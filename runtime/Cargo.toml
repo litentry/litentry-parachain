@@ -46,6 +46,9 @@ xcm = { git = "https://github.com/paritytech/polkadot", default-features = false
 xcm-builder = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "rococo-v1" }
 xcm-executor = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "rococo-v1" }
 
+# local dependencies
+pallet-account-linker = { path = '../pallets/account-linker', default-features = false }
+
 [build-dependencies]
 substrate-wasm-builder = "3.0.0"
 
