@@ -309,8 +309,6 @@ impl pallet_account_linker::Config for Runtime {
 // impl pallet_offchain_worker::Trait for Runtime {
 // 	type Event = Event;
 // 	type Call = Call;
-// 	// type SubmitUnsignedTransaction = SubmitPFTransaction;
-
 // }
 
 // pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
