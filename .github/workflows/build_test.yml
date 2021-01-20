@@ -1,0 +1,26 @@
+name: Rust
+
+on:
+  push:
+    branches: [ rococo-v1 ]
+  pull_request:
+    branches: [ rococo-v1 ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Add wasm toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: nightly-2020-10-06
+        target: wasm32-unknown-unknown
+        override: true
+    - name: Build
+      run: cargo build --release
