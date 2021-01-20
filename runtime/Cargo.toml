@@ -48,6 +48,7 @@ xcm-executor = { git = "https://github.com/paritytech/polkadot", default-feature
 
 # local dependencies
 pallet-account-linker = { path = '../pallets/account-linker', default-features = false }
+pallet-offchain-worker = { path = '../pallets/offchain-worker', default-features = false }
 
 [build-dependencies]
 substrate-wasm-builder = "3.0.0"
