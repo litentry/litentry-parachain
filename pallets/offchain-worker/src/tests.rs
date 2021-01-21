@@ -1,5 +1,5 @@
 use crate::*;
-use frame_support::{impl_outer_event, impl_outer_origin, parameter_types};
+use frame_support::{impl_outer_event, impl_outer_origin, parameter_types, impl_outer_dispatch};
 use codec::{alloc::sync::Arc};
 use parking_lot::RwLock;
 use sp_core::{
@@ -8,9 +8,11 @@ use sp_core::{
 		OffchainExt, TransactionPoolExt,
 	},
 	sr25519::{self, Signature},
-	testing::KeyStore,
-	traits::KeystoreExt,
 	H256,
+};
+use sp_keystore::{
+	{KeystoreExt, SyncCryptoStore},
+	testing::KeyStore,
 };
 use sp_io::TestExternalities;
 use sp_runtime::{
@@ -19,18 +21,26 @@ use sp_runtime::{
 	Perbill,
 };
 
-use crate as OffchainWorker;
+use crate as offchainWorker;
 use account_linker;
+use pallet_balances;
 
 impl_outer_origin! {
 	pub enum Origin for TestRuntime where system = frame_system {}
 }
 
+impl_outer_dispatch! {
+	pub enum OuterCall for TestRuntime where origin: Origin {
+		self::OffchainWorker,
+	}
+}
+
 impl_outer_event! {
 	pub enum TestEvent for TestRuntime {
 		frame_system<T>,
-		OffchainWorker<T>,
+		offchainWorker<T>,
 		account_linker<T>,
+		pallet_balances<T>,
 	}
 }
 
@@ -39,38 +49,47 @@ pub struct TestRuntime;
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
-	pub const MaximumBlockWeight: u32 = 1_000_000;
-	pub const MaximumBlockLength: u32 = 10 * 1_000_000;
-	pub const AvailableBlockRatio: Perbill = Perbill::one();
+	pub BlockWeights: frame_system::limits::BlockWeights =
+		frame_system::limits::BlockWeights::simple_max(1024);
 }
 
 // The TestRuntime implements two pallet/frame traits: system, and simple_event
-impl frame_system::Trait for TestRuntime {
+impl frame_system::Config for TestRuntime {
 	type BaseCallFilter = ();
+	type BlockWeights = ();
+	type BlockLength = ();
+	type DbWeight = ();
 	type Origin = Origin;
 	type Index = u64;
-	type Call = ();
 	type BlockNumber = u64;
 	type Hash = H256;
+	type Call = OuterCall;
 	type Hashing = BlakeTwo256;
 	type AccountId = sr25519::Public;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = TestEvent;
 	type BlockHashCount = BlockHashCount;
-	type MaximumBlockWeight = MaximumBlockWeight;
-	type DbWeight = ();
-	type BlockExecutionWeight = ();
-	type ExtrinsicBaseWeight = ();
-	type MaximumExtrinsicWeight = MaximumBlockWeight;
-	type MaximumBlockLength = MaximumBlockLength;
-	type AvailableBlockRatio = AvailableBlockRatio;
 	type Version = ();
 	type PalletInfo = ();
-	type AccountData = ();
+	type AccountData = pallet_balances::AccountData<u64>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
+	type SS58Prefix = ();
+}
+
+parameter_types! {
+	pub const ExistentialDeposit: u64 = 1;
+}
+impl pallet_balances::Config for TestRuntime {
+	type MaxLocks = ();
+	type Balance = u64;
+	type DustRemoval = ();
+	type Event = TestEvent;
+	type ExistentialDeposit = ExistentialDeposit;
+	type AccountStore = System;
+	type WeightInfo = ();
 }
 
 pub type TestExtrinsic = TestXt<Call<TestRuntime>, ()>;
@@ -79,13 +98,13 @@ parameter_types! {
 	pub const UnsignedPriority: u64 = 100;
 }
 
-impl Trait for TestRuntime {
+impl Config for TestRuntime {
 	// type AuthorityId = crypto::TestAuthId;
 	type Call = Call<TestRuntime>;
 	type Event = TestEvent;
 }
 
-impl account_linker::Trait for TestRuntime {
+impl account_linker::Config for TestRuntime {
 	type Event = TestEvent;
 }
 
@@ -96,8 +115,8 @@ where
 	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
 		call: Call<TestRuntime>,
 		_public: <Signature as Verify>::Signer,
-		_account: <TestRuntime as frame_system::Trait>::AccountId,
-		index: <TestRuntime as frame_system::Trait>::Index,
+		_account: <TestRuntime as frame_system::Config>::AccountId,
+		index: <TestRuntime as frame_system::Config>::Index,
 	) -> Option<(
 		Call<TestRuntime>,
 		<TestExtrinsic as sp_runtime::traits::Extrinsic>::SignaturePayload,
@@ -120,7 +139,7 @@ where
 }
 
 pub type System = frame_system::Module<TestRuntime>;
-// pub type OffchainWorker = Module<TestRuntime>;
+type OffchainWorker = Module<TestRuntime>;
 
 pub struct ExternalityBuilder;
 
@@ -136,10 +155,11 @@ impl ExternalityBuilder {
 		let (offchain, offchain_state) = testing::TestOffchainExt::new();
 		let (pool, pool_state) = testing::TestTransactionPoolExt::new();
 		let keystore = KeyStore::new();
-		keystore
-			.write()
-			.sr25519_generate_new(KEY_TYPE, Some(&format!("{}/hunter1", PHRASE)))
-			.unwrap();
+		SyncCryptoStore::sr25519_generate_new(
+			&keystore,
+			KEY_TYPE,
+			Some(&format!("{}/hunter1", PHRASE))
+		).unwrap();
 
 		let storage = frame_system::GenesisConfig::default()
 			.build_storage::<TestRuntime>()
@@ -148,7 +168,7 @@ impl ExternalityBuilder {
 		let mut t = TestExternalities::from(storage);
 		t.register_extension(OffchainExt::new(offchain));
 		t.register_extension(TransactionPoolExt::new(pool));
-		t.register_extension(KeystoreExt(keystore));
+		t.register_extension(KeystoreExt(Arc::new(keystore)));
 		t.execute_with(|| System::set_block_number(1));
 		(t, pool_state, offchain_state)
 	}
