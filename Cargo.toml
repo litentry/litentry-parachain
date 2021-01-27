@@ -18,7 +18,7 @@ parking_lot = '0.9.0'
 trie-root = '0.15.2'
 codec = { package = 'parity-scale-codec', version = '1.0.0' }
 structopt = "0.3.3"
-serde = { version = "1.0.101", features = ["derive"] }
+serde = { version = "1.0.119", features = ["derive"] }
 hex-literal = "0.2.1"
 
 # Parachain dependencies
@@ -37,6 +37,7 @@ sc-cli = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1"
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 sc-executor = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 sc-service = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+sc-telemetry = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 sc-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 sp-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 sc-network = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
@@ -316,7 +317,6 @@ kusama-runtime = { git = "https://github.com/paritytech//polkadot", branch = "ro
 polkadot-runtime-parachains = { git = "https://github.com/paritytech//polkadot", branch = "rococo-v1" }
 polkadot-node-network-protocol = { git = "https://github.com/paritytech//polkadot", branch = "rococo-v1" }
 polkadot-node-subsystem = { git = "https://github.com/paritytech//polkadot", branch = "rococo-v1" }
-polkadot-validation = { git = "https://github.com/paritytech//polkadot", branch = "rococo-v1" }
 polkadot-statement-table = { git = "https://github.com/paritytech//polkadot", branch = "rococo-v1" }
 polkadot-overseer = { git = "https://github.com/paritytech//polkadot", branch = "rococo-v1" }
 polkadot-node-primitives = { git = "https://github.com/paritytech//polkadot", branch = "rococo-v1" }
@@ -325,8 +325,7 @@ polkadot-cli = { git = "https://github.com/paritytech//polkadot", branch = "roco
 
 [patch."https://github.com/paritytech/cumulus"]
 cumulus-primitives = { git = "https://github.com/paritytech//cumulus", branch = "rococo-v1" }
-cumulus-parachain-upgrade  = { git = "https://github.com/paritytech//cumulus", branch = "rococo-v1" }
-cumulus-message-broker  = { git = "https://github.com/paritytech//cumulus", branch = "rococo-v1" }
+cumulus-parachain-system  = { git = "https://github.com/paritytech//cumulus", branch = "rococo-v1" }
 cumulus-network = { git = "https://github.com/paritytech//cumulus", branch = "rococo-v1" }
 cumulus-service = { git = "https://github.com/paritytech//cumulus", branch = "rococo-v1" }
 cumulus-consensus = { git = "https://github.com/paritytech//cumulus", branch = "rococo-v1" }
