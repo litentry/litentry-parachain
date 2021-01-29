@@ -1,8 +1,11 @@
 use crate::{Module, Config, Error};
 use frame_support::{
-	assert_ok, impl_outer_origin, parameter_types, impl_outer_dispatch,
+	impl_outer_origin, impl_outer_event, parameter_types, impl_outer_dispatch,
 	weights::{DispatchInfo, GetDispatchInfo}, traits::{OnInitialize, OnFinalize}
 };
+use frame_system as system;
+use crate as account_linker;
+use pallet_balances as balances;
 use sp_core::H256;
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
@@ -19,6 +22,14 @@ impl_outer_origin! {
 impl_outer_dispatch! {
 	pub enum OuterCall for Test where origin: Origin {
 		self::AccountLinker,
+	}
+}
+
+impl_outer_event! {
+	pub enum TestEvent for Test {
+		system<T>,
+		account_linker<T>,
+		balances<T>,
 	}
 }
 
@@ -46,7 +57,7 @@ impl frame_system::Config for Test {
 	type AccountId = AccountId32;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = generic::Header<Self::BlockNumber, BlakeTwo256>;
-	type Event = ();
+	type Event = TestEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = ();
@@ -64,19 +75,19 @@ impl pallet_balances::Config for Test {
 	type MaxLocks = ();
 	type Balance = u64;
 	type DustRemoval = ();
-	type Event = ();
+	type Event = TestEvent;
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
 }
 
 impl Config for Test {
-	type Event = ();
+	type Event = TestEvent;
 }
 
-type System = frame_system::Module<Test>;
 pub type AccountLinker = Module<Test>;
 pub type AccountLinkerError = Error<Test>;
+pub type System = system::Module<Test>;
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
@@ -84,4 +95,14 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		.build_storage::<Test>()
 		.unwrap()
 		.into()
+}
+
+pub fn run_to_block(n: u32) {
+    while System::block_number() < n {
+        AccountLinker::on_finalize(System::block_number());
+        System::on_finalize(System::block_number());
+        System::set_block_number(System::block_number() + 1);
+        System::on_initialize(System::block_number());
+        AccountLinker::on_initialize(System::block_number());
+    }
 }
