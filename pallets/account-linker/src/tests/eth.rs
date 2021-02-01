@@ -1,4 +1,4 @@
-use crate::mock::*;
+use crate::{mock::*, Event};
 
 use codec::Encode;
 use parity_crypto::Keccak256;
@@ -33,125 +33,7 @@ fn generate_rsv(sig: &[u8; 65]) -> ([u8; 32], [u8; 32], u8) {
 }
 
 #[test]
-fn test_btc_link_p2pkh() {
-	new_test_ext().execute_with(|| {
-
-		use bitcoin::network::constants::Network;
-		use bitcoin::util::address::Address;
-		use bitcoin::util::key;
-		use bitcoin::secp256k1::{Secp256k1, Message as BTCMessage};
-		use bitcoin::secp256k1::rand::thread_rng;
-
-		// Generate random key pair
-		let s = Secp256k1::new();
-		let pair = s.generate_keypair(&mut thread_rng());
-		let public_key = key::PublicKey {
-			compressed: true,
-			key: pair.1,
-		};
-
-		// Generate pay-to-pubkey-hash address
-		let address = Address::p2pkh(&public_key, Network::Bitcoin);
-
-		let account: AccountId32 = AccountId32::from([255u8; 32]);
-		let block_number: u32 = 99999;
-
-		let mut bytes = b"Link Litentry: ".encode();
-		let mut account_vec = account.encode();
-		let mut expiring_block_number_vec = block_number.encode();
-
-		bytes.append(&mut account_vec);
-		bytes.append(&mut expiring_block_number_vec);
-
-		let message = BTCMessage::from_slice(&bytes.keccak256()).unwrap();
-
-		let (v, rs) = s.sign_recoverable(&message, &pair.0).serialize_compact();
-
-		let mut r = [0u8; 32];
-		let mut s = [0u8; 32];
-
-		r[..32].copy_from_slice(&rs[..32]);
-		s[..32].copy_from_slice(&rs[32..64]);
-
-		assert_ok!(AccountLinker::link_btc(
-			Origin::signed(account.clone()),
-			account.clone(),
-			0,
-			address.clone().to_string().as_bytes().to_vec(),
-			block_number,
-			r,
-			s,
-			v.to_i32() as u8
-		));
-
-		let addr_stored = String::from_utf8(AccountLinker::btc_addresses(&account)[0].clone()).unwrap();
-
-		assert_eq!(addr_stored, address.to_string());
-
-	});
-}
-#[test]
-fn test_btc_link_p2wpkh() {
-	new_test_ext().execute_with(|| {
-
-		use bitcoin::network::constants::Network;
-		use bitcoin::util::address::Address;
-		use bitcoin::util::key;
-		use bitcoin::secp256k1::{Secp256k1, Message as BTCMessage};
-		use bitcoin::secp256k1::rand::thread_rng;
-
-		// Generate random key pair
-		let s = Secp256k1::new();
-		let pair = s.generate_keypair(&mut thread_rng());
-		let public_key = key::PublicKey {
-			compressed: true,
-			key: pair.1,
-		};
-
-		// Generate pay-to-pubkey-hash address
-		let address = Address::p2wpkh(&public_key, Network::Bitcoin).unwrap();
-
-		println!("{}", address);
-		let account: AccountId32 = AccountId32::from([255u8; 32]);
-		let block_number: u32 = 99999;
-
-		let mut bytes = b"Link Litentry: ".encode();
-		let mut account_vec = account.encode();
-		let mut expiring_block_number_vec = block_number.encode();
-
-		bytes.append(&mut account_vec);
-		bytes.append(&mut expiring_block_number_vec);
-
-		let message = BTCMessage::from_slice(&bytes.keccak256()).unwrap();
-
-		let (v, rs) = s.sign_recoverable(&message, &pair.0).serialize_compact();
-
-		let mut r = [0u8; 32];
-		let mut s = [0u8; 32];
-
-		r[..32].copy_from_slice(&rs[..32]);
-		s[..32].copy_from_slice(&rs[32..64]);
-
-		assert_ok!(AccountLinker::link_btc(
-			Origin::signed(account.clone()),
-			account.clone(),
-			0,
-			address.clone().to_string().as_bytes().to_vec(),
-			block_number,
-			r,
-			s,
-			v.to_i32() as u8
-		));
-
-		let addr_stored = String::from_utf8(AccountLinker::btc_addresses(&account)[0].clone()).unwrap();
-
-		assert_eq!(addr_stored, address.to_string());
-
-	});
-}
-
-#[test]
-fn test_invalid_block_number() {
+fn test_expired_block_number_eth() {
 	new_test_ext().execute_with(|| {
 
 		let account: AccountId32 = AccountId32::from([0u8; 32]);
@@ -180,7 +62,36 @@ fn test_invalid_block_number() {
 }
 
 #[test]
-fn test_unexpected_address() {
+fn test_invalid_expiring_block_number_eth() {
+	new_test_ext().execute_with(|| {
+
+		let account: AccountId32 = AccountId32::from([0u8; 32]);
+		let block_number: u32 = crate::EXPIRING_BLOCK_NUMBER_MAX + 1;
+
+		let mut gen = Random{};
+		let key_pair = gen.generate().unwrap();
+
+		let msg = generate_msg(&account, block_number);
+		let sig = generate_sig(&key_pair, &msg);
+		let (r, s, v) = generate_rsv(&sig);
+
+		assert_noop!(
+			AccountLinker::link_eth(
+				Origin::signed(account.clone()),
+				account.clone(),
+				0,
+				key_pair.address().to_fixed_bytes(),
+				block_number,
+				r,
+				s,
+				v),
+			AccountLinkerError::InvalidExpiringBlockNumber
+		);
+	});
+}
+
+#[test]
+fn test_unexpected_address_eth() {
 	new_test_ext().execute_with(|| {
 
 		let account: AccountId32 = AccountId32::from([72u8; 32]);
@@ -212,6 +123,8 @@ fn test_unexpected_address() {
 fn test_insert_eth_address() {
 	new_test_ext().execute_with(|| {
 
+        run_to_block(1);
+
 		let account: AccountId32 = AccountId32::from([5u8; 32]);
 		let block_number: u32 = 99999;
 
@@ -238,7 +151,14 @@ fn test_insert_eth_address() {
 				v
 			));
 
-			assert_eq!(AccountLinker::eth_addresses(&account).len(), i+1);
+            assert_eq!(AccountLinker::eth_addresses(&account).len(), i+1);
+            assert_eq!(
+                System::events()[i].event,  
+                TestEvent::account_linker( Event::<Test>::EthAddressLinked(
+                    account.clone(), 
+                    key_pair.address().to_fixed_bytes().to_vec())
+                )
+            );
 			expected_vec.push(key_pair.address().to_fixed_bytes());
 		}
 		assert_eq!(AccountLinker::eth_addresses(&account), expected_vec);

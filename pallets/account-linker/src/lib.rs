@@ -2,7 +2,7 @@
 
 use codec::Encode;
 use sp_std::prelude::*;
-use sp_io::crypto::{secp256k1_ecdsa_recover, secp256k1_ecdsa_recover_compressed};
+use sp_io::crypto::secp256k1_ecdsa_recover_compressed;
 use frame_support::{decl_module, decl_storage, decl_event, decl_error, dispatch, ensure};
 use frame_system::{ensure_signed};
 use btc::base58::ToBase58;
@@ -17,6 +17,7 @@ mod tests;
 mod btc;
 mod util_eth;
 
+const EXPIRING_BLOCK_NUMBER_MAX: u32 = 10 * 60 * 24 * 30; // 30 days for 6s per block
 pub const MAX_ETH_LINKS: usize = 3;
 pub const MAX_BTC_LINKS: usize = 3;
 
@@ -41,7 +42,8 @@ decl_event!(
 	where
 		AccountId = <T as frame_system::Config>::AccountId,
 	{
-		SomethingStored(u32, AccountId),
+		EthAddressLinked(AccountId, Vec<u8>),
+		BtcAddressLinked(AccountId, Vec<u8>),
 	}
 );
 
@@ -54,6 +56,7 @@ decl_error! {
 		UnexpectedEthMsgLength,
 		InvalidBTCAddress,
 		InvalidBTCAddressLength,
+		InvalidExpiringBlockNumber,
 	}
 }
 
@@ -83,8 +86,9 @@ decl_module! {
 
 			let current_block_number = <frame_system::Module<T>>::block_number();
 			ensure!(expiring_block_number > current_block_number, Error::<T>::LinkRequestExpired);
+			ensure!((expiring_block_number - current_block_number) < T::BlockNumber::from(EXPIRING_BLOCK_NUMBER_MAX), 
+				Error::<T>::InvalidExpiringBlockNumber);
 
-			// TODO: there is no eth prefix here
 			let mut bytes = b"Link Litentry: ".encode();
 			let mut account_vec = account.encode();
 			let mut expiring_block_number_vec = expiring_block_number.encode();
@@ -110,14 +114,15 @@ decl_module! {
 			let mut addrs = Self::eth_addresses(&account);
 			// NOTE: allow linking `MAX_ETH_LINKS` eth addresses.
 			if (index >= addrs.len()) && (addrs.len() != MAX_ETH_LINKS) {
-				addrs.push(addr);
+				addrs.push(addr.clone());
 			} else if (index >= addrs.len()) && (addrs.len() == MAX_ETH_LINKS) {
-				addrs[MAX_ETH_LINKS - 1] = addr;
+				addrs[MAX_ETH_LINKS - 1] = addr.clone();
 			} else {
-				addrs[index] = addr;
+				addrs[index] = addr.clone();
 			}
 
-			<EthereumLink<T>>::insert(account, addrs);
+			<EthereumLink<T>>::insert(account.clone(), addrs);
+			Self::deposit_event(RawEvent::EthAddressLinked(account, addr.to_vec()));
 
 			Ok(())
 
@@ -140,6 +145,8 @@ decl_module! {
 
 			let current_block_number = <frame_system::Module<T>>::block_number();
 			ensure!(expiring_block_number > current_block_number, Error::<T>::LinkRequestExpired);
+			ensure!((expiring_block_number - current_block_number) < T::BlockNumber::from(EXPIRING_BLOCK_NUMBER_MAX), 
+				Error::<T>::InvalidExpiringBlockNumber);
 
 			// TODO: we may enlarge this 2
 			if addr_expected.len() < 2 {
@@ -171,30 +178,15 @@ decl_module! {
 			sig[..32].copy_from_slice(&r[..32]);
 			sig[32..64].copy_from_slice(&s[..32]);
 			sig[64] = v;
-			
-
-			// currently both compressed and uncompressed is ok for legacy address
-			// need to also modify the test
-
-			// let pk_no_prefix = secp256k1_ecdsa_recover(&sig, &msg)
-			// 	.map_err(|_| Error::<T>::EcdsaRecoverFailure)?;
 
 			let pk = secp256k1_ecdsa_recover_compressed(&sig, &msg)
 			.map_err(|_| Error::<T>::EcdsaRecoverFailure)?;
 
-			let mut addr = Vec::new();
+			let mut addr;
 
 			match addr_type {
 				BTCAddrType::Legacy => {
-					// let mut pk = [0u8; 65];
-
-					// // pk prefix = 4
-					// pk[0] = 4;
-					// pk[1..65].copy_from_slice(&pk_no_prefix);
-
-					// addr = btc::legacy::btc_addr_from_pk_uncompressed(pk).to_base58();
-
-					addr = btc::legacy::btc_addr_from_pk_compressed(pk).to_base58();
+					addr = btc::legacy::btc_addr_from_pk(&pk).to_base58();
 				},
 				// Native P2WPKH is a scriptPubKey of 22 bytes. 
 				// It starts with a OP_0, followed by a canonical push of the keyhash (i.e. 0x0014{20-byte keyhash})
@@ -217,14 +209,15 @@ decl_module! {
 			let mut addrs = Self::btc_addresses(&account);
 			// NOTE: allow linking `MAX_BTC_LINKS` btc addresses.
 			if (index >= addrs.len()) && (addrs.len() != MAX_BTC_LINKS) {
-				addrs.push(addr);
+				addrs.push(addr.clone());
 			} else if (index >= addrs.len()) && (addrs.len() == MAX_BTC_LINKS) {
-				addrs[MAX_BTC_LINKS - 1] = addr;
+				addrs[MAX_BTC_LINKS - 1] = addr.clone();
 			} else {
-				addrs[index] = addr;
+				addrs[index] = addr.clone();
 			}
 
-			<BitcoinLink<T>>::insert(account, addrs);
+			<BitcoinLink<T>>::insert(account.clone(), addrs);
+			Self::deposit_event(RawEvent::BtcAddressLinked(account, addr));
 
 			Ok(())
 
