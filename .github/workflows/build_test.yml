@@ -30,8 +30,6 @@ jobs:
         cd polkadot
         cargo build --release --features=real-overseer
         cd ..
-    - name: Run unit tests
-      run: cargo test --verbose
     - name: Run integration test
       run: |
         cd ts-tests
