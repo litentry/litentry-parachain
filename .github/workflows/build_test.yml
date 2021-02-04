@@ -3,6 +3,7 @@ name: Rust
 on:
   push:
     branches: [ rococo-v1 ]
+    branches: [ integration-test ]
   pull_request:
     branches: [ rococo-v1 ]
 
@@ -16,11 +17,26 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: true
     - name: Add wasm toolchain
       uses: actions-rs/toolchain@v1
       with:
         toolchain: nightly-2020-10-06
         target: wasm32-unknown-unknown
         override: true
-    - name: Build
-      run: cargo build --release
+    - name: Build relay node and parachain
+      run: |
+        cargo build --release
+        cd polkadot
+        cargo build --release --features=real-overseer
+        cd ..
+    - name: Run unit tests
+      run: cargo test --verbose
+    - name: Run integration test
+      run: |
+        cd ts-tests
+        ../polkadot/start-bob.sh.bk& ../polkadot/start-alice.sh.bk&
+        npm install 
+        npm test
+

@@ -1,10 +1,5 @@
 'use strict';
 
-/* globals
-	AggregateError,
-	SharedArrayBuffer,
-*/
-
 var undefined;
 
 var $SyntaxError = SyntaxError;
