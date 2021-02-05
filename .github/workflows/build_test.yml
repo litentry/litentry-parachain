@@ -33,7 +33,7 @@ jobs:
     - name: Run integration test
       run: |
         cd ts-tests
-        ../polkadot/start-bob.sh.bk& ../polkadot/start-alice.sh.bk&
         npm install 
+        ./scripts/start-alice-and-bob.sh
         npm test
 
