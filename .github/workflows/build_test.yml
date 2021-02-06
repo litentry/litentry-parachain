@@ -2,7 +2,7 @@ name: Rust
 
 on:
   push:
-    branches: [ rococo-v1 , integration-test ]
+    branches: [ rococo-v1 ]
   pull_request:
     branches: [ rococo-v1 ]
 
