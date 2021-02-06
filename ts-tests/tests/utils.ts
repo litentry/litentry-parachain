@@ -320,10 +320,10 @@ export function describeLitentry(
     cb: (context: {api: ApiPromise, alice: KeyringPair}) => void, provider?: string)
 {
   describe(title, function() {
-    // Set timeout to 120 seconds
-    this.timeout(720000);
+    // Set timeout to 600 seconds
+    this.timeout(600000);
 
-    let tokenServer: ChildProcess;
+    // let tokenServer: ChildProcess;
     let binary: ChildProcess;
     let context:
         {api: ApiPromise, alice: KeyringPair} = {api: {} as ApiPromise, alice: {} as KeyringPair};
@@ -331,19 +331,19 @@ export function describeLitentry(
     before('Starting Litentry Test Node', async function() {
       // this.timeout(SPAWNING_TIME);
       await launchRelayNodesAndParachainRegister();
-      const initTokenServer = await launchAPITokenServer();
+      // const initTokenServer = await launchAPITokenServer();
       const initNode = await launchLitentryNode(specFilename, provider);
-      tokenServer = initTokenServer.apikey_server;
+      // tokenServer = initTokenServer.apikey_server;
       binary = initNode.binary;
       const initApi = await initApiPromise(wsProvider);
       context.api = initApi.api;
       context.alice = initApi.alice;
-      return sendTokenToOcw(initApi.api, initApi.alice);
+      // return sendTokenToOcw(initApi.api, initApi.alice);
     });
 
     after(async function() {
       // console.log(`\x1b[31m Killing RPC\x1b[0m`);
-      tokenServer.kill()
+      // tokenServer.kill()
       binary.kill();
       context.api.disconnect();
     });
