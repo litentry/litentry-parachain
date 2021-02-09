@@ -9,7 +9,7 @@ import fs from 'fs';
 import Web3 from 'web3';
 import {JsonRpcResponse} from 'web3-core-helpers';
 
-export const LITENTRY_BINARY_PATH = `../target/release/rococo-collator`;
+export const LITENTRY_BINARY_PATH = `../target/release/litentry-collator`;
 export const POLKADOT_BINARY_PATH = `../polkadot/target/release/polkadot`;
 export const APIKEY_SERVER_PATH = `../litentry-token-server`;
 export const PARA_GENESIS_HEAD_PATH = `para-1984-genesis`;
