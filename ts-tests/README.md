@@ -8,16 +8,17 @@ This node.js project aims to test and verify Litentry Runtime as a whole, includ
 
 ## Run
 
-For now, you need to start the node manually first by the command
+1. Launch Relay Nodes
 
-`./target/debug/litentry-node --dev --tmp`
+`./scripts/start-alice-and-bob.sh`
 
-And then run the command
+2. Run tests
 
-`ts-node ts-tests/tests/test-eth-balance.ts`
+`npm test`
 
-Later a better test suite will be built with better framework integrated and full test automation.
+3. After it's done, you need to manually kill relay nodes 
 
+`killall polkadot`
 ## Output
 
 The current test runs through the following steps: link eth account -> check account linking state -> asset claim -> check asset balances.
