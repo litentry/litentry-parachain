@@ -2,7 +2,7 @@
 
 # configure the relative paths of binary and chain spec
 GIT_ROOT=`git rev-parse --show-toplevel`
-LITENTRY_BIN=$GIT_ROOT/target/release/rococo-collator
+LITENTRY_BIN=$GIT_ROOT/target/release/litentry-collator
 POLKADOT_BIN=$GIT_ROOT/polkadot/target/release/polkadot
 ROCOCO_CHAINSPEC=$GIT_ROOT/polkadot/rococo-local-cfde-real-overseer-new.json
 
