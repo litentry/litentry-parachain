@@ -1,64 +1,25 @@
-// Copyright 2019 Parity Technologies (UK) Ltd.
-// This file is part of Cumulus.
-
-// Cumulus is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// Cumulus is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
-
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
-#![recursion_limit = "256"]
+#![recursion_limit="256"]
 
 // Make the WASM binary available.
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use rococo_parachain_primitives::*;
-use sp_api::impl_runtime_apis;
-use sp_core::OpaqueMetadata;
-use sp_runtime::{
-	create_runtime_str, generic, impl_opaque_keys, SaturatedConversion,
-	traits::{BlakeTwo256, Block as BlockT, IdentityLookup},
-	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult,
-};
-use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-use codec::Encode;
-
-/// Import the account-linker pallet.
-pub use pallet_account_linker;
-
-/// Import the offchain-worker pallet.
-pub use pallet_offchain_worker;
-
-// A few exports that help ease life for downstream crates.
-pub use frame_support::{
-	debug, construct_runtime, parameter_types,
-	traits::Randomness,
-	weights::{
-		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		DispatchClass, IdentityFee, Weight,
-	},
-	StorageValue,
+use sp_std::prelude::*;
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_runtime::{
+	ApplyExtrinsicResult, generic, create_runtime_str, impl_opaque_keys, MultiSignature,
+	transaction_validity::{TransactionValidity, TransactionSource},
+	traits::StaticLookup,
 };
-use frame_system::limits::{BlockLength, BlockWeights};
-pub use pallet_balances::Call as BalancesCall;
-pub use pallet_timestamp::Call as TimestampCall;
-#[cfg(any(feature = "std", test))]
-pub use sp_runtime::BuildStorage;
-pub use sp_runtime::{Perbill, Permill};
+use sp_runtime::traits::{
+	BlakeTwo256, Block as BlockT, AccountIdLookup, Verify, IdentifyAccount, SaturatedConversion,
+};
+use sp_api::impl_runtime_apis;
 
 // XCM imports
 use polkadot_parachain::primitives::Sibling;
@@ -72,11 +33,73 @@ use xcm_executor::{
 	traits::{IsConcrete, NativeAsset},
 	Config, XcmExecutor,
 };
+use frame_system::limits::{BlockLength, BlockWeights};
 
-pub type SessionHandlers = ();
+// A few exports that help ease life for downstream crates.
+#[cfg(any(feature = "std", test))]
+pub use sp_runtime::BuildStorage;
+pub use pallet_timestamp::Call as TimestampCall;
+pub use pallet_balances::Call as BalancesCall;
+pub use sp_runtime::{Permill, Perbill};
+pub use frame_support::{
+	debug, construct_runtime, parameter_types, StorageValue,
+	traits::{KeyOwnerProofSystem, Randomness},
+	weights::{
+		Weight, IdentityFee, DispatchClass,
+		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
+	},
+};
+use codec::Encode;
 
-impl_opaque_keys! {
-	pub struct SessionKeys {}
+/// Import the account-linker pallet.
+pub use pallet_account_linker;
+
+/// Import the offchain-worker pallet.
+pub use pallet_offchain_worker;
+
+/// An index to a block.
+pub type BlockNumber = u32;
+
+/// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
+pub type Signature = MultiSignature;
+
+/// Some way of identifying an account on the chain. We intentionally make it equivalent
+/// to the public key of our transaction signing scheme.
+pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+
+/// The type for looking up accounts. We don't expect more than 4 billion of them, but you
+/// never know...
+pub type AccountIndex = u32;
+
+/// Balance of an account.
+pub type Balance = u128;
+
+/// Index of a transaction in the chain.
+pub type Index = u32;
+
+/// A hash of some data used by the chain.
+pub type Hash = sp_core::H256;
+
+/// Digest item type.
+pub type DigestItem = generic::DigestItem<Hash>;
+
+/// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
+/// the specifics of the runtime. They can then be made to be agnostic over specific formats
+/// of data like extrinsics, allowing for them to continue syncing the network through upgrades
+/// to even the core data structures.
+pub mod opaque {
+	use super::*;
+
+	pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
+
+	/// Opaque block type.
+	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+
+	pub type SessionHandlers = ();
+
+	impl_opaque_keys! {
+		pub struct SessionKeys {}
+	}
 }
 
 /// This runtime version.
@@ -89,14 +112,17 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
 };
-
+/// This determines the average expected block time that we are targetting.
+/// Blocks will be produced at a minimum duration defined by `SLOT_DURATION`.
+/// `SLOT_DURATION` is picked up by `pallet_timestamp` which is in turn picked
+/// up by `pallet_aura` to implement `fn slot_duration()`.
+///
+/// Change this to adjust the block time.
 pub const MILLISECS_PER_BLOCK: u64 = 6000;
 
 pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
-pub const EPOCH_DURATION_IN_BLOCKS: u32 = 10 * MINUTES;
-
-// These time units are defined in number of blocks.
+// Time is measured by number of blocks.
 pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
@@ -151,16 +177,24 @@ parameter_types! {
 		})
 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
 		.build_or_panic();
-	pub const SS58Prefix: u8 = 42;
+	pub const SS58Prefix: u8 = 31;
 }
 
+// Configure FRAME pallets to include in runtime.
+
 impl frame_system::Config for Runtime {
+	/// The basic call filter to use in dispatchable.
+	type BaseCallFilter = ();
+	/// Block & extrinsics weights: base values and limits.
+	type BlockWeights = RuntimeBlockWeights;
+	/// The maximum length of a block (in bytes).
+	type BlockLength = RuntimeBlockLength;
 	/// The identifier used to distinguish between accounts.
 	type AccountId = AccountId;
 	/// The aggregated dispatch type that is available for extrinsics.
 	type Call = Call;
 	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
-	type Lookup = IdentityLookup<AccountId>;
+	type Lookup = AccountIdLookup<AccountId, ()>;
 	/// The index type for storing how many extrinsics an account has signed.
 	type Index = Index;
 	/// The index type for blocks.
@@ -177,18 +211,23 @@ impl frame_system::Config for Runtime {
 	type Origin = Origin;
 	/// Maximum number of block number to block hash mappings to keep (oldest pruned first).
 	type BlockHashCount = BlockHashCount;
-	/// Runtime version.
+	/// The weight of database operations that the runtime can invoke.
+	type DbWeight = RocksDbWeight;
+	/// Version of the runtime.
 	type Version = Version;
-	/// Converts a module to an index of this module in the runtime.
+	/// Converts a module to the index of the module in `construct_runtime!`.
+	///
+	/// This type is being generated by `construct_runtime!`.
 	type PalletInfo = PalletInfo;
-	type AccountData = pallet_balances::AccountData<Balance>;
+	/// What to do if a new account is created.
 	type OnNewAccount = ();
+	/// What to do if an account is fully reaped from the system.
 	type OnKilledAccount = ();
-	type DbWeight = ();
-	type BaseCallFilter = ();
+	/// The data to be stored in an account.
+	type AccountData = pallet_balances::AccountData<Balance>;
+	/// Weight information for the extrinsics of this pallet.
 	type SystemWeightInfo = ();
-	type BlockWeights = RuntimeBlockWeights;
-	type BlockLength = RuntimeBlockLength;
+	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
 	type SS58Prefix = SS58Prefix;
 }
 
@@ -206,13 +245,11 @@ impl pallet_timestamp::Config for Runtime {
 
 parameter_types! {
 	pub const ExistentialDeposit: u128 = 500;
-	pub const TransferFee: u128 = 0;
-	pub const CreationFee: u128 = 0;
-	pub const TransactionByteFee: u128 = 1;
 	pub const MaxLocks: u32 = 50;
 }
 
 impl pallet_balances::Config for Runtime {
+	type MaxLocks = MaxLocks;
 	/// The type for recording an account's balance.
 	type Balance = Balance;
 	/// The ubiquitous event type.
@@ -220,8 +257,11 @@ impl pallet_balances::Config for Runtime {
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
-	type WeightInfo = ();
-	type MaxLocks = MaxLocks;
+	type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
+	pub const TransactionByteFee: Balance = 1;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
@@ -232,8 +272,8 @@ impl pallet_transaction_payment::Config for Runtime {
 }
 
 impl pallet_sudo::Config for Runtime {
-	type Call = Call;
 	type Event = Event;
+	type Call = Call;
 }
 
 impl cumulus_parachain_system::Config for Runtime {
@@ -329,6 +369,7 @@ where
 		let tip = 0;
 		let extra: SignedExtra = (
 			frame_system::CheckSpecVersion::<Runtime>::new(),
+			frame_system::CheckTxVersion::<Runtime>::new(),
 			frame_system::CheckGenesis::<Runtime>::new(),
 			frame_system::CheckEra::<Runtime>::from(generic::Era::mortal(period, current_block)),
 			frame_system::CheckNonce::<Runtime>::from(index),
@@ -345,7 +386,7 @@ where
 
 		let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
 
-		let address = account;
+		let address = Self::Lookup::unlookup(account);
 		let (call, extra, _) = raw_payload.deconstruct();
 		Some((call, (address, signature, extra)))
 	}
@@ -364,10 +405,11 @@ where
 	type Extrinsic = UncheckedExtrinsic;
 }
 
-construct_runtime! {
+// Create the runtime by composing the FRAME pallets that were previously configured.
+construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
-		NodeBlock = rococo_parachain_primitives::Block,
+		NodeBlock = opaque::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Module, Call, Storage, Config, Event<T>},
@@ -383,10 +425,10 @@ construct_runtime! {
 		AccountLinkerModule: pallet_account_linker::{Module, Call, Storage, Event<T>},
 		OffchainWorkerModule: pallet_offchain_worker::{Module, Call, Storage, Event<T>, ValidateUnsigned},
 	}
-}
+);
 
 /// The address format for describing accounts.
-pub type Address = AccountId;
+pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
 /// Block header type as expected by this runtime.
 pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type as expected by this runtime.
@@ -398,11 +440,12 @@ pub type BlockId = generic::BlockId<Block>;
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
 	frame_system::CheckSpecVersion<Runtime>,
+	frame_system::CheckTxVersion<Runtime>,
 	frame_system::CheckGenesis<Runtime>,
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
-	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
+	pallet_transaction_payment::ChargeTransactionPayment<Runtime>
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
@@ -439,9 +482,7 @@ impl_runtime_apis! {
 	}
 
 	impl sp_block_builder::BlockBuilder<Block> for Runtime {
-		fn apply_extrinsic(
-			extrinsic: <Block as BlockT>::Extrinsic,
-		) -> ApplyExtrinsicResult {
+		fn apply_extrinsic(extrinsic: <Block as BlockT>::Extrinsic) -> ApplyExtrinsicResult {
 			Executive::apply_extrinsic(extrinsic)
 		}
 
@@ -453,7 +494,10 @@ impl_runtime_apis! {
 			data.create_extrinsics()
 		}
 
-		fn check_inherents(block: Block, data: sp_inherents::InherentData) -> sp_inherents::CheckInherentsResult {
+		fn check_inherents(
+			block: Block,
+			data: sp_inherents::InherentData,
+		) -> sp_inherents::CheckInherentsResult {
 			data.check_extrinsics(&block)
 		}
 
@@ -478,14 +522,35 @@ impl_runtime_apis! {
 	}
 
 	impl sp_session::SessionKeys<Block> for Runtime {
-		fn decode_session_keys(
-			encoded: Vec<u8>,
-		) -> Option<Vec<(Vec<u8>, sp_core::crypto::KeyTypeId)>> {
-			SessionKeys::decode_into_raw_public_keys(&encoded)
+		fn generate_session_keys(seed: Option<Vec<u8>>) -> Vec<u8> {
+			opaque::SessionKeys::generate(seed)
 		}
 
-		fn generate_session_keys(seed: Option<Vec<u8>>) -> Vec<u8> {
-			SessionKeys::generate(seed)
+		fn decode_session_keys(
+			encoded: Vec<u8>,
+		) -> Option<Vec<(Vec<u8>, KeyTypeId)>> {
+			opaque::SessionKeys::decode_into_raw_public_keys(&encoded)
+		}
+	}
+
+	impl frame_system_rpc_runtime_api::AccountNonceApi<Block, AccountId, Index> for Runtime {
+		fn account_nonce(account: AccountId) -> Index {
+			System::account_nonce(account)
+		}
+	}
+
+	impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance> for Runtime {
+		fn query_info(
+			uxt: <Block as BlockT>::Extrinsic,
+			len: u32,
+		) -> pallet_transaction_payment_rpc_runtime_api::RuntimeDispatchInfo<Balance> {
+			TransactionPayment::query_info(uxt, len)
+		}
+		fn query_fee_details(
+			uxt: <Block as BlockT>::Extrinsic,
+			len: u32,
+		) -> pallet_transaction_payment::FeeDetails<Balance> {
+			TransactionPayment::query_fee_details(uxt, len)
 		}
 	}
 }

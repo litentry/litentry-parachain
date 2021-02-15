@@ -1,19 +1,3 @@
-// Copyright 2019 Parity Technologies (UK) Ltd.
-// This file is part of Cumulus.
-
-// Cumulus is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// Cumulus is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
-
 use crate::{
 	chain_spec,
 	cli::{Cli, RelayChainCli, Subcommand},
@@ -39,18 +23,18 @@ fn load_spec(
 	id: &str,
 	para_id: ParaId,
 ) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
-	match id {
-		"staging" => Ok(Box::new(chain_spec::staging_test_net(para_id))),
-		"" => Ok(Box::new(chain_spec::get_chain_spec(para_id))),
-		path => Ok(Box::new(chain_spec::ChainSpec::from_json_file(
-			path.into(),
-		)?)),
-	}
+	Ok(match id {
+		"dev" => Box::new(chain_spec::development_config(para_id)),
+		"" | "local" => Box::new(chain_spec::local_testnet_config(para_id)),
+		path => Box::new(chain_spec::ChainSpec::from_json_file(
+			std::path::PathBuf::from(path),
+		)?),
+	})
 }
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
-		"Litentry Parachain Collator".into()
+		"Litentry Collator".into()
 	}
 
 	fn impl_version() -> String {
@@ -59,7 +43,7 @@ impl SubstrateCli for Cli {
 
 	fn description() -> String {
 		format!(
-			"Litentry parachain collator\n\nThe command-line arguments provided first will be \
+			"Litentry Collator\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relaychain node.\n\n\
 		{} [parachain-args] -- [relaychain-args]",
@@ -80,7 +64,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
-		load_spec(id, self.run.parachain_id.unwrap_or(100).into())
+		load_spec(id, self.run.parachain_id.unwrap_or(200).into())
 	}
 
 	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
@@ -90,7 +74,7 @@ impl SubstrateCli for Cli {
 
 impl SubstrateCli for RelayChainCli {
 	fn impl_name() -> String {
-		"Litentry Parachain Collator".into()
+		"Litentry Collator".into()
 	}
 
 	fn impl_version() -> String {
@@ -98,7 +82,7 @@ impl SubstrateCli for RelayChainCli {
 	}
 
 	fn description() -> String {
-		"Litentry parachain collator\n\nThe command-line arguments provided first will be \
+		"Litentry Collator\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relaychain node.\n\n\
 		rococo-collator [parachain-args] -- [relaychain-args]"
@@ -271,7 +255,7 @@ pub fn run() -> Result<()> {
 						.chain(cli.relaychain_args.iter()),
 				);
 
-				let id = ParaId::from(cli.run.parachain_id.or(para_id).unwrap_or(100));
+				let id = ParaId::from(cli.run.parachain_id.or(para_id).unwrap_or(200));
 
 				let parachain_account =
 					AccountIdConversion::<polkadot_primitives::v0::AccountId>::into_account(&id);
