@@ -27,13 +27,13 @@ jobs:
     - name: Build relay node and parachain
       run: |
         cargo build --release
-        cd polkadot
-        cargo build --release --features=real-overseer
-        cd ..
-    - name: Run integration test
-      run: |
-        cd ts-tests
-        npm install 
-        ./scripts/start-alice-and-bob.sh
-        npm test
+        #cd polkadot
+        #cargo build --release --features=real-overseer
+        #cd ..
+        #- name: Run integration test
+        #  run: |
+        #    cd ts-tests
+        #    npm install 
+        #    ./scripts/start-alice-and-bob.sh
+        #    npm test
 
