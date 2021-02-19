@@ -3,13 +3,14 @@ use crate::{
 	cli::{Cli, RelayChainCli, Subcommand},
 };
 use codec::Encode;
-use cumulus_primitives::{genesis::generate_genesis_block, ParaId};
+use cumulus_primitives_core::ParaId;
+use cumulus_client_service::genesis::generate_genesis_block;
 use log::info;
 use parachain_runtime::Block;
 use polkadot_parachain::primitives::AccountIdConversion;
 use sc_cli::{
-	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams,
-	KeystoreParams, NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
+	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
+	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
 };
 use sc_service::{
 	config::{BasePath, PrometheusConfig},
@@ -23,13 +24,13 @@ fn load_spec(
 	id: &str,
 	para_id: ParaId,
 ) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
-	Ok(match id {
-		"dev" => Box::new(chain_spec::development_config(para_id)),
-		"" | "local" => Box::new(chain_spec::local_testnet_config(para_id)),
-		path => Box::new(chain_spec::ChainSpec::from_json_file(
-			std::path::PathBuf::from(path),
-		)?),
-	})
+	match id {
+		"staging" => Ok(Box::new(chain_spec::staging_test_net(para_id))),
+		"" => Ok(Box::new(chain_spec::get_chain_spec(para_id))),
+		path => Ok(Box::new(chain_spec::ChainSpec::from_json_file(
+			path.into(),
+		)?)),
+	}
 }
 
 impl SubstrateCli for Cli {
@@ -64,7 +65,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
-		load_spec(id, self.run.parachain_id.unwrap_or(200).into())
+		load_spec(id, self.run.parachain_id.unwrap_or(100).into())
 	}
 
 	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
@@ -74,7 +75,7 @@ impl SubstrateCli for Cli {
 
 impl SubstrateCli for RelayChainCli {
 	fn impl_name() -> String {
-		"Litentry Collator".into()
+		"Cumulus Test Parachain Collator".into()
 	}
 
 	fn impl_version() -> String {
@@ -192,7 +193,7 @@ pub fn run() -> Result<()> {
 			})
 		}
 		Some(Subcommand::ExportGenesisState(params)) => {
-			let mut builder = sc_cli::GlobalLoggerBuilder::new("");
+			let mut builder = sc_cli::LoggerBuilder::new("");
 			builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
 			let _ = builder.init();
 
@@ -216,7 +217,7 @@ pub fn run() -> Result<()> {
 			Ok(())
 		}
 		Some(Subcommand::ExportGenesisWasm(params)) => {
-			let mut builder = sc_cli::GlobalLoggerBuilder::new("");
+			let mut builder = sc_cli::LoggerBuilder::new("");
 			builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
 			let _ = builder.init();
 
@@ -266,11 +267,12 @@ pub fn run() -> Result<()> {
 
 				let task_executor = config.task_executor.clone();
 				let polkadot_config = SubstrateCli::create_configuration(
-						&polkadot_cli,
-						&polkadot_cli,
-						task_executor,
-						None,
-					).map_err(|err| format!("Relay chain argument error: {}", err))?;
+					&polkadot_cli,
+					&polkadot_cli,
+					task_executor,
+					config.telemetry_handle.clone(),
+				)
+				.map_err(|err| format!("Relay chain argument error: {}", err))?;
 				let collator = cli.run.base.validator || cli.collator;
 
 				info!("Parachain id: {:?}", id);
@@ -405,5 +407,12 @@ impl CliConfiguration<Self> for RelayChainCli {
 
 	fn announce_block(&self) -> Result<bool> {
 		self.base.base.announce_block()
+	}
+
+	fn telemetry_endpoints(
+		&self,
+		chain_spec: &Box<dyn ChainSpec>,
+	) -> Result<Option<sc_telemetry::TelemetryEndpoints>> {
+		self.base.base.telemetry_endpoints(chain_spec)
 	}
 }

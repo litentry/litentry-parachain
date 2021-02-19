@@ -182,11 +182,9 @@ decl_module! {
 			let pk = secp256k1_ecdsa_recover_compressed(&sig, &msg)
 			.map_err(|_| Error::<T>::EcdsaRecoverFailure)?;
 
-			let mut addr;
-
-			match addr_type {
+			let addr = match addr_type {
 				BTCAddrType::Legacy => {
-					addr = btc::legacy::btc_addr_from_pk(&pk).to_base58();
+					btc::legacy::btc_addr_from_pk(&pk).to_base58()
 				},
 				// Native P2WPKH is a scriptPubKey of 22 bytes. 
 				// It starts with a OP_0, followed by a canonical push of the keyhash (i.e. 0x0014{20-byte keyhash})
@@ -199,9 +197,9 @@ decl_module! {
 					pk[1] = 20;
 					pk[2..].copy_from_slice(&pk_hash);
 					let wp = WitnessProgram::from_scriptpubkey(&pk.to_vec()).map_err(|_| Error::<T>::InvalidBTCAddress)?;
-					addr = wp.to_address(b"bc".to_vec()).map_err(|_| Error::<T>::InvalidBTCAddress)?;
+					wp.to_address(b"bc".to_vec()).map_err(|_| Error::<T>::InvalidBTCAddress)?
 				}
-			}
+			};
 
 			ensure!(addr == addr_expected, Error::<T>::UnexpectedAddress);
 

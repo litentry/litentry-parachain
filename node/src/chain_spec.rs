@@ -1,10 +1,11 @@
-use cumulus_primitives::ParaId;
+use cumulus_primitives_core::ParaId;
+use hex_literal::hex;
+use rococo_parachain_primitives::{AccountId, Signature};
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
-use parachain_runtime::{AccountId, Signature};
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<parachain_runtime::GenesisConfig, Extensions>;
@@ -43,41 +44,9 @@ where
 	AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
 }
 
-pub fn development_config(id: ParaId) -> ChainSpec {
+pub fn get_chain_spec(id: ParaId) -> ChainSpec {
 	ChainSpec::from_genesis(
-		// Name
-		"Development",
-		// ID
-		"dev",
-		ChainType::Local,
-		move || {
-			testnet_genesis(
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				vec![
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					get_account_id_from_seed::<sr25519::Public>("Bob"),
-					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-				],
-				id,
-			)
-		},
-		vec![],
-		None,
-		None,
-		None,
-		Extensions {
-			relay_chain: "rococo-dev".into(),
-			para_id: id.into(),
-		},
-	)
-}
-
-pub fn local_testnet_config(id: ParaId) -> ChainSpec {
-	ChainSpec::from_genesis(
-		// Name
 		"Local Testnet",
-		// ID
 		"local_testnet",
 		ChainType::Local,
 		move || {
@@ -105,7 +74,32 @@ pub fn local_testnet_config(id: ParaId) -> ChainSpec {
 		None,
 		None,
 		Extensions {
-			relay_chain: "rococo-local".into(),
+			relay_chain: "westend-dev".into(),
+			para_id: id.into(),
+		},
+	)
+}
+
+pub fn staging_test_net(id: ParaId) -> ChainSpec {
+	ChainSpec::from_genesis(
+		"Staging Testnet",
+		"staging_testnet",
+		ChainType::Live,
+		move || {
+			testnet_genesis(
+				hex!["9ed7705e3c7da027ba0583a22a3212042f7e715d3c168ba14f1424e2bc111d00"].into(),
+				vec![
+					hex!["9ed7705e3c7da027ba0583a22a3212042f7e715d3c168ba14f1424e2bc111d00"].into(),
+				],
+				id,
+			)
+		},
+		Vec::new(),
+		None,
+		None,
+		None,
+		Extensions {
+			relay_chain: "westend-dev".into(),
 			para_id: id.into(),
 		},
 	)
