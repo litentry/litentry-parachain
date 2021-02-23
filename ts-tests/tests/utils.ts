@@ -14,7 +14,7 @@ export const POLKADOT_BINARY_PATH = `../polkadot/target/release/polkadot`;
 export const APIKEY_SERVER_PATH = `../litentry-token-server`;
 export const PARA_GENESIS_HEAD_PATH = `para-1984-genesis`;
 export const PARA_WASM_PATH = `para-1984-wasm`;
-export const ROCOCO_LOCAL_PATH = `../polkadot/rococo-local-cfde-real-overseer-new.json`;
+export const ROCOCO_LOCAL_PATH = `./rococo-local-cfde-real-overseer.json`;
 export const SPAWNING_TIME = 30000;
 
 // OCW account
@@ -122,9 +122,10 @@ export async function launchRelayNodesAndParachainRegister()
     provider: new WsProvider('ws://localhost:9944'),
     types: {
       // mapping the actual specified address format
-      Address: 'AccountId',
+      Address: 'MultiAddress',
       // mapping the lookup
-      LookupSource: 'AccountId',
+      LookupSource: 'MultiAddress',
+      ParaLifecycle: 'u64',
     }
   });
   // Get keyring of Alice
