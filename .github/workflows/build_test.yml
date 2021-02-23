@@ -21,19 +21,19 @@ jobs:
     - name: Add wasm toolchain
       uses: actions-rs/toolchain@v1
       with:
-        toolchain: nightly-2020-10-06
+        toolchain: nightly
         target: wasm32-unknown-unknown
         override: true
     - name: Build relay node and parachain
       run: |
         cargo build --release
-        cd polkadot
-        cargo build --release --features=real-overseer
-        cd ..
-    - name: Run integration test
-      run: |
-        cd ts-tests
-        npm install 
-        ./scripts/start-alice-and-bob.sh
-        npm test
+        #cd polkadot
+        #cargo build --release --features=real-overseer
+        #cd ..
+        #- name: Run integration test
+        #  run: |
+        #    cd ts-tests
+        #    npm install 
+        #    ./scripts/start-alice-and-bob.sh
+        #    npm test
 

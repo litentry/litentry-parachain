@@ -1,21 +1,6 @@
-// Copyright 2019 Parity Technologies (UK) Ltd.
-// This file is part of Cumulus.
-
-// Cumulus is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// Cumulus is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
-
-use cumulus_network::build_block_announce_validator;
-use cumulus_service::{
+use cumulus_client_network::build_block_announce_validator;
+use cumulus_primitives_core::ParaId;
+use cumulus_client_service::{
 	prepare_node_config, start_collator, start_full_node, StartCollatorParams, StartFullNodeParams,
 };
 use parachain_runtime::RuntimeApi;
@@ -28,6 +13,7 @@ use sp_core::Pair;
 use sp_runtime::traits::BlakeTwo256;
 use sp_trie::PrefixedMemoryDB;
 use std::sync::Arc;
+use sc_telemetry::TelemetrySpan;
 
 // Native executor instance.
 native_executor_instance!(
@@ -49,13 +35,13 @@ pub fn new_partial(
 		(),
 		sp_consensus::import_queue::BasicQueue<Block, PrefixedMemoryDB<BlakeTwo256>>,
 		sc_transaction_pool::FullPool<Block, TFullClient<Block, RuntimeApi, Executor>>,
-		Option<sc_telemetry::TelemetrySpan>,
+		(),
 	>,
 	sc_service::Error,
 > {
 	let inherent_data_providers = sp_inherents::InherentDataProviders::new();
 
-	let (client, backend, keystore_container, task_manager, telemetry_span) =
+	let (client, backend, keystore_container, task_manager) =
 		sc_service::new_full_parts::<Block, RuntimeApi, Executor>(&config)?;
 	let client = Arc::new(client);
 
@@ -63,12 +49,13 @@ pub fn new_partial(
 
 	let transaction_pool = sc_transaction_pool::BasicPool::new_full(
 		config.transaction_pool.clone(),
+		config.role.is_authority().into(),
 		config.prometheus_registry(),
 		task_manager.spawn_handle(),
 		client.clone(),
 	);
 
-	let import_queue = cumulus_consensus::import_queue::import_queue(
+	let import_queue = cumulus_client_consensus::import_queue::import_queue(
 		client.clone(),
 		client.clone(),
 		inherent_data_providers.clone(),
@@ -85,7 +72,7 @@ pub fn new_partial(
 		transaction_pool,
 		inherent_data_providers,
 		select_chain: (),
-		other: telemetry_span,
+		other: (),
 	};
 
 	Ok(params)
@@ -99,7 +86,7 @@ async fn start_node_impl<RB>(
 	parachain_config: Configuration,
 	collator_key: CollatorPair,
 	polkadot_config: Configuration,
-	id: polkadot_primitives::v0::Id,
+	id: ParaId,
 	validator: bool,
 	rpc_ext_builder: RB,
 ) -> sc_service::error::Result<(TaskManager, Arc<TFullClient<Block, RuntimeApi, Executor>>)>
@@ -117,7 +104,7 @@ where
 	let parachain_config = prepare_node_config(parachain_config);
 
 	let polkadot_full_node =
-		cumulus_service::build_polkadot_full_node(polkadot_config, collator_key.public()).map_err(
+		cumulus_client_service::build_polkadot_full_node(polkadot_config, collator_key.public()).map_err(
 			|e| match e {
 				polkadot_service::Error::Sub(x) => x,
 				s => format!("{}", s).into(),
@@ -125,7 +112,6 @@ where
 		)?;
 
 	let params = new_partial(&parachain_config)?;
-	let telemetry_span = params.other;
 	params
 		.inherent_data_providers
 		.register_provider(sp_timestamp::InherentDataProvider)
@@ -158,6 +144,9 @@ where
 	let rpc_client = client.clone();
 	let rpc_extensions_builder = Box::new(move |_, _| rpc_ext_builder(rpc_client.clone()));
 
+	let telemetry_span = TelemetrySpan::new();
+	let _telemetry_span_entered = telemetry_span.enter();
+
 	sc_service::spawn_tasks(sc_service::SpawnTasksParams {
 		on_demand: None,
 		remote_blockchain: None,
@@ -171,7 +160,7 @@ where
 		network: network.clone(),
 		network_status_sinks,
 		system_rpc_tx,
-		telemetry_span,
+		telemetry_span: Some(telemetry_span.clone()),
 	})?;
 
 	let announce_block = {
@@ -229,7 +218,7 @@ pub async fn start_node(
 	parachain_config: Configuration,
 	collator_key: CollatorPair,
 	polkadot_config: Configuration,
-	id: polkadot_primitives::v0::Id,
+	id: ParaId,
 	validator: bool,
 ) -> sc_service::error::Result<(TaskManager, Arc<TFullClient<Block, RuntimeApi, Executor>>)> {
 	start_node_impl(
