@@ -1,3 +1,3 @@
 [submodule "polkadot"]
 	path = polkadot
-	url = https://github.com/litentry/polkadot
+	url = https://github.com/paritytech/polkadot
