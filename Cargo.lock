@@ -4881,6 +4881,7 @@ dependencies = [
  "pallet-balances",
  "pallet-offchain-worker",
  "pallet-randomness-collective-flip",
+ "pallet-scheduler",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",

@@ -30,7 +30,10 @@ pub use frame_support::{
 	},
 	StorageValue,
 };
-use frame_system::limits::{BlockLength, BlockWeights};
+use frame_system::{
+	EnsureRoot,
+	limits::{BlockLength, BlockWeights}
+};
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
 #[cfg(any(feature = "std", test))]
@@ -181,6 +184,23 @@ impl pallet_timestamp::Config for Runtime {
 	type OnTimestampSet = ();
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
+}
+
+parameter_types! {
+	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) *
+		RuntimeBlockWeights::get().max_block;
+	pub const MaxScheduledPerBlock: u32 = 50;
+}
+
+impl pallet_scheduler::Config for Runtime {
+	type Event = Event;
+	type Origin = Origin;
+	type PalletsOrigin = OriginCaller;
+	type Call = Call;
+	type MaximumWeight = MaximumSchedulerWeight;
+	type ScheduleOrigin = EnsureRoot<AccountId>;
+	type MaxScheduledPerBlock = MaxScheduledPerBlock;
+	type WeightInfo = pallet_scheduler::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -353,6 +373,7 @@ construct_runtime! {
 		Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
 		Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
+		Scheduler: pallet_scheduler::{Module, Call, Storage, Event<T>},
 		ParachainSystem: cumulus_pallet_parachain_system::{Module, Call, Storage, Inherent, Event},
 		TransactionPayment: pallet_transaction_payment::{Module, Storage},
 		ParachainInfo: parachain_info::{Module, Storage, Config},
