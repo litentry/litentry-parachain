@@ -78,6 +78,7 @@ std = [
 	"pallet-timestamp/std",
 	"pallet-sudo/std",
 	"pallet-scheduler/std",
+	"pallet-collective/std",
 	"pallet-transaction-payment/std",
 	"pallet-account-linker/std",
 	"pallet-offchain-worker/std",
