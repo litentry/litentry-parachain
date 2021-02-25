@@ -317,7 +317,8 @@ impl<T: Config> Module<T> {
 					Err(Error::<T>::InvalidNumber)
 				} else {
 					match core::str::from_utf8(&info.etherscan) {
-						Ok(token) => Self::fetch_balances(<account_linker::EthereumLink<T>>::get(account), 
+						Ok(token) => Self::fetch_balances(
+							<account_linker::Module<T>>::eth_addresses(account), 
 							urls::HttpRequest::GET(urls::HttpGet {
 								blockchain: urls::BlockChainType::ETH,
 								prefix: "https://api-ropsten.etherscan.io/api?module=account&action=balancemulti&address=0x",
@@ -357,7 +358,8 @@ impl<T: Config> Module<T> {
 					Err(Error::<T>::InvalidNumber)
 				} else {
 					match core::str::from_utf8(&info.infura) {
-						Ok(token) => Self::fetch_balances(<account_linker::EthereumLink<T>>::get(account), 
+						Ok(token) => Self::fetch_balances(
+							<account_linker::Module<T>>::eth_addresses(account), 
 							urls::HttpRequest::POST(urls::HttpPost {
 								url_main: "https://ropsten.infura.io/v3/",
 								blockchain: urls::BlockChainType::ETH,
