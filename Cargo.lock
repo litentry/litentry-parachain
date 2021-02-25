@@ -4879,6 +4879,7 @@ dependencies = [
  "funty",
  "pallet-account-linker",
  "pallet-balances",
+ "pallet-collective",
  "pallet-offchain-worker",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
