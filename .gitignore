@@ -6,4 +6,6 @@
 
 **/node_modules/
 **/para-1984*
-./ts-tests/rococo-local-cfde-real-overseer.json
+ts-tests/rococo-local-cfde-real-overseer.json
+
+tags.lock

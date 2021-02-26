@@ -4,17 +4,18 @@ import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
 import {KeyringPair} from '@polkadot/keyring/types';
 import {Bytes} from '@polkadot/types';
 import {TypeRegistry} from '@polkadot/types/create';
-import {ChildProcess, spawn} from 'child_process';
+import {ChildProcess, spawn, exec} from 'child_process';
 import fs from 'fs';
 import Web3 from 'web3';
 import {JsonRpcResponse} from 'web3-core-helpers';
 
 export const LITENTRY_BINARY_PATH = `../target/release/litentry-collator`;
 export const POLKADOT_BINARY_PATH = `../polkadot/target/release/polkadot`;
-export const APIKEY_SERVER_PATH = `../litentry-token-server`;
+export const APIKEY_SERVER_PATH = `../target/release/litentry-token-server`;
 export const PARA_GENESIS_HEAD_PATH = `para-1984-genesis`;
 export const PARA_WASM_PATH = `para-1984-wasm`;
 export const ROCOCO_LOCAL_PATH = `./rococo-local-cfde-real-overseer.json`;
+export const RELAY_NODE_SCRIPT = `./scripts/start-alice-and-bob.sh`;
 export const SPAWNING_TIME = 30000;
 
 // OCW account
@@ -269,6 +270,7 @@ export async function initApiPromise(wsProvider: WsProvider)
       Signature: {v: 'u64', r: 'H256', s: 'H256'},
       BlockWeights: 'u64',
       BlockLength: 'u64',
+      ParachainInherentData: 'u64',
     }
   });
 
@@ -324,28 +326,39 @@ export function describeLitentry(
     // Set timeout to 600 seconds
     this.timeout(600000);
 
-    // let tokenServer: ChildProcess;
+    let tokenServer: ChildProcess;
     let binary: ChildProcess;
+    let relayNodes: ChildProcess;
     let context:
         {api: ApiPromise, alice: KeyringPair} = {api: {} as ApiPromise, alice: {} as KeyringPair};
     // Making sure the Litentry node has started
     before('Starting Litentry Test Node', async function() {
       // this.timeout(SPAWNING_TIME);
+      // Run alice and bob relay nodes on a separate process
+      relayNodes = exec(`sh ${RELAY_NODE_SCRIPT}`, (error, stdout, stderr) => {
+        //console.log(stdout);
+        console.log(stderr);
+        if (error !== null) {
+          console.log(`exec error: ${error}`);
+        }
+      });
+      // Wait for connection with relay nodes
       await launchRelayNodesAndParachainRegister();
-      // const initTokenServer = await launchAPITokenServer();
+      const initTokenServer = await launchAPITokenServer();
       const initNode = await launchLitentryNode(specFilename, provider);
-      // tokenServer = initTokenServer.apikey_server;
+      tokenServer = initTokenServer.apikey_server;
       binary = initNode.binary;
       const initApi = await initApiPromise(wsProvider);
       context.api = initApi.api;
       context.alice = initApi.alice;
-      // return sendTokenToOcw(initApi.api, initApi.alice);
+      return sendTokenToOcw(initApi.api, initApi.alice);
     });
 
     after(async function() {
-      // console.log(`\x1b[31m Killing RPC\x1b[0m`);
-      // tokenServer.kill()
+      console.log(`\x1b[31m Killing RPC\x1b[0m`);
+      tokenServer.kill()
       binary.kill();
+      relayNodes.kill();
       context.api.disconnect();
     });
 
