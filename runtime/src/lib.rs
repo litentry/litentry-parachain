@@ -82,6 +82,9 @@ pub const EPOCH_DURATION_IN_BLOCKS: u32 = 10 * MINUTES;
 pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
+pub const MILLICENTS: Balance = 1_000_000_000;
+pub const CENTS: Balance = 1_000 * MILLICENTS;
+pub const DOLLARS: Balance = 100 * CENTS;
 
 // 1 in 4 blocks (on average, not counting collisions) will be primary babe blocks.
 pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
@@ -270,6 +273,9 @@ parameter_types! {
 	pub Ancestry: MultiLocation = Junction::Parachain {
 		id: ParachainInfo::parachain_id().into()
 	}.into();
+	pub const QueryTaskRedundancy: u32 = 3;
+	pub const QuerySessionLength: u32 = 5;
+	pub const OcwQueryReward: Balance = 1 * DOLLARS;
 }
 
 type LocationConverter = (
@@ -322,6 +328,14 @@ impl pallet_account_linker::Config for Runtime {
 impl pallet_offchain_worker::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
+	type Balance = Balance;
+	type AuthorityId = pallet_offchain_worker::crypto::TestAuthId;
+	type QueryTaskRedundancy = QueryTaskRedundancy;
+	type QuerySessionLength = QuerySessionLength;
+	type Currency = Balances;
+	type Reward = ();
+	type OcwQueryReward = OcwQueryReward;
+	type WeightInfo = pallet_offchain_worker::weights::SubstrateWeight<Runtime>;
 }
 
 pub type SignedPayload = generic::SignedPayload<Call, SignedExtra>;
@@ -399,7 +413,7 @@ construct_runtime! {
 		XcmHandler: cumulus_pallet_xcm_handler::{Module, Call, Event<T>, Origin},
 
 		AccountLinkerModule: pallet_account_linker::{Module, Call, Storage, Event<T>},
-		OffchainWorkerModule: pallet_offchain_worker::{Module, Call, Storage, Event<T>, ValidateUnsigned},
+		OffchainWorkerModule: pallet_offchain_worker::{Module, Call, Storage, Event<T>},
 	}
 }
 

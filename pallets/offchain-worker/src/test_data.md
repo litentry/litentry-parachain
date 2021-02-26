@@ -1,13 +1,13 @@
 # Ethereum signature for test
-r = '0x4306864b7928f8393579ad849fd47685840cdf197c0085a5d241d28b9c6d14b3'
-s = '0x3f4d2f5912213b3c0983c01a2199759b794d1423fe66cd5076b6ca9f5f60e45f'
-v = 27
-
-r = 4306864b7928f8393579ad849fd47685840cdf197c0085a5d241d28b9c6d14b3
-s = 3f4d2f5912213b3c0983c01a2199759b794d1423fe66cd5076b6ca9f5f60e45f
-
-account = 0x167453188a05082e3b347c1c518f3dd55d37fbbf
-[22, 116, 83, 24, 138, 5, 8, 46, 59, 52, 124, 28, 81, 143, 61, 213, 93, 55, 251, 191]
+eth address 0x4d88dc5d528a33e4b8be579e9476715f60060582
+[77, 136, 220, 93, 82, 138, 51, 228, 184, 190, 87, 158, 148, 118, 113, 95, 96, 6, 5, 130]
+block number 10000
+signature
+r 0x318400f0f9bd15f0d8842870b510e996dffc944b77111ded03a4255c66e82d42
+[49, 132, 0, 240, 249, 189, 21, 240, 216, 132, 40, 112, 181, 16, 233, 150, 223, 252, 148, 75, 119, 17, 29, 237, 3, 164, 37, 92, 102, 232, 45, 66]
+s 0x7132e765d5e6bb21ba046dbb98e28bb28cb2bebe0c8aced2c547aca60a554892
+[113, 50, 231, 101, 213, 230, 187, 33, 186, 4, 109, 187, 152, 226, 139, 178, 140, 178, 190, 190, 12, 138, 206, 210, 197, 71, 172, 166, 10, 85, 72, 146]
+v 0x1c
 
 https://api-ropsten.etherscan.io/api?module=account&action=balancemulti&address=0x167453188a05082e3b347c1c518f3dd55d37fbbf&tag=latest&apikey=RF71W4Z2RDA7XQD6EN19NGB66C2QD9UPHB
 
@@ -42,4 +42,30 @@ v = 0
 [u8; 25] prefix 0 + hash160  + checksum 4 bytes.
 0x001db22bfeb133761132194c1c4688194dd58fc6373672a95d
 address 1MnqFoXqLWDGByG94fvvvWAPWE6tEUMQET
+
+
+## Insert key off-chain worker to sign tx
+### Generate a new account
+bash-5.0$ subkey generate
+
+Secret phrase `loop high amazing chat tennis auto denial attend type quit liquid tonight` is account:
+  Secret seed:      0xad9e7d8233eff5b32ebdf1cfd6d2007f0bfa7c73f7d2d7e60f95dbd642a8af54
+  Public key (hex): 0x8c35b97c56099cf3b5c631d1f296abbb11289857e74a8f60936290080d56da6d
+  Account ID:       0x8c35b97c56099cf3b5c631d1f296abbb11289857e74a8f60936290080d56da6d
+  SS58 Address:     5FEYX9NES9mAJt1Xg4WebmHWywxyeGQK8G3oEBXtyfZrRePX
+
+### Submit a new key via RPC
+$ curl http://localhost:9933 -H "Content-Type:application/json;charset=utf-8" -d \
+  '{
+    "jsonrpc":"2.0",
+    "id":1,
+    "method":"author_insertKey",
+    "params": [
+      "ocw!",
+      "loop high amazing chat tennis auto denial attend type quit liquid tonight",
+      "0x8c35b97c56099cf3b5c631d1f296abbb11289857e74a8f60936290080d56da6d"
+    ]
+  }'
+
+### transfer token from alice to 5FEYX9NES9mAJt1Xg4WebmHWywxyeGQK8G3oEBXtyfZrRePX
 
