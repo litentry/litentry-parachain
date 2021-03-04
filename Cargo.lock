@@ -5025,6 +5025,7 @@ dependencies = [
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
+ "pallet-treasury",
  "parachain-info",
  "parity-scale-codec 2.0.0",
  "polkadot-parachain",

@@ -313,7 +313,7 @@ pub mod pallet {
 				},
 			};
 		}
-
+    
 		// Aggregate query result and then record on chain
 		fn aggregate_query_result() {
 			let mut result_map: BTreeMap<(T::AccountId, urls::BlockChainType, u128), u32> = BTreeMap::new();
