@@ -190,7 +190,8 @@ export async function launchLitentryNode(
     `--alice`,
     `--`,
     `--execution`,
-    `wasm`,
+    //`wasm`,
+    `native`,
     `--chain`,
     ROCOCO_LOCAL_PATH,
     `--port`,
@@ -335,13 +336,7 @@ export function describeLitentry(
     before('Starting Litentry Test Node', async function() {
       // this.timeout(SPAWNING_TIME);
       // Run alice and bob relay nodes on a separate process
-      relayNodes = exec(`sh ${RELAY_NODE_SCRIPT}`, (error, stdout, stderr) => {
-        //console.log(stdout);
-        console.log(stderr);
-        if (error !== null) {
-          console.log(`exec error: ${error}`);
-        }
-      });
+      relayNodes = spawn(`sh`, [`${RELAY_NODE_SCRIPT}`]);
       // Wait for connection with relay nodes
       await launchRelayNodesAndParachainRegister();
       const initTokenServer = await launchAPITokenServer();
@@ -359,6 +354,9 @@ export function describeLitentry(
       tokenServer.kill()
       binary.kill();
       relayNodes.kill();
+      // FIXME Currently we can only kill background processes with calling killall. 
+      //       This needs to be changed later 
+      exec(`killall polkadot`);
       context.api.disconnect();
     });
 
