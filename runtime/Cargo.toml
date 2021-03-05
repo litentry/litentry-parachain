@@ -26,6 +26,7 @@ frame-support = { git = "https://github.com/paritytech/substrate", default-featu
 frame-executive = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
 frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
+pallet-democracy = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
 pallet-randomness-collective-flip = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
 pallet-treasury = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
@@ -81,6 +82,7 @@ std = [
 	"pallet-sudo/std",
 	"pallet-scheduler/std",
 	"pallet-collective/std",
+	"pallet-democracy/std",
 	"pallet-transaction-payment/std",
 	"pallet-account-linker/std",
 	"pallet-offchain-worker/std",

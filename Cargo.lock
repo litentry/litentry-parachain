@@ -4880,6 +4880,7 @@ dependencies = [
  "pallet-account-linker",
  "pallet-balances",
  "pallet-collective",
+ "pallet-democracy",
  "pallet-offchain-worker",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",

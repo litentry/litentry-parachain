@@ -154,6 +154,9 @@ fn testnet_genesis(
 	endowed_accounts: Vec<AccountId>,
 	id: ParaId,
 ) -> parachain_runtime::GenesisConfig {
+
+	let num_endowed_accounts = endowed_accounts.len();
+
 	parachain_runtime::GenesisConfig {
 		frame_system: Some(parachain_runtime::SystemConfig {
 			code: parachain_runtime::WASM_BINARY
@@ -170,7 +173,15 @@ fn testnet_genesis(
 		}),
 		pallet_sudo: Some(parachain_runtime::SudoConfig { key: root_key }),
 		parachain_info: Some(parachain_runtime::ParachainInfoConfig { parachain_id: id }),
+		pallet_democracy: Some(parachain_runtime::DemocracyConfig::default()),
 		pallet_collective_Instance1: Some(parachain_runtime::CouncilConfig::default()),
+		pallet_collective_Instance2: Some(parachain_runtime::TechnicalCommitteeConfig {
+			members: endowed_accounts.iter()
+						.take((num_endowed_accounts + 1) / 2)
+						.cloned()
+						.collect(),
+			phantom: Default::default(),
+		}),
 		pallet_treasury: Some(Default::default()),
 	}
 }
