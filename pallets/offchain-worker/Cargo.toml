@@ -1,41 +1,36 @@
 [package]
-authors = ['Junius Zhou <junius@litentry.com>']
+authors = ['Litentry Dev']
 description = 'FRAME pallet template for defining custom runtime logic.'
 edition = '2018'
 homepage = 'https://litentry.com'
 license = 'Unlicense'
 name = 'pallet-offchain-worker'
 repository = 'https://github.com/litentry/litentry-node'
-version = '2.0.1'
+version = '0.0.1'
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false }
-serde = { version = "=1.0.123", optional = true }
-frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
-frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
+serde = { version = "1.0.119", optional = true }
+sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
 sp-io = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
 sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
 alt_serde = { version = "=1.0.104", default-features = false, features = ["derive"] }
 serde_json = { version = "1", default-features = false, git = "https://github.com/Xanewok/json", branch = "no-std", features = ["alloc"] }
 
-parking_lot = "0.11.1"
-sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1"}
+parking_lot = "0.10.0"
 sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
+frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
+frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
 sp-arithmetic = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
 account-linker = {path = "../account-linker", package = "pallet-account-linker", default-features = false}
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1", optional = true }
 
 [dev-dependencies]
-sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1"}
-sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
-sp-io = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
-sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
-
+pallet-balances = { version = '3.0.0' }
 hex = "0.4.2"
-
 
 [features]
 default = ['std']
@@ -49,4 +44,6 @@ std = [
     "sp-runtime/std",
     "sp-std/std",
     "account-linker/std",
+    "frame-benchmarking/std"
 ]
+runtime-benchmarks = ["frame-benchmarking"]

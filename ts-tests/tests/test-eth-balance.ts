@@ -139,38 +139,49 @@ async function get_assets(api: ApiPromise, alice: KeyringPair)
   return assetsBalances;
 }
 
-describeLitentry('Test Ethereum Link and Balance Fetch', ``, (context) =>{
+describeLitentry("Test Ethereum Link and Balance Fetch", ``, (context) => {
+  step("Create Ethereum Link", async function () {
+    await eth_link(context.api, context.alice);
+  });
 
-  step('Create Ethereum Link', async function () {
-  await eth_link(context.api, context.alice);
-  })
+  step("Retrieving Alice's linked Ethereum accounts", async function () {
+    const ethAddr = await check_linking_state(context.api, context.alice);
 
-step('Retrieving Alice\'s linked Ethereum accounts', async function() {
-  const ethAddr = await check_linking_state(context.api, context.alice);
+    expect(ethAddr.toString()).to.equal(testEthAddress);
+  });
 
-  expect(ethAddr.toString()).to.equal(testEthAddress);
-})
+  step("Claim assets for Alice", async function () {
+    await asset_claim(context.api, context.alice);
+  });
 
-step('Claim assets for Alice', async function() {
-  await asset_claim(context.api, context.alice);
-})
+  step("Retrieving assets information of Alice", async function () {
+    // Retrieve ocw account balance
+    const {
+      nonce: old_n,
+      data: old_balance,
+    } = await context.api.query.system.account(OCR_ACCOUNT);
 
-  step('Retrieving assets information of Alice', async function () {
-  // Retrieve ocw account balance
-  const {nonce: old_n, data: old_balance} = await context.api.query.system.account(OCR_ACCOUNT);
+    // Wait for 36s ~ 6 blocks
+    //await new Promise((r) => setTimeout(r, 36000));
+    const balances = await get_assets(context.api, context.alice);
 
-  // Wait for 36s ~ 6 blocks
-  // await new Promise(r => setTimeout(r, 36000));
-  // const balances = await get_assets(context.api, context.alice);
+    // TODO fetch real time balance and compare it here
+    //expect(balances.toString()).to.equal(
+    //  `[null,"0x00000000000000004563918244f40000"]`
+    //);
 
-  // TODO fetch real time balance and compare it here
-  // expect(balances.toString()).to.equal(`[null,"0x00000000000000004563918244f40000"]`);
-
-  // Retrieve ocw account balance
-  const {nonce: new_n, data: balance} = await context.api.query.system.account(OCR_ACCOUNT);
-  console.log(`new is ${balance.free.toString()}  old is ${old_balance.free}`);
-  console.log(`difference is ${
-      (Number(balance.free.toString()) - Number(old_balance.free.toString())).toString()}`);
-  })
-
+    // Retrieve ocw account balance
+    const {
+      nonce: new_n,
+      data: balance,
+    } = await context.api.query.system.account(OCR_ACCOUNT);
+    console.log(
+      `new is ${balance.free.toString()}  old is ${old_balance.free}`
+    );
+    console.log(
+      `difference is ${(
+        Number(balance.free.toString()) - Number(old_balance.free.toString())
+      ).toString()}`
+    );
+  });
 });

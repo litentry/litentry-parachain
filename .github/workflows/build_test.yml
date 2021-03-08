@@ -34,6 +34,5 @@ jobs:
       run: |
         cd ts-tests
         npm install 
-        ./scripts/start-alice-and-bob.sh
         npm test
 
