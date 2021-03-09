@@ -4,8 +4,6 @@ panic = 'unwind'
 [workspace]
 members = [
     'node',
-    'pallets/account-linker',
-    'pallets/offchain-worker',
     'runtime',
     'token-server',
 ]
