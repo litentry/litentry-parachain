@@ -105,7 +105,7 @@ pub mod pallet {
 		}
 
 		fn on_finalize(block_number: T::BlockNumber) {
-			debug::info!("ocw on_finalize.{:?}.", block_number);
+			debug::info!("ocw on_finalize {:?}.", block_number);
 
 			let query_session_length: usize = T::QuerySessionLength::get() as usize;
 			let index_in_session = TryInto::<usize>::try_into(block_number).map_or(query_session_length, |bn| bn % query_session_length);
@@ -123,6 +123,8 @@ pub mod pallet {
 		// TODO block N offchain_worker will be called after block N+1 finalize
 		// Trigger by offchain framework in each block
 		fn offchain_worker(block_number: T::BlockNumber) {
+			debug::info!("ocw offchain worker {:?}.", block_number);
+
 			let query_session_length: usize = T::QuerySessionLength::get() as usize;
 
 			let index_in_session = TryInto::<usize>::try_into(block_number).map_or(query_session_length, |bn| bn % query_session_length);
