@@ -445,6 +445,8 @@ impl cumulus_pallet_xcm_handler::Config for Runtime {
 
 impl pallet_account_linker::Config for Runtime {
 	type Event = Event;
+  type WeightInfo = pallet_account_linker::weights::SubstrateWeight<Runtime>;
+
 }
 
 impl pallet_offchain_worker::Config for Runtime {

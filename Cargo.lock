@@ -4428,6 +4428,22 @@ dependencies = [
 
 [[package]]
 name = "pallet-account-linker"
+version = "0.0.1"
+source = "git+https://github.com/litentry/litentry-account-linker?branch=rococo#f7a34cff662c47299fb3e237a460e6122a994857"
+dependencies = [
+ "frame-benchmarking 3.0.0",
+ "frame-support 3.0.0 (git+https://github.com/paritytech/substrate?branch=rococo-v1)",
+ "frame-system 3.0.0 (git+https://github.com/paritytech/substrate?branch=rococo-v1)",
+ "parity-scale-codec 2.0.0",
+ "ripemd160 0.9.1",
+ "sha2 0.9.3",
+ "sp-arithmetic 3.0.0 (git+https://github.com/paritytech/substrate?branch=rococo-v1)",
+ "sp-io 3.0.0 (git+https://github.com/paritytech/substrate?branch=rococo-v1)",
+ "sp-std 3.0.0 (git+https://github.com/paritytech/substrate?branch=rococo-v1)",
+]
+
+[[package]]
+name = "pallet-account-linker"
 version = "2.0.1"
 dependencies = [
  "bitcoin",
@@ -4704,13 +4720,34 @@ dependencies = [
 [[package]]
 name = "pallet-offchain-worker"
 version = "0.0.1"
+source = "git+https://github.com/litentry/litentry-offchain-worker?branch=rococo#a6f8f3b9fce97f6d202462699e853a48cd2985b8"
+dependencies = [
+ "alt_serde",
+ "frame-benchmarking 3.0.0",
+ "frame-support 3.0.0 (git+https://github.com/paritytech/substrate?branch=rococo-v1)",
+ "frame-system 3.0.0 (git+https://github.com/paritytech/substrate?branch=rococo-v1)",
+ "pallet-account-linker 0.0.1",
+ "parity-scale-codec 2.0.0",
+ "parking_lot 0.10.2",
+ "serde",
+ "serde_json 1.0.44",
+ "sp-arithmetic 3.0.0 (git+https://github.com/paritytech/substrate?branch=rococo-v1)",
+ "sp-core 3.0.0 (git+https://github.com/paritytech/substrate?branch=rococo-v1)",
+ "sp-io 3.0.0 (git+https://github.com/paritytech/substrate?branch=rococo-v1)",
+ "sp-runtime 3.0.0 (git+https://github.com/paritytech/substrate?branch=rococo-v1)",
+ "sp-std 3.0.0 (git+https://github.com/paritytech/substrate?branch=rococo-v1)",
+]
+
+[[package]]
+name = "pallet-offchain-worker"
+version = "0.0.1"
 dependencies = [
  "alt_serde",
  "frame-benchmarking 3.0.0",
  "frame-support 3.0.0 (git+https://github.com/paritytech/substrate?branch=rococo-v1)",
  "frame-system 3.0.0 (git+https://github.com/paritytech/substrate?branch=rococo-v1)",
  "hex",
- "pallet-account-linker",
+ "pallet-account-linker 2.0.1",
  "pallet-balances 3.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "parity-scale-codec 2.0.0",
  "parking_lot 0.10.2",
@@ -5016,11 +5053,11 @@ dependencies = [
  "frame-support 3.0.0 (git+https://github.com/paritytech/substrate?branch=rococo-v1)",
  "frame-system 3.0.0 (git+https://github.com/paritytech/substrate?branch=rococo-v1)",
  "funty",
- "pallet-account-linker",
+ "pallet-account-linker 0.0.1",
  "pallet-balances 3.0.0 (git+https://github.com/paritytech/substrate?branch=rococo-v1)",
  "pallet-collective",
  "pallet-democracy",
- "pallet-offchain-worker",
+ "pallet-offchain-worker 0.0.1 (git+https://github.com/litentry/litentry-offchain-worker?branch=rococo)",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
  "pallet-sudo",
