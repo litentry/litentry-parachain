@@ -49,8 +49,10 @@ xcm-executor = { git = "https://github.com/paritytech/polkadot", default-feature
 
 # local dependencies
 parachain-info = { path = "../pallets/parachain-info", default-features = false }
-pallet-account-linker = { path = '../pallets/account-linker', default-features = false }
-pallet-offchain-worker = { path = '../pallets/offchain-worker', default-features = false }
+
+# litentry pallets
+pallet-account-linker = { git = "https://github.com/litentry/litentry-pallets", default-features = false, branch = "rococo" }
+pallet-offchain-worker = { git = "https://github.com/litentry/litentry-pallets", default-features = false, branch = "rococo" }
 
 [build-dependencies]
 substrate-wasm-builder = "3.0.0"
