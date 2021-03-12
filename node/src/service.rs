@@ -147,7 +147,7 @@ where
 	let telemetry_span = TelemetrySpan::new();
 	let _telemetry_span_entered = telemetry_span.enter();
 
-  if parachain_config.offchain_worker.enabled {
+  	if parachain_config.offchain_worker.enabled {
 		sc_service::build_offchain_workers(
 			&parachain_config, backend.clone(), task_manager.spawn_handle(), client.clone(), network.clone(),
 		);
