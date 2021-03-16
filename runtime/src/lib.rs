@@ -25,7 +25,7 @@ use sp_version::RuntimeVersion;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
-	debug, construct_runtime, parameter_types,
+	construct_runtime, parameter_types,
 	traits::Randomness,
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -441,6 +441,8 @@ impl cumulus_pallet_xcm_handler::Config for Runtime {
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type UpwardMessageSender = ParachainSystem;
 	type HrmpMessageSender = ParachainSystem;
+	type SendXcmOrigin = EnsureRoot<AccountId>;
+	type AccountIdConverter = LocationConverter;
 }
 
 impl pallet_account_linker::Config for Runtime {
@@ -494,7 +496,7 @@ where
 		#[cfg_attr(not(feature = "std"), allow(unused_variables))]
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|e| {
-				debug::native::warn!("SignedPayload error: {:?}", e);
+				log::warn!("SignedPayload error: {:?}", e);
 			})
 			.ok()?;
 
@@ -649,4 +651,4 @@ impl_runtime_apis! {
 	}
 }
 
-cumulus_pallet_parachain_system::register_validate_block!(Block, Executive);
+cumulus_pallet_parachain_system::register_validate_block!(Runtime, Executive);
