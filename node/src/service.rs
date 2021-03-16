@@ -148,13 +148,13 @@ where
 	let rpc_extensions_builder = Box::new(move |_, _| rpc_ext_builder(rpc_client.clone()));
 
 	let telemetry_span = TelemetrySpan::new();
-	let _telemetry_span_entered = telemetry_span.enter();
+    let _telemetry_span_entered = telemetry_span.enter();
 
-  	// if parachain_config.offchain_worker.enabled {
-	// 	sc_service::build_offchain_workers(
-	// 		&parachain_config, backend.clone(), task_manager.spawn_handle(), client.clone(), network.clone(),
-	// 	);
-	// }
+    if parachain_config.offchain_worker.enabled {
+        sc_service::build_offchain_workers(
+            &parachain_config, backend.clone(), task_manager.spawn_handle(), client.clone(), network.clone(),
+            );
+    }
 
 	sc_service::spawn_tasks(sc_service::SpawnTasksParams {
 		on_demand: None,
