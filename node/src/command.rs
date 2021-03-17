@@ -76,7 +76,7 @@ impl SubstrateCli for Cli {
 
 impl SubstrateCli for RelayChainCli {
 	fn impl_name() -> String {
-		"Cumulus Test Parachain Collator".into()
+		"Litentry Collator".into()
 	}
 
 	fn impl_version() -> String {
