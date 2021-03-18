@@ -325,8 +325,8 @@ export function describeLitentry(
     cb: (context: {api: ApiPromise, alice: KeyringPair}) => void, provider?: string)
 {
   describe(title, function() {
-    // Set timeout to 600 seconds
-    this.timeout(600000);
+    // Set timeout to 6000 seconds (Because of 50-blocks delay of rococo, so called "training wheels")
+    this.timeout(6000000);
 
     let tokenServer: ChildProcess;
     let binary: ChildProcess;
