@@ -4860,6 +4860,7 @@ dependencies = [
  "pallet-collective",
  "pallet-democracy",
  "pallet-offchain-worker",
+ "pallet-proxy",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
  "pallet-sudo",
