@@ -28,8 +28,12 @@ jobs:
         override: true
     - name: Build relay node and parachain
       run: |
-        cargo update -p pallet-account-linker
-        cargo update -p pallet-offchain-worker
+        #cargo update -p pallet-account-linker
+        #cargo update -p pallet-offchain-worker
+        # Currently there is a conflict updating single pallet
+        # It's due to the dependency polkadot-parachain.
+        # Therefore use cargo update instead
+        cargo update
         cargo build --release
         cd polkadot
         cargo build --release --features=real-overseer
