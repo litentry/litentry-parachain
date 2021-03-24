@@ -5,5 +5,4 @@ panic = 'unwind'
 members = [
     'node',
     'runtime',
-    'token-server',
 ]
