@@ -11,7 +11,7 @@ import {JsonRpcResponse} from 'web3-core-helpers';
 
 export const LITENTRY_BINARY_PATH = `../target/release/litentry-collator`;
 export const POLKADOT_BINARY_PATH = `../polkadot/target/release/polkadot`;
-export const APIKEY_SERVER_PATH = `../target/release/litentry-token-server`;
+export const APIKEY_SERVER_PATH = `../token-server/target/release/litentry-token-server`;
 export const PARA_GENESIS_HEAD_PATH = `para-1984-genesis`;
 export const PARA_WASM_PATH = `para-1984-wasm`;
 export const ROCOCO_LOCAL_PATH = `./rococo-local-cfde-real-overseer.json`;

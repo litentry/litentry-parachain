@@ -30,6 +30,11 @@ jobs:
         cd polkadot
         cargo build --release --features=real-overseer
         cd ..
+    - name: Build token server
+      run: |
+        cd token-server
+        cargo build --release
+        cd ..
     - name: Run integration test
       run: |
         cd ts-tests
