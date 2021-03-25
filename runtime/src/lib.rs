@@ -22,6 +22,7 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
+
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
 	construct_runtime, parameter_types, RuntimeDebug,
@@ -591,24 +592,24 @@ construct_runtime! {
 		NodeBlock = rococo_parachain_primitives::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Module, Call, Storage, Config, Event<T>},
-		Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
-		Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
-		Sudo: pallet_sudo::{Module, Call, Storage, Config<T>, Event<T>},
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Module, Call, Storage},
-		Scheduler: pallet_scheduler::{Module, Call, Storage, Event<T>},
-		ParachainSystem: cumulus_pallet_parachain_system::{Module, Call, Storage, Inherent, Event},
-		TransactionPayment: pallet_transaction_payment::{Module, Storage},
-		Treasury: pallet_treasury::{Module, Call, Storage, Config, Event<T>},
-		Democracy: pallet_democracy::{Module, Call, Storage, Config, Event<T>},
-		Council: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Event<T>, Config<T>},
-		TechnicalCommittee: pallet_collective::<Instance2>::{Module, Call, Storage, Origin<T>, Event<T>, Config<T>},
-		Proxy: pallet_proxy::{Module, Call, Storage, Event<T>},
-		ParachainInfo: parachain_info::{Module, Storage, Config},
-		XcmHandler: cumulus_pallet_xcm_handler::{Module, Call, Event<T>, Origin},
+		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
+		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>},
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Call, Storage},
+		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>},
+		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event},
+		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
+		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>},
+		Democracy: pallet_democracy::{Pallet, Call, Storage, Config, Event<T>},
+		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>},
+		TechnicalCommittee: pallet_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>},
+		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>},
+		ParachainInfo: parachain_info::{Pallet, Storage, Config},
+		XcmHandler: cumulus_pallet_xcm_handler::{Pallet, Call, Event<T>, Origin},
 
-		AccountLinkerModule: pallet_account_linker::{Module, Call, Storage, Event<T>},
-		OffchainWorkerModule: pallet_offchain_worker::{Module, Call, Storage, Event<T>},
+		AccountLinkerModule: pallet_account_linker::{Pallet, Call, Storage, Event<T>},
+		OffchainWorkerModule: pallet_offchain_worker::{Pallet, Call, Storage, Event<T>},
 	}
 }
 
@@ -641,7 +642,7 @@ pub type Executive = frame_executive::Executive<
 	Block,
 	frame_system::ChainContext<Runtime>,
 	Runtime,
-	AllModules,
+	AllPallets,
 >;
 
 impl_runtime_apis! {
@@ -685,7 +686,7 @@ impl_runtime_apis! {
 		}
 
 		fn random_seed() -> <Block as BlockT>::Hash {
-			RandomnessCollectiveFlip::random_seed()
+			RandomnessCollectiveFlip::random_seed().0
 		}
 	}
 
