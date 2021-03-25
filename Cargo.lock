@@ -5456,7 +5456,7 @@ dependencies = [
 [[package]]
 name = "polkadot-cli"
 version = "0.8.29"
-source = "git+https://github.com/paritytech/polkadot?branch=rococo-v1#2a0cbd042bad70a39ed87d74fec09ad909300db3"
+source = "git+https://github.com/paritytech/polkadot?branch=rococo-v1#0c9d4c9289e017b7589cc5f761d38545b833e1df"
 dependencies = [
  "frame-benchmarking-cli",
  "futures 0.3.12",
@@ -6235,7 +6235,7 @@ dependencies = [
 [[package]]
 name = "polkadot-test-runtime"
 version = "0.8.29"
-source = "git+https://github.com/paritytech/polkadot?branch=rococo-v1#2a0cbd042bad70a39ed87d74fec09ad909300db3"
+source = "git+https://github.com/paritytech/polkadot?branch=rococo-v1#0c9d4c9289e017b7589cc5f761d38545b833e1df"
 dependencies = [
  "bitvec",
  "frame-election-provider-support",
@@ -6290,7 +6290,7 @@ dependencies = [
 [[package]]
 name = "polkadot-test-service"
 version = "0.8.29"
-source = "git+https://github.com/paritytech/polkadot?branch=rococo-v1#2a0cbd042bad70a39ed87d74fec09ad909300db3"
+source = "git+https://github.com/paritytech/polkadot?branch=rococo-v1#0c9d4c9289e017b7589cc5f761d38545b833e1df"
 dependencies = [
  "frame-benchmarking",
  "frame-system",
@@ -6846,7 +6846,7 @@ dependencies = [
  "cfg-if 0.1.10",
  "libc",
  "nix",
- "rand 0.3.23",
+ "rand 0.6.5",
  "winapi 0.3.9",
 ]
 
@@ -8511,7 +8511,7 @@ dependencies = [
  "libc",
  "nix",
  "quick-error 2.0.0",
- "rand 0.3.23",
+ "rand 0.6.5",
  "winapi 0.3.9",
 ]
 
@@ -10119,7 +10119,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04f8ab788026715fa63b31960869617cba39117e520eb415b0139543e325ab59"
 dependencies = [
  "cfg-if 0.1.10",
- "rand 0.3.23",
+ "rand 0.6.5",
  "static_assertions",
 ]
 
