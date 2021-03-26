@@ -34,6 +34,7 @@ pallet-treasury = { git = "https://github.com/paritytech/substrate", default-fea
 pallet-scheduler = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
 pallet-collective = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
 pallet-proxy = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
+pallet-recovery = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
 pallet-sudo = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
 pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
 
@@ -82,6 +83,7 @@ std = [
 	"pallet-timestamp/std",
 	"pallet-treasury/std",
 	"pallet-proxy/std",
+	"pallet-recovery/std",
 	"pallet-sudo/std",
 	"pallet-scheduler/std",
 	"pallet-collective/std",
