@@ -4915,6 +4915,7 @@ dependencies = [
  "pallet-offchain-worker",
  "pallet-proxy",
  "pallet-randomness-collective-flip",
+ "pallet-recovery",
  "pallet-scheduler",
  "pallet-sudo",
  "pallet-timestamp",
