@@ -1,5 +1,6 @@
 # litentry-parachain
 [![Rust](https://github.com/litentry/litentry-parachain/actions/workflows/build_test.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/build_test.yml)
+[![Update Pallets](https://github.com/litentry/litentry-parachain/actions/workflows/update_pallets.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/update_pallets.yml)
 
 The Litentry parachain.
 
