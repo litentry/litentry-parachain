@@ -23,8 +23,7 @@ jobs:
           override: true
       - name: Update pallets and commit
         run: |
-          cargo update -p pallet-account-linker
-          cargo update -p pallet-offchain-worker
+          cargo update 
 
       - name: Create Pull Request
         id: cpr
