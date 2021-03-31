@@ -528,9 +528,40 @@ impl cumulus_pallet_xcm_handler::Config for Runtime {
 	type AccountIdConverter = LocationConverter;
 }
 
+type MoreThanHalfCouncil = EnsureOneOf<
+	AccountId,
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>
+>;
+
+parameter_types! {
+	// Minimum 4 CENTS/byte
+	pub const BasicDeposit: Balance = deposit(1, 258);
+	pub const FieldDeposit: Balance = deposit(0, 66);
+	pub const SubAccountDeposit: Balance = deposit(1, 53);
+	pub const MaxSubAccounts: u32 = 100;
+	pub const MaxAdditionalFields: u32 = 100;
+	pub const MaxRegistrars: u32 = 20;
+}
+
+impl pallet_identity::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type BasicDeposit = BasicDeposit;
+	type FieldDeposit = FieldDeposit;
+	type SubAccountDeposit = SubAccountDeposit;
+	type MaxSubAccounts = MaxSubAccounts;
+	type MaxAdditionalFields = MaxAdditionalFields;
+	type MaxRegistrars = MaxRegistrars;
+	type Slashed = Treasury;
+	type ForceOrigin = MoreThanHalfCouncil;
+	type RegistrarOrigin = MoreThanHalfCouncil;
+	type WeightInfo = pallet_identity::weights::SubstrateWeight<Runtime>;
+}
+
 impl pallet_account_linker::Config for Runtime {
 	type Event = Event;
-  type WeightInfo = pallet_account_linker::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = pallet_account_linker::weights::SubstrateWeight<Runtime>;
 
 }
 
@@ -625,6 +656,7 @@ construct_runtime! {
 		Recovery: pallet_recovery::{Pallet, Call, Storage, Event<T>},
 		ParachainInfo: parachain_info::{Pallet, Storage, Config},
 		XcmHandler: cumulus_pallet_xcm_handler::{Pallet, Call, Event<T>, Origin},
+		Identity: pallet_identity::{Pallet, Call, Storage, Event<T>},
 
 		AccountLinkerModule: pallet_account_linker::{Pallet, Call, Storage, Event<T>},
 		OffchainWorkerModule: pallet_offchain_worker::{Pallet, Call, Storage, Event<T>},

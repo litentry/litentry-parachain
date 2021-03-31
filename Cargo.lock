@@ -4912,6 +4912,7 @@ dependencies = [
  "pallet-balances",
  "pallet-collective",
  "pallet-democracy",
+ "pallet-identity",
  "pallet-offchain-worker",
  "pallet-proxy",
  "pallet-randomness-collective-flip",
