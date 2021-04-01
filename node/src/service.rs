@@ -138,7 +138,7 @@ where
 	let polkadot_full_node =
 		cumulus_client_service::build_polkadot_full_node(
 			polkadot_config,
-			collator_key.public(),
+			collator_key.clone(),
 			telemetry_worker_handle,
 		)
 		.map_err(|e| match e {
