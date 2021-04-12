@@ -9,7 +9,7 @@ The Litentry parachain.
 1. Build polkadot binary
 ```
 cd polkadot
-cargo build --release --features=real-overseer
+cargo build --release
 ```
 2. Build Litentry parachain binary
 ```
