@@ -126,7 +126,21 @@ export async function launchRelayNodesAndParachainRegister()
       Address: 'MultiAddress',
       // mapping the lookup
       LookupSource: 'MultiAddress',
-      ParaLifecycle: 'u64',
+     // BeefyNextAuthoritySet: {
+     //   id: 'u64',
+     //   len: 'u32',
+     //   root: 'H256'
+     // },
+     // ValidatorSetId: 'u64',
+     // ParaLifecycle: {
+     //   _enum: ['Onboarding', 'Parathread', 'Parachain', 'UpgradingToParachain', 'DowngradingToParathread', 'OutgoingParathread', 'OutgoingParachain']
+     // },
+     // ParachainsInherentData: {
+     //   bitfields: 'SignedAvailabilityBitfields',
+     //   backedCandidates: 'Vec<BackedCandidate>',
+     //   disputes: 'MultiDisputeStatementSet',
+     //   parentHeader: 'Header'
+     // },
     }
   });
   // Get keyring of Alice

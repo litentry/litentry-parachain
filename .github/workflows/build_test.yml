@@ -28,7 +28,7 @@ jobs:
       run: |
         cargo build --release
         cd polkadot
-        cargo build --release --features=real-overseer
+        cargo build --release
         cd ..
     - name: Build token server
       run: |
