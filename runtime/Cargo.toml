@@ -41,7 +41,10 @@ pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", 
 # Cumulus dependencies
 cumulus-pallet-parachain-system = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "rococo-v1" }
 cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "rococo-v1" }
-cumulus-pallet-xcm-handler = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "rococo-v1" }
+cumulus-primitives-utility = {git = "https://github.com/paritytech/cumulus", default-features = false, branch = "rococo-v1"}
+cumulus-pallet-xcmp-queue = {git = "https://github.com/paritytech/cumulus", default-features = false, branch = "rococo-v1"}
+cumulus-pallet-xcm = {git = "https://github.com/paritytech/cumulus", default-features = false, branch = "rococo-v1"}
+cumulus-ping = {git = "https://github.com/paritytech/cumulus", default-features = false, branch = "rococo-v1"}
 parachain-info = {git = "https://github.com/paritytech/cumulus", default-features = false, branch = "rococo-v1"}
 rococo-parachain-primitives = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "rococo-v1" }
 
@@ -50,6 +53,7 @@ polkadot-parachain = { git = "https://github.com/paritytech/polkadot", default-f
 xcm = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "rococo-v1" }
 xcm-builder = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "rococo-v1" }
 xcm-executor = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "rococo-v1" }
+pallet-xcm = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "rococo-v1" }
 
 # litentry pallets
 pallet-account-linker = { git = "https://github.com/litentry/litentry-pallets", default-features = false, branch = "rococo" }
@@ -94,8 +98,12 @@ std = [
 	"parachain-info/std",
 	"rococo-parachain-primitives/std",
 	"cumulus-pallet-parachain-system/std",
-	"cumulus-pallet-xcm-handler/std",
 	"cumulus-primitives-core/std",
+	"cumulus-pallet-xcmp-queue/std",
+	"cumulus-pallet-xcm/std",
+	"cumulus-primitives-core/std",
+	"cumulus-primitives-utility/std",
+	"cumulus-ping/std",	
 	"xcm/std",
 	"xcm-builder/std",
 	"xcm-executor/std",
