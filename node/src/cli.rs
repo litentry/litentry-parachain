@@ -46,7 +46,7 @@ pub struct ExportGenesisStateCommand {
 	/// Id of the parachain this state is for.
 	///
 	/// Default: 1984
-	#[structopt(long, conflicts_with = "chain")]
+	#[structopt(long)]
 	pub parachain_id: Option<u32>,
 
 	/// Write output in binary. Default is to write in hex.
@@ -54,7 +54,7 @@ pub struct ExportGenesisStateCommand {
 	pub raw: bool,
 
 	/// The name of the chain for that the genesis state should be exported.
-	#[structopt(long, conflicts_with = "parachain-id")]
+	#[structopt(long)]
 	pub chain: Option<String>,
 }
 
@@ -75,24 +75,6 @@ pub struct ExportGenesisWasmCommand {
 }
 
 #[derive(Debug, StructOpt)]
-pub struct RunCmd {
-	#[structopt(flatten)]
-	pub base: sc_cli::RunCmd,
-
-	/// Id of the parachain this collator collates for.
-	#[structopt(long)]
-	pub parachain_id: Option<u32>,
-}
-
-impl std::ops::Deref for RunCmd {
-	type Target = sc_cli::RunCmd;
-
-	fn deref(&self) -> &Self::Target {
-		&self.base
-	}
-}
-
-#[derive(Debug, StructOpt)]
 #[structopt(settings = &[
 	structopt::clap::AppSettings::GlobalVersion,
 	structopt::clap::AppSettings::ArgsNegateSubcommands,
@@ -103,13 +85,7 @@ pub struct Cli {
 	pub subcommand: Option<Subcommand>,
 
 	#[structopt(flatten)]
-	pub run: RunCmd,
-
-	/// Run node as collator.
-	///
-	/// Note that this is the same as running with `--validator`.
-	#[structopt(long, conflicts_with = "validator")]
-	pub collator: bool,
+	pub run: cumulus_client_cli::RunCmd,
 
 	/// Relaychain arguments
 	#[structopt(raw = true)]
