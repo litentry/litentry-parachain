@@ -25,7 +25,7 @@ use sp_version::RuntimeVersion;
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
 	construct_runtime, parameter_types, RuntimeDebug, PalletId, match_type,
-	traits::{Randomness, InstanceFilter, IsInVec, All},
+	traits::{Randomness, InstanceFilter, IsInVec, All, MaxEncodedLen},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		DispatchClass, IdentityFee, Weight,
@@ -68,6 +68,7 @@ impl_opaque_keys! {
 }
 
 /// This runtime version.
+#[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("litentry-parachain"),
 	impl_name: create_runtime_str!("litentry-parachain"),
@@ -187,6 +188,7 @@ impl frame_system::Config for Runtime {
 }
 
 
+
 parameter_types! {
 	// One storage item; key size 32, value size 8; .
 	pub const ProxyDepositBase: Balance = deposit(1, 8);
@@ -199,7 +201,7 @@ parameter_types! {
 }
 
 /// The type used to represent the kinds of proxying allowed.
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, RuntimeDebug)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, RuntimeDebug, MaxEncodedLen)]
 pub enum ProxyType {
 	Any,
 	NonTransfer,
@@ -674,7 +676,6 @@ where
 		let tip = 0;
 		let extra: SignedExtra = (
 			frame_system::CheckSpecVersion::<Runtime>::new(),
-			frame_system::CheckTxVersion::<Runtime>::new(),
 			frame_system::CheckGenesis::<Runtime>::new(),
 			frame_system::CheckEra::<Runtime>::from(generic::Era::mortal(period, current_block)),
 			frame_system::CheckNonce::<Runtime>::from(index),
@@ -754,12 +755,12 @@ construct_runtime! {
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>},
-		Democracy: pallet_democracy::{Pallet, Call, Storage, Config, Event<T>},
+		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>},
 		TechnicalCommittee: pallet_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>},
 		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>},
 		Recovery: pallet_recovery::{Pallet, Call, Storage, Event<T>},
-		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>, ValidateUnsigned} = 20,
+		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>, ValidateUnsigned} = 20,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 21,
 
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 30,
@@ -807,7 +808,6 @@ pub type BlockId = generic::BlockId<Block>;
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
 	frame_system::CheckSpecVersion<Runtime>,
-	frame_system::CheckTxVersion<Runtime>,
 	frame_system::CheckGenesis<Runtime>,
 	frame_system::CheckEra<Runtime>,
 	frame_system::CheckNonce<Runtime>,
@@ -827,7 +827,6 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPallets,
-	(),
 >;
 
 impl_runtime_apis! {
