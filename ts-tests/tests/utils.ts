@@ -188,11 +188,12 @@ export async function launchRelayNodesAndParachainRegister()
   return parachainRegister;
 }
 
-export async function launchLitentryNode(
+export async function launchLitentryNodes(
     specFilename: string, provider?: string): Promise<{binary: ChildProcess}>
 {
   const cmd = LITENTRY_BINARY_PATH;
-  const args = [
+  // The args of main node that we use to interact with
+  const args_main_node = [
     `--collator`,
     `--tmp`,
     `--parachain-id`,
@@ -214,7 +215,7 @@ export async function launchLitentryNode(
     `--ws-port`,
     `9977`,
   ];
-  const binary = spawn(cmd, args);
+  const binary = spawn(cmd, args_main_node);
 
   binary.on('error', (err) => {
     if ((err as any).errno == 'ENOENT')
@@ -270,9 +271,9 @@ export async function initApiPromise(wsProvider: WsProvider)
     provider: wsProvider,
     types: {
       // mapping the actual specified address format
-      Address: 'AccountId',
+      Address: 'MultiAddress',
       // mapping the lookup
-      LookupSource: 'AccountId',
+      LookupSource: 'MultiAddress',
       Account: {nonce: 'U256', balance: 'U256'},
       Transaction: {
         nonce: 'U256',
@@ -355,7 +356,7 @@ export function describeLitentry(
       // Wait for connection with relay nodes
       await launchRelayNodesAndParachainRegister();
       const initTokenServer = await launchAPITokenServer();
-      const initNode = await launchLitentryNode(specFilename, provider);
+      const initNode = await launchLitentryNodes(specFilename, provider);
       tokenServer = initTokenServer.apikey_server;
       binary = initNode.binary;
       const initApi = await initApiPromise(wsProvider);
@@ -372,6 +373,7 @@ export function describeLitentry(
       // FIXME Currently we can only kill background processes with calling killall. 
       //       This needs to be changed later 
       exec(`killall polkadot`);
+      exec(`killall litentry-collator`);
       context.api.disconnect();
     });
 
