@@ -45,7 +45,7 @@ pub struct ExportGenesisStateCommand {
 
 	/// Id of the parachain this state is for.
 	///
-	/// Default: 1984
+	/// Default: 2022
 	#[structopt(long)]
 	pub parachain_id: Option<u32>,
 
