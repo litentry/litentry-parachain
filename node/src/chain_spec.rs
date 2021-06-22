@@ -175,35 +175,35 @@ fn testnet_genesis(
 	let num_endowed_accounts = endowed_accounts.len();
 
 	parachain_runtime::GenesisConfig {
-		frame_system: parachain_runtime::SystemConfig {
+		system: parachain_runtime::SystemConfig {
 			code: parachain_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
 			changes_trie_config: Default::default(),
 		},
-		pallet_balances: parachain_runtime::BalancesConfig {
+		balances: parachain_runtime::BalancesConfig {
 			balances: endowed_accounts
 				.iter()
 				.cloned()
 				.map(|k| (k, 1 << 60))
 				.collect(),
 		},
-		pallet_sudo: parachain_runtime::SudoConfig { key: root_key },
+		sudo: parachain_runtime::SudoConfig { key: root_key },
 		parachain_info: parachain_runtime::ParachainInfoConfig { parachain_id: id },
-		pallet_democracy: parachain_runtime::DemocracyConfig::default(),
-		pallet_collective_Instance1: parachain_runtime::CouncilConfig::default(),
-		pallet_collective_Instance2: parachain_runtime::TechnicalCommitteeConfig {
+		democracy: parachain_runtime::DemocracyConfig::default(),
+		council: parachain_runtime::CouncilConfig::default(),
+		technical_committee: parachain_runtime::TechnicalCommitteeConfig {
 			members: endowed_accounts.iter()
 						.take((num_endowed_accounts + 1) / 2)
 						.cloned()
 						.collect(),
 			phantom: Default::default(),
 		},
-		pallet_treasury: Default::default(),
-		pallet_aura: parachain_runtime::AuraConfig {
+		treasury: Default::default(),
+		aura: parachain_runtime::AuraConfig {
 			authorities: initial_authorities,
 		},
-		cumulus_pallet_aura_ext: Default::default(),
-		cumulus_pallet_parachain_system: Default::default(),
+		aura_ext: Default::default(),
+		parachain_system: Default::default(),
 	}
 }
