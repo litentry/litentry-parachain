@@ -61,14 +61,14 @@ async function eth_link(api: ApiPromise, alice: KeyringPair) {
   console.log(`s is ${signedMsg.s}`);
   console.log(`v is ${signedMsg.v}`);
 
-  let sig = { r: signedMsg.r, s: signedMsg.s, v: signedMsg.v };
+  //let sig = { r: signedMsg.r, s: signedMsg.s, v: signedMsg.v };
 
   const transaction = api.tx.accountLinkerModule.linkEth(
     alice.address,
     0,
     ethAddressBytes,
     10000,
-    sig
+    signedMsg.signature
   );
 
   const link = new Promise<{ block: string }>(async (resolve, reject) => {
