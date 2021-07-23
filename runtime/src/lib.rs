@@ -35,8 +35,7 @@ pub use frame_support::{
 use frame_system::{
 	EnsureRoot, EnsureOneOf,
 	limits::{BlockLength, BlockWeights}
-};
-pub use pallet_balances::Call as BalancesCall;
+};pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 #[cfg(any(feature = "std", test))]
@@ -117,8 +116,8 @@ const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
 /// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used
 /// by  Operational  extrinsics.
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
-/// We allow for 2 seconds of compute with a 6 second average block time.
-const MAXIMUM_BLOCK_WEIGHT: Weight = 2 * WEIGHT_PER_SECOND;
+/// We allow for .5 seconds of compute with a 12 second average block time.
+const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
 
 parameter_types! {
 	pub const BlockHashCount: BlockNumber = 250;
@@ -316,6 +315,8 @@ impl pallet_balances::Config for Runtime {
 	type ReserveIdentifier = [u8; 8];
 }
 
+impl pallet_randomness_collective_flip::Config for Runtime {}
+
 impl pallet_transaction_payment::Config for Runtime {
 	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
 	type TransactionByteFee = TransactionByteFee;
@@ -486,8 +487,6 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 impl parachain_info::Config for Runtime {}
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
-
-impl pallet_randomness_collective_flip::Config for Runtime {}
 
 parameter_types! {
 	pub const RocLocation: MultiLocation = X1(Parent);
@@ -712,7 +711,7 @@ where
 parameter_types! {
 	pub const AssetDeposit: Balance = 1 * ROC;
 	pub const ApprovalDeposit: Balance = 100 * MILLIROC;
-	pub const StringLimit: u32 = 50;
+	pub const AssetsStringLimit: u32 = 50;
 	pub const MetadataDepositBase: Balance = 1 * ROC;
 	pub const MetadataDepositPerByte: Balance = 10 * MILLIROC;
 	pub const UnitBody: BodyId = BodyId::Unit;
@@ -731,7 +730,7 @@ impl pallet_assets::Config for Runtime {
 	type MetadataDepositBase = MetadataDepositBase;
 	type MetadataDepositPerByte = MetadataDepositPerByte;
 	type ApprovalDeposit = ApprovalDeposit;
-	type StringLimit = StringLimit;
+	type StringLimit = AssetsStringLimit;
 	type Freezer = ();
 	type Extra = ();
 	type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
@@ -750,7 +749,7 @@ construct_runtime! {
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>},
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Call, Storage},
+		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage},
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>},
@@ -759,7 +758,7 @@ construct_runtime! {
 		TechnicalCommittee: pallet_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>},
 		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>},
 		Recovery: pallet_recovery::{Pallet, Call, Storage, Event<T>},
-		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>, ValidateUnsigned} = 20,
+		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>} = 20,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 21,
 
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 30,
@@ -873,8 +872,9 @@ impl_runtime_apis! {
 		fn validate_transaction(
 			source: TransactionSource,
 			tx: <Block as BlockT>::Extrinsic,
+			block_hash: <Block as BlockT>::Hash,
 		) -> TransactionValidity {
-			Executive::validate_transaction(source, tx)
+			Executive::validate_transaction(source, tx, block_hash)
 		}
 	}
 
