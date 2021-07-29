@@ -29,7 +29,7 @@ fn load_spec(
 		path => {
 			let chain_spec = chain_spec::ChainSpec::from_json_file(path.into())?;
 			Box::new(chain_spec)
-		}
+		},
 	})
 }
 

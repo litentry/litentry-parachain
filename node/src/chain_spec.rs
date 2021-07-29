@@ -38,7 +38,8 @@ impl Extensions {
 type AccountPublic = <Signature as Verify>::Signer;
 
 /// Helper function to generate an account ID from seed
-pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId where
+pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
+where
 	AccountPublic: From<<TPublic::Pair as Pair>::Public>,
 {
 	AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
@@ -74,10 +75,7 @@ pub fn get_chain_spec(id: ParaId) -> ChainSpec {
 		None,
 		None,
 		None,
-		Extensions {
-			relay_chain: "westend".into(),
-			para_id: id.into(),
-		},
+		Extensions { relay_chain: "westend".into(), para_id: id.into() },
 	)
 }
 
@@ -107,10 +105,7 @@ pub fn staging_test_net(id: ParaId) -> ChainSpec {
 		None,
 		None,
 		None,
-		Extensions {
-			relay_chain: "westend".into(),
-			para_id: id.into(),
-		},
+		Extensions { relay_chain: "westend".into(), para_id: id.into() },
 	)
 }
 
