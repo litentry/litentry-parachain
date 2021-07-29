@@ -38,8 +38,7 @@ impl Extensions {
 type AccountPublic = <Signature as Verify>::Signer;
 
 /// Helper function to generate an account ID from seed
-pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
-where
+pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId where
 	AccountPublic: From<<TPublic::Pair as Pair>::Public>,
 {
 	AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
@@ -75,7 +74,10 @@ pub fn get_chain_spec(id: ParaId) -> ChainSpec {
 		None,
 		None,
 		None,
-		Extensions { relay_chain: "westend-dev".into(), para_id: id.into() },
+		Extensions {
+			relay_chain: "westend".into(),
+			para_id: id.into(),
+		},
 	)
 }
 
@@ -105,48 +107,10 @@ pub fn staging_test_net(id: ParaId) -> ChainSpec {
 		None,
 		None,
 		None,
-		Extensions { relay_chain: "westend-dev".into(), para_id: id.into() },
-	)
-}
-
-pub fn rococo_parachain_config(id: ParaId) -> ChainSpec {
-	const ROCOCO_STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
-
-	ChainSpec::from_genesis(
-		// Name
-		"Litentry Rostock",
-		// ID
-		"litentry_rostock",
-		ChainType::Live,
-		move || {
-			testnet_genesis(
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				vec![get_from_seed::<AuraId>("Alice"), get_from_seed::<AuraId>("Bob")],
-				vec![
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					get_account_id_from_seed::<sr25519::Public>("Bob"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie"),
-					get_account_id_from_seed::<sr25519::Public>("Dave"),
-					get_account_id_from_seed::<sr25519::Public>("Eve"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-				],
-				id,
-			)
+		Extensions {
+			relay_chain: "westend".into(),
+			para_id: id.into(),
 		},
-		vec![],
-		Some(
-			TelemetryEndpoints::new(vec![(ROCOCO_STAGING_TELEMETRY_URL.to_string(), 0)])
-				.expect("Telemetry url is valid; qed"),
-		),
-		Some("lit"),
-		None,
-		Extensions { relay_chain: "rococo".into(), para_id: id.into() },
 	)
 }
 
