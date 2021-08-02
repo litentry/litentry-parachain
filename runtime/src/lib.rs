@@ -740,6 +740,25 @@ impl pallet_aura::Config for Runtime {
 	type AuthorityId = AuraId;
 }
 
+parameter_types! {
+	pub MaxClassMetadata: u32 = 1024;
+	pub MaxTokenMetadata: u32 = 1024;
+}
+
+impl orml_nft::Config for Runtime {
+	type ClassId = u32;
+	type TokenId = u64;
+	type ClassData = pallet_nft::ClassData<BlockNumber, Self::ClassId>;
+	type TokenData = pallet_nft::TokenData;
+	type MaxClassMetadata = MaxClassMetadata;
+	type MaxTokenMetadata = MaxTokenMetadata;
+}
+
+impl pallet_nft::Config for Runtime {
+	type Event = Event;
+	type WeightInfo = pallet_nft::weights::SubstrateWeight<Runtime>;
+}
+
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -775,8 +794,10 @@ construct_runtime! {
 
 		Spambot: cumulus_ping::{Pallet, Call, Storage, Event<T>} = 99,
 
+		OrmlNFT: orml_nft::{Pallet, Storage, Config<T>},
 		AccountLinkerModule: pallet_account_linker::{Pallet, Call, Storage, Event<T>},
 		OffchainWorkerModule: pallet_offchain_worker::{Pallet, Call, Storage, Event<T>},
+		NFT: pallet_nft::{Pallet, Call, Event<T>},
 	}
 }
 
