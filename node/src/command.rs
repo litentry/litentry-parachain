@@ -29,7 +29,7 @@ fn load_spec(
 		path => {
 			let chain_spec = chain_spec::ChainSpec::from_json_file(path.into())?;
 			Box::new(chain_spec)
-		}
+		},
 	})
 }
 
@@ -149,27 +149,27 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::BuildSpec(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
-		}
+		},
 		Some(Subcommand::CheckBlock(cmd)) => {
 			construct_async_run!(|components, cli, cmd, config| {
 				Ok(cmd.run(components.client, components.import_queue))
 			})
-		}
+		},
 		Some(Subcommand::ExportBlocks(cmd)) => {
 			construct_async_run!(|components, cli, cmd, config| {
 				Ok(cmd.run(components.client, config.database))
 			})
-		}
+		},
 		Some(Subcommand::ExportState(cmd)) => {
 			construct_async_run!(|components, cli, cmd, config| {
 				Ok(cmd.run(components.client, config.chain_spec))
 			})
-		}
+		},
 		Some(Subcommand::ImportBlocks(cmd)) => {
 			construct_async_run!(|components, cli, cmd, config| {
 				Ok(cmd.run(components.client, components.import_queue))
 			})
-		}
+		},
 		Some(Subcommand::PurgeChain(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 
@@ -190,7 +190,7 @@ pub fn run() -> Result<()> {
 
 				cmd.run(config, polkadot_config)
 			})
-		}
+		},
 		Some(Subcommand::Revert(cmd)) => construct_async_run!(|components, cli, cmd, config| {
 			Ok(cmd.run(components.client, components.backend))
 		}),
@@ -217,7 +217,7 @@ pub fn run() -> Result<()> {
 			}
 
 			Ok(())
-		}
+		},
 		Some(Subcommand::ExportGenesisWasm(params)) => {
 			let mut builder = sc_cli::LoggerBuilder::new("");
 			builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
@@ -238,12 +238,11 @@ pub fn run() -> Result<()> {
 			}
 
 			Ok(())
-		}
+		},
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 
 			runner.run_node_until_exit(|config| async move {
-
 				let para_id =
 					chain_spec::Extensions::try_get(&*config.chain_spec).map(|e| e.para_id);
 
@@ -271,23 +270,14 @@ pub fn run() -> Result<()> {
 				info!("Parachain id: {:?}", id);
 				info!("Parachain Account: {}", parachain_account);
 				info!("Parachain genesis state: {}", genesis_state);
-				info!(
-					"Is collating: {}",
-					if config.role.is_authority() {
-						"yes"
-					} else {
-						"no"
-					}
-				);
-
+				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
 
 				crate::service::start_rococo_parachain_node(config, polkadot_config, id)
 					.await
 					.map(|r| r.0)
 					.map_err(Into::into)
-
 			})
-		}
+		},
 	}
 }
 
@@ -356,11 +346,7 @@ impl CliConfiguration<Self> for RelayChainCli {
 	fn chain_id(&self, is_dev: bool) -> Result<String> {
 		let chain_id = self.base.base.chain_id(is_dev)?;
 
-		Ok(if chain_id.is_empty() {
-			self.chain_id.clone().unwrap_or_default()
-		} else {
-			chain_id
-		})
+		Ok(if chain_id.is_empty() { self.chain_id.clone().unwrap_or_default() } else { chain_id })
 	}
 
 	fn role(&self, is_dev: bool) -> Result<sc_service::Role> {

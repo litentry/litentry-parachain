@@ -37,7 +37,8 @@ impl Extensions {
 type AccountPublic = <Signature as Verify>::Signer;
 
 /// Helper function to generate an account ID from seed
-pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId where
+pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
+where
 	AccountPublic: From<<TPublic::Pair as Pair>::Public>,
 {
 	AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
@@ -51,10 +52,7 @@ pub fn get_chain_spec(id: ParaId) -> ChainSpec {
 		move || {
 			testnet_genesis(
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				vec![
-					get_from_seed::<AuraId>("Alice"),
-					get_from_seed::<AuraId>("Bob"),
-				],
+				vec![get_from_seed::<AuraId>("Alice"), get_from_seed::<AuraId>("Bob")],
 				vec![
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					get_account_id_from_seed::<sr25519::Public>("Bob"),
@@ -76,10 +74,7 @@ pub fn get_chain_spec(id: ParaId) -> ChainSpec {
 		None,
 		None,
 		None,
-		Extensions {
-			relay_chain: "westend".into(),
-			para_id: id.into(),
-		},
+		Extensions { relay_chain: "westend".into(), para_id: id.into() },
 	)
 }
 
@@ -100,7 +95,7 @@ pub fn staging_test_net(id: ParaId) -> ChainSpec {
 						.unchecked_into(),
 				],
 				vec![
-					hex!["9ed7705e3c7da027ba0583a22a3212042f7e715d3c168ba14f1424e2bc111d00"].into(),
+					hex!["9ed7705e3c7da027ba0583a22a3212042f7e715d3c168ba14f1424e2bc111d00"].into()
 				],
 				id,
 			)
@@ -109,10 +104,7 @@ pub fn staging_test_net(id: ParaId) -> ChainSpec {
 		None,
 		None,
 		None,
-		Extensions {
-			relay_chain: "westend".into(),
-			para_id: id.into(),
-		},
+		Extensions { relay_chain: "westend".into(), para_id: id.into() },
 	)
 }
 
@@ -122,7 +114,6 @@ fn testnet_genesis(
 	endowed_accounts: Vec<AccountId>,
 	id: ParaId,
 ) -> parachain_runtime::GenesisConfig {
-
 	let num_endowed_accounts = endowed_accounts.len();
 
 	parachain_runtime::GenesisConfig {
@@ -133,11 +124,7 @@ fn testnet_genesis(
 			changes_trie_config: Default::default(),
 		},
 		balances: parachain_runtime::BalancesConfig {
-			balances: endowed_accounts
-				.iter()
-				.cloned()
-				.map(|k| (k, 1 << 60))
-				.collect(),
+			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
 		},
 		sudo: parachain_runtime::SudoConfig { key: root_key },
 		orml_nft: Default::default(),
@@ -145,16 +132,15 @@ fn testnet_genesis(
 		democracy: parachain_runtime::DemocracyConfig::default(),
 		council: parachain_runtime::CouncilConfig::default(),
 		technical_committee: parachain_runtime::TechnicalCommitteeConfig {
-			members: endowed_accounts.iter()
-						.take((num_endowed_accounts + 1) / 2)
-						.cloned()
-						.collect(),
+			members: endowed_accounts
+				.iter()
+				.take((num_endowed_accounts + 1) / 2)
+				.cloned()
+				.collect(),
 			phantom: Default::default(),
 		},
 		treasury: Default::default(),
-		aura: parachain_runtime::AuraConfig {
-			authorities: initial_authorities,
-		},
+		aura: parachain_runtime::AuraConfig { authorities: initial_authorities },
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
 	}
