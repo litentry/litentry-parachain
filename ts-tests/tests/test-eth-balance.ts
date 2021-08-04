@@ -8,17 +8,22 @@ import { step } from "mocha-steps";
 
 import { describeLitentry, OCR_ACCOUNT } from "./utils";
 
-const privateKey =
-  "0xe82c0c4259710bb0d6cf9f9e8d0ad73419c1278a14d375e5ca691e7618103011";
+// Configs of test ropsten account and private key
+// NOTE: If config.json does not exist, the default config shall be in use
+//       This is mainly for CI configuration 
+//       As the conditional import is not possible, please change this line 
+//       manually if you want to customize your config
+//import CONFIG from "../config.json"
+import DEFAULT_CONFIG from "../config.example.json"
+
+const testEthAddress =  DEFAULT_CONFIG.eth_address;
+const privateKey =  DEFAULT_CONFIG.private_key;
 
 // Provider is set to localhost for development
 const wsProvider = new WsProvider("ws://localhost:9944");
 
 // Keyring needed to sign using Alice account
 const keyring = new Keyring({ type: "sr25519" });
-
-// Configs of test ropsten account
-const testEthAddress = "[0x4d88dc5d528a33e4b8be579e9476715f60060582]";
 
 const msgPrefix: string = "Link Litentry: ";
 

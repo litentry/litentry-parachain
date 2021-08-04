@@ -2,10 +2,11 @@
 .idea
 .vscode
 .DS_Store
-/.cargo/config
+.cargo/config
 
 **/node_modules/
-**/para-2022*
+**/para-*
 ts-tests/rococo-local-cfde-real-overseer.json
+ts-tests/config.json
 
 tags.lock
