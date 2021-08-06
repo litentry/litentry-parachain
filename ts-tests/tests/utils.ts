@@ -6,20 +6,25 @@ import { Bytes } from "@polkadot/types";
 import { TypeRegistry } from "@polkadot/types/create";
 import { ChildProcess, spawn, exec } from "child_process";
 import fs from "fs";
-import Web3 from "web3";
-import { JsonRpcResponse } from "web3-core-helpers";
+// Configs of test ropsten account and private key
+// NOTE: If config.json does not exist, the default config shall be in use
+//       This is mainly for CI configuration 
+//       As the conditional import is not possible, please change this line 
+//       manually if you want to customize your config
+//import CONFIG from "../config.json"
+import DEFAULT_CONFIG from "../config.example.json"
 
 export const LITENTRY_BINARY_PATH = `../target/release/litentry-collator`;
 export const POLKADOT_BINARY_PATH = `../polkadot/target/release/polkadot`;
 export const APIKEY_SERVER_PATH = `../token-server/target/release/litentry-token-server`;
-export const PARA_GENESIS_HEAD_PATH = `para-1984-genesis`;
-export const PARA_WASM_PATH = `para-1984-wasm`;
+export const PARA_GENESIS_HEAD_PATH = `para-2022-genesis`;
+export const PARA_WASM_PATH = `para-2022-wasm`;
 export const ROCOCO_LOCAL_PATH = `./rococo-local-cfde-real-overseer.json`;
 export const RELAY_NODE_SCRIPT = `./scripts/start-alice-and-bob.sh`;
 export const SPAWNING_TIME = 30000;
 
 // OCW account
-export const OCR_ACCOUNT = "5FEYX9NES9mAJt1Xg4WebmHWywxyeGQK8G3oEBXtyfZrRePX";
+const ocwAccount = DEFAULT_CONFIG.ocw_account;
 
 // Provider is set to localhost for development
 const wsProvider = new WsProvider("ws://localhost:9844");
@@ -83,40 +88,6 @@ export async function launchRelayNodesAndParachainRegister() {
     `--bob`,
   ];
 
-  // const aliceLaunch = spawn(cmd, aliceArgs);
-  // const bobLaunch = spawn(cmd, bobArgs);
-
-  // aliceLaunch.on("error", (err) => {
-  //	if ((err as any).errno == "ENOENT") {
-  //		console.error(
-  //			`\x1b[31mMissing relay node binary (${POLKADOT_BINARY_PATH}).\nPlease
-  // compile the polkadot project!`
-  //		);
-  //	} else {
-  //		console.error(err);
-  //	}
-  //	process.exit(1);
-  // });
-  // bobLaunch.on("error", (err) => {
-  //	if ((err as any).errno == "ENOENT") {
-  //		console.error(
-  //			`\x1b[31mMissing relay node binary (${POLKADOT_BINARY_PATH}).\nPlease
-  // compile the polkadot project!`
-  //		);
-  //	} else {
-  //		console.error(err);
-  //	}
-  //	process.exit(1);
-  // });
-
-  //  aliceLaunch.stdout.on('data', (data) => {
-  //    console.log('Relay Node Output: ' + data.toString());
-  //  });
-  //
-  //  aliceLaunch.stderr.on('data', (data) => {
-  //    console.log('Relay Node Output: ' + data.toString());
-  //  });
-
   const api = await ApiPromise.create({
     provider: new WsProvider("ws://localhost:9944"),
     types: {
@@ -124,21 +95,6 @@ export async function launchRelayNodesAndParachainRegister() {
       Address: "MultiAddress",
       // mapping the lookup
       LookupSource: "MultiAddress",
-      // BeefyNextAuthoritySet: {
-      //   id: 'u64',
-      //   len: 'u32',
-      //   root: 'H256'
-      // },
-      // ValidatorSetId: 'u64',
-      // ParaLifecycle: {
-      //   _enum: ['Onboarding', 'Parathread', 'Parachain', 'UpgradingToParachain', 'DowngradingToParathread', 'OutgoingParathread', 'OutgoingParachain']
-      // },
-      // ParachainsInherentData: {
-      //   bitfields: 'SignedAvailabilityBitfields',
-      //   backedCandidates: 'Vec<BackedCandidate>',
-      //   disputes: 'MultiDisputeStatementSet',
-      //   parentHeader: 'Header'
-      // },
     },
   });
   // Get keyring of Alice
@@ -157,7 +113,7 @@ export async function launchRelayNodesAndParachainRegister() {
   const validationCodeBytes = fs.readFileSync(PARA_WASM_PATH, "utf8");
 
   const tx = api.tx.sudo.sudo(
-    api.tx.parasSudoWrapper.sudoScheduleParaInitialize(1984, {
+    api.tx.parasSudoWrapper.sudoScheduleParaInitialize(2022, {
       genesisHead: new Bytes(registry, genesisHeadBytes),
       validationCode: new Bytes(registry, validationCodeBytes),
       parachain: true,
@@ -201,7 +157,7 @@ export async function launchLitentryNodes(
     `--collator`,
     `--tmp`,
     `--parachain-id`,
-    `1984`,
+    `2022`,
     `--port`,
     `40333`,
     `--ws-port`,
@@ -239,26 +195,6 @@ export async function launchLitentryNodes(
   binary.stderr.on("data", (data) => {
     console.log("Litentry Node Output: " + data.toString());
   });
-
-  //	await new Promise((resolve) => {
-  //		const timer = setTimeout(() => {
-  //			console.error(`\x1b[31m Failed to start Litentry Node.\x1b[0m`);
-  //			console.error(`Command: ${cmd} ${args.join(" ")}`);
-  //			process.exit(1);
-  //		}, SPAWNING_TIME - 2000);
-  //
-  //		const onData = async (chunk) => {
-  //			if (chunk.toString().match("Listening for new connections on
-  // 127.0.0.1:9944.")) {
-  //
-  //				clearTimeout(timer);
-  //				console.log(`Litentry Node Starts`);
-  //				resolve();
-  //			}
-  //		};
-  //		binary.stderr.on("data", onData);
-  //		binary.stdout.on("data", onData);
-  //	});
 
   return { binary };
 }
@@ -325,7 +261,7 @@ async function sendTokenToOcw(api: ApiPromise, alice: KeyringPair) {
   console.log(`Transfer tokens from Alice to ocw account`);
   return new Promise<{ block: string }>(async (resolve, reject) => {
     const unsub = await api.tx.balances
-      .transfer(OCR_ACCOUNT, 1000000000000000)
+      .transfer(ocwAccount, 1000000000000000)
       .signAndSend(alice, (result) => {
         console.log(`Current status is ${result.status}`);
         if (result.status.isInBlock) {

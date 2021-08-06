@@ -2,7 +2,7 @@ import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
 import { expect } from "chai";
 import { step } from "mocha-steps";
 
-import { describeLitentry, OCR_ACCOUNT } from "./utils";
+import { describeLitentry } from "./utils";
 import { ethLink, checkLinkingState } from "./account-link";
 import { assetClaim, getAssets } from "./account-data-retrieve";
 
@@ -16,13 +16,7 @@ import DEFAULT_CONFIG from "../config.example.json"
 
 const testEthAddress =  DEFAULT_CONFIG.eth_address;
 const privateKey =  DEFAULT_CONFIG.private_key;
-
-// Provider is set to localhost for development
-const wsProvider = new WsProvider("ws://localhost:9944");
-
-// Keyring needed to sign using Alice account
-const keyring = new Keyring({ type: "sr25519" });
-
+const ocwAccount = DEFAULT_CONFIG.ocw_account;
 
 describeLitentry("Test Ethereum Link and Balance Fetch", ``, (context) => {
   step("Create Ethereum Link", async function () {
@@ -42,7 +36,7 @@ describeLitentry("Test Ethereum Link and Balance Fetch", ``, (context) => {
   step("Retrieving assets information of Alice", async function () {
     // Retrieve ocw account balance
     const { nonce: old_n, data: old_balance } =
-      await context.api.query.system.account(OCR_ACCOUNT);
+      await context.api.query.system.account(ocwAccount);
 
     // Wait for 150s ~ 6 blocks
     await new Promise((r) => setTimeout(r, 150000));
@@ -53,9 +47,9 @@ describeLitentry("Test Ethereum Link and Balance Fetch", ``, (context) => {
       `[null,"0x00000000000000004563918244f40000"]`
     );
 
-	// Retrieve OCR account balances before and after assets claim
+	// Retrieve OCW account balances before and after assets claim
     const { nonce: new_n, data: balance } =
-      await context.api.query.system.account(OCR_ACCOUNT);
+      await context.api.query.system.account(ocwAccount);
     console.log(
       `new is ${balance.free.toString()}  old is ${old_balance.free}`
     );
