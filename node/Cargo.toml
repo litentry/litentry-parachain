@@ -79,6 +79,10 @@ polkadot-service = { git = "https://github.com/paritytech/polkadot", branch = "r
 polkadot-cli = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.8" }
 polkadot-parachain = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.8" }
 
+# Benchmarking
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
+
 # Local dependencies
 parachain-runtime = { path = "../runtime" }
 
@@ -87,3 +91,6 @@ substrate-build-script-utils = { git = "https://github.com/paritytech/substrate.
 
 [features]
 default = []
+runtime-benchmarks = [
+	"parachain-runtime/runtime-benchmarks",
+]

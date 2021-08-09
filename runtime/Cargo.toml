@@ -69,6 +69,10 @@ pallet-nft = { git = "https://github.com/litentry/litentry-pallets", default-fea
 
 orml-nft = { git = "https://github.com/open-web3-stack/open-runtime-module-library", default-features = false, rev = "ca054d3078a8d157d0c176ed319d6ff49f38d349" }
 
+# benchmarking 
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8", optional = true }
+frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8", optional = true }
+
 [build-dependencies]
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 
@@ -125,4 +129,14 @@ std = [
 	"xcm-executor/std",
 	"log/std",
 	"max-encoded-len/std",
+]
+
+runtime-benchmarks = [
+	"frame-benchmarking",
+	"frame-system-benchmarking",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"pallet-collective/runtime-benchmarks",
+	"pallet-xcm/runtime-benchmarks",
+	"xcm-builder/runtime-benchmarks",
 ]
