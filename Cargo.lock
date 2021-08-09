@@ -5505,6 +5505,7 @@ dependencies = [
  "frame-system",
  "frame-system-benchmarking",
  "funty",
+ "hex-literal 0.3.3",
  "log",
  "max-encoded-len",
  "orml-nft",
