@@ -26,8 +26,8 @@ export const SPAWNING_TIME = 30000;
 // OCW account
 const ocwAccount = DEFAULT_CONFIG.ocw_account;
 
-// Provider is set to localhost for development
-const wsProvider = new WsProvider("ws://localhost:9844");
+// Provider is set for parachain node
+const wsProvider = new WsProvider(DEFAULT_CONFIG.parachain_ws);
 
 // Keyring needed to sign using Alice account
 const keyring = new Keyring({ type: "sr25519" });
@@ -89,7 +89,7 @@ export async function launchRelayNodesAndParachainRegister() {
   ];
 
   const api = await ApiPromise.create({
-    provider: new WsProvider("ws://localhost:9944"),
+    provider: new WsProvider(DEFAULT_CONFIG.relaynode_ws),
     types: {
       // mapping the actual specified address format
       Address: "MultiAddress",
