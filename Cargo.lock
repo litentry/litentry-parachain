@@ -5495,6 +5495,7 @@ dependencies = [
  "pallet-balances",
  "pallet-collective",
  "pallet-democracy",
+ "pallet-identity",
  "pallet-nft",
  "pallet-offchain-worker",
  "pallet-proxy",
