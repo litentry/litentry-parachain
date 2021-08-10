@@ -4806,7 +4806,9 @@ dependencies = [
  "parity-scale-codec",
  "ripemd160",
  "sha2 0.9.5",
+ "sp-core",
  "sp-io",
+ "sp-runtime",
  "sp-std",
 ]
 
