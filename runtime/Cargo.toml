@@ -142,4 +142,5 @@ runtime-benchmarks = [
 	"pallet-xcm/runtime-benchmarks",
 	"xcm-builder/runtime-benchmarks",
 	"pallet-account-linker/runtime-benchmarks",
+	"pallet-offchain-worker/runtime-benchmarks",
 ]

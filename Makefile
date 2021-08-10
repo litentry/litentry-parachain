@@ -47,6 +47,20 @@ benchmark-account-linker:
 	--output=./source/weights.rs \
 	--template=./.maintain/frame-weight-template.hbs
 
+benchmark-offchain-worker:
+	target/release/litentry-collator benchmark \
+	--chain=./source/local.json \
+	--execution=wasm  \
+	--db-cache=20 \
+	--wasm-execution=compiled \
+	--pallet=pallet-offchain-worker \
+	--extrinsic=* \
+	--heap-pages=4096 \
+	--steps=20 \
+	--repeat=50 \
+	--output=./source/weights.rs \
+	--template=./.maintain/frame-weight-template.hbs
+
 fmt:
 	cargo fmt
 define pkgid

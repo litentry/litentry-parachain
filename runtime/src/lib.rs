@@ -963,6 +963,8 @@ impl_runtime_apis! {
 
 			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
 			add_benchmark!(params, batches, pallet_account_linker, AccountLinkerModule);
+			add_benchmark!(params, batches, pallet_offchain_worker, OffchainWorkerModule);
+
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
