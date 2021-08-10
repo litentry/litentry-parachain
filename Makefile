@@ -27,7 +27,7 @@ benchmark-frame-system:
 	--heap-pages=4096 \
 	--steps=20 \
 	--repeat=50 \
-	--output=weights.rs \
+	--output=./source/weights.rs \
 	--template=./.maintain/frame-weight-template.hbs
 
 fmt:
