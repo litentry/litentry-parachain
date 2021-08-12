@@ -1,7 +1,6 @@
 import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
 import { loadConfig, launchRelayNodesAndParachainRegister } from './utils';
 
-
 (async () => {
     console.log('Register parachain ...');
     const DEFAULT_CONFIG = loadConfig();

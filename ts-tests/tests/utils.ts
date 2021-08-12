@@ -6,13 +6,7 @@ import { Bytes } from '@polkadot/types';
 import { TypeRegistry } from '@polkadot/types/create';
 import { ChildProcess, spawn, exec } from 'child_process';
 import fs from 'fs';
-// Configs of test ropsten account and private key
-// NOTE: If config.json does not exist, the default config shall be in use
-//       This is mainly for CI configuration
-//       As the conditional import is not possible, please change this line
-//       manually if you want to customize your config
-//import CONFIG from "../config.json"
-// import DEFAULT_CONFIG from '../config.example.json';
+
 export function loadConfig() {
     require('dotenv').config();
     switch (process.env.NODE_ENV) {
@@ -28,15 +22,6 @@ export function loadConfig() {
 }
 const DEFAULT_CONFIG = loadConfig();
 
-export const LITENTRY_BINARY_PATH = `../target/release/litentry-collator`;
-export const POLKADOT_BINARY_PATH = `../polkadot/target/release/polkadot`;
-export const APIKEY_SERVER_PATH = `../token-server/target/release/litentry-token-server`;
-export const PARA_GENESIS_HEAD_PATH = `para-2022-genesis`;
-export const PARA_WASM_PATH = `para-2022-wasm`;
-export const ROCOCO_LOCAL_PATH = `./rococo-local-cfde-real-overseer.json`;
-export const RELAY_NODE_SCRIPT = `./scripts/start-alice-and-bob.sh`;
-export const SPAWNING_TIME = 30000;
-
 // OCW account
 const ocwAccount = DEFAULT_CONFIG.ocw_account;
 
@@ -46,53 +31,7 @@ const wsProvider = new WsProvider(DEFAULT_CONFIG.parachain_ws);
 // Keyring needed to sign using Alice account
 const keyring = new Keyring({ type: 'sr25519' });
 
-export async function launchAPITokenServer(): Promise<{
-    apikey_server: ChildProcess;
-}> {
-    const apikey_server = spawn(APIKEY_SERVER_PATH, [], {
-        env: {
-            etherscan: 'RF71W4Z2RDA7XQD6EN19NGB66C2QD9UPHB',
-            infura: 'aa0a6af5f94549928307febe80612a2a',
-            blockchain: '',
-        },
-    });
-
-    apikey_server.on('error', (err) => {
-        if ((err as any).errno == 'ENOENT') {
-            console.error(
-                `\x1b[31mMissing litentry-token-server binary (${APIKEY_SERVER_PATH}).\nPlease compile the litentry project:\ncargo build\x1b[0m`
-            );
-        } else {
-            console.error(err);
-        }
-        process.exit(1);
-    });
-
-    apikey_server.stdout.on('data', (data) => {
-        console.log('Litentry Token Server Output: ' + data.toString());
-    });
-
-    apikey_server.stderr.on('data', (data) => {
-        console.log('Litentry Token Server Output: ' + data.toString());
-    });
-
-    return { apikey_server };
-}
-
 export async function launchRelayNodesAndParachainRegister(api: ApiPromise) {
-    // const cmd = POLKADOT_BINARY_PATH;
-    // const aliceArgs = [`--chain`, ROCOCO_LOCAL_PATH, `--tmp`, `--port`, `30333`, `--ws-port`, `9944`, `--alice`];
-    // const bobArgs = [`--chain`, ROCOCO_LOCAL_PATH, `--tmp`, `--port`, `30334`, `--ws-port`, `9955`, `--bob`];
-
-    // const api = await ApiPromise.create({
-    //     provider: new WsProvider(DEFAULT_CONFIG.relaynode_ws),
-    //     types: {
-    //         // mapping the actual specified address format
-    //         Address: 'MultiAddress',
-    //         // mapping the lookup
-    //         LookupSource: 'MultiAddress',
-    //     },
-    // });
     // Get keyring of Alice
     const alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
     // Get keyring of Sudo
@@ -135,55 +74,6 @@ export async function launchRelayNodesAndParachainRegister(api: ApiPromise) {
     });
 
     return parachainRegister;
-}
-
-export async function launchLitentryNodes(specFilename: string, provider?: string): Promise<{ binary: ChildProcess }> {
-    const cmd = LITENTRY_BINARY_PATH;
-    // The args of main node that we use to interact with
-    const args_main_node = [
-        `--collator`,
-        `--tmp`,
-        `--parachain-id`,
-        `2022`,
-        `--port`,
-        `40333`,
-        `--ws-port`,
-        `9844`,
-        `--alice`,
-        `--execution`,
-        `native`,
-        `--`,
-        `--execution`,
-        `wasm`,
-        `--chain`,
-        ROCOCO_LOCAL_PATH,
-        `--port`,
-        `30343`,
-        `--ws-port`,
-        `9977`,
-    ];
-    const binary = spawn(cmd, args_main_node);
-
-    binary.on('error', (err) => {
-        if ((err as any).errno == 'ENOENT') {
-            console.error(
-                `\x1b[31mMissing litentry-node binary (${LITENTRY_BINARY_PATH}).\nPlease compile the litentry project:\ncargo build\x1b[0m`
-            );
-        } else {
-            console.error(err);
-        }
-        process.exit(1);
-    });
-
-    binary.stdout.on('data', (data) => {
-        console.log('Litentry Node Output: ' + data.toString());
-    });
-
-    binary.stderr.on('data', (data) => {
-        console.log('Litentry Node Output: ' + data.toString());
-    });
-
-    return { binary };
 }
 
 export async function initApiPromise(wsProvider: WsProvider) {
