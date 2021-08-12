@@ -58,6 +58,8 @@ export async function ethLink(api: ApiPromise, alice: KeyringPair, privateKey: s
                 resolve({
                     block: result.status.asFinalized.toString(),
                 });
+            } else if (result.status.isInvalid) {
+                reject(`Link creation is ${result.status}`);
             }
         });
     });
