@@ -16,12 +16,12 @@ $LITENTRY_BIN export-genesis-state --parachain-id $PARACHAIN_ID > para-$PARACHAI
 $LITENTRY_BIN export-genesis-wasm > para-$PARACHAIN_ID-wasm
 
 # run alice and bob as relay nodes
-$POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --alice --tmp --port 30333 --ws-port 9844 &> /tmp/relay.alice.log &
+$POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --alice --tmp --port 30333 --ws-port 9944 &> /tmp/relay.alice.log &
 sleep 3
-$POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --bob --tmp --port 30334 --ws-port 9845  &> /tmp/relay.bob.log &
+$POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --bob --tmp --port 30334 --ws-port 9945  &> /tmp/relay.bob.log &
 sleep 3
 
 # run a second litentry-collator instance
-$LITENTRY_BIN --collator --tmp --parachain-id $PARACHAIN_ID --port 40333 --ws-port 9854 --alice -- --execution native --chain $ROCOCO_CHAINSPEC --port 30344 --ws-port 9946 &> /tmp/para.alice.log &
+$LITENTRY_BIN --collator --tmp --parachain-id $PARACHAIN_ID --port 40333 --ws-port 9954 --alice -- --execution native --chain $ROCOCO_CHAINSPEC --port 30344 --ws-port 9946 &> /tmp/para.alice.log &
 sleep 3
-$LITENTRY_BIN --collator --tmp --parachain-id $PARACHAIN_ID --port 40334 --ws-port 9855 --bob -- --execution native --chain $ROCOCO_CHAINSPEC --port 30344 --ws-port 9947 &> /tmp/para.bob.log &
+$LITENTRY_BIN --collator --tmp --parachain-id $PARACHAIN_ID --port 40334 --ws-port 9955 --bob -- --execution native --chain $ROCOCO_CHAINSPEC --port 30344 --ws-port 9947 &> /tmp/para.bob.log &
