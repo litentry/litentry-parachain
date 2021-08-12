@@ -38,6 +38,9 @@ jobs:
     - name: Run integration test
       run: |
         cd ts-tests
-        npm install 
-        npm test
-
+        echo "NODE_ENV=ci" > .env
+        source ./scripts/start-relay-and-para-chain.sh
+        source ./scripts/start-token-server.sh
+        yarn && yarn register-parachain
+        yarn test
+        source ./scripts/clean-up.sh
