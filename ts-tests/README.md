@@ -4,13 +4,13 @@ This node.js project aims to test and verify Litentry Runtime as a whole, includ
 
 ## Install
 
-`npm i`
+`yarn`
 
 ## Run
 
 Run tests with command
 
-`npm test`
+`yarn test`
 
 ## Output
 
