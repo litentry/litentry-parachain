@@ -200,6 +200,7 @@ export async function launchLitentryNodes(
   const args_main_node = [
     `--collator`,
     `--tmp`,
+    `--force-authoring`,
     `--parachain-id`,
     `1984`,
     `--port`,
@@ -208,7 +209,7 @@ export async function launchLitentryNodes(
     `9844`,
     `--alice`,
     `--execution`,
-    `native`,
+    `wasm`,
     `--`,
     `--execution`,
     `wasm`,
