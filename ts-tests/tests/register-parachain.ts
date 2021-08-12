@@ -3,7 +3,7 @@ import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
 import { TypeRegistry } from '@polkadot/types/create';
 import { Bytes } from '@polkadot/types';
 
-import { loadConfig } from './utils';
+import { loadConfig, signAndSend } from './utils';
 
 
 async function registerParachain(api: ApiPromise, config: any) {
@@ -30,23 +30,7 @@ async function registerParachain(api: ApiPromise, config: any) {
     );
 
     console.log(`Parachain registration tx Sent!`);
-    const parachainRegister = new Promise<{ block: string }>(async (resolve, reject) => {
-        const unsub = await tx.signAndSend(alice, (result) => {
-            console.log(`Parachain registration is ${result.status}`);
-            if (result.status.isInBlock) {
-                console.log(`Parachain registration included at blockHash ${result.status.asInBlock}`);
-                console.log(`Waiting for finalization... (can take a minute)`);
-            } else if (result.status.isFinalized) {
-                console.log(`Transfer finalized at blockHash ${result.status.asFinalized}`);
-                unsub();
-                resolve({
-                    block: result.status.asFinalized.toString(),
-                });
-            }
-        });
-    });
-
-    return parachainRegister;
+    return signAndSend(tx, alice)
 }
 
 
