@@ -3,6 +3,8 @@ import { KeyringPair } from '@polkadot/keyring/types';
 import { UInt } from '@polkadot/types/codec';
 import { TypeRegistry } from '@polkadot/types/create';
 
+import { signAndSend } from './utils';
+
 // Create Ethereum Link from ALICE
 export async function ethLink(api: ApiPromise, alice: KeyringPair, privateKey: string) {
     console.log(`\nStep 1: Link Ethereum account`);
@@ -38,7 +40,7 @@ export async function ethLink(api: ApiPromise, alice: KeyringPair, privateKey: s
 
     //let sig = { r: signedMsg.r, s: signedMsg.s, v: signedMsg.v };
 
-    const transaction = api.tx.accountLinkerModule.linkEth(
+    const tx = api.tx.accountLinkerModule.linkEth(
         alice.address,
         0,
         ethAddressBytes,
@@ -46,24 +48,7 @@ export async function ethLink(api: ApiPromise, alice: KeyringPair, privateKey: s
         signedMsg.signature
     );
 
-    const link = new Promise<{ block: string }>(async (resolve, reject) => {
-        const unsub = await transaction.signAndSend(alice, (result) => {
-            console.log(`Link creation is ${result.status}`);
-            if (result.status.isInBlock) {
-                console.log(`Link included at blockHash ${result.status.asInBlock}`);
-                console.log(`Waiting for finalization... (can take a minute)`);
-            } else if (result.status.isFinalized) {
-                console.log(`Transfer finalized at blockHash ${result.status.asFinalized}`);
-                unsub();
-                resolve({
-                    block: result.status.asFinalized.toString(),
-                });
-            } else if (result.status.isInvalid) {
-                reject(`Link creation is ${result.status}`);
-            }
-        });
-    });
-    return link;
+    return signAndSend(tx, alice);
 }
 
 // Retrieve Alice & Link Storage

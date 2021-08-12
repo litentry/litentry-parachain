@@ -1,6 +1,7 @@
 import 'mocha';
 
 import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
+import { AddressOrPair, ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { TypeRegistry } from '@polkadot/types/create';
 
@@ -18,9 +19,13 @@ export function loadConfig() {
     }
 }
 
-const config = loadConfig();
+export function sleep(secs: number) {
+    return new Promise((resolve) => {
+        setTimeout(resolve, secs * 1000);
+    });
+}
 
-async function initApiPromise() {
+async function initApiPromise(config: any) {
     console.log(`Initiating the API (ignore message "Unable to resolve type B..." and "Unknown types found...")`);
     // Provider is set for parachain node
     const wsProvider = new WsProvider(config.parachain_ws);
@@ -74,24 +79,29 @@ async function initApiPromise() {
     return { api, alice };
 }
 
-async function sendTokenToOcw(api: ApiPromise, alice: KeyringPair) {
-    // Transfer tokens from Alice to ocw account
-    console.log(`Transfer tokens from Alice to ocw account`);
-    const ocwAccount = config.ocw_account;
+export function signAndSend(tx: SubmittableExtrinsic<ApiTypes>, account: AddressOrPair) {
     return new Promise<{ block: string }>(async (resolve, reject) => {
-        const unsub = await api.tx.balances.transfer(ocwAccount, 1000000000000000).signAndSend(alice, (result) => {
+        await tx.signAndSend(account, (result) => {
             console.log(`Current status is ${result.status}`);
             if (result.status.isInBlock) {
                 console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
             } else if (result.status.isFinalized) {
                 console.log(`Transaction finalized at blockHash ${result.status.asFinalized}`);
-                unsub();
                 resolve({
                     block: result.status.asFinalized.toString(),
                 });
+            } else if (result.status.isInvalid) {
+                reject(`Transaction is ${result.status}`);
             }
         });
     });
+}
+
+async function sendTokenToOcw(api: ApiPromise, alice: KeyringPair, ocwAccount: string) {
+    // Transfer tokens from Alice to ocw account
+    console.log(`Transfer tokens from Alice to ocw account`);
+    const tx = api.tx.balances.transfer(ocwAccount, 1000000000000000);
+    return signAndSend(tx, alice);
 }
 
 export function describeLitentry(
@@ -109,10 +119,11 @@ export function describeLitentry(
         };
         // Making sure the Litentry node has started
         before('Starting Litentry Test Node', async function () {
-            const initApi = await initApiPromise();
+            const config = loadConfig();
+            const initApi = await initApiPromise(config);
             context.api = initApi.api;
             context.alice = initApi.alice;
-            return sendTokenToOcw(initApi.api, initApi.alice);
+            return sendTokenToOcw(initApi.api, initApi.alice, config.ocw_account);
         });
 
         after(async function () {});

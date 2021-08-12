@@ -2,7 +2,7 @@ import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
 import { expect } from 'chai';
 import { step } from 'mocha-steps';
 
-import { describeLitentry, loadConfig } from './utils';
+import { describeLitentry, loadConfig, sleep } from './utils';
 import { ethLink, checkLinkingState } from './account-link';
 import { assetClaim, getAssets } from './account-data-retrieve';
 
@@ -33,7 +33,7 @@ describeLitentry('Test Ethereum Link and Balance Fetch', ``, (context) => {
         const { nonce: old_n, data: old_balance } = await context.api.query.system.account(ocwAccount);
 
         // Wait for 150s ~ 6 blocks
-        await new Promise((r) => setTimeout(r, 150000));
+        await sleep(150);
         const balances = await getAssets(context.api, context.alice);
 
         // TODO fetch real time balance and compare it here
