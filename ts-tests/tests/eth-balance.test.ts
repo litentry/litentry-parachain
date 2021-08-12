@@ -2,7 +2,7 @@ import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
 import { expect } from 'chai';
 import { step } from 'mocha-steps';
 
-import { describeLitentry } from './utils';
+import { describeLitentry, loadConfig } from './utils';
 import { ethLink, checkLinkingState } from './account-link';
 import { assetClaim, getAssets } from './account-data-retrieve';
 
@@ -12,7 +12,8 @@ import { assetClaim, getAssets } from './account-data-retrieve';
 //       As the conditional import is not possible, please change this line
 //       manually if you want to customize your config
 //import CONFIG from "../config.json"
-import DEFAULT_CONFIG from '../config.example.json';
+// import DEFAULT_CONFIG from '../config.example.json';
+const DEFAULT_CONFIG = loadConfig();
 
 const testEthAddress = DEFAULT_CONFIG.eth_address;
 const privateKey = DEFAULT_CONFIG.private_key;

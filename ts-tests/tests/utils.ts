@@ -12,7 +12,21 @@ import fs from 'fs';
 //       As the conditional import is not possible, please change this line
 //       manually if you want to customize your config
 //import CONFIG from "../config.json"
-import DEFAULT_CONFIG from '../config.example.json';
+// import DEFAULT_CONFIG from '../config.example.json';
+export function loadConfig() {
+    require('dotenv').config();
+    switch (process.env.NODE_ENV) {
+        case 'development':
+        case 'test':
+        case 'ci':
+            return require('../config.ci.json');
+        case 'staging':
+            return require('../config.staging.json');
+        default:
+            throw new Error(`Invalid NODE_ENV: ${process.env.NODE_ENV}`);
+    }
+}
+const DEFAULT_CONFIG = loadConfig();
 
 export const LITENTRY_BINARY_PATH = `../target/release/litentry-collator`;
 export const POLKADOT_BINARY_PATH = `../polkadot/target/release/polkadot`;
@@ -66,9 +80,9 @@ export async function launchAPITokenServer(): Promise<{
 }
 
 export async function launchRelayNodesAndParachainRegister() {
-    const cmd = POLKADOT_BINARY_PATH;
-    const aliceArgs = [`--chain`, ROCOCO_LOCAL_PATH, `--tmp`, `--port`, `30333`, `--ws-port`, `9944`, `--alice`];
-    const bobArgs = [`--chain`, ROCOCO_LOCAL_PATH, `--tmp`, `--port`, `30334`, `--ws-port`, `9955`, `--bob`];
+    // const cmd = POLKADOT_BINARY_PATH;
+    // const aliceArgs = [`--chain`, ROCOCO_LOCAL_PATH, `--tmp`, `--port`, `30333`, `--ws-port`, `9944`, `--alice`];
+    // const bobArgs = [`--chain`, ROCOCO_LOCAL_PATH, `--tmp`, `--port`, `30334`, `--ws-port`, `9955`, `--bob`];
 
     const api = await ApiPromise.create({
         provider: new WsProvider(DEFAULT_CONFIG.relaynode_ws),
@@ -261,15 +275,8 @@ export function describeLitentry(
         };
         // Making sure the Litentry node has started
         before('Starting Litentry Test Node', async function () {
-            // this.timeout(SPAWNING_TIME);
-            // Run alice and bob relay nodes on a separate process
-            relayNodes = spawn(`sh`, [`${RELAY_NODE_SCRIPT}`]);
-            // Wait for connection with relay nodes
+            // Registrar parachain
             await launchRelayNodesAndParachainRegister();
-            const initTokenServer = await launchAPITokenServer();
-            const initNode = await launchLitentryNodes(specFilename, provider);
-            tokenServer = initTokenServer.apikey_server;
-            binary = initNode.binary;
             const initApi = await initApiPromise(wsProvider);
             context.api = initApi.api;
             context.alice = initApi.alice;
@@ -277,15 +284,6 @@ export function describeLitentry(
         });
 
         after(async function () {
-            console.log(`\x1b[31m Killing RPC\x1b[0m`);
-            tokenServer.kill();
-            binary.kill();
-            relayNodes.kill();
-            // FIXME Currently we can only kill background processes with calling killall.
-            //       This needs to be changed later
-            exec(`killall polkadot`);
-            exec(`killall litentry-collator`);
-            context.api.disconnect();
         });
 
         cb(context);

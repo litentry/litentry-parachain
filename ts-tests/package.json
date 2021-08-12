@@ -7,7 +7,7 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "mocha --exit -r ts-node/register 'tests/**/*.ts'"
+    "test": "mocha --exit -r ts-node/register 'tests/**/*.test.ts'"
   },
   "author": "Han Zhao",
   "license": "ISC",
