@@ -5159,6 +5159,7 @@ version = "0.0.1"
 source = "git+https://github.com/litentry/litentry-pallets?branch=polkadot-v0.9.8#be69ead68654d87e83d3b98b967b3c55ef7ff197"
 dependencies = [
  "enumflags2",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "orml-nft",
