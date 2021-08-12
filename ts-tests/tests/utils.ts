@@ -79,20 +79,20 @@ export async function launchAPITokenServer(): Promise<{
     return { apikey_server };
 }
 
-export async function launchRelayNodesAndParachainRegister() {
+export async function launchRelayNodesAndParachainRegister(api: ApiPromise) {
     // const cmd = POLKADOT_BINARY_PATH;
     // const aliceArgs = [`--chain`, ROCOCO_LOCAL_PATH, `--tmp`, `--port`, `30333`, `--ws-port`, `9944`, `--alice`];
     // const bobArgs = [`--chain`, ROCOCO_LOCAL_PATH, `--tmp`, `--port`, `30334`, `--ws-port`, `9955`, `--bob`];
 
-    const api = await ApiPromise.create({
-        provider: new WsProvider(DEFAULT_CONFIG.relaynode_ws),
-        types: {
-            // mapping the actual specified address format
-            Address: 'MultiAddress',
-            // mapping the lookup
-            LookupSource: 'MultiAddress',
-        },
-    });
+    // const api = await ApiPromise.create({
+    //     provider: new WsProvider(DEFAULT_CONFIG.relaynode_ws),
+    //     types: {
+    //         // mapping the actual specified address format
+    //         Address: 'MultiAddress',
+    //         // mapping the lookup
+    //         LookupSource: 'MultiAddress',
+    //     },
+    // });
     // Get keyring of Alice
     const alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
     // Get keyring of Sudo
@@ -275,8 +275,6 @@ export function describeLitentry(
         };
         // Making sure the Litentry node has started
         before('Starting Litentry Test Node', async function () {
-            // Registrar parachain
-            await launchRelayNodesAndParachainRegister();
             const initApi = await initApiPromise(wsProvider);
             context.api = initApi.api;
             context.alice = initApi.alice;

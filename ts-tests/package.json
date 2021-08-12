@@ -7,6 +7,7 @@
     "test": "tests"
   },
   "scripts": {
+    "register-parachain": "ts-node tests/register-parachain.ts",
     "test": "mocha --exit -r ts-node/register 'tests/**/*.test.ts'"
   },
   "author": "Han Zhao",
