@@ -16,3 +16,5 @@ echo "Stop polkadot  ..."
 echo "Stop litentry collator  ..."
 [ -f $PARA_ALICE_PIDFILE ]   && kill -9  $(cat $PARA_ALICE_PIDFILE)
 [ -f $PARA_BOB_PIDFILE ]     && kill -9  $(cat $PARA_BOB_PIDFILE)
+
+exit 0
