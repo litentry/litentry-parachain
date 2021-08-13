@@ -1,4 +1,4 @@
-name: Rust
+name: Build and run integration test
 
 on:
   push:
@@ -38,6 +38,5 @@ jobs:
     - name: Run integration test
       run: |
         cd ts-tests
-        npm install 
-        npm test
-
+        ./scripts/run-test.sh
+      shell: bash {0}
