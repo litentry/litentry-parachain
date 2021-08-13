@@ -1,4 +1,4 @@
-name: Rust
+name: Build and run integration test
 
 on:
   push:
@@ -38,9 +38,4 @@ jobs:
     - name: Run integration test
       run: |
         cd ts-tests
-        echo "NODE_ENV=ci" > .env
-        source ./scripts/start-relay-and-para-chain.sh
-        source ./scripts/start-token-server.sh
-        yarn && yarn register-parachain
-        yarn test
-        source ./scripts/clean-up.sh
+        ./scripts/run-test.sh

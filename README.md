@@ -18,8 +18,7 @@ cargo build --release
 3. Run test
 ```
 cd ts-tests
-npm install
-npm test
+./scripts/run-test.sh
 ```
 
 

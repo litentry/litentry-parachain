@@ -6,7 +6,6 @@
 
 **/node_modules/
 **/para-*
-ts-tests/rococo-local-cfde-real-overseer.json
-ts-tests/config.json
 
 tags.lock
+yarn.lock
