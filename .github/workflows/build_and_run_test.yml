@@ -15,9 +15,9 @@ jobs:
     runs-on: self-hosted
 
     steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: true
+    # - uses: actions/checkout@v2
+    #   with:
+    #     submodules: true
     # - name: Add wasm toolchain
     #   uses: actions-rs/toolchain@v1
     #   with:
@@ -27,9 +27,9 @@ jobs:
     # - name: Build relay node and parachain
     #   run: |
     #     cargo build --release
-    #     cd polkadot
-    #     cargo build --release
-    #     cd ..
+        # cd polkadot
+        # cargo build --release
+        # cd ..
     # - name: Build token server
     #   run: |
     #     cd token-server
@@ -46,27 +46,23 @@ jobs:
         tmpdir=${{ steps.set-tmpdir.outputs.tmpdir }}
         ts-tests/scripts/run-test.sh $tmpdir
 
+    # - name: Test successful
+    #   if: ${{ success() }}
+    #   run: |
+    #     tmpdir=${{ steps.set-tmpdir.outputs.tmpdir }}
+    #     echo "Success: Removing $tmpdir ..."
+    #     rm -rf "$tmpdir"
+
+    - uses: actions/upload-artifact@v2
+      if: ${{ failure() }}
+      with:
+        name: litentry-parachain-debug.log
+        path: ${{ steps.set-tmpdir.outputs.tmpdir }}/**/*
+        retention-days: 7
+
     - name: Clean up
       if: ${{ always() }}
       run: |
         tmpdir=${{ steps.set-tmpdir.outputs.tmpdir }}
         ts-tests/scripts/clean-up.sh $tmpdir
-
-    - name: Test successful
-      if: ${{ success() }}
-      run: |
-        tmpdir=${{ steps.set-tmpdir.outputs.tmpdir }}
-        echo "Success: Removing $tmpdir ..."
         rm -rf "$tmpdir"
-
-    # - name: Test failed
-    #   if: ${{ failure() }}
-    #   run: |
-    #     tmpdir=${{ steps.set-tmpdir.outputs.tmpdir }}
-    #     echo "Failed: Please check logs in $tmpdir"
-    - uses: actions/upload-artifact@v2
-      if: failure()
-      with:
-        name: litentry-parachain-debug.log
-        path: ${{ steps.set-tmpdir.outputs.tmpdir }}/**/*
-        retention-days: 7
