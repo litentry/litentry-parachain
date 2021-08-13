@@ -31,6 +31,7 @@ pallet-assets = { git = "https://github.com/paritytech/substrate", default-featu
 pallet-aura = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8" }
 pallet-democracy = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8" }
+pallet-identity = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8" }
 pallet-randomness-collective-flip = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8" }
 pallet-treasury = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8" }
@@ -69,6 +70,12 @@ pallet-nft = { git = "https://github.com/litentry/litentry-pallets", default-fea
 
 orml-nft = { git = "https://github.com/open-web3-stack/open-runtime-module-library", default-features = false, rev = "ca054d3078a8d157d0c176ed319d6ff49f38d349" }
 
+# benchmarking 
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8", optional = true }
+frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.8", optional = true }
+
+hex-literal = "0.3"
+
 [build-dependencies]
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.8" }
 
@@ -106,6 +113,7 @@ std = [
 	"pallet-scheduler/std",
 	"pallet-collective/std",
 	"pallet-democracy/std",
+	"pallet-identity/std",
 	"pallet-transaction-payment/std",
 	"pallet-account-linker/std",
 	"pallet-offchain-worker/std",
@@ -125,4 +133,17 @@ std = [
 	"xcm-executor/std",
 	"log/std",
 	"max-encoded-len/std",
+]
+
+runtime-benchmarks = [
+	"frame-benchmarking",
+	"frame-system-benchmarking",
+	"frame-support/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"pallet-collective/runtime-benchmarks",
+	"pallet-xcm/runtime-benchmarks",
+	"xcm-builder/runtime-benchmarks",
+	"pallet-account-linker/runtime-benchmarks",
+	"pallet-offchain-worker/runtime-benchmarks",
+	"pallet-nft/runtime-benchmarks",
 ]

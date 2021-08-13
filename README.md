@@ -6,16 +6,25 @@ The Litentry parachain.
 
 
 ## Setup
-1. Build polkadot binary
+1. Update git submodule
+```
+git submodule update --init --recursive
+```
+2. Build polkadot binary
 ```
 cd polkadot
 cargo build --release
 ```
-2. Build Litentry parachain binary
+3. Build Litentry parachain binary
 ```
 cargo build --release
 ```
-3. Run test
+4. Build token server binary
+```
+cd token-server
+cargo build --release
+```
+5. Run test
 ```
 cd ts-tests
 ./scripts/run-test.sh
