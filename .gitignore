@@ -8,6 +8,3 @@ source/
 
 **/node_modules/
 **/para-*
-
-tags.lock
-yarn.lock
