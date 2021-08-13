@@ -2,15 +2,13 @@
 
 This node.js project aims to test and verify Litentry Runtime as a whole, including the interactions between user, AccountLink and OffChainWorker.
 
-## Install
+## To run tests with one-line command:
 
-`npm i`
+```
+./scripts/run-test.sh
+```
 
-## Run
-
-Run tests with command
-
-`npm test`
+To run separate yarn targets, please check package.json
 
 ## Output
 
