@@ -4,6 +4,8 @@
 .DS_Store
 /.cargo/config
 
+source/
+
 **/node_modules/
 **/para-2022*
 ts-tests/rococo-local-cfde-real-overseer.json
