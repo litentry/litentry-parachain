@@ -21,7 +21,7 @@ echo
 
 if [[ $2 -eq 0 ]]; then
     echo "Removing $TMP_DIR ..."
-    # rm -rf "$TMP_DIR"
+    rm -rf "$TMP_DIR"
 else
     echo "Please check logs in $TMP_DIR"
 fi
