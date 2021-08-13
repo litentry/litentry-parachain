@@ -1,5 +1,7 @@
 #!/bin/sh
 
+TMP_DIR="$1"
+
 echo "killing litentry-token-server ..."
 killall litentry-token-server
 echo "killing polkadot ..."
@@ -10,8 +12,8 @@ killall litentry-collator
 echo
 
 if [ "$2" -eq 0 ]; then
-    echo "Removing $1 ..."
-    rm -rf "$1"
+    echo "Removing $TMP_DIR ..."
+    rm -rf "$TMP_DIR"
 else
-    echo "Please check logs in $1"
+    echo "Please check logs in $TMP_DIR"
 fi
