@@ -15,26 +15,27 @@ jobs:
     runs-on: self-hosted
 
     steps:
-    # - uses: actions/checkout@v2
-    #   with:
-    #     submodules: true
-    # - name: Add wasm toolchain
-    #   uses: actions-rs/toolchain@v1
-    #   with:
-    #     toolchain: nightly-2021-03-24
-    #     target: wasm32-unknown-unknown
-    #     override: true
-    # - name: Build relay node and parachain
-    #   run: |
-    #     cargo build --release
-        # cd polkadot
-        # cargo build --release
-        # cd ..
-    # - name: Build token server
-    #   run: |
-    #     cd token-server
-    #     cargo build --release
-    #     cd ..
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+    - name: Add wasm toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: nightly-2021-03-24
+        target: wasm32-unknown-unknown
+        override: true
+    - name: Build relay node and parachain
+      run: |
+        cargo build --release
+        cd polkadot
+        cargo build --release
+        cd ..
+    - name: Build token server
+      run: |
+        cd token-server
+        cargo build --release
+        cd ..
+
     - name: Set tmp directory
       id: set-tmpdir
       run: |
@@ -45,13 +46,6 @@ jobs:
       run: |
         tmpdir=${{ steps.set-tmpdir.outputs.tmpdir }}
         ts-tests/scripts/run-test.sh $tmpdir
-
-    # - name: Test successful
-    #   if: ${{ success() }}
-    #   run: |
-    #     tmpdir=${{ steps.set-tmpdir.outputs.tmpdir }}
-    #     echo "Success: Removing $tmpdir ..."
-    #     rm -rf "$tmpdir"
 
     - uses: actions/upload-artifact@v2
       if: ${{ failure() }}

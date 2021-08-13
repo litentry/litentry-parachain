@@ -13,5 +13,3 @@ echo "NODE_ENV=ci" > .env
 ./scripts/start-token-server.sh "$tmpdir"
 yarn && yarn register-parachain 2>&1 | tee "$tmpdir/register-parachain.log"
 yarn test 2>&1 | tee "$tmpdir/test.log"
-
-exit 1
