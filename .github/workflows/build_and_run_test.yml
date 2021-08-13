@@ -39,3 +39,4 @@ jobs:
       run: |
         cd ts-tests
         ./scripts/run-test.sh
+      shell: bash {0}
