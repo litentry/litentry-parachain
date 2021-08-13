@@ -35,18 +35,38 @@ jobs:
     #     cd token-server
     #     cargo build --release
     #     cd ..
+    - name: Set tmp directory
+      id: set-tmpdir
+      run: |
+        tmpdir=$(mktemp -d /tmp/tmp.XXXXXX)
+        echo "::set-output name=tmpdir::$tmpdir"
+
     - name: Run integration test
       run: |
-        exit 0
-        # cd ts-tests
-        # ./scripts/run-test.sh
-      shell: bash {0}
-    - name: Clean up
-      if: ${{ failure() }}
-      run: |
-        echo "Failed"
+        tmpdir=${{ steps.set-tmpdir.outputs.tmpdir }}
+        ts-tests/scripts/run-test.sh $tmpdir
 
     - name: Clean up
+      if: ${{ always() }}
+      run: |
+        tmpdir=${{ steps.set-tmpdir.outputs.tmpdir }}
+        ts-tests/scripts/clean-up.sh $tmpdir
+
+    - name: Test successful
       if: ${{ success() }}
       run: |
-        echo "Success"
+        tmpdir=${{ steps.set-tmpdir.outputs.tmpdir }}
+        echo "Success: Removing $tmpdir ..."
+        rm -rf "$tmpdir"
+
+    # - name: Test failed
+    #   if: ${{ failure() }}
+    #   run: |
+    #     tmpdir=${{ steps.set-tmpdir.outputs.tmpdir }}
+    #     echo "Failed: Please check logs in $tmpdir"
+    - uses: actions/upload-artifact@v2
+      if: failure()
+      with:
+        name: litentry-parachain-debug.log
+        path: ${{ steps.set-tmpdir.outputs.tmpdir }}/**/*
+        retention-days: 7
