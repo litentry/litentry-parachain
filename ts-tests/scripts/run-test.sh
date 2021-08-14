@@ -5,8 +5,7 @@ cd "$basedir"
 
 cd ..
 
-tmpdir=$(mktemp -d /tmp/tmp.XXXXXX)
-tmpdir="${1:-$tmpdir}"
+tmpdir="${1:-/tmp}"
 
 echo "NODE_ENV=ci" > .env
 ./scripts/start-relay-and-para-chain.sh "$tmpdir"
