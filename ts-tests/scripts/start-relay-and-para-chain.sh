@@ -8,8 +8,7 @@ LITENTRY_BIN=$GIT_ROOT/target/release/litentry-collator
 POLKADOT_BIN=$GIT_ROOT/polkadot/target/release/polkadot
 
 # temp directory to store logs
-TMP_DIR="$1"
-TMP_DIR=${TMP_DIR:=/tmp}
+TMP_DIR="${1:-/tmp}"
 . $basedir/constants.sh $TMP_DIR
 
 # generate chain spec
