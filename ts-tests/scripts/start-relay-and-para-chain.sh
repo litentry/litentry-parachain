@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 basedir=$(dirname "$0")
 # configure the relative paths of binary

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 TMP_DIR="/tmp"
 TMP_DIR="${1:-$TMP_DIR}"
