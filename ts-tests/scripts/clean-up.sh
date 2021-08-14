@@ -1,7 +1,6 @@
 #!/bin/sh
 
-TMP_DIR="/tmp"
-TMP_DIR="${1:-$TMP_DIR}"
+TMP_DIR="${1:-/tmp}"
 basedir=$(dirname "$0")
 
 . $basedir/constants.sh $TMP_DIR
