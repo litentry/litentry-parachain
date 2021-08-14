@@ -60,3 +60,4 @@ jobs:
         tmpdir=${{ steps.set-tmpdir.outputs.tmpdir }}
         ts-tests/scripts/clean-up.sh $tmpdir
         rm -rf "$tmpdir"
+      shell: bash {0}

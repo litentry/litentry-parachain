@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/bin/bash
+
+set -o pipefail
 
 TMP_DIR="${1:-/tmp}"
 basedir=$(dirname "$0")
