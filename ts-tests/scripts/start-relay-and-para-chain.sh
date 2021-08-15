@@ -23,7 +23,9 @@ sleep 3
 $POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --bob --tmp --port 30334 --ws-port 9945  &> "$TMP_DIR/relay.bob.log" &
 sleep 3
 
-# run a second litentry-collator instance
-$LITENTRY_BIN --collator --tmp --parachain-id $PARACHAIN_ID --port 40333 --ws-port 9954 --alice -- --execution native --chain $ROCOCO_CHAINSPEC --port 30344 --ws-port 9946 &> "$TMP_DIR/para.alice.log" &
+# run a litentry-collator instance
+# use --force-authoring to generate blocks even it's in single-node network
+$LITENTRY_BIN --collator --force-authoring --tmp --parachain-id $PARACHAIN_ID --port 40333 --ws-port 9954 --alice --execution wasm \
+  -- \
+  --execution wasm --chain $ROCOCO_CHAINSPEC --port 30344 --ws-port 9946 &> "$TMP_DIR/para.alice.log" &
 sleep 3
-$LITENTRY_BIN --collator --tmp --parachain-id $PARACHAIN_ID --port 40334 --ws-port 9955 --bob -- --execution native --chain $ROCOCO_CHAINSPEC --port 30344 --ws-port 9947 &> "$TMP_DIR/para.bob.log" &
