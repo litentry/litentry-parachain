@@ -21,18 +21,13 @@ jobs:
     - name: Add wasm toolchain
       uses: actions-rs/toolchain@v1
       with:
-        toolchain: nightly-2021-03-24
+        toolchain: stable
         target: wasm32-unknown-unknown
         override: true
     - name: Build relay node and parachain
       run: |
         cargo build --release
         cd polkadot
-        cargo build --release
-        cd ..
-    - name: Build token server
-      run: |
-        cd token-server
         cargo build --release
         cd ..
 
