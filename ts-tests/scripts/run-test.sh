@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -o pipefail
+
 basedir=$(dirname "$0")
 cd "$basedir"
 

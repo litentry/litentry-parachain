@@ -46,6 +46,7 @@ jobs:
       run: |
         tmpdir=${{ steps.set-tmpdir.outputs.tmpdir }}
         ts-tests/scripts/run-test.sh $tmpdir
+      shell: bash {0}
 
     - uses: actions/upload-artifact@v2
       if: ${{ failure() }}
