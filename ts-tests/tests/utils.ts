@@ -61,9 +61,10 @@ async function initApiPromise(config: any) {
     console.log(`Initialization done`);
     console.log(`Genesis at block: ${api.genesisHash.toHex()}`);
 
-    // Get keyring of Alice
+    // Get keyring of Alice and Bob
     const keyring = new Keyring({ type: 'sr25519' });
     const alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
+    const bob = keyring.addFromUri('//Bob', { name: 'Bob default' });
 
     // Insert ocw session key
     const resInsertKey = api.rpc.author.insertKey(
@@ -72,11 +73,12 @@ async function initApiPromise(config: any) {
         '0x8c35b97c56099cf3b5c631d1f296abbb11289857e74a8f60936290080d56da6d'
     );
 
-    const { nonce, data: balance } = await api.query.system.account(alice.address);
-    console.log(`Alice Substrate Account: ${alice.address}`);
-    console.log(`Alice Substrate Account (nonce: ${nonce}) balance, free: ${balance.free.toHex()}`);
+    const { nonce: nonceAlice, data: balanceAlice } = await api.query.system.account(alice.address);
+    const { nonce: nonceBob, data: balanceBob } = await api.query.system.account(bob.address);
+    console.log(`Alice Substrate Account: ${alice.address} (nonce: ${nonceAlice}) balance, free: ${balanceAlice.free.toHex()}`);
+    console.log(`Bob Substrate Account: ${bob.address} (nonce: ${nonceBob}) balance, free: ${balanceBob.free.toHex()}`);
 
-    return { api, alice };
+    return { api, alice, bob};
 }
 
 export function signAndSend(tx: SubmittableExtrinsic<ApiTypes>, account: AddressOrPair) {
@@ -97,25 +99,19 @@ export function signAndSend(tx: SubmittableExtrinsic<ApiTypes>, account: Address
     });
 }
 
-async function sendTokenToOcw(api: ApiPromise, alice: KeyringPair, ocwAccount: string) {
-    // Transfer tokens from Alice to ocw account
-    console.log(`Transfer tokens from Alice to ocw account`);
-    const tx = api.tx.balances.transfer(ocwAccount, 1000000000000000);
-    return signAndSend(tx, alice);
-}
-
 export function describeLitentry(
     title: string,
     specFilename: string,
-    cb: (context: { api: ApiPromise; alice: KeyringPair }) => void
+    cb: (context: { api: ApiPromise; alice: KeyringPair; bob: KeyringPair }) => void
 ) {
     describe(title, function () {
         // Set timeout to 6000 seconds (Because of 50-blocks delay of rococo, so called "training wheels")
         this.timeout(6000000);
 
-        let context: { api: ApiPromise; alice: KeyringPair } = {
+        let context: { api: ApiPromise; alice: KeyringPair; bob: KeyringPair } = {
             api: {} as ApiPromise,
             alice: {} as KeyringPair,
+            bob: {} as KeyringPair,
         };
         // Making sure the Litentry node has started
         before('Starting Litentry Test Node', async function () {
@@ -123,7 +119,7 @@ export function describeLitentry(
             const initApi = await initApiPromise(config);
             context.api = initApi.api;
             context.alice = initApi.alice;
-            return sendTokenToOcw(initApi.api, initApi.alice, config.ocw_account);
+            context.bob = initApi.bob;
         });
 
         after(async function () {});
