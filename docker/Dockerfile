@@ -24,4 +24,5 @@ RUN useradd -m -u 1000 -U -s /bin/sh -d /litentry-parachain litentry && \
 EXPOSE 30333 9933 9944 40333
 VOLUME ["/data"]
 
-CMD ["/usr/local/bin/litentry-collator"]
+ENTRYPOINT ["/usr/local/bin/litentry-collator"]
+CMD ["--tmp", "--dev"]
