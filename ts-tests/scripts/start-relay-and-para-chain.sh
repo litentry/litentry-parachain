@@ -5,7 +5,7 @@ basedir=$(dirname "$0")
 PARACHAIN_ID=2022
 GIT_ROOT=`git rev-parse --show-toplevel`
 LITENTRY_BIN=$GIT_ROOT/target/release/litentry-collator
-POLKADOT_BIN=$GIT_ROOT/polkadot/target/release/polkadot
+POLKADOT_BIN=/tmp/polkadot
 
 # temp directory to store logs
 TMP_DIR="${1:-/tmp}"

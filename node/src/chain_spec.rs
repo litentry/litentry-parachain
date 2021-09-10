@@ -127,7 +127,6 @@ fn testnet_genesis(
 			balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
 		},
 		sudo: parachain_runtime::SudoConfig { key: root_key },
-		orml_nft: Default::default(),
 		parachain_info: parachain_runtime::ParachainInfoConfig { parachain_id: id },
 		democracy: parachain_runtime::DemocracyConfig::default(),
 		council: parachain_runtime::CouncilConfig::default(),
