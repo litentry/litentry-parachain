@@ -1,0 +1,88 @@
+version: "3.7"
+services:
+  relaychain-alice:
+    ports:
+      - 9944:9944
+      - 9933:9933
+      - 30333:30333
+    volumes:
+      - relaychain-alice:/data
+    build:
+      context: .
+      dockerfile: relaychain.Dockerfile
+    command:
+      - --base-path=/data
+      - --chain=/app/rococo-local.json
+      - --validator
+      - --ws-external
+      - --rpc-external
+      - --rpc-cors=all
+      - --name=alice
+      - --alice
+      - --rpc-methods=unsafe
+      - --no-beefy
+      - --force-authoring
+    environment: {}
+    ulimits:
+      &a1
+      nofile:
+        soft: 65536
+        hard: 65536
+  relaychain-bob:
+    ports:
+      - 9945:9944
+      - 9934:9933
+      - 30334:30333
+    volumes:
+      - relaychain-bob:/data
+    build:
+      context: .
+      dockerfile: relaychain.Dockerfile
+    command:
+      - --base-path=/data
+      - --chain=/app/rococo-local.json
+      - --validator
+      - --ws-external
+      - --rpc-external
+      - --rpc-cors=all
+      - --name=bob
+      - --bob
+      - --rpc-methods=unsafe
+      - --no-beefy
+    environment: {}
+    ulimits: *a1
+  parachain-2022-0:
+    ports:
+      - 9954:9944
+      - 9936:9933
+      - 40333:30333
+    volumes:
+      - parachain-2022-0:/data
+    build:
+      context: .
+      dockerfile: parachain-2022.Dockerfile
+    command:
+      - --base-path=/data
+      - --chain=/app/dev-2022.json
+      - --ws-external
+      - --rpc-external
+      - --rpc-cors=all
+      - --name=parachain-2022-0
+      - --collator
+      - --parachain-id=2022
+      - --rpc-methods=unsafe
+      - --force-authoring
+      - --execution=wasm
+      - --alice
+      - --node-key=c02aab73e4dd1bd1553f0458101c6c227d15b65dae6fe3980f652149d4a59e86
+      - --listen-addr=/ip4/0.0.0.0/tcp/30333
+      - --
+      - --chain=/app/rococo-local.json
+      - --execution=wasm
+      - --name=relaychain-alice
+    environment: {}
+    ulimits: *a1
+volumes:
+  ? relaychain-alice
+  ? relaychain-bob
+  ? parachain-2022-0
