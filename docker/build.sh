@@ -13,7 +13,7 @@ echo "HEAD commit: $HEAD_COMMIT"
 
 if [ "$TAG_COMMIT" == "$HEAD_COMMIT" ]; then
     VERSION=`git describe --tags $TAG_COMMIT`
-else:
+else
     VERSION=`git rev-parse --short HEAD`
 fi
 
@@ -24,7 +24,7 @@ GITREPO=litentry-parachain
 
 # Build the image
 echo "Building ${GITUSER}/${GITREPO}:latest docker image, hang on!"
-time docker build -f ./docker/Dockerfile --build-arg RUSTC_WRAPPER= --build-arg PROFILE=release -t ${GITUSER}/${GITREPO}:latest .
+time docker build -f ./docker/Dockerfile --build-arg PROFILE=release -t ${GITUSER}/${GITREPO}:latest .
 
 # Tag it with VERSION
 docker tag ${GITUSER}/${GITREPO}:latest ${GITUSER}/${GITREPO}:${VERSION}
