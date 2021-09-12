@@ -8,15 +8,17 @@ cd $PROJECT_ROOT
 
 TAG_COMMIT=`git rev-list --tags --max-count=1`
 HEAD_COMMIT=`git rev-parse HEAD`
-echo "TAG: $TAG_COMMIT"
-echo "HEAD: $HEAD_COMMIT"
+echo "TAG  commit: $TAG_COMMIT"
+echo "HEAD commit: $HEAD_COMMIT"
 
-VERSION=$HEAD_COMMIT
 if [ "$TAG_COMMIT" == "$HEAD_COMMIT" ]; then
     VERSION=`git describe --tags $TAG_COMMIT`
 else:
     VERSION=`git rev-parse --short HEAD`
 fi
+
+echo "VERSION: $VERSION"
+
 GITUSER=litentry
 GITREPO=litentry-parachain
 

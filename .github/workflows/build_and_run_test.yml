@@ -64,4 +64,5 @@ jobs:
         docker-compose rm -f -s -v
         docker volume ls | grep generated_ | sed 's/local *//' | xargs docker volume rm
         docker rmi -f $(docker images litentry/litentry-parachain --format "{{.Repository}}:{{.Tag}}" | grep -v latest)
+        docker rmi -f $(docker images --filter=reference='generated_*' --format "{{.Repository}}:{{.Tag}}")
         rm -rf "$tmpdir"
