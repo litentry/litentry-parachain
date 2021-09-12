@@ -2,7 +2,7 @@ name: Build & Test
 
 on:
   push:
-    branches: [ dev ]
+    branches: [ dev, add-docker-image ]
   pull_request:
     branches: [ dev ]
 
@@ -15,20 +15,15 @@ jobs:
     runs-on: self-hosted
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout codes
+      uses: actions/checkout@v2
       with:
         submodules: true
-    - name: Add wasm toolchain
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        target: wasm32-unknown-unknown
-        override: true
-    - name: Build relay node and parachain
+
+    - name: Build docker image
       run: |
-        cargo build --release
-        cd polkadot
-        cargo build --release
+        cd docker
+        ./build.sh
         cd ..
 
     - name: Set tmp directory
@@ -37,23 +32,36 @@ jobs:
         tmpdir=$(mktemp -d /tmp/tmp.XXXXXX)
         echo "::set-output name=tmpdir::$tmpdir"
 
+    - name: Start docker containers
+      run: |
+        cd docker/generated
+        docker-compose up -d --build
+
     - name: Run integration test
       run: |
         tmpdir=${{ steps.set-tmpdir.outputs.tmpdir }}
         ts-tests/scripts/run-test.sh $tmpdir
       shell: bash {0}
 
-    - uses: actions/upload-artifact@v2
+    - name: Archive logs if test fails
+      uses: actions/upload-artifact@v2
       if: ${{ failure() }}
       with:
         name: litentry-parachain-debug.log
         path: ${{ steps.set-tmpdir.outputs.tmpdir }}/**/*
         retention-days: 7
 
+    - name: Push docker image if test passes
+      if: ${{ success() }}
+      run: |
+        docker push -a litentry/litentry-parachain
+
     - name: Clean up
       if: ${{ always() }}
       run: |
         tmpdir=${{ steps.set-tmpdir.outputs.tmpdir }}
-        ts-tests/scripts/clean-up.sh $tmpdir
+        cd docker/generated
+        docker-compose rm -f -s -v
+        docker volume ls | grep generated_ | sed 's/local *//' | xargs docker volume rm
+        docker rmi -f $(docker images litentry/litentry-parachain --format "{{.Repository}}:{{.Tag}}" | grep -v latest)
         rm -rf "$tmpdir"
-      shell: bash {0}

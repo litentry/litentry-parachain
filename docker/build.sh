@@ -14,6 +14,8 @@ echo "HEAD: $HEAD_COMMIT"
 VERSION=$HEAD_COMMIT
 if [ "$TAG_COMMIT" == "$HEAD_COMMIT" ]; then
     VERSION=`git describe --tags $TAG_COMMIT`
+else:
+    VERSION=`git rev-parse --short HEAD`
 fi
 GITUSER=litentry
 GITREPO=litentry-parachain
