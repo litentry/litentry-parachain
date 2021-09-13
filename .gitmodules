@@ -1,3 +1,0 @@
-[submodule "token-server"]
-	path = token-server
-	url = https://github.com/litentry/litentry-token-server
