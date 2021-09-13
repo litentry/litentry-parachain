@@ -63,6 +63,7 @@ jobs:
         cd docker/generated
         docker-compose rm -f -s -v
         docker volume ls | grep generated_ | sed 's/local *//' | xargs docker volume rm
+        [ -z "$(docker images --filter=dangling=true -q)" ] || docker rmi -f $(docker images --filter=dangling=true -q)
         docker rmi -f $(docker images litentry/litentry-parachain --format "{{.Repository}}:{{.Tag}}" | grep -v latest)
         docker rmi -f $(docker images --filter=reference='generated_*' --format "{{.Repository}}:{{.Tag}}")
         rm -rf "$tmpdir"
