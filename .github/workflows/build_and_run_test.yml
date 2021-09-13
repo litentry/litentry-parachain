@@ -55,6 +55,8 @@ jobs:
     - name: Push docker image if test passes
       if: ${{ success() }}
       run: |
+        [ -z "$(docker images --filter=dangling=true -q)" ] || docker rmi -f $(docker images --filter=dangling=true -q)
+        docker images
         docker push -a litentry/litentry-parachain
 
     - name: Clean up
