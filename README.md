@@ -40,7 +40,7 @@ cd ts-tests
 ./scripts/run-test.sh
 ```
 You might need to clean-up the docker images/containers/volumes if you don't want them.
-Please check [`github actions`](./.github/workflows/build_and_run_test.yml) for more.
+Please check [`ts-tests/scripts/clean-up.sh`](./ts-tests/scripts/clean-up.sh) for more.
 
 ## License
 Apache-2.0

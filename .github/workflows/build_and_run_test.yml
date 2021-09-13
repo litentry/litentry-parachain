@@ -22,10 +22,8 @@ jobs:
 
     - name: Build docker image
       run: |
-        docker images
-        cd docker
         ./build.sh
-        cd ..
+      working-directory: ./docker
 
     - name: Set tmp directory
       id: set-tmpdir
@@ -35,8 +33,8 @@ jobs:
 
     - name: Start docker containers
       run: |
-        cd docker/generated
         docker-compose up -d --build
+      working-directory: ./docker/generated
 
     - name: Run integration test
       run: |
@@ -63,11 +61,5 @@ jobs:
       if: ${{ always() }}
       run: |
         tmpdir=${{ steps.set-tmpdir.outputs.tmpdir }}
-        docker images
-        cd docker/generated
-        docker-compose rm -f -s -v
-        docker volume ls | grep generated_ | sed 's/local *//' | xargs docker volume rm
-        [ -z "$(docker images --filter=dangling=true -q)" ] || docker rmi -f $(docker images --filter=dangling=true -q)
-        docker rmi -f $(docker images litentry/litentry-parachain --format "{{.Repository}}:{{.Tag}}" | grep -v latest)
-        docker rmi -f $(docker images --filter=reference='generated_*' --format "{{.Repository}}:{{.Tag}}")
         rm -rf "$tmpdir"
+        ts-tests/scripts/clean-up.sh
