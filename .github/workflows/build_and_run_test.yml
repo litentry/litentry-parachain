@@ -22,6 +22,7 @@ jobs:
 
     - name: Build docker image
       run: |
+        docker images
         cd docker
         ./build.sh
         cd ..
@@ -60,6 +61,7 @@ jobs:
       if: ${{ always() }}
       run: |
         tmpdir=${{ steps.set-tmpdir.outputs.tmpdir }}
+        docker images
         cd docker/generated
         docker-compose rm -f -s -v
         docker volume ls | grep generated_ | sed 's/local *//' | xargs docker volume rm
