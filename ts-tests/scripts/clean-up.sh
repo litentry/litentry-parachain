@@ -1,20 +1,23 @@
-#!/bin/bash
+#!/bin/sh
 
-set -o pipefail
-
-TMP_DIR="${1:-/tmp}"
 basedir=$(dirname "$0")
+cd "$basedir/../../docker/generated"
 
-. $basedir/constants.sh $TMP_DIR
+docker images
 
-echo "Stop token server ..."
-[ -f $TOKEN_SERVER_PIDFILE ] && kill -9 $(cat $TOKEN_SERVER_PIDFILE)
+echo "stop and remove docker containers..."
+docker-compose rm -f -s -v
 
-echo "Stop polkadot  ..."
-[ -f $RELAY_ALICE_PIDFILE ]  && kill -9  $(cat $RELAY_ALICE_PIDFILE)
-[ -f $RELAY_BOB_PIDFILE ]    && kill -9  $(cat $RELAY_BOB_PIDFILE)
+echo "remove docker volumes..."
+docker volume ls | grep generated_ | sed 's/local *//' | xargs docker volume rm
 
-echo "Stop litentry collator  ..."
-[ -f $PARA_ALICE_PIDFILE ]   && kill -9  $(cat $PARA_ALICE_PIDFILE)
+echo "remove dangling docker images if any..."
+[ -z "$(docker images --filter=dangling=true -q)" ] || docker rmi -f $(docker images --filter=dangling=true -q)
 
-exit 0
+echo "keep litentry/litentry-parachain:latest while removing other tags..."
+docker rmi -f $(docker images litentry/litentry-parachain --format "{{.Repository}}:{{.Tag}}" | grep -v latest)
+
+echo "remove generated images..."
+docker rmi -f $(docker images --filter=reference='generated_*' --format "{{.Repository}}:{{.Tag}}")
+
+echo "cleaned up."

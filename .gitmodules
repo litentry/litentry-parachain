@@ -1,6 +1,0 @@
-[submodule "polkadot"]
-	path = polkadot
-	url = https://github.com/paritytech/polkadot
-[submodule "token-server"]
-	path = token-server
-	url = https://github.com/litentry/litentry-token-server
