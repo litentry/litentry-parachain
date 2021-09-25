@@ -216,9 +216,9 @@ impl InstanceFilter<Call> for ProxyType {
 			ProxyType::NonTransfer => !matches!(c, Call::Balances(..)),
 			ProxyType::Governance => matches!(
 				c,
-				Call::Democracy(..) |
-					Call::Council(..) | Call::TechnicalCommittee(..) |
-					Call::Treasury(..)
+				Call::Democracy(..)
+					| Call::Council(..) | Call::TechnicalCommittee(..)
+					| Call::Treasury(..)
 			),
 		}
 	}
