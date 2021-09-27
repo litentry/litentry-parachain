@@ -58,7 +58,6 @@ pub fn get_collator_keys_from_seed(seed: &str) -> AuraId {
 	get_pair_from_seed::<AuraId>(seed)
 }
 
-/// Get the parachain properties which should be filled into chain spec
 pub fn parachain_properties(symbol: &str, decimals: u32, ss58format: u32) -> Option<Properties> {
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), symbol.into());
@@ -68,13 +67,18 @@ pub fn parachain_properties(symbol: &str, decimals: u32, ss58format: u32) -> Opt
 	Some(properties)
 }
 
+/// Get default parachain properties for Litentry which will be filled into chain spec
+pub fn default_parachain_properties() -> Option<Properties> {
+	parachain_properties("LIT", 12, 31)
+}
+
 pub fn get_chain_spec_dev(id: ParaId) -> ChainSpec {
 	ChainSpec::from_genesis(
 		"litentry-dev",
 		"litentry-dev",
 		ChainType::Development,
 		move || {
-			dev_genesis(
+			default_genesis(
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				vec![
 					(
@@ -105,8 +109,8 @@ pub fn get_chain_spec_dev(id: ParaId) -> ChainSpec {
 		},
 		vec![],
 		None,
-		Some("Litentry"),                    // TODO
-		parachain_properties("LIT", 12, 30), // TODO
+		Some("Litentry"),
+		default_parachain_properties(),
 		Extensions { relay_chain: "rococo-local".into(), para_id: id.into() },
 	)
 }
@@ -117,35 +121,46 @@ pub fn get_chain_spec_staging(id: ParaId) -> ChainSpec {
 		"litentry-staging",
 		ChainType::Local,
 		move || {
-			staging_genesis(
-				// TODO: generate sudo, invulnerables, endowed_accounts for staging
-				hex!["9ed7705e3c7da027ba0583a22a3212042f7e715d3c168ba14f1424e2bc111d00"].into(),
+			default_genesis(
+				// Staging keys are derivative keys based on a single master secret phrase:
+				//
+				// root: 	$SECRET
+				// account:	$SECRET//collator//<id>
+				// aura: 	$SECRET//collator//<id>//aura
+
+				// 5DaB1AshD6NsRRq84rsLuR65aD8tTPxp2Ub7HnqVtirgWn4V
+				hex!["42b5bbd733848b2207070115b0ed7479ea391f58c7c703cbdb960333005a4f67"].into(),
 				vec![
 					(
-						// $secret//one
-						hex!["aad9fa2249f87a210a0f93400b7f90e47b810c6d65caa0ca3f5af982904c2a33"]
+						// 5FZP2oqDBBWzaKp8STUQKTvSo2Y1UD68briboWreLiVAxJr1
+						hex!["9a937224ffe6f9ec81301a63739e399836a77b77c5e7c59f9dcf75ee674e040b"]
 							.into(),
-						hex!["aad9fa2249f87a210a0f93400b7f90e47b810c6d65caa0ca3f5af982904c2a33"]
+						// 5HbUXue4BsoBmR1ZSWCurQMTdi2jrDdVzMQoKtc8ByMH9uEc
+						hex!["f4a4ec8eca5abe1f2a84690e4f999fdc4ae0b95abad33fcd9ed222a3fba7876f"]
 							.unchecked_into(),
 					),
 					(
-						// $secret//two
-						hex!["d47753f0cca9dd8da00c70e82ec4fc5501a69c49a5952a643d18802837c88212"]
+						// 5EJLoe5Uaj8U7jTxJwiDCP1kNSnHu4Buw8pdkpm136QRiAEC
+						hex!["62df08d3d47b89aa675268f30e516b3614e01fd888d92bb4d0d0733cc564f04d"]
 							.into(),
-						hex!["d47753f0cca9dd8da00c70e82ec4fc5501a69c49a5952a643d18802837c88212"]
+						// 5E9ky6gxEMAHrVRLyubyL4UqCkdt5kJmHkB7HuxJ3Y5LDvm3
+						hex!["5c532a810bd75624694109c1f2cb735c6b504b4c0ad5035e738415395272a73c"]
 							.unchecked_into(),
 					),
 				],
 				vec![
-					hex!["9ed7705e3c7da027ba0583a22a3212042f7e715d3c168ba14f1424e2bc111d00"].into()
+					hex!["9a937224ffe6f9ec81301a63739e399836a77b77c5e7c59f9dcf75ee674e040b"].into(),
+					hex!["62df08d3d47b89aa675268f30e516b3614e01fd888d92bb4d0d0733cc564f04d"].info(),
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_account_id_from_seed::<sr25519::Public>("Bob"),
 				],
 				id,
 			)
 		},
 		vec![],
 		None,
-		Some("Litentry"),                    // TODO
-		parachain_properties("LIT", 12, 30), // TODO
+		Some("Litentry"),
+		default_parachain_properties(),
 		Extensions { relay_chain: "rococo-local".into(), para_id: id.into() },
 	)
 }
@@ -153,12 +168,7 @@ pub fn get_chain_spec_staging(id: ParaId) -> ChainSpec {
 // TODO: update this
 const LITENTRY_ED: u128 = 100_000_000_000;
 
-// TODO: the genesis config in `dev_genesis` and `staging_genesis` depends on
-//		 which pallets need to be included
-// idea: `dev_genesis` should have all the pallets that we need for convenience of development
-//		 `staging_genesis` should be as close to production as possbile
-//                         (e.g. PoA -> PoS -> remove sudo -> governance)
-fn dev_genesis(
+fn default_genesis(
 	root_key: AccountId,
 	invulnerables: Vec<(AccountId, AuraId)>,
 	endowed_accounts: Vec<AccountId>,
@@ -197,8 +207,7 @@ fn dev_genesis(
 				.collect(),
 		},
 		democracy: parachain_runtime::DemocracyConfig::default(),
-		council: parachain_runtime::CouncilConfig::default(),
-		technical_committee: parachain_runtime::TechnicalCommitteeConfig {
+		council: parachain_runtime::CouncilConfig {
 			members: endowed_accounts
 				.iter()
 				.take((num_endowed_accounts + 1) / 2)
@@ -206,53 +215,6 @@ fn dev_genesis(
 				.collect(),
 			phantom: Default::default(),
 		},
-		treasury: Default::default(),
-		aura: Default::default(),
-		aura_ext: Default::default(),
-		parachain_system: Default::default(),
-	}
-}
-
-fn staging_genesis(
-	root_key: AccountId,
-	invulnerables: Vec<(AccountId, AuraId)>,
-	endowed_accounts: Vec<AccountId>,
-	id: ParaId,
-) -> parachain_runtime::GenesisConfig {
-	let num_endowed_accounts = endowed_accounts.len();
-
-	parachain_runtime::GenesisConfig {
-		system: parachain_runtime::SystemConfig {
-			code: parachain_runtime::WASM_BINARY
-				.expect("WASM binary was not build, please build it!")
-				.to_vec(),
-			changes_trie_config: Default::default(),
-		},
-		balances: parachain_runtime::BalancesConfig {
-			balances: endowed_accounts.iter().cloned().map(|k| (k, LITENTRY_ED * 4096)).collect(),
-		},
-		sudo: parachain_runtime::SudoConfig { key: root_key },
-		parachain_info: parachain_runtime::ParachainInfoConfig { parachain_id: id },
-		collator_selection: parachain_runtime::CollatorSelectionConfig {
-			invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
-			candidacy_bond: LITENTRY_ED * 16,
-			..Default::default()
-		},
-		session: parachain_runtime::SessionConfig {
-			keys: invulnerables
-				.iter()
-				.cloned()
-				.map(|(acc, aura)| {
-					(
-						acc.clone(),                             // account id
-						acc.clone(),                             // validator id
-						parachain_runtime::SessionKeys { aura }, // session keys
-					)
-				})
-				.collect(),
-		},
-		democracy: parachain_runtime::DemocracyConfig::default(),
-		council: parachain_runtime::CouncilConfig::default(),
 		technical_committee: parachain_runtime::TechnicalCommitteeConfig {
 			members: endowed_accounts
 				.iter()
