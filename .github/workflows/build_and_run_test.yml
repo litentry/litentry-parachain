@@ -11,15 +11,9 @@ env:
 
 jobs:
   build-test:
-
     runs-on: self-hosted
 
     steps:
-    - name: Runner workspace path
-      run: |
-        echo "Cleaning up previous run"
-        rm -rf "${{ github.workspace }}"
-
     - name: Checkout codes
       uses: actions/checkout@v2
 
