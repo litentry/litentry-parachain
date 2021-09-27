@@ -150,7 +150,7 @@ pub fn get_chain_spec_staging(id: ParaId) -> ChainSpec {
 				],
 				vec![
 					hex!["9a937224ffe6f9ec81301a63739e399836a77b77c5e7c59f9dcf75ee674e040b"].into(),
-					hex!["62df08d3d47b89aa675268f30e516b3614e01fd888d92bb4d0d0733cc564f04d"].info(),
+					hex!["62df08d3d47b89aa675268f30e516b3614e01fd888d92bb4d0d0733cc564f04d"].into(),
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					get_account_id_from_seed::<sr25519::Public>("Bob"),
 				],
