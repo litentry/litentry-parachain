@@ -17,8 +17,6 @@ jobs:
     steps:
     - name: Checkout codes
       uses: actions/checkout@v2
-      with:
-        submodules: true
 
     - name: Build docker image
       run: |
