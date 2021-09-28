@@ -11,14 +11,11 @@ env:
 
 jobs:
   build-test:
-
     runs-on: self-hosted
 
     steps:
     - name: Checkout codes
       uses: actions/checkout@v2
-      with:
-        submodules: true
 
     - name: Build docker image
       run: |
