@@ -1,3 +1,7 @@
+# A parachain-launch (https://github.com/open-web3-stack/parachain-launch) config
+# used in staging env
+# contains 3 relaychain nodes + 2 parachain node
+#
 # Relaychain Configuration
 relaychain:
   image: parity/polkadot:v0.9.10 # the docker image to use
@@ -19,17 +23,16 @@ relaychain:
       flags: # additional CLI flags for this node
         - --force-authoring
     - name: bob
+    - name: charlie
 
 # Parachain Configuration
 parachains:
 # Config for first parachain
 - image: litentry/litentry-parachain:latest
-  chain: dev
+  chain: staging
   id: 2022 # override parachain id
   parachain: true # this is parachain, not parathread
   flags: # CLI flags for these parachain nodes
-    - --rpc-methods=unsafe
-    - --force-authoring
     - --execution=wasm
   relaychainFlags: # CLI flags for the relaychain port
     - --execution=wasm
@@ -40,6 +43,11 @@ parachains:
     rpcPort: 9936
     port: 40333
     flags: # additional CLI flags for this node
-      - --alice
+    relaychainFlags: # additional CLI flags for relaychain part
+      - --name=relaychain-alice
+  - wsPort: 9955
+    rpcPort: 9937
+    port: 40334
+    flags: # additional CLI flags for this node
     relaychainFlags: # additional CLI flags for relaychain part
       - --name=relaychain-alice

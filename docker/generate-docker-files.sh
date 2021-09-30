@@ -1,7 +1,9 @@
 #!/bin/sh
 
-basedir=$(dirname "$0")
-cd "$basedir"
+BASEDIR=$(dirname "$0")
+cd "$BASEDIR"
+
+CHAIN_TYPE=${1:-dev}
 
 if ! docker image inspect litentry/litentry-parachain:latest &>/dev/null; then
   echo "please build litentry/litentry-parachain:latest first"
@@ -15,11 +17,11 @@ if ! parachain-launch --version &>/dev/null; then
   exit 1
 fi
 
-parachain-launch generate --config=2relay-1para-launch-config.yml --output=generated --yes
+parachain-launch generate --config="parachain-launch-config-$CHAIN_TYPE.yml" --output="generated-$CHAIN_TYPE" --yes
 
 cat << EOF
 
-Done, please check files under $basedir/generated/
+Done, please check files under $BASEDIR/generated-$CHAIN_TYPE/
 
 To start the network, run
 cd generated

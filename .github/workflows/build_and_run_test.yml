@@ -31,7 +31,7 @@ jobs:
     - name: Start docker containers
       run: |
         docker-compose up -d --build
-      working-directory: ./docker/generated
+      working-directory: ./docker/generated-dev
 
     - name: Run integration test
       run: |
