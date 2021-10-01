@@ -2,9 +2,17 @@ name: Build & Test
 
 on:
   push:
-    branches: [ dev ]
+    branches:
+      - dev
+    paths-ignore:
+      - '**/dependabot.yml'
+      - '**/README.md'
   pull_request:
-    branches: [ dev ]
+    branches:
+      - dev
+    paths-ignore:
+      - '**/dependabot.yml'
+      - '**/README.md'
 
 env:
   CARGO_TERM_COLOR: always
