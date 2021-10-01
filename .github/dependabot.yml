@@ -22,4 +22,4 @@ updates:
       - dependency-name: "test-runner"
       - dependency-name: "generate-bags"
     schedule:
-      interval: "daily"
+      interval: "weekly"
