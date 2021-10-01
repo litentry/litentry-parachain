@@ -32,7 +32,8 @@ cd docker
 ```
 Prerequisite: [parachain-launch](https://github.com/open-web3-stack/parachain-launch) must be installed.
 
-To build staging env chain-specs, use `./generate-docker-files.sh staging`.
+To build staging env chain-specs, use `./generate-docker-files.sh staging`
+staging env doesn't really run the service inside docker container, but the generated chain specs are useful.
 
 ## run CI tests locally
 
