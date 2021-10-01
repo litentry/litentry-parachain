@@ -4111,7 +4111,7 @@ dependencies = [
  "log",
  "parachain-runtime",
  "parity-scale-codec",
- "parking_lot 0.9.0",
+ "parking_lot 0.11.1",
  "polkadot-cli",
  "polkadot-parachain",
  "polkadot-primitives",
