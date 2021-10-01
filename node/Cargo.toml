@@ -28,7 +28,7 @@ serde = { version = "1.0.119", features = ["derive"] }
 hex-literal = "0.2.1"
 
 # RPC related dependencies
-jsonrpc-core = "15.1.0"
+jsonrpc-core = "18.0.0"
 
 # Substrate dependencies
 sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.10" }
