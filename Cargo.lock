@@ -4118,7 +4118,7 @@ dependencies = [
  "structopt",
  "substrate-build-script-utils",
  "substrate-prometheus-endpoint",
- "trie-root 0.15.2",
+ "trie-root",
 ]
 
 [[package]]
@@ -9653,7 +9653,7 @@ dependencies = [
  "thiserror",
  "tracing",
  "trie-db",
- "trie-root 0.16.0",
+ "trie-root",
 ]
 
 [[package]]
@@ -9757,7 +9757,7 @@ dependencies = [
  "sp-core",
  "sp-std",
  "trie-db",
- "trie-root 0.16.0",
+ "trie-root",
 ]
 
 [[package]]
@@ -10610,15 +10610,6 @@ dependencies = [
  "log",
  "rustc-hex",
  "smallvec 1.6.1",
-]
-
-[[package]]
-name = "trie-root"
-version = "0.15.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b779f7c1c8fe9276365d9d5be5c4b5adeacf545117bb3f64c974305789c5c0b"
-dependencies = [
- "hash-db",
 ]
 
 [[package]]
