@@ -20,7 +20,7 @@ derive_more = "0.99.16"
 exit-future = "0.2.0"
 futures = { version = "0.3.1", features = ["compat"] }
 log = "0.4.13"
-parking_lot = "0.11.1"
+parking_lot = "0.11.2"
 trie-root = "0.16.0"
 codec = { package = "parity-scale-codec", version = "2.0.0" }
 structopt = "0.3.3"
