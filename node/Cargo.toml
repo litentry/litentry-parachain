@@ -23,7 +23,7 @@ log = "0.4.13"
 parking_lot = "0.11.1"
 trie-root = "0.15.2"
 codec = { package = "parity-scale-codec", version = "2.0.0" }
-structopt = "0.3.3"
+structopt = "0.3.23"
 serde = { version = "1.0.130", features = ["derive"] }
 hex-literal = "0.2.1"
 
