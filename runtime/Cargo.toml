@@ -94,6 +94,7 @@ std = [
 	"frame-support/std",
 	"frame-executive/std",
 	"frame-system/std",
+	"frame-benchmarking/std",
 	"pallet-assets/std",
 	"pallet-aura/std",
 	"pallet-authorship/std",
@@ -135,4 +136,5 @@ runtime-benchmarks = [
 	"pallet-collective/runtime-benchmarks",
 	"pallet-xcm/runtime-benchmarks",
 	"xcm-builder/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
 ]
