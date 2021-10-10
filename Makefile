@@ -17,7 +17,7 @@ build-benchmark:
 	cargo build --features runtime-benchmarks --release
 
 build-spec:
-	./target/release/litentry-collator build-spec --disable-default-bootnode > ./source/local.json
+	./target/release/litentry-collator build-spec --chain dev --disable-default-bootnode > ./source/local.json
 
 benchmark-frame-system:
 	target/release/litentry-collator benchmark \
