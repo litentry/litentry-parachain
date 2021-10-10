@@ -29,9 +29,10 @@ type Hash = sp_core::H256;
 
 // Native executor instance.
 native_executor_instance!(
-	pub RococoParachainRuntimeExecutor,
+	pub LitentryParachainRuntimeExecutor,
 	parachain_runtime::api::dispatch,
 	parachain_runtime::native_version,
+	frame_benchmarking::benchmarking::HostFunctions,
 );
 
 /// Starts a `ServiceBuilder` for a full service.
@@ -298,14 +299,14 @@ where
 
 /// Build the import queue for the rococo parachain runtime.
 pub fn rococo_parachain_build_import_queue(
-	client: Arc<TFullClient<Block, parachain_runtime::RuntimeApi, RococoParachainRuntimeExecutor>>,
+	client: Arc<TFullClient<Block, parachain_runtime::RuntimeApi, LitentryParachainRuntimeExecutor>>,
 	config: &Configuration,
 	telemetry: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
 ) -> Result<
 	sc_consensus::DefaultImportQueue<
 		Block,
-		TFullClient<Block, parachain_runtime::RuntimeApi, RococoParachainRuntimeExecutor>,
+		TFullClient<Block, parachain_runtime::RuntimeApi, LitentryParachainRuntimeExecutor>,
 	>,
 	sc_service::Error,
 > {
@@ -348,9 +349,9 @@ pub async fn start_rococo_parachain_node(
 	id: ParaId,
 ) -> sc_service::error::Result<(
 	TaskManager,
-	Arc<TFullClient<Block, parachain_runtime::RuntimeApi, RococoParachainRuntimeExecutor>>,
+	Arc<TFullClient<Block, parachain_runtime::RuntimeApi, LitentryParachainRuntimeExecutor>>,
 )> {
-	start_node_impl::<parachain_runtime::RuntimeApi, RococoParachainRuntimeExecutor, _, _, _>(
+	start_node_impl::<parachain_runtime::RuntimeApi, LitentryParachainRuntimeExecutor, _, _, _>(
 		parachain_config,
 		polkadot_config,
 		id,
