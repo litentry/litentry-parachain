@@ -1,6 +1,6 @@
 use cumulus_primitives_core::ParaId;
 use hex_literal::hex;
-use parachain_runtime::{AccountId, AuraId, Signature};
+use litentry_parachain_runtime::{AccountId, AuraId, Signature};
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup, Properties};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
@@ -8,7 +8,8 @@ use sp_core::{crypto::UncheckedInto, sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
-pub type ChainSpec = sc_service::GenericChainSpec<parachain_runtime::GenesisConfig, Extensions>;
+pub type ChainSpec =
+	sc_service::GenericChainSpec<litentry_parachain_runtime::GenesisConfig, Extensions>;
 
 /// Helper function to generate a crypto pair from seed
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
@@ -173,41 +174,41 @@ fn default_genesis(
 	invulnerables: Vec<(AccountId, AuraId)>,
 	endowed_accounts: Vec<AccountId>,
 	id: ParaId,
-) -> parachain_runtime::GenesisConfig {
+) -> litentry_parachain_runtime::GenesisConfig {
 	let num_endowed_accounts = endowed_accounts.len();
 
-	parachain_runtime::GenesisConfig {
-		system: parachain_runtime::SystemConfig {
-			code: parachain_runtime::WASM_BINARY
+	litentry_parachain_runtime::GenesisConfig {
+		system: litentry_parachain_runtime::SystemConfig {
+			code: litentry_parachain_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
 			changes_trie_config: Default::default(),
 		},
-		balances: parachain_runtime::BalancesConfig {
+		balances: litentry_parachain_runtime::BalancesConfig {
 			balances: endowed_accounts.iter().cloned().map(|k| (k, LITENTRY_ED * 4096)).collect(),
 		},
-		sudo: parachain_runtime::SudoConfig { key: root_key },
-		parachain_info: parachain_runtime::ParachainInfoConfig { parachain_id: id },
-		collator_selection: parachain_runtime::CollatorSelectionConfig {
+		sudo: litentry_parachain_runtime::SudoConfig { key: root_key },
+		parachain_info: litentry_parachain_runtime::ParachainInfoConfig { parachain_id: id },
+		collator_selection: litentry_parachain_runtime::CollatorSelectionConfig {
 			invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
 			candidacy_bond: LITENTRY_ED * 16,
 			..Default::default()
 		},
-		session: parachain_runtime::SessionConfig {
+		session: litentry_parachain_runtime::SessionConfig {
 			keys: invulnerables
 				.iter()
 				.cloned()
 				.map(|(acc, aura)| {
 					(
-						acc.clone(),                             // account id
-						acc.clone(),                             // validator id
-						parachain_runtime::SessionKeys { aura }, // session keys
+						acc.clone(),                                      // account id
+						acc.clone(),                                      // validator id
+						litentry_parachain_runtime::SessionKeys { aura }, // session keys
 					)
 				})
 				.collect(),
 		},
-		democracy: parachain_runtime::DemocracyConfig::default(),
-		council: parachain_runtime::CouncilConfig {
+		democracy: litentry_parachain_runtime::DemocracyConfig::default(),
+		council: litentry_parachain_runtime::CouncilConfig {
 			members: endowed_accounts
 				.iter()
 				.take((num_endowed_accounts + 1) / 2)
@@ -215,7 +216,7 @@ fn default_genesis(
 				.collect(),
 			phantom: Default::default(),
 		},
-		technical_committee: parachain_runtime::TechnicalCommitteeConfig {
+		technical_committee: litentry_parachain_runtime::TechnicalCommitteeConfig {
 			members: endowed_accounts
 				.iter()
 				.take((num_endowed_accounts + 1) / 2)
