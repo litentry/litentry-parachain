@@ -1,7 +1,7 @@
 #!/bin/sh
 
 basedir=$(dirname "$0")
-cd "$basedir/../../docker/generated-dev"
+cd "$basedir/../docker/generated-dev"
 
 docker images
 

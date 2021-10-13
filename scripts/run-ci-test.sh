@@ -3,7 +3,7 @@
 set -o pipefail
 
 basedir=$(dirname "$0")
-cd "$basedir/.."
+cd "$basedir/../ts-tests"
 
 tmpdir="${1:-/tmp}"
 
