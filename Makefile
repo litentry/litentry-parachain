@@ -23,7 +23,7 @@ build-runtime:
 
 .PHONY: build-docker
 build-docker:
-	@cd docker; ./build.sh
+	@./scripts/build-docker.sh
 
 .PHONY: build-spec-dev
 build-spec-dev:
@@ -45,7 +45,7 @@ test-node:
 
 .PHONY: test-ci
 test-ci: launch-local-docker
-	./scripts/run-ci-test.sh
+	@./scripts/run-ci-test.sh
 
 ## format
 
@@ -68,11 +68,11 @@ clean-local-docker:
 
 .PHONY: generate-docker-compose-dev
 generate-docker-compose-dev:
-	@./docker/generate-docker-files.sh dev
+	@./scripts/generate-docker-files.sh dev
 
 .PHONY: generate-docker-compose-staging
 generate-docker-compose-staging:
-	@./docker/generate-docker-files.sh staging
+	@./scripts/generate-docker-files.sh staging
 
 ## benchmark
 

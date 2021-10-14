@@ -1,9 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set -o pipefail
+set -eo pipefail
 
-basedir=$(dirname "$0")
-cd "$basedir/../ts-tests"
+ROOTDIR=$(git rev-parse --show-toplevel)
+cd "$ROOTDIR/ts-tests"
 
 tmpdir="${1:-/tmp}"
 

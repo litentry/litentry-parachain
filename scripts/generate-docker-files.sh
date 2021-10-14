@@ -1,7 +1,8 @@
-#!/bin/sh
+#!/usr/bin/env bash
+set -eo pipefail
 
-BASEDIR=$(dirname "$0")
-cd "$BASEDIR"
+ROOTDIR=$(git rev-parse --show-toplevel)
+cd "$ROOTDIR/docker"
 
 CHAIN_TYPE=${1:-dev}
 

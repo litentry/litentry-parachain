@@ -1,7 +1,8 @@
-#!/bin/sh
+#!/usr/bin/env bash
+set -eo pipefail
 
-basedir=$(dirname "$0")
-cd "$basedir/../docker/generated-dev"
+ROOTDIR=$(git rev-parse --show-toplevel)
+cd "$ROOTDIR/docker/generated-dev"
 
 docker images
 
