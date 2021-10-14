@@ -22,6 +22,9 @@ env:
 jobs:
   build-test:
     if: "!contains(github.event.commits[0].message, '[SKIP CI]')"
+    concurrency:
+      group: ${{ github.ref }}
+      cancel-in-progress: true
     runs-on: self-hosted
     steps:
     - name: Checkout codes
