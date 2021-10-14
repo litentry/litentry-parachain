@@ -13,6 +13,7 @@ on:
     paths-ignore:
       - '**/dependabot.yml'
       - '**/README.md'
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
@@ -26,45 +27,30 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Build docker image
-      run: |
-        ./build.sh
-      working-directory: ./docker
+      uses: ./.github/workflows/build_docker_image.yml
+      with:
+        branch: ${GITHUB_REF#refs/heads/}
 
-    - name: Set tmp directory
-      id: set-tmpdir
+    - name: Start docker containers and run CI
       run: |
-        tmpdir=$(mktemp -d /tmp/tmp.XXXXXX)
-        echo "::set-output name=tmpdir::$tmpdir"
-
-    - name: Start docker containers
-      run: |
-        docker-compose up -d --build
-      working-directory: ./docker/generated-dev
-
-    - name: Run integration test
-      run: |
-        tmpdir=${{ steps.set-tmpdir.outputs.tmpdir }}
-        ts-tests/scripts/run-test.sh $tmpdir
-      shell: bash {0}
+        make test-ci
 
     - name: Archive logs if test fails
       uses: actions/upload-artifact@v2
       if: ${{ failure() }}
       with:
-        name: litentry-parachain-debug.log
-        path: ${{ steps.set-tmpdir.outputs.tmpdir }}/**/*
+        name: ci-log
+        path: /tmp/parachain_ci_test.log
         retention-days: 7
 
-    - name: Push docker image if test passes
-      if: ${{ success() }}
-      run: |
-        [ -z "$(docker images --filter=dangling=true -q)" ] || docker rmi -f $(docker images --filter=dangling=true -q)
-        docker images
-        docker push -a litentry/litentry-parachain
+    - name: Push docker image on dev branch if test passes
+      if: ${{ success() && (github.ref == 'refs/heads/dev') }}
+      uses: ./.github/workflows/push_docker_image.yml
+      with:
+        tag: latest
 
     - name: Clean up
       if: ${{ always() }}
       run: |
-        tmpdir=${{ steps.set-tmpdir.outputs.tmpdir }}
-        rm -rf "$tmpdir"
-        ts-tests/scripts/clean-up.sh
+        rm -f /tmp/parachain_ci_test.log
+        make clean-local-docker
