@@ -22,7 +22,7 @@ parachain-launch generate --config="parachain-launch-config-$CHAIN_TYPE.yml" --o
 
 cat << EOF
 
-Done, please check files under $BASEDIR/generated-$CHAIN_TYPE/
+Done, please check files under $ROOTDIR/docker/generated-$CHAIN_TYPE/
 
 To start the network, run
 cd generated
