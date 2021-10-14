@@ -19,8 +19,8 @@ env:
 
 jobs:
   build-test:
+    if: "!contains(github.event.commits[0].message, '[SKIP CI]')"
     runs-on: self-hosted
-
     steps:
     - name: Checkout codes
       uses: actions/checkout@v2
