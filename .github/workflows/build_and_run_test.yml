@@ -28,7 +28,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Build docker image
-      uses: ./.github/workflows/build_docker_image.yml
+      uses: ./.github/workflows/build_docker_image.yml@${{ github.ref }}
       with:
         branch: ${GITHUB_REF#refs/heads/}
 
@@ -46,7 +46,7 @@ jobs:
 
     - name: Push docker image on dev branch if test passes
       if: ${{ success() && (github.ref == 'refs/heads/dev') }}
-      uses: ./.github/workflows/push_docker_image.yml
+      uses: ./.github/workflows/push_docker_image.yml@${{ github.ref }}
       with:
         tag: latest
 
