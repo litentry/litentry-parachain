@@ -1,20 +1,22 @@
 #!/usr/bin/env bash
-set -e
-pushd .
+set -eo pipefail
 
-# The following line ensure we run from the project root
-PROJECT_ROOT=`git rev-parse --show-toplevel`
-cd $PROJECT_ROOT
+ROOTDIR=$(git rev-parse --show-toplevel)
+cd "$ROOTDIR"
 
-TAG_COMMIT=`git rev-list --tags --max-count=1`
-HEAD_COMMIT=`git rev-parse HEAD`
-echo "TAG  commit: $TAG_COMMIT"
-echo "HEAD commit: $HEAD_COMMIT"
+VERSION="$1"
 
-if [ "$TAG_COMMIT" == "$HEAD_COMMIT" ]; then
-    VERSION=`git describe --tags $TAG_COMMIT`
-else
-    VERSION=`git rev-parse --short HEAD`
+if [ -z "$VERSION" ]; then
+    TAG_COMMIT=`git rev-list --tags --max-count=1`
+    HEAD_COMMIT=`git rev-parse HEAD`
+    echo "TAG  commit: $TAG_COMMIT"
+    echo "HEAD commit: $HEAD_COMMIT"
+
+    if [ "$TAG_COMMIT" == "$HEAD_COMMIT" ]; then
+        VERSION=`git describe --tags $TAG_COMMIT`
+    else
+        VERSION=`git rev-parse --short HEAD`
+    fi
 fi
 
 echo "VERSION: $VERSION"
@@ -32,5 +34,3 @@ docker tag ${GITUSER}/${GITREPO}:latest ${GITUSER}/${GITREPO}:${VERSION}
 # Show the list of available images for this repo
 echo "Image is ready"
 docker images | grep ${GITREPO}
-
-popd

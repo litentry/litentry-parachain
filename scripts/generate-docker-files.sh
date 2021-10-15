@@ -1,7 +1,8 @@
-#!/bin/sh
+#!/usr/bin/env bash
+set -eo pipefail
 
-BASEDIR=$(dirname "$0")
-cd "$BASEDIR"
+ROOTDIR=$(git rev-parse --show-toplevel)
+cd "$ROOTDIR/docker"
 
 CHAIN_TYPE=${1:-dev}
 
@@ -20,10 +21,8 @@ fi
 parachain-launch generate --config="parachain-launch-config-$CHAIN_TYPE.yml" --output="generated-$CHAIN_TYPE" --yes
 
 cat << EOF
+Done, please check files under $ROOTDIR/docker/generated-$CHAIN_TYPE/
 
-Done, please check files under $BASEDIR/generated-$CHAIN_TYPE/
-
-To start the network, run
-cd generated
-docker-compose up -d --build
+To start the network, run:
+make launch-local-docker
 EOF
