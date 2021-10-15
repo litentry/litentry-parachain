@@ -35,10 +35,6 @@ build-benchmark:
 
 ## test
 
-.PHONY: test-all
-test-all:
-	cargo test
-
 .PHONY: test-node
 test-node:
 	cargo test --package $(call pkgid, $(NODE_BIN))
