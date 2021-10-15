@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - dev
-      - 133-improve-ci-gh-actions
     paths-ignore:
       - '**/dependabot.yml'
       - '**/README.md'
