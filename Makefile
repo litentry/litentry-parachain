@@ -74,67 +74,23 @@ generate-docker-compose-dev:
 generate-docker-compose-staging:
 	@./scripts/generate-docker-files.sh staging
 
-## benchmark
+## benchmark for pallets
 
 .PHONY: benchmark-frame-system
 benchmark-frame-system:
-	target/release/litentry-collator benchmark \
-	--chain=./source/local.json \
-	--execution=wasm  \
-	--db-cache=20 \
-	--wasm-execution=compiled \
-	--pallet=frame_system \
-	--extrinsic=* \
-	--heap-pages=4096 \
-	--steps=20 \
-	--repeat=50 \
-	--output=./source/weights.rs \
-	--template=./.maintain/frame-weight-template.hbs
+	@./scripts/run-benchmark-pallet.sh frame_system
 
 .PHONY: benchmark-account-linker
 benchmark-account-linker:
-	target/release/litentry-collator benchmark \
-	--chain=./source/local.json \
-	--execution=wasm  \
-	--db-cache=20 \
-	--wasm-execution=compiled \
-	--pallet=pallet-account-linker \
-	--extrinsic=* \
-	--heap-pages=4096 \
-	--steps=20 \
-	--repeat=50 \
-	--output=./source/weights.rs \
-	--template=./.maintain/frame-weight-template.hbs
+	@./scripts/run-benchmark-pallet.sh account-linker
 
 .PHONY: benchmark-offchain-worker
 benchmark-offchain-worker:
-	target/release/litentry-collator benchmark \
-	--chain=./source/local.json \
-	--execution=wasm  \
-	--db-cache=20 \
-	--wasm-execution=compiled \
-	--pallet=pallet-offchain-worker \
-	--extrinsic=* \
-	--heap-pages=4096 \
-	--steps=20 \
-	--repeat=50 \
-	--output=./source/weights.rs \
-	--template=./.maintain/frame-weight-template.hbs
+	@./scripts/run-benchmark-pallet.sh pallet-offchain-worker
 
 .PHONY: benchmark-nft
 benchmark-nft:
-	target/release/litentry-collator benchmark \
-	--chain=./source/local.json \
-	--execution=wasm  \
-	--db-cache=20 \
-	--wasm-execution=compiled \
-	--pallet=pallet-nft \
-	--extrinsic=* \
-	--heap-pages=4096 \
-	--steps=20 \
-	--repeat=50 \
-	--output=./source/weights.rs \
-	--template=./.maintain/frame-weight-template.hbs
+	@./scripts/run-benchmark-pallet.sh pallet-nft
 
 define pkgid
 	$(shell cargo pkgid $1)
