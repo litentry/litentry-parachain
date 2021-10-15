@@ -50,8 +50,8 @@ To run the CI tests locally, dev network must be launched first as above, then:
 ```
 make test-ci
 ```
-You might need to clean-up the docker images/containers/volumes if you don't want them.
-Please check [`ts-tests/scripts/clean-up.sh`](./ts-tests/scripts/clean-up.sh) for more.
+You may want to run `make clean-local-docker` to stop the containers and tidy them.
+Please note that this command also removes all local `litentry/litentry-parachain` images except the one with latest tag.
 
 ## License
 Apache-2.0
