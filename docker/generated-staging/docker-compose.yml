@@ -94,7 +94,7 @@ services:
       - --collator
       - --parachain-id=2022
       - --execution=wasm
-      - --node-key=d6cc47382dba173a61e79221ccc67edbde14dd5a79d244f53d3e8aa4ef20145a
+      - --node-key=76a9b9b4c6b3ffd5cd17e260b6622b7084ce1895c880682efab5f69b137f663c
       - --listen-addr=/ip4/0.0.0.0/tcp/30333
       - --
       - --chain=/app/rococo-local.json
@@ -122,7 +122,7 @@ services:
       - --collator
       - --parachain-id=2022
       - --execution=wasm
-      - --bootnodes=/dns/parachain-2022-0/tcp/30333/p2p/12D3KooWH5AaxRC7Jz62qvzjjAo4TbTQWLtLVXq8N8CC6WSZY1ov
+      - --bootnodes=/dns/parachain-2022-0/tcp/30333/p2p/12D3KooWStcee6gchLEYirsDgkyKBog6DdPEuDANWAykugTZRAvm
       - --listen-addr=/ip4/0.0.0.0/tcp/30333
       - --
       - --chain=/app/rococo-local.json
