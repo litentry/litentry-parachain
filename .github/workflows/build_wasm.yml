@@ -8,8 +8,6 @@ on:
         default: dev
         required: false
   push:
-    branches:
-      - 140-use-srtool-to-build-wasm
     tags:
       - "*"
 
@@ -35,7 +33,7 @@ jobs:
       - name: Summary
         run: |
           echo '${{ steps.srtool_build.outputs.json }}' | jq . > litentry-parachain-srtool-digest.json
-          cat ${{ matrix.chain }}-srtool-digest.json
+          cat litentry-parachain-srtool-digest.json
           echo "==============================================="
           echo "compact runtime:            ${{ steps.srtool_build.outputs.wasm }}"
           echo "compact compressed runtime: ${{ steps.srtool_build.outputs.wasm_compressed }}"
