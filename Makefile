@@ -16,10 +16,15 @@ build-all:
 build-node:
 	cargo build -p $(call pkgid, $(NODE_BIN)) --release
 
-# TODO: use srtool to build wasm
 .PHONY: build-runtime
 build-runtime:
 	cargo build -p $(call pkgid, $(RUNTIME)) --release
+
+# use srtool to build wasm locally
+# in github actions srtool-actions is used
+.PHONY: srtool-build-wasm
+srtool-build-wasm:
+	@./scripts/build-wasm.sh
 
 .PHONY: build-docker
 build-docker:
