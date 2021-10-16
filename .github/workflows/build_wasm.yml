@@ -10,9 +10,6 @@ on:
   push:
     tags:
       - "*"
-  push:
-    branches:
-      - 140-use-srtool-to-build-wasm
 
 env:
   CARGO_TERM_COLOR: always
