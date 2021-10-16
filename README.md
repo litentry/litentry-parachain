@@ -1,5 +1,6 @@
 # litentry-parachain
 [![Build & Test](https://github.com/litentry/litentry-parachain/actions/workflows/build_and_run_test.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/build_and_run_test.yml)
+[![Build wasm](https://github.com/litentry/litentry-parachain/actions/workflows/build_wasm.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/build_wasm.yml)
 [![Update Pallets](https://github.com/litentry/litentry-parachain/actions/workflows/update_pallets.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/update_pallets.yml)
 
 The Litentry parachain.
