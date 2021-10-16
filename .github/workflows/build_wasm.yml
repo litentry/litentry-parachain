@@ -8,6 +8,8 @@ on:
         default: dev
         required: false
   push:
+    branches:
+      - 140-use-srtool-to-build-wasm
     tags:
       - "*"
 
