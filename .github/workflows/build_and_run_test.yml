@@ -48,7 +48,7 @@ jobs:
         retention-days: 7
 
     - name: Push docker image on dev branch if test passes
-      if: ${{ success() && (github.event == 'push') && (github.ref == 'refs/heads/dev') }}
+      if: ${{ success() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
       run:
         docker push litentry/litentry-parachain:latest
 
