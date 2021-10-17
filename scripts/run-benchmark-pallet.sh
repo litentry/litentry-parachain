@@ -3,9 +3,8 @@
 set -eo pipefail
 
 function usage() {
-    echo "Usage: ./$0 pallet-name"
+    echo "Usage: $0 pallet-name"
 }
-
 
 [ $# -ne 1 ] && (usage; exit 1)
 
