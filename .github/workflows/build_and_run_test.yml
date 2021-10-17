@@ -30,6 +30,11 @@ jobs:
     - name: Checkout codes
       uses: actions/checkout@v2
 
+    - name: Debug
+      run: |
+        echo "event is ${{ github.event }}"
+        echo "branch is ${{ github.ref }}"
+
     - name: Build docker image
       run: |
         ./scripts/build-docker.sh
@@ -47,11 +52,6 @@ jobs:
         name: ci-log
         path: /tmp/parachain_ci_test.log
         retention-days: 7
-
-    - name: Debug
-      run: |
-        echo "event is ${{ github.event }}"
-        echo "branch is ${{ github.ref }}"
 
     - name: Push docker image on dev branch if test passes
       if: ${{ success() && (github.event == 'push') && (github.ref == 'refs/heads/dev') }}
