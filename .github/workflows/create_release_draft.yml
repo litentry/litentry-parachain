@@ -6,9 +6,13 @@ on:
       ref:
         description: an existing tag (e.g. v1.2.3)
         required: true
+  push:
+    branches:
+      - 146-skeletons-for-releases
+
 
 env:
-  RELEASE_TAG: ${{ github.event.inputs.ref }}
+  RELEASE_TAG: ${{ github.event.inputs.ref || github.ref }}
 
 jobs:
   ## build runtime wasm ##
@@ -85,7 +89,7 @@ jobs:
 
       - name: Generate release notes
         run: |
-          echo "TODO" > ${{ github.workspace }}/.github/release_text.md
+          echo "${GITHUB_WORKSPACE}" > ${{ github.workspace }}/.github/release_text.md
 
       - name: Create release draft
         id: create-release-draft
