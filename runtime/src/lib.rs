@@ -149,7 +149,9 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("litentry-parachain"),
 	impl_name: create_runtime_str!("litentry-parachain"),
 	authoring_version: 1,
-	spec_version: 1,
+	// same versioning-mechanism as polkadot, corresponds to 0.1.0 package version/client version.
+	// last digit is used for minor updates, like 9110 -> 9111 in polkadot 
+	spec_version: 1000,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,

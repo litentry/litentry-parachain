@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-set -eo pipefail
+
+# no `set -e` here as we allow commands to fail in this script
 
 ROOTDIR=$(git rev-parse --show-toplevel)
 cd "$ROOTDIR/docker/generated-dev"

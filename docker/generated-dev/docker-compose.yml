@@ -74,7 +74,7 @@ services:
       - --force-authoring
       - --execution=wasm
       - --alice
-      - --node-key=48ec2ab5f1f8672268a86c72961f99ec9a1aff6881bc2e3f1350d3b02b1cccf4
+      - --node-key=76a874cd2771d11b8ca83ddc190cbb705e1bd6923b3dade6159fc21b106e7d6c
       - --listen-addr=/ip4/0.0.0.0/tcp/30333
       - --
       - --chain=/app/rococo-local.json
