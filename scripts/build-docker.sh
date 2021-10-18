@@ -26,10 +26,10 @@ GITREPO=litentry-parachain
 
 # Build the image
 echo "Building ${GITUSER}/${GITREPO}:latest docker image, hang on!"
-time docker build --rm --no-cache --pull -f ./docker/Dockerfile --build-arg PROFILE=release -t ${GITUSER}/${GITREPO}:latest .
+time docker build --rm --no-cache --pull -f ./docker/Dockerfile --build-arg PROFILE=release -t ${GITUSER}/${GITREPO}:${VERSION} .
 
-# Tag it with VERSION
-docker tag ${GITUSER}/${GITREPO}:latest ${GITUSER}/${GITREPO}:${VERSION}
+# Tag it with latest if no arg was provided
+[ -z "$1" ] && docker tag ${GITUSER}/${GITREPO}:${VERSION} ${GITUSER}/${GITREPO}:latest
 
 # Show the list of available images for this repo
 echo "Image is ready"
