@@ -56,7 +56,7 @@ format:
 
 # launch a local dev network using docker
 .PHONY: launch-local-docker
-launch-local-docker:
+launch-local-docker: generate-docker-compose-dev
 	@cd docker/generated-dev; docker-compose up -d --build
 
 # stop the local dev containers and cleanup images
