@@ -6,13 +6,9 @@ on:
       ref:
         description: an existing tag (e.g. v1.2.3)
         required: true
-  push:
-    branches:
-      - 146-skeletons-for-releases
-
 
 env:
-  RELEASE_TAG: 146-skeletons-for-releases
+  RELEASE_TAG: ${{ github.event.inputs.ref }}
 
 jobs:
   ## build runtime wasm ##

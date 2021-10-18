@@ -49,14 +49,14 @@ cat << EOF > "$1"
 version: **$NODE_VERSION**
 
 ### binary
-name: <CODE>litentry-collator<CODE>
-sha1sum hash: <CODE>$NODE_HASH<CODE>
-compiled with <CODE>$NODE_BUILD_DOCKER_IMAGE_DIGEST<CODE>
-rustc version: <CODE>$NODE_RUSTC_VERSION<CODE>
+- name: <CODE>litentry-collator<CODE>
+- sha1sum hash: <CODE>$NODE_HASH<CODE>
+- compiled with <CODE>$NODE_BUILD_DOCKER_IMAGE_DIGEST<CODE>
+- rustc version: <CODE>$NODE_RUSTC_VERSION<CODE>
 
 ### docker image
-name: <CODE>litentry/litentry-parachain:$RELEASE_TAG<CODE>
-repo digest hash: <CODE>$NODE_BINARY_DOCKER_IMAGE_DIGEST<CODE>
+- name: <CODE>litentry/litentry-parachain:$RELEASE_TAG<CODE>
+- repo digest hash: <CODE>$NODE_BINARY_DOCKER_IMAGE_DIGEST<CODE>
 
 ## Runtime
 
