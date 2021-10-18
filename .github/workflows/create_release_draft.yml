@@ -93,7 +93,7 @@ jobs:
 
       - name: Generate release notes
         run: |
-          ./${{ github.workspace }}/scripts/generate-release-notes.sh | tee ${{ github.workspace }}/.github/release_notes.md
+          ./scripts/generate-release-notes.sh | tee ${{ github.workspace }}/.github/release_notes.md
 
       - name: Create release draft
         id: create-release-draft
