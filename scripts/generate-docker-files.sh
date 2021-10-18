@@ -8,7 +8,7 @@ function print_divider() {
 ROOTDIR=$(git rev-parse --show-toplevel)
 cd "$ROOTDIR/docker"
 
-PARCHAIN_LAUNCH_BIN="$ROOTDIR/node_modules/.bin/parachain-launch"
+PARCHAIN_LAUNCH_BIN="$ROOTDIR/docker/node_modules/.bin/parachain-launch"
 
 CHAIN_TYPE=${1:-dev}
 
