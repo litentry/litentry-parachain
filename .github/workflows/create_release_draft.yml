@@ -67,6 +67,10 @@ jobs:
         run: |
           docker push litentry/litentry-parachain:${{ env.RELEASE_TAG }}
 
+      - name: Remove dangling images if any
+        run: |
+          [ -z "$(docker images --filter=dangling=true -q)" ] || docker rmi -f $(docker images --filter=dangling=true -q)
+
       - name: Copy client binary to disk
         run: |
           docker cp $(docker create --rm litentry/litentry-parachain:${{ env.RELEASE_TAG }}):/usr/local/bin/litentry-collator .
@@ -93,7 +97,7 @@ jobs:
 
       - name: Generate release notes
         run: |
-          ./scripts/generate-release-notes.sh | tee ${{ github.workspace }}/.github/release_notes.md
+          ./scripts/generate-release-notes.sh ${{ github.workspace }}/.github/release_notes.md
 
       - name: Create release draft
         id: create-release-draft
