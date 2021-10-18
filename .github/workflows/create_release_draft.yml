@@ -12,7 +12,7 @@ on:
 
 
 env:
-  RELEASE_TAG: ${{ github.event.inputs.ref || github.ref }}
+  RELEASE_TAG: 146-skeletons-for-releases
 
 jobs:
   ## build runtime wasm ##
