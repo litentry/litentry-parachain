@@ -63,6 +63,10 @@ jobs:
           echo "============================="
           docker images
 
+      - name: Push docker image
+        run: |
+          docker push litentry/litentry-parachain:${{ env.RELEASE_TAG }}
+
       - name: Copy client binary to disk
         run: |
           docker cp $(docker create --rm litentry/litentry-parachain:${{ env.RELEASE_TAG }}):/usr/local/bin/litentry-collator .
@@ -89,18 +93,18 @@ jobs:
 
       - name: Generate release notes
         run: |
-          echo "${GITHUB_WORKSPACE}" > ${{ github.workspace }}/.github/release_text.md
+          ./${{ github.workspace }}/scripts/generate-release-notes.sh | tee ${{ github.workspace }}/.github/release_notes.md
 
       - name: Create release draft
         id: create-release-draft
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ env.RELEASE_TAG }}
-          release_name: Litentry-parachain release ${{ env.RELEASE_TAG }}
-          body_path: ${{ github.workspace }}/.github/release_text.md
+          name: Litentry-parachain release ${{ env.RELEASE_TAG }}
+          body_path: ${{ github.workspace }}/.github/release_notes.md
           draft: true
           files: |
-            litentry-parachain-srtool-digest.json
-            litentry-parachain-runtime.compact.wasm
-            litentry-parachain-runtime.compact.compressed.wasm
-            litentry-collator
+            litentry-parachain-runtime/litentry-parachain-srtool-digest.json
+            litentry-parachain-runtime/litentry-parachain-runtime.compact.wasm
+            litentry-parachain-runtime/litentry-parachain-runtime.compact.compressed.wasm
+            litentry-collator/litentry-collator
