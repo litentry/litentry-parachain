@@ -225,6 +225,7 @@ fn default_genesis(
 			phantom: Default::default(),
 		},
 		treasury: Default::default(),
+		vesting: Default::default(),
 		aura: Default::default(),
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
