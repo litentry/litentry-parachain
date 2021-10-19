@@ -59,6 +59,10 @@ use xcm_builder::{
 };
 use xcm_executor::{Config, XcmExecutor};
 
+
+// Litentry Pallets
+use pallet_transaction_payment_interface::DealWithFees;
+
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
 pub type Signature = MultiSignature;
 
@@ -457,11 +461,15 @@ parameter_types! {
 
 // TODO: same as rococo-parachain but differnet as parachain-template
 impl pallet_transaction_payment::Config for Runtime {
-	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
+	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = IdentityFee<Balance>;
 	type FeeMultiplierUpdate = ();
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
+}
+
+impl pallet_transaction_payment_interface::Config for Runtime {
+	type Event = Event;
 }
 
 parameter_types! {
@@ -910,6 +918,8 @@ construct_runtime! {
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage},
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>},
+		TransactionPaymentInterface: pallet_transaction_payment_interface::{Pallet, Call, Storage, Config, Event<T>},
+
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>},
 		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>},
