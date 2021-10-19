@@ -918,7 +918,7 @@ construct_runtime! {
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage},
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>},
-		TransactionPaymentInterface: pallet_transaction_payment_interface::{Pallet, Call, Storage, Config, Event<T>},
+		TransactionPaymentInterface: pallet_transaction_payment_interface::{Pallet, Call, Storage, Event<T>},
 
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>},

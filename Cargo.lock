@@ -719,9 +719,9 @@ checksum = "d9df67f7bf9ef8498769f994239c45613ef0c5899415fb58e9add412d2c1a538"
 
 [[package]]
 name = "byte-slice-cast"
-version = "1.1.0"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca0796d76a983651b4a0ddda16203032759f2fd9103d9181f7c65c06ee8872e6"
+checksum = "1d30c751592b77c499e7bce34d99d67c2c11bdc0574e9a488ddade14150a4698"
 
 [[package]]
 name = "byte-tools"
@@ -5208,7 +5208,7 @@ dependencies = [
 [[package]]
 name = "pallet-transaction-payment-interface"
 version = "0.0.1"
-source = "git+https://github.com/litentry/litentry-pallets?branch=transaction_payment_impls#ec5f9c97a534208c1f92b0c963dbe12685912a17"
+source = "git+https://github.com/litentry/litentry-pallets?branch=transaction_payment_impls#01b379dc381247457d4c801a41d98c07c0be5fc6"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5218,7 +5218,10 @@ dependencies = [
  "pallet-treasury",
  "parity-scale-codec",
  "scale-info",
+ "serde",
  "sp-core",
+ "sp-io",
+ "sp-runtime",
  "sp-std",
 ]
 
