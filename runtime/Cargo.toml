@@ -50,6 +50,7 @@ pallet-proxy = { git = "https://github.com/paritytech/substrate", default-featur
 pallet-recovery = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
 pallet-sudo = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
 pallet-utility = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
+pallet-vesting = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
 pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
 pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
 
@@ -122,6 +123,7 @@ std = [
 	"pallet-democracy/std",
 	"pallet-identity/std",
 	"pallet-utility/std",
+	"pallet-vesting/std",
 	"pallet-transaction-payment/std",
 	"parachain-info/std",
 	"cumulus-pallet-aura-ext/std",
