@@ -3946,6 +3946,7 @@ dependencies = [
  "pallet-collective",
  "pallet-democracy",
  "pallet-identity",
+ "pallet-multisig",
  "pallet-proxy",
  "pallet-randomness-collective-flip",
  "pallet-recovery",

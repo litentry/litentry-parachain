@@ -45,6 +45,7 @@ pallet-treasury = { git = "https://github.com/paritytech/substrate", default-fea
 pallet-session = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
 pallet-scheduler = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
 pallet-collective = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
+pallet-multisig = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
 pallet-proxy = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
 pallet-recovery = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
 pallet-sudo = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
@@ -112,6 +113,7 @@ std = [
 	"pallet-timestamp/std",
 	"pallet-treasury/std",
 	"pallet-proxy/std",
+	"pallet-multisig/std",
 	"pallet-recovery/std",
 	"pallet-sudo/std",
 	"pallet-scheduler/std",
