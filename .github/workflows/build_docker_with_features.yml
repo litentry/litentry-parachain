@@ -1,0 +1,45 @@
+name: Build docker with features
+
+on:
+  workflow_dispatch:
+    inputs:
+      docker_tag:
+        description: The tag for the built docker image
+        required: true
+      features:
+        description: A comma separated list for features for cargo build
+        required: true
+
+
+jobs:
+  ## build docker image of client binary with features ##
+  build-docker-with-features:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout codes on ${{ github.ref }}
+        uses: actions/checkout@v2
+
+      - name: Build docker image
+        run: |
+          ./scripts/build-docker.sh ${{ github.event.inputs.docker_tag }} ${{ github.event.inputs.features }}
+          echo "============================="
+          docker images
+
+      - name: Push docker image
+        run: |
+          docker push litentry/litentry-parachain:${{ github.event.inputs.docker_tag }}
+
+      - name: Remove dangling images if any
+        run: |
+          [ -z "$(docker images --filter=dangling=true -q)" ] || docker rmi -f $(docker images --filter=dangling=true -q)
+
+      - name: Copy client binary to disk
+        run: |
+          docker cp $(docker create --rm litentry/litentry-parachain:${{ github.event.inputs.docker_tag }}:/usr/local/bin/litentry-collator .
+
+      - name: Upload the client binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: litentry-collator
+          path: |
+            litentry-collator

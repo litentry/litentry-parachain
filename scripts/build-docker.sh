@@ -5,6 +5,7 @@ ROOTDIR=$(git rev-parse --show-toplevel)
 cd "$ROOTDIR"
 
 VERSION="$1"
+FEATURES="$2"
 
 if [ -z "$VERSION" ]; then
     TAG_COMMIT=`git rev-list --tags --max-count=1`
@@ -20,13 +21,17 @@ if [ -z "$VERSION" ]; then
 fi
 
 echo "VERSION: $VERSION"
+echo "FEATURES: $FEATURES"
 
 GITUSER=litentry
 GITREPO=litentry-parachain
 
 # Build the image
-echo "Building ${GITUSER}/${GITREPO}:latest docker image, hang on!"
-time docker build --rm --no-cache --pull -f ./docker/Dockerfile --build-arg PROFILE=release -t ${GITUSER}/${GITREPO}:${VERSION} .
+echo "Building ${GITUSER}/${GITREPO}:${VERSION} docker image, hang on!"
+docker build --rm --no-cache --pull -f ./docker/Dockerfile \
+    --build-arg PROFILE=release \
+    --build-arg FEATURES="$FEATURES" \
+    -t ${GITUSER}/${GITREPO}:${VERSION} .
 
 # Tag it with latest if no arg was provided
 [ -z "$1" ] && docker tag ${GITUSER}/${GITREPO}:${VERSION} ${GITUSER}/${GITREPO}:latest
