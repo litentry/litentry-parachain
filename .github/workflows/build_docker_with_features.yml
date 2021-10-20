@@ -7,7 +7,7 @@ on:
         description: The tag for the built docker image
         required: true
       features:
-        description: A comma separated list for features for cargo build
+        description: A comma separated list of features for `cargo build`, see cargo build --help for details
         required: true
 
 
