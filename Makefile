@@ -81,6 +81,18 @@ generate-docker-compose-staging:
 benchmark-frame-system:
 	@./scripts/run-benchmark-pallet.sh frame_system
 
+.PHONY: benchmark-pallet-balances
+benchmark-pallet-balances:
+	@./scripts/run-benchmark-pallet.sh pallet_balances
+
+.PHONY: benchmark-pallet-democracy
+benchmark-pallet-democracy:
+	@./scripts/run-benchmark-pallet.sh pallet_democracy
+
+.PHONY: benchmark-pallet-utility
+benchmark-pallet-utility:
+	@./scripts/run-benchmark-pallet.sh pallet_utility
+
 .PHONY: benchmark-account-linker
 benchmark-account-linker:
 	@./scripts/run-benchmark-pallet.sh account-linker
