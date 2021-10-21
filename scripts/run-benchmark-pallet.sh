@@ -23,5 +23,5 @@ echo "running benchmark for $1"
     --heap-pages=4096 \
     --steps=20 \
     --repeat=50 \
-    --output=./source/"$1"-weights.rs \
+    --output=./runtime/src/weights/"$1".rs \
     --template=./.maintain/frame-weight-template.hbs
