@@ -30,7 +30,7 @@ sp-version = { git = "https://github.com/paritytech/substrate", default-features
 frame-executive = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
 frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
 frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
-frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.11" }
+frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
 
 ## Substrate Pallet Dependencies
 pallet-aura = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11" }
