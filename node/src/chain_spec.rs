@@ -104,10 +104,6 @@ pub fn get_chain_spec_dev(id: ParaId) -> ChainSpec {
 						get_account_id_from_seed::<sr25519::Public>("Alice"),
 						get_collator_keys_from_seed("Alice"),
 					),
-					(
-						get_account_id_from_seed::<sr25519::Public>("Bob"),
-						get_collator_keys_from_seed("Bob"),
-					),
 				],
 				DEFAULT_CANDIDACY_BOND,
 				vec![
@@ -121,42 +117,6 @@ pub fn get_chain_spec_dev(id: ParaId) -> ChainSpec {
 					),
 					(
 						get_account_id_from_seed::<sr25519::Public>("Charlie"),
-						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
-					),
-					(
-						get_account_id_from_seed::<sr25519::Public>("Dave"),
-						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
-					),
-					(
-						get_account_id_from_seed::<sr25519::Public>("Eve"),
-						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
-					),
-					(
-						get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
-					),
-					(
-						get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
-					),
-					(
-						get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
-					),
-					(
-						get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
-					),
-					(
-						get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
-					),
-					(
-						get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
-					),
-					(
-						get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
 					),
 				],
