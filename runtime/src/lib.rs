@@ -1075,7 +1075,6 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_democracy, Democracy);
 			list_benchmark!(list, extra, pallet_collective, Council);
 			list_benchmark!(list, extra, pallet_identity, Identity);
-			list_benchmark!(list, extra, pallet_collective, TechnicalCommittee);
 			list_benchmark!(list, extra, pallet_proxy, Proxy);
 			list_benchmark!(list, extra, pallet_balances, Balances);
 			list_benchmark!(list, extra, pallet_assets,Assets );
@@ -1117,7 +1116,6 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_democracy, Democracy);
 			add_benchmark!(params, batches, pallet_collective, Council);
 			add_benchmark!(params, batches, pallet_identity, Identity);
-			add_benchmark!(params, batches, pallet_collective, TechnicalCommittee);
 			add_benchmark!(params, batches, pallet_proxy, Proxy);
 			add_benchmark!(params, batches, pallet_balances, Balances);
 			add_benchmark!(params, batches, pallet_assets, Assets );

@@ -109,10 +109,6 @@ benchmark-pallet-collective:
 benchmark-pallet-identity:
 	@./scripts/run-benchmark-pallet.sh pallet-identity
 
-.PHONY: benchmark-pallet-collective
-benchmark-pallet-collective:
-	@./scripts/run-benchmark-pallet.sh pallet-collective
-
 .PHONY: benchmark-pallet-proxy
 benchmark-pallet-proxy:
 	@./scripts/run-benchmark-pallet.sh pallet-proxy
