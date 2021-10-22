@@ -1,15 +1,19 @@
 use cumulus_primitives_core::ParaId;
-use hex_literal::hex;
-use litentry_parachain_runtime::{AccountId, AuraId, Signature};
+use litentry_parachain_runtime::{
+	AccountId, AuraId, Balance, BalancesConfig, CollatorSelectionConfig, CouncilConfig,
+	CouncilMembershipConfig, DemocracyConfig, GenesisConfig, ParachainInfoConfig, SessionConfig,
+	Signature, SudoConfig, SystemConfig, TechnicalCommitteeConfig,
+	TechnicalCommitteeMembershipConfig, UNIT, WASM_BINARY,
+};
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup, Properties};
 use sc_service::ChainType;
+use sc_telemetry::TelemetryEndpoints;
 use serde::{Deserialize, Serialize};
-use sp_core::{crypto::UncheckedInto, sr25519, Pair, Public};
+use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
-pub type ChainSpec =
-	sc_service::GenericChainSpec<litentry_parachain_runtime::GenesisConfig, Extensions>;
+pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
 
 /// Helper function to generate a crypto pair from seed
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
@@ -73,13 +77,30 @@ pub fn default_parachain_properties() -> Option<Properties> {
 	parachain_properties("LIT", 12, 31)
 }
 
+const DEFAULT_CANDIDACY_BOND: Balance = 16 * UNIT;
+const DEFAULT_ENDOWED_ACCOUNT_BALANCE: Balance = 1000 * UNIT;
+
+/// GenesisInfo struct to store the parsed genesis_info JSON
+#[derive(Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+struct GenesisInfo {
+	root_key: AccountId,
+	invulnerables: Vec<(AccountId, AuraId)>,
+	candidacy_bond: String,
+	endowed_accounts: Vec<(AccountId, String)>,
+	council_membership: Vec<AccountId>,
+	technical_committee_membership: Vec<AccountId>,
+	boot_nodes: Vec<String>,
+	telemetry_endpoints: Vec<String>,
+}
+
 pub fn get_chain_spec_dev(id: ParaId) -> ChainSpec {
 	ChainSpec::from_genesis(
-		"litentry-dev",
-		"litentry-dev",
+		"Litentry-dev",
+		"Litentry-dev",
 		ChainType::Development,
 		move || {
-			default_genesis(
+			generate_genesis(
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				vec![
 					(
@@ -91,6 +112,57 @@ pub fn get_chain_spec_dev(id: ParaId) -> ChainSpec {
 						get_collator_keys_from_seed("Bob"),
 					),
 				],
+				DEFAULT_CANDIDACY_BOND,
+				vec![
+					(
+						get_account_id_from_seed::<sr25519::Public>("Alice"),
+						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Bob"),
+						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Charlie"),
+						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Dave"),
+						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Eve"),
+						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
+					),
+				],
 				vec![
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					get_account_id_from_seed::<sr25519::Public>("Bob"),
@@ -98,12 +170,11 @@ pub fn get_chain_spec_dev(id: ParaId) -> ChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Dave"),
 					get_account_id_from_seed::<sr25519::Public>("Eve"),
 					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+				],
+				vec![
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_account_id_from_seed::<sr25519::Public>("Bob"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie"),
 				],
 				id,
 			)
@@ -117,84 +188,107 @@ pub fn get_chain_spec_dev(id: ParaId) -> ChainSpec {
 }
 
 pub fn get_chain_spec_staging(id: ParaId) -> ChainSpec {
-	ChainSpec::from_genesis(
-		"litentry-staging",
-		"litentry-staging",
+	get_chain_spec_from_genesis_info(
+		include_bytes!("../res/genesis_info/staging.json"),
+		"Litentry-staging",
+		"Litentry-staging",
 		ChainType::Local,
-		move || {
-			default_genesis(
-				// Staging keys are derivative keys based on a single master secret phrase:
-				//
-				// root: 	$SECRET
-				// account:	$SECRET//collator//<id>
-				// aura: 	$SECRET//collator//<id>//aura
-
-				// 5DaB1AshD6NsRRq84rsLuR65aD8tTPxp2Ub7HnqVtirgWn4V
-				hex!["42b5bbd733848b2207070115b0ed7479ea391f58c7c703cbdb960333005a4f67"].into(),
-				vec![
-					(
-						// 5FZP2oqDBBWzaKp8STUQKTvSo2Y1UD68briboWreLiVAxJr1
-						hex!["9a937224ffe6f9ec81301a63739e399836a77b77c5e7c59f9dcf75ee674e040b"]
-							.into(),
-						// 5HbUXue4BsoBmR1ZSWCurQMTdi2jrDdVzMQoKtc8ByMH9uEc
-						hex!["f4a4ec8eca5abe1f2a84690e4f999fdc4ae0b95abad33fcd9ed222a3fba7876f"]
-							.unchecked_into(),
-					),
-					(
-						// 5EJLoe5Uaj8U7jTxJwiDCP1kNSnHu4Buw8pdkpm136QRiAEC
-						hex!["62df08d3d47b89aa675268f30e516b3614e01fd888d92bb4d0d0733cc564f04d"]
-							.into(),
-						// 5E9ky6gxEMAHrVRLyubyL4UqCkdt5kJmHkB7HuxJ3Y5LDvm3
-						hex!["5c532a810bd75624694109c1f2cb735c6b504b4c0ad5035e738415395272a73c"]
-							.unchecked_into(),
-					),
-				],
-				vec![
-					hex!["9a937224ffe6f9ec81301a63739e399836a77b77c5e7c59f9dcf75ee674e040b"].into(),
-					hex!["62df08d3d47b89aa675268f30e516b3614e01fd888d92bb4d0d0733cc564f04d"].into(),
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					get_account_id_from_seed::<sr25519::Public>("Bob"),
-				],
-				id,
-			)
-		},
-		vec![],
-		None,
-		Some("Litentry"),
-		default_parachain_properties(),
-		Extensions { relay_chain: "rococo-local".into(), para_id: id.into() },
+		"rococo-local".into(),
+		id,
 	)
 }
 
-// TODO: update this
-const LITENTRY_ED: u128 = 100_000_000_000;
+pub fn get_chain_spec_prod(id: ParaId) -> ChainSpec {
+	get_chain_spec_from_genesis_info(
+		include_bytes!("../res/genesis_info/prod.json"),
+		"Litentry",
+		"Litentry",
+		ChainType::Live,
+		"polkadot".into(),
+		id,
+	)
+}
 
-fn default_genesis(
+/// Private function to get a ChainSpec from a `genesis_info_json_file`,
+/// used in both staging and prod env.
+fn get_chain_spec_from_genesis_info(
+	genesis_info_bytes: &[u8],
+	name: &str,
+	id: &str,
+	chain_type: ChainType,
+	relay_chain_name: String,
+	para_id: ParaId,
+) -> ChainSpec {
+	let genesis_info: GenesisInfo =
+		serde_json::from_slice(genesis_info_bytes).expect("Invalid GenesisInfo; qed.");
+
+	let boot_nodes = genesis_info.boot_nodes.clone();
+	let telemetry_endpoints = genesis_info.telemetry_endpoints.clone();
+
+	ChainSpec::from_genesis(
+		name,
+		id,
+		chain_type,
+		move || {
+			use std::str::FromStr;
+			let genesis_info_cloned = genesis_info.clone();
+			generate_genesis(
+				genesis_info_cloned.root_key,
+				genesis_info_cloned.invulnerables,
+				u128::from_str(&genesis_info_cloned.candidacy_bond)
+					.expect("Bad candicy bond; qed."),
+				genesis_info_cloned
+					.endowed_accounts
+					.into_iter()
+					.map(|(k, b)| (k, u128::from_str(&b).expect("Bad endowed balance; qed.")))
+					.collect(),
+				genesis_info_cloned.council_membership,
+				genesis_info_cloned.technical_committee_membership,
+				para_id,
+			)
+		},
+		boot_nodes
+			.into_iter()
+			.map(|k| k.parse().expect("Wrong bootnode format; qed."))
+			.collect(),
+		Some(
+			TelemetryEndpoints::new(
+				telemetry_endpoints
+					.into_iter()
+					.map(|k| (k, 0)) // 0 is verbose level
+					.collect(),
+			)
+			.expect("Invalid telemetry URL; qed."),
+		),
+		Some("Litentry"),
+		default_parachain_properties(),
+		Extensions { relay_chain: relay_chain_name, para_id: para_id.into() },
+	)
+}
+
+fn generate_genesis(
 	root_key: AccountId,
 	invulnerables: Vec<(AccountId, AuraId)>,
-	endowed_accounts: Vec<AccountId>,
+	candicy_bond: Balance,
+	endowed_accounts: Vec<(AccountId, Balance)>,
+	council_membership: Vec<AccountId>,
+	technical_committee_membership: Vec<AccountId>,
 	id: ParaId,
-) -> litentry_parachain_runtime::GenesisConfig {
-	let num_endowed_accounts = endowed_accounts.len();
-
-	litentry_parachain_runtime::GenesisConfig {
-		system: litentry_parachain_runtime::SystemConfig {
-			code: litentry_parachain_runtime::WASM_BINARY
-				.expect("WASM binary was not build, please build it!")
-				.to_vec(),
+) -> GenesisConfig {
+	GenesisConfig {
+		system: SystemConfig {
+			code: WASM_BINARY.expect("WASM binary was not build, please build it!").to_vec(),
 			changes_trie_config: Default::default(),
 		},
-		balances: litentry_parachain_runtime::BalancesConfig {
-			balances: endowed_accounts.iter().cloned().map(|k| (k, LITENTRY_ED * 4096)).collect(),
-		},
-		sudo: litentry_parachain_runtime::SudoConfig { key: root_key },
-		parachain_info: litentry_parachain_runtime::ParachainInfoConfig { parachain_id: id },
-		collator_selection: litentry_parachain_runtime::CollatorSelectionConfig {
+		balances: BalancesConfig { balances: endowed_accounts },
+		sudo: SudoConfig { key: root_key },
+		parachain_info: ParachainInfoConfig { parachain_id: id },
+		collator_selection: CollatorSelectionConfig {
 			invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
-			candidacy_bond: LITENTRY_ED * 16,
+			candidacy_bond: candicy_bond,
 			..Default::default()
 		},
-		session: litentry_parachain_runtime::SessionConfig {
+		session: SessionConfig {
 			keys: invulnerables
 				.iter()
 				.cloned()
@@ -207,21 +301,15 @@ fn default_genesis(
 				})
 				.collect(),
 		},
-		democracy: litentry_parachain_runtime::DemocracyConfig::default(),
-		council: litentry_parachain_runtime::CouncilConfig {
-			members: endowed_accounts
-				.iter()
-				.take((num_endowed_accounts + 1) / 2)
-				.cloned()
-				.collect(),
+		democracy: DemocracyConfig::default(),
+		council: CouncilConfig::default(),
+		council_membership: CouncilMembershipConfig {
+			members: council_membership,
 			phantom: Default::default(),
 		},
-		technical_committee: litentry_parachain_runtime::TechnicalCommitteeConfig {
-			members: endowed_accounts
-				.iter()
-				.take((num_endowed_accounts + 1) / 2)
-				.cloned()
-				.collect(),
+		technical_committee: TechnicalCommitteeConfig::default(),
+		technical_committee_membership: TechnicalCommitteeMembershipConfig {
+			members: technical_committee_membership,
 			phantom: Default::default(),
 		},
 		treasury: Default::default(),
