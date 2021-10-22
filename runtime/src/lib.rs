@@ -1067,20 +1067,20 @@ impl_runtime_apis! {
 			use frame_system_benchmarking::Pallet as SystemBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
-			list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
-			list_benchmark!(list, extra, pallet_timestamp, Timestamp);
-			list_benchmark!(list, extra, pallet_utility, Utility);
-			list_benchmark!(list, extra, pallet_scheduler, Scheduler);
-			list_benchmark!(list, extra, pallet_treasury, Treasury);
-			list_benchmark!(list, extra, pallet_democracy, Democracy);
-			list_benchmark!(list, extra, pallet_collective, Council);
-			list_benchmark!(list, extra, pallet_identity, Identity);
-			list_benchmark!(list, extra, pallet_collective, TechnicalCommittee);
-			list_benchmark!(list, extra, pallet_proxy, Proxy);
-			list_benchmark!(list, extra, pallet_balances, Balances);
-			list_benchmark!(list, extra, pallet_assets,Assets );
-			list_benchmark!(list, extra, pallet_collator_selection, CollatorSelection);
-			list_benchmark!(list, extra, pallet_xcm, PolkadotXcm);
+			// list_benchmark!(list, extra, frame_system, SystemBench::<Runtime>);
+			// list_benchmark!(list, extra, pallet_timestamp, Timestamp);
+			// list_benchmark!(list, extra, pallet_utility, Utility);
+			// list_benchmark!(list, extra, pallet_scheduler, Scheduler);
+			// list_benchmark!(list, extra, pallet_treasury, Treasury);
+			// list_benchmark!(list, extra, pallet_democracy, Democracy);
+			// list_benchmark!(list, extra, pallet_collective, Council);
+			// list_benchmark!(list, extra, pallet_identity, Identity);
+			// list_benchmark!(list, extra, pallet_collective, TechnicalCommittee);
+			// list_benchmark!(list, extra, pallet_proxy, Proxy);
+			// list_benchmark!(list, extra, pallet_balances, Balances);
+			// list_benchmark!(list, extra, pallet_assets,Assets );
+			// list_benchmark!(list, extra, pallet_collator_selection, CollatorSelection);
+			// list_benchmark!(list, extra, pallet_xcm, PolkadotXcm);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 			return (list, storage_info)
@@ -1110,20 +1110,20 @@ impl_runtime_apis! {
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 
-			add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
-			add_benchmark!(params, batches, pallet_timestamp, Timestamp);
-			add_benchmark!(params, batches, pallet_utility, Utility);
-			add_benchmark!(params, batches, pallet_scheduler, Scheduler);
-			add_benchmark!(params, batches, pallet_treasury, Treasury);
-			add_benchmark!(params, batches, pallet_democracy, Democracy);
-			add_benchmark!(params, batches, pallet_collective, Council);
-			add_benchmark!(params, batches, pallet_identity, Identity);
-			add_benchmark!(params, batches, pallet_collective, TechnicalCommittee);
-			add_benchmark!(params, batches, pallet_proxy, Proxy);
-			add_benchmark!(params, batches, pallet_balances, Balances);
-			add_benchmark!(params, batches, pallet_assets,Assets );
-			add_benchmark!(params, batches, pallet_collator_selection, CollatorSelection);
-			add_benchmark!(params, batches, pallet_xcm, PolkadotXcm);
+			// add_benchmark!(params, batches, frame_system, SystemBench::<Runtime>);
+			// add_benchmark!(params, batches, pallet_timestamp, Timestamp);
+			// add_benchmark!(params, batches, pallet_utility, Utility);
+			// add_benchmark!(params, batches, pallet_scheduler, Scheduler);
+			// add_benchmark!(params, batches, pallet_treasury, Treasury);
+			// add_benchmark!(params, batches, pallet_democracy, Democracy);
+			// add_benchmark!(params, batches, pallet_collective, Council);
+			// add_benchmark!(params, batches, pallet_identity, Identity);
+			// add_benchmark!(params, batches, pallet_collective, TechnicalCommittee);
+			// add_benchmark!(params, batches, pallet_proxy, Proxy);
+			// add_benchmark!(params, batches, pallet_balances, Balances);
+			// add_benchmark!(params, batches, pallet_assets,Assets );
+			// add_benchmark!(params, batches, pallet_collator_selection, CollatorSelection);
+			// add_benchmark!(params, batches, pallet_xcm, PolkadotXcm);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
