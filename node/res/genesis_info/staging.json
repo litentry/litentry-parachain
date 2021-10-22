@@ -25,14 +25,6 @@
         "1000000000000000"
       ]
     ],
-    "councilMembership": [
-        "5FZP2oqDBBWzaKp8STUQKTvSo2Y1UD68briboWreLiVAxJr1",
-        "5EJLoe5Uaj8U7jTxJwiDCP1kNSnHu4Buw8pdkpm136QRiAEC"
-    ],
-    "technicalCommitteeMembership": [
-      "5FZP2oqDBBWzaKp8STUQKTvSo2Y1UD68briboWreLiVAxJr1",
-      "5EJLoe5Uaj8U7jTxJwiDCP1kNSnHu4Buw8pdkpm136QRiAEC"
-    ],
     "bootNodes": [
     ],
     "telemetryEndpoints": [
