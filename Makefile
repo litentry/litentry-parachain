@@ -79,19 +79,55 @@ generate-docker-compose-staging:
 
 .PHONY: benchmark-frame-system
 benchmark-frame-system:
-	@./scripts/run-benchmark-pallet.sh frame_system
+	@./scripts/run-benchmark-pallet.sh frame-system
 
-.PHONY: benchmark-pallet-balances
-benchmark-pallet-balances:
-	@./scripts/run-benchmark-pallet.sh pallet_balances
-
-.PHONY: benchmark-pallet-democracy
-benchmark-pallet-democracy:
-	@./scripts/run-benchmark-pallet.sh pallet_democracy
+.PHONY: benchmark-pallet-timestamp
+benchmark-pallet-timestamp:
+	@./scripts/run-benchmark-pallet.sh pallet-timestamp
 
 .PHONY: benchmark-pallet-utility
 benchmark-pallet-utility:
-	@./scripts/run-benchmark-pallet.sh pallet_utility
+	@./scripts/run-benchmark-pallet.sh pallet-utility
+
+.PHONY: benchmark-pallet-scheduler
+benchmark-pallet-scheduler:
+	@./scripts/run-benchmark-pallet.sh pallet-scheduler
+
+.PHONY: benchmark-pallet-treasury
+benchmark-pallet-treasury:
+	@./scripts/run-benchmark-pallet.sh pallet-treasury
+
+.PHONY: benchmark-pallet-democracy
+benchmark-pallet-democracy:
+	@./scripts/run-benchmark-pallet.sh pallet-democracy
+
+.PHONY: benchmark-pallet-collective
+benchmark-pallet-collective:
+	@./scripts/run-benchmark-pallet.sh pallet-collective
+
+.PHONY: benchmark-pallet-identity
+benchmark-pallet-identity:
+	@./scripts/run-benchmark-pallet.sh pallet-identity
+
+.PHONY: benchmark-pallet-collective
+benchmark-pallet-collective:
+	@./scripts/run-benchmark-pallet.sh pallet-collective
+
+.PHONY: benchmark-pallet-proxy
+benchmark-pallet-proxy:
+	@./scripts/run-benchmark-pallet.sh pallet-proxy
+
+.PHONY: benchmark-pallet-balances
+benchmark-pallet-balances:
+	@./scripts/run-benchmark-pallet.sh pallet-balances
+
+.PHONY: benchmark-pallet-assets
+benchmark-pallet-assets:
+	@./scripts/run-benchmark-pallet.sh pallet-assets
+
+.PHONY: benchmark-pallet-collator-selection
+benchmark-pallet-collator-selection:
+	@./scripts/run-benchmark-pallet.sh pallet-collator-selection
 
 .PHONY: benchmark-account-linker
 benchmark-account-linker:
