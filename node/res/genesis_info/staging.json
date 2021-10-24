@@ -1,0 +1,40 @@
+{
+    "rootKey": "5DaB1AshD6NsRRq84rsLuR65aD8tTPxp2Ub7HnqVtirgWn4V",
+    "invulnerables": [
+      [
+        "5FZP2oqDBBWzaKp8STUQKTvSo2Y1UD68briboWreLiVAxJr1",
+        "5HbUXue4BsoBmR1ZSWCurQMTdi2jrDdVzMQoKtc8ByMH9uEc"
+      ],
+      [
+        "5EJLoe5Uaj8U7jTxJwiDCP1kNSnHu4Buw8pdkpm136QRiAEC",
+        "5E9ky6gxEMAHrVRLyubyL4UqCkdt5kJmHkB7HuxJ3Y5LDvm3"
+      ]
+    ],
+    "candidacyBond": "16000000000000",
+    "endowedAccounts": [
+      [
+        "5FZP2oqDBBWzaKp8STUQKTvSo2Y1UD68briboWreLiVAxJr1",
+        "1000000000000000"
+      ],
+      [
+        "5EJLoe5Uaj8U7jTxJwiDCP1kNSnHu4Buw8pdkpm136QRiAEC",
+        "1000000000000000"
+      ],
+      [
+        "5DaB1AshD6NsRRq84rsLuR65aD8tTPxp2Ub7HnqVtirgWn4V",
+        "1000000000000000"
+      ],
+      [
+        "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+        "1000000000000000"
+      ],
+      [
+        "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
+        "1000000000000000"
+      ]
+    ],
+    "bootNodes": [
+    ],
+    "telemetryEndpoints": [
+    ]
+  }
