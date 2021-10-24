@@ -1,8 +1,8 @@
 use cumulus_primitives_core::ParaId;
 use litentry_parachain_runtime::{
-	AccountId, AuraId, Balance, BalancesConfig, CollatorSelectionConfig, CouncilConfig,
-	DemocracyConfig, GenesisConfig, ParachainInfoConfig, SessionConfig, Signature, SudoConfig,
-	SystemConfig, TechnicalCommitteeConfig, UNIT, WASM_BINARY,
+	AccountId, AuraId, Balance, BalancesConfig, CollatorSelectionConfig, CouncilMembershipConfig,
+	GenesisConfig, ParachainInfoConfig, SessionConfig, Signature, SudoConfig, SystemConfig,
+	TechnicalCommitteeMembershipConfig, UNIT, WASM_BINARY,
 };
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup, Properties};
 use sc_service::ChainType;
@@ -87,6 +87,8 @@ struct GenesisInfo {
 	invulnerables: Vec<(AccountId, AuraId)>,
 	candidacy_bond: String,
 	endowed_accounts: Vec<(AccountId, String)>,
+	council: Vec<AccountId>,
+	technical_committee: Vec<AccountId>,
 	boot_nodes: Vec<String>,
 	telemetry_endpoints: Vec<String>,
 }
@@ -99,12 +101,10 @@ pub fn get_chain_spec_dev(id: ParaId) -> ChainSpec {
 		move || {
 			generate_genesis(
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				vec![
-					(
-						get_account_id_from_seed::<sr25519::Public>("Alice"),
-						get_collator_keys_from_seed("Alice"),
-					),
-				],
+				vec![(
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_collator_keys_from_seed("Alice"),
+				)],
 				DEFAULT_CANDIDACY_BOND,
 				vec![
 					(
@@ -120,6 +120,11 @@ pub fn get_chain_spec_dev(id: ParaId) -> ChainSpec {
 						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
 					),
 				],
+				vec![
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_account_id_from_seed::<sr25519::Public>("Bob"),
+				],
+				vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
 				id,
 			)
 		},
@@ -186,6 +191,8 @@ fn get_chain_spec_from_genesis_info(
 					.into_iter()
 					.map(|(k, b)| (k, u128::from_str(&b).expect("Bad endowed balance; qed.")))
 					.collect(),
+				genesis_info_cloned.council,
+				genesis_info_cloned.technical_committee,
 				para_id,
 			)
 		},
@@ -213,6 +220,8 @@ fn generate_genesis(
 	invulnerables: Vec<(AccountId, AuraId)>,
 	candicy_bond: Balance,
 	endowed_accounts: Vec<(AccountId, Balance)>,
+	council_members: Vec<AccountId>,
+	technical_committee_members: Vec<AccountId>,
 	id: ParaId,
 ) -> GenesisConfig {
 	GenesisConfig {
@@ -241,9 +250,17 @@ fn generate_genesis(
 				})
 				.collect(),
 		},
-		democracy: DemocracyConfig::default(),
-		council: CouncilConfig::default(),
-		technical_committee: TechnicalCommitteeConfig::default(),
+		democracy: Default::default(),
+		council: Default::default(),
+		council_membership: CouncilMembershipConfig {
+			members: council_members,
+			phantom: Default::default(),
+		},
+		technical_committee: Default::default(),
+		technical_committee_membership: TechnicalCommitteeMembershipConfig {
+			members: technical_committee_members,
+			phantom: Default::default(),
+		},
 		treasury: Default::default(),
 		vesting: Default::default(),
 		aura: Default::default(),
