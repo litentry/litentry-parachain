@@ -59,6 +59,10 @@ use xcm_builder::{
 };
 use xcm_executor::{Config, XcmExecutor};
 
+// transaction payment pallet related items: TODO, move to common
+use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
+use sp_runtime::{FixedPointNumber, Perquintill};
+
 
 // Litentry Pallets
 use pallet_transaction_payment_interface::DealWithFees;
@@ -459,12 +463,29 @@ parameter_types! {
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
+// transaction payment pallet: TODO, move to common
+parameter_types! {
+	/// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
+	/// than this will decrease the weight and more will increase.
+	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
+	/// The adjustment variable of the runtime. Higher values will cause `TargetBlockFullness` to
+	/// change the fees more rapidly.
+	pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(3, 100_000);
+	/// Minimum amount of the multiplier. This value cannot be too low. A test case should ensure
+	/// that combined with `AdjustmentVariable`, we can recover from the minimum.
+	/// See `multiplier_can_grow_from_zero`.
+	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000u128);
+}
+// transaction payment pallet: TODO, move to common
+pub type SlowAdjustingFeeUpdate<R> =
+	TargetedFeeAdjustment<R, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
+
 // TODO: same as rococo-parachain but differnet as parachain-template
 impl pallet_transaction_payment::Config for Runtime {
 	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = IdentityFee<Balance>;
-	type FeeMultiplierUpdate = ();
+	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 }
 
