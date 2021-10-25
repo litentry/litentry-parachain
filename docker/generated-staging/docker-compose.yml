@@ -20,8 +20,8 @@ services:
       - --name=alice
       - --alice
       - --rpc-methods=unsafe
+      - --execution=wasm
       - --no-beefy
-      - --force-authoring
     environment: {}
     ulimits:
       &a1
@@ -48,6 +48,7 @@ services:
       - --name=bob
       - --bob
       - --rpc-methods=unsafe
+      - --execution=wasm
       - --no-beefy
     environment: {}
     ulimits: *a1
@@ -71,14 +72,15 @@ services:
       - --name=charlie
       - --charlie
       - --rpc-methods=unsafe
+      - --execution=wasm
       - --no-beefy
     environment: {}
     ulimits: *a1
   parachain-2022-0:
     ports:
-      - 9954:9944
+      - 9947:9944
       - 9936:9933
-      - 40333:30333
+      - 30336:30333
     volumes:
       - parachain-2022-0:/data
     build:
@@ -93,20 +95,23 @@ services:
       - --name=parachain-2022-0
       - --collator
       - --parachain-id=2022
+      - --rpc-methods=unsafe
+      - --force-authoring
       - --execution=wasm
-      - --node-key=76a9b9b4c6b3ffd5cd17e260b6622b7084ce1895c880682efab5f69b137f663c
+      - --alice
+      - --node-key=c744e35f2efdcfbb6bf658a437a49b3ea11727232f27250d262bd1c0d8ed24e0
       - --listen-addr=/ip4/0.0.0.0/tcp/30333
       - --
       - --chain=/app/rococo-local.json
       - --execution=wasm
-      - --name=relaychain-alice
+      - --no-beefy
     environment: {}
     ulimits: *a1
   parachain-2022-1:
     ports:
-      - 9955:9944
+      - 9948:9944
       - 9937:9933
-      - 40334:30333
+      - 30337:30333
     volumes:
       - parachain-2022-1:/data
     build:
@@ -121,13 +126,16 @@ services:
       - --name=parachain-2022-1
       - --collator
       - --parachain-id=2022
+      - --rpc-methods=unsafe
+      - --force-authoring
       - --execution=wasm
-      - --bootnodes=/dns/parachain-2022-0/tcp/30333/p2p/12D3KooWStcee6gchLEYirsDgkyKBog6DdPEuDANWAykugTZRAvm
+      - --bob
+      - --bootnodes=/dns/parachain-2022-0/tcp/30333/p2p/12D3KooWL7RohdaxYfgF9jcRqKUuP6LkRe3QMBWrkSCXc4WZa8pa
       - --listen-addr=/ip4/0.0.0.0/tcp/30333
       - --
       - --chain=/app/rococo-local.json
       - --execution=wasm
-      - --name=relaychain-alice
+      - --no-beefy
     environment: {}
     ulimits: *a1
 volumes:
