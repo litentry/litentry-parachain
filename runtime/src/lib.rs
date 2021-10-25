@@ -470,6 +470,7 @@ impl pallet_transaction_payment::Config for Runtime {
 
 impl pallet_transaction_payment_interface::Config for Runtime {
 	type Event = Event;
+	type Currency = Balances;
 }
 
 parameter_types! {
