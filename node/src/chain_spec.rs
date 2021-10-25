@@ -2,7 +2,7 @@ use cumulus_primitives_core::ParaId;
 use litentry_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, CollatorSelectionConfig, CouncilMembershipConfig,
 	GenesisConfig, ParachainInfoConfig, SessionConfig, Signature, SudoConfig, SystemConfig,
-	TechnicalCommitteeMembershipConfig, UNIT, WASM_BINARY,
+	TechnicalCommitteeConfig, UNIT, WASM_BINARY,
 };
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup, Properties};
 use sc_service::ChainType;
@@ -256,8 +256,7 @@ fn generate_genesis(
 			members: council_members,
 			phantom: Default::default(),
 		},
-		technical_committee: Default::default(),
-		technical_committee_membership: TechnicalCommitteeMembershipConfig {
+		technical_committee: TechnicalCommitteeConfig {
 			members: technical_committee_members,
 			phantom: Default::default(),
 		},
