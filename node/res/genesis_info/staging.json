@@ -34,7 +34,10 @@
       ]
     ],
     "bootNodes": [
+      "/dns/parachain-sg-1.staging.litentry.io/tcp/40333/p2p/12D3KooWCnBzJy9w9hQFyiwVG2mADqNaPu3Z6WFThivwnrppdWND",
+      "/dns/parachain-sg-2.staging.litentry.io/tcp/40333/p2p/12D3KooWDFSgJbNmLFGEX4ukGriJpvCcttGEKSQVCspKyRToC2j5"
     ],
     "telemetryEndpoints": [
+      "wss://telemetry-backend.parachain.litentry.io/submit"
     ]
   }
