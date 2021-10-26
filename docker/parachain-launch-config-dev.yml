@@ -14,21 +14,18 @@ relaychain:
   env: # environment variables for all relaychain nodes
   flags: # additional CLI flags for all relaychain nodes
     - --rpc-methods=unsafe
+    - --execution=wasm
     - --no-beefy
   nodes: # nodes config
     - name: alice # the node name and session key, this imply `--alice`
-      wsPort: 9944 # default ws port number is `9944 + global_node_index`
-      rpcPort: 9933 # default rpc port number is `9933 + global_node_index`
-      port: 30333 # default libp2p port number is `30333 + global_node_index`
-      flags: # additional CLI flags for this node
-        - --force-authoring
     - name: bob
 
 # Parachain Configuration
 parachains:
 # Config for first parachain
 - image: litentry/litentry-parachain:latest
-  chain: dev
+  chain:
+    base: dev
   id: 2022 # override parachain id
   parachain: true # this is parachain, not parathread
   flags: # CLI flags for these parachain nodes
@@ -37,13 +34,9 @@ parachains:
     - --execution=wasm
   relaychainFlags: # CLI flags for the relaychain port
     - --execution=wasm
+    - --no-beefy
   env: # environment variables for this parachain nodes
   volumePath: /data # The path to mount volume and base path, default to /data
   nodes: # nodes config
-  - wsPort: 9954
-    rpcPort: 9936
-    port: 40333
-    flags: # additional CLI flags for this node
-      - --alice
-    relaychainFlags: # additional CLI flags for relaychain part
-      - --name=relaychain-alice
+  - flags: # additional CLI flags for this node
+    - --alice
