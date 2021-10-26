@@ -14,12 +14,15 @@ echo "remove docker volumes..."
 docker volume ls | grep generated-dev | sed 's/local *//' | xargs docker volume rm
 
 echo "remove dangling docker images if any..."
-[ -z "$(docker images --filter=dangling=true -q)" ] || docker rmi -f $(docker images --filter=dangling=true -q)
+IMG=$(docker images --filter=dangling=true -q)
+[ -z "$IMG" ] || docker rmi -f $IMG
 
 echo "keep litentry/litentry-parachain:latest while removing other tags..."
-docker rmi -f $(docker images litentry/litentry-parachain --format "{{.Repository}}:{{.Tag}}" | grep -v latest)
+IMG=$(docker images litentry/litentry-parachain --format "{{.Repository}}:{{.Tag}}" | grep -v latest)
+[ -z "$IMG" ] || docker rmi -f $IMG
 
 echo "remove generated images..."
-docker rmi -f $(docker images --filter=reference='generated-dev*' --format "{{.Repository}}:{{.Tag}}")
+IMG=$(docker images --filter=reference='generated-dev*' --format "{{.Repository}}:{{.Tag}}")
+[ -z "$IMG" ] || docker rmi -f $IMG
 
 echo "cleaned up."

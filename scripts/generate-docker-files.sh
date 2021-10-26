@@ -1,28 +1,26 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
+function print_divider() {
+  echo "------------------------------------------------------------"
+}
+
 ROOTDIR=$(git rev-parse --show-toplevel)
 cd "$ROOTDIR/docker"
 
+PARCHAIN_LAUNCH_BIN="$ROOTDIR/docker/node_modules/.bin/parachain-launch"
+
 CHAIN_TYPE=${1:-dev}
 
-if ! docker image inspect litentry/litentry-parachain:latest &>/dev/null; then
-  echo "please build litentry/litentry-parachain:latest first"
-  exit 1
+print_divider
+
+if [ ! -f "$PARCHAIN_LAUNCH_BIN" ]; then
+  echo "installing parachain-launch ..."
+  yarn add @open-web3/parachain-launch
+  print_divider
 fi
 
-if ! parachain-launch --version &>/dev/null; then
-  echo "please install parachain-launch first:"
-  echo "e.g."
-  echo "yarn global add @open-web3/parachain-launch"
-  exit 1
-fi
+"$PARCHAIN_LAUNCH_BIN" generate --config="parachain-launch-config-$CHAIN_TYPE.yml" --output="generated-$CHAIN_TYPE" --yes
 
-parachain-launch generate --config="parachain-launch-config-$CHAIN_TYPE.yml" --output="generated-$CHAIN_TYPE" --yes
-
-cat << EOF
-Done, please check files under $ROOTDIR/docker/generated-$CHAIN_TYPE/
-
-To start the network, run:
-make launch-local-docker
-EOF
+echo "Done, please check files under $ROOTDIR/docker/generated-$CHAIN_TYPE/"
+print_divider
