@@ -39,14 +39,14 @@ jobs:
     - name: Start docker containers and run CI
       timeout-minutes: 30
       run: |
-        make test-ci
+        make test-ci-binary
 
     - name: Archive logs if test fails
       uses: actions/upload-artifact@v2
       if: ${{ failure() }}
       with:
-        name: ci-log
-        path: /tmp/parachain_ci_test.log
+        name: ci-artifacts
+        path: /tmp/parachain_dev/
         retention-days: 7
 
     - name: Push docker image on dev branch if test passes
@@ -57,5 +57,4 @@ jobs:
     - name: Clean up
       if: ${{ always() }}
       run: |
-        rm -f /tmp/parachain_ci_test.log
-        make clean-local-docker
+        make clean-local-binary
