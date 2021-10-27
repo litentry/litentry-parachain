@@ -30,12 +30,14 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Build docker image
+      timeout-minutes: 40
       run: |
         ./scripts/build-docker.sh
         echo "============================="
         docker images
 
     - name: Start docker containers and run CI
+      timeout-minutes: 30
       run: |
         make test-ci
 

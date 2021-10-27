@@ -197,9 +197,9 @@ const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
 const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
 
-/// Function used in pallet_proxy configuration
+/// Function used in some fee configurations
 pub const fn deposit(items: u32, bytes: u32) -> Balance {
-	items as Balance * 15 * UNIT + (bytes as Balance) * 6 * UNIT
+	items as Balance * DOLLARS + (bytes as Balance) * 100 * MILLICENTS
 }
 
 /// The version information used to identify this runtime when compiled natively.
@@ -321,9 +321,16 @@ impl pallet_multisig::Config for Runtime {
 	scale_info::TypeInfo,
 )]
 pub enum ProxyType {
-	Any,
-	NonTransfer,
-	Governance,
+    /// Fully permissioned proxy. Can execute any call on behalf of _proxied_.
+    Any,
+    /// Can execute any call that does not transfer funds, including asset transfers.
+    NonTransfer,
+    /// Proxy with the ability to reject time-delay proxy announcements.
+    CancelProxy,
+    /// Collator selection proxy. Can execute calls related to collator selection mechanism.
+    Collator,
+    /// Governance
+    Governance,
 }
 
 impl Default for ProxyType {
@@ -336,7 +343,23 @@ impl InstanceFilter<Call> for ProxyType {
 	fn filter(&self, c: &Call) -> bool {
 		match self {
 			ProxyType::Any => true,
-			ProxyType::NonTransfer => !matches!(c, Call::Balances(..)),
+			ProxyType::NonTransfer => !matches!(
+				c, 
+				Call::Balances(..) | 
+					Call::Vesting(pallet_vesting::Call::vested_transfer { .. })
+			),
+            ProxyType::CancelProxy => matches!(
+                c,
+                Call::Proxy(pallet_proxy::Call::reject_announcement { .. }) |
+                	Call::Utility(..) |
+                	Call::Multisig(..)
+            ),
+            ProxyType::Collator => matches!(
+                c,
+                Call::CollatorSelection(..) |
+                	Call::Utility(..) |
+                	Call::Multisig(..)
+            ),
 			ProxyType::Governance => matches!(
 				c,
 				Call::Democracy(..)
@@ -866,7 +889,7 @@ impl pallet_collator_selection::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MinVestedTransfer: Balance = 100 * DOLLARS;
+	pub const MinVestedTransfer: Balance = 10 * CENTS;
 }
 
 impl pallet_vesting::Config for Runtime {

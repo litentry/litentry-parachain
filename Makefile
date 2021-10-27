@@ -74,7 +74,7 @@ format:
 # launch a local dev network using docker
 .PHONY: launch-local-docker ## Launch dev parachain by docker locally
 launch-local-docker: generate-docker-compose-dev
-	@cd docker/generated-dev; docker-compose up -d --build
+	@./scripts/launch-local-docker.sh
 
 # stop the local dev containers and cleanup images
 # for the most part used when done with launch-local-docker
