@@ -55,7 +55,7 @@ fi
 if [ -z "$PARACHAIN_BIN" ]; then
   echo "no litentry-collator binary provided, download now ..."
   # copy the binary from docker image
-  docker cp $(docker create --rm litentry/litentry-parachain:latest):/usr/local/bin/litentry-collator .
+  docker cp $(docker create --rm litentry/litentry-parachain:collective):/usr/local/bin/litentry-collator .
   chmod a+x litentry-collator
   PARACHAIN_BIN="$TMPDIR/litentry-collator"
 fi
