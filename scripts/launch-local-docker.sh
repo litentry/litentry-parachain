@@ -28,8 +28,8 @@ if [ "$WITH_RESTART" != "true" ]; then
   exit 0
 fi
 
-parachain_service=$(docker-compose ps --services --filter "status=running" | grep -F "parachain-")
-relaychain_service="$(docker-compose ps --services --filter "status=running" | grep -F "relaychain-")"
+parachain_service=$(docker-compose ps --services --filter 'status=running' | grep -F 'parachain-')
+relaychain_service="$(docker-compose ps --services --filter 'status=running' | grep -F 'relaychain-')"
 
 print_divider
 
