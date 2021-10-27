@@ -183,9 +183,6 @@ pub const MILLICENTS: Balance = CENTS / 1000;
 /// The existential deposit.
 pub const EXISTENTIAL_DEPOSIT: Balance = 10 * CENTS;
 
-// 1 in 4 blocks (on average, not counting collisions) will be primary babe blocks.
-pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
-
 /// We assume that ~10% of the block weight is consumed by `on_initialize` handlers. This is
 /// used to limit the maximal weight of a single extrinsic.
 const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
