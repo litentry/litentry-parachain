@@ -24,19 +24,17 @@ jobs:
     concurrency:
       group: ${{ github.ref }}
       cancel-in-progress: true
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
     - name: Checkout codes
       uses: actions/checkout@v2
 
-    - name: Build docker image
-      timeout-minutes: 40
+    - name: install packages
       run: |
-        ./scripts/build-docker.sh
-        echo "============================="
-        docker images
+        sudo apt install jq wget
+        sudo snap install node --classic --channel=15
 
-    - name: Start docker containers and run CI
+    - name: run CI
       timeout-minutes: 30
       run: |
         make test-ci-binary
