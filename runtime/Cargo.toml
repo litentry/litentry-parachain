@@ -74,6 +74,9 @@ xcm-executor = { git = "https://github.com/paritytech/polkadot", default-feature
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11", optional = true }
 frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11", optional = true }
 
+# Litentry pallets
+pallet-payment-interface = { version = "0.0.1", path = "../pallets/payment-interface" }
+
 [dev-dependencies]
 hex-literal = "0.3.3"
 
