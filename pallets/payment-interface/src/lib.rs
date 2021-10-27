@@ -1,7 +1,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
-use frame_support::traits::{Currency, ReservableCurrency, Imbalance, OnUnbalanced};
+// use codec::alloc::string::String;
+use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
+use scale_info::TypeInfo;
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
 
 pub type NegativeImbalance<T> = <pallet_balances::Pallet<T> as Currency<
 	<T as frame_system::Config>::AccountId,
@@ -10,16 +14,19 @@ pub type NegativeImbalance<T> = <pallet_balances::Pallet<T> as Currency<
 type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
-/// A means of determining if a vote is past pass threshold.
+// linear ratio of transaction fee distribution
 #[derive(Clone, Copy, PartialEq, Eq, Encode, Decode, sp_runtime::RuntimeDebug, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub enum VoteThreshold {
-	/// A supermajority of approvals is needed to pass this vote.
-	SuperMajorityApprove,
-	/// A supermajority of rejects is needed to fail this vote.
-	SuperMajorityAgainst,
-	/// A simple majority of approvals is needed to pass this vote.
-	SimpleMajority,
+pub struct RatioOf {
+	treasury: u32,
+	author: u32,
+	burned: u32,
+}
+
+impl Default for RatioOf {
+	fn default() -> Self {
+		RatioOf { treasury: 0, author: 0, burned: 1 }
+	}
 }
 
 pub use pallet::*;
@@ -27,90 +34,81 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-    use frame_support::pallet_prelude::*;
-    use frame_system::pallet_prelude::*;
-    #[pallet::config]
+	use frame_support::pallet_prelude::*;
+	use frame_system::pallet_prelude::*;
+	#[pallet::config]
 	pub trait Config: frame_system::Config {
-        type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Currency: Currency<Self::AccountId>;
-    }
+	}
 
-    #[pallet::pallet]
-    #[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::pallet]
+	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
-    #[pallet::type_value]
-	pub fn RatioOnEmpty() -> (u32, u32, u32) {
-		(50, 30, 20)
-	}
-
-    #[pallet::storage]
+	#[pallet::storage]
 	#[pallet::getter(fn get_ratio)]
-	pub type Ratio<T: Config> =
-		StorageValue<_, (u32, u32, u32), ValueQuery, RatioOnEmpty>;
-
-	#[pallet::type_value]
-	pub fn FixBlockRewardOnEmpty<T: Config>() ->u32 {
-		0
-	}
+	pub type Ratio<T: Config> = StorageValue<_, RatioOf, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn fix_block_reward)]
-	pub type FixBlockReward<T: Config> =
-		StorageValue<_, u32, ValueQuery>;
+	pub type FixBlockReward<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
+		ratio: RatioOf,
+		fix_block_reward: u32,
+		_phantom: sp_std::marker::PhantomData<T>,
 	}
 
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			GenesisConfig {}
+			GenesisConfig {
+				ratio: Default::default(),
+				fix_block_reward: Default::default(),
+				_phantom: Default::default(),
+			}
 		}
 	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
+			<Ratio<T>>::put(self.ratio);
+			<FixBlockReward<T>>::put(self.fix_block_reward);
 		}
 	}
 
-    #[pallet::event]
-    #[pallet::generate_deposit(pub(super) fn deposit_event)]
-    pub enum Event<T: Config> {
-        SetRatio(u32, u32, u32),
+	#[pallet::event]
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
+	pub enum Event<T: Config> {
+		SetRatio(RatioOf),
 		SetFixBlockReward(u32),
-    }
+	}
 
-    #[pallet::error]
+	#[pallet::error]
 	pub enum Error<T> {
-        RatioOverflow,
+		RatioOverflow,
 		BlockRewardTooLow,
-    }
+	}
 
-    
-    #[pallet::hooks]
-    impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
-    
-    #[pallet::call]
-    impl<T: Config> Pallet<T> {
-        #[pallet::weight(10)]
-        pub fn set_ratio(
-            origin: OriginFor<T>,
-            treasury_ratio: u32,
-            author_ratio: u32,
-            burned_ratio: u32,
-        ) -> DispatchResult {
-            ensure_root(origin)?;
-            if treasury_ratio + author_ratio + burned_ratio > 0 {
-                <Ratio<T>>::put((treasury_ratio, author_ratio, burned_ratio));
-                Self::deposit_event(Event::<T>::SetRatio(treasury_ratio, author_ratio, burned_ratio));
-                Ok(())
-            } else {
-                Err(Error::<T>::RatioOverflow.into())
-            }
-        }
+	#[pallet::hooks]
+	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
+
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {
+		#[pallet::weight(10)]
+		pub fn set_ratio(origin: OriginFor<T>, ratio: RatioOf) -> DispatchResult {
+			ensure_root(origin)?;
+			if ratio.treasury + ratio.author + ratio.burned > 0 {
+				<Ratio<T>>::put(ratio);
+				Self::deposit_event(Event::<T>::SetRatio(ratio));
+				Ok(())
+			} else {
+				Err(Error::<T>::RatioOverflow.into())
+			}
+		}
 
 		#[pallet::weight(10)]
 		pub fn set_fix_block_reward(
@@ -119,21 +117,21 @@ pub mod pallet {
 			block_reward: u32,
 		) -> DispatchResult {
 			ensure_root(origin)?;
-			
+
 			// Reward meet minimum_balance requirement of account existence
-			if BalanceOf::<T>::from(block_reward) < <T::Currency as Currency<T::AccountId>>::minimum_balance() {
-				return Err(Error::<T>::BlockRewardTooLow.into());
+			if 0 < block_reward &&
+				BalanceOf::<T>::from(block_reward) <
+					<T::Currency as Currency<T::AccountId>>::minimum_balance()
+			{
+				return Err(Error::<T>::BlockRewardTooLow.into())
 			}
 
 			<FixBlockReward<T>>::put(block_reward);
-            Self::deposit_event(Event::<T>::SetFixBlockReward(block_reward));
-            Ok(())
+			Self::deposit_event(Event::<T>::SetFixBlockReward(block_reward));
+			Ok(())
 		}
-
-    }
-
+	}
 }
-
 
 /// Logic for the author to get a portion of fees.
 pub struct ToAuthor<R>(sp_std::marker::PhantomData<R>);
@@ -156,7 +154,6 @@ where
 	}
 }
 
-
 pub struct DealWithFees<R>(sp_std::marker::PhantomData<R>);
 impl<R> OnUnbalanced<NegativeImbalance<R>> for DealWithFees<R>
 where
@@ -167,10 +164,10 @@ where
 	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance<R>>) {
 		if let Some(fees) = fees_then_tips.next() {
 			// for fees, (1) to treasury, (2) to author and (3) burned
-            let ratio = Pallet::<R>::get_ratio();
-            let (unburned, _) = fees.ration(ratio.0 + ratio.1, ratio.2);
-			let mut split = unburned.ration(ratio.0, ratio.1);
-            
+			let ratio = Pallet::<R>::get_ratio();
+			let (unburned, _) = fees.ration(ratio.treasury + ratio.author, ratio.burned);
+			let mut split = unburned.ration(ratio.treasury, ratio.author);
+
 			if let Some(tips) = fees_then_tips.next() {
 				// for tips, if any, 100% to author
 				tips.merge_into(&mut split.1);
@@ -182,14 +179,10 @@ where
 	}
 }
 
-
-
-
-
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate as pallet_transaction_payment_interface;
+	use crate as pallet_payment_interface;
 
 	use std::cell::RefCell;
 
@@ -198,21 +191,21 @@ mod tests {
 
 	use sp_core::H256;
 	use sp_runtime::{
-		testing::{Header},
+		testing::Header,
 		traits::{BlakeTwo256, IdentityLookup, SignedExtension},
 		Perbill,
 	};
 
 	use frame_support::{
 		assert_ok, parameter_types,
-		traits::{Get, FindAuthor},
+		traits::{FindAuthor, Get},
 		weights::{
-			DispatchClass, DispatchInfo, PostDispatchInfo, Weight,
-			WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
+			DispatchClass, DispatchInfo, PostDispatchInfo, Weight, WeightToFeeCoefficient,
+			WeightToFeeCoefficients, WeightToFeePolynomial,
 		},
-        PalletId,
+		PalletId,
 	};
-	
+
 	use pallet_balances::Call as BalancesCall;
 
 	type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
@@ -225,11 +218,11 @@ mod tests {
 			UncheckedExtrinsic = UncheckedExtrinsic,
 		{
 			System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-            Authorship: pallet_authorship::{Pallet, Call, Storage},
-            Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>},
+			Authorship: pallet_authorship::{Pallet, Call, Storage},
+			Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>},
 			Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 			TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
-            TransactionPaymentInterface: pallet_transaction_payment_interface::{Pallet, Call, Storage, Event<T>},
+			PaymentInterface: pallet_payment_interface::{Pallet, Call, Storage, Event<T>},
 		}
 	);
 
@@ -289,25 +282,25 @@ mod tests {
 		pub const ExistentialDeposit: u64 = 1;
 	}
 
-    parameter_types! {
+	parameter_types! {
 		pub const UncleGenerations: u64 = 5;
 	}
-    
-    impl pallet_authorship::Config for Runtime {
-        type FindAuthor = AuthorGiven;
-        type UncleGenerations = UncleGenerations;
-        type FilterUncle = ();
-        type EventHandler = ();
-    }
 
-    pub type ConsensusEngineId = [u8; 4];
-    const TEST_ID: ConsensusEngineId = [1, 2, 3, 4];
+	impl pallet_authorship::Config for Runtime {
+		type FindAuthor = AuthorGiven;
+		type UncleGenerations = UncleGenerations;
+		type FilterUncle = ();
+		type EventHandler = ();
+	}
 
-    pub struct AuthorGiven;
+	pub type ConsensusEngineId = [u8; 4];
+	const TEST_ID: ConsensusEngineId = [1, 2, 3, 4];
+
+	pub struct AuthorGiven;
 	impl FindAuthor<u64> for AuthorGiven {
 		fn find_author<'a, I>(digests: I) -> Option<u64>
-	    where
-		    I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>
+		where
+			I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
 		{
 			for (id, data) in digests {
 				if id == TEST_ID {
@@ -331,26 +324,26 @@ mod tests {
 		type WeightInfo = ();
 	}
 
-    parameter_types! {
-        pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
-    }
+	parameter_types! {
+		pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
+	}
 
-    impl pallet_treasury::Config for Runtime {
-        type PalletId = TreasuryPalletId;
-        type Currency = Balances;
-        type ApproveOrigin = frame_system::EnsureSigned<u64>;
-        type RejectOrigin = frame_system::EnsureSigned<u64>;
-        type Event = Event;
-        type OnSlash = ();
-        type ProposalBond = ();
-        type ProposalBondMinimum = ();
-        type SpendPeriod = ();
-        type Burn = ();
-        type BurnDestination = ();
-        type SpendFunds = ();
-        type WeightInfo = pallet_treasury::weights::SubstrateWeight<Runtime>;
-        type MaxApprovals = ();
-    }
+	impl pallet_treasury::Config for Runtime {
+		type PalletId = TreasuryPalletId;
+		type Currency = Balances;
+		type ApproveOrigin = frame_system::EnsureSigned<u64>;
+		type RejectOrigin = frame_system::EnsureSigned<u64>;
+		type Event = Event;
+		type OnSlash = ();
+		type ProposalBond = ();
+		type ProposalBondMinimum = ();
+		type SpendPeriod = ();
+		type Burn = ();
+		type BurnDestination = ();
+		type SpendFunds = ();
+		type WeightInfo = pallet_treasury::weights::SubstrateWeight<Runtime>;
+		type MaxApprovals = ();
+	}
 
 	impl WeightToFeePolynomial for WeightToFee {
 		type Balance = u64;
@@ -365,19 +358,20 @@ mod tests {
 		}
 	}
 
-    impl pallet_transaction_payment_interface::Config for Runtime {
-        type Event = Event;
+	impl pallet_payment_interface::Config for Runtime {
+		type Event = Event;
 		type Currency = Balances;
-    }
+	}
 
-    parameter_types! {
-        pub static TransactionByteFee: u64 = 1;
+	parameter_types! {
+		pub static TransactionByteFee: u64 = 1;
 		pub static WeightToFee: u64 = 1;
 		pub static OperationalFeeMultiplier: u8 = 5;
-    }
+	}
 
 	impl pallet_transaction_payment::Config for Runtime {
-		type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
+		type OnChargeTransaction =
+			pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
 		type TransactionByteFee = TransactionByteFee;
 		type OperationalFeeMultiplier = OperationalFeeMultiplier;
 		type WeightToFee = WeightToFee;
@@ -402,14 +396,6 @@ mod tests {
 			self.base_weight = base_weight;
 			self
 		}
-		pub fn byte_fee(mut self, byte_fee: u64) -> Self {
-			self.byte_fee = byte_fee;
-			self
-		}
-		pub fn weight_fee(mut self, weight_to_fee: u64) -> Self {
-			self.weight_to_fee = weight_to_fee;
-			self
-		}
 		pub fn balance_factor(mut self, factor: u64) -> Self {
 			self.balance_factor = factor;
 			self
@@ -424,9 +410,7 @@ mod tests {
 			let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 			pallet_balances::GenesisConfig::<Runtime> {
 				balances: if self.balance_factor > 0 {
-					vec![
-						(1, 100 * self.balance_factor),
-					]
+					vec![(1, 100 * self.balance_factor)]
 				} else {
 					vec![]
 				},
@@ -437,16 +421,16 @@ mod tests {
 		}
 	}
 
-    /// create a transaction info struct from weight. Handy to avoid building the whole struct.
+	/// create a transaction info struct from weight. Handy to avoid building the whole struct.
 	pub fn info_from_weight(w: Weight) -> DispatchInfo {
 		// pays_fee: Pays::Yes -- class: DispatchClass::Normal
 		DispatchInfo { weight: w, ..Default::default() }
 	}
 
-    fn post_info_from_weight(w: Weight) -> PostDispatchInfo {
+	fn post_info_from_weight(w: Weight) -> PostDispatchInfo {
 		PostDispatchInfo { actual_weight: Some(w), pays_fee: Default::default() }
 	}
-	
+
 	#[test]
 	fn signed_extension_transaction_payment_work() {
 		ExtBuilder::default()
@@ -454,61 +438,78 @@ mod tests {
 			.base_weight(5)
 			.build()
 			.execute_with(|| {
-                assert_ok!(TransactionPaymentInterface::set_ratio(Origin::root(), 50, 30, 20));
-                let mut sender_balance = Balances::free_balance(1);
-                let mut treasury_balance = Balances::free_balance(Treasury::account_id());
+				assert_ok!(PaymentInterface::set_ratio(
+					Origin::root(),
+					RatioOf { treasury: 50, author: 30, burned: 20 }
+				));
+				let mut sender_balance = Balances::free_balance(1);
+				let mut treasury_balance = Balances::free_balance(Treasury::account_id());
 				let len = 10;
 				let pre = pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(0)
 					.pre_dispatch(&1, CALL, &info_from_weight(85), len)
 					.unwrap();
-                // 1: initial 1000 balance, withdraw 5 base fee, 85 weight fee, 10 len fee
-                // Treasury unchanged
+				// 1: initial 1000 balance, withdraw 5 base fee, 85 weight fee, 10 len fee
+				// Treasury unchanged
 				assert_eq!(sender_balance - Balances::free_balance(1), 5 + 85 + 10);
-                assert_eq!(Balances::free_balance(Treasury::account_id()) - treasury_balance, 0);
-                sender_balance = Balances::free_balance(1);
-                treasury_balance = Balances::free_balance(Treasury::account_id());
-				assert_ok!(pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::post_dispatch(
-					pre,
-					&info_from_weight(85),
-                    // so acutal weight is 35 + 5 + 10 = 50
-					&post_info_from_weight(35),
-					len,
-					&Ok(())
-				));
-                // 1: balance refund 50
+				assert_eq!(Balances::free_balance(Treasury::account_id()) - treasury_balance, 0);
+				sender_balance = Balances::free_balance(1);
+				treasury_balance = Balances::free_balance(Treasury::account_id());
+				assert_ok!(
+					pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::post_dispatch(
+						pre,
+						&info_from_weight(85),
+						// so acutal weight is 35 + 5 + 10 = 50
+						&post_info_from_weight(35),
+						len,
+						&Ok(())
+					)
+				);
+				// 1: balance refund 50
 				assert_eq!(Balances::free_balance(1) - sender_balance, 50);
-                // treasury pallet account get distribution 50 out of (50+30+20) proprtion of 50 actual weight
-                assert_eq!(Balances::free_balance(Treasury::account_id()) - treasury_balance, 50*50/(50+30+20));
-                // TODO: author account get distribution
+				// treasury pallet account get distribution 50 out of (50+30+20) proprtion of 50
+				// actual weight
+				assert_eq!(
+					Balances::free_balance(Treasury::account_id()) - treasury_balance,
+					50 * 50 / (50 + 30 + 20)
+				);
+				// TODO: author account get distribution
 
-                // change the ratio setting and repeat the pre/post dispatch above
-                assert_ok!(TransactionPaymentInterface::set_ratio(Origin::root(), 20, 30, 50));
-                let mut sender_balance = Balances::free_balance(1);
-                let mut treasury_balance = Balances::free_balance(Treasury::account_id());
-                let len = 10;
+				// change the ratio setting and repeat the pre/post dispatch above
+				assert_ok!(PaymentInterface::set_ratio(
+					Origin::root(),
+					RatioOf { treasury: 20, author: 30, burned: 50 }
+				));
+				let mut sender_balance = Balances::free_balance(1);
+				let mut treasury_balance = Balances::free_balance(Treasury::account_id());
+				let len = 10;
 				let pre = pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(0)
 					.pre_dispatch(&1, CALL, &info_from_weight(85), len)
 					.unwrap();
-                // 1: withdraw 5 base fee, 85 weight fee, 10 len fee
-                // Treasury unchanged
+				// 1: withdraw 5 base fee, 85 weight fee, 10 len fee
+				// Treasury unchanged
 				assert_eq!(sender_balance - Balances::free_balance(1), 5 + 85 + 10);
-                assert_eq!(Balances::free_balance(Treasury::account_id()) - treasury_balance, 0);
-                sender_balance = Balances::free_balance(1);
-                treasury_balance = Balances::free_balance(Treasury::account_id());
-                assert_ok!(pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::post_dispatch(
-					pre,
-					&info_from_weight(85),
-                    // so acutal weight is 35 + 5 + 10 = 50
-					&post_info_from_weight(35),
-					len,
-					&Ok(())
-				));
-                // 1: balance refund 50
+				assert_eq!(Balances::free_balance(Treasury::account_id()) - treasury_balance, 0);
+				sender_balance = Balances::free_balance(1);
+				treasury_balance = Balances::free_balance(Treasury::account_id());
+				assert_ok!(
+					pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::post_dispatch(
+						pre,
+						&info_from_weight(85),
+						// so acutal weight is 35 + 5 + 10 = 50
+						&post_info_from_weight(35),
+						len,
+						&Ok(())
+					)
+				);
+				// 1: balance refund 50
 				assert_eq!(Balances::free_balance(1) - sender_balance, 50);
-                // treasury pallet account get distribution 20 out of (50+30+20) proprtion of 50 actual weight
-                assert_eq!(Balances::free_balance(Treasury::account_id()) - treasury_balance, 20*50/(50+30+20));
-                // TODO: author account get distribution
+				// treasury pallet account get distribution 20 out of (50+30+20) proprtion of 50
+				// actual weight
+				assert_eq!(
+					Balances::free_balance(Treasury::account_id()) - treasury_balance,
+					20 * 50 / (50 + 30 + 20)
+				);
+				// TODO: author account get distribution
 			});
 	}
-
 }

@@ -75,7 +75,7 @@ frame-benchmarking = { git = "https://github.com/paritytech/substrate", default-
 frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.11", optional = true }
 
 # Litentry pallets
-pallet-payment-interface = { version = "0.0.1", path = "../pallets/payment-interface" }
+pallet-payment-interface = { version = "0.0.1", default-features = false, path = "../pallets/payment-interface" }
 
 [dev-dependencies]
 hex-literal = "0.3.3"
@@ -110,6 +110,7 @@ std = [
 	"pallet-collective/std",
 	"pallet-democracy/std",
 	"pallet-multisig/std",
+	"pallet-payment-interface/std",
 	"pallet-proxy/std",
 	"pallet-scheduler/std",
 	"pallet-session/std",

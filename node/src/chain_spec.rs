@@ -99,12 +99,10 @@ pub fn get_chain_spec_dev(id: ParaId) -> ChainSpec {
 		move || {
 			generate_genesis(
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				vec![
-					(
-						get_account_id_from_seed::<sr25519::Public>("Alice"),
-						get_collator_keys_from_seed("Alice"),
-					),
-				],
+				vec![(
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_collator_keys_from_seed("Alice"),
+				)],
 				DEFAULT_CANDIDACY_BOND,
 				vec![
 					(
@@ -249,5 +247,6 @@ fn generate_genesis(
 		aura: Default::default(),
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
+		payment_interface: Default::default(),
 	}
 }

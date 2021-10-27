@@ -1,11 +1,10 @@
 [package]
 authors = ['Litentry Dev']
-description = 'dynamic implementation for transaction payment pallet'
+description = 'dynamic implementation for payment pallet'
 edition = '2018'
 homepage = 'https://litentry.com'
 license = 'Unlicense'
 name = 'pallet-payment-interface'
-repository = 'https://github.com/litentry/litentry-pallets'
 version = '0.0.1'
 
 [package.metadata.docs.rs]
@@ -18,15 +17,18 @@ codec = { package = "parity-scale-codec", version = "2.0.0", default-features = 
 scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 serde = { version = "1.0.126", optional = true }
 
+# Substrate Dependencies
+## Substrate Primitive Dependencies
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false}
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false}
 
-
+## Substrate FRAME Dependencies
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
 
+## Substrate Pallet Dependencies
 pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
 pallet-treasury = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
 pallet-authorship = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
@@ -38,8 +40,8 @@ smallvec = "1.7.0"
 [features]
 default = ["std"]
 std = [
-	"serde",
 	"codec/std",
+	"serde",
 	"scale-info/std",
 	"sp-core/std",
 	"sp-io/std",

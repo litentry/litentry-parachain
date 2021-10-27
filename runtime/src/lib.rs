@@ -59,6 +59,13 @@ use xcm_builder::{
 };
 use xcm_executor::{Config, XcmExecutor};
 
+// TODO: MOVE TO COMMON
+// transaction payment pallet related items: TODO, move to common
+use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
+use sp_runtime::{FixedPointNumber, Perquintill};
+// Litentry Pallets
+use pallet_payment_interface::DealWithFees;
+
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
 pub type Signature = MultiSignature;
 
@@ -321,16 +328,16 @@ impl pallet_multisig::Config for Runtime {
 	scale_info::TypeInfo,
 )]
 pub enum ProxyType {
-    /// Fully permissioned proxy. Can execute any call on behalf of _proxied_.
-    Any,
-    /// Can execute any call that does not transfer funds, including asset transfers.
-    NonTransfer,
-    /// Proxy with the ability to reject time-delay proxy announcements.
-    CancelProxy,
-    /// Collator selection proxy. Can execute calls related to collator selection mechanism.
-    Collator,
-    /// Governance
-    Governance,
+	/// Fully permissioned proxy. Can execute any call on behalf of _proxied_.
+	Any,
+	/// Can execute any call that does not transfer funds, including asset transfers.
+	NonTransfer,
+	/// Proxy with the ability to reject time-delay proxy announcements.
+	CancelProxy,
+	/// Collator selection proxy. Can execute calls related to collator selection mechanism.
+	Collator,
+	/// Governance
+	Governance,
 }
 
 impl Default for ProxyType {
@@ -344,27 +351,21 @@ impl InstanceFilter<Call> for ProxyType {
 		match self {
 			ProxyType::Any => true,
 			ProxyType::NonTransfer => !matches!(
-				c, 
-				Call::Balances(..) | 
-					Call::Vesting(pallet_vesting::Call::vested_transfer { .. })
+				c,
+				Call::Balances(..) | Call::Vesting(pallet_vesting::Call::vested_transfer { .. })
 			),
-            ProxyType::CancelProxy => matches!(
-                c,
-                Call::Proxy(pallet_proxy::Call::reject_announcement { .. }) |
-                	Call::Utility(..) |
-                	Call::Multisig(..)
-            ),
-            ProxyType::Collator => matches!(
-                c,
-                Call::CollatorSelection(..) |
-                	Call::Utility(..) |
-                	Call::Multisig(..)
-            ),
+			ProxyType::CancelProxy => matches!(
+				c,
+				Call::Proxy(pallet_proxy::Call::reject_announcement { .. }) |
+					Call::Utility(..) | Call::Multisig(..)
+			),
+			ProxyType::Collator =>
+				matches!(c, Call::CollatorSelection(..) | Call::Utility(..) | Call::Multisig(..)),
 			ProxyType::Governance => matches!(
 				c,
-				Call::Democracy(..)
-					| Call::Council(..) | Call::TechnicalCommittee(..)
-					| Call::Treasury(..)
+				Call::Democracy(..) |
+					Call::Council(..) | Call::TechnicalCommittee(..) |
+					Call::Treasury(..)
 			),
 		}
 	}
@@ -477,13 +478,36 @@ parameter_types! {
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
+// transaction payment pallet: TODO, move to common
+parameter_types! {
+	/// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
+	/// than this will decrease the weight and more will increase.
+	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
+	/// The adjustment variable of the runtime. Higher values will cause `TargetBlockFullness` to
+	/// change the fees more rapidly.
+	pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(3, 100_000);
+	/// Minimum amount of the multiplier. This value cannot be too low. A test case should ensure
+	/// that combined with `AdjustmentVariable`, we can recover from the minimum.
+	/// See `multiplier_can_grow_from_zero`.
+	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000u128);
+}
+// transaction payment pallet: TODO, move to common
+pub type SlowAdjustingFeeUpdate<R> =
+	TargetedFeeAdjustment<R, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
+
 // TODO: same as rococo-parachain but differnet as parachain-template
 impl pallet_transaction_payment::Config for Runtime {
-	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
+	type OnChargeTransaction =
+		pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = IdentityFee<Balance>;
-	type FeeMultiplierUpdate = ();
+	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
+}
+
+impl pallet_payment_interface::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
 }
 
 parameter_types! {
@@ -915,6 +939,9 @@ construct_runtime! {
 		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 51,
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 52,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 53,
+
+		// Litentry Pallet
+		PaymentInterface: pallet_payment_interface::{Pallet, Call, Storage, Config<T>, Event<T>} = 60,
 
 		// TMP
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 255,
