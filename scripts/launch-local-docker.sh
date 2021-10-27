@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-set -eo pipefail
 
 # whether to restart the relaychains if parachain doesn't produce blocks
 WITH_RESTART=${1:-true}
 
-# wait intervail in seconds to check the block import and production of parachain
+# wait interval in seconds to check the block import and production of parachain
 WAIT_INTERVAL_SECONDS=10
 
+# rounds to wait in `check_block`, in total it's 12 * 10 = 2min
 WAIT_ROUNDS=12
 
 # restart interval in seconds for restarting relaychains sequentially
@@ -27,6 +27,10 @@ docker-compose up -d --build
 if [ "$WITH_RESTART" != "true" ]; then
   exit 0
 fi
+
+# sleep for a while to make sure `docker-compose` is ready
+# otherwise `docker-compose logs` could print empty output
+sleep 10
 
 parachain_service=$(docker-compose ps --services --filter 'status=running' | grep -F 'parachain-')
 relaychain_service="$(docker-compose ps --services --filter 'status=running' | grep -F 'relaychain-')"
