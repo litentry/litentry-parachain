@@ -6,6 +6,9 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+pub mod constants;
+pub use constants::{currency::*};
+
 use sp_api::impl_runtime_apis;
 use sp_core::{
 	crypto::KeyTypeId,
@@ -174,12 +177,6 @@ pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
 
-// Unit or DOLLARS = the base number of indivisible units for balances
-pub const UNIT: Balance = 1_000_000_000_000;
-pub const DOLLARS: Balance = UNIT;
-pub const CENTS: Balance = DOLLARS / 100;
-pub const MILLICENTS: Balance = CENTS / 1000;
-
 /// The existential deposit.
 pub const EXISTENTIAL_DEPOSIT: Balance = 10 * CENTS;
 
@@ -193,11 +190,6 @@ const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
 const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
-
-/// Function used in some fee configurations
-pub const fn deposit(items: u32, bytes: u32) -> Balance {
-	items as Balance * DOLLARS + (bytes as Balance) * 100 * MILLICENTS
-}
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
