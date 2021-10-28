@@ -1,0 +1,36 @@
+{
+    "rootKey": "5DaB1AshD6NsRRq84rsLuR65aD8tTPxp2Ub7HnqVtirgWn4V",
+    "invulnerables": [
+      [
+        "5FZP2oqDBBWzaKp8STUQKTvSo2Y1UD68briboWreLiVAxJr1",
+        "5HbUXue4BsoBmR1ZSWCurQMTdi2jrDdVzMQoKtc8ByMH9uEc"
+      ],
+      [
+        "5EJLoe5Uaj8U7jTxJwiDCP1kNSnHu4Buw8pdkpm136QRiAEC",
+        "5E9ky6gxEMAHrVRLyubyL4UqCkdt5kJmHkB7HuxJ3Y5LDvm3"
+      ]
+    ],
+    "candidacyBond": "16000000000000",
+    "endowedAccounts": [
+      [
+        "5FZP2oqDBBWzaKp8STUQKTvSo2Y1UD68briboWreLiVAxJr1",
+        "1000000000000000"
+      ],
+      [
+        "5EJLoe5Uaj8U7jTxJwiDCP1kNSnHu4Buw8pdkpm136QRiAEC",
+        "1000000000000000"
+      ],
+      [
+        "5DaB1AshD6NsRRq84rsLuR65aD8tTPxp2Ub7HnqVtirgWn4V",
+        "1000000000000000"
+      ]
+    ],
+    "bootNodes": [
+      "/dns/parachain-sg-1.litentry.io/tcp/40333/p2p/12D3KooWBy6nNAuca2ZrxNEH93bzmb7ZjRpzRbbz7CtNEraiHtSC",
+      "/dns/parachain-sg-2.litentry.io/tcp/40333/p2p/12D3KooWJejFQVK5wtZeDZguAXkzQxngrS9yZt2F1bk92m5w4Xgp",
+      "/dns/parachain-sg-3.litentry.io/tcp/40333/p2p/12D3KooWD3ovhokyzvB4k8q6XhSiBrfySz2qzzNdj6SeqaUcFLga"
+    ],
+    "telemetryEndpoints": [
+      "wss://telemetry-backend.parachain.litentry.io/submit"
+    ]
+  }

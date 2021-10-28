@@ -16,7 +16,7 @@ use sp_core::{
 };
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify},
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, IdentifyAccount, Verify},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiSignature,
 };
@@ -47,7 +47,7 @@ pub use sp_runtime::{MultiAddress, Perbill, Percent, Permill};
 pub use sp_runtime::BuildStorage;
 
 // Polkadot Imports
-use pallet_xcm::{EnsureXcm, IsMajorityOfBody, XcmPassthrough};
+use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 
 // XCM Imports
@@ -152,7 +152,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("litentry-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot, corresponds to 0.1.0 package version/client version.
-	// last digit is used for minor updates, like 9110 -> 9111 in polkadot 
+	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
 	spec_version: 1000,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
@@ -176,20 +176,14 @@ pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
 
-// TODO: the `UNIT` and `CENTS` values are copied from the previous version
-///      we might want to adjust these
-// Unit = the base number of indivisible units for balances
+// Unit or DOLLARS = the base number of indivisible units for balances
 pub const UNIT: Balance = 1_000_000_000_000;
-pub const MILLIUNIT: Balance = 1_000_000_000;
-pub const MICROUNIT: Balance = 1_000_000;
+pub const DOLLARS: Balance = UNIT;
+pub const CENTS: Balance = DOLLARS / 100;
+pub const MILLICENTS: Balance = CENTS / 1000;
 
-// Another balance system, 1 MILLICENTS = 1 MILLIUNIT
-pub const MILLICENTS: Balance = MILLIUNIT;
-pub const CENTS: Balance = 1_000 * MILLICENTS;
-pub const DOLLARS: Balance = 100 * CENTS;
-
-/// The existential deposit. Set to 1/10 of the Rococo Relay Chain.
-pub const EXISTENTIAL_DEPOSIT: Balance = MILLIUNIT;
+/// The existential deposit.
+pub const EXISTENTIAL_DEPOSIT: Balance = 10 * CENTS;
 
 // 1 in 4 blocks (on average, not counting collisions) will be primary babe blocks.
 pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
@@ -205,9 +199,9 @@ const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
 const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
 
-/// Function used in pallet_proxy configuration
+/// Function used in some fee configurations
 pub const fn deposit(items: u32, bytes: u32) -> Balance {
-	items as Balance * 15 * UNIT + (bytes as Balance) * 6 * UNIT
+	items as Balance * DOLLARS + (bytes as Balance) * 100 * MILLICENTS
 }
 
 /// The version information used to identify this runtime when compiled natively.
@@ -296,6 +290,24 @@ impl frame_system::Config for Runtime {
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
 }
 
+parameter_types! {
+	// One storage item; key size is 32; value is size 4+4+16+32 bytes = 56 bytes.
+	pub const DepositBase: Balance = deposit(1, 88);
+	// Additional storage item size of 32 bytes.
+	pub const DepositFactor: Balance = deposit(0, 32);
+	pub const MaxSignatories: u16 = 100;
+}
+
+impl pallet_multisig::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type Currency = Balances;
+	type DepositBase = DepositBase;
+	type DepositFactor = DepositFactor;
+	type MaxSignatories = MaxSignatories;
+	type WeightInfo = pallet_multisig::weights::SubstrateWeight<Runtime>;
+}
+
 /// The type used to represent the kinds of proxying allowed.
 #[derive(
 	Copy,
@@ -311,9 +323,16 @@ impl frame_system::Config for Runtime {
 	scale_info::TypeInfo,
 )]
 pub enum ProxyType {
-	Any,
-	NonTransfer,
-	Governance,
+    /// Fully permissioned proxy. Can execute any call on behalf of _proxied_.
+    Any,
+    /// Can execute any call that does not transfer funds, including asset transfers.
+    NonTransfer,
+    /// Proxy with the ability to reject time-delay proxy announcements.
+    CancelProxy,
+    /// Collator selection proxy. Can execute calls related to collator selection mechanism.
+    Collator,
+    /// Governance
+    Governance,
 }
 
 impl Default for ProxyType {
@@ -326,7 +345,23 @@ impl InstanceFilter<Call> for ProxyType {
 	fn filter(&self, c: &Call) -> bool {
 		match self {
 			ProxyType::Any => true,
-			ProxyType::NonTransfer => !matches!(c, Call::Balances(..)),
+			ProxyType::NonTransfer => !matches!(
+				c, 
+				Call::Balances(..) | 
+					Call::Vesting(pallet_vesting::Call::vested_transfer { .. })
+			),
+            ProxyType::CancelProxy => matches!(
+                c,
+                Call::Proxy(pallet_proxy::Call::reject_announcement { .. }) |
+                	Call::Utility(..) |
+                	Call::Multisig(..)
+            ),
+            ProxyType::Collator => matches!(
+                c,
+                Call::CollatorSelection(..) |
+                	Call::Utility(..) |
+                	Call::Multisig(..)
+            ),
 			ProxyType::Governance => matches!(
 				c,
 				Call::Democracy(..)
@@ -370,23 +405,6 @@ impl pallet_proxy::Config for Runtime {
 	type CallHasher = BlakeTwo256;
 	type AnnouncementDepositBase = AnnouncementDepositBase;
 	type AnnouncementDepositFactor = AnnouncementDepositFactor;
-}
-
-parameter_types! {
-	pub const ConfigDepositBase: Balance = 5 * DOLLARS;
-	pub const FriendDepositFactor: Balance = 50 * CENTS;
-	pub const MaxFriends: u16 = 9;
-	pub const RecoveryDeposit: Balance = 5 * DOLLARS;
-}
-
-impl pallet_recovery::Config for Runtime {
-	type Event = Event;
-	type Call = Call;
-	type Currency = Balances;
-	type ConfigDepositBase = ConfigDepositBase;
-	type FriendDepositFactor = FriendDepositFactor;
-	type MaxFriends = MaxFriends;
-	type RecoveryDeposit = RecoveryDeposit;
 }
 
 parameter_types! {
@@ -449,7 +467,11 @@ impl pallet_balances::Config for Runtime {
 	type ReserveIdentifier = [u8; 8];
 }
 
-impl pallet_randomness_collective_flip::Config for Runtime {}
+impl pallet_utility::Config for Runtime {
+    type Event = Event;
+    type Call = Call;
+    type WeightInfo = weights::pallet_utility::WeightInfo<Runtime>;
+}
 
 parameter_types! {
 	/// Relay Chain `TransactionByteFee` / 10
@@ -565,36 +587,7 @@ impl pallet_collective::Config<TechnicalCollective> for Runtime {
 	type MaxProposals = TechnicalMaxProposals;
 	type MaxMembers = TechnicalMaxMembers;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
-	type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
-}
-
-parameter_types! {
-	pub const BasicDeposit: Balance = 10 * DOLLARS;       // 258 bytes on-chain
-	pub const FieldDeposit: Balance = 250 * CENTS;        // 66 bytes on-chain
-	pub const SubAccountDeposit: Balance = 2 * DOLLARS;   // 53 bytes on-chain
-	pub const MaxSubAccounts: u32 = 100;
-	pub const MaxAdditionalFields: u32 = 100;
-	pub const MaxRegistrars: u32 = 20;
-}
-
-type EnsureRootOrHalfCouncil = EnsureOneOf<
-	AccountId,
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>,
->;
-impl pallet_identity::Config for Runtime {
-	type Event = Event;
-	type Currency = Balances;
-	type BasicDeposit = BasicDeposit;
-	type FieldDeposit = FieldDeposit;
-	type SubAccountDeposit = SubAccountDeposit;
-	type MaxSubAccounts = MaxSubAccounts;
-	type MaxAdditionalFields = MaxAdditionalFields;
-	type MaxRegistrars = MaxRegistrars;
-	type Slashed = Treasury;
-	type ForceOrigin = EnsureRootOrHalfCouncil;
-	type RegistrarOrigin = EnsureRootOrHalfCouncil;
-	type WeightInfo = weights::pallet_identity::WeightInfo<Runtime>;
+	type WeightInfo = weights::pallet_collective::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -866,45 +859,19 @@ impl pallet_collator_selection::Config for Runtime {
 	type WeightInfo = pallet_collator_selection::weights::SubstrateWeight<Runtime>;
 }
 
-impl cumulus_ping::Config for Runtime {
-	type Event = Event;
-	type Origin = Origin;
-	type Call = Call;
-	type XcmSender = XcmRouter;
-}
-
 parameter_types! {
-	pub const AssetDeposit: Balance = 1 * UNIT;
-	pub const ApprovalDeposit: Balance = 100 * MILLIUNIT;
-	pub const AssetsStringLimit: u32 = 50;
-	pub const MetadataDepositBase: Balance = 1 * UNIT;
-	pub const MetadataDepositPerByte: Balance = 10 * MILLIUNIT;
-	pub const UnitBody: BodyId = BodyId::Unit;
+	pub const MinVestedTransfer: Balance = 10 * CENTS;
 }
 
-/// A majority of the Unit body from Rococo over XCM is our required administration origin.
-pub type AdminOrigin = EnsureXcm<IsMajorityOfBody<RocLocation, UnitBody>>;
-
-impl pallet_assets::Config for Runtime {
+impl pallet_vesting::Config for Runtime {
 	type Event = Event;
-	type Balance = u64;
-	type AssetId = u32;
 	type Currency = Balances;
-	type ForceOrigin = AdminOrigin;
-	type AssetDeposit = AssetDeposit;
-	type MetadataDepositBase = MetadataDepositBase;
-	type MetadataDepositPerByte = MetadataDepositPerByte;
-	type ApprovalDeposit = ApprovalDeposit;
-	type StringLimit = AssetsStringLimit;
-	type Freezer = ();
-	type Extra = ();
-	type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
-}
-
-impl pallet_utility::Config for Runtime {
-    type Event = Event;
-    type Call = Call;
-    type WeightInfo = weights::pallet_utility::WeightInfo<Runtime>;
+	type BlockNumberToBalance = ConvertInto;
+	type MinVestedTransfer = MinVestedTransfer;
+	type WeightInfo = pallet_vesting::weights::SubstrateWeight<Runtime>;
+	// `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
+	// highest number of schedules that encodes less than 2^10.
+	const MAX_VESTING_SCHEDULES: u32 = 28;
 }
 
 construct_runtime! {
@@ -913,34 +880,37 @@ construct_runtime! {
 		NodeBlock = opaque::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>},
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage},
-		Utility: pallet_utility::{Pallet, Call, Event},
-		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>},
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
-		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>},
-		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>},
-		Identity: pallet_identity::{Pallet, Call, Storage, Event<T>},
-		TechnicalCommittee: pallet_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>},
-		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>},
-		Recovery: pallet_recovery::{Pallet, Call, Storage, Event<T>},
+		// Core
+		System: frame_system::{Pallet, Call, Storage, Config, Event<T>} = 0,
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 1,
+		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 2,
+		Utility: pallet_utility::{Pallet, Call, Event} = 3,
+		Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>} = 4,
+		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 5,
+
+		// Token related
+		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 10,
+		Vesting: pallet_vesting::{Pallet, Call, Storage, Event<T>, Config<T>} = 11,
+		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 12,
+		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 13,
+
+		// Governance
+		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 21,
+		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 22,
+		TechnicalCommittee: pallet_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 23,
+
+		// Parachain
 		ParachainSystem: cumulus_pallet_parachain_system::{
 			Pallet, Call, Config, Storage, Inherent, Event<T>, ValidateUnsigned,
-		} = 20,
-		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 21,
-
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 30,
-		Assets: pallet_assets::{Pallet, Call, Storage, Event<T>} = 31,
+		} = 30,
+		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 31,
 
 		// Collator support. the order of these 4 are important and shall not change.
-		Authorship: pallet_authorship::{Pallet, Call, Storage},
-		CollatorSelection: pallet_collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>},
-		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
-		Aura: pallet_aura::{Pallet, Storage, Config<T>},
-		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config},
+		Authorship: pallet_authorship::{Pallet, Call, Storage} = 40,
+		CollatorSelection: pallet_collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>} = 41,
+		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 42,
+		Aura: pallet_aura::{Pallet, Storage, Config<T>} = 43,
+		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config} = 44,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 50,
@@ -948,7 +918,8 @@ construct_runtime! {
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 52,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 53,
 
-		Spambot: cumulus_ping::{Pallet, Call, Storage, Event<T>} = 99,
+		// TMP
+		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 255,
 	}
 }
 
@@ -1076,10 +1047,8 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_treasury, Treasury);
 			list_benchmark!(list, extra, pallet_democracy, Democracy);
 			list_benchmark!(list, extra, pallet_collective, Council);
-			list_benchmark!(list, extra, pallet_identity, Identity);
 			list_benchmark!(list, extra, pallet_proxy, Proxy);
 			list_benchmark!(list, extra, pallet_balances, Balances);
-			list_benchmark!(list, extra, pallet_assets,Assets );
 			list_benchmark!(list, extra, pallet_collator_selection, CollatorSelection);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
@@ -1117,10 +1086,8 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_treasury, Treasury);
 			add_benchmark!(params, batches, pallet_democracy, Democracy);
 			add_benchmark!(params, batches, pallet_collective, Council);
-			add_benchmark!(params, batches, pallet_identity, Identity);
 			add_benchmark!(params, batches, pallet_proxy, Proxy);
 			add_benchmark!(params, batches, pallet_balances, Balances);
-			add_benchmark!(params, batches, pallet_assets, Assets );
 			add_benchmark!(params, batches, pallet_collator_selection, CollatorSelection);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }

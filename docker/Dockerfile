@@ -2,11 +2,13 @@ FROM paritytech/ci-linux:production as builder
 LABEL description="This is the build stage for Polkadot. Here we create the binary."
 
 ARG PROFILE=release
+ARG FEATURES
 WORKDIR /litentry-parachain
 
 COPY . /litentry-parachain
 
-RUN cargo build --$PROFILE
+# empty features (--features=) will be ignored
+RUN cargo build --$PROFILE --features=$FEATURES
 
 # ===== SECOND STAGE ======
 
