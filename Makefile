@@ -122,10 +122,6 @@ benchmark-pallet-democracy:
 benchmark-pallet-collective:
 	@./scripts/run-benchmark-pallet.sh pallet-collective
 
-.PHONY: benchmark-pallet-identity
-benchmark-pallet-identity:
-	@./scripts/run-benchmark-pallet.sh pallet-identity
-
 .PHONY: benchmark-pallet-proxy
 benchmark-pallet-proxy:
 	@./scripts/run-benchmark-pallet.sh pallet-proxy
@@ -133,10 +129,6 @@ benchmark-pallet-proxy:
 .PHONY: benchmark-pallet-balances
 benchmark-pallet-balances:
 	@./scripts/run-benchmark-pallet.sh pallet-balances
-
-.PHONY: benchmark-pallet-assets
-benchmark-pallet-assets:
-	@./scripts/run-benchmark-pallet.sh pallet-assets
 
 .PHONY: benchmark-pallet-collator-selection
 benchmark-pallet-collator-selection:
