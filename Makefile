@@ -5,7 +5,7 @@ all:
 NODE_BIN=litentry-collator
 RUNTIME=litentry-parachain-runtime
 
-.PHONY: help ## Display help commands.
+.PHONY: help ## Display help commands
 help:
 	@printf 'Usage:\n'
 	@printf '  make <tagert>\n'
@@ -25,76 +25,87 @@ help:
 
 # build release
 
-.PHONY: build-all ## Build release version.
+.PHONY: build-all ## Build release version
 build-all:
 	cargo build --release
 
-.PHONY: build-node ## Build release node only.
+.PHONY: build-node ## Build release node only
 build-node:
 	cargo build -p $(call pkgid, $(NODE_BIN)) --release
 
-.PHONY: build-runtime ## Build release runtime only.
+.PHONY: build-runtime ## Build release runtime only
 build-runtime:
 	cargo build -p $(call pkgid, $(RUNTIME)) --release
 
-# use srtool to build wasm locally
-# in github actions srtool-actions is used
-.PHONY: srtool-build-wasm
+.PHONY: srtool-build-wasm ## Build wasm locally with srtools
 srtool-build-wasm:
 	@./scripts/build-wasm.sh
 
-.PHONY: build-docker ## Build docker image.
+.PHONY: build-docker ## Build docker image
 build-docker:
 	@./scripts/build-docker.sh
 
-.PHONY: build-spec-dev ## Build specifiction without bootnodes.
+.PHONY: build-spec-dev ## Build specifiction without bootnodes
 build-spec-dev:
 	./target/release/$(NODE_BIN) build-spec --chain dev --disable-default-bootnode > ./source/local.json
 
 .PHONY: build-benchmark ## Build release version with `runtime-benchmarks`
 build-benchmark:
 	cargo build --features runtime-benchmarks --release
+	
+# launching local dev networks
 
-# test
+.PHONY: launch-local-docker ## Launch dev parachain network with docker locally
+launch-local-docker: generate-docker-compose-dev
+	@./scripts/launch-local-docker.sh
+
+.PHONY: launch-local-binary ## Launch dev parachain network with binaries locally
+launch-local-binary:
+	@./scripts/launch-local-binary.sh
+
+# run tests
 
 .PHONY: test-node
 test-node:
 	cargo test --package $(call pkgid, $(NODE_BIN))
 
-.PHONY: test-ci
-test-ci: launch-local-docker
+.PHONY: test-ci-docker ## Run CI tests with docker without clean-up
+test-ci-docker: launch-local-docker
+	@./scripts/run-ci-test.sh docker
+
+.PHONY: test-ci-binary ## Run CI tests with binary without clean-up
+test-ci-binary: launch-local-binary
 	@./scripts/run-ci-test.sh
 
-# format
+# clean up
 
-.PHONY: format ## Format source code by `cargo fmt`.
-format:
-	cargo fmt --all -- --check
-
-# launch a local dev network using docker
-.PHONY: launch-local-docker ## Launch dev parachain by docker locally
-launch-local-docker: generate-docker-compose-dev
-	@cd docker/generated-dev; docker-compose up -d --build
-
-# stop the local dev containers and cleanup images
-# for the most part used when done with launch-local-docker
-.PHONY: clean-local-docker ## Clean up docker images, containers, volumes, etc.
+.PHONY: clean-local-docker ## Clean up docker images, containers, volumes, etc
 clean-local-docker:
 	@./scripts/clean-local-docker.sh
 
+.PHONY: clean-local-binary ## Clean up (kill) started relaychain and parachain binaries
+clean-local-binary:
+	@./scripts/clean-local-binary.sh
+
 # generate docker-compose files
 
-.PHONY: generate-docker-compose-dev ## Generate dev docker-compose files.
+.PHONY: generate-docker-compose-dev ## Generate dev docker-compose files
 generate-docker-compose-dev:
 	@./scripts/generate-docker-files.sh dev
 
-.PHONY: generate-docker-compose-staging ## Generate staging docker-compose files.
+.PHONY: generate-docker-compose-staging ## Generate staging docker-compose files
 generate-docker-compose-staging:
 	@./scripts/generate-docker-files.sh staging
 
+# format
+
+.PHONY: format ## Format source code by `cargo fmt`
+format:
+	cargo fmt --all -- --check
+
 # benchmark for pallets
 
-.PHONY: benchmark-frame-system ## Benchmark pallet `frame-system`.
+.PHONY: benchmark-frame-system ## Benchmark pallet `frame-system`
 benchmark-frame-system:
 	@./scripts/run-benchmark-pallet.sh frame-system
 
@@ -134,15 +145,15 @@ benchmark-pallet-balances:
 benchmark-pallet-collator-selection:
 	@./scripts/run-benchmark-pallet.sh pallet-collator-selection
 
-.PHONY: benchmark-account-linker  ## Benchmark pallet `account-linker`.
+.PHONY: benchmark-account-linker  ## Benchmark pallet `account-linker`
 benchmark-account-linker:
 	@./scripts/run-benchmark-pallet.sh account-linker
 
-.PHONY: benchmark-offchain-worker ## Benchmark pallet `offchain-worker`.
+.PHONY: benchmark-offchain-worker ## Benchmark pallet `offchain-worker`
 benchmark-offchain-worker:
 	@./scripts/run-benchmark-pallet.sh pallet-offchain-worker
 
-.PHONY: benchmark-nft ## Benchmark pallet `nft`.
+.PHONY: benchmark-nft ## Benchmark pallet `nft`
 benchmark-nft:
 	@./scripts/run-benchmark-pallet.sh pallet-nft
 
