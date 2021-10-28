@@ -28,8 +28,9 @@ PARACHAIN_ID=2022
 
 TMPDIR=/tmp/parachain_dev
 [ -d "$TMPDIR" ] || mkdir -p "$TMPDIR"
+ROOTDIR=$(git rev-parse --show-toplevel)
 
-cd "$TMPDIR"
+cd "$ROOTDIR"
 
 function print_divider() {
   echo "------------------------------------------------------------"
@@ -40,11 +41,11 @@ print_divider
 if [ -z "$POLKADOT_BIN" ]; then
   echo "no polkadot binary provided, download now ..."
   # download from latest official release
-  wget -q -O download.log https://api.github.com/repos/paritytech/polkadot/releases/latest
-  url=$(cat download.log | jq | grep browser_download_url | grep "polkadot\"$" | sed 's/.*https/https/;s/"//')
-  wget -O polkadot -q "$url"
-  chmod a+x polkadot
+  wget -q -O "$TMPDIR/download.log" https://api.github.com/repos/paritytech/polkadot/releases/latest
+  url=$(cat "$TMPDIR/download.log" | jq | grep browser_download_url | grep "polkadot\"$" | sed 's/.*https/https/;s/"//')
   POLKADOT_BIN="$TMPDIR/polkadot"
+  wget -O "$POLKADOT_BIN" -q "$url"
+  chmod a+x "$POLKADOT_BIN"
 fi
 
 if ! "$POLKADOT_BIN" --version &> /dev/null; then
@@ -54,11 +55,10 @@ if ! "$POLKADOT_BIN" --version &> /dev/null; then
 fi
 
 if [ -z "$PARACHAIN_BIN" ]; then
-  echo "no litentry-collator binary provided, download now ..."
-  # copy the binary from docker image
-  docker cp $(docker create --rm litentry/litentry-parachain:collective):/usr/local/bin/litentry-collator .
-  chmod a+x litentry-collator
-  PARACHAIN_BIN="$TMPDIR/litentry-collator"
+  echo "no litentry-collator binary provided, build it now ..."
+  make build-node
+  PARACHAIN_BIN="$ROOTDIR/target/release/litentry-collator"
+  chmod a+x "$PARACHAIN_BIN"
 fi
 
 if ! "$PARACHAIN_BIN" --version &> /dev/null; then
@@ -66,6 +66,8 @@ if ! "$PARACHAIN_BIN" --version &> /dev/null; then
   usage
   exit 1
 fi
+
+cd "$TMPDIR"
 
 echo "starting dev network with binaries ..."
 
@@ -79,19 +81,16 @@ $PARACHAIN_BIN export-genesis-wasm --chain dev > para-$PARACHAIN_ID-wasm
 
 # run alice and bob as relay nodes
 $POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --alice --tmp --port 30333 --ws-port 9944 &> "relay.alice.log" &
-echo $! > "relay.alice.pid"
-sleep 5
+sleep 10
 
 $POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --bob --tmp --port 30334 --ws-port 9945  &> "relay.bob.log" &
-echo $! > "relay.bob.pid"
-sleep 5
+sleep 10
 
 # run a litentry-collator instance
 $PARACHAIN_BIN --alice --collator --force-authoring --tmp --chain dev --parachain-id $PARACHAIN_ID --port 40333 --ws-port 9946 --execution wasm \
   -- \
   --execution wasm --chain $ROCOCO_CHAINSPEC --port 30332 --ws-port 9943 &> "para.alice.log" &
-echo $! > "para.alice.pid"
-sleep 5
+sleep 10
 
 echo "done. please check $TMPDIR for generated files if need"
 print_divider
