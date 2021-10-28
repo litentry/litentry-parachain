@@ -6,31 +6,12 @@
 
 The Litentry parachain.
 
-## launch of local dev network
-
-To start a dev network locally with 2 relaychain nodes and 1 parachain node, there're 2 ways:
-
-### 1. use docker images for both polkadot and litentry-parachain (preferred)
-
+## Lists of make targets
+Simply run
 ```
-make launch-local-docker
+make help
 ```
-During this a few files will be generated under `docker/generated-dev/`.
-
-### 2. use raw binaries for both polkadot and litentry-parachain
-
-Only when option 1 doesn't work.
-Due to a [known issue](https://github.com/litentry/litentry-parachain/issues/187) it's possible that after launching the parachain is not producing any blocks. In this case we could try to launch the dev network with raw binaries.
-
-prequisite:
-- you have the `./target/release/litentry-collator` binary, locally compiled.
-- if you have on non-Linux host, you need to have polkadot binary locally compiled.
-
-To start the network:
-If you are on linux host, run `make launch-local-binary`
-If you are on other OS, run `./scripts/launch-local-binary.sh path-to-polkadot-bin path-to-litentry-parachain-bin`
-
-**Build and push of docker images are disabled** until we find a robust solution for [issue #192](https://github.com/litentry/litentry-parachain/issues/192).
+to see the full lists of market targets and their short descriptions.
 
 ## manual builds
 
@@ -50,21 +31,49 @@ To build the `litentry/litentry-parachain` docker image locally:
 make build-docker
 ```
 
-To build staging env chain-specs:
-```
-make generate-docker-compose-staging
-```
-Staging env doesn't really run the service inside docker container, but the generated chain specs are useful.
+## launch of local dev network
 
-For a full list of make targets, run:
+To start a local dev network with 2 relaychain nodes and 1 parachain node, there're two ways:
+
+### 1. use docker images for both polkadot and litentry-parachain (preferred)
+
 ```
-make help
+make launch-local-docker
 ```
+[parachain-launch](https://github.com/open-web3-stack/parachain-launch) will be installed and used to generate chain-specs and docker-compose files.
 
-The default leasing duration for parachain is 1 day, in case you want to extend it (even after it's downgraded to parathread), simply do a `forceLease` via sudo, it should be upgraded to parachain soon again and start to produce blocks.
+The generated files will be under `docker/generated-dev/`.
 
-![image](https://user-images.githubusercontent.com/7630809/135689832-1f57cd5c-7f83-4fce-9bb0-832b77a38dcc.png)
+When finished with the dev network, run
+```
+make clean-local-docker
+```
+to stop the processes and tidy things up.
 
+### 2. use raw binaries for both polkadot and litentry-parachain
+
+Only when option 1 doesn't work.
+Due to a [known issue](https://github.com/litentry/litentry-parachain/issues/187) it's possible that after launching the parachain is not producing any blocks.
+
+In this case we could try to launch the dev network with raw binaries.
+
+**On Linux host:**
+
+- you should have the locally compiled `./target/release/litentry-collator` binary.
+- run `make launch-local-binary`
+
+**On Non-Linux host:**
+
+- you should have locally compiled binaries, for both `polkadot` and `litentry-collator`
+- run `./scripts/launch-local-binary.sh path-to-polkadot-bin path-to-litentry-parachain-bin`
+
+When finished with the dev network, run
+```
+make clean-local-binary
+```
+to stop the processes and tidy things up.
+
+**Build and push of docker images are disabled** until we find a robust solution for [issue #192](https://github.com/litentry/litentry-parachain/issues/192).
 
 ## run CI tests locally
 
@@ -74,10 +83,20 @@ make test-ci-docker
 ```
 or
 ```
+# if on Linux
 make test-ci-binary
+
+# otherwise
+./scripts/launch-local-binary.sh path-to-polkadot-bin path-to-litentry-parachain-bin
+./scripts/run-ci-test.sh
 ```
-You may want to run `make clean-local-docker` or `make clean-local-binary` to stop the containers and tidy them afterwards.
-Please note that this command also removes all local `litentry/litentry-parachain` images except the one with `latest` tag.
+Remember to run the clean-up afterwards.
+
+## extend the leasing period
+
+The default leasing duration for parachain is 1 day, in case you want to extend it (even after it's downgraded to parathread), simply do a `forceLease` via sudo, it should be upgraded to parachain soon again and start to produce blocks.
+
+![image](https://user-images.githubusercontent.com/7630809/135689832-1f57cd5c-7f83-4fce-9bb0-832b77a38dcc.png)
 
 ## License
 Apache-2.0
