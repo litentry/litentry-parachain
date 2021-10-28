@@ -29,14 +29,7 @@ jobs:
     - name: Checkout codes
       uses: actions/checkout@v2
 
-    - name: Build docker image
-      timeout-minutes: 40
-      run: |
-        ./scripts/build-docker.sh
-        echo "============================="
-        docker images
-
-    - name: Start docker containers and run CI
+    - name: Build binary and run CI
       timeout-minutes: 30
       run: |
         make test-ci-binary
@@ -48,11 +41,6 @@ jobs:
         name: ci-artifacts
         path: /tmp/parachain_dev/
         retention-days: 7
-
-    - name: Push docker image on dev branch if test passes
-      if: ${{ success() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
-      run:
-        docker push litentry/litentry-parachain:latest
 
     - name: Clean up
       if: ${{ always() }}
