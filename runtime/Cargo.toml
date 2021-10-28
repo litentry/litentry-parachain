@@ -144,6 +144,7 @@ runtime-benchmarks = [
 	"pallet-democracy/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
 	"pallet-utility/runtime-benchmarks",
+	"xcm-builder/runtime-benchmarks",
 	"pallet-xcm/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
