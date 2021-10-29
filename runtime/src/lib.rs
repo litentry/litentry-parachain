@@ -34,7 +34,7 @@ use sp_version::RuntimeVersion;
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	construct_runtime, match_type, parameter_types,
-	traits::{Everything, InstanceFilter},
+	traits::{Contains, Everything, InstanceFilter},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
 		DispatchClass, IdentityFee, Weight,
@@ -887,8 +887,7 @@ impl Contains<Call> for BaseCallFilter {
             call,
             Call::Sudo(_) |
             // System
-            Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_) |
-            Call::Utility(_) | Call::Multisig(_) | Call::Proxy(_) | 
+            Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_)
         )
     }
 }
