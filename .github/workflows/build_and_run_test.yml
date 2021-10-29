@@ -29,31 +29,29 @@ jobs:
     - name: Checkout codes
       uses: actions/checkout@v2
 
-    - name: Build docker image
-      run: |
-        ./scripts/build-docker.sh
-        echo "============================="
-        docker images
+    - name: Install toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: nightly
+        components: rustfmt
+        target: wasm32-unknown-unknown
+        default: true
 
-    - name: Start docker containers and run CI
+    - name: Build binary and run CI
+      timeout-minutes: 50
       run: |
-        make test-ci
+        make test-ci-binary
 
     - name: Archive logs if test fails
       uses: actions/upload-artifact@v2
       if: ${{ failure() }}
       with:
-        name: ci-log
-        path: /tmp/parachain_ci_test.log
+        name: ci-artifacts
+        path: /tmp/parachain_dev/
         retention-days: 7
-
-    - name: Push docker image on dev branch if test passes
-      if: ${{ success() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
-      run:
-        docker push litentry/litentry-parachain:latest
 
     - name: Clean up
       if: ${{ always() }}
       run: |
-        rm -f /tmp/parachain_ci_test.log
-        make clean-local-docker
+        make clean-local-binary

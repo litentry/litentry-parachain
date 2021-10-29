@@ -130,6 +130,11 @@ pub fn get_chain_spec_dev(id: ParaId) -> ChainSpec {
 }
 
 pub fn get_chain_spec_staging(id: ParaId) -> ChainSpec {
+	// Staging keys are derivative keys based on a single master secret phrase:
+	//
+	// root: 	$SECRET
+	// account:	$SECRET//collator//<id>
+	// aura: 	$SECRET//collator//<id>//aura
 	get_chain_spec_from_genesis_info(
 		include_bytes!("../res/genesis_info/staging.json"),
 		"Litentry-staging",
