@@ -1,7 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
-// use codec::alloc::string::String;
 use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
 use scale_info::TypeInfo;
 #[cfg(feature = "std")]
@@ -10,9 +9,6 @@ use serde::{Deserialize, Serialize};
 pub type NegativeImbalance<T> = <pallet_balances::Pallet<T> as Currency<
 	<T as frame_system::Config>::AccountId,
 >>::NegativeImbalance;
-
-type BalanceOf<T> =
-	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 // linear ratio of transaction fee distribution
 #[derive(Clone, Copy, PartialEq, Eq, Encode, Decode, sp_runtime::RuntimeDebug, TypeInfo)]
@@ -23,9 +19,10 @@ pub struct RatioOf {
 	burned: u32,
 }
 
+// It is recommended to set sum of ratio to 100, yet only decimal loss is concerned.
 impl Default for RatioOf {
 	fn default() -> Self {
-		RatioOf { treasury: 0, author: 0, burned: 1 }
+		RatioOf { treasury: 0, author: 0, burned: 100 }
 	}
 }
 
@@ -39,7 +36,6 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		type Currency: Currency<Self::AccountId>;
 	}
 
 	#[pallet::pallet]
@@ -98,6 +94,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		//TODO: WEIGHT INFO
 		#[pallet::weight(10)]
 		pub fn set_ratio(origin: OriginFor<T>, ratio: RatioOf) -> DispatchResult {
 			ensure_root(origin)?;
@@ -109,7 +106,7 @@ pub mod pallet {
 				Err(Error::<T>::RatioOverflow.into())
 			}
 		}
-
+		//TODO: WEIGHT INFO
 		#[pallet::weight(10)]
 		pub fn set_fix_block_reward(
 			origin: OriginFor<T>,
@@ -117,14 +114,6 @@ pub mod pallet {
 			block_reward: u32,
 		) -> DispatchResult {
 			ensure_root(origin)?;
-
-			// Reward meet minimum_balance requirement of account existence
-			if 0 < block_reward &&
-				BalanceOf::<T>::from(block_reward) <
-					<T::Currency as Currency<T::AccountId>>::minimum_balance()
-			{
-				return Err(Error::<T>::BlockRewardTooLow.into())
-			}
 
 			<FixBlockReward<T>>::put(block_reward);
 			Self::deposit_event(Event::<T>::SetFixBlockReward(block_reward));
@@ -184,10 +173,8 @@ mod tests {
 	use super::*;
 	use crate as pallet_payment_interface;
 
-	use std::cell::RefCell;
-
-	// use codec::Encode;
 	use smallvec::smallvec;
+	use std::cell::RefCell;
 
 	use sp_core::H256;
 	use sp_runtime::{
@@ -360,7 +347,6 @@ mod tests {
 
 	impl pallet_payment_interface::Config for Runtime {
 		type Event = Event;
-		type Currency = Balances;
 	}
 
 	parameter_types! {

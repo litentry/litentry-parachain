@@ -29,10 +29,10 @@ frame-support = { git = "https://github.com/paritytech/substrate", branch = "pol
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
 
 ## Substrate Pallet Dependencies
-pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
-pallet-treasury = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
 pallet-authorship = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
+pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
+pallet-treasury = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
 
 [dev-dependencies]
 smallvec = "1.7.0"
@@ -49,8 +49,8 @@ std = [
 	"sp-std/std",
 	"frame-support/std",
 	"frame-system/std",
-	"pallet-transaction-payment/std",
-	"pallet-treasury/std",
 	"pallet-authorship/std",
 	"pallet-balances/std",
+	"pallet-transaction-payment/std",
+	"pallet-treasury/std",
 ]

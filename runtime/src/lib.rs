@@ -40,6 +40,7 @@ use frame_system::{
 };
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 pub use sp_runtime::{MultiAddress, Perbill, Percent, Permill};
+pub use pallet_payment_interface::RatioOf;
 
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -507,7 +508,6 @@ impl pallet_transaction_payment::Config for Runtime {
 
 impl pallet_payment_interface::Config for Runtime {
 	type Event = Event;
-	type Currency = Balances;
 }
 
 parameter_types! {

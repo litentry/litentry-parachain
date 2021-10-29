@@ -247,6 +247,9 @@ fn generate_genesis(
 		aura: Default::default(),
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
-		payment_interface: Default::default(),
+		payment_interface: PaymentInterfaceConfig {
+			ratio: RatioOf { treasury: 40, author: 0, burned: 60},
+			fix_block_reward: 20 * CENTS,
+		},
 	}
 }
