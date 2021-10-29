@@ -7,11 +7,9 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 pub mod constants;
-pub use constants::{currency::*};
+pub use constants::currency::*;
 
-pub use primitives::*;
-pub use primitives::Index as Index;
-pub use primitives::opaque as opaque;
+pub use primitives::{opaque, Index, *};
 
 use sp_api::impl_runtime_apis;
 use sp_core::{
@@ -68,9 +66,9 @@ use xcm_executor::{Config, XcmExecutor};
 
 // TODO: MOVE TO COMMON
 // transaction payment pallet related items: TODO, move to common
+use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
 use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
 use sp_runtime::{FixedPointNumber, Perquintill};
-use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
 pub type NegativeImbalance<T> = <pallet_balances::Pallet<T> as Currency<
 	<T as frame_system::Config>::AccountId,
 >>::NegativeImbalance;
@@ -267,16 +265,16 @@ impl pallet_multisig::Config for Runtime {
 	scale_info::TypeInfo,
 )]
 pub enum ProxyType {
-    /// Fully permissioned proxy. Can execute any call on behalf of _proxied_.
-    Any,
-    /// Can execute any call that does not transfer funds, including asset transfers.
-    NonTransfer,
-    /// Proxy with the ability to reject time-delay proxy announcements.
-    CancelProxy,
-    /// Collator selection proxy. Can execute calls related to collator selection mechanism.
-    Collator,
-    /// Governance
-    Governance,
+	/// Fully permissioned proxy. Can execute any call on behalf of _proxied_.
+	Any,
+	/// Can execute any call that does not transfer funds, including asset transfers.
+	NonTransfer,
+	/// Proxy with the ability to reject time-delay proxy announcements.
+	CancelProxy,
+	/// Collator selection proxy. Can execute calls related to collator selection mechanism.
+	Collator,
+	/// Governance
+	Governance,
 }
 
 impl Default for ProxyType {
@@ -290,27 +288,21 @@ impl InstanceFilter<Call> for ProxyType {
 		match self {
 			ProxyType::Any => true,
 			ProxyType::NonTransfer => !matches!(
-				c, 
-				Call::Balances(..) | 
-					Call::Vesting(pallet_vesting::Call::vested_transfer { .. })
+				c,
+				Call::Balances(..) | Call::Vesting(pallet_vesting::Call::vested_transfer { .. })
 			),
-            ProxyType::CancelProxy => matches!(
-                c,
-                Call::Proxy(pallet_proxy::Call::reject_announcement { .. }) |
-                	Call::Utility(..) |
-                	Call::Multisig(..)
-            ),
-            ProxyType::Collator => matches!(
-                c,
-                Call::CollatorSelection(..) |
-                	Call::Utility(..) |
-                	Call::Multisig(..)
-            ),
+			ProxyType::CancelProxy => matches!(
+				c,
+				Call::Proxy(pallet_proxy::Call::reject_announcement { .. }) |
+					Call::Utility(..) | Call::Multisig(..)
+			),
+			ProxyType::Collator =>
+				matches!(c, Call::CollatorSelection(..) | Call::Utility(..) | Call::Multisig(..)),
 			ProxyType::Governance => matches!(
 				c,
-				Call::Democracy(..)
-					| Call::Council(..) | Call::TechnicalCommittee(..)
-					| Call::Treasury(..)
+				Call::Democracy(..) |
+					Call::Council(..) | Call::TechnicalCommittee(..) |
+					Call::Treasury(..)
 			),
 		}
 	}
@@ -485,7 +477,6 @@ parameter_types! {
 // transaction payment pallet: TODO, move to common
 pub type SlowAdjustingFeeUpdate<R> =
 	TargetedFeeAdjustment<R, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
-
 
 impl pallet_transaction_payment::Config for Runtime {
 	type OnChargeTransaction =
