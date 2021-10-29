@@ -425,15 +425,14 @@ impl pallet_transaction_payment::Config for Runtime {
 }
 
 parameter_types! {
-	pub const LaunchPeriod: BlockNumber = 28 * 24 * 60 * MINUTES;
-	pub const VotingPeriod: BlockNumber = 28 * 24 * 60 * MINUTES;
-	pub const FastTrackVotingPeriod: BlockNumber = 3 * 24 * 60 * MINUTES;
+	pub const LaunchPeriod: BlockNumber = 5 * DAYS;
+	pub const VotingPeriod: BlockNumber = 5 * DAYS;
+	pub const FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
 	pub const InstantAllowed: bool = true;
 	pub const MinimumDeposit: Balance = 100 * DOLLARS;
-	pub const EnactmentPeriod: BlockNumber = 30 * 24 * 60 * MINUTES;
-	pub const CooloffPeriod: BlockNumber = 28 * 24 * 60 * MINUTES;
-	// One cent: $10,000 / MB
-	pub const PreimageByteDeposit: Balance = 1 * CENTS;
+	pub const EnactmentPeriod: BlockNumber = 2 * DAYS;
+	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
+	pub const PreimageByteDeposit: Balance = deposit(0, 1);
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = 100;
 }
@@ -560,19 +559,9 @@ impl pallet_membership::Config<pallet_membership::Instance2> for Runtime {
 parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub const ProposalBondMinimum: Balance = 1 * DOLLARS;
-	pub const SpendPeriod: BlockNumber = 1 * DAYS;
-	pub const Burn: Permill = Permill::from_percent(50);
-	pub const TipCountdown: BlockNumber = 1 * DAYS;
-	pub const TipFindersFee: Percent = Percent::from_percent(20);
-	pub const TipReportDepositBase: Balance = 1 * DOLLARS;
-	pub const DataDepositPerByte: Balance = 1 * CENTS;
-	pub const BountyDepositBase: Balance = 1 * DOLLARS;
-	pub const BountyDepositPayoutDelay: BlockNumber = 1 * DAYS;
+	pub const SpendPeriod: BlockNumber = 7 * DAYS;
+	pub const Burn: Permill = Permill::from_percent(0);
 	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
-	pub const BountyUpdatePeriod: BlockNumber = 14 * DAYS;
-	pub const MaximumReasonLength: u32 = 16384;
-	pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
-	pub const BountyValueMinimum: Balance = 5 * DOLLARS;
 	pub const MaxApprovals: u32 = 100;
 }
 
@@ -804,8 +793,8 @@ impl pallet_aura::Config for Runtime {
 
 parameter_types! {
 	pub const PotId: PalletId = PalletId(*b"PotStake");
-	pub const MaxCandidates: u32 = 1000;
-	pub const MinCandidates: u32 = 1;
+	pub const MaxCandidates: u32 = 100;
+	pub const MinCandidates: u32 = 0;
 	pub const SessionLength: BlockNumber = 6 * HOURS;
 	pub const MaxInvulnerables: u32 = 100;
 }
