@@ -7,7 +7,7 @@ pub use types::*;
 
 /// Common types of parachains.
 mod types {
-	use ::sp_runtime::{
+	use sp_runtime::{
 		traits::{IdentifyAccount, Verify},
 		MultiSignature,
 	};

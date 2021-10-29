@@ -446,9 +446,8 @@ where
 	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance<R>>) {
 		if let Some(fees) = fees_then_tips.next() {
 			// for fees, (1) to treasury, (2) to author and (3) burned
-			let ratio = TRANSACTION_PAYMENT_RATIO;
-			let (unburned, _) = fees.ration(ratio.treasury + ratio.author, ratio.burned);
-			let mut split = unburned.ration(ratio.treasury, ratio.author);
+			let (unburned, _) = fees.ration(TREASURY_PROPORTION + AUTHOR_PROPORTION, BURNED_PROPORTION);
+			let mut split = unburned.ration(TREASURY_PROPORTION, AUTHOR_PROPORTION);
 
 			if let Some(tips) = fees_then_tips.next() {
 				// for tips, if any, 100% to author
