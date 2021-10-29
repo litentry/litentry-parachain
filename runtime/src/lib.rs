@@ -212,7 +212,7 @@ impl frame_system::Config for Runtime {
 	/// The weight of database operations that the runtime can invoke.
 	type DbWeight = (); // TODO: cumulus is `RocksDbWeight`
 	/// The basic call filter to use in dispatchable.
-	type BaseCallFilter = Everything;
+	type BaseCallFilter = BaseCallFilter;
 	/// Weight information for the extrinsics of this pallet.
 	type SystemWeightInfo = ();
 	/// Block & extrinsics weights: base values and limits.
@@ -878,6 +878,19 @@ construct_runtime! {
 		// TMP
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 255,
 	}
+}
+
+pub struct BaseCallFilter;
+impl Contains<Call> for BaseCallFilter {
+    fn contains(call: &Call) -> bool {
+        matches!(
+            call,
+            Call::Sudo(_) |
+            // System
+            Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_) |
+            Call::Utility(_) | Call::Multisig(_) | Call::Proxy(_) | 
+        )
+    }
 }
 
 impl_runtime_apis! {
