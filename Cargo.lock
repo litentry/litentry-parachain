@@ -3927,6 +3927,7 @@ dependencies = [
  "pallet-collator-selection",
  "pallet-collective",
  "pallet-democracy",
+ "pallet-membership",
  "pallet-multisig",
  "pallet-payment-interface",
  "pallet-proxy",
@@ -3943,6 +3944,7 @@ dependencies = [
  "parachain-info",
  "parity-scale-codec",
  "polkadot-parachain",
+ "primitives",
  "scale-info",
  "serde",
  "sp-api",
@@ -6702,6 +6704,14 @@ dependencies = [
  "impl-serde",
  "scale-info",
  "uint",
+]
+
+[[package]]
+name = "primitives"
+version = "0.1.0"
+dependencies = [
+ "sp-core",
+ "sp-runtime",
 ]
 
 [[package]]
