@@ -1,0 +1,17 @@
+[package]
+name = 'primitives'
+version = '0.1.0'
+authors = ["Litentry Dev"]
+edition = '2018'
+
+[dependencies]
+# Substrate dependencies
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11", default-features = false }
+
+[features]
+default = ["std"]
+std = [
+    "sp-core/std",
+    "sp-runtime/std",
+]
