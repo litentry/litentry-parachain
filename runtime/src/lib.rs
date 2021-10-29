@@ -66,6 +66,15 @@ use xcm_builder::{
 };
 use xcm_executor::{Config, XcmExecutor};
 
+// TODO: MOVE TO COMMON
+// transaction payment pallet related items: TODO, move to common
+use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
+use sp_runtime::{FixedPointNumber, Perquintill};
+use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
+pub type NegativeImbalance<T> = <pallet_balances::Pallet<T> as Currency<
+	<T as frame_system::Config>::AccountId,
+>>::NegativeImbalance;
+
 /// The address format for describing accounts.
 pub type Address = MultiAddress<AccountId, ()>;
 
@@ -414,12 +423,90 @@ parameter_types! {
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
-// TODO: same as rococo-parachain but differnet as parachain-template
+// linear ratio of transaction fee distribution
+struct RatioOf {
+	treasury: u32,
+	author: u32,
+	burned: u32,
+}
+
+// It is recommended to set sum of ratio to 100, yet only decimal loss is concerned.
+impl Default for RatioOf {
+	fn default() -> Self {
+		RatioOf { treasury: 0, author: 0, burned: 100 }
+	}
+}
+
+/// Logic for the author to get a portion of fees.
+pub struct ToAuthor<R>(sp_std::marker::PhantomData<R>);
+impl<R> OnUnbalanced<NegativeImbalance<R>> for ToAuthor<R>
+where
+	R: pallet_balances::Config + pallet_authorship::Config,
+	<R as frame_system::Config>::Event: From<pallet_balances::Event<R>>,
+{
+	fn on_nonzero_unbalanced(amount: NegativeImbalance<R>) {
+		let numeric_amount = amount.peek();
+		let author = <pallet_authorship::Pallet<R>>::author();
+		<pallet_balances::Pallet<R>>::resolve_creating(
+			&<pallet_authorship::Pallet<R>>::author(),
+			amount,
+		);
+		<frame_system::Pallet<R>>::deposit_event(pallet_balances::Event::Deposit(
+			author,
+			numeric_amount,
+		));
+	}
+}
+
+pub struct DealWithFees<R>(sp_std::marker::PhantomData<R>);
+impl<R> OnUnbalanced<NegativeImbalance<R>> for DealWithFees<R>
+where
+	R: pallet_balances::Config + pallet_treasury::Config + pallet_authorship::Config,
+	pallet_treasury::Pallet<R>: OnUnbalanced<NegativeImbalance<R>>,
+	<R as frame_system::Config>::Event: From<pallet_balances::Event<R>>,
+{
+	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance<R>>) {
+		if let Some(fees) = fees_then_tips.next() {
+			// for fees, (1) to treasury, (2) to author and (3) burned
+			let ratio = RatioOf {treasury: 40, author: 0, burned: 60};
+			let (unburned, _) = fees.ration(ratio.treasury + ratio.author, ratio.burned);
+			let mut split = unburned.ration(ratio.treasury, ratio.author);
+
+			if let Some(tips) = fees_then_tips.next() {
+				// for tips, if any, 100% to author
+				tips.merge_into(&mut split.1);
+			}
+			use pallet_treasury::Pallet as Treasury;
+			<Treasury<R> as OnUnbalanced<_>>::on_unbalanced(split.0);
+			<ToAuthor<R> as OnUnbalanced<_>>::on_unbalanced(split.1);
+		}
+	}
+}
+
+// transaction payment pallet: TODO, move to common
+parameter_types! {
+	/// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
+	/// than this will decrease the weight and more will increase.
+	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
+	/// The adjustment variable of the runtime. Higher values will cause `TargetBlockFullness` to
+	/// change the fees more rapidly.
+	pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(3, 100_000);
+	/// Minimum amount of the multiplier. This value cannot be too low. A test case should ensure
+	/// that combined with `AdjustmentVariable`, we can recover from the minimum.
+	/// See `multiplier_can_grow_from_zero`.
+	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000u128);
+}
+// transaction payment pallet: TODO, move to common
+pub type SlowAdjustingFeeUpdate<R> =
+	TargetedFeeAdjustment<R, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
+
+
 impl pallet_transaction_payment::Config for Runtime {
-	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
+	type OnChargeTransaction =
+		pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = IdentityFee<Balance>;
-	type FeeMultiplierUpdate = ();
+	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 }
 
