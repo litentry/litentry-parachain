@@ -3927,6 +3927,7 @@ dependencies = [
  "pallet-collator-selection",
  "pallet-collective",
  "pallet-democracy",
+ "pallet-membership",
  "pallet-multisig",
  "pallet-proxy",
  "pallet-scheduler",
