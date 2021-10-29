@@ -423,20 +423,6 @@ parameter_types! {
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
-// linear ratio of transaction fee distribution
-struct RatioOf {
-	treasury: u32,
-	author: u32,
-	burned: u32,
-}
-
-// It is recommended to set sum of ratio to 100, yet only decimal loss is concerned.
-impl Default for RatioOf {
-	fn default() -> Self {
-		RatioOf { treasury: 0, author: 0, burned: 100 }
-	}
-}
-
 /// Logic for the author to get a portion of fees.
 pub struct ToAuthor<R>(sp_std::marker::PhantomData<R>);
 impl<R> OnUnbalanced<NegativeImbalance<R>> for ToAuthor<R>
@@ -468,7 +454,7 @@ where
 	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance<R>>) {
 		if let Some(fees) = fees_then_tips.next() {
 			// for fees, (1) to treasury, (2) to author and (3) burned
-			let ratio = RatioOf {treasury: 40, author: 0, burned: 60};
+			let ratio = TRANSACTION_PAYMENT_RATIO;
 			let (unburned, _) = fees.ration(ratio.treasury + ratio.author, ratio.burned);
 			let mut split = unburned.ration(ratio.treasury, ratio.author);
 
