@@ -1,7 +1,7 @@
 use cumulus_primitives_core::ParaId;
 use litentry_parachain_runtime::{
-	AccountId, AuraId, Balance, BalancesConfig, CollatorSelectionConfig, CouncilConfig,
-	DemocracyConfig, GenesisConfig, ParachainInfoConfig, SessionConfig, Signature, SudoConfig,
+	AccountId, AuraId, Balance, BalancesConfig, CENTS, CollatorSelectionConfig, CouncilConfig,
+	DemocracyConfig, GenesisConfig, ParachainInfoConfig, PaymentInterfaceConfig, RatioOf, SessionConfig, Signature, SudoConfig,
 	SystemConfig, TechnicalCommitteeConfig, UNIT, WASM_BINARY,
 };
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup, Properties};

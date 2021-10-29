@@ -1,10 +1,13 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use codec::{Decode, Encode};
+use codec::{Codec, Decode, Encode};
 use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
 use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
+
+use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeSerializeDeserialize};
+use sp_std::fmt::Debug;
 
 pub type NegativeImbalance<T> = <pallet_balances::Pallet<T> as Currency<
 	<T as frame_system::Config>::AccountId,
@@ -14,9 +17,9 @@ pub type NegativeImbalance<T> = <pallet_balances::Pallet<T> as Currency<
 #[derive(Clone, Copy, PartialEq, Eq, Encode, Decode, sp_runtime::RuntimeDebug, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct RatioOf {
-	treasury: u32,
-	author: u32,
-	burned: u32,
+	pub treasury: u32,
+	pub author: u32,
+	pub burned: u32,
 }
 
 // It is recommended to set sum of ratio to 100, yet only decimal loss is concerned.
@@ -36,6 +39,16 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type Balance: Parameter
+			+ Member
+			+ AtLeast32BitUnsigned
+			+ Codec
+			+ Default
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ Debug
+			+ MaxEncodedLen
+			+ TypeInfo;
 	}
 
 	#[pallet::pallet]
@@ -48,13 +61,12 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn fix_block_reward)]
-	pub type FixBlockReward<T: Config> = StorageValue<_, u32, ValueQuery>;
+	pub type FixBlockReward<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
-		ratio: RatioOf,
-		fix_block_reward: u32,
-		_phantom: sp_std::marker::PhantomData<T>,
+		pub ratio: RatioOf,
+		pub fix_block_reward: T::Balance,
 	}
 
 	#[cfg(feature = "std")]
@@ -63,7 +75,6 @@ pub mod pallet {
 			GenesisConfig {
 				ratio: Default::default(),
 				fix_block_reward: Default::default(),
-				_phantom: Default::default(),
 			}
 		}
 	}
@@ -80,7 +91,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		SetRatio(RatioOf),
-		SetFixBlockReward(u32),
+		SetFixBlockReward(T::Balance),
 	}
 
 	#[pallet::error]
@@ -111,7 +122,7 @@ pub mod pallet {
 		pub fn set_fix_block_reward(
 			origin: OriginFor<T>,
 			// block_reward: <T::Currency as Currency<T::AccountId>>::Balance,
-			block_reward: u32,
+			block_reward: T::Balance,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 
@@ -347,6 +358,7 @@ mod tests {
 
 	impl pallet_payment_interface::Config for Runtime {
 		type Event = Event;
+		type Balance = u128;
 	}
 
 	parameter_types! {
