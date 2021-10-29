@@ -461,7 +461,7 @@ where
 	}
 }
 
-// transaction payment pallet: TODO, move to common
+// Transaction payment pallet: TODO, move to common
 parameter_types! {
 	/// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
 	/// than this will decrease the weight and more will increase.
@@ -474,7 +474,7 @@ parameter_types! {
 	/// See `multiplier_can_grow_from_zero`.
 	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000u128);
 }
-// transaction payment pallet: TODO, move to common
+// Transaction payment pallet: TODO, move to common
 pub type SlowAdjustingFeeUpdate<R> =
 	TargetedFeeAdjustment<R, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 

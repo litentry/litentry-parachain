@@ -11,15 +11,15 @@ pub mod currency {
 	pub const AUTHOR_PROPORTION: u32 = 0u32;
 	pub const BURNED_PROPORTION: u32 = 60u32;
 
-	// linear ratio of transaction fee distribution
+	// Linear ratio of transaction fee distribution
 	// It is recommended to set sum of ratio to 100, yet only decimal loss is concerned.
-	pub struct RatioOf {
+	pub struct TransactionFeeDistributionRatio {
 		pub treasury: u32,
 		pub author: u32,
 		pub burned: u32,
 	}
 
-	pub const TRANSACTION_PAYMENT_RATIO: RatioOf = RatioOf {
+	pub const TRANSACTION_PAYMENT_RATIO: TransactionFeeDistributionRatio = TransactionFeeDistributionRatio {
 		treasury: TREASURY_PROPORTION,
 		author: AUTHOR_PROPORTION,
 		burned: BURNED_PROPORTION,
