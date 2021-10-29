@@ -5,6 +5,8 @@
 ROOTDIR=$(git rev-parse --show-toplevel)
 cd "$ROOTDIR/docker/generated-dev"
 
+TMPDIR=/tmp/parachain_dev
+
 docker images
 
 echo "stop and remove docker containers..."
@@ -24,5 +26,7 @@ IMG=$(docker images litentry/litentry-parachain --format "{{.Repository}}:{{.Tag
 echo "remove generated images..."
 IMG=$(docker images --filter=reference='generated-dev*' --format "{{.Repository}}:{{.Tag}}")
 [ -z "$IMG" ] || docker rmi -f $IMG
+
+rm -rf "$TMPDIR"
 
 echo "cleaned up."
