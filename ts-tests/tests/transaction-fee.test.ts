@@ -4,33 +4,14 @@ import { step } from 'mocha-steps';
 
 import { signAndSend, describeLitentry, loadConfig, sleep } from './utils';
 
+
 describeLitentry('Test Transaction Fee', ``, (context) => {
     console.log(`Test Transaction Fee`);
 
-    step('Set transaction fee portion ', async function () {
-        // Get the initial transaction fee ratio
-        const ratio = await context.api.query.transactionPaymentInterface.ratio();
-
-		const defaultRatio = "[50,30,20]";
-		
-		console.log(`The default transaction fee ratio is ${ratio}`);
-        expect(ratio.toString()).to.equal(defaultRatio);
-
-		//const treasuryPortion: U32 = 100;
-		//const authorPortion: U32 = 20; 
-		//const burnedPortion: U32 = 70;
-		
-		// Set transaction fee ratio to 100:20:80
-        const txSetRatio = context.api.tx.sudo.sudo(
-			context.api.tx.transactionPaymentInterface.setRatio(100, 20, 80)
-			);
-        await signAndSend(txSetRatio, context.alice);
-
-        const newRatio = await context.api.query.transactionPaymentInterface.ratio();
-
-		console.log(`The new transaction fee ratio is ${newRatio}`);
-        expect(newRatio.toString()).to.equal("[100,20,80]");
-    });
+	// These are default proportions configured in runtime as constants
+	const TREASURY_PROPORTION = 40;
+	const AUTHOR_PROPORTION = 0;
+	const BURNED_PROPORTION = 60;
 
     step('Verify transaction fee distribution', async function () {
 		// Get Treasury account
@@ -76,8 +57,9 @@ describeLitentry('Test Transaction Fee', ``, (context) => {
 
 		console.log(`The actual transaction fee is ${txFee}, the Block author (Alice) has an balance increase of ${aliceBalanceIncrease}, and the Treasury pot has an balance increase of ${treasuryBalanceIncrease}`)
 
-		expect(treasuryBalanceIncrease).to.approximately(txFee / 2, 10);
-		expect(aliceBalanceIncrease).to.approximately(txFee / 10, 10);
+		const totalProportion = TREASURY_PROPORTION + AUTHOR_PROPORTION + BURNED_PROPORTION;
+		expect(treasuryBalanceIncrease).to.approximately(txFee / totalProportion * TREASURY_PROPORTION, 10);
+		expect(aliceBalanceIncrease).to.approximately(txFee / totalProportion * AUTHOR_PROPORTION, 10);
     });
 
 });
