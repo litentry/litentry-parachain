@@ -158,4 +158,5 @@ runtime-benchmarks = [
 	"pallet-proxy/runtime-benchmarks",
 	'pallet-xcm/runtime-benchmarks',
 	"pallet-collator-selection/runtime-benchmarks",
+	"pallet-membership/runtime-benchmarks"
 ]
