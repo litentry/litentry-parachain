@@ -1,30 +1,46 @@
-FROM paritytech/ci-linux:production as builder
-LABEL description="This is the build stage for Polkadot. Here we create the binary."
+# ==========================
+# stage 1: build
+# https://hub.docker.com/_/rust
+# our host is based on bullseye/sid => rust:latest
+# ==========================
+FROM rust:latest as builder
+WORKDIR /litentry
+COPY . /litentry
 
-ARG PROFILE=release
-ARG FEATURES
-WORKDIR /litentry-parachain
+# always use the toolchain in base image
+# we do not fix toolchain version as it's still evolving rapidly
+RUN rustup default nightly && \
+	rustup target add wasm32-unknown-unknown --toolchain nightly
 
-COPY . /litentry-parachain
+RUN apt-get update && \
+	apt-get dist-upgrade -y -o Dpkg::Options::="--force-confold" && \
+	apt-get install -y cmake pkg-config libssl-dev git clang libclang-dev
 
-# empty features (--features=) will be ignored
-RUN cargo build --$PROFILE --features=$FEATURES
+ARG BUILD_ARGS
 
-# ===== SECOND STAGE ======
+RUN cargo build --release $BUILD_ARGS
 
-FROM debian:buster-slim
-LABEL description="This is the 2nd stage: a very small image where we copy the litentry-collator binary."
-ARG PROFILE=release
-COPY --from=builder /litentry-parachain/target/$PROFILE/litentry-collator /usr/local/bin
+# ==========================
+# stage 2: packaging
+# ==========================
 
-RUN useradd -m -u 1000 -U -s /bin/sh -d /litentry-parachain litentry && \
-  mkdir -p /litentry-parachain/.local/share && \
-  mkdir /data && \
-  ln -s /data /litentry-parachain/.local/share/litentry-parachain && \
-  rm -rf /usr/bin /usr/sbin
+FROM ubuntu:20.04
+LABEL maintainer="litentry-dev"
 
-EXPOSE 30333 9933 9944 40333
+COPY --from=builder /litentry/target/release/litentry-collator /usr/local/bin
+
+RUN useradd -m -u 1000 -U -s /bin/sh -d /litentry litentry && \
+	mkdir -p /data /litentry/.local/share && \
+	chown -R litentry:litentry /data && \
+	ln -s /data /litentry/.local/share/litentry-collator && \
+# unclutter and minimize the attack surface
+	rm -rf /usr/bin /usr/sbin && \
+# check if executable works in this container
+	/usr/local/bin/litentry-collator --version
+
+USER litentry
+EXPOSE 30333 9933 9944 9615
 VOLUME ["/data"]
 
 ENTRYPOINT ["/usr/local/bin/litentry-collator"]
-CMD ["--tmp", "--dev"]
+CMD ["--help"]
