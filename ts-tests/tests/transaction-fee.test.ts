@@ -70,14 +70,14 @@ describeLitentry('Test Transaction Fee', ``, (context) => {
         );
 
 		// Calculate transaction fee 
-		const txFee = eveInitBalance.free.toBigInt() - eveCurrentBalance.free.toBigInt() - BigInt(transferAmount);
-		const treasuryBalanceIncrease = treasuryCurrentBalance.free.toBigInt() - treasuryInitBalance.free.toBigInt();
-		const aliceBalanceIncrease = aliceCurrentBalance.free.toBigInt() - aliceInitBalance.free.toBigInt();
+		const txFee = eveInitBalance.free.toNumber() - eveCurrentBalance.free.toNumber() - transferAmount;
+		const treasuryBalanceIncrease = treasuryCurrentBalance.free.toNumber() - treasuryInitBalance.free.toNumber();
+		const aliceBalanceIncrease = aliceCurrentBalance.free.toNumber() - aliceInitBalance.free.toNumber();
 
 		console.log(`The actual transaction fee is ${txFee}, the Block author (Alice) has an balance increase of ${aliceBalanceIncrease}, and the Treasury pot has an balance increase of ${treasuryBalanceIncrease}`)
 
-		expect(treasuryBalanceIncrease).to.equal(txFee / BigInt(2));
-		expect(aliceBalanceIncrease).to.equal(txFee / BigInt(10));
+		expect(treasuryBalanceIncrease).to.approximately(txFee / 2, 10);
+		expect(aliceBalanceIncrease).to.approximately(txFee / 10, 10);
     });
 
 });
