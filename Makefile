@@ -141,6 +141,10 @@ benchmark-pallet-proxy:
 benchmark-pallet-balances:
 	@./scripts/run-benchmark-pallet.sh pallet-balances
 
+.PHONY: benchmark-pallet-membership
+benchmark-pallet-membership:
+	@./scripts/run-benchmark-pallet.sh pallet-membership
+
 .PHONY: benchmark-pallet-collator-selection
 benchmark-pallet-collator-selection:
 	@./scripts/run-benchmark-pallet.sh pallet-collator-selection
