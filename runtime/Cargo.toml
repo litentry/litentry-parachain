@@ -79,6 +79,7 @@ frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", d
 
 [dev-dependencies]
 hex-literal = "0.3.3"
+smallvec = "1.7.0"
 
 [build-dependencies]
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.11" }

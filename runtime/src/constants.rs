@@ -7,7 +7,7 @@ pub mod currency {
 	pub const CENTS: Balance = DOLLARS / 100;
 	pub const MILLICENTS: Balance = CENTS / 1_000;
 
-    // Linear ratio of transaction fee distribution
+	// Linear ratio of transaction fee distribution
 	// It is recommended to set sum of ratio to 100, yet only decimal loss is concerned.
 	pub const TREASURY_PROPORTION: u32 = 40u32;
 	pub const AUTHOR_PROPORTION: u32 = 0u32;

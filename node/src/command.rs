@@ -27,9 +27,9 @@ fn load_spec(
 	Ok(match id {
 		"dev" => Box::new(chain_spec::get_chain_spec_dev(para_id)),
 		"staging" => Box::new(chain_spec::get_chain_spec_staging(para_id)),
-		"generate-prod" => Box::new(chain_spec::get_chain_spec_prod(para_id)), /* to generate
-		                                                                         * res/chain_spec/
-		                                                                         * prod.json */
+		"generate-prod" => Box::new(chain_spec::get_chain_spec_prod(para_id)), /* to generate */
+		// res/chain_spec/
+		// prod.json
 		"" | "prod" => Box::new(chain_spec::ChainSpec::from_json_bytes(
 			&include_bytes!("../res/chain_spec/prod.json")[..],
 		)?),

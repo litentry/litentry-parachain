@@ -24,6 +24,11 @@ use sp_runtime::{
 	ApplyExtrinsicResult,
 };
 
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
+
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -446,7 +451,8 @@ where
 	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance<R>>) {
 		if let Some(fees) = fees_then_tips.next() {
 			// for fees, (1) to treasury, (2) to author and (3) burned
-			let (unburned, _) = fees.ration(TREASURY_PROPORTION + AUTHOR_PROPORTION, BURNED_PROPORTION);
+			let (unburned, _) =
+				fees.ration(TREASURY_PROPORTION + AUTHOR_PROPORTION, BURNED_PROPORTION);
 			let mut split = unburned.ration(TREASURY_PROPORTION, AUTHOR_PROPORTION);
 
 			if let Some(tips) = fees_then_tips.next() {
