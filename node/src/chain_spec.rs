@@ -76,7 +76,7 @@ pub fn default_parachain_properties() -> Option<Properties> {
 	parachain_properties("LIT", 12, 31)
 }
 
-const DEFAULT_CANDIDACY_BOND: Balance = 16 * UNIT;
+const DEFAULT_CANDIDACY_BOND: Balance = 1;
 const DEFAULT_ENDOWED_ACCOUNT_BALANCE: Balance = 1000 * UNIT;
 
 /// GenesisInfo struct to store the parsed genesis_info JSON
