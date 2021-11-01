@@ -1,4 +1,4 @@
-use crate::mock::*;
+use super::mock::*;
 use frame_support::assert_ok;
 use sp_runtime::traits::SignedExtension;
 

@@ -24,11 +24,6 @@ use sp_runtime::{
 	ApplyExtrinsicResult,
 };
 
-#[cfg(test)]
-mod mock;
-#[cfg(test)]
-mod tests;
-
 mod impls;
 use impls::{DealWithFees, SlowAdjustingFeeUpdate};
 
