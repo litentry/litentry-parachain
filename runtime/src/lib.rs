@@ -37,7 +37,7 @@ use frame_support::{
 	traits::{Everything, InstanceFilter},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
-		DispatchClass, IdentityFee, Weight,
+		DispatchClass, IdentityFee, Weight, RocksDbWeight,
 	},
 	PalletId, RuntimeDebug,
 };
@@ -209,7 +209,7 @@ impl frame_system::Config for Runtime {
 	/// What to do if an account is fully reaped from the system.
 	type OnKilledAccount = ();
 	/// The weight of database operations that the runtime can invoke.
-	type DbWeight = (); // TODO: cumulus is `RocksDbWeight`
+	type DbWeight = RocksDbWeight;
 	/// The basic call filter to use in dispatchable.
 	type BaseCallFilter = Everything;
 	/// Weight information for the extrinsics of this pallet.
