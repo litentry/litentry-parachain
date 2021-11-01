@@ -8,3 +8,4 @@ pub mod pallet_timestamp;
 pub mod pallet_treasury;
 pub mod pallet_utility;
 pub mod pallet_membership;
+pub mod pallet_multisig;
