@@ -36,8 +36,8 @@ use frame_support::{
 	construct_runtime, match_type, parameter_types,
 	traits::{Everything, InstanceFilter},
 	weights::{
-		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
-		DispatchClass, IdentityFee, Weight, RocksDbWeight,
+		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
+		DispatchClass, IdentityFee, Weight,
 	},
 	PalletId, RuntimeDebug,
 };
