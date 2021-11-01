@@ -1,3 +1,19 @@
+// Copyright 2020-2021 Litentry Technologies GmbH.
+// This file is part of Litentry.
+// 
+// Litentry is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// 
+// Litentry is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// 
+// You should have received a copy of the GNU General Public License
+// along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
@@ -7,11 +23,9 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 pub mod constants;
-pub use constants::{currency::*};
+pub use constants::currency::*;
 
-pub use primitives::*;
-pub use primitives::Index as Index;
-pub use primitives::opaque as opaque;
+pub use primitives::{opaque, Index, *};
 
 use sp_api::impl_runtime_apis;
 use sp_core::{
@@ -25,6 +39,9 @@ use sp_runtime::{
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
 };
+
+mod impls;
+use impls::{DealWithFees, SlowAdjustingFeeUpdate};
 
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -258,16 +275,16 @@ impl pallet_multisig::Config for Runtime {
 	scale_info::TypeInfo,
 )]
 pub enum ProxyType {
-    /// Fully permissioned proxy. Can execute any call on behalf of _proxied_.
-    Any,
-    /// Can execute any call that does not transfer funds, including asset transfers.
-    NonTransfer,
-    /// Proxy with the ability to reject time-delay proxy announcements.
-    CancelProxy,
-    /// Collator selection proxy. Can execute calls related to collator selection mechanism.
-    Collator,
-    /// Governance
-    Governance,
+	/// Fully permissioned proxy. Can execute any call on behalf of _proxied_.
+	Any,
+	/// Can execute any call that does not transfer funds, including asset transfers.
+	NonTransfer,
+	/// Proxy with the ability to reject time-delay proxy announcements.
+	CancelProxy,
+	/// Collator selection proxy. Can execute calls related to collator selection mechanism.
+	Collator,
+	/// Governance
+	Governance,
 }
 
 impl Default for ProxyType {
@@ -281,27 +298,21 @@ impl InstanceFilter<Call> for ProxyType {
 		match self {
 			ProxyType::Any => true,
 			ProxyType::NonTransfer => !matches!(
-				c, 
-				Call::Balances(..) | 
-					Call::Vesting(pallet_vesting::Call::vested_transfer { .. })
+				c,
+				Call::Balances(..) | Call::Vesting(pallet_vesting::Call::vested_transfer { .. })
 			),
-            ProxyType::CancelProxy => matches!(
-                c,
-                Call::Proxy(pallet_proxy::Call::reject_announcement { .. }) |
-                	Call::Utility(..) |
-                	Call::Multisig(..)
-            ),
-            ProxyType::Collator => matches!(
-                c,
-                Call::CollatorSelection(..) |
-                	Call::Utility(..) |
-                	Call::Multisig(..)
-            ),
+			ProxyType::CancelProxy => matches!(
+				c,
+				Call::Proxy(pallet_proxy::Call::reject_announcement { .. }) |
+					Call::Utility(..) | Call::Multisig(..)
+			),
+			ProxyType::Collator =>
+				matches!(c, Call::CollatorSelection(..) | Call::Utility(..) | Call::Multisig(..)),
 			ProxyType::Governance => matches!(
 				c,
-				Call::Democracy(..)
-					| Call::Council(..) | Call::TechnicalCommittee(..)
-					| Call::Treasury(..)
+				Call::Democracy(..) |
+					Call::Council(..) | Call::TechnicalCommittee(..) |
+					Call::Treasury(..)
 			),
 		}
 	}
@@ -409,17 +420,16 @@ impl pallet_utility::Config for Runtime {
 }
 
 parameter_types! {
-	/// Relay Chain `TransactionByteFee` / 10
-	pub const TransactionByteFee: Balance = 1 * MILLICENTS;
+	pub const TransactionByteFee: Balance = MILLICENTS / 10;
 	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
-// TODO: same as rococo-parachain but differnet as parachain-template
 impl pallet_transaction_payment::Config for Runtime {
-	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, ()>;
+	type OnChargeTransaction =
+		pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
 	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = IdentityFee<Balance>;
-	type FeeMultiplierUpdate = ();
+	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 }
 
