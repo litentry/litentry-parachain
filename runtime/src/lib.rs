@@ -96,7 +96,6 @@ pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signatu
 pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Call, SignedExtra>;
 
 /// Executive: handles dispatch to the various modules.
-/// TODO: add OnRuntimeUpgrade
 pub type Executive = frame_executive::Executive<
 	Runtime,
 	Block,
