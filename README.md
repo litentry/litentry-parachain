@@ -52,8 +52,7 @@ to stop the processes and tidy things up.
 
 ### 2. use raw binaries for both polkadot and litentry-parachain
 
-Only when option 1 doesn't work.
-Due to a [known issue](https://github.com/litentry/litentry-parachain/issues/187) it's possible that after launching the parachain is not producing any blocks.
+Only when option 1 doesn't work and you suspect the docker-image went wrong.
 
 In this case we could try to launch the dev network with raw binaries.
 
@@ -72,8 +71,6 @@ When finished with the dev network, run
 make clean-local-binary
 ```
 to stop the processes and tidy things up.
-
-**Build and push of docker images are disabled** until we find a robust solution for [issue #192](https://github.com/litentry/litentry-parachain/issues/192).
 
 ## run CI tests locally
 
@@ -99,4 +96,4 @@ The default leasing duration for parachain is 1 day, in case you want to extend 
 ![image](https://user-images.githubusercontent.com/7630809/135689832-1f57cd5c-7f83-4fce-9bb0-832b77a38dcc.png)
 
 ## License
-Apache-2.0
+GPLv3

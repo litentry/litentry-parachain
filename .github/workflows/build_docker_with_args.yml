@@ -1,4 +1,4 @@
-name: Build docker with features
+name: Build docker with args
 
 on:
   workflow_dispatch:
@@ -6,14 +6,14 @@ on:
       docker_tag:
         description: The tag for the built docker image
         required: true
-      features:
-        description: A comma separated list of features for `cargo build`, see cargo build --help for details
+      args:
+        description: Args to pass to `cargo build`, e.g. --features=runtime-benchmarks
         required: true
 
 
 jobs:
-  ## build docker image of client binary with features ##
-  build-docker-with-features:
+  ## build docker image of client binary with args ##
+  build-docker-with-args:
     runs-on: self-hosted
     steps:
       - name: Checkout codes on ${{ github.ref }}
@@ -21,7 +21,7 @@ jobs:
 
       - name: Build docker image
         run: |
-          ./scripts/build-docker.sh ${{ github.event.inputs.docker_tag }} ${{ github.event.inputs.features }}
+          ./scripts/build-docker.sh ${{ github.event.inputs.docker_tag }} ${{ github.event.inputs.args }}
           echo "============================="
           docker images
 
