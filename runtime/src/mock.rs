@@ -33,11 +33,14 @@ frame_support::construct_runtime!(
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 	}
 );
+
 pub const CALL: &<Runtime as frame_system::Config>::Call =
 	&Call::Balances(BalancesCall::transfer { dest: 2, value: 69 });
+
 thread_local! {
 	static EXTRINSIC_BASE_WEIGHT: RefCell<u64> = RefCell::new(0);
 }
+
 pub struct BlockWeights;
 impl Get<frame_system::limits::BlockWeights> for BlockWeights {
 	fn get() -> frame_system::limits::BlockWeights {
@@ -52,9 +55,11 @@ impl Get<frame_system::limits::BlockWeights> for BlockWeights {
 			.build_or_panic()
 	}
 }
+
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 }
+
 impl frame_system::Config for Runtime {
 	type BaseCallFilter = frame_support::traits::Everything;
 	type BlockWeights = BlockWeights;
@@ -80,9 +85,11 @@ impl frame_system::Config for Runtime {
 	type SS58Prefix = ();
 	type OnSetCode = ();
 }
+
 parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
 }
+
 parameter_types! {
 	pub const UncleGenerations: u64 = 5;
 }
@@ -93,6 +100,7 @@ impl pallet_authorship::Config for Runtime {
 	type FilterUncle = ();
 	type EventHandler = ();
 }
+
 pub type ConsensusEngineId = [u8; 4];
 const TEST_ID: ConsensusEngineId = [1, 2, 3, 4];
 pub struct AuthorGiven;
@@ -109,6 +117,7 @@ impl FindAuthor<u64> for AuthorGiven {
 		None
 	}
 }
+
 impl pallet_balances::Config for Runtime {
 	type Balance = u64;
 	type Event = Event;
@@ -120,9 +129,11 @@ impl pallet_balances::Config for Runtime {
 	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
 }
+
 parameter_types! {
 	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
 }
+
 impl pallet_treasury::Config for Runtime {
 	type PalletId = TreasuryPalletId;
 	type Currency = Balances;
@@ -139,6 +150,7 @@ impl pallet_treasury::Config for Runtime {
 	type WeightInfo = pallet_treasury::weights::SubstrateWeight<Runtime>;
 	type MaxApprovals = ();
 }
+
 impl WeightToFeePolynomial for WeightToFee {
 	type Balance = u64;
 	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
@@ -150,11 +162,13 @@ impl WeightToFeePolynomial for WeightToFee {
 		}]
 	}
 }
+
 parameter_types! {
 	pub static TransactionByteFee: u64 = 1;
 	pub static WeightToFee: u64 = 1;
 	pub static OperationalFeeMultiplier: u8 = 5;
 }
+
 impl pallet_transaction_payment::Config for Runtime {
 	type OnChargeTransaction =
 		pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
@@ -163,17 +177,20 @@ impl pallet_transaction_payment::Config for Runtime {
 	type WeightToFee = WeightToFee;
 	type FeeMultiplierUpdate = ();
 }
+
 pub struct ExtBuilder {
 	balance_factor: u64,
 	base_weight: u64,
 	byte_fee: u64,
 	weight_to_fee: u64,
 }
+
 impl Default for ExtBuilder {
 	fn default() -> Self {
 		Self { balance_factor: 1, base_weight: 0, byte_fee: 1, weight_to_fee: 1 }
 	}
 }
+
 impl ExtBuilder {
 	pub fn base_weight(mut self, base_weight: u64) -> Self {
 		self.base_weight = base_weight;
@@ -211,11 +228,13 @@ impl ExtBuilder {
 		t.into()
 	}
 }
+
 /// create a transaction info struct from weight. Handy to avoid building the whole struct.
 pub fn info_from_weight(w: Weight) -> DispatchInfo {
 	// pays_fee: Pays::Yes -- class: DispatchClass::Normal
 	DispatchInfo { weight: w, ..Default::default() }
 }
+
 pub fn post_info_from_weight(w: Weight) -> PostDispatchInfo {
 	PostDispatchInfo { actual_weight: Some(w), pays_fee: Default::default() }
 }
