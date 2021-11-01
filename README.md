@@ -96,4 +96,4 @@ The default leasing duration for parachain is 1 day, in case you want to extend 
 ![image](https://user-images.githubusercontent.com/7630809/135689832-1f57cd5c-7f83-4fce-9bb0-832b77a38dcc.png)
 
 ## License
-Apache-2.0
+GPLv3
