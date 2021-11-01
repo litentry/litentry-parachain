@@ -149,6 +149,10 @@ benchmark-pallet-membership:
 benchmark-pallet-collator-selection:
 	@./scripts/run-benchmark-pallet.sh pallet-collator-selection
 
+.PHONY: benchmark-pallet-multisig
+benchmark-pallet-multisig:
+	@./scripts/run-benchmark-pallet.sh pallet-multisig
+
 .PHONY: benchmark-account-linker  ## Benchmark pallet `account-linker`
 benchmark-account-linker:
 	@./scripts/run-benchmark-pallet.sh account-linker
