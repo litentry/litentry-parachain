@@ -65,6 +65,7 @@ async function initApiPromise(config: any) {
     const keyring = new Keyring({ type: 'sr25519' });
     const alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
     const bob = keyring.addFromUri('//Bob', { name: 'Bob default' });
+    const eve = keyring.addFromUri('//Eve', { name: 'Eve default' });
 
     // Insert ocw session key
     const resInsertKey = api.rpc.author.insertKey(
@@ -73,12 +74,20 @@ async function initApiPromise(config: any) {
         '0x8c35b97c56099cf3b5c631d1f296abbb11289857e74a8f60936290080d56da6d'
     );
 
+	// Set Eve's balance to 1000000000000000
+	const txSetBalance = api.tx.sudo.sudo(
+		api.tx.balances.setBalance(eve.address, 1000000000000000, 0)
+		);
+	await signAndSend(txSetBalance, alice);
+
     const { nonce: nonceAlice, data: balanceAlice } = await api.query.system.account(alice.address);
     const { nonce: nonceBob, data: balanceBob } = await api.query.system.account(bob.address);
+    const { nonce: nonceEve, data: balanceEve } = await api.query.system.account(eve.address);
     console.log(`Alice Substrate Account: ${alice.address} (nonce: ${nonceAlice}) balance, free: ${balanceAlice.free.toHex()}`);
     console.log(`Bob Substrate Account: ${bob.address} (nonce: ${nonceBob}) balance, free: ${balanceBob.free.toHex()}`);
+    console.log(`Eve Substrate Account: ${eve.address} (nonce: ${nonceEve}) balance, free: ${balanceEve.free.toHex()}`);
 
-    return { api, alice, bob};
+    return { api, alice, bob, eve};
 }
 
 export function signAndSend(tx: SubmittableExtrinsic<ApiTypes>, account: AddressOrPair) {
@@ -102,16 +111,17 @@ export function signAndSend(tx: SubmittableExtrinsic<ApiTypes>, account: Address
 export function describeLitentry(
     title: string,
     specFilename: string,
-    cb: (context: { api: ApiPromise; alice: KeyringPair; bob: KeyringPair }) => void
+    cb: (context: { api: ApiPromise; alice: KeyringPair; bob: KeyringPair , eve: KeyringPair}) => void
 ) {
     describe(title, function () {
         // Set timeout to 6000 seconds (Because of 50-blocks delay of rococo, so called "training wheels")
         this.timeout(6000000);
 
-        let context: { api: ApiPromise; alice: KeyringPair; bob: KeyringPair } = {
+        let context: { api: ApiPromise; alice: KeyringPair; bob: KeyringPair; eve: KeyringPair} = {
             api: {} as ApiPromise,
             alice: {} as KeyringPair,
             bob: {} as KeyringPair,
+            eve: {} as KeyringPair,
         };
         // Making sure the Litentry node has started
         before('Starting Litentry Test Node', async function () {
@@ -120,6 +130,7 @@ export function describeLitentry(
             context.api = initApi.api;
             context.alice = initApi.alice;
             context.bob = initApi.bob;
+            context.eve = initApi.eve;
         });
 
         after(async function () {});
