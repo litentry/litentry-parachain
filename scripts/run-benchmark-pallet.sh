@@ -13,6 +13,8 @@ cd "$ROOTDIR"
 
 echo "running benchmark for $1"
 
+filename=${1//-/_}
+
 ./target/release/litentry-collator benchmark \
     --chain=./source/local.json \
     --execution=wasm  \
@@ -23,5 +25,4 @@ echo "running benchmark for $1"
     --heap-pages=4096 \
     --steps=20 \
     --repeat=50 \
-    --output=./source/weights.rs \
-    --template=./.maintain/frame-weight-template.hbs
+    --output=./runtime/src/weights/"$filename".rs

@@ -107,19 +107,51 @@ format:
 
 .PHONY: benchmark-frame-system ## Benchmark pallet `frame-system`
 benchmark-frame-system:
-	@./scripts/run-benchmark-pallet.sh frame_system
+	@./scripts/run-benchmark-pallet.sh frame-system
 
-.PHONY: benchmark-account-linker  ## Benchmark pallet `account-linker`
-benchmark-account-linker:
-	@./scripts/run-benchmark-pallet.sh account-linker
+.PHONY: benchmark-pallet-timestamp
+benchmark-pallet-timestamp:
+	@./scripts/run-benchmark-pallet.sh pallet-timestamp
 
-.PHONY: benchmark-offchain-worker ## Benchmark pallet `offchain-worker`
-benchmark-offchain-worker:
-	@./scripts/run-benchmark-pallet.sh pallet-offchain-worker
+.PHONY: benchmark-pallet-utility
+benchmark-pallet-utility:
+	@./scripts/run-benchmark-pallet.sh pallet-utility
 
-.PHONY: benchmark-nft ## Benchmark pallet `nft`
-benchmark-nft:
-	@./scripts/run-benchmark-pallet.sh pallet-nft
+.PHONY: benchmark-pallet-scheduler
+benchmark-pallet-scheduler:
+	@./scripts/run-benchmark-pallet.sh pallet-scheduler
+
+.PHONY: benchmark-pallet-treasury
+benchmark-pallet-treasury:
+	@./scripts/run-benchmark-pallet.sh pallet-treasury
+
+.PHONY: benchmark-pallet-democracy
+benchmark-pallet-democracy:
+	@./scripts/run-benchmark-pallet.sh pallet-democracy
+
+.PHONY: benchmark-pallet-collective
+benchmark-pallet-collective:
+	@./scripts/run-benchmark-pallet.sh pallet-collective
+
+.PHONY: benchmark-pallet-proxy
+benchmark-pallet-proxy:
+	@./scripts/run-benchmark-pallet.sh pallet-proxy
+
+.PHONY: benchmark-pallet-balances
+benchmark-pallet-balances:
+	@./scripts/run-benchmark-pallet.sh pallet-balances
+
+.PHONY: benchmark-pallet-membership
+benchmark-pallet-membership:
+	@./scripts/run-benchmark-pallet.sh pallet-membership
+
+.PHONY: benchmark-pallet-collator-selection
+benchmark-pallet-collator-selection:
+	@./scripts/run-benchmark-pallet.sh pallet-collator-selection
+
+.PHONY: benchmark-pallet-multisig
+benchmark-pallet-multisig:
+	@./scripts/run-benchmark-pallet.sh pallet-multisig
 
 define pkgid
 	$(shell cargo pkgid $1)
