@@ -1,13 +1,17 @@
 {
-    "rootKey": "5DaB1AshD6NsRRq84rsLuR65aD8tTPxp2Ub7HnqVtirgWn4V",
+    "rootKey": "48Xwa5ULoarqW1Rgim8SxM2faxcHfRs5ARSGahVD7KbhXJFy",
     "invulnerables": [
       [
-        "5FZP2oqDBBWzaKp8STUQKTvSo2Y1UD68briboWreLiVAxJr1",
-        "5HbUXue4BsoBmR1ZSWCurQMTdi2jrDdVzMQoKtc8ByMH9uEc"
+        "4BVDXqfiwCzx4UxSgoQoax6EnRuNZfYNhx8ungLRC3rxKktE",
+        "46sgTotdpJnyH2V6QKJ2aVqepyUNapt7HPuy2xMc4qdtx99Z"
       ],
       [
-        "5EJLoe5Uaj8U7jTxJwiDCP1kNSnHu4Buw8pdkpm136QRiAEC",
-        "5E9ky6gxEMAHrVRLyubyL4UqCkdt5kJmHkB7HuxJ3Y5LDvm3"
+        "47EtB4vijKGvHckktM1uujUDs8Cyjfjw33sfteTUZsXacY9G",
+        "4Ba3Qvjk2fEKiDbJEXqsWT5m3HzHWB22g215wK5BJjWsEjLJ"
+      ],
+      [
+        "471akmW9AtYCxGzUt5WPLRmdWi5a8UAAN6r8LywEhMfTiL4r",
+        "4C7Zb4XjnCUbxqdyUSq3dxF5odHww6YNFrkhZcFpbMqcCFhf"
       ]
     ],
     "candidacyBond": "16000000000000",
@@ -38,8 +42,7 @@
       "5EJLoe5Uaj8U7jTxJwiDCP1kNSnHu4Buw8pdkpm136QRiAEC"
     ],
     "technicalCommittee": [
-      "5FZP2oqDBBWzaKp8STUQKTvSo2Y1UD68briboWreLiVAxJr1",
-      "5EJLoe5Uaj8U7jTxJwiDCP1kNSnHu4Buw8pdkpm136QRiAEC"
+      "4BHzYjn2Lb931cNRxH26SBH3r4xuP3AZXGgw8yXghWnmuNYP"
     ],
     "bootNodes": [
       "/dns/parachain-sg-1.litentry.io/tcp/40333/p2p/12D3KooWBy6nNAuca2ZrxNEH93bzmb7ZjRpzRbbz7CtNEraiHtSC",
