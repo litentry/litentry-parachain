@@ -1,12 +1,12 @@
 [package]
 authors = ['Litentry Dev']
 build = 'build.rs'
-description = 'A new Cumulus FRAME-based Substrate node, ready for hacking.'
+description = 'Litentry parachain collator implementation.'
 edition = '2018'
-homepage = 'https://substrate.dev'
-license = 'Unlicense'
+homepage = 'https://litentry.com/'
+license = 'GPL-3.0'
 name = 'litentry-collator'
-repository = 'https://github.com/substrate-developer-hub/substrate-parachain-template'
+repository = 'https://github.com/litentry/litentry-parachain'
 version = '0.9.0'
 
 [[bin]]
