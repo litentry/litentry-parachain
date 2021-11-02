@@ -17,8 +17,8 @@
 use cumulus_primitives_core::ParaId;
 use litentry_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, CollatorSelectionConfig, CouncilMembershipConfig,
-	GenesisConfig, ParachainInfoConfig, SessionConfig, Signature, SudoConfig, SystemConfig,
-	TechnicalCommitteeMembershipConfig, UNIT, WASM_BINARY,
+	GenesisConfig, ParachainInfoConfig, PnsNftConfig, SessionConfig, Signature, SudoConfig,
+	SystemConfig, TechnicalCommitteeMembershipConfig, UNIT, WASM_BINARY,
 };
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup, Properties};
 use sc_service::ChainType;
@@ -287,5 +287,20 @@ fn generate_genesis(
 		aura: Default::default(),
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
+		pns_nft: PnsNftConfig {
+			tokens: vec![(
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				vec![1, 2, 3],
+				(),
+				vec![(
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					vec![3, 2, 1],
+					Default::default(),
+					sp_core::convert_hash::<sp_core::H256, [u8; 32]>(&sp_io::hashing::keccak_256(
+						"dot".as_bytes(),
+					)),
+				)],
+			)],
+		},
 	}
 }

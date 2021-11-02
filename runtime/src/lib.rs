@@ -837,6 +837,100 @@ impl pallet_vesting::Config for Runtime {
 	const MAX_VESTING_SCHEDULES: u32 = 28;
 }
 
+// pns deploy
+use pns_registrar::*;
+
+parameter_types! {
+	pub const MaxMetadata: u32 = 15;
+}
+
+impl nft::Config for Runtime {
+	type ClassId = u32;
+
+	type TokenId = Hash;
+
+	type TotalId = u128;
+
+	type ClassData = ();
+
+	type TokenData = registry::Record;
+
+	type MaxClassMetadata = MaxMetadata;
+
+	type MaxTokenMetadata = MaxMetadata;
+}
+parameter_types! {
+	pub const Official: sp_runtime::AccountId32 = sp_runtime::AccountId32::new([212, 53, 147, 199, 21, 253, 211, 28, 97, 20, 26, 189, 4, 169, 159, 214, 130, 44, 133, 88, 133, 76, 205, 227, 154, 86, 132, 231, 165, 109, 162, 125]);
+	pub const Metadata: sp_std::vec::Vec<u8> = sp_std::vec::Vec::new();
+}
+
+impl registry::Config for Runtime {
+	type Event = Event;
+
+	type Official = Official;
+
+	type DefaultMetadata = Metadata;
+
+	type WeightInfo = weights::pns_pallets::WeightInfo<Runtime>;
+
+	type Registrar = registrar::Pallet<Runtime>;
+
+	type ResolverId = u32;
+}
+
+parameter_types! {
+	pub const GracePeriod: BlockNumber = 90 * DAYS;
+	pub const DefaultCapacity: u32 = 20;
+	pub const SetSubnamePrice: Balance = 1;
+	pub const BlackList: sp_std::vec::Vec<Hash> = sp_std::vec::Vec::new();
+	pub const BaseNode: Hash = sp_core::H256([206, 21, 156, 243, 67, 128, 117, 125, 25, 50, 168, 228, 167, 78, 133, 232, 89, 87, 176, 167, 165, 45, 156, 86, 108, 10, 60, 141, 97, 51, 208, 247]);
+}
+impl registrar::Config for Runtime {
+	type Event = Event;
+
+	type ResolverId = u32;
+
+	type Registry = registry::Pallet<Runtime>;
+
+	type Currency = pallet_balances::Pallet<Runtime>;
+
+	type GracePeriod = GracePeriod;
+
+	type DefaultCapacity = DefaultCapacity;
+
+	type SetSubnamePrice = SetSubnamePrice;
+
+	type BlackList = BlackList;
+
+	type BaseNode = BaseNode;
+
+	type WeightInfo = weights::pns_pallets::WeightInfo<Runtime>;
+
+	type PriceOracle = TestPriceOracle;
+}
+pub struct TestPriceOracle;
+
+impl traits::PriceOracle for TestPriceOracle {
+	type Duration = BlockNumber;
+	type Balance = Balance;
+
+	fn renew_price(
+		name_len: usize,
+		expires: Self::Duration,
+		duration: Self::Duration,
+	) -> Self::Balance {
+		10
+	}
+
+	fn registry_price(name_len: usize, duration: Self::Duration) -> Self::Balance {
+		9
+	}
+
+	fn register_fee(name_len: usize) -> Self::Balance {
+		8
+	}
+}
+
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -882,6 +976,11 @@ construct_runtime! {
 		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 51,
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 52,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 53,
+
+		// PNS
+		PnsNft: nft::{Pallet, Storage, Config<T>} = 54,
+		PnsRegistry: registry::{Pallet, Call,Storage, Event<T>} = 55,
+		PnsRegistrar: registrar::{Pallet, Call,Storage, Event<T>} = 56,
 
 		// TMP
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 255,

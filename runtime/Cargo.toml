@@ -73,6 +73,10 @@ xcm = { git = "https://github.com/paritytech/polkadot", default-features = false
 xcm-builder = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.12" }
 xcm-executor = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.12" }
 
+# pns dependencies
+pns-registrar = { git = "https://github.com/pnsproject/pns-pallets", default-features = false, branch = "polkadot-v0.9.12" }
+
+
 # benchmarking 
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.12", optional = true }
 frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.12", optional = true }
@@ -137,6 +141,7 @@ std = [
 	"xcm/std",
 	"xcm-builder/std",
 	"xcm-executor/std",
+	"pns-registrar/std",
 	"frame-benchmarking/std",
 ]
 

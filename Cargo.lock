@@ -3928,6 +3928,7 @@ dependencies = [
  "pallet-xcm",
  "parachain-info",
  "parity-scale-codec",
+ "pns-registrar",
  "polkadot-parachain",
  "primitives",
  "scale-info",
@@ -5607,6 +5608,21 @@ name = "platforms"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "989d43012e2ca1c4a02507c67282691a0a3207f9dc67cec596b43fe925b3d325"
+
+[[package]]
+name = "pns-registrar"
+version = "0.1.0"
+source = "git+https://github.com/pnsproject/pns-pallets?branch=polkadot-v0.9.12#26094709879ad04898b9030b4dd32765bffcf912"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+]
 
 [[package]]
 name = "polkadot-approval-distribution"
