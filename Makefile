@@ -153,18 +153,6 @@ benchmark-pallet-collator-selection:
 benchmark-pallet-multisig:
 	@./scripts/run-benchmark-pallet.sh pallet-multisig
 
-.PHONY: benchmark-account-linker  ## Benchmark pallet `account-linker`
-benchmark-account-linker:
-	@./scripts/run-benchmark-pallet.sh account-linker
-
-.PHONY: benchmark-offchain-worker ## Benchmark pallet `offchain-worker`
-benchmark-offchain-worker:
-	@./scripts/run-benchmark-pallet.sh pallet-offchain-worker
-
-.PHONY: benchmark-nft ## Benchmark pallet `nft`
-benchmark-nft:
-	@./scripts/run-benchmark-pallet.sh pallet-nft
-
 define pkgid
 	$(shell cargo pkgid $1)
 endef
