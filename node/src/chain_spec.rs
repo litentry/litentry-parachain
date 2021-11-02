@@ -92,7 +92,7 @@ pub fn default_parachain_properties() -> Option<Properties> {
 	parachain_properties("LIT", 12, 31)
 }
 
-const DEFAULT_CANDIDACY_BOND: Balance = 1;
+const DEV_CANDIDACY_BOND: Balance = 1;
 const DEFAULT_ENDOWED_ACCOUNT_BALANCE: Balance = 1000 * UNIT;
 
 /// GenesisInfo struct to store the parsed genesis_info JSON
@@ -121,7 +121,7 @@ pub fn get_chain_spec_dev(id: ParaId) -> ChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					get_collator_keys_from_seed("Alice"),
 				)],
-				DEFAULT_CANDIDACY_BOND,
+				DEV_CANDIDACY_BOND,
 				vec![
 					(
 						get_account_id_from_seed::<sr25519::Public>("Alice"),
