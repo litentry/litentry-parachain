@@ -1,0 +1,4 @@
+
+[submodule "pns-pallets"]
+	path = pns-pallets
+	url = https://github.com/pnsproject/pns-pallets

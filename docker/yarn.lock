@@ -11,8 +11,8 @@
 
 "@open-web3/parachain-launch@^1.0.5":
   version "1.0.5"
-  resolved "https://registry.yarnpkg.com/@open-web3/parachain-launch/-/parachain-launch-1.0.5.tgz#80c5f29c1aabb8844bb50961e4e891acd089978b"
-  integrity sha512-S3+efpD8WOybyGrlGVyQvFHpOocvXSni8gCbG0Sp7hfq544kE+TamjcswFpXj1c8K1Sna23G6uHSpUQc5fWgOQ==
+  resolved "https://registry.npmmirror.com/@open-web3/parachain-launch/download/@open-web3/parachain-launch-1.0.5.tgz#80c5f29c1aabb8844bb50961e4e891acd089978b"
+  integrity sha1-gMXynBqruIRLtQlh5OiRrNCJl4s=
   dependencies:
     "@polkadot/api" "^5.6.1"
     "@polkadot/keyring" "^7.2.1"
