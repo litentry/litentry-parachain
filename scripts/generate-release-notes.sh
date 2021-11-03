@@ -39,6 +39,8 @@ RUNTIME_COMPRESSED_SHA256=$(cat "$SRTOOL_DIGEST_FILE" | jq .runtimes.compressed.
 RUNTIME_COMPRESSED_PROPOSAL_HASH=$(cat "$SRTOOL_DIGEST_FILE" | jq .runtimes.compressed.subwasm.proposal_hash | sed 's/"//g')
 RUNTIME_COMPRESSED_PARACHAIN_UPGRADE_HASH=$(cat "$SRTOOL_DIGEST_FILE" | jq .runtimes.compressed.subwasm.parachain_authorize_upgrade_hash | sed 's/"//g')
 
+
+
 # use <CODE> to decorate around the stuff and then replace it with `
 # so that it's not executed as commands inside heredoc
 cat << EOF > "$1"
@@ -72,8 +74,31 @@ version: **$RUNTIME_VERSION**
 - proposal_hash: <CODE>$RUNTIME_COMPRESSED_PROPOSAL_HASH<CODE>
 - parachain_authorize_upgrade_hash: <CODE>$RUNTIME_COMPRESSED_PARACHAIN_UPGRADE_HASH<CODE>
 
-## Changes
+EOF
+
+if [ "$GENESIS_RELEASE" = "true" ]; then
+  GENESIS_STATE_HASH=$(sha1sum litentry-collator/litentry-genesis-state | awk '{print $1}')
+  GENESIS_WASM_HASH=$(sha1sum litentry-collator/litentry-genesis-wasm | awk '{print $1}')
+
+  # double check that exported wasm matches what's written in chain-spec
+  # intentionally use 'generate-prod' as chain type
+  docker run --rm "litentry/litentry-parachain:$RELEASE_TAG" build-spec --chain=generate-prod --raw | \
+  grep -F '"0x3a636f6465"' | sed 's/.*"0x3a636f6465": "//;s/",$//' | tr -d '\n' > /tmp/built-wasm
+
+  if cmp /tmp/built-wasm litentry-collator/litentry-genesis-wasm; then
+    echo "genesis-wasm equal, all good."
+    rm -f /tmp/built-wasm
+  else
+    echo "genesis-wasm unequal"
+    exit 1
+  fi
+  cat << EOF >> "$1"
+## Genesis artefacts
+
+- genesis-state sha1sum <CODE>$GENESIS_STATE_HASH<CODE>
+- genesis-wasm  sha1sum <CODE>$GENESIS_WASM_HASH<CODE>
 
 EOF
+fi
 
 sed -i 's/<CODE>/`/g' "$1"
