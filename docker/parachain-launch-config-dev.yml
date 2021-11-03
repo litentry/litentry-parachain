@@ -26,7 +26,7 @@ parachains:
 - image: litentry/litentry-parachain:latest
   chain:
     base: dev
-  id: 2022 # override parachain id
+  id: 2105 # override parachain id
   parachain: true # this is parachain, not parathread
   flags: # CLI flags for these parachain nodes
     - --rpc-methods=unsafe

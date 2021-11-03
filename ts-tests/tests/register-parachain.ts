@@ -22,7 +22,7 @@ async function registerParachain(api: ApiPromise, config: any) {
     const registry = new TypeRegistry();
 
     const tx = api.tx.sudo.sudo(
-        api.tx.parasSudoWrapper.sudoScheduleParaInitialize(2022, {
+        api.tx.parasSudoWrapper.sudoScheduleParaInitialize(2105, {
             genesisHead: new Bytes(registry, genesisHeadBytes),
             validationCode: new Bytes(registry, validationCodeBytes),
             parachain: true,

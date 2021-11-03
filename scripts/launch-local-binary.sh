@@ -24,7 +24,7 @@ fi
 
 POLKADOT_BIN="$1"
 PARACHAIN_BIN="$2"
-PARACHAIN_ID=2022
+PARACHAIN_ID=2105
 
 TMPDIR=/tmp/parachain_dev
 [ -d "$TMPDIR" ] || mkdir -p "$TMPDIR"
