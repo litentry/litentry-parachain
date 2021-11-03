@@ -52,7 +52,7 @@ use sp_version::RuntimeVersion;
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	construct_runtime, match_type, parameter_types,
-	traits::{Everything, InstanceFilter},
+	traits::{Contains, Everything, InstanceFilter},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		DispatchClass, IdentityFee, Weight,
@@ -229,7 +229,7 @@ impl frame_system::Config for Runtime {
 	/// The weight of database operations that the runtime can invoke.
 	type DbWeight = RocksDbWeight;
 	/// The basic call filter to use in dispatchable.
-	type BaseCallFilter = Everything;
+	type BaseCallFilter = BaseCallFilter;
 	/// Weight information for the extrinsics of this pallet.
 	type SystemWeightInfo = weights::frame_system::WeightInfo<Runtime>;
 	/// Block & extrinsics weights: base values and limits.
@@ -886,6 +886,18 @@ construct_runtime! {
 		// TMP
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 255,
 	}
+}
+
+pub struct BaseCallFilter;
+impl Contains<Call> for BaseCallFilter {
+    fn contains(call: &Call) -> bool {
+        matches!(
+            call,
+            Call::Sudo(_) |
+            // System
+            Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_)
+        )
+    }
 }
 
 impl_runtime_apis! {
