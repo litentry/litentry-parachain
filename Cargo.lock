@@ -3910,6 +3910,8 @@ dependencies = [
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
+ "pallet-bridge",
+ "pallet-bridge-transfer",
  "pallet-collator-selection",
  "pallet-collective",
  "pallet-democracy",
@@ -4720,6 +4722,43 @@ dependencies = [
  "pallet-treasury",
  "parity-scale-codec",
  "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-bridge"
+version = "0.0.1"
+source = "git+https://github.com/litentry/litentry-pallets?branch=token-bridge#9fc4f319c93424bad38da13ae03ae41611da8a4c"
+dependencies = [
+ "blake2-rfc",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-bridge-transfer"
+version = "0.0.1"
+source = "git+https://github.com/litentry/litentry-pallets?branch=token-bridge#9fc4f319c93424bad38da13ae03ae41611da8a4c"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex",
+ "pallet-bridge",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-arithmetic",
  "sp-core",
  "sp-io",
  "sp-runtime",
