@@ -131,8 +131,16 @@ impl_opaque_keys! {
 /// This runtime version.
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("litentry"),
-	impl_name: create_runtime_str!("litentry"),
+	// Note:
+	// It's important to match `litentry-parachain-runtime`, which is runtime pkg name
+	// otherwise no extrinsic can be submitted.
+	// In logs it's shown:
+	// Failed to submit extrinsic: Extrinsic verification error: Runtime error: Execution failed:
+	// Other("Wasm execution trapped: wasm trap: unreachable ...
+	//
+	// However our CI passes (TODO)
+	spec_name: create_runtime_str!("litentry-parachain"),
+	impl_name: create_runtime_str!("litentry-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot, corresponds to 0.9.0 TOML version
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot

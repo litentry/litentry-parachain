@@ -8,7 +8,8 @@ on:
         required: true
       args:
         description: Args to pass to `cargo build`, e.g. --features=runtime-benchmarks
-        required: true
+        default: ''
+        required: false
 
 
 jobs:
