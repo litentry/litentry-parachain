@@ -42,7 +42,7 @@ if [ -z "$POLKADOT_BIN" ]; then
   echo "no polkadot binary provided, download now ..."
   # TODO: find a way to get stable download link
   # https://api.github.com/repos/paritytech/polkadot/releases/latest is not reliable as 
-  # poladot could publish release which has no binary
+  # polkadot could publish release which has no binary
   url="https://github.com/paritytech/polkadot/releases/download/v0.9.12/polkadot"
   POLKADOT_BIN="$TMPDIR/polkadot"
   wget -O "$POLKADOT_BIN" -q "$url"
@@ -86,17 +86,25 @@ $PARACHAIN_BIN export-genesis-state --parachain-id $PARACHAIN_ID --chain dev > p
 $PARACHAIN_BIN export-genesis-wasm --chain dev > para-$PARACHAIN_ID-wasm
 
 # run alice and bob as relay nodes
-$POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --alice --tmp --port 30333 --ws-port 9944 &> "relay.alice.log" &
+$POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --alice --tmp --port 30333 --ws-port 9944 --rpc-port 9933 &> "relay.alice.log" &
 sleep 10
 
-$POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --bob --tmp --port 30334 --ws-port 9945  &> "relay.bob.log" &
+$POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --bob --tmp --port 30334 --ws-port 9945  --rpc-port 9934 &> "relay.bob.log" &
 sleep 10
 
 # run a litentry-collator instance
-$PARACHAIN_BIN --alice --collator --force-authoring --tmp --chain dev --parachain-id $PARACHAIN_ID --port 40333 --ws-port 9946 --execution wasm \
+$PARACHAIN_BIN --alice --collator --force-authoring --tmp --chain dev --parachain-id $PARACHAIN_ID \
+  --port 30335 --ws-port 9946 --rpc-port 9935 --execution wasm \
   -- \
-  --execution wasm --chain $ROCOCO_CHAINSPEC --port 30332 --ws-port 9943 &> "para.alice.log" &
+  --execution wasm --chain $ROCOCO_CHAINSPEC --port 30332 --ws-port 9943 --rpc-port 9932 &> "para.alice.log" &
 sleep 10
+
+echo "register parachain now ..."
+cd "$ROOTDIR/ts-tests"
+echo "NODE_ENV=ci" > .env
+yarn
+yarn register-parachain 2>&1 | tee "$TMPDIR/register-parachain.log"
+print_divider
 
 echo "done. please check $TMPDIR for generated files if need"
 print_divider
