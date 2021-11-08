@@ -71,7 +71,7 @@ test-node:
 
 .PHONY: test-ci-docker ## Run CI tests with docker without clean-up
 test-ci-docker: launch-local-docker
-	@./scripts/run-ci-test.sh docker
+	@./scripts/run-ci-test.sh
 
 .PHONY: test-ci-binary ## Run CI tests with binary without clean-up
 test-ci-binary: launch-local-binary
