@@ -52,7 +52,7 @@ use sp_version::RuntimeVersion;
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	construct_runtime, match_type, parameter_types,
-	traits::{Everything, InstanceFilter},
+	traits::{Contains, Everything, InstanceFilter},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		DispatchClass, IdentityFee, Weight,
@@ -131,13 +131,21 @@ impl_opaque_keys! {
 /// This runtime version.
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
+	// Note:
+	// It's important to match `litentry-parachain-runtime`, which is runtime pkg name
+	// otherwise no extrinsic can be submitted.
+	// In logs it's shown:
+	// Failed to submit extrinsic: Extrinsic verification error: Runtime error: Execution failed:
+	// Other("Wasm execution trapped: wasm trap: unreachable ...
+	//
+	// However our CI passes (TODO)
 	spec_name: create_runtime_str!("litentry-parachain"),
 	impl_name: create_runtime_str!("litentry-parachain"),
 	authoring_version: 1,
-	// same versioning-mechanism as polkadot, corresponds to 0.1.0 package version/client version.
+	// same versioning-mechanism as polkadot, corresponds to 0.9.0 TOML version
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 1000,
-	impl_version: 1,
+	spec_version: 9000,
+	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
 };
@@ -229,7 +237,7 @@ impl frame_system::Config for Runtime {
 	/// The weight of database operations that the runtime can invoke.
 	type DbWeight = RocksDbWeight;
 	/// The basic call filter to use in dispatchable.
-	type BaseCallFilter = Everything;
+	type BaseCallFilter = BaseCallFilter;
 	/// Weight information for the extrinsics of this pallet.
 	type SystemWeightInfo = weights::frame_system::WeightInfo<Runtime>;
 	/// Block & extrinsics weights: base values and limits.
@@ -916,6 +924,18 @@ construct_runtime! {
 		// TMP
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 255,
 	}
+}
+
+pub struct BaseCallFilter;
+impl Contains<Call> for BaseCallFilter {
+    fn contains(call: &Call) -> bool {
+        matches!(
+            call,
+            Call::Sudo(_) |
+            // System
+            Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_)
+        )
+    }
 }
 
 impl_runtime_apis! {

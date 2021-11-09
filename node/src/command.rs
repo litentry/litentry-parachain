@@ -34,7 +34,7 @@ use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::Block as BlockT;
 use std::{io::Write, net::SocketAddr};
 
-const DEFAULT_PARA_ID: u32 = 2022;
+const DEFAULT_PARA_ID: u32 = 2013;
 
 fn load_spec(
 	id: &str,
