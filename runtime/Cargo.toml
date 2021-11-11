@@ -78,8 +78,8 @@ frame-benchmarking = { git = "https://github.com/paritytech/substrate", default-
 frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.12", optional = true }
 
 # Litentry pallet dependencies
-pallet-bridge = { git = "https://github.com/litentry/litentry-pallets", default-features = false, branch = "token-bridge" }
-pallet-bridge-transfer = { git = "https://github.com/litentry/litentry-pallets", default-features = false, branch = "token-bridge" }
+pallet-bridge = { path = "../pallets/bridge", default-features = false }
+pallet-bridge-transfer = { path = "../pallets/bridge-transfer", default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.3.3"

@@ -4745,8 +4745,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-bridge"
-version = "0.0.1"
-source = "git+https://github.com/litentry/litentry-pallets?branch=token-bridge#9fc4f319c93424bad38da13ae03ae41611da8a4c"
+version = "0.1.0"
 dependencies = [
  "blake2-rfc",
  "frame-benchmarking",
@@ -4763,14 +4762,16 @@ dependencies = [
 
 [[package]]
 name = "pallet-bridge-transfer"
-version = "0.0.1"
-source = "git+https://github.com/litentry/litentry-pallets?branch=token-bridge#9fc4f319c93424bad38da13ae03ae41611da8a4c"
+version = "0.1.0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "hex",
+ "hex-literal",
+ "pallet-balances",
  "pallet-bridge",
+ "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
  "sp-arithmetic",

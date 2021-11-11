@@ -1,0 +1,45 @@
+[package]
+authors = ['Litentry Dev']
+edition = '2018'
+homepage = 'https://litentry.com'
+name = 'pallet-bridge'
+repository = 'https://github.com/litentry/litentry-pallets'
+version = '0.1.0'
+
+[dependencies]
+# third-party dependencies
+codec = { package = "parity-scale-codec", version = "2.2", default-features = false, features = ["derive", "max-encoded-len"] }
+blake2-rfc = { version = "0.2.18", default-features = false }
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
+
+# primitives
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
+
+# frame dependencies
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false, optional = true }
+
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", default-features = false }
+
+[features]
+default = ["std"]
+runtime-benchmarks = [
+	'frame-benchmarking',
+	'frame-support/runtime-benchmarks',
+	'frame-system/runtime-benchmarks',
+]
+std = [
+	"codec/std",
+	"sp-std/std",
+	"sp-runtime/std",
+	"sp-io/std",
+	"sp-core/std",
+	"frame-support/std",
+	"frame-system/std",
+	"frame-benchmarking/std",
+	"pallet-balances/std",
+]

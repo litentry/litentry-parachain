@@ -144,7 +144,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot, corresponds to 0.9.0 TOML version
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9111,
+	spec_version: 9100,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -868,7 +868,6 @@ impl pallet_bridge_transfer::Config for Runtime {
     type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
     type Currency = Balances;
     type NativeTokenResourceId = NativeTokenResourceId;
-    type OnFeePay = Treasury;
 }
 
 construct_runtime! {
