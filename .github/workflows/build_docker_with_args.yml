@@ -22,7 +22,7 @@ jobs:
 
       - name: Build docker image
         run: |
-          ./scripts/build-docker.sh ${{ github.event.inputs.docker_tag }} ${{ github.event.inputs.args }}
+          ./scripts/build-docker.sh ${{ github.event.inputs.docker_tag }} "${{ github.event.inputs.args }}"
           echo "============================="
           docker images
 
