@@ -87,7 +87,7 @@ $PARACHAIN_BIN export-genesis-wasm --chain dev > para-$PARACHAIN_ID-wasm
 
 # run alice and bob as relay nodes
 $POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --alice --tmp --port 30333 --ws-port 9944 --rpc-port 9933 &> "relay.alice.log" &
-sleep 20
+sleep 10
 
 line=$(grep "ocal node identity is:" relay.alice.log)
 echo $line
@@ -120,5 +120,4 @@ print_divider
 
 echo "done. please check $TMPDIR for generated files if need"
 
-sleep 10000000
 print_divider
