@@ -99,9 +99,13 @@ generate-docker-compose-staging:
 
 # format
 
-.PHONY: format ## Format source code by `cargo fmt`
-format:
+.PHONY: fmtcheck ## cargo fmt check
+fmtcheck:
 	cargo fmt --all -- --check
+
+.PHONY: fmt ## cargo fmt all
+fmt:
+	cargo fmt --all
 
 # benchmark for pallets
 
