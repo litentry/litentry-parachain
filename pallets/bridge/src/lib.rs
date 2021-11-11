@@ -27,10 +27,8 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	// use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
-
 	use codec::{Decode, Encode, EncodeLike};
 	pub use frame_support::{
 		pallet_prelude::*, traits::StorageVersion, weights::GetDispatchInfo, PalletId, Parameter,
