@@ -9,7 +9,7 @@ files=$((git diff --cached --name-only --diff-filter=ACMR | grep -Ei "\.rs$") ||
 if [ ! -z "$files" ]; then
   echo "[cargo fmt] and [git add] the following files:"
   echo "$files"
-  cargo fmt --all
+  make fmt
   git add $(echo "$files" | paste -s -d " " -)
 fi
 
