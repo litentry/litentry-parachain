@@ -87,16 +87,28 @@ $PARACHAIN_BIN export-genesis-wasm --chain dev > para-$PARACHAIN_ID-wasm
 
 # run alice and bob as relay nodes
 $POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --alice --tmp --port 30333 --ws-port 9944 --rpc-port 9933 &> "relay.alice.log" &
-sleep 10
+sleep 20
 
-$POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --bob --tmp --port 30334 --ws-port 9945  --rpc-port 9934 &> "relay.bob.log" &
+line=$(grep "ocal node identity is:" relay.alice.log)
+echo $line
+
+re="ocal node identity is: (.*)"
+if ! [[ $line =~ $re ]]; then 
+  echo "local node not found for alice in log" 
+  exit 1
+fi
+echo ${BASH_REMATCH[1]}
+
+$POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --bob --tmp --port 30334 --ws-port 9945  --rpc-port 9934 \
+  --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/${BASH_REMATCH[1]} &> "relay.bob.log" &
 sleep 10
 
 # run a litentry-collator instance
 $PARACHAIN_BIN --alice --collator --force-authoring --tmp --chain dev --parachain-id $PARACHAIN_ID \
   --port 30335 --ws-port 9946 --rpc-port 9935 --execution wasm \
   -- \
-  --execution wasm --chain $ROCOCO_CHAINSPEC --port 30332 --ws-port 9943 --rpc-port 9932 &> "para.alice.log" &
+  --execution wasm --chain $ROCOCO_CHAINSPEC --port 30332 --ws-port 9943 --rpc-port 9932 \
+  --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/${BASH_REMATCH[1]} &> "para.alice.log" &
 sleep 10
 
 echo "register parachain now ..."
@@ -107,4 +119,6 @@ yarn register-parachain 2>&1 | tee "$TMPDIR/register-parachain.log"
 print_divider
 
 echo "done. please check $TMPDIR for generated files if need"
+
+sleep 10000000
 print_divider
