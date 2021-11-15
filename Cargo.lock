@@ -3900,6 +3900,7 @@ dependencies = [
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
+ "try-runtime-cli",
 ]
 
 [[package]]
@@ -3920,6 +3921,7 @@ dependencies = [
  "frame-system",
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
+ "frame-try-runtime",
  "hex-literal",
  "log",
  "pallet-aura",
@@ -8462,9 +8464,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.69"
+version = "1.0.70"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e466864e431129c7e0d3476b92f20458e5879919a0596c6472738d9fa2d342f8"
+checksum = "e277c495ac6cd1a01a58d0a0c574568b4d1ddf14f59965c6a58b8d96400b54f3"
 dependencies = [
  "itoa",
  "ryu",
