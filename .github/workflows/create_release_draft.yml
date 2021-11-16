@@ -3,16 +3,21 @@ name: Create release draft
 on:
   workflow_dispatch:
     inputs:
-      ref:
-        description: an existing tag (e.g. v1.2.3)
+      release_tag:
+        description: an existing tag for creating release (e.g. v1.2.3)
         required: true
+      diff_tag:
+        description: an existing tag to run diff against (e.g. v1.2.0)
+        default: ''
+        required: false
       is_geneis_release:
         description: if it's genesis release [true|false]
         default: 'false'
         required: false
 
 env:
-  RELEASE_TAG: ${{ github.event.inputs.ref }}
+  RELEASE_TAG: ${{ github.event.inputs.release_tag }}
+  DIFF_TAG: ${{ github.event.inputs.diff_tag }}
   GENESIS_RELEASE: ${{ github.event.inputs.is_geneis_release }}
 
 jobs:
@@ -106,7 +111,7 @@ jobs:
 
       - name: Generate release notes
         run: |
-          ./scripts/generate-release-notes.sh ${{ github.workspace }}/.github/release_notes.md
+          ./scripts/generate-release-notes.sh ${{ github.workspace }}/.github/release_notes.md ${{ env.DIFF_TAG }}
 
       - name: Create release draft
         id: create-release-draft

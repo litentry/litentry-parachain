@@ -115,25 +115,27 @@ sed -i.bak 's/<CODEBLOCK>/```/g' "$1"
 rm -f "$1.bak"
 
 # if we have a diff-tag, list the changes inbetween
-OLD_TAG="$2"
+DIFF_TAG="$2"
 
-if [ -z "$OLD_TAG" ]; then
+if [ -z "$DIFF_TAG" ]; then
   echo "Nothing to compare"
   exit 0
-elif [ "$OLD_TAG" = "$RELEASE_TAG" ]; then
+elif [ "$DIFF_TAG" = "$RELEASE_TAG" ]; then
   echo "Skip compare to itself"
   exit 0
 else
   cat << EOF >> "$1"
 ## Changes
 
-Raw diff: [$OLD_TAG...$RELEASE_TAG](https://github.com/litentry/litentry-parachain/compare/$OLD_TAG...$RELEASE_TAG)
+Raw diff: [$DIFF_TAG...$RELEASE_TAG](https://github.com/litentry/litentry-parachain/compare/$DIFF_TAG...$RELEASE_TAG)
+
+Details:
 
 EOF
 
-  git log --no-merges --abbrev-commit --pretty="format:%t|%s" $OLD_TAG...$RELEASE_TAG | while read -r f; do
+  git log --no-merges --abbrev-commit --pretty="format:%t|%s" $DIFF_TAG...$RELEASE_TAG | while read -r f; do
     commit=$(echo "$f" | cut -d'|' -f1)
     desc=$(echo "$f" | cut -d'|' -f2)
-    echo "- [$commit]($REPO/commit/$commit) $desc" >> "$1"
+    echo "- [[$commit]($REPO/commit/$commit)]  $desc" >> "$1"
   done
 fi
