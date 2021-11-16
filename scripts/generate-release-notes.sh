@@ -31,10 +31,6 @@ SRTOOL_DIGEST_FILE=litentry-parachain-runtime/litentry-parachain-srtool-digest.j
 
 RUNTIME_VERSION=$(grep spec_version runtime/src/lib.rs | sed 's/.*version: //;s/,//')
 
-RUNTIME_COMPACT_SHA256=$(cat "$SRTOOL_DIGEST_FILE" | jq .runtimes.compact.sha256 | sed 's/"//g')
-RUNTIME_COMPACT_PROPOSAL_HASH=$(cat "$SRTOOL_DIGEST_FILE" | jq .runtimes.compact.subwasm.proposal_hash | sed 's/"//g')
-RUNTIME_COMPACT_PARACHAIN_UPGRADE_HASH=$(cat "$SRTOOL_DIGEST_FILE" | jq .runtimes.compact.subwasm.parachain_authorize_upgrade_hash | sed 's/"//g')
-
 RUNTIME_COMPRESSED_SHA256=$(cat "$SRTOOL_DIGEST_FILE" | jq .runtimes.compressed.sha256 | sed 's/"//g')
 RUNTIME_COMPRESSED_PROPOSAL_HASH=$(cat "$SRTOOL_DIGEST_FILE" | jq .runtimes.compressed.subwasm.proposal_hash | sed 's/"//g')
 RUNTIME_COMPRESSED_PARACHAIN_UPGRADE_HASH=$(cat "$SRTOOL_DIGEST_FILE" | jq .runtimes.compressed.subwasm.parachain_authorize_upgrade_hash | sed 's/"//g')
@@ -44,8 +40,6 @@ RUNTIME_COMPRESSED_PARACHAIN_UPGRADE_HASH=$(cat "$SRTOOL_DIGEST_FILE" | jq .runt
 # use <CODE> to decorate around the stuff and then replace it with `
 # so that it's not executed as commands inside heredoc
 cat << EOF > "$1"
-
-# Release notes for litentry-parachain $RELEASE_TAG
 
 ## Client
 
@@ -63,11 +57,6 @@ version: **$NODE_VERSION**
 ## Runtime
 
 version: **$RUNTIME_VERSION**
-
-### compact
-- sha256: <CODE>$RUNTIME_COMPACT_SHA256<CODE>
-- proposal_hash: <CODE>$RUNTIME_COMPACT_PROPOSAL_HASH<CODE>
-- parachain_authorize_upgrade_hash: <CODE>$RUNTIME_COMPACT_PARACHAIN_UPGRADE_HASH<CODE>
 
 ### compact-compressed
 - sha256: <CODE>$RUNTIME_COMPRESSED_SHA256<CODE>
