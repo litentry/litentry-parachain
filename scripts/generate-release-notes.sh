@@ -136,6 +136,6 @@ EOF
   git log --no-merges --abbrev-commit --pretty="format:%t|%s" $DIFF_TAG..$RELEASE_TAG | while read -r f; do
     commit=$(echo "$f" | cut -d'|' -f1)
     desc=$(echo "$f" | cut -d'|' -f2)
-    echo "- [[$commit]($REPO/commit/$commit)]  $desc" >> "$1"
+    echo -e "- [\`$commit\`]($REPO/commit/$commit) $desc" >> "$1"
   done
 fi
