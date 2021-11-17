@@ -75,9 +75,9 @@ proposal (authorizeUpgrade)  : $RUNTIME_COMPRESSED_AUTHORIZE_UPGRADE_HASH
 ## Dependencies
 
 <CODEBLOCK>
-Substrate : $SUBSTRATE_DEP
-Polkadot  : $POLKADOT_DEP
-Cumulus   : $CUMULUS_DEP
+Substrate                    : $SUBSTRATE_DEP
+Polkadot                     : $POLKADOT_DEP
+Cumulus                      : $CUMULUS_DEP
 <CODEBLOCK>
 
 EOF
@@ -133,7 +133,7 @@ Details:
 
 EOF
 
-  git log --no-merges --abbrev-commit --pretty="format:%t|%s" $DIFF_TAG..$RELEASE_TAG | while read -r f; do
+  git log --no-merges --abbrev-commit --pretty="format:%h|%s" $DIFF_TAG..$RELEASE_TAG | while read -r f; do
     commit=$(echo "$f" | cut -d'|' -f1)
     desc=$(echo "$f" | cut -d'|' -f2)
     echo -e "- [\`$commit\`]($REPO/commit/$commit) $desc" >> "$1"
