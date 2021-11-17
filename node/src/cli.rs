@@ -15,7 +15,6 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::chain_spec;
-use sc_cli;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
