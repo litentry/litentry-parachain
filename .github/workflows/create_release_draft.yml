@@ -3,16 +3,21 @@ name: Create release draft
 on:
   workflow_dispatch:
     inputs:
-      ref:
-        description: an existing tag (e.g. v1.2.3)
+      release_tag:
+        description: an existing tag for creating release (e.g. v1.2.3)
         required: true
+      diff_tag:
+        description: an existing tag to run diff against (e.g. v1.2.0)
+        default: ''
+        required: false
       is_geneis_release:
         description: if it's genesis release [true|false]
         default: 'false'
         required: false
 
 env:
-  RELEASE_TAG: ${{ github.event.inputs.ref }}
+  RELEASE_TAG: ${{ github.event.inputs.release_tag }}
+  DIFF_TAG: ${{ github.event.inputs.diff_tag }}
   GENESIS_RELEASE: ${{ github.event.inputs.is_geneis_release }}
 
 jobs:
@@ -24,6 +29,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           ref: ${{ env.RELEASE_TAG }}
+          fetch-depth: 0
 
       - name: Build with srtool
         id: srtool_build
@@ -37,7 +43,6 @@ jobs:
           echo '${{ steps.srtool_build.outputs.json }}' | jq . > litentry-parachain-srtool-digest.json
           echo "==============================================="
           cat litentry-parachain-srtool-digest.json
-          cp ${{ steps.srtool_build.outputs.wasm }} litentry-parachain-runtime.compact.wasm
           cp ${{ steps.srtool_build.outputs.wasm_compressed }} litentry-parachain-runtime.compact.compressed.wasm
 
       - name: Upload wasm artefacts
@@ -46,7 +51,6 @@ jobs:
           name: litentry-parachain-runtime
           path: |
             litentry-parachain-srtool-digest.json
-            litentry-parachain-runtime.compact.wasm
             litentry-parachain-runtime.compact.compressed.wasm
 
   ## build docker image of client binary ##
@@ -57,6 +61,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           ref: ${{ env.RELEASE_TAG }}
+          fetch-depth: 0
 
       - name: Build docker image
         run: |
@@ -102,24 +107,24 @@ jobs:
         uses: actions/checkout@v2
         with:
           ref: ${{ env.RELEASE_TAG }}
+          fetch-depth: 0
 
       - name: Download all artefacts
         uses: actions/download-artifact@v2
 
       - name: Generate release notes
         run: |
-          ./scripts/generate-release-notes.sh ${{ github.workspace }}/.github/release_notes.md
+          ./scripts/generate-release-notes.sh ${{ github.workspace }}/.github/release_notes.md ${{ env.DIFF_TAG }}
 
       - name: Create release draft
         id: create-release-draft
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ env.RELEASE_TAG }}
-          name: Litentry-parachain release ${{ env.RELEASE_TAG }}
+          name: Litentry-parachain ${{ env.RELEASE_TAG }}
           body_path: ${{ github.workspace }}/.github/release_notes.md
           draft: true
           files: |
             litentry-parachain-runtime/litentry-parachain-srtool-digest.json
-            litentry-parachain-runtime/litentry-parachain-runtime.compact.wasm
             litentry-parachain-runtime/litentry-parachain-runtime.compact.compressed.wasm
             litentry-collator/*
