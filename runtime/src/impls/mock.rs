@@ -63,7 +63,7 @@ impl Get<frame_system::limits::BlockWeights> for BlockWeights {
 		frame_system::limits::BlockWeights::builder()
 			.base_block(0)
 			.for_class(DispatchClass::all(), |weights| {
-				weights.base_extrinsic = EXTRINSIC_BASE_WEIGHT.with(|v| *v.borrow()).into();
+				weights.base_extrinsic = EXTRINSIC_BASE_WEIGHT.with(|v| *v.borrow());
 			})
 			.for_class(DispatchClass::non_mandatory(), |weights| {
 				weights.max_total = 1024.into();
@@ -127,7 +127,7 @@ impl FindAuthor<u64> for AuthorGiven {
 	{
 		for (id, data) in digests {
 			if id == TEST_ID {
-				return u64::decode(&mut &data[..]).ok()
+				return u64::decode(&mut &*data).ok()
 			}
 		}
 		None
@@ -210,14 +210,6 @@ impl Default for ExtBuilder {
 impl ExtBuilder {
 	pub fn base_weight(mut self, base_weight: u64) -> Self {
 		self.base_weight = base_weight;
-		self
-	}
-	pub fn byte_fee(mut self, byte_fee: u64) -> Self {
-		self.byte_fee = byte_fee;
-		self
-	}
-	pub fn weight_fee(mut self, weight_to_fee: u64) -> Self {
-		self.weight_to_fee = weight_to_fee;
 		self
 	}
 	pub fn balance_factor(mut self, factor: u64) -> Self {

@@ -265,7 +265,7 @@ fn generate_genesis(
 				.map(|(acc, aura)| {
 					(
 						acc.clone(),                                      // account id
-						acc.clone(),                                      // validator id
+						acc,                                              // validator id
 						litentry_parachain_runtime::SessionKeys { aura }, // session keys
 					)
 				})

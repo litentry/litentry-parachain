@@ -107,6 +107,12 @@ fmtcheck:
 fmt:
 	cargo fmt --all
 
+# clippy
+
+.PHONY: clippy ## cargo clippy
+clippy:
+	cargo clippy --workspace --all-targets --all-features -- -D warnings
+
 # benchmark for pallets
 
 .PHONY: benchmark-frame-system ## Benchmark pallet `frame-system`

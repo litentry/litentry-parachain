@@ -38,6 +38,26 @@ jobs:
     - name: Run cargo fmt check
       run: make fmtcheck
 
+  check-cargo-clippy:
+    runs-on: ubuntu-latest
+    needs: check-cargo-fmt
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Install toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: nightly
+        components: clippy
+        target: wasm32-unknown-unknown
+        default: true
+
+    - name: Run cargo clippy check
+      run: make clippy
+
   build-test:
     if: "!contains(github.event.commits[0].message, '[SKIP CI]')"
     concurrency:

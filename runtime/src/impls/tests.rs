@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+#![allow(clippy::identity_op)]
+
 use super::mock::*;
 use frame_support::assert_ok;
 use sp_runtime::traits::SignedExtension;
