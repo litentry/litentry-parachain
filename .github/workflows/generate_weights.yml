@@ -1,0 +1,40 @@
+name: Generate weights files
+
+on:
+  workflow_dispatch:
+    inputs:
+      pallets:
+        description: pallets to calculate weights, * for all, or comma listed (e.g. frame-system,pallet-proxy)
+        default: '*'
+        required: true
+
+env:
+  REMOTE_HOST: parachain-staging-sg-3 # remote host to run benchmarking upon, must be ssh reachable
+
+
+jobs:
+  ## build docker image with runtime-benchmarks feature, and then run the benchmarking remotely
+  build-and-run-benchmark:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout codes on ${{ github.ref }}
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Build docker image
+        run: |
+          ./scripts/build-docker.sh runtime-benchmarks --features=runtime-benchmarks
+
+      - name: Push docker image
+        run: |
+          docker push litentry/litentry-parachain:runtime-benchmarks
+
+      - name: Remove dangling images if any
+        run: |
+          [ -z "$(docker images --filter=dangling=true -q)" ] || docker rmi -f $(docker images --filter=dangling=true -q)
+
+      # exit status should propagate through ssh
+      - name: Run benchmarking script remotely
+        run: |
+          ssh -x "${{ env.REMOTE_HOST }}" 'bash -s' < scripts/run-benchmark-pallet-remote.sh "${{ github.event.inputs.pallets }}"
