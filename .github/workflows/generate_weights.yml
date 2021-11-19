@@ -1,0 +1,18 @@
+name: Generate weights files
+
+on:
+  workflow_dispatch:
+    inputs:
+      pallets:
+        description: pallets to calculate weights, * for all, or comma listed (e.g. frame-system,pallet-proxy)
+        default: '*'
+        required: true
+
+jobs:
+  build-and-run-benchmark:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout codes on ${{ github.ref }}
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
