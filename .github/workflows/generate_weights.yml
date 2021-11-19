@@ -1,6 +1,9 @@
 name: Generate weights files
 
 on:
+  push:
+    branches:
+      - 242-automate-pallet-benchmarking
   workflow_dispatch:
     inputs:
       pallets:
