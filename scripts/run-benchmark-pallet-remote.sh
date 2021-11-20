@@ -15,11 +15,12 @@ function usage() {
 [ $# -ne 1 ] && (usage; exit 1)
 
 # pull docker image
-docker pull litentry/litentry-parachain:runtime-benchmarksß
+docker pull litentry/litentry-parachain:runtime-benchmarks
 
 # clone the repo
-TMPDIR=$(mktemp -d /tmp/XXXXXX)
+TMPDIR=/tmp
 cd "$TMPDIR"
+[ -d litentry-parachain ] && rm -rf litentry-parachain
 git clone https://github.com/litentry/litentry-parachain
 cd litentry-parachain
 
@@ -29,9 +30,9 @@ chmod a+x litentry-collator
 
 # poopulate PALLETS
 PALLETS=
-caes "$1" in
-  '*')  PALLETS=$(grep '::{Pallet' runtime/src/lib.rs | sed 's/::{Pallet.*//;s/::<.*//;s/.*: *//' | uniq | paste -s -d" " -) ;;
-  *)    PALLETS=$(echo "$1" | tr ',' ' ') ;;
+case "$1" in
+  '*')  echo "we are here"; PALLETS=$(grep '::{Pallet' runtime/src/lib.rs | sed 's/::{Pallet.*//;s/::<.*//;s/.*: *//' | uniq | paste -s -d" " -) ;;
+  *)    echo "others"; PALLETS=$(echo "$1" | tr ',' ' ') ;;
 esac
 PALLETS=${PALLETS//-/_}
 
