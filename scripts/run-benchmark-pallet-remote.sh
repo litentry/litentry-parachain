@@ -31,8 +31,8 @@ chmod a+x litentry-collator
 # poopulate PALLETS
 PALLETS=
 case "$1" in
-  '*')  echo "we are here"; PALLETS=$(grep '::{Pallet' runtime/src/lib.rs | sed 's/::{Pallet.*//;s/::<.*//;s/.*: *//' | uniq | paste -s -d" " -) ;;
-  *)    echo "others"; PALLETS=$(echo "$1" | tr ',' ' ') ;;
+  '*')  PALLETS=$(grep add_benchmark! runtime/src/lib.rs | tr ',' ' ' | awk '{print $3}' | paste -s -d' ' -) ;;
+  *)    PALLETS=$(echo "$1" | tr ',' ' ') ;;
 esac
 PALLETS=${PALLETS//-/_}
 
@@ -41,7 +41,10 @@ echo "$PALLETS"
 
 for p in $PALLETS; do
   echo "bencharking $p ..."
-  ./litentry-collator benchmark \
+  # filter out the flooding warnings from pallet_scheduler:
+  # Warning: There are more items queued in the Scheduler than expected from the runtime configuration.
+  #          An update might be needed
+  RUST_LOG=runtime::scheduler=error ./litentry-collator benchmark \
       --chain=dev \
       --execution=wasm  \
       --db-cache=20 \
