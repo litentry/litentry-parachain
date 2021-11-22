@@ -42,7 +42,7 @@ echo "Pallets:"
 echo "$PALLETS"
 
 for p in $PALLETS; do
-  echo "bencharking $p ..."
+  echo "benchmarking $p ..."
   # filter out the flooding warnings from pallet_scheduler:
   # Warning: There are more items queued in the Scheduler than expected from the runtime configuration.
   #          An update might be needed
