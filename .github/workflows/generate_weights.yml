@@ -9,7 +9,7 @@ on:
         required: true
 
 env:
-  REMOTE_HOST: parachain-staging-sg-3 # remote host to run benchmarking upon, must be ssh reachable
+  REMOTE_HOST: parachain-staging-sg-3  # remote host to run benchmarking upon, must be ssh reachable
 
 jobs:
   ## build docker image with runtime-benchmarks feature, and then run the benchmarking remotely
@@ -54,7 +54,7 @@ jobs:
       - name: create auto PR
         uses: peter-evans/create-pull-request@v3
         with:
-          commit-message: [benchmarking bot] Auto commit generated weights files
+          commit-message: '[benchmarking bot] Auto commit generated weights files'
           committer: benchmarking bot <noreply@github.com>
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           signoff: false
