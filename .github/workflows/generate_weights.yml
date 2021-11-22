@@ -1,4 +1,4 @@
-name: Generate weights files
+name: Generate weights
 
 on:
   workflow_dispatch:
@@ -41,7 +41,7 @@ jobs:
           if [ "$arg" = "*" ];
             then arg="\\$arg";
           fi
-          ssh -x "${{ env.REMOTE_HOST }}" 'bash -s' < scripts/run-benchmark-pallet-remote.sh "${{ github.ref }}" "$arg"
+          ssh -x "${{ env.REMOTE_HOST }}" 'bash -s' < scripts/run-benchmark-pallet-remote.sh "${GITHUB_REF#refs/heads/}" "$arg"
 
       - name: Copy generated weights files back
         run: |
