@@ -6,13 +6,14 @@ set -eo pipefail
 # to calculate the weights
 
 function usage() {
-  echo "Usage: $0 pallet-names"
+  echo "Usage: $0 branch-or-tag pallet-names"
+  echo "       branch-or-tag will be used to checkout codes"
   echo "       pallet-names can be either * or a comma listed pallet names"
-  echo "e.g.:  $0 *"
-  echo "       $0 frame-system,pallet-proxy,pallet-collective"
+  echo "e.g.:  $0 dev *"
+  echo "       $0 dev frame-system,pallet-proxy,pallet-collective"
 }
 
-[ $# -ne 1 ] && (usage; exit 1)
+[ $# -ne 2 ] && (usage; exit 1)
 
 # pull docker image
 docker pull litentry/litentry-parachain:runtime-benchmarks
@@ -23,6 +24,7 @@ cd "$TMPDIR"
 [ -d litentry-parachain ] && rm -rf litentry-parachain
 git clone https://github.com/litentry/litentry-parachain
 cd litentry-parachain
+git checkout "$1"
 
 # copy binary out
 docker cp $(docker create --rm litentry/litentry-parachain:runtime-benchmarks):/usr/local/bin/litentry-collator .
@@ -30,9 +32,9 @@ chmod a+x litentry-collator
 
 # poopulate PALLETS
 PALLETS=
-case "$1" in
+case "$2" in
   '*')  PALLETS=$(grep add_benchmark! runtime/src/lib.rs | tr ',' ' ' | awk '{print $3}' | paste -s -d' ' -) ;;
-  *)    PALLETS=$(echo "$1" | tr ',' ' ') ;;
+  *)    PALLETS=$(echo "$2" | tr ',' ' ') ;;
 esac
 PALLETS=${PALLETS//-/_}
 
