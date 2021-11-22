@@ -11,7 +11,6 @@ on:
 env:
   REMOTE_HOST: parachain-staging-sg-3 # remote host to run benchmarking upon, must be ssh reachable
 
-
 jobs:
   ## build docker image with runtime-benchmarks feature, and then run the benchmarking remotely
   build-and-run-benchmark:
@@ -37,4 +36,37 @@ jobs:
       # exit status should propagate through ssh
       - name: Run benchmarking script remotely for pallets ${{ github.event.inputs.pallets }}
         run: |
-          ssh -x "${{ env.REMOTE_HOST }}" 'bash -s' < scripts/run-benchmark-pallet-remote.sh "${{ github.event.inputs.pallets }}"
+          # prepend the asterisk with \ to go through ssh
+          arg="${{ github.event.inputs.pallets }}"
+          if [ "$arg" = "*" ];
+            then arg="\\$arg";
+          fi
+          ssh -x "${{ env.REMOTE_HOST }}" 'bash -s' < scripts/run-benchmark-pallet-remote.sh "${{ github.ref }}" "$arg"
+
+      - name: Copy generated weights files back
+        run: |
+          echo "copy generated weights files back ..."
+          scp "${{ env.REMOTE_HOST }}":/tmp/litentry-parachain/runtime/src/weights/*.rs runtime/src/weights/
+          echo "done"
+          echo "======================"
+          git status
+
+      - name: create auto PR
+        uses: peter-evans/create-pull-request@v3
+        with:
+          commit-message: [benchmarking bot] Auto commit generated weights files
+          committer: benchmarking bot <noreply@github.com>
+          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+          signoff: false
+          branch: benchmarking-bot-${{ github.run_id }}
+          delete-branch: true
+          title: '[benchmarking bot] Update generated weights files'
+          body: |
+            This is an automatically created PR.
+            It updates the weights files under `runtime/src/weights/*.rs` after running benchmarks on the remote machine.
+          labels: |
+            S1-pleasereview
+            automated-pr
+          assignees: ${{ github.actor }}
+          reviewers: ${{ github.actor }}
+          draft: false
