@@ -63,7 +63,10 @@ jobs:
           title: '[benchmarking bot] Update generated weights files'
           body: |
             This is an automatically created PR.
-            It updates the weights files under `runtime/src/weights/*.rs` after running benchmarks on the remote machine.
+            It updates the weights files under `runtime/src/weights/*.rs` after running benchmarks on the remote machine: ${{ env.REMOTE_HOST }}
+
+            Pallets: "${{ github.event.inputs.pallets }}"
+            Github action run: https://github.com/litentry/litentry-parachain/actions/runs/${{ github.run_id }}
           labels: |
             S1-pleasereview
             automated-pr
