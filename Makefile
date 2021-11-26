@@ -117,51 +117,51 @@ clippy:
 
 .PHONY: benchmark-frame-system ## Benchmark pallet `frame-system`
 benchmark-frame-system:
-	@./scripts/run-benchmark-pallet.sh frame-system
+	@./scripts/run-benchmark-pallet-local.sh frame-system
 
 .PHONY: benchmark-pallet-timestamp
 benchmark-pallet-timestamp:
-	@./scripts/run-benchmark-pallet.sh pallet-timestamp
+	@./scripts/run-benchmark-pallet-local.sh pallet-timestamp
 
 .PHONY: benchmark-pallet-utility
 benchmark-pallet-utility:
-	@./scripts/run-benchmark-pallet.sh pallet-utility
+	@./scripts/run-benchmark-pallet-local.sh pallet-utility
 
 .PHONY: benchmark-pallet-scheduler
 benchmark-pallet-scheduler:
-	@./scripts/run-benchmark-pallet.sh pallet-scheduler
+	@./scripts/run-benchmark-pallet-local.sh pallet-scheduler
 
 .PHONY: benchmark-pallet-treasury
 benchmark-pallet-treasury:
-	@./scripts/run-benchmark-pallet.sh pallet-treasury
+	@./scripts/run-benchmark-pallet-local.sh pallet-treasury
 
 .PHONY: benchmark-pallet-democracy
 benchmark-pallet-democracy:
-	@./scripts/run-benchmark-pallet.sh pallet-democracy
+	@./scripts/run-benchmark-pallet-local.sh pallet-democracy
 
 .PHONY: benchmark-pallet-collective
 benchmark-pallet-collective:
-	@./scripts/run-benchmark-pallet.sh pallet-collective
+	@./scripts/run-benchmark-pallet-local.sh pallet-collective
 
 .PHONY: benchmark-pallet-proxy
 benchmark-pallet-proxy:
-	@./scripts/run-benchmark-pallet.sh pallet-proxy
+	@./scripts/run-benchmark-pallet-local.sh pallet-proxy
 
 .PHONY: benchmark-pallet-balances
 benchmark-pallet-balances:
-	@./scripts/run-benchmark-pallet.sh pallet-balances
+	@./scripts/run-benchmark-pallet-local.sh pallet-balances
 
 .PHONY: benchmark-pallet-membership
 benchmark-pallet-membership:
-	@./scripts/run-benchmark-pallet.sh pallet-membership
+	@./scripts/run-benchmark-pallet-local.sh pallet-membership
 
 .PHONY: benchmark-pallet-collator-selection
 benchmark-pallet-collator-selection:
-	@./scripts/run-benchmark-pallet.sh pallet-collator-selection
+	@./scripts/run-benchmark-pallet-local.sh pallet-collator-selection
 
 .PHONY: benchmark-pallet-multisig
 benchmark-pallet-multisig:
-	@./scripts/run-benchmark-pallet.sh pallet-multisig
+	@./scripts/run-benchmark-pallet-local.sh pallet-multisig
 
 define pkgid
 	$(shell cargo pkgid $1)

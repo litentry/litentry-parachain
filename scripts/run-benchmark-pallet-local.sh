@@ -16,7 +16,7 @@ echo "running benchmark for $1"
 filename=${1//-/_}
 
 ./target/release/litentry-collator benchmark \
-    --chain=./source/local.json \
+    --chain=dev \
     --execution=wasm  \
     --db-cache=20 \
     --wasm-execution=compiled \
