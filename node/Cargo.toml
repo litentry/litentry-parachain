@@ -16,7 +16,7 @@ name = 'litentry-collator'
 targets = ['x86_64-unknown-linux-gnu']
 
 [dependencies]
-futures = { version = "0.3.17", features = ["compat"] }
+futures = { version = "0.3.18", features = ["compat"] }
 log = "0.4.13"
 codec = { package = "parity-scale-codec", version = "2.3.0" }
 structopt = "0.3.23"
