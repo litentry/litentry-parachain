@@ -400,6 +400,7 @@ impl pallet_scheduler::Config for Runtime {
 	type ScheduleOrigin = EnsureRoot<AccountId>;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
 	type WeightInfo = weights::pallet_scheduler::WeightInfo<Runtime>;
+	type OriginPrivilegeCmp = frame_support::traits::EqualPrivilegeOnly;
 }
 
 parameter_types! {
@@ -425,7 +426,8 @@ impl pallet_balances::Config for Runtime {
 impl pallet_utility::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
-	type WeightInfo = weights::pallet_utility::WeightInfo<Runtime>;
+	type PalletsOrigin = OriginCaller;
+	type WeightInfo = (); // TODO: to be updated by weights calculation
 }
 
 parameter_types! {
