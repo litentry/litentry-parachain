@@ -41,12 +41,6 @@ async function registerParachain(api: ApiPromise, config: any) {
     const provider = new WsProvider(config.relaynode_ws);
     const api = await ApiPromise.create({
         provider: provider,
-        types: {
-            // mapping the actual specified address format
-            Address: 'MultiAddress',
-            // mapping the lookup
-            LookupSource: 'MultiAddress',
-        },
     });
 
     await registerParachain(api, config);
