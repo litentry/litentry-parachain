@@ -27,6 +27,8 @@ use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 
+const DEFAULT_PARA_ID: u32 = 2013;
+
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
 
@@ -109,7 +111,7 @@ struct GenesisInfo {
 	telemetry_endpoints: Vec<String>,
 }
 
-pub fn get_chain_spec_dev(id: ParaId) -> ChainSpec {
+pub fn get_chain_spec_dev() -> ChainSpec {
 	ChainSpec::from_genesis(
 		"Litentry-dev",
 		"Litentry-dev",
@@ -141,18 +143,18 @@ pub fn get_chain_spec_dev(id: ParaId) -> ChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Bob"),
 				],
 				vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
-				id,
+				DEFAULT_PARA_ID.into(),
 			)
 		},
 		vec![],
 		None,
 		Some("Litentry"),
 		default_parachain_properties(),
-		Extensions { relay_chain: "rococo-local".into(), para_id: id.into() },
+		Extensions { relay_chain: "rococo-local".into(), para_id: DEFAULT_PARA_ID.into() },
 	)
 }
 
-pub fn get_chain_spec_staging(id: ParaId) -> ChainSpec {
+pub fn get_chain_spec_staging() -> ChainSpec {
 	// Staging keys are derivative keys based on a single master secret phrase:
 	//
 	// root: 	$SECRET
@@ -164,18 +166,18 @@ pub fn get_chain_spec_staging(id: ParaId) -> ChainSpec {
 		"Litentry-staging",
 		ChainType::Local,
 		"rococo-local".into(),
-		id,
+		DEFAULT_PARA_ID.into(),
 	)
 }
 
-pub fn get_chain_spec_prod(id: ParaId) -> ChainSpec {
+pub fn get_chain_spec_prod() -> ChainSpec {
 	get_chain_spec_from_genesis_info(
 		include_bytes!("../res/genesis_info/prod.json"),
 		"Litentry",
 		"Litentry",
 		ChainType::Live,
 		"polkadot".into(),
-		id,
+		DEFAULT_PARA_ID.into(),
 	)
 }
 
@@ -248,7 +250,6 @@ fn generate_genesis(
 	GenesisConfig {
 		system: SystemConfig {
 			code: WASM_BINARY.expect("WASM binary was not build, please build it!").to_vec(),
-			changes_trie_config: Default::default(),
 		},
 		balances: BalancesConfig { balances: endowed_accounts },
 		sudo: SudoConfig { key: root_key },
