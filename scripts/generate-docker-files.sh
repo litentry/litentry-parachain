@@ -20,6 +20,15 @@ if [ ! -f "$PARCHAIN_LAUNCH_BIN" ]; then
   print_divider
 fi
 
+# pull the image first, it also overrides the local image
+# this makes sure we are using the newest image
+grep 'image:' "parachain-launch-config-$CHAIN_TYPE.yml" | sed 's/.*image: //' | while read f; do
+  echo "pulling $f ..."
+  docker pull -q "$f"
+done
+
+print_divider
+
 "$PARCHAIN_LAUNCH_BIN" generate --config="parachain-launch-config-$CHAIN_TYPE.yml" --output="generated-$CHAIN_TYPE" --yes
 
 echo "Done, please check files under $ROOTDIR/docker/generated-$CHAIN_TYPE/"

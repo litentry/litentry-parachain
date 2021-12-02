@@ -93,10 +93,6 @@ clean-local-binary:
 generate-docker-compose-dev:
 	@./scripts/generate-docker-files.sh dev
 
-.PHONY: generate-docker-compose-staging ## Generate staging docker-compose files
-generate-docker-compose-staging:
-	@./scripts/generate-docker-files.sh staging
-
 # format
 
 .PHONY: fmtcheck ## cargo fmt check
