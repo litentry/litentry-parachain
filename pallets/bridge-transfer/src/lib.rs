@@ -50,7 +50,8 @@ pub mod pallet {
 	pub trait Config: frame_system::Config + bridge::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
-		/// Specifies the origin check provided by the bridge for calls that can only be called by the bridge pallet
+		/// Specifies the origin check provided by the bridge for calls that can only be called by
+		/// the bridge pallet
 		type BridgeOrigin: EnsureOrigin<Self::Origin, Success = Self::AccountId>;
 
 		/// The currency mechanism.

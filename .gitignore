@@ -4,8 +4,6 @@
 .DS_Store
 .cargo/config
 
-source/
-
 **/node_modules/
 **/para-*
 

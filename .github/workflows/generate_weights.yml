@@ -1,0 +1,75 @@
+name: Generate weights
+
+on:
+  workflow_dispatch:
+    inputs:
+      pallets:
+        description: pallets to calculate weights, * for all, or comma listed (e.g. frame-system,pallet-proxy)
+        default: '*'
+        required: true
+
+env:
+  REMOTE_HOST: parachain-staging-sg-3  # remote host to run benchmarking upon, must be ssh reachable
+
+jobs:
+  ## build docker image with runtime-benchmarks feature, and then run the benchmarking remotely
+  build-and-run-benchmark:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout codes on ${{ github.ref }}
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Build docker image
+        run: |
+          ./scripts/build-docker.sh runtime-benchmarks --features=runtime-benchmarks
+
+      - name: Push docker image
+        run: |
+          docker push litentry/litentry-parachain:runtime-benchmarks
+
+      - name: Remove dangling images if any
+        run: |
+          [ -z "$(docker images --filter=dangling=true -q)" ] || docker rmi -f $(docker images --filter=dangling=true -q)
+
+      # exit status should propagate through ssh
+      - name: Run benchmarking script remotely for pallets ${{ github.event.inputs.pallets }}
+        run: |
+          # prepend the asterisk with \ to go through ssh
+          arg="${{ github.event.inputs.pallets }}"
+          if [ "$arg" = "*" ];
+            then arg="\\$arg";
+          fi
+          ssh -x "${{ env.REMOTE_HOST }}" 'bash -s' < scripts/run-benchmark-pallet-remote.sh "${GITHUB_REF#refs/heads/}" "$arg"
+
+      - name: Copy generated weights files back
+        run: |
+          echo "copy generated weights files back ..."
+          scp "${{ env.REMOTE_HOST }}":/tmp/litentry-parachain/runtime/src/weights/*.rs runtime/src/weights/
+          echo "done"
+          echo "======================"
+          git status
+
+      - name: create auto PR
+        uses: peter-evans/create-pull-request@v3
+        with:
+          commit-message: '[benchmarking bot] Auto commit generated weights files'
+          committer: benchmarking bot <noreply@github.com>
+          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+          signoff: false
+          branch: benchmarking-bot-${{ github.run_id }}
+          delete-branch: true
+          title: '[benchmarking bot] Update generated weights files'
+          body: |
+            This is an automatically created PR.
+            It updates the weights files under `runtime/src/weights/*.rs` after running benchmarks on the remote machine: ${{ env.REMOTE_HOST }}
+
+            Pallets: "${{ github.event.inputs.pallets }}"
+            Github action run: https://github.com/litentry/litentry-parachain/actions/runs/${{ github.run_id }}
+          labels: |
+            S1-pleasereview
+            automated-pr
+          assignees: ${{ github.actor }}
+          reviewers: ${{ github.actor }}
+          draft: false

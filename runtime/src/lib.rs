@@ -1,20 +1,21 @@
 // Copyright 2020-2021 Litentry Technologies GmbH.
 // This file is part of Litentry.
-// 
+//
 // Litentry is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // Litentry is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::identity_op)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
@@ -22,8 +23,8 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-pub mod weights;
 pub mod constants;
+pub mod weights;
 pub use constants::currency::*;
 
 pub use primitives::{opaque, Index, *};
@@ -539,7 +540,7 @@ impl pallet_membership::Config<pallet_membership::Instance1> for Runtime {
 	type MembershipInitialized = Council;
 	type MembershipChanged = Council;
 	type MaxMembers = CouncilMaxMembers;
-	type WeightInfo = pallet_membership::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_membership::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -846,28 +847,28 @@ impl pallet_vesting::Config for Runtime {
 }
 
 parameter_types! {
-    pub const BridgeChainId: u8 = 1;
-    pub const ProposalLifetime: BlockNumber = 50400; // ~7 days
+	pub const BridgeChainId: u8 = 1;
+	pub const ProposalLifetime: BlockNumber = 50400; // ~7 days
 }
 
 impl pallet_bridge::Config for Runtime {
-    type Event = Event;
-    type BridgeCommitteeOrigin = EnsureRootOrHalfCouncil;
-    type Proposal = Call;
-    type BridgeChainId = BridgeChainId;
-    type ProposalLifetime = ProposalLifetime;
+	type Event = Event;
+	type BridgeCommitteeOrigin = EnsureRootOrHalfCouncil;
+	type Proposal = Call;
+	type BridgeChainId = BridgeChainId;
+	type ProposalLifetime = ProposalLifetime;
 }
 
 parameter_types! {
-    // bridge::derive_resource_id(1, &bridge::hashing::blake2_128(b"LIT"));
-    pub const NativeTokenResourceId: [u8; 32] = hex_literal::hex!("00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001");
+	// bridge::derive_resource_id(1, &bridge::hashing::blake2_128(b"LIT"));
+	pub const NativeTokenResourceId: [u8; 32] = hex_literal::hex!("00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001");
 }
 
 impl pallet_bridge_transfer::Config for Runtime {
-    type Event = Event;
-    type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
-    type Currency = Balances;
-    type NativeTokenResourceId = NativeTokenResourceId;
+	type Event = Event;
+	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
+	type Currency = Balances;
+	type NativeTokenResourceId = NativeTokenResourceId;
 }
 
 construct_runtime! {
@@ -917,8 +918,8 @@ construct_runtime! {
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 53,
 
 		// ChainBridge
-        ChainBridge: pallet_bridge::{Pallet, Call, Storage, Event<T>} = 60,
-        BridgeTransfer: pallet_bridge_transfer::{Pallet, Call, Event<T>, Storage} = 61,
+		ChainBridge: pallet_bridge::{Pallet, Call, Storage, Event<T>} = 60,
+		BridgeTransfer: pallet_bridge_transfer::{Pallet, Call, Event<T>, Storage} = 61,
 
 		// TMP
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 255,
@@ -927,14 +928,14 @@ construct_runtime! {
 
 pub struct BaseCallFilter;
 impl Contains<Call> for BaseCallFilter {
-    fn contains(call: &Call) -> bool {
-        matches!(
-            call,
-            Call::Sudo(_) |
+	fn contains(call: &Call) -> bool {
+		matches!(
+			call,
+			Call::Sudo(_) |
             // System
             Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_)
-        )
-    }
+		)
+	}
 }
 
 impl_runtime_apis! {
@@ -1043,6 +1044,21 @@ impl_runtime_apis! {
 		}
 	}
 
+	#[cfg(feature = "try-runtime")]
+	impl frame_try_runtime::TryRuntime<Block> for Runtime {
+		fn on_runtime_upgrade() -> (Weight, Weight) {
+			// NOTE: intentional unwrap: we don't want to propagate the error backwards, and want to
+			// have a backtrace here. If any of the pre/post migration checks fail, we shall stop
+			// right here and right now.
+			let weight = Executive::try_runtime_upgrade().unwrap();
+			(weight, RuntimeBlockWeights::get().max_block)
+		}
+
+		fn execute_block_no_check(block: Block) -> Weight {
+			Executive::execute_block_no_check(block)
+		}
+	}
+
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
 		fn benchmark_metadata(extra: bool) -> (
@@ -1068,7 +1084,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_multisig, Multisig);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
-			return (list, storage_info)
+			(list, storage_info)
 		}
 
 		fn dispatch_benchmark(

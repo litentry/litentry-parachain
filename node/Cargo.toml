@@ -16,13 +16,13 @@ name = 'litentry-collator'
 targets = ['x86_64-unknown-linux-gnu']
 
 [dependencies]
-futures = { version = "0.3.17", features = ["compat"] }
+futures = { version = "0.3.18", features = ["compat"] }
 log = "0.4.13"
 codec = { package = "parity-scale-codec", version = "2.3.0" }
 structopt = "0.3.23"
 serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0"
-hex-literal = "0.3.3"
+hex-literal = "0.3.4"
 async-trait = "0.1.42"
 
 # Substrate dependencies
@@ -61,14 +61,14 @@ frame-rpc-system = { package = "substrate-frame-rpc-system", git = "https://gith
 pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 
 # Cumulus dependencies
-cumulus-client-cli = { git = "https://github.com/paritytech/cumulus.git", branch = "polkadot-v0.9.12" }
-cumulus-client-consensus-aura = { git = "https://github.com/paritytech/cumulus.git", branch = "polkadot-v0.9.12" }
-cumulus-client-consensus-relay-chain = { git = "https://github.com/paritytech/cumulus.git", branch = "polkadot-v0.9.12" }
-cumulus-client-consensus-common = { git = "https://github.com/paritytech/cumulus.git", branch = "polkadot-v0.9.12" }
-cumulus-client-collator = { git = "https://github.com/paritytech/cumulus.git", branch = "polkadot-v0.9.12" }
-cumulus-client-service = { git = "https://github.com/paritytech/cumulus.git", branch = "polkadot-v0.9.12" }
-cumulus-client-network = { git = "https://github.com/paritytech/cumulus.git", branch = "polkadot-v0.9.12" }
-cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus.git", branch = "polkadot-v0.9.12" }
+cumulus-client-cli = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12" }
+cumulus-client-consensus-aura = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12" }
+cumulus-client-consensus-relay-chain = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12" }
+cumulus-client-consensus-common = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12" }
+cumulus-client-collator = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12" }
+cumulus-client-service = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12" }
+cumulus-client-network = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12" }
+cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12" }
 cumulus-primitives-parachain-inherent = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.12" }
 
 # Polkadot dependencies
@@ -81,6 +81,9 @@ polkadot-parachain = { git = "https://github.com/paritytech/polkadot", branch = 
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12" }
 
+# TryRuntime
+try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.12", optional = true }
+
 # Local dependencies
 litentry-parachain-runtime = { path = "../runtime" }
 
@@ -91,4 +94,8 @@ substrate-build-script-utils = { git = "https://github.com/paritytech/substrate.
 default = []
 runtime-benchmarks = [
 	"litentry-parachain-runtime/runtime-benchmarks",
+]
+try-runtime = [
+	"try-runtime-cli",
+	"litentry-parachain-runtime/try-runtime",
 ]

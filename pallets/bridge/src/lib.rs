@@ -27,13 +27,15 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_system::pallet_prelude::*;
-	use scale_info::TypeInfo;
 	use codec::{Decode, Encode, EncodeLike};
 	pub use frame_support::{
 		pallet_prelude::*, traits::StorageVersion, weights::GetDispatchInfo, PalletId, Parameter,
 	};
-	use frame_system::{self as system};
+	use frame_system::{
+		pallet_prelude::*,
+		{self as system},
+	};
+	use scale_info::TypeInfo;
 	pub use sp_core::U256;
 	use sp_runtime::{
 		traits::{AccountIdConversion, Dispatchable},
@@ -142,7 +144,8 @@ pub mod pallet {
 			+ EncodeLike
 			+ GetDispatchInfo;
 		/// The identifier for this chain.
-		/// This must be unique and must not collide with existing IDs within a set of bridged chains.
+		/// This must be unique and must not collide with existing IDs within a set of bridged
+		/// chains.
 		#[pallet::constant]
 		type BridgeChainId: Get<BridgeChainId>;
 
@@ -161,9 +164,11 @@ pub mod pallet {
 		RelayerAdded(T::AccountId),
 		/// Relayer removed from set
 		RelayerRemoved(T::AccountId),
-		/// FungibleTransfer is for relaying fungibles (dest_id, nonce, resource_id, amount, recipient)
+		/// FungibleTransfer is for relaying fungibles (dest_id, nonce, resource_id, amount,
+		/// recipient)
 		FungibleTransfer(BridgeChainId, DepositNonce, ResourceId, U256, Vec<u8>),
-		/// NonFungibleTransfer is for relaying NFTs (dest_id, nonce, resource_id, token_id, recipient, metadata)
+		/// NonFungibleTransfer is for relaying NFTs (dest_id, nonce, resource_id, token_id,
+		/// recipient, metadata)
 		NonFungibleTransfer(BridgeChainId, DepositNonce, ResourceId, Vec<u8>, Vec<u8>, Vec<u8>),
 		/// GenericTransfer is for a generic data payload (dest_id, nonce, resource_id, metadata)
 		GenericTransfer(BridgeChainId, DepositNonce, ResourceId, Vec<u8>),
@@ -561,8 +566,8 @@ pub mod pallet {
 			Self::try_resolve_proposal(nonce, src_id, prop)
 		}
 
-		/// Commits a vote against the proposal and cancels it if more than (relayers.len() - threshold)
-		/// votes against exist.
+		/// Commits a vote against the proposal and cancels it if more than (relayers.len() -
+		/// threshold) votes against exist.
 		fn vote_against(
 			who: T::AccountId,
 			nonce: DepositNonce,

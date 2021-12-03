@@ -10,24 +10,63 @@ on:
   pull_request:
     branches:
       - dev
-    paths-ignore:
-      - '**/dependabot.yml'
-      - '**/README.md'
   workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  check-cargo-fmt:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Install toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: nightly
+        components: rustfmt
+        target: wasm32-unknown-unknown
+        default: true
+
+    - name: Run cargo fmt check
+      run: make fmtcheck
+
+  check-cargo-clippy:
+    runs-on: ubuntu-latest
+    needs: check-cargo-fmt
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Install toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: nightly
+        components: clippy
+        target: wasm32-unknown-unknown
+        default: true
+
+    - name: Run cargo clippy check
+      run: make clippy
+
   build-test:
     if: "!contains(github.event.commits[0].message, '[SKIP CI]')"
     concurrency:
       group: ${{ github.ref }}
       cancel-in-progress: true
     runs-on: self-hosted
+    needs: check-cargo-fmt
     steps:
     - name: Checkout codes
       uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
 
     - name: Build docker image
       timeout-minutes: 40

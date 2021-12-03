@@ -19,10 +19,12 @@ jobs:
     steps:
       - name: Checkout codes on ${{ github.ref }}
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Build docker image
         run: |
-          ./scripts/build-docker.sh ${{ github.event.inputs.docker_tag }} ${{ github.event.inputs.args }}
+          ./scripts/build-docker.sh ${{ github.event.inputs.docker_tag }} "${{ github.event.inputs.args }}"
           echo "============================="
           docker images
 

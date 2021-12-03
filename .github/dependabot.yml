@@ -2,7 +2,7 @@ version: 2
 updates:
   - package-ecosystem: "cargo"
     directory: "/"
-    labels: ["I1-low", "F7-devop"]
+    labels: ["S1-pleasereview", "dependencies", "automated-pr"]
     # Handle updates for crates from github.com/paritytech/substrate manually.
     ignore:
       - dependency-name: "substrate-*"
@@ -11,9 +11,9 @@ updates:
       - dependency-name: "sp-*"
       - dependency-name: "frame-*"
       - dependency-name: "cumulus-*"
+      - dependency-name: "parachain-info"
       - dependency-name: "pallet-*"
       - dependency-name: "xcm*"
-      - dependency-name: "parachain-runtime"
       - dependency-name: "litentry-*"
       - dependency-name: "fork-tree"
       - dependency-name: "remote-externalities"
@@ -21,5 +21,12 @@ updates:
       - dependency-name: "try-runtime-*"
       - dependency-name: "test-runner"
       - dependency-name: "generate-bags"
+    reviewers:
+      - "Satoshi-Kusumoto"
+      - "h4n0"
+      - "suinuj"
+      - "chenzongxiong"
+      - "wangminqi"
+      - "Kailai-Wang"
     schedule:
       interval: "weekly"
