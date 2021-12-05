@@ -150,7 +150,7 @@ pub fn get_chain_spec_dev() -> ChainSpec {
 		None,
 		Some("Litentry"),
 		default_parachain_properties(),
-		Extensions { relay_chain: "rococo-local".into(), para_id: DEFAULT_PARA_ID.into() },
+		Extensions { relay_chain: "rococo-local".into(), para_id: DEFAULT_PARA_ID },
 	)
 }
 
