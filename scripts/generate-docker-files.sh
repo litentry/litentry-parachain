@@ -20,12 +20,11 @@ if [ ! -f "$PARCHAIN_LAUNCH_BIN" ]; then
   print_divider
 fi
 
-# pull the image first, it also overrides the local image
-# this makes sure we are using the newest image
-grep 'image:' "parachain-launch-config-$CHAIN_TYPE.yml" | sed 's/.*image: //' | while read f; do
-  echo "pulling $f ..."
-  docker pull -q "$f"
-done
+# pull the polkadot image to make sure we are using the latest
+# litentry-parachain image is left as it is, since it could be freshly built
+POLKADOT_IMAGE=$(grep 'parity/polkadot' "parachain-launch-config-$CHAIN_TYPE.yml" | sed 's/.*image: //')
+echo "pulling $POLKADOT_IMAGE ..."
+docker pull -q "$POLKADOT_IMAGE"
 
 print_divider
 
