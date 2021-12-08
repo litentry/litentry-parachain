@@ -62,13 +62,11 @@ impl SubstrateCli for Cli {
 	}
 
 	fn description() -> String {
-		format!(
-			"Litentry Collator\n\nThe command-line arguments provided first will be \
-			passed to the parachain node, while the arguments provided after -- will be passed \
-			to the relaychain node.\n\n\
-			{} [parachain-args] -- [relaychain-args]",
-			Self::executable_name()
-		)
+		"Litentry Collator\n\nThe command-line arguments provided first will be \
+		passed to the parachain node, while the arguments provided after -- will be passed \
+		to the relay chain node.\n\n\
+		litentry-collator <parachain-args> -- <relay-chain-args>"
+			.into()
 	}
 
 	fn author() -> String {
@@ -104,8 +102,8 @@ impl SubstrateCli for RelayChainCli {
 	fn description() -> String {
 		"Litentry Collator\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
-		to the relaychain node.\n\n\
-		litentry-collator [parachain-args] -- [relaychain-args]"
+		to the relay chain node.\n\n\
+		litentry-collator <parachain-args> -- <relay-chain-args>"
 			.into()
 	}
 
@@ -194,7 +192,7 @@ pub fn run() -> Result<()> {
 			runner.sync_run(|config| {
 				let polkadot_cli = RelayChainCli::new(
 					&config,
-					[RelayChainCli::executable_name()].iter().chain(cli.relaychain_args.iter()),
+					[RelayChainCli::executable_name()].iter().chain(cli.relay_chain_args.iter()),
 				);
 
 				let polkadot_config = SubstrateCli::create_configuration(
@@ -290,11 +288,11 @@ pub fn run() -> Result<()> {
 			runner.run_node_until_exit(|config| async move {
 				let para_id = chain_spec::Extensions::try_get(&*config.chain_spec)
 					.map(|e| e.para_id)
-					.ok_or("Could not find parachain extension for chain-spec.")?;
+					.ok_or("Could not find parachain ID in chain-spec.")?;
 
 				let polkadot_cli = RelayChainCli::new(
 					&config,
-					[RelayChainCli::executable_name()].iter().chain(cli.relaychain_args.iter()),
+					[RelayChainCli::executable_name()].iter().chain(cli.relay_chain_args.iter()),
 				);
 
 				let id = ParaId::from(para_id);

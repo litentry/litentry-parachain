@@ -117,9 +117,9 @@ pub struct Cli {
 	#[structopt(flatten)]
 	pub run: cumulus_client_cli::RunCmd,
 
-	/// Relaychain arguments
+	/// Relay chain arguments
 	#[structopt(raw = true)]
-	pub relaychain_args: Vec<String>,
+	pub relay_chain_args: Vec<String>,
 }
 
 #[derive(Debug)]
