@@ -612,7 +612,6 @@ pub mod pallet {
 			})
 		}
 
-		#[cfg(feature = "runtime-benchmarks")]
 		fn successful_origin() -> T::Origin {
 			let bridge_id = MODULE_ID.into_account();
 			T::Origin::from(system::RawOrigin::Signed(bridge_id))

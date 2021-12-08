@@ -16,8 +16,6 @@
 
 #![cfg(test)]
 
-use super::*;
-
 use frame_support::{ord_parameter_types, parameter_types, weights::Weight, PalletId};
 use frame_system::{self as system};
 use hex_literal::hex;
@@ -159,29 +157,6 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	ext
 }
 
-fn last_event() -> Event {
-	system::Pallet::<Test>::events().pop().map(|e| e.event).expect("Event expected")
-}
-
-pub fn expect_event<E: Into<Event>>(e: E) {
-	assert_eq!(last_event(), e.into());
-}
-
-// Asserts that the event was emitted at some point.
-pub fn event_exists<E: Into<Event>>(e: E) {
-	let actual: Vec<Event> =
-		system::Pallet::<Test>::events().iter().map(|e| e.event.clone()).collect();
-	let e: Event = e.into();
-	let mut exists = false;
-	for evt in actual {
-		if evt == e {
-			exists = true;
-			break
-		}
-	}
-	assert!(exists);
-}
-
 // Checks events against the latest. A contiguous set of events must be provided. They must
 // include the most recent event, but do not have to include every past event.
 pub fn assert_events(mut expected: Vec<Event>) {
@@ -192,6 +167,6 @@ pub fn assert_events(mut expected: Vec<Event>) {
 
 	for evt in expected {
 		let next = actual.pop().expect("event expected");
-		assert_eq!(next, evt.into(), "Events don't match");
+		assert_eq!(next, evt, "Events don't match");
 	}
 }

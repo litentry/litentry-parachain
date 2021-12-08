@@ -19,15 +19,14 @@
 use super::{
 	bridge,
 	mock::{
-		assert_events, balances, event_exists, expect_event, new_test_ext, Balances, Bridge,
+		assert_events, balances, new_test_ext, Balances, Bridge,
 		BridgeTransfer, Call, Event, NativeTokenResourceId, Origin, ProposalLifetime, Test,
 		ENDOWED_BALANCE, RELAYER_A, RELAYER_B, RELAYER_C,
 	},
 	*,
 };
-use frame_support::{assert_noop, assert_ok, dispatch::DispatchError};
+use frame_support::{assert_noop, assert_ok};
 
-use codec::Encode;
 use hex_literal::hex;
 
 const TEST_THRESHOLD: u32 = 2;
@@ -97,7 +96,6 @@ fn transfer_to_holdingaccount() {
 fn transfer_to_regular_account() {
 	new_test_ext().execute_with(|| {
 		let dest_chain = 0;
-		let bridge_id: u64 = Bridge::account_id();
 		let asset =
 			bridge::derive_resource_id(dest_chain, &bridge::hashing::blake2_128(b"an asset"));
 		let amount: u64 = 100;
@@ -138,7 +136,7 @@ fn create_successful_transfer_proposal() {
 			r_id,
 			Box::new(proposal.clone())
 		));
-		let prop = Bridge::votes(src_id, (prop_id.clone(), proposal.clone())).unwrap();
+		let prop = Bridge::votes(src_id, (prop_id, proposal.clone())).unwrap();
 		let expected = bridge::ProposalVotes {
 			votes_for: vec![RELAYER_A],
 			votes_against: vec![],
@@ -155,7 +153,7 @@ fn create_successful_transfer_proposal() {
 			r_id,
 			Box::new(proposal.clone())
 		));
-		let prop = Bridge::votes(src_id, (prop_id.clone(), proposal.clone())).unwrap();
+		let prop = Bridge::votes(src_id, (prop_id, proposal.clone())).unwrap();
 		let expected = bridge::ProposalVotes {
 			votes_for: vec![RELAYER_A],
 			votes_against: vec![RELAYER_B],
@@ -172,7 +170,7 @@ fn create_successful_transfer_proposal() {
 			r_id,
 			Box::new(proposal.clone())
 		));
-		let prop = Bridge::votes(src_id, (prop_id.clone(), proposal.clone())).unwrap();
+		let prop = Bridge::votes(src_id, (prop_id, proposal)).unwrap();
 		let expected = bridge::ProposalVotes {
 			votes_for: vec![RELAYER_A, RELAYER_C],
 			votes_against: vec![RELAYER_B],

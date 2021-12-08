@@ -149,7 +149,7 @@ pub fn new_test_ext_initialized(
 		assert_ok!(Bridge::whitelist_chain(Origin::root(), src_id));
 		// Set and check resource ID mapped to some junk data
 		assert_ok!(Bridge::set_resource(Origin::root(), r_id, resource));
-		assert_eq!(Bridge::resource_exists(r_id), true);
+		assert!(Bridge::resource_exists(r_id));
 	});
 	t
 }
@@ -164,6 +164,6 @@ pub fn assert_events(mut expected: Vec<Event>) {
 
 	for evt in expected {
 		let next = actual.pop().expect("event expected");
-		assert_eq!(next, evt.into(), "Events don't match (actual,expected)");
+		assert_eq!(next, evt, "Events don't match (actual,expected)");
 	}
 }
