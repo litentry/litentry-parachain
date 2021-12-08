@@ -77,8 +77,9 @@ pub struct ExportGenesisStateCommand {
 	#[structopt(short, long)]
 	pub raw: bool,
 
-	/// To not break the command / tools that we use
-	/// It doesn't have any effect (TODO)
+	/// To not break parachain-launch
+	/// It doesn't have any effect.
+	/// Will be removed once parachain-launch is updated.
 	#[structopt(long)]
 	pub parachain_id: Option<u32>,
 
