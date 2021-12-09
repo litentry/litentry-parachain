@@ -111,7 +111,7 @@ fmt:
 
 .PHONY: clippy ## cargo clippy
 clippy:
-	cargo clippy --workspace --all-targets --all-features -- -D warnings
+	SKIP_WASM_BUILD=1 cargo clippy --workspace --all-targets --all-features -- -D warnings
 
 # benchmark for pallets
 
