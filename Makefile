@@ -46,7 +46,7 @@ build-docker:
 	@./scripts/build-docker.sh
 
 .PHONY: build-node-benchmarks ## Build release version with `runtime-benchmarks` feature
-build-benchmark:
+build-node-benchmarks:
 	cargo build --features runtime-benchmarks --release
 	
 # launching local dev networks
