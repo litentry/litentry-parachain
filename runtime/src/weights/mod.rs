@@ -11,5 +11,4 @@ pub mod pallet_proxy;
 pub mod pallet_scheduler;
 pub mod pallet_timestamp;
 pub mod pallet_treasury;
-// TODO: to be re-calculated
-// pub mod pallet_utility;
+pub mod pallet_utility;
