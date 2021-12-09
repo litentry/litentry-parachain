@@ -240,7 +240,17 @@ impl frame_system::Config for Runtime {
 	/// The basic call filter to use in dispatchable.
 	type BaseCallFilter = BaseCallFilter;
 	/// Weight information for the extrinsics of this pallet.
-	type SystemWeightInfo = weights::frame_system::WeightInfo<Runtime>;
+	///
+	/// TODO:
+	/// use () for polkadot-v0.9.13 version as the generated frame_system weigts
+	/// breaks compilation: missing trait implementation `set_changes_trie_config`.
+	/// It looks like an upstream issue.
+	///
+	/// our runtime/src/weights/frame_system.rs is intentionally not updated.
+	///
+	/// Also note the statemine code:
+	/// https://github.com/paritytech/cumulus/blob/master/polkadot-parachains/statemine/src/lib.rs#L152
+	type SystemWeightInfo = ();
 	/// Block & extrinsics weights: base values and limits.
 	type BlockWeights = RuntimeBlockWeights;
 	/// The maximum length of a block (in bytes).
