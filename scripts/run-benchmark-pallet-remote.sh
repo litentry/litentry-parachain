@@ -56,5 +56,6 @@ for p in $PALLETS; do
       --heap-pages=4096 \
       --steps=20 \
       --repeat=50 \
+      --header=./LICENCE_HEADER \
       --output=./runtime/src/weights/"$p".rs
 done

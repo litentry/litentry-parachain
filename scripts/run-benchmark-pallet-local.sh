@@ -25,4 +25,5 @@ filename=${1//-/_}
     --heap-pages=4096 \
     --steps=20 \
     --repeat=50 \
+    --header=./LICENCE_HEADER \
     --output=./runtime/src/weights/"$filename".rs

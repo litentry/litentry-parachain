@@ -24,13 +24,13 @@ fi
 
 POLKADOT_BIN="$1"
 PARACHAIN_BIN="$2"
-PARACHAIN_ID=2013
 
 TMPDIR=/tmp/parachain_dev
 [ -d "$TMPDIR" ] || mkdir -p "$TMPDIR"
 ROOTDIR=$(git rev-parse --show-toplevel)
 
 cd "$ROOTDIR"
+PARACHAIN_ID=$(grep DEFAULT_PARA_ID node/src/chain_spec.rs  | grep u32 | sed 's/.* = //;s/\;//')
 
 function print_divider() {
   echo "------------------------------------------------------------"
@@ -43,7 +43,7 @@ if [ -z "$POLKADOT_BIN" ]; then
   # TODO: find a way to get stable download link
   # https://api.github.com/repos/paritytech/polkadot/releases/latest is not reliable as 
   # polkadot could publish release which has no binary
-  url="https://github.com/paritytech/polkadot/releases/download/v0.9.12/polkadot"
+  url="https://github.com/paritytech/polkadot/releases/download/v0.9.13/polkadot"
   POLKADOT_BIN="$TMPDIR/polkadot"
   wget -O "$POLKADOT_BIN" -q "$url"
   chmod a+x "$POLKADOT_BIN"
@@ -82,7 +82,7 @@ ROCOCO_CHAINSPEC=rococo-local-chain-spec.json
 $POLKADOT_BIN build-spec --chain rococo-local --disable-default-bootnode --raw > $ROCOCO_CHAINSPEC
 
 # generate genesis state and wasm for registration
-$PARACHAIN_BIN export-genesis-state --parachain-id $PARACHAIN_ID --chain dev > para-$PARACHAIN_ID-genesis
+$PARACHAIN_BIN export-genesis-state --chain dev > para-$PARACHAIN_ID-genesis
 $PARACHAIN_BIN export-genesis-wasm --chain dev > para-$PARACHAIN_ID-wasm
 
 # run alice and bob as relay nodes
@@ -93,7 +93,7 @@ $POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --bob --tmp --port 30334 --ws-port 9945 
 sleep 10
 
 # run a litentry-collator instance
-$PARACHAIN_BIN --alice --collator --force-authoring --tmp --chain dev --parachain-id $PARACHAIN_ID \
+$PARACHAIN_BIN --alice --collator --force-authoring --tmp --chain dev \
   --port 30335 --ws-port 9946 --rpc-port 9935 --execution wasm \
   -- \
   --execution wasm --chain $ROCOCO_CHAINSPEC --port 30332 --ws-port 9943 --rpc-port 9932 &> "para.alice.log" &
