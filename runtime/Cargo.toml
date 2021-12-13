@@ -2,7 +2,7 @@
 name = 'litentry-parachain-runtime'
 version = '0.9.0'
 authors = ["Litentry Dev"]
-edition = '2018'
+edition = '2021'
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "2.3.0", default-features = false, features = ["derive", "max-encoded-len"] }

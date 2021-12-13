@@ -2,7 +2,7 @@
 authors = ['Litentry Dev']
 build = 'build.rs'
 description = 'Litentry parachain collator implementation.'
-edition = '2018'
+edition = '2021'
 homepage = 'https://litentry.com/'
 license = 'GPL-3.0'
 name = 'litentry-collator'
