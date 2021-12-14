@@ -107,7 +107,7 @@ struct GenesisInfo {
 pub fn get_chain_spec_dev() -> ChainSpec {
 	ChainSpec::from_genesis(
 		"Litentry-dev",
-		"Litentry-dev",
+		"litentry-dev",
 		ChainType::Development,
 		move || {
 			generate_genesis(
@@ -141,7 +141,7 @@ pub fn get_chain_spec_dev() -> ChainSpec {
 		},
 		Vec::new(),
 		None,
-		Some("Litentry"),
+		Some("litentry"),
 		default_parachain_properties(),
 		Extensions { relay_chain: "rococo-local".into(), para_id: DEFAULT_PARA_ID },
 	)
@@ -156,7 +156,7 @@ pub fn get_chain_spec_staging() -> ChainSpec {
 	get_chain_spec_from_genesis_info(
 		include_bytes!("../res/genesis_info/staging.json"),
 		"Litentry-staging",
-		"Litentry-staging",
+		"litentry-staging",
 		ChainType::Local,
 		"rococo-local".into(),
 		DEFAULT_PARA_ID.into(),
@@ -167,7 +167,7 @@ pub fn get_chain_spec_prod() -> ChainSpec {
 	get_chain_spec_from_genesis_info(
 		include_bytes!("../res/genesis_info/prod.json"),
 		"Litentry",
-		"Litentry",
+		"litentry",
 		ChainType::Live,
 		"polkadot".into(),
 		DEFAULT_PARA_ID.into(),
@@ -225,7 +225,7 @@ fn get_chain_spec_from_genesis_info(
 			)
 			.expect("Invalid telemetry URL; qed."),
 		),
-		Some("Litentry"),
+		Some("litentry"),
 		default_parachain_properties(),
 		Extensions { relay_chain: relay_chain_name, para_id: para_id.into() },
 	)
