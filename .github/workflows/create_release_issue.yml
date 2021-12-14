@@ -14,11 +14,14 @@ jobs:
           ref: ${{ github.ref }}
           fetch-depth: 0
 
+      - name: Set env variable
+        run: |
+          echo "VERSION=${GITHUB_REF#refs/*/}" >> "$GITHUB_ENV"
+
       - id: create-issue
         uses: JasonEtco/create-an-issue@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${GITHUB_REF#refs/*/}
         with:
           filename: .github/ISSUE_TEMPLATE/release.md
           update_existing: false
