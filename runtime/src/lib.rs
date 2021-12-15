@@ -37,7 +37,7 @@ use sp_core::{
 };
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto},
+	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Verify},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
 };
@@ -858,6 +858,149 @@ impl pallet_vesting::Config for Runtime {
 	const MAX_VESTING_SCHEDULES: u32 = 28;
 }
 
+parameter_types! {
+	pub const MaxMetadata: u32 = 15;
+}
+
+impl pns_registrar::nft::Config for Runtime {
+	type ClassId = u32;
+
+	type TokenId = Hash;
+
+	type TotalId = u128;
+
+	type ClassData = ();
+
+	type TokenData = pns_registrar::registry::Record;
+
+	type MaxClassMetadata = MaxMetadata;
+
+	type MaxTokenMetadata = MaxMetadata;
+}
+
+impl pns_registrar::registry::Config for Runtime {
+	type Event = Event;
+
+	type WeightInfo = weights::pns_registrar::WeightInfo;
+
+	type Registrar = pns_registrar::registrar::Pallet<Runtime>;
+
+	type ResolverId = u32;
+}
+
+parameter_types! {
+	pub const GracePeriod: Moment = 90 * 24 * 60 * 60;
+	pub const MinRegistrationDuration: Moment = 28 * 24 * 60 * 60;
+	pub const DefaultCapacity: u32 = 20;
+	pub const BaseNode: Hash = sp_core::H256([206, 21, 156, 243, 67, 128, 117, 125, 25, 50, 168, 228, 167, 78, 133, 232, 89, 87, 176, 167, 165, 45, 156, 86, 108, 10, 60, 141, 97, 51, 208, 247]);
+}
+
+pub type Moment = u64;
+
+impl pns_registrar::registrar::Config for Runtime {
+	type Event = Event;
+
+	type ResolverId = u32;
+
+	type Registry = pns_registrar::registry::Pallet<Runtime>;
+
+	type Currency = pallet_balances::Pallet<Runtime>;
+
+	type GracePeriod = GracePeriod;
+
+	type DefaultCapacity = DefaultCapacity;
+
+	type BaseNode = BaseNode;
+
+	type WeightInfo = weights::pns_registrar::WeightInfo;
+
+	type MinRegistrationDuration = MinRegistrationDuration;
+
+	type PriceOracle = pns_registrar::price_oracle::Pallet<Runtime>;
+
+	type Moment = Moment;
+
+	type NowProvider = pallet_timestamp::Pallet<Runtime>;
+
+	type Manager = pns_registrar::registry::Pallet<Runtime>;
+}
+
+parameter_types! {
+	pub const MaximumLength: u8 = 10;
+	pub const RateScale: Balance = 100_000;
+}
+
+impl pns_registrar::price_oracle::Config for Runtime {
+	type Event = Event;
+
+	type Currency = pallet_balances::Pallet<Runtime>;
+
+	type MaximumLength = MaximumLength;
+
+	type WeightInfo = weights::pns_registrar::WeightInfo;
+
+	type Moment = Moment;
+
+	type ExchangeRate = TestRate;
+
+	type RateScale = RateScale;
+
+	type Manager = pns_registrar::registry::Pallet<Runtime>;
+}
+pub struct TestRate;
+
+impl pns_registrar::traits::ExchangeRate for TestRate {
+	type Balance = Balance;
+
+	fn get_exchange_rate() -> Self::Balance {
+		3_140_000
+	}
+}
+
+impl pns_registrar::redeem_code::Config for Runtime {
+	type Event = Event;
+
+	type WeightInfo = weights::pns_registrar::WeightInfo;
+
+	type Registrar = pns_registrar::registrar::Pallet<Runtime>;
+
+	type BaseNode = BaseNode;
+
+	type Moment = Moment;
+
+	type Public = <Signature as Verify>::Signer;
+
+	type Signature = Signature;
+
+	type Manager = pns_registrar::registry::Pallet<Runtime>;
+}
+
+impl pns_resolvers::Config for Runtime {
+	type Event = Event;
+
+	type WeightInfo = weights::pns_resolvers::WeightInfo;
+
+	type AccountIndex = u32;
+
+	type RegistryChecker = TestChecker;
+
+	type DomainHash = Hash;
+}
+
+pub struct TestChecker;
+
+impl pns_resolvers::traits::RegistryChecker for TestChecker {
+	type Hash = Hash;
+
+	type AccountId = AccountId;
+	// TODO: 跨链验证
+	fn check_node_useable(node: Self::Hash, owner: &Self::AccountId) -> bool {
+		use pns_registrar::traits::Registrar;
+		pns_registrar::nft::TokensByOwner::<Runtime>::contains_key((owner, 0, node)) &&
+			PnsRegistrar::check_expires_useable(node).is_ok()
+	}
+}
+
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -903,6 +1046,14 @@ construct_runtime! {
 		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 51,
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 52,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 53,
+
+		// PNS
+		PnsNft: pns_registrar::nft,
+		PnsRegistry: pns_registrar::registry,
+		PnsRegistrar: pns_registrar::registrar,
+		PnsRedeemCode: pns_registrar::redeem_code,
+		PnsPriceOracle: pns_registrar::price_oracle,
+		PnsResolvers: pns_resolvers,
 
 		// TMP
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 255,

@@ -5,10 +5,15 @@ authors = ["Litentry Dev"]
 edition = '2021'
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "2.3.0", default-features = false, features = ["derive", "max-encoded-len"] }
+codec = { package = "parity-scale-codec", version = "2.3.0", default-features = false, features = [
+	"derive",
+	"max-encoded-len",
+] }
 hex-literal = { version = '0.3.4', optional = true }
 log = { version = "0.4.14", default-features = false }
-scale-info = { version = "1.0.0", default-features = false, features = ["derive"] }
+scale-info = { version = "1.0.0", default-features = false, features = [
+	"derive",
+] }
 serde = { version = "1.0.130", optional = true, features = ["derive"] }
 
 primitives = { path = "../primitives", default-features = false }
@@ -33,7 +38,7 @@ frame-executive = { git = "https://github.com/paritytech/substrate", default-fea
 frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.13" }
 frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.13" }
 frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.13" }
-frame-try-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, optional = true , branch = "polkadot-v0.9.13" }
+frame-try-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, optional = true, branch = "polkadot-v0.9.13" }
 
 ## Substrate Pallet Dependencies
 pallet-aura = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.13" }
@@ -78,6 +83,17 @@ xcm-executor = { git = "https://github.com/paritytech/polkadot", default-feature
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.13", optional = true }
 frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.13", optional = true }
 
+# pns pallets
+[dependencies.pns-registrar]
+default-features = false
+git = 'https://github.com/pnsproject/pns-pallets.git'
+branch = 'main'
+
+[dependencies.pns-resolvers]
+default-features = false
+git = 'https://github.com/pnsproject/pns-pallets.git'
+branch = 'main'
+
 [dev-dependencies]
 hex-literal = "0.3.4"
 smallvec = "1.7.0"
@@ -86,7 +102,7 @@ smallvec = "1.7.0"
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 
 [features]
-default = [ "std" ]
+default = ["std"]
 std = [
 	"codec/std",
 	"log/std",
@@ -140,6 +156,8 @@ std = [
 	"xcm-builder/std",
 	"xcm-executor/std",
 	"frame-benchmarking/std",
+	"pns-resolvers/std",
+	"pns-registrar/std",
 ]
 
 runtime-benchmarks = [
@@ -161,7 +179,7 @@ runtime-benchmarks = [
 	"pallet-utility/runtime-benchmarks",
 	"pallet-xcm/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
-	"xcm-builder/runtime-benchmarks"
+	"xcm-builder/runtime-benchmarks",
 ]
 
 try-runtime = [
