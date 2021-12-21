@@ -18,8 +18,8 @@
     "tokenDecimals": 12,
     "tokenSymbol": "LIT"
   },
-  "relay_chain": "polkadot",
-  "para_id": 2013,
+  "relayChain": "polkadot",
+  "paraId": 2013,
   "consensusEngine": null,
   "codeSubstitutes": {},
   "genesis": {
