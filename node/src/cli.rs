@@ -77,12 +77,6 @@ pub struct ExportGenesisStateCommand {
 	#[structopt(short, long)]
 	pub raw: bool,
 
-	/// To not break parachain-launch
-	/// It doesn't have any effect.
-	/// Will be removed once parachain-launch is updated.
-	#[structopt(long)]
-	pub parachain_id: Option<u32>,
-
 	/// The name of the chain for that the genesis state should be exported.
 	#[structopt(long)]
 	pub chain: Option<String>,
