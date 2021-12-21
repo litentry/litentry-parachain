@@ -94,8 +94,8 @@
       "4BkazoqhutiPXxnrdHBRyspszXp5T3RS2WZVN9Afm2voDpWN"
     ],
     "bootNodes": [
-      "/dns/rpc0.parachain-sg.litentry.io/tcp/40333/p2p/12D3KooWBy6nNAuca2ZrxNEH93bzmb7ZjRpzRbbz7CtNEraiHtSC",
-      "/dns/rpc1.parachain-sg.litentry.io/tcp/40333/p2p/12D3KooWJejFQVK5wtZeDZguAXkzQxngrS9yZt2F1bk92m5w4Xgp"
+      "/dns/rpc0.parachain-sg.litentry.io/tcp/40333/ws/p2p/12D3KooWBy6nNAuca2ZrxNEH93bzmb7ZjRpzRbbz7CtNEraiHtSC",
+      "/dns/rpc1.parachain-sg.litentry.io/tcp/40333/ws/p2p/12D3KooWJejFQVK5wtZeDZguAXkzQxngrS9yZt2F1bk92m5w4Xgp"
     ],
     "telemetryEndpoints": [
       "wss://telemetry-backend.parachain.litentry.io/submit"

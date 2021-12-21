@@ -28,7 +28,11 @@ docker pull "litentry/litentry-parachain:$RELEASE_TAG"
 NODE_VERSION=$(grep version node/Cargo.toml | head -n1 | sed "s/'$//;s/.*'//")
 NODE_BIN=litentry-collator
 NODE_SHA1SUM=$(shasum litentry-collator/"$NODE_BIN" | awk '{print $1}')
-NODE_RUSTC_VERSION=$(docker run --rm "$NODE_BUILD_BASE_IMAGE" rustup default nightly 2>&1 | grep " installed" | sed 's/.*installed - //')
+if [ -f rust-toolchain.toml ]; then
+  NODE_RUSTC_VERSION=$(rustc --version)
+else
+  NODE_RUSTC_VERSION=$(docker run --rm "$NODE_BUILD_BASE_IMAGE" rustup default nightly 2>&1 | grep " installed" | sed 's/.*installed - //')
+fi
 
 SRTOOL_DIGEST_FILE=litentry-parachain-runtime/litentry-parachain-srtool-digest.json
 

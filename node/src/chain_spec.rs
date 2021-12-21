@@ -41,7 +41,7 @@ pub fn get_public_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pa
 
 /// The extensions for the [`ChainSpec`].
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ChainSpecGroup, ChainSpecExtension)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "camelCase")]
 pub struct Extensions {
 	/// The relay chain of the Parachain.
 	pub relay_chain: String,
