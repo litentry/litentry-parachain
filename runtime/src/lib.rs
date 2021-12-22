@@ -1067,7 +1067,9 @@ impl Contains<Call> for BaseCallFilter {
 			call,
 			Call::Sudo(_) |
             // System
-            Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_)
+            Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_) |
+			// Pns
+			Call::PnsNft(_) | Call::PnsRegistry(_) | Call::PnsRegistrar(_) | Call::PnsRedeemCode(_) | Call::PnsPriceOracle(_) | Call::PnsResolvers(_)
 		)
 	}
 }
