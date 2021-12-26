@@ -117,9 +117,9 @@ pub mod pallet {
 	/// fast processing of reward proposals, imagine later when sudo is removed
 	#[pallet::storage]
 	#[pallet::getter(fn admin)]
-	pub type Admin<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
+	pub type Admin<T: Config> = StorageValue<_, T::AccountId, OptionQuery>;
 
-	// current maximum pool id
+	// current maximum pool id starting from 1
 	// used as starting point as long as it hasn't reached max_value()
 	// see get_next_pool_id()
 	#[pallet::storage]
@@ -134,7 +134,7 @@ pub mod pallet {
 		Blake2_128Concat,
 		T::PoolId,
 		RewardPool<T::PoolId, T::AccountId, T::Balance, T::BlockNumber>,
-		OptionQuery,
+		ValueQuery,
 	>;
 
 	/// Map for PoolId <> RewardPoolOwner
@@ -147,7 +147,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Admin acccount was changed, the \[ old admin \] is provided
-		AdminChanged { old_admin: T::AccountId },
+		AdminChanged { old_admin: Option<T::AccountId> },
 		/// An \[ amount \] balance of \[ who \] was slashed
 		BalanceSlashed { who: T::AccountId, amount: T::Balance },
 		/// A reward pool with \[ id \] was approved by admin
@@ -178,6 +178,8 @@ pub mod pallet {
 		NoSuchRewardPool,
 		/// Error when the sender doesn't have enough reserved balance
 		InsufficientReservedBalance,
+		/// Error when `total` amount is 0 when proposing reward pool
+		InvalidTotalBalance,
 		/// Error when the remaning of a reward pool is not enough
 		InsufficientRemain,
 		/// Error when start_at < end_at when proposing reward pool
@@ -220,10 +222,12 @@ pub mod pallet {
 			id: T::PoolId,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			ensure!(sender == Self::admin(), Error::<T>::RequireAdmin);
+			ensure!(sender == Self::admin().unwrap(), Error::<T>::RequireAdmin);
+			ensure!(RewardPools::<T>::contains_key(id), Error::<T>::NoSuchRewardPool);
 
-			let mut pool = RewardPools::<T>::get(id).ok_or(Error::<T>::NoSuchRewardPool)?;
-			pool.approved = true;
+			RewardPools::<T>::mutate(id, |pool| {
+				pool.approved = true;
+			});
 			Self::deposit_event(Event::RewardPoolApproved { id });
 			Ok(().into())
 		}
@@ -235,9 +239,10 @@ pub mod pallet {
 			id: T::PoolId,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			ensure!(sender == Self::admin(), Error::<T>::RequireAdmin);
+			ensure!(sender == Self::admin().unwrap(), Error::<T>::RequireAdmin);
+			ensure!(RewardPools::<T>::contains_key(id), Error::<T>::NoSuchRewardPool);
 
-			let mut pool = RewardPools::<T>::get(id).ok_or(Error::<T>::NoSuchRewardPool)?;
+			let pool = Self::reward_pools(id);
 			// in case the reward pool was approved earlier, it can't be rejected (it can only be
 			// closed)
 			ensure!(!pool.approved, Error::<T>::RewardPoolAlreadyApproved);
@@ -252,13 +257,17 @@ pub mod pallet {
 			// theoretically unslashed should be always 0, but just to play it safe
 			// no error is thrown even if unslashed is non-zero.
 			let actual_slashed = to_slash - unslashed;
+			RewardPools::<T>::mutate(id, |pool| {
+				pool.remain = pool.remain.saturating_sub(actual_slashed);
+			});
+
 			Self::deposit_event(Event::RewardPoolRejected { id });
 			Self::deposit_event(Event::BalanceSlashed {
 				who: pool.owner.clone(),
 				amount: actual_slashed,
 			});
-			pool.remain = pool.remain.saturating_sub(actual_slashed);
-			Self::unreserve_and_close_reward_pool(pool);
+
+			Self::unreserve_and_close_reward_pool(id);
 			Ok(().into())
 		}
 
@@ -269,14 +278,16 @@ pub mod pallet {
 			id: T::PoolId,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			let mut pool = RewardPools::<T>::get(id).ok_or(Error::<T>::NoSuchRewardPool)?;
+			ensure!(RewardPools::<T>::contains_key(id), Error::<T>::NoSuchRewardPool);
+			let mut pool = RewardPools::<T>::get(id);
 			ensure!(
-				sender == Self::admin() || sender == pool.owner,
+				sender == Self::admin().unwrap() || sender == pool.owner,
 				Error::<T>::RequireAdminOrRewardPoolOwner
 			);
 			ensure!(pool.approved, Error::<T>::RewardPoolUnapproved);
 
 			pool.started = true;
+			RewardPools::<T>::insert(id, pool);
 			Self::deposit_event(Event::RewardPoolStarted { id });
 			Ok(().into())
 		}
@@ -285,14 +296,16 @@ pub mod pallet {
 		#[pallet::weight(50_000_000)]
 		pub fn stop_reward_pool(origin: OriginFor<T>, id: T::PoolId) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			let mut pool = RewardPools::<T>::get(id).ok_or(Error::<T>::NoSuchRewardPool)?;
+			ensure!(RewardPools::<T>::contains_key(id), Error::<T>::NoSuchRewardPool);
+			let mut pool = RewardPools::<T>::get(id);
 			ensure!(
-				sender == Self::admin() || sender == pool.owner,
+				sender == Self::admin().unwrap() || sender == pool.owner,
 				Error::<T>::RequireAdminOrRewardPoolOwner
 			);
 			ensure!(pool.approved, Error::<T>::RewardPoolUnapproved);
 
 			pool.started = false;
+			RewardPools::<T>::insert(id, pool);
 			Self::deposit_event(Event::RewardPoolStopped { id });
 			Ok(().into())
 		}
@@ -307,13 +320,13 @@ pub mod pallet {
 			id: T::PoolId,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			let pool = RewardPools::<T>::get(id).ok_or(Error::<T>::NoSuchRewardPool)?;
+			ensure!(RewardPools::<T>::contains_key(id), Error::<T>::NoSuchRewardPool);
 			ensure!(
-				sender == Self::admin() || sender == pool.owner,
+				sender == Self::admin().unwrap() || sender == Self::reward_pools(id).owner,
 				Error::<T>::RequireAdminOrRewardPoolOwner
 			);
 
-			Self::unreserve_and_close_reward_pool(pool);
+			Self::unreserve_and_close_reward_pool(id);
 			Ok(().into())
 		}
 
@@ -328,6 +341,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			// a few sanity checks
 			let sender = ensure_signed(origin)?;
+			ensure!(total > 0u32.into(), Error::<T>::InvalidTotalBalance);
 			ensure!(
 				<pallet_balances::Pallet<T> as ReservableCurrency<_>>::can_reserve(&sender, total),
 				Error::<T>::InsufficientReservedBalance
@@ -371,7 +385,8 @@ pub mod pallet {
 			amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			let mut pool = RewardPools::<T>::get(id).ok_or(Error::<T>::NoSuchRewardPool)?;
+			ensure!(RewardPools::<T>::contains_key(id), Error::<T>::NoSuchRewardPool);
+			let pool = Self::reward_pools(id);
 			ensure!(sender == pool.owner, Error::<T>::RequireRewardPoolOwner);
 			ensure!(pool.approved, Error::<T>::RewardPoolUnapproved);
 			ensure!(pool.started, Error::<T>::RewardPoolStopped);
@@ -409,8 +424,10 @@ pub mod pallet {
 					BalanceStatus::Free,
 				)?;
 			let actual_moved = amount - unmoved;
-			pool.remain = pool.remain.saturating_sub(actual_moved);
 			Self::deposit_event(Event::RewardSent { to, amount: actual_moved });
+			RewardPools::<T>::mutate(id, |pool| {
+				pool.remain = pool.remain.saturating_sub(actual_moved);
+			});
 			ensure!(unmoved == Zero::zero(), Error::<T>::UnexpectedUnMovedAmount);
 			Ok(().into())
 		}
@@ -419,22 +436,19 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// close the reward pool, remove it from the map
 		/// and unreserve all the remaining token to the pool owner
-		///
-		/// this function takes ownership of `pool`
-		fn unreserve_and_close_reward_pool(
-			pool: RewardPool<T::PoolId, T::AccountId, T::Balance, T::BlockNumber>,
-		) {
+		fn unreserve_and_close_reward_pool(id: T::PoolId) {
+			let pool = RewardPools::<T>::take(id);
 			// we don't care if reserved balance is less than pool.remain
 			let _ = <pallet_balances::Pallet<T> as ReservableCurrency<_>>::unreserve(
 				&pool.owner,
 				pool.remain,
 			);
-			RewardPools::<T>::remove(pool.id);
 			RewardPoolOwners::<T>::remove(pool.id);
+
 			Self::deposit_event(Event::RewardPoolRemoved {
 				id: pool.id,
-				name: pool.name,
-				owner: pool.owner,
+				name: pool.name.clone(),
+				owner: pool.owner.clone(),
 			});
 		}
 
@@ -458,12 +472,13 @@ pub mod pallet {
 		fn get_next_pool_id() -> Result<T::PoolId, pallet::Error<T>> {
 			// if CurrentMaxPoolId hasn't reached max, increment and return it
 			if Self::current_max_pool_id() < T::PoolId::max_value() {
-				return CurrentMaxPoolId::<T>::try_mutate(|id| {
+				return CurrentMaxPoolId::<T>::mutate(|id| {
 					*id += 1u64.into();
 					Ok(*id)
 				})
 			}
 
+			// otherwise find the vacant id from the beginning
 			let sorted_ids = Self::get_sorted_pool_ids();
 			let len = sorted_ids.len();
 			for i in 0..len {
