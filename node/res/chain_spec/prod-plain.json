@@ -1,11 +1,10 @@
 {
   "name": "Litentry",
-  "id": "Litentry",
+  "id": "litentry",
   "chainType": "Live",
   "bootNodes": [
-    "/dns/parachain-sg-1.litentry.io/tcp/40333/p2p/12D3KooWBy6nNAuca2ZrxNEH93bzmb7ZjRpzRbbz7CtNEraiHtSC",
-    "/dns/parachain-sg-2.litentry.io/tcp/40333/p2p/12D3KooWJejFQVK5wtZeDZguAXkzQxngrS9yZt2F1bk92m5w4Xgp",
-    "/dns/parachain-sg-3.litentry.io/tcp/40333/p2p/12D3KooWD3ovhokyzvB4k8q6XhSiBrfySz2qzzNdj6SeqaUcFLga"
+    "/dns/rpc0.parachain-sg.litentry.io/tcp/40333/ws/p2p/12D3KooWBy6nNAuca2ZrxNEH93bzmb7ZjRpzRbbz7CtNEraiHtSC",
+    "/dns/rpc1.parachain-sg.litentry.io/tcp/40333/ws/p2p/12D3KooWJejFQVK5wtZeDZguAXkzQxngrS9yZt2F1bk92m5w4Xgp"
   ],
   "telemetryEndpoints": [
     [
@@ -13,14 +12,14 @@
       0
     ]
   ],
-  "protocolId": "Litentry",
+  "protocolId": "litentry",
   "properties": {
     "ss58Format": 31,
     "tokenDecimals": 12,
     "tokenSymbol": "LIT"
   },
-  "relay_chain": "polkadot",
-  "para_id": 2013,
+  "relayChain": "polkadot",
+  "paraId": 2013,
   "consensusEngine": null,
   "codeSubstitutes": {},
   "genesis": {
