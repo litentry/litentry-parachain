@@ -29,19 +29,19 @@
 //! Some notes:
 //!  - the admin account can only be set by SetAdminOrigin, which will be bound at runtime.
 //!  - a user can propose/own multiple reward pools.
-//!  - the events and errors are relatively in detail.
+//!  - the events and errors are relatively in verbose level.
 //!  - about the usage of reversed balance: see the checks around `slash_reserved` and
-//!    `repatriated_reversed`, theoretically the desired amount should always be slashed/moved, as
+//!    `repatriated_reversed`, theoretically the desired amount could always be slashed/moved, as
 //!    `total` amount is already reserved upon creation of a reward pool. However, we are playing it
 //!    safe and we make sure the emitted event always contains the actual amount, since we don't
 //!    know if user's balance is unexpectedly unreserved somewhere outside this pallet.
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// #[cfg(test)]
-// mod mock;
+#[cfg(test)]
+mod mock;
 
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod tests;
 
 // #[cfg(feature = "runtime-benchmarks")]
 // mod benchmarking;
@@ -53,14 +53,14 @@ use frame_support::{
 use frame_system::pallet_prelude::*;
 pub use pallet::*;
 use sp_runtime::{
-	traits::{AtLeast32BitUnsigned, Bounded, CheckedAdd, Saturating, Zero},
+	traits::{AtLeast32BitUnsigned, Bounded, Saturating, Zero},
 	Percent,
 };
 
 use scale_info::TypeInfo;
 
 /// a single reward pool
-#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[derive(PartialEq, Eq, Default, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct RewardPool<PoolId, AccountId, Balance, BlockNumber> {
 	id: PoolId,
 	name: Vec<u8>,
@@ -93,10 +93,9 @@ pub mod pallet {
 
 		type PoolId: Default
 			+ Copy
-			+ Bounded
+			+ PartialEq
 			+ core::fmt::Debug
 			+ codec::FullCodec
-			+ CheckedAdd
 			+ AtLeast32BitUnsigned
 			+ From<u64>
 			+ TypeInfo;
@@ -120,10 +119,12 @@ pub mod pallet {
 	#[pallet::getter(fn admin)]
 	pub type Admin<T: Config> = StorageValue<_, T::AccountId, ValueQuery>;
 
-	// current pool id
+	// current maximum pool id
+	// used as starting point as long as it hasn't reached max_value()
+	// see get_next_pool_id()
 	#[pallet::storage]
-	#[pallet::getter(fn current_pool_id)]
-	pub(super) type CurrentPoolId<T: Config> = StorageValue<_, T::PoolId, ValueQuery>;
+	#[pallet::getter(fn current_max_pool_id)]
+	pub type CurrentMaxPoolId<T: Config> = StorageValue<_, T::PoolId, ValueQuery>;
 
 	/// Map for PoolId <> RewardPool
 	#[pallet::storage]
@@ -195,8 +196,8 @@ pub mod pallet {
 		RewardPoolRanTooLate,
 		/// Error of unexpected unmoved amount when calling repatriate_reserved
 		UnexpectedUnMovedAmount,
-		/// Error when pool id overflow when trying to get next
-		PoolIdOverflow,
+		/// Error when no vacant PoolId can be acquired
+		NoVacantPoolId,
 	}
 
 	#[pallet::call]
@@ -339,7 +340,7 @@ pub mod pallet {
 
 			// reserve the owner's balance
 			let _ = <pallet_balances::Pallet<T> as ReservableCurrency<_>>::reserve(&sender, total)?;
-			let next_id: T::PoolId = Self::get_next_id()?;
+			let next_id: T::PoolId = Self::get_next_pool_id()?;
 			// create the reward pool
 			let new_reward_pool = RewardPool::<_, _, _, _> {
 				id: next_id,
@@ -437,13 +438,43 @@ pub mod pallet {
 			});
 		}
 
-		fn get_next_id() -> Result<T::PoolId, sp_runtime::DispatchError> {
-			// TODO: solve the overflow
-			CurrentPoolId::<T>::try_mutate(|id| {
-				let next = id.checked_add(&1u64.into()).ok_or(Error::<T>::PoolIdOverflow)?;
-				*id = next;
-				Ok(next)
-			})
+		pub fn get_sorted_pool_ids() -> Vec<T::PoolId> {
+			let mut ids = RewardPools::<T>::iter_keys().collect::<Vec<T::PoolId>>();
+			ids.sort();
+			ids
+		}
+
+		#[cfg(test)]
+		// propose a default reward pool, but with given id
+		// mainly used to test get_next_pool_id()
+		pub fn propose_default_reward_pool(id: T::PoolId, should_change_current_max: bool) {
+			RewardPools::<T>::insert(id, RewardPool::default());
+			RewardPoolOwners::<T>::insert(id, T::AccountId::default());
+			if should_change_current_max {
+				CurrentMaxPoolId::<T>::put(id);
+			}
+		}
+
+		fn get_next_pool_id() -> Result<T::PoolId, pallet::Error<T>> {
+			// if CurrentMaxPoolId hasn't reached max, increment and return it
+			if Self::current_max_pool_id() < T::PoolId::max_value() {
+				return CurrentMaxPoolId::<T>::try_mutate(|id| {
+					*id += 1u64.into();
+					Ok(*id)
+				})
+			}
+
+			let sorted_ids = Self::get_sorted_pool_ids();
+			let len = sorted_ids.len();
+			for i in 0..len {
+				// we start from 1, the addition should never overflow
+				let expected_id: T::PoolId = (i as u64).checked_add(1u64).unwrap().into();
+				if sorted_ids[i] != expected_id {
+					return Ok(expected_id)
+				}
+			}
+
+			Err(Error::<T>::NoVacantPoolId)
 		}
 	}
 }
