@@ -21,9 +21,9 @@
 //!  2. the admin can approve or reject the proposal, a proportion of `total`
 //!     amount will be slashed upon rejection.
 //!  3. once approved, either the pool owner or admin can start/stop the
-//! 	pool multiple times, or close the pool to remove it from the map storage,
+//!     pool multiple times, or close the pool to remove it from the map storage,
 //!     where the remaining amount will be unreserved.
-//!	 4. when the pool is actively running, the owner can send the reward to any other user,
+//!  4. when the pool is actively running, the owner can send the reward to any other user,
 //!     the amount will be deducted directly from reserved balance.
 //!
 //! Some notes:
@@ -243,8 +243,7 @@ pub mod pallet {
 			ensure!(RewardPools::<T>::contains_key(id), Error::<T>::NoSuchRewardPool);
 
 			let pool = Self::reward_pools(id);
-			// in case the reward pool was approved earlier, it can't be rejected (it can only be
-			// closed)
+			// a reward pool can't be rejected if it was approved earlier
 			ensure!(!pool.approved, Error::<T>::RewardPoolAlreadyApproved);
 
 			// slash a portion from reserved balance
@@ -262,10 +261,7 @@ pub mod pallet {
 			});
 
 			Self::deposit_event(Event::RewardPoolRejected { id });
-			Self::deposit_event(Event::BalanceSlashed {
-				who: pool.owner.clone(),
-				amount: actual_slashed,
-			});
+			Self::deposit_event(Event::BalanceSlashed { who: pool.owner, amount: actual_slashed });
 
 			Self::unreserve_and_close_reward_pool(id);
 			Ok(().into())
@@ -448,7 +444,7 @@ pub mod pallet {
 			Self::deposit_event(Event::RewardPoolRemoved {
 				id: pool.id,
 				name: pool.name.clone(),
-				owner: pool.owner.clone(),
+				owner: pool.owner,
 			});
 		}
 
@@ -480,11 +476,9 @@ pub mod pallet {
 
 			// otherwise find the vacant id from the beginning
 			let sorted_ids = Self::get_sorted_pool_ids();
-			let len = sorted_ids.len();
-			for i in 0..len {
-				// we start from 1, the addition should never overflow
-				let expected_id: T::PoolId = (i as u64).checked_add(1u64).unwrap().into();
-				if sorted_ids[i] != expected_id {
+			for (idx, id) in sorted_ids.iter().enumerate() {
+				let expected_id: T::PoolId = (idx as u64).checked_add(1u64).unwrap().into();
+				if id != &expected_id {
 					return Ok(expected_id)
 				}
 			}
