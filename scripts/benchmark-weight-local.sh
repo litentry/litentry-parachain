@@ -10,7 +10,7 @@ set -eo pipefail
 # The `litentry-collator` binary must be compiled with `runtime-benchmarks` feature.
 
 function usage() {
-    echo "Usage: $0 pallet-name [runtime|pallet]"
+    echo "Usage: $0 pallet-name runtime|pallet"
 }
 
 [ $# -ne 2 ] && (usage; exit 1)
@@ -47,7 +47,7 @@ esac
     --execution=wasm  \
     --db-cache=20 \
     --wasm-execution=compiled \
-    --pallet="$1" \
+    --pallet="$PALLET" \
     --extrinsic=* \
     --heap-pages=4096 \
     --steps=20 \
