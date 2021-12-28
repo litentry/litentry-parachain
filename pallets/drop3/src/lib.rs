@@ -58,6 +58,7 @@ use sp_runtime::{
 };
 
 use scale_info::TypeInfo;
+use sp_std::vec::Vec;
 
 /// a single reward pool
 #[derive(PartialEq, Eq, Default, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
