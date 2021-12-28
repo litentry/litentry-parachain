@@ -1,10 +1,10 @@
-name: Generate weights
+name: Benchmark runtime weights
 
 on:
   workflow_dispatch:
     inputs:
       pallets:
-        description: pallets to calculate weights, * for all, or comma listed (e.g. frame-system,pallet-proxy)
+        description: pallets to benchmark, * for all, or comma listed (e.g. frame-system,pallet-proxy)
         default: '*'
         required: true
 
@@ -13,7 +13,7 @@ env:
 
 jobs:
   ## build docker image with runtime-benchmarks feature, and then run the benchmarking remotely
-  build-and-run-benchmark:
+  build-and-benchmark:
     runs-on: self-hosted
     steps:
       - name: Checkout codes on ${{ github.ref }}
@@ -34,14 +34,14 @@ jobs:
           [ -z "$(docker images --filter=dangling=true -q)" ] || docker rmi -f $(docker images --filter=dangling=true -q)
 
       # exit status should propagate through ssh
-      - name: Run benchmarking script remotely for pallets ${{ github.event.inputs.pallets }}
+      - name: Remotely benchmark pallets ${{ github.event.inputs.pallets }}
         run: |
           # prepend the asterisk with \ to go through ssh
           arg="${{ github.event.inputs.pallets }}"
           if [ "$arg" = "*" ];
             then arg="\\$arg";
           fi
-          ssh -x "${{ env.REMOTE_HOST }}" 'bash -s' < scripts/run-benchmark-pallet-remote.sh "${GITHUB_REF#refs/heads/}" "$arg"
+          ssh -x "${{ env.REMOTE_HOST }}" 'bash -s' < scripts/benchmark-weight-remote.sh "${GITHUB_REF#refs/heads/}" "$arg"
 
       - name: Copy generated weights files back
         run: |
@@ -51,7 +51,7 @@ jobs:
           echo "======================"
           git status
 
-      - name: create auto PR
+      - name: Create auto PR
         uses: peter-evans/create-pull-request@v3
         with:
           commit-message: '[benchmarking bot] Auto commit generated weights files'
