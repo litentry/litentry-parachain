@@ -35,6 +35,8 @@
 //!    `total` amount is already reserved upon creation of a reward pool. However, we are playing it
 //!    safe and we make sure the emitted event always contains the actual amount, since we don't
 //!    know if user's balance is unexpectedly unreserved somewhere outside this pallet.
+
+#![allow(clippy::type_complexity)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(test)]
@@ -62,16 +64,28 @@ use sp_std::vec::Vec;
 
 /// a single reward pool
 #[derive(PartialEq, Eq, Default, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
-pub struct RewardPool<PoolId, AccountId, Balance, BlockNumber> {
+pub struct RewardPool<PoolId, BoundedString, AccountId, Balance, BlockNumber> {
+	// unique pool id
 	id: PoolId,
-	name: Vec<u8>,
+	// a bounded string whose length is limited by `MaximumStringLength`
+	name: BoundedString,
+	// account id of the pool owner
 	owner: AccountId,
-	total: Balance,  // total amount of token that will be reserved upon creation
-	remain: Balance, // remaining amount of token
+	// total amount of token that will be reserved upon creation
+	total: Balance,
+	// remaining amount of token that can be sent as reward for this pool
+	remain: Balance,
+	// block height where the pool was created
 	create_at: BlockNumber,
+	// start block height which is defined when proposing,
+	// calling `send_reward` prior to this height would fail
 	start_at: BlockNumber,
+	// end block height which is defined when proposing,
+	// calling `send_reward` after this height would fail
 	end_at: BlockNumber,
+	// if the pool is started
 	started: bool,
+	// if the pool is approved
 	approved: bool,
 }
 
@@ -108,9 +122,9 @@ pub mod pallet {
 		#[pallet::constant]
 		type SlashPercent: Get<Percent>;
 
-		/// The maximum length a name of proposed reward pool can be
+		/// The maximum length a on-chain string can be
 		#[pallet::constant]
-		type MaxNameLength: Get<u32>;
+		type MaximumStringLength: Get<u32>;
 	}
 
 	/// The reward pool admin account
@@ -134,7 +148,13 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		T::PoolId,
-		RewardPool<T::PoolId, T::AccountId, T::Balance, T::BlockNumber>,
+		RewardPool<
+			T::PoolId,
+			BoundedVec<u8, T::MaximumStringLength>,
+			T::AccountId,
+			T::Balance,
+			T::BlockNumber,
+		>,
 		ValueQuery,
 	>;
 
@@ -185,8 +205,6 @@ pub mod pallet {
 		InsufficientRemain,
 		/// Error when start_at < end_at when proposing reward pool
 		InvalidProposedBlock,
-		/// Error when proposed reward pool name is too long
-		ProposedNameTooLong,
 		/// Error when the reward pool is unapproved
 		RewardPoolUnapproved,
 		/// Error when the reward pool is first approved then rejected
@@ -344,18 +362,17 @@ pub mod pallet {
 				Error::<T>::InsufficientReservedBalance
 			);
 			ensure!(end_at >= start_at, Error::<T>::InvalidProposedBlock);
-			ensure!(
-				name.len() <= T::MaxNameLength::get() as usize,
-				Error::<T>::ProposedNameTooLong
-			);
+
+			let bounded_name: BoundedVec<u8, T::MaximumStringLength> =
+				name.clone().try_into().expect("reward pool name is too long");
 
 			// reserve the owner's balance
 			let _ = <pallet_balances::Pallet<T> as ReservableCurrency<_>>::reserve(&sender, total)?;
 			let next_id: T::PoolId = Self::get_next_pool_id()?;
 			// create the reward pool
-			let new_reward_pool = RewardPool::<_, _, _, _> {
+			let new_reward_pool = RewardPool::<_, _, _, _, _> {
 				id: next_id,
-				name: name.clone(),
+				name: bounded_name,
 				owner: sender.clone(),
 				total,
 				remain: total,
@@ -444,7 +461,7 @@ pub mod pallet {
 
 			Self::deposit_event(Event::RewardPoolRemoved {
 				id: pool.id,
-				name: pool.name.clone(),
+				name: pool.name.into_inner(),
 				owner: pool.owner,
 			});
 		}
