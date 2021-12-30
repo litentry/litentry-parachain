@@ -94,7 +94,7 @@ impl pallet_balances::Config for Test {
 
 parameter_types! {
 	pub const SlashPercent: Percent = Percent::from_percent(20);
-	pub const MaximumStringLength: u32 = 16;
+	pub const MaximumNameLength: u32 = 16;
 }
 
 ord_parameter_types! {
@@ -105,8 +105,9 @@ impl pallet_drop3::Config for Test {
 	type Event = Event;
 	type PoolId = PoolId;
 	type SetAdminOrigin = EnsureSignedBy<One, u64>;
+	type WeightInfo = ();
 	type SlashPercent = SlashPercent;
-	type MaximumStringLength = MaximumStringLength;
+	type MaximumNameLength = MaximumNameLength;
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {

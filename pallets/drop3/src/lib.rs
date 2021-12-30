@@ -47,6 +47,7 @@ mod tests;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
+pub mod weights;
 
 use frame_support::{
 	pallet_prelude::*,
@@ -61,13 +62,14 @@ use sp_runtime::{
 
 use scale_info::TypeInfo;
 use sp_std::vec::Vec;
+pub use weights::WeightInfo;
 
 /// a single reward pool
 #[derive(PartialEq, Eq, Default, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct RewardPool<PoolId, BoundedString, AccountId, Balance, BlockNumber> {
 	// unique pool id
 	id: PoolId,
-	// a bounded string whose length is limited by `MaximumStringLength`
+	// a bounded string whose length is limited by `MaximumNameLength`
 	name: BoundedString,
 	// account id of the pool owner
 	owner: AccountId,
@@ -118,13 +120,15 @@ pub mod pallet {
 		/// The origin who can set the admin account
 		type SetAdminOrigin: EnsureOrigin<Self::Origin>;
 
+		type WeightInfo: WeightInfo;
+
 		/// percent of the total amount slashed when proposal gets rejected
 		#[pallet::constant]
 		type SlashPercent: Get<Percent>;
 
 		/// The maximum length a on-chain string can be
 		#[pallet::constant]
-		type MaximumStringLength: Get<u32>;
+		type MaximumNameLength: Get<u32>;
 	}
 
 	/// The reward pool admin account
@@ -150,7 +154,7 @@ pub mod pallet {
 		T::PoolId,
 		RewardPool<
 			T::PoolId,
-			BoundedVec<u8, T::MaximumStringLength>,
+			BoundedVec<u8, T::MaximumNameLength>,
 			T::AccountId,
 			T::Balance,
 			T::BlockNumber,
@@ -225,7 +229,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Change the admin account
 		/// similar to sudo.set_key, the old account will be supplied in event
-		#[pallet::weight(50_000_000)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_admin())]
 		pub fn set_admin(origin: OriginFor<T>, new: T::AccountId) -> DispatchResultWithPostInfo {
 			T::SetAdminOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::AdminChanged { old_admin: Self::admin() });
@@ -235,7 +239,7 @@ pub mod pallet {
 		}
 
 		/// Approve a RewardPool proposal, must be called from admin
-		#[pallet::weight(50_000_000)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::approve_reward_pool())]
 		pub fn approve_reward_pool(
 			origin: OriginFor<T>,
 			id: T::PoolId,
@@ -252,7 +256,7 @@ pub mod pallet {
 		}
 
 		/// Reject a RewardPool proposal, must be called from admin
-		#[pallet::weight(50_000_000)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::reject_reward_pool())]
 		pub fn reject_reward_pool(
 			origin: OriginFor<T>,
 			id: T::PoolId,
@@ -287,7 +291,7 @@ pub mod pallet {
 		}
 
 		/// Start a reward pool, can be called by admin or reward pool owner
-		#[pallet::weight(50_000_000)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::start_reward_pool())]
 		pub fn start_reward_pool(
 			origin: OriginFor<T>,
 			id: T::PoolId,
@@ -308,7 +312,7 @@ pub mod pallet {
 		}
 
 		/// Stop a reward pool, can be called by admin or reward pool owner
-		#[pallet::weight(50_000_000)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::stop_reward_pool())]
 		pub fn stop_reward_pool(origin: OriginFor<T>, id: T::PoolId) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			ensure!(RewardPools::<T>::contains_key(id), Error::<T>::NoSuchRewardPool);
@@ -329,7 +333,7 @@ pub mod pallet {
 		///
 		/// Note here `approved` state is not required, which gives the owner a
 		/// chance to close it before the admin evaluates the proposal
-		#[pallet::weight(50_000_000)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::close_reward_pool())]
 		pub fn close_reward_pool(
 			origin: OriginFor<T>,
 			id: T::PoolId,
@@ -346,7 +350,7 @@ pub mod pallet {
 		}
 
 		/// Create a RewardPool proposal, can be called by any signed account
-		#[pallet::weight(50_000_000)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::propose_reward_pool(T::MaximumNameLength::get()))]
 		pub fn propose_reward_pool(
 			origin: OriginFor<T>,
 			name: Vec<u8>,
@@ -363,7 +367,7 @@ pub mod pallet {
 			);
 			ensure!(end_at >= start_at, Error::<T>::InvalidProposedBlock);
 
-			let bounded_name: BoundedVec<u8, T::MaximumStringLength> =
+			let bounded_name: BoundedVec<u8, T::MaximumNameLength> =
 				name.clone().try_into().expect("reward pool name is too long");
 
 			// reserve the owner's balance
@@ -394,7 +398,7 @@ pub mod pallet {
 		/// TODO:
 		/// `repatriate_reserved()` requires that the destination account is active
 		/// otherwise `DeadAccount` error is returned. Is it OK in our case?
-		#[pallet::weight(50_000_000)]
+		#[pallet::weight(<T as pallet::Config>::WeightInfo::send_reward())]
 		pub fn send_reward(
 			origin: OriginFor<T>,
 			id: T::PoolId,

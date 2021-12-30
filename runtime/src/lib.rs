@@ -860,15 +860,16 @@ impl pallet_vesting::Config for Runtime {
 
 parameter_types! {
 	pub const SlashPercent: Percent = Percent::from_percent(20);
-	pub const MaximumStringLength: u32 = 16;
+	pub const MaximumNameLength: u32 = 16;
 }
 
 impl pallet_drop3::Config for Runtime {
 	type Event = Event;
 	type PoolId = u64;
 	type SetAdminOrigin = EnsureRootOrHalfCouncil;
+	type WeightInfo = (); // To be rerun with runtime benchmarks
 	type SlashPercent = SlashPercent;
-	type MaximumStringLength = MaximumStringLength;
+	type MaximumNameLength = MaximumNameLength;
 }
 
 construct_runtime! {
