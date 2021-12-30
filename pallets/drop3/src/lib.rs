@@ -391,6 +391,9 @@ pub mod pallet {
 
 		/// transfer an amount of reserved balance to some other user
 		/// must be called by reward pool owner
+		/// TODO:
+		/// `repatriate_reserved()` requires that the destination account is active
+		/// otherwise `DeadAccount` error is returned. Is it OK in our case?
 		#[pallet::weight(50_000_000)]
 		pub fn send_reward(
 			origin: OriginFor<T>,

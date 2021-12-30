@@ -256,7 +256,7 @@ fn send_reward_works() {
 		assert_ok!(Drop3::approve_reward_pool(Origin::signed(1), 1));
 		assert_ok!(Drop3::start_reward_pool(Origin::signed(3), 1));
 
-		// only the reward pool can send reward
+		// only the reward pool owner can send reward, not even the admin
 		assert_noop!(
 			Drop3::send_reward(Origin::signed(1), 1, 4, 10),
 			Error::<Test>::RequireRewardPoolOwner
