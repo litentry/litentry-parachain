@@ -245,7 +245,7 @@ pub mod pallet {
 			id: T::PoolId,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			ensure!(sender == Self::admin().unwrap(), Error::<T>::RequireAdmin);
+			ensure!(sender == Self::admin().unwrap_or_default(), Error::<T>::RequireAdmin);
 			ensure!(RewardPools::<T>::contains_key(id), Error::<T>::NoSuchRewardPool);
 
 			RewardPools::<T>::mutate(id, |pool| {
@@ -262,7 +262,7 @@ pub mod pallet {
 			id: T::PoolId,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			ensure!(sender == Self::admin().unwrap(), Error::<T>::RequireAdmin);
+			ensure!(sender == Self::admin().unwrap_or_default(), Error::<T>::RequireAdmin);
 			ensure!(RewardPools::<T>::contains_key(id), Error::<T>::NoSuchRewardPool);
 
 			let pool = Self::reward_pools(id);
@@ -300,7 +300,7 @@ pub mod pallet {
 			ensure!(RewardPools::<T>::contains_key(id), Error::<T>::NoSuchRewardPool);
 			let mut pool = RewardPools::<T>::get(id);
 			ensure!(
-				sender == Self::admin().unwrap() || sender == pool.owner,
+				sender == Self::admin().unwrap_or_default() || sender == pool.owner,
 				Error::<T>::RequireAdminOrRewardPoolOwner
 			);
 			ensure!(pool.approved, Error::<T>::RewardPoolUnapproved);
@@ -318,7 +318,7 @@ pub mod pallet {
 			ensure!(RewardPools::<T>::contains_key(id), Error::<T>::NoSuchRewardPool);
 			let mut pool = RewardPools::<T>::get(id);
 			ensure!(
-				sender == Self::admin().unwrap() || sender == pool.owner,
+				sender == Self::admin().unwrap_or_default() || sender == pool.owner,
 				Error::<T>::RequireAdminOrRewardPoolOwner
 			);
 			ensure!(pool.approved, Error::<T>::RewardPoolUnapproved);
@@ -341,7 +341,8 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			ensure!(RewardPools::<T>::contains_key(id), Error::<T>::NoSuchRewardPool);
 			ensure!(
-				sender == Self::admin().unwrap() || sender == Self::reward_pools(id).owner,
+				sender == Self::admin().unwrap_or_default() ||
+					sender == Self::reward_pools(id).owner,
 				Error::<T>::RequireAdminOrRewardPoolOwner
 			);
 
@@ -477,17 +478,6 @@ pub mod pallet {
 			let mut ids = RewardPools::<T>::iter_keys().collect::<Vec<T::PoolId>>();
 			ids.sort();
 			ids
-		}
-
-		#[cfg(test)]
-		// propose a default reward pool, but with given id
-		// mainly used to test get_next_pool_id()
-		pub fn propose_default_reward_pool(id: T::PoolId, should_change_current_max: bool) {
-			RewardPools::<T>::insert(id, RewardPool::default());
-			RewardPoolOwners::<T>::insert(id, T::AccountId::default());
-			if should_change_current_max {
-				CurrentMaxPoolId::<T>::put(id);
-			}
 		}
 
 		fn get_next_pool_id() -> Result<T::PoolId, pallet::Error<T>> {

@@ -77,7 +77,7 @@ fn multiple_propose_reward_pool_works() {
 fn propose_reward_pool_works_with_wrapping_id() {
 	new_test_ext().execute_with(|| {
 		// manually insert a reward pool with `PoolId::max_value() - 1` as id
-		Drop3::propose_default_reward_pool(PoolId::max_value() - 1, true);
+		propose_default_reward_pool(PoolId::max_value() - 1, true);
 
 		let _ = <Balances as Currency<_>>::deposit_creating(&3, 1000);
 
@@ -98,8 +98,8 @@ fn propose_reward_pool_works_with_wrapping_id() {
 		assert_eq!(Drop3::current_max_pool_id(), PoolId::max_value());
 
 		// manually insert reward pools with id = 2 and 4
-		Drop3::propose_default_reward_pool(2, false);
-		Drop3::propose_default_reward_pool(4, false);
+		propose_default_reward_pool(2, false);
+		propose_default_reward_pool(4, false);
 
 		// create a new proposal, it should have the id 3
 		assert_ok!(Drop3::propose_reward_pool(Origin::signed(3), b"test".to_vec(), 10, 2, 3));

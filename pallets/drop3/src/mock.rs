@@ -110,6 +110,21 @@ impl pallet_drop3::Config for Test {
 	type MaximumNameLength = MaximumNameLength;
 }
 
+// propose a default reward pool with the given id
+pub(crate) fn propose_default_reward_pool(
+	id: <Test as pallet_drop3::Config>::PoolId,
+	should_change_current_max: bool,
+) {
+	pallet_drop3::RewardPools::<Test>::insert(id, pallet_drop3::RewardPool::default());
+	pallet_drop3::RewardPoolOwners::<Test>::insert(
+		id,
+		<Test as frame_system::Config>::AccountId::default(),
+	);
+	if should_change_current_max {
+		pallet_drop3::CurrentMaxPoolId::<Test>::put(id);
+	}
+}
+
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
