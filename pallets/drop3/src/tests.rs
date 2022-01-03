@@ -45,7 +45,8 @@ fn propose_reward_pool_works() {
 		let _ = <Balances as Currency<_>>::deposit_creating(&3, 100);
 		assert_ok!(Drop3::propose_reward_pool(Origin::signed(3), b"test".to_vec(), 100, 2, 3));
 		assert_eq!(Drop3::get_sorted_pool_ids(), vec![1]);
-		let pool = Drop3::reward_pools(1);
+		assert!(Drop3::reward_pools(1).is_some());
+		let pool = Drop3::reward_pools(1).unwrap();
 		assert!(!pool.started);
 		assert!(!pool.approved);
 		assert_eq!(pool.owner, 3);
@@ -145,7 +146,7 @@ fn approve_reward_pool_works() {
 		let _ = <Balances as Currency<_>>::deposit_creating(&3, 100);
 		assert_ok!(Drop3::propose_reward_pool(Origin::signed(3), b"test".to_vec(), 100, 2, 3));
 		assert_ok!(Drop3::approve_reward_pool(Origin::signed(1), 1));
-		assert!(Drop3::reward_pools(1).approved);
+		assert!(Drop3::reward_pools(1).unwrap().approved);
 		System::assert_last_event(Event::Drop3(crate::Event::RewardPoolApproved { id: 1 }));
 	});
 }
@@ -156,7 +157,20 @@ fn approve_reward_pool_fails_with_non_admin() {
 		let _ = <Balances as Currency<_>>::deposit_creating(&3, 100);
 		assert_ok!(Drop3::propose_reward_pool(Origin::signed(3), b"test".to_vec(), 100, 2, 3));
 		assert_noop!(Drop3::approve_reward_pool(Origin::signed(3), 1), Error::<Test>::RequireAdmin);
-		assert!(!Drop3::reward_pools(1).approved);
+		assert!(!Drop3::reward_pools(1).unwrap().approved);
+	});
+}
+
+#[test]
+fn approve_reward_pool_fails_with_non_existent_pool() {
+	new_test_ext().execute_with(|| {
+		let _ = <Balances as Currency<_>>::deposit_creating(&3, 100);
+		assert_ok!(Drop3::propose_reward_pool(Origin::signed(3), b"test".to_vec(), 100, 2, 3));
+		assert_noop!(
+			Drop3::approve_reward_pool(Origin::signed(1), 2),
+			Error::<Test>::NoSuchRewardPool
+		);
+		assert!(!Drop3::reward_pools(1).unwrap().approved);
 	});
 }
 
@@ -210,13 +224,17 @@ fn start_stop_reward_pool_works() {
 		assert_ok!(Drop3::approve_reward_pool(Origin::signed(1), 1));
 		// pool owner starts the reward pool
 		assert_ok!(Drop3::start_reward_pool(Origin::signed(3), 1));
-		assert!(Drop3::reward_pools(1).started);
+		assert!(Drop3::reward_pools(1).unwrap().started);
 		// admin stops the reward pool
 		assert_ok!(Drop3::stop_reward_pool(Origin::signed(1), 1));
-		assert!(!Drop3::reward_pools(1).started);
+		assert!(!Drop3::reward_pools(1).unwrap().started);
 		assert_noop!(
 			Drop3::start_reward_pool(Origin::signed(2), 1),
 			Error::<Test>::RequireAdminOrRewardPoolOwner
+		);
+		assert_noop!(
+			Drop3::start_reward_pool(Origin::signed(1), 5),
+			Error::<Test>::NoSuchRewardPool
 		);
 	});
 }
@@ -267,7 +285,7 @@ fn send_reward_works() {
 		assert_eq!(Balances::reserved_balance(3), 70);
 		assert_eq!(Balances::free_balance(4), 15);
 		assert_eq!(Balances::free_balance(5), 30);
-		assert_eq!(Drop3::reward_pools(1).remain, 70);
+		assert_eq!(Drop3::reward_pools(1).unwrap().remain, 70);
 		System::assert_has_event(Event::Drop3(crate::Event::RewardSent { to: 4, amount: 10 }));
 		System::assert_has_event(Event::Drop3(crate::Event::RewardSent { to: 5, amount: 20 }));
 	});

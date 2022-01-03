@@ -24,6 +24,7 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	Percent,
 };
+use sp_std::vec;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -115,10 +116,23 @@ pub(crate) fn propose_default_reward_pool(
 	id: <Test as pallet_drop3::Config>::PoolId,
 	should_change_current_max: bool,
 ) {
-	pallet_drop3::RewardPools::<Test>::insert(id, pallet_drop3::RewardPool::default());
+	let default_reward_pool = pallet_drop3::RewardPool::<_, _, _, _, _> {
+		id,
+		name: vec![].try_into().unwrap(),
+		owner: <Test as frame_system::Config>::AccountId::from(0u32),
+		total: <Test as pallet_balances::Config>::Balance::default(),
+		remain: <Test as pallet_balances::Config>::Balance::default(),
+		create_at: <Test as frame_system::Config>::BlockNumber::default(),
+		start_at: <Test as frame_system::Config>::BlockNumber::default(),
+		end_at: <Test as frame_system::Config>::BlockNumber::default(),
+		started: false,
+		approved: false,
+	};
+
+	pallet_drop3::RewardPools::<Test>::insert(id, default_reward_pool);
 	pallet_drop3::RewardPoolOwners::<Test>::insert(
 		id,
-		<Test as frame_system::Config>::AccountId::default(),
+		<Test as frame_system::Config>::AccountId::from(0u32),
 	);
 	if should_change_current_max {
 		pallet_drop3::CurrentMaxPoolId::<Test>::put(id);

@@ -65,7 +65,7 @@ use sp_std::vec::Vec;
 pub use weights::WeightInfo;
 
 /// a single reward pool
-#[derive(PartialEq, Eq, Default, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct RewardPool<PoolId, BoundedString, AccountId, Balance, BlockNumber> {
 	// unique pool id
 	id: PoolId,
@@ -159,7 +159,7 @@ pub mod pallet {
 			T::Balance,
 			T::BlockNumber,
 		>,
-		ValueQuery,
+		OptionQuery,
 	>;
 
 	/// Map for PoolId <> RewardPoolOwner
@@ -245,14 +245,18 @@ pub mod pallet {
 			id: T::PoolId,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			ensure!(sender == Self::admin().unwrap_or_default(), Error::<T>::RequireAdmin);
-			ensure!(RewardPools::<T>::contains_key(id), Error::<T>::NoSuchRewardPool);
+			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
 
 			RewardPools::<T>::mutate(id, |pool| {
-				pool.approved = true;
-			});
-			Self::deposit_event(Event::RewardPoolApproved { id });
-			Ok(().into())
+				if let Some(mut p) = pool.take() {
+					p.approved = true;
+					*pool = Some(p);
+					Self::deposit_event(Event::RewardPoolApproved { id });
+					Ok(().into())
+				} else {
+					Err(Error::<T>::NoSuchRewardPool.into())
+				}
+			})
 		}
 
 		/// Reject a RewardPool proposal, must be called from admin
@@ -262,10 +266,8 @@ pub mod pallet {
 			id: T::PoolId,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			ensure!(sender == Self::admin().unwrap_or_default(), Error::<T>::RequireAdmin);
-			ensure!(RewardPools::<T>::contains_key(id), Error::<T>::NoSuchRewardPool);
-
-			let pool = Self::reward_pools(id);
+			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
+			let pool = RewardPools::<T>::get(id).ok_or(Error::<T>::NoSuchRewardPool)?;
 			// a reward pool can't be rejected if it was approved earlier
 			ensure!(!pool.approved, Error::<T>::RewardPoolAlreadyApproved);
 
@@ -280,14 +282,16 @@ pub mod pallet {
 			// no error is thrown even if unslashed is non-zero.
 			let actual_slashed = to_slash - unslashed;
 			RewardPools::<T>::mutate(id, |pool| {
-				pool.remain = pool.remain.saturating_sub(actual_slashed);
+				if let Some(mut p) = pool.take() {
+					p.remain = p.remain.saturating_sub(actual_slashed);
+					*pool = Some(p);
+				}
 			});
 
 			Self::deposit_event(Event::RewardPoolRejected { id });
 			Self::deposit_event(Event::BalanceSlashed { who: pool.owner, amount: actual_slashed });
 
-			Self::unreserve_and_close_reward_pool(id);
-			Ok(().into())
+			Self::unreserve_and_close_reward_pool(id)
 		}
 
 		/// Start a reward pool, can be called by admin or reward pool owner
@@ -297,10 +301,9 @@ pub mod pallet {
 			id: T::PoolId,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			ensure!(RewardPools::<T>::contains_key(id), Error::<T>::NoSuchRewardPool);
-			let mut pool = RewardPools::<T>::get(id);
+			let mut pool = RewardPools::<T>::get(id).ok_or(Error::<T>::NoSuchRewardPool)?;
 			ensure!(
-				sender == Self::admin().unwrap_or_default() || sender == pool.owner,
+				Some(sender.clone()) == Self::admin() || sender == pool.owner,
 				Error::<T>::RequireAdminOrRewardPoolOwner
 			);
 			ensure!(pool.approved, Error::<T>::RewardPoolUnapproved);
@@ -315,10 +318,9 @@ pub mod pallet {
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::stop_reward_pool())]
 		pub fn stop_reward_pool(origin: OriginFor<T>, id: T::PoolId) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			ensure!(RewardPools::<T>::contains_key(id), Error::<T>::NoSuchRewardPool);
-			let mut pool = RewardPools::<T>::get(id);
+			let mut pool = RewardPools::<T>::get(id).ok_or(Error::<T>::NoSuchRewardPool)?;
 			ensure!(
-				sender == Self::admin().unwrap_or_default() || sender == pool.owner,
+				Some(sender.clone()) == Self::admin() || sender == pool.owner,
 				Error::<T>::RequireAdminOrRewardPoolOwner
 			);
 			ensure!(pool.approved, Error::<T>::RewardPoolUnapproved);
@@ -339,15 +341,13 @@ pub mod pallet {
 			id: T::PoolId,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			ensure!(RewardPools::<T>::contains_key(id), Error::<T>::NoSuchRewardPool);
+			let pool = RewardPools::<T>::get(id).ok_or(Error::<T>::NoSuchRewardPool)?;
 			ensure!(
-				sender == Self::admin().unwrap_or_default() ||
-					sender == Self::reward_pools(id).owner,
+				Some(sender.clone()) == Self::admin() || sender == pool.owner,
 				Error::<T>::RequireAdminOrRewardPoolOwner
 			);
 
-			Self::unreserve_and_close_reward_pool(id);
-			Ok(().into())
+			Self::unreserve_and_close_reward_pool(id)
 		}
 
 		/// Create a RewardPool proposal, can be called by any signed account
@@ -407,8 +407,7 @@ pub mod pallet {
 			amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			ensure!(RewardPools::<T>::contains_key(id), Error::<T>::NoSuchRewardPool);
-			let pool = Self::reward_pools(id);
+			let pool = RewardPools::<T>::get(id).ok_or(Error::<T>::NoSuchRewardPool)?;
 			ensure!(sender == pool.owner, Error::<T>::RequireRewardPoolOwner);
 			ensure!(pool.approved, Error::<T>::RewardPoolUnapproved);
 			ensure!(pool.started, Error::<T>::RewardPoolStopped);
@@ -448,7 +447,10 @@ pub mod pallet {
 			let actual_moved = amount - unmoved;
 			Self::deposit_event(Event::RewardSent { to, amount: actual_moved });
 			RewardPools::<T>::mutate(id, |pool| {
-				pool.remain = pool.remain.saturating_sub(actual_moved);
+				if let Some(mut p) = pool.take() {
+					p.remain = p.remain.saturating_sub(actual_moved);
+					*pool = Some(p);
+				}
 			});
 			ensure!(unmoved == Zero::zero(), Error::<T>::UnexpectedUnMovedAmount);
 			Ok(().into())
@@ -458,8 +460,8 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// close the reward pool, remove it from the map
 		/// and unreserve all the remaining token to the pool owner
-		fn unreserve_and_close_reward_pool(id: T::PoolId) {
-			let pool = RewardPools::<T>::take(id);
+		fn unreserve_and_close_reward_pool(id: T::PoolId) -> DispatchResultWithPostInfo {
+			let pool = RewardPools::<T>::take(id).ok_or(Error::<T>::NoSuchRewardPool)?;
 			// we don't care if reserved balance is less than pool.remain
 			let _ = <pallet_balances::Pallet<T> as ReservableCurrency<_>>::unreserve(
 				&pool.owner,
@@ -472,6 +474,8 @@ pub mod pallet {
 				name: pool.name.into_inner(),
 				owner: pool.owner,
 			});
+
+			Ok(().into())
 		}
 
 		pub fn get_sorted_pool_ids() -> Vec<T::PoolId> {
