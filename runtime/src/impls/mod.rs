@@ -42,10 +42,10 @@ where
 			&<pallet_authorship::Pallet<R>>::author(),
 			amount,
 		);
-		<frame_system::Pallet<R>>::deposit_event(pallet_balances::Event::Deposit(
-			author,
-			numeric_amount,
-		));
+		<frame_system::Pallet<R>>::deposit_event(pallet_balances::Event::Deposit {
+			who: author,
+			amount: numeric_amount,
+		});
 	}
 }
 

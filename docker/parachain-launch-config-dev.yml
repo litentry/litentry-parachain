@@ -4,41 +4,40 @@
 #
 # Relaychain Configuration
 relaychain:
-  image: parity/polkadot:latest # the docker image to use
-  chain: rococo-local # the chain to use
-  runtimeGenesisConfig: # additonal genesis override
+  image: parity/polkadot:latest
+  chain: rococo-local
+  runtimeGenesisConfig:
     configuration:
       config:
-        validation_upgrade_frequency: 1
-        validation_upgrade_delay: 1
-  env: # environment variables for all relaychain nodes
+        validation_upgrade_frequency: 3
+        validation_upgrade_delay: 3
+  env:
     RUST_LOG: parachain::candidate-backing=trace,parachain::candidate-selection=trace,parachain::pvf=trace,parachain::collator-protocol=trace,parachain::provisioner=trace
-  flags: # additional CLI flags for all relaychain nodes
+  flags:
     - --rpc-methods=unsafe
     - --execution=wasm
     - --no-beefy
-  nodes: # nodes config
-    - name: alice # the node name and session key, this imply `--alice`
+  nodes:
+    - name: alice
     - name: bob
 
 # Parachain Configuration
 parachains:
-# Config for first parachain
 - image: litentry/litentry-parachain:latest
   chain:
     base: dev
-  id: 2013 # override parachain id
-  parachain: true # this is parachain, not parathread
-  flags: # CLI flags for these parachain nodes
+  id: 2013
+  parachain: true
+  flags:
     - --rpc-methods=unsafe
     - --force-authoring
     - --execution=wasm
-  relaychainFlags: # CLI flags for the relaychain port
+  relaychainFlags:
     - --execution=wasm
     - --no-beefy
-  env: # environment variables for this parachain nodes
+  env:
     RUST_LOG: sc_basic_authorship=trace,cumulus-consensus=trace,cumulus-collator=trace,collator_protocol=trace,collation_generation=trace,aura=debug
-  volumePath: /data # The path to mount volume and base path, default to /data
-  nodes: # nodes config
-  - flags: # additional CLI flags for this node
+  volumePath: /data
+  nodes:
+  - flags:
     - --alice

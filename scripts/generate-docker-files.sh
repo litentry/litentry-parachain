@@ -14,11 +14,17 @@ CHAIN_TYPE=${1:-dev}
 
 print_divider
 
-if [ ! -f "$PARCHAIN_LAUNCH_BIN" ]; then
-  echo "installing parachain-launch ..."
-  yarn add @open-web3/parachain-launch
-  print_divider
-fi
+echo "installing parachain-launch ..."
+yarn add @open-web3/parachain-launch
+print_divider
+
+# pull the polkadot image to make sure we are using the latest
+# litentry-parachain image is left as it is, since it could be freshly built
+POLKADOT_IMAGE=$(grep 'parity/polkadot' "parachain-launch-config-$CHAIN_TYPE.yml" | sed 's/.*image: //')
+echo "pulling $POLKADOT_IMAGE ..."
+docker pull -q "$POLKADOT_IMAGE"
+
+print_divider
 
 "$PARCHAIN_LAUNCH_BIN" generate --config="parachain-launch-config-$CHAIN_TYPE.yml" --output="generated-$CHAIN_TYPE" --yes
 

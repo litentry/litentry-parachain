@@ -4,6 +4,6 @@
     "ocw_account" : "5FEYX9NES9mAJt1Xg4WebmHWywxyeGQK8G3oEBXtyfZrRePX",
     "parachain_genesis_path": "/tmp/parachain_dev/para-2013-genesis",
     "parachain_wasm_path": "/tmp/parachain_dev/para-2013-wasm",
-    "parachain_ws" : "ws://localhost:9946",
-    "relaynode_ws" : "ws://localhost:9944"
+    "parachain_ws" : "ws://127.0.0.1:9946",
+    "relaynode_ws" : "ws://127.0.0.1:9944"
 }

@@ -1,7 +1,7 @@
 # litentry-parachain
 [![Build & Test](https://github.com/litentry/litentry-parachain/actions/workflows/build_and_run_test.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/build_and_run_test.yml)
 [![Build wasm](https://github.com/litentry/litentry-parachain/actions/workflows/build_wasm.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/build_wasm.yml)
-[![Generate weights](https://github.com/litentry/litentry-parachain/actions/workflows/generate_weights.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/generate_weights.yml)
+[![Benchmark runtime weights](https://github.com/litentry/litentry-parachain/actions/workflows/benchmark_runtime_weights.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/benchmark_runtime_weights.yml)
 [![Create release draft](https://github.com/litentry/litentry-parachain/actions/workflows/create_release_draft.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/create_release_draft.yml)
 
 The Litentry parachain.
