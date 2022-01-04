@@ -62,9 +62,9 @@ fn run_to_block<T: Config>(n: T::BlockNumber) {
 // return the caller account
 fn create_default_caller<T: Config>() -> T::AccountId {
 	let caller: T::AccountId = account("caller", 0, SEED);
-	let existential_deposit = T::ExistentialDeposit::get();
-	let default_balance = existential_deposit.saturating_mul(DEFAULT_ED_MULTIPLIER.into());
-	let _ = <pallet_balances::Pallet<T> as Currency<_>>::deposit_creating(&caller, default_balance);
+	let default_balance =
+		T::Currency::minimum_balance().saturating_mul(DEFAULT_ED_MULTIPLIER.into());
+	let _ = T::Currency::deposit_creating(&caller, default_balance);
 	caller
 }
 
@@ -76,7 +76,7 @@ fn create_default_proposal<T: Config>(caller: T::AccountId) -> (T::PoolId, Vec<u
 	assert!(Drop3::<T>::propose_reward_pool(
 		RawOrigin::Signed(caller).into(),
 		name.clone(),
-		T::ExistentialDeposit::get().saturating_mul(DEFAULT_ED_MULTIPLIER.into()),
+		T::Currency::minimum_balance().saturating_mul(DEFAULT_ED_MULTIPLIER.into()),
 		1u32.into(),
 		5u32.into(),
 	)
@@ -140,7 +140,7 @@ benchmarks! {
 		assert_event::<T>(Event::RewardPoolRejected { id }.into());
 		assert_event::<T>(Event::BalanceSlashed {
 			who: caller.clone(),
-			amount: T::SlashPercent::get() * T::ExistentialDeposit::get().saturating_mul(DEFAULT_ED_MULTIPLIER.into()),
+			amount: T::SlashPercent::get() * T::Currency::minimum_balance().saturating_mul(DEFAULT_ED_MULTIPLIER.into()),
 		}.into());
 		assert_event::<T>(Event::RewardPoolRemoved { id, name, owner: caller }.into());
 	}
@@ -175,7 +175,7 @@ benchmarks! {
 	}: _(
 		RawOrigin::Signed(caller.clone()),
 		name.clone(),
-		T::ExistentialDeposit::get().saturating_mul(DEFAULT_ED_MULTIPLIER.into()),
+		T::Currency::minimum_balance().saturating_mul(DEFAULT_ED_MULTIPLIER.into()),
 		1u32.into(),
 		5u32.into()
 	)
@@ -188,12 +188,12 @@ benchmarks! {
 		let (caller, id, _) = setup::<T>(true);
 		let to: T::AccountId = account("to", 0, SEED);
 		// account must be active, otherwise you'll get DeadAccount error
-		let _ = <pallet_balances::Pallet<T> as Currency<_>>::deposit_creating(&to, T::ExistentialDeposit::get());
-		let amount: T::Balance = T::ExistentialDeposit::get().saturating_mul(TRANSFER_ED_MULTIPLIER.into());
+		let _ = T::Currency::deposit_creating(&to, T::Currency::minimum_balance());
+		let amount = T::Currency::minimum_balance().saturating_mul(TRANSFER_ED_MULTIPLIER.into());
 	}: _(RawOrigin::Signed(caller), id, to.clone(), amount)
 	verify {
 		assert_event::<T>(Event::RewardSent { to: to.clone(), amount }.into());
-		assert_eq!(<pallet_balances::Pallet<T> as Currency<_>>::free_balance(&to), amount + T::ExistentialDeposit::get());
+		assert_eq!(T::Currency::free_balance(&to), amount + T::Currency::minimum_balance());
 	}
 }
 

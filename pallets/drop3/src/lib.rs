@@ -51,7 +51,7 @@ pub mod weights;
 
 use frame_support::{
 	pallet_prelude::*,
-	traits::{BalanceStatus, ReservableCurrency, StorageVersion},
+	traits::{BalanceStatus, Currency, ReservableCurrency, StorageVersion},
 };
 use frame_system::pallet_prelude::*;
 pub use pallet::*;
@@ -63,7 +63,6 @@ use sp_runtime::{
 use scale_info::TypeInfo;
 use sp_std::vec::Vec;
 pub use weights::WeightInfo;
-
 /// a single reward pool
 #[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct RewardPool<PoolId, BoundedString, AccountId, Balance, BlockNumber> {
@@ -91,6 +90,9 @@ pub struct RewardPool<PoolId, BoundedString, AccountId, Balance, BlockNumber> {
 	approved: bool,
 }
 
+type BalanceOf<T> =
+	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
@@ -104,10 +106,11 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::config]
-	pub trait Config: pallet_balances::Config + frame_system::Config {
+	pub trait Config: frame_system::Config {
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
+		/// A unique id representing a single reward pool
 		type PoolId: Default
 			+ Copy
 			+ PartialEq
@@ -117,9 +120,13 @@ pub mod pallet {
 			+ From<u64>
 			+ TypeInfo;
 
+		/// Currency mechanism
+		type Currency: ReservableCurrency<Self::AccountId>;
+
 		/// The origin who can set the admin account
 		type SetAdminOrigin: EnsureOrigin<Self::Origin>;
 
+		/// Weights
 		type WeightInfo: WeightInfo;
 
 		/// percent of the total amount slashed when proposal gets rejected
@@ -156,7 +163,7 @@ pub mod pallet {
 			T::PoolId,
 			BoundedVec<u8, T::MaximumNameLength>,
 			T::AccountId,
-			T::Balance,
+			BalanceOf<T>,
 			T::BlockNumber,
 		>,
 		OptionQuery,
@@ -174,7 +181,7 @@ pub mod pallet {
 		/// Admin acccount was changed, the \[ old admin \] is provided
 		AdminChanged { old_admin: Option<T::AccountId> },
 		/// An \[ amount \] balance of \[ who \] was slashed
-		BalanceSlashed { who: T::AccountId, amount: T::Balance },
+		BalanceSlashed { who: T::AccountId, amount: BalanceOf<T> },
 		/// A reward pool with \[ id \] was approved by admin
 		RewardPoolApproved { id: T::PoolId },
 		/// A reward pool with \[ id \] was rejected by admin
@@ -188,7 +195,7 @@ pub mod pallet {
 		/// A reward pool with \[ id, name, owner \] was proposed
 		RewardPoolProposed { id: T::PoolId, name: Vec<u8>, owner: T::AccountId },
 		/// An \[ amount \] of reward was sent to \[ to \]
-		RewardSent { to: T::AccountId, amount: T::Balance },
+		RewardSent { to: T::AccountId, amount: BalanceOf<T> },
 	}
 
 	#[pallet::error]
@@ -247,15 +254,12 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
 
-			RewardPools::<T>::mutate(id, |pool| {
-				if let Some(mut p) = pool.take() {
-					p.approved = true;
-					*pool = Some(p);
-					Self::deposit_event(Event::RewardPoolApproved { id });
-					Ok(().into())
-				} else {
-					Err(Error::<T>::NoSuchRewardPool.into())
-				}
+			RewardPools::<T>::try_mutate(id, |pool| {
+				let mut p = pool.take().ok_or(Error::<T>::NoSuchRewardPool)?;
+				p.approved = true;
+				*pool = Some(p);
+				Self::deposit_event(Event::RewardPoolApproved { id });
+				Ok(().into())
 			})
 		}
 
@@ -267,30 +271,25 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
-			let pool = RewardPools::<T>::get(id).ok_or(Error::<T>::NoSuchRewardPool)?;
-			// a reward pool can't be rejected if it was approved earlier
-			ensure!(!pool.approved, Error::<T>::RewardPoolAlreadyApproved);
 
-			// slash a portion from reserved balance
-			let to_slash = T::SlashPercent::get() * pool.total;
-			let (_, unslashed) =
-				<pallet_balances::Pallet<T> as ReservableCurrency<_>>::slash_reserved(
-					&pool.owner,
-					to_slash,
-				);
-			// theoretically unslashed should be always 0, but just to play it safe
-			// no error is thrown even if unslashed is non-zero.
-			let actual_slashed = to_slash - unslashed;
-			RewardPools::<T>::mutate(id, |pool| {
-				if let Some(mut p) = pool.take() {
-					p.remain = p.remain.saturating_sub(actual_slashed);
-					*pool = Some(p);
-				}
-			});
+			let _ = RewardPools::<T>::try_mutate(id, |pool| -> DispatchResultWithPostInfo {
+				let mut p = pool.take().ok_or(Error::<T>::NoSuchRewardPool)?;
+				// a reward pool can't be rejected if it was approved earlier
+				ensure!(!p.approved, Error::<T>::RewardPoolAlreadyApproved);
+				// slash a portion from reserved balance
+				let to_slash = T::SlashPercent::get() * p.total;
+				let (_, unslashed) = T::Currency::slash_reserved(&p.owner, to_slash);
+				// theoretically unslashed should be always 0, but just to play it safe
+				// no error is thrown even if unslashed is non-zero.
+				let actual_slashed = to_slash - unslashed;
+				p.remain = p.remain.saturating_sub(actual_slashed);
+				*pool = Some(p.clone());
+				Self::deposit_event(Event::BalanceSlashed { who: p.owner, amount: actual_slashed });
+				Self::deposit_event(Event::RewardPoolRejected { id });
+				Ok(().into())
+			})?; // important to propagate the mutation error to caller
 
-			Self::deposit_event(Event::RewardPoolRejected { id });
-			Self::deposit_event(Event::BalanceSlashed { who: pool.owner, amount: actual_slashed });
-
+			// has to be after mutation is done
 			Self::unreserve_and_close_reward_pool(id)
 		}
 
@@ -301,34 +300,38 @@ pub mod pallet {
 			id: T::PoolId,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			let mut pool = RewardPools::<T>::get(id).ok_or(Error::<T>::NoSuchRewardPool)?;
-			ensure!(
-				Some(sender.clone()) == Self::admin() || sender == pool.owner,
-				Error::<T>::RequireAdminOrRewardPoolOwner
-			);
-			ensure!(pool.approved, Error::<T>::RewardPoolUnapproved);
 
-			pool.started = true;
-			RewardPools::<T>::insert(id, pool);
-			Self::deposit_event(Event::RewardPoolStarted { id });
-			Ok(().into())
+			RewardPools::<T>::try_mutate(id, |pool| {
+				let mut p = pool.take().ok_or(Error::<T>::NoSuchRewardPool)?;
+				ensure!(
+					Some(sender.clone()) == Self::admin() || sender == p.owner,
+					Error::<T>::RequireAdminOrRewardPoolOwner
+				);
+				ensure!(p.approved, Error::<T>::RewardPoolUnapproved);
+				p.started = true;
+				*pool = Some(p);
+				Self::deposit_event(Event::RewardPoolStarted { id });
+				Ok(().into())
+			})
 		}
 
 		/// Stop a reward pool, can be called by admin or reward pool owner
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::stop_reward_pool())]
 		pub fn stop_reward_pool(origin: OriginFor<T>, id: T::PoolId) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			let mut pool = RewardPools::<T>::get(id).ok_or(Error::<T>::NoSuchRewardPool)?;
-			ensure!(
-				Some(sender.clone()) == Self::admin() || sender == pool.owner,
-				Error::<T>::RequireAdminOrRewardPoolOwner
-			);
-			ensure!(pool.approved, Error::<T>::RewardPoolUnapproved);
 
-			pool.started = false;
-			RewardPools::<T>::insert(id, pool);
-			Self::deposit_event(Event::RewardPoolStopped { id });
-			Ok(().into())
+			RewardPools::<T>::try_mutate(id, |pool| {
+				let mut p = pool.take().ok_or(Error::<T>::NoSuchRewardPool)?;
+				ensure!(
+					Some(sender.clone()) == Self::admin() || sender == p.owner,
+					Error::<T>::RequireAdminOrRewardPoolOwner
+				);
+				ensure!(p.approved, Error::<T>::RewardPoolUnapproved);
+				p.started = false;
+				*pool = Some(p);
+				Self::deposit_event(Event::RewardPoolStopped { id });
+				Ok(().into())
+			})
 		}
 
 		/// Close a reward pool, can be called by admin or reward pool owner
@@ -355,7 +358,7 @@ pub mod pallet {
 		pub fn propose_reward_pool(
 			origin: OriginFor<T>,
 			name: Vec<u8>,
-			total: T::Balance,
+			total: BalanceOf<T>,
 			start_at: T::BlockNumber,
 			end_at: T::BlockNumber,
 		) -> DispatchResultWithPostInfo {
@@ -368,7 +371,7 @@ pub mod pallet {
 				name.clone().try_into().expect("reward pool name is too long");
 
 			// reserve the owner's balance
-			let _ = <pallet_balances::Pallet<T> as ReservableCurrency<_>>::reserve(&sender, total)?;
+			let _ = T::Currency::reserve(&sender, total)?;
 			let next_id: T::PoolId = Self::get_next_pool_id()?;
 			// create the reward pool
 			let new_reward_pool = RewardPool::<_, _, _, _, _> {
@@ -400,56 +403,49 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			id: T::PoolId,
 			to: T::AccountId,
-			amount: T::Balance,
+			amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			let pool = RewardPools::<T>::get(id).ok_or(Error::<T>::NoSuchRewardPool)?;
-			ensure!(sender == pool.owner, Error::<T>::RequireRewardPoolOwner);
-			ensure!(pool.approved, Error::<T>::RewardPoolUnapproved);
-			ensure!(pool.started, Error::<T>::RewardPoolStopped);
 
-			let now = <frame_system::Pallet<T>>::block_number();
-			ensure!(now >= pool.start_at, Error::<T>::RewardPoolRanTooEarly);
-			ensure!(now <= pool.end_at, Error::<T>::RewardPoolRanTooLate);
+			RewardPools::<T>::try_mutate(id, |pool| {
+				let mut p = pool.take().ok_or(Error::<T>::NoSuchRewardPool)?;
+				ensure!(sender == p.owner, Error::<T>::RequireRewardPoolOwner);
+				ensure!(p.approved, Error::<T>::RewardPoolUnapproved);
+				ensure!(p.started, Error::<T>::RewardPoolStopped);
 
-			// ensure the remaining amount of a pool >= amount to be sent
-			ensure!(pool.remain >= amount, Error::<T>::InsufficientRemain);
-			// ensure the reserved balance of the pool owner >= amount of a pool
-			// theoretically this should be always true, even when one account has multiple reward
-			// pools and the balance is reserved/unreserved here and there.
-			//
-			// If it somehow fails, it implies somewhere the code logic is wrong or the the reserved
-			// balance was (unexpectedly) unreserved
-			//
-			// we don't care so much about the comparison between reserved balance and pool.remain,
-			// the worst case is pool.remain is higher than reserved balance when unreserving, which
-			// is not so bad as up to 'reserved balance' will be unreserved anyway.
-			ensure!(
-				<pallet_balances::Pallet<T> as ReservableCurrency<_>>::reserved_balance(
-					&pool.owner
-				) >= amount,
-				Error::<T>::InsufficientReservedBalance
-			);
-			// do the transfer from the reserved balance
-			// we shall make sure the correct amount is included in event even when
-			// unmoved is non-zero (which should not happen)
-			let unmoved =
-				<pallet_balances::Pallet<T> as ReservableCurrency<_>>::repatriate_reserved(
-					&pool.owner,
-					&to,
-					amount,
-					BalanceStatus::Free,
-				)?;
-			let actual_moved = amount - unmoved;
-			Self::deposit_event(Event::RewardSent { to, amount: actual_moved });
-			RewardPools::<T>::mutate(id, |pool| {
-				if let Some(mut p) = pool.take() {
-					p.remain = p.remain.saturating_sub(actual_moved);
-					*pool = Some(p);
-				}
-			});
-			ensure!(unmoved == Zero::zero(), Error::<T>::UnexpectedUnMovedAmount);
-			Ok(().into())
+				let now = <frame_system::Pallet<T>>::block_number();
+				ensure!(now >= p.start_at, Error::<T>::RewardPoolRanTooEarly);
+				ensure!(now <= p.end_at, Error::<T>::RewardPoolRanTooLate);
+
+				// ensure the remaining amount of a pool >= amount to be sent
+				ensure!(p.remain >= amount, Error::<T>::InsufficientRemain);
+				// ensure the reserved balance of the pool owner >= amount of a pool
+				// theoretically this should be always true, even when one account has multiple
+				// reward pools and the balance is reserved/unreserved here and there.
+				//
+				// If it somehow fails, it implies somewhere the code logic is wrong or the the
+				// reserved balance was (unexpectedly) unreserved
+				//
+				// we don't care so much about the comparison between reserved balance and
+				// pool.remain, the worst case is pool.remain is higher than reserved balance when
+				// unreserving, which is not so bad as up to 'reserved balance' will be unreserved
+				// anyway.
+				ensure!(
+					T::Currency::reserved_balance(&p.owner) >= amount,
+					Error::<T>::InsufficientReservedBalance
+				);
+				// do the transfer from the reserved balance
+				// we shall make sure the correct amount is included in event even when
+				// unmoved is non-zero (which should not happen)
+				let unmoved =
+					T::Currency::repatriate_reserved(&p.owner, &to, amount, BalanceStatus::Free)?;
+				ensure!(unmoved == Zero::zero(), Error::<T>::UnexpectedUnMovedAmount);
+				let actual_moved = amount - unmoved;
+				p.remain = p.remain.saturating_sub(actual_moved);
+				*pool = Some(p);
+				Self::deposit_event(Event::RewardSent { to, amount: actual_moved });
+				Ok(().into())
+			})
 		}
 	}
 
@@ -459,10 +455,7 @@ pub mod pallet {
 		fn unreserve_and_close_reward_pool(id: T::PoolId) -> DispatchResultWithPostInfo {
 			let pool = RewardPools::<T>::take(id).ok_or(Error::<T>::NoSuchRewardPool)?;
 			// we don't care if reserved balance is less than pool.remain
-			let _ = <pallet_balances::Pallet<T> as ReservableCurrency<_>>::unreserve(
-				&pool.owner,
-				pool.remain,
-			);
+			let _ = T::Currency::unreserve(&pool.owner, pool.remain);
 			RewardPoolOwners::<T>::remove(pool.id);
 
 			Self::deposit_event(Event::RewardPoolRemoved {

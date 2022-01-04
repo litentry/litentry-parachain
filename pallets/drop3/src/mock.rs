@@ -106,6 +106,7 @@ impl pallet_drop3::Config for Test {
 	type Event = Event;
 	type PoolId = PoolId;
 	type SetAdminOrigin = EnsureSignedBy<One, u64>;
+	type Currency = Balances;
 	type WeightInfo = ();
 	type SlashPercent = SlashPercent;
 	type MaximumNameLength = MaximumNameLength;
@@ -120,8 +121,8 @@ pub(crate) fn propose_default_reward_pool(
 		id,
 		name: vec![].try_into().unwrap(),
 		owner: <Test as frame_system::Config>::AccountId::from(0u32),
-		total: <Test as pallet_balances::Config>::Balance::default(),
-		remain: <Test as pallet_balances::Config>::Balance::default(),
+		total: pallet_drop3::BalanceOf::<Test>::default(),
+		remain: pallet_drop3::BalanceOf::<Test>::default(),
 		create_at: <Test as frame_system::Config>::BlockNumber::default(),
 		start_at: <Test as frame_system::Config>::BlockNumber::default(),
 		end_at: <Test as frame_system::Config>::BlockNumber::default(),

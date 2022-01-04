@@ -42,7 +42,7 @@ fn set_admin_fails_with_unprivileged_origin() {
 #[test]
 fn propose_reward_pool_works() {
 	new_test_ext().execute_with(|| {
-		let _ = <Balances as Currency<_>>::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 100);
 		assert_ok!(Drop3::propose_reward_pool(Origin::signed(3), b"test".to_vec(), 100, 2, 3));
 		assert_eq!(Drop3::get_sorted_pool_ids(), vec![1]);
 		assert!(Drop3::reward_pools(1).is_some());
@@ -64,7 +64,7 @@ fn propose_reward_pool_works() {
 #[test]
 fn multiple_propose_reward_pool_works() {
 	new_test_ext().execute_with(|| {
-		let _ = <Balances as Currency<_>>::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 100);
 		assert_ok!(Drop3::propose_reward_pool(Origin::signed(3), b"test".to_vec(), 10, 2, 3));
 		assert_ok!(Drop3::propose_reward_pool(Origin::signed(3), b"test".to_vec(), 20, 4, 5));
 		assert_eq!(Drop3::get_sorted_pool_ids(), vec![1, 2]);
@@ -80,7 +80,7 @@ fn propose_reward_pool_works_with_wrapping_id() {
 		// manually insert a reward pool with `PoolId::max_value() - 1` as id
 		propose_default_reward_pool(PoolId::max_value() - 1, true);
 
-		let _ = <Balances as Currency<_>>::deposit_creating(&3, 1000);
+		let _ = Balances::deposit_creating(&3, 1000);
 
 		// create a new proposal, it should have the id PoolId::max_value()
 		assert_ok!(Drop3::propose_reward_pool(Origin::signed(3), b"test".to_vec(), 10, 2, 3));
@@ -119,7 +119,7 @@ fn propose_reward_pool_works_with_wrapping_id() {
 #[test]
 fn propose_reward_pool_fails_with_zero_toal() {
 	new_test_ext().execute_with(|| {
-		let _ = <Balances as Currency<_>>::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 100);
 		assert_noop!(
 			Drop3::propose_reward_pool(Origin::signed(3), b"test".to_vec(), 0, 2, 3),
 			Error::<Test>::InvalidTotalBalance
@@ -131,7 +131,7 @@ fn propose_reward_pool_fails_with_zero_toal() {
 #[test]
 fn propose_reward_pool_fails_with_insufficient_balance() {
 	new_test_ext().execute_with(|| {
-		let _ = <Balances as Currency<_>>::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 100);
 		assert_noop!(
 			Drop3::propose_reward_pool(Origin::signed(3), b"test".to_vec(), 200, 2, 3),
 			pallet_balances::Error::<Test, _>::InsufficientBalance
@@ -143,7 +143,7 @@ fn propose_reward_pool_fails_with_insufficient_balance() {
 #[test]
 fn approve_reward_pool_works() {
 	new_test_ext().execute_with(|| {
-		let _ = <Balances as Currency<_>>::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 100);
 		assert_ok!(Drop3::propose_reward_pool(Origin::signed(3), b"test".to_vec(), 100, 2, 3));
 		assert_ok!(Drop3::approve_reward_pool(Origin::signed(1), 1));
 		assert!(Drop3::reward_pools(1).unwrap().approved);
@@ -154,7 +154,7 @@ fn approve_reward_pool_works() {
 #[test]
 fn approve_reward_pool_fails_with_non_admin() {
 	new_test_ext().execute_with(|| {
-		let _ = <Balances as Currency<_>>::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 100);
 		assert_ok!(Drop3::propose_reward_pool(Origin::signed(3), b"test".to_vec(), 100, 2, 3));
 		assert_noop!(Drop3::approve_reward_pool(Origin::signed(3), 1), Error::<Test>::RequireAdmin);
 		assert!(!Drop3::reward_pools(1).unwrap().approved);
@@ -164,7 +164,7 @@ fn approve_reward_pool_fails_with_non_admin() {
 #[test]
 fn approve_reward_pool_fails_with_non_existent_pool() {
 	new_test_ext().execute_with(|| {
-		let _ = <Balances as Currency<_>>::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 100);
 		assert_ok!(Drop3::propose_reward_pool(Origin::signed(3), b"test".to_vec(), 100, 2, 3));
 		assert_noop!(
 			Drop3::approve_reward_pool(Origin::signed(1), 2),
@@ -177,7 +177,7 @@ fn approve_reward_pool_fails_with_non_existent_pool() {
 #[test]
 fn reject_reward_pool_works() {
 	new_test_ext().execute_with(|| {
-		let _ = <Balances as Currency<_>>::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 100);
 		assert_ok!(Drop3::propose_reward_pool(Origin::signed(3), b"test".to_vec(), 100, 2, 3));
 		assert_ok!(Drop3::reject_reward_pool(Origin::signed(1), 1));
 		assert_eq!(Balances::reserved_balance(3), 0);
@@ -190,13 +190,17 @@ fn reject_reward_pool_works() {
 			name: b"test".to_vec(),
 			owner: 3,
 		}));
+		assert_noop!(
+			Drop3::reject_reward_pool(Origin::signed(1), 5),
+			Error::<Test>::NoSuchRewardPool
+		);
 	});
 }
 
 #[test]
 fn reject_reward_pool_works_with_unexpected_unreserve() {
 	new_test_ext().execute_with(|| {
-		let _ = <Balances as Currency<_>>::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 100);
 		assert_ok!(Drop3::propose_reward_pool(Origin::signed(3), b"test".to_vec(), 100, 2, 3));
 		// intentionally unreserve 90 out of 100
 		<Balances as ReservableCurrency<_>>::unreserve(&3, 90);
@@ -217,9 +221,30 @@ fn reject_reward_pool_works_with_unexpected_unreserve() {
 }
 
 #[test]
+fn reject_reward_pool_fails_with_already_approved() {
+	new_test_ext().execute_with(|| {
+		let _ = Balances::deposit_creating(&3, 100);
+		assert_ok!(Drop3::propose_reward_pool(Origin::signed(3), b"test".to_vec(), 100, 2, 3));
+		assert_ok!(Drop3::approve_reward_pool(Origin::signed(1), 1));
+		assert!(Drop3::reward_pools(1).unwrap().approved);
+		System::assert_has_event(Event::Drop3(crate::Event::RewardPoolApproved { id: 1 }));
+		// reject an approved proposal should fail
+		assert_noop!(
+			Drop3::reject_reward_pool(Origin::signed(1), 1),
+			Error::<Test>::RewardPoolAlreadyApproved
+		);
+		// the pool shouldn't be deleted and no change of reserved balance
+		assert!(crate::RewardPools::<Test>::contains_key(1));
+		assert!(Drop3::reward_pools(1).unwrap().approved);
+		assert_eq!(Drop3::reward_pools(1).unwrap().remain, 100);
+		assert_eq!(Balances::reserved_balance(3), 100);
+	});
+}
+
+#[test]
 fn start_stop_reward_pool_works() {
 	new_test_ext().execute_with(|| {
-		let _ = <Balances as Currency<_>>::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 100);
 		assert_ok!(Drop3::propose_reward_pool(Origin::signed(3), b"test".to_vec(), 100, 2, 3));
 		assert_ok!(Drop3::approve_reward_pool(Origin::signed(1), 1));
 		// pool owner starts the reward pool
@@ -236,13 +261,21 @@ fn start_stop_reward_pool_works() {
 			Drop3::start_reward_pool(Origin::signed(1), 5),
 			Error::<Test>::NoSuchRewardPool
 		);
+		assert_noop!(
+			Drop3::stop_reward_pool(Origin::signed(2), 1),
+			Error::<Test>::RequireAdminOrRewardPoolOwner
+		);
+		assert_noop!(
+			Drop3::stop_reward_pool(Origin::signed(1), 5),
+			Error::<Test>::NoSuchRewardPool
+		);
 	});
 }
 
 #[test]
 fn close_reward_pool_works() {
 	new_test_ext().execute_with(|| {
-		let _ = <Balances as Currency<_>>::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 100);
 		assert_ok!(Drop3::propose_reward_pool(Origin::signed(3), b"test".to_vec(), 100, 2, 3));
 		// pool owner should be able to close the pool even before the admin approves or rejects it
 		assert_ok!(Drop3::close_reward_pool(Origin::signed(3), 1));
@@ -266,9 +299,9 @@ fn close_reward_pool_works() {
 #[test]
 fn send_reward_works() {
 	new_test_ext().execute_with(|| {
-		let _ = <Balances as Currency<_>>::deposit_creating(&3, 100);
-		let _ = <Balances as Currency<_>>::deposit_creating(&4, 5);
-		let _ = <Balances as Currency<_>>::deposit_creating(&5, 10);
+		let _ = Balances::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&4, 5);
+		let _ = Balances::deposit_creating(&5, 10);
 
 		assert_ok!(Drop3::propose_reward_pool(Origin::signed(3), b"test".to_vec(), 100, 1, 3));
 		assert_ok!(Drop3::approve_reward_pool(Origin::signed(1), 1));
@@ -294,9 +327,9 @@ fn send_reward_works() {
 #[test]
 fn send_reward_fails_with_unapproved_pool() {
 	new_test_ext().execute_with(|| {
-		let _ = <Balances as Currency<_>>::deposit_creating(&3, 100);
-		let _ = <Balances as Currency<_>>::deposit_creating(&4, 5);
-		let _ = <Balances as Currency<_>>::deposit_creating(&5, 10);
+		let _ = Balances::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&4, 5);
+		let _ = Balances::deposit_creating(&5, 10);
 
 		assert_ok!(Drop3::propose_reward_pool(Origin::signed(3), b"test".to_vec(), 100, 1, 3));
 		assert_noop!(
@@ -309,9 +342,9 @@ fn send_reward_fails_with_unapproved_pool() {
 #[test]
 fn send_reward_fails_with_stopped_pool() {
 	new_test_ext().execute_with(|| {
-		let _ = <Balances as Currency<_>>::deposit_creating(&3, 100);
-		let _ = <Balances as Currency<_>>::deposit_creating(&4, 5);
-		let _ = <Balances as Currency<_>>::deposit_creating(&5, 10);
+		let _ = Balances::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&4, 5);
+		let _ = Balances::deposit_creating(&5, 10);
 
 		assert_ok!(Drop3::propose_reward_pool(Origin::signed(3), b"test".to_vec(), 100, 1, 3));
 		assert_ok!(Drop3::approve_reward_pool(Origin::signed(1), 1));
@@ -325,7 +358,7 @@ fn send_reward_fails_with_stopped_pool() {
 #[test]
 fn send_reward_fails_with_too_early() {
 	new_test_ext().execute_with(|| {
-		let _ = <Balances as Currency<_>>::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 100);
 		System::set_block_number(1);
 		assert_ok!(Drop3::propose_reward_pool(Origin::signed(3), b"test".to_vec(), 100, 2, 3));
 		assert_ok!(Drop3::approve_reward_pool(Origin::signed(1), 1));
@@ -341,7 +374,7 @@ fn send_reward_fails_with_too_early() {
 #[test]
 fn send_reward_fails_with_too_late() {
 	new_test_ext().execute_with(|| {
-		let _ = <Balances as Currency<_>>::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 100);
 		System::set_block_number(4);
 		assert_ok!(Drop3::propose_reward_pool(Origin::signed(3), b"test".to_vec(), 100, 2, 3));
 		assert_ok!(Drop3::approve_reward_pool(Origin::signed(1), 1));
@@ -357,9 +390,9 @@ fn send_reward_fails_with_too_late() {
 #[test]
 fn send_reward_fails_with_insufficient_reserved_balance() {
 	new_test_ext().execute_with(|| {
-		let _ = <Balances as Currency<_>>::deposit_creating(&3, 100);
-		let _ = <Balances as Currency<_>>::deposit_creating(&4, 5);
-		let _ = <Balances as Currency<_>>::deposit_creating(&5, 10);
+		let _ = Balances::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&4, 5);
+		let _ = Balances::deposit_creating(&5, 10);
 
 		assert_ok!(Drop3::propose_reward_pool(Origin::signed(3), b"test".to_vec(), 100, 1, 3));
 		assert_ok!(Drop3::approve_reward_pool(Origin::signed(1), 1));
@@ -377,9 +410,9 @@ fn send_reward_fails_with_insufficient_reserved_balance() {
 #[test]
 fn send_reward_fails_with_insufficient_remain() {
 	new_test_ext().execute_with(|| {
-		let _ = <Balances as Currency<_>>::deposit_creating(&3, 100);
-		let _ = <Balances as Currency<_>>::deposit_creating(&4, 5);
-		let _ = <Balances as Currency<_>>::deposit_creating(&5, 10);
+		let _ = Balances::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&4, 5);
+		let _ = Balances::deposit_creating(&5, 10);
 
 		assert_ok!(Drop3::propose_reward_pool(Origin::signed(3), b"test".to_vec(), 100, 1, 3));
 		assert_ok!(Drop3::approve_reward_pool(Origin::signed(1), 1));

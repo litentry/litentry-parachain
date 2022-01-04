@@ -867,6 +867,7 @@ impl pallet_drop3::Config for Runtime {
 	type Event = Event;
 	type PoolId = u64;
 	type SetAdminOrigin = EnsureRootOrHalfCouncil;
+	type Currency = Balances;
 	type WeightInfo = (); // To be rerun with runtime benchmarks
 	type SlashPercent = SlashPercent;
 	type MaximumNameLength = MaximumNameLength;
