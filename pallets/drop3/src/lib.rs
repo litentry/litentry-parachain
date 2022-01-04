@@ -362,10 +362,6 @@ pub mod pallet {
 			// a few sanity checks
 			let sender = ensure_signed(origin)?;
 			ensure!(total > 0u32.into(), Error::<T>::InvalidTotalBalance);
-			ensure!(
-				<pallet_balances::Pallet<T> as ReservableCurrency<_>>::can_reserve(&sender, total),
-				Error::<T>::InsufficientReservedBalance
-			);
 			ensure!(end_at >= start_at, Error::<T>::InvalidProposedBlock);
 
 			let bounded_name: BoundedVec<u8, T::MaximumNameLength> =

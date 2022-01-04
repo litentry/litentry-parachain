@@ -134,7 +134,7 @@ fn propose_reward_pool_fails_with_insufficient_balance() {
 		let _ = <Balances as Currency<_>>::deposit_creating(&3, 100);
 		assert_noop!(
 			Drop3::propose_reward_pool(Origin::signed(3), b"test".to_vec(), 200, 2, 3),
-			Error::<Test>::InsufficientReservedBalance
+			pallet_balances::Error::<Test, _>::InsufficientBalance
 		);
 		assert_eq!(Drop3::get_sorted_pool_ids(), Vec::<PoolId>::new());
 	});
