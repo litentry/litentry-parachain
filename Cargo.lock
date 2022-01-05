@@ -108,9 +108,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.51"
+version = "1.0.52"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b26702f315f53b6071259e15dd9d64528213b44d61de1ec926eca7715d62203"
+checksum = "84450d0b4a8bd1ba4144ce8ce718fbc5d071358b1e5384bace6536b3d1f2d5b3"
 
 [[package]]
 name = "approx"
@@ -3147,7 +3147,7 @@ dependencies = [
  "http",
  "jsonrpsee-types",
  "log",
- "pin-project 1.0.8",
+ "pin-project 1.0.9",
  "rustls-native-certs",
  "serde",
  "serde_json",
@@ -3302,7 +3302,7 @@ dependencies = [
  "libp2p-yamux",
  "multiaddr",
  "parking_lot 0.11.2",
- "pin-project 1.0.8",
+ "pin-project 1.0.9",
  "smallvec",
  "wasm-timer",
 ]
@@ -3327,7 +3327,7 @@ dependencies = [
  "multihash 0.14.0",
  "multistream-select",
  "parking_lot 0.11.2",
- "pin-project 1.0.8",
+ "pin-project 1.0.9",
  "prost",
  "prost-build",
  "rand 0.8.4",
@@ -3568,7 +3568,7 @@ checksum = "0f1a458bbda880107b5b36fcb9b5a1ef0c329685da0e203ed692a8ebe64cc92c"
 dependencies = [
  "futures 0.3.19",
  "log",
- "pin-project 1.0.8",
+ "pin-project 1.0.9",
  "rand 0.7.3",
  "salsa20",
  "sha3",
@@ -3587,7 +3587,7 @@ dependencies = [
  "libp2p-core",
  "libp2p-swarm",
  "log",
- "pin-project 1.0.8",
+ "pin-project 1.0.9",
  "prost",
  "prost-build",
  "rand 0.7.3",
@@ -3631,7 +3631,7 @@ dependencies = [
  "libp2p-core",
  "libp2p-swarm",
  "log",
- "lru 0.7.1",
+ "lru 0.7.2",
  "rand 0.7.3",
  "smallvec",
  "unsigned-varint 0.7.1",
@@ -3930,6 +3930,7 @@ dependencies = [
  "pallet-collator-selection",
  "pallet-collective",
  "pallet-democracy",
+ "pallet-drop3",
  "pallet-membership",
  "pallet-multisig",
  "pallet-proxy",
@@ -4007,9 +4008,9 @@ dependencies = [
 
 [[package]]
 name = "lru"
-version = "0.7.1"
+version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "469898e909a1774d844793b347135a0cd344ca2f69d082013ecb8061a2229a3a"
+checksum = "274353858935c992b13c0ca408752e2121da852d07dec7ce5f108c77dfa14d1f"
 dependencies = [
  "hashbrown",
 ]
@@ -4357,7 +4358,7 @@ dependencies = [
  "bytes 1.1.0",
  "futures 0.3.19",
  "log",
- "pin-project 1.0.8",
+ "pin-project 1.0.9",
  "smallvec",
  "unsigned-varint 0.7.1",
 ]
@@ -4799,6 +4800,22 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-drop3"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -5565,27 +5582,27 @@ dependencies = [
 
 [[package]]
 name = "pin-project"
-version = "0.4.28"
+version = "0.4.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "918192b5c59119d51e0cd221f4d49dde9112824ba717369e903c97d076083d0f"
+checksum = "9615c18d31137579e9ff063499264ddc1278e7b1982757ebc111028c4d1dc909"
 dependencies = [
- "pin-project-internal 0.4.28",
+ "pin-project-internal 0.4.29",
 ]
 
 [[package]]
 name = "pin-project"
-version = "1.0.8"
+version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "576bc800220cc65dac09e99e97b08b358cfab6e17078de8dc5fee223bd2d0c08"
+checksum = "1622113ce508488160cff04e6abc60960e676d330e1ca0f77c0b8df17c81438f"
 dependencies = [
- "pin-project-internal 1.0.8",
+ "pin-project-internal 1.0.9",
 ]
 
 [[package]]
 name = "pin-project-internal"
-version = "0.4.28"
+version = "0.4.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3be26700300be6d9d23264c73211d8190e755b6b5ca7a1b28230025511b52a5e"
+checksum = "044964427019eed9d49d9d5bbce6047ef18f37100ea400912a9fa4a3523ab12a"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -5594,9 +5611,9 @@ dependencies = [
 
 [[package]]
 name = "pin-project-internal"
-version = "1.0.8"
+version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e8fe8163d14ce7f0cdac2e040116f22eac817edabff0be91e8aff7e9accf389"
+checksum = "b95af56fee93df76d721d356ac1ca41fccf168bc448eb14049234df764ba3e76"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -5667,7 +5684,7 @@ source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.13#7d8f
 dependencies = [
  "derive_more",
  "futures 0.3.19",
- "lru 0.7.1",
+ "lru 0.7.2",
  "parity-scale-codec",
  "polkadot-erasure-coding",
  "polkadot-node-network-protocol",
@@ -5688,7 +5705,7 @@ version = "0.9.13"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.13#7d8f00b90cd6d87780123b3e08ca120cfb0c6e50"
 dependencies = [
  "futures 0.3.19",
- "lru 0.7.1",
+ "lru 0.7.2",
  "parity-scale-codec",
  "polkadot-erasure-coding",
  "polkadot-node-network-protocol",
@@ -5793,7 +5810,7 @@ source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.13#7d8f
 dependencies = [
  "derive_more",
  "futures 0.3.19",
- "lru 0.7.1",
+ "lru 0.7.2",
  "parity-scale-codec",
  "polkadot-erasure-coding",
  "polkadot-node-network-protocol",
@@ -5889,7 +5906,7 @@ dependencies = [
  "futures 0.3.19",
  "futures-timer 3.0.2",
  "kvdb",
- "lru 0.7.1",
+ "lru 0.7.2",
  "merlin",
  "parity-scale-codec",
  "polkadot-node-jaeger",
@@ -6087,7 +6104,7 @@ dependencies = [
  "futures-timer 3.0.2",
  "libc",
  "parity-scale-codec",
- "pin-project 1.0.8",
+ "pin-project 1.0.9",
  "polkadot-core-primitives",
  "polkadot-node-subsystem-util",
  "polkadot-parachain",
@@ -6230,10 +6247,10 @@ dependencies = [
  "derive_more",
  "futures 0.3.19",
  "itertools",
- "lru 0.7.1",
+ "lru 0.7.2",
  "metered-channel",
  "parity-scale-codec",
- "pin-project 1.0.8",
+ "pin-project 1.0.9",
  "polkadot-node-jaeger",
  "polkadot-node-metrics",
  "polkadot-node-network-protocol",
@@ -6255,7 +6272,7 @@ source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.13#7d8f
 dependencies = [
  "futures 0.3.19",
  "futures-timer 3.0.2",
- "lru 0.7.1",
+ "lru 0.7.2",
  "parity-util-mem",
  "parking_lot 0.11.2",
  "polkadot-node-metrics",
@@ -6278,7 +6295,7 @@ dependencies = [
  "futures 0.3.19",
  "futures-timer 3.0.2",
  "metered-channel",
- "pin-project 1.0.8",
+ "pin-project 1.0.9",
  "polkadot-node-network-protocol",
  "polkadot-node-primitives",
  "polkadot-overseer-gen-proc-macro",
@@ -6549,7 +6566,7 @@ dependencies = [
  "hex-literal",
  "kvdb",
  "kvdb-rocksdb",
- "lru 0.7.1",
+ "lru 0.7.2",
  "pallet-babe",
  "pallet-im-online",
  "pallet-mmr-primitives",
@@ -6772,9 +6789,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.34"
+version = "1.0.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f84e92c0f7c9d58328b85a78557813e4bd845130db68d7184635344399423b1"
+checksum = "c7342d5883fbccae1cc37a2353b09c87c9b0f3afd73f5fb9bba687a1f733b029"
 dependencies = [
  "unicode-xid",
 ]
@@ -6891,9 +6908,9 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.10"
+version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38bc8cc6a5f2e3655e0899c1b848643b2562f853f114bfec7be120678e3ace05"
+checksum = "47aa80447ce4daf1717500037052af176af5d38cc3e571d9ec1c7353fc10c87d"
 dependencies = [
  "proc-macro2",
 ]
@@ -7315,7 +7332,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4da5fcb054c46f5a5dff833b129285a93d3f0179531735e6c866e8cc307d2020"
 dependencies = [
  "futures 0.3.19",
- "pin-project 0.4.28",
+ "pin-project 0.4.29",
  "static_assertions",
 ]
 
@@ -7904,10 +7921,10 @@ dependencies = [
  "linked-hash-map",
  "linked_hash_set",
  "log",
- "lru 0.7.1",
+ "lru 0.7.2",
  "parity-scale-codec",
  "parking_lot 0.11.2",
- "pin-project 1.0.8",
+ "pin-project 1.0.9",
  "prost",
  "prost-build",
  "rand 0.7.3",
@@ -7941,7 +7958,7 @@ dependencies = [
  "futures-timer 3.0.2",
  "libp2p",
  "log",
- "lru 0.7.1",
+ "lru 0.7.2",
  "sc-network",
  "sp-runtime",
  "substrate-prometheus-endpoint",
@@ -8088,7 +8105,7 @@ dependencies = [
  "parity-scale-codec",
  "parity-util-mem",
  "parking_lot 0.11.2",
- "pin-project 1.0.8",
+ "pin-project 1.0.9",
  "rand 0.7.3",
  "sc-block-builder",
  "sc-chain-spec",
@@ -8181,7 +8198,7 @@ dependencies = [
  "libp2p",
  "log",
  "parking_lot 0.11.2",
- "pin-project 1.0.8",
+ "pin-project 1.0.9",
  "rand 0.7.3",
  "serde",
  "serde_json",
@@ -8773,7 +8790,7 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.13#fc
 dependencies = [
  "futures 0.3.19",
  "log",
- "lru 0.7.1",
+ "lru 0.7.2",
  "parity-scale-codec",
  "parking_lot 0.11.2",
  "sp-api",
@@ -9564,9 +9581,9 @@ checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 
 [[package]]
 name = "syn"
-version = "1.0.82"
+version = "1.0.84"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8daf5dd0bb60cbd4137b1b587d2fc0ae729bc07cf01cd70b36a1ed5ade3b9d59"
+checksum = "ecb2e6da8ee5eb9a61068762a32fa9619cc591ceb055b3687f4cd4051ec2e06b"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -9853,7 +9870,7 @@ version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97d095ae15e245a057c8e8451bab9b3ee1e1f68e9ba2b4fbc18d0ac5237835f2"
 dependencies = [
- "pin-project 1.0.8",
+ "pin-project 1.0.9",
  "tracing",
 ]
 
@@ -10004,9 +10021,9 @@ checksum = "5e66dcbec4290c69dd03c57e76c2469ea5c7ce109c6dd4351c13055cf71ea055"
 
 [[package]]
 name = "twox-hash"
-version = "1.6.1"
+version = "1.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f559b464de2e2bdabcac6a210d12e9b5a5973c251e102c44c585c71d51bd78e"
+checksum = "4ee73e6e4924fe940354b8d4d98cad5231175d615cd855b758adc658c0aac6a0"
 dependencies = [
  "cfg-if 1.0.0",
  "rand 0.8.4",
@@ -10015,9 +10032,9 @@ dependencies = [
 
 [[package]]
 name = "typenum"
-version = "1.14.0"
+version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b63708a265f51345575b27fe43f9500ad611579e764c79edbc2037b1121959ec"
+checksum = "dcf81ac59edc17cc8697ff311e8f5ef2d99fcbd9817b34cec66f90b6c3dfd987"
 
 [[package]]
 name = "ucd-trie"
@@ -10731,18 +10748,18 @@ dependencies = [
 
 [[package]]
 name = "zstd"
-version = "0.9.0+zstd.1.5.0"
+version = "0.9.1+zstd.1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07749a5dc2cb6b36661290245e350f15ec3bbb304e493db54a1d354480522ccd"
+checksum = "538b8347df9257b7fbce37677ef7535c00a3c7bf1f81023cc328ed7fe4b41de8"
 dependencies = [
  "zstd-safe",
 ]
 
 [[package]]
 name = "zstd-safe"
-version = "4.1.1+zstd.1.5.0"
+version = "4.1.2+zstd.1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c91c90f2c593b003603e5e0493c837088df4469da25aafff8bce42ba48caf079"
+checksum = "9fb4cfe2f6e6d35c5d27ecd9d256c4b6f7933c4895654917460ec56c29336cc1"
 dependencies = [
  "libc",
  "zstd-sys",
@@ -10750,9 +10767,9 @@ dependencies = [
 
 [[package]]
 name = "zstd-sys"
-version = "1.6.1+zstd.1.5.0"
+version = "1.6.2+zstd.1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "615120c7a2431d16cf1cf979e7fc31ba7a5b5e5707b29c8a99e5dbf8a8392a33"
+checksum = "2daf2f248d9ea44454bfcb2516534e8b8ad2fc91bf818a1885495fc42bc8ac9f"
 dependencies = [
  "cc",
  "libc",
