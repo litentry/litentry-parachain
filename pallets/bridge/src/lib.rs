@@ -53,7 +53,7 @@ pub mod pallet {
 	/// Helper function to concatenate a chain ID and some bytes to produce a resource ID.
 	/// The common format is (31 bytes unique ID + 1 byte chain ID).
 	pub fn derive_resource_id(chain: u8, id: &[u8]) -> ResourceId {
-		if id.len() == 0 {
+		if id.is_empty() {
 			[0; 32]
 		} else {
 			let mut r_id: ResourceId = [0; 32];
