@@ -2,8 +2,10 @@
 
 set -eo pipefail
 
-# this script will be run on the remote host
-# to calculate the weights
+# This script benchmarks the runtime weight on the remote host.
+#
+# For now it doesn't support benchmarking the pallet weight, which is less
+# important from where we stand and it will be overriden by runtime weight anyway
 
 function usage() {
   echo "Usage: $0 branch-or-tag pallet-names"
@@ -47,7 +49,7 @@ for p in $PALLETS; do
   # Warning: There are more items queued in the Scheduler than expected from the runtime configuration.
   #          An update might be needed
   RUST_LOG=runtime::scheduler=error ./litentry-collator benchmark \
-      --chain=dev \
+      --chain=generate-prod \
       --execution=wasm  \
       --db-cache=20 \
       --wasm-execution=compiled \
