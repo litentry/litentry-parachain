@@ -81,6 +81,8 @@ frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", d
 # Litentry pallet dependencies
 pallet-bridge = { path = "../pallets/bridge", default-features = false }
 pallet-bridge-transfer = { path = "../pallets/bridge-transfer", default-features = false }
+# Litentry pallets
+pallet-drop3 = { path = "../pallets/drop3", default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.3.4"
@@ -116,6 +118,7 @@ std = [
 	"pallet-balances/std",
 	"pallet-collective/std",
 	"pallet-democracy/std",
+	"pallet-drop3/std",
 	"pallet-membership/std",
 	"pallet-multisig/std",
 	"pallet-proxy/std",
@@ -157,6 +160,7 @@ runtime-benchmarks = [
 	"pallet-collator-selection/runtime-benchmarks",
 	"pallet-collective/runtime-benchmarks",
 	"pallet-democracy/runtime-benchmarks",
+	"pallet-drop3/runtime-benchmarks",
 	"pallet-membership/runtime-benchmarks",
 	"pallet-multisig/runtime-benchmarks",
 	"pallet-proxy/runtime-benchmarks",
