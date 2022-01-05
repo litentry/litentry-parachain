@@ -859,6 +859,21 @@ impl pallet_vesting::Config for Runtime {
 }
 
 parameter_types! {
+	pub const SlashPercent: Percent = Percent::from_percent(20);
+	pub const MaximumNameLength: u32 = 16;
+}
+
+impl pallet_drop3::Config for Runtime {
+	type Event = Event;
+	type PoolId = u64;
+	type SetAdminOrigin = EnsureRootOrHalfCouncil;
+	type Currency = Balances;
+	type WeightInfo = (); // To be rerun with runtime benchmarks
+	type SlashPercent = SlashPercent;
+	type MaximumNameLength = MaximumNameLength;
+}
+
+parameter_types! {
 	pub const MaxMetadata: u32 = 15;
 }
 
@@ -1034,18 +1049,22 @@ construct_runtime! {
 		} = 30,
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 31,
 
-		// Collator support. the order of these 4 are important and shall not change.
+		// Collator support
+		// The order of these 4 are important and shall not change.
 		Authorship: pallet_authorship::{Pallet, Call, Storage} = 40,
 		CollatorSelection: pallet_collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>} = 41,
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 42,
 		Aura: pallet_aura::{Pallet, Storage, Config<T>} = 43,
 		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config} = 44,
 
-		// XCM helpers.
+		// XCM helpers
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 50,
 		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 51,
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 52,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 53,
+
+		// Litentry pallets
+		Drop3: pallet_drop3::{Pallet, Call, Storage, Event<T>} = 70,
 
 		// PNS
 		PnsNft: pns_registrar::nft,
@@ -1218,6 +1237,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_collator_selection, CollatorSelection);
 			list_benchmark!(list, extra, pallet_membership, CouncilMembership);
 			list_benchmark!(list, extra, pallet_multisig, Multisig);
+			list_benchmark!(list, extra, pallet_drop3, Drop3);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 			(list, storage_info)
@@ -1259,6 +1279,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_collator_selection, CollatorSelection);
 			add_benchmark!(params, batches, pallet_membership, CouncilMembership);
 			add_benchmark!(params, batches, pallet_multisig, Multisig);
+			add_benchmark!(params, batches, pallet_drop3, Drop3);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
