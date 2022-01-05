@@ -32,17 +32,21 @@ impl registrar::WeightInfo for WeightInfo {
 		10_000
 	}
 
-	fn add_blacklist() -> Weight {
+	fn add_reserved() -> Weight {
 		10_000
 	}
 
-	fn remove_blacklist() -> Weight {
+	fn remove_reserved() -> Weight {
 		10_000
 	}
 }
 
 impl registry::WeightInfo for WeightInfo {
-	fn set_approval_for_all() -> Weight {
+	fn approve() -> Weight {
+		10_000
+	}
+
+	fn approval_for_all() -> Weight {
 		10_000
 	}
 

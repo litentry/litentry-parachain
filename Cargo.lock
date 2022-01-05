@@ -5638,7 +5638,7 @@ checksum = "e8d0eef3571242013a0d5dc84861c3ae4a652e56e12adf8bdc26ff5f8cb34c94"
 [[package]]
 name = "pns-registrar"
 version = "0.1.0"
-source = "git+https://github.com/pnsproject/pns-pallets.git?branch=main#ce4bba0fac75e4df8482dd85d8c67bebb5f13dae"
+source = "git+https://github.com/pnsproject/pns-pallets.git?branch=main#f87f5f3eaa7d9738d5e1e92619155934bdf365a1"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5655,7 +5655,7 @@ dependencies = [
 [[package]]
 name = "pns-resolvers"
 version = "0.1.0"
-source = "git+https://github.com/pnsproject/pns-pallets.git?branch=main#ce4bba0fac75e4df8482dd85d8c67bebb5f13dae"
+source = "git+https://github.com/pnsproject/pns-pallets.git?branch=main#f87f5f3eaa7d9738d5e1e92619155934bdf365a1"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -9923,7 +9923,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "matchers",
- "parking_lot 0.11.2",
+ "parking_lot 0.10.2",
  "regex",
  "serde",
  "serde_json",
@@ -10043,7 +10043,7 @@ version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f559b464de2e2bdabcac6a210d12e9b5a5973c251e102c44c585c71d51bd78e"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "rand 0.8.4",
  "static_assertions",
 ]

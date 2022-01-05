@@ -27,7 +27,7 @@ use sc_telemetry::TelemetryEndpoints;
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
-use std::collections::BTreeSet;
+
 
 const DEFAULT_PARA_ID: u32 = 2013;
 
@@ -302,8 +302,9 @@ fn generate_genesis(
 			origin: vec![],
 			official: Some(get_account_id_from_seed::<sr25519::Public>("Alice")),
 			managers: vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
+			..Default::default()
 		},
-		pns_registrar: PnsRegistrarConfig { infos: vec![], blacklist: BTreeSet::new() },
+		pns_registrar: PnsRegistrarConfig { infos: vec![], ..Default::default() },
 		pns_redeem_code: PnsRedeemCodeConfig { redeems: None },
 		pns_price_oracle: PnsPriceOracleConfig {
 			base_prices: vec![
