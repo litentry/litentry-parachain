@@ -945,9 +945,7 @@ impl Contains<Call> for BaseCallFilter {
 			call,
 			Call::Sudo(_) |
             // System
-            Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_) |
-			// Bridge
-			Call::ChainBridge(_) | Call::BridgeTransfer(_)
+            Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_) 
 		)
 	}
 }

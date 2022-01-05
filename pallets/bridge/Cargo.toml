@@ -1,6 +1,6 @@
 [package]
 authors = ['Litentry Dev']
-edition = '2018'
+edition = '2021'
 homepage = 'https://litentry.com'
 name = 'pallet-bridge'
 repository = 'https://github.com/litentry/litentry-pallets'

@@ -86,7 +86,7 @@ pub mod pallet {
 
 	impl<A: PartialEq, B: PartialOrd + Default> ProposalVotes<A, B> {
 		/// Attempts to mark the proposal as approve or rejected.
-		/// Returns true if the status changes from active.
+		/// Returns new status.
 		pub fn try_to_complete(&mut self, threshold: u32, total: u32) -> ProposalStatus {
 			if self.votes_for.len() >= threshold as usize {
 				self.status = ProposalStatus::Approved;
@@ -126,7 +126,7 @@ pub mod pallet {
 		}
 	}
 
-	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
