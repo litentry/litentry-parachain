@@ -949,7 +949,7 @@ construct_runtime! {
 		ChainBridge: pallet_bridge::{Pallet, Call, Storage, Event<T>} = 60,
 		BridgeTransfer: pallet_bridge_transfer::{Pallet, Call, Event<T>, Storage} = 61,
 		// Litentry pallets
-		Drop3: pallet_drop3::{Pallet, Call, Storage, Event<T>} = 70,
+		Drop3: pallet_drop3::{Pallet, Call, Storage, Event<T>} = 62,
 
 		// TMP
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 255,
