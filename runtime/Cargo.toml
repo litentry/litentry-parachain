@@ -80,6 +80,7 @@ frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", d
 
 # Litentry pallets
 pallet-drop3 = { path = "../pallets/drop3", default-features = false }
+pallet-extrinsic-filter = { path = "../pallets/extrinsic-filter", default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.3.4"

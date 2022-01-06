@@ -145,7 +145,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot, corresponds to 0.9.1 TOML version
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9010,
+	spec_version: 9050,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -238,7 +238,7 @@ impl frame_system::Config for Runtime {
 	/// The weight of database operations that the runtime can invoke.
 	type DbWeight = RocksDbWeight;
 	/// The basic call filter to use in dispatchable.
-	type BaseCallFilter = BaseCallFilter;
+	type BaseCallFilter = ExtrinsicFilter;
 	/// Weight information for the extrinsics of this pallet.
 	///
 	/// TODO:
@@ -873,6 +873,14 @@ impl pallet_drop3::Config for Runtime {
 	type MaximumNameLength = MaximumNameLength;
 }
 
+impl pallet_extrinsic_filter::Config for Runtime {
+	type Event = Event;
+	type UpdateOrigin = EnsureRootOrHalfCouncil;
+	type NormalModeFilter = NormalModeFilter;
+	type SafeModeFilter = SafeModeFilter;
+	type TestModeFilter = Everything;
+}
+
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -922,20 +930,37 @@ construct_runtime! {
 
 		// Litentry pallets
 		Drop3: pallet_drop3::{Pallet, Call, Storage, Event<T>} = 70,
+		ExtrinsicFilter: pallet_extrinsic_filter::{Pallet, Call, Storage, Event<T>} = 71,
 
 		// TMP
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 255,
 	}
 }
 
-pub struct BaseCallFilter;
-impl Contains<Call> for BaseCallFilter {
+pub struct SafeModeFilter;
+impl Contains<Call> for SafeModeFilter {
 	fn contains(call: &Call) -> bool {
 		matches!(
 			call,
 			Call::Sudo(_) |
             // System
-            Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_)
+            Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_) |
+			// ExtrinsicFilter
+			Call::ExtrinsicFilter(_)
+		)
+	}
+}
+
+pub struct NormalModeFilter;
+impl Contains<Call> for NormalModeFilter {
+	fn contains(call: &Call) -> bool {
+		matches!(
+			call,
+			Call::Sudo(_) |
+            // System
+            Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_) |
+			// ExtrinsicFilter
+			Call::ExtrinsicFilter(_)
 		)
 	}
 }
