@@ -206,13 +206,13 @@ pub mod pallet {
 							pallet_name_bytes,
 							function_name_bytes,
 						});
+						// do not pay the fee upon successful block
+						Ok(Pays::No.into())
 					} else {
-						return Err(Error::<T>::ExtrinsicAlreadyBlocked)
+						Err(Error::<T>::ExtrinsicAlreadyBlocked.into())
 					}
 				},
-			);
-			// do not pay the fee upon successful block
-			Ok(Pays::No.into())
+			)
 		}
 
 		/// unblock the given extrinsics
@@ -237,7 +237,7 @@ pub mod pallet {
 					function_name_bytes,
 				});
 			} else {
-				return Err(Error::<T>::ExtrinsicNotBlocked)
+				return Err(Error::<T>::ExtrinsicNotBlocked.into())
 			}
 			// do not pay the fee upon successful unblock
 			Ok(Pays::No.into())
