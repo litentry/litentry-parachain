@@ -859,6 +859,31 @@ impl pallet_vesting::Config for Runtime {
 }
 
 parameter_types! {
+	pub const BridgeChainId: u8 = 1;
+	pub const ProposalLifetime: BlockNumber = 50400; // ~7 days
+}
+
+impl pallet_bridge::Config for Runtime {
+	type Event = Event;
+	type BridgeCommitteeOrigin = EnsureRootOrHalfCouncil;
+	type Proposal = Call;
+	type BridgeChainId = BridgeChainId;
+	type ProposalLifetime = ProposalLifetime;
+}
+
+parameter_types! {
+	// bridge::derive_resource_id(1, &bridge::hashing::blake2_128(b"LIT"));
+	pub const NativeTokenResourceId: [u8; 32] = hex_literal::hex!("00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001");
+}
+
+impl pallet_bridge_transfer::Config for Runtime {
+	type Event = Event;
+	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
+	type Currency = Balances;
+	type NativeTokenResourceId = NativeTokenResourceId;
+}
+
+parameter_types! {
 	pub const SlashPercent: Percent = Percent::from_percent(20);
 	pub const MaximumNameLength: u32 = 16;
 }
@@ -1063,8 +1088,11 @@ construct_runtime! {
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 52,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 53,
 
+		// ChainBridge
+		ChainBridge: pallet_bridge::{Pallet, Call, Storage, Event<T>} = 60,
+		BridgeTransfer: pallet_bridge_transfer::{Pallet, Call, Event<T>, Storage} = 61,
 		// Litentry pallets
-		Drop3: pallet_drop3::{Pallet, Call, Storage, Event<T>} = 70,
+		Drop3: pallet_drop3::{Pallet, Call, Storage, Event<T>} = 62,
 
 		// PNS
 		PnsNft: pns_registrar::nft,

@@ -1,0 +1,52 @@
+[package]
+authors = ['Litentry Dev']
+edition = '2021'
+homepage = 'https://litentry.com'
+name = 'pallet-bridge-transfer'
+repository = 'https://github.com/litentry/litentry-pallets'
+version = '0.1.0'
+
+[dependencies]
+# third-party dependencies
+codec = { package = "parity-scale-codec", version = "2.2", default-features = false, features = ["derive", "max-encoded-len"] }
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
+
+# primitives
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
+sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
+
+# frame dependencies
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false, optional = true }
+
+pallet-bridge = { path = "../bridge", default-features = false }
+hex = { version = "0.4", default-features = false }
+
+[dev-dependencies]
+hex-literal = "0.3"
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", default-features = false }
+
+[features]
+default = ["std"]
+runtime-benchmarks = [
+	'frame-benchmarking',
+	'frame-support/runtime-benchmarks',
+	'frame-system/runtime-benchmarks',
+]
+std = [
+	"codec/std",
+	"sp-std/std",
+	"sp-runtime/std",
+	"sp-io/std",
+	"sp-core/std",
+	"sp-arithmetic/std",
+	"frame-support/std",
+	"frame-system/std",
+	"frame-benchmarking/std",
+	"pallet-bridge/std",
+]
