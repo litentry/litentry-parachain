@@ -27,20 +27,42 @@
 //! On top of it, it should be possible to selectively block certain extrinsic
 //! or all extrinsics in certain pallet (blacklist feature).
 //!
-//! Currenly, no “whitelisting” is implemented, as the only usecase for whitelisting
+//! Currenly, the main purpose of this pallet is to serve as security guard.
+//! Therefore no “whitelisting” is supported, as the only usecase for whitelisting
 //! appears to be testing, which could be covered by `test mode` + optional blacklisting.
 //! Moreover, whitelisting would bring about more state transitions and
 //! increase the complexity of this pallet.
+//!
+//! The dispatchables `block_extrinsics` and `unblock_extrinsics` MUST be called on pair.
+//!
+//! If you block extrinsics by:
+//!   1. block_extrinsics(pallet_A, fn_A)
+//!   2. block_extrinsics(pallet_A, None)
+//! to completely unblock fn_A, you need to call:
+//!   3. unblock_extrinsics(pallet_A, fn_A)
+//!   4. unblock_extrinsics(pallet_A, None)
+//! order of 3. and 4. doesn't matter.
+//!
+//! We disallow blocking a single extrinsic and unblock ingit via "unblock all", it means
+//!   1. block_extrinsics(pallet_A, fn_A)
+//! and then
+//!   2. unlock_extrinsics(pallet_A, None)
+//! will not work, and vice versa.
+//!
+//! The reasons:
+//! - simplicity
+//! - prevent from (misused) whitelisting by first blocking all extrinsics and unblock a single
+//!   extrinsic from the same pallet.
 //!
 //! Setting the mode and blocking extrinsics should only come from a priviledged origin.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// #[cfg(test)]
-// mod mock;
+#[cfg(test)]
+mod mock;
 
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod tests;
 
 // #[cfg(feature = "runtime-benchmarks")]
 // mod benchmarking;
@@ -133,6 +155,10 @@ pub mod pallet {
 		CannotBlock,
 		/// Error during conversion bytes to utf8 string
 		CannotConvertToString,
+		/// Error when trying to block extrinsic more than once
+		ExtrinsicAlreadyBlocked,
+		/// Error when trying to unblock a non-existent extrinsic
+		ExtrinsicNotBlocked,
 	}
 
 	#[pallet::call]
@@ -165,7 +191,7 @@ pub mod pallet {
 			T::UpdateOrigin::ensure_origin(origin)?;
 			let pallet_name_string = sp_std::str::from_utf8(&pallet_name_bytes)
 				.map_err(|_| Error::<T>::CannotConvertToString)?;
-			// we disallow blocking this pallet
+			// we disallow blocking this pallet itself
 			ensure!(
 				pallet_name_string != <Self as PalletInfoAccess>::name(),
 				Error::<T>::CannotBlock
@@ -180,10 +206,13 @@ pub mod pallet {
 							pallet_name_bytes,
 							function_name_bytes,
 						});
+					} else {
+						return Err(Error::<T>::ExtrinsicAlreadyBlocked)
 					}
 				},
 			);
-			Ok(().into())
+			// do not pay the fee upon successful block
+			Ok(Pays::No.into())
 		}
 
 		/// unblock the given extrinsics
@@ -207,9 +236,11 @@ pub mod pallet {
 					pallet_name_bytes,
 					function_name_bytes,
 				});
+			} else {
+				return Err(Error::<T>::ExtrinsicNotBlocked)
 			}
-
-			Ok(().into())
+			// do not pay the fee upon successful unblock
+			Ok(Pays::No.into())
 		}
 	}
 
