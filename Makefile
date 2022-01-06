@@ -103,7 +103,7 @@ fmt:
 
 .PHONY: clippy ## cargo clippy
 clippy:
-	cargo clippy --workspace --all-targets --all-features -- -D warnings
+	SKIP_WASM_BUILD=1 cargo clippy --workspace --all-targets --all-features -- -D warnings
 
 define pkgid
 	$(shell cargo pkgid $1)
