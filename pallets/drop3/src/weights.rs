@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Litentry Technologies GmbH.
+// Copyright 2020-2022 Litentry Technologies GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -32,7 +32,7 @@
 // --heap-pages=4096
 // --steps=20
 // --repeat=50
-// --header=./LICENCE_HEADER
+// --header=./LICENSE_HEADER
 // --template=./templates/benchmark/pallet-weight-template.hbs
 // --output=./pallets/drop3/src/weights.rs
 
