@@ -125,6 +125,7 @@ impl pallet_extrinsic_filter::Config for Test {
 	type SafeModeFilter = SafeModeFilter;
 	type NormalModeFilter = NormalModeFilter;
 	type TestModeFilter = Everything;
+	type WeightInfo = ();
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {

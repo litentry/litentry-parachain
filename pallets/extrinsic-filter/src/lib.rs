@@ -64,9 +64,9 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-// #[cfg(feature = "runtime-benchmarks")]
-// mod benchmarking;
-// pub mod weights;
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+pub mod weights;
 
 use frame_support::{
 	dispatch::{CallMetadata, GetCallMetadata},
@@ -79,6 +79,7 @@ pub use pallet::*;
 use sp_std::{prelude::*, vec::Vec};
 
 use scale_info::TypeInfo;
+pub use weights::WeightInfo;
 
 #[derive(PartialEq, Eq, Clone, Copy, Encode, Decode, Debug, TypeInfo)]
 pub enum OperationalMode {
@@ -123,6 +124,9 @@ pub mod pallet {
 		type NormalModeFilter: Contains<Self::Call>;
 		type SafeModeFilter: Contains<Self::Call>;
 		type TestModeFilter: Contains<Self::Call>;
+
+		/// Weights
+		type WeightInfo: WeightInfo;
 	}
 
 	/// current mode, ValueQuery as it can't be None

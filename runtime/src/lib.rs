@@ -904,6 +904,7 @@ impl pallet_extrinsic_filter::Config for Runtime {
 	type NormalModeFilter = NormalModeFilter;
 	type SafeModeFilter = SafeModeFilter;
 	type TestModeFilter = Everything;
+	type WeightInfo = (); // To be rerun with runtime benchmarks
 }
 
 construct_runtime! {
@@ -1137,6 +1138,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_membership, CouncilMembership);
 			list_benchmark!(list, extra, pallet_multisig, Multisig);
 			list_benchmark!(list, extra, pallet_drop3, Drop3);
+			list_benchmark!(list, extra, pallet_extrinsic_filter, ExtrinsicFilter);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 			(list, storage_info)
@@ -1179,6 +1181,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_membership, CouncilMembership);
 			add_benchmark!(params, batches, pallet_multisig, Multisig);
 			add_benchmark!(params, batches, pallet_drop3, Drop3);
+			add_benchmark!(params, batches, pallet_extrinsic_filter, ExtrinsicFilter);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
