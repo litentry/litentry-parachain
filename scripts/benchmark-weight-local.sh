@@ -54,7 +54,7 @@ esac
     --heap-pages=4096 \
     --steps=20 \
     --repeat=50 \
-    --header=./LICENCE_HEADER \
+    --header=./LICENSE_HEADER \
     $TEMPLATE \
     $OUTPUT
 
