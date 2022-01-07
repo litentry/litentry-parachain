@@ -971,8 +971,8 @@ impl Contains<Call> for SafeModeFilter {
 		matches!(
 			call,
 			Call::Sudo(_) |
-            // System
-            Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_) |
+			// System
+			Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_) |
 			// ExtrinsicFilter
 			Call::ExtrinsicFilter(_)
 		)
@@ -985,8 +985,8 @@ impl Contains<Call> for NormalModeFilter {
 		matches!(
 			call,
 			Call::Sudo(_) |
-            // System
-            Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_) |
+			// System
+			Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_) |
 			// ExtrinsicFilter
 			Call::ExtrinsicFilter(_)
 		)
