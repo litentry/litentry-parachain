@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Litentry Technologies GmbH.
+// Copyright 2020-2022 Litentry Technologies GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -141,8 +141,8 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// a mode was just sent
-		ModeSet { mode: OperationalMode },
+		/// a new mode was just sent
+		ModeSet { new_mode: OperationalMode },
 		/// some extrinsics are blocked
 		ExtrinsicsBlocked { pallet_name_bytes: Vec<u8>, function_name_bytes: Option<Vec<u8>> },
 		/// some extrinsics are unblocked
@@ -173,7 +173,7 @@ pub mod pallet {
 			// just set to the desired mode
 			Mode::<T>::put(mode);
 
-			Self::deposit_event(Event::ModeSet { mode });
+			Self::deposit_event(Event::ModeSet { new_mode: mode });
 
 			Ok(().into())
 		}

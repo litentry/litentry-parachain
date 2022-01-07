@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Litentry Technologies GmbH.
+// Copyright 2020-2022 Litentry Technologies GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -115,7 +115,7 @@ impl Contains<Call> for SafeModeFilter {
 pub struct NormalModeFilter;
 impl Contains<Call> for NormalModeFilter {
 	fn contains(call: &Call) -> bool {
-		matches!(call, Call::System(_) | Call::ExtrinsicFilter(_) | Call::Balances(_))
+		matches!(call, Call::System(_) | Call::ExtrinsicFilter(_) | Call::Timestamp(_))
 	}
 }
 
@@ -128,8 +128,10 @@ impl pallet_extrinsic_filter::Config for Test {
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
-
+	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	pallet_balances::GenesisConfig::<Test> { balances: vec![(1, 100)] }
+		.assimilate_storage(&mut t)
+		.unwrap();
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| {
 		System::set_block_number(1);
