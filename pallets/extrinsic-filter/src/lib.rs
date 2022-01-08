@@ -16,34 +16,37 @@
 
 //! A pallet for dynamically filtering the extrinsics
 //!
-//! Inspired by Acala and Moonbeam implementations.
+//! Inspired by:
+//! - Acala `transaction-pause`
+//! - Moonbeam `maintenance-mode`
+//! implementations.
 //!
 //! This pallet is used to bind to frame_system::BaseCallFilter in runtime,
 //! aiming to provide 3 modes:
-//! - `safe mode`:   only core systems are running
+//! - `safe mode`:   only core extrinsics are allowed
 //! - `normal mode`: the normal status when parachain is running
-//! - `test mode`:   all extrinsics are allowed (useful for testing)
+//! - `test mode`:   all extrinsics are allowed
 //!
 //! On top of it, it should be possible to selectively block certain extrinsic
-//! or all extrinsics in certain pallet (blacklist feature).
+//! or all extrinsics in certain pallet (blacklisting).
 //!
-//! Currenly, the main purpose of this pallet is to serve as security guard.
+//! Currenly, this pallet is mainly served as security guard.
 //! Therefore no “whitelisting” is supported, as the only usecase for whitelisting
 //! appears to be testing, which could be covered by `test mode` + optional blacklisting.
 //! Moreover, whitelisting would bring about more state transitions and
 //! increase the complexity of this pallet.
 //!
 //! The dispatchables `block_extrinsics` and `unblock_extrinsics` MUST be called on pair.
-//!
-//! If you block extrinsics by:
+//! For exmaple:
 //!   1. block_extrinsics(pallet_A, fn_A)
 //!   2. block_extrinsics(pallet_A, None)
 //! to completely unblock fn_A, you need to call:
 //!   3. unblock_extrinsics(pallet_A, fn_A)
 //!   4. unblock_extrinsics(pallet_A, None)
-//! order of 3. and 4. doesn't matter.
+//! the order of 3 and 4 doesn't matter though.
 //!
-//! We disallow blocking a single extrinsic and unblock ingit via "unblock all", it means
+//! We disallow(nullify) blocking a single extrinsic and unblocking it by unblocking its
+//! belonging pallet, it means:
 //!   1. block_extrinsics(pallet_A, fn_A)
 //! and then
 //!   2. unlock_extrinsics(pallet_A, None)
@@ -51,10 +54,9 @@
 //!
 //! The reasons:
 //! - simplicity
-//! - prevent from (misused) whitelisting by first blocking all extrinsics and unblock a single
-//!   extrinsic from the same pallet.
+//! - whitelisting is not supported
 //!
-//! Setting the mode and blocking extrinsics should only come from a priviledged origin.
+//! All dispatchables in this pallet must come from a priviledged origin.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -103,9 +105,6 @@ pub mod pallet {
 
 	/// The current storage version.
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
-
-	/// A wildcard to represents all extrinsics in one pallet
-	/// const WILDCARD_FUNCTION_NAME: &str = "*";
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
