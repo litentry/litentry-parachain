@@ -238,7 +238,7 @@ impl frame_system::Config for Runtime {
 	/// The weight of database operations that the runtime can invoke.
 	type DbWeight = RocksDbWeight;
 	/// The basic call filter to use in dispatchable.
-	type BaseCallFilter = BaseCallFilter;
+	type BaseCallFilter = ExtrinsicFilter;
 	/// Weight information for the extrinsics of this pallet.
 	///
 	/// TODO:
@@ -898,6 +898,15 @@ impl pallet_drop3::Config for Runtime {
 	type MaximumNameLength = MaximumNameLength;
 }
 
+impl pallet_extrinsic_filter::Config for Runtime {
+	type Event = Event;
+	type UpdateOrigin = EnsureRootOrHalfCouncil;
+	type NormalModeFilter = NormalModeFilter;
+	type SafeModeFilter = SafeModeFilter;
+	type TestModeFilter = Everything;
+	type WeightInfo = (); // To be rerun with runtime benchmarks
+}
+
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -945,25 +954,41 @@ construct_runtime! {
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 52,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 53,
 
-		// ChainBridge
+		// Litentry pallets
 		ChainBridge: pallet_bridge::{Pallet, Call, Storage, Event<T>} = 60,
 		BridgeTransfer: pallet_bridge_transfer::{Pallet, Call, Event<T>, Storage} = 61,
-		// Litentry pallets
 		Drop3: pallet_drop3::{Pallet, Call, Storage, Event<T>} = 62,
+		ExtrinsicFilter: pallet_extrinsic_filter::{Pallet, Call, Storage, Event<T>} = 63,
 
 		// TMP
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 255,
 	}
 }
 
-pub struct BaseCallFilter;
-impl Contains<Call> for BaseCallFilter {
+pub struct SafeModeFilter;
+impl Contains<Call> for SafeModeFilter {
 	fn contains(call: &Call) -> bool {
 		matches!(
 			call,
 			Call::Sudo(_) |
-            // System
-            Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_)
+			// System
+			Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_) |
+			// ExtrinsicFilter
+			Call::ExtrinsicFilter(_)
+		)
+	}
+}
+
+pub struct NormalModeFilter;
+impl Contains<Call> for NormalModeFilter {
+	fn contains(call: &Call) -> bool {
+		matches!(
+			call,
+			Call::Sudo(_) |
+			// System
+			Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_) |
+			// ExtrinsicFilter
+			Call::ExtrinsicFilter(_)
 		)
 	}
 }
@@ -1113,6 +1138,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_membership, CouncilMembership);
 			list_benchmark!(list, extra, pallet_multisig, Multisig);
 			list_benchmark!(list, extra, pallet_drop3, Drop3);
+			list_benchmark!(list, extra, pallet_extrinsic_filter, ExtrinsicFilter);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 			(list, storage_info)
@@ -1155,6 +1181,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_membership, CouncilMembership);
 			add_benchmark!(params, batches, pallet_multisig, Multisig);
 			add_benchmark!(params, batches, pallet_drop3, Drop3);
+			add_benchmark!(params, batches, pallet_extrinsic_filter, ExtrinsicFilter);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
