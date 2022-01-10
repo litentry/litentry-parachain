@@ -167,6 +167,12 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Set the mode
+		///
+		/// The storage of `BlockedExtrinsics` is unaffected.
+		/// The reason is we'd rather have this pallet behave conservatively:
+		/// having extra blocked extrinsics is better than having unexpected whitelisted extrinsics.
+		/// See the test `set_mode_should_not_clear_blocked_extrinsics()`
+		///
 		/// Weights should be 2 DB writes: 1 for mode and 1 for event
 		#[pallet::weight(2 * T::DbWeight::get().write)]
 		pub fn set_mode(origin: OriginFor<T>, mode: OperationalMode) -> DispatchResultWithPostInfo {

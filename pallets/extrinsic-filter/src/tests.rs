@@ -43,6 +43,32 @@ fn set_mode_fails_with_unauthorized_origin() {
 }
 
 #[test]
+fn set_mode_should_not_clear_blocked_extrinsics() {
+	new_test_ext().execute_with(|| {
+		assert_eq!(ExtrinsicFilter::mode(), crate::OperationalMode::Normal);
+
+		// block Balances.transfer
+		assert_ok!(ExtrinsicFilter::block_extrinsics(
+			Origin::root(),
+			b"Balances".to_vec(),
+			Some(b"transfer".to_vec())
+		));
+		assert_eq!(
+			ExtrinsicFilter::blocked_extrinsics((b"Balances".to_vec(), b"transfer".to_vec())),
+			Some(())
+		);
+
+		assert_ok!(ExtrinsicFilter::set_mode(Origin::root(), crate::OperationalMode::Test));
+		assert_eq!(ExtrinsicFilter::mode(), crate::OperationalMode::Test);
+		// previously blocked extrinsics are still there
+		assert_eq!(
+			ExtrinsicFilter::blocked_extrinsics((b"Balances".to_vec(), b"transfer".to_vec())),
+			Some(())
+		);
+	});
+}
+
+#[test]
 fn safe_mode_works() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(ExtrinsicFilter::set_mode(Origin::root(), crate::OperationalMode::Safe));
