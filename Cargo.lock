@@ -7332,11 +7332,13 @@ dependencies = [
  "hex-literal",
  "litentry-parachain-runtime",
  "pallet-balances",
+ "pallet-transaction-payment",
  "parity-scale-codec",
  "serde",
  "serde_json",
  "smallvec",
  "sp-io",
+ "sp-runtime",
 ]
 
 [[package]]
