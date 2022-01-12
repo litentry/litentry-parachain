@@ -1,31 +1,11 @@
-use frame_support::{
-	traits::{GenesisBuild, OnFinalize, OnIdle, OnInitialize},
-	weights::{DispatchInfo, PostDispatchInfo, Weight},
-};
-use sp_runtime::MultiAddress;
-// use frame_support::{
-// 	parameter_types,
-// 	traits::{FindAuthor, Get},
-// 	weights::{
-// 		DispatchClass, DispatchInfo, PostDispatchInfo, Weight, WeightToFeeCoefficient,
-// 		WeightToFeeCoefficients, WeightToFeePolynomial,
-// 	},
-// 	PalletId,
-// };
+use frame_support::weights::{DispatchInfo, PostDispatchInfo, Weight};
 
 pub use runtime::{
 	AccountId, Balance, Balances, Call, Runtime, System, TransactionPayment, Treasury,
 };
 pub const ALICE: [u8; 32] = [1u8; 32];
 pub const BOB: [u8; 32] = [2u8; 32];
-
-// pub const ALICE_ACCOUNT: AccountId = AccountId([4u8; 32]);
-
 pub use pallet_balances::Call as BalancesCall;
-// pub const CALL: &<Runtime as frame_system::Config>::Call =
-// 	&Call::Balances(BalancesCall::transfer {
-//         dest: MultiAddress::Id(ALICE_ACCOUNT),
-//         value: 69 });
 
 pub struct ExtBuilder {
 	balance_factor: u64,
@@ -58,6 +38,11 @@ impl ExtBuilder {
 		self.balance_factor = factor;
 		self
 	}
+	// fn set_constants(&self) {
+	// 	EXTRINSIC_BASE_WEIGHT.with(|v| *v.borrow_mut() = self.base_weight);
+	// 	TRANSACTION_BYTE_FEE.with(|v| *v.borrow_mut() = self.byte_fee);
+	// 	WEIGHT_TO_FEE.with(|v| *v.borrow_mut() = self.weight_to_fee);
+	// }
 	pub fn balances(mut self, balances: Vec<(AccountId, Balance)>) -> Self {
 		self.balances = balances;
 		self
@@ -70,7 +55,7 @@ impl ExtBuilder {
 	}
 
 	pub fn build(self) -> sp_io::TestExternalities {
-		let mut t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
+		let t = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
 		let mut ext = sp_io::TestExternalities::new(t);
 		ext.execute_with(|| System::set_block_number(1));
 		ext

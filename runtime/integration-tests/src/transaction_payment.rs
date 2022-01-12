@@ -1,13 +1,37 @@
 use crate::setup::*;
 use frame_support::assert_ok;
-use sp_runtime::{
-	traits::{SignedExtension, Zero},
-	MultiAddress,
-};
+use frame_system::RawOrigin;
+use sp_runtime::{traits::SignedExtension, MultiAddress};
+
+#[test]
+fn test_set_balance() {
+	ExtBuilder::default()
+		.balances(vec![
+			// fund Alice and BOB
+			(AccountId::from(ALICE), 123456789123456789),
+			(AccountId::from(BOB), 123456789123456789),
+		])
+		.balance_factor(10)
+		.base_weight(5)
+		.build()
+		.execute_with(|| {
+			assert_ok!(Balances::set_balance(
+				RawOrigin::Root.into(),
+				MultiAddress::Id(AccountId::from(BOB)),
+				100,
+				0
+			));
+		})
+}
 
 #[test]
 fn test_payment() {
 	ExtBuilder::default()
+		.balances(vec![
+			// fund Alice and BOB
+			(AccountId::from(ALICE), 123456789123456789),
+			(AccountId::from(BOB), 123456789123456789),
+		])
 		.balance_factor(10)
 		.base_weight(5)
 		.build()
