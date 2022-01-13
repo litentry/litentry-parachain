@@ -9,4 +9,5 @@ members = [
     'pallets/bridge',
     'pallets/bridge-transfer',
     'pallets/drop3',
+    'pallets/parachain-staking',
 ]
