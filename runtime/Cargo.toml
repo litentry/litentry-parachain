@@ -64,6 +64,7 @@ cumulus-pallet-xcmp-queue = { git = "https://github.com/paritytech/cumulus", def
 cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.13" }
 cumulus-primitives-utility = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.13" }
 cumulus-primitives-timestamp = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.13" }
+# DEPRECATED: REMOVE AFTER RUNTIME UPGRADE
 pallet-collator-selection = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.13" }
 parachain-info = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.13" }
 
@@ -83,6 +84,7 @@ pallet-bridge = { path = "../pallets/bridge", default-features = false }
 pallet-bridge-transfer = { path = "../pallets/bridge-transfer", default-features = false }
 pallet-drop3 = { path = "../pallets/drop3", default-features = false }
 pallet-extrinsic-filter = { path = "../pallets/extrinsic-filter", default-features = false }
+parachain-staking = { path = "../pallets/parachain-staking", default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.3.4"
@@ -129,6 +131,7 @@ std = [
 	"pallet-treasury/std",
 	"pallet-utility/std",
 	"pallet-vesting/std",
+	"parachain-staking/std",
 	"primitives/std",
 	"cumulus-pallet-aura-ext/std",
 	"cumulus-pallet-dmp-queue/std",
@@ -138,6 +141,7 @@ std = [
 	"cumulus-primitives-core/std",
 	"cumulus-primitives-utility/std",
 	"cumulus-primitives-timestamp/std",
+	# DEPRECATED: REMOVE AFTER RUNTIME UPGRADE
 	"pallet-collator-selection/std",
 	"parachain-info/std",
 	"pallet-xcm/std",
@@ -158,7 +162,6 @@ runtime-benchmarks = [
 	"frame-system-benchmarking",
 	"frame-system/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
-	"pallet-collator-selection/runtime-benchmarks",
 	"pallet-collective/runtime-benchmarks",
 	"pallet-democracy/runtime-benchmarks",
 	"pallet-membership/runtime-benchmarks",
@@ -169,6 +172,7 @@ runtime-benchmarks = [
 	"pallet-treasury/runtime-benchmarks",
 	"pallet-utility/runtime-benchmarks",
 	"pallet-xcm/runtime-benchmarks",
+	"parachain-staking/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 	"xcm-builder/runtime-benchmarks",
 	"pallet-bridge/runtime-benchmarks",
@@ -197,4 +201,5 @@ try-runtime = [
 	"pallet-treasury/try-runtime",
 	"pallet-utility/try-runtime",
 	"pallet-vesting/try-runtime",
+	"parachain-staking/try-runtime",
 ]
