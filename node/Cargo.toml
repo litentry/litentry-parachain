@@ -98,8 +98,10 @@ kitentry-runtime = ["kitentry-parachain-runtime"]
 litentry-runtime = ["litentry-parachain-runtime"]
 runtime-benchmarks = [
   "litentry-parachain-runtime/runtime-benchmarks",
+  "kitentry-parachain-runtime/runtime-benchmarks",
 ]
 try-runtime = [
   "try-runtime-cli",
   "litentry-parachain-runtime/try-runtime",
+  "kitentry-parachain-runtime/try-runtime",
 ]
