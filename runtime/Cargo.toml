@@ -79,11 +79,11 @@ xcm-executor = { git = "https://github.com/paritytech/polkadot", default-feature
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.13", optional = true }
 frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.13", optional = true }
 
-# Litentry pallet dependencies
+# Litentry pallets
 pallet-bridge = { path = "../pallets/bridge", default-features = false }
 pallet-bridge-transfer = { path = "../pallets/bridge-transfer", default-features = false }
-# Litentry pallets
 pallet-drop3 = { path = "../pallets/drop3", default-features = false }
+pallet-extrinsic-filter = { path = "../pallets/extrinsic-filter", default-features = false }
 parachain-staking = { path = "../pallets/parachain-staking", default-features = false }
 
 [dev-dependencies]
@@ -120,7 +120,6 @@ std = [
 	"pallet-balances/std",
 	"pallet-collective/std",
 	"pallet-democracy/std",
-	"pallet-drop3/std",
 	"pallet-membership/std",
 	"pallet-multisig/std",
 	"pallet-proxy/std",
@@ -153,6 +152,8 @@ std = [
 	"frame-benchmarking/std",
 	"pallet-bridge/std",
 	"pallet-bridge-transfer/std",
+	"pallet-drop3/std",
+	"pallet-extrinsic-filter/std",
 ]
 
 runtime-benchmarks = [
@@ -163,7 +164,6 @@ runtime-benchmarks = [
 	"pallet-balances/runtime-benchmarks",
 	"pallet-collective/runtime-benchmarks",
 	"pallet-democracy/runtime-benchmarks",
-	"pallet-drop3/runtime-benchmarks",
 	"pallet-membership/runtime-benchmarks",
 	"pallet-multisig/runtime-benchmarks",
 	"pallet-proxy/runtime-benchmarks",
@@ -174,7 +174,11 @@ runtime-benchmarks = [
 	"pallet-xcm/runtime-benchmarks",
 	"parachain-staking/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
-	"xcm-builder/runtime-benchmarks"
+	"xcm-builder/runtime-benchmarks",
+	"pallet-bridge/runtime-benchmarks",
+	"pallet-bridge-transfer/runtime-benchmarks",
+	"pallet-drop3/runtime-benchmarks",
+	"pallet-extrinsic-filter/runtime-benchmarks",
 ]
 
 try-runtime = [

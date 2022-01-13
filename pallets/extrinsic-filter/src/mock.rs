@@ -14,23 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate as pallet_drop3;
-use frame_support::{ord_parameter_types, parameter_types};
+use crate as pallet_extrinsic_filter;
+use frame_support::{
+	parameter_types,
+	traits::{Contains, Everything},
+};
 use frame_system as system;
-use frame_system::EnsureSignedBy;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	Percent,
 };
-use sp_std::vec;
+use system::EnsureRoot;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
 pub type Balance = u128;
-pub type PoolId = u64;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -40,8 +40,9 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
-		Drop3: pallet_drop3::{Pallet, Call, Storage, Event<T>},
+		ExtrinsicFilter: pallet_extrinsic_filter::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -51,7 +52,7 @@ parameter_types! {
 }
 
 impl system::Config for Test {
-	type BaseCallFilter = frame_support::traits::Everything;
+	type BaseCallFilter = ExtrinsicFilter;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
@@ -77,6 +78,17 @@ impl system::Config for Test {
 }
 
 parameter_types! {
+	pub const MinimumPeriod: u64 = 10000;
+}
+
+impl pallet_timestamp::Config for Test {
+	type Moment = u64;
+	type OnTimestampSet = ();
+	type MinimumPeriod = MinimumPeriod;
+	type WeightInfo = ();
+}
+
+parameter_types! {
 	pub const ExistentialDeposit: u128 = 1;
 	pub const MaxLocks: u32 = 50;
 }
@@ -93,61 +105,37 @@ impl pallet_balances::Config for Test {
 	type WeightInfo = ();
 }
 
-parameter_types! {
-	pub const SlashPercent: Percent = Percent::from_percent(20);
-	pub const MaximumNameLength: u32 = 16;
-}
-
-ord_parameter_types! {
-	pub const One: u64 = 1;
-}
-
-impl pallet_drop3::Config for Test {
-	type Event = Event;
-	type PoolId = PoolId;
-	type SetAdminOrigin = EnsureSignedBy<One, u64>;
-	type Currency = Balances;
-	type WeightInfo = ();
-	type SlashPercent = SlashPercent;
-	type MaximumNameLength = MaximumNameLength;
-}
-
-// propose a default reward pool with the given id
-pub(crate) fn propose_default_reward_pool(
-	id: <Test as pallet_drop3::Config>::PoolId,
-	should_change_current_max: bool,
-) {
-	let default_reward_pool = pallet_drop3::RewardPool::<_, _, _, _, _> {
-		id,
-		name: vec![].try_into().unwrap(),
-		owner: <Test as frame_system::Config>::AccountId::from(0u32),
-		total: pallet_drop3::BalanceOf::<Test>::default(),
-		remain: pallet_drop3::BalanceOf::<Test>::default(),
-		create_at: <Test as frame_system::Config>::BlockNumber::default(),
-		start_at: <Test as frame_system::Config>::BlockNumber::default(),
-		end_at: <Test as frame_system::Config>::BlockNumber::default(),
-		started: false,
-		approved: false,
-	};
-
-	pallet_drop3::RewardPools::<Test>::insert(id, default_reward_pool);
-	pallet_drop3::RewardPoolOwners::<Test>::insert(
-		id,
-		<Test as frame_system::Config>::AccountId::from(0u32),
-	);
-	if should_change_current_max {
-		pallet_drop3::CurrentMaxPoolId::<Test>::put(id);
+pub struct SafeModeFilter;
+impl Contains<Call> for SafeModeFilter {
+	fn contains(call: &Call) -> bool {
+		matches!(call, Call::System(_) | Call::ExtrinsicFilter(_))
 	}
 }
 
-pub fn new_test_ext() -> sp_io::TestExternalities {
-	let t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
+pub struct NormalModeFilter;
+impl Contains<Call> for NormalModeFilter {
+	fn contains(call: &Call) -> bool {
+		matches!(call, Call::System(_) | Call::ExtrinsicFilter(_) | Call::Timestamp(_))
+	}
+}
 
+impl pallet_extrinsic_filter::Config for Test {
+	type Event = Event;
+	type UpdateOrigin = EnsureRoot<Self::AccountId>;
+	type SafeModeFilter = SafeModeFilter;
+	type NormalModeFilter = NormalModeFilter;
+	type TestModeFilter = Everything;
+	type WeightInfo = ();
+}
+
+pub fn new_test_ext() -> sp_io::TestExternalities {
+	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	pallet_balances::GenesisConfig::<Test> { balances: vec![(1, 100)] }
+		.assimilate_storage(&mut t)
+		.unwrap();
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| {
 		System::set_block_number(1);
-		// set 1 as admin account
-		let _ = Drop3::set_admin(Origin::signed(1), 1);
 	});
 	ext
 }
