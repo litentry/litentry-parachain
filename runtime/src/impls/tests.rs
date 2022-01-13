@@ -30,7 +30,7 @@ fn signed_extension_transaction_payment_work() {
 			let mut sender_balance = Balances::free_balance(1);
 			let mut treasury_balance = Balances::free_balance(Treasury::account_id());
 			let len = 10;
-			let pre = ChargeTransactionPayment::<Runtime>::from(0)
+			let pre = pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(0)
 				.pre_dispatch(&1, CALL, &info_from_weight(85), len)
 				.unwrap();
 			// 1: initial 1000 balance, withdraw 5 base fee, 85 weight fee, 10 len fee
