@@ -35,7 +35,6 @@ impl ExtBuilder {
 		pallet_balances::GenesisConfig::<Runtime> {
 			balances: self
 				.balances
-				.clone()
 				.into_iter()
 				.map(|(account_id, initial_balance)| (account_id, initial_balance))
 				.collect::<Vec<_>>(),

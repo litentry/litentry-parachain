@@ -38,7 +38,7 @@ fn test_payment() {
 
 			let byte_fee: u128 = 1_000_000;
 			let base_fee: u128 = 25_000_000;
-			let info: u128 = 85;
+			let info: u64 = 85;
 
 			let tranfer_call: &<Runtime as frame_system::Config>::Call =
 				&Call::Balances(BalancesCall::transfer {
@@ -59,11 +59,8 @@ fn test_payment() {
 				.unwrap();
 			// 1: initial 1000 balance, withdraw 5 base fee, 85 weight fee, 10 len fee
 			// Treasury unchanged
-			let total = 5 * base_fee + info + len * byte_fee;
-			assert_eq!(
-				sender_balance - Balances::free_balance(&AccountId::from(ALICE)),
-				5 * base_fee + info + len * byte_fee
-			);
+			let total = 5 * base_fee + info as u128 + len * byte_fee;
+			assert_eq!(sender_balance - Balances::free_balance(&AccountId::from(ALICE)), total,);
 			assert_eq!(Balances::free_balance(Treasury::account_id()) - treasury_balance, 0);
 			sender_balance = Balances::free_balance(&AccountId::from(ALICE));
 			treasury_balance = Balances::free_balance(Treasury::account_id());
@@ -83,7 +80,7 @@ fn test_payment() {
 			// weight
 			assert_eq!(
 				Balances::free_balance(Treasury::account_id()) - treasury_balance,
-				(total - 50) * 40 / (40 + 0 + 60)
+				(total - 50) * 40 / (40 + 60)
 			);
 			assert_eq!(true, true);
 		})
