@@ -14,15 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#![warn(unused_extern_crates)]
+use substrate_wasm_builder::WasmBuilder;
 
-mod chain_specs;
-#[macro_use]
-mod service;
-mod cli;
-mod command;
-mod rpc;
-
-fn main() -> sc_cli::Result<()> {
-	command::run()
+fn main() {
+	WasmBuilder::new()
+		.with_current_project()
+		.export_heap_base()
+		.import_memory()
+		.build()
 }

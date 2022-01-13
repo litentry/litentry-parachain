@@ -2,7 +2,7 @@
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
+
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
@@ -17,44 +17,87 @@
 #![allow(clippy::borrowed_box)]
 
 use crate::{
-	chain_spec,
+	chain_specs,
 	cli::{Cli, RelayChainCli, Subcommand},
 	service::{new_partial, LitentryParachainRuntimeExecutor},
 };
 use codec::Encode;
 use cumulus_client_service::genesis::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
-use litentry_parachain_runtime::Block;
+#[cfg(feature = "kitentry-runtime")]
+use kitentry_parachain_runtime::{self as parachain_runtime, Block};
+#[cfg(feature = "litentry-runtime")]
+use litentry_parachain_runtime::{self as parachain_runtime, Block};
 use log::info;
 use polkadot_parachain::primitives::AccountIdConversion;
+use primitives::Header;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
 	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
 };
 use sc_service::config::{BasePath, PrometheusConfig};
 use sp_core::hexdisplay::HexDisplay;
-use sp_runtime::traits::Block as BlockT;
+use sp_runtime::{generic, traits::Block as BlockT};
 use std::{io::Write, net::SocketAddr};
 
+trait IdentifyChain {
+	fn is_litentry(&self) -> bool;
+	fn is_kitentry(&self) -> bool;
+}
+
+impl IdentifyChain for dyn sc_service::ChainSpec {
+	fn is_litentry(&self) -> bool {
+		self.id().starts_with("litentry")
+	}
+	fn is_kitentry(&self) -> bool {
+		self.id().starts_with("kitentry")
+	}
+}
+
+impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
+	fn is_litentry(&self) -> bool {
+		<dyn sc_service::ChainSpec>::is_litentry(self)
+	}
+	fn is_kitentry(&self) -> bool {
+		<dyn sc_service::ChainSpec>::is_kitentry(self)
+	}
+}
+
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
-	Ok(match id {
-		"dev" => Box::new(chain_spec::get_chain_spec_dev()),
-		"staging" => Box::new(chain_spec::get_chain_spec_staging()),
-		// In order to generate res/chain_spec/prod.json
-		"generate-prod" => Box::new(chain_spec::get_chain_spec_prod()),
-		"" | "prod" => Box::new(chain_spec::ChainSpec::from_json_bytes(
-			&include_bytes!("../res/chain_spec/prod.json")[..],
-		)?),
+	match id {
+		#[cfg(feature = "litentry-runtime")]
+		"litentry-dev" => Ok(Box::new(chain_specs::litentry::get_chain_spec_dev())),
+		#[cfg(feature = "litentry-runtime")]
+		"litentry-staging" => Ok(Box::new(chain_specs::litentry::get_chain_spec_staging())),
+		// Generate res/chain_specs/litentry.json
+		#[cfg(feature = "litentry-runtime")]
+		"generate-litentry" => Ok(Box::new(chain_specs::litentry::get_chain_spec_prod())),
+		// Generate res/chain_specs/kitentry.json
+		#[cfg(feature = "kitentry-runtime")]
+		"generate-kitentry" => Ok(Box::new(chain_specs::kitentry::get_chain_spec_prod())),
+		#[cfg(feature = "litentry-runtime")]
+		"" | "litentry-prod" => Ok(Box::new(chain_specs::litentry::ChainSpec::from_json_bytes(
+			&include_bytes!("../res/chain_specs/litentry.json")[..],
+		)?)),
 		path => {
-			let chain_spec = chain_spec::ChainSpec::from_json_file(path.into())?;
-			Box::new(chain_spec)
+			let dummy_chain_spec = chain_specs::DummyChainSpec::from_json_file(path.into())?;
+			if dummy_chain_spec.is_litentry() {
+				#[cfg(feature = "litentry-runtime")]
+				return Ok(Box::new(chain_specs::litentry::ChainSpec::from_json_file(path.into())?))
+			} else if dummy_chain_spec.is_kitentry() {
+				#[cfg(feature = "kitentry-runtime")]
+				return Ok(Box::new(chain_specs::kitentry::ChainSpec::from_json_file(path.into())?))
+			} else {
+				return Err("Unsupported network type.".into())
+			}
+			Err("Unsupported network type.".into())
 		},
-	})
+	}
 }
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
-		"Litentry Collator".into()
+		"Litentry/Kitentry Collator".into()
 	}
 
 	fn impl_version() -> String {
@@ -62,7 +105,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn description() -> String {
-		"Litentry Collator\n\nThe command-line arguments provided first will be \
+		"Litentry/Kitentry Collator\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relay chain node.\n\n\
 		litentry-collator <parachain-args> -- <relay-chain-args>"
@@ -86,13 +129,13 @@ impl SubstrateCli for Cli {
 	}
 
 	fn native_runtime_version(_chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		&litentry_parachain_runtime::VERSION
+		&parachain_runtime::VERSION
 	}
 }
 
 impl SubstrateCli for RelayChainCli {
 	fn impl_name() -> String {
-		"Litentry Collator".into()
+		"Litentry/Kitentry Collator".into()
 	}
 
 	fn impl_version() -> String {
@@ -100,7 +143,7 @@ impl SubstrateCli for RelayChainCli {
 	}
 
 	fn description() -> String {
-		"Litentry Collator\n\nThe command-line arguments provided first will be \
+		"Litentry/Kitentry Collator\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relay chain node.\n\n\
 		litentry-collator <parachain-args> -- <relay-chain-args>"
@@ -143,7 +186,7 @@ macro_rules! construct_async_run {
 
 		runner.async_run(|$config| {
 			let $components = new_partial::<
-				litentry_parachain_runtime::RuntimeApi,
+				parachain_runtime::RuntimeApi,
 				LitentryParachainRuntimeExecutor,
 				_
 			>(
@@ -286,7 +329,7 @@ pub fn run() -> Result<()> {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 
 			runner.run_node_until_exit(|config| async move {
-				let para_id = chain_spec::Extensions::try_get(&*config.chain_spec)
+				let para_id = chain_specs::Extensions::try_get(&*config.chain_spec)
 					.map(|e| e.para_id)
 					.ok_or("Could not find parachain ID in chain-spec.")?;
 

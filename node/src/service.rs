@@ -28,7 +28,16 @@ use cumulus_primitives_core::ParaId;
 use polkadot_service::NativeExecutionDispatch;
 
 use crate::rpc;
-use litentry_parachain_runtime::{opaque::Block, AccountId, Balance, Hash, Index as Nonce};
+#[cfg(feature = "kitentry-runtime")]
+use kitentry_parachain_runtime::{
+	self as parachain_runtime, api as parachain_api, opaque::Block, AccountId, Balance, Hash,
+	Index as Nonce, RuntimeApi,
+};
+#[cfg(feature = "litentry-runtime")]
+use litentry_parachain_runtime::{
+	self as parachain_runtime, api as parachain_api, opaque::Block, AccountId, Balance, Hash,
+	Index as Nonce, RuntimeApi,
+};
 
 use sc_client_api::ExecutorProvider;
 use sc_executor::NativeElseWasmExecutor;
@@ -49,11 +58,11 @@ impl sc_executor::NativeExecutionDispatch for LitentryParachainRuntimeExecutor {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		litentry_parachain_runtime::api::dispatch(method, data)
+		parachain_api::dispatch(method, data)
 	}
 
 	fn native_version() -> sc_executor::NativeVersion {
-		litentry_parachain_runtime::native_version()
+		parachain_runtime::native_version()
 	}
 }
 
@@ -364,21 +373,9 @@ pub async fn start_litentry_parachain_node(
 	id: ParaId,
 ) -> sc_service::error::Result<(
 	TaskManager,
-	Arc<
-		TFullClient<
-			Block,
-			litentry_parachain_runtime::RuntimeApi,
-			NativeElseWasmExecutor<LitentryParachainRuntimeExecutor>,
-		>,
-	>,
+	Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<LitentryParachainRuntimeExecutor>>>,
 )> {
-	start_node_impl::<
-		litentry_parachain_runtime::RuntimeApi,
-		LitentryParachainRuntimeExecutor,
-		_,
-		_,
-		_,
-	>(
+	start_node_impl::<RuntimeApi, LitentryParachainRuntimeExecutor, _, _, _>(
 		parachain_config,
 		polkadot_config,
 		id,
@@ -467,11 +464,7 @@ pub async fn start_litentry_parachain_node(
 /// Build the import queue for the litentry parachain runtime.
 pub fn litentry_parachain_build_import_queue(
 	client: Arc<
-		TFullClient<
-			Block,
-			litentry_parachain_runtime::RuntimeApi,
-			NativeElseWasmExecutor<LitentryParachainRuntimeExecutor>,
-		>,
+		TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<LitentryParachainRuntimeExecutor>>,
 	>,
 	config: &Configuration,
 	telemetry: Option<TelemetryHandle>,
@@ -479,11 +472,7 @@ pub fn litentry_parachain_build_import_queue(
 ) -> Result<
 	sc_consensus::DefaultImportQueue<
 		Block,
-		TFullClient<
-			Block,
-			litentry_parachain_runtime::RuntimeApi,
-			NativeElseWasmExecutor<LitentryParachainRuntimeExecutor>,
-		>,
+		TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<LitentryParachainRuntimeExecutor>>,
 	>,
 	sc_service::Error,
 > {

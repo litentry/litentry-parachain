@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use super::*;
 use cumulus_primitives_core::ParaId;
 use litentry_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, CollatorSelectionConfig, CouncilMembershipConfig,
@@ -31,47 +32,6 @@ const DEFAULT_PARA_ID: u32 = 2013;
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
-
-/// Helper function to generate a crypto pair from seed
-pub fn get_public_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
-	TPublic::Pair::from_string(&format!("//{}", seed), None)
-		.expect("static values are valid; qed")
-		.public()
-}
-
-/// The extensions for the [`ChainSpec`].
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ChainSpecGroup, ChainSpecExtension)]
-#[serde(rename_all = "camelCase")]
-pub struct Extensions {
-	/// The relay chain of the Parachain.
-	pub relay_chain: String,
-	/// The id of the Parachain.
-	pub para_id: u32,
-}
-
-impl Extensions {
-	/// Try to get the extension from the given `ChainSpec`.
-	pub fn try_get(chain_spec: &dyn sc_service::ChainSpec) -> Option<&Self> {
-		sc_chain_spec::get_extension(chain_spec.extensions())
-	}
-}
-
-type AccountPublic = <Signature as Verify>::Signer;
-
-/// Generate collator keys from seed.
-///
-/// This function's return type must always match the session keys of the chain in tuple format.
-pub fn get_collator_keys_from_seed(seed: &str) -> AuraId {
-	get_public_from_seed::<AuraId>(seed)
-}
-
-/// Helper function to generate an account ID from seed
-pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
-where
-	AccountPublic: From<<TPublic::Pair as Pair>::Public>,
-{
-	AccountPublic::from(get_public_from_seed::<TPublic>(seed)).into_account()
-}
 
 pub fn parachain_properties(symbol: &str, decimals: u32, ss58format: u32) -> Option<Properties> {
 	let mut properties = Properties::new();
@@ -154,7 +114,7 @@ pub fn get_chain_spec_staging() -> ChainSpec {
 	// account:	$SECRET//collator//<id>
 	// aura: 	$SECRET//collator//<id>//aura
 	get_chain_spec_from_genesis_info(
-		include_bytes!("../res/genesis_info/staging.json"),
+		include_bytes!("../../res/genesis_info/staging.json"),
 		"Litentry-staging",
 		"litentry-staging",
 		ChainType::Local,
@@ -165,7 +125,7 @@ pub fn get_chain_spec_staging() -> ChainSpec {
 
 pub fn get_chain_spec_prod() -> ChainSpec {
 	get_chain_spec_from_genesis_info(
-		include_bytes!("../res/genesis_info/prod.json"),
+		include_bytes!("../../res/genesis_info/litentry.json"),
 		"Litentry",
 		"litentry",
 		ChainType::Live,
