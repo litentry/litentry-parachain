@@ -3786,7 +3786,7 @@ dependencies = [
  "libsecp256k1-gen-genmult",
  "rand 0.8.4",
  "serde",
- "sha2 0.9.8",
+ "sha2 0.9.9",
  "typenum 1.15.0",
 ]
 
