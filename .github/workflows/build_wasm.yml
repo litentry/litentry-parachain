@@ -3,6 +3,12 @@ name: Build wasm
 on:
   workflow_dispatch:
     inputs:
+      chain:
+        type: choice
+        description: The chain whose runtime-wasm is built
+        options:
+        - litmus
+        - litentry
       ref:
         description: The ref to be used for the repo
         default: ''
@@ -21,26 +27,26 @@ jobs:
           ref: ${{ github.event.inputs.ref || github.ref }}
           fetch-depth: 0
 
-      - name: Build with srtool
+      - name: Build ${{ github.event.inputs.chain }} wasm with srtool
         id: srtool_build
         uses: chevdor/srtool-actions@v0.3.0
         with:
-          chain: litentry-parachain
-          runtime_dir: runtime
+          chain: ${{ github.event.inputs.chain }}-parachain
+          runtime_dir: runtime/${{ github.event.inputs.chain }}
 
       - name: Summary
         run: |
-          echo '${{ steps.srtool_build.outputs.json }}' | jq . > litentry-parachain-srtool-digest.json
+          echo '${{ steps.srtool_build.outputs.json }}' | jq . > ${{ github.event.inputs.chain }}-parachain-srtool-digest.json
           echo "==============================================="
-          cat litentry-parachain-srtool-digest.json
-          cp ${{ steps.srtool_build.outputs.wasm }} litentry-parachain-runtime.compact.wasm
-          cp ${{ steps.srtool_build.outputs.wasm_compressed }} litentry-parachain-runtime.compact.compressed.wasm
+          cat ${{ github.event.inputs.chain }}-parachain-srtool-digest.json
+          cp ${{ steps.srtool_build.outputs.wasm }} ${{ github.event.inputs.chain }}-parachain-runtime.compact.wasm
+          cp ${{ steps.srtool_build.outputs.wasm_compressed }} ${{ github.event.inputs.chain }}-parachain-runtime.compact.compressed.wasm
 
       - name: Upload wasm artefacts
         uses: actions/upload-artifact@v2
         with:
-          name: litentry-parachain-runtime
+          name: ${{ github.event.inputs.chain }}-parachain-runtime
           path: |
-            litentry-parachain-srtool-digest.json
-            litentry-parachain-runtime.compact.wasm
-            litentry-parachain-runtime.compact.compressed.wasm
+            ${{ github.event.inputs.chain }}-parachain-srtool-digest.json
+            ${{ github.event.inputs.chain }}-parachain-runtime.compact.wasm
+            ${{ github.event.inputs.chain }}-parachain-runtime.compact.compressed.wasm

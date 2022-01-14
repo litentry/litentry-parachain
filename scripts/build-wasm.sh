@@ -28,4 +28,4 @@ cargo install --git https://github.com/chevdor/srtool-cli
 srtool -i "$SRTOOL_IMAGE" build -p $CHAIN-parachain-runtime -r runtime/$CHAIN
 
 echo "============================"
-echo "Done, the wasms are under runtime/target/srtool/release/wbuild/litentry-parachain-runtime/"
+echo "Done, the wasms are under runtime/target/srtool/release/wbuild/$CHAIN-parachain-runtime/"
