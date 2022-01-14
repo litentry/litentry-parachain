@@ -36,11 +36,7 @@ std = [
 	"codec/std",
 	"sp-std/std",
 	"sp-runtime/std",
-	"sp-io/std",
-	"sp-core/std",
 	"frame-support/std",
 	"frame-system/std",
 	"frame-benchmarking/std",
-	"pallet-balances/std",
-	"pallet-timestamp/std",
 ]
