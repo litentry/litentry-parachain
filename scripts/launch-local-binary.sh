@@ -11,19 +11,17 @@
 
 function usage() {
   echo
-  echo "Usage:   $0 [path-to-polkadot-bin] [path-to-litentry-collator]"
+  echo "Usage:   $0 litentry|litmus [path-to-polkadot-bin] [path-to-litentry-collator]"
   echo "Default: polkadot bin from the latest official release"
   echo "         litentry-collator bin from litentry/litentry-parachain:latest image"
   echo "         both are of Linux verion"
 }
 
-if [ "$#" -gt 2 ] ; then
-  usage
-  exit 1
-fi
+[ $# -lt 1 ] && (usage; exit 1)
 
-POLKADOT_BIN="$1"
-PARACHAIN_BIN="$2"
+CHAIN=$1
+POLKADOT_BIN="$2"
+PARACHAIN_BIN="$3"
 
 TMPDIR=/tmp/parachain_dev
 [ -d "$TMPDIR" ] || mkdir -p "$TMPDIR"
@@ -82,8 +80,8 @@ ROCOCO_CHAINSPEC=rococo-local-chain-spec.json
 $POLKADOT_BIN build-spec --chain rococo-local --disable-default-bootnode --raw > $ROCOCO_CHAINSPEC
 
 # generate genesis state and wasm for registration
-$PARACHAIN_BIN export-genesis-state --chain dev > para-$PARACHAIN_ID-genesis
-$PARACHAIN_BIN export-genesis-wasm --chain dev > para-$PARACHAIN_ID-wasm
+$PARACHAIN_BIN export-genesis-state --chain $CHAIN-dev > para-$PARACHAIN_ID-genesis
+$PARACHAIN_BIN export-genesis-wasm --chain $CHAIN-dev > para-$PARACHAIN_ID-wasm
 
 # run alice and bob as relay nodes
 $POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --alice --tmp --port 30333 --ws-port 9944 --rpc-port 9933 &> "relay.alice.log" &
