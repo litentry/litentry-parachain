@@ -6,6 +6,11 @@
 
 The Litentry parachain.
 
+Similar to polkadot, different chain-specs/runtimes are compiled into one single binary: in our case it's:
+- litentry-parachain-runtime (on polkadot)
+- litmus-parachain-runtime   (on kusama)
+
+Therefore, when building node binary or docker image, no distinction is required. But when building runtime/starting binary/running tests, the chain type must be explicitly given. See the examples below.
 ## Lists of make targets
 Simply run
 ```
@@ -20,33 +25,35 @@ To build the litentry-parachain raw binary manually:
 make build-node
 ```
 
-To build the litentry-parachain runtime wasm manually:
-```
-make build-runtime
-```
-The wasms should be located under `target/release/wbuild/litentry-parachain-runtime/`
-
 To build the `litentry/litentry-parachain` docker image locally:
 ```
 make build-docker
 ```
+
+To build the litentry-parachain runtime wasm manually:
+```
+make build-runtime-litentry
+```
+The wasms should be located under `target/release/wbuild/litentry-parachain-runtime/`
+
+Similarly, use `make build-runtime-litmus` to build the litmus-parachain-runtime.
 
 ## launch of local dev network
 
 To start a local dev network with 2 relaychain nodes and 1 parachain node, there're two ways:
 
 ### 1. use docker images for both polkadot and litentry-parachain (preferred)
-
+Take the litentry-parachain for example:
 ```
-make launch-local-docker
+make launch-docker-litentry
 ```
 [parachain-launch](https://github.com/open-web3-stack/parachain-launch) will be installed and used to generate chain-specs and docker-compose files.
 
-The generated files will be under `docker/generated-dev/`.
+The generated files will be under `docker/generated-litentry/`.
 
 When finished with the dev network, run
 ```
-make clean-local-docker
+make clean-docker-litentry
 ```
 to stop the processes and tidy things up.
 
@@ -59,33 +66,34 @@ In this case we could try to launch the dev network with raw binaries.
 **On Linux host:**
 
 - you should have the locally compiled `./target/release/litentry-collator` binary.
-- run `make launch-local-binary`
+- run `make launch-binary-litentry`
 
 **On Non-Linux host:**
 
 - you should have locally compiled binaries, for both `polkadot` and `litentry-collator`
-- run `./scripts/launch-local-binary.sh path-to-polkadot-bin path-to-litentry-parachain-bin`
+- run `./scripts/launch-local-binary.sh litentry path-to-polkadot-bin path-to-litentry-parachain-bin`
 
 When finished with the dev network, run
 ```
-make clean-local-binary
+make clean-binary
 ```
 to stop the processes and tidy things up.
+Note this command should work for both litentry and litmus (you don't have to differentiate them).
 
-## run CI tests locally
+## run ts tests locally
 
-To run the CI tests locally, similar to launching the networks, it's possible to run them in either docker or binary mode:
+To run the ts tests locally, similar to launching the networks, it's possible to run them in either docker or binary mode:
 ```
-make test-ci-docker
+make test-ts-docker-litentry
 ```
 or
 ```
 # if on Linux
-make test-ci-binary
+make test-ts-binary-litentry
 
 # otherwise
-./scripts/launch-local-binary.sh path-to-polkadot-bin path-to-litentry-parachain-bin
-./scripts/run-ci-test.sh
+./scripts/launch-local-binary.sh litentry path-to-polkadot-bin path-to-litentry-parachain-bin
+./scripts/run-ts-test.sh
 ```
 Remember to run the clean-up afterwards.
 
