@@ -25,7 +25,7 @@ relaychain:
 parachains:
 - image: litentry/litentry-parachain:latest
   chain:
-    base: dev
+    base: litentry-dev
   id: 2013
   parachain: true
   flags:
