@@ -1490,7 +1490,7 @@ pub mod pallet {
 			Self {
 				candidates: vec![],
 				delegations: vec![],
-				..Default::default()
+				inflation_config: InflationInfo::<BalanceOf<T>>::default()
 			}
 		}
 	}
