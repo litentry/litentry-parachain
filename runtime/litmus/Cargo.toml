@@ -1,5 +1,5 @@
 [package]
-name = 'kitentry-parachain-runtime'
+name = 'litmus-parachain-runtime'
 version = '0.9.1'
 authors = ["Litentry Dev"]
 edition = '2021'
