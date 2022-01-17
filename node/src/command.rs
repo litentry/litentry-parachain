@@ -19,15 +19,13 @@
 use crate::{
 	chain_specs,
 	cli::{Cli, RelayChainCli, Subcommand},
-	service::{new_partial, LitentryParachainRuntimeExecutor},
+	service::{
+		new_partial, Block, KitentryParachainRuntimeExecutor, LitentryParachainRuntimeExecutor,
+	},
 };
 use codec::Encode;
 use cumulus_client_service::genesis::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
-#[cfg(feature = "kitentry-runtime")]
-use kitentry_parachain_runtime::{self as parachain_runtime, Block};
-#[cfg(feature = "litentry-runtime")]
-use litentry_parachain_runtime::{self as parachain_runtime, Block};
 use log::info;
 use polkadot_parachain::primitives::AccountIdConversion;
 use primitives::Header;
@@ -64,35 +62,33 @@ impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
 }
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
-	match id {
-		#[cfg(feature = "litentry-runtime")]
-		"litentry-dev" => Ok(Box::new(chain_specs::litentry::get_chain_spec_dev())),
-		#[cfg(feature = "litentry-runtime")]
-		"litentry-staging" => Ok(Box::new(chain_specs::litentry::get_chain_spec_staging())),
-		// Generate res/chain_specs/litentry.json
-		#[cfg(feature = "litentry-runtime")]
-		"generate-litentry" => Ok(Box::new(chain_specs::litentry::get_chain_spec_prod())),
-		// Generate res/chain_specs/kitentry.json
-		#[cfg(feature = "kitentry-runtime")]
-		"generate-kitentry" => Ok(Box::new(chain_specs::kitentry::get_chain_spec_prod())),
-		#[cfg(feature = "litentry-runtime")]
-		"" | "litentry-prod" => Ok(Box::new(chain_specs::litentry::ChainSpec::from_json_bytes(
+	Ok(match id {
+		// Litentry
+		"litentry-dev" => Box::new(chain_specs::litentry::get_chain_spec_dev()),
+		"litentry-staging" => Box::new(chain_specs::litentry::get_chain_spec_staging()),
+		"litentry-prod" => Box::new(chain_specs::litentry::ChainSpec::from_json_bytes(
 			&include_bytes!("../res/chain_specs/litentry.json")[..],
-		)?)),
+		)?),
+		// Kitentry
+		"kitentry-dev" => Box::new(chain_specs::kitentry::get_chain_spec_dev()),
+		"kitentry-staging" => Box::new(chain_specs::kitentry::get_chain_spec_staging()),
+		"kitentry-prod" => Box::new(chain_specs::kitentry::ChainSpec::from_json_bytes(
+			&include_bytes!("../res/chain_specs/kitentry.json")[..],
+		)?),
+		// Generate res/chain_specs/litentry.json
+		"generate-litentry" => Box::new(chain_specs::litentry::get_chain_spec_prod()),
+		// Generate res/chain_specs/kitentry.json
+		"generate-kitentry" => Box::new(chain_specs::kitentry::get_chain_spec_prod()),
 		path => {
-			let dummy_chain_spec = chain_specs::DummyChainSpec::from_json_file(path.into())?;
-			if dummy_chain_spec.is_litentry() {
-				#[cfg(feature = "litentry-runtime")]
-				return Ok(Box::new(chain_specs::litentry::ChainSpec::from_json_file(path.into())?))
-			} else if dummy_chain_spec.is_kitentry() {
-				#[cfg(feature = "kitentry-runtime")]
-				return Ok(Box::new(chain_specs::kitentry::ChainSpec::from_json_file(path.into())?))
+			let chain_spec = chain_specs::ChainSpec::from_json_file(path.into())?;
+			if chain_spec.is_kitentry() {
+				Box::new(chain_specs::kitentry::ChainSpec::from_json_file(path.into())?)
 			} else {
-				return Err("Unsupported network type.".into())
+				// By default litentry is used
+				Box::new(chain_spec)
 			}
-			Err("Unsupported network type.".into())
 		},
-	}
+	})
 }
 
 impl SubstrateCli for Cli {
@@ -128,8 +124,12 @@ impl SubstrateCli for Cli {
 		load_spec(id)
 	}
 
-	fn native_runtime_version(_chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		&parachain_runtime::VERSION
+	fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
+		if chain_spec.is_kitentry() {
+			&kitentry_parachain_runtime::VERSION
+		} else {
+			&litentry_parachain_runtime::VERSION
+		}
 	}
 }
 
@@ -184,18 +184,33 @@ macro_rules! construct_async_run {
 	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
 		let runner = $cli.create_runner($cmd)?;
 
-		runner.async_run(|$config| {
-			let $components = new_partial::<
-				parachain_runtime::RuntimeApi,
-				LitentryParachainRuntimeExecutor,
-				_
-			>(
-				&$config,
-				crate::service::litentry_parachain_build_import_queue,
-			)?;
-			let task_manager = $components.task_manager;
-			{ $( $code )* }.map(|v| (v, task_manager))
-		})
+		if runner.config().chain_spec.is_kitentry() {
+			runner.async_run(|$config| {
+				let $components = new_partial::<
+					kitentry_parachain_runtime::RuntimeApi,
+					KitentryParachainRuntimeExecutor,
+					_
+				>(
+					&$config,
+					crate::service::kitentry_parachain_build_import_queue,
+				)?;
+				let task_manager = $components.task_manager;
+				{ $( $code )* }.map(|v| (v, task_manager))
+			})
+		} else {
+			runner.async_run(|$config| {
+				let $components = new_partial::<
+					litentry_parachain_runtime::RuntimeApi,
+					LitentryParachainRuntimeExecutor,
+					_
+				>(
+					&$config,
+					crate::service::litentry_parachain_build_import_queue,
+				)?;
+				let task_manager = $components.task_manager;
+				{ $( $code )* }.map(|v| (v, task_manager))
+			})
+		}
 
 	}}
 }
@@ -301,7 +316,17 @@ pub fn run() -> Result<()> {
 			if cfg!(feature = "runtime-benchmarks") {
 				let runner = cli.create_runner(cmd)?;
 
-				runner.sync_run(|config| cmd.run::<Block, LitentryParachainRuntimeExecutor>(config))
+				if runner.config().chain_spec.is_kitentry() {
+					runner.sync_run(|config| {
+						cmd.run::<Block, KitentryParachainRuntimeExecutor>(config)
+					})
+				} else if runner.config().chain_spec.is_litentry() {
+					runner.sync_run(|config| {
+						cmd.run::<Block, LitentryParachainRuntimeExecutor>(config)
+					})
+				} else {
+					Err("Chain doesn't support benchmarking".into())
+				}
 			} else {
 				Err("Benchmarking wasn't enabled when building the node. \
 				You can enable it with `--features runtime-benchmarks`."
@@ -310,16 +335,23 @@ pub fn run() -> Result<()> {
 		#[cfg(feature = "try-runtime")]
 		Some(Subcommand::TryRuntime(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| {
-				// we don't need any of the components of new_partial, just a runtime, or a task
-				// manager to do `async_run`.
-				let registry = config.prometheus_config.as_ref().map(|cfg| &cfg.registry);
-				let task_manager =
-					sc_service::TaskManager::new(config.tokio_handle.clone(), registry)
-						.map_err(|e| sc_cli::Error::Service(sc_service::Error::Prometheus(e)))?;
+			// we don't need any of the components of new_partial, just a runtime, or a task
+			// manager to do `async_run`.
+			let registry = config.prometheus_config.as_ref().map(|cfg| &cfg.registry);
+			let task_manager = sc_service::TaskManager::new(config.tokio_handle.clone(), registry)
+				.map_err(|e| sc_cli::Error::Service(sc_service::Error::Prometheus(e)))?;
 
-				Ok((cmd.run::<Block, LitentryParachainRuntimeExecutor>(config), task_manager))
-			})
+			if runner.config().chain_spec.is_kitentry() {
+				runner.async_run(|config| {
+					Ok((cmd.run::<Block, KitentryParachainRuntimeExecutor>(config), task_manager))
+				})
+			} else if runner.config().chain_spec.is_litentry() {
+				runner.async_run(|config| {
+					Ok((cmd.run::<Block, LitentryParachainRuntimeExecutor>(config), task_manager))
+				})
+			} else {
+				Err("Chain doesn't support try-runtime".into())
+			}
 		},
 		#[cfg(not(feature = "try-runtime"))]
 		Some(Subcommand::TryRuntime) => Err("TryRuntime wasn't enabled when building the node. \
@@ -357,10 +389,17 @@ pub fn run() -> Result<()> {
 				info!("Parachain genesis state: {}", genesis_state);
 				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
 
-				crate::service::start_litentry_parachain_node(config, polkadot_config, id)
-					.await
-					.map(|r| r.0)
-					.map_err(Into::into)
+				if config.chain_spec.is_kitentry() {
+					crate::service::start_kitentry_parachain_node(config, polkadot_config, id)
+						.await
+						.map(|r| r.0)
+						.map_err(Into::into)
+				} else {
+					crate::service::start_litentry_parachain_node(config, polkadot_config, id)
+						.await
+						.map(|r| r.0)
+						.map_err(Into::into)
+				}
 			})
 		},
 	}

@@ -85,8 +85,8 @@ frame-benchmarking-cli = {git = "https://github.com/paritytech/substrate", branc
 try-runtime-cli = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", optional = true}
 
 # Local dependencies
-kitentry-parachain-runtime = {path = "../runtime/kitentry", optional = true}
-litentry-parachain-runtime = {path = "../runtime/litentry", optional = true}
+kitentry-parachain-runtime = {path = "../runtime/kitentry"}
+litentry-parachain-runtime = {path = "../runtime/litentry"}
 primitives = {path = "../primitives"}
 
 [build-dependencies]
@@ -94,8 +94,6 @@ substrate-build-script-utils = {git = "https://github.com/paritytech/substrate.g
 
 [features]
 default = []
-kitentry-runtime = ["kitentry-parachain-runtime"]
-litentry-runtime = ["litentry-parachain-runtime"]
 runtime-benchmarks = [
   "litentry-parachain-runtime/runtime-benchmarks",
   "kitentry-parachain-runtime/runtime-benchmarks",

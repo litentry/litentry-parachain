@@ -24,12 +24,12 @@ use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 
-#[cfg(feature = "kitentry-runtime")]
 pub mod kitentry;
-#[cfg(feature = "litentry-runtime")]
 pub mod litentry;
 
-pub type DummyChainSpec = sc_service::GenericChainSpec<(), Extensions>;
+// This is a default chain spec using litentry genesis config
+pub type ChainSpec =
+	sc_service::GenericChainSpec<litentry_parachain_runtime::GenesisConfig, Extensions>;
 
 /// Helper function to generate a crypto pair from seed
 pub fn get_public_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
