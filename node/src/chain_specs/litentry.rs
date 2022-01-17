@@ -18,15 +18,14 @@ use super::*;
 use cumulus_primitives_core::ParaId;
 use litentry_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, CollatorSelectionConfig, CouncilMembershipConfig,
-	GenesisConfig, ParachainInfoConfig, SessionConfig, Signature, SudoConfig, SystemConfig,
+	GenesisConfig, ParachainInfoConfig, SessionConfig, SudoConfig, SystemConfig,
 	TechnicalCommitteeMembershipConfig, UNIT, WASM_BINARY,
 };
-use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup, Properties};
+use sc_chain_spec::Properties;
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
-use serde::{Deserialize, Serialize};
-use sp_core::{sr25519, Pair, Public};
-use sp_runtime::traits::{IdentifyAccount, Verify};
+use serde::Deserialize;
+use sp_core::sr25519;
 
 const DEFAULT_PARA_ID: u32 = 2013;
 
