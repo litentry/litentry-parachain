@@ -21,7 +21,6 @@ use litmus_parachain_runtime::{
 	GenesisConfig, ParachainInfoConfig, SessionConfig, SudoConfig, SystemConfig,
 	TechnicalCommitteeMembershipConfig, UNIT, WASM_BINARY,
 };
-use sc_chain_spec::Properties;
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
 use serde::Deserialize;
@@ -32,18 +31,9 @@ const DEFAULT_PARA_ID: u32 = 2106;
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
 
-pub fn parachain_properties(symbol: &str, decimals: u32, ss58format: u32) -> Option<Properties> {
-	let mut properties = Properties::new();
-	properties.insert("tokenSymbol".into(), symbol.into());
-	properties.insert("tokenDecimals".into(), decimals.into());
-	properties.insert("ss58Format".into(), ss58format.into());
-
-	Some(properties)
-}
-
 /// Get default parachain properties for Litmus which will be filled into chain spec
-pub fn default_parachain_properties() -> Option<Properties> {
-	parachain_properties("LIT", 12, 256)
+fn default_parachain_properties() -> Option<Properties> {
+	parachain_properties("LIT", 12, 131)
 }
 
 const DEV_CANDIDACY_BOND: Balance = 1;

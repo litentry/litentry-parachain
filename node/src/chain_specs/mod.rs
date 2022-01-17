@@ -15,6 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use primitives::{AccountId, Signature};
+pub use sc_chain_spec::Properties;
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use serde::{Deserialize, Serialize};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -67,4 +68,14 @@ where
 	AccountPublic: From<<TPublic::Pair as Pair>::Public>,
 {
 	AccountPublic::from(get_public_from_seed::<TPublic>(seed)).into_account()
+}
+
+/// Helper function to generate parachain properties
+pub fn parachain_properties(symbol: &str, decimals: u32, ss58format: u32) -> Option<Properties> {
+	let mut properties = Properties::new();
+	properties.insert("tokenSymbol".into(), symbol.into());
+	properties.insert("tokenDecimals".into(), decimals.into());
+	properties.insert("ss58Format".into(), ss58format.into());
+
+	Some(properties)
 }
