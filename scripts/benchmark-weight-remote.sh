@@ -35,7 +35,7 @@ chmod a+x litentry-collator
 # poopulate PALLETS
 PALLETS=
 case "$2" in
-  '*')  PALLETS=$(grep add_benchmark! runtime/src/lib.rs | tr ',' ' ' | awk '{print $3}' | paste -s -d' ' -) ;;
+  '*')  PALLETS=$(grep add_benchmark! runtime/$1/src/lib.rs | tr ',' ' ' | awk '{print $3}' | paste -s -d' ' -) ;;
   *)    PALLETS=$(echo "$2" | tr ',' ' ') ;;
 esac
 PALLETS=${PALLETS//-/_}

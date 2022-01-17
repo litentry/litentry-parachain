@@ -3,6 +3,12 @@ name: Create release draft
 on:
   workflow_dispatch:
     inputs:
+      chain:
+        type: choice
+        description: The chain whose runtime-wasm is released
+        options:
+        - litmus
+        - litentry
       release_tag:
         description: an existing tag for creating release (e.g. v1.2.3)
         required: true
@@ -16,6 +22,7 @@ on:
         required: false
 
 env:
+  CHAIN: ${{ github.event.inputs.chain }}
   RELEASE_TAG: ${{ github.event.inputs.release_tag }}
   DIFF_TAG: ${{ github.event.inputs.diff_tag }}
   GENESIS_RELEASE: ${{ github.event.inputs.is_geneis_release }}
@@ -35,23 +42,23 @@ jobs:
         id: srtool_build
         uses: chevdor/srtool-actions@v0.3.0
         with:
-          chain: litentry-parachain
-          runtime_dir: runtime
+          chain: ${{ env.CHAIN }}-parachain
+          runtime_dir: runtime/${{ env.CHAIN }}
 
       - name: Summary
         run: |
-          echo '${{ steps.srtool_build.outputs.json }}' | jq . > litentry-parachain-srtool-digest.json
+          echo '${{ steps.srtool_build.outputs.json }}' | jq . > ${{ env.CHAIN }}-parachain-srtool-digest.json
           echo "==============================================="
-          cat litentry-parachain-srtool-digest.json
-          cp ${{ steps.srtool_build.outputs.wasm_compressed }} litentry-parachain-runtime.compact.compressed.wasm
+          cat ${{ env.CHAIN }}-parachain-srtool-digest.json
+          cp ${{ steps.srtool_build.outputs.wasm_compressed }} ${{ env.CHAIN }}-parachain-runtime.compact.compressed.wasm
 
       - name: Upload wasm artefacts
         uses: actions/upload-artifact@v2
         with:
-          name: litentry-parachain-runtime
+          name: ${{ env.CHAIN }}-parachain-runtime
           path: |
-            litentry-parachain-srtool-digest.json
-            litentry-parachain-runtime.compact.compressed.wasm
+            ${{ env.CHAIN }}-parachain-srtool-digest.json
+            ${{ env.CHAIN }}-parachain-runtime.compact.compressed.wasm
 
   ## build docker image of client binary ##
   build-docker:
@@ -80,8 +87,8 @@ jobs:
       - name: Generate genesis artefacts if need
         if: github.event.inputs.is_geneis_release == 'true'
         run: |
-          docker run --rm litentry/litentry-parachain:${{ env.RELEASE_TAG }} export-genesis-state > litentry-genesis-state
-          docker run --rm litentry/litentry-parachain:${{ env.RELEASE_TAG }} export-genesis-wasm > litentry-genesis-wasm
+          docker run --rm litentry/litentry-parachain:${{ env.RELEASE_TAG }} export-genesis-state --chain=${{ env.CHAIN }} > ${{ env.CHAIN }}-genesis-state
+          docker run --rm litentry/litentry-parachain:${{ env.RELEASE_TAG }} export-genesis-wasm --chain=${{ env.CHAIN }} > ${{ env.CHAIN }}-genesis-wasm
 
       - name: Copy client binary to disk
         run: |
@@ -94,8 +101,8 @@ jobs:
           if-no-files-found: ignore
           path: |
             litentry-collator
-            litentry-genesis-state
-            litentry-genesis-wasm
+            ${{ env.CHAIN }}-genesis-state
+            ${{ env.CHAIN }}-genesis-wasm
 
   ## create the release draft ##
   create-release-draft:
@@ -113,7 +120,7 @@ jobs:
 
       - name: Generate release notes
         run: |
-          ./scripts/generate-release-notes.sh ${{ github.workspace }}/.github/release_notes.md ${{ env.DIFF_TAG }}
+          ./scripts/generate-release-notes.sh ${{ env.CHAIN }} ${{ github.workspace }}/.github/release_notes.md ${{ env.DIFF_TAG }}
 
       - name: Create release draft
         id: create-release-draft
@@ -124,6 +131,6 @@ jobs:
           body_path: ${{ github.workspace }}/.github/release_notes.md
           draft: true
           files: |
-            litentry-parachain-runtime/litentry-parachain-srtool-digest.json
-            litentry-parachain-runtime/litentry-parachain-runtime.compact.compressed.wasm
+            ${{ env.CHAIN }}-parachain-runtime/${{ env.CHAIN }}-parachain-srtool-digest.json
+            ${{ env.CHAIN }}-parachain-runtime/${{ env.CHAIN }}-parachain-runtime.compact.compressed.wasm
             litentry-collator/*
