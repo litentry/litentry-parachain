@@ -65,13 +65,13 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		// Litentry
 		"litentry-dev" => Box::new(chain_specs::litentry::get_chain_spec_dev()),
 		"litentry-staging" => Box::new(chain_specs::litentry::get_chain_spec_staging()),
-		"litentry-prod" => Box::new(chain_specs::litentry::ChainSpec::from_json_bytes(
+		"litentry" => Box::new(chain_specs::litentry::ChainSpec::from_json_bytes(
 			&include_bytes!("../res/chain_specs/litentry.json")[..],
 		)?),
 		// Litmus
 		"litmus-dev" => Box::new(chain_specs::litmus::get_chain_spec_dev()),
 		"litmus-staging" => Box::new(chain_specs::litmus::get_chain_spec_staging()),
-		"litmus-prod" => Box::new(chain_specs::litmus::ChainSpec::from_json_bytes(
+		"litmus" => Box::new(chain_specs::litmus::ChainSpec::from_json_bytes(
 			&include_bytes!("../res/chain_specs/litmus.json")[..],
 		)?),
 		// Generate res/chain_specs/litentry.json
