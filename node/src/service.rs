@@ -58,17 +58,17 @@ impl sc_executor::NativeExecutionDispatch for LitentryParachainRuntimeExecutor {
 }
 
 // Native executor instance.
-pub struct KitentryParachainRuntimeExecutor;
+pub struct LitmusParachainRuntimeExecutor;
 
-impl sc_executor::NativeExecutionDispatch for KitentryParachainRuntimeExecutor {
+impl sc_executor::NativeExecutionDispatch for LitmusParachainRuntimeExecutor {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		kitentry_parachain_runtime::api::dispatch(method, data)
+		litmus_parachain_runtime::api::dispatch(method, data)
 	}
 
 	fn native_version() -> sc_executor::NativeVersion {
-		kitentry_parachain_runtime::native_version()
+		litmus_parachain_runtime::native_version()
 	}
 }
 
@@ -479,8 +479,8 @@ pub async fn start_litentry_parachain_node(
 	.await
 }
 
-/// Start a kitentry parachain node.
-pub async fn start_kitentry_parachain_node(
+/// Start a litmus parachain node.
+pub async fn start_litmus_parachain_node(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
 	id: ParaId,
@@ -489,14 +489,14 @@ pub async fn start_kitentry_parachain_node(
 	Arc<
 		TFullClient<
 			Block,
-			kitentry_parachain_runtime::RuntimeApi,
-			NativeElseWasmExecutor<KitentryParachainRuntimeExecutor>,
+			litmus_parachain_runtime::RuntimeApi,
+			NativeElseWasmExecutor<LitmusParachainRuntimeExecutor>,
 		>,
 	>,
 )> {
 	start_node_impl::<
-		kitentry_parachain_runtime::RuntimeApi,
-		KitentryParachainRuntimeExecutor,
+		litmus_parachain_runtime::RuntimeApi,
+		LitmusParachainRuntimeExecutor,
 		_,
 		_,
 		_,
@@ -505,7 +505,7 @@ pub async fn start_kitentry_parachain_node(
 		polkadot_config,
 		id,
 		|_| Ok(Default::default()),
-		kitentry_parachain_build_import_queue,
+		litmus_parachain_build_import_queue,
 		|client,
 		 prometheus_registry,
 		 telemetry,
@@ -641,13 +641,13 @@ pub fn litentry_parachain_build_import_queue(
 	.map_err(Into::into)
 }
 
-/// Build the import queue for the kitentry parachain runtime.
-pub fn kitentry_parachain_build_import_queue(
+/// Build the import queue for the litmus parachain runtime.
+pub fn litmus_parachain_build_import_queue(
 	client: Arc<
 		TFullClient<
 			Block,
-			kitentry_parachain_runtime::RuntimeApi,
-			NativeElseWasmExecutor<KitentryParachainRuntimeExecutor>,
+			litmus_parachain_runtime::RuntimeApi,
+			NativeElseWasmExecutor<LitmusParachainRuntimeExecutor>,
 		>,
 	>,
 	config: &Configuration,
@@ -658,8 +658,8 @@ pub fn kitentry_parachain_build_import_queue(
 		Block,
 		TFullClient<
 			Block,
-			kitentry_parachain_runtime::RuntimeApi,
-			NativeElseWasmExecutor<KitentryParachainRuntimeExecutor>,
+			litmus_parachain_runtime::RuntimeApi,
+			NativeElseWasmExecutor<LitmusParachainRuntimeExecutor>,
 		>,
 	>,
 	sc_service::Error,

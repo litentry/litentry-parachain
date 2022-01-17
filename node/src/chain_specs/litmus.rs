@@ -16,7 +16,7 @@
 
 use super::*;
 use cumulus_primitives_core::ParaId;
-use kitentry_parachain_runtime::{
+use litmus_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, CollatorSelectionConfig, CouncilMembershipConfig,
 	GenesisConfig, ParachainInfoConfig, SessionConfig, SudoConfig, SystemConfig,
 	TechnicalCommitteeMembershipConfig, UNIT, WASM_BINARY,
@@ -41,9 +41,9 @@ pub fn parachain_properties(symbol: &str, decimals: u32, ss58format: u32) -> Opt
 	Some(properties)
 }
 
-/// Get default parachain properties for Kitentry which will be filled into chain spec
+/// Get default parachain properties for Litmus which will be filled into chain spec
 pub fn default_parachain_properties() -> Option<Properties> {
-	parachain_properties("KIT", 12, 256)
+	parachain_properties("LIT", 12, 256)
 }
 
 const DEV_CANDIDACY_BOND: Balance = 1;
@@ -65,8 +65,8 @@ struct GenesisInfo {
 
 pub fn get_chain_spec_dev() -> ChainSpec {
 	ChainSpec::from_genesis(
-		"Kitentry-dev",
-		"kitentry-dev",
+		"Litmus-dev",
+		"litmus-dev",
 		ChainType::Development,
 		move || {
 			generate_genesis(
@@ -100,13 +100,13 @@ pub fn get_chain_spec_dev() -> ChainSpec {
 		},
 		Vec::new(),
 		None,
-		Some("kitentry"),
+		Some("litmus"),
 		default_parachain_properties(),
 		Extensions { relay_chain: "rococo-local".into(), para_id: DEFAULT_PARA_ID },
 	)
 }
 
-// FIXME Remove this for Kitentry?
+// FIXME Remove this for Litmus?
 pub fn get_chain_spec_staging() -> ChainSpec {
 	// Staging keys are derivative keys based on a single master secret phrase:
 	//
@@ -115,8 +115,8 @@ pub fn get_chain_spec_staging() -> ChainSpec {
 	// aura: 	$SECRET//collator//<id>//aura
 	get_chain_spec_from_genesis_info(
 		include_bytes!("../../res/genesis_info/staging.json"),
-		"Kitentry-staging",
-		"kitentry-staging",
+		"Litmus-staging",
+		"litmus-staging",
 		ChainType::Local,
 		"rococo-local".into(),
 		DEFAULT_PARA_ID.into(),
@@ -125,9 +125,9 @@ pub fn get_chain_spec_staging() -> ChainSpec {
 
 pub fn get_chain_spec_prod() -> ChainSpec {
 	get_chain_spec_from_genesis_info(
-		include_bytes!("../../res/genesis_info/kitentry.json"),
-		"Kitentry",
-		"kitentry",
+		include_bytes!("../../res/genesis_info/litmus.json"),
+		"Litmus",
+		"litmus",
 		ChainType::Live,
 		"kusama".into(),
 		DEFAULT_PARA_ID.into(),
@@ -185,7 +185,7 @@ fn get_chain_spec_from_genesis_info(
 			)
 			.expect("Invalid telemetry URL; qed."),
 		),
-		Some("kitentry"),
+		Some("litmus"),
 		default_parachain_properties(),
 		Extensions { relay_chain: relay_chain_name, para_id: para_id.into() },
 	)
@@ -218,9 +218,9 @@ fn generate_genesis(
 				.cloned()
 				.map(|(acc, aura)| {
 					(
-						acc.clone(),                                      // account id
-						acc,                                              // validator id
-						kitentry_parachain_runtime::SessionKeys { aura }, // session keys
+						acc.clone(),                                    // account id
+						acc,                                            // validator id
+						litmus_parachain_runtime::SessionKeys { aura }, // session keys
 					)
 				})
 				.collect(),

@@ -10,5 +10,5 @@ members = [
   'pallets/extrinsic-filter',
   'primitives',
   'runtime/litentry',
-  'runtime/kitentry',
+  'runtime/litmus',
 ]

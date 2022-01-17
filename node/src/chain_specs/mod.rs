@@ -21,8 +21,8 @@ use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 
-pub mod kitentry;
 pub mod litentry;
+pub mod litmus;
 
 // This is a default chain spec using litentry genesis config
 pub type ChainSpec =
