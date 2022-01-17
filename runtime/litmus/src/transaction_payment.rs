@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use super::*;
+use crate::*;
 // transaction payment pallet related items
 use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
 use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
