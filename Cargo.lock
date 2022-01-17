@@ -7394,6 +7394,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "runtime-integration-tests"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "hex",
+ "hex-literal",
+ "litentry-parachain-runtime",
+ "pallet-balances",
+ "pallet-transaction-payment",
+ "parity-scale-codec",
+ "serde",
+ "serde_json",
+ "smallvec",
+ "sp-io",
+ "sp-runtime",
+]
+
+[[package]]
 name = "rustc-demangle"
 version = "0.1.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"

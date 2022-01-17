@@ -14,11 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#[cfg(test)]
-mod mock;
-#[cfg(test)]
-mod tests;
-
 use super::*;
 // transaction payment pallet related items
 use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
