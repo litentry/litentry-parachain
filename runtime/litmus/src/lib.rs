@@ -133,15 +133,15 @@ impl_opaque_keys! {
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// Note:
-	// It's important to match `litentry-parachain-runtime`, which is runtime pkg name
+	// It's important to match `litmus-parachain-runtime`, which is runtime pkg name
 	// otherwise no extrinsic can be submitted.
 	// In logs it's shown:
 	// Failed to submit extrinsic: Extrinsic verification error: Runtime error: Execution failed:
 	// Other("Wasm execution trapped: wasm trap: unreachable ...
 	//
 	// However our CI passes (TODO)
-	spec_name: create_runtime_str!("litentry-parachain"),
-	impl_name: create_runtime_str!("litentry-parachain"),
+	spec_name: create_runtime_str!("litmus-parachain"),
+	impl_name: create_runtime_str!("litmus-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot, corresponds to 0.9.1 TOML version
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
@@ -954,7 +954,7 @@ construct_runtime! {
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 52,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 53,
 
-		// Litentry pallets
+		// Litmus pallets
 		ChainBridge: pallet_bridge::{Pallet, Call, Storage, Event<T>} = 60,
 		BridgeTransfer: pallet_bridge_transfer::{Pallet, Call, Event<T>, Storage} = 61,
 		Drop3: pallet_drop3::{Pallet, Call, Storage, Event<T>} = 62,

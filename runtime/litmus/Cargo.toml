@@ -78,7 +78,7 @@ xcm-executor = { git = "https://github.com/paritytech/polkadot", default-feature
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.13", optional = true }
 frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.13", optional = true }
 
-# Litentry pallets
+# Litmus pallets
 pallet-bridge = { path = "../../pallets/bridge", default-features = false }
 pallet-bridge-transfer = { path = "../../pallets/bridge-transfer", default-features = false }
 pallet-drop3 = { path = "../../pallets/drop3", default-features = false }
