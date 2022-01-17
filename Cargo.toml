@@ -9,6 +9,7 @@ members = [
     'pallets/drop3',
     'pallets/extrinsic-filter',
     'primitives',
-    'runtime',
+    'runtime/litentry',
+    'runtime/litmus',
     'runtime/integration-tests',
 ]

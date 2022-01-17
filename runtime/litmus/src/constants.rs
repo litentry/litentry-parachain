@@ -14,15 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#![warn(unused_extern_crates)]
+/// Money matters.
+pub mod currency {
+	use crate::Balance;
 
-mod chain_specs;
-#[macro_use]
-mod service;
-mod cli;
-mod command;
-mod rpc;
+	pub const UNIT: Balance = 1_000_000_000_000;
+	pub const DOLLARS: Balance = UNIT; // 1_000_000_000_000
+	pub const CENTS: Balance = DOLLARS / 100; // 10_000_000_000
+	pub const MILLICENTS: Balance = CENTS / 1_000; // 10_000_000
 
-fn main() -> sc_cli::Result<()> {
-	command::run()
+	// Linear ratio of transaction fee distribution
+	// It is recommended to set sum of ratio to 100, yet only decimal loss is concerned.
+	pub const TREASURY_PROPORTION: u32 = 40u32;
+	pub const AUTHOR_PROPORTION: u32 = 0u32;
+	pub const BURNED_PROPORTION: u32 = 60u32;
+
+	/// Function used in some fee configurations
+	pub const fn deposit(items: u32, bytes: u32) -> Balance {
+		items as Balance * DOLLARS + (bytes as Balance) * 100 * MILLICENTS
+	}
 }

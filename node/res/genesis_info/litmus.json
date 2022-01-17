@@ -1,0 +1,103 @@
+{
+    "rootKey": "48Xwa5ULoarqW1Rgim8SxM2faxcHfRs5ARSGahVD7KbhXJFy",
+    "invulnerables": [
+      [
+        "4BVDXqfiwCzx4UxSgoQoax6EnRuNZfYNhx8ungLRC3rxKktE",
+        "46sgTotdpJnyH2V6QKJ2aVqepyUNapt7HPuy2xMc4qdtx99Z"
+      ],
+      [
+        "47EtB4vijKGvHckktM1uujUDs8Cyjfjw33sfteTUZsXacY9G",
+        "4Ba3Qvjk2fEKiDbJEXqsWT5m3HzHWB22g215wK5BJjWsEjLJ"
+      ],
+      [
+        "471akmW9AtYCxGzUt5WPLRmdWi5a8UAAN6r8LywEhMfTiL4r",
+        "4C7Zb4XjnCUbxqdyUSq3dxF5odHww6YNFrkhZcFpbMqcCFhf"
+      ]
+    ],
+    "candidacyBond": "16000000000000",
+    "endowedAccounts": [
+      [
+        "48Xwa5ULoarqW1Rgim8SxM2faxcHfRs5ARSGahVD7KbhXJFy",
+        "100000000000000"
+      ],
+      [
+        "4BVDXqfiwCzx4UxSgoQoax6EnRuNZfYNhx8ungLRC3rxKktE",
+        "100000000000000"
+      ],
+      [
+        "47EtB4vijKGvHckktM1uujUDs8Cyjfjw33sfteTUZsXacY9G",
+        "100000000000000"
+      ],
+      [
+        "471akmW9AtYCxGzUt5WPLRmdWi5a8UAAN6r8LywEhMfTiL4r",
+        "100000000000000"
+      ],
+      [
+        "4BoGfYFBsNZ444urRNESMZgjHXQbCu5PjG2PFHZrgXsTbD5m",
+        "100000000000000"
+      ],
+      [
+        "49kx3zEm25R73n29DVu9nB37vLqCzxBD5Y9g7mFGZcGUDT4r",
+        "100000000000000"
+      ],
+      [
+        "4ABPT2RCYsGgtdpBPwnkbSw5HTfzeCRk232BpoDvzP6EPiqY",
+        "100000000000000"
+      ],
+      [
+        "4BJwAyGAj7qeaQMEqqoAJoUtDpWqdf3TyzHe6NPRaVufo8GT",
+        "100000000000000"
+      ],
+      [
+        "48mdJP2yC6JxomGdx947MyFYnbXWC7Jxqrz8ZeCK8ifJSoqH",
+        "100000000000000"
+      ],
+      [
+        "478gmhwuobjjPJ2599SkpbvkFDGcqMtq3iwigcXQkkRmuyQE",
+        "100000000000000"
+      ],
+      [
+        "46nVPUsXi8dgni7cvuVFEoyYfnTa1Z6VopqzENMnocVSmecR",
+        "100000000000000"
+      ],
+      [
+        "4BkazoqhutiPXxnrdHBRyspszXp5T3RS2WZVN9Afm2voDpWN",
+        "100000000000000"
+      ],
+      [
+        "4AzBUP8abWrpcyYtHEsStJvkRX3jpPr1a2aHX3r7mekQ3V21",
+        "100000000000000"
+      ],
+      [
+        "46n9Gkp6vKnKSDZodFZ7q3QCk8LK6JRvedFfSJSDpQbaJxEj",
+        "100000000000000"
+      ],
+      [
+        "47jBsTJr5NoaFTBzt7Xq6rb75oNVYjLSFzemWZmehCXjKDbR",
+        "100000000000000"
+      ]
+    ],
+    "council": [
+      "4BoGfYFBsNZ444urRNESMZgjHXQbCu5PjG2PFHZrgXsTbD5m",
+      "49kx3zEm25R73n29DVu9nB37vLqCzxBD5Y9g7mFGZcGUDT4r",
+      "4ABPT2RCYsGgtdpBPwnkbSw5HTfzeCRk232BpoDvzP6EPiqY",
+      "4BJwAyGAj7qeaQMEqqoAJoUtDpWqdf3TyzHe6NPRaVufo8GT",
+      "48mdJP2yC6JxomGdx947MyFYnbXWC7Jxqrz8ZeCK8ifJSoqH",
+      "478gmhwuobjjPJ2599SkpbvkFDGcqMtq3iwigcXQkkRmuyQE",
+      "4AzBUP8abWrpcyYtHEsStJvkRX3jpPr1a2aHX3r7mekQ3V21",
+      "46n9Gkp6vKnKSDZodFZ7q3QCk8LK6JRvedFfSJSDpQbaJxEj",
+      "47jBsTJr5NoaFTBzt7Xq6rb75oNVYjLSFzemWZmehCXjKDbR"
+    ],
+    "technicalCommittee": [
+      "4BJwAyGAj7qeaQMEqqoAJoUtDpWqdf3TyzHe6NPRaVufo8GT",
+      "46nVPUsXi8dgni7cvuVFEoyYfnTa1Z6VopqzENMnocVSmecR",
+      "4BkazoqhutiPXxnrdHBRyspszXp5T3RS2WZVN9Afm2voDpWN"
+    ],
+    "bootNodes": [
+      "/dns/rpc0.parachain-sg.litentry.io/tcp/40333/ws/p2p/12D3KooWBy6nNAuca2ZrxNEH93bzmb7ZjRpzRbbz7CtNEraiHtSC",
+      "/dns/rpc1.parachain-sg.litentry.io/tcp/40333/ws/p2p/12D3KooWJejFQVK5wtZeDZguAXkzQxngrS9yZt2F1bk92m5w4Xgp"
+    ],
+    "telemetryEndpoints": [
+      "wss://telemetry-backend.parachain.litentry.io/submit"
+    ]
+  }

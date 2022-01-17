@@ -14,77 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use super::*;
 use cumulus_primitives_core::ParaId;
-use litentry_parachain_runtime::{
+use litmus_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, CollatorSelectionConfig, CouncilMembershipConfig,
-	GenesisConfig, ParachainInfoConfig, SessionConfig, Signature, SudoConfig, SystemConfig,
+	GenesisConfig, ParachainInfoConfig, SessionConfig, SudoConfig, SystemConfig,
 	TechnicalCommitteeMembershipConfig, UNIT, WASM_BINARY,
 };
-use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup, Properties};
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
-use serde::{Deserialize, Serialize};
-use sp_core::{sr25519, Pair, Public};
-use sp_runtime::traits::{IdentifyAccount, Verify};
+use serde::Deserialize;
+use sp_core::sr25519;
 
-const DEFAULT_PARA_ID: u32 = 2013;
+const DEFAULT_PARA_ID: u32 = 2106;
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
 
-/// Helper function to generate a crypto pair from seed
-pub fn get_public_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
-	TPublic::Pair::from_string(&format!("//{}", seed), None)
-		.expect("static values are valid; qed")
-		.public()
-}
-
-/// The extensions for the [`ChainSpec`].
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ChainSpecGroup, ChainSpecExtension)]
-#[serde(rename_all = "camelCase")]
-pub struct Extensions {
-	/// The relay chain of the Parachain.
-	pub relay_chain: String,
-	/// The id of the Parachain.
-	pub para_id: u32,
-}
-
-impl Extensions {
-	/// Try to get the extension from the given `ChainSpec`.
-	pub fn try_get(chain_spec: &dyn sc_service::ChainSpec) -> Option<&Self> {
-		sc_chain_spec::get_extension(chain_spec.extensions())
-	}
-}
-
-type AccountPublic = <Signature as Verify>::Signer;
-
-/// Generate collator keys from seed.
-///
-/// This function's return type must always match the session keys of the chain in tuple format.
-pub fn get_collator_keys_from_seed(seed: &str) -> AuraId {
-	get_public_from_seed::<AuraId>(seed)
-}
-
-/// Helper function to generate an account ID from seed
-pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
-where
-	AccountPublic: From<<TPublic::Pair as Pair>::Public>,
-{
-	AccountPublic::from(get_public_from_seed::<TPublic>(seed)).into_account()
-}
-
-pub fn parachain_properties(symbol: &str, decimals: u32, ss58format: u32) -> Option<Properties> {
-	let mut properties = Properties::new();
-	properties.insert("tokenSymbol".into(), symbol.into());
-	properties.insert("tokenDecimals".into(), decimals.into());
-	properties.insert("ss58Format".into(), ss58format.into());
-
-	Some(properties)
-}
-
-/// Get default parachain properties for Litentry which will be filled into chain spec
-pub fn default_parachain_properties() -> Option<Properties> {
-	parachain_properties("LIT", 12, 31)
+/// Get default parachain properties for Litmus which will be filled into chain spec
+fn default_parachain_properties() -> Option<Properties> {
+	parachain_properties("LIT", 12, 131)
 }
 
 const DEV_CANDIDACY_BOND: Balance = 1;
@@ -106,8 +55,8 @@ struct GenesisInfo {
 
 pub fn get_chain_spec_dev() -> ChainSpec {
 	ChainSpec::from_genesis(
-		"Litentry-dev",
-		"litentry-dev",
+		"Litmus-dev",
+		"litmus-dev",
 		ChainType::Development,
 		move || {
 			generate_genesis(
@@ -141,12 +90,13 @@ pub fn get_chain_spec_dev() -> ChainSpec {
 		},
 		Vec::new(),
 		None,
-		Some("litentry"),
+		Some("litmus"),
 		default_parachain_properties(),
 		Extensions { relay_chain: "rococo-local".into(), para_id: DEFAULT_PARA_ID },
 	)
 }
 
+// FIXME Remove this for Litmus?
 pub fn get_chain_spec_staging() -> ChainSpec {
 	// Staging keys are derivative keys based on a single master secret phrase:
 	//
@@ -154,9 +104,9 @@ pub fn get_chain_spec_staging() -> ChainSpec {
 	// account:	$SECRET//collator//<id>
 	// aura: 	$SECRET//collator//<id>//aura
 	get_chain_spec_from_genesis_info(
-		include_bytes!("../res/genesis_info/staging.json"),
-		"Litentry-staging",
-		"litentry-staging",
+		include_bytes!("../../res/genesis_info/staging.json"),
+		"Litmus-staging",
+		"litmus-staging",
 		ChainType::Local,
 		"rococo-local".into(),
 		DEFAULT_PARA_ID.into(),
@@ -165,11 +115,11 @@ pub fn get_chain_spec_staging() -> ChainSpec {
 
 pub fn get_chain_spec_prod() -> ChainSpec {
 	get_chain_spec_from_genesis_info(
-		include_bytes!("../res/genesis_info/prod.json"),
-		"Litentry",
-		"litentry",
+		include_bytes!("../../res/genesis_info/litmus.json"),
+		"Litmus",
+		"litmus",
 		ChainType::Live,
-		"polkadot".into(),
+		"kusama".into(),
 		DEFAULT_PARA_ID.into(),
 	)
 }
@@ -225,7 +175,7 @@ fn get_chain_spec_from_genesis_info(
 			)
 			.expect("Invalid telemetry URL; qed."),
 		),
-		Some("litentry"),
+		Some("litmus"),
 		default_parachain_properties(),
 		Extensions { relay_chain: relay_chain_name, para_id: para_id.into() },
 	)
@@ -258,9 +208,9 @@ fn generate_genesis(
 				.cloned()
 				.map(|(acc, aura)| {
 					(
-						acc.clone(),                                      // account id
-						acc,                                              // validator id
-						litentry_parachain_runtime::SessionKeys { aura }, // session keys
+						acc.clone(),                                    // account id
+						acc,                                            // validator id
+						litmus_parachain_runtime::SessionKeys { aura }, // session keys
 					)
 				})
 				.collect(),

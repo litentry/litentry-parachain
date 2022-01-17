@@ -28,7 +28,7 @@ use cumulus_primitives_core::ParaId;
 use polkadot_service::NativeExecutionDispatch;
 
 use crate::rpc;
-use litentry_parachain_runtime::{opaque::Block, AccountId, Balance, Hash, Index as Nonce};
+pub use primitives::{AccountId, Balance, Block, Hash, Header, Index as Nonce};
 
 use sc_client_api::ExecutorProvider;
 use sc_executor::NativeElseWasmExecutor;
@@ -54,6 +54,21 @@ impl sc_executor::NativeExecutionDispatch for LitentryParachainRuntimeExecutor {
 
 	fn native_version() -> sc_executor::NativeVersion {
 		litentry_parachain_runtime::native_version()
+	}
+}
+
+// Native executor instance.
+pub struct LitmusParachainRuntimeExecutor;
+
+impl sc_executor::NativeExecutionDispatch for LitmusParachainRuntimeExecutor {
+	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+
+	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
+		litmus_parachain_runtime::api::dispatch(method, data)
+	}
+
+	fn native_version() -> sc_executor::NativeVersion {
+		litmus_parachain_runtime::native_version()
 	}
 }
 
@@ -464,6 +479,113 @@ pub async fn start_litentry_parachain_node(
 	.await
 }
 
+/// Start a litmus parachain node.
+pub async fn start_litmus_parachain_node(
+	parachain_config: Configuration,
+	polkadot_config: Configuration,
+	id: ParaId,
+) -> sc_service::error::Result<(
+	TaskManager,
+	Arc<
+		TFullClient<
+			Block,
+			litmus_parachain_runtime::RuntimeApi,
+			NativeElseWasmExecutor<LitmusParachainRuntimeExecutor>,
+		>,
+	>,
+)> {
+	start_node_impl::<
+		litmus_parachain_runtime::RuntimeApi,
+		LitmusParachainRuntimeExecutor,
+		_,
+		_,
+		_,
+	>(
+		parachain_config,
+		polkadot_config,
+		id,
+		|_| Ok(Default::default()),
+		litmus_parachain_build_import_queue,
+		|client,
+		 prometheus_registry,
+		 telemetry,
+		 task_manager,
+		 relay_chain_node,
+		 transaction_pool,
+		 sync_oracle,
+		 keystore,
+		 force_authoring| {
+			let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
+
+			let proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
+				task_manager.spawn_handle(),
+				client.clone(),
+				transaction_pool,
+				prometheus_registry,
+				telemetry.clone(),
+			);
+
+			let relay_chain_backend = relay_chain_node.backend.clone();
+			let relay_chain_client = relay_chain_node.client.clone();
+			Ok(build_aura_consensus::<
+				sp_consensus_aura::sr25519::AuthorityPair,
+				_,
+				_,
+				_,
+				_,
+				_,
+				_,
+				_,
+				_,
+				_,
+			>(BuildAuraConsensusParams {
+				proposer_factory,
+				create_inherent_data_providers: move |_, (relay_parent, validation_data)| {
+					let parachain_inherent =
+					cumulus_primitives_parachain_inherent::ParachainInherentData::create_at_with_client(
+						relay_parent,
+						&relay_chain_client,
+						&*relay_chain_backend,
+						&validation_data,
+						id,
+					);
+					async move {
+						let time = sp_timestamp::InherentDataProvider::from_system_time();
+
+						let slot =
+						sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_duration(
+							*time,
+							slot_duration.slot_duration(),
+						);
+
+						let parachain_inherent = parachain_inherent.ok_or_else(|| {
+							Box::<dyn std::error::Error + Send + Sync>::from(
+								"Failed to create parachain inherent",
+							)
+						})?;
+						Ok((time, slot, parachain_inherent))
+					}
+				},
+				block_import: client.clone(),
+				relay_chain_client: relay_chain_node.client.clone(),
+				relay_chain_backend: relay_chain_node.backend.clone(),
+				para_client: client,
+				backoff_authoring_blocks: Option::<()>::None,
+				sync_oracle,
+				keystore,
+				force_authoring,
+				slot_duration,
+				// We got around 500ms for proposing
+				block_proposal_slot_portion: SlotProportion::new(1f32 / 24f32),
+				// And a maximum of 750ms if slots are skipped
+				max_block_proposal_slot_portion: Some(SlotProportion::new(1f32 / 16f32)),
+				telemetry,
+			}))
+		},
+	)
+	.await
+}
+
 /// Build the import queue for the litentry parachain runtime.
 pub fn litentry_parachain_build_import_queue(
 	client: Arc<
@@ -483,6 +605,61 @@ pub fn litentry_parachain_build_import_queue(
 			Block,
 			litentry_parachain_runtime::RuntimeApi,
 			NativeElseWasmExecutor<LitentryParachainRuntimeExecutor>,
+		>,
+	>,
+	sc_service::Error,
+> {
+	let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
+
+	cumulus_client_consensus_aura::import_queue::<
+		sp_consensus_aura::sr25519::AuthorityPair,
+		_,
+		_,
+		_,
+		_,
+		_,
+		_,
+	>(cumulus_client_consensus_aura::ImportQueueParams {
+		block_import: client.clone(),
+		client: client.clone(),
+		create_inherent_data_providers: move |_, _| async move {
+			let time = sp_timestamp::InherentDataProvider::from_system_time();
+
+			let slot =
+				sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_duration(
+					*time,
+					slot_duration.slot_duration(),
+				);
+
+			Ok((time, slot))
+		},
+		registry: config.prometheus_registry(),
+		can_author_with: sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone()),
+		spawner: &task_manager.spawn_essential_handle(),
+		telemetry,
+	})
+	.map_err(Into::into)
+}
+
+/// Build the import queue for the litmus parachain runtime.
+pub fn litmus_parachain_build_import_queue(
+	client: Arc<
+		TFullClient<
+			Block,
+			litmus_parachain_runtime::RuntimeApi,
+			NativeElseWasmExecutor<LitmusParachainRuntimeExecutor>,
+		>,
+	>,
+	config: &Configuration,
+	telemetry: Option<TelemetryHandle>,
+	task_manager: &TaskManager,
+) -> Result<
+	sc_consensus::DefaultImportQueue<
+		Block,
+		TFullClient<
+			Block,
+			litmus_parachain_runtime::RuntimeApi,
+			NativeElseWasmExecutor<LitmusParachainRuntimeExecutor>,
 		>,
 	>,
 	sc_service::Error,
