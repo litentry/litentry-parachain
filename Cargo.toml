@@ -3,12 +3,12 @@ panic = 'unwind'
 
 [workspace]
 members = [
-  'node',
-  'pallets/bridge',
-  'pallets/bridge-transfer',
-  'pallets/drop3',
-  'pallets/extrinsic-filter',
-  'primitives',
-  'runtime/litentry',
-  'runtime/litmus',
+    'node',
+    'pallets/bridge',
+    'pallets/bridge-transfer',
+    'pallets/drop3',
+    'pallets/extrinsic-filter',
+    'primitives',
+    'runtime/litentry',
+    'runtime/litmus',
 ]
