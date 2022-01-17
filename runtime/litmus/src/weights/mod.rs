@@ -14,15 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#![warn(unused_extern_crates)]
+#![allow(clippy::unnecessary_cast)]
 
-mod chain_specs;
-#[macro_use]
-mod service;
-mod cli;
-mod command;
-mod rpc;
-
-fn main() -> sc_cli::Result<()> {
-	command::run()
-}
+pub mod frame_system;
+pub mod pallet_balances;
+pub mod pallet_collator_selection;
+pub mod pallet_collective;
+pub mod pallet_democracy;
+pub mod pallet_membership;
+pub mod pallet_multisig;
+pub mod pallet_proxy;
+pub mod pallet_scheduler;
+pub mod pallet_timestamp;
+pub mod pallet_treasury;
+pub mod pallet_utility;

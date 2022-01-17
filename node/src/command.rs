@@ -17,14 +17,15 @@
 #![allow(clippy::borrowed_box)]
 
 use crate::{
-	chain_spec,
+	chain_specs,
 	cli::{Cli, RelayChainCli, Subcommand},
-	service::{new_partial, LitentryParachainRuntimeExecutor},
+	service::{
+		new_partial, Block, LitentryParachainRuntimeExecutor, LitmusParachainRuntimeExecutor,
+	},
 };
 use codec::Encode;
 use cumulus_client_service::genesis::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
-use litentry_parachain_runtime::Block;
 use log::info;
 use polkadot_parachain::primitives::AccountIdConversion;
 use sc_cli::{
@@ -36,25 +37,62 @@ use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::Block as BlockT;
 use std::{io::Write, net::SocketAddr};
 
+trait IdentifyChain {
+	fn is_litentry(&self) -> bool;
+	fn is_litmus(&self) -> bool;
+}
+
+impl IdentifyChain for dyn sc_service::ChainSpec {
+	fn is_litentry(&self) -> bool {
+		self.id().starts_with("litentry")
+	}
+	fn is_litmus(&self) -> bool {
+		self.id().starts_with("litmus")
+	}
+}
+
+impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
+	fn is_litentry(&self) -> bool {
+		<dyn sc_service::ChainSpec>::is_litentry(self)
+	}
+	fn is_litmus(&self) -> bool {
+		<dyn sc_service::ChainSpec>::is_litmus(self)
+	}
+}
+
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
-		"dev" => Box::new(chain_spec::get_chain_spec_dev()),
-		"staging" => Box::new(chain_spec::get_chain_spec_staging()),
-		// In order to generate res/chain_spec/prod.json
-		"generate-prod" => Box::new(chain_spec::get_chain_spec_prod()),
-		"" | "prod" => Box::new(chain_spec::ChainSpec::from_json_bytes(
-			&include_bytes!("../res/chain_spec/prod.json")[..],
+		// Litentry
+		"litentry-dev" => Box::new(chain_specs::litentry::get_chain_spec_dev()),
+		"litentry-staging" => Box::new(chain_specs::litentry::get_chain_spec_staging()),
+		"litentry" => Box::new(chain_specs::litentry::ChainSpec::from_json_bytes(
+			&include_bytes!("../res/chain_specs/litentry.json")[..],
 		)?),
+		// Litmus
+		"litmus-dev" => Box::new(chain_specs::litmus::get_chain_spec_dev()),
+		"litmus-staging" => Box::new(chain_specs::litmus::get_chain_spec_staging()),
+		"litmus" => Box::new(chain_specs::litmus::ChainSpec::from_json_bytes(
+			&include_bytes!("../res/chain_specs/litmus.json")[..],
+		)?),
+		// Generate res/chain_specs/litentry.json
+		"generate-litentry" => Box::new(chain_specs::litentry::get_chain_spec_prod()),
+		// Generate res/chain_specs/litmus.json
+		"generate-litmus" => Box::new(chain_specs::litmus::get_chain_spec_prod()),
 		path => {
-			let chain_spec = chain_spec::ChainSpec::from_json_file(path.into())?;
-			Box::new(chain_spec)
+			let chain_spec = chain_specs::ChainSpec::from_json_file(path.into())?;
+			if chain_spec.is_litmus() {
+				Box::new(chain_specs::litmus::ChainSpec::from_json_file(path.into())?)
+			} else {
+				// By default litentry is used
+				Box::new(chain_spec)
+			}
 		},
 	})
 }
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
-		"Litentry Collator".into()
+		"Litentry/Litmus Collator".into()
 	}
 
 	fn impl_version() -> String {
@@ -62,7 +100,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn description() -> String {
-		"Litentry Collator\n\nThe command-line arguments provided first will be \
+		"Litentry/Litmus Collator\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relay chain node.\n\n\
 		litentry-collator <parachain-args> -- <relay-chain-args>"
@@ -85,14 +123,18 @@ impl SubstrateCli for Cli {
 		load_spec(id)
 	}
 
-	fn native_runtime_version(_chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		&litentry_parachain_runtime::VERSION
+	fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
+		if chain_spec.is_litmus() {
+			&litmus_parachain_runtime::VERSION
+		} else {
+			&litentry_parachain_runtime::VERSION
+		}
 	}
 }
 
 impl SubstrateCli for RelayChainCli {
 	fn impl_name() -> String {
-		"Litentry Collator".into()
+		"Litentry/Litmus Collator".into()
 	}
 
 	fn impl_version() -> String {
@@ -100,7 +142,7 @@ impl SubstrateCli for RelayChainCli {
 	}
 
 	fn description() -> String {
-		"Litentry Collator\n\nThe command-line arguments provided first will be \
+		"Litentry/Litmus Collator\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relay chain node.\n\n\
 		litentry-collator <parachain-args> -- <relay-chain-args>"
@@ -141,18 +183,33 @@ macro_rules! construct_async_run {
 	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
 		let runner = $cli.create_runner($cmd)?;
 
-		runner.async_run(|$config| {
-			let $components = new_partial::<
-				litentry_parachain_runtime::RuntimeApi,
-				LitentryParachainRuntimeExecutor,
-				_
-			>(
-				&$config,
-				crate::service::litentry_parachain_build_import_queue,
-			)?;
-			let task_manager = $components.task_manager;
-			{ $( $code )* }.map(|v| (v, task_manager))
-		})
+		if runner.config().chain_spec.is_litmus() {
+			runner.async_run(|$config| {
+				let $components = new_partial::<
+					litmus_parachain_runtime::RuntimeApi,
+					LitmusParachainRuntimeExecutor,
+					_
+				>(
+					&$config,
+					crate::service::litmus_parachain_build_import_queue,
+				)?;
+				let task_manager = $components.task_manager;
+				{ $( $code )* }.map(|v| (v, task_manager))
+			})
+		} else {
+			runner.async_run(|$config| {
+				let $components = new_partial::<
+					litentry_parachain_runtime::RuntimeApi,
+					LitentryParachainRuntimeExecutor,
+					_
+				>(
+					&$config,
+					crate::service::litentry_parachain_build_import_queue,
+				)?;
+				let task_manager = $components.task_manager;
+				{ $( $code )* }.map(|v| (v, task_manager))
+			})
+		}
 
 	}}
 }
@@ -258,7 +315,16 @@ pub fn run() -> Result<()> {
 			if cfg!(feature = "runtime-benchmarks") {
 				let runner = cli.create_runner(cmd)?;
 
-				runner.sync_run(|config| cmd.run::<Block, LitentryParachainRuntimeExecutor>(config))
+				if runner.config().chain_spec.is_litmus() {
+					runner
+						.sync_run(|config| cmd.run::<Block, LitmusParachainRuntimeExecutor>(config))
+				} else if runner.config().chain_spec.is_litentry() {
+					runner.sync_run(|config| {
+						cmd.run::<Block, LitentryParachainRuntimeExecutor>(config)
+					})
+				} else {
+					Err("Chain doesn't support benchmarking".into())
+				}
 			} else {
 				Err("Benchmarking wasn't enabled when building the node. \
 				You can enable it with `--features runtime-benchmarks`."
@@ -267,16 +333,24 @@ pub fn run() -> Result<()> {
 		#[cfg(feature = "try-runtime")]
 		Some(Subcommand::TryRuntime(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| {
-				// we don't need any of the components of new_partial, just a runtime, or a task
-				// manager to do `async_run`.
-				let registry = config.prometheus_config.as_ref().map(|cfg| &cfg.registry);
-				let task_manager =
-					sc_service::TaskManager::new(config.tokio_handle.clone(), registry)
-						.map_err(|e| sc_cli::Error::Service(sc_service::Error::Prometheus(e)))?;
+			// we don't need any of the components of new_partial, just a runtime, or a task
+			// manager to do `async_run`.
+			let registry = &runner.config().prometheus_config.as_ref().map(|cfg| &cfg.registry);
+			let task_manager =
+				sc_service::TaskManager::new(runner.config().tokio_handle.clone(), *registry)
+					.map_err(|e| sc_cli::Error::Service(sc_service::Error::Prometheus(e)))?;
 
-				Ok((cmd.run::<Block, LitentryParachainRuntimeExecutor>(config), task_manager))
-			})
+			if runner.config().chain_spec.is_litmus() {
+				runner.async_run(|config| {
+					Ok((cmd.run::<Block, LitmusParachainRuntimeExecutor>(config), task_manager))
+				})
+			} else if runner.config().chain_spec.is_litentry() {
+				runner.async_run(|config| {
+					Ok((cmd.run::<Block, LitentryParachainRuntimeExecutor>(config), task_manager))
+				})
+			} else {
+				Err("Chain doesn't support try-runtime".into())
+			}
 		},
 		#[cfg(not(feature = "try-runtime"))]
 		Some(Subcommand::TryRuntime) => Err("TryRuntime wasn't enabled when building the node. \
@@ -286,7 +360,7 @@ pub fn run() -> Result<()> {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 
 			runner.run_node_until_exit(|config| async move {
-				let para_id = chain_spec::Extensions::try_get(&*config.chain_spec)
+				let para_id = chain_specs::Extensions::try_get(&*config.chain_spec)
 					.map(|e| e.para_id)
 					.ok_or("Could not find parachain ID in chain-spec.")?;
 
@@ -314,10 +388,17 @@ pub fn run() -> Result<()> {
 				info!("Parachain genesis state: {}", genesis_state);
 				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
 
-				crate::service::start_litentry_parachain_node(config, polkadot_config, id)
-					.await
-					.map(|r| r.0)
-					.map_err(Into::into)
+				if config.chain_spec.is_litmus() {
+					crate::service::start_litmus_parachain_node(config, polkadot_config, id)
+						.await
+						.map(|r| r.0)
+						.map_err(Into::into)
+				} else {
+					crate::service::start_litentry_parachain_node(config, polkadot_config, id)
+						.await
+						.map(|r| r.0)
+						.map_err(Into::into)
+				}
 			})
 		},
 	}
