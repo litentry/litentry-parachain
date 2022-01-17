@@ -92,7 +92,7 @@ if [ "$GENESIS_RELEASE" = "true" ]; then
 
   # double check that exported wasm matches what's written in chain-spec
   # intentionally use 'generate-prod' as chain type
-  docker run --rm "litentry/litentry-parachain:$RELEASE_TAG" build-spec --chain=generate-prod --raw | \
+  docker run --rm "litentry/litentry-parachain:$RELEASE_TAG" build-spec --chain=generate-litentry --raw | \
   grep -F '"0x3a636f6465"' | sed 's/.*"0x3a636f6465": "//;s/",$//' | tr -d '\n' > /tmp/built-wasm
 
   if cmp /tmp/built-wasm litentry-collator/litentry-genesis-wasm; then

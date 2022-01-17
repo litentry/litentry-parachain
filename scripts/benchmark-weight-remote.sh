@@ -49,7 +49,7 @@ for p in $PALLETS; do
   # Warning: There are more items queued in the Scheduler than expected from the runtime configuration.
   #          An update might be needed
   RUST_LOG=runtime::scheduler=error ./litentry-collator benchmark \
-      --chain=generate-prod \
+      --chain=generate-litentry \
       --execution=wasm  \
       --db-cache=20 \
       --wasm-execution=compiled \

@@ -25,12 +25,12 @@ case "$2" in
     runtime)
         OUTPUT="--output=./runtime/src/weights/$PALLET.rs"
         TEMPLATE=
-        CHAIN="--chain=generate-prod"
+        CHAIN="--chain=generate-litentry"
         ;;
     pallet)
         OUTPUT="$(cargo pkgid -q $1 | sed 's/.*litentry-parachain/\./;s/#.*/\/src\/weights.rs/')"
         TEMPLATE="--template=./templates/benchmark/pallet-weight-template.hbs"
-        CHAIN="--chain=dev"
+        CHAIN="--chain=litentry-dev"
         if [[ $OUTPUT == *"github.com"* ]]; then
             echo "only local pallets can be benchmarked"
             exit 2
