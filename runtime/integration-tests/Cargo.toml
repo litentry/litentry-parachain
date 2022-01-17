@@ -12,6 +12,7 @@ serde_json = "1.0.68"
 hex = { version = "0.4" }
 hex-literal = { version = "0.3.1" }
 
+# TODO: consider how to test both litentry and litmus
 runtime = { package = "litentry-parachain-runtime", path = "../litentry" }
 pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.13" }
 
