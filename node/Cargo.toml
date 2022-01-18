@@ -26,7 +26,7 @@ hex-literal = "0.3.4"
 async-trait = "0.1.42"
 
 # Substrate dependencies
-sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.13" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
 sp-inherents = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13" }
@@ -85,7 +85,9 @@ frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", bran
 try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.13", optional = true }
 
 # Local dependencies
-litentry-parachain-runtime = { path = "../runtime" }
+litentry-parachain-runtime = { path = "../runtime/litentry" }
+litmus-parachain-runtime = { path = "../runtime/litmus" }
+primitives = { path = "../primitives" }
 
 [build-dependencies]
 substrate-build-script-utils = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.13" }
@@ -94,8 +96,10 @@ substrate-build-script-utils = { git = "https://github.com/paritytech/substrate.
 default = []
 runtime-benchmarks = [
 	"litentry-parachain-runtime/runtime-benchmarks",
+	"litmus-parachain-runtime/runtime-benchmarks",
 ]
 try-runtime = [
 	"try-runtime-cli",
 	"litentry-parachain-runtime/try-runtime",
+	"litmus-parachain-runtime/try-runtime",
 ]

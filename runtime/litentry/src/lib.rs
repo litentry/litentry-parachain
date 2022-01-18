@@ -43,8 +43,8 @@ use sp_runtime::{
 	ApplyExtrinsicResult,
 };
 
-mod impls;
-use impls::{DealWithFees, SlowAdjustingFeeUpdate};
+mod transaction_payment;
+use transaction_payment::{DealWithFees, SlowAdjustingFeeUpdate};
 
 use sp_std::prelude::*;
 #[cfg(feature = "std")]

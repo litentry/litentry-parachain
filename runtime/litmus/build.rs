@@ -14,17 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#![allow(clippy::unnecessary_cast)]
+use substrate_wasm_builder::WasmBuilder;
 
-pub mod frame_system;
-pub mod pallet_balances;
-pub mod pallet_collective;
-pub mod pallet_democracy;
-pub mod pallet_membership;
-pub mod pallet_multisig;
-pub mod pallet_proxy;
-pub mod pallet_scheduler;
-pub mod pallet_timestamp;
-pub mod pallet_treasury;
-pub mod pallet_utility;
-pub mod parachain_staking;
+fn main() {
+	WasmBuilder::new()
+		.with_current_project()
+		.export_heap_base()
+		.import_memory()
+		.build()
+}
