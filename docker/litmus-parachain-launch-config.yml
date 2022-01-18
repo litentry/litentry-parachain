@@ -1,0 +1,43 @@
+# A parachain-launch (https://github.com/open-web3-stack/parachain-launch) config
+# used in dev env
+# contains 2 relaychain nodes + 1 parachain node
+#
+# Relaychain Configuration
+relaychain:
+  image: parity/polkadot:latest
+  chain: rococo-local
+  runtimeGenesisConfig:
+    configuration:
+      config:
+        validation_upgrade_frequency: 3
+        validation_upgrade_delay: 3
+  env:
+    RUST_LOG: parachain::candidate-backing=trace,parachain::candidate-selection=trace,parachain::pvf=trace,parachain::collator-protocol=trace,parachain::provisioner=trace
+  flags:
+    - --rpc-methods=unsafe
+    - --execution=wasm
+    - --no-beefy
+  nodes:
+    - name: alice
+    - name: bob
+
+# Parachain Configuration
+parachains:
+- image: litentry/litentry-parachain:latest
+  chain:
+    base: litmus-dev
+  id: 2106
+  parachain: true
+  flags:
+    - --rpc-methods=unsafe
+    - --force-authoring
+    - --execution=wasm
+  relaychainFlags:
+    - --execution=wasm
+    - --no-beefy
+  env:
+    RUST_LOG: sc_basic_authorship=trace,cumulus-consensus=trace,cumulus-collator=trace,collator_protocol=trace,collation_generation=trace,aura=debug
+  volumePath: /data
+  nodes:
+  - flags:
+    - --alice

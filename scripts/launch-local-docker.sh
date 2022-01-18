@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 
-# whether to restart the relaychains if parachain doesn't produce blocks
-WITH_RESTART=${1:-true}
+function usage() {
+  echo "Usage: $0 litentry|litmus"
+}
+
+[ $# -ne 1 ] && (usage; exit 1)
+
+CHAIN=$1
 
 # wait interval in seconds to check the block import and production of parachain
 WAIT_INTERVAL_SECONDS=10
@@ -20,13 +25,9 @@ function print_divider() {
 }
 
 ROOTDIR=$(git rev-parse --show-toplevel)
-cd "$ROOTDIR/docker/generated-dev/"
+cd "$ROOTDIR/docker/generated-$CHAIN/"
 
 docker-compose up -d --build
-
-if [ "$WITH_RESTART" != "true" ]; then
-  exit 0
-fi
 
 # sleep for a while to make sure `docker-compose` is ready
 # otherwise `docker-compose logs` could print empty output
