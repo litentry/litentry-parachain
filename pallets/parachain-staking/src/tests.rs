@@ -28,7 +28,7 @@ use crate::{
 		roll_one_block, roll_to, roll_to_round_begin, roll_to_round_end, set_author, Balances,
 		Event as MetaEvent, ExtBuilder, Origin, Stake, Test,
 	},
-	Bond, CandidateState, CollatorStatus, DelegationChange, DelegationRequest, DelegatorAdded,
+	Bond, CollatorStatus, DelegationChange, DelegationRequest, DelegatorAdded,
 	Error, Event, Range,
 };
 use frame_support::{assert_noop, assert_ok};
@@ -2447,11 +2447,9 @@ fn execute_delegator_bond_less_updates_just_bottom_delegations() {
 				for Bond { owner: post_owner, amount: post_amount } in
 					&post_call_collator_state.bottom_delegations
 				{
-					if &owner == post_owner {
-						if &amount != post_amount {
-							not_equal = true;
-							break
-						}
+					if &owner == post_owner && &amount != post_amount {
+						not_equal = true;
+						break
 					}
 				}
 			}
@@ -2461,11 +2459,9 @@ fn execute_delegator_bond_less_updates_just_bottom_delegations() {
 				for Bond { owner: post_owner, amount: post_amount } in
 					&post_call_collator_state.top_delegations
 				{
-					if &owner == post_owner {
-						if &amount != post_amount {
-							equal = false;
-							break
-						}
+					if &owner == post_owner && &amount != post_amount {
+						equal = false;
+						break
 					}
 				}
 			}
@@ -2501,11 +2497,9 @@ fn execute_delegator_bond_less_does_not_delete_bottom_delegations() {
 				for Bond { owner: post_owner, amount: post_amount } in
 					&post_call_collator_state.bottom_delegations
 				{
-					if &owner == post_owner {
-						if &amount != post_amount {
-							equal = false;
-							break
-						}
+					if &owner == post_owner && &amount != post_amount {
+						equal = false;
+						break
 					}
 				}
 			}
@@ -2515,11 +2509,9 @@ fn execute_delegator_bond_less_does_not_delete_bottom_delegations() {
 				for Bond { owner: post_owner, amount: post_amount } in
 					&post_call_collator_state.top_delegations
 				{
-					if &owner == post_owner {
-						if &amount != post_amount {
-							not_equal = true;
-							break
-						}
+					if &owner == post_owner && &amount != post_amount {
+						not_equal = true;
+						break
 					}
 				}
 			}
