@@ -48,6 +48,9 @@ for p in $PALLETS; do
   # filter out the flooding warnings from pallet_scheduler:
   # Warning: There are more items queued in the Scheduler than expected from the runtime configuration.
   #          An update might be needed
+  #
+  # TODO: which chain-spec type in `--chain=` should be used? prod or dev?
+  #       It shouldn't matter too much though
   RUST_LOG=runtime::scheduler=error ./litentry-collator benchmark \
       --chain=generate-$1 \
       --execution=wasm  \
