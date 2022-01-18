@@ -28,8 +28,7 @@ use crate::{
 		roll_one_block, roll_to, roll_to_round_begin, roll_to_round_end, set_author, Balances,
 		Event as MetaEvent, ExtBuilder, Origin, Stake, Test,
 	},
-	Bond, CollatorStatus, DelegationChange, DelegationRequest, DelegatorAdded,
-	Error, Event, Range,
+	Bond, CollatorStatus, DelegationChange, DelegationRequest, DelegatorAdded, Error, Event, Range,
 };
 use frame_support::{assert_noop, assert_ok};
 use sp_runtime::{traits::Zero, DispatchError, Perbill, Percent};
