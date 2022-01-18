@@ -24,8 +24,8 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 pub mod constants;
-pub mod weights;
 pub mod migration;
+pub mod weights;
 pub use constants::currency::*;
 
 pub use primitives::{opaque, Index, *};

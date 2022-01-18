@@ -13,18 +13,20 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
-use frame_support::{inherent::Vec, traits::{Currency, Get, OnRuntimeUpgrade}, StorageHasher, Twox128};
-use frame_support::storage::storage_prefix;
-use sp_std::marker::PhantomData;
-use frame_support::pallet_prelude::*;
-use sp_runtime::{Perbill};
+use frame_support::{
+	inherent::Vec,
+	pallet_prelude::*,
+	storage::storage_prefix,
+	traits::{Currency, Get, OnRuntimeUpgrade},
+	StorageHasher, Twox128,
+};
 use parachain_staking::BalanceOf;
-use sp_runtime::traits::Zero;
-
+use sp_runtime::{traits::Zero, Perbill};
+use sp_std::marker::PhantomData;
 
 pub struct MigrateCollatorSelectionIntoParachainStaking<T>(PhantomData<T>);
-impl <T> OnRuntimeUpgrade for MigrateCollatorSelectionIntoParachainStaking<T> 
-where 
+impl<T> OnRuntimeUpgrade for MigrateCollatorSelectionIntoParachainStaking<T>
+where
 	T: parachain_staking::Config,
 	<T as frame_system::Config>::Event: From<parachain_staking::Event<T>>,
 {
@@ -33,35 +35,37 @@ where
 		use primitives::AccountId;
 
 		log::info!("Pre check pallet CollatorSelection exists");
-        // Get Invulnerables address from CollatorSelection
-		// WARN: We do not care about any Candidates storage, as we forbid any general transaction by sudo and so no info there in practice
+		// Get Invulnerables address from CollatorSelection
+		// WARN: We do not care about any Candidates storage, as we forbid any general transaction
+		// by sudo and so no info there in practice
 		let invulnerables = frame_support::storage::migration::get_storage_value::<Vec<AccountId>>(
 			b"CollatorSelection",
 			b"Invulnerables",
 			b"",
-		).expect("Storage query fails: CollatorSelection Invulnerables");
+		)
+		.expect("Storage query fails: CollatorSelection Invulnerables");
 
 		if invulnerables.len() == 0 {
-            Err("CollatorSelection empty")
-        } else {
-            Ok(())
-        }
+			Err("CollatorSelection empty")
+		} else {
+			Ok(())
+		}
 	}
 
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
-		let invulnerables = frame_support::storage::migration::get_storage_value::<Vec<<T as frame_system::Config>::AccountId>>(
-			b"CollatorSelection",
-			b"Invulnerables",
-			b"",
-		).expect("Storage query fails: CollatorSelection Invulnerables");		
-		
+		let invulnerables = frame_support::storage::migration::get_storage_value::<
+			Vec<<T as frame_system::Config>::AccountId>,
+		>(b"CollatorSelection", b"Invulnerables", b"")
+		.expect("Storage query fails: CollatorSelection Invulnerables");
+
 		let mut candidate_count = 0u32;
 		// Get the minimum collator stake amount
 		let min_collator_stk = <T as parachain_staking::Config>::MinCollatorStk::get();
 		// Initialize the candidates
 		for candidate in invulnerables {
 			assert!(
-				<T as parachain_staking::Config>::Currency::free_balance(&candidate) >= min_collator_stk,
+				<T as parachain_staking::Config>::Currency::free_balance(&candidate) >=
+					min_collator_stk,
 				"Account does not have enough balance to bond as a candidate."
 			);
 			candidate_count += 1u32;
@@ -98,14 +102,17 @@ where
 			<T as parachain_staking::Config>::DefaultCollatorCommission::get(),
 		);
 		// Set parachain bond config to default config
-		frame_support::storage::migration::put_storage_value::<parachain_staking::ParachainBondConfig<<T as frame_system::Config>::AccountId>>(
+		frame_support::storage::migration::put_storage_value::<
+			parachain_staking::ParachainBondConfig<<T as frame_system::Config>::AccountId>,
+		>(
 			b"ParachainStaking",
 			b"ParachainBondInfo",
 			b"",
 			parachain_staking::ParachainBondConfig {
 				// must be set soon; if not => due inflation will be sent to collators/delegators
 				account: <T as frame_system::Config>::AccountId::default(),
-				percent: <T as parachain_staking::Config>::DefaultParachainBondReservePercent::get(),
+				percent: <T as parachain_staking::Config>::DefaultParachainBondReservePercent::get(
+				),
 			},
 		);
 
@@ -117,19 +124,21 @@ where
 			<T as parachain_staking::Config>::MinSelectedCandidates::get(),
 		);
 		// Choose top TotalSelected collator candidates
-		// WARNING/TODO: We change the private into public of select_top_candidates function in pallet. We should change it back in next runtime upgrade for safety.
-		let (v_count, _, total_staked) = <parachain_staking::Pallet<T>>::select_top_candidates(1u32);
+		// WARNING/TODO: We change the private into public of select_top_candidates function in
+		// pallet. We should change it back in next runtime upgrade for safety.
+		let (v_count, _, total_staked) =
+			<parachain_staking::Pallet<T>>::select_top_candidates(1u32);
 
-		
 		// Start Round 1 at Block 0
 		let round: parachain_staking::RoundInfo<<T as frame_system::Config>::BlockNumber> =
-			parachain_staking::RoundInfo::new(1u32, 0u32.into(), <T as parachain_staking::Config>::DefaultBlocksPerRound::get());
-		frame_support::storage::migration::put_storage_value::<parachain_staking::RoundInfo<<T as frame_system::Config>::BlockNumber>>(
-			b"ParachainStaking",
-			b"Round",
-			b"",
-			round,
-		);
+			parachain_staking::RoundInfo::new(
+				1u32,
+				0u32.into(),
+				<T as parachain_staking::Config>::DefaultBlocksPerRound::get(),
+			);
+		frame_support::storage::migration::put_storage_value::<
+			parachain_staking::RoundInfo<<T as frame_system::Config>::BlockNumber>,
+		>(b"ParachainStaking", b"Round", b"", round);
 
 		// // Snapshot total stake
 		// The code below is supposed to behave same as:
@@ -145,7 +154,6 @@ where
 		final_key.extend_from_slice(&storage_prefix);
 		final_key.extend_from_slice(key_hashed.as_ref());
 		frame_support::storage::unhashed::put(final_key.as_ref(), &val);
-		
 
 		// Deposit NewRound event at RuntimeUpgrade
 		<frame_system::Pallet<T>>::deposit_event(parachain_staking::Event::NewRound(
@@ -154,13 +162,14 @@ where
 			v_count,
 			total_staked,
 		));
-		
-
 
 		// Remove CollatorSelection Storage
 		// TODO: Very Weak safety
 		let entries: u64 = 4 + 6142;
-		frame_support::storage::unhashed::kill_prefix(&Twox128::hash(b"CollatorSelection"), Some(entries.try_into().unwrap()));
+		frame_support::storage::unhashed::kill_prefix(
+			&Twox128::hash(b"CollatorSelection"),
+			Some(entries.try_into().unwrap()),
+		);
 		<T as frame_system::Config>::DbWeight::get().writes(entries.into())
 	}
 
@@ -169,14 +178,17 @@ where
 		use sp_io::KillStorageResult;
 
 		log::info!("Post check CollatorSelection");
-		let res = frame_support::storage::unhashed::kill_prefix(&Twox128::hash(b"CollatorSelection"), Some(0));
+		let res = frame_support::storage::unhashed::kill_prefix(
+			&Twox128::hash(b"CollatorSelection"),
+			Some(0),
+		);
 
 		match res {
 			KillStorageResult::AllRemoved(0) | KillStorageResult::SomeRemaining(0) => Ok(()),
 			KillStorageResult::AllRemoved(n) | KillStorageResult::SomeRemaining(n) => {
 				log::error!("Remaining entries: {:?}", n);
 				Err("CollatorSelection not removed")
-			}
+			},
 		}
 	}
 }
