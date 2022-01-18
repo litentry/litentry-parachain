@@ -26,7 +26,7 @@ cd "$TMPDIR"
 [ -d litentry-parachain ] && rm -rf litentry-parachain
 git clone https://github.com/litentry/litentry-parachain
 cd litentry-parachain
-git checkout "$1"
+git checkout "$2"
 
 # copy binary out
 docker cp $(docker create --rm litentry/litentry-parachain:runtime-benchmarks):/usr/local/bin/litentry-collator .
@@ -34,9 +34,9 @@ chmod a+x litentry-collator
 
 # poopulate PALLETS
 PALLETS=
-case "$2" in
+case "$3" in
   '*')  PALLETS=$(grep add_benchmark! runtime/$1/src/lib.rs | tr ',' ' ' | awk '{print $3}' | paste -s -d' ' -) ;;
-  *)    PALLETS=$(echo "$2" | tr ',' ' ') ;;
+  *)    PALLETS=$(echo "$3" | tr ',' ' ') ;;
 esac
 PALLETS=${PALLETS//-/_}
 

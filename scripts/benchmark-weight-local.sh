@@ -13,28 +13,28 @@ set -eo pipefail
 # define the runtime: litentry or litmus.
 
 function usage() {
-    echo "Usage: $0 pallet-name runtime|pallet [litentry|litmus]"
+    echo "Usage: $0 litentry|litmus pallet-name runtime|pallet"
 }
 
-[ $# -lt 2 ] && (usage; exit 1)
+[ $# -ne 3 ] && (usage; exit 1)
 
 ROOTDIR=$(git rev-parse --show-toplevel)
 cd "$ROOTDIR"
 
-PALLET=${1//-/_}
+PALLET=${2//-/_}
 
-case "$2" in
+echo "running $1-$3 benchmark for $PALLET locally ..."
+
+case "$3" in
     runtime)
-        echo "running $3-$2 benchmark for $PALLET locally ..."
-        OUTPUT="--output=./runtime/$3/src/weights/$PALLET.rs"
+        OUTPUT="--output=./runtime/$1/src/weights/$PALLET.rs"
         TEMPLATE=
-        CHAIN="--chain=generate-$3"
+        CHAIN="--chain=generate-$1"
         ;;
     pallet)
-        echo "running $2 benchmark for $PALLET locally ..."
-        OUTPUT="$(cargo pkgid -q $1 | sed 's/.*litentry-parachain/\./;s/#.*/\/src\/weights.rs/')"
+        OUTPUT="$(cargo pkgid -q $2 | sed 's/.*litentry-parachain/\./;s/#.*/\/src\/weights.rs/')"
         TEMPLATE="--template=./templates/benchmark/pallet-weight-template.hbs"
-        CHAIN="--chain=dev"
+        CHAIN="--chain=$1-dev"
         if [[ $OUTPUT == *"github.com"* ]]; then
             echo "only local pallets can be benchmarked"
             exit 2
