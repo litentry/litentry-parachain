@@ -13,7 +13,7 @@ function usage() {
 
 echo "bumping codes from v$1 to v$2 ..."
 
-for f in 'node/Cargo.toml' 'runtime/Cargo.toml' 'primitives/Cargo.toml'; do
+find . -name 'Cargo.toml' | grep -v target | while read -r f; do
   sed -i '' "s/polkadot-v$1/polkadot-v$2/g" "$f"
   sed -i '' "s/release-v$1/release-v$2/g" "$f"
 done

@@ -1,9 +1,9 @@
 all:
 	@make help
+
 # variant declaration
 
 NODE_BIN=litentry-collator
-RUNTIME=litentry-parachain-runtime
 
 .PHONY: help ## Display help commands
 help:
@@ -33,61 +33,97 @@ build-all:
 build-node:
 	cargo build -p $(call pkgid, $(NODE_BIN)) --release
 
-.PHONY: build-runtime ## Build release runtime
-build-runtime:
-	cargo build -p $(call pkgid, $(RUNTIME)) --release
+.PHONY: build-runtime-litentry ## Build litentry release runtime
+build-runtime-litentry:
+	cargo build -p $(call pkgid, litentry-parachain-runtime) --release
 
-.PHONY: srtool-build-wasm ## Build wasm locally with srtools
-srtool-build-wasm:
-	@./scripts/build-wasm.sh
+.PHONY: build-runtime-litmus ## Build litmus release runtime
+build-runtime-litmus:
+	cargo build -p $(call pkgid, litmus-parachain-runtime) --release
+
+.PHONY: srtool-build-wasm-litentry ## Build litentry wasm with srtools
+srtool-build-wasm-litentry:
+	@./scripts/build-wasm.sh litentry
+
+.PHONY: srtool-build-wasm-litmus ## Build litmus wasm with srtools
+srtool-build-wasm-litmus:
+	@./scripts/build-wasm.sh litmus
 
 .PHONY: build-docker ## Build docker image
 build-docker:
 	@./scripts/build-docker.sh
 
-.PHONY: build-node-benchmarks ## Build release version with `runtime-benchmarks` feature
+.PHONY: build-node-benchmarks ## Build release node with `runtime-benchmarks` feature
 build-node-benchmarks:
 	cargo build --features runtime-benchmarks --release
+
+.PHONY: build-node-tryruntime ## Build release node with `try-runtime` feature
+build-node-tryruntime:
+	cargo build --features try-runtime --release
 	
 # launching local dev networks
 
-.PHONY: launch-local-docker ## Launch dev parachain network with docker locally
-launch-local-docker: generate-docker-compose-dev
-	@./scripts/launch-local-docker.sh
+.PHONY: launch-docker-litentry ## Launch litentry-parachain dev network with docker locally
+launch-docker-litentry: generate-docker-compose-litentry
+	@./scripts/launch-local-docker.sh litentry
 
-.PHONY: launch-local-binary ## Launch dev parachain network with binaries locally
-launch-local-binary:
-	@./scripts/launch-local-binary.sh
+.PHONY: launch-docker-litmus ## Launch litmus-parachain dev network with docker locally
+launch-docker-litmus: generate-docker-compose-litmus
+	@./scripts/launch-local-docker.sh litmus
+
+.PHONY: launch-binary-litentry ## Launch litentry-parachain dev network with binaries locally
+launch-binary-litentry:
+	@./scripts/launch-local-binary.sh litentry
+
+.PHONY: launch-binary-litmus ## Launch litmus-parachain dev network with binaries locally
+launch-binary-litmus:
+	@./scripts/launch-local-binary.sh litmus
 
 # run tests
 
-.PHONY: test-node
-test-node:
-	cargo test --package $(call pkgid, $(NODE_BIN))
+.PHONY: test-cargo-all ## cargo test --all
+test-cargo-all:
+	@cargo test --release --all
 
-.PHONY: test-ci-docker ## Run CI tests with docker without clean-up
-test-ci-docker: launch-local-docker
-	@./scripts/run-ci-test.sh
+.PHONY: test-ts-docker-litentry ## Run litentry ts tests with docker without clean-up
+test-ts-docker-litentry: launch-docker-litentry
+	@./scripts/run-ts-test.sh
 
-.PHONY: test-ci-binary ## Run CI tests with binary without clean-up
-test-ci-binary: launch-local-binary
-	@./scripts/run-ci-test.sh
+.PHONY: test-ts-docker-litmus ## Run litmus ts tests with docker without clean-up
+test-ts-docker-litmus: launch-docker-litmus
+	@./scripts/run-ts-test.sh
+
+.PHONY: test-ts-binary-litentry ## Run litentry ts tests with binary without clean-up
+test-ts-binary-litentry: launch-binary-litentry
+	@./scripts/run-ts-test.sh
+
+.PHONY: test-ts-binary-litmus ## Run litmus ts tests with binary without clean-up
+test-ts-binary-litmus: launch-binary-litmus
+	@./scripts/run-ts-test.sh
 
 # clean up
 
-.PHONY: clean-local-docker ## Clean up docker images, containers, volumes, etc
-clean-local-docker:
-	@./scripts/clean-local-docker.sh
+.PHONY: clean-docker-litentry ## Clean up litentry docker images, containers, volumes, etc
+clean-docker-litentry:
+	@./scripts/clean-local-docker.sh litentry
 
-.PHONY: clean-local-binary ## Clean up (kill) started relaychain and parachain binaries
-clean-local-binary:
+.PHONY: clean-docker-litmus ## Clean up litmus docker images, containers, volumes, etc
+clean-docker-litmus:
+	@./scripts/clean-local-docker.sh litmus
+
+.PHONY: clean-binary ## Kill started polkadot and litentry-collator binaries
+clean-binary:
 	@./scripts/clean-local-binary.sh
 
 # generate docker-compose files
 
-.PHONY: generate-docker-compose-dev ## Generate dev docker-compose files
-generate-docker-compose-dev:
-	@./scripts/generate-docker-files.sh dev
+.PHONY: generate-docker-compose-litentry ## Generate docker-compose files for litentry dev
+generate-docker-compose-litentry:
+	@./scripts/generate-docker-files.sh litentry
+
+.PHONY: generate-docker-compose-litmus ## Generate docker-compose files for litmus dev
+generate-docker-compose-litmus:
+	@./scripts/generate-docker-files.sh litmus
 
 # format
 

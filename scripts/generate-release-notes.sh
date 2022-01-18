@@ -8,14 +8,15 @@ err_report() {
 trap 'err_report $LINENO' ERR
 
 function usage() {
-    echo "Usage: $0 path-to-output diff-tag"
+    echo "Usage: $0 litentry|litmus path-to-output diff-tag"
 }
 
-[ $# -gt 2 ] && (usage; exit 1)
+[ $# -ne 3 ] && (usage; exit 1)
 
 ROOTDIR=$(git rev-parse --show-toplevel)
 cd "$ROOTDIR"
 
+CHAIN=$1
 REPO=https://github.com/litentry/litentry-parachain
 
 # base image used to build the node binary
@@ -34,9 +35,9 @@ else
   NODE_RUSTC_VERSION=$(docker run --rm "$NODE_BUILD_BASE_IMAGE" rustup default nightly 2>&1 | grep " installed" | sed 's/.*installed - //')
 fi
 
-SRTOOL_DIGEST_FILE=litentry-parachain-runtime/litentry-parachain-srtool-digest.json
+SRTOOL_DIGEST_FILE=$CHAIN-parachain-runtime/$CHAIN-parachain-srtool-digest.json
 
-RUNTIME_VERSION=$(grep spec_version runtime/src/lib.rs | sed 's/.*version: //;s/,//')
+RUNTIME_VERSION=$(grep spec_version runtime/$CHAIN/src/lib.rs | sed 's/.*version: //;s/,//')
 RUNTIME_COMPRESSED_SIZE=$(cat "$SRTOOL_DIGEST_FILE" | jq .runtimes.compressed.size | sed 's/"//g')
 RUNTIME_RUSTC_VERSION=$(cat "$SRTOOL_DIGEST_FILE" | jq .rustc | sed 's/"//g')
 RUNTIME_COMPRESSED_SHA256=$(cat "$SRTOOL_DIGEST_FILE" | jq .runtimes.compressed.sha256 | sed 's/"//g')
@@ -87,15 +88,15 @@ Cumulus                      : $CUMULUS_DEP
 EOF
 
 if [ "$GENESIS_RELEASE" = "true" ]; then
-  GENESIS_STATE_HASH=$(shasum litentry-collator/litentry-genesis-state | awk '{print $1}')
-  GENESIS_WASM_HASH=$(shasum litentry-collator/litentry-genesis-wasm | awk '{print $1}')
+  GENESIS_STATE_HASH=$(shasum litentry-collator/$CHAIN-genesis-state | awk '{print $1}')
+  GENESIS_WASM_HASH=$(shasum litentry-collator/$CHAIN-genesis-wasm | awk '{print $1}')
 
   # double check that exported wasm matches what's written in chain-spec
   # intentionally use 'generate-prod' as chain type
-  docker run --rm "litentry/litentry-parachain:$RELEASE_TAG" build-spec --chain=generate-prod --raw | \
+  docker run --rm "litentry/litentry-parachain:$RELEASE_TAG" build-spec --chain=generate-$CHAIN --raw | \
   grep -F '"0x3a636f6465"' | sed 's/.*"0x3a636f6465": "//;s/",$//' | tr -d '\n' > /tmp/built-wasm
 
-  if cmp /tmp/built-wasm litentry-collator/litentry-genesis-wasm; then
+  if cmp /tmp/built-wasm litentry-collator/$CHAIN-genesis-wasm; then
     echo "genesis-wasm equal, all good."
     rm -f /tmp/built-wasm
   else
