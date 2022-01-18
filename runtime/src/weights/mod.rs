@@ -18,8 +18,6 @@
 
 pub mod frame_system;
 pub mod pallet_balances;
-// DEPRECATED: REMOVE AFTER RUNTIME UPGRADE
-pub mod pallet_collator_selection;
 pub mod pallet_collective;
 pub mod pallet_democracy;
 pub mod pallet_membership;

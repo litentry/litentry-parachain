@@ -16,7 +16,7 @@
 
 use cumulus_primitives_core::ParaId;
 use litentry_parachain_runtime::{
-	AccountId, AuraId, Balance, BalancesConfig, CollatorSelectionConfig, ParachainStakingConfig, CouncilMembershipConfig,
+	AccountId, AuraId, Balance, BalancesConfig, ParachainStakingConfig, CouncilMembershipConfig,
 	GenesisConfig, ParachainInfoConfig, SessionConfig, Signature, SudoConfig, SystemConfig,
 	TechnicalCommitteeMembershipConfig, UNIT, WASM_BINARY,
 };
@@ -247,12 +247,6 @@ fn generate_genesis(
 		balances: BalancesConfig { balances: endowed_accounts },
 		sudo: SudoConfig { key: root_key },
 		parachain_info: ParachainInfoConfig { parachain_id: id },
-		// DEPRECATED: REMOVE AFTER RUNTIME UPGRADE
-		collator_selection: CollatorSelectionConfig {
-			invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
-			candidacy_bond: candicy_bond,
-			..Default::default()
-		},
 		parachain_staking: ParachainStakingConfig {
 			candidates: invulnerables.iter().cloned().map(|(acc, _)| (acc, 1000)).collect(),
 			..Default::default()

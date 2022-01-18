@@ -64,8 +64,6 @@ cumulus-pallet-xcmp-queue = { git = "https://github.com/paritytech/cumulus", def
 cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.13" }
 cumulus-primitives-utility = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.13" }
 cumulus-primitives-timestamp = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.13" }
-# DEPRECATED: REMOVE AFTER RUNTIME UPGRADE
-pallet-collator-selection = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.13" }
 parachain-info = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.13" }
 
 # Polkadot dependencies
@@ -141,8 +139,6 @@ std = [
 	"cumulus-primitives-core/std",
 	"cumulus-primitives-utility/std",
 	"cumulus-primitives-timestamp/std",
-	# DEPRECATED: REMOVE AFTER RUNTIME UPGRADE
-	"pallet-collator-selection/std",
 	"parachain-info/std",
 	"pallet-xcm/std",
 	"polkadot-parachain/std",
