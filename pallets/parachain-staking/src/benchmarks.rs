@@ -838,7 +838,7 @@ benchmarks! {
 					let mut open_spots = delegators.len() as u32 - *n_count;
 					while open_spots > 0 && remaining_delegations > 0 {
 						let caller = delegators[open_spots as usize - 1usize].clone();
-						if Pallet::<T>::delegate(RawOrigin::Signed(
+						if let Ok(_) = Pallet::<T>::delegate(RawOrigin::Signed(
 							caller.clone()).into(),
 							col.clone(),
 							<<T as Config>::MinDelegatorStk as Get<BalanceOf<T>>>::get(),
