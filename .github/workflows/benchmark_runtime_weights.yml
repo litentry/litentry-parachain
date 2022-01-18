@@ -41,6 +41,7 @@ jobs:
 
       # exit status should propagate through ssh
       - name: Remotely benchmark pallets ${{ github.event.inputs.pallets }} for ${{ github.event.inputs.chain }}
+        timeout-minutes: 120
         run: |
           # prepend the asterisk with \ to go through ssh
           arg="${{ github.event.inputs.pallets }}"
