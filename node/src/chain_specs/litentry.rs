@@ -18,7 +18,7 @@ use super::*;
 use cumulus_primitives_core::ParaId;
 use litentry_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, CouncilMembershipConfig, GenesisConfig,
-	ParachainInfoConfig, ParachainStakingConfig, SessionConfig, Signature, SudoConfig,
+	ParachainInfoConfig, ParachainStakingConfig, SessionConfig, SudoConfig,
 	SystemConfig, TechnicalCommitteeMembershipConfig, UNIT, WASM_BINARY,
 };
 use sc_service::ChainType;
@@ -36,7 +36,6 @@ fn default_parachain_properties() -> Option<Properties> {
 	parachain_properties("LIT", 12, 31)
 }
 
-const DEV_CANDIDACY_BOND: Balance = 1;
 const DEFAULT_ENDOWED_ACCOUNT_BALANCE: Balance = 1000 * UNIT;
 
 /// GenesisInfo struct to store the parsed genesis_info JSON
@@ -45,7 +44,6 @@ const DEFAULT_ENDOWED_ACCOUNT_BALANCE: Balance = 1000 * UNIT;
 struct GenesisInfo {
 	root_key: AccountId,
 	invulnerables: Vec<(AccountId, AuraId)>,
-	candidacy_bond: String,
 	endowed_accounts: Vec<(AccountId, String)>,
 	council: Vec<AccountId>,
 	technical_committee: Vec<AccountId>,
@@ -65,7 +63,6 @@ pub fn get_chain_spec_dev() -> ChainSpec {
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					get_collator_keys_from_seed("Alice"),
 				)],
-				DEV_CANDIDACY_BOND,
 				vec![
 					(
 						get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -149,8 +146,6 @@ fn get_chain_spec_from_genesis_info(
 			generate_genesis(
 				genesis_info_cloned.root_key,
 				genesis_info_cloned.invulnerables,
-				u128::from_str(&genesis_info_cloned.candidacy_bond)
-					.expect("Bad candicy bond; qed."),
 				genesis_info_cloned
 					.endowed_accounts
 					.into_iter()
@@ -183,7 +178,6 @@ fn get_chain_spec_from_genesis_info(
 fn generate_genesis(
 	root_key: AccountId,
 	invulnerables: Vec<(AccountId, AuraId)>,
-	candicy_bond: Balance,
 	endowed_accounts: Vec<(AccountId, Balance)>,
 	council_members: Vec<AccountId>,
 	technical_committee_members: Vec<AccountId>,

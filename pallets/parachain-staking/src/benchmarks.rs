@@ -402,7 +402,7 @@ benchmarks! {
 		} else {
 			0u32.into()
 		};
-		let (caller, _) = create_funded_user::<T>("caller", USER_SEED, extra.into());
+		let (caller, _) = create_funded_user::<T>("caller", USER_SEED, extra);
 		// Delegation count
 		let mut del_del_count = 0u32;
 		// Nominate MaxDelegationsPerDelegators collator candidates
@@ -451,7 +451,7 @@ benchmarks! {
 		let bond = <<T as Config>::MinDelegatorStk as Get<BalanceOf<T>>>::get();
 		Pallet::<T>::delegate(RawOrigin::Signed(
 			caller.clone()).into(),
-			collator.clone(),
+			collator,
 			bond,
 			0u32,
 			0u32
@@ -520,7 +520,7 @@ benchmarks! {
 		let bond = <<T as Config>::MinDelegatorStk as Get<BalanceOf<T>>>::get();
 		Pallet::<T>::delegate(RawOrigin::Signed(
 			caller.clone()).into(),
-			collator.clone(),
+			collator,
 			bond,
 			0u32,
 			0u32
@@ -578,7 +578,7 @@ benchmarks! {
 			0u32,
 			0u32
 		)?;
-	}: _(RawOrigin::Signed(caller.clone()), collator.clone(), bond)
+	}: _(RawOrigin::Signed(caller.clone()), collator, bond)
 	verify {
 		let expected_bond = bond * 2u32.into();
 		assert_eq!(T::Currency::reserved_balance(&caller), expected_bond);
@@ -772,7 +772,7 @@ benchmarks! {
 			ideal: Perbill::one(),
 			max: Perbill::one(),
 		};
-		Pallet::<T>::set_inflation(RawOrigin::Root.into(), high_inflation.clone())?;
+		Pallet::<T>::set_inflation(RawOrigin::Root.into(), high_inflation)?;
 		Pallet::<T>::set_total_selected(RawOrigin::Root.into(), 28u32)?;
 		// INITIALIZE COLLATOR STATE
 		let mut collators: Vec<T::AccountId> = Vec::new();
@@ -793,7 +793,7 @@ benchmarks! {
 		let collator_starting_balances: Vec<(
 			T::AccountId,
 			<<T as Config>::Currency as Currency<T::AccountId>>::Balance
-		)> = collators.iter().map(|x| (x.clone(), T::Currency::free_balance(&x))).collect();
+		)> = collators.iter().map(|x| (x.clone(), T::Currency::free_balance(x))).collect();
 		// INITIALIZE DELEGATIONS
 		let mut col_del_count: BTreeMap<T::AccountId, u32> = BTreeMap::new();
 		collators.iter().for_each(|x| {
@@ -838,7 +838,7 @@ benchmarks! {
 					let mut open_spots = delegators.len() as u32 - *n_count;
 					while open_spots > 0 && remaining_delegations > 0 {
 						let caller = delegators[open_spots as usize - 1usize].clone();
-						if let Ok(_) = Pallet::<T>::delegate(RawOrigin::Signed(
+						if Pallet::<T>::delegate(RawOrigin::Signed(
 							caller.clone()).into(),
 							col.clone(),
 							<<T as Config>::MinDelegatorStk as Get<BalanceOf<T>>>::get(),
@@ -860,7 +860,7 @@ benchmarks! {
 		let delegator_starting_balances: Vec<(
 			T::AccountId,
 			<<T as Config>::Currency as Currency<T::AccountId>>::Balance
-		)> = delegators.iter().map(|x| (x.clone(), T::Currency::free_balance(&x))).collect();
+		)> = delegators.iter().map(|x| (x.clone(), T::Currency::free_balance(x))).collect();
 		// PREPARE RUN_TO_BLOCK LOOP
 		let before_running_round_index = Pallet::<T>::round().current;
 		let round_length: T::BlockNumber = Pallet::<T>::round().length.into();
@@ -990,7 +990,7 @@ benchmarks! {
 		// nominators should have been paid
 		for delegator in &delegators {
 			assert!(
-				T::Currency::free_balance(&delegator) > initial_stake_amount,
+				T::Currency::free_balance(delegator) > initial_stake_amount,
 				"delegator should have been paid in pay_one_collator_reward"
 			);
 		}
@@ -1005,7 +1005,7 @@ benchmarks! {
 			1u32
 		)?;
 		let start = <frame_system::Pallet<T>>::block_number();
-		Pallet::<T>::note_author(collator.clone());
+		Pallet::<T>::note_author(collator);
 		<frame_system::Pallet<T>>::on_finalize(start);
 		<frame_system::Pallet<T>>::set_block_number(
 			start + 1u32.into()

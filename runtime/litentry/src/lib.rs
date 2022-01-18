@@ -144,13 +144,13 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// However our CI passes (TODO)
 	spec_name: create_runtime_str!("litentry-parachain"),
 	impl_name: create_runtime_str!("litentry-parachain"),
-	authoring_version: 2,
+	authoring_version: 1,
 	// same versioning-mechanism as polkadot, corresponds to 0.9.1 TOML version
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9999,
-	impl_version: 2,
+	spec_version: 9910,
+	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 2,
+	transaction_version: 1,
 };
 
 /// The existential deposit.

@@ -150,7 +150,7 @@ where
 		);
 		let storage_prefix = storage_prefix(b"ParachainStaking", b"Staked");
 		let key_hashed = 1u32.using_encoded(Twox64Concat::hash);
-		let mut final_key = Vec::with_capacity(storage_prefix.len() + &key_hashed.len());
+		let mut final_key = Vec::with_capacity(storage_prefix.len() + key_hashed.len());
 		final_key.extend_from_slice(&storage_prefix);
 		final_key.extend_from_slice(key_hashed.as_ref());
 		frame_support::storage::unhashed::put(final_key.as_ref(), &val);
@@ -170,7 +170,7 @@ where
 			&Twox128::hash(b"CollatorSelection"),
 			Some(entries.try_into().unwrap()),
 		);
-		<T as frame_system::Config>::DbWeight::get().writes(entries.into())
+		<T as frame_system::Config>::DbWeight::get().writes(entries)
 	}
 
 	#[cfg(feature = "try-runtime")]

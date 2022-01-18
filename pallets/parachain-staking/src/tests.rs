@@ -3019,7 +3019,7 @@ fn collator_selection_chooses_top_candidates() {
 				Event::CollatorChosen(2, 5, 60),
 				Event::NewRound(5, 2, 5, 400),
 			];
-			assert_eq_events!(expected.clone());
+			assert_eq_events!(expected);
 			assert_ok!(Stake::schedule_leave_candidates(Origin::signed(6), 6));
 			assert_last_event!(MetaEvent::Stake(Event::CandidateScheduledExit(2, 6, 4)));
 			roll_to(21);

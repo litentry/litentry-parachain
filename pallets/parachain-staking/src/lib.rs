@@ -48,6 +48,10 @@
 //! To leave the set of delegators and revoke all delegations, call `leave_delegators`.
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::needless_return)]
+#![allow(clippy::useless_conversion)]
+#![allow(clippy::type_complexity)]
+#![allow(clippy::unnecessary_filter_map)]
 
 #[cfg(any(test, feature = "runtime-benchmarks"))]
 mod benchmarks;
@@ -1975,7 +1979,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let delegator = ensure_signed(origin)?;
 			let mut state = <DelegatorState<T>>::get(&delegator).ok_or(Error::<T>::DelegatorDNE)?;
-			state.increase_delegation::<T>(candidate.clone(), more)?;
+			state.increase_delegation::<T>(candidate, more)?;
 			Ok(().into())
 		}
 		#[pallet::weight(<T as Config>::WeightInfo::schedule_delegator_bond_less())]
@@ -2318,11 +2322,7 @@ pub mod pallet {
 			);
 
 			let round = <Round<T>>::get();
-			if round.should_update(now) {
-				true
-			} else {
-				false
-			}
+			round.should_update(now)
 		}
 	}
 
