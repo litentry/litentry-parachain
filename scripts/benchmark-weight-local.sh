@@ -8,26 +8,30 @@ set -eo pipefail
 # Therefore substrate (or other github) pallets are not supported:
 # they are benchmarked by the source anyway (e.g. SubstrateWeigt)
 # The `litentry-collator` binary must be compiled with `runtime-benchmarks` feature.
+#
+# When benchmarking runtime weight, a third parameter is needed to
+# define the runtime: litentry or litmus.
 
 function usage() {
-    echo "Usage: $0 pallet-name runtime|pallet"
+    echo "Usage: $0 pallet-name runtime|pallet [litentry|litmus]"
 }
 
-[ $# -ne 2 ] && (usage; exit 1)
+[ $# -lt 2 ] && (usage; exit 1)
 
 ROOTDIR=$(git rev-parse --show-toplevel)
 cd "$ROOTDIR"
 
 PALLET=${1//-/_}
-echo "running $2 benchmark for $PALLET locally ..."
 
 case "$2" in
     runtime)
-        OUTPUT="--output=./runtime/src/weights/$PALLET.rs"
+        echo "running $3-$2 benchmark for $PALLET locally ..."
+        OUTPUT="--output=./runtime/$3/src/weights/$PALLET.rs"
         TEMPLATE=
-        CHAIN="--chain=generate-prod"
+        CHAIN="--chain=generate-$3"
         ;;
     pallet)
+        echo "running $2 benchmark for $PALLET locally ..."
         OUTPUT="$(cargo pkgid -q $1 | sed 's/.*litentry-parachain/\./;s/#.*/\/src\/weights.rs/')"
         TEMPLATE="--template=./templates/benchmark/pallet-weight-template.hbs"
         CHAIN="--chain=dev"
@@ -54,7 +58,7 @@ esac
     --heap-pages=4096 \
     --steps=20 \
     --repeat=50 \
-    --header=./LICENCE_HEADER \
+    --header=./LICENSE_HEADER \
     $TEMPLATE \
     $OUTPUT
 

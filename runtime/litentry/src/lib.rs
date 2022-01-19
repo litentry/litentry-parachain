@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Litentry Technologies GmbH.
+// Copyright 2020-2022 Litentry Technologies GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -42,8 +42,8 @@ use sp_runtime::{
 	ApplyExtrinsicResult,
 };
 
-mod impls;
-use impls::{DealWithFees, SlowAdjustingFeeUpdate};
+mod transaction_payment;
+use transaction_payment::{DealWithFees, SlowAdjustingFeeUpdate};
 
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -145,7 +145,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot, corresponds to 0.9.1 TOML version
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9010,
+	spec_version: 9020,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -238,7 +238,7 @@ impl frame_system::Config for Runtime {
 	/// The weight of database operations that the runtime can invoke.
 	type DbWeight = RocksDbWeight;
 	/// The basic call filter to use in dispatchable.
-	type BaseCallFilter = BaseCallFilter;
+	type BaseCallFilter = ExtrinsicFilter;
 	/// Weight information for the extrinsics of this pallet.
 	///
 	/// TODO:
@@ -923,9 +923,11 @@ impl pns_registrar::registry::Config for Runtime {
 
 	type WeightInfo = weights::pns_registrar::WeightInfo;
 
-	type Registrar = pns_registrar::registrar::Pallet<Runtime>;
+	type Registrar = PnsRegistrar;
 
 	type ResolverId = u32;
+
+	type ManagerOrigin = PnsOrigin;
 }
 
 parameter_types! {
@@ -942,9 +944,9 @@ impl pns_registrar::registrar::Config for Runtime {
 
 	type ResolverId = u32;
 
-	type Registry = pns_registrar::registry::Pallet<Runtime>;
+	type Registry = PnsRegistry;
 
-	type Currency = pallet_balances::Pallet<Runtime>;
+	type Currency = Balances;
 
 	type GracePeriod = GracePeriod;
 
@@ -956,13 +958,15 @@ impl pns_registrar::registrar::Config for Runtime {
 
 	type MinRegistrationDuration = MinRegistrationDuration;
 
-	type PriceOracle = pns_registrar::price_oracle::Pallet<Runtime>;
+	type PriceOracle = PnsPriceOracle;
 
 	type Moment = Moment;
 
-	type NowProvider = pallet_timestamp::Pallet<Runtime>;
+	type NowProvider = Timestamp;
 
-	type Manager = pns_registrar::registry::Pallet<Runtime>;
+	type ManagerOrigin = PnsOrigin;
+
+	type Official = PnsRegistry;
 }
 
 parameter_types! {
@@ -973,7 +977,7 @@ parameter_types! {
 impl pns_registrar::price_oracle::Config for Runtime {
 	type Event = Event;
 
-	type Currency = pallet_balances::Pallet<Runtime>;
+	type Currency = Balances;
 
 	type MaximumLength = MaximumLength;
 
@@ -985,7 +989,7 @@ impl pns_registrar::price_oracle::Config for Runtime {
 
 	type RateScale = RateScale;
 
-	type Manager = pns_registrar::registry::Pallet<Runtime>;
+	type ManagerOrigin = PnsOrigin;
 }
 pub struct TestRate;
 
@@ -1002,7 +1006,7 @@ impl pns_registrar::redeem_code::Config for Runtime {
 
 	type WeightInfo = weights::pns_registrar::WeightInfo;
 
-	type Registrar = pns_registrar::registrar::Pallet<Runtime>;
+	type Registrar = PnsRegistrar;
 
 	type BaseNode = BaseNode;
 
@@ -1012,7 +1016,15 @@ impl pns_registrar::redeem_code::Config for Runtime {
 
 	type Signature = Signature;
 
-	type Manager = pns_registrar::registry::Pallet<Runtime>;
+	type ManagerOrigin = PnsOrigin;
+
+	type Official = PnsRegistry;
+}
+
+impl pns_registrar::origin::Config for Runtime {
+	type Event = Event;
+
+	type WeightInfo = weights::pns_registrar::WeightInfo;
 }
 
 impl pns_resolvers::Config for Runtime {
@@ -1039,6 +1051,15 @@ impl pns_resolvers::traits::RegistryChecker for TestChecker {
 		pns_registrar::nft::TokensByOwner::<Runtime>::contains_key((owner, 0, node)) &&
 			PnsRegistrar::check_expires_useable(node).is_ok()
 	}
+}
+
+impl pallet_extrinsic_filter::Config for Runtime {
+	type Event = Event;
+	type UpdateOrigin = EnsureRootOrHalfCouncil;
+	type NormalModeFilter = NormalModeFilter;
+	type SafeModeFilter = SafeModeFilter;
+	type TestModeFilter = Everything;
+	type WeightInfo = (); // To be rerun with runtime benchmarks
 }
 
 construct_runtime! {
@@ -1088,35 +1109,50 @@ construct_runtime! {
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 52,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 53,
 
-		// ChainBridge
+		// Litentry pallets
 		ChainBridge: pallet_bridge::{Pallet, Call, Storage, Event<T>} = 60,
 		BridgeTransfer: pallet_bridge_transfer::{Pallet, Call, Event<T>, Storage} = 61,
-		// Litentry pallets
 		Drop3: pallet_drop3::{Pallet, Call, Storage, Event<T>} = 62,
+		ExtrinsicFilter: pallet_extrinsic_filter::{Pallet, Call, Storage, Event<T>} = 63,
 
 		// PNS
-		PnsNft: pns_registrar::nft,
-		PnsRegistry: pns_registrar::registry,
-		PnsRegistrar: pns_registrar::registrar,
-		PnsRedeemCode: pns_registrar::redeem_code,
-		PnsPriceOracle: pns_registrar::price_oracle,
-		PnsResolvers: pns_resolvers,
+		PnsNft: pns_registrar::nft = 70,
+		PnsRegistry: pns_registrar::registry = 71,
+		PnsRegistrar: pns_registrar::registrar = 72,
+		PnsRedeemCode: pns_registrar::redeem_code = 73,
+		PnsPriceOracle: pns_registrar::price_oracle = 74,
+		PnsOrigin: pns_registrar::origin = 75,
+		PnsResolvers: pns_resolvers = 79,
 
 		// TMP
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 255,
 	}
 }
 
-pub struct BaseCallFilter;
-impl Contains<Call> for BaseCallFilter {
+pub struct SafeModeFilter;
+impl Contains<Call> for SafeModeFilter {
 	fn contains(call: &Call) -> bool {
 		matches!(
 			call,
 			Call::Sudo(_) |
-            // System
-            Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_) |
-			// Pns
-			Call::PnsNft(_) | Call::PnsRegistry(_) | Call::PnsRegistrar(_) | Call::PnsRedeemCode(_) | Call::PnsPriceOracle(_) | Call::PnsResolvers(_)
+			// System
+			Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_) |
+			// ExtrinsicFilter
+			Call::ExtrinsicFilter(_)
+		)
+	}
+}
+
+pub struct NormalModeFilter;
+impl Contains<Call> for NormalModeFilter {
+	fn contains(call: &Call) -> bool {
+		matches!(
+			call,
+			Call::Sudo(_) |
+			// System
+			Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_) |
+			// ExtrinsicFilter
+			Call::ExtrinsicFilter(_)
 		)
 	}
 }
@@ -1266,6 +1302,7 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_membership, CouncilMembership);
 			list_benchmark!(list, extra, pallet_multisig, Multisig);
 			list_benchmark!(list, extra, pallet_drop3, Drop3);
+			list_benchmark!(list, extra, pallet_extrinsic_filter, ExtrinsicFilter);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 			(list, storage_info)
@@ -1308,6 +1345,7 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_membership, CouncilMembership);
 			add_benchmark!(params, batches, pallet_multisig, Multisig);
 			add_benchmark!(params, batches, pallet_drop3, Drop3);
+			add_benchmark!(params, batches, pallet_extrinsic_filter, ExtrinsicFilter);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

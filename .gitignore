@@ -9,6 +9,8 @@
 
 docker/yarn.lock
 docker/package.json
-docker/generated-dev/
+docker/generated-*/
+
+ts-tests/package-lock.json
 
 tags.lock

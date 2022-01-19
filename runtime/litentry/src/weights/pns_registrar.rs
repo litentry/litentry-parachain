@@ -61,14 +61,6 @@ impl registry::WeightInfo for WeightInfo {
 	fn set_official() -> Weight {
 		10_000
 	}
-
-	fn add_manger() -> Weight {
-		10_000
-	}
-
-	fn remove_manger() -> Weight {
-		10_000
-	}
 }
 
 impl redeem_code::WeightInfo for WeightInfo {
@@ -81,6 +73,12 @@ impl redeem_code::WeightInfo for WeightInfo {
 	}
 
 	fn name_redeem_any() -> Weight {
+		10_000
+	}
+}
+
+impl pns_registrar::origin::WeightInfo for WeightInfo {
+	fn set_origin() -> Weight {
 		10_000
 	}
 }

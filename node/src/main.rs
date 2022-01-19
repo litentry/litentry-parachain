@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Litentry Technologies GmbH.
+// Copyright 2020-2022 Litentry Technologies GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 
 #![warn(unused_extern_crates)]
 
-mod chain_spec;
+mod chain_specs;
 #[macro_use]
 mod service;
 mod cli;
