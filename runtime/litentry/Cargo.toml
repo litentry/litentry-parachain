@@ -1,6 +1,6 @@
 [package]
 name = 'litentry-parachain-runtime'
-version = '0.9.1'
+version = '0.9.2'
 authors = ["Litentry Dev"]
 edition = '2021'
 

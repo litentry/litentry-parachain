@@ -3,15 +3,15 @@
     "invulnerables": [
       [
         "4BVDXqfiwCzx4UxSgoQoax6EnRuNZfYNhx8ungLRC3rxKktE",
-        "46sgTotdpJnyH2V6QKJ2aVqepyUNapt7HPuy2xMc4qdtx99Z"
+        "5FnHQaGSf3nSPhiuXUz6viwCdtCbY6qDmajDNvc2agQTUz7p"
       ],
       [
         "47EtB4vijKGvHckktM1uujUDs8Cyjfjw33sfteTUZsXacY9G",
-        "4Ba3Qvjk2fEKiDbJEXqsWT5m3HzHWB22g215wK5BJjWsEjLJ"
+        "5GiratPSg2spVUmKHgCc6uG2M6ciNVptg1ouGctraWG9Tr5C"
       ],
       [
         "471akmW9AtYCxGzUt5WPLRmdWi5a8UAAN6r8LywEhMfTiL4r",
-        "4C7Zb4XjnCUbxqdyUSq3dxF5odHww6YNFrkhZcFpbMqcCFhf"
+        "5HasyPSumFF7W4Mro8NaT8fXEwBm5WxmTXi62ea7iYf8aV4m"
       ]
     ],
     "candidacyBond": "16000000000000",
@@ -94,8 +94,8 @@
       "4BkazoqhutiPXxnrdHBRyspszXp5T3RS2WZVN9Afm2voDpWN"
     ],
     "bootNodes": [
-      "/dns/rpc0.parachain-sg.litentry.io/tcp/40333/ws/p2p/12D3KooWBy6nNAuca2ZrxNEH93bzmb7ZjRpzRbbz7CtNEraiHtSC",
-      "/dns/rpc1.parachain-sg.litentry.io/tcp/40333/ws/p2p/12D3KooWJejFQVK5wtZeDZguAXkzQxngrS9yZt2F1bk92m5w4Xgp"
+      "/dns/rpc0.litmus-parachain-sg.litentry.io/tcp/40333/ws/p2p/12D3KooWM6tHFhpfwTcb7p7WH7buTejtSjcTToXnGBWJey4kFE2D",
+      "/dns/rpc1.litmus-parachain-sg.litentry.io/tcp/40333/ws/p2p/12D3KooWSa3kz9PY7JFMVKGStBn2xj3L5MuNdh3LzeinUQsvZsdB"
     ],
     "telemetryEndpoints": [
       "wss://telemetry-backend.parachain.litentry.io/submit"
