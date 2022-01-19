@@ -45,7 +45,7 @@ where
 		)
 		.expect("Storage query fails: CollatorSelection Invulnerables");
 
-		if invulnerables.len() == 0 {
+		if invulnerables.is_empty() {
 			Err("CollatorSelection empty")
 		} else {
 			Ok(())
