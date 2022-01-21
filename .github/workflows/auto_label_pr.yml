@@ -1,22 +1,44 @@
 # inspired by polkadot
 name: Label PRs
 
+#on:
+#  pull_request:
+#    types: [opened,ready_for_review]
+
+#jobs:
+#  label-prs:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Label drafts
+#        uses: andymckay/labeler@master
+#        if: github.event.pull_request.draft == true
+#        with:
+#          remove-labels: 'S1-pleasereview'
+#
+#      - name: Label PRs
+#        uses: andymckay/labeler@master
+#        if: github.event.pull_request.draft == false
+#        with:
+#          add-labels: 'S1-pleasereview'
+
+#name: 'PR Status Labeller'
+
 on:
   pull_request:
-    types: [opened,ready_for_review]
+  pull_request_review:
 
 jobs:
-  label-prs:
+  pr_status_labeller:
     runs-on: ubuntu-latest
     steps:
-      - name: Label drafts
-        uses: andymckay/labeler@master
-        if: github.event.pull_request.draft == true
-        with:
-          remove-labels: 'S1-pleasereview'
-
-      - name: Label PRs
-        uses: andymckay/labeler@master
-        if: github.event.pull_request.draft == false
-        with:
-          add-labels: 'S1-pleasereview'
+      - name: Run Labeller
+        uses: comnoco/pr-status-labeller@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AWAITING_REVIEW_LABEL: 'awaiting review' # default: 'awaiting review'
+          CHANGES_REQUESTED_LABEL: 'changes requested' # default: 'changes requested'
+          CLOSED_LABEL: 'closed' # default: 'closed'
+          CODE_APPROVED_LABEL: 'code approved' # default: 'code approved'
+          MERGED_LABEL: 'merged' # default: 'merged'
+          APPLY_CLOSED_LABEL: true # default: true
+          APPLY_MERGED_LABEL: true # default: true
