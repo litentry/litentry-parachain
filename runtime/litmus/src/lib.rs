@@ -907,6 +907,151 @@ impl pallet_extrinsic_filter::Config for Runtime {
 	type WeightInfo = (); // To be rerun with runtime benchmarks
 }
 
+parameter_types! {
+	pub const MaxMetadata: u32 = 15;
+}
+
+impl pns_registrar::nft::Config for Runtime {
+	type ClassId = u32;
+
+	type TokenId = Hash;
+
+	type TotalId = u128;
+
+	type ClassData = ();
+
+	type TokenData = pns_registrar::registry::Record;
+
+	type MaxClassMetadata = MaxMetadata;
+
+	type MaxTokenMetadata = MaxMetadata;
+}
+
+impl pns_registrar::registry::Config for Runtime {
+	type Event = Event;
+
+	type WeightInfo = weights::pns_registrar::WeightInfo;
+
+	type Registrar = PnsRegistrar;
+
+	type ResolverId = u32;
+
+	type ManagerOrigin = PnsOrigin;
+}
+
+parameter_types! {
+	pub const GracePeriod: Moment = 90 * 24 * 60 * 60;
+	pub const MinRegistrationDuration: Moment = 28 * 24 * 60 * 60;
+	pub const DefaultCapacity: u32 = 20;
+	pub const BaseNode: Hash = sp_core::H256([206, 21, 156, 243, 67, 128, 117, 125, 25, 50, 168, 228, 167, 78, 133, 232, 89, 87, 176, 167, 165, 45, 156, 86, 108, 10, 60, 141, 97, 51, 208, 247]);
+}
+
+pub type Moment = u64;
+
+impl pns_registrar::registrar::Config for Runtime {
+	type Event = Event;
+
+	type ResolverId = u32;
+
+	type Registry = PnsRegistry;
+
+	type Currency = Balances;
+
+	type GracePeriod = GracePeriod;
+
+	type DefaultCapacity = DefaultCapacity;
+
+	type BaseNode = BaseNode;
+
+	type WeightInfo = weights::pns_registrar::WeightInfo;
+
+	type MinRegistrationDuration = MinRegistrationDuration;
+
+	type PriceOracle = PnsPriceOracle;
+
+	type Moment = Moment;
+
+	type NowProvider = Timestamp;
+
+	type ManagerOrigin = PnsOrigin;
+
+	type Official = PnsRegistry;
+}
+
+parameter_types! {
+	pub const MaximumLength: u8 = 10;
+	pub const RateScale: Balance = 100_000;
+}
+
+impl pns_registrar::price_oracle::Config for Runtime {
+	type Event = Event;
+
+	type Currency = Balances;
+
+	type MaximumLength = MaximumLength;
+
+	type WeightInfo = weights::pns_registrar::WeightInfo;
+
+	type Moment = Moment;
+
+	type ExchangeRate = PnsPriceOracle;
+
+	type RateScale = RateScale;
+
+	type ManagerOrigin = PnsOrigin;
+}
+
+impl pns_registrar::redeem_code::Config for Runtime {
+	type Event = Event;
+
+	type WeightInfo = weights::pns_registrar::WeightInfo;
+
+	type Registrar = PnsRegistrar;
+
+	type BaseNode = BaseNode;
+
+	type Moment = Moment;
+
+	type Public = <Signature as sp_runtime::traits::Verify>::Signer;
+
+	type Signature = Signature;
+
+	type ManagerOrigin = PnsOrigin;
+
+	type Official = PnsRegistry;
+}
+
+impl pns_registrar::origin::Config for Runtime {
+	type Event = Event;
+
+	type WeightInfo = weights::pns_registrar::WeightInfo;
+}
+
+impl pns_resolvers::Config for Runtime {
+	type Event = Event;
+
+	type WeightInfo = weights::pns_resolvers::WeightInfo;
+
+	type AccountIndex = u32;
+
+	type RegistryChecker = LocalChecker;
+
+	type DomainHash = Hash;
+}
+
+pub struct LocalChecker;
+
+impl pns_resolvers::traits::RegistryChecker for LocalChecker {
+	type Hash = Hash;
+
+	type AccountId = AccountId;
+	fn check_node_useable(node: Self::Hash, owner: &Self::AccountId) -> bool {
+		use pns_registrar::traits::Registrar;
+		pns_registrar::nft::TokensByOwner::<Runtime>::contains_key((owner, 0, node)) &&
+			PnsRegistrar::check_expires_useable(node).is_ok()
+	}
+}
+
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -959,6 +1104,15 @@ construct_runtime! {
 		BridgeTransfer: pallet_bridge_transfer::{Pallet, Call, Event<T>, Storage} = 61,
 		Drop3: pallet_drop3::{Pallet, Call, Storage, Event<T>} = 62,
 		ExtrinsicFilter: pallet_extrinsic_filter::{Pallet, Call, Storage, Event<T>} = 63,
+
+		// PNS pallets
+		PnsNft: pns_registrar::nft = 70,
+		PnsRegistry: pns_registrar::registry = 71,
+		PnsRegistrar: pns_registrar::registrar = 72,
+		PnsRedeemCode: pns_registrar::redeem_code = 73,
+		PnsPriceOracle: pns_registrar::price_oracle = 74,
+		PnsOrigin: pns_registrar::origin = 75,
+		PnsResolvers: pns_resolvers = 79,
 
 		// TMP
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 255,

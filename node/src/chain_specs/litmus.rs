@@ -19,7 +19,7 @@ use cumulus_primitives_core::ParaId;
 use litmus_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, CollatorSelectionConfig, CouncilMembershipConfig,
 	GenesisConfig, ParachainInfoConfig, SessionConfig, SudoConfig, SystemConfig,
-	TechnicalCommitteeMembershipConfig, UNIT, WASM_BINARY,
+	TechnicalCommitteeMembershipConfig, UNIT, WASM_BINARY, PnsOriginConfig, PnsResolversConfig, PnsPriceOracleConfig, PnsRedeemCodeConfig, PnsRegistrarConfig, PnsRegistryConfig, PnsNftConfig,
 };
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
@@ -231,5 +231,42 @@ fn generate_genesis(
 		aura: Default::default(),
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
+		pns_nft: PnsNftConfig {
+			tokens: vec![(
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				vec![1, 2, 3],
+				(),
+				vec![(
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					vec![3, 2, 1],
+					Default::default(),
+					sp_core::convert_hash::<sp_core::H256, [u8; 32]>(
+						&sp_core::hashing::keccak_256("dot".as_bytes()),
+					),
+				)],
+			)],
+		},
+		pns_registry: PnsRegistryConfig {
+			origin: vec![],
+			official: Some(get_account_id_from_seed::<sr25519::Public>("Alice")),
+			..Default::default()
+		},
+		pns_registrar: PnsRegistrarConfig { infos: vec![], ..Default::default() },
+		pns_redeem_code: PnsRedeemCodeConfig { redeems: None },
+		pns_price_oracle: PnsPriceOracleConfig {
+			base_prices: vec![
+				10000, 10000, 10000, 10000, 7000, 7000, 7000, 4000, 4000, 4000, 3000, 3000, 3000,
+				2000, 2000, 2000, 1000, 1000, 1000, 1000,
+			],
+			rent_prices: vec![
+				10000, 10000, 10000, 10000, 7000, 7000, 7000, 4000, 4000, 4000, 3000, 3000, 3000,
+				2000, 2000, 2000, 1000, 1000, 1000, 1000,
+			],
+			init_rate: 1999999
+		},
+		pns_resolvers: PnsResolversConfig { accounts: vec![], texts: vec![] },
+		pns_origin: PnsOriginConfig {
+			origins: vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
+		},
 	}
 }

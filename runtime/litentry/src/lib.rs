@@ -985,20 +985,11 @@ impl pns_registrar::price_oracle::Config for Runtime {
 
 	type Moment = Moment;
 
-	type ExchangeRate = TestRate;
+	type ExchangeRate = PnsPriceOracle;
 
 	type RateScale = RateScale;
 
 	type ManagerOrigin = PnsOrigin;
-}
-pub struct TestRate;
-
-impl pns_registrar::traits::ExchangeRate for TestRate {
-	type Balance = Balance;
-
-	fn get_exchange_rate() -> Self::Balance {
-		3_140_000
-	}
 }
 
 impl pns_registrar::redeem_code::Config for Runtime {
@@ -1034,18 +1025,17 @@ impl pns_resolvers::Config for Runtime {
 
 	type AccountIndex = u32;
 
-	type RegistryChecker = TestChecker;
+	type RegistryChecker = LocalChecker;
 
 	type DomainHash = Hash;
 }
 
-pub struct TestChecker;
+pub struct LocalChecker;
 
-impl pns_resolvers::traits::RegistryChecker for TestChecker {
+impl pns_resolvers::traits::RegistryChecker for LocalChecker {
 	type Hash = Hash;
 
 	type AccountId = AccountId;
-	// TODO: 跨链验证
 	fn check_node_useable(node: Self::Hash, owner: &Self::AccountId) -> bool {
 		use pns_registrar::traits::Registrar;
 		pns_registrar::nft::TokensByOwner::<Runtime>::contains_key((owner, 0, node)) &&

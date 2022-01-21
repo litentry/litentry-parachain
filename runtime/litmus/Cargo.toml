@@ -84,6 +84,17 @@ pallet-bridge-transfer = { path = "../../pallets/bridge-transfer", default-featu
 pallet-drop3 = { path = "../../pallets/drop3", default-features = false }
 pallet-extrinsic-filter = { path = "../../pallets/extrinsic-filter", default-features = false }
 
+# PNS pallets
+[dependencies.pns-registrar]
+default-features = false
+git = 'https://github.com/pnsproject/pns-pallets.git'
+branch = 'main'
+
+[dependencies.pns-resolvers]
+default-features = false
+git = 'https://github.com/pnsproject/pns-pallets.git'
+branch = 'main'
+
 [dev-dependencies]
 hex-literal = "0.3.4"
 smallvec = "1.8.0"
@@ -150,6 +161,8 @@ std = [
 	"pallet-bridge-transfer/std",
 	"pallet-drop3/std",
 	"pallet-extrinsic-filter/std",
+	"pns-registrar/std",
+	"pns-resolvers/std"
 ]
 
 runtime-benchmarks = [

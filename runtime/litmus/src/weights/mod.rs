@@ -28,3 +28,5 @@ pub mod pallet_scheduler;
 pub mod pallet_timestamp;
 pub mod pallet_treasury;
 pub mod pallet_utility;
+pub mod pns_registrar;
+pub mod pns_resolvers;
