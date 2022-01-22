@@ -55,33 +55,6 @@ jobs:
       - name: Run cargo clippy check
         run: make clippy
 
-  run-cargo-tests:
-    runs-on: ubuntu-latest
-    needs: check-cargo-fmt
-    strategy:
-      matrix:
-        chain:
-          - litmus
-          - litentry
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
-      - name: Install toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-          target: wasm32-unknown-unknown
-          default: true
-
-      - name: Run unittests
-        run: cargo test --release -p pallet-* --lib
-
-      - name: Run runtime integration tests
-        run: cargo test --release -p ${{ matrix.chain }}-parachain-runtime --lib
-
   build-docker:
     if: "!contains(github.event.commits[0].message, '[SKIP CI]')"
     concurrency:
@@ -129,9 +102,52 @@ jobs:
         run: |
           make clean-docker-${{ matrix.chain }}
 
+  run-cargo-unit-tests:
+    runs-on: ubuntu-latest
+    needs: check-cargo-fmt
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          target: wasm32-unknown-unknown
+          default: true
+
+      - name: Run unittests
+        run: cargo test --release -p pallet-* --lib
+
+  run-cargo-runtime-tests:
+    runs-on: ubuntu-latest
+    needs: check-cargo-fmt
+    strategy:
+      matrix:
+        chain:
+          - litmus
+          - litentry
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          target: wasm32-unknown-unknown
+          default: true
+
+      - name: Run runtime integration tests
+        run: cargo test --release -p ${{ matrix.chain }}-parachain-runtime --lib
+
   push-docker-image:
     runs-on: self-hosted
-    needs: ["check-cargo-clippy", "run-cargo-tests", "run-ts-tests"]
+    needs: ["check-cargo-clippy", "run-cargo-unit-tests", "run-cargo-runtime-tests", "run-ts-tests"]
     steps:
       - name: Push docker image on dev branch if test passes
         if: ${{ success() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
