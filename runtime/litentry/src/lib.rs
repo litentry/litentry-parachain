@@ -45,6 +45,9 @@ use sp_runtime::{
 mod transaction_payment;
 use transaction_payment::{DealWithFees, SlowAdjustingFeeUpdate};
 
+#[cfg(test)]
+mod tests;
+
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;

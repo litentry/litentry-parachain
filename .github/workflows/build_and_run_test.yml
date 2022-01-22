@@ -58,6 +58,11 @@ jobs:
   run-cargo-tests:
     runs-on: ubuntu-latest
     needs: check-cargo-fmt
+    strategy:
+      matrix:
+        chain:
+          - litmus
+          - litentry
     steps:
       - uses: actions/checkout@v2
         with:
@@ -71,8 +76,11 @@ jobs:
           target: wasm32-unknown-unknown
           default: true
 
-      - name: Run cargo unittests
-        run: cargo test -p pallet-* --lib
+      - name: Run unittests
+        run: cargo test --release -p pallet-* --lib
+
+      - name: Run runtime integration tests
+        run: cargo test --release -p ${{ matrix.chain }}-parachain-runtime --lib
 
   build-docker:
     if: "!contains(github.event.commits[0].message, '[SKIP CI]')"

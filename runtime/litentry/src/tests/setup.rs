@@ -1,6 +1,22 @@
+// Copyright 2020-2022 Litentry Technologies GmbH.
+// This file is part of Litentry.
+//
+// Litentry is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Litentry is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
+
 use frame_support::weights::{DispatchInfo, PostDispatchInfo, Weight};
 
-pub use runtime::{
+pub use crate::{
 	AccountId, Balance, Balances, Call, Runtime, System, TransactionPayment, Treasury,
 };
 pub const ALICE: [u8; 32] = [1u8; 32];
