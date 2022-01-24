@@ -893,7 +893,7 @@ impl pallet_drop3::Config for Runtime {
 	type PoolId = u64;
 	type SetAdminOrigin = EnsureRootOrHalfCouncil;
 	type Currency = Balances;
-	type WeightInfo = (); // To be rerun with runtime benchmarks
+	type WeightInfo = weights::pallet_drop3::WeightInfo<Runtime>;
 	type SlashPercent = SlashPercent;
 	type MaximumNameLength = MaximumNameLength;
 }
@@ -904,7 +904,7 @@ impl pallet_extrinsic_filter::Config for Runtime {
 	type NormalModeFilter = NormalModeFilter;
 	type SafeModeFilter = SafeModeFilter;
 	type TestModeFilter = Everything;
-	type WeightInfo = (); // To be rerun with runtime benchmarks
+	type WeightInfo = weights::pallet_extrinsic_filter::WeightInfo<Runtime>;
 }
 
 parameter_types! {

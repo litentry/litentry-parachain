@@ -122,12 +122,15 @@ jobs:
         run: |
           ./scripts/generate-release-notes.sh ${{ env.CHAIN }} ${{ github.workspace }}/.github/release_notes.md ${{ env.DIFF_TAG }}
 
+      - name: set CHAIN_TITLE env
+        run: echo "CHAIN_TITLE=${CHAIN/lit/Lit}" >> $GITHUB_ENV
+
       - name: Create release draft
         id: create-release-draft
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ env.RELEASE_TAG }}
-          name: Litentry-parachain ${{ env.RELEASE_TAG }}
+          name: ${{ env.CHAIN_TITLE }}-parachain ${{ env.RELEASE_TAG }}
           body_path: ${{ github.workspace }}/.github/release_notes.md
           draft: true
           files: |

@@ -16,8 +16,8 @@ image="litentry/litentry-parachain:$TAG"
 
 docker pull "$image"
 
-docker run --rm "$image" build-spec --chain=generate-$CHAIN > node/res/chain_spec/$CHAIN-plain.json
-docker run --rm "$image" build-spec --chain=generate-$CHAIN --raw > node/res/chain_spec/$CHAIN.json
+docker run --rm "$image" build-spec --chain=generate-$CHAIN > node/res/chain_specs/$CHAIN-plain.json
+docker run --rm "$image" build-spec --chain=generate-$CHAIN --raw > node/res/chain_specs/$CHAIN.json
 
-echo "Done, please check node/res/chain_spec/"
-ls -l node/res/chain_spec/
+echo "Done, please check node/res/chain_specs/"
+ls -l node/res/chain_specs/
