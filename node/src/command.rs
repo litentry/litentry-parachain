@@ -40,6 +40,7 @@ use std::{io::Write, net::SocketAddr};
 trait IdentifyChain {
 	fn is_litentry(&self) -> bool;
 	fn is_litmus(&self) -> bool;
+	fn is_dev(&self) -> bool;
 }
 
 impl IdentifyChain for dyn sc_service::ChainSpec {
@@ -49,6 +50,9 @@ impl IdentifyChain for dyn sc_service::ChainSpec {
 	fn is_litmus(&self) -> bool {
 		self.id().starts_with("litmus")
 	}
+	fn is_dev(&self) -> bool {
+		self.id().ends_with("dev")
+	}
 }
 
 impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
@@ -57,6 +61,9 @@ impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
 	}
 	fn is_litmus(&self) -> bool {
 		<dyn sc_service::ChainSpec>::is_litmus(self)
+	}
+	fn is_dev(&self) -> bool {
+		<dyn sc_service::ChainSpec>::is_dev(self)
 	}
 }
 
@@ -315,6 +322,10 @@ pub fn run() -> Result<()> {
 			if cfg!(feature = "runtime-benchmarks") {
 				let runner = cli.create_runner(cmd)?;
 
+				if !runner.config().chain_spec.is_dev() {
+					return Err("Only dev chain should be used in benchmark".into())
+				}
+
 				if runner.config().chain_spec.is_litmus() {
 					runner
 						.sync_run(|config| cmd.run::<Block, LitmusParachainRuntimeExecutor>(config))
@@ -339,6 +350,10 @@ pub fn run() -> Result<()> {
 			let task_manager =
 				sc_service::TaskManager::new(runner.config().tokio_handle.clone(), *registry)
 					.map_err(|e| sc_cli::Error::Service(sc_service::Error::Prometheus(e)))?;
+
+			if !runner.config().chain_spec.is_dev() {
+				return Err("Only dev chain should be used in try-runtime".into())
+			}
 
 			if runner.config().chain_spec.is_litmus() {
 				runner.async_run(|config| {
