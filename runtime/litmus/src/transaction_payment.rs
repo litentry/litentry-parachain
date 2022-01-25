@@ -33,10 +33,7 @@ where
 	fn on_nonzero_unbalanced(amount: NegativeImbalance<R>) {
 		let _numeric_amount = amount.peek();
 		let author = <pallet_authorship::Pallet<R>>::author();
-		<pallet_balances::Pallet<R>>::resolve_creating(
-			&author,
-			amount,
-		);
+		<pallet_balances::Pallet<R>>::resolve_creating(&author,amount);
 	}
 }
 
