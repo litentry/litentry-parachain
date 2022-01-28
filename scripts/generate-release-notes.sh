@@ -53,7 +53,7 @@ TAB="$(printf '\t')"
 
 # use <CODE> to decorate around the stuff and then replace it with `
 # so that it's not executed as commands inside heredoc
-cat << EOF > "$1"
+cat << EOF > "$2"
 
 ## Client
 
@@ -103,7 +103,7 @@ if [ "$GENESIS_RELEASE" = "true" ]; then
     echo "genesis-wasm unequal"
     exit 1
   fi
-  cat << EOF >> "$1"
+  cat << EOF >> "$2"
 ## Genesis artefacts
 
 <CODEBLOCK>
@@ -116,11 +116,11 @@ fi
 
 # restore ``` in markdown doc
 # use -i.bak for compatibility for MacOS and Linux
-sed -i.bak 's/<CODEBLOCK>/```/g' "$1"
-rm -f "$1.bak"
+sed -i.bak 's/<CODEBLOCK>/```/g' "$2"
+rm -f "$2.bak"
 
 # if we have a diff-tag, list the changes inbetween
-DIFF_TAG="$2"
+DIFF_TAG="$3"
 
 if [ -z "$DIFF_TAG" ]; then
   echo "Nothing to compare"
@@ -129,7 +129,7 @@ elif [ "$DIFF_TAG" = "$RELEASE_TAG" ]; then
   echo "Skip compare to itself"
   exit 0
 else
-  cat << EOF >> "$1"
+  cat << EOF >> "$2"
 ## Changes
 
 Raw diff: [$DIFF_TAG...$RELEASE_TAG](https://github.com/litentry/litentry-parachain/compare/$DIFF_TAG...$RELEASE_TAG)
@@ -141,6 +141,6 @@ EOF
   git log --no-merges --abbrev-commit --pretty="format:%h|%s" $DIFF_TAG..$RELEASE_TAG | while read -r f; do
     commit=$(echo "$f" | cut -d'|' -f1)
     desc=$(echo "$f" | cut -d'|' -f2)
-    echo -e "- [\`$commit\`]($REPO/commit/$commit) $desc" >> "$1"
+    echo -e "- [\`$commit\`]($REPO/commit/$commit) $desc" >> "$2"
   done
 fi

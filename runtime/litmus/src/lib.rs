@@ -45,6 +45,9 @@ use sp_runtime::{
 mod transaction_payment;
 use transaction_payment::{DealWithFees, SlowAdjustingFeeUpdate};
 
+#[cfg(test)]
+mod tests;
+
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -120,7 +123,7 @@ pub type Executive = frame_executive::Executive<
 	Block,
 	frame_system::ChainContext<Runtime>,
 	Runtime,
-	AllPallets,
+	AllPalletsWithSystem,
 >;
 
 impl_opaque_keys! {

@@ -12,5 +12,4 @@ members = [
     'pallets/parachain-staking',
     'runtime/litentry',
     'runtime/litmus',
-    'runtime/integration-tests',
 ]
