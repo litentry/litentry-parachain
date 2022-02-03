@@ -18,8 +18,9 @@ use super::*;
 use cumulus_primitives_core::ParaId;
 use litmus_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, CollatorSelectionConfig, CouncilMembershipConfig,
-	GenesisConfig, ParachainInfoConfig, SessionConfig, SudoConfig, SystemConfig,
-	TechnicalCommitteeMembershipConfig, UNIT, WASM_BINARY, PnsOriginConfig, PnsResolversConfig, PnsPriceOracleConfig, PnsRedeemCodeConfig, PnsRegistrarConfig, PnsRegistryConfig, PnsNftConfig,
+	GenesisConfig, ParachainInfoConfig, PnsNftConfig, PnsOriginConfig, PnsPriceOracleConfig,
+	PnsRedeemCodeConfig, PnsRegistrarConfig, PnsRegistryConfig, PnsResolversConfig, SessionConfig,
+	SudoConfig, SystemConfig, TechnicalCommitteeMembershipConfig, UNIT, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
@@ -262,7 +263,7 @@ fn generate_genesis(
 				10000, 10000, 10000, 10000, 7000, 7000, 7000, 4000, 4000, 4000, 3000, 3000, 3000,
 				2000, 2000, 2000, 1000, 1000, 1000, 1000,
 			],
-			init_rate: 1999999
+			init_rate: 1999999,
 		},
 		pns_resolvers: PnsResolversConfig { accounts: vec![], texts: vec![] },
 		pns_origin: PnsOriginConfig {

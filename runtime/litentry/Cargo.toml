@@ -188,6 +188,8 @@ runtime-benchmarks = [
 	"pallet-bridge-transfer/runtime-benchmarks",
 	"pallet-drop3/runtime-benchmarks",
 	"pallet-extrinsic-filter/runtime-benchmarks",
+	"pns-registrar/runtime-benchmarks",
+	"pns-resolvers/runtime-benchmarks",
 ]
 
 try-runtime = [
@@ -210,4 +212,5 @@ try-runtime = [
 	"pallet-treasury/try-runtime",
 	"pallet-utility/try-runtime",
 	"pallet-vesting/try-runtime",
+	"pns-registrar/try-runtime",
 ]

@@ -247,7 +247,6 @@ fn generate_genesis(
 			)],
 		},
 		pns_registry: PnsRegistryConfig {
-			origin: vec![],
 			official: Some(get_account_id_from_seed::<sr25519::Public>("Alice")),
 			..Default::default()
 		},
@@ -262,7 +261,7 @@ fn generate_genesis(
 				10000, 10000, 10000, 10000, 7000, 7000, 7000, 4000, 4000, 4000, 3000, 3000, 3000,
 				2000, 2000, 2000, 1000, 1000, 1000, 1000,
 			],
-			init_rate: 1999999
+			init_rate: 1999999,
 		},
 		pns_resolvers: PnsResolversConfig { accounts: vec![], texts: vec![] },
 		pns_origin: PnsOriginConfig {

@@ -4,7 +4,7 @@ use frame_support::dispatch::Weight;
 
 pub struct WeightInfo;
 
-impl pns_resolvers::WeightInfo for WeightInfo {
+impl pns_resolvers::resolvers::WeightInfo for WeightInfo {
 	fn set_text(_content_len: usize) -> Weight {
 		10_000
 	}

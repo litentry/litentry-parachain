@@ -1008,8 +1008,6 @@ impl pns_registrar::redeem_code::Config for Runtime {
 
 	type Registrar = PnsRegistrar;
 
-	type BaseNode = BaseNode;
-
 	type Moment = Moment;
 
 	type Public = <Signature as sp_runtime::traits::Verify>::Signer;
@@ -1027,7 +1025,7 @@ impl pns_registrar::origin::Config for Runtime {
 	type WeightInfo = weights::pns_registrar::WeightInfo;
 }
 
-impl pns_resolvers::Config for Runtime {
+impl pns_resolvers::resolvers::Config for Runtime {
 	type Event = Event;
 
 	type WeightInfo = weights::pns_resolvers::WeightInfo;
@@ -1041,7 +1039,7 @@ impl pns_resolvers::Config for Runtime {
 
 pub struct LocalChecker;
 
-impl pns_resolvers::traits::RegistryChecker for LocalChecker {
+impl pns_resolvers::resolvers::RegistryChecker for LocalChecker {
 	type Hash = Hash;
 
 	type AccountId = AccountId;
@@ -1112,7 +1110,7 @@ construct_runtime! {
 		PnsRedeemCode: pns_registrar::redeem_code = 73,
 		PnsPriceOracle: pns_registrar::price_oracle = 74,
 		PnsOrigin: pns_registrar::origin = 75,
-		PnsResolvers: pns_resolvers = 79,
+		PnsResolvers: pns_resolvers::resolvers = 79,
 
 		// TMP
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 255,
@@ -1293,6 +1291,12 @@ impl_runtime_apis! {
 			list_benchmark!(list, extra, pallet_multisig, Multisig);
 			list_benchmark!(list, extra, pallet_drop3, Drop3);
 			list_benchmark!(list, extra, pallet_extrinsic_filter, ExtrinsicFilter);
+			list_benchmark!(list, extra, pns_registrar::price_oracle,PnsPriceOracle);
+			list_benchmark!(list, extra, pns_registrar::registrar,PnsRegistrar);
+			list_benchmark!(list, extra, pns_registrar::registry,PnsRegistry);
+			list_benchmark!(list, extra, pns_registrar::redeem_code,PnsRedeemCode);
+			list_benchmark!(list, extra, pns_registrar::origin,PnsOrigin);
+			list_benchmark!(list, extra, pns_resolvers::resolvers,PnsResolvers);
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 			(list, storage_info)
@@ -1336,6 +1340,12 @@ impl_runtime_apis! {
 			add_benchmark!(params, batches, pallet_multisig, Multisig);
 			add_benchmark!(params, batches, pallet_drop3, Drop3);
 			add_benchmark!(params, batches, pallet_extrinsic_filter, ExtrinsicFilter);
+			add_benchmark!(params, batches, pns_registrar::price_oracle,PnsPriceOracle);
+			add_benchmark!(params, batches, pns_registrar::registrar,PnsRegistrar);
+			add_benchmark!(params, batches, pns_registrar::registry,PnsRegistry);
+			add_benchmark!(params, batches, pns_registrar::redeem_code,PnsRedeemCode);
+			add_benchmark!(params, batches, pns_registrar::origin,PnsOrigin);
+			add_benchmark!(params, batches, pns_resolvers::resolvers,PnsResolvers);
 
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)

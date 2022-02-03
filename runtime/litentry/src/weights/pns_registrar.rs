@@ -6,21 +6,29 @@ use pns_registrar::{price_oracle, redeem_code, registrar, registry};
 pub struct WeightInfo;
 
 impl price_oracle::WeightInfo for WeightInfo {
-	fn set_price() -> Weight {
+	fn set_exchange_rate() -> Weight {
+		10_000
+	}
+
+	fn set_base_price(_len: u32) -> Weight {
+		10_000
+	}
+
+	fn set_rent_price(_len: u32) -> Weight {
 		10_000
 	}
 }
 
 impl registrar::WeightInfo for WeightInfo {
-	fn mint_subname() -> Weight {
+	fn mint_subname(_len: u32) -> Weight {
 		10_000
 	}
 
-	fn register() -> Weight {
+	fn register(_len: u32) -> Weight {
 		10_000
 	}
 
-	fn renew() -> Weight {
+	fn renew(_len: u32) -> Weight {
 		10_000
 	}
 
@@ -42,11 +50,11 @@ impl registrar::WeightInfo for WeightInfo {
 }
 
 impl registry::WeightInfo for WeightInfo {
-	fn approve() -> Weight {
+	fn approve(_approve: bool) -> Weight {
 		10_000
 	}
 
-	fn approval_for_all() -> Weight {
+	fn approval_for_all(_approve: bool) -> Weight {
 		10_000
 	}
 
@@ -68,17 +76,17 @@ impl redeem_code::WeightInfo for WeightInfo {
 		10_000
 	}
 
-	fn name_redeem() -> Weight {
+	fn name_redeem(_len: u32) -> Weight {
 		10_000
 	}
 
-	fn name_redeem_any() -> Weight {
+	fn name_redeem_any(_len: u32) -> Weight {
 		10_000
 	}
 }
 
 impl pns_registrar::origin::WeightInfo for WeightInfo {
-	fn set_origin() -> Weight {
+	fn set_origin(_approve: bool) -> Weight {
 		10_000
 	}
 }
