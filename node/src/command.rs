@@ -32,7 +32,10 @@ use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
 	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
 };
-use sc_service::config::{BasePath, PrometheusConfig};
+use sc_service::{
+	config::{BasePath, PrometheusConfig},
+	TaskManager,
+};
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::Block as BlockT;
 use std::{io::Write, net::SocketAddr};
@@ -342,36 +345,34 @@ pub fn run() -> Result<()> {
 				You can enable it with `--features runtime-benchmarks`."
 					.into())
 			},
-		#[cfg(feature = "try-runtime")]
 		Some(Subcommand::TryRuntime(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			// we don't need any of the components of new_partial, just a runtime, or a task
-			// manager to do `async_run`.
-			let registry = &runner.config().prometheus_config.as_ref().map(|cfg| &cfg.registry);
-			let task_manager =
-				sc_service::TaskManager::new(runner.config().tokio_handle.clone(), *registry)
-					.map_err(|e| sc_cli::Error::Service(sc_service::Error::Prometheus(e)))?;
+			if cfg!(feature = "try-runtime") {
+				let runner = cli.create_runner(cmd)?;
 
-			if !runner.config().chain_spec.is_dev() {
-				return Err("Only dev chain should be used in try-runtime".into())
-			}
+				// grab the task manager.
+				let registry = &runner.config().prometheus_config.as_ref().map(|cfg| &cfg.registry);
+				let task_manager =
+					TaskManager::new(runner.config().tokio_handle.clone(), *registry)
+						.map_err(|e| format!("Error: {:?}", e))?;
 
-			if runner.config().chain_spec.is_litmus() {
-				runner.async_run(|config| {
-					Ok((cmd.run::<Block, LitmusParachainRuntimeExecutor>(config), task_manager))
-				})
-			} else if runner.config().chain_spec.is_litentry() {
-				runner.async_run(|config| {
-					Ok((cmd.run::<Block, LitentryParachainRuntimeExecutor>(config), task_manager))
-				})
+				if runner.config().chain_spec.is_litmus() {
+					runner.async_run(|config| {
+						Ok((cmd.run::<Block, LitmusParachainRuntimeExecutor>(config), task_manager))
+					})
+				} else if runner.config().chain_spec.is_litentry() {
+					runner.async_run(|config| {
+						Ok((
+							cmd.run::<Block, LitentryParachainRuntimeExecutor>(config),
+							task_manager,
+						))
+					})
+				} else {
+					Err("Chain doesn't support benchmarking".into())
+				}
 			} else {
-				Err("Chain doesn't support try-runtime".into())
+				Err("Try-runtime must be enabled by `--features try-runtime`.".into())
 			}
 		},
-		#[cfg(not(feature = "try-runtime"))]
-		Some(Subcommand::TryRuntime) => Err("TryRuntime wasn't enabled when building the node. \
-				You can enable it with `--features try-runtime`."
-			.into()),
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 
@@ -476,11 +477,24 @@ impl CliConfiguration<Self> for RelayChainCli {
 		self.base.base.rpc_ws(default_listen_port)
 	}
 
-	fn prometheus_config(&self, default_listen_port: u16) -> Result<Option<PrometheusConfig>> {
-		self.base.base.prometheus_config(default_listen_port)
+	fn prometheus_config(
+		&self,
+		default_listen_port: u16,
+		chain_spec: &Box<dyn ChainSpec>,
+	) -> Result<Option<PrometheusConfig>> {
+		self.base.base.prometheus_config(default_listen_port, chain_spec)
 	}
 
-	fn init<C: SubstrateCli>(&self) -> Result<()> {
+	fn init<F>(
+		&self,
+		_support_url: &String,
+		_impl_version: &String,
+		_logger_hook: F,
+		_config: &sc_service::Configuration,
+	) -> Result<()>
+	where
+		F: FnOnce(&mut sc_cli::LoggerBuilder, &sc_service::Configuration),
+	{
 		unreachable!("PolkadotCli is never initialized; qed");
 	}
 

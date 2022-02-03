@@ -91,6 +91,7 @@ pub fn get_chain_spec_dev() -> ChainSpec {
 		Vec::new(),
 		None,
 		Some("litmus"),
+		None,
 		default_parachain_properties(),
 		Extensions { relay_chain: "rococo-local".into(), para_id: DEFAULT_PARA_ID },
 	)
@@ -176,6 +177,7 @@ fn get_chain_spec_from_genesis_info(
 			.expect("Invalid telemetry URL; qed."),
 		),
 		Some("litmus"),
+		None,
 		default_parachain_properties(),
 		Extensions { relay_chain: relay_chain_name, para_id: para_id.into() },
 	)
@@ -195,7 +197,7 @@ fn generate_genesis(
 			code: WASM_BINARY.expect("WASM binary was not build, please build it!").to_vec(),
 		},
 		balances: BalancesConfig { balances: endowed_accounts },
-		sudo: SudoConfig { key: root_key },
+		sudo: SudoConfig { key: Some(root_key) },
 		parachain_info: ParachainInfoConfig { parachain_id: id },
 		collator_selection: CollatorSelectionConfig {
 			invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),

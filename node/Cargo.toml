@@ -70,6 +70,8 @@ cumulus-client-service = { git = "https://github.com/paritytech/cumulus", branch
 cumulus-client-network = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.16" }
 cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.16" }
 cumulus-primitives-parachain-inherent = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.16" }
+cumulus-relay-chain-interface = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.16" }
+cumulus-relay-chain-local = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.16" }
 
 # Polkadot dependencies
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.16" }
@@ -82,7 +84,7 @@ frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch =
 frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 
 # TryRuntime
-try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16", optional = true }
+try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.16" }
 
 # Local dependencies
 litentry-parachain-runtime = { path = "../runtime/litentry" }
@@ -99,7 +101,6 @@ runtime-benchmarks = [
 	"litmus-parachain-runtime/runtime-benchmarks",
 ]
 try-runtime = [
-	"try-runtime-cli",
 	"litentry-parachain-runtime/try-runtime",
 	"litmus-parachain-runtime/try-runtime",
 ]
