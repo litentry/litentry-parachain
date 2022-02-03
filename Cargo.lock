@@ -4055,6 +4055,7 @@ dependencies = [
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
  "try-runtime-cli",
+ "xcm",
 ]
 
 [[package]]
