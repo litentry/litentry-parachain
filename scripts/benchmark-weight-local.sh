@@ -27,7 +27,7 @@ echo "running $1-$3 benchmark for $PALLET locally ..."
 
 case "$3" in
     runtime)
-        OUTPUT="--output=./runtime/$1/src/weights/$PALLET.rs"
+        OUTPUT="--output=./runtime/$1/src/weights/${PALLET//:://}.rs"
         TEMPLATE=
         CHAIN="--chain=generate-$1"
         ;;

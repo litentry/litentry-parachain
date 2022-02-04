@@ -930,7 +930,7 @@ impl pns_registrar::nft::Config for Runtime {
 impl pns_registrar::registry::Config for Runtime {
 	type Event = Event;
 
-	type WeightInfo = weights::pns_registrar::WeightInfo;
+	type WeightInfo = weights::pns_registrar::registry::WeightInfo<Runtime>;
 
 	type Registrar = PnsRegistrar;
 
@@ -963,7 +963,7 @@ impl pns_registrar::registrar::Config for Runtime {
 
 	type BaseNode = BaseNode;
 
-	type WeightInfo = weights::pns_registrar::WeightInfo;
+	type WeightInfo = weights::pns_registrar::registrar::WeightInfo<Runtime>;
 
 	type MinRegistrationDuration = MinRegistrationDuration;
 
@@ -990,7 +990,7 @@ impl pns_registrar::price_oracle::Config for Runtime {
 
 	type MaximumLength = MaximumLength;
 
-	type WeightInfo = weights::pns_registrar::WeightInfo;
+	type WeightInfo = weights::pns_registrar::price_oracle::WeightInfo<Runtime>;
 
 	type Moment = Moment;
 
@@ -1004,7 +1004,7 @@ impl pns_registrar::price_oracle::Config for Runtime {
 impl pns_registrar::redeem_code::Config for Runtime {
 	type Event = Event;
 
-	type WeightInfo = weights::pns_registrar::WeightInfo;
+	type WeightInfo = weights::pns_registrar::redeem_code::WeightInfo<Runtime>;
 
 	type Registrar = PnsRegistrar;
 
@@ -1022,13 +1022,13 @@ impl pns_registrar::redeem_code::Config for Runtime {
 impl pns_registrar::origin::Config for Runtime {
 	type Event = Event;
 
-	type WeightInfo = weights::pns_registrar::WeightInfo;
+	type WeightInfo = weights::pns_registrar::origin::WeightInfo<Runtime>;
 }
 
 impl pns_resolvers::resolvers::Config for Runtime {
 	type Event = Event;
 
-	type WeightInfo = weights::pns_resolvers::WeightInfo;
+	type WeightInfo = weights::pns_resolvers::resolvers::WeightInfo<Runtime>;
 
 	type AccountIndex = u32;
 

@@ -62,5 +62,5 @@ for p in $PALLETS; do
       --steps=20 \
       --repeat=50 \
       --header=./LICENSE_HEADER \
-      --output=./runtime/$1/src/weights/"$p".rs
+      --output=./runtime/$1/src/weights/"${p//:://}".rs
 done

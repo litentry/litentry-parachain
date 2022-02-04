@@ -253,15 +253,9 @@ fn generate_genesis(
 		pns_registrar: PnsRegistrarConfig { infos: vec![], ..Default::default() },
 		pns_redeem_code: PnsRedeemCodeConfig { redeems: None },
 		pns_price_oracle: PnsPriceOracleConfig {
-			base_prices: vec![
-				10000, 10000, 10000, 10000, 7000, 7000, 7000, 4000, 4000, 4000, 3000, 3000, 3000,
-				2000, 2000, 2000, 1000, 1000, 1000, 1000,
-			],
-			rent_prices: vec![
-				10000, 10000, 10000, 10000, 7000, 7000, 7000, 4000, 4000, 4000, 3000, 3000, 3000,
-				2000, 2000, 2000, 1000, 1000, 1000, 1000,
-			],
-			init_rate: 1999999,
+			base_prices: vec![0; 20],
+			rent_prices: vec![0; 20],
+			init_rate: 0,
 		},
 		pns_resolvers: PnsResolversConfig { accounts: vec![], texts: vec![] },
 		pns_origin: PnsOriginConfig {
