@@ -11,7 +11,6 @@ relaychain:
   flags:
     - --rpc-methods=unsafe
     - --execution=wasm
-    - --no-beefy
   nodes:
     - name: alice
     - name: bob
@@ -29,7 +28,6 @@ parachains:
     - --execution=wasm
   relaychainFlags:
     - --execution=wasm
-    - --no-beefy
   env:
     RUST_LOG: sc_basic_authorship=trace,cumulus-consensus=trace,cumulus-collator=trace,collator_protocol=trace,collation_generation=trace,aura=debug
   volumePath: /data
