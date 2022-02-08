@@ -29,7 +29,7 @@ case "$3" in
     runtime)
         OUTPUT="--output=./runtime/$1/src/weights/${PALLET//:://}.rs"
         TEMPLATE=
-        CHAIN="--chain=generate-$1"
+        CHAIN="--chain=$1-dev"
         ;;
     pallet)
         OUTPUT="$(cargo pkgid -q $2 | sed 's/.*litentry-parachain/\./;s/#.*/\/src\/weights.rs/')"
