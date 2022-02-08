@@ -124,7 +124,12 @@ pub type Executive = frame_executive::Executive<
 	Block,
 	frame_system::ChainContext<Runtime>,
 	Runtime,
-	// TODO: to be verified
+	// see https://github.com/paritytech/substrate/pull/10043
+	//
+	// With this type the hooks of pallets will be executed
+	// in the order that they are declared in `constrcut_runtime!`
+	// it was reverse order before.
+	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
 >;
 
@@ -949,7 +954,17 @@ construct_runtime! {
 		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 31,
 
 		// Collator support
-		// The order of these 4 are important and shall not change.
+		// About the order of these 5 pallets, the comment in cumulus seems to be outdated.
+		//
+		// The main thing is Authorship looks for the block author (T::FindAuthor::find_author)
+		// in its `on_initialize` hook -> Session::find_author, where Session::validators() is enquired.
+		// Meanwhile Session could modify the validators storage in its `on_initialize` hook. If Session
+		// comes after Authorship, the changes on validators() will only take effect in the next block.
+		//
+		// I assume it's the desired behavior though or it doesn't really matter.
+		//
+		// also see the comment above `AllPalletsWithSystem` and
+		// https://github.com/litentry/litentry-parachain/issues/336
 		Authorship: pallet_authorship::{Pallet, Call, Storage} = 40,
 		CollatorSelection: pallet_collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>} = 41,
 		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 42,
