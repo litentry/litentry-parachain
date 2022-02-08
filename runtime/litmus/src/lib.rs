@@ -124,6 +124,7 @@ pub type Executive = frame_executive::Executive<
 	Block,
 	frame_system::ChainContext<Runtime>,
 	Runtime,
+	// TODO: to be verified
 	AllPalletsWithSystem,
 >;
 
@@ -152,7 +153,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_version: 9030,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 0,
+	transaction_version: 1,
 	state_version: 0,
 };
 
@@ -417,7 +418,7 @@ impl pallet_scheduler::Config for Runtime {
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
 	type WeightInfo = (); // TODO: to be rerun - weights::pallet_scheduler::WeightInfo<Runtime>;
 	type OriginPrivilegeCmp = frame_support::traits::EqualPrivilegeOnly;
-	type PreimageProvider = ();
+	type PreimageProvider = (); // TODO: maybe use pallet_preimage
 	type NoPreimagePostponement = ();
 }
 
