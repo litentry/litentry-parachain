@@ -16,7 +16,7 @@
 
 #![allow(clippy::unnecessary_cast)]
 
-// pub mod frame_system; // commented out, see lib.rs where `SystemWeightInfo = ()`
+pub mod frame_system;
 pub mod pallet_balances;
 pub mod pallet_collator_selection;
 pub mod pallet_collective;
