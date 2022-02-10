@@ -41,8 +41,8 @@ where
 
 		weight += migration::Initialize::<T>::initial_registry(official, root_domain);
 
-		let base_prices = sp_std::vec![1.into(); 20];
-		let rent_prices = sp_std::vec![1.into(); 20];
+		let base_prices = [1.into(); 11];
+		let rent_prices = [1.into(); 11];
 		let init_rate = 1_000.into();
 
 		weight +=

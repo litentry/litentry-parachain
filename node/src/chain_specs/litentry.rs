@@ -259,8 +259,8 @@ fn generate_genesis(
 		pns_registrar: PnsRegistrarConfig { infos: vec![], ..Default::default() },
 		pns_redeem_code: PnsRedeemCodeConfig { redeems: None },
 		pns_price_oracle: PnsPriceOracleConfig {
-			base_prices: vec![0; 20],
-			rent_prices: vec![0; 20],
+			base_prices: [0; 11],
+			rent_prices: [0; 11],
 			init_rate: 0,
 		},
 		pns_resolvers: PnsResolversConfig { accounts: vec![], texts: vec![] },

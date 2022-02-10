@@ -1190,6 +1190,12 @@ mod benches {
 		[pallet_multisig, Multisig]
 		[pallet_drop3, Drop3]
 		[pallet_extrinsic_filter, ExtrinsicFilter]
+		[pns_registrar::price_oracle,PnsPriceOracle]
+		[pns_registrar::registrar,PnsRegistrar]
+		[pns_registrar::registry,PnsRegistry]
+		[pns_registrar::redeem_code,PnsRedeemCode]
+		[pns_registrar::origin,PnsOrigin]
+		[pns_resolvers::resolvers,PnsResolvers]
 	);
 }
 

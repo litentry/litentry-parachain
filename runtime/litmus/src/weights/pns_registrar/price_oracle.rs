@@ -54,19 +54,19 @@ impl<T: frame_system::Config> pns_registrar::price_oracle::WeightInfo for Weight
 	}
 	// Storage: PnsOrigin Origins (r:2 w:0)
 	// Storage: PnsPriceOracle BasePrice (r:0 w:1)
-	fn set_base_price(l: u32, ) -> Weight {
+	fn set_base_price( ) -> Weight {
 		(14_456_000 as Weight)
 			// Standard Error: 0
-			.saturating_add((15_000 as Weight).saturating_mul(l as Weight))
+			.saturating_add((15_000 as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: PnsOrigin Origins (r:2 w:0)
 	// Storage: PnsPriceOracle RentPrice (r:0 w:1)
-	fn set_rent_price(l: u32, ) -> Weight {
+	fn set_rent_price( ) -> Weight {
 		(14_622_000 as Weight)
 			// Standard Error: 0
-			.saturating_add((11_000 as Weight).saturating_mul(l as Weight))
+			.saturating_add((11_000 as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
