@@ -82,7 +82,7 @@ fn test_payment() {
 			treasury_balance = Balances::free_balance(Treasury::account_id());
 			assert_ok!(
 				<pallet_transaction_payment::ChargeTransactionPayment::<Runtime>>::post_dispatch(
-					pre,
+					Some(pre),
 					&info_from_weight(info),
 					// so acutal weight is 35 + 5 + 10 = 50
 					&post_info_from_weight(35),
