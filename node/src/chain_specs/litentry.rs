@@ -19,8 +19,9 @@ use cumulus_primitives_core::ParaId;
 use litentry_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, CollatorSelectionConfig, CouncilMembershipConfig,
 	GenesisConfig, ParachainInfoConfig, PnsNftConfig, PnsOriginConfig, PnsPriceOracleConfig,
-	PnsRedeemCodeConfig, PnsRegistrarConfig, PnsRegistryConfig, PnsResolversConfig, SessionConfig,
-	SudoConfig, SystemConfig, TechnicalCommitteeMembershipConfig, UNIT, WASM_BINARY,
+	PnsRedeemCodeConfig, PnsRegistrarConfig, PnsRegistryConfig, PnsResolversConfig,
+	PolkadotXcmConfig, SessionConfig, SudoConfig, SystemConfig, TechnicalCommitteeMembershipConfig,
+	UNIT, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
@@ -31,6 +32,9 @@ const DEFAULT_PARA_ID: u32 = 2013;
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
+
+/// The default XCM version to set in genesis config.
+const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
 
 /// Get default parachain properties for Litentry which will be filled into chain spec
 fn default_parachain_properties() -> Option<Properties> {
@@ -92,6 +96,7 @@ pub fn get_chain_spec_dev() -> ChainSpec {
 		Vec::new(),
 		None,
 		Some("litentry"),
+		None,
 		default_parachain_properties(),
 		Extensions { relay_chain: "rococo-local".into(), para_id: DEFAULT_PARA_ID },
 	)
@@ -176,6 +181,7 @@ fn get_chain_spec_from_genesis_info(
 			.expect("Invalid telemetry URL; qed."),
 		),
 		Some("litentry"),
+		None,
 		default_parachain_properties(),
 		Extensions { relay_chain: relay_chain_name, para_id: para_id.into() },
 	)
@@ -195,7 +201,7 @@ fn generate_genesis(
 			code: WASM_BINARY.expect("WASM binary was not build, please build it!").to_vec(),
 		},
 		balances: BalancesConfig { balances: endowed_accounts },
-		sudo: SudoConfig { key: root_key },
+		sudo: SudoConfig { key: Some(root_key) },
 		parachain_info: ParachainInfoConfig { parachain_id: id },
 		collator_selection: CollatorSelectionConfig {
 			invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
@@ -261,5 +267,6 @@ fn generate_genesis(
 		pns_origin: PnsOriginConfig {
 			origins: vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
 		},
+		polkadot_xcm: PolkadotXcmConfig { safe_xcm_version: Some(SAFE_XCM_VERSION) },
 	}
 }
