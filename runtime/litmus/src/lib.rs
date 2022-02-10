@@ -24,6 +24,7 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 pub mod constants;
+pub mod migration;
 pub mod weights;
 pub use constants::currency::*;
 
@@ -124,6 +125,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
+	migration::PnsPalletsInitialize<Runtime>,
 >;
 
 impl_opaque_keys! {
@@ -998,8 +1000,6 @@ impl pns_registrar::price_oracle::Config for Runtime {
 	type Moment = Moment;
 
 	type ExchangeRate = PnsPriceOracle;
-
-	type RateScale = RateScale;
 
 	type ManagerOrigin = PnsOrigin;
 }
