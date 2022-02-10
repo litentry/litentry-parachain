@@ -35,6 +35,7 @@ chmod a+x litentry-collator
 # poopulate PALLETS
 PALLETS=
 case "$3" in
+  '*')
     PALLETS=$(grep -F '[pallet_' runtime/$1/src/lib.rs | sed 's/.*\[//;s/,.*//' | paste -s -d' ' -)
     PALLETS="frame_system $PALLETS"
     ;;
