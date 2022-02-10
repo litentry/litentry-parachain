@@ -948,7 +948,7 @@ parameter_types! {
 	pub const GracePeriod: Moment = 90 * 24 * 60 * 60;
 	pub const MinRegistrationDuration: Moment = 28 * 24 * 60 * 60;
 	pub const DefaultCapacity: u32 = 20;
-	pub const BaseNode: Hash = sp_core::H256([206, 21, 156, 243, 67, 128, 117, 125, 25, 50, 168, 228, 167, 78, 133, 232, 89, 87, 176, 167, 165, 45, 156, 86, 108, 10, 60, 141, 97, 51, 208, 247]);
+	pub const BaseNode: Hash = sp_core::H256([123, 105, 22, 230, 57, 187, 28, 77, 63, 247, 10, 172, 24, 79, 76, 242, 84, 252, 87, 67, 198, 150, 20, 129, 121, 32, 0, 83, 198, 248, 3, 13]);
 }
 
 pub type Moment = u64;
@@ -980,12 +980,13 @@ impl pns_registrar::registrar::Config for Runtime {
 
 	type ManagerOrigin = PnsOrigin;
 
+	type IsOpen = PnsOrigin;
+
 	type Official = PnsRegistry;
 }
 
 parameter_types! {
 	pub const MaximumLength: u8 = 10;
-	pub const RateScale: Balance = 100_000;
 }
 
 impl pns_registrar::price_oracle::Config for Runtime {

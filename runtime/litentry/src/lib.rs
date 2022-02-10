@@ -971,12 +971,13 @@ impl pns_registrar::registrar::Config for Runtime {
 
 	type ManagerOrigin = PnsOrigin;
 
+	type IsOpen = PnsOrigin;
+
 	type Official = PnsRegistry;
 }
 
 parameter_types! {
 	pub const MaximumLength: u8 = 10;
-	pub const RateScale: Balance = 100_000;
 }
 
 impl pns_registrar::price_oracle::Config for Runtime {
