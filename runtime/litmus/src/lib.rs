@@ -251,17 +251,7 @@ impl frame_system::Config for Runtime {
 	/// The basic call filter to use in dispatchable.
 	type BaseCallFilter = ExtrinsicFilter;
 	/// Weight information for the extrinsics of this pallet.
-	///
-	/// TODO:
-	/// use () for polkadot-v0.9.13 version as the generated frame_system weigts
-	/// breaks compilation: missing trait implementation `set_changes_trie_config`.
-	/// It looks like an upstream issue.
-	///
-	/// our runtime/src/weights/frame_system.rs is intentionally not updated.
-	///
-	/// Also note the statemine code:
-	/// https://github.com/paritytech/cumulus/blob/master/polkadot-parachains/statemine/src/lib.rs#L152
-	type SystemWeightInfo = ();
+	type SystemWeightInfo = weights::frame_system::WeightInfo<Runtime>;
 	/// Block & extrinsics weights: base values and limits.
 	type BlockWeights = RuntimeBlockWeights;
 	/// The maximum length of a block (in bytes).
@@ -393,7 +383,7 @@ impl pallet_timestamp::Config for Runtime {
 	type Moment = u64;
 	type OnTimestampSet = ();
 	type MinimumPeriod = MinimumPeriod;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_timestamp::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -421,9 +411,11 @@ impl pallet_scheduler::Config for Runtime {
 	type MaximumWeight = MaximumSchedulerWeight;
 	type ScheduleOrigin = EnsureRoot<AccountId>;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
-	type WeightInfo = (); // TODO: to be rerun - weights::pallet_scheduler::WeightInfo<Runtime>;
+	// TODO: we might need non-empty PreimageProvider (see below) to run the benchmark,
+	// otherwise I get: panicked at 'called `Result::unwrap()` on an `Err` value: ()'
+	type WeightInfo = ();
 	type OriginPrivilegeCmp = frame_support::traits::EqualPrivilegeOnly;
-	type PreimageProvider = (); // TODO: maybe use pallet_preimage
+	type PreimageProvider = ();
 	type NoPreimagePostponement = ();
 }
 
@@ -1022,13 +1014,13 @@ extern crate frame_benchmarking;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benches {
+	// TODO: pallet_scheduler
 	define_benchmarks!(
 		[frame_system, SystemBench::<Runtime>]
 		[pallet_balances, Balances]
 		[pallet_timestamp, Timestamp]
 		[pallet_collator_selection, CollatorSelection]
 		[pallet_utility, Utility]
-		[pallet_scheduler, Scheduler]
 		[pallet_treasury, Treasury]
 		[pallet_democracy, Democracy]
 		[pallet_collective, Council]

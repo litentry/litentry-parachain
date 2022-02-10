@@ -35,13 +35,23 @@ chmod a+x litentry-collator
 # poopulate PALLETS
 PALLETS=
 case "$3" in
-  '*')  PALLETS=$(grep add_benchmark! runtime/$1/src/lib.rs | tr ',' ' ' | awk '{print $3}' | paste -s -d' ' -) ;;
-  *)    PALLETS=$(echo "$3" | tr ',' ' ') ;;
+  '*')
+    PALLETS=$(grep -F '[pallet_' runtime/$1/src/lib.rs | sed 's/.*\[//;s/,.*//' | paste -s -d' ' -)
+    PALLETS="frame_system $PALLETS"
+    ;;
+  *)
+    PALLETS=$(echo "$3" | tr ',' ' ')
+    ;;
 esac
 PALLETS=${PALLETS//-/_}
 
 echo "Pallets:"
 echo "$PALLETS"
+
+if [ -z "$PALLETS" ]; then
+  echo "no pallets found"
+  exit 1
+fi
 
 for p in $PALLETS; do
   echo "benchmarking $p ..."
