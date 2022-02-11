@@ -16,7 +16,7 @@ where
 	>>::Balance: From<u32>,
 {
 	fn on_runtime_upgrade() -> Weight {
-		let mut weight = 5_000;
+		let mut weight = 500_000;
 
 		let managers = sp_std::vec![
 			T::AccountId::from(crate::AccountId::new([
