@@ -248,7 +248,7 @@ fn generate_genesis(
 					vec![3, 2, 1],
 					Default::default(),
 					sp_core::convert_hash::<sp_core::H256, [u8; 32]>(
-						&sp_core::hashing::keccak_256("dot".as_bytes()),
+						&sp_core::hashing::keccak_256("ksm".as_bytes()),
 					),
 				)],
 			)],
