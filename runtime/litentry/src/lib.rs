@@ -423,9 +423,11 @@ impl pallet_scheduler::Config for Runtime {
 	type MaximumWeight = MaximumSchedulerWeight;
 	type ScheduleOrigin = EnsureRoot<AccountId>;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
-	type WeightInfo = (); // TODO: to be rerun - weights::pallet_scheduler::WeightInfo<Runtime>;
+	// TODO: we might need non-empty PreimageProvider (see below) to run the benchmark,
+	// otherwise I get: panicked at 'called `Result::unwrap()` on an `Err` value: ()'
+	type WeightInfo = ();
 	type OriginPrivilegeCmp = frame_support::traits::EqualPrivilegeOnly;
-	type PreimageProvider = (); // TODO: maybe use pallet_preimage
+	type PreimageProvider = ();
 	type NoPreimagePostponement = ();
 }
 
@@ -1175,13 +1177,13 @@ extern crate frame_benchmarking;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benches {
+	// TODO: pallet_scheduler
 	define_benchmarks!(
 		[frame_system, SystemBench::<Runtime>]
 		[pallet_balances, Balances]
 		[pallet_timestamp, Timestamp]
 		[pallet_collator_selection, CollatorSelection]
 		[pallet_utility, Utility]
-		[pallet_scheduler, Scheduler]
 		[pallet_treasury, Treasury]
 		[pallet_democracy, Democracy]
 		[pallet_collective, Council]
