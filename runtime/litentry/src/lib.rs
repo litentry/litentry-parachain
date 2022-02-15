@@ -991,16 +991,10 @@ impl pns_registrar::registrar::Config for Runtime {
 	type Official = PnsRegistry;
 }
 
-parameter_types! {
-	pub const MaximumLength: u8 = 10;
-}
-
 impl pns_registrar::price_oracle::Config for Runtime {
 	type Event = Event;
 
 	type Currency = Balances;
-
-	type MaximumLength = MaximumLength;
 
 	type WeightInfo = weights::pns_registrar::price_oracle::WeightInfo<Runtime>;
 

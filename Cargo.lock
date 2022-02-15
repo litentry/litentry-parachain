@@ -6282,7 +6282,7 @@ checksum = "e8d0eef3571242013a0d5dc84861c3ae4a652e56e12adf8bdc26ff5f8cb34c94"
 [[package]]
 name = "pns-registrar"
 version = "0.1.0"
-source = "git+https://github.com/pnsproject/pns-pallets.git?branch=main#255598ceb28410300e4956367ac73fdb8c43945c"
+source = "git+https://github.com/pnsproject/pns-pallets.git?branch=main#d7d6b9b82a13d36a31b96897eb78ba3a8e9ea08d"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6301,7 +6301,7 @@ dependencies = [
 [[package]]
 name = "pns-resolvers"
 version = "0.1.0"
-source = "git+https://github.com/pnsproject/pns-pallets.git?branch=main#255598ceb28410300e4956367ac73fdb8c43945c"
+source = "git+https://github.com/pnsproject/pns-pallets.git?branch=main#d7d6b9b82a13d36a31b96897eb78ba3a8e9ea08d"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
