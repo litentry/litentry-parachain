@@ -4202,7 +4202,7 @@ dependencies = [
 
 [[package]]
 name = "litentry-parachain-runtime"
-version = "0.9.3"
+version = "0.9.4"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
