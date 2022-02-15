@@ -157,7 +157,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot, corresponds to 0.9.1 TOML version
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9030,
+	spec_version: 9040,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -951,7 +951,10 @@ parameter_types! {
 	pub const GracePeriod: Moment = 90 * 24 * 60 * 60;
 	pub const MinRegistrationDuration: Moment = 28 * 24 * 60 * 60;
 	pub const DefaultCapacity: u32 = 20;
-	pub const BaseNode: Hash = sp_core::H256([206, 21, 156, 243, 67, 128, 117, 125, 25, 50, 168, 228, 167, 78, 133, 232, 89, 87, 176, 167, 165, 45, 156, 86, 108, 10, 60, 141, 97, 51, 208, 247]);
+	pub const BaseNode: Hash = sp_core::H256([
+		63, 206, 125, 19, 100, 168, 147, 226, 19, 188, 66, 18, 121, 43, 81, 127, 252, 136, 245,
+		177, 59, 134, 200, 239, 156, 141, 57, 12, 58, 19, 112, 206,
+	]);
 }
 
 pub type Moment = u64;
