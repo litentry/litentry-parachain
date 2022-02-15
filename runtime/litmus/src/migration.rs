@@ -14,6 +14,7 @@ where
 	<<T as pns_registrar::price_oracle::Config>::Currency as Currency<
 		<T as frame_system::Config>::AccountId,
 	>>::Balance: From<u32>,
+	T::Hash: From<[u8; 32]>,
 {
 	fn on_runtime_upgrade() -> Weight {
 		let mut weight = 500_000;
@@ -35,12 +36,16 @@ where
 			27, 176, 43, 12, 142, 67, 84, 241, 64, 102, 161, 36, 125, 24,
 		]));
 
-		let root_domain = sp_core::convert_hash::<T::Hash, [u8; 32]>(&sp_io::hashing::keccak_256(
-			"ksm".as_bytes(),
-		));
+		// ksm : [40, 176, 66, 80, 226, 106, 137, 121, 141, 170, 194, 128, 195, 181, 31, 184, 186,
+		// 190, 216, 60, 185, 180,141, 134, 171, 252, 4, 74, 2, 250, 3, 144]
+		let root_domain = T::Hash::from([
+			40, 176, 66, 80, 226, 106, 137, 121, 141, 170, 194, 128, 195, 181, 31, 184, 186, 190,
+			216, 60, 185, 180, 141, 134, 171, 252, 4, 74, 2, 250, 3, 144,
+		]);
 
 		weight += migration::Initialize::<T>::initial_registry(official, root_domain);
 
+		// TODO: 价格设置过低无法正常交易
 		let base_prices = [1.into(); 11];
 		let rent_prices = [1.into(); 11];
 		let init_rate = 1_000.into();

@@ -14,3 +14,5 @@ docker/generated-*/
 ts-tests/package-lock.json
 
 tags.lock
+
+pns.sh

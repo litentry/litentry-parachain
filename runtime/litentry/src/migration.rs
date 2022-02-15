@@ -14,6 +14,7 @@ where
 	<<T as pns_registrar::price_oracle::Config>::Currency as Currency<
 		<T as frame_system::Config>::AccountId,
 	>>::Balance: From<u32>,
+	T::Hash: From<[u8; 32]>,
 {
 	fn on_runtime_upgrade() -> Weight {
 		let mut weight = 500_000;
@@ -35,9 +36,13 @@ where
 			27, 176, 43, 12, 142, 67, 84, 241, 64, 102, 161, 36, 125, 24,
 		]));
 
-		let root_domain = sp_core::convert_hash::<T::Hash, [u8; 32]>(&sp_io::hashing::keccak_256(
-			"dot".as_bytes(),
-		));
+		// dot : [63, 206, 125, 19, 100, 168, 147, 226, 19, 188, 66, 18, 121, 43, 81, 127, 252,
+		// 136,245, 177, 59, 134, 200, 239, 156, 141, 57, 12, 58, 19, 112, 206]
+
+		let root_domain = T::Hash::from([
+			63, 206, 125, 19, 100, 168, 147, 226, 19, 188, 66, 18, 121, 43, 81, 127, 252, 136, 245,
+			177, 59, 134, 200, 239, 156, 141, 57, 12, 58, 19, 112, 206,
+		]);
 
 		weight += migration::Initialize::<T>::initial_registry(official, root_domain);
 

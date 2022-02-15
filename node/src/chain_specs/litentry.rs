@@ -246,9 +246,10 @@ fn generate_genesis(
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					vec![3, 2, 1],
 					Default::default(),
-					sp_core::convert_hash::<sp_core::H256, [u8; 32]>(
-						&sp_core::hashing::keccak_256("dot".as_bytes()),
-					),
+					sp_core::H256([
+						63, 206, 125, 19, 100, 168, 147, 226, 19, 188, 66, 18, 121, 43, 81, 127,
+						252, 136, 245, 177, 59, 134, 200, 239, 156, 141, 57, 12, 58, 19, 112, 206,
+					]),
 				)],
 			)],
 		},
