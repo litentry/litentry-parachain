@@ -1,5 +1,6 @@
 import 'mocha';
 
+import '@polkadot/api-augment';
 import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
 import { AddressOrPair, ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { KeyringPair } from '@polkadot/keyring/types';
@@ -33,29 +34,6 @@ async function initApiPromise(config: any) {
     // Initiate the polkadot API.
     const api = await ApiPromise.create({
         provider: wsProvider,
-        types: {
-            // mapping the actual specified address format
-            Address: 'MultiAddress',
-            // mapping the lookup
-            LookupSource: 'MultiAddress',
-            Account: { nonce: 'U256', balance: 'U256' },
-            Transaction: {
-                nonce: 'U256',
-                action: 'String',
-                gas_price: 'u64',
-                gas_limit: 'u64',
-                value: 'U256',
-                input: 'Vec<u8>',
-                signature: 'Signature',
-            },
-            Signature: '[u8; 65]', //{ v: "u64", r: "H256", s: "H256" },
-            BlockWeights: 'u64',
-            BlockLength: 'u64',
-            ParachainInherentData: 'u64',
-            DataSource: 'u64',
-            EthAddress: '[u8; 20]',
-            QueryKey: 'u64',
-        },
     });
 
     console.log(`Initialization done`);
@@ -63,9 +41,9 @@ async function initApiPromise(config: any) {
 
     // Get keyring of Alice and Bob
     const keyring = new Keyring({ type: 'sr25519' });
-    const alice = keyring.addFromUri('//Alice', { name: 'Alice default' });
-    const bob = keyring.addFromUri('//Bob', { name: 'Bob default' });
-    const eve = keyring.addFromUri('//Eve', { name: 'Eve default' });
+    const alice = keyring.addFromUri('//Alice');
+    const bob = keyring.addFromUri('//Bob');
+    const eve = keyring.addFromUri('//Eve');
 
     // Insert ocw session key
     const resInsertKey = api.rpc.author.insertKey(

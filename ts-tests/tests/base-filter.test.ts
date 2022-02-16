@@ -1,6 +1,5 @@
 import { expect } from 'chai';
 import { step } from 'mocha-steps';
-import { u8aConcat } from '@polkadot/util';
 
 import { signAndSend, describeLitentry, loadConfig, sleep } from './utils';
 
