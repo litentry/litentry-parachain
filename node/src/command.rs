@@ -40,6 +40,8 @@ use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::Block as BlockT;
 use std::{io::Write, net::SocketAddr};
 
+const UNSUPPORTED_CHAIN_MESSAGE: &str = "Unsupported chain spec, please use litmus* or litentry*";
+
 trait IdentifyChain {
 	fn is_litentry(&self) -> bool;
 	fn is_litmus(&self) -> bool;
@@ -201,12 +203,12 @@ macro_rules! construct_async_run {
 					_
 				>(
 					&$config,
-					crate::service::litmus_parachain_build_import_queue,
+					crate::service::build_import_queue::<litmus_parachain_runtime::RuntimeApi, LitmusParachainRuntimeExecutor>,
 				)?;
 				let task_manager = $components.task_manager;
 				{ $( $code )* }.map(|v| (v, task_manager))
 			})
-		} else {
+		} else if runner.config().chain_spec.is_litentry() {
 			runner.async_run(|$config| {
 				let $components = new_partial::<
 					litentry_parachain_runtime::RuntimeApi,
@@ -214,13 +216,14 @@ macro_rules! construct_async_run {
 					_
 				>(
 					&$config,
-					crate::service::litentry_parachain_build_import_queue,
+					crate::service::build_import_queue::<litentry_parachain_runtime::RuntimeApi, LitentryParachainRuntimeExecutor>,
 				)?;
 				let task_manager = $components.task_manager;
 				{ $( $code )* }.map(|v| (v, task_manager))
 			})
+		} else {
+			panic!("{}", UNSUPPORTED_CHAIN_MESSAGE)
 		}
-
 	}}
 }
 
@@ -338,7 +341,7 @@ pub fn run() -> Result<()> {
 						cmd.run::<Block, LitentryParachainRuntimeExecutor>(config)
 					})
 				} else {
-					Err("Chain doesn't support benchmarking".into())
+					Err(UNSUPPORTED_CHAIN_MESSAGE.into())
 				}
 			} else {
 				Err("Benchmarking wasn't enabled when building the node. \
@@ -367,7 +370,7 @@ pub fn run() -> Result<()> {
 						))
 					})
 				} else {
-					Err("Chain doesn't support benchmarking".into())
+					Err(UNSUPPORTED_CHAIN_MESSAGE.into())
 				}
 			} else {
 				Err("Try-runtime must be enabled by `--features try-runtime`.".into())
@@ -408,15 +411,23 @@ pub fn run() -> Result<()> {
 				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
 
 				if config.chain_spec.is_litmus() {
-					crate::service::start_litmus_parachain_node(config, polkadot_config, id)
-						.await
-						.map(|r| r.0)
-						.map_err(Into::into)
+					crate::service::start_node::<
+						litmus_parachain_runtime::RuntimeApi,
+						LitmusParachainRuntimeExecutor,
+					>(config, polkadot_config, id)
+					.await
+					.map(|r| r.0)
+					.map_err(Into::into)
+				} else if config.chain_spec.is_litentry() {
+					crate::service::start_node::<
+						litentry_parachain_runtime::RuntimeApi,
+						LitentryParachainRuntimeExecutor,
+					>(config, polkadot_config, id)
+					.await
+					.map(|r| r.0)
+					.map_err(Into::into)
 				} else {
-					crate::service::start_litentry_parachain_node(config, polkadot_config, id)
-						.await
-						.map(|r| r.0)
-						.map_err(Into::into)
+					Err(UNSUPPORTED_CHAIN_MESSAGE.into())
 				}
 			})
 		},

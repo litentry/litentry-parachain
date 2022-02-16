@@ -22,11 +22,6 @@ updates:
       - dependency-name: "test-runner"
       - dependency-name: "generate-bags"
     reviewers:
-      - "Satoshi-Kusumoto"
-      - "h4n0"
-      - "suinuj"
-      - "chenzongxiong"
-      - "wangminqi"
-      - "Kailai-Wang"
+      - "litentry/parachain"
     schedule:
       interval: "weekly"
