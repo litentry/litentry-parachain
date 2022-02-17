@@ -1048,6 +1048,7 @@ mod benches {
 		[pallet_drop3, Drop3]
 		[pallet_extrinsic_filter, ExtrinsicFilter]
 		[pallet_scheduler, Scheduler]
+		[pallet_preimage, Preimage]
 	);
 }
 
