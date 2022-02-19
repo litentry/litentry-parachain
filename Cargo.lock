@@ -4246,8 +4246,8 @@ dependencies = [
  "pallet-xcm",
  "parachain-info",
  "parity-scale-codec",
- "pns-registrar",
- "pns-resolvers",
+ "pns-registrar 0.1.0 (git+https://github.com/pnsproject/pns-pallets.git?branch=main)",
+ "pns-resolvers 0.1.0 (git+https://github.com/pnsproject/pns-pallets.git?branch=main)",
  "polkadot-parachain",
  "primitives",
  "scale-info",
@@ -4317,8 +4317,8 @@ dependencies = [
  "pallet-xcm",
  "parachain-info",
  "parity-scale-codec",
- "pns-registrar",
- "pns-resolvers",
+ "pns-registrar 0.1.0 (git+https://github.com/pnsproject/pns-pallets.git?branch=polkadot-v0.9.16)",
+ "pns-resolvers 0.1.0 (git+https://github.com/pnsproject/pns-pallets.git?branch=polkadot-v0.9.16)",
  "polkadot-parachain",
  "primitives",
  "scale-info",
@@ -6299,6 +6299,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "pns-registrar"
+version = "0.1.0"
+source = "git+https://github.com/pnsproject/pns-pallets.git?branch=polkadot-v0.9.16#add4678e6d89ae57c42edf752ab0768856761864"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-api",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pns-resolvers"
 version = "0.1.0"
 source = "git+https://github.com/pnsproject/pns-pallets.git?branch=main#d7d6b9b82a13d36a31b96897eb78ba3a8e9ea08d"
@@ -6307,7 +6326,25 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parity-scale-codec",
- "pns-registrar",
+ "pns-registrar 0.1.0 (git+https://github.com/pnsproject/pns-pallets.git?branch=main)",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pns-resolvers"
+version = "0.1.0"
+source = "git+https://github.com/pnsproject/pns-pallets.git?branch=polkadot-v0.9.16#add4678e6d89ae57c42edf752ab0768856761864"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "pns-registrar 0.1.0 (git+https://github.com/pnsproject/pns-pallets.git?branch=polkadot-v0.9.16)",
  "scale-info",
  "serde",
  "sp-core",

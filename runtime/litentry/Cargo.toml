@@ -88,12 +88,12 @@ pallet-extrinsic-filter = { path = "../../pallets/extrinsic-filter", default-fea
 [dependencies.pns-registrar]
 default-features = false
 git = 'https://github.com/pnsproject/pns-pallets.git'
-branch = 'main'
+branch = 'polkadot-v0.9.16'
 
 [dependencies.pns-resolvers]
 default-features = false
 git = 'https://github.com/pnsproject/pns-pallets.git'
-branch = 'main'
+branch = 'polkadot-v0.9.16'
 
 [dev-dependencies]
 hex-literal = "0.3.4"
