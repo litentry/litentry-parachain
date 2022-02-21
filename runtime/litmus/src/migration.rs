@@ -17,7 +17,7 @@ where
 	T::Hash: From<[u8; 32]>,
 {
 	fn on_runtime_upgrade() -> Weight {
-		let mut weight = 500_000;
+		let mut weight = 50_000_000;
 
 		let managers = sp_std::vec![
 			T::AccountId::from(crate::AccountId::new([
@@ -46,8 +46,8 @@ where
 		weight += migration::Initialize::<T>::initial_registry(official, root_domain);
 
 		// TODO: 价格设置过低无法正常交易
-		let base_prices = [1.into(); 11];
-		let rent_prices = [1.into(); 11];
+		let base_prices = [11.into(); 11];
+		let rent_prices = [11.into(); 11];
 		let init_rate = 1_000.into();
 
 		weight +=
