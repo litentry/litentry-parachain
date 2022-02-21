@@ -59,36 +59,12 @@ fn transfer() {
 			10,
 			resource_id,
 		));
-		assert_eq!(Balances::free_balance(&bridge_id), ENDOWED_BALANCE - 10);
 		assert_eq!(Balances::free_balance(RELAYER_A), ENDOWED_BALANCE + 10);
 
-		assert_events(vec![Event::Balances(balances::Event::Transfer {
-			from: Bridge::account_id(),
-			to: RELAYER_A,
+		assert_events(vec![Event::Balances(balances::Event::Deposit {
+			who: RELAYER_A,
 			amount: 10,
 		})]);
-	})
-}
-
-#[test]
-fn transfer_to_holdingaccount() {
-	new_test_ext().execute_with(|| {
-		let dest_chain = 0;
-		let bridge_id: u64 = Bridge::account_id();
-		let asset =
-			bridge::derive_resource_id(dest_chain, &bridge::hashing::blake2_128(b"an asset"));
-		let amount: u64 = 100;
-
-		// transfer to bridge account is not allowed
-		assert_noop!(
-			BridgeTransfer::transfer(
-				Origin::signed(Bridge::account_id()),
-				bridge_id,
-				amount,
-				asset,
-			),
-			Error::<Test>::InvalidCommand
-		);
 	})
 }
 
@@ -180,18 +156,13 @@ fn create_successful_transfer_proposal() {
 		assert_eq!(prop, expected);
 
 		assert_eq!(Balances::free_balance(RELAYER_A), ENDOWED_BALANCE + 10);
-		assert_eq!(Balances::free_balance(Bridge::account_id()), ENDOWED_BALANCE - 10);
 
 		assert_events(vec![
 			Event::Bridge(bridge::Event::VoteFor(src_id, prop_id, RELAYER_A)),
 			Event::Bridge(bridge::Event::VoteAgainst(src_id, prop_id, RELAYER_B)),
 			Event::Bridge(bridge::Event::VoteFor(src_id, prop_id, RELAYER_C)),
 			Event::Bridge(bridge::Event::ProposalApproved(src_id, prop_id)),
-			Event::Balances(balances::Event::Transfer {
-				from: Bridge::account_id(),
-				to: RELAYER_A,
-				amount: 10,
-			}),
+			Event::Balances(balances::Event::Deposit { who: RELAYER_A, amount: 10 }),
 			Event::Bridge(bridge::Event::ProposalSucceeded(src_id, prop_id)),
 		]);
 	})

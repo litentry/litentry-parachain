@@ -27,9 +27,8 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::{
-		fail,
 		pallet_prelude::*,
-		traits::{Currency, ExistenceRequirement, StorageVersion},
+		traits::{fungible::Mutate, Currency, StorageVersion},
 	};
 	use frame_system::pallet_prelude::*;
 	pub use pallet_bridge as bridge;
@@ -56,7 +55,8 @@ pub mod pallet {
 		type BridgeOrigin: EnsureOrigin<Self::Origin, Success = Self::AccountId>;
 
 		/// The currency mechanism.
-		type Currency: Currency<Self::AccountId>;
+		type Currency: Currency<Self::AccountId>
+			+ Mutate<Self::AccountId, Balance = BalanceOf<Self>>;
 
 		#[pallet::constant]
 		type NativeTokenResourceId: Get<ResourceId>;
@@ -93,27 +93,17 @@ pub mod pallet {
 			amount: BalanceOf<T>,
 			rid: ResourceId,
 		) -> DispatchResult {
-			let source = T::BridgeOrigin::ensure_origin(origin)?;
+			T::BridgeOrigin::ensure_origin(origin)?;
 			// transfer to bridge account from external accounts is not allowed.
-			if source == to {
-				fail!(Error::<T>::InvalidCommand);
-			}
 
 			if rid == T::NativeTokenResourceId::get() {
-				// ERC20 LIT transfer
-				<T as Config>::Currency::transfer(
-					&source,
-					&to,
-					amount,
-					ExistenceRequirement::AllowDeath,
-				)?;
+				// ERC20 LIT mint
+				<T as Config>::Currency::mint_into(&to, amount.into())?;
 			} else {
 				return Err(Error::<T>::InvalidResourceId.into())
 			}
-
 			Ok(())
 		}
 	}
-
 	impl<T: Config> Pallet<T> {}
 }
