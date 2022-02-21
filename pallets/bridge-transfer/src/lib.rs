@@ -60,6 +60,9 @@ pub mod pallet {
 
 		#[pallet::constant]
 		type NativeTokenResourceId: Get<ResourceId>;
+
+		#[pallet::constant]
+		type MaximumIssuance: Get<BalanceOf<Self>>;
 	}
 
 	#[pallet::event]
@@ -70,6 +73,7 @@ pub mod pallet {
 	pub enum Error<T> {
 		InvalidCommand,
 		InvalidResourceId,
+		ReachMaximumSupply,
 	}
 
 	#[pallet::storage]
@@ -94,11 +98,14 @@ pub mod pallet {
 			rid: ResourceId,
 		) -> DispatchResult {
 			T::BridgeOrigin::ensure_origin(origin)?;
-			// transfer to bridge account from external accounts is not allowed.
 
+			let total_issuance = <T as Config>::Currency::total_issuance();
+			if total_issuance + amount > T::MaximumIssuance::get() {
+				return Err(Error::<T>::ReachMaximumSupply.into())
+			}
 			if rid == T::NativeTokenResourceId::get() {
 				// ERC20 LIT mint
-				<T as Config>::Currency::mint_into(&to, amount.into())?;
+				<T as Config>::Currency::mint_into(&to, amount)?;
 			} else {
 				return Err(Error::<T>::InvalidResourceId.into())
 			}

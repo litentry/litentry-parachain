@@ -20,8 +20,8 @@ use super::{
 	bridge,
 	mock::{
 		assert_events, balances, new_test_ext, Balances, Bridge, BridgeTransfer, Call, Event,
-		NativeTokenResourceId, Origin, ProposalLifetime, Test, ENDOWED_BALANCE, RELAYER_A,
-		RELAYER_B, RELAYER_C,
+		NativeTokenResourceId, Origin, ProposalLifetime, Test, ENDOWED_BALANCE, MAXIMUM_ISSURANCE,
+		RELAYER_A, RELAYER_B, RELAYER_C,
 	},
 	*,
 };
@@ -65,6 +65,25 @@ fn transfer() {
 			who: RELAYER_A,
 			amount: 10,
 		})]);
+	})
+}
+
+#[test]
+fn exceed_max_supply() {
+	new_test_ext().execute_with(|| {
+		let bridge_id: u64 = Bridge::account_id();
+		let resource_id = NativeTokenResourceId::get();
+		assert_eq!(Balances::free_balance(&bridge_id), ENDOWED_BALANCE);
+
+		assert_noop!(
+			BridgeTransfer::transfer(
+				Origin::signed(Bridge::account_id()),
+				RELAYER_A,
+				MAXIMUM_ISSURANCE + 1,
+				resource_id,
+			),
+			Error::<Test>::ReachMaximumSupply
+		);
 	})
 }
 
