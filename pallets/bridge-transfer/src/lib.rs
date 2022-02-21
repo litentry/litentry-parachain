@@ -100,7 +100,7 @@ pub mod pallet {
 			T::BridgeOrigin::ensure_origin(origin)?;
 
 			let total_issuance = <T as Config>::Currency::total_issuance();
-			if total_issuance + amount > T::MaximumIssuance::get() {
+			if amount > T::MaximumIssuance::get() || total_issuance + amount > T::MaximumIssuance::get() {
 				return Err(Error::<T>::ReachMaximumSupply.into())
 			}
 			if rid == T::NativeTokenResourceId::get() {

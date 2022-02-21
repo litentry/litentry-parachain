@@ -88,6 +88,33 @@ fn exceed_max_supply() {
 }
 
 #[test]
+fn exceed_max_supply() {
+	new_test_ext().execute_with(|| {
+		let bridge_id: u64 = Bridge::account_id();
+		let resource_id = NativeTokenResourceId::get();
+		assert_eq!(Balances::free_balance(&bridge_id), ENDOWED_BALANCE);
+
+		assert_ok!(BridgeTransfer::transfer(
+			Origin::signed(Bridge::account_id()),
+				RELAYER_A,
+				MAXIMUM_ISSURANCE,
+				resource_id,
+		));
+
+		assert_noop!(
+			BridgeTransfer::transfer(
+				Origin::signed(Bridge::account_id()),
+				RELAYER_A,
+				10,
+				resource_id,
+			),
+			Error::<Test>::ReachMaximumSupply
+		);
+	})
+}
+
+
+#[test]
 fn transfer_to_regular_account() {
 	new_test_ext().execute_with(|| {
 		let dest_chain = 0;
