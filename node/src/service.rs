@@ -37,6 +37,7 @@ use sc_service::{Configuration, PartialComponents, Role, TFullBackend, TFullClie
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use sp_api::ConstructRuntimeApi;
 use sp_consensus::SlotData;
+use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_keystore::SyncCryptoStorePtr;
 use sp_runtime::traits::BlakeTwo256;
 use std::{sync::Arc, time::Duration};
@@ -377,33 +378,41 @@ where
 	Ok((task_manager, client))
 }
 
-/// Start a litentry parachain node.
-pub async fn start_litentry_parachain_node(
+/// Start a litmus/litentry node.
+pub async fn start_node<RuntimeApi, Executor>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
 	id: ParaId,
 ) -> sc_service::error::Result<(
 	TaskManager,
-	Arc<
-		TFullClient<
+	Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>>,
+)>
+where
+	RuntimeApi: ConstructRuntimeApi<Block, TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>>
+		+ Send
+		+ Sync
+		+ 'static,
+	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
+		+ sp_api::Metadata<Block>
+		+ sp_session::SessionKeys<Block>
+		+ sp_api::ApiExt<
 			Block,
-			litentry_parachain_runtime::RuntimeApi,
-			NativeElseWasmExecutor<LitentryParachainRuntimeExecutor>,
-		>,
-	>,
-)> {
-	start_node_impl::<
-		litentry_parachain_runtime::RuntimeApi,
-		LitentryParachainRuntimeExecutor,
-		_,
-		_,
-		_,
-	>(
+			StateBackend = sc_client_api::StateBackendFor<TFullBackend<Block>, Block>,
+		> + sp_offchain::OffchainWorkerApi<Block>
+		+ sp_block_builder::BlockBuilder<Block>
+		+ cumulus_primitives_core::CollectCollationInfo<Block>
+		+ sp_consensus_aura::AuraApi<Block, AuraId>
+		+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
+		+ frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
+	sc_client_api::StateBackendFor<TFullBackend<Block>, Block>: sp_api::StateBackend<BlakeTwo256>,
+	Executor: sc_executor::NativeExecutionDispatch + 'static,
+{
+	start_node_impl::<RuntimeApi, Executor, _, _, _>(
 		parachain_config,
 		polkadot_config,
 		id,
 		|_| Ok(Default::default()),
-		litentry_parachain_build_import_queue,
+		build_import_queue::<RuntimeApi, Executor>,
 		|client,
 		 prometheus_registry,
 		 telemetry,
@@ -471,178 +480,39 @@ pub async fn start_litentry_parachain_node(
 	.await
 }
 
-/// Start a litmus parachain node.
-pub async fn start_litmus_parachain_node(
-	parachain_config: Configuration,
-	polkadot_config: Configuration,
-	id: ParaId,
-) -> sc_service::error::Result<(
-	TaskManager,
-	Arc<
-		TFullClient<
-			Block,
-			litmus_parachain_runtime::RuntimeApi,
-			NativeElseWasmExecutor<LitmusParachainRuntimeExecutor>,
-		>,
-	>,
-)> {
-	start_node_impl::<
-		litmus_parachain_runtime::RuntimeApi,
-		LitmusParachainRuntimeExecutor,
-		_,
-		_,
-		_,
-	>(
-		parachain_config,
-		polkadot_config,
-		id,
-		|_| Ok(Default::default()),
-		litmus_parachain_build_import_queue,
-		|client,
-		 prometheus_registry,
-		 telemetry,
-		 task_manager,
-		 relay_chain_interface,
-		 transaction_pool,
-		 sync_oracle,
-		 keystore,
-		 force_authoring| {
-			let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
-
-			let proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
-				task_manager.spawn_handle(),
-				client.clone(),
-				transaction_pool,
-				prometheus_registry,
-				telemetry.clone(),
-			);
-
-			Ok(AuraConsensus::build::<sp_consensus_aura::sr25519::AuthorityPair, _, _, _, _, _, _>(
-				BuildAuraConsensusParams {
-					proposer_factory,
-					create_inherent_data_providers: move |_, (relay_parent, validation_data)| {
-						let relay_chain_interface = relay_chain_interface.clone();
-						async move {
-							let parachain_inherent =
-							cumulus_primitives_parachain_inherent::ParachainInherentData::create_at(
-								relay_parent,
-								&relay_chain_interface,
-								&validation_data,
-								id,
-							).await;
-							let time = sp_timestamp::InherentDataProvider::from_system_time();
-
-							let slot =
-						sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_duration(
-							*time,
-							slot_duration.slot_duration(),
-						);
-
-						let parachain_inherent = parachain_inherent.ok_or_else(|| {
-							Box::<dyn std::error::Error + Send + Sync>::from(
-								"Failed to create parachain inherent",
-							)
-						})?;
-						Ok((time, slot, parachain_inherent))
-					}
-				},
-				block_import: client.clone(),
-				para_client: client,
-				backoff_authoring_blocks: Option::<()>::None,
-				sync_oracle,
-				keystore,
-				force_authoring,
-				slot_duration,
-				// We got around 500ms for proposing
-				block_proposal_slot_portion: SlotProportion::new(1f32 / 24f32),
-				// And a maximum of 750ms if slots are skipped
-				max_block_proposal_slot_portion: Some(SlotProportion::new(1f32 / 16f32)),
-				telemetry,
-				},
-			))
-		},
-	)
-	.await
-}
-
-/// Build the import queue for the litentry parachain runtime.
-pub fn litentry_parachain_build_import_queue(
-	client: Arc<
-		TFullClient<
-			Block,
-			litentry_parachain_runtime::RuntimeApi,
-			NativeElseWasmExecutor<LitentryParachainRuntimeExecutor>,
-		>,
-	>,
+/// Build the import queue for the litmus/litentry runtime.
+pub fn build_import_queue<RuntimeApi, Executor>(
+	client: Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>>,
 	config: &Configuration,
 	telemetry: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
 ) -> Result<
 	sc_consensus::DefaultImportQueue<
 		Block,
-		TFullClient<
-			Block,
-			litentry_parachain_runtime::RuntimeApi,
-			NativeElseWasmExecutor<LitentryParachainRuntimeExecutor>,
-		>,
+		TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>,
 	>,
 	sc_service::Error,
-> {
-	let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
-
-	cumulus_client_consensus_aura::import_queue::<
-		sp_consensus_aura::sr25519::AuthorityPair,
-		_,
-		_,
-		_,
-		_,
-		_,
-		_,
-	>(cumulus_client_consensus_aura::ImportQueueParams {
-		block_import: client.clone(),
-		client: client.clone(),
-		create_inherent_data_providers: move |_, _| async move {
-			let time = sp_timestamp::InherentDataProvider::from_system_time();
-
-			let slot =
-				sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_duration(
-					*time,
-					slot_duration.slot_duration(),
-				);
-
-			Ok((time, slot))
-		},
-		registry: config.prometheus_registry(),
-		can_author_with: sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone()),
-		spawner: &task_manager.spawn_essential_handle(),
-		telemetry,
-	})
-	.map_err(Into::into)
-}
-
-/// Build the import queue for the litmus parachain runtime.
-pub fn litmus_parachain_build_import_queue(
-	client: Arc<
-		TFullClient<
+>
+where
+	RuntimeApi: ConstructRuntimeApi<Block, TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>>
+		+ Send
+		+ Sync
+		+ 'static,
+	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
+		+ sp_api::Metadata<Block>
+		+ sp_session::SessionKeys<Block>
+		+ sp_api::ApiExt<
 			Block,
-			litmus_parachain_runtime::RuntimeApi,
-			NativeElseWasmExecutor<LitmusParachainRuntimeExecutor>,
-		>,
-	>,
-	config: &Configuration,
-	telemetry: Option<TelemetryHandle>,
-	task_manager: &TaskManager,
-) -> Result<
-	sc_consensus::DefaultImportQueue<
-		Block,
-		TFullClient<
-			Block,
-			litmus_parachain_runtime::RuntimeApi,
-			NativeElseWasmExecutor<LitmusParachainRuntimeExecutor>,
-		>,
-	>,
-	sc_service::Error,
-> {
+			StateBackend = sc_client_api::StateBackendFor<TFullBackend<Block>, Block>,
+		> + sp_offchain::OffchainWorkerApi<Block>
+		+ sp_block_builder::BlockBuilder<Block>
+		+ cumulus_primitives_core::CollectCollationInfo<Block>
+		+ sp_consensus_aura::AuraApi<Block, AuraId>
+		+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
+		+ frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>,
+	sc_client_api::StateBackendFor<TFullBackend<Block>, Block>: sp_api::StateBackend<BlakeTwo256>,
+	Executor: sc_executor::NativeExecutionDispatch + 'static,
+{
 	let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 
 	cumulus_client_consensus_aura::import_queue::<

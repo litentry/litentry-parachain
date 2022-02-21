@@ -28,7 +28,8 @@ TMPDIR=/tmp/parachain_dev
 ROOTDIR=$(git rev-parse --show-toplevel)
 
 cd "$ROOTDIR"
-PARACHAIN_ID=$(grep DEFAULT_PARA_ID node/src/chain_spec.rs  | grep u32 | sed 's/.* = //;s/\;//')
+PARACHAIN_ID=$(grep DEFAULT_PARA_ID node/src/chain_specs/$CHAIN.rs  | grep u32 | sed 's/.* = //;s/\;//')
+export PARACHAIN_ID
 
 function print_divider() {
   echo "------------------------------------------------------------"
@@ -41,7 +42,7 @@ if [ -z "$POLKADOT_BIN" ]; then
   # TODO: find a way to get stable download link
   # https://api.github.com/repos/paritytech/polkadot/releases/latest is not reliable as 
   # polkadot could publish release which has no binary
-  url="https://github.com/paritytech/polkadot/releases/download/v0.9.13/polkadot"
+  url="https://github.com/paritytech/polkadot/releases/download/v0.9.16/polkadot"
   POLKADOT_BIN="$TMPDIR/polkadot"
   wget -O "$POLKADOT_BIN" -q "$url"
   chmod a+x "$POLKADOT_BIN"
@@ -80,33 +81,25 @@ ROCOCO_CHAINSPEC=rococo-local-chain-spec.json
 $POLKADOT_BIN build-spec --chain rococo-local --disable-default-bootnode --raw > $ROCOCO_CHAINSPEC
 
 # generate genesis state and wasm for registration
-$PARACHAIN_BIN export-genesis-state --chain $CHAIN-dev > para-$PARACHAIN_ID-genesis
-$PARACHAIN_BIN export-genesis-wasm --chain $CHAIN-dev > para-$PARACHAIN_ID-wasm
+$PARACHAIN_BIN export-genesis-state --chain $CHAIN-dev > genesis-state
+$PARACHAIN_BIN export-genesis-wasm --chain $CHAIN-dev > genesis-wasm
 
 # run alice and bob as relay nodes
 $POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --alice --tmp --port 30333 --ws-port 9944 --rpc-port 9933 &> "relay.alice.log" &
 sleep 10
 
-line=$(grep "ocal node identity is:" relay.alice.log)
-echo $line
-
-re="ocal node identity is: (.*)"
-if ! [[ $line =~ $re ]]; then 
-  echo "local node not found for alice in log" 
-  exit 1
-fi
-echo ${BASH_REMATCH[1]}
+RELAY_ALICE_IDENTITY=$(grep 'Local node identity' relay.alice.log | sed 's/^.*: //')
 
 $POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --bob --tmp --port 30334 --ws-port 9945  --rpc-port 9934 \
-  --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/${BASH_REMATCH[1]} &> "relay.bob.log" &
+  --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/$RELAY_ALICE_IDENTITY &> "relay.bob.log" &
 sleep 10
 
 # run a litentry-collator instance
-$PARACHAIN_BIN --alice --collator --force-authoring --tmp --chain dev \
+$PARACHAIN_BIN --alice --collator --force-authoring --tmp --chain $CHAIN-dev \
   --port 30335 --ws-port 9946 --rpc-port 9935 --execution wasm \
   -- \
   --execution wasm --chain $ROCOCO_CHAINSPEC --port 30332 --ws-port 9943 --rpc-port 9932 \
-  --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/${BASH_REMATCH[1]} &> "para.alice.log" &
+  --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/$RELAY_ALICE_IDENTITY &> "para.alice.log" &
 sleep 10
 
 echo "register parachain now ..."

@@ -427,8 +427,23 @@ impl pallet_scheduler::Config for Runtime {
 	// otherwise I get: panicked at 'called `Result::unwrap()` on an `Err` value: ()'
 	type WeightInfo = ();
 	type OriginPrivilegeCmp = frame_support::traits::EqualPrivilegeOnly;
-	type PreimageProvider = ();
+	type PreimageProvider = Preimage;
 	type NoPreimagePostponement = ();
+}
+
+parameter_types! {
+	pub const PreimageMaxSize: u32 = 4096 * 1024;
+	pub const PreimageBaseDeposit: Balance = 1 * DOLLARS;
+}
+
+impl pallet_preimage::Config for Runtime {
+	type WeightInfo = pallet_preimage::weights::SubstrateWeight<Runtime>;
+	type Event = Event;
+	type Currency = Balances;
+	type ManagerOrigin = EnsureRoot<AccountId>;
+	type MaxSize = PreimageMaxSize;
+	type BaseDeposit = PreimageBaseDeposit;
+	type ByteDeposit = PreimageByteDeposit;
 }
 
 parameter_types! {
@@ -1076,6 +1091,7 @@ construct_runtime! {
 		Utility: pallet_utility::{Pallet, Call, Event} = 3,
 		Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>} = 4,
 		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 5,
+		Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>} = 6,
 
 		// Token related
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 10,
@@ -1174,7 +1190,6 @@ extern crate frame_benchmarking;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benches {
-	// TODO: pallet_scheduler
 	define_benchmarks!(
 		[frame_system, SystemBench::<Runtime>]
 		[pallet_balances, Balances]
@@ -1189,6 +1204,8 @@ mod benches {
 		[pallet_multisig, Multisig]
 		[pallet_drop3, Drop3]
 		[pallet_extrinsic_filter, ExtrinsicFilter]
+		[pallet_scheduler, Scheduler]
+		[pallet_preimage, Preimage]
 		[pns_registrar::price_oracle,PnsPriceOracle]
 		[pns_registrar::registrar,PnsRegistrar]
 		[pns_registrar::registry,PnsRegistry]
