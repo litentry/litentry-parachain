@@ -8,10 +8,10 @@ err_report() {
 trap 'err_report $LINENO' ERR
 
 function usage() {
-    echo "Usage: $0 litentry|litmus path-to-output diff-tag"
+    echo "Usage: $0 litentry|litmus path-to-output diff-tag release-type"
 }
 
-[ $# -ne 3 ] && (usage; exit 1)
+[ $# -ne 4 ] && (usage; exit 1)
 
 ROOTDIR=$(git rev-parse --show-toplevel)
 cd "$ROOTDIR"
@@ -51,10 +51,13 @@ POLKADOT_DEP=$(grep polkadot-cli node/Cargo.toml | sed 's/.*branch = "//;s/".*//
 
 TAB="$(printf '\t')"
 
+echo > "$2"
+
 # use <CODE> to decorate around the stuff and then replace it with `
 # so that it's not executed as commands inside heredoc
-cat << EOF > "$2"
 
+if [ "$4" != "runtime" ]; then
+  cat << EOF >> "$2"
 ## Client
 
 <CODEBLOCK>
@@ -65,6 +68,11 @@ sha1sum                      : $NODE_SHA1SUM
 docker image                 : litentry/litentry-parachain:$RELEASE_TAG
 <CODEBLOCK>
 
+EOF
+fi
+
+if [ "$4" != "client" ]; then
+  cat << EOF >> "$2"
 ## Runtime
 
 <CODEBLOCK>
@@ -77,6 +85,10 @@ proposal (setCode)           : $RUNTIME_COMPRESSED_SET_CODE_HASH
 proposal (authorizeUpgrade)  : $RUNTIME_COMPRESSED_AUTHORIZE_UPGRADE_HASH
 <CODEBLOCK>
 
+EOF
+fi
+
+cat << EOF >> "$2"
 ## Dependencies
 
 <CODEBLOCK>
