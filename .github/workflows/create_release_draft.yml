@@ -5,10 +5,17 @@ on:
     inputs:
       chain:
         type: choice
-        description: The chain whose runtime-wasm is released
+        description: Which parachain is regarded
         options:
         - litmus
         - litentry
+      release_type:
+        type: choice
+        description: Which release type
+        options:
+        - client
+        - runtime
+        - both
       release_tag:
         description: an existing tag for creating release (e.g. v1.2.3)
         required: true
@@ -23,6 +30,7 @@ on:
 
 env:
   CHAIN: ${{ github.event.inputs.chain }}
+  RELEASE_TYPE: ${{ github.event.inputs.release_type }}
   RELEASE_TAG: ${{ github.event.inputs.release_tag }}
   DIFF_TAG: ${{ github.event.inputs.diff_tag }}
   GENESIS_RELEASE: ${{ github.event.inputs.is_geneis_release }}
@@ -30,6 +38,7 @@ env:
 jobs:
   ## build runtime wasm ##
   build-wasm:
+    if: github.event.inputs.release_type != 'client'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
@@ -62,6 +71,7 @@ jobs:
 
   ## build docker image of client binary ##
   build-docker:
+    if: github.event.inputs.release_type != 'runtime'
     runs-on: self-hosted
     steps:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
@@ -120,7 +130,7 @@ jobs:
 
       - name: Generate release notes
         run: |
-          ./scripts/generate-release-notes.sh ${{ env.CHAIN }} ${{ github.workspace }}/.github/release_notes.md ${{ env.DIFF_TAG }}
+          ./scripts/generate-release-notes.sh ${{ env.CHAIN }} ${{ github.workspace }}/.github/release_notes.md ${{ env.DIFF_TAG }} ${{ env.RELEASE_TYPE }}
 
       - name: set CHAIN_TITLE env
         run: echo "CHAIN_TITLE=${CHAIN/lit/Lit}" >> $GITHUB_ENV
