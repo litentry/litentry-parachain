@@ -11,7 +11,7 @@ function usage() {
     echo "Usage: $0 litentry|litmus path-to-output diff-tag release-type"
 }
 
-[ $# -ne 4 ] && (usage; exit 1)
+[ $# -ne 3 ] && [ $# -ne 4 ] && (usage; exit 1)
 
 ROOTDIR=$(git rev-parse --show-toplevel)
 cd "$ROOTDIR"
@@ -56,7 +56,7 @@ echo > "$2"
 # use <CODE> to decorate around the stuff and then replace it with `
 # so that it's not executed as commands inside heredoc
 
-if [ "$4" != "runtime" ]; then
+if [ "$3" != "runtime" ]; then
   cat << EOF >> "$2"
 ## Client
 
@@ -71,7 +71,7 @@ docker image                 : litentry/litentry-parachain:$RELEASE_TAG
 EOF
 fi
 
-if [ "$4" != "client" ]; then
+if [ "$3" != "client" ]; then
   cat << EOF >> "$2"
 ## Runtime
 
@@ -132,7 +132,7 @@ sed -i.bak 's/<CODEBLOCK>/```/g' "$2"
 rm -f "$2.bak"
 
 # if we have a diff-tag, list the changes inbetween
-DIFF_TAG="$3"
+DIFF_TAG="$4"
 
 if [ -z "$DIFF_TAG" ]; then
   echo "Nothing to compare"

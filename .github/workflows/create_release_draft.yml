@@ -137,7 +137,7 @@ jobs:
 
       - name: Generate release notes
         run: |
-          ./scripts/generate-release-notes.sh ${{ env.CHAIN }} ${{ github.workspace }}/.github/release_notes.md ${{ env.DIFF_TAG }} ${{ env.RELEASE_TYPE }}
+          ./scripts/generate-release-notes.sh ${{ env.CHAIN }} ${{ github.workspace }}/.github/release_notes.md ${{ env.RELEASE_TYPE }} ${{ env.DIFF_TAG }}
 
       - name: set CHAIN_TITLE env
         run: echo "CHAIN_TITLE=${CHAIN/lit/Lit}" >> $GITHUB_ENV
