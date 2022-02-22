@@ -96,9 +96,9 @@ fn exceed_max_supply() {
 
 		assert_ok!(BridgeTransfer::transfer(
 			Origin::signed(Bridge::account_id()),
-				RELAYER_A,
-				MAXIMUM_ISSURANCE,
-				resource_id,
+			RELAYER_A,
+			MAXIMUM_ISSURANCE,
+			resource_id,
 		));
 
 		assert_noop!(
@@ -112,7 +112,6 @@ fn exceed_max_supply() {
 		);
 	})
 }
-
 
 #[test]
 fn transfer_to_regular_account() {
