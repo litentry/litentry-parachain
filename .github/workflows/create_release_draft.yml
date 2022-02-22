@@ -118,7 +118,10 @@ jobs:
   create-release-draft:
     runs-on: ubuntu-latest
     # see https://github.com/actions/runner/issues/491
-    # seems to be the only to achieve this
+    # seems to be the only way to achieve this
+    needs:
+      - build-wasm
+      - build-docker
     if: |
       !failure() && !cancelled() &&
       (success('build-wasm') || success('build-docker'))
