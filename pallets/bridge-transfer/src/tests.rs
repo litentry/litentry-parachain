@@ -88,7 +88,7 @@ fn exceed_max_supply() {
 }
 
 #[test]
-fn exceed_max_supply() {
+fn exceed_max_supply_second() {
 	new_test_ext().execute_with(|| {
 		let bridge_id: u64 = Bridge::account_id();
 		let resource_id = NativeTokenResourceId::get();
