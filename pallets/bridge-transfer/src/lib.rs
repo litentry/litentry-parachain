@@ -31,6 +31,8 @@ pub mod pallet {
 		traits::{fungible::Mutate, Currency, StorageVersion},
 	};
 	use frame_system::pallet_prelude::*;
+	use sp_runtime::traits::CheckedAdd;
+
 	pub use pallet_bridge as bridge;
 
 	type ResourceId = bridge::ResourceId;
@@ -74,6 +76,7 @@ pub mod pallet {
 		InvalidCommand,
 		InvalidResourceId,
 		ReachMaximumSupply,
+		OverFlow,
 	}
 
 	#[pallet::storage]
@@ -100,9 +103,8 @@ pub mod pallet {
 			T::BridgeOrigin::ensure_origin(origin)?;
 
 			let total_issuance = <T as Config>::Currency::total_issuance();
-			if amount > T::MaximumIssuance::get() ||
-				total_issuance + amount > T::MaximumIssuance::get()
-			{
+			let new_issuance = total_issuance.checked_add(&amount).ok_or(Error::<T>::OverFlow)?;
+			if new_issuance > T::MaximumIssuance::get() {
 				return Err(Error::<T>::ReachMaximumSupply.into())
 			}
 			if rid == T::NativeTokenResourceId::get() {

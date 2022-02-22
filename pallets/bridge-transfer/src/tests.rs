@@ -69,6 +69,25 @@ fn transfer() {
 }
 
 #[test]
+fn mint_overflow() {
+	new_test_ext().execute_with(|| {
+		let bridge_id: u64 = Bridge::account_id();
+		let resource_id = NativeTokenResourceId::get();
+		assert_eq!(Balances::free_balance(&bridge_id), ENDOWED_BALANCE);
+
+		assert_noop!(
+			BridgeTransfer::transfer(
+				Origin::signed(Bridge::account_id()),
+				RELAYER_A,
+				u64::MAX,
+				resource_id,
+			),
+			Error::<Test>::OverFlow
+		);
+	})
+}
+
+#[test]
 fn exceed_max_supply() {
 	new_test_ext().execute_with(|| {
 		let bridge_id: u64 = Bridge::account_id();
@@ -97,7 +116,7 @@ fn exceed_max_supply_second() {
 		assert_ok!(BridgeTransfer::transfer(
 			Origin::signed(Bridge::account_id()),
 			RELAYER_A,
-			MAXIMUM_ISSURANCE,
+			MAXIMUM_ISSURANCE - Balances::total_issuance(),
 			resource_id,
 		));
 
