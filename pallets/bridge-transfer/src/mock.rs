@@ -32,6 +32,7 @@ use pallet_bridge as bridge;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
+pub const MAXIMUM_ISSURANCE: u64 = 20_000_000_000_000;
 
 frame_support::construct_runtime!(
 	pub enum Test where
@@ -117,6 +118,7 @@ impl bridge::Config for Test {
 }
 
 parameter_types! {
+	pub const MaximumIssuance: u64 = MAXIMUM_ISSURANCE;
 	// bridge::derive_resource_id(1, &bridge::hashing::blake2_128(b"LIT"));
 	pub const NativeTokenResourceId: [u8; 32] = hex!("0000000000000000000000000000000a21dfe87028f214dd976be8479f5af001");
 }
@@ -126,6 +128,7 @@ impl Config for Test {
 	type BridgeOrigin = bridge::EnsureBridge<Test>;
 	type Currency = Balances;
 	type NativeTokenResourceId = NativeTokenResourceId;
+	type MaximumIssuance = MaximumIssuance;
 }
 
 parameter_types! {
