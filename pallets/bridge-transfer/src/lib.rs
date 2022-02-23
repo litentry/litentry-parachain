@@ -27,11 +27,12 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::{
-		fail,
 		pallet_prelude::*,
-		traits::{Currency, ExistenceRequirement, StorageVersion},
+		traits::{fungible::Mutate, Currency, StorageVersion},
 	};
 	use frame_system::pallet_prelude::*;
+	use sp_runtime::traits::CheckedAdd;
+
 	pub use pallet_bridge as bridge;
 
 	type ResourceId = bridge::ResourceId;
@@ -56,10 +57,14 @@ pub mod pallet {
 		type BridgeOrigin: EnsureOrigin<Self::Origin, Success = Self::AccountId>;
 
 		/// The currency mechanism.
-		type Currency: Currency<Self::AccountId>;
+		type Currency: Currency<Self::AccountId>
+			+ Mutate<Self::AccountId, Balance = BalanceOf<Self>>;
 
 		#[pallet::constant]
 		type NativeTokenResourceId: Get<ResourceId>;
+
+		#[pallet::constant]
+		type MaximumIssuance: Get<BalanceOf<Self>>;
 	}
 
 	#[pallet::event]
@@ -70,6 +75,8 @@ pub mod pallet {
 	pub enum Error<T> {
 		InvalidCommand,
 		InvalidResourceId,
+		ReachMaximumSupply,
+		OverFlow,
 	}
 
 	#[pallet::storage]
@@ -93,27 +100,21 @@ pub mod pallet {
 			amount: BalanceOf<T>,
 			rid: ResourceId,
 		) -> DispatchResult {
-			let source = T::BridgeOrigin::ensure_origin(origin)?;
-			// transfer to bridge account from external accounts is not allowed.
-			if source == to {
-				fail!(Error::<T>::InvalidCommand);
-			}
+			T::BridgeOrigin::ensure_origin(origin)?;
 
+			let total_issuance = <T as Config>::Currency::total_issuance();
+			let new_issuance = total_issuance.checked_add(&amount).ok_or(Error::<T>::OverFlow)?;
+			if new_issuance > T::MaximumIssuance::get() {
+				return Err(Error::<T>::ReachMaximumSupply.into())
+			}
 			if rid == T::NativeTokenResourceId::get() {
-				// ERC20 LIT transfer
-				<T as Config>::Currency::transfer(
-					&source,
-					&to,
-					amount,
-					ExistenceRequirement::AllowDeath,
-				)?;
+				// ERC20 LIT mint
+				<T as Config>::Currency::mint_into(&to, amount)?;
 			} else {
 				return Err(Error::<T>::InvalidResourceId.into())
 			}
-
 			Ok(())
 		}
 	}
-
 	impl<T: Config> Pallet<T> {}
 }
