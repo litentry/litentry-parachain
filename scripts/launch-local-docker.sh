@@ -42,7 +42,7 @@ function check_block() {
   for i in $(seq 1 $WAIT_ROUNDS); do
     sleep $WAIT_INTERVAL_SECONDS
     if docker-compose logs "$parachain_service" | grep -F '[Parachain]' | grep -Fq "best: #1"; then
-      echo "parachain produced #1, all good. Quite now"
+      echo "parachain produced #1, all good. Quit now"
       exit 0
     fi
   done
