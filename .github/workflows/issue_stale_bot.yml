@@ -1,0 +1,31 @@
+name: Issue stale bot
+
+on:
+  schedule:
+    - cron: '30 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  stale-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v4
+        with:
+          stale-issue-message: '
+          :exclamation: This issue is stale because it has been open for 20 days with no activity.
+          
+          Remove `S2-stale` label or update it, otherwise this issue will be closed in 5 days.
+          
+          @litentry/parachain 
+          '
+          close-issue-message: '
+          :closed_lock_with_key: This issue was closed because there has been no activity for 5 days since it became stale.
+          '
+          days-before-stale: 20
+          days-before-close: 5
+          stale-issue-label: S2-stale
+          days-before-pr-close: -1
