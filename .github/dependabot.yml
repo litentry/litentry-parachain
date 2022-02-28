@@ -25,3 +25,13 @@ updates:
       - "litentry/parachain"
     schedule:
       interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/ts-tests"
+    labels: ["S1-pleasereview", "dependencies", "automated-pr"]
+    allow:
+      # check only direct dependencies
+      - dependency-type: "direct"
+    reviewers:
+      - "litentry/parachain"
+    schedule:
+      interval: "weekly"
