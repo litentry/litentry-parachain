@@ -401,8 +401,6 @@ impl pallet_scheduler::Config for Runtime {
 	type MaximumWeight = MaximumSchedulerWeight;
 	type ScheduleOrigin = EnsureRoot<AccountId>;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
-	// TODO: we might need non-empty PreimageProvider (see below) to run the benchmark,
-	// otherwise I get: panicked at 'called `Result::unwrap()` on an `Err` value: ()'
 	type WeightInfo = ();
 	type OriginPrivilegeCmp = frame_support::traits::EqualPrivilegeOnly;
 	type PreimageProvider = Preimage;
@@ -905,6 +903,7 @@ mod benches {
 		[pallet_extrinsic_filter, ExtrinsicFilter]
 		[pallet_scheduler, Scheduler]
 		[pallet_preimage, Preimage]
+		[pallet_session, SessionBench::<Runtime>]
 	);
 }
 
@@ -1038,7 +1037,7 @@ impl_runtime_apis! {
 			use frame_benchmarking::{Benchmarking, BenchmarkList};
 			use frame_support::traits::StorageInfoTrait;
 			use frame_system_benchmarking::Pallet as SystemBench;
-			// TODO: maybe use cumulus-pallet-session-benchmarking as in cumulus
+			use cumulus_pallet_session_benchmarking::Pallet as SessionBench;
 
 			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmarks!(list, extra);
@@ -1054,6 +1053,9 @@ impl_runtime_apis! {
 
 			use frame_system_benchmarking::Pallet as SystemBench;
 			impl frame_system_benchmarking::Config for Runtime {}
+
+			use cumulus_pallet_session_benchmarking::Pallet as SessionBench;
+			impl cumulus_pallet_session_benchmarking::Config for Runtime {}
 
 			let whitelist: Vec<TrackedStorageKey> = vec![
 				// Block Number

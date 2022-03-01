@@ -26,7 +26,7 @@ pub mod pallet_extrinsic_filter;
 pub mod pallet_membership;
 pub mod pallet_multisig;
 pub mod pallet_proxy;
-// pub mod pallet_scheduler; // TODO: see comment in code
+pub mod pallet_scheduler;
 pub mod pallet_timestamp;
 pub mod pallet_treasury;
 pub mod pallet_utility;

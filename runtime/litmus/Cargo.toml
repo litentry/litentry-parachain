@@ -56,7 +56,6 @@ pallet-utility = { git = "https://github.com/paritytech/substrate", default-feat
 pallet-vesting = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.17" }
 
 # Cumulus dependencies
-
 cumulus-pallet-aura-ext = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.17" }
 cumulus-pallet-dmp-queue = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.17" }
 cumulus-pallet-parachain-system = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.17" }
@@ -78,6 +77,7 @@ xcm-executor = { git = "https://github.com/paritytech/polkadot", default-feature
 # benchmarking 
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.17", optional = true }
 frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.17", optional = true }
+cumulus-pallet-session-benchmarking = { git = 'https://github.com/paritytech/cumulus', default-features = false, branch = "polkadot-v0.9.17", optional = true }
 
 # Litmus pallets
 pallet-bridge = { path = "../../pallets/bridge", default-features = false }
@@ -157,6 +157,7 @@ std = [
 ]
 
 runtime-benchmarks = [
+	"cumulus-pallet-session-benchmarking/runtime-benchmarks",
 	"frame-benchmarking/runtime-benchmarks",
 	"frame-support/runtime-benchmarks",
 	"frame-system-benchmarking",
