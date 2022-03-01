@@ -901,7 +901,8 @@ mod benches {
 		[frame_system, SystemBench::<Runtime>]
 		[pallet_balances, Balances]
 		[pallet_timestamp, Timestamp]
-		[pallet_collator_selection, CollatorSelection]
+		// it's an upstream bug, comment it out for now
+		// [pallet_collator_selection, CollatorSelection]
 		[pallet_utility, Utility]
 		[pallet_treasury, Treasury]
 		[pallet_democracy, Democracy]
