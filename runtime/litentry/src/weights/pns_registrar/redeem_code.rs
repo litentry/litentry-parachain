@@ -54,7 +54,7 @@ impl<T: frame_system::Config> pns_registrar::redeem_code::WeightInfo for WeightI
 	// Storage: PnsRegistry Origin (r:1 w:1)
 	// Storage: PnsNft TokensByOwner (r:0 w:1)
 	fn name_redeem_min() -> Weight {
-		(80_000_000 as Weight)
+		(81_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(8 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
@@ -71,8 +71,10 @@ impl<T: frame_system::Config> pns_registrar::redeem_code::WeightInfo for WeightI
 			.saturating_add(T::DbWeight::get().reads(8 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
-	fn create_label(_l: u32, ) -> Weight {
-		(978_000 as Weight)
+	fn create_label(l: u32, ) -> Weight {
+		(922_000 as Weight)
+			// Standard Error: 0
+			.saturating_add((2_000 as Weight).saturating_mul(l as Weight))
 	}
 	// Storage: PnsRegistry Official (r:1 w:0)
 	// Storage: Timestamp Now (r:1 w:0)
@@ -92,8 +94,8 @@ impl<T: frame_system::Config> pns_registrar::redeem_code::WeightInfo for WeightI
 	// Storage: PnsRedeemCode Redeems (r:0 w:2)
 	fn mint_redeem(l: u32, ) -> Weight {
 		(0 as Weight)
-			// Standard Error: 3_000
-			.saturating_add((818_000 as Weight).saturating_mul(l as Weight))
+			// Standard Error: 1_000
+			.saturating_add((829_000 as Weight).saturating_mul(l as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(l as Weight)))

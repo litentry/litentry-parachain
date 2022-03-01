@@ -48,10 +48,15 @@ where
 		// TODO: 价格设置过低无法正常交易
 		let base_prices = [11.into(); 11];
 		let rent_prices = [11.into(); 11];
+		let deposit_prices = [11.into(); 11];
 		let init_rate = 1_000.into();
 
-		weight +=
-			migration::Initialize::<T>::initial_price_oracle(base_prices, rent_prices, init_rate);
+		weight += migration::Initialize::<T>::initial_price_oracle(
+			base_prices,
+			rent_prices,
+			deposit_prices,
+			init_rate,
+		);
 
 		weight
 	}

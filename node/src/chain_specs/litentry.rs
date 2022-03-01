@@ -262,6 +262,7 @@ fn generate_genesis(
 		pns_price_oracle: PnsPriceOracleConfig {
 			base_prices: [0; 11],
 			rent_prices: [0; 11],
+			deposit_prices: [0; 11],
 			init_rate: 0,
 		},
 		pns_resolvers: PnsResolversConfig { accounts: vec![], texts: vec![] },
