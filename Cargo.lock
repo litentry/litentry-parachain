@@ -188,9 +188,9 @@ dependencies = [
 
 [[package]]
 name = "async-global-executor"
-version = "2.0.2"
+version = "2.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9586ec52317f36de58453159d48351bc244bc24ced3effc1fce22f3d48664af6"
+checksum = "c026b7e44f1316b567ee750fea85103f87fcb80792b860e979f221259796ca0a"
 dependencies = [
  "async-channel",
  "async-executor",
@@ -4214,7 +4214,7 @@ checksum = "a261afc61b7a5e323933b402ca6a1765183687c614789b1e4db7762ed4230bca"
 
 [[package]]
 name = "litentry-collator"
-version = "0.9.3"
+version = "0.9.4"
 dependencies = [
  "async-trait",
  "clap",
@@ -4282,7 +4282,7 @@ dependencies = [
 
 [[package]]
 name = "litentry-parachain-runtime"
-version = "0.9.3"
+version = "0.9.4"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
@@ -4353,7 +4353,7 @@ dependencies = [
 
 [[package]]
 name = "litmus-parachain-runtime"
-version = "0.9.3"
+version = "0.9.4"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
@@ -7545,7 +7545,7 @@ dependencies = [
 
 [[package]]
 name = "primitives"
-version = "0.9.3"
+version = "0.9.4"
 dependencies = [
  "sp-core",
  "sp-runtime",
