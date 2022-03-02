@@ -898,11 +898,10 @@ extern crate frame_benchmarking;
 #[cfg(feature = "runtime-benchmarks")]
 mod benches {
 	define_benchmarks!(
+		// TODO: remove pallet_collator_selection for now => upstream bug
 		[frame_system, SystemBench::<Runtime>]
 		[pallet_balances, Balances]
 		[pallet_timestamp, Timestamp]
-		// it's an upstream bug, comment it out for now
-		// [pallet_collator_selection, CollatorSelection]
 		[pallet_utility, Utility]
 		[pallet_treasury, Treasury]
 		[pallet_democracy, Democracy]
