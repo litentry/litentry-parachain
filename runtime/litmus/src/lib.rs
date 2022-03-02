@@ -401,7 +401,7 @@ impl pallet_scheduler::Config for Runtime {
 	type MaximumWeight = MaximumSchedulerWeight;
 	type ScheduleOrigin = EnsureRoot<AccountId>;
 	type MaxScheduledPerBlock = MaxScheduledPerBlock;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_scheduler::WeightInfo<Runtime>;
 	type OriginPrivilegeCmp = frame_support::traits::EqualPrivilegeOnly;
 	type PreimageProvider = Preimage;
 	type NoPreimagePostponement = ();
@@ -413,7 +413,7 @@ parameter_types! {
 }
 
 impl pallet_preimage::Config for Runtime {
-	type WeightInfo = pallet_preimage::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_preimage::WeightInfo<Runtime>;
 	type Event = Event;
 	type Currency = Balances;
 	type ManagerOrigin = EnsureRoot<AccountId>;
@@ -685,7 +685,7 @@ impl pallet_session::Config for Runtime {
 	// Essentially just Aura, but lets be pedantic.
 	type SessionHandler = <SessionKeys as sp_runtime::traits::OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = SessionKeys;
-	type WeightInfo = pallet_session::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::pallet_session::WeightInfo<Runtime>;
 }
 
 impl pallet_aura::Config for Runtime {
@@ -727,7 +727,7 @@ impl pallet_vesting::Config for Runtime {
 	type Currency = Balances;
 	type BlockNumberToBalance = ConvertInto;
 	type MinVestedTransfer = MinVestedTransfer;
-	type WeightInfo = pallet_vesting::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = ();
 	// `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
 	// highest number of schedules that encodes less than 2^10.
 	const MAX_VESTING_SCHEDULES: u32 = 28;
