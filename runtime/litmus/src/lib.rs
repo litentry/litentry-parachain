@@ -889,6 +889,7 @@ extern crate frame_benchmarking;
 mod benches {
 	define_benchmarks!(
 		// TODO: remove pallet_collator_selection for now => upstream bug
+		//       see https://github.com/paritytech/cumulus/pull/1061
 		[frame_system, SystemBench::<Runtime>]
 		[pallet_balances, Balances]
 		[pallet_timestamp, Timestamp]
