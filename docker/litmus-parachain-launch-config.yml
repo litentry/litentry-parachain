@@ -18,8 +18,7 @@ relaychain:
 # Parachain Configuration
 parachains:
 - image: litentry/litentry-parachain:latest
-  chain:
-    base: litmus-dev
+  chain: litmus-dev
   id: 2106
   parachain: true
   flags:
