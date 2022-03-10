@@ -78,7 +78,7 @@ if [ $(hostname) != "ubuntu-16gb-CI" ]; then
   echo "         please make sure the given HTTP-RPC endpoint accessible"
 else
   # open the ssh port forwarding for a short time
-  ssh -f -L 9933:localhost:9933 litmus-sg-rpc0 sleep 120
+  ssh -f -L 9900:localhost:9933 litmus-sg-rpc0 sleep 120
 fi
 
 # retrieve the live wasm
