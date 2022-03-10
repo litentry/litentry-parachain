@@ -18,7 +18,7 @@ function print_divider() {
 
 function usage() {
   print_divider
-  echo "Usage: $0 [binary] [http-rpc-endpoint] [orig-chain] [fork-chain]"
+  echo "Usage: $0 [http-rpc-endpoint] [orig-chain] [fork-chain] [binary]"
   echo 
   echo "the http-rpc-endpoint has to be a reachabale HTTP-RPC URL (do not mix it up with ws port)"
   echo 
@@ -41,9 +41,9 @@ case "$1" in
     ;;
 esac
 
-ENDPOINT="${2:-http://localhost:9933}"
-ORIG_CHAIN=${3:-litmus}
-FORK_CHAIN=${4:-litmus-dev}
+ENDPOINT="${1:-http://localhost:9933}"
+ORIG_CHAIN=${2:-litmus}
+FORK_CHAIN=${3:-litmus-dev}
 CHAIN_TYPE=
 
 case "$FORK_CHAIN" in
@@ -65,10 +65,10 @@ npm i
 mkdir data && cd data
 
 # copy the binary
-if [ -z "$1" ]; then
+if [ -z "$4" ]; then
   docker cp $(docker create --rm litentry/litentry-parachain:latest):/usr/local/bin/litentry-collator binary
 else
-  cp "$1" binary
+  cp "$4" binary
 fi
 chmod a+x binary
 
