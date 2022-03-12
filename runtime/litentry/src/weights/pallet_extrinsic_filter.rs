@@ -18,12 +18,12 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2022-03-02, STEPS: `20`, REPEAT: 50, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("litmus-dev"), DB CACHE: 20
+//! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("litentry-dev"), DB CACHE: 20
 
 // Executed Command:
 // ./litentry-collator
 // benchmark
-// --chain=litmus-dev
+// --chain=litentry-dev
 // --execution=wasm
 // --db-cache=20
 // --wasm-execution=compiled
@@ -33,7 +33,7 @@
 // --steps=20
 // --repeat=50
 // --header=./LICENSE_HEADER
-// --output=./runtime/litmus/src/weights/pallet_extrinsic_filter.rs
+// --output=./runtime/litentry/src/weights/pallet_extrinsic_filter.rs
 
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
@@ -47,7 +47,7 @@ pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_extrinsic_filter::WeightInfo for WeightInfo<T> {
 	// Storage: ExtrinsicFilter BlockedExtrinsics (r:1 w:1)
 	fn block_extrinsics(p: u32, f: u32, ) -> Weight {
-		(22_870_000 as Weight)
+		(21_728_000 as Weight)
 			// Standard Error: 0
 			.saturating_add((4_000 as Weight).saturating_mul(p as Weight))
 			// Standard Error: 0
@@ -57,9 +57,9 @@ impl<T: frame_system::Config> pallet_extrinsic_filter::WeightInfo for WeightInfo
 	}
 	// Storage: ExtrinsicFilter BlockedExtrinsics (r:1 w:1)
 	fn unblock_extrinsics(p: u32, f: u32, ) -> Weight {
-		(23_677_000 as Weight)
+		(23_619_000 as Weight)
 			// Standard Error: 0
-			.saturating_add((8_000 as Weight).saturating_mul(p as Weight))
+			.saturating_add((9_000 as Weight).saturating_mul(p as Weight))
 			// Standard Error: 0
 			.saturating_add((9_000 as Weight).saturating_mul(f as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
