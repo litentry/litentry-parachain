@@ -41,6 +41,10 @@ build-runtime-litentry:
 build-runtime-litmus:
 	cargo build -p $(call pkgid, litmus-parachain-runtime) --release
 
+.PHONY: build-runtime-rococo ## Build rococo release runtime
+build-runtime-rococo:
+	cargo build -p $(call pkgid, rococo-parachain-runtime) --release
+
 .PHONY: srtool-build-wasm-litentry ## Build litentry wasm with srtools
 srtool-build-wasm-litentry:
 	@./scripts/build-wasm.sh litentry
@@ -48,6 +52,10 @@ srtool-build-wasm-litentry:
 .PHONY: srtool-build-wasm-litmus ## Build litmus wasm with srtools
 srtool-build-wasm-litmus:
 	@./scripts/build-wasm.sh litmus
+
+.PHONY: srtool-build-wasm-rococo ## Build rococo wasm with srtools
+srtool-build-wasm-rococo:
+	@./scripts/build-wasm.sh rococo
 
 .PHONY: build-docker ## Build docker image
 build-docker:
