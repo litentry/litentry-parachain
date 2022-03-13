@@ -11,4 +11,5 @@ members = [
     'primitives',
     'runtime/litentry',
     'runtime/litmus',
+    'runtime/rococo',
 ]
