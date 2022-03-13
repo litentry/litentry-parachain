@@ -24,7 +24,6 @@ use rococo_parachain_runtime::{
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
 use serde::Deserialize;
-use sp_core::sr25519;
 
 const DEFAULT_PARA_ID: u32 = 2075;
 
@@ -39,9 +38,6 @@ const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
 fn default_parachain_properties() -> Option<Properties> {
 	parachain_properties("LIT", 12, 131)
 }
-
-const DEV_CANDIDACY_BOND: Balance = 1;
-const DEFAULT_ENDOWED_ACCOUNT_BALANCE: Balance = 1000 * UNIT;
 
 /// GenesisInfo struct to store the parsed genesis_info JSON
 #[derive(Deserialize, Debug, Clone)]
