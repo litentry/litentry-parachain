@@ -47,7 +47,7 @@ jobs:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v2
         with:
-          ref: ${{ env.RELEASE_TAG }}
+          # ref: ${{ env.RELEASE_TAG }}
           fetch-depth: 0
 
       - name: Build with srtool
@@ -80,7 +80,7 @@ jobs:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v2
         with:
-          ref: ${{ env.RELEASE_TAG }}
+          # ref: ${{ env.RELEASE_TAG }}
           fetch-depth: 0
 
       - name: Build docker image
@@ -132,7 +132,7 @@ jobs:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v2
         with:
-          ref: ${{ env.RELEASE_TAG }}
+          # ref: ${{ env.RELEASE_TAG }}
           fetch-depth: 0
 
       - name: Download all artefacts
