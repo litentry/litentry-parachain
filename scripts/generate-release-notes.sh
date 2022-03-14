@@ -8,18 +8,17 @@ err_report() {
 trap 'err_report $LINENO' ERR
 
 function usage() {
-  echo "Usage: $0 litentry|litmus path-to-output diff-tag release-type"
+  echo "Usage: $0 path-to-output release-type [diff-tag]"
 }
 
-[ $# -ne 3 ] && [ $# -ne 4 ] && (usage; exit 1)
+[ $# -ne 2 ] && [ $# -ne 3 ] && (usage; exit 1)
 
 ROOTDIR=$(git rev-parse --show-toplevel)
 cd "$ROOTDIR"
 
-CHAIN=$1
 REPO=https://github.com/litentry/litentry-parachain
 
-if [ "$3" != "runtime" ]; then
+if [ "$2" != "runtime" ]; then
   # base image used to build the node binary
   NODE_BUILD_BASE_IMAGE=$(grep FROM docker/Dockerfile | head -n1 | sed 's/^FROM //;s/ as.*//')
 
@@ -37,7 +36,7 @@ if [ "$3" != "runtime" ]; then
   fi
 fi
 
-if [ "$3" != "client" ]; then
+if [ "$2" != "client" ]; then
   SRTOOL_DIGEST_FILE=$CHAIN-parachain-runtime/$CHAIN-parachain-srtool-digest.json
   RUNTIME_VERSION=$(grep spec_version runtime/$CHAIN/src/lib.rs | sed 's/.*version: //;s/,//')
   RUNTIME_COMPRESSED_SIZE=$(cat "$SRTOOL_DIGEST_FILE" | jq .runtimes.compressed.size | sed 's/"//g')
@@ -52,15 +51,25 @@ SUBSTRATE_DEP=$(grep sp-core node/Cargo.toml | sed 's/.*branch = "//;s/".*//')
 CUMULUS_DEP=$(grep cumulus-client-cli node/Cargo.toml | sed 's/.*branch = "//;s/".*//')
 POLKADOT_DEP=$(grep polkadot-cli node/Cargo.toml | sed 's/.*branch = "//;s/".*//')
 
-TAB="$(printf '\t')"
-
-echo > "$2"
+echo > "$1"
+echo "## This is a release for:" >> "$1"
+if [ "$2" != "runtime" ]; then
+  echo "- [x] Client" >> "$1"
+else
+  echo "- [ ] Client" >> "$1"
+fi
+if [ "$2" != "client" ]; then
+  echo "- [x] Runtime" >> "$1"
+else
+  echo "- [ ] Runtime" >> "$1"
+fi
+echo >> "$1"
 
 # use <CODE> to decorate around the stuff and then replace it with `
 # so that it's not executed as commands inside heredoc
 
-if [ "$3" != "runtime" ]; then
-  cat << EOF >> "$2"
+if [ "$2" != "runtime" ]; then
+  cat << EOF >> "$1"
 ## Client
 
 <CODEBLOCK>
@@ -74,9 +83,20 @@ docker image                 : litentry/litentry-parachain:$RELEASE_TAG
 EOF
 fi
 
-if [ "$3" != "client" ]; then
-  cat << EOF >> "$2"
-## Runtime
+if [ "$2" != "client" ]; then
+  echo "## Runtime" >> "$1"
+  # TODO rococo
+  for CHAIN in litmus litentry; do
+    SRTOOL_DIGEST_FILE=$CHAIN-parachain-runtime/$CHAIN-parachain-srtool-digest.json
+    RUNTIME_VERSION=$(grep spec_version runtime/$CHAIN/src/lib.rs | sed 's/.*version: //;s/,//')
+    RUNTIME_COMPRESSED_SIZE=$(cat "$SRTOOL_DIGEST_FILE" | jq .runtimes.compressed.size | sed 's/"//g')
+    RUNTIME_RUSTC_VERSION=$(cat "$SRTOOL_DIGEST_FILE" | jq .rustc | sed 's/"//g')
+    RUNTIME_COMPRESSED_SHA256=$(cat "$SRTOOL_DIGEST_FILE" | jq .runtimes.compressed.sha256 | sed 's/"//g')
+    RUNTIME_COMPRESSED_BLAKE2=$(cat "$SRTOOL_DIGEST_FILE" | jq .runtimes.compressed.blake2_256 | sed 's/"//g')
+    RUNTIME_COMPRESSED_SET_CODE_HASH=$(cat "$SRTOOL_DIGEST_FILE" | jq .runtimes.compressed.subwasm.proposal_hash | sed 's/"//g')
+    RUNTIME_COMPRESSED_AUTHORIZE_UPGRADE_HASH=$(cat "$SRTOOL_DIGEST_FILE" | jq .runtimes.compressed.subwasm.parachain_authorize_upgrade_hash | sed 's/"//g')
+    cat << EOF >> "$1"
+### $CHAIN
 
 <CODEBLOCK>
 version                      : $RUNTIME_VERSION
@@ -89,9 +109,10 @@ proposal (authorizeUpgrade)  : $RUNTIME_COMPRESSED_AUTHORIZE_UPGRADE_HASH
 <CODEBLOCK>
 
 EOF
+  done
 fi
 
-cat << EOF >> "$2"
+cat << EOF >> "$1"
 ## Dependencies
 
 <CODEBLOCK>
@@ -102,28 +123,28 @@ Cumulus                      : $CUMULUS_DEP
 
 EOF
 
-if [ "$GENESIS_RELEASE" = "true" ]; then
-  if [ "$3" = "runtime" ]; then
+if [ "$GENESIS_RELEASE" != "none" ]; then
+  if [ "$2" = "runtime" ]; then
     echo "genesis release requires to build client"
     exit 1
   fi
 
-  GENESIS_STATE_HASH=$(shasum litentry-collator/$CHAIN-genesis-state | awk '{print $1}')
-  GENESIS_WASM_HASH=$(shasum litentry-collator/$CHAIN-genesis-wasm | awk '{print $1}')
+  GENESIS_STATE_HASH=$(shasum litentry-collator/$GENESIS_RELEASE-genesis-state | awk '{print $1}')
+  GENESIS_WASM_HASH=$(shasum litentry-collator/$GENESIS_RELEASE-genesis-wasm | awk '{print $1}')
 
   # double check that exported wasm matches what's written in chain-spec
   # intentionally use 'generate-prod' as chain type
-  docker run --rm "litentry/litentry-parachain:$RELEASE_TAG" build-spec --chain=generate-$CHAIN --raw | \
+  docker run --rm "litentry/litentry-parachain:$RELEASE_TAG" build-spec --chain=generate-$GENESIS_RELEASE --raw | \
   grep -F '"0x3a636f6465"' | sed 's/.*"0x3a636f6465": "//;s/",$//' | tr -d '\n' > /tmp/built-wasm
 
-  if cmp /tmp/built-wasm litentry-collator/$CHAIN-genesis-wasm; then
+  if cmp /tmp/built-wasm litentry-collator/$GENESIS_RELEASE-genesis-wasm; then
     echo "genesis-wasm equal, all good."
     rm -f /tmp/built-wasm
   else
     echo "genesis-wasm unequal"
     exit 1
   fi
-  cat << EOF >> "$2"
+  cat << EOF >> "$1"
 ## Genesis artefacts
 
 <CODEBLOCK>
@@ -136,11 +157,11 @@ fi
 
 # restore ``` in markdown doc
 # use -i.bak for compatibility for MacOS and Linux
-sed -i.bak 's/<CODEBLOCK>/```/g' "$2"
-rm -f "$2.bak"
+sed -i.bak 's/<CODEBLOCK>/```/g' "$1"
+rm -f "$1.bak"
 
 # if we have a diff-tag, list the changes inbetween
-DIFF_TAG="$4"
+DIFF_TAG="$3"
 
 if [ -z "$DIFF_TAG" ]; then
   echo "Nothing to compare"
@@ -149,7 +170,7 @@ elif [ "$DIFF_TAG" = "$RELEASE_TAG" ]; then
   echo "Skip compare to itself"
   exit 0
 else
-  cat << EOF >> "$2"
+  cat << EOF >> "$1"
 ## Changes
 
 Raw diff: [$DIFF_TAG...$RELEASE_TAG](https://github.com/litentry/litentry-parachain/compare/$DIFF_TAG...$RELEASE_TAG)
@@ -161,6 +182,6 @@ EOF
   git log --no-merges --abbrev-commit --pretty="format:%h|%s" $DIFF_TAG..$RELEASE_TAG | while read -r f; do
     commit=$(echo "$f" | cut -d'|' -f1)
     desc=$(echo "$f" | cut -d'|' -f2)
-    echo -e "- [\`$commit\`]($REPO/commit/$commit) $desc" >> "$2"
+    echo -e "- [\`$commit\`]($REPO/commit/$commit) $desc" >> "$1"
   done
 fi
