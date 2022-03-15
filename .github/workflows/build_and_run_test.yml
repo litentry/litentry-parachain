@@ -94,7 +94,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v3
         with:
-          path: docker-artifact
+          name: docker-artifact
 
       - name: Load docker image
         run: |
@@ -167,7 +167,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v3
         with:
-          path: docker-artifact
+          name: docker-artifact
 
       - name: Load docker image
         run: |
