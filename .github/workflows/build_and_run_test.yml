@@ -68,7 +68,7 @@ jobs:
           fetch-depth: 0
 
       - name: Build docker image
-        timeout-minutes: 40
+        # timeout-minutes: 40
         run: |
           ./scripts/build-docker.sh
           echo "============================="
