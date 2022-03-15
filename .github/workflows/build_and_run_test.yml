@@ -78,10 +78,11 @@ jobs:
       # to share data between jobs
       - name: Cache docker image
         uses: actions/cache@v2
-        path: litentry-parachain.tar
-        key: docker-${{ hashFiles('litentry-parachain.tar') }}
-        restore-keys: |
-          docker-
+        with:
+          path: litentry-parachain.tar
+          key: docker-${{ hashFiles('litentry-parachain.tar') }}
+          restore-keys: |
+            docker-
 
   run-ts-tests:
     runs-on: ubuntu-latest
