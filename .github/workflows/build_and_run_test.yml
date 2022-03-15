@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - dev
-      - 393-avoid-self-runner-in-CI
     paths-ignore:
       - '**/dependabot.yml'
       - '**/README.md'
@@ -20,18 +19,16 @@ jobs:
   check-cargo-fmt:
     runs-on: ubuntu-latest
     steps:
-      - &checkout
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
-      - &toolchain
-        name: Install toolchain
+      - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: nightly
-          components: rustfmt, clippy
+          components: rustfmt
           target: wasm32-unknown-unknown
           default: true
 
@@ -42,8 +39,18 @@ jobs:
     runs-on: ubuntu-latest
     needs: check-cargo-fmt
     steps:
-      - *checkout
-      - *toolchain
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          components: clippy
+          target: wasm32-unknown-unknown
+          default: true
 
       - name: Run cargo clippy check
         run: make clippy
@@ -57,7 +64,10 @@ jobs:
     runs-on: self-hosted
     needs: check-cargo-fmt
     steps:
-      - *checkout
+      - name: Checkout codes
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Build docker image
         timeout-minutes: 80
@@ -85,15 +95,16 @@ jobs:
           - litmus
           - litentry
     steps:
-      - *checkout
+      - name: Checkout codes
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
-      - &download-docker
-        uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v3
         with:
           name: docker-artifact
 
-      - &load-docker
-        name: Load docker image
+      - name: Load docker image
         run: |
           docker load -i litentry-parachain.tar
 
@@ -119,8 +130,17 @@ jobs:
     runs-on: ubuntu-latest
     needs: check-cargo-fmt
     steps:
-      - *checkout
-      - *toolchain
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          target: wasm32-unknown-unknown
+          default: true
 
       - name: Run unittests
         run: cargo test --release -p pallet-* --lib
@@ -134,8 +154,17 @@ jobs:
           - litmus
           - litentry
     steps:
-      - *checkout
-      - *toolchain
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          target: wasm32-unknown-unknown
+          default: true
 
       - name: Run runtime integration tests
         run: cargo test --release -p ${{ matrix.chain }}-parachain-runtime --lib
@@ -144,8 +173,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: ["check-cargo-clippy", "run-cargo-unit-tests", "run-cargo-runtime-tests", "run-ts-tests"]
     steps:
-      - *download-docker
-      - *load-docker
+      - uses: actions/download-artifact@v3
+        with:
+          name: docker-artifact
+
+      - name: Load docker image
+        run: |
+          docker load -i litentry-parachain.tar
 
       - name: Dockerhub login
         uses: docker/login-action@v1
