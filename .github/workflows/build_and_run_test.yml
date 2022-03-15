@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - dev
+      - 393-avoid-self-runner-in-CI
     paths-ignore:
       - '**/dependabot.yml'
       - '**/README.md'
