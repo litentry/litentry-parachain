@@ -75,6 +75,9 @@ jobs:
           ./scripts/build-docker.sh
           echo "============================="
           docker images
+
+      - name: Save docker image
+        run: |
           docker save litentry/litentry-parachain:latest -o litentry-parachain.tar
 
       - name: Upload docker image
