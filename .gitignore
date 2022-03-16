@@ -5,7 +5,6 @@
 .cargo/config
 
 **/node_modules/
-**/para-*
 
 docker/yarn.lock
 docker/package.json
