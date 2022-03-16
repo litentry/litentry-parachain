@@ -97,26 +97,21 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup docker buildx
-        uses: docker/setup-buildx-action@v1
-
-      # we try to cache docker layers between GHA with cargo-chef
       - name: Build docker image
         if: needs.check-file-change.outputs.src == 'true'
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          tags: litentry/litentry-parachain:latest
-          outputs: type=docker,dest=litentry-parachain.tar
-          push: false
-          file: docker/Dockerfile
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+        timeout-minutes: 40
+        run: |
+          ./scripts/build-docker.sh
+          echo "============================="
+          docker images
 
       - name: Pull docker image optinally
         if: needs.check-file-change.outputs.src == 'false'
         run: |
           docker pull litentry/litentry-parachain:latest
+
+      - name: Save docker image
+        run: |
           docker save litentry/litentry-parachain:latest -o litentry-parachain.tar
 
       - name: Upload docker image
