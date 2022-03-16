@@ -19,15 +19,14 @@ WORKDIR /litentry
 RUN rustup default nightly && \
 	rustup target add wasm32-unknown-unknown --toolchain nightly
 
-COPY --from=planner /app/recipe.json /litentry/recipe.json
-COPY . /litentry
-
-# Notice that we are specifying the --target flag!
-RUN cargo chef cook --release --recipe-path recipe.json
-
 RUN apt-get update && \
 	apt-get dist-upgrade -y -o Dpkg::Options::="--force-confold" && \
 	apt-get install -y cmake pkg-config libssl-dev git clang libclang-dev
+
+COPY --from=planner /app/recipe.json /litentry/recipe.json
+COPY . /litentry
+
+RUN cargo chef cook --release --recipe-path recipe.json
 
 ARG BUILD_ARGS
 
