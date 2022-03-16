@@ -23,13 +23,14 @@ RUN apt-get update && \
 	apt-get dist-upgrade -y -o Dpkg::Options::="--force-confold" && \
 	apt-get install -y cmake pkg-config libssl-dev git clang libclang-dev
 
+# copy the recipe and toolchain file to make sure we are using consistent `cargo`
 COPY --from=planner /app/recipe.json /litentry/recipe.json
-COPY . /litentry
-
+COPY rust-toolchain.toml /litentry/rust-toolchain.toml
 RUN cargo chef cook --release --recipe-path recipe.json
 
+# copy and build the real src
+COPY . /litentry
 ARG BUILD_ARGS
-
 RUN cargo build --release $BUILD_ARGS
 
 # ==========================
