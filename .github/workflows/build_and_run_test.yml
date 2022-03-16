@@ -21,6 +21,10 @@ jobs:
     outputs:
       ts: ${{ steps.filter.outputs.ts }}
     steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
       # Checks to see if any files in the PR/commit match one of the listed file types.
       # We can use this filter to decide whether or not to build docker images
       - uses: dorny/paths-filter@v2
