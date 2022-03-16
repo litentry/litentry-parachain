@@ -41,6 +41,7 @@ jobs:
               - 'primitives/**'
               - 'runtime/**'
               - 'scripts/build-docker.sh'
+              - 'docker/Dockerfile'
               - '**/Cargo.lock'
               - '**/Cargo.toml'
               - '**/rust-toolchain.toml'
