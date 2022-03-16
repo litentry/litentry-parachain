@@ -23,7 +23,7 @@ jobs:
   check-file-change:
     runs-on: ubuntu-latest
     outputs:
-      ts: ${{ steps.filter.outputs.ts }}
+      src: ${{ steps.filter.outputs.src }}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -35,8 +35,15 @@ jobs:
         id: filter
         with:
           filters: |
-            ts:
-              - 'ts-tests/**'
+            src:
+              - 'node/**'
+              - 'pallets/**'
+              - 'primitives/**'
+              - 'runtime/**'
+              - 'scripts/build-docker.sh'
+              - '**/Cargo.lock'
+              - '**/Cargo.toml'
+              - '**/rust-toolchain.toml'
 
   check-cargo-fmt:
     runs-on: ubuntu-latest
@@ -60,7 +67,7 @@ jobs:
   check-cargo-clippy:
     runs-on: ubuntu-latest
     needs: [check-cargo-fmt, check-file-change]
-    if: needs.check-file-change.outputs.ts == 'false'
+    if: needs.check-file-change.outputs.src == 'true'
     steps:
       - uses: actions/checkout@v2
         with:
@@ -91,7 +98,7 @@ jobs:
           fetch-depth: 0
 
       - name: Build docker image
-        if: needs.check-file-change.outputs.ts == 'false'
+        if: needs.check-file-change.outputs.src == 'true'
         timeout-minutes: 40
         run: |
           ./scripts/build-docker.sh
@@ -99,9 +106,7 @@ jobs:
           docker images
 
       - name: Pull docker image optinally
-        # if the changed files are ts-tests/** files,
-        # do not build the docker image, just pull it instead
-        if: needs.check-file-change.outputs.ts == 'true'
+        if: needs.check-file-change.outputs.src == 'false'
         run: |
           docker pull litentry/litentry-parachain:latest
 
@@ -158,7 +163,7 @@ jobs:
   run-cargo-unit-tests:
     runs-on: ubuntu-latest
     needs: [check-cargo-fmt, check-file-change]
-    if: needs.check-file-change.outputs.ts == 'false'
+    if: needs.check-file-change.outputs.src == 'true'
     steps:
       - uses: actions/checkout@v2
         with:
@@ -178,7 +183,7 @@ jobs:
   run-cargo-runtime-tests:
     runs-on: ubuntu-latest
     needs: [check-cargo-fmt, check-file-change]
-    if: needs.check-file-change.outputs.ts == 'false'
+    if: needs.check-file-change.outputs.src == 'true'
     env:
       RUST_BACKTRACE: full
       RUSTC_WRAPPER: sccache
