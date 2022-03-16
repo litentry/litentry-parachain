@@ -1,16 +1,28 @@
+FROM rust:latest as chef
+USER root
+RUN cargo install cargo-chef
+WORKDIR /app
+
+FROM chef AS planner
+COPY . .
+RUN rustup default nightly && \
+	rustup target add wasm32-unknown-unknown --toolchain nightly
+RUN cargo chef prepare --recipe-path recipe.json
+
 # ==========================
 # stage 1: build
 # https://hub.docker.com/_/rust
 # our host is based on bullseye/sid => rust:latest
 # ==========================
-FROM rust:latest as builder
+FROM chef as builder
 WORKDIR /litentry
-COPY . /litentry
-
-# always use the toolchain in base image
-# we do not fix toolchain version as it's still evolving rapidly
 RUN rustup default nightly && \
 	rustup target add wasm32-unknown-unknown --toolchain nightly
+
+COPY --from=planner /app/recipe.json /litentry/recipe.json
+# Notice that we are specifying the --target flag!
+RUN cargo chef cook --release --recipe-path recipe.json
+COPY . /litentry
 
 RUN apt-get update && \
 	apt-get dist-upgrade -y -o Dpkg::Options::="--force-confold" && \
