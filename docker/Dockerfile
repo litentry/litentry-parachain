@@ -1,19 +1,25 @@
+# ===================================
+# stage 1: install cargo-chef
+# https://hub.docker.com/_/rust
+# our host is based on bullseye/sid => rust:latest
+# ===================================
 FROM rust:latest as chef
 USER root
 RUN cargo install cargo-chef
 WORKDIR /app
 
-FROM chef AS planner
+# ===================================
+# stage 2: generate cargo-chef recipe
+# ===================================
+FROM chef AS cacher
 COPY . .
 RUN rustup default nightly && \
 	rustup target add wasm32-unknown-unknown --toolchain nightly
 RUN cargo chef prepare --recipe-path recipe.json
 
-# ==========================
-# stage 1: build
-# https://hub.docker.com/_/rust
-# our host is based on bullseye/sid => rust:latest
-# ==========================
+# ===================================
+# stage 3: build
+# ===================================
 FROM chef as builder
 WORKDIR /litentry
 RUN rustup default nightly && \
@@ -24,7 +30,7 @@ RUN apt-get update && \
 	apt-get install -y cmake pkg-config libssl-dev git clang libclang-dev
 
 # copy the recipe and toolchain file to make sure we are using consistent `cargo`
-COPY --from=planner /app/recipe.json /litentry/recipe.json
+COPY --from=cacher /app/recipe.json /litentry/recipe.json
 COPY rust-toolchain.toml /litentry/rust-toolchain.toml
 RUN cargo chef cook --release --recipe-path recipe.json
 
@@ -32,10 +38,11 @@ RUN cargo chef cook --release --recipe-path recipe.json
 COPY . /litentry
 ARG BUILD_ARGS
 RUN cargo build --release $BUILD_ARGS
+RUN strip target/release/litentry-collator
 
-# ==========================
+# ===================================
 # stage 2: packaging
-# ==========================
+# ===================================
 
 FROM ubuntu:20.04
 LABEL maintainer="litentry-dev"
