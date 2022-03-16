@@ -15,6 +15,10 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check-file-change:
     runs-on: ubuntu-latest
@@ -74,9 +78,6 @@ jobs:
         run: make clippy
 
   build-docker:
-    concurrency:
-      group: ${{ github.ref }}
-      cancel-in-progress: true
     # run the docker build on our self-hosted runner, which takes < 20min
     # on a standard github runner it takes ~1 hour
     # runs-on: self-hosted
