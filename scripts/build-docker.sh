@@ -29,7 +29,7 @@ GITREPO=litentry-parachain
 # Build the image
 echo "------------------------------------------------------------"
 echo "Building ${GITUSER}/${GITREPO}:${TAG} docker image ..."
-docker build --rm --pull -f ./docker/Dockerfile \
+docker build --rm --no-cache --pull -f ./docker/Dockerfile \
     --build-arg BUILD_ARGS="$ARGS" \
     -t ${GITUSER}/${GITREPO}:${TAG} .
 
