@@ -14,6 +14,14 @@ TYPE="$1"
 TAG="$2"
 ARGS="$3"
 
+NOCACHE_FLAG=
+
+case "$TYPE" in
+    dev) ;;
+    prod) NOCACHE_FLAG="--no-cache" ;;
+    *) usage; exit 1 ;;
+esac
+
 if [ -z "$TAG" ]; then
     TAG_COMMIT=`git rev-list --tags --max-count=1`
     HEAD_COMMIT=`git rev-parse HEAD`
@@ -37,7 +45,7 @@ GITREPO=litentry-parachain
 # Build the image
 echo "------------------------------------------------------------"
 echo "Building ${GITUSER}/${GITREPO}:${TAG} docker image ..."
-docker build --rm --no-cache --pull -f ./docker/Dockerfile.${TYPE} \
+docker build --rm ${NOCACHE_FLAG} --pull -f ./docker/Dockerfile.${TYPE} \
     --build-arg BUILD_ARGS="$ARGS" \
     -t ${GITUSER}/${GITREPO}:${TAG} .
 

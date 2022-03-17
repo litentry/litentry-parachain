@@ -86,8 +86,10 @@ jobs:
         run: make clippy
 
   build-docker:
-    # run the docker build on our self-hosted runner, which takes < 20min without cache
-    # on a standard github runner it takes ~1 hour
+    # run the docker build on our self-hosted runner, which takes
+    # - 25min without cache, or
+    # - 15 min with cache
+    # on a standard github runner it takes 1 hour+
     runs-on: self-hosted
     needs: [check-cargo-fmt, check-file-change]
     steps:
