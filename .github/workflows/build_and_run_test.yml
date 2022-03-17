@@ -40,8 +40,7 @@ jobs:
               - 'pallets/**'
               - 'primitives/**'
               - 'runtime/**'
-              - 'scripts/build-docker.sh'
-              - 'docker/Dockerfile'
+              - 'docker/Dockerfile.dev'
               - '**/Cargo.lock'
               - '**/Cargo.toml'
               - '**/rust-toolchain.toml'
@@ -100,8 +99,7 @@ jobs:
       - name: Setup docker buildx
         uses: docker/setup-buildx-action@v1
 
-      # To sync GHA cache seems to be very slow, as we are building locally,
-      # simply use a local cache
+      # Syncing GHA cache seems to be very slow, we use local cache for a self-hosted runner
       - name: Build docker image
         if: needs.check-file-change.outputs.src == 'true'
         uses: docker/build-push-action@v2
@@ -110,25 +108,18 @@ jobs:
           tags: litentry/litentry-parachain:latest
           outputs: type=docker,dest=litentry-parachain.tar
           push: false
-          file: docker/Dockerfile
+          file: docker/Dockerfile.dev
           cache-from: type=local,src=/tmp/parachain-buildx-cache
           cache-to: type=local,dest=/tmp/parachain-buildx-cache-new,mode=max
 
       - name: Move cache
-        # Temp fix
+        if: needs.check-file-change.outputs.src == 'true'
+        # Temp fix for constantly growing cache, see
         # https://github.com/docker/build-push-action/issues/252
         # https://github.com/moby/buildkit/issues/1896
         run: |
           rm -rf /tmp/parachain-buildx-cache
           mv /tmp/parachain-buildx-cache-new /tmp/parachain-buildx-cache
-
-      # - name: Build docker image
-      #   if: needs.check-file-change.outputs.src == 'true'
-      #   timeout-minutes: 40
-      #   run: |
-      #     ./scripts/build-docker.sh
-      #     echo "============================="
-      #     docker images
 
       - name: Pull docker image optinally
         if: needs.check-file-change.outputs.src == 'false'
