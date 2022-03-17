@@ -90,6 +90,7 @@ jobs:
     # - 25min without cache, or
     # - 15 min with cache
     # on a standard github runner it takes 1 hour+
+    # see also https://github.com/litentry/litentry-parachain/issues/259
     runs-on: self-hosted
     needs: [check-cargo-fmt, check-file-change]
     steps:
