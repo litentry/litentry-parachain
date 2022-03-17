@@ -27,11 +27,12 @@ make build-node
 
 To build the `litentry/litentry-parachain` docker image locally:
 ```
-make build-docker-de
+make build-docker-dev
 or
 make build-docker-prod
 ```
-depending on which Dockerfile should be used. The dev version has integrated `cargo-chef` for caching.
+depending on which Dockerfile should be used: [Dockerfile.dev](./docker/Dockerfile.dev) or [Dockerfile.prod](./docker/Dockerfile.prod).
+The dev version has integrated [`cargo-chef`](https://github.com/LukeMathWalker/cargo-chef) for caching.
 As of funtionalities they should be identical.
 
 To build the litentry-parachain runtime wasm manually:
