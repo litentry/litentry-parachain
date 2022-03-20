@@ -3,12 +3,6 @@ name: Create release draft
 on:
   workflow_dispatch:
     inputs:
-      chain:
-        type: choice
-        description: Which parachain is regarded
-        options:
-          - litmus
-          - litentry
       release_type:
         type: choice
         description: Which release type
@@ -23,23 +17,32 @@ on:
         description: an existing tag to run diff against (e.g. v1.2.0)
         default: ''
         required: false
-      is_geneis_release:
-        description: if it's genesis release [true|false]
-        default: 'false'
-        required: false
+      genesis_release:
+        type: choice
+        description: If any of the genesis artefacts should be released alongside
+        options:
+          - none
+          - litmus
+          - rococo
+          - litentry
 
 env:
-  CHAIN: ${{ github.event.inputs.chain }}
   RELEASE_TYPE: ${{ github.event.inputs.release_type }}
   RELEASE_TAG: ${{ github.event.inputs.release_tag }}
   DIFF_TAG: ${{ github.event.inputs.diff_tag }}
-  GENESIS_RELEASE: ${{ github.event.inputs.is_geneis_release }}
+  GENESIS_RELEASE: ${{ github.event.inputs.genesis_release }}
 
 jobs:
   ## build runtime wasm ##
   build-wasm:
     if: github.event.inputs.release_type != 'client'
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        chain:
+          - litmus
+          # TODO - rococo
+          - litentry
     steps:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v2
@@ -51,23 +54,23 @@ jobs:
         id: srtool_build
         uses: chevdor/srtool-actions@v0.3.0
         with:
-          chain: ${{ env.CHAIN }}-parachain
-          runtime_dir: runtime/${{ env.CHAIN }}
+          chain: ${{ matrix.chain }}-parachain
+          runtime_dir: runtime/${{ matrix.chain }}
 
       - name: Summary
         run: |
-          echo '${{ steps.srtool_build.outputs.json }}' | jq . > ${{ env.CHAIN }}-parachain-srtool-digest.json
+          echo '${{ steps.srtool_build.outputs.json }}' | jq . > ${{ matrix.chain }}-parachain-srtool-digest.json
           echo "==============================================="
-          cat ${{ env.CHAIN }}-parachain-srtool-digest.json
-          cp ${{ steps.srtool_build.outputs.wasm_compressed }} ${{ env.CHAIN }}-parachain-runtime.compact.compressed.wasm
+          cat ${{ matrix.chain }}-parachain-srtool-digest.json
+          cp ${{ steps.srtool_build.outputs.wasm_compressed }} ${{ matrix.chain }}-parachain-runtime.compact.compressed.wasm
 
       - name: Upload wasm artefacts
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ env.CHAIN }}-parachain-runtime
+          name: ${{ matrix.chain }}-parachain-runtime
           path: |
-            ${{ env.CHAIN }}-parachain-srtool-digest.json
-            ${{ env.CHAIN }}-parachain-runtime.compact.compressed.wasm
+            ${{ matrix.chain }}-parachain-srtool-digest.json
+            ${{ matrix.chain }}-parachain-runtime.compact.compressed.wasm
 
   ## build docker image of client binary ##
   build-docker:
@@ -95,10 +98,10 @@ jobs:
           [ -z "$(docker images --filter=dangling=true -q)" ] || docker rmi -f $(docker images --filter=dangling=true -q)
 
       - name: Generate genesis artefacts if need
-        if: github.event.inputs.is_geneis_release == 'true'
+        if: github.event.inputs.genesis_release != 'none'
         run: |
-          docker run --rm litentry/litentry-parachain:${{ env.RELEASE_TAG }} export-genesis-state --chain=${{ env.CHAIN }} > ${{ env.CHAIN }}-genesis-state
-          docker run --rm litentry/litentry-parachain:${{ env.RELEASE_TAG }} export-genesis-wasm --chain=${{ env.CHAIN }} > ${{ env.CHAIN }}-genesis-wasm
+          docker run --rm litentry/litentry-parachain:${{ env.RELEASE_TAG }} export-genesis-state --chain=${{ env.GENESIS_RELEASE }} > ${{ env.GENESIS_RELEASE }}-genesis-state
+          docker run --rm litentry/litentry-parachain:${{ env.RELEASE_TAG }} export-genesis-wasm --chain=${{ env.GENESIS_RELEASE }} > ${{ env.GENESIS_RELEASE }}-genesis-wasm
 
       - name: Copy client binary to disk
         run: |
@@ -111,8 +114,8 @@ jobs:
           if-no-files-found: ignore
           path: |
             litentry-collator
-            ${{ env.CHAIN }}-genesis-state
-            ${{ env.CHAIN }}-genesis-wasm
+            ${{ env.GENESIS_RELEASE }}-genesis-state
+            ${{ env.GENESIS_RELEASE }}-genesis-wasm
 
   ## create the release draft ##
   create-release-draft:
@@ -137,20 +140,17 @@ jobs:
 
       - name: Generate release notes
         run: |
-          ./scripts/generate-release-notes.sh ${{ env.CHAIN }} ${{ github.workspace }}/.github/release_notes.md ${{ env.RELEASE_TYPE }} ${{ env.DIFF_TAG }}
-
-      - name: set CHAIN_TITLE env
-        run: echo "CHAIN_TITLE=${CHAIN/lit/Lit}" >> $GITHUB_ENV
+          ./scripts/generate-release-notes.sh ${{ github.workspace }}/.github/release_notes.md ${{ env.RELEASE_TYPE }} ${{ env.DIFF_TAG }}
 
       - name: Create release draft
         id: create-release-draft
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ env.RELEASE_TAG }}
-          name: ${{ env.CHAIN_TITLE }}-parachain ${{ env.RELEASE_TAG }}
+          name: Litentry-parachain ${{ env.RELEASE_TAG }}
           body_path: ${{ github.workspace }}/.github/release_notes.md
           draft: true
           files: |
-            ${{ env.CHAIN }}-parachain-runtime/${{ env.CHAIN }}-parachain-srtool-digest.json
-            ${{ env.CHAIN }}-parachain-runtime/${{ env.CHAIN }}-parachain-runtime.compact.compressed.wasm
+            *-parachain-runtime/*-parachain-srtool-digest.json
+            *-parachain-runtime/*-parachain-runtime.compact.compressed.wasm
             litentry-collator/*

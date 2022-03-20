@@ -4,20 +4,12 @@
       [
         "5FZP2oqDBBWzaKp8STUQKTvSo2Y1UD68briboWreLiVAxJr1",
         "5HbUXue4BsoBmR1ZSWCurQMTdi2jrDdVzMQoKtc8ByMH9uEc"
-      ],
-      [
-        "5EJLoe5Uaj8U7jTxJwiDCP1kNSnHu4Buw8pdkpm136QRiAEC",
-        "5E9ky6gxEMAHrVRLyubyL4UqCkdt5kJmHkB7HuxJ3Y5LDvm3"
       ]
     ],
     "candidacyBond": "16000000000000",
     "endowedAccounts": [
       [
         "5FZP2oqDBBWzaKp8STUQKTvSo2Y1UD68briboWreLiVAxJr1",
-        "1000000000000000"
-      ],
-      [
-        "5EJLoe5Uaj8U7jTxJwiDCP1kNSnHu4Buw8pdkpm136QRiAEC",
         "1000000000000000"
       ],
       [
@@ -31,15 +23,14 @@
     ],
     "council": [
       "5FZP2oqDBBWzaKp8STUQKTvSo2Y1UD68briboWreLiVAxJr1",
-      "5EJLoe5Uaj8U7jTxJwiDCP1kNSnHu4Buw8pdkpm136QRiAEC"
+      "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY"
     ],
     "technicalCommittee": [
       "5FZP2oqDBBWzaKp8STUQKTvSo2Y1UD68briboWreLiVAxJr1",
-      "5EJLoe5Uaj8U7jTxJwiDCP1kNSnHu4Buw8pdkpm136QRiAEC"
+      "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY"
     ],
     "bootNodes": [
-      "/dns/parachain-sg-0.staging.litentry.io/tcp/40333/p2p/12D3KooWCnBzJy9w9hQFyiwVG2mADqNaPu3Z6WFThivwnrppdWND",
-      "/dns/parachain-sg-1.staging.litentry.io/tcp/40333/p2p/12D3KooWDFSgJbNmLFGEX4ukGriJpvCcttGEKSQVCspKyRToC2j5"
+      "/dns/parachain-sg-0.staging.litentry.io/tcp/40333/p2p/12D3KooWCnBzJy9w9hQFyiwVG2mADqNaPu3Z6WFThivwnrppdWND"
     ],
     "telemetryEndpoints": [
       "wss://telemetry-backend.parachain.litentry.io/submit"
