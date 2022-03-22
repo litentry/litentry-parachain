@@ -40,9 +40,8 @@ ARG BUILD_ARGS
 RUN cargo build --release $BUILD_ARGS
 
 # ===================================
-# stage 2: packaging
+# stage 4: packaging
 # ===================================
-
 FROM ubuntu:20.04
 LABEL maintainer="litentry-dev"
 
