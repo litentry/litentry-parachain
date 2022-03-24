@@ -17,13 +17,12 @@ RUN apt-get update && \
 	apt-get install -y cmake pkg-config libssl-dev git clang libclang-dev
 
 ARG BUILD_ARGS
-
 RUN cargo build --release $BUILD_ARGS
+RUN strip target/release/litentry-collator
 
 # ==========================
 # stage 2: packaging
 # ==========================
-
 FROM ubuntu:20.04
 LABEL maintainer="litentry-dev"
 
