@@ -111,7 +111,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 			} else if chain_spec.is_rococo() {
 				Box::new(chain_specs::rococo::ChainSpec::from_json_file(path.into())?)
 			} else {
-				// By default litentry is used
+				// Fallback: use Litentry chain spec
 				Box::new(chain_spec)
 			}
 		},
