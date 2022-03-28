@@ -3,6 +3,12 @@ name: Build docker with args
 on:
   workflow_dispatch:
     inputs:
+      dockerfile_type:
+        type: choice
+        description: The type of Dockerfile to use
+        options:
+        - dev
+        - prod
       docker_tag:
         description: The tag for the built docker image
         required: true
@@ -24,7 +30,7 @@ jobs:
 
       - name: Build docker image
         run: |
-          ./scripts/build-docker.sh ${{ github.event.inputs.docker_tag }} "${{ github.event.inputs.args }}"
+          ./scripts/build-docker.sh ${{ github.event.inputs.dockerfile_type }} ${{ github.event.inputs.docker_tag }} "${{ github.event.inputs.args }}"
           echo "============================="
           docker images
 
@@ -41,7 +47,7 @@ jobs:
           docker cp $(docker create --rm litentry/litentry-parachain:${{ github.event.inputs.docker_tag }}):/usr/local/bin/litentry-collator .
 
       - name: Upload the client binary
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: litentry-collator
           path: |

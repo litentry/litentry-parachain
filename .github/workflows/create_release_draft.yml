@@ -65,7 +65,7 @@ jobs:
           cp ${{ steps.srtool_build.outputs.wasm_compressed }} ${{ matrix.chain }}-parachain-runtime.compact.compressed.wasm
 
       - name: Upload wasm artefacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.chain }}-parachain-runtime
           path: |
@@ -85,7 +85,7 @@ jobs:
 
       - name: Build docker image
         run: |
-          ./scripts/build-docker.sh ${{ env.RELEASE_TAG }}
+          ./scripts/build-docker.sh prod ${{ env.RELEASE_TAG }}
           echo "============================="
           docker images
 
@@ -108,7 +108,7 @@ jobs:
           docker cp $(docker create --rm litentry/litentry-parachain:${{ env.RELEASE_TAG }}):/usr/local/bin/litentry-collator .
 
       - name: Upload the client binary
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: litentry-collator
           if-no-files-found: ignore
@@ -136,7 +136,7 @@ jobs:
           fetch-depth: 0
 
       - name: Download all artefacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
 
       - name: Generate release notes
         run: |

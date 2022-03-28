@@ -49,9 +49,13 @@ srtool-build-wasm-litentry:
 srtool-build-wasm-litmus:
 	@./scripts/build-wasm.sh litmus
 
-.PHONY: build-docker ## Build docker image
-build-docker:
-	@./scripts/build-docker.sh
+.PHONY: build-docker-dev ## Build docker image using Dockerfile.dev
+build-docker-dev:
+	@./scripts/build-docker.sh dev
+
+.PHONY: build-docker-prod ## Build docker image using Dockerfile.prod
+build-docker-prod:
+	@./scripts/build-docker.sh prod
 
 .PHONY: build-node-benchmarks ## Build release node with `runtime-benchmarks` feature
 build-node-benchmarks:
