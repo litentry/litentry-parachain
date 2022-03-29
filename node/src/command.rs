@@ -95,7 +95,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 			if chain_spec.is_litmus() {
 				Box::new(chain_specs::litmus::ChainSpec::from_json_file(path.into())?)
 			} else {
-				// By default litentry is used
+				// Fallback: use Litentry chain spec
 				Box::new(chain_spec)
 			}
 		},

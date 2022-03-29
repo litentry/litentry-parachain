@@ -43,7 +43,7 @@ jobs:
           cp ${{ steps.srtool_build.outputs.wasm_compressed }} ${{ github.event.inputs.chain }}-parachain-runtime.compact.compressed.wasm
 
       - name: Upload wasm artefacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ github.event.inputs.chain }}-parachain-runtime
           path: |

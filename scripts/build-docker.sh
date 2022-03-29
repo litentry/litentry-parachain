@@ -1,11 +1,26 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
+function usage() {
+  echo "Usage:   $0 dev|prod [docker-tag] [build-args]"
+}
+
+[ $# -lt 1 ] && (usage; exit 1)
+
 ROOTDIR=$(git rev-parse --show-toplevel)
 cd "$ROOTDIR"
 
-TAG="$1"
-ARGS="$2"
+TYPE="$1"
+TAG="$2"
+ARGS="$3"
+
+NOCACHE_FLAG=
+
+case "$TYPE" in
+    dev) ;;
+    prod) NOCACHE_FLAG="--no-cache" ;;
+    *) usage; exit 1 ;;
+esac
 
 if [ -z "$TAG" ]; then
     TAG_COMMIT=`git rev-list --tags --max-count=1`
@@ -20,6 +35,7 @@ if [ -z "$TAG" ]; then
     fi
 fi
 
+echo "TYPE: $TYPE"
 echo "TAG: $TAG"
 echo "ARGS: $ARGS"
 
@@ -29,7 +45,7 @@ GITREPO=litentry-parachain
 # Build the image
 echo "------------------------------------------------------------"
 echo "Building ${GITUSER}/${GITREPO}:${TAG} docker image ..."
-docker build --rm --no-cache --pull -f ./docker/Dockerfile \
+docker build --rm ${NOCACHE_FLAG} --pull -f ./docker/Dockerfile.${TYPE} \
     --build-arg BUILD_ARGS="$ARGS" \
     -t ${GITUSER}/${GITREPO}:${TAG} .
 

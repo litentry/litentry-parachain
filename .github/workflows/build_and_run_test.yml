@@ -15,7 +15,36 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  check-file-change:
+    runs-on: ubuntu-latest
+    outputs:
+      src: ${{ steps.filter.outputs.src }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      # Checks to see if any files in the PR/commit match one of the listed file types.
+      # We can use this filter to decide whether or not to build docker images
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            src:
+              - 'node/**'
+              - 'pallets/**'
+              - 'primitives/**'
+              - 'runtime/**'
+              - 'docker/Dockerfile.dev'
+              - '**/Cargo.lock'
+              - '**/Cargo.toml'
+              - '**/rust-toolchain.toml'
+
   check-cargo-fmt:
     runs-on: ubuntu-latest
     steps:
@@ -37,7 +66,8 @@ jobs:
 
   check-cargo-clippy:
     runs-on: ubuntu-latest
-    needs: check-cargo-fmt
+    needs: [check-cargo-fmt, check-file-change]
+    if: needs.check-file-change.outputs.src == 'true'
     steps:
       - uses: actions/checkout@v2
         with:
@@ -56,27 +86,62 @@ jobs:
         run: make clippy
 
   build-docker:
-    if: "!contains(github.event.commits[0].message, '[SKIP CI]')"
-    concurrency:
-      group: ${{ github.ref }}
-      cancel-in-progress: true
+    # run the docker build on our self-hosted runner, which takes
+    # - 25min without cache, or
+    # - 15 min with cache
+    # on a standard github runner it takes 1 hour+
+    # see also https://github.com/litentry/litentry-parachain/issues/259
     runs-on: self-hosted
-    needs: check-cargo-fmt
+    needs: [check-cargo-fmt, check-file-change]
     steps:
       - name: Checkout codes
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
+      - name: Setup docker buildx
+        uses: docker/setup-buildx-action@v1
+
+      # Syncing GHA cache seems to be very slow, we use local cache for a self-hosted runner
       - name: Build docker image
-        timeout-minutes: 40
+        if: needs.check-file-change.outputs.src == 'true'
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          tags: litentry/litentry-parachain:latest
+          outputs: type=docker,dest=litentry-parachain.tar
+          push: false
+          file: docker/Dockerfile.dev
+          cache-from: type=local,src=/tmp/parachain-buildx-cache
+          cache-to: type=local,dest=/tmp/parachain-buildx-cache-new,mode=max
+
+      - name: Move cache
+        if: needs.check-file-change.outputs.src == 'true'
+        # Temp fix for constantly growing cache, see
+        # https://github.com/docker/build-push-action/issues/252
+        # https://github.com/moby/buildkit/issues/1896
         run: |
-          ./scripts/build-docker.sh
-          echo "============================="
-          docker images
+          rm -rf /tmp/parachain-buildx-cache
+          mv /tmp/parachain-buildx-cache-new /tmp/parachain-buildx-cache
+
+      - name: Pull docker image optinally
+        if: needs.check-file-change.outputs.src == 'false'
+        run: |
+          docker pull litentry/litentry-parachain:latest
+          docker save litentry/litentry-parachain:latest -o litentry-parachain.tar
+
+      - name: Upload docker image
+        uses: actions/upload-artifact@v3
+        with:
+          name: docker-artifact
+          path: litentry-parachain.tar
+
+      - name: Remove dangling docker images if any
+        run: |
+          [ -z "$(docker images --filter=dangling=true -q)" ] || docker rmi -f $(docker images --filter=dangling=true -q)
 
   run-ts-tests:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: build-docker
     strategy:
       matrix:
@@ -84,13 +149,26 @@ jobs:
           - litmus
           - litentry
     steps:
+      - name: Checkout codes
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: docker-artifact
+
+      - name: Load docker image
+        run: |
+          docker load -i litentry-parachain.tar
+
       - name: Run ts tests for ${{ matrix.chain }}
         timeout-minutes: 20
         run: |
           make test-ts-docker-${{ matrix.chain }}
 
       - name: Archive logs if test fails
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: ${{ failure() }}
         with:
           name: ${{ matrix.chain }}-ts-tests-artifacts
@@ -104,7 +182,8 @@ jobs:
 
   run-cargo-unit-tests:
     runs-on: ubuntu-latest
-    needs: check-cargo-fmt
+    needs: [check-cargo-fmt, check-file-change]
+    if: needs.check-file-change.outputs.src == 'true'
     steps:
       - uses: actions/checkout@v2
         with:
@@ -123,7 +202,14 @@ jobs:
 
   run-cargo-runtime-tests:
     runs-on: ubuntu-latest
-    needs: check-cargo-fmt
+    needs: [check-cargo-fmt, check-file-change]
+    if: needs.check-file-change.outputs.src == 'true'
+    env:
+      RUST_BACKTRACE: full
+      RUSTC_WRAPPER: sccache
+      SCCACHE_CACHE_SIZE: 10G
+      SCCACHE_DIR: /home/runner/.cache/sccache
+      CARGO_INCREMENTAL: 0
     strategy:
       matrix:
         chain:
@@ -142,13 +228,64 @@ jobs:
           target: wasm32-unknown-unknown
           default: true
 
+      # use sccache to accelerate binary compilation
+      # see https://www.infinyon.com/blog/2021/04/github-actions-best-practices/
+      - name: Install sccache
+        env:
+          LINK: https://github.com/mozilla/sccache/releases/download
+          SCCACHE_VERSION: v0.2.15
+        run: |
+          SCCACHE_FILE=sccache-$SCCACHE_VERSION-x86_64-unknown-linux-musl
+          mkdir -p $HOME/.local/bin
+          curl -L "$LINK/$SCCACHE_VERSION/$SCCACHE_FILE.tar.gz" | tar xz
+          mv -f $SCCACHE_FILE/sccache $HOME/.local/bin/sccache
+          chmod +x $HOME/.local/bin/sccache
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Cache cargo registry
+        uses: actions/cache@v2
+        continue-on-error: false
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            cargo-
+
+      - name: Cache sccache
+        uses: actions/cache@v2
+        continue-on-error: false
+        with:
+          path: /home/runner/.cache/sccache
+          key: sccache-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            sccache-
+
       - name: Run runtime integration tests
         run: cargo test --release -p ${{ matrix.chain }}-parachain-runtime --lib
 
+      - name: Print sccache stats
+        run: sccache --show-stats
+
   push-docker-image:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: ["check-cargo-clippy", "run-cargo-unit-tests", "run-cargo-runtime-tests", "run-ts-tests"]
     steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: docker-artifact
+
+      - name: Load docker image
+        run: |
+          docker load -i litentry-parachain.tar
+
+      - name: Dockerhub login
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
       - name: Push docker image on dev branch if test passes
         if: ${{ success() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
         run:

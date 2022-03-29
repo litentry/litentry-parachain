@@ -5,7 +5,6 @@
 .cargo/config
 
 **/node_modules/
-**/para-*
 
 docker/yarn.lock
 docker/package.json
@@ -14,3 +13,5 @@ docker/generated-*/
 ts-tests/package-lock.json
 
 tags.lock
+
+recipe.json
