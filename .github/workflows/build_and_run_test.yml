@@ -145,7 +145,7 @@ jobs:
     needs: build-docker
     strategy:
       matrix:
-        chain:
+        chain: # no rococo
           - litmus
           - litentry
     steps:
@@ -220,6 +220,7 @@ jobs:
         chain:
           - litmus
           - litentry
+          - rococo
     steps:
       - uses: actions/checkout@v2
         with:
