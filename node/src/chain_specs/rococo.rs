@@ -19,7 +19,7 @@ use cumulus_primitives_core::ParaId;
 use rococo_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, CollatorSelectionConfig, CouncilMembershipConfig,
 	GenesisConfig, ParachainInfoConfig, PolkadotXcmConfig, SessionConfig, SudoConfig, SystemConfig,
-	TechnicalCommitteeMembershipConfig, UNIT, WASM_BINARY,
+	TechnicalCommitteeMembershipConfig, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
