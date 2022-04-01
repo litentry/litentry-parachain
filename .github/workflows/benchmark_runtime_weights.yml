@@ -15,7 +15,7 @@ on:
         required: true
 
 env:
-  REMOTE_HOST: parachain-staging-sg-2  # remote host to run benchmarking upon, must be ssh reachable
+  REMOTE_HOST: parachain-benchmark  # remote host to run benchmarking upon, must be ssh reachable
 
 jobs:
   ## build docker image with runtime-benchmarks feature, and then run the benchmarking remotely
