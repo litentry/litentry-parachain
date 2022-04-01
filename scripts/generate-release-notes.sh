@@ -20,7 +20,7 @@ REPO=https://github.com/litentry/litentry-parachain
 
 if [ "$2" != "runtime" ]; then
   # base image used to build the node binary
-  NODE_BUILD_BASE_IMAGE=$(grep FROM docker/Dockerfile | head -n1 | sed 's/^FROM //;s/ as.*//')
+  NODE_BUILD_BASE_IMAGE=$(grep FROM docker/Dockerfile.prod | head -n1 | sed 's/^FROM //;s/ as.*//')
 
   # somehow `docker inspect` doesn't pull our litentry-parachain image sometimes
   docker pull "$NODE_BUILD_BASE_IMAGE"
