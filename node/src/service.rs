@@ -49,7 +49,6 @@ type HostFunctions = sp_io::SubstrateHostFunctions;
 #[cfg(feature = "runtime-benchmarks")]
 type HostFunctions =
 	(sp_io::SubstrateHostFunctions, frame_benchmarking::benchmarking::HostFunctions);
-
 // Native executor instance.
 pub struct LitentryParachainRuntimeExecutor;
 
@@ -167,7 +166,7 @@ where
 
 	let (client, backend, keystore_container, task_manager) =
 		sc_service::new_full_parts::<Block, RuntimeApi, _>(
-			&config,
+			config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
 			executor,
 		)?;
@@ -477,7 +476,7 @@ where
 				task_manager.spawn_handle(),
 				client.clone(),
 				transaction_pool,
-				prometheus_registry.clone(),
+				prometheus_registry,
 				telemetry.clone(),
 			);
 
@@ -513,7 +512,7 @@ where
 						}
 					},
 					block_import: client.clone(),
-					para_client: client.clone(),
+					para_client: client,
 					backoff_authoring_blocks: Option::<()>::None,
 					sync_oracle,
 					keystore,
@@ -575,7 +574,7 @@ where
 		_,
 	>(cumulus_client_consensus_aura::ImportQueueParams {
 		block_import: client.clone(),
-		client: client.clone(),
+		client,
 		create_inherent_data_providers: move |_, _| async move {
 			let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
 
@@ -587,7 +586,7 @@ where
 
 			Ok((timestamp, slot))
 		},
-		registry: config.prometheus_registry().clone(),
+		registry: config.prometheus_registry(),
 		can_author_with: sp_consensus::AlwaysCanAuthor,
 		spawner: &task_manager.spawn_essential_handle(),
 		telemetry,
