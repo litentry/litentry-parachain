@@ -864,6 +864,7 @@ impl Contains<Call> for SafeModeFilter {
 pub struct NormalModeFilter;
 impl Contains<Call> for NormalModeFilter {
 	fn contains(call: &Call) -> bool {
+		// Calls that fulfill either matches or match below can pass the filter
 		matches!(
 			call,
 			Call::Sudo(_) |
@@ -871,7 +872,14 @@ impl Contains<Call> for NormalModeFilter {
 			Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_) |
 			// ExtrinsicFilter
 			Call::ExtrinsicFilter(_)
-		)
+		) || match call {
+			// Only enable vest() call function in vesting
+			Call::Vesting(method) => match method {
+				pallet_vesting::Call::vest { .. } => true,
+				_ => false,
+			},
+			_ => false,
+		}
 	}
 }
 
