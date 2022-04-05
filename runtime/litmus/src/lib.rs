@@ -870,10 +870,10 @@ impl Contains<Call> for NormalModeFilter {
 			// System
 			Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_) |
 			// ExtrinsicFilter
-			Call::ExtrinsicFilter(_) | 
+			Call::ExtrinsicFilter(_) |
 			// Vesting - only enable vest() call function
 			Call::Vesting(pallet_vesting::Call::vest { .. })
-		) 
+		)
 	}
 }
 
