@@ -19,11 +19,12 @@ use cumulus_primitives_core::ParaId;
 use rococo_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, CollatorSelectionConfig, CouncilMembershipConfig,
 	GenesisConfig, ParachainInfoConfig, PolkadotXcmConfig, SessionConfig, SudoConfig, SystemConfig,
-	TechnicalCommitteeMembershipConfig, WASM_BINARY,
+	TechnicalCommitteeMembershipConfig, UNIT, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
 use serde::Deserialize;
+use sp_core::sr25519;
 
 const DEFAULT_PARA_ID: u32 = 2002;
 
@@ -38,6 +39,9 @@ const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
 fn default_parachain_properties() -> Option<Properties> {
 	parachain_properties("LIT", 12, 131)
 }
+
+const DEV_CANDIDACY_BOND: Balance = 1;
+const DEFAULT_ENDOWED_ACCOUNT_BALANCE: Balance = 1000 * UNIT;
 
 /// GenesisInfo struct to store the parsed genesis_info JSON
 #[derive(Deserialize, Debug, Clone)]
