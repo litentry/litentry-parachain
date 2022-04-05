@@ -95,6 +95,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 			&include_bytes!("../res/chain_specs/litmus.json")[..],
 		)?),
 		// Rococo
+		"rococo-dev" => Box::new(chain_specs::rococo::get_chain_spec_dev()),
 		"rococo" => Box::new(chain_specs::rococo::ChainSpec::from_json_bytes(
 			&include_bytes!("../res/chain_specs/rococo.json")[..],
 		)?),
