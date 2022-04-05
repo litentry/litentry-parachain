@@ -53,7 +53,7 @@ type HostFunctions =
 pub struct LitentryParachainRuntimeExecutor;
 
 impl sc_executor::NativeExecutionDispatch for LitentryParachainRuntimeExecutor {
-	type ExtendHostFunctions = ();
+	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		litentry_parachain_runtime::api::dispatch(method, data)
@@ -68,7 +68,7 @@ impl sc_executor::NativeExecutionDispatch for LitentryParachainRuntimeExecutor {
 pub struct LitmusParachainRuntimeExecutor;
 
 impl sc_executor::NativeExecutionDispatch for LitmusParachainRuntimeExecutor {
-	type ExtendHostFunctions = ();
+	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		litmus_parachain_runtime::api::dispatch(method, data)
@@ -83,7 +83,7 @@ impl sc_executor::NativeExecutionDispatch for LitmusParachainRuntimeExecutor {
 pub struct RococoParachainRuntimeExecutor;
 
 impl sc_executor::NativeExecutionDispatch for RococoParachainRuntimeExecutor {
-	type ExtendHostFunctions = ();
+	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		rococo_parachain_runtime::api::dispatch(method, data)
