@@ -864,7 +864,6 @@ impl Contains<Call> for SafeModeFilter {
 pub struct NormalModeFilter;
 impl Contains<Call> for NormalModeFilter {
 	fn contains(call: &Call) -> bool {
-		// Calls that fulfill either matches or match below can pass the filter
 		matches!(
 			call,
 			Call::Sudo(_) |
