@@ -95,6 +95,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 			&include_bytes!("../res/chain_specs/litmus.json")[..],
 		)?),
 		// Rococo
+		"rococo-dev" => Box::new(chain_specs::rococo::get_chain_spec_dev()),
 		"rococo" => Box::new(chain_specs::rococo::ChainSpec::from_json_bytes(
 			&include_bytes!("../res/chain_specs/rococo.json")[..],
 		)?),
@@ -218,11 +219,10 @@ macro_rules! construct_async_run {
 			runner.async_run(|$config| {
 				let $components = new_partial::<
 					litmus_parachain_runtime::RuntimeApi,
-					LitmusParachainRuntimeExecutor,
 					_
 				>(
 					&$config,
-					crate::service::build_import_queue::<litmus_parachain_runtime::RuntimeApi, LitmusParachainRuntimeExecutor>,
+					crate::service::build_import_queue::<litmus_parachain_runtime::RuntimeApi>,
 				)?;
 				let task_manager = $components.task_manager;
 				{ $( $code )* }.map(|v| (v, task_manager))
@@ -231,11 +231,10 @@ macro_rules! construct_async_run {
 			runner.async_run(|$config| {
 				let $components = new_partial::<
 					litentry_parachain_runtime::RuntimeApi,
-					LitentryParachainRuntimeExecutor,
 					_
 				>(
 					&$config,
-					crate::service::build_import_queue::<litentry_parachain_runtime::RuntimeApi, LitentryParachainRuntimeExecutor>,
+					crate::service::build_import_queue::<litentry_parachain_runtime::RuntimeApi>,
 				)?;
 				let task_manager = $components.task_manager;
 				{ $( $code )* }.map(|v| (v, task_manager))
@@ -244,11 +243,10 @@ macro_rules! construct_async_run {
 			runner.async_run(|$config| {
 				let $components = new_partial::<
 					rococo_parachain_runtime::RuntimeApi,
-					RococoParachainRuntimeExecutor,
 					_
 				>(
 					&$config,
-					crate::service::build_import_queue::<rococo_parachain_runtime::RuntimeApi, RococoParachainRuntimeExecutor>,
+					crate::service::build_import_queue::<rococo_parachain_runtime::RuntimeApi>,
 				)?;
 				let task_manager = $components.task_manager;
 				{ $( $code )* }.map(|v| (v, task_manager))
@@ -417,6 +415,7 @@ pub fn run() -> Result<()> {
 		},
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
+			let collator_options = cli.run.collator_options();
 
 			runner.run_node_until_exit(|config| async move {
 				let para_id = chain_specs::Extensions::try_get(&*config.chain_spec)
@@ -450,26 +449,32 @@ pub fn run() -> Result<()> {
 				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
 
 				if config.chain_spec.is_litmus() {
-					crate::service::start_node::<
-						litmus_parachain_runtime::RuntimeApi,
-						LitmusParachainRuntimeExecutor,
-					>(config, polkadot_config, id)
+					crate::service::start_node::<litmus_parachain_runtime::RuntimeApi>(
+						config,
+						polkadot_config,
+						collator_options,
+						id,
+					)
 					.await
 					.map(|r| r.0)
 					.map_err(Into::into)
 				} else if config.chain_spec.is_litentry() {
-					crate::service::start_node::<
-						litentry_parachain_runtime::RuntimeApi,
-						LitentryParachainRuntimeExecutor,
-					>(config, polkadot_config, id)
+					crate::service::start_node::<litentry_parachain_runtime::RuntimeApi>(
+						config,
+						polkadot_config,
+						collator_options,
+						id,
+					)
 					.await
 					.map(|r| r.0)
 					.map_err(Into::into)
 				} else if config.chain_spec.is_rococo() {
-					crate::service::start_node::<
-						rococo_parachain_runtime::RuntimeApi,
-						RococoParachainRuntimeExecutor,
-					>(config, polkadot_config, id)
+					crate::service::start_node::<rococo_parachain_runtime::RuntimeApi>(
+						config,
+						polkadot_config,
+						collator_options,
+						id,
+					)
 					.await
 					.map(|r| r.0)
 					.map_err(Into::into)

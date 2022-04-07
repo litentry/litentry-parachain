@@ -37,7 +37,7 @@ PALLETS=
 case "$3" in
   '*')
     PALLETS=$(grep -F '[pallet_' runtime/$1/src/lib.rs | sed 's/.*\[//;s/,.*//' | paste -s -d' ' -)
-    PALLETS="frame_system $PALLETS"
+    PALLETS="frame_system cumulus_pallet_xcmp_queue $PALLETS"
     ;;
   *)
     PALLETS=$(echo "$3" | tr ',' ' ')

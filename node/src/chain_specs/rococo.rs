@@ -19,11 +19,12 @@ use cumulus_primitives_core::ParaId;
 use rococo_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, CollatorSelectionConfig, CouncilMembershipConfig,
 	GenesisConfig, ParachainInfoConfig, PolkadotXcmConfig, SessionConfig, SudoConfig, SystemConfig,
-	TechnicalCommitteeMembershipConfig, WASM_BINARY,
+	TechnicalCommitteeMembershipConfig, UNIT, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
 use serde::Deserialize;
+use sp_core::sr25519;
 
 const DEFAULT_PARA_ID: u32 = 2002;
 
@@ -39,6 +40,9 @@ fn default_parachain_properties() -> Option<Properties> {
 	parachain_properties("LIT", 12, 131)
 }
 
+const DEV_CANDIDACY_BOND: Balance = 1;
+const DEFAULT_ENDOWED_ACCOUNT_BALANCE: Balance = 1000 * UNIT;
+
 /// GenesisInfo struct to store the parsed genesis_info JSON
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -51,6 +55,50 @@ struct GenesisInfo {
 	technical_committee: Vec<AccountId>,
 	boot_nodes: Vec<String>,
 	telemetry_endpoints: Vec<String>,
+}
+
+pub fn get_chain_spec_dev() -> ChainSpec {
+	ChainSpec::from_genesis(
+		"Litentry-rococo-dev",
+		"litentry-rococo-dev",
+		ChainType::Development,
+		move || {
+			generate_genesis(
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				vec![(
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_collator_keys_from_seed("Alice"),
+				)],
+				DEV_CANDIDACY_BOND,
+				vec![
+					(
+						get_account_id_from_seed::<sr25519::Public>("Alice"),
+						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Bob"),
+						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Charlie"),
+						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
+					),
+				],
+				vec![
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_account_id_from_seed::<sr25519::Public>("Bob"),
+				],
+				vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
+				DEFAULT_PARA_ID.into(),
+			)
+		},
+		Vec::new(),
+		None,
+		Some("litentry-rococo"),
+		None,
+		default_parachain_properties(),
+		Extensions { relay_chain: "rococo-local".into(), para_id: DEFAULT_PARA_ID },
+	)
 }
 
 pub fn get_chain_spec_prod() -> ChainSpec {
