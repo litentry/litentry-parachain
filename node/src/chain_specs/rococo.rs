@@ -26,7 +26,7 @@ use sc_telemetry::TelemetryEndpoints;
 use serde::Deserialize;
 use sp_core::sr25519;
 
-const DEFAULT_PARA_ID: u32 = 2002;
+const DEFAULT_PARA_ID: u32 = 2106;
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
