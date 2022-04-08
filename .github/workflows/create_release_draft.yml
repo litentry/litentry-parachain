@@ -7,9 +7,9 @@ on:
         type: choice
         description: Which release type
         options:
+          - both
           - client
           - runtime
-          - both
       release_tag:
         description: an existing tag for creating release (e.g. v1.2.3)
         required: true
