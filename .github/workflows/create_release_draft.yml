@@ -41,7 +41,7 @@ jobs:
       matrix:
         chain:
           - litmus
-          # TODO - rococo
+          - rococo
           - litentry
     steps:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}

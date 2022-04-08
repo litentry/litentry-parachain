@@ -145,7 +145,7 @@ jobs:
     needs: build-docker
     strategy:
       matrix:
-        chain:
+        chain: # no rococo
           - litmus
           - litentry
     steps:
@@ -200,10 +200,15 @@ jobs:
       - name: Run unittests
         run: cargo test --release -p pallet-* --lib
 
+  # The reason why not to put the if-check on the job level is to make sure the
+  # *matrix* job is run, although it can be skipped in the end.
+  #
+  # This is required when setting github merge rules to protected branch,
+  # where you can only select one of `run-cargo-runtime-tests` and `run-cargo-runtime-tests(litmus)`.
+  # If you put if-check on the job level, it can't fit every possible case.
   run-cargo-runtime-tests:
     runs-on: ubuntu-latest
     needs: [check-cargo-fmt, check-file-change]
-    if: needs.check-file-change.outputs.src == 'true'
     env:
       RUST_BACKTRACE: full
       RUSTC_WRAPPER: sccache
@@ -215,12 +220,14 @@ jobs:
         chain:
           - litmus
           - litentry
+          - rococo
     steps:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
       - name: Install toolchain
+        if: needs.check-file-change.outputs.src == 'true'
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -231,6 +238,7 @@ jobs:
       # use sccache to accelerate binary compilation
       # see https://www.infinyon.com/blog/2021/04/github-actions-best-practices/
       - name: Install sccache
+        if: needs.check-file-change.outputs.src == 'true'
         env:
           LINK: https://github.com/mozilla/sccache/releases/download
           SCCACHE_VERSION: v0.2.15
@@ -243,6 +251,7 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Cache cargo registry
+        if: needs.check-file-change.outputs.src == 'true'
         uses: actions/cache@v2
         continue-on-error: false
         with:
@@ -254,6 +263,7 @@ jobs:
             cargo-
 
       - name: Cache sccache
+        if: needs.check-file-change.outputs.src == 'true'
         uses: actions/cache@v2
         continue-on-error: false
         with:
@@ -263,14 +273,20 @@ jobs:
             sccache-
 
       - name: Run runtime integration tests
+        if: needs.check-file-change.outputs.src == 'true'
         run: cargo test --release -p ${{ matrix.chain }}-parachain-runtime --lib
 
       - name: Print sccache stats
+        if: needs.check-file-change.outputs.src == 'true'
         run: sccache --show-stats
 
+  # Secrets are not passed to the runner when a workflow is triggered from a forked repository,
+  # see https://docs.github.com/en/actions/security-guides/encrypted-secrets#using-encrypted-secrets-in-a-workflow
+  # Only push docker image when tests are passed on dev branch
   push-docker-image:
     runs-on: ubuntu-latest
     needs: ["check-cargo-clippy", "run-cargo-unit-tests", "run-cargo-runtime-tests", "run-ts-tests"]
+    if: ${{ success() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
     steps:
       - uses: actions/download-artifact@v3
         with:
@@ -286,7 +302,6 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      - name: Push docker image on dev branch if test passes
-        if: ${{ success() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
+      - name: Push docker image
         run:
           docker push litentry/litentry-parachain:latest

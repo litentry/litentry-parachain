@@ -20,7 +20,7 @@ REPO=https://github.com/litentry/litentry-parachain
 
 if [ "$2" != "runtime" ]; then
   # base image used to build the node binary
-  NODE_BUILD_BASE_IMAGE=$(grep FROM docker/Dockerfile | head -n1 | sed 's/^FROM //;s/ as.*//')
+  NODE_BUILD_BASE_IMAGE=$(grep FROM docker/Dockerfile.prod | head -n1 | sed 's/^FROM //;s/ as.*//')
 
   # somehow `docker inspect` doesn't pull our litentry-parachain image sometimes
   docker pull "$NODE_BUILD_BASE_IMAGE"
@@ -74,8 +74,7 @@ fi
 
 if [ "$2" != "client" ]; then
   echo "## Runtime" >> "$1"
-  # TODO rococo
-  for CHAIN in litmus litentry; do
+  for CHAIN in litmus rococo litentry; do
     SRTOOL_DIGEST_FILE=$CHAIN-parachain-runtime/$CHAIN-parachain-srtool-digest.json
     RUNTIME_VERSION=$(grep spec_version runtime/$CHAIN/src/lib.rs | sed 's/.*version: //;s/,//')
     RUNTIME_COMPRESSED_SIZE=$(cat "$SRTOOL_DIGEST_FILE" | jq .runtimes.compressed.size | sed 's/"//g')

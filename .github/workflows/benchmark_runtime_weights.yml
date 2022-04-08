@@ -9,13 +9,14 @@ on:
         options:
         - litmus
         - litentry
+        - rococo
       pallets:
         description: pallets to benchmark, * for all, or comma listed (e.g. frame-system,pallet-proxy)
         default: '*'
         required: true
 
 env:
-  REMOTE_HOST: parachain-staging-sg-2  # remote host to run benchmarking upon, must be ssh reachable
+  REMOTE_HOST: parachain-benchmark  # remote host to run benchmarking upon, must be ssh reachable
 
 jobs:
   ## build docker image with runtime-benchmarks feature, and then run the benchmarking remotely
