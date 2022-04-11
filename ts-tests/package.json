@@ -27,7 +27,7 @@
     "@polkadot/api": "^7.15.1",
     "@polkadot/types": "^7.13.1",
     "dotenv": "^16.0.0",
-    "web3": "^1.7.1"
+    "web3": "^1.7.3"
   },
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
