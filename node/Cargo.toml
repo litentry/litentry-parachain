@@ -92,6 +92,7 @@ try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "p
 litentry-parachain-runtime = { path = "../runtime/litentry" }
 litmus-parachain-runtime = { path = "../runtime/litmus" }
 rococo-parachain-runtime = { path = "../runtime/rococo" }
+moonbase-parachain-runtime = { path = "../runtime/moonbase" }
 primitives = { path = "../primitives" }
 
 [build-dependencies]

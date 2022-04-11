@@ -15,7 +15,7 @@ on:
         required: true
       diff_tag:
         description: an existing tag to run diff against (e.g. v1.2.0)
-        default: ''
+        default: ""
         required: false
       genesis_release:
         type: choice
@@ -25,6 +25,7 @@ on:
           - litmus
           - rococo
           - litentry
+          - moonbase
 
 env:
   RELEASE_TYPE: ${{ github.event.inputs.release_type }}
@@ -43,6 +44,7 @@ jobs:
           - litmus
           - rococo
           - litentry
+          - moonbase
     steps:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v2
