@@ -104,11 +104,13 @@ runtime-benchmarks = [
 	"litentry-parachain-runtime/runtime-benchmarks",
 	"litmus-parachain-runtime/runtime-benchmarks",
 	"rococo-parachain-runtime/runtime-benchmarks",
+	"moonbase-parachain-runtime/runtime-benchmarks",
 	"polkadot-service/runtime-benchmarks",
 ]
 try-runtime = [
 	"litentry-parachain-runtime/try-runtime",
 	"litmus-parachain-runtime/try-runtime",
 	"rococo-parachain-runtime/try-runtime",
+	"moonbase-parachain-runtime/try-runtime",
 	"polkadot-service/try-runtime",
 ]

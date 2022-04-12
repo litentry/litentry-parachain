@@ -221,6 +221,7 @@ jobs:
           - litmus
           - litentry
           - rococo
+          - moonbase
     steps:
       - uses: actions/checkout@v2
         with:

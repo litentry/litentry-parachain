@@ -440,7 +440,7 @@ where
 	Ok((task_manager, client))
 }
 
-/// Start a litmus/litentry/rococo node.
+/// Start a litmus/litentry/rococo/moonbase node.
 pub async fn start_node<RuntimeApi>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
@@ -545,7 +545,7 @@ where
 	.await
 }
 
-/// Build the import queue for the litmus/litentry/rococo runtime.
+/// Build the import queue for the litmus/litentry/rococo/moonbase runtime.
 pub fn build_import_queue<RuntimeApi>(
 	client: Arc<TFullClient<Block, RuntimeApi, WasmExecutor<HostFunctions>>>,
 	config: &Configuration,
