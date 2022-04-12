@@ -4,20 +4,12 @@
     [
       "jcRVUU8svEMTtwJjX1HzySNrrVEHVnoAdNAmhnbM8ub5dfbM9",
       "jcSmq9jXyvZWwJQY6cqf7fCAbnFpesph35H3iqKPgSexTLbCr"
-    ],
-    [
-      "jcSQcu5RXtWXKPN78zJogNyqsff1j4ffgoJ2njNcDbZ3qNEh5",
-      "jcQ9fNkocehtVvSa9deQr36bnJWt656EQdN3zDgSgP7dgX2kr"
     ]
   ],
   "candidacyBond": "16000000000000",
   "endowedAccounts": [
     [
       "jcRVUU8svEMTtwJjX1HzySNrrVEHVnoAdNAmhnbM8ub5dfbM9",
-      "1000000000000000"
-    ],
-    [
-      "jcSQcu5RXtWXKPN78zJogNyqsff1j4ffgoJ2njNcDbZ3qNEh5",
       "1000000000000000"
     ],
     [
@@ -30,15 +22,13 @@
     ]
   ],
   "council": [
-    "jcRVUU8svEMTtwJjX1HzySNrrVEHVnoAdNAmhnbM8ub5dfbM9",
-    "jcSQcu5RXtWXKPN78zJogNyqsff1j4ffgoJ2njNcDbZ3qNEh5"
+    "jcRVUU8svEMTtwJjX1HzySNrrVEHVnoAdNAmhnbM8ub5dfbM9"
   ],
   "technicalCommittee": [
-    "jcRVUU8svEMTtwJjX1HzySNrrVEHVnoAdNAmhnbM8ub5dfbM9",
-    "jcSQcu5RXtWXKPN78zJogNyqsff1j4ffgoJ2njNcDbZ3qNEh5"
+    "jcRVUU8svEMTtwJjX1HzySNrrVEHVnoAdNAmhnbM8ub5dfbM9"
   ],
   "bootNodes": [
-    "/dns/rpc.rococo-parachain-sg.litentry.io/tcp/40333/ws/p2p/12D3KooWC9WbcoS2fuaohQXfk3RwXH1hwffEG7iudbJRfNK54hTT"
+    "/dns/moonbase-parachain-sg-0.litentry.io/tcp/40333/ws/p2p/12D3KooWB4f2J7EzKNDmuc4pEgJR9F7w3nE3JNWEEad6PphJhTNx"
   ],
   "telemetryEndpoints": [
     "wss://telemetry-backend.parachain.litentry.io/submit"
