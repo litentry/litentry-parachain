@@ -17,8 +17,8 @@ RUN apt-get update && \
 	apt-get install -y cmake pkg-config libssl-dev git clang libclang-dev
 
 ARG BUILD_ARGS
-RUN cargo build --release $BUILD_ARGS
-RUN strip target/release/litentry-collator
+RUN cargo build --profile production $BUILD_ARGS
+RUN strip target/production/litentry-collator
 
 # ==========================
 # stage 2: packaging
@@ -26,7 +26,7 @@ RUN strip target/release/litentry-collator
 FROM ubuntu:20.04
 LABEL maintainer="litentry-dev"
 
-COPY --from=builder /litentry/target/release/litentry-collator /usr/local/bin
+COPY --from=builder /litentry/target/production/litentry-collator /usr/local/bin
 
 RUN useradd -m -u 1000 -U -s /bin/sh -d /litentry litentry && \
 	mkdir -p /data /litentry/.local/share && \
