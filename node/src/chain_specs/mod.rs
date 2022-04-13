@@ -24,6 +24,7 @@ use sp_runtime::traits::{IdentifyAccount, Verify};
 
 pub mod litentry;
 pub mod litmus;
+pub mod moonbase;
 pub mod rococo;
 
 // This is a default chain spec using litentry genesis config

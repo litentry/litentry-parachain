@@ -21,7 +21,7 @@ use crate::{
 	cli::{Cli, RelayChainCli, Subcommand},
 	service::{
 		new_partial, Block, LitentryParachainRuntimeExecutor, LitmusParachainRuntimeExecutor,
-		RococoParachainRuntimeExecutor,
+		MoonbaseParachainRuntimeExecutor, RococoParachainRuntimeExecutor,
 	},
 };
 use codec::Encode;
@@ -47,6 +47,7 @@ trait IdentifyChain {
 	fn is_litentry(&self) -> bool;
 	fn is_litmus(&self) -> bool;
 	fn is_rococo(&self) -> bool;
+	fn is_moonbase(&self) -> bool;
 	fn is_dev(&self) -> bool;
 }
 
@@ -59,6 +60,9 @@ impl IdentifyChain for dyn sc_service::ChainSpec {
 	}
 	fn is_rococo(&self) -> bool {
 		self.id().starts_with("rococo")
+	}
+	fn is_moonbase(&self) -> bool {
+		self.id().starts_with("moonbase")
 	}
 	fn is_dev(&self) -> bool {
 		self.id().ends_with("dev")
@@ -74,6 +78,9 @@ impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
 	}
 	fn is_rococo(&self) -> bool {
 		<dyn sc_service::ChainSpec>::is_rococo(self)
+	}
+	fn is_moonbase(&self) -> bool {
+		<dyn sc_service::ChainSpec>::is_moonbase(self)
 	}
 	fn is_dev(&self) -> bool {
 		<dyn sc_service::ChainSpec>::is_dev(self)
@@ -99,18 +106,27 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		"rococo" => Box::new(chain_specs::rococo::ChainSpec::from_json_bytes(
 			&include_bytes!("../res/chain_specs/rococo.json")[..],
 		)?),
+		// Moonbase
+		"moonbase-dev" => Box::new(chain_specs::moonbase::get_chain_spec_dev()),
+		"moonbase" => Box::new(chain_specs::moonbase::ChainSpec::from_json_bytes(
+			&include_bytes!("../res/chain_specs/moonbase.json")[..],
+		)?),
 		// Generate res/chain_specs/litentry.json
 		"generate-litentry" => Box::new(chain_specs::litentry::get_chain_spec_prod()),
 		// Generate res/chain_specs/litmus.json
 		"generate-litmus" => Box::new(chain_specs::litmus::get_chain_spec_prod()),
 		// Generate res/chain_specs/rococo.json
 		"generate-rococo" => Box::new(chain_specs::rococo::get_chain_spec_prod()),
+		// Generate res/chain_specs/moonbase.json
+		"generate-moonbase" => Box::new(chain_specs::moonbase::get_chain_spec_prod()),
 		path => {
 			let chain_spec = chain_specs::ChainSpec::from_json_file(path.into())?;
 			if chain_spec.is_litmus() {
 				Box::new(chain_specs::litmus::ChainSpec::from_json_file(path.into())?)
 			} else if chain_spec.is_rococo() {
 				Box::new(chain_specs::rococo::ChainSpec::from_json_file(path.into())?)
+			} else if chain_spec.is_moonbase() {
+				Box::new(chain_specs::moonbase::ChainSpec::from_json_file(path.into())?)
 			} else {
 				// Fallback: use Litentry chain spec
 				Box::new(chain_spec)
@@ -157,6 +173,8 @@ impl SubstrateCli for Cli {
 			&litmus_parachain_runtime::VERSION
 		} else if chain_spec.is_rococo() {
 			&rococo_parachain_runtime::VERSION
+		} else if chain_spec.is_moonbase() {
+			&moonbase_parachain_runtime::VERSION
 		} else {
 			// By default litentry is used
 			&litentry_parachain_runtime::VERSION
@@ -247,6 +265,18 @@ macro_rules! construct_async_run {
 				>(
 					&$config,
 					crate::service::build_import_queue::<rococo_parachain_runtime::RuntimeApi>,
+				)?;
+				let task_manager = $components.task_manager;
+				{ $( $code )* }.map(|v| (v, task_manager))
+			})
+		} else if runner.config().chain_spec.is_moonbase() {
+			runner.async_run(|$config| {
+				let $components = new_partial::<
+					moonbase_parachain_runtime::RuntimeApi,
+					_
+				>(
+					&$config,
+					crate::service::build_import_queue::<moonbase_parachain_runtime::RuntimeApi>,
 				)?;
 				let task_manager = $components.task_manager;
 				{ $( $code )* }.map(|v| (v, task_manager))
@@ -373,6 +403,10 @@ pub fn run() -> Result<()> {
 				} else if runner.config().chain_spec.is_rococo() {
 					runner
 						.sync_run(|config| cmd.run::<Block, RococoParachainRuntimeExecutor>(config))
+				} else if runner.config().chain_spec.is_moonbase() {
+					runner.sync_run(|config| {
+						cmd.run::<Block, MoonbaseParachainRuntimeExecutor>(config)
+					})
 				} else {
 					Err(UNSUPPORTED_CHAIN_MESSAGE.into())
 				}
@@ -405,6 +439,13 @@ pub fn run() -> Result<()> {
 				} else if runner.config().chain_spec.is_rococo() {
 					runner.async_run(|config| {
 						Ok((cmd.run::<Block, RococoParachainRuntimeExecutor>(config), task_manager))
+					})
+				} else if runner.config().chain_spec.is_moonbase() {
+					runner.async_run(|config| {
+						Ok((
+							cmd.run::<Block, MoonbaseParachainRuntimeExecutor>(config),
+							task_manager,
+						))
 					})
 				} else {
 					Err(UNSUPPORTED_CHAIN_MESSAGE.into())
@@ -470,6 +511,16 @@ pub fn run() -> Result<()> {
 					.map_err(Into::into)
 				} else if config.chain_spec.is_rococo() {
 					crate::service::start_node::<rococo_parachain_runtime::RuntimeApi>(
+						config,
+						polkadot_config,
+						collator_options,
+						id,
+					)
+					.await
+					.map(|r| r.0)
+					.map_err(Into::into)
+				} else if config.chain_spec.is_moonbase() {
+					crate::service::start_node::<moonbase_parachain_runtime::RuntimeApi>(
 						config,
 						polkadot_config,
 						collator_options,

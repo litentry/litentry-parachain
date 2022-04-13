@@ -92,6 +92,7 @@ try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "p
 litentry-parachain-runtime = { path = "../runtime/litentry" }
 litmus-parachain-runtime = { path = "../runtime/litmus" }
 rococo-parachain-runtime = { path = "../runtime/rococo" }
+moonbase-parachain-runtime = { path = "../runtime/moonbase" }
 primitives = { path = "../primitives" }
 
 [build-dependencies]
@@ -103,11 +104,13 @@ runtime-benchmarks = [
 	"litentry-parachain-runtime/runtime-benchmarks",
 	"litmus-parachain-runtime/runtime-benchmarks",
 	"rococo-parachain-runtime/runtime-benchmarks",
+	"moonbase-parachain-runtime/runtime-benchmarks",
 	"polkadot-service/runtime-benchmarks",
 ]
 try-runtime = [
 	"litentry-parachain-runtime/try-runtime",
 	"litmus-parachain-runtime/try-runtime",
 	"rococo-parachain-runtime/try-runtime",
+	"moonbase-parachain-runtime/try-runtime",
 	"polkadot-service/try-runtime",
 ]
