@@ -25,6 +25,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 pub mod constants;
 pub mod weights;
+pub mod asset_config;
 pub mod xcm_config;
 pub use constants::currency::*;
 
@@ -832,12 +833,16 @@ construct_runtime! {
 		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin, Config} = 51,
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 52,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 53,
+		XTokens: orml_xtokens::{Pallet, Call, Storage, Event<T>} = 54,
+		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 55,
+		// ForeignAssets: pallet_assets::<Instance1>::{Pallet, Call, Storage, Event<T>} = 55,
 
 		// Litmus pallets
 		ChainBridge: pallet_bridge::{Pallet, Call, Storage, Event<T>} = 60,
 		BridgeTransfer: pallet_bridge_transfer::{Pallet, Call, Event<T>, Storage} = 61,
 		Drop3: pallet_drop3::{Pallet, Call, Storage, Event<T>} = 62,
 		ExtrinsicFilter: pallet_extrinsic_filter::{Pallet, Call, Storage, Event<T>} = 63,
+		AssetManager: pallet_asset_manager::{Pallet, Call, Storage, Event<T>} = 64,
 
 		// TMP
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 255,
