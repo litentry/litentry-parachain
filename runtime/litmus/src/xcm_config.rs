@@ -24,6 +24,7 @@ use frame_support::{
 	match_type, parameter_types,
 	traits::{Everything, Nothing, PalletInfoAccess},
 	weights::{IdentityFee, Weight},
+	PalletId,
 };
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
 use pallet_xcm::XcmPassthrough;
@@ -103,12 +104,17 @@ pub type LocalAssetTransactor = CurrencyAdapter<
 	(),
 >;
 
-///// Disable the foreign asset transfer
+// Litentry: The CheckAccount implementation is forced by the bug of FungiblesAdapter.
+// We should replace () regarding fake_pallet_id account after our PR passed.
+use sp_runtime::traits::AccountIdConversion;
+parameter_types! {
+	pub const TempPalletId: PalletId = PalletId(*b"py/tempA");
+	pub TempAccount: AccountId = TempPalletId::get().into_account();
+}
 // The non-reserve fungible transactor type
-// It will use pallet-assets, and the Id will be CurrencyId::ParachainReserve(MultiLocation)
+// It will use orml_tokens, and the Id will be CurrencyId::ParachainReserve(MultiLocation)
 pub type ForeignFungiblesTransactor = FungiblesAdapter<
-	// Use this fungibles implementation:
-	//////////////// Create new token type for the first time? or other implementation here
+	// Use this fungibles implementation
 	Tokens,
 	// Use this currency when it is a fungible asset matching the given location or name:
 	ConvertedConcreteAssetId<
@@ -117,27 +123,23 @@ pub type ForeignFungiblesTransactor = FungiblesAdapter<
 		AssetIdMuliLocationConvert,
 		JustTry,
 	>,
-	// Do a simple punn to convert an AccountId20 MultiLocation into a native chain account ID:
+	// Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
 	AccountId,
 	// We dont allow teleports.
 	Nothing,
 	// We dont track any teleports
-	(),
+	TempAccount,
 >;
-///// Disable the foreign asset transfer
 
-pub type AssetTransactors = ForeignFungiblesTransactor;
-// // The XCM transaction handlers for different type of assets.
-// pub type AssetTransactors = (
-// 	// SelfReserve asset, both pre and post 0.9.16
-// 	LocalAssetTransactor,
-// 	///////// Disable the foreign asset transfer
-// 	// // Foreign assets (non native minted token crossed from remote chain)
-// 	ForeignFungiblesTransactor,
-// 	///////// Disable the foreign asset transfer
-// );
+// The XCM transaction handlers for different type of assets.
+pub type AssetTransactors = (
+	// SelfReserve asset, both pre and post 0.9.16
+	LocalAssetTransactor,
+	// // Foreign assets (non native minted token crossed from remote chain)
+	ForeignFungiblesTransactor,
+);
 
 /// This is the type we use to convert an (incoming) XCM origin into a local `Origin` instance,
 /// ready for dispatching a transaction with Xcm's `Transact`. There is an `OriginKind` which can
@@ -172,7 +174,6 @@ match_type! {
 		MultiLocation { parents: 1, interior: X1(Plurality { id: BodyId::Executive, .. }) }
 	};
 }
-
 
 pub trait Reserve {
 	/// Returns assets reserve location.
@@ -239,7 +240,7 @@ impl xcm_executor::Config for XcmConfig {
 	type Barrier = Barrier;
 	type Weigher = XcmWeigher;
 
-	///////////////Implmentation needed
+	///////////////TODO: Implmentation needed
 	type Trader = UsingComponents<IdentityFee<Balance>, RelayLocation, AccountId, Balances, ()>;
 	type ResponseHandler = PolkadotXcm;
 	type AssetTrap = PolkadotXcm;
@@ -343,14 +344,6 @@ impl xcmConvert<MultiLocation, AssetId> for AssetIdMuliLocationConvert {
 	}
 }
 
-
-
-
-
-
-
-
-
 match_type! {
 	pub type ParentOrParachains: impl Contains<MultiLocation> = {
 		// Local account: Litmus
@@ -410,7 +403,6 @@ impl cumulus_pallet_xcm::Config for Runtime {
 	type Event = Event;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 }
-
 
 impl orml_xtokens::Config for Runtime {
 	type Event = Event;
