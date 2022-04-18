@@ -141,7 +141,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9050,
+	spec_version: 9060,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -876,7 +876,11 @@ impl Contains<Call> for NormalModeFilter {
 			// ExtrinsicFilter
 			Call::ExtrinsicFilter(_) |
 			// Vesting - only enable vest() call function
-			Call::Vesting(pallet_vesting::Call::vest { .. })
+			Call::Vesting(pallet_vesting::Call::vest { .. }) |
+			// ChainBridge
+			Call::ChainBridge(_) |
+			// BridgeTransfer
+			Call::BridgeTransfer(_)
 		)
 	}
 }
