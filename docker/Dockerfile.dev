@@ -37,7 +37,7 @@ RUN cargo chef cook --release --recipe-path recipe.json
 # copy and build the real src
 COPY . /litentry
 ARG BUILD_ARGS
-RUN cargo build --release $BUILD_ARGS
+RUN cargo build --locked --release $BUILD_ARGS
 
 # ===================================
 # stage 4: packaging

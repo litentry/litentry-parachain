@@ -1,6 +1,3 @@
-[profile.release]
-panic = 'unwind'
-
 [workspace]
 members = [
     'node',
@@ -14,3 +11,19 @@ members = [
     'runtime/rococo',
     'runtime/moonbase',
 ]
+
+[profile.release]
+panic = "unwind"
+opt-level = 3
+
+[profile.dev]
+# https://internals.rust-lang.org/t/help-test-faster-incremental-debug-macos-builds-on-nightly/14016
+split-debuginfo = 'unpacked'
+
+[profile.dev.package.backtrace]
+inherits = "release"
+
+[profile.production]
+inherits = "release"
+lto = true
+codegen-units = 1
