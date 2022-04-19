@@ -23,9 +23,9 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+pub mod asset_config;
 pub mod constants;
 pub mod weights;
-pub mod asset_config;
 pub mod xcm_config;
 pub use constants::currency::*;
 

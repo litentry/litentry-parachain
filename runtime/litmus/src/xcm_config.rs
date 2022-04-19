@@ -15,11 +15,10 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::{
-	AssetId, AssetManager, Balance, Balances, Call, Event, Origin, ParachainInfo, ParachainSystem, PolkadotXcm,
-	Runtime, Tokens, XcmpQueue,
+	AssetId, AssetManager, Balance, Balances, Call, Event, Origin, ParachainInfo, ParachainSystem,
+	PolkadotXcm, Runtime, Tokens, XcmpQueue,
 };
 
-use primitives::AccountId;
 use frame_support::{
 	match_type, parameter_types,
 	traits::{Everything, Nothing, PalletInfoAccess},
@@ -27,26 +26,27 @@ use frame_support::{
 	PalletId,
 };
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
+use pallet_asset_manager::AssetTypeGetter;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use xcm::latest::AssetId as xcmAssetId;
-use xcm::latest::prelude::*;
+use primitives::AccountId;
+use xcm::latest::{prelude::*, AssetId as xcmAssetId};
 use xcm_builder::{
-	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, ConvertedConcreteAssetId, 
-	CurrencyAdapter, EnsureXcmOrigin, FixedWeightBounds, FungiblesAdapter, IsConcrete, LocationInverter, 
-	ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
-	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
-	UsingComponents,
+	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom,
+	ConvertedConcreteAssetId, CurrencyAdapter, EnsureXcmOrigin, FixedWeightBounds,
+	FungiblesAdapter, IsConcrete, LocationInverter, ParentIsPreset, RelayChainAsNative,
+	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
+	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
 };
-use xcm_executor::XcmExecutor;
-use xcm_executor::traits::{JustTry, FilterAssetLocation, Convert as xcmConvert};
-use pallet_asset_manager::AssetTypeGetter;
+use xcm_executor::{
+	traits::{Convert as xcmConvert, FilterAssetLocation, JustTry},
+	XcmExecutor,
+};
 
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
-use sp_std::prelude::*;
-use sp_std::borrow::Borrow;
 use sp_runtime::traits::Convert as spConvert;
+use sp_std::{borrow::Borrow, prelude::*};
 
 parameter_types! {
 	pub const RelayLocation: MultiLocation = MultiLocation::parent();
@@ -117,12 +117,7 @@ pub type ForeignFungiblesTransactor = FungiblesAdapter<
 	// Use this fungibles implementation
 	Tokens,
 	// Use this currency when it is a fungible asset matching the given location or name:
-	ConvertedConcreteAssetId<
-		AssetId,
-		Balance,
-		AssetIdMuliLocationConvert,
-		JustTry,
-	>,
+	ConvertedConcreteAssetId<AssetId, Balance, AssetIdMuliLocationConvert, JustTry>,
 	// Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
@@ -209,7 +204,7 @@ impl FilterAssetLocation for MultiNativeAsset {
 	fn filter_asset_location(asset: &MultiAsset, origin: &MultiLocation) -> bool {
 		if let Some(ref reserve) = asset.reserve() {
 			if reserve == origin {
-				return true;
+				return true
 			}
 		}
 		false
@@ -233,7 +228,8 @@ impl xcm_executor::Config for XcmConfig {
 	// How to withdraw and deposit an asset.
 	type AssetTransactor = AssetTransactors;
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
-	// Only Allow chains to handle their own reserve assets crossed on local chain whatever way they want.
+	// Only Allow chains to handle their own reserve assets crossed on local chain whatever way they
+	// want.
 	type IsReserve = MultiNativeAsset;
 	type IsTeleporter = (); // Teleporting is disabled.
 	type LocationInverter = LocationInverter<Ancestry>;
@@ -267,10 +263,7 @@ impl spConvert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 	fn convert(account: AccountId) -> MultiLocation {
 		MultiLocation {
 			parents: 0,
-			interior: X1(Junction::AccountId32 {
-				network: NetworkId::Any,
-				id: account.into(),
-			}),
+			interior: X1(Junction::AccountId32 { network: NetworkId::Any, id: account.into() }),
 		}
 	}
 }
@@ -279,7 +272,8 @@ impl spConvert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 #[derive(Clone, Eq, Debug, PartialEq, Ord, PartialOrd, Encode, Decode, TypeInfo)]
 pub enum CurrencyId {
 	SelfReserve, // The only parachain native token: LIT
-	ParachainReserve(MultiLocation), // Any parachain based asset, including local native minted ones.
+	ParachainReserve(MultiLocation), /* Any parachain based asset, including local native
+	              * minted ones. */
 }
 impl Default for CurrencyId {
 	fn default() -> Self {
@@ -300,7 +294,7 @@ impl spConvert<CurrencyId, Option<MultiLocation>> for CurrencyIdMultiLocationCon
 			CurrencyId::SelfReserve => {
 				let multi: MultiLocation = OldAnchoringSelfReserve::get();
 				Some(multi)
-			}
+			},
 			CurrencyId::ParachainReserve(multi) => Some(multi),
 		}
 	}
@@ -308,7 +302,8 @@ impl spConvert<CurrencyId, Option<MultiLocation>> for CurrencyIdMultiLocationCon
 impl spConvert<MultiLocation, Option<CurrencyId>> for CurrencyIdMultiLocationConvert {
 	fn convert(multi: MultiLocation) -> Option<CurrencyId> {
 		match multi {
-			a if (a == OldAnchoringSelfReserve::get()) | (a == NewAnchoringSelfReserve::get()) => Some(CurrencyId::SelfReserve),
+			a if (a == OldAnchoringSelfReserve::get()) | (a == NewAnchoringSelfReserve::get()) =>
+				Some(CurrencyId::SelfReserve),
 			_ => Some(CurrencyId::ParachainReserve(multi)),
 		}
 	}
@@ -321,8 +316,14 @@ impl spConvert<MultiLocation, Option<CurrencyId>> for CurrencyIdMultiLocationCon
 pub struct AssetIdMuliLocationConvert;
 impl xcmConvert<MultiLocation, AssetId> for AssetIdMuliLocationConvert {
 	fn convert_ref(multi: impl Borrow<MultiLocation>) -> Result<AssetId, ()> {
-		if let Some(currency_id) = <CurrencyIdMultiLocationConvert as spConvert<MultiLocation, Option<CurrencyId>>>::convert(multi.borrow().clone().into()) {
-			if let Some(asset_id) = <AssetManager as AssetTypeGetter<AssetId, CurrencyId>>::get_asset_id(currency_id) {
+		if let Some(currency_id) = <CurrencyIdMultiLocationConvert as spConvert<
+			MultiLocation,
+			Option<CurrencyId>,
+		>>::convert(multi.borrow().clone().into())
+		{
+			if let Some(asset_id) =
+				<AssetManager as AssetTypeGetter<AssetId, CurrencyId>>::get_asset_id(currency_id)
+			{
 				Ok(asset_id)
 			} else {
 				Err(())
@@ -332,8 +333,15 @@ impl xcmConvert<MultiLocation, AssetId> for AssetIdMuliLocationConvert {
 		}
 	}
 	fn reverse_ref(asset_id: impl Borrow<AssetId>) -> Result<MultiLocation, ()> {
-		if let Some(currency_id) = <AssetManager as AssetTypeGetter<AssetId, CurrencyId>>::get_asset_type(asset_id.borrow().clone().into()) {
-			if let Some(multi) = <CurrencyIdMultiLocationConvert as spConvert<CurrencyId, Option<MultiLocation>>>::convert(currency_id) {
+		if let Some(currency_id) =
+			<AssetManager as AssetTypeGetter<AssetId, CurrencyId>>::get_asset_type(
+				asset_id.borrow().clone().into(),
+			) {
+			if let Some(multi) = <CurrencyIdMultiLocationConvert as spConvert<
+				CurrencyId,
+				Option<MultiLocation>,
+			>>::convert(currency_id)
+			{
 				Ok(multi)
 			} else {
 				Err(())
@@ -420,6 +428,6 @@ impl orml_xtokens::Config for Runtime {
 	type BaseXcmWeight = BaseXcmWeight;
 	type LocationInverter = LocationInverter<Ancestry>;
 	type MaxAssetsForTransfer = MaxAssetsForTransfer;
-	
+
 	type ReserveProvider = AbsoluteReserveProvider;
 }

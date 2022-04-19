@@ -15,8 +15,8 @@
 // along with Moonbeam.  If not, see <http://www.gnu.org/licenses/>.
 
 // Litentry: Code has been simplified by Litentry.
-// (1) The local asset support is removed. This pallet is for managing Xcm foreign asset specifically.
-// (2) The mapping of AssetId and AssetType is now capable of manual choosen 
+// (1) The local asset support is removed. This pallet is for managing Xcm foreign asset
+// specifically. (2) The mapping of AssetId and AssetType is now capable of manual choosen
 // (3) Compatibility to orml_token instead of pallet_assets
 // (4) Code for destroy asset is removed
 
@@ -46,8 +46,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 // TODO implement
-#[cfg(feature = "runtime-benchmarks")]
-mod benchmarking;
+// #[cfg(feature = "runtime-benchmarks")]
+// mod benchmarking;
 pub mod weights;
 
 use frame_support::pallet;
@@ -56,13 +56,13 @@ pub use pallet::*;
 #[pallet]
 pub mod pallet {
 	use crate::weights::WeightInfo;
+	use codec::HasCompact;
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{Currency, ReservableCurrency},
 		PalletId,
 	};
 	use frame_system::pallet_prelude::*;
-	use codec::HasCompact;
 	use sp_runtime::traits::{AccountIdConversion, AtLeast32BitUnsigned};
 	use sp_std::vec::Vec;
 
@@ -110,7 +110,14 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		/// The Asset Id. This will be used to register the asset in Assets
-		type AssetId: Member + Parameter + Default + Ord + PartialOrd + Copy + HasCompact + MaxEncodedLen;
+		type AssetId: Member
+			+ Parameter
+			+ Default
+			+ Ord
+			+ PartialOrd
+			+ Copy
+			+ HasCompact
+			+ MaxEncodedLen;
 
 		/// The Foreign Asset Kind.
 		type ForeignAssetType: Parameter + Member + Ord + PartialOrd;
@@ -155,36 +162,22 @@ pub mod pallet {
 			asset_type: T::ForeignAssetType,
 			metadata: AssetMetadata<BalanceOf<T>>,
 		},
-		/// Litentry: Purestake use AssetType as index. This might lead to security issue if MultiLocation Hash changes. Here we use AssetId instead.
-		/// Changed the amount of units we are charging per execution second for a given asset
-		UnitsPerSecondChanged {
-			asset_id: T::AssetId,
-			units_per_second: u128,
-		},
+		/// Litentry: Purestake use AssetType as index. This might lead to security issue if
+		/// MultiLocation Hash changes. Here we use AssetId instead. Changed the amount of units we
+		/// are charging per execution second for a given asset
+		UnitsPerSecondChanged { asset_id: T::AssetId, units_per_second: u128 },
 		/// Changed the xcm type mapping for a given asset id
-		ForeignAssetTypeChanged {
-			asset_id: T::AssetId,
-			new_asset_type: T::ForeignAssetType,
-		},
+		ForeignAssetTypeChanged { asset_id: T::AssetId, new_asset_type: T::ForeignAssetType },
 		/// Removed all information related to an assetId
-		ForeignAssetRemoved {
-			asset_id: T::AssetId,
-			asset_type: T::ForeignAssetType,
-		},
-		/// Litentry: Purestake use AssetType as index. This might lead to security issue if MultiLocation Hash changes. Here we use AssetId instead.
-		/// Supported asset type for fee payment removed
+		ForeignAssetRemoved { asset_id: T::AssetId, asset_type: T::ForeignAssetType },
+		/// Litentry: Purestake use AssetType as index. This might lead to security issue if
+		/// MultiLocation Hash changes. Here we use AssetId instead. Supported asset type for fee
+		/// payment removed
 		SupportedAssetRemoved { asset_id: T::AssetId },
 		/// Local asset was created
-		LocalAssetRegistered {
-			asset_id: T::AssetId,
-			creator: T::AccountId,
-			owner: T::AccountId,
-		},
+		LocalAssetRegistered { asset_id: T::AssetId, creator: T::AccountId, owner: T::AccountId },
 		/// Removed all information related to an assetId and destroyed asset
-		ForeignAssetDestroyed {
-			asset_id: T::AssetId,
-			asset_type: T::ForeignAssetType,
-		},
+		ForeignAssetDestroyed { asset_id: T::AssetId, asset_type: T::ForeignAssetType },
 		/// Removed all information related to an assetId and destroyed asset
 		LocalAssetDestroyed { asset_id: T::AssetId },
 	}
@@ -205,16 +198,14 @@ pub mod pallet {
 	pub type AssetTypeId<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::ForeignAssetType, T::AssetId>;
 
-
-	/// Litentry: Purestake use AssetType as index. This might lead to security issue if MultiLocation Hash changes. Here we use AssetId instead.
-	/// Stores the units per second for local execution for a AssetType.
-	/// This is used to know how to charge for XCM execution in a particular
-	/// asset
+	/// Litentry: Purestake use AssetType as index. This might lead to security issue if
+	/// MultiLocation Hash changes. Here we use AssetId instead. Stores the units per second for
+	/// local execution for a AssetType. This is used to know how to charge for XCM execution in a
+	/// particular asset
 	/// Not all assets might contain units per second, hence the different storage
 	#[pallet::storage]
 	#[pallet::getter(fn asset_id_units_per_second)]
-	pub type AssetIdUnitsPerSecond<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AssetId, u128>;
+	pub type AssetIdUnitsPerSecond<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, u128>;
 
 	/// Stores the counter of the number of local assets that have been
 	/// created so far
@@ -226,12 +217,12 @@ pub mod pallet {
 	#[pallet::getter(fn local_asset_counter)]
 	pub type LocalAssetCounter<T: Config> = StorageValue<_, u128, ValueQuery>;
 
-	/// Litentry: Purestake use AssetType as index. This might lead to security issue if MultiLocation Hash changes. Here we use AssetId instead.
+	/// Litentry: Purestake use AssetType as index. This might lead to security issue if
+	/// MultiLocation Hash changes. Here we use AssetId instead.
 	// Supported fee asset payments
 	#[pallet::storage]
 	#[pallet::getter(fn supported_fee_payment_assets)]
-	pub type SupportedFeePaymentAssets<T: Config> =
-		StorageValue<_, Vec<T::AssetId>, ValueQuery>;
+	pub type SupportedFeePaymentAssets<T: Config> = StorageValue<_, Vec<T::AssetId>, ValueQuery>;
 
 	/// The storages for AssetMetadatas.
 	///
@@ -253,20 +244,13 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::ForeignAssetModifierOrigin::ensure_origin(origin)?;
 
-			ensure!(
-				AssetIdType::<T>::get(&asset_id).is_none(),
-				Error::<T>::AssetAlreadyExists
-			);
+			ensure!(AssetIdType::<T>::get(&asset_id).is_none(), Error::<T>::AssetAlreadyExists);
 
 			AssetMetadatas::<T>::insert(&asset_id, &metadata);
 			AssetIdType::<T>::insert(&asset_id, &asset_type);
 			AssetTypeId::<T>::insert(&asset_type, &asset_id);
 
-			Self::deposit_event(Event::ForeignAssetRegistered {
-				asset_id,
-				asset_type,
-				metadata,
-			});
+			Self::deposit_event(Event::ForeignAssetRegistered { asset_id, asset_type, metadata });
 			Ok(())
 		}
 
@@ -278,14 +262,11 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::ForeignAssetModifierOrigin::ensure_origin(origin)?;
 
-			let asset_id: T::AssetId = AssetTypeId::<T>::get(&asset_type).ok_or(Error::<T>::AssetDoesNotExist)?;
+			let asset_id: T::AssetId =
+				AssetTypeId::<T>::get(&asset_type).ok_or(Error::<T>::AssetDoesNotExist)?;
 			AssetMetadatas::<T>::insert(&asset_id, &metadata);
 
-			Self::deposit_event(Event::<T>::ForeignAssetUpdated {
-				asset_id,
-				asset_type,
-				metadata,
-			});
+			Self::deposit_event(Event::<T>::ForeignAssetUpdated { asset_id, asset_type, metadata });
 			Ok(())
 		}
 
@@ -300,10 +281,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::ForeignAssetModifierOrigin::ensure_origin(origin)?;
 
-			ensure!(
-				AssetTypeId::<T>::get(&asset_type).is_some(),
-				Error::<T>::AssetDoesNotExist
-			);
+			ensure!(AssetTypeId::<T>::get(&asset_type).is_some(), Error::<T>::AssetDoesNotExist);
 
 			// Grab supported assets
 			let mut supported_assets = SupportedFeePaymentAssets::<T>::get();
@@ -313,20 +291,19 @@ pub mod pallet {
 				Error::<T>::TooLowNumAssetsWeightHint
 			);
 
-			let asset_id: T::AssetId = AssetTypeId::<T>::get(&asset_type).ok_or(Error::<T>::AssetDoesNotExist)?;
+			let asset_id: T::AssetId =
+				AssetTypeId::<T>::get(&asset_type).ok_or(Error::<T>::AssetDoesNotExist)?;
 			// Only if the asset is not supported we need to push it
 			if let Err(index) = supported_assets.binary_search(&asset_id) {
 				supported_assets.insert(index, asset_id.clone());
 				SupportedFeePaymentAssets::<T>::put(supported_assets);
 			}
 
-			let asset_id: T::AssetId = AssetTypeId::<T>::get(&asset_type).ok_or(Error::<T>::AssetDoesNotExist)?;
+			let asset_id: T::AssetId =
+				AssetTypeId::<T>::get(&asset_type).ok_or(Error::<T>::AssetDoesNotExist)?;
 			AssetIdUnitsPerSecond::<T>::insert(&asset_id, &units_per_second);
 
-			Self::deposit_event(Event::UnitsPerSecondChanged {
-				asset_id,
-				units_per_second,
-			});
+			Self::deposit_event(Event::UnitsPerSecondChanged { asset_id, units_per_second });
 			Ok(())
 		}
 
@@ -352,10 +329,7 @@ pub mod pallet {
 			// Remove previous asset type info
 			AssetTypeId::<T>::remove(&previous_asset_type);
 
-			Self::deposit_event(Event::ForeignAssetTypeChanged {
-				asset_id,
-				new_asset_type,
-			});
+			Self::deposit_event(Event::ForeignAssetTypeChanged { asset_id, new_asset_type });
 			Ok(())
 		}
 
@@ -368,7 +342,8 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::ForeignAssetModifierOrigin::ensure_origin(origin)?;
 
-			let asset_id: T::AssetId = AssetTypeId::<T>::get(&asset_type).ok_or(Error::<T>::AssetDoesNotExist)?;
+			let asset_id: T::AssetId =
+				AssetTypeId::<T>::get(&asset_type).ok_or(Error::<T>::AssetDoesNotExist)?;
 
 			// Grab supported assets
 			let mut supported_assets = SupportedFeePaymentAssets::<T>::get();
@@ -427,10 +402,7 @@ pub mod pallet {
 				SupportedFeePaymentAssets::<T>::put(supported_assets);
 			}
 
-			Self::deposit_event(Event::ForeignAssetRemoved {
-				asset_id,
-				asset_type,
-			});
+			Self::deposit_event(Event::ForeignAssetRemoved { asset_id, asset_type });
 			Ok(())
 		}
 	}

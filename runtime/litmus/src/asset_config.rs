@@ -1,18 +1,16 @@
-use super::xcm_config::CurrencyId;
 use super::{
-    AccountId, Amount, AssetId, Balance, Balances, Event, MaxLocks, Runtime, TreasuryPalletId,
+	xcm_config::CurrencyId, AccountId, Amount, AssetId, Balance, Balances, Event, MaxLocks,
+	Runtime, TreasuryPalletId,
 };
-use orml_traits::{parameter_type_with_key};
-use frame_support::parameter_types;
-use frame_support::traits::Contains;
+use frame_support::{parameter_types, traits::Contains};
 use frame_system::EnsureRoot;
-use sp_std::prelude::*;
+use orml_traits::parameter_type_with_key;
 use sp_runtime::traits::AccountIdConversion;
+use sp_std::prelude::*;
 
 pub fn get_all_module_accounts() -> Vec<AccountId> {
 	vec![]
 }
-
 
 // Replace this in our asset_manager pallet
 parameter_type_with_key! {
@@ -56,4 +54,3 @@ impl pallet_asset_manager::Config for Runtime {
 	type Currency = Balances;
 	type WeightInfo = ();
 }
-
