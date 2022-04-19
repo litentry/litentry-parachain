@@ -27,27 +27,27 @@ help:
 
 .PHONY: build-all ## Build release version
 build-all:
-	cargo build --release
+	cargo build --locked --release
 
 .PHONY: build-node ## Build release node with default features
 build-node:
-	cargo build -p $(call pkgid, $(NODE_BIN)) --release
+	cargo build --locked -p $(call pkgid, $(NODE_BIN)) --release
 
 .PHONY: build-runtime-litentry ## Build litentry release runtime
 build-runtime-litentry:
-	cargo build -p $(call pkgid, litentry-parachain-runtime) --release
+	cargo build --locked -p $(call pkgid, litentry-parachain-runtime) --release
 
 .PHONY: build-runtime-litmus ## Build litmus release runtime
 build-runtime-litmus:
-	cargo build -p $(call pkgid, litmus-parachain-runtime) --release
+	cargo build --locked -p $(call pkgid, litmus-parachain-runtime) --release
 
 .PHONY: build-runtime-rococo ## Build rococo release runtime
 build-runtime-rococo:
-	cargo build -p $(call pkgid, rococo-parachain-runtime) --release
+	cargo build --locked -p $(call pkgid, rococo-parachain-runtime) --release
 
 .PHONY: build-runtime-moonbase ## Build moonbase release runtime
 build-runtime-moonbase:
-	cargo build -p $(call pkgid, moonbase-parachain-runtime) --release
+	cargo build --locked -p $(call pkgid, moonbase-parachain-runtime) --release
 
 .PHONY: srtool-build-wasm-litentry ## Build litentry wasm with srtools
 srtool-build-wasm-litentry:
@@ -75,11 +75,11 @@ build-docker-prod:
 
 .PHONY: build-node-benchmarks ## Build release node with `runtime-benchmarks` feature
 build-node-benchmarks:
-	cargo build --features runtime-benchmarks --release
+	cargo build --locked --features runtime-benchmarks --release
 
 .PHONY: build-node-tryruntime ## Build release node with `try-runtime` feature
 build-node-tryruntime:
-	cargo build --features try-runtime --release
+	cargo build --locked --features try-runtime --release
 	
 # launching local dev networks
 
