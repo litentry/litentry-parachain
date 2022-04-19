@@ -15,7 +15,7 @@ CHAIN=$1
 SRTOOL_IMAGE=${2:-paritytech/srtool}
 
 case "$1" in
-  litentry|litmus|rococo) ;;
+  litentry|litmus|rococo|moonbase) ;;
   *) usage; exit 1 ;;
 esac
 

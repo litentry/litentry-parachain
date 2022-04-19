@@ -7,16 +7,17 @@ on:
         type: choice
         description: The chain whose runtime is benchmarked
         options:
-        - litmus
-        - litentry
-        - rococo
+          - litmus
+          - litentry
+          - rococo
+          - moonbase
       pallets:
         description: pallets to benchmark, * for all, or comma listed (e.g. frame-system,pallet-proxy)
-        default: '*'
+        default: "*"
         required: true
 
 env:
-  REMOTE_HOST: parachain-benchmark  # remote host to run benchmarking upon, must be ssh reachable
+  REMOTE_HOST: parachain-benchmark # remote host to run benchmarking upon, must be ssh reachable
 
 jobs:
   ## build docker image with runtime-benchmarks feature, and then run the benchmarking remotely
@@ -62,13 +63,13 @@ jobs:
       - name: Create auto PR
         uses: peter-evans/create-pull-request@v3
         with:
-          commit-message: '[benchmarking bot] Auto commit generated weights files'
+          commit-message: "[benchmarking bot] Auto commit generated weights files"
           committer: benchmarking bot <noreply@github.com>
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           signoff: false
           branch: benchmarking-bot-${{ github.run_id }}
           delete-branch: true
-          title: '[benchmarking bot] Update generated weights files'
+          title: "[benchmarking bot] Update generated weights files"
           body: |
             This is an automatically created PR.
             It updates the weights files under `runtime/${{ github.event.inputs.chain }}/src/weights/*.rs` after running benchmarks on the remote machine: ${{ env.REMOTE_HOST }}

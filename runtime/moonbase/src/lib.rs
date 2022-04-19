@@ -25,7 +25,6 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 pub mod constants;
 pub mod weights;
-pub mod asset_config;
 pub mod xcm_config;
 pub use constants::currency::*;
 
@@ -129,13 +128,20 @@ impl_opaque_keys! {
 /// This runtime version.
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	// It's important to match `litmus-parachain-runtime`, which is runtime pkg name
-	spec_name: create_runtime_str!("litmus-parachain"),
-	impl_name: create_runtime_str!("litmus-parachain"),
+	// Note:
+	// It's important to match `moonbase-parachain-runtime`, which is runtime pkg name
+	// otherwise no extrinsic can be submitted.
+	// In logs it's shown:
+	// Failed to submit extrinsic: Extrinsic verification error: Runtime error: Execution failed:
+	// Other("Wasm execution trapped: wasm trap: unreachable ...
+	//
+	// However our CI passes (TODO)
+	spec_name: create_runtime_str!("moonbase-parachain"),
+	impl_name: create_runtime_str!("moonbase-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9060,
+	spec_version: 9050,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -833,16 +839,12 @@ construct_runtime! {
 		PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin, Config} = 51,
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 52,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 53,
-		XTokens: orml_xtokens::{Pallet, Call, Storage, Event<T>} = 54,
-		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 55,
-		// ForeignAssets: pallet_assets::<Instance1>::{Pallet, Call, Storage, Event<T>} = 55,
 
-		// Litmus pallets
+		// Moonbase pallets
 		ChainBridge: pallet_bridge::{Pallet, Call, Storage, Event<T>} = 60,
 		BridgeTransfer: pallet_bridge_transfer::{Pallet, Call, Event<T>, Storage} = 61,
 		Drop3: pallet_drop3::{Pallet, Call, Storage, Event<T>} = 62,
 		ExtrinsicFilter: pallet_extrinsic_filter::{Pallet, Call, Storage, Event<T>} = 63,
-		AssetManager: pallet_asset_manager::{Pallet, Call, Storage, Event<T>} = 64,
 
 		// TMP
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 255,
@@ -874,11 +876,7 @@ impl Contains<Call> for NormalModeFilter {
 			// ExtrinsicFilter
 			Call::ExtrinsicFilter(_) |
 			// Vesting - only enable vest() call function
-			Call::Vesting(pallet_vesting::Call::vest { .. }) |
-			// ChainBridge
-			Call::ChainBridge(_) |
-			// BridgeTransfer
-			Call::BridgeTransfer(_)
+			Call::Vesting(pallet_vesting::Call::vest { .. })
 		)
 	}
 }

@@ -16,7 +16,7 @@
 
 use super::*;
 use cumulus_primitives_core::ParaId;
-use rococo_parachain_runtime::{
+use moonbase_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, CollatorSelectionConfig, CouncilMembershipConfig,
 	GenesisConfig, ParachainInfoConfig, PolkadotXcmConfig, SessionConfig, SudoConfig, SystemConfig,
 	TechnicalCommitteeMembershipConfig, UNIT, WASM_BINARY,
@@ -34,7 +34,7 @@ pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
 /// The default XCM version to set in genesis config.
 const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
 
-/// Get default parachain properties for Rococo which will be filled into chain spec
+/// Get default parachain properties for Moonbase which will be filled into chain spec
 /// Currently, we use 131 as the SS58Prefix (same as Litmus)
 fn default_parachain_properties() -> Option<Properties> {
 	parachain_properties("LIT", 12, 131)
@@ -59,8 +59,8 @@ struct GenesisInfo {
 
 pub fn get_chain_spec_dev() -> ChainSpec {
 	ChainSpec::from_genesis(
-		"Litentry-rococo-dev",
-		"litentry-rococo-dev",
+		"Litentry-moonbase-dev",
+		"litentry-moonbase-dev",
 		ChainType::Development,
 		move || {
 			generate_genesis(
@@ -94,20 +94,20 @@ pub fn get_chain_spec_dev() -> ChainSpec {
 		},
 		Vec::new(),
 		None,
-		Some("litentry-rococo"),
+		Some("litentry-moonbase"),
 		None,
 		default_parachain_properties(),
-		Extensions { relay_chain: "rococo-local".into(), para_id: DEFAULT_PARA_ID },
+		Extensions { relay_chain: "moonbase-local".into(), para_id: DEFAULT_PARA_ID },
 	)
 }
 
 pub fn get_chain_spec_prod() -> ChainSpec {
 	get_chain_spec_from_genesis_info(
-		include_bytes!("../../res/genesis_info/rococo.json"),
-		"Litentry-rococo",
-		"litentry-rococo",
+		include_bytes!("../../res/genesis_info/moonbase.json"),
+		"Litentry-moonbase",
+		"litentry-moonbase",
 		ChainType::Live,
-		"rococo".into(),
+		"moonbase".into(),
 		DEFAULT_PARA_ID.into(),
 	)
 }
@@ -163,7 +163,7 @@ fn get_chain_spec_from_genesis_info(
 			)
 			.expect("Invalid telemetry URL; qed."),
 		),
-		Some("litentry-rococo"),
+		Some("litentry-moonbase"),
 		None,
 		default_parachain_properties(),
 		Extensions { relay_chain: relay_chain_name, para_id: para_id.into() },
@@ -197,9 +197,9 @@ fn generate_genesis(
 				.cloned()
 				.map(|(acc, aura)| {
 					(
-						acc.clone(),                                    // account id
-						acc,                                            // validator id
-						rococo_parachain_runtime::SessionKeys { aura }, // session keys
+						acc.clone(),                                      // account id
+						acc,                                              // validator id
+						moonbase_parachain_runtime::SessionKeys { aura }, // session keys
 					)
 				})
 				.collect(),

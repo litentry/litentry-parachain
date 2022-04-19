@@ -74,7 +74,7 @@ fi
 
 if [ "$2" != "client" ]; then
   echo "## Runtime" >> "$1"
-  for CHAIN in litmus rococo litentry; do
+  for CHAIN in litmus rococo litentry moonbase; do
     SRTOOL_DIGEST_FILE=$CHAIN-parachain-runtime/$CHAIN-parachain-srtool-digest.json
     RUNTIME_VERSION=$(grep spec_version runtime/$CHAIN/src/lib.rs | sed 's/.*version: //;s/,//')
     RUNTIME_COMPRESSED_SIZE=$(cat "$SRTOOL_DIGEST_FILE" | jq .runtimes.compressed.size | sed 's/"//g')
