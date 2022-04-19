@@ -1123,9 +1123,9 @@ dependencies = [
 
 [[package]]
 name = "clap_lex"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d716edb7c26222b1b21de6e6d505b274f9f3db9e7bc2e06baf389d57ae842df8"
+checksum = "189ddd3b5d32a70b35e7686054371742a937b0d99128e76dde6340210e966669"
 dependencies = [
  "os_str_bytes",
 ]
@@ -5500,9 +5500,6 @@ name = "os_str_bytes"
 version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8e22443d1643a904602595ba1cd8f7d896afe56d26712531c5ff73a15b2fbf64"
-dependencies = [
- "memchr",
-]
 
 [[package]]
 name = "owning_ref"
