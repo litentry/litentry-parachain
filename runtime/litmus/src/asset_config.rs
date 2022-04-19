@@ -12,15 +12,6 @@ pub fn get_all_module_accounts() -> Vec<AccountId> {
 	vec![]
 }
 
-// Replace this in our asset_manager pallet
-parameter_type_with_key! {
-	pub ExistentialDeposits: |currency_id: AssetId| -> Balance {
-		match currency_id {
-			_ => 0,
-		}
-	};
-}
-
 parameter_types! {
 	pub LitTreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
 }
