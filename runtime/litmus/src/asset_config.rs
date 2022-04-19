@@ -1,5 +1,5 @@
 use super::{
-	xcm_config::CurrencyId, AccountId, Amount, AssetId, Balance, Balances, Event, MaxLocks,
+	xcm_config::CurrencyId, AccountId, Amount, AssetId, AssetManager, Balance, Balances, Event, MaxLocks,
 	Runtime, TreasuryPalletId,
 };
 use frame_support::{parameter_types, traits::Contains};
@@ -37,8 +37,8 @@ impl orml_tokens::Config for Runtime {
 	type Balance = Balance;
 	type Amount = Amount;
 	type CurrencyId = AssetId;
-	// Get this info from pallet_asset_manager
-	type ExistentialDeposits = ExistentialDeposits;
+	// Get this info from pallet_asset_manager metadata
+	type ExistentialDeposits = AssetManager;
 	type OnDust = orml_tokens::TransferDust<Runtime, LitTreasuryAccount>;
 	type MaxLocks = MaxLocks;
 	type DustRemovalWhitelist = DustRemovalWhitelist;

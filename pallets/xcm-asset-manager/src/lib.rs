@@ -65,6 +65,7 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use sp_runtime::traits::{AccountIdConversion, AtLeast32BitUnsigned};
 	use sp_std::vec::Vec;
+	use orml_traits::GetByKey;
 
 	#[pallet::pallet]
 	#[pallet::without_storage_info]
@@ -411,6 +412,13 @@ pub mod pallet {
 		/// The account ID of AssetManager
 		pub fn account_id() -> T::AccountId {
 			PALLET_ID.into_account()
+		}
+	}
+
+	impl<T: Config> GetByKey<T::AssetId, BalanceOf<T>> for Pallet<T> {
+		fn get(asset_id: &T::AssetId) -> BalanceOf<T> {
+			let metadata: AssetMetadata<BalanceOf<T>> = AssetMetadatas::<T>::get(asset_id).unwrap_or_default();
+			metadata.minimal_balance
 		}
 	}
 }

@@ -5700,6 +5700,7 @@ dependencies = [
  "frame-system 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.18)",
  "hex-literal",
  "log",
+ "orml-traits",
  "pallet-balances",
  "parity-scale-codec",
  "scale-info",
