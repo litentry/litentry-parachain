@@ -44,6 +44,7 @@
 //! remove_existing_asset_type: which removes a mapping from a foreign asset to an assetId
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::clone_on_copy)]
 
 // TODO implement
 // #[cfg(feature = "runtime-benchmarks")]
@@ -63,9 +64,9 @@ pub mod pallet {
 		PalletId,
 	};
 	use frame_system::pallet_prelude::*;
+	use orml_traits::GetByKey;
 	use sp_runtime::traits::{AccountIdConversion, AtLeast32BitUnsigned};
 	use sp_std::vec::Vec;
-	use orml_traits::GetByKey;
 
 	#[pallet::pallet]
 	#[pallet::without_storage_info]
@@ -417,7 +418,8 @@ pub mod pallet {
 
 	impl<T: Config> GetByKey<T::AssetId, BalanceOf<T>> for Pallet<T> {
 		fn get(asset_id: &T::AssetId) -> BalanceOf<T> {
-			let metadata: AssetMetadata<BalanceOf<T>> = AssetMetadatas::<T>::get(asset_id).unwrap_or_default();
+			let metadata: AssetMetadata<BalanceOf<T>> =
+				AssetMetadatas::<T>::get(asset_id).unwrap_or_default();
 			metadata.minimal_balance
 		}
 	}

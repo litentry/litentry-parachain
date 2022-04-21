@@ -1,14 +1,14 @@
 use super::{
-	xcm_config::CurrencyId, AccountId, Amount, AssetId, AssetManager, Balance, Balances, Event, MaxLocks,
-	Runtime, TreasuryPalletId,
+	xcm_config::CurrencyId, AccountId, Amount, AssetId, AssetManager, Balance, Balances, Event,
+	MaxLocks, Runtime, TreasuryPalletId,
 };
 use frame_support::{parameter_types, traits::Contains};
 use frame_system::EnsureRoot;
-use orml_traits::parameter_type_with_key;
 use sp_runtime::traits::AccountIdConversion;
 use sp_std::prelude::*;
 
 pub fn get_all_module_accounts() -> Vec<AccountId> {
+	// Add whitelist here, usually this is the system account like treasury
 	vec![]
 }
 
