@@ -835,7 +835,6 @@ construct_runtime! {
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 53,
 		XTokens: orml_xtokens::{Pallet, Call, Storage, Event<T>} = 54,
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 55,
-		// ForeignAssets: pallet_assets::<Instance1>::{Pallet, Call, Storage, Event<T>} = 55,
 
 		// Litmus pallets
 		ChainBridge: pallet_bridge::{Pallet, Call, Storage, Event<T>} = 60,

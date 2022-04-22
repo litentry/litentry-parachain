@@ -4753,7 +4753,6 @@ dependencies = [
  "orml-traits",
  "orml-xtokens",
  "pallet-asset-manager",
- "pallet-assets",
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
@@ -5112,6 +5111,10 @@ dependencies = [
  "frame-try-runtime",
  "hex-literal",
  "log",
+ "orml-tokens",
+ "orml-traits",
+ "orml-xtokens",
+ "pallet-asset-manager",
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
@@ -5615,20 +5618,6 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "xcm",
-]
-
-[[package]]
-name = "pallet-assets"
-version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.18#fc3fd073d3a0acf9933c3994b660ebd7b5833f65"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -8603,6 +8592,10 @@ dependencies = [
  "frame-try-runtime",
  "hex-literal",
  "log",
+ "orml-tokens",
+ "orml-traits",
+ "orml-xtokens",
+ "pallet-asset-manager",
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
