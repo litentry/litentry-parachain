@@ -4490,7 +4490,7 @@ checksum = "a261afc61b7a5e323933b402ca6a1765183687c614789b1e4db7762ed4230bca"
 
 [[package]]
 name = "litentry-collator"
-version = "0.9.5"
+version = "0.9.6"
 dependencies = [
  "async-trait",
  "clap",
@@ -4561,7 +4561,7 @@ dependencies = [
 
 [[package]]
 name = "litentry-parachain-runtime"
-version = "0.9.5"
+version = "0.9.6"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
@@ -4632,7 +4632,7 @@ dependencies = [
 
 [[package]]
 name = "litmus-parachain-runtime"
-version = "0.9.5"
+version = "0.9.6"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
@@ -4993,7 +4993,7 @@ dependencies = [
 
 [[package]]
 name = "moonbase-parachain-runtime"
-version = "0.9.5"
+version = "0.9.6"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
@@ -7943,7 +7943,7 @@ dependencies = [
 
 [[package]]
 name = "primitives"
-version = "0.9.5"
+version = "0.9.6"
 dependencies = [
  "sp-core",
  "sp-runtime",
@@ -8407,7 +8407,7 @@ dependencies = [
 
 [[package]]
 name = "rococo-parachain-runtime"
-version = "0.9.5"
+version = "0.9.6"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",

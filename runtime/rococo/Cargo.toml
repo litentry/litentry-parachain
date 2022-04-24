@@ -1,6 +1,6 @@
 [package]
 name = 'rococo-parachain-runtime'
-version = '0.9.5'
+version = '0.9.6'
 authors = ["Litentry Dev"]
 edition = '2021'
 
