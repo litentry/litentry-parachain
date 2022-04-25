@@ -114,3 +114,8 @@ try-runtime = [
 	"moonbase-parachain-runtime/try-runtime",
 	"polkadot-service/try-runtime",
 ]
+# allow workers to register without remote attestation for dev purposes
+# currently only available on litmus
+skip-ias-check = [
+	"litmus-parachain-runtime/skip-ias-check",
+]
