@@ -177,8 +177,8 @@ pub mod pallet {
 		/// payment removed
 		SupportedAssetRemoved { asset_id: T::AssetId },
 		// /// Local asset was created
-		// LocalAssetRegistered { asset_id: T::AssetId, creator: T::AccountId, owner: T::AccountId },
-		// /// Removed all information related to an assetId and destroyed asset
+		// LocalAssetRegistered { asset_id: T::AssetId, creator: T::AccountId, owner: T::AccountId
+		// }, /// Removed all information related to an assetId and destroyed asset
 		// ForeignAssetDestroyed { asset_id: T::AssetId, asset_type: T::ForeignAssetType },
 		// /// Removed all information related to an assetId and destroyed asset
 		// LocalAssetDestroyed { asset_id: T::AssetId },
