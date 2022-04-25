@@ -259,7 +259,7 @@ impl xcm_executor::Config for XcmConfig {
 	type Weigher = XcmWeigher;
 	// Litentry: This is the tool used for calculating that inside XcmExecutor vm, how to transfer
 	// asset into weight fee. Usually this is in order to fulfull Barrier
-	// AllowTopLevelPaidExecutionFrom requirement Currently we have not implement the asset to fee
+	// AllowTopLevelPaidExecutionFrom requirement. Currently we have not implement the asset to fee
 	// rule for Foreign Asset, so pure cross chain transfer from XCM parachain will be rejected no
 	// matter.
 	type Trader = Traders;

@@ -143,10 +143,10 @@ pub mod pallet {
 		AssetAlreadyExists,
 		AssetDoesNotExist,
 		TooLowNumAssetsWeightHint,
-		LocalAssetLimitReached,
-		ErrorDestroyingAsset,
-		NotSufficientDeposit,
-		NonExistentLocalAsset,
+		// LocalAssetLimitReached,
+		// ErrorDestroyingAsset,
+		// NotSufficientDeposit,
+		// NonExistentLocalAsset,
 	}
 
 	#[pallet::event]
@@ -176,12 +176,12 @@ pub mod pallet {
 		/// MultiLocation Hash changes. Here we use AssetId instead. Supported asset type for fee
 		/// payment removed
 		SupportedAssetRemoved { asset_id: T::AssetId },
-		/// Local asset was created
-		LocalAssetRegistered { asset_id: T::AssetId, creator: T::AccountId, owner: T::AccountId },
-		/// Removed all information related to an assetId and destroyed asset
-		ForeignAssetDestroyed { asset_id: T::AssetId, asset_type: T::ForeignAssetType },
-		/// Removed all information related to an assetId and destroyed asset
-		LocalAssetDestroyed { asset_id: T::AssetId },
+		// /// Local asset was created
+		// LocalAssetRegistered { asset_id: T::AssetId, creator: T::AccountId, owner: T::AccountId },
+		// /// Removed all information related to an assetId and destroyed asset
+		// ForeignAssetDestroyed { asset_id: T::AssetId, asset_type: T::ForeignAssetType },
+		// /// Removed all information related to an assetId and destroyed asset
+		// LocalAssetDestroyed { asset_id: T::AssetId },
 	}
 
 	/// Mapping from an asset id to asset type.
