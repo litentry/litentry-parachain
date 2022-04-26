@@ -48,7 +48,7 @@ case "$3" in
         ;;
 esac
 
-./target/release/litentry-collator benchmark \
+./target/release/litentry-collator benchmark pallet \
     $CHAIN \
     --execution=wasm  \
     --db-cache=20 \
