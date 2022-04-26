@@ -426,31 +426,23 @@ pub fn run() -> Result<()> {
 			match cmd {
 				BenchmarkCmd::Pallet(cmd) =>
 					if cfg!(feature = "runtime-benchmarks") {
-						let runner = cli.create_runner(cmd)?;
-
 						if !runner.config().chain_spec.is_dev() {
 							return Err("Only dev chain should be used in benchmark".into())
 						}
 
-						if runner.config().chain_spec.is_litmus() {
-							runner.sync_run(|config| {
+						runner.sync_run(|config| {
+							if config.chain_spec.is_litmus() {
 								cmd.run::<Block, LitmusParachainRuntimeExecutor>(config)
-							})
-						} else if runner.config().chain_spec.is_litentry() {
-							runner.sync_run(|config| {
+							} else if config.chain_spec.is_litentry() {
 								cmd.run::<Block, LitentryParachainRuntimeExecutor>(config)
-							})
-						} else if runner.config().chain_spec.is_rococo() {
-							runner.sync_run(|config| {
+							} else if config.chain_spec.is_rococo() {
 								cmd.run::<Block, RococoParachainRuntimeExecutor>(config)
-							})
-						} else if runner.config().chain_spec.is_moonbase() {
-							runner.sync_run(|config| {
+							} else if config.chain_spec.is_moonbase() {
 								cmd.run::<Block, MoonbaseParachainRuntimeExecutor>(config)
-							})
-						} else {
-							Err(UNSUPPORTED_CHAIN_MESSAGE.into())
-						}
+							} else {
+								Err(UNSUPPORTED_CHAIN_MESSAGE.into())
+							}
+						})
 					} else {
 						Err("Benchmarking wasn't enabled when building the node. \
 						You can enable it with `--features runtime-benchmarks`."
