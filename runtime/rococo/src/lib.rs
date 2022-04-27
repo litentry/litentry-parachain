@@ -141,7 +141,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9050,
+	spec_version: 9051,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -149,7 +149,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 };
 
 /// The existential deposit.
-pub const EXISTENTIAL_DEPOSIT: Balance = 10 * CENTS;
+pub const EXISTENTIAL_DEPOSIT: Balance = 50 * CENTS;
 
 /// We assume that ~10% of the block weight is consumed by `on_initialize` handlers. This is
 /// used to limit the maximal weight of a single extrinsic.
