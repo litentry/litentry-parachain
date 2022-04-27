@@ -58,7 +58,7 @@ for p in $PALLETS; do
   # filter out the flooding warnings from pallet_scheduler:
   # Warning: There are more items queued in the Scheduler than expected from the runtime configuration.
   #          An update might be needed
-  RUST_LOG=runtime::scheduler=error ./litentry-collator benchmark \
+  RUST_LOG=runtime::scheduler=error ./litentry-collator benchmark pallet \
       --chain=$1-dev \
       --execution=wasm  \
       --db-cache=20 \
