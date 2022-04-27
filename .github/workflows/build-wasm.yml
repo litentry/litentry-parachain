@@ -9,6 +9,8 @@ on:
         options:
         - litmus
         - litentry
+        - rococo
+        - moonbase
       ref:
         description: The ref to be used for the repo
         default: ''
