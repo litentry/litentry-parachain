@@ -57,7 +57,7 @@ use frame_support::{
 	traits::{Contains, EnsureOneOf, Everything, InstanceFilter},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		DispatchClass, IdentityFee, Weight,
+		ConstantMultiplier, DispatchClass, IdentityFee, Weight,
 	},
 	PalletId, RuntimeDebug,
 };
@@ -141,7 +141,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9052,
+	spec_version: 9060,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -453,8 +453,8 @@ parameter_types! {
 impl pallet_transaction_payment::Config for Runtime {
 	type OnChargeTransaction =
 		pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
-	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = IdentityFee<Balance>;
+	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 }

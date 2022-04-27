@@ -54,8 +54,9 @@ pub enum Subcommand {
 	#[clap(subcommand)]
 	Key(sc_cli::KeySubcommand),
 
-	/// The custom benchmark subcommmand benchmarking runtime pallets.
-	#[clap(name = "benchmark", about = "Benchmark runtime pallets.")]
+	/// Sub-commands concerned with benchmarking.
+	/// The pallet benchmarking moved to the `pallet` sub-command.
+	#[clap(subcommand)]
 	Benchmark(frame_benchmarking_cli::BenchmarkCmd),
 
 	/// Try some testing command against a specified runtime state.
