@@ -9,6 +9,7 @@ on:
         options:
         - litmus
         - litentry
+        - rococo
       ref:
         description: The ref to be used for the repo
         default: ''
