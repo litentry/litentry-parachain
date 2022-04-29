@@ -64,9 +64,9 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use orml_traits::GetByKey;
+pub use pallet::*;
 use sp_runtime::traits::{AccountIdConversion, AtLeast32BitUnsigned, One};
 use sp_std::{convert::*, vec::Vec};
-pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -163,8 +163,6 @@ pub mod pallet {
 		/// MultiLocation Hash changes. Here we use AssetId instead. Changed the amount of units we
 		/// are charging per execution second for a given asset
 		UnitsPerSecondChanged { asset_id: T::AssetId, units_per_second: u128 },
-		/// Add the xcm type mapping for a given asset id
-		ForeignAssetTypeAdded { asset_id: T::AssetId, new_asset_type: T::ForeignAssetType },
 		/// Removed all information related to an assetId
 		ForeignAssetRemoved { asset_id: T::AssetId, asset_type: T::ForeignAssetType },
 		/// Litentry: Purestake use AssetType as index. This might lead to security issue if
@@ -340,7 +338,10 @@ pub mod pallet {
 			// Remove previous asset type info
 			// AssetTypeId::<T>::remove(&previous_asset_type);
 
-			Self::deposit_event(Event::ForeignAssetTypeAdded { asset_id, new_asset_type });
+			Self::deposit_event(Event::ForeignAssetRegistered {
+				asset_id,
+				asset_type: new_asset_type,
+			});
 			Ok(())
 		}
 

@@ -18,18 +18,14 @@ use super::*;
 use crate as pallet_asset_manager;
 use codec::{Decode, Encode};
 
-use frame_support::{
-	construct_runtime, parameter_types, traits::Everything, RuntimeDebug,
-};
+use frame_support::{construct_runtime, parameter_types, traits::Everything, RuntimeDebug};
 use frame_system::EnsureRoot;
 use scale_info::TypeInfo;
 use sp_core::H256;
-use sp_runtime::traits::Hash as THash;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
-use xcm::latest::prelude::*;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -99,7 +95,6 @@ pub type AssetId = u32;
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum MockAssetType {
 	MockAsset(AssetId),
-	Xcm(MultiLocation),
 }
 
 impl Default for MockAssetType {
@@ -112,27 +107,6 @@ impl From<MockAssetType> for AssetId {
 	fn from(asset: MockAssetType) -> AssetId {
 		match asset {
 			MockAssetType::MockAsset(id) => id,
-			MockAssetType::Xcm(id) => {
-				let mut result: [u8; 4] = [0u8; 4];
-				let hash: H256 = id.using_encoded(<Test as frame_system::Config>::Hashing::hash);
-				result.copy_from_slice(&hash.as_fixed_bytes()[0..4]);
-				u32::from_le_bytes(result)
-			}
-		}
-	}
-}
-
-impl From<MultiLocation> for MockAssetType {
-	fn from(location: MultiLocation) -> Self {
-		Self::Xcm(location)
-	}
-}
-
-impl Into<Option<MultiLocation>> for MockAssetType {
-	fn into(self) -> Option<MultiLocation> {
-		match self {
-			Self::Xcm(location) => Some(location),
-			_ => None,
 		}
 	}
 }
@@ -147,13 +121,8 @@ impl Config for Test {
 	type WeightInfo = ();
 }
 
+#[derive(Default)]
 pub(crate) struct ExtBuilder {}
-
-impl Default for ExtBuilder {
-	fn default() -> ExtBuilder {
-		ExtBuilder {}
-	}
-}
 
 impl ExtBuilder {
 	pub(crate) fn build(self) -> sp_io::TestExternalities {
@@ -171,13 +140,7 @@ pub(crate) fn events() -> Vec<super::Event<Test>> {
 	System::events()
 		.into_iter()
 		.map(|r| r.event)
-		.filter_map(|e| {
-			if let Event::AssetManager(inner) = e {
-				Some(inner)
-			} else {
-				None
-			}
-		})
+		.filter_map(|e| if let Event::AssetManager(inner) = e { Some(inner) } else { None })
 		.collect::<Vec<_>>()
 }
 
