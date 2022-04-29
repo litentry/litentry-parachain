@@ -49,29 +49,28 @@
 // TODO implement
 // #[cfg(feature = "runtime-benchmarks")]
 // mod benchmarking;
-// #[cfg(test)]
-// pub mod mock;
-// #[cfg(test)]
-// pub mod tests;
+#[cfg(test)]
+pub mod mock;
+#[cfg(test)]
+pub mod tests;
 pub mod weights;
 
-use frame_support::pallet;
+use crate::weights::WeightInfo;
+use codec::HasCompact;
+use frame_support::{
+	pallet_prelude::*,
+	traits::{Currency, ReservableCurrency},
+	transactional, PalletId,
+};
+use frame_system::pallet_prelude::*;
+use orml_traits::GetByKey;
+use sp_runtime::traits::{AccountIdConversion, AtLeast32BitUnsigned, One};
+use sp_std::{convert::*, vec::Vec};
 pub use pallet::*;
 
-#[pallet]
+#[frame_support::pallet]
 pub mod pallet {
-	use crate::weights::WeightInfo;
-	use codec::HasCompact;
-	use frame_support::{
-		pallet_prelude::*,
-		traits::{Currency, ReservableCurrency},
-		transactional,
-		PalletId,
-	};
-	use frame_system::pallet_prelude::*;
-	use orml_traits::GetByKey;
-	use sp_runtime::traits::{AccountIdConversion, AtLeast32BitUnsigned, One};
-	use sp_std::vec::Vec;
+	use super::*;
 
 	#[pallet::pallet]
 	#[pallet::without_storage_info]
@@ -151,24 +150,15 @@ pub mod pallet {
 		AssetLimitReached,
 		DefaultAssetTypeRemoved,
 		TooLowNumAssetsWeightHint,
-		// ErrorDestroyingAsset,
-		// NotSufficientDeposit,
-		// NonExistentLocalAsset,
 	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(crate) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// New asset with the asset manager is registered
-		ForeignAssetRegistered {
-			asset_id: T::AssetId,
-			asset_type: T::ForeignAssetType,
-		},
+		ForeignAssetRegistered { asset_id: T::AssetId, asset_type: T::ForeignAssetType },
 		/// The foreign asset updated.
-		ForeignAssetMetadataUpdated {
-			asset_id: T::AssetId,
-			metadata: AssetMetadata<BalanceOf<T>>,
-		},
+		ForeignAssetMetadataUpdated { asset_id: T::AssetId, metadata: AssetMetadata<BalanceOf<T>> },
 		/// Litentry: Purestake use AssetType as index. This might lead to security issue if
 		/// MultiLocation Hash changes. Here we use AssetId instead. Changed the amount of units we
 		/// are charging per execution second for a given asset
@@ -178,9 +168,14 @@ pub mod pallet {
 		/// Removed all information related to an assetId
 		ForeignAssetRemoved { asset_id: T::AssetId, asset_type: T::ForeignAssetType },
 		/// Litentry: Purestake use AssetType as index. This might lead to security issue if
-		/// MultiLocation Hash changes. Here we use AssetId instead. 
-		/// New Event gives the info about involved asset_id, removed asset_type, and the new default asset_id and asset_type mapping after removal
-		SupportedAssetTypeRemoved { asset_id: T::AssetId, removed_asset_type: T::ForeignAssetType, default_asset_type: T::ForeignAssetType },
+		/// MultiLocation Hash changes. Here we use AssetId instead.
+		/// New Event gives the info about involved asset_id, removed asset_type, and the new
+		/// default asset_id and asset_type mapping after removal
+		SupportedAssetTypeRemoved {
+			asset_id: T::AssetId,
+			removed_asset_type: T::ForeignAssetType,
+			default_asset_type: T::ForeignAssetType,
+		},
 	}
 
 	/// Mapping from an asset id to asset type.
@@ -257,7 +252,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Relocate asset id. 
+		/// Relocate asset id.
 		/// Can only be larger than current assignment.
 		#[pallet::weight(T::WeightInfo::relocate_foreign_asset_id())]
 		pub fn relocate_foreign_asset_id(
@@ -332,9 +327,11 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::ForeignAssetModifierOrigin::ensure_origin(origin)?;
 
-			ensure!(AssetIdType::<T>::get(&asset_id).is_none(), Error::<T>::AssetIdDoesNotExist);
-			ensure!(AssetTypeId::<T>::get(&new_asset_type).is_none(), Error::<T>::AssetAlreadyExists);
-			
+			ensure!(AssetIdType::<T>::get(&asset_id).is_some(), Error::<T>::AssetIdDoesNotExist);
+			ensure!(
+				AssetTypeId::<T>::get(&new_asset_type).is_none(),
+				Error::<T>::AssetAlreadyExists
+			);
 
 			// Insert new asset type info
 			AssetIdType::<T>::insert(&asset_id, &new_asset_type);
@@ -349,8 +346,9 @@ pub mod pallet {
 
 		/// TODO: Weight is no longer related to num_assets_weight_hint; changes here needed
 		/// We do not allow the destroy of asset id so far
-		/// But we will remove all existing related fee settings. So will need re-implement by extrinsic call.
-		/// New default asset type is needed for the assignment of asset_id's default asset type mapping
+		/// But we will remove all existing related fee settings. So will need re-implement by
+		/// extrinsic call. New default asset type is needed for the assignment of asset_id's
+		/// default asset type mapping
 		#[pallet::weight(T::WeightInfo::remove_asset_type(*num_assets_weight_hint))]
 		#[transactional]
 		pub fn remove_asset_type(
@@ -368,7 +366,8 @@ pub mod pallet {
 				AssetIdType::<T>::insert(&asset_id, i);
 			}
 
-			let default_asset_type: T::ForeignAssetType = AssetIdType::<T>::get(&asset_id).ok_or(Error::<T>::AssetIdDoesNotExist)?;
+			let default_asset_type: T::ForeignAssetType =
+				AssetIdType::<T>::get(&asset_id).ok_or(Error::<T>::AssetIdDoesNotExist)?;
 			if default_asset_type == asset_type {
 				return Err(Error::<T>::DefaultAssetTypeRemoved.into())
 			}
@@ -395,7 +394,11 @@ pub mod pallet {
 			// Remove
 			AssetIdUnitsPerSecond::<T>::remove(&asset_id);
 
-			Self::deposit_event(Event::SupportedAssetTypeRemoved { asset_id: asset_id, removed_asset_type: asset_type, default_asset_type: default_asset_type });
+			Self::deposit_event(Event::SupportedAssetTypeRemoved {
+				asset_id,
+				removed_asset_type: asset_type,
+				default_asset_type,
+			});
 			Ok(())
 		}
 	}

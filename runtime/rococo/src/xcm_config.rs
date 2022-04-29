@@ -23,7 +23,7 @@ use super::{
 };
 
 use frame_support::{
-	match_type, parameter_types,
+	match_types, parameter_types,
 	traits::{Everything, Nothing, PalletInfoAccess},
 	weights::{IdentityFee, Weight},
 	PalletId,
@@ -297,12 +297,12 @@ impl spConvert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 #[derive(Clone, Eq, Debug, PartialEq, Ord, PartialOrd, Encode, Decode, TypeInfo)]
 pub enum CurrencyId {
 	SelfReserve, // The only parachain native token: LIT
-	ParachainReserve(MultiLocation), /* Any parachain based asset, including local native
+	ParachainReserve(Box<MultiLocation>), /* Any parachain based asset, including local native
 	              * minted ones. */
 }
 impl Default for CurrencyId {
 	fn default() -> Self {
-		CurrencyId::ParachainReserve(MultiLocation::here())
+		CurrencyId::ParachainReserve(Box::new(MultiLocation::here()))
 	}
 }
 
@@ -320,7 +320,7 @@ impl spConvert<CurrencyId, Option<MultiLocation>> for CurrencyIdMultiLocationCon
 				let multi: MultiLocation = OldAnchoringSelfReserve::get();
 				Some(multi)
 			},
-			CurrencyId::ParachainReserve(multi) => Some(multi),
+			CurrencyId::ParachainReserve(multi) => Some(*multi),
 		}
 	}
 }
@@ -329,7 +329,7 @@ impl spConvert<MultiLocation, Option<CurrencyId>> for CurrencyIdMultiLocationCon
 		match multi {
 			a if (a == OldAnchoringSelfReserve::get()) | (a == NewAnchoringSelfReserve::get()) =>
 				Some(CurrencyId::SelfReserve),
-			_ => Some(CurrencyId::ParachainReserve(multi)),
+			_ => Some(CurrencyId::ParachainReserve(Box::new(multi))),
 		}
 	}
 }
@@ -377,7 +377,7 @@ impl xcmConvert<MultiLocation, AssetId> for AssetIdMuliLocationConvert {
 	}
 }
 
-match_type! {
+match_types! {
 	pub type ParentOrParachains: impl Contains<MultiLocation> = {
 		// Local account: Litmus
 		MultiLocation { parents: 0, interior: X1(Junction::AccountId32 { .. }) } |

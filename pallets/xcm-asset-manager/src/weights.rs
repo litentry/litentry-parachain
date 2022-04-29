@@ -148,7 +148,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
-		// Storage: AssetManager AssetIdType (r:1 w:1)
+	// Storage: AssetManager AssetIdType (r:1 w:1)
 	// Storage: Assets Asset (r:1 w:1)
 	// Storage: Assets Metadata (r:1 w:1)
 	// Storage: AssetManager AssetTypeId (r:0 w:1)
