@@ -883,8 +883,9 @@ impl Contains<Call> for SafeModeFilter {
 pub struct NormalModeFilter;
 impl Contains<Call> for NormalModeFilter {
 	fn contains(call: &Call) -> bool {
-		matches!(
+		let m = matches!(
 			call,
+			// Sudo
 			Call::Sudo(_) |
 			// System
 			Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_) |
@@ -896,7 +897,11 @@ impl Contains<Call> for NormalModeFilter {
 			Call::ChainBridge(_) |
 			// BridgeTransfer
 			Call::BridgeTransfer(_)
-		)
+		);
+		if cfg!(feature = "tee-dev") {
+			m = m | matches!(call, Call::Teerex(_));
+		}
+		m
 	}
 }
 
