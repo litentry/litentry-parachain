@@ -238,6 +238,7 @@ pub type Traders = (
 		Balances,
 		DealWithFees<Runtime>,
 	>,
+	// TODO::Implement foreign asset fee to weight rule from AssetManager Setting
 );
 
 /// Xcm Weigher shared between multiple Xcm-related configs.
@@ -384,9 +385,9 @@ match_type! {
 		// Relay-chain account: Kusama
 		MultiLocation { parents: 1, interior: X1(Junction::AccountId32 { .. }) } |
 		// AccountKey20 based parachain: Moonriver
-		MultiLocation { parents: 1, interior: X2(Parachain(1), Junction::AccountKey20 { .. }) } |
+		MultiLocation { parents: 1, interior: X2(Parachain( .. ), Junction::AccountKey20 { .. }) } |
 		// AccountId 32 based parachain: Statemint
-		MultiLocation { parents: 1, interior: X2(Parachain(2), Junction::AccountId32 { .. }) }
+		MultiLocation { parents: 1, interior: X2(Parachain( .. ), Junction::AccountId32 { .. }) }
 	};
 }
 

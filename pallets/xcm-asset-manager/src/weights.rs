@@ -57,17 +57,15 @@ pub trait WeightInfo {
 	#[rustfmt::skip]
 	fn register_foreign_asset() -> Weight;
 	#[rustfmt::skip]
-	fn update_foreign_asset() -> Weight;
+	fn relocate_foreign_asset_id() -> Weight;
+	#[rustfmt::skip]
+	fn update_foreign_asset_metadata() -> Weight;
 	#[rustfmt::skip]
 	fn set_asset_units_per_second(x: u32, ) -> Weight;
 	#[rustfmt::skip]
-	fn change_existing_asset_type(x: u32, ) -> Weight;
+	fn add_asset_type(x: u32, ) -> Weight;
 	#[rustfmt::skip]
-	fn remove_supported_asset(x: u32, ) -> Weight;
-	#[rustfmt::skip]
-	fn remove_existing_asset_type(x: u32, ) -> Weight;
-	#[rustfmt::skip]
-	fn register_local_asset() -> Weight;
+	fn remove_asset_type(x: u32, ) -> Weight;
 }
 
 /// Weights for pallet_asset_manager using the Substrate node and recommended hardware.
@@ -88,7 +86,17 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Assets Metadata (r:1 w:1)
 	// Storage: AssetManager AssetTypeId (r:0 w:1)
 	#[rustfmt::skip]
-	fn update_foreign_asset() -> Weight {
+	fn relocate_foreign_asset_id() -> Weight {
+		(47_597_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(3 as Weight))
+			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+	}
+	// Storage: AssetManager AssetIdType (r:1 w:1)
+	// Storage: Assets Asset (r:1 w:1)
+	// Storage: Assets Metadata (r:1 w:1)
+	// Storage: AssetManager AssetTypeId (r:0 w:1)
+	#[rustfmt::skip]
+	fn update_foreign_asset_metadata() -> Weight {
 		(47_597_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
@@ -109,45 +117,22 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: AssetManager AssetTypeUnitsPerSecond (r:1 w:2)
 	// Storage: AssetManager AssetTypeId (r:0 w:2)
 	#[rustfmt::skip]
-	fn change_existing_asset_type(x: u32, ) -> Weight {
+	fn add_asset_type(x: u32, ) -> Weight {
 		(40_757_000 as Weight)
 			// Standard Error: 4_000
 			.saturating_add((1_266_000 as Weight).saturating_mul(x as Weight))
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
-	// Storage: System Account (r:1 w:1)
-	// Storage: AssetManager LocalAssetCounter (r:1 w:1)
-	// Storage: LocalAssets Asset (r:1 w:1)
-	// Storage: EVM AccountCodes (r:0 w:1)
-	// Storage: AssetManager LocalAssetDeposit (r:0 w:1)
-	#[rustfmt::skip]
-	fn register_local_asset() -> Weight {
-		(51_689_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(5 as Weight))
-	}
 	// Storage: AssetManager SupportedFeePaymentAssets (r:1 w:1)
 	// Storage: AssetManager AssetTypeUnitsPerSecond (r:0 w:1)
 	#[rustfmt::skip]
-	fn remove_supported_asset(x: u32, ) -> Weight {
+	fn remove_asset_type(x: u32, ) -> Weight {
 		(25_700_000 as Weight)
 			// Standard Error: 3_000
 			.saturating_add((1_043_000 as Weight).saturating_mul(x as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
-	}
-	// Storage: AssetManager SupportedFeePaymentAssets (r:1 w:1)
-	// Storage: AssetManager AssetIdType (r:1 w:1)
-	// Storage: AssetManager AssetTypeUnitsPerSecond (r:0 w:1)
-	// Storage: AssetManager AssetTypeId (r:0 w:1)
-	#[rustfmt::skip]
-	fn remove_existing_asset_type(x: u32, ) -> Weight {
-		(32_359_000 as Weight)
-			// Standard Error: 3_000
-			.saturating_add((1_073_000 as Weight).saturating_mul(x as Weight))
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
 }
 
@@ -163,12 +148,22 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
+		// Storage: AssetManager AssetIdType (r:1 w:1)
+	// Storage: Assets Asset (r:1 w:1)
+	// Storage: Assets Metadata (r:1 w:1)
+	// Storage: AssetManager AssetTypeId (r:0 w:1)
+	#[rustfmt::skip]
+	fn relocate_foreign_asset_id() -> Weight {
+		(47_597_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+	}
 	// Storage: AssetManager AssetIdType (r:1 w:1)
 	// Storage: Assets Asset (r:1 w:1)
 	// Storage: Assets Metadata (r:1 w:1)
 	// Storage: AssetManager AssetTypeId (r:0 w:1)
 	#[rustfmt::skip]
-	fn update_foreign_asset() -> Weight {
+	fn update_foreign_asset_metadata() -> Weight {
 		(47_597_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
@@ -189,44 +184,21 @@ impl WeightInfo for () {
 	// Storage: AssetManager AssetTypeUnitsPerSecond (r:1 w:2)
 	// Storage: AssetManager AssetTypeId (r:0 w:2)
 	#[rustfmt::skip]
-	fn change_existing_asset_type(x: u32, ) -> Weight {
+	fn add_asset_type(x: u32, ) -> Weight {
 		(40_757_000 as Weight)
 			// Standard Error: 4_000
 			.saturating_add((1_266_000 as Weight).saturating_mul(x as Weight))
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
 	}
-	// Storage: System Account (r:1 w:1)
-	// Storage: AssetManager LocalAssetCounter (r:1 w:1)
-	// Storage: LocalAssets Asset (r:1 w:1)
-	// Storage: EVM AccountCodes (r:0 w:1)
-	// Storage: AssetManager LocalAssetDeposit (r:0 w:1)
-	#[rustfmt::skip]
-	fn register_local_asset() -> Weight {
-		(51_689_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
-	}
 	// Storage: AssetManager SupportedFeePaymentAssets (r:1 w:1)
 	// Storage: AssetManager AssetTypeUnitsPerSecond (r:0 w:1)
 	#[rustfmt::skip]
-	fn remove_supported_asset(x: u32, ) -> Weight {
+	fn remove_asset_type(x: u32, ) -> Weight {
 		(25_700_000 as Weight)
 			// Standard Error: 3_000
 			.saturating_add((1_043_000 as Weight).saturating_mul(x as Weight))
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
-	}
-	// Storage: AssetManager SupportedFeePaymentAssets (r:1 w:1)
-	// Storage: AssetManager AssetIdType (r:1 w:1)
-	// Storage: AssetManager AssetTypeUnitsPerSecond (r:0 w:1)
-	// Storage: AssetManager AssetTypeId (r:0 w:1)
-	#[rustfmt::skip]
-	fn remove_existing_asset_type(x: u32, ) -> Weight {
-		(32_359_000 as Weight)
-			// Standard Error: 3_000
-			.saturating_add((1_073_000 as Weight).saturating_mul(x as Weight))
-			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
 	}
 }

@@ -16,7 +16,7 @@
 
 use super::*;
 use crate as pallet_asset_manager;
-use parity_scale_codec::{Decode, Encode};
+use codec::{Decode, Encode};
 
 use frame_support::{
 	construct_runtime, parameter_types, traits::Everything, weights::Weight, RuntimeDebug,
@@ -96,19 +96,6 @@ impl pallet_balances::Config for Test {
 	type ReserveIdentifier = [u8; 8];
 }
 
-parameter_types! {
-	pub const AssetDeposit: u64 = 1;
-	pub const ApprovalDeposit: u64 = 1;
-	pub const StringLimit: u32 = 50;
-	pub const MetadataDepositBase: u64 = 1;
-	pub const MetadataDepositPerByte: u64 = 1;
-}
-
-parameter_types! {
-	pub const StatemineParaIdInfo: u32 = 1000u32;
-	pub const StatemineAssetsInstanceInfo: u8 = 50u8;
-}
-
 pub type AssetId = u32;
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum MockAssetType {
@@ -151,70 +138,13 @@ impl Into<Option<MultiLocation>> for MockAssetType {
 	}
 }
 
-pub struct MockAssetPalletRegistrar;
-
-impl AssetRegistrar<Test> for MockAssetPalletRegistrar {
-	fn create_foreign_asset(
-		_asset: u32,
-		_min_balance: u64,
-		_metadata: u32,
-		_is_sufficient: bool,
-	) -> Result<(), DispatchError> {
-		Ok(())
-	}
-
-	fn create_local_asset(
-		_asset: u32,
-		_account: u64,
-		_min_balance: u64,
-		_is_sufficient: bool,
-		_owner: u64,
-	) -> sp_runtime::DispatchResult {
-		Ok(())
-	}
-
-	fn destroy_foreign_asset(_asset: u32, _witness: u32) -> Result<(), DispatchError> {
-		Ok(())
-	}
-
-	fn destroy_local_asset(_asset: u32, _witness: u32) -> Result<(), DispatchError> {
-		Ok(())
-	}
-
-	fn destroy_asset_dispatch_info_weight(_asset: u32, _witness: u32) -> Weight {
-		0
-	}
-}
-
-pub struct MockLocalAssetIdCreator;
-impl pallet_asset_manager::LocalAssetIdCreator<Test> for MockLocalAssetIdCreator {
-	fn create_asset_id_from_metadata(local_asset_counter: u128) -> AssetId {
-		// Our means of converting a creator to an assetId
-		// We basically hash nonce+account
-		let mut result: [u8; 4] = [0u8; 4];
-		let big_endian = local_asset_counter.to_le_bytes();
-		result.copy_from_slice(&big_endian[0..4]);
-		u32::from_le_bytes(result)
-	}
-}
-
-parameter_types! {
-	pub const LocalAssetDeposit: u64 = 1;
-}
-
 impl Config for Test {
 	type Event = Event;
 	type Balance = u64;
 	type AssetId = u32;
-	type AssetRegistrarMetadata = u32;
 	type ForeignAssetType = MockAssetType;
-	type AssetRegistrar = MockAssetPalletRegistrar;
 	type ForeignAssetModifierOrigin = EnsureRoot<u64>;
-	type LocalAssetModifierOrigin = EnsureRoot<u64>;
-	type LocalAssetIdCreator = MockLocalAssetIdCreator;
-	type AssetDestroyWitness = u32;
 	type Currency = Balances;
-	type LocalAssetDeposit = LocalAssetDeposit;
 	type WeightInfo = ();
 }
 
