@@ -883,7 +883,7 @@ impl Contains<Call> for SafeModeFilter {
 pub struct NormalModeFilter;
 impl Contains<Call> for NormalModeFilter {
 	fn contains(call: &Call) -> bool {
-		let m = matches!(
+		let mut m = matches!(
 			call,
 			// Sudo
 			Call::Sudo(_) |
@@ -899,7 +899,7 @@ impl Contains<Call> for NormalModeFilter {
 			Call::BridgeTransfer(_)
 		);
 		if cfg!(feature = "tee-dev") {
-			m = m | matches!(call, Call::Teerex(_));
+			m |= matches!(call, Call::Teerex(_));
 		}
 		m
 	}
