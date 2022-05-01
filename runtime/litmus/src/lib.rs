@@ -775,6 +775,9 @@ impl pallet_drop3::Config for Runtime {
 impl pallet_extrinsic_filter::Config for Runtime {
 	type Event = Event;
 	type UpdateOrigin = EnsureRootOrHalfCouncil;
+	#[cfg(feature = "tee-dev")]
+	type BaseCallFilter = Everything;
+	#[cfg(not(feature = "tee-dev"))]
 	type NormalModeFilter = NormalModeFilter;
 	type SafeModeFilter = SafeModeFilter;
 	type TestModeFilter = Everything;
@@ -883,7 +886,7 @@ impl Contains<Call> for SafeModeFilter {
 pub struct NormalModeFilter;
 impl Contains<Call> for NormalModeFilter {
 	fn contains(call: &Call) -> bool {
-		let mut m = matches!(
+		matches!(
 			call,
 			// Sudo
 			Call::Sudo(_) |
@@ -897,11 +900,7 @@ impl Contains<Call> for NormalModeFilter {
 			Call::ChainBridge(_) |
 			// BridgeTransfer
 			Call::BridgeTransfer(_)
-		);
-		if cfg!(feature = "tee-dev") {
-			m |= matches!(call, Call::Teerex(_));
-		}
-		m
+		)
 	}
 }
 
