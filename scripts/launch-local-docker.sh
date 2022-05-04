@@ -51,8 +51,8 @@ function check_block() {
 echo "waiting for parachain to import blocks ..."
 
 while : ; do
-  if docker-compose logs "$parachain_service" | grep -F '[Parachain]' | grep -Fq "Imported #1"; then
-    echo "parachain imported #1"
+  if docker-compose logs "$parachain_service" | grep -F '[Parachain]' | grep -Fq "Imported #"; then
+    echo "parachain imported blocks"
     break
   else
     sleep $WAIT_INTERVAL_SECONDS
