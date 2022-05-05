@@ -86,7 +86,8 @@ pallet-drop3 = { path = "../../pallets/drop3", default-features = false }
 pallet-extrinsic-filter = { path = "../../pallets/extrinsic-filter", default-features = false }
 
 # TEE pallets - TODO: patch it with litentry teerex
-pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "polkadot-v0.9.20" }
+# TODO: switch to polkadot-v0.9.20 branch once upstream has it
+pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "polkadot-v0.9.19" }
 
 [dev-dependencies]
 hex-literal = "0.3.4"
