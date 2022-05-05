@@ -27,7 +27,7 @@ pub mod constants;
 pub mod weights;
 pub mod xcm_config;
 pub use constants::currency::*;
-
+pub use pallet_teerex;
 pub use primitives::{opaque, Index, *};
 
 use sp_api::impl_runtime_apis;
@@ -67,6 +67,9 @@ use frame_system::{
 };
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 pub use sp_runtime::{MultiAddress, Perbill, Percent, Permill};
+
+// for TEE
+pub use pallet_balances::Call as BalancesCall;
 
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -154,6 +157,9 @@ const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
 const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
+
+/// A timestamp: milliseconds since the unix epoch.
+pub type Moment = u64;
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
@@ -359,8 +365,8 @@ parameter_types! {
 
 impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
-	type Moment = u64;
-	type OnTimestampSet = ();
+	type Moment = Moment;
+	type OnTimestampSet = Teerex;
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = weights::pallet_timestamp::WeightInfo<Runtime>;
 }
@@ -769,10 +775,26 @@ impl pallet_drop3::Config for Runtime {
 impl pallet_extrinsic_filter::Config for Runtime {
 	type Event = Event;
 	type UpdateOrigin = EnsureRootOrHalfCouncil;
+	#[cfg(feature = "tee-dev")]
+	type NormalModeFilter = Everything;
+	#[cfg(not(feature = "tee-dev"))]
 	type NormalModeFilter = NormalModeFilter;
 	type SafeModeFilter = SafeModeFilter;
 	type TestModeFilter = Everything;
 	type WeightInfo = weights::pallet_extrinsic_filter::WeightInfo<Runtime>;
+}
+
+parameter_types! {
+	pub const MomentsPerDay: Moment = 86_400_000; // [ms/d]
+	pub const MaxSilenceTime: Moment =172_800_000; // 48h
+}
+
+impl pallet_teerex::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type MomentsPerDay = MomentsPerDay;
+	type MaxSilenceTime = MaxSilenceTime;
+	type WeightInfo = ();
 }
 
 construct_runtime! {
@@ -839,6 +861,9 @@ construct_runtime! {
 		Drop3: pallet_drop3::{Pallet, Call, Storage, Event<T>} = 62,
 		ExtrinsicFilter: pallet_extrinsic_filter::{Pallet, Call, Storage, Event<T>} = 63,
 
+		// TEE
+		Teerex: pallet_teerex::{Pallet, Call, Config, Storage, Event<T>} = 90,
+
 		// TMP
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 255,
 	}
@@ -863,6 +888,7 @@ impl Contains<Call> for NormalModeFilter {
 	fn contains(call: &Call) -> bool {
 		matches!(
 			call,
+			// Sudo
 			Call::Sudo(_) |
 			// System
 			Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_) |
@@ -902,6 +928,7 @@ mod benches {
 		[pallet_session, SessionBench::<Runtime>]
 		[pallet_collator_selection, CollatorSelection]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
+		[pallet_teerex, Teerex]
 	);
 }
 
