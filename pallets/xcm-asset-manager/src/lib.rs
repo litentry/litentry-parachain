@@ -47,8 +47,8 @@
 #![allow(clippy::clone_on_copy)]
 
 // TODO implement
-// #[cfg(feature = "runtime-benchmarks")]
-// mod benchmarking;
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
 #[cfg(test)]
 pub mod mock;
 #[cfg(test)]
@@ -317,7 +317,7 @@ pub mod pallet {
 
 		/// Add the xcm type mapping for a existing assetId, other assetType still exists if any.
 		/// TODO: Weight is no longer related to num_assets_weight_hint; changes here needed
-		#[pallet::weight(T::WeightInfo::add_asset_type(0))]
+		#[pallet::weight(T::WeightInfo::add_asset_type())]
 		pub fn add_asset_type(
 			origin: OriginFor<T>,
 			asset_id: T::AssetId,

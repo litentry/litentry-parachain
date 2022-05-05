@@ -24,8 +24,9 @@ use scale_info::TypeInfo;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
+	traits::{BlakeTwo256, Hash as THash, IdentityLookup},
 };
+use xcm::latest::prelude::*;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -95,6 +96,7 @@ pub type AssetId = u32;
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum MockAssetType {
 	MockAsset(AssetId),
+	Xcm(Box<MultiLocation>),
 }
 
 impl Default for MockAssetType {
@@ -107,6 +109,27 @@ impl From<MockAssetType> for AssetId {
 	fn from(asset: MockAssetType) -> AssetId {
 		match asset {
 			MockAssetType::MockAsset(id) => id,
+			MockAssetType::Xcm(id) => {
+				let mut result: [u8; 4] = [0u8; 4];
+				let hash: H256 = (*id).using_encoded(<Test as frame_system::Config>::Hashing::hash);
+				result.copy_from_slice(&hash.as_fixed_bytes()[0..4]);
+				u32::from_le_bytes(result)
+			},
+		}
+	}
+}
+
+impl From<MultiLocation> for MockAssetType {
+	fn from(location: MultiLocation) -> Self {
+		Self::Xcm(Box::new(location))
+	}
+}
+
+impl From<MockAssetType> for Option<MultiLocation> {
+	fn from(asset: MockAssetType) -> Option<MultiLocation> {
+		match asset {
+			MockAssetType::Xcm(location) => Some(*location),
+			_ => None,
 		}
 	}
 }

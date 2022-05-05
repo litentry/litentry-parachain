@@ -63,7 +63,7 @@ pub trait WeightInfo {
 	#[rustfmt::skip]
 	fn set_asset_units_per_second(x: u32, ) -> Weight;
 	#[rustfmt::skip]
-	fn add_asset_type(x: u32, ) -> Weight;
+	fn add_asset_type() -> Weight;
 	#[rustfmt::skip]
 	fn remove_asset_type(x: u32, ) -> Weight;
 }
@@ -117,10 +117,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: AssetManager AssetTypeUnitsPerSecond (r:1 w:2)
 	// Storage: AssetManager AssetTypeId (r:0 w:2)
 	#[rustfmt::skip]
-	fn add_asset_type(x: u32, ) -> Weight {
+	fn add_asset_type() -> Weight {
 		(40_757_000 as Weight)
 			// Standard Error: 4_000
-			.saturating_add((1_266_000 as Weight).saturating_mul(x as Weight))
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
@@ -184,10 +183,9 @@ impl WeightInfo for () {
 	// Storage: AssetManager AssetTypeUnitsPerSecond (r:1 w:2)
 	// Storage: AssetManager AssetTypeId (r:0 w:2)
 	#[rustfmt::skip]
-	fn add_asset_type(x: u32, ) -> Weight {
+	fn add_asset_type() -> Weight {
 		(40_757_000 as Weight)
 			// Standard Error: 4_000
-			.saturating_add((1_266_000 as Weight).saturating_mul(x as Weight))
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
 	}
