@@ -119,9 +119,12 @@ impl From<MockAssetType> for AssetId {
 	}
 }
 
-impl From<MultiLocation> for MockAssetType {
-	fn from(location: MultiLocation) -> Self {
-		Self::Xcm(Box::new(location))
+impl From<Option<MultiLocation>> for MockAssetType {
+	fn from(location: Option<MultiLocation>) -> Self {
+		match location {
+			None => Self::Xcm(Box::new(MultiLocation::default())),
+			Some(multi) => Self::Xcm(Box::new(multi)),
+		}
 	}
 }
 

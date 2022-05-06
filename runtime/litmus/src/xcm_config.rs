@@ -305,12 +305,19 @@ impl Default for CurrencyId {
 		CurrencyId::ParachainReserve(Box::new(MultiLocation::here()))
 	}
 }
-
-// How to convert from CurrencyId to MultiLocation: for orml convert sp_runtime Convert trait
-pub struct CurrencyIdMultiLocationConvert;
-impl spConvert<CurrencyId, Option<MultiLocation>> for CurrencyIdMultiLocationConvert {
-	fn convert(currency: CurrencyId) -> Option<MultiLocation> {
-		match currency {
+impl From<Option<MultiLocation>> for CurrencyId {
+	fn from(location: Option<MultiLocation>) -> Self {
+		match location {
+			Some(a) if (a == OldAnchoringSelfReserve::get()) | (a == NewAnchoringSelfReserve::get()) =>
+				CurrencyId::SelfReserve,
+			Some(multi) => CurrencyId::ParachainReserve(Box::new(multi)),
+			None => CurrencyId::ParachainReserve(Box::new(MultiLocation::default()))
+		}
+	}
+}
+impl From<CurrencyId> for Option<MultiLocation> {
+	fn from(currency_id: CurrencyId) -> Self {
+		match currency_id {
 			// For now and until Xtokens is adapted to handle 0.9.16 version we use
 			// the old anchoring here
 			// This is not a problem in either cases, since the view of the destination
@@ -322,6 +329,15 @@ impl spConvert<CurrencyId, Option<MultiLocation>> for CurrencyIdMultiLocationCon
 			},
 			CurrencyId::ParachainReserve(multi) => Some(*multi),
 		}
+	}
+}
+
+
+// How to convert from CurrencyId to MultiLocation: for orml convert sp_runtime Convert trait
+pub struct CurrencyIdMultiLocationConvert;
+impl spConvert<CurrencyId, Option<MultiLocation>> for CurrencyIdMultiLocationConvert {
+	fn convert(currency: CurrencyId) -> Option<MultiLocation> {
+		currency.into()
 	}
 }
 impl spConvert<MultiLocation, Option<CurrencyId>> for CurrencyIdMultiLocationConvert {
