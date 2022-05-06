@@ -92,6 +92,9 @@ pallet-bridge-transfer = { path = "../../pallets/bridge-transfer", default-featu
 pallet-drop3 = { path = "../../pallets/drop3", default-features = false }
 pallet-extrinsic-filter = { path = "../../pallets/extrinsic-filter", default-features = false }
 
+# TEE pallets - TODO: patch it with litentry teerex
+pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "polkadot-v0.9.19" }
+
 [dev-dependencies]
 hex-literal = "0.3.4"
 
@@ -100,6 +103,9 @@ substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", bran
 
 [features]
 default = [ "std" ]
+tee-dev = [
+	"pallet-teerex/skip-ias-check",
+]
 std = [
 	"codec/std",
 	"log/std",
@@ -165,6 +171,7 @@ std = [
 	"pallet-bridge-transfer/std",
 	"pallet-drop3/std",
 	"pallet-extrinsic-filter/std",
+	"pallet-teerex/std"
 ]
 
 runtime-benchmarks = [
@@ -194,6 +201,7 @@ runtime-benchmarks = [
 	"pallet-drop3/runtime-benchmarks",
 	"pallet-extrinsic-filter/runtime-benchmarks",
 	"cumulus-pallet-xcmp-queue/runtime-benchmarks",
+	"pallet-teerex/runtime-benchmarks",
 ]
 
 try-runtime = [
