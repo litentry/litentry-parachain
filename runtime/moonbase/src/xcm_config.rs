@@ -308,10 +308,12 @@ impl Default for CurrencyId {
 impl From<Option<MultiLocation>> for CurrencyId {
 	fn from(location: Option<MultiLocation>) -> Self {
 		match location {
-			Some(a) if (a == OldAnchoringSelfReserve::get()) | (a == NewAnchoringSelfReserve::get()) =>
+			Some(a)
+				if (a == OldAnchoringSelfReserve::get()) |
+					(a == NewAnchoringSelfReserve::get()) =>
 				CurrencyId::SelfReserve,
 			Some(multi) => CurrencyId::ParachainReserve(Box::new(multi)),
-			None => CurrencyId::ParachainReserve(Box::new(MultiLocation::default()))
+			None => CurrencyId::ParachainReserve(Box::new(MultiLocation::default())),
 		}
 	}
 }
