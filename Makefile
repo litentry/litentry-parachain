@@ -145,6 +145,12 @@ generate-docker-compose-litentry:
 generate-docker-compose-litmus:
 	@./scripts/generate-docker-files.sh litmus
 
+# update dependencies
+
+.PHONY: update-ts-dep ## update ts-tests dependencies
+update-ts-dep:
+	@cd ts-tests && npx npm-check-updates && yarn
+
 # format
 
 .PHONY: fmtcheck ## cargo fmt check
