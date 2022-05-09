@@ -794,7 +794,7 @@ impl pallet_teerex::Config for Runtime {
 	type Currency = Balances;
 	type MomentsPerDay = MomentsPerDay;
 	type MaxSilenceTime = MaxSilenceTime;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_teerex::WeightInfo<Runtime>;
 }
 
 construct_runtime! {
