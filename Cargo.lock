@@ -959,9 +959,9 @@ checksum = "c1db59621ec70f09c5e9b597b220c7a2b43611f4710dc03ceb8748637775692c"
 
 [[package]]
 name = "camino"
-version = "1.0.7"
+version = "1.0.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f3132262930b0522068049f5870a856ab8affc80c70d08b6ecb785771a6fc23"
+checksum = "07fd178c5af4d59e83498ef15cf3f154e1a6f9d091270cb86283c65ef44e9ef0"
 dependencies = [
  "serde",
 ]
@@ -11039,9 +11039,9 @@ dependencies = [
 
 [[package]]
 name = "ss58-registry"
-version = "1.17.0"
+version = "1.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b84a70894df7a73666e0694f44b41a9571625e9546fb58a0818a565d2c7e084"
+checksum = "ceb8b72a924ccfe7882d0e26144c114503760a4d1248bb5cd06c8ab2d55404cc"
 dependencies = [
  "Inflector",
  "num-format",
@@ -11255,9 +11255,9 @@ checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 
 [[package]]
 name = "syn"
-version = "1.0.92"
+version = "1.0.93"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ff7c592601f11445996a06f8ad0c27f094a58857c2f89e97974ab9235b92c52"
+checksum = "04066589568b72ec65f42d65a1a52436e954b168773148893c020269563decf2"
 dependencies = [
  "proc-macro2",
  "quote",
