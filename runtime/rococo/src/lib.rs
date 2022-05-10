@@ -779,6 +779,9 @@ impl pallet_drop3::Config for Runtime {
 impl pallet_extrinsic_filter::Config for Runtime {
 	type Event = Event;
 	type UpdateOrigin = EnsureRootOrHalfCouncil;
+	#[cfg(feature = "tee-dev")]
+	type NormalModeFilter = Everything;
+	#[cfg(not(feature = "tee-dev"))]
 	type NormalModeFilter = NormalModeFilter;
 	type SafeModeFilter = SafeModeFilter;
 	type TestModeFilter = Everything;
