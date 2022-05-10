@@ -160,7 +160,7 @@ std = [
 	"pallet-bridge-transfer/std",
 	"pallet-drop3/std",
 	"pallet-extrinsic-filter/std",
-	"pallet-teerex/std"
+	"pallet-teerex/std",
 ]
 
 runtime-benchmarks = [
