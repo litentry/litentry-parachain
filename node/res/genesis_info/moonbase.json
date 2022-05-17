@@ -31,6 +31,6 @@
     "/dns/moonbase-parachain-sg-0.litentry.io/tcp/40333/ws/p2p/12D3KooWB4f2J7EzKNDmuc4pEgJR9F7w3nE3JNWEEad6PphJhTNx"
   ],
   "telemetryEndpoints": [
-    "wss://telemetry-backend.parachain.litentry.io/submit"
+    "wss://telemetry.polkadot.io/submit/"
   ]
 }

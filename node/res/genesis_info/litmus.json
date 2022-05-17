@@ -98,6 +98,6 @@
       "/dns/rpc1.litmus-parachain-sg.litentry.io/tcp/40333/ws/p2p/12D3KooWSa3kz9PY7JFMVKGStBn2xj3L5MuNdh3LzeinUQsvZsdB"
     ],
     "telemetryEndpoints": [
-      "wss://telemetry-backend.parachain.litentry.io/submit"
+      "wss://telemetry.polkadot.io/submit/"
     ]
   }
