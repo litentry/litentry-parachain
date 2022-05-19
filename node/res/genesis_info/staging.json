@@ -33,6 +33,6 @@
       "/dns/parachain-sg-0.staging.litentry.io/tcp/40333/p2p/12D3KooWCnBzJy9w9hQFyiwVG2mADqNaPu3Z6WFThivwnrppdWND"
     ],
     "telemetryEndpoints": [
-      "wss://telemetry-backend.parachain.litentry.io/submit"
+      "wss://telemetry.polkadot.io/submit/"
     ]
   }

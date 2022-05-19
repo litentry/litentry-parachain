@@ -41,6 +41,6 @@
     "/dns/rpc.rococo-parachain-sg.litentry.io/tcp/40333/ws/p2p/12D3KooWC9WbcoS2fuaohQXfk3RwXH1hwffEG7iudbJRfNK54hTT"
   ],
   "telemetryEndpoints": [
-    "wss://telemetry-backend.parachain.litentry.io/submit"
+    "wss://telemetry.polkadot.io/submit/"
   ]
 }
