@@ -12,7 +12,7 @@ on:
         - rococo
         - moonbase
       ref:
-        description: The ref to be used for the repo
+        description: The commit SHA or tag for checking out code
         default: ''
         required: false
 
