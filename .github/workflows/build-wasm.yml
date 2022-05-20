@@ -12,7 +12,7 @@ on:
         - rococo
         - moonbase
       ref:
-        description: The ref to be used for the repo
+        description: The commit SHA or tag for checking out code
         default: ''
         required: false
 
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout codes on ${{ github.event.inputs.ref || github.ref }}
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: ${{ github.event.inputs.ref || github.ref }}
           fetch-depth: 0
