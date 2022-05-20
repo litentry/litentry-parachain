@@ -27,6 +27,7 @@ pub mod constants;
 pub mod weights;
 pub mod xcm_config;
 pub use constants::currency::*;
+pub use pallet_sidechain;
 pub use pallet_teerex;
 pub use primitives::{opaque, Index, *};
 
@@ -801,6 +802,16 @@ impl pallet_teerex::Config for Runtime {
 	type WeightInfo = ();
 }
 
+parameter_types! {
+	pub const EarlyBlockProposalLenience: u64 = 100;
+}
+
+impl pallet_sidechain::Config for Runtime {
+	type Event = Event;
+	type WeightInfo = ();
+	type EarlyBlockProposalLenience = EarlyBlockProposalLenience;
+}
+
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -867,6 +878,7 @@ construct_runtime! {
 
 		// TEE
 		Teerex: pallet_teerex::{Pallet, Call, Config, Storage, Event<T>} = 90,
+		Sidechain: pallet_sidechain::{Pallet, Call, Storage, Event<T>} = 91,
 
 		// TMP
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 255,
@@ -932,6 +944,7 @@ mod benches {
 		[pallet_collator_selection, CollatorSelection]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
 		[pallet_teerex, Teerex]
+		[pallet_sidechain, Sidechain]
 	);
 }
 

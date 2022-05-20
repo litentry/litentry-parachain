@@ -86,7 +86,9 @@ pallet-drop3 = { path = "../../pallets/drop3", default-features = false }
 pallet-extrinsic-filter = { path = "../../pallets/extrinsic-filter", default-features = false }
 
 # TEE pallets - TODO: patch it with litentry teerex
-pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "polkadot-v0.9.20" }
+# TODO: use same branch for both pallets
+pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "master" }
+pallet-sidechain = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "master" }
 
 [dev-dependencies]
 hex-literal = "0.3.4"
@@ -161,6 +163,7 @@ std = [
 	"pallet-drop3/std",
 	"pallet-extrinsic-filter/std",
 	"pallet-teerex/std",
+	"pallet-sidechain/std",
 ]
 
 runtime-benchmarks = [
@@ -190,6 +193,7 @@ runtime-benchmarks = [
 	"pallet-extrinsic-filter/runtime-benchmarks",
 	"cumulus-pallet-xcmp-queue/runtime-benchmarks",
 	"pallet-teerex/runtime-benchmarks",
+	"pallet-sidechain/runtime-benchmarks",
 ]
 
 try-runtime = [
