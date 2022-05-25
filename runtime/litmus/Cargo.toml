@@ -76,9 +76,9 @@ xcm-builder = { git = "https://github.com/paritytech/polkadot", default-features
 xcm-executor = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.20" }
 
 # Orml dependencies
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", default-features = false, branch = "polkadot-v0.9.19" }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", default-features = false, branch = "polkadot-v0.9.19" }
-orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", default-features = false, branch = "polkadot-v0.9.19" }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", default-features = false, rev = "920c5a6e11f76378d8aeb5b3551a834bc4ecb9c8" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", default-features = false, rev = "920c5a6e11f76378d8aeb5b3551a834bc4ecb9c8" }
+orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", default-features = false, rev = "920c5a6e11f76378d8aeb5b3551a834bc4ecb9c8" }
 
 # benchmarking 
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.20", optional = true }
@@ -98,11 +98,11 @@ pallet-sidechain = { git = "https://github.com/integritee-network/pallets.git", 
 
 [dev-dependencies]
 hex-literal = "0.3.4"
-cumulus-primitives-parachain-inherent = { git = 'https://github.com/paritytech/cumulus', branch = "polkadot-v0.9.19" }
-sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
-polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.19" }
-polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.19" }
-xcm-simulator = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.19"}
+cumulus-primitives-parachain-inherent = { git = 'https://github.com/paritytech/cumulus', branch = "polkadot-v0.9.20" }
+sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.20" }
+polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.20" }
+polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.20" }
+xcm-simulator = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.20"}
 
 [build-dependencies]
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.20" }

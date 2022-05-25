@@ -5073,6 +5073,7 @@ dependencies = [
  "cumulus-pallet-xcm",
  "cumulus-pallet-xcmp-queue",
  "cumulus-primitives-core",
+ "cumulus-primitives-parachain-inherent",
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
  "frame-benchmarking",
@@ -5115,6 +5116,8 @@ dependencies = [
  "parachain-info",
  "parity-scale-codec",
  "polkadot-parachain",
+ "polkadot-primitives",
+ "polkadot-runtime-parachains",
  "primitives",
  "scale-info",
  "serde",
@@ -5128,6 +5131,7 @@ dependencies = [
  "sp-offchain",
  "sp-runtime",
  "sp-session",
+ "sp-state-machine",
  "sp-std",
  "sp-transaction-pool",
  "sp-version",
@@ -5135,6 +5139,7 @@ dependencies = [
  "xcm",
  "xcm-builder",
  "xcm-executor",
+ "xcm-simulator",
 ]
 
 [[package]]
@@ -5475,7 +5480,7 @@ dependencies = [
 [[package]]
 name = "orml-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.19#fb171f1f5ae3c28e238e9455e1f5e079dc890fbe"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=920c5a6e11f76378d8aeb5b3551a834bc4ecb9c8#920c5a6e11f76378d8aeb5b3551a834bc4ecb9c8"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5490,7 +5495,7 @@ dependencies = [
 [[package]]
 name = "orml-traits"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.19#fb171f1f5ae3c28e238e9455e1f5e079dc890fbe"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=920c5a6e11f76378d8aeb5b3551a834bc4ecb9c8#920c5a6e11f76378d8aeb5b3551a834bc4ecb9c8"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
@@ -5508,7 +5513,7 @@ dependencies = [
 [[package]]
 name = "orml-utilities"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.19#fb171f1f5ae3c28e238e9455e1f5e079dc890fbe"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=920c5a6e11f76378d8aeb5b3551a834bc4ecb9c8#920c5a6e11f76378d8aeb5b3551a834bc4ecb9c8"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -5522,7 +5527,7 @@ dependencies = [
 [[package]]
 name = "orml-xcm-support"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.19#fb171f1f5ae3c28e238e9455e1f5e079dc890fbe"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=920c5a6e11f76378d8aeb5b3551a834bc4ecb9c8#920c5a6e11f76378d8aeb5b3551a834bc4ecb9c8"
 dependencies = [
  "frame-support",
  "orml-traits",
@@ -5536,7 +5541,7 @@ dependencies = [
 [[package]]
 name = "orml-xtokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.19#fb171f1f5ae3c28e238e9455e1f5e079dc890fbe"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=920c5a6e11f76378d8aeb5b3551a834bc4ecb9c8#920c5a6e11f76378d8aeb5b3551a834bc4ecb9c8"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -8712,6 +8717,7 @@ dependencies = [
  "cumulus-pallet-xcm",
  "cumulus-pallet-xcmp-queue",
  "cumulus-primitives-core",
+ "cumulus-primitives-parachain-inherent",
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
  "frame-benchmarking",
@@ -8756,6 +8762,8 @@ dependencies = [
  "parachain-info",
  "parity-scale-codec",
  "polkadot-parachain",
+ "polkadot-primitives",
+ "polkadot-runtime-parachains",
  "primitives",
  "scale-info",
  "serde",
@@ -8769,6 +8777,7 @@ dependencies = [
  "sp-offchain",
  "sp-runtime",
  "sp-session",
+ "sp-state-machine",
  "sp-std",
  "sp-transaction-pool",
  "sp-version",
@@ -8776,6 +8785,7 @@ dependencies = [
  "xcm",
  "xcm-builder",
  "xcm-executor",
+ "xcm-simulator",
 ]
 
 [[package]]
@@ -12853,8 +12863,8 @@ dependencies = [
 
 [[package]]
 name = "xcm-simulator"
-version = "0.9.19"
-source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.19#f00a2772497aadddf75b8b4b475843ea0d910c48"
+version = "0.9.20"
+source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.20#568169b41aea59a54ab8cfa23c31e84a26708280"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
