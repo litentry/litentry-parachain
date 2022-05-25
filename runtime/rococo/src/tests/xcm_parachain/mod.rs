@@ -56,7 +56,6 @@ fn _sibling_b_account() -> AccountId32 {
 #[test]
 fn test_xtokens_recognize_multilocation() {
 	TestNet::reset();
-
 	Relay::execute_with(|| {
 		let _ = pallet_balances::Pallet::<relay::Runtime>::deposit_creating(
 			&para_a_account(),
@@ -73,7 +72,6 @@ fn test_xtokens_recognize_multilocation() {
 	ParaB::execute_with(|| {
 		register_channel_info(2, 1);
 	});
-
 	ParaB::execute_with(|| {
 		assert_ok!(AssetManager::register_foreign_asset(
 			RawOrigin::Root.into(),
@@ -106,7 +104,7 @@ fn test_xtokens_recognize_multilocation() {
 		// Wrong Multilocation does not pass
 		assert_noop!(
 			XTokens::transfer(
-				Origin::signed(AccountId::from(ALICE).into()),
+				Origin::signed(AccountId::from(ALICE)),
 				CurrencyId::SelfReserve,
 				1_000_000_000_000,
 				Box::new((Parent, Parachain(2)).into()),
@@ -116,12 +114,11 @@ fn test_xtokens_recognize_multilocation() {
 		);
 
 		assert_ok!(XTokens::transfer(
-			Origin::signed(AccountId::from(ALICE).into()),
+			Origin::signed(AccountId::from(ALICE)),
 			CurrencyId::SelfReserve,
 			1_000_000_000_000,
 			Box::new(
-				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB.into() })
-					.into()
+				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
 			800_000_000
 		));
@@ -136,66 +133,100 @@ fn test_xtokens_recognize_multilocation() {
 
 #[test]
 fn test_pallet_xcm_recognize_multilocation() {
-	ExtBuilder::default()
-		.balances(vec![
-			// fund Alice and BOB
-			(AccountId::from(ALICE), 500_000_000_000_000_000),
-			(AccountId::from(BOB), 500_000_000_000_000_000),
-		])
-		.build()
-		.execute_with(|| {
-			register_channel_info(1, 2);
-
-			assert_eq!(Balances::free_balance(&AccountId::from(ALICE)), 500_000_000_000_000_000);
-			// It is sent but with XCM execution failed as Parachain is not exist.
-			assert_ok!(PolkadotXcm::reserve_transfer_assets(
-				Origin::signed(AccountId::from(ALICE).into()),
-				Box::new((Parent, Parachain(2)).into()),
-				Box::new((Junction::AccountId32 { network: Any, id: ALICE.into() }).into().into()),
-				Box::new(
-					vec![MultiAsset {
-						id: AssetId::Concrete(
-							CurrencyIdMultiLocationConvert::convert(CurrencyId::SelfReserve)
-								.unwrap(),
-						),
-						fun: Fungibility::Fungible(1_000_000_000_000),
-					}]
+	TestNet::reset();
+	Relay::execute_with(|| {
+		let _ = pallet_balances::Pallet::<relay::Runtime>::deposit_creating(
+			&para_a_account(),
+			1_000_000_000_000,
+		);
+		let _ = pallet_balances::Pallet::<relay::Runtime>::deposit_creating(
+			&para_b_account(),
+			1_000_000_000_000,
+		);
+	});
+	ParaA::execute_with(|| {
+		register_channel_info(1, 2);
+	});
+	ParaB::execute_with(|| {
+		register_channel_info(2, 1);
+	});
+	ParaB::execute_with(|| {
+		assert_ok!(AssetManager::register_foreign_asset(
+			RawOrigin::Root.into(),
+			CurrencyId::ParachainReserve(Box::new(
+				(
+					Parent,
+					Parachain(1),
+					PalletInstance(<Balances as PalletInfoAccess>::index() as u8)
+				)
 					.into()
-				),
-				0
-			));
-			assert_eq!(Balances::free_balance(&AccountId::from(ALICE)), 499_999_000_000_000_000);
-			assert_eq!(
-				last_event(),
-				Event::PolkadotXcm(pallet_xcm::Event::Attempted(Outcome::Complete(200_000_000)))
-			);
-		})
-}
+			)),
+			Default::default()
+		));
+		assert_ok!(AssetManager::set_asset_units_per_second(
+			RawOrigin::Root.into(),
+			CurrencyId::ParachainReserve(Box::new(
+				(
+					Parent,
+					Parachain(1),
+					PalletInstance(<Balances as PalletInfoAccess>::index() as u8)
+				)
+					.into()
+			)),
+			1_000_000_000_000,
+			1
+		));
+	});
 
-#[test]
-fn test_xcm_executor_recognize_multilocation() {
-	ExtBuilder::default()
-		.balances(vec![
-			// fund Alice and BOB
-			(AccountId::from(ALICE), 123456789123456789),
-			(AccountId::from(BOB), 123456789123456789),
-		])
-		.build()
-		.execute_with(|| {
-			// CumulusXcm
-		})
-}
-
-#[test]
-fn test_xcm_executor_recognize_false_multilocation() {
-	ExtBuilder::default()
-		.balances(vec![
-			// fund Alice and BOB
-			(AccountId::from(ALICE), 123456789123456789),
-			(AccountId::from(BOB), 123456789123456789),
-		])
-		.build()
-		.execute_with(|| {})
+	ParaA::execute_with(|| {
+		assert_eq!(Balances::free_balance(&AccountId::from(ALICE)), 500_000_000_000_000_000);
+		// It is sent but with XCM execution failed as Parachain is not exist.
+		// Unregistereed Parachain Multilocation does not pass
+		assert_ok!(PolkadotXcm::reserve_transfer_assets(
+			Origin::signed(AccountId::from(ALICE)),
+			Box::new((Parent, Parachain(4)).into()),
+			Box::new((Junction::AccountId32 { network: Any, id: ALICE }).into().into()),
+			Box::new(
+				vec![MultiAsset {
+					id: AssetId::Concrete(
+						CurrencyIdMultiLocationConvert::convert(CurrencyId::SelfReserve).unwrap(),
+					),
+					fun: Fungibility::Fungible(1_000_000_000_000),
+				}]
+				.into()
+			),
+			0
+		));
+		assert_eq!(Balances::free_balance(&AccountId::from(ALICE)), 499_999_000_000_000_000);
+		assert_eq!(
+			last_event(),
+			// XCMP_QUEUE SendError Transport
+			Event::PolkadotXcm(pallet_xcm::Event::Attempted(Outcome::Incomplete(
+				200_000_000,
+				XcmError::Transport("")
+			)))
+		);
+		assert_ok!(PolkadotXcm::reserve_transfer_assets(
+			Origin::signed(AccountId::from(ALICE)),
+			Box::new((Parent, Parachain(2)).into()),
+			Box::new((Junction::AccountId32 { network: Any, id: ALICE }).into().into()),
+			Box::new(
+				vec![MultiAsset {
+					id: AssetId::Concrete(
+						CurrencyIdMultiLocationConvert::convert(CurrencyId::SelfReserve).unwrap(),
+					),
+					fun: Fungibility::Fungible(1_000_000_000_000),
+				}]
+				.into()
+			),
+			0
+		));
+		assert_eq!(Balances::free_balance(&AccountId::from(ALICE)), 499_998_000_000_000_000);
+		assert_eq!(
+			last_event(),
+			Event::PolkadotXcm(pallet_xcm::Event::Attempted(Outcome::Complete(200_000_000)))
+		);
+	});
 }
 
 fn register_channel_info(self_para_id: u32, remote_para_id: u32) {
@@ -203,8 +234,10 @@ fn register_channel_info(self_para_id: u32, remote_para_id: u32) {
 	// We mimic the consequence of HRMP Channel request for cumulus_pallet_parachain_system
 	// set_validation_data inherent_extrinsics
 
-	let mut sproof_builder = relay_sproof_builder::RelayStateSproofBuilder::default();
-	sproof_builder.para_id = ParaId::from(self_para_id);
+	let mut sproof_builder = relay_sproof_builder::RelayStateSproofBuilder {
+		para_id: ParaId::from(self_para_id),
+		..Default::default()
+	};
 	sproof_builder.upsert_ingress_channel(ParaId::from(remote_para_id));
 	sproof_builder.upsert_egress_channel(ParaId::from(remote_para_id));
 
@@ -216,7 +249,7 @@ fn register_channel_info(self_para_id: u32, remote_para_id: u32) {
 		..Default::default()
 	};
 	let system_inherent_data = ParachainInherentData {
-		validation_data: vfp.clone(),
+		validation_data: vfp,
 		relay_chain_state,
 		downward_messages: Default::default(),
 		horizontal_messages: Default::default(),

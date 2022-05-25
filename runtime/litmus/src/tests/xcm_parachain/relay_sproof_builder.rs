@@ -178,7 +178,7 @@ impl RelayStateSproofBuilder {
 			insert(relay_chain::well_known_keys::CURRENT_SLOT.to_vec(), self.current_slot.encode());
 		}
 
-		let root = backend.root().clone();
+		let root = *backend.root();
 		let proof = sp_state_machine::prove_read(backend, relevant_keys).expect("prove read");
 		(root, proof)
 	}
