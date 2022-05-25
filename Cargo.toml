@@ -5,6 +5,7 @@ members = [
     'pallets/bridge-transfer',
     'pallets/drop3',
     'pallets/extrinsic-filter',
+    'pallets/identity-management',
     'primitives',
     'runtime/litentry',
     'runtime/litmus',
