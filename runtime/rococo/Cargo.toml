@@ -74,7 +74,7 @@ xcm = { git = "https://github.com/paritytech/polkadot", default-features = false
 xcm-builder = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.22" }
 xcm-executor = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.22" }
 
-# benchmarking 
+# benchmarking
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.22", optional = true }
 frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.22", optional = true }
 cumulus-pallet-session-benchmarking = { git = 'https://github.com/paritytech/cumulus', default-features = false, branch = "polkadot-v0.9.22", optional = true }
@@ -87,8 +87,8 @@ pallet-extrinsic-filter = { path = "../../pallets/extrinsic-filter", default-fea
 
 # TEE pallets - TODO: patch it with litentry teerex
 # TODO: use same branch for both pallets
-pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "master" }
-pallet-sidechain = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "master" }
+pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "polkadot-v0.9.22" }
+pallet-sidechain = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "polkadot-v0.9.22" }
 
 [dev-dependencies]
 hex-literal = "0.3.4"
