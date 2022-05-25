@@ -418,4 +418,31 @@ pub mod pallet {
 			metadata.minimal_balance
 		}
 	}
+
+	// AssetManager or other FeeToWeight source should implement this trait
+	// Defines the trait to obtain the units per second of a give asset_type for local execution
+	// This parameter will be used to charge for fees upon asset_type deposit
+	pub trait UnitsToWeightRatio<AssetType> {
+		// Whether payment in a particular asset_type is suppotrted
+		fn payment_is_supported(asset_type: AssetType) -> bool;
+		// Get units per second from asset type
+		fn get_units_per_second(asset_type: AssetType) -> Option<u128>;
+	}
+
+	impl<T: Config> UnitsToWeightRatio<T::ForeignAssetType> for Pallet<T> {
+		fn payment_is_supported(asset_type: T::ForeignAssetType) -> bool {
+			if let Some(asset_id) = AssetTypeId::<T>::get(&asset_type) {
+				SupportedFeePaymentAssets::<T>::get().binary_search(&asset_id).is_ok()
+			} else {
+				false
+			}
+		}
+		fn get_units_per_second(asset_type: T::ForeignAssetType) -> Option<u128> {
+			if let Some(asset_id) = AssetTypeId::<T>::get(&asset_type) {
+				AssetIdUnitsPerSecond::<T>::get(asset_id)
+			} else {
+				None
+			}
+		}
+	}
 }
