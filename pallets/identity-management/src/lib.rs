@@ -22,11 +22,9 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::{
-		pallet_prelude::*,
-	};
+	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-	
+
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
@@ -40,16 +38,13 @@ pub mod pallet {
 	pub enum Event<T: Config> {}
 
 	#[pallet::error]
-	pub enum Error<T> {
-	}
+	pub enum Error<T> {}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// The extrinsic used to verify the response from TEE side
 		#[pallet::weight(1_000)]
-		pub fn dummy(
-			origin: OriginFor<T>,
-		) -> DispatchResult {
+		pub fn dummy(origin: OriginFor<T>) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
 			log::error!(
 				target: "identity management",
