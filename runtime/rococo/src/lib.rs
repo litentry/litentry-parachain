@@ -142,7 +142,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9070,
+	spec_version: 9071,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -894,7 +894,9 @@ impl Contains<Call> for SafeModeFilter {
 			// System
 			Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_) |
 			// ExtrinsicFilter
-			Call::ExtrinsicFilter(_)
+			Call::ExtrinsicFilter(_) |
+			// Multisig - required when sudo is a multisig account
+			Call::Multisig(_)
 		)
 	}
 }
@@ -914,7 +916,9 @@ impl Contains<Call> for NormalModeFilter {
 			// ChainBridge
 			Call::ChainBridge(_) |
 			// BridgeTransfer
-			Call::BridgeTransfer(_)
+			Call::BridgeTransfer(_) |
+			// Multisig - required when sudo is a multisig account
+			Call::Multisig(_)
 		)
 	}
 }
