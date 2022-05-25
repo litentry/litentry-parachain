@@ -460,6 +460,7 @@ pub fn run() -> Result<()> {
 					})
 				}),
 				BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
+				BenchmarkCmd::Machine(cmd) => runner.sync_run(|config| cmd.run(&config)),
 			}
 		},
 		Some(Subcommand::TryRuntime(cmd)) => {

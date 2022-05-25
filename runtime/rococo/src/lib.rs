@@ -28,7 +28,8 @@ pub mod constants;
 pub mod weights;
 pub mod xcm_config;
 pub use constants::currency::*;
-
+pub use pallet_sidechain;
+pub use pallet_teerex;
 pub use primitives::{opaque, Index, *};
 
 use sp_api::impl_runtime_apis;
@@ -142,7 +143,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9061,
+	spec_version: 9070,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -162,6 +163,9 @@ const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
 const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
+
+/// A timestamp: milliseconds since the unix epoch.
+pub type Moment = u64;
 
 /// The version information used to identify this runtime when compiled natively.
 #[cfg(feature = "std")]
@@ -367,8 +371,8 @@ parameter_types! {
 
 impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
-	type Moment = u64;
-	type OnTimestampSet = ();
+	type Moment = Moment;
+	type OnTimestampSet = Teerex;
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = weights::pallet_timestamp::WeightInfo<Runtime>;
 }
@@ -777,10 +781,36 @@ impl pallet_drop3::Config for Runtime {
 impl pallet_extrinsic_filter::Config for Runtime {
 	type Event = Event;
 	type UpdateOrigin = EnsureRootOrHalfCouncil;
+	#[cfg(feature = "tee-dev")]
+	type NormalModeFilter = Everything;
+	#[cfg(not(feature = "tee-dev"))]
 	type NormalModeFilter = NormalModeFilter;
 	type SafeModeFilter = SafeModeFilter;
 	type TestModeFilter = Everything;
 	type WeightInfo = weights::pallet_extrinsic_filter::WeightInfo<Runtime>;
+}
+
+parameter_types! {
+	pub const MomentsPerDay: Moment = 86_400_000; // [ms/d]
+	pub const MaxSilenceTime: Moment =172_800_000; // 48h
+}
+
+impl pallet_teerex::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type MomentsPerDay = MomentsPerDay;
+	type MaxSilenceTime = MaxSilenceTime;
+	type WeightInfo = ();
+}
+
+parameter_types! {
+	pub const EarlyBlockProposalLenience: u64 = 100;
+}
+
+impl pallet_sidechain::Config for Runtime {
+	type Event = Event;
+	type WeightInfo = ();
+	type EarlyBlockProposalLenience = EarlyBlockProposalLenience;
 }
 
 construct_runtime! {
@@ -850,6 +880,10 @@ construct_runtime! {
 		ExtrinsicFilter: pallet_extrinsic_filter::{Pallet, Call, Storage, Event<T>} = 63,
 		AssetManager: pallet_asset_manager::{Pallet, Call, Storage, Event<T>} = 64,
 
+		// TEE
+		Teerex: pallet_teerex::{Pallet, Call, Config, Storage, Event<T>} = 90,
+		Sidechain: pallet_sidechain::{Pallet, Call, Storage, Event<T>} = 91,
+
 		// TMP
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 255,
 	}
@@ -914,6 +948,8 @@ mod benches {
 		[pallet_session, SessionBench::<Runtime>]
 		[pallet_collator_selection, CollatorSelection]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
+		[pallet_teerex, Teerex]
+		[pallet_sidechain, Sidechain]
 	);
 }
 

@@ -8,7 +8,7 @@
   ],
   "telemetryEndpoints": [
     [
-      "/dns/telemetry-backend.parachain.litentry.io/tcp/443/x-parity-wss/%2Fsubmit",
+      "/dns/telemetry.polkadot.io/tcp/443/x-parity-wss/%2Fsubmit%2F",
       0
     ]
   ],
