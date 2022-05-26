@@ -775,10 +775,6 @@ impl pallet_extrinsic_filter::Config for Runtime {
 	type WeightInfo = weights::pallet_extrinsic_filter::WeightInfo<Runtime>;
 }
 
-impl pallet_identity_management::Config for Runtime {
-	type Event = Event;
-}
-
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -842,7 +838,6 @@ construct_runtime! {
 		BridgeTransfer: pallet_bridge_transfer::{Pallet, Call, Event<T>, Storage} = 61,
 		Drop3: pallet_drop3::{Pallet, Call, Storage, Event<T>} = 62,
 		ExtrinsicFilter: pallet_extrinsic_filter::{Pallet, Call, Storage, Event<T>} = 63,
-		IdentityManagement: pallet_identity_management::{Pallet, Call, Storage, Event<T>} = 64,
 
 		// TMP
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 255,

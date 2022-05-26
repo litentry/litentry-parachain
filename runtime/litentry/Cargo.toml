@@ -84,7 +84,6 @@ pallet-bridge = { path = "../../pallets/bridge", default-features = false }
 pallet-bridge-transfer = { path = "../../pallets/bridge-transfer", default-features = false }
 pallet-drop3 = { path = "../../pallets/drop3", default-features = false }
 pallet-extrinsic-filter = { path = "../../pallets/extrinsic-filter", default-features = false }
-pallet-identity-management = { path = "../../pallets/identity-management", default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.3.4"
