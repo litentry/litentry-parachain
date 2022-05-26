@@ -4733,6 +4733,7 @@ dependencies = [
  "pallet-democracy",
  "pallet-drop3",
  "pallet-extrinsic-filter",
+ "pallet-identity-management",
  "pallet-membership",
  "pallet-multisig",
  "pallet-preimage",
@@ -5944,6 +5945,24 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-identity-management"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -8617,6 +8636,7 @@ dependencies = [
  "pallet-democracy",
  "pallet-drop3",
  "pallet-extrinsic-filter",
+ "pallet-identity-management",
  "pallet-membership",
  "pallet-multisig",
  "pallet-preimage",
