@@ -283,7 +283,7 @@ where
 	sc_client_api::StateBackendFor<TFullBackend<Block>, Block>: sp_api::StateBackend<BlakeTwo256>,
 	RB: Fn(
 			Arc<TFullClient<Block, RuntimeApi, WasmExecutor<HostFunctions>>>,
-		) -> Result<RpcModule<()>, sc_service::Error>
+		) -> Result<jsonrpsee::RpcModule<()>, sc_service::Error>
 		+ Send
 		+ 'static,
 	BIQ: FnOnce(
