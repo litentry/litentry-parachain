@@ -15,6 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 #![allow(clippy::type_complexity)]
+#![allow(clippy::too_many_arguments)]
 
 // rpc
 use jsonrpsee::RpcModule;
