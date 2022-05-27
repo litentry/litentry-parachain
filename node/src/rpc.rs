@@ -64,7 +64,7 @@ where
 	let FullDeps { client, pool, deny_unsafe } = deps;
 
 	module.merge(SystemRpc::new(client.clone(), pool, deny_unsafe).into_rpc())?;
-	module.merge(TransactionPaymentRpc::new(client.clone()).into_rpc())?;
+	module.merge(TransactionPaymentRpc::new(client).into_rpc())?;
 
 	Ok(module)
 }
