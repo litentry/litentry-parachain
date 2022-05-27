@@ -813,6 +813,10 @@ impl pallet_sidechain::Config for Runtime {
 	type EarlyBlockProposalLenience = EarlyBlockProposalLenience;
 }
 
+impl pallet_identity_management::Config for Runtime {
+	type Event = Event;
+}
+
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -879,6 +883,7 @@ construct_runtime! {
 		Drop3: pallet_drop3::{Pallet, Call, Storage, Event<T>} = 62,
 		ExtrinsicFilter: pallet_extrinsic_filter::{Pallet, Call, Storage, Event<T>} = 63,
 		AssetManager: pallet_asset_manager::{Pallet, Call, Storage, Event<T>} = 64,
+		IdentityManagement: pallet_identity_management::{Pallet, Call, Storage, Event<T>} = 65,
 
 		// TEE
 		Teerex: pallet_teerex::{Pallet, Call, Config, Storage, Event<T>} = 90,
