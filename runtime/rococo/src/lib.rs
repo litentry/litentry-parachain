@@ -142,7 +142,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9070,
+	spec_version: 9071,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -812,6 +812,10 @@ impl pallet_sidechain::Config for Runtime {
 	type EarlyBlockProposalLenience = EarlyBlockProposalLenience;
 }
 
+impl pallet_identity_management::Config for Runtime {
+	type Event = Event;
+}
+
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -875,6 +879,7 @@ construct_runtime! {
 		BridgeTransfer: pallet_bridge_transfer::{Pallet, Call, Event<T>, Storage} = 61,
 		Drop3: pallet_drop3::{Pallet, Call, Storage, Event<T>} = 62,
 		ExtrinsicFilter: pallet_extrinsic_filter::{Pallet, Call, Storage, Event<T>} = 63,
+		IdentityManagement: pallet_identity_management::{Pallet, Call, Storage, Event<T>} = 64,
 
 		// TEE
 		Teerex: pallet_teerex::{Pallet, Call, Config, Storage, Event<T>} = 90,
@@ -894,7 +899,9 @@ impl Contains<Call> for SafeModeFilter {
 			// System
 			Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_) |
 			// ExtrinsicFilter
-			Call::ExtrinsicFilter(_)
+			Call::ExtrinsicFilter(_) |
+			// Multisig - required when sudo is a multisig account
+			Call::Multisig(_)
 		)
 	}
 }
@@ -914,7 +921,9 @@ impl Contains<Call> for NormalModeFilter {
 			// ChainBridge
 			Call::ChainBridge(_) |
 			// BridgeTransfer
-			Call::BridgeTransfer(_)
+			Call::BridgeTransfer(_) |
+			// Multisig - required when sudo is a multisig account
+			Call::Multisig(_)
 		)
 	}
 }

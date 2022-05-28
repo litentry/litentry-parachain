@@ -1,6 +1,6 @@
 [package]
 name = 'litmus-parachain-runtime'
-version = '0.9.7'
+version = '0.9.7-1'
 authors = ["Litentry Dev"]
 edition = '2021'
 
@@ -84,6 +84,7 @@ pallet-bridge = { path = "../../pallets/bridge", default-features = false }
 pallet-bridge-transfer = { path = "../../pallets/bridge-transfer", default-features = false }
 pallet-drop3 = { path = "../../pallets/drop3", default-features = false }
 pallet-extrinsic-filter = { path = "../../pallets/extrinsic-filter", default-features = false }
+pallet-identity-management = { path = "../../pallets/identity-management", default-features = false }
 
 # TEE pallets - TODO: patch it with litentry teerex
 pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "polkadot-v0.9.22" }
@@ -161,6 +162,7 @@ std = [
 	"pallet-bridge-transfer/std",
 	"pallet-drop3/std",
 	"pallet-extrinsic-filter/std",
+	"pallet-identity-management/std",
 	"pallet-teerex/std",
 	"pallet-sidechain/std",
 ]
