@@ -443,7 +443,7 @@ impl pallet_utility::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 	type PalletsOrigin = OriginCaller;
-	type WeightInfo = weights::pallet_utility::WeightInfo<Runtime>;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -620,7 +620,7 @@ impl pallet_treasury::Config for Runtime {
 	type Burn = Burn;
 	type BurnDestination = ();
 	type SpendFunds = ();
-	type WeightInfo = weights::pallet_treasury::WeightInfo<Runtime>;
+	type WeightInfo = ();
 	type MaxApprovals = MaxApprovals;
 }
 
