@@ -599,6 +599,11 @@ parameter_types! {
 
 impl pallet_xcm::Config for Runtime {
 	type Event = Event;
+	// We allow anyone to send any XCM to anywhere
+	// This is highly relied on if target chain properly filtered
+	// Check their Barriers implementation
+	// And for TakeWeightCredit
+	// Check if their executor's ShouldExecute trait weight_credit
 	type SendXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
