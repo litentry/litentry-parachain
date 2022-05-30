@@ -26,7 +26,7 @@ frame-system = { git = "https://github.com/paritytech/substrate", default-featur
 xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.22", default-features = false }
 
 # Orml dependencies
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", default-features = false, rev = "920c5a6e11f76378d8aeb5b3551a834bc4ecb9c8" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", default-features = false, rev = "f709ed62262435b3ad80482d309e3575625d1e5b" }
 
 # Benchmarks
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", optional = true, default-features = false }
