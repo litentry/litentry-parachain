@@ -41,7 +41,7 @@ print_divider
 function check_block() {
   for i in $(seq 1 $WAIT_ROUNDS); do
     sleep $WAIT_INTERVAL_SECONDS
-    if docker-compose logs "$parachain_service" | grep -F '[Parachain]' | grep -Fq "best: #1" 2>/dev/null; then
+    if docker-compose logs "$parachain_service" | grep -F '[Parachain]' 2>/dev/null | grep -Fq "best: #1" 2>/dev/null; then
       echo "parachain produced #1, all good. Quit now"
       exit 0
     fi
@@ -51,7 +51,7 @@ function check_block() {
 echo "waiting for parachain to import blocks ..."
 
 while : ; do
-  if docker-compose logs "$parachain_service" | grep -F '[Parachain]' | grep -Fq "Imported #" 2>/dev/null; then
+  if docker-compose logs "$parachain_service" | grep -F '[Parachain]' 2>/dev/null | grep -Fq "Imported #" 2>/dev/null; then
     echo "parachain imported blocks"
     break
   else
