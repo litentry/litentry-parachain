@@ -484,7 +484,7 @@
     "@babel/runtime" "^7.18.3"
     "@polkadot/util" "^9.3.1"
 
-"@polkadot/types@8.6.2", "@polkadot/types@^8.5.1":
+"@polkadot/types@8.6.2", "@polkadot/types@^8.6.2":
   version "8.6.2"
   resolved "https://registry.yarnpkg.com/@polkadot/types/-/types-8.6.2.tgz#4a0aad232a21b2c7465d4825e52b0565f0cc3b1d"
   integrity sha512-T35bTk0HojZPJGiJw5t1GFZhg+LU1S1xkZ4EmhxlxjK31dVJVVzwgafdp/fMaSWUKmr32X9mvxVIErtUtUUQ+A==

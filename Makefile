@@ -149,7 +149,7 @@ generate-docker-compose-litmus:
 
 .PHONY: update-ts-dep ## update ts-tests dependencies
 update-ts-dep:
-	@cd ts-tests && npx npm-check-updates && yarn
+	@cd ts-tests && npx npm-check-updates -u && yarn
 
 # format
 
