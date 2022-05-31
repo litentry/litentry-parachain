@@ -848,7 +848,7 @@ construct_runtime! {
 		BridgeTransfer: pallet_bridge_transfer::{Pallet, Call, Event<T>, Storage} = 61,
 		Drop3: pallet_drop3::{Pallet, Call, Storage, Event<T>} = 62,
 		ExtrinsicFilter: pallet_extrinsic_filter::{Pallet, Call, Storage, Event<T>} = 63,
-		AssetManager: pallet_asset_manager::{Pallet, Call, Storage, Event<T>} = 64,
+		AssetManager: pallet_asset_manager::{Pallet, Call, Storage, Event<T>} = 65, // save 64 for TEE identity Manager?
 
 		// TMP
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 255,
