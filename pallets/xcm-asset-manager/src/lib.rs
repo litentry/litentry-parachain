@@ -212,8 +212,6 @@ pub mod pallet {
 	#[pallet::getter(fn foreign_asset_tracker)]
 	pub type ForeignAssetTracker<T: Config> = StorageValue<_, T::AssetId, ValueQuery>;
 
-	/// Litentry: Purestake use AssetType as index. This might lead to security issue if
-	/// MultiLocation Hash changes. Here we use AssetId instead.
 	// Supported fee asset payments
 	#[pallet::storage]
 	#[pallet::getter(fn supported_fee_payment_assets)]
