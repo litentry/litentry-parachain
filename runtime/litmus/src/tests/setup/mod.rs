@@ -25,12 +25,12 @@ pub use crate::{
 };
 pub const ALICE: [u8; 32] = [1u8; 32];
 pub const BOB: [u8; 32] = [2u8; 32];
-// use xcm_simulator_example::relay_chain as relay;
 pub use sp_std::cell::RefCell;
 pub mod relay;
 pub use pallet_balances::Call as BalancesCall;
 use xcm_simulator::{decl_test_network, decl_test_parachain, decl_test_relay_chain};
 
+// TODO::Common folder for genreal utility function
 pub(crate) fn last_event() -> Event {
 	System::events().pop().expect("Event expected").event
 }

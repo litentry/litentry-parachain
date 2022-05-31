@@ -40,9 +40,6 @@ mod types {
 	/// AssetId type
 	pub type AssetId = u128;
 
-	/// ParachainID type
-	pub type ParachainId = u32;
-
 	/// Balance of an account.
 	pub type Balance = u128;
 
