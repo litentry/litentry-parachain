@@ -61,7 +61,7 @@ pub mod mock;
 pub mod tests;
 pub mod weights;
 
-use crate::weights::WeightInfo;
+pub use crate::weights::WeightInfo;
 use codec::HasCompact;
 use frame_support::{
 	pallet_prelude::*,

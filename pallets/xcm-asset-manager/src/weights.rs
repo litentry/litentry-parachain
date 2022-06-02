@@ -71,128 +71,104 @@ pub trait WeightInfo {
 /// Weights for pallet_asset_manager using the Substrate node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
-	// Storage: AssetManager AssetIdType (r:1 w:1)
-	// Storage: Assets Asset (r:1 w:1)
-	// Storage: Assets Metadata (r:1 w:1)
-	// Storage: AssetManager AssetTypeId (r:0 w:1)
-	#[rustfmt::skip]
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
+	// Storage: AssetManager ForeignAssetTracker (r:1 w:1)
+	// Storage: AssetManager AssetTypeId (r:1 w:1)
+	// Storage: AssetManager AssetIdType (r:0 w:1)
+	// Storage: AssetManager AssetIdMetadata (r:0 w:1)
 	fn register_foreign_asset_type() -> Weight {
-		(47_597_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+		(32_800_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
 	}
-	// Storage: AssetManager AssetIdType (r:1 w:1)
-	// Storage: Assets Asset (r:1 w:1)
-	// Storage: Assets Metadata (r:1 w:1)
-	// Storage: AssetManager AssetTypeId (r:0 w:1)
-	#[rustfmt::skip]
+	// Storage: AssetManager ForeignAssetTracker (r:1 w:1)
 	fn relocate_foreign_asset_id() -> Weight {
-		(47_597_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+		(13_600_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
-	// Storage: AssetManager AssetIdType (r:1 w:1)
-	// Storage: Assets Asset (r:1 w:1)
-	// Storage: Assets Metadata (r:1 w:1)
-	// Storage: AssetManager AssetTypeId (r:0 w:1)
-	#[rustfmt::skip]
+	// Storage: AssetManager AssetIdType (r:1 w:0)
+	// Storage: AssetManager AssetIdMetadata (r:0 w:1)
 	fn update_foreign_asset_metadata() -> Weight {
-		(47_597_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+		(17_100_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
-	// Storage: AssetManager AssetTypeId (r:1 w:0)
-	// Storage: AssetManager SupportedFeePaymentAssets (r:1 w:1)
-	// Storage: AssetManager AssetTypeUnitsPerSecond (r:0 w:1)
-	#[rustfmt::skip]
+	// Storage: AssetManager AssetIdType (r:1 w:0)
+	// Storage: AssetManager AssetIdUnitsPerSecond (r:0 w:1)
 	fn set_asset_units_per_second() -> Weight {
-		(32_865_000 as Weight)
-			// Standard Error: 3_000
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		(16_300_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
-	// Storage: AssetManager SupportedFeePaymentAssets (r:1 w:1)
 	// Storage: AssetManager AssetIdType (r:1 w:1)
-	// Storage: AssetManager AssetTypeUnitsPerSecond (r:1 w:2)
-	// Storage: AssetManager AssetTypeId (r:0 w:2)
-	#[rustfmt::skip]
+	// Storage: AssetManager AssetTypeId (r:1 w:1)
 	fn add_asset_type() -> Weight {
-		(40_757_000 as Weight)
-			// Standard Error: 4_000
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(6 as Weight))
+		(21_500_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
 	}
-	// Storage: AssetManager SupportedFeePaymentAssets (r:1 w:1)
-	// Storage: AssetManager AssetTypeUnitsPerSecond (r:0 w:1)
-	#[rustfmt::skip]
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
+	// Storage: AssetManager AssetIdType (r:1 w:1)
+	// Storage: AssetManager AssetTypeId (r:2 w:1)
 	fn remove_asset_type() -> Weight {
-		(25_700_000 as Weight)
-			// Standard Error: 3_000
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		(31_800_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
 	}
 }
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
-	// Storage: AssetManager AssetIdType (r:1 w:1)
-	// Storage: Assets Asset (r:1 w:1)
-	// Storage: Assets Metadata (r:1 w:1)
-	// Storage: AssetManager AssetTypeId (r:0 w:1)
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
+	// Storage: AssetManager ForeignAssetTracker (r:1 w:1)
+	// Storage: AssetManager AssetTypeId (r:1 w:1)
+	// Storage: AssetManager AssetIdType (r:0 w:1)
+	// Storage: AssetManager AssetIdMetadata (r:0 w:1)
 	#[rustfmt::skip]
 	fn register_foreign_asset_type() -> Weight {
-		(47_597_000 as Weight)
+		(32_800_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
 	}
-	// Storage: AssetManager AssetIdType (r:1 w:1)
-	// Storage: Assets Asset (r:1 w:1)
-	// Storage: Assets Metadata (r:1 w:1)
-	// Storage: AssetManager AssetTypeId (r:0 w:1)
+	// Storage: AssetManager ForeignAssetTracker (r:1 w:1)
 	#[rustfmt::skip]
 	fn relocate_foreign_asset_id() -> Weight {
-		(47_597_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+		(13_600_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
-	// Storage: AssetManager AssetIdType (r:1 w:1)
-	// Storage: Assets Asset (r:1 w:1)
-	// Storage: Assets Metadata (r:1 w:1)
-	// Storage: AssetManager AssetTypeId (r:0 w:1)
+	// Storage: AssetManager AssetIdType (r:1 w:0)
+	// Storage: AssetManager AssetIdMetadata (r:0 w:1)
 	#[rustfmt::skip]
 	fn update_foreign_asset_metadata() -> Weight {
-		(47_597_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+		(17_100_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
-	// Storage: AssetManager AssetTypeId (r:1 w:0)
-	// Storage: AssetManager SupportedFeePaymentAssets (r:1 w:1)
-	// Storage: AssetManager AssetTypeUnitsPerSecond (r:0 w:1)
+	// Storage: AssetManager AssetIdType (r:1 w:0)
+	// Storage: AssetManager AssetIdUnitsPerSecond (r:0 w:1)
 	#[rustfmt::skip]
 	fn set_asset_units_per_second() -> Weight {
-		(32_865_000 as Weight)
-			// Standard Error: 3_000
+		(16_300_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+	}
+	// Storage: AssetManager AssetIdType (r:1 w:1)
+	// Storage: AssetManager AssetTypeId (r:1 w:1)
+	#[rustfmt::skip]
+	fn add_asset_type() -> Weight {
+		(21_500_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
 	}
-	// Storage: AssetManager SupportedFeePaymentAssets (r:1 w:1)
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: AssetManager AssetIdType (r:1 w:1)
-	// Storage: AssetManager AssetTypeUnitsPerSecond (r:1 w:2)
-	// Storage: AssetManager AssetTypeId (r:0 w:2)
-	#[rustfmt::skip]
-	fn add_asset_type() -> Weight {
-		(40_757_000 as Weight)
-			// Standard Error: 4_000
-			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
-	}
-	// Storage: AssetManager SupportedFeePaymentAssets (r:1 w:1)
-	// Storage: AssetManager AssetTypeUnitsPerSecond (r:0 w:1)
+	// Storage: AssetManager AssetTypeId (r:2 w:1)
 	#[rustfmt::skip]
 	fn remove_asset_type() -> Weight {
-		(25_700_000 as Weight)
-			// Standard Error: 3_000
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
+		(31_800_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
 	}
 }

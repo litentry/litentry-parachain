@@ -140,7 +140,7 @@ benchmarks! {
 	}
 
 	remove_asset_type {
-		let x in 5..100;
+		let x = 5;
 		let asset_type: T::ForeignAssetType = Some(MultiLocation::new(
 			0,
 			Here)).into();
