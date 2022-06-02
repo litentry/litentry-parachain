@@ -154,7 +154,7 @@ pub mod pallet {
 		AssetTypeDoesNotExist,
 		AssetIdDoesNotExist,
 		DefaultAssetTypeRemoved,
-		AssetIdReachLimit,
+		AssetIdLimitReached,
 	}
 
 	#[pallet::event]
@@ -244,7 +244,7 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::ForeignAssetTypeRegistered { asset_id, asset_type });
 			Self::deposit_event(Event::<T>::ForeignAssetMetadataUpdated { asset_id, metadata });
 
-			asset_id = asset_id.checked_add(&One::one()).ok_or(Error::<T>::AssetIdReachLimit)?;
+			asset_id = asset_id.checked_add(&One::one()).ok_or(Error::<T>::AssetIdLimitReached)?;
 			// Auto increment for Asset counter
 			ForeignAssetTracker::<T>::put(asset_id);
 

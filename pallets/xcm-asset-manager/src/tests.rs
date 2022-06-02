@@ -617,7 +617,7 @@ fn test_asset_id_over_flow_error() {
 				MockAssetType::MockAsset(3),
 				asset_metadata_1.clone()
 			),
-			Error::<Test>::AssetIdReachLimit
+			Error::<Test>::AssetIdLimitReached
 		);
 	});
 }
