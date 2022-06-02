@@ -615,7 +615,7 @@ fn test_asset_id_over_flow_error() {
 			AssetManager::register_foreign_asset_type(
 				Origin::root(),
 				MockAssetType::MockAsset(3),
-				asset_metadata_1.clone()
+				asset_metadata_1
 			),
 			Error::<Test>::AssetIdLimitReached
 		);
