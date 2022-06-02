@@ -154,7 +154,7 @@ pub mod pallet {
 		AssetTypeDoesNotExist,
 		AssetIdDoesNotExist,
 		DefaultAssetTypeRemoved,
-		AssetIdOverflow,
+		AssetIdReachLimit,
 	}
 
 	#[pallet::event]
@@ -225,6 +225,7 @@ pub mod pallet {
 		/// Register new asset with the asset manager
 		/// TODO::Reserve native token multilocation through GenesisBuild/RuntimeUpgrade
 		#[pallet::weight(T::WeightInfo::register_foreign_asset_type())]
+		#[transactional]
 		pub fn register_foreign_asset_type(
 			origin: OriginFor<T>,
 			asset_type: T::ForeignAssetType,
@@ -243,7 +244,7 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::ForeignAssetTypeRegistered { asset_id, asset_type });
 			Self::deposit_event(Event::<T>::ForeignAssetMetadataUpdated { asset_id, metadata });
 
-			asset_id = asset_id.checked_add(&One::one()).ok_or(Error::<T>::AssetIdOverflow)?;
+			asset_id = asset_id.checked_add(&One::one()).ok_or(Error::<T>::AssetIdReachLimit)?;
 			// Auto increment for Asset counter
 			ForeignAssetTracker::<T>::put(asset_id);
 

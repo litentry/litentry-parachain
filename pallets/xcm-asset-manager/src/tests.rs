@@ -180,10 +180,6 @@ fn test_update_foreign_asset_metadata_works() {
 				asset_type: MockAssetType::MockAsset(1),
 			},
 			crate::Event::ForeignAssetMetadataUpdated { asset_id: 0, metadata: asset_metadata_1 },
-			crate::Event::ForeignAssetTrackerUpdated {
-				old_asset_tracker: 1,
-				new_asset_tracker: 10,
-			},
 			crate::Event::ForeignAssetMetadataUpdated { asset_id: 0, metadata: asset_metadata_2 },
 		]);
 	});
@@ -611,9 +607,17 @@ fn test_asset_id_over_flow_error() {
 		crate::ForeignAssetTracker::<Test>::put(10);
 		assert_ok!(AssetManager::register_foreign_asset_type(
 			Origin::root(),
-			MockAssetType::MockAsset(1),
-			asset_metadata_1
+			MockAssetType::MockAsset(2),
+			asset_metadata_1.clone()
 		));
 		crate::ForeignAssetTracker::<Test>::put(u32::MAX);
+		assert_noop!(
+			AssetManager::register_foreign_asset_type(
+				Origin::root(),
+				MockAssetType::MockAsset(3),
+				asset_metadata_1.clone()
+			),
+			Error::<Test>::AssetIdReachLimit
+		);
 	});
 }
