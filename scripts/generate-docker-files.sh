@@ -23,7 +23,7 @@ OUTDIR=generated-$CHAIN
 print_divider
 
 echo "installing parachain-launch ..."
-yarn add @open-web3/parachain-launch
+yarn add -s @open-web3/parachain-launch
 print_divider
 
 # pull the polkadot image to make sure we are using the latest
