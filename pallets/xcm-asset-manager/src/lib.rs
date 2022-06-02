@@ -224,18 +224,24 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Register new asset with the asset manager
 		/// TODO::Reserve native token multilocation through GenesisBuild/RuntimeUpgrade
+		/// TODO::Add Multilocation filter for register
 		#[pallet::weight(T::WeightInfo::register_foreign_asset_type())]
-		#[transactional]
 		pub fn register_foreign_asset_type(
 			origin: OriginFor<T>,
 			asset_type: T::ForeignAssetType,
 			metadata: AssetMetadata<BalanceOf<T>>,
 		) -> DispatchResult {
 			T::ForeignAssetModifierOrigin::ensure_origin(origin)?;
-
-			let mut asset_id = ForeignAssetTracker::<T>::get();
-
 			ensure!(!AssetTypeId::<T>::contains_key(&asset_type), Error::<T>::AssetAlreadyExists);
+			let asset_id = ForeignAssetTracker::<T>::try_mutate(
+				|tracker| -> Result<T::AssetId, DispatchError> {
+					// So The default tracker is skipped, temporary reserve the future multilocation
+					// map for asset_id=0
+					*tracker =
+						tracker.checked_add(&One::one()).ok_or(Error::<T>::AssetIdLimitReached)?;
+					Ok(*tracker)
+				}
+			)?;
 
 			AssetIdMetadata::<T>::insert(&asset_id, &metadata);
 			AssetIdType::<T>::insert(&asset_id, &asset_type);
@@ -243,10 +249,6 @@ pub mod pallet {
 
 			Self::deposit_event(Event::<T>::ForeignAssetTypeRegistered { asset_id, asset_type });
 			Self::deposit_event(Event::<T>::ForeignAssetMetadataUpdated { asset_id, metadata });
-
-			asset_id = asset_id.checked_add(&One::one()).ok_or(Error::<T>::AssetIdLimitReached)?;
-			// Auto increment for Asset counter
-			ForeignAssetTracker::<T>::put(asset_id);
 
 			Ok(())
 		}
@@ -256,16 +258,17 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::relocate_foreign_asset_id())]
 		pub fn relocate_foreign_asset_id(
 			origin: OriginFor<T>,
-			next_asset_id: T::AssetId,
+			new_asset_tracker: T::AssetId,
 		) -> DispatchResult {
 			T::ForeignAssetModifierOrigin::ensure_origin(origin)?;
-			let old_next_asset_id = ForeignAssetTracker::<T>::get();
-			if next_asset_id > old_next_asset_id {
+			let next_asset_id = new_asset_tracker.checked_add(&One::one()).ok_or(Error::<T>::AssetIdLimitReached)?;
+			let old_existing_asset_id = ForeignAssetTracker::<T>::get();
+			if next_asset_id > old_existing_asset_id {
 				Self::deposit_event(Event::<T>::ForeignAssetTrackerUpdated {
-					old_asset_tracker: old_next_asset_id,
-					new_asset_tracker: next_asset_id,
+					old_asset_tracker: old_existing_asset_id,
+					new_asset_tracker: new_asset_tracker,
 				});
-				ForeignAssetTracker::<T>::put(next_asset_id);
+				ForeignAssetTracker::<T>::put(new_asset_tracker);
 			}
 			Ok(())
 		}

@@ -37,14 +37,14 @@ fn registering_foreign_works() {
 			asset_metadata_1.clone()
 		));
 
-		assert_eq!(AssetManager::asset_id_type(0).unwrap(), MockAssetType::MockAsset(1));
-		assert_eq!(AssetManager::asset_type_id(MockAssetType::MockAsset(1)).unwrap(), 0);
+		assert_eq!(AssetManager::asset_id_type(1).unwrap(), MockAssetType::MockAsset(1));
+		assert_eq!(AssetManager::asset_type_id(MockAssetType::MockAsset(1)).unwrap(), 1);
 		expect_events(vec![
 			crate::Event::ForeignAssetTypeRegistered {
-				asset_id: 0,
+				asset_id: 1,
 				asset_type: MockAssetType::MockAsset(1),
 			},
-			crate::Event::ForeignAssetMetadataUpdated { asset_id: 0, metadata: asset_metadata_1 },
+			crate::Event::ForeignAssetMetadataUpdated { asset_id: 1, metadata: asset_metadata_1 },
 		])
 	});
 }
@@ -77,10 +77,10 @@ fn registering_foreign_errors() {
 
 		expect_events(vec![
 			crate::Event::ForeignAssetTypeRegistered {
-				asset_id: 0,
+				asset_id: 1,
 				asset_type: MockAssetType::MockAsset(1),
 			},
-			crate::Event::ForeignAssetMetadataUpdated { asset_id: 0, metadata: asset_metadata_1 },
+			crate::Event::ForeignAssetMetadataUpdated { asset_id: 1, metadata: asset_metadata_1 },
 		]);
 	});
 }
@@ -102,22 +102,22 @@ fn test_relocated_asset_id_works() {
 			asset_metadata_1.clone()
 		));
 
-		assert_eq!(AssetManager::asset_id_type(0).unwrap(), MockAssetType::MockAsset(1));
+		assert_eq!(AssetManager::asset_id_type(1).unwrap(), MockAssetType::MockAsset(1));
 		assert_ok!(AssetManager::relocate_foreign_asset_id(Origin::root(), 10u32));
 		assert_ok!(AssetManager::register_foreign_asset_type(
 			Origin::root(),
 			MockAssetType::MockAsset(2),
 			asset_metadata_1.clone()
 		));
-		assert_eq!(AssetManager::asset_id_type(10).unwrap(), MockAssetType::MockAsset(2));
+		assert_eq!(AssetManager::asset_id_type(11).unwrap(), MockAssetType::MockAsset(2));
 
 		expect_events(vec![
 			crate::Event::ForeignAssetTypeRegistered {
-				asset_id: 0,
+				asset_id: 1,
 				asset_type: MockAssetType::MockAsset(1),
 			},
 			crate::Event::ForeignAssetMetadataUpdated {
-				asset_id: 0,
+				asset_id: 1,
 				metadata: asset_metadata_1.clone(),
 			},
 			crate::Event::ForeignAssetTrackerUpdated {
@@ -125,10 +125,10 @@ fn test_relocated_asset_id_works() {
 				new_asset_tracker: 10,
 			},
 			crate::Event::ForeignAssetTypeRegistered {
-				asset_id: 10,
+				asset_id: 11,
 				asset_type: MockAssetType::MockAsset(2),
 			},
-			crate::Event::ForeignAssetMetadataUpdated { asset_id: 10, metadata: asset_metadata_1 },
+			crate::Event::ForeignAssetMetadataUpdated { asset_id: 11, metadata: asset_metadata_1 },
 		]);
 	});
 }
@@ -156,31 +156,31 @@ fn test_update_foreign_asset_metadata_works() {
 			MockAssetType::MockAsset(1),
 			asset_metadata_1.clone()
 		));
-		assert_eq!(AssetManager::asset_id_type(0).unwrap(), MockAssetType::MockAsset(1));
+		assert_eq!(AssetManager::asset_id_type(1).unwrap(), MockAssetType::MockAsset(1));
 		assert_noop!(
 			AssetManager::update_foreign_asset_metadata(
 				Origin::root(),
-				1,
+				2,
 				asset_metadata_2.clone()
 			),
 			Error::<Test>::AssetIdDoesNotExist
 		);
-		assert_eq!(AssetManager::asset_metadatas(0).unwrap(), asset_metadata_1);
+		assert_eq!(AssetManager::asset_metadatas(1).unwrap(), asset_metadata_1);
 
 		assert_ok!(AssetManager::update_foreign_asset_metadata(
 			Origin::root(),
-			0,
+			1,
 			asset_metadata_2.clone()
 		));
-		assert_eq!(AssetManager::asset_metadatas(0).unwrap(), asset_metadata_2);
+		assert_eq!(AssetManager::asset_metadatas(1).unwrap(), asset_metadata_2);
 
 		expect_events(vec![
 			crate::Event::ForeignAssetTypeRegistered {
-				asset_id: 0,
+				asset_id: 1,
 				asset_type: MockAssetType::MockAsset(1),
 			},
-			crate::Event::ForeignAssetMetadataUpdated { asset_id: 0, metadata: asset_metadata_1 },
-			crate::Event::ForeignAssetMetadataUpdated { asset_id: 0, metadata: asset_metadata_2 },
+			crate::Event::ForeignAssetMetadataUpdated { asset_id: 1, metadata: asset_metadata_1 },
+			crate::Event::ForeignAssetMetadataUpdated { asset_id: 1, metadata: asset_metadata_2 },
 		]);
 	});
 }
@@ -200,25 +200,25 @@ fn test_root_can_change_units_per_second() {
 			MockAssetType::MockAsset(1),
 			asset_metadata_1.clone()
 		));
-		assert_eq!(AssetManager::asset_id_type(0).unwrap(), MockAssetType::MockAsset(1));
-		assert_eq!(AssetManager::asset_metadatas(0).unwrap(), asset_metadata_1);
+		assert_eq!(AssetManager::asset_id_type(1).unwrap(), MockAssetType::MockAsset(1));
+		assert_eq!(AssetManager::asset_metadatas(1).unwrap(), asset_metadata_1);
 
 		assert!(!AssetManager::payment_is_supported(MockAssetType::MockAsset(1)));
 		assert_eq!(AssetManager::get_units_per_second(MockAssetType::MockAsset(1)), None);
 
-		assert_ok!(AssetManager::set_asset_units_per_second(Origin::root(), 0, 200u128));
+		assert_ok!(AssetManager::set_asset_units_per_second(Origin::root(), 1, 200u128));
 
 		assert!(AssetManager::payment_is_supported(MockAssetType::MockAsset(1)));
-		assert_eq!(AssetManager::asset_id_units_per_second(0), 200);
+		assert_eq!(AssetManager::asset_id_units_per_second(1), 200);
 		assert_eq!(AssetManager::get_units_per_second(MockAssetType::MockAsset(1)), Some(200));
 
 		expect_events(vec![
 			crate::Event::ForeignAssetTypeRegistered {
-				asset_id: 0,
+				asset_id: 1,
 				asset_type: MockAssetType::MockAsset(1),
 			},
-			crate::Event::ForeignAssetMetadataUpdated { asset_id: 0, metadata: asset_metadata_1 },
-			crate::Event::UnitsPerSecondChanged { asset_id: 0, units_per_second: 200 },
+			crate::Event::ForeignAssetMetadataUpdated { asset_id: 1, metadata: asset_metadata_1 },
+			crate::Event::UnitsPerSecondChanged { asset_id: 1, units_per_second: 200 },
 		]);
 	});
 }
@@ -306,37 +306,37 @@ fn test_root_can_add_asset_type() {
 			asset_metadata_2.clone()
 		));
 
-		assert_ok!(AssetManager::add_asset_type(Origin::root(), 0, MockAssetType::MockAsset(3)));
+		assert_ok!(AssetManager::add_asset_type(Origin::root(), 1, MockAssetType::MockAsset(3)));
 
 		assert_noop!(
-			AssetManager::add_asset_type(Origin::root(), 0, MockAssetType::MockAsset(2)),
+			AssetManager::add_asset_type(Origin::root(), 1, MockAssetType::MockAsset(2)),
 			Error::<Test>::AssetAlreadyExists
 		);
 
 		assert_noop!(
-			AssetManager::add_asset_type(Origin::root(), 2, MockAssetType::MockAsset(4)),
+			AssetManager::add_asset_type(Origin::root(), 3, MockAssetType::MockAsset(4)),
 			Error::<Test>::AssetIdDoesNotExist
 		);
 
 		// New associations are stablished
-		assert_eq!(AssetManager::asset_id_type(0).unwrap(), MockAssetType::MockAsset(3));
-		assert_eq!(AssetManager::asset_type_id(MockAssetType::MockAsset(3)).unwrap(), 0);
+		assert_eq!(AssetManager::asset_id_type(1).unwrap(), MockAssetType::MockAsset(3));
+		assert_eq!(AssetManager::asset_type_id(MockAssetType::MockAsset(3)).unwrap(), 1);
 		// Old associations are remained, but not default
-		assert_eq!(AssetManager::asset_type_id(MockAssetType::MockAsset(1)).unwrap(), 0);
+		assert_eq!(AssetManager::asset_type_id(MockAssetType::MockAsset(1)).unwrap(), 1);
 
 		expect_events(vec![
 			crate::Event::ForeignAssetTypeRegistered {
-				asset_id: 0,
+				asset_id: 1,
 				asset_type: MockAssetType::MockAsset(1),
 			},
-			crate::Event::ForeignAssetMetadataUpdated { asset_id: 0, metadata: asset_metadata_1 },
+			crate::Event::ForeignAssetMetadataUpdated { asset_id: 1, metadata: asset_metadata_1 },
 			crate::Event::ForeignAssetTypeRegistered {
-				asset_id: 1,
+				asset_id: 2,
 				asset_type: MockAssetType::MockAsset(2),
 			},
-			crate::Event::ForeignAssetMetadataUpdated { asset_id: 1, metadata: asset_metadata_2 },
+			crate::Event::ForeignAssetMetadataUpdated { asset_id: 2, metadata: asset_metadata_2 },
 			crate::Event::ForeignAssetTypeRegistered {
-				asset_id: 0,
+				asset_id: 1,
 				asset_type: MockAssetType::MockAsset(3),
 			},
 		])
@@ -362,25 +362,25 @@ fn test_change_units_per_second_after_setting_it_once() {
 		assert!(!AssetManager::payment_is_supported(MockAssetType::MockAsset(1)));
 		assert_eq!(AssetManager::get_units_per_second(MockAssetType::MockAsset(1)), None);
 
-		assert_ok!(AssetManager::set_asset_units_per_second(Origin::root(), 0, 200u128));
+		assert_ok!(AssetManager::set_asset_units_per_second(Origin::root(), 1, 200u128));
 		assert!(AssetManager::payment_is_supported(MockAssetType::MockAsset(1)));
-		assert_eq!(AssetManager::asset_id_units_per_second(0), 200);
+		assert_eq!(AssetManager::asset_id_units_per_second(1), 200);
 		assert_eq!(AssetManager::get_units_per_second(MockAssetType::MockAsset(1)), Some(200));
 
-		assert_ok!(AssetManager::set_asset_units_per_second(Origin::root(), 0, 100u128));
+		assert_ok!(AssetManager::set_asset_units_per_second(Origin::root(), 1, 100u128));
 
 		assert!(AssetManager::payment_is_supported(MockAssetType::MockAsset(1)));
-		assert_eq!(AssetManager::asset_id_units_per_second(0), 100);
+		assert_eq!(AssetManager::asset_id_units_per_second(1), 100);
 		assert_eq!(AssetManager::get_units_per_second(MockAssetType::MockAsset(1)), Some(100));
 
 		expect_events(vec![
 			crate::Event::ForeignAssetTypeRegistered {
-				asset_id: 0,
+				asset_id: 1,
 				asset_type: MockAssetType::MockAsset(1),
 			},
-			crate::Event::ForeignAssetMetadataUpdated { asset_id: 0, metadata: asset_metadata_1 },
-			crate::Event::UnitsPerSecondChanged { asset_id: 0, units_per_second: 200 },
-			crate::Event::UnitsPerSecondChanged { asset_id: 0, units_per_second: 100 },
+			crate::Event::ForeignAssetMetadataUpdated { asset_id: 1, metadata: asset_metadata_1 },
+			crate::Event::UnitsPerSecondChanged { asset_id: 1, units_per_second: 200 },
+			crate::Event::UnitsPerSecondChanged { asset_id: 1, units_per_second: 100 },
 		]);
 	});
 }
@@ -402,61 +402,61 @@ fn test_root_can_remove_asset_type() {
 			asset_metadata_1.clone()
 		));
 
-		assert_ok!(AssetManager::set_asset_units_per_second(Origin::root(), 0, 100u128));
+		assert_ok!(AssetManager::set_asset_units_per_second(Origin::root(), 1, 100u128));
 
-		assert_ok!(AssetManager::add_asset_type(Origin::root(), 0, MockAssetType::MockAsset(2)));
-		assert_ok!(AssetManager::add_asset_type(Origin::root(), 0, MockAssetType::MockAsset(3)));
+		assert_ok!(AssetManager::add_asset_type(Origin::root(), 1, MockAssetType::MockAsset(2)));
+		assert_ok!(AssetManager::add_asset_type(Origin::root(), 1, MockAssetType::MockAsset(3)));
 
 		assert!(AssetManager::payment_is_supported(MockAssetType::MockAsset(1)));
-		assert_eq!(AssetManager::asset_id_units_per_second(0), 100);
+		assert_eq!(AssetManager::asset_id_units_per_second(1), 100);
 		assert_eq!(AssetManager::get_units_per_second(MockAssetType::MockAsset(1)), Some(100));
 
 		assert_ok!(AssetManager::remove_asset_type(
 			Origin::root(),
-			0,
+			1,
 			MockAssetType::MockAsset(1),
 			None
 		));
 
 		assert!(!AssetManager::payment_is_supported(MockAssetType::MockAsset(1)));
-		assert_eq!(AssetManager::asset_id_units_per_second(0), 100);
+		assert_eq!(AssetManager::asset_id_units_per_second(1), 100);
 		assert_eq!(AssetManager::get_units_per_second(MockAssetType::MockAsset(1)), None);
 		assert!(AssetManager::payment_is_supported(MockAssetType::MockAsset(2)));
 		assert_eq!(AssetManager::get_units_per_second(MockAssetType::MockAsset(2)), Some(100));
 
-		assert_eq!(AssetManager::asset_id_type(0).unwrap(), MockAssetType::MockAsset(3));
+		assert_eq!(AssetManager::asset_id_type(1).unwrap(), MockAssetType::MockAsset(3));
 
 		assert_ok!(AssetManager::remove_asset_type(
 			Origin::root(),
-			0,
+			1,
 			MockAssetType::MockAsset(3),
 			Some(MockAssetType::MockAsset(2))
 		));
 
-		assert_eq!(AssetManager::asset_id_type(0).unwrap(), MockAssetType::MockAsset(2));
+		assert_eq!(AssetManager::asset_id_type(1).unwrap(), MockAssetType::MockAsset(2));
 
 		expect_events(vec![
 			crate::Event::ForeignAssetTypeRegistered {
-				asset_id: 0,
+				asset_id: 1,
 				asset_type: MockAssetType::MockAsset(1),
 			},
-			crate::Event::ForeignAssetMetadataUpdated { asset_id: 0, metadata: asset_metadata_1 },
-			crate::Event::UnitsPerSecondChanged { asset_id: 0, units_per_second: 100 },
+			crate::Event::ForeignAssetMetadataUpdated { asset_id: 1, metadata: asset_metadata_1 },
+			crate::Event::UnitsPerSecondChanged { asset_id: 1, units_per_second: 100 },
 			crate::Event::ForeignAssetTypeRegistered {
-				asset_id: 0,
+				asset_id: 1,
 				asset_type: MockAssetType::MockAsset(2),
 			},
 			crate::Event::ForeignAssetTypeRegistered {
-				asset_id: 0,
+				asset_id: 1,
 				asset_type: MockAssetType::MockAsset(3),
 			},
 			crate::Event::ForeignAssetTypeRemoved {
-				asset_id: 0,
+				asset_id: 1,
 				removed_asset_type: MockAssetType::MockAsset(1),
 				default_asset_type: MockAssetType::MockAsset(3),
 			},
 			crate::Event::ForeignAssetTypeRemoved {
-				asset_id: 0,
+				asset_id: 1,
 				removed_asset_type: MockAssetType::MockAsset(3),
 				default_asset_type: MockAssetType::MockAsset(2),
 			},
@@ -476,20 +476,20 @@ fn test_asset_id_non_existent_error() {
 		};
 
 		assert_noop!(
-			AssetManager::update_foreign_asset_metadata(Origin::root(), 0, asset_metadata_1),
+			AssetManager::update_foreign_asset_metadata(Origin::root(), 1, asset_metadata_1),
 			Error::<Test>::AssetIdDoesNotExist
 		);
 		assert_noop!(
-			AssetManager::set_asset_units_per_second(Origin::root(), 0, 200u128),
+			AssetManager::set_asset_units_per_second(Origin::root(), 1, 200u128),
 			Error::<Test>::AssetIdDoesNotExist
 		);
 		assert_noop!(
-			AssetManager::add_asset_type(Origin::root(), 1, MockAssetType::MockAsset(2)),
+			AssetManager::add_asset_type(Origin::root(), 2, MockAssetType::MockAsset(2)),
 			Error::<Test>::AssetIdDoesNotExist
 		);
 
 		assert_noop!(
-			AssetManager::remove_asset_type(Origin::root(), 0, MockAssetType::MockAsset(1), None),
+			AssetManager::remove_asset_type(Origin::root(), 1, MockAssetType::MockAsset(1), None),
 			Error::<Test>::AssetIdDoesNotExist
 		);
 	});
@@ -519,7 +519,7 @@ fn test_asset_already_exists_error() {
 			Error::<Test>::AssetAlreadyExists
 		);
 		assert_noop!(
-			AssetManager::add_asset_type(Origin::root(), 0, MockAssetType::MockAsset(1)),
+			AssetManager::add_asset_type(Origin::root(), 1, MockAssetType::MockAsset(1)),
 			Error::<Test>::AssetAlreadyExists
 		);
 	});
@@ -541,13 +541,13 @@ fn test_asset_type_does_not_exist_error() {
 			asset_metadata_1
 		));
 		assert_noop!(
-			AssetManager::remove_asset_type(Origin::root(), 0, MockAssetType::MockAsset(2), None),
+			AssetManager::remove_asset_type(Origin::root(), 1, MockAssetType::MockAsset(2), None),
 			Error::<Test>::AssetTypeDoesNotExist
 		);
 		assert_noop!(
 			AssetManager::remove_asset_type(
 				Origin::root(),
-				0,
+				1,
 				MockAssetType::MockAsset(1),
 				Some(MockAssetType::MockAsset(2))
 			),
@@ -571,16 +571,16 @@ fn test_default_asset_type_removed_error() {
 			MockAssetType::MockAsset(1),
 			asset_metadata_1
 		));
-		assert_ok!(AssetManager::add_asset_type(Origin::root(), 0, MockAssetType::MockAsset(2)));
+		assert_ok!(AssetManager::add_asset_type(Origin::root(), 1, MockAssetType::MockAsset(2)));
 
 		assert_noop!(
-			AssetManager::remove_asset_type(Origin::root(), 0, MockAssetType::MockAsset(2), None),
+			AssetManager::remove_asset_type(Origin::root(), 1, MockAssetType::MockAsset(2), None),
 			Error::<Test>::DefaultAssetTypeRemoved
 		);
 		assert_noop!(
 			AssetManager::remove_asset_type(
 				Origin::root(),
-				0,
+				1,
 				MockAssetType::MockAsset(1),
 				Some(MockAssetType::MockAsset(1))
 			),

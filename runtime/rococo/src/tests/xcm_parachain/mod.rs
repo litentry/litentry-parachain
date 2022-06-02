@@ -87,7 +87,7 @@ fn test_xtokens_recognize_multilocation() {
 		));
 		assert_ok!(AssetManager::set_asset_units_per_second(
 			RawOrigin::Root.into(),
-			0,
+			1,
 			1_000_000_000_000
 		));
 	});
@@ -157,7 +157,7 @@ fn test_pallet_xcm_recognize_multilocation() {
 		));
 		assert_ok!(AssetManager::set_asset_units_per_second(
 			RawOrigin::Root.into(),
-			0,
+			1,
 			1_000_000_000_000
 		));
 	});
