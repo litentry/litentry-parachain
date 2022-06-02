@@ -31,7 +31,7 @@ fn registering_foreign_works() {
 			is_frozen: false,
 		};
 
-		assert_ok!(AssetManager::register_foreign_asset(
+		assert_ok!(AssetManager::register_foreign_asset_type(
 			Origin::root(),
 			MockAssetType::MockAsset(1),
 			asset_metadata_1.clone()
@@ -40,7 +40,7 @@ fn registering_foreign_works() {
 		assert_eq!(AssetManager::asset_id_type(0).unwrap(), MockAssetType::MockAsset(1));
 		assert_eq!(AssetManager::asset_type_id(MockAssetType::MockAsset(1)).unwrap(), 0);
 		expect_events(vec![
-			crate::Event::ForeignAssetRegistered {
+			crate::Event::ForeignAssetTypeRegistered {
 				asset_id: 0,
 				asset_type: MockAssetType::MockAsset(1),
 			},
@@ -60,20 +60,28 @@ fn registering_foreign_errors() {
 			is_frozen: false,
 		};
 
-		assert_ok!(AssetManager::register_foreign_asset(
+		assert_ok!(AssetManager::register_foreign_asset_type(
 			Origin::root(),
 			MockAssetType::MockAsset(1),
 			asset_metadata_1.clone()
 		));
 
 		assert_noop!(
-			AssetManager::register_foreign_asset(
+			AssetManager::register_foreign_asset_type(
 				Origin::root(),
 				MockAssetType::MockAsset(1),
-				asset_metadata_1
+				asset_metadata_1.clone()
 			),
 			Error::<Test>::AssetAlreadyExists
 		);
+
+		expect_events(vec![
+			crate::Event::ForeignAssetTypeRegistered {
+				asset_id: 0,
+				asset_type: MockAssetType::MockAsset(1),
+			},
+			crate::Event::ForeignAssetMetadataUpdated { asset_id: 0, metadata: asset_metadata_1 },
+		]);
 	});
 }
 
@@ -88,7 +96,7 @@ fn test_relocated_asset_id_works() {
 			is_frozen: false,
 		};
 
-		assert_ok!(AssetManager::register_foreign_asset(
+		assert_ok!(AssetManager::register_foreign_asset_type(
 			Origin::root(),
 			MockAssetType::MockAsset(1),
 			asset_metadata_1.clone()
@@ -96,12 +104,32 @@ fn test_relocated_asset_id_works() {
 
 		assert_eq!(AssetManager::asset_id_type(0).unwrap(), MockAssetType::MockAsset(1));
 		assert_ok!(AssetManager::relocate_foreign_asset_id(Origin::root(), 10u32));
-		assert_ok!(AssetManager::register_foreign_asset(
+		assert_ok!(AssetManager::register_foreign_asset_type(
 			Origin::root(),
 			MockAssetType::MockAsset(2),
-			asset_metadata_1
+			asset_metadata_1.clone()
 		));
 		assert_eq!(AssetManager::asset_id_type(10).unwrap(), MockAssetType::MockAsset(2));
+
+		expect_events(vec![
+			crate::Event::ForeignAssetTypeRegistered {
+				asset_id: 0,
+				asset_type: MockAssetType::MockAsset(1),
+			},
+			crate::Event::ForeignAssetMetadataUpdated {
+				asset_id: 0,
+				metadata: asset_metadata_1.clone(),
+			},
+			crate::Event::ForeignAssetTrackerUpdated {
+				old_asset_tracker: 1,
+				new_asset_tracker: 10,
+			},
+			crate::Event::ForeignAssetTypeRegistered {
+				asset_id: 10,
+				asset_type: MockAssetType::MockAsset(2),
+			},
+			crate::Event::ForeignAssetMetadataUpdated { asset_id: 10, metadata: asset_metadata_1 },
+		]);
 	});
 }
 
@@ -123,32 +151,41 @@ fn test_update_foreign_asset_metadata_works() {
 			is_frozen: false,
 		};
 
-		assert_ok!(AssetManager::register_foreign_asset(
+		assert_ok!(AssetManager::register_foreign_asset_type(
 			Origin::root(),
 			MockAssetType::MockAsset(1),
 			asset_metadata_1.clone()
 		));
-
 		assert_eq!(AssetManager::asset_id_type(0).unwrap(), MockAssetType::MockAsset(1));
-
 		assert_noop!(
 			AssetManager::update_foreign_asset_metadata(
 				Origin::root(),
-				MockAssetType::MockAsset(2),
+				1,
 				asset_metadata_2.clone()
 			),
-			Error::<Test>::AssetTypeDoesNotExist
+			Error::<Test>::AssetIdDoesNotExist
 		);
-
 		assert_eq!(AssetManager::asset_metadatas(0).unwrap(), asset_metadata_1);
 
 		assert_ok!(AssetManager::update_foreign_asset_metadata(
 			Origin::root(),
-			MockAssetType::MockAsset(1),
+			0,
 			asset_metadata_2.clone()
 		));
-
 		assert_eq!(AssetManager::asset_metadatas(0).unwrap(), asset_metadata_2);
+
+		expect_events(vec![
+			crate::Event::ForeignAssetTypeRegistered {
+				asset_id: 0,
+				asset_type: MockAssetType::MockAsset(1),
+			},
+			crate::Event::ForeignAssetMetadataUpdated { asset_id: 0, metadata: asset_metadata_1 },
+			crate::Event::ForeignAssetTrackerUpdated {
+				old_asset_tracker: 1,
+				new_asset_tracker: 10,
+			},
+			crate::Event::ForeignAssetMetadataUpdated { asset_id: 0, metadata: asset_metadata_2 },
+		]);
 	});
 }
 
@@ -162,30 +199,31 @@ fn test_root_can_change_units_per_second() {
 			minimal_balance: 0,
 			is_frozen: false,
 		};
-		assert_ok!(AssetManager::register_foreign_asset(
+		assert_ok!(AssetManager::register_foreign_asset_type(
 			Origin::root(),
 			MockAssetType::MockAsset(1),
 			asset_metadata_1.clone()
 		));
+		assert_eq!(AssetManager::asset_id_type(0).unwrap(), MockAssetType::MockAsset(1));
+		assert_eq!(AssetManager::asset_metadatas(0).unwrap(), asset_metadata_1);
 
-		assert_ok!(AssetManager::set_asset_units_per_second(
-			Origin::root(),
-			MockAssetType::MockAsset(1),
-			200u128,
-			0
-		));
+		assert!(!AssetManager::payment_is_supported(MockAssetType::MockAsset(1)));
+		assert_eq!(AssetManager::get_units_per_second(MockAssetType::MockAsset(1)), None);
 
-		assert_eq!(AssetManager::asset_id_units_per_second(0).unwrap(), 200);
-		assert!(AssetManager::supported_fee_payment_assets().contains(&0u32));
+		assert_ok!(AssetManager::set_asset_units_per_second(Origin::root(), 0, 200u128));
+
+		assert!(AssetManager::payment_is_supported(MockAssetType::MockAsset(1)));
+		assert_eq!(AssetManager::asset_id_units_per_second(0), 200);
+		assert_eq!(AssetManager::get_units_per_second(MockAssetType::MockAsset(1)), Some(200));
 
 		expect_events(vec![
-			crate::Event::ForeignAssetRegistered {
+			crate::Event::ForeignAssetTypeRegistered {
 				asset_id: 0,
 				asset_type: MockAssetType::MockAsset(1),
 			},
 			crate::Event::ForeignAssetMetadataUpdated { asset_id: 0, metadata: asset_metadata_1 },
 			crate::Event::UnitsPerSecondChanged { asset_id: 0, units_per_second: 200 },
-		])
+		]);
 	});
 }
 
@@ -200,7 +238,7 @@ fn test_regular_user_cannot_call_extrinsics() {
 			is_frozen: false,
 		};
 		assert_noop!(
-			AssetManager::register_foreign_asset(
+			AssetManager::register_foreign_asset_type(
 				Origin::signed(1),
 				MockAssetType::MockAsset(1),
 				asset_metadata_1.clone()
@@ -214,21 +252,12 @@ fn test_regular_user_cannot_call_extrinsics() {
 		);
 
 		assert_noop!(
-			AssetManager::update_foreign_asset_metadata(
-				Origin::signed(1),
-				MockAssetType::MockAsset(1),
-				asset_metadata_1
-			),
+			AssetManager::update_foreign_asset_metadata(Origin::signed(1), 0, asset_metadata_1),
 			sp_runtime::DispatchError::BadOrigin
 		);
 
 		assert_noop!(
-			AssetManager::set_asset_units_per_second(
-				Origin::signed(1),
-				MockAssetType::MockAsset(1),
-				200u128,
-				0
-			),
+			AssetManager::set_asset_units_per_second(Origin::signed(1), 0, 200u128),
 			sp_runtime::DispatchError::BadOrigin
 		);
 
@@ -240,12 +269,14 @@ fn test_regular_user_cannot_call_extrinsics() {
 		assert_noop!(
 			AssetManager::remove_asset_type(
 				Origin::signed(1),
+				0,
 				MockAssetType::MockAsset(1),
-				Some(MockAssetType::MockAsset(2)),
-				0
+				Some(MockAssetType::MockAsset(2))
 			),
 			sp_runtime::DispatchError::BadOrigin
 		);
+
+		expect_events(vec![]);
 	});
 }
 
@@ -267,13 +298,13 @@ fn test_root_can_add_asset_type() {
 			is_frozen: false,
 		};
 
-		assert_ok!(AssetManager::register_foreign_asset(
+		assert_ok!(AssetManager::register_foreign_asset_type(
 			Origin::root(),
 			MockAssetType::MockAsset(1),
 			asset_metadata_1.clone()
 		));
 
-		assert_ok!(AssetManager::register_foreign_asset(
+		assert_ok!(AssetManager::register_foreign_asset_type(
 			Origin::root(),
 			MockAssetType::MockAsset(2),
 			asset_metadata_2.clone()
@@ -298,17 +329,17 @@ fn test_root_can_add_asset_type() {
 		assert_eq!(AssetManager::asset_type_id(MockAssetType::MockAsset(1)).unwrap(), 0);
 
 		expect_events(vec![
-			crate::Event::ForeignAssetRegistered {
+			crate::Event::ForeignAssetTypeRegistered {
 				asset_id: 0,
 				asset_type: MockAssetType::MockAsset(1),
 			},
 			crate::Event::ForeignAssetMetadataUpdated { asset_id: 0, metadata: asset_metadata_1 },
-			crate::Event::ForeignAssetRegistered {
+			crate::Event::ForeignAssetTypeRegistered {
 				asset_id: 1,
 				asset_type: MockAssetType::MockAsset(2),
 			},
 			crate::Event::ForeignAssetMetadataUpdated { asset_id: 1, metadata: asset_metadata_2 },
-			crate::Event::ForeignAssetRegistered {
+			crate::Event::ForeignAssetTypeRegistered {
 				asset_id: 0,
 				asset_type: MockAssetType::MockAsset(3),
 			},
@@ -326,34 +357,28 @@ fn test_change_units_per_second_after_setting_it_once() {
 			minimal_balance: 0,
 			is_frozen: false,
 		};
-		assert_ok!(AssetManager::register_foreign_asset(
+		assert_ok!(AssetManager::register_foreign_asset_type(
 			Origin::root(),
 			MockAssetType::MockAsset(1),
 			asset_metadata_1.clone()
 		));
 
-		assert_ok!(AssetManager::set_asset_units_per_second(
-			Origin::root(),
-			MockAssetType::MockAsset(1),
-			200u128,
-			0
-		));
+		assert!(!AssetManager::payment_is_supported(MockAssetType::MockAsset(1)));
+		assert_eq!(AssetManager::get_units_per_second(MockAssetType::MockAsset(1)), None);
 
-		assert_eq!(AssetManager::asset_id_units_per_second(0).unwrap(), 200);
-		assert!(AssetManager::supported_fee_payment_assets().contains(&0u32));
+		assert_ok!(AssetManager::set_asset_units_per_second(Origin::root(), 0, 200u128));
+		assert!(AssetManager::payment_is_supported(MockAssetType::MockAsset(1)));
+		assert_eq!(AssetManager::asset_id_units_per_second(0), 200);
+		assert_eq!(AssetManager::get_units_per_second(MockAssetType::MockAsset(1)), Some(200));
 
-		assert_ok!(AssetManager::set_asset_units_per_second(
-			Origin::root(),
-			MockAssetType::MockAsset(1),
-			100u128,
-			1
-		));
+		assert_ok!(AssetManager::set_asset_units_per_second(Origin::root(), 0, 100u128));
 
-		assert_eq!(AssetManager::asset_id_units_per_second(0).unwrap(), 100);
-		assert!(AssetManager::supported_fee_payment_assets().contains(&0u32));
+		assert!(AssetManager::payment_is_supported(MockAssetType::MockAsset(1)));
+		assert_eq!(AssetManager::asset_id_units_per_second(0), 100);
+		assert_eq!(AssetManager::get_units_per_second(MockAssetType::MockAsset(1)), Some(100));
 
 		expect_events(vec![
-			crate::Event::ForeignAssetRegistered {
+			crate::Event::ForeignAssetTypeRegistered {
 				asset_id: 0,
 				asset_type: MockAssetType::MockAsset(1),
 			},
@@ -375,68 +400,66 @@ fn test_root_can_remove_asset_type() {
 			minimal_balance: 0,
 			is_frozen: false,
 		};
-		assert_ok!(AssetManager::register_foreign_asset(
+		assert_ok!(AssetManager::register_foreign_asset_type(
 			Origin::root(),
 			MockAssetType::MockAsset(1),
 			asset_metadata_1.clone()
 		));
 
-		assert_ok!(AssetManager::set_asset_units_per_second(
-			Origin::root(),
-			MockAssetType::MockAsset(1),
-			100u128,
-			0
-		));
+		assert_ok!(AssetManager::set_asset_units_per_second(Origin::root(), 0, 100u128));
 
 		assert_ok!(AssetManager::add_asset_type(Origin::root(), 0, MockAssetType::MockAsset(2)));
-
 		assert_ok!(AssetManager::add_asset_type(Origin::root(), 0, MockAssetType::MockAsset(3)));
 
-		assert_eq!(AssetManager::asset_id_units_per_second(0).unwrap(), 100);
-		assert!(AssetManager::supported_fee_payment_assets().contains(&0u32));
+		assert!(AssetManager::payment_is_supported(MockAssetType::MockAsset(1)));
+		assert_eq!(AssetManager::asset_id_units_per_second(0), 100);
+		assert_eq!(AssetManager::get_units_per_second(MockAssetType::MockAsset(1)), Some(100));
 
 		assert_ok!(AssetManager::remove_asset_type(
 			Origin::root(),
+			0,
 			MockAssetType::MockAsset(1),
-			None,
-			1
+			None
 		));
 
-		assert!(AssetManager::asset_id_units_per_second(0).is_none());
-		assert!(!AssetManager::supported_fee_payment_assets().contains(&0u32));
+		assert!(!AssetManager::payment_is_supported(MockAssetType::MockAsset(1)));
+		assert_eq!(AssetManager::asset_id_units_per_second(0), 100);
+		assert_eq!(AssetManager::get_units_per_second(MockAssetType::MockAsset(1)), None);
+		assert!(AssetManager::payment_is_supported(MockAssetType::MockAsset(2)));
+		assert_eq!(AssetManager::get_units_per_second(MockAssetType::MockAsset(2)), Some(100));
 
 		assert_eq!(AssetManager::asset_id_type(0).unwrap(), MockAssetType::MockAsset(3));
 
 		assert_ok!(AssetManager::remove_asset_type(
 			Origin::root(),
+			0,
 			MockAssetType::MockAsset(3),
-			Some(MockAssetType::MockAsset(2)),
-			0
+			Some(MockAssetType::MockAsset(2))
 		));
 
 		assert_eq!(AssetManager::asset_id_type(0).unwrap(), MockAssetType::MockAsset(2));
 
 		expect_events(vec![
-			crate::Event::ForeignAssetRegistered {
+			crate::Event::ForeignAssetTypeRegistered {
 				asset_id: 0,
 				asset_type: MockAssetType::MockAsset(1),
 			},
 			crate::Event::ForeignAssetMetadataUpdated { asset_id: 0, metadata: asset_metadata_1 },
 			crate::Event::UnitsPerSecondChanged { asset_id: 0, units_per_second: 100 },
-			crate::Event::ForeignAssetRegistered {
+			crate::Event::ForeignAssetTypeRegistered {
 				asset_id: 0,
 				asset_type: MockAssetType::MockAsset(2),
 			},
-			crate::Event::ForeignAssetRegistered {
+			crate::Event::ForeignAssetTypeRegistered {
 				asset_id: 0,
 				asset_type: MockAssetType::MockAsset(3),
 			},
-			crate::Event::SupportedAssetTypeRemoved {
+			crate::Event::ForeignAssetTypeRemoved {
 				asset_id: 0,
 				removed_asset_type: MockAssetType::MockAsset(1),
 				default_asset_type: MockAssetType::MockAsset(3),
 			},
-			crate::Event::SupportedAssetTypeRemoved {
+			crate::Event::ForeignAssetTypeRemoved {
 				asset_id: 0,
 				removed_asset_type: MockAssetType::MockAsset(3),
 				default_asset_type: MockAssetType::MockAsset(2),
@@ -446,7 +469,7 @@ fn test_root_can_remove_asset_type() {
 }
 
 #[test]
-fn test_weight_hint_error() {
+fn test_asset_id_non_existent_error() {
 	ExtBuilder::default().build().execute_with(|| {
 		let asset_metadata_1 = crate::AssetMetadata::<BalanceOf<Test>> {
 			name: "test".into(),
@@ -455,46 +478,142 @@ fn test_weight_hint_error() {
 			minimal_balance: 0,
 			is_frozen: false,
 		};
-		assert_ok!(AssetManager::register_foreign_asset(
-			Origin::root(),
-			MockAssetType::MockAsset(1),
-			asset_metadata_1
-		));
-
-		assert_ok!(AssetManager::set_asset_units_per_second(
-			Origin::root(),
-			MockAssetType::MockAsset(1),
-			200u128,
-			0
-		));
 
 		assert_noop!(
-			AssetManager::set_asset_units_per_second(
-				Origin::root(),
-				MockAssetType::MockAsset(1),
-				100u128,
-				0
-			),
-			Error::<Test>::TooLowNumAssetsWeightHint
+			AssetManager::update_foreign_asset_metadata(Origin::root(), 0, asset_metadata_1),
+			Error::<Test>::AssetIdDoesNotExist
 		);
-	});
-}
-
-#[test]
-fn test_asset_id_non_existent_error() {
-	ExtBuilder::default().build().execute_with(|| {
 		assert_noop!(
-			AssetManager::set_asset_units_per_second(
-				Origin::root(),
-				MockAssetType::MockAsset(1),
-				200u128,
-				0
-			),
-			Error::<Test>::AssetTypeDoesNotExist
+			AssetManager::set_asset_units_per_second(Origin::root(), 0, 200u128),
+			Error::<Test>::AssetIdDoesNotExist
 		);
 		assert_noop!(
 			AssetManager::add_asset_type(Origin::root(), 1, MockAssetType::MockAsset(2)),
 			Error::<Test>::AssetIdDoesNotExist
 		);
+
+		assert_noop!(
+			AssetManager::remove_asset_type(Origin::root(), 0, MockAssetType::MockAsset(1), None),
+			Error::<Test>::AssetIdDoesNotExist
+		);
+	});
+}
+
+#[test]
+fn test_asset_already_exists_error() {
+	ExtBuilder::default().build().execute_with(|| {
+		let asset_metadata_1 = crate::AssetMetadata::<BalanceOf<Test>> {
+			name: "test".into(),
+			symbol: "TST".into(),
+			decimals: 12,
+			minimal_balance: 0,
+			is_frozen: false,
+		};
+		assert_ok!(AssetManager::register_foreign_asset_type(
+			Origin::root(),
+			MockAssetType::MockAsset(1),
+			asset_metadata_1.clone()
+		));
+		assert_noop!(
+			AssetManager::register_foreign_asset_type(
+				Origin::root(),
+				MockAssetType::MockAsset(1),
+				asset_metadata_1
+			),
+			Error::<Test>::AssetAlreadyExists
+		);
+		assert_noop!(
+			AssetManager::add_asset_type(Origin::root(), 0, MockAssetType::MockAsset(1)),
+			Error::<Test>::AssetAlreadyExists
+		);
+	});
+}
+
+#[test]
+fn test_asset_type_does_not_exist_error() {
+	ExtBuilder::default().build().execute_with(|| {
+		let asset_metadata_1 = crate::AssetMetadata::<BalanceOf<Test>> {
+			name: "test".into(),
+			symbol: "TST".into(),
+			decimals: 12,
+			minimal_balance: 0,
+			is_frozen: false,
+		};
+		assert_ok!(AssetManager::register_foreign_asset_type(
+			Origin::root(),
+			MockAssetType::MockAsset(1),
+			asset_metadata_1
+		));
+		assert_noop!(
+			AssetManager::remove_asset_type(Origin::root(), 0, MockAssetType::MockAsset(2), None),
+			Error::<Test>::AssetTypeDoesNotExist
+		);
+		assert_noop!(
+			AssetManager::remove_asset_type(
+				Origin::root(),
+				0,
+				MockAssetType::MockAsset(1),
+				Some(MockAssetType::MockAsset(2))
+			),
+			Error::<Test>::AssetTypeDoesNotExist
+		);
+	});
+}
+
+#[test]
+fn test_default_asset_type_removed_error() {
+	ExtBuilder::default().build().execute_with(|| {
+		let asset_metadata_1 = crate::AssetMetadata::<BalanceOf<Test>> {
+			name: "test".into(),
+			symbol: "TST".into(),
+			decimals: 12,
+			minimal_balance: 0,
+			is_frozen: false,
+		};
+		assert_ok!(AssetManager::register_foreign_asset_type(
+			Origin::root(),
+			MockAssetType::MockAsset(1),
+			asset_metadata_1
+		));
+		assert_ok!(AssetManager::add_asset_type(Origin::root(), 0, MockAssetType::MockAsset(2)));
+
+		assert_noop!(
+			AssetManager::remove_asset_type(Origin::root(), 0, MockAssetType::MockAsset(2), None),
+			Error::<Test>::DefaultAssetTypeRemoved
+		);
+		assert_noop!(
+			AssetManager::remove_asset_type(
+				Origin::root(),
+				0,
+				MockAssetType::MockAsset(1),
+				Some(MockAssetType::MockAsset(1))
+			),
+			Error::<Test>::DefaultAssetTypeRemoved
+		);
+	});
+}
+
+#[test]
+fn test_asset_id_over_flow_error() {
+	ExtBuilder::default().build().execute_with(|| {
+		let asset_metadata_1 = crate::AssetMetadata::<BalanceOf<Test>> {
+			name: "test".into(),
+			symbol: "TST".into(),
+			decimals: 12,
+			minimal_balance: 0,
+			is_frozen: false,
+		};
+		assert_ok!(AssetManager::register_foreign_asset_type(
+			Origin::root(),
+			MockAssetType::MockAsset(1),
+			asset_metadata_1.clone()
+		));
+		crate::ForeignAssetTracker::<Test>::put(10);
+		assert_ok!(AssetManager::register_foreign_asset_type(
+			Origin::root(),
+			MockAssetType::MockAsset(1),
+			asset_metadata_1
+		));
+		crate::ForeignAssetTracker::<Test>::put(u32::MAX);
 	});
 }

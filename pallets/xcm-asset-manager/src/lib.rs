@@ -31,14 +31,13 @@
 //! and control the creation of foreign assets
 //! The assumption is we work with AssetTypes, which can then be comverted to AssetIds
 //!
-//! This pallet has six storage items:
+//! This pallet has five storage items:
 //! - AssetIdType: A mapping from AssetId->AssetType.
 //! - AssetIdUnitsPerSecond: An AssetId->u128 mapping that holds how much each AssetId should be
 //!   charged per unit of second, in the case such an Asset is received as a XCM asset.
 //! - AssetTypeId: A mapping from AssetType -> AssetId.
 //! - ForeignAssetTracker: The counter of foreign assets that have been created so far.
-//! - SupportedFeePaymentAssets: The assets supported to serve as weight payment in XCM.
-//! - AssetIdMetadatas: An AssetId->AssetMetadata mapping that holds the metadata token info.
+//! - AssetIdMetadata: An AssetId->AssetMetadata mapping that holds the metadata token info.
 //!
 //! This pallet has six extrinsics:
 //! - register_foreign_asset: Register a foreign asset in this pallet.
@@ -154,9 +153,7 @@ pub mod pallet {
 		AssetAlreadyExists,
 		AssetTypeDoesNotExist,
 		AssetIdDoesNotExist,
-		AssetLimitReached,
 		DefaultAssetTypeRemoved,
-		TooLowNumAssetsWeightHint,
 		AssetIdOverflow,
 	}
 
@@ -165,15 +162,13 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// The foreign asset updated.
 		ForeignAssetMetadataUpdated { asset_id: T::AssetId, metadata: AssetMetadata<BalanceOf<T>> },
-		/// New asset with the asset manager is registered
-		ForeignAssetRegistered { asset_id: T::AssetId, asset_type: T::ForeignAssetType },
-		/// Removed all information related to an assetId
-		ForeignAssetRemoved { asset_id: T::AssetId, asset_type: T::ForeignAssetType },
 		/// AssetTracker manipulated
 		ForeignAssetTrackerUpdated { old_asset_tracker: T::AssetId, new_asset_tracker: T::AssetId },
+		/// New asset with the asset manager is registered
+		ForeignAssetTypeRegistered { asset_id: T::AssetId, asset_type: T::ForeignAssetType },
 		/// New Event gives the info about involved asset_id, removed asset_type, and the new
 		/// default asset_id and asset_type mapping after removal
-		SupportedAssetTypeRemoved {
+		ForeignAssetTypeRemoved {
 			asset_id: T::AssetId,
 			removed_asset_type: T::ForeignAssetType,
 			default_asset_type: T::ForeignAssetType,
@@ -189,7 +184,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn asset_id_type)]
 	pub type AssetIdType<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AssetId, T::ForeignAssetType>;
+		StorageMap<_, Blake2_128Concat, T::AssetId, T::ForeignAssetType, OptionQuery>;
 
 	/// Reverse mapping of AssetIdType. Mapping from an asset type to an asset id.
 	/// This is mostly used when receiving a multilocation XCM message to retrieve
@@ -197,14 +192,15 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn asset_type_id)]
 	pub type AssetTypeId<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::ForeignAssetType, T::AssetId>;
+		StorageMap<_, Blake2_128Concat, T::ForeignAssetType, T::AssetId, OptionQuery>;
 
 	/// Stores the units per second for local execution for a AssetType.
 	/// This is used to know how to charge for XCM execution in a particular asset
 	/// Not all assets might contain units per second, hence the different storage
 	#[pallet::storage]
 	#[pallet::getter(fn asset_id_units_per_second)]
-	pub type AssetIdUnitsPerSecond<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, u128>;
+	pub type AssetIdUnitsPerSecond<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AssetId, u128, ValueQuery>;
 
 	/// Stores the tracker of foreign assets id that have been
 	/// created so far
@@ -212,25 +208,24 @@ pub mod pallet {
 	#[pallet::getter(fn foreign_asset_tracker)]
 	pub type ForeignAssetTracker<T: Config> = StorageValue<_, T::AssetId, ValueQuery>;
 
-	// Supported fee asset payments
-	#[pallet::storage]
-	#[pallet::getter(fn supported_fee_payment_assets)]
-	pub type SupportedFeePaymentAssets<T: Config> = StorageValue<_, Vec<T::AssetId>, ValueQuery>;
+	// // Supported fee asset payments
+	// #[pallet::storage]
+	// #[pallet::getter(fn supported_fee_payment_assets)]
+	// pub type SupportedFeePaymentAssets<T: Config> = StorageValue<_, Vec<T::AssetId>, ValueQuery>;
 
-	/// The storages for AssetIdMetadatas.
-	///
-	/// AssetIdMetadatas: map AssetId => Option<AssetMetadata>
+	/// The storages for AssetIdMetadata.
+	/// AssetIdMetadata: map AssetId => Option<AssetMetadata>
 	#[pallet::storage]
 	#[pallet::getter(fn asset_metadatas)]
-	pub type AssetIdMetadatas<T: Config> =
+	pub type AssetIdMetadata<T: Config> =
 		StorageMap<_, Twox64Concat, T::AssetId, AssetMetadata<BalanceOf<T>>, OptionQuery>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Register new asset with the asset manager
 		/// TODO::Reserve native token multilocation through GenesisBuild/RuntimeUpgrade
-		#[pallet::weight(T::WeightInfo::register_foreign_asset())]
-		pub fn register_foreign_asset(
+		#[pallet::weight(T::WeightInfo::register_foreign_asset_type())]
+		pub fn register_foreign_asset_type(
 			origin: OriginFor<T>,
 			asset_type: T::ForeignAssetType,
 			metadata: AssetMetadata<BalanceOf<T>>,
@@ -241,11 +236,11 @@ pub mod pallet {
 
 			ensure!(!AssetTypeId::<T>::contains_key(&asset_type), Error::<T>::AssetAlreadyExists);
 
-			AssetIdMetadatas::<T>::insert(&asset_id, &metadata);
+			AssetIdMetadata::<T>::insert(&asset_id, &metadata);
 			AssetIdType::<T>::insert(&asset_id, &asset_type);
 			AssetTypeId::<T>::insert(&asset_type, &asset_id);
 
-			Self::deposit_event(Event::<T>::ForeignAssetRegistered { asset_id, asset_type });
+			Self::deposit_event(Event::<T>::ForeignAssetTypeRegistered { asset_id, asset_type });
 			Self::deposit_event(Event::<T>::ForeignAssetMetadataUpdated { asset_id, metadata });
 
 			asset_id = asset_id.checked_add(&One::one()).ok_or(Error::<T>::AssetIdOverflow)?;
@@ -274,17 +269,17 @@ pub mod pallet {
 			Ok(())
 		}
 
+		// Update asset metadata
 		#[pallet::weight(T::WeightInfo::update_foreign_asset_metadata())]
 		pub fn update_foreign_asset_metadata(
 			origin: OriginFor<T>,
-			asset_type: T::ForeignAssetType,
+			asset_id: T::AssetId,
 			metadata: AssetMetadata<BalanceOf<T>>,
 		) -> DispatchResult {
 			T::ForeignAssetModifierOrigin::ensure_origin(origin)?;
 
-			let asset_id: T::AssetId =
-				AssetTypeId::<T>::get(&asset_type).ok_or(Error::<T>::AssetTypeDoesNotExist)?;
-			AssetIdMetadatas::<T>::insert(&asset_id, &metadata);
+			ensure!(AssetIdType::<T>::contains_key(&asset_id), Error::<T>::AssetIdDoesNotExist);
+			AssetIdMetadata::<T>::insert(&asset_id, &metadata);
 
 			Self::deposit_event(Event::<T>::ForeignAssetMetadataUpdated { asset_id, metadata });
 			Ok(())
@@ -292,31 +287,16 @@ pub mod pallet {
 
 		/// Change the amount of units we are charging per execution second
 		/// for a given ForeignAssetType
-		#[pallet::weight(T::WeightInfo::set_asset_units_per_second(*num_assets_weight_hint))]
+		/// 0 means not support
+		#[pallet::weight(T::WeightInfo::set_asset_units_per_second())]
 		pub fn set_asset_units_per_second(
 			origin: OriginFor<T>,
-			asset_type: T::ForeignAssetType,
+			asset_id: T::AssetId,
 			units_per_second: u128,
-			num_assets_weight_hint: u32,
 		) -> DispatchResult {
 			T::ForeignAssetModifierOrigin::ensure_origin(origin)?;
 
-			let asset_id: T::AssetId =
-				AssetTypeId::<T>::get(&asset_type).ok_or(Error::<T>::AssetTypeDoesNotExist)?;
-
-			// Grab supported assets
-			let mut supported_assets = SupportedFeePaymentAssets::<T>::get();
-
-			ensure!(
-				num_assets_weight_hint >= (supported_assets.len() as u32),
-				Error::<T>::TooLowNumAssetsWeightHint
-			);
-
-			// Only if the asset is not supported we need to push it
-			if let Err(index) = supported_assets.binary_search(&asset_id) {
-				supported_assets.insert(index, asset_id.clone());
-				SupportedFeePaymentAssets::<T>::put(supported_assets);
-			}
+			ensure!(AssetIdType::<T>::contains_key(&asset_id), Error::<T>::AssetIdDoesNotExist);
 
 			AssetIdUnitsPerSecond::<T>::insert(&asset_id, &units_per_second);
 
@@ -325,7 +305,6 @@ pub mod pallet {
 		}
 
 		/// Add the xcm type mapping for a existing assetId, other assetType still exists if any.
-		/// TODO: Weight is no longer related to num_assets_weight_hint; changes here needed
 		#[pallet::weight(T::WeightInfo::add_asset_type())]
 		pub fn add_asset_type(
 			origin: OriginFor<T>,
@@ -344,36 +323,33 @@ pub mod pallet {
 			AssetIdType::<T>::insert(&asset_id, &new_asset_type);
 			AssetTypeId::<T>::insert(&new_asset_type, &asset_id);
 
-			// Remove previous asset type info
-			// AssetTypeId::<T>::remove(&previous_asset_type);
-
-			Self::deposit_event(Event::ForeignAssetRegistered {
+			Self::deposit_event(Event::ForeignAssetTypeRegistered {
 				asset_id,
 				asset_type: new_asset_type,
 			});
 			Ok(())
 		}
 
-		/// TODO: Weight is no longer related to num_assets_weight_hint; changes here needed
-		/// We do not allow the destroy of asset id so far
-		/// But we will remove all existing related fee settings. So will need re-implement by
-		/// extrinsic call. New default asset type is needed for the assignment of asset_id's
-		/// default asset type mapping
-		#[pallet::weight(T::WeightInfo::remove_asset_type(*num_assets_weight_hint))]
+		/// We do not allow the destroy of asset id so far; So at least one AssetTpye should be
+		/// assigned to existing AssetId Both asset_type and potential new_default_asset_type must
+		/// be an existing relation with asset_id
+		#[pallet::weight(T::WeightInfo::remove_asset_type())]
 		#[transactional]
 		pub fn remove_asset_type(
 			origin: OriginFor<T>,
+			asset_id: T::AssetId,
 			asset_type: T::ForeignAssetType,
 			new_default_asset_type: Option<T::ForeignAssetType>,
-			num_assets_weight_hint: u32,
 		) -> DispatchResult {
 			T::ForeignAssetModifierOrigin::ensure_origin(origin)?;
 
-			let asset_id: T::AssetId =
-				AssetTypeId::<T>::get(&asset_type).ok_or(Error::<T>::AssetTypeDoesNotExist)?;
+			ensure!(AssetIdType::<T>::contains_key(&asset_id), Error::<T>::AssetIdDoesNotExist);
+			ensure!(AssetTypeId::<T>::contains_key(&asset_type), Error::<T>::AssetTypeDoesNotExist);
 
 			if let Some(i) = new_default_asset_type {
-				AssetIdType::<T>::insert(&asset_id, i);
+				// new default asset type must register already
+				ensure!(AssetTypeId::<T>::contains_key(&i), Error::<T>::AssetTypeDoesNotExist);
+				AssetIdType::<T>::insert(&asset_id, &i);
 			}
 
 			let default_asset_type: T::ForeignAssetType =
@@ -382,29 +358,10 @@ pub mod pallet {
 				return Err(Error::<T>::DefaultAssetTypeRemoved.into())
 			}
 
-			// Grab supported assets
-			let mut supported_assets = SupportedFeePaymentAssets::<T>::get();
-
-			ensure!(
-				num_assets_weight_hint >= (supported_assets.len() as u32),
-				Error::<T>::TooLowNumAssetsWeightHint
-			);
-
-			// Only if the old asset is supported we need to remove it
-			if let Ok(index) = supported_assets.binary_search(&asset_id) {
-				supported_assets.remove(index);
-			}
-
-			// Insert
-			SupportedFeePaymentAssets::<T>::put(supported_assets);
-
 			// Remove from AssetTypeId
 			AssetTypeId::<T>::remove(&asset_type);
 
-			// Remove
-			AssetIdUnitsPerSecond::<T>::remove(&asset_id);
-
-			Self::deposit_event(Event::SupportedAssetTypeRemoved {
+			Self::deposit_event(Event::ForeignAssetTypeRemoved {
 				asset_id,
 				removed_asset_type: asset_type,
 				default_asset_type,
@@ -423,7 +380,7 @@ pub mod pallet {
 	impl<T: Config> GetByKey<T::AssetId, BalanceOf<T>> for Pallet<T> {
 		fn get(asset_id: &T::AssetId) -> BalanceOf<T> {
 			let metadata: AssetMetadata<BalanceOf<T>> =
-				AssetIdMetadatas::<T>::get(asset_id).unwrap_or_default();
+				AssetIdMetadata::<T>::get(asset_id).unwrap_or_default();
 			metadata.minimal_balance
 		}
 	}
@@ -441,17 +398,20 @@ pub mod pallet {
 	impl<T: Config> UnitsToWeightRatio<T::ForeignAssetType> for Pallet<T> {
 		fn payment_is_supported(asset_type: T::ForeignAssetType) -> bool {
 			if let Some(asset_id) = AssetTypeId::<T>::get(&asset_type) {
-				SupportedFeePaymentAssets::<T>::get().binary_search(&asset_id).is_ok()
-			} else {
-				false
+				if AssetIdUnitsPerSecond::<T>::get(asset_id) > 0 {
+					return true
+				}
 			}
+			false
 		}
 		fn get_units_per_second(asset_type: T::ForeignAssetType) -> Option<u128> {
 			if let Some(asset_id) = AssetTypeId::<T>::get(&asset_type) {
-				AssetIdUnitsPerSecond::<T>::get(asset_id)
-			} else {
-				None
+				let ups = AssetIdUnitsPerSecond::<T>::get(asset_id);
+				if ups > 0 {
+					return Some(ups)
+				}
 			}
+			None
 		}
 	}
 }

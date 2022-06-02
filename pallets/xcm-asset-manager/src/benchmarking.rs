@@ -25,7 +25,7 @@ use xcm::latest::prelude::*;
 benchmarks! {
 	// This where clause allows us to create ForeignAssetTypes
 	where_clause { where T::ForeignAssetType: From<Option<MultiLocation>> }
-	register_foreign_asset {
+	register_foreign_asset_type {
 		// does not really matter what we register
 		let asset_type: T::ForeignAssetType = Some(MultiLocation::new(
 			0,
@@ -66,9 +66,9 @@ benchmarks! {
 
 		let asset_id = Pallet::<T>::foreign_asset_tracker();
 
-		Pallet::<T>::register_foreign_asset(
+		Pallet::<T>::register_foreign_asset_type(
 			RawOrigin::Root.into(),
-			asset_type.clone(),
+			asset_type,
 			metadata
 		)?;
 
@@ -80,35 +80,13 @@ benchmarks! {
 			is_frozen: false,
 		};
 
-	}: _(RawOrigin::Root, asset_type, metadata_new.clone())
+	}: _(RawOrigin::Root, asset_id.clone(), metadata_new.clone())
 	verify {
 		assert_eq!(Pallet::<T>::asset_metadatas(asset_id), Some(metadata_new));
 	}
 
 	set_asset_units_per_second {
-		// We make it dependent on the number of existing assets already
-		let x in 5..100;
-		for i in 0..x {
-			let asset_type: T::ForeignAssetType = Some(MultiLocation::new(
-				1,
-				X1(GeneralIndex(i as u128))
-			)).into();
-			let metadata = AssetMetadata::<BalanceOf<T>> {
-				name: "test".into(),
-				symbol: "TST".into(),
-				decimals: 12,
-				minimal_balance: BalanceOf::<T>::default(),
-				is_frozen: false,
-			};
-			Pallet::<T>::register_foreign_asset(
-				RawOrigin::Root.into(),
-				asset_type.clone(),
-				metadata
-			)?;
-			Pallet::<T>::set_asset_units_per_second(RawOrigin::Root.into(), asset_type.clone(), 2, i)?;
-		}
-
-		// does not really matter what we register, as long as it is different than the previous
+		// does not really matter what we register
 		let asset_type: T::ForeignAssetType = Some(MultiLocation::new(
 			0,
 			Here)).into();
@@ -120,16 +98,15 @@ benchmarks! {
 			is_frozen: false,
 		};
 		let asset_id = Pallet::<T>::foreign_asset_tracker();
-		Pallet::<T>::register_foreign_asset(
+		Pallet::<T>::register_foreign_asset_type(
 			RawOrigin::Root.into(),
-			asset_type.clone(),
+			asset_type,
 			metadata
 		)?;
 
-	}: _(RawOrigin::Root, asset_type, 1, x)
+	}: _(RawOrigin::Root, asset_id.clone(), 1)
 	verify {
-		assert!(Pallet::<T>::supported_fee_payment_assets().contains(&asset_id));
-		assert_eq!(Pallet::<T>::asset_id_units_per_second(asset_id), Some(1));
+		assert_eq!(Pallet::<T>::asset_id_units_per_second(asset_id), 1);
 	}
 
 	add_asset_type {
@@ -146,7 +123,7 @@ benchmarks! {
 			is_frozen: false,
 		};
 		let asset_id = Pallet::<T>::foreign_asset_tracker();
-		Pallet::<T>::register_foreign_asset(
+		Pallet::<T>::register_foreign_asset_type(
 			RawOrigin::Root.into(),
 			asset_type,
 			metadata
@@ -175,7 +152,7 @@ benchmarks! {
 			is_frozen: false,
 		};
 		let asset_id = Pallet::<T>::foreign_asset_tracker();
-		Pallet::<T>::register_foreign_asset(
+		Pallet::<T>::register_foreign_asset_type(
 			RawOrigin::Root.into(),
 			asset_type,
 			metadata
@@ -199,7 +176,7 @@ benchmarks! {
 			0,
 			X1(GeneralIndex((x-2) as u128))
 		)).into();
-	}: _(RawOrigin::Root, asset_type_to_be_removed.clone(), Some(asset_type_new_default.clone()), x)
+	}: _(RawOrigin::Root, asset_id.clone(), asset_type_to_be_removed.clone(), Some(asset_type_new_default.clone()))
 	verify {
 		assert_eq!(Pallet::<T>::asset_id_type(asset_id), Some(asset_type_new_default));
 		assert!(Pallet::<T>::asset_type_id(asset_type_to_be_removed).is_none());

@@ -55,17 +55,17 @@ use sp_std::marker::PhantomData;
 /// Weight functions needed for pallet_asset_manager.
 pub trait WeightInfo {
 	#[rustfmt::skip]
-	fn register_foreign_asset() -> Weight;
+	fn register_foreign_asset_type() -> Weight;
 	#[rustfmt::skip]
 	fn relocate_foreign_asset_id() -> Weight;
 	#[rustfmt::skip]
 	fn update_foreign_asset_metadata() -> Weight;
 	#[rustfmt::skip]
-	fn set_asset_units_per_second(x: u32, ) -> Weight;
+	fn set_asset_units_per_second() -> Weight;
 	#[rustfmt::skip]
 	fn add_asset_type() -> Weight;
 	#[rustfmt::skip]
-	fn remove_asset_type(x: u32, ) -> Weight;
+	fn remove_asset_type() -> Weight;
 }
 
 /// Weights for pallet_asset_manager using the Substrate node and recommended hardware.
@@ -76,7 +76,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Assets Metadata (r:1 w:1)
 	// Storage: AssetManager AssetTypeId (r:0 w:1)
 	#[rustfmt::skip]
-	fn register_foreign_asset() -> Weight {
+	fn register_foreign_asset_type() -> Weight {
 		(47_597_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
@@ -105,10 +105,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: AssetManager SupportedFeePaymentAssets (r:1 w:1)
 	// Storage: AssetManager AssetTypeUnitsPerSecond (r:0 w:1)
 	#[rustfmt::skip]
-	fn set_asset_units_per_second(x: u32, ) -> Weight {
+	fn set_asset_units_per_second() -> Weight {
 		(32_865_000 as Weight)
 			// Standard Error: 3_000
-			.saturating_add((1_210_000 as Weight).saturating_mul(x as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -126,10 +125,9 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: AssetManager SupportedFeePaymentAssets (r:1 w:1)
 	// Storage: AssetManager AssetTypeUnitsPerSecond (r:0 w:1)
 	#[rustfmt::skip]
-	fn remove_asset_type(x: u32, ) -> Weight {
+	fn remove_asset_type() -> Weight {
 		(25_700_000 as Weight)
 			// Standard Error: 3_000
-			.saturating_add((1_043_000 as Weight).saturating_mul(x as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -142,7 +140,7 @@ impl WeightInfo for () {
 	// Storage: Assets Metadata (r:1 w:1)
 	// Storage: AssetManager AssetTypeId (r:0 w:1)
 	#[rustfmt::skip]
-	fn register_foreign_asset() -> Weight {
+	fn register_foreign_asset_type() -> Weight {
 		(47_597_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
@@ -171,10 +169,9 @@ impl WeightInfo for () {
 	// Storage: AssetManager SupportedFeePaymentAssets (r:1 w:1)
 	// Storage: AssetManager AssetTypeUnitsPerSecond (r:0 w:1)
 	#[rustfmt::skip]
-	fn set_asset_units_per_second(x: u32, ) -> Weight {
+	fn set_asset_units_per_second() -> Weight {
 		(32_865_000 as Weight)
 			// Standard Error: 3_000
-			.saturating_add((1_210_000 as Weight).saturating_mul(x as Weight))
 			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
 	}
@@ -192,10 +189,9 @@ impl WeightInfo for () {
 	// Storage: AssetManager SupportedFeePaymentAssets (r:1 w:1)
 	// Storage: AssetManager AssetTypeUnitsPerSecond (r:0 w:1)
 	#[rustfmt::skip]
-	fn remove_asset_type(x: u32, ) -> Weight {
+	fn remove_asset_type() -> Weight {
 		(25_700_000 as Weight)
 			// Standard Error: 3_000
-			.saturating_add((1_043_000 as Weight).saturating_mul(x as Weight))
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
 	}

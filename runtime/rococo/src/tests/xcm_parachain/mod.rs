@@ -73,7 +73,7 @@ fn test_xtokens_recognize_multilocation() {
 		register_channel_info(2, 1);
 	});
 	ParaB::execute_with(|| {
-		assert_ok!(AssetManager::register_foreign_asset(
+		assert_ok!(AssetManager::register_foreign_asset_type(
 			RawOrigin::Root.into(),
 			CurrencyId::ParachainReserve(Box::new(
 				(
@@ -87,16 +87,8 @@ fn test_xtokens_recognize_multilocation() {
 		));
 		assert_ok!(AssetManager::set_asset_units_per_second(
 			RawOrigin::Root.into(),
-			CurrencyId::ParachainReserve(Box::new(
-				(
-					Parent,
-					Parachain(1),
-					PalletInstance(<Balances as PalletInfoAccess>::index() as u8)
-				)
-					.into()
-			)),
-			1_000_000_000_000,
-			1
+			0,
+			1_000_000_000_000
 		));
 	});
 
@@ -151,7 +143,7 @@ fn test_pallet_xcm_recognize_multilocation() {
 		register_channel_info(2, 1);
 	});
 	ParaB::execute_with(|| {
-		assert_ok!(AssetManager::register_foreign_asset(
+		assert_ok!(AssetManager::register_foreign_asset_type(
 			RawOrigin::Root.into(),
 			CurrencyId::ParachainReserve(Box::new(
 				(
@@ -165,16 +157,8 @@ fn test_pallet_xcm_recognize_multilocation() {
 		));
 		assert_ok!(AssetManager::set_asset_units_per_second(
 			RawOrigin::Root.into(),
-			CurrencyId::ParachainReserve(Box::new(
-				(
-					Parent,
-					Parachain(1),
-					PalletInstance(<Balances as PalletInfoAccess>::index() as u8)
-				)
-					.into()
-			)),
-			1_000_000_000_000,
-			1
+			0,
+			1_000_000_000_000
 		));
 	});
 
