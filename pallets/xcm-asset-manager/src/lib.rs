@@ -240,7 +240,7 @@ pub mod pallet {
 					*tracker =
 						tracker.checked_add(&One::one()).ok_or(Error::<T>::AssetIdLimitReached)?;
 					Ok(*tracker)
-				}
+				},
 			)?;
 
 			AssetIdMetadata::<T>::insert(&asset_id, &metadata);
@@ -261,12 +261,14 @@ pub mod pallet {
 			new_asset_tracker: T::AssetId,
 		) -> DispatchResult {
 			T::ForeignAssetModifierOrigin::ensure_origin(origin)?;
-			let next_asset_id = new_asset_tracker.checked_add(&One::one()).ok_or(Error::<T>::AssetIdLimitReached)?;
+			let next_asset_id = new_asset_tracker
+				.checked_add(&One::one())
+				.ok_or(Error::<T>::AssetIdLimitReached)?;
 			let old_existing_asset_id = ForeignAssetTracker::<T>::get();
 			if next_asset_id > old_existing_asset_id {
 				Self::deposit_event(Event::<T>::ForeignAssetTrackerUpdated {
 					old_asset_tracker: old_existing_asset_id,
-					new_asset_tracker: new_asset_tracker,
+					new_asset_tracker,
 				});
 				ForeignAssetTracker::<T>::put(new_asset_tracker);
 			}
