@@ -289,6 +289,7 @@ pub mod pallet {
 		}
 
 		/// Add the xcm type mapping for a existing assetId, other assetType still exists if any.
+		/// TODO: Change add_asset_type with internal function wrapper
 		#[pallet::weight(T::WeightInfo::add_asset_type())]
 		pub fn add_asset_type(
 			origin: OriginFor<T>,
@@ -297,7 +298,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::ForeignAssetModifierOrigin::ensure_origin(origin)?;
 
-			// TODO:
+			// TODO: TBD, mutate replace insert + ensure! as asset_id is always an update
 			ensure!(AssetIdType::<T>::contains_key(&asset_id), Error::<T>::AssetIdDoesNotExist);
 			ensure!(
 				!AssetTypeId::<T>::contains_key(&new_asset_type),
@@ -318,6 +319,7 @@ pub mod pallet {
 		/// We do not allow the destroy of asset id so far; So at least one AssetTpye should be
 		/// assigned to existing AssetId Both asset_type and potential new_default_asset_type must
 		/// be an existing relation with asset_id
+		/// TODO: Change remove_asset_type with internal function wrapper
 		#[pallet::weight(T::WeightInfo::remove_asset_type())]
 		#[transactional]
 		pub fn remove_asset_type(
