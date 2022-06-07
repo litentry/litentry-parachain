@@ -253,28 +253,6 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Relocate asset id.
-		/// Can only be larger than current assignment.
-		#[pallet::weight(T::WeightInfo::relocate_foreign_asset_id())]
-		pub fn relocate_foreign_asset_id(
-			origin: OriginFor<T>,
-			new_asset_tracker: T::AssetId,
-		) -> DispatchResult {
-			T::ForeignAssetModifierOrigin::ensure_origin(origin)?;
-			let next_asset_id = new_asset_tracker
-				.checked_add(&One::one())
-				.ok_or(Error::<T>::AssetIdLimitReached)?;
-			let old_existing_asset_id = ForeignAssetTracker::<T>::get();
-			if next_asset_id > old_existing_asset_id {
-				Self::deposit_event(Event::<T>::ForeignAssetTrackerUpdated {
-					old_asset_tracker: old_existing_asset_id,
-					new_asset_tracker,
-				});
-				ForeignAssetTracker::<T>::put(new_asset_tracker);
-			}
-			Ok(())
-		}
-
 		// Update asset metadata
 		#[pallet::weight(T::WeightInfo::update_foreign_asset_metadata())]
 		pub fn update_foreign_asset_metadata(
@@ -319,6 +297,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::ForeignAssetModifierOrigin::ensure_origin(origin)?;
 
+			// TODO:
 			ensure!(AssetIdType::<T>::contains_key(&asset_id), Error::<T>::AssetIdDoesNotExist);
 			ensure!(
 				!AssetTypeId::<T>::contains_key(&new_asset_type),

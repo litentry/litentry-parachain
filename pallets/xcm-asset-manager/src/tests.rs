@@ -103,7 +103,8 @@ fn test_relocated_asset_id_works() {
 		));
 
 		assert_eq!(AssetManager::asset_id_type(1).unwrap(), MockAssetType::MockAsset(1));
-		assert_ok!(AssetManager::relocate_foreign_asset_id(Origin::root(), 10u32));
+
+		crate::ForeignAssetTracker::<Test>::put(10);
 		assert_ok!(AssetManager::register_foreign_asset_type(
 			Origin::root(),
 			MockAssetType::MockAsset(2),
@@ -119,10 +120,6 @@ fn test_relocated_asset_id_works() {
 			crate::Event::ForeignAssetMetadataUpdated {
 				asset_id: 1,
 				metadata: asset_metadata_1.clone(),
-			},
-			crate::Event::ForeignAssetTrackerUpdated {
-				old_asset_tracker: 1,
-				new_asset_tracker: 10,
 			},
 			crate::Event::ForeignAssetTypeRegistered {
 				asset_id: 11,
@@ -239,11 +236,6 @@ fn test_regular_user_cannot_call_extrinsics() {
 				MockAssetType::MockAsset(1),
 				asset_metadata_1.clone()
 			),
-			sp_runtime::DispatchError::BadOrigin
-		);
-
-		assert_noop!(
-			AssetManager::relocate_foreign_asset_id(Origin::signed(1), 10u32),
 			sp_runtime::DispatchError::BadOrigin
 		);
 

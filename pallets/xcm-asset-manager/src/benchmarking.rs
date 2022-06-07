@@ -19,7 +19,6 @@
 use crate::{AssetMetadata, BalanceOf, Call, Config, Pallet};
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
 use frame_system::RawOrigin;
-use sp_runtime::traits::One;
 use xcm::latest::prelude::*;
 
 benchmarks! {
@@ -42,13 +41,6 @@ benchmarks! {
 	}: _(RawOrigin::Root, asset_type.clone(), metadata)
 	verify {
 		assert_eq!(Pallet::<T>::asset_id_type(foreign_asset_tracker), Some(asset_type));
-	}
-
-	relocate_foreign_asset_id {
-		let asset_id = T::AssetId::default() + One::one();
-	}: _(RawOrigin::Root, asset_id.clone())
-	verify {
-		assert_eq!(Pallet::<T>::foreign_asset_tracker(), asset_id);
 	}
 
 	update_foreign_asset_metadata {

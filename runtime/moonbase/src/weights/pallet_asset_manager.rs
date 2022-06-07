@@ -56,12 +56,6 @@ impl<T: frame_system::Config> pallet_asset_manager::WeightInfo for WeightInfo<T>
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
-	// Storage: AssetManager ForeignAssetTracker (r:1 w:1)
-	fn relocate_foreign_asset_id() -> Weight {
-		(12_400_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-	}
 	// Storage: AssetManager AssetIdType (r:1 w:0)
 	// Storage: AssetManager AssetIdMetadata (r:0 w:1)
 	fn update_foreign_asset_metadata() -> Weight {

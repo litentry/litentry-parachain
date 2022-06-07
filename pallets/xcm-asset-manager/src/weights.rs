@@ -57,8 +57,6 @@ pub trait WeightInfo {
 	#[rustfmt::skip]
 	fn register_foreign_asset_type() -> Weight;
 	#[rustfmt::skip]
-	fn relocate_foreign_asset_id() -> Weight;
-	#[rustfmt::skip]
 	fn update_foreign_asset_metadata() -> Weight;
 	#[rustfmt::skip]
 	fn set_asset_units_per_second() -> Weight;
@@ -80,12 +78,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		(32_800_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
-	}
-	// Storage: AssetManager ForeignAssetTracker (r:1 w:1)
-	fn relocate_foreign_asset_id() -> Weight {
-		(13_600_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	// Storage: AssetManager AssetIdType (r:1 w:0)
 	// Storage: AssetManager AssetIdMetadata (r:0 w:1)
@@ -130,13 +122,6 @@ impl WeightInfo for () {
 		(32_800_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
-	}
-	// Storage: AssetManager ForeignAssetTracker (r:1 w:1)
-	#[rustfmt::skip]
-	fn relocate_foreign_asset_id() -> Weight {
-		(13_600_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	// Storage: AssetManager AssetIdType (r:1 w:0)
 	// Storage: AssetManager AssetIdMetadata (r:0 w:1)
