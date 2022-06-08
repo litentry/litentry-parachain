@@ -39,11 +39,10 @@
 //! - ForeignAssetTracker: The counter of foreign assets that have been created so far.
 //! - AssetIdMetadata: An AssetId->AssetMetadata mapping that holds the metadata token info.
 //!
-//! This pallet has six extrinsics:
+//! This pallet has five extrinsics:
 //! - register_foreign_asset: Register a foreign asset in this pallet.
 //! - set_asset_units_per_second: Set the unit per second that should be charged for a particular
 //!   asset.
-//! - relocate_foreign_asset_id: Allow to manipulate ForeignAssetTracker value.
 //! - update_foreign_asset_metadata: Update the metadata of asset.
 //! - add_asset_type: Add the correspondence between AssetId and AssetType.
 //! - remove_asset_type: Remove the correspondence between AssetId and AssetType. At least one
@@ -52,7 +51,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::clone_on_copy)]
 
-// TODO implement
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 #[cfg(test)]
@@ -207,11 +205,6 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn foreign_asset_tracker)]
 	pub type ForeignAssetTracker<T: Config> = StorageValue<_, T::AssetId, ValueQuery>;
-
-	// // Supported fee asset payments
-	// #[pallet::storage]
-	// #[pallet::getter(fn supported_fee_payment_assets)]
-	// pub type SupportedFeePaymentAssets<T: Config> = StorageValue<_, Vec<T::AssetId>, ValueQuery>;
 
 	/// The storages for AssetIdMetadata.
 	/// AssetIdMetadata: map AssetId => Option<AssetMetadata>
