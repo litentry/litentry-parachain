@@ -257,7 +257,6 @@ fn test_regular_user_cannot_call_extrinsics() {
 		assert_noop!(
 			AssetManager::remove_asset_type(
 				Origin::signed(1),
-				0,
 				MockAssetType::MockAsset(1),
 				Some(MockAssetType::MockAsset(2))
 			),
@@ -405,7 +404,6 @@ fn test_root_can_remove_asset_type() {
 
 		assert_ok!(AssetManager::remove_asset_type(
 			Origin::root(),
-			1,
 			MockAssetType::MockAsset(1),
 			None
 		));
@@ -420,7 +418,6 @@ fn test_root_can_remove_asset_type() {
 
 		assert_ok!(AssetManager::remove_asset_type(
 			Origin::root(),
-			1,
 			MockAssetType::MockAsset(3),
 			Some(MockAssetType::MockAsset(2))
 		));
@@ -479,11 +476,6 @@ fn test_asset_id_non_existent_error() {
 			AssetManager::add_asset_type(Origin::root(), 2, MockAssetType::MockAsset(2)),
 			Error::<Test>::AssetIdDoesNotExist
 		);
-
-		assert_noop!(
-			AssetManager::remove_asset_type(Origin::root(), 1, MockAssetType::MockAsset(1), None),
-			Error::<Test>::AssetIdDoesNotExist
-		);
 	});
 }
 
@@ -533,13 +525,12 @@ fn test_asset_type_does_not_exist_error() {
 			asset_metadata_1
 		));
 		assert_noop!(
-			AssetManager::remove_asset_type(Origin::root(), 1, MockAssetType::MockAsset(2), None),
+			AssetManager::remove_asset_type(Origin::root(), MockAssetType::MockAsset(2), None),
 			Error::<Test>::AssetTypeDoesNotExist
 		);
 		assert_noop!(
 			AssetManager::remove_asset_type(
 				Origin::root(),
-				1,
 				MockAssetType::MockAsset(1),
 				Some(MockAssetType::MockAsset(2))
 			),
@@ -566,13 +557,12 @@ fn test_default_asset_type_removed_error() {
 		assert_ok!(AssetManager::add_asset_type(Origin::root(), 1, MockAssetType::MockAsset(2)));
 
 		assert_noop!(
-			AssetManager::remove_asset_type(Origin::root(), 1, MockAssetType::MockAsset(2), None),
+			AssetManager::remove_asset_type(Origin::root(), MockAssetType::MockAsset(2), None),
 			Error::<Test>::DefaultAssetTypeRemoved
 		);
 		assert_noop!(
 			AssetManager::remove_asset_type(
 				Origin::root(),
-				1,
 				MockAssetType::MockAsset(1),
 				Some(MockAssetType::MockAsset(1))
 			),

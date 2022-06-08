@@ -168,7 +168,7 @@ benchmarks! {
 			0,
 			X1(GeneralIndex((x-2) as u128))
 		)).into();
-	}: _(RawOrigin::Root, asset_id.clone(), asset_type_to_be_removed.clone(), Some(asset_type_new_default.clone()))
+	}: _(RawOrigin::Root, asset_type_to_be_removed.clone(), Some(asset_type_new_default.clone()))
 	verify {
 		assert_eq!(Pallet::<T>::asset_id_type(asset_id), Some(asset_type_new_default));
 		assert!(Pallet::<T>::asset_type_id(asset_type_to_be_removed).is_none());

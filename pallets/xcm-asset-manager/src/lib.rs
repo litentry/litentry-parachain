@@ -317,14 +317,13 @@ pub mod pallet {
 		#[transactional]
 		pub fn remove_asset_type(
 			origin: OriginFor<T>,
-			asset_id: T::AssetId,
 			asset_type: T::ForeignAssetType,
 			new_default_asset_type: Option<T::ForeignAssetType>,
 		) -> DispatchResult {
 			T::ForeignAssetModifierOrigin::ensure_origin(origin)?;
 
-			ensure!(AssetIdType::<T>::contains_key(&asset_id), Error::<T>::AssetIdDoesNotExist);
-			ensure!(AssetTypeId::<T>::contains_key(&asset_type), Error::<T>::AssetTypeDoesNotExist);
+			let asset_id =
+				AssetTypeId::<T>::get(&asset_type).ok_or(Error::<T>::AssetTypeDoesNotExist)?;
 
 			if let Some(i) = new_default_asset_type {
 				// new default asset type must register already
@@ -333,6 +332,7 @@ pub mod pallet {
 			}
 
 			let default_asset_type: T::ForeignAssetType =
+			    // This should be impossible to not get
 				AssetIdType::<T>::get(&asset_id).ok_or(Error::<T>::AssetIdDoesNotExist)?;
 			if default_asset_type == asset_type {
 				return Err(Error::<T>::DefaultAssetTypeRemoved.into())
