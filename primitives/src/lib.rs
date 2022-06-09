@@ -34,6 +34,12 @@ mod types {
 	/// to the public key of our transaction signing scheme.
 	pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 
+	/// Signed version of Balance
+	pub type Amount = i128;
+
+	/// AssetId type
+	pub type AssetId = u128;
+
 	/// Balance of an account.
 	pub type Balance = u128;
 
