@@ -326,8 +326,12 @@ pub mod pallet {
 				AssetTypeId::<T>::get(&asset_type).ok_or(Error::<T>::AssetTypeDoesNotExist)?;
 
 			if let Some(i) = new_default_asset_type {
-				// new default asset type must register already
-				ensure!(AssetTypeId::<T>::contains_key(&i), Error::<T>::AssetTypeDoesNotExist);
+				// new default asset type must register already, and not belong to other asset_id
+				ensure!(
+					AssetTypeId::<T>::get(&i).ok_or(Error::<T>::AssetTypeDoesNotExist)? ==
+						asset_id.clone(),
+					Error::<T>::AssetAlreadyExists
+				);
 				AssetIdType::<T>::insert(&asset_id, &i);
 			}
 

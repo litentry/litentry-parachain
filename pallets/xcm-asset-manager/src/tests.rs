@@ -454,6 +454,41 @@ fn test_root_can_remove_asset_type() {
 }
 
 #[test]
+fn test_malicious_remove_asset_type_fail() {
+	ExtBuilder::default().build().execute_with(|| {
+		let asset_metadata_1 = crate::AssetMetadata::<BalanceOf<Test>> {
+			name: "test".into(),
+			symbol: "TST".into(),
+			decimals: 12,
+			minimal_balance: 0,
+			is_frozen: false,
+		};
+		assert_ok!(AssetManager::register_foreign_asset_type(
+			Origin::root(),
+			MockAssetType::MockAsset(1),
+			asset_metadata_1.clone()
+		));
+		assert_ok!(AssetManager::register_foreign_asset_type(
+			Origin::root(),
+			MockAssetType::MockAsset(2),
+			asset_metadata_1
+		));
+		assert_ok!(AssetManager::add_asset_type(Origin::root(), 1, MockAssetType::MockAsset(3)));
+		assert_ok!(AssetManager::add_asset_type(Origin::root(), 2, MockAssetType::MockAsset(4)));
+
+		// try assign asset_type=4 (which belongs to asset_id=2) to asset_id=1
+		assert_noop!(
+			AssetManager::remove_asset_type(
+				Origin::root(),
+				MockAssetType::MockAsset(1),
+				Some(MockAssetType::MockAsset(4))
+			),
+			Error::<Test>::AssetAlreadyExists
+		);
+	})
+}
+
+#[test]
 fn test_asset_id_non_existent_error() {
 	ExtBuilder::default().build().execute_with(|| {
 		let asset_metadata_1 = crate::AssetMetadata::<BalanceOf<Test>> {
@@ -506,6 +541,8 @@ fn test_asset_already_exists_error() {
 			AssetManager::add_asset_type(Origin::root(), 1, MockAssetType::MockAsset(1)),
 			Error::<Test>::AssetAlreadyExists
 		);
+
+		//remove_asset_type's error is tested in test_malicious_remove_asset_type_fail
 	});
 }
 
