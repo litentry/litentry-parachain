@@ -236,7 +236,7 @@ impl frame_system::Config for Runtime {
 	/// The weight of database operations that the runtime can invoke.
 	type DbWeight = RocksDbWeight;
 	/// The basic call filter to use in dispatchable.
-	type BaseCallFilter = ExtrinsicFilter;
+	type BaseCallFilter = BaseCallFilter;
 	/// Weight information for the extrinsics of this pallet.
 	type SystemWeightInfo = weights::frame_system::WeightInfo<Runtime>;
 	/// Block & extrinsics weights: base values and limits.
@@ -890,19 +890,29 @@ construct_runtime! {
 	}
 }
 
-pub struct SafeModeFilter;
-impl Contains<Call> for SafeModeFilter {
+pub struct BaseCallFilter;
+impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
-		matches!(
+		if matches!(
 			call,
 			Call::Sudo(_) |
-			// System
-			Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_) |
-			// ExtrinsicFilter
-			Call::ExtrinsicFilter(_) |
-			// Multisig - required when sudo is a multisig account
-			Call::Multisig(_)
-		)
+				Call::System(_) | Call::Timestamp(_) |
+				Call::ParachainSystem(_) |
+				Call::ExtrinsicFilter(_) |
+				Call::Multisig(_)
+		) {
+			// always allow core calls
+			return true
+		}
+
+		return pallet_extrinsic_filter::Pallet::<Runtime>::contains(call)
+	}
+}
+
+pub struct SafeModeFilter;
+impl Contains<Call> for SafeModeFilter {
+	fn contains(_call: &Call) -> bool {
+		false
 	}
 }
 
@@ -911,20 +921,12 @@ impl Contains<Call> for NormalModeFilter {
 	fn contains(call: &Call) -> bool {
 		matches!(
 			call,
-			// Sudo
-			Call::Sudo(_) |
-			// System
-			Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_) |
-			// ExtrinsicFilter
-			Call::ExtrinsicFilter(_) |
 			// Vesting - only enable vest() call function
 			Call::Vesting(pallet_vesting::Call::vest { .. }) |
 			// ChainBridge
 			Call::ChainBridge(_) |
 			// BridgeTransfer
-			Call::BridgeTransfer(_) |
-			// Multisig - required when sudo is a multisig account
-			Call::Multisig(_)
+			Call::BridgeTransfer(_)
 		)
 	}
 }
