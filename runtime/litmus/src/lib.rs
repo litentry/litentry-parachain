@@ -907,7 +907,7 @@ impl Contains<Call> for BaseCallFilter {
 			return true
 		}
 
-		return pallet_extrinsic_filter::Pallet::<Runtime>::contains(call)
+		pallet_extrinsic_filter::Pallet::<Runtime>::contains(call)
 	}
 }
 

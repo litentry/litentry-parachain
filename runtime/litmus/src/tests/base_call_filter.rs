@@ -43,7 +43,7 @@ fn multisig_enabled() {
 				threshold: 2,
 				other_signatories: vec![bob(), charlie()],
 				maybe_timepoint: None,
-				call: OpaqueCall::from_encoded(data.clone()),
+				call: OpaqueCall::from_encoded(data),
 				store_call: false,
 				max_weight: 0,
 			}
