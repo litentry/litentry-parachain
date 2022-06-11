@@ -41,7 +41,9 @@ use sp_runtime::{
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
 mod transaction_payment;
-use transaction_payment::{DealWithFees, SlowAdjustingFeeUpdate};
+pub use transaction_payment::{
+	DealWithFees, MinimumMultiplier, SlowAdjustingFeeUpdate, TargetBlockFullness,
+};
 
 #[cfg(test)]
 mod tests;
