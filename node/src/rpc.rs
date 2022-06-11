@@ -15,17 +15,17 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 #![warn(missing_docs)]
+#![warn(missing_docs)]
 
 use std::sync::Arc;
 
+use primitives::{AccountId, Balance, Block, Index as Nonce};
 use sc_client_api::AuxStore;
 pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
-
-pub use primitives::{AccountId, Balance, Block, Index as Nonce};
 
 /// A type representing all RPC extensions.
 pub type RpcExtension = jsonrpsee::RpcModule<()>;
@@ -57,14 +57,14 @@ where
 	C::Api: BlockBuilder<Block>,
 	P: TransactionPool + Sync + Send + 'static,
 {
-	use frame_rpc_system::{SystemApiServer, SystemRpc};
-	use pallet_transaction_payment_rpc::{TransactionPaymentApiServer, TransactionPaymentRpc};
+	use frame_rpc_system::{System, SystemApiServer};
+	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
 
 	let mut module = RpcExtension::new(());
 	let FullDeps { client, pool, deny_unsafe } = deps;
 
-	module.merge(SystemRpc::new(client.clone(), pool, deny_unsafe).into_rpc())?;
-	module.merge(TransactionPaymentRpc::new(client).into_rpc())?;
+	module.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
+	module.merge(TransactionPayment::new(client.clone()).into_rpc())?;
 
 	Ok(module)
 }

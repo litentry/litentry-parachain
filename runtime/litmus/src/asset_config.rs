@@ -13,7 +13,7 @@ pub fn get_all_module_accounts() -> Vec<AccountId> {
 }
 
 parameter_types! {
-	pub LitTreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
+	pub LitTreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
 
 pub struct DustRemovalWhitelist;
