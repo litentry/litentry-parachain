@@ -15,7 +15,10 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate as pallet_drop3;
-use frame_support::{ord_parameter_types, parameter_types};
+use frame_support::{
+	ord_parameter_types, parameter_types,
+	traits::{ConstU128, ConstU16, ConstU32, ConstU64},
+};
 use frame_system as system;
 use frame_system::EnsureSignedBy;
 use sp_core::H256;
@@ -45,11 +48,6 @@ frame_support::construct_runtime!(
 	}
 );
 
-parameter_types! {
-	pub const BlockHashCount: u64 = 250;
-	pub const SS58Prefix: u8 = 31;
-}
-
 impl system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;
 	type BlockWeights = ();
@@ -65,38 +63,32 @@ impl system::Config for Test {
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = Event;
-	type BlockHashCount = BlockHashCount;
+	type BlockHashCount = ConstU64<250>;
 	type Version = ();
 	type PalletInfo = PalletInfo;
 	type AccountData = pallet_balances::AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
-	type SS58Prefix = SS58Prefix;
+	type SS58Prefix = ConstU16<31>;
 	type OnSetCode = ();
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
-}
-
-parameter_types! {
-	pub const ExistentialDeposit: u128 = 1;
-	pub const MaxLocks: u32 = 50;
+	type MaxConsumers = ConstU32<16>;
 }
 
 impl pallet_balances::Config for Test {
-	type MaxLocks = MaxLocks;
+	type MaxLocks = ConstU32<50>;
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
 	type Balance = Balance; // the type that is relevant to us
 	type Event = Event;
 	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
+	type ExistentialDeposit = ConstU128<1>;
 	type AccountStore = System;
 	type WeightInfo = ();
 }
 
 parameter_types! {
 	pub const SlashPercent: Percent = Percent::from_percent(20);
-	pub const MaximumNameLength: u32 = 16;
 }
 
 ord_parameter_types! {
@@ -110,7 +102,7 @@ impl pallet_drop3::Config for Test {
 	type Currency = Balances;
 	type WeightInfo = ();
 	type SlashPercent = SlashPercent;
-	type MaximumNameLength = MaximumNameLength;
+	type MaximumNameLength = ConstU32<16>;
 }
 
 // propose a default reward pool with the given id
