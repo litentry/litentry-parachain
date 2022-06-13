@@ -16,3 +16,4 @@
 
 mod setup;
 mod transaction_payment;
+mod xcm_parachain;
