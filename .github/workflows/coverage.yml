@@ -54,7 +54,7 @@ jobs:
 
       - name: Run cargo-tarpaulin
         run: |
-          cargo tarpaulin --release --no-fail-fast --workspace -e runtime
+          cargo tarpaulin --release --no-fail-fast --workspace -e node primitives runtime scritps templates ts-tests
 
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v2
