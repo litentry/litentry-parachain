@@ -17,7 +17,7 @@
 use crate as pallet_extrinsic_filter;
 use frame_support::{
 	parameter_types,
-	traits::{Contains, Everything},
+	traits::{ConstU128, ConstU16, ConstU32, ConstU64, Contains, Everything},
 };
 use frame_system as system;
 use sp_core::H256;
@@ -48,7 +48,6 @@ frame_support::construct_runtime!(
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
-	pub const SS58Prefix: u8 = 31;
 }
 
 impl system::Config for Test {
@@ -73,35 +72,26 @@ impl system::Config for Test {
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
-	type SS58Prefix = SS58Prefix;
+	type SS58Prefix = ConstU16<31>;
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
-}
-
-parameter_types! {
-	pub const MinimumPeriod: u64 = 10000;
 }
 
 impl pallet_timestamp::Config for Test {
 	type Moment = u64;
 	type OnTimestampSet = ();
-	type MinimumPeriod = MinimumPeriod;
+	type MinimumPeriod = ConstU64<10000>;
 	type WeightInfo = ();
 }
 
-parameter_types! {
-	pub const ExistentialDeposit: u128 = 1;
-	pub const MaxLocks: u32 = 50;
-}
-
 impl pallet_balances::Config for Test {
-	type MaxLocks = MaxLocks;
+	type MaxLocks = ConstU32<50>;
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
 	type Balance = Balance; // the type that is relevant to us
 	type Event = Event;
 	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
+	type ExistentialDeposit = ConstU128<1>;
 	type AccountStore = System;
 	type WeightInfo = ();
 }

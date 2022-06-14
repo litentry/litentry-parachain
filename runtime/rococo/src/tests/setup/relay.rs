@@ -21,6 +21,10 @@ use xcm_executor::{Config, XcmExecutor};
 pub type AccountId = AccountId32;
 pub type Balance = u128;
 
+parameter_types! {
+	pub const BlockHashCount: u64 = 250;
+}
+
 impl frame_system::Config for Runtime {
 	type Origin = Origin;
 	type Call = Call;
@@ -32,7 +36,7 @@ impl frame_system::Config for Runtime {
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = Event;
-	type BlockHashCount = ConstU64<250>;
+	type BlockHashCount = BlockHashCount;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type Version = ();
