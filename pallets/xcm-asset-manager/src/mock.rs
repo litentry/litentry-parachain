@@ -19,7 +19,7 @@ use crate as pallet_asset_manager;
 use codec::{Decode, Encode};
 
 use frame_support::{
-	construct_runtime,
+	construct_runtime, parameter_types,
 	traits::{ConstU64, Everything},
 	RuntimeDebug,
 };
@@ -50,6 +50,10 @@ construct_runtime!(
 	}
 );
 
+parameter_types! {
+	pub const BlockHashCount: u64 = 250;
+}
+
 impl frame_system::Config for Test {
 	type BaseCallFilter = Everything;
 	type BlockWeights = ();
@@ -64,7 +68,7 @@ impl frame_system::Config for Test {
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = Event;
-	type BlockHashCount = ConstU64<250>;
+	type BlockHashCount = BlockHashCount;
 	type DbWeight = ();
 	type Version = ();
 	type PalletInfo = PalletInfo;

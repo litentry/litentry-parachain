@@ -19,7 +19,6 @@
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{ConstU32, ConstU64},
-	weights::Weight,
 	PalletId,
 };
 use frame_system::{self as system};
@@ -28,7 +27,6 @@ use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
-	Perbill,
 };
 
 use crate::{self as bridge_transfer, Config};
@@ -54,9 +52,7 @@ frame_support::construct_runtime!(
 );
 
 parameter_types! {
-	pub const MaximumBlockWeight: Weight = 1024;
-	pub const MaximumBlockLength: u32 = 2 * 1024;
-	pub const AvailableBlockRatio: Perbill = Perbill::one();
+	pub const BlockHashCount: u64 = 250;
 }
 
 impl frame_system::Config for Test {
@@ -71,7 +67,7 @@ impl frame_system::Config for Test {
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = Event;
-	type BlockHashCount = ConstU64<250>;
+	type BlockHashCount = BlockHashCount;
 	type DbWeight = ();
 	type Version = ();
 	type AccountData = pallet_balances::AccountData<u64>;

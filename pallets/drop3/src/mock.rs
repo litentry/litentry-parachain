@@ -17,7 +17,7 @@
 use crate as pallet_drop3;
 use frame_support::{
 	ord_parameter_types, parameter_types,
-	traits::{ConstU128, ConstU16, ConstU32, ConstU64},
+	traits::{ConstU128, ConstU16, ConstU32},
 };
 use frame_system as system;
 use frame_system::EnsureSignedBy;
@@ -48,6 +48,10 @@ frame_support::construct_runtime!(
 	}
 );
 
+parameter_types! {
+	pub const BlockHashCount: u64 = 250;
+}
+
 impl system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;
 	type BlockWeights = ();
@@ -63,7 +67,7 @@ impl system::Config for Test {
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = Event;
-	type BlockHashCount = ConstU64<250>;
+	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
 	type AccountData = pallet_balances::AccountData<Balance>;

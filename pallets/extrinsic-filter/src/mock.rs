@@ -15,7 +15,10 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate as pallet_extrinsic_filter;
-use frame_support::traits::{ConstU128, ConstU16, ConstU32, ConstU64, Contains, Everything};
+use frame_support::{
+	parameter_types,
+	traits::{ConstU128, ConstU16, ConstU32, ConstU64, Contains, Everything},
+};
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
@@ -43,6 +46,10 @@ frame_support::construct_runtime!(
 	}
 );
 
+parameter_types! {
+	pub const BlockHashCount: u64 = 250;
+}
+
 impl system::Config for Test {
 	type BaseCallFilter = ExtrinsicFilter;
 	type BlockWeights = ();
@@ -58,7 +65,7 @@ impl system::Config for Test {
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = Event;
-	type BlockHashCount = ConstU64<250>;
+	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
 	type AccountData = pallet_balances::AccountData<Balance>;
