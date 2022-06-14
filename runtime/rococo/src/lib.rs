@@ -918,7 +918,6 @@ extern crate frame_benchmarking;
 mod benches {
 	define_benchmarks!(
 		[frame_system, SystemBench::<Runtime>]
-		[pallet_asset_manager, AssetManager]
 		[pallet_balances, Balances]
 		[pallet_timestamp, Timestamp]
 		[pallet_utility, Utility]
