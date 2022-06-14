@@ -17,11 +17,27 @@
 use frame_support::weights::{DispatchInfo, PostDispatchInfo, Weight};
 
 pub use crate::{
-	AccountId, Balance, Balances, Call, Runtime, System, TransactionPayment, Treasury,
+	AccountId, Balance, Balances, Call, Event, ExtrinsicFilter, MinimumMultiplier, Multisig,
+	Origin, ParachainSystem, Runtime, RuntimeBlockWeights, SlowAdjustingFeeUpdate, System,
+	TargetBlockFullness, TransactionByteFee, TransactionPayment, Treasury, Vesting, UNIT,
 };
 pub const ALICE: [u8; 32] = [1u8; 32];
 pub const BOB: [u8; 32] = [2u8; 32];
+pub const CHARLIE: [u8; 32] = [3u8; 32];
+
 pub use pallet_balances::Call as BalancesCall;
+
+pub(crate) fn alice() -> AccountId {
+	AccountId::from(ALICE)
+}
+
+pub(crate) fn bob() -> AccountId {
+	AccountId::from(BOB)
+}
+
+pub(crate) fn charlie() -> AccountId {
+	AccountId::from(CHARLIE)
+}
 
 pub struct ExtBuilder {
 	balances: Vec<(AccountId, Balance)>,
@@ -72,4 +88,18 @@ pub fn info_from_weight(w: Weight) -> DispatchInfo {
 
 pub fn post_info_from_weight(w: Weight) -> PostDispatchInfo {
 	PostDispatchInfo { actual_weight: Some(w), pays_fee: Default::default() }
+}
+
+pub fn run_with_system_weight<F>(w: Weight, mut assertions: F)
+where
+	F: FnMut(),
+{
+	let mut t: sp_io::TestExternalities = frame_system::GenesisConfig::default()
+		.build_storage::<Runtime>()
+		.unwrap()
+		.into();
+	t.execute_with(|| {
+		System::set_block_consumed_resources(w, 0);
+		assertions()
+	});
 }
