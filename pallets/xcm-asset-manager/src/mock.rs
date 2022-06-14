@@ -18,7 +18,11 @@ use super::*;
 use crate as pallet_asset_manager;
 use codec::{Decode, Encode};
 
-use frame_support::{construct_runtime, parameter_types, traits::Everything, RuntimeDebug};
+use frame_support::{
+	construct_runtime, parameter_types,
+	traits::{ConstU64, Everything},
+	RuntimeDebug,
+};
 use frame_system::EnsureRoot;
 use scale_info::TypeInfo;
 use sp_core::H256;
@@ -49,6 +53,7 @@ construct_runtime!(
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 }
+
 impl frame_system::Config for Test {
 	type BaseCallFilter = Everything;
 	type BlockWeights = ();
@@ -76,15 +81,11 @@ impl frame_system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-parameter_types! {
-	pub const ExistentialDeposit: u64 = 1;
-}
-
 impl pallet_balances::Config for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type Event = Event;
-	type ExistentialDeposit = ExistentialDeposit;
+	type ExistentialDeposit = ConstU64<1>;
 	type AccountStore = System;
 	type WeightInfo = ();
 	type MaxLocks = ();

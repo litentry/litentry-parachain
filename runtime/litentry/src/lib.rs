@@ -56,7 +56,9 @@ use sp_version::RuntimeVersion;
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{Contains, EnsureOneOf, Everything, InstanceFilter},
+	traits::{
+		ConstU16, ConstU32, ConstU64, ConstU8, Contains, EnsureOneOf, Everything, InstanceFilter,
+	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		ConstantMultiplier, DispatchClass, IdentityFee, Weight,
@@ -191,7 +193,7 @@ parameter_types! {
 		})
 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
 		.build_or_panic();
-	pub const SS58Prefix: u8 = 31;
+	pub const SS58Prefix: u16 = 31;
 }
 
 impl frame_system::Config for Runtime {
@@ -249,7 +251,6 @@ parameter_types! {
 	pub const DepositBase: Balance = deposit(1, 88);
 	// Additional storage item size of 32 bytes.
 	pub const DepositFactor: Balance = deposit(0, 32);
-	pub const MaxSignatories: u16 = 100;
 }
 
 impl pallet_multisig::Config for Runtime {
@@ -258,7 +259,7 @@ impl pallet_multisig::Config for Runtime {
 	type Currency = Balances;
 	type DepositBase = DepositBase;
 	type DepositFactor = DepositFactor;
-	type MaxSignatories = MaxSignatories;
+	type MaxSignatories = ConstU16<100>;
 	type WeightInfo = weights::pallet_multisig::WeightInfo<Runtime>;
 }
 
@@ -334,10 +335,8 @@ parameter_types! {
 	pub const ProxyDepositBase: Balance = deposit(1, 8);
 	// Additional storage item size of 33 bytes.
 	pub const ProxyDepositFactor: Balance = deposit(0, 33);
-	pub const MaxProxies: u16 = 32;
 	pub const AnnouncementDepositBase: Balance = deposit(1, 8);
 	pub const AnnouncementDepositFactor: Balance = deposit(0, 66);
-	pub const MaxPending: u16 = 32;
 }
 
 impl pallet_proxy::Config for Runtime {
@@ -347,33 +346,25 @@ impl pallet_proxy::Config for Runtime {
 	type ProxyType = ProxyType;
 	type ProxyDepositBase = ProxyDepositBase;
 	type ProxyDepositFactor = ProxyDepositFactor;
-	type MaxProxies = MaxProxies;
+	type MaxProxies = ConstU32<32>;
 	type WeightInfo = weights::pallet_proxy::WeightInfo<Runtime>;
-	type MaxPending = MaxPending;
+	type MaxPending = ConstU32<32>;
 	type CallHasher = BlakeTwo256;
 	type AnnouncementDepositBase = AnnouncementDepositBase;
 	type AnnouncementDepositFactor = AnnouncementDepositFactor;
-}
-
-parameter_types! {
-	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
 }
 
 impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
 	type Moment = u64;
 	type OnTimestampSet = ();
-	type MinimumPeriod = MinimumPeriod;
+	type MinimumPeriod = ConstU64<{ SLOT_DURATION / 2 }>;
 	type WeightInfo = weights::pallet_timestamp::WeightInfo<Runtime>;
-}
-
-parameter_types! {
-	pub const UncleGenerations: u32 = 0;
 }
 
 impl pallet_authorship::Config for Runtime {
 	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Aura>;
-	type UncleGenerations = UncleGenerations;
+	type UncleGenerations = ConstU32<0>;
 	type FilterUncle = ();
 	type EventHandler = (CollatorSelection,);
 }
@@ -381,7 +372,6 @@ impl pallet_authorship::Config for Runtime {
 parameter_types! {
 	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) *
 		RuntimeBlockWeights::get().max_block;
-	pub const MaxScheduledPerBlock: u32 = 50;
 }
 
 impl pallet_scheduler::Config for Runtime {
@@ -391,7 +381,7 @@ impl pallet_scheduler::Config for Runtime {
 	type Call = Call;
 	type MaximumWeight = MaximumSchedulerWeight;
 	type ScheduleOrigin = EnsureRoot<AccountId>;
-	type MaxScheduledPerBlock = MaxScheduledPerBlock;
+	type MaxScheduledPerBlock = ConstU32<50>;
 	type WeightInfo = weights::pallet_scheduler::WeightInfo<Runtime>;
 	type OriginPrivilegeCmp = frame_support::traits::EqualPrivilegeOnly;
 	type PreimageProvider = Preimage;
@@ -415,8 +405,6 @@ impl pallet_preimage::Config for Runtime {
 
 parameter_types! {
 	pub const ExistentialDeposit: Balance = EXISTENTIAL_DEPOSIT;
-	pub const MaxLocks: u32 = 50;
-	pub const MaxReserves: u32 = 50;
 }
 
 impl pallet_balances::Config for Runtime {
@@ -428,8 +416,8 @@ impl pallet_balances::Config for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = weights::pallet_balances::WeightInfo<Runtime>;
-	type MaxLocks = MaxLocks;
-	type MaxReserves = MaxReserves;
+	type MaxLocks = ConstU32<50>;
+	type MaxReserves = ConstU32<50>;
 	type ReserveIdentifier = [u8; 8];
 }
 
@@ -442,7 +430,6 @@ impl pallet_utility::Config for Runtime {
 
 parameter_types! {
 	pub const TransactionByteFee: Balance = MILLICENTS / 10;
-	pub const OperationalFeeMultiplier: u8 = 5;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
@@ -451,7 +438,7 @@ impl pallet_transaction_payment::Config for Runtime {
 	type WeightToFee = IdentityFee<Balance>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
-	type OperationalFeeMultiplier = OperationalFeeMultiplier;
+	type OperationalFeeMultiplier = ConstU8<5>;
 }
 
 parameter_types! {
@@ -463,8 +450,6 @@ parameter_types! {
 	pub const EnactmentPeriod: BlockNumber = 2 * DAYS;
 	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
 	pub const PreimageByteDeposit: Balance = deposit(0, 1);
-	pub const MaxVotes: u32 = 100;
-	pub const MaxProposals: u32 = 100;
 }
 
 impl pallet_democracy::Config for Runtime {
@@ -513,15 +498,13 @@ impl pallet_democracy::Config for Runtime {
 	type Slash = Treasury;
 	type Scheduler = Scheduler;
 	type PalletsOrigin = OriginCaller;
-	type MaxVotes = MaxVotes;
+	type MaxVotes = ConstU32<100>;
 	type WeightInfo = weights::pallet_democracy::WeightInfo<Runtime>;
-	type MaxProposals = MaxProposals;
+	type MaxProposals = ConstU32<100>;
 }
 
 parameter_types! {
 	pub const CouncilMotionDuration: BlockNumber = 3 * DAYS;
-	pub const CouncilMaxProposals: u32 = 100;
-	pub const CouncilMaxMembers: u32 = 100;
 }
 
 type CouncilCollective = pallet_collective::Instance1;
@@ -530,8 +513,8 @@ impl pallet_collective::Config<CouncilCollective> for Runtime {
 	type Proposal = Call;
 	type Event = Event;
 	type MotionDuration = CouncilMotionDuration;
-	type MaxProposals = CouncilMaxProposals;
-	type MaxMembers = CouncilMaxMembers;
+	type MaxProposals = ConstU32<100>;
+	type MaxMembers = ConstU32<100>;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
 	type WeightInfo = weights::pallet_collective::WeightInfo<Runtime>;
 }
@@ -549,14 +532,12 @@ impl pallet_membership::Config<pallet_membership::Instance1> for Runtime {
 	type PrimeOrigin = EnsureRootOrHalfCouncil;
 	type MembershipInitialized = Council;
 	type MembershipChanged = Council;
-	type MaxMembers = CouncilMaxMembers;
+	type MaxMembers = ConstU32<100>;
 	type WeightInfo = weights::pallet_membership::WeightInfo<Runtime>;
 }
 
 parameter_types! {
 	pub const TechnicalMotionDuration: BlockNumber = 3 * DAYS;
-	pub const TechnicalMaxProposals: u32 = 100;
-	pub const TechnicalMaxMembers: u32 = 100;
 }
 
 type TechnicalCollective = pallet_collective::Instance2;
@@ -565,8 +546,8 @@ impl pallet_collective::Config<TechnicalCollective> for Runtime {
 	type Proposal = Call;
 	type Event = Event;
 	type MotionDuration = TechnicalMotionDuration;
-	type MaxProposals = TechnicalMaxProposals;
-	type MaxMembers = TechnicalMaxMembers;
+	type MaxProposals = ConstU32<100>;
+	type MaxMembers = ConstU32<100>;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
 	type WeightInfo = weights::pallet_collective::WeightInfo<Runtime>;
 }
@@ -580,7 +561,7 @@ impl pallet_membership::Config<pallet_membership::Instance2> for Runtime {
 	type PrimeOrigin = EnsureRootOrHalfCouncil;
 	type MembershipInitialized = TechnicalCommittee;
 	type MembershipChanged = TechnicalCommittee;
-	type MaxMembers = TechnicalMaxMembers;
+	type MaxMembers = ConstU32<100>;
 	type WeightInfo = weights::pallet_membership::WeightInfo<Runtime>;
 }
 
@@ -591,7 +572,6 @@ parameter_types! {
 	pub const SpendPeriod: BlockNumber = 7 * DAYS;
 	pub const Burn: Permill = Permill::from_percent(0);
 	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
-	pub const MaxApprovals: u32 = 100;
 }
 
 impl pallet_treasury::Config for Runtime {
@@ -615,7 +595,7 @@ impl pallet_treasury::Config for Runtime {
 	type BurnDestination = ();
 	type SpendFunds = ();
 	type WeightInfo = weights::pallet_treasury::WeightInfo<Runtime>;
-	type MaxApprovals = MaxApprovals;
+	type MaxApprovals = ConstU32<100>;
 }
 
 impl pallet_sudo::Config for Runtime {
@@ -664,7 +644,6 @@ impl cumulus_pallet_dmp_queue::Config for Runtime {
 parameter_types! {
 	pub const Period: u32 = 6 * HOURS;
 	pub const Offset: u32 = 0;
-	pub const MaxAuthorities: u32 = 100_000;
 }
 
 impl pallet_session::Config for Runtime {
@@ -684,15 +663,12 @@ impl pallet_session::Config for Runtime {
 impl pallet_aura::Config for Runtime {
 	type AuthorityId = AuraId;
 	type DisabledValidators = ();
-	type MaxAuthorities = MaxAuthorities;
+	type MaxAuthorities = ConstU32<100_000>;
 }
 
 parameter_types! {
 	pub const PotId: PalletId = PalletId(*b"PotStake");
-	pub const MaxCandidates: u32 = 100;
-	pub const MinCandidates: u32 = 0;
 	pub const SessionLength: BlockNumber = 6 * HOURS;
-	pub const MaxInvulnerables: u32 = 100;
 }
 
 impl pallet_collator_selection::Config for Runtime {
@@ -700,9 +676,9 @@ impl pallet_collator_selection::Config for Runtime {
 	type Currency = Balances;
 	type UpdateOrigin = EnsureRoot<AccountId>;
 	type PotId = PotId;
-	type MaxCandidates = MaxCandidates;
-	type MinCandidates = MinCandidates;
-	type MaxInvulnerables = MaxInvulnerables;
+	type MaxCandidates = ConstU32<100>;
+	type MinCandidates = ConstU32<0>;
+	type MaxInvulnerables = ConstU32<100>;
 	// should be a multiple of session or things will get inconsistent
 	type KickThreshold = Period;
 	type ValidatorId = <Self as frame_system::Config>::AccountId;
@@ -755,7 +731,6 @@ impl pallet_bridge_transfer::Config for Runtime {
 
 parameter_types! {
 	pub const SlashPercent: Percent = Percent::from_percent(20);
-	pub const MaximumNameLength: u32 = 16;
 }
 
 impl pallet_drop3::Config for Runtime {
@@ -765,7 +740,7 @@ impl pallet_drop3::Config for Runtime {
 	type Currency = Balances;
 	type WeightInfo = weights::pallet_drop3::WeightInfo<Runtime>;
 	type SlashPercent = SlashPercent;
-	type MaximumNameLength = MaximumNameLength;
+	type MaximumNameLength = ConstU32<16>;
 }
 
 impl pallet_extrinsic_filter::Config for Runtime {
