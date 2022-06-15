@@ -19,6 +19,7 @@
 use crate::{AssetMetadata, BalanceOf, Call, Config, Pallet};
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
 use frame_system::RawOrigin;
+use sp_runtime::traits::{CheckedAdd, One};
 use xcm::latest::prelude::*;
 
 benchmarks! {
@@ -36,11 +37,11 @@ benchmarks! {
 			minimal_balance: BalanceOf::<T>::default(),
 			is_frozen: false,
 		};
-		let foreign_asset_tracker = Pallet::<T>::foreign_asset_tracker();
+		let next_asset_id = Pallet::<T>::foreign_asset_tracker().checked_add(&One::one()).unwrap();
 
 	}: _(RawOrigin::Root, asset_type.clone(), metadata)
 	verify {
-		assert_eq!(Pallet::<T>::asset_id_type(foreign_asset_tracker), Some(asset_type));
+		assert_eq!(Pallet::<T>::asset_id_type(next_asset_id), Some(asset_type));
 	}
 
 	update_foreign_asset_metadata {
@@ -56,13 +57,13 @@ benchmarks! {
 			is_frozen: false,
 		};
 
-		let asset_id = Pallet::<T>::foreign_asset_tracker();
-
 		Pallet::<T>::register_foreign_asset_type(
 			RawOrigin::Root.into(),
 			asset_type,
 			metadata
 		)?;
+
+		let asset_id = Pallet::<T>::foreign_asset_tracker();
 
 		let metadata_new = AssetMetadata::<BalanceOf<T>> {
 			name: "test".into(),
@@ -89,12 +90,12 @@ benchmarks! {
 			minimal_balance: BalanceOf::<T>::default(),
 			is_frozen: false,
 		};
-		let asset_id = Pallet::<T>::foreign_asset_tracker();
 		Pallet::<T>::register_foreign_asset_type(
 			RawOrigin::Root.into(),
 			asset_type,
 			metadata
 		)?;
+		let asset_id = Pallet::<T>::foreign_asset_tracker();
 
 	}: _(RawOrigin::Root, asset_id.clone(), 1)
 	verify {
@@ -114,12 +115,12 @@ benchmarks! {
 			minimal_balance: BalanceOf::<T>::default(),
 			is_frozen: false,
 		};
-		let asset_id = Pallet::<T>::foreign_asset_tracker();
 		Pallet::<T>::register_foreign_asset_type(
 			RawOrigin::Root.into(),
 			asset_type,
 			metadata
 		)?;
+		let asset_id = Pallet::<T>::foreign_asset_tracker();
 
 		let new_asset_type: T::ForeignAssetType = Some(MultiLocation::new(
 			0,
@@ -143,14 +144,12 @@ benchmarks! {
 			minimal_balance: BalanceOf::<T>::default(),
 			is_frozen: false,
 		};
-		let asset_id = Pallet::<T>::foreign_asset_tracker();
 		Pallet::<T>::register_foreign_asset_type(
 			RawOrigin::Root.into(),
 			asset_type,
 			metadata
 		)?;
-		// We make it dependent on the number of existing assets already
-		// Worst case is we need to remove it from SupportedAAssetsFeePayment too
+		let asset_id = Pallet::<T>::foreign_asset_tracker();
 		for i in 0..x {
 			let asset_type:  T::ForeignAssetType = Some(MultiLocation::new(0, X1(GeneralIndex(i as u128)))).into();
 			Pallet::<T>::add_asset_type(
