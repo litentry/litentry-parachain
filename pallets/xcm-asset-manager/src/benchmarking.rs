@@ -150,8 +150,6 @@ benchmarks! {
 			metadata
 		)?;
 		let asset_id = Pallet::<T>::foreign_asset_tracker();
-		// We make it dependent on the number of existing assets already
-		// Worst case is we need to remove it from SupportedAAssetsFeePayment too
 		for i in 0..x {
 			let asset_type:  T::ForeignAssetType = Some(MultiLocation::new(0, X1(GeneralIndex(i as u128)))).into();
 			Pallet::<T>::add_asset_type(
