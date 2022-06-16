@@ -581,6 +581,7 @@ match_types! {
 
 parameter_type_with_key! {
 	pub ParachainMinFee: |_location: MultiLocation| -> Option<u128> {
+		// Always return `None` to disallow using fee asset and target asset with different reserve chains
 		None
 	};
 }

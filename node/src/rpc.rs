@@ -15,7 +15,6 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 #![warn(missing_docs)]
-#![warn(missing_docs)]
 
 use std::sync::Arc;
 
