@@ -42,7 +42,9 @@ use sp_runtime::{
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
 mod transaction_payment;
-use transaction_payment::{DealWithFees, SlowAdjustingFeeUpdate};
+pub use transaction_payment::{
+	DealWithFees, MinimumMultiplier, SlowAdjustingFeeUpdate, TargetBlockFullness,
+};
 
 #[cfg(test)]
 mod tests;
@@ -144,7 +146,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9070,
+	spec_version: 9080,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -238,7 +240,7 @@ impl frame_system::Config for Runtime {
 	/// The weight of database operations that the runtime can invoke.
 	type DbWeight = RocksDbWeight;
 	/// The basic call filter to use in dispatchable.
-	type BaseCallFilter = ExtrinsicFilter;
+	type BaseCallFilter = BaseCallFilter;
 	/// Weight information for the extrinsics of this pallet.
 	type SystemWeightInfo = weights::frame_system::WeightInfo<Runtime>;
 	/// Block & extrinsics weights: base values and limits.
@@ -830,17 +832,29 @@ construct_runtime! {
 	}
 }
 
-pub struct SafeModeFilter;
-impl Contains<Call> for SafeModeFilter {
+pub struct BaseCallFilter;
+impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
-		matches!(
+		if matches!(
 			call,
 			Call::Sudo(_) |
-			// System
-			Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_) |
-			// ExtrinsicFilter
-			Call::ExtrinsicFilter(_)
-		)
+				Call::System(_) | Call::Timestamp(_) |
+				Call::ParachainSystem(_) |
+				Call::ExtrinsicFilter(_) |
+				Call::Multisig(_)
+		) {
+			// always allow core calls
+			return true
+		}
+
+		pallet_extrinsic_filter::Pallet::<Runtime>::contains(call)
+	}
+}
+
+pub struct SafeModeFilter;
+impl Contains<Call> for SafeModeFilter {
+	fn contains(_call: &Call) -> bool {
+		false
 	}
 }
 
@@ -849,13 +863,14 @@ impl Contains<Call> for NormalModeFilter {
 	fn contains(call: &Call) -> bool {
 		matches!(
 			call,
-			Call::Sudo(_) |
-			// System
-			Call::System(_) | Call::Timestamp(_) | Call::ParachainSystem(_) |
-			// ExtrinsicFilter
-			Call::ExtrinsicFilter(_) |
-			// Vesting - only enable vest() call function
-			Call::Vesting(pallet_vesting::Call::vest { .. })
+			// Vesting::vest
+			Call::Vesting(pallet_vesting::Call::vest { .. }) |
+			// ChainBridge
+			Call::ChainBridge(_) |
+			// BridgeTransfer
+			Call::BridgeTransfer(_) |
+			// XTokens::transfer for normal users
+			Call::XTokens(orml_xtokens::Call::transfer { .. })
 		)
 	}
 }
