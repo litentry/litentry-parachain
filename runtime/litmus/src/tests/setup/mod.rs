@@ -137,9 +137,8 @@ decl_test_parachain! {
 		DmpMessageHandler = DmpQueue,
 		new_ext = ExtBuilder::default()
 		.balances(vec![
-			// fund Alice and BOB
+			// fund Alice
 			(AccountId::from(ALICE), 500_000_000_000_000_000),
-			(AccountId::from(BOB), 500_000_000_000_000_000),
 		]).parachain_id(1).build(),
 	}
 }
@@ -151,8 +150,7 @@ decl_test_parachain! {
 		DmpMessageHandler = DmpQueue,
 		new_ext = ExtBuilder::default()
 		.balances(vec![
-			// fund Alice and BOB
-			(AccountId::from(ALICE), 600_000_000_000_000_000),
+			// fund BOB
 			(AccountId::from(BOB), 600_000_000_000_000_000),
 		]).parachain_id(2).build(),
 	}
