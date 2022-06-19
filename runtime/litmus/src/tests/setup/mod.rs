@@ -162,10 +162,7 @@ pub fn relay_ext() -> sp_io::TestExternalities {
 		.unwrap();
 
 	pallet_balances::GenesisConfig::<relay::Runtime> {
-		balances: vec![
-			(AccountId::from(ALICE), 700_000_000_000_000_000),
-			(AccountId::from(BOB), 700_000_000_000_000_000),
-		],
+		balances: vec![],
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
