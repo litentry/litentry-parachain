@@ -16,10 +16,14 @@
 #![allow(clippy::clone_on_copy)]
 #![allow(clippy::useless_conversion)]
 
+#[cfg(test)]
+use super::tests::setup::ParachainXcmRouter;
 use super::{
 	transaction_payment::DealWithFees, AssetId, AssetManager, Balance, Balances, Call, Event,
-	Origin, ParachainInfo, ParachainSystem, PolkadotXcm, Runtime, Tokens, Treasury, XcmpQueue,
+	Origin, ParachainInfo, PolkadotXcm, Runtime, Tokens, Treasury,
 };
+#[cfg(not(test))]
+use super::{ParachainSystem, XcmpQueue};
 
 use frame_support::{
 	match_types, parameter_types,
@@ -433,6 +437,11 @@ impl xcm_executor::Config for XcmConfig {
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
 pub type LocalOriginToLocation = SignedToAccountId32<Origin, AccountId, RelayNetwork>;
 
+#[cfg(test)]
+/// The mimic XcmRouter which only change storage locally for Xcm to digest.
+/// XCM router for parachain.
+pub type XcmRouter = ParachainXcmRouter<ParachainInfo>;
+#[cfg(not(test))]
 /// The means for routing XCM messages which are not for local execution into the right message
 /// queues.
 pub type XcmRouter = (
@@ -476,7 +485,6 @@ impl From<MultiLocation> for CurrencyId {
 		}
 	}
 }
-
 impl From<Option<MultiLocation>> for CurrencyId {
 	fn from(location: Option<MultiLocation>) -> Self {
 		match location {
@@ -600,6 +608,11 @@ parameter_types! {
 
 impl pallet_xcm::Config for Runtime {
 	type Event = Event;
+	// We allow anyone to send any XCM to anywhere
+	// This is highly relied on if target chain properly filtered
+	// Check their Barriers implementation
+	// And for TakeWeightCredit
+	// Check if their executor's ShouldExecute trait weight_credit
 	type SendXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;

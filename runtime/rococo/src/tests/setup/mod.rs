@@ -25,7 +25,6 @@ pub use crate::{
 	RuntimeBlockWeights, SlowAdjustingFeeUpdate, System, TargetBlockFullness, Tokens,
 	TransactionByteFee, TransactionPayment, Treasury, Vesting, XTokens, XcmpQueue, UNIT,
 };
-
 pub const ALICE: [u8; 32] = [1u8; 32];
 pub const BOB: [u8; 32] = [2u8; 32];
 pub const CHARLIE: [u8; 32] = [3u8; 32];
@@ -35,6 +34,7 @@ pub mod relay;
 pub use pallet_balances::Call as BalancesCall;
 use xcm_simulator::{decl_test_network, decl_test_parachain, decl_test_relay_chain};
 
+// TODO::Common folder for genreal utility function
 pub(crate) fn last_event() -> Event {
 	System::events().pop().expect("Event expected").event
 }
@@ -137,9 +137,8 @@ decl_test_parachain! {
 		DmpMessageHandler = DmpQueue,
 		new_ext = ExtBuilder::default()
 		.balances(vec![
-			// fund Alice and BOB
+			// fund Alice
 			(AccountId::from(ALICE), 500_000_000_000_000_000),
-			(AccountId::from(BOB), 500_000_000_000_000_000),
 		]).parachain_id(1).build(),
 	}
 }
@@ -151,8 +150,7 @@ decl_test_parachain! {
 		DmpMessageHandler = DmpQueue,
 		new_ext = ExtBuilder::default()
 		.balances(vec![
-			// fund Alice and BOB
-			(AccountId::from(ALICE), 600_000_000_000_000_000),
+			// fund BOB
 			(AccountId::from(BOB), 600_000_000_000_000_000),
 		]).parachain_id(2).build(),
 	}
@@ -163,14 +161,9 @@ pub fn relay_ext() -> sp_io::TestExternalities {
 		.build_storage::<relay::Runtime>()
 		.unwrap();
 
-	pallet_balances::GenesisConfig::<relay::Runtime> {
-		balances: vec![
-			(AccountId::from(ALICE), 700_000_000_000_000_000),
-			(AccountId::from(BOB), 700_000_000_000_000_000),
-		],
-	}
-	.assimilate_storage(&mut t)
-	.unwrap();
+	pallet_balances::GenesisConfig::<relay::Runtime> { balances: vec![] }
+		.assimilate_storage(&mut t)
+		.unwrap();
 
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| relay::System::set_block_number(1));
