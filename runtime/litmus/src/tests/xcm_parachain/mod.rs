@@ -22,6 +22,7 @@ use crate::{
 use cumulus_primitives_core::{ParaId, PersistedValidationData};
 use cumulus_primitives_parachain_inherent::ParachainInherentData;
 
+use codec::Encode;
 use frame_support::{
 	assert_noop, assert_ok,
 	traits::{Currency, PalletInfoAccess},
@@ -29,7 +30,6 @@ use frame_support::{
 use frame_system::RawOrigin;
 use orml_traits::MultiCurrency;
 use polkadot_parachain::primitives::RelayChainBlockNumber;
-use codec::Encode;
 use sp_runtime::{traits::Convert, AccountId32};
 use xcm::prelude::*;
 use xcm_executor::traits::Convert as xcmConvert;
@@ -38,21 +38,21 @@ use xcm_simulator::TestExt;
 pub mod relay_sproof_builder;
 
 fn _para_account(x: u32) -> AccountId32 {
-	let account = <LocationToAccountId as xcmConvert<MultiLocation, AccountId32>>::convert(Parachain(x).into()).unwrap();
-	account
+	<LocationToAccountId as xcmConvert<MultiLocation, AccountId32>>::convert(Parachain(x).into())
+		.unwrap()
 }
 
 fn sibling_account(x: u32) -> AccountId32 {
-	let account = <LocationToAccountId as xcmConvert<MultiLocation, AccountId32>>::convert((Parent, Parachain(x)).into()).unwrap();
-	account
+	<LocationToAccountId as xcmConvert<MultiLocation, AccountId32>>::convert(
+		(Parent, Parachain(x)).into(),
+	)
+	.unwrap()
 }
 
 fn relay_account() -> AccountId32 {
-	let account = <LocationToAccountId as xcmConvert<MultiLocation, AccountId32>>::convert(Parent.into()).unwrap();
-	// let account = <ParentIsPreset<AccountId32> as xcmConvert<MultiLocation, AccountId32>>::convert(Parent.into()).unwrap();
-	account
+	<LocationToAccountId as xcmConvert<MultiLocation, AccountId32>>::convert(Parent.into()).unwrap()
 }
- 
+
 fn para_native_token_multilocation(x: u32) -> MultiLocation {
 	(Parent, Parachain(x), PalletInstance(<Balances as PalletInfoAccess>::index() as u8)).into()
 }
@@ -493,8 +493,7 @@ fn test_methods_pallet_xcm_expected_fail() {
 				fees: MultiAsset {
 					id: Concrete(para_native_token_multilocation(1)),
 					fun: Fungible((UnitWeightCost::get() * 4).into()),
-				}
-				.into(),
+				},
 				weight_limit: Limited(UnitWeightCost::get() * 4),
 			},
 			DepositAsset {
@@ -573,8 +572,7 @@ fn test_pallet_xcm_send_capacity_1() {
 				fees: MultiAsset {
 					id: Concrete(para_native_token_multilocation(1)),
 					fun: Fungible((UnitWeightCost::get() * 4).into()),
-				}
-				.into(),
+				},
 				weight_limit: Limited(UnitWeightCost::get() * 4),
 			},
 			DepositAsset {
@@ -616,8 +614,7 @@ fn test_pallet_xcm_send_capacity_1() {
 				fees: MultiAsset {
 					id: Concrete(para_native_token_multilocation(1)),
 					fun: Fungible((UnitWeightCost::get() * 4).into()),
-				}
-				.into(),
+				},
 				weight_limit: Limited(UnitWeightCost::get() * 4),
 			},
 			DepositAsset {
@@ -670,8 +667,7 @@ fn test_pallet_xcm_send_capacity_1() {
 				fees: MultiAsset {
 					id: Concrete(para_native_token_multilocation(1)),
 					fun: Fungible((UnitWeightCost::get() * 4).into()),
-				}
-				.into(),
+				},
 				weight_limit: Limited(UnitWeightCost::get() * 4),
 			},
 			DepositAsset {
@@ -711,8 +707,7 @@ fn test_pallet_xcm_send_capacity_1() {
 				fees: MultiAsset {
 					id: Concrete(para_native_token_multilocation(1)),
 					fun: Fungible((UnitWeightCost::get() * 4).into()),
-				}
-				.into(),
+				},
 				weight_limit: Limited(UnitWeightCost::get() * 4),
 			},
 			DepositAsset {
@@ -757,13 +752,16 @@ fn test_pallet_xcm_send_capacity_2() {
 	// Users on Relay want to manipulate the soveregin account of Relay on Parachain A
 	Relay::execute_with(|| {
 		// Mimic the Xcm message sending
-		let assets =
-			vec![MultiAsset { id: Concrete((Parent, Here).into()), fun: Fungible(10 * 4 + 10_000) }].into();
+		let assets = vec![MultiAsset {
+			id: Concrete((Parent, Here).into()),
+			fun: Fungible(10 * 4 + 10_000),
+		}]
+		.into();
 		let xcm = Xcm(vec![
 			ReserveAssetDeposited(assets),
 			ClearOrigin,
 			BuyExecution {
-				fees: MultiAsset { id: Concrete((Parent, Here).into()), fun: Fungible(10 * 4) }.into(),
+				fees: MultiAsset { id: Concrete((Parent, Here).into()), fun: Fungible(10 * 4) },
 				weight_limit: Limited(200_000_000 * 4),
 			},
 			DepositAsset {
@@ -796,8 +794,7 @@ fn test_pallet_xcm_send_capacity_2() {
 			ReserveAssetDeposited(assets),
 			ClearOrigin,
 			BuyExecution {
-				fees: MultiAsset { id: Concrete((Parent, Here).into()), fun: Fungible(10 * 4) }
-					.into(),
+				fees: MultiAsset { id: Concrete((Parent, Here).into()), fun: Fungible(10 * 4) },
 				weight_limit: Limited(200_000_000 * 4),
 			},
 			DepositAsset {
@@ -823,11 +820,8 @@ fn test_pallet_xcm_send_capacity_2() {
 	Relay::execute_with(|| {
 		// Mimic the Xcm message sending
 		// It should fail since XcmExecutor::IsReserve setting
-		let assets = vec![MultiAsset {
-			id: Concrete((Parent, Here).into()),
-			fun: Fungible(20_000),
-		}]
-		.into();
+		let assets =
+			vec![MultiAsset { id: Concrete((Parent, Here).into()), fun: Fungible(20_000) }].into();
 		let xcm = Xcm(vec![
 			ReserveAssetDeposited(assets),
 			DepositAsset {
@@ -905,14 +899,17 @@ fn test_pallet_xcm_send_capacity_3() {
 		assert_eq!(Balances::free_balance(&AccountId::from(BOB)), 0);
 	});
 	Relay::execute_with(|| {
-		let call_message = Call::Balances(pallet_balances::Call::<Runtime>::transfer { dest: AccountId::from(BOB).into(), value: 2_000_000_000_000 }).encode().into();
-		let xcm = Xcm(vec![
-			Transact {
-				origin_type: OriginKind::SovereignAccount,
-				require_weight_at_most: 10_000_000_000,
-				call: call_message,
-			},
-		]);
+		let call_message = Call::Balances(pallet_balances::Call::<Runtime>::transfer {
+			dest: AccountId::from(BOB).into(),
+			value: 2_000_000_000_000,
+		})
+		.encode()
+		.into();
+		let xcm = Xcm(vec![Transact {
+			origin_type: OriginKind::SovereignAccount,
+			require_weight_at_most: 10_000_000_000,
+			call: call_message,
+		}]);
 		// Root sending the raw Xcm works successfully
 		assert_ok!(pallet_xcm::Pallet::<relay::Runtime>::send(
 			RawOrigin::Root.into(),
@@ -921,21 +918,17 @@ fn test_pallet_xcm_send_capacity_3() {
 		));
 		assert_eq!(
 			relay::System::events().pop().expect("Event expected").event,
-			relay::Event::XcmPallet(pallet_xcm::Event::Sent(
-				Here.into(),
-				Parachain(1).into().into(),
-				xcm,
-			))
+			relay::Event::XcmPallet(
+				pallet_xcm::Event::Sent(Here.into(), Parachain(1).into(), xcm,)
+			)
 		);
 	});
 	ParaA::execute_with(|| {
-		// It seems that Transact will be ignored. But Why? Wrong implementation?
+		// It seems that Transact will be ignored. It is safer but Why? Wrong implementation?
 		// TODO:: figure out the reason
 		assert_eq!(Balances::free_balance(&relay_account()), 10_000_000_000_000);
 		assert_eq!(Balances::free_balance(&AccountId::from(BOB)), 0);
 	});
-
-
 }
 
 // Send Xcm by root/individual on parachain to maniplulate xcm relaychain's soverign accounts
@@ -944,18 +937,23 @@ fn test_pallet_xcm_send_capacity_3() {
 fn test_pallet_xcm_send_capacity_4() {
 	relaychain_parachains_set_up();
 	ParaA::execute_with(|| {
-		let call_message = relay::Call::Balances(pallet_balances::Call::<relay::Runtime>::transfer { dest: AccountId::from(BOB).into(), value: 2_000_000_000_000 }).encode().into();
-		let assets = vec![MultiAsset {
-				id: Concrete(Here.into()),
-				fun: Fungible(2_000_000_000), // Assets used for fee 
-			}]
+		let call_message =
+			relay::Call::Balances(pallet_balances::Call::<relay::Runtime>::transfer {
+				dest: AccountId::from(BOB),
+				value: 2_000_000_000_000,
+			})
+			.encode()
 			.into();
+		let assets = vec![MultiAsset {
+			id: Concrete(Here.into()),
+			fun: Fungible(2_000_000_000), // Assets used for fee
+		}]
+		.into();
 		let xcm = Xcm(vec![
 			WithdrawAsset(assets),
 			BuyExecution {
-				fees: MultiAsset { id: Concrete(Here.into()), fun: Fungible(20_0000) }
-				.into(),
-				weight_limit: Limited(2_000_000_000)
+				fees: MultiAsset { id: Concrete(Here.into()), fun: Fungible(20_0000) },
+				weight_limit: Limited(2_000_000_000),
 			},
 			Transact {
 				origin_type: OriginKind::SovereignAccount,
@@ -971,17 +969,20 @@ fn test_pallet_xcm_send_capacity_4() {
 		));
 		assert_eq!(
 			System::events().pop().expect("Event expected").event,
-			Event::PolkadotXcm(pallet_xcm::Event::Sent(
-				Here.into(),
-				Parent.into(),
-				xcm,
-			))
+			Event::PolkadotXcm(pallet_xcm::Event::Sent(Here.into(), Parent.into(), xcm,))
 		);
 	});
 	Relay::execute_with(|| {
-		// It seems that Transact will be ignored. But Why? Wrong implementation?
-		assert_eq!(pallet_balances::Pallet::<relay::Runtime>::free_balance(&AccountId::from(BOB)), 0);
-		assert_eq!(pallet_balances::Pallet::<relay::Runtime>::free_balance(&sibling_account(1)), 100_000_000_000_000);
+		// It seems that Transact will be ignored. It is safer but Why? Wrong implementation?
+		// TODO: Figure out why
+		assert_eq!(
+			pallet_balances::Pallet::<relay::Runtime>::free_balance(&AccountId::from(BOB)),
+			0
+		);
+		assert_eq!(
+			pallet_balances::Pallet::<relay::Runtime>::free_balance(&sibling_account(1)),
+			100_000_000_000_000
+		);
 	});
 }
 
