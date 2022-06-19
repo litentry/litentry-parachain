@@ -20,11 +20,15 @@ use frame_support::{
 };
 
 pub use crate::{
-	AccountId, AssetManager, Balance, Balances, Call, CumulusXcm, DmpQueue, Event, ParachainSystem,
-	PolkadotXcm, Runtime, System, Tokens, TransactionPayment, Treasury, XTokens, XcmpQueue,
+	AccountId, AssetManager, Balance, Balances, Call, CumulusXcm, DmpQueue, Event, ExtrinsicFilter,
+	MinimumMultiplier, Multisig, Origin, ParachainSystem, PolkadotXcm, Runtime,
+	RuntimeBlockWeights, SlowAdjustingFeeUpdate, System, TargetBlockFullness, Tokens,
+	TransactionByteFee, TransactionPayment, Treasury, Vesting, XTokens, XcmpQueue, UNIT,
 };
+
 pub const ALICE: [u8; 32] = [1u8; 32];
 pub const BOB: [u8; 32] = [2u8; 32];
+pub const CHARLIE: [u8; 32] = [3u8; 32];
 
 pub use sp_std::cell::RefCell;
 pub mod relay;
@@ -34,6 +38,18 @@ use xcm_simulator::{decl_test_network, decl_test_parachain, decl_test_relay_chai
 // TODO::Common folder for genreal utility function
 pub(crate) fn last_event() -> Event {
 	System::events().pop().expect("Event expected").event
+}
+
+pub(crate) fn alice() -> AccountId {
+	AccountId::from(ALICE)
+}
+
+pub(crate) fn bob() -> AccountId {
+	AccountId::from(BOB)
+}
+
+pub(crate) fn charlie() -> AccountId {
+	AccountId::from(CHARLIE)
 }
 
 pub struct ExtBuilder {
@@ -99,6 +115,20 @@ pub fn info_from_weight(w: Weight) -> DispatchInfo {
 
 pub fn post_info_from_weight(w: Weight) -> PostDispatchInfo {
 	PostDispatchInfo { actual_weight: Some(w), pays_fee: Default::default() }
+}
+
+pub fn run_with_system_weight<F>(w: Weight, mut assertions: F)
+where
+	F: FnMut(),
+{
+	let mut t: sp_io::TestExternalities = frame_system::GenesisConfig::default()
+		.build_storage::<Runtime>()
+		.unwrap()
+		.into();
+	t.execute_with(|| {
+		System::set_block_consumed_resources(w, 0);
+		assertions()
+	});
 }
 
 decl_test_parachain! {

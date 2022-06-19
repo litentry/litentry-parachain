@@ -8,17 +8,12 @@ function usage() {
 
 CHAIN=$1
 
-# wait interval in seconds to check the block import and production of parachain
+# interval and rounds to wait to check the block production and finalization of parachain
 WAIT_INTERVAL_SECONDS=10
+WAIT_ROUNDS=30
 
-# rounds to wait in `check_block`, in total it's 12 * 10 = 2min
-WAIT_ROUNDS=12
-
-# restart interval in seconds for restarting relaychains sequentially
-RESTART_INTERVAL_SECONDS=20
-
-# if the parachain ever produces the first block
-HAS_BLOCK=false
+# if the parachain has produced the first block
+BLOCK_PRODUCED=false
 
 function print_divider() {
   echo "------------------------------------------------------------"
@@ -34,44 +29,36 @@ docker-compose up -d --build
 sleep 10
 
 parachain_service=$(docker-compose ps --services --filter 'status=running' | grep -F 'parachain-')
-relaychain_service="$(docker-compose ps --services --filter 'status=running' | grep -F 'relaychain-')"
 
 print_divider
 
-function check_block() {
-  for i in $(seq 1 $WAIT_ROUNDS); do
-    sleep $WAIT_INTERVAL_SECONDS
-    if docker-compose logs "$parachain_service" | grep -F '[Parachain]' 2>/dev/null | grep -Fq "best: #1" 2>/dev/null; then
-      echo "parachain produced #1, all good. Quit now"
-      exit 0
-    fi
-  done
-}
+echo "waiting for parachain to produce blocks ..."
 
-echo "waiting for parachain to import blocks ..."
-
-while : ; do
-  if docker-compose logs "$parachain_service" | grep -F '[Parachain]' 2>/dev/null | grep -Fq "Imported #" 2>/dev/null; then
-    echo "parachain imported blocks"
+for i in $(seq 1 $WAIT_ROUNDS); do
+  sleep $WAIT_INTERVAL_SECONDS
+  if docker-compose logs "$parachain_service" 2>&1 | grep -F '0 peers' 2>/dev/null | grep -Fq "best: #1" 2>/dev/null; then
+    echo "parachain produced #1"
+    BLOCK_PRODUCED=true
     break
-  else
-    sleep $WAIT_INTERVAL_SECONDS
   fi
 done
 
-print_divider
-echo "checking parachain block production ..."
-check_block
+if [ "$BLOCK_PRODUCED" = "false" ]; then
+  echo "no block production detected, you might want to check it manually. Quit now"
+  exit 1
+fi
 
-echo "no parachain blocks detected, restart relaychains ..."
-for i in $relaychain_service; do
-  sleep $RESTART_INTERVAL_SECONDS
-  docker-compose restart $i
+print_divider
+
+echo "waiting for parachain to finalize blocks ..."
+
+for i in $(seq 1 $WAIT_ROUNDS); do
+  sleep $WAIT_INTERVAL_SECONDS
+  if docker-compose logs "$parachain_service" 2>&1 | grep -F '0 peers' 2>/dev/null | grep -Fq "finalized #1" 2>/dev/null; then
+    echo "parachain finalized #1, all good. Quit now"
+    exit 0
+  fi
 done
 
-print_divider
-echo "relaychain restarted"
-echo "checking parachain block production again ..."
-
-check_block
-echo "still no blocks detected, you might want to check it manually. Quit now"
+echo "no block finalization detected, you might want to check it manually. Quit now"
+exit 1

@@ -68,6 +68,24 @@ fn balance_transfer_disabled() {
 }
 
 #[test]
+fn balance_transfer_with_sudo_works() {
+	ExtBuilder::default()
+		.balances(vec![(alice(), 10 * UNIT)])
+		.build()
+		.execute_with(|| {
+			let call: Call = pallet_balances::Call::force_transfer {
+				source: alice().into(),
+				dest: bob().into(),
+				value: 1 * UNIT,
+			}
+			.into();
+			assert_ok!(call.dispatch(Origin::root()),);
+			assert_eq!(Balances::free_balance(&alice()), 9 * UNIT);
+			assert_eq!(Balances::free_balance(&bob()), 1 * UNIT);
+		})
+}
+
+#[test]
 fn block_core_call_has_no_effect() {
 	ExtBuilder::default()
 		.balances(vec![(alice(), 10 * UNIT)])

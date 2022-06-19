@@ -16,7 +16,10 @@
 
 use super::setup::*;
 use codec::Encode;
-use frame_support::{assert_noop, assert_ok, traits::WrapperKeepOpaque};
+use frame_support::{
+	assert_noop, assert_ok,
+	traits::{VestingSchedule, WrapperKeepOpaque},
+};
 use sp_runtime::traits::Dispatchable;
 type OpaqueCall = WrapperKeepOpaque<<Runtime as frame_system::Config>::Call>;
 
@@ -65,24 +68,6 @@ fn balance_transfer_disabled() {
 }
 
 #[test]
-fn balance_transfer_with_sudo_works() {
-	ExtBuilder::default()
-		.balances(vec![(alice(), 10 * UNIT)])
-		.build()
-		.execute_with(|| {
-			let call: Call = pallet_balances::Call::force_transfer {
-				source: alice().into(),
-				dest: bob().into(),
-				value: 1 * UNIT,
-			}
-			.into();
-			assert_ok!(call.dispatch(Origin::root()),);
-			assert_eq!(Balances::free_balance(&alice()), 9 * UNIT);
-			assert_eq!(Balances::free_balance(&bob()), 1 * UNIT);
-		})
-}
-
-#[test]
 fn block_core_call_has_no_effect() {
 	ExtBuilder::default()
 		.balances(vec![(alice(), 10 * UNIT)])
@@ -100,5 +85,45 @@ fn block_core_call_has_no_effect() {
 			);
 			// ...however, no effect in the actual call dispatching
 			assert_ok!(call.dispatch(Origin::signed(alice())));
+		})
+}
+
+#[test]
+fn block_non_core_call_works() {
+	ExtBuilder::default()
+		.balances(vec![(alice(), 100 * UNIT)])
+		.build()
+		.execute_with(|| {
+			assert_ok!(Vesting::vested_transfer(
+				Origin::signed(alice()),
+				bob().into(),
+				pallet_vesting::VestingInfo::new(10 * UNIT, 1 * UNIT, 0,),
+			));
+			let call: Call = pallet_vesting::Call::vest {}.into();
+			assert_ok!(call.clone().dispatch(Origin::signed(bob())));
+			assert_eq!(Balances::free_balance(&bob()), 10 * UNIT);
+			assert_eq!(Balances::usable_balance(&bob()), 1 * UNIT);
+
+			System::set_block_number(2);
+			assert_eq!(Vesting::vesting_balance(&bob()), Some(8 * UNIT));
+
+			// try to block Vesting call, which is a non-core call
+			assert_ok!(ExtrinsicFilter::block_extrinsics(
+				Origin::root(),
+				b"Vesting".to_vec(),
+				None
+			));
+			// it's stored in the storage
+			assert_eq!(
+				ExtrinsicFilter::blocked_extrinsics((b"Vesting".to_vec(), Vec::<u8>::default())),
+				Some(())
+			);
+			// ...and it will take effect
+			assert_noop!(
+				call.dispatch(Origin::signed(bob())),
+				frame_system::Error::<Runtime>::CallFiltered
+			);
+			// usable balance is unchanged
+			assert_eq!(Balances::usable_balance(&bob()), 1 * UNIT);
 		})
 }

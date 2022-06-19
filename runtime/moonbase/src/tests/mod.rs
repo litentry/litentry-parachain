@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-pub mod setup;
+mod base_call_filter;
+mod setup;
 mod transaction_payment;
 mod xcm_parachain;
