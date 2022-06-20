@@ -204,31 +204,7 @@ fn test_pallet_xcm_recognize_multilocation() {
 fn test_methods_xtokens_expected_succeed() {
 	relaychain_parachains_set_up();
 	ParaA::execute_with(|| {
-		// Sending 1 ParaA token after xcm fee to BOB by XTokens::transfer
-		assert_ok!(XTokens::transfer(
-			Origin::signed(AccountId::from(ALICE)),
-			CurrencyId::SelfReserve,
-			(UnitWeightCost::get() * 4 + 1).into(),
-			Box::new(
-				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
-			),
-			UnitWeightCost::get() * 4
-		));
-		assert_eq!(
-			Balances::free_balance(&AccountId::from(ALICE)),
-			u128::from(500_000_000_000_000_000 - UnitWeightCost::get() * 4 - 1)
-		);
-		assert_eq!(
-			Balances::free_balance(&sibling_account(2)),
-			// u128::from(UnitWeightCost::get() * 4 + 1)
-			// This is caused by DustLost of pallet_balances
-			// We keep this single weird test implementation to see if there will be a fix
-			// The issue is minor: We should fund/test real token transfer with amount more than
-			// DustLost
-			0
-		);
-
-		// Solve the DustLost
+		// Solve the DustLost first
 		let _ = pallet_balances::Pallet::<Runtime>::deposit_creating(
 			&sibling_account(2),
 			1_000_000_000_000,
@@ -251,7 +227,7 @@ fn test_methods_xtokens_expected_succeed() {
 		));
 		assert_eq!(
 			Balances::free_balance(&AccountId::from(ALICE)),
-			u128::from(500_000_000_000_000_000 - UnitWeightCost::get() * 8 - 11)
+			u128::from(500_000_000_000_000_000 - UnitWeightCost::get() * 4 - 10)
 		);
 		assert_eq!(
 			Balances::free_balance(&sibling_account(2)),
@@ -271,7 +247,7 @@ fn test_methods_xtokens_expected_succeed() {
 		));
 		assert_eq!(
 			Balances::free_balance(&AccountId::from(ALICE)),
-			u128::from(500_000_000_000_000_000 - UnitWeightCost::get() * 12 - 111)
+			u128::from(500_000_000_000_000_000 - UnitWeightCost::get() * 8 - 110)
 		);
 		assert_eq!(
 			Balances::free_balance(&sibling_account(2)),
@@ -302,7 +278,7 @@ fn test_methods_xtokens_expected_succeed() {
 		));
 		assert_eq!(
 			Balances::free_balance(&AccountId::from(ALICE)),
-			u128::from(500_000_000_000_000_000 - UnitWeightCost::get() * 16 - 1_111)
+			u128::from(500_000_000_000_000_000 - UnitWeightCost::get() * 12 - 1_110)
 		);
 		assert_eq!(
 			Balances::free_balance(&sibling_account(2)),
@@ -321,7 +297,7 @@ fn test_methods_xtokens_expected_succeed() {
 		));
 		assert_eq!(
 			Balances::free_balance(&AccountId::from(ALICE)),
-			u128::from(500_000_000_000_000_000 - UnitWeightCost::get() * 20 - 11_111)
+			u128::from(500_000_000_000_000_000 - UnitWeightCost::get() * 16 - 11_110)
 		);
 		assert_eq!(
 			Balances::free_balance(&sibling_account(2)),
@@ -346,7 +322,7 @@ fn test_methods_xtokens_expected_succeed() {
 		));
 		assert_eq!(
 			Balances::free_balance(&AccountId::from(ALICE)),
-			u128::from(500_000_000_000_000_000 - UnitWeightCost::get() * 24 - 111_111)
+			u128::from(500_000_000_000_000_000 - UnitWeightCost::get() * 20 - 111_110)
 		);
 		assert_eq!(
 			Balances::free_balance(&sibling_account(2)),
@@ -360,7 +336,7 @@ fn test_methods_xtokens_expected_succeed() {
 				1, // Asset_id=1. The first registered Token: ParaA Token in Para B
 				&AccountId::from(BOB)
 			),
-			111_111 // Xtoken: The DustLost does not effect the minting on remote chain
+			111_110 // Xtoken: The DustLost does not effect the minting on remote chain
 		);
 	});
 }
@@ -368,7 +344,32 @@ fn test_methods_xtokens_expected_succeed() {
 #[test]
 fn test_methods_xtokens_expected_fail() {
 	relaychain_parachains_set_up();
-	//TODOTODOTODOTODOTODOTODO
+	// Sending 1 ParaA token after xcm fee to BOB by XTokens::transfer
+	ParaA::execute_with(|| {
+		// Dust Lost make transaction failed
+		assert_noop!(
+			XTokens::transfer(
+				Origin::signed(AccountId::from(ALICE)),
+				CurrencyId::SelfReserve,
+				(UnitWeightCost::get() * 4 + 1).into(),
+				Box::new(
+					(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
+				),
+				UnitWeightCost::get() * 4
+			),
+			orml_xtokens::Error::<Runtime>::XcmExecutionFailed
+		);
+		assert_eq!(Balances::free_balance(&AccountId::from(ALICE)), 500_000_000_000_000_000);
+		assert_eq!(
+			Balances::free_balance(&sibling_account(2)),
+			// u128::from(UnitWeightCost::get() * 4 + 1)
+			// This is caused by DustLost of pallet_balances
+			// We keep this single weird test implementation to see if there will be a
+			// fix/implementation option The issue is minor: We should fund/test real token
+			// transfer with amount more than DustLost
+			0
+		);
+	});
 }
 
 #[test]
