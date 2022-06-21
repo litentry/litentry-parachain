@@ -37,9 +37,11 @@ use xcm_simulator::TestExt;
 
 pub mod relay_sproof_builder;
 
-fn _para_account(x: u32) -> AccountId32 {
-	<LocationToAccountId as xcmConvert<MultiLocation, AccountId32>>::convert(Parachain(x).into())
-		.unwrap()
+fn para_account(x: u32) -> AccountId32 {
+	<relay::SovereignAccountOf as xcmConvert<MultiLocation, AccountId32>>::convert(
+		Parachain(x).into(),
+	)
+	.unwrap()
 }
 
 fn sibling_account(x: u32) -> AccountId32 {
@@ -336,7 +338,7 @@ fn test_methods_xtokens_expected_succeed() {
 				1, // Asset_id=1. The first registered Token: ParaA Token in Para B
 				&AccountId::from(BOB)
 			),
-			111_110 // Xtoken: The DustLost does not effect the minting on remote chain
+			111_110
 		);
 	});
 }
@@ -362,10 +364,10 @@ fn test_methods_xtokens_expected_fail() {
 		assert_eq!(Balances::free_balance(&AccountId::from(ALICE)), 500_000_000_000_000_000);
 		assert_eq!(
 			Balances::free_balance(&sibling_account(2)),
-			// u128::from(UnitWeightCost::get() * 4 + 1)
 			// This is caused by DustLost of pallet_balances
-			// We keep this single weird test implementation to see if there will be a
-			// fix/implementation option The issue is minor: We should fund/test real token
+			// We keep this single weird test implementation to see if
+			// omrl_xtoken changes way of handling such.
+			// The issue is minor: We should fund/test real token
 			// transfer with amount more than DustLost
 			0
 		);
@@ -394,8 +396,7 @@ fn test_methods_pallet_xcm_expected_succeed() {
 			0
 		));
 		assert_eq!(Balances::free_balance(&AccountId::from(ALICE)), 500_000_000_000_000_000);
-		// Unlike orml_xtoken, pallet_xcm fails when DustLost issue happens
-		// This is the preferred performance
+		// Unlike orml_xtoken, pallet_xcm fails with event when DustLost issue happens
 		assert_eq!(
 			last_event(),
 			Event::PolkadotXcm(pallet_xcm::Event::Attempted(Outcome::Incomplete(
@@ -556,7 +557,7 @@ fn test_methods_pallet_xcm_expected_fail() {
 
 // Send Xcm by root/individual on sibling to maniplulate XCM parachain soverign accounts
 #[test]
-fn test_pallet_xcm_send_capacity_1() {
+fn test_pallet_xcm_send_capacity_between_sibling() {
 	relaychain_parachains_set_up();
 	// Send result Xcm of pallet_xcm::reserve_transfer_assets by user
 	ParaA::execute_with(|| {
@@ -733,7 +734,7 @@ fn test_pallet_xcm_send_capacity_1() {
 
 // Send Xcm by root/individual on relay to maniplulate xcm parachain soverign accounts
 #[test]
-fn test_pallet_xcm_send_capacity_2() {
+fn test_pallet_xcm_send_capacity_without_transact() {
 	relaychain_parachains_set_up();
 	ParaA::execute_with(|| {
 		assert_ok!(AssetManager::register_foreign_asset_type(
@@ -750,7 +751,7 @@ fn test_pallet_xcm_send_capacity_2() {
 		));
 	});
 
-	// Users on Relay want to manipulate the soveregin account of Relay on Parachain A
+	// Relay users manipulate the soveregin account of Relay on Parachain A fail
 	Relay::execute_with(|| {
 		// Mimic the Xcm message sending
 		let assets = vec![MultiAsset {
@@ -763,7 +764,7 @@ fn test_pallet_xcm_send_capacity_2() {
 			ClearOrigin,
 			BuyExecution {
 				fees: MultiAsset { id: Concrete((Parent, Here).into()), fun: Fungible(10 * 4) },
-				weight_limit: Limited(200_000_000 * 4),
+				weight_limit: Limited(UnitWeightCost::get() * 4),
 			},
 			DepositAsset {
 				assets: All.into(),
@@ -783,7 +784,7 @@ fn test_pallet_xcm_send_capacity_2() {
 		assert_eq!(Tokens::free_balance(2, &AccountId::from(BOB)), 0);
 	});
 
-	// Root on Relay want to manipulate the soveregin account of Relay on Parachain A
+	// Relay root manipulate the soveregin account of Relay on Parachain A succeed
 	Relay::execute_with(|| {
 		// Mimic the Xcm message sending
 		let assets = vec![MultiAsset {
@@ -817,7 +818,7 @@ fn test_pallet_xcm_send_capacity_2() {
 	});
 
 	// But as relay, Xcm without Buy execution is also fine
-	// Root on Relay want to manipulate the soveregin account of Relay on Parachain A
+	// Relay root manipulate the soveregin account of Relay on Parachain A succeed
 	Relay::execute_with(|| {
 		// Mimic the Xcm message sending
 		// It should fail since XcmExecutor::IsReserve setting
@@ -844,7 +845,7 @@ fn test_pallet_xcm_send_capacity_2() {
 		assert_eq!(Tokens::free_balance(2, &AccountId::from(BOB)), 30_000);
 	});
 
-	// Root on Relay want to manipulate LIT
+	// Relay root manipulate LIT on Parachain A failed
 	Relay::execute_with(|| {
 		// Mimic the Xcm message sending, Here we even try to manipulate local parachainA token LIT
 		// It should fail since XcmExecutor::IsReserve setting
@@ -876,41 +877,53 @@ fn test_pallet_xcm_send_capacity_2() {
 	});
 }
 
-// Relay root maniplate its own sovereign account by Xcm::Transact
+// Relay root manipulate its own sovereign account on Parachain A by Xcm::Transact (Flawed)
 #[test]
-fn test_pallet_xcm_send_capacity_3() {
+fn test_pallet_xcm_send_capacity_relay_manipulation() {
 	relaychain_parachains_set_up();
 	ParaA::execute_with(|| {
-		assert_ok!(AssetManager::register_foreign_asset_type(
-			RawOrigin::Root.into(),
-			CurrencyId::ParachainReserve(Box::new((Parent, Here).into())),
-			Default::default()
-		));
-		assert_ok!(AssetManager::set_asset_units_per_second(
-			RawOrigin::Root.into(),
-			2,
-			50_000 /*  Although does not matter here
-			        *1_000_000_000_000 / 20_000_000; Since Para UnitWeightCost : Relay
-			        * UnitWeightCost = 200_000_000 : 10 */
-		));
 		let _ = pallet_balances::Pallet::<Runtime>::deposit_creating(
 			&relay_account(),
 			10_000_000_000_000,
 		);
+		assert_eq!(Balances::free_balance(&relay_account()), 10_000_000_000_000);
 		assert_eq!(Balances::free_balance(&AccountId::from(BOB)), 0);
 	});
 	Relay::execute_with(|| {
-		let call_message = Call::Balances(pallet_balances::Call::<Runtime>::transfer {
+		let call_message = Call::Balances(pallet_balances::Call::transfer {
 			dest: AccountId::from(BOB).into(),
 			value: 2_000_000_000_000,
 		})
 		.encode()
 		.into();
-		let xcm = Xcm(vec![Transact {
-			origin_type: OriginKind::SovereignAccount,
-			require_weight_at_most: 10_000_000_000,
-			call: call_message,
-		}]);
+		let assets = vec![MultiAsset {
+			id: Concrete(para_native_token_multilocation(1)),
+			fun: Fungible((UnitWeightCost::get() * 5 + 1_000_000_000).into()), /* Assets used for
+			                                                                    * fee */
+		}]
+		.into();
+		let xcm = Xcm(vec![
+			WithdrawAsset(assets),
+			BuyExecution {
+				fees: MultiAsset {
+					id: Concrete(para_native_token_multilocation(1)),
+					fun: Fungible((UnitWeightCost::get() * 5 + 1_000_000_000).into()),
+				},
+				weight_limit: Limited(UnitWeightCost::get() * 5 + 1_000_000_000),
+			},
+			Transact {
+				origin_type: OriginKind::SovereignAccount,
+				require_weight_at_most: 1_000_000_000,
+				call: call_message,
+			},
+			RefundSurplus,
+			DepositAsset {
+				assets: All.into(),
+				max_assets: 1,
+				beneficiary: Junction::AccountId32 { network: Any, id: relay_account().into() }
+					.into(),
+			},
+		]);
 		// Root sending the raw Xcm works successfully
 		assert_ok!(pallet_xcm::Pallet::<relay::Runtime>::send(
 			RawOrigin::Root.into(),
@@ -925,26 +938,34 @@ fn test_pallet_xcm_send_capacity_3() {
 		);
 	});
 	ParaA::execute_with(|| {
-		// It seems that Transact will be ignored. It is safer but Why? Wrong implementation?
-		// TODO:: figure out the reason
-		assert_eq!(Balances::free_balance(&relay_account()), 10_000_000_000_000);
+		// assert_eq!(
+		// 	System::events().into_iter().map(|evt| evt.event).collect::<Vec<_>>(),
+		// 	vec![]
+		// );
+		// The whole Xcm get Executed but fee paid without Transact executed ??????????
+		// TODO:: Some very detials need to be checked
+		// We leave it here for now. As neither do we have to consider Relay root attack Parachain
 		assert_eq!(Balances::free_balance(&AccountId::from(BOB)), 0);
+		assert_eq!(
+			pallet_balances::Pallet::<relay::Runtime>::free_balance(&AccountId::from(BOB)),
+			0
+		);
+		let xcm_fee = u128::from(UnitWeightCost::get() * 5 + 1_000_000_000);
+		assert_eq!(Balances::free_balance(&relay_account()), 10_000_000_000_000 - xcm_fee);
 	});
 }
 
-// Send Xcm by root/individual on parachain to maniplulate xcm relaychain's soverign accounts
-// Relay root maniplate its own sovereign account by Xcm::Transact
+// Parachain root manipulate its own sovereign account on Relay by Xcm::Transact succeed
 #[test]
-fn test_pallet_xcm_send_capacity_4() {
+fn test_pallet_xcm_send_capacity_parachain_manipulation() {
 	relaychain_parachains_set_up();
 	ParaA::execute_with(|| {
-		let call_message =
-			relay::Call::Balances(pallet_balances::Call::<relay::Runtime>::transfer {
-				dest: AccountId::from(BOB),
-				value: 2_000_000_000_000,
-			})
-			.encode()
-			.into();
+		let call_message = relay::Call::Balances(pallet_balances::Call::transfer {
+			dest: AccountId::from(BOB),
+			value: 2_000_000_000_000,
+		})
+		.encode()
+		.into();
 		let assets = vec![MultiAsset {
 			id: Concrete(Here.into()),
 			fun: Fungible(2_000_000_000), // Assets used for fee
@@ -953,13 +974,20 @@ fn test_pallet_xcm_send_capacity_4() {
 		let xcm = Xcm(vec![
 			WithdrawAsset(assets),
 			BuyExecution {
-				fees: MultiAsset { id: Concrete(Here.into()), fun: Fungible(20_0000) },
+				fees: MultiAsset { id: Concrete(Here.into()), fun: Fungible(2_000_000_000) },
 				weight_limit: Limited(2_000_000_000),
 			},
 			Transact {
 				origin_type: OriginKind::SovereignAccount,
 				require_weight_at_most: 1_000_000_000,
 				call: call_message,
+			},
+			RefundSurplus,
+			DepositAsset {
+				assets: All.into(),
+				max_assets: 1,
+				beneficiary: Junction::AccountId32 { network: Any, id: para_account(1).into() }
+					.into(),
 			},
 		]);
 		// Root sending the raw Xcm works successfully
@@ -974,15 +1002,17 @@ fn test_pallet_xcm_send_capacity_4() {
 		);
 	});
 	Relay::execute_with(|| {
-		// It seems that Transact will be ignored. It is safer but Why? Wrong implementation?
-		// TODO: Figure out why
+		// Manipulation successful
 		assert_eq!(
 			pallet_balances::Pallet::<relay::Runtime>::free_balance(&AccountId::from(BOB)),
-			0
+			2_000_000_000_000
 		);
+		let xcm_fee = 1_000_000_000 + 5 * 10;
+		// So Transact simply consume all "require_weight_at_most" as long as qualified for dispatch
+		// weight.
 		assert_eq!(
-			pallet_balances::Pallet::<relay::Runtime>::free_balance(&sibling_account(1)),
-			100_000_000_000_000
+			pallet_balances::Pallet::<relay::Runtime>::free_balance(&para_account(1)),
+			100_000_000_000_000 - 2_000_000_000_000 - xcm_fee
 		);
 	});
 }
@@ -1021,11 +1051,11 @@ fn relaychain_parachains_set_up() {
 	TestNet::reset();
 	Relay::execute_with(|| {
 		let _ = pallet_balances::Pallet::<relay::Runtime>::deposit_creating(
-			&sibling_account(1),
+			&para_account(1),
 			100_000_000_000_000,
 		);
 		let _ = pallet_balances::Pallet::<relay::Runtime>::deposit_creating(
-			&sibling_account(2),
+			&para_account(2),
 			100_000_000_000_000,
 		);
 	});

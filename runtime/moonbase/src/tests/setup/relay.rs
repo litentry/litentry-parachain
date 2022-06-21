@@ -15,7 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use frame_support::{
-	construct_runtime, parameter_types,
+	construct_runtime, match_types, parameter_types,
 	traits::{ConstU128, ConstU32, ConstU64, Everything},
 	weights::IdentityFee,
 };
@@ -27,10 +27,11 @@ use cumulus_primitives_core::ParaId;
 use polkadot_runtime_parachains::{configuration, origin, shared, ump};
 use xcm::latest::prelude::*;
 use xcm_builder::{
-	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, ChildParachainAsNative,
+	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
+	AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, ChildParachainAsNative,
 	ChildParachainConvertsVia, CurrencyAdapter as XcmCurrencyAdapter, FixedWeightBounds,
-	IsConcrete, LocationInverter, SignedAccountId32AsNative, SignedToAccountId32,
-	SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
+	IsChildSystemParachain, IsConcrete, LocationInverter, SignedAccountId32AsNative,
+	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
 };
 use xcm_executor::{Config, XcmExecutor};
 
@@ -105,7 +106,25 @@ type LocalOriginConverter = (
 );
 
 pub type XcmRouter = super::RelayChainXcmRouter;
-pub type Barrier = (TakeWeightCredit, AllowTopLevelPaidExecutionFrom<Everything>);
+
+match_types! {
+	pub type OnlyParachains: impl Contains<MultiLocation> = {
+		MultiLocation { parents: 0, interior: X1(Parachain(_)) }
+	};
+}
+/// The barriers one of which must be passed for an XCM message to be executed.
+pub type Barrier = (
+	// Weight that is paid for may be consumed.
+	TakeWeightCredit,
+	// If the message is one that immediately attemps to pay for execution, then allow it.
+	AllowTopLevelPaidExecutionFrom<Everything>,
+	// Messages coming from system parachains need not pay for execution.
+	AllowUnpaidExecutionFrom<IsChildSystemParachain<ParaId>>,
+	// Expected responses are OK.
+	AllowKnownQueryResponses<XcmPallet>,
+	// Subscriptions for version tracking are OK.
+	AllowSubscriptionsFrom<OnlyParachains>,
+);
 
 pub struct XcmConfig;
 impl Config for XcmConfig {
@@ -116,7 +135,7 @@ impl Config for XcmConfig {
 	type IsReserve = ();
 	type IsTeleporter = ();
 	type LocationInverter = LocationInverter<Ancestry>;
-	type Barrier = Barrier;
+	type Barrier = Barrier; // This is the setting should be same from Kusama
 	type Weigher = FixedWeightBounds<ConstU64<10>, Call, ConstU32<100>>;
 	type Trader = UsingComponents<IdentityFee<Balance>, KsmLocation, AccountId, Balances, ()>;
 	type ResponseHandler = ();
