@@ -64,8 +64,3 @@ jobs:
           fail_ci_if_error: true # optional (default = false)
           verbose: true # optional (default = false)
 
-      - name: Upload test result artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: test-result-artifact
-          path: test-result.tar
