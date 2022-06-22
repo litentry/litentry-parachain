@@ -56,7 +56,7 @@ jobs:
         run: |
           # cargo tarpaulin --release --no-fail-fast --workspace -e node primitives runtime scritps templates ts-tests
           PACKAGES=$(find pallets/ -name "Cargo.toml" | xargs grep name | tr '"' "'" | sed "s/'$//;s/.*'//" | paste -s -d "," -)
-          cargo tarpaulin --no-fail-fast -p "$PACKAGES"
+          cargo tarpaulin --no-fail-fast -o Xml -p "$PACKAGES"
 
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v2
