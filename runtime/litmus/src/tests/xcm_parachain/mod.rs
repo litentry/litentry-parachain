@@ -27,30 +27,30 @@ use frame_support::{
 	traits::{Currency, PalletInfoAccess},
 };
 use frame_system::RawOrigin;
-use polkadot_parachain::primitives::{AccountIdConversion, RelayChainBlockNumber, Sibling};
-use sp_runtime::{traits::Convert, AccountId32};
+use polkadot_parachain::primitives::{RelayChainBlockNumber, Sibling};
+use sp_runtime::{
+	traits::{AccountIdConversion, Convert},
+	AccountId32,
+};
 use xcm::prelude::*;
-// use xcm::latest::prelude::*;
 use xcm_simulator::TestExt;
 
 pub mod relay_sproof_builder;
 
 fn para_a_account() -> AccountId32 {
-	ParaId::from(1).into_account()
+	ParaId::from(1).into_account_truncating()
 }
 
 fn para_b_account() -> AccountId32 {
-	ParaId::from(2).into_account()
+	ParaId::from(2).into_account_truncating()
 }
 
 fn _sibling_a_account() -> AccountId32 {
-	use sp_runtime::traits::AccountIdConversion;
-	Sibling::from(1).into_account()
+	Sibling::from(1).into_account_truncating()
 }
 
 fn _sibling_b_account() -> AccountId32 {
-	use sp_runtime::traits::AccountIdConversion;
-	Sibling::from(2).into_account()
+	Sibling::from(2).into_account_truncating()
 }
 
 #[test]

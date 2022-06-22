@@ -113,7 +113,7 @@ pub type LocalAssetTransactor = CurrencyAdapter<
 use sp_runtime::traits::AccountIdConversion;
 parameter_types! {
 	pub const TempPalletId: PalletId = PalletId(*b"py/tempA");
-	pub TempAccount: AccountId = TempPalletId::get().into_account();
+	pub TempAccount: AccountId = TempPalletId::get().into_account_truncating();
 }
 // The non-reserve fungible transactor type
 // It will use orml_tokens, and the Id will be CurrencyId::ParachainReserve(MultiLocation)
@@ -578,11 +578,10 @@ match_types! {
 	};
 }
 
-// Litentry: set this to max. The reason for doing so is to forbid using Fee Asset and Target Asset
-// with different reserve chain.
 parameter_type_with_key! {
-	pub ParachainMinFee: |_location: MultiLocation| -> u128 {
-		u128::MAX
+	pub ParachainMinFee: |_location: MultiLocation| -> Option<u128> {
+		// Always return `None` to disallow using fee asset and target asset with different reserve chains
+		None
 	};
 }
 

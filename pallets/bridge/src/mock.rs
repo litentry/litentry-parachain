@@ -18,13 +18,15 @@
 
 use super::*;
 
-use frame_support::{assert_ok, ord_parameter_types, parameter_types, weights::Weight};
+use frame_support::{
+	assert_ok, ord_parameter_types, parameter_types,
+	traits::{ConstU32, ConstU64},
+};
 use frame_system::{self as system};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
-	Perbill,
 };
 
 use crate::{self as bridge, Config};
@@ -48,10 +50,6 @@ frame_support::construct_runtime!(
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
-	pub const MaximumBlockWeight: Weight = 1024;
-	pub const MaximumBlockLength: u32 = 2 * 1024;
-	pub const AvailableBlockRatio: Perbill = Perbill::one();
-	pub const MaxLocks: u32 = 100;
 }
 
 impl frame_system::Config for Test {
@@ -78,11 +76,7 @@ impl frame_system::Config for Test {
 	type BlockLength = ();
 	type SS58Prefix = ();
 	type OnSetCode = ();
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
-}
-
-parameter_types! {
-	pub const ExistentialDeposit: u64 = 1;
+	type MaxConsumers = ConstU32<16>;
 }
 
 ord_parameter_types! {
@@ -93,10 +87,10 @@ impl pallet_balances::Config for Test {
 	type Balance = u64;
 	type DustRemoval = ();
 	type Event = Event;
-	type ExistentialDeposit = ExistentialDeposit;
+	type ExistentialDeposit = ConstU64<1>;
 	type AccountStore = System;
 	type WeightInfo = ();
-	type MaxLocks = ();
+	type MaxLocks = ConstU32<100>;
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
 }
@@ -122,7 +116,7 @@ pub const ENDOWED_BALANCE: u64 = 100_000_000;
 pub const TEST_THRESHOLD: u32 = 2;
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let bridge_id = PalletId(*b"litry/bg").into_account();
+	let bridge_id = PalletId(*b"litry/bg").into_account_truncating();
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	pallet_balances::GenesisConfig::<Test> { balances: vec![(bridge_id, ENDOWED_BALANCE)] }
 		.assimilate_storage(&mut t)
