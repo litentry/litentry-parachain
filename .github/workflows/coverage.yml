@@ -3,7 +3,7 @@ name: Tests Coverage
 on:
   push:
     branches:
-      - coverage_test
+      - dev
     paths-ignore:
       - "**/dependabot.yml"
       - "**/README.md"
