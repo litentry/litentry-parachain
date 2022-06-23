@@ -12,12 +12,6 @@ on:
       - dev
   workflow_dispatch:
 
-env:
-  TARPAULIN_VERSION: 0.20.1
-  # LIBCLANG_PATH: "/usr/lib/llvm-11/lib" # default `llvm-config --prefix`
-  # SCCACHE_CACHE_SIZE: "100G"
-  CARGO_INCREMENTAL: 0
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -49,12 +43,9 @@ jobs:
       - name: Install cargo-tarpaulin
         run: |
             cargo install cargo-tarpaulin
-          # wget https://github.com/xd009642/tarpaulin/releases/download/${{ env.TARPAULIN_VERSION }}/cargo-tarpaulin-${{ env.TARPAULIN_VERSION }}-travis.tar.gz
-          # tar -zxvf cargo-tarpaulin-${{ env.TARPAULIN_VERSION }}-travis.tar.gz -C $HOME/.cargo/bin
 
       - name: Run cargo-tarpaulin
         run: |
-          # cargo tarpaulin --release --no-fail-fast --workspace -e node primitives runtime scritps templates ts-tests
           PACKAGES=$(find pallets/ -name "Cargo.toml" | xargs grep name | tr '"' "'" | sed "s/'$//;s/.*'//" | paste -s -d "," -)
           cargo tarpaulin --no-fail-fast -o Xml -p "$PACKAGES"
 
