@@ -1,0 +1,58 @@
+name: Tests Coverage
+
+on:
+  push:
+    branches:
+      - dev
+    paths-ignore:
+      - "**/dependabot.yml"
+      - "**/README.md"
+  pull_request:
+    branches:
+      - dev
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Coverage Report
+    runs-on: [ubuntu-latest]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          components: rustfmt
+          target: wasm32-unknown-unknown
+          default: true
+
+      - name: Install additional dependencies
+        run: |
+            sudo apt update -y &&
+            sudo apt install -y cmake pkg-config libssl-dev git gcc build-essential git clang libclang-dev
+
+      - name: Install cargo-tarpaulin
+        run: |
+            cargo install cargo-tarpaulin
+
+      - name: Run cargo-tarpaulin
+        run: |
+          PACKAGES=$(find pallets/ -name "Cargo.toml" | xargs grep name | tr '"' "'" | sed "s/'$//;s/.*'//" | paste -s -d "," -)
+          cargo tarpaulin --no-fail-fast -o Xml -p "$PACKAGES" \
+          --exclude-files **/mock.rs **/weights.rs **/benchmarking.rs **/weights/* node/* runtime/*
+
+      - name: Upload to codecov.io
+        uses: codecov/codecov-action@v2
+        with:
+          fail_ci_if_error: true # optional (default = false)
+          verbose: true # optional (default = false)
+
