@@ -47,9 +47,8 @@ jobs:
       - name: Run cargo-tarpaulin
         run: |
           PACKAGES=$(find pallets/ -name "Cargo.toml" | xargs grep name | tr '"' "'" | sed "s/'$//;s/.*'//" | paste -s -d "," -)
-          cargo tarpaulin --no-fail-fast -o Xml --workspace \
-          --exclude-files **/mock.rs **/weights.rs **/benchmarking.rs **/weights/* node/* runtime/* \
-          -e *-runtime *node
+          cargo tarpaulin --no-fail-fast -o Xml -p "$PACKAGES" \
+          --exclude-files **/mock.rs **/weights.rs **/benchmarking.rs **/weights/* node/* runtime/*
 
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v2
