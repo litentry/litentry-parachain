@@ -1,3 +1,6 @@
+# global args that are used across multiple stages
+ARG PROFILE
+
 # ==========================
 # stage 1: build
 # https://hub.docker.com/_/rust
@@ -16,7 +19,6 @@ RUN apt-get update && \
 	apt-get dist-upgrade -y -o Dpkg::Options::="--force-confold" && \
 	apt-get install -y cmake pkg-config libssl-dev git clang libclang-dev
 
-ARG PROFILE
 ARG BUILD_ARGS
 RUN cargo build --locked --profile $PROFILE $BUILD_ARGS
 
