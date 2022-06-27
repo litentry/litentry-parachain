@@ -87,7 +87,7 @@ pallet-extrinsic-filter = { path = "../../pallets/extrinsic-filter", default-fea
 
 [dev-dependencies]
 hex-literal = "0.3.4"
-smallvec = "1.8.0"
+smallvec = "1.8.1"
 
 [build-dependencies]
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.23" }
