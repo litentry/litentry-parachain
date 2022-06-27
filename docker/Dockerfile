@@ -16,9 +16,9 @@ RUN apt-get update && \
 	apt-get dist-upgrade -y -o Dpkg::Options::="--force-confold" && \
 	apt-get install -y cmake pkg-config libssl-dev git clang libclang-dev
 
+ARG PROFILE
 ARG BUILD_ARGS
-RUN cargo build --locked --profile production $BUILD_ARGS
-RUN strip target/production/litentry-collator
+RUN cargo build --locked --profile $PROFILE $BUILD_ARGS
 
 # ==========================
 # stage 2: packaging
@@ -26,7 +26,7 @@ RUN strip target/production/litentry-collator
 FROM ubuntu:20.04
 LABEL maintainer="litentry-dev"
 
-COPY --from=builder /litentry/target/production/litentry-collator /usr/local/bin
+COPY --from=builder /litentry/target/$PROFILE/litentry-collator /usr/local/bin
 
 RUN useradd -m -u 1000 -U -s /bin/sh -d /litentry litentry && \
 	mkdir -p /data /litentry/.local/share && \

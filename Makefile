@@ -65,11 +65,11 @@ srtool-build-wasm-rococo:
 srtool-build-wasm-moonbase:
 	@./scripts/build-wasm.sh moonbase
 
-.PHONY: build-docker-dev ## Build docker image using Dockerfile.dev
+.PHONY: build-docker-dev ## Build docker image using dev setting (--profile release)
 build-docker-dev:
 	@./scripts/build-docker.sh dev
 
-.PHONY: build-docker-prod ## Build docker image using Dockerfile.prod
+.PHONY: build-docker-prod ## Build docker image using prod setting (--profile production)
 build-docker-prod:
 	@./scripts/build-docker.sh prod
 

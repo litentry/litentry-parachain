@@ -17,9 +17,13 @@ ARGS="$3"
 NOCACHE_FLAG=
 
 case "$TYPE" in
-    dev) ;;
-    prod) NOCACHE_FLAG="--no-cache" ;;
-    *) usage; exit 1 ;;
+    dev)
+        PROFILE=release ;;
+    prod)
+        PROFILE=production
+        NOCACHE_FLAG="--no-cache" ;;
+    *)
+        usage; exit 1 ;;
 esac
 
 if [ -z "$TAG" ]; then
@@ -45,7 +49,8 @@ GITREPO=litentry-parachain
 # Build the image
 echo "------------------------------------------------------------"
 echo "Building ${GITUSER}/${GITREPO}:${TAG} docker image ..."
-docker build --rm ${NOCACHE_FLAG} --pull -f ./docker/Dockerfile.${TYPE} \
+docker build --rm ${NOCACHE_FLAG} --pull -f ./docker/Dockerfile \
+    --build-arg PROFILE="$PROFILE" \
     --build-arg BUILD_ARGS="$ARGS" \
     -t ${GITUSER}/${GITREPO}:${TAG} .
 
