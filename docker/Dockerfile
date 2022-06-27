@@ -12,7 +12,7 @@ COPY . /litentry
 
 RUN apt-get update && \
 	apt-get upgrade -y && \
-	apt-get install -yq openssl clang libclang-dev
+	apt-get install -yq openssl clang libclang-dev cmake
 
 ARG BUILD_ARGS
 ARG PROFILE
