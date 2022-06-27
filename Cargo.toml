@@ -28,3 +28,4 @@ inherits = "release"
 inherits = "release"
 lto = true
 codegen-units = 1
+strip = "symbols"
