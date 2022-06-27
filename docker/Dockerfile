@@ -20,6 +20,7 @@ RUN apt-get update && \
 	apt-get install -y cmake pkg-config libssl-dev git clang libclang-dev
 
 ARG BUILD_ARGS
+ARG PROFILE
 RUN cargo build --locked --profile $PROFILE $BUILD_ARGS
 
 # ==========================
@@ -27,6 +28,8 @@ RUN cargo build --locked --profile $PROFILE $BUILD_ARGS
 # ==========================
 FROM ubuntu:20.04
 LABEL maintainer="litentry-dev"
+
+ARG PROFILE
 
 COPY --from=builder /litentry/target/$PROFILE/litentry-collator /usr/local/bin
 
