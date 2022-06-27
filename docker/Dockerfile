@@ -1,3 +1,6 @@
+# global args that are used across multiple stages
+ARG PROFILE
+
 # ==========================
 # stage 1: build
 # https://hub.docker.com/_/rust
@@ -7,18 +10,13 @@ FROM rust:latest as builder
 WORKDIR /litentry
 COPY . /litentry
 
-# always use the toolchain in base image
-# we do not fix toolchain version as it's still evolving rapidly
-RUN rustup default nightly && \
-	rustup target add wasm32-unknown-unknown --toolchain nightly
-
 RUN apt-get update && \
-	apt-get dist-upgrade -y -o Dpkg::Options::="--force-confold" && \
-	apt-get install -y cmake pkg-config libssl-dev git clang libclang-dev
+	apt-get upgrade -y && \
+	apt-get install -yq openssl clang libclang-dev
 
 ARG BUILD_ARGS
-RUN cargo build --locked --profile production $BUILD_ARGS
-RUN strip target/production/litentry-collator
+ARG PROFILE
+RUN cargo build --locked --profile $PROFILE $BUILD_ARGS
 
 # ==========================
 # stage 2: packaging
@@ -26,7 +24,9 @@ RUN strip target/production/litentry-collator
 FROM ubuntu:20.04
 LABEL maintainer="litentry-dev"
 
-COPY --from=builder /litentry/target/production/litentry-collator /usr/local/bin
+ARG PROFILE
+
+COPY --from=builder /litentry/target/$PROFILE/litentry-collator /usr/local/bin
 
 RUN useradd -m -u 1000 -U -s /bin/sh -d /litentry litentry && \
 	mkdir -p /data /litentry/.local/share && \
