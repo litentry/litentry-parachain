@@ -49,13 +49,13 @@ GITREPO=litentry-parachain
 # Build the image
 echo "------------------------------------------------------------"
 echo "Building ${GITUSER}/${GITREPO}:${TAG} docker image ..."
-docker build --rm ${NOCACHE_FLAG} --pull -f ./docker/Dockerfile \
+docker build ${NOCACHE_FLAG} --pull -f ./docker/Dockerfile \
     --build-arg PROFILE="$PROFILE" \
     --build-arg BUILD_ARGS="$ARGS" \
     -t ${GITUSER}/${GITREPO}:${TAG} .
 
 # Tag it with latest if no tag parameter was provided
-[ -z "$1" ] && docker tag ${GITUSER}/${GITREPO}:${TAG} ${GITUSER}/${GITREPO}:latest
+[ -z "$2" ] && docker tag ${GITUSER}/${GITREPO}:${TAG} ${GITUSER}/${GITREPO}:latest
 
 # Show the list of available images for this repo
 echo "Image is ready"
