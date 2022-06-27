@@ -10,14 +10,9 @@ FROM rust:latest as builder
 WORKDIR /litentry
 COPY . /litentry
 
-# always use the toolchain in base image
-# we do not fix toolchain version as it's still evolving rapidly
-RUN rustup default nightly && \
-	rustup target add wasm32-unknown-unknown --toolchain nightly
-
 RUN apt-get update && \
-	apt-get dist-upgrade -y -o Dpkg::Options::="--force-confold" && \
-	apt-get install -y cmake pkg-config libssl-dev git clang libclang-dev
+	apt-get upgrade -y && \
+	apt-get install -yq openssl clang libclang-dev
 
 ARG BUILD_ARGS
 ARG PROFILE
