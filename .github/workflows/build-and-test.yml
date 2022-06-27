@@ -100,7 +100,7 @@ jobs:
           fetch-depth: 0
 
       - name: Build docker image
-        timeout-minutes: 40
+        timeout-minutes: 60
         if: needs.check-file-change.outputs.src == 'true'
         run: |
           ./scripts/build-docker.sh dev
