@@ -101,6 +101,12 @@ substrate-build-script-utils = { git = "https://github.com/paritytech/substrate.
 
 [features]
 default = []
+fast-runtime = [
+  "litentry-parachain-runtime/fast-runtime",
+  "litmus-parachain-runtime/fast-runtime",
+  "rococo-parachain-runtime/fast-runtime",
+  "moonbase-parachain-runtime/fast-runtime",
+]
 runtime-benchmarks = [
 	"litentry-parachain-runtime/runtime-benchmarks",
 	"litmus-parachain-runtime/runtime-benchmarks",

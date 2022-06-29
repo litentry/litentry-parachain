@@ -86,6 +86,7 @@ frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", d
 cumulus-pallet-session-benchmarking = { git = 'https://github.com/paritytech/cumulus', default-features = false, branch = "polkadot-v0.9.24", optional = true }
 
 # Rococo pallets
+runtime-common = { path = '../common', default-features = false }
 pallet-asset-manager = { path = "../../pallets/xcm-asset-manager", default-features = false }
 pallet-bridge = { path = "../../pallets/bridge", default-features = false }
 pallet-bridge-transfer = { path = "../../pallets/bridge-transfer", default-features = false }
@@ -110,6 +111,7 @@ substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", bran
 
 [features]
 default = [ "std" ]
+fast-runtime = []
 tee-dev = [
 	"pallet-teerex/skip-ias-check",
 ]
@@ -174,6 +176,7 @@ std = [
 	"xcm-builder/std",
 	"xcm-executor/std",
 	"frame-benchmarking/std",
+	'runtime-common/std',
 	"pallet-bridge/std",
 	"pallet-bridge-transfer/std",
 	"pallet-drop3/std",
@@ -182,7 +185,6 @@ std = [
 	"pallet-teerex/std",
 	"pallet-sidechain/std",
 ]
-
 runtime-benchmarks = [
 	"cumulus-pallet-session-benchmarking/runtime-benchmarks",
 	"frame-benchmarking/runtime-benchmarks",
