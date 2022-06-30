@@ -51,8 +51,8 @@ pub(crate) fn charlie() -> AccountId {
 	AccountId::from(CHARLIE)
 }
 
-let pub para_a_user_initial_balance: u128 = 500_000_000_000_000_000;
-let pub para_b_user_initial_balance: u128 = 600_000_000_000_000_000
+pub const ParaAUserInitialBalance: u128 = 500_000_000_000_000_000;
+pub const ParaBUserInitialBalance: u128 = 600_000_000_000_000_000;
 
 pub struct ExtBuilder {
 	balances: Vec<(AccountId, Balance)>,
@@ -141,7 +141,7 @@ decl_test_parachain! {
 		new_ext = ExtBuilder::default()
 		.balances(vec![
 			// fund Alice
-			(alice(), para_a_user_initial_balance),
+			(alice(), ParaAUserInitialBalance),
 		]).parachain_id(1).build(),
 	}
 }
@@ -154,7 +154,7 @@ decl_test_parachain! {
 		new_ext = ExtBuilder::default()
 		.balances(vec![
 			// fund BOB
-			(bob(), para_b_user_initial_balance),
+			(bob(), ParaBUserInitialBalance),
 		]).parachain_id(2).build(),
 	}
 }
