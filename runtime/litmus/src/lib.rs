@@ -889,7 +889,7 @@ impl Contains<Call> for NormalModeFilter {
 			Call::Council(_) |
 			Call::TechnicalCommittee(_) |
 			Call::CouncilMembership(_) |
-			Call::TechnicalMembership(_) |
+			Call::TechnicalCommitteeMembership(_) |
 			// democracy, we don't subdivide the calls, so we allow public proposals
 			Call::Democracy(_)
 		)
