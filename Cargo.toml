@@ -11,6 +11,7 @@ members = [
     'runtime/litmus',
     'runtime/rococo',
     'runtime/moonbase',
+    'runtime/common',
 ]
 
 [profile.release]
@@ -28,3 +29,4 @@ inherits = "release"
 inherits = "release"
 lto = true
 codegen-units = 1
+strip = "symbols"

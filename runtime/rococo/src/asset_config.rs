@@ -41,6 +41,8 @@ impl orml_tokens::Config for Runtime {
 	type ReserveIdentifier = ReserveIdentifier;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 	type WeightInfo = ();
+	type OnNewTokenAccount = ();
+	type OnKilledTokenAccount = ();
 }
 
 impl pallet_asset_manager::Config for Runtime {
