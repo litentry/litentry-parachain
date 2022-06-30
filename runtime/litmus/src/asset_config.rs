@@ -6,7 +6,7 @@ use frame_support::{
 	parameter_types,
 	traits::{ConstU32, Contains},
 };
-use frame_system::EnsureRoot;
+use runtime_common::EnsureRootOrHalfCouncil;
 use sp_runtime::traits::AccountIdConversion;
 use sp_std::prelude::*;
 
@@ -50,7 +50,7 @@ impl pallet_asset_manager::Config for Runtime {
 	type Balance = Balance;
 	type AssetId = AssetId;
 	type ForeignAssetType = CurrencyId;
-	type ForeignAssetModifierOrigin = EnsureRoot<AccountId>;
+	type ForeignAssetModifierOrigin = EnsureRootOrHalfCouncil;
 	type Currency = Balances;
 	type WeightInfo = weights::pallet_asset_manager::WeightInfo<Runtime>;
 }
