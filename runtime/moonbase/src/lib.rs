@@ -767,32 +767,30 @@ construct_runtime! {
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		// Core
-		System: frame_system::{Pallet, Call, Storage, Config, Event<T>} = 0,
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 1,
-		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 2,
-		Utility: pallet_utility::{Pallet, Call, Event} = 3,
-		Multisig: pallet_multisig::{Pallet, Call, Storage, Event<T>} = 4,
-		Proxy: pallet_proxy::{Pallet, Call, Storage, Event<T>} = 5,
-		Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>} = 6,
+		System: frame_system = 0,
+		Timestamp: pallet_timestamp = 1,
+		Scheduler: pallet_scheduler = 2,
+		Utility: pallet_utility= 3,
+		Multisig: pallet_multisig = 4,
+		Proxy: pallet_proxy = 5,
+		Preimage: pallet_preimage = 6,
 
 		// Token related
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 10,
-		Vesting: pallet_vesting::{Pallet, Call, Storage, Event<T>, Config<T>} = 11,
+		Balances: pallet_balances = 10,
+		Vesting: pallet_vesting = 11,
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 12,
-		Treasury: pallet_treasury::{Pallet, Call, Storage, Config, Event<T>} = 13,
+		Treasury: pallet_treasury = 13,
 
 		// Governance
-		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 21,
-		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 22,
-		CouncilMembership: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>, Config<T>} = 23,
-		TechnicalCommittee: pallet_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 24,
-		TechnicalCommitteeMembership: pallet_membership::<Instance2>::{Pallet, Call, Storage, Event<T>, Config<T>} = 25,
+		Democracy: pallet_democracy = 21,
+		Council: pallet_collective::<Instance1> = 22,
+		CouncilMembership: pallet_membership::<Instance1> = 23,
+		TechnicalCommittee: pallet_collective::<Instance2> = 24,
+		TechnicalCommitteeMembership: pallet_membership::<Instance2> = 25,
 
 		// Parachain
-		ParachainSystem: cumulus_pallet_parachain_system::{
-			Pallet, Call, Config, Storage, Inherent, Event<T>, ValidateUnsigned,
-		} = 30,
-		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 31,
+		ParachainSystem: cumulus_pallet_parachain_system = 30,
+		ParachainInfo: parachain_info = 31,
 
 		// Collator support
 		// About the order of these 5 pallets, the comment in cumulus seems to be outdated.
@@ -806,29 +804,29 @@ construct_runtime! {
 		//
 		// also see the comment above `AllPalletsWithSystem` and
 		// https://github.com/litentry/litentry-parachain/issues/336
-		Authorship: pallet_authorship::{Pallet, Call, Storage} = 40,
-		CollatorSelection: pallet_collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>} = 41,
-		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 42,
-		Aura: pallet_aura::{Pallet, Storage, Config<T>} = 43,
-		AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config} = 44,
+		Authorship: pallet_authorship = 40,
+		CollatorSelection: pallet_collator_selection = 41,
+		Session: pallet_session = 42,
+		Aura: pallet_aura = 43,
+		AuraExt: cumulus_pallet_aura_ext = 44,
 
 		// XCM helpers
-		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 50,
-		PolkadotXcm: pallet_xcm::{Pallet, Call, Storage, Event<T>, Origin, Config} = 51,
-		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 52,
-		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 53,
-		XTokens: orml_xtokens::{Pallet, Call, Storage, Event<T>} = 54,
+		XcmpQueue: cumulus_pallet_xcmp_queue = 50,
+		PolkadotXcm: pallet_xcm = 51,
+		CumulusXcm: cumulus_pallet_xcm = 52,
+		DmpQueue: cumulus_pallet_dmp_queue = 53,
+		XTokens: orml_xtokens = 54,
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 55,
 
 		// Moonbase pallets
-		ChainBridge: pallet_bridge::{Pallet, Call, Storage, Event<T>} = 60,
-		BridgeTransfer: pallet_bridge_transfer::{Pallet, Call, Event<T>, Storage} = 61,
-		Drop3: pallet_drop3::{Pallet, Call, Storage, Event<T>} = 62,
-		ExtrinsicFilter: pallet_extrinsic_filter::{Pallet, Call, Storage, Event<T>} = 63,
-		AssetManager: pallet_asset_manager::{Pallet, Call, Storage, Event<T>} = 65, // save 64 for TEE identity Manager?
+		ChainBridge: pallet_bridge = 60,
+		BridgeTransfer: pallet_bridge_transfer = 61,
+		Drop3: pallet_drop3 = 62,
+		ExtrinsicFilter: pallet_extrinsic_filter = 63,
+		AssetManager: pallet_asset_manager = 65, // save 64 for TEE identity Manager?
 
 		// TMP
-		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 255,
+		Sudo: pallet_sudo = 255,
 	}
 }
 
