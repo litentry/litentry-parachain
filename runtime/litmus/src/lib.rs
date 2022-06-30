@@ -804,13 +804,13 @@ construct_runtime! {
 
 		// Token related
 		Balances: pallet_balances= 10,
-		Vesting: pallet_vesting= 11,
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 12,
+		Vesting: pallet_vesting = 11,
+		TransactionPayment: pallet_transaction_payment = 12,
 		Treasury: pallet_treasury = 13,
 
 		// Governance
-		Democracy: pallet_democracy= 21,
-		Council: pallet_collective::<Instance1>= 22,
+		Democracy: pallet_democracy = 21,
+		Council: pallet_collective::<Instance1> = 22,
 		CouncilMembership: pallet_membership::<Instance1> = 23,
 		TechnicalCommittee: pallet_collective::<Instance2> = 24,
 		TechnicalCommitteeMembership: pallet_membership::<Instance2>= 25,
@@ -843,7 +843,7 @@ construct_runtime! {
 		CumulusXcm: cumulus_pallet_xcm = 52,
 		DmpQueue: cumulus_pallet_dmp_queue = 53,
 		XTokens: orml_xtokens = 54,
-		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 55,
+		Tokens: orml_tokens = 55,
 
 		// Litmus pallets
 		ChainBridge: pallet_bridge = 60,
@@ -882,6 +882,7 @@ impl Contains<Call> for BaseCallFilter {
 }
 
 pub struct SafeModeFilter;
+
 impl Contains<Call> for SafeModeFilter {
 	fn contains(_call: &Call) -> bool {
 		false
@@ -889,6 +890,7 @@ impl Contains<Call> for SafeModeFilter {
 }
 
 pub struct NormalModeFilter;
+
 impl Contains<Call> for NormalModeFilter {
 	fn contains(call: &Call) -> bool {
 		matches!(

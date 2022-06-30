@@ -809,7 +809,7 @@ construct_runtime! {
 		// Token related
 		Balances: pallet_balances = 10,
 		Vesting: pallet_vesting = 11,
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 12,
+		TransactionPayment: pallet_transaction_payment = 12,
 		Treasury: pallet_treasury = 13,
 
 		// Governance
@@ -847,7 +847,7 @@ construct_runtime! {
 		CumulusXcm: cumulus_pallet_xcm = 52,
 		DmpQueue: cumulus_pallet_dmp_queue = 53,
 		XTokens: orml_xtokens = 54,
-		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 55,
+		Tokens: orml_tokens = 55,
 
 		// Rococo pallets
 		ChainBridge: pallet_bridge = 60,

@@ -771,7 +771,7 @@ construct_runtime! {
 		// Token related
 		Balances: pallet_balances = 10,
 		Vesting: pallet_vesting = 11,
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage} = 12,
+		TransactionPayment: pallet_transaction_payment = 12,
 		Treasury: pallet_treasury = 13,
 
 		// Governance
