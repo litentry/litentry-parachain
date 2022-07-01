@@ -23,7 +23,8 @@ pub use crate::{
 	AccountId, AssetManager, Balance, Balances, Call, CumulusXcm, DmpQueue, Event, ExtrinsicFilter,
 	MinimumMultiplier, Multisig, Origin, ParachainSystem, PolkadotXcm, Runtime,
 	RuntimeBlockWeights, SlowAdjustingFeeUpdate, System, TargetBlockFullness, Tokens,
-	TransactionByteFee, TransactionPayment, Treasury, Vesting, XTokens, XcmpQueue, UNIT,
+	TransactionByteFee, TransactionPayment, Treasury, Vesting, XTokens, XcmpQueue, CENTS,
+	MILLICENTS, UNIT,
 };
 pub const ALICE: [u8; 32] = [1u8; 32];
 pub const BOB: [u8; 32] = [2u8; 32];
@@ -50,6 +51,9 @@ pub(crate) fn bob() -> AccountId {
 pub(crate) fn charlie() -> AccountId {
 	AccountId::from(CHARLIE)
 }
+
+pub const PARA_A_USER_INITIAL_BALANCE: u128 = 500_000 * UNIT;
+pub const PARA_B_USER_INITIAL_BALANCE: u128 = 600_000 * UNIT;
 
 pub struct ExtBuilder {
 	balances: Vec<(AccountId, Balance)>,
@@ -137,9 +141,8 @@ decl_test_parachain! {
 		DmpMessageHandler = DmpQueue,
 		new_ext = ExtBuilder::default()
 		.balances(vec![
-			// fund Alice and BOB
-			(AccountId::from(ALICE), 500_000_000_000_000_000),
-			(AccountId::from(BOB), 500_000_000_000_000_000),
+			// fund Alice
+			(alice(), PARA_A_USER_INITIAL_BALANCE),
 		]).parachain_id(1).build(),
 	}
 }
@@ -151,9 +154,8 @@ decl_test_parachain! {
 		DmpMessageHandler = DmpQueue,
 		new_ext = ExtBuilder::default()
 		.balances(vec![
-			// fund Alice and BOB
-			(AccountId::from(ALICE), 600_000_000_000_000_000),
-			(AccountId::from(BOB), 600_000_000_000_000_000),
+			// fund BOB
+			(bob(), PARA_B_USER_INITIAL_BALANCE),
 		]).parachain_id(2).build(),
 	}
 }
@@ -163,14 +165,9 @@ pub fn relay_ext() -> sp_io::TestExternalities {
 		.build_storage::<relay::Runtime>()
 		.unwrap();
 
-	pallet_balances::GenesisConfig::<relay::Runtime> {
-		balances: vec![
-			(AccountId::from(ALICE), 700_000_000_000_000_000),
-			(AccountId::from(BOB), 700_000_000_000_000_000),
-		],
-	}
-	.assimilate_storage(&mut t)
-	.unwrap();
+	pallet_balances::GenesisConfig::<relay::Runtime> { balances: vec![] }
+		.assimilate_storage(&mut t)
+		.unwrap();
 
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| relay::System::set_block_number(1));

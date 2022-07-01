@@ -15,6 +15,6 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 mod base_call_filter;
-mod setup;
+pub mod setup;
 mod transaction_payment;
 mod xcm_parachain;
