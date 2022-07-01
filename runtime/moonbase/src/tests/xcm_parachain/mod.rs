@@ -330,7 +330,7 @@ fn test_methods_xtokens_expected_succeed() {
 			1 * UNIT + u128::from(UnitWeightCost::get() * 8) + 11 * CENTS
 		);
 
-		// Sending 1_000 ParaA token after xcm fee to BOB by XTokens::transfer_multiasset_with_fee
+		// Sending 1 UNIT ParaA token after xcm fee to BOB by XTokens::transfer_multiasset_with_fee
 		assert_ok!(XTokens::transfer_multiasset_with_fee(
 			Origin::signed(alice()),
 			Box::new(
@@ -361,7 +361,7 @@ fn test_methods_xtokens_expected_succeed() {
 			1 * UNIT + u128::from(UnitWeightCost::get() * 12) + 111 * CENTS
 		);
 
-		// Sending 10_000 ParaA token after xcm fee to BOB by XTokens::transfer_multicurrencies
+		// Sending 10 UNIT ParaA token after xcm fee to BOB by XTokens::transfer_multicurrencies
 		assert_ok!(XTokens::transfer_multicurrencies(
 			Origin::signed(alice()),
 			vec![(CurrencyId::SelfReserve, u128::from(UnitWeightCost::get() * 4) + 10 * UNIT)],
@@ -380,7 +380,7 @@ fn test_methods_xtokens_expected_succeed() {
 			1 * UNIT + u128::from(UnitWeightCost::get() * 16) + 1111 * CENTS
 		);
 
-		// Sending 100_000 ParaA token after xcm fee to BOB by XTokens::transfer_multiassets
+		// Sending 100 UNIT ParaA token after xcm fee to BOB by XTokens::transfer_multiassets
 		assert_ok!(XTokens::transfer_multiassets(
 			Origin::signed(alice()),
 			Box::new(
