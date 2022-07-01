@@ -43,6 +43,10 @@ jobs:
           if [ "${{ github.event.inputs.rococo }}" = "true" ]; then
             chain="$chain rococo"
           fi
+          if [ "$chain" = "" ]; then
+            echo "::error::Please select at least one chain."
+            exit 1
+          fi
           echo "CHAIN=$chain" >> $GITHUB_ENV
 
       - name: Checkout codes on ${{ github.ref }}
@@ -71,9 +75,6 @@ jobs:
           chain="${{ env.CHAIN }}"
           if [ "$arg" = "*" ]; then
             arg="\\$arg";
-          fi
-          if [ "$chain" = "all" ]; then
-            chain="rococo litmus litentry"
           fi
           for c in $chain; do
             ssh -x "${{ env.REMOTE_HOST }}" 'bash -s' < scripts/benchmark-weight-remote.sh "$c" "${GITHUB_REF#refs/heads/}" "$arg"
