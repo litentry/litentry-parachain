@@ -236,5 +236,6 @@ fn generate_genesis(
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
 		polkadot_xcm: PolkadotXcmConfig { safe_xcm_version: Some(SAFE_XCM_VERSION) },
+		transaction_payment: Default::default(),
 	}
 }
