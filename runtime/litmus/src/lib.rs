@@ -126,7 +126,7 @@ pub type Executive = frame_executive::Executive<
 	// see https://github.com/paritytech/substrate/pull/10043
 	//
 	// With this type the hooks of pallets will be executed
-	// in the order that they are declared in `constrcut_runtime!`
+	// in the order that they are declared in `construct_runtime!`
 	// it was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
@@ -777,7 +777,7 @@ construct_runtime! {
 	{
 		// Core
 		System: frame_system = 0,
-		Timestamp: pallet_timestamp= 1,
+		Timestamp: pallet_timestamp = 1,
 		Scheduler: pallet_scheduler = 2,
 		Utility: pallet_utility = 3,
 		Multisig: pallet_multisig = 4,
@@ -785,7 +785,7 @@ construct_runtime! {
 		Preimage: pallet_preimage = 6,
 
 		// Token related
-		Balances: pallet_balances= 10,
+		Balances: pallet_balances = 10,
 		Vesting: pallet_vesting = 11,
 		TransactionPayment: pallet_transaction_payment = 12,
 		Treasury: pallet_treasury = 13,

@@ -121,7 +121,7 @@ pub type Executive = frame_executive::Executive<
 	// see https://github.com/paritytech/substrate/pull/10043
 	//
 	// With this type the hooks of pallets will be executed
-	// in the order that they are declared in `constrcut_runtime!`.
+	// in the order that they are declared in `construct_runtime!`.
 	// It was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
