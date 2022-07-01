@@ -384,3 +384,37 @@ fn unpaired_block_unblock_fails() {
 		assert_noop!(call.dispatch(Origin::signed(1)), frame_system::Error::<Test>::CallFiltered);
 	});
 }
+
+#[test]
+fn blocked_extrinsic_is_retained_upon_mode_switch() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(ExtrinsicFilter::set_mode(Origin::root(), crate::OperationalMode::Safe));
+
+		// SafeModeFilter disallows pallet_timestamp calls
+		let call: Call = pallet_timestamp::Call::set { now: 100 }.into();
+		assert_noop!(
+			call.clone().dispatch(Origin::none()),
+			frame_system::Error::<Test>::CallFiltered
+		);
+
+		// block the whole pallet_timestamp
+		assert_ok!(ExtrinsicFilter::block_extrinsics(Origin::root(), b"Timestamp".to_vec(), None,));
+
+		// switch to NormalMode, calls to pallet_timestamp should still be filtered out
+		assert_ok!(ExtrinsicFilter::set_mode(Origin::root(), crate::OperationalMode::Normal));
+		assert_noop!(
+			call.clone().dispatch(Origin::none()),
+			frame_system::Error::<Test>::CallFiltered
+		);
+
+		// unblock from NormalMode works
+		assert_ok!(ExtrinsicFilter::unblock_extrinsics(
+			Origin::root(),
+			b"Timestamp".to_vec(),
+			None,
+		));
+
+		// ... and takes effect
+		assert_ok!(call.dispatch(Origin::none()));
+	});
+}
