@@ -168,10 +168,7 @@ fn test_xtokens_weight_parameter() {
 			0
 		);
 		// Check the treasury of remote chain's asset XCM
-		assert_eq!(
-			Tokens::free_balance(1, &XcmFeesAccount::get()),
-			0
-		);
+		assert_eq!(Tokens::free_balance(1, &XcmFeesAccount::get()), 0);
 	});
 
 	ParaA::execute_with(|| {
