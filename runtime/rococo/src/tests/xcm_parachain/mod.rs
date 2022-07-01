@@ -16,7 +16,10 @@
 
 use super::setup::*;
 use crate::{
-	xcm_config::{CurrencyId, CurrencyIdMultiLocationConvert, LocationToAccountId, UnitWeightCost},
+	xcm_config::{
+		CurrencyId, CurrencyIdMultiLocationConvert, LocationToAccountId, UnitWeightCost,
+		XcmFeesAccount,
+	},
 	Origin,
 };
 use cumulus_primitives_core::{ParaId, PersistedValidationData};
@@ -36,6 +39,8 @@ use xcm_executor::traits::Convert as xcmConvert;
 use xcm_simulator::TestExt;
 
 pub mod relay_sproof_builder;
+
+pub const RELAY_UNIT: u128 = 1;
 
 fn para_account(x: u32) -> AccountId32 {
 	<relay::SovereignAccountOf as xcmConvert<MultiLocation, AccountId32>>::convert(
@@ -66,9 +71,9 @@ fn test_xtokens_recognize_multilocation() {
 		// Wrong Multilocation does not pass
 		assert_noop!(
 			XTokens::transfer(
-				Origin::signed(AccountId::from(ALICE)),
+				Origin::signed(alice()),
 				CurrencyId::SelfReserve,
-				1_000_000_000_000,
+				1 * UNIT,
 				Box::new((Parent, Parachain(2)).into()),
 				UnitWeightCost::get() * 4
 			),
@@ -76,22 +81,19 @@ fn test_xtokens_recognize_multilocation() {
 		);
 
 		assert_ok!(XTokens::transfer(
-			Origin::signed(AccountId::from(ALICE)),
+			Origin::signed(alice()),
 			CurrencyId::SelfReserve,
-			1_000_000_000_000,
+			1 * UNIT,
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
 			UnitWeightCost::get() * 4
 		));
-		assert_eq!(
-			Balances::free_balance(&AccountId::from(ALICE)),
-			500_000_000_000_000_000 - 1_000_000_000_000
-		);
+		assert_eq!(Balances::free_balance(&alice()), PARA_A_USER_INITIAL_BALANCE - 1 * UNIT);
 		assert_eq!(
 			Balances::free_balance(&sibling_account(2)),
-			1_000_000_000_000 /* Notice this is interesting, as it suggest local preserve XCM
-			                   * fee belongs to remote chain, not local chain */
+			1 * UNIT /* Notice this is interesting, as it suggest local preserve XCM
+			          * fee belongs to remote chain, not local chain */
 		);
 	});
 
@@ -99,16 +101,21 @@ fn test_xtokens_recognize_multilocation() {
 		assert_eq!(
 			Tokens::free_balance(
 				1, // Asset_id=1. The first registered Token in Para B
-				&AccountId::from(BOB)
+				&bob()
 			),
-			u128::from(1_000_000_000_000 - UnitWeightCost::get() * 4)
+			1 * UNIT - u128::from(UnitWeightCost::get() * 4)
+		);
+		// Check the treasury of remote chain's asset XCM
+		assert_eq!(
+			Tokens::free_balance(1, &XcmFeesAccount::get()),
+			u128::from(UnitWeightCost::get() * 4)
 		);
 
 		// Send ParaA token back to ParachainA's BOB
 		assert_ok!(XTokens::transfer(
-			Origin::signed(AccountId::from(BOB)),
+			Origin::signed(bob()),
 			CurrencyId::ParachainReserve(Box::new(para_native_token_multilocation(1))),
-			500_000_000_000,
+			40 * CENTS,
 			Box::new(
 				(Parent, Parachain(1), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
@@ -118,13 +125,86 @@ fn test_xtokens_recognize_multilocation() {
 
 	ParaA::execute_with(|| {
 		assert_eq!(
-			Balances::free_balance(&AccountId::from(BOB)),
-			u128::from(500_000_000_000 - UnitWeightCost::get() * 4)
+			Balances::free_balance(&bob()),
+			40 * CENTS - u128::from(UnitWeightCost::get() * 4)
 		);
 		assert_eq!(
 			Balances::free_balance(&sibling_account(2)),
-			500_000_000_000 /* When assets transfer back, the xcm fee is moved to
-			                 * XcmFeesAccount, which is Treasury */
+			60 * CENTS /* When non-native assets transferred, the xcm fee is moved to
+			            * XcmFeesAccount, which is Treasury, but native token just burned */
+		);
+		assert_eq!(Balances::free_balance(&XcmFeesAccount::get()), 0);
+	});
+}
+
+// If this test fail, at least some part of XCM fee rule changes
+#[test]
+fn test_xtokens_weight_parameter() {
+	relaychain_parachains_set_up();
+	ParaA::execute_with(|| {
+		// Insufficient weight still pass, but has no effect on remote chain
+		assert_ok!(XTokens::transfer(
+			Origin::signed(alice()),
+			CurrencyId::SelfReserve,
+			1 * UNIT,
+			Box::new(
+				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
+			),
+			UnitWeightCost::get() * 1
+		));
+		assert_eq!(Balances::free_balance(&alice()), PARA_A_USER_INITIAL_BALANCE - 1 * UNIT);
+		assert_eq!(
+			Balances::free_balance(&sibling_account(2)),
+			1 * UNIT /* Notice this is interesting, as it suggest local preserve XCM
+			          * fee belongs to remote chain, not local chain */
+		);
+	});
+	ParaB::execute_with(|| {
+		assert_eq!(
+			Tokens::free_balance(
+				1, // Asset_id=1. The first registered Token in Para B
+				&bob()
+			),
+			0
+		);
+		// Check the treasury of remote chain's asset XCM
+		assert_eq!(
+			Tokens::free_balance(1, &XcmFeesAccount::get()),
+			0
+		);
+	});
+
+	ParaA::execute_with(|| {
+		// Redundant weight pass but remote the chain charges its own rule and returns the surplus
+		assert_ok!(XTokens::transfer(
+			Origin::signed(alice()),
+			CurrencyId::SelfReserve,
+			1 * UNIT,
+			Box::new(
+				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
+			),
+			UnitWeightCost::get() * 5
+		));
+		assert_eq!(Balances::free_balance(&alice()), PARA_A_USER_INITIAL_BALANCE - 2 * UNIT);
+		assert_eq!(
+			Balances::free_balance(&sibling_account(2)),
+			2 * UNIT /* Notice this is interesting, as it suggest local preserve XCM
+			          * fee belongs to remote chain, not local chain */
+		);
+	});
+
+	ParaB::execute_with(|| {
+		assert_eq!(
+			Tokens::free_balance(
+				1, // Asset_id=1. The first registered Token in Para B
+				&bob()
+			),
+			1 * UNIT - u128::from(UnitWeightCost::get() * 4)
+		);
+		// Check the treasury of remote chain's asset XCM
+		assert_eq!(
+			Tokens::free_balance(1, &XcmFeesAccount::get()),
+			u128::from(UnitWeightCost::get() * 4)
 		);
 	});
 }
@@ -133,11 +213,11 @@ fn test_xtokens_recognize_multilocation() {
 fn test_pallet_xcm_recognize_multilocation() {
 	relaychain_parachains_set_up();
 	ParaA::execute_with(|| {
-		assert_eq!(Balances::free_balance(&AccountId::from(ALICE)), 500_000_000_000_000_000);
+		assert_eq!(Balances::free_balance(&alice()), PARA_A_USER_INITIAL_BALANCE);
 		// It is sent but with XCM execution failed as Parachain is not exist.
 		// Unregistereed Parachain Multilocation does not pass
 		assert_ok!(PolkadotXcm::reserve_transfer_assets(
-			Origin::signed(AccountId::from(ALICE)),
+			Origin::signed(alice()),
 			Box::new((Parent, Parachain(4)).into()),
 			Box::new((Junction::AccountId32 { network: Any, id: BOB }).into().into()),
 			Box::new(
@@ -145,13 +225,13 @@ fn test_pallet_xcm_recognize_multilocation() {
 					id: AssetId::Concrete(
 						CurrencyIdMultiLocationConvert::convert(CurrencyId::SelfReserve).unwrap(),
 					),
-					fun: Fungibility::Fungible(1_000_000_000_000),
+					fun: Fungibility::Fungible(1 * UNIT),
 				}]
 				.into()
 			),
 			0
 		));
-		assert_eq!(Balances::free_balance(&AccountId::from(ALICE)), 499_999_000_000_000_000);
+		assert_eq!(Balances::free_balance(&alice()), PARA_A_USER_INITIAL_BALANCE - 1 * UNIT);
 		assert_eq!(Balances::free_balance(&sibling_account(2)), 0);
 		assert_eq!(
 			last_event(),
@@ -163,7 +243,7 @@ fn test_pallet_xcm_recognize_multilocation() {
 			)))
 		);
 		assert_ok!(PolkadotXcm::reserve_transfer_assets(
-			Origin::signed(AccountId::from(ALICE)),
+			Origin::signed(alice()),
 			Box::new((Parent, Parachain(2)).into()),
 			Box::new((Junction::AccountId32 { network: Any, id: BOB }).into().into()),
 			Box::new(
@@ -171,16 +251,16 @@ fn test_pallet_xcm_recognize_multilocation() {
 					id: AssetId::Concrete(
 						CurrencyIdMultiLocationConvert::convert(CurrencyId::SelfReserve).unwrap(),
 					),
-					fun: Fungibility::Fungible(2_000_000_000_000),
+					fun: Fungibility::Fungible(2 * UNIT),
 				}]
 				.into()
 			),
 			0
 		));
-		assert_eq!(Balances::free_balance(&AccountId::from(ALICE)), 499_997_000_000_000_000);
+		assert_eq!(Balances::free_balance(&alice()), PARA_A_USER_INITIAL_BALANCE - 3 * UNIT);
 		assert_eq!(
 			Balances::free_balance(&sibling_account(2)),
-			2_000_000_000_000 // Only non trpped asset is in sovereign account
+			2 * UNIT // Only non trpped asset is in sovereign account
 		);
 		assert_eq!(
 			last_event(),
@@ -194,9 +274,9 @@ fn test_pallet_xcm_recognize_multilocation() {
 		assert_eq!(
 			Tokens::free_balance(
 				1, // Asset_id=1. The first registered Token in Para B
-				&AccountId::from(BOB)
+				&bob()
 			),
-			u128::from(2_000_000_000_000 - UnitWeightCost::get() * 4)
+			2 * UNIT - u128::from(UnitWeightCost::get() * 4)
 		);
 	});
 	// Notice so far pallet_xcm does not handle the asset transfer back - 0.9.23
@@ -207,18 +287,15 @@ fn test_methods_xtokens_expected_succeed() {
 	relaychain_parachains_set_up();
 	ParaA::execute_with(|| {
 		// Solve the DustLost first
-		let _ = pallet_balances::Pallet::<Runtime>::deposit_creating(
-			&sibling_account(2),
-			1_000_000_000_000,
-		);
+		let _ = pallet_balances::Pallet::<Runtime>::deposit_creating(&sibling_account(2), 1 * UNIT);
 
 		// Sending 10 ParaA token after xcm fee to BOB by XTokens::transfer_multiasset
 		assert_ok!(XTokens::transfer_multiasset(
-			Origin::signed(AccountId::from(ALICE)),
+			Origin::signed(alice()),
 			Box::new(
 				MultiAsset {
 					id: Concrete(para_native_token_multilocation(1)),
-					fun: Fungible((UnitWeightCost::get() * 4 + 10).into())
+					fun: Fungible(u128::from(UnitWeightCost::get() * 4) + 1 * CENTS)
 				}
 				.into()
 			),
@@ -228,19 +305,19 @@ fn test_methods_xtokens_expected_succeed() {
 			UnitWeightCost::get() * 4
 		));
 		assert_eq!(
-			Balances::free_balance(&AccountId::from(ALICE)),
-			u128::from(500_000_000_000_000_000 - UnitWeightCost::get() * 4 - 10)
+			Balances::free_balance(&alice()),
+			PARA_A_USER_INITIAL_BALANCE - u128::from(UnitWeightCost::get() * 4) - 1 * CENTS
 		);
 		assert_eq!(
 			Balances::free_balance(&sibling_account(2)),
-			1_000_000_000_000 + u128::from(UnitWeightCost::get() * 4 + 10)
+			1 * UNIT + u128::from(UnitWeightCost::get() * 4) + 1 * CENTS
 		);
 
 		// Sending 100 ParaA token after xcm fee to BOB by XTokens::transfer_with_fee
 		assert_ok!(XTokens::transfer_with_fee(
-			Origin::signed(AccountId::from(ALICE)),
+			Origin::signed(alice()),
 			CurrencyId::SelfReserve,
-			100,
+			10 * CENTS,
 			(UnitWeightCost::get() * 4).into(),
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
@@ -248,21 +325,21 @@ fn test_methods_xtokens_expected_succeed() {
 			UnitWeightCost::get() * 4
 		));
 		assert_eq!(
-			Balances::free_balance(&AccountId::from(ALICE)),
-			u128::from(500_000_000_000_000_000 - UnitWeightCost::get() * 8 - 110)
+			Balances::free_balance(&alice()),
+			PARA_A_USER_INITIAL_BALANCE - u128::from(UnitWeightCost::get() * 8) - 11 * CENTS
 		);
 		assert_eq!(
 			Balances::free_balance(&sibling_account(2)),
-			1_000_000_000_000 + u128::from(UnitWeightCost::get() * 8 + 110)
+			1 * UNIT + u128::from(UnitWeightCost::get() * 8) + 11 * CENTS
 		);
 
 		// Sending 1_000 ParaA token after xcm fee to BOB by XTokens::transfer_multiasset_with_fee
 		assert_ok!(XTokens::transfer_multiasset_with_fee(
-			Origin::signed(AccountId::from(ALICE)),
+			Origin::signed(alice()),
 			Box::new(
 				MultiAsset {
 					id: Concrete(para_native_token_multilocation(1)),
-					fun: Fungible(1000)
+					fun: Fungible(1 * UNIT)
 				}
 				.into()
 			),
@@ -279,18 +356,18 @@ fn test_methods_xtokens_expected_succeed() {
 			UnitWeightCost::get() * 4
 		));
 		assert_eq!(
-			Balances::free_balance(&AccountId::from(ALICE)),
-			u128::from(500_000_000_000_000_000 - UnitWeightCost::get() * 12 - 1_110)
+			Balances::free_balance(&alice()),
+			PARA_A_USER_INITIAL_BALANCE - u128::from(UnitWeightCost::get() * 12) - 111 * CENTS
 		);
 		assert_eq!(
 			Balances::free_balance(&sibling_account(2)),
-			1_000_000_000_000 + u128::from(UnitWeightCost::get() * 12 + 1_110)
+			1 * UNIT + u128::from(UnitWeightCost::get() * 12) + 111 * CENTS
 		);
 
 		// Sending 10_000 ParaA token after xcm fee to BOB by XTokens::transfer_multicurrencies
 		assert_ok!(XTokens::transfer_multicurrencies(
-			Origin::signed(AccountId::from(ALICE)),
-			vec![(CurrencyId::SelfReserve, (UnitWeightCost::get() * 4 + 10_000).into())],
+			Origin::signed(alice()),
+			vec![(CurrencyId::SelfReserve, u128::from(UnitWeightCost::get() * 4) + 10 * UNIT)],
 			0,
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
@@ -298,21 +375,21 @@ fn test_methods_xtokens_expected_succeed() {
 			UnitWeightCost::get() * 4
 		));
 		assert_eq!(
-			Balances::free_balance(&AccountId::from(ALICE)),
-			u128::from(500_000_000_000_000_000 - UnitWeightCost::get() * 16 - 11_110)
+			Balances::free_balance(&alice()),
+			PARA_A_USER_INITIAL_BALANCE - u128::from(UnitWeightCost::get() * 16) - 1111 * CENTS
 		);
 		assert_eq!(
 			Balances::free_balance(&sibling_account(2)),
-			1_000_000_000_000 + u128::from(UnitWeightCost::get() * 16 + 11_110)
+			1 * UNIT + u128::from(UnitWeightCost::get() * 16) + 1111 * CENTS
 		);
 
 		// Sending 100_000 ParaA token after xcm fee to BOB by XTokens::transfer_multiassets
 		assert_ok!(XTokens::transfer_multiassets(
-			Origin::signed(AccountId::from(ALICE)),
+			Origin::signed(alice()),
 			Box::new(
 				vec![MultiAsset {
 					id: Concrete(para_native_token_multilocation(1)),
-					fun: Fungible((UnitWeightCost::get() * 4 + 100_000).into())
+					fun: Fungible(u128::from(UnitWeightCost::get() * 4) + 100 * UNIT)
 				}]
 				.into()
 			),
@@ -323,12 +400,12 @@ fn test_methods_xtokens_expected_succeed() {
 			UnitWeightCost::get() * 4
 		));
 		assert_eq!(
-			Balances::free_balance(&AccountId::from(ALICE)),
-			u128::from(500_000_000_000_000_000 - UnitWeightCost::get() * 20 - 111_110)
+			Balances::free_balance(&alice()),
+			PARA_A_USER_INITIAL_BALANCE - u128::from(UnitWeightCost::get() * 20) - 11111 * CENTS
 		);
 		assert_eq!(
 			Balances::free_balance(&sibling_account(2)),
-			1_000_000_000_000 + u128::from(UnitWeightCost::get() * 20 + 111_110)
+			1 * UNIT + u128::from(UnitWeightCost::get() * 20) + 11111 * CENTS
 		);
 	});
 
@@ -336,9 +413,9 @@ fn test_methods_xtokens_expected_succeed() {
 		assert_eq!(
 			Tokens::free_balance(
 				1, // Asset_id=1. The first registered Token: ParaA Token in Para B
-				&AccountId::from(BOB)
+				&bob()
 			),
-			111_110
+			11111 * CENTS
 		);
 	});
 }
@@ -351,9 +428,9 @@ fn test_methods_xtokens_expected_fail() {
 		// Dust Lost make transaction failed
 		assert_noop!(
 			XTokens::transfer(
-				Origin::signed(AccountId::from(ALICE)),
+				Origin::signed(alice()),
 				CurrencyId::SelfReserve,
-				(UnitWeightCost::get() * 4 + 1).into(),
+				u128::from(UnitWeightCost::get() * 4) + 100 * MILLICENTS,
 				Box::new(
 					(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
 				),
@@ -361,7 +438,7 @@ fn test_methods_xtokens_expected_fail() {
 			),
 			orml_xtokens::Error::<Runtime>::XcmExecutionFailed
 		);
-		assert_eq!(Balances::free_balance(&AccountId::from(ALICE)), 500_000_000_000_000_000);
+		assert_eq!(Balances::free_balance(&alice()), PARA_A_USER_INITIAL_BALANCE);
 		assert_eq!(
 			Balances::free_balance(&sibling_account(2)),
 			// This is caused by DustLost of pallet_balances
@@ -379,9 +456,9 @@ fn test_methods_pallet_xcm_expected_succeed() {
 	relaychain_parachains_set_up();
 
 	ParaA::execute_with(|| {
-		assert_eq!(Balances::free_balance(&AccountId::from(ALICE)), 500_000_000_000_000_000);
+		assert_eq!(Balances::free_balance(&alice()), PARA_A_USER_INITIAL_BALANCE);
 		assert_ok!(PolkadotXcm::reserve_transfer_assets(
-			Origin::signed(AccountId::from(ALICE)),
+			Origin::signed(alice()),
 			Box::new((Parent, Parachain(2)).into()),
 			Box::new((Junction::AccountId32 { network: Any, id: BOB }).into().into()),
 			Box::new(
@@ -389,13 +466,15 @@ fn test_methods_pallet_xcm_expected_succeed() {
 					id: AssetId::Concrete(
 						CurrencyIdMultiLocationConvert::convert(CurrencyId::SelfReserve).unwrap(),
 					),
-					fun: Fungibility::Fungible((UnitWeightCost::get() * 4 + 1).into()),
+					fun: Fungibility::Fungible(
+						u128::from(UnitWeightCost::get() * 4) + 100 * MILLICENTS
+					),
 				}]
 				.into()
 			),
 			0
 		));
-		assert_eq!(Balances::free_balance(&AccountId::from(ALICE)), 500_000_000_000_000_000);
+		assert_eq!(Balances::free_balance(&alice()), PARA_A_USER_INITIAL_BALANCE);
 		// Unlike orml_xtoken, pallet_xcm fails with event when DustLost issue happens
 		assert_eq!(
 			last_event(),
@@ -405,19 +484,16 @@ fn test_methods_pallet_xcm_expected_succeed() {
 			)))
 		);
 		// Solve the DustLost
-		let _ = pallet_balances::Pallet::<Runtime>::deposit_creating(
-			&sibling_account(2),
-			1_000_000_000_000,
-		);
+		let _ = pallet_balances::Pallet::<Runtime>::deposit_creating(&sibling_account(2), 1 * UNIT);
 
 		assert_ok!(PolkadotXcm::reserve_transfer_assets(
-			Origin::signed(AccountId::from(ALICE)),
+			Origin::signed(alice()),
 			Box::new((Parent, Parachain(2)).into()),
 			Box::new((Junction::AccountId32 { network: Any, id: BOB }).into().into()),
 			Box::new(
 				vec![MultiAsset {
 					id: Concrete(para_native_token_multilocation(1)),
-					fun: Fungible((UnitWeightCost::get() * 4 + 10).into())
+					fun: Fungible(u128::from(UnitWeightCost::get() * 4) + 1 * CENTS)
 				}]
 				.into()
 			),
@@ -430,22 +506,22 @@ fn test_methods_pallet_xcm_expected_succeed() {
 			)))
 		);
 		assert_eq!(
-			Balances::free_balance(&AccountId::from(ALICE)),
-			u128::from(500_000_000_000_000_000 - UnitWeightCost::get() * 4 - 10)
+			Balances::free_balance(&alice()),
+			PARA_A_USER_INITIAL_BALANCE - u128::from(UnitWeightCost::get() * 4) - 1 * CENTS
 		);
 		assert_eq!(
 			Balances::free_balance(&sibling_account(2)),
-			1_000_000_000_000 + u128::from(UnitWeightCost::get() * 4 + 10)
+			1 * UNIT + u128::from(UnitWeightCost::get() * 4) + 1 * CENTS
 		);
 
 		assert_ok!(PolkadotXcm::limited_reserve_transfer_assets(
-			Origin::signed(AccountId::from(ALICE)),
+			Origin::signed(alice()),
 			Box::new((Parent, Parachain(2)).into()),
 			Box::new((Junction::AccountId32 { network: Any, id: BOB }).into().into()),
 			Box::new(
 				vec![MultiAsset {
 					id: Concrete(para_native_token_multilocation(1)),
-					fun: Fungible((UnitWeightCost::get() * 4 + 100).into())
+					fun: Fungible(u128::from(UnitWeightCost::get() * 4) + 10 * CENTS)
 				}]
 				.into()
 			),
@@ -459,12 +535,12 @@ fn test_methods_pallet_xcm_expected_succeed() {
 			)))
 		);
 		assert_eq!(
-			Balances::free_balance(&AccountId::from(ALICE)),
-			u128::from(500_000_000_000_000_000 - UnitWeightCost::get() * 8 - 110)
+			Balances::free_balance(&alice()),
+			PARA_A_USER_INITIAL_BALANCE - u128::from(UnitWeightCost::get() * 8) - 11 * CENTS
 		);
 		assert_eq!(
 			Balances::free_balance(&sibling_account(2)),
-			1_000_000_000_000 + u128::from(UnitWeightCost::get() * 8 + 110)
+			1 * UNIT + u128::from(UnitWeightCost::get() * 8) + 11 * CENTS
 		);
 	});
 
@@ -472,9 +548,9 @@ fn test_methods_pallet_xcm_expected_succeed() {
 		assert_eq!(
 			Tokens::free_balance(
 				1, // Asset_id=1. The first registered Token: ParaA Token in Para B
-				&AccountId::from(BOB)
+				&bob()
 			),
-			110
+			11 * CENTS
 		);
 	});
 }
@@ -486,7 +562,7 @@ fn test_methods_pallet_xcm_expected_fail() {
 		// Mimic the Xcm message sending
 		let assets = vec![MultiAsset {
 			id: Concrete(para_native_token_multilocation(1)),
-			fun: Fungible((UnitWeightCost::get() * 4 + 100).into()),
+			fun: Fungible(u128::from(UnitWeightCost::get() * 4) + 10 * CENTS),
 		}]
 		.into();
 		let dest = (Parent, Parachain(2)).into();
@@ -510,7 +586,7 @@ fn test_methods_pallet_xcm_expected_fail() {
 		// setting here in future
 		assert_noop!(
 			PolkadotXcm::execute(
-				Origin::signed(AccountId::from(ALICE)),
+				Origin::signed(alice()),
 				Box::new(xcm::VersionedXcm::V2(message)),
 				UnitWeightCost::get() * 4
 			),
@@ -520,13 +596,13 @@ fn test_methods_pallet_xcm_expected_fail() {
 		// Stopped by filter， nothing passed by execute, pallet_xcm::XcmTeleportFilter
 		assert_noop!(
 			PolkadotXcm::teleport_assets(
-				Origin::signed(AccountId::from(ALICE)),
+				Origin::signed(alice()),
 				Box::new((Parent, Parachain(2)).into()),
 				Box::new((Junction::AccountId32 { network: Any, id: BOB }).into().into()),
 				Box::new(
 					vec![MultiAsset {
 						id: Concrete(para_native_token_multilocation(1)),
-						fun: Fungible((UnitWeightCost::get() * 4 + 10).into())
+						fun: Fungible(u128::from(UnitWeightCost::get() * 4) + 1 * CENTS)
 					}]
 					.into()
 				),
@@ -537,13 +613,13 @@ fn test_methods_pallet_xcm_expected_fail() {
 
 		assert_noop!(
 			PolkadotXcm::limited_teleport_assets(
-				Origin::signed(AccountId::from(ALICE)),
+				Origin::signed(alice()),
 				Box::new((Parent, Parachain(2)).into()),
 				Box::new((Junction::AccountId32 { network: Any, id: BOB }).into().into()),
 				Box::new(
 					vec![MultiAsset {
 						id: Concrete(para_native_token_multilocation(1)),
-						fun: Fungible((UnitWeightCost::get() * 4 + 100).into())
+						fun: Fungible(u128::from(UnitWeightCost::get() * 4) + 10 * CENTS)
 					}]
 					.into()
 				),
@@ -564,7 +640,7 @@ fn test_pallet_xcm_send_capacity_between_sibling() {
 		// Mimic the Xcm message sending
 		let assets = vec![MultiAsset {
 			id: Concrete(para_native_token_multilocation(1)),
-			fun: Fungible((UnitWeightCost::get() * 4 + 10_000_000_000_000).into()),
+			fun: Fungible(u128::from(UnitWeightCost::get() * 4) + 10 * UNIT),
 		}]
 		.into();
 		let xcm = Xcm(vec![
@@ -585,7 +661,7 @@ fn test_pallet_xcm_send_capacity_between_sibling() {
 		]);
 		// User sending the raw Xcm works successfully
 		assert_ok!(PolkadotXcm::send(
-			Origin::signed(AccountId::from(ALICE)),
+			Origin::signed(alice()),
 			Box::new((Parent, Parachain(2)).into()),
 			Box::new(xcm::VersionedXcm::V2(xcm)),
 		));
@@ -595,7 +671,7 @@ fn test_pallet_xcm_send_capacity_between_sibling() {
 		assert_eq!(
 			Tokens::free_balance(
 				1, // Asset_id=1. The first registered Token in Para B
-				&AccountId::from(BOB)
+				&bob()
 			),
 			0
 		);
@@ -606,7 +682,7 @@ fn test_pallet_xcm_send_capacity_between_sibling() {
 		// Mimic the Xcm message sending
 		let assets = vec![MultiAsset {
 			id: Concrete(para_native_token_multilocation(1)),
-			fun: Fungible((UnitWeightCost::get() * 4 + 10_000_000_000_000).into()),
+			fun: Fungible(u128::from(UnitWeightCost::get() * 4) + 10 * UNIT),
 		}]
 		.into();
 		let xcm = Xcm(vec![
@@ -637,20 +713,20 @@ fn test_pallet_xcm_send_capacity_between_sibling() {
 		assert_eq!(
 			Tokens::free_balance(
 				1, // Asset_id=1. The first registered Token in Para B
-				&AccountId::from(BOB)
+				&bob()
 			),
-			10_000_000_000_000
+			10 * UNIT
 		);
 	});
 	ParaA::execute_with(|| {
 		// Fill up the missing assets
 		let _ = pallet_balances::Pallet::<Runtime>::deposit_creating(
 			&sibling_account(2),
-			u128::from(UnitWeightCost::get() * 4 + 10_000_000_000_000),
+			u128::from(UnitWeightCost::get() * 4) + 10 * UNIT,
 		);
 		assert_eq!(
 			Balances::free_balance(&sibling_account(2)),
-			u128::from(UnitWeightCost::get() * 4 + 10_000_000_000_000)
+			u128::from(UnitWeightCost::get() * 4) + 10 * UNIT
 		);
 	});
 
@@ -659,7 +735,7 @@ fn test_pallet_xcm_send_capacity_between_sibling() {
 		// Mimic the Xcm message sending
 		let assets = vec![MultiAsset {
 			id: Concrete(para_native_token_multilocation(1)),
-			fun: Fungible((UnitWeightCost::get() * 4 + 7_500_000_000_000).into()),
+			fun: Fungible(u128::from(UnitWeightCost::get() * 4) + 7 * UNIT),
 		}]
 		.into();
 		let xcm = Xcm(vec![
@@ -680,7 +756,7 @@ fn test_pallet_xcm_send_capacity_between_sibling() {
 		]);
 		// User sending the raw Xcm works successfully
 		assert_ok!(PolkadotXcm::send(
-			Origin::signed(AccountId::from(ALICE)),
+			Origin::signed(alice()),
 			Box::new((Parent, Parachain(1)).into()),
 			Box::new(xcm::VersionedXcm::V2(xcm)),
 		));
@@ -689,9 +765,9 @@ fn test_pallet_xcm_send_capacity_between_sibling() {
 		// The remote received and ignored
 		assert_eq!(
 			Balances::free_balance(&sibling_account(2)),
-			u128::from(UnitWeightCost::get() * 4 + 10_000_000_000_000)
+			u128::from(UnitWeightCost::get() * 4) + 10 * UNIT
 		);
-		assert_eq!(Balances::free_balance(&AccountId::from(BOB)), 0);
+		assert_eq!(Balances::free_balance(&bob()), 0);
 	});
 
 	// Root on Parachain B want to manipulate the soveregin account of Parachain B on Parachain A
@@ -699,7 +775,7 @@ fn test_pallet_xcm_send_capacity_between_sibling() {
 		// Mimic the Xcm message sending
 		let assets = vec![MultiAsset {
 			id: Concrete(para_native_token_multilocation(1)),
-			fun: Fungible((UnitWeightCost::get() * 4 + 7_500_000_000_000).into()),
+			fun: Fungible(u128::from(UnitWeightCost::get() * 4) + 7 * UNIT),
 		}]
 		.into();
 		let xcm = Xcm(vec![
@@ -727,8 +803,8 @@ fn test_pallet_xcm_send_capacity_between_sibling() {
 	});
 	ParaA::execute_with(|| {
 		// The remote received and handled; So we trust root power no matter.
-		assert_eq!(Balances::free_balance(&sibling_account(2)), 2_500_000_000_000);
-		assert_eq!(Balances::free_balance(&AccountId::from(BOB)), 7_500_000_000_000);
+		assert_eq!(Balances::free_balance(&sibling_account(2)), 3 * UNIT);
+		assert_eq!(Balances::free_balance(&bob()), 7 * UNIT);
 	});
 }
 
@@ -745,9 +821,9 @@ fn test_pallet_xcm_send_capacity_without_transact() {
 		assert_ok!(AssetManager::set_asset_units_per_second(
 			RawOrigin::Root.into(),
 			2,
-			50_000 /*  Although does not matter here
-			        *1_000_000_000_000 / 20_000_000; Since Para UnitWeightCost : Relay
-			        * UnitWeightCost = 200_000_000 : 10 */
+			50_000 * RELAY_UNIT /*  Although does not matter here
+			                     *1_000_000_000_000 / 20_000_000; Since Para UnitWeightCost :
+			                     * Relay UnitWeightCost = 200_000_000 : 10 */
 		));
 	});
 
@@ -756,7 +832,7 @@ fn test_pallet_xcm_send_capacity_without_transact() {
 		// Mimic the Xcm message sending
 		let assets = vec![MultiAsset {
 			id: Concrete((Parent, Here).into()),
-			fun: Fungible(10 * 4 + 10_000),
+			fun: Fungible(10 * 4 * RELAY_UNIT + 10_000 * RELAY_UNIT),
 		}]
 		.into();
 		let xcm = Xcm(vec![
@@ -774,14 +850,14 @@ fn test_pallet_xcm_send_capacity_without_transact() {
 		]);
 		// User sending the raw Xcm works successfully
 		assert_ok!(pallet_xcm::Pallet::<relay::Runtime>::send(
-			relay::Origin::signed(AccountId::from(ALICE)),
+			relay::Origin::signed(alice()),
 			Box::new(Parachain(1).into().into()),
 			Box::new(xcm::VersionedXcm::V2(xcm)),
 		));
 	});
 	ParaA::execute_with(|| {
 		// Message ignored
-		assert_eq!(Tokens::free_balance(2, &AccountId::from(BOB)), 0);
+		assert_eq!(Tokens::free_balance(2, &bob()), 0);
 	});
 
 	// Relay root manipulate the soveregin account of Relay on Parachain A succeed
@@ -789,7 +865,7 @@ fn test_pallet_xcm_send_capacity_without_transact() {
 		// Mimic the Xcm message sending
 		let assets = vec![MultiAsset {
 			id: Concrete((Parent, Here).into()),
-			fun: Fungible(10 * 4 + 10_000),
+			fun: Fungible(10 * 4 * RELAY_UNIT + 10_000 * RELAY_UNIT),
 		}]
 		.into();
 		let xcm = Xcm(vec![
@@ -797,7 +873,7 @@ fn test_pallet_xcm_send_capacity_without_transact() {
 			ClearOrigin,
 			BuyExecution {
 				fees: MultiAsset { id: Concrete((Parent, Here).into()), fun: Fungible(10 * 4) },
-				weight_limit: Limited(200_000_000 * 4),
+				weight_limit: Limited((200_000_000 * 4 * RELAY_UNIT).try_into().unwrap()),
 			},
 			DepositAsset {
 				assets: All.into(),
@@ -814,7 +890,7 @@ fn test_pallet_xcm_send_capacity_without_transact() {
 	});
 	ParaA::execute_with(|| {
 		// Relay root is similar Sibling root
-		assert_eq!(Tokens::free_balance(2, &AccountId::from(BOB)), 10_000);
+		assert_eq!(Tokens::free_balance(2, &bob()), 10_000 * RELAY_UNIT);
 	});
 
 	// But as relay, Xcm without Buy execution is also fine
@@ -822,8 +898,11 @@ fn test_pallet_xcm_send_capacity_without_transact() {
 	Relay::execute_with(|| {
 		// Mimic the Xcm message sending
 		// It should fail since XcmExecutor::IsReserve setting
-		let assets =
-			vec![MultiAsset { id: Concrete((Parent, Here).into()), fun: Fungible(20_000) }].into();
+		let assets = vec![MultiAsset {
+			id: Concrete((Parent, Here).into()),
+			fun: Fungible(20_000 * RELAY_UNIT),
+		}]
+		.into();
 		let xcm = Xcm(vec![
 			ReserveAssetDeposited(assets),
 			DepositAsset {
@@ -842,7 +921,7 @@ fn test_pallet_xcm_send_capacity_without_transact() {
 	ParaA::execute_with(|| {
 		// We trust Relay root with even more power than Sibling root. They can easily manipulate
 		// their asset on our chain
-		assert_eq!(Tokens::free_balance(2, &AccountId::from(BOB)), 30_000);
+		assert_eq!(Tokens::free_balance(2, &bob()), 30_000 * RELAY_UNIT);
 	});
 
 	// Relay root manipulate LIT on Parachain A failed
@@ -851,7 +930,7 @@ fn test_pallet_xcm_send_capacity_without_transact() {
 		// It should fail since XcmExecutor::IsReserve setting
 		let assets = vec![MultiAsset {
 			id: Concrete(para_native_token_multilocation(1)),
-			fun: Fungible(2_000_000_000_000),
+			fun: Fungible(2 * UNIT),
 		}]
 		.into();
 		let xcm = Xcm(vec![
@@ -873,7 +952,7 @@ fn test_pallet_xcm_send_capacity_without_transact() {
 		// We trust Relay root with even more power than Sibling root. They can easily manipulate
 		// our asset But extra XcmExecutor::IsReserve filter stop chain root handle non-"self
 		// reserve" asset
-		assert_eq!(Balances::free_balance(&AccountId::from(BOB)), 0);
+		assert_eq!(Balances::free_balance(&bob()), 0);
 	});
 }
 
@@ -882,24 +961,19 @@ fn test_pallet_xcm_send_capacity_without_transact() {
 fn test_pallet_xcm_send_capacity_relay_manipulation() {
 	relaychain_parachains_set_up();
 	ParaA::execute_with(|| {
-		let _ = pallet_balances::Pallet::<Runtime>::deposit_creating(
-			&relay_account(),
-			10_000_000_000_000,
-		);
-		assert_eq!(Balances::free_balance(&relay_account()), 10_000_000_000_000);
-		assert_eq!(Balances::free_balance(&AccountId::from(BOB)), 0);
+		let _ = pallet_balances::Pallet::<Runtime>::deposit_creating(&relay_account(), 10 * UNIT);
+		assert_eq!(Balances::free_balance(&relay_account()), 10 * UNIT);
+		assert_eq!(Balances::free_balance(&bob()), 0);
 	});
 	Relay::execute_with(|| {
-		let call_message = Call::Balances(pallet_balances::Call::transfer {
-			dest: AccountId::from(BOB).into(),
-			value: 2_000_000_000_000,
-		})
-		.encode()
-		.into();
+		let call_message =
+			Call::Balances(pallet_balances::Call::transfer { dest: bob().into(), value: 2 * UNIT })
+				.encode()
+				.into();
 		let assets = vec![MultiAsset {
 			id: Concrete(para_native_token_multilocation(1)),
-			fun: Fungible((UnitWeightCost::get() * 5 + 1_000_000_000).into()), /* Assets used for
-			                                                                    * fee */
+			fun: Fungible(u128::from(UnitWeightCost::get() * 5) + 100 * MILLICENTS), /* Assets used for
+			                                                                          * fee */
 		}]
 		.into();
 		let xcm = Xcm(vec![
@@ -907,7 +981,7 @@ fn test_pallet_xcm_send_capacity_relay_manipulation() {
 			BuyExecution {
 				fees: MultiAsset {
 					id: Concrete(para_native_token_multilocation(1)),
-					fun: Fungible((UnitWeightCost::get() * 5 + 1_000_000_000).into()),
+					fun: Fungible(u128::from(UnitWeightCost::get() * 5) + 100 * MILLICENTS),
 				},
 				weight_limit: Limited(UnitWeightCost::get() * 5 + 1_000_000_000),
 			},
@@ -945,13 +1019,10 @@ fn test_pallet_xcm_send_capacity_relay_manipulation() {
 		// The whole Xcm get Executed but fee paid without Transact executed ??????????
 		// TODO:: Some very detials need to be checked
 		// We leave it here for now. As neither do we have to consider Relay root attack Parachain
-		assert_eq!(Balances::free_balance(&AccountId::from(BOB)), 0);
-		assert_eq!(
-			pallet_balances::Pallet::<relay::Runtime>::free_balance(&AccountId::from(BOB)),
-			0
-		);
-		let xcm_fee = u128::from(UnitWeightCost::get() * 5 + 1_000_000_000);
-		assert_eq!(Balances::free_balance(&relay_account()), 10_000_000_000_000 - xcm_fee);
+		assert_eq!(Balances::free_balance(&bob()), 0);
+		assert_eq!(pallet_balances::Pallet::<relay::Runtime>::free_balance(&bob()), 0);
+		let xcm_fee = u128::from(UnitWeightCost::get() * 5) + 100 * MILLICENTS;
+		assert_eq!(Balances::free_balance(&relay_account()), 10 * UNIT - xcm_fee);
 	});
 }
 
@@ -960,21 +1031,22 @@ fn test_pallet_xcm_send_capacity_relay_manipulation() {
 fn test_pallet_xcm_send_capacity_parachain_manipulation() {
 	relaychain_parachains_set_up();
 	ParaA::execute_with(|| {
-		let call_message = relay::Call::Balances(pallet_balances::Call::transfer {
-			dest: AccountId::from(BOB),
-			value: 2_000_000_000_000,
-		})
-		.encode()
-		.into();
+		let call_message =
+			relay::Call::Balances(pallet_balances::Call::transfer { dest: bob(), value: 2 * UNIT })
+				.encode()
+				.into();
 		let assets = vec![MultiAsset {
 			id: Concrete(Here.into()),
-			fun: Fungible(2_000_000_000), // Assets used for fee
+			fun: Fungible(2_000_000_000 * RELAY_UNIT), // Assets used for fee
 		}]
 		.into();
 		let xcm = Xcm(vec![
 			WithdrawAsset(assets),
 			BuyExecution {
-				fees: MultiAsset { id: Concrete(Here.into()), fun: Fungible(2_000_000_000) },
+				fees: MultiAsset {
+					id: Concrete(Here.into()),
+					fun: Fungible(2_000_000_000 * RELAY_UNIT),
+				},
 				weight_limit: Limited(2_000_000_000),
 			},
 			Transact {
@@ -1003,16 +1075,13 @@ fn test_pallet_xcm_send_capacity_parachain_manipulation() {
 	});
 	Relay::execute_with(|| {
 		// Manipulation successful
-		assert_eq!(
-			pallet_balances::Pallet::<relay::Runtime>::free_balance(&AccountId::from(BOB)),
-			2_000_000_000_000
-		);
-		let xcm_fee = 1_000_000_000 + 5 * 10;
+		assert_eq!(pallet_balances::Pallet::<relay::Runtime>::free_balance(&bob()), 2 * UNIT);
+		let xcm_fee = 1_000_000_000 * RELAY_UNIT + 5 * 10 * RELAY_UNIT;
 		// So Transact simply consume all "require_weight_at_most" as long as qualified for dispatch
 		// weight.
 		assert_eq!(
 			pallet_balances::Pallet::<relay::Runtime>::free_balance(&para_account(1)),
-			100_000_000_000_000 - 2_000_000_000_000 - xcm_fee
+			RELAY_SOVEREIGN_ACCOUNT_INITIAL_BALANCE - 2 * UNIT - xcm_fee
 		);
 	});
 }
@@ -1047,16 +1116,17 @@ fn register_channel_info(self_para_id: u32, remote_para_id: u32) {
 	assert_ok!(ParachainSystem::set_validation_data(RawOrigin::None.into(), system_inherent_data));
 }
 
+pub const RELAY_SOVEREIGN_ACCOUNT_INITIAL_BALANCE: u128 = 100_000_000_000_000 * RELAY_UNIT;
 fn relaychain_parachains_set_up() {
 	TestNet::reset();
 	Relay::execute_with(|| {
 		let _ = pallet_balances::Pallet::<relay::Runtime>::deposit_creating(
 			&para_account(1),
-			100_000_000_000_000,
+			RELAY_SOVEREIGN_ACCOUNT_INITIAL_BALANCE,
 		);
 		let _ = pallet_balances::Pallet::<relay::Runtime>::deposit_creating(
 			&para_account(2),
-			100_000_000_000_000,
+			RELAY_SOVEREIGN_ACCOUNT_INITIAL_BALANCE,
 		);
 	});
 	ParaA::execute_with(|| {

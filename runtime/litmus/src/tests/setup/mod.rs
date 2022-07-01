@@ -23,7 +23,8 @@ pub use crate::{
 	AccountId, AssetManager, Balance, Balances, Call, CumulusXcm, DmpQueue, Event, ExtrinsicFilter,
 	MinimumMultiplier, Multisig, Origin, ParachainSystem, PolkadotXcm, Runtime,
 	RuntimeBlockWeights, SlowAdjustingFeeUpdate, System, TargetBlockFullness, Tokens,
-	TransactionByteFee, TransactionPayment, Treasury, Vesting, XTokens, XcmpQueue, UNIT,
+	TransactionByteFee, TransactionPayment, Treasury, Vesting, XTokens, XcmpQueue, CENTS,
+	MILLICENTS, UNIT,
 };
 pub const ALICE: [u8; 32] = [1u8; 32];
 pub const BOB: [u8; 32] = [2u8; 32];
@@ -51,8 +52,8 @@ pub(crate) fn charlie() -> AccountId {
 	AccountId::from(CHARLIE)
 }
 
-pub const ParaAUserInitialBalance: u128 = 500_000_000_000_000_000;
-pub const ParaBUserInitialBalance: u128 = 600_000_000_000_000_000;
+pub const PARA_A_USER_INITIAL_BALANCE: u128 = 500_000 * UNIT;
+pub const PARA_B_USER_INITIAL_BALANCE: u128 = 600_000 * UNIT;
 
 pub struct ExtBuilder {
 	balances: Vec<(AccountId, Balance)>,
@@ -141,7 +142,7 @@ decl_test_parachain! {
 		new_ext = ExtBuilder::default()
 		.balances(vec![
 			// fund Alice
-			(alice(), ParaAUserInitialBalance),
+			(alice(), PARA_A_USER_INITIAL_BALANCE),
 		]).parachain_id(1).build(),
 	}
 }
@@ -154,7 +155,7 @@ decl_test_parachain! {
 		new_ext = ExtBuilder::default()
 		.balances(vec![
 			// fund BOB
-			(bob(), ParaBUserInitialBalance),
+			(bob(), PARA_B_USER_INITIAL_BALANCE),
 		]).parachain_id(2).build(),
 	}
 }
