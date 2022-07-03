@@ -16,6 +16,7 @@ name = 'litentry-collator'
 targets = ['x86_64-unknown-linux-gnu']
 
 [dependencies]
+tracing-core = "=0.1.26" # fixate the version, see https://github.com/paritytech/substrate/issues/11691
 futures = { version = "0.3.18", features = ["compat"] }
 log = "0.4"
 codec = { package = "parity-scale-codec", version = "3.0.0" }
