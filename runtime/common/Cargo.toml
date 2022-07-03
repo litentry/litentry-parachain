@@ -18,9 +18,9 @@ primitives = { package = "primitives", path = "../../primitives", default-featur
 [features]
 default = ["std"]
 std = [
-    "frame-support/std",
+	"frame-support/std",
 	"frame-system/std",
 	"pallet-collective/std",
 	"pallet-membership/std",
-    "primitives/std",
+	"primitives/std",
 ]
