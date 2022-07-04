@@ -2,7 +2,7 @@ version: 2
 updates:
   - package-ecosystem: "cargo"
     directory: "/"
-    labels: ["S1-pleasereview", "dependencies", "automated-pr"]
+    labels: ["automated-pr"]
     # Handle updates for crates from github.com/paritytech/substrate manually.
     ignore:
       - dependency-name: "substrate-*"

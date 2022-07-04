@@ -102,7 +102,6 @@ jobs:
             Chain: "${{ env.CHAIN }}"
             Github action run: https://github.com/litentry/litentry-parachain/actions/runs/${{ github.run_id }}
           labels: |
-            S1-pleasereview
             automated-pr
           assignees: ${{ github.actor }}
           reviewers: ${{ github.actor }}
