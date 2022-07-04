@@ -19,8 +19,8 @@
 #[cfg(test)]
 use super::tests::setup::ParachainXcmRouter;
 use super::{
-	transaction_payment::DealWithFees, AssetId, AssetManager, Balance, Balances, Call, Event,
-	Origin, ParachainInfo, PolkadotXcm, Runtime, Tokens, Treasury,
+	AssetId, AssetManager, Balance, Balances, Call, DealWithFees, Event, Origin, ParachainInfo,
+	PolkadotXcm, Runtime, Tokens, Treasury,
 };
 #[cfg(not(test))]
 use super::{ParachainSystem, XcmpQueue};

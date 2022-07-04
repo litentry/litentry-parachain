@@ -7,21 +7,29 @@ edition = '2021'
 [dependencies]
 primitives = { path = "../../primitives", default-features = false }
 
+sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
 frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
 frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
 
+pallet-balances = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
+pallet-authorship = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
 pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
+pallet-treasury = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
 
 [features]
 default = ["std"]
 std = [
     "primitives/std",
+    "sp-std/std",
     "sp-runtime/std",
     "frame-system/std",
     "frame-support/std",
 
+    "pallet-authorship/std",
+    "pallet-balances/std",
     "pallet-transaction-payment/std",
+    "pallet-treasury/std",
 ]
 runtime-benchmarks = [
     "sp-runtime/runtime-benchmarks",
@@ -30,5 +38,8 @@ runtime-benchmarks = [
 ]
 
 try-runtime = [
+    "pallet-authorship/try-runtime",
+    "pallet-balances/try-runtime",
     "pallet-transaction-payment/try-runtime",
+    "pallet-treasury/try-runtime",
 ]

@@ -8763,9 +8763,13 @@ version = "0.9.8"
 dependencies = [
  "frame-support",
  "frame-system",
+ "pallet-authorship",
+ "pallet-balances",
  "pallet-transaction-payment",
+ "pallet-treasury",
  "primitives",
  "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]

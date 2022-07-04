@@ -42,9 +42,10 @@ use sp_runtime::{
 };
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
-mod transaction_payment;
-use runtime_common::{BlockHashCount, BlockLength, MinimumMultiplier, SlowAdjustingFeeUpdate};
-pub use transaction_payment::DealWithFees;
+use runtime_common::{
+	impl_runtime_transaction_payment_fees, BlockHashCount, BlockLength, MinimumMultiplier,
+	NegativeImbalance, SlowAdjustingFeeUpdate,
+};
 
 #[cfg(test)]
 mod tests;
@@ -433,6 +434,7 @@ impl pallet_utility::Config for Runtime {
 parameter_types! {
 	pub const TransactionByteFee: Balance = MILLICENTS / 10;
 }
+impl_runtime_transaction_payment_fees!(constants);
 
 impl pallet_transaction_payment::Config for Runtime {
 	type OnChargeTransaction =

@@ -21,12 +21,16 @@
 
 use frame_support::{
 	parameter_types, sp_runtime,
-	traits::{ConstU32, Currency, OneSessionHandler},
-	weights::{constants::WEIGHT_PER_SECOND, Weight},
+	traits::{Currency, OnUnbalanced},
 };
 use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
 use primitives::BlockNumber;
 use sp_runtime::{FixedPointNumber, Perbill, Perquintill};
+
+pub type NegativeImbalance<T> = <pallet_balances::Pallet<T> as Currency<
+	<T as frame_system::Config>::AccountId,
+>>::NegativeImbalance;
+
 /// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used
 /// by  Operational  extrinsics.
 pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
@@ -52,6 +56,59 @@ parameter_types! {
 /// https://research.web3.foundation/en/latest/polkadot/overview/2-token-economics.html#-2.-slow-adjusting-mechanism
 pub type SlowAdjustingFeeUpdate<R> =
 	TargetedFeeAdjustment<R, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
+
+/// Logic for the author to get a portion of fees.
+pub struct ToAuthor<R>(sp_std::marker::PhantomData<R>);
+impl<R> OnUnbalanced<NegativeImbalance<R>> for ToAuthor<R>
+where
+	R: pallet_balances::Config + pallet_authorship::Config,
+	<R as frame_system::Config>::Event: From<pallet_balances::Event<R>>,
+{
+	fn on_nonzero_unbalanced(amount: NegativeImbalance<R>) {
+		if let Some(author) = <pallet_authorship::Pallet<R>>::author() {
+			<pallet_balances::Pallet<R>>::resolve_creating(&author, amount);
+		}
+	}
+}
+
+#[macro_export]
+macro_rules! impl_runtime_transaction_payment_fees {
+	($runtime:ident) => {
+		use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
+		use runtime_common::ToAuthor;
+		use sp_runtime::FixedPointNumber;
+
+		// do i need to extract these constants to the common module?
+		use $runtime::currency::{AUTHOR_PROPORTION, BURNED_PROPORTION, TREASURY_PROPORTION};
+
+		// important !! The struct is used externally
+		pub struct DealWithFees<R>(sp_std::marker::PhantomData<R>);
+
+		impl<R> OnUnbalanced<NegativeImbalance<R>> for DealWithFees<R>
+		where
+			R: pallet_balances::Config + pallet_treasury::Config + pallet_authorship::Config,
+			pallet_treasury::Pallet<R>: OnUnbalanced<NegativeImbalance<R>>,
+			<R as frame_system::Config>::Event: From<pallet_balances::Event<R>>,
+		{
+			fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance<R>>) {
+				if let Some(fees) = fees_then_tips.next() {
+					// for fees, (1) to treasury, (2) to author and (3) burned
+					let (unburned, _) =
+						fees.ration(TREASURY_PROPORTION + AUTHOR_PROPORTION, BURNED_PROPORTION);
+					let mut split = unburned.ration(TREASURY_PROPORTION, AUTHOR_PROPORTION);
+
+					if let Some(tips) = fees_then_tips.next() {
+						// for tips, if any, 100% to author
+						tips.merge_into(&mut split.1);
+					}
+					use pallet_treasury::Pallet as Treasury;
+					<Treasury<R> as OnUnbalanced<_>>::on_unbalanced(split.0);
+					<ToAuthor<R> as OnUnbalanced<_>>::on_unbalanced(split.1);
+				}
+			}
+		}
+	};
+}
 
 /// See https://github.com/paritytech/polkadot/blob/7096430edd116b1dc6d8337ab35b149e213cbfe9/runtime/common/src/lib.rs#L218
 ///
