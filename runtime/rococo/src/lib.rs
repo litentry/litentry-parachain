@@ -43,9 +43,8 @@ use sp_runtime::{
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
 mod transaction_payment;
-pub use transaction_payment::{
-	DealWithFees, MinimumMultiplier, SlowAdjustingFeeUpdate, TargetBlockFullness,
-};
+use runtime_common::{BlockHashCount, BlockLength, MinimumMultiplier, SlowAdjustingFeeUpdate};
+pub use transaction_payment::DealWithFees;
 
 #[cfg(test)]
 mod tests;
@@ -67,10 +66,7 @@ use frame_support::{
 	},
 	PalletId, RuntimeDebug,
 };
-use frame_system::{
-	limits::{BlockLength, BlockWeights},
-	EnsureRoot,
-};
+use frame_system::{limits::BlockWeights, EnsureRoot};
 use runtime_common::prod_or_fast;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 pub use sp_runtime::{MultiAddress, Perbill, Percent, Permill};
@@ -179,15 +175,12 @@ pub fn native_version() -> NativeVersion {
 }
 
 parameter_types! {
-	pub const BlockHashCount: BlockNumber = 250;
 	pub const Version: RuntimeVersion = VERSION;
 
 	// This part is copied from Substrate's `bin/node/runtime/src/lib.rs`.
 	//  The `RuntimeBlockLength` and `RuntimeBlockWeights` exist here because the
 	// `DeletionWeightLimit` and `DeletionQueueDepth` depend on those to parameterize
 	// the lazy contract deletion.
-	pub RuntimeBlockLength: BlockLength =
-		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 	pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
 		.base_block(BlockExecutionWeight::get())
 		.for_class(DispatchClass::all(), |weights| {
@@ -251,7 +244,7 @@ impl frame_system::Config for Runtime {
 	/// Block & extrinsics weights: base values and limits.
 	type BlockWeights = RuntimeBlockWeights;
 	/// The maximum length of a block (in bytes).
-	type BlockLength = RuntimeBlockLength;
+	type BlockLength = BlockLength;
 	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
 	type SS58Prefix = SS58Prefix;
 	/// The action to take on a Runtime Upgrade

@@ -5,7 +5,30 @@ authors = ["Litentry Dev"]
 edition = '2021'
 
 [dependencies]
+primitives = { path = "../../primitives", default-features = false }
+
+sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
+frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
+frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
+
+pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
 
 [features]
 default = ["std"]
-std = []
+std = [
+    "primitives/std",
+    "sp-runtime/std",
+    "frame-system/std",
+    "frame-support/std",
+
+    "pallet-transaction-payment/std",
+]
+runtime-benchmarks = [
+    "sp-runtime/runtime-benchmarks",
+    "frame-system/runtime-benchmarks",
+    "frame-support/runtime-benchmarks",
+]
+
+try-runtime = [
+    "pallet-transaction-payment/try-runtime",
+]

@@ -8760,6 +8760,13 @@ dependencies = [
 [[package]]
 name = "runtime-common"
 version = "0.9.8"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-transaction-payment",
+ "primitives",
+ "sp-runtime",
+]
 
 [[package]]
 name = "rustc-demangle"
