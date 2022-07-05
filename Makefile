@@ -65,13 +65,13 @@ srtool-build-wasm-rococo:
 srtool-build-wasm-moonbase:
 	@./scripts/build-wasm.sh moonbase
 
-.PHONY: build-docker-dev ## Build docker image using dev setting (--profile release)
-build-docker-dev:
-	@./scripts/build-docker.sh dev
+.PHONY: build-docker-release ## Build docker image using cargo profile `release`
+build-docker-release:
+	@./scripts/build-docker.sh release
 
-.PHONY: build-docker-prod ## Build docker image using prod setting (--profile production)
-build-docker-prod:
-	@./scripts/build-docker.sh prod
+.PHONY: build-docker-production ## Build docker image using cargo profile `production`
+build-docker-production:
+	@./scripts/build-docker.sh production
 
 .PHONY: build-node-benchmarks ## Build release node with `runtime-benchmarks` feature
 build-node-benchmarks:
@@ -81,21 +81,21 @@ build-node-benchmarks:
 build-node-tryruntime:
 	cargo build --locked --features try-runtime --release
 	
-# launching local dev networks
+# launch a local network
 
-.PHONY: launch-docker-litentry ## Launch litentry-parachain dev network with docker locally
+.PHONY: launch-docker-litentry ## Launch a local litentry-parachain network with docker
 launch-docker-litentry: generate-docker-compose-litentry
 	@./scripts/launch-local-docker.sh litentry
 
-.PHONY: launch-docker-litmus ## Launch litmus-parachain dev network with docker locally
+.PHONY: launch-docker-litmus ## Launch a local litmus-parachain network with docker
 launch-docker-litmus: generate-docker-compose-litmus
 	@./scripts/launch-local-docker.sh litmus
 
-.PHONY: launch-binary-litentry ## Launch litentry-parachain dev network with binaries locally
+.PHONY: launch-binary-litentry ## Launch a local litentry-parachain network with binaries
 launch-binary-litentry:
 	@./scripts/launch-local-binary.sh litentry
 
-.PHONY: launch-binary-litmus ## Launch litmus-parachain dev network with binaries locally
+.PHONY: launch-binary-litmus ## Launch a local litmus-parachain network with binaries
 launch-binary-litmus:
 	@./scripts/launch-local-binary.sh litmus
 
@@ -137,11 +137,11 @@ clean-binary:
 
 # generate docker-compose files
 
-.PHONY: generate-docker-compose-litentry ## Generate docker-compose files for litentry dev
+.PHONY: generate-docker-compose-litentry ## Generate docker-compose files for litentry local network
 generate-docker-compose-litentry:
 	@./scripts/generate-docker-files.sh litentry
 
-.PHONY: generate-docker-compose-litmus ## Generate docker-compose files for litmus dev
+.PHONY: generate-docker-compose-litmus ## Generate docker-compose files for litmus local network
 generate-docker-compose-litmus:
 	@./scripts/generate-docker-files.sh litmus
 

@@ -110,7 +110,7 @@ jobs:
 
       - name: Build docker image
         run: |
-          ./scripts/build-docker.sh prod ${{ env.RELEASE_TAG }}
+          ./scripts/build-docker.sh production ${{ env.RELEASE_TAG }}
           echo "============================="
           docker images
 
