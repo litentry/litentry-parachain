@@ -58,9 +58,7 @@ use sp_version::RuntimeVersion;
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{
-		ConstU16, ConstU32, ConstU64, ConstU8, Contains, EnsureOneOf, Everything, InstanceFilter,
-	},
+	traits::{ConstU16, ConstU32, ConstU64, ConstU8, Contains, Everything, InstanceFilter},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		ConstantMultiplier, DispatchClass, IdentityFee, Weight,
@@ -71,7 +69,12 @@ use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
 };
-use runtime_common::prod_or_fast;
+use runtime_common::{
+	prod_or_fast, CouncilInstance, CouncilMembershipInstance, EnsureRootOrAllCouncil,
+	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrHalfTechnicalCommittee,
+	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee,
+	TechnicalCommitteeInstance, TechnicalCommitteeMembershipInstance,
+};
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 pub use sp_runtime::{MultiAddress, Perbill, Percent, Permill};
 
@@ -120,7 +123,7 @@ pub type Executive = frame_executive::Executive<
 	// see https://github.com/paritytech/substrate/pull/10043
 	//
 	// With this type the hooks of pallets will be executed
-	// in the order that they are declared in `constrcut_runtime!`
+	// in the order that they are declared in `construct_runtime!`
 	// it was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
@@ -455,13 +458,13 @@ impl pallet_transaction_payment::Config for Runtime {
 }
 
 parameter_types! {
-	pub LaunchPeriod: BlockNumber = prod_or_fast!(5 * DAYS, 5 * MINUTES, "ROCOCO_LAUNCHPERIOD");
-	pub VotingPeriod: BlockNumber = prod_or_fast!(5 * DAYS, 5 * MINUTES, "ROCOCO_VOTINGPERIOD");
-	pub FastTrackVotingPeriod: BlockNumber = prod_or_fast!(3 * HOURS, 2 * MINUTES, "ROCOCO_FASTTRACKVOTINGPERIOD");
+	pub LaunchPeriod: BlockNumber = prod_or_fast!(10 * MINUTES, 5 * MINUTES, "ROCOCO_LAUNCHPERIOD");
+	pub VotingPeriod: BlockNumber = prod_or_fast!(10 * MINUTES, 5 * MINUTES, "ROCOCO_VOTINGPERIOD");
+	pub FastTrackVotingPeriod: BlockNumber = prod_or_fast!(8 * MINUTES, 2 * MINUTES, "ROCOCO_FASTTRACKVOTINGPERIOD");
 	pub const InstantAllowed: bool = true;
 	pub const MinimumDeposit: Balance = 100 * DOLLARS;
-	pub EnactmentPeriod: BlockNumber = prod_or_fast!(1 * DAYS, 2 * MINUTES, "ROCOCO_ENACTMENTPERIOD");
-	pub CooloffPeriod: BlockNumber = prod_or_fast!(5 * DAYS, 2 * MINUTES, "ROCOCO_COOLOFFPERIOD");
+	pub EnactmentPeriod: BlockNumber = prod_or_fast!(5 * MINUTES, 2 * MINUTES, "ROCOCO_ENACTMENTPERIOD");
+	pub CooloffPeriod: BlockNumber = prod_or_fast!(10 * MINUTES, 2 * MINUTES, "ROCOCO_COOLOFFPERIOD");
 	pub const PreimageByteDeposit: Balance = deposit(0, 1);
 }
 
@@ -475,39 +478,30 @@ impl pallet_democracy::Config for Runtime {
 	type VoteLockingPeriod = EnactmentPeriod; // Same as EnactmentPeriod
 	type MinimumDeposit = MinimumDeposit;
 	/// A straight majority of the council can decide what their next motion is.
-	type ExternalOrigin =
-		pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 1, 2>;
+	type ExternalOrigin = EnsureRootOrHalfCouncil;
 	/// A super-majority can have the next scheduled referendum be a straight majority-carries vote.
-	type ExternalMajorityOrigin =
-		pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 3, 4>;
+	type ExternalMajorityOrigin = EnsureRootOrTwoThirdsCouncil;
 	/// A unanimous council can have the next scheduled referendum be a straight default-carries
 	/// (NTB) vote.
-	type ExternalDefaultOrigin =
-		pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 1, 1>;
+	type ExternalDefaultOrigin = EnsureRootOrAllCouncil;
 	/// Two thirds of the technical committee can have an ExternalMajority/ExternalDefault vote
 	/// be tabled immediately and with a shorter voting/enactment period.
-	type FastTrackOrigin =
-		pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCollective, 2, 3>;
-	type InstantOrigin =
-		pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCollective, 1, 1>;
+	type FastTrackOrigin = EnsureRootOrTwoThirdsTechnicalCommittee;
+	type InstantOrigin = EnsureRootOrAllTechnicalCommittee;
 	type InstantAllowed = InstantAllowed;
 	type FastTrackVotingPeriod = FastTrackVotingPeriod;
 	// To cancel a proposal which has been passed, 2/3 of the council must agree to it.
-	type CancellationOrigin =
-		pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 2, 3>;
+	type CancellationOrigin = EnsureRootOrTwoThirdsCouncil;
 	// To cancel a proposal before it has been passed, the technical committee must be unanimous or
 	// Root must agree.
-	type CancelProposalOrigin = EnsureOneOf<
-		EnsureRoot<AccountId>,
-		pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCollective, 1, 1>,
-	>;
+	type CancelProposalOrigin = EnsureRootOrAllTechnicalCommittee;
 	type BlacklistOrigin = EnsureRoot<AccountId>;
 	// Any single technical committee member may veto a coming council proposal, however they can
 	// only do it once and it lasts only for the cool-off period.
-	type VetoOrigin = pallet_collective::EnsureMember<AccountId, TechnicalCollective>;
+	type VetoOrigin = pallet_collective::EnsureMember<AccountId, TechnicalCommitteeInstance>;
 	type CooloffPeriod = CooloffPeriod;
 	type PreimageByteDeposit = PreimageByteDeposit;
-	type OperationalPreimageOrigin = pallet_collective::EnsureMember<AccountId, CouncilCollective>;
+	type OperationalPreimageOrigin = pallet_collective::EnsureMember<AccountId, CouncilInstance>;
 	type Slash = Treasury;
 	type Scheduler = Scheduler;
 	type PalletsOrigin = OriginCaller;
@@ -520,8 +514,7 @@ parameter_types! {
 	pub const CouncilMotionDuration: BlockNumber = 3 * DAYS;
 }
 
-type CouncilCollective = pallet_collective::Instance1;
-impl pallet_collective::Config<CouncilCollective> for Runtime {
+impl pallet_collective::Config<CouncilInstance> for Runtime {
 	type Origin = Origin;
 	type Proposal = Call;
 	type Event = Event;
@@ -532,17 +525,13 @@ impl pallet_collective::Config<CouncilCollective> for Runtime {
 	type WeightInfo = weights::pallet_collective::WeightInfo<Runtime>;
 }
 
-type EnsureRootOrHalfCouncil = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
->;
-impl pallet_membership::Config<pallet_membership::Instance1> for Runtime {
+impl pallet_membership::Config<CouncilMembershipInstance> for Runtime {
 	type Event = Event;
-	type AddOrigin = EnsureRootOrHalfCouncil;
-	type RemoveOrigin = EnsureRootOrHalfCouncil;
-	type SwapOrigin = EnsureRootOrHalfCouncil;
-	type ResetOrigin = EnsureRootOrHalfCouncil;
-	type PrimeOrigin = EnsureRootOrHalfCouncil;
+	type AddOrigin = EnsureRootOrTwoThirdsCouncil;
+	type RemoveOrigin = EnsureRootOrTwoThirdsCouncil;
+	type SwapOrigin = EnsureRootOrTwoThirdsCouncil;
+	type ResetOrigin = EnsureRootOrTwoThirdsCouncil;
+	type PrimeOrigin = EnsureRootOrTwoThirdsCouncil;
 	type MembershipInitialized = Council;
 	type MembershipChanged = Council;
 	type MaxMembers = ConstU32<100>;
@@ -553,8 +542,7 @@ parameter_types! {
 	pub const TechnicalMotionDuration: BlockNumber = 3 * DAYS;
 }
 
-type TechnicalCollective = pallet_collective::Instance2;
-impl pallet_collective::Config<TechnicalCollective> for Runtime {
+impl pallet_collective::Config<TechnicalCommitteeInstance> for Runtime {
 	type Origin = Origin;
 	type Proposal = Call;
 	type Event = Event;
@@ -565,13 +553,13 @@ impl pallet_collective::Config<TechnicalCollective> for Runtime {
 	type WeightInfo = weights::pallet_collective::WeightInfo<Runtime>;
 }
 
-impl pallet_membership::Config<pallet_membership::Instance2> for Runtime {
+impl pallet_membership::Config<TechnicalCommitteeMembershipInstance> for Runtime {
 	type Event = Event;
-	type AddOrigin = EnsureRootOrHalfCouncil;
-	type RemoveOrigin = EnsureRootOrHalfCouncil;
-	type SwapOrigin = EnsureRootOrHalfCouncil;
-	type ResetOrigin = EnsureRootOrHalfCouncil;
-	type PrimeOrigin = EnsureRootOrHalfCouncil;
+	type AddOrigin = EnsureRootOrTwoThirdsCouncil;
+	type RemoveOrigin = EnsureRootOrTwoThirdsCouncil;
+	type SwapOrigin = EnsureRootOrTwoThirdsCouncil;
+	type ResetOrigin = EnsureRootOrTwoThirdsCouncil;
+	type PrimeOrigin = EnsureRootOrTwoThirdsCouncil;
 	type MembershipInitialized = TechnicalCommittee;
 	type MembershipChanged = TechnicalCommittee;
 	type MaxMembers = ConstU32<100>;
@@ -582,7 +570,7 @@ parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub const ProposalBondMinimum: Balance = 1 * DOLLARS;
 	pub const ProposalBondMaximum: Balance = 20 * DOLLARS;
-	pub SpendPeriod: BlockNumber = prod_or_fast!(7 * DAYS, 2 * MINUTES, "ROCOCO_SPENDPERIOD");
+	pub SpendPeriod: BlockNumber = prod_or_fast!(10 * MINUTES, 2 * MINUTES, "ROCOCO_SPENDPERIOD");
 	pub const Burn: Permill = Permill::from_percent(0);
 	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
 }
@@ -590,14 +578,8 @@ parameter_types! {
 impl pallet_treasury::Config for Runtime {
 	type PalletId = TreasuryPalletId;
 	type Currency = Balances;
-	type ApproveOrigin = EnsureOneOf<
-		EnsureRoot<AccountId>,
-		pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 3, 5>,
-	>;
-	type RejectOrigin = EnsureOneOf<
-		EnsureRoot<AccountId>,
-		pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>,
-	>;
+	type ApproveOrigin = EnsureRootOrTwoThirdsCouncil;
+	type RejectOrigin = EnsureRootOrHalfCouncil;
 	type Event = Event;
 	type OnSlash = ();
 	type ProposalBond = ProposalBond;
@@ -687,7 +669,7 @@ parameter_types! {
 impl pallet_collator_selection::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-	type UpdateOrigin = EnsureRoot<AccountId>;
+	type UpdateOrigin = EnsureRootOrHalfCouncil;
 	type PotId = PotId;
 	type MaxCandidates = ConstU32<100>;
 	type MinCandidates = ConstU32<0>;
@@ -758,7 +740,7 @@ impl pallet_drop3::Config for Runtime {
 
 impl pallet_extrinsic_filter::Config for Runtime {
 	type Event = Event;
-	type UpdateOrigin = EnsureRootOrHalfCouncil;
+	type UpdateOrigin = EnsureRootOrHalfTechnicalCommittee;
 	#[cfg(feature = "tee-dev")]
 	type NormalModeFilter = Everything;
 	#[cfg(not(feature = "tee-dev"))]
@@ -904,7 +886,14 @@ impl Contains<Call> for NormalModeFilter {
 			// BridgeTransfer
 			Call::BridgeTransfer(_) |
 			// XTokens::transfer for normal users
-			Call::XTokens(orml_xtokens::Call::transfer { .. })
+			Call::XTokens(orml_xtokens::Call::transfer { .. }) |
+			// collectives and memberships
+			Call::Council(_) |
+			Call::TechnicalCommittee(_) |
+			Call::CouncilMembership(_) |
+			Call::TechnicalCommitteeMembership(_) |
+			// democracy, we don't subdivide the calls, so we allow public proposals
+			Call::Democracy(_)
 		)
 	}
 }
