@@ -23,6 +23,9 @@ pub mod currency {
 	pub const CENTS: Balance = DOLLARS / 100; // 10_000_000_000
 	pub const MILLICENTS: Balance = CENTS / 1_000; // 10_000_000
 
+	/// The existential deposit.
+	pub const EXISTENTIAL_DEPOSIT: Balance = 10 * CENTS;
+
 	// Linear ratio of transaction fee distribution
 	// It is recommended to set sum of ratio to 100, yet only decimal loss is concerned.
 	pub const TREASURY_PROPORTION: u32 = 40u32;

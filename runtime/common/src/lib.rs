@@ -22,7 +22,12 @@
 use frame_support::{
 	parameter_types, sp_runtime,
 	traits::{Currency, OnUnbalanced},
+	weights::{
+		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
+		DispatchClass, Weight,
+	},
 };
+use frame_system::limits;
 use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
 use primitives::BlockNumber;
 use sp_runtime::{FixedPointNumber, Perbill, Perquintill};
@@ -31,25 +36,60 @@ pub type NegativeImbalance<T> = <pallet_balances::Pallet<T> as Currency<
 	<T as frame_system::Config>::AccountId,
 >>::NegativeImbalance;
 
-/// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used
-/// by  Operational  extrinsics.
+/// We assume that ~10% of the block weight is consumed by `on_initialize` handlers. This is
+/// used to limit the maximal weight of a single extrinsic.
+pub const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
+
+/// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used by
+/// `Operational` extrinsics.
 pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
+
+/// We allow for 0.5 of a second of compute with a 12 second average block time.
+pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
 
 // Common constants used in all runtimes.
 parameter_types! {
 	pub const BlockHashCount: BlockNumber = 250;
+
 	/// The portion of the `NORMAL_DISPATCH_RATIO` that we adjust the fees with. Blocks filled less
 	/// than this will decrease the weight and more will increase.
 	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
+
 	/// The adjustment variable of the runtime. Higher values will cause `TargetBlockFullness` to
 	/// change the fees more rapidly.
 	pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(3, 100_000);
+
 	/// Minimum amount of the multiplier. This value cannot be too low. A test case should ensure
 	/// that combined with `AdjustmentVariable`, we can recover from the minimum.
 	/// See `multiplier_can_grow_from_zero`.
 	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000u128);
+
 	/// Maximum length of block. Up to 5MB.
-	pub BlockLength: frame_system::limits::BlockLength = frame_system::limits::BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
+	pub BlockLength: limits::BlockLength = limits::BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
+
+	/// Block weights base values and limits.
+	// This part is copied from Substrate's `bin/node/runtime/src/lib.rs`.
+	// The `RuntimeBlockLength` and `RuntimeBlockWeights` exist here because the
+	// `DeletionWeightLimit` and `DeletionQueueDepth` depend on those to parameterize
+	// the lazy contract deletion.
+	pub RuntimeBlockWeights: limits::BlockWeights = limits::BlockWeights::builder()
+		.base_block(BlockExecutionWeight::get())
+		.for_class(DispatchClass::all(), |weights| {
+			weights.base_extrinsic = ExtrinsicBaseWeight::get();
+		})
+		.for_class(DispatchClass::Normal, |weights| {
+			weights.max_total = Some(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT);
+		})
+		.for_class(DispatchClass::Operational, |weights| {
+			weights.max_total = Some(MAXIMUM_BLOCK_WEIGHT);
+			// Operational transactions have an extra reserved space, so that they
+			// are included even if block reached `MAXIMUM_BLOCK_WEIGHT`.
+			weights.reserved = Some(
+				MAXIMUM_BLOCK_WEIGHT - NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT,
+			);
+		})
+		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
+		.build_or_panic();
 }
 
 /// Parameterized slow adjusting fee updated based on
@@ -71,14 +111,14 @@ where
 	}
 }
 
+/// This macro expects the passed runtime constants to contain a `currency` module.
 #[macro_export]
 macro_rules! impl_runtime_transaction_payment_fees {
 	($runtime:ident) => {
 		use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
 		use runtime_common::ToAuthor;
-		use sp_runtime::FixedPointNumber;
 
-		// do i need to extract these constants to the common module?
+		// Do i need to extract these constants to the common module?
 		use $runtime::currency::{AUTHOR_PROPORTION, BURNED_PROPORTION, TREASURY_PROPORTION};
 
 		// important !! The struct is used externally

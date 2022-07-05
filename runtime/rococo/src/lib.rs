@@ -43,8 +43,8 @@ use sp_runtime::{
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
 use runtime_common::{
-	impl_runtime_transaction_payment_fees, BlockHashCount, BlockLength, MinimumMultiplier,
-	NegativeImbalance, SlowAdjustingFeeUpdate,
+	impl_runtime_transaction_payment_fees, BlockHashCount, BlockLength, NegativeImbalance,
+	RuntimeBlockWeights, SlowAdjustingFeeUpdate, MAXIMUM_BLOCK_WEIGHT,
 };
 
 #[cfg(test)]
@@ -61,13 +61,10 @@ use frame_support::{
 	traits::{
 		ConstU16, ConstU32, ConstU64, ConstU8, Contains, EnsureOneOf, Everything, InstanceFilter,
 	},
-	weights::{
-		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		ConstantMultiplier, DispatchClass, IdentityFee, Weight,
-	},
+	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
 	PalletId, RuntimeDebug,
 };
-use frame_system::{limits::BlockWeights, EnsureRoot};
+use frame_system::EnsureRoot;
 use runtime_common::prod_or_fast;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 pub use sp_runtime::{MultiAddress, Perbill, Percent, Permill};
@@ -152,20 +149,6 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	state_version: 0,
 };
 
-/// The existential deposit.
-pub const EXISTENTIAL_DEPOSIT: Balance = 10 * CENTS;
-
-/// We assume that ~10% of the block weight is consumed by `on_initialize` handlers. This is
-/// used to limit the maximal weight of a single extrinsic.
-const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
-
-/// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used by
-/// `Operational` extrinsics.
-const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
-
-/// We allow for 0.5 of a second of compute with a 12 second average block time.
-const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
-
 /// A timestamp: milliseconds since the unix epoch.
 pub type Moment = u64;
 
@@ -178,28 +161,6 @@ pub fn native_version() -> NativeVersion {
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 
-	// This part is copied from Substrate's `bin/node/runtime/src/lib.rs`.
-	//  The `RuntimeBlockLength` and `RuntimeBlockWeights` exist here because the
-	// `DeletionWeightLimit` and `DeletionQueueDepth` depend on those to parameterize
-	// the lazy contract deletion.
-	pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
-		.base_block(BlockExecutionWeight::get())
-		.for_class(DispatchClass::all(), |weights| {
-			weights.base_extrinsic = ExtrinsicBaseWeight::get();
-		})
-		.for_class(DispatchClass::Normal, |weights| {
-			weights.max_total = Some(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT);
-		})
-		.for_class(DispatchClass::Operational, |weights| {
-			weights.max_total = Some(MAXIMUM_BLOCK_WEIGHT);
-			// Operational transactions have some extra reserved space, so that they
-			// are included even if block reached `MAXIMUM_BLOCK_WEIGHT`.
-			weights.reserved = Some(
-				MAXIMUM_BLOCK_WEIGHT - NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT
-			);
-		})
-		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
-		.build_or_panic();
 	pub const SS58Prefix: u16 = 131;
 }
 
