@@ -27,9 +27,9 @@ make build-node
 
 To build the `litentry/litentry-parachain` docker image locally:
 ```
-make build-docker-dev
+make build-docker-release
 or
-make build-docker-prod
+make build-docker-production
 ```
 they will use `release` or `production` cargo profile, respectively.
 
@@ -41,9 +41,9 @@ The wasms should be located under `target/release/wbuild/litentry-parachain-runt
 
 Similarly, use `make build-runtime-litmus` to build the litmus-parachain-runtime.
 
-## launch of local dev network
+## launch of local network
 
-To start a local dev network with 2 relaychain nodes and 1 parachain node, there're two ways:
+To start a local network with 2 relaychain nodes and 1 parachain node, there're two ways:
 
 ### 1. use docker images for both polkadot and litentry-parachain (preferred)
 Take the litentry-parachain for example:
@@ -54,7 +54,7 @@ make launch-docker-litentry
 
 The generated files will be under `docker/generated-litentry/`.
 
-When finished with the dev network, run
+When finished with the network, run
 ```
 make clean-docker-litentry
 ```
@@ -64,7 +64,7 @@ to stop the processes and tidy things up.
 
 Only when option 1 doesn't work and you suspect the docker-image went wrong.
 
-In this case we could try to launch the dev network with raw binaries.
+In this case we could try to launch the network with raw binaries.
 
 **On Linux host:**
 
@@ -76,7 +76,7 @@ In this case we could try to launch the dev network with raw binaries.
 - you should have locally compiled binaries, for both `polkadot` and `litentry-collator`
 - run `./scripts/launch-local-binary.sh litentry path-to-polkadot-bin path-to-litentry-parachain-bin`
 
-When finished with the dev network, run
+When finished with the network, run
 ```
 make clean-binary
 ```
