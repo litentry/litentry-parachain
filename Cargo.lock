@@ -8760,6 +8760,13 @@ dependencies = [
 [[package]]
 name = "runtime-common"
 version = "0.9.8"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-collective",
+ "pallet-membership",
+ "primitives",
+]
 
 [[package]]
 name = "rustc-demangle"
