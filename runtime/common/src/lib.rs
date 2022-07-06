@@ -19,6 +19,8 @@
 #![allow(clippy::upper_case_acronyms)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod xcm_impl;
+
 use frame_support::{
 	parameter_types, sp_runtime,
 	traits::{Currency, EnsureOneOf, OnUnbalanced},

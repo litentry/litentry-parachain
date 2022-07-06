@@ -5,6 +5,8 @@ authors = ["Litentry Dev"]
 edition = '2021'
 
 [dependencies]
+log = { version = "0.4", default-features = false }
+
 # substrate
 sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
@@ -17,12 +19,21 @@ pallet-membership = { git = "https://github.com/paritytech/substrate", branch = 
 pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
 pallet-treasury = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
 
+# Polkadot dependencies
+xcm = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.24" }
+xcm-builder= { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.24" }
+xcm-executor = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.24" }
+
 # local
-primitives = { package = "primitives", path = "../../primitives", default-features = false }
+primitives = {path = "../../primitives", default-features = false }
+pallet-asset-manager = { path = "../../pallets/xcm-asset-manager", default-features = false }
 
 [features]
 default = ["std"]
 std = [
+    "log/std",
+
+    # substrate
     "sp-std/std",
     "sp-runtime/std",
 	"frame-support/std",
@@ -33,6 +44,13 @@ std = [
 	"pallet-membership/std",
     "pallet-transaction-payment/std",
     "pallet-treasury/std",
+
+    # polkadot
+    "xcm/std",
+    "xcm-builder/std",
+    "xcm-executor/std",
+
+    # local
 	"primitives/std",
 ]
 
