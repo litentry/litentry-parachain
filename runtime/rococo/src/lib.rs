@@ -151,7 +151,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9081,
+	spec_version: 9082,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -857,7 +857,8 @@ impl Contains<Call> for BaseCallFilter {
 				Call::System(_) | Call::Timestamp(_) |
 				Call::ParachainSystem(_) |
 				Call::ExtrinsicFilter(_) |
-				Call::Multisig(_)
+				Call::Multisig(_) |
+				Call::Council(_) | Call::TechnicalCommittee(_)
 		) {
 			// always allow core calls
 			return true
@@ -887,9 +888,7 @@ impl Contains<Call> for NormalModeFilter {
 			Call::BridgeTransfer(_) |
 			// XTokens::transfer for normal users
 			Call::XTokens(orml_xtokens::Call::transfer { .. }) |
-			// collectives and memberships
-			Call::Council(_) |
-			Call::TechnicalCommittee(_) |
+			// memberships
 			Call::CouncilMembership(_) |
 			Call::TechnicalCommitteeMembership(_) |
 			// democracy, we don't subdivide the calls, so we allow public proposals
