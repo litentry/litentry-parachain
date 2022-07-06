@@ -19,72 +19,61 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
-// Make the WASM binary available.
-#[cfg(feature = "std")]
-include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
+#[cfg(feature = "runtime-benchmarks")]
+#[macro_use]
+extern crate frame_benchmarking;
 
-pub mod asset_config;
-pub mod constants;
-pub mod weights;
-pub mod xcm_config;
-pub use constants::currency::*;
+use codec::{Decode, Encode, MaxEncodedLen};
+use frame_support::{
+	construct_runtime, parameter_types,
+	traits::{ConstU16, ConstU32, ConstU64, ConstU8, Contains, Everything, InstanceFilter},
+	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
+	PalletId, RuntimeDebug,
+};
+use frame_system::EnsureRoot;
 pub use pallet_sidechain;
 pub use pallet_teerex;
-pub use primitives::{opaque, Index, *};
-
 use sp_api::impl_runtime_apis;
+pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+#[cfg(any(feature = "std", test))]
+pub use sp_runtime::BuildStorage;
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
 };
-use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
-
-use runtime_common::{
-	impl_runtime_transaction_payment_fees, BlockHashCount, BlockLength, NegativeImbalance,
-	RuntimeBlockWeights, SlowAdjustingFeeUpdate, MAXIMUM_BLOCK_WEIGHT,
-};
-
-#[cfg(test)]
-mod tests;
-
+pub use sp_runtime::{MultiAddress, Perbill, Percent, Permill};
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-
-use codec::{Decode, Encode, MaxEncodedLen};
-use frame_support::{
-	construct_runtime, parameter_types,
-	traits::{
-		ConstU16, ConstU32, ConstU64, ConstU8, Contains, EnsureOneOf, Everything, InstanceFilter,
-	},
-	weights::{
-		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		ConstantMultiplier, DispatchClass, IdentityFee, Weight,
-	},
-	PalletId, RuntimeDebug,
-};
-use frame_system::{
-	limits::BlockWeights,
-	EnsureRoot,
-};
-use runtime_common::{
-	prod_or_fast, CouncilInstance, CouncilMembershipInstance, EnsureRootOrAllCouncil,
-	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrHalfTechnicalCommittee,
-	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee,
-	TechnicalCommitteeInstance, TechnicalCommitteeMembershipInstance,
-};
-pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-pub use sp_runtime::{MultiAddress, Perbill, Percent, Permill};
-
-#[cfg(any(feature = "std", test))]
-pub use sp_runtime::BuildStorage;
-
 // XCM Imports
 use xcm_executor::XcmExecutor;
+
+pub use constants::currency::*;
+pub use primitives::{opaque, Index, *};
+use runtime_common::{
+	impl_runtime_transaction_payment_fees, prod_or_fast, BlockHashCount, BlockLength,
+	CouncilInstance, CouncilMembershipInstance, EnsureRootOrAllCouncil,
+	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrHalfTechnicalCommittee,
+	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, NegativeImbalance,
+	RuntimeBlockWeights, SlowAdjustingFeeUpdate, TechnicalCommitteeInstance,
+	TechnicalCommitteeMembershipInstance, MAXIMUM_BLOCK_WEIGHT,
+};
+use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
+
+// Make the WASM binary available.
+#[cfg(feature = "std")]
+include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
+
+pub mod asset_config;
+pub mod constants;
+#[cfg(test)]
+mod tests;
+pub mod weights;
+pub mod xcm_config;
 
 /// The address format for describing accounts.
 pub type Address = MultiAddress<AccountId, ()>;
@@ -861,10 +850,6 @@ impl Contains<Call> for NormalModeFilter {
 		)
 	}
 }
-
-#[cfg(feature = "runtime-benchmarks")]
-#[macro_use]
-extern crate frame_benchmarking;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benches {

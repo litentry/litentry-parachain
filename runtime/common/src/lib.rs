@@ -21,16 +21,17 @@
 
 use frame_support::{
 	parameter_types, sp_runtime,
-	traits::{Currency, OnUnbalanced},
+	traits::{Currency, EnsureOneOf, OnUnbalanced},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
 		DispatchClass, Weight,
 	},
 };
-use frame_system::limits;
+use frame_system::{limits, EnsureRoot};
 use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
-use primitives::BlockNumber;
 use sp_runtime::{FixedPointNumber, Perbill, Perquintill};
+
+use primitives::{AccountId, BlockNumber};
 
 pub type NegativeImbalance<T> = <pallet_balances::Pallet<T> as Currency<
 	<T as frame_system::Config>::AccountId,
@@ -149,11 +150,6 @@ macro_rules! impl_runtime_transaction_payment_fees {
 		}
 	};
 }
-
-use frame_support::traits::EnsureOneOf;
-use frame_system::EnsureRoot;
-
-pub use primitives::AccountId;
 
 /// See https://github.com/paritytech/polkadot/blob/7096430edd116b1dc6d8337ab35b149e213cbfe9/runtime/common/src/lib.rs#L218
 ///
