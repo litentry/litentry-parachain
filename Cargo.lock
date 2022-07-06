@@ -8765,6 +8765,8 @@ dependencies = [
  "frame-system",
  "pallet-authorship",
  "pallet-balances",
+ "pallet-collective",
+ "pallet-membership",
  "pallet-transaction-payment",
  "pallet-treasury",
  "primitives",

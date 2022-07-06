@@ -150,6 +150,11 @@ macro_rules! impl_runtime_transaction_payment_fees {
 	};
 }
 
+use frame_support::traits::EnsureOneOf;
+use frame_system::EnsureRoot;
+
+pub use primitives::AccountId;
+
 /// See https://github.com/paritytech/polkadot/blob/7096430edd116b1dc6d8337ab35b149e213cbfe9/runtime/common/src/lib.rs#L218
 ///
 /// Macro to set a value (e.g. when using the `parameter_types` macro) to either a production value
@@ -181,3 +186,42 @@ macro_rules! prod_or_fast {
 		}
 	};
 }
+
+/// Instance definition for council and technical committee
+pub type CouncilInstance = pallet_collective::Instance1;
+pub type TechnicalCommitteeInstance = pallet_collective::Instance2;
+pub type CouncilMembershipInstance = pallet_membership::Instance1;
+pub type TechnicalCommitteeMembershipInstance = pallet_membership::Instance2;
+
+/// Type definition for various proportions of council and technical committee
+/// Council
+pub type EnsureRootOrAllCouncil = EnsureOneOf<
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilInstance, 1, 1>,
+>;
+
+pub type EnsureRootOrHalfCouncil = EnsureOneOf<
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilInstance, 1, 2>,
+>;
+
+pub type EnsureRootOrTwoThirdsCouncil = EnsureOneOf<
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilInstance, 2, 3>,
+>;
+
+/// Technical Committee
+pub type EnsureRootOrAllTechnicalCommittee = EnsureOneOf<
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCommitteeInstance, 1, 1>,
+>;
+
+pub type EnsureRootOrHalfTechnicalCommittee = EnsureOneOf<
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCommitteeInstance, 1, 2>,
+>;
+
+pub type EnsureRootOrTwoThirdsTechnicalCommittee = EnsureOneOf<
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCommitteeInstance, 2, 3>,
+>;

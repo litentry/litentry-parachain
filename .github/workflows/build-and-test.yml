@@ -103,7 +103,7 @@ jobs:
         timeout-minutes: 60
         if: needs.check-file-change.outputs.src == 'true'
         run: |
-          ./scripts/build-docker.sh dev
+          ./scripts/build-docker.sh release
           echo "============================="
           docker images
 

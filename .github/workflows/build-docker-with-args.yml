@@ -7,12 +7,12 @@ on:
         description: The commit SHA or tag for checking out code
         default: ''
         required: false
-      dockerfile_type:
+      cargo_profile:
         type: choice
-        description: The type of Dockerfile to use
+        description: which profile to use in cargo
         options:
-        - dev
-        - prod
+        - release
+        - production
       docker_tag:
         description: The tag for the built docker image
         required: true
@@ -35,7 +35,7 @@ jobs:
 
       - name: Build docker image
         run: |
-          ./scripts/build-docker.sh ${{ github.event.inputs.dockerfile_type }} ${{ github.event.inputs.docker_tag }} "${{ github.event.inputs.args }}"
+          ./scripts/build-docker.sh ${{ github.event.inputs.cargo_profile }} ${{ github.event.inputs.docker_tag }} "${{ github.event.inputs.args }}"
           echo "============================="
           docker images
 

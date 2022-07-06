@@ -2,7 +2,7 @@
 set -eo pipefail
 
 function usage() {
-  echo "Usage:   $0 dev|prod [docker-tag] [build-args]"
+  echo "Usage:   $0 release|production [docker-tag] [build-args]"
 }
 
 [ $# -lt 1 ] && (usage; exit 1)
@@ -10,17 +10,16 @@ function usage() {
 ROOTDIR=$(git rev-parse --show-toplevel)
 cd "$ROOTDIR"
 
-TYPE="$1"
+PROFILE="$1"
 TAG="$2"
 ARGS="$3"
 
 NOCACHE_FLAG=
 
-case "$TYPE" in
-    dev)
-        PROFILE=release ;;
-    prod)
-        PROFILE=production
+case "$PROFILE" in
+    release)
+        ;;
+    production)
         NOCACHE_FLAG="--no-cache" ;;
     *)
         usage; exit 1 ;;
@@ -39,7 +38,7 @@ if [ -z "$TAG" ]; then
     fi
 fi
 
-echo "TYPE: $TYPE"
+echo "PROFILE: $PROFILE"
 echo "TAG: $TAG"
 echo "ARGS: $ARGS"
 
