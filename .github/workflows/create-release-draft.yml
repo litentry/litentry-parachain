@@ -5,12 +5,12 @@ on:
     inputs:
       release_client:
         type: boolean
-        description: release client
+        description: client
         required: true
         default: true
       release_runtime:
         type: boolean
-        description: release runtime
+        description: runtime
         required: true
         default: true
       release_tag:
