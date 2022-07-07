@@ -395,6 +395,7 @@ impl pallet_utility::Config for Runtime {
 parameter_types! {
 	pub const TransactionByteFee: Balance = MILLICENTS / 10;
 }
+
 impl_runtime_transaction_payment_fees!(constants);
 
 impl pallet_transaction_payment::Config for Runtime {
