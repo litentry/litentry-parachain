@@ -24,6 +24,7 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 pub mod constants;
+pub mod migration;
 pub mod weights;
 pub mod xcm_config;
 pub use constants::currency::*;
@@ -56,7 +57,9 @@ use sp_version::RuntimeVersion;
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{ConstU16, ConstU32, ConstU64, ConstU8, Contains, Everything, InstanceFilter},
+	traits::{
+		ConstU128, ConstU16, ConstU32, ConstU64, ConstU8, Contains, Everything, InstanceFilter,
+	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		ConstantMultiplier, DispatchClass, IdentityFee, Weight,
@@ -125,6 +128,7 @@ pub type Executive = frame_executive::Executive<
 	// It was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
+	migration::MigrateCollatorSelectionIntoParachainStaking<Runtime>,
 >;
 
 impl_opaque_keys! {
@@ -314,7 +318,7 @@ impl InstanceFilter<Call> for ProxyType {
 					Call::Utility(..) | Call::Multisig(..)
 			),
 			ProxyType::Collator =>
-				matches!(c, Call::CollatorSelection(..) | Call::Utility(..) | Call::Multisig(..)),
+				matches!(c, Call::ParachainStaking(..) | Call::Utility(..) | Call::Multisig(..)),
 			ProxyType::Governance => matches!(
 				c,
 				Call::Democracy(..) |
@@ -370,7 +374,7 @@ impl pallet_authorship::Config for Runtime {
 	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Aura>;
 	type UncleGenerations = ConstU32<0>;
 	type FilterUncle = ();
-	type EventHandler = (CollatorSelection,);
+	type EventHandler = (ParachainStaking,);
 }
 
 parameter_types! {
@@ -633,10 +637,10 @@ impl pallet_session::Config for Runtime {
 	type Event = Event;
 	type ValidatorId = <Self as frame_system::Config>::AccountId;
 	// we don't have stash and controller, thus we don't need the convert as well.
-	type ValidatorIdOf = pallet_collator_selection::IdentityCollator;
-	type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
-	type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
-	type SessionManager = CollatorSelection;
+	type ValidatorIdOf = ConvertInto;
+	type ShouldEndSession = ParachainStaking;
+	type NextSessionRotation = ParachainStaking;
+	type SessionManager = ParachainStaking;
 	// Essentially just Aura, but lets be pedantic.
 	type SessionHandler = <SessionKeys as sp_runtime::traits::OpaqueKeys>::KeyTypeIdProviders;
 	type Keys = SessionKeys;
@@ -650,24 +654,53 @@ impl pallet_aura::Config for Runtime {
 }
 
 parameter_types! {
-	pub const PotId: PalletId = PalletId(*b"PotStake");
-	pub const SessionLength: BlockNumber = 6 * HOURS;
+	/// Default fixed percent a collator takes off the top of due rewards
+	pub const DefaultCollatorCommission: Perbill = Perbill::from_percent(20);
+	/// Default percent of inflation set aside for parachain bond every round
+	pub const DefaultParachainBondReservePercent: Percent = Percent::from_percent(30);
 }
 
-impl pallet_collator_selection::Config for Runtime {
+impl parachain_staking::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-	type UpdateOrigin = EnsureRootOrHalfCouncil;
-	type PotId = PotId;
-	type MaxCandidates = ConstU32<100>;
-	type MinCandidates = ConstU32<0>;
-	type MaxInvulnerables = ConstU32<100>;
-	// should be a multiple of session or things will get inconsistent
-	type KickThreshold = Period;
-	type ValidatorId = <Self as frame_system::Config>::AccountId;
-	type ValidatorIdOf = pallet_collator_selection::IdentityCollator;
-	type ValidatorRegistration = Session;
-	type WeightInfo = weights::pallet_collator_selection::WeightInfo<Runtime>;
+	type MonetaryGovernanceOrigin = EnsureRoot<AccountId>;
+	/// Minimum round length is 2 minutes (10 * 12 second block times)
+	type MinBlocksPerRound = ConstU32<10>;
+	/// Blocks per round
+	type DefaultBlocksPerRound = ConstU32<{ 6 * HOURS }>;
+	/// Rounds before the collator leaving the candidates request can be executed
+	type LeaveCandidatesDelay = ConstU32<24>;
+	/// Rounds before the candidate bond increase/decrease can be executed
+	type CandidateBondLessDelay = ConstU32<24>;
+	/// Rounds before the delegator exit can be executed
+	type LeaveDelegatorsDelay = ConstU32<24>;
+	/// Rounds before the delegator revocation can be executed
+	type RevokeDelegationDelay = ConstU32<24>;
+	/// Rounds before the delegator bond increase/decrease can be executed
+	type DelegationBondLessDelay = ConstU32<24>;
+	/// Rounds before the reward is paid
+	type RewardPaymentDelay = ConstU32<2>;
+	/// Minimum collators selected per round, default at genesis and minimum forever after
+	type MinSelectedCandidates = ConstU32<8>;
+	/// Maximum top delegations per candidate
+	type MaxTopDelegationsPerCandidate = ConstU32<300>;
+	/// Maximum bottom delegations per candidate
+	type MaxBottomDelegationsPerCandidate = ConstU32<50>;
+	/// Maximum delegations per delegator
+	type MaxDelegationsPerDelegator = ConstU32<100>;
+	type DefaultCollatorCommission = DefaultCollatorCommission;
+	type DefaultParachainBondReservePercent = DefaultParachainBondReservePercent;
+	/// Minimum stake required to become a collator
+	type MinCollatorStk = ConstU128<1000>;
+	/// Minimum stake required to be reserved to be a candidate
+	type MinCandidateStk = ConstU128<500>;
+	/// Minimum stake required to be reserved to be a delegator
+	type MinDelegation = ConstU128<5>;
+	/// Minimum stake required to be reserved to be a delegator
+	type MinDelegatorStk = ConstU128<5>;
+	type OnCollatorPayout = ();
+	type OnNewRound = ();
+	type WeightInfo = parachain_staking::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {
@@ -780,10 +813,11 @@ construct_runtime! {
 		// also see the comment above `AllPalletsWithSystem` and
 		// https://github.com/litentry/litentry-parachain/issues/336
 		Authorship: pallet_authorship = 40,
-		CollatorSelection: pallet_collator_selection = 41,
+		//41 is for old CollatorSelection, replaced by ParachainSTaking
 		Session: pallet_session = 42,
 		Aura: pallet_aura = 43,
 		AuraExt: cumulus_pallet_aura_ext = 44,
+		ParachainStaking: parachain_staking = 45,
 
 		// XCM helpers
 		XcmpQueue: cumulus_pallet_xcmp_queue = 50,
@@ -857,7 +891,7 @@ mod benches {
 		[pallet_scheduler, Scheduler]
 		[pallet_preimage, Preimage]
 		[pallet_session, SessionBench::<Runtime>]
-		[pallet_collator_selection, CollatorSelection]
+		[parachain_staking, ParachainStaking]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
 	);
 }

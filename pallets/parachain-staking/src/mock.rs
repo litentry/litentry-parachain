@@ -30,7 +30,6 @@ use frame_support::{
 	weights::Weight,
 };
 use sp_core::H256;
-use sp_io;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
@@ -168,11 +167,7 @@ impl Default for ExtBuilder {
 			delegations: vec![],
 			collators: vec![],
 			inflation: InflationInfo {
-				expect: Range {
-					min: 700,
-					ideal: 700,
-					max: 700,
-				},
+				expect: Range { min: 700, ideal: 700, max: 700 },
 				// not used
 				annual: Range {
 					min: Perbill::from_percent(50),
@@ -220,11 +215,9 @@ impl ExtBuilder {
 			.build_storage::<Test>()
 			.expect("Frame system builds valid default genesis config");
 
-		pallet_balances::GenesisConfig::<Test> {
-			balances: self.balances,
-		}
-		.assimilate_storage(&mut t)
-		.expect("Pallet balances storage can be assimilated");
+		pallet_balances::GenesisConfig::<Test> { balances: self.balances }
+			.assimilate_storage(&mut t)
+			.expect("Pallet balances storage can be assimilated");
 		pallet_parachain_staking::GenesisConfig::<Test> {
 			candidates: self.collators,
 			delegations: self.delegations,
@@ -285,13 +278,7 @@ pub(crate) fn events() -> Vec<pallet::Event<Test>> {
 	System::events()
 		.into_iter()
 		.map(|r| r.event)
-		.filter_map(|e| {
-			if let Event::ParachainStaking(inner) = e {
-				Some(inner)
-			} else {
-				None
-			}
-		})
+		.filter_map(|e| if let Event::ParachainStaking(inner) = e { Some(inner) } else { None })
 		.collect::<Vec<_>>()
 }
 
@@ -384,7 +371,7 @@ macro_rules! assert_event_emitted {
 					e,
 					crate::mock::events()
 				);
-			}
+			},
 		}
 	};
 }
@@ -401,7 +388,7 @@ macro_rules! assert_event_not_emitted {
 					e,
 					crate::mock::events()
 				);
-			}
+			},
 		}
 	};
 }
@@ -416,7 +403,7 @@ pub(crate) fn set_author(round: u32, acc: u64, pts: u32) {
 pub(crate) fn query_lock_amount(account_id: u64, id: LockIdentifier) -> Option<Balance> {
 	for lock in Balances::locks(&account_id) {
 		if lock.id == id {
-			return Some(lock.amount);
+			return Some(lock.amount)
 		}
 	}
 	None
@@ -464,17 +451,11 @@ fn geneses() {
 		.execute_with(|| {
 			assert!(System::events().is_empty());
 			// collators
-			assert_eq!(
-				ParachainStaking::get_collator_stakable_free_balance(&1),
-				500
-			);
+			assert_eq!(ParachainStaking::get_collator_stakable_free_balance(&1), 500);
 			assert_eq!(query_lock_amount(1, COLLATOR_LOCK_ID), Some(500));
 			assert!(ParachainStaking::is_candidate(&1));
 			assert_eq!(query_lock_amount(2, COLLATOR_LOCK_ID), Some(200));
-			assert_eq!(
-				ParachainStaking::get_collator_stakable_free_balance(&2),
-				100
-			);
+			assert_eq!(ParachainStaking::get_collator_stakable_free_balance(&2), 100);
 			assert!(ParachainStaking::is_candidate(&2));
 			// delegators
 			for x in 3..7 {
@@ -488,19 +469,13 @@ fn geneses() {
 			}
 			// no delegator staking locks
 			assert_eq!(query_lock_amount(7, DELEGATOR_LOCK_ID), None);
-			assert_eq!(
-				ParachainStaking::get_delegator_stakable_free_balance(&7),
-				100
-			);
+			assert_eq!(ParachainStaking::get_delegator_stakable_free_balance(&7), 100);
 			assert_eq!(query_lock_amount(8, DELEGATOR_LOCK_ID), None);
 			assert_eq!(ParachainStaking::get_delegator_stakable_free_balance(&8), 9);
 			assert_eq!(query_lock_amount(9, DELEGATOR_LOCK_ID), None);
 			assert_eq!(ParachainStaking::get_delegator_stakable_free_balance(&9), 4);
 			// no collator staking locks
-			assert_eq!(
-				ParachainStaking::get_collator_stakable_free_balance(&7),
-				100
-			);
+			assert_eq!(ParachainStaking::get_collator_stakable_free_balance(&7), 100);
 			assert_eq!(ParachainStaking::get_collator_stakable_free_balance(&8), 9);
 			assert_eq!(ParachainStaking::get_collator_stakable_free_balance(&9), 4);
 		});
@@ -518,13 +493,7 @@ fn geneses() {
 			(10, 100),
 		])
 		.with_candidates(vec![(1, 20), (2, 20), (3, 20), (4, 20), (5, 10)])
-		.with_delegations(vec![
-			(6, 1, 10),
-			(7, 1, 10),
-			(8, 2, 10),
-			(9, 2, 10),
-			(10, 1, 10),
-		])
+		.with_delegations(vec![(6, 1, 10), (7, 1, 10), (8, 2, 10), (9, 2, 10), (10, 1, 10)])
 		.build()
 		.execute_with(|| {
 			assert!(System::events().is_empty());
@@ -541,10 +510,7 @@ fn geneses() {
 			for x in 6..11 {
 				assert!(ParachainStaking::is_delegator(&x));
 				assert_eq!(query_lock_amount(x, DELEGATOR_LOCK_ID), Some(10));
-				assert_eq!(
-					ParachainStaking::get_delegator_stakable_free_balance(&x),
-					90
-				);
+				assert_eq!(ParachainStaking::get_delegator_stakable_free_balance(&x), 90);
 			}
 		});
 }

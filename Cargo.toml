@@ -6,6 +6,7 @@ members = [
     'pallets/drop3',
     'pallets/extrinsic-filter',
     'pallets/identity-management',
+    'pallets/parachain-staking',
     'primitives',
     'runtime/litentry',
     'runtime/litmus',
