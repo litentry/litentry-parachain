@@ -795,7 +795,7 @@ construct_runtime! {
 		Council: pallet_collective::<Instance1> = 22,
 		CouncilMembership: pallet_membership::<Instance1> = 23,
 		TechnicalCommittee: pallet_collective::<Instance2> = 24,
-		TechnicalCommitteeMembership: pallet_membership::<Instance2>= 25,
+		TechnicalCommitteeMembership: pallet_membership::<Instance2> = 25,
 
 		// Parachain
 		ParachainSystem: cumulus_pallet_parachain_system = 30,
@@ -814,7 +814,7 @@ construct_runtime! {
 		// also see the comment above `AllPalletsWithSystem` and
 		// https://github.com/litentry/litentry-parachain/issues/336
 		Authorship: pallet_authorship = 40,
-		CollatorSelection: pallet_collator_selection= 41,
+		CollatorSelection: pallet_collator_selection = 41,
 		Session: pallet_session = 42,
 		Aura: pallet_aura = 43,
 		AuraExt: cumulus_pallet_aura_ext = 44,
@@ -840,7 +840,7 @@ construct_runtime! {
 		Sidechain: pallet_sidechain = 91,
 
 		// TMP
-		Sudo: pallet_sudo= 255,
+		Sudo: pallet_sudo = 255,
 	}
 }
 

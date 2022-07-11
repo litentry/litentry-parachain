@@ -140,12 +140,6 @@ impl_opaque_keys! {
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// Note:
 	// It's important to match `rococo-parachain-runtime`, which is runtime pkg name
-	// otherwise no extrinsic can be submitted.
-	// In logs it's shown:
-	// Failed to submit extrinsic: Extrinsic verification error: Runtime error: Execution failed:
-	// Other("Wasm execution trapped: wasm trap: unreachable ...
-	//
-	// However our CI passes (TODO)
 	spec_name: create_runtime_str!("rococo-parachain"),
 	impl_name: create_runtime_str!("rococo-parachain"),
 	authoring_version: 1,
