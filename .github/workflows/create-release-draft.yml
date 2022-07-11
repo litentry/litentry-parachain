@@ -81,8 +81,8 @@ jobs:
         env:
           # optional: will override the parachain pallet ID and authorize_upgrade call ID,
           #           which will result in a different parachain_authorize_upgrade_hash
-          PARACHAIN_PALLET_ID: 0x1e
-          AUTHORIZE_UPGRADE_PREFIX: 0x02
+          PARACHAIN_PALLET_ID: "0x1e"
+          AUTHORIZE_UPGRADE_PREFIX: "0x02"
         with:
           chain: ${{ matrix.chain }}-parachain
           runtime_dir: runtime/${{ matrix.chain }}
