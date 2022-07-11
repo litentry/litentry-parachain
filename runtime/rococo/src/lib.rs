@@ -151,7 +151,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9082,
+	spec_version: 9083,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -892,7 +892,9 @@ impl Contains<Call> for NormalModeFilter {
 			Call::CouncilMembership(_) |
 			Call::TechnicalCommitteeMembership(_) |
 			// democracy, we don't subdivide the calls, so we allow public proposals
-			Call::Democracy(_)
+			Call::Democracy(_) |
+			// Utility
+			Call::Utility(_)
 		)
 	}
 }
