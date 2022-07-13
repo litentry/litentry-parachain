@@ -35,6 +35,8 @@ fn test_xtokens_recognize_multilocation() {
 		ParaA,
 		ParaB,
 		Relay,
+		RelayChainRuntime,
+		RelayOrigin,
 		UnitWeightCost,
 		LocationToAccountId,
 	>(|| TestNet::reset());
@@ -50,6 +52,8 @@ fn test_xtokens_weight_parameter() {
 		ParaA,
 		ParaB,
 		Relay,
+		RelayChainRuntime,
+		RelayOrigin,
 		UnitWeightCost,
 		LocationToAccountId,
 	>(|| TestNet::reset());
@@ -64,6 +68,8 @@ fn test_pallet_xcm_recognize_multilocation() {
 		ParaA,
 		ParaB,
 		Relay,
+		RelayChainRuntime,
+		RelayOrigin,
 		UnitWeightCost,
 		LocationToAccountId,
 	>(|| TestNet::reset());
@@ -78,6 +84,8 @@ fn test_methods_xtokens_expected_succeed() {
 		ParaA,
 		ParaB,
 		Relay,
+		RelayChainRuntime,
+		RelayOrigin,
 		UnitWeightCost,
 		LocationToAccountId,
 	>(|| TestNet::reset());
@@ -92,6 +100,8 @@ fn test_methods_xtokens_expected_fail() {
 		ParaA,
 		ParaB,
 		Relay,
+		RelayChainRuntime,
+		RelayOrigin,
 		UnitWeightCost,
 		LocationToAccountId,
 	>(|| TestNet::reset());
@@ -106,6 +116,8 @@ fn test_methods_pallet_xcm_expected_succeed() {
 		ParaA,
 		ParaB,
 		Relay,
+		RelayChainRuntime,
+		RelayOrigin,
 		UnitWeightCost,
 		LocationToAccountId,
 	>(|| TestNet::reset());
@@ -120,6 +132,8 @@ fn test_methods_pallet_xcm_expected_fail() {
 		ParaA,
 		ParaB,
 		Relay,
+		RelayChainRuntime,
+		RelayOrigin,
 		UnitWeightCost,
 		LocationToAccountId,
 	>(|| TestNet::reset());
@@ -135,6 +149,8 @@ fn test_pallet_xcm_send_capacity_between_sibling() {
 		ParaA,
 		ParaB,
 		Relay,
+		RelayChainRuntime,
+		RelayOrigin,
 		UnitWeightCost,
 		LocationToAccountId,
 	>(|| TestNet::reset());
@@ -192,5 +208,3 @@ fn test_pallet_xcm_send_capacity_parachain_manipulation() {
 		LocationToAccountId,
 	>(|| TestNet::reset());
 }
-
-// TODO::figure out the other OriginKind scenario

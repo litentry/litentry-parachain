@@ -202,7 +202,7 @@ macro_rules! decl_test_chain {
 			}
 		}
 
-		// ///declare ParachainXcmRouter, RelayChainXcmRouter
+		//declare ParachainXcmRouter, RelayChainXcmRouter
 		decl_test_network! {
 			pub struct TestNet {
 				relay_chain = Relay,

@@ -97,12 +97,18 @@ pub fn test_xtokens_recognize_multilocation<
 	ParaA: xcm_simulator::TestExt,
 	ParaB: xcm_simulator::TestExt,
 	Relay: xcm_simulator::TestExt,
+	RelayRuntime: frame_system::Config<AccountId = AccountId, Origin = RelayOrigin>
+		+ pallet_xcm::Config
+		+ pallet_balances::Config<Balance = Balance>,
+	RelayOrigin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
 	UnitWeightCost: frame_support::traits::Get<frame_support::weights::Weight>,
 	LocationToAccountId: xcmConvert<MultiLocation, AccountId32>,
 >(
 	reset: Reset,
 ) {
-	relaychain_parachains_set_up::<Reset, Origin, ParaA, ParaB, Relay, R>(reset);
+	relaychain_parachains_set_up::<Reset, Origin, R, ParaA, ParaB, Relay, RelayRuntime, RelayOrigin>(
+		reset,
+	);
 	let xcm_fees_account = pallet_treasury::Pallet::<R>::account_id();
 	ParaA::execute_with(|| {
 		// Wrong Multilocation does not pass
@@ -188,12 +194,18 @@ pub fn test_xtokens_weight_parameter<
 	ParaA: xcm_simulator::TestExt,
 	ParaB: xcm_simulator::TestExt,
 	Relay: xcm_simulator::TestExt,
+	RelayRuntime: frame_system::Config<AccountId = AccountId, Origin = RelayOrigin>
+		+ pallet_xcm::Config
+		+ pallet_balances::Config<Balance = Balance>,
+	RelayOrigin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
 	UnitWeightCost: frame_support::traits::Get<frame_support::weights::Weight>,
 	LocationToAccountId: xcmConvert<MultiLocation, AccountId32>,
 >(
 	reset: Reset,
 ) {
-	relaychain_parachains_set_up::<Reset, Origin, ParaA, ParaB, Relay, R>(reset);
+	relaychain_parachains_set_up::<Reset, Origin, R, ParaA, ParaB, Relay, RelayRuntime, RelayOrigin>(
+		reset,
+	);
 	let xcm_fees_account = pallet_treasury::Pallet::<R>::account_id();
 	ParaA::execute_with(|| {
 		// Insufficient weight still pass, but has no effect on remote chain
@@ -274,6 +286,10 @@ pub fn test_pallet_xcm_recognize_multilocation<
 	ParaA: xcm_simulator::TestExt,
 	ParaB: xcm_simulator::TestExt,
 	Relay: xcm_simulator::TestExt,
+	RelayRuntime: frame_system::Config<AccountId = AccountId, Origin = RelayOrigin>
+		+ pallet_xcm::Config
+		+ pallet_balances::Config<Balance = Balance>,
+	RelayOrigin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
 	UnitWeightCost: frame_support::traits::Get<frame_support::weights::Weight>,
 	LocationToAccountId: xcmConvert<MultiLocation, AccountId32>,
 >(
@@ -281,7 +297,9 @@ pub fn test_pallet_xcm_recognize_multilocation<
 ) where
 	<R as frame_system::Config>::Event: From<pallet_xcm::Event<R>>,
 {
-	relaychain_parachains_set_up::<Reset, Origin, ParaA, ParaB, Relay, R>(reset);
+	relaychain_parachains_set_up::<Reset, Origin, R, ParaA, ParaB, Relay, RelayRuntime, RelayOrigin>(
+		reset,
+	);
 	ParaA::execute_with(|| {
 		assert_eq!(Balances::<R>::free_balance(&alice()), PARA_A_USER_INITIAL_BALANCE);
 		// It is sent but with XCM execution failed as Parachain is not exist.
@@ -370,12 +388,18 @@ pub fn test_methods_xtokens_expected_succeed<
 	ParaA: xcm_simulator::TestExt,
 	ParaB: xcm_simulator::TestExt,
 	Relay: xcm_simulator::TestExt,
+	RelayRuntime: frame_system::Config<AccountId = AccountId, Origin = RelayOrigin>
+		+ pallet_xcm::Config
+		+ pallet_balances::Config<Balance = Balance>,
+	RelayOrigin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
 	UnitWeightCost: frame_support::traits::Get<frame_support::weights::Weight>,
 	LocationToAccountId: xcmConvert<MultiLocation, AccountId32>,
 >(
 	reset: Reset,
 ) {
-	relaychain_parachains_set_up::<Reset, Origin, ParaA, ParaB, Relay, R>(reset);
+	relaychain_parachains_set_up::<Reset, Origin, R, ParaA, ParaB, Relay, RelayRuntime, RelayOrigin>(
+		reset,
+	);
 	ParaA::execute_with(|| {
 		// Solve the DustLost first
 		let _ = pallet_balances::Pallet::<R>::deposit_creating(
@@ -531,12 +555,18 @@ pub fn test_methods_xtokens_expected_fail<
 	ParaA: xcm_simulator::TestExt,
 	ParaB: xcm_simulator::TestExt,
 	Relay: xcm_simulator::TestExt,
+	RelayRuntime: frame_system::Config<AccountId = AccountId, Origin = RelayOrigin>
+		+ pallet_xcm::Config
+		+ pallet_balances::Config<Balance = Balance>,
+	RelayOrigin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
 	UnitWeightCost: frame_support::traits::Get<frame_support::weights::Weight>,
 	LocationToAccountId: xcmConvert<MultiLocation, AccountId32>,
 >(
 	reset: Reset,
 ) {
-	relaychain_parachains_set_up::<Reset, Origin, ParaA, ParaB, Relay, R>(reset);
+	relaychain_parachains_set_up::<Reset, Origin, R, ParaA, ParaB, Relay, RelayRuntime, RelayOrigin>(
+		reset,
+	);
 	// Sending 1 ParaA token after xcm fee to BOB by XTokens::transfer
 	ParaA::execute_with(|| {
 		// Dust Lost make transaction failed
@@ -579,6 +609,10 @@ pub fn test_methods_pallet_xcm_expected_succeed<
 	ParaA: xcm_simulator::TestExt,
 	ParaB: xcm_simulator::TestExt,
 	Relay: xcm_simulator::TestExt,
+	RelayRuntime: frame_system::Config<AccountId = AccountId, Origin = RelayOrigin>
+		+ pallet_xcm::Config
+		+ pallet_balances::Config<Balance = Balance>,
+	RelayOrigin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
 	UnitWeightCost: frame_support::traits::Get<frame_support::weights::Weight>,
 	LocationToAccountId: xcmConvert<MultiLocation, AccountId32>,
 >(
@@ -586,7 +620,9 @@ pub fn test_methods_pallet_xcm_expected_succeed<
 ) where
 	<R as frame_system::Config>::Event: From<pallet_xcm::Event<R>>,
 {
-	relaychain_parachains_set_up::<Reset, Origin, ParaA, ParaB, Relay, R>(reset);
+	relaychain_parachains_set_up::<Reset, Origin, R, ParaA, ParaB, Relay, RelayRuntime, RelayOrigin>(
+		reset,
+	);
 
 	ParaA::execute_with(|| {
 		assert_eq!(Balances::<R>::free_balance(&alice()), PARA_A_USER_INITIAL_BALANCE);
@@ -703,12 +739,18 @@ pub fn test_methods_pallet_xcm_expected_fail<
 	ParaA: xcm_simulator::TestExt,
 	ParaB: xcm_simulator::TestExt,
 	Relay: xcm_simulator::TestExt,
+	RelayRuntime: frame_system::Config<AccountId = AccountId, Origin = RelayOrigin>
+		+ pallet_xcm::Config
+		+ pallet_balances::Config<Balance = Balance>,
+	RelayOrigin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
 	UnitWeightCost: frame_support::traits::Get<frame_support::weights::Weight>,
 	LocationToAccountId: xcmConvert<MultiLocation, AccountId32>,
 >(
 	reset: Reset,
 ) {
-	relaychain_parachains_set_up::<Reset, Origin, ParaA, ParaB, Relay, R>(reset);
+	relaychain_parachains_set_up::<Reset, Origin, R, ParaA, ParaB, Relay, RelayRuntime, RelayOrigin>(
+		reset,
+	);
 	ParaA::execute_with(|| {
 		// Mimic the Xcm message sending
 		let assets = vec![MultiAsset {
@@ -801,12 +843,18 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<
 	ParaA: xcm_simulator::TestExt,
 	ParaB: xcm_simulator::TestExt,
 	Relay: xcm_simulator::TestExt,
+	RelayRuntime: frame_system::Config<AccountId = AccountId, Origin = RelayOrigin>
+		+ pallet_xcm::Config
+		+ pallet_balances::Config<Balance = Balance>,
+	RelayOrigin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
 	UnitWeightCost: frame_support::traits::Get<frame_support::weights::Weight>,
 	LocationToAccountId: xcmConvert<MultiLocation, AccountId32>,
 >(
 	reset: Reset,
 ) {
-	relaychain_parachains_set_up::<Reset, Origin, ParaA, ParaB, Relay, R>(reset);
+	relaychain_parachains_set_up::<Reset, Origin, R, ParaA, ParaB, Relay, RelayRuntime, RelayOrigin>(
+		reset,
+	);
 	// Send result Xcm of pallet_xcm::reserve_transfer_assets by user
 	ParaA::execute_with(|| {
 		// Mimic the Xcm message sending
@@ -998,14 +1046,18 @@ pub fn test_pallet_xcm_send_capacity_without_transact<
 	ParaA: xcm_simulator::TestExt,
 	ParaB: xcm_simulator::TestExt,
 	Relay: xcm_simulator::TestExt,
-	RelayRuntime: frame_system::Config<AccountId = AccountId, Origin = RelayOrigin> + pallet_xcm::Config,
+	RelayRuntime: frame_system::Config<AccountId = AccountId, Origin = RelayOrigin>
+		+ pallet_xcm::Config
+		+ pallet_balances::Config<Balance = Balance>,
 	RelayOrigin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
 	UnitWeightCost: frame_support::traits::Get<frame_support::weights::Weight>,
 	LocationToAccountId: xcmConvert<MultiLocation, AccountId32>,
 >(
 	reset: Reset,
 ) {
-	relaychain_parachains_set_up::<Reset, Origin, ParaA, ParaB, Relay, R>(reset);
+	relaychain_parachains_set_up::<Reset, Origin, R, ParaA, ParaB, Relay, RelayRuntime, RelayOrigin>(
+		reset,
+	);
 	ParaA::execute_with(|| {
 		assert_ok!(AssetManager::<R>::register_foreign_asset_type(
 			RawOrigin::Root.into(),
@@ -1186,7 +1238,9 @@ pub fn test_pallet_xcm_send_capacity_relay_manipulation<
 	<<R as frame_system::Config>::Lookup as sp_runtime::traits::StaticLookup>::Source:
 		From<AccountId32>,
 {
-	relaychain_parachains_set_up::<Reset, Origin, ParaA, ParaB, Relay, R>(reset);
+	relaychain_parachains_set_up::<Reset, Origin, R, ParaA, ParaB, Relay, RelayRuntime, RelayOrigin>(
+		reset,
+	);
 	ParaA::execute_with(|| {
 		let _ = pallet_balances::Pallet::<R>::deposit_creating(
 			&relay_account::<LocationToAccountId>(),
@@ -1289,7 +1343,9 @@ pub fn test_pallet_xcm_send_capacity_parachain_manipulation<
 	<<RelayRuntime as frame_system::Config>::Lookup as sp_runtime::traits::StaticLookup>::Source:
 		From<AccountId32>,
 {
-	relaychain_parachains_set_up::<Reset, Origin, ParaA, ParaB, Relay, R>(reset);
+	relaychain_parachains_set_up::<Reset, Origin, R, ParaA, ParaB, Relay, RelayRuntime, RelayOrigin>(
+		reset,
+	);
 	ParaA::execute_with(|| {
 		let call_message: RelayCall =
 			pallet_balances::Call::transfer { dest: bob().into(), value: 2 * UNIT }.into();
@@ -1388,25 +1444,28 @@ pub const RELAY_SOVEREIGN_ACCOUNT_INITIAL_BALANCE: u128 = 100_000_000_000_000 * 
 fn relaychain_parachains_set_up<
 	Reset: FnOnce(),
 	Origin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
-	ParaA: xcm_simulator::TestExt,
-	ParaB: xcm_simulator::TestExt,
-	Relay: xcm_simulator::TestExt,
 	R: RuntimeConfig
 		+ cumulus_pallet_parachain_system::Config
 		+ frame_system::Config<AccountId = AccountId, Origin = Origin>
 		+ orml_xtokens::Config<Balance = Balance, CurrencyId = CurrencyId<R>>
 		+ orml_tokens::Config<Balance = Balance, CurrencyId = AssetId>
 		+ pallet_asset_manager::Config<ForeignAssetType = CurrencyId<R>>,
+	ParaA: xcm_simulator::TestExt,
+	ParaB: xcm_simulator::TestExt,
+	Relay: xcm_simulator::TestExt,
+	RelayRuntime: frame_system::Config<AccountId = AccountId, Origin = RelayOrigin>
+		+ pallet_balances::Config<Balance = Balance>,
+	RelayOrigin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
 >(
 	reset: Reset,
 ) {
 	reset(); //TestNet::reset();
 	Relay::execute_with(|| {
-		let _ = Balances::<R>::deposit_creating(
+		let _ = Balances::<RelayRuntime>::deposit_creating(
 			&para_account(1),
 			RELAY_SOVEREIGN_ACCOUNT_INITIAL_BALANCE,
 		);
-		let _ = Balances::<R>::deposit_creating(
+		let _ = Balances::<RelayRuntime>::deposit_creating(
 			&para_account(2),
 			RELAY_SOVEREIGN_ACCOUNT_INITIAL_BALANCE,
 		);
