@@ -68,7 +68,7 @@ where
 					min_collator_stk,
 				"Account does not have enough balance to bond as a candidate."
 			);
-			candidate_count += 1u32;
+			candidate_count = candidate_count.saturating_add(1u32);
 			if let Err(error) = <parachain_staking::Pallet<T>>::join_candidates(
 				<T as frame_system::Config>::Origin::from(Some(candidate.clone()).into()),
 				min_collator_stk,
@@ -76,7 +76,7 @@ where
 			) {
 				log::warn!("Join candidates failed in genesis with error {:?}", error);
 			} else {
-				candidate_count += 1u32;
+				candidate_count = candidate_count.saturating_add(1u32);
 			}
 		}
 

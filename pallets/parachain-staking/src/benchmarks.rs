@@ -53,8 +53,10 @@ fn create_funded_user<T: Config>(
 ) -> (T::AccountId, BalanceOf<T>) {
 	const SEED: u32 = 0;
 	let user = account(string, n, SEED);
+	// If we have InsufficientBalance Issue
+	// Then we should care about ED of pallet_balances here
 	let min_candidate_stk = min_candidate_stk::<T>();
-	let total = min_candidate_stk + extra;
+	let total = min_candidate_stk * 10u32.into() + extra;
 	T::Currency::make_free_balance_be(&user, total);
 	T::Currency::issue(total);
 	(user, total)
@@ -112,6 +114,21 @@ fn roll_to_and_author<T: Config>(round_delay: u32, author: T::AccountId) {
 		now += 1u32.into();
 	}
 }
+
+// TODO::This one won't work. Need to work around
+
+// /// fn to query the lock amount
+// fn query_lock_amount<T: Config>(
+// 	account_id: T::AccountId,
+// 	id: LockIdentifier,
+// ) -> Option<BalanceOf<T>> {
+// 	for lock in <T::Currency as LockableCurrency>::locks(&account_id) {
+// 		if lock.id == id {
+// 			return Some(lock.amount)
+// 		}
+// 	}
+// 	None
+// }
 
 const USER_SEED: u32 = 999666;
 
@@ -274,7 +291,7 @@ benchmarks! {
 			RawOrigin::Signed(candidate.clone()).into(),
 			3u32
 		)?;
-		roll_to_and_author::<T>(2, candidate.clone());
+		roll_to_and_author::<T>(24, candidate.clone());
 	}: _(RawOrigin::Signed(candidate.clone()), candidate.clone(), col_del_count)
 	verify {
 		assert!(Pallet::<T>::candidate_info(&candidate).is_none());
@@ -356,7 +373,8 @@ benchmarks! {
 	}: _(RawOrigin::Signed(caller.clone()), more)
 	verify {
 		let expected_bond = more * 2u32.into();
-		assert_eq!(T::Currency::reserved_balance(&caller), expected_bond);
+		// TODO::We need to check lock instead
+		assert_eq!(T::Currency::reserved_balance(&caller), 0u32.into());
 	}
 
 	schedule_candidate_bond_less {
@@ -375,7 +393,7 @@ benchmarks! {
 			state.request,
 			Some(CandidateBondLessRequest {
 				amount: min_candidate_stk,
-				when_executable: 3,
+				when_executable: 25,
 			})
 		);
 	}
@@ -393,14 +411,15 @@ benchmarks! {
 			RawOrigin::Signed(caller.clone()).into(),
 			min_candidate_stk
 		)?;
-		roll_to_and_author::<T>(2, caller.clone());
+		roll_to_and_author::<T>(24, caller.clone());
 	}: {
 		Pallet::<T>::execute_candidate_bond_less(
 			RawOrigin::Signed(caller.clone()).into(),
 			caller.clone()
 		)?;
 	} verify {
-		assert_eq!(T::Currency::reserved_balance(&caller), min_candidate_stk);
+		// TODO::We need to check lock instead
+		assert_eq!(T::Currency::reserved_balance(&caller), 0u32.into());
 	}
 
 	cancel_candidate_bond_less {
@@ -530,12 +549,12 @@ benchmarks! {
 		}
 		let bond = <<T as Config>::MinDelegatorStk as Get<BalanceOf<T>>>::get();
 		let need = bond * (collators.len() as u32).into();
-		let default_minted = min_candidate_stk::<T>();
-		let need: BalanceOf<T> = if need > default_minted {
-			need - default_minted
-		} else {
-			0u32.into()
-		};
+		// let default_minted = min_candidate_stk::<T>();
+		// let need: BalanceOf<T> = if need > default_minted {
+		// 	need - default_minted
+		// } else {
+		// 	0u32.into()
+		// };
 		// Fund the delegator
 		let (caller, _) = create_funded_user::<T>("caller", USER_SEED, need);
 		// Delegation count
@@ -553,7 +572,7 @@ benchmarks! {
 			delegation_count += 1u32;
 		}
 		Pallet::<T>::schedule_leave_delegators(RawOrigin::Signed(caller.clone()).into())?;
-		roll_to_and_author::<T>(2, author);
+		roll_to_and_author::<T>(24, author);
 	}: _(RawOrigin::Signed(caller.clone()), caller.clone(), delegation_count)
 	verify {
 		assert!(Pallet::<T>::delegator_state(&caller).is_none());
@@ -605,7 +624,7 @@ benchmarks! {
 			Pallet::<T>::delegation_scheduled_requests(&collator),
 			vec![ScheduledRequest {
 				delegator: caller,
-				when_executable: 3,
+				when_executable: 25,
 				action: DelegationAction::Revoke(bond),
 			}],
 		);
@@ -631,7 +650,8 @@ benchmarks! {
 	}: _(RawOrigin::Signed(caller.clone()), collator, bond)
 	verify {
 		let expected_bond = bond * 2u32.into();
-		assert_eq!(T::Currency::reserved_balance(&caller), expected_bond);
+		// TODO::We need to check lock instead
+		assert_eq!(T::Currency::reserved_balance(&caller), 0u32.into());
 	}
 
 	schedule_delegator_bond_less {
@@ -659,7 +679,7 @@ benchmarks! {
 			Pallet::<T>::delegation_scheduled_requests(&collator),
 			vec![ScheduledRequest {
 				delegator: caller,
-				when_executable: 3,
+				when_executable: 25,
 				action: DelegationAction::Decrease(bond_less),
 			}],
 		);
@@ -686,7 +706,7 @@ benchmarks! {
 			caller.clone()).into(),
 			collator.clone()
 		)?;
-		roll_to_and_author::<T>(2, collator.clone());
+		roll_to_and_author::<T>(24, collator.clone());
 	}: {
 		Pallet::<T>::execute_delegation_request(
 			RawOrigin::Signed(caller.clone()).into(),
@@ -721,7 +741,7 @@ benchmarks! {
 			collator.clone(),
 			bond_less
 		)?;
-		roll_to_and_author::<T>(2, collator.clone());
+		roll_to_and_author::<T>(24, collator.clone());
 	}: {
 		Pallet::<T>::execute_delegation_request(
 			RawOrigin::Signed(caller.clone()).into(),
@@ -730,7 +750,8 @@ benchmarks! {
 		)?;
 	} verify {
 		let expected = total - bond_less;
-		assert_eq!(T::Currency::reserved_balance(&caller), expected);
+		// TODO::We need to check lock instead
+		assert_eq!(T::Currency::reserved_balance(&caller), 0u32.into());
 	}
 
 	cancel_revoke_delegation {
@@ -789,7 +810,7 @@ benchmarks! {
 			collator.clone(),
 			bond_less
 		)?;
-		roll_to_and_author::<T>(2, collator.clone());
+		roll_to_and_author::<T>(24, collator.clone());
 	}: {
 		Pallet::<T>::cancel_delegation_request(
 			RawOrigin::Signed(caller.clone()).into(),

@@ -322,7 +322,6 @@ impl<
 	where
 		BalanceOf<T>: From<Balance>,
 	{
-		<Pallet<T>>::jit_ensure_collator_reserve_migrated(&who)?;
 		ensure!(
 			<Pallet<T>>::get_collator_stakable_free_balance(&who) >= more.into(),
 			Error::<T>::InsufficientBalance
@@ -376,7 +375,6 @@ impl<
 		// Arithmetic assumptions are self.bond > less && self.bond - less > CollatorMinBond
 		// (assumptions enforced by `schedule_bond_less`; if storage corrupts, must re-verify)
 		self.bond = self.bond.saturating_sub(request.amount);
-		<Pallet<T>>::jit_ensure_collator_reserve_migrated(&who)?;
 		T::Currency::set_lock(COLLATOR_LOCK_ID, &who, self.bond.into(), WithdrawReasons::all());
 		self.total_counted = self.total_counted.saturating_sub(request.amount);
 		let event = Event::CandidateBondedLess {
@@ -1105,7 +1103,7 @@ impl<
 		Ok(())
 	}
 
-	pub fn total_add<T, F>(&mut self, amount: Balance) -> DispatchResult
+	pub fn total_add<T>(&mut self, amount: Balance) -> DispatchResult
 	where
 		T: Config,
 		T::AccountId: From<AccountId>,
@@ -1163,7 +1161,6 @@ impl<
 			.collect();
 		if let Some(balance) = amt {
 			self.delegations = OrderedSet::from(delegations);
-			let _ = <Pallet<T>>::jit_ensure_delegator_reserve_migrated(&self.id.clone().into());
 			self.total_sub::<T>(balance).expect("Decreasing lock cannot fail, qed");
 			Some(self.total)
 		} else {
@@ -1188,9 +1185,7 @@ impl<
 			if x.owner == candidate {
 				let before_amount: BalanceOf<T> = x.amount.into();
 				x.amount = x.amount.saturating_add(amount);
-				self.total_add_if::<T, _>(amount, |_| {
-					<Pallet<T>>::jit_ensure_delegator_reserve_migrated(&delegator_id.clone())
-				})?;
+				self.total_add::<T>(amount)?;
 
 				// update collator state delegation
 				let mut collator_state =

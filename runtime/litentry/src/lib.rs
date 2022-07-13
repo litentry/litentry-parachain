@@ -57,9 +57,7 @@ use sp_version::RuntimeVersion;
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{
-		ConstU128, ConstU16, ConstU32, ConstU64, ConstU8, Contains, Everything, InstanceFilter,
-	},
+	traits::{ConstU16, ConstU32, ConstU64, ConstU8, Contains, Everything, InstanceFilter},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		ConstantMultiplier, DispatchClass, IdentityFee, Weight,
@@ -691,13 +689,13 @@ impl parachain_staking::Config for Runtime {
 	type DefaultCollatorCommission = DefaultCollatorCommission;
 	type DefaultParachainBondReservePercent = DefaultParachainBondReservePercent;
 	/// Minimum stake required to become a collator
-	type MinCollatorStk = ConstU128<1000>;
+	type MinCollatorStk = ExistentialDeposit;
 	/// Minimum stake required to be reserved to be a candidate
-	type MinCandidateStk = ConstU128<500>;
+	type MinCandidateStk = ExistentialDeposit;
 	/// Minimum stake required to be reserved to be a delegator
-	type MinDelegation = ConstU128<5>;
+	type MinDelegation = ExistentialDeposit;
 	/// Minimum stake required to be reserved to be a delegator
-	type MinDelegatorStk = ConstU128<5>;
+	type MinDelegatorStk = ExistentialDeposit;
 	type OnCollatorPayout = ();
 	type OnNewRound = ();
 	type WeightInfo = parachain_staking::weights::SubstrateWeight<Runtime>;
