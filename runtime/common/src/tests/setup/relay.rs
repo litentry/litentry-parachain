@@ -149,7 +149,7 @@ macro_rules! decl_test_relay_chain_runtime {
 		impl xcm_executor::Config for XcmConfig {
 			type Call = Call;
 			type XcmSender = XcmRouter;
-			type AssetTransactor = LocalAssetTransactor<Runtime>;
+			type AssetTransactor = LocalAssetTransactor<RelayChainRuntime>;
 			type OriginConverter = LocalOriginConverter<Origin>;
 			type IsReserve = ();
 			type IsTeleporter = ();
