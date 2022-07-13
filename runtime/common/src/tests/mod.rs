@@ -14,13 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::Runtime;
+// mod base_call_filter;
 
-#[cfg(test)]
-runtime_common::decl_test_chain!(Runtime);
+pub mod setup;
+// mod transaction_payment;
 
-mod base_call_filter;
+pub mod xcm_parachain;
 
-mod transaction_payment;
+pub mod base_call_filter;
 
-mod xcm_parachain;
+pub mod transaction_payment;

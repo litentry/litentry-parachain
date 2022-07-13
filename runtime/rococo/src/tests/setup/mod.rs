@@ -21,11 +21,11 @@ use frame_support::{
 
 pub use crate::{
 	AccountId, AssetManager, Balance, Balances, Call, CumulusXcm, DmpQueue, Event, ExtrinsicFilter,
-	MinimumMultiplier, Multisig, Origin, ParachainSystem, PolkadotXcm, Runtime,
-	RuntimeBlockWeights, SlowAdjustingFeeUpdate, System, TargetBlockFullness, Tokens,
-	TransactionByteFee, TransactionPayment, Treasury, Vesting, XTokens, XcmpQueue, CENTS,
-	MILLICENTS, UNIT,
+	Multisig, Origin, ParachainSystem, PolkadotXcm, Runtime, System, Tokens, TransactionByteFee,
+	TransactionPayment, Treasury, Vesting, XTokens, XcmpQueue,
 };
+use runtime_common::currency::*;
+
 pub const ALICE: [u8; 32] = [1u8; 32];
 pub const BOB: [u8; 32] = [2u8; 32];
 pub const CHARLIE: [u8; 32] = [3u8; 32];

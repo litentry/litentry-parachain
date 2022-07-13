@@ -16,21 +16,18 @@
 #![allow(clippy::clone_on_copy)]
 #![allow(clippy::useless_conversion)]
 
-use codec::{Decode, Encode};
 use frame_support::{
 	match_types, parameter_types,
-	traits::{Everything, Nothing, PalletInfoAccess},
+	traits::{Everything, Nothing},
 	weights::{IdentityFee, Weight},
 	PalletId,
 };
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use scale_info::TypeInfo;
 // Litentry: The CheckAccount implementation is forced by the bug of FungiblesAdapter.
 // We should replace () regarding fake_pallet_id account after our PR passed.
 use sp_runtime::traits::AccountIdConversion;
-use sp_std::{borrow::Borrow, prelude::*};
 use xcm::latest::prelude::*;
 use xcm_builder::{
 	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom,
@@ -41,9 +38,12 @@ use xcm_builder::{
 };
 use xcm_executor::{traits::JustTry, XcmExecutor};
 
-use pallet_asset_manager::AssetTypeGetter;
 use primitives::AccountId;
-use runtime_common::xcm_impl::{FirstAssetTrader, MultiNativeAsset, XcmFeesToAccount};
+use runtime_common::xcm_impl::{
+	AccountIdToMultiLocation, AssetIdMuliLocationConvert, CurrencyId,
+	CurrencyIdMultiLocationConvert, FirstAssetTrader, MultiNativeAsset, NewAnchoringSelfReserve,
+	OldAnchoringSelfReserve, XcmFeesToAccount,
+};
 
 #[cfg(test)]
 use super::tests::setup::ParachainXcmRouter;
@@ -72,15 +72,15 @@ pub type LocationToAccountId = (
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
 	AccountId32Aliases<RelayNetwork, AccountId>,
 );
-
-runtime_common::impl_converters!(Runtime);
+impl runtime_common::xcm_impl::RuntimeConfig for Runtime {}
+// runtime_common::impl_converters!(Runtime);
 
 /// Means for transacting self reserve assets on this chain.
 pub type LocalAssetTransactor = CurrencyAdapter<
 	// Use this currency:
 	Balances,
 	// Use this currency when it is a fungible asset matching the given location or name:
-	(IsConcrete<NewAnchoringSelfReserve>, IsConcrete<OldAnchoringSelfReserve>),
+	(IsConcrete<NewAnchoringSelfReserve<Runtime>>, IsConcrete<OldAnchoringSelfReserve<Runtime>>),
 	// Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
@@ -99,7 +99,7 @@ pub type ForeignFungiblesTransactor = FungiblesAdapter<
 	// Use this fungibles implementation
 	Tokens,
 	// Use this currency when it is a fungible asset matching the given location or name:
-	ConvertedConcreteAssetId<AssetId, Balance, AssetIdMuliLocationConvert, JustTry>,
+	ConvertedConcreteAssetId<AssetId, Balance, AssetIdMuliLocationConvert<Runtime>, JustTry>,
 	// Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
@@ -171,25 +171,30 @@ parameter_types! {
 pub type Traders = (
 	UsingComponents<
 		IdentityFee<Balance>,
-		NewAnchoringSelfReserve,
+		NewAnchoringSelfReserve<Runtime>,
 		AccountId,
 		Balances,
 		DealWithFees<Runtime>,
 	>,
 	UsingComponents<
 		IdentityFee<Balance>,
-		OldAnchoringSelfReserve,
+		OldAnchoringSelfReserve<Runtime>,
 		AccountId,
 		Balances,
 		DealWithFees<Runtime>,
 	>,
 	// TODO::Implement foreign asset fee to weight rule from AssetManager Setting; Need more test
 	FirstAssetTrader<
-		CurrencyId,
+		CurrencyId<Runtime>,
 		AssetManager,
 		XcmFeesToAccount<
 			Tokens,
-			ConvertedConcreteAssetId<AssetId, Balance, AssetIdMuliLocationConvert, JustTry>,
+			ConvertedConcreteAssetId<
+				AssetId,
+				Balance,
+				AssetIdMuliLocationConvert<Runtime>,
+				JustTry,
+			>,
 			AccountId,
 			XcmFeesAccount,
 		>,
@@ -309,9 +314,9 @@ impl cumulus_pallet_xcm::Config for Runtime {
 impl orml_xtokens::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
-	type CurrencyId = CurrencyId;
+	type CurrencyId = CurrencyId<Runtime>;
 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
-	type CurrencyIdConvert = CurrencyIdMultiLocationConvert;
+	type CurrencyIdConvert = CurrencyIdMultiLocationConvert<Runtime>;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type SelfLocation = SelfLocation;
 	type MultiLocationsFilter = ParentOrParachains;

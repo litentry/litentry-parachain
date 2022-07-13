@@ -16,24 +16,25 @@
 
 use super::setup::*;
 use crate::{
-	xcm_config::{
-		CurrencyId, CurrencyIdMultiLocationConvert, LocationToAccountId, UnitWeightCost,
-		XcmFeesAccount,
-	},
-	Origin,
+    xcm_config::{LocationToAccountId, UnitWeightCost, XcmFeesAccount},
+    Origin,
 };
+use codec::Encode;
 use cumulus_primitives_core::{ParaId, PersistedValidationData};
 use cumulus_primitives_parachain_inherent::ParachainInherentData;
-
-use codec::Encode;
 use frame_support::{
-	assert_noop, assert_ok,
-	traits::{Currency, PalletInfoAccess},
+    assert_noop, assert_ok,
+    traits::{Currency, PalletInfoAccess},
 };
 use frame_system::RawOrigin;
 use orml_traits::MultiCurrency;
 use polkadot_parachain::primitives::RelayChainBlockNumber;
+use runtime_common::{
+    currency::*,
+    xcm_impl::{CurrencyId as CommonCurrencyId, CurrencyIdMultiLocationConvert},
+};
 use sp_runtime::{traits::Convert, AccountId32};
+use std::marker::PhantomData;
 use xcm::prelude::*;
 use xcm_executor::traits::Convert as xcmConvert;
 use xcm_simulator::TestExt;
@@ -41,6 +42,8 @@ use xcm_simulator::TestExt;
 pub mod relay_sproof_builder;
 
 pub const RELAY_UNIT: u128 = 1;
+
+type CurrencyId = CommonCurrencyId<Runtime>;
 
 fn para_account(x: u32) -> AccountId32 {
 	<relay::SovereignAccountOf as xcmConvert<MultiLocation, AccountId32>>::convert(
@@ -72,7 +75,7 @@ fn test_xtokens_recognize_multilocation() {
 		assert_noop!(
 			XTokens::transfer(
 				Origin::signed(alice()),
-				CurrencyId::SelfReserve,
+				CurrencyId::SelfReserve(PhantomData::default()),
 				1 * UNIT,
 				Box::new((Parent, Parachain(2)).into()),
 				UnitWeightCost::get() * 4
@@ -82,7 +85,7 @@ fn test_xtokens_recognize_multilocation() {
 
 		assert_ok!(XTokens::transfer(
 			Origin::signed(alice()),
-			CurrencyId::SelfReserve,
+			CurrencyId::SelfReserve(PhantomData::default()),
 			1 * UNIT,
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
@@ -145,7 +148,7 @@ fn test_xtokens_weight_parameter() {
 		// Insufficient weight still pass, but has no effect on remote chain
 		assert_ok!(XTokens::transfer(
 			Origin::signed(alice()),
-			CurrencyId::SelfReserve,
+			CurrencyId::SelfReserve(PhantomData::default()),
 			1 * UNIT,
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
@@ -175,7 +178,7 @@ fn test_xtokens_weight_parameter() {
 		// Redundant weight pass but remote the chain charges its own rule and returns the surplus
 		assert_ok!(XTokens::transfer(
 			Origin::signed(alice()),
-			CurrencyId::SelfReserve,
+			CurrencyId::SelfReserve(PhantomData::default()),
 			1 * UNIT,
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
@@ -220,7 +223,7 @@ fn test_pallet_xcm_recognize_multilocation() {
 			Box::new(
 				vec![MultiAsset {
 					id: AssetId::Concrete(
-						CurrencyIdMultiLocationConvert::convert(CurrencyId::SelfReserve).unwrap(),
+						CurrencyIdMultiLocationConvert::convert(CurrencyId::SelfReserve(PhantomData::default())).unwrap(),
 					),
 					fun: Fungibility::Fungible(1 * UNIT),
 				}]
@@ -246,7 +249,7 @@ fn test_pallet_xcm_recognize_multilocation() {
 			Box::new(
 				vec![MultiAsset {
 					id: AssetId::Concrete(
-						CurrencyIdMultiLocationConvert::convert(CurrencyId::SelfReserve).unwrap(),
+						CurrencyIdMultiLocationConvert::convert(CurrencyId::SelfReserve(PhantomData::default())).unwrap(),
 					),
 					fun: Fungibility::Fungible(2 * UNIT),
 				}]
@@ -313,7 +316,7 @@ fn test_methods_xtokens_expected_succeed() {
 		// Sending 100 ParaA token after xcm fee to BOB by XTokens::transfer_with_fee
 		assert_ok!(XTokens::transfer_with_fee(
 			Origin::signed(alice()),
-			CurrencyId::SelfReserve,
+			CurrencyId::SelfReserve(PhantomData::default()),
 			10 * CENTS,
 			(UnitWeightCost::get() * 4).into(),
 			Box::new(
@@ -364,7 +367,7 @@ fn test_methods_xtokens_expected_succeed() {
 		// Sending 10 UNIT ParaA token after xcm fee to BOB by XTokens::transfer_multicurrencies
 		assert_ok!(XTokens::transfer_multicurrencies(
 			Origin::signed(alice()),
-			vec![(CurrencyId::SelfReserve, u128::from(UnitWeightCost::get() * 4) + 10 * UNIT)],
+			vec![(CurrencyId::SelfReserve(PhantomData::default()), u128::from(UnitWeightCost::get() * 4) + 10 * UNIT)],
 			0,
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
@@ -426,7 +429,7 @@ fn test_methods_xtokens_expected_fail() {
 		assert_noop!(
 			XTokens::transfer(
 				Origin::signed(alice()),
-				CurrencyId::SelfReserve,
+				CurrencyId::SelfReserve(PhantomData::default()),
 				u128::from(UnitWeightCost::get() * 4) + 100 * MILLICENTS,
 				Box::new(
 					(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
@@ -461,7 +464,7 @@ fn test_methods_pallet_xcm_expected_succeed() {
 			Box::new(
 				vec![MultiAsset {
 					id: AssetId::Concrete(
-						CurrencyIdMultiLocationConvert::convert(CurrencyId::SelfReserve).unwrap(),
+						CurrencyIdMultiLocationConvert::convert(CurrencyId::SelfReserve(PhantomData::default())).unwrap(),
 					),
 					fun: Fungibility::Fungible(
 						u128::from(UnitWeightCost::get() * 4) + 100 * MILLICENTS

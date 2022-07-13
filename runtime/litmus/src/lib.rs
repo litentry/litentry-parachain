@@ -54,10 +54,10 @@ use sp_version::RuntimeVersion;
 // XCM Imports
 use xcm_executor::XcmExecutor;
 
-pub use constants::currency::*;
+pub use constants::currency::deposit;
 pub use primitives::{opaque, Index, *};
 use runtime_common::{
-	impl_runtime_transaction_payment_fees, prod_or_fast, BlockHashCount, BlockLength,
+	currency::*, impl_runtime_transaction_payment_fees, prod_or_fast, BlockHashCount, BlockLength,
 	CouncilInstance, CouncilMembershipInstance, EnsureRootOrAllCouncil,
 	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrHalfTechnicalCommittee,
 	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, NegativeImbalance,

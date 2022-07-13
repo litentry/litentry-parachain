@@ -20,6 +20,10 @@ use frame_support::{
 	weights::{constants::ExtrinsicBaseWeight, DispatchClass, Weight},
 };
 use pallet_transaction_payment::Multiplier;
+use runtime_common::{
+	currency::*, MinimumMultiplier, RuntimeBlockWeights, SlowAdjustingFeeUpdate,
+	TargetBlockFullness,
+};
 use sp_runtime::traits::{Convert, SignedExtension};
 
 fn max_normal() -> Weight {

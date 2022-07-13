@@ -19,6 +19,9 @@
 #![allow(clippy::upper_case_acronyms)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(feature = "tests")]
+pub mod tests;
+
 pub mod xcm_impl;
 
 use frame_support::{
@@ -49,6 +52,18 @@ pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
 pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
+
+pub mod currency {
+	use primitives::Balance;
+
+	pub const UNIT: Balance = 1_000_000_000_000;
+	pub const DOLLARS: Balance = UNIT; // 1_000_000_000_000
+	pub const CENTS: Balance = DOLLARS / 100; // 10_000_000_000
+	pub const MILLICENTS: Balance = CENTS / 1_000; // 10_000_000
+
+	/// The existential deposit.
+	pub const EXISTENTIAL_DEPOSIT: Balance = 10 * CENTS;
+}
 
 // Common constants used in all runtimes.
 parameter_types! {

@@ -14,23 +14,34 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use super::WEIGHT_PER_SECOND;
+use codec::{Decode, Encode};
 use frame_support::{
-	traits::{tokens::fungibles::Mutate, Get},
+	traits::{tokens::fungibles::Mutate, Get, PalletInfoAccess},
 	weights::Weight,
 };
-use pallet_asset_manager::UnitsToWeightRatio;
-use sp_runtime::traits::Zero;
-use sp_std::marker::PhantomData;
+use pallet_balances::pallet::Pallet as RuntimeBalances;
+use parachain_info::pallet::Pallet as ParachainInfo;
+use scale_info::TypeInfo;
+use sp_runtime::traits::{Convert as spConvert, Zero};
+use sp_std::{borrow::Borrow, boxed::Box, cmp::Ordering, marker::PhantomData, prelude::*};
 use xcm::{
 	latest::{
-		prelude::{Fungibility, MultiAsset, MultiLocation, XcmError},
+		prelude::{
+			Fungibility, Junction, Junctions, MultiAsset, MultiLocation, NetworkId, XcmError,
+		},
 		AssetId as xcmAssetId,
 	},
 	prelude::{Parachain, X1},
 };
 use xcm_builder::TakeRevenue;
-use xcm_executor::traits::{FilterAssetLocation, MatchesFungibles, WeightTrader};
+use xcm_executor::traits::{
+	Convert as xcmConvert, FilterAssetLocation, MatchesFungibles, WeightTrader,
+};
+
+use pallet_asset_manager::{AssetTypeGetter, Pallet as AssetManager, UnitsToWeightRatio};
+use primitives::{AccountId, AssetId, Balance, BlockNumber};
+
+use super::WEIGHT_PER_SECOND;
 
 // We need to know how to charge for incoming assets
 // This takes the first fungible asset, and takes whatever UnitPerSecondGetter establishes
@@ -216,172 +227,262 @@ impl FilterAssetLocation for MultiNativeAsset {
 	}
 }
 
-/// implement different types of converters:
-/// CurrencyId <----> MultiLocation
-/// AccountId ----> MultiLocation
-/// AssetId <----> MultiLocation
-#[macro_export]
-macro_rules! impl_converters {
-	($runtime:ty) => {
-		// use frame_support::parameter_types;
-		use pallet_balances::pallet::Pallet as RuntimeBalances;
-		use sp_runtime::traits::Convert as spConvert;
-		use xcm_executor::traits::Convert as xcmConvert;
-
-		parameter_types! {
-			// The old anchoring method before 0.9.16
-			// https://github.com/paritytech/polkadot/pull/4470
-			pub OldAnchoringSelfReserve: MultiLocation = MultiLocation {
-				parents:1,
-				interior: Junctions::X2(
-					Parachain(ParachainInfo::parachain_id().into()),
-					PalletInstance(<RuntimeBalances<$runtime> as PalletInfoAccess>::index() as u8)
-				)
-			};
-			// New Self Reserve location, defines the multilocation identifiying the self-reserve currency
-			// This is used to match it also against our Balances pallet when we receive such
-			// a MultiLocation: (Self Balances pallet index)
-			// This is the new anchoring way
-			pub NewAnchoringSelfReserve: MultiLocation = MultiLocation {
-				parents:0,
-				interior: Junctions::X1(
-					PalletInstance(<RuntimeBalances<$runtime> as PalletInfoAccess>::index() as u8)
-				)
-			};
-		}
-
-		// Our currencyId. We distinguish for now between SelfReserve, and Others, defined by their
-		// Id.
-		#[derive(Clone, Eq, Debug, PartialEq, Ord, PartialOrd, Encode, Decode, TypeInfo)]
-		pub enum CurrencyId {
-			SelfReserve, // The only parachain native token: LIT
-			ParachainReserve(Box<MultiLocation>), /* Any parachain based asset, including local
-			              * native minted ones. */
-		}
-
-		impl Default for CurrencyId {
-			fn default() -> Self {
-				CurrencyId::ParachainReserve(Box::new(MultiLocation::here()))
-			}
-		}
-
-		impl From<MultiLocation> for CurrencyId {
-			fn from(location: MultiLocation) -> Self {
-				match location {
-					a if (a == OldAnchoringSelfReserve::get()) |
-						(a == NewAnchoringSelfReserve::get()) =>
-						CurrencyId::SelfReserve,
-					_ => CurrencyId::ParachainReserve(Box::new(location.into())),
-				}
-			}
-		}
-
-		impl From<Option<MultiLocation>> for CurrencyId {
-			fn from(location: Option<MultiLocation>) -> Self {
-				match location {
-					Some(a)
-						if (a == OldAnchoringSelfReserve::get()) |
-							(a == NewAnchoringSelfReserve::get()) =>
-						CurrencyId::SelfReserve,
-					Some(multi) => CurrencyId::ParachainReserve(Box::new(multi)),
-					None => CurrencyId::ParachainReserve(Box::new(MultiLocation::default())),
-				}
-			}
-		}
-
-		impl From<CurrencyId> for Option<MultiLocation> {
-			fn from(currency_id: CurrencyId) -> Self {
-				match currency_id {
-					// For now and until Xtokens is adapted to handle 0.9.16 version we use
-					// the old anchoring here
-					// This is not a problem in either cases, since the view of the destination
-					// chain does not change
-					// TODO! change this to NewAnchoringSelfReserve once xtokens is adapted for it
-					CurrencyId::SelfReserve => {
-						let multi: MultiLocation = OldAnchoringSelfReserve::get();
-						Some(multi)
-					},
-					CurrencyId::ParachainReserve(multi) => Some(*multi),
-				}
-			}
-		}
-
-		/// Instructs how to convert a 32 byte accountId into a MultiLocation
-		pub struct AccountIdToMultiLocation;
-		impl spConvert<AccountId, MultiLocation> for AccountIdToMultiLocation {
-			fn convert(account: AccountId) -> MultiLocation {
-				MultiLocation {
-					parents: 0,
-					interior: X1(Junction::AccountId32 {
-						network: NetworkId::Any,
-						id: account.into(),
-					}),
-				}
-			}
-		}
-
-		// How to convert from CurrencyId to MultiLocation: for orml convert sp_runtime Convert
-		// trait
-		pub struct CurrencyIdMultiLocationConvert;
-		impl spConvert<CurrencyId, Option<MultiLocation>> for CurrencyIdMultiLocationConvert {
-			fn convert(currency: CurrencyId) -> Option<MultiLocation> {
-				currency.into()
-			}
-		}
-
-		impl spConvert<MultiLocation, Option<CurrencyId>> for CurrencyIdMultiLocationConvert {
-			fn convert(multi: MultiLocation) -> Option<CurrencyId> {
-				match multi {
-					a if (a == OldAnchoringSelfReserve::get()) |
-						(a == NewAnchoringSelfReserve::get()) =>
-						Some(CurrencyId::SelfReserve),
-					_ => Some(CurrencyId::ParachainReserve(Box::new(multi))),
-				}
-			}
-		}
-
-		/// Converter struct implementing `AssetIdConversion` converting a numeric asset ID
-		/// (must be `TryFrom/TryInto<u128>`) into a MultiLocation Value and Viceversa through
-		/// an intermediate generic type AssetType.
-		/// The trait bounds enforce is that the AssetTypeGetter trait is also implemented
-		pub struct AssetIdMuliLocationConvert;
-		impl xcmConvert<MultiLocation, AssetId> for AssetIdMuliLocationConvert {
-			fn convert_ref(multi: impl Borrow<MultiLocation>) -> Result<AssetId, ()> {
-				if let Some(currency_id) = <CurrencyIdMultiLocationConvert as spConvert<
-					MultiLocation,
-					Option<CurrencyId>,
-				>>::convert(multi.borrow().clone().into())
-				{
-					if let Some(asset_id) =
-						<AssetManager as AssetTypeGetter<AssetId, CurrencyId>>::get_asset_id(
-							currency_id,
-						) {
-						Ok(asset_id)
-					} else {
-						Err(())
-					}
-				} else {
-					Err(())
-				}
-			}
-			fn reverse_ref(asset_id: impl Borrow<AssetId>) -> Result<MultiLocation, ()> {
-				if let Some(currency_id) =
-					<AssetManager as AssetTypeGetter<AssetId, CurrencyId>>::get_asset_type(
-						asset_id.borrow().clone().into(),
-					) {
-					if let Some(multi) = <CurrencyIdMultiLocationConvert as spConvert<
-						CurrencyId,
-						Option<MultiLocation>,
-					>>::convert(currency_id)
-					{
-						Ok(multi)
-					} else {
-						Err(())
-					}
-				} else {
-					Err(())
-				}
-			}
-		}
-	};
+/// A set of pallet_config that runtime must implement.
+pub trait RuntimeConfig:
+	parachain_info::Config
+	+ pallet_asset_manager::Config<AssetId = AssetId>
+	+ pallet_balances::Config<Balance = Balance>
+	+ pallet_extrinsic_filter::Config
+	+ parachain_info::Config
+	+ pallet_xcm::Config
+	+ pallet_vesting::Config
+	+ pallet_treasury::Config
+	+ frame_system::Config<BlockNumber = BlockNumber, AccountId = AccountId>
+// where
+// 	<Self as frame_system::Config>::BlockNumber: From<BlockNumber>,
+{
 }
+
+#[derive(Clone, Eq, Debug, PartialEq, Ord, PartialOrd, Encode, Decode, TypeInfo)]
+pub enum CurrencyId4Compare {
+	SelfReserve,
+	ParachainReserve(Box<MultiLocation>),
+}
+
+// Our currencyId. We distinguish for now between SelfReserve, and Others, defined by their Id.
+#[derive(Clone, Eq, Debug, PartialEq, Encode, Decode, TypeInfo)]
+pub enum CurrencyId<R: RuntimeConfig> {
+	SelfReserve(PhantomData<R>), // The only parachain native token: LIT
+	ParachainReserve(Box<MultiLocation>), /* Any parachain based asset, including local native minted
+	                              * ones. */
+}
+
+fn convert_currency<R: RuntimeConfig>(s: &CurrencyId<R>) -> CurrencyId4Compare {
+	match s {
+		CurrencyId::<R>::SelfReserve(_) => CurrencyId4Compare::SelfReserve,
+		CurrencyId::<R>::ParachainReserve(multi) =>
+			CurrencyId4Compare::ParachainReserve(multi.clone()),
+	}
+}
+
+impl<R: RuntimeConfig> Ord for CurrencyId<R> {
+	fn cmp(&self, other: &Self) -> Ordering {
+		convert_currency(&self).cmp(&convert_currency(other))
+	}
+}
+
+impl<R: RuntimeConfig> PartialOrd for CurrencyId<R> {
+	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+		Some(self.cmp(other))
+	}
+}
+
+impl<R: RuntimeConfig> Default for CurrencyId<R> {
+	fn default() -> Self {
+		CurrencyId::ParachainReserve(Box::new(MultiLocation::here()))
+	}
+}
+
+/// Instructs how to convert a 32 byte accountId into a MultiLocation
+pub struct AccountIdToMultiLocation;
+impl spConvert<AccountId, MultiLocation> for AccountIdToMultiLocation {
+	fn convert(account: AccountId) -> MultiLocation {
+		MultiLocation {
+			parents: 0,
+			interior: X1(Junction::AccountId32 { network: NetworkId::Any, id: account.into() }),
+		}
+	}
+}
+
+pub struct OldAnchoringSelfReserve<R>(PhantomData<R>);
+impl<R: RuntimeConfig> OldAnchoringSelfReserve<R> {
+	/// Returns the value of this parameter type.
+	pub fn get() -> MultiLocation {
+		MultiLocation {
+			parents: 1,
+			interior: Junctions::X2(
+				Parachain(ParachainInfo::<R>::parachain_id().into()),
+				Junction::PalletInstance(<RuntimeBalances<R> as PalletInfoAccess>::index() as u8),
+			),
+		}
+	}
+}
+
+impl<I: From<MultiLocation>, R: RuntimeConfig> ::frame_support::traits::Get<I>
+	for OldAnchoringSelfReserve<R>
+{
+	fn get() -> I {
+		I::from(Self::get())
+	}
+}
+
+pub struct NewAnchoringSelfReserve<R>(PhantomData<R>);
+
+impl<R: RuntimeConfig> NewAnchoringSelfReserve<R> {
+	/// Returns the value of this parameter type.
+	pub fn get() -> MultiLocation {
+		MultiLocation {
+			parents: 0,
+			interior: Junctions::X1(Junction::PalletInstance(
+				<RuntimeBalances<R> as PalletInfoAccess>::index() as u8,
+			)),
+		}
+	}
+}
+
+impl<I: From<MultiLocation>, R: RuntimeConfig> ::frame_support::traits::Get<I>
+	for NewAnchoringSelfReserve<R>
+{
+	fn get() -> I {
+		I::from(Self::get())
+	}
+}
+
+impl<R: RuntimeConfig> From<MultiLocation> for CurrencyId<R> {
+	fn from(location: MultiLocation) -> Self {
+		match location {
+			a if (a == (OldAnchoringSelfReserve::<R>::get())) |
+				(a == (NewAnchoringSelfReserve::<R>::get())) =>
+				CurrencyId::<R>::SelfReserve(PhantomData::default()),
+			_ => CurrencyId::<R>::ParachainReserve(Box::new(location.into())),
+		}
+	}
+}
+
+impl<R: RuntimeConfig> From<Option<MultiLocation>> for CurrencyId<R> {
+	fn from(location: Option<MultiLocation>) -> Self {
+		match location {
+			Some(a)
+				if (a == OldAnchoringSelfReserve::<R>::get()) |
+					(a == NewAnchoringSelfReserve::<R>::get()) =>
+				CurrencyId::<R>::SelfReserve(PhantomData::default()),
+			Some(multi) => CurrencyId::ParachainReserve(Box::new(multi)),
+			None => CurrencyId::ParachainReserve(Box::new(MultiLocation::default())),
+		}
+	}
+}
+
+impl<R: RuntimeConfig> From<CurrencyId<R>> for Option<MultiLocation> {
+	fn from(currency_id: CurrencyId<R>) -> Self {
+		match currency_id {
+			// For now and until Xtokens is adapted to handle 0.9.16 version we use
+			// the old anchoring here
+			// This is not a problem in either cases, since the view of the destination
+			// chain does not change
+			// TODO! change this to NewAnchoringSelfReserve once xtokens is adapted for it
+			CurrencyId::<R>::SelfReserve(_) => {
+				let multi: MultiLocation = OldAnchoringSelfReserve::<R>::get();
+				Some(multi)
+			},
+			CurrencyId::<R>::ParachainReserve(multi) => Some(*multi),
+		}
+	}
+}
+
+// How to convert from CurrencyId to MultiLocation: for orml convert sp_runtime Convert
+// trait
+pub struct CurrencyIdMultiLocationConvert<R: RuntimeConfig>(PhantomData<R>);
+impl<R: RuntimeConfig> spConvert<CurrencyId<R>, Option<MultiLocation>>
+	for CurrencyIdMultiLocationConvert<R>
+{
+	fn convert(currency: CurrencyId<R>) -> Option<MultiLocation> {
+		currency.into()
+	}
+}
+
+impl<R: RuntimeConfig> spConvert<MultiLocation, Option<CurrencyId<R>>>
+	for CurrencyIdMultiLocationConvert<R>
+{
+	fn convert(multi: MultiLocation) -> Option<CurrencyId<R>> {
+		match multi {
+			a if (a == OldAnchoringSelfReserve::<R>::get()) |
+				(a == NewAnchoringSelfReserve::<R>::get()) =>
+				Some(CurrencyId::<R>::SelfReserve(PhantomData::default())),
+			_ => Some(CurrencyId::<R>::ParachainReserve(Box::new(multi))),
+		}
+	}
+}
+
+/// Converter struct implementing `AssetIdConversion` converting a numeric asset ID
+/// (must be `TryFrom/TryInto<u128>`) into a MultiLocation Value and Viceversa through
+/// an intermediate generic type AssetType.
+/// The trait bounds enforce is that the AssetTypeGetter trait is also implemented
+pub struct AssetIdMuliLocationConvert<R>(PhantomData<R>);
+impl<R: RuntimeConfig> xcmConvert<MultiLocation, AssetId> for AssetIdMuliLocationConvert<R>
+where
+	R: pallet_asset_manager::Config<ForeignAssetType = CurrencyId<R>>,
+{
+	fn convert_ref(multi: impl Borrow<MultiLocation>) -> Result<AssetId, ()> {
+		if let Some(currency_id) = <CurrencyIdMultiLocationConvert<R> as spConvert<
+			MultiLocation,
+			Option<CurrencyId<R>>,
+		>>::convert(multi.borrow().clone().into())
+		{
+			if let Some(asset_id) =
+				<AssetManager<R> as AssetTypeGetter<AssetId, CurrencyId<R>>>::get_asset_id(
+					currency_id,
+				) {
+				Ok(asset_id)
+			} else {
+				Err(())
+			}
+		} else {
+			Err(())
+		}
+	}
+
+	fn reverse_ref(asset_id: impl Borrow<AssetId>) -> Result<MultiLocation, ()> {
+		if let Some(currency_id) =
+			<AssetManager<R> as AssetTypeGetter<AssetId, CurrencyId<R>>>::get_asset_type(
+				asset_id.borrow().clone().into(),
+			) {
+			if let Some(multi) = <CurrencyIdMultiLocationConvert<R> as spConvert<
+				CurrencyId<R>,
+				Option<MultiLocation>,
+			>>::convert(currency_id)
+			{
+				Ok(multi)
+			} else {
+				Err(())
+			}
+		} else {
+			Err(())
+		}
+	}
+}
+
+// implement different types of converters:
+// CurrencyId <----> MultiLocation
+// AccountId ----> MultiLocation
+// AssetId <----> MultiLocation
+// #[macro_export]
+// macro_rules! impl_converters {
+// 	($runtime:ty) => {
+// 		// use frame_support::parameter_types;
+// 		use pallet_balances::pallet::Pallet as RuntimeBalances;
+// 		use sp_runtime::traits::Convert as spConvert;
+// 		use xcm_executor::traits::Convert as xcmConvert;
+//
+// 		parameter_types! {
+// 			// The old anchoring method before 0.9.16
+// 			// https://github.com/paritytech/polkadot/pull/4470
+// 			pub OldAnchoringSelfReserve: MultiLocation = MultiLocation {
+// 				parents:1,
+// 				interior: Junctions::X2(
+// 					Parachain(ParachainInfo::parachain_id().into()),
+// 					PalletInstance(<RuntimeBalances<$runtime> as PalletInfoAccess>::index() as u8)
+// 				)
+// 			};
+// 			// New Self Reserve location, defines the multilocation identifiying the self-reserve currency
+// 			// This is used to match it also against our Balances pallet when we receive such
+// 			// a MultiLocation: (Self Balances pallet index)
+// 			// This is the new anchoring way
+// 			pub NewAnchoringSelfReserve: MultiLocation = MultiLocation {
+// 				parents:0,
+// 				interior: Junctions::X1(
+// 					PalletInstance(<RuntimeBalances<$runtime> as PalletInfoAccess>::index() as u8)
+// 				)
+// 			};
+// 		}
+// 	};
+// }
