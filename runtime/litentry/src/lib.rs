@@ -698,7 +698,7 @@ impl parachain_staking::Config for Runtime {
 	type MinDelegatorStk = ExistentialDeposit;
 	type OnCollatorPayout = ();
 	type OnNewRound = ();
-	type WeightInfo = parachain_staking::weights::SubstrateWeight<Runtime>;
+	type WeightInfo = weights::parachain_staking::WeightInfo<Runtime>;
 }
 
 parameter_types! {
