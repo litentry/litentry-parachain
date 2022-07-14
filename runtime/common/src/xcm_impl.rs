@@ -238,8 +238,6 @@ pub trait RuntimeConfig:
 	+ pallet_vesting::Config
 	+ pallet_treasury::Config
 	+ frame_system::Config<BlockNumber = BlockNumber, AccountId = AccountId>
-// where
-// 	<Self as frame_system::Config>::BlockNumber: From<BlockNumber>,
 {
 }
 

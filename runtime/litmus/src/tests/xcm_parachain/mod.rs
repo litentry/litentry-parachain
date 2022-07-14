@@ -14,7 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-// use super::setup::*;
+use runtime_common::tests::{xcm_parachain, xcm_parachain::TestXCMRequirements};
+
 use crate::{
 	tests::{
 		Call as RelayCall, Origin as RelayOrigin, ParaA, ParaB, Relay, RelayChainRuntime, TestNet,
@@ -22,189 +23,87 @@ use crate::{
 	xcm_config::{LocationToAccountId, UnitWeightCost},
 	Call, Origin, Runtime,
 };
-pub mod relay_sproof_builder;
 
+pub mod relay_sproof_builder;
 // pub const RELAY_UNIT: u128 = 1;
+
+struct LitmusTestXCMRequirements;
+
+impl TestXCMRequirements for LitmusTestXCMRequirements {
+	type ParaOrigin = Origin;
+	type ParaCall = Call;
+	type ParaRuntime = Runtime;
+	type ParaA = ParaA;
+	type ParaB = ParaB;
+	type Relay = Relay;
+	type RelayOrigin = RelayOrigin;
+	type RelayCall = RelayCall;
+	type RelayRuntime = RelayChainRuntime;
+	type UnitWeightCost = UnitWeightCost;
+	type LocationToAccountId = LocationToAccountId;
+
+	fn reset() {
+		TestNet::reset()
+	}
+}
 
 #[test]
 fn test_xtokens_recognize_multilocation() {
-	runtime_common::tests::xcm_parachain::test_xtokens_recognize_multilocation::<
-		_,
-		Origin,
-		Runtime,
-		ParaA,
-		ParaB,
-		Relay,
-		RelayChainRuntime,
-		RelayOrigin,
-		UnitWeightCost,
-		LocationToAccountId,
-	>(|| TestNet::reset());
+	xcm_parachain::test_xtokens_recognize_multilocation::<LitmusTestXCMRequirements>();
 }
 
 // If this test fail, at least some part of XCM fee rule changes
 #[test]
 fn test_xtokens_weight_parameter() {
-	runtime_common::tests::xcm_parachain::test_xtokens_weight_parameter::<
-		_,
-		Origin,
-		Runtime,
-		ParaA,
-		ParaB,
-		Relay,
-		RelayChainRuntime,
-		RelayOrigin,
-		UnitWeightCost,
-		LocationToAccountId,
-	>(|| TestNet::reset());
+	xcm_parachain::test_xtokens_weight_parameter::<LitmusTestXCMRequirements>();
 }
 
 #[test]
 fn test_pallet_xcm_recognize_multilocation() {
-	runtime_common::tests::xcm_parachain::test_pallet_xcm_recognize_multilocation::<
-		_,
-		Origin,
-		Runtime,
-		ParaA,
-		ParaB,
-		Relay,
-		RelayChainRuntime,
-		RelayOrigin,
-		UnitWeightCost,
-		LocationToAccountId,
-	>(|| TestNet::reset());
+	xcm_parachain::test_pallet_xcm_recognize_multilocation::<LitmusTestXCMRequirements>();
 }
 
 #[test]
 fn test_methods_xtokens_expected_succeed() {
-	runtime_common::tests::xcm_parachain::test_methods_xtokens_expected_succeed::<
-		_,
-		Origin,
-		Runtime,
-		ParaA,
-		ParaB,
-		Relay,
-		RelayChainRuntime,
-		RelayOrigin,
-		UnitWeightCost,
-		LocationToAccountId,
-	>(|| TestNet::reset());
+	xcm_parachain::test_methods_xtokens_expected_succeed::<LitmusTestXCMRequirements>();
 }
 
 #[test]
 fn test_methods_xtokens_expected_fail() {
-	runtime_common::tests::xcm_parachain::test_methods_xtokens_expected_fail::<
-		_,
-		Origin,
-		Runtime,
-		ParaA,
-		ParaB,
-		Relay,
-		RelayChainRuntime,
-		RelayOrigin,
-		UnitWeightCost,
-		LocationToAccountId,
-	>(|| TestNet::reset());
+	xcm_parachain::test_methods_xtokens_expected_fail::<LitmusTestXCMRequirements>();
 }
 
 #[test]
 fn test_methods_pallet_xcm_expected_succeed() {
-	runtime_common::tests::xcm_parachain::test_methods_pallet_xcm_expected_succeed::<
-		_,
-		Origin,
-		Runtime,
-		ParaA,
-		ParaB,
-		Relay,
-		RelayChainRuntime,
-		RelayOrigin,
-		UnitWeightCost,
-		LocationToAccountId,
-	>(|| TestNet::reset());
+	xcm_parachain::test_methods_pallet_xcm_expected_succeed::<LitmusTestXCMRequirements>();
 }
 
 #[test]
 fn test_methods_pallet_xcm_expected_fail() {
-	runtime_common::tests::xcm_parachain::test_methods_pallet_xcm_expected_fail::<
-		_,
-		Origin,
-		Runtime,
-		ParaA,
-		ParaB,
-		Relay,
-		RelayChainRuntime,
-		RelayOrigin,
-		UnitWeightCost,
-		LocationToAccountId,
-	>(|| TestNet::reset());
+	xcm_parachain::test_methods_pallet_xcm_expected_fail::<LitmusTestXCMRequirements>();
 }
 
 // Send Xcm by root/individual on sibling to maniplulate XCM parachain soverign accounts
 #[test]
 fn test_pallet_xcm_send_capacity_between_sibling() {
-	runtime_common::tests::xcm_parachain::test_pallet_xcm_send_capacity_between_sibling::<
-		_,
-		Origin,
-		Runtime,
-		ParaA,
-		ParaB,
-		Relay,
-		RelayChainRuntime,
-		RelayOrigin,
-		UnitWeightCost,
-		LocationToAccountId,
-	>(|| TestNet::reset());
+	xcm_parachain::test_pallet_xcm_send_capacity_between_sibling::<LitmusTestXCMRequirements>();
 }
 
 // Send Xcm by root/individual on relay to maniplulate xcm parachain soverign accounts
 #[test]
 fn test_pallet_xcm_send_capacity_without_transact() {
-	runtime_common::tests::xcm_parachain::test_pallet_xcm_send_capacity_without_transact::<
-		_,
-		Origin,
-		Runtime,
-		ParaA,
-		ParaB,
-		Relay,
-		RelayChainRuntime,
-		RelayOrigin,
-		UnitWeightCost,
-		LocationToAccountId,
-	>(|| TestNet::reset());
+	xcm_parachain::test_pallet_xcm_send_capacity_without_transact::<LitmusTestXCMRequirements>();
 }
 
 // Relay root manipulate its own sovereign account on Parachain A by Xcm::Transact (Flawed)
 #[test]
 fn test_pallet_xcm_send_capacity_relay_manipulation() {
-	runtime_common::tests::xcm_parachain::test_pallet_xcm_send_capacity_relay_manipulation::<
-		_,
-		Origin,
-		Call,
-		Runtime,
-		ParaA,
-		ParaB,
-		Relay,
-		RelayChainRuntime,
-		RelayOrigin,
-		UnitWeightCost,
-		LocationToAccountId,
-	>(|| TestNet::reset());
+	xcm_parachain::test_pallet_xcm_send_capacity_relay_manipulation::<LitmusTestXCMRequirements>();
 }
 
 // Parachain root manipulate its own sovereign account on Relay by Xcm::Transact succeed
 #[test]
 fn test_pallet_xcm_send_capacity_parachain_manipulation() {
-	runtime_common::tests::xcm_parachain::test_pallet_xcm_send_capacity_parachain_manipulation::<
-		_,
-		Origin,
-		Runtime,
-		ParaA,
-		ParaB,
-		Relay,
-		RelayChainRuntime,
-		RelayOrigin,
-		RelayCall,
-		UnitWeightCost,
-		LocationToAccountId,
-	>(|| TestNet::reset());
+	xcm_parachain::test_pallet_xcm_send_capacity_parachain_manipulation::<LitmusTestXCMRequirements>(
+	);
 }
