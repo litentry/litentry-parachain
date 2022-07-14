@@ -59,49 +59,52 @@ fn test_xtokens_weight_parameter() {
 
 #[test]
 fn test_pallet_xcm_recognize_multilocation() {
-    xcm_parachain::test_pallet_xcm_recognize_multilocation::<MoonbaseTestXCMRequirements>();
+	xcm_parachain::test_pallet_xcm_recognize_multilocation::<MoonbaseTestXCMRequirements>();
 }
 
 #[test]
 fn test_methods_xtokens_expected_succeed() {
-    xcm_parachain::test_methods_xtokens_expected_succeed::<MoonbaseTestXCMRequirements>();
+	xcm_parachain::test_methods_xtokens_expected_succeed::<MoonbaseTestXCMRequirements>();
 }
 
 #[test]
 fn test_methods_xtokens_expected_fail() {
-    xcm_parachain::test_methods_xtokens_expected_fail::<MoonbaseTestXCMRequirements>();
+	xcm_parachain::test_methods_xtokens_expected_fail::<MoonbaseTestXCMRequirements>();
 }
 
 #[test]
 fn test_methods_pallet_xcm_expected_succeed() {
-    xcm_parachain::test_methods_pallet_xcm_expected_succeed::<MoonbaseTestXCMRequirements>();
+	xcm_parachain::test_methods_pallet_xcm_expected_succeed::<MoonbaseTestXCMRequirements>();
 }
 
 #[test]
 fn test_methods_pallet_xcm_expected_fail() {
-    xcm_parachain::test_methods_pallet_xcm_expected_fail::<MoonbaseTestXCMRequirements>();
+	xcm_parachain::test_methods_pallet_xcm_expected_fail::<MoonbaseTestXCMRequirements>();
 }
 
 // Send Xcm by root/individual on sibling to maniplulate XCM parachain soverign accounts
 #[test]
 fn test_pallet_xcm_send_capacity_between_sibling() {
-    xcm_parachain::test_pallet_xcm_send_capacity_between_sibling::<MoonbaseTestXCMRequirements>();
+	xcm_parachain::test_pallet_xcm_send_capacity_between_sibling::<MoonbaseTestXCMRequirements>();
 }
 
 // Send Xcm by root/individual on relay to maniplulate xcm parachain soverign accounts
 #[test]
 fn test_pallet_xcm_send_capacity_without_transact() {
-    xcm_parachain::test_pallet_xcm_send_capacity_without_transact::<MoonbaseTestXCMRequirements>();
+	xcm_parachain::test_pallet_xcm_send_capacity_without_transact::<MoonbaseTestXCMRequirements>();
 }
 
 // Relay root manipulate its own sovereign account on Parachain A by Xcm::Transact (Flawed)
 #[test]
 fn test_pallet_xcm_send_capacity_relay_manipulation() {
-    xcm_parachain::test_pallet_xcm_send_capacity_relay_manipulation::<MoonbaseTestXCMRequirements>();
+	xcm_parachain::test_pallet_xcm_send_capacity_relay_manipulation::<MoonbaseTestXCMRequirements>(
+	);
 }
 
 // Parachain root manipulate its own sovereign account on Relay by Xcm::Transact succeed
 #[test]
 fn test_pallet_xcm_send_capacity_parachain_manipulation() {
-    xcm_parachain::test_pallet_xcm_send_capacity_parachain_manipulation::<MoonbaseTestXCMRequirements>();
+	xcm_parachain::test_pallet_xcm_send_capacity_parachain_manipulation::<
+		MoonbaseTestXCMRequirements,
+	>();
 }

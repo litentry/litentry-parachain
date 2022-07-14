@@ -25,8 +25,10 @@ pub use sp_std::cell::RefCell;
 
 use primitives::{AccountId, Balance, BlockNumber};
 
-use crate::{currency::UNIT, xcm_impl::ParaRuntimeRequirements};
-use crate::xcm_impl::BaseRuntimeRequirements;
+use crate::{
+	currency::UNIT,
+	xcm_impl::{BaseRuntimeRequirements, ParaRuntimeRequirements},
+};
 
 pub const ALICE: [u8; 32] = [1u8; 32];
 pub const BOB: [u8; 32] = [2u8; 32];

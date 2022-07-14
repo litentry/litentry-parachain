@@ -17,7 +17,7 @@
 /// Money matters.
 pub mod currency {
 	use crate::Balance;
-    use runtime_common::currency::{DOLLARS, MILLICENTS};
+	use runtime_common::currency::{DOLLARS, MILLICENTS};
 
 	// Linear ratio of transaction fee distribution
 	// It is recommended to set sum of ratio to 100, yet only decimal loss is concerned.
