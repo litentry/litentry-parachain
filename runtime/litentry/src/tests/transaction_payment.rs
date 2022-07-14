@@ -22,7 +22,8 @@ use pallet_transaction_payment::Multiplier;
 use sp_runtime::traits::{Convert, SignedExtension};
 
 use runtime_common::{
-	currency::UNIT, RuntimeBlockWeights, SlowAdjustingFeeUpdate, TargetBlockFullness, MinimumMultiplier
+	currency::UNIT, MinimumMultiplier, RuntimeBlockWeights, SlowAdjustingFeeUpdate,
+	TargetBlockFullness,
 };
 
 use super::setup::*;
