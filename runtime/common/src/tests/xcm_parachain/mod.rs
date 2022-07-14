@@ -46,7 +46,7 @@ use crate::{
 };
 
 use super::{
-	super::xcm_impl::{CurrencyId, RuntimeConfig},
+	super::xcm_impl::{CurrencyId, ParaRuntimeRequirements},
 	setup::{alice, bob, relay::SovereignAccountOf, BOB, PARA_A_USER_INITIAL_BALANCE},
 };
 
@@ -81,7 +81,7 @@ fn relay_account<LocationToAccountId: xcmConvert<MultiLocation, AccountId32>>() 
 	<LocationToAccountId as xcmConvert<MultiLocation, AccountId32>>::convert(Parent.into()).unwrap()
 }
 
-fn para_native_token_multilocation<R: RuntimeConfig>(x: u32) -> MultiLocation {
+fn para_native_token_multilocation<R: ParaRuntimeRequirements>(x: u32) -> MultiLocation {
 	(Parent, Parachain(x), PalletInstance(<Balances<R> as PalletInfoAccess>::index() as u8)).into()
 }
 
@@ -92,7 +92,7 @@ pub trait TestXCMRequirements {
 		+ Dispatchable<Origin = Self::ParaOrigin>
 		+ From<pallet_balances::Call<Self::ParaRuntime>>
 		+ Encode;
-	type ParaRuntime: RuntimeConfig
+	type ParaRuntime: ParaRuntimeRequirements
 		+ frame_system::Config<AccountId = AccountId, Origin = Self::ParaOrigin>
 		+ orml_xtokens::Config<Balance = Balance, CurrencyId = CurrencyId<Self::ParaRuntime>>
 		+ orml_tokens::Config<Balance = Balance, CurrencyId = AssetId>
@@ -1220,7 +1220,7 @@ where
 	});
 }
 
-fn register_channel_info<R: RuntimeConfig + cumulus_pallet_parachain_system::Config>(
+fn register_channel_info<R: ParaRuntimeRequirements + cumulus_pallet_parachain_system::Config>(
 	self_para_id: u32,
 	remote_para_id: u32,
 ) {

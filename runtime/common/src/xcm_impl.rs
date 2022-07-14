@@ -228,7 +228,7 @@ impl FilterAssetLocation for MultiNativeAsset {
 }
 
 /// A set of pallet_config that runtime must implement.
-pub trait RuntimeConfig:
+pub trait ParaRuntimeRequirements:
 	parachain_info::Config
 	+ pallet_asset_manager::Config<AssetId = AssetId>
 	+ pallet_balances::Config<Balance = Balance>
@@ -249,13 +249,13 @@ pub enum CurrencyId4Compare {
 
 // Our currencyId. We distinguish for now between SelfReserve, and Others, defined by their Id.
 #[derive(Clone, Eq, Debug, PartialEq, Encode, Decode, TypeInfo)]
-pub enum CurrencyId<R: RuntimeConfig> {
+pub enum CurrencyId<R: ParaRuntimeRequirements> {
 	SelfReserve(PhantomData<R>), // The only parachain native token: LIT
 	ParachainReserve(Box<MultiLocation>), /* Any parachain based asset, including local native minted
 	                              * ones. */
 }
 
-fn convert_currency<R: RuntimeConfig>(s: &CurrencyId<R>) -> CurrencyId4Compare {
+fn convert_currency<R: ParaRuntimeRequirements>(s: &CurrencyId<R>) -> CurrencyId4Compare {
 	match s {
 		CurrencyId::<R>::SelfReserve(_) => CurrencyId4Compare::SelfReserve,
 		CurrencyId::<R>::ParachainReserve(multi) =>
@@ -263,19 +263,19 @@ fn convert_currency<R: RuntimeConfig>(s: &CurrencyId<R>) -> CurrencyId4Compare {
 	}
 }
 
-impl<R: RuntimeConfig> Ord for CurrencyId<R> {
+impl<R: ParaRuntimeRequirements> Ord for CurrencyId<R> {
 	fn cmp(&self, other: &Self) -> Ordering {
 		convert_currency(&self).cmp(&convert_currency(other))
 	}
 }
 
-impl<R: RuntimeConfig> PartialOrd for CurrencyId<R> {
+impl<R: ParaRuntimeRequirements> PartialOrd for CurrencyId<R> {
 	fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
 		Some(self.cmp(other))
 	}
 }
 
-impl<R: RuntimeConfig> Default for CurrencyId<R> {
+impl<R: ParaRuntimeRequirements> Default for CurrencyId<R> {
 	fn default() -> Self {
 		CurrencyId::ParachainReserve(Box::new(MultiLocation::here()))
 	}
@@ -293,7 +293,7 @@ impl spConvert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 }
 
 pub struct OldAnchoringSelfReserve<R>(PhantomData<R>);
-impl<R: RuntimeConfig> OldAnchoringSelfReserve<R> {
+impl<R: ParaRuntimeRequirements> OldAnchoringSelfReserve<R> {
 	/// Returns the value of this parameter type.
 	pub fn get() -> MultiLocation {
 		MultiLocation {
@@ -306,7 +306,7 @@ impl<R: RuntimeConfig> OldAnchoringSelfReserve<R> {
 	}
 }
 
-impl<I: From<MultiLocation>, R: RuntimeConfig> ::frame_support::traits::Get<I>
+impl<I: From<MultiLocation>, R: ParaRuntimeRequirements> ::frame_support::traits::Get<I>
 	for OldAnchoringSelfReserve<R>
 {
 	fn get() -> I {
@@ -316,7 +316,7 @@ impl<I: From<MultiLocation>, R: RuntimeConfig> ::frame_support::traits::Get<I>
 
 pub struct NewAnchoringSelfReserve<R>(PhantomData<R>);
 
-impl<R: RuntimeConfig> NewAnchoringSelfReserve<R> {
+impl<R: ParaRuntimeRequirements> NewAnchoringSelfReserve<R> {
 	/// Returns the value of this parameter type.
 	pub fn get() -> MultiLocation {
 		MultiLocation {
@@ -328,7 +328,7 @@ impl<R: RuntimeConfig> NewAnchoringSelfReserve<R> {
 	}
 }
 
-impl<I: From<MultiLocation>, R: RuntimeConfig> ::frame_support::traits::Get<I>
+impl<I: From<MultiLocation>, R: ParaRuntimeRequirements> ::frame_support::traits::Get<I>
 	for NewAnchoringSelfReserve<R>
 {
 	fn get() -> I {
@@ -336,7 +336,7 @@ impl<I: From<MultiLocation>, R: RuntimeConfig> ::frame_support::traits::Get<I>
 	}
 }
 
-impl<R: RuntimeConfig> From<MultiLocation> for CurrencyId<R> {
+impl<R: ParaRuntimeRequirements> From<MultiLocation> for CurrencyId<R> {
 	fn from(location: MultiLocation) -> Self {
 		match location {
 			a if (a == (OldAnchoringSelfReserve::<R>::get())) |
@@ -347,7 +347,7 @@ impl<R: RuntimeConfig> From<MultiLocation> for CurrencyId<R> {
 	}
 }
 
-impl<R: RuntimeConfig> From<Option<MultiLocation>> for CurrencyId<R> {
+impl<R: ParaRuntimeRequirements> From<Option<MultiLocation>> for CurrencyId<R> {
 	fn from(location: Option<MultiLocation>) -> Self {
 		match location {
 			Some(a)
@@ -360,7 +360,7 @@ impl<R: RuntimeConfig> From<Option<MultiLocation>> for CurrencyId<R> {
 	}
 }
 
-impl<R: RuntimeConfig> From<CurrencyId<R>> for Option<MultiLocation> {
+impl<R: ParaRuntimeRequirements> From<CurrencyId<R>> for Option<MultiLocation> {
 	fn from(currency_id: CurrencyId<R>) -> Self {
 		match currency_id {
 			// For now and until Xtokens is adapted to handle 0.9.16 version we use
@@ -379,8 +379,8 @@ impl<R: RuntimeConfig> From<CurrencyId<R>> for Option<MultiLocation> {
 
 // How to convert from CurrencyId to MultiLocation: for orml convert sp_runtime Convert
 // trait
-pub struct CurrencyIdMultiLocationConvert<R: RuntimeConfig>(PhantomData<R>);
-impl<R: RuntimeConfig> spConvert<CurrencyId<R>, Option<MultiLocation>>
+pub struct CurrencyIdMultiLocationConvert<R: ParaRuntimeRequirements>(PhantomData<R>);
+impl<R: ParaRuntimeRequirements> spConvert<CurrencyId<R>, Option<MultiLocation>>
 	for CurrencyIdMultiLocationConvert<R>
 {
 	fn convert(currency: CurrencyId<R>) -> Option<MultiLocation> {
@@ -388,7 +388,7 @@ impl<R: RuntimeConfig> spConvert<CurrencyId<R>, Option<MultiLocation>>
 	}
 }
 
-impl<R: RuntimeConfig> spConvert<MultiLocation, Option<CurrencyId<R>>>
+impl<R: ParaRuntimeRequirements> spConvert<MultiLocation, Option<CurrencyId<R>>>
 	for CurrencyIdMultiLocationConvert<R>
 {
 	fn convert(multi: MultiLocation) -> Option<CurrencyId<R>> {
@@ -406,7 +406,8 @@ impl<R: RuntimeConfig> spConvert<MultiLocation, Option<CurrencyId<R>>>
 /// an intermediate generic type AssetType.
 /// The trait bounds enforce is that the AssetTypeGetter trait is also implemented
 pub struct AssetIdMuliLocationConvert<R>(PhantomData<R>);
-impl<R: RuntimeConfig> xcmConvert<MultiLocation, AssetId> for AssetIdMuliLocationConvert<R>
+impl<R: ParaRuntimeRequirements> xcmConvert<MultiLocation, AssetId>
+	for AssetIdMuliLocationConvert<R>
 where
 	R: pallet_asset_manager::Config<ForeignAssetType = CurrencyId<R>>,
 {

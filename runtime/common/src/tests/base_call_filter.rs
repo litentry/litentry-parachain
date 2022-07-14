@@ -24,7 +24,7 @@ use sp_runtime::traits::Dispatchable;
 
 use primitives::AccountId;
 
-use crate::{currency::UNIT, xcm_impl::RuntimeConfig};
+use crate::{currency::UNIT, xcm_impl::ParaRuntimeRequirements};
 
 use crate::tests::setup::{alice, bob, charlie, ExtBuilder};
 
@@ -35,14 +35,14 @@ type Balances<R> = pallet_balances::Pallet<R>;
 type Vesting<R> = pallet_vesting::Pallet<R>;
 type Multisig<R> = pallet_multisig::Pallet<R>;
 
-pub fn default_mode<R: RuntimeConfig>() {
+pub fn default_mode<R: ParaRuntimeRequirements>() {
 	ExtBuilder::<R>::default().build().execute_with(|| {
 		assert_eq!(ExtrinsicFilter::<R>::mode(), pallet_extrinsic_filter::OperationalMode::Normal);
 	});
 }
 
 pub fn multisig_enabled<
-	R: RuntimeConfig + pallet_multisig::Config,
+	R: ParaRuntimeRequirements + pallet_multisig::Config,
 	Origin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
 	Call: Clone
 		+ Dispatchable<Origin = Origin>
@@ -77,7 +77,7 @@ where
 }
 
 pub fn balance_transfer_disabled<
-	R: RuntimeConfig,
+	R: ParaRuntimeRequirements,
 	Origin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
 	Call: Clone + Dispatchable<Origin = Origin> + From<pallet_balances::Call<R>> + Encode,
 >()
@@ -100,7 +100,7 @@ where
 }
 
 pub fn balance_transfer_with_sudo_works<
-	R: RuntimeConfig,
+	R: ParaRuntimeRequirements,
 	Origin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
 	Call: Clone + Dispatchable<Origin = Origin> + From<pallet_balances::Call<R>> + Encode,
 >()
@@ -126,7 +126,7 @@ where
 }
 
 pub fn block_core_call_has_no_effect<
-	R: RuntimeConfig + frame_system::Config<Origin = Origin>,
+	R: ParaRuntimeRequirements + frame_system::Config<Origin = Origin>,
 	Origin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
 	Call: Clone + Dispatchable<Origin = Origin> + From<frame_system::Call<R>> + Encode,
 >()
@@ -161,7 +161,7 @@ where
 }
 
 pub fn block_non_core_call_works<
-	R: RuntimeConfig
+	R: ParaRuntimeRequirements
 		+ frame_system::Config<Origin = Origin>
 		+ pallet_vesting::Config<Currency = Balances<R>>,
 	Origin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,

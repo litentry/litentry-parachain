@@ -31,7 +31,7 @@ use crate::{
 	tests::setup::{
 		alice, bob, info_from_weight, post_info_from_weight, run_with_system_weight, ExtBuilder,
 	},
-	xcm_impl::RuntimeConfig,
+	xcm_impl::ParaRuntimeRequirements,
 	MinimumMultiplier, NegativeImbalance, RuntimeBlockWeights, SlowAdjustingFeeUpdate,
 	TargetBlockFullness,
 };
@@ -54,7 +54,7 @@ fn target() -> Weight {
 	TargetBlockFullness::get() * max_normal()
 }
 
-pub fn multiplier_can_grow_from_zero<R: RuntimeConfig>() {
+pub fn multiplier_can_grow_from_zero<R: ParaRuntimeRequirements>() {
 	// if the min is too small, then this will not change, and we are doomed forever.
 	// the weight is 1/100th bigger than target.
 	run_with_system_weight::<_, R>(target() * 101 / 100, || {
@@ -64,7 +64,9 @@ pub fn multiplier_can_grow_from_zero<R: RuntimeConfig>() {
 }
 
 pub fn transaction_payment_works<
-	R: RuntimeConfig + pallet_transaction_payment::Config + frame_system::Config<Call = Call>,
+	R: ParaRuntimeRequirements
+		+ pallet_transaction_payment::Config
+		+ frame_system::Config<Call = Call>,
 	TransactionByteFee: frame_support::traits::Get<Balance>,
 	Origin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
 	Call: Clone + Dispatchable<Origin = Origin> + From<pallet_balances::Call<R>>,
