@@ -126,7 +126,7 @@ pub fn test_xtokens_recognize_multilocation<R: TestXCMRequirements>() {
 			XTokens::<R::ParaRuntime>::transfer(
 				R::ParaOrigin::signed(alice()),
 				CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData::default()),
-				1 * UNIT,
+				UNIT,
 				Box::new((Parent, Parachain(2)).into()),
 				R::UnitWeightCost::get() * 4
 			),
@@ -136,7 +136,7 @@ pub fn test_xtokens_recognize_multilocation<R: TestXCMRequirements>() {
 		assert_ok!(XTokens::<R::ParaRuntime>::transfer(
 			R::ParaOrigin::signed(alice()),
 			CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData::default()),
-			1 * UNIT,
+			UNIT,
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
@@ -144,12 +144,12 @@ pub fn test_xtokens_recognize_multilocation<R: TestXCMRequirements>() {
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
-			PARA_A_USER_INITIAL_BALANCE - 1 * UNIT
+			PARA_A_USER_INITIAL_BALANCE - UNIT
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
-			1 * UNIT /* Notice this is interesting, as it suggest local preserve XCM
-			          * fee belongs to remote chain, not local chain */
+			UNIT /* Notice this is interesting, as it suggest local preserve XCM
+			      * fee belongs to remote chain, not local chain */
 		);
 	});
 
@@ -159,7 +159,7 @@ pub fn test_xtokens_recognize_multilocation<R: TestXCMRequirements>() {
 				1, // Asset_id=1. The first registered Token in Para B
 				&bob()
 			),
-			1 * UNIT - u128::from(R::UnitWeightCost::get() * 4)
+			UNIT - u128::from(R::UnitWeightCost::get() * 4)
 		);
 		// Check the treasury of remote chain's asset XCM
 		assert_eq!(
@@ -204,20 +204,20 @@ pub fn test_xtokens_weight_parameter<R: TestXCMRequirements>() {
 		assert_ok!(XTokens::<R::ParaRuntime>::transfer(
 			R::ParaOrigin::signed(alice()),
 			CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData::default()),
-			1 * UNIT,
+			UNIT,
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
-			R::UnitWeightCost::get() * 1
+			R::UnitWeightCost::get()
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
-			PARA_A_USER_INITIAL_BALANCE - 1 * UNIT
+			PARA_A_USER_INITIAL_BALANCE - UNIT
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
-			1 * UNIT /* Notice this is interesting, as it suggest local preserve XCM
-			          * fee belongs to remote chain, not local chain */
+			UNIT /* Notice this is interesting, as it suggest local preserve XCM
+			      * fee belongs to remote chain, not local chain */
 		);
 	});
 	R::ParaB::execute_with(|| {
@@ -237,7 +237,7 @@ pub fn test_xtokens_weight_parameter<R: TestXCMRequirements>() {
 		assert_ok!(XTokens::<R::ParaRuntime>::transfer(
 			R::ParaOrigin::signed(alice()),
 			CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData::default()),
-			1 * UNIT,
+			UNIT,
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
@@ -260,7 +260,7 @@ pub fn test_xtokens_weight_parameter<R: TestXCMRequirements>() {
 				1, // Asset_id=1. The first registered Token in Para B
 				&bob()
 			),
-			1 * UNIT - u128::from(R::UnitWeightCost::get() * 4)
+			UNIT - u128::from(R::UnitWeightCost::get() * 4)
 		);
 		// Check the treasury of remote chain's asset XCM
 		assert_eq!(
@@ -293,7 +293,7 @@ where
 						))
 						.unwrap(),
 					),
-					fun: Fungibility::Fungible(1 * UNIT),
+					fun: Fungibility::Fungible(UNIT),
 				}]
 				.into()
 			),
@@ -301,7 +301,7 @@ where
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
-			PARA_A_USER_INITIAL_BALANCE - 1 * UNIT
+			PARA_A_USER_INITIAL_BALANCE - UNIT
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
@@ -371,7 +371,7 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 		// Solve the DustLost first
 		let _ = pallet_balances::Pallet::<R::ParaRuntime>::deposit_creating(
 			&sibling_account::<R::LocationToAccountId>(2),
-			1 * UNIT,
+			UNIT,
 		);
 
 		// Sending 10 ParaA token after xcm fee to BOB by XTokens::transfer_multiasset
@@ -380,9 +380,7 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 			Box::new(
 				MultiAsset {
 					id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
-					fun: Fungibility::Fungible(
-						u128::from(R::UnitWeightCost::get() * 4) + 1 * CENTS
-					)
+					fun: Fungibility::Fungible(u128::from(R::UnitWeightCost::get() * 4) + CENTS)
 				}
 				.into()
 			),
@@ -393,11 +391,11 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
-			PARA_A_USER_INITIAL_BALANCE - u128::from(R::UnitWeightCost::get() * 4) - 1 * CENTS
+			PARA_A_USER_INITIAL_BALANCE - u128::from(R::UnitWeightCost::get() * 4) - CENTS
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
-			1 * UNIT + u128::from(R::UnitWeightCost::get() * 4) + 1 * CENTS
+			UNIT + u128::from(R::UnitWeightCost::get() * 4) + CENTS
 		);
 
 		// Sending 100 ParaA token after xcm fee to BOB by XTokens::transfer_with_fee
@@ -417,7 +415,7 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
-			1 * UNIT + u128::from(R::UnitWeightCost::get() * 8) + 11 * CENTS
+			UNIT + u128::from(R::UnitWeightCost::get() * 8) + 11 * CENTS
 		);
 
 		// Sending 1 UNIT ParaA token after xcm fee to BOB by XTokens::transfer_multiasset_with_fee
@@ -426,7 +424,7 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 			Box::new(
 				MultiAsset {
 					id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
-					fun: Fungibility::Fungible(1 * UNIT)
+					fun: Fungibility::Fungible(UNIT)
 				}
 				.into()
 			),
@@ -448,7 +446,7 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
-			1 * UNIT + u128::from(R::UnitWeightCost::get() * 12) + 111 * CENTS
+			UNIT + u128::from(R::UnitWeightCost::get() * 12) + 111 * CENTS
 		);
 
 		// Sending 10 UNIT ParaA token after xcm fee to BOB by XTokens::transfer_multicurrencies
@@ -470,7 +468,7 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
-			1 * UNIT + u128::from(R::UnitWeightCost::get() * 16) + 1111 * CENTS
+			UNIT + u128::from(R::UnitWeightCost::get() * 16) + 1111 * CENTS
 		);
 
 		// Sending 100 UNIT ParaA token after xcm fee to BOB by XTokens::transfer_multiassets
@@ -497,7 +495,7 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
-			1 * UNIT + u128::from(R::UnitWeightCost::get() * 20) + 11111 * CENTS
+			UNIT + u128::from(R::UnitWeightCost::get() * 20) + 11111 * CENTS
 		);
 	});
 
@@ -584,7 +582,7 @@ where
 		// Solve the DustLost
 		let _ = pallet_balances::Pallet::<R::ParaRuntime>::deposit_creating(
 			&sibling_account::<R::LocationToAccountId>(2),
-			1 * UNIT,
+			UNIT,
 		);
 
 		assert_ok!(PolkadotXcm::<R::ParaRuntime>::reserve_transfer_assets(
@@ -594,9 +592,7 @@ where
 			Box::new(
 				vec![MultiAsset {
 					id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
-					fun: Fungibility::Fungible(
-						u128::from(R::UnitWeightCost::get() * 4) + 1 * CENTS
-					)
+					fun: Fungibility::Fungible(u128::from(R::UnitWeightCost::get() * 4) + CENTS)
 				}]
 				.into()
 			),
@@ -608,11 +604,11 @@ where
 
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
-			PARA_A_USER_INITIAL_BALANCE - u128::from(R::UnitWeightCost::get() * 4) - 1 * CENTS
+			PARA_A_USER_INITIAL_BALANCE - u128::from(R::UnitWeightCost::get() * 4) - CENTS
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
-			1 * UNIT + u128::from(R::UnitWeightCost::get() * 4) + 1 * CENTS
+			UNIT + u128::from(R::UnitWeightCost::get() * 4) + CENTS
 		);
 
 		assert_ok!(PolkadotXcm::<R::ParaRuntime>::limited_reserve_transfer_assets(
@@ -640,7 +636,7 @@ where
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
-			1 * UNIT + u128::from(R::UnitWeightCost::get() * 8) + 11 * CENTS
+			UNIT + u128::from(R::UnitWeightCost::get() * 8) + 11 * CENTS
 		);
 	});
 
@@ -704,7 +700,7 @@ pub fn test_methods_pallet_xcm_expected_fail<R: TestXCMRequirements>() {
 							para_native_token_multilocation::<R::ParaRuntime>(1)
 						),
 						fun: Fungibility::Fungible(
-							u128::from(R::UnitWeightCost::get() * 4) + 1 * CENTS
+							u128::from(R::UnitWeightCost::get() * 4) + CENTS
 						)
 					}]
 					.into()

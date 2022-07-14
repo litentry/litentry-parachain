@@ -24,7 +24,7 @@ use crate::{
 	Call, Origin, Runtime,
 };
 
-pub mod relay_sproof_builder;
+// pub mod relay_sproof_builder;
 
 struct RococoTestXCMRequirements;
 

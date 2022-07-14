@@ -196,11 +196,11 @@ impl Reserve for MultiAsset {
 		if let xcmAssetId::Concrete(location) = self.id.clone() {
 			let first_interior = location.first_interior();
 			let parents = location.parent_count();
-			match (parents, first_interior.clone()) {
+			match (parents, first_interior) {
 				// The only case for non-relay chain will be the chain itself.
-				(0, Some(Parachain(id))) => Some(MultiLocation::new(0, X1(Parachain(id.clone())))),
+				(0, Some(Parachain(id))) => Some(MultiLocation::new(0, X1(Parachain(*id)))),
 				// Only Sibling parachain is recognized.
-				(1, Some(Parachain(id))) => Some(MultiLocation::new(1, X1(Parachain(id.clone())))),
+				(1, Some(Parachain(id))) => Some(MultiLocation::new(1, X1(Parachain(*id)))),
 				// The Relay chain.
 				(1, _) => Some(MultiLocation::parent()),
 				// No other case is allowed for now.
@@ -269,7 +269,7 @@ fn convert_currency<R: ParaRuntimeRequirements>(s: &CurrencyId<R>) -> CurrencyId
 
 impl<R: ParaRuntimeRequirements> Ord for CurrencyId<R> {
 	fn cmp(&self, other: &Self) -> Ordering {
-		convert_currency(&self).cmp(&convert_currency(other))
+		convert_currency(self).cmp(&convert_currency(other))
 	}
 }
 
@@ -346,7 +346,7 @@ impl<R: ParaRuntimeRequirements> From<MultiLocation> for CurrencyId<R> {
 			a if (a == (OldAnchoringSelfReserve::<R>::get())) |
 				(a == (NewAnchoringSelfReserve::<R>::get())) =>
 				CurrencyId::<R>::SelfReserve(PhantomData::default()),
-			_ => CurrencyId::<R>::ParachainReserve(Box::new(location.into())),
+			_ => CurrencyId::<R>::ParachainReserve(Box::new(location)),
 		}
 	}
 }
@@ -419,7 +419,7 @@ where
 		if let Some(currency_id) = <CurrencyIdMultiLocationConvert<R> as spConvert<
 			MultiLocation,
 			Option<CurrencyId<R>>,
-		>>::convert(multi.borrow().clone().into())
+		>>::convert(multi.borrow().clone())
 		{
 			if let Some(asset_id) =
 				<AssetManager<R> as AssetTypeGetter<AssetId, CurrencyId<R>>>::get_asset_id(
@@ -437,7 +437,7 @@ where
 	fn reverse_ref(asset_id: impl Borrow<AssetId>) -> Result<MultiLocation, ()> {
 		if let Some(currency_id) =
 			<AssetManager<R> as AssetTypeGetter<AssetId, CurrencyId<R>>>::get_asset_type(
-				asset_id.borrow().clone().into(),
+				*asset_id.borrow(),
 			) {
 			if let Some(multi) = <CurrencyIdMultiLocationConvert<R> as spConvert<
 				CurrencyId<R>,

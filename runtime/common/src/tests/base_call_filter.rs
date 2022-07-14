@@ -94,7 +94,7 @@ where
 		.build()
 		.execute_with(|| {
 			let call: Call =
-				pallet_balances::Call::transfer { dest: bob().into(), value: 1 * UNIT }.into();
+				pallet_balances::Call::transfer { dest: bob().into(), value: UNIT }.into();
 			assert_noop!(
 				call.dispatch(Origin::signed(alice())),
 				frame_system::Error::<R>::CallFiltered
@@ -119,12 +119,12 @@ where
 			let call: Call = pallet_balances::Call::force_transfer {
 				source: alice().into(),
 				dest: bob().into(),
-				value: 1 * UNIT,
+				value: UNIT,
 			}
 			.into();
 			assert_ok!(call.dispatch(Origin::root()),);
 			assert_eq!(Balances::<R>::free_balance(&alice()), 9 * UNIT);
-			assert_eq!(Balances::<R>::free_balance(&bob()), 1 * UNIT);
+			assert_eq!(Balances::<R>::free_balance(&bob()), UNIT);
 		})
 }
 
@@ -182,12 +182,12 @@ where
 			assert_ok!(Vesting::<R>::vested_transfer(
 				Origin::signed(alice()),
 				bob().into(),
-				pallet_vesting::VestingInfo::new(10 * UNIT, 1 * UNIT, 0,),
+				pallet_vesting::VestingInfo::new(10 * UNIT, UNIT, 0,),
 			));
 			let call: Call = pallet_vesting::Call::vest {}.into();
 			assert_ok!(call.clone().dispatch(Origin::signed(bob())));
 			assert_eq!(Balances::<R>::free_balance(&bob()), 10 * UNIT);
-			assert_eq!(Balances::<R>::usable_balance(&bob()), 1 * UNIT);
+			assert_eq!(Balances::<R>::usable_balance(&bob()), UNIT);
 
 			System::<R>::set_block_number(2);
 			assert_eq!(Vesting::<R>::vesting_balance(&bob()), Some(8 * UNIT));
@@ -212,6 +212,6 @@ where
 				frame_system::Error::<R>::CallFiltered
 			);
 			// usable balance is unchanged
-			assert_eq!(Balances::<R>::usable_balance(&bob()), 1 * UNIT);
+			assert_eq!(Balances::<R>::usable_balance(&bob()), UNIT);
 		})
 }

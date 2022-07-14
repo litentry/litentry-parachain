@@ -7,7 +7,7 @@ use frame_support::{
 	traits::{ConstU32, Contains},
 };
 use frame_system::EnsureRoot;
-use runtime_common::{xcm_impl::CurrencyId, EnsureRootOrHalfCouncil};
+use runtime_common::xcm_impl::CurrencyId;
 use sp_runtime::traits::AccountIdConversion;
 use sp_std::prelude::*;
 

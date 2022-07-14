@@ -31,7 +31,7 @@ use crate::{
 	tests::setup::{
 		alice, bob, info_from_weight, post_info_from_weight, run_with_system_weight, ExtBuilder,
 	},
-	xcm_impl::{BaseRuntimeRequirements, ParaRuntimeRequirements},
+	xcm_impl::BaseRuntimeRequirements,
 	MinimumMultiplier, NegativeImbalance, RuntimeBlockWeights, SlowAdjustingFeeUpdate,
 	TargetBlockFullness,
 };
