@@ -46,7 +46,8 @@ use runtime_common::xcm_impl::{
 };
 
 #[cfg(test)]
-use super::tests::setup::ParachainXcmRouter;
+use crate::tests::ParachainXcmRouter;
+
 use super::{
 	AssetId, AssetManager, Balance, Balances, Call, DealWithFees, Event, Origin, ParachainInfo,
 	PolkadotXcm, Runtime, Tokens, Treasury,
