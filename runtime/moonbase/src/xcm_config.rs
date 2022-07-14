@@ -46,7 +46,8 @@ use runtime_common::xcm_impl::{
 };
 
 #[cfg(test)]
-use super::tests::setup::ParachainXcmRouter;
+use crate::tests::ParachainXcmRouter;
+
 use super::{
 	AssetId, AssetManager, Balance, Balances, Call, DealWithFees, Event, Origin, ParachainInfo,
 	PolkadotXcm, Runtime, Tokens, Treasury,
@@ -80,7 +81,7 @@ pub type LocalAssetTransactor = CurrencyAdapter<
 	// Use this currency:
 	Balances,
 	// Use this currency when it is a fungible asset matching the given location or name:
-    (IsConcrete<NewAnchoringSelfReserve<Runtime>>, IsConcrete<OldAnchoringSelfReserve<Runtime>>),
+	(IsConcrete<NewAnchoringSelfReserve<Runtime>>, IsConcrete<OldAnchoringSelfReserve<Runtime>>),
 	// Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
@@ -189,7 +190,12 @@ pub type Traders = (
 		AssetManager,
 		XcmFeesToAccount<
 			Tokens,
-			ConvertedConcreteAssetId<AssetId, Balance, AssetIdMuliLocationConvert<Runtime>, JustTry>,
+			ConvertedConcreteAssetId<
+				AssetId,
+				Balance,
+				AssetIdMuliLocationConvert<Runtime>,
+				JustTry,
+			>,
 			AccountId,
 			XcmFeesAccount,
 		>,
