@@ -14,20 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{Call, Origin, Runtime, TransactionByteFee};
+use runtime_common::tests::transaction_payment;
 
+use crate::{Call, Origin, Runtime, TransactionByteFee};
 
 #[test]
 fn multiplier_can_grow_from_zero() {
-    runtime_common::tests::transaction_payment::multiplier_can_grow_from_zero::<Runtime>();
+    transaction_payment::multiplier_can_grow_from_zero::<Runtime>();
 }
 
 #[test]
 fn transaction_payment_works() {
-    runtime_common::tests::transaction_payment::transaction_payment_works::<
-        Runtime,
-        TransactionByteFee,
-        Origin,
-        Call,
-    >();
+    transaction_payment::transaction_payment_works::<Runtime, TransactionByteFee, Origin, Call>();
 }

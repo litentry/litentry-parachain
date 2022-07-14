@@ -228,16 +228,20 @@ impl FilterAssetLocation for MultiNativeAsset {
 }
 
 /// A set of pallet_config that runtime must implement.
-pub trait ParaRuntimeRequirements:
-	parachain_info::Config
-	+ pallet_asset_manager::Config<AssetId = AssetId>
+pub trait BaseRuntimeRequirements:
+	frame_system::Config<BlockNumber = BlockNumber, AccountId = AccountId>
 	+ pallet_balances::Config<Balance = Balance>
 	+ pallet_extrinsic_filter::Config
+	+ pallet_multisig::Config
 	+ parachain_info::Config
 	+ pallet_xcm::Config
-	+ pallet_vesting::Config
 	+ pallet_treasury::Config
-	+ frame_system::Config<BlockNumber = BlockNumber, AccountId = AccountId>
+	+ pallet_transaction_payment::Config
+{
+}
+
+pub trait ParaRuntimeRequirements:
+	BaseRuntimeRequirements + pallet_asset_manager::Config<AssetId = AssetId> + pallet_vesting::Config
 {
 }
 

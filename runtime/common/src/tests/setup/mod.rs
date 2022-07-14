@@ -26,6 +26,7 @@ pub use sp_std::cell::RefCell;
 use primitives::{AccountId, Balance, BlockNumber};
 
 use crate::{currency::UNIT, xcm_impl::ParaRuntimeRequirements};
+use crate::xcm_impl::BaseRuntimeRequirements;
 
 pub const ALICE: [u8; 32] = [1u8; 32];
 pub const BOB: [u8; 32] = [2u8; 32];
@@ -62,7 +63,7 @@ impl<R> Default for ExtBuilder<R> {
 
 impl<R> ExtBuilder<R>
 where
-	R: ParaRuntimeRequirements,
+	R: BaseRuntimeRequirements,
 {
 	pub fn balances(mut self, balances: Vec<(AccountId, Balance)>) -> Self {
 		self.balances = balances;
@@ -130,7 +131,7 @@ pub fn post_info_from_weight(w: Weight) -> PostDispatchInfo {
 pub fn run_with_system_weight<F, R>(w: Weight, mut assertions: F)
 where
 	F: FnMut(),
-	R: ParaRuntimeRequirements,
+	R: BaseRuntimeRequirements,
 {
 	let mut t: sp_io::TestExternalities =
 		frame_system::GenesisConfig::default().build_storage::<R>().unwrap().into();

@@ -24,7 +24,10 @@ use sp_runtime::traits::Dispatchable;
 
 use primitives::AccountId;
 
-use crate::{currency::UNIT, xcm_impl::ParaRuntimeRequirements};
+use crate::{
+	currency::UNIT,
+	xcm_impl::{BaseRuntimeRequirements, ParaRuntimeRequirements},
+};
 
 use crate::tests::setup::{alice, bob, charlie, ExtBuilder};
 
@@ -35,14 +38,14 @@ type Balances<R> = pallet_balances::Pallet<R>;
 type Vesting<R> = pallet_vesting::Pallet<R>;
 type Multisig<R> = pallet_multisig::Pallet<R>;
 
-pub fn default_mode<R: ParaRuntimeRequirements>() {
+pub fn default_mode<R: BaseRuntimeRequirements>() {
 	ExtBuilder::<R>::default().build().execute_with(|| {
 		assert_eq!(ExtrinsicFilter::<R>::mode(), pallet_extrinsic_filter::OperationalMode::Normal);
 	});
 }
 
 pub fn multisig_enabled<
-	R: ParaRuntimeRequirements + pallet_multisig::Config,
+	R: BaseRuntimeRequirements,
 	Origin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
 	Call: Clone
 		+ Dispatchable<Origin = Origin>
@@ -77,7 +80,7 @@ where
 }
 
 pub fn balance_transfer_disabled<
-	R: ParaRuntimeRequirements,
+	R: BaseRuntimeRequirements,
 	Origin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
 	Call: Clone + Dispatchable<Origin = Origin> + From<pallet_balances::Call<R>> + Encode,
 >()
@@ -100,7 +103,7 @@ where
 }
 
 pub fn balance_transfer_with_sudo_works<
-	R: ParaRuntimeRequirements,
+	R: BaseRuntimeRequirements,
 	Origin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
 	Call: Clone + Dispatchable<Origin = Origin> + From<pallet_balances::Call<R>> + Encode,
 >()
@@ -126,7 +129,7 @@ where
 }
 
 pub fn block_core_call_has_no_effect<
-	R: ParaRuntimeRequirements + frame_system::Config<Origin = Origin>,
+	R: BaseRuntimeRequirements + frame_system::Config<Origin = Origin>,
 	Origin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
 	Call: Clone + Dispatchable<Origin = Origin> + From<frame_system::Call<R>> + Encode,
 >()

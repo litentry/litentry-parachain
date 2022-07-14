@@ -74,6 +74,7 @@ pub type LocationToAccountId = (
 	AccountId32Aliases<RelayNetwork, AccountId>,
 );
 
+impl runtime_common::xcm_impl::BaseRuntimeRequirements for Runtime {}
 impl runtime_common::xcm_impl::ParaRuntimeRequirements for Runtime {}
 // runtime_common::impl_converters!(Runtime);
 

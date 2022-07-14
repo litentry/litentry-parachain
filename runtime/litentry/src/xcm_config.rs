@@ -54,6 +54,9 @@ pub type LocationToAccountId = (
 	AccountId32Aliases<RelayNetwork, AccountId>,
 );
 
+#[cfg(test)]
+impl runtime_common::xcm_impl::BaseRuntimeRequirements for Runtime {}
+
 /// Means for transacting assets on this chain.
 pub type LocalAssetTransactor = CurrencyAdapter<
 	// Use this currency:

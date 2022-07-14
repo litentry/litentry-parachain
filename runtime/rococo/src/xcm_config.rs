@@ -73,8 +73,9 @@ pub type LocationToAccountId = (
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
 	AccountId32Aliases<RelayNetwork, AccountId>,
 );
+
+impl runtime_common::xcm_impl::BaseRuntimeRequirements for Runtime {}
 impl runtime_common::xcm_impl::ParaRuntimeRequirements for Runtime {}
-// runtime_common::impl_converters!(Runtime);
 
 /// Means for transacting self reserve assets on this chain.
 pub type LocalAssetTransactor = CurrencyAdapter<
