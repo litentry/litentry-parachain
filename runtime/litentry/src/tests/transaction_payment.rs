@@ -14,13 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use super::setup::*;
 use frame_support::{
 	assert_ok,
 	weights::{constants::ExtrinsicBaseWeight, DispatchClass, Weight},
 };
 use pallet_transaction_payment::Multiplier;
 use sp_runtime::traits::{Convert, SignedExtension};
+
+use runtime_common::{
+	currency::UNIT, RuntimeBlockWeights, SlowAdjustingFeeUpdate, TargetBlockFullness, MinimumMultiplier
+};
+
+use super::setup::*;
 
 fn max_normal() -> Weight {
 	RuntimeBlockWeights::get()

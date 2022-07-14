@@ -54,8 +54,9 @@ use xcm_executor::XcmExecutor;
 
 pub use constants::currency::deposit;
 pub use primitives::{opaque, Index, *};
+pub use runtime_common::currency::*;
 use runtime_common::{
-    currency::*, impl_runtime_transaction_payment_fees, prod_or_fast, BlockHashCount, BlockLength,
+    impl_runtime_transaction_payment_fees, prod_or_fast, BlockHashCount, BlockLength,
     CouncilInstance, CouncilMembershipInstance, EnsureRootOrAllCouncil,
     EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfTechnicalCommittee,
     EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, NegativeImbalance,

@@ -15,17 +15,16 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use frame_support::weights::{DispatchInfo, PostDispatchInfo, Weight};
+pub use pallet_balances::Call as BalancesCall;
 
 pub use crate::{
-	AccountId, Balance, Balances, Call, Event, ExtrinsicFilter, MinimumMultiplier, Multisig,
-	Origin, ParachainSystem, Runtime, RuntimeBlockWeights, SlowAdjustingFeeUpdate, System,
-	TargetBlockFullness, TransactionByteFee, TransactionPayment, Treasury, Vesting, UNIT,
+	AccountId, Balance, Balances, Call, Event, ExtrinsicFilter, Multisig, Origin, ParachainSystem,
+	Runtime, System, TransactionByteFee, TransactionPayment, Treasury, Vesting,
 };
+
 pub const ALICE: [u8; 32] = [1u8; 32];
 pub const BOB: [u8; 32] = [2u8; 32];
 pub const CHARLIE: [u8; 32] = [3u8; 32];
-
-pub use pallet_balances::Call as BalancesCall;
 
 pub(crate) fn alice() -> AccountId {
 	AccountId::from(ALICE)

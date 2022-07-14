@@ -19,6 +19,7 @@ use codec::Encode;
 use frame_support::{assert_noop, assert_ok, traits::WrapperKeepOpaque};
 use sp_runtime::traits::Dispatchable;
 type OpaqueCall = WrapperKeepOpaque<<Runtime as frame_system::Config>::Call>;
+use runtime_common::currency::UNIT;
 
 #[test]
 fn default_mode() {
