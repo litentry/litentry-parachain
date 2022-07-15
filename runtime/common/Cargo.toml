@@ -7,10 +7,10 @@ edition = '2021'
 [dependencies]
 
 # substrate
-frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
-frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
-pallet-collective = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
-pallet-membership = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.25", default-features = false }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.25", default-features = false }
+pallet-collective = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.25", default-features = false }
+pallet-membership = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.25", default-features = false }
 
 # local
 primitives = { package = "primitives", path = "../../primitives", default-features = false }
