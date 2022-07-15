@@ -236,6 +236,7 @@ pub mod pallet {
 		PendingDelegationRequestNotDueYet,
 		CannotDelegateLessThanOrEqualToLowestBottomWhenFull,
 		PendingDelegationRevoke,
+		CandidateUnauthorized,
 	}
 
 	#[pallet::event]
@@ -408,6 +409,12 @@ pub mod pallet {
 			new_per_round_inflation_min: Perbill,
 			new_per_round_inflation_ideal: Perbill,
 			new_per_round_inflation_max: Perbill,
+		},
+		CandidateWhiteListAdded {
+			candidate: T::AccountId,
+		},
+		CandidateWhiteListRemoved {
+			candidate: T::AccountId,
 		},
 	}
 
@@ -593,6 +600,13 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
+	/// The whitelist of collation candidates.
+	/// This storage should be safe to delete after
+	/// we release the restriction
+	#[pallet::storage]
+	#[pallet::getter(fn candidates)]
+	pub type Candidates<T: Config> = StorageValue<_, Vec<T::AccountId>, ValueQuery>;
+
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub candidates: Vec<(T::AccountId, BalanceOf<T>)>,
@@ -612,6 +626,11 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
+			// Put the candiadates into the whitelist list
+			let candidates =
+				self.candidates.clone().into_iter().map(|x| x.0).collect::<Vec<T::AccountId>>();
+			<Candidates<T>>::put(candidates);
+
 			<InflationConfig<T>>::put(self.inflation_config.clone());
 			let mut candidate_count = 0u32;
 			// Initialize the candidates
@@ -824,6 +843,52 @@ pub mod pallet {
 			<InflationConfig<T>>::put(inflation_config);
 			Ok(().into())
 		}
+		#[pallet::weight(<T as Config>::WeightInfo::add_candidates_whitelist(*candidate_count))]
+		/// add white list of candidates
+		/// This function should be safe to delete after restriction removed
+		pub fn add_candidates_whitelist(
+			origin: OriginFor<T>,
+			candidate: T::AccountId,
+			candidate_count: u32,
+		) -> DispatchResultWithPostInfo {
+			frame_system::ensure_root(origin)?;
+			let mut candidates = <Candidates<T>>::get();
+			let old_count = candidates.len() as u32;
+			ensure!(
+				candidate_count >= old_count,
+				Error::<T>::TooLowCandidateCountWeightHintJoinCandidates
+			);
+			if let Err(index) = candidates.binary_search(&candidate) {
+				candidates.insert(index, candidate.clone());
+				Candidates::<T>::put(candidates);
+				Self::deposit_event(Event::CandidateWhiteListAdded { candidate: candidate});
+			}
+			Ok(().into())
+		}
+
+		#[pallet::weight(<T as Config>::WeightInfo::remove_candidates_whitelist(*candidate_count))]
+		/// remove white list of candidates
+		/// This function should be safe to delete after restriction removed
+		pub fn remove_candidates_whitelist(
+			origin: OriginFor<T>,
+			candidate: T::AccountId,
+			candidate_count: u32,
+		) -> DispatchResultWithPostInfo {
+			frame_system::ensure_root(origin)?;
+			let mut candidates = <Candidates<T>>::get();
+			let old_count = candidates.len() as u32;
+			ensure!(
+				candidate_count >= old_count,
+				Error::<T>::TooLowCandidateCountWeightHintJoinCandidates
+			);
+			if let Ok(index) = candidates.binary_search(&candidate) {
+				candidates.remove(index);
+				Candidates::<T>::put(candidates);
+				Self::deposit_event(Event::CandidateWhiteListRemoved { candidate: candidate});
+			}
+			Ok(().into())
+		}
+
 		#[pallet::weight(<T as Config>::WeightInfo::join_candidates(*candidate_count))]
 		/// Join the set of collator candidates
 		pub fn join_candidates(
@@ -832,6 +897,7 @@ pub mod pallet {
 			candidate_count: u32,
 		) -> DispatchResultWithPostInfo {
 			let acc = ensure_signed(origin)?;
+			ensure!(Self::is_white_list(&acc), Error::<T>::CandidateUnauthorized);
 			ensure!(!Self::is_candidate(&acc), Error::<T>::CandidateExists);
 			ensure!(!Self::is_delegator(&acc), Error::<T>::DelegatorExists);
 			ensure!(bond >= T::MinCandidateStk::get(), Error::<T>::CandidateBondBelowMin);
@@ -1251,6 +1317,13 @@ pub mod pallet {
 		}
 		pub fn is_candidate(acc: &T::AccountId) -> bool {
 			<CandidateInfo<T>>::get(acc).is_some()
+		}
+
+		pub fn is_white_list(acc: &T::AccountId) -> bool {
+			if <Candidates<T>>::get().binary_search(acc).is_err() {
+				return false
+			}
+			true
 		}
 		pub fn is_selected_candidate(acc: &T::AccountId) -> bool {
 			<SelectedCandidates<T>>::get().binary_search(acc).is_ok()

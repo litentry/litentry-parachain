@@ -54,6 +54,8 @@ pub trait WeightInfo {
 	fn set_total_selected() -> Weight;
 	fn set_collator_commission() -> Weight;
 	fn set_blocks_per_round() -> Weight;
+	fn add_candidates_whitelist(x: u32, ) -> Weight;
+	fn remove_candidates_whitelist(x: u32, ) -> Weight;
 	fn join_candidates(x: u32, ) -> Weight;
 	fn schedule_leave_candidates(x: u32, ) -> Weight;
 	fn execute_leave_candidates(x: u32, ) -> Weight;
@@ -128,6 +130,20 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 		(20_600_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+	}
+	fn add_candidates_whitelist(x: u32, ) -> Weight {
+		(76_974_000 as Weight)
+			// Standard Error: 1_000
+			.saturating_add((112_000 as Weight).saturating_mul(x as Weight))
+			.saturating_add(T::DbWeight::get().reads(6 as Weight))
+			.saturating_add(T::DbWeight::get().writes(8 as Weight))
+	}
+	fn remove_candidates_whitelist(x: u32, ) -> Weight {
+		(76_974_000 as Weight)
+			// Standard Error: 1_000
+			.saturating_add((112_000 as Weight).saturating_mul(x as Weight))
+			.saturating_add(T::DbWeight::get().reads(6 as Weight))
+			.saturating_add(T::DbWeight::get().writes(8 as Weight))
 	}
 	// Storage: ParachainStaking CandidateInfo (r:1 w:1)
 	// Storage: ParachainStaking DelegatorState (r:1 w:0)
@@ -442,6 +458,20 @@ impl WeightInfo for () {
 		(20_600_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
+	}
+	fn add_candidates_whitelist(x: u32, ) -> Weight {
+		(76_974_000 as Weight)
+			// Standard Error: 1_000
+			.saturating_add((112_000 as Weight).saturating_mul(x as Weight))
+			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(8 as Weight))
+	}
+	fn remove_candidates_whitelist(x: u32, ) -> Weight {
+		(76_974_000 as Weight)
+			// Standard Error: 1_000
+			.saturating_add((112_000 as Weight).saturating_mul(x as Weight))
+			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(8 as Weight))
 	}
 	// Storage: ParachainStaking CandidateInfo (r:1 w:1)
 	// Storage: ParachainStaking DelegatorState (r:1 w:0)

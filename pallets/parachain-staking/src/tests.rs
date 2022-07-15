@@ -548,6 +548,8 @@ fn cannot_set_same_parachain_bond_reserve_percent() {
 #[test]
 fn join_candidates_event_emits_correctly() {
 	ExtBuilder::default().with_balances(vec![(1, 10)]).build().execute_with(|| {
+		// This should be safe to delete after collator restrcition removed
+		assert_ok!(ParachainStaking::add_candidates_whitelist(Origin::root(), 1, 0u32));
 		assert_ok!(ParachainStaking::join_candidates(Origin::signed(1), 10u128, 0u32));
 		assert_last_event!(MetaEvent::ParachainStaking(Event::JoinedCollatorCandidates {
 			account: 1,
@@ -560,6 +562,8 @@ fn join_candidates_event_emits_correctly() {
 #[test]
 fn join_candidates_reserves_balance() {
 	ExtBuilder::default().with_balances(vec![(1, 10)]).build().execute_with(|| {
+		// This should be safe to delete after collator restrcition removed
+		assert_ok!(ParachainStaking::add_candidates_whitelist(Origin::root(), 1, 0u32));
 		assert_eq!(ParachainStaking::get_collator_stakable_free_balance(&1), 10);
 		assert_ok!(ParachainStaking::join_candidates(Origin::signed(1), 10u128, 0u32));
 		assert_eq!(ParachainStaking::get_collator_stakable_free_balance(&1), 0);
@@ -569,6 +573,8 @@ fn join_candidates_reserves_balance() {
 #[test]
 fn join_candidates_increases_total_staked() {
 	ExtBuilder::default().with_balances(vec![(1, 10)]).build().execute_with(|| {
+		// This should be safe to delete after collator restrcition removed
+		assert_ok!(ParachainStaking::add_candidates_whitelist(Origin::root(), 1, 0u32));
 		assert_eq!(ParachainStaking::total(), 0);
 		assert_ok!(ParachainStaking::join_candidates(Origin::signed(1), 10u128, 0u32));
 		assert_eq!(ParachainStaking::total(), 10);
@@ -578,6 +584,8 @@ fn join_candidates_increases_total_staked() {
 #[test]
 fn join_candidates_creates_candidate_state() {
 	ExtBuilder::default().with_balances(vec![(1, 10)]).build().execute_with(|| {
+		// This should be safe to delete after collator restrcition removed
+		assert_ok!(ParachainStaking::add_candidates_whitelist(Origin::root(), 1, 0u32));
 		assert!(ParachainStaking::candidate_info(1).is_none());
 		assert_ok!(ParachainStaking::join_candidates(Origin::signed(1), 10u128, 0u32));
 		let candidate_state = ParachainStaking::candidate_info(1).expect("just joined => exists");
@@ -588,6 +596,8 @@ fn join_candidates_creates_candidate_state() {
 #[test]
 fn join_candidates_adds_to_candidate_pool() {
 	ExtBuilder::default().with_balances(vec![(1, 10)]).build().execute_with(|| {
+		// This should be safe to delete after collator restrcition removed
+		assert_ok!(ParachainStaking::add_candidates_whitelist(Origin::root(), 1, 0u32));
 		assert!(ParachainStaking::candidate_pool().0.is_empty());
 		assert_ok!(ParachainStaking::join_candidates(Origin::signed(1), 10u128, 0u32));
 		let candidate_pool = ParachainStaking::candidate_pool();
@@ -618,6 +628,8 @@ fn cannot_join_candidates_if_delegator() {
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
 		.execute_with(|| {
+			// This should be safe to delete after collator restrcition removed
+			assert_ok!(ParachainStaking::add_candidates_whitelist(Origin::root(), 2, 1u32));
 			assert_noop!(
 				ParachainStaking::join_candidates(Origin::signed(2), 10u128, 1u32),
 				Error::<Test>::DelegatorExists
@@ -628,6 +640,8 @@ fn cannot_join_candidates_if_delegator() {
 #[test]
 fn cannot_join_candidates_without_min_bond() {
 	ExtBuilder::default().with_balances(vec![(1, 1000)]).build().execute_with(|| {
+		// This should be safe to delete after collator restrcition removed
+		assert_ok!(ParachainStaking::add_candidates_whitelist(Origin::root(), 1, 100u32));
 		assert_noop!(
 			ParachainStaking::join_candidates(Origin::signed(1), 9u128, 100u32),
 			Error::<Test>::CandidateBondBelowMin
@@ -638,6 +652,8 @@ fn cannot_join_candidates_without_min_bond() {
 #[test]
 fn cannot_join_candidates_with_more_than_available_balance() {
 	ExtBuilder::default().with_balances(vec![(1, 500)]).build().execute_with(|| {
+		// This should be safe to delete after collator restrcition removed
+		assert_ok!(ParachainStaking::add_candidates_whitelist(Origin::root(), 1, 0u32));
 		assert_noop!(
 			ParachainStaking::join_candidates(Origin::signed(1), 501u128, 100u32),
 			DispatchError::Module(ModuleError {
@@ -656,6 +672,8 @@ fn insufficient_join_candidates_weight_hint_fails() {
 		.with_candidates(vec![(1, 20), (2, 20), (3, 20), (4, 20), (5, 20)])
 		.build()
 		.execute_with(|| {
+			// This should be safe to delete after collator restrcition removed
+			assert_ok!(ParachainStaking::add_candidates_whitelist(Origin::root(), 6, 6u32));
 			for i in 0..5 {
 				assert_noop!(
 					ParachainStaking::join_candidates(Origin::signed(6), 20, i),
@@ -684,6 +702,8 @@ fn sufficient_join_candidates_weight_hint_succeeds() {
 		.execute_with(|| {
 			let mut count = 5u32;
 			for i in 6..10 {
+				// This should be safe to delete after collator restrcition removed
+				assert_ok!(ParachainStaking::add_candidates_whitelist(Origin::root(), i, count));
 				assert_ok!(ParachainStaking::join_candidates(Origin::signed(i), 20, count));
 				count += 1u32;
 			}
@@ -1511,6 +1531,8 @@ fn can_delegate_immediately_after_other_join_candidates() {
 		.with_balances(vec![(1, 20), (2, 20)])
 		.build()
 		.execute_with(|| {
+			// This should be safe to delete after collator restrcition removed
+		assert_ok!(ParachainStaking::add_candidates_whitelist(Origin::root(), 1, 0u32));
 			assert_ok!(ParachainStaking::join_candidates(Origin::signed(1), 20, 0));
 			assert_ok!(ParachainStaking::delegate(Origin::signed(2), 1, 20, 0, 0));
 		});
@@ -3404,6 +3426,8 @@ fn paid_collator_commission_matches_config() {
 				},
 			];
 			assert_eq_events!(expected.clone());
+			// This should be safe to delete after collator restrcition removed
+			assert_ok!(ParachainStaking::add_candidates_whitelist(Origin::root(), 4, 100u32));
 			assert_ok!(ParachainStaking::join_candidates(Origin::signed(4), 20u128, 100u32));
 			assert_last_event!(MetaEvent::ParachainStaking(Event::JoinedCollatorCandidates {
 				account: 4,
@@ -3415,6 +3439,9 @@ fn paid_collator_commission_matches_config() {
 			assert_ok!(ParachainStaking::delegate(Origin::signed(6), 4, 10, 10, 10));
 			roll_to(11);
 			let mut new = vec![
+				Event::CandidateWhiteListAdded {
+					candidate: 4,
+				},
 				Event::JoinedCollatorCandidates {
 					account: 4,
 					amount_locked: 20,
@@ -5502,5 +5529,57 @@ fn revoke_last_removes_lock() {
 			roll_to_round_begin(5);
 			assert_ok!(ParachainStaking::execute_delegation_request(Origin::signed(3), 3, 2));
 			assert_eq!(crate::mock::query_lock_amount(3, DELEGATOR_LOCK_ID), None);
+		});
+}
+
+#[test]
+fn add_white_list() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 100), (2, 100), (3, 100), (4, 100)])
+		.with_candidates(vec![(1, 25), (2, 25)])
+		.with_delegations(vec![(3, 1, 30), (3, 2, 25)])
+		.build()
+		.execute_with(|| {
+			// Adding a candidate to whitelist
+			assert_ok!(ParachainStaking::add_candidates_whitelist(Origin::root(), 4, 2));
+			assert_last_event!(MetaEvent::ParachainStaking(Event::CandidateWhiteListAdded {
+				candidate: 4,
+			}));
+
+			// Adding a existing whitelist has no new effect ( new event)
+			assert_ok!(ParachainStaking::add_candidates_whitelist(Origin::root(), 1, 3));
+			assert_last_event!(MetaEvent::ParachainStaking(Event::CandidateWhiteListAdded {
+				candidate: 4,
+			}));
+
+			// wrong count parameter will be stopped
+			assert_noop!(ParachainStaking::add_candidates_whitelist(Origin::root(), 1, 1), Error::<Test>::TooLowCandidateCountWeightHintJoinCandidates);
+			
+		});
+}
+
+#[test]
+fn remove_white_list() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 100), (2, 100), (3, 100), (4, 100)])
+		.with_candidates(vec![(1, 25), (2, 25)])
+		.with_delegations(vec![(3, 1, 30), (3, 2, 25)])
+		.build()
+		.execute_with(|| {
+			// Removing a candidate from whitelist
+			assert_ok!(ParachainStaking::remove_candidates_whitelist(Origin::root(), 1, 2));
+			assert_last_event!(MetaEvent::ParachainStaking(Event::CandidateWhiteListRemoved {
+				candidate: 1,
+			}));
+
+			// Removing a non-existing whitelist has no new effect ( new event)
+			assert_ok!(ParachainStaking::remove_candidates_whitelist(Origin::root(), 3, 1));
+			assert_last_event!(MetaEvent::ParachainStaking(Event::CandidateWhiteListRemoved {
+				candidate: 1,
+			}));
+
+			// wrong count parameter will be stopped
+			assert_noop!(ParachainStaking::remove_candidates_whitelist(Origin::root(), 2, 0), Error::<Test>::TooLowCandidateCountWeightHintJoinCandidates);
+			
 		});
 }
