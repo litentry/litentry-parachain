@@ -55,6 +55,7 @@ pub mod relay_sproof_builder;
 pub const RELAY_UNIT: u128 = 1;
 
 type XTokens<R> = orml_xtokens::Pallet<R>;
+type ExtrinsicFilter<R> = pallet_extrinsic_filter::Pallet<R>;
 type Balances<R> = pallet_balances::Pallet<R>;
 type Tokens<R> = orml_tokens::Pallet<R>;
 type AssetManager<R> = pallet_asset_manager::Pallet<R>;
@@ -1085,6 +1086,10 @@ where
 			10 * UNIT
 		);
 		assert_eq!(Balances::<R::ParaRuntime>::free_balance(&bob()), 0);
+		assert_ok!(ExtrinsicFilter::<R::ParaRuntime>::set_mode(
+			RawOrigin::Root.into(),
+			pallet_extrinsic_filter::OperationalMode::Test
+		));
 	});
 	R::Relay::execute_with(|| {
 		let call_message: R::ParaCall =
@@ -1141,13 +1146,18 @@ where
 		// The whole Xcm get Executed but fee paid without Transact executed ??????????
 		// TODO:: Some very detials need to be checked
 		// We leave it here for now. As neither do we have to consider Relay root attack Parachain
-		assert_eq!(Balances::<R::ParaRuntime>::free_balance(&bob()), 0);
+		assert_eq!(Balances::<R::ParaRuntime>::free_balance(&bob()), 2 * UNIT);
 		assert_eq!(pallet_balances::Pallet::<R::RelayRuntime>::free_balance(&bob()), 0);
 		let xcm_fee = u128::from(R::UnitWeightCost::get() * 5) + 100 * MILLICENTS;
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&relay_account::<R::LocationToAccountId>()),
-			10 * UNIT - xcm_fee
+			10 * UNIT - xcm_fee - 2 * UNIT
 		);
+        // restore normal mode?
+		assert_ok!(ExtrinsicFilter::<R::ParaRuntime>::set_mode(
+			RawOrigin::Root.into(),
+			pallet_extrinsic_filter::OperationalMode::Normal
+		));
 	});
 }
 
