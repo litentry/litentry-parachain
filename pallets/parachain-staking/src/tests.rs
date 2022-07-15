@@ -1532,7 +1532,7 @@ fn can_delegate_immediately_after_other_join_candidates() {
 		.build()
 		.execute_with(|| {
 			// This should be safe to delete after collator restrcition removed
-		assert_ok!(ParachainStaking::add_candidates_whitelist(Origin::root(), 1, 0u32));
+			assert_ok!(ParachainStaking::add_candidates_whitelist(Origin::root(), 1, 0u32));
 			assert_ok!(ParachainStaking::join_candidates(Origin::signed(1), 20, 0));
 			assert_ok!(ParachainStaking::delegate(Origin::signed(2), 1, 20, 0, 0));
 		});
@@ -3439,9 +3439,7 @@ fn paid_collator_commission_matches_config() {
 			assert_ok!(ParachainStaking::delegate(Origin::signed(6), 4, 10, 10, 10));
 			roll_to(11);
 			let mut new = vec![
-				Event::CandidateWhiteListAdded {
-					candidate: 4,
-				},
+				Event::CandidateWhiteListAdded { candidate: 4 },
 				Event::JoinedCollatorCandidates {
 					account: 4,
 					amount_locked: 20,
@@ -5553,8 +5551,10 @@ fn add_white_list() {
 			}));
 
 			// wrong count parameter will be stopped
-			assert_noop!(ParachainStaking::add_candidates_whitelist(Origin::root(), 1, 1), Error::<Test>::TooLowCandidateCountWeightHintJoinCandidates);
-			
+			assert_noop!(
+				ParachainStaking::add_candidates_whitelist(Origin::root(), 1, 1),
+				Error::<Test>::TooLowCandidateCountWeightHintJoinCandidates
+			);
 		});
 }
 
@@ -5579,7 +5579,9 @@ fn remove_white_list() {
 			}));
 
 			// wrong count parameter will be stopped
-			assert_noop!(ParachainStaking::remove_candidates_whitelist(Origin::root(), 2, 0), Error::<Test>::TooLowCandidateCountWeightHintJoinCandidates);
-			
+			assert_noop!(
+				ParachainStaking::remove_candidates_whitelist(Origin::root(), 2, 0),
+				Error::<Test>::TooLowCandidateCountWeightHintJoinCandidates
+			);
 		});
 }

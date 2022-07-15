@@ -280,9 +280,13 @@ pub mod pallet {
 			new_bond: BalanceOf<T>,
 		},
 		/// Candidate temporarily leave the set of collator candidates without unbonding.
-		CandidateWentOffline { candidate: T::AccountId },
+		CandidateWentOffline {
+			candidate: T::AccountId,
+		},
 		/// Candidate rejoins the set of collator candidates.
-		CandidateBackOnline { candidate: T::AccountId },
+		CandidateBackOnline {
+			candidate: T::AccountId,
+		},
 		/// Candidate has requested to leave the set of candidates.
 		CandidateScheduledExit {
 			exit_allowed_round: RoundIndex,
@@ -290,7 +294,9 @@ pub mod pallet {
 			scheduled_exit: RoundIndex,
 		},
 		/// Cancelled request to leave the set of candidates.
-		CancelledCandidateExit { candidate: T::AccountId },
+		CancelledCandidateExit {
+			candidate: T::AccountId,
+		},
 		/// Cancelled request to decrease candidate's bond.
 		CancelledCandidateBondLess {
 			candidate: T::AccountId,
@@ -338,7 +344,10 @@ pub mod pallet {
 			scheduled_exit: RoundIndex,
 		},
 		/// Delegator has left the set of delegators.
-		DelegatorLeft { delegator: T::AccountId, unstaked_amount: BalanceOf<T> },
+		DelegatorLeft {
+			delegator: T::AccountId,
+			unstaked_amount: BalanceOf<T>,
+		},
 		/// Delegation revoked.
 		DelegationRevoked {
 			delegator: T::AccountId,
@@ -352,7 +361,9 @@ pub mod pallet {
 			unstaked_amount: BalanceOf<T>,
 		},
 		/// Cancelled a pending request to exit the set of delegators.
-		DelegatorExitCancelled { delegator: T::AccountId },
+		DelegatorExitCancelled {
+			delegator: T::AccountId,
+		},
 		/// Cancelled request to change an existing delegation.
 		CancelledDelegationRequest {
 			delegator: T::AccountId,
@@ -374,13 +385,25 @@ pub mod pallet {
 			total_candidate_staked: BalanceOf<T>,
 		},
 		/// Paid the account (delegator or collator) the balance as liquid rewards.
-		Rewarded { account: T::AccountId, rewards: BalanceOf<T> },
+		Rewarded {
+			account: T::AccountId,
+			rewards: BalanceOf<T>,
+		},
 		/// Transferred to account which holds funds reserved for parachain bond.
-		ReservedForParachainBond { account: T::AccountId, value: BalanceOf<T> },
+		ReservedForParachainBond {
+			account: T::AccountId,
+			value: BalanceOf<T>,
+		},
 		/// Account (re)set for parachain bond treasury.
-		ParachainBondAccountSet { old: T::AccountId, new: T::AccountId },
+		ParachainBondAccountSet {
+			old: T::AccountId,
+			new: T::AccountId,
+		},
 		/// Percent of inflation reserved for parachain bond (re)set.
-		ParachainBondReservePercentSet { old: Percent, new: Percent },
+		ParachainBondReservePercentSet {
+			old: Percent,
+			new: Percent,
+		},
 		/// Annual inflation input (first 3) was used to derive new per-round inflation (last 3)
 		InflationSet {
 			annual_min: Perbill,
@@ -397,9 +420,15 @@ pub mod pallet {
 			expect_max: BalanceOf<T>,
 		},
 		/// Set total selected candidates to this value.
-		TotalSelectedSet { old: u32, new: u32 },
+		TotalSelectedSet {
+			old: u32,
+			new: u32,
+		},
 		/// Set collator commission to this value.
-		CollatorCommissionSet { old: Perbill, new: Perbill },
+		CollatorCommissionSet {
+			old: Perbill,
+			new: Perbill,
+		},
 		/// Set blocks per round
 		BlocksPerRoundSet {
 			current_round: RoundIndex,
@@ -861,7 +890,7 @@ pub mod pallet {
 			if let Err(index) = candidates.binary_search(&candidate) {
 				candidates.insert(index, candidate.clone());
 				Candidates::<T>::put(candidates);
-				Self::deposit_event(Event::CandidateWhiteListAdded { candidate: candidate});
+				Self::deposit_event(Event::CandidateWhiteListAdded { candidate });
 			}
 			Ok(().into())
 		}
@@ -884,7 +913,7 @@ pub mod pallet {
 			if let Ok(index) = candidates.binary_search(&candidate) {
 				candidates.remove(index);
 				Candidates::<T>::put(candidates);
-				Self::deposit_event(Event::CandidateWhiteListRemoved { candidate: candidate});
+				Self::deposit_event(Event::CandidateWhiteListRemoved { candidate });
 			}
 			Ok(().into())
 		}
