@@ -19,7 +19,7 @@
 #![allow(clippy::upper_case_acronyms)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::traits::EnsureOneOf;
+use frame_support::traits::EitherOfDiverse;
 use frame_system::EnsureRoot;
 
 pub use primitives::AccountId;
@@ -64,33 +64,33 @@ pub type TechnicalCommitteeMembershipInstance = pallet_membership::Instance2;
 
 /// Type definition for various proportions of council and technical committee
 /// Council
-pub type EnsureRootOrAllCouncil = EnsureOneOf<
+pub type EnsureRootOrAllCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilInstance, 1, 1>,
 >;
 
-pub type EnsureRootOrHalfCouncil = EnsureOneOf<
+pub type EnsureRootOrHalfCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilInstance, 1, 2>,
 >;
 
-pub type EnsureRootOrTwoThirdsCouncil = EnsureOneOf<
+pub type EnsureRootOrTwoThirdsCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilInstance, 2, 3>,
 >;
 
 /// Technical Committee
-pub type EnsureRootOrAllTechnicalCommittee = EnsureOneOf<
+pub type EnsureRootOrAllTechnicalCommittee = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCommitteeInstance, 1, 1>,
 >;
 
-pub type EnsureRootOrHalfTechnicalCommittee = EnsureOneOf<
+pub type EnsureRootOrHalfTechnicalCommittee = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCommitteeInstance, 1, 2>,
 >;
 
-pub type EnsureRootOrTwoThirdsTechnicalCommittee = EnsureOneOf<
+pub type EnsureRootOrTwoThirdsTechnicalCommittee = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCommitteeInstance, 2, 3>,
 >;
