@@ -447,39 +447,3 @@ where
 		}
 	}
 }
-
-// implement different types of converters:
-// CurrencyId <----> MultiLocation
-// AccountId ----> MultiLocation
-// AssetId <----> MultiLocation
-// #[macro_export]
-// macro_rules! impl_converters {
-// 	($runtime:ty) => {
-// 		// use frame_support::parameter_types;
-// 		use pallet_balances::pallet::Pallet as RuntimeBalances;
-// 		use sp_runtime::traits::Convert as spConvert;
-// 		use xcm_executor::traits::Convert as xcmConvert;
-//
-// 		parameter_types! {
-// 			// The old anchoring method before 0.9.16
-// 			// https://github.com/paritytech/polkadot/pull/4470
-// 			pub OldAnchoringSelfReserve: MultiLocation = MultiLocation {
-// 				parents:1,
-// 				interior: Junctions::X2(
-// 					Parachain(ParachainInfo::parachain_id().into()),
-// 					PalletInstance(<RuntimeBalances<$runtime> as PalletInfoAccess>::index() as u8)
-// 				)
-// 			};
-// 			// New Self Reserve location, defines the multilocation identifiying the self-reserve currency
-// 			// This is used to match it also against our Balances pallet when we receive such
-// 			// a MultiLocation: (Self Balances pallet index)
-// 			// This is the new anchoring way
-// 			pub NewAnchoringSelfReserve: MultiLocation = MultiLocation {
-// 				parents:0,
-// 				interior: Junctions::X1(
-// 					PalletInstance(<RuntimeBalances<$runtime> as PalletInfoAccess>::index() as u8)
-// 				)
-// 			};
-// 		}
-// 	};
-// }
