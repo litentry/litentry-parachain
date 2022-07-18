@@ -354,11 +354,7 @@ impl<R: BaseRuntimeRequirements> From<MultiLocation> for CurrencyId<R> {
 impl<R: BaseRuntimeRequirements> From<Option<MultiLocation>> for CurrencyId<R> {
 	fn from(location: Option<MultiLocation>) -> Self {
 		match location {
-			Some(a)
-				if (a == OldAnchoringSelfReserve::<R>::get()) |
-					(a == NewAnchoringSelfReserve::<R>::get()) =>
-				CurrencyId::<R>::SelfReserve(PhantomData::default()),
-			Some(multi) => CurrencyId::ParachainReserve(Box::new(multi)),
+			Some(multi) => Self::from(multi),
 			None => CurrencyId::ParachainReserve(Box::new(MultiLocation::default())),
 		}
 	}
