@@ -19,70 +19,62 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
-// Make the WASM binary available.
-#[cfg(feature = "std")]
-include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
+#[cfg(feature = "runtime-benchmarks")]
+#[macro_use]
+extern crate frame_benchmarking;
 
-pub mod asset_config;
-pub mod constants;
-pub mod weights;
-pub mod xcm_config;
-pub use constants::currency::*;
+use codec::{Decode, Encode, MaxEncodedLen};
+use frame_support::{
+	construct_runtime, parameter_types,
+	traits::{ConstU16, ConstU32, ConstU64, ConstU8, Contains, Everything, InstanceFilter},
+	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
+	PalletId, RuntimeDebug,
+};
+use frame_system::EnsureRoot;
 pub use pallet_sidechain;
 pub use pallet_teerex;
-pub use primitives::{opaque, Index, *};
-
 use sp_api::impl_runtime_apis;
+pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+#[cfg(any(feature = "std", test))]
+pub use sp_runtime::BuildStorage;
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
 };
-use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
-
-mod transaction_payment;
-pub use transaction_payment::{
-	DealWithFees, MinimumMultiplier, SlowAdjustingFeeUpdate, TargetBlockFullness,
-};
-
-#[cfg(test)]
-mod tests;
-
+pub use sp_runtime::{MultiAddress, Perbill, Percent, Permill};
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-
-use codec::{Decode, Encode, MaxEncodedLen};
-use frame_support::{
-	construct_runtime, parameter_types,
-	traits::{ConstU16, ConstU32, ConstU64, ConstU8, Contains, Everything, InstanceFilter},
-	weights::{
-		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		ConstantMultiplier, DispatchClass, IdentityFee, Weight,
-	},
-	PalletId, RuntimeDebug,
-};
-use frame_system::{
-	limits::{BlockLength, BlockWeights},
-	EnsureRoot,
-};
-use runtime_common::{
-	prod_or_fast, CouncilInstance, CouncilMembershipInstance, EnsureRootOrAllCouncil,
-	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrHalfTechnicalCommittee,
-	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee,
-	TechnicalCommitteeInstance, TechnicalCommitteeMembershipInstance,
-};
-pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-pub use sp_runtime::{MultiAddress, Perbill, Percent, Permill};
-
-#[cfg(any(feature = "std", test))]
-pub use sp_runtime::BuildStorage;
-
 // XCM Imports
 use xcm_executor::XcmExecutor;
+
+pub use constants::currency::deposit;
+pub use primitives::{opaque, Index, *};
+pub use runtime_common::currency::*;
+use runtime_common::{
+	impl_runtime_transaction_payment_fees, prod_or_fast, BlockHashCount, BlockLength,
+	CouncilInstance, CouncilMembershipInstance, EnsureRootOrAllCouncil,
+	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrHalfTechnicalCommittee,
+	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, NegativeImbalance,
+	RuntimeBlockWeights, SlowAdjustingFeeUpdate, TechnicalCommitteeInstance,
+	TechnicalCommitteeMembershipInstance, MAXIMUM_BLOCK_WEIGHT,
+};
+use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
+
+// Make the WASM binary available.
+#[cfg(feature = "std")]
+include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
+
+pub mod asset_config;
+pub mod constants;
+#[cfg(test)]
+mod tests;
+pub mod weights;
+pub mod xcm_config;
 
 /// The address format for describing accounts.
 pub type Address = MultiAddress<AccountId, ()>;
@@ -152,20 +144,6 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	state_version: 0,
 };
 
-/// The existential deposit.
-pub const EXISTENTIAL_DEPOSIT: Balance = 10 * CENTS;
-
-/// We assume that ~10% of the block weight is consumed by `on_initialize` handlers. This is
-/// used to limit the maximal weight of a single extrinsic.
-const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
-
-/// We allow `Normal` extrinsics to fill up the block up to 75%, the rest can be used by
-/// `Operational` extrinsics.
-const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
-
-/// We allow for 0.5 of a second of compute with a 12 second average block time.
-const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
-
 /// A timestamp: milliseconds since the unix epoch.
 pub type Moment = u64;
 
@@ -176,33 +154,8 @@ pub fn native_version() -> NativeVersion {
 }
 
 parameter_types! {
-	pub const BlockHashCount: BlockNumber = 250;
 	pub const Version: RuntimeVersion = VERSION;
 
-	// This part is copied from Substrate's `bin/node/runtime/src/lib.rs`.
-	//  The `RuntimeBlockLength` and `RuntimeBlockWeights` exist here because the
-	// `DeletionWeightLimit` and `DeletionQueueDepth` depend on those to parameterize
-	// the lazy contract deletion.
-	pub RuntimeBlockLength: BlockLength =
-		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
-	pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
-		.base_block(BlockExecutionWeight::get())
-		.for_class(DispatchClass::all(), |weights| {
-			weights.base_extrinsic = ExtrinsicBaseWeight::get();
-		})
-		.for_class(DispatchClass::Normal, |weights| {
-			weights.max_total = Some(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT);
-		})
-		.for_class(DispatchClass::Operational, |weights| {
-			weights.max_total = Some(MAXIMUM_BLOCK_WEIGHT);
-			// Operational transactions have some extra reserved space, so that they
-			// are included even if block reached `MAXIMUM_BLOCK_WEIGHT`.
-			weights.reserved = Some(
-				MAXIMUM_BLOCK_WEIGHT - NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT
-			);
-		})
-		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
-		.build_or_panic();
 	pub const SS58Prefix: u16 = 131;
 }
 
@@ -248,7 +201,7 @@ impl frame_system::Config for Runtime {
 	/// Block & extrinsics weights: base values and limits.
 	type BlockWeights = RuntimeBlockWeights;
 	/// The maximum length of a block (in bytes).
-	type BlockLength = RuntimeBlockLength;
+	type BlockLength = BlockLength;
 	/// This is used as an identifier of the chain. 42 is the generic substrate prefix.
 	type SS58Prefix = SS58Prefix;
 	/// The action to take on a Runtime Upgrade
@@ -441,6 +394,7 @@ impl pallet_utility::Config for Runtime {
 parameter_types! {
 	pub const TransactionByteFee: Balance = MILLICENTS / 10;
 }
+impl_runtime_transaction_payment_fees!(constants);
 
 impl pallet_transaction_payment::Config for Runtime {
 	type OnChargeTransaction =
@@ -767,6 +721,10 @@ impl pallet_identity_management::Config for Runtime {
 	type Event = Event;
 }
 
+impl runtime_common::BaseRuntimeRequirements for Runtime {}
+
+impl runtime_common::ParaRuntimeRequirements for Runtime {}
+
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -892,10 +850,6 @@ impl Contains<Call> for NormalModeFilter {
 		)
 	}
 }
-
-#[cfg(feature = "runtime-benchmarks")]
-#[macro_use]
-extern crate frame_benchmarking;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benches {
