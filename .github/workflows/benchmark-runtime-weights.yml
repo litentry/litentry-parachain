@@ -65,7 +65,12 @@ jobs:
       - name: Remove dangling images if any
         run: |
           [ -z "$(docker images --filter=dangling=true -q)" ] || docker rmi -f $(docker images --filter=dangling=true -q)
-
+      - name: Start remote instance
+        run: |
+          aws ec2 start-instances --instance-ids i-0a3bdc24e56b4b457
+          sleep 10
+          ret=`aws ec2  describe-instance-status --instance-ids i-0a3bdc24e56b4b457 |jq '.InstanceStatuses[0].InstanceState.Name'`
+          echo "Remote instance running state: $ret"
       # exit status should propagate through ssh
       - name: Remotely benchmark pallets ${{ github.event.inputs.pallets }} for ${{ env.CHAIN }}
         timeout-minutes: 240
@@ -83,6 +88,12 @@ jobs:
           done
           echo "======================"
           git status
+      - name: Stop remote instance
+        run: |
+          aws ec2 stop-instances --instance-ids i-0a3bdc24e56b4b457
+          sleep 10
+          ret=`aws ec2  describe-instance-status --instance-ids i-0a3bdc24e56b4b457 |jq '.InstanceStatuses[0].InstanceState.Name'`
+          echo "Remote instance running state: $ret"
 
       - name: Create auto PR
         uses: peter-evans/create-pull-request@v3
