@@ -2,22 +2,8 @@
 
 name: Release - Extrinsic Ordering Check
 on:
-  push:
-    branches:
-      - 577-automation-extrinsic-pallet-order-check
   workflow_dispatch:
     inputs:
-      # reference_url:
-      #   description: The WebSocket url of the reference node
-      #   default:
-      #   required: false
-      # reference_url:
-      #   default:
-      #   required: false
-      # binary_url:
-      #   description: A url to a Linux binary for the node containing the runtime to test
-      #   default: https://releases.parity.io/polkadot/x86_64-debian:stretch/v0.9.10/polkadot
-      #   required: true
       chain:
         description: The name of the chain to compare with, should be litentry or litmus
         default: litentry
@@ -29,23 +15,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CHAIN: ${{github.event.inputs.chain}}
-      BIN_URL: ${{github.event.inputs.binary_url}}
-      # REF_URL: ${{github.event.inputs.reference_url}}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
-
-      # - name: Fetch binary
-      #   run: |
-      #     echo Fetching $BIN_URL
-      #     wget $BIN_URL -O polkadot
-      #     chmod a+x polkadot
-      #     ./polkadot --version
-
-      # - name: Start local node
-      #   run: |
-      #     echo Running on $CHAIN
-      #     ./polkadot --chain=$CHAIN &
 
       - name: Prepare output
         run: |
@@ -79,9 +51,6 @@ jobs:
       - name: Show result
         run: |
           cat output.txt
-
-      # - name: Stop our local node
-      #   run: pkill polkadot
 
       - name: Save output as artifact
         uses: actions/upload-artifact@v3
