@@ -1,6 +1,5 @@
-# This workflow performs the Extrinsic Ordering Check on demand using a binary
-
 name: Release - Extrinsic Ordering Check
+
 on:
   workflow_dispatch:
     inputs:
