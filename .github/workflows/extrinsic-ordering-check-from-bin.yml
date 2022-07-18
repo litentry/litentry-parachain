@@ -2,6 +2,9 @@
 
 name: Release - Extrinsic Ordering Check
 on:
+  push:
+    branches:
+      - 577-automation-extrinsic-pallet-order-check
   workflow_dispatch:
     inputs:
       # reference_url:
