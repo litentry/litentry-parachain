@@ -24,11 +24,9 @@ use crate::{
 	Call, Origin, Runtime,
 };
 
-// pub mod relay_sproof_builder;
+struct LitmusTestXCMRequirements;
 
-struct RococoTestXCMRequirements;
-
-impl TestXCMRequirements for RococoTestXCMRequirements {
+impl TestXCMRequirements for LitmusTestXCMRequirements {
 	type ParaOrigin = Origin;
 	type ParaCall = Call;
 	type ParaRuntime = Runtime;
@@ -48,61 +46,61 @@ impl TestXCMRequirements for RococoTestXCMRequirements {
 
 #[test]
 fn test_xtokens_recognize_multilocation() {
-	xcm_parachain::test_xtokens_recognize_multilocation::<RococoTestXCMRequirements>();
+	xcm_parachain::test_xtokens_recognize_multilocation::<LitmusTestXCMRequirements>();
 }
 
 // If this test fail, at least some part of XCM fee rule changes
 #[test]
 fn test_xtokens_weight_parameter() {
-	xcm_parachain::test_xtokens_weight_parameter::<RococoTestXCMRequirements>();
+	xcm_parachain::test_xtokens_weight_parameter::<LitmusTestXCMRequirements>();
 }
 
 #[test]
 fn test_pallet_xcm_recognize_multilocation() {
-	xcm_parachain::test_pallet_xcm_recognize_multilocation::<RococoTestXCMRequirements>();
+	xcm_parachain::test_pallet_xcm_recognize_multilocation::<LitmusTestXCMRequirements>();
 }
 
 #[test]
 fn test_methods_xtokens_expected_succeed() {
-	xcm_parachain::test_methods_xtokens_expected_succeed::<RococoTestXCMRequirements>();
+	xcm_parachain::test_methods_xtokens_expected_succeed::<LitmusTestXCMRequirements>();
 }
 
 #[test]
 fn test_methods_xtokens_expected_fail() {
-	xcm_parachain::test_methods_xtokens_expected_fail::<RococoTestXCMRequirements>();
+	xcm_parachain::test_methods_xtokens_expected_fail::<LitmusTestXCMRequirements>();
 }
 
 #[test]
 fn test_methods_pallet_xcm_expected_succeed() {
-	xcm_parachain::test_methods_pallet_xcm_expected_succeed::<RococoTestXCMRequirements>();
+	xcm_parachain::test_methods_pallet_xcm_expected_succeed::<LitmusTestXCMRequirements>();
 }
 
 #[test]
 fn test_methods_pallet_xcm_expected_fail() {
-	xcm_parachain::test_methods_pallet_xcm_expected_fail::<RococoTestXCMRequirements>();
+	xcm_parachain::test_methods_pallet_xcm_expected_fail::<LitmusTestXCMRequirements>();
 }
 
 // Send Xcm by root/individual on sibling to maniplulate XCM parachain soverign accounts
 #[test]
 fn test_pallet_xcm_send_capacity_between_sibling() {
-	xcm_parachain::test_pallet_xcm_send_capacity_between_sibling::<RococoTestXCMRequirements>();
+	xcm_parachain::test_pallet_xcm_send_capacity_between_sibling::<LitmusTestXCMRequirements>();
 }
 
 // Send Xcm by root/individual on relay to maniplulate xcm parachain soverign accounts
 #[test]
 fn test_pallet_xcm_send_capacity_without_transact() {
-	xcm_parachain::test_pallet_xcm_send_capacity_without_transact::<RococoTestXCMRequirements>();
+	xcm_parachain::test_pallet_xcm_send_capacity_without_transact::<LitmusTestXCMRequirements>();
 }
 
 // Relay root manipulate its own sovereign account on Parachain A by Xcm::Transact (Flawed)
 #[test]
 fn test_pallet_xcm_send_capacity_relay_manipulation() {
-	xcm_parachain::test_pallet_xcm_send_capacity_relay_manipulation::<RococoTestXCMRequirements>();
+	xcm_parachain::test_pallet_xcm_send_capacity_relay_manipulation::<LitmusTestXCMRequirements>();
 }
 
 // Parachain root manipulate its own sovereign account on Relay by Xcm::Transact succeed
 #[test]
 fn test_pallet_xcm_send_capacity_parachain_manipulation() {
-	xcm_parachain::test_pallet_xcm_send_capacity_parachain_manipulation::<RococoTestXCMRequirements>(
+	xcm_parachain::test_pallet_xcm_send_capacity_parachain_manipulation::<LitmusTestXCMRequirements>(
 	);
 }

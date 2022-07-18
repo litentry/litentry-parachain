@@ -254,9 +254,11 @@ pub enum CurrencyId4Compare {
 // Our currencyId. We distinguish for now between SelfReserve, and Others, defined by their Id.
 #[derive(Clone, Eq, Debug, PartialEq, Encode, Decode, TypeInfo)]
 pub enum CurrencyId<R: BaseRuntimeRequirements> {
-	SelfReserve(PhantomData<R>), // The only parachain native token: LIT
-	ParachainReserve(Box<MultiLocation>), /* Any parachain based asset, including local native minted
-	                              * ones. */
+	// The only parachain native token: LIT
+	SelfReserve(PhantomData<R>),
+
+	// Any parachain based asset, including local native minted ones.
+	ParachainReserve(Box<MultiLocation>),
 }
 
 fn convert_currency<R: BaseRuntimeRequirements>(s: &CurrencyId<R>) -> CurrencyId4Compare {
@@ -310,9 +312,7 @@ impl<R: BaseRuntimeRequirements> OldAnchoringSelfReserve<R> {
 	}
 }
 
-impl<I: From<MultiLocation>, R: BaseRuntimeRequirements> ::frame_support::traits::Get<I>
-	for OldAnchoringSelfReserve<R>
-{
+impl<I: From<MultiLocation>, R: BaseRuntimeRequirements> Get<I> for OldAnchoringSelfReserve<R> {
 	fn get() -> I {
 		I::from(Self::get())
 	}
@@ -332,9 +332,7 @@ impl<R: BaseRuntimeRequirements> NewAnchoringSelfReserve<R> {
 	}
 }
 
-impl<I: From<MultiLocation>, R: BaseRuntimeRequirements> ::frame_support::traits::Get<I>
-	for NewAnchoringSelfReserve<R>
-{
+impl<I: From<MultiLocation>, R: BaseRuntimeRequirements> Get<I> for NewAnchoringSelfReserve<R> {
 	fn get() -> I {
 		I::from(Self::get())
 	}
