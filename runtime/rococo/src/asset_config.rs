@@ -1,12 +1,12 @@
 use super::{
-	weights, xcm_config::CurrencyId, AccountId, Amount, AssetId, AssetManager, Balance, Balances,
-	Event, Runtime, TreasuryPalletId,
+	weights, AccountId, Amount, AssetId, AssetManager, Balance, Balances, Event, Runtime,
+	TreasuryPalletId,
 };
 use frame_support::{
 	parameter_types,
 	traits::{ConstU32, Contains},
 };
-use runtime_common::EnsureRootOrHalfCouncil;
+use runtime_common::{xcm_impl::CurrencyId, EnsureRootOrHalfCouncil};
 use sp_runtime::traits::AccountIdConversion;
 use sp_std::prelude::*;
 
@@ -49,7 +49,7 @@ impl pallet_asset_manager::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
 	type AssetId = AssetId;
-	type ForeignAssetType = CurrencyId;
+	type ForeignAssetType = CurrencyId<Runtime>;
 	type ForeignAssetModifierOrigin = EnsureRootOrHalfCouncil;
 	type Currency = Balances;
 	type WeightInfo = weights::pallet_asset_manager::WeightInfo<Runtime>;
