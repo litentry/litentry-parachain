@@ -26,10 +26,9 @@ use primitives::AccountId;
 
 use crate::{
 	currency::UNIT,
-	xcm_impl::{BaseRuntimeRequirements, ParaRuntimeRequirements},
+	tests::setup::{alice, bob, charlie, ExtBuilder},
+	BaseRuntimeRequirements, ParaRuntimeRequirements,
 };
-
-use crate::tests::setup::{alice, bob, charlie, ExtBuilder};
 
 type OpaqueCall<R> = WrapperKeepOpaque<<R as pallet_multisig::Config>::Call>;
 type ExtrinsicFilter<R> = pallet_extrinsic_filter::Pallet<R>;

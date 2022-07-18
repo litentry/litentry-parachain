@@ -31,9 +31,8 @@ use crate::{
 	tests::setup::{
 		alice, bob, info_from_weight, post_info_from_weight, run_with_system_weight, ExtBuilder,
 	},
-	xcm_impl::BaseRuntimeRequirements,
-	MinimumMultiplier, NegativeImbalance, RuntimeBlockWeights, SlowAdjustingFeeUpdate,
-	TargetBlockFullness,
+	BaseRuntimeRequirements, MinimumMultiplier, NegativeImbalance, RuntimeBlockWeights,
+	SlowAdjustingFeeUpdate, TargetBlockFullness,
 };
 
 type Balances<R> = pallet_balances::Pallet<R>;

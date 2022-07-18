@@ -715,6 +715,10 @@ impl pallet_extrinsic_filter::Config for Runtime {
 	type WeightInfo = weights::pallet_extrinsic_filter::WeightInfo<Runtime>;
 }
 
+impl runtime_common::BaseRuntimeRequirements for Runtime {}
+
+impl runtime_common::ParaRuntimeRequirements for Runtime {}
+
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,

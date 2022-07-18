@@ -36,7 +36,7 @@ use frame_system::{limits, EnsureRoot};
 use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
 use sp_runtime::{FixedPointNumber, Perbill, Perquintill};
 
-use primitives::{AccountId, BlockNumber};
+use primitives::{AccountId, AssetId, Balance, BlockNumber};
 
 pub type NegativeImbalance<T> = <pallet_balances::Pallet<T> as Currency<
 	<T as frame_system::Config>::AccountId,
@@ -238,3 +238,21 @@ pub type EnsureRootOrTwoThirdsTechnicalCommittee = EnsureOneOf<
 	EnsureRoot<AccountId>,
 	pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCommitteeInstance, 2, 3>,
 >;
+
+/// A set of pallet_config that runtime must implement.
+pub trait BaseRuntimeRequirements:
+	frame_system::Config<BlockNumber = BlockNumber, AccountId = AccountId>
+	+ pallet_balances::Config<Balance = Balance>
+	+ pallet_extrinsic_filter::Config
+	+ pallet_multisig::Config
+	+ parachain_info::Config
+	+ pallet_xcm::Config
+	+ pallet_treasury::Config
+	+ pallet_transaction_payment::Config
+{
+}
+
+pub trait ParaRuntimeRequirements:
+	BaseRuntimeRequirements + pallet_asset_manager::Config<AssetId = AssetId> + pallet_vesting::Config
+{
+}

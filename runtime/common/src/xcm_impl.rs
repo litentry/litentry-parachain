@@ -38,8 +38,9 @@ use xcm_executor::traits::{
 	Convert as xcmConvert, FilterAssetLocation, MatchesFungibles, WeightTrader,
 };
 
+use crate::{BaseRuntimeRequirements, ParaRuntimeRequirements};
 use pallet_asset_manager::{AssetTypeGetter, Pallet as AssetManager, UnitsToWeightRatio};
-use primitives::{AccountId, AssetId, Balance, BlockNumber};
+use primitives::{AccountId, AssetId};
 
 use super::WEIGHT_PER_SECOND;
 
@@ -225,24 +226,6 @@ impl FilterAssetLocation for MultiNativeAsset {
 		}
 		false
 	}
-}
-
-/// A set of pallet_config that runtime must implement.
-pub trait BaseRuntimeRequirements:
-	frame_system::Config<BlockNumber = BlockNumber, AccountId = AccountId>
-	+ pallet_balances::Config<Balance = Balance>
-	+ pallet_extrinsic_filter::Config
-	+ pallet_multisig::Config
-	+ parachain_info::Config
-	+ pallet_xcm::Config
-	+ pallet_treasury::Config
-	+ pallet_transaction_payment::Config
-{
-}
-
-pub trait ParaRuntimeRequirements:
-	BaseRuntimeRequirements + pallet_asset_manager::Config<AssetId = AssetId> + pallet_vesting::Config
-{
 }
 
 #[derive(Clone, Eq, Debug, PartialEq, Ord, PartialOrd, Encode, Decode, TypeInfo)]

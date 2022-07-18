@@ -42,12 +42,9 @@ use primitives::{AccountId, AssetId, Balance};
 
 use crate::{
 	currency::{CENTS, MILLICENTS, UNIT},
-	xcm_impl::CurrencyIdMultiLocationConvert,
-};
-
-use super::{
-	super::xcm_impl::{CurrencyId, ParaRuntimeRequirements},
-	setup::{alice, bob, relay::SovereignAccountOf, BOB, PARA_A_USER_INITIAL_BALANCE},
+	tests::setup::{alice, bob, relay::SovereignAccountOf, BOB, PARA_A_USER_INITIAL_BALANCE},
+	xcm_impl::{CurrencyId, CurrencyIdMultiLocationConvert},
+	ParaRuntimeRequirements,
 };
 
 pub mod relay_sproof_builder;

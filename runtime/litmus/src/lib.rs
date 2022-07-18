@@ -724,6 +724,10 @@ impl pallet_identity_management::Config for Runtime {
 	type Event = Event;
 }
 
+impl runtime_common::BaseRuntimeRequirements for Runtime {}
+
+impl runtime_common::ParaRuntimeRequirements for Runtime {}
+
 construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
