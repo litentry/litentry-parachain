@@ -19,8 +19,6 @@
 #![allow(clippy::upper_case_acronyms)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::traits::EitherOfDiverse;
-use frame_system::EnsureRoot;
 #[cfg(feature = "tests")]
 pub mod tests;
 
@@ -28,7 +26,7 @@ pub mod xcm_impl;
 
 use frame_support::{
 	parameter_types, sp_runtime,
-	traits::{Currency, EnsureOneOf, OnUnbalanced},
+	traits::{Currency, EitherOfDiverse, OnUnbalanced},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
 		DispatchClass, Weight,
