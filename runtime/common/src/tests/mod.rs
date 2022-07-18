@@ -14,33 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-pub mod setup {
-	use crate::Runtime;
-	#[cfg(test)]
-	runtime_common::decl_test_chain!(Runtime);
-}
+// mod base_call_filter;
 
-mod base_call_filter {
-	use crate::{Call, Origin, Runtime};
+pub mod setup;
+// mod transaction_payment;
 
-	runtime_common::run_call_filter_tests!();
-}
+pub mod xcm_parachain;
 
-mod transaction_payment {
-	use crate::{Call, Origin, Runtime, TransactionByteFee};
+pub mod base_call_filter;
 
-	runtime_common::run_transaction_payment_tests!();
-}
-
-mod xcm_parachain {
-	use crate::{
-		tests::setup::{
-			Call as RelayCall, Origin as RelayOrigin, ParaA, ParaB, Relay, RelayChainRuntime,
-			TestNet,
-		},
-		xcm_config::{LocationToAccountId, UnitWeightCost},
-		Call, Origin, Runtime,
-	};
-
-	runtime_common::run_xcm_tests!();
-}
+pub mod transaction_payment;
