@@ -140,3 +140,25 @@ where
 			);
 		})
 }
+
+#[macro_export]
+macro_rules! run_transaction_payment_tests {
+	() => {
+		use runtime_common::tests::transaction_payment;
+
+		#[test]
+		fn multiplier_can_grow_from_zero() {
+			transaction_payment::multiplier_can_grow_from_zero::<Runtime>();
+		}
+
+		#[test]
+		fn transaction_payment_works() {
+			transaction_payment::transaction_payment_works::<
+				Runtime,
+				TransactionByteFee,
+				Origin,
+				Call,
+			>();
+		}
+	};
+}

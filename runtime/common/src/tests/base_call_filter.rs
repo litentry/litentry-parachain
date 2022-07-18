@@ -214,3 +214,40 @@ where
 			assert_eq!(Balances::<R>::usable_balance(&bob()), UNIT);
 		})
 }
+
+#[macro_export]
+macro_rules! run_call_filter_tests {
+	() => {
+		use runtime_common::tests::base_call_filter;
+
+		#[test]
+		fn default_mode() {
+			base_call_filter::default_mode::<Runtime>();
+		}
+
+		#[test]
+		fn multisig_enabled() {
+			base_call_filter::multisig_enabled::<Runtime, Origin, Call>();
+		}
+
+		#[test]
+		fn balance_transfer_disabled() {
+			base_call_filter::balance_transfer_disabled::<Runtime, Origin, Call>();
+		}
+
+		#[test]
+		fn balance_transfer_with_sudo_works() {
+			base_call_filter::balance_transfer_with_sudo_works::<Runtime, Origin, Call>();
+		}
+
+		#[test]
+		fn block_core_call_has_no_effect() {
+			base_call_filter::block_core_call_has_no_effect::<Runtime, Origin, Call>();
+		}
+
+		#[test]
+		fn block_non_core_call_works() {
+			base_call_filter::block_non_core_call_works::<Runtime, Origin, Call>();
+		}
+	};
+}

@@ -46,7 +46,7 @@ use runtime_common::xcm_impl::{
 };
 
 #[cfg(test)]
-use crate::tests::ParachainXcmRouter;
+use crate::tests::setup::ParachainXcmRouter;
 
 use super::{
 	AssetId, AssetManager, Balance, Balances, Call, DealWithFees, Event, Origin, ParachainInfo,

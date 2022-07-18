@@ -1308,5 +1308,92 @@ fn relaychain_parachains_set_up<R: TestXCMRequirements>() {
 		));
 	});
 }
-
 // TODO::figure out the other OriginKind scenario
+
+#[macro_export]
+macro_rules! run_xcm_tests {
+	() => {
+		use runtime_common::tests::{xcm_parachain, xcm_parachain::TestXCMRequirements};
+
+		struct XCMRequirements;
+
+		impl TestXCMRequirements for XCMRequirements {
+			type ParaOrigin = Origin;
+			type ParaCall = Call;
+			type ParaRuntime = Runtime;
+			type ParaA = ParaA;
+			type ParaB = ParaB;
+			type Relay = Relay;
+			type RelayOrigin = RelayOrigin;
+			type RelayCall = RelayCall;
+			type RelayRuntime = RelayChainRuntime;
+			type UnitWeightCost = UnitWeightCost;
+			type LocationToAccountId = LocationToAccountId;
+
+			fn reset() {
+				TestNet::reset()
+			}
+		}
+
+		#[test]
+		fn test_xtokens_recognize_multilocation() {
+			xcm_parachain::test_xtokens_recognize_multilocation::<XCMRequirements>();
+		}
+
+		// If this test fail, at least some part of XCM fee rule changes
+		#[test]
+		fn test_xtokens_weight_parameter() {
+			xcm_parachain::test_xtokens_weight_parameter::<XCMRequirements>();
+		}
+
+		#[test]
+		fn test_pallet_xcm_recognize_multilocation() {
+			xcm_parachain::test_pallet_xcm_recognize_multilocation::<XCMRequirements>();
+		}
+
+		#[test]
+		fn test_methods_xtokens_expected_succeed() {
+			xcm_parachain::test_methods_xtokens_expected_succeed::<XCMRequirements>();
+		}
+
+		#[test]
+		fn test_methods_xtokens_expected_fail() {
+			xcm_parachain::test_methods_xtokens_expected_fail::<XCMRequirements>();
+		}
+
+		#[test]
+		fn test_methods_pallet_xcm_expected_succeed() {
+			xcm_parachain::test_methods_pallet_xcm_expected_succeed::<XCMRequirements>();
+		}
+
+		#[test]
+		fn test_methods_pallet_xcm_expected_fail() {
+			xcm_parachain::test_methods_pallet_xcm_expected_fail::<XCMRequirements>();
+		}
+
+		// Send Xcm by root/individual on sibling to maniplulate XCM parachain soverign accounts
+		#[test]
+		fn test_pallet_xcm_send_capacity_between_sibling() {
+			xcm_parachain::test_pallet_xcm_send_capacity_between_sibling::<XCMRequirements>();
+		}
+
+		// Send Xcm by root/individual on relay to maniplulate xcm parachain soverign accounts
+		#[test]
+		fn test_pallet_xcm_send_capacity_without_transact() {
+			xcm_parachain::test_pallet_xcm_send_capacity_without_transact::<XCMRequirements>();
+		}
+
+		// Relay root manipulate its own sovereign account on Parachain A by Xcm::Transact (Flawed)
+		#[test]
+		fn test_pallet_xcm_send_capacity_relay_manipulation() {
+			xcm_parachain::test_pallet_xcm_send_capacity_relay_manipulation::<XCMRequirements>();
+		}
+
+		// Parachain root manipulate its own sovereign account on Relay by Xcm::Transact succeed
+		#[test]
+		fn test_pallet_xcm_send_capacity_parachain_manipulation() {
+			xcm_parachain::test_pallet_xcm_send_capacity_parachain_manipulation::<XCMRequirements>(
+			);
+		}
+	};
+}
