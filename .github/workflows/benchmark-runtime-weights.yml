@@ -71,7 +71,7 @@ jobs:
           sleep 1
           ret=`aws ec2 describe-instance-status --instance-ids i-0a3bdc24e56b4b457 | jq '.InstanceStatuses[0].InstanceState.Name'`
           cnt=0
-          while [[ "$ret" != "running" || $cnt -gt 5 ]]; do
+          while [[ "$ret" != "running" && $cnt -lt 5 ]]; do
             ret=`aws ec2 describe-instance-status --instance-ids i-0a3bdc24e56b4b457 | jq '.InstanceStatuses[0].InstanceState.Name'`
             cnt=$((cnt + 1))
             sleep 1
