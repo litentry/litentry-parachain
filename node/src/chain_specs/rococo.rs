@@ -207,12 +207,12 @@ fn generate_genesis(
 		democracy: Default::default(),
 		council: Default::default(),
 		council_membership: CouncilMembershipConfig {
-			members: council_members,
+			members: council_members.try_into().expect("error convert to BoundedVec"),
 			phantom: Default::default(),
 		},
 		technical_committee: Default::default(),
 		technical_committee_membership: TechnicalCommitteeMembershipConfig {
-			members: technical_committee_members,
+			members: technical_committee_members.try_into().expect("error convert to BoundedVec"),
 			phantom: Default::default(),
 		},
 		treasury: Default::default(),
