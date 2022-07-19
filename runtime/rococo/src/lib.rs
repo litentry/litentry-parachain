@@ -133,12 +133,6 @@ impl_opaque_keys! {
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// Note:
 	// It's important to match `rococo-parachain-runtime`, which is runtime pkg name
-	// otherwise no extrinsic can be submitted.
-	// In logs it's shown:
-	// Failed to submit extrinsic: Extrinsic verification error: Runtime error: Execution failed:
-	// Other("Wasm execution trapped: wasm trap: unreachable ...
-	//
-	// However our CI passes (TODO)
 	spec_name: create_runtime_str!("rococo-parachain"),
 	impl_name: create_runtime_str!("rococo-parachain"),
 	authoring_version: 1,
@@ -819,7 +813,8 @@ impl Contains<Call> for BaseCallFilter {
 				Call::System(_) | Call::Timestamp(_) |
 				Call::ParachainSystem(_) |
 				Call::ExtrinsicFilter(_) |
-				Call::Multisig(_)
+				Call::Multisig(_) |
+				Call::Council(_) | Call::TechnicalCommittee(_)
 		) {
 			// always allow core calls
 			return true
@@ -849,13 +844,13 @@ impl Contains<Call> for NormalModeFilter {
 			Call::BridgeTransfer(_) |
 			// XTokens::transfer for normal users
 			Call::XTokens(orml_xtokens::Call::transfer { .. }) |
-			// collectives and memberships
-			Call::Council(_) |
-			Call::TechnicalCommittee(_) |
+			// memberships
 			Call::CouncilMembership(_) |
 			Call::TechnicalCommitteeMembership(_) |
 			// democracy, we don't subdivide the calls, so we allow public proposals
-			Call::Democracy(_)
+			Call::Democracy(_) |
+			// Utility
+			Call::Utility(_)
 		)
 	}
 }
