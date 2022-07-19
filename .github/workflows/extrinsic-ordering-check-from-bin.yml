@@ -38,7 +38,7 @@ jobs:
           echo "Target version: $VERSION" >> output.txt
           echo "Chain: $CHAIN" >> output.txt
           echo "----------------------------------------------------------------------" >> output.txt
-          CMD="docker run --pull always --network host jacogr/polkadot-js-tools metadata $REF_URL ws://localhost:9944"
+          CMD="docker run --pull always --network host jacogr/polkadot-js-tools metadata $REF_URL $BASE_URL"
           echo -e "Running:\n$CMD"
           $CMD >> output.txt
           sed -z -i 's/\n\n/\n/g' output.txt
