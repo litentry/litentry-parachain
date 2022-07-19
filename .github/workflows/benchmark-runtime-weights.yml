@@ -71,7 +71,11 @@ jobs:
           sleep 1
           ret=`aws ec2 describe-instance-status --instance-ids i-0a3bdc24e56b4b457 | jq '.InstanceStatuses[0].InstanceState.Name'`
           cnt=0
-          while [ "$ret" != "running" || "$cnt" < "5" ]; do ret=`aws ec2 describe-instance-status --instance-ids i-0a3bdc24e56b4b457 | jq '.InstanceStatuses[0].InstanceState.Name'`; cnt=$((cnt + 1)); sleep 1; done
+          while [[ "$ret" != "running" || $cnt -gt 5 ]]; do
+            ret=`aws ec2 describe-instance-status --instance-ids i-0a3bdc24e56b4b457 | jq '.InstanceStatuses[0].InstanceState.Name'`
+            cnt=$((cnt + 1))
+            sleep 1
+          done
           echo "Remote instance running state: $ret, retry count: $cnt"
           ip=`aws ec2 describe-instances --filters 'Name=instance-state-name,Values=running' 'Name=instance-id,Values=i-0a3bdc24e56b4b457' --query 'Reservations[*].Instances[*].[PublicIpAddress]' | jq '.[0][0][0]'`
           echo "Running instances ip address: $ip"
