@@ -1,6 +1,12 @@
 name: Release - Extrinsic Ordering Check
 
 on:
+  workflow_run:
+    workflows:
+      - Create release draft
+      # - Issue stale bot
+    types:
+      - requested
   # push:
   #   branches:
   #     - 577-automation-extrinsic-pallet-order-check
@@ -10,7 +16,6 @@ on:
         description: The name of the chain to compare with, should be litentry or litmus
         default: litentry
         required: true
-
 jobs:
   check:
     name: Run check
