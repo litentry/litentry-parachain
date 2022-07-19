@@ -54,17 +54,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Build docker image
-        run: |
-          ./scripts/build-docker.sh production runtime-benchmarks --features=runtime-benchmarks
+      # - name: Build docker image
+      #   run: |
+      #     ./scripts/build-docker.sh production runtime-benchmarks --features=runtime-benchmarks
 
-      - name: Push docker image
-        run: |
-          docker push litentry/litentry-parachain:runtime-benchmarks
+      # - name: Push docker image
+      #   run: |
+      #     docker push litentry/litentry-parachain:runtime-benchmarks
 
-      - name: Remove dangling images if any
-        run: |
-          [ -z "$(docker images --filter=dangling=true -q)" ] || docker rmi -f $(docker images --filter=dangling=true -q)
+      # - name: Remove dangling images if any
+      #   run: |
+      #     [ -z "$(docker images --filter=dangling=true -q)" ] || docker rmi -f $(docker images --filter=dangling=true -q)
 
       - name: Start remote instance
         id: start_instance
