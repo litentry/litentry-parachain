@@ -135,7 +135,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9080,
+	spec_version: 9081,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -616,7 +616,7 @@ impl pallet_parachain_staking::Config for Runtime {
 	type Currency = Balances;
 	type MonetaryGovernanceOrigin = EnsureRoot<AccountId>;
 	/// Minimum round length is 2 minutes (10 * 12 second block times)
-	type MinBlocksPerRound = ConstU32<10>;
+	type MinBlocksPerRound = ConstU32<{ 2 * MINUTES }>;
 	/// Blocks per round
 	type DefaultBlocksPerRound = ConstU32<{ 6 * HOURS }>;
 	/// Rounds before the collator leaving the candidates request can be executed

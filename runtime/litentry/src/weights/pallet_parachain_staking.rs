@@ -45,7 +45,7 @@ use sp_std::marker::PhantomData;
 
 /// Weight functions for `parachain_staking`.
 pub struct WeightInfo<T>(PhantomData<T>);
-impl<T: frame_system::Config> parachain_staking::WeightInfo for WeightInfo<T> {
+impl<T: frame_system::Config> pallet_parachain_staking::WeightInfo for WeightInfo<T> {
 	// Storage: ParachainStaking InflationConfig (r:1 w:1)
 	fn set_staking_expectations() -> Weight {
 		(15_300_000 as Weight)

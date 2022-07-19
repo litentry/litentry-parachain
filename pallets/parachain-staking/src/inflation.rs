@@ -31,9 +31,8 @@ use substrate_fixed::{
 	types::{I32F32, I64F64},
 };
 
-const SECONDS_PER_YEAR: u32 = 31557600;
-const SECONDS_PER_BLOCK: u32 = 12;
-pub const BLOCKS_PER_YEAR: u32 = SECONDS_PER_YEAR / SECONDS_PER_BLOCK;
+use primitives::*;
+pub const BLOCKS_PER_YEAR: u32 = YEARS;
 
 fn rounds_per_year<T: Config>() -> u32 {
 	let blocks_per_round = <Pallet<T>>::round().length;
