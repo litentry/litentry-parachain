@@ -24,8 +24,7 @@ on:
         required: true
 
 env:
-  REMOTE_HOST: parachain-benchmark # remote host to run benchmarking upon, must be reachable per ssh
-
+  INSTANCE_ID: ${{ secrets.BENCHMARK_INSTANCE_ID }} # remote host to run benchmarking upon, must be reachable per ssh
 jobs:
   ## build docker image with runtime-benchmarks feature, and then run the benchmarking remotely
   build-and-benchmark:
@@ -69,17 +68,17 @@ jobs:
       - name: Start remote instance
         id: start_instance
         run: |
-          aws ec2 start-instances --instance-ids i-0a3bdc24e56b4b457
+          aws ec2 start-instances --instance-ids ${{ env.INSTANCE_ID }}
           sleep 3
-          ret=`aws ec2 describe-instance-status --instance-ids i-0a3bdc24e56b4b457 --query 'InstanceStatuses[0].InstanceState.Name' --output text`
+          ret=`aws ec2 describe-instance-status --instance-ids ${{ env.INSTANCE_ID }} --query 'InstanceStatuses[0].InstanceState.Name' --output text`
           cnt=0
           while [[ "$ret" != "running" && $cnt -lt 5 ]]; do
-            ret=`aws ec2 describe-instance-status --instance-ids i-0a3bdc24e56b4b457 --query 'InstanceStatuses[0].InstanceState.Name' --output text`
+            ret=`aws ec2 describe-instance-status --instance-ids ${{ env.INSTANCE_ID }} --query 'InstanceStatuses[0].InstanceState.Name' --output text`
             cnt=$((cnt + 1))
             sleep 2
           done
           echo "Remote instance running state: $ret, retry count: $cnt"
-          remote_ip=`aws ec2 describe-instances --filters 'Name=instance-state-name,Values=running' 'Name=instance-id,Values=i-0a3bdc24e56b4b457' --query 'Reservations[*].Instances[*].[PublicIpAddress]' --output text`
+          remote_ip=`aws ec2 describe-instances --filters 'Name=instance-state-name,Values=running' 'Name=instance-id,Values=${{ env.INSTANCE_ID }}' --query 'Reservations[*].Instances[*].[PublicIpAddress]' --output text`
           echo "Running instances ip address: $remote_ip"
           echo "::set-output name=remote_ip::$remote_ip"
 
@@ -105,9 +104,9 @@ jobs:
       - name: Stop remote instance
         if: always()
         run: |
-          aws ec2 stop-instances --instance-ids i-0a3bdc24e56b4b457
+          aws ec2 stop-instances --instance-ids ${{ env.INSTANCE_ID }}
           sleep 5
-          ret=`aws ec2  describe-instance-status --instance-ids i-0a3bdc24e56b4b457 |jq '.InstanceStatuses[0].InstanceState.Name'`
+          ret=`aws ec2 describe-instance-status --instance-ids ${{ env.INSTANCE_ID }} | jq '.InstanceStatuses[0].InstanceState.Name'`
           echo "Remote instance running state: $ret"
 
       - name: Create auto PR
@@ -122,7 +121,7 @@ jobs:
           title: "[benchmarking bot] Update generated weights files"
           body: |
             This is an automatically created PR.
-            It updates the weights files under `runtime/*/src/weights/*.rs` after running benchmarks on the remote machine: ${{ env.REMOTE_HOST }}
+            It updates the weights files under `runtime/*/src/weights/*.rs` after running benchmarks on the remote machine: ${{ env.INSTANCE_ID }}
 
             Pallets: "${{ github.event.inputs.pallets }}"
             Chain: "${{ env.CHAIN }}"
