@@ -757,7 +757,7 @@ construct_runtime! {
 		Council: pallet_collective::<Instance1> = 22,
 		CouncilMembership: pallet_membership::<Instance1> = 23,
 		TechnicalCommittee: pallet_collective::<Instance2> = 24,
-		TechnicalCommitteeMembership: pallet_membership::<Instance2>= 25,
+		TechnicalCommitteeMembership: pallet_membership::<Instance2> = 25,
 
 		// Parachain
 		ParachainSystem: cumulus_pallet_parachain_system = 30,
@@ -776,7 +776,7 @@ construct_runtime! {
 		// also see the comment above `AllPalletsWithSystem` and
 		// https://github.com/litentry/litentry-parachain/issues/336
 		Authorship: pallet_authorship = 40,
-		CollatorSelection: pallet_collator_selection= 41,
+		CollatorSelection: pallet_collator_selection = 41,
 		Session: pallet_session = 42,
 		Aura: pallet_aura = 43,
 		AuraExt: cumulus_pallet_aura_ext = 44,
@@ -802,7 +802,7 @@ construct_runtime! {
 		Sidechain: pallet_sidechain = 91,
 
 		// TMP
-		Sudo: pallet_sudo= 255,
+		Sudo: pallet_sudo = 255,
 	}
 }
 
@@ -816,7 +816,8 @@ impl Contains<Call> for BaseCallFilter {
 				Call::System(_) | Call::Timestamp(_) |
 				Call::ParachainSystem(_) |
 				Call::ExtrinsicFilter(_) |
-				Call::Multisig(_)
+				Call::Multisig(_) |
+				Call::Council(_) | Call::TechnicalCommittee(_)
 		) {
 			// always allow core calls
 			return true
@@ -848,13 +849,13 @@ impl Contains<Call> for NormalModeFilter {
 			Call::BridgeTransfer(_) |
 			// XTokens::transfer for normal users
 			Call::XTokens(orml_xtokens::Call::transfer { .. }) |
-			// collectives and memberships
-			Call::Council(_) |
-			Call::TechnicalCommittee(_) |
+			// memberships
 			Call::CouncilMembership(_) |
 			Call::TechnicalCommitteeMembership(_) |
 			// democracy, we don't subdivide the calls, so we allow public proposals
-			Call::Democracy(_)
+			Call::Democracy(_) |
+			// Utility
+			Call::Utility(_)
 		)
 	}
 }
