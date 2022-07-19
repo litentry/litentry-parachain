@@ -1,6 +1,9 @@
 name: Create release draft
 
 on:
+  push:
+    branches:
+      - 577-automation-extrinsic-pallet-order-check
   workflow_dispatch:
     inputs:
       release_client:
