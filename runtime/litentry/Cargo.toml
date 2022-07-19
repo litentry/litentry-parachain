@@ -85,7 +85,7 @@ pallet-bridge = { path = "../../pallets/bridge", default-features = false }
 pallet-bridge-transfer = { path = "../../pallets/bridge-transfer", default-features = false }
 pallet-drop3 = { path = "../../pallets/drop3", default-features = false }
 pallet-extrinsic-filter = { path = "../../pallets/extrinsic-filter", default-features = false }
-parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
+pallet-parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.3.4"
@@ -126,6 +126,7 @@ std = [
 	"pallet-democracy/std",
 	"pallet-membership/std",
 	"pallet-multisig/std",
+	"pallet-parachain-staking/std",
 	"pallet-preimage/std",
 	"pallet-proxy/std",
 	"pallet-scheduler/std",
@@ -137,7 +138,6 @@ std = [
 	"pallet-treasury/std",
 	"pallet-utility/std",
 	"pallet-vesting/std",
-	"parachain-staking/std",
 	"primitives/std",
 	"cumulus-pallet-aura-ext/std",
 	"cumulus-pallet-dmp-queue/std",
@@ -171,6 +171,7 @@ runtime-benchmarks = [
 	"pallet-democracy/runtime-benchmarks",
 	"pallet-membership/runtime-benchmarks",
 	"pallet-multisig/runtime-benchmarks",
+	"pallet-parachain-staking/runtime-benchmarks",
 	"pallet-preimage/runtime-benchmarks",
 	"pallet-proxy/runtime-benchmarks",
 	"pallet-scheduler/runtime-benchmarks",
@@ -178,7 +179,6 @@ runtime-benchmarks = [
 	"pallet-treasury/runtime-benchmarks",
 	"pallet-utility/runtime-benchmarks",
 	"pallet-xcm/runtime-benchmarks",
-	"parachain-staking/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 	"xcm-builder/runtime-benchmarks",
 	"pallet-bridge/runtime-benchmarks",
@@ -199,6 +199,7 @@ try-runtime = [
 	"pallet-democracy/try-runtime",
 	"pallet-membership/try-runtime",
 	"pallet-multisig/try-runtime",
+	"pallet-parachain-staking/try-runtime",
 	"pallet-preimage/try-runtime",
 	"pallet-proxy/try-runtime",
 	"pallet-scheduler/try-runtime",
@@ -209,5 +210,4 @@ try-runtime = [
 	"pallet-treasury/try-runtime",
 	"pallet-utility/try-runtime",
 	"pallet-vesting/try-runtime",
-	"parachain-staking/try-runtime",
 ]

@@ -611,7 +611,7 @@ parameter_types! {
 	pub const DefaultParachainBondReservePercent: Percent = Percent::from_percent(30);
 }
 
-impl parachain_staking::Config for Runtime {
+impl pallet_parachain_staking::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type MonetaryGovernanceOrigin = EnsureRoot<AccountId>;
@@ -651,7 +651,7 @@ impl parachain_staking::Config for Runtime {
 	type MinDelegatorStk = ExistentialDeposit;
 	type OnCollatorPayout = ();
 	type OnNewRound = ();
-	type WeightInfo = weights::parachain_staking::WeightInfo<Runtime>;
+	type WeightInfo = weights::pallet_parachain_staking::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -771,7 +771,7 @@ construct_runtime! {
 		Session: pallet_session = 42,
 		Aura: pallet_aura = 43,
 		AuraExt: cumulus_pallet_aura_ext = 44,
-		ParachainStaking: parachain_staking = 45,
+		ParachainStaking: pallet_parachain_staking = 45,
 
 		// XCM helpers
 		XcmpQueue: cumulus_pallet_xcmp_queue = 50,
@@ -841,7 +841,7 @@ mod benches {
 		[pallet_scheduler, Scheduler]
 		[pallet_preimage, Preimage]
 		[pallet_session, SessionBench::<Runtime>]
-		[parachain_staking, ParachainStaking]
+		[pallet_parachain_staking, ParachainStaking]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
 	);
 }

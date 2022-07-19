@@ -4497,6 +4497,7 @@ dependencies = [
  "pallet-extrinsic-filter",
  "pallet-membership",
  "pallet-multisig",
+ "pallet-parachain-staking",
  "pallet-preimage",
  "pallet-proxy",
  "pallet-scheduler",
@@ -4510,7 +4511,6 @@ dependencies = [
  "pallet-vesting",
  "pallet-xcm",
  "parachain-info",
- "parachain-staking",
  "parity-scale-codec",
  "polkadot-parachain",
  "primitives",
@@ -6128,6 +6128,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-parachain-staking"
+version = "3.0.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-authorship",
+ "pallet-balances",
+ "pallet-session",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "similar-asserts",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
+ "substrate-fixed",
+]
+
+[[package]]
 name = "pallet-preimage"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24#814752f60ab8cce7e2ece3ce0c1b10799b4eab28"
@@ -6519,29 +6542,6 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
-]
-
-[[package]]
-name = "parachain-staking"
-version = "3.0.0"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "log",
- "pallet-authorship",
- "pallet-balances",
- "pallet-session",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "similar-asserts",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-staking",
- "sp-std",
- "substrate-fixed",
 ]
 
 [[package]]

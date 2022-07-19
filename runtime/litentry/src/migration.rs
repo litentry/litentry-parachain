@@ -20,15 +20,15 @@ use frame_support::{
 	traits::{Currency, Get, OnRuntimeUpgrade},
 	StorageHasher, Twox128,
 };
-use parachain_staking::BalanceOf;
+use pallet_parachain_staking::BalanceOf;
 use sp_runtime::{traits::Zero, Perbill};
 use sp_std::marker::PhantomData;
 
 pub struct MigrateCollatorSelectionIntoParachainStaking<T>(PhantomData<T>);
 impl<T> OnRuntimeUpgrade for MigrateCollatorSelectionIntoParachainStaking<T>
 where
-	T: parachain_staking::Config,
-	<T as frame_system::Config>::Event: From<parachain_staking::Event<T>>,
+	T: pallet_parachain_staking::Config,
+	<T as frame_system::Config>::Event: From<pallet_parachain_staking::Event<T>>,
 {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
@@ -60,16 +60,16 @@ where
 
 		let mut candidate_count = 0u32;
 		// Get the minimum collator stake amount
-		let min_collator_stk = <T as parachain_staking::Config>::MinCollatorStk::get();
+		let min_collator_stk = <T as pallet_parachain_staking::Config>::MinCollatorStk::get();
 		// Initialize the candidates
 		for candidate in invulnerables {
 			assert!(
-				<T as parachain_staking::Config>::Currency::free_balance(&candidate) >=
+				<T as pallet_parachain_staking::Config>::Currency::free_balance(&candidate) >=
 					min_collator_stk,
 				"Account does not have enough balance to bond as a candidate."
 			);
 			candidate_count = candidate_count.saturating_add(1u32);
-			if let Err(error) = <parachain_staking::Pallet<T>>::join_candidates(
+			if let Err(error) = <pallet_parachain_staking::Pallet<T>>::join_candidates(
 				<T as frame_system::Config>::Origin::from(Some(candidate.clone()).into()),
 				min_collator_stk,
 				candidate_count,
@@ -99,23 +99,24 @@ where
 			b"ParachainStaking",
 			b"CollatorCommission",
 			b"",
-			<T as parachain_staking::Config>::DefaultCollatorCommission::get(),
+			<T as pallet_parachain_staking::Config>::DefaultCollatorCommission::get(),
 		);
 		// Set parachain bond config to default config
 		frame_support::storage::migration::put_storage_value::<
-			parachain_staking::ParachainBondConfig<<T as frame_system::Config>::AccountId>,
+			pallet_parachain_staking::ParachainBondConfig<<T as frame_system::Config>::AccountId>,
 		>(
 			b"ParachainStaking",
 			b"ParachainBondInfo",
 			b"",
-			parachain_staking::ParachainBondConfig {
+			pallet_parachain_staking::ParachainBondConfig {
 				// must be set soon; if not => due inflation will be sent to some weird place
 				account: <T as frame_system::Config>::AccountId::decode(
 					&mut sp_runtime::traits::TrailingZeroInput::zeroes(),
 				)
 				.expect("infinite length input; no invalid inputs for type; qed"),
-				percent: <T as parachain_staking::Config>::DefaultParachainBondReservePercent::get(
-				),
+				percent:
+					<T as pallet_parachain_staking::Config>::DefaultParachainBondReservePercent::get(
+					),
 			},
 		);
 
@@ -124,23 +125,23 @@ where
 			b"ParachainStaking",
 			b"TotalSelected",
 			b"",
-			<T as parachain_staking::Config>::MinSelectedCandidates::get(),
+			<T as pallet_parachain_staking::Config>::MinSelectedCandidates::get(),
 		);
 		// Choose top TotalSelected collator candidates
 		// WARNING/TODO: We change the private into public of select_top_candidates function in
 		// pallet. We should change it back in next runtime upgrade for safety.
 		let (v_count, _, total_staked) =
-			<parachain_staking::Pallet<T>>::select_top_candidates(1u32);
+			<pallet_parachain_staking::Pallet<T>>::select_top_candidates(1u32);
 
 		// Start Round 1 at Block 0
-		let round: parachain_staking::RoundInfo<<T as frame_system::Config>::BlockNumber> =
-			parachain_staking::RoundInfo::new(
+		let round: pallet_parachain_staking::RoundInfo<<T as frame_system::Config>::BlockNumber> =
+			pallet_parachain_staking::RoundInfo::new(
 				1u32,
 				0u32.into(),
-				<T as parachain_staking::Config>::DefaultBlocksPerRound::get(),
+				<T as pallet_parachain_staking::Config>::DefaultBlocksPerRound::get(),
 			);
 		frame_support::storage::migration::put_storage_value::<
-			parachain_staking::RoundInfo<<T as frame_system::Config>::BlockNumber>,
+			pallet_parachain_staking::RoundInfo<<T as frame_system::Config>::BlockNumber>,
 		>(b"ParachainStaking", b"Round", b"", round);
 
 		// // Snapshot total stake
@@ -159,7 +160,7 @@ where
 		frame_support::storage::unhashed::put(final_key.as_ref(), &val);
 
 		// Deposit NewRound event at RuntimeUpgrade
-		<frame_system::Pallet<T>>::deposit_event(parachain_staking::Event::NewRound {
+		<frame_system::Pallet<T>>::deposit_event(pallet_parachain_staking::Event::NewRound {
 			starting_block: <T as frame_system::Config>::BlockNumber::zero(),
 			round: 1u32,
 			selected_collators_number: v_count,
