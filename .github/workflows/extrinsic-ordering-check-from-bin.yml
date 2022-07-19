@@ -21,7 +21,10 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v3
 
-      - name: Prepare output
+      - name: Pull polkadot-js-tools image
+        run: docker pull jacogr/polkadot-js-tools
+
+      - name: Prepare output and compare the metadata
         run: |
           BASE_URL=wss://parachain-eu-0.staging.litentry.io
           LITENTRY_REF_URL=wss://rpc.litentry-parachain.litentry.io
@@ -35,12 +38,6 @@ jobs:
           echo "Target version: $VERSION" >> output.txt
           echo "Chain: $CHAIN" >> output.txt
           echo "----------------------------------------------------------------------" >> output.txt
-
-      - name: Pull polkadot-js-tools image
-        run: docker pull jacogr/polkadot-js-tools
-
-      - name: Compare the metadata
-        run: |
           CMD="docker run --pull always --network host jacogr/polkadot-js-tools metadata $REF_URL ws://localhost:9944"
           echo -e "Running:\n$CMD"
           $CMD >> output.txt
