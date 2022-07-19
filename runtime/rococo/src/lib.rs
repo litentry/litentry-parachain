@@ -24,6 +24,7 @@
 extern crate frame_benchmarking;
 
 use codec::{Decode, Encode, MaxEncodedLen};
+use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{ConstU16, ConstU32, ConstU64, ConstU8, Contains, Everything, InstanceFilter},
@@ -143,7 +144,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9080,
+	spec_version: 9090,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -539,6 +540,7 @@ impl pallet_treasury::Config for Runtime {
 	type ProposalBond = ProposalBond;
 	type ProposalBondMinimum = ProposalBondMinimum;
 	type ProposalBondMaximum = ProposalBondMaximum;
+	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<Balance>;
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
 	type BurnDestination = ();
@@ -566,6 +568,7 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type OutboundXcmpMessageSource = XcmpQueue;
 	type XcmpMessageHandler = XcmpQueue;
 	type ReservedXcmpWeight = ReservedXcmpWeight;
+	type CheckAssociatedRelayNumber = RelayNumberStrictlyIncreases;
 }
 
 impl parachain_info::Config for Runtime {}
