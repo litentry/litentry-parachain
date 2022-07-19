@@ -95,9 +95,9 @@ jobs:
             arg="\\$arg";
           fi
           for c in $chain; do
-            ssh -x "${{ steps.start_instance.outputs.remote_ip }}" 'bash -s' < scripts/benchmark-weight-remote.sh "$c" "${GITHUB_REF#refs/heads/}" "$arg"
+            ssh -x -o StrictHostKeychecking=no "${{ steps.start_instance.outputs.remote_ip }}" -l ${{ secrets.BENCHMARK_SSH_USER }} -i ${{ secrets.BENCHMARK_SSH_KEYPATH }} 'bash -s' < scripts/benchmark-weight-remote.sh "$c" "${GITHUB_REF#refs/heads/}" "$arg"
             echo "copy generated weights files back ..."
-            scp "${{ env.REMOTE_HOST }}":/tmp/litentry-parachain/runtime/$c/src/weights/*.rs runtime/$c/src/weights/
+            scp -o StrictHostKeychecking=no -i ${{ secrets.BENCHMARK_SSH_KEYPATH }} "${{ secrets.BENCHMARK_SSH_USER }}@${{ steps.start_instance.outputs.remote_ip }}":/tmp/litentry-parachain/runtime/$c/src/weights/*.rs runtime/$c/src/weights/
           done
           echo "======================"
           git status
