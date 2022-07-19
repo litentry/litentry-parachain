@@ -50,6 +50,8 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::clone_on_copy)]
+#![allow(deprecated)]
+/// will un-deprecated in 0.9.26
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
