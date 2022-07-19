@@ -54,66 +54,72 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Build docker image
-        run: |
-          ./scripts/build-docker.sh production runtime-benchmarks --features=runtime-benchmarks
+      # - name: Build docker image
+      #   run: |
+      #     ./scripts/build-docker.sh production runtime-benchmarks --features=runtime-benchmarks
 
-      - name: Push docker image
-        run: |
-          docker push litentry/litentry-parachain:runtime-benchmarks
+      # - name: Push docker image
+      #   run: |
+      #     docker push litentry/litentry-parachain:runtime-benchmarks
 
-      - name: Remove dangling images if any
-        run: |
-          [ -z "$(docker images --filter=dangling=true -q)" ] || docker rmi -f $(docker images --filter=dangling=true -q)
+      # - name: Remove dangling images if any
+      #   run: |
+      #     [ -z "$(docker images --filter=dangling=true -q)" ] || docker rmi -f $(docker images --filter=dangling=true -q)
       - name: Start remote instance
         run: |
           aws ec2 start-instances --instance-ids i-0a3bdc24e56b4b457
-          sleep 10
+          sleep 1
           ret=`aws ec2  describe-instance-status --instance-ids i-0a3bdc24e56b4b457 |jq '.InstanceStatuses[0].InstanceState.Name'`
-          echo "Remote instance running state: $ret"
-      # exit status should propagate through ssh
-      - name: Remotely benchmark pallets ${{ github.event.inputs.pallets }} for ${{ env.CHAIN }}
-        timeout-minutes: 240
-        run: |
-          # prepend the asterisk with \ to go through ssh
-          arg="${{ github.event.inputs.pallets }}"
-          chain="${{ env.CHAIN }}"
-          if [ "$arg" = "*" ]; then
-            arg="\\$arg";
-          fi
-          for c in $chain; do
-            ssh -x "${{ env.REMOTE_HOST }}" 'bash -s' < scripts/benchmark-weight-remote.sh "$c" "${GITHUB_REF#refs/heads/}" "$arg"
-            echo "copy generated weights files back ..."
-            scp "${{ env.REMOTE_HOST }}":/tmp/litentry-parachain/runtime/$c/src/weights/*.rs runtime/$c/src/weights/
-          done
-          echo "======================"
-          git status
+          cnt=0
+          while [ "$ret" != "running" || "$cnt" < "5" ]; do ret=`aws ec2  describe-instance-status --instance-ids i-0a3bdc24e56b4b457 |jq '.InstanceStatuses[0].InstanceState.Name'; cnt=$((cnt + 1)); sleep 1; done
+          echo "Remote instance running state: $ret, retry count: $cnt"
+          ip=`aws ec2 describe-instances --filters "Name=instance-state-name,Values=running" "Name=instance-id,Values=i-0a3bdc24e56b4b457" --query 'Reservations[*].Instances[*].[PublicIpAddress]' | jq '.[0][0][0]'`
+          echo "Running instances ip address: $ip"
+
+      # # exit status should propagate through ssh
+      # - name: Remotely benchmark pallets ${{ github.event.inputs.pallets }} for ${{ env.CHAIN }}
+      #   timeout-minutes: 240
+      #   run: |
+      #     # prepend the asterisk with \ to go through ssh
+      #     arg="${{ github.event.inputs.pallets }}"
+      #     chain="${{ env.CHAIN }}"
+      #     if [ "$arg" = "*" ]; then
+      #       arg="\\$arg";
+      #     fi
+      #     for c in $chain; do
+      #       ssh -x "${{ env.REMOTE_HOST }}" 'bash -s' < scripts/benchmark-weight-remote.sh "$c" "${GITHUB_REF#refs/heads/}" "$arg"
+      #       echo "copy generated weights files back ..."
+      #       scp "${{ env.REMOTE_HOST }}":/tmp/litentry-parachain/runtime/$c/src/weights/*.rs runtime/$c/src/weights/
+      #     done
+      #     echo "======================"
+      #     git status
       - name: Stop remote instance
+        if: always()
         run: |
           aws ec2 stop-instances --instance-ids i-0a3bdc24e56b4b457
-          sleep 10
+          sleep 5
           ret=`aws ec2  describe-instance-status --instance-ids i-0a3bdc24e56b4b457 |jq '.InstanceStatuses[0].InstanceState.Name'`
           echo "Remote instance running state: $ret"
 
-      - name: Create auto PR
-        uses: peter-evans/create-pull-request@v3
-        with:
-          commit-message: "[benchmarking bot] Auto commit generated weights files"
-          committer: benchmarking bot <noreply@github.com>
-          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
-          signoff: false
-          branch: benchmarking-bot-${{ github.run_id }}
-          delete-branch: true
-          title: "[benchmarking bot] Update generated weights files"
-          body: |
-            This is an automatically created PR.
-            It updates the weights files under `runtime/*/src/weights/*.rs` after running benchmarks on the remote machine: ${{ env.REMOTE_HOST }}
+      # - name: Create auto PR
+      #   uses: peter-evans/create-pull-request@v3
+      #   with:
+      #     commit-message: "[benchmarking bot] Auto commit generated weights files"
+      #     committer: benchmarking bot <noreply@github.com>
+      #     author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+      #     signoff: false
+      #     branch: benchmarking-bot-${{ github.run_id }}
+      #     delete-branch: true
+      #     title: "[benchmarking bot] Update generated weights files"
+      #     body: |
+      #       This is an automatically created PR.
+      #       It updates the weights files under `runtime/*/src/weights/*.rs` after running benchmarks on the remote machine: ${{ env.REMOTE_HOST }}
 
-            Pallets: "${{ github.event.inputs.pallets }}"
-            Chain: "${{ env.CHAIN }}"
-            Github action run: https://github.com/litentry/litentry-parachain/actions/runs/${{ github.run_id }}
-          labels: |
-            automated-pr
-          assignees: ${{ github.actor }}
-          reviewers: ${{ github.actor }}
-          draft: false
+      #       Pallets: "${{ github.event.inputs.pallets }}"
+      #       Chain: "${{ env.CHAIN }}"
+      #       Github action run: https://github.com/litentry/litentry-parachain/actions/runs/${{ github.run_id }}
+      #     labels: |
+      #       automated-pr
+      #     assignees: ${{ github.actor }}
+      #     reviewers: ${{ github.actor }}
+      #     draft: false
