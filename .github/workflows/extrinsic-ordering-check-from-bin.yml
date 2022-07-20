@@ -13,8 +13,6 @@ jobs:
   check:
     name: Run check
     runs-on: ubuntu-latest
-    env:
-      CHAIN: ${{github.event.inputs.chain}}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
@@ -25,8 +23,8 @@ jobs:
       - name: Prepare output and compare the metadata
         run: |
           BASE_URL=wss://parachain-eu-0.staging.litentry.io
-          chains=("litmus" "litentry")
-          for c in $chains; do
+          chains=( "litmus" "litentry" )
+          for c in ${chains[@]}; do
             REF_URL=wss://rpc.$c-parachain.litentry.io
             echo "Metadata comparison:" > output-$c.txt
             echo "Date: $(date)" >> output-$c.txt
@@ -38,12 +36,9 @@ jobs:
             CMD="docker run --pull always --network host jacogr/polkadot-js-tools metadata $REF_URL $BASE_URL"
             echo -e "Running:\n$CMD"
             docker run --pull always --network host jacogr/polkadot-js-tools metadata $REF_URL $BASE_URL | tee -a output-$c.txt
-            cat output-$c.txt
             SUMMARY=$(./scripts/extrinsic-ordering-filter.sh output-$c.txt)
-            echo -e $SUMMARY
             echo -e $SUMMARY >> output-$c.txt
           done
-
       - name: Show result
         run: |
           cat output-litmus.txt
