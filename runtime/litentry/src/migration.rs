@@ -84,6 +84,7 @@ where
 	}
 
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		use sp_io::KillStorageResult;
 		let invulnerables = frame_support::storage::migration::get_storage_value::<
 			Vec<<T as frame_system::Config>::AccountId>,
 		>(b"CollatorSelection", b"Invulnerables", b"")
@@ -211,10 +212,12 @@ where
 		// Remove CollatorSelection Storage
 		// TODO: Very Weak safety
 		let entries: u64 = 4 + 6142;
-		frame_support::storage::unhashed::kill_prefix(
+		let _res: KillStorageResult = frame_support::storage::unhashed::clear_prefix(
 			&Twox128::hash(b"CollatorSelection"),
 			Some(entries.try_into().unwrap()),
-		);
+			None,
+		)
+		.into();
 		<T as frame_system::Config>::DbWeight::get().writes(entries)
 	}
 
@@ -225,10 +228,12 @@ where
 		use sp_io::KillStorageResult;
 
 		log::info!("Post check CollatorSelection");
-		let res = frame_support::storage::unhashed::kill_prefix(
+		let res: KillStorageResult = frame_support::storage::unhashed::clear_prefix(
 			&Twox128::hash(b"CollatorSelection"),
 			Some(0),
-		);
+			None,
+		)
+		.into();
 
 		match res {
 			KillStorageResult::AllRemoved(0) | KillStorageResult::SomeRemaining(0) => {},
