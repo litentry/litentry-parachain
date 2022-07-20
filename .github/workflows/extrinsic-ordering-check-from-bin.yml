@@ -5,8 +5,11 @@ on:
     workflows:
       - Create release draft
       - Issue stale bot
+    branches:
+      - 577-automation-extrinsic-pallet-order-check
     types:
       - requested
+      - completed
   # push:
   #   branches:
   #     - 577-automation-extrinsic-pallet-order-check
