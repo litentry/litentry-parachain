@@ -1,6 +1,7 @@
 name: Release - Extrinsic Ordering Check
 
 on:
+  workflow_dispatch:
   workflow_run:
     workflows: ["Create release draft", "Issue stale bot"]
     branches:
@@ -9,15 +10,12 @@ on:
       - tmp
     types:
       - completed
-  # push:
-  #   branches:
-  #     - 577-automation-extrinsic-pallet-order-check
-  workflow_dispatch:
-    inputs:
-      chain:
-        description: The name of the chain to compare with, should be litentry or litmus
-        default: litentry
-        required: true
+
+    # inputs:
+    #   chain:
+    #     description: The name of the chain to compare with, should be litentry or litmus
+    #     default: litentry
+    #     required: true
 jobs:
   check:
     name: Run check
@@ -33,35 +31,37 @@ jobs:
 
       - name: Prepare output and compare the metadata
         run: |
-          CHAIN=${CHAIN:-litmus}
           BASE_URL=wss://parachain-eu-0.staging.litentry.io
-          LITENTRY_REF_URL=wss://rpc.litentry-parachain.litentry.io
-          LITMUS_REF_URL=wss://rpc.litmus-parachain.litentry.io
-          REF_URL=$LITENTRY_REF_URL
-          if [ "$CHAIN" == "litmus" ]; then REF_URL=$LITMUS_REF_URL; fi
-          echo "Metadata comparison:" > output.txt
-          echo "Date: $(date)" >> output.txt
-          echo "Base: $BASE_URL" >> output.txt
-          echo "Reference: $REF_URL" >> output.txt
-          echo "Target version: $VERSION" >> output.txt
-          echo "Chain: $CHAIN" >> output.txt
-          echo "----------------------------------------------------------------------" >> output.txt
-          CMD="docker run --pull always --network host jacogr/polkadot-js-tools metadata $REF_URL $BASE_URL"
-          echo -e "Running:\n$CMD"
-          $CMD >> output.txt
-          sed -z -i 's/\n\n/\n/g' output.txt
-          cat output.txt | egrep -n -i ''
-          SUMMARY=$(./scripts/extrinsic-ordering-filter.sh output.txt)
-          echo -e $SUMMARY
-          echo -e $SUMMARY >> output.txt
+          chains=("litmus" "litentry")
+          for c in $chains; do
+            REF_URL=wss://rpc.$c-parachain.litentry.io
+            echo "Metadata comparison:" > output-$c.txt
+            echo "Date: $(date)" >> output-$c.txt
+            echo "Base: $BASE_URL" >> output-$c.txt
+            echo "Reference: $REF_URL" >> output-$c.txt
+            echo "Target version: $VERSION" >> output-$c.txt
+            echo "Chain: $c" >> output-$c.txt
+            echo "----------------------------------------------------------------------" >> output-$c.txt
+            CMD="docker run --pull always --network host jacogr/polkadot-js-tools metadata $REF_URL $BASE_URL"
+            echo -e "Running:\n$CMD"
+            $CMD >> output-$c.txt
+            sed -z -i 's/\n\n/\n/g' output-$c.txt
+            cat output-$c.txt | egrep -n -i ''
+            SUMMARY=$(./scripts/extrinsic-ordering-filter.sh output-$c.txt)
+            echo -e $SUMMARY
+            echo -e $SUMMARY >> output-$c.txt
+          done
 
       - name: Show result
         run: |
-          cat output.txt
+          cat output-litmus.txt
+          echo '--------------------------------------------------------------------------------'
+          cat output-litentry.txt
 
       - name: Save output as artifact
         uses: actions/upload-artifact@v3
         with:
-          name: output-${{ env.CHAIN }}
+          name: output
           path: |
-            output.txt
+            output-litmus.txt
+            output-litentry.txt
