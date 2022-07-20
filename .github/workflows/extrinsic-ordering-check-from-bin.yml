@@ -3,19 +3,12 @@ name: Release - Extrinsic Ordering Check
 on:
   workflow_dispatch:
   workflow_run:
-    workflows: ["Create release draft", "Issue stale bot"]
+    workflows: ["Create release draft"]
     branches:
-      - 577-automation-extrinsic-pallet-order-check"
       - dev
-      - tmp
     types:
       - completed
 
-    # inputs:
-    #   chain:
-    #     description: The name of the chain to compare with, should be litentry or litmus
-    #     default: litentry
-    #     required: true
 jobs:
   check:
     name: Run check
@@ -55,7 +48,7 @@ jobs:
       - name: Show result
         run: |
           cat output-litmus.txt
-          echo '--------------------------------------------------------------------------------'
+          echo "--------------------------------------------------------------------------------"
           cat output-litentry.txt
 
       - name: Save output as artifact
