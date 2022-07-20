@@ -32,6 +32,7 @@ where
 {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<(), &'static str> {
+		use frame_support::traits::OnRuntimeUpgradeHelpersExt;
 		use primitives::AccountId;
 
 		log::info!("Pre check pallet CollatorSelection exists");
@@ -46,10 +47,40 @@ where
 		.expect("Storage query fails: CollatorSelection Invulnerables");
 
 		if invulnerables.is_empty() {
-			Err("CollatorSelection empty")
-		} else {
-			Ok(())
-		}
+			return Err("CollatorSelection empty")
+		};
+
+		// Set the temporary storage for post upgrade check
+		Self::set_temp_storage(invulnerables, "invulnerables");
+
+		// Ensure ParachainStaking is Empty
+		assert!(
+			!frame_support::storage::migration::have_storage_value(
+				b"ParachainStaking",
+				b"SelectedCandidates",
+				b"",
+			),
+			"ParachainStaking SelectedCandidates Storage Already Exist"
+		);
+
+		assert!(
+			!frame_support::storage::migration::have_storage_value(
+				b"ParachainStaking",
+				b"CandidatePool",
+				b"",
+			),
+			"ParachainStaking CandidatePool Storage Already Exist"
+		);
+
+		assert!(
+			!frame_support::storage::migration::have_storage_value(
+				b"ParachainStaking",
+				b"SelectedTotalCandidates",
+				b"",
+			),
+			"ParachainStaking Total Storage Already Exist"
+		);
+		Ok(())
 	}
 
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
@@ -69,6 +100,16 @@ where
 				"Account does not have enough balance to bond as a candidate."
 			);
 			candidate_count = candidate_count.saturating_add(1u32);
+
+			// Add candidate whitelist
+			if let Err(error) = <pallet_parachain_staking::Pallet<T>>::add_candidates_whitelist(
+				<T as frame_system::Config>::Origin::from(frame_system::RawOrigin::Root),
+				candidate.clone(),
+				candidate_count,
+			) {
+				log::warn!("Add candidates whitelist failed in migration with error {:?}", error);
+			}
+
 			if let Err(error) = <pallet_parachain_staking::Pallet<T>>::join_candidates(
 				<T as frame_system::Config>::Origin::from(Some(candidate.clone()).into()),
 				min_collator_stk,
@@ -179,6 +220,8 @@ where
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade() -> Result<(), &'static str> {
+		use frame_support::traits::OnRuntimeUpgradeHelpersExt;
+		use primitives::AccountId;
 		use sp_io::KillStorageResult;
 
 		log::info!("Post check CollatorSelection");
@@ -188,11 +231,52 @@ where
 		);
 
 		match res {
-			KillStorageResult::AllRemoved(0) | KillStorageResult::SomeRemaining(0) => Ok(()),
+			KillStorageResult::AllRemoved(0) | KillStorageResult::SomeRemaining(0) => {},
 			KillStorageResult::AllRemoved(n) | KillStorageResult::SomeRemaining(n) => {
 				log::error!("Remaining entries: {:?}", n);
-				Err("CollatorSelection not removed")
+				return Err("CollatorSelection not removed")
 			},
-		}
+		};
+
+		assert!(
+			!frame_support::storage::migration::have_storage_value(
+				b"ParachainStaking",
+				b"CandidatePool",
+				b"",
+			),
+			"ParachainStaking CandidatePool Storage Already Exist"
+		);
+
+		assert!(
+			!frame_support::storage::migration::have_storage_value(
+				b"ParachainStaking",
+				b"SelectedTotalCandidates",
+				b"",
+			),
+			"ParachainStaking Total Storage Already Exist"
+		);
+
+		// Check the Selected Candidates info
+		let selected_candidates = frame_support::storage::migration::get_storage_value::<
+			Vec<AccountId>,
+		>(b"ParachainStaking", b"SelectedCandidates", b"")
+		.expect("Storage query fails: ParachainStaking SelectedCandidates");
+		let invulnerables: Vec<AccountId> = Self::get_temp_storage("invulnerables").expect("qed");
+		assert!(selected_candidates == invulnerables, "candidates not migrate properly");
+
+		// Check the Round info
+		let round_info = frame_support::storage::migration::get_storage_value::<
+			pallet_parachain_staking::RoundInfo<T::BlockNumber>,
+		>(b"ParachainStaking", b"Round", b"")
+		.expect("Storage query fails: ParachainStaking Round");
+
+		let expected_round_info = pallet_parachain_staking::RoundInfo::<T::BlockNumber>::new(
+			1u32,
+			0u32.into(),
+			<T as pallet_parachain_staking::Config>::DefaultBlocksPerRound::get(),
+		);
+		assert!(round_info == expected_round_info, "round info not migrate properly");
+
+		Ok(())
 	}
 }
