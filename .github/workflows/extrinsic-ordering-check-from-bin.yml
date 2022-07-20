@@ -4,7 +4,7 @@ on:
   workflow_run:
     workflows:
       - Create release draft
-      # - Issue stale bot
+      - Issue stale bot
     types:
       - requested
   # push:
