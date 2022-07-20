@@ -37,9 +37,8 @@ jobs:
             echo "----------------------------------------------------------------------" >> output-$c.txt
             CMD="docker run --pull always --network host jacogr/polkadot-js-tools metadata $REF_URL $BASE_URL"
             echo -e "Running:\n$CMD"
-            $CMD >> output-$c.txt
-            sed -z -i 's/\n\n/\n/g' output-$c.txt
-            cat output-$c.txt | egrep -n -i ''
+            docker run --pull always --network host jacogr/polkadot-js-tools metadata $REF_URL $BASE_URL | tee -a output-$c.txt
+            cat output-$c.txt
             SUMMARY=$(./scripts/extrinsic-ordering-filter.sh output-$c.txt)
             echo -e $SUMMARY
             echo -e $SUMMARY >> output-$c.txt
