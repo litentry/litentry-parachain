@@ -24,6 +24,7 @@
 extern crate frame_benchmarking;
 
 use codec::{Decode, Encode, MaxEncodedLen};
+use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{ConstU16, ConstU32, ConstU64, ConstU8, Contains, Everything, InstanceFilter},
@@ -132,18 +133,12 @@ impl_opaque_keys! {
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// Note:
 	// It's important to match `rococo-parachain-runtime`, which is runtime pkg name
-	// otherwise no extrinsic can be submitted.
-	// In logs it's shown:
-	// Failed to submit extrinsic: Extrinsic verification error: Runtime error: Execution failed:
-	// Other("Wasm execution trapped: wasm trap: unreachable ...
-	//
-	// However our CI passes (TODO)
 	spec_name: create_runtime_str!("rococo-parachain"),
 	impl_name: create_runtime_str!("rococo-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9080,
+	spec_version: 9090,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -539,6 +534,7 @@ impl pallet_treasury::Config for Runtime {
 	type ProposalBond = ProposalBond;
 	type ProposalBondMinimum = ProposalBondMinimum;
 	type ProposalBondMaximum = ProposalBondMaximum;
+	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<Balance>;
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
 	type BurnDestination = ();
@@ -566,6 +562,7 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type OutboundXcmpMessageSource = XcmpQueue;
 	type XcmpMessageHandler = XcmpQueue;
 	type ReservedXcmpWeight = ReservedXcmpWeight;
+	type CheckAssociatedRelayNumber = RelayNumberStrictlyIncreases;
 }
 
 impl parachain_info::Config for Runtime {}
@@ -815,7 +812,8 @@ impl Contains<Call> for BaseCallFilter {
 				Call::System(_) | Call::Timestamp(_) |
 				Call::ParachainSystem(_) |
 				Call::ExtrinsicFilter(_) |
-				Call::Multisig(_)
+				Call::Multisig(_) |
+				Call::Council(_) | Call::TechnicalCommittee(_)
 		) {
 			// always allow core calls
 			return true
@@ -845,13 +843,13 @@ impl Contains<Call> for NormalModeFilter {
 			Call::BridgeTransfer(_) |
 			// XTokens::transfer for normal users
 			Call::XTokens(orml_xtokens::Call::transfer { .. }) |
-			// collectives and memberships
-			Call::Council(_) |
-			Call::TechnicalCommittee(_) |
+			// memberships
 			Call::CouncilMembership(_) |
 			Call::TechnicalCommitteeMembership(_) |
 			// democracy, we don't subdivide the calls, so we allow public proposals
-			Call::Democracy(_)
+			Call::Democracy(_) |
+			// Utility
+			Call::Utility(_)
 		)
 	}
 }
