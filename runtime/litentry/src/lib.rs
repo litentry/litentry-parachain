@@ -391,6 +391,7 @@ parameter_types! {
 impl_runtime_transaction_payment_fees!(constants);
 
 impl pallet_transaction_payment::Config for Runtime {
+	type Event = Event;
 	type OnChargeTransaction =
 		pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
 	type WeightToFee = IdentityFee<Balance>;
@@ -789,8 +790,14 @@ impl Contains<Call> for SafeModeFilter {
 
 pub struct NormalModeFilter;
 impl Contains<Call> for NormalModeFilter {
-	fn contains(_call: &Call) -> bool {
-		false
+	fn contains(call: &Call) -> bool {
+		matches!(
+			call,
+			// Vesting::vest
+			Call::Vesting(pallet_vesting::Call::vest { .. }) |
+			// Utility
+			Call::Utility(_)
+		)
 	}
 }
 

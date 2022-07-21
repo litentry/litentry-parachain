@@ -5,17 +5,17 @@ on:
     inputs:
       litentry:
         type: boolean
-        description: The litentry will be benchmarked
+        description: litentry
         required: true
         default: true
       litmus:
         type: boolean
-        description: The litmus will be benchmarked
+        description: litmus
         required: true
         default: true
       rococo:
         type: boolean
-        description: The rococo will be benchmarked
+        description: rococo
         required: true
         default: true
       pallets:
