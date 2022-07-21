@@ -790,8 +790,14 @@ impl Contains<Call> for SafeModeFilter {
 
 pub struct NormalModeFilter;
 impl Contains<Call> for NormalModeFilter {
-	fn contains(_call: &Call) -> bool {
-		false
+	fn contains(call: &Call) -> bool {
+		matches!(
+			call,
+			// Vesting::vest
+			Call::Vesting(pallet_vesting::Call::vest { .. }) |
+			// Utility
+			Call::Utility(_)
+		)
 	}
 }
 
