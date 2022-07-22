@@ -231,3 +231,49 @@ fn create_successful_transfer_proposal() {
 		]);
 	})
 }
+
+#[test]
+fn test_external_balances_adjusted() {
+	new_test_ext().execute_with(|| {
+		// Check the default external_balances
+		assert_eq!(ExternalBalances::<Test>::get(), <Test as Config>::MaximumIssuance::get());
+		// Set the new external_balances
+		assert_noop!(
+			BridgeTransfer::set_external_balances(
+				Origin::signed(Bridge::account_id()),
+				<Test as Config>::MaximumIssuance::get() / 2
+			),
+			sp_runtime::DispatchError::BadOrigin
+		);
+		assert_ok!(BridgeTransfer::set_external_balances(
+			Origin::root(),
+			<Test as Config>::MaximumIssuance::get() / 2
+		));
+
+		// Check inital state
+		let bridge_id: u64 = Bridge::account_id();
+		let resource_id = NativeTokenResourceId::get();
+		assert_eq!(Balances::free_balance(&bridge_id), ENDOWED_BALANCE);
+		// Transfer and check result
+		// Check the external_balances
+		assert_eq!(ExternalBalances::<Test>::get(), <Test as Config>::MaximumIssuance::get() / 2);
+		assert_ok!(BridgeTransfer::transfer(
+			Origin::signed(Bridge::account_id()),
+			RELAYER_A,
+			10,
+			resource_id,
+		));
+		assert_eq!(Balances::free_balance(RELAYER_A), ENDOWED_BALANCE + 10);
+
+		// Check the external_balances
+		assert_eq!(
+			ExternalBalances::<Test>::get(),
+			<Test as Config>::MaximumIssuance::get() / 2 - 10
+		);
+
+		assert_events(vec![Event::Balances(balances::Event::Deposit {
+			who: RELAYER_A,
+			amount: 10,
+		})]);
+	})
+}

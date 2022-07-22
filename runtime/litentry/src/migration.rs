@@ -27,7 +27,7 @@ use sp_std::marker::PhantomData;
 pub struct MigrateCollatorSelectionIntoParachainStaking<T>(PhantomData<T>);
 impl<T> OnRuntimeUpgrade for MigrateCollatorSelectionIntoParachainStaking<T>
 where
-	T: pallet_parachain_staking::Config,
+	T: pallet_parachain_staking::Config + pallet_bridge_transfer::Config,
 	<T as frame_system::Config>::Event: From<pallet_parachain_staking::Event<T>>,
 {
 	#[cfg(feature = "try-runtime")]
@@ -81,7 +81,7 @@ where
 		assert!(
 			!frame_support::storage::migration::have_storage_value(
 				b"ParachainStaking",
-				b"SelectedTotalCandidates",
+				b"Total",
 				b"",
 			),
 			"ParachainStaking Total Storage Already Exist"
@@ -179,7 +179,7 @@ where
 			b"ParachainStaking",
 			b"TotalSelected",
 			b"",
-			<T as pallet_parachain_staking::Config>::MinSelectedCandidates::get(),
+			candidate_count,
 		);
 		// Choose top TotalSelected collator candidates
 		// WARNING/TODO: We change the private into public of select_top_candidates function in
@@ -256,30 +256,31 @@ where
 		};
 
 		assert!(
-			!frame_support::storage::migration::have_storage_value(
+			frame_support::storage::migration::have_storage_value(
 				b"ParachainStaking",
 				b"CandidatePool",
 				b"",
 			),
-			"ParachainStaking CandidatePool Storage Already Exist"
+			"ParachainStaking CandidatePool Storage not migrate properly"
 		);
 
 		assert!(
-			!frame_support::storage::migration::have_storage_value(
+			frame_support::storage::migration::have_storage_value(
 				b"ParachainStaking",
-				b"SelectedTotalCandidates",
+				b"Total",
 				b"",
 			),
-			"ParachainStaking Total Storage Already Exist"
+			"ParachainStaking Total Storage not migrate properly"
 		);
 
 		// Check the Selected Candidates info
-		let selected_candidates = frame_support::storage::migration::get_storage_value::<
+		let mut selected_candidates = frame_support::storage::migration::get_storage_value::<
 			Vec<AccountId>,
 		>(b"ParachainStaking", b"SelectedCandidates", b"")
 		.expect("Storage query fails: ParachainStaking SelectedCandidates");
-		let invulnerables: Vec<AccountId> = Self::get_temp_storage("invulnerables").expect("qed");
-		assert!(selected_candidates == invulnerables, "candidates not migrate properly");
+		let mut invulnerables: Vec<AccountId> = Self::get_temp_storage("invulnerables").expect("qed");
+
+		assert!(selected_candidates.sort() == invulnerables.sort(), "candidates not migrate properly");
 
 		// Check the Round info
 		let round_info = frame_support::storage::migration::get_storage_value::<

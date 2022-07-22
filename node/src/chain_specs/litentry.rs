@@ -196,7 +196,7 @@ fn generate_genesis(
 		sudo: SudoConfig { key: Some(root_key) },
 		parachain_info: ParachainInfoConfig { parachain_id: id },
 		parachain_staking: ParachainStakingConfig {
-			candidates: invulnerables.iter().cloned().map(|(acc, _)| (acc, UNIT / 10)).collect(),
+			candidates: invulnerables.iter().cloned().map(|(acc, _)| (acc, 50 * UNIT)).collect(),
 			..Default::default()
 		},
 		session: SessionConfig {
