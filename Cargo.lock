@@ -5720,6 +5720,7 @@ dependencies = [
  "hex-literal",
  "pallet-balances",
  "pallet-bridge",
+ "pallet-parachain-staking",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",

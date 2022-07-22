@@ -49,6 +49,12 @@ where
 		if invulnerables.is_empty() {
 			return Err("CollatorSelection empty")
 		};
+		let invulnerables_len: u32 = invulnerables.len().try_into().unwrap_or(0);
+		assert!(
+			invulnerables_len >=
+				<T as pallet_parachain_staking::Config>::MinSelectedCandidates::get(),
+			"Need More Initial Candidates"
+		);
 
 		// Set the temporary storage for post upgrade check
 		Self::set_temp_storage(invulnerables, "invulnerables");
@@ -89,6 +95,12 @@ where
 			Vec<<T as frame_system::Config>::AccountId>,
 		>(b"CollatorSelection", b"Invulnerables", b"")
 		.expect("Storage query fails: CollatorSelection Invulnerables");
+		let invulnerables_len: u32 = invulnerables.len().try_into().unwrap_or(0);
+		assert!(
+			invulnerables_len >=
+				<T as pallet_parachain_staking::Config>::MinSelectedCandidates::get(),
+			"Need More Initial Candidates"
+		);
 
 		let mut candidate_count = 0u32;
 		// Get the minimum collator stake amount

@@ -45,3 +45,14 @@ impl OnNewRound for () {
 		0
 	}
 }
+
+pub trait IssuanceAdapter<Balance> {
+	fn adapted_total_issuance() -> Balance;
+}
+
+use sp_runtime::traits::AtLeast32BitUnsigned;
+impl<Balance: AtLeast32BitUnsigned> IssuanceAdapter<Balance> for () {
+	fn adapted_total_issuance() -> Balance {
+		0u32.into()
+	}
+}

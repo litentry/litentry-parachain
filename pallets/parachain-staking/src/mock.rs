@@ -146,6 +146,7 @@ impl Config for Test {
 	type OnCollatorPayout = ();
 	type OnNewRound = ();
 	type WeightInfo = ();
+	type IssuanceAdapter = ();
 }
 
 pub(crate) struct ExtBuilder {

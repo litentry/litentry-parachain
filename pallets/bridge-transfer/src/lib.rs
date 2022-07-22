@@ -31,7 +31,8 @@ pub mod pallet {
 		traits::{fungible::Mutate, Currency, StorageVersion},
 	};
 	use frame_system::pallet_prelude::*;
-	use sp_runtime::traits::CheckedAdd;
+	use pallet_parachain_staking::IssuanceAdapter;
+	use sp_runtime::traits::{CheckedAdd, CheckedSub};
 
 	pub use pallet_bridge as bridge;
 
@@ -90,6 +91,16 @@ pub mod pallet {
 		BalanceOf<T>,
 	>;
 
+	#[pallet::type_value]
+	pub fn DefaultExternalBalances<T: Config>() -> BalanceOf<T> {
+		T::MaximumIssuance::get()
+	}
+
+	#[pallet::storage]
+	#[pallet::getter(fn external_balances)]
+	pub type ExternalBalances<T: Config> =
+		StorageValue<_, BalanceOf<T>, ValueQuery, DefaultExternalBalances<T>>;
+
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Executes a simple currency transfer using the bridge account as the source
@@ -108,13 +119,33 @@ pub mod pallet {
 				return Err(Error::<T>::ReachMaximumSupply.into())
 			}
 			if rid == T::NativeTokenResourceId::get() {
+				let external_balances = <ExternalBalances<T>>::get()
+					.checked_sub(&amount)
+					.ok_or(Error::<T>::OverFlow)?;
 				// ERC20 LIT mint
 				<T as Config>::Currency::mint_into(&to, amount)?;
+				<ExternalBalances<T>>::put(external_balances);
 			} else {
 				return Err(Error::<T>::InvalidResourceId.into())
 			}
 			Ok(())
 		}
+
+		#[pallet::weight(195_000_000)]
+		pub fn set_external_balances(
+			origin: OriginFor<T>,
+			external_balances: BalanceOf<T>,
+		) -> DispatchResult {
+			frame_system::ensure_root(origin)?;
+			<ExternalBalances<T>>::put(external_balances);
+			Ok(())
+		}
 	}
 	impl<T: Config> Pallet<T> {}
+
+	impl<T: Config> IssuanceAdapter<BalanceOf<T>> for Pallet<T> {
+		fn adapted_total_issuance() -> BalanceOf<T> {
+			<ExternalBalances<T>>::get()
+		}
+	}
 }

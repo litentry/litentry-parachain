@@ -190,6 +190,8 @@ pub mod pallet {
 		type OnNewRound: OnNewRound;
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
+		/// The source for adjusted inflation base.
+		type IssuanceAdapter: IssuanceAdapter<BalanceOf<Self>>;
 	}
 
 	#[pallet::error]
@@ -669,6 +671,20 @@ pub mod pallet {
 					"Account does not have enough balance to bond as a candidate."
 				);
 				candidate_count = candidate_count.saturating_add(1u32);
+
+				// Add candidate whitelist
+				// This should be safe to delete after removing whitelist
+				if let Err(error) = <Pallet<T>>::add_candidates_whitelist(
+					<T as frame_system::Config>::Origin::from(frame_system::RawOrigin::Root),
+					candidate.clone(),
+					candidate_count,
+				) {
+					log::warn!(
+						"Add candidates whitelist failed in migration with error {:?}",
+						error
+					);
+				}
+
 				if let Err(error) = <Pallet<T>>::join_candidates(
 					T::Origin::from(Some(candidate.clone()).into()),
 					balance,

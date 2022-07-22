@@ -609,9 +609,13 @@ impl pallet_aura::Config for Runtime {
 
 parameter_types! {
 	/// Default fixed percent a collator takes off the top of due rewards
-	pub const DefaultCollatorCommission: Perbill = Perbill::from_percent(20);
+	pub const DefaultCollatorCommission: Perbill = Perbill::from_percent(0);
 	/// Default percent of inflation set aside for parachain bond every round
-	pub const DefaultParachainBondReservePercent: Percent = Percent::from_percent(30);
+	pub const DefaultParachainBondReservePercent: Percent = Percent::from_percent(0);
+	pub const MinCollatorStk: Balance = 50 * DOLLARS;
+	pub const MinCandidateStk: Balance = 50 * DOLLARS;
+	pub const MinDelegation: Balance = 50 * DOLLARS;
+	pub const MinDelegatorStk: Balance = 50 * DOLLARS;
 }
 
 impl pallet_parachain_staking::Config for Runtime {
@@ -623,38 +627,39 @@ impl pallet_parachain_staking::Config for Runtime {
 	/// Blocks per round
 	type DefaultBlocksPerRound = ConstU32<{ 6 * HOURS }>;
 	/// Rounds before the collator leaving the candidates request can be executed
-	type LeaveCandidatesDelay = ConstU32<24>;
+	type LeaveCandidatesDelay = ConstU32<28>;
 	/// Rounds before the candidate bond increase/decrease can be executed
-	type CandidateBondLessDelay = ConstU32<24>;
+	type CandidateBondLessDelay = ConstU32<28>;
 	/// Rounds before the delegator exit can be executed
-	type LeaveDelegatorsDelay = ConstU32<24>;
+	type LeaveDelegatorsDelay = ConstU32<28>;
 	/// Rounds before the delegator revocation can be executed
-	type RevokeDelegationDelay = ConstU32<24>;
+	type RevokeDelegationDelay = ConstU32<28>;
 	/// Rounds before the delegator bond increase/decrease can be executed
-	type DelegationBondLessDelay = ConstU32<24>;
+	type DelegationBondLessDelay = ConstU32<28>;
 	/// Rounds before the reward is paid
 	type RewardPaymentDelay = ConstU32<2>;
 	/// Minimum collators selected per round, default at genesis and minimum forever after
-	type MinSelectedCandidates = ConstU32<8>;
+	type MinSelectedCandidates = ConstU32<1>;
 	/// Maximum top delegations per candidate
-	type MaxTopDelegationsPerCandidate = ConstU32<300>;
+	type MaxTopDelegationsPerCandidate = ConstU32<1000>;
 	/// Maximum bottom delegations per candidate
-	type MaxBottomDelegationsPerCandidate = ConstU32<50>;
+	type MaxBottomDelegationsPerCandidate = ConstU32<200>;
 	/// Maximum delegations per delegator
 	type MaxDelegationsPerDelegator = ConstU32<100>;
 	type DefaultCollatorCommission = DefaultCollatorCommission;
 	type DefaultParachainBondReservePercent = DefaultParachainBondReservePercent;
 	/// Minimum stake required to become a collator
-	type MinCollatorStk = ExistentialDeposit;
+	type MinCollatorStk = MinCollatorStk;
 	/// Minimum stake required to be reserved to be a candidate
-	type MinCandidateStk = ExistentialDeposit;
+	type MinCandidateStk = MinCandidateStk;
 	/// Minimum stake required to be reserved to be a delegator
-	type MinDelegation = ExistentialDeposit;
+	type MinDelegation = MinDelegation;
 	/// Minimum stake required to be reserved to be a delegator
-	type MinDelegatorStk = ExistentialDeposit;
+	type MinDelegatorStk = MinDelegatorStk;
 	type OnCollatorPayout = ();
 	type OnNewRound = ();
 	type WeightInfo = weights::pallet_parachain_staking::WeightInfo<Runtime>;
+	type IssuanceAdapter = ();
 }
 
 parameter_types! {
