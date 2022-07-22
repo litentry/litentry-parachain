@@ -279,8 +279,7 @@ where
 		>(b"ParachainStaking", b"SelectedCandidates", b"")
 		.expect("Storage query fails: ParachainStaking SelectedCandidates");
 		selected_candidates.sort();
-		let mut invulnerables: Vec<AccountId> =
-			Self::get_temp_storage("invulnerables").expect("qed");
+		let mut invulnerables: Vec<AccountId> = Self::get_temp_storage("invulnerables").expect("qed");
 		invulnerables.sort();
 
 		assert!(selected_candidates == invulnerables, "candidates not migrate properly");

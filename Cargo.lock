@@ -8371,6 +8371,7 @@ dependencies = [
  "pallet-identity-management",
  "pallet-membership",
  "pallet-multisig",
+ "pallet-parachain-staking",
  "pallet-preimage",
  "pallet-proxy",
  "pallet-scheduler",

@@ -93,6 +93,7 @@ pallet-bridge-transfer = { path = "../../pallets/bridge-transfer", default-featu
 pallet-drop3 = { path = "../../pallets/drop3", default-features = false }
 pallet-extrinsic-filter = { path = "../../pallets/extrinsic-filter", default-features = false }
 pallet-identity-management = { path = "../../pallets/identity-management", default-features = false }
+pallet-parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
 
 # TEE pallets - TODO: patch it with litentry teerex
 pallet-teerex = { git = "https://github.com/litentry/integritee-pallets.git", default-features = false, branch = "polkadot-v0.9.26" }
@@ -149,6 +150,7 @@ std = [
 	"pallet-democracy/std",
 	"pallet-membership/std",
 	"pallet-multisig/std",
+	"pallet-parachain-staking/std",
 	"pallet-preimage/std",
 	"pallet-proxy/std",
 	"pallet-scheduler/std",
@@ -199,6 +201,7 @@ runtime-benchmarks = [
 	"pallet-democracy/runtime-benchmarks",
 	"pallet-membership/runtime-benchmarks",
 	"pallet-multisig/runtime-benchmarks",
+	"pallet-parachain-staking/runtime-benchmarks",
 	"pallet-preimage/runtime-benchmarks",
 	"pallet-proxy/runtime-benchmarks",
 	"pallet-scheduler/runtime-benchmarks",
@@ -228,6 +231,7 @@ try-runtime = [
 	"pallet-democracy/try-runtime",
 	"pallet-membership/try-runtime",
 	"pallet-multisig/try-runtime",
+	"pallet-parachain-staking/try-runtime",
 	"pallet-preimage/try-runtime",
 	"pallet-proxy/try-runtime",
 	"pallet-scheduler/try-runtime",
