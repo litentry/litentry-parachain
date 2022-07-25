@@ -15,21 +15,21 @@ jobs:
   check:
     name: Run check
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        chain: [rococo, litmus, litentry]
+        include:
+          - chain: rococo
+            ref_url: wss://rpc.rococo-parachain-sg.litentry.io
+          - chain: litmus
+            ref_url: wss://rpc.litmus-parachain.litentry.io
+          - chain: litentry
+            ref_url: wss://rpc.litentry-parachain.litentry.io
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
 
       - name: Prepare output and compare the metadata
-        strategy:
-          matrix:
-            chain: [rococo, litmus, litentry]
-            include:
-              - chain: rococo
-                ref_url: wss://rpc.rococo-parachain-sg.litentry.io
-              - chain: litmus
-                ref_url: wss://rpc.litmus-parachain.litentry.io
-              - chain: litentry
-                ref_url: wss://rpc.litentry-parachain.litentry.io
         run: |
           BASE_URL=wss://parachain-eu-0.staging.litentry.io
           chain=${{ matrix.chain }}
@@ -69,17 +69,19 @@ jobs:
           # done
       - name: Show result
         run: |
-          cat output-rococo.txt
-          echo "--------------------------------------------------------------------------------"
-          cat output-litmus.txt
-          echo "--------------------------------------------------------------------------------"
-          cat output-litentry.txt
+          cat output-${{ matrix.chain }}.txt
+          # cat output-rococo.txt
+          # echo "--------------------------------------------------------------------------------"
+          # cat output-litmus.txt
+          # echo "--------------------------------------------------------------------------------"
+          # cat output-litentry.txt
 
       - name: Save output as artifact
         uses: actions/upload-artifact@v3
         with:
           name: output
           path: |
-            output-rococo.txt
-            output-litmus.txt
-            output-litentry.txt
+            output-${{ matrix.chain }}.txt
+            # output-rococo.txt
+            # output-litmus.txt
+            # output-litentry.txt
