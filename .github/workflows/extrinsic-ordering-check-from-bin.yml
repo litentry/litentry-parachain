@@ -33,7 +33,7 @@ jobs:
         run: |
           BASE_URL=wss://parachain-eu-0.staging.litentry.io
           chain=${{ matrix.chain }}
-          REF_URL=$${ matrix.ref_url }}
+          REF_URL=${{ matrix.ref_url }}
           echo "Metadata comparison:" > output-$chain.txt
           echo "Date: $(date)" >> output-$chain.txt
           echo "Base: $BASE_URL" >> output-$chain.txt
