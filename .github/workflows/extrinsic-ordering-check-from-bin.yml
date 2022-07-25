@@ -1,4 +1,4 @@
-name: Release - Extrinsic Ordering Check
+name: Extrinsic Ordering Check
 
 on:
   workflow_dispatch:
