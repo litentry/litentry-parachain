@@ -6,6 +6,8 @@ on:
     workflows: ["Create release draft"]
     branches:
       - dev
+      - release
+      - release-**
     types:
       - completed
 
@@ -17,30 +19,58 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v3
 
-      - name: Pull polkadot-js-tools image
-        run: docker pull jacogr/polkadot-js-tools
-
       - name: Prepare output and compare the metadata
+        strategy:
+          matrix:
+            chain: [rococo, litmus, litentry]
+            include:
+              - chain: rococo
+                ref_url: wss://rpc.rococo-parachain-sg.litentry.io
+              - chain: litmus
+                ref_url: wss://rpc.litmus-parachain.litentry.io
+              - chain: litentry
+                ref_url: wss://rpc.litentry-parachain.litentry.io
         run: |
           BASE_URL=wss://parachain-eu-0.staging.litentry.io
-          chains=( "litmus" "litentry" )
-          for c in ${chains[@]}; do
-            REF_URL=wss://rpc.$c-parachain.litentry.io
-            echo "Metadata comparison:" > output-$c.txt
-            echo "Date: $(date)" >> output-$c.txt
-            echo "Base: $BASE_URL" >> output-$c.txt
-            echo "Reference: $REF_URL" >> output-$c.txt
-            echo "Target version: $VERSION" >> output-$c.txt
-            echo "Chain: $c" >> output-$c.txt
-            echo "----------------------------------------------------------------------" >> output-$c.txt
-            CMD="docker run --pull always --network host jacogr/polkadot-js-tools metadata $REF_URL $BASE_URL"
-            echo -e "Running:\n$CMD"
-            docker run --pull always --network host jacogr/polkadot-js-tools metadata $REF_URL $BASE_URL | tee -a output-$c.txt
-            SUMMARY=$(./scripts/extrinsic-ordering-filter.sh output-$c.txt)
-            echo -e $SUMMARY >> output-$c.txt
-          done
+          chain=${{ matrix.chain }}
+          REF_URL=$${ matrix.ref_url }}
+          echo "Metadata comparison:" > output-$chain.txt
+          echo "Date: $(date)" >> output-$chain.txt
+          echo "Base: $BASE_URL" >> output-$chain.txt
+          echo "Reference: $REF_URL" >> output-$chain.txt
+          echo "Target version: $VERSION" >> output-$chain.txt
+          echo "Chain: $chain" >> output-$chain.txt
+          echo "----------------------------------------------------------------------" >> output-$chain.txt
+          CMD="docker run --pull always --network host jacogr/polkadot-js-tools metadata $REF_URL $BASE_URL"
+          echo -e "Running:\n$CMD"
+          docker run --pull always --network host jacogr/polkadot-js-tools metadata $REF_URL $BASE_URL | tee -a output-$chain.txt
+          SUMMARY=$(./scripts/extrinsic-ordering-filter.sh output-$chain.txt)
+          echo -e $SUMMARY >> output-$chain.txt
+
+          # rpc_map=$(mktemp -d)
+          # echo wss://rpc.rococo-parachain-sg.litentry.io > $rpc_map/rococo
+          # echo wss://rpc.litmus-parachain.litentry.io > $rpc_map/litmus
+          # echo wss://rpc.litentry-parachain.litentry.io > $rpc_map/litentry
+          # chains=("rococo" "litmus" "litentry")
+          # for c in ${chains[@]}; do
+          #   REF_URL=$(< "$rpc_map/$c")
+          #   echo "Metadata comparison:" > output-$c.txt
+          #   echo "Date: $(date)" >> output-$c.txt
+          #   echo "Base: $BASE_URL" >> output-$c.txt
+          #   echo "Reference: $REF_URL" >> output-$c.txt
+          #   echo "Target version: $VERSION" >> output-$c.txt
+          #   echo "Chain: $c" >> output-$c.txt
+          #   echo "----------------------------------------------------------------------" >> output-$c.txt
+          #   CMD="docker run --pull always --network host jacogr/polkadot-js-tools metadata $REF_URL $BASE_URL"
+          #   echo -e "Running:\n$CMD"
+          #   docker run --pull always --network host jacogr/polkadot-js-tools metadata $REF_URL $BASE_URL | tee -a output-$c.txt
+          #   SUMMARY=$(./scripts/extrinsic-ordering-filter.sh output-$c.txt)
+          #   echo -e $SUMMARY >> output-$c.txt
+          # done
       - name: Show result
         run: |
+          cat output-rococo.txt
+          echo "--------------------------------------------------------------------------------"
           cat output-litmus.txt
           echo "--------------------------------------------------------------------------------"
           cat output-litentry.txt
@@ -50,5 +80,6 @@ jobs:
         with:
           name: output
           path: |
+            output-rococo.txt
             output-litmus.txt
             output-litentry.txt
