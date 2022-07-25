@@ -31,9 +31,14 @@ jobs:
 
       - name: Prepare output and compare the metadata
         run: |
-          BASE_URL=wss://parachain-eu-0.staging.litentry.io
+          RELEASE_TAG=v0.9.9-1
+          PARACHAIN_NAME=local-parachain
+          BASE_URL=ws://127.0.0.1:9944
           chain=${{ matrix.chain }}
           REF_URL=${{ matrix.ref_url }}
+          # BASE_URL=ws://host.docker.internal:9944
+          # chain=litmus
+          # REF_URL=wss://rpc.litmus-parachain.litentry.io
           echo "Metadata comparison:" > output-$chain.txt
           echo "Date: $(date)" >> output-$chain.txt
           echo "Base: $BASE_URL" >> output-$chain.txt
@@ -41,11 +46,15 @@ jobs:
           echo "Target version: $VERSION" >> output-$chain.txt
           echo "Chain: $chain" >> output-$chain.txt
           echo "----------------------------------------------------------------------" >> output-$chain.txt
-          CMD="docker run --pull always --network host jacogr/polkadot-js-tools metadata $REF_URL $BASE_URL"
+          echo "Running parachain: $chain"
+          docker run --name=$PARACHAIN_NAME  -d --rm -p 9944:9944 litentry/litentry-parachain:$RELEASE_TAG --chain=$chain --rpc-cors=all --ws-external --tmp -- --dev
+          sleep 3
+          CMD="docker run --network host jacogr/polkadot-js-tools metadata $REF_URL $BASE_URL"
           echo -e "Running:\n$CMD"
-          docker run --pull always --network host jacogr/polkadot-js-tools metadata $REF_URL $BASE_URL | tee -a output-$chain.txt
+          docker run --rm --network host jacogr/polkadot-js-tools metadata $REF_URL $BASE_URL | tee -a output-$chain.txt
           SUMMARY=$(./scripts/extrinsic-ordering-filter.sh output-$chain.txt)
           echo -e $SUMMARY >> output-$chain.txt
+          docker stop $PARACHAIN_NAME
 
           # rpc_map=$(mktemp -d)
           # echo wss://rpc.rococo-parachain-sg.litentry.io > $rpc_map/rococo
