@@ -833,7 +833,18 @@ impl Contains<Call> for NormalModeFilter {
 			// Vesting::vest
 			Call::Vesting(pallet_vesting::Call::vest { .. }) |
 			// Utility
-			Call::Utility(_)
+			Call::Utility(_) |
+			// ParachainStaking; Only the collator part
+			Call::ParachainStaking(pallet_parachain_staking::Call::join_candidates { .. }) |
+			Call::ParachainStaking(pallet_parachain_staking::Call::schedule_leave_candidates { .. }) |
+			Call::ParachainStaking(pallet_parachain_staking::Call::execute_leave_candidates { .. }) |
+			Call::ParachainStaking(pallet_parachain_staking::Call::cancel_leave_candidates { .. }) |
+			Call::ParachainStaking(pallet_parachain_staking::Call::go_offline { .. }) |
+			Call::ParachainStaking(pallet_parachain_staking::Call::go_online { .. }) |
+			Call::ParachainStaking(pallet_parachain_staking::Call::candidate_bond_more { .. }) |
+			Call::ParachainStaking(pallet_parachain_staking::Call::schedule_candidate_bond_less { .. }) |
+			Call::ParachainStaking(pallet_parachain_staking::Call::execute_candidate_bond_less { .. }) |
+			Call::ParachainStaking(pallet_parachain_staking::Call::cancel_candidate_bond_less { .. })
 		)
 	}
 }
