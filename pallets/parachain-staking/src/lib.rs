@@ -670,8 +670,6 @@ pub mod pallet {
 					<Pallet<T>>::get_collator_stakable_free_balance(candidate) >= balance,
 					"Account does not have enough balance to bond as a candidate."
 				);
-				candidate_count = candidate_count.saturating_add(1u32);
-
 				// Add candidate whitelist
 				// This should be safe to delete after removing whitelist
 				if let Err(error) = <Pallet<T>>::add_candidates_whitelist(
