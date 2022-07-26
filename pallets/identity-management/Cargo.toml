@@ -25,8 +25,8 @@ frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch =
 hex = { version = "0.4", default-features = false }
 
 # teerex dependencies
-teerex-primitives = { git = "https://github.com/litentry/integritee-pallets.git", default-features = false, branch = "polkadot-v0.9.25" }
-pallet-teerex = { git = "https://github.com/litentry/integritee-pallets.git", default-features = false, branch = "polkadot-v0.9.25" }
+teerex-primitives = { git = "https://github.com/litentry/integritee-pallets.git", default-features = false, branch = "polkadot-v0.9.26" }
+pallet-teerex = { git = "https://github.com/litentry/integritee-pallets.git", default-features = false, branch = "polkadot-v0.9.26" }
 
 [features]
 default = ["std"]
