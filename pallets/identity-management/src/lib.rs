@@ -37,42 +37,6 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
-	/// The general data type, a byte vec
-	pub type GeneralDataType = Vec<u8>;
-
-	/// The supported identity type
-	#[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq, Eq, TypeInfo)]
-	pub enum IdentityType {
-		// Web2
-		Twitter,
-		GitHub,
-		Discord,
-		// Web3
-		Ethereum,
-		Substrate,
-	}
-
-	/// The web type (Web2 or Web3)
-	#[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq, Eq, TypeInfo)]
-	pub enum WebType {
-		Web2,
-		Web3,
-	}
-
-	/// The general Identity definition used for both Web2 and Web3 identities
-	#[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq, Eq, TypeInfo)]
-	pub struct Identity {
-		// Required fields
-		pub id_type: IdentityType,
-		pub address: GeneralDataType,
-		// Optional fields
-		pub web_type: Option<WebType>,
-		pub metadata: Option<GeneralDataType>,
-		pub verify_required: bool,
-		pub web2_verification_data: Option<GeneralDataType>,
-		pub web3_verification_data: Option<GeneralDataType>,
-	}
-
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_teerex::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
