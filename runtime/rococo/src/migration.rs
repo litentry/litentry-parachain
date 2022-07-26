@@ -112,8 +112,6 @@ where
 					min_collator_stk,
 				"Account does not have enough balance to bond as a candidate."
 			);
-			candidate_count = candidate_count.saturating_add(1u32);
-
 			// Add candidate whitelist
 			if let Err(error) = <pallet_parachain_staking::Pallet<T>>::add_candidates_whitelist(
 				<T as frame_system::Config>::Origin::from(frame_system::RawOrigin::Root),
@@ -133,6 +131,8 @@ where
 				candidate_count = candidate_count.saturating_add(1u32);
 			}
 		}
+
+		assert!(candidate_count > 0, "No valid candidates");
 
 		// Reproduce the genesis build
 		// Initialize the rest setup of parachain-staking
