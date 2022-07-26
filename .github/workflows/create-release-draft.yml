@@ -201,8 +201,8 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
-        # with:
-        #   ref: ${{ env.RELEASE_TAG }}
+        with:
+          ref: ${{ env.RELEASE_TAG }}
       - name: Prepare output and compare the metadata
         timeout-minutes: 3
         run: |
