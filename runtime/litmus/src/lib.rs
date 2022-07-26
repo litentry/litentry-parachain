@@ -726,6 +726,7 @@ impl pallet_sidechain::Config for Runtime {
 
 impl pallet_identity_management::Config for Runtime {
 	type Event = Event;
+	type Call = Call;
 }
 
 impl runtime_common::BaseRuntimeRequirements for Runtime {}
