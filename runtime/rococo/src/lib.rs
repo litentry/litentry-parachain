@@ -665,7 +665,7 @@ impl pallet_parachain_staking::Config for Runtime {
 	type OnCollatorPayout = ();
 	type OnNewRound = ();
 	type WeightInfo = weights::pallet_parachain_staking::WeightInfo<Runtime>;
-	type IssuanceAdapter = ();
+	type IssuanceAdapter = BridgeTransfer;
 }
 
 parameter_types! {
