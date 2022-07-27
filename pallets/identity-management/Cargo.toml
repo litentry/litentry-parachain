@@ -35,6 +35,7 @@ pallet-teerex = { git = "https://github.com/litentry/integritee-pallets.git", de
 pallet-balances = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
 sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
+hex-literal = { version = "0.3.2" }
 
 [features]
 default = ["std"]

@@ -20,11 +20,11 @@
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
-//#[cfg(test)]
-//mod mock;
+#[cfg(test)]
+mod mock;
 
-//#[cfg(test)]
-//mod tests;
+#[cfg(test)]
+mod tests;
 
 pub mod weights;
 

@@ -14,8 +14,50 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{mock::*, Error};
+use crate::{mock::* };
 use frame_support::{
-	assert_noop, assert_ok,
-	traits::{Currency, ReservableCurrency},
+	 assert_ok
 };
+use hex_literal::hex;
+use sp_core::H256;
+
+// Sample MRENCLAVE from
+// https://github.com/integritee-network/pallets/blob/master/test-utils/src/ias.rs#L125-L132
+const TEST_MRENCLAVE: [u8; 32] =
+	hex!("7a3454ec8f42e265cb5be7dfd111e1d95ac6076ed82a0948b2e2a45cf17b62a0");
+
+#[test]
+fn test_link_identity() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(IdentityManagement::link_identity(
+			Origin::signed(1),
+			H256::from_slice(&TEST_MRENCLAVE),
+			vec![1u8; 2048]
+		));
+		System::assert_last_event(Event::IdentityManagement(crate::Event::LinkIdentityRequested));
+	});
+}
+
+#[test]
+fn test_unlink_identity() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(IdentityManagement::unlink_identity(
+			Origin::signed(1),
+			H256::from_slice(&TEST_MRENCLAVE),
+			vec![1u8; 2048]
+		));
+		System::assert_last_event(Event::IdentityManagement(crate::Event::UnlinkIdentityRequested));
+	});
+}
+
+#[test]
+fn test_verify_identity() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(IdentityManagement::verify_identity(
+			Origin::signed(1),
+			H256::from_slice(&TEST_MRENCLAVE),
+			vec![1u8; 2048]
+		));
+		System::assert_last_event(Event::IdentityManagement(crate::Event::VerifyIdentityRequested));
+	});
+}

@@ -19,7 +19,7 @@
 use crate as pallet_identity_management;
 use frame_support::{
 	parameter_types,
-	traits::{ConstU128, ConstU16, ConstU32, ConstU64,  Everything},
+	traits::{ConstU128, ConstU16, ConstU32, ConstU64, Everything},
 };
 use frame_system as system;
 use sp_core::H256;
@@ -118,7 +118,7 @@ impl pallet_identity_management::Config for Test {
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| {
