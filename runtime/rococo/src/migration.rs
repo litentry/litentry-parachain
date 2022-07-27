@@ -91,15 +91,25 @@ where
 
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
 		use sp_io::KillStorageResult;
-		let invulnerables = frame_support::storage::migration::get_storage_value::<
+		let mut invulnerables = frame_support::storage::migration::get_storage_value::<
 			Vec<<T as frame_system::Config>::AccountId>,
 		>(b"CollatorSelection", b"Invulnerables", b"")
 		.expect("Storage query fails: CollatorSelection Invulnerables");
+		invulnerables.sort();
+
 		let invulnerables_len: u32 = invulnerables.len().try_into().unwrap_or(0);
 		assert!(
 			invulnerables_len >=
 				<T as pallet_parachain_staking::Config>::MinSelectedCandidates::get(),
 			"Need More Initial Candidates"
+		);
+
+		// Add whitelist Storage
+		frame_support::storage::migration::put_storage_value::<Vec<<T as frame_system::Config>::AccountId>>(
+			b"ParachainStaking",
+			b"Candidates",
+			b"",
+			invulnerables.clone(),
 		);
 
 		let mut candidate_count = 0u32;
@@ -112,14 +122,6 @@ where
 					min_collator_stk,
 				"Account does not have enough balance to bond as a candidate."
 			);
-			// Add candidate whitelist
-			if let Err(error) = <pallet_parachain_staking::Pallet<T>>::add_candidates_whitelist(
-				<T as frame_system::Config>::Origin::from(frame_system::RawOrigin::Root),
-				candidate.clone(),
-				candidate_count,
-			) {
-				log::warn!("Add candidates whitelist failed in migration with error {:?}", error);
-			}
 
 			if let Err(error) = <pallet_parachain_staking::Pallet<T>>::join_candidates(
 				<T as frame_system::Config>::Origin::from(Some(candidate.clone()).into()),

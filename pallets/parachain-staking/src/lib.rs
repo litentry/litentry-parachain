@@ -658,8 +658,11 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
 			// Put the candiadates into the whitelist list
+			// This should be safe to delete after removing whitelist
+			let mut genesis_candidates = self.candidates.clone();
+			genesis_candidates.sort();
 			let candidates =
-				self.candidates.clone().into_iter().map(|x| x.0).collect::<Vec<T::AccountId>>();
+				genesis_candidates.into_iter().map(|x| x.0).collect::<Vec<T::AccountId>>();
 			<Candidates<T>>::put(candidates);
 
 			<InflationConfig<T>>::put(self.inflation_config.clone());
