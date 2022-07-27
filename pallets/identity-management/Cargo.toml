@@ -31,6 +31,11 @@ hex-literal = { version = "0.3.2", optional = true }
 teerex-primitives = { git = "https://github.com/litentry/integritee-pallets.git", default-features = false, branch = "polkadot-v0.9.26" }
 pallet-teerex = { git = "https://github.com/litentry/integritee-pallets.git", default-features = false, branch = "polkadot-v0.9.26" }
 
+[dev-dependencies]
+pallet-balances = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
+sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
+
 [features]
 default = ["std"]
 runtime-benchmarks = [

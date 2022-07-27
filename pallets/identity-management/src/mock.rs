@@ -14,10 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+#![cfg(test)]
+
 use crate as pallet_identity_management;
 use frame_support::{
 	parameter_types,
-	traits::{ConstU128, ConstU16, ConstU32, ConstU64, Contains, Everything},
+	traits::{ConstU128, ConstU16, ConstU32, ConstU64,  Everything},
 };
 use frame_system as system;
 use sp_core::H256;
@@ -25,7 +27,6 @@ use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
-use system::EnsureRoot;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -41,8 +42,9 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
-		Teerex: pallet_teerex::{Pallet, Call, Storage, Event<T>}
-		IdentityManagement: pallet_identity_management::{Pallet, Call, Storage, Event<T>}
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
+		Teerex: pallet_teerex::{Pallet, Call, Storage, Event<T>},
+		IdentityManagement: pallet_identity_management::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -77,12 +79,19 @@ impl system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-parameter_types! {
-	pub const MomentsPerDay: Moment = 86_400_000; // [ms/d]
-	pub const MaxSilenceTime: Moment =172_800_000; // 48h
+impl pallet_timestamp::Config for Test {
+	type Moment = u64;
+	type OnTimestampSet = ();
+	type MinimumPeriod = ConstU64<10000>;
+	type WeightInfo = ();
 }
 
-impl pallet_teerex::Config for Runtime {
+parameter_types! {
+	pub const MomentsPerDay: u64 = 86_400_000; // [ms/d]
+	pub const MaxSilenceTime:u64 =172_800_000; // 48h
+}
+
+impl pallet_teerex::Config for Test {
 	type Event = Event;
 	type Currency = Balances;
 	type MomentsPerDay = MomentsPerDay;
@@ -102,9 +111,10 @@ impl pallet_balances::Config for Test {
 	type WeightInfo = ();
 }
 
-impl pallet_identity_management::Config for Runtime {
+impl pallet_identity_management::Config for Test {
 	type Event = Event;
 	type Call = Call;
+	type WeightInfo = ();
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
