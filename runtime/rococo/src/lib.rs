@@ -23,6 +23,7 @@
 #[macro_use]
 extern crate frame_benchmarking;
 
+pub mod migration;
 use codec::{Decode, Encode, MaxEncodedLen};
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use frame_support::{
