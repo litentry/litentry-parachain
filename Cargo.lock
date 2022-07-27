@@ -5714,6 +5714,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex",
+ "hex-literal",
  "log",
  "pallet-teerex",
  "parity-scale-codec",

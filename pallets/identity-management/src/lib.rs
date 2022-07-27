@@ -18,10 +18,18 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+#[cfg(test)]
+pub mod mock;
+pub mod weights;
+
+pub use crate::weights::WeightInfo;
 pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use crate::weights::WeightInfo;
 	use frame_support::{
 		dispatch::{DispatchErrorWithPostInfo, Dispatchable, PostDispatchInfo},
 		pallet_prelude::*,
@@ -45,6 +53,7 @@ pub mod pallet {
 			+ GetDispatchInfo
 			+ From<pallet_teerex::Call<Self>>
 			+ IsSubType<Call<Self>>;
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::event]
@@ -61,7 +70,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Link an identity
-		#[pallet::weight(1_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::link_identity())]
 		pub fn link_identity(
 			origin: OriginFor<T>,
 			shard: H256,
@@ -82,20 +91,15 @@ pub mod pallet {
 					post_dispatch_info
 						.actual_weight
 						.map(|actual_weight| {
-							// FIXME add this part after weights added
-							//	T::WeightInfo::link_identity(call_len as u32)
-							//		.saturating_add(actual_weight)
-							actual_weight
+							<T as Config>::WeightInfo::link_identity().saturating_add(actual_weight)
 						})
 						.into()
 				})
 				.map_err(|err| match err.post_info.actual_weight {
 					Some(actual_weight) => {
-						// FIXME add this part after weights added
-						//let weight_used = T::WeightInfo::link_identity(call_len as u32)
-						//	.saturating_add(actual_weight);
-						//let post_info = Some(weight_used).into();
-						let post_info = Some(actual_weight).into();
+						let weight_used = <T as Config>::WeightInfo::link_identity()
+							.saturating_add(actual_weight);
+						let post_info = Some(weight_used).into();
 						DispatchErrorWithPostInfo { post_info, error: err.error }
 					},
 					None => err,
@@ -103,7 +107,7 @@ pub mod pallet {
 		}
 
 		/// Unlink an identity
-		#[pallet::weight(1_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::unlink_identity())]
 		pub fn unlink_identity(
 			origin: OriginFor<T>,
 			shard: H256,
@@ -124,20 +128,16 @@ pub mod pallet {
 					post_dispatch_info
 						.actual_weight
 						.map(|actual_weight| {
-							// FIXME add this part after weights added
-							//	T::WeightInfo::unlink_identity(call_len as u32)
-							//		.saturating_add(actual_weight)
-							actual_weight
+							<T as Config>::WeightInfo::unlink_identity()
+								.saturating_add(actual_weight)
 						})
 						.into()
 				})
 				.map_err(|err| match err.post_info.actual_weight {
 					Some(actual_weight) => {
-						// FIXME add this part after weights added
-						//let weight_used = T::WeightInfo::unlink_identity(call_len as u32)
-						//	.saturating_add(actual_weight);
-						//let post_info = Some(weight_used).into();
-						let post_info = Some(actual_weight).into();
+						let weight_used = <T as Config>::WeightInfo::unlink_identity()
+							.saturating_add(actual_weight);
+						let post_info = Some(weight_used).into();
 						DispatchErrorWithPostInfo { post_info, error: err.error }
 					},
 					None => err,
@@ -145,7 +145,7 @@ pub mod pallet {
 		}
 
 		/// Verify a linked identity
-		#[pallet::weight(1_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::verify_identity())]
 		pub fn verify_identity(
 			origin: OriginFor<T>,
 			shard: H256,
@@ -166,20 +166,16 @@ pub mod pallet {
 					post_dispatch_info
 						.actual_weight
 						.map(|actual_weight| {
-							// FIXME add this part after weights added
-							//	T::WeightInfo::verify_identity(call_len as u32)
-							//		.saturating_add(actual_weight)
-							actual_weight
+							<T as Config>::WeightInfo::verify_identity()
+								.saturating_add(actual_weight)
 						})
 						.into()
 				})
 				.map_err(|err| match err.post_info.actual_weight {
 					Some(actual_weight) => {
-						// FIXME add this part after weights added
-						//let weight_used = T::WeightInfo::verify_identity(call_len as u32)
-						//	.saturating_add(actual_weight);
-						//let post_info = Some(weight_used).into();
-						let post_info = Some(actual_weight).into();
+						let weight_used = <T as Config>::WeightInfo::verify_identity()
+							.saturating_add(actual_weight);
+						let post_info = Some(weight_used).into();
 						DispatchErrorWithPostInfo { post_info, error: err.error }
 					},
 					None => err,
