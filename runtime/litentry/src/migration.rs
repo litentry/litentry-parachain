@@ -178,7 +178,7 @@ where
 			b"ParachainStaking",
 			b"TotalSelected",
 			b"",
-			candidate_count / 2,
+			candidate_count,
 		);
 		// Choose top TotalSelected collator candidates
 		// WARNING/TODO: We change the private into public of select_top_candidates function in
