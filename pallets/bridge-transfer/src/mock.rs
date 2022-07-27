@@ -101,6 +101,7 @@ impl pallet_balances::Config for Test {
 parameter_types! {
 	pub const TestChainId: u8 = 5;
 	pub const ProposalLifetime: u64 = 100;
+	pub const TreasuryAccount:u64 = 0x8;
 }
 
 impl bridge::Config for Test {
@@ -108,7 +109,9 @@ impl bridge::Config for Test {
 	type BridgeCommitteeOrigin = frame_system::EnsureRoot<Self::AccountId>;
 	type Proposal = Call;
 	type BridgeChainId = TestChainId;
+	type Currency = Balances;
 	type ProposalLifetime = ProposalLifetime;
+	type TreasuryAccount = TreasuryAccount;
 }
 
 parameter_types! {
@@ -151,7 +154,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	.assimilate_storage(&mut t)
 	.unwrap();
 	let mut ext = sp_io::TestExternalities::new(t);
-	ext.execute_with(|| System::set_block_number(1));
+	ext.execute_with(|| frame_system::Pallet::<Test>::set_block_number(1));
 	ext
 }
 

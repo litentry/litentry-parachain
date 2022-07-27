@@ -28,6 +28,7 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::{Decode, Encode, EncodeLike};
+	use frame_support::traits::{Currency, ExistenceRequirement::AllowDeath, WithdrawReasons};
 	pub use frame_support::{
 		pallet_prelude::*, traits::StorageVersion, weights::GetDispatchInfo, PalletId, Parameter,
 	};
@@ -36,10 +37,9 @@ pub mod pallet {
 		{self as system},
 	};
 	use scale_info::TypeInfo;
-	pub use sp_core::U256;
 	use sp_runtime::{
 		traits::{AccountIdConversion, Dispatchable},
-		RuntimeDebug,
+		RuntimeDebug, SaturatedConversion,
 	};
 	use sp_std::prelude::*;
 
@@ -49,6 +49,8 @@ pub mod pallet {
 	pub type BridgeChainId = u8;
 	pub type DepositNonce = u64;
 	pub type ResourceId = [u8; 32];
+	pub type BalanceOf<T> =
+		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 	/// Helper function to concatenate a chain ID and some bytes to produce a resource ID.
 	/// The common format is (31 bytes unique ID + 1 byte chain ID).
@@ -83,7 +85,7 @@ pub mod pallet {
 
 	#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 	pub enum BridgeEvent {
-		FungibleTransfer(BridgeChainId, DepositNonce, ResourceId, U256, Vec<u8>),
+		FungibleTransfer(BridgeChainId, DepositNonce, ResourceId, u128, Vec<u8>),
 		NonFungibleTransfer(BridgeChainId, DepositNonce, ResourceId, Vec<u8>, Vec<u8>, Vec<u8>),
 		GenericTransfer(BridgeChainId, DepositNonce, ResourceId, Vec<u8>),
 	}
@@ -154,8 +156,14 @@ pub mod pallet {
 		#[pallet::constant]
 		type BridgeChainId: Get<BridgeChainId>;
 
+		/// Currency impl
+		type Currency: Currency<Self::AccountId>;
+
 		#[pallet::constant]
 		type ProposalLifetime: Get<Self::BlockNumber>;
+
+		/// Treasury account to receive assets fee
+		type TreasuryAccount: Get<Self::AccountId>;
 	}
 
 	#[pallet::event]
@@ -171,7 +179,7 @@ pub mod pallet {
 		RelayerRemoved(T::AccountId),
 		/// FungibleTransfer is for relaying fungibles (dest_id, nonce, resource_id, amount,
 		/// recipient)
-		FungibleTransfer(BridgeChainId, DepositNonce, ResourceId, U256, Vec<u8>),
+		FungibleTransfer(BridgeChainId, DepositNonce, ResourceId, u128, Vec<u8>),
 		/// NonFungibleTransfer is for relaying NFTs (dest_id, nonce, resource_id, token_id,
 		/// recipient, metadata)
 		NonFungibleTransfer(BridgeChainId, DepositNonce, ResourceId, Vec<u8>, Vec<u8>, Vec<u8>),
@@ -189,6 +197,8 @@ pub mod pallet {
 		ProposalSucceeded(BridgeChainId, DepositNonce),
 		/// Execution of call failed
 		ProposalFailed(BridgeChainId, DepositNonce),
+		/// Update bridge transfer fee
+		FeeUpdated { dest_id: BridgeChainId, fee: BalanceOf<T> },
 	}
 
 	#[pallet::error]
@@ -223,6 +233,14 @@ pub mod pallet {
 		ProposalAlreadyComplete,
 		/// Lifetime of proposal has been exceeded
 		ProposalExpired,
+		/// Too expensive fee for withdrawn asset
+		FeeTooExpensive,
+		/// No fee with the ID was found
+		FeeDoesNotExist,
+		/// Balance too low to withdraw
+		InsufficientBalance,
+
+		CannotPayAsFee,
 	}
 
 	#[pallet::storage]
@@ -264,6 +282,10 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn bridge_events)]
 	pub type BridgeEvents<T> = StorageValue<_, Vec<BridgeEvent>, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn bridge_fee)]
+	pub type BridgeFee<T: Config> = StorageMap<_, Twox64Concat, BridgeChainId, BalanceOf<T>>;
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
@@ -350,6 +372,23 @@ pub mod pallet {
 		pub fn remove_relayer(origin: OriginFor<T>, v: T::AccountId) -> DispatchResult {
 			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
 			Self::unregister_relayer(v)
+		}
+
+		/// Change extra bridge transfer fee that user should pay
+		///
+		/// # <weight>
+		/// - O(1) lookup and insert
+		/// # </weight>
+		#[pallet::weight(195_000_000)]
+		pub fn update_fee(
+			origin: OriginFor<T>,
+			dest_id: BridgeChainId,
+			fee: BalanceOf<T>,
+		) -> DispatchResult {
+			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
+			BridgeFee::<T>::insert(dest_id, fee);
+			Self::deposit_event(Event::FeeUpdated { dest_id, fee });
+			Ok(())
 		}
 
 		/// Commits a vote in favour of the provided proposal.
@@ -446,6 +485,13 @@ pub mod pallet {
 		/// Checks if a chain exists as a whitelisted destination
 		pub fn chain_whitelisted(id: BridgeChainId) -> bool {
 			Self::chains(id).is_some()
+		}
+
+		/// Increments the deposit nonce for the specified chain ID
+		fn bump_nonce(id: BridgeChainId) -> DepositNonce {
+			let nonce = Self::chains(id).unwrap_or_default() + 1;
+			ChainNonces::<T>::insert(id, nonce);
+			nonce
 		}
 
 		// *** Admin methods ***
@@ -601,6 +647,50 @@ pub mod pallet {
 		/// Cancels a proposal.
 		fn cancel_execution(src_id: BridgeChainId, nonce: DepositNonce) -> DispatchResult {
 			Self::deposit_event(Event::ProposalRejected(src_id, nonce));
+			Ok(())
+		}
+
+		/// Initiates a transfer of a fungible asset out of the chain. This should be called by
+		/// another pallet.
+		pub fn transfer_fungible(
+			sender: T::AccountId,
+			dest_id: BridgeChainId,
+			resource_id: ResourceId,
+			to: Vec<u8>,
+			amount: BalanceOf<T>,
+		) -> DispatchResult {
+			ensure!(Self::chain_whitelisted(dest_id), Error::<T>::ChainNotWhitelisted);
+			let fee: BalanceOf<T> =
+				BridgeFee::<T>::get(dest_id).ok_or(Error::<T>::CannotPayAsFee)?;
+			// No need to transfer to to dest chains if it's not enough to pay fee.
+			ensure!(amount > fee, Error::<T>::FeeTooExpensive);
+
+			let actual_amount = amount - fee;
+			// Ensure we have sufficient free balance
+			let balance: BalanceOf<T> = T::Currency::free_balance(&sender);
+			ensure!(balance >= amount, Error::<T>::InsufficientBalance);
+
+			T::Currency::withdraw(&sender, actual_amount, WithdrawReasons::TRANSFER, AllowDeath)?;
+			T::Currency::burn(actual_amount);
+
+			// transfer fee to treasury
+			T::Currency::transfer(&sender, &T::TreasuryAccount::get(), fee, AllowDeath)?;
+
+			let nonce = Self::bump_nonce(dest_id);
+			BridgeEvents::<T>::append(BridgeEvent::FungibleTransfer(
+				dest_id,
+				nonce,
+				resource_id,
+				actual_amount.saturated_into::<u128>(),
+				to.clone(),
+			));
+			Self::deposit_event(Event::FungibleTransfer(
+				dest_id,
+				nonce,
+				resource_id,
+				actual_amount.saturated_into::<u128>(),
+				to,
+			));
 			Ok(())
 		}
 	}
