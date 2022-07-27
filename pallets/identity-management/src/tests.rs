@@ -14,10 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{mock::* };
-use frame_support::{
-	 assert_ok
-};
+use crate::mock::*;
+use frame_support::assert_ok;
 use hex_literal::hex;
 use sp_core::H256;
 
