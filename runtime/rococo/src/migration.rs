@@ -105,12 +105,9 @@ where
 		);
 
 		// Add whitelist Storage
-		frame_support::storage::migration::put_storage_value::<Vec<<T as frame_system::Config>::AccountId>>(
-			b"ParachainStaking",
-			b"Candidates",
-			b"",
-			invulnerables.clone(),
-		);
+		frame_support::storage::migration::put_storage_value::<
+			Vec<<T as frame_system::Config>::AccountId>,
+		>(b"ParachainStaking", b"Candidates", b"", invulnerables.clone());
 
 		let mut candidate_count = 0u32;
 		// Get the minimum collator stake amount
@@ -281,7 +278,8 @@ where
 		>(b"ParachainStaking", b"SelectedCandidates", b"")
 		.expect("Storage query fails: ParachainStaking SelectedCandidates");
 		selected_candidates.sort();
-		let mut invulnerables: Vec<AccountId> = Self::get_temp_storage("invulnerables").expect("qed");
+		let mut invulnerables: Vec<AccountId> =
+			Self::get_temp_storage("invulnerables").expect("qed");
 		invulnerables.sort();
 
 		assert!(selected_candidates == invulnerables, "candidates not migrate properly");
