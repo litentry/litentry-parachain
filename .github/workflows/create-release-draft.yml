@@ -186,7 +186,7 @@ jobs:
 
   ## check extrinsic ##
   extrinsic-ordering-check-from-bin:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: build-docker
     strategy:
       matrix:
@@ -215,7 +215,7 @@ jobs:
           echo "Date: $(date)" >> output-$chain.txt
           echo "Base: $BASE_URL" >> output-$chain.txt
           echo "Reference: $REF_URL" >> output-$chain.txt
-          echo "Target version: $VERSION" >> output-$chain.txt
+          echo "Target Tag: $RELEASE_TAG" >> output-$chain.txt
           echo "Chain: $chain" >> output-$chain.txt
           echo "----------------------------------------------------------------------" >> output-$chain.txt
           echo "Running parachain: $chain"
@@ -238,7 +238,7 @@ jobs:
         with:
           actions: 'find-issues'
           token: ${{ secrets.GITHUB_TOKEN }}
-          issue-state: 'closed'
+          issue-state: 'open'
           title-includes: Litentry-parachain ${{ env.RELEASE_TAG }} Release checklist
 
       - name: Create comment
