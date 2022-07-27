@@ -673,18 +673,6 @@ pub mod pallet {
 					<Pallet<T>>::get_collator_stakable_free_balance(candidate) >= balance,
 					"Account does not have enough balance to bond as a candidate."
 				);
-				// Add candidate whitelist
-				// This should be safe to delete after removing whitelist
-				if let Err(error) = <Pallet<T>>::add_candidates_whitelist(
-					<T as frame_system::Config>::Origin::from(frame_system::RawOrigin::Root),
-					candidate.clone(),
-					candidate_count,
-				) {
-					log::warn!(
-						"Add candidates whitelist failed in migration with error {:?}",
-						error
-					);
-				}
 
 				if let Err(error) = <Pallet<T>>::join_candidates(
 					T::Origin::from(Some(candidate.clone()).into()),
