@@ -599,9 +599,9 @@ impl pallet_session::Config for Runtime {
 	type Event = Event;
 	type ValidatorId = <Self as frame_system::Config>::AccountId;
 	// we don't have stash and controller, thus we don't need the convert as well.
-	type ValidatorIdOf = pallet_collator_selection::IdentityCollator;
-	type ShouldEndSession = pallet_session::PeriodicSessions<Period, Offset>;
-	type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
+	type ValidatorIdOf = ConvertInto;
+	type ShouldEndSession = ParachainStaking;
+	type NextSessionRotation = ParachainStaking;
 	type SessionManager = ParachainStaking;
 	// Essentially just Aura, but lets be pedantic.
 	type SessionHandler = <SessionKeys as sp_runtime::traits::OpaqueKeys>::KeyTypeIdProviders;
@@ -633,7 +633,7 @@ impl pallet_parachain_staking::Config for Runtime {
 	/// Minimum round length is 2 minutes (10 * 12 second block times)
 	type MinBlocksPerRound = ConstU32<{ 2 * MINUTES }>;
 	/// Blocks per round
-	type DefaultBlocksPerRound = ConstU32<{ 6 * HOURS }>;
+	type DefaultBlocksPerRound = Period;
 	/// Rounds before the collator leaving the candidates request can be executed
 	type LeaveCandidatesDelay = ConstU32<28>;
 	/// Rounds before the candidate bond increase/decrease can be executed
