@@ -136,7 +136,6 @@ jobs:
       - name: Copy client binary to disk
         run: |
           docker cp $(docker create --rm litentry/litentry-parachain:${{ env.RELEASE_TAG }}):/usr/local/bin/litentry-collator .
-
       - name: Upload the client binary
         uses: actions/upload-artifact@v3
         with:
@@ -146,7 +145,6 @@ jobs:
             litentry-collator
             ${{ env.GENESIS_RELEASE }}-genesis-state
             ${{ env.GENESIS_RELEASE }}-genesis-wasm
-
 
   ## test again the built docker image ##
   run-ts-tests:
@@ -185,6 +183,73 @@ jobs:
         if: ${{ always() }}
         run: |
           make clean-docker-${{ matrix.chain }}
+
+  ## check extrinsic ##
+  extrinsic-ordering-check-from-bin:
+    runs-on: ubuntu-latest
+    needs: build-docker
+    strategy:
+      matrix:
+        chain: [rococo, litmus, litentry]
+        include:
+          - chain: rococo
+            ref_url: wss://rpc.rococo-parachain-sg.litentry.io
+          - chain: litmus
+            ref_url: wss://rpc.litmus-parachain.litentry.io
+          - chain: litentry
+            ref_url: wss://rpc.litentry-parachain.litentry.io
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+      - name: Prepare output and compare the metadata
+        timeout-minutes: 3
+        run: |
+          RELEASE_TAG=${{ env.RELEASE_TAG }}
+          PARACHAIN_NAME=local-parachain
+          BASE_URL=ws://127.0.0.1:9944
+          chain=${{ matrix.chain }}
+          REF_URL=${{ matrix.ref_url }}
+          echo "Metadata comparison:" > output-$chain.txt
+          echo "Date: $(date)" >> output-$chain.txt
+          echo "Base: $BASE_URL" >> output-$chain.txt
+          echo "Reference: $REF_URL" >> output-$chain.txt
+          echo "Target Tag: $RELEASE_TAG" >> output-$chain.txt
+          echo "Chain: $chain" >> output-$chain.txt
+          echo "----------------------------------------------------------------------" >> output-$chain.txt
+          echo "Running parachain: $chain"
+          docker run --pull always --rm --name=$PARACHAIN_NAME -d -p 9944:9944 litentry/litentry-parachain:$RELEASE_TAG --chain=$chain --rpc-cors=all --ws-external --tmp -- --dev
+          sleep 3
+          CMD="docker run --pull always --network host jacogr/polkadot-js-tools metadata $REF_URL $BASE_URL"
+          echo -e "Running:\n$CMD"
+          docker run --pull always --rm --network host jacogr/polkadot-js-tools metadata $REF_URL $BASE_URL | tee -a output-$chain.txt
+          SUMMARY=$(./scripts/extrinsic-ordering-filter.sh output-$chain.txt)
+          echo -e $SUMMARY >> output-$chain.txt
+          docker stop $PARACHAIN_NAME
+          content=$(< output-$chain.txt)
+          echo "content<<EOF" >> $GITHUB_ENV
+          echo "$content" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Find issues
+        uses: actions-cool/issues-helper@v3
+        id: findissueid
+        with:
+          actions: 'find-issues'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-state: 'open'
+          title-includes: Litentry-parachain ${{ env.RELEASE_TAG }} Release checklist
+
+      - name: Create comment
+        if: ${{ steps.findissueid.outputs.issues }} != '[]'
+        uses: actions-cool/issues-helper@v3
+        with:
+          actions: 'create-comment'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ fromJson(steps.findissueid.outputs.issues)[0].number }}
+          body: |
+            ${{ env.content }}
 
   ## create the release draft ##
   create-release-draft:
