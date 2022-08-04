@@ -59,6 +59,8 @@
 //! All dispatchables in this pallet must come from a priviledged origin.
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(deprecated)]
+/// will un-deprecated in 0.9.26
 
 #[cfg(test)]
 mod mock;
