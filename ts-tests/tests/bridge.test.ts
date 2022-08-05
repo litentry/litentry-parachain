@@ -10,7 +10,6 @@ const bn100e12 = new BN(10).pow(new BN(12)).mul(new BN(100));
 
 describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
     step('Transfer 100 Lit from eth to parachain', async function () {
-
         let bridge = context.ethConfig.bridge.connect(context.ethConfig.wallets.bob);
         let erc20 = context.ethConfig.erc20.connect(context.ethConfig.wallets.bob);
         // substrate native token
@@ -41,7 +40,7 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
         const b: BigNumber = await erc20.balanceOf(receipt)
         await signAndSend(context.parachainConfig.api.tx.bridgeTransfer.transferNative(bn100e12.toString(), receipt, 0), context.parachainConfig.alice)
         // const fee = await context.parachainConfig.api.query.chainBridge.bridgeFee(0)
-        await sleep(10)
+        await sleep(15)
         const actual_receive = BigNumber.from('99,000,000,000,000,000,000'.replace(/,/g, ""))
         assert.equal(b.add(actual_receive).toString(), (await erc20.balanceOf(receipt)).toString())
     })

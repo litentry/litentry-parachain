@@ -99,6 +99,10 @@ launch-binary-litentry:
 launch-binary-litmus:
 	@./scripts/launch-local-binary.sh litmus
 
+.PHONY: launch-binary-rococo ## Launch a local rococo-parachain network with binaries
+launch-binary-rococo:
+	@./scripts/launch-local-binary.sh rococo
+
 # run tests
 
 .PHONY: test-cargo-all ## cargo test --all
@@ -119,6 +123,10 @@ test-ts-binary-litentry: launch-binary-litentry
 
 .PHONY: test-ts-binary-litmus ## Run litmus ts tests with binary without clean-up
 test-ts-binary-litmus: launch-binary-litmus
+	@./scripts/run-ts-test.sh
+
+test-ts-binary-rococo: launch-binary-rococo
+	@./scripts/launch-local-bridge-binary.sh
 	@./scripts/run-ts-test.sh
 
 # clean up

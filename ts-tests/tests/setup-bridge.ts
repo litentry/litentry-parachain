@@ -179,15 +179,16 @@ function emptyDir(directoryPath: string) {
 }
 
 async function startChainBridge(ethConfig: EthConfig, parachainConfig: ParachainConfig, ethRelayer: string, parachainRelayer: string, config: string, log: string) {
+    require('dotenv').config();
     emptyDir("./bridge/data")
     const ethBlock = await ethConfig.wallets.bob.provider.getBlockNumber();
     const subBlock = await parachainConfig.api.rpc.chain.getHeader();
     generateBridgeConfig(ethConfig, ethRelayer, parachainRelayer, ethBlock, subBlock.number.toNumber(), config)
     const logging = fs.createWriteStream(log, {flags: 'w+'});
     const lsProcess = spawn(
-        '/root/dev-spaces/litentry/ChainBridge/build/chainbridge',
+        `${process.env.GOPATH}/bin/chainbridge`,
         ['--verbosity', 'trace', '--blockstore', './bridge/data', '--config', config, '--keystore', './bridge/keys'],
-        {env: {stage: "dev"}},
+        {env: {STAGE: "dev"}},
     );
     lsProcess.stdout.pipe(logging);
     lsProcess.stderr.pipe(logging);
