@@ -2,7 +2,7 @@
 
 ROOTDIR=$(git rev-parse --show-toplevel)
 
-#GOPATH=${HOME}/go go install github.com/Phala-Network/ChainBridge/cmd/chainbridge@main
+GOPATH=${HOME}/go go install github.com/litentry/ChainBridge@dev
 
 ${ROOTDIR}/scripts/geth/run_geth.sh
 
