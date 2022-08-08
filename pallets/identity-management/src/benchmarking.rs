@@ -69,6 +69,17 @@ benchmarks! {
 	verify {
 		assert_last_event::<T>(Event::VerifyIdentityRequested.into());
 	}
+
+	// Benchmark `set_user_shielding_key`. There are no worst conditions. The benchmark showed that
+	// execution time is constant irrespective of encrypted_data size.
+	set_user_shielding_key {
+		let caller = whitelisted_caller();
+		let shard = H256::from_slice(&TEST_MRENCLAVE);
+		let encrypted_data = vec![1u8; 2048];
+	}: _(RawOrigin::Signed(caller), shard, encrypted_data )
+	verify {
+		assert_last_event::<T>(Event::SetShieldingKeyRequested.into());
+	}
 }
 
 impl_benchmark_test_suite!(IdentityManagement, crate::mock::new_test_ext(), crate::mock::Test,);

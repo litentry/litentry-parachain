@@ -66,6 +66,7 @@ pub mod pallet {
 		LinkIdentityRequested,
 		UnlinkIdentityRequested,
 		VerifyIdentityRequested,
+		SetShieldingKeyRequested,
 	}
 
 	#[pallet::error]
@@ -178,6 +179,44 @@ pub mod pallet {
 				.map_err(|err| match err.post_info.actual_weight {
 					Some(actual_weight) => {
 						let weight_used = <T as Config>::WeightInfo::verify_identity()
+							.saturating_add(actual_weight);
+						let post_info = Some(weight_used).into();
+						DispatchErrorWithPostInfo { post_info, error: err.error }
+					},
+					None => err,
+				})
+		}
+
+		/// Set or update user's shielding key
+		#[pallet::weight(<T as Config>::WeightInfo::set_user_shielding_key())]
+		pub fn set_user_shielding_key(
+			origin: OriginFor<T>,
+			shard: H256,
+			encrypted_data: Vec<u8>,
+		) -> DispatchResultWithPostInfo {
+			let _ = ensure_signed(origin.clone())?;
+
+			// Forward encrypted call to worker via teerex
+			let request = Request { shard, cyphertext: encrypted_data };
+			let call: <T as Config>::Call = pallet_teerex::Call::call_worker { request }.into();
+			let result = call.dispatch(origin);
+
+			Self::deposit_event(Event::SetShieldingKeyRequested);
+
+			// Parse dispatch result and update weight and error information
+			result
+				.map(|post_dispatch_info| {
+					post_dispatch_info
+						.actual_weight
+						.map(|actual_weight| {
+							<T as Config>::WeightInfo::set_user_shielding_key()
+								.saturating_add(actual_weight)
+						})
+						.into()
+				})
+				.map_err(|err| match err.post_info.actual_weight {
+					Some(actual_weight) => {
+						let weight_used = <T as Config>::WeightInfo::set_user_shielding_key()
 							.saturating_add(actual_weight);
 						let post_info = Some(weight_used).into();
 						DispatchErrorWithPostInfo { post_info, error: err.error }

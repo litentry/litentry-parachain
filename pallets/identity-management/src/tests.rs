@@ -59,3 +59,17 @@ fn test_verify_identity() {
 		System::assert_last_event(Event::IdentityManagement(crate::Event::VerifyIdentityRequested));
 	});
 }
+
+#[test]
+fn test_set_user_shielding_key() {
+	new_test_ext().execute_with(|| {
+		assert_ok!(IdentityManagement::set_user_shielding_key(
+			Origin::signed(1),
+			H256::from_slice(&TEST_MRENCLAVE),
+			vec![1u8; 2048]
+		));
+		System::assert_last_event(Event::IdentityManagement(
+			crate::Event::SetShieldingKeyRequested,
+		));
+	});
+}
