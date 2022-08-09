@@ -267,7 +267,7 @@ export function describeCrossChainTransfer(
             context.parachainConfig = parachainConfig
 
 
-            await startChainBridge(ethConfig, parachainConfig, ethConfig.wallets.bob.address, parachainConfig.bob.address, config.bridge_path, "./bridge/bob.json", "./bridge/bob.log")
+            await startChainBridge(ethConfig, parachainConfig, ethConfig.wallets.bob.address, parachainConfig.bob.address, config.bridge_path, "./bridge/bob.json", "/tmp/parachain_dev/bob.log")
             await sleep(5)
 
         });
