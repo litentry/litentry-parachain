@@ -28,7 +28,7 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
             destinationRecipientAddress);
         const beforeAccountData = await context.parachainConfig.api.query.system.account(context.parachainConfig.ferdie.address);
         await bridge.deposit(destinationChainID, destResourceId, data)
-        await sleep(30);
+        await sleep(36);
         const afterAccountData = await context.parachainConfig.api.query.system.account(context.parachainConfig.ferdie.address);
         assert.equal(bn100e12.add(beforeAccountData.data.free.toBn()).toString(), afterAccountData.data.free.toBn().toString())
     });

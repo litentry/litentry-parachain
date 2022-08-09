@@ -178,7 +178,7 @@ function emptyDir(directoryPath: string) {
     }
 }
 
-async function startChainBridge(ethConfig: EthConfig, parachainConfig: ParachainConfig, ethRelayer: string, parachainRelayer: string, config: string, log: string) {
+async function startChainBridge(ethConfig: EthConfig, parachainConfig: ParachainConfig, ethRelayer: string, parachainRelayer: string, bridgePath: string, config: string, log: string) {
     require('dotenv').config();
     emptyDir("./bridge/data")
     const ethBlock = await ethConfig.wallets.bob.provider.getBlockNumber();
@@ -186,7 +186,8 @@ async function startChainBridge(ethConfig: EthConfig, parachainConfig: Parachain
     generateBridgeConfig(ethConfig, ethRelayer, parachainRelayer, ethBlock, subBlock.number.toNumber(), config)
     const logging = fs.createWriteStream(log, {flags: 'w+'});
     const lsProcess = spawn(
-        `${process.env.GOPATH}/bin/chainbridge`,
+        // `${process.env.GOPATH}/bin/chainbridge`,
+        bridgePath,
         ['--verbosity', 'trace', '--blockstore', './bridge/data', '--config', config, '--keystore', './bridge/keys'],
         {env: {STAGE: "dev"}},
     );
@@ -262,7 +263,7 @@ export function describeCrossChainTransfer(
             context.parachainConfig = parachainConfig
 
 
-            await startChainBridge(ethConfig, parachainConfig, ethConfig.wallets.bob.address, parachainConfig.bob.address, "./bridge/bob.json", "./bridge/bob.log")
+            await startChainBridge(ethConfig, parachainConfig, ethConfig.wallets.bob.address, parachainConfig.bob.address, config.bridge_path, "./bridge/bob.json", "./bridge/bob.log")
             await sleep(5)
 
         });

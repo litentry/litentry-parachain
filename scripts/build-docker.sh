@@ -47,6 +47,10 @@ GITREPO=litentry-parachain
 
 # Build the image
 echo "------------------------------------------------------------"
+echo "Building ${GITUSER}/chainbridge:latest docker image ..."
+docker build ${NOCACHE_FLAG} --pull -f ./docker/bridge.dockerfile -t ${GITUSER}/chainbridge:latest .
+
+echo "------------------------------------------------------------"
 echo "Building ${GITUSER}/${GITREPO}:${TAG} docker image ..."
 docker build ${NOCACHE_FLAG} --pull -f ./docker/Dockerfile \
     --build-arg PROFILE="$PROFILE" \
