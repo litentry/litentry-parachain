@@ -584,7 +584,6 @@ impl cumulus_pallet_dmp_queue::Config for Runtime {
 }
 
 parameter_types! {
-	pub Period: u32 = prod_or_fast!(6 * HOURS, 2 * MINUTES, "LITENTRY_PERIOD");
 	pub const Offset: u32 = 0;
 }
 
@@ -617,6 +616,10 @@ parameter_types! {
 	pub const MinCandidateStk: Balance = 50 * DOLLARS;
 	pub const MinDelegation: Balance = 50 * DOLLARS;
 	pub const MinDelegatorStk: Balance = 50 * DOLLARS;
+}
+
+parameter_types! {
+	pub Period: u32 = prod_or_fast!(6 * HOURS, 2 * MINUTES, "LITENTRY_PERIOD");
 }
 
 impl pallet_parachain_staking::Config for Runtime {

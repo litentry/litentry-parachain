@@ -140,7 +140,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9093,
+	spec_version: 9094,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -591,7 +591,6 @@ impl cumulus_pallet_dmp_queue::Config for Runtime {
 }
 
 parameter_types! {
-	pub Period: u32 = prod_or_fast!(6 * HOURS, 2 * MINUTES, "ROCOCO_PERIOD");
 	pub const Offset: u32 = 0;
 }
 
@@ -633,7 +632,7 @@ impl pallet_parachain_staking::Config for Runtime {
 	/// Minimum round length is 2 minutes (10 * 12 second block times)
 	type MinBlocksPerRound = ConstU32<{ 2 * MINUTES }>;
 	/// Blocks per round
-	type DefaultBlocksPerRound = Period;
+	type DefaultBlocksPerRound = ConstU32<{ 2 * MINUTES }>;
 	/// Rounds before the collator leaving the candidates request can be executed
 	type LeaveCandidatesDelay = ConstU32<28>;
 	/// Rounds before the candidate bond increase/decrease can be executed
