@@ -18,39 +18,211 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+#[cfg(test)]
+mod mock;
+
+#[cfg(test)]
+mod tests;
+
+pub mod weights;
+
+pub use crate::weights::WeightInfo;
 pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::pallet_prelude::*;
+	use crate::weights::WeightInfo;
+	use frame_support::{
+		dispatch::{DispatchErrorWithPostInfo, Dispatchable, PostDispatchInfo},
+		pallet_prelude::*,
+		traits::IsSubType,
+		weights::GetDispatchInfo,
+	};
 	use frame_system::pallet_prelude::*;
+	use sp_core::H256;
+	use sp_std::prelude::*;
+	use teerex_primitives::Request;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + pallet_teerex::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type Call: Parameter
+			+ Dispatchable<Origin = Self::Origin, PostInfo = PostDispatchInfo>
+			+ GetDispatchInfo
+			+ From<pallet_teerex::Call<Self>>
+			+ IsSubType<Call<Self>>;
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::event]
-	pub enum Event<T: Config> {}
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
+	pub enum Event<T: Config> {
+		LinkIdentityRequested,
+		UnlinkIdentityRequested,
+		VerifyIdentityRequested,
+		SetShieldingKeyRequested,
+	}
 
 	#[pallet::error]
 	pub enum Error<T> {}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// The extrinsic used to verify the response from TEE side
-		#[pallet::weight(1_000)]
-		pub fn dummy(origin: OriginFor<T>) -> DispatchResult {
-			let _ = ensure_signed(origin)?;
-			log::error!(
-				target: "identity management",
-				"dummy called."
-			);
-			Ok(())
+		/// Link an identity
+		#[pallet::weight(<T as Config>::WeightInfo::link_identity())]
+		pub fn link_identity(
+			origin: OriginFor<T>,
+			shard: H256,
+			encrypted_data: Vec<u8>,
+		) -> DispatchResultWithPostInfo {
+			let _ = ensure_signed(origin.clone())?;
+
+			// Forward encrypted call to worker via teerex
+			let request = Request { shard, cyphertext: encrypted_data };
+			let call: <T as Config>::Call = pallet_teerex::Call::call_worker { request }.into();
+			let result = call.dispatch(origin);
+
+			Self::deposit_event(Event::LinkIdentityRequested);
+
+			// Parse dispatch result and update weight and error information
+			result
+				.map(|post_dispatch_info| {
+					post_dispatch_info
+						.actual_weight
+						.map(|actual_weight| {
+							<T as Config>::WeightInfo::link_identity().saturating_add(actual_weight)
+						})
+						.into()
+				})
+				.map_err(|err| match err.post_info.actual_weight {
+					Some(actual_weight) => {
+						let weight_used = <T as Config>::WeightInfo::link_identity()
+							.saturating_add(actual_weight);
+						let post_info = Some(weight_used).into();
+						DispatchErrorWithPostInfo { post_info, error: err.error }
+					},
+					None => err,
+				})
+		}
+
+		/// Unlink an identity
+		#[pallet::weight(<T as Config>::WeightInfo::unlink_identity())]
+		pub fn unlink_identity(
+			origin: OriginFor<T>,
+			shard: H256,
+			encrypted_data: Vec<u8>,
+		) -> DispatchResultWithPostInfo {
+			let _ = ensure_signed(origin.clone())?;
+
+			// Forward encrypted call to worker via teerex
+			let request = Request { shard, cyphertext: encrypted_data };
+			let call: <T as Config>::Call = pallet_teerex::Call::call_worker { request }.into();
+			let result = call.dispatch(origin);
+
+			Self::deposit_event(Event::UnlinkIdentityRequested);
+
+			// Parse dispatch result and update weight and error information
+			result
+				.map(|post_dispatch_info| {
+					post_dispatch_info
+						.actual_weight
+						.map(|actual_weight| {
+							<T as Config>::WeightInfo::unlink_identity()
+								.saturating_add(actual_weight)
+						})
+						.into()
+				})
+				.map_err(|err| match err.post_info.actual_weight {
+					Some(actual_weight) => {
+						let weight_used = <T as Config>::WeightInfo::unlink_identity()
+							.saturating_add(actual_weight);
+						let post_info = Some(weight_used).into();
+						DispatchErrorWithPostInfo { post_info, error: err.error }
+					},
+					None => err,
+				})
+		}
+
+		/// Verify a linked identity
+		#[pallet::weight(<T as Config>::WeightInfo::verify_identity())]
+		pub fn verify_identity(
+			origin: OriginFor<T>,
+			shard: H256,
+			encrypted_data: Vec<u8>,
+		) -> DispatchResultWithPostInfo {
+			let _ = ensure_signed(origin.clone())?;
+
+			// Forward encrypted call to worker via teerex
+			let request = Request { shard, cyphertext: encrypted_data };
+			let call: <T as Config>::Call = pallet_teerex::Call::call_worker { request }.into();
+			let result = call.dispatch(origin);
+
+			Self::deposit_event(Event::VerifyIdentityRequested);
+
+			// Parse dispatch result and update weight and error information
+			result
+				.map(|post_dispatch_info| {
+					post_dispatch_info
+						.actual_weight
+						.map(|actual_weight| {
+							<T as Config>::WeightInfo::verify_identity()
+								.saturating_add(actual_weight)
+						})
+						.into()
+				})
+				.map_err(|err| match err.post_info.actual_weight {
+					Some(actual_weight) => {
+						let weight_used = <T as Config>::WeightInfo::verify_identity()
+							.saturating_add(actual_weight);
+						let post_info = Some(weight_used).into();
+						DispatchErrorWithPostInfo { post_info, error: err.error }
+					},
+					None => err,
+				})
+		}
+
+		/// Set or update user's shielding key
+		#[pallet::weight(<T as Config>::WeightInfo::set_user_shielding_key())]
+		pub fn set_user_shielding_key(
+			origin: OriginFor<T>,
+			shard: H256,
+			encrypted_data: Vec<u8>,
+		) -> DispatchResultWithPostInfo {
+			let _ = ensure_signed(origin.clone())?;
+
+			// Forward encrypted call to worker via teerex
+			let request = Request { shard, cyphertext: encrypted_data };
+			let call: <T as Config>::Call = pallet_teerex::Call::call_worker { request }.into();
+			let result = call.dispatch(origin);
+
+			Self::deposit_event(Event::SetShieldingKeyRequested);
+
+			// Parse dispatch result and update weight and error information
+			result
+				.map(|post_dispatch_info| {
+					post_dispatch_info
+						.actual_weight
+						.map(|actual_weight| {
+							<T as Config>::WeightInfo::set_user_shielding_key()
+								.saturating_add(actual_weight)
+						})
+						.into()
+				})
+				.map_err(|err| match err.post_info.actual_weight {
+					Some(actual_weight) => {
+						let weight_used = <T as Config>::WeightInfo::set_user_shielding_key()
+							.saturating_add(actual_weight);
+						let post_info = Some(weight_used).into();
+						DispatchErrorWithPostInfo { post_info, error: err.error }
+					},
+					None => err,
+				})
 		}
 	}
 }
