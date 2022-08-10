@@ -110,6 +110,11 @@ async function setupCrossChainTransfer(pConfig: ParachainConfig, eConfig: EthCon
         }
     }
 
+    const filterMode = (await pConfig.api.query.extrinsicFilter.mode()).toHuman()
+    if ("Test" !== filterMode) {
+        extrinsic.push(pConfig.api.tx.sudo.sudo(pConfig.api.tx.extrinsicFilter.setMode("Test")))
+    }
+
     const whitelist = await pConfig.api.query.chainBridge.chainNonces(sourceChainID)
     if (!whitelist.toHuman()) {
         extrinsic.push(pConfig.api.tx.sudo.sudo(pConfig.api.tx.chainBridge.whitelistChain(sourceChainID)))
