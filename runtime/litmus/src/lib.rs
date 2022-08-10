@@ -729,6 +729,8 @@ impl pallet_sidechain::Config for Runtime {
 
 impl pallet_identity_management::Config for Runtime {
 	type Event = Event;
+	type Call = Call;
+	type WeightInfo = ();
 }
 
 impl runtime_common::BaseRuntimeRequirements for Runtime {}
@@ -885,6 +887,7 @@ mod benches {
 		[pallet_session, SessionBench::<Runtime>]
 		[pallet_collator_selection, CollatorSelection]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
+		[pallet_identity_management, IdentityManagement]
 		[pallet_teerex, Teerex]
 		[pallet_sidechain, Sidechain]
 	);
