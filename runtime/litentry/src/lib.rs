@@ -837,6 +837,8 @@ impl Contains<Call> for NormalModeFilter {
 			Call::Vesting(pallet_vesting::Call::vest { .. }) |
 			// Utility
 			Call::Utility(_) |
+			// Session
+			Call::Session(_) |
 			// ParachainStaking; Only the collator part
 			Call::ParachainStaking(pallet_parachain_staking::Call::join_candidates { .. }) |
 			Call::ParachainStaking(pallet_parachain_staking::Call::schedule_leave_candidates { .. }) |

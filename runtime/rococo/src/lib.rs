@@ -885,6 +885,8 @@ impl Contains<Call> for NormalModeFilter {
 			Call::Democracy(_) |
 			// Utility
 			Call::Utility(_) |
+			// Seesion
+			Call::Session(_) |
 			// ParachainStaking; Only the collator part
 			Call::ParachainStaking(pallet_parachain_staking::Call::join_candidates { .. }) |
 			Call::ParachainStaking(pallet_parachain_staking::Call::schedule_leave_candidates { .. }) |

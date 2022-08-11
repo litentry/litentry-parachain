@@ -856,7 +856,9 @@ impl Contains<Call> for NormalModeFilter {
 			// democracy, we don't subdivide the calls, so we allow public proposals
 			Call::Democracy(_) |
 			// Utility
-			Call::Utility(_)
+			Call::Utility(_) |
+			// Session
+			Call::Session(_)
 		)
 	}
 }
