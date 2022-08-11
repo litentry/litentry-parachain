@@ -13,6 +13,7 @@ members = [
     'runtime/rococo',
     'runtime/moonbase',
     'runtime/common',
+    'pallets/tee/identity-management',
 ]
 
 [profile.release]
