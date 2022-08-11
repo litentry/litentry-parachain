@@ -176,5 +176,5 @@ clippy:
 	SKIP_WASM_BUILD=1 cargo clippy --workspace --all-targets --all-features -- -D warnings
 
 define pkgid
-	$(shell cargo pkgid $1)
+$(shell cargo pkgid $1)
 endef
