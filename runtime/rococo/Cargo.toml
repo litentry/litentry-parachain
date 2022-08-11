@@ -96,8 +96,8 @@ pallet-identity-management = { path = "../../pallets/identity-management", defau
 pallet-parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
 
 # TEE pallets - TODO: patch it with litentry teerex
-pallet-teerex = { git = "https://github.com/litentry/integritee-pallets.git", default-features = false, branch = "polkadot-v0.9.26" }
-pallet-sidechain = { git = "https://github.com/litentry/integritee-pallets.git", default-features = false, branch = "polkadot-v0.9.26" }
+pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "polkadot-v0.9.26" }
+pallet-sidechain = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "polkadot-v0.9.26" }
 
 [dev-dependencies]
 hex-literal = "0.3.4"
@@ -216,6 +216,7 @@ runtime-benchmarks = [
 	"pallet-drop3/runtime-benchmarks",
 	"pallet-extrinsic-filter/runtime-benchmarks",
 	"cumulus-pallet-xcmp-queue/runtime-benchmarks",
+	"pallet-identity-management/runtime-benchmarks",
 	"pallet-teerex/runtime-benchmarks",
 	"pallet-sidechain/runtime-benchmarks",
 ]
