@@ -16,5 +16,8 @@ docker run -d --rm --name chainbridge litentry/chainbridge bash -c 'ls /go/bin/ 
 docker cp chainbridge:/go/bin/chainbridge ${TMPDIR}/
 echo "copy binary:chainbridge to ${TMPDIR}"
 
-${ROOTDIR}/scripts/geth/run_geth.sh
+echo "------------------------------------------------------------"
 
+docker rm -f geth &>/dev/null
+docker run -d --rm --entrypoint 'sh' --name 'geth' -v ${ROOTDIR}/scripts/geth:/data/ -p 8546:8546 -p 8545:8545 ethereum/client-go:latest /data/run_geth.sh docker /data
+echo "runing geth...(container name: geth)"

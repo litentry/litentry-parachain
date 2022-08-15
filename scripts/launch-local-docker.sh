@@ -19,9 +19,6 @@ function print_divider() {
   echo "------------------------------------------------------------"
 }
 
-TMPDIR=/tmp/parachain_dev
-[ -d "$TMPDIR" ] || mkdir -p "$TMPDIR"
-
 ROOTDIR=$(git rev-parse --show-toplevel)
 cd "$ROOTDIR/docker/generated-$CHAIN/"
 
@@ -32,25 +29,6 @@ docker-compose up -d --build
 sleep 10
 
 parachain_service=$(docker-compose ps --services --filter 'status=running' | grep -F 'parachain-')
-
-print_divider
-
-[ -d "${ROOTDIR}/scripts/bridge/" ] || mkdir -p "${ROOTDIR}/scripts/bridge/"
-# Build the image
-echo "Building litentry/chainbridge:latest docker image ..."
-docker build --no-cache -f ${ROOTDIR}/docker/bridge.dockerfile -t litentry/chainbridge:latest .
-
-print_divider
-
-docker run -d --rm --name chainbridge litentry/chainbridge bash -c 'ls /go/ChainBridge/build && sleep 10'
-docker cp chainbridge:/go/ChainBridge/build/chainbridge ${TMPDIR}/
-echo "copy binary:chainbridge to ${TMPDIR}"
-
-print_divider
-
-docker rm -f geth &>/dev/null
-docker run -d --rm --entrypoint 'sh' --name 'geth' -v ${ROOTDIR}/scripts/geth:/data/ -p 8546:8546 -p 8545:8545 ethereum/client-go:latest /data/run_geth.sh docker /data
-echo "runing geth...(container name: geth)"
 
 print_divider
 

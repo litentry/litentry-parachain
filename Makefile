@@ -82,6 +82,9 @@ build-node-tryruntime:
 	cargo build --locked --features try-runtime --release
 	
 # launch a local network
+.PHONY: launch-docker-bridge
+launch-docker-bridge:
+	@./scripts/launch-local-bridge-docker.sh
 
 .PHONY: launch-docker-litentry ## Launch a local litentry-parachain network with docker
 launch-docker-litentry: generate-docker-compose-litentry
@@ -110,12 +113,12 @@ test-cargo-all:
 	@cargo test --release --all
 
 .PHONY: test-ts-docker-litentry ## Run litentry ts tests with docker without clean-up
-test-ts-docker-litentry: launch-docker-litentry
-	@./scripts/run-ts-test.sh
+test-ts-docker-litentry: launch-docker-litentry launch-docker-bridge
+	@./scripts/run-ts-test.sh bridge
 
 .PHONY: test-ts-docker-litmus ## Run litmus ts tests with docker without clean-up
-test-ts-docker-litmus: launch-docker-litmus
-	@./scripts/run-ts-test.sh
+test-ts-docker-litmus: launch-docker-litmus launch-docker-bridge
+	@./scripts/run-ts-test.sh bridge
 
 .PHONY: test-ts-binary-litentry ## Run litentry ts tests with binary without clean-up
 test-ts-binary-litentry: launch-binary-litentry
@@ -123,10 +126,6 @@ test-ts-binary-litentry: launch-binary-litentry
 
 .PHONY: test-ts-binary-litmus ## Run litmus ts tests with binary without clean-up
 test-ts-binary-litmus: launch-binary-litmus
-	@./scripts/run-ts-test.sh
-
-test-ts-binary-rococo: launch-binary-rococo
-	@./scripts/launch-local-bridge-binary.sh
 	@./scripts/run-ts-test.sh
 
 # clean up
