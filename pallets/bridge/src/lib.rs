@@ -241,6 +241,8 @@ pub mod pallet {
 		InsufficientBalance,
 
 		CannotPayAsFee,
+
+		NonceOverFlow,
 	}
 
 	#[pallet::storage]
@@ -279,6 +281,9 @@ pub mod pallet {
 	#[pallet::getter(fn resources)]
 	pub type Resources<T> = StorageMap<_, Blake2_256, ResourceId, Vec<u8>>;
 
+	// ChainBridge Service(https://github.com/litentry/ChainBridge) read this storage for each block,
+	// and if this storage has value, it will perform cross-chain transfer.
+	// For more details, see at: https://github.com/litentry/ChainBridge/blob/main/chains/substrate/listener.go#L186-L237
 	#[pallet::storage]
 	#[pallet::getter(fn bridge_events)]
 	pub type BridgeEvents<T> = StorageValue<_, Vec<BridgeEvent>, ValueQuery>;
@@ -488,10 +493,13 @@ pub mod pallet {
 		}
 
 		/// Increments the deposit nonce for the specified chain ID
-		fn bump_nonce(id: BridgeChainId) -> DepositNonce {
-			let nonce = Self::chains(id).unwrap_or_default() + 1;
-			ChainNonces::<T>::insert(id, nonce);
-			nonce
+		fn bump_nonce(id: BridgeChainId) -> Result<DepositNonce, Error<T>> {
+			let nonce = Self::chains(id).unwrap_or_default();
+			let new_nonce = nonce.checked_add(1u64).ok_or(Error::<T>::NonceOverFlow);
+			if new_nonce.is_ok() {
+				ChainNonces::<T>::insert(id, new_nonce.as_ref().unwrap());
+			}
+			new_nonce
 		}
 
 		// *** Admin methods ***
@@ -676,7 +684,7 @@ pub mod pallet {
 			// transfer fee to treasury
 			T::Currency::transfer(&sender, &T::TreasuryAccount::get(), fee, AllowDeath)?;
 
-			let nonce = Self::bump_nonce(dest_id);
+			let nonce = Self::bump_nonce(dest_id)?;
 			BridgeEvents::<T>::append(BridgeEvent::FungibleTransfer(
 				dest_id,
 				nonce,

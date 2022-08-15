@@ -98,7 +98,7 @@ impl pallet_balances::Config for Test {
 parameter_types! {
 	pub const TestChainId: u8 = 5;
 	pub const ProposalLifetime: u64 = 50;
-		pub const TreasuryAccount:u64 = 0x8;
+	pub const TreasuryAccount:u64 = 0x8;
 }
 
 impl Config for Test {
