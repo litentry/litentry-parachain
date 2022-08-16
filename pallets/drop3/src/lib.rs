@@ -372,7 +372,7 @@ pub mod pallet {
 				name.clone().try_into().expect("reward pool name is too long");
 
 			// reserve the owner's balance
-			let _ = T::Currency::reserve(&sender, total)?;
+			T::Currency::reserve(&sender, total)?;
 			let next_id: T::PoolId = Self::get_next_pool_id()?;
 			// create the reward pool
 			let new_reward_pool = RewardPool::<_, _, _, _, _> {
