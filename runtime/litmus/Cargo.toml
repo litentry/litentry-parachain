@@ -97,6 +97,7 @@ pallet-identity-management = { path = "../../pallets/identity-management", defau
 # TEE pallets - TODO: patch it with litentry teerex
 pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "polkadot-v0.9.26" }
 pallet-sidechain = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "polkadot-v0.9.26" }
+pallet-teeracle = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "polkadot-v0.9.26" }
 
 [dev-dependencies]
 hex-literal = "0.3.4"
