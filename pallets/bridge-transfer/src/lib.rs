@@ -17,12 +17,12 @@
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub use pallet::*;
+
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
 mod tests;
-
-pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -32,6 +32,7 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use sp_runtime::traits::CheckedAdd;
+	use sp_std::vec::Vec;
 
 	pub use pallet_bridge as bridge;
 
@@ -68,7 +69,6 @@ pub mod pallet {
 	}
 
 	#[pallet::event]
-	// #[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {}
 
 	#[pallet::error]
@@ -92,6 +92,20 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// Transfers some amount of the native token to some recipient on a (whitelisted)
+		/// destination chain.
+		#[pallet::weight(195_000_000)]
+		pub fn transfer_native(
+			origin: OriginFor<T>,
+			amount: bridge::BalanceOf<T>,
+			recipient: Vec<u8>,
+			dest_id: bridge::BridgeChainId,
+		) -> DispatchResult {
+			let source = ensure_signed(origin)?;
+			let resource_id = T::NativeTokenResourceId::get();
+			<bridge::Pallet<T>>::transfer_fungible(source, dest_id, resource_id, recipient, amount)
+		}
+
 		/// Executes a simple currency transfer using the bridge account as the source
 		#[pallet::weight(195_000_000)]
 		pub fn transfer(
