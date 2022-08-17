@@ -19,8 +19,8 @@
 use super::{
 	mock::{
 		assert_events, new_test_ext, new_test_ext_initialized, Balances, Bridge, Call, Event,
-		Origin, ProposalLifetime, System, Test, TestChainId, ENDOWED_BALANCE, RELAYER_A, RELAYER_B,
-		RELAYER_C, TEST_THRESHOLD,
+		Origin, ProposalLifetime, System, Test, TestChainId, TreasuryAccount, ENDOWED_BALANCE,
+		RELAYER_A, RELAYER_B, RELAYER_C, TEST_THRESHOLD,
 	},
 	pallet::Event as PalletEvent,
 	*,
@@ -453,5 +453,109 @@ fn proposal_expires() {
 		assert_eq!(prop, expected);
 
 		assert_events(vec![Event::Bridge(PalletEvent::VoteFor(src_id, prop_id, RELAYER_A))]);
+	})
+}
+
+#[test]
+fn transfer_fungible() {
+	new_test_ext().execute_with(|| {
+		let dest_id: BridgeChainId = 0;
+		let resource_id = derive_resource_id(dest_id, b"remark");
+		let dest_account: Vec<u8> = vec![1];
+		assert_ok!(Pallet::<Test>::update_fee(Origin::root(), dest_id, 10));
+		assert_ok!(Pallet::<Test>::whitelist_chain(Origin::root(), dest_id));
+		assert_ok!(Pallet::<Test>::transfer_fungible(
+			RELAYER_A,
+			dest_id,
+			resource_id,
+			dest_account.clone(),
+			100,
+		));
+		assert_eq!(ChainNonces::<Test>::get(dest_id), Some(1u64));
+		assert_eq!(pallet_balances::Pallet::<Test>::free_balance(&TreasuryAccount::get()), 10);
+		assert_eq!(
+			pallet_balances::Pallet::<Test>::free_balance(&RELAYER_A),
+			ENDOWED_BALANCE - 100
+		);
+		assert_events(vec![Event::Bridge(PalletEvent::FungibleTransfer(
+			dest_id,
+			1,
+			resource_id,
+			100 - 10,
+			dest_account,
+		))]);
+	})
+}
+
+#[test]
+fn transfer_fungible_no_fee() {
+	new_test_ext().execute_with(|| {
+		let dest_id: BridgeChainId = 0;
+		let resource_id = derive_resource_id(dest_id, b"remark");
+		let dest_account: Vec<u8> = vec![1];
+		assert_ok!(Pallet::<Test>::whitelist_chain(Origin::root(), dest_id));
+		assert_noop!(
+			Pallet::<Test>::transfer_fungible(RELAYER_A, dest_id, resource_id, dest_account, 100,),
+			Error::<Test>::CannotPayAsFee
+		);
+	})
+}
+
+#[test]
+fn transfer_fungible_no_whitelist() {
+	new_test_ext().execute_with(|| {
+		let dest_id: BridgeChainId = 0;
+		let resource_id = derive_resource_id(dest_id, b"remark");
+		let dest_account: Vec<u8> = vec![1];
+		assert_noop!(
+			Pallet::<Test>::transfer_fungible(RELAYER_A, dest_id, resource_id, dest_account, 100,),
+			Error::<Test>::ChainNotWhitelisted
+		);
+	})
+}
+
+#[test]
+fn transfer_fungible_insufficient_funds_fee() {
+	new_test_ext().execute_with(|| {
+		let dest_id: BridgeChainId = 0;
+		let resource_id = derive_resource_id(dest_id, b"remark");
+		let dest_account: Vec<u8> = vec![1];
+		let fee: BalanceOf<Test> = 10;
+		let transfer_amount = fee;
+		assert_ok!(Pallet::<Test>::update_fee(Origin::root(), dest_id, fee));
+		assert_ok!(Pallet::<Test>::whitelist_chain(Origin::root(), dest_id));
+		assert_noop!(
+			Pallet::<Test>::transfer_fungible(
+				RELAYER_A,
+				dest_id,
+				resource_id,
+				dest_account,
+				transfer_amount
+			),
+			Error::<Test>::FeeTooExpensive
+		);
+	})
+}
+
+#[test]
+fn transfer_fungible_insufficient_free_balance() {
+	new_test_ext().execute_with(|| {
+		let dest_id: BridgeChainId = 0;
+		let resource_id = derive_resource_id(dest_id, b"remark");
+		let dest_account: Vec<u8> = vec![1];
+		let fee: BalanceOf<Test> = 10;
+		let transfer_amount = 100;
+		assert_ok!(Pallet::<Test>::update_fee(Origin::root(), dest_id, fee));
+		assert_ok!(Pallet::<Test>::whitelist_chain(Origin::root(), dest_id));
+		assert_noop!(
+			Pallet::<Test>::transfer_fungible(
+				0x7,
+				dest_id,
+				resource_id,
+				dest_account,
+				transfer_amount
+			),
+			Error::<Test>::InsufficientBalance
+		);
 	})
 }

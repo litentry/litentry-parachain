@@ -82,6 +82,9 @@ build-node-tryruntime:
 	cargo build --locked --features try-runtime --release
 	
 # launch a local network
+.PHONY: launch-docker-bridge
+launch-docker-bridge:
+	@./scripts/launch-local-bridge-docker.sh
 
 .PHONY: launch-docker-litentry ## Launch a local litentry-parachain network with docker
 launch-docker-litentry: generate-docker-compose-litentry
@@ -99,6 +102,10 @@ launch-binary-litentry:
 launch-binary-litmus:
 	@./scripts/launch-local-binary.sh litmus
 
+.PHONY: launch-binary-rococo ## Launch a local rococo-parachain network with binaries
+launch-binary-rococo:
+	@./scripts/launch-local-binary.sh rococo
+
 # run tests
 
 .PHONY: test-cargo-all ## cargo test --all
@@ -106,12 +113,12 @@ test-cargo-all:
 	@cargo test --release --all
 
 .PHONY: test-ts-docker-litentry ## Run litentry ts tests with docker without clean-up
-test-ts-docker-litentry: launch-docker-litentry
-	@./scripts/run-ts-test.sh
+test-ts-docker-litentry: launch-docker-litentry launch-docker-bridge
+	@./scripts/run-ts-test.sh bridge
 
 .PHONY: test-ts-docker-litmus ## Run litmus ts tests with docker without clean-up
-test-ts-docker-litmus: launch-docker-litmus
-	@./scripts/run-ts-test.sh
+test-ts-docker-litmus: launch-docker-litmus launch-docker-bridge
+	@./scripts/run-ts-test.sh bridge
 
 .PHONY: test-ts-binary-litentry ## Run litentry ts tests with binary without clean-up
 test-ts-binary-litentry: launch-binary-litentry
@@ -168,5 +175,5 @@ clippy:
 	SKIP_WASM_BUILD=1 cargo clippy --workspace --all-targets --all-features -- -D warnings
 
 define pkgid
-	$(shell cargo pkgid $1)
+$(shell cargo pkgid $1)
 endef

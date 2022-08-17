@@ -1,10 +1,19 @@
 import 'mocha';
 
 import '@polkadot/api-augment';
-import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
-import { AddressOrPair, ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
-import { KeyringPair } from '@polkadot/keyring/types';
-import { TypeRegistry } from '@polkadot/types/create';
+import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
+import {AddressOrPair, ApiTypes, SubmittableExtrinsic,} from '@polkadot/api/types';
+import {KeyringPair} from '@polkadot/keyring/types';
+import {BN} from '@polkadot/util'
+
+export class ParachainConfig {
+    api!: ApiPromise;
+    alice!: KeyringPair;
+    bob!: KeyringPair;
+    eve!: KeyringPair;
+    ferdie!: KeyringPair;
+}
+
 
 export function loadConfig() {
     require('dotenv').config();
@@ -26,7 +35,7 @@ export function sleep(secs: number) {
     });
 }
 
-async function initApiPromise(config: any) {
+export async function initApiPromise(config: any): Promise<ParachainConfig> {
     console.log(`Initiating the API (ignore message "Unable to resolve type B..." and "Unknown types found...")`);
     // Provider is set for parachain node
     const wsProvider = new WsProvider(config.parachain_ws);
@@ -40,10 +49,11 @@ async function initApiPromise(config: any) {
     console.log(`Genesis at block: ${api.genesisHash.toHex()}`);
 
     // Get keyring of Alice and Bob
-    const keyring = new Keyring({ type: 'sr25519' });
+    const keyring = new Keyring({type: 'sr25519'});
     const alice = keyring.addFromUri('//Alice');
     const bob = keyring.addFromUri('//Bob');
     const eve = keyring.addFromUri('//Eve');
+    const ferdie = keyring.addFromUri('//Ferdie');
 
     // Insert ocw session key
     const resInsertKey = api.rpc.author.insertKey(
@@ -52,20 +62,24 @@ async function initApiPromise(config: any) {
         '0x8c35b97c56099cf3b5c631d1f296abbb11289857e74a8f60936290080d56da6d'
     );
 
-	// Set Eve's balance to 1000000000000000
-	const txSetBalance = api.tx.sudo.sudo(
-		api.tx.balances.setBalance(eve.address, 1000000000000000, 0)
-		);
-	await signAndSend(txSetBalance, alice);
-
-    const { nonce: nonceAlice, data: balanceAlice } = await api.query.system.account(alice.address);
-    const { nonce: nonceBob, data: balanceBob } = await api.query.system.account(bob.address);
-    const { nonce: nonceEve, data: balanceEve } = await api.query.system.account(eve.address);
+    // Set Eve's balance to 1000000000000000
+    const eve_info = await api.query.system.account(eve.address);
+    if (eve_info.data.free.lt(new BN(1000000000000000))) {
+        const txSetBalance = api.tx.sudo.sudo(
+            api.tx.balances.setBalance(eve.address, 1000000000000000, 0)
+        );
+        await signAndSend(txSetBalance, alice);
+    }
+    const {nonce: nonceAlice, data: balanceAlice} = await api.query.system.account(alice.address);
+    const {nonce: nonceBob, data: balanceBob} = await api.query.system.account(bob.address);
+    const {nonce: nonceEve, data: balanceEve} = await api.query.system.account(eve.address);
+    const {nonce: nonceFerdie, data: balanceFerdie} = await api.query.system.account(ferdie.address);
     console.log(`Alice Substrate Account: ${alice.address} (nonce: ${nonceAlice}) balance, free: ${balanceAlice.free.toHex()}`);
     console.log(`Bob Substrate Account: ${bob.address} (nonce: ${nonceBob}) balance, free: ${balanceBob.free.toHex()}`);
     console.log(`Eve Substrate Account: ${eve.address} (nonce: ${nonceEve}) balance, free: ${balanceEve.free.toHex()}`);
+    console.log(`Ferdie Substrate Account: ${ferdie.address} (nonce: ${nonceFerdie}) balance, free: ${balanceFerdie.free.toHex()}`);
 
-    return { api, alice, bob, eve};
+    return {api, alice, bob, eve, ferdie};
 }
 
 export function signAndSend(tx: SubmittableExtrinsic<ApiTypes>, account: AddressOrPair) {
@@ -89,17 +103,18 @@ export function signAndSend(tx: SubmittableExtrinsic<ApiTypes>, account: Address
 export function describeLitentry(
     title: string,
     specFilename: string,
-    cb: (context: { api: ApiPromise; alice: KeyringPair; bob: KeyringPair , eve: KeyringPair}) => void
+    cb: (context: ParachainConfig) => void
 ) {
     describe(title, function () {
         // Set timeout to 6000 seconds (Because of 50-blocks delay of rococo, so called "training wheels")
         this.timeout(6000000);
 
-        let context: { api: ApiPromise; alice: KeyringPair; bob: KeyringPair; eve: KeyringPair} = {
+        let context: ParachainConfig = {
             api: {} as ApiPromise,
             alice: {} as KeyringPair,
             bob: {} as KeyringPair,
             eve: {} as KeyringPair,
+            ferdie: {} as KeyringPair,
         };
         // Making sure the Litentry node has started
         before('Starting Litentry Test Node', async function () {
@@ -111,7 +126,8 @@ export function describeLitentry(
             context.eve = initApi.eve;
         });
 
-        after(async function () {});
+        after(async function () {
+        });
 
         cb(context);
     });
