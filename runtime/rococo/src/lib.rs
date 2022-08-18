@@ -740,9 +740,26 @@ parameter_types! {
 	pub const NativeTokenResourceId: [u8; 32] = hex_literal::hex!("00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001");
 }
 
+pub struct TechnicalCommitteeProvider;
+impl SortedMembers<AccountId> for TechnicalCommitteeProvider {
+	fn contains(who: &AccountId) -> bool {
+		TechnicalCommittee::is_member(who)
+	}
+
+	fn sorted_members() -> Vec<AccountId> {
+		TechnicalCommittee::members()
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn add(_: &AccountId) {
+		unimplemented!()
+	}
+}
+
 impl pallet_bridge_transfer::Config for Runtime {
 	type Event = Event;
 	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
+	type TransferNativeMembers = TechnicalCommitteeProvider;
 	type Currency = Balances;
 	type NativeTokenResourceId = NativeTokenResourceId;
 	type MaximumIssuance = MaximumIssuance;
