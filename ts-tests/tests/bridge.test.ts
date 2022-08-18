@@ -104,7 +104,7 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
         const total_issuance = (await context.parachainConfig.api.query.balances.totalIssuance()).toBn()
         const maximum_issuance = new BN(context.parachainConfig.api.consts.bridgeTransfer.maximumIssuance.toString())
         await context.ethConfig.erc20.mint(context.ethConfig.wallets.bob.address, maximum_issuance.sub(new BN(1000)).mul(new BN(1000000)).toString())
-        const depositAmount = maximum_issuance.sub(total_issuance).sub(new BN(1000)).mul(new BN(1000000))
+        const depositAmount = maximum_issuance.sub(total_issuance).add(new BN(1000)).mul(new BN(1000000))
         let destinationChainID = 1;
         const destinationRecipientAddress = "0x1cbd2d43530a44705ad088af313e18f80b53ef16b36177cd4b77b846f2a5f07c";
         await erc20.approve(context.ethConfig.erc20Handler.address, `0x${depositAmount.toString('hex')}`)
