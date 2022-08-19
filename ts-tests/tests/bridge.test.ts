@@ -100,7 +100,7 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
         // substrate native token
         const destResourceId = context.parachainConfig.api.consts.bridgeTransfer.nativeTokenResourceId.toHex()
         const total_issuance = (await context.parachainConfig.api.query.balances.totalIssuance()).toBn()
-        const maximum_issuance = new BN(context.parachainConfig.api.consts.bridgeTransfer.maximumIssuance.toString())
+        const maximum_issuance = new BN((await context.parachainConfig.api.query.bridgeTransfer.maximumIssuance()).toString())
         await context.ethConfig.erc20.mint(context.ethConfig.wallets.bob.address, maximum_issuance.sub(new BN(1000)).mul(new BN(1000000)).toString())
         const depositAmount = maximum_issuance.sub(total_issuance).add(new BN(1000)).mul(new BN(1000000))
         let destinationChainID = 1;
