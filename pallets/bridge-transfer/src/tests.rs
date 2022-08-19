@@ -20,8 +20,8 @@ use super::{
 	bridge,
 	mock::{
 		assert_events, balances, new_test_ext, Balances, Bridge, BridgeTransfer, Call, Event,
-		NativeTokenResourceId, Origin, ProposalLifetime, Test, ENDOWED_BALANCE, MAXIMUM_ISSURANCE,
-		RELAYER_A, RELAYER_B, RELAYER_C,
+		NativeTokenResourceId, Origin, ProposalLifetime, Test, TreasuryAccount, ENDOWED_BALANCE,
+		MAXIMUM_ISSURANCE, RELAYER_A, RELAYER_B, RELAYER_C,
 	},
 	*,
 };
@@ -65,6 +65,35 @@ fn transfer() {
 			who: RELAYER_A,
 			amount: 10,
 		})]);
+	})
+}
+
+#[test]
+fn transfer_native() {
+	new_test_ext().execute_with(|| {
+		let dest_bridge_id: bridge::BridgeChainId = 0;
+		let resource_id = NativeTokenResourceId::get();
+		let dest_account: Vec<u8> = vec![1];
+		assert_ok!(pallet_bridge::Pallet::<Test>::update_fee(Origin::root(), dest_bridge_id, 10));
+		assert_ok!(pallet_bridge::Pallet::<Test>::whitelist_chain(Origin::root(), dest_bridge_id));
+		assert_ok!(Pallet::<Test>::transfer_native(
+			Origin::signed(RELAYER_A),
+			100,
+			dest_account.clone(),
+			dest_bridge_id
+		));
+		assert_eq!(pallet_balances::Pallet::<Test>::free_balance(&TreasuryAccount::get()), 10);
+		assert_eq!(
+			pallet_balances::Pallet::<Test>::free_balance(&RELAYER_A),
+			ENDOWED_BALANCE - 100
+		);
+		assert_events(vec![Event::Bridge(bridge::Event::FungibleTransfer(
+			dest_bridge_id,
+			1,
+			resource_id,
+			100 - 10,
+			dest_account,
+		))]);
 	})
 }
 
@@ -230,4 +259,31 @@ fn create_successful_transfer_proposal() {
 			Event::Bridge(bridge::Event::ProposalSucceeded(src_id, prop_id)),
 		]);
 	})
+}
+
+#[test]
+fn set_maximum_issuance() {
+	new_test_ext().execute_with(|| {
+		assert_eq!(pallet::MaximumIssuance::<Test>::get(), mock::MaximumIssuance::get());
+		assert_ok!(pallet::Pallet::<Test>::set_maximum_issuance(Origin::signed(RELAYER_A), 2));
+		assert_eq!(pallet::MaximumIssuance::<Test>::get(), 2);
+		frame_system::Pallet::<Test>::assert_last_event(
+			crate::Event::<Test>::MaximumIssuanceChanged {
+				old_value: mock::MaximumIssuance::get(),
+			}
+			.into(),
+		);
+	});
+}
+
+#[test]
+fn set_maximum_issuance_fails_with_unprivileged_origin() {
+	new_test_ext().execute_with(|| {
+		assert_eq!(pallet::MaximumIssuance::<Test>::get(), mock::MaximumIssuance::get());
+		assert_noop!(
+			pallet::Pallet::<Test>::set_maximum_issuance(Origin::signed(RELAYER_B), 2),
+			sp_runtime::DispatchError::BadOrigin
+		);
+		assert_eq!(pallet::MaximumIssuance::<Test>::get(), mock::MaximumIssuance::get());
+	});
 }

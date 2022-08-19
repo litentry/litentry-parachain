@@ -17,21 +17,22 @@
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub use pallet::*;
+
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
 mod tests;
 
-pub use pallet::*;
-
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::{
 		pallet_prelude::*,
-		traits::{fungible::Mutate, Currency, StorageVersion},
+		traits::{fungible::Mutate, Currency, SortedMembers, StorageVersion},
 	};
 	use frame_system::pallet_prelude::*;
-	use sp_runtime::traits::CheckedAdd;
+	use sp_runtime::traits::{BadOrigin, CheckedAdd};
+	use sp_std::vec::Vec;
 
 	pub use pallet_bridge as bridge;
 
@@ -56,6 +57,12 @@ pub mod pallet {
 		/// the bridge pallet
 		type BridgeOrigin: EnsureOrigin<Self::Origin, Success = Self::AccountId>;
 
+		/// The priviledged accounts to call the transfer_native
+		type TransferNativeMembers: SortedMembers<Self::AccountId>;
+
+		/// The privileged origin to call update_maximum_issuance
+		type SetMaximumIssuanceOrigin: EnsureOrigin<Self::Origin>;
+
 		/// The currency mechanism.
 		type Currency: Currency<Self::AccountId>
 			+ Mutate<Self::AccountId, Balance = BalanceOf<Self>>;
@@ -64,12 +71,15 @@ pub mod pallet {
 		type NativeTokenResourceId: Get<ResourceId>;
 
 		#[pallet::constant]
-		type MaximumIssuance: Get<BalanceOf<Self>>;
+		type DefaultMaximumIssuance: Get<BalanceOf<Self>>;
 	}
 
 	#[pallet::event]
-	// #[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {}
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
+	pub enum Event<T: Config> {
+		/// MaximumIssuance was changed
+		MaximumIssuanceChanged { old_value: BalanceOf<T> },
+	}
 
 	#[pallet::error]
 	pub enum Error<T> {
@@ -90,8 +100,28 @@ pub mod pallet {
 		BalanceOf<T>,
 	>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn maximum_issuance)]
+	pub type MaximumIssuance<T: Config> =
+		StorageValue<_, BalanceOf<T>, ValueQuery, T::DefaultMaximumIssuance>;
+
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// Transfers some amount of the native token to some recipient on a (whitelisted)
+		/// destination chain.
+		#[pallet::weight(195_000_000)]
+		pub fn transfer_native(
+			origin: OriginFor<T>,
+			amount: bridge::BalanceOf<T>,
+			recipient: Vec<u8>,
+			dest_id: bridge::BridgeChainId,
+		) -> DispatchResult {
+			let source = ensure_signed(origin)?;
+			ensure!(T::TransferNativeMembers::contains(&source), BadOrigin);
+			let resource_id = T::NativeTokenResourceId::get();
+			<bridge::Pallet<T>>::transfer_fungible(source, dest_id, resource_id, recipient, amount)
+		}
+
 		/// Executes a simple currency transfer using the bridge account as the source
 		#[pallet::weight(195_000_000)]
 		pub fn transfer(
@@ -104,7 +134,7 @@ pub mod pallet {
 
 			let total_issuance = <T as Config>::Currency::total_issuance();
 			let new_issuance = total_issuance.checked_add(&amount).ok_or(Error::<T>::OverFlow)?;
-			if new_issuance > T::MaximumIssuance::get() {
+			if new_issuance > MaximumIssuance::<T>::get() {
 				return Err(Error::<T>::ReachMaximumSupply.into())
 			}
 			if rid == T::NativeTokenResourceId::get() {
@@ -115,6 +145,20 @@ pub mod pallet {
 			}
 			Ok(())
 		}
+
+		#[pallet::weight(195_000_000)]
+		pub fn set_maximum_issuance(
+			origin: OriginFor<T>,
+			maximum_issuance: BalanceOf<T>,
+		) -> DispatchResultWithPostInfo {
+			T::SetMaximumIssuanceOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::MaximumIssuanceChanged {
+				old_value: MaximumIssuance::<T>::get(),
+			});
+			MaximumIssuance::<T>::set(maximum_issuance);
+			Ok(Pays::No.into())
+		}
 	}
+
 	impl<T: Config> Pallet<T> {}
 }
