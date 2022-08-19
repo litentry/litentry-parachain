@@ -48,7 +48,6 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
     step("Boundary testing on ethereum: over the maximum balance", async function () {
         const receipt = context.ethConfig.wallets.charlie.address;
         const handlerBalance: BigNumber = await context.ethConfig.erc20.balanceOf(context.ethConfig.erc20Handler.address)
-        let erc20 = context.ethConfig.erc20.connect(context.ethConfig.wallets.bob);
         const fee = await context.parachainConfig.api.query.chainBridge.bridgeFee(0)
         const Bridge = require("../bridge/contracts/Bridge.json")
         const inter = new ethers.utils.Interface(Bridge.abi)
@@ -70,7 +69,6 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
                     const decodedInput = inter.parseTransaction({data: tx.data, value: tx.value})
                     if (decodedInput.name === 'executeProposal') {
                         const receipt = await provider.getTransactionReceipt(tx.hash)
-                        console.log(`${receipt}`)
                         assert.equal(0, receipt.status, "Expect the transaction fail, it actually succeeds")
                         return
                     }
@@ -83,7 +81,7 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
     step("Boundary testing on ethereum: equal to the maximum balance", async function () {
         const receipt = context.ethConfig.wallets.charlie.address;
         const handlerBalance: BigNumber = await context.ethConfig.erc20.balanceOf(context.ethConfig.erc20Handler.address)
-        let erc20 = context.ethConfig.erc20.connect(context.ethConfig.wallets.bob);
+        const erc20 = context.ethConfig.erc20.connect(context.ethConfig.wallets.bob);
         const fee = await context.parachainConfig.api.query.chainBridge.bridgeFee(0)
         await signAndSend(context.parachainConfig.api.tx.bridgeTransfer.transferNative(
                 handlerBalance.div(BigNumber.from(1000000)).add(BigNumber.from(fee.toString())),
