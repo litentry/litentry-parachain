@@ -742,12 +742,12 @@ parameter_types! {
 
 pub struct TechnicalCommitteeProvider;
 impl SortedMembers<AccountId> for TechnicalCommitteeProvider {
-	fn contains(_who: &AccountId) -> bool {
-		true
-	}
-
 	fn sorted_members() -> Vec<AccountId> {
 		vec![]
+	}
+
+	fn contains(_who: &AccountId) -> bool {
+		true
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
@@ -760,9 +760,10 @@ impl pallet_bridge_transfer::Config for Runtime {
 	type Event = Event;
 	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
 	type TransferNativeMembers = TechnicalCommitteeProvider;
+	type SetMaximumIssuanceOrigin = EnsureRootOrHalfCouncil;
 	type Currency = Balances;
 	type NativeTokenResourceId = NativeTokenResourceId;
-	type MaximumIssuance = MaximumIssuance;
+	type DefaultMaximumIssuance = MaximumIssuance;
 }
 
 parameter_types! {
