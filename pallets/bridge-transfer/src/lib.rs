@@ -28,10 +28,10 @@ mod tests;
 pub mod pallet {
 	use frame_support::{
 		pallet_prelude::*,
-		traits::{fungible::Mutate, Currency, StorageVersion},
+		traits::{fungible::Mutate, Currency, SortedMembers, StorageVersion},
 	};
 	use frame_system::pallet_prelude::*;
-	use sp_runtime::traits::CheckedAdd;
+	use sp_runtime::traits::{BadOrigin, CheckedAdd};
 	use sp_std::vec::Vec;
 
 	pub use pallet_bridge as bridge;
@@ -56,6 +56,9 @@ pub mod pallet {
 		/// Specifies the origin check provided by the bridge for calls that can only be called by
 		/// the bridge pallet
 		type BridgeOrigin: EnsureOrigin<Self::Origin, Success = Self::AccountId>;
+
+		/// The priviledged accounts to call the transfer_native
+		type TransferNativeMembers: SortedMembers<Self::AccountId>;
 
 		/// The currency mechanism.
 		type Currency: Currency<Self::AccountId>
@@ -102,6 +105,7 @@ pub mod pallet {
 			dest_id: bridge::BridgeChainId,
 		) -> DispatchResult {
 			let source = ensure_signed(origin)?;
+			ensure!(T::TransferNativeMembers::contains(&source), BadOrigin);
 			let resource_id = T::NativeTokenResourceId::get();
 			<bridge::Pallet<T>>::transfer_fungible(source, dest_id, resource_id, recipient, amount)
 		}

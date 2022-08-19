@@ -18,7 +18,7 @@
 
 use frame_support::{
 	ord_parameter_types, parameter_types,
-	traits::{ConstU32, ConstU64},
+	traits::{ConstU32, ConstU64, SortedMembers},
 	PalletId,
 };
 use frame_system::{self as system};
@@ -120,9 +120,26 @@ parameter_types! {
 	pub const NativeTokenResourceId: [u8; 32] = hex!("0000000000000000000000000000000a21dfe87028f214dd976be8479f5af001");
 }
 
+pub struct MembersProvider;
+impl SortedMembers<u64> for MembersProvider {
+	fn contains(who: &u64) -> bool {
+		Self::sorted_members().contains(who)
+	}
+
+	fn sorted_members() -> Vec<u64> {
+		vec![RELAYER_A, RELAYER_B, RELAYER_C]
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn add(_: &u64) {
+		unimplemented!()
+	}
+}
+
 impl Config for Test {
 	type Event = Event;
 	type BridgeOrigin = bridge::EnsureBridge<Test>;
+	type TransferNativeMembers = MembersProvider;
 	type Currency = Balances;
 	type NativeTokenResourceId = NativeTokenResourceId;
 	type MaximumIssuance = MaximumIssuance;
