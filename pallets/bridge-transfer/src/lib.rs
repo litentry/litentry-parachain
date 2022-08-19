@@ -60,6 +60,9 @@ pub mod pallet {
 		/// The priviledged accounts to call the transfer_native
 		type TransferNativeMembers: SortedMembers<Self::AccountId>;
 
+		/// The privileged origin to call update_maximum_issuance
+		type SetMaximumIssuanceOrigin: EnsureOrigin<Self::Origin>;
+
 		/// The currency mechanism.
 		type Currency: Currency<Self::AccountId>
 			+ Mutate<Self::AccountId, Balance = BalanceOf<Self>>;
@@ -68,11 +71,15 @@ pub mod pallet {
 		type NativeTokenResourceId: Get<ResourceId>;
 
 		#[pallet::constant]
-		type MaximumIssuance: Get<BalanceOf<Self>>;
+		type DefaultMaximumIssuance: Get<BalanceOf<Self>>;
 	}
 
 	#[pallet::event]
-	pub enum Event<T: Config> {}
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
+	pub enum Event<T: Config> {
+		/// MaximumIssuance was changed
+		MaximumIssuanceChanged { old_value: BalanceOf<T> },
+	}
 
 	#[pallet::error]
 	pub enum Error<T> {
@@ -92,6 +99,11 @@ pub mod pallet {
 		T::AccountId,
 		BalanceOf<T>,
 	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn maximum_issuance)]
+	pub type MaximumIssuance<T: Config> =
+		StorageValue<_, BalanceOf<T>, ValueQuery, T::DefaultMaximumIssuance>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -122,7 +134,7 @@ pub mod pallet {
 
 			let total_issuance = <T as Config>::Currency::total_issuance();
 			let new_issuance = total_issuance.checked_add(&amount).ok_or(Error::<T>::OverFlow)?;
-			if new_issuance > T::MaximumIssuance::get() {
+			if new_issuance > MaximumIssuance::<T>::get() {
 				return Err(Error::<T>::ReachMaximumSupply.into())
 			}
 			if rid == T::NativeTokenResourceId::get() {
@@ -133,6 +145,20 @@ pub mod pallet {
 			}
 			Ok(())
 		}
+
+		#[pallet::weight(195_000_000)]
+		pub fn set_maximum_issuance(
+			origin: OriginFor<T>,
+			maximum_issuance: BalanceOf<T>,
+		) -> DispatchResultWithPostInfo {
+			T::SetMaximumIssuanceOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::MaximumIssuanceChanged {
+				old_value: MaximumIssuance::<T>::get(),
+			});
+			MaximumIssuance::<T>::set(maximum_issuance);
+			Ok(Pays::No.into())
+		}
 	}
+
 	impl<T: Config> Pallet<T> {}
 }

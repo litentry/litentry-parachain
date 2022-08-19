@@ -21,7 +21,7 @@ use frame_support::{
 	traits::{ConstU32, ConstU64, SortedMembers},
 	PalletId,
 };
-use frame_system::{self as system};
+use frame_system::{self as system, EnsureSignedBy};
 use hex_literal::hex;
 use sp_core::H256;
 use sp_runtime::{
@@ -120,14 +120,18 @@ parameter_types! {
 	pub const NativeTokenResourceId: [u8; 32] = hex!("0000000000000000000000000000000a21dfe87028f214dd976be8479f5af001");
 }
 
+ord_parameter_types! {
+	pub const SetMaximumIssuanceOrigin: u64 = RELAYER_A;
+}
+
 pub struct MembersProvider;
 impl SortedMembers<u64> for MembersProvider {
-	fn contains(who: &u64) -> bool {
-		Self::sorted_members().contains(who)
-	}
-
 	fn sorted_members() -> Vec<u64> {
 		vec![RELAYER_A, RELAYER_B, RELAYER_C]
+	}
+
+	fn contains(who: &u64) -> bool {
+		Self::sorted_members().contains(who)
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
@@ -140,9 +144,10 @@ impl Config for Test {
 	type Event = Event;
 	type BridgeOrigin = bridge::EnsureBridge<Test>;
 	type TransferNativeMembers = MembersProvider;
+	type SetMaximumIssuanceOrigin = EnsureSignedBy<SetMaximumIssuanceOrigin, u64>;
 	type Currency = Balances;
 	type NativeTokenResourceId = NativeTokenResourceId;
-	type MaximumIssuance = MaximumIssuance;
+	type DefaultMaximumIssuance = MaximumIssuance;
 }
 
 parameter_types! {

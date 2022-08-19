@@ -260,3 +260,30 @@ fn create_successful_transfer_proposal() {
 		]);
 	})
 }
+
+#[test]
+fn set_maximum_issuance() {
+	new_test_ext().execute_with(|| {
+		assert_eq!(pallet::MaximumIssuance::<Test>::get(), mock::MaximumIssuance::get());
+		assert_ok!(pallet::Pallet::<Test>::set_maximum_issuance(Origin::signed(RELAYER_A), 2));
+		assert_eq!(pallet::MaximumIssuance::<Test>::get(), 2);
+		frame_system::Pallet::<Test>::assert_last_event(
+			crate::Event::<Test>::MaximumIssuanceChanged {
+				old_value: mock::MaximumIssuance::get(),
+			}
+			.into(),
+		);
+	});
+}
+
+#[test]
+fn set_maximum_issuance_fails_with_unprivileged_origin() {
+	new_test_ext().execute_with(|| {
+		assert_eq!(pallet::MaximumIssuance::<Test>::get(), mock::MaximumIssuance::get());
+		assert_noop!(
+			pallet::Pallet::<Test>::set_maximum_issuance(Origin::signed(RELAYER_B), 2),
+			sp_runtime::DispatchError::BadOrigin
+		);
+		assert_eq!(pallet::MaximumIssuance::<Test>::get(), mock::MaximumIssuance::get());
+	});
+}
