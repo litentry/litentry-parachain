@@ -9,6 +9,7 @@
   "scripts": {
     "register-parachain": "ts-node tests/register-parachain.ts",
     "test": "mocha --exit --sort -r ts-node/register 'tests/base-filter.test.ts'",
+    "test-bridge": "mocha --exit --sort -r ts-node/register 'tests/bridge.test.ts'",
     "test-all": "mocha --exit --sort -r ts-node/register 'tests/**/*.test.ts'"
   },
   "author": "Han Zhao",
@@ -24,10 +25,11 @@
     "typescript": "^4.7.3"
   },
   "dependencies": {
-    "@polkadot/api": "^8.7.1",
-    "@polkadot/types": "^8.7.1",
+    "@polkadot/api": "^9.0.1",
+    "@polkadot/types": "^9.0.1",
     "dotenv": "^16.0.1",
-    "web3": "^1.7.3"
+    "web3": "^1.7.3",
+    "ethers": "^5.6.9"
   },
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,

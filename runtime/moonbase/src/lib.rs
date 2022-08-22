@@ -29,7 +29,7 @@ use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
 		ConstU16, ConstU32, ConstU64, ConstU8, Contains, EitherOfDiverse, Everything,
-		InstanceFilter,
+		InstanceFilter, SortedMembers,
 	},
 	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
 	PalletId, RuntimeDebug,
@@ -42,7 +42,7 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 pub use sp_runtime::BuildStorage;
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto},
+	traits::{AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
 };
@@ -59,7 +59,7 @@ pub use primitives::{opaque, Index, *};
 pub use runtime_common::currency::*;
 use runtime_common::{
 	impl_runtime_transaction_payment_fees, BlockHashCount, BlockLength, NegativeImbalance,
-	RuntimeBlockWeights, SlowAdjustingFeeUpdate, MAXIMUM_BLOCK_WEIGHT,
+	RuntimeBlockWeights, SlowAdjustingFeeUpdate, TechnicalCommitteeInstance, MAXIMUM_BLOCK_WEIGHT,
 };
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
@@ -440,9 +440,9 @@ impl pallet_democracy::Config for Runtime {
 	/// Two thirds of the technical committee can have an ExternalMajority/ExternalDefault vote
 	/// be tabled immediately and with a shorter voting/enactment period.
 	type FastTrackOrigin =
-		pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCollective, 2, 3>;
+		pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCommitteeInstance, 2, 3>;
 	type InstantOrigin =
-		pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCollective, 1, 1>;
+		pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCommitteeInstance, 1, 1>;
 	type InstantAllowed = InstantAllowed;
 	type FastTrackVotingPeriod = FastTrackVotingPeriod;
 	// To cancel a proposal which has been passed, 2/3 of the council must agree to it.
@@ -452,12 +452,12 @@ impl pallet_democracy::Config for Runtime {
 	// Root must agree.
 	type CancelProposalOrigin = EitherOfDiverse<
 		EnsureRoot<AccountId>,
-		pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCollective, 1, 1>,
+		pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCommitteeInstance, 1, 1>,
 	>;
 	type BlacklistOrigin = EnsureRoot<AccountId>;
 	// Any single technical committee member may veto a coming council proposal, however they can
 	// only do it once and it lasts only for the cool-off period.
-	type VetoOrigin = pallet_collective::EnsureMember<AccountId, TechnicalCollective>;
+	type VetoOrigin = pallet_collective::EnsureMember<AccountId, TechnicalCommitteeInstance>;
 	type CooloffPeriod = CooloffPeriod;
 	type PreimageByteDeposit = PreimageByteDeposit;
 	type OperationalPreimageOrigin = pallet_collective::EnsureMember<AccountId, CouncilCollective>;
@@ -506,8 +506,7 @@ parameter_types! {
 	pub const TechnicalMotionDuration: BlockNumber = 3 * DAYS;
 }
 
-type TechnicalCollective = pallet_collective::Instance2;
-impl pallet_collective::Config<TechnicalCollective> for Runtime {
+impl pallet_collective::Config<TechnicalCommitteeInstance> for Runtime {
 	type Origin = Origin;
 	type Proposal = Call;
 	type Event = Event;
@@ -673,6 +672,7 @@ impl pallet_vesting::Config for Runtime {
 parameter_types! {
 	pub const BridgeChainId: u8 = 1;
 	pub const ProposalLifetime: BlockNumber = 50400; // ~7 days
+	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
 
 impl pallet_bridge::Config for Runtime {
@@ -680,7 +680,9 @@ impl pallet_bridge::Config for Runtime {
 	type BridgeCommitteeOrigin = EnsureRootOrHalfCouncil;
 	type Proposal = Call;
 	type BridgeChainId = BridgeChainId;
+	type Currency = Balances;
 	type ProposalLifetime = ProposalLifetime;
+	type TreasuryAccount = TreasuryAccount;
 }
 
 parameter_types! {
@@ -688,13 +690,30 @@ parameter_types! {
 	// bridge::derive_resource_id(1, &bridge::hashing::blake2_128(b"LIT"));
 	pub const NativeTokenResourceId: [u8; 32] = hex_literal::hex!("00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001");
 }
+pub struct TechnicalCommitteeProvider;
+impl SortedMembers<AccountId> for TechnicalCommitteeProvider {
+	fn sorted_members() -> Vec<AccountId> {
+		TechnicalCommittee::members()
+	}
+
+	fn contains(who: &AccountId) -> bool {
+		TechnicalCommittee::is_member(who)
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn add(_: &AccountId) {
+		unimplemented!()
+	}
+}
 
 impl pallet_bridge_transfer::Config for Runtime {
 	type Event = Event;
 	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
+	type TransferNativeMembers = TechnicalCommitteeProvider;
+	type SetMaximumIssuanceOrigin = EnsureRootOrHalfCouncil;
 	type Currency = Balances;
 	type NativeTokenResourceId = NativeTokenResourceId;
-	type MaximumIssuance = MaximumIssuance;
+	type DefaultMaximumIssuance = MaximumIssuance;
 }
 
 parameter_types! {

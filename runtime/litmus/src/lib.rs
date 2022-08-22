@@ -27,7 +27,9 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{ConstU16, ConstU32, ConstU64, ConstU8, Contains, Everything, InstanceFilter},
+	traits::{
+		ConstU16, ConstU32, ConstU64, ConstU8, Contains, Everything, InstanceFilter, SortedMembers,
+	},
 	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
 	PalletId, RuntimeDebug,
 };
@@ -43,7 +45,7 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 pub use sp_runtime::BuildStorage;
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto},
+	traits::{AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
 };
@@ -683,6 +685,7 @@ impl pallet_vesting::Config for Runtime {
 parameter_types! {
 	pub const BridgeChainId: u8 = 1;
 	pub const ProposalLifetime: BlockNumber = 50400; // ~7 days
+	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
 
 impl pallet_bridge::Config for Runtime {
@@ -690,7 +693,9 @@ impl pallet_bridge::Config for Runtime {
 	type BridgeCommitteeOrigin = EnsureRootOrHalfCouncil;
 	type Proposal = Call;
 	type BridgeChainId = BridgeChainId;
+	type Currency = Balances;
 	type ProposalLifetime = ProposalLifetime;
+	type TreasuryAccount = TreasuryAccount;
 }
 
 parameter_types! {
@@ -699,12 +704,30 @@ parameter_types! {
 	pub const NativeTokenResourceId: [u8; 32] = hex_literal::hex!("00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001");
 }
 
+pub struct TechnicalCommitteeProvider;
+impl SortedMembers<AccountId> for TechnicalCommitteeProvider {
+	fn sorted_members() -> Vec<AccountId> {
+		TechnicalCommittee::members()
+	}
+
+	fn contains(who: &AccountId) -> bool {
+		TechnicalCommittee::is_member(who)
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn add(_: &AccountId) {
+		unimplemented!()
+	}
+}
+
 impl pallet_bridge_transfer::Config for Runtime {
 	type Event = Event;
 	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
+	type TransferNativeMembers = TechnicalCommitteeProvider;
+	type SetMaximumIssuanceOrigin = EnsureRootOrHalfCouncil;
 	type Currency = Balances;
 	type NativeTokenResourceId = NativeTokenResourceId;
-	type MaximumIssuance = MaximumIssuance;
+	type DefaultMaximumIssuance = MaximumIssuance;
 }
 
 parameter_types! {

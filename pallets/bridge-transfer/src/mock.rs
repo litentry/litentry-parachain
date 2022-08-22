@@ -18,10 +18,10 @@
 
 use frame_support::{
 	ord_parameter_types, parameter_types,
-	traits::{ConstU32, ConstU64},
+	traits::{ConstU32, ConstU64, SortedMembers},
 	PalletId,
 };
-use frame_system::{self as system};
+use frame_system::{self as system, EnsureSignedBy};
 use hex_literal::hex;
 use sp_core::H256;
 use sp_runtime::{
@@ -101,6 +101,7 @@ impl pallet_balances::Config for Test {
 parameter_types! {
 	pub const TestChainId: u8 = 5;
 	pub const ProposalLifetime: u64 = 100;
+	pub const TreasuryAccount:u64 = 0x8;
 }
 
 impl bridge::Config for Test {
@@ -108,7 +109,9 @@ impl bridge::Config for Test {
 	type BridgeCommitteeOrigin = frame_system::EnsureRoot<Self::AccountId>;
 	type Proposal = Call;
 	type BridgeChainId = TestChainId;
+	type Currency = Balances;
 	type ProposalLifetime = ProposalLifetime;
+	type TreasuryAccount = TreasuryAccount;
 }
 
 parameter_types! {
@@ -117,12 +120,34 @@ parameter_types! {
 	pub const NativeTokenResourceId: [u8; 32] = hex!("0000000000000000000000000000000a21dfe87028f214dd976be8479f5af001");
 }
 
+ord_parameter_types! {
+	pub const SetMaximumIssuanceOrigin: u64 = RELAYER_A;
+}
+
+pub struct MembersProvider;
+impl SortedMembers<u64> for MembersProvider {
+	fn sorted_members() -> Vec<u64> {
+		vec![RELAYER_A, RELAYER_B, RELAYER_C]
+	}
+
+	fn contains(who: &u64) -> bool {
+		Self::sorted_members().contains(who)
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn add(_: &u64) {
+		unimplemented!()
+	}
+}
+
 impl Config for Test {
 	type Event = Event;
 	type BridgeOrigin = bridge::EnsureBridge<Test>;
+	type TransferNativeMembers = MembersProvider;
+	type SetMaximumIssuanceOrigin = EnsureSignedBy<SetMaximumIssuanceOrigin, u64>;
 	type Currency = Balances;
 	type NativeTokenResourceId = NativeTokenResourceId;
-	type MaximumIssuance = MaximumIssuance;
+	type DefaultMaximumIssuance = MaximumIssuance;
 }
 
 parameter_types! {
@@ -151,7 +176,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	.assimilate_storage(&mut t)
 	.unwrap();
 	let mut ext = sp_io::TestExternalities::new(t);
-	ext.execute_with(|| System::set_block_number(1));
+	ext.execute_with(|| frame_system::Pallet::<Test>::set_block_number(1));
 	ext
 }
 
