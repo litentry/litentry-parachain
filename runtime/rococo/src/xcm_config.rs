@@ -16,9 +16,11 @@
 #![allow(clippy::clone_on_copy)]
 #![allow(clippy::useless_conversion)]
 
+// use frame_system::RawOrigin as SystemRawOrigin;
+// use pallet_collective::RawOrigin as CollectiveRawOrigin;
 use frame_support::{
 	match_types, parameter_types,
-	traits::{Everything, Nothing},
+	traits::{EnsureOrigin, Everything, Nothing, OriginTrait},
 	weights::{IdentityFee, Weight},
 	PalletId,
 };
@@ -27,6 +29,15 @@ use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 // Litentry: The CheckAccount implementation is forced by the bug of FungiblesAdapter.
 // We should replace () regarding fake_pallet_id account after our PR passed.
+use primitives::AccountId;
+use runtime_common::{
+	xcm_impl::{
+		AccountIdToMultiLocation, AssetIdMuliLocationConvert, CurrencyId,
+		CurrencyIdMultiLocationConvert, FirstAssetTrader, MultiNativeAsset,
+		NewAnchoringSelfReserve, OldAnchoringSelfReserve, XcmFeesToAccount,
+	},
+	EnsureRootOrTwoThirdsCouncil,
+};
 use sp_runtime::traits::AccountIdConversion;
 use xcm::latest::prelude::*;
 use xcm_builder::{
@@ -36,13 +47,9 @@ use xcm_builder::{
 	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
 	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
 };
-use xcm_executor::{traits::JustTry, XcmExecutor};
-
-use primitives::AccountId;
-use runtime_common::xcm_impl::{
-	AccountIdToMultiLocation, AssetIdMuliLocationConvert, CurrencyId,
-	CurrencyIdMultiLocationConvert, FirstAssetTrader, MultiNativeAsset, NewAnchoringSelfReserve,
-	OldAnchoringSelfReserve, XcmFeesToAccount,
+use xcm_executor::{
+	traits::{Convert, JustTry},
+	XcmExecutor,
 };
 
 #[cfg(test)]
@@ -278,6 +285,45 @@ parameter_types! {
 	pub const MaxAssetsForTransfer: usize = 3;
 }
 
+/// `EnsureOrigin` barrier to convert from dispatch origin to XCM origin, if one exists.
+pub struct EnsureXcmOriginWithSpecialRootGroup<Origin, Conversion, SpecialRootGroup>(
+	sp_std::marker::PhantomData<(Origin, Conversion, SpecialRootGroup)>,
+);
+impl<
+		Origin: OriginTrait + Clone,
+		Conversion: Convert<Origin, MultiLocation>,
+		SpecialRootGroup: EnsureOrigin<Origin>,
+	> EnsureOrigin<Origin> for EnsureXcmOriginWithSpecialRootGroup<Origin, Conversion, SpecialRootGroup>
+where
+	Origin::PalletsOrigin: PartialEq,
+{
+	type Success = MultiLocation;
+	fn try_origin(o: Origin) -> Result<Self::Success, Origin> {
+		// Notice: Even if we do not implement the root power here,
+		// Some extrinsic like pallet_xcm send will still automatically convert call::root into Here
+		let o = match SpecialRootGroup::try_origin(o) {
+			Ok(_) => return Ok(Here.into()),
+			Err(o) => o,
+		};
+		let o = match Conversion::convert(o) {
+			Ok(location) => return Ok(location),
+			Err(o) => o,
+		};
+		// We institute a root fallback so root can always represent the context. This
+		// guarantees that `successful_origin` will work.
+		if o.caller() == Origin::root().caller() {
+			Ok(Here.into())
+		} else {
+			Err(o)
+		}
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn successful_origin() -> Origin {
+		Origin::root()
+	}
+}
+
 impl pallet_xcm::Config for Runtime {
 	type Event = Event;
 	// We allow anyone to send any XCM to anywhere
@@ -285,7 +331,11 @@ impl pallet_xcm::Config for Runtime {
 	// Check their Barriers implementation
 	// And for TakeWeightCredit
 	// Check if their executor's ShouldExecute trait weight_credit
-	type SendXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
+	type SendXcmOrigin = EnsureXcmOriginWithSpecialRootGroup<
+		Origin,
+		LocalOriginToLocation,
+		EnsureRootOrTwoThirdsCouncil,
+	>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
 	type XcmExecuteFilter = Nothing;

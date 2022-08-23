@@ -23,10 +23,11 @@ use frame_support::{
 	traits::{Everything, Nothing},
 	weights::{IdentityFee, Weight},
 };
-
+use frame_system::RawOrigin;
+use pallet_bridge::EnsureOrigin;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use runtime_common::{EnsureRootOrTwoThirdsCouncil, FilterEnsureOrigin};
+use sp_core::crypto::UncheckedInto;
 use xcm::latest::prelude::*;
 use xcm_builder::{
 	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter,
@@ -147,8 +148,7 @@ pub type XcmRouter = (
 impl pallet_xcm::Config for Runtime {
 	type Event = Event;
 	//type SendXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
-	type SendXcmOrigin =
-		FilterEnsureOrigin<Origin, LocalOriginToLocation, EnsureRootOrTwoThirdsCouncil>;
+	type SendXcmOrigin = FilterEnsureOrigin<Origin, LocalOriginToLocation>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
 	type XcmExecuteFilter = Nothing;
