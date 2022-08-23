@@ -14,8 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-mod base_call_filter;
+use runtime_common::tests::orml_xcm;
 
-mod transaction_payment;
+use crate::{Origin};
 
-mod orml_xcm;
+
+#[test]
+fn orml_xcm_works() {
+	orml_xcm::orml_xcm_test::orml_xcm_works::<Origin>()
+}

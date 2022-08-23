@@ -23,11 +23,10 @@ use frame_support::{
 	traits::{Everything, Nothing},
 	weights::{IdentityFee, Weight},
 };
-use frame_system::RawOrigin;
-use pallet_bridge::EnsureOrigin;
+
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use sp_core::crypto::UncheckedInto;
+use runtime_common::{EnsureRootOrTwoThirdsCouncil, FilterEnsureOrigin};
 use xcm::latest::prelude::*;
 use xcm_builder::{
 	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter,
@@ -132,47 +131,6 @@ impl xcm_executor::Config for XcmConfig {
 	type SubscriptionService = PolkadotXcm;
 }
 
-/// the filter account who is allowed to dispatch XCM sends
-use sp_std::marker::PhantomData;
-// use core::marker::PhantomData;
-use frame_support::traits::OriginTrait;
-use xcm_executor::traits::{Convert, ConvertOrigin};
-use runtime_common::EnsureRootOrTwoThirdsCouncil;
-pub struct FilterEnsureOrigin<Origin, Conversion>(PhantomData<(Origin, Conversion)>);
-impl<Origin: OriginTrait + Clone, Conversion: Convert<Origin, MultiLocation>> EnsureOrigin<Origin>
-	for FilterEnsureOrigin<Origin, Conversion>
-where
-	Origin::PalletsOrigin: PartialEq,
-	
-{
-	type Success = MultiLocation;
-	fn try_origin(o: Origin) -> Result<Self::Success, Origin> {
-		let o = match Conversion::convert(o) {
-			Ok(location) => return Ok(location),
-			Err(o) => o,
-		};
-		// We institute a root fallback so root can always represent the context. This
-		// guarantees that `successful_origin` will work.
-		// if o.caller() == Origin::root().caller() | o.caller() ==EnsureRootOrTwoThirdsCouncil {
-			// Ok(Here.into())
-		// } else {
-			// Err(o)
-		// }
-		let root_account = Origin::root().caller();
-		match o.caller(){
-			/// root can send the cross chain message
-			root_account =>Ok(Here.into()),
-			EnsureRootOrTwoThirdsCouncil => Ok(Here.into()),
-			_=>Err(o),
-		}
-	}
-
-	#[cfg(feature = "runtime-benchmarks")]
-	fn successful_origin() -> Origin {
-		Origin::as_signed(self)
-	}
-}
-
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
 pub type LocalOriginToLocation = SignedToAccountId32<Origin, AccountId, RelayNetwork>;
 
@@ -189,7 +147,8 @@ pub type XcmRouter = (
 impl pallet_xcm::Config for Runtime {
 	type Event = Event;
 	//type SendXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
-	type SendXcmOrigin = FilterEnsureOrigin<Origin, LocalOriginToLocation>;
+	type SendXcmOrigin =
+		FilterEnsureOrigin<Origin, LocalOriginToLocation, EnsureRootOrTwoThirdsCouncil>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
 	type XcmExecuteFilter = Nothing;
