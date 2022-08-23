@@ -144,7 +144,7 @@ pub struct DelayedPayout<Balance> {
 	pub collator_commission: Perbill,
 }
 
-#[derive(PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[derive(PartialEq, Eq, Clone, Copy, Encode, Decode, RuntimeDebug, TypeInfo)]
 /// Request scheduled to change the collator candidate self-bond
 pub struct CandidateBondLessRequest<Balance> {
 	pub amount: Balance,
@@ -230,7 +230,7 @@ impl<AccountId, Balance: Copy + Ord + sp_std::ops::AddAssign + Zero + Saturating
 	}
 }
 
-#[derive(PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[derive(PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 /// Capacity status for top or bottom delegations
 pub enum CapacityStatus {
 	/// Reached capacity
@@ -991,13 +991,13 @@ impl<
 
 /// Convey relevant information describing if a delegator was added to the top or bottom
 /// Delegations added to the top yield a new total
-#[derive(Clone, Copy, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[derive(Clone, Copy, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum DelegatorAdded<B> {
 	AddedToTop { new_total: B },
 	AddedToBottom,
 }
 
-#[derive(Clone, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum DelegatorStatus {
 	/// Active with no scheduled exit
 	Active,

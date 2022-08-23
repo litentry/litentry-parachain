@@ -145,7 +145,6 @@ impl Config for Test {
 	type BridgeOrigin = bridge::EnsureBridge<Test>;
 	type TransferNativeMembers = MembersProvider;
 	type SetMaximumIssuanceOrigin = EnsureSignedBy<SetMaximumIssuanceOrigin, u64>;
-	type Currency = Balances;
 	type NativeTokenResourceId = NativeTokenResourceId;
 	type DefaultMaximumIssuance = MaximumIssuance;
 }

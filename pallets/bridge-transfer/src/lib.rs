@@ -29,6 +29,7 @@ pub mod pallet {
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{fungible::Mutate, Currency, SortedMembers, StorageVersion},
+		transactional,
 	};
 	use frame_system::pallet_prelude::*;
 	use pallet_parachain_staking::IssuanceAdapter;
@@ -39,8 +40,9 @@ pub mod pallet {
 
 	type ResourceId = bridge::ResourceId;
 
-	type BalanceOf<T> =
-		<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+	type BalanceOf<T> = <<T as bridge::Config>::Currency as Currency<
+		<T as frame_system::Config>::AccountId,
+	>>::Balance;
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
@@ -64,15 +66,11 @@ pub mod pallet {
 		/// The privileged origin to call update_maximum_issuance
 		type SetMaximumIssuanceOrigin: EnsureOrigin<Self::Origin>;
 
-		/// The currency mechanism.
-		type Currency: Currency<Self::AccountId>
-			+ Mutate<Self::AccountId, Balance = BalanceOf<Self>>;
-
 		#[pallet::constant]
 		type NativeTokenResourceId: Get<ResourceId>;
 
 		#[pallet::constant]
-		type DefaultMaximumIssuance: Get<BalanceOf<Self>>;
+		type DefaultMaximumIssuance: Get<bridge::BalanceOf<Self>>;
 	}
 
 	#[pallet::event]
@@ -98,29 +96,30 @@ pub mod pallet {
 		bridge::ResourceId,
 		Twox64Concat,
 		T::AccountId,
-		BalanceOf<T>,
+		bridge::BalanceOf<T>,
 	>;
 
 	#[pallet::type_value]
-	pub fn DefaultExternalBalances<T: Config>() -> BalanceOf<T> {
-		T::MaximumIssuance::get()
+	pub fn DefaultExternalBalances<T: Config>() -> bridge::BalanceOf<T> {
+		T::DefaultMaximumIssuance::get()
 	}
 
 	#[pallet::storage]
 	#[pallet::getter(fn external_balances)]
 	pub type ExternalBalances<T: Config> =
-		StorageValue<_, BalanceOf<T>, ValueQuery, DefaultExternalBalances<T>>;
+		StorageValue<_, bridge::BalanceOf<T>, ValueQuery, DefaultExternalBalances<T>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn maximum_issuance)]
 	pub type MaximumIssuance<T: Config> =
-		StorageValue<_, BalanceOf<T>, ValueQuery, T::DefaultMaximumIssuance>;
+		StorageValue<_, bridge::BalanceOf<T>, ValueQuery, T::DefaultMaximumIssuance>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Transfers some amount of the native token to some recipient on a (whitelisted)
 		/// destination chain.
 		#[pallet::weight(195_000_000)]
+		#[transactional]
 		pub fn transfer_native(
 			origin: OriginFor<T>,
 			amount: bridge::BalanceOf<T>,
@@ -130,6 +129,11 @@ pub mod pallet {
 			let source = ensure_signed(origin)?;
 			ensure!(T::TransferNativeMembers::contains(&source), BadOrigin);
 			let resource_id = T::NativeTokenResourceId::get();
+
+			let external_balances =
+				<ExternalBalances<T>>::get().checked_add(&amount).ok_or(Error::<T>::OverFlow)?;
+			<ExternalBalances<T>>::put(external_balances);
+
 			<bridge::Pallet<T>>::transfer_fungible(source, dest_id, resource_id, recipient, amount)
 		}
 
@@ -138,12 +142,12 @@ pub mod pallet {
 		pub fn transfer(
 			origin: OriginFor<T>,
 			to: T::AccountId,
-			amount: BalanceOf<T>,
+			amount: bridge::BalanceOf<T>,
 			rid: ResourceId,
 		) -> DispatchResult {
 			T::BridgeOrigin::ensure_origin(origin)?;
 
-			let total_issuance = <T as Config>::Currency::total_issuance();
+			let total_issuance = <T as bridge::Config>::Currency::total_issuance();
 			let new_issuance = total_issuance.checked_add(&amount).ok_or(Error::<T>::OverFlow)?;
 			if new_issuance > MaximumIssuance::<T>::get() {
 				return Err(Error::<T>::ReachMaximumSupply.into())
@@ -153,7 +157,7 @@ pub mod pallet {
 					.checked_sub(&amount)
 					.ok_or(Error::<T>::OverFlow)?;
 				// ERC20 LIT mint
-				<T as Config>::Currency::mint_into(&to, amount)?;
+				<T as bridge::Config>::Currency::mint_into(&to, amount)?;
 				<ExternalBalances<T>>::put(external_balances);
 			} else {
 				return Err(Error::<T>::InvalidResourceId.into())
@@ -164,17 +168,17 @@ pub mod pallet {
 		#[pallet::weight(195_000_000)]
 		pub fn set_external_balances(
 			origin: OriginFor<T>,
-			external_balances: BalanceOf<T>,
+			external_balances: bridge::BalanceOf<T>,
 		) -> DispatchResult {
 			frame_system::ensure_root(origin)?;
 			<ExternalBalances<T>>::put(external_balances);
 			Ok(())
-    }
-    
-    #[pallet::weight(195_000_000)]
+		}
+
+		#[pallet::weight(195_000_000)]
 		pub fn set_maximum_issuance(
 			origin: OriginFor<T>,
-			maximum_issuance: BalanceOf<T>,
+			maximum_issuance: bridge::BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			T::SetMaximumIssuanceOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::MaximumIssuanceChanged {

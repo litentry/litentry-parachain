@@ -711,7 +711,6 @@ impl pallet_bridge_transfer::Config for Runtime {
 	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
 	type TransferNativeMembers = TechnicalCommitteeProvider;
 	type SetMaximumIssuanceOrigin = EnsureRootOrHalfCouncil;
-	type Currency = Balances;
 	type NativeTokenResourceId = NativeTokenResourceId;
 	type DefaultMaximumIssuance = MaximumIssuance;
 }
