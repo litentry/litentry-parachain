@@ -27,7 +27,9 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{ConstU16, ConstU32, ConstU64, ConstU8, Contains, Everything, InstanceFilter},
+	traits::{
+		ConstU16, ConstU32, ConstU64, ConstU8, Contains, Everything, InstanceFilter, SortedMembers,
+	},
 	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
 	PalletId, RuntimeDebug,
 };
@@ -692,12 +694,30 @@ parameter_types! {
 	pub const NativeTokenResourceId: [u8; 32] = hex_literal::hex!("00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001");
 }
 
+pub struct TechnicalCommitteeProvider;
+impl SortedMembers<AccountId> for TechnicalCommitteeProvider {
+	fn sorted_members() -> Vec<AccountId> {
+		TechnicalCommittee::members()
+	}
+
+	fn contains(who: &AccountId) -> bool {
+		TechnicalCommittee::is_member(who)
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn add(_: &AccountId) {
+		unimplemented!()
+	}
+}
+
 impl pallet_bridge_transfer::Config for Runtime {
 	type Event = Event;
 	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
+	type SetMaximumIssuanceOrigin = EnsureRootOrHalfCouncil;
+	type TransferNativeMembers = TechnicalCommitteeProvider;
 	type Currency = Balances;
 	type NativeTokenResourceId = NativeTokenResourceId;
-	type MaximumIssuance = MaximumIssuance;
+	type DefaultMaximumIssuance = MaximumIssuance;
 }
 
 parameter_types! {

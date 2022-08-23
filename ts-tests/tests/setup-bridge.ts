@@ -89,8 +89,8 @@ async function setupCrossChainTransfer(pConfig: ParachainConfig, eConfig: EthCon
     await eConfig.erc20.mint(eConfig.wallets.charlie.address, toWei('100000'))
     await eConfig.erc20.mint(eConfig.wallets.dave.address, toWei('100000'))
     await eConfig.erc20.mint(eConfig.wallets.eve.address, toWei('100000'))
+    await eConfig.erc20.mint(eConfig.erc20Handler.address, toWei('300'))
     await eConfig.bridge.adminSetResource(eConfig.erc20Handler.address, destResourceId, eConfig.erc20.address);
-    await eConfig.bridge.adminSetBurnable(eConfig.erc20Handler.address, eConfig.erc20.address, opts);
     await eConfig.bridge.adminSetDecimals(eConfig.erc20Handler.address, eConfig.erc20.address, 18, 12, opts);
     //  votes.entries equivalent to nonce
     await eConfig.bridge.adminSetDepositNonce(destChainID, depositNonce.length, opts);
@@ -186,8 +186,8 @@ function emptyDir(directoryPath: string) {
 async function startChainBridge(ethConfig: EthConfig, parachainConfig: ParachainConfig, ethRelayer: string, parachainRelayer: string, bridgePath: string, config: string, log: string) {
     require('dotenv').config();
     const dataDir = './bridge/data';
-    if (!fs.existsSync(dataDir)){
-        fs.mkdirSync(dataDir, { recursive: true });
+    if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, {recursive: true});
     }
     emptyDir(dataDir)
     const ethBlock = await ethConfig.wallets.bob.provider.getBlockNumber();
