@@ -14,81 +14,41 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>
 
-#[cfg(test)]
-pub mod orml_xcm_test {
+use frame_support::{
+	dispatch::RawOrigin,
+	traits::{EnsureOrigin, OriginTrait},
+	*,
+};
 
-	// use polkadot_runtime_parachains::Origin;
+use crate::{EnsureRootOrTwoThirdsCouncil, FilterEnsureOrigin};
+use primitives::*;
+use xcm::latest::prelude::*;
+use xcm_executor::traits::Convert;
 
-	use frame_support::{
-		parameter_types,
-		dispatch::RawOrigin,
-		traits::{EnsureOrigin, OriginTrait},
-		*,
-	};
+pub fn orml_xcm_works<
+	Origin: OriginTrait
+		+ From<RawOrigin<AccountId>>
+		+ Clone
+		+ std::convert::From<
+			pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_balances::Instance1>,
+		> + std::fmt::Debug,
+	LocalOriginToLocation: Convert<Origin, MultiLocation>,
+>()
+where
+	std::result::Result<frame_system::RawOrigin<sp_runtime::AccountId32>, Origin>:
+		std::convert::From<Origin>,
+	std::result::Result<
+		pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_balances::Instance1>,
+		Origin,
+	>: std::convert::From<Origin>,
+{
+	let test_origin = frame_system::RawOrigin::Root;
+	let res_account = <FilterEnsureOrigin<
+		Origin,
+		LocalOriginToLocation,
+		EnsureRootOrTwoThirdsCouncil,
+	> as EnsureOrigin<Origin>>::try_origin(Origin::from(test_origin))
+	.unwrap();
 
-	use sp_std::marker::PhantomData;
-	use xcm::latest::prelude::*;
-	use xcm_executor::traits::Convert;
-
-	// use xcm_builder::SignedToAccountId32;
-
-	use primitives::*;
-	use sp_std::prelude::*;
-
-	use crate::EnsureRootOrTwoThirdsCouncil;
-	parameter_types! {
-		pub const RelayNetwork: NetworkId = NetworkId::Any;
-	}
-	
-	// type  LocalOriginToLocation = SignedToAccountId32::<Origin, AccountId, RelayNetwork>;
-
-	struct Filterensureorigin<Origin, Conversion, SpecialGroup>(
-		PhantomData<(Origin, Conversion, SpecialGroup)>,
-	);
-	impl<
-			Origin: OriginTrait + Clone,
-			Conversion: Convert<Origin, MultiLocation>,
-			SpecialGroup: EnsureOrigin<Origin>,
-		> EnsureOrigin<Origin> for Filterensureorigin<Origin, Conversion, SpecialGroup>
-	where
-		Origin::PalletsOrigin: PartialEq,
-	{
-		type Success = MultiLocation;
-		fn try_origin(o: Origin) -> Result<Self::Success, Origin> {
-			// root can send the cross chain message
-
-			let o = match SpecialGroup::try_origin(o) {
-				Ok(_) => return Ok(Here.into()),
-				Err(o) => o,
-			};
-
-			let o = match Conversion::convert(o) {
-				Ok(location) => return Ok(location),
-				Err(o) => o,
-			};
-
-			if o.caller() == Origin::root().caller() {
-				Ok(Here.into())
-			} else {
-				Err(o)
-			}
-		}
-
-		#[cfg(feature = "runtime-benchmarks")]
-		fn successful_origin() -> Origin {
-			Origin::root()
-		}
-	}
-
-	#[cfg(test)]
-	pub fn orml_xcm_works<
-		Origin: OriginTrait + From<RawOrigin<AccountId>> + Clone,
-		LocalOriginToLocation: Convert<Origin, MultiLocation>,
-	>() {
-		
-		let test_origin = frame_system::RawOrigin::Root;
-		let res_account = Filterensureorigin::<Origin, LocalOriginToLocation, EnsureRootOrTwoThirdsCouncil>::try_origin(test_origin).unwrap();
-	
-		assert_eq!(res_account,Here);
-	}
+	assert_eq!(res_account, Here.into());
 }

@@ -14,12 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::{xcm_config::LocalOriginToLocation, Origin};
 use runtime_common::tests::orml_xcm;
-
-use crate::{Origin};
-
 
 #[test]
 fn orml_xcm_works() {
-	orml_xcm::orml_xcm_test::orml_xcm_works::<Origin>()
+	// orml_xcm_works::<Origin, LocalOriginToLocation>();
+	orml_xcm::orml_xcm_works::<Origin, LocalOriginToLocation>();
 }
