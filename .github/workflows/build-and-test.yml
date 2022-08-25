@@ -57,10 +57,10 @@ jobs:
         with:
           profile: minimal
           toolchain: nightly
-          components: rustfmt
+          components: taplo
           target: wasm32-unknown-unknown
           default: true
-        # run: cargo install taplo-cli --locked
+        run: cargo install taplo-cli --locked
 
       - name: Run taplo fmt check
         run: make taplocheck
