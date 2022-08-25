@@ -164,13 +164,14 @@ update-ts-dep:
 fmtcheck:
 	cargo fmt --all -- --check
 
-.PHONY: fmt ## cargo fmt all
-fmt:
-	cargo fmt --all
-
 .PHONY: taplocheck ## taplo fmt check
 taplocheck:
 	taplo fmt --check
+
+.PHONY: fmt ## cargo fmt all && taplo fmt all
+fmt:
+	cargo fmt --all
+	taplo fmt
 
 # clippy
 
