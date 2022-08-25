@@ -47,7 +47,6 @@ jobs:
 
   check-cargo-fmt:
     runs-on: ubuntu-latest
-    # needs: [check-taplo-fmt]
     steps:
       - uses: actions/checkout@v3
         with:
