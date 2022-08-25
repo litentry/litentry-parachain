@@ -57,7 +57,7 @@ jobs:
         with:
           profile: minimal
           toolchain: nightly
-          components: taplo
+          # components: taplo
           target: wasm32-unknown-unknown
           default: true
         run: cargo install taplo-cli --locked
