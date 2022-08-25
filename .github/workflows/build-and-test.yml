@@ -45,25 +45,6 @@ jobs:
               - '**/Cargo.toml'
               - '**/rust-toolchain.toml'
 
-  check-taplo-fmt:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Install toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-          components: taplo-cli
-          target: wasm32-unknown-unknown
-          default: true
-
-      - name: Run taplo fmt check
-        run: make taplocheck
-
   check-cargo-fmt:
     runs-on: ubuntu-latest
     # needs: [check-taplo-fmt]
@@ -83,6 +64,12 @@ jobs:
 
       - name: Run cargo fmt check
         run: make fmtcheck
+
+      - name: Install taplo
+        run: cargo install taplo-cli --locked
+
+      - name: Run taplo fmt check
+        run: make taplocheck
 
   check-cargo-clippy:
     runs-on: ubuntu-latest
