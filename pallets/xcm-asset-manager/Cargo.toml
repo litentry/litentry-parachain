@@ -1,7 +1,7 @@
 [package]
-name = "pallet-asset-manager"
-authors = [ "Litentry Dev" ]
+authors = ["Litentry Dev"]
 edition = "2021"
+name = "pallet-asset-manager"
 version = "0.1.0"
 
 [dependencies]
@@ -36,21 +36,21 @@ pallet-balances = { git = "https://github.com/paritytech/substrate", default-fea
 sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
 
 [features]
-default = [ "std" ]
+default = ["std"]
 std = [
-	"frame-support/std",
-	"frame-system/std",
-	"codec/std",
-	"orml-traits/std",
-	"scale-info/std",
-	"serde",
-	"sp-io/std",
-	"sp-runtime/std",
-	"sp-std/std",
-	"xcm/std",
+  "frame-support/std",
+  "frame-system/std",
+  "codec/std",
+  "orml-traits/std",
+  "scale-info/std",
+  "serde",
+  "sp-io/std",
+  "sp-runtime/std",
+  "sp-std/std",
+  "xcm/std",
 ]
 
 runtime-benchmarks = [
-	"frame-benchmarking",
+  "frame-benchmarking",
 ]
-try-runtime = [ "frame-support/try-runtime" ]
+try-runtime = ["frame-support/try-runtime"]
