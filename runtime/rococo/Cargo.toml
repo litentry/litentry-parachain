@@ -97,8 +97,8 @@ pallet-extrinsic-filter = { path = "../../pallets/extrinsic-filter", default-fea
 pallet-identity-management = { path = "../../pallets/identity-management", default-features = false }
 
 # TEE pallets - TODO: patch it with litentry teerex
-pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "polkadot-v0.9.26" }
-pallet-sidechain = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "polkadot-v0.9.26" }
+pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "sdk-v0.9.0-polkadot-v0.9.26" }
+pallet-sidechain = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "sdk-v0.9.0-polkadot-v0.9.26" }
 
 [dev-dependencies]
 hex-literal = "0.3.4"
