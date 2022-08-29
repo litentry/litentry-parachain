@@ -19,7 +19,7 @@ targets = ['x86_64-unknown-linux-gnu']
 async-trait = "0.1.57"
 clap = { version = "3.2", features = ["derive"] }
 codec = { package = "parity-scale-codec", version = "3.0.0" }
-futures = { version = "0.3.23", features = ["compat"] }
+futures = { version = "0.3.24", features = ["compat"] }
 hex-literal = "0.3.4"
 log = "0.4"
 serde = { version = "1.0.144", features = ["derive"] }
