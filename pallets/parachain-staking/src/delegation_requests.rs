@@ -411,13 +411,13 @@ impl<T: Config> Pallet<T> {
 	/// executed in the current round, for this function to succeed.
 	pub(crate) fn delegator_execute_scheduled_revoke_all(
 		delegator: T::AccountId,
-		delegation_count: u32,
+		// delegation_count: u32,
 	) -> DispatchResultWithPostInfo {
 		let mut state = <DelegatorState<T>>::get(&delegator).ok_or(<Error<T>>::DelegatorDNE)?;
-		ensure!(
-			delegation_count >= (state.delegations.0.len() as u32),
-			Error::<T>::TooLowDelegationCountToLeaveDelegators
-		);
+		// ensure!(
+		// 	delegation_count >= (state.delegations.0.len() as u32),
+		// 	Error::<T>::TooLowDelegationCountToLeaveDelegators
+		// );
 		let now = <Round<T>>::get().current;
 
 		let mut validated_scheduled_requests = vec![];

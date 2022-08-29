@@ -90,6 +90,7 @@ pub mod pallet {
 		InflationInfo, Range, WeightInfo,
 	};
 	use frame_support::{
+		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::*,
 		traits::{
 			tokens::WithdrawReasons, Currency, EstimateNextSessionRotation, Get, Imbalance,
@@ -223,13 +224,8 @@ pub mod pallet {
 		CannotSetBelowMin,
 		RoundLengthMustBeAtLeastTotalSelectedCollators,
 		NoWritingSameValue,
-		TooLowCandidateCountWeightHintJoinCandidates,
 		TooLowCandidateCountWeightHintCancelLeaveCandidates,
-		TooLowCandidateCountToLeaveCandidates,
-		TooLowDelegationCountToDelegate,
-		TooLowCandidateDelegationCountToDelegate,
 		TooLowCandidateDelegationCountToLeaveCandidates,
-		TooLowDelegationCountToLeaveDelegators,
 		PendingCandidateRequestsDNE,
 		PendingCandidateRequestAlreadyExists,
 		PendingCandidateRequestNotDueYet,
@@ -242,7 +238,7 @@ pub mod pallet {
 	}
 
 	#[pallet::event]
-	#[pallet::generate_deposit(pub(crate) fn deposit_event)]
+	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Started new round.
 		NewRound {
@@ -677,7 +673,6 @@ pub mod pallet {
 				if let Err(error) = <Pallet<T>>::join_candidates(
 					T::Origin::from(Some(candidate.clone()).into()),
 					balance,
-					candidate_count,
 				) {
 					log::warn!("Join candidates failed in genesis with error {:?}", error);
 				} else {
@@ -692,16 +687,10 @@ pub mod pallet {
 					<Pallet<T>>::get_delegator_stakable_free_balance(delegator) >= balance,
 					"Account does not have enough balance to place delegation."
 				);
-				let cd_count =
-					if let Some(x) = col_delegator_count.get(target) { *x } else { 0u32 };
-				let dd_count =
-					if let Some(x) = del_delegation_count.get(delegator) { *x } else { 0u32 };
 				if let Err(error) = <Pallet<T>>::delegate(
 					T::Origin::from(Some(delegator.clone()).into()),
 					target.clone(),
 					balance,
-					cd_count,
-					dd_count,
 				) {
 					log::warn!("Delegate failed in genesis with error {:?}", error);
 				} else {
@@ -747,7 +736,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(<T as Config>::WeightInfo::set_staking_expectations())]
+		#[pallet::weight(< T as Config >::WeightInfo::set_staking_expectations())]
 		/// Set the expectations for total staked. These expectations determine the issuance for
 		/// the round according to logic in `fn compute_issuance`
 		pub fn set_staking_expectations(
@@ -767,7 +756,7 @@ pub mod pallet {
 			<InflationConfig<T>>::put(config);
 			Ok(().into())
 		}
-		#[pallet::weight(<T as Config>::WeightInfo::set_inflation())]
+		#[pallet::weight(< T as Config >::WeightInfo::set_inflation())]
 		/// Set the annual inflation rate to derive per-round inflation
 		pub fn set_inflation(
 			origin: OriginFor<T>,
@@ -790,7 +779,7 @@ pub mod pallet {
 			<InflationConfig<T>>::put(config);
 			Ok(().into())
 		}
-		#[pallet::weight(<T as Config>::WeightInfo::set_parachain_bond_account())]
+		#[pallet::weight(< T as Config >::WeightInfo::set_parachain_bond_account())]
 		/// Set the account that will hold funds set aside for parachain bond
 		pub fn set_parachain_bond_account(
 			origin: OriginFor<T>,
@@ -803,7 +792,7 @@ pub mod pallet {
 			Self::deposit_event(Event::ParachainBondAccountSet { old, new });
 			Ok(().into())
 		}
-		#[pallet::weight(<T as Config>::WeightInfo::set_parachain_bond_reserve_percent())]
+		#[pallet::weight(< T as Config >::WeightInfo::set_parachain_bond_reserve_percent())]
 		/// Set the percent of inflation set aside for parachain bond
 		pub fn set_parachain_bond_reserve_percent(
 			origin: OriginFor<T>,
@@ -816,7 +805,7 @@ pub mod pallet {
 			Self::deposit_event(Event::ParachainBondReservePercentSet { old, new });
 			Ok(().into())
 		}
-		#[pallet::weight(<T as Config>::WeightInfo::set_total_selected())]
+		#[pallet::weight(< T as Config >::WeightInfo::set_total_selected())]
 		/// Set the total number of collator candidates selected per round
 		/// - changes are not applied until the start of the next round
 		pub fn set_total_selected(origin: OriginFor<T>, new: u32) -> DispatchResultWithPostInfo {
@@ -832,7 +821,7 @@ pub mod pallet {
 			Self::deposit_event(Event::TotalSelectedSet { old, new });
 			Ok(().into())
 		}
-		#[pallet::weight(<T as Config>::WeightInfo::set_collator_commission())]
+		#[pallet::weight(< T as Config >::WeightInfo::set_collator_commission())]
 		/// Set the commission for all collators
 		pub fn set_collator_commission(
 			origin: OriginFor<T>,
@@ -845,7 +834,7 @@ pub mod pallet {
 			Self::deposit_event(Event::CollatorCommissionSet { old, new });
 			Ok(().into())
 		}
-		#[pallet::weight(<T as Config>::WeightInfo::set_blocks_per_round())]
+		#[pallet::weight(< T as Config >::WeightInfo::set_blocks_per_round())]
 		/// Set blocks per round
 		/// - if called with `new` less than length of current round, will transition immediately
 		/// in the next block
@@ -877,21 +866,15 @@ pub mod pallet {
 			<InflationConfig<T>>::put(inflation_config);
 			Ok(().into())
 		}
-		#[pallet::weight(<T as Config>::WeightInfo::add_candidates_whitelist(*candidate_count))]
+		#[pallet::weight(< T as Config >::WeightInfo::add_candidates_whitelist((< Candidates < T >>::get().len() + 1) as u32))]
 		/// add white list of candidates
 		/// This function should be safe to delete after restriction removed
 		pub fn add_candidates_whitelist(
 			origin: OriginFor<T>,
 			candidate: T::AccountId,
-			candidate_count: u32,
 		) -> DispatchResultWithPostInfo {
 			frame_system::ensure_root(origin)?;
 			let mut candidates = <Candidates<T>>::get();
-			let old_count = candidates.len() as u32;
-			ensure!(
-				candidate_count >= old_count,
-				Error::<T>::TooLowCandidateCountWeightHintJoinCandidates
-			);
 			if let Err(index) = candidates.binary_search(&candidate) {
 				candidates.insert(index, candidate.clone());
 				Candidates::<T>::put(candidates);
@@ -900,21 +883,15 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(<T as Config>::WeightInfo::remove_candidates_whitelist(*candidate_count))]
+		#[pallet::weight(< T as Config >::WeightInfo::remove_candidates_whitelist((< Candidates < T >>::get().len() - 1) as u32))]
 		/// remove white list of candidates
 		/// This function should be safe to delete after restriction removed
 		pub fn remove_candidates_whitelist(
 			origin: OriginFor<T>,
 			candidate: T::AccountId,
-			candidate_count: u32,
 		) -> DispatchResultWithPostInfo {
 			frame_system::ensure_root(origin)?;
 			let mut candidates = <Candidates<T>>::get();
-			let old_count = candidates.len() as u32;
-			ensure!(
-				candidate_count >= old_count,
-				Error::<T>::TooLowCandidateCountWeightHintJoinCandidates
-			);
 			if let Ok(index) = candidates.binary_search(&candidate) {
 				candidates.remove(index);
 				Candidates::<T>::put(candidates);
@@ -922,13 +899,11 @@ pub mod pallet {
 			}
 			Ok(().into())
 		}
-
-		#[pallet::weight(<T as Config>::WeightInfo::join_candidates(*candidate_count))]
+		#[pallet::weight(< T as Config >::WeightInfo::join_candidates(< CandidatePool < T >>::get().0.len() as u32))]
 		/// Join the set of collator candidates
 		pub fn join_candidates(
 			origin: OriginFor<T>,
 			bond: BalanceOf<T>,
-			candidate_count: u32,
 		) -> DispatchResultWithPostInfo {
 			let acc = ensure_signed(origin)?;
 			ensure!(Self::is_white_list(&acc), Error::<T>::CandidateUnauthorized);
@@ -936,11 +911,6 @@ pub mod pallet {
 			ensure!(!Self::is_delegator(&acc), Error::<T>::DelegatorExists);
 			ensure!(bond >= T::MinCandidateStk::get(), Error::<T>::CandidateBondBelowMin);
 			let mut candidates = <CandidatePool<T>>::get();
-			let old_count = candidates.0.len() as u32;
-			ensure!(
-				candidate_count >= old_count,
-				Error::<T>::TooLowCandidateCountWeightHintJoinCandidates
-			);
 			ensure!(
 				candidates.insert(Bond { owner: acc.clone(), amount: bond }),
 				Error::<T>::CandidateExists
@@ -968,21 +938,14 @@ pub mod pallet {
 			});
 			Ok(().into())
 		}
-		#[pallet::weight(<T as Config>::WeightInfo::schedule_leave_candidates(*candidate_count))]
+		#[pallet::weight(< T as Config >::WeightInfo::schedule_leave_candidates(< CandidatePool < T >>::get().0.len() as u32))]
 		/// Request to leave the set of candidates. If successful, the account is immediately
 		/// removed from the candidate pool to prevent selection as a collator.
-		pub fn schedule_leave_candidates(
-			origin: OriginFor<T>,
-			candidate_count: u32,
-		) -> DispatchResultWithPostInfo {
+		pub fn schedule_leave_candidates(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let collator = ensure_signed(origin)?;
 			let mut state = <CandidateInfo<T>>::get(&collator).ok_or(Error::<T>::CandidateDNE)?;
 			let (now, when) = state.schedule_leave::<T>()?;
 			let mut candidates = <CandidatePool<T>>::get();
-			ensure!(
-				candidate_count >= candidates.0.len() as u32,
-				Error::<T>::TooLowCandidateCountToLeaveCandidates
-			);
 			if candidates.remove(&Bond::from_owner(collator.clone())) {
 				<CandidatePool<T>>::put(candidates);
 			}
@@ -996,25 +959,20 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(
-			<T as Config>::WeightInfo::execute_leave_candidates(*candidate_delegation_count)
-		)]
+        < T as Config >::WeightInfo::execute_leave_candidates(< CandidateInfo < T >>::get(candidate).ok_or(Error::< T >::CandidateDNE).unwrap().delegation_count)
+        )]
 		/// Execute leave candidates request
 		pub fn execute_leave_candidates(
 			origin: OriginFor<T>,
 			candidate: T::AccountId,
-			candidate_delegation_count: u32,
 		) -> DispatchResultWithPostInfo {
 			ensure_signed(origin)?;
 			let state = <CandidateInfo<T>>::get(&candidate).ok_or(Error::<T>::CandidateDNE)?;
-			ensure!(
-				state.delegation_count <= candidate_delegation_count,
-				Error::<T>::TooLowCandidateDelegationCountToLeaveCandidates
-			);
 			state.can_leave::<T>()?;
 			let return_stake = |bond: Bond<T::AccountId, BalanceOf<T>>| -> DispatchResult {
 				// remove delegation from delegator state
 				let mut delegator = DelegatorState::<T>::get(&bond.owner).expect(
-					"Collator state and delegator state are consistent. 
+					"Collator state and delegator state are consistent.
 						Collator state has a record of this delegation. Therefore, 
 						Delegator state also has a record. qed.",
 				);
@@ -1073,23 +1031,16 @@ pub mod pallet {
 			});
 			Ok(().into())
 		}
-		#[pallet::weight(<T as Config>::WeightInfo::cancel_leave_candidates(*candidate_count))]
+		#[pallet::weight(< T as Config >::WeightInfo::cancel_leave_candidates(< CandidatePool < T >>::get().0.len() as u32))]
 		/// Cancel open request to leave candidates
 		/// - only callable by collator account
 		/// - result upon successful call is the candidate is active in the candidate pool
-		pub fn cancel_leave_candidates(
-			origin: OriginFor<T>,
-			candidate_count: u32,
-		) -> DispatchResultWithPostInfo {
+		pub fn cancel_leave_candidates(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let collator = ensure_signed(origin)?;
 			let mut state = <CandidateInfo<T>>::get(&collator).ok_or(Error::<T>::CandidateDNE)?;
 			ensure!(state.is_leaving(), Error::<T>::CandidateNotLeaving);
 			state.go_online();
 			let mut candidates = <CandidatePool<T>>::get();
-			ensure!(
-				candidates.0.len() as u32 <= candidate_count,
-				Error::<T>::TooLowCandidateCountWeightHintCancelLeaveCandidates
-			);
 			ensure!(
 				candidates.insert(Bond { owner: collator.clone(), amount: state.total_counted }),
 				Error::<T>::AlreadyActive
@@ -1099,7 +1050,7 @@ pub mod pallet {
 			Self::deposit_event(Event::CancelledCandidateExit { candidate: collator });
 			Ok(().into())
 		}
-		#[pallet::weight(<T as Config>::WeightInfo::go_offline())]
+		#[pallet::weight(< T as Config >::WeightInfo::go_offline())]
 		/// Temporarily leave the set of collator candidates without unbonding
 		pub fn go_offline(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let collator = ensure_signed(origin)?;
@@ -1114,7 +1065,7 @@ pub mod pallet {
 			Self::deposit_event(Event::CandidateWentOffline { candidate: collator });
 			Ok(().into())
 		}
-		#[pallet::weight(<T as Config>::WeightInfo::go_online())]
+		#[pallet::weight(< T as Config >::WeightInfo::go_online())]
 		/// Rejoin the set of collator candidates if previously had called `go_offline`
 		pub fn go_online(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let collator = ensure_signed(origin)?;
@@ -1132,7 +1083,7 @@ pub mod pallet {
 			Self::deposit_event(Event::CandidateBackOnline { candidate: collator });
 			Ok(().into())
 		}
-		#[pallet::weight(<T as Config>::WeightInfo::candidate_bond_more())]
+		#[pallet::weight(< T as Config >::WeightInfo::candidate_bond_more())]
 		/// Increase collator candidate self bond by `more`
 		pub fn candidate_bond_more(
 			origin: OriginFor<T>,
@@ -1148,7 +1099,7 @@ pub mod pallet {
 			}
 			Ok(().into())
 		}
-		#[pallet::weight(<T as Config>::WeightInfo::schedule_candidate_bond_less())]
+		#[pallet::weight(< T as Config >::WeightInfo::schedule_candidate_bond_less())]
 		/// Request by collator candidate to decrease self bond by `less`
 		pub fn schedule_candidate_bond_less(
 			origin: OriginFor<T>,
@@ -1165,7 +1116,7 @@ pub mod pallet {
 			});
 			Ok(().into())
 		}
-		#[pallet::weight(<T as Config>::WeightInfo::execute_candidate_bond_less())]
+		#[pallet::weight(< T as Config >::WeightInfo::execute_candidate_bond_less())]
 		/// Execute pending request to adjust the collator candidate self bond
 		pub fn execute_candidate_bond_less(
 			origin: OriginFor<T>,
@@ -1177,7 +1128,7 @@ pub mod pallet {
 			<CandidateInfo<T>>::insert(&candidate, state);
 			Ok(().into())
 		}
-		#[pallet::weight(<T as Config>::WeightInfo::cancel_candidate_bond_less())]
+		#[pallet::weight(< T as Config >::WeightInfo::cancel_candidate_bond_less())]
 		/// Cancel pending request to adjust the collator candidate self bond
 		pub fn cancel_candidate_bond_less(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let collator = ensure_signed(origin)?;
@@ -1187,19 +1138,17 @@ pub mod pallet {
 			Ok(().into())
 		}
 		#[pallet::weight(
-			<T as Config>::WeightInfo::delegate(
-				*candidate_delegation_count,
-				*delegation_count
-			)
-		)]
+        < T as Config >::WeightInfo::delegate(
+        < CandidateInfo < T >>::get(candidate).ok_or(Error::< T >::CandidateDNE).unwrap().delegation_count as u32,
+        < T as Config >::MaxDelegationsPerDelegator::get()
+        )
+        )]
 		/// If caller is not a delegator and not a collator, then join the set of delegators
 		/// If caller is a delegator, then makes delegation to change their delegation state
 		pub fn delegate(
 			origin: OriginFor<T>,
 			candidate: T::AccountId,
 			amount: BalanceOf<T>,
-			candidate_delegation_count: u32,
-			delegation_count: u32,
 		) -> DispatchResultWithPostInfo {
 			let delegator = ensure_signed(origin)?;
 			// check that caller can reserve the amount before any changes to storage
@@ -1211,10 +1160,6 @@ pub mod pallet {
 			{
 				// delegation after first
 				ensure!(amount >= T::MinDelegation::get(), Error::<T>::DelegationBelowMin);
-				ensure!(
-					delegation_count >= state.delegations.0.len() as u32,
-					Error::<T>::TooLowDelegationCountToDelegate
-				);
 				ensure!(
 					(state.delegations.0.len() as u32) < T::MaxDelegationsPerDelegator::get(),
 					Error::<T>::ExceedMaxDelegationsPerDelegator
@@ -1231,10 +1176,6 @@ pub mod pallet {
 				Delegator::new(delegator.clone(), candidate.clone(), amount)
 			};
 			let mut state = <CandidateInfo<T>>::get(&candidate).ok_or(Error::<T>::CandidateDNE)?;
-			ensure!(
-				candidate_delegation_count >= state.delegation_count,
-				Error::<T>::TooLowCandidateDelegationCountToDelegate
-			);
 			let (delegator_position, less_total_staked) =
 				state.add_delegation::<T>(&candidate, Bond { owner: delegator.clone(), amount })?;
 			// TODO: causes redundant free_balance check
@@ -1248,17 +1189,27 @@ pub mod pallet {
 			let new_total_locked = <Total<T>>::get().saturating_add(net_total_increase);
 			<Total<T>>::put(new_total_locked);
 			<CandidateInfo<T>>::insert(&candidate, state);
-			<DelegatorState<T>>::insert(&delegator, delegator_state);
+			<DelegatorState<T>>::insert(&delegator, &delegator_state);
 			<DelegatorReserveToLockMigrations<T>>::insert(&delegator, true);
+
+			let actual_weight = Some(T::WeightInfo::delegate(
+				<CandidateInfo<T>>::get(&candidate)
+					.ok_or(Error::<T>::CandidateDNE)
+					.unwrap()
+					.delegation_count as u32,
+				delegator_state.delegations.0.len() as u32,
+			))
+			.into();
+
 			Self::deposit_event(Event::Delegation {
 				delegator,
 				locked_amount: amount,
 				candidate,
 				delegator_position,
 			});
-			Ok(().into())
+			Ok(actual_weight)
 		}
-		#[pallet::weight(<T as Config>::WeightInfo::schedule_leave_delegators())]
+		#[pallet::weight(< T as Config >::WeightInfo::schedule_leave_delegators())]
 		/// Request to leave the set of delegators. If successful, the caller is scheduled to be
 		/// allowed to exit via a [DelegationAction::Revoke] towards all existing delegations.
 		/// Success forbids future delegation requests until the request is invoked or cancelled.
@@ -1266,17 +1217,18 @@ pub mod pallet {
 			let delegator = ensure_signed(origin)?;
 			Self::delegator_schedule_revoke_all(delegator)
 		}
-		#[pallet::weight(<T as Config>::WeightInfo::execute_leave_delegators(*delegation_count))]
+		#[pallet::weight(< T as Config >::WeightInfo::execute_leave_delegators(
+        < DelegatorState < T >>::get(& delegator).ok_or(< Error < T >>::DelegatorDNE).unwrap().delegations.0.len() as u32
+        ))]
 		/// Execute the right to exit the set of delegators and revoke all ongoing delegations.
 		pub fn execute_leave_delegators(
 			origin: OriginFor<T>,
 			delegator: T::AccountId,
-			delegation_count: u32,
 		) -> DispatchResultWithPostInfo {
 			ensure_signed(origin)?;
-			Self::delegator_execute_scheduled_revoke_all(delegator, delegation_count)
+			Self::delegator_execute_scheduled_revoke_all(delegator)
 		}
-		#[pallet::weight(<T as Config>::WeightInfo::cancel_leave_delegators())]
+		#[pallet::weight(< T as Config >::WeightInfo::cancel_leave_delegators())]
 		/// Cancel a pending request to exit the set of delegators. Success clears the pending exit
 		/// request (thereby resetting the delay upon another `leave_delegators` call).
 		pub fn cancel_leave_delegators(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
@@ -1284,7 +1236,7 @@ pub mod pallet {
 			Self::delegator_cancel_scheduled_revoke_all(delegator)
 		}
 
-		#[pallet::weight(<T as Config>::WeightInfo::schedule_revoke_delegation())]
+		#[pallet::weight(< T as Config >::WeightInfo::schedule_revoke_delegation())]
 		/// Request to revoke an existing delegation. If successful, the delegation is scheduled
 		/// to be allowed to be revoked via the `execute_delegation_request` extrinsic.
 		pub fn schedule_revoke_delegation(
@@ -1295,7 +1247,7 @@ pub mod pallet {
 			Self::delegation_schedule_revoke(collator, delegator)
 		}
 
-		#[pallet::weight(<T as Config>::WeightInfo::delegator_bond_more())]
+		#[pallet::weight(< T as Config >::WeightInfo::delegator_bond_more())]
 		/// Bond more for delegators wrt a specific collator candidate.
 		pub fn delegator_bond_more(
 			origin: OriginFor<T>,
@@ -1312,7 +1264,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(<T as Config>::WeightInfo::schedule_delegator_bond_less())]
+		#[pallet::weight(< T as Config >::WeightInfo::schedule_delegator_bond_less())]
 		/// Request bond less for delegators wrt a specific collator candidate.
 		pub fn schedule_delegator_bond_less(
 			origin: OriginFor<T>,
@@ -1323,7 +1275,7 @@ pub mod pallet {
 			Self::delegation_schedule_bond_decrease(candidate, delegator, less)
 		}
 
-		#[pallet::weight(<T as Config>::WeightInfo::execute_delegator_bond_less())]
+		#[pallet::weight(< T as Config >::WeightInfo::execute_delegator_bond_less())]
 		/// Execute pending request to change an existing delegation
 		pub fn execute_delegation_request(
 			origin: OriginFor<T>,
@@ -1334,7 +1286,7 @@ pub mod pallet {
 			Self::delegation_execute_scheduled_request(candidate, delegator)
 		}
 
-		#[pallet::weight(<T as Config>::WeightInfo::cancel_delegator_bond_less())]
+		#[pallet::weight(< T as Config >::WeightInfo::cancel_delegator_bond_less())]
 		/// Cancel request to change an existing delegation.
 		pub fn cancel_delegation_request(
 			origin: OriginFor<T>,
@@ -1344,7 +1296,6 @@ pub mod pallet {
 			Self::delegation_cancel_request(candidate, delegator)
 		}
 	}
-
 	impl<T: Config> Pallet<T> {
 		pub fn is_delegator(acc: &T::AccountId) -> bool {
 			<DelegatorState<T>>::get(acc).is_some()
