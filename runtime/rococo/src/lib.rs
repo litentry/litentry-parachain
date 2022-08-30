@@ -79,6 +79,7 @@ pub mod constants;
 mod tests;
 pub mod weights;
 pub mod xcm_config;
+// pub mod migration;
 
 /// The address format for describing accounts.
 pub type Address = MultiAddress<AccountId, ()>;
@@ -123,6 +124,7 @@ pub type Executive = frame_executive::Executive<
 	// it was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
+	// migration::MigrateCollatorSelectionIntoParachainStaking<Runtime>,
 >;
 
 impl_opaque_keys! {

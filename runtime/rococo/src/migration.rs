@@ -123,7 +123,6 @@ where
 			if let Err(error) = <pallet_parachain_staking::Pallet<T>>::join_candidates(
 				<T as frame_system::Config>::Origin::from(Some(candidate.clone()).into()),
 				min_collator_stk,
-				candidate_count,
 			) {
 				log::warn!("Join candidates failed in genesis with error {:?}", error);
 			} else {
