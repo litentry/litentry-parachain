@@ -80,7 +80,7 @@ build-node-benchmarks:
 .PHONY: build-node-tryruntime ## Build release node with `try-runtime` feature
 build-node-tryruntime:
 	cargo build --locked --features try-runtime --release
-	
+
 # launch a local network
 .PHONY: launch-docker-bridge
 launch-docker-bridge:
@@ -164,9 +164,14 @@ update-ts-dep:
 fmtcheck:
 	cargo fmt --all -- --check
 
-.PHONY: fmt ## cargo fmt all
+.PHONY: taplocheck ## taplo fmt check
+taplocheck:
+	taplo fmt --check
+
+.PHONY: fmt ## cargo fmt all && taplo fmt all
 fmt:
 	cargo fmt --all
+	taplo fmt
 
 # clippy
 
