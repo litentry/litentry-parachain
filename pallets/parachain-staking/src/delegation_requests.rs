@@ -27,7 +27,12 @@ use crate::{
 	},
 	Delegator,
 };
-use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, traits::Get, RuntimeDebug};
+use frame_support::{
+	dispatch::DispatchResultWithPostInfo,
+	ensure,
+	traits::{Get, ReservableCurrency},
+	RuntimeDebug,
+};
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use sp_runtime::traits::Saturating;
@@ -130,7 +135,7 @@ impl<T: Config> Pallet<T> {
 		ensure!(new_amount >= T::MinDelegation::get(), <Error<T>>::DelegationBelowMin);
 
 		// Net Total is total after pending orders are executed
-		let net_total = state.total().saturating_sub(state.less_total);
+		let net_total = state.total.saturating_sub(state.less_total);
 		// Net Total is always >= MinDelegatorStk
 		let max_subtracted_amount = net_total.saturating_sub(T::MinDelegatorStk::get());
 		ensure!(decrease_amount <= max_subtracted_amount, <Error<T>>::DelegatorBondBelowMin);
@@ -214,7 +219,7 @@ impl<T: Config> Pallet<T> {
 					true
 				} else {
 					ensure!(
-						state.total().saturating_sub(T::MinDelegatorStk::get()) >= amount,
+						state.total.saturating_sub(T::MinDelegatorStk::get().into()) >= amount,
 						<Error<T>>::DelegatorBondBelowMin
 					);
 					false
@@ -225,7 +230,7 @@ impl<T: Config> Pallet<T> {
 				state.less_total = state.less_total.saturating_sub(amount);
 
 				// remove delegation from delegator state
-				state.rm_delegation::<T>(&collator);
+				state.rm_delegation(&collator);
 
 				// remove delegation from collator state delegations
 				Self::delegator_leaves_candidate(collator.clone(), delegator.clone(), amount)?;
@@ -258,22 +263,19 @@ impl<T: Config> Pallet<T> {
 						return if bond.amount > amount {
 							let amount_before: BalanceOf<T> = bond.amount;
 							bond.amount = bond.amount.saturating_sub(amount);
+							state.total = state.total.saturating_sub(amount);
+							let new_total: BalanceOf<T> = state.total.into();
+							ensure!(
+								new_total >= T::MinDelegation::get(),
+								<Error<T>>::DelegationBelowMin
+							);
+							ensure!(
+								new_total >= T::MinDelegatorStk::get(),
+								<Error<T>>::DelegatorBondBelowMin
+							);
 							let mut collator_info = <CandidateInfo<T>>::get(&collator)
 								.ok_or(<Error<T>>::CandidateDNE)?;
-
-							state.total_sub_if::<T, _>(amount, |total| {
-								let new_total: BalanceOf<T> = total;
-								ensure!(
-									new_total >= T::MinDelegation::get(),
-									<Error<T>>::DelegationBelowMin
-								);
-								ensure!(
-									new_total >= T::MinDelegatorStk::get(),
-									<Error<T>>::DelegatorBondBelowMin
-								);
-								Ok(())
-							})?;
-
+							T::Currency::unreserve(&delegator, amount);
 							// need to go into decrease_delegation
 							let in_top = collator_info.decrease_delegation::<T>(
 								&collator,
@@ -451,9 +453,6 @@ impl<T: Config> Pallet<T> {
 			scheduled_requests.remove(request_idx).action.amount();
 			updated_scheduled_requests.push((collator, scheduled_requests));
 		}
-		// set state.total so that state.adjust_bond_lock will remove lock
-		let unstaked_amount = state.total();
-		state.total_sub::<T>(unstaked_amount)?;
 
 		updated_scheduled_requests
 			.into_iter()
@@ -461,7 +460,10 @@ impl<T: Config> Pallet<T> {
 				<DelegationScheduledRequests<T>>::insert(collator, scheduled_requests);
 			});
 
-		Self::deposit_event(Event::DelegatorLeft { delegator: delegator.clone(), unstaked_amount });
+		Self::deposit_event(Event::DelegatorLeft {
+			delegator: delegator.clone(),
+			unstaked_amount: state.total,
+		});
 		<DelegatorState<T>>::remove(&delegator);
 
 		Ok(().into())
