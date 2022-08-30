@@ -5,7 +5,7 @@ set -e
 ROOTDIR=$(git rev-parse --show-toplevel)
 cd "$ROOTDIR"
 
-files=$((git diff --cached --name-only --diff-filter=ACMR | grep -Ei "\.rs$") || true)
+files=$((git diff --cached --name-only --diff-filter=ACMR | grep -Ei "\.rs$|Cargo.toml$") || true)
 if [ ! -z "$files" ]; then
   echo "[cargo fmt] and [git add] the following files:"
   echo "$files"

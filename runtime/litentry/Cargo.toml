@@ -1,8 +1,8 @@
 [package]
-name = 'litentry-parachain-runtime'
-version = '0.9.9'
 authors = ["Litentry Dev"]
 edition = '2021'
+name = 'litentry-parachain-runtime'
+version = '0.9.9'
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len"] }
@@ -63,8 +63,8 @@ cumulus-pallet-parachain-system = { git = "https://github.com/paritytech/cumulus
 cumulus-pallet-xcm = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.26" }
 cumulus-pallet-xcmp-queue = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.26" }
 cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.26" }
-cumulus-primitives-utility = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.26" }
 cumulus-primitives-timestamp = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.26" }
+cumulus-primitives-utility = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.26" }
 pallet-collator-selection = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.26" }
 parachain-info = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.26" }
 
@@ -76,142 +76,141 @@ xcm-builder = { git = "https://github.com/paritytech/polkadot", default-features
 xcm-executor = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.26" }
 
 # benchmarking 
+cumulus-pallet-session-benchmarking = { git = 'https://github.com/paritytech/cumulus', default-features = false, branch = "polkadot-v0.9.26", optional = true }
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26", optional = true }
 frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26", optional = true }
-cumulus-pallet-session-benchmarking = { git = 'https://github.com/paritytech/cumulus', default-features = false, branch = "polkadot-v0.9.26", optional = true }
 
 # Litentry pallets
-runtime-common = { path = '../common', default-features = false }
 pallet-bridge = { path = "../../pallets/bridge", default-features = false }
 pallet-bridge-transfer = { path = "../../pallets/bridge-transfer", default-features = false }
 pallet-drop3 = { path = "../../pallets/drop3", default-features = false }
 pallet-extrinsic-filter = { path = "../../pallets/extrinsic-filter", default-features = false }
 pallet-parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
+runtime-common = { path = '../common', default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.3.4"
-smallvec = "1.9.0"
 runtime-common = { path = '../common', default-features = false, features = ["tests"] }
+smallvec = "1.9.0"
 
 [build-dependencies]
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 
 [features]
-default = [ "std" ]
+default = ["std"]
 fast-runtime = []
 std = [
-	"codec/std",
-	"log/std",
-	"serde",
-	"sp-api/std",
-	"sp-block-builder/std",
-	"sp-consensus-aura/std",
-	"sp-core/std",
-	"sp-inherents/std",
-	"sp-io/std",
-	"sp-offchain/std",
-	"sp-runtime/std",
-	"sp-session/std",
-	"sp-std/std",
-	"sp-transaction-pool/std",
-	"sp-version/std",
-	"frame-executive/std",
-	"frame-support/std",
-	"frame-system/std",
-	"frame-try-runtime/std",
-	"frame-system-rpc-runtime-api/std",
-	"pallet-aura/std",
-	"pallet-authorship/std",
-	"pallet-balances/std",
-	"pallet-bounties/std",
-	"pallet-collective/std",
-	"pallet-democracy/std",
-	"pallet-membership/std",
-	"pallet-multisig/std",
-	"pallet-parachain-staking/std",
-	"pallet-preimage/std",
-	"pallet-proxy/std",
-	"pallet-scheduler/std",
-	"pallet-session/std",
-	"pallet-sudo/std",
-	"pallet-timestamp/std",
-	"pallet-transaction-payment/std",
-	"pallet-transaction-payment-rpc-runtime-api/std",
-	"pallet-treasury/std",
-	"pallet-utility/std",
-	"pallet-vesting/std",
-	"primitives/std",
-	"cumulus-pallet-aura-ext/std",
-	"cumulus-pallet-dmp-queue/std",
-	"cumulus-pallet-parachain-system/std",
-	"cumulus-pallet-xcm/std",
-	"cumulus-pallet-xcmp-queue/std",
-	"cumulus-primitives-core/std",
-	"cumulus-primitives-utility/std",
-	"cumulus-primitives-timestamp/std",
-	"parachain-info/std",
-	"pallet-xcm/std",
-	"polkadot-parachain/std",
-	"xcm/std",
-	"xcm-builder/std",
-	"xcm-executor/std",
-	"frame-benchmarking/std",
-	'runtime-common/std',
-	"pallet-bridge/std",
-	"pallet-bridge-transfer/std",
-	"pallet-drop3/std",
-	"pallet-extrinsic-filter/std",
+  "codec/std",
+  "log/std",
+  "serde",
+  "sp-api/std",
+  "sp-block-builder/std",
+  "sp-consensus-aura/std",
+  "sp-core/std",
+  "sp-inherents/std",
+  "sp-io/std",
+  "sp-offchain/std",
+  "sp-runtime/std",
+  "sp-session/std",
+  "sp-std/std",
+  "sp-transaction-pool/std",
+  "sp-version/std",
+  "frame-executive/std",
+  "frame-support/std",
+  "frame-system/std",
+  "frame-try-runtime/std",
+  "frame-system-rpc-runtime-api/std",
+  "pallet-aura/std",
+  "pallet-authorship/std",
+  "pallet-balances/std",
+  "pallet-bounties/std",
+  "pallet-collective/std",
+  "pallet-democracy/std",
+  "pallet-membership/std",
+  "pallet-multisig/std",
+  "pallet-parachain-staking/std",
+  "pallet-preimage/std",
+  "pallet-proxy/std",
+  "pallet-scheduler/std",
+  "pallet-session/std",
+  "pallet-sudo/std",
+  "pallet-timestamp/std",
+  "pallet-transaction-payment/std",
+  "pallet-transaction-payment-rpc-runtime-api/std",
+  "pallet-treasury/std",
+  "pallet-utility/std",
+  "pallet-vesting/std",
+  "primitives/std",
+  "cumulus-pallet-aura-ext/std",
+  "cumulus-pallet-dmp-queue/std",
+  "cumulus-pallet-parachain-system/std",
+  "cumulus-pallet-xcm/std",
+  "cumulus-pallet-xcmp-queue/std",
+  "cumulus-primitives-core/std",
+  "cumulus-primitives-utility/std",
+  "cumulus-primitives-timestamp/std",
+  "parachain-info/std",
+  "pallet-xcm/std",
+  "polkadot-parachain/std",
+  "xcm/std",
+  "xcm-builder/std",
+  "xcm-executor/std",
+  "frame-benchmarking/std",
+  'runtime-common/std',
+  "pallet-bridge/std",
+  "pallet-bridge-transfer/std",
+  "pallet-drop3/std",
+  "pallet-extrinsic-filter/std",
 ]
 runtime-benchmarks = [
-	"cumulus-pallet-session-benchmarking/runtime-benchmarks",
-	"frame-benchmarking/runtime-benchmarks",
-	"frame-support/runtime-benchmarks",
-	"frame-system-benchmarking",
-	"frame-system/runtime-benchmarks",
-	"pallet-balances/runtime-benchmarks",
-	"pallet-bounties/runtime-benchmarks",
-	"pallet-collective/runtime-benchmarks",
-	"pallet-democracy/runtime-benchmarks",
-	"pallet-membership/runtime-benchmarks",
-	"pallet-multisig/runtime-benchmarks",
-	"pallet-parachain-staking/runtime-benchmarks",
-	"pallet-preimage/runtime-benchmarks",
-	"pallet-proxy/runtime-benchmarks",
-	"pallet-scheduler/runtime-benchmarks",
-	"pallet-timestamp/runtime-benchmarks",
-	"pallet-treasury/runtime-benchmarks",
-	"pallet-utility/runtime-benchmarks",
-	"pallet-xcm/runtime-benchmarks",
-	"sp-runtime/runtime-benchmarks",
-	"xcm-builder/runtime-benchmarks",
-	"pallet-bridge/runtime-benchmarks",
-	"pallet-bridge-transfer/runtime-benchmarks",
-	"pallet-drop3/runtime-benchmarks",
-	"pallet-extrinsic-filter/runtime-benchmarks",
-	"cumulus-pallet-xcmp-queue/runtime-benchmarks",
+  "cumulus-pallet-session-benchmarking/runtime-benchmarks",
+  "frame-benchmarking/runtime-benchmarks",
+  "frame-support/runtime-benchmarks",
+  "frame-system-benchmarking",
+  "frame-system/runtime-benchmarks",
+  "pallet-balances/runtime-benchmarks",
+  "pallet-bounties/runtime-benchmarks",
+  "pallet-collective/runtime-benchmarks",
+  "pallet-democracy/runtime-benchmarks",
+  "pallet-membership/runtime-benchmarks",
+  "pallet-multisig/runtime-benchmarks",
+  "pallet-parachain-staking/runtime-benchmarks",
+  "pallet-preimage/runtime-benchmarks",
+  "pallet-proxy/runtime-benchmarks",
+  "pallet-scheduler/runtime-benchmarks",
+  "pallet-timestamp/runtime-benchmarks",
+  "pallet-treasury/runtime-benchmarks",
+  "pallet-utility/runtime-benchmarks",
+  "pallet-xcm/runtime-benchmarks",
+  "sp-runtime/runtime-benchmarks",
+  "xcm-builder/runtime-benchmarks",
+  "pallet-bridge/runtime-benchmarks",
+  "pallet-bridge-transfer/runtime-benchmarks",
+  "pallet-drop3/runtime-benchmarks",
+  "pallet-extrinsic-filter/runtime-benchmarks",
+  "cumulus-pallet-xcmp-queue/runtime-benchmarks",
 ]
-
 try-runtime = [
-	"frame-executive/try-runtime",
-	"frame-system/try-runtime",
-	"frame-try-runtime",
-	"pallet-aura/try-runtime",
-	"pallet-authorship/try-runtime",
-	"pallet-balances/try-runtime",
-	"pallet-bounties/try-runtime",
-	"pallet-collective/try-runtime",
-	"pallet-democracy/try-runtime",
-	"pallet-membership/try-runtime",
-	"pallet-multisig/try-runtime",
-	"pallet-parachain-staking/try-runtime",
-	"pallet-preimage/try-runtime",
-	"pallet-proxy/try-runtime",
-	"pallet-scheduler/try-runtime",
-	"pallet-session/try-runtime",
-	"pallet-sudo/try-runtime",
-	"pallet-timestamp/try-runtime",
-	"pallet-transaction-payment/try-runtime",
-	"pallet-treasury/try-runtime",
-	"pallet-utility/try-runtime",
-	"pallet-vesting/try-runtime",
+  "frame-executive/try-runtime",
+  "frame-system/try-runtime",
+  "frame-try-runtime",
+  "pallet-aura/try-runtime",
+  "pallet-authorship/try-runtime",
+  "pallet-balances/try-runtime",
+  "pallet-bounties/try-runtime",
+  "pallet-collective/try-runtime",
+  "pallet-democracy/try-runtime",
+  "pallet-membership/try-runtime",
+  "pallet-multisig/try-runtime",
+  "pallet-parachain-staking/try-runtime",
+  "pallet-preimage/try-runtime",
+  "pallet-proxy/try-runtime",
+  "pallet-scheduler/try-runtime",
+  "pallet-session/try-runtime",
+  "pallet-sudo/try-runtime",
+  "pallet-timestamp/try-runtime",
+  "pallet-transaction-payment/try-runtime",
+  "pallet-treasury/try-runtime",
+  "pallet-utility/try-runtime",
+  "pallet-vesting/try-runtime",
 ]
