@@ -2,7 +2,7 @@
 authors = ['Litentry Dev']
 edition = '2021'
 homepage = 'https://litentry.com'
-name = 'pallet-identity-management'
+name = 'pallet-identity-management-mock'
 repository = 'https://github.com/litentry/litentry-parachain'
 version = '0.1.0'
 
@@ -15,6 +15,7 @@ scale-info = { version = "2.1.1", default-features = false, features = ["derive"
 sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false }
 
@@ -27,9 +28,8 @@ frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch =
 hex = { version = "0.4", default-features = false }
 hex-literal = { version = "0.3.2", optional = true }
 
-# teerex dependencies
-pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "sdk-v0.9.0-polkadot-v0.9.26" }
-teerex-primitives = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "sdk-v0.9.0-polkadot-v0.9.26" }
+primitives = { path = "../../primitives", default-features = false }
+rsa = { git = "https://github.com/RustCrypto/RSA", tag = "v0.7.0-pre", default-features = false, features = ["serde", "pem"] }
 
 [dev-dependencies]
 hex-literal = { version = "0.3.2" }
@@ -50,9 +50,8 @@ std = [
   "sp-io/std",
   "sp-core/std",
   "sp-arithmetic/std",
-  "teerex-primitives/std",
-  "pallet-teerex/std",
   "frame-support/std",
   "frame-system/std",
   "frame-benchmarking/std",
+  "rsa/std",
 ]
