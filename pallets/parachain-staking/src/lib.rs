@@ -866,7 +866,7 @@ pub mod pallet {
 			<InflationConfig<T>>::put(inflation_config);
 			Ok(().into())
 		}
-		#[pallet::weight(< T as Config >::WeightInfo::add_candidates_whitelist((< Candidates < T >>::get().len() + 1) as u32))]
+		#[pallet::weight(< T as Config >::WeightInfo::add_candidates_whitelist(< Candidates < T >>::get().len() as u32))]
 		/// add white list of candidates
 		/// This function should be safe to delete after restriction removed
 		pub fn add_candidates_whitelist(
@@ -883,7 +883,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(< T as Config >::WeightInfo::remove_candidates_whitelist((< Candidates < T >>::get().len() - 1) as u32))]
+		#[pallet::weight(< T as Config >::WeightInfo::remove_candidates_whitelist(< Candidates < T >>::get().len() as u32))]
 		/// remove white list of candidates
 		/// This function should be safe to delete after restriction removed
 		pub fn remove_candidates_whitelist(
@@ -899,7 +899,7 @@ pub mod pallet {
 			}
 			Ok(().into())
 		}
-		#[pallet::weight(< T as Config >::WeightInfo::join_candidates(< CandidatePool < T >>::get().0.len() as u32))]
+		#[pallet::weight(< T as Config >::WeightInfo::join_candidates(<CandidatePool <T>>::get().0.len() as u32))]
 		/// Join the set of collator candidates
 		pub fn join_candidates(
 			origin: OriginFor<T>,
@@ -938,7 +938,7 @@ pub mod pallet {
 			});
 			Ok(().into())
 		}
-		#[pallet::weight(< T as Config >::WeightInfo::schedule_leave_candidates(< CandidatePool < T >>::get().0.len() as u32))]
+		#[pallet::weight(< T as Config >::WeightInfo::schedule_leave_candidates(<CandidatePool < T >>::get().0.len() as u32))]
 		/// Request to leave the set of candidates. If successful, the account is immediately
 		/// removed from the candidate pool to prevent selection as a collator.
 		pub fn schedule_leave_candidates(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
@@ -959,7 +959,12 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(
-        < T as Config >::WeightInfo::execute_leave_candidates(< CandidateInfo < T >>::get(candidate).ok_or(Error::< T >::CandidateDNE).unwrap().delegation_count)
+        < T as Config >::WeightInfo::execute_leave_candidates(
+		< CandidateInfo < T >>::get(candidate)
+			.ok_or_else(|| CandidateMetadata::<BalanceOf<T>>::new(Zero::zero()))
+			.unwrap()
+			.delegation_count
+		)
         )]
 		/// Execute leave candidates request
 		pub fn execute_leave_candidates(
@@ -1139,7 +1144,10 @@ pub mod pallet {
 		}
 		#[pallet::weight(
         < T as Config >::WeightInfo::delegate(
-        < CandidateInfo < T >>::get(candidate).ok_or(Error::< T >::CandidateDNE).unwrap().delegation_count as u32,
+        < CandidateInfo < T >>::get(candidate)
+			.ok_or_else(|| CandidateMetadata::<BalanceOf<T>>::new(Zero::zero()))
+			.unwrap()
+			.delegation_count as u32,
         < T as Config >::MaxDelegationsPerDelegator::get()
         )
         )]
@@ -1188,15 +1196,12 @@ pub mod pallet {
 			};
 			let new_total_locked = <Total<T>>::get().saturating_add(net_total_increase);
 			<Total<T>>::put(new_total_locked);
-			<CandidateInfo<T>>::insert(&candidate, state);
+			<CandidateInfo<T>>::insert(&candidate, &state);
 			<DelegatorState<T>>::insert(&delegator, &delegator_state);
 			<DelegatorReserveToLockMigrations<T>>::insert(&delegator, true);
 
 			let actual_weight = Some(T::WeightInfo::delegate(
-				<CandidateInfo<T>>::get(&candidate)
-					.ok_or(Error::<T>::CandidateDNE)
-					.unwrap()
-					.delegation_count as u32,
+				state.delegation_count as u32,
 				delegator_state.delegations.0.len() as u32,
 			))
 			.into();

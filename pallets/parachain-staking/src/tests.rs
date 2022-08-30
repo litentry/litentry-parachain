@@ -694,12 +694,10 @@ fn sufficient_join_candidates_weight_hint_succeeds() {
 		.with_candidates(vec![(1, 20), (2, 20), (3, 20), (4, 20), (5, 20)])
 		.build()
 		.execute_with(|| {
-			let mut _count = 5u32;
 			for i in 6..10 {
 				// This should be safe to delete after collator restrcition removed
 				assert_ok!(ParachainStaking::add_candidates_whitelist(Origin::root(), i));
 				assert_ok!(ParachainStaking::join_candidates(Origin::signed(i), 20));
-				_count += 1u32;
 			}
 		});
 }
@@ -767,10 +765,8 @@ fn sufficient_leave_candidates_weight_hint_succeeds() {
 		.with_candidates(vec![(1, 20), (2, 20), (3, 20), (4, 20), (5, 20)])
 		.build()
 		.execute_with(|| {
-			let mut _count = 5u32;
 			for i in 1..6 {
 				assert_ok!(ParachainStaking::schedule_leave_candidates(Origin::signed(i)));
-				_count -= 1u32;
 			}
 		});
 }
@@ -1674,15 +1670,11 @@ fn sufficient_delegate_weight_hint_succeeds() {
 		.with_delegations(vec![(3, 1, 10), (4, 1, 10), (5, 1, 10), (6, 1, 10)])
 		.build()
 		.execute_with(|| {
-			let mut _count = 4u32;
 			for i in 7..11 {
 				assert_ok!(ParachainStaking::delegate(Origin::signed(i), 1, 10));
-				_count += 1u32;
 			}
-			let mut _count = 0u32;
 			for i in 3..11 {
 				assert_ok!(ParachainStaking::delegate(Origin::signed(i), 2, 10));
-				_count += 1u32;
 			}
 		});
 }
@@ -1706,14 +1698,10 @@ fn insufficient_delegate_weight_hint_fails() {
 		.with_delegations(vec![(3, 1, 10), (4, 1, 10), (5, 1, 10), (6, 1, 10)])
 		.build()
 		.execute_with(|| {
-			let mut _count = 3u32;
 			// to set up for next error test
-			_count = 4u32;
 			for i in 7..11 {
 				assert_ok!(ParachainStaking::delegate(Origin::signed(i), 1, 10));
-				_count += 1u32;
 			}
-			_count = 0u32;
 		});
 }
 
@@ -1926,6 +1914,10 @@ fn cannot_execute_leave_delegators_if_single_delegation_revoke_manually_cancelle
 			assert_ok!(ParachainStaking::schedule_leave_delegators(Origin::signed(2)));
 			assert_ok!(ParachainStaking::cancel_delegation_request(Origin::signed(2), 3));
 			roll_to(10);
+			assert_noop!(
+				ParachainStaking::execute_leave_delegators(Origin::signed(2), 2),
+				Error::<Test>::DelegatorNotLeaving
+			);
 			// can execute after manually scheduling revoke, and the round delay after which
 			// all revokes can be executed
 			assert_ok!(ParachainStaking::schedule_revoke_delegation(Origin::signed(2), 3));
