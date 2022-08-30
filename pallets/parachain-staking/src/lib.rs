@@ -92,7 +92,8 @@ pub mod pallet {
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{
-			Currency, EstimateNextSessionRotation, Get, Imbalance, LockableCurrency, ReservableCurrency,
+			Currency, EstimateNextSessionRotation, Get, Imbalance, LockableCurrency,
+			ReservableCurrency,
 		},
 	};
 	use frame_system::pallet_prelude::*;

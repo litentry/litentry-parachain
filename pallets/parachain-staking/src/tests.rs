@@ -39,7 +39,10 @@ use crate::{
 	AtStake, Bond, CollatorStatus, DelegationScheduledRequests, DelegatorAdded, Error, Event,
 	Range,
 };
-use frame_support::{assert_noop, assert_ok};
+use frame_support::{
+	assert_noop, assert_ok,
+	traits::{LockIdentifier, LockableCurrency, WithdrawReasons},
+};
 use sp_runtime::{traits::Zero, DispatchError, ModuleError, Perbill, Percent};
 
 // ~~ ROOT ~~
@@ -5606,5 +5609,97 @@ fn remove_white_list() {
 				ParachainStaking::remove_candidates_whitelist(Origin::root(), 2, 0),
 				Error::<Test>::TooLowCandidateCountWeightHintJoinCandidates
 			);
+		});
+}
+
+// Test of reserve, lock, transfer availability in staking
+#[test]
+fn staked_capacity() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 1000), (2, 1000), (3, 1000), (4, 1000), (5, 1000), (6, 1000)])
+		.with_candidates(vec![(1, 100), (2, 100), (3, 100)])
+		.with_delegations(vec![])
+		.build()
+		.execute_with(|| {
+			const ID_1: LockIdentifier = *b"1       ";
+			// Delegate/Candidate can not stake more if they do not have enough transferrable (free)
+			// balance
+			assert_noop!(
+				ParachainStaking::candidate_bond_more(Origin::signed(1), 3000),
+				DispatchError::Module(ModuleError {
+					index: 2,
+					error: [8, 0, 0, 0],
+					message: Some("InsufficientBalance")
+				})
+			);
+			assert_noop!(
+				ParachainStaking::delegate(Origin::signed(4), 1, 3000, 0, 0u32),
+				DispatchError::Module(ModuleError {
+					index: 2,
+					error: [8, 0, 0, 0],
+					message: Some("InsufficientBalance")
+				})
+			);
+			// Delegate/Candidate can stake more if they enough balance and lock insignificant large
+			Balances::set_lock(ID_1, &2, 400, WithdrawReasons::all());
+			Balances::set_lock(ID_1, &5, 400, WithdrawReasons::all());
+			assert_ok!(ParachainStaking::candidate_bond_more(Origin::signed(2), 500));
+			assert_ok!(ParachainStaking::delegate(Origin::signed(5), 1, 500, 0, 0u32));
+
+			// Delegate/Candidate can not stake more if they enough balance and lock significant
+			// large
+			Balances::set_lock(ID_1, &3, 600, WithdrawReasons::TRANSFER);
+			Balances::set_lock(ID_1, &6, 600, WithdrawReasons::TRANSFER);
+			assert_noop!(
+				ParachainStaking::candidate_bond_more(Origin::signed(3), 500),
+				DispatchError::Module(ModuleError {
+					index: 2,
+					error: [8, 0, 0, 0],
+					message: Some("InsufficientBalance")
+				})
+			);
+			assert_noop!(
+				ParachainStaking::delegate(Origin::signed(6), 1, 500, 0, 0u32),
+				DispatchError::Module(ModuleError {
+					index: 2,
+					error: [8, 0, 0, 0],
+					message: Some("InsufficientBalance")
+				})
+			);
+
+			// After stake, if some locks added, the unstake proccess is uneffected.
+			Balances::set_lock(ID_1, &2, u128::MAX, WithdrawReasons::all());
+			Balances::set_lock(ID_1, &5, u128::MAX, WithdrawReasons::all());
+			// Delegator leaves freely
+			assert_ok!(ParachainStaking::schedule_delegator_bond_less(Origin::signed(5), 1, 5));
+			let state = ParachainStaking::delegation_scheduled_requests(&1);
+			assert_eq!(
+				state,
+				vec![ScheduledRequest {
+					delegator: 5,
+					when_executable: 3,
+					action: DelegationAction::Decrease(5),
+				}],
+			);
+			assert_ok!(ParachainStaking::schedule_leave_delegators(Origin::signed(5)));
+			roll_to(10);
+			assert_ok!(ParachainStaking::execute_leave_delegators(Origin::signed(5), 5, 1));
+			assert!(ParachainStaking::delegator_state(2).is_none());
+			assert!(
+				!ParachainStaking::delegation_scheduled_requests(&1)
+					.iter()
+					.any(|x| x.delegator == 5),
+				"delegation request not removed"
+			);
+
+			// Candidate leaves freely
+			assert_ok!(ParachainStaking::schedule_candidate_bond_less(Origin::signed(2), 5));
+			roll_to(20);
+			assert_ok!(ParachainStaking::execute_candidate_bond_less(Origin::signed(2), 2));
+			assert_last_event!(MetaEvent::ParachainStaking(Event::CandidateBondedLess {
+				candidate: 2,
+				amount: 5,
+				new_bond: 595,
+			}));
 		});
 }
