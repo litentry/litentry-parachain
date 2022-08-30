@@ -33,10 +33,15 @@ use frame_system::pallet_prelude::*;
 use hex_literal::hex;
 pub use pallet::*;
 use rsa::{
-	pkcs1::{DecodeRsaPrivateKey, DecodeRsaPublicKey, EncodeRsaPrivateKey, EncodeRsaPublicKey},
 	pkcs1v15::{SigningKey, VerifyingKey},
+	pkcs8::{DecodePrivateKey, DecodePublicKey, EncodePrivateKey, EncodePublicKey},
 	Hash, PaddingScheme, PublicKey, PublicKeyParts, RsaPrivateKey, RsaPublicKey,
 };
+
+use rsa::pkcs1::{
+	DecodeRsaPrivateKey, DecodeRsaPublicKey, EncodeRsaPrivateKey, EncodeRsaPublicKey,
+};
+
 use sp_core::H256;
 use sp_std::prelude::*;
 
@@ -54,8 +59,26 @@ pub type Did = BoundedVec<u8, ConstU32<1024>>;
 pub(crate) type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
 pub(crate) type Metadata = BoundedVec<u8, ConstU32<3072>>;
 
-pub(crate) const RSA_2048_PRIV_PEM: &str = include_str!("rsa_key_examples/pkcs1/2048-priv.pem");
-pub(crate) const RSA_2048_PUB_PEM: &str = include_str!("rsa_key_examples/pkcs1/2048-pub.pem");
+pub(crate) const USER_SHIELDING_KEY_PRIV: &str =
+	include_str!("rsa_key_examples/pkcs1/2048-priv.pem");
+pub(crate) const USER_SHIELDING_KEY_PUB: &str = include_str!("rsa_key_examples/pkcs1/2048-pub.pem");
+pub(crate) const TEE_SHIELDING_KEY_PRIV: &str =
+	include_str!("rsa_key_examples/pkcs1/3072-priv.pem");
+pub(crate) const TEE_SHIELDING_KEY_PUB: &str = include_str!("rsa_key_examples/pkcs1/3072-pub.pem");
+
+pub(crate) fn get_mock_user_shielding_key() -> (RsaPublicKey, RsaPrivateKey) {
+	(
+		RsaPublicKey::from_pkcs1_pem(USER_SHIELDING_KEY_PUB).unwrap(),
+		RsaPrivateKey::from_pkcs1_pem(USER_SHIELDING_KEY_PRIV).unwrap(),
+	)
+}
+
+pub(crate) fn get_mock_tee_shielding_key() -> (RsaPublicKey, RsaPrivateKey) {
+	(
+		RsaPublicKey::from_public_key_pem(TEE_SHIELDING_KEY_PUB).unwrap(),
+		RsaPrivateKey::from_pkcs1_pem(TEE_SHIELDING_KEY_PRIV).unwrap(),
+	)
+}
 
 #[frame_support::pallet]
 pub mod pallet {
