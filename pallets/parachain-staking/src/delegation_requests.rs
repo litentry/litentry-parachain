@@ -414,7 +414,7 @@ impl<T: Config> Pallet<T> {
 	pub(crate) fn delegator_execute_scheduled_revoke_all(
 		delegator: T::AccountId,
 	) -> DispatchResultWithPostInfo {
-		let mut state = <DelegatorState<T>>::get(&delegator).ok_or(<Error<T>>::DelegatorDNE)?;
+		let state = <DelegatorState<T>>::get(&delegator).ok_or(<Error<T>>::DelegatorDNE)?;
 		let now = <Round<T>>::get().current;
 
 		let mut validated_scheduled_requests = vec![];

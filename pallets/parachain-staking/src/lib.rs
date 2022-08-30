@@ -1175,7 +1175,6 @@ pub mod pallet {
 			<Total<T>>::put(new_total_locked);
 			<CandidateInfo<T>>::insert(&candidate, &state);
 			<DelegatorState<T>>::insert(&delegator, &delegator_state);
-			<DelegatorReserveToLockMigrations<T>>::insert(&delegator, true);
 
 			let actual_weight = Some(T::WeightInfo::delegate(
 				state.delegation_count as u32,

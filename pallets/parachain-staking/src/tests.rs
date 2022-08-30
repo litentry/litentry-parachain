@@ -5562,7 +5562,7 @@ fn staked_capacity() {
 				})
 			);
 			assert_noop!(
-				ParachainStaking::delegate(Origin::signed(4), 1, 3000, 0, 0u32),
+				ParachainStaking::delegate(Origin::signed(4), 1, 3000),
 				DispatchError::Module(ModuleError {
 					index: 2,
 					error: [8, 0, 0, 0],
@@ -5573,7 +5573,7 @@ fn staked_capacity() {
 			Balances::set_lock(ID_1, &2, 400, WithdrawReasons::all());
 			Balances::set_lock(ID_1, &5, 400, WithdrawReasons::all());
 			assert_ok!(ParachainStaking::candidate_bond_more(Origin::signed(2), 500));
-			assert_ok!(ParachainStaking::delegate(Origin::signed(5), 1, 500, 0, 0u32));
+			assert_ok!(ParachainStaking::delegate(Origin::signed(5), 1, 500));
 
 			// Delegate/Candidate can not stake more if they enough balance and lock significant
 			// large
@@ -5588,7 +5588,7 @@ fn staked_capacity() {
 				})
 			);
 			assert_noop!(
-				ParachainStaking::delegate(Origin::signed(6), 1, 500, 0, 0u32),
+				ParachainStaking::delegate(Origin::signed(6), 1, 500),
 				DispatchError::Module(ModuleError {
 					index: 2,
 					error: [8, 0, 0, 0],
@@ -5612,7 +5612,7 @@ fn staked_capacity() {
 			);
 			assert_ok!(ParachainStaking::schedule_leave_delegators(Origin::signed(5)));
 			roll_to(10);
-			assert_ok!(ParachainStaking::execute_leave_delegators(Origin::signed(5), 5, 1));
+			assert_ok!(ParachainStaking::execute_leave_delegators(Origin::signed(5), 5));
 			assert!(ParachainStaking::delegator_state(2).is_none());
 			assert!(
 				!ParachainStaking::delegation_scheduled_requests(&1)
