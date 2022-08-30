@@ -30,7 +30,7 @@ use sp_runtime::{
 	traits::{Saturating, Zero},
 	Perbill, Percent, RuntimeDebug,
 };
-use sp_std::{cmp::Ordering, prelude::*};
+use sp_std::{cmp::Ordering, prelude::*, vec};
 
 #[derive(Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct Bond<AccountId, Balance> {
