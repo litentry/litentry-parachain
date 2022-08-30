@@ -5820,8 +5820,11 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "primitives",
+ "rand 0.8.5",
  "rsa",
  "scale-info",
+ "sha2 0.10.2",
+ "signature",
  "sp-arithmetic",
  "sp-core",
  "sp-io",
@@ -8603,7 +8606,7 @@ dependencies = [
 [[package]]
 name = "rsa"
 version = "0.7.0-pre"
-source = "git+https://github.com/RustCrypto/RSA?tag=v0.7.0-pre#b626d48a4f4f5246a5224762d118ff607e3ac248"
+source = "git+https://github.com/Kailai-Wang/RustCrypto-RSA#bf26f97139ca4fde626804b634de44b39670c28b"
 dependencies = [
  "byteorder",
  "digest 0.10.3",
@@ -8615,6 +8618,7 @@ dependencies = [
  "pkcs8",
  "rand_core 0.6.3",
  "serde",
+ "signature",
  "smallvec",
  "subtle",
  "zeroize",

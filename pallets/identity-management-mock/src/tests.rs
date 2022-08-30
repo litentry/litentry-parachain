@@ -14,17 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use super::{
-	DecodeRsaPrivateKey, DecodeRsaPublicKey, EncodeRsaPrivateKey, EncodeRsaPublicKey,
-	PublicKeyParts, RsaPrivateKey, RsaPublicKey,
-};
+use super::*;
 use crate::{mock::*, RSA_2048_PRIV_PEM, RSA_2048_PUB_PEM};
 use frame_support::assert_ok;
 use hex_literal::hex;
+use sha2::{Digest, Sha256};
+use signature::{RandomizedSigner, Signature, Verifier};
 use sp_core::H256;
 
 #[test]
-fn test_rsa_key_pair_works() {
+fn test_read_rsa_key_pair_works() {
 	let public_key = RsaPublicKey::from_pkcs1_pem(RSA_2048_PUB_PEM).unwrap();
 	assert_eq!(&public_key.n().to_bytes_be(), &hex!("B6C42C515F10A6AAF282C63EDBE24243A170F3FA2633BD4833637F47CA4F6F36E03A5D29EFC3191AC80F390D874B39E30F414FCEC1FCA0ED81E547EDC2CD382C76F61C9018973DB9FA537972A7C701F6B77E0982DFC15FC01927EE5E7CD94B4F599FF07013A7C8281BDF22DCBC9AD7CABB7C4311C982F58EDB7213AD4558B332266D743AED8192D1884CADB8B14739A8DADA66DC970806D9C7AC450CB13D0D7C575FB198534FC61BC41BC0F0574E0E0130C7BBBFBDFDC9F6A6E2E3E2AFF1CBEAC89BA57884528D55CFB08327A1E8C89F4E003CF2888E933241D9D695BCBBACDC90B44E3E095FA37058EA25B13F5E295CBEAC6DE838AB8C50AF61E298975B872F"));
 	assert_eq!(&public_key.e().to_bytes_be(), &hex!("010001"));
@@ -37,54 +36,39 @@ fn test_rsa_key_pair_works() {
 	assert_eq!(&private_key.primes()[1].to_bytes_be(), &hex!("D3F314757E40E954836F92BE24236AF2F0DA04A34653C180AF67E960086D93FDE65CB23EFD9D09374762F5981E361849AF68CDD75394FF6A4E06EB69B209E4228DB2DFA70E40F7F9750A528176647B788D0E5777A2CB8B22E3CD267FF70B4F3B02D3AAFB0E18C590A564B03188B0AA5FC48156B07622214243BD1227EFA7F2F9"));
 }
 
-/*
 #[test]
-fn test_link_identity() {
-	new_test_ext().execute_with(|| {
-		assert_ok!(IdentityManagement::link_identity(
-			Origin::signed(1),
-			H256::from_slice(&TEST_MRENCLAVE),
-			vec![1u8; 2048]
-		));
-		System::assert_last_event(Event::IdentityManagement(crate::Event::LinkIdentityRequested));
-	});
+fn test_encrypt_decrypt_rsa_key_pair_works() {
+	let public_key = RsaPublicKey::from_pkcs1_pem(RSA_2048_PUB_PEM).unwrap();
+	let private_key = RsaPrivateKey::from_pkcs1_pem(RSA_2048_PRIV_PEM).unwrap();
+	assert_eq!(private_key.to_public_key(), public_key);
+
+	// encrypt with public key
+	let mut rng = rand::thread_rng();
+	let data = b"hello world";
+	let enc_data = public_key
+		.encrypt(&mut rng, PaddingScheme::new_pkcs1v15_encrypt(), &data[..])
+		.expect("failed to encrypt");
+
+	// decrypt with private key
+	let dec_data = private_key
+		.decrypt(PaddingScheme::new_pkcs1v15_encrypt(), &enc_data)
+		.expect("failed to decrypt");
+	assert_eq!(&data[..], &dec_data[..]);
 }
 
 #[test]
-fn test_unlink_identity() {
-	new_test_ext().execute_with(|| {
-		assert_ok!(IdentityManagement::unlink_identity(
-			Origin::signed(1),
-			H256::from_slice(&TEST_MRENCLAVE),
-			vec![1u8; 2048]
-		));
-		System::assert_last_event(Event::IdentityManagement(crate::Event::UnlinkIdentityRequested));
-	});
-}
+fn test_sign_verify_rsa_key_pair_works() {
+	let public_key = RsaPublicKey::from_pkcs1_pem(RSA_2048_PUB_PEM).unwrap();
+	let private_key = RsaPrivateKey::from_pkcs1_pem(RSA_2048_PRIV_PEM).unwrap();
+	let signing_key = SigningKey::new_with_hash(private_key, Hash::SHA2_256);
+	let verifying_key: VerifyingKey = (&signing_key).into();
 
-#[test]
-fn test_verify_identity() {
-	new_test_ext().execute_with(|| {
-		assert_ok!(IdentityManagement::verify_identity(
-			Origin::signed(1),
-			H256::from_slice(&TEST_MRENCLAVE),
-			vec![1u8; 2048]
-		));
-		System::assert_last_event(Event::IdentityManagement(crate::Event::VerifyIdentityRequested));
-	});
-}
+	// sign with private key
+	let mut rng = rand::thread_rng();
+	let data = b"hello world";
+	let digest = Sha256::digest(data).to_vec();
+	let signature = signing_key.sign_with_rng(&mut rng, &digest);
 
-#[test]
-fn test_set_user_shielding_key() {
-	new_test_ext().execute_with(|| {
-		assert_ok!(IdentityManagement::set_user_shielding_key(
-			Origin::signed(1),
-			H256::from_slice(&TEST_MRENCLAVE),
-			vec![1u8; 2048]
-		));
-		System::assert_last_event(Event::IdentityManagement(
-			crate::Event::SetShieldingKeyRequested,
-		));
-	});
+	// verify
+	verifying_key.verify(&digest, &signature).expect("failed to verify");
 }
-*/

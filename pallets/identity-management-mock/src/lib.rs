@@ -34,7 +34,8 @@ use hex_literal::hex;
 pub use pallet::*;
 use rsa::{
 	pkcs1::{DecodeRsaPrivateKey, DecodeRsaPublicKey, EncodeRsaPrivateKey, EncodeRsaPublicKey},
-	PublicKeyParts, RsaPrivateKey, RsaPublicKey,
+	pkcs1v15::{SigningKey, VerifyingKey},
+	Hash, PaddingScheme, PublicKey, PublicKeyParts, RsaPrivateKey, RsaPublicKey,
 };
 use sp_core::H256;
 use sp_std::prelude::*;
