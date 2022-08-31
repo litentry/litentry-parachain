@@ -113,13 +113,17 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
             destinationRecipientAddress);
         await bridge.deposit(destinationChainID, destResourceId, data)
         let expectResult = false
-
-        for (let i = 0; i < 3; i++) {
-            await sleep(13)
-            const signedBlock = await context.parachainConfig.api.rpc.chain.getBlock();
+        const block = await context.parachainConfig.api.rpc.chain.getBlock()
+        const blockNumber = block.block.header.number
+        const unsubscribe = await context.parachainConfig.api.rpc.chain.subscribeNewHeads(async (header) => {
+            console.log(`Chain is at block: #${header.number}`);
+            const signedBlock = await context.parachainConfig.api.rpc.chain.getBlock(header.hash);
             const apiAt = await context.parachainConfig.api.at(signedBlock.block.header.hash);
             const allRecords = await apiAt.query.system.events();
-            console.log(`query events at block:${signedBlock.block.header.hash}`)
+            if (header.number.toNumber() > blockNumber.toNumber() + 4) {
+                unsubscribe()
+                assert.fail("expect the transaction fail in the last 4 blocks, but not found")
+            }
             signedBlock.block.extrinsics.forEach((ex, index) => {
                 if (!(ex.method.section === 'chainBridge' && ex.method.method === 'acknowledgeProposal')) {
                     return
@@ -148,8 +152,11 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
                     }
                 })
             });
-            if (expectResult) break
-        }
-        assert.isTrue(expectResult, "expect the transaction fail in the last 3 blocks, but not found")
+            if (expectResult) {
+                unsubscribe()
+                assert.exists("")
+            }
+        })
+        await sleep(39)
     })
 })

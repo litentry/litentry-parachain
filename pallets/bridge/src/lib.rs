@@ -28,7 +28,9 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::{Decode, Encode, EncodeLike};
-	use frame_support::traits::{Currency, ExistenceRequirement::AllowDeath, WithdrawReasons};
+	use frame_support::traits::{
+		fungible::Mutate, Currency, ExistenceRequirement::AllowDeath, WithdrawReasons,
+	};
 	pub use frame_support::{
 		pallet_prelude::*, traits::StorageVersion, weights::GetDispatchInfo, PalletId, Parameter,
 	};
@@ -157,7 +159,8 @@ pub mod pallet {
 		type BridgeChainId: Get<BridgeChainId>;
 
 		/// Currency impl
-		type Currency: Currency<Self::AccountId>;
+		type Currency: Currency<Self::AccountId>
+			+ Mutate<Self::AccountId, Balance = BalanceOf<Self>>;
 
 		#[pallet::constant]
 		type ProposalLifetime: Get<Self::BlockNumber>;

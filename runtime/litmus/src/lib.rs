@@ -145,7 +145,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9090,
+	spec_version: 9096,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -703,18 +703,21 @@ impl pallet_bridge::Config for Runtime {
 
 parameter_types! {
 	pub const MaximumIssuance: Balance = 20_000_000 * DOLLARS;
+	// Ethereum LIT total issuance in parachain decimal form
+	pub const ExternalTotalIssuance: Balance = 100_000_000 * DOLLARS;
 	// bridge::derive_resource_id(1, &bridge::hashing::blake2_128(b"LIT"));
 	pub const NativeTokenResourceId: [u8; 32] = hex_literal::hex!("00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001");
 }
 
-pub struct TechnicalCommitteeProvider;
-impl SortedMembers<AccountId> for TechnicalCommitteeProvider {
+// allow anyone to call transfer_native
+pub struct TransferNativeAnyone;
+impl SortedMembers<AccountId> for TransferNativeAnyone {
 	fn sorted_members() -> Vec<AccountId> {
-		TechnicalCommittee::members()
+		vec![]
 	}
 
-	fn contains(who: &AccountId) -> bool {
-		TechnicalCommittee::is_member(who)
+	fn contains(_who: &AccountId) -> bool {
+		true
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
@@ -726,11 +729,11 @@ impl SortedMembers<AccountId> for TechnicalCommitteeProvider {
 impl pallet_bridge_transfer::Config for Runtime {
 	type Event = Event;
 	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
-	type TransferNativeMembers = TechnicalCommitteeProvider;
+	type TransferNativeMembers = TransferNativeAnyone;
 	type SetMaximumIssuanceOrigin = EnsureRootOrHalfCouncil;
-	type Currency = Balances;
 	type NativeTokenResourceId = NativeTokenResourceId;
 	type DefaultMaximumIssuance = MaximumIssuance;
+	type ExternalTotalIssuance = ExternalTotalIssuance;
 }
 
 parameter_types! {
@@ -924,7 +927,9 @@ impl Contains<Call> for NormalModeFilter {
 			// democracy, we don't subdivide the calls, so we allow public proposals
 			Call::Democracy(_) |
 			// Utility
-			Call::Utility(_)
+			Call::Utility(_) |
+			// Session
+			Call::Session(_)
 		)
 	}
 }
