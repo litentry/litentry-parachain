@@ -27,7 +27,9 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{ConstU16, ConstU32, ConstU64, ConstU8, Contains, Everything, InstanceFilter},
+	traits::{
+		ConstU16, ConstU32, ConstU64, ConstU8, Contains, Everything, InstanceFilter, SortedMembers,
+	},
 	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
 	PalletId, RuntimeDebug,
 };
@@ -39,7 +41,7 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 pub use sp_runtime::BuildStorage;
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
-	traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto},
+	traits::{AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
 };
@@ -134,7 +136,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9090,
+	spec_version: 9095,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -455,6 +457,7 @@ impl pallet_democracy::Config for Runtime {
 
 parameter_types! {
 	pub const CouncilMotionDuration: BlockNumber = 3 * DAYS;
+	pub const CouncilDefaultMaxMembers: u32 = 100;
 }
 
 impl pallet_collective::Config<CouncilInstance> for Runtime {
@@ -463,7 +466,7 @@ impl pallet_collective::Config<CouncilInstance> for Runtime {
 	type Event = Event;
 	type MotionDuration = CouncilMotionDuration;
 	type MaxProposals = ConstU32<100>;
-	type MaxMembers = ConstU32<100>;
+	type MaxMembers = CouncilDefaultMaxMembers;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
 	type WeightInfo = weights::pallet_collective::WeightInfo<Runtime>;
 }
@@ -477,7 +480,7 @@ impl pallet_membership::Config<CouncilMembershipInstance> for Runtime {
 	type PrimeOrigin = EnsureRootOrTwoThirdsCouncil;
 	type MembershipInitialized = Council;
 	type MembershipChanged = Council;
-	type MaxMembers = ConstU32<100>;
+	type MaxMembers = CouncilDefaultMaxMembers;
 	type WeightInfo = weights::pallet_membership::WeightInfo<Runtime>;
 }
 
@@ -491,7 +494,7 @@ impl pallet_collective::Config<TechnicalCommitteeInstance> for Runtime {
 	type Event = Event;
 	type MotionDuration = TechnicalMotionDuration;
 	type MaxProposals = ConstU32<100>;
-	type MaxMembers = ConstU32<100>;
+	type MaxMembers = CouncilDefaultMaxMembers;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
 	type WeightInfo = weights::pallet_collective::WeightInfo<Runtime>;
 }
@@ -505,7 +508,7 @@ impl pallet_membership::Config<TechnicalCommitteeMembershipInstance> for Runtime
 	type PrimeOrigin = EnsureRootOrTwoThirdsCouncil;
 	type MembershipInitialized = TechnicalCommittee;
 	type MembershipChanged = TechnicalCommittee;
-	type MaxMembers = ConstU32<100>;
+	type MaxMembers = CouncilDefaultMaxMembers;
 	type WeightInfo = weights::pallet_membership::WeightInfo<Runtime>;
 }
 
@@ -516,6 +519,16 @@ parameter_types! {
 	pub SpendPeriod: BlockNumber = prod_or_fast!(7 * DAYS, 2 * MINUTES, "LITENTRY_SPENDPERIOD");
 	pub const Burn: Permill = Permill::from_percent(0);
 	pub const TreasuryPalletId: PalletId = PalletId(*b"py/trsry");
+
+	pub BountyDepositBase: Balance = deposit(1, 0);
+	pub const BountyDepositPayoutDelay: BlockNumber = 4 * DAYS;
+	pub const BountyUpdatePeriod: BlockNumber = 35 * DAYS;
+	pub const CuratorDepositMultiplier: Permill = Permill::from_percent(50);
+	pub CuratorDepositMin: Balance = DOLLARS;
+	pub CuratorDepositMax: Balance = 100 * DOLLARS;
+	pub BountyValueMinimum: Balance = 5 * DOLLARS;
+	pub DataDepositPerByte: Balance = deposit(0, 1);
+	pub const MaximumReasonLength: u32 = 8192;
 }
 
 impl pallet_treasury::Config for Runtime {
@@ -524,7 +537,7 @@ impl pallet_treasury::Config for Runtime {
 	type ApproveOrigin = EnsureRootOrTwoThirdsCouncil;
 	type RejectOrigin = EnsureRootOrHalfCouncil;
 	type Event = Event;
-	type OnSlash = ();
+	type OnSlash = Treasury;
 	type ProposalBond = ProposalBond;
 	type ProposalBondMinimum = ProposalBondMinimum;
 	type ProposalBondMaximum = ProposalBondMaximum;
@@ -532,9 +545,26 @@ impl pallet_treasury::Config for Runtime {
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
 	type BurnDestination = ();
+	// type SpendFunds = Bounties;
+	// Bounties is not enabled yet
 	type SpendFunds = ();
 	type WeightInfo = ();
 	type MaxApprovals = ConstU32<100>;
+}
+
+impl pallet_bounties::Config for Runtime {
+	type Event = Event;
+	type BountyDepositBase = BountyDepositBase;
+	type BountyDepositPayoutDelay = BountyDepositPayoutDelay;
+	type BountyUpdatePeriod = BountyUpdatePeriod;
+	type BountyValueMinimum = BountyValueMinimum;
+	type CuratorDepositMultiplier = CuratorDepositMultiplier;
+	type CuratorDepositMin = CuratorDepositMin;
+	type CuratorDepositMax = CuratorDepositMax;
+	type DataDepositPerByte = DataDepositPerByte;
+	type MaximumReasonLength = MaximumReasonLength;
+	type WeightInfo = ();
+	type ChildBountyManager = ();
 }
 
 impl pallet_sudo::Config for Runtime {
@@ -645,6 +675,7 @@ impl pallet_vesting::Config for Runtime {
 parameter_types! {
 	pub const BridgeChainId: u8 = 1;
 	pub const ProposalLifetime: BlockNumber = 50400; // ~7 days
+	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
 
 impl pallet_bridge::Config for Runtime {
@@ -652,7 +683,9 @@ impl pallet_bridge::Config for Runtime {
 	type BridgeCommitteeOrigin = EnsureRootOrHalfCouncil;
 	type Proposal = Call;
 	type BridgeChainId = BridgeChainId;
+	type Currency = Balances;
 	type ProposalLifetime = ProposalLifetime;
+	type TreasuryAccount = TreasuryAccount;
 }
 
 parameter_types! {
@@ -661,12 +694,30 @@ parameter_types! {
 	pub const NativeTokenResourceId: [u8; 32] = hex_literal::hex!("00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001");
 }
 
+pub struct TechnicalCommitteeProvider;
+impl SortedMembers<AccountId> for TechnicalCommitteeProvider {
+	fn sorted_members() -> Vec<AccountId> {
+		TechnicalCommittee::members()
+	}
+
+	fn contains(who: &AccountId) -> bool {
+		TechnicalCommittee::is_member(who)
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn add(_: &AccountId) {
+		unimplemented!()
+	}
+}
+
 impl pallet_bridge_transfer::Config for Runtime {
 	type Event = Event;
 	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
+	type SetMaximumIssuanceOrigin = EnsureRootOrHalfCouncil;
+	type TransferNativeMembers = TechnicalCommitteeProvider;
 	type Currency = Balances;
 	type NativeTokenResourceId = NativeTokenResourceId;
-	type MaximumIssuance = MaximumIssuance;
+	type DefaultMaximumIssuance = MaximumIssuance;
 }
 
 parameter_types! {
@@ -722,6 +773,7 @@ construct_runtime! {
 		CouncilMembership: pallet_membership::<Instance1> = 23,
 		TechnicalCommittee: pallet_collective::<Instance2> = 24,
 		TechnicalCommitteeMembership: pallet_membership::<Instance2> = 25,
+		Bounties: pallet_bounties = 26,
 
 		// Parachain
 		ParachainSystem: cumulus_pallet_parachain_system = 30,

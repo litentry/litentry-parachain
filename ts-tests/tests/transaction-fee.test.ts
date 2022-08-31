@@ -61,5 +61,4 @@ describeLitentry('Test Transaction Fee', ``, (context) => {
 		expect(treasuryBalanceIncrease).to.approximately(txFee / totalProportion * TREASURY_PROPORTION, 10);
 		expect(aliceBalanceIncrease).to.approximately(txFee / totalProportion * AUTHOR_PROPORTION, 10);
     });
-
 });
