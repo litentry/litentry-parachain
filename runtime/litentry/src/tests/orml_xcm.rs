@@ -43,6 +43,7 @@ fn orml_xcm_half_council_works() {
 }
 
 #[test]
-fn orml_xcm_member_works(){
-	orml_xcm::orml_xcm_member_works::<Runtime,Origin, LocalOriginToLocation,Call,CouncilInstance>();
+fn orml_xcm_member_works() {
+	orml_xcm::orml_xcm_member_works::<Runtime, Origin, LocalOriginToLocation, Call, CouncilInstance>(
+	);
 }
