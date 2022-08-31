@@ -693,7 +693,7 @@ impl pallet_parachain_staking::Config for Runtime {
 	type OnCollatorPayout = ();
 	type OnNewRound = ();
 	type WeightInfo = weights::pallet_parachain_staking::WeightInfo<Runtime>;
-	type IssuanceAdapter = ();
+	type IssuanceAdapter = BridgeTransfer;
 }
 
 parameter_types! {
@@ -729,6 +729,8 @@ impl pallet_bridge::Config for Runtime {
 
 parameter_types! {
 	pub const MaximumIssuance: Balance = 80_000_000 * DOLLARS;
+	// Ethereum LIT total issuance in parachain decimal form
+	pub const ExternalTotalIssuance = 100_000_000 * DOLLARS;
 	// bridge::derive_resource_id(1, &bridge::hashing::blake2_128(b"LIT"));
 	pub const NativeTokenResourceId: [u8; 32] = hex_literal::hex!("00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001");
 }
@@ -756,6 +758,7 @@ impl pallet_bridge_transfer::Config for Runtime {
 	type TransferNativeMembers = TechnicalCommitteeProvider;
 	type NativeTokenResourceId = NativeTokenResourceId;
 	type DefaultMaximumIssuance = MaximumIssuance;
+	type ExternalTotalIssuance = ExternalTotalIssuance;
 }
 
 parameter_types! {
