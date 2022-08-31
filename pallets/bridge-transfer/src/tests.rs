@@ -264,8 +264,6 @@ fn create_successful_transfer_proposal() {
 #[test]
 fn test_external_balances_adjusted() {
 	new_test_ext().execute_with(|| {
-		// Check the default external_balances
-		assert_eq!(ExternalBalances::<Test>::get(), MaximumIssuance::<Test>::get());
 		// Set the new external_balances
 		assert_noop!(
 			BridgeTransfer::set_external_balances(
