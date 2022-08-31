@@ -961,7 +961,8 @@ pub mod pallet {
 		#[pallet::weight(
         < T as Config >::WeightInfo::execute_leave_candidates(
 		< CandidateInfo < T >>::get(candidate)
-			.map_or_else(|| CandidateMetadata::<BalanceOf<T>>::new(Zero::zero()),|candidate_metadata|candidate_metadata)
+			.map_or_else(|| CandidateMetadata::<BalanceOf<T>>::new(Zero::zero()),
+			|candidate_metadata|candidate_metadata)
 			.delegation_count as u32
 		)
         )]
@@ -1144,7 +1145,8 @@ pub mod pallet {
 		#[pallet::weight(
         < T as Config >::WeightInfo::delegate(
         < CandidateInfo < T >>::get(candidate)
-			.map_or_else(|| CandidateMetadata::<BalanceOf<T>>::new(Zero::zero()),|candidate_metadata|candidate_metadata)
+			.map_or_else(|| CandidateMetadata::<BalanceOf<T>>::new(Zero::zero()),
+			|candidate_metadata|candidate_metadata)
 			.delegation_count as u32,
         < T as Config >::MaxDelegationsPerDelegator::get()
         )
@@ -1221,7 +1223,9 @@ pub mod pallet {
 			Self::delegator_schedule_revoke_all(delegator)
 		}
 		#[pallet::weight(< T as Config >::WeightInfo::execute_leave_delegators(
-        < DelegatorState < T >>::get(& delegator).ok_or(< Error < T >>::DelegatorDNE).unwrap().delegations.0.len() as u32
+		< DelegatorState < T >>::get(& delegator)
+			.map_or_else(|| 0u32,
+			|delegator_state| delegator_state.delegations.0.len() as u32)
         ))]
 		/// Execute the right to exit the set of delegators and revoke all ongoing delegations.
 		pub fn execute_leave_delegators(

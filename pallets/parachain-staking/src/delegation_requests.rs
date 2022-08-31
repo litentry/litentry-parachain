@@ -19,7 +19,6 @@
 //! implementations.
 
 //! Scheduled requests functionality for delegators
-
 use crate::{
 	pallet::{
 		BalanceOf, CandidateInfo, Config, DelegationScheduledRequests, DelegatorState, Error,
