@@ -21,7 +21,7 @@ use crate::{BlockNumber, Metadata};
 
 // The context associated with the (litentry-account, did) pair
 // TODO: maybe we have better naming
-#[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, TypeInfo, MaxEncodedLen)]
+#[derive(Clone, Eq, PartialEq, Default, Debug, Encode, Decode, TypeInfo, MaxEncodedLen)]
 pub struct IdentityContext {
 	// the metadata
 	pub metadata: Option<Metadata>,
@@ -29,12 +29,6 @@ pub struct IdentityContext {
 	pub linking_request_block: BlockNumber,
 	// if this did is verified
 	pub is_verified: bool,
-}
-
-impl Default for IdentityContext {
-	fn default() -> Self {
-		Self { metadata: None, linking_request_block: BlockNumber::default(), is_verified: false }
-	}
 }
 
 impl IdentityContext {

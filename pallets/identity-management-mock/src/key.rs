@@ -52,13 +52,12 @@ pub fn get_mock_tee_shielding_key() -> (RsaPublicKey, RsaPrivateKey) {
 	)
 }
 
-pub fn encrypt_with_public_key(k: &Vec<u8>, data: &[u8]) -> Vec<u8> {
+pub fn encrypt_with_public_key(k: &[u8], data: &[u8]) -> Vec<u8> {
 	let mut rng = rand::thread_rng();
 	let public_key = RsaPublicKey::from_public_key_pem(sp_std::str::from_utf8(k).unwrap()).unwrap();
-	let enc_data = public_key
-		.encrypt(&mut rng, PaddingScheme::new_pkcs1v15_encrypt(), &data[..])
-		.expect("failed to encrypt");
-	enc_data
+	public_key
+		.encrypt(&mut rng, PaddingScheme::new_pkcs1v15_encrypt(), data)
+		.expect("failed to encrypt")
 }
 
 #[cfg(test)]

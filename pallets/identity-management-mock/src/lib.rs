@@ -204,7 +204,7 @@ pub mod pallet {
 			shard: ShardIdentifier,
 			encrypted_data: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
-			let caller = ensure_signed(origin.clone())?;
+			let caller = ensure_signed(origin)?;
 			ensure!(
 				WhitelistedCallers::<T>::contains_key(&caller),
 				Error::<T>::CallerNotWhitelisted
@@ -236,7 +236,7 @@ pub mod pallet {
 			shard: ShardIdentifier,
 			encrypted_data: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
-			let caller = ensure_signed(origin.clone())?;
+			let caller = ensure_signed(origin)?;
 			ensure!(
 				WhitelistedCallers::<T>::contains_key(&caller),
 				Error::<T>::CallerNotWhitelisted
@@ -253,7 +253,7 @@ pub mod pallet {
 						.ok_or(Error::<T>::ShieldingKeyNotExist)?;
 
 					// emit the challenge code event
-					let code: ChallengeCode = [1, 2, 3, 4, 5, 6].into();
+					let code: ChallengeCode = [1, 2, 3, 4, 5, 6];
 					Self::deposit_event(Event::<T>::ChallengeCodeGeneratedPlain {
 						account: who.clone(),
 						code,
@@ -288,7 +288,7 @@ pub mod pallet {
 			shard: ShardIdentifier,
 			encrypted_data: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
-			let caller = ensure_signed(origin.clone())?;
+			let caller = ensure_signed(origin)?;
 			ensure!(
 				WhitelistedCallers::<T>::contains_key(&caller),
 				Error::<T>::CallerNotWhitelisted
@@ -324,7 +324,7 @@ pub mod pallet {
 			shard: ShardIdentifier,
 			encrypted_data: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
-			let caller = ensure_signed(origin.clone())?;
+			let caller = ensure_signed(origin)?;
 			ensure!(
 				WhitelistedCallers::<T>::contains_key(&caller),
 				Error::<T>::CallerNotWhitelisted
@@ -362,7 +362,7 @@ pub mod pallet {
 						Ok(().into())
 					})
 				},
-				_ => return Err(Error::<T>::WrongTrustedCallType.into()),
+				_ => Err(Error::<T>::WrongTrustedCallType.into()),
 			}
 		}
 	}
@@ -370,7 +370,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		fn handle_call_worker_payload(
 			shard: &ShardIdentifier,
-			payload: &Vec<u8>,
+			payload: &[u8],
 		) -> Result<TrustedCall, DispatchError> {
 			// decrypt using TEE's shielding key
 			let (_, private_key) = get_mock_tee_shielding_key();

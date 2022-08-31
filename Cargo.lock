@@ -4496,6 +4496,7 @@ dependencies = [
  "pallet-drop3",
  "pallet-extrinsic-filter",
  "pallet-identity-management",
+ "pallet-identity-management-mock",
  "pallet-membership",
  "pallet-multisig",
  "pallet-preimage",
@@ -8512,6 +8513,7 @@ dependencies = [
  "pallet-drop3",
  "pallet-extrinsic-filter",
  "pallet-identity-management",
+ "pallet-identity-management-mock",
  "pallet-membership",
  "pallet-multisig",
  "pallet-parachain-staking",
@@ -8654,7 +8656,7 @@ dependencies = [
 [[package]]
 name = "rsa"
 version = "0.7.0-pre"
-source = "git+https://github.com/Kailai-Wang/RustCrypto-RSA#bf26f97139ca4fde626804b634de44b39670c28b"
+source = "git+https://github.com/litentry/RustCrypto-RSA#979d8266c31d3ae3f0a131da9802f6b9976bb268"
 dependencies = [
  "byteorder",
  "digest 0.10.3",
