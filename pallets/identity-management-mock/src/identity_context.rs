@@ -17,34 +17,28 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 
-use crate::{BlockNumberOf, Config, Metadata};
+use crate::{BlockNumber, Metadata};
 
 // The context associated with the (litentry-account, did) pair
 // TODO: maybe we have better naming
 #[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, TypeInfo, MaxEncodedLen)]
-#[scale_info(skip_type_params(T))]
-#[codec(mel_bound())]
-pub struct IdentityContext<T: Config> {
+pub struct IdentityContext {
 	// the metadata
 	pub metadata: Option<Metadata>,
 	// the block number (of parent chain) where the linking was intially requested
-	pub linking_request_block: BlockNumberOf<T>,
+	pub linking_request_block: BlockNumber,
 	// if this did is verified
 	pub is_verified: bool,
 }
 
-impl<T: Config> Default for IdentityContext<T> {
+impl Default for IdentityContext {
 	fn default() -> Self {
-		Self {
-			metadata: None,
-			linking_request_block: BlockNumberOf::<T>::default(),
-			is_verified: false,
-		}
+		Self { metadata: None, linking_request_block: BlockNumber::default(), is_verified: false }
 	}
 }
 
-impl<T: Config> IdentityContext<T> {
-	pub fn new(linking_request_block: BlockNumberOf<T>) -> Self {
+impl IdentityContext {
+	pub fn new(linking_request_block: BlockNumber) -> Self {
 		Self { metadata: None, linking_request_block, is_verified: false }
 	}
 }

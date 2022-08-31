@@ -17,9 +17,9 @@
 // The STF primitives for mocking
 // Mostly copied from tee-worker app-libs/stf/src/lib.rs
 
-use crate::UserShieldingKey;
+use crate::{Did, Metadata, UserShieldingKey};
 use codec::{Decode, Encode, MaxEncodedLen};
-use primitives::Index;
+use primitives::{BlockNumber, Index};
 use sp_core::{crypto::AccountId32, ed25519, sr25519, Pair, H256};
 use sp_runtime::{traits::Verify, MultiSignature};
 use sp_std::prelude::*;
@@ -155,12 +155,18 @@ pub enum PublicGetter {
 #[allow(non_camel_case_types)]
 pub enum TrustedCall {
 	set_shielding_key(AccountId, AccountId, UserShieldingKey),
+	link_identity(AccountId, AccountId, Did, Option<Metadata>, BlockNumber),
+	unlink_identity(AccountId, AccountId, Did),
+	verify_identity(AccountId, AccountId, Did, BlockNumber),
 }
 
 impl TrustedCall {
 	pub fn account(&self) -> &AccountId {
 		match self {
 			TrustedCall::set_shielding_key(account, _, _) => account,
+			TrustedCall::link_identity(account, _, _, _, _) => account,
+			TrustedCall::unlink_identity(account, _, _) => account,
+			TrustedCall::verify_identity(account, _, _, _) => account,
 		}
 	}
 

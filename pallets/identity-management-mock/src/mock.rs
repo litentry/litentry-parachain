@@ -16,13 +16,12 @@
 
 #![cfg(test)]
 
-use crate as pallet_identity_management_mock;
+use crate::{self as pallet_identity_management_mock, Mrenclave};
 use frame_support::{
 	parameter_types,
 	traits::{ConstU128, ConstU16, ConstU32, ConstU64, Everything},
 };
 use frame_system as system;
-use hex_literal::hex;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -100,9 +99,7 @@ impl pallet_balances::Config for Test {
 }
 
 parameter_types! {
-	// https://github.com/integritee-network/pallets/blob/master/test-utils/src/ias.rs#L125-L132
-	pub const TestMrenclave: [u8; 32] =
-		hex!("7a3454ec8f42e265cb5be7dfd111e1d95ac6076ed82a0948b2e2a45cf17b62a0");
+	pub const TestMrenclave: Mrenclave = [2; 32];
 }
 
 impl pallet_identity_management_mock::Config for Test {
@@ -110,6 +107,7 @@ impl pallet_identity_management_mock::Config for Test {
 	type Call = Call;
 	type ManageWhitelistOrigin = EnsureRoot<Self::AccountId>;
 	type Mrenclave = TestMrenclave;
+	type MaxVerificationDelay = ConstU32<10>;
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {

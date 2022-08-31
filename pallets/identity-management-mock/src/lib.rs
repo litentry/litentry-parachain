@@ -45,8 +45,8 @@ pub type Mrenclave = [u8; 32];
 pub type UserShieldingKey = BoundedVec<u8, ConstU32<1024>>;
 pub type ChallengeCode = [u8; 6];
 pub type Did = BoundedVec<u8, ConstU32<1024>>;
-pub(crate) type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
-pub(crate) type Metadata = BoundedVec<u8, ConstU32<3072>>;
+pub(crate) type Metadata = BoundedVec<u8, ConstU32<2048>>;
+pub(crate) use primitives::BlockNumber;
 
 mod key;
 use key::{encrypt_with_public_key, get_mock_tee_shielding_key, PaddingScheme};
@@ -69,9 +69,12 @@ pub mod pallet {
 			+ IsSubType<Call<Self>>;
 		/// origin to manage caller whitelist
 		type ManageWhitelistOrigin: EnsureOrigin<Self::Origin>;
-		/// enc
+		/// basically the mocked enclave hash
 		#[pallet::constant]
 		type Mrenclave: Get<Mrenclave>;
+		// maximum delay in block numbers between linking an identity and verifying an identity
+		#[pallet::constant]
+		type MaxVerificationDelay: Get<BlockNumber>;
 	}
 
 	#[pallet::event]
@@ -82,8 +85,24 @@ pub mod pallet {
 		UnlinkIdentityRequested,
 		VerifyIdentityRequested,
 		SetShieldingKeyRequested,
+		// =============================================
 		// Mocked events that should have come from TEE
-		UserShieldingKeyUpdated { account: Vec<u8>, key: Vec<u8> },
+		// we have both the "plain" version and "encrypted" version for debugging
+		// =============================================
+		// set user's shielding key
+		UserShieldingKeySetPlain { account: AccountId, key: UserShieldingKey },
+		UserShieldingKeySetEnc { account: Vec<u8>, key: Vec<u8> },
+		// link identity
+		ChallengeCodeGeneratedPlain { account: AccountId, code: ChallengeCode },
+		ChallengeCodeGeneratedEnc { account: Vec<u8>, code: Vec<u8> },
+		IdentityLinkedPlain { account: AccountId, identity: Did },
+		IdentityLinkedEnc { account: Vec<u8>, identity: Vec<u8> },
+		// unlink identity
+		IdentityUnlinkedPlain { account: AccountId, identity: Did },
+		IdentityUnlinkedEnc { account: Vec<u8>, identity: Vec<u8> },
+		// verify identity
+		IdentityVerifiedPlain { account: AccountId, identity: Did },
+		IdentityVerifiedEnc { account: Vec<u8>, identity: Vec<u8> },
 	}
 
 	#[pallet::error]
@@ -102,6 +121,16 @@ pub mod pallet {
 		WrongTrustedCallType,
 		/// error when verifying trusted call signature
 		TrustedCallBadSignature,
+		/// identity already exists when linking an identity
+		IdentityAlreadyExist,
+		/// identity not exist when unlinking an identity
+		IdentityNotExist,
+		/// no shielding key for a given AccountId
+		ShieldingKeyNotExist,
+		/// a verification reqeust comes too early
+		VerificationRequestTooEarly,
+		/// a verification reqeust comes too late
+		VerificationRequestTooLate,
 	}
 
 	#[pallet::storage]
@@ -140,7 +169,7 @@ pub mod pallet {
 		AccountId,
 		Blake2_128Concat,
 		Did,
-		IdentityContext<T>,
+		IdentityContext,
 		OptionQuery,
 	>;
 
@@ -180,14 +209,17 @@ pub mod pallet {
 				WhitelistedCallers::<T>::contains_key(&caller),
 				Error::<T>::CallerNotWhitelisted
 			);
-			// intentionally trigger the event now
 			Self::deposit_event(Event::<T>::SetShieldingKeyRequested);
 
 			let trusted_call = Self::handle_call_worker_payload(&shard, &encrypted_data)?;
 			match trusted_call {
-				TrustedCall::set_shielding_key(root, who, key) => {
+				TrustedCall::set_shielding_key(_root, who, key) => {
 					UserShieldingKeys::<T>::insert(&who, &key);
-					Self::deposit_event(Event::<T>::UserShieldingKeyUpdated {
+					Self::deposit_event(Event::<T>::UserShieldingKeySetPlain {
+						account: who.clone(),
+						key: key.clone(),
+					});
+					Self::deposit_event(Event::<T>::UserShieldingKeySetEnc {
 						account: encrypt_with_public_key(&key, who.encode().as_slice()),
 						key: encrypt_with_public_key(&key, key.as_slice()),
 					});
@@ -204,10 +236,48 @@ pub mod pallet {
 			shard: ShardIdentifier,
 			encrypted_data: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin.clone())?;
-			ensure!(WhitelistedCallers::<T>::contains_key(who), Error::<T>::CallerNotWhitelisted);
-
+			let caller = ensure_signed(origin.clone())?;
+			ensure!(
+				WhitelistedCallers::<T>::contains_key(&caller),
+				Error::<T>::CallerNotWhitelisted
+			);
 			Self::deposit_event(Event::LinkIdentityRequested);
+			let trusted_call = Self::handle_call_worker_payload(&shard, &encrypted_data)?;
+			match trusted_call {
+				TrustedCall::link_identity(_root, who, did, metadata, bn) => {
+					ensure!(
+						!IDGraphs::<T>::contains_key(&who, &did),
+						Error::<T>::IdentityAlreadyExist
+					);
+					let key = UserShieldingKeys::<T>::get(&who)
+						.ok_or(Error::<T>::ShieldingKeyNotExist)?;
+
+					// emit the challenge code event
+					let code: ChallengeCode = [1, 2, 3, 4, 5, 6].into();
+					Self::deposit_event(Event::<T>::ChallengeCodeGeneratedPlain {
+						account: who.clone(),
+						code,
+					});
+					Self::deposit_event(Event::<T>::ChallengeCodeGeneratedEnc {
+						account: encrypt_with_public_key(&key, who.encode().as_slice()),
+						code: encrypt_with_public_key(&key, code.as_ref()),
+					});
+
+					// emit the IdentityLinked event
+					let context =
+						IdentityContext { metadata, linking_request_block: bn, is_verified: false };
+					IDGraphs::<T>::insert(&who, &did, context);
+					Self::deposit_event(Event::<T>::IdentityLinkedPlain {
+						account: who.clone(),
+						identity: did.clone(),
+					});
+					Self::deposit_event(Event::<T>::IdentityLinkedEnc {
+						account: encrypt_with_public_key(&key, who.encode().as_slice()),
+						identity: encrypt_with_public_key(&key, did.as_slice()),
+					});
+				},
+				_ => return Err(Error::<T>::WrongTrustedCallType.into()),
+			};
 			Ok(().into())
 		}
 
@@ -218,10 +288,32 @@ pub mod pallet {
 			shard: ShardIdentifier,
 			encrypted_data: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin.clone())?;
-			ensure!(WhitelistedCallers::<T>::contains_key(who), Error::<T>::CallerNotWhitelisted);
-
+			let caller = ensure_signed(origin.clone())?;
+			ensure!(
+				WhitelistedCallers::<T>::contains_key(&caller),
+				Error::<T>::CallerNotWhitelisted
+			);
 			Self::deposit_event(Event::UnlinkIdentityRequested);
+			let trusted_call = Self::handle_call_worker_payload(&shard, &encrypted_data)?;
+			match trusted_call {
+				TrustedCall::unlink_identity(_root, who, did) => {
+					ensure!(IDGraphs::<T>::contains_key(&who, &did), Error::<T>::IdentityNotExist);
+					let key = UserShieldingKeys::<T>::get(&who)
+						.ok_or(Error::<T>::ShieldingKeyNotExist)?;
+
+					// emit the IdentityUnlinked event
+					IDGraphs::<T>::remove(&who, &did);
+					Self::deposit_event(Event::<T>::IdentityUnlinkedPlain {
+						account: who.clone(),
+						identity: did.clone(),
+					});
+					Self::deposit_event(Event::<T>::IdentityUnlinkedEnc {
+						account: encrypt_with_public_key(&key, who.encode().as_slice()),
+						identity: encrypt_with_public_key(&key, did.as_slice()),
+					});
+				},
+				_ => return Err(Error::<T>::WrongTrustedCallType.into()),
+			};
 			Ok(().into())
 		}
 
@@ -232,11 +324,46 @@ pub mod pallet {
 			shard: ShardIdentifier,
 			encrypted_data: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin.clone())?;
-			ensure!(WhitelistedCallers::<T>::contains_key(who), Error::<T>::CallerNotWhitelisted);
-
+			let caller = ensure_signed(origin.clone())?;
+			ensure!(
+				WhitelistedCallers::<T>::contains_key(&caller),
+				Error::<T>::CallerNotWhitelisted
+			);
 			Self::deposit_event(Event::VerifyIdentityRequested);
-			Ok(().into())
+			let trusted_call = Self::handle_call_worker_payload(&shard, &encrypted_data)?;
+			match trusted_call {
+				TrustedCall::verify_identity(_root, who, did, verification_request_block) => {
+					ensure!(IDGraphs::<T>::contains_key(&who, &did), Error::<T>::IdentityNotExist);
+					let key = UserShieldingKeys::<T>::get(&who)
+						.ok_or(Error::<T>::ShieldingKeyNotExist)?;
+
+					IDGraphs::<T>::try_mutate(&who, &did, |context| -> DispatchResultWithPostInfo {
+						let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
+						ensure!(
+							c.linking_request_block <= verification_request_block,
+							Error::<T>::VerificationRequestTooEarly
+						);
+						ensure!(
+							verification_request_block - c.linking_request_block <=
+								T::MaxVerificationDelay::get(),
+							Error::<T>::VerificationRequestTooLate
+						);
+						c.is_verified = true;
+						*context = Some(c);
+						// emit the IdentityVerified event
+						Self::deposit_event(Event::<T>::IdentityVerifiedPlain {
+							account: who.clone(),
+							identity: did.clone(),
+						});
+						Self::deposit_event(Event::<T>::IdentityVerifiedEnc {
+							account: encrypt_with_public_key(&key, who.encode().as_slice()),
+							identity: encrypt_with_public_key(&key, did.as_slice()),
+						});
+						Ok(().into())
+					})
+				},
+				_ => return Err(Error::<T>::WrongTrustedCallType.into()),
+			}
 		}
 	}
 
