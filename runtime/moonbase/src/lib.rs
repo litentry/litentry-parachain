@@ -141,7 +141,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9090,
+	spec_version: 9095,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -687,6 +687,8 @@ impl pallet_bridge::Config for Runtime {
 
 parameter_types! {
 	pub const MaximumIssuance: Balance = 20_000_000 * DOLLARS;
+	// Ethereum LIT total issuance in parachain decimal form
+	pub const ExternalTotalIssuance: Balance = 100_000_000 * DOLLARS;
 	// bridge::derive_resource_id(1, &bridge::hashing::blake2_128(b"LIT"));
 	pub const NativeTokenResourceId: [u8; 32] = hex_literal::hex!("00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001");
 }
@@ -711,9 +713,9 @@ impl pallet_bridge_transfer::Config for Runtime {
 	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
 	type TransferNativeMembers = TechnicalCommitteeProvider;
 	type SetMaximumIssuanceOrigin = EnsureRootOrHalfCouncil;
-	type Currency = Balances;
 	type NativeTokenResourceId = NativeTokenResourceId;
 	type DefaultMaximumIssuance = MaximumIssuance;
+	type ExternalTotalIssuance = ExternalTotalIssuance;
 }
 
 parameter_types! {

@@ -262,6 +262,62 @@ fn create_successful_transfer_proposal() {
 }
 
 #[test]
+fn test_external_balances_adjusted() {
+	new_test_ext().execute_with(|| {
+		// Set the new external_balances
+		assert_noop!(
+			BridgeTransfer::set_external_balances(
+				Origin::signed(Bridge::account_id()),
+				MaximumIssuance::<Test>::get() / 2
+			),
+			sp_runtime::DispatchError::BadOrigin
+		);
+		assert_ok!(BridgeTransfer::set_external_balances(
+			Origin::root(),
+			MaximumIssuance::<Test>::get() / 2
+		));
+
+		// Check inital state
+		let bridge_id: u64 = Bridge::account_id();
+		let resource_id = NativeTokenResourceId::get();
+		assert_eq!(Balances::free_balance(&bridge_id), ENDOWED_BALANCE);
+		// Transfer and check result
+		// Check the external_balances
+		assert_eq!(ExternalBalances::<Test>::get(), MaximumIssuance::<Test>::get() / 2);
+		assert_ok!(BridgeTransfer::transfer(
+			Origin::signed(Bridge::account_id()),
+			RELAYER_A,
+			10,
+			resource_id,
+		));
+		assert_eq!(Balances::free_balance(RELAYER_A), ENDOWED_BALANCE + 10);
+
+		// Check the external_balances
+		assert_eq!(ExternalBalances::<Test>::get(), MaximumIssuance::<Test>::get() / 2 - 10);
+
+		assert_events(vec![Event::Balances(balances::Event::Deposit {
+			who: RELAYER_A,
+			amount: 10,
+		})]);
+
+		// Token cross out of parachain
+		// Whitelist setup
+		let dest_chain = 0;
+		assert_ok!(pallet_bridge::Pallet::<Test>::update_fee(Origin::root(), dest_chain, 0));
+		assert_ok!(pallet_bridge::Pallet::<Test>::whitelist_chain(Origin::root(), dest_chain));
+		assert_ok!(BridgeTransfer::transfer_native(
+			Origin::signed(RELAYER_A),
+			5,
+			vec![0u8, 0u8, 0u8, 0u8], // no meaning
+			dest_chain,
+		));
+
+		// Check the external_balances
+		assert_eq!(ExternalBalances::<Test>::get(), MaximumIssuance::<Test>::get() / 2 - 5);
+	});
+}
+
+#[test]
 fn set_maximum_issuance() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(pallet::MaximumIssuance::<Test>::get(), mock::MaximumIssuance::get());

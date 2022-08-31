@@ -116,6 +116,7 @@ impl bridge::Config for Test {
 
 parameter_types! {
 	pub const MaximumIssuance: u64 = MAXIMUM_ISSURANCE;
+	pub const ExternalTotalIssuance: u64 = MAXIMUM_ISSURANCE;
 	// bridge::derive_resource_id(1, &bridge::hashing::blake2_128(b"LIT"));
 	pub const NativeTokenResourceId: [u8; 32] = hex!("0000000000000000000000000000000a21dfe87028f214dd976be8479f5af001");
 }
@@ -145,9 +146,9 @@ impl Config for Test {
 	type BridgeOrigin = bridge::EnsureBridge<Test>;
 	type TransferNativeMembers = MembersProvider;
 	type SetMaximumIssuanceOrigin = EnsureSignedBy<SetMaximumIssuanceOrigin, u64>;
-	type Currency = Balances;
 	type NativeTokenResourceId = NativeTokenResourceId;
 	type DefaultMaximumIssuance = MaximumIssuance;
+	type ExternalTotalIssuance = ExternalTotalIssuance;
 }
 
 parameter_types! {
