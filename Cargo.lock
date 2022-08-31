@@ -6183,10 +6183,13 @@ name = "pallet-teeracle"
 version = "0.1.0"
 source = "git+https://github.com/integritee-network/pallets.git?branch=sdk-v0.9.0-polkadot-v0.9.26#170582c91c79cd5e2489e3e958aa27e26fce8bbc"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "hex-literal",
  "log",
  "pallet-teerex",
+ "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
@@ -6195,6 +6198,7 @@ dependencies = [
  "sp-std",
  "substrate-fixed 0.5.9 (git+https://github.com/encointer/substrate-fixed.git?tag=v0.5.9)",
  "teeracle-primitives",
+ "test-utils",
 ]
 
 [[package]]
