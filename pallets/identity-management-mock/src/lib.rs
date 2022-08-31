@@ -16,6 +16,7 @@
 
 // Ensure we're `no_std` when compiling for Wasm.
 
+#![allow(dead_code)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(test)]
@@ -30,60 +31,29 @@ use frame_support::{
 	weights::GetDispatchInfo,
 };
 use frame_system::pallet_prelude::*;
-use hex_literal::hex;
 pub use pallet::*;
-use rsa::{
-	pkcs1v15::{SigningKey, VerifyingKey},
-	pkcs8::{DecodePrivateKey, DecodePublicKey, EncodePrivateKey, EncodePublicKey},
-	Hash, PaddingScheme, PublicKey, PublicKeyParts, RsaPrivateKey, RsaPublicKey,
-};
-
-use rsa::pkcs1::{
-	DecodeRsaPrivateKey, DecodeRsaPublicKey, EncodeRsaPrivateKey, EncodeRsaPublicKey,
-};
-
-use sp_core::H256;
+use sp_runtime::DispatchError;
 use sp_std::prelude::*;
 
-mod mock_types;
-use mock_types::*;
+mod stf_primitives;
+use stf_primitives::{AccountId, ShardIdentifier, TrustedCall, TrustedOperation};
 
 mod identity_context;
 use identity_context::IdentityContext;
 
 pub type Mrenclave = [u8; 32];
-
 pub type UserShieldingKey = BoundedVec<u8, ConstU32<1024>>;
 pub type ChallengeCode = [u8; 6];
 pub type Did = BoundedVec<u8, ConstU32<1024>>;
 pub(crate) type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
 pub(crate) type Metadata = BoundedVec<u8, ConstU32<3072>>;
 
-pub(crate) const USER_SHIELDING_KEY_PRIV: &str =
-	include_str!("rsa_key_examples/pkcs1/2048-priv.pem");
-pub(crate) const USER_SHIELDING_KEY_PUB: &str = include_str!("rsa_key_examples/pkcs1/2048-pub.pem");
-pub(crate) const TEE_SHIELDING_KEY_PRIV: &str =
-	include_str!("rsa_key_examples/pkcs1/3072-priv.pem");
-pub(crate) const TEE_SHIELDING_KEY_PUB: &str = include_str!("rsa_key_examples/pkcs1/3072-pub.pem");
-
-pub(crate) fn get_mock_user_shielding_key() -> (RsaPublicKey, RsaPrivateKey) {
-	(
-		RsaPublicKey::from_pkcs1_pem(USER_SHIELDING_KEY_PUB).unwrap(),
-		RsaPrivateKey::from_pkcs1_pem(USER_SHIELDING_KEY_PRIV).unwrap(),
-	)
-}
-
-pub(crate) fn get_mock_tee_shielding_key() -> (RsaPublicKey, RsaPrivateKey) {
-	(
-		RsaPublicKey::from_public_key_pem(TEE_SHIELDING_KEY_PUB).unwrap(),
-		RsaPrivateKey::from_pkcs1_pem(TEE_SHIELDING_KEY_PRIV).unwrap(),
-	)
-}
+mod key;
+use key::{encrypt_with_public_key, get_mock_tee_shielding_key, PaddingScheme};
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
@@ -113,13 +83,25 @@ pub mod pallet {
 		VerifyIdentityRequested,
 		SetShieldingKeyRequested,
 		// Mocked events that should have come from TEE
-		UserShieldingKeyUpdated { id: Vec<u8>, key: Vec<u8> },
+		UserShieldingKeyUpdated { account: Vec<u8>, key: Vec<u8> },
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
 		/// caller is not in whitelist (therefore disallowed to call some extrinsics)
 		CallerNotWhitelisted,
+		/// Error when decrypting using TEE'shielding key
+		ShieldingKeyDecryptionFailed,
+		/// Error when decoding trusted operation
+		TrustedOperationDecodingFailed,
+		/// Error when converting to trusted call
+		TrustedCallConversionFailed,
+		/// unexpected TrustedOperation type
+		WrongTrustedOperationType,
+		/// unexpected TrustedCall type
+		WrongTrustedCallType,
+		/// error when verifying trusted call signature
+		TrustedCallBadSignature,
 	}
 
 	#[pallet::storage]
@@ -127,11 +109,14 @@ pub mod pallet {
 	pub type WhitelistedCallers<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, (), OptionQuery>;
 
+	/// We use stf_primitives::AccountId instead of T::AcoundId as key for the TEE-releated storages
+	/// - for simplicity
+	/// - fo
 	/// user shielding key is per Litentry account
 	#[pallet::storage]
 	#[pallet::getter(fn user_shielding_keys)]
 	pub type UserShieldingKeys<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AccountId, UserShieldingKey, OptionQuery>;
+		StorageMap<_, Blake2_128Concat, AccountId, UserShieldingKey, OptionQuery>;
 
 	/// challenge code is per Litentry account + did
 	#[pallet::storage]
@@ -139,7 +124,7 @@ pub mod pallet {
 	pub type ChallengeCodes<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
-		T::AccountId,
+		AccountId,
 		Blake2_128Concat,
 		Did,
 		ChallengeCode,
@@ -152,7 +137,7 @@ pub mod pallet {
 	pub type IDGraphs<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
-		T::AccountId,
+		AccountId,
 		Blake2_128Concat,
 		Did,
 		IdentityContext<T>,
@@ -187,13 +172,28 @@ pub mod pallet {
 		#[pallet::weight(195_000_000)]
 		pub fn set_user_shielding_key(
 			origin: OriginFor<T>,
-			shard: H256,
+			shard: ShardIdentifier,
 			encrypted_data: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin.clone())?;
-			ensure!(WhitelistedCallers::<T>::contains_key(who), Error::<T>::CallerNotWhitelisted);
+			let caller = ensure_signed(origin.clone())?;
+			ensure!(
+				WhitelistedCallers::<T>::contains_key(&caller),
+				Error::<T>::CallerNotWhitelisted
+			);
+			// intentionally trigger the event now
+			Self::deposit_event(Event::<T>::SetShieldingKeyRequested);
 
-			Self::deposit_event(Event::SetShieldingKeyRequested);
+			let trusted_call = Self::handle_call_worker_payload(&shard, &encrypted_data)?;
+			match trusted_call {
+				TrustedCall::set_shielding_key(root, who, key) => {
+					UserShieldingKeys::<T>::insert(&who, &key);
+					Self::deposit_event(Event::<T>::UserShieldingKeyUpdated {
+						account: encrypt_with_public_key(&key, who.encode().as_slice()),
+						key: encrypt_with_public_key(&key, key.as_slice()),
+					});
+				},
+				_ => return Err(Error::<T>::WrongTrustedCallType.into()),
+			};
 			Ok(().into())
 		}
 
@@ -201,7 +201,7 @@ pub mod pallet {
 		#[pallet::weight(195_000_000)]
 		pub fn link_identity(
 			origin: OriginFor<T>,
-			shard: H256,
+			shard: ShardIdentifier,
 			encrypted_data: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin.clone())?;
@@ -215,7 +215,7 @@ pub mod pallet {
 		#[pallet::weight(195_000_000)]
 		pub fn unlink_identity(
 			origin: OriginFor<T>,
-			shard: H256,
+			shard: ShardIdentifier,
 			encrypted_data: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin.clone())?;
@@ -229,7 +229,7 @@ pub mod pallet {
 		#[pallet::weight(195_000_000)]
 		pub fn verify_identity(
 			origin: OriginFor<T>,
-			shard: H256,
+			shard: ShardIdentifier,
 			encrypted_data: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin.clone())?;
@@ -241,17 +241,29 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		fn handle_call_worker_payload(payload: Vec<u8>) {
-			/*
-			// decrypt
-			let decrypted_extrinsic = shielding_key.decrypt(&payload).unwrap();
-			// code
-			let decoded_operation =
-				TrustedOperation::decode(&mut decrypted_extrinsic.as_slice()).unwrap();
-			// conver to TrustedCallSigned
-			let trusted_call_signed = decoded_operation.to_call().unwrap();
-			assert!(trusted_call_signed.verify_signature(&mr_enclave, &shard_id()));
-			*/
+		fn handle_call_worker_payload(
+			shard: &ShardIdentifier,
+			payload: &Vec<u8>,
+		) -> Result<TrustedCall, DispatchError> {
+			// decrypt using TEE's shielding key
+			let (_, private_key) = get_mock_tee_shielding_key();
+			let decrypted_extrinsic = private_key
+				.decrypt(PaddingScheme::new_pkcs1v15_encrypt(), payload)
+				.map_err(|_| Error::<T>::ShieldingKeyDecryptionFailed)?;
+			// decode
+			let decoded_operation = TrustedOperation::decode(&mut decrypted_extrinsic.as_slice())
+				.map_err(|_| Error::<T>::TrustedOperationDecodingFailed)?;
+			// convert to TrustedCallSigned
+			let trusted_call_signed = match decoded_operation {
+				TrustedOperation::indirect_call(call) => call,
+				_ => return Err(Error::<T>::WrongTrustedOperationType.into()),
+			};
+			// double-check the signature
+			ensure!(
+				trusted_call_signed.verify_signature(&<T as Config>::Mrenclave::get(), shard),
+				Error::<T>::TrustedCallBadSignature
+			);
+			Ok(trusted_call_signed.call)
 		}
 	}
 }

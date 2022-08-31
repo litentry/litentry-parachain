@@ -14,13 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-// mostly copied from tee-worker app-libs/stf/src/lib.rs
+// The STF primitives for mocking
+// Mostly copied from tee-worker app-libs/stf/src/lib.rs
 
-use codec::{Decode, Encode, EncodeLike};
+use crate::UserShieldingKey;
+use codec::{Decode, Encode, MaxEncodedLen};
 use primitives::Index;
 use sp_core::{crypto::AccountId32, ed25519, sr25519, Pair, H256};
-use sp_keyring::AccountKeyring;
 use sp_runtime::{traits::Verify, MultiSignature};
+use sp_std::prelude::*;
 
 pub type Signature = MultiSignature;
 pub type AuthorityId = <Signature as Verify>::Signer;
@@ -54,7 +56,7 @@ impl From<sr25519::Pair> for KeyPair {
 	}
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, scale_info::TypeInfo)]
 pub struct TrustedCallSigned {
 	pub call: TrustedCall,
 	pub nonce: Index,
@@ -82,7 +84,7 @@ impl TrustedCallSigned {
 	}
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, scale_info::TypeInfo)]
 #[allow(non_camel_case_types)]
 pub enum TrustedOperation {
 	indirect_call(TrustedCallSigned),
@@ -124,7 +126,7 @@ impl TrustedOperation {
 	}
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, scale_info::TypeInfo)]
 #[allow(non_camel_case_types)]
 pub enum Getter {
 	public(PublicGetter),
@@ -143,16 +145,16 @@ impl From<TrustedGetterSigned> for Getter {
 	}
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, scale_info::TypeInfo)]
 #[allow(non_camel_case_types)]
 pub enum PublicGetter {
 	some_value,
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, scale_info::TypeInfo)]
 #[allow(non_camel_case_types)]
 pub enum TrustedCall {
-	set_shielding_key(AccountId, AccountId, Vec<u8>),
+	set_shielding_key(AccountId, AccountId, UserShieldingKey),
 }
 
 impl TrustedCall {
@@ -178,7 +180,7 @@ impl TrustedCall {
 	}
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, scale_info::TypeInfo)]
 #[allow(non_camel_case_types)]
 pub enum TrustedGetter {
 	shielding_key(AccountId),
@@ -197,7 +199,7 @@ impl TrustedGetter {
 	}
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, scale_info::TypeInfo)]
 pub struct TrustedGetterSigned {
 	pub getter: TrustedGetter,
 	pub signature: Signature,

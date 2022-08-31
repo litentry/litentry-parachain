@@ -26,25 +26,23 @@ frame-system = { git = "https://github.com/paritytech/substrate", branch = "polk
 # benchmarking
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26", default-features = false, optional = true }
 hex = { version = "0.4", default-features = false }
-hex-literal = { version = "0.3.2", optional = true }
 
-primitives = { path = "../../primitives", default-features = false }
-rsa = { git = "https://github.com/Kailai-Wang/RustCrypto-RSA", default-features = false, features = ["serde", "pem"] }
-
-[dev-dependencies]
 hex-literal = { version = "0.3.2" }
-pallet-balances = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
-pallet-timestamp = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
+primitives = { path = "../../primitives", default-features = false }
 rand = "0.8"
+rsa = { git = "https://github.com/Kailai-Wang/RustCrypto-RSA", default-features = false, features = ["serde", "pem"] }
 sha2 = { version = "0.10.2", default-features = false }
 signature = { version = ">=1.4, <1.7", default-features = false, features = ["rand-preview"] }
+
+[dev-dependencies]
+pallet-balances = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
 sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
 
 [features]
 default = ["std"]
 runtime-benchmarks = [
   "frame-benchmarking",
-  "hex-literal",
 ]
 std = [
   "codec/std",
