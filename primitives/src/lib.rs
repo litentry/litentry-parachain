@@ -73,6 +73,8 @@ mod constants {
 	pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 	pub const HOURS: BlockNumber = MINUTES * 60;
 	pub const DAYS: BlockNumber = HOURS * 24;
+	// 365.25 DAYS = 8766 HOURS
+	pub const YEARS: BlockNumber = HOURS * 8766;
 }
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know

@@ -85,6 +85,7 @@ pallet-bridge = { path = "../../pallets/bridge", default-features = false }
 pallet-bridge-transfer = { path = "../../pallets/bridge-transfer", default-features = false }
 pallet-drop3 = { path = "../../pallets/drop3", default-features = false }
 pallet-extrinsic-filter = { path = "../../pallets/extrinsic-filter", default-features = false }
+pallet-parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
 runtime-common = { path = '../common', default-features = false }
 
 [dev-dependencies]
@@ -106,11 +107,11 @@ runtime-benchmarks = [
   "frame-system/runtime-benchmarks",
   "pallet-balances/runtime-benchmarks",
   "pallet-bounties/runtime-benchmarks",
-  "pallet-collator-selection/runtime-benchmarks",
   "pallet-collective/runtime-benchmarks",
   "pallet-democracy/runtime-benchmarks",
   "pallet-membership/runtime-benchmarks",
   "pallet-multisig/runtime-benchmarks",
+  "pallet-parachain-staking/runtime-benchmarks",
   "pallet-preimage/runtime-benchmarks",
   "pallet-proxy/runtime-benchmarks",
   "pallet-scheduler/runtime-benchmarks",
@@ -155,6 +156,7 @@ std = [
   "pallet-democracy/std",
   "pallet-membership/std",
   "pallet-multisig/std",
+  "pallet-parachain-staking/std",
   "pallet-preimage/std",
   "pallet-proxy/std",
   "pallet-scheduler/std",
@@ -175,7 +177,6 @@ std = [
   "cumulus-primitives-core/std",
   "cumulus-primitives-utility/std",
   "cumulus-primitives-timestamp/std",
-  "pallet-collator-selection/std",
   "parachain-info/std",
   "pallet-xcm/std",
   "polkadot-parachain/std",
@@ -189,7 +190,6 @@ std = [
   "pallet-drop3/std",
   "pallet-extrinsic-filter/std",
 ]
-
 try-runtime = [
   "frame-executive/try-runtime",
   "frame-system/try-runtime",
@@ -202,6 +202,7 @@ try-runtime = [
   "pallet-democracy/try-runtime",
   "pallet-membership/try-runtime",
   "pallet-multisig/try-runtime",
+  "pallet-parachain-staking/try-runtime",
   "pallet-preimage/try-runtime",
   "pallet-proxy/try-runtime",
   "pallet-scheduler/try-runtime",
