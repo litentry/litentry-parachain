@@ -74,6 +74,18 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// The extrinsic used to verify the response from TEE side
+		/// Keep it until HTTPS test on tee-worker refactored
+		#[pallet::weight(1_000)]
+		pub fn dummy(origin: OriginFor<T>) -> DispatchResult {
+			let _ = ensure_signed(origin)?;
+			log::error!(
+				target: "identity management",
+				"dummy called."
+			);
+			Ok(())
+		}
+
 		/// Link an identity
 		#[pallet::weight(<T as Config>::WeightInfo::link_identity())]
 		pub fn link_identity(
