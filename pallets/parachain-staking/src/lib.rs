@@ -944,13 +944,13 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(
-        < T as Config >::WeightInfo::execute_leave_candidates(
+		< T as Config >::WeightInfo::execute_leave_candidates(
 		< CandidateInfo < T >>::get(candidate)
-			.ok_or_else(|| CandidateMetadata::<BalanceOf<T>>::new(Zero::zero()))
-			.unwrap()
-			.delegation_count
+		.map_or_else(|| CandidateMetadata::<BalanceOf<T>>::new(Zero::zero()),
+		|candidate_metadata|candidate_metadata)
+		.delegation_count as u32
 		)
-        )]
+		)]
 		/// Execute leave candidates request
 		pub fn execute_leave_candidates(
 			origin: OriginFor<T>,
@@ -1124,14 +1124,14 @@ pub mod pallet {
 			Ok(().into())
 		}
 		#[pallet::weight(
-        < T as Config >::WeightInfo::delegate(
-        < CandidateInfo < T >>::get(candidate)
-			.ok_or_else(|| CandidateMetadata::<BalanceOf<T>>::new(Zero::zero()))
-			.unwrap()
-			.delegation_count as u32,
-        < T as Config >::MaxDelegationsPerDelegator::get()
-        )
-        )]
+		< T as Config >::WeightInfo::delegate(
+		< CandidateInfo < T >>::get(candidate)
+		.map_or_else(|| CandidateMetadata::<BalanceOf<T>>::new(Zero::zero()),
+		|candidate_metadata|candidate_metadata)
+		.delegation_count as u32,
+		< T as Config >::MaxDelegationsPerDelegator::get()
+		)
+		)]
 		/// If caller is not a delegator and not a collator, then join the set of delegators
 		/// If caller is a delegator, then makes delegation to change their delegation state
 		pub fn delegate(
@@ -1198,8 +1198,10 @@ pub mod pallet {
 			Self::delegator_schedule_revoke_all(delegator)
 		}
 		#[pallet::weight(< T as Config >::WeightInfo::execute_leave_delegators(
-        < DelegatorState < T >>::get(& delegator).ok_or(< Error < T >>::DelegatorDNE).unwrap().delegations.0.len() as u32
-        ))]
+		< DelegatorState < T >>::get(& delegator)
+		.map_or_else(|| 0u32,
+		|delegator_state| delegator_state.delegations.0.len() as u32)
+		))]
 		/// Execute the right to exit the set of delegators and revoke all ongoing delegations.
 		pub fn execute_leave_delegators(
 			origin: OriginFor<T>,
