@@ -73,7 +73,7 @@ pub mod pallet {
 		type DefaultMaximumIssuance: Get<bridge::BalanceOf<Self>>;
 
 		#[pallet::constant]
-		// In parachain local decimal format 
+		// In parachain local decimal format
 		type ExternalTotalIssuance: Get<bridge::BalanceOf<Self>>;
 	}
 
@@ -105,11 +105,13 @@ pub mod pallet {
 
 	#[pallet::type_value]
 	pub fn DefaultExternalBalances<T: Config>() -> bridge::BalanceOf<T> {
-		T::ExternalTotalIssuance::get().checked_sub(&<<T as bridge::Config>::Currency as Currency<
-			<T as frame_system::Config>::AccountId,
-		>>::total_issuance()).map_or_else(|| 0u32.into(), |v| v)
+		T::ExternalTotalIssuance::get()
+			.checked_sub(&<<T as bridge::Config>::Currency as Currency<
+				<T as frame_system::Config>::AccountId,
+			>>::total_issuance())
+			.map_or_else(|| 0u32.into(), |v| v)
 	}
-	
+
 	#[pallet::storage]
 	#[pallet::getter(fn external_balances)]
 	pub type ExternalBalances<T: Config> =

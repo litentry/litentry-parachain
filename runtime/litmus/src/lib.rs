@@ -701,7 +701,7 @@ impl pallet_bridge::Config for Runtime {
 parameter_types! {
 	pub const MaximumIssuance: Balance = 20_000_000 * DOLLARS;
 	// Ethereum LIT total issuance in parachain decimal form
-	pub const ExternalTotalIssuance = 100_000_000 * DOLLARS;
+	pub const ExternalTotalIssuance: Balance = 100_000_000 * DOLLARS;
 	// bridge::derive_resource_id(1, &bridge::hashing::blake2_128(b"LIT"));
 	pub const NativeTokenResourceId: [u8; 32] = hex_literal::hex!("00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001");
 }
