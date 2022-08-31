@@ -961,9 +961,8 @@ pub mod pallet {
 		#[pallet::weight(
         < T as Config >::WeightInfo::execute_leave_candidates(
 		< CandidateInfo < T >>::get(candidate)
-			.ok_or_else(|| CandidateMetadata::<BalanceOf<T>>::new(Zero::zero()))
-			.unwrap()
-			.delegation_count
+			.map_or_else(|| CandidateMetadata::<BalanceOf<T>>::new(Zero::zero()),|candidate_metadata|candidate_metadata)
+			.delegation_count as u32
 		)
         )]
 		/// Execute leave candidates request
@@ -1145,8 +1144,7 @@ pub mod pallet {
 		#[pallet::weight(
         < T as Config >::WeightInfo::delegate(
         < CandidateInfo < T >>::get(candidate)
-			.ok_or_else(|| CandidateMetadata::<BalanceOf<T>>::new(Zero::zero()))
-			.unwrap()
+			.map_or_else(|| CandidateMetadata::<BalanceOf<T>>::new(Zero::zero()),|candidate_metadata|candidate_metadata)
 			.delegation_count as u32,
         < T as Config >::MaxDelegationsPerDelegator::get()
         )
