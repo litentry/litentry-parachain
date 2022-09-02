@@ -31,39 +31,37 @@ use xcm::latest::prelude::*;
 use xcm_executor::traits::Convert;
 
 pub fn orml_xcm_root_works<
+	R: BaseRuntimeRequirements + frame_system::Config<Call = Call>,
 	Origin: OriginTrait
 		+ From<RawOrigin<AccountId>>
 		+ Clone
 		+ std::convert::From<
-			pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_balances::Instance1>,
-		> + std::fmt::Debug,
+			pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_collective::Instance1>,
+		>,
 	LocalOriginToLocation: Convert<Origin, MultiLocation>,
+	Call: Clone + Dispatchable<Origin = Origin> + From<frame_system::Call<R>>,
 >()
 where
+	<<R as frame_system::Config>::Lookup as sp_runtime::traits::StaticLookup>::Source:
+		From<sp_runtime::AccountId32>,
 	std::result::Result<frame_system::RawOrigin<sp_runtime::AccountId32>, Origin>:
 		std::convert::From<Origin>,
 	std::result::Result<
-		pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_balances::Instance1>,
-		Origin,
-	>: std::convert::From<Origin>,
-	Origin: std::convert::From<
-		pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_balances::Instance2>,
-	>,
-	std::result::Result<
-		pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_balances::Instance2>,
+		pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_collective::Instance1>,
 		Origin,
 	>: std::convert::From<Origin>,
 {
-	// test the RootOrTwoThirdsCouncil can send the xcm
-	let test_root_origin = frame_system::RawOrigin::Root;
-	let res_account = <FilterEnsureOrigin<
-		Origin,
-		LocalOriginToLocation,
-		EnsureRootOrTwoThirdsCouncil,
-	> as EnsureOrigin<Origin>>::try_origin(Origin::from(test_root_origin))
-	.unwrap();
+	ExtBuilder::<R>::default().build().execute_with(|| {
+		let test_root_origin = frame_system::RawOrigin::Root;
+		let res_account = <FilterEnsureOrigin<
+			Origin,
+			LocalOriginToLocation,
+			EnsureRootOrTwoThirdsCouncil,
+		> as EnsureOrigin<Origin>>::try_origin(Origin::from(test_root_origin))
+		.map_or_else(|_| Here.into(), |res_account| res_account);
 
-	assert_eq!(res_account, Here.into());
+		assert_eq!(res_account, Here.into());
+	})
 }
 
 pub fn orml_xcm_signed_works<
@@ -72,26 +70,18 @@ pub fn orml_xcm_signed_works<
 		+ From<RawOrigin<AccountId>>
 		+ Clone
 		+ std::convert::From<
-			pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_balances::Instance1>,
-		> + std::fmt::Debug,
+			pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_collective::Instance1>,
+		>,
 	LocalOriginToLocation: Convert<Origin, MultiLocation>,
-	Call: Clone + Dispatchable<Origin = Origin> + From<pallet_balances::Call<R>>,
+	Call: Clone + Dispatchable<Origin = Origin> + From<frame_system::Call<R>>,
 >()
 where
 	<<R as frame_system::Config>::Lookup as sp_runtime::traits::StaticLookup>::Source:
 		From<sp_runtime::AccountId32>,
-
 	std::result::Result<frame_system::RawOrigin<sp_runtime::AccountId32>, Origin>:
 		std::convert::From<Origin>,
 	std::result::Result<
-		pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_balances::Instance1>,
-		Origin,
-	>: std::convert::From<Origin>,
-	Origin: std::convert::From<
-		pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_balances::Instance2>,
-	>,
-	std::result::Result<
-		pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_balances::Instance2>,
+		pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_collective::Instance1>,
 		Origin,
 	>: std::convert::From<Origin>,
 {
@@ -102,123 +92,121 @@ where
 			LocalOriginToLocation,
 			EnsureRootOrTwoThirdsCouncil,
 		> as EnsureOrigin<Origin>>::try_origin(Origin::from(test_signed_origin))
-		.unwrap();
+		.map_or_else(|_| Here.into(), |res_account| res_account);
 
 		assert_ne!(res_account, Here.into());
 	});
 }
 
 pub fn orml_xcm_two_thirds_councli_works<
+	R: BaseRuntimeRequirements + frame_system::Config<Call = Call>,
 	Origin: OriginTrait
 		+ From<RawOrigin<AccountId>>
 		+ Clone
 		+ std::convert::From<
-			pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_balances::Instance1>,
-		> + std::fmt::Debug,
+			pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_collective::Instance1>,
+		> + std::convert::From<pallet_collective::RawOrigin<sp_runtime::AccountId32, I>>,
 	LocalOriginToLocation: Convert<Origin, MultiLocation>,
+	Call: Clone + Dispatchable<Origin = Origin> + From<frame_system::Call<R>>,
 	I,
 >()
 where
+	<<R as frame_system::Config>::Lookup as sp_runtime::traits::StaticLookup>::Source:
+		From<sp_runtime::AccountId32>,
 	std::result::Result<frame_system::RawOrigin<sp_runtime::AccountId32>, Origin>:
 		std::convert::From<Origin>,
 	std::result::Result<
-		pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_balances::Instance1>,
-		Origin,
-	>: std::convert::From<Origin>,
-	Origin: std::convert::From<
-			pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_balances::Instance2>,
-		> + std::convert::From<pallet_collective::RawOrigin<sp_runtime::AccountId32, I>>,
-	std::result::Result<
-		pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_balances::Instance2>,
+		pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_collective::Instance1>,
 		Origin,
 	>: std::convert::From<Origin>,
 {
-	let tow_third_origin: Origin =
-		pallet_collective::RawOrigin::<AccountId, I>::Members(2, 3).into();
+	ExtBuilder::<R>::default().build().execute_with(|| {
+		let tow_third_origin: Origin =
+			pallet_collective::RawOrigin::<AccountId, I>::Members(2, 3).into();
 
-	let res_account = <FilterEnsureOrigin<
-		Origin,
-		LocalOriginToLocation,
-		EnsureRootOrTwoThirdsCouncil,
-	> as EnsureOrigin<Origin>>::try_origin(tow_third_origin)
-	.unwrap();
+		let res_account = <FilterEnsureOrigin<
+			Origin,
+			LocalOriginToLocation,
+			EnsureRootOrTwoThirdsCouncil,
+		> as EnsureOrigin<Origin>>::try_origin(tow_third_origin)
+		.map_or_else(|_| Here.into(), |res_account| res_account);
 
-	assert_eq!(res_account, Here.into());
+		assert_eq!(res_account, Here.into());
+	})
 }
 
 pub fn orml_xcm_one_four_councli_works<
+	R: BaseRuntimeRequirements + frame_system::Config<Call = Call>,
 	Origin: OriginTrait
 		+ From<RawOrigin<AccountId>>
 		+ Clone
 		+ std::convert::From<
-			pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_balances::Instance1>,
-		> + std::fmt::Debug,
+			pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_collective::Instance1>,
+		> + std::convert::From<pallet_collective::RawOrigin<sp_runtime::AccountId32, I>>,
 	LocalOriginToLocation: Convert<Origin, MultiLocation>,
+	Call: Clone + Dispatchable<Origin = Origin> + From<frame_system::Call<R>>,
 	I,
 >()
 where
+	<<R as frame_system::Config>::Lookup as sp_runtime::traits::StaticLookup>::Source:
+		From<sp_runtime::AccountId32>,
 	std::result::Result<frame_system::RawOrigin<sp_runtime::AccountId32>, Origin>:
 		std::convert::From<Origin>,
 	std::result::Result<
-		pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_balances::Instance1>,
-		Origin,
-	>: std::convert::From<Origin>,
-	Origin: std::convert::From<
-			pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_balances::Instance2>,
-		> + std::convert::From<pallet_collective::RawOrigin<sp_runtime::AccountId32, I>>,
-	std::result::Result<
-		pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_balances::Instance2>,
+		pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_collective::Instance1>,
 		Origin,
 	>: std::convert::From<Origin>,
 {
-	let one_four_origin: Origin =
-		pallet_collective::RawOrigin::<AccountId, I>::Members(1, 4).into();
+	ExtBuilder::<R>::default().build().execute_with(|| {
+		let one_four_origin: Origin =
+			pallet_collective::RawOrigin::<AccountId, I>::Members(1, 4).into();
 
-	let should_failed = <FilterEnsureOrigin<
-		Origin,
-		LocalOriginToLocation,
-		EnsureRootOrTwoThirdsCouncil,
-	> as EnsureOrigin<Origin>>::try_origin(one_four_origin)
-	.is_err();
+		let should_failed = <FilterEnsureOrigin<
+			Origin,
+			LocalOriginToLocation,
+			EnsureRootOrTwoThirdsCouncil,
+		> as EnsureOrigin<Origin>>::try_origin(one_four_origin)
+		.is_err();
 
-	assert!(should_failed);
+		assert!(should_failed);
+	})
 }
 
 pub fn orml_xcm_half_councli_works<
+	R: BaseRuntimeRequirements + frame_system::Config<Call = Call>,
 	Origin: OriginTrait
 		+ From<RawOrigin<AccountId>>
 		+ Clone
 		+ std::convert::From<
-			pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_balances::Instance1>,
-		> + std::fmt::Debug,
+			pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_collective::Instance1>,
+		> + std::convert::From<pallet_collective::RawOrigin<sp_runtime::AccountId32, I>>,
 	LocalOriginToLocation: Convert<Origin, MultiLocation>,
+	Call: Clone + Dispatchable<Origin = Origin> + From<frame_system::Call<R>>,
 	I,
 >()
 where
+	<<R as frame_system::Config>::Lookup as sp_runtime::traits::StaticLookup>::Source:
+		From<sp_runtime::AccountId32>,
 	std::result::Result<frame_system::RawOrigin<sp_runtime::AccountId32>, Origin>:
 		std::convert::From<Origin>,
 	std::result::Result<
-		pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_balances::Instance1>,
-		Origin,
-	>: std::convert::From<Origin>,
-	Origin: std::convert::From<
-			pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_balances::Instance2>,
-		> + std::convert::From<pallet_collective::RawOrigin<sp_runtime::AccountId32, I>>,
-	std::result::Result<
-		pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_balances::Instance2>,
+		pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_collective::Instance1>,
 		Origin,
 	>: std::convert::From<Origin>,
 {
-	let half_origin: Origin = pallet_collective::RawOrigin::<AccountId, I>::Members(1, 2).into();
+	ExtBuilder::<R>::default().build().execute_with(|| {
+		let half_origin: Origin =
+			pallet_collective::RawOrigin::<AccountId, I>::Members(1, 2).into();
 
-	let should_failed = <FilterEnsureOrigin<
-		Origin,
-		LocalOriginToLocation,
-		EnsureRootOrTwoThirdsCouncil,
-	> as EnsureOrigin<Origin>>::try_origin(half_origin)
-	.is_err();
+		let should_failed = <FilterEnsureOrigin<
+			Origin,
+			LocalOriginToLocation,
+			EnsureRootOrTwoThirdsCouncil,
+		> as EnsureOrigin<Origin>>::try_origin(half_origin)
+		.is_err();
 
-	assert!(should_failed);
+		assert!(should_failed);
+	})
 }
 
 pub fn orml_xcm_member_works<
@@ -227,27 +215,19 @@ pub fn orml_xcm_member_works<
 		+ From<RawOrigin<AccountId>>
 		+ Clone
 		+ std::convert::From<
-			pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_balances::Instance1>,
-		> + std::fmt::Debug,
+			pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_collective::Instance1>,
+		> + std::convert::From<pallet_collective::RawOrigin<sp_runtime::AccountId32, I>>,
 	LocalOriginToLocation: Convert<Origin, MultiLocation>,
-	Call: Clone + Dispatchable<Origin = Origin> + From<pallet_balances::Call<R>>,
+	Call: Clone + Dispatchable<Origin = Origin> + From<frame_system::Call<R>>,
 	I,
 >()
 where
 	<<R as frame_system::Config>::Lookup as sp_runtime::traits::StaticLookup>::Source:
 		From<sp_runtime::AccountId32>,
-
 	std::result::Result<frame_system::RawOrigin<sp_runtime::AccountId32>, Origin>:
 		std::convert::From<Origin>,
 	std::result::Result<
-		pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_balances::Instance1>,
-		Origin,
-	>: std::convert::From<Origin>,
-	Origin: std::convert::From<
-			pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_balances::Instance2>,
-		> + std::convert::From<pallet_collective::RawOrigin<sp_runtime::AccountId32, I>>,
-	std::result::Result<
-		pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_balances::Instance2>,
+		pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_collective::Instance1>,
 		Origin,
 	>: std::convert::From<Origin>,
 {
