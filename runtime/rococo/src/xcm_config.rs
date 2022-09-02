@@ -36,6 +36,7 @@ use runtime_common::xcm_impl::{
 	OldAnchoringSelfReserve, XcmFeesToAccount,
 };
 
+use runtime_common::{EnsureRootOrTwoThirdsCouncil, FilterEnsureOrigin};
 use sp_runtime::traits::AccountIdConversion;
 use xcm::latest::prelude::*;
 use xcm_builder::{
@@ -46,7 +47,6 @@ use xcm_builder::{
 	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
 };
 use xcm_executor::{traits::JustTry, XcmExecutor};
-use runtime_common::{EnsureRootOrTwoThirdsCouncil, FilterEnsureOrigin};
 
 #[cfg(test)]
 use crate::tests::setup::ParachainXcmRouter;
@@ -288,7 +288,8 @@ impl pallet_xcm::Config for Runtime {
 	// Check their Barriers implementation
 	// And for TakeWeightCredit
 	// Check if their executor's ShouldExecute trait weight_credit
-	type SendXcmOrigin = FilterEnsureOrigin<Origin, LocalOriginToLocation,EnsureRootOrTwoThirdsCouncil>;
+	type SendXcmOrigin =
+		FilterEnsureOrigin<Origin, LocalOriginToLocation, EnsureRootOrTwoThirdsCouncil>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
 	type XcmExecuteFilter = Nothing;
