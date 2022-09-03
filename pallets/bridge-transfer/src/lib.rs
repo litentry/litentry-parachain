@@ -174,16 +174,6 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(195_000_000)]
-		pub fn set_external_balances(
-			origin: OriginFor<T>,
-			external_balances: bridge::BalanceOf<T>,
-		) -> DispatchResult {
-			frame_system::ensure_root(origin)?;
-			<ExternalBalances<T>>::put(external_balances);
-			Ok(())
-		}
-
-		#[pallet::weight(195_000_000)]
 		pub fn set_maximum_issuance(
 			origin: OriginFor<T>,
 			maximum_issuance: bridge::BalanceOf<T>,
@@ -194,6 +184,16 @@ pub mod pallet {
 			});
 			MaximumIssuance::<T>::set(maximum_issuance);
 			Ok(Pays::No.into())
+		}
+
+		#[pallet::weight(195_000_000)]
+		pub fn set_external_balances(
+			origin: OriginFor<T>,
+			external_balances: bridge::BalanceOf<T>,
+		) -> DispatchResult {
+			frame_system::ensure_root(origin)?;
+			<ExternalBalances<T>>::put(external_balances);
+			Ok(())
 		}
 	}
 

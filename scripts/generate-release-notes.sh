@@ -167,7 +167,8 @@ Details:
 
 EOF
 
-  git log --no-merges --abbrev-commit --pretty="format:%h|%s" $DIFF_TAG..$RELEASE_TAG | while read -r f; do
+  # use %n as a workaround otherwise there's no newline after the whole body
+  git log --no-merges --abbrev-commit --pretty="format:%h|%s%n" $DIFF_TAG..$RELEASE_TAG | grep -v "^$" | while read -r f; do
     commit=$(echo "$f" | cut -d'|' -f1)
     desc=$(echo "$f" | cut -d'|' -f2)
     echo -e "- [\`$commit\`]($REPO/commit/$commit) $desc" >> "$1"
