@@ -54,6 +54,8 @@ jobs:
 
   check-cargo-fmt:
     runs-on: ubuntu-latest
+    # so that the if condition on `check-file-change` propagates here
+    needs: check-file-change
     steps:
       - uses: actions/checkout@v3
         with:
