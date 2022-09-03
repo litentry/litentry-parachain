@@ -14,6 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+#[cfg(feature = "std")]
+extern crate std;
+
+#[cfg(not(feature = "std"))]
+use sp_std::prelude::*;
+
 pub use rsa::{
 	pkcs1::{DecodeRsaPrivateKey, DecodeRsaPublicKey, EncodeRsaPrivateKey, EncodeRsaPublicKey},
 	pkcs1v15::{SigningKey, VerifyingKey},
@@ -53,6 +59,21 @@ pub fn get_mock_tee_shielding_key() -> (RsaPublicKey, RsaPrivateKey) {
 }
 
 pub fn encrypt_with_public_key(k: &[u8], data: &[u8]) -> Vec<u8> {
+	// TODO:
+	// using `rand_chacha` 0.3 without default-features seem to cause linking errors, why?
+	//
+	// use rand_chacha::{rand_core::SeedableRng, ChaCha8Rng};
+	// let mut rng = ChaCha8Rng::from_seed([42; 32]);
+	//
+	// pallet compilation would go through, but when compiling litmus runtime I've got:
+	//
+	// error: `#[alloc_error_handler]` function required, but not found
+	// error: `#[panic_handler]` function required, but not found
+	//
+	// litmus does have sp-io linked.
+	//
+	// To use `rand` crate, I have to keep the default features of it and additionally
+	// enable "js" feature for `getrandom` crate for wasm build. See Cargo.toml
 	let mut rng = rand::thread_rng();
 	let public_key = RsaPublicKey::from_public_key_pem(sp_std::str::from_utf8(k).unwrap()).unwrap();
 	public_key

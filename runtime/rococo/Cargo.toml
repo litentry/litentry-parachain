@@ -219,6 +219,7 @@ std = [
   "pallet-drop3/std",
   "pallet-extrinsic-filter/std",
   "pallet-identity-management/std",
+  "pallet-identity-management-mock/std",
   "pallet-teerex/std",
   "pallet-sidechain/std",
 ]
