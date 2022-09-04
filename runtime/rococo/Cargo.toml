@@ -2,7 +2,7 @@
 authors = ["Litentry Dev"]
 edition = '2021'
 name = 'rococo-parachain-runtime'
-version = '0.9.9'
+version = '0.9.10'
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len"] }
@@ -67,7 +67,6 @@ cumulus-pallet-xcmp-queue = { git = "https://github.com/paritytech/cumulus", def
 cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.26" }
 cumulus-primitives-timestamp = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.26" }
 cumulus-primitives-utility = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.26" }
-pallet-collator-selection = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.26" }
 parachain-info = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.26" }
 
 # Polkadot dependencies

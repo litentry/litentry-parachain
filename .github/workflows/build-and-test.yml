@@ -100,6 +100,10 @@ jobs:
       - name: Run cargo clippy check
         run: make clippy
 
+      - name: Fail-fast; cancel other jobs
+        if: failure()
+        uses: andymckay/cancel-action@0.2
+
   build-docker:
     # run the docker build on our self-hosted runner, which takes
     # - 25min without cache, or
@@ -201,6 +205,10 @@ jobs:
       - name: Run unittests
         run: cargo test --release -p pallet-* --lib
 
+      - name: Fail-fast; cancel other jobs
+        if: failure()
+        uses: andymckay/cancel-action@0.2
+
   # The reason why not to put the if-check on the job level is to make sure the
   # *matrix* job is run, although it can be skipped in the end.
   #
@@ -281,6 +289,10 @@ jobs:
       - name: Print sccache stats
         if: needs.check-file-change.outputs.src == 'true'
         run: sccache --show-stats
+
+      - name: Fail-fast; cancel other jobs
+        if: failure()
+        uses: andymckay/cancel-action@0.2
 
   # Secrets are not passed to the runner when a workflow is triggered from a forked repository,
   # see https://docs.github.com/en/actions/security-guides/encrypted-secrets#using-encrypted-secrets-in-a-workflow
