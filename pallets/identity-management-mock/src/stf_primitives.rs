@@ -14,13 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-// The STF primitives for mocking
-// Mostly copied from tee-worker app-libs/stf/src/lib.rs
+// The STF primitives for mocking, reference: app-libs/stf/src/lib.rs in tee-worker
+//
+// I stripped off the signing fn from KeyPair as the pallet itself
+// only uses the SR25519 keys for verifying signatures, not signing.
+// sign would require some system randomness if I understand it correctly, plus
+// exposing the `full_crypto` feature from sp-core, which seems to cause linking/runtime issues
+//
+// some read: https://github.com/paritytech/substrate/issues/12009#issuecomment-1213006641
 
 use crate::{Did, Metadata, UserShieldingKey};
 use codec::{Decode, Encode, MaxEncodedLen};
 use primitives::{BlockNumber, Index};
-use sp_core::{crypto::AccountId32, ed25519, sr25519, Pair, H256};
+use sp_core::{crypto::AccountId32, ed25519, sr25519, H256};
 use sp_runtime::{traits::Verify, MultiSignature};
 use sp_std::prelude::*;
 
@@ -31,29 +37,8 @@ pub type ShardIdentifier = H256;
 
 #[derive(Clone)]
 pub enum KeyPair {
-	Sr25519(sr25519::Pair),
-	Ed25519(ed25519::Pair),
-}
-
-impl KeyPair {
-	fn sign(&self, payload: &[u8]) -> Signature {
-		match self {
-			Self::Sr25519(pair) => pair.sign(payload).into(),
-			Self::Ed25519(pair) => pair.sign(payload).into(),
-		}
-	}
-}
-
-impl From<ed25519::Pair> for KeyPair {
-	fn from(x: ed25519::Pair) -> Self {
-		KeyPair::Ed25519(x)
-	}
-}
-
-impl From<sr25519::Pair> for KeyPair {
-	fn from(x: sr25519::Pair) -> Self {
-		KeyPair::Sr25519(x)
-	}
+	Sr25519(sr25519::Public),
+	Ed25519(ed25519::Public),
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, scale_info::TypeInfo)]
@@ -172,17 +157,12 @@ impl TrustedCall {
 
 	pub fn sign(
 		&self,
-		pair: &KeyPair,
-		nonce: Index,
-		mrenclave: &[u8; 32],
-		shard: &ShardIdentifier,
+		_pair: &KeyPair,
+		_nonce: Index,
+		_mrenclave: &[u8; 32],
+		_shard: &ShardIdentifier,
 	) -> TrustedCallSigned {
-		let mut payload = self.encode();
-		payload.append(&mut nonce.encode());
-		payload.append(&mut mrenclave.encode());
-		payload.append(&mut shard.encode());
-
-		TrustedCallSigned { call: self.clone(), nonce, signature: pair.sign(payload.as_slice()) }
+		todo!()
 	}
 }
 
@@ -199,9 +179,8 @@ impl TrustedGetter {
 		}
 	}
 
-	pub fn sign(&self, pair: &KeyPair) -> TrustedGetterSigned {
-		let signature = pair.sign(self.encode().as_slice());
-		TrustedGetterSigned { getter: self.clone(), signature }
+	pub fn sign(&self, _pair: &KeyPair) -> TrustedGetterSigned {
+		todo!()
 	}
 }
 
