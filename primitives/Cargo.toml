@@ -2,7 +2,7 @@
 authors = ["Litentry Dev"]
 edition = '2021'
 name = 'primitives'
-version = '0.9.9'
+version = '0.9.10'
 
 [dependencies]
 # Substrate dependencies
