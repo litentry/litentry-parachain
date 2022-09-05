@@ -16,6 +16,8 @@
 #![allow(clippy::clone_on_copy)]
 #![allow(clippy::useless_conversion)]
 
+// use frame_system::RawOrigin as SystemRawOrigin;
+// use pallet_collective::RawOrigin as CollectiveRawOrigin;
 use frame_support::{
 	match_types, parameter_types,
 	traits::{Everything, Nothing},
@@ -27,6 +29,14 @@ use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 // Litentry: The CheckAccount implementation is forced by the bug of FungiblesAdapter.
 // We should replace () regarding fake_pallet_id account after our PR passed.
+use primitives::AccountId;
+use runtime_common::xcm_impl::{
+	AccountIdToMultiLocation, AssetIdMuliLocationConvert, CurrencyId,
+	CurrencyIdMultiLocationConvert, FirstAssetTrader, MultiNativeAsset, NewAnchoringSelfReserve,
+	OldAnchoringSelfReserve, XcmFeesToAccount,
+};
+
+use runtime_common::{EnsureRootOrTwoThirdsCouncil, FilterEnsureOrigin};
 use sp_runtime::traits::AccountIdConversion;
 use xcm::latest::prelude::*;
 use xcm_builder::{
@@ -37,13 +47,6 @@ use xcm_builder::{
 	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
 };
 use xcm_executor::{traits::JustTry, XcmExecutor};
-
-use primitives::AccountId;
-use runtime_common::xcm_impl::{
-	AccountIdToMultiLocation, AssetIdMuliLocationConvert, CurrencyId,
-	CurrencyIdMultiLocationConvert, FirstAssetTrader, MultiNativeAsset, NewAnchoringSelfReserve,
-	OldAnchoringSelfReserve, XcmFeesToAccount,
-};
 
 #[cfg(test)]
 use crate::tests::setup::ParachainXcmRouter;
@@ -285,7 +288,8 @@ impl pallet_xcm::Config for Runtime {
 	// Check their Barriers implementation
 	// And for TakeWeightCredit
 	// Check if their executor's ShouldExecute trait weight_credit
-	type SendXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
+	type SendXcmOrigin =
+		FilterEnsureOrigin<Origin, LocalOriginToLocation, EnsureRootOrTwoThirdsCouncil>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
 	type XcmExecuteFilter = Nothing;
