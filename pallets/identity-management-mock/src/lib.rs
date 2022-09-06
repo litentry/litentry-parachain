@@ -93,8 +93,8 @@ pub mod pallet {
 		UserShieldingKeySetPlain { account: AccountId, key: UserShieldingKey },
 		UserShieldingKeySetEnc { account: Vec<u8>, key: Vec<u8> },
 		// link identity
-		ChallengeCodeGeneratedPlain { account: AccountId, code: ChallengeCode },
-		ChallengeCodeGeneratedEnc { account: Vec<u8>, code: Vec<u8> },
+		ChallengeCodeGeneratedPlain { account: AccountId, identity: Did, code: ChallengeCode },
+		ChallengeCodeGeneratedEnc { account: Vec<u8>, identity: Vec<u8>, code: Vec<u8> },
 		IdentityLinkedPlain { account: AccountId, identity: Did },
 		IdentityLinkedEnc { account: Vec<u8>, identity: Vec<u8> },
 		// unlink identity
@@ -256,10 +256,12 @@ pub mod pallet {
 					let code: ChallengeCode = [1, 2, 3, 4, 5, 6];
 					Self::deposit_event(Event::<T>::ChallengeCodeGeneratedPlain {
 						account: who.clone(),
+						identity: did.clone(),
 						code,
 					});
 					Self::deposit_event(Event::<T>::ChallengeCodeGeneratedEnc {
 						account: encrypt_with_public_key(&key, who.encode().as_slice()),
+						identity: encrypt_with_public_key(&key, did.as_slice()),
 						code: encrypt_with_public_key(&key, code.as_ref()),
 					});
 
