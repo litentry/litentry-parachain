@@ -39,10 +39,13 @@ use xcm_builder::{
 use xcm_executor::{traits::JustTry, XcmExecutor};
 
 use primitives::AccountId;
-use runtime_common::xcm_impl::{
-	AccountIdToMultiLocation, AssetIdMuliLocationConvert, CurrencyId,
-	CurrencyIdMultiLocationConvert, FirstAssetTrader, MultiNativeAsset, NewAnchoringSelfReserve,
-	OldAnchoringSelfReserve, XcmFeesToAccount,
+use runtime_common::{
+	xcm_impl::{
+		AccountIdToMultiLocation, AssetIdMuliLocationConvert, CurrencyId,
+		CurrencyIdMultiLocationConvert, FirstAssetTrader, MultiNativeAsset,
+		NewAnchoringSelfReserve, OldAnchoringSelfReserve, XcmFeesToAccount,
+	},
+	EnsureRootOrTwoThirdsCouncil, FilterEnsureOrigin,
 };
 
 #[cfg(test)]
@@ -285,7 +288,8 @@ impl pallet_xcm::Config for Runtime {
 	// Check their Barriers implementation
 	// And for TakeWeightCredit
 	// Check if their executor's ShouldExecute trait weight_credit
-	type SendXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
+	type SendXcmOrigin =
+		FilterEnsureOrigin<Origin, LocalOriginToLocation, EnsureRootOrTwoThirdsCouncil>;
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<Origin, LocalOriginToLocation>;
 	type XcmExecuteFilter = Nothing;
