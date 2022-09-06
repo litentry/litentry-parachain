@@ -139,7 +139,7 @@ pub enum PublicGetter {
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, scale_info::TypeInfo)]
 #[allow(non_camel_case_types)]
 pub enum TrustedCall {
-	set_shielding_key(AccountId, AccountId, UserShieldingKey),
+	set_user_shielding_key(AccountId, AccountId, UserShieldingKey),
 	link_identity(AccountId, AccountId, Did, Option<Metadata>, BlockNumber),
 	unlink_identity(AccountId, AccountId, Did),
 	verify_identity(AccountId, AccountId, Did, BlockNumber),
@@ -148,7 +148,7 @@ pub enum TrustedCall {
 impl TrustedCall {
 	pub fn account(&self) -> &AccountId {
 		match self {
-			TrustedCall::set_shielding_key(account, _, _) => account,
+			TrustedCall::set_user_shielding_key(account, _, _) => account,
 			TrustedCall::link_identity(account, _, _, _, _) => account,
 			TrustedCall::unlink_identity(account, _, _) => account,
 			TrustedCall::verify_identity(account, _, _, _) => account,

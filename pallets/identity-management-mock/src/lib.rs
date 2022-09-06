@@ -213,7 +213,7 @@ pub mod pallet {
 
 			let trusted_call = Self::handle_call_worker_payload(&shard, &encrypted_data)?;
 			match trusted_call {
-				TrustedCall::set_shielding_key(_root, who, key) => {
+				TrustedCall::set_user_shielding_key(_root, who, key) => {
 					UserShieldingKeys::<T>::insert(&who, &key);
 					Self::deposit_event(Event::<T>::UserShieldingKeySetPlain {
 						account: who.clone(),
