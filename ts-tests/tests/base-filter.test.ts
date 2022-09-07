@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { step } from 'mocha-steps';
-import {assert} from 'chai';
+import { assert } from 'chai';
 import { signAndSend, describeLitentry, loadConfig, sleep } from './utils';
 
 describeLitentry('Test Base Filter', ``, (context) => {
@@ -26,13 +26,13 @@ describeLitentry('Test Base Filter', ``, (context) => {
         );
 
         expect(eveCurrentNonce.toNumber()).to.equal(eveInitNonce.toNumber() + 1);
+        // the balance transfer should work for litmus but not for litentry
         if (context.parachain == 'litentry') {
-            // The transfer should fail and Bob's balance stays unchanged
             expect(bobCurrentBalance.free.toBigInt()).to.equal(bobInitBalance.free.toBigInt());
         } else if (context.parachain == 'litmus') {
             expect(bobCurrentBalance.free.toBigInt()).to.equal(bobInitBalance.free.toBigInt() + BigInt(1000));
         } else {
-            assert.fail("unsupported parachain type");
+            assert.fail('unsupported parachain type');
         }
     });
 
@@ -45,10 +45,10 @@ describeLitentry('Test Base Filter', ``, (context) => {
             context.bob.address
         );
 
-		// Force transfer 1000 unit from Eve to Bob, signed by Alice(sudo)
+        // Force transfer 1000 unit from Eve to Bob, signed by Alice(sudo)
         const tx = context.api.tx.sudo.sudo(
-			context.api.tx.balances.forceTransfer(context.eve.address,context.bob.address, 1000)
-			);
+            context.api.tx.balances.forceTransfer(context.eve.address, context.bob.address, 1000)
+        );
         await signAndSend(tx, context.alice);
 
         const { nonce: aliceCurrentNonce, data: aliceCurrentBalance } = await context.api.query.system.account(
@@ -58,9 +58,8 @@ describeLitentry('Test Base Filter', ``, (context) => {
             context.bob.address
         );
 
-		// The transfer should succeed 
+        // The transfer should always succeed
         expect(aliceCurrentNonce.toNumber()).to.equal(aliceInitNonce.toNumber() + 1);
         expect(bobCurrentBalance.free.toBigInt()).to.equal(bobInitBalance.free.toBigInt() + BigInt(1000));
     });
-
 });

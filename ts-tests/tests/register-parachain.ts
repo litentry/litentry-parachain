@@ -1,11 +1,10 @@
 import fs from 'fs';
-import '@polkadot/api-augment'
+import '@polkadot/api-augment';
 import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
 import { TypeRegistry } from '@polkadot/types/create';
 import { Bytes } from '@polkadot/types';
 
 import { loadConfig, signAndSend } from './utils';
-
 
 async function registerParachain(api: ApiPromise, config: any) {
     // Get keyring of Alice, who is also the sudo in dev chain spec
@@ -26,9 +25,8 @@ async function registerParachain(api: ApiPromise, config: any) {
     );
 
     console.log(`Parachain registration tx Sent!`);
-    return signAndSend(tx, alice)
+    return signAndSend(tx, alice);
 }
-
 
 (async () => {
     console.log('Register parachain ...');

@@ -1,10 +1,10 @@
 import 'mocha';
 
 import '@polkadot/api-augment';
-import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
-import {AddressOrPair, ApiTypes, SubmittableExtrinsic,} from '@polkadot/api/types';
-import {KeyringPair} from '@polkadot/keyring/types';
-import {BN} from '@polkadot/util'
+import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
+import { AddressOrPair, ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
+import { KeyringPair } from '@polkadot/keyring/types';
+import { BN } from '@polkadot/util';
 
 export class ParachainConfig {
     api!: ApiPromise;
@@ -14,7 +14,6 @@ export class ParachainConfig {
     eve!: KeyringPair;
     ferdie!: KeyringPair;
 }
-
 
 export function loadConfig() {
     require('dotenv').config();
@@ -51,7 +50,7 @@ export async function initApiPromise(config: any): Promise<ParachainConfig> {
     console.log(`Genesis at block: ${api.genesisHash.toHex()}`);
 
     // Get keyring of Alice and Bob
-    const keyring = new Keyring({type: 'sr25519'});
+    const keyring = new Keyring({ type: 'sr25519' });
     const alice = keyring.addFromUri('//Alice');
     const bob = keyring.addFromUri('//Bob');
     const eve = keyring.addFromUri('//Eve');
@@ -67,21 +66,25 @@ export async function initApiPromise(config: any): Promise<ParachainConfig> {
     // Set Eve's balance to 1000000000000000
     const eve_info = await api.query.system.account(eve.address);
     if (eve_info.data.free.lt(new BN(1000000000000000))) {
-        const txSetBalance = api.tx.sudo.sudo(
-            api.tx.balances.setBalance(eve.address, 1000000000000000, 0)
-        );
+        const txSetBalance = api.tx.sudo.sudo(api.tx.balances.setBalance(eve.address, 1000000000000000, 0));
         await signAndSend(txSetBalance, alice);
     }
-    const {nonce: nonceAlice, data: balanceAlice} = await api.query.system.account(alice.address);
-    const {nonce: nonceBob, data: balanceBob} = await api.query.system.account(bob.address);
-    const {nonce: nonceEve, data: balanceEve} = await api.query.system.account(eve.address);
-    const {nonce: nonceFerdie, data: balanceFerdie} = await api.query.system.account(ferdie.address);
-    console.log(`Alice Substrate Account: ${alice.address} (nonce: ${nonceAlice}) balance, free: ${balanceAlice.free.toHex()}`);
+    const { nonce: nonceAlice, data: balanceAlice } = await api.query.system.account(alice.address);
+    const { nonce: nonceBob, data: balanceBob } = await api.query.system.account(bob.address);
+    const { nonce: nonceEve, data: balanceEve } = await api.query.system.account(eve.address);
+    const { nonce: nonceFerdie, data: balanceFerdie } = await api.query.system.account(ferdie.address);
+    console.log(
+        `Alice Substrate Account: ${alice.address} (nonce: ${nonceAlice}) balance, free: ${balanceAlice.free.toHex()}`
+    );
     console.log(`Bob Substrate Account: ${bob.address} (nonce: ${nonceBob}) balance, free: ${balanceBob.free.toHex()}`);
     console.log(`Eve Substrate Account: ${eve.address} (nonce: ${nonceEve}) balance, free: ${balanceEve.free.toHex()}`);
-    console.log(`Ferdie Substrate Account: ${ferdie.address} (nonce: ${nonceFerdie}) balance, free: ${balanceFerdie.free.toHex()}`);
+    console.log(
+        `Ferdie Substrate Account: ${
+            ferdie.address
+        } (nonce: ${nonceFerdie}) balance, free: ${balanceFerdie.free.toHex()}`
+    );
 
-    return {api, parachain, alice, bob, eve, ferdie};
+    return { api, parachain, alice, bob, eve, ferdie };
 }
 
 export function signAndSend(tx: SubmittableExtrinsic<ApiTypes>, account: AddressOrPair) {
@@ -102,11 +105,7 @@ export function signAndSend(tx: SubmittableExtrinsic<ApiTypes>, account: Address
     });
 }
 
-export function describeLitentry(
-    title: string,
-    specFilename: string,
-    cb: (context: ParachainConfig) => void
-) {
+export function describeLitentry(title: string, specFilename: string, cb: (context: ParachainConfig) => void) {
     describe(title, function () {
         // Set timeout to 6000 seconds (Because of 50-blocks delay of rococo, so called "training wheels")
         this.timeout(6000000);
@@ -130,8 +129,7 @@ export function describeLitentry(
             context.eve = initApi.eve;
         });
 
-        after(async function () {
-        });
+        after(async function () {});
 
         cb(context);
     });
