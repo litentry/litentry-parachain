@@ -8,6 +8,7 @@ import {BN} from '@polkadot/util'
 
 export class ParachainConfig {
     api!: ApiPromise;
+    parachain!: string;
     alice!: KeyringPair;
     bob!: KeyringPair;
     eve!: KeyringPair;
@@ -39,6 +40,7 @@ export async function initApiPromise(config: any): Promise<ParachainConfig> {
     console.log(`Initiating the API (ignore message "Unable to resolve type B..." and "Unknown types found...")`);
     // Provider is set for parachain node
     const wsProvider = new WsProvider(config.parachain_ws);
+    const parachain = config.parachain;
 
     // Initiate the polkadot API.
     const api = await ApiPromise.create({
@@ -79,7 +81,7 @@ export async function initApiPromise(config: any): Promise<ParachainConfig> {
     console.log(`Eve Substrate Account: ${eve.address} (nonce: ${nonceEve}) balance, free: ${balanceEve.free.toHex()}`);
     console.log(`Ferdie Substrate Account: ${ferdie.address} (nonce: ${nonceFerdie}) balance, free: ${balanceFerdie.free.toHex()}`);
 
-    return {api, alice, bob, eve, ferdie};
+    return {api, parachain, alice, bob, eve, ferdie};
 }
 
 export function signAndSend(tx: SubmittableExtrinsic<ApiTypes>, account: AddressOrPair) {
@@ -111,6 +113,7 @@ export function describeLitentry(
 
         let context: ParachainConfig = {
             api: {} as ApiPromise,
+            parachain: {} as string,
             alice: {} as KeyringPair,
             bob: {} as KeyringPair,
             eve: {} as KeyringPair,
@@ -120,6 +123,7 @@ export function describeLitentry(
         before('Starting Litentry Test Node', async function () {
             const config = loadConfig();
             const initApi = await initApiPromise(config);
+            context.parachain = initApi.parachain;
             context.api = initApi.api;
             context.alice = initApi.alice;
             context.bob = initApi.bob;

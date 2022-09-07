@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { step } from 'mocha-steps';
-
+import {assert} from 'chai';
 import { signAndSend, describeLitentry, loadConfig, sleep } from './utils';
 
 describeLitentry('Test Base Filter', ``, (context) => {
@@ -26,8 +26,14 @@ describeLitentry('Test Base Filter', ``, (context) => {
         );
 
         expect(eveCurrentNonce.toNumber()).to.equal(eveInitNonce.toNumber() + 1);
-		// The transfer should fail and Bob's balance stays unchanged
-        expect(bobCurrentBalance.free.toBigInt()).to.equal(bobInitBalance.free.toBigInt());
+        if (context.parachain == 'litentry') {
+            // The transfer should fail and Bob's balance stays unchanged
+            expect(bobCurrentBalance.free.toBigInt()).to.equal(bobInitBalance.free.toBigInt());
+        } else if (context.parachain == 'litmus') {
+            expect(bobCurrentBalance.free.toBigInt()).to.equal(bobInitBalance.free.toBigInt() + BigInt(1000));
+        } else {
+            assert.fail("unsupported parachain type");
+        }
     });
 
     step('Transfer 1000 unit from Eve to Bob with Sudo', async function () {

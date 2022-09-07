@@ -3,7 +3,13 @@
 set -eo pipefail
 
 bridge=false
-if [ -n "$1" ]; then
+
+case "$1" in
+    litentry|litmus) parachain_type=$1;;
+    *) echo "usage: ./$0 litmus|litentry [bridge]"; exit 1 ;;
+esac
+    
+if [ "$2" = "bridge" ]; then
     bridge=true
 fi
 
@@ -11,11 +17,13 @@ ROOTDIR=$(git rev-parse --show-toplevel)
 cd "$ROOTDIR/ts-tests"
 
 TMPDIR=/tmp/parachain_dev
+sed -i.bak "s/var_parachain_type/$parachain_type/g" config.ci.json
+
 [ -d "$TMPDIR" ] || mkdir -p "$TMPDIR"
 
 [ -f .env ] || echo "NODE_ENV=ci" >.env
 yarn
-yarn test 2>&1 | tee "$TMPDIR/parachain_ci_test.log"
+yarn test-filter 2>&1 | tee "$TMPDIR/parachain_ci_test.log"
 if $bridge; then
     yarn test-bridge 2>&1 | tee -a "$TMPDIR/parachain_ci_test.log"
 fi
