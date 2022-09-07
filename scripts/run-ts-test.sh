@@ -5,7 +5,7 @@ set -eo pipefail
 bridge=false
 
 case "$1" in
-    litentry|litmus) parachain_type=$1;;
+    litentry|litmus) export PARACHAIN_TYPE=$1 ;;
     *) echo "usage: ./$0 litmus|litentry [bridge]"; exit 1 ;;
 esac
     
@@ -17,7 +17,6 @@ ROOTDIR=$(git rev-parse --show-toplevel)
 cd "$ROOTDIR/ts-tests"
 
 TMPDIR=/tmp/parachain_dev
-sed -i.bak "s/var_parachain_type/$parachain_type/g" config.ci.json
 
 [ -d "$TMPDIR" ] || mkdir -p "$TMPDIR"
 

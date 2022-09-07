@@ -39,7 +39,8 @@ export async function initApiPromise(config: any): Promise<ParachainConfig> {
     console.log(`Initiating the API (ignore message "Unable to resolve type B..." and "Unknown types found...")`);
     // Provider is set for parachain node
     const wsProvider = new WsProvider(config.parachain_ws);
-    const parachain = config.parachain;
+    // Intentionally return an unknown default value
+    const parachain = process.env.PARACHAIN_TYPE || 'unknown_parachain';
 
     // Initiate the polkadot API.
     const api = await ApiPromise.create({

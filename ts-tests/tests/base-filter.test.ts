@@ -27,9 +27,9 @@ describeLitentry('Test Base Filter', ``, (context) => {
 
         expect(eveCurrentNonce.toNumber()).to.equal(eveInitNonce.toNumber() + 1);
         // the balance transfer should work for litmus but not for litentry
-        if (context.parachain == 'litentry') {
+        if (context.parachain === 'litentry') {
             expect(bobCurrentBalance.free.toBigInt()).to.equal(bobInitBalance.free.toBigInt());
-        } else if (context.parachain == 'litmus') {
+        } else if (context.parachain === 'litmus') {
             expect(bobCurrentBalance.free.toBigInt()).to.equal(bobInitBalance.free.toBigInt() + BigInt(1000));
         } else {
             assert.fail('unsupported parachain type');
