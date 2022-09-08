@@ -176,7 +176,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		balances: vec![
 			(bridge_id, ENDOWED_BALANCE),
 			(RELAYER_A, ENDOWED_BALANCE),
-			(treasury_account, 10),
+			(treasury_account, ENDOWED_BALANCE),
 		],
 	}
 	.assimilate_storage(&mut t)
