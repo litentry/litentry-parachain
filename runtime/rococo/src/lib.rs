@@ -143,7 +143,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9100,
+	spec_version: 9101,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -985,6 +985,8 @@ impl Contains<Call> for NormalModeFilter {
 			Call::Utility(_) |
 			// Seesion
 			Call::Session(_) |
+			// Balance
+			Call::Balances(_) |
 			// ParachainStaking; Only the collator part
 			Call::ParachainStaking(pallet_parachain_staking::Call::join_candidates { .. }) |
 			Call::ParachainStaking(pallet_parachain_staking::Call::schedule_leave_candidates { .. }) |
