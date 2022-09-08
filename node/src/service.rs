@@ -99,21 +99,6 @@ impl sc_executor::NativeExecutionDispatch for RococoParachainRuntimeExecutor {
 	}
 }
 
-// Native executor instance.
-pub struct MoonbaseParachainRuntimeExecutor;
-
-impl sc_executor::NativeExecutionDispatch for MoonbaseParachainRuntimeExecutor {
-	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
-
-	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		moonbase_parachain_runtime::api::dispatch(method, data)
-	}
-
-	fn native_version() -> sc_executor::NativeVersion {
-		moonbase_parachain_runtime::native_version()
-	}
-}
-
 /// Starts a `ServiceBuilder` for a full service.
 ///
 /// Use this macro if you don't actually need the full service, but just the builder in order to
@@ -460,7 +445,7 @@ where
 	Ok((task_manager, client))
 }
 
-/// Start a litmus/litentry/rococo/moonbase node.
+/// Start a litmus/litentry/rococo node.
 pub async fn start_node<RuntimeApi>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
@@ -567,7 +552,7 @@ where
 	.await
 }
 
-/// Build the import queue for the litmus/litentry/rococo/moonbase runtime.
+/// Build the import queue for the litmus/litentry/rococo runtime.
 pub fn build_import_queue<RuntimeApi>(
 	client: Arc<TFullClient<Block, RuntimeApi, WasmExecutor<HostFunctions>>>,
 	config: &Configuration,

@@ -140,7 +140,7 @@ where
 	});
 }
 
-/// This macro expects the passed runtime(litentry litmus moonbase rococo) to contain
+/// This macro expects the passed runtime(litentry litmus rococo) to contain
 /// `cumulus_pallet_xcmp_queue` and `cumulus_pallet_dmp_queue`.
 #[macro_export]
 macro_rules! decl_test_chain {

@@ -10,7 +10,6 @@ members = [
   'runtime/litentry',
   'runtime/litmus',
   'runtime/rococo',
-  'runtime/moonbase',
   'runtime/common',
 ]
 
