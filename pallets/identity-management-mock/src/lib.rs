@@ -254,6 +254,7 @@ pub mod pallet {
 
 					// emit the challenge code event
 					let code: ChallengeCode = [1, 2, 3, 4, 5, 6];
+					ChallengeCodes::<T>::insert(&who, &did, &code);
 					Self::deposit_event(Event::<T>::ChallengeCodeGeneratedPlain {
 						account: who.clone(),
 						identity: did.clone(),
