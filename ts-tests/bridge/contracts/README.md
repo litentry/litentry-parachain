@@ -4,7 +4,7 @@
 
 These contracts come from [Repo: chainbridge-solidity](https://github.com/Phala-Network/chainbridge-solidity)
 
-Run command: ```make compile```in the project(chainbridge-solidity) root directory to generate the files.
+Run command: `make compile`in the project(chainbridge-solidity) root directory to generate the files.
 
 Copy files from chainbridge-solidity(build/contracts) to current directory.
 
@@ -14,9 +14,9 @@ In the CI test, the version is: [Branch: phala-bridge](https://github.com/Phala-
 
 ## Why use different versions
 
-In the integration test, after launching the local test network, We want to run the test script multiple times(The contract is redeployed every time). 
+In the integration test, after launching the local test network, We want to run the test script multiple times(The contract is redeployed every time).
 
-After running the test script, the nonce on Parachain will be changed, so a function is needed to set the value of the nonce on smart contract. 
+After running the test script, the nonce on Parachain will be changed, so a function is needed to set the value of the nonce on smart contract.
 
 In the branch Phala-Bridge, we can call the function: adminSetDepositNonce. In addition, we can also flexibly set the value of decimals for different tokens (adminSetDecimals).
 
@@ -27,4 +27,3 @@ There are some differences between the two versions of the contract code. These 
 Only some settings are changed, the core function like deposit, voteProposal, executeProposal have not changed
 
 For more details, see at [Compare diffs](https://github.com/Phala-Network/chainbridge-solidity/compare/btclottery..Phala-Network:chainbridge-solidity:phala-bridge)
-

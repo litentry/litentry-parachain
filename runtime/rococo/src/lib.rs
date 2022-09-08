@@ -142,7 +142,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9100,
+	spec_version: 9101,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -999,6 +999,8 @@ impl Contains<Call> for NormalModeFilter {
 			Call::Utility(_) |
 			// Seesion
 			Call::Session(_) |
+			// Balance
+			Call::Balances(_) |
 			// IMP Mock, only allowed on rococo for testing
 			// we should use `tee-dev` branch if we want to test it on Litmus
 			Call::IdentityManagementMock(_) |
