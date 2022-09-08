@@ -138,6 +138,13 @@ impl From<MockAssetType> for Option<MultiLocation> {
 	}
 }
 
+pub struct NativeTokenForeignAssetType;
+impl Get<MockAssetType> for NativeTokenForeignAssetType {
+	fn get() -> MockAssetType {
+		MockAssetType::MockAsset(0)
+	}
+}
+
 impl Config for Test {
 	type Event = Event;
 	type Balance = u64;
@@ -146,6 +153,7 @@ impl Config for Test {
 	type ForeignAssetModifierOrigin = EnsureRoot<u64>;
 	type Currency = Balances;
 	type WeightInfo = ();
+	type NativeTokenForeignAssetType = NativeTokenForeignAssetType;
 }
 
 #[derive(Default)]

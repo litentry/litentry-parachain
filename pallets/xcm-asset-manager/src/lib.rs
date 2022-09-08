@@ -117,6 +117,8 @@ pub mod pallet {
 		}
 	}
 
+	pub type ForeignAssetTypeOf<T> = <T as Config>::ForeignAssetType;
+
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
@@ -133,7 +135,7 @@ pub mod pallet {
 			+ MaxEncodedLen;
 
 		/// The Foreign Asset Kind.
-		type ForeignAssetType: Parameter + Member + Ord + PartialOrd;
+		type ForeignAssetType: Parameter + Member + Ord + PartialOrd + Default;
 
 		/// The units in which we record balances.
 		type Balance: Member + Parameter + AtLeast32BitUnsigned + Default + Copy + MaxEncodedLen;
@@ -145,6 +147,8 @@ pub mod pallet {
 		type Currency: ReservableCurrency<Self::AccountId>;
 
 		type WeightInfo: WeightInfo;
+
+		type NativeTokenForeignAssetType: Get<ForeignAssetTypeOf<Self>>;
 	}
 
 	/// An error that can occur while executing the mapping pallet's logic.
@@ -214,6 +218,36 @@ pub mod pallet {
 	#[pallet::getter(fn asset_metadatas)]
 	pub type AssetIdMetadata<T: Config> =
 		StorageMap<_, Twox64Concat, T::AssetId, AssetMetadata<BalanceOf<T>>, OptionQuery>;
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		_phantom: sp_std::marker::PhantomData<T>,
+	}
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			GenesisConfig { _phantom: Default::default() }
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			AssetIdMetadata::<T>::insert(T::AssetId::default(), AssetMetadata::default());
+			AssetIdType::<T>::insert(T::AssetId::default(), T::NativeTokenForeignAssetType::get());
+			AssetTypeId::<T>::insert(T::NativeTokenForeignAssetType::get(), T::AssetId::default());
+
+			<Pallet<T>>::deposit_event(Event::<T>::ForeignAssetTypeRegistered {
+				asset_id: T::AssetId::default(),
+				asset_type: T::NativeTokenForeignAssetType::get(),
+			});
+			<Pallet<T>>::deposit_event(Event::<T>::ForeignAssetMetadataUpdated {
+				asset_id: T::AssetId::default(),
+				metadata: Default::default(),
+			});
+		}
+	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {

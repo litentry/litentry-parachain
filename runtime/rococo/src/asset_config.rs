@@ -4,11 +4,11 @@ use super::{
 };
 use frame_support::{
 	parameter_types,
-	traits::{ConstU32, Contains},
+	traits::{ConstU32, Contains, Get},
 };
 use runtime_common::{xcm_impl::CurrencyId, EnsureRootOrHalfCouncil};
 use sp_runtime::traits::AccountIdConversion;
-use sp_std::prelude::*;
+use sp_std::{marker::PhantomData, prelude::*};
 
 pub fn get_all_module_accounts() -> Vec<AccountId> {
 	// Add whitelist here, usually this is the system account like treasury
@@ -45,6 +45,13 @@ impl orml_tokens::Config for Runtime {
 	type OnKilledTokenAccount = ();
 }
 
+pub struct NativeTokenForeignAssetType;
+impl Get<CurrencyId<Runtime>> for NativeTokenForeignAssetType {
+	fn get() -> CurrencyId<Runtime> {
+		CurrencyId::<Runtime>::SelfReserve(PhantomData::<Runtime>)
+	}
+}
+
 impl pallet_asset_manager::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
@@ -53,4 +60,5 @@ impl pallet_asset_manager::Config for Runtime {
 	type ForeignAssetModifierOrigin = EnsureRootOrHalfCouncil;
 	type Currency = Balances;
 	type WeightInfo = weights::pallet_asset_manager::WeightInfo<Runtime>;
+	type NativeTokenForeignAssetType = NativeTokenForeignAssetType;
 }

@@ -223,5 +223,6 @@ fn generate_genesis(
 		polkadot_xcm: PolkadotXcmConfig { safe_xcm_version: Some(SAFE_XCM_VERSION) },
 		transaction_payment: Default::default(),
 		tokens: Default::default(),
+		asset_manager: Default::default(),
 	}
 }

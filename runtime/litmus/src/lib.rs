@@ -23,6 +23,7 @@
 #[macro_use]
 extern crate frame_benchmarking;
 
+pub mod migration;
 use codec::{Decode, Encode, MaxEncodedLen};
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use frame_support::{
@@ -125,6 +126,7 @@ pub type Executive = frame_executive::Executive<
 	// it was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
+	migration::AddNativeTokenForeignAssetTypeForAssetManager<Runtime>,
 >;
 
 impl_opaque_keys! {

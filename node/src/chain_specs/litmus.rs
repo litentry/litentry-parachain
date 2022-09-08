@@ -240,5 +240,6 @@ fn generate_genesis(
 		teerex: TeerexConfig { allow_sgx_debug_mode: true },
 		transaction_payment: Default::default(),
 		tokens: Default::default(),
+		asset_manager: Default::default(),
 	}
 }
