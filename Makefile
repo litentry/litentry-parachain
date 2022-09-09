@@ -165,6 +165,10 @@ fmt:
 	cargo fmt --all
 	taplo fmt
 
+.PHONY: githooks ## install the githooks
+githooks:
+	git config core.hooksPath .githooks
+
 # clippy
 
 .PHONY: clippy ## cargo clippy

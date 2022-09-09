@@ -36,8 +36,10 @@ use frame_support::{
 use frame_system::EnsureRoot;
 // for TEE
 pub use pallet_balances::Call as BalancesCall;
+use pallet_identity_management_mock::Mrenclave;
 pub use pallet_sidechain;
 pub use pallet_teerex;
+
 use sp_api::impl_runtime_apis;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -784,6 +786,18 @@ impl pallet_identity_management::Config for Runtime {
 	type WeightInfo = ();
 }
 
+parameter_types! {
+	pub const TestMrenclave: Mrenclave = [2; 32];
+}
+
+impl pallet_identity_management_mock::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type ManageWhitelistOrigin = EnsureRoot<Self::AccountId>;
+	type Mrenclave = TestMrenclave;
+	type MaxVerificationDelay = ConstU32<10>;
+}
+
 impl runtime_common::BaseRuntimeRequirements for Runtime {}
 
 impl runtime_common::ParaRuntimeRequirements for Runtime {}
@@ -858,6 +872,9 @@ construct_runtime! {
 		// TEE
 		Teerex: pallet_teerex = 90,
 		Sidechain: pallet_sidechain = 91,
+
+		// Mock
+		IdentityManagementMock: pallet_identity_management_mock = 100,
 
 		// TMP
 		Sudo: pallet_sudo = 255,
