@@ -114,19 +114,19 @@ test-cargo-all:
 
 .PHONY: test-ts-docker-litentry ## Run litentry ts tests with docker without clean-up
 test-ts-docker-litentry: launch-docker-litentry launch-docker-bridge
-	@./scripts/run-ts-test.sh bridge
+	@./scripts/run-ts-test.sh litentry bridge
 
 .PHONY: test-ts-docker-litmus ## Run litmus ts tests with docker without clean-up
 test-ts-docker-litmus: launch-docker-litmus launch-docker-bridge
-	@./scripts/run-ts-test.sh bridge
+	@./scripts/run-ts-test.sh litmus bridge
 
 .PHONY: test-ts-binary-litentry ## Run litentry ts tests with binary without clean-up
 test-ts-binary-litentry: launch-binary-litentry
-	@./scripts/run-ts-test.sh
+	@./scripts/run-ts-test.sh litentry
 
 .PHONY: test-ts-binary-litmus ## Run litmus ts tests with binary without clean-up
 test-ts-binary-litmus: launch-binary-litmus
-	@./scripts/run-ts-test.sh
+	@./scripts/run-ts-test.sh litmus
 
 # clean up
 
