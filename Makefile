@@ -45,10 +45,6 @@ build-runtime-litmus:
 build-runtime-rococo:
 	cargo build --locked -p $(call pkgid, rococo-parachain-runtime) --release
 
-.PHONY: build-runtime-moonbase ## Build moonbase release runtime
-build-runtime-moonbase:
-	cargo build --locked -p $(call pkgid, moonbase-parachain-runtime) --release
-
 .PHONY: srtool-build-wasm-litentry ## Build litentry wasm with srtools
 srtool-build-wasm-litentry:
 	@./scripts/build-wasm.sh litentry
@@ -60,10 +56,6 @@ srtool-build-wasm-litmus:
 .PHONY: srtool-build-wasm-rococo ## Build rococo wasm with srtools
 srtool-build-wasm-rococo:
 	@./scripts/build-wasm.sh rococo
-
-.PHONY: srtool-build-wasm-moonbase ## Build moonbase wasm with srtools
-srtool-build-wasm-moonbase:
-	@./scripts/build-wasm.sh moonbase
 
 .PHONY: build-docker-release ## Build docker image using cargo profile `release`
 build-docker-release:

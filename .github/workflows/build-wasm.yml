@@ -10,7 +10,6 @@ on:
         - litmus
         - litentry
         - rococo
-        - moonbase
       ref:
         description: The commit SHA or tag for checking out code
         default: ''
