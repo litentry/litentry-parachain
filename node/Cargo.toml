@@ -93,7 +93,6 @@ try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "p
 # Local dependencies
 litentry-parachain-runtime = { path = "../runtime/litentry" }
 litmus-parachain-runtime = { path = "../runtime/litmus" }
-moonbase-parachain-runtime = { path = "../runtime/moonbase" }
 primitives = { path = "../primitives" }
 rococo-parachain-runtime = { path = "../runtime/rococo" }
 
@@ -106,20 +105,17 @@ fast-runtime = [
   "litentry-parachain-runtime/fast-runtime",
   "litmus-parachain-runtime/fast-runtime",
   "rococo-parachain-runtime/fast-runtime",
-  "moonbase-parachain-runtime/fast-runtime",
 ]
 runtime-benchmarks = [
   "litentry-parachain-runtime/runtime-benchmarks",
   "litmus-parachain-runtime/runtime-benchmarks",
   "rococo-parachain-runtime/runtime-benchmarks",
-  "moonbase-parachain-runtime/runtime-benchmarks",
   "polkadot-service/runtime-benchmarks",
 ]
 try-runtime = [
   "litentry-parachain-runtime/try-runtime",
   "litmus-parachain-runtime/try-runtime",
   "rococo-parachain-runtime/try-runtime",
-  "moonbase-parachain-runtime/try-runtime",
   "polkadot-service/try-runtime",
 ]
 # allow workers to register without remote attestation for dev purposes
