@@ -96,7 +96,7 @@ make test-ts-binary-litentry
 
 # otherwise
 ./scripts/launch-local-binary.sh litentry path-to-polkadot-bin path-to-litentry-parachain-bin
-./scripts/run-ts-test.sh
+./scripts/run-ts-test.sh litentry
 ```
 Remember to run the clean-up afterwards.
 

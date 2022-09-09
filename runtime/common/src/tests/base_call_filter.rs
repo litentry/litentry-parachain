@@ -27,7 +27,7 @@ use primitives::AccountId;
 use crate::{
 	currency::UNIT,
 	tests::setup::{alice, bob, charlie, ExtBuilder},
-	BaseRuntimeRequirements, ParaRuntimeRequirements,
+	BaseRuntimeRequirements,
 };
 
 type OpaqueCall<R> = WrapperKeepOpaque<<R as pallet_multisig::Config>::Call>;
@@ -75,6 +75,27 @@ where
 			}
 			.into();
 			assert_ok!(multisig_call.dispatch(Origin::signed(alice())));
+		})
+}
+
+pub fn balance_transfer_works<
+	R: BaseRuntimeRequirements,
+	Origin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
+	Call: Clone + Dispatchable<Origin = Origin> + From<pallet_balances::Call<R>> + Encode,
+>()
+where
+	<<R as frame_system::Config>::Lookup as sp_runtime::traits::StaticLookup>::Source:
+		From<sp_runtime::AccountId32>,
+	<Call as Dispatchable>::PostInfo: sp_std::fmt::Debug + Default,
+{
+	ExtBuilder::<R>::default()
+		.balances(vec![(alice(), 10 * UNIT)])
+		.build()
+		.execute_with(|| {
+			let call: Call =
+				pallet_balances::Call::transfer { dest: bob().into(), value: UNIT }.into();
+			assert_ok!(call.dispatch(Origin::signed(alice())));
+			assert_eq!(Balances::<R>::free_balance(&bob()), UNIT);
 		})
 }
 
@@ -163,7 +184,7 @@ where
 }
 
 pub fn block_non_core_call_works<
-	R: ParaRuntimeRequirements
+	R: BaseRuntimeRequirements
 		+ frame_system::Config<Origin = Origin>
 		+ pallet_vesting::Config<Currency = Balances<R>>,
 	Origin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
@@ -228,11 +249,6 @@ macro_rules! run_call_filter_tests {
 		#[test]
 		fn multisig_enabled() {
 			base_call_filter::multisig_enabled::<Runtime, Origin, Call>();
-		}
-
-		#[test]
-		fn balance_transfer_disabled() {
-			base_call_filter::balance_transfer_disabled::<Runtime, Origin, Call>();
 		}
 
 		#[test]
