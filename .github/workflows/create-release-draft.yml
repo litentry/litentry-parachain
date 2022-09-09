@@ -28,7 +28,6 @@ on:
           - litmus
           - rococo
           - litentry
-          - moonbase
 
 env:
   RELEASE_TAG: ${{ github.event.inputs.release_tag }}
@@ -67,7 +66,6 @@ jobs:
           - litmus
           - rococo
           - litentry
-          - moonbase
     steps:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v3

@@ -759,7 +759,7 @@
     "@polkadot/util" "^10.1.2"
     rxjs "^7.5.6"
 
-"@polkadot/rpc-provider@9.0.1", "@polkadot/rpc-provider@^9.0.1":
+"@polkadot/rpc-provider@9.0.1":
   version "9.0.1"
   resolved "https://registry.yarnpkg.com/@polkadot/rpc-provider/-/rpc-provider-9.0.1.tgz#b2f3fd561ad1c61c094441e2aa79294f58b3df76"
   integrity sha512-AiyULOrJoBbH2hEfcKrCKz6Mf3/o+SO3dwL8+MKcehAj4ExaX6alcPgZnYWYz8Xl2cnZ8Kc0T/xg2emu+7gFBA==
@@ -4394,6 +4394,11 @@ prettier-linter-helpers@^1.0.0:
   integrity sha512-GbK2cP9nraSSUF9N2XwUwqfzlAFlMNYYl+ShE/V+H8a9uNl/oUqB1w2EL54Jh0OlyRSd8RfWYJ3coVS4TROP2w==
   dependencies:
     fast-diff "^1.1.2"
+
+prettier@2.7.1:
+  version "2.7.1"
+  resolved "https://registry.yarnpkg.com/prettier/-/prettier-2.7.1.tgz#e235806850d057f97bb08368a4f7d899f7760c64"
+  integrity sha512-ujppO+MkdPqoVINuDFDRLClm7D78qbDt0/NR+wp5FqEZOoTNAjPHWj17QRhu7geIHJfcNhRk1XVQmF8Bp3ye+g==
 
 prettier@^2.1.2:
   version "2.5.1"
