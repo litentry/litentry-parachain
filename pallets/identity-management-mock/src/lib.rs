@@ -43,7 +43,7 @@ use identity_context::IdentityContext;
 
 mod key;
 use key::{
-	aes_encrypt_default, get_mock_tee_shielding_key, AesCiphertext, PaddingScheme,
+	aes_encrypt_default, get_mock_tee_shielding_key, AesOutput, PaddingScheme,
 	USER_SHIELDING_KEY_LEN,
 };
 
@@ -93,49 +93,19 @@ pub mod pallet {
 		// we have both the "plain" version and "encrypted" version for debugging
 		// =============================================
 		// set user's shielding key
-		UserShieldingKeySetPlain {
-			account: AccountId,
-		},
-		UserShieldingKeySetEnc {
-			account: AesCiphertext,
-		},
+		UserShieldingKeySetPlain { account: AccountId },
+		UserShieldingKeySetEnc { account: AesOutput },
 		// link identity
-		ChallengeCodeGeneratedPlain {
-			account: AccountId,
-			identity: Did,
-			code: ChallengeCode,
-		},
-		ChallengeCodeGeneratedEnc {
-			account: AesCiphertext,
-			identity: AesCiphertext,
-			code: AesCiphertext,
-		},
-		IdentityLinkedPlain {
-			account: AccountId,
-			identity: Did,
-		},
-		IdentityLinkedEnc {
-			account: AesCiphertext,
-			identity: AesCiphertext,
-		},
+		ChallengeCodeGeneratedPlain { account: AccountId, identity: Did, code: ChallengeCode },
+		ChallengeCodeGeneratedEnc { account: AesOutput, identity: AesOutput, code: AesOutput },
+		IdentityLinkedPlain { account: AccountId, identity: Did },
+		IdentityLinkedEnc { account: AesOutput, identity: AesOutput },
 		// unlink identity
-		IdentityUnlinkedPlain {
-			account: AccountId,
-			identity: Did,
-		},
-		IdentityUnlinkedEnc {
-			account: AesCiphertext,
-			identity: AesCiphertext,
-		},
+		IdentityUnlinkedPlain { account: AccountId, identity: Did },
+		IdentityUnlinkedEnc { account: AesOutput, identity: AesOutput },
 		// verify identity
-		IdentityVerifiedPlain {
-			account: AccountId,
-			identity: Did,
-		},
-		IdentityVerifiedEnc {
-			account: AesCiphertext,
-			identity: AesCiphertext,
-		},
+		IdentityVerifiedPlain { account: AccountId, identity: Did },
+		IdentityVerifiedEnc { account: AesOutput, identity: AesOutput },
 	}
 
 	#[pallet::error]

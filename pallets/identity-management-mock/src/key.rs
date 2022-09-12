@@ -56,7 +56,7 @@ const USER_SHIELDING_KEY_TAG_LEN: usize = 16;
 // all-in-one struct containing the ciphertext and required metadata to verify the decryption
 // By default a postfix tag is used => last 16 bytes of ciphertext is MAC tag
 #[derive(Debug, Default, Clone, Eq, PartialEq, Encode, Decode, TypeInfo)]
-pub struct AesCiphertext {
+pub struct AesOutput {
 	ciphertext: Vec<u8>,
 	aad: Vec<u8>,
 	nonce: [u8; USER_SHIELDING_KEY_NONCE_LEN], // IV
@@ -75,15 +75,15 @@ pub(crate) fn aes_encrypt(
 	data: &[u8],
 	aad: &[u8],
 	nonce: [u8; USER_SHIELDING_KEY_NONCE_LEN],
-) -> AesCiphertext {
+) -> AesOutput {
 	let cipher = Aes256Gcm::new(key.into());
 	let payload = Payload { msg: data, aad };
 	let ciphertext = cipher.encrypt(&nonce.into(), payload).unwrap();
-	AesCiphertext { ciphertext, aad: aad.to_vec(), nonce }
+	AesOutput { ciphertext, aad: aad.to_vec(), nonce }
 }
 
 // encrypt the plaintext `data` with null aad and random nonce
-pub fn aes_encrypt_default(key: &[u8; USER_SHIELDING_KEY_LEN], data: &[u8]) -> AesCiphertext {
+pub fn aes_encrypt_default(key: &[u8; USER_SHIELDING_KEY_LEN], data: &[u8]) -> AesOutput {
 	aes_encrypt(key, data, b"", Aes256Gcm::generate_nonce(&mut OsRng).into())
 }
 
