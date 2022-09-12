@@ -28,7 +28,7 @@ pub use rsa::{
 };
 
 use aes_gcm::{
-	aead::{Aead, AeadCore, KeyInit, OsRng, Payload},
+	aead::{Aead, KeyInit, Payload},
 	Aes256Gcm,
 };
 
@@ -45,13 +45,17 @@ use scale_info::TypeInfo;
 // -pubout -out \   	pallets/identity-management-mock/src/rsa_key_examples/pkcs1/2048-pub.pem
 //
 // we use 3072-bit RSA as TEE shielding key
-const TEE_SHIELDING_KEY_PRIV: &str = include_str!("rsa_key_examples/pkcs1/3072-priv.pem");
-const TEE_SHIELDING_KEY_PUB: &str = include_str!("rsa_key_examples/pkcs1/3072-pub.pem");
+const MOCK_TEE_SHIELDING_KEY_PRIV: &str = include_str!("rsa_key_examples/pkcs1/3072-priv.pem");
+const MOCK_TEE_SHIELDING_KEY_PUB: &str = include_str!("rsa_key_examples/pkcs1/3072-pub.pem");
 
 // we use 256-bit AES-GCM as user shielding key
 pub const USER_SHIELDING_KEY_LEN: usize = 32;
 const USER_SHIELDING_KEY_NONCE_LEN: usize = 12;
 const USER_SHIELDING_KEY_TAG_LEN: usize = 16;
+// use a fake nonce for this pallet
+// in real situations we should either use Randomness pallet for wasm runtime, or
+// Aes256Gcm::generate_nonce for non-wasm case
+const MOCK_NONCE: [u8; USER_SHIELDING_KEY_NONCE_LEN] = [2u8; USER_SHIELDING_KEY_NONCE_LEN];
 
 // all-in-one struct containing the ciphertext and required metadata to verify the decryption
 // By default a postfix tag is used => last 16 bytes of ciphertext is MAC tag
@@ -64,8 +68,8 @@ pub struct AesOutput {
 
 pub fn get_mock_tee_shielding_key() -> (RsaPublicKey, RsaPrivateKey) {
 	(
-		RsaPublicKey::from_public_key_pem(TEE_SHIELDING_KEY_PUB).unwrap(),
-		RsaPrivateKey::from_pkcs1_pem(TEE_SHIELDING_KEY_PRIV).unwrap(),
+		RsaPublicKey::from_public_key_pem(MOCK_TEE_SHIELDING_KEY_PUB).unwrap(),
+		RsaPrivateKey::from_pkcs1_pem(MOCK_TEE_SHIELDING_KEY_PRIV).unwrap(),
 	)
 }
 
@@ -84,12 +88,13 @@ pub(crate) fn aes_encrypt(
 
 // encrypt the plaintext `data` with null aad and random nonce
 pub fn aes_encrypt_default(key: &[u8; USER_SHIELDING_KEY_LEN], data: &[u8]) -> AesOutput {
-	aes_encrypt(key, data, b"", Aes256Gcm::generate_nonce(&mut OsRng).into())
+	aes_encrypt(key, data, b"", MOCK_NONCE)
 }
 
 #[cfg(test)]
 mod test {
 	use super::*;
+	use aes_gcm::{aead::OsRng, AeadCore};
 	use hex_literal::hex;
 	use rand_chacha::{rand_core::SeedableRng, ChaCha8Rng};
 	use sha2::{Digest, Sha256};
@@ -151,12 +156,11 @@ mod test {
 		const PLAINTEXT: &[u8] = b"hello world";
 		const KEY: &[u8; USER_SHIELDING_KEY_LEN] =
 			&hex!("b52c505a37d78eda5dd34f20c22540ea1b58963cf8e5bf8ffa85f9f2492505b4");
-		let ciphertext = aes_encrypt_default(KEY, PLAINTEXT);
+		let output = aes_encrypt_default(KEY, PLAINTEXT);
+		assert_eq!(output.nonce, MOCK_NONCE);
 		let cipher = Aes256Gcm::new(KEY.into());
-		let decrypted_plaintext = cipher
-			.decrypt(&ciphertext.nonce.into(), ciphertext.ciphertext.as_ref())
-			.unwrap();
-		// let (ct, tag) = decrypted_plaintext.split_at(decrypted_plaintext.len()16);
+		let decrypted_plaintext =
+			cipher.decrypt(&output.nonce.into(), output.ciphertext.as_ref()).unwrap();
 		assert_eq!(PLAINTEXT, &decrypted_plaintext);
 	}
 
