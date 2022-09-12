@@ -112,7 +112,7 @@ mod test {
 	}
 
 	#[test]
-	fn test_encrypt_decrypt_rsa_key_pair_works() {
+	fn test_encrypt_decrypt_rsa_works() {
 		let (public_key, private_key) = get_mock_tee_shielding_key();
 		assert_eq!(private_key.to_public_key(), public_key);
 
@@ -131,7 +131,7 @@ mod test {
 	}
 
 	#[test]
-	fn test_sign_verify_rsa_key_pair_works() {
+	fn test_sign_verify_rsa_works() {
 		let (_public_key, private_key) = crate::get_mock_tee_shielding_key();
 		let signing_key = SigningKey::new_with_hash(private_key, Hash::SHA2_256);
 		let verifying_key: VerifyingKey = (&signing_key).into();
@@ -161,12 +161,62 @@ mod test {
 	}
 
 	#[test]
-	fn test_encrypt_decrypt_aes_gcm_random_key_works() {
+	fn test_encrypt_decrypt_aes_gcm_random_works() {
 		let key = Aes256Gcm::generate_key(&mut OsRng);
 		let cipher = Aes256Gcm::new(&key);
 		let nonce = Aes256Gcm::generate_nonce(&mut OsRng); // 96-bits; unique per message
 		let ciphertext = cipher.encrypt(&nonce, b"plaintext message".as_ref()).unwrap();
 		let plaintext = cipher.decrypt(&nonce, ciphertext.as_ref()).unwrap();
 		assert_eq!(&plaintext, b"plaintext message");
+	}
+
+	#[test]
+	fn test_encrypt_decrypt_aes_gcm_hardcoded_with_aad_works() {
+		// values are from TestVector is RSA crate:
+		const KEY: &[u8] =
+			&hex!("d33ea320cec0e43dfc1e3d1d8ccca2dd7e30ad3ea18ad7141cc83645d18771ae");
+		const NONCE: &[u8] = &hex!("540009f321f41d00202e473b");
+		const PLAINTEXT: &[u8] = &hex!("e56cdd522d526d8d0cd18131a19ee4fd");
+		const AAD: &[u8] = &hex!("a41162e1fe875a81fbb5667f73c5d4cbbb9c3956002f7867047edec15bdcac1206e519ee9c238c371a38a485c710da60");
+		const CIPHERTEXT: &[u8] = &hex!("8b624b6f5483f42f36c85dc7cf3e9609");
+		const TAG: &[u8] = &hex!("2651e978d9eaa6c5f4db52391ac9bc7c");
+
+		let cipher = Aes256Gcm::new(KEY.into());
+		let ct = aes_encrypt(KEY.try_into().unwrap(), PLAINTEXT, AAD, NONCE.try_into().unwrap());
+		// verify ciphertext
+		let ct_ct = &ct.ciphertext.as_slice()[..(ct.ciphertext.len() - 16)];
+		assert_eq!(ct_ct, CIPHERTEXT);
+		// verify tag
+		let ct_tag = &ct.ciphertext.as_slice()[(ct.ciphertext.len() - 16)..];
+		assert_eq!(ct_tag, TAG);
+		// try decrypt and verify, we need to include `aad` into payload as it's non-null
+		let payload = Payload { msg: &ct.ciphertext, aad: &ct.aad };
+		let decrypted_plaintext = cipher.decrypt(NONCE.try_into().unwrap(), payload).unwrap();
+		assert_eq!(&decrypted_plaintext, PLAINTEXT);
+	}
+
+	#[test]
+	fn test_encrypt_decrypt_aes_gcm_hardcoded_no_aad_works() {
+		// values are from TestVector is RSA crate:
+		const KEY: &[u8] =
+			&hex!("56690798978c154ff250ba78e463765f2f0ce69709a4551bd8cb3addeda087b6");
+		const NONCE: &[u8] = &hex!("cf37c286c18ad4ea3d0ba6a0");
+		const PLAINTEXT: &[u8] = &hex!("2d328124a8d58d56d0775eed93de1a88");
+		const AAD: &[u8] = b"";
+		const CIPHERTEXT: &[u8] = &hex!("3b0a0267f6ecde3a78b30903ebd4ca6e");
+		const TAG: &[u8] = &hex!("1fd2006409fc636379f3d4067eca0988");
+
+		let cipher = Aes256Gcm::new(KEY.into());
+		let ct = aes_encrypt(KEY.try_into().unwrap(), PLAINTEXT, AAD, NONCE.try_into().unwrap());
+		// verify ciphertext
+		let ct_ct = &ct.ciphertext.as_slice()[..(ct.ciphertext.len() - 16)];
+		assert_eq!(ct_ct, CIPHERTEXT);
+		// verify tag
+		let ct_tag = &ct.ciphertext.as_slice()[(ct.ciphertext.len() - 16)..];
+		assert_eq!(ct_tag, TAG);
+		// try decrypt and verify, we pass ciphertext directly as `aad` is null
+		let decrypted_plaintext =
+			cipher.decrypt(NONCE.try_into().unwrap(), ct.ciphertext.as_ref()).unwrap();
+		assert_eq!(&decrypted_plaintext, PLAINTEXT);
 	}
 }
