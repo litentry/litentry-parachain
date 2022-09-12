@@ -20,10 +20,12 @@ frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch =
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28", default-features = false }
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28", default-features = false }
 
+pallet-identity-management = { path = "../../pallets/identity-management", default-features = false }
+primitives = { path = "../../primitives", default-features = false }
+
 aes-gcm = { git = "https://github.com/RustCrypto/AEADs", default-features = false, features = ["aes", "alloc"] }
 hex = { version = "0.4", default-features = false }
 hex-literal = { version = "0.3.2" }
-primitives = { path = "../../primitives", default-features = false }
 rsa = { git = "https://github.com/litentry/RustCrypto-RSA", default-features = false, features = ["serde", "pem"] }
 
 [dev-dependencies]

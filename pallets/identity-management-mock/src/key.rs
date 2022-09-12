@@ -32,8 +32,9 @@ use aes_gcm::{
 	Aes256Gcm,
 };
 
-use codec::{Decode, Encode};
-use scale_info::TypeInfo;
+pub use pallet_identity_management::{
+	AesOutput, USER_SHIELDING_KEY_LEN, USER_SHIELDING_KEY_NONCE_LEN,
+};
 
 // The hardcoded exemplary shielding keys for mocking
 // openssl always generates a mix of X509 pub key and pkcs1 private key
@@ -48,23 +49,10 @@ use scale_info::TypeInfo;
 const MOCK_TEE_SHIELDING_KEY_PRIV: &str = include_str!("rsa_key_examples/pkcs1/3072-priv.pem");
 const MOCK_TEE_SHIELDING_KEY_PUB: &str = include_str!("rsa_key_examples/pkcs1/3072-pub.pem");
 
-// we use 256-bit AES-GCM as user shielding key
-pub const USER_SHIELDING_KEY_LEN: usize = 32;
-const USER_SHIELDING_KEY_NONCE_LEN: usize = 12;
-const USER_SHIELDING_KEY_TAG_LEN: usize = 16;
 // use a fake nonce for this pallet
 // in real situations we should either use Randomness pallet for wasm runtime, or
 // Aes256Gcm::generate_nonce for non-wasm case
 const MOCK_NONCE: [u8; USER_SHIELDING_KEY_NONCE_LEN] = [2u8; USER_SHIELDING_KEY_NONCE_LEN];
-
-// all-in-one struct containing the ciphertext and required metadata to verify the decryption
-// By default a postfix tag is used => last 16 bytes of ciphertext is MAC tag
-#[derive(Debug, Default, Clone, Eq, PartialEq, Encode, Decode, TypeInfo)]
-pub struct AesOutput {
-	ciphertext: Vec<u8>,
-	aad: Vec<u8>,
-	nonce: [u8; USER_SHIELDING_KEY_NONCE_LEN], // IV
-}
 
 pub fn get_mock_tee_shielding_key() -> (RsaPublicKey, RsaPrivateKey) {
 	(
