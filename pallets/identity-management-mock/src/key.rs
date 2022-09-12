@@ -40,9 +40,9 @@ use scale_info::TypeInfo;
 // see https://stackoverflow.com/questions/10783366/how-to-generate-pkcs1-rsa-keys-in-pem-format
 //
 // commands used to generate keys:
-// 1. openssl genrsa -out pallets/identity-management-mock/src/rsa_key_examples/pkcs1/2048-priv.pem
-// 2048 2. openssl rsa -in pallets/identity-management-mock/src/rsa_key_examples/pkcs1/2048-priv.pem
-// -pubout -out \   	pallets/identity-management-mock/src/rsa_key_examples/pkcs1/2048-pub.pem
+// 1. openssl genrsa -out pallets/identity-management-mock/src/rsa_key_examples/pkcs1/3072-priv.pem
+// 3072 2. openssl rsa -in pallets/identity-management-mock/src/rsa_key_examples/pkcs1/3072-priv.pem
+// -pubout -out \    pallets/identity-management-mock/src/rsa_key_examples/pkcs1/3072-pub.pem
 //
 // we use 3072-bit RSA as TEE shielding key
 const MOCK_TEE_SHIELDING_KEY_PRIV: &str = include_str!("rsa_key_examples/pkcs1/3072-priv.pem");
