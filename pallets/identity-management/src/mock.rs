@@ -18,7 +18,7 @@
 
 use crate as pallet_identity_management;
 use frame_support::{
-	parameter_types,
+	ord_parameter_types, parameter_types,
 	traits::{ConstU128, ConstU16, ConstU32, ConstU64, Everything},
 };
 use frame_system as system;
@@ -27,6 +27,7 @@ use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
+use system::EnsureSignedBy;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -111,10 +112,15 @@ impl pallet_balances::Config for Test {
 	type WeightInfo = ();
 }
 
+ord_parameter_types! {
+	pub const One: u64 = 1;
+}
+
 impl pallet_identity_management::Config for Test {
 	type Event = Event;
 	type Call = Call;
 	type WeightInfo = ();
+	type EventTriggerOrigin = EnsureSignedBy<One, u64>;
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
