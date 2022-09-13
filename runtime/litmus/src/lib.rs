@@ -34,9 +34,13 @@ use frame_support::{
 	PalletId, RuntimeDebug,
 };
 use frame_system::EnsureRoot;
+
 // for TEE
 pub use pallet_balances::Call as BalancesCall;
-use pallet_identity_management_mock::Mrenclave;
+pub use pallet_identity_management::{
+	AesOutput, UserShieldingKeyType, USER_SHIELDING_KEY_LEN, USER_SHIELDING_KEY_NONCE_LEN,
+};
+pub use pallet_identity_management_mock::Mrenclave;
 pub use pallet_sidechain;
 pub use pallet_teerex;
 

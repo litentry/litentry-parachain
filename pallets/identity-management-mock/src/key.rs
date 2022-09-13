@@ -20,80 +20,92 @@ extern crate std;
 #[cfg(not(feature = "std"))]
 use sp_std::prelude::*;
 
+use rsa::pkcs8::DecodePublicKey;
 pub use rsa::{
 	pkcs1::{DecodeRsaPrivateKey, DecodeRsaPublicKey, EncodeRsaPrivateKey, EncodeRsaPublicKey},
 	pkcs1v15::{SigningKey, VerifyingKey},
 	Hash, PaddingScheme, PublicKey, PublicKeyParts, RsaPrivateKey, RsaPublicKey,
 };
 
-use rand_chacha::{rand_core::SeedableRng, ChaCha8Rng};
-pub use rsa::pkcs8::DecodePublicKey;
+use aes_gcm::{
+	aead::{Aead, KeyInit, Payload},
+	Aes256Gcm,
+};
+
+pub use pallet_identity_management::{
+	AesOutput, USER_SHIELDING_KEY_LEN, USER_SHIELDING_KEY_NONCE_LEN,
+};
 
 // The hardcoded exemplary shielding keys for mocking
 // openssl always generates a mix of X509 pub key and pkcs1 private key
 // see https://stackoverflow.com/questions/10783366/how-to-generate-pkcs1-rsa-keys-in-pem-format
 //
 // commands used to generate keys:
-// 1. openssl genrsa -out pallets/identity-management-mock/src/rsa_key_examples/pkcs1/2048-priv.pem
-// 2048 2. openssl rsa -in pallets/identity-management-mock/src/rsa_key_examples/pkcs1/2048-priv.pem
-// -pubout -out \   	pallets/identity-management-mock/src/rsa_key_examples/pkcs1/2048-pub.pem
+// 1. openssl genrsa -out pallets/identity-management-mock/src/rsa_key_examples/pkcs1/3072-priv.pem
+// 3072 2. openssl rsa -in pallets/identity-management-mock/src/rsa_key_examples/pkcs1/3072-priv.pem
+// -pubout -out \    pallets/identity-management-mock/src/rsa_key_examples/pkcs1/3072-pub.pem
 //
-// we use 2048 bit keys as user shielding key and 3072 bit for TEE shielding key
-const USER_SHIELDING_KEY_PRIV: &str = include_str!("rsa_key_examples/pkcs1/2048-priv.pem");
-const USER_SHIELDING_KEY_PUB: &str = include_str!("rsa_key_examples/pkcs1/2048-pub.pem");
-const TEE_SHIELDING_KEY_PRIV: &str = include_str!("rsa_key_examples/pkcs1/3072-priv.pem");
-const TEE_SHIELDING_KEY_PUB: &str = include_str!("rsa_key_examples/pkcs1/3072-pub.pem");
+// we use 3072-bit RSA as TEE shielding key
+const MOCK_TEE_SHIELDING_KEY_PRIV: &str = include_str!("rsa_key_examples/pkcs1/3072-priv.pem");
+const MOCK_TEE_SHIELDING_KEY_PUB: &str = include_str!("rsa_key_examples/pkcs1/3072-pub.pem");
 
-// TODO: remove unwrap and expect(..)
-pub fn get_mock_user_shielding_key() -> (RsaPublicKey, RsaPrivateKey) {
-	(
-		RsaPublicKey::from_public_key_pem(USER_SHIELDING_KEY_PUB).unwrap(),
-		RsaPrivateKey::from_pkcs1_pem(USER_SHIELDING_KEY_PRIV).unwrap(),
-	)
-}
+// use a fake nonce for this pallet
+// in real situations we should either use Randomness pallet for wasm runtime, or
+// Aes256Gcm::generate_nonce for non-wasm case
+const MOCK_NONCE: [u8; USER_SHIELDING_KEY_NONCE_LEN] = [2u8; USER_SHIELDING_KEY_NONCE_LEN];
 
 pub fn get_mock_tee_shielding_key() -> (RsaPublicKey, RsaPrivateKey) {
 	(
-		RsaPublicKey::from_public_key_pem(TEE_SHIELDING_KEY_PUB).unwrap(),
-		RsaPrivateKey::from_pkcs1_pem(TEE_SHIELDING_KEY_PRIV).unwrap(),
+		RsaPublicKey::from_public_key_pem(MOCK_TEE_SHIELDING_KEY_PUB).unwrap(),
+		RsaPrivateKey::from_pkcs1_pem(MOCK_TEE_SHIELDING_KEY_PRIV).unwrap(),
 	)
 }
 
-pub fn encrypt_with_public_key(k: &[u8], data: &[u8]) -> Vec<u8> {
-	// use a derandomized seed
-	// rand::thread_rng() would require std in crate `rand`
-	let mut rng = ChaCha8Rng::from_seed([42; 32]);
-	let public_key = RsaPublicKey::from_public_key_pem(sp_std::str::from_utf8(k).unwrap()).unwrap();
-	public_key
-		.encrypt(&mut rng, PaddingScheme::new_pkcs1v15_encrypt(), data)
-		.expect("failed to encrypt")
+// encrypt the plaintext `data` with given `aad` and `nonce`
+pub(crate) fn aes_encrypt(
+	key: &[u8; USER_SHIELDING_KEY_LEN],
+	data: &[u8],
+	aad: &[u8],
+	nonce: [u8; USER_SHIELDING_KEY_NONCE_LEN],
+) -> AesOutput {
+	let cipher = Aes256Gcm::new(key.into());
+	let payload = Payload { msg: data, aad };
+	let ciphertext = cipher.encrypt(&nonce.into(), payload).unwrap();
+	AesOutput { ciphertext, aad: aad.to_vec(), nonce }
+}
+
+// encrypt the plaintext `data` with null aad and random nonce
+pub fn aes_encrypt_default(key: &[u8; USER_SHIELDING_KEY_LEN], data: &[u8]) -> AesOutput {
+	aes_encrypt(key, data, b"", MOCK_NONCE)
 }
 
 #[cfg(test)]
 mod test {
 	use super::*;
+	use aes_gcm::{aead::OsRng, AeadCore};
 	use hex_literal::hex;
+	use rand_chacha::{rand_core::SeedableRng, ChaCha8Rng};
 	use sha2::{Digest, Sha256};
 	use signature::{RandomizedSigner, Verifier};
 
 	#[test]
 	fn test_read_rsa_key_pair_works() {
-		let (public_key, private_key) = get_mock_user_shielding_key();
+		let (public_key, private_key) = get_mock_tee_shielding_key();
 		// openssl rsa -pubin -inform PEM -text -modulus <
-		// pallets/identity-management-mock/src/rsa_key_examples/pkcs1/2048-pub.pem
-		assert_eq!(&public_key.n().to_bytes_be(), &hex!("CBD08EFBD65343F9DFD9E6A3DC5B0296BC07174691D8C8B5594DF2F82E9F3E435B093DFA1496B406AF04287D3F851D51050846DE657B4C3A12467FD78E4ABF1A87B984A346FA0DC28AC09B7CFBFAD8AC183B87138CD1594BCFF5ABF46226A708569A02EC66B249A03AF8486638F6A12E2208D97C206C0DB6D8376EFFF464BB5B49FF4C9D2CDF82DBA59F36DC77092275975A689C7B87239F19D47A748C6631F5DDDCEF0B82ED1B46EFC48B202D37F9213ACDA317D326F6E0A07F27723F768B070981309C14C616079693CE7A0AF0EB3AE8DEE0E0A03DBAC0B29A5594C2582A7974205D5D4F70E2EA65A99588188D5F06B07647414E5BEAB33FF52A957FF2227B"));
+		// pallets/identity-management-mock/src/rsa_key_examples/pkcs1/3072-pub.pem
+		assert_eq!(&public_key.n().to_bytes_be(), &hex!("E802BF953FA5AEBEF77EE7587F1F94A05C604665EA272DC3A5A421F3566CBB6F9726F2D468B2A932EEA0502651309B4149D892D318C3EABB0C006C506A0F1F12DB7AE1257932F39DD2E2309F137F6274283CE80CCB55A4760AC3A44E96EC74826AA5C001ABBC9749B988063F29A75DF0007364AADA17BD45FC711519F46B04E71CFA04CE8C952BC58F1C4E377CB851CF5F95A66CA5BD2E64065D626848F6F5E5A79268C5DE255E4E408C5D19770AF9F9A89E23961864930FC0FC6AD1863C2F69AEC85AC06CAB5226524FEA21BB1DF702888EF2C50C5EBDCB5F5F4F92818F1CDB37E29363787AF48CF63A68D1C021484628C5C7BE9E359C36E0281BE9A90B3FBF8A86DDA69544D282615F8EC62AE680EA779F8B6D89E132EFFDD4F66A39002C99832BD8B633A2740E030B305A2C72F1D611C707F7E36A15B8D7B3C14572B99838BAA89283998AEA09DED098B819F71241BC55865CF63B732D2B5BC96FBAAFBDA24713D14A44E51616761F436F99B756E56DF05C12B6582CB7CBAB97750CBEB083"));
 		assert_eq!(&public_key.e().to_bytes_be(), &hex!("010001"));
 
 		// openssl asn1parse -in <path-to-file>
-		assert_eq!(&private_key.n().to_bytes_be(), &hex!("CBD08EFBD65343F9DFD9E6A3DC5B0296BC07174691D8C8B5594DF2F82E9F3E435B093DFA1496B406AF04287D3F851D51050846DE657B4C3A12467FD78E4ABF1A87B984A346FA0DC28AC09B7CFBFAD8AC183B87138CD1594BCFF5ABF46226A708569A02EC66B249A03AF8486638F6A12E2208D97C206C0DB6D8376EFFF464BB5B49FF4C9D2CDF82DBA59F36DC77092275975A689C7B87239F19D47A748C6631F5DDDCEF0B82ED1B46EFC48B202D37F9213ACDA317D326F6E0A07F27723F768B070981309C14C616079693CE7A0AF0EB3AE8DEE0E0A03DBAC0B29A5594C2582A7974205D5D4F70E2EA65A99588188D5F06B07647414E5BEAB33FF52A957FF2227B"));
+		assert_eq!(&private_key.n().to_bytes_be(), &hex!("E802BF953FA5AEBEF77EE7587F1F94A05C604665EA272DC3A5A421F3566CBB6F9726F2D468B2A932EEA0502651309B4149D892D318C3EABB0C006C506A0F1F12DB7AE1257932F39DD2E2309F137F6274283CE80CCB55A4760AC3A44E96EC74826AA5C001ABBC9749B988063F29A75DF0007364AADA17BD45FC711519F46B04E71CFA04CE8C952BC58F1C4E377CB851CF5F95A66CA5BD2E64065D626848F6F5E5A79268C5DE255E4E408C5D19770AF9F9A89E23961864930FC0FC6AD1863C2F69AEC85AC06CAB5226524FEA21BB1DF702888EF2C50C5EBDCB5F5F4F92818F1CDB37E29363787AF48CF63A68D1C021484628C5C7BE9E359C36E0281BE9A90B3FBF8A86DDA69544D282615F8EC62AE680EA779F8B6D89E132EFFDD4F66A39002C99832BD8B633A2740E030B305A2C72F1D611C707F7E36A15B8D7B3C14572B99838BAA89283998AEA09DED098B819F71241BC55865CF63B732D2B5BC96FBAAFBDA24713D14A44E51616761F436F99B756E56DF05C12B6582CB7CBAB97750CBEB083"));
 		assert_eq!(&private_key.e().to_bytes_be(), &hex!("010001"));
-		assert_eq!(&private_key.d().to_bytes_be(), &hex!("026A999760C621F32F753CE7CA7005CAD5B5DBCFC960E1984CD3C0C2B282CED12B9E236EF89984CEE37A502494013704C3E3823B96C66C73EFCD882C7D1263CBA3BA4E59453927BA9BBC86DB677D64DE3D774F35AB20BC474AD2E5D402E9E46713E7C58B19F89928DE2A1D69A0D943B5F14F5B8CBE31A9C3F6324A0D9CCF28ED79BB5BE9C36AEA2422F8609C959A876E9E97C20CA8AE0822D71AFE93FAAC4184AFCB7FCEF55721557F46D013B8A5903217898A881E0ED00AA1A0551F22492C13A7B7B1ED724D19DDE6B99387AC8BFEA1D28E16968DE0C9C4C84AB5A0CF2CA2DB3BC07E64BEA0934B46D4D7EACE40D79013234D8E880B7EF339C3255937CFAC31"));
-		assert_eq!(&private_key.primes()[0].to_bytes_be(), &hex!("E7FD29DD53BD18133D2B8FF4B52567C1F6AA63EA6C5375DB2A49C70B8D00BC5A589C300507770A666E691C3FF3038C6482E686B397393DD154DEF1E6FFF74E72918E1D8B520518812D3B3E67F900C1DDFB2AC51A76A0328FBC39E8E060186DCF588F9D732738C76DD901F61DECE973733245E401CC3C7E0E2F02C89C1CA1B8B3"));
-		assert_eq!(&private_key.primes()[1].to_bytes_be(), &hex!("E0E8E221EC053D4C7D5E5FC07AAFA930D1A791E6DD3957280406071AD47CC9F8A871F7DF8E36416EA2DC78412EE8B2B2EC148E2C0790C7690575CA4FCF0BCD46738D0E13A6917DB063966B6AAC3D8752A739D3BCC8A33FD94D86571E359F9A713CEE99F26316DB49C4F478FB695E21F76BF18F1F59EB0A396C6AEEDE518F0319"));
+		assert_eq!(&private_key.d().to_bytes_be(), &hex!("3A54BE902A91604ED8F0C9FF60EEB2B262A73DEBCFA40C087D73B7A973582103DC4FC98B87CB2B6907BFBC86F5B0AFC80965EEFC2DE4CBF63CFD3A3E397C15C6EAF188FB9FEE247BD09257C116E8D6FAF746E0DC9E9EA89B98F7392F1D18D3EE1A1C141B176F71E5F24475B599A65FA2C0AA426C062B23C61DC2DC984AF0412A4E09B9FDA830B4F1959A7B3BCE1A954EFAEC280C76DB0A77D175D710FB0F44217A310030873A83EC4EA43B9FF463091830C19996DA09274435B400B32EF9A0BD89AA5ED810FB68939AF56A30094312F5B2B27942DDA3E09DBD0DF3AFD8A29164080CF8D96BA8CB2379DC7BAC6CE384269A56EEBF418CA0292BF749F408405D68AF554126D7C8A4CD33EACA195CF8DE14468986986A4DD9C8C9D8A3DC5A20B7749E4E26313F2C7216A5FC60720BEC94EC8DAE598B08D41B70C7047095D32B77794A8727612488D40BC81574F3F3F5759DDCD812B22A81A7D226B56BE9930E5E9AEBF0605E70F046E61465D3292F46E2F1E2A6C16B079B6AC0003F6F2C3B631839"));
+		assert_eq!(&private_key.primes()[0].to_bytes_be(), &hex!("FF710DDA71F7104DB9475474142F70E23E21302419A49627DF01877180BD94A3202E0B274C15D0C5D62770BA38F391588BC57D4032E8A8E72932D2717C70C8C03646FFA7678FE89870644156093951CB829CB27A2203CD12537CCE0C984369133C2C3B13D60A48154A2B63DBCC616C3020840436919591CE848BB4433E9C27E463E966A146EF2FC353793AC957948C49A26124A145E08216AF774CDF5AE60861BDDFABBE255E5C7A012BF7505F8FED6DC37FD04B6799DF7197771D3678184505"));
+		assert_eq!(&private_key.primes()[1].to_bytes_be(), &hex!("E884950F5F40402EF56648EF5DA494B00AE95F2C1CE5E70AE76D42ABBDED141672D41AC1B0588AE435CF8BED129F51B04034FD917277035938A3015BAD3204220AD6C8C1A75E2D9C2F19121DB9242A05CB1C871A935925B05DA5E4942989B364613673F5578E2D72340CB5821533CC72858FE72160C2415F7B152A0AF460E3BD99C7FB7383F81DB3A04FF0940695C532EE9F9AC3DBACB4F6A011A07C313D923E3E5BB6D1C11D0BD38FB0D27BF1AC734259878E10D7C95FC1ACCB8119F3A315E7"));
 	}
 
 	#[test]
-	fn test_encrypt_decrypt_rsa_key_pair_works() {
+	fn test_encrypt_decrypt_rsa_works() {
 		let (public_key, private_key) = get_mock_tee_shielding_key();
 		assert_eq!(private_key.to_public_key(), public_key);
 
@@ -112,7 +124,7 @@ mod test {
 	}
 
 	#[test]
-	fn test_sign_verify_rsa_key_pair_works() {
+	fn test_sign_verify_rsa_works() {
 		let (_public_key, private_key) = crate::get_mock_tee_shielding_key();
 		let signing_key = SigningKey::new_with_hash(private_key, Hash::SHA2_256);
 		let verifying_key: VerifyingKey = (&signing_key).into();
@@ -125,5 +137,78 @@ mod test {
 
 		// verify
 		verifying_key.verify(&digest, &signature).expect("failed to verify");
+	}
+
+	#[test]
+	fn test_encrypt_decrypt_aes_gcm_default_works() {
+		const PLAINTEXT: &[u8] = b"hello world";
+		const KEY: &[u8; USER_SHIELDING_KEY_LEN] =
+			&hex!("b52c505a37d78eda5dd34f20c22540ea1b58963cf8e5bf8ffa85f9f2492505b4");
+		let output = aes_encrypt_default(KEY, PLAINTEXT);
+		assert_eq!(output.nonce, MOCK_NONCE);
+		let cipher = Aes256Gcm::new(KEY.into());
+		let decrypted_plaintext =
+			cipher.decrypt(&output.nonce.into(), output.ciphertext.as_ref()).unwrap();
+		assert_eq!(PLAINTEXT, &decrypted_plaintext);
+	}
+
+	#[test]
+	fn test_encrypt_decrypt_aes_gcm_random_works() {
+		let key = Aes256Gcm::generate_key(&mut OsRng);
+		let cipher = Aes256Gcm::new(&key);
+		let nonce = Aes256Gcm::generate_nonce(&mut OsRng); // 96-bits; unique per message
+		let ciphertext = cipher.encrypt(&nonce, b"plaintext message".as_ref()).unwrap();
+		let plaintext = cipher.decrypt(&nonce, ciphertext.as_ref()).unwrap();
+		assert_eq!(&plaintext, b"plaintext message");
+	}
+
+	#[test]
+	fn test_encrypt_decrypt_aes_gcm_hardcoded_with_aad_works() {
+		// values are from TestVector is RSA crate:
+		const KEY: &[u8] =
+			&hex!("d33ea320cec0e43dfc1e3d1d8ccca2dd7e30ad3ea18ad7141cc83645d18771ae");
+		const NONCE: &[u8] = &hex!("540009f321f41d00202e473b");
+		const PLAINTEXT: &[u8] = &hex!("e56cdd522d526d8d0cd18131a19ee4fd");
+		const AAD: &[u8] = &hex!("a41162e1fe875a81fbb5667f73c5d4cbbb9c3956002f7867047edec15bdcac1206e519ee9c238c371a38a485c710da60");
+		const CIPHERTEXT: &[u8] = &hex!("8b624b6f5483f42f36c85dc7cf3e9609");
+		const TAG: &[u8] = &hex!("2651e978d9eaa6c5f4db52391ac9bc7c");
+
+		let cipher = Aes256Gcm::new(KEY.into());
+		let ct = aes_encrypt(KEY.try_into().unwrap(), PLAINTEXT, AAD, NONCE.try_into().unwrap());
+		// verify ciphertext
+		let ct_ct = &ct.ciphertext.as_slice()[..(ct.ciphertext.len() - 16)];
+		assert_eq!(ct_ct, CIPHERTEXT);
+		// verify tag
+		let ct_tag = &ct.ciphertext.as_slice()[(ct.ciphertext.len() - 16)..];
+		assert_eq!(ct_tag, TAG);
+		// try decrypt and verify, we need to include `aad` into payload as it's non-null
+		let payload = Payload { msg: &ct.ciphertext, aad: &ct.aad };
+		let decrypted_plaintext = cipher.decrypt(NONCE.try_into().unwrap(), payload).unwrap();
+		assert_eq!(&decrypted_plaintext, PLAINTEXT);
+	}
+
+	#[test]
+	fn test_encrypt_decrypt_aes_gcm_hardcoded_no_aad_works() {
+		// values are from TestVector is RSA crate:
+		const KEY: &[u8] =
+			&hex!("56690798978c154ff250ba78e463765f2f0ce69709a4551bd8cb3addeda087b6");
+		const NONCE: &[u8] = &hex!("cf37c286c18ad4ea3d0ba6a0");
+		const PLAINTEXT: &[u8] = &hex!("2d328124a8d58d56d0775eed93de1a88");
+		const AAD: &[u8] = b"";
+		const CIPHERTEXT: &[u8] = &hex!("3b0a0267f6ecde3a78b30903ebd4ca6e");
+		const TAG: &[u8] = &hex!("1fd2006409fc636379f3d4067eca0988");
+
+		let cipher = Aes256Gcm::new(KEY.into());
+		let ct = aes_encrypt(KEY.try_into().unwrap(), PLAINTEXT, AAD, NONCE.try_into().unwrap());
+		// verify ciphertext
+		let ct_ct = &ct.ciphertext.as_slice()[..(ct.ciphertext.len() - 16)];
+		assert_eq!(ct_ct, CIPHERTEXT);
+		// verify tag
+		let ct_tag = &ct.ciphertext.as_slice()[(ct.ciphertext.len() - 16)..];
+		assert_eq!(ct_tag, TAG);
+		// try decrypt and verify, we pass ciphertext directly as `aad` is null
+		let decrypted_plaintext =
+			cipher.decrypt(NONCE.try_into().unwrap(), ct.ciphertext.as_ref()).unwrap();
+		assert_eq!(&decrypted_plaintext, PLAINTEXT);
 	}
 }
