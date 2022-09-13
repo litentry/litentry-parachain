@@ -31,6 +31,9 @@ pub mod weights;
 pub use crate::weights::WeightInfo;
 pub use pallet::*;
 
+mod key;
+pub use key::*;
+
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::weights::WeightInfo;

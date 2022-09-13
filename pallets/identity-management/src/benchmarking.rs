@@ -22,14 +22,10 @@ use super::*;
 use crate::Pallet as IdentityManagement;
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_system::RawOrigin;
-use hex_literal::hex;
 use sp_core::H256;
 use sp_std::vec;
 
-// Sample MRENCLAVE from
-// https://github.com/integritee-network/pallets/blob/master/test-utils/src/ias.rs#L125-L132
-const TEST_MRENCLAVE: [u8; 32] =
-	hex!("7a3454ec8f42e265cb5be7dfd111e1d95ac6076ed82a0948b2e2a45cf17b62a0");
+const TEST_MRENCLAVE: [u8; 32] = [2u8; 32];
 
 fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 	frame_system::Pallet::<T>::assert_last_event(generic_event.into());

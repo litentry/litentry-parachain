@@ -92,6 +92,7 @@ pallet-bridge-transfer = { path = "../../pallets/bridge-transfer", default-featu
 pallet-drop3 = { path = "../../pallets/drop3", default-features = false }
 pallet-extrinsic-filter = { path = "../../pallets/extrinsic-filter", default-features = false }
 pallet-identity-management = { path = "../../pallets/identity-management", default-features = false }
+pallet-identity-management-mock = { path = "../../pallets/identity-management-mock", default-features = false }
 runtime-common = { path = '../common', default-features = false }
 
 # TEE pallets - TODO: patch it with litentry teerex
@@ -181,6 +182,7 @@ std = [
   "pallet-drop3/std",
   "pallet-extrinsic-filter/std",
   "pallet-identity-management/std",
+  "pallet-identity-management-mock/std",
   "pallet-teerex/std",
   "pallet-sidechain/std",
 ]
