@@ -14,7 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-// Ensure we're `no_std` when compiling for Wasm.
+//! This is a mock to pallet-identity-management on parachain (IMP).
+//! It hides/mocks all things happened on TEE side and returns the
+//! result immediately.
+//!
+//! The idea is to give F/E an idea how the interface(extrinsic) would
+//! look like and what kind of events can be expected.
+//!
+//! TODO: event/error handling
+//! Currently the errors are synchronously emitted from this pallet itself,
+//! meanwhile we have the `SomeError` **Event** which is callable from TEE
+//! to represent any generic "error".
+//! However, there are so many error cases in TEE that I'm not even sure
+//! if it's a good idea to have a matching extrinsic for error propagation.
 
 #![allow(dead_code)]
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -78,6 +90,8 @@ pub mod pallet {
 		// maximum delay in block numbers between linking an identity and verifying an identity
 		#[pallet::constant]
 		type MaxVerificationDelay: Get<BlockNumber>;
+		// the origin allowed to call event-triggering extrinsics, normally TEE
+		type EventTriggerOrigin: EnsureOrigin<Self::Origin>;
 	}
 
 	#[pallet::event]
@@ -87,27 +101,33 @@ pub mod pallet {
 		LinkIdentityRequested,
 		UnlinkIdentityRequested,
 		VerifyIdentityRequested,
-		SetShieldingKeyRequested,
+		SetUserShieldingKeyRequested,
 		// =============================================
 		// Mocked events that should have come from TEE
 		// we have both the "plain" version and "encrypted" version for debugging
 		// =============================================
 		// set user's shielding key
 		UserShieldingKeySetPlain { account: AccountId },
-		UserShieldingKeySetEnc { account: AesOutput },
+		UserShieldingKeySet { account: AesOutput },
 		// link identity
 		ChallengeCodeGeneratedPlain { account: AccountId, identity: Did, code: ChallengeCode },
-		ChallengeCodeGeneratedEnc { account: AesOutput, identity: AesOutput, code: AesOutput },
+		ChallengeCodeGenerated { account: AesOutput, identity: AesOutput, code: AesOutput },
 		IdentityLinkedPlain { account: AccountId, identity: Did },
-		IdentityLinkedEnc { account: AesOutput, identity: AesOutput },
+		IdentityLinked { account: AesOutput, identity: AesOutput },
 		// unlink identity
 		IdentityUnlinkedPlain { account: AccountId, identity: Did },
-		IdentityUnlinkedEnc { account: AesOutput, identity: AesOutput },
+		IdentityUnlinked { account: AesOutput, identity: AesOutput },
 		// verify identity
 		IdentityVerifiedPlain { account: AccountId, identity: Did },
-		IdentityVerifiedEnc { account: AesOutput, identity: AesOutput },
+		IdentityVerified { account: AesOutput, identity: AesOutput },
+		// some error happened during processing in TEE, we use string-like
+		// parameters for more "generic" error event reporting
+		// TODO: maybe use concrete errors instead of events when we are more sure
+		// see also the comment at the beginning
+		SomeError { func: Vec<u8>, error: Vec<u8> },
 	}
 
+	/// These are the errors that are immediately emitted from this mock pallet
 	#[pallet::error]
 	pub enum Error<T> {
 		/// caller is not in whitelist (therefore disallowed to call some extrinsics)
@@ -212,7 +232,7 @@ pub mod pallet {
 				WhitelistedCallers::<T>::contains_key(&caller),
 				Error::<T>::CallerNotWhitelisted
 			);
-			Self::deposit_event(Event::<T>::SetShieldingKeyRequested);
+			Self::deposit_event(Event::<T>::SetUserShieldingKeyRequested);
 
 			let trusted_call = Self::handle_call_worker_payload(&shard, &encrypted_data)?;
 			match trusted_call {
@@ -221,7 +241,7 @@ pub mod pallet {
 					Self::deposit_event(Event::<T>::UserShieldingKeySetPlain {
 						account: who.clone(),
 					});
-					Self::deposit_event(Event::<T>::UserShieldingKeySetEnc {
+					Self::deposit_event(Event::<T>::UserShieldingKeySet {
 						account: aes_encrypt_default(&key, who.encode().as_slice()),
 					});
 				},
@@ -261,7 +281,7 @@ pub mod pallet {
 						identity: did.clone(),
 						code,
 					});
-					Self::deposit_event(Event::<T>::ChallengeCodeGeneratedEnc {
+					Self::deposit_event(Event::<T>::ChallengeCodeGenerated {
 						account: aes_encrypt_default(&key, who.encode().as_slice()),
 						identity: aes_encrypt_default(&key, did.as_slice()),
 						code: aes_encrypt_default(&key, code.as_ref()),
@@ -275,7 +295,7 @@ pub mod pallet {
 						account: who.clone(),
 						identity: did.clone(),
 					});
-					Self::deposit_event(Event::<T>::IdentityLinkedEnc {
+					Self::deposit_event(Event::<T>::IdentityLinked {
 						account: aes_encrypt_default(&key, who.encode().as_slice()),
 						identity: aes_encrypt_default(&key, did.as_slice()),
 					});
@@ -311,7 +331,7 @@ pub mod pallet {
 						account: who.clone(),
 						identity: did.clone(),
 					});
-					Self::deposit_event(Event::<T>::IdentityUnlinkedEnc {
+					Self::deposit_event(Event::<T>::IdentityUnlinked {
 						account: aes_encrypt_default(&key, who.encode().as_slice()),
 						identity: aes_encrypt_default(&key, did.as_slice()),
 					});
@@ -359,7 +379,7 @@ pub mod pallet {
 							account: who.clone(),
 							identity: did.clone(),
 						});
-						Self::deposit_event(Event::<T>::IdentityVerifiedEnc {
+						Self::deposit_event(Event::<T>::IdentityVerified {
 							account: aes_encrypt_default(&key, who.encode().as_slice()),
 							identity: aes_encrypt_default(&key, did.as_slice()),
 						});
@@ -368,6 +388,73 @@ pub mod pallet {
 				},
 				_ => Err(Error::<T>::WrongTrustedCallType.into()),
 			}
+		}
+
+		// The following extrinsics are supposed to be called by TEE only
+		#[pallet::weight(195_000_000)]
+		pub fn user_shielding_key_set(
+			origin: OriginFor<T>,
+			account: AesOutput,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::UserShieldingKeySet { account });
+			Ok(().into())
+		}
+
+		#[pallet::weight(195_000_000)]
+		pub fn challenge_code_generated(
+			origin: OriginFor<T>,
+			account: AesOutput,
+			identity: AesOutput,
+			code: AesOutput,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::ChallengeCodeGenerated { account, identity, code });
+			Ok(().into())
+		}
+
+		#[pallet::weight(195_000_000)]
+		pub fn identity_linked(
+			origin: OriginFor<T>,
+			account: AesOutput,
+			identity: AesOutput,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::IdentityLinked { account, identity });
+			Ok(().into())
+		}
+
+		#[pallet::weight(195_000_000)]
+		pub fn identity_unlinked(
+			origin: OriginFor<T>,
+			account: AesOutput,
+			identity: AesOutput,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::IdentityUnlinked { account, identity });
+			Ok(Pays::No.into())
+		}
+
+		#[pallet::weight(195_000_000)]
+		pub fn identity_verified(
+			origin: OriginFor<T>,
+			account: AesOutput,
+			identity: AesOutput,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::IdentityVerified { account, identity });
+			Ok(Pays::No.into())
+		}
+
+		#[pallet::weight(195_000_000)]
+		pub fn some_error(
+			origin: OriginFor<T>,
+			func: Vec<u8>,
+			error: Vec<u8>,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::SomeError { func, error });
+			Ok(Pays::No.into())
 		}
 	}
 

@@ -74,7 +74,7 @@ benchmarks! {
 		let encrypted_data = vec![1u8; 2048];
 	}: _(RawOrigin::Signed(caller), shard, encrypted_data )
 	verify {
-		assert_last_event::<T>(Event::SetShieldingKeyRequested.into());
+		assert_last_event::<T>(Event::SetUserShieldingKeyRequested.into());
 	}
 }
 

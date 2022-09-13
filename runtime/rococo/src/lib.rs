@@ -851,6 +851,8 @@ impl pallet_identity_management::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 	type WeightInfo = ();
+	// TODO: use the real TEE account
+	type EventTriggerOrigin = EnsureRoot<AccountId>;
 }
 
 parameter_types! {
@@ -863,6 +865,8 @@ impl pallet_identity_management_mock::Config for Runtime {
 	type ManageWhitelistOrigin = EnsureRoot<Self::AccountId>;
 	type Mrenclave = TestMrenclave;
 	type MaxVerificationDelay = ConstU32<10>;
+	// TODO: use the real TEE account
+	type EventTriggerOrigin = EnsureRoot<AccountId>;
 }
 
 impl runtime_common::BaseRuntimeRequirements for Runtime {}
