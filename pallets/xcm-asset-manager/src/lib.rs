@@ -234,7 +234,9 @@ pub mod pallet {
 			AssetIdType::<T>::insert(&asset_id, &asset_type);
 			AssetTypeId::<T>::insert(&asset_type, &asset_id);
 
-			ForeignAssetTracker::<T>::put(asset_id.checked_add(&One::one()).ok_or(Error::<T>::AssetIdLimitReached)?);
+			ForeignAssetTracker::<T>::put(
+				asset_id.checked_add(&One::one()).ok_or(Error::<T>::AssetIdLimitReached)?,
+			);
 
 			Self::deposit_event(Event::<T>::ForeignAssetTypeRegistered { asset_id, asset_type });
 			Self::deposit_event(Event::<T>::ForeignAssetMetadataUpdated { asset_id, metadata });
