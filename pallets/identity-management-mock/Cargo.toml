@@ -27,6 +27,9 @@ aes-gcm = { git = "https://github.com/RustCrypto/AEADs", default-features = fals
 hex = { version = "0.4", default-features = false }
 hex-literal = { version = "0.3.2" }
 rsa = { git = "https://github.com/litentry/RustCrypto-RSA", default-features = false, features = ["serde", "pem"] }
+serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
+serde_derive = { version = "1.0", default-features = false }
+serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 
 [dev-dependencies]
 aes-gcm = { git = "https://github.com/RustCrypto/AEADs" }
@@ -55,4 +58,6 @@ std = [
   "frame-system/std",
   "frame-benchmarking/std",
   "rsa/std",
+  "serde/std",
+  "serde_json/std",
 ]
