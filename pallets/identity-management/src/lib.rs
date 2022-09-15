@@ -14,7 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-// Ensure we're `no_std` when compiling for Wasm.
+//! TODO: event/error handling
+//! Currently the errors are synchronously emitted from this pallet itself,
+//! meanwhile we have the `SomeError` **Event** which is callable from TEE
+//! to represent any generic "error".
+//! However, there are so many error cases in TEE that I'm not even sure
+//! if it's a good idea to have a matching extrinsic for error propagation.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -36,7 +41,7 @@ pub use key::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::weights::WeightInfo;
+	use crate::{weights::WeightInfo, AesOutput};
 	use frame_support::{
 		dispatch::{DispatchErrorWithPostInfo, Dispatchable, PostDispatchInfo},
 		pallet_prelude::*,
@@ -61,6 +66,8 @@ pub mod pallet {
 			+ From<pallet_teerex::Call<Self>>
 			+ IsSubType<Call<Self>>;
 		type WeightInfo: WeightInfo;
+		// the origin allowed to call event-triggering extrinsics, normally TEE
+		type EventTriggerOrigin: EnsureOrigin<Self::Origin>;
 	}
 
 	#[pallet::event]
@@ -69,7 +76,18 @@ pub mod pallet {
 		LinkIdentityRequested,
 		UnlinkIdentityRequested,
 		VerifyIdentityRequested,
-		SetShieldingKeyRequested,
+		SetUserShieldingKeyRequested,
+		// event that should be triggered by TriggerEventOrigin
+		UserShieldingKeySet { account: AesOutput },
+		ChallengeCodeGenerated { account: AesOutput, identity: AesOutput, code: AesOutput },
+		IdentityLinked { account: AesOutput, identity: AesOutput },
+		IdentityUnlinked { account: AesOutput, identity: AesOutput },
+		IdentityVerified { account: AesOutput, identity: AesOutput },
+		// some error happened during processing in TEE, we use string-like
+		// parameters for more "generic" error event reporting
+		// TODO: maybe use concrete errors instead of events when we are more sure
+		// see also the comment at the beginning
+		SomeError { func: Vec<u8>, error: Vec<u8> },
 	}
 
 	#[pallet::error]
@@ -204,7 +222,7 @@ pub mod pallet {
 			let call: <T as Config>::Call = pallet_teerex::Call::call_worker { request }.into();
 			let result = call.dispatch(origin);
 
-			Self::deposit_event(Event::SetShieldingKeyRequested);
+			Self::deposit_event(Event::SetUserShieldingKeyRequested);
 
 			// Parse dispatch result and update weight and error information
 			result
@@ -226,6 +244,73 @@ pub mod pallet {
 					},
 					None => err,
 				})
+		}
+
+		// The following extrinsics are supposed to be called by TEE only
+		#[pallet::weight(195_000_000)]
+		pub fn user_shielding_key_set(
+			origin: OriginFor<T>,
+			account: AesOutput,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::UserShieldingKeySet { account });
+			Ok(().into())
+		}
+
+		#[pallet::weight(195_000_000)]
+		pub fn challenge_code_generated(
+			origin: OriginFor<T>,
+			account: AesOutput,
+			identity: AesOutput,
+			code: AesOutput,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::ChallengeCodeGenerated { account, identity, code });
+			Ok(().into())
+		}
+
+		#[pallet::weight(195_000_000)]
+		pub fn identity_linked(
+			origin: OriginFor<T>,
+			account: AesOutput,
+			identity: AesOutput,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::IdentityLinked { account, identity });
+			Ok(().into())
+		}
+
+		#[pallet::weight(195_000_000)]
+		pub fn identity_unlinked(
+			origin: OriginFor<T>,
+			account: AesOutput,
+			identity: AesOutput,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::IdentityUnlinked { account, identity });
+			Ok(Pays::No.into())
+		}
+
+		#[pallet::weight(195_000_000)]
+		pub fn identity_verified(
+			origin: OriginFor<T>,
+			account: AesOutput,
+			identity: AesOutput,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::IdentityVerified { account, identity });
+			Ok(Pays::No.into())
+		}
+
+		#[pallet::weight(195_000_000)]
+		pub fn some_error(
+			origin: OriginFor<T>,
+			func: Vec<u8>,
+			error: Vec<u8>,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::SomeError { func, error });
+			Ok(Pays::No.into())
 		}
 	}
 }

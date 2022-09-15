@@ -69,7 +69,7 @@ fn test_set_user_shielding_key() {
 			vec![1u8; 2048]
 		));
 		System::assert_last_event(Event::IdentityManagement(
-			crate::Event::SetShieldingKeyRequested,
+			crate::Event::SetUserShieldingKeyRequested,
 		));
 	});
 }
