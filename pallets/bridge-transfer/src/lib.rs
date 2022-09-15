@@ -19,6 +19,7 @@
 
 pub use pallet::*;
 
+mod benchmark;
 #[cfg(test)]
 mod mock;
 #[cfg(test)]

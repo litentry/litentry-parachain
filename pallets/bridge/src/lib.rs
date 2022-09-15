@@ -22,6 +22,7 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+mod banchmark;
 pub mod hashing;
 pub use pallet::*;
 
@@ -151,7 +152,8 @@ pub mod pallet {
 		type Proposal: Parameter
 			+ Dispatchable<Origin = Self::Origin>
 			+ EncodeLike
-			+ GetDispatchInfo;
+			+ GetDispatchInfo
+			+ From<frame_system::Call<Self>>;
 		/// The identifier for this chain.
 		/// This must be unique and must not collide with existing IDs within a set of bridged
 		/// chains.
