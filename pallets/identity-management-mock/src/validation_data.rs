@@ -33,7 +33,9 @@ pub struct Web2ValidationData {
 #[serde(rename_all = "camelCase")]
 pub struct Web3ValidationData {
 	pub message: Vec<u8>,
-	pub signature: Vec<u8>, // should be eventually decoded to sp_runtime::MultiSignature
+	// should be eventually decoded to sp_runtime::MultiSignature, I can't use this type
+	// directly though, as it can't be deserialized under `no_std`
+	pub signature: Vec<u8>,
 }
 
 #[derive(Clone, Encode, Decode, Serialize, Deserialize)]

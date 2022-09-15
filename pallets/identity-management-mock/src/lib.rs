@@ -345,7 +345,7 @@ pub mod pallet {
 			let _ = ValidationData::decode(&mut decrypted_validation_data.as_slice())
 				.map_err(|_| Error::<T>::WrongDecodedType)?;
 
-			// TODO: maybe do the actual verification
+			// TODO: can we do an actual verification? At least for web3
 			ensure!(IDGraphs::<T>::contains_key(&who, &did), Error::<T>::IdentityNotExist);
 			let key = UserShieldingKeys::<T>::get(&who).ok_or(Error::<T>::ShieldingKeyNotExist)?;
 
