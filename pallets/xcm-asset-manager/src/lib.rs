@@ -219,6 +219,7 @@ pub mod pallet {
 		/// TODO::Reserve native token multilocation through GenesisBuild/RuntimeUpgrade
 		/// TODO::Add Multilocation filter for register
 		#[pallet::weight(T::WeightInfo::register_foreign_asset_type())]
+		#[transactional]
 		pub fn register_foreign_asset_type(
 			origin: OriginFor<T>,
 			asset_type: T::ForeignAssetType,
@@ -226,19 +227,16 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::ForeignAssetModifierOrigin::ensure_origin(origin)?;
 			ensure!(!AssetTypeId::<T>::contains_key(&asset_type), Error::<T>::AssetAlreadyExists);
-			let asset_id = ForeignAssetTracker::<T>::try_mutate(
-				|tracker| -> Result<T::AssetId, DispatchError> {
-					// So The default tracker is skipped, temporary reserve the future multilocation
-					// map for asset_id=0
-					*tracker =
-						tracker.checked_add(&One::one()).ok_or(Error::<T>::AssetIdLimitReached)?;
-					Ok(*tracker)
-				},
-			)?;
+
+			let asset_id = ForeignAssetTracker::<T>::get();
 
 			AssetIdMetadata::<T>::insert(&asset_id, &metadata);
 			AssetIdType::<T>::insert(&asset_id, &asset_type);
 			AssetTypeId::<T>::insert(&asset_type, &asset_id);
+
+			ForeignAssetTracker::<T>::put(
+				asset_id.checked_add(&One::one()).ok_or(Error::<T>::AssetIdLimitReached)?,
+			);
 
 			Self::deposit_event(Event::<T>::ForeignAssetTypeRegistered { asset_id, asset_type });
 			Self::deposit_event(Event::<T>::ForeignAssetMetadataUpdated { asset_id, metadata });
