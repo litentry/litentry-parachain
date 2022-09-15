@@ -6,11 +6,11 @@ members = [
   'pallets/drop3',
   'pallets/extrinsic-filter',
   'pallets/identity-management',
+  'pallets/identity-management-mock',
   'primitives',
   'runtime/litentry',
   'runtime/litmus',
   'runtime/rococo',
-  'runtime/moonbase',
   'runtime/common',
 ]
 

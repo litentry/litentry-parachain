@@ -57,6 +57,7 @@ use sp_version::RuntimeVersion;
 use xcm_executor::XcmExecutor;
 
 pub use constants::currency::deposit;
+use pallet_identity_management_mock::Mrenclave;
 pub use primitives::{opaque, Index, *};
 pub use runtime_common::currency::*;
 use runtime_common::{
@@ -79,7 +80,6 @@ pub mod constants;
 mod tests;
 pub mod weights;
 pub mod xcm_config;
-// pub mod migration;
 
 /// The address format for describing accounts.
 pub type Address = MultiAddress<AccountId, ()>;
@@ -124,7 +124,6 @@ pub type Executive = frame_executive::Executive<
 	// it was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
-	// migration::MigrateCollatorSelectionIntoParachainStaking<Runtime>,
 >;
 
 impl_opaque_keys! {
@@ -854,6 +853,18 @@ impl pallet_identity_management::Config for Runtime {
 	type WeightInfo = ();
 }
 
+parameter_types! {
+	pub const TestMrenclave: Mrenclave = [2; 32];
+}
+
+impl pallet_identity_management_mock::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type ManageWhitelistOrigin = EnsureRoot<Self::AccountId>;
+	type Mrenclave = TestMrenclave;
+	type MaxVerificationDelay = ConstU32<10>;
+}
+
 impl runtime_common::BaseRuntimeRequirements for Runtime {}
 
 impl runtime_common::ParaRuntimeRequirements for Runtime {}
@@ -931,6 +942,9 @@ construct_runtime! {
 		Teerex: pallet_teerex = 90,
 		Sidechain: pallet_sidechain = 91,
 
+		// Mock
+		IdentityManagementMock: pallet_identity_management_mock = 100,
+
 		// TMP
 		Sudo: pallet_sudo = 255,
 	}
@@ -987,6 +1001,9 @@ impl Contains<Call> for NormalModeFilter {
 			Call::Session(_) |
 			// Balance
 			Call::Balances(_) |
+			// IMP Mock, only allowed on rococo for testing
+			// we should use `tee-dev` branch if we want to test it on Litmus
+			Call::IdentityManagementMock(_) |
 			// ParachainStaking; Only the collator part
 			Call::ParachainStaking(pallet_parachain_staking::Call::join_candidates { .. }) |
 			Call::ParachainStaking(pallet_parachain_staking::Call::schedule_leave_candidates { .. }) |

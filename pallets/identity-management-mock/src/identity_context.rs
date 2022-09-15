@@ -14,19 +14,25 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-/// Money matters.
-pub mod currency {
-	use crate::Balance;
-	use runtime_common::currency::{DOLLARS, MILLICENTS};
+use codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
 
-	// Linear ratio of transaction fee distribution
-	// It is recommended to set sum of ratio to 100, yet only decimal loss is concerned.
-	pub const TREASURY_PROPORTION: u32 = 40u32;
-	pub const AUTHOR_PROPORTION: u32 = 0u32;
-	pub const BURNED_PROPORTION: u32 = 60u32;
+use crate::{BlockNumber, Metadata};
 
-	/// Function used in some fee configurations
-	pub const fn deposit(items: u32, bytes: u32) -> Balance {
-		items as Balance * DOLLARS + (bytes as Balance) * 100 * MILLICENTS
+// The context associated with the (litentry-account, did) pair
+// TODO: maybe we have better naming
+#[derive(Clone, Eq, PartialEq, Default, Debug, Encode, Decode, TypeInfo, MaxEncodedLen)]
+pub struct IdentityContext {
+	// the metadata
+	pub metadata: Option<Metadata>,
+	// the block number (of parent chain) where the linking was intially requested
+	pub linking_request_block: BlockNumber,
+	// if this did is verified
+	pub is_verified: bool,
+}
+
+impl IdentityContext {
+	pub fn new(linking_request_block: BlockNumber) -> Self {
+		Self { metadata: None, linking_request_block, is_verified: false }
 	}
 }
