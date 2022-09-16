@@ -120,7 +120,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
 			encrypted_did: Vec<u8>,
-			encrypted_metadata: Vec<u8>,
+			encrypted_metadata: Option<Vec<u8>>,
 		) -> DispatchResultWithPostInfo {
 			let _ = ensure_signed(origin)?;
 			Self::deposit_event(Event::LinkIdentityRequested { shard });

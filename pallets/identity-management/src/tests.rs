@@ -28,7 +28,7 @@ fn test_link_identity() {
 			Origin::signed(1),
 			shard,
 			vec![1u8; 2048],
-			vec![1u8; 2048]
+			Some(vec![1u8; 2048])
 		));
 		System::assert_last_event(Event::IdentityManagement(crate::Event::LinkIdentityRequested {
 			shard,
