@@ -14,33 +14,33 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#[cfg(feature = "std")]
-extern crate std;
-
-#[cfg(not(feature = "std"))]
-use sp_std::prelude::*;
+// The serialized validation data for verifying an identity
+// we simply use parity codec to ser/de the data and transfer around
+// (instead of serde_json)
+//
+// It's written in this IMP-mock crate just to give an idea how the
+// `validation_data` should look like, the decoding and usage of it
+// is done within TEE
 
 use codec::{Decode, Encode};
-use serde::{Deserialize, Serialize};
+use sp_runtime::MultiSignature;
 
-#[derive(Clone, Encode, Decode, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[allow(non_camel_case_types)]
 pub struct Web2ValidationData {
-	pub link: Vec<u8>,
+	pub link: String,
 }
 
-#[derive(Clone, Encode, Decode, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[allow(non_camel_case_types)]
 pub struct Web3ValidationData {
-	pub message: Vec<u8>,
-	// should be eventually decoded to sp_runtime::MultiSignature, I can't use this type
-	// directly though, as it can't be deserialized under `no_std`
-	pub signature: Vec<u8>,
+	pub message: String,
+	pub signature: MultiSignature,
 }
 
-#[derive(Clone, Encode, Decode, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ValidationData {
-	pub web2_validation_data: Option<Web2ValidationData>,
-	pub web3_validation_data: Option<Web3ValidationData>,
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[allow(non_camel_case_types)]
+pub enum ValidationData {
+	web2(Web2ValidationData),
+	web3(Web3ValidationData),
 }
