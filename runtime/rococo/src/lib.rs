@@ -36,7 +36,9 @@ use frame_support::{
 };
 use frame_system::EnsureRoot;
 pub use pallet_sidechain;
+pub use pallet_teeracle;
 pub use pallet_teerex;
+
 use sp_api::impl_runtime_apis;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -847,6 +849,12 @@ impl pallet_sidechain::Config for Runtime {
 	type EarlyBlockProposalLenience = ConstU64<100>;
 }
 
+impl pallet_teeracle::Config for Runtime {
+	type Event = Event;
+	type WeightInfo = ();
+	type MaxWhitelistedReleases = ConstU32<10>;
+}
+
 impl pallet_identity_management::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = ();
@@ -943,6 +951,7 @@ construct_runtime! {
 		// TEE
 		Teerex: pallet_teerex = 90,
 		Sidechain: pallet_sidechain = 91,
+		Teeracle: pallet_teeracle = 92,
 
 		// Mock
 		IdentityManagementMock: pallet_identity_management_mock = 100,
@@ -1045,6 +1054,7 @@ mod benches {
 		[pallet_identity_management, IdentityManagement]
 		[pallet_teerex, Teerex]
 		[pallet_sidechain, Sidechain]
+		[pallet_teeracle, Teeracle]
 	);
 }
 
