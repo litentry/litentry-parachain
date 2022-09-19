@@ -784,10 +784,6 @@ impl pallet_sidechain::Config for Runtime {
 	type EarlyBlockProposalLenience = ConstU64<100>;
 }
 
-parameter_types! {
-	pub const MaxWhitelistedReleases: u32 = 10;
-}
-
 impl pallet_identity_management::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = ();
