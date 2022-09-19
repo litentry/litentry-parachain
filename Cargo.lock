@@ -4480,6 +4480,7 @@ dependencies = [
  "cumulus-pallet-xcm",
  "cumulus-pallet-xcmp-queue",
  "cumulus-primitives-core",
+ "cumulus-primitives-parachain-inherent",
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
  "frame-benchmarking",
@@ -4491,6 +4492,10 @@ dependencies = [
  "frame-try-runtime",
  "hex-literal",
  "log",
+ "orml-tokens",
+ "orml-traits",
+ "orml-xtokens",
+ "pallet-asset-manager",
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
@@ -4519,6 +4524,8 @@ dependencies = [
  "parachain-info",
  "parity-scale-codec",
  "polkadot-parachain",
+ "polkadot-primitives",
+ "polkadot-runtime-parachains",
  "primitives",
  "runtime-common",
  "scale-info",
@@ -4533,6 +4540,7 @@ dependencies = [
  "sp-offchain",
  "sp-runtime",
  "sp-session",
+ "sp-state-machine",
  "sp-std",
  "sp-transaction-pool",
  "sp-version",
@@ -4540,6 +4548,7 @@ dependencies = [
  "xcm",
  "xcm-builder",
  "xcm-executor",
+ "xcm-simulator",
 ]
 
 [[package]]
