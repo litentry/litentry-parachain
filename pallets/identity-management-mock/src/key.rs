@@ -17,9 +17,6 @@
 #[cfg(feature = "std")]
 extern crate std;
 
-#[cfg(not(feature = "std"))]
-use sp_std::prelude::*;
-
 use rsa::pkcs8::DecodePublicKey;
 pub use rsa::{
 	pkcs1::{DecodeRsaPrivateKey, DecodeRsaPublicKey, EncodeRsaPrivateKey, EncodeRsaPublicKey},

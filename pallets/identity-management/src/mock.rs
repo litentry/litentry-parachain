@@ -41,11 +41,10 @@ frame_support::construct_runtime!(
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		Teerex: pallet_teerex::{Pallet, Call, Storage, Event<T>},
-		IdentityManagement: pallet_identity_management::{Pallet, Call, Storage, Event<T>},
+		System: frame_system,
+		Balances: pallet_balances,
+		Timestamp: pallet_timestamp,
+		IdentityManagement: pallet_identity_management,
 	}
 );
 
@@ -87,19 +86,6 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
-parameter_types! {
-	pub const MomentsPerDay: u64 = 86_400_000; // [ms/d]
-	pub const MaxSilenceTime:u64 =172_800_000; // 48h
-}
-
-impl pallet_teerex::Config for Test {
-	type Event = Event;
-	type Currency = Balances;
-	type MomentsPerDay = MomentsPerDay;
-	type MaxSilenceTime = MaxSilenceTime;
-	type WeightInfo = ();
-}
-
 impl pallet_balances::Config for Test {
 	type MaxLocks = ConstU32<50>;
 	type MaxReserves = ();
@@ -118,7 +104,6 @@ ord_parameter_types! {
 
 impl pallet_identity_management::Config for Test {
 	type Event = Event;
-	type Call = Call;
 	type WeightInfo = ();
 	type EventTriggerOrigin = EnsureSignedBy<One, u64>;
 }

@@ -38,10 +38,11 @@ benchmarks! {
 	link_identity {
 		let caller = whitelisted_caller();
 		let shard = H256::from_slice(&TEST_MRENCLAVE);
-		let encrypted_data = vec![1u8; 2048];
-	}: _(RawOrigin::Signed(caller), shard, encrypted_data )
+		let encrypted_did = vec![1u8; 2048];
+		let encrypted_metadata = Some(vec![1u8; 2048]);
+	}: _(RawOrigin::Signed(caller), shard, encrypted_did, encrypted_metadata)
 	verify {
-		assert_last_event::<T>(Event::LinkIdentityRequested.into());
+		assert_last_event::<T>(Event::LinkIdentityRequested{ shard }.into());
 	}
 
 	// Benchmark `unlink_identity`. There are no worst conditions. The benchmark showed that
@@ -49,10 +50,10 @@ benchmarks! {
 	unlink_identity {
 		let caller = whitelisted_caller();
 		let shard = H256::from_slice(&TEST_MRENCLAVE);
-		let encrypted_data = vec![1u8; 2048];
-	}: _(RawOrigin::Signed(caller), shard, encrypted_data )
+		let encrypted_did = vec![1u8; 2048];
+	}: _(RawOrigin::Signed(caller), shard, encrypted_did )
 	verify {
-		assert_last_event::<T>(Event::UnlinkIdentityRequested.into());
+		assert_last_event::<T>(Event::UnlinkIdentityRequested{ shard }.into());
 	}
 
 	// Benchmark `verify_identity`. There are no worst conditions. The benchmark showed that
@@ -60,10 +61,11 @@ benchmarks! {
 	verify_identity {
 		let caller = whitelisted_caller();
 		let shard = H256::from_slice(&TEST_MRENCLAVE);
-		let encrypted_data = vec![1u8; 2048];
-	}: _(RawOrigin::Signed(caller), shard, encrypted_data )
+		let encrypted_did = vec![1u8; 2048];
+		let encrypted_validation_data = vec![1u8; 2048];
+	}: _(RawOrigin::Signed(caller), shard, encrypted_did, encrypted_validation_data )
 	verify {
-		assert_last_event::<T>(Event::VerifyIdentityRequested.into());
+		assert_last_event::<T>(Event::VerifyIdentityRequested{ shard }.into());
 	}
 
 	// Benchmark `set_user_shielding_key`. There are no worst conditions. The benchmark showed that
@@ -71,10 +73,10 @@ benchmarks! {
 	set_user_shielding_key {
 		let caller = whitelisted_caller();
 		let shard = H256::from_slice(&TEST_MRENCLAVE);
-		let encrypted_data = vec![1u8; 2048];
-	}: _(RawOrigin::Signed(caller), shard, encrypted_data )
+		let encrypted_key = vec![1u8; 2048];
+	}: _(RawOrigin::Signed(caller), shard, encrypted_key )
 	verify {
-		assert_last_event::<T>(Event::SetUserShieldingKeyRequested.into());
+		assert_last_event::<T>(Event::SetUserShieldingKeyRequested{ shard }.into());
 	}
 }
 
