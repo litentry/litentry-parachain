@@ -119,6 +119,8 @@ parameter_types! {
 	pub const ExternalTotalIssuance: u64 = MAXIMUM_ISSURANCE;
 	// bridge::derive_resource_id(1, &bridge::hashing::blake2_128(b"LIT"));
 	pub const NativeTokenResourceId: [u8; 32] = hex!("0000000000000000000000000000000a21dfe87028f214dd976be8479f5af001");
+	// transfernativemembers
+	static MembersProviderTestvalue:Vec<u64> = vec![RELAYER_A, RELAYER_B, RELAYER_C];
 }
 
 ord_parameter_types! {
@@ -128,7 +130,7 @@ ord_parameter_types! {
 pub struct MembersProvider;
 impl SortedMembers<u64> for MembersProvider {
 	fn sorted_members() -> Vec<u64> {
-		vec![RELAYER_A, RELAYER_B, RELAYER_C]
+		MembersProviderTestvalue::get()
 	}
 
 	fn contains(who: &u64) -> bool {
@@ -136,8 +138,12 @@ impl SortedMembers<u64> for MembersProvider {
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	fn add(_: &u64) {
-		unimplemented!()
+	fn add(_new: &u64) {
+		// unimplemented!()
+		MembersProviderTestvalue::mutate(|members| {
+			members.push(*new);
+			members.sort();
+		})
 	}
 }
 

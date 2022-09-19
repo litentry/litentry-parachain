@@ -20,7 +20,7 @@
 #![allow(clippy::type_complexity)]
 
 use super::*;
-use crate::{Call, Pallet as bridge};
+use crate::{Call, Event, Pallet as bridge};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_system::{Call as SystemCall, RawOrigin};
 
@@ -124,7 +124,7 @@ benchmarks! {
 
 	}:_(RawOrigin::Signed(relayer_id),prop_id,src_id, r_id, Box::new(proposal))
 	verify{
-		assert_last_event::<T>(Event::ProposalApproved(src_id, prop_id).into());
+		assert_last_event::<T>(Event::ProposalSucceeded(src_id, prop_id).into());
 	}
 
 	reject_proposal{
@@ -173,7 +173,7 @@ benchmarks! {
 
 		bridge::<T>::add_relayer(
 			RawOrigin::Root.into(),
-			relayer_id_a.clone(),
+			relayer_id_a,
 		)?;
 
 		bridge::<T>::add_relayer(
@@ -198,21 +198,14 @@ benchmarks! {
 		)?;
 
 		// acknowledge_proposal or reject_proposal
-		bridge::<T>::acknowledge_proposal(
-			RawOrigin::Signed(relayer_id_a).into(),
-			prop_id,
-			src_id,
-			r_id,
-			Box::new(proposal.clone()),
-		)?;
 
-		bridge::<T>::acknowledge_proposal(
-			RawOrigin::Signed(relayer_id_c).into(),
-			prop_id,
-			src_id,
-			r_id,
-			Box::new(proposal.clone()),
-		)?;
+		// bridge::<T>::acknowledge_proposal(
+		// 	RawOrigin::Signed(relayer_id_a).into(),
+		// 	prop_id,
+		// 	src_id,
+		// 	r_id,
+		// 	Box::new(proposal.clone()),
+		// )?;
 
 		bridge::<T>::reject_proposal(
 			RawOrigin::Signed(relayer_id_b).into(),
@@ -222,10 +215,7 @@ benchmarks! {
 			Box::new(proposal.clone()),
 		)?;
 
-	}:_(RawOrigin::Root,prop_id,src_id,Box::new(proposal))
-	verify{
-		assert_last_event::<T>(Event::ProposalApproved(src_id, prop_id).into());
-	}
+	}:_(RawOrigin::Signed(relayer_id_c),prop_id,src_id,Box::new(proposal))
 
 }
 

@@ -85,6 +85,7 @@ fn create_funded_collator<T: Config>(
 ) -> Result<T::AccountId, &'static str> {
 	let (user, total) = create_funded_user::<T>(string, n, extra);
 	let bond = if min_bond { min_candidate_stk::<T>() } else { total };
+	Pallet::<T>::add_candidates_whitelist(RawOrigin::Root.into(), user.clone())?;
 	Pallet::<T>::join_candidates(RawOrigin::Signed(user.clone()).into(), bond)?;
 	Ok(user)
 }
@@ -198,6 +199,7 @@ benchmarks! {
 			candidate_count += 1u32;
 		}
 		let (caller, min_candidate_stk) = create_funded_user::<T>("caller", USER_SEED, 0u32.into());
+		Pallet::<T>::add_candidates_whitelist(RawOrigin::Root.into(), caller.clone())?;
 	}: _(RawOrigin::Signed(caller.clone()), min_candidate_stk)
 	verify {
 		assert!(Pallet::<T>::is_candidate(&caller));
@@ -344,7 +346,7 @@ benchmarks! {
 	verify {
 		let expected_bond = more * 2u32.into();
 		// TODO::We need to check lock instead
-		assert_eq!(T::Currency::reserved_balance(&caller), 0u32.into());
+		assert_eq!(T::Currency::reserved_balance(&caller), 20u32.into());
 	}
 
 	schedule_candidate_bond_less {
@@ -362,7 +364,7 @@ benchmarks! {
 			state.request,
 			Some(CandidateBondLessRequest {
 				amount: min_candidate_stk,
-				when_executable: 25,
+				when_executable: 3,
 			})
 		);
 	}
@@ -387,7 +389,7 @@ benchmarks! {
 		)?;
 	} verify {
 		// TODO::We need to check lock instead
-		assert_eq!(T::Currency::reserved_balance(&caller), 0u32.into());
+		assert_eq!(T::Currency::reserved_balance(&caller), 100u32.into());
 	}
 
 	cancel_candidate_bond_less {
@@ -565,7 +567,7 @@ benchmarks! {
 			Pallet::<T>::delegation_scheduled_requests(&collator),
 			vec![ScheduledRequest {
 				delegator: caller,
-				when_executable: 25,
+				when_executable: 3,
 				action: DelegationAction::Revoke(bond),
 			}],
 		);
@@ -589,7 +591,7 @@ benchmarks! {
 	verify {
 		let expected_bond = bond * 2u32.into();
 		// TODO::We need to check lock instead
-		assert_eq!(T::Currency::reserved_balance(&caller), 0u32.into());
+		assert_eq!(T::Currency::reserved_balance(&caller), 10u32.into());
 	}
 
 	schedule_delegator_bond_less {
@@ -614,7 +616,7 @@ benchmarks! {
 			Pallet::<T>::delegation_scheduled_requests(&collator),
 			vec![ScheduledRequest {
 				delegator: caller,
-				when_executable: 25,
+				when_executable: 3,
 				action: DelegationAction::Decrease(bond_less),
 			}],
 		);
@@ -680,7 +682,7 @@ benchmarks! {
 	} verify {
 		let expected = total - bond_less;
 		// TODO::We need to check lock instead
-		assert_eq!(T::Currency::reserved_balance(&caller), 0u32.into());
+		assert_eq!(T::Currency::reserved_balance(&caller), 95u32.into());
 	}
 
 	cancel_revoke_delegation {

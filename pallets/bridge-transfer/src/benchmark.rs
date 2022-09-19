@@ -22,8 +22,9 @@
 use super::*;
 use bridge::BalanceOf as balance;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
-use frame_support::traits::Currency;
+use frame_support::{ensure, traits::Currency};
 use frame_system::RawOrigin;
+use pallet_bridge::EnsureOrigin;
 
 const MAXIMUM_ISSURANCE: u32 = 20_000;
 
@@ -33,14 +34,15 @@ fn create_user<T: Config>(string: &'static str, n: u32, seed: u32) -> T::Account
 	let total = 100u32.into();
 	T::Currency::make_free_balance_be(&user, total);
 	T::Currency::issue(total);
-
 	user
 }
 
 benchmarks! {
 	transfer_native{
-		// let sender:T::AccountId = account("sender", 0u32, USER_SEED);
 		let sender:T::AccountId = create_user::<T>("sender",0u32,1u32);
+
+		T::TransferNativeMembers::add(sender);
+		ensure!(T::TransferNativeMembers::contains(sender),"add transfernativemember failed");
 
 		let dest_chain = 0;
 
@@ -58,18 +60,20 @@ benchmarks! {
 	}:_(RawOrigin::Signed(sender),50u32.into(),vec![0u8, 0u8, 0u8, 0u8],dest_chain)
 
 	transfer{
-		// let bridge_id = account("bridge", 0u32, USER_SEED);
+
+		// let sender = bridge::account_id();
 		let bridge_id:T::AccountId = create_user::<T>("bridge",0u32,1u32);
-		// let to_account:T::AccountId = account("to", 1u32, USER_SEED+1);
+		// let origin = bridge::EnsureBridge::successful_origin()?;
+
 		let to_account:T::AccountId = create_user::<T>("to",1u32,2u32);
 
 		let resource_id :bridge::ResourceId= [0u8;32];
-
 	}:_(RawOrigin::Signed(bridge_id),to_account,50u32.into(),resource_id)
 
 	set_maximum_issuance{
+		let origin = T::SetMaximumIssuanceOrigin::successful_origin();
 		let maximum_issuance:balance<T> = 2u32.into();
-	}:_(RawOrigin::Root,maximum_issuance)
+	}:_<T::Origin>(origin,maximum_issuance)
 	verify{
 		assert_eq!(MaximumIssuance::<T>::get(),maximum_issuance);
 	}
