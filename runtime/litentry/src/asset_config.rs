@@ -1,15 +1,16 @@
-use super::{
-	weights, AccountId, Amount, AssetId, AssetManager, Balance, Balances, Event, Runtime,
-	TreasuryPalletId,
-};
 use frame_support::{
 	parameter_types,
 	traits::{ConstU32, Contains},
 };
-use frame_system::EnsureRoot;
-use runtime_common::xcm_impl::CurrencyId;
 use sp_runtime::traits::AccountIdConversion;
 use sp_std::prelude::*;
+
+use runtime_common::{xcm_impl::CurrencyId, EnsureRootOrHalfCouncil};
+
+use super::{
+	weights, AccountId, Amount, AssetId, AssetManager, Balance, Balances, Event, Runtime,
+	TreasuryPalletId,
+};
 
 pub fn get_all_module_accounts() -> Vec<AccountId> {
 	// Add whitelist here, usually this is the system account like treasury
@@ -51,7 +52,7 @@ impl pallet_asset_manager::Config for Runtime {
 	type Balance = Balance;
 	type AssetId = AssetId;
 	type ForeignAssetType = CurrencyId<Runtime>;
-	type ForeignAssetModifierOrigin = EnsureRoot<AccountId>;
+	type ForeignAssetModifierOrigin = EnsureRootOrHalfCouncil;
 	type Currency = Balances;
 	type WeightInfo = weights::pallet_asset_manager::WeightInfo<Runtime>;
 }

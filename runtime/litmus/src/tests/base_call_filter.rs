@@ -14,12 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use substrate_wasm_builder::WasmBuilder;
+use crate::{Call, Origin, Runtime};
 
-fn main() {
-	WasmBuilder::new()
-		.with_current_project()
-		.export_heap_base()
-		.import_memory()
-		.build()
+runtime_common::run_call_filter_tests!();
+
+#[test]
+fn balance_transfer_works() {
+	base_call_filter::balance_transfer_works::<Runtime, Origin, Call>();
 }

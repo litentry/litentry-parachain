@@ -45,10 +45,6 @@ build-runtime-litmus:
 build-runtime-rococo:
 	cargo build --locked -p $(call pkgid, rococo-parachain-runtime) --release
 
-.PHONY: build-runtime-moonbase ## Build moonbase release runtime
-build-runtime-moonbase:
-	cargo build --locked -p $(call pkgid, moonbase-parachain-runtime) --release
-
 .PHONY: srtool-build-wasm-litentry ## Build litentry wasm with srtools
 srtool-build-wasm-litentry:
 	@./scripts/build-wasm.sh litentry
@@ -60,10 +56,6 @@ srtool-build-wasm-litmus:
 .PHONY: srtool-build-wasm-rococo ## Build rococo wasm with srtools
 srtool-build-wasm-rococo:
 	@./scripts/build-wasm.sh rococo
-
-.PHONY: srtool-build-wasm-moonbase ## Build moonbase wasm with srtools
-srtool-build-wasm-moonbase:
-	@./scripts/build-wasm.sh moonbase
 
 .PHONY: build-docker-release ## Build docker image using cargo profile `release`
 build-docker-release:
@@ -114,19 +106,19 @@ test-cargo-all:
 
 .PHONY: test-ts-docker-litentry ## Run litentry ts tests with docker without clean-up
 test-ts-docker-litentry: launch-docker-litentry launch-docker-bridge
-	@./scripts/run-ts-test.sh bridge
+	@./scripts/run-ts-test.sh litentry bridge
 
 .PHONY: test-ts-docker-litmus ## Run litmus ts tests with docker without clean-up
 test-ts-docker-litmus: launch-docker-litmus launch-docker-bridge
-	@./scripts/run-ts-test.sh bridge
+	@./scripts/run-ts-test.sh litmus bridge
 
 .PHONY: test-ts-binary-litentry ## Run litentry ts tests with binary without clean-up
 test-ts-binary-litentry: launch-binary-litentry
-	@./scripts/run-ts-test.sh
+	@./scripts/run-ts-test.sh litentry
 
 .PHONY: test-ts-binary-litmus ## Run litmus ts tests with binary without clean-up
 test-ts-binary-litmus: launch-binary-litmus
-	@./scripts/run-ts-test.sh
+	@./scripts/run-ts-test.sh litmus
 
 # clean up
 
@@ -172,6 +164,10 @@ taplocheck:
 fmt:
 	cargo fmt --all
 	taplo fmt
+
+.PHONY: githooks ## install the githooks
+githooks:
+	git config core.hooksPath .githooks
 
 # clippy
 

@@ -30,7 +30,7 @@ use cumulus_client_service::{
 use cumulus_primitives_core::ParaId;
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
 use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
-use cumulus_relay_chain_rpc_interface::RelayChainRPCInterface;
+use cumulus_relay_chain_rpc_interface::{create_client_and_start_worker, RelayChainRpcInterface};
 use polkadot_service::CollatorPair;
 
 use crate::rpc;
@@ -38,7 +38,8 @@ pub use primitives::{AccountId, Balance, Block, Hash, Header, Index as Nonce};
 
 use sc_executor::WasmExecutor;
 use sc_network::NetworkService;
-use sc_service::{Configuration, PartialComponents, Role, TFullBackend, TFullClient, TaskManager};
+use sc_network_common::service::NetworkBlock;
+use sc_service::{Configuration, PartialComponents, TFullBackend, TFullClient, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use sp_api::ConstructRuntimeApi;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -95,21 +96,6 @@ impl sc_executor::NativeExecutionDispatch for RococoParachainRuntimeExecutor {
 
 	fn native_version() -> sc_executor::NativeVersion {
 		rococo_parachain_runtime::native_version()
-	}
-}
-
-// Native executor instance.
-pub struct MoonbaseParachainRuntimeExecutor;
-
-impl sc_executor::NativeExecutionDispatch for MoonbaseParachainRuntimeExecutor {
-	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
-
-	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		moonbase_parachain_runtime::api::dispatch(method, data)
-	}
-
-	fn native_version() -> sc_executor::NativeVersion {
-		moonbase_parachain_runtime::native_version()
 	}
 }
 
@@ -236,8 +222,10 @@ async fn build_relay_chain_interface(
 	hwbench: Option<sc_sysinfo::HwBench>,
 ) -> RelayChainResult<(Arc<(dyn RelayChainInterface + 'static)>, Option<CollatorPair>)> {
 	match collator_options.relay_chain_rpc_url {
-		Some(relay_chain_url) =>
-			Ok((Arc::new(RelayChainRPCInterface::new(relay_chain_url).await?) as Arc<_>, None)),
+		Some(relay_chain_url) => {
+			let client = create_client_and_start_worker(relay_chain_url, task_manager).await?;
+			Ok((Arc::new(RelayChainRpcInterface::new(client)) as Arc<_>, None))
+		},
 		None => build_inprocess_relay_chain(
 			polkadot_config,
 			parachain_config,
@@ -316,10 +304,6 @@ where
 		bool,
 	) -> Result<Box<dyn ParachainConsensus<Block>>, sc_service::Error>,
 {
-	if matches!(parachain_config.role, Role::Light) {
-		return Err("Light client not supported!".into())
-	}
-
 	let parachain_config = prepare_node_config(parachain_config);
 
 	let params = new_partial::<RuntimeApi, BIQ>(&parachain_config, build_import_queue)?;
@@ -461,7 +445,7 @@ where
 	Ok((task_manager, client))
 }
 
-/// Start a litmus/litentry/rococo/moonbase node.
+/// Start a litmus/litentry/rococo node.
 pub async fn start_node<RuntimeApi>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
@@ -568,7 +552,7 @@ where
 	.await
 }
 
-/// Build the import queue for the litmus/litentry/rococo/moonbase runtime.
+/// Build the import queue for the litmus/litentry/rococo runtime.
 pub fn build_import_queue<RuntimeApi>(
 	client: Arc<TFullClient<Block, RuntimeApi, WasmExecutor<HostFunctions>>>,
 	config: &Configuration,

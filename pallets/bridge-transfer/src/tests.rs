@@ -82,18 +82,27 @@ fn transfer_native() {
 			dest_account.clone(),
 			dest_bridge_id
 		));
-		assert_eq!(pallet_balances::Pallet::<Test>::free_balance(&TreasuryAccount::get()), 10);
+		assert_eq!(
+			pallet_balances::Pallet::<Test>::free_balance(&TreasuryAccount::get()),
+			ENDOWED_BALANCE + 10
+		);
 		assert_eq!(
 			pallet_balances::Pallet::<Test>::free_balance(&RELAYER_A),
 			ENDOWED_BALANCE - 100
 		);
-		assert_events(vec![Event::Bridge(bridge::Event::FungibleTransfer(
-			dest_bridge_id,
-			1,
-			resource_id,
-			100 - 10,
-			dest_account,
-		))]);
+		assert_events(vec![
+			mock::Event::Balances(pallet_balances::Event::Deposit {
+				who: TreasuryAccount::get(),
+				amount: 10,
+			}),
+			Event::Bridge(bridge::Event::FungibleTransfer(
+				dest_bridge_id,
+				1,
+				resource_id,
+				100 - 10,
+				dest_account,
+			)),
+		]);
 	})
 }
 

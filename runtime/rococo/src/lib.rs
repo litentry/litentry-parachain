@@ -57,6 +57,7 @@ use sp_version::RuntimeVersion;
 use xcm_executor::XcmExecutor;
 
 pub use constants::currency::deposit;
+use pallet_identity_management_mock::Mrenclave;
 pub use primitives::{opaque, Index, *};
 pub use runtime_common::currency::*;
 use runtime_common::{
@@ -79,7 +80,6 @@ pub mod constants;
 mod tests;
 pub mod weights;
 pub mod xcm_config;
-// pub mod migration;
 
 /// The address format for describing accounts.
 pub type Address = MultiAddress<AccountId, ()>;
@@ -124,7 +124,6 @@ pub type Executive = frame_executive::Executive<
 	// it was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
-	// migration::MigrateCollatorSelectionIntoParachainStaking<Runtime>,
 >;
 
 impl_opaque_keys! {
@@ -143,7 +142,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9095,
+	spec_version: 9101,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -850,8 +849,22 @@ impl pallet_sidechain::Config for Runtime {
 
 impl pallet_identity_management::Config for Runtime {
 	type Event = Event;
-	type Call = Call;
 	type WeightInfo = ();
+	// TODO: use the real TEE account
+	type EventTriggerOrigin = EnsureRoot<AccountId>;
+}
+
+parameter_types! {
+	pub const TestMrenclave: Mrenclave = [2; 32];
+}
+
+impl pallet_identity_management_mock::Config for Runtime {
+	type Event = Event;
+	type ManageWhitelistOrigin = EnsureRoot<Self::AccountId>;
+	type Mrenclave = TestMrenclave;
+	type MaxVerificationDelay = ConstU32<10>;
+	// TODO: use the real TEE account
+	type EventTriggerOrigin = EnsureRoot<AccountId>;
 }
 
 impl runtime_common::BaseRuntimeRequirements for Runtime {}
@@ -931,6 +944,9 @@ construct_runtime! {
 		Teerex: pallet_teerex = 90,
 		Sidechain: pallet_sidechain = 91,
 
+		// Mock
+		IdentityManagementMock: pallet_identity_management_mock = 100,
+
 		// TMP
 		Sudo: pallet_sudo = 255,
 	}
@@ -985,6 +1001,11 @@ impl Contains<Call> for NormalModeFilter {
 			Call::Utility(_) |
 			// Seesion
 			Call::Session(_) |
+			// Balance
+			Call::Balances(_) |
+			// IMP Mock, only allowed on rococo for testing
+			// we should use `tee-dev` branch if we want to test it on Litmus
+			Call::IdentityManagementMock(_) |
 			// ParachainStaking; Only the collator part
 			Call::ParachainStaking(pallet_parachain_staking::Call::join_candidates { .. }) |
 			Call::ParachainStaking(pallet_parachain_staking::Call::schedule_leave_candidates { .. }) |

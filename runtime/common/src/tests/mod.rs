@@ -24,3 +24,5 @@ pub mod xcm_parachain;
 pub mod base_call_filter;
 
 pub mod transaction_payment;
+
+pub mod orml_xcm;

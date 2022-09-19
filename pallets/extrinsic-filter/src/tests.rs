@@ -363,7 +363,7 @@ fn unpaired_block_unblock_fails() {
 		assert_noop!(call.dispatch(Origin::signed(1)), frame_system::Error::<Test>::CallFiltered);
 
 		// clear the storage
-		crate::BlockedExtrinsics::<Test>::remove_all(None);
+		let _ = crate::BlockedExtrinsics::<Test>::clear(u32::max_value(), None);
 
 		// block the whole pallet and unblock a single extrinsic should fail
 		assert_ok!(ExtrinsicFilter::block_extrinsics(Origin::root(), b"Balances".to_vec(), None,));

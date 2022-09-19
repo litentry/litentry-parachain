@@ -37,8 +37,11 @@ use frame_system::EnsureRoot;
 
 // for TEE
 pub use pallet_balances::Call as BalancesCall;
+pub use pallet_identity_management::{
+	AesOutput, UserShieldingKeyType, USER_SHIELDING_KEY_LEN, USER_SHIELDING_KEY_NONCE_LEN,
+};
+pub use pallet_identity_management_mock::Mrenclave;
 pub use pallet_sidechain;
-pub use pallet_teeracle;
 pub use pallet_teerex;
 
 use sp_api::impl_runtime_apis;
@@ -145,7 +148,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9096,
+	spec_version: 9101,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -785,16 +788,24 @@ parameter_types! {
 	pub const MaxWhitelistedReleases: u32 = 10;
 }
 
-impl pallet_teeracle::Config for Runtime {
-	type Event = Event;
-	type WeightInfo = ();
-	type MaxWhitelistedReleases = MaxWhitelistedReleases;
-}
-
 impl pallet_identity_management::Config for Runtime {
 	type Event = Event;
-	type Call = Call;
 	type WeightInfo = ();
+	// TODO: use the real TEE account
+	type EventTriggerOrigin = EnsureRoot<AccountId>;
+}
+
+parameter_types! {
+	pub const TestMrenclave: Mrenclave = [2; 32];
+}
+
+impl pallet_identity_management_mock::Config for Runtime {
+	type Event = Event;
+	type ManageWhitelistOrigin = EnsureRoot<Self::AccountId>;
+	type Mrenclave = TestMrenclave;
+	type MaxVerificationDelay = ConstU32<10>;
+	// TODO: use the real TEE account
+	type EventTriggerOrigin = EnsureRoot<AccountId>;
 }
 
 impl runtime_common::BaseRuntimeRequirements for Runtime {}
@@ -871,7 +882,9 @@ construct_runtime! {
 		// TEE
 		Teerex: pallet_teerex = 90,
 		Sidechain: pallet_sidechain = 91,
-		Teeracle: pallet_teeracle = 92,
+
+		// Mock
+		IdentityManagementMock: pallet_identity_management_mock = 100,
 
 		// TMP
 		Sudo: pallet_sudo = 255,
@@ -929,7 +942,9 @@ impl Contains<Call> for NormalModeFilter {
 			// Utility
 			Call::Utility(_) |
 			// Session
-			Call::Session(_)
+			Call::Session(_) |
+			// Balance
+			Call::Balances(_)
 		)
 	}
 }
@@ -958,7 +973,6 @@ mod benches {
 		[pallet_identity_management, IdentityManagement]
 		[pallet_teerex, Teerex]
 		[pallet_sidechain, Sidechain]
-		[pallet_teeracle, Teeracle]
 	);
 }
 

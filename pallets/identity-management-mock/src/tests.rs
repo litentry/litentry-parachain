@@ -14,19 +14,4 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-/// Money matters.
-pub mod currency {
-	use crate::Balance;
-	use runtime_common::currency::{DOLLARS, MILLICENTS};
-
-	// Linear ratio of transaction fee distribution
-	// It is recommended to set sum of ratio to 100, yet only decimal loss is concerned.
-	pub const TREASURY_PROPORTION: u32 = 40u32;
-	pub const AUTHOR_PROPORTION: u32 = 0u32;
-	pub const BURNED_PROPORTION: u32 = 60u32;
-
-	/// Function used in some fee configurations
-	pub const fn deposit(items: u32, bytes: u32) -> Balance {
-		items as Balance * DOLLARS + (bytes as Balance) * 100 * MILLICENTS
-	}
-}
+// TODO: maybe write unittests for mock pallet -- mock of mock

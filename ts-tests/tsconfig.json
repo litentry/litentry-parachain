@@ -1,14 +1,12 @@
 {
-  "extends": "./node_modules/gts/tsconfig-google.json",
-  "compilerOptions": {
-    "esModuleInterop": true,
-    "target": "es5",
-    "lib": ["es2019"],
-    "rootDir": ".",
-    "outDir": "build"
-  },
-  "include": ["tests/**/*.ts"],
-  "exclude": [
-    "node_modules"
-  ]
+    "extends": "./node_modules/gts/tsconfig-google.json",
+    "compilerOptions": {
+        "esModuleInterop": true,
+        "target": "es5",
+        "lib": ["es2019"],
+        "rootDir": ".",
+        "outDir": "build"
+    },
+    "include": ["tests/**/*.ts"],
+    "exclude": ["node_modules"]
 }

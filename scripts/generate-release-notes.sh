@@ -74,7 +74,7 @@ fi
 
 if [ "$2" != "client" ]; then
   echo "## Runtime" >> "$1"
-  for CHAIN in litmus rococo litentry moonbase; do
+  for CHAIN in litmus rococo litentry; do
     SRTOOL_DIGEST_FILE=$CHAIN-parachain-runtime/$CHAIN-parachain-srtool-digest.json
     RUNTIME_VERSION=$(grep spec_version runtime/$CHAIN/src/lib.rs | sed 's/.*version: //;s/,//')
     RUNTIME_COMPRESSED_SIZE=$(cat "$SRTOOL_DIGEST_FILE" | jq .runtimes.compressed.size | sed 's/"//g')
@@ -167,7 +167,8 @@ Details:
 
 EOF
 
-  git log --no-merges --abbrev-commit --pretty="format:%h|%s" $DIFF_TAG..$RELEASE_TAG | while read -r f; do
+  # use %n as a workaround otherwise there's no newline after the whole body
+  git log --no-merges --abbrev-commit --pretty="format:%h|%s%n" $DIFF_TAG..$RELEASE_TAG | grep -v "^$" | while read -r f; do
     commit=$(echo "$f" | cut -d'|' -f1)
     desc=$(echo "$f" | cut -d'|' -f2)
     echo -e "- [\`$commit\`]($REPO/commit/$commit) $desc" >> "$1"

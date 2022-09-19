@@ -681,11 +681,11 @@ pub mod pallet {
 			let balance: BalanceOf<T> = T::Currency::free_balance(&sender);
 			ensure!(balance >= amount, Error::<T>::InsufficientBalance);
 
-			T::Currency::withdraw(&sender, actual_amount, WithdrawReasons::TRANSFER, AllowDeath)?;
-			T::Currency::burn(actual_amount);
+			T::Currency::withdraw(&sender, amount, WithdrawReasons::TRANSFER, AllowDeath)?;
+			T::Currency::burn(amount);
 
-			// transfer fee to treasury
-			T::Currency::transfer(&sender, &T::TreasuryAccount::get(), fee, AllowDeath)?;
+			// deposit fee to treasury
+			let _ = T::Currency::deposit_into_existing(&T::TreasuryAccount::get(), fee)?;
 
 			let nonce = Self::bump_nonce(dest_id)?;
 			BridgeEvents::<T>::append(BridgeEvent::FungibleTransfer(
