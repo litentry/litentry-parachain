@@ -108,10 +108,9 @@ ord_parameter_types! {
 
 impl pallet_identity_management_mock::Config for Test {
 	type Event = Event;
-	type Call = Call;
 	type ManageWhitelistOrigin = EnsureRoot<Self::AccountId>;
 	type Mrenclave = TestMrenclave;
-	type MaxVerificationDelay = ConstU32<10>;
+	type MaxVerificationDelay = ConstU64<10>;
 	type EventTriggerOrigin = EnsureSignedBy<One, u64>;
 }
 
