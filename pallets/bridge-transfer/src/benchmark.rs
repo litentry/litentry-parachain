@@ -22,7 +22,7 @@
 use super::*;
 use bridge::BalanceOf as balance;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
-use frame_support::{ensure, traits::Currency};
+use frame_support::{ensure, traits::{Currency,SortedMembers}};
 use frame_system::RawOrigin;
 use pallet_bridge::EnsureOrigin;
 
@@ -41,8 +41,8 @@ benchmarks! {
 	transfer_native{
 		let sender:T::AccountId = create_user::<T>("sender",0u32,1u32);
 
-		T::TransferNativeMembers::add(sender);
-		ensure!(T::TransferNativeMembers::contains(sender),"add transfernativemember failed");
+		T::TransferNativeMembers::add(&sender);
+		ensure!(T::TransferNativeMembers::contains(&sender),"add transfernativemember failed");
 
 		let dest_chain = 0;
 
@@ -63,7 +63,7 @@ benchmarks! {
 
 		// let sender = bridge::account_id();
 		let bridge_id:T::AccountId = create_user::<T>("bridge",0u32,1u32);
-		// let origin = bridge::EnsureBridge::successful_origin()?;
+		// let origin = T::BridgeOrigin::successful_origin();
 
 		let to_account:T::AccountId = create_user::<T>("to",1u32,2u32);
 
