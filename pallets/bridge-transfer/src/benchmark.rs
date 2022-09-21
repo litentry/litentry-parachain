@@ -31,7 +31,7 @@ const MAXIMUM_ISSURANCE: u32 = 20_000;
 fn create_user<T: Config>(string: &'static str, n: u32, seed: u32) -> T::AccountId {
 	let user = account(string, n, seed);
 
-	let total = 100u32.into();
+	let total = MAXIMUM_ISSURANCE.into();
 	T::Currency::make_free_balance_be(&user, total);
 	T::Currency::issue(total);
 	user
@@ -62,13 +62,13 @@ benchmarks! {
 	transfer{
 
 		// let sender = bridge::account_id();
-		let bridge_id:T::AccountId = create_user::<T>("bridge",0u32,1u32);
-		// let origin = T::BridgeOrigin::successful_origin();
+		// let bridge_id:T::AccountId = create_user::<T>("bridge",0u32,1u32);
+		let origin = T::BridgeOrigin::successful_origin();
 
 		let to_account:T::AccountId = create_user::<T>("to",1u32,2u32);
 
 		let resource_id :bridge::ResourceId= [0u8;32];
-	}:_(RawOrigin::Signed(bridge_id),to_account,50u32.into(),resource_id)
+	}:_<T::Origin>(origin,to_account,50u32.into(),resource_id)
 
 	set_maximum_issuance{
 		let origin = T::SetMaximumIssuanceOrigin::successful_origin();

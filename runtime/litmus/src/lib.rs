@@ -967,6 +967,8 @@ mod benches {
 		[pallet_identity_management, IdentityManagement]
 		[pallet_teerex, Teerex]
 		[pallet_sidechain, Sidechain]
+		[pallet_bridge,ChainBridge]
+		[pallet_bridge_transfer,BridgeTransfer]
 	);
 }
 

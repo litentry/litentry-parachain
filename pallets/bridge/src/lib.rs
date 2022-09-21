@@ -22,7 +22,9 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+#[cfg(feature = "runtime-benchmarks")]
 mod banchmark;
+
 pub mod hashing;
 pub use pallet::*;
 
