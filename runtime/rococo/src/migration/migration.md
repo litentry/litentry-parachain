@@ -1,4 +1,4 @@
-P9010.rs
+P9100.rs
 https://github.com/litentry/litentry-parachain/releases/tag/v0.9.10
  # This migration is for the replacement of CollatorSelection with ParachainStaking
 
