@@ -410,8 +410,7 @@ pub mod pallet {
 			let validation_data = ValidationData::decode(&mut decrypted_validation_data.as_slice())
 				.map_err(|_| Error::<T>::WrongDecodedType)?;
 
-			// do an actual verification for web3, we can't do it for web2 as it requires offchain
-			// verification
+			// Web3 signature verification, we can't do web2 here as it requires offchain operations
 			if let ValidationData::Web3(web3_validation_data) = validation_data {
 				match web3_validation_data {
 					Web3ValidationData::Substrate(substrate_validation_data) => {
@@ -584,8 +583,6 @@ pub mod pallet {
 			Ok(())
 		}
 
-		// mostly copied from the old account-linker, the msg digest is computed using EIP-191
-		// TODO: use external crates
 		fn verify_evm_signature(
 			who: &T::AccountId,
 			identity: &Identity,
@@ -629,6 +626,8 @@ pub mod pallet {
 			Ok(msg)
 		}
 
+		// mostly copied from the old account-linker, the msg digest is computed using EIP-191
+		// TODO: use external crates
 		fn compute_evm_msg_digest(mut msg: Vec<u8>) -> Result<[u8; 32], &'static str> {
 			let mut length_bytes = Self::usize_to_u8_array(msg.len())?;
 			let mut eth_bytes = b"\x19Ethereum Signed Message:\n".encode();
