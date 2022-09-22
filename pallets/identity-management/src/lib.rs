@@ -50,11 +50,13 @@ pub use key::*;
 use sp_core::H256;
 use sp_std::vec::Vec;
 
-// ShardIdentifier for enclave
+// enclave related types
 pub type ShardIdentifier = H256;
+pub type MrenclaveType = [u8; 32];
+
 // fn types for handling inside tee-worker
 pub type SetUserShieldingKeyFn = ([u8; 2], ShardIdentifier, Vec<u8>);
-pub type LinkIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>);
+pub type LinkIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>, Option<Vec<u8>>);
 pub type UnlinkIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>);
 pub type VerifyIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>, Vec<u8>);
 
@@ -119,7 +121,7 @@ pub mod pallet {
 		pub fn link_identity(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
-			encrypted_did: Vec<u8>,
+			encrypted_identity: Vec<u8>,
 			encrypted_metadata: Option<Vec<u8>>,
 		) -> DispatchResultWithPostInfo {
 			let _ = ensure_signed(origin)?;
@@ -132,7 +134,7 @@ pub mod pallet {
 		pub fn unlink_identity(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
-			encrypted_did: Vec<u8>,
+			encrypted_identity: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let _ = ensure_signed(origin)?;
 			Self::deposit_event(Event::UnlinkIdentityRequested { shard });
@@ -144,7 +146,7 @@ pub mod pallet {
 		pub fn verify_identity(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
-			encrypted_did: Vec<u8>,
+			encrypted_identity: Vec<u8>,
 			encrypted_validation_data: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let _ = ensure_signed(origin)?;
