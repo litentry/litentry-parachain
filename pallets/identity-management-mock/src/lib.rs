@@ -188,7 +188,7 @@ pub mod pallet {
 		VerificationRequestTooLate,
 		/// verify substrate signature failed
 		VerifySubstrateSignatureFailed,
-		/// recover substrate pubkey using ecdsa failed
+		/// recover substrate pubkey failed using ecdsa
 		RecoverSubstratePubkeyFailed,
 		/// verify evm signature failed
 		VerifyEvmSignatureFailed,
@@ -204,8 +204,8 @@ pub mod pallet {
 		WrongWeb3NetworkType,
 		/// wrong identity handle type
 		WrongIdentityHanldeType,
-		/// fail to recover evm pubkey
-		RecoverEvmPubkeyFailed,
+		/// fail to recover evm address
+		RecoverEvmAddressFailed,
 	}
 
 	#[pallet::storage]
@@ -565,8 +565,11 @@ pub mod pallet {
 						Error::<T>::VerifySubstrateSignatureFailed
 					);
 				},
+				// We can' use `ecdsa_verify` directly we don't have the raw 33-bytes publick key
+				// instead we only have AccountId which is blake2_256(pubkey)
 				IdentityMultiSignature::Ecdsa(sig) => {
-					let digest = keccak_256(&msg);
+					// see https://github.com/paritytech/substrate/blob/493b58bd4a475080d428ce47193ee9ea9757a808/primitives/runtime/src/traits.rs#L132
+					let digest = blake2_256(&msg);
 					let recovered_substrate_pubkey =
 						secp256k1_ecdsa_recover_compressed(&sig.0, &digest)
 							.map_err(|_| Error::<T>::RecoverSubstratePubkeyFailed)?;
@@ -591,8 +594,8 @@ pub mod pallet {
 			let digest = Self::compute_evm_msg_digest(msg)
 				.map_err(|_| Error::<T>::ComputeEvmMessageDigestFailed)?;
 			if let IdentityMultiSignature::Ethereum(sig) = &validation_data.signature {
-				let recovered_evm_pubkey = Self::recover_evm_address(&digest, sig.as_ref())
-					.map_err(|_| Error::<T>::RecoverEvmPubkeyFailed)?;
+				let recovered_evm_address = Self::recover_evm_address(&digest, sig.as_ref())
+					.map_err(|_| Error::<T>::RecoverEvmAddressFailed)?;
 				let evm_address = match &identity.web_type {
 					IdentityWebType::Web3(Web3Network::Evm(_)) => match &identity.handle {
 						IdentityHandle::Address20(handle) => handle,
@@ -600,7 +603,10 @@ pub mod pallet {
 					},
 					_ => return Err(Error::<T>::WrongWeb3NetworkType.into()),
 				};
-				ensure!(&recovered_evm_pubkey == evm_address, Error::<T>::VerifyEvmSignatureFailed);
+				ensure!(
+					&recovered_evm_address == evm_address,
+					Error::<T>::VerifyEvmSignatureFailed
+				);
 			} else {
 				return Err(Error::<T>::WrongSignatureType.into())
 			}
