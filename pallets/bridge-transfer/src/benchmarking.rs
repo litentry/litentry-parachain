@@ -22,13 +22,11 @@
 use super::*;
 use bridge::BalanceOf as balance;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
-// use frame_support::{ensure,traits::{Currency,SortedMembers},PalletId};
+use frame_support::{ensure,traits::{Currency,SortedMembers},PalletId};
 use frame_system::RawOrigin;
 use pallet_bridge::{EnsureOrigin,Get};
 use sp_runtime::traits::AccountIdConversion;
-// use sp_std::vec;
-use frame_support::PalletId;
-use frame_support::traits::Currency;
+use sp_std::vec;
 
 const MAXIMUM_ISSURANCE: u32 = 20_000;
 
@@ -66,12 +64,17 @@ benchmarks! {
 	transfer{
 
 		let sender = PalletId(*b"litry/bg").into_account_truncating();
-		// error  Account cannot exist with the funds that would be given
+		/*
+		error  Account cannot exist with the funds that would be given
+
+		For the above error, I guess if there is not enough balance allocated to the account, so there are the three lines of code below
+		*/
 
 		let total = MAXIMUM_ISSURANCE.into();
-		T::Currency::make_free_balance_be(&user, total);
+		T::Currency::make_free_balance_be(&sender, total);
 		T::Currency::issue(total);
 
+		//
 		// let origin = T::BridgeOrigin::successful_origin();
 
 		let to_account:T::AccountId = create_user::<T>("to",1u32,2u32);
