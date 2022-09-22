@@ -17,11 +17,12 @@
 //! Inspired by:
 //! - Moonbeam `pallet_parachain_staking`
 //! implementations.
+//! Benchmarking
 
 #![cfg(feature = "runtime-benchmarks")]
 #![allow(clippy::type_complexity)]
+#[allow(unused)]
 
-//! Benchmarking
 use crate::{
 	BalanceOf, Call, CandidateBondLessRequest, Config, DelegationAction, Pallet, Range,
 	ScheduledRequest,
@@ -31,7 +32,7 @@ use frame_support::traits::{Currency, Get, OnFinalize, OnInitialize, ReservableC
 use frame_system::RawOrigin;
 use pallet_authorship::EventHandler;
 use sp_runtime::{Perbill, Percent};
-use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
+use sp_std::{collections::btree_map::BTreeMap, vec::Vec,vec};
 
 /// Minimum collator candidate stake
 fn min_candidate_stk<T: Config>() -> BalanceOf<T> {
@@ -1007,7 +1008,7 @@ benchmarks! {
 
 #[cfg(test)]
 mod tests {
-	use crate::{benchmarks::*, mock::Test};
+	use crate::{benchmarking::*, mock::Test};
 	use frame_support::assert_ok;
 	use sp_io::TestExternalities;
 
@@ -1227,4 +1228,4 @@ mod tests {
 	}
 }
 
-impl_benchmark_test_suite!(Pallet, crate::benchmarks::tests::new_test_ext(), crate::mock::Test);
+impl_benchmark_test_suite!(Pallet, crate::benchmarking::tests::new_test_ext(), crate::mock::Test);

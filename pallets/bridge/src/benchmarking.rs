@@ -23,6 +23,7 @@ use super::*;
 use crate::{Call, Event, Pallet as bridge};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_system::{Call as SystemCall, RawOrigin};
+use sp_std::{vec::Vec,vec,boxed::Box};
 
 const USER_SEED: u32 = 9966;
 
@@ -66,7 +67,7 @@ benchmarks! {
 	}
 
 	whitelist_chain{
-		let bridgechain_id:BridgeChainId = 0;
+		let bridgechain_id:BridgeChainId = 5;
 	}:_(RawOrigin::Root,bridgechain_id)
 	verify{
 		assert!(ChainNonces::<T>::contains_key(bridgechain_id));
@@ -80,7 +81,7 @@ benchmarks! {
 	}
 
 	remove_relayer{
-		let relayer_id: T::AccountId = account("TEST_A", 0u32, USER_SEED);
+		let relayer_id: T::AccountId = account("TEST_B", 0u32, USER_SEED);
 
 		bridge::<T>::add_relayer(
 			RawOrigin::Root.into(),
@@ -101,7 +102,7 @@ benchmarks! {
 	acknowledge_proposal{
 		let relayer_id: T::AccountId = account("TEST_A", 0u32, USER_SEED);
 		let prop_id:DepositNonce = 1;
-		let src_id:BridgeChainId =1;
+		let src_id:BridgeChainId = 5;
 		let r_id:ResourceId = derive_resource_id(src_id, b"remark");
 
 		let proposal = make_proposal::<T>(vec![15]);
@@ -130,7 +131,7 @@ benchmarks! {
 	reject_proposal{
 		let relayer_id: T::AccountId = account("TEST_B", 0u32, USER_SEED);
 		let prop_id:DepositNonce = 1;
-		let src_id:BridgeChainId = 1;
+		let src_id:BridgeChainId = 5;
 		let r_id:ResourceId = derive_resource_id(src_id, b"remark");
 
 		let proposal = make_proposal::<T>(vec![16]);
@@ -164,7 +165,7 @@ benchmarks! {
 		let relayer_id_b: T::AccountId = account("TEST_B", 1u32, USER_SEED+1);
 		let relayer_id_c: T::AccountId = account("TEST_C", 2u32, USER_SEED-1);
 		let prop_id:DepositNonce = 1;
-		let src_id:BridgeChainId =1;
+		let src_id:BridgeChainId = 5;
 		let r_id:ResourceId = derive_resource_id(src_id, b"remark");
 
 		let proposal = make_proposal::<T>(vec![17]);

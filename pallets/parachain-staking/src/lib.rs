@@ -63,7 +63,7 @@ pub mod types;
 pub mod weights;
 
 #[cfg(any(test, feature = "runtime-benchmarks"))]
-mod benchmarks;
+mod benchmarking;
 #[cfg(test)]
 mod mock;
 mod set;

@@ -20,11 +20,12 @@
 pub use pallet::*;
 
 #[cfg(feature = "runtime-benchmarks")]
-mod benchmark;
+mod benchmarking;
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
 mod tests;
+mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {

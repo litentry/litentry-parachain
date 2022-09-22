@@ -22,9 +22,13 @@
 use super::*;
 use bridge::BalanceOf as balance;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
-use frame_support::{ensure, traits::{Currency,SortedMembers}};
+// use frame_support::{ensure,traits::{Currency,SortedMembers},PalletId};
 use frame_system::RawOrigin;
-use pallet_bridge::EnsureOrigin;
+use pallet_bridge::{EnsureOrigin,Get};
+use sp_runtime::traits::AccountIdConversion;
+// use sp_std::vec;
+use frame_support::PalletId;
+use frame_support::traits::Currency;
 
 const MAXIMUM_ISSURANCE: u32 = 20_000;
 
@@ -42,7 +46,7 @@ benchmarks! {
 		let sender:T::AccountId = create_user::<T>("sender",0u32,1u32);
 
 		T::TransferNativeMembers::add(&sender);
-		ensure!(T::TransferNativeMembers::contains(&sender),"add transfernativemember failed");
+		ensure!(T::TransferNativeMembers::contains(&sender),"add transfer_native_member failed");
 
 		let dest_chain = 0;
 
@@ -61,15 +65,22 @@ benchmarks! {
 
 	transfer{
 
-		// let sender = bridge::account_id();
-		// let bridge_id:T::AccountId = create_user::<T>("bridge",0u32,1u32);
-		let origin = T::BridgeOrigin::successful_origin();
+		let sender = PalletId(*b"litry/bg").into_account_truncating();
+		// error  Account cannot exist with the funds that would be given
+
+		let total = MAXIMUM_ISSURANCE.into();
+		T::Currency::make_free_balance_be(&user, total);
+		T::Currency::issue(total);
+
+		// let origin = T::BridgeOrigin::successful_origin();
 
 		let to_account:T::AccountId = create_user::<T>("to",1u32,2u32);
 
-		let resource_id :bridge::ResourceId= [0u8;32];
-	}:_<T::Origin>(origin,to_account,50u32.into(),resource_id)
+		let resource_id :bridge::ResourceId= T::NativeTokenResourceId::get();
 
+	}:_(RawOrigin::Signed(sender),to_account,50u32.into(),resource_id)
+
+	// had passed
 	set_maximum_issuance{
 		let origin = T::SetMaximumIssuanceOrigin::successful_origin();
 		let maximum_issuance:balance<T> = 2u32.into();

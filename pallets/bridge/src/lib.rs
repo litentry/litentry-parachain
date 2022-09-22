@@ -23,9 +23,11 @@ mod mock;
 mod tests;
 
 #[cfg(feature = "runtime-benchmarks")]
-mod banchmark;
+mod benchmarking;
 
 pub mod hashing;
+mod weights;
+
 pub use pallet::*;
 
 #[frame_support::pallet]
