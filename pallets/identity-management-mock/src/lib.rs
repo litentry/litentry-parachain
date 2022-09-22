@@ -29,6 +29,7 @@
 //! if it's a good idea to have a matching extrinsic for error propagation.
 
 #![allow(dead_code)]
+#![allow(clippy::needless_borrow)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(test)]
@@ -414,14 +415,14 @@ pub mod pallet {
 			if let ValidationData::Web3(web3_validation_data) = validation_data {
 				match web3_validation_data {
 					Web3ValidationData::Substrate(substrate_validation_data) => {
-						let _ = Self::verify_substrate_signature(
+						Self::verify_substrate_signature(
 							&who,
 							&identity,
 							&substrate_validation_data,
 						)?;
 					},
 					Web3ValidationData::Evm(evm_validation_data) => {
-						let _ = Self::verify_evm_signature(&who, &identity, &evm_validation_data)?;
+						Self::verify_evm_signature(&who, &identity, &evm_validation_data)?;
 					},
 				}
 			}
@@ -615,12 +616,13 @@ pub mod pallet {
 
 		// web3 message format: <challeng-code> + <litentry-AccountId32> + <Identity>, where
 		// <> means SCALE-encoded
+		// TODO: do we want to apply the same for web2 message?(= discard JSON format)
 		fn get_expected_web3_message(
 			who: &T::AccountId,
 			identity: &Identity,
 		) -> Result<Vec<u8>, DispatchError> {
-			let code = Self::challenge_codes(who, identity)
-				.ok_or_else(|| Error::<T>::ChallengeCodeNotExist)?;
+			let code =
+				Self::challenge_codes(who, identity).ok_or(Error::<T>::ChallengeCodeNotExist)?;
 			let mut msg = code.encode();
 			msg.append(&mut who.encode());
 			msg.append(&mut identity.encode());
