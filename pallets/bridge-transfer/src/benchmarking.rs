@@ -24,6 +24,7 @@ use bridge::BalanceOf as balance;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::{ensure,traits::{Currency,SortedMembers},PalletId};
 use frame_system::RawOrigin;
+use sp_arithmetic::traits::Saturating;
 use pallet_bridge::{EnsureOrigin,Get};
 use sp_runtime::traits::AccountIdConversion;
 use sp_std::vec;
@@ -33,9 +34,9 @@ const MAXIMUM_ISSURANCE: u32 = 20_000;
 fn create_user<T: Config>(string: &'static str, n: u32, seed: u32) -> T::AccountId {
 	let user = account(string, n, seed);
 
-	let total = MAXIMUM_ISSURANCE.into();
-	T::Currency::make_free_balance_be(&user, total);
-	T::Currency::issue(total);
+	let default_balance =
+		T::Currency::minimum_balance().saturating_mul(MAXIMUM_ISSURANCE.into());
+	let _ = T::Currency::deposit_creating(&user, default_balance);
 	user
 }
 
@@ -43,7 +44,6 @@ benchmarks! {
 	transfer_native{
 		let sender:T::AccountId = create_user::<T>("sender",0u32,1u32);
 
-		T::TransferNativeMembers::add(&sender);
 		ensure!(T::TransferNativeMembers::contains(&sender),"add transfer_native_member failed");
 
 		let dest_chain = 0;
@@ -64,17 +64,11 @@ benchmarks! {
 	transfer{
 
 		let sender = PalletId(*b"litry/bg").into_account_truncating();
-		/*
-		error  Account cannot exist with the funds that would be given
 
-		For the above error, I guess if there is not enough balance allocated to the account, so there are the three lines of code below
-		*/
+		let default_balance =
+		T::Currency::minimum_balance().saturating_mul(MAXIMUM_ISSURANCE.into());
+		let _ = T::Currency::deposit_creating(&sender, default_balance);
 
-		let total = MAXIMUM_ISSURANCE.into();
-		T::Currency::make_free_balance_be(&sender, total);
-		T::Currency::issue(total);
-
-		//
 		// let origin = T::BridgeOrigin::successful_origin();
 
 		let to_account:T::AccountId = create_user::<T>("to",1u32,2u32);

@@ -47,6 +47,8 @@ use sp_std::marker::PhantomData;
 
 /// Weight functions needed for pallet_bridge_transfer.
 pub trait WeightInfo {
+	fn transfer_native() -> Weight;
+	fn transfer() -> Weight;
 	fn set_maximum_issuance() -> Weight;
 	fn set_external_balances() -> Weight;
 }
@@ -54,30 +56,66 @@ pub trait WeightInfo {
 /// Weights for pallet_bridge_transfer using the Litentry node and recommended hardware.
 pub struct LitentryWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
+	// Storage: BridgeTransfer ExternalBalances (r:1 w:1)
+	// Storage: ChainBridge ChainNonces (r:1 w:1)
+	// Storage: ChainBridge BridgeFee (r:1 w:0)
+	// Storage: System Account (r:2 w:2)
+	// Storage: ChainBridge BridgeEvents (r:1 w:1)
+	fn transfer_native() -> Weight {
+		(60_783_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(6 as Weight))
+			.saturating_add(T::DbWeight::get().writes(5 as Weight))
+	}
+	// Storage: BridgeTransfer MaximumIssuance (r:1 w:0)
+	// Storage: BridgeTransfer ExternalBalances (r:1 w:1)
+	// Storage: System Account (r:1 w:1)
+	fn transfer() -> Weight {
+		(28_874_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(3 as Weight))
+			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+	}
 	// Storage: BridgeTransfer MaximumIssuance (r:1 w:1)
 	fn set_maximum_issuance() -> Weight {
-		(14_597_000 as Weight)
+		(14_447_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: BridgeTransfer ExternalBalances (r:0 w:1)
 	fn set_external_balances() -> Weight {
-		(4_288_000 as Weight)
+		(4_388_000 as Weight)
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 }
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
+	// Storage: BridgeTransfer ExternalBalances (r:1 w:1)
+	// Storage: ChainBridge ChainNonces (r:1 w:1)
+	// Storage: ChainBridge BridgeFee (r:1 w:0)
+	// Storage: System Account (r:2 w:2)
+	// Storage: ChainBridge BridgeEvents (r:1 w:1)
+	fn transfer_native() -> Weight {
+		(60_783_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(5 as Weight))
+	}
+	// Storage: BridgeTransfer MaximumIssuance (r:1 w:0)
+	// Storage: BridgeTransfer ExternalBalances (r:1 w:1)
+	// Storage: System Account (r:1 w:1)
+	fn transfer() -> Weight {
+		(28_874_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(2 as Weight))
+	}
 	// Storage: BridgeTransfer MaximumIssuance (r:1 w:1)
 	fn set_maximum_issuance() -> Weight {
-		(14_597_000 as Weight)
+		(14_447_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	// Storage: BridgeTransfer ExternalBalances (r:0 w:1)
 	fn set_external_balances() -> Weight {
-		(4_288_000 as Weight)
+		(4_388_000 as Weight)
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 }

@@ -138,12 +138,8 @@ impl SortedMembers<u64> for MembersProvider {
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	fn add(new: &u64) {
-		// unimplemented!()
-		MembersProviderTestvalue::mutate(|members| {
-			members.push(*new);
-			members.sort();
-		})
+	fn add(_: &u64) {
+		unimplemented!()
 	}
 }
 
