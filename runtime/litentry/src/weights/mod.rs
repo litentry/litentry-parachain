@@ -33,6 +33,6 @@ pub mod pallet_scheduler;
 pub mod pallet_session;
 pub mod pallet_timestamp;
 // pub mod pallet_treasury;
+pub mod pallet_bridge;
+pub mod pallet_bridge_transfer;
 pub mod pallet_utility;
-mod pallet_bridge;
-mod pallet_bridge_transfer;
