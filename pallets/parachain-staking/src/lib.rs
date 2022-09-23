@@ -55,6 +55,7 @@
 #![allow(clippy::type_complexity)]
 #![allow(clippy::unnecessary_cast)]
 #![allow(clippy::useless_conversion)]
+#![allow(clippy::needless_borrow)]
 
 mod delegation_requests;
 pub mod inflation;
