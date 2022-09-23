@@ -16,7 +16,7 @@
 
 #![cfg(test)]
 
-use crate::{self as pallet_identity_management_mock, Mrenclave};
+use crate::{self as pallet_identity_management_mock, MrenclaveType};
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{ConstU128, ConstU16, ConstU32, ConstU64, Everything},
@@ -99,7 +99,7 @@ impl pallet_balances::Config for Test {
 }
 
 parameter_types! {
-	pub const TestMrenclave: Mrenclave = [2; 32];
+	pub const TestMrenclave: MrenclaveType = [2; 32];
 }
 
 ord_parameter_types! {

@@ -35,6 +35,14 @@ use frame_support::{
 	PalletId, RuntimeDebug,
 };
 use frame_system::EnsureRoot;
+
+// for TEE
+pub use pallet_balances::Call as BalancesCall;
+pub use pallet_identity_management::{
+	AesOutput, LinkIdentityFn, MrenclaveType, SetUserShieldingKeyFn, ShardIdentifier,
+	UnlinkIdentityFn, UserShieldingKeyType, VerifyIdentityFn, USER_SHIELDING_KEY_LEN,
+	USER_SHIELDING_KEY_NONCE_LEN, USER_SHIELDING_KEY_TAG_LEN,
+};
 pub use pallet_sidechain;
 pub use pallet_teeracle;
 pub use pallet_teerex;
@@ -59,7 +67,6 @@ use sp_version::RuntimeVersion;
 use xcm_executor::XcmExecutor;
 
 pub use constants::currency::deposit;
-use pallet_identity_management_mock::Mrenclave;
 pub use primitives::{opaque, Index, *};
 pub use runtime_common::currency::*;
 use runtime_common::{
@@ -863,7 +870,7 @@ impl pallet_identity_management::Config for Runtime {
 }
 
 parameter_types! {
-	pub const TestMrenclave: Mrenclave = [2; 32];
+	pub const TestMrenclave: MrenclaveType = [2; 32];
 }
 
 impl pallet_identity_management_mock::Config for Runtime {

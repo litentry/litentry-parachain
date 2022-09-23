@@ -4560,6 +4560,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "litentry-primitives"
+version = "0.1.0"
+source = "git+https://github.com/litentry/tee-worker#8f5f5016751d6ab82edfff1727be359e19712c46"
+dependencies = [
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "litmus-parachain-runtime"
 version = "0.9.10"
 dependencies = [
@@ -5850,6 +5862,7 @@ dependencies = [
  "frame-system",
  "hex",
  "hex-literal",
+ "litentry-primitives",
  "log",
  "pallet-balances",
  "pallet-identity-management",
