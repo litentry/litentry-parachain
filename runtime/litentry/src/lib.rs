@@ -928,6 +928,8 @@ mod benches {
 		[pallet_session, SessionBench::<Runtime>]
 		[pallet_parachain_staking, ParachainStaking]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
+		[pallet_bridge,ChainBridge]
+		[pallet_bridge_transfer,BridgeTransfer]
 	);
 }
 

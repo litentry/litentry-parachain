@@ -22,10 +22,14 @@
 use super::*;
 use bridge::BalanceOf as balance;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
-use frame_support::{ensure,traits::{Currency,SortedMembers},PalletId};
+use frame_support::{
+	ensure,
+	traits::{Currency, SortedMembers},
+	PalletId,
+};
 use frame_system::RawOrigin;
+use pallet_bridge::{EnsureOrigin, Get};
 use sp_arithmetic::traits::Saturating;
-use pallet_bridge::{EnsureOrigin,Get};
 use sp_runtime::traits::AccountIdConversion;
 use sp_std::vec;
 
@@ -34,8 +38,7 @@ const MAXIMUM_ISSURANCE: u32 = 20_000;
 fn create_user<T: Config>(string: &'static str, n: u32, seed: u32) -> T::AccountId {
 	let user = account(string, n, seed);
 
-	let default_balance =
-		T::Currency::minimum_balance().saturating_mul(MAXIMUM_ISSURANCE.into());
+	let default_balance = T::Currency::minimum_balance().saturating_mul(MAXIMUM_ISSURANCE.into());
 	let _ = T::Currency::deposit_creating(&user, default_balance);
 	user
 }
@@ -69,15 +72,12 @@ benchmarks! {
 		T::Currency::minimum_balance().saturating_mul(MAXIMUM_ISSURANCE.into());
 		let _ = T::Currency::deposit_creating(&sender, default_balance);
 
-		// let origin = T::BridgeOrigin::successful_origin();
-
 		let to_account:T::AccountId = create_user::<T>("to",1u32,2u32);
 
 		let resource_id :bridge::ResourceId= T::NativeTokenResourceId::get();
 
 	}:_(RawOrigin::Signed(sender),to_account,50u32.into(),resource_id)
 
-	// had passed
 	set_maximum_issuance{
 		let origin = T::SetMaximumIssuanceOrigin::successful_origin();
 		let maximum_issuance:balance<T> = 2u32.into();

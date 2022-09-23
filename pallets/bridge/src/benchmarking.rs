@@ -23,7 +23,7 @@ use super::*;
 use crate::{Call, Event, Pallet as bridge};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_system::{Call as SystemCall, RawOrigin};
-use sp_std::{vec::Vec,vec,boxed::Box};
+use sp_std::{boxed::Box, vec, vec::Vec};
 
 const USER_SEED: u32 = 9966;
 
@@ -197,16 +197,6 @@ benchmarks! {
 			r_id,
 			method,
 		)?;
-
-		// acknowledge_proposal or reject_proposal
-
-		// bridge::<T>::acknowledge_proposal(
-		// 	RawOrigin::Signed(relayer_id_a).into(),
-		// 	prop_id,
-		// 	src_id,
-		// 	r_id,
-		// 	Box::new(proposal.clone()),
-		// )?;
 
 		bridge::<T>::reject_proposal(
 			RawOrigin::Signed(relayer_id_b).into(),
