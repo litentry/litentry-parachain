@@ -14,62 +14,66 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::mock::*;
+use crate::{mock::*, ShardIdentifier};
 use frame_support::assert_ok;
-use hex_literal::hex;
 use sp_core::H256;
 
-// Sample MRENCLAVE from
-// https://github.com/integritee-network/pallets/blob/master/test-utils/src/ias.rs#L125-L132
-const TEST_MRENCLAVE: [u8; 32] =
-	hex!("7a3454ec8f42e265cb5be7dfd111e1d95ac6076ed82a0948b2e2a45cf17b62a0");
+const TEST_MRENCLAVE: [u8; 32] = [2u8; 32];
 
 #[test]
 fn test_link_identity() {
 	new_test_ext().execute_with(|| {
+		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
 		assert_ok!(IdentityManagement::link_identity(
 			Origin::signed(1),
-			H256::from_slice(&TEST_MRENCLAVE),
-			vec![1u8; 2048]
+			shard,
+			vec![1u8; 2048],
+			Some(vec![1u8; 2048])
 		));
-		System::assert_last_event(Event::IdentityManagement(crate::Event::LinkIdentityRequested));
+		System::assert_last_event(Event::IdentityManagement(crate::Event::LinkIdentityRequested {
+			shard,
+		}));
 	});
 }
 
 #[test]
 fn test_unlink_identity() {
 	new_test_ext().execute_with(|| {
-		assert_ok!(IdentityManagement::unlink_identity(
-			Origin::signed(1),
-			H256::from_slice(&TEST_MRENCLAVE),
-			vec![1u8; 2048]
+		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
+		assert_ok!(IdentityManagement::unlink_identity(Origin::signed(1), shard, vec![1u8; 2048]));
+		System::assert_last_event(Event::IdentityManagement(
+			crate::Event::UnlinkIdentityRequested { shard },
 		));
-		System::assert_last_event(Event::IdentityManagement(crate::Event::UnlinkIdentityRequested));
 	});
 }
 
 #[test]
 fn test_verify_identity() {
 	new_test_ext().execute_with(|| {
+		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
 		assert_ok!(IdentityManagement::verify_identity(
 			Origin::signed(1),
-			H256::from_slice(&TEST_MRENCLAVE),
+			shard,
+			vec![1u8; 2048],
 			vec![1u8; 2048]
 		));
-		System::assert_last_event(Event::IdentityManagement(crate::Event::VerifyIdentityRequested));
+		System::assert_last_event(Event::IdentityManagement(
+			crate::Event::VerifyIdentityRequested { shard },
+		));
 	});
 }
 
 #[test]
 fn test_set_user_shielding_key() {
 	new_test_ext().execute_with(|| {
+		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
 		assert_ok!(IdentityManagement::set_user_shielding_key(
 			Origin::signed(1),
-			H256::from_slice(&TEST_MRENCLAVE),
+			shard,
 			vec![1u8; 2048]
 		));
 		System::assert_last_event(Event::IdentityManagement(
-			crate::Event::SetShieldingKeyRequested,
+			crate::Event::SetUserShieldingKeyRequested { shard },
 		));
 	});
 }
