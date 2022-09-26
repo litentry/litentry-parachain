@@ -39,7 +39,7 @@ mod tests;
 
 use frame_support::{pallet_prelude::*, traits::ConstU32};
 pub use pallet::*;
-use pallet_identity_management::{MrenclaveType, ShardIdentifier};
+use pallet_identity_management::ShardIdentifier;
 use sp_core::{ed25519, sr25519};
 use sp_io::{
 	crypto::{
@@ -84,9 +84,6 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// origin to manage caller whitelist
 		type ManageWhitelistOrigin: EnsureOrigin<Self::Origin>;
-		/// basically the mocked enclave hash
-		#[pallet::constant]
-		type Mrenclave: Get<MrenclaveType>;
 		// maximum delay in block numbers between linking an identity and verifying an identity
 		#[pallet::constant]
 		type MaxVerificationDelay: Get<BlockNumberOf<Self>>;
