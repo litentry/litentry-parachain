@@ -16,18 +16,30 @@
 
 #![cfg(test)]
 
-use crate::{self as pallet_identity_management_mock, MrenclaveType};
+use crate::{
+	self as pallet_identity_management_mock,
+	key::{aes_encrypt_default, tee_encrypt},
+	ChallengeCode, Identity, IdentityHandle, IdentityMultiSignature, IdentityWebType,
+	SubstrateNetwork, TwitterValidationData, UserShieldingKeyType, ValidationData,
+	Web2ValidationData, Web3CommonValidationData, Web3Network, Web3ValidationData,
+};
+use aes_gcm::{
+	aead::{Aead, KeyInit, OsRng},
+	Aes256Gcm,
+};
+use codec::Encode;
 use frame_support::{
-	ord_parameter_types, parameter_types,
+	assert_ok, ord_parameter_types, parameter_types,
 	traits::{ConstU128, ConstU16, ConstU32, ConstU64, Everything},
 };
 use frame_system as system;
-use sp_core::H256;
+use sp_core::{blake2_128, Pair, H256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
 use system::{EnsureRoot, EnsureSignedBy};
+use tee_primitives::Web2Network;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -98,10 +110,6 @@ impl pallet_balances::Config for Test {
 	type WeightInfo = ();
 }
 
-parameter_types! {
-	pub const TestMrenclave: MrenclaveType = [2; 32];
-}
-
 ord_parameter_types! {
 	pub const One: u64 = 1;
 }
@@ -109,17 +117,165 @@ ord_parameter_types! {
 impl pallet_identity_management_mock::Config for Test {
 	type Event = Event;
 	type ManageWhitelistOrigin = EnsureRoot<Self::AccountId>;
-	type Mrenclave = TestMrenclave;
 	type MaxVerificationDelay = ConstU64<10>;
 	type EventTriggerOrigin = EnsureSignedBy<One, u64>;
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
+
+	pallet_balances::GenesisConfig::<Test> { balances: vec![(1u64, 100)] }
+		.assimilate_storage(&mut t)
+		.unwrap();
 
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| {
+		// add to `One` to whitelist
+		let _ = IdentityManagementMock::add_to_whitelist(Origin::root(), 1u64);
 		System::set_block_number(1);
 	});
 	ext
+}
+
+pub fn create_alice_polkadot_identity() -> Identity {
+	let p = sp_core::sr25519::Pair::from_string("//Alice", None).unwrap();
+	Identity {
+		web_type: IdentityWebType::Web3(Web3Network::Substrate(SubstrateNetwork::Polkadot)),
+		handle: IdentityHandle::Address32(p.public().0),
+	}
+}
+
+pub fn create_alice_twitter_identity() -> Identity {
+	Identity {
+		web_type: IdentityWebType::Web2(Web2Network::Twitter),
+		handle: IdentityHandle::String(
+			b"aliceTwitterHandle".to_vec().try_into().expect("convert to BoundedVec failed"),
+		),
+	}
+}
+
+pub fn create_alice_twitter_validation_data() -> ValidationData {
+	ValidationData::Web2(Web2ValidationData::Twitter(TwitterValidationData {
+		tweet_id: b"0903".to_vec().try_into().expect("convert to BoundedVec failed"),
+	}))
+}
+
+pub fn create_alice_polkadot_validation_data(
+	who: <Test as frame_system::Config>::AccountId,
+	code: ChallengeCode,
+) -> ValidationData {
+	let p = sp_core::sr25519::Pair::from_string("//Alice", None).unwrap();
+	let identity = create_alice_polkadot_identity();
+	let msg = IdentityManagementMock::get_expected_web3_message(&who, &identity, &code)
+		.expect("cannot calculate web3 message");
+	let sig = p.sign(&msg);
+
+	let common_validation_data = Web3CommonValidationData {
+		message: msg.try_into().unwrap(),
+		signature: IdentityMultiSignature::Sr25519(sig),
+	};
+	ValidationData::Web3(Web3ValidationData::Substrate(common_validation_data))
+}
+
+// generate a random user shielding key, encrypt it and store it for account `who`
+pub fn setup_user_shieding_key(
+	who: <Test as frame_system::Config>::AccountId,
+) -> UserShieldingKeyType {
+	// generate user shielding key
+	let shielding_key = Aes256Gcm::generate_key(&mut OsRng);
+	let encrpted_shielding_key = tee_encrypt(&shielding_key);
+	// whitelist caller
+	assert_ok!(IdentityManagementMock::add_to_whitelist(Origin::root(), who));
+	assert_ok!(IdentityManagementMock::set_user_shielding_key(
+		Origin::signed(who),
+		H256::random(),
+		encrpted_shielding_key.to_vec()
+	));
+	System::assert_has_event(Event::IdentityManagementMock(
+		crate::Event::UserShieldingKeySetPlain { account: who },
+	));
+	// enrypt the result
+	let key = IdentityManagementMock::user_shielding_keys(&who).unwrap();
+	let aes_encrypted_account = aes_encrypt_default(&key, who.encode().as_slice());
+	System::assert_has_event(Event::IdentityManagementMock(crate::Event::UserShieldingKeySet {
+		account: aes_encrypted_account,
+	}));
+	key
+}
+
+pub fn setup_link_identity(
+	who: <Test as frame_system::Config>::AccountId,
+	identity: Identity,
+	bn: <Test as frame_system::Config>::BlockNumber,
+) {
+	let key = setup_user_shieding_key(who);
+	let encrypted_identity = tee_encrypt(identity.clone().encode().as_slice());
+	assert_ok!(IdentityManagementMock::link_identity(
+		Origin::signed(who),
+		H256::random(),
+		encrypted_identity.to_vec(),
+		None
+	));
+	System::assert_has_event(Event::IdentityManagementMock(crate::Event::IdentityLinkedPlain {
+		account: who,
+		identity: identity.clone(),
+	}));
+	// encrypt the result
+	let aes_encrypted_account = aes_encrypt_default(&key, who.encode().as_slice());
+	let aes_encrypted_identity = aes_encrypt_default(&key, identity.encode().as_slice());
+	System::assert_has_event(Event::IdentityManagementMock(crate::Event::UserShieldingKeySet {
+		account: aes_encrypted_account.clone(),
+	}));
+
+	// double check the challenge code
+	let code = blake2_128(bn.encode().as_slice());
+	System::assert_has_event(Event::IdentityManagementMock(
+		crate::Event::ChallengeCodeGeneratedPlain { account: who, identity, code },
+	));
+	let aes_encrypted_code = aes_encrypt_default(&key, code.encode().as_slice());
+	System::assert_has_event(Event::IdentityManagementMock(crate::Event::ChallengeCodeGenerated {
+		account: aes_encrypted_account,
+		identity: aes_encrypted_identity,
+		code: aes_encrypted_code,
+	}));
+}
+
+pub fn setup_verify_twitter_identity(
+	who: <Test as frame_system::Config>::AccountId,
+	identity: Identity,
+	bn: <Test as frame_system::Config>::BlockNumber,
+) {
+	let _ = setup_link_identity(who, identity.clone(), bn);
+	let encrypted_identity = tee_encrypt(identity.clone().encode().as_slice());
+	let validation_data = match &identity.web_type {
+		IdentityWebType::Web2(Web2Network::Twitter) => create_alice_twitter_validation_data(),
+		_ => panic!("unxpected web_type"),
+	};
+	assert_ok!(IdentityManagementMock::verify_identity(
+		Origin::signed(who),
+		H256::random(),
+		encrypted_identity,
+		tee_encrypt(validation_data.encode().as_slice()),
+	));
+}
+
+pub fn setup_verify_polkadot_identity(
+	who: <Test as frame_system::Config>::AccountId,
+	identity: Identity,
+	bn: <Test as frame_system::Config>::BlockNumber,
+) {
+	let _ = setup_link_identity(who, identity.clone(), bn);
+	let encrypted_identity = tee_encrypt(identity.clone().encode().as_slice());
+	let code = IdentityManagementMock::challenge_codes(&who, &identity).unwrap();
+	let validation_data = match &identity.web_type {
+		IdentityWebType::Web3(Web3Network::Substrate(SubstrateNetwork::Polkadot)) =>
+			create_alice_polkadot_validation_data(who.clone(), code.clone()),
+		_ => panic!("unxpected web_type"),
+	};
+	assert_ok!(IdentityManagementMock::verify_identity(
+		Origin::signed(who),
+		H256::random(),
+		encrypted_identity,
+		tee_encrypt(validation_data.encode().as_slice()),
+	));
 }

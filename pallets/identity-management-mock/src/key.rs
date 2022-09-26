@@ -76,6 +76,19 @@ pub fn aes_encrypt_default(key: &[u8; USER_SHIELDING_KEY_LEN], data: &[u8]) -> A
 	aes_encrypt(key, data, b"", MOCK_NONCE)
 }
 
+// encrypt the given data using the mock tee shielding key
+#[cfg(test)]
+pub fn tee_encrypt(data: &[u8]) -> Vec<u8> {
+	use sha2::Sha256;
+	let (public_key, _) = get_mock_tee_shielding_key();
+	// encrypt with public key
+	let mut rng = rand::thread_rng();
+	let enc_data = public_key
+		.encrypt(&mut rng, PaddingScheme::new_oaep::<Sha256>(), data)
+		.expect("failed to encrypt");
+	enc_data
+}
+
 #[cfg(test)]
 mod test {
 	use super::*;

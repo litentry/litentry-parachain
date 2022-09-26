@@ -39,7 +39,8 @@ mod tests;
 
 use frame_support::{pallet_prelude::*, traits::ConstU32};
 pub use pallet::*;
-use pallet_identity_management::ShardIdentifier;
+use pallet_identity_management::{ShardIdentifier, UserShieldingKeyType};
+use sha2::Sha256;
 use sp_core::{ed25519, sr25519};
 use sp_io::{
 	crypto::{
@@ -50,8 +51,9 @@ use sp_io::{
 use sp_runtime::DispatchError;
 use sp_std::prelude::*;
 use tee_primitives::{
-	Identity, IdentityHandle, IdentityMultiSignature, IdentityWebType, ValidationData,
-	Web3CommonValidationData, Web3Network, Web3ValidationData,
+	Identity, IdentityHandle, IdentityMultiSignature, IdentityWebType, SubstrateNetwork,
+	TwitterValidationData, ValidationData, Web2ValidationData, Web3CommonValidationData,
+	Web3Network, Web3ValidationData,
 };
 
 mod identity_context;
@@ -72,7 +74,6 @@ pub(crate) type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
 pub mod pallet {
 	use super::*;
 	use frame_system::pallet_prelude::*;
-	use pallet_identity_management::UserShieldingKeyType;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -204,6 +205,8 @@ pub mod pallet {
 		WrongIdentityHanldeType,
 		/// fail to recover evm address
 		RecoverEvmAddressFailed,
+		/// the message in validation data is unexpected
+		UnexpectedMessage,
 	}
 
 	#[pallet::storage]
@@ -438,6 +441,14 @@ pub mod pallet {
 				c.verification_request_block = Some(now);
 
 				*context = Some(c);
+
+				// remove challenge code
+				ensure!(
+					Self::challenge_codes(&who, &identity).is_some(),
+					Error::<T>::ChallengeCodeNotExist
+				);
+				ChallengeCodes::<T>::remove(&who, &identity);
+
 				// emit the IdentityVerified event
 				Self::deposit_event(Event::<T>::IdentityVerifiedPlain {
 					account: who.clone(),
@@ -523,7 +534,7 @@ pub mod pallet {
 		fn decrypt_with_tee_shielding_key(encrypted_data: &[u8]) -> Result<Vec<u8>, DispatchError> {
 			let (_, private_key) = get_mock_tee_shielding_key();
 			let decrypted_data = private_key
-				.decrypt(PaddingScheme::new_pkcs1v15_encrypt(), encrypted_data)
+				.decrypt(PaddingScheme::new_oaep::<Sha256>(), encrypted_data)
 				.map_err(|_| Error::<T>::ShieldingKeyDecryptionFailed)?;
 			Ok(decrypted_data)
 		}
@@ -539,7 +550,14 @@ pub mod pallet {
 			identity: &Identity,
 			validation_data: &Web3CommonValidationData,
 		) -> DispatchResult {
-			let msg = Self::get_expected_web3_message(who, identity)?;
+			let code =
+				Self::challenge_codes(who, identity).ok_or(Error::<T>::ChallengeCodeNotExist)?;
+			let msg = Self::get_expected_web3_message(who, identity, &code)?;
+
+			ensure!(
+				msg.as_slice() == validation_data.message.as_slice(),
+				Error::<T>::UnexpectedMessage
+			);
 
 			let substrate_address = match &identity.web_type {
 				IdentityWebType::Web3(Web3Network::Substrate(_)) => match &identity.handle {
@@ -585,7 +603,9 @@ pub mod pallet {
 			identity: &Identity,
 			validation_data: &Web3CommonValidationData,
 		) -> DispatchResult {
-			let msg = Self::get_expected_web3_message(who, identity)?;
+			let code =
+				Self::challenge_codes(who, identity).ok_or(Error::<T>::ChallengeCodeNotExist)?;
+			let msg = Self::get_expected_web3_message(who, identity, &code)?;
 			let digest = Self::compute_evm_msg_digest(msg)
 				.map_err(|_| Error::<T>::ComputeEvmMessageDigestFailed)?;
 			if let IdentityMultiSignature::Ethereum(sig) = &validation_data.signature {
@@ -611,12 +631,11 @@ pub mod pallet {
 		// web3 message format: <challeng-code> + <litentry-AccountId32> + <Identity>, where
 		// <> means SCALE-encoded
 		// TODO: do we want to apply the same for web2 message?(= discard JSON format)
-		fn get_expected_web3_message(
+		pub fn get_expected_web3_message(
 			who: &T::AccountId,
 			identity: &Identity,
+			code: &ChallengeCode,
 		) -> Result<Vec<u8>, DispatchError> {
-			let code =
-				Self::challenge_codes(who, identity).ok_or(Error::<T>::ChallengeCodeNotExist)?;
 			let mut msg = code.encode();
 			msg.append(&mut who.encode());
 			msg.append(&mut identity.encode());
