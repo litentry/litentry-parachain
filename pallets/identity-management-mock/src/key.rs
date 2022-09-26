@@ -110,12 +110,12 @@ mod test {
 		let mut rng = ChaCha8Rng::from_seed([42; 32]);
 		let data = b"hello world";
 		let enc_data = public_key
-			.encrypt(&mut rng, PaddingScheme::new_pkcs1v15_encrypt(), &data[..])
+			.encrypt(&mut rng, PaddingScheme::new_oaep::<Sha256>(), &data[..])
 			.expect("failed to encrypt");
 
 		// decrypt with private key
 		let dec_data = private_key
-			.decrypt(PaddingScheme::new_pkcs1v15_encrypt(), &enc_data)
+			.decrypt(PaddingScheme::new_oaep::<Sha256>(), &enc_data)
 			.expect("failed to decrypt");
 		assert_eq!(&data[..], &dec_data[..]);
 	}
