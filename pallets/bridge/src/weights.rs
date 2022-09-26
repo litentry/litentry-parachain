@@ -54,9 +54,9 @@ pub trait WeightInfo {
 	fn add_relayer() -> Weight;
 	fn remove_relayer() -> Weight;
 	fn update_fee() -> Weight;
-	fn acknowledge_proposal() -> Weight;
+	fn acknowledge_proposal(x:u32,) -> Weight;
 	fn reject_proposal() -> Weight;
-	fn eval_vote_state() -> Weight;
+	fn eval_vote_state(x:u32,) -> Weight;
 }
 
 /// Weights for pallet_bridge using the Litentry node and recommended hardware.
@@ -110,10 +110,11 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	// Storage: ChainBridge Votes (r:1 w:1)
 	// Storage: ChainBridge RelayerThreshold (r:1 w:0)
 	// Storage: ChainBridge RelayerCount (r:1 w:0)
-	fn acknowledge_proposal() -> Weight {
+	fn acknowledge_proposal(x:u32,) -> Weight {
 		(46_667_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+			.saturating_add(x as Weight)
 	}
 	// Storage: ChainBridge Relayers (r:1 w:0)
 	// Storage: ChainBridge ChainNonces (r:1 w:0)
@@ -129,10 +130,11 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	// Storage: ChainBridge Votes (r:1 w:1)
 	// Storage: ChainBridge RelayerThreshold (r:1 w:0)
 	// Storage: ChainBridge RelayerCount (r:1 w:0)
-	fn eval_vote_state() -> Weight {
+	fn eval_vote_state(x:u32,) -> Weight {
 		(16_521_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+			.saturating_add(x as Weight)
 	}
 }
 
@@ -186,10 +188,11 @@ impl WeightInfo for () {
 	// Storage: ChainBridge Votes (r:1 w:1)
 	// Storage: ChainBridge RelayerThreshold (r:1 w:0)
 	// Storage: ChainBridge RelayerCount (r:1 w:0)
-	fn acknowledge_proposal() -> Weight {
+	fn acknowledge_proposal(x:u32,) -> Weight {
 		(46_667_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(6 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+			.saturating_add(x as Weight)
 	}
 	// Storage: ChainBridge Relayers (r:1 w:0)
 	// Storage: ChainBridge ChainNonces (r:1 w:0)
@@ -205,9 +208,10 @@ impl WeightInfo for () {
 	// Storage: ChainBridge Votes (r:1 w:1)
 	// Storage: ChainBridge RelayerThreshold (r:1 w:0)
 	// Storage: ChainBridge RelayerCount (r:1 w:0)
-	fn eval_vote_state() -> Weight {
+	fn eval_vote_state(x:u32,) -> Weight {
 		(16_521_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+			.saturating_add(x as Weight)
 	}
 }

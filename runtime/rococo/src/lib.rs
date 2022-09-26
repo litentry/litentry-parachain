@@ -766,6 +766,7 @@ impl pallet_bridge::Config for Runtime {
 	type Currency = Balances;
 	type ProposalLifetime = ProposalLifetime;
 	type TreasuryAccount = TreasuryAccount;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -800,6 +801,7 @@ impl pallet_bridge_transfer::Config for Runtime {
 	type NativeTokenResourceId = NativeTokenResourceId;
 	type DefaultMaximumIssuance = MaximumIssuance;
 	type ExternalTotalIssuance = ExternalTotalIssuance;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -1045,6 +1047,8 @@ mod benches {
 		[pallet_identity_management, IdentityManagement]
 		[pallet_teerex, Teerex]
 		[pallet_sidechain, Sidechain]
+		[pallet_bridge,ChainBridge]
+		[pallet_bridge_transfer,BridgeTransfer]
 	);
 }
 

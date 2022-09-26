@@ -32,6 +32,7 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use crate::weights::WeightInfo;
 	use codec::{Decode, Encode, EncodeLike};
 	use frame_support::traits::{
 		fungible::Mutate, Currency, ExistenceRequirement::AllowDeath, WithdrawReasons,
@@ -173,6 +174,9 @@ pub mod pallet {
 
 		/// Treasury account to receive assets fee
 		type TreasuryAccount: Get<Self::AccountId>;
+
+		/// Weight information for extrinsics in this pallet.
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::event]
@@ -320,7 +324,7 @@ pub mod pallet {
 		/// # <weight>
 		/// - O(1) lookup and insert
 		/// # </weight>
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_threshold(*threshold as u32))]
 		pub fn set_threshold(origin: OriginFor<T>, threshold: u32) -> DispatchResult {
 			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
 			Self::set_relayer_threshold(threshold)
@@ -331,7 +335,7 @@ pub mod pallet {
 		/// # <weight>
 		/// - O(1) write
 		/// # </weight>
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_resource())]
 		pub fn set_resource(
 			origin: OriginFor<T>,
 			id: ResourceId,
@@ -349,7 +353,7 @@ pub mod pallet {
 		/// # <weight>
 		/// - O(1) removal
 		/// # </weight>
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::remove_resource())]
 		pub fn remove_resource(origin: OriginFor<T>, id: ResourceId) -> DispatchResult {
 			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
 			Self::unregister_resource(id)
@@ -360,7 +364,7 @@ pub mod pallet {
 		/// # <weight>
 		/// - O(1) lookup and insert
 		/// # </weight>
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::whitelist_chain())]
 		pub fn whitelist_chain(origin: OriginFor<T>, id: BridgeChainId) -> DispatchResult {
 			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
 			Self::whitelist(id)
@@ -371,7 +375,7 @@ pub mod pallet {
 		/// # <weight>
 		/// - O(1) lookup and insert
 		/// # </weight>
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::add_relayer())]
 		pub fn add_relayer(origin: OriginFor<T>, v: T::AccountId) -> DispatchResult {
 			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
 			Self::register_relayer(v)
@@ -382,7 +386,7 @@ pub mod pallet {
 		/// # <weight>
 		/// - O(1) lookup and removal
 		/// # </weight>
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::remove_relayer())]
 		pub fn remove_relayer(origin: OriginFor<T>, v: T::AccountId) -> DispatchResult {
 			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
 			Self::unregister_relayer(v)
@@ -393,7 +397,7 @@ pub mod pallet {
 		/// # <weight>
 		/// - O(1) lookup and insert
 		/// # </weight>
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::update_fee())]
 		pub fn update_fee(
 			origin: OriginFor<T>,
 			dest_id: BridgeChainId,
@@ -413,10 +417,9 @@ pub mod pallet {
 		/// # <weight>
 		/// - weight of proposed call, regardless of whether execution is performed
 		/// # </weight>
-		#[pallet::weight({
-			let dispatch_info = call.get_dispatch_info();
-			(dispatch_info.weight + 195_000_000, dispatch_info.class, Pays::Yes)
-		})]
+		#[pallet::weight(
+		<T as Config>::WeightInfo::acknowledge_proposal(call.get_dispatch_info().weight as u32)
+		)]
 		pub fn acknowledge_proposal(
 			origin: OriginFor<T>,
 			nonce: DepositNonce,
@@ -437,7 +440,7 @@ pub mod pallet {
 		/// # <weight>
 		/// - Fixed, since execution of proposal should not be included
 		/// # </weight>
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::reject_proposal())]
 		pub fn reject_proposal(
 			origin: OriginFor<T>,
 			nonce: DepositNonce,
@@ -461,10 +464,7 @@ pub mod pallet {
 		/// # <weight>
 		/// - weight of proposed call, regardless of whether execution is performed
 		/// # </weight>
-		#[pallet::weight({
-			let dispatch_info = prop.get_dispatch_info();
-			(dispatch_info.weight + 195_000_000, dispatch_info.class, Pays::Yes)
-		})]
+		#[pallet::weight(<T as Config>::WeightInfo::eval_vote_state(prop.get_dispatch_info().weight as u32))]
 		pub fn eval_vote_state(
 			origin: OriginFor<T>,
 			nonce: DepositNonce,

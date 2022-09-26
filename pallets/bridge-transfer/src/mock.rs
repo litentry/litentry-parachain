@@ -112,6 +112,7 @@ impl bridge::Config for Test {
 	type Currency = Balances;
 	type ProposalLifetime = ProposalLifetime;
 	type TreasuryAccount = TreasuryAccount;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -151,6 +152,7 @@ impl Config for Test {
 	type NativeTokenResourceId = NativeTokenResourceId;
 	type DefaultMaximumIssuance = MaximumIssuance;
 	type ExternalTotalIssuance = ExternalTotalIssuance;
+	type WeightInfo = ();
 }
 
 parameter_types! {

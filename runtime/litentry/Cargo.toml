@@ -136,6 +136,7 @@ runtime-benchmarks = [
   "pallet-drop3/runtime-benchmarks",
   "pallet-extrinsic-filter/runtime-benchmarks",
   "cumulus-pallet-xcmp-queue/runtime-benchmarks",
+  "pallet-asset-manager/runtime-benchmarks",
 ]
 std = [
   "codec/std",
@@ -208,7 +209,6 @@ try-runtime = [
   "frame-executive/try-runtime",
   "frame-system/try-runtime",
   "frame-try-runtime",
-  "pallet-asset-manager/runtime-benchmarks",
   "pallet-aura/try-runtime",
   "pallet-authorship/try-runtime",
   "pallet-balances/try-runtime",
