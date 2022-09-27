@@ -792,14 +792,9 @@ impl pallet_identity_management::Config for Runtime {
 	type EventTriggerOrigin = EnsureRoot<AccountId>;
 }
 
-parameter_types! {
-	pub const TestMrenclave: MrenclaveType = [2; 32];
-}
-
 impl pallet_identity_management_mock::Config for Runtime {
 	type Event = Event;
 	type ManageWhitelistOrigin = EnsureRoot<Self::AccountId>;
-	type Mrenclave = TestMrenclave;
 	type MaxVerificationDelay = ConstU32<10>;
 	// TODO: use the real TEE account
 	type EventTriggerOrigin = EnsureRoot<AccountId>;
