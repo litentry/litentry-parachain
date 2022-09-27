@@ -176,8 +176,12 @@ clippy:
 	SKIP_WASM_BUILD=1 cargo clippy --workspace --all-targets --all-features -- -D warnings
 
 .PHONY: clippyfix ## cargo clippy --fix
-clippy:
+clippyfix:
 	SKIP_WASM_BUILD=1 cargo clippy --fix --workspace --all-targets --all-features -- -D warnings
+
+.PHONY: cargofix ## cargo clippy --fix
+cargofix:
+	cargo fix --allow-dirty --allow-staged --workspace --all-targets --all-features
 
 define pkgid
 $(shell cargo pkgid $1)
