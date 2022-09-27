@@ -238,7 +238,7 @@ pub fn setup_link_identity(
 	bn: <Test as frame_system::Config>::BlockNumber,
 ) {
 	let key = setup_user_shieding_key(who);
-	let encrypted_identity = tee_encrypt(identity.clone().encode().as_slice());
+	let encrypted_identity = tee_encrypt(identity.encode().as_slice());
 	assert_ok!(IdentityManagementMock::link_identity(
 		Origin::signed(who),
 		H256::random(),
@@ -274,8 +274,8 @@ pub fn setup_verify_twitter_identity(
 	identity: Identity,
 	bn: <Test as frame_system::Config>::BlockNumber,
 ) {
-	let _ = setup_link_identity(who, identity.clone(), bn);
-	let encrypted_identity = tee_encrypt(identity.clone().encode().as_slice());
+	setup_link_identity(who, identity.clone(), bn);
+	let encrypted_identity = tee_encrypt(identity.encode().as_slice());
 	let validation_data = match &identity.web_type {
 		IdentityWebType::Web2(Web2Network::Twitter) => create_mock_twitter_validation_data(),
 		_ => panic!("unxpected web_type"),
@@ -294,18 +294,18 @@ pub fn setup_verify_polkadot_identity(
 	bn: <Test as frame_system::Config>::BlockNumber,
 ) {
 	let identity = create_mock_polkadot_identity(p.public().0);
-	let _ = setup_link_identity(who, identity.clone(), bn);
-	let encrypted_identity = tee_encrypt(identity.clone().encode().as_slice());
+	setup_link_identity(who, identity.clone(), bn);
+	let encrypted_identity = tee_encrypt(identity.encode().as_slice());
 	let code = IdentityManagementMock::challenge_codes(&who, &identity).unwrap();
 	let validation_data = match &identity.web_type {
 		IdentityWebType::Web3(Web3Network::Substrate(SubstrateNetwork::Polkadot)) =>
-			create_mock_polkadot_validation_data(who.clone(), p, code),
+			create_mock_polkadot_validation_data(who, p, code),
 		_ => panic!("unxpected web_type"),
 	};
 	println!(
 		"encoded identity len = {}, encoded vd len = {}",
-		identity.clone().encode().as_slice().len(),
-		validation_data.clone().encode().as_slice().len()
+		identity.encode().as_slice().len(),
+		validation_data.encode().as_slice().len()
 	);
 	assert_ok!(IdentityManagementMock::verify_identity(
 		Origin::signed(who),
@@ -321,12 +321,12 @@ pub fn setup_verify_eth_identity(
 	bn: <Test as frame_system::Config>::BlockNumber,
 ) {
 	let identity = create_mock_eth_identity(p.address().0);
-	let _ = setup_link_identity(who, identity.clone(), bn);
-	let encrypted_identity = tee_encrypt(identity.clone().encode().as_slice());
+	setup_link_identity(who, identity.clone(), bn);
+	let encrypted_identity = tee_encrypt(identity.encode().as_slice());
 	let code = IdentityManagementMock::challenge_codes(&who, &identity).unwrap();
 	let validation_data = match &identity.web_type {
 		IdentityWebType::Web3(Web3Network::Evm(EvmNetwork::Ethereum)) =>
-			create_mock_eth_validation_data(who.clone(), p, code),
+			create_mock_eth_validation_data(who, p, code),
 		_ => panic!("unxpected web_type"),
 	};
 	assert_ok!(IdentityManagementMock::verify_identity(

@@ -83,10 +83,10 @@ pub fn tee_encrypt(data: &[u8]) -> Vec<u8> {
 	let (public_key, _) = get_mock_tee_shielding_key();
 	// encrypt with public key
 	let mut rng = rand::thread_rng();
-	let enc_data = public_key
+
+	public_key
 		.encrypt(&mut rng, PaddingScheme::new_oaep::<Sha256>(), data)
-		.expect("failed to encrypt");
-	enc_data
+		.expect("failed to encrypt")
 }
 
 #[cfg(test)]
