@@ -14,17 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{
-	key::aes_encrypt_default, mock::*, Error, Identity, IdentityHandle, IdentityMultiSignature,
-	IdentityWebType, ShardIdentifier, UserShieldingKeyType, ValidationData,
-	Web3CommonValidationData, Web3Network, Web3ValidationData,
-};
-use codec::Encode;
-use frame_support::{
-	assert_noop, assert_ok,
-	traits::{Currency, ReservableCurrency},
-};
-use sp_core::H256;
+use crate::{mock::*, Error};
+
+use frame_support::assert_noop;
+use sp_core::{Pair, H256};
 
 #[test]
 fn unpriveledged_origin_call_fails() {
@@ -47,36 +40,62 @@ fn set_user_shielding_key_works() {
 	});
 }
 
+// The following tests are based on:
+// - twitter for web2
+// - polkadot for web3-substrate
+// - ethereum for web3-evm
+// TODO: maybe add more types
+
 #[test]
-fn link_web2_identity_works() {
+fn link_twitter_identity_works() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(5);
-		let _ = setup_link_identity(2, create_alice_twitter_identity(), 5);
+		let _ = setup_link_identity(2, create_mock_twitter_identity(), 5);
 	});
 }
 
 #[test]
-fn link_web3_identity_works() {
+fn link_polkadot_identity_works() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(3);
-		let _ = setup_link_identity(2, create_alice_polkadot_identity(), 3);
+		let p = sp_core::sr25519::Pair::from_string("//Alice", None).unwrap();
+		let _ = setup_link_identity(2, create_mock_polkadot_identity(p.public().0), 3);
+	});
+}
+
+#[test]
+fn link_eth_identity_works() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(3);
+		let p = Random.generate();
+		let _ = setup_link_identity(2, create_mock_eth_identity(p.address().0), 3);
 	});
 }
 
 // actually it should always be successful, as we don't have on-chain web2 verification
 // for the mock pallet
 #[test]
-fn link_verify_twitter_identity_works() {
+fn verify_twitter_identity_works() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(3);
-		let _ = setup_verify_twitter_identity(2, create_alice_twitter_identity(), 3);
+		let _ = setup_verify_twitter_identity(2, create_mock_twitter_identity(), 3);
 	});
 }
 
 #[test]
-fn link_verify_polkadot_identity_works() {
+fn verify_polkadot_identity_works() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(3);
-		let _ = setup_verify_polkadot_identity(2, create_alice_polkadot_identity(), 3);
+		let p = sp_core::sr25519::Pair::from_string("//Alice", None).unwrap();
+		let _ = setup_verify_polkadot_identity(2, p, 3);
+	});
+}
+
+#[test]
+fn verify_eth_identity_works() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(4);
+		let p = Random.generate();
+		let _ = setup_verify_eth_identity(2, p, 4);
 	});
 }

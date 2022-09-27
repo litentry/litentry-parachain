@@ -19,12 +19,11 @@
 use crate::{
 	self as pallet_identity_management_mock,
 	key::{aes_encrypt_default, tee_encrypt},
-	ChallengeCode, Identity, IdentityHandle, IdentityMultiSignature, IdentityWebType,
-	SubstrateNetwork, TwitterValidationData, UserShieldingKeyType, ValidationData,
-	Web2ValidationData, Web3CommonValidationData, Web3Network, Web3ValidationData,
+	ChallengeCode,
 };
+
 use aes_gcm::{
-	aead::{Aead, KeyInit, OsRng},
+	aead::{KeyInit, OsRng},
 	Aes256Gcm,
 };
 use codec::Encode;
@@ -33,13 +32,19 @@ use frame_support::{
 	traits::{ConstU128, ConstU16, ConstU32, ConstU64, Everything},
 };
 use frame_system as system;
+pub use parity_crypto::publickey::{sign, Generator, KeyPair as EvmPair, Message, Random};
+use sp_core::sr25519::Pair as SubstratePair; // TODO: maybe use more generic struct
 use sp_core::{blake2_128, Pair, H256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
 use system::{EnsureRoot, EnsureSignedBy};
-use tee_primitives::Web2Network;
+use tee_primitives::{
+	EthereumSignature, EvmNetwork, Identity, IdentityHandle, IdentityMultiSignature,
+	IdentityWebType, SubstrateNetwork, TwitterValidationData, UserShieldingKeyType, ValidationData,
+	Web2Network, Web2ValidationData, Web3CommonValidationData, Web3Network, Web3ValidationData,
+};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -137,15 +142,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	ext
 }
 
-pub fn create_alice_polkadot_identity() -> Identity {
-	let p = sp_core::sr25519::Pair::from_string("//Alice", None).unwrap();
-	Identity {
-		web_type: IdentityWebType::Web3(Web3Network::Substrate(SubstrateNetwork::Polkadot)),
-		handle: IdentityHandle::Address32(p.public().0),
-	}
-}
-
-pub fn create_alice_twitter_identity() -> Identity {
+pub fn create_mock_twitter_identity() -> Identity {
 	Identity {
 		web_type: IdentityWebType::Web2(Web2Network::Twitter),
 		handle: IdentityHandle::String(
@@ -154,18 +151,32 @@ pub fn create_alice_twitter_identity() -> Identity {
 	}
 }
 
-pub fn create_alice_twitter_validation_data() -> ValidationData {
+pub fn create_mock_polkadot_identity(address: [u8; 32]) -> Identity {
+	Identity {
+		web_type: IdentityWebType::Web3(Web3Network::Substrate(SubstrateNetwork::Polkadot)),
+		handle: IdentityHandle::Address32(address),
+	}
+}
+
+pub fn create_mock_eth_identity(address: [u8; 20]) -> Identity {
+	Identity {
+		web_type: IdentityWebType::Web3(Web3Network::Evm(EvmNetwork::Ethereum)),
+		handle: IdentityHandle::Address20(address),
+	}
+}
+
+pub fn create_mock_twitter_validation_data() -> ValidationData {
 	ValidationData::Web2(Web2ValidationData::Twitter(TwitterValidationData {
 		tweet_id: b"0903".to_vec().try_into().expect("convert to BoundedVec failed"),
 	}))
 }
 
-pub fn create_alice_polkadot_validation_data(
+pub fn create_mock_polkadot_validation_data(
 	who: <Test as frame_system::Config>::AccountId,
+	p: SubstratePair,
 	code: ChallengeCode,
 ) -> ValidationData {
-	let p = sp_core::sr25519::Pair::from_string("//Alice", None).unwrap();
-	let identity = create_alice_polkadot_identity();
+	let identity = create_mock_polkadot_identity(p.public().0);
 	let msg = IdentityManagementMock::get_expected_web3_message(&who, &identity, &code)
 		.expect("cannot calculate web3 message");
 	let sig = p.sign(&msg);
@@ -175,6 +186,24 @@ pub fn create_alice_polkadot_validation_data(
 		signature: IdentityMultiSignature::Sr25519(sig),
 	};
 	ValidationData::Web3(Web3ValidationData::Substrate(common_validation_data))
+}
+
+pub fn create_mock_eth_validation_data(
+	who: <Test as frame_system::Config>::AccountId,
+	p: EvmPair,
+	code: ChallengeCode,
+) -> ValidationData {
+	let identity = create_mock_eth_identity(p.address().0);
+	let msg = IdentityManagementMock::get_expected_web3_message(&who, &identity, &code)
+		.expect("cannot calculate web3 message");
+	let digest = IdentityManagementMock::compute_evm_msg_digest(&msg);
+	let sig = sign(p.secret(), &Message::from(digest)).unwrap();
+
+	let common_validation_data = Web3CommonValidationData {
+		message: msg.try_into().unwrap(),
+		signature: IdentityMultiSignature::Ethereum(EthereumSignature(sig.into_electrum())),
+	};
+	ValidationData::Web3(Web3ValidationData::Evm(common_validation_data))
 }
 
 // generate a random user shielding key, encrypt it and store it for account `who`
@@ -248,7 +277,7 @@ pub fn setup_verify_twitter_identity(
 	let _ = setup_link_identity(who, identity.clone(), bn);
 	let encrypted_identity = tee_encrypt(identity.clone().encode().as_slice());
 	let validation_data = match &identity.web_type {
-		IdentityWebType::Web2(Web2Network::Twitter) => create_alice_twitter_validation_data(),
+		IdentityWebType::Web2(Web2Network::Twitter) => create_mock_twitter_validation_data(),
 		_ => panic!("unxpected web_type"),
 	};
 	assert_ok!(IdentityManagementMock::verify_identity(
@@ -261,15 +290,43 @@ pub fn setup_verify_twitter_identity(
 
 pub fn setup_verify_polkadot_identity(
 	who: <Test as frame_system::Config>::AccountId,
-	identity: Identity,
+	p: SubstratePair,
 	bn: <Test as frame_system::Config>::BlockNumber,
 ) {
+	let identity = create_mock_polkadot_identity(p.public().0);
 	let _ = setup_link_identity(who, identity.clone(), bn);
 	let encrypted_identity = tee_encrypt(identity.clone().encode().as_slice());
 	let code = IdentityManagementMock::challenge_codes(&who, &identity).unwrap();
 	let validation_data = match &identity.web_type {
 		IdentityWebType::Web3(Web3Network::Substrate(SubstrateNetwork::Polkadot)) =>
-			create_alice_polkadot_validation_data(who.clone(), code.clone()),
+			create_mock_polkadot_validation_data(who.clone(), p, code),
+		_ => panic!("unxpected web_type"),
+	};
+	println!(
+		"encoded identity len = {}, encoded vd len = {}",
+		identity.clone().encode().as_slice().len(),
+		validation_data.clone().encode().as_slice().len()
+	);
+	assert_ok!(IdentityManagementMock::verify_identity(
+		Origin::signed(who),
+		H256::random(),
+		encrypted_identity,
+		tee_encrypt(validation_data.encode().as_slice()),
+	));
+}
+
+pub fn setup_verify_eth_identity(
+	who: <Test as frame_system::Config>::AccountId,
+	p: EvmPair,
+	bn: <Test as frame_system::Config>::BlockNumber,
+) {
+	let identity = create_mock_eth_identity(p.address().0);
+	let _ = setup_link_identity(who, identity.clone(), bn);
+	let encrypted_identity = tee_encrypt(identity.clone().encode().as_slice());
+	let code = IdentityManagementMock::challenge_codes(&who, &identity).unwrap();
+	let validation_data = match &identity.web_type {
+		IdentityWebType::Web3(Web3Network::Evm(EvmNetwork::Ethereum)) =>
+			create_mock_eth_validation_data(who.clone(), p, code),
 		_ => panic!("unxpected web_type"),
 	};
 	assert_ok!(IdentityManagementMock::verify_identity(
