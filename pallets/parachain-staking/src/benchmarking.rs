@@ -23,8 +23,8 @@
 
 //! Benchmarking
 use crate::{
-	BalanceOf, Call, CandidateBondLessRequest, Config, DelegationAction, Pallet, Range,
-	ScheduledRequest,
+	BalanceOf, Call, Candidates, CandidateBondLessRequest, Config, DelegationAction, Event, Pallet, Range,
+	Round, ScheduledRequest,
 };
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::traits::{Currency, Get, OnFinalize, OnInitialize, ReservableCurrency};
@@ -108,6 +108,9 @@ fn roll_to_and_author<T: Config>(round_delay: u32, author: T::AccountId) {
 		now += 1u32.into();
 	}
 }
+fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
+	frame_system::Pallet::<T>::assert_last_event(generic_event.into());
+}
 
 // TODO::This one won't work. Need to work around
 
@@ -127,6 +130,29 @@ fn roll_to_and_author<T: Config>(round_delay: u32, author: T::AccountId) {
 const USER_SEED: u32 = 999666;
 
 benchmarks! {
+
+	add_candidates_whitelist{
+		let x in 1...1000;
+
+		let candidate:T::AccountId = account("TEST", 0u32, USER_SEED+x);
+	}: _(RawOrigin::Root,candidate.clone())
+	verify{
+		assert_last_event::<T>(Event::CandidateWhiteListAdded {
+			candidate
+		}.into());
+	}
+
+	remove_candidates_whitelist{
+		let x in 1..20;
+		let candidate:T::AccountId = account("TEST", 0u32, USER_SEED+x);
+		Pallet::<T>::add_candidates_whitelist(RawOrigin::Root.into(), candidate.clone())?;
+	}: _(RawOrigin::Root,candidate.clone())
+	verify{
+		assert_last_event::<T>(Event::CandidateWhiteListRemoved {
+			candidate
+		}.into());
+	}
+
 	// MONETARY ORIGIN DISPATCHABLES
 	set_staking_expectations {
 		let stake_range: Range<BalanceOf<T>> = Range {
@@ -275,8 +301,9 @@ benchmarks! {
 		Pallet::<T>::schedule_leave_candidates(
 			RawOrigin::Signed(candidate.clone()).into(),
 		)?;
-		//The previously set 24 was too small to satisfy the minimum time for conditions to leave, so the time was extended
-		roll_to_and_author::<T>(30, candidate.clone());
+
+		let round = <Round<T>>::get().current + T::LeaveCandidatesDelay::get();
+		roll_to_and_author::<T>(round, candidate.clone());
 	}: _(RawOrigin::Signed(candidate.clone()), candidate.clone())
 	verify {
 		assert!(Pallet::<T>::candidate_info(&candidate).is_none());
@@ -362,11 +389,13 @@ benchmarks! {
 	}: _(RawOrigin::Signed(caller.clone()), min_candidate_stk)
 	verify {
 		let state = Pallet::<T>::candidate_info(&caller).expect("request bonded less so exists");
+
+		let rounds = <Round<T>>::get().current + T::CandidateBondLessDelay::get();
 		assert_eq!(
 			state.request,
 			Some(CandidateBondLessRequest {
 				amount: min_candidate_stk,
-				when_executable: 45,
+				when_executable: rounds,
 			})
 		);
 	}
@@ -383,7 +412,9 @@ benchmarks! {
 			RawOrigin::Signed(caller.clone()).into(),
 			min_candidate_stk
 		)?;
-		roll_to_and_author::<T>(30, caller.clone());
+
+		let rounds = <Round<T>>::get().current + T::CandidateBondLessDelay::get();
+		roll_to_and_author::<T>(rounds, caller.clone());
 	}: {
 		Pallet::<T>::execute_candidate_bond_less(
 			RawOrigin::Signed(caller.clone()).into(),
@@ -524,7 +555,8 @@ benchmarks! {
 			)?;
 		}
 		Pallet::<T>::schedule_leave_delegators(RawOrigin::Signed(caller.clone()).into())?;
-		roll_to_and_author::<T>(30, author);
+		let rounds = <Round<T>>::get().current.saturating_add(T::LeaveDelegatorsDelay::get());
+		roll_to_and_author::<T>(rounds, author);
 	}: _(RawOrigin::Signed(caller.clone()), caller.clone())
 	verify {
 		assert!(Pallet::<T>::delegator_state(&caller).is_none());
@@ -566,11 +598,12 @@ benchmarks! {
 		)?;
 	}: _(RawOrigin::Signed(caller.clone()), collator.clone())
 	verify {
+		let rounds = <Round<T>>::get().current.saturating_add(T::RevokeDelegationDelay::get());
 		assert_eq!(
 			Pallet::<T>::delegation_scheduled_requests(&collator),
 			vec![ScheduledRequest {
 				delegator: caller,
-				when_executable: 25,
+				when_executable: rounds,
 				action: DelegationAction::Revoke(bond),
 			}],
 		);
@@ -615,11 +648,13 @@ benchmarks! {
 	verify {
 		let state = Pallet::<T>::delegator_state(&caller)
 			.expect("just request bonded less so exists");
+
+		let rounds = <Round<T>>::get().current.saturating_add(T::RevokeDelegationDelay::get());
 		assert_eq!(
 			Pallet::<T>::delegation_scheduled_requests(&collator),
 			vec![ScheduledRequest {
 				delegator: caller,
-				when_executable: 25,
+				when_executable: rounds,
 				action: DelegationAction::Decrease(bond_less),
 			}],
 		);
@@ -643,7 +678,9 @@ benchmarks! {
 			caller.clone()).into(),
 			collator.clone()
 		)?;
-		roll_to_and_author::<T>(30, collator.clone());
+		let rounds = <Round<T>>::get().current.saturating_add(T::RevokeDelegationDelay::get());
+
+		roll_to_and_author::<T>(rounds, collator.clone());
 	}: {
 		Pallet::<T>::execute_delegation_request(
 			RawOrigin::Signed(caller.clone()).into(),
@@ -675,7 +712,9 @@ benchmarks! {
 			collator.clone(),
 			bond_less
 		)?;
-		roll_to_and_author::<T>(30, collator.clone());
+
+		let rounds = <Round<T>>::get().current.saturating_add(T::RevokeDelegationDelay::get());
+		roll_to_and_author::<T>(rounds, collator.clone());
 	}: {
 		Pallet::<T>::execute_delegation_request(
 			RawOrigin::Signed(caller.clone()).into(),
@@ -738,7 +777,9 @@ benchmarks! {
 			collator.clone(),
 			bond_less
 		)?;
-		roll_to_and_author::<T>(30, collator.clone());
+
+		let rounds = <Round<T>>::get().current.saturating_add(T::RevokeDelegationDelay::get());
+		roll_to_and_author::<T>(rounds, collator.clone());
 	}: {
 		Pallet::<T>::cancel_delegation_request(
 			RawOrigin::Signed(caller.clone()).into(),
