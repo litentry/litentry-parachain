@@ -742,6 +742,7 @@ impl SortedMembers<AccountId> for TechnicalCommitteeProvider {
 		TechnicalCommittee::members()
 	}
 
+	#[cfg(not(feature = "runtime-benchmarks"))]
 	fn contains(who: &AccountId) -> bool {
 		TechnicalCommittee::is_member(who)
 	}
@@ -749,6 +750,11 @@ impl SortedMembers<AccountId> for TechnicalCommitteeProvider {
 	#[cfg(feature = "runtime-benchmarks")]
 	fn add(_: &AccountId) {
 		unimplemented!()
+	}
+	// To ensure that the benchmark code runs through
+	#[cfg(feature = "runtime-benchmarks")]
+	fn contains(_who: &AccountId) -> bool {
+		true
 	}
 }
 

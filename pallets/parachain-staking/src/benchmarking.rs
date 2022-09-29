@@ -275,7 +275,8 @@ benchmarks! {
 		Pallet::<T>::schedule_leave_candidates(
 			RawOrigin::Signed(candidate.clone()).into(),
 		)?;
-		roll_to_and_author::<T>(24, candidate.clone());
+		//The previously set 24 was too small to satisfy the minimum time for conditions to leave, so the time was extended
+		roll_to_and_author::<T>(30, candidate.clone());
 	}: _(RawOrigin::Signed(candidate.clone()), candidate.clone())
 	verify {
 		assert!(Pallet::<T>::candidate_info(&candidate).is_none());
@@ -284,7 +285,7 @@ benchmarks! {
 			assert!(Pallet::<T>::is_delegator(&delegator));
 		}
 	}
-	
+
 	cancel_leave_candidates {
 		let x in 3..1_000;
 		// Worst Case Complexity is removal from an ordered list so \exists full list before call
@@ -347,8 +348,7 @@ benchmarks! {
 	}: _(RawOrigin::Signed(caller.clone()), more)
 	verify {
 		let expected_bond = more * 2u32.into();
-		// TODO::We need to check lock instead
-		assert_eq!(T::Currency::reserved_balance(&caller), 0u32.into());
+		assert_eq!(T::Currency::reserved_balance(&caller), expected_bond);
 	}
 
 	schedule_candidate_bond_less {
@@ -366,7 +366,7 @@ benchmarks! {
 			state.request,
 			Some(CandidateBondLessRequest {
 				amount: min_candidate_stk,
-				when_executable: 25,
+				when_executable: 45,
 			})
 		);
 	}
@@ -383,7 +383,7 @@ benchmarks! {
 			RawOrigin::Signed(caller.clone()).into(),
 			min_candidate_stk
 		)?;
-		roll_to_and_author::<T>(24, caller.clone());
+		roll_to_and_author::<T>(30, caller.clone());
 	}: {
 		Pallet::<T>::execute_candidate_bond_less(
 			RawOrigin::Signed(caller.clone()).into(),
@@ -391,7 +391,8 @@ benchmarks! {
 		)?;
 	} verify {
 		// TODO::We need to check lock instead
-		assert_eq!(T::Currency::reserved_balance(&caller), 0u32.into());
+		let expected_bond = min_candidate_stk * 10u32.into();
+		assert_eq!(T::Currency::reserved_balance(&caller),expected_bond);
 	}
 
 	cancel_candidate_bond_less {
@@ -642,7 +643,7 @@ benchmarks! {
 			caller.clone()).into(),
 			collator.clone()
 		)?;
-		roll_to_and_author::<T>(24, collator.clone());
+		roll_to_and_author::<T>(30, collator.clone());
 	}: {
 		Pallet::<T>::execute_delegation_request(
 			RawOrigin::Signed(caller.clone()).into(),
@@ -674,7 +675,7 @@ benchmarks! {
 			collator.clone(),
 			bond_less
 		)?;
-		roll_to_and_author::<T>(24, collator.clone());
+		roll_to_and_author::<T>(30, collator.clone());
 	}: {
 		Pallet::<T>::execute_delegation_request(
 			RawOrigin::Signed(caller.clone()).into(),
@@ -684,7 +685,7 @@ benchmarks! {
 	} verify {
 		let expected = total - bond_less;
 		// TODO::We need to check lock instead
-		assert_eq!(T::Currency::reserved_balance(&caller), 0u32.into());
+		assert_eq!(T::Currency::reserved_balance(&caller), expected);
 	}
 
 	cancel_revoke_delegation {
@@ -737,7 +738,7 @@ benchmarks! {
 			collator.clone(),
 			bond_less
 		)?;
-		roll_to_and_author::<T>(24, collator.clone());
+		roll_to_and_author::<T>(30, collator.clone());
 	}: {
 		Pallet::<T>::cancel_delegation_request(
 			RawOrigin::Signed(caller.clone()).into(),
@@ -1080,7 +1081,7 @@ mod tests {
 			assert_ok!(Pallet::<Test>::test_benchmark_schedule_leave_candidates());
 		});
 	}
-/*
+
 	#[test]
 	fn bench_execute_leave_candidates() {
 		new_test_ext().execute_with(|| {
@@ -1088,7 +1089,6 @@ mod tests {
 		});
 	}
 
- */
 	#[test]
 	fn bench_cancel_leave_candidates() {
 		new_test_ext().execute_with(|| {
