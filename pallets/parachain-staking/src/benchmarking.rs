@@ -524,7 +524,7 @@ benchmarks! {
 			)?;
 		}
 		Pallet::<T>::schedule_leave_delegators(RawOrigin::Signed(caller.clone()).into())?;
-		roll_to_and_author::<T>(24, author);
+		roll_to_and_author::<T>(30, author);
 	}: _(RawOrigin::Signed(caller.clone()), caller.clone())
 	verify {
 		assert!(Pallet::<T>::delegator_state(&caller).is_none());
@@ -594,7 +594,7 @@ benchmarks! {
 	verify {
 		let expected_bond = bond * 2u32.into();
 		// TODO::We need to check lock instead
-		assert_eq!(T::Currency::reserved_balance(&caller), 0u32.into());
+		assert_eq!(T::Currency::reserved_balance(&caller), expected_bond);
 	}
 
 	schedule_delegator_bond_less {
