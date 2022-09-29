@@ -29,9 +29,7 @@ use aes_gcm::{
 	Aes256Gcm,
 };
 
-pub use pallet_identity_management::{
-	AesOutput, USER_SHIELDING_KEY_LEN, USER_SHIELDING_KEY_NONCE_LEN,
-};
+pub use primitives::{AesOutput, USER_SHIELDING_KEY_LEN, USER_SHIELDING_KEY_NONCE_LEN};
 
 // The hardcoded exemplary shielding keys for mocking
 // openssl always generates a mix of X509 pub key and pkcs1 private key

@@ -38,11 +38,6 @@ use frame_system::EnsureRoot;
 
 // for TEE
 pub use pallet_balances::Call as BalancesCall;
-pub use pallet_identity_management::{
-	AesOutput, LinkIdentityFn, MrenclaveType, SetUserShieldingKeyFn, ShardIdentifier,
-	UnlinkIdentityFn, UserShieldingKeyType, VerifyIdentityFn, USER_SHIELDING_KEY_LEN,
-	USER_SHIELDING_KEY_NONCE_LEN, USER_SHIELDING_KEY_TAG_LEN,
-};
 pub use pallet_sidechain;
 pub use pallet_teerex;
 

@@ -40,7 +40,7 @@ mod tests;
 use codec::alloc::string::ToString;
 use frame_support::{pallet_prelude::*, traits::ConstU32};
 pub use pallet::*;
-use pallet_identity_management::{ShardIdentifier, UserShieldingKeyType};
+use primitives::{ShardIdentifier, UserShieldingKeyType};
 use sha2::Sha256;
 use sp_core::{ed25519, sr25519};
 use sp_io::{

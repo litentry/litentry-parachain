@@ -6013,6 +6013,7 @@ dependencies = [
  "pallet-balances",
  "pallet-timestamp",
  "parity-scale-codec 3.2.1",
+ "primitives",
  "scale-info",
  "sp-arithmetic",
  "sp-core",
@@ -8265,8 +8266,11 @@ dependencies = [
 name = "primitives"
 version = "0.9.10"
 dependencies = [
+ "parity-scale-codec 3.2.1",
+ "scale-info",
  "sp-core",
  "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]

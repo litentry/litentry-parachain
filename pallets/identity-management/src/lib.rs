@@ -44,15 +44,8 @@ pub mod weights;
 pub use crate::weights::WeightInfo;
 pub use pallet::*;
 
-mod key;
-pub use key::*;
-
-use sp_core::H256;
+pub use primitives::{AesOutput, ShardIdentifier};
 use sp_std::vec::Vec;
-
-// enclave related types
-pub type ShardIdentifier = H256;
-pub type MrenclaveType = [u8; 32];
 
 // fn types for handling inside tee-worker
 pub type SetUserShieldingKeyFn = ([u8; 2], ShardIdentifier, Vec<u8>);
