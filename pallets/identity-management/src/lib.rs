@@ -67,8 +67,8 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type WeightInfo: WeightInfo;
-		// the origin allowed to call event-triggering extrinsics, normally TEE
-		type EventTriggerOrigin: EnsureOrigin<Self::Origin>;
+		// some extrinsics should only be called by origins from TEE
+		type TEECallOrigin: EnsureOrigin<Self::Origin>;
 	}
 
 	#[pallet::event]
@@ -155,7 +155,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			account: AesOutput,
 		) -> DispatchResultWithPostInfo {
-			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::UserShieldingKeySet { account });
 			Ok(Pays::No.into())
 		}
@@ -167,7 +167,7 @@ pub mod pallet {
 			identity: AesOutput,
 			code: AesOutput,
 		) -> DispatchResultWithPostInfo {
-			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::ChallengeCodeGenerated { account, identity, code });
 			Ok(Pays::No.into())
 		}
@@ -178,7 +178,7 @@ pub mod pallet {
 			account: AesOutput,
 			identity: AesOutput,
 		) -> DispatchResultWithPostInfo {
-			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::IdentityLinked { account, identity });
 			Ok(Pays::No.into())
 		}
@@ -189,7 +189,7 @@ pub mod pallet {
 			account: AesOutput,
 			identity: AesOutput,
 		) -> DispatchResultWithPostInfo {
-			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::IdentityUnlinked { account, identity });
 			Ok(Pays::No.into())
 		}
@@ -200,7 +200,7 @@ pub mod pallet {
 			account: AesOutput,
 			identity: AesOutput,
 		) -> DispatchResultWithPostInfo {
-			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::IdentityVerified { account, identity });
 			Ok(Pays::No.into())
 		}
@@ -211,7 +211,7 @@ pub mod pallet {
 			func: Vec<u8>,
 			error: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
-			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::SomeError { func, error });
 			Ok(Pays::No.into())
 		}

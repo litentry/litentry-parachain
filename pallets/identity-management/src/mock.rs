@@ -105,7 +105,7 @@ ord_parameter_types! {
 impl pallet_identity_management::Config for Test {
 	type Event = Event;
 	type WeightInfo = ();
-	type EventTriggerOrigin = EnsureSignedBy<One, u64>;
+	type TEECallOrigin = EnsureSignedBy<One, u64>;
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
