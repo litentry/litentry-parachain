@@ -33,12 +33,18 @@ use primitives::{AesOutput, ShardIdentifier};
 use sp_core::H256;
 use sp_std::vec::Vec;
 
-// fn types for handling inside tee-worker
+mod vc_context;
+pub use vc_context::*;
+
+// fn types for xt handling inside tee-worker
 pub type GenerateVCFn = ([u8; 2], ShardIdentifier, u32);
+
+// VCID type in the registry, maybe we want a "did:...." format?
+pub type VCID = u64;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::{AesOutput, ShardIdentifier, Vec, H256};
+	use super::*;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
@@ -53,22 +59,23 @@ pub mod pallet {
 		type TEECallOrigin: EnsureOrigin<Self::Origin>;
 	}
 
-	// a map VC-ID -> hash of VC
-	// current type: u64 -> H256
+	// a map VCID -> VC context
 	#[pallet::storage]
-	#[pallet::getter(fn vc_hashes)]
-	pub type VCHashes<T> = StorageMap<_, Blake2_256, u64, H256>;
+	#[pallet::getter(fn vc_registry)]
+	pub type VCRegistry<T: Config> = StorageMap<_, Blake2_256, VCID, VCContext<T>>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		// TODO: do we need account as event parameter? This needs to be decided by F/E
-		VCGenerationRequested { shard: ShardIdentifier, ruleset_id: u32 },
+		VCRequested { shard: ShardIdentifier, ruleset_id: u32 },
+		// a VC is disabled on chain
+		VCDisabled { id: VCID },
+		// a VC is revoked on chain
+		VCRevoked { id: VCID },
 		// event that should be triggered by TEECallOrigin
-		// a VC for an account is generated
-		VCGenerated { account: AesOutput, vc: AesOutput },
-		// a VC's hash is stored on parachain
-		VCHashStored { id: u64, hash: H256 },
+		// a VC is just issued
+		VCIssued { account: T::AccountId, id: VCID, vc: AesOutput },
 		// some error happened during processing in TEE, we use string-like
 		// parameters for more "generic" error event reporting
 		// TODO: maybe use concrete errors instead of events when we are more sure
@@ -78,20 +85,52 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// the VC ID already exists
-		VCIdExist,
+		/// the VC already exists
+		VCAlreadyExists,
+		/// the ID doesn't exist
+		VCNotExist,
+		/// The requester doesn't have the permission (because of subject mismatch)
+		VCSubjectMismatch,
+		/// The VC is already disabled
+		VCAlreadyDisabled,
 	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(195_000_000)]
-		pub fn generate_vc(
+		pub fn request_vc(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
 			ruleset_id: u32,
 		) -> DispatchResultWithPostInfo {
 			let _ = ensure_signed(origin)?;
-			Self::deposit_event(Event::VCGenerationRequested { shard, ruleset_id });
+			Self::deposit_event(Event::VCRequested { shard, ruleset_id });
+			Ok(().into())
+		}
+
+		#[pallet::weight(195_000_000)]
+		pub fn disable_vc(origin: OriginFor<T>, id: VCID) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+
+			VCRegistry::<T>::try_mutate(id, |context| {
+				let mut c = context.take().ok_or(Error::<T>::VCNotExist)?;
+				ensure!(who == c.subject, Error::<T>::VCSubjectMismatch);
+				ensure!(c.status == Status::Active, Error::<T>::VCAlreadyDisabled);
+				c.status = Status::Disabled;
+				*context = Some(c);
+				Self::deposit_event(Event::VCDisabled { id });
+				Ok(().into())
+			})
+		}
+
+		#[pallet::weight(195_000_000)]
+		pub fn revoke_vc(origin: OriginFor<T>, id: VCID) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+
+			let context = VCRegistry::<T>::get(id).ok_or(Error::<T>::VCNotExist)?;
+			ensure!(who == context.subject, Error::<T>::VCSubjectMismatch);
+			VCRegistry::<T>::remove(id);
+			Self::deposit_event(Event::VCRevoked { id });
 			Ok(().into())
 		}
 
@@ -99,18 +138,17 @@ pub mod pallet {
 		/// The following extrinsics are supposed to be called by TEE only
 		/// ---------------------------------------------------
 		#[pallet::weight(195_000_000)]
-		pub fn vc_generated(
+		pub fn vc_issued(
 			origin: OriginFor<T>,
-			account: AesOutput,
-			vc: AesOutput,
+			account: T::AccountId,
 			id: u64,
 			hash: H256,
+			vc: AesOutput,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::VCGenerated { account, vc });
-			ensure!(!VCHashes::<T>::contains_key(id), Error::<T>::VCIdExist);
-			VCHashes::<T>::insert(id, hash);
-			Self::deposit_event(Event::VCHashStored { id, hash });
+			ensure!(!VCRegistry::<T>::contains_key(id), Error::<T>::VCAlreadyExists);
+			VCRegistry::<T>::insert(id, VCContext::<T>::new(account.clone(), hash));
+			Self::deposit_event(Event::VCIssued { account, id, vc });
 			Ok(Pays::No.into())
 		}
 
