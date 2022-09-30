@@ -79,7 +79,7 @@ pub mod pallet {
 		UnlinkIdentityRequested { shard: ShardIdentifier },
 		VerifyIdentityRequested { shard: ShardIdentifier },
 		SetUserShieldingKeyRequested { shard: ShardIdentifier },
-		// event that should be triggered by TriggerEventOrigin
+		// event that should be triggered by TEECallOrigin
 		UserShieldingKeySet { account: AesOutput },
 		ChallengeCodeGenerated { account: AesOutput, identity: AesOutput, code: AesOutput },
 		IdentityLinked { account: AesOutput, identity: AesOutput },
