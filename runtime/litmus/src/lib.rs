@@ -800,6 +800,12 @@ impl pallet_identity_management_mock::Config for Runtime {
 	type TEECallOrigin = EnsureSignedBy<ALICE, AccountId>;
 }
 
+impl pallet_vc_management::Config for Runtime {
+	type Event = Event;
+	// TODO: use the real TEE account
+	type TEECallOrigin = EnsureSignedBy<ALICE, AccountId>;
+}
+
 impl runtime_common::BaseRuntimeRequirements for Runtime {}
 
 impl runtime_common::ParaRuntimeRequirements for Runtime {}
@@ -870,6 +876,7 @@ construct_runtime! {
 		ExtrinsicFilter: pallet_extrinsic_filter = 63,
 		IdentityManagement: pallet_identity_management = 64,
 		AssetManager: pallet_asset_manager = 65,
+		VCManagement: pallet_vc_management = 66,
 
 		// TEE
 		Teerex: pallet_teerex = 90,
