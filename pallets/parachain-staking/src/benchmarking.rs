@@ -23,7 +23,7 @@
 
 //! Benchmarking
 use crate::{
-	BalanceOf, Call, Candidates, CandidateBondLessRequest, Config, DelegationAction, Event, Pallet, Range,
+	BalanceOf, Call, CandidateBondLessRequest, Config, DelegationAction, Event, Pallet, Range,
 	Round, ScheduledRequest,
 };
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
@@ -132,9 +132,21 @@ const USER_SEED: u32 = 999666;
 benchmarks! {
 
 	add_candidates_whitelist{
-		let x in 1...1000;
+		let x in 1..100u32;
 
-		let candidate:T::AccountId = account("TEST", 0u32, USER_SEED+x);
+		let mut candidate_count = 1u32;
+		for i in 2..x {
+			let seed = USER_SEED - i;
+			let collator = create_funded_collator::<T>(
+				"collator",
+				seed,
+				0u32.into(),
+				true,
+			)?;
+			candidate_count += 1u32;
+		}
+
+		let candidate:T::AccountId = account("TEST", 0u32, USER_SEED);
 	}: _(RawOrigin::Root,candidate.clone())
 	verify{
 		assert_last_event::<T>(Event::CandidateWhiteListAdded {
@@ -143,8 +155,21 @@ benchmarks! {
 	}
 
 	remove_candidates_whitelist{
-		let x in 1..20;
-		let candidate:T::AccountId = account("TEST", 0u32, USER_SEED+x);
+		let x in 1..100u32;
+
+		let mut candidate_count = 1u32;
+		for i in 2..x {
+			let seed = USER_SEED - i;
+			let collator = create_funded_collator::<T>(
+				"collator",
+				seed,
+				0u32.into(),
+				true,
+			)?;
+			candidate_count += 1u32;
+		}
+
+		let candidate:T::AccountId = account("TEST", 0u32, USER_SEED);
 		Pallet::<T>::add_candidates_whitelist(RawOrigin::Root.into(), candidate.clone())?;
 	}: _(RawOrigin::Root,candidate.clone())
 	verify{
