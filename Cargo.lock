@@ -4604,7 +4604,7 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-service",
- "primitives",
+ "primitives 0.9.10",
  "rococo-parachain-runtime",
  "sc-basic-authorship",
  "sc-chain-spec",
@@ -4701,7 +4701,7 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-runtime-parachains",
- "primitives",
+ "primitives 0.9.10",
  "runtime-common",
  "scale-info",
  "serde",
@@ -4729,10 +4729,11 @@ dependencies = [
 [[package]]
 name = "litentry-primitives"
 version = "0.1.0"
-source = "git+https://github.com/litentry/tee-worker#63e7518a37a23644377691b0c8d18fa8c13fb8e3"
+source = "git+https://github.com/litentry/tee-worker#500b7f132cf808160bb90c6081b714f51fd12435"
 dependencies = [
  "pallet-identity-management 0.1.0 (git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev)",
  "parity-scale-codec 3.2.1",
+ "primitives 0.9.10 (git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev)",
  "scale-info",
  "serde",
  "serde_json",
@@ -4803,7 +4804,7 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-runtime-parachains",
- "primitives",
+ "primitives 0.9.10",
  "runtime-common",
  "scale-info",
  "serde",
@@ -6014,7 +6015,7 @@ dependencies = [
  "pallet-balances",
  "pallet-timestamp",
  "parity-scale-codec 3.2.1",
- "primitives",
+ "primitives 0.9.10",
  "scale-info",
  "sp-arithmetic",
  "sp-core",
@@ -6057,7 +6058,7 @@ dependencies = [
  "pallet-timestamp",
  "parity-crypto",
  "parity-scale-codec 3.2.1",
- "primitives",
+ "primitives 0.9.10",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
  "rsa",
@@ -6271,7 +6272,7 @@ dependencies = [
  "pallet-balances",
  "pallet-session",
  "parity-scale-codec 3.2.1",
- "primitives",
+ "primitives 0.9.10",
  "scale-info",
  "serde",
  "similar-asserts",
@@ -6626,7 +6627,7 @@ dependencies = [
  "pallet-balances",
  "pallet-timestamp",
  "parity-scale-codec 3.2.1",
- "primitives",
+ "primitives 0.9.10",
  "scale-info",
  "sp-arithmetic",
  "sp-core",
@@ -8313,6 +8314,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "primitives"
+version = "0.9.10"
+source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#a8a24758c94210780c12bf2a0c7101920f53ce4e"
+dependencies = [
+ "sp-core",
+ "sp-runtime",
+]
+
+[[package]]
 name = "prioritized-metered-channel"
 version = "0.2.0"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.28#314298c32ac6df996ea8f3fe23fa5d3768340066"
@@ -9040,7 +9050,7 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-runtime-parachains",
- "primitives",
+ "primitives 0.9.10",
  "runtime-common",
  "scale-info",
  "serde",
@@ -9221,7 +9231,7 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-runtime-parachains",
- "primitives",
+ "primitives 0.9.10",
  "scale-info",
  "sp-core",
  "sp-io",
@@ -11601,9 +11611,9 @@ dependencies = [
 
 [[package]]
 name = "ss58-registry"
-version = "1.30.0"
+version = "1.31.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2486f3d026e958566c6079caef44108cddf0ae6f8a411ef74fb08cdb56e614a"
+checksum = "1de151faef619cb7b5c26b32d42bc7ddccac0d202beb7a84344b44e9232b92f7"
 dependencies = [
  "Inflector",
  "num-format",
