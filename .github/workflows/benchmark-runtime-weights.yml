@@ -92,19 +92,24 @@ jobs:
         run: |
           docker pull litentry/litentry-parachain:runtime-benchmarks
 
+      # TODO: maybe use GHA to start/stop remote instance
       - name: Start remote instance
+        timeout-minutes: 10
         id: start_instance
         run: |
           aws ec2 start-instances --instance-ids ${{ env.INSTANCE_ID }}
-          sleep 3
-          ret=`aws ec2 describe-instance-status --instance-ids ${{ env.INSTANCE_ID }} --query 'InstanceStatuses[0].InstanceState.Name' --output text`
-          cnt=0
-          while [[ "$ret" != "running" && $cnt -lt 5 ]]; do
-            ret=`aws ec2 describe-instance-status --instance-ids ${{ env.INSTANCE_ID }} --query 'InstanceStatuses[0].InstanceState.Name' --output text`
-            cnt=$((cnt + 1))
-            sleep 5
+          sleep 5
+          instance_status="aws ec2 describe-instance-status --instance-ids ${{ env.INSTANCE_ID }} --query 'InstanceStatuses[0].InstanceStatus.Status' --output text"
+          system_status="aws ec2 describe-instance-status --instance-ids ${{ env.INSTANCE_ID }} --query 'InstanceStatuses[0].SystemStatus.Status' --output text"
+          SECONDS=0
+          while : ; do
+            if [ $(eval $instance_status) = "ok" ] && [ $(eval $system_status) = "ok" ]
+              break
+            else
+              sleep 20
+            fi
           done
-          echo "Remote instance running state: $ret, retry count: $cnt"
+          echo "Remote instance reachable now after $SECONDS seconds"
           remote_ip=`aws ec2 describe-instances --filters 'Name=instance-state-name,Values=running' 'Name=instance-id,Values=${{ env.INSTANCE_ID }}' --query 'Reservations[*].Instances[*].[PublicIpAddress]' --output text`
           echo "Running instances ip address: $remote_ip"
           echo "::set-output name=remote_ip::$remote_ip"
@@ -128,13 +133,13 @@ jobs:
           echo "======================"
           git status
 
-      # - name: Stop remote instance
-      #   if: always()
-      #   run: |
-      #     aws ec2 stop-instances --instance-ids ${{ env.INSTANCE_ID }}
-      #     sleep 5
-      #     ret=`aws ec2 describe-instance-status --instance-ids ${{ env.INSTANCE_ID }} | jq '.InstanceStatuses[0].InstanceState.Name'`
-      #     echo "Remote instance running state: $ret"
+      - name: Stop remote instance
+        if: always()
+        run: |
+          aws ec2 stop-instances --instance-ids ${{ env.INSTANCE_ID }}
+          sleep 5
+          ret=`aws ec2 describe-instance-status --instance-ids ${{ env.INSTANCE_ID }} | jq '.InstanceStatuses[0].InstanceState.Name'`
+          echo "Remote instance running state: $ret"
 
       - name: Create auto PR
         uses: peter-evans/create-pull-request@v3
