@@ -5,7 +5,8 @@ on:
     inputs:
       rebuild-docker:
         type: boolean
-        description: if the runtime-benchmarks image should be rebuilt or pulled from hub
+        # if the runtime-benchmarks image should be rebuilt or pulled from hub
+        description: rebuild-docker
         required: true
         default: true
       litentry:
@@ -59,6 +60,10 @@ jobs:
   benchmark:
     runs-on: self-hosted
     needs: build-docker
+    # see https://github.com/actions/runner/issues/491
+    if: |
+      always() &&
+      (needs.build-docker.result == 'success' || needs.build-docker.result == 'skipped') 
     steps:
       - name: Set env
         run: |
