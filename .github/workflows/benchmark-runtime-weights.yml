@@ -111,7 +111,12 @@ jobs:
 
       - name: debug
         run: |
-           ssh -x -o StrictHostKeychecking=no "18.140.239.54" -l ${{ env.BENCHMARK_SSH_USER }} -i ${{ env.BENCHMARK_SSH_KEYPATH }} pwd
+            arg="${{ github.event.inputs.pallets }}"
+            chain="${{ env.CHAIN }}"
+            if [ "$arg" = "*" ]; then
+              arg="\\$arg";
+            fi
+            ssh -x -o StrictHostKeychecking=no "18.140.239.54" -l ${{ env.BENCHMARK_SSH_USER }} -i ${{ env.BENCHMARK_SSH_KEYPATH }} 'bash -s' < scripts/benchmark-weight-remote.sh "$c" "${GITHUB_REF#refs/heads/}" "$arg"
 
       # exit status should propagate through ssh
       # - name: Remotely benchmark pallets ${{ github.event.inputs.pallets }} for ${{ env.CHAIN }}
