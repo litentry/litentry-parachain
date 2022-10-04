@@ -26,9 +26,9 @@ mod tests;
 mod benchmarking;
 
 pub mod hashing;
-mod weights;
-
+pub mod weights;
 pub use pallet::*;
+pub use weights::WeightInfo;
 
 #[frame_support::pallet]
 pub mod pallet {

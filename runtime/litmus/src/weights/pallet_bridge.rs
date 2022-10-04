@@ -94,10 +94,11 @@ impl<T: frame_system::Config> pallet_bridge::WeightInfo for WeightInfo<T> {
 	// Storage: ChainBridge Votes (r:1 w:1)
 	// Storage: ChainBridge RelayerThreshold (r:1 w:0)
 	// Storage: ChainBridge RelayerCount (r:1 w:0)
-	fn acknowledge_proposal() -> Weight {
+	fn acknowledge_proposal(x:u32,) -> Weight {
 		(46_067_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+			.saturating_add(x as Weight)
 	}
 	// Storage: ChainBridge Relayers (r:1 w:0)
 	// Storage: ChainBridge ChainNonces (r:1 w:0)
@@ -113,9 +114,10 @@ impl<T: frame_system::Config> pallet_bridge::WeightInfo for WeightInfo<T> {
 	// Storage: ChainBridge Votes (r:1 w:1)
 	// Storage: ChainBridge RelayerThreshold (r:1 w:0)
 	// Storage: ChainBridge RelayerCount (r:1 w:0)
-	fn eval_vote_state() -> Weight {
+	fn eval_vote_state(x:u32,) -> Weight {
 		(16_176_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+			.saturating_add(x as Weight)
 	}
 }
