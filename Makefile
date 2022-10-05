@@ -177,9 +177,9 @@ clippy:
 
 .PHONY: clippyfix ## cargo clippy --fix
 clippyfix:
-	SKIP_WASM_BUILD=1 cargo clippy --fix --workspace --all-targets --all-features -- -D warnings
+	SKIP_WASM_BUILD=1 cargo clippy --allow-dirty --allow-staged --fix --workspace --all-targets --all-features -- -D warnings
 
-.PHONY: cargofix ## cargo clippy --fix
+.PHONY: cargofix ## cargo fix
 cargofix:
 	cargo fix --allow-dirty --allow-staged --workspace --all-targets --all-features
 

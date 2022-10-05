@@ -21,6 +21,9 @@ pub use constants::*;
 pub use opaque::*;
 pub use types::*;
 
+mod key;
+pub use key::*;
+
 /// Common types of parachains.
 mod types {
 	use sp_runtime::{

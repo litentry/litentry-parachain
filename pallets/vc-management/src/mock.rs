@@ -16,7 +16,7 @@
 
 #![cfg(test)]
 
-use crate as pallet_identity_management;
+use crate as pallet_vc_management;
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{ConstU128, ConstU16, ConstU32, ConstU64, Everything},
@@ -44,7 +44,7 @@ frame_support::construct_runtime!(
 		System: frame_system,
 		Balances: pallet_balances,
 		Timestamp: pallet_timestamp,
-		IdentityManagement: pallet_identity_management,
+		VCManagement: pallet_vc_management,
 	}
 );
 
@@ -102,9 +102,8 @@ ord_parameter_types! {
 	pub const One: u64 = 1;
 }
 
-impl pallet_identity_management::Config for Test {
+impl pallet_vc_management::Config for Test {
 	type Event = Event;
-	type WeightInfo = ();
 	type TEECallOrigin = EnsureSignedBy<One, u64>;
 }
 
