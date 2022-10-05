@@ -29,18 +29,17 @@ use aes_gcm::{
 	Aes256Gcm,
 };
 
-pub use pallet_identity_management::{
-	AesOutput, USER_SHIELDING_KEY_LEN, USER_SHIELDING_KEY_NONCE_LEN,
-};
+pub use primitives::{AesOutput, USER_SHIELDING_KEY_LEN, USER_SHIELDING_KEY_NONCE_LEN};
 
+#[rustfmt::skip]
 // The hardcoded exemplary shielding keys for mocking
 // openssl always generates a mix of X509 pub key and pkcs1 private key
 // see https://stackoverflow.com/questions/10783366/how-to-generate-pkcs1-rsa-keys-in-pem-format
 //
 // commands used to generate keys:
-// 1. openssl genrsa -out pallets/identity-management-mock/src/rsa_key_examples/pkcs1/3072-priv.pem
-// 3072 2. openssl rsa -in pallets/identity-management-mock/src/rsa_key_examples/pkcs1/3072-priv.pem
-// -pubout -out \    pallets/identity-management-mock/src/rsa_key_examples/pkcs1/3072-pub.pem
+// 1. openssl genrsa -out pallets/identity-management-mock/src/rsa_key_examples/pkcs1/3072-priv.pem 3072
+// 2. openssl rsa -in pallets/identity-management-mock/src/rsa_key_examples/pkcs1/3072-priv.pem \
+//    -pubout -out pallets/identity-management-mock/src/rsa_key_examples/pkcs1/3072-pub.pem
 //
 // we use 3072-bit RSA as TEE shielding key
 const MOCK_TEE_SHIELDING_KEY_PRIV: &str = include_str!("rsa_key_examples/pkcs1/3072-priv.pem");
@@ -74,6 +73,19 @@ pub(crate) fn aes_encrypt(
 // encrypt the plaintext `data` with null aad and random nonce
 pub fn aes_encrypt_default(key: &[u8; USER_SHIELDING_KEY_LEN], data: &[u8]) -> AesOutput {
 	aes_encrypt(key, data, b"", MOCK_NONCE)
+}
+
+// encrypt the given data using the mock tee shielding key
+#[cfg(test)]
+pub fn tee_encrypt(data: &[u8]) -> Vec<u8> {
+	use sha2::Sha256;
+	let (public_key, _) = get_mock_tee_shielding_key();
+	// encrypt with public key
+	let mut rng = rand::thread_rng();
+
+	public_key
+		.encrypt(&mut rng, PaddingScheme::new_oaep::<Sha256>(), data)
+		.expect("failed to encrypt")
 }
 
 #[cfg(test)]
@@ -110,12 +122,12 @@ mod test {
 		let mut rng = ChaCha8Rng::from_seed([42; 32]);
 		let data = b"hello world";
 		let enc_data = public_key
-			.encrypt(&mut rng, PaddingScheme::new_pkcs1v15_encrypt(), &data[..])
+			.encrypt(&mut rng, PaddingScheme::new_oaep::<Sha256>(), &data[..])
 			.expect("failed to encrypt");
 
 		// decrypt with private key
 		let dec_data = private_key
-			.decrypt(PaddingScheme::new_pkcs1v15_encrypt(), &enc_data)
+			.decrypt(PaddingScheme::new_oaep::<Sha256>(), &enc_data)
 			.expect("failed to decrypt");
 		assert_eq!(&data[..], &dec_data[..]);
 	}

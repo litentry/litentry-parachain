@@ -44,15 +44,8 @@ pub mod weights;
 pub use crate::weights::WeightInfo;
 pub use pallet::*;
 
-mod key;
-pub use key::*;
-
-use sp_core::H256;
+pub use primitives::{AesOutput, ShardIdentifier};
 use sp_std::vec::Vec;
-
-// enclave related types
-pub type ShardIdentifier = H256;
-pub type MrenclaveType = [u8; 32];
 
 // fn types for handling inside tee-worker
 pub type SetUserShieldingKeyFn = ([u8; 2], ShardIdentifier, Vec<u8>);
@@ -74,8 +67,8 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type WeightInfo: WeightInfo;
-		// the origin allowed to call event-triggering extrinsics, normally TEE
-		type EventTriggerOrigin: EnsureOrigin<Self::Origin>;
+		// some extrinsics should only be called by origins from TEE
+		type TEECallOrigin: EnsureOrigin<Self::Origin>;
 	}
 
 	#[pallet::event]
@@ -86,7 +79,7 @@ pub mod pallet {
 		UnlinkIdentityRequested { shard: ShardIdentifier },
 		VerifyIdentityRequested { shard: ShardIdentifier },
 		SetUserShieldingKeyRequested { shard: ShardIdentifier },
-		// event that should be triggered by TriggerEventOrigin
+		// event that should be triggered by TEECallOrigin
 		UserShieldingKeySet { account: AesOutput },
 		ChallengeCodeGenerated { account: AesOutput, identity: AesOutput, code: AesOutput },
 		IdentityLinked { account: AesOutput, identity: AesOutput },
@@ -174,7 +167,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			account: AesOutput,
 		) -> DispatchResultWithPostInfo {
-			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::UserShieldingKeySet { account });
 			Ok(Pays::No.into())
 		}
@@ -186,7 +179,7 @@ pub mod pallet {
 			identity: AesOutput,
 			code: AesOutput,
 		) -> DispatchResultWithPostInfo {
-			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::ChallengeCodeGenerated { account, identity, code });
 			Ok(Pays::No.into())
 		}
@@ -197,7 +190,7 @@ pub mod pallet {
 			account: AesOutput,
 			identity: AesOutput,
 		) -> DispatchResultWithPostInfo {
-			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::IdentityLinked { account, identity });
 			Ok(Pays::No.into())
 		}
@@ -208,7 +201,7 @@ pub mod pallet {
 			account: AesOutput,
 			identity: AesOutput,
 		) -> DispatchResultWithPostInfo {
-			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::IdentityUnlinked { account, identity });
 			Ok(Pays::No.into())
 		}
@@ -219,7 +212,7 @@ pub mod pallet {
 			account: AesOutput,
 			identity: AesOutput,
 		) -> DispatchResultWithPostInfo {
-			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::IdentityVerified { account, identity });
 			Ok(Pays::No.into())
 		}
@@ -230,7 +223,7 @@ pub mod pallet {
 			func: Vec<u8>,
 			error: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
-			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::SomeError { func, error });
 			Ok(Pays::No.into())
 		}

@@ -1507,9 +1507,7 @@ pub mod pallet {
 		}
 		/// Best as in most cumulatively supported in terms of stake
 		/// Returns [collator_count, delegation_count, total staked]
-		/// // WARNING/TODO: We change the private into public of select_top_candidates function in
-		/// pallet. We should change it back in next runtime upgrade for safety.
-		pub fn select_top_candidates(now: RoundIndex) -> (u32, u32, BalanceOf<T>) {
+		fn select_top_candidates(now: RoundIndex) -> (u32, u32, BalanceOf<T>) {
 			let (mut collator_count, mut delegation_count, mut total) =
 				(0u32, 0u32, BalanceOf::<T>::zero());
 			// choose the top TotalSelected qualified candidates, ordered by stake

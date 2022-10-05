@@ -37,9 +37,11 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+use codec::alloc::string::ToString;
 use frame_support::{pallet_prelude::*, traits::ConstU32};
 pub use pallet::*;
-use pallet_identity_management::{MrenclaveType, ShardIdentifier};
+use primitives::{ShardIdentifier, UserShieldingKeyType};
+use sha2::Sha256;
 use sp_core::{ed25519, sr25519};
 use sp_io::{
 	crypto::{
@@ -58,12 +60,8 @@ mod identity_context;
 use identity_context::IdentityContext;
 
 mod key;
-use key::{
-	aes_encrypt_default, get_mock_tee_shielding_key, AesOutput, PaddingScheme,
-	USER_SHIELDING_KEY_LEN,
-};
+use key::{aes_encrypt_default, get_mock_tee_shielding_key, AesOutput, PaddingScheme};
 
-pub type UserShieldingKey = [u8; USER_SHIELDING_KEY_LEN];
 pub type ChallengeCode = [u8; 16]; // TODO: is 16 bytes enough?
 pub(crate) type Metadata = BoundedVec<u8, ConstU32<2048>>;
 pub(crate) type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
@@ -72,7 +70,6 @@ pub(crate) type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
 pub mod pallet {
 	use super::*;
 	use frame_system::pallet_prelude::*;
-	use pallet_identity_management::UserShieldingKeyType;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -84,14 +81,11 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// origin to manage caller whitelist
 		type ManageWhitelistOrigin: EnsureOrigin<Self::Origin>;
-		/// basically the mocked enclave hash
-		#[pallet::constant]
-		type Mrenclave: Get<MrenclaveType>;
 		// maximum delay in block numbers between linking an identity and verifying an identity
 		#[pallet::constant]
 		type MaxVerificationDelay: Get<BlockNumberOf<Self>>;
-		// the origin allowed to call event-triggering extrinsics, normally TEE
-		type EventTriggerOrigin: EnsureOrigin<Self::Origin>;
+		// some extrinsics should only be called by origins from TEE
+		type TEECallOrigin: EnsureOrigin<Self::Origin>;
 	}
 
 	#[pallet::event]
@@ -197,8 +191,6 @@ pub mod pallet {
 		LinkingRequestBlockZero,
 		/// the challenge code doesn't exist
 		ChallengeCodeNotExist,
-		/// compute evm message digest failed
-		ComputeEvmMessageDigestFailed,
 		/// wrong signature type
 		WrongSignatureType,
 		/// wrong web3 network type
@@ -207,6 +199,8 @@ pub mod pallet {
 		WrongIdentityHanldeType,
 		/// fail to recover evm address
 		RecoverEvmAddressFailed,
+		/// the message in validation data is unexpected
+		UnexpectedMessage,
 	}
 
 	#[pallet::storage]
@@ -218,7 +212,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn user_shielding_keys)]
 	pub type UserShieldingKeys<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AccountId, UserShieldingKey, OptionQuery>;
+		StorageMap<_, Blake2_128Concat, T::AccountId, UserShieldingKeyType, OptionQuery>;
 
 	/// challenge code is per Litentry account + identity
 	#[pallet::storage]
@@ -441,6 +435,14 @@ pub mod pallet {
 				c.verification_request_block = Some(now);
 
 				*context = Some(c);
+
+				// remove challenge code
+				ensure!(
+					Self::challenge_codes(&who, &identity).is_some(),
+					Error::<T>::ChallengeCodeNotExist
+				);
+				ChallengeCodes::<T>::remove(&who, &identity);
+
 				// emit the IdentityVerified event
 				Self::deposit_event(Event::<T>::IdentityVerifiedPlain {
 					account: who.clone(),
@@ -460,7 +462,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			account: AesOutput,
 		) -> DispatchResultWithPostInfo {
-			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::UserShieldingKeySet { account });
 			Ok(Pays::No.into())
 		}
@@ -472,7 +474,7 @@ pub mod pallet {
 			identity: AesOutput,
 			code: AesOutput,
 		) -> DispatchResultWithPostInfo {
-			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::ChallengeCodeGenerated { account, identity, code });
 			Ok(Pays::No.into())
 		}
@@ -483,7 +485,7 @@ pub mod pallet {
 			account: AesOutput,
 			identity: AesOutput,
 		) -> DispatchResultWithPostInfo {
-			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::IdentityLinked { account, identity });
 			Ok(Pays::No.into())
 		}
@@ -494,7 +496,7 @@ pub mod pallet {
 			account: AesOutput,
 			identity: AesOutput,
 		) -> DispatchResultWithPostInfo {
-			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::IdentityUnlinked { account, identity });
 			Ok(Pays::No.into())
 		}
@@ -505,7 +507,7 @@ pub mod pallet {
 			account: AesOutput,
 			identity: AesOutput,
 		) -> DispatchResultWithPostInfo {
-			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::IdentityVerified { account, identity });
 			Ok(Pays::No.into())
 		}
@@ -516,7 +518,7 @@ pub mod pallet {
 			func: Vec<u8>,
 			error: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
-			let _ = T::EventTriggerOrigin::ensure_origin(origin)?;
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::SomeError { func, error });
 			Ok(Pays::No.into())
 		}
@@ -526,7 +528,7 @@ pub mod pallet {
 		fn decrypt_with_tee_shielding_key(encrypted_data: &[u8]) -> Result<Vec<u8>, DispatchError> {
 			let (_, private_key) = get_mock_tee_shielding_key();
 			let decrypted_data = private_key
-				.decrypt(PaddingScheme::new_pkcs1v15_encrypt(), encrypted_data)
+				.decrypt(PaddingScheme::new_oaep::<Sha256>(), encrypted_data)
 				.map_err(|_| Error::<T>::ShieldingKeyDecryptionFailed)?;
 			Ok(decrypted_data)
 		}
@@ -542,7 +544,14 @@ pub mod pallet {
 			identity: &Identity,
 			validation_data: &Web3CommonValidationData,
 		) -> DispatchResult {
-			let msg = Self::get_expected_web3_message(who, identity)?;
+			let code =
+				Self::challenge_codes(who, identity).ok_or(Error::<T>::ChallengeCodeNotExist)?;
+			let msg = Self::get_expected_web3_message(who, identity, &code)?;
+
+			ensure!(
+				msg.as_slice() == validation_data.message.as_slice(),
+				Error::<T>::UnexpectedMessage
+			);
 
 			let substrate_address = match &identity.web_type {
 				IdentityWebType::Web3(Web3Network::Substrate(_)) => match &identity.handle {
@@ -588,9 +597,10 @@ pub mod pallet {
 			identity: &Identity,
 			validation_data: &Web3CommonValidationData,
 		) -> DispatchResult {
-			let msg = Self::get_expected_web3_message(who, identity)?;
-			let digest = Self::compute_evm_msg_digest(msg)
-				.map_err(|_| Error::<T>::ComputeEvmMessageDigestFailed)?;
+			let code =
+				Self::challenge_codes(who, identity).ok_or(Error::<T>::ChallengeCodeNotExist)?;
+			let msg = Self::get_expected_web3_message(who, identity, &code)?;
+			let digest = Self::compute_evm_msg_digest(&msg);
 			if let IdentityMultiSignature::Ethereum(sig) = &validation_data.signature {
 				let recovered_evm_address = Self::recover_evm_address(&digest, sig.as_ref())
 					.map_err(|_| Error::<T>::RecoverEvmAddressFailed)?;
@@ -614,48 +624,26 @@ pub mod pallet {
 		// web3 message format: <challeng-code> + <litentry-AccountId32> + <Identity>, where
 		// <> means SCALE-encoded
 		// TODO: do we want to apply the same for web2 message?(= discard JSON format)
-		fn get_expected_web3_message(
+		pub fn get_expected_web3_message(
 			who: &T::AccountId,
 			identity: &Identity,
+			code: &ChallengeCode,
 		) -> Result<Vec<u8>, DispatchError> {
-			let code =
-				Self::challenge_codes(who, identity).ok_or(Error::<T>::ChallengeCodeNotExist)?;
 			let mut msg = code.encode();
 			msg.append(&mut who.encode());
 			msg.append(&mut identity.encode());
 			Ok(msg)
 		}
 
-		// mostly copied from the old account-linker, the msg digest is computed using EIP-191
-		// TODO: use external crates
-		fn compute_evm_msg_digest(mut msg: Vec<u8>) -> Result<[u8; 32], &'static str> {
-			let mut length_bytes = Self::usize_to_u8_array(msg.len())?;
-			let mut eth_bytes = b"\x19Ethereum Signed Message:\n".encode();
-			eth_bytes.append(&mut length_bytes);
-			eth_bytes.append(&mut msg);
-			Ok(keccak_256(&eth_bytes))
-		}
-
-		/// Convert a usize type to a u8 array.
-		/// The input is first converted as a string with decimal presentation,
-		/// and then this string is converted to a byte array with UTF8 encoding.
-		/// To avoid unnecessary complexity, the current function supports up to
-		/// 2 digits unsigned decimal (range 0 - 99)
-		fn usize_to_u8_array(length: usize) -> Result<Vec<u8>, &'static str> {
-			if length >= 100 {
-				Err("Unexpected ethereum message length!")
-			} else {
-				let digits = b"0123456789".encode();
-				let tens = length / 10;
-				let ones = length % 10;
-
-				let mut vec_res: Vec<u8> = Vec::new();
-				if tens != 0 {
-					vec_res.push(digits[tens]);
-				}
-				vec_res.push(digits[ones]);
-				Ok(vec_res)
-			}
+		// we use an EIP-191 message has computing
+		pub fn compute_evm_msg_digest(message: &[u8]) -> [u8; 32] {
+			let eip_191_message = [
+				"\x19Ethereum Signed Message:\n".as_bytes(),
+				message.len().to_string().as_bytes(),
+				message,
+			]
+			.concat();
+			keccak_256(&eip_191_message)
 		}
 
 		fn recover_evm_address(
