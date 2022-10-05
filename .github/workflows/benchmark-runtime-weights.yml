@@ -3,6 +3,12 @@ name: Benchmark runtime weights
 on:
   workflow_dispatch:
     inputs:
+      rebuild-docker:
+        type: boolean
+        # if the runtime-benchmarks image should be rebuilt or pulled from hub
+        description: rebuild-docker
+        required: true
+        default: true
       litentry:
         type: boolean
         description: litentry
@@ -24,13 +30,40 @@ on:
         required: true
 
 env:
-  INSTANCE_ID: ${{ secrets.BENCHMARK_INSTANCE_ID }} # remote host to run benchmarking upon, must be reachable per ssh
+  INSTANCE_ID: ${{ secrets.BENCHMARK_INSTANCE_ID }}  # remote AWS host to run benchmarking
   BENCHMARK_SSH_USER: ${{ secrets.BENCHMARK_SSH_USER }}
   BENCHMARK_SSH_KEYPATH: ${{ secrets.BENCHMARK_SSH_KEYPATH }}
 jobs:
-  ## build docker image with runtime-benchmarks feature, and then run the benchmarking remotely
-  build-and-benchmark:
+  ## build docker image with runtime-benchmarks feature
+  build-docker:
+    if: ${{ github.event.inputs.rebuild-docker == 'true' }}
     runs-on: self-hosted
+    steps:
+      - name: Checkout codes on ${{ github.ref }}
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Build docker image
+        run: |
+          ./scripts/build-docker.sh production runtime-benchmarks --features=runtime-benchmarks
+
+      - name: Push docker image
+        run: |
+          docker push litentry/litentry-parachain:runtime-benchmarks
+
+      - name: Remove dangling images if any
+        run: |
+          [ -z "$(docker images --filter=dangling=true -q)" ] || docker rmi -f $(docker images --filter=dangling=true -q)
+
+  ## run the benchmarking remotely
+  benchmark:
+    runs-on: self-hosted
+    needs: build-docker
+    # see https://github.com/actions/runner/issues/491
+    if: |
+      always() &&
+      (needs.build-docker.result == 'success' || needs.build-docker.result == 'skipped') 
     steps:
       - name: Set env
         run: |
@@ -55,31 +88,28 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Build docker image
+      - name: Pull docker image
         run: |
-          ./scripts/build-docker.sh production runtime-benchmarks --features=runtime-benchmarks
+          docker pull litentry/litentry-parachain:runtime-benchmarks
 
-      - name: Push docker image
-        run: |
-          docker push litentry/litentry-parachain:runtime-benchmarks
-
-      - name: Remove dangling images if any
-        run: |
-          [ -z "$(docker images --filter=dangling=true -q)" ] || docker rmi -f $(docker images --filter=dangling=true -q)
-
+      # TODO: maybe use GHA to start/stop remote instance
       - name: Start remote instance
+        timeout-minutes: 10
         id: start_instance
         run: |
           aws ec2 start-instances --instance-ids ${{ env.INSTANCE_ID }}
-          sleep 3
-          ret=`aws ec2 describe-instance-status --instance-ids ${{ env.INSTANCE_ID }} --query 'InstanceStatuses[0].InstanceState.Name' --output text`
-          cnt=0
-          while [[ "$ret" != "running" && $cnt -lt 5 ]]; do
-            ret=`aws ec2 describe-instance-status --instance-ids ${{ env.INSTANCE_ID }} --query 'InstanceStatuses[0].InstanceState.Name' --output text`
-            cnt=$((cnt + 1))
-            sleep 2
+          sleep 5
+          instance_status="aws ec2 describe-instance-status --instance-ids ${{ env.INSTANCE_ID }} --query 'InstanceStatuses[0].InstanceStatus.Status' --output text"
+          system_status="aws ec2 describe-instance-status --instance-ids ${{ env.INSTANCE_ID }} --query 'InstanceStatuses[0].SystemStatus.Status' --output text"
+          SECONDS=0
+          while : ; do
+            if [ "$(eval $instance_status)" = "ok" ] && [ "$(eval $system_status)" = "ok" ]; then
+              break
+            else
+              sleep 20
+            fi
           done
-          echo "Remote instance running state: $ret, retry count: $cnt"
+          echo "Remote instance reachable now after $SECONDS seconds"
           remote_ip=`aws ec2 describe-instances --filters 'Name=instance-state-name,Values=running' 'Name=instance-id,Values=${{ env.INSTANCE_ID }}' --query 'Reservations[*].Instances[*].[PublicIpAddress]' --output text`
           echo "Running instances ip address: $remote_ip"
           echo "::set-output name=remote_ip::$remote_ip"
