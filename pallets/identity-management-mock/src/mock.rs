@@ -123,7 +123,7 @@ impl pallet_identity_management_mock::Config for Test {
 	type Event = Event;
 	type ManageWhitelistOrigin = EnsureRoot<Self::AccountId>;
 	type MaxVerificationDelay = ConstU64<10>;
-	type EventTriggerOrigin = EnsureSignedBy<One, u64>;
+	type TEECallOrigin = EnsureSignedBy<One, u64>;
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
