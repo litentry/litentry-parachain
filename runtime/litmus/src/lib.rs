@@ -33,7 +33,6 @@ use frame_support::{
 	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
 	PalletId, RuntimeDebug,
 };
-use frame_system::EnsureRoot;
 
 // for TEE
 pub use pallet_balances::Call as BalancesCall;
@@ -357,7 +356,7 @@ impl pallet_scheduler::Config for Runtime {
 	type PalletsOrigin = OriginCaller;
 	type Call = Call;
 	type MaximumWeight = MaximumSchedulerWeight;
-	type ScheduleOrigin = EnsureRoot<AccountId>;
+	type ScheduleOrigin = EnsureRootOrAllCouncil;
 	type MaxScheduledPerBlock = ConstU32<50>;
 	type WeightInfo = weights::pallet_scheduler::WeightInfo<Runtime>;
 	type OriginPrivilegeCmp = frame_support::traits::EqualPrivilegeOnly;
@@ -374,7 +373,7 @@ impl pallet_preimage::Config for Runtime {
 	type WeightInfo = weights::pallet_preimage::WeightInfo<Runtime>;
 	type Event = Event;
 	type Currency = Balances;
-	type ManagerOrigin = EnsureRoot<AccountId>;
+	type ManagerOrigin = EnsureRootOrAllCouncil;
 	type MaxSize = PreimageMaxSize;
 	type BaseDeposit = PreimageBaseDeposit;
 	type ByteDeposit = PreimageByteDeposit;
@@ -459,7 +458,7 @@ impl pallet_democracy::Config for Runtime {
 	// To cancel a proposal before it has been passed, the technical committee must be unanimous or
 	// Root must agree.
 	type CancelProposalOrigin = EnsureRootOrAllTechnicalCommittee;
-	type BlacklistOrigin = EnsureRoot<AccountId>;
+	type BlacklistOrigin = EnsureRootOrAllCouncil;
 	// Any single technical committee member may veto a coming council proposal, however they can
 	// only do it once and it lasts only for the cool-off period.
 	type VetoOrigin = pallet_collective::EnsureMember<AccountId, TechnicalCommitteeInstance>;
@@ -613,8 +612,8 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type ChannelInfo = ParachainSystem;
 	// We use pallet_xcm to confirm the version of xcm
 	type VersionWrapper = PolkadotXcm;
-	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
-	type ControllerOrigin = EnsureRoot<AccountId>;
+	type ExecuteOverweightOrigin = EnsureRootOrAllCouncil;
+	type ControllerOrigin = EnsureRootOrAllCouncil;
 	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
 	type WeightInfo = weights::cumulus_pallet_xcmp_queue::WeightInfo<Runtime>;
 }
@@ -622,7 +621,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 impl cumulus_pallet_dmp_queue::Config for Runtime {
 	type Event = Event;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
+	type ExecuteOverweightOrigin = EnsureRootOrAllCouncil;
 }
 
 parameter_types! {
@@ -786,15 +785,15 @@ impl pallet_identity_management::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = ();
 	// TODO: use the real TEE account
-	type EventTriggerOrigin = EnsureRoot<AccountId>;
+	type EventTriggerOrigin = EnsureRootOrAllCouncil;
 }
 
 impl pallet_identity_management_mock::Config for Runtime {
 	type Event = Event;
-	type ManageWhitelistOrigin = EnsureRoot<Self::AccountId>;
+	type ManageWhitelistOrigin = EnsureRootOrAllCouncil;
 	type MaxVerificationDelay = ConstU32<10>;
 	// TODO: use the real TEE account
-	type EventTriggerOrigin = EnsureRoot<AccountId>;
+	type EventTriggerOrigin = EnsureRootOrAllCouncil;
 }
 
 impl runtime_common::BaseRuntimeRequirements for Runtime {}
