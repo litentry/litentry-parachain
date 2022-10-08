@@ -15,6 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 // Define the user shielding key constant and struct
+// Put it in primitives as it will be used by multiple pallets/external crates
 
 #[cfg(feature = "std")]
 extern crate std;
@@ -24,6 +25,9 @@ use sp_std::prelude::*;
 
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
+
+pub type ShardIdentifier = sp_core::H256;
+pub type MrenclaveType = [u8; 32];
 
 // we use 256-bit AES-GCM as user shielding key
 pub const USER_SHIELDING_KEY_LEN: usize = 32;

@@ -2,7 +2,7 @@
 authors = ['Litentry Dev']
 edition = '2021'
 homepage = 'https://litentry.com'
-name = 'pallet-identity-management'
+name = 'pallet-vc-management'
 repository = 'https://github.com/litentry/litentry-parachain'
 version = '0.1.0'
 
@@ -22,12 +22,12 @@ sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28", default-features = false }
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28", default-features = false }
 
+# local
+primitives = { path = "../../primitives", default-features = false }
+
 # benchmarking
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28", default-features = false, optional = true }
 hex = { version = "0.4", default-features = false }
-
-# local
-primitives = { path = "../../primitives", default-features = false }
 
 [dev-dependencies]
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.28" }

@@ -21,7 +21,22 @@ use sp_core::H256;
 const TEST_MRENCLAVE: [u8; 32] = [2u8; 32];
 
 #[test]
-fn test_link_identity() {
+fn set_user_shielding_key_works() {
+	new_test_ext().execute_with(|| {
+		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
+		assert_ok!(IdentityManagement::set_user_shielding_key(
+			Origin::signed(1),
+			shard,
+			vec![1u8; 2048]
+		));
+		System::assert_last_event(Event::IdentityManagement(
+			crate::Event::SetUserShieldingKeyRequested { shard },
+		));
+	});
+}
+
+#[test]
+fn link_identity_works() {
 	new_test_ext().execute_with(|| {
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
 		assert_ok!(IdentityManagement::link_identity(
@@ -37,7 +52,7 @@ fn test_link_identity() {
 }
 
 #[test]
-fn test_unlink_identity() {
+fn unlink_identity_works() {
 	new_test_ext().execute_with(|| {
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
 		assert_ok!(IdentityManagement::unlink_identity(Origin::signed(1), shard, vec![1u8; 2048]));
@@ -48,7 +63,7 @@ fn test_unlink_identity() {
 }
 
 #[test]
-fn test_verify_identity() {
+fn verify_identity_works() {
 	new_test_ext().execute_with(|| {
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
 		assert_ok!(IdentityManagement::verify_identity(
@@ -59,21 +74,6 @@ fn test_verify_identity() {
 		));
 		System::assert_last_event(Event::IdentityManagement(
 			crate::Event::VerifyIdentityRequested { shard },
-		));
-	});
-}
-
-#[test]
-fn test_set_user_shielding_key() {
-	new_test_ext().execute_with(|| {
-		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
-		assert_ok!(IdentityManagement::set_user_shielding_key(
-			Origin::signed(1),
-			shard,
-			vec![1u8; 2048]
-		));
-		System::assert_last_event(Event::IdentityManagement(
-			crate::Event::SetUserShieldingKeyRequested { shard },
 		));
 	});
 }

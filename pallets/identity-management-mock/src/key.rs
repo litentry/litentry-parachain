@@ -29,18 +29,17 @@ use aes_gcm::{
 	Aes256Gcm,
 };
 
-pub use pallet_identity_management::{
-	AesOutput, USER_SHIELDING_KEY_LEN, USER_SHIELDING_KEY_NONCE_LEN,
-};
+pub use primitives::{AesOutput, USER_SHIELDING_KEY_LEN, USER_SHIELDING_KEY_NONCE_LEN};
 
+#[rustfmt::skip]
 // The hardcoded exemplary shielding keys for mocking
 // openssl always generates a mix of X509 pub key and pkcs1 private key
 // see https://stackoverflow.com/questions/10783366/how-to-generate-pkcs1-rsa-keys-in-pem-format
 //
 // commands used to generate keys:
-// 1. openssl genrsa -out pallets/identity-management-mock/src/rsa_key_examples/pkcs1/3072-priv.pem
-// 3072 2. openssl rsa -in pallets/identity-management-mock/src/rsa_key_examples/pkcs1/3072-priv.pem
-// -pubout -out \    pallets/identity-management-mock/src/rsa_key_examples/pkcs1/3072-pub.pem
+// 1. openssl genrsa -out pallets/identity-management-mock/src/rsa_key_examples/pkcs1/3072-priv.pem 3072
+// 2. openssl rsa -in pallets/identity-management-mock/src/rsa_key_examples/pkcs1/3072-priv.pem \
+//    -pubout -out pallets/identity-management-mock/src/rsa_key_examples/pkcs1/3072-pub.pem
 //
 // we use 3072-bit RSA as TEE shielding key
 const MOCK_TEE_SHIELDING_KEY_PRIV: &str = include_str!("rsa_key_examples/pkcs1/3072-priv.pem");
