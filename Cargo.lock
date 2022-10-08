@@ -4737,7 +4737,7 @@ dependencies = [
 [[package]]
 name = "litentry-primitives"
 version = "0.1.0"
-source = "git+https://github.com/litentry/tee-worker?branch=88-wrong-signer-origin#0726bc78435ecbb10cb06a6cf90982ceaa1f7ade"
+source = "git+https://github.com/litentry/tee-worker#e0b91fb9aa19f13369d0a0bd83519812acfbc5b6"
 dependencies = [
  "parity-scale-codec 3.2.1",
  "primitives 0.9.10 (git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev)",

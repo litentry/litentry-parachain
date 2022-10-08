@@ -29,7 +29,7 @@ hex = { version = "0.4", default-features = false }
 hex-literal = { version = "0.3.2" }
 rsa = { git = "https://github.com/litentry/RustCrypto-RSA", default-features = false, features = ["serde", "pem"] }
 sha2 = { version = "0.10.2", default-features = false }
-tee-primitives = { git = "https://github.com/litentry/tee-worker", package = "litentry-primitives", branch = "88-wrong-signer-origin", default-features = false }
+tee-primitives = { git = "https://github.com/litentry/tee-worker", package = "litentry-primitives", default-features = false }
 
 [dev-dependencies]
 aes-gcm = { git = "https://github.com/RustCrypto/AEADs" }
