@@ -105,7 +105,10 @@ benchmarks! {
 		let src_id:BridgeChainId = 5;
 		let r_id:ResourceId = derive_resource_id(src_id, b"remark");
 
-		let proposal = make_proposal::<T>(vec![15]);
+		let i in 0..10;
+		let length = 100;
+		let proposal = make_proposal::<T>(vec![i as u8;length]);
+
 		let method = vec![0u8];
 
 		bridge::<T>::add_relayer(
@@ -134,7 +137,7 @@ benchmarks! {
 		let src_id:BridgeChainId = 5;
 		let r_id:ResourceId = derive_resource_id(src_id, b"remark");
 
-		let proposal = make_proposal::<T>(vec![16]);
+		let proposal = make_proposal::<T>(vec![]);
 
 		let method = vec![0u8];
 
@@ -168,7 +171,9 @@ benchmarks! {
 		let src_id:BridgeChainId = 5;
 		let r_id:ResourceId = derive_resource_id(src_id, b"remark");
 
-		let proposal = make_proposal::<T>(vec![17]);
+		let i in 0..10;
+		let length = 100;
+		let proposal = make_proposal::<T>(vec![i as u8;length]);
 
 		let method = vec![0u8];
 
