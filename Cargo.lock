@@ -4788,7 +4788,6 @@ dependencies = [
  "pallet-scheduler",
  "pallet-session",
  "pallet-sidechain",
- "pallet-sudo",
  "pallet-teerex",
  "pallet-timestamp",
  "pallet-transaction-payment",

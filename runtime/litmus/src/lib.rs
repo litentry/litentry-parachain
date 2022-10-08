@@ -83,6 +83,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 pub mod asset_config;
 pub mod constants;
+pub mod migration;
 pub mod weights;
 pub mod xcm_config;
 
@@ -132,6 +133,7 @@ pub type Executive = frame_executive::Executive<
 	// it was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
+	migration::RemoveSudoAndStorage<Runtime>,
 >;
 
 impl_opaque_keys! {
@@ -584,11 +586,6 @@ impl pallet_bounties::Config for Runtime {
 	type ChildBountyManager = ();
 }
 
-impl pallet_sudo::Config for Runtime {
-	type Call = Call;
-	type Event = Event;
-}
-
 parameter_types! {
 	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
 	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
@@ -877,9 +874,6 @@ construct_runtime! {
 
 		// Mock
 		IdentityManagementMock: pallet_identity_management_mock = 100,
-
-		// TMP
-		Sudo: pallet_sudo = 255,
 	}
 }
 
@@ -889,8 +883,8 @@ impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
 		if matches!(
 			call,
-			Call::Sudo(_) |
-				Call::System(_) | Call::Timestamp(_) |
+			Call::System(_) |
+				Call::Timestamp(_) |
 				Call::ParachainSystem(_) |
 				Call::ExtrinsicFilter(_) |
 				Call::Multisig(_) |
