@@ -46,7 +46,9 @@ jobs:
 
       - name: Run cargo-tarpaulin
         run: |
-          PACKAGES=$(find pallets/ -name "Cargo.toml" | xargs grep name | tr '"' "'" | sed "s/'$//;s/.*'//" | paste -s -d "," -)
+          PACKAGES=$(find pallets/ -name "Cargo.toml" | while read -r f; do pn=$(grep name "$f" | \
+                     tr '"' "'" | sed "s/'$//;s/.*'//"); f="file://$(pwd)/${f//\/Cargo.toml/#$pn}"; \
+                     cargo pkgid "$f"; done | paste -s -d "," -)
           cargo tarpaulin --no-fail-fast -o Xml -p "$PACKAGES" \
           --exclude-files **/mock.rs **/weights.rs **/benchmarking.rs **/weights/* node/* runtime/*
 
