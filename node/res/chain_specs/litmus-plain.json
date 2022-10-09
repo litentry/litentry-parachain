@@ -169,7 +169,10 @@
       "aura": {
         "authorities": []
       },
-      "auraExt": null
+      "auraExt": null,
+      "sudo": {
+        "key": "5ECCQzRn2nUqDesngcoi7FxLhJBXGSnoEmXiMDZXCj94chRP"
+      }
     }
   }
 }

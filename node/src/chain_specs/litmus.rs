@@ -46,6 +46,7 @@ const DEFAULT_ENDOWED_ACCOUNT_BALANCE: Balance = 1000 * UNIT;
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 struct GenesisInfo {
+	root_key: AccountId,
 	invulnerables: Vec<(AccountId, AuraId)>,
 	candidacy_bond: String,
 	endowed_accounts: Vec<(AccountId, String)>,
