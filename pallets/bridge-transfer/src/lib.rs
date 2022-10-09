@@ -19,13 +19,18 @@
 
 pub use pallet::*;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
 mod tests;
+pub mod weights;
+pub use weights::WeightInfo;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use crate::weights::WeightInfo;
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{fungible::Mutate, Currency, SortedMembers, StorageVersion},
@@ -75,6 +80,9 @@ pub mod pallet {
 		#[pallet::constant]
 		// In parachain local decimal format
 		type ExternalTotalIssuance: Get<bridge::BalanceOf<Self>>;
+
+		/// Weight information for extrinsics in this pallet.
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::event]
@@ -126,7 +134,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Transfers some amount of the native token to some recipient on a (whitelisted)
 		/// destination chain.
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::transfer_native())]
 		#[transactional]
 		pub fn transfer_native(
 			origin: OriginFor<T>,
@@ -146,7 +154,7 @@ pub mod pallet {
 		}
 
 		/// Executes a simple currency transfer using the bridge account as the source
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::transfer())]
 		pub fn transfer(
 			origin: OriginFor<T>,
 			to: T::AccountId,
@@ -173,7 +181,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_maximum_issuance())]
 		pub fn set_maximum_issuance(
 			origin: OriginFor<T>,
 			maximum_issuance: bridge::BalanceOf<T>,
@@ -186,7 +194,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_external_balances())]
 		pub fn set_external_balances(
 			origin: OriginFor<T>,
 			external_balances: bridge::BalanceOf<T>,
