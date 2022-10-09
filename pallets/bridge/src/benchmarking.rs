@@ -107,7 +107,6 @@ benchmarks! {
 
 		let i in 0..10;
 		let length = 100;
-		// let proposal = make_proposal::<T>(vec![i as u8;length]);
 
 
 		let method = vec![0u8];
@@ -175,7 +174,6 @@ benchmarks! {
 
 		let i in 0..10;
 		let length = 100;
-		// let proposal = make_proposal::<T>(vec![i as u8;length]);
 
 		let method = vec![0u8];
 
