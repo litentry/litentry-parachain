@@ -49,10 +49,10 @@ pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_bridge::WeightInfo for WeightInfo<T> {
 	// Storage: ChainBridge RelayerThreshold (r:0 w:1)
 	/// The range of component `i` is `[1, 100]`.
-	fn set_threshold(i: u32, ) -> Weight {
+	fn set_threshold() -> Weight {
 		(13_120_000 as Weight)
 			// Standard Error: 0
-			.saturating_add((2_000 as Weight).saturating_mul(i as Weight))
+			.saturating_add(2_000 as Weight)
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: ChainBridge Resources (r:0 w:1)
@@ -97,10 +97,10 @@ impl<T: frame_system::Config> pallet_bridge::WeightInfo for WeightInfo<T> {
 	// Storage: ChainBridge RelayerThreshold (r:1 w:0)
 	// Storage: ChainBridge RelayerCount (r:1 w:0)
 	/// The range of component `i` is `[0, 10]`.
-	fn acknowledge_proposal(i: u32, ) -> Weight {
+	fn acknowledge_proposal() -> Weight {
 		(50_052_000 as Weight)
 			// Standard Error: 2_000
-			.saturating_add((24_000 as Weight).saturating_mul(i as Weight))
+			.saturating_add(24_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -119,7 +119,7 @@ impl<T: frame_system::Config> pallet_bridge::WeightInfo for WeightInfo<T> {
 	// Storage: ChainBridge RelayerThreshold (r:1 w:0)
 	// Storage: ChainBridge RelayerCount (r:1 w:0)
 	/// The range of component `i` is `[0, 10]`.
-	fn eval_vote_state(_i: u32, ) -> Weight {
+	fn eval_vote_state() -> Weight {
 		(17_646_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
