@@ -18,7 +18,7 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2022-10-09, STEPS: `20`, REPEAT: 50, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! HOSTNAME: `parachain-benchmark`, CPU: `Intel(R) Xeon(R) Platinum 8124M CPU @ 3.00GHz`
+//! HOSTNAME: `parachain-benchmark`, CPU: `Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz`
 //! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("rococo-dev"), DB CACHE: 20
 
 // Executed Command:
@@ -48,46 +48,43 @@ use sp_std::marker::PhantomData;
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_bridge::WeightInfo for WeightInfo<T> {
 	// Storage: ChainBridge RelayerThreshold (r:0 w:1)
-	/// The range of component `i` is `[1, 100]`.
 	fn set_threshold() -> Weight {
-		(14_275_000 as Weight)
-			// Standard Error: 0
-			.saturating_add(3_000 as Weight)
+		(13_458_000 as Weight)
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: ChainBridge Resources (r:0 w:1)
 	fn set_resource() -> Weight {
-		(5_195_000 as Weight)
+		(4_726_000 as Weight)
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: ChainBridge Resources (r:0 w:1)
 	fn remove_resource() -> Weight {
-		(4_787_000 as Weight)
+		(4_583_000 as Weight)
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: ChainBridge ChainNonces (r:1 w:1)
 	fn whitelist_chain() -> Weight {
-		(17_039_000 as Weight)
+		(16_146_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: ChainBridge Relayers (r:1 w:1)
 	// Storage: ChainBridge RelayerCount (r:1 w:1)
 	fn add_relayer() -> Weight {
-		(20_587_000 as Weight)
+		(19_289_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	// Storage: ChainBridge Relayers (r:1 w:1)
 	// Storage: ChainBridge RelayerCount (r:1 w:1)
 	fn remove_relayer() -> Weight {
-		(21_852_000 as Weight)
+		(20_527_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	// Storage: ChainBridge BridgeFee (r:0 w:1)
 	fn update_fee() -> Weight {
-		(15_005_000 as Weight)
+		(14_016_000 as Weight)
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: ChainBridge Relayers (r:1 w:0)
@@ -96,9 +93,8 @@ impl<T: frame_system::Config> pallet_bridge::WeightInfo for WeightInfo<T> {
 	// Storage: ChainBridge Votes (r:1 w:1)
 	// Storage: ChainBridge RelayerThreshold (r:1 w:0)
 	// Storage: ChainBridge RelayerCount (r:1 w:0)
-	/// The range of component `i` is `[0, 10]`.
 	fn acknowledge_proposal() -> Weight {
-		(51_315_000 as Weight)
+		(48_260_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -109,16 +105,15 @@ impl<T: frame_system::Config> pallet_bridge::WeightInfo for WeightInfo<T> {
 	// Storage: ChainBridge RelayerThreshold (r:1 w:0)
 	// Storage: ChainBridge RelayerCount (r:1 w:0)
 	fn reject_proposal() -> Weight {
-		(43_775_000 as Weight)
+		(41_079_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: ChainBridge Votes (r:1 w:1)
 	// Storage: ChainBridge RelayerThreshold (r:1 w:0)
 	// Storage: ChainBridge RelayerCount (r:1 w:0)
-	/// The range of component `i` is `[0, 10]`.
 	fn eval_vote_state() -> Weight {
-		(18_440_000 as Weight)
+		(16_382_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
