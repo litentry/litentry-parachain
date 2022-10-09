@@ -38,10 +38,10 @@ fn make_proposal<T: Config>(remark: Vec<u8>) -> T::Proposal {
 benchmarks! {
 	// This will measure the execution time of `set_threshold` for b in [1..1000] range.
 	set_threshold{
-		let b in 1..100u32;
-	}:_(RawOrigin::Root,b)
+		let i in 1..100u32;
+	}:_(RawOrigin::Root,i)
 	verify{
-		assert_eq!(RelayerThreshold::<T>::get(),b);
+		assert_eq!(RelayerThreshold::<T>::get(),i);
 	}
 
 	set_resource{
@@ -107,7 +107,8 @@ benchmarks! {
 
 		let i in 0..10;
 		let length = 100;
-		let proposal = make_proposal::<T>(vec![i as u8;length]);
+		// let proposal = make_proposal::<T>(vec![i as u8;length]);
+
 
 		let method = vec![0u8];
 
@@ -125,6 +126,7 @@ benchmarks! {
 			RawOrigin::Root.into(),
 			r_id,method,
 		)?;
+		let proposal = make_proposal::<T>(vec![i as u8;length]);
 
 	}:_(RawOrigin::Signed(relayer_id),prop_id,src_id, r_id, Box::new(proposal))
 	verify{
@@ -173,7 +175,7 @@ benchmarks! {
 
 		let i in 0..10;
 		let length = 100;
-		let proposal = make_proposal::<T>(vec![i as u8;length]);
+		// let proposal = make_proposal::<T>(vec![i as u8;length]);
 
 		let method = vec![0u8];
 
@@ -202,6 +204,8 @@ benchmarks! {
 			r_id,
 			method,
 		)?;
+
+		let proposal = make_proposal::<T>(vec![i as u8;length]);
 
 		bridge::<T>::reject_proposal(
 			RawOrigin::Signed(relayer_id_b).into(),
