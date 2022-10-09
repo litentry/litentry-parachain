@@ -86,6 +86,10 @@ launch-docker-litentry: generate-docker-compose-litentry
 launch-docker-litmus: generate-docker-compose-litmus
 	@./scripts/launch-local-docker.sh litmus
 
+.PHONY: launch-docker-rococo ## Launch a local rococo-parachain network with docker
+launch-docker-rococo: generate-docker-compose-rococo
+	@./scripts/launch-local-docker.sh rococo
+
 .PHONY: launch-binary-litentry ## Launch a local litentry-parachain network with binaries
 launch-binary-litentry:
 	@./scripts/launch-local-binary.sh litentry
@@ -130,6 +134,10 @@ clean-docker-litentry:
 clean-docker-litmus:
 	@./scripts/clean-local-docker.sh litmus
 
+.PHONY: clean-docker-rococo ## Clean up rococo docker images, containers, volumes, etc
+clean-docker-rococo:
+	@./scripts/clean-local-docker.sh rococo
+
 .PHONY: clean-binary ## Kill started polkadot and litentry-collator binaries
 clean-binary:
 	@./scripts/clean-local-binary.sh
@@ -143,6 +151,10 @@ generate-docker-compose-litentry:
 .PHONY: generate-docker-compose-litmus ## Generate docker-compose files for litmus local network
 generate-docker-compose-litmus:
 	@./scripts/generate-docker-files.sh litmus
+
+.PHONY: generate-docker-compose-rococo ## Generate docker-compose files for litmus local network
+generate-docker-compose-rococo:
+	@./scripts/generate-docker-files.sh rococo
 
 # update dependencies
 
