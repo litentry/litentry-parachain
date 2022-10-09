@@ -116,6 +116,10 @@ test-ts-docker-litentry: launch-docker-litentry launch-docker-bridge
 test-ts-docker-litmus: launch-docker-litmus launch-docker-bridge
 	@./scripts/run-ts-test.sh litmus bridge
 
+.PHONY: test-ts-docker-rococo ## Run rococo ts tests with docker without clean-up
+test-ts-docker-rococo: launch-docker-rococo launch-docker-bridge
+	@./scripts/run-ts-test.sh rococo bridge
+
 .PHONY: test-ts-binary-litentry ## Run litentry ts tests with binary without clean-up
 test-ts-binary-litentry: launch-binary-litentry
 	@./scripts/run-ts-test.sh litentry
@@ -123,6 +127,10 @@ test-ts-binary-litentry: launch-binary-litentry
 .PHONY: test-ts-binary-litmus ## Run litmus ts tests with binary without clean-up
 test-ts-binary-litmus: launch-binary-litmus
 	@./scripts/run-ts-test.sh litmus
+
+.PHONY: test-ts-binary-rococo ## Run rococo ts tests with binary without clean-up
+test-ts-binary-rococo: launch-binary-rococo
+	@./scripts/run-ts-test.sh rococo
 
 # clean up
 
