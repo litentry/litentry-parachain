@@ -770,6 +770,7 @@ impl pallet_bridge::Config for Runtime {
 	type Currency = Balances;
 	type ProposalLifetime = ProposalLifetime;
 	type TreasuryAccount = TreasuryAccount;
+	type WeightInfo = weights::pallet_bridge::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -804,6 +805,7 @@ impl pallet_bridge_transfer::Config for Runtime {
 	type NativeTokenResourceId = NativeTokenResourceId;
 	type DefaultMaximumIssuance = MaximumIssuance;
 	type ExternalTotalIssuance = ExternalTotalIssuance;
+	type WeightInfo = weights::pallet_bridge_transfer::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -1052,11 +1054,15 @@ mod benches {
 		[pallet_scheduler, Scheduler]
 		[pallet_preimage, Preimage]
 		[pallet_session, SessionBench::<Runtime>]
-		[pallet_parachain_staking, ParachainStaking]
+		// Since this module benchmark times out, comment it out for now
+		// https://github.com/litentry/litentry-parachain/actions/runs/3155868677/jobs/5134984739
+		// [pallet_parachain_staking, ParachainStaking]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
 		[pallet_identity_management, IdentityManagement]
 		[pallet_teerex, Teerex]
 		[pallet_sidechain, Sidechain]
+		[pallet_bridge,ChainBridge]
+		[pallet_bridge_transfer,BridgeTransfer]
 	);
 }
 
