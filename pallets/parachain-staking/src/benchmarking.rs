@@ -23,15 +23,15 @@
 
 //! Benchmarking
 use crate::{
-	BalanceOf, Call, CandidateBondLessRequest, Config, DelegationAction, Pallet, Range,
-	ScheduledRequest,
+	BalanceOf, Call, CandidateBondLessRequest, Config, DelegationAction, Event, Pallet, Range,
+	Round, ScheduledRequest,
 };
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::traits::{Currency, Get, OnFinalize, OnInitialize, ReservableCurrency};
 use frame_system::RawOrigin;
 use pallet_authorship::EventHandler;
 use sp_runtime::{Perbill, Percent};
-use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
+use sp_std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 
 /// Minimum collator candidate stake
 fn min_candidate_stk<T: Config>() -> BalanceOf<T> {
@@ -85,6 +85,8 @@ fn create_funded_collator<T: Config>(
 ) -> Result<T::AccountId, &'static str> {
 	let (user, total) = create_funded_user::<T>(string, n, extra);
 	let bond = if min_bond { min_candidate_stk::<T>() } else { total };
+	//Due to the CandidateUnauthorized error, I had to add this line of code
+	Pallet::<T>::add_candidates_whitelist(RawOrigin::Root.into(), user.clone())?;
 	Pallet::<T>::join_candidates(RawOrigin::Signed(user.clone()).into(), bond)?;
 	Ok(user)
 }
@@ -106,6 +108,9 @@ fn roll_to_and_author<T: Config>(round_delay: u32, author: T::AccountId) {
 		now += 1u32.into();
 	}
 }
+fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
+	frame_system::Pallet::<T>::assert_last_event(generic_event.into());
+}
 
 // TODO::This one won't work. Need to work around
 
@@ -125,6 +130,54 @@ fn roll_to_and_author<T: Config>(round_delay: u32, author: T::AccountId) {
 const USER_SEED: u32 = 999666;
 
 benchmarks! {
+
+	add_candidates_whitelist{
+		let x in 1..100u32;
+
+		let mut candidate_count = 1u32;
+		for i in 2..x {
+			let seed = USER_SEED - i;
+			let collator = create_funded_collator::<T>(
+				"collator",
+				seed,
+				0u32.into(),
+				true,
+			)?;
+			candidate_count += 1u32;
+		}
+
+		let candidate:T::AccountId = account("TEST", 0u32, USER_SEED);
+	}: _(RawOrigin::Root,candidate.clone())
+	verify{
+		assert_last_event::<T>(Event::CandidateWhiteListAdded {
+			candidate
+		}.into());
+	}
+
+	remove_candidates_whitelist{
+		let x in 1..100u32;
+
+		let mut candidate_count = 1u32;
+		for i in 2..x {
+			let seed = USER_SEED - i;
+			let collator = create_funded_collator::<T>(
+				"collator",
+				seed,
+				0u32.into(),
+				true,
+			)?;
+			candidate_count += 1u32;
+		}
+
+		let candidate:T::AccountId = account("TEST", 0u32, USER_SEED);
+		Pallet::<T>::add_candidates_whitelist(RawOrigin::Root.into(), candidate.clone())?;
+	}: _(RawOrigin::Root,candidate.clone())
+	verify{
+		assert_last_event::<T>(Event::CandidateWhiteListRemoved {
+			candidate
+		}.into());
+	}
+
 	// MONETARY ORIGIN DISPATCHABLES
 	set_staking_expectations {
 		let stake_range: Range<BalanceOf<T>> = Range {
@@ -198,6 +251,8 @@ benchmarks! {
 			candidate_count += 1u32;
 		}
 		let (caller, min_candidate_stk) = create_funded_user::<T>("caller", USER_SEED, 0u32.into());
+		//Due to the CandidateUnauthorized error, I had to add this line of code
+		Pallet::<T>::add_candidates_whitelist(RawOrigin::Root.into(),caller.clone())?;
 	}: _(RawOrigin::Signed(caller.clone()), min_candidate_stk)
 	verify {
 		assert!(Pallet::<T>::is_candidate(&caller));
@@ -271,7 +326,9 @@ benchmarks! {
 		Pallet::<T>::schedule_leave_candidates(
 			RawOrigin::Signed(candidate.clone()).into(),
 		)?;
-		roll_to_and_author::<T>(24, candidate.clone());
+
+		let round = <Round<T>>::get().current + T::LeaveCandidatesDelay::get();
+		roll_to_and_author::<T>(round, candidate.clone());
 	}: _(RawOrigin::Signed(candidate.clone()), candidate.clone())
 	verify {
 		assert!(Pallet::<T>::candidate_info(&candidate).is_none());
@@ -343,8 +400,7 @@ benchmarks! {
 	}: _(RawOrigin::Signed(caller.clone()), more)
 	verify {
 		let expected_bond = more * 2u32.into();
-		// TODO::We need to check lock instead
-		assert_eq!(T::Currency::reserved_balance(&caller), 0u32.into());
+		assert_eq!(T::Currency::reserved_balance(&caller), expected_bond);
 	}
 
 	schedule_candidate_bond_less {
@@ -358,11 +414,13 @@ benchmarks! {
 	}: _(RawOrigin::Signed(caller.clone()), min_candidate_stk)
 	verify {
 		let state = Pallet::<T>::candidate_info(&caller).expect("request bonded less so exists");
+
+		let rounds = <Round<T>>::get().current + T::CandidateBondLessDelay::get();
 		assert_eq!(
 			state.request,
 			Some(CandidateBondLessRequest {
 				amount: min_candidate_stk,
-				when_executable: 25,
+				when_executable: rounds,
 			})
 		);
 	}
@@ -379,7 +437,9 @@ benchmarks! {
 			RawOrigin::Signed(caller.clone()).into(),
 			min_candidate_stk
 		)?;
-		roll_to_and_author::<T>(24, caller.clone());
+
+		let rounds = <Round<T>>::get().current + T::CandidateBondLessDelay::get();
+		roll_to_and_author::<T>(rounds, caller.clone());
 	}: {
 		Pallet::<T>::execute_candidate_bond_less(
 			RawOrigin::Signed(caller.clone()).into(),
@@ -387,7 +447,8 @@ benchmarks! {
 		)?;
 	} verify {
 		// TODO::We need to check lock instead
-		assert_eq!(T::Currency::reserved_balance(&caller), 0u32.into());
+		let expected_bond = min_candidate_stk * 10u32.into();
+		assert_eq!(T::Currency::reserved_balance(&caller),expected_bond);
 	}
 
 	cancel_candidate_bond_less {
@@ -519,7 +580,8 @@ benchmarks! {
 			)?;
 		}
 		Pallet::<T>::schedule_leave_delegators(RawOrigin::Signed(caller.clone()).into())?;
-		roll_to_and_author::<T>(24, author);
+		let rounds = <Round<T>>::get().current.saturating_add(T::LeaveDelegatorsDelay::get());
+		roll_to_and_author::<T>(rounds, author);
 	}: _(RawOrigin::Signed(caller.clone()), caller.clone())
 	verify {
 		assert!(Pallet::<T>::delegator_state(&caller).is_none());
@@ -561,11 +623,12 @@ benchmarks! {
 		)?;
 	}: _(RawOrigin::Signed(caller.clone()), collator.clone())
 	verify {
+		let rounds = <Round<T>>::get().current.saturating_add(T::RevokeDelegationDelay::get());
 		assert_eq!(
 			Pallet::<T>::delegation_scheduled_requests(&collator),
 			vec![ScheduledRequest {
 				delegator: caller,
-				when_executable: 25,
+				when_executable: rounds,
 				action: DelegationAction::Revoke(bond),
 			}],
 		);
@@ -589,7 +652,7 @@ benchmarks! {
 	verify {
 		let expected_bond = bond * 2u32.into();
 		// TODO::We need to check lock instead
-		assert_eq!(T::Currency::reserved_balance(&caller), 0u32.into());
+		assert_eq!(T::Currency::reserved_balance(&caller), expected_bond);
 	}
 
 	schedule_delegator_bond_less {
@@ -610,11 +673,13 @@ benchmarks! {
 	verify {
 		let state = Pallet::<T>::delegator_state(&caller)
 			.expect("just request bonded less so exists");
+
+		let rounds = <Round<T>>::get().current.saturating_add(T::RevokeDelegationDelay::get());
 		assert_eq!(
 			Pallet::<T>::delegation_scheduled_requests(&collator),
 			vec![ScheduledRequest {
 				delegator: caller,
-				when_executable: 25,
+				when_executable: rounds,
 				action: DelegationAction::Decrease(bond_less),
 			}],
 		);
@@ -638,7 +703,9 @@ benchmarks! {
 			caller.clone()).into(),
 			collator.clone()
 		)?;
-		roll_to_and_author::<T>(24, collator.clone());
+		let rounds = <Round<T>>::get().current.saturating_add(T::RevokeDelegationDelay::get());
+
+		roll_to_and_author::<T>(rounds, collator.clone());
 	}: {
 		Pallet::<T>::execute_delegation_request(
 			RawOrigin::Signed(caller.clone()).into(),
@@ -670,7 +737,9 @@ benchmarks! {
 			collator.clone(),
 			bond_less
 		)?;
-		roll_to_and_author::<T>(24, collator.clone());
+
+		let rounds = <Round<T>>::get().current.saturating_add(T::RevokeDelegationDelay::get());
+		roll_to_and_author::<T>(rounds, collator.clone());
 	}: {
 		Pallet::<T>::execute_delegation_request(
 			RawOrigin::Signed(caller.clone()).into(),
@@ -680,7 +749,7 @@ benchmarks! {
 	} verify {
 		let expected = total - bond_less;
 		// TODO::We need to check lock instead
-		assert_eq!(T::Currency::reserved_balance(&caller), 0u32.into());
+		assert_eq!(T::Currency::reserved_balance(&caller), expected);
 	}
 
 	cancel_revoke_delegation {
@@ -733,7 +802,9 @@ benchmarks! {
 			collator.clone(),
 			bond_less
 		)?;
-		roll_to_and_author::<T>(24, collator.clone());
+
+		let rounds = <Round<T>>::get().current.saturating_add(T::RevokeDelegationDelay::get());
+		roll_to_and_author::<T>(rounds, collator.clone());
 	}: {
 		Pallet::<T>::cancel_delegation_request(
 			RawOrigin::Signed(caller.clone()).into(),
@@ -1005,7 +1076,7 @@ benchmarks! {
 
 #[cfg(test)]
 mod tests {
-	use crate::{benchmarks::*, mock::Test};
+	use crate::{benchmarking::*, mock::Test};
 	use frame_support::assert_ok;
 	use sp_io::TestExternalities;
 
@@ -1225,4 +1296,4 @@ mod tests {
 	}
 }
 
-impl_benchmark_test_suite!(Pallet, crate::benchmarks::tests::new_test_ext(), crate::mock::Test);
+impl_benchmark_test_suite!(Pallet, crate::benchmarking::tests::new_test_ext(), crate::mock::Test);
