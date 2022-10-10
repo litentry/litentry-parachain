@@ -324,7 +324,7 @@ pub mod pallet {
 		/// # <weight>
 		/// - O(1) lookup and insert
 		/// # </weight>
-		#[pallet::weight(<T as Config>::WeightInfo::set_threshold(*threshold as u32))]
+		#[pallet::weight(<T as Config>::WeightInfo::set_threshold())]
 		pub fn set_threshold(origin: OriginFor<T>, threshold: u32) -> DispatchResult {
 			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
 			Self::set_relayer_threshold(threshold)
@@ -417,9 +417,12 @@ pub mod pallet {
 		/// # <weight>
 		/// - weight of proposed call, regardless of whether execution is performed
 		/// # </weight>
-		#[pallet::weight(
-		<T as Config>::WeightInfo::acknowledge_proposal(call.get_dispatch_info().weight as u32)
-		)]
+		#[pallet::weight({
+		let di = call.get_dispatch_info();
+		(< T as Config >::WeightInfo::acknowledge_proposal()
+		.saturating_add(di.weight),
+		di.class)
+		})]
 		pub fn acknowledge_proposal(
 			origin: OriginFor<T>,
 			nonce: DepositNonce,
@@ -464,7 +467,12 @@ pub mod pallet {
 		/// # <weight>
 		/// - weight of proposed call, regardless of whether execution is performed
 		/// # </weight>
-		#[pallet::weight(<T as Config>::WeightInfo::eval_vote_state(prop.get_dispatch_info().weight as u32))]
+		#[pallet::weight({
+		let di = prop.get_dispatch_info();
+		(< T as Config >::WeightInfo::eval_vote_state()
+		.saturating_add(di.weight),
+		di.class)
+		})]
 		pub fn eval_vote_state(
 			origin: OriginFor<T>,
 			nonce: DepositNonce,
