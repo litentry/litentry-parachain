@@ -51,24 +51,24 @@ impl<T: frame_system::Config> pallet_extrinsic_filter::WeightInfo for WeightInfo
 	/// The range of component `p` is `[1, 1024]`.
 	/// The range of component `f` is `[1, 1024]`.
 	fn block_extrinsics(p: u32, f: u32, ) -> Weight {
-		(19_920_000 as Weight)
+		Weight::from_ref_time(19_920_000 as u64)
 			// Standard Error: 0
-			.saturating_add((4_000 as Weight).saturating_mul(p as Weight))
+			.saturating_add(Weight::from_ref_time(4_000 as u64).saturating_mul(p as u64))
 			// Standard Error: 0
-			.saturating_add((4_000 as Weight).saturating_mul(f as Weight))
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+			.saturating_add(Weight::from_ref_time(4_000 as u64).saturating_mul(f as u64))
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: ExtrinsicFilter BlockedExtrinsics (r:1 w:1)
 	/// The range of component `p` is `[1, 1024]`.
 	/// The range of component `f` is `[1, 1024]`.
 	fn unblock_extrinsics(p: u32, f: u32, ) -> Weight {
-		(20_305_000 as Weight)
+		Weight::from_ref_time(20_305_000 as u64)
 			// Standard Error: 0
-			.saturating_add((8_000 as Weight).saturating_mul(p as Weight))
+			.saturating_add(Weight::from_ref_time(8_000 as u64).saturating_mul(p as u64))
 			// Standard Error: 0
-			.saturating_add((9_000 as Weight).saturating_mul(f as Weight))
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+			.saturating_add(Weight::from_ref_time(9_000 as u64).saturating_mul(f as u64))
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 }

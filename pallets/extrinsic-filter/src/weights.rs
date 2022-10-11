@@ -41,7 +41,7 @@
 #![allow(unused_imports)]
 #![allow(clippy::unnecessary_cast)]
 
-use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
+use frame_support::{traits::Get, weights::{RefTimeWeight, Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
 /// Weight functions needed for pallet_extrinsic_filter.
@@ -55,21 +55,21 @@ pub struct LitentryWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	// Storage: ExtrinsicFilter BlockedExtrinsics (r:1 w:1)
 	fn block_extrinsics(_p: u32, f: u32, ) -> Weight {
-		(30_218_000 as Weight)
+		Weight::from_ref_time(30_218_000 as u64)
 			// Standard Error: 0
-			.saturating_add((1_000 as Weight).saturating_mul(f as Weight))
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+			.saturating_add(Weight::from_ref_time(1_000 as u64).saturating_mul(f as u64))
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: ExtrinsicFilter BlockedExtrinsics (r:1 w:1)
 	fn unblock_extrinsics(p: u32, f: u32, ) -> Weight {
-		(29_586_000 as Weight)
+		Weight::from_ref_time(29_586_000 as u64)
 			// Standard Error: 0
-			.saturating_add((4_000 as Weight).saturating_mul(p as Weight))
+			.saturating_add(Weight::from_ref_time(4_000 as u64).saturating_mul(p as u64))
 			// Standard Error: 0
-			.saturating_add((3_000 as Weight).saturating_mul(f as Weight))
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+			.saturating_add(Weight::from_ref_time(3_000 as u64).saturating_mul(f as u64))
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 }
 
@@ -77,20 +77,20 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 impl WeightInfo for () {
 	// Storage: ExtrinsicFilter BlockedExtrinsics (r:1 w:1)
 	fn block_extrinsics(_p: u32, f: u32, ) -> Weight {
-		(30_218_000 as Weight)
+		Weight::from_ref_time(30_218_000 as u64)
 			// Standard Error: 0
-			.saturating_add((1_000 as Weight).saturating_mul(f as Weight))
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+			.saturating_add(Weight::from_ref_time(1_000 as u64).saturating_mul(f as u64))
+			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: ExtrinsicFilter BlockedExtrinsics (r:1 w:1)
 	fn unblock_extrinsics(p: u32, f: u32, ) -> Weight {
-		(29_586_000 as Weight)
+		Weight::from_ref_time(29_586_000 as u64)
 			// Standard Error: 0
-			.saturating_add((4_000 as Weight).saturating_mul(p as Weight))
+			.saturating_add(Weight::from_ref_time(4_000 as u64).saturating_mul(p as u64))
 			// Standard Error: 0
-			.saturating_add((3_000 as Weight).saturating_mul(f as Weight))
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+			.saturating_add(Weight::from_ref_time(3_000 as u64).saturating_mul(f as u64))
+			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 }

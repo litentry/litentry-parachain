@@ -53,27 +53,27 @@ impl<T: frame_system::Config> pallet_bridge_transfer::WeightInfo for WeightInfo<
 	// Storage: System Account (r:2 w:2)
 	// Storage: ChainBridge BridgeEvents (r:1 w:1)
 	fn transfer_native() -> Weight {
-		(67_343_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(6 as Weight))
-			.saturating_add(T::DbWeight::get().writes(5 as Weight))
+		Weight::from_ref_time(67_343_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(6 as u64))
+			.saturating_add(T::DbWeight::get().writes(5 as u64))
 	}
 	// Storage: BridgeTransfer MaximumIssuance (r:1 w:0)
 	// Storage: BridgeTransfer ExternalBalances (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn transfer() -> Weight {
-		(31_814_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(31_814_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(3 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	// Storage: BridgeTransfer MaximumIssuance (r:1 w:1)
 	fn set_maximum_issuance() -> Weight {
-		(14_563_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(14_563_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: BridgeTransfer ExternalBalances (r:0 w:1)
 	fn set_external_balances() -> Weight {
-		(3_822_000 as Weight)
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(3_822_000 as u64)
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 }

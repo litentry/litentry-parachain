@@ -49,48 +49,48 @@ pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_drop3::WeightInfo for WeightInfo<T> {
 	// Storage: Drop3 Admin (r:1 w:1)
 	fn set_admin() -> Weight {
-		(15_387_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(15_387_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Drop3 Admin (r:1 w:0)
 	// Storage: Drop3 RewardPools (r:1 w:1)
 	fn approve_reward_pool() -> Weight {
-		(22_115_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(22_115_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Drop3 Admin (r:1 w:0)
 	// Storage: Drop3 RewardPools (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	// Storage: Drop3 RewardPoolOwners (r:0 w:1)
 	fn reject_reward_pool() -> Weight {
-		(59_375_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+		Weight::from_ref_time(59_375_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(3 as u64))
+			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 	// Storage: Drop3 RewardPools (r:1 w:1)
 	// Storage: Drop3 Admin (r:1 w:0)
 	fn start_reward_pool() -> Weight {
-		(22_223_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(22_223_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Drop3 RewardPools (r:1 w:1)
 	// Storage: Drop3 Admin (r:1 w:0)
 	fn stop_reward_pool() -> Weight {
-		(23_671_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(23_671_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Drop3 RewardPools (r:1 w:1)
 	// Storage: Drop3 Admin (r:1 w:0)
 	// Storage: System Account (r:1 w:1)
 	// Storage: Drop3 RewardPoolOwners (r:0 w:1)
 	fn close_reward_pool() -> Weight {
-		(40_114_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+		Weight::from_ref_time(40_114_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(3 as u64))
+			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 	// Storage: System Account (r:1 w:1)
 	// Storage: Drop3 CurrentMaxPoolId (r:1 w:1)
@@ -98,17 +98,17 @@ impl<T: frame_system::Config> pallet_drop3::WeightInfo for WeightInfo<T> {
 	// Storage: Drop3 RewardPools (r:0 w:1)
 	/// The range of component `n` is `[0, 16]`.
 	fn propose_reward_pool(n: u32, ) -> Weight {
-		(35_424_000 as Weight)
+		Weight::from_ref_time(35_424_000 as u64)
 			// Standard Error: 2_000
-			.saturating_add((5_000 as Weight).saturating_mul(n as Weight))
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+			.saturating_add(Weight::from_ref_time(5_000 as u64).saturating_mul(n as u64))
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(4 as u64))
 	}
 	// Storage: Drop3 RewardPools (r:1 w:1)
 	// Storage: System Account (r:2 w:2)
 	fn send_reward() -> Weight {
-		(42_155_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+		Weight::from_ref_time(42_155_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(3 as u64))
+			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 }

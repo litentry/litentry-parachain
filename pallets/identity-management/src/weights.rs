@@ -42,7 +42,7 @@
 #![allow(unused_imports)]
 #![allow(clippy::unnecessary_cast)]
 
-use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
+use frame_support::{traits::Get, weights::{RefTimeWeight, Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
 /// Weight functions needed for pallet_identity_management.
@@ -57,31 +57,31 @@ pub trait WeightInfo {
 pub struct LitentryWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	fn link_identity() -> Weight {
-		(17_000_000 as Weight)
+		Weight::from_ref_time(17_000_000 as u64)
 	}
 	fn unlink_identity() -> Weight {
-		(17_000_000 as Weight)
+		Weight::from_ref_time(17_000_000 as u64)
 	}
 	fn verify_identity() -> Weight {
-		(16_000_000 as Weight)
+		Weight::from_ref_time(16_000_000 as u64)
 	}
 	fn set_user_shielding_key() -> Weight {
-		(17_000_000 as Weight)
+		Weight::from_ref_time(17_000_000 as u64)
 	}
 }
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
 	fn link_identity() -> Weight {
-		(17_000_000 as Weight)
+		Weight::from_ref_time(17_000_000 as u64)
 	}
 	fn unlink_identity() -> Weight {
-		(17_000_000 as Weight)
+		Weight::from_ref_time(17_000_000 as u64)
 	}
 	fn verify_identity() -> Weight {
-		(16_000_000 as Weight)
+		Weight::from_ref_time(16_000_000 as u64)
 	}
 	fn set_user_shielding_key() -> Weight {
-		(17_000_000 as Weight)
+		Weight::from_ref_time(17_000_000 as u64)
 	}
 }

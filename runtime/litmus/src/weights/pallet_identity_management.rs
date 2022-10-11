@@ -48,15 +48,15 @@ use sp_std::marker::PhantomData;
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_identity_management::WeightInfo for WeightInfo<T> {
 	fn link_identity() -> Weight {
-		(15_164_000 as Weight)
+		Weight::from_ref_time(15_164_000 as u64)
 	}
 	fn unlink_identity() -> Weight {
-		(14_108_000 as Weight)
+		Weight::from_ref_time(14_108_000 as u64)
 	}
 	fn verify_identity() -> Weight {
-		(15_337_000 as Weight)
+		Weight::from_ref_time(15_337_000 as u64)
 	}
 	fn set_user_shielding_key() -> Weight {
-		(13_876_000 as Weight)
+		Weight::from_ref_time(13_876_000 as u64)
 	}
 }
