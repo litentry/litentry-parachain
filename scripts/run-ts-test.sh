@@ -5,7 +5,7 @@ set -eo pipefail
 bridge=false
 
 case "$1" in
-    litentry|litmus) export PARACHAIN_TYPE=$1 ;;
+    litentry|litmus|rococo) export PARACHAIN_TYPE=$1 ;;
     *) echo "usage: ./$0 litmus|litentry [bridge]"; exit 1 ;;
 esac
     

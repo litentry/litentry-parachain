@@ -52,7 +52,7 @@ jobs:
           echo "Running instances ip address: ${{ steps.start_instance.outputs.remote_ip }}"
           ssh -x -o StrictHostKeychecking=no "${{ steps.start_instance.outputs.remote_ip }}" -l ${{ env.BENCHMARK_SSH_USER }} -i ${{ env.BENCHMARK_SSH_KEYPATH }} \
             docker pull litentry/litentry-parachain:${{ github.event.inputs.docker_tag }} && \
-            docker run --rm litentry/litentry-parachain:${{ github.event.inputs.docker_tag }} benchmark machine --chain=litmus-dev
+            docker run --rm litentry/litentry-parachain:${{ github.event.inputs.docker_tag }} benchmark machine --allow-fail --chain=litmus-dev
 
       - name: Stop remote instance
         if: always()

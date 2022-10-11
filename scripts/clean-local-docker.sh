@@ -3,7 +3,7 @@
 # no `set -e` here as we allow commands to fail in this script
 
 function usage() {
-  echo "Usage: $0 litentry|litmus"
+  echo "Usage: $0 litentry|litmus|rococo"
 }
 
 [ $# -ne 1 ] && (usage; exit 1)

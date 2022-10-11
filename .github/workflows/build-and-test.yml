@@ -150,9 +150,10 @@ jobs:
     needs: build-docker
     strategy:
       matrix:
-        chain: # no rococo
+        chain:
           - litmus
           - litentry
+          - rococo
     steps:
       - name: Checkout codes
         uses: actions/checkout@v3
