@@ -32,6 +32,11 @@ use frame_support::{
 	traits::{ConstU128, ConstU16, ConstU32, ConstU64, Everything},
 };
 use frame_system as system;
+use mock_tee_primitives::{
+	EthereumSignature, EvmNetwork, Identity, IdentityHandle, IdentityMultiSignature,
+	IdentityWebType, SubstrateNetwork, TwitterValidationData, UserShieldingKeyType, ValidationData,
+	Web2Network, Web2ValidationData, Web3CommonValidationData, Web3Network, Web3ValidationData,
+};
 pub use parity_crypto::publickey::{sign, Generator, KeyPair as EvmPair, Message, Random};
 use sp_core::sr25519::Pair as SubstratePair; // TODO: maybe use more generic struct
 use sp_core::{blake2_128, Pair, H256};
@@ -40,11 +45,6 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 };
 use system::{EnsureRoot, EnsureSignedBy};
-use tee_primitives::{
-	EthereumSignature, EvmNetwork, Identity, IdentityHandle, IdentityMultiSignature,
-	IdentityWebType, SubstrateNetwork, TwitterValidationData, UserShieldingKeyType, ValidationData,
-	Web2Network, Web2ValidationData, Web3CommonValidationData, Web3Network, Web3ValidationData,
-};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
