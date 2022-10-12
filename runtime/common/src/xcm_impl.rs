@@ -51,7 +51,7 @@ pub struct FirstAssetTrader<
 	AssetType: From<MultiLocation> + Clone,
 	AssetIdInfoGetter: UnitsToWeightRatio<AssetType>,
 	R: TakeRevenue,
->(Weight, Option<(MultiLocation, u128, u128)>, PhantomData<(AssetType, AssetIdInfoGetter, R)>);
+>(u64, Option<(MultiLocation, u128, u128)>, PhantomData<(AssetType, AssetIdInfoGetter, R)>);
 impl<
 		AssetType: From<MultiLocation> + Clone,
 		AssetIdInfoGetter: UnitsToWeightRatio<AssetType>,
@@ -63,7 +63,7 @@ impl<
 	}
 	fn buy_weight(
 		&mut self,
-		weight: Weight,
+		weight: u64,
 		payment: xcm_executor::Assets,
 	) -> Result<xcm_executor::Assets, XcmError> {
 		let first_asset = payment.fungible_assets_iter().next().ok_or(XcmError::TooExpensive)?;
@@ -131,7 +131,7 @@ impl<
 		}
 	}
 
-	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
+	fn refund_weight(&mut self, weight: u64) -> Option<MultiAsset> {
 		if let Some((id, prev_amount, units_per_second)) = self.1.clone() {
 			let weight = weight.min(self.0);
 			self.0 -= weight;
