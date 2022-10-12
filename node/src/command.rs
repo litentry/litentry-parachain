@@ -51,13 +51,16 @@ trait IdentifyChain {
 
 impl IdentifyChain for dyn sc_service::ChainSpec {
 	fn is_litentry(&self) -> bool {
-		self.id().starts_with("litentry")
+		// we need the combined condition as the id in our rococo spec starts with `litentry-rococo`
+		// simply renaming `litentry-rococo` to `rococo` everywhere would have an impact on the
+		// existing litentry-rococo chain
+		self.id().starts_with("litentry") && !self.id().starts_with("litentry-rococo")
 	}
 	fn is_litmus(&self) -> bool {
 		self.id().starts_with("litmus")
 	}
 	fn is_rococo(&self) -> bool {
-		self.id().starts_with("rococo")
+		self.id().starts_with("litentry-rococo")
 	}
 	fn is_dev(&self) -> bool {
 		self.id().ends_with("dev")

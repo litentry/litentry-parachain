@@ -134,6 +134,7 @@ impl SortedMembers<u64> for MembersProvider {
 		MembersProviderTestvalue::get()
 	}
 
+	#[cfg(not(feature = "runtime-benchmarks"))]
 	fn contains(who: &u64) -> bool {
 		Self::sorted_members().contains(who)
 	}
@@ -141,6 +142,11 @@ impl SortedMembers<u64> for MembersProvider {
 	#[cfg(feature = "runtime-benchmarks")]
 	fn add(_: &u64) {
 		unimplemented!()
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn contains(_who: &u64) -> bool {
+		true
 	}
 }
 

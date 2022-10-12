@@ -3,7 +3,7 @@
 # no `set -e` here as we allow commands to fail in this script
 
 function usage() {
-  echo "Usage: $0 litentry|litmus"
+  echo "Usage: $0 litentry|litmus|rococo"
 }
 
 [ $# -ne 1 ] && (usage; exit 1)
@@ -18,9 +18,13 @@ docker images
 
 echo "stop and remove docker containers..."
 docker-compose rm -f -s -v
+docker container stop geth || true
 
 echo "remove docker volumes..."
 docker volume ls | grep generated-$CHAIN | sed 's/local *//' | xargs docker volume rm
+
+echo "remove gethdata/..."
+rm -rf "$ROOTDIR/scripts/geth/gethdata"
 
 echo "remove dangling docker images if any..."
 IMG=$(docker images --filter=dangling=true -q)

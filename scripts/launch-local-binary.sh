@@ -11,7 +11,7 @@
 
 function usage() {
   echo
-  echo "Usage:   $0 litentry|litmus [path-to-polkadot-bin] [path-to-litentry-collator]"
+  echo "Usage:   $0 litentry|litmus|rococo [path-to-polkadot-bin] [path-to-litentry-collator]"
   echo "Default: polkadot bin from the latest official release"
   echo "         litentry-collator bin from litentry/litentry-parachain:latest image"
   echo "         both are of Linux verion"

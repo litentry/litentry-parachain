@@ -4604,7 +4604,7 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-service",
- "primitives 0.9.10",
+ "primitives",
  "rococo-parachain-runtime",
  "sc-basic-authorship",
  "sc-chain-spec",
@@ -4701,7 +4701,7 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-runtime-parachains",
- "primitives 0.9.10",
+ "primitives",
  "runtime-common",
  "scale-info",
  "serde",
@@ -4724,22 +4724,6 @@ dependencies = [
  "xcm-builder",
  "xcm-executor",
  "xcm-simulator",
-]
-
-[[package]]
-name = "litentry-primitives"
-version = "0.1.0"
-source = "git+https://github.com/litentry/tee-worker#500b7f132cf808160bb90c6081b714f51fd12435"
-dependencies = [
- "pallet-identity-management 0.1.0 (git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev)",
- "parity-scale-codec 3.2.1",
- "primitives 0.9.10 (git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev)",
- "scale-info",
- "serde",
- "serde_json",
- "sp-core",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -4780,7 +4764,7 @@ dependencies = [
  "pallet-democracy",
  "pallet-drop3",
  "pallet-extrinsic-filter",
- "pallet-identity-management 0.1.0",
+ "pallet-identity-management",
  "pallet-identity-management-mock",
  "pallet-membership",
  "pallet-multisig",
@@ -4803,7 +4787,7 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-runtime-parachains",
- "primitives 0.9.10",
+ "primitives",
  "runtime-common",
  "scale-info",
  "serde",
@@ -5041,6 +5025,21 @@ dependencies = [
  "log",
  "wasi 0.11.0+wasi-snapshot-preview1",
  "windows-sys",
+]
+
+[[package]]
+name = "mock-tee-primitives"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "parity-scale-codec 3.2.1",
+ "primitives",
+ "scale-info",
+ "serde",
+ "serde_json",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -6014,28 +6013,11 @@ dependencies = [
  "pallet-balances",
  "pallet-timestamp",
  "parity-scale-codec 3.2.1",
- "primitives 0.9.10",
+ "primitives",
  "scale-info",
  "sp-arithmetic",
  "sp-core",
  "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-identity-management"
-version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#a8a24758c94210780c12bf2a0c7101920f53ce4e"
-dependencies = [
- "frame-support",
- "frame-system",
- "hex",
- "log",
- "parity-scale-codec 3.2.1",
- "scale-info",
- "sp-arithmetic",
- "sp-core",
  "sp-runtime",
  "sp-std",
 ]
@@ -6050,14 +6032,14 @@ dependencies = [
  "frame-system",
  "hex",
  "hex-literal",
- "litentry-primitives",
  "log",
+ "mock-tee-primitives",
  "pallet-balances",
- "pallet-identity-management 0.1.0",
+ "pallet-identity-management",
  "pallet-timestamp",
  "parity-crypto",
  "parity-scale-codec 3.2.1",
- "primitives 0.9.10",
+ "primitives",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
  "rsa",
@@ -6271,7 +6253,7 @@ dependencies = [
  "pallet-balances",
  "pallet-session",
  "parity-scale-codec 3.2.1",
- "primitives 0.9.10",
+ "primitives",
  "scale-info",
  "serde",
  "similar-asserts",
@@ -6626,7 +6608,7 @@ dependencies = [
  "pallet-balances",
  "pallet-timestamp",
  "parity-scale-codec 3.2.1",
- "primitives 0.9.10",
+ "primitives",
  "scale-info",
  "sp-arithmetic",
  "sp-core",
@@ -8313,15 +8295,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "primitives"
-version = "0.9.10"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#a8a24758c94210780c12bf2a0c7101920f53ce4e"
-dependencies = [
- "sp-core",
- "sp-runtime",
-]
-
-[[package]]
 name = "prioritized-metered-channel"
 version = "0.2.0"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.28#314298c32ac6df996ea8f3fe23fa5d3768340066"
@@ -9023,7 +8996,7 @@ dependencies = [
  "pallet-democracy",
  "pallet-drop3",
  "pallet-extrinsic-filter",
- "pallet-identity-management 0.1.0",
+ "pallet-identity-management",
  "pallet-identity-management-mock",
  "pallet-membership",
  "pallet-multisig",
@@ -9049,7 +9022,7 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-runtime-parachains",
- "primitives 0.9.10",
+ "primitives",
  "runtime-common",
  "scale-info",
  "serde",
@@ -9230,7 +9203,7 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-runtime-parachains",
- "primitives 0.9.10",
+ "primitives",
  "scale-info",
  "sp-core",
  "sp-io",
