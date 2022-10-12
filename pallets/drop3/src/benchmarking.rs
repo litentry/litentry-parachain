@@ -111,10 +111,17 @@ fn setup<T: Config>(should_start: bool) -> (T::AccountId, T::PoolId, Vec<u8>) {
 benchmarks! {
 	set_admin {
 		let origin = T::SetAdminOrigin::successful_origin();
+		/*
+		If the setup function is used here then old_admin uses the configuration in setup func, i.e whitelisted_caller()
+		But here we are not using setup, so when using the `cargo test -p pallet-drop3 --features runtime-benchmarks`  command,
+		go back to using the environment configured by the pallet mock.rs
+		i.e let _ = Drop3::set_admin(Origin::signed(1), 1);  mock.rs 147
+		*/
+		let old_admin= <Admin<T>>::get();
 		let admin: T::AccountId = account("admin", 0, SEED);
 	}: _<T::Origin>(origin, admin)
 	verify {
-		assert_last_event::<T>(Event::AdminChanged { old_admin: None }.into());
+		assert_last_event::<T>(Event::AdminChanged { old_admin }.into());
 	}
 
 	approve_reward_pool {
