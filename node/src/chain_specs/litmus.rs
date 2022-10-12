@@ -45,6 +45,7 @@ const DEFAULT_ENDOWED_ACCOUNT_BALANCE: Balance = 1000 * UNIT;
 /// GenesisInfo struct to store the parsed genesis_info JSON
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 struct GenesisInfo {
 	root_key: AccountId,
 	invulnerables: Vec<(AccountId, AuraId)>,
