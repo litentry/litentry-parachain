@@ -36,6 +36,9 @@ use sp_std::vec::Vec;
 mod vc_context;
 pub use vc_context::*;
 
+mod ruleset;
+pub use ruleset::*;
+
 // fn types for xt handling inside tee-worker
 pub type GenerateVCFn = ([u8; 2], ShardIdentifier, u32);
 
@@ -68,7 +71,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		// TODO: do we need account as event parameter? This needs to be decided by F/E
-		VCRequested { shard: ShardIdentifier, ruleset_id: u32 },
+		VCRequested { shard: ShardIdentifier, ruleset: Ruleset },
 		// a VC is disabled on chain
 		VCDisabled { id: VCID },
 		// a VC is revoked on chain
@@ -101,10 +104,10 @@ pub mod pallet {
 		pub fn request_vc(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
-			ruleset_id: u32,
+			ruleset: Ruleset,
 		) -> DispatchResultWithPostInfo {
 			let _ = ensure_signed(origin)?;
-			Self::deposit_event(Event::VCRequested { shard, ruleset_id });
+			Self::deposit_event(Event::VCRequested { shard, ruleset });
 			Ok(().into())
 		}
 
