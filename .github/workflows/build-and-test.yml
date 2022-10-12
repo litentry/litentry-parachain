@@ -210,6 +210,31 @@ jobs:
         if: failure()
         uses: andymckay/cancel-action@0.2
 
+  run-cargo-benchmarks:
+    runs-on: ubuntu-latest
+    needs: [check-cargo-fmt, check-file-change]
+    if: needs.check-file-change.outputs.src == 'true'
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          target: wasm32-unknown-unknown
+          default: true
+
+      - name: Run benchmarks
+        run: cargo test --release -p pallet-* --lib --features runtime-benchmarks
+
+      - name: Fail-fast; cancel other jobs
+        if: failure()
+        uses: andymckay/cancel-action@0.2
+
+
   # The reason why not to put the if-check on the job level is to make sure the
   # *matrix* job is run, although it can be skipped in the end.
   #
@@ -303,6 +328,7 @@ jobs:
       [
         "check-cargo-clippy",
         "run-cargo-unit-tests",
+        "run-cargo-benchmarks",
         "run-cargo-runtime-tests",
         "run-ts-tests",
       ]
