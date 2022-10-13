@@ -112,7 +112,7 @@ async function setupCrossChainTransfer(
     let opts = { gasLimit: 85000, gasPrice: 20000000000 };
     const parachainFee = new BN(10).pow(new BN(12)); // 1 unit
     const sourceChainID = 0; //ethereum
-    const destChainID = 1; //parachain
+    const destChainID = parseInt(pConfig.api.consts.chainBridge.bridgeChainId.toString()) //parachain
     const depositNonce = await pConfig.api.query.chainBridge.votes.entries(sourceChainID);
 
     const destResourceId = pConfig.api.consts.bridgeTransfer.nativeTokenResourceId.toHex();
