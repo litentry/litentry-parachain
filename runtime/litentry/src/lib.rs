@@ -881,7 +881,7 @@ impl Contains<Call> for BaseCallFilter {
 				// ChainBridge
 				Call::ChainBridge(_) |
 				// BridgeTransfer
-				Call::BridgeTransfer(_) |
+				Call::BridgeTransfer(_)
 		) {
 			// always allow core calls
 			return true
