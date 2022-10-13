@@ -757,7 +757,7 @@ impl pallet_vesting::Config for Runtime {
 }
 
 parameter_types! {
-	pub const BridgeChainId: u8 = 1;
+	pub const BridgeChainId: u8 = 3;
 	pub const ProposalLifetime: BlockNumber = 50400; // ~7 days
 	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }

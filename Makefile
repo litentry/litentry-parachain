@@ -108,6 +108,10 @@ launch-binary-rococo:
 test-cargo-all:
 	@cargo test --release --all
 
+.PHONY: test-cargo-all-benchmarks
+test-cargo-all-benchmarks:
+	@cargo test --release --all --features runtime-benchmarks
+
 .PHONY: test-ts-docker-litentry ## Run litentry ts tests with docker without clean-up
 test-ts-docker-litentry: launch-docker-litentry launch-docker-bridge
 	@./scripts/run-ts-test.sh litentry bridge
