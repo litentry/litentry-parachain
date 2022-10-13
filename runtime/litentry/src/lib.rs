@@ -138,7 +138,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9100,
+	spec_version: 9101,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -712,7 +712,7 @@ impl pallet_vesting::Config for Runtime {
 }
 
 parameter_types! {
-	pub const BridgeChainId: u8 = 1;
+	pub const BridgeChainId: u8 = 2;
 	pub const ProposalLifetime: BlockNumber = 50400; // ~7 days
 	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
@@ -725,6 +725,7 @@ impl pallet_bridge::Config for Runtime {
 	type Currency = Balances;
 	type ProposalLifetime = ProposalLifetime;
 	type TreasuryAccount = TreasuryAccount;
+	type WeightInfo = weights::pallet_bridge::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -741,6 +742,7 @@ impl SortedMembers<AccountId> for TechnicalCommitteeProvider {
 		TechnicalCommittee::members()
 	}
 
+	#[cfg(not(feature = "runtime-benchmarks"))]
 	fn contains(who: &AccountId) -> bool {
 		TechnicalCommittee::is_member(who)
 	}
@@ -748,6 +750,11 @@ impl SortedMembers<AccountId> for TechnicalCommitteeProvider {
 	#[cfg(feature = "runtime-benchmarks")]
 	fn add(_: &AccountId) {
 		unimplemented!()
+	}
+	// To ensure that the benchmark code runs through
+	#[cfg(feature = "runtime-benchmarks")]
+	fn contains(_who: &AccountId) -> bool {
+		true
 	}
 }
 
@@ -759,6 +766,7 @@ impl pallet_bridge_transfer::Config for Runtime {
 	type NativeTokenResourceId = NativeTokenResourceId;
 	type DefaultMaximumIssuance = MaximumIssuance;
 	type ExternalTotalIssuance = ExternalTotalIssuance;
+	type WeightInfo = weights::pallet_bridge_transfer::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -869,7 +877,11 @@ impl Contains<Call> for BaseCallFilter {
 				Call::System(_) | Call::Timestamp(_) |
 				Call::ParachainSystem(_) |
 				Call::ExtrinsicFilter(_) |
-				Call::Multisig(_)
+				Call::Multisig(_) |
+				// ChainBridge
+				Call::ChainBridge(_) |
+				// BridgeTransfer
+				Call::BridgeTransfer(_)
 		) {
 			// always allow core calls
 			return true
@@ -931,8 +943,12 @@ mod benches {
 		[pallet_scheduler, Scheduler]
 		[pallet_preimage, Preimage]
 		[pallet_session, SessionBench::<Runtime>]
-		[pallet_parachain_staking, ParachainStaking]
+		// Since this module benchmark times out, comment it out for now
+		// https://github.com/litentry/litentry-parachain/actions/runs/3155868677/jobs/5134984739
+		// [pallet_parachain_staking, ParachainStaking]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
+		[pallet_bridge,ChainBridge]
+		[pallet_bridge_transfer,BridgeTransfer]
 	);
 }
 

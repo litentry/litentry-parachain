@@ -109,6 +109,7 @@ impl Config for Test {
 	type Currency = Balances;
 	type ProposalLifetime = ProposalLifetime;
 	type TreasuryAccount = TreasuryAccount;
+	type WeightInfo = ();
 }
 
 // pub const BRIDGE_ID: u64 =

@@ -36,7 +36,9 @@ chmod a+x litentry-collator
 PALLETS=
 case "$3" in
   '*')
-    PALLETS=$(grep -F '[pallet_' runtime/$1/src/lib.rs | sed 's/.*\[//;s/,.*//' | paste -s -d' ' -)
+#    PALLETS=$(grep -F '[pallet_' runtime/$1/src/lib.rs | sed 's/.*\[//;s/,.*//' | paste -s -d' ' -)
+# In runtime, you want to ignore a benchmark code
+    PALLETS=$(grep -F '[pallet_' runtime/$1/src/lib.rs | tr -d '\t' | grep -v "^ *//" | sed 's/.*\[//;s/,.*//' | paste -s -d' ' -)
     PALLETS="frame_system cumulus_pallet_xcmp_queue $PALLETS"
     ;;
   *)

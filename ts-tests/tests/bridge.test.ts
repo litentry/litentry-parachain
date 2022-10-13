@@ -16,7 +16,7 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
         // const destResourceId = "0x00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001"
         const destResourceId = context.parachainConfig.api.consts.bridgeTransfer.nativeTokenResourceId.toHex();
         const depositAmount = toHex(BigNumber.from('100,000,000,000,000,000,000'.replace(/,/g, '')).toString());
-        let destinationChainID = 1;
+        let destinationChainID = parseInt(context.parachainConfig.api.consts.chainBridge.bridgeChainId.toString());
         //FERDIE key command: polkadot key inspect //Ferdie
         const destinationRecipientAddress = '0x1cbd2d43530a44705ad088af313e18f80b53ef16b36177cd4b77b846f2a5f07c';
 
@@ -123,7 +123,8 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
             maximum_issuance.sub(new BN(1000)).mul(new BN(1000000)).toString()
         );
         const depositAmount = maximum_issuance.sub(total_issuance).add(new BN(1000)).mul(new BN(1000000));
-        let destinationChainID = 1;
+        let destinationChainID = parseInt(context.parachainConfig.api.consts.chainBridge.bridgeChainId.toString());
+
         const destinationRecipientAddress = '0x1cbd2d43530a44705ad088af313e18f80b53ef16b36177cd4b77b846f2a5f07c';
         await erc20.approve(context.ethConfig.erc20Handler.address, `0x${depositAmount.toString('hex')}`);
         await sleep(2);
