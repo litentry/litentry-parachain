@@ -877,7 +877,11 @@ impl Contains<Call> for BaseCallFilter {
 				Call::System(_) | Call::Timestamp(_) |
 				Call::ParachainSystem(_) |
 				Call::ExtrinsicFilter(_) |
-				Call::Multisig(_)
+				Call::Multisig(_) |
+				// ChainBridge
+				Call::ChainBridge(_) |
+				// BridgeTransfer
+				Call::BridgeTransfer(_) |
 		) {
 			// always allow core calls
 			return true
