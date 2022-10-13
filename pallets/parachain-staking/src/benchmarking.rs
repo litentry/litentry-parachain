@@ -446,7 +446,6 @@ benchmarks! {
 			caller.clone()
 		)?;
 	} verify {
-		// TODO::We need to check lock instead
 		let expected_bond = min_candidate_stk * 10u32.into();
 		assert_eq!(T::Currency::reserved_balance(&caller),expected_bond);
 	}
@@ -651,7 +650,6 @@ benchmarks! {
 	}: _(RawOrigin::Signed(caller.clone()), collator, bond)
 	verify {
 		let expected_bond = bond * 2u32.into();
-		// TODO::We need to check lock instead
 		assert_eq!(T::Currency::reserved_balance(&caller), expected_bond);
 	}
 
@@ -748,7 +746,6 @@ benchmarks! {
 		)?;
 	} verify {
 		let expected = total - bond_less;
-		// TODO::We need to check lock instead
 		assert_eq!(T::Currency::reserved_balance(&caller), expected);
 	}
 
