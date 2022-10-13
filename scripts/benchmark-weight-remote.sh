@@ -8,7 +8,7 @@ set -eo pipefail
 # important from where we stand as it will be overriden by runtime weight anyway
 
 function usage() {
-  echo "Usage: $0 litentry|litmus branch-or-tag pallet-names"
+  echo "Usage: $0 litentry|litmus|rococo branch-or-tag pallet-names"
   echo "       branch-or-tag will be used to checkout codes"
   echo "       pallet-names can be either * or a comma listed pallet names"
   echo "e.g.:  $0 litentry dev *"
@@ -36,7 +36,9 @@ chmod a+x litentry-collator
 PALLETS=
 case "$3" in
   '*')
-    PALLETS=$(grep -F '[pallet_' runtime/$1/src/lib.rs | sed 's/.*\[//;s/,.*//' | paste -s -d' ' -)
+#    PALLETS=$(grep -F '[pallet_' runtime/$1/src/lib.rs | sed 's/.*\[//;s/,.*//' | paste -s -d' ' -)
+# In runtime, you want to ignore a benchmark code
+    PALLETS=$(grep -F '[pallet_' runtime/$1/src/lib.rs | tr -d '\t' | grep -v "^ *//" | sed 's/.*\[//;s/,.*//' | paste -s -d' ' -)
     PALLETS="frame_system cumulus_pallet_xcmp_queue $PALLETS"
     ;;
   *)

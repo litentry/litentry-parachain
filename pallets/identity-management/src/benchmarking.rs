@@ -22,14 +22,10 @@ use super::*;
 use crate::Pallet as IdentityManagement;
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_system::RawOrigin;
-use hex_literal::hex;
 use sp_core::H256;
 use sp_std::vec;
 
-// Sample MRENCLAVE from
-// https://github.com/integritee-network/pallets/blob/master/test-utils/src/ias.rs#L125-L132
-const TEST_MRENCLAVE: [u8; 32] =
-	hex!("7a3454ec8f42e265cb5be7dfd111e1d95ac6076ed82a0948b2e2a45cf17b62a0");
+const TEST_MRENCLAVE: [u8; 32] = [2u8; 32];
 
 fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 	frame_system::Pallet::<T>::assert_last_event(generic_event.into());
@@ -42,10 +38,11 @@ benchmarks! {
 	link_identity {
 		let caller = whitelisted_caller();
 		let shard = H256::from_slice(&TEST_MRENCLAVE);
-		let encrypted_data = vec![1u8; 2048];
-	}: _(RawOrigin::Signed(caller), shard, encrypted_data )
+		let encrypted_did = vec![1u8; 2048];
+		let encrypted_metadata = Some(vec![1u8; 2048]);
+	}: _(RawOrigin::Signed(caller), shard, encrypted_did, encrypted_metadata)
 	verify {
-		assert_last_event::<T>(Event::LinkIdentityRequested.into());
+		assert_last_event::<T>(Event::LinkIdentityRequested{ shard }.into());
 	}
 
 	// Benchmark `unlink_identity`. There are no worst conditions. The benchmark showed that
@@ -53,10 +50,10 @@ benchmarks! {
 	unlink_identity {
 		let caller = whitelisted_caller();
 		let shard = H256::from_slice(&TEST_MRENCLAVE);
-		let encrypted_data = vec![1u8; 2048];
-	}: _(RawOrigin::Signed(caller), shard, encrypted_data )
+		let encrypted_did = vec![1u8; 2048];
+	}: _(RawOrigin::Signed(caller), shard, encrypted_did )
 	verify {
-		assert_last_event::<T>(Event::UnlinkIdentityRequested.into());
+		assert_last_event::<T>(Event::UnlinkIdentityRequested{ shard }.into());
 	}
 
 	// Benchmark `verify_identity`. There are no worst conditions. The benchmark showed that
@@ -64,10 +61,11 @@ benchmarks! {
 	verify_identity {
 		let caller = whitelisted_caller();
 		let shard = H256::from_slice(&TEST_MRENCLAVE);
-		let encrypted_data = vec![1u8; 2048];
-	}: _(RawOrigin::Signed(caller), shard, encrypted_data )
+		let encrypted_did = vec![1u8; 2048];
+		let encrypted_validation_data = vec![1u8; 2048];
+	}: _(RawOrigin::Signed(caller), shard, encrypted_did, encrypted_validation_data )
 	verify {
-		assert_last_event::<T>(Event::VerifyIdentityRequested.into());
+		assert_last_event::<T>(Event::VerifyIdentityRequested{ shard }.into());
 	}
 
 	// Benchmark `set_user_shielding_key`. There are no worst conditions. The benchmark showed that
@@ -75,10 +73,10 @@ benchmarks! {
 	set_user_shielding_key {
 		let caller = whitelisted_caller();
 		let shard = H256::from_slice(&TEST_MRENCLAVE);
-		let encrypted_data = vec![1u8; 2048];
-	}: _(RawOrigin::Signed(caller), shard, encrypted_data )
+		let encrypted_key = vec![1u8; 2048];
+	}: _(RawOrigin::Signed(caller), shard, encrypted_key )
 	verify {
-		assert_last_event::<T>(Event::SetShieldingKeyRequested.into());
+		assert_last_event::<T>(Event::SetUserShieldingKeyRequested{ shard }.into());
 	}
 }
 

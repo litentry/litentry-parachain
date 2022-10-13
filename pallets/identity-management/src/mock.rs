@@ -18,7 +18,7 @@
 
 use crate as pallet_identity_management;
 use frame_support::{
-	parameter_types,
+	ord_parameter_types, parameter_types,
 	traits::{ConstU128, ConstU16, ConstU32, ConstU64, Everything},
 };
 use frame_system as system;
@@ -27,6 +27,7 @@ use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
+use system::EnsureSignedBy;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -40,11 +41,10 @@ frame_support::construct_runtime!(
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		Teerex: pallet_teerex::{Pallet, Call, Storage, Event<T>},
-		IdentityManagement: pallet_identity_management::{Pallet, Call, Storage, Event<T>},
+		System: frame_system,
+		Balances: pallet_balances,
+		Timestamp: pallet_timestamp,
+		IdentityManagement: pallet_identity_management,
 	}
 );
 
@@ -86,19 +86,6 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
-parameter_types! {
-	pub const MomentsPerDay: u64 = 86_400_000; // [ms/d]
-	pub const MaxSilenceTime:u64 =172_800_000; // 48h
-}
-
-impl pallet_teerex::Config for Test {
-	type Event = Event;
-	type Currency = Balances;
-	type MomentsPerDay = MomentsPerDay;
-	type MaxSilenceTime = MaxSilenceTime;
-	type WeightInfo = ();
-}
-
 impl pallet_balances::Config for Test {
 	type MaxLocks = ConstU32<50>;
 	type MaxReserves = ();
@@ -111,10 +98,14 @@ impl pallet_balances::Config for Test {
 	type WeightInfo = ();
 }
 
+ord_parameter_types! {
+	pub const One: u64 = 1;
+}
+
 impl pallet_identity_management::Config for Test {
 	type Event = Event;
-	type Call = Call;
 	type WeightInfo = ();
+	type TEECallOrigin = EnsureSignedBy<One, u64>;
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {

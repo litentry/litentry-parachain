@@ -45,10 +45,6 @@ build-runtime-litmus:
 build-runtime-rococo:
 	cargo build --locked -p $(call pkgid, rococo-parachain-runtime) --release
 
-.PHONY: build-runtime-moonbase ## Build moonbase release runtime
-build-runtime-moonbase:
-	cargo build --locked -p $(call pkgid, moonbase-parachain-runtime) --release
-
 .PHONY: srtool-build-wasm-litentry ## Build litentry wasm with srtools
 srtool-build-wasm-litentry:
 	@./scripts/build-wasm.sh litentry
@@ -60,10 +56,6 @@ srtool-build-wasm-litmus:
 .PHONY: srtool-build-wasm-rococo ## Build rococo wasm with srtools
 srtool-build-wasm-rococo:
 	@./scripts/build-wasm.sh rococo
-
-.PHONY: srtool-build-wasm-moonbase ## Build moonbase wasm with srtools
-srtool-build-wasm-moonbase:
-	@./scripts/build-wasm.sh moonbase
 
 .PHONY: build-docker-release ## Build docker image using cargo profile `release`
 build-docker-release:
@@ -94,6 +86,10 @@ launch-docker-litentry: generate-docker-compose-litentry
 launch-docker-litmus: generate-docker-compose-litmus
 	@./scripts/launch-local-docker.sh litmus
 
+.PHONY: launch-docker-rococo ## Launch a local rococo-parachain network with docker
+launch-docker-rococo: generate-docker-compose-rococo
+	@./scripts/launch-local-docker.sh rococo
+
 .PHONY: launch-binary-litentry ## Launch a local litentry-parachain network with binaries
 launch-binary-litentry:
 	@./scripts/launch-local-binary.sh litentry
@@ -112,6 +108,10 @@ launch-binary-rococo:
 test-cargo-all:
 	@cargo test --release --all
 
+.PHONY: test-cargo-all-benchmarks
+test-cargo-all-benchmarks:
+	@cargo test --release --all --features runtime-benchmarks
+
 .PHONY: test-ts-docker-litentry ## Run litentry ts tests with docker without clean-up
 test-ts-docker-litentry: launch-docker-litentry launch-docker-bridge
 	@./scripts/run-ts-test.sh litentry bridge
@@ -120,6 +120,10 @@ test-ts-docker-litentry: launch-docker-litentry launch-docker-bridge
 test-ts-docker-litmus: launch-docker-litmus launch-docker-bridge
 	@./scripts/run-ts-test.sh litmus bridge
 
+.PHONY: test-ts-docker-rococo ## Run rococo ts tests with docker without clean-up
+test-ts-docker-rococo: launch-docker-rococo launch-docker-bridge
+	@./scripts/run-ts-test.sh rococo bridge
+
 .PHONY: test-ts-binary-litentry ## Run litentry ts tests with binary without clean-up
 test-ts-binary-litentry: launch-binary-litentry
 	@./scripts/run-ts-test.sh litentry
@@ -127,6 +131,10 @@ test-ts-binary-litentry: launch-binary-litentry
 .PHONY: test-ts-binary-litmus ## Run litmus ts tests with binary without clean-up
 test-ts-binary-litmus: launch-binary-litmus
 	@./scripts/run-ts-test.sh litmus
+
+.PHONY: test-ts-binary-rococo ## Run rococo ts tests with binary without clean-up
+test-ts-binary-rococo: launch-binary-rococo
+	@./scripts/run-ts-test.sh rococo
 
 # clean up
 
@@ -137,6 +145,10 @@ clean-docker-litentry:
 .PHONY: clean-docker-litmus ## Clean up litmus docker images, containers, volumes, etc
 clean-docker-litmus:
 	@./scripts/clean-local-docker.sh litmus
+
+.PHONY: clean-docker-rococo ## Clean up rococo docker images, containers, volumes, etc
+clean-docker-rococo:
+	@./scripts/clean-local-docker.sh rococo
 
 .PHONY: clean-binary ## Kill started polkadot and litentry-collator binaries
 clean-binary:
@@ -151,6 +163,10 @@ generate-docker-compose-litentry:
 .PHONY: generate-docker-compose-litmus ## Generate docker-compose files for litmus local network
 generate-docker-compose-litmus:
 	@./scripts/generate-docker-files.sh litmus
+
+.PHONY: generate-docker-compose-rococo ## Generate docker-compose files for litmus local network
+generate-docker-compose-rococo:
+	@./scripts/generate-docker-files.sh rococo
 
 # update dependencies
 
@@ -173,11 +189,23 @@ fmt:
 	cargo fmt --all
 	taplo fmt
 
+.PHONY: githooks ## install the githooks
+githooks:
+	git config core.hooksPath .githooks
+
 # clippy
 
 .PHONY: clippy ## cargo clippy
 clippy:
 	SKIP_WASM_BUILD=1 cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+.PHONY: clippyfix ## cargo clippy --fix
+clippyfix:
+	SKIP_WASM_BUILD=1 cargo clippy --allow-dirty --allow-staged --fix --workspace --all-targets --all-features -- -D warnings
+
+.PHONY: cargofix ## cargo fix
+cargofix:
+	cargo fix --allow-dirty --allow-staged --workspace --all-targets --all-features
 
 define pkgid
 $(shell cargo pkgid $1)

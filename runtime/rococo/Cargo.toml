@@ -9,7 +9,7 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 hex-literal = { version = '0.3.4' }
 log = { version = "0.4", default-features = false }
 scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
-serde = { version = "1.0.144", optional = true, features = ["derive"] }
+serde = { version = "1.0", optional = true, features = ["derive"] }
 smallvec = "1.9.0"
 
 primitives = { path = "../../primitives", default-features = false }
@@ -93,12 +93,14 @@ pallet-bridge-transfer = { path = "../../pallets/bridge-transfer", default-featu
 pallet-drop3 = { path = "../../pallets/drop3", default-features = false }
 pallet-extrinsic-filter = { path = "../../pallets/extrinsic-filter", default-features = false }
 pallet-identity-management = { path = "../../pallets/identity-management", default-features = false }
+pallet-identity-management-mock = { path = "../../pallets/identity-management-mock", default-features = false }
 pallet-parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
+pallet-vc-management = { path = "../../pallets/vc-management", default-features = false }
 runtime-common = { path = '../common', default-features = false }
 
 # TEE pallets - TODO: patch it with litentry teerex
-pallet-sidechain = { git = "https://github.com/litentry/integritee-pallets.git", default-features = false, branch = "polkadot-v0.9.28" }
-pallet-teerex = { git = "https://github.com/litentry/integritee-pallets.git", default-features = false, branch = "polkadot-v0.9.28" }
+pallet-sidechain = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "polkadot-v0.9.28" }
+pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "polkadot-v0.9.28" }
 
 [dev-dependencies]
 cumulus-primitives-parachain-inherent = { git = 'https://github.com/paritytech/cumulus', branch = "polkadot-v0.9.28" }
@@ -128,7 +130,9 @@ runtime-benchmarks = [
   "pallet-democracy/runtime-benchmarks",
   "pallet-membership/runtime-benchmarks",
   "pallet-multisig/runtime-benchmarks",
-  "pallet-parachain-staking/runtime-benchmarks",
+  #  This module timed out for some reason and had to be commented out temporarily
+  #  https://github.com/litentry/litentry-parachain/actions/runs/3155868677/jobs/5134984739
+  #  "pallet-parachain-staking/runtime-benchmarks",
   "pallet-preimage/runtime-benchmarks",
   "pallet-proxy/runtime-benchmarks",
   "pallet-scheduler/runtime-benchmarks",
@@ -147,6 +151,7 @@ runtime-benchmarks = [
   "pallet-identity-management/runtime-benchmarks",
   "pallet-teerex/runtime-benchmarks",
   "pallet-sidechain/runtime-benchmarks",
+  "pallet-vc-management/runtime-benchmarks",
 ]
 std = [
   "codec/std",
@@ -217,8 +222,10 @@ std = [
   "pallet-drop3/std",
   "pallet-extrinsic-filter/std",
   "pallet-identity-management/std",
+  "pallet-identity-management-mock/std",
   "pallet-teerex/std",
   "pallet-sidechain/std",
+  "pallet-vc-management/std",
 ]
 tee-dev = [
   "pallet-teerex/skip-ias-check",

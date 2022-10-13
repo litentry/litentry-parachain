@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 function usage() {
-  echo "Usage: $0 litentry|litmus"
+  echo "Usage: $0 litentry|litmus|rococo"
 }
 
 [ $# -ne 1 ] && (usage; exit 1)

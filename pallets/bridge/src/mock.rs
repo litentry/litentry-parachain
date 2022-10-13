@@ -109,6 +109,7 @@ impl Config for Test {
 	type Currency = Balances;
 	type ProposalLifetime = ProposalLifetime;
 	type TreasuryAccount = TreasuryAccount;
+	type WeightInfo = ();
 }
 
 // pub const BRIDGE_ID: u64 =
@@ -120,9 +121,14 @@ pub const TEST_THRESHOLD: u32 = 2;
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let bridge_id = PalletId(*b"litry/bg").into_account_truncating();
+	let treasury_account: u64 = 0x8;
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	pallet_balances::GenesisConfig::<Test> {
-		balances: vec![(bridge_id, ENDOWED_BALANCE), (RELAYER_A, ENDOWED_BALANCE)],
+		balances: vec![
+			(bridge_id, ENDOWED_BALANCE),
+			(RELAYER_A, ENDOWED_BALANCE),
+			(treasury_account, ENDOWED_BALANCE),
+		],
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();

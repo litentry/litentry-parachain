@@ -22,11 +22,17 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
 pub mod hashing;
+pub mod weights;
 pub use pallet::*;
+pub use weights::WeightInfo;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use crate::weights::WeightInfo;
 	use codec::{Decode, Encode, EncodeLike};
 	use frame_support::traits::{
 		fungible::Mutate, Currency, ExistenceRequirement::AllowDeath, WithdrawReasons,
@@ -151,7 +157,8 @@ pub mod pallet {
 		type Proposal: Parameter
 			+ Dispatchable<Origin = Self::Origin>
 			+ EncodeLike
-			+ GetDispatchInfo;
+			+ GetDispatchInfo
+			+ From<frame_system::Call<Self>>;
 		/// The identifier for this chain.
 		/// This must be unique and must not collide with existing IDs within a set of bridged
 		/// chains.
@@ -167,6 +174,9 @@ pub mod pallet {
 
 		/// Treasury account to receive assets fee
 		type TreasuryAccount: Get<Self::AccountId>;
+
+		/// Weight information for extrinsics in this pallet.
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::event]
@@ -314,7 +324,7 @@ pub mod pallet {
 		/// # <weight>
 		/// - O(1) lookup and insert
 		/// # </weight>
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_threshold())]
 		pub fn set_threshold(origin: OriginFor<T>, threshold: u32) -> DispatchResult {
 			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
 			Self::set_relayer_threshold(threshold)
@@ -325,7 +335,7 @@ pub mod pallet {
 		/// # <weight>
 		/// - O(1) write
 		/// # </weight>
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_resource())]
 		pub fn set_resource(
 			origin: OriginFor<T>,
 			id: ResourceId,
@@ -343,7 +353,7 @@ pub mod pallet {
 		/// # <weight>
 		/// - O(1) removal
 		/// # </weight>
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::remove_resource())]
 		pub fn remove_resource(origin: OriginFor<T>, id: ResourceId) -> DispatchResult {
 			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
 			Self::unregister_resource(id)
@@ -354,7 +364,7 @@ pub mod pallet {
 		/// # <weight>
 		/// - O(1) lookup and insert
 		/// # </weight>
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::whitelist_chain())]
 		pub fn whitelist_chain(origin: OriginFor<T>, id: BridgeChainId) -> DispatchResult {
 			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
 			Self::whitelist(id)
@@ -365,7 +375,7 @@ pub mod pallet {
 		/// # <weight>
 		/// - O(1) lookup and insert
 		/// # </weight>
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::add_relayer())]
 		pub fn add_relayer(origin: OriginFor<T>, v: T::AccountId) -> DispatchResult {
 			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
 			Self::register_relayer(v)
@@ -376,7 +386,7 @@ pub mod pallet {
 		/// # <weight>
 		/// - O(1) lookup and removal
 		/// # </weight>
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::remove_relayer())]
 		pub fn remove_relayer(origin: OriginFor<T>, v: T::AccountId) -> DispatchResult {
 			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
 			Self::unregister_relayer(v)
@@ -387,7 +397,7 @@ pub mod pallet {
 		/// # <weight>
 		/// - O(1) lookup and insert
 		/// # </weight>
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::update_fee())]
 		pub fn update_fee(
 			origin: OriginFor<T>,
 			dest_id: BridgeChainId,
@@ -408,8 +418,10 @@ pub mod pallet {
 		/// - weight of proposed call, regardless of whether execution is performed
 		/// # </weight>
 		#[pallet::weight({
-			let dispatch_info = call.get_dispatch_info();
-			(dispatch_info.weight + 195_000_000, dispatch_info.class, Pays::Yes)
+		let di = call.get_dispatch_info();
+		(< T as Config >::WeightInfo::acknowledge_proposal()
+		.saturating_add(di.weight),
+		di.class)
 		})]
 		pub fn acknowledge_proposal(
 			origin: OriginFor<T>,
@@ -431,7 +443,7 @@ pub mod pallet {
 		/// # <weight>
 		/// - Fixed, since execution of proposal should not be included
 		/// # </weight>
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::reject_proposal())]
 		pub fn reject_proposal(
 			origin: OriginFor<T>,
 			nonce: DepositNonce,
@@ -456,8 +468,10 @@ pub mod pallet {
 		/// - weight of proposed call, regardless of whether execution is performed
 		/// # </weight>
 		#[pallet::weight({
-			let dispatch_info = prop.get_dispatch_info();
-			(dispatch_info.weight + 195_000_000, dispatch_info.class, Pays::Yes)
+		let di = prop.get_dispatch_info();
+		(< T as Config >::WeightInfo::eval_vote_state()
+		.saturating_add(di.weight),
+		di.class)
 		})]
 		pub fn eval_vote_state(
 			origin: OriginFor<T>,
@@ -533,7 +547,7 @@ pub mod pallet {
 			ensure!(id != T::BridgeChainId::get(), Error::<T>::InvalidChainId);
 			// Cannot whitelist with an existing entry
 			ensure!(!Self::chain_whitelisted(id), Error::<T>::ChainAlreadyWhitelisted);
-			ChainNonces::<T>::insert(&id, 0);
+			ChainNonces::<T>::insert(id, 0);
 			Self::deposit_event(Event::ChainWhitelisted(id));
 			Ok(())
 		}
@@ -681,11 +695,11 @@ pub mod pallet {
 			let balance: BalanceOf<T> = T::Currency::free_balance(&sender);
 			ensure!(balance >= amount, Error::<T>::InsufficientBalance);
 
-			T::Currency::withdraw(&sender, actual_amount, WithdrawReasons::TRANSFER, AllowDeath)?;
-			T::Currency::burn(actual_amount);
+			T::Currency::withdraw(&sender, amount, WithdrawReasons::TRANSFER, AllowDeath)?;
+			T::Currency::burn(amount);
 
-			// transfer fee to treasury
-			T::Currency::transfer(&sender, &T::TreasuryAccount::get(), fee, AllowDeath)?;
+			// deposit fee to treasury
+			let _ = T::Currency::deposit_into_existing(&T::TreasuryAccount::get(), fee)?;
 
 			let nonce = Self::bump_nonce(dest_id)?;
 			BridgeEvents::<T>::append(BridgeEvent::FungibleTransfer(

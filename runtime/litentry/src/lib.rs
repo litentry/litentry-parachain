@@ -23,7 +23,6 @@
 #[macro_use]
 extern crate frame_benchmarking;
 
-pub mod migration;
 use codec::{Decode, Encode, MaxEncodedLen};
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use frame_support::{
@@ -71,11 +70,13 @@ use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+pub mod asset_config;
 pub mod constants;
-#[cfg(test)]
-mod tests;
 pub mod weights;
 pub mod xcm_config;
+
+#[cfg(test)]
+mod tests;
 
 /// The address format for describing accounts.
 pub type Address = MultiAddress<AccountId, ()>;
@@ -120,7 +121,6 @@ pub type Executive = frame_executive::Executive<
 	// It was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
-	migration::MigrateCollatorSelectionIntoParachainStaking<Runtime>,
 >;
 
 impl_opaque_keys! {
@@ -138,7 +138,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9100,
+	spec_version: 9101,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -712,7 +712,7 @@ impl pallet_vesting::Config for Runtime {
 }
 
 parameter_types! {
-	pub const BridgeChainId: u8 = 1;
+	pub const BridgeChainId: u8 = 2;
 	pub const ProposalLifetime: BlockNumber = 50400; // ~7 days
 	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
@@ -725,6 +725,7 @@ impl pallet_bridge::Config for Runtime {
 	type Currency = Balances;
 	type ProposalLifetime = ProposalLifetime;
 	type TreasuryAccount = TreasuryAccount;
+	type WeightInfo = weights::pallet_bridge::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -741,6 +742,7 @@ impl SortedMembers<AccountId> for TechnicalCommitteeProvider {
 		TechnicalCommittee::members()
 	}
 
+	#[cfg(not(feature = "runtime-benchmarks"))]
 	fn contains(who: &AccountId) -> bool {
 		TechnicalCommittee::is_member(who)
 	}
@@ -748,6 +750,11 @@ impl SortedMembers<AccountId> for TechnicalCommitteeProvider {
 	#[cfg(feature = "runtime-benchmarks")]
 	fn add(_: &AccountId) {
 		unimplemented!()
+	}
+	// To ensure that the benchmark code runs through
+	#[cfg(feature = "runtime-benchmarks")]
+	fn contains(_who: &AccountId) -> bool {
+		true
 	}
 }
 
@@ -759,6 +766,7 @@ impl pallet_bridge_transfer::Config for Runtime {
 	type NativeTokenResourceId = NativeTokenResourceId;
 	type DefaultMaximumIssuance = MaximumIssuance;
 	type ExternalTotalIssuance = ExternalTotalIssuance;
+	type WeightInfo = weights::pallet_bridge_transfer::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -784,8 +792,9 @@ impl pallet_extrinsic_filter::Config for Runtime {
 	type WeightInfo = weights::pallet_extrinsic_filter::WeightInfo<Runtime>;
 }
 
-#[cfg(test)]
 impl runtime_common::BaseRuntimeRequirements for Runtime {}
+
+impl runtime_common::ParaRuntimeRequirements for Runtime {}
 
 construct_runtime! {
 	pub enum Runtime where
@@ -844,12 +853,15 @@ construct_runtime! {
 		PolkadotXcm: pallet_xcm = 51,
 		CumulusXcm: cumulus_pallet_xcm = 52,
 		DmpQueue: cumulus_pallet_dmp_queue = 53,
+		XTokens: orml_xtokens = 54,
+		Tokens: orml_tokens = 55,
 
 		// Litentry pallets
 		ChainBridge: pallet_bridge = 60,
 		BridgeTransfer: pallet_bridge_transfer = 61,
 		Drop3: pallet_drop3 = 62,
 		ExtrinsicFilter: pallet_extrinsic_filter = 63,
+		AssetManager: pallet_asset_manager = 64,
 
 		// TMP
 		Sudo: pallet_sudo = 255,
@@ -865,7 +877,11 @@ impl Contains<Call> for BaseCallFilter {
 				Call::System(_) | Call::Timestamp(_) |
 				Call::ParachainSystem(_) |
 				Call::ExtrinsicFilter(_) |
-				Call::Multisig(_)
+				Call::Multisig(_) |
+				// ChainBridge
+				Call::ChainBridge(_) |
+				// BridgeTransfer
+				Call::BridgeTransfer(_)
 		) {
 			// always allow core calls
 			return true
@@ -912,6 +928,7 @@ impl Contains<Call> for NormalModeFilter {
 mod benches {
 	define_benchmarks!(
 		[frame_system, SystemBench::<Runtime>]
+		[pallet_asset_manager, AssetManager]
 		[pallet_balances, Balances]
 		[pallet_timestamp, Timestamp]
 		[pallet_utility, Utility]
@@ -926,8 +943,12 @@ mod benches {
 		[pallet_scheduler, Scheduler]
 		[pallet_preimage, Preimage]
 		[pallet_session, SessionBench::<Runtime>]
-		[pallet_parachain_staking, ParachainStaking]
+		// Since this module benchmark times out, comment it out for now
+		// https://github.com/litentry/litentry-parachain/actions/runs/3155868677/jobs/5134984739
+		// [pallet_parachain_staking, ParachainStaking]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
+		[pallet_bridge,ChainBridge]
+		[pallet_bridge_transfer,BridgeTransfer]
 	);
 }
 
