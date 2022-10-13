@@ -175,6 +175,7 @@ function generateBridgeConfig(
     parachainRelayer: string,
     ethStartFrom: number,
     parachainStartFrom: number,
+    parachainChainID: number,
     filename: string
 ) {
     // import sub key: chainbridge accounts import --sr25519 --privateKey //Alice
@@ -201,7 +202,7 @@ function generateBridgeConfig(
             {
                 name: 'sub',
                 type: 'substrate',
-                id: '1',
+                id: parachainChainID.toString(),
                 endpoint: 'ws://127.0.0.1:9946',
                 from: parachainRelayer,
                 opts: {
@@ -239,7 +240,9 @@ async function startChainBridge(
     emptyDir(dataDir);
     const ethBlock = await ethConfig.wallets.bob.provider.getBlockNumber();
     const subBlock = await parachainConfig.api.rpc.chain.getHeader();
-    generateBridgeConfig(ethConfig, ethRelayer, parachainRelayer, ethBlock, subBlock.number.toNumber(), config);
+    const parachainChainID = parseInt(parachainConfig.api.consts.chainBridge.bridgeChainId.toString()) //parachain
+
+    generateBridgeConfig(ethConfig, ethRelayer, parachainRelayer, ethBlock, subBlock.number.toNumber(), parachainChainID, config);
     const logging = fs.createWriteStream(log, { flags: 'w+' });
     const lsProcess = spawn(
         // `${process.env.GOPATH}/bin/chainbridge`,
