@@ -18,7 +18,8 @@ use frame_support::{
 	assert_ok,
 	dispatch::RawOrigin,
 	weights::{
-		constants::ExtrinsicBaseWeight, DispatchClass, DispatchInfo, IdentityFee, PostDispatchInfo, Weight, WeightToFee
+		constants::ExtrinsicBaseWeight, DispatchClass, DispatchInfo, IdentityFee, PostDispatchInfo,
+		Weight, WeightToFee,
 	},
 };
 use pallet_balances::Call as BalancesCall;

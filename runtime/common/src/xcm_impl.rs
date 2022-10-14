@@ -15,9 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use codec::{Decode, Encode};
-use frame_support::{
-	traits::{tokens::fungibles::Mutate, Get, PalletInfoAccess},
-};
+use frame_support::traits::{tokens::fungibles::Mutate, Get, PalletInfoAccess};
 use pallet_balances::pallet::Pallet as RuntimeBalances;
 use parachain_info::pallet::Pallet as ParachainInfo;
 use scale_info::TypeInfo;
@@ -134,7 +132,8 @@ impl<
 		if let Some((id, prev_amount, units_per_second)) = self.1.clone() {
 			let weight = weight.min(self.0);
 			self.0 -= weight;
-			let amount = units_per_second * (weight as u128) / (WEIGHT_PER_SECOND.ref_time() as u128);
+			let amount =
+				units_per_second * (weight as u128) / (WEIGHT_PER_SECOND.ref_time() as u128);
 			self.1 = Some((id.clone(), prev_amount.saturating_sub(amount), units_per_second));
 			Some(MultiAsset { fun: Fungibility::Fungible(amount), id: xcmAssetId::Concrete(id) })
 		} else {
