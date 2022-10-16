@@ -26,7 +26,7 @@ extern crate frame_benchmarking;
 use codec::{Decode, Encode, MaxEncodedLen};
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use frame_support::{
-	construct_runtime, ord_parameter_types, parameter_types,
+	construct_runtime, parameter_types,
 	traits::{
 		ConstU16, ConstU32, ConstU64, ConstU8, Contains, ContainsLengthBound, Everything,
 		InstanceFilter, SortedMembers,
@@ -34,7 +34,7 @@ use frame_support::{
 	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
 	PalletId, RuntimeDebug,
 };
-use frame_system::{EnsureRoot, EnsureSignedBy};
+use frame_system::EnsureRoot;
 use hex_literal::hex;
 
 // for TEE
@@ -853,29 +853,22 @@ impl pallet_sidechain::Config for Runtime {
 	type EarlyBlockProposalLenience = ConstU64<100>;
 }
 
-ord_parameter_types! {
-	pub const ALICE: AccountId = sp_runtime::AccountId32::new(hex!["d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"]);
-}
-
 impl pallet_identity_management::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = ();
-	// TODO: use the real TEE account
-	type TEECallOrigin = EnsureSignedBy<ALICE, AccountId>;
+	type TEECallOrigin = pallet_identity_management::EnsureEnclaveSigner<Runtime>;
 }
 
 impl pallet_identity_management_mock::Config for Runtime {
 	type Event = Event;
 	type ManageWhitelistOrigin = EnsureRoot<Self::AccountId>;
 	type MaxVerificationDelay = ConstU32<10>;
-	// TODO: use the real TEE account
-	type TEECallOrigin = EnsureSignedBy<ALICE, AccountId>;
+	type TEECallOrigin = pallet_identity_management::EnsureEnclaveSigner<Runtime>;
 }
 
 impl pallet_vc_management::Config for Runtime {
 	type Event = Event;
-	// TODO: use the real TEE account
-	type TEECallOrigin = EnsureSignedBy<ALICE, AccountId>;
+	type TEECallOrigin = pallet_identity_management::EnsureEnclaveSigner<Runtime>;
 }
 
 impl runtime_common::BaseRuntimeRequirements for Runtime {}
