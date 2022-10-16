@@ -66,7 +66,7 @@ pub use primitives::{opaque, Index, *};
 pub use runtime_common::currency::*;
 use runtime_common::{
 	impl_runtime_transaction_payment_fees, prod_or_fast, BlockHashCount, BlockLength,
-	CouncilInstance, CouncilMembershipInstance, EnsureRootOrAllCouncil,
+	CouncilInstance, CouncilMembershipInstance, EnsureEnclaveSigner, EnsureRootOrAllCouncil,
 	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrHalfTechnicalCommittee,
 	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, NegativeImbalance,
 	RuntimeBlockWeights, SlowAdjustingFeeUpdate, TechnicalCommitteeInstance,
@@ -856,19 +856,19 @@ impl pallet_sidechain::Config for Runtime {
 impl pallet_identity_management::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = ();
-	type TEECallOrigin = pallet_identity_management::EnsureEnclaveSigner<Runtime>;
+	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 }
 
 impl pallet_identity_management_mock::Config for Runtime {
 	type Event = Event;
 	type ManageWhitelistOrigin = EnsureRoot<Self::AccountId>;
 	type MaxVerificationDelay = ConstU32<10>;
-	type TEECallOrigin = pallet_identity_management::EnsureEnclaveSigner<Runtime>;
+	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 }
 
 impl pallet_vc_management::Config for Runtime {
 	type Event = Event;
-	type TEECallOrigin = pallet_identity_management::EnsureEnclaveSigner<Runtime>;
+	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 }
 
 impl runtime_common::BaseRuntimeRequirements for Runtime {}

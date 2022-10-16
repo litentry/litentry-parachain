@@ -18,6 +18,7 @@
 
 use crate as pallet_identity_management;
 use frame_support::{
+	pallet_prelude::EnsureOrigin,
 	parameter_types,
 	traits::{ConstU128, ConstU16, ConstU32, ConstU64, Everything},
 };
@@ -32,6 +33,25 @@ type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
 pub type Balance = u128;
+
+type SystemOrigin = <Test as frame_system::Config>::Origin;
+type SystemAccountId = <Test as frame_system::Config>::AccountId;
+
+// Similar to `runtime_common`, just don't want to pull in the whole dependency
+pub struct EnsureEnclaveSigner;
+impl EnsureOrigin<SystemOrigin> for EnsureEnclaveSigner {
+	type Success = SystemAccountId;
+	fn try_origin(o: SystemOrigin) -> Result<Self::Success, SystemOrigin> {
+		Into::<Result<frame_system::RawOrigin<SystemAccountId>, SystemOrigin>>::into(o).and_then(
+			|o| match o {
+				frame_system::RawOrigin::Signed(ref who)
+					if pallet_teerex::Pallet::<Test>::is_registered_enclave(who) == Ok(true) =>
+					Ok(*who),
+				r => Err(SystemOrigin::from(r)),
+			},
+		)
+	}
+}
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -114,7 +134,7 @@ impl pallet_teerex::Config for Test {
 impl pallet_identity_management::Config for Test {
 	type Event = Event;
 	type WeightInfo = ();
-	type TEECallOrigin = pallet_identity_management::EnsureEnclaveSigner<Test>;
+	type TEECallOrigin = EnsureEnclaveSigner;
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {

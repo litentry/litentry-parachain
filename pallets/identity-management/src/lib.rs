@@ -64,7 +64,7 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_teerex::Config {
+	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type WeightInfo: WeightInfo;
 		// some extrinsics should only be called by origins from TEE
@@ -214,21 +214,6 @@ pub mod pallet {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::SomeError { func, error });
 			Ok(Pays::No.into())
-		}
-	}
-
-	// EnsureOrigin implementation to make sure the extrinsic origin
-	// must come from one of the registered enclaves
-	pub struct EnsureEnclaveSigner<T>(sp_std::marker::PhantomData<T>);
-	impl<T: Config> EnsureOrigin<T::Origin> for EnsureEnclaveSigner<T> {
-		type Success = T::AccountId;
-		fn try_origin(o: T::Origin) -> Result<Self::Success, T::Origin> {
-			o.into().and_then(|o| match o {
-				frame_system::RawOrigin::Signed(ref who)
-					if pallet_teerex::Pallet::<T>::is_registered_enclave(who) == Ok(true) =>
-					Ok(who.clone()),
-				r => Err(T::Origin::from(r)),
-			})
 		}
 	}
 }
