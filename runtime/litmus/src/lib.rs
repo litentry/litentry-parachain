@@ -26,14 +26,14 @@ extern crate frame_benchmarking;
 use codec::{Decode, Encode, MaxEncodedLen};
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use frame_support::{
-	construct_runtime, parameter_types,
+	construct_runtime, ord_parameter_types, parameter_types,
 	traits::{
 		ConstU16, ConstU32, ConstU64, ConstU8, Contains, Everything, InstanceFilter, SortedMembers,
 	},
 	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
 	PalletId, RuntimeDebug,
 };
-use frame_system::EnsureRoot;
+use frame_system::{EnsureRoot, EnsureSignedBy};
 use hex_literal::hex;
 
 // for TEE
@@ -789,11 +789,16 @@ impl pallet_identity_management::Config for Runtime {
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 }
 
+ord_parameter_types! {
+	pub const ALICE: AccountId = sp_runtime::AccountId32::new(hex!["d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"]);
+}
+
 impl pallet_identity_management_mock::Config for Runtime {
 	type Event = Event;
 	type ManageWhitelistOrigin = EnsureRoot<Self::AccountId>;
 	type MaxVerificationDelay = ConstU32<10>;
-	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
+	// intentionally use ALICE for the IMP mock
+	type TEECallOrigin = EnsureSignedBy<ALICE, AccountId>;
 }
 
 impl pallet_vc_management::Config for Runtime {
