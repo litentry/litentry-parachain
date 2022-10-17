@@ -877,11 +877,7 @@ impl Contains<Call> for BaseCallFilter {
 				Call::System(_) | Call::Timestamp(_) |
 				Call::ParachainSystem(_) |
 				Call::ExtrinsicFilter(_) |
-				Call::Multisig(_) |
-				// ChainBridge
-				Call::ChainBridge(_) |
-				// BridgeTransfer
-				Call::BridgeTransfer(_)
+				Call::Multisig(_)
 		) {
 			// always allow core calls
 			return true
@@ -905,6 +901,10 @@ impl Contains<Call> for NormalModeFilter {
 			call,
 			// Vesting::vest
 			Call::Vesting(pallet_vesting::Call::vest { .. }) |
+			// ChainBridge
+			Call::ChainBridge(_) |
+			// BridgeTransfer
+			Call::BridgeTransfer(_) |
 			// Utility
 			Call::Utility(_) |
 			// Session
