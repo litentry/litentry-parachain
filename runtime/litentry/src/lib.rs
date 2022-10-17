@@ -138,7 +138,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9100,
+	spec_version: 9101,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -712,7 +712,7 @@ impl pallet_vesting::Config for Runtime {
 }
 
 parameter_types! {
-	pub const BridgeChainId: u8 = 1;
+	pub const BridgeChainId: u8 = 2;
 	pub const ProposalLifetime: BlockNumber = 50400; // ~7 days
 	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
@@ -901,6 +901,10 @@ impl Contains<Call> for NormalModeFilter {
 			call,
 			// Vesting::vest
 			Call::Vesting(pallet_vesting::Call::vest { .. }) |
+			// ChainBridge
+			Call::ChainBridge(_) |
+			// BridgeTransfer
+			Call::BridgeTransfer(_) |
 			// Utility
 			Call::Utility(_) |
 			// Session

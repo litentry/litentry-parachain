@@ -112,7 +112,7 @@ async function setupCrossChainTransfer(
     let opts = { gasLimit: 85000, gasPrice: 20000000000 };
     const parachainFee = new BN(10).pow(new BN(12)); // 1 unit
     const sourceChainID = 0; //ethereum
-    const destChainID = 1; //parachain
+    const destChainID = parseInt(pConfig.api.consts.chainBridge.bridgeChainId.toString()) //parachain
     const depositNonce = await pConfig.api.query.chainBridge.votes.entries(sourceChainID);
 
     const destResourceId = pConfig.api.consts.bridgeTransfer.nativeTokenResourceId.toHex();
@@ -175,6 +175,7 @@ function generateBridgeConfig(
     parachainRelayer: string,
     ethStartFrom: number,
     parachainStartFrom: number,
+    parachainChainID: number,
     filename: string
 ) {
     // import sub key: chainbridge accounts import --sr25519 --privateKey //Alice
@@ -201,7 +202,7 @@ function generateBridgeConfig(
             {
                 name: 'sub',
                 type: 'substrate',
-                id: '1',
+                id: parachainChainID.toString(),
                 endpoint: 'ws://127.0.0.1:9946',
                 from: parachainRelayer,
                 opts: {
@@ -239,7 +240,9 @@ async function startChainBridge(
     emptyDir(dataDir);
     const ethBlock = await ethConfig.wallets.bob.provider.getBlockNumber();
     const subBlock = await parachainConfig.api.rpc.chain.getHeader();
-    generateBridgeConfig(ethConfig, ethRelayer, parachainRelayer, ethBlock, subBlock.number.toNumber(), config);
+    const parachainChainID = parseInt(parachainConfig.api.consts.chainBridge.bridgeChainId.toString()) //parachain
+
+    generateBridgeConfig(ethConfig, ethRelayer, parachainRelayer, ethBlock, subBlock.number.toNumber(), parachainChainID, config);
     const logging = fs.createWriteStream(log, { flags: 'w+' });
     const lsProcess = spawn(
         // `${process.env.GOPATH}/bin/chainbridge`,
