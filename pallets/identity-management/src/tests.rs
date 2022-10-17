@@ -81,7 +81,7 @@ fn verify_identity_works() {
 }
 
 #[test]
-fn tee_callback_works_with_registered_enclave() {
+fn tee_callback_with_registered_enclave_works() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(Teerex::register_enclave(
 			Origin::signed(1),
@@ -98,7 +98,7 @@ fn tee_callback_works_with_registered_enclave() {
 }
 
 #[test]
-fn tee_callback_fails_with_unregistered_enclave() {
+fn tee_callback_with_unregistered_enclave_fails() {
 	new_test_ext().execute_with(|| {
 		assert_noop!(
 			IdentityManagement::some_error(Origin::signed(1), vec![1u8; 16], vec![2u8; 16]),
