@@ -18,7 +18,8 @@
 
 use crate as pallet_identity_management;
 use frame_support::{
-	ord_parameter_types, parameter_types,
+	pallet_prelude::EnsureOrigin,
+	parameter_types,
 	traits::{ConstU128, ConstU16, ConstU32, ConstU64, Everything},
 };
 use frame_system as system;
@@ -27,12 +28,30 @@ use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
-use system::EnsureSignedBy;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
 pub type Balance = u128;
+
+type SystemOrigin = <Test as frame_system::Config>::Origin;
+type SystemAccountId = <Test as frame_system::Config>::AccountId;
+
+// Similar to `runtime_common`, just don't want to pull in the whole dependency
+pub struct EnsureEnclaveSigner;
+impl EnsureOrigin<SystemOrigin> for EnsureEnclaveSigner {
+	type Success = SystemAccountId;
+	fn try_origin(o: SystemOrigin) -> Result<Self::Success, SystemOrigin> {
+		Into::<Result<frame_system::RawOrigin<SystemAccountId>, SystemOrigin>>::into(o).and_then(
+			|o| match o {
+				frame_system::RawOrigin::Signed(ref who)
+					if pallet_teerex::Pallet::<Test>::is_registered_enclave(who) == Ok(true) =>
+					Ok(*who),
+				r => Err(SystemOrigin::from(r)),
+			},
+		)
+	}
+}
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -44,6 +63,7 @@ frame_support::construct_runtime!(
 		System: frame_system,
 		Balances: pallet_balances,
 		Timestamp: pallet_timestamp,
+		Teerex: pallet_teerex,
 		IdentityManagement: pallet_identity_management,
 	}
 );
@@ -98,14 +118,23 @@ impl pallet_balances::Config for Test {
 	type WeightInfo = ();
 }
 
-ord_parameter_types! {
-	pub const One: u64 = 1;
+parameter_types! {
+	pub const MomentsPerDay: u64 = 86_400_000; // [ms/d]
+	pub const MaxSilenceTime: u64 =172_800_000; // 48h
+}
+
+impl pallet_teerex::Config for Test {
+	type Event = Event;
+	type Currency = Balances;
+	type MomentsPerDay = MomentsPerDay;
+	type MaxSilenceTime = MaxSilenceTime;
+	type WeightInfo = ();
 }
 
 impl pallet_identity_management::Config for Test {
 	type Event = Event;
 	type WeightInfo = ();
-	type TEECallOrigin = EnsureSignedBy<One, u64>;
+	type TEECallOrigin = EnsureEnclaveSigner;
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
