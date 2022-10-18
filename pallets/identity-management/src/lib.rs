@@ -97,18 +97,6 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// The extrinsic used to verify the response from TEE side
-		/// Keep it until HTTPS test on tee-worker refactored
-		#[pallet::weight(1_000)]
-		pub fn dummy(origin: OriginFor<T>) -> DispatchResult {
-			let _ = ensure_signed(origin)?;
-			log::error!(
-				target: "identity management",
-				"dummy called."
-			);
-			Ok(())
-		}
-
 		/// Set or update user's shielding key
 		#[pallet::weight(<T as Config>::WeightInfo::set_user_shielding_key())]
 		pub fn set_user_shielding_key(
