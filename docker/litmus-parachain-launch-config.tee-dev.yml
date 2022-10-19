@@ -23,7 +23,7 @@ relaychain:
 
 # Parachain Configuration
 parachains:
-- image: litentry/litentry-parachain:tee
+- image: litentry/litentry-parachain:tee-dev
   chain: litmus-dev
   id: 2106
   parachain: true
