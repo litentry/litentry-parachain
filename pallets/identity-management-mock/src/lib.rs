@@ -623,7 +623,7 @@ pub mod pallet {
 
 		// web3 message format: <challeng-code> + <litentry-AccountId32> + <Identity>, where
 		// <> means SCALE-encoded
-		// TODO: do we want to apply the same for web2 message?(= discard JSON format)
+		// Notice: actually we use the same format for web2 message too
 		pub fn get_expected_web3_message(
 			who: &T::AccountId,
 			identity: &Identity,
