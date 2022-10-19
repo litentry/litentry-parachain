@@ -98,6 +98,7 @@ runtime-common = { path = '../common', default-features = false }
 # TEE pallets
 # TODO: change to `master` branch temporarily for aligning upstream codebase: tee-worker/#113
 pallet-sidechain = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "master" }
+pallet-teeracle = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "master" }
 pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "master" }
 
 [dev-dependencies]
@@ -185,6 +186,7 @@ std = [
   "pallet-identity-management-mock/std",
   "pallet-teerex/std",
   "pallet-sidechain/std",
+  "pallet-teeracle/std",
   "pallet-vc-management/std",
 ]
 tee-dev = [
@@ -223,6 +225,7 @@ runtime-benchmarks = [
   "pallet-identity-management/runtime-benchmarks",
   "pallet-teerex/runtime-benchmarks",
   "pallet-sidechain/runtime-benchmarks",
+  "pallet-teeracle/runtime-benchmarks",
   "pallet-vc-management/runtime-benchmarks",
 ]
 try-runtime = [
