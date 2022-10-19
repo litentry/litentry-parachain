@@ -1126,7 +1126,7 @@ dependencies = [
 [[package]]
 name = "common-primitives"
 version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=master#5b0706e8b9f726d81d8aff74efbae8e023e783b7"
+source = "git+https://github.com/integritee-network/pallets.git?branch=szp/polkadot-v0.9.29#60d42b013d12b51622f1068e5cbd40b5079f5827"
 dependencies = [
  "sp-std",
 ]
@@ -6569,7 +6569,7 @@ dependencies = [
 [[package]]
 name = "pallet-teeracle"
 version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=master#5b0706e8b9f726d81d8aff74efbae8e023e783b7"
+source = "git+https://github.com/integritee-network/pallets.git?branch=szp/polkadot-v0.9.29#60d42b013d12b51622f1068e5cbd40b5079f5827"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -11994,7 +11994,7 @@ checksum = "c02424087780c9b71cc96799eaeddff35af2bc513278cda5c99fc1f5d026d3c1"
 [[package]]
 name = "teeracle-primitives"
 version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=master#5b0706e8b9f726d81d8aff74efbae8e023e783b7"
+source = "git+https://github.com/integritee-network/pallets.git?branch=szp/polkadot-v0.9.29#60d42b013d12b51622f1068e5cbd40b5079f5827"
 dependencies = [
  "common-primitives",
  "sp-std",
