@@ -264,6 +264,7 @@ try-runtime = [
   "pallet-session/try-runtime",
   "pallet-sidechain/try-runtime",
   "pallet-sudo/try-runtime",
+  "pallet-teeracle/try-runtime",
   "pallet-teerex/try-runtime",
   "pallet-timestamp/try-runtime",
   "pallet-transaction-payment/try-runtime",
