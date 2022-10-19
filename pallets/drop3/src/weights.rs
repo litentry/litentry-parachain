@@ -61,66 +61,66 @@ pub struct LitentryWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	// Storage: Drop3 Admin (r:1 w:1)
 	fn set_admin() -> Weight {
-		(25_000_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(25_000_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Drop3 Admin (r:1 w:0)
 	// Storage: Drop3 RewardPools (r:1 w:1)
 	fn approve_reward_pool() -> Weight {
-		(38_000_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(38_000_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Drop3 Admin (r:1 w:0)
 	// Storage: Drop3 RewardPools (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	// Storage: Drop3 RewardPoolOwners (r:0 w:1)
 	fn reject_reward_pool() -> Weight {
-		(112_000_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+		Weight::from_ref_time(112_000_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(3 as u64))
+			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 	// Storage: Drop3 RewardPools (r:1 w:1)
 	// Storage: Drop3 Admin (r:1 w:0)
 	fn start_reward_pool() -> Weight {
-		(40_000_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(40_000_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Drop3 RewardPools (r:1 w:1)
 	// Storage: Drop3 Admin (r:1 w:0)
 	fn stop_reward_pool() -> Weight {
-		(41_000_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(41_000_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Drop3 RewardPools (r:1 w:1)
 	// Storage: Drop3 Admin (r:1 w:0)
 	// Storage: System Account (r:1 w:1)
 	// Storage: Drop3 RewardPoolOwners (r:0 w:1)
 	fn close_reward_pool() -> Weight {
-		(68_000_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+		Weight::from_ref_time(68_000_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(3 as u64))
+			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 	// Storage: System Account (r:1 w:1)
 	// Storage: Drop3 CurrentMaxPoolId (r:1 w:1)
 	// Storage: Drop3 RewardPoolOwners (r:0 w:1)
 	// Storage: Drop3 RewardPools (r:0 w:1)
 	fn propose_reward_pool(n: u32, ) -> Weight {
-		(61_962_000 as Weight)
+		Weight::from_ref_time(61_962_000 as u64)
 			// Standard Error: 36_000
-			.saturating_add((1_135_000 as Weight).saturating_mul(n as Weight))
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+			.saturating_add(Weight::from_ref_time(1_135_000 as u64).saturating_mul(n as u64))
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(4 as u64))
 	}
 	// Storage: Drop3 RewardPools (r:1 w:1)
 	// Storage: System Account (r:2 w:2)
 	fn send_reward() -> Weight {
-		(84_000_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+		Weight::from_ref_time(84_000_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(3 as u64))
+			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 }
 
@@ -128,65 +128,65 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 impl WeightInfo for () {
 	// Storage: Drop3 Admin (r:1 w:1)
 	fn set_admin() -> Weight {
-		(25_000_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(25_000_000 as u64)
+			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: Drop3 Admin (r:1 w:0)
 	// Storage: Drop3 RewardPools (r:1 w:1)
 	fn approve_reward_pool() -> Weight {
-		(38_000_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(38_000_000 as u64)
+			.saturating_add(RocksDbWeight::get().reads(2 as u64))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: Drop3 Admin (r:1 w:0)
 	// Storage: Drop3 RewardPools (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	// Storage: Drop3 RewardPoolOwners (r:0 w:1)
 	fn reject_reward_pool() -> Weight {
-		(112_000_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+		Weight::from_ref_time(112_000_000 as u64)
+			.saturating_add(RocksDbWeight::get().reads(3 as u64))
+			.saturating_add(RocksDbWeight::get().writes(3 as u64))
 	}
 	// Storage: Drop3 RewardPools (r:1 w:1)
 	// Storage: Drop3 Admin (r:1 w:0)
 	fn start_reward_pool() -> Weight {
-		(40_000_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(40_000_000 as u64)
+			.saturating_add(RocksDbWeight::get().reads(2 as u64))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: Drop3 RewardPools (r:1 w:1)
 	// Storage: Drop3 Admin (r:1 w:0)
 	fn stop_reward_pool() -> Weight {
-		(41_000_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(41_000_000 as u64)
+			.saturating_add(RocksDbWeight::get().reads(2 as u64))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: Drop3 RewardPools (r:1 w:1)
 	// Storage: Drop3 Admin (r:1 w:0)
 	// Storage: System Account (r:1 w:1)
 	// Storage: Drop3 RewardPoolOwners (r:0 w:1)
 	fn close_reward_pool() -> Weight {
-		(68_000_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+		Weight::from_ref_time(68_000_000 as u64)
+			.saturating_add(RocksDbWeight::get().reads(3 as u64))
+			.saturating_add(RocksDbWeight::get().writes(3 as u64))
 	}
 	// Storage: System Account (r:1 w:1)
 	// Storage: Drop3 CurrentMaxPoolId (r:1 w:1)
 	// Storage: Drop3 RewardPoolOwners (r:0 w:1)
 	// Storage: Drop3 RewardPools (r:0 w:1)
 	fn propose_reward_pool(n: u32, ) -> Weight {
-		(61_962_000 as Weight)
+		Weight::from_ref_time(61_962_000 as u64)
 			// Standard Error: 36_000
-			.saturating_add((1_135_000 as Weight).saturating_mul(n as Weight))
-			.saturating_add(RocksDbWeight::get().reads(2 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+			.saturating_add(Weight::from_ref_time(1_135_000 as u64).saturating_mul(n as u64))
+			.saturating_add(RocksDbWeight::get().reads(2 as u64))
+			.saturating_add(RocksDbWeight::get().writes(4 as u64))
 	}
 	// Storage: Drop3 RewardPools (r:1 w:1)
 	// Storage: System Account (r:2 w:2)
 	fn send_reward() -> Weight {
-		(84_000_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+		Weight::from_ref_time(84_000_000 as u64)
+			.saturating_add(RocksDbWeight::get().reads(3 as u64))
+			.saturating_add(RocksDbWeight::get().writes(3 as u64))
 	}
 }

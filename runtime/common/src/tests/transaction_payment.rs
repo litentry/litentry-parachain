@@ -18,7 +18,8 @@ use frame_support::{
 	assert_ok,
 	dispatch::RawOrigin,
 	weights::{
-		constants::ExtrinsicBaseWeight, DispatchClass, DispatchInfo, PostDispatchInfo, Weight,
+		constants::ExtrinsicBaseWeight, DispatchClass, DispatchInfo, IdentityFee, PostDispatchInfo,
+		Weight, WeightToFee,
 	},
 };
 use pallet_balances::Call as BalancesCall;
@@ -100,13 +101,17 @@ where
 				.pre_dispatch(
 					&alice(),
 					&tranfer_call,
-					&info_from_weight(dispatch_info as u64),
+					&info_from_weight(Weight::from_ref_time(dispatch_info as u64)),
 					len as usize,
 				)
 				.unwrap();
 
-			let total_payment: Balance = ExtrinsicBaseWeight::get() as u128 +
-				dispatch_info + len * TransactionByteFee::get();
+			// This test here already assume that we use IdentityFee
+			let total_payment: Balance =
+				IdentityFee::<Balance>::weight_to_fee(&ExtrinsicBaseWeight::get()) +
+					IdentityFee::<Balance>::weight_to_fee(&Weight::from_ref_time(
+						dispatch_info as u64,
+					)) + (len as Balance) * TransactionByteFee::get();
 			assert_eq!(old_sender_balance - Balances::<R>::free_balance(&alice()), total_payment);
 			assert_eq!(
 				Balances::<R>::free_balance(Treasury::<R>::account_id()),
@@ -117,8 +122,8 @@ where
 			old_treasury_balance = Balances::<R>::free_balance(Treasury::<R>::account_id());
 			assert_ok!(<pallet_transaction_payment::ChargeTransactionPayment::<R>>::post_dispatch(
 				Some(pre),
-				&info_from_weight(dispatch_info as u64),
-				&post_info_from_weight(post_dispatch_info as u64),
+				&info_from_weight(Weight::from_ref_time(dispatch_info as u64)),
+				&post_info_from_weight(Weight::from_ref_time(post_dispatch_info as u64)),
 				len as usize,
 				&Ok(())
 			));
