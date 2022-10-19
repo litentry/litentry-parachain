@@ -65,7 +65,7 @@ pub use primitives::{opaque, Index, *};
 pub use runtime_common::currency::*;
 use runtime_common::{
 	impl_runtime_transaction_payment_fees, prod_or_fast, BlockHashCount, BlockLength,
-	CouncilInstance, CouncilMembershipInstance, EnsureRootOrAllCouncil,
+	CouncilInstance, CouncilMembershipInstance, EnsureEnclaveSigner, EnsureRootOrAllCouncil,
 	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrHalfTechnicalCommittee,
 	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, NegativeImbalance,
 	RuntimeBlockWeights, SlowAdjustingFeeUpdate, TechnicalCommitteeInstance,
@@ -780,29 +780,27 @@ impl pallet_sidechain::Config for Runtime {
 	type EarlyBlockProposalLenience = ConstU64<100>;
 }
 
-ord_parameter_types! {
-	pub const ALICE: AccountId = sp_runtime::AccountId32::new(hex!["d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"]);
-}
-
 impl pallet_identity_management::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = ();
-	// TODO: use the real TEE account
-	type TEECallOrigin = EnsureSignedBy<ALICE, AccountId>;
+	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
+}
+
+ord_parameter_types! {
+	pub const ALICE: AccountId = sp_runtime::AccountId32::new(hex!["d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"]);
 }
 
 impl pallet_identity_management_mock::Config for Runtime {
 	type Event = Event;
 	type ManageWhitelistOrigin = EnsureRootOrAllCouncil;
 	type MaxVerificationDelay = ConstU32<10>;
-	// TODO: use the real TEE account
+	// intentionally use ALICE for the IMP mock
 	type TEECallOrigin = EnsureSignedBy<ALICE, AccountId>;
 }
 
 impl pallet_vc_management::Config for Runtime {
 	type Event = Event;
-	// TODO: use the real TEE account
-	type TEECallOrigin = EnsureSignedBy<ALICE, AccountId>;
+	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 }
 
 impl runtime_common::BaseRuntimeRequirements for Runtime {}
