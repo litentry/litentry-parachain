@@ -43,7 +43,7 @@ xcm-builder = { git = "https://github.com/paritytech/polkadot", default-features
 xcm-executor = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.29" }
 
 # TEE
-pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "master" }
+pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "szp/polkadot-v0.9.29" }
 
 # local
 pallet-asset-manager = { path = "../../pallets/xcm-asset-manager", default-features = false }

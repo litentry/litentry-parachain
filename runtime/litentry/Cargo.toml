@@ -219,6 +219,7 @@ try-runtime = [
   "frame-try-runtime",
   "orml-tokens/try-runtime",
   "orml-xtokens/try-runtime",
+  "pallet-asset-manager/try-runtime",
   "pallet-aura/try-runtime",
   "pallet-authorship/try-runtime",
   "pallet-balances/try-runtime",

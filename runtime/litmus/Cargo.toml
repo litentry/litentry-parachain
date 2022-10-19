@@ -98,8 +98,8 @@ runtime-common = { path = '../common', default-features = false }
 
 # TEE pallets
 # TODO: change to `master`/`polkadot-v0.9.29` branch temporarily for aligning upstream codebase: tee-worker/#113
-pallet-sidechain = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "polkadot-v0.9.29" }
-pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "polkadot-v0.9.29" }
+pallet-sidechain = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "szp/polkadot-v0.9.29" }
+pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "szp/polkadot-v0.9.29" }
 
 [dev-dependencies]
 cumulus-primitives-parachain-inherent = { git = 'https://github.com/paritytech/cumulus', branch = "polkadot-v0.9.29" }
@@ -239,12 +239,14 @@ try-runtime = [
   "frame-try-runtime",
   "orml-tokens/try-runtime",
   "orml-xtokens/try-runtime",
+  "pallet-asset-manager/try-runtime",
   "pallet-aura/try-runtime",
   "pallet-authorship/try-runtime",
   "pallet-balances/try-runtime",
   "pallet-bounties/try-runtime",
   "pallet-bridge/try-runtime",
   "pallet-bridge-transfer/try-runtime",
+  "pallet-collator-selection/try-runtime",
   "pallet-collective/try-runtime",
   "pallet-democracy/try-runtime",
   "pallet-drop3/try-runtime",
@@ -257,9 +259,9 @@ try-runtime = [
   "pallet-proxy/try-runtime",
   "pallet-scheduler/try-runtime",
   "pallet-session/try-runtime",
-  # "pallet-sidechain/try-runtime",
+  "pallet-sidechain/try-runtime",
   "pallet-sudo/try-runtime",
-  # "pallet-teerex/try-runtime",
+  "pallet-teerex/try-runtime",
   "pallet-timestamp/try-runtime",
   "pallet-transaction-payment/try-runtime",
   "pallet-treasury/try-runtime",
