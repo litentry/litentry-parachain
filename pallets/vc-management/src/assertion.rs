@@ -20,10 +20,10 @@
 // See: https://www.notion.so/litentry/Expected-parameters-in-predefined-rulesets-14f74928aa2b43509167da12a3e75507
 
 use codec::{Decode, Encode, MaxEncodedLen};
+use primitives::Balance;
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
 
-type Balance = u128;
 type MaxStringLength = ConstU32<64>;
 pub type ParameterString = BoundedVec<u8, MaxStringLength>;
 
