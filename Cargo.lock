@@ -1126,7 +1126,7 @@ dependencies = [
 [[package]]
 name = "common-primitives"
 version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=szp/polkadot-v0.9.29#60d42b013d12b51622f1068e5cbd40b5079f5827"
+source = "git+https://github.com/integritee-network/pallets.git?branch=szp/polkadot-v0.9.29#7ed394541f6770e72267ca6496b42d7ee3015570"
 dependencies = [
  "sp-std",
 ]
@@ -3455,7 +3455,7 @@ dependencies = [
 [[package]]
 name = "ias-verify"
 version = "0.1.4"
-source = "git+https://github.com/integritee-network/pallets.git?branch=szp/polkadot-v0.9.29#60d42b013d12b51622f1068e5cbd40b5079f5827"
+source = "git+https://github.com/integritee-network/pallets.git?branch=szp/polkadot-v0.9.29#7ed394541f6770e72267ca6496b42d7ee3015570"
 dependencies = [
  "base64",
  "chrono",
@@ -6473,7 +6473,7 @@ dependencies = [
 [[package]]
 name = "pallet-sidechain"
 version = "0.9.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=szp/polkadot-v0.9.29#60d42b013d12b51622f1068e5cbd40b5079f5827"
+source = "git+https://github.com/integritee-network/pallets.git?branch=szp/polkadot-v0.9.29#7ed394541f6770e72267ca6496b42d7ee3015570"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6569,7 +6569,7 @@ dependencies = [
 [[package]]
 name = "pallet-teeracle"
 version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=szp/polkadot-v0.9.29#60d42b013d12b51622f1068e5cbd40b5079f5827"
+source = "git+https://github.com/integritee-network/pallets.git?branch=szp/polkadot-v0.9.29#7ed394541f6770e72267ca6496b42d7ee3015570"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6592,7 +6592,7 @@ dependencies = [
 [[package]]
 name = "pallet-teerex"
 version = "0.9.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=szp/polkadot-v0.9.29#60d42b013d12b51622f1068e5cbd40b5079f5827"
+source = "git+https://github.com/integritee-network/pallets.git?branch=szp/polkadot-v0.9.29#7ed394541f6770e72267ca6496b42d7ee3015570"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -10721,9 +10721,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.85"
+version = "1.0.86"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e55a28e3aaef9d5ce0506d0a14dbba8054ddc7e499ef522dd8b26859ec9d4a44"
+checksum = "41feea4228a6f1cd09ec7a3593a682276702cd67b5273544757dae23c096f074"
 dependencies = [
  "itoa",
  "ryu",
@@ -10827,7 +10827,7 @@ checksum = "43b2853a4d09f215c24cc5489c992ce46052d359b5109343cbafbf26bc62f8a3"
 [[package]]
 name = "sidechain-primitives"
 version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=szp/polkadot-v0.9.29#60d42b013d12b51622f1068e5cbd40b5079f5827"
+source = "git+https://github.com/integritee-network/pallets.git?branch=szp/polkadot-v0.9.29#7ed394541f6770e72267ca6496b42d7ee3015570"
 dependencies = [
  "parity-scale-codec 3.2.1",
  "scale-info",
@@ -11994,7 +11994,7 @@ checksum = "c02424087780c9b71cc96799eaeddff35af2bc513278cda5c99fc1f5d026d3c1"
 [[package]]
 name = "teeracle-primitives"
 version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=szp/polkadot-v0.9.29#60d42b013d12b51622f1068e5cbd40b5079f5827"
+source = "git+https://github.com/integritee-network/pallets.git?branch=szp/polkadot-v0.9.29#7ed394541f6770e72267ca6496b42d7ee3015570"
 dependencies = [
  "common-primitives",
  "sp-std",
@@ -12004,7 +12004,7 @@ dependencies = [
 [[package]]
 name = "teerex-primitives"
 version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=szp/polkadot-v0.9.29#60d42b013d12b51622f1068e5cbd40b5079f5827"
+source = "git+https://github.com/integritee-network/pallets.git?branch=szp/polkadot-v0.9.29#7ed394541f6770e72267ca6496b42d7ee3015570"
 dependencies = [
  "ias-verify",
  "parity-scale-codec 3.2.1",
@@ -12051,7 +12051,7 @@ dependencies = [
 [[package]]
 name = "test-utils"
 version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=szp/polkadot-v0.9.29#60d42b013d12b51622f1068e5cbd40b5079f5827"
+source = "git+https://github.com/integritee-network/pallets.git?branch=szp/polkadot-v0.9.29#7ed394541f6770e72267ca6496b42d7ee3015570"
 dependencies = [
  "hex-literal",
  "log",
@@ -12490,7 +12490,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if 1.0.0",
  "digest 0.10.5",
- "rand 0.6.5",
+ "rand 0.8.5",
  "static_assertions",
 ]
 
