@@ -15,10 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use codec::{Decode, Encode};
-use frame_support::{
-	traits::{tokens::fungibles::Mutate, Get, PalletInfoAccess},
-	weights::Weight,
-};
+use frame_support::traits::{tokens::fungibles::Mutate, Get, PalletInfoAccess};
 use pallet_balances::pallet::Pallet as RuntimeBalances;
 use parachain_info::pallet::Pallet as ParachainInfo;
 use scale_info::TypeInfo;
@@ -51,7 +48,7 @@ pub struct FirstAssetTrader<
 	AssetType: From<MultiLocation> + Clone,
 	AssetIdInfoGetter: UnitsToWeightRatio<AssetType>,
 	R: TakeRevenue,
->(Weight, Option<(MultiLocation, u128, u128)>, PhantomData<(AssetType, AssetIdInfoGetter, R)>);
+>(u64, Option<(MultiLocation, u128, u128)>, PhantomData<(AssetType, AssetIdInfoGetter, R)>);
 impl<
 		AssetType: From<MultiLocation> + Clone,
 		AssetIdInfoGetter: UnitsToWeightRatio<AssetType>,
@@ -63,7 +60,7 @@ impl<
 	}
 	fn buy_weight(
 		&mut self,
-		weight: Weight,
+		weight: u64,
 		payment: xcm_executor::Assets,
 	) -> Result<xcm_executor::Assets, XcmError> {
 		let first_asset = payment.fungible_assets_iter().next().ok_or(XcmError::TooExpensive)?;
@@ -82,7 +79,7 @@ impl<
 				if let Some(units_per_second) = AssetIdInfoGetter::get_units_per_second(asset_type)
 				{
 					let amount = units_per_second.saturating_mul(weight as u128) /
-						(WEIGHT_PER_SECOND as u128);
+						(WEIGHT_PER_SECOND.ref_time() as u128);
 
 					// We dont need to proceed if the amount is 0
 					// For cases (specially tests) where the asset is very cheap with respect
@@ -131,11 +128,12 @@ impl<
 		}
 	}
 
-	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
+	fn refund_weight(&mut self, weight: u64) -> Option<MultiAsset> {
 		if let Some((id, prev_amount, units_per_second)) = self.1.clone() {
 			let weight = weight.min(self.0);
 			self.0 -= weight;
-			let amount = units_per_second * (weight as u128) / (WEIGHT_PER_SECOND as u128);
+			let amount =
+				units_per_second * (weight as u128) / (WEIGHT_PER_SECOND.ref_time() as u128);
 			self.1 = Some((id.clone(), prev_amount.saturating_sub(amount), units_per_second));
 			Some(MultiAsset { fun: Fungibility::Fungible(amount), id: xcmAssetId::Concrete(id) })
 		} else {

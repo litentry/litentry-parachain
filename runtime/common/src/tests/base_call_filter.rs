@@ -17,6 +17,7 @@
 use codec::{Decode, Encode};
 use frame_support::{
 	assert_noop, assert_ok,
+	pallet_prelude::Weight,
 	traits::{VestingSchedule, WrapperKeepOpaque},
 };
 use frame_system::RawOrigin;
@@ -71,7 +72,7 @@ where
 				maybe_timepoint: None,
 				call: OpaqueCall::<R>::from_encoded(data),
 				store_call: false,
-				max_weight: 0,
+				max_weight: Weight::zero(),
 			}
 			.into();
 			assert_ok!(multisig_call.dispatch(Origin::signed(alice())));

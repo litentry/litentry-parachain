@@ -54,6 +54,9 @@ mod types {
 
 	/// An index to a block.
 	pub type BlockNumber = u32;
+
+	// Weight Type for XCM
+	pub type XcmV2Weight = xcm::v2::Weight;
 }
 
 /// Common constants of parachains.
