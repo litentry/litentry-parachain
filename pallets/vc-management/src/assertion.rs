@@ -29,17 +29,17 @@ pub type ParameterString = BoundedVec<u8, MaxStringLength>;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 pub enum Assertion {
-	Assert1,
-	Assert2(ParameterString, ParameterString), // (guild_id, user_id)
-	Assert3(ParameterString, ParameterString), // (guild_id, user_id)
-	Assert4,
-	Assert5(ParameterString, ParameterString), // (twitter_account, tweet_id)
-	Assert6,
-	Assert7(Balance, u32), // (DOT_amount, year)
-	Assert8(u64),          // (tx_amount)
-	Assert9,
-	Assert10(Balance, u32), // (WBTC_amount, year)
-	Assert11(Balance, u32), // (ETH_amount, year)
-	Assert12(Balance, u32), // (LIT_amount, year)
-	Assert13(u32),          // (Karma_amount) - TODO: unsupported
+	A1,
+	A2(ParameterString, ParameterString), // (guild_id, user_id)
+	A3(ParameterString, ParameterString), // (guild_id, user_id)
+	A4,
+	A5(ParameterString, ParameterString), // (twitter_account, tweet_id)
+	A6,
+	A7(Balance, u32), // (DOT_amount, year)
+	A8(u64),          // (tx_amount)
+	A9,
+	A10(Balance, u32), // (WBTC_amount, year)
+	A11(Balance, u32), // (ETH_amount, year)
+	A12(Balance, u32), // (LIT_amount, year)
+	A13(u32),          // (Karma_amount) - TODO: unsupported
 }

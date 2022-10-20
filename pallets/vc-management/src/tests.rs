@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{mock::*, AesOutput, Error, Ruleset, ShardIdentifier, Status};
+use crate::{mock::*, AesOutput, Assertion, Error, ShardIdentifier, Status};
 use frame_support::{assert_noop, assert_ok};
 use sp_core::H256;
 
@@ -24,10 +24,10 @@ const TEST_MRENCLAVE: [u8; 32] = [2u8; 32];
 fn request_vc_works() {
 	new_test_ext().execute_with(|| {
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
-		assert_ok!(VCManagement::request_vc(Origin::signed(1), shard, Ruleset::R1));
+		assert_ok!(VCManagement::request_vc(Origin::signed(1), shard, Assertion::A1));
 		System::assert_last_event(Event::VCManagement(crate::Event::VCRequested {
 			shard,
-			ruleset: Ruleset::R1,
+			assertion: Assertion::A1,
 		}));
 	});
 }
