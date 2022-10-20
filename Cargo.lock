@@ -4677,7 +4677,7 @@ checksum = "d4d2456c373231a208ad294c33dc5bff30051eafd954cd4caae83a712b12854d"
 
 [[package]]
 name = "litentry-collator"
-version = "0.9.10"
+version = "0.9.11"
 dependencies = [
  "async-trait",
  "clap",
@@ -4749,7 +4749,7 @@ dependencies = [
 
 [[package]]
 name = "litentry-parachain-runtime"
-version = "0.9.10"
+version = "0.9.11"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
@@ -4831,7 +4831,7 @@ dependencies = [
 
 [[package]]
 name = "litmus-parachain-runtime"
-version = "0.9.10"
+version = "0.9.11"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
@@ -8417,7 +8417,7 @@ dependencies = [
 
 [[package]]
 name = "primitives"
-version = "0.9.10"
+version = "0.9.11"
 dependencies = [
  "parity-scale-codec 3.2.1",
  "scale-info",
@@ -9094,7 +9094,7 @@ dependencies = [
 
 [[package]]
 name = "rococo-parachain-runtime"
-version = "0.9.10"
+version = "0.9.11"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
@@ -9310,7 +9310,7 @@ dependencies = [
 
 [[package]]
 name = "runtime-common"
-version = "0.9.10"
+version = "0.9.11"
 dependencies = [
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-core",
