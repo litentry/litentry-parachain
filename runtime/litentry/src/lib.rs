@@ -138,7 +138,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9101,
+	spec_version: 9110,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -736,33 +736,28 @@ parameter_types! {
 	pub const NativeTokenResourceId: [u8; 32] = hex_literal::hex!("00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001");
 }
 
-pub struct TechnicalCommitteeProvider;
-impl SortedMembers<AccountId> for TechnicalCommitteeProvider {
+// allow anyone to call transfer_native
+pub struct TransferNativeAnyone;
+impl SortedMembers<AccountId> for TransferNativeAnyone {
 	fn sorted_members() -> Vec<AccountId> {
-		TechnicalCommittee::members()
+		vec![]
 	}
 
-	#[cfg(not(feature = "runtime-benchmarks"))]
-	fn contains(who: &AccountId) -> bool {
-		TechnicalCommittee::is_member(who)
+	fn contains(_who: &AccountId) -> bool {
+		true
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
 	fn add(_: &AccountId) {
 		unimplemented!()
 	}
-	// To ensure that the benchmark code runs through
-	#[cfg(feature = "runtime-benchmarks")]
-	fn contains(_who: &AccountId) -> bool {
-		true
-	}
 }
 
 impl pallet_bridge_transfer::Config for Runtime {
 	type Event = Event;
 	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
+	type TransferNativeMembers = TransferNativeAnyone;
 	type SetMaximumIssuanceOrigin = EnsureRootOrHalfCouncil;
-	type TransferNativeMembers = TechnicalCommitteeProvider;
 	type NativeTokenResourceId = NativeTokenResourceId;
 	type DefaultMaximumIssuance = MaximumIssuance;
 	type ExternalTotalIssuance = ExternalTotalIssuance;
