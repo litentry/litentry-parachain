@@ -33,7 +33,7 @@ describeLitentry('Test Base Filter', ``, (context) => {
         } else if (parachain === 'litmus-dev' || parachain === 'rococo-dev') {
             expect(bobCurrentBalance.free.toBigInt()).to.equal(bobInitBalance.free.toBigInt() + BigInt(1000));
         } else {
-            assert.fail('unsupported parachain type');
+            assert.fail('unsupported parachain type', parachain);
         }
     });
 
