@@ -67,7 +67,7 @@ export async function initApiPromise(config: any): Promise<ParachainConfig> {
     // Set Eve's balance to 1000000000000000
     const eve_info = await api.query.system.account(eve.address);
     if (eve_info.data.free.lt(new BN(1000000000000000))) {
-        const txSetBalance = api.tx.sudo.sudo(api.tx.balances.setBalance(eve.address, 1000000000000000, 0));
+        const txSetBalance = await sudoWrapper(api, api.tx.balances.setBalance(eve.address, 1000000000000000, 0))
         await signAndSend(txSetBalance, alice);
     }
     const { nonce: nonceAlice, data: balanceAlice } = await api.query.system.account(alice.address);
@@ -104,6 +104,21 @@ export function signAndSend(tx: SubmittableExtrinsic<ApiTypes>, account: Address
             }
         });
     });
+}
+
+/// After removing the sudo module, we use `EnsureRootOrHalfCouncil` instead of `Sudo`,
+//  and there are only two council members in litmus-dev/rococo-dev/litentry-dev.
+//  So only `propose` is required, no vote.
+// TODO support to send the `vote extrinsic`, if the number of council members is greater than 2.
+export async function sudoWrapper(api: ApiPromise, tx: SubmittableExtrinsic<ApiTypes>) {
+    const chain = (await api.rpc.system.chain()).toString().toLowerCase();
+    if (chain == 'litmus-dev') {
+        const threshold = api.createType("Compact<u32>", 1);
+        const call = api.createType("Call", tx);
+        return api.tx.council.propose(threshold, call, api.createType("Compact<u32>", tx.length))
+    } else {
+        return api.tx.sudo.sudo(tx);
+    }
 }
 
 export function describeLitentry(title: string, specFilename: string, cb: (context: ParachainConfig) => void) {

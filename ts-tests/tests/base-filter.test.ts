@@ -27,9 +27,10 @@ describeLitentry('Test Base Filter', ``, (context) => {
 
         expect(eveCurrentNonce.toNumber()).to.equal(eveInitNonce.toNumber() + 1);
         // the balance transfer should work for litmus|rococo but not for litentry
-        if (context.parachain === 'litentry') {
+        const parachain = (await context.api.rpc.system.chain()).toString().toLowerCase();
+        if (parachain === 'litentry-dev') {
             expect(bobCurrentBalance.free.toBigInt()).to.equal(bobInitBalance.free.toBigInt());
-        } else if (context.parachain === 'litmus' || context.parachain === 'rococo') {
+        } else if (parachain === 'litmus-dev' || parachain === 'rococo-dev') {
             expect(bobCurrentBalance.free.toBigInt()).to.equal(bobInitBalance.free.toBigInt() + BigInt(1000));
         } else {
             assert.fail('unsupported parachain type');
@@ -37,6 +38,12 @@ describeLitentry('Test Base Filter', ``, (context) => {
     });
 
     step('Transfer 1000 unit from Eve to Bob with Sudo', async function () {
+        // only work for litentry|rococo
+        const parachain = (await context.api.rpc.system.chain()).toString().toLowerCase();
+        if (parachain === 'litmus-dev') {
+            console.log("skip test.")
+            return
+        }
         // Get the initial balance of Alice and Bob
         const { nonce: aliceInitNonce, data: aliceInitBalance } = await context.api.query.system.account(
             context.alice.address
