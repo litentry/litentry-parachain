@@ -546,7 +546,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let code =
 				Self::challenge_codes(who, identity).ok_or(Error::<T>::ChallengeCodeNotExist)?;
-			let msg = Self::get_expected_web3_message(who, identity, &code)?;
+			let msg = Self::get_expected_payload(who, identity, &code)?;
 
 			ensure!(
 				msg.as_slice() == validation_data.message.as_slice(),
@@ -599,7 +599,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let code =
 				Self::challenge_codes(who, identity).ok_or(Error::<T>::ChallengeCodeNotExist)?;
-			let msg = Self::get_expected_web3_message(who, identity, &code)?;
+			let msg = Self::get_expected_payload(who, identity, &code)?;
 			let digest = Self::compute_evm_msg_digest(&msg);
 			if let IdentityMultiSignature::Ethereum(sig) = &validation_data.signature {
 				let recovered_evm_address = Self::recover_evm_address(&digest, sig.as_ref())
@@ -621,10 +621,9 @@ pub mod pallet {
 			Ok(())
 		}
 
-		// web3 message format: <challeng-code> + <litentry-AccountId32> + <Identity>, where
-		// <> means SCALE-encoded
-		// Notice: actually we use the same format for web2 message too
-		pub fn get_expected_web3_message(
+		// Payload format: blake2_256(<challeng-code> + <litentry-AccountId32> + <Identity>), where
+		// <> means SCALE-encoded. It applies to both web2 and web3 message
+		pub fn get_expected_payload(
 			who: &T::AccountId,
 			identity: &Identity,
 			code: &ChallengeCode,
@@ -632,7 +631,7 @@ pub mod pallet {
 			let mut msg = code.encode();
 			msg.append(&mut who.encode());
 			msg.append(&mut identity.encode());
-			Ok(msg)
+			Ok(blake2_256(&msg).to_vec())
 		}
 
 		// we use an EIP-191 message has computing

@@ -177,7 +177,7 @@ pub fn create_mock_polkadot_validation_data(
 	code: ChallengeCode,
 ) -> ValidationData {
 	let identity = create_mock_polkadot_identity(p.public().0);
-	let msg = IdentityManagementMock::get_expected_web3_message(&who, &identity, &code)
+	let msg = IdentityManagementMock::get_expected_payload(&who, &identity, &code)
 		.expect("cannot calculate web3 message");
 	let sig = p.sign(&msg);
 
@@ -194,7 +194,7 @@ pub fn create_mock_eth_validation_data(
 	code: ChallengeCode,
 ) -> ValidationData {
 	let identity = create_mock_eth_identity(p.address().0);
-	let msg = IdentityManagementMock::get_expected_web3_message(&who, &identity, &code)
+	let msg = IdentityManagementMock::get_expected_payload(&who, &identity, &code)
 		.expect("cannot calculate web3 message");
 	let digest = IdentityManagementMock::compute_evm_msg_digest(&msg);
 	let sig = sign(p.secret(), &Message::from(digest)).unwrap();
