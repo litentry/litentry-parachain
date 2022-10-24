@@ -30,7 +30,7 @@ describeLitentry('Test Base Filter', ``, (context) => {
         const parachain = (await context.api.rpc.system.chain()).toString().toLowerCase();
         if (parachain === 'litentry-dev') {
             expect(bobCurrentBalance.free.toBigInt()).to.equal(bobInitBalance.free.toBigInt());
-        } else if (parachain === 'litmus-dev' || parachain === 'rococo-dev') {
+        } else if (parachain === 'litmus-dev' || parachain === 'litentry-rococo-dev') {
             expect(bobCurrentBalance.free.toBigInt()).to.equal(bobInitBalance.free.toBigInt() + BigInt(1000));
         } else {
             assert.fail('unsupported parachain type', parachain);
