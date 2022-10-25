@@ -98,6 +98,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		)?),
 		// Rococo
 		"rococo-dev" => Box::new(chain_specs::rococo::get_chain_spec_dev()),
+		"rococo-staging" => Box::new(chain_specs::rococo::get_chain_spec_staging()),
 		"rococo" => Box::new(chain_specs::rococo::ChainSpec::from_json_bytes(
 			&include_bytes!("../res/chain_specs/rococo-170000.json")[..],
 		)?),
