@@ -49,7 +49,6 @@ pallet-preimage = { git = "https://github.com/paritytech/substrate", default-fea
 pallet-proxy = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.29" }
 pallet-scheduler = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.29" }
 pallet-session = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.29" }
-pallet-sudo = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.29" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.29" }
 pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.29" }
 pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.29" }
@@ -155,7 +154,6 @@ std = [
   "pallet-proxy/std",
   "pallet-scheduler/std",
   "pallet-session/std",
-  "pallet-sudo/std",
   "pallet-timestamp/std",
   "pallet-transaction-payment/std",
   "pallet-transaction-payment-rpc-runtime-api/std",
@@ -263,7 +261,6 @@ try-runtime = [
   "pallet-scheduler/try-runtime",
   "pallet-session/try-runtime",
   "pallet-sidechain/try-runtime",
-  "pallet-sudo/try-runtime",
   "pallet-teeracle/try-runtime",
   "pallet-teerex/try-runtime",
   "pallet-timestamp/try-runtime",

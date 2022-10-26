@@ -18,7 +18,7 @@ use super::*;
 use cumulus_primitives_core::ParaId;
 use litmus_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, CollatorSelectionConfig, CouncilMembershipConfig,
-	GenesisConfig, ParachainInfoConfig, PolkadotXcmConfig, SessionConfig, SudoConfig, SystemConfig,
+	GenesisConfig, ParachainInfoConfig, PolkadotXcmConfig, SessionConfig, SystemConfig,
 	TechnicalCommitteeMembershipConfig, TeerexConfig, UNIT, WASM_BINARY,
 };
 use sc_service::ChainType;
@@ -45,6 +45,7 @@ const DEFAULT_ENDOWED_ACCOUNT_BALANCE: Balance = 1000 * UNIT;
 /// GenesisInfo struct to store the parsed genesis_info JSON
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 struct GenesisInfo {
 	root_key: AccountId,
 	invulnerables: Vec<(AccountId, AuraId)>,
@@ -63,7 +64,6 @@ pub fn get_chain_spec_dev() -> ChainSpec {
 		ChainType::Development,
 		move || {
 			generate_genesis(
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				vec![(
 					get_account_id_from_seed::<sr25519::Public>("Alice"),
 					get_collator_keys_from_seed("Alice"),
@@ -80,6 +80,10 @@ pub fn get_chain_spec_dev() -> ChainSpec {
 					),
 					(
 						get_account_id_from_seed::<sr25519::Public>("Charlie"),
+						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Eve"),
 						DEFAULT_ENDOWED_ACCOUNT_BALANCE,
 					),
 				],
@@ -152,7 +156,6 @@ fn get_chain_spec_from_genesis_info(
 			use std::str::FromStr;
 			let genesis_info_cloned = genesis_info.clone();
 			generate_genesis(
-				genesis_info_cloned.root_key,
 				genesis_info_cloned.invulnerables,
 				u128::from_str(&genesis_info_cloned.candidacy_bond)
 					.expect("Bad candicy bond; qed."),
@@ -187,7 +190,6 @@ fn get_chain_spec_from_genesis_info(
 }
 
 fn generate_genesis(
-	root_key: AccountId,
 	invulnerables: Vec<(AccountId, AuraId)>,
 	candicy_bond: Balance,
 	endowed_accounts: Vec<(AccountId, Balance)>,
@@ -200,7 +202,6 @@ fn generate_genesis(
 			code: WASM_BINARY.expect("WASM binary was not build, please build it!").to_vec(),
 		},
 		balances: BalancesConfig { balances: endowed_accounts },
-		sudo: SudoConfig { key: Some(root_key) },
 		parachain_info: ParachainInfoConfig { parachain_id: id },
 		collator_selection: CollatorSelectionConfig {
 			invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
