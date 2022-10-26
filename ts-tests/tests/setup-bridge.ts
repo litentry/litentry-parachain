@@ -5,7 +5,14 @@ import { Contract, ethers, Wallet } from 'ethers';
 import { BN } from '@polkadot/util';
 import fs from 'fs';
 import { spawn } from 'child_process';
-import { initApiPromise, loadConfig, ParachainConfig, signAndSend, sleep } from './utils';
+import {
+    initApiPromise,
+    loadConfig,
+    ParachainConfig,
+    signAndSend,
+    sleep,
+    sudoWrapper
+} from './utils';
 import { toWei } from 'web3-utils';
 
 const path = require('path');
@@ -137,30 +144,30 @@ async function setupCrossChainTransfer(
     for (let i = 0; i < parachainRelayers.length; i++) {
         const isRelayer = await pConfig.api.query.chainBridge.relayers(parachainRelayers[i]);
         if (!isRelayer.toHuman()) {
-            extrinsic.push(pConfig.api.tx.sudo.sudo(pConfig.api.tx.chainBridge.addRelayer(parachainRelayers[i])));
+            extrinsic.push(await sudoWrapper(pConfig.api, pConfig.api.tx.chainBridge.addRelayer(parachainRelayers[i])));
         }
     }
 
-    const filterMode = (await pConfig.api.query.extrinsicFilter.mode()).toHuman();
-    if ('Test' !== filterMode) {
-        extrinsic.push(pConfig.api.tx.sudo.sudo(pConfig.api.tx.extrinsicFilter.setMode('Test')));
-    }
+    // const filterMode = (await pConfig.api.query.extrinsicFilter.mode()).toHuman();
+    // if ('Test' !== filterMode) {
+    //     extrinsic.push(pConfig.api.tx.sudo.sudo(pConfig.api.tx.extrinsicFilter.setMode('Test')));
+    // }
 
     const whitelist = await pConfig.api.query.chainBridge.chainNonces(sourceChainID);
     if (!whitelist.toHuman()) {
-        extrinsic.push(pConfig.api.tx.sudo.sudo(pConfig.api.tx.chainBridge.whitelistChain(sourceChainID)));
+        extrinsic.push(await sudoWrapper(pConfig.api, pConfig.api.tx.chainBridge.whitelistChain(sourceChainID)));
     }
 
     const resource = await pConfig.api.query.chainBridge.resources(destResourceId);
     if (resource.toHuman() !== 'BridgeTransfer.transfer') {
         extrinsic.push(
-            pConfig.api.tx.sudo.sudo(pConfig.api.tx.chainBridge.setResource(destResourceId, 'BridgeTransfer.transfer'))
+            await sudoWrapper(pConfig.api, pConfig.api.tx.chainBridge.setResource(destResourceId, 'BridgeTransfer.transfer'))
         );
     }
 
     const fee = await pConfig.api.query.chainBridge.bridgeFee(sourceChainID);
     if (!fee || fee.toString() !== parachainFee.toString()) {
-        extrinsic.push(pConfig.api.tx.sudo.sudo(pConfig.api.tx.chainBridge.updateFee(0, parachainFee)));
+        extrinsic.push(await sudoWrapper(pConfig.api, pConfig.api.tx.chainBridge.updateFee(0, parachainFee)));
     }
 
     if (extrinsic.length > 0) {
@@ -235,7 +242,7 @@ async function startChainBridge(
     require('dotenv').config();
     const dataDir = './bridge/data';
     if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir, { recursive: true });
+        fs.mkdirSync(dataDir, {recursive: true});
     }
     emptyDir(dataDir);
     const ethBlock = await ethConfig.wallets.bob.provider.getBlockNumber();
@@ -243,12 +250,12 @@ async function startChainBridge(
     const parachainChainID = parseInt(parachainConfig.api.consts.chainBridge.bridgeChainId.toString()) //parachain
 
     generateBridgeConfig(ethConfig, ethRelayer, parachainRelayer, ethBlock, subBlock.number.toNumber(), parachainChainID, config);
-    const logging = fs.createWriteStream(log, { flags: 'w+' });
+    const logging = fs.createWriteStream(log, {flags: 'w+'});
     const lsProcess = spawn(
         // `${process.env.GOPATH}/bin/chainbridge`,
         bridgePath,
         ['--verbosity', 'trace', '--blockstore', dataDir, '--config', config, '--keystore', './bridge/keys'],
-        { env: { STAGE: 'dev' } }
+        {env: {STAGE: 'dev'}}
     );
     lsProcess.stdout.pipe(logging);
     lsProcess.stderr.pipe(logging);
@@ -296,7 +303,13 @@ export function describeCrossChainTransfer(
                 dave: new ethers.Wallet(generateTestKeys().dave, provider),
                 eve: new ethers.Wallet(generateTestKeys().eve, provider),
             };
-            const { bridge, erc20Handler, erc721Handler, genericHandler, erc20 } = await deployBridgeContracts(
+            const {
+                bridge,
+                erc20Handler,
+                erc721Handler,
+                genericHandler,
+                erc20
+            } = await deployBridgeContracts(
                 wallets.alice
             );
 
@@ -331,7 +344,8 @@ export function describeCrossChainTransfer(
             await sleep(5);
         });
 
-        after(async function () {});
+        after(async function () {
+        });
 
         cb(context);
     });
