@@ -100,7 +100,6 @@ pub fn get_chain_spec_dev() -> ChainSpec {
 	)
 }
 
-// FIXME Remove this for Litmus?
 pub fn get_chain_spec_staging() -> ChainSpec {
 	// Staging keys are derivative keys based on a single master secret phrase:
 	//

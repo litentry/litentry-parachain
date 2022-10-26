@@ -9,6 +9,7 @@ The Litentry parachain.
 Similar to polkadot, different chain-specs/runtimes are compiled into one single binary: in our case it's:
 - litentry-parachain-runtime (on polkadot)
 - litmus-parachain-runtime   (on kusama)
+- rococo-parachain-runtime   (on rococo)
 
 Therefore, when building node binary or docker image, no distinction is required. But when building runtime/starting binary/running tests, the chain type must be explicitly given. See the examples below.
 ## Lists of make targets
@@ -39,28 +40,29 @@ make build-runtime-litentry
 ```
 The wasms should be located under `target/release/wbuild/litentry-parachain-runtime/`
 
-Similarly, use `make build-runtime-litmus` to build the litmus-parachain-runtime.
+Similarly, use `make build-runtime-litmus` and `make build-runtime-rococo` to build the litmus-parachain-runtime and rococo-parachain-runtime, respectively.
 
 ## launch of local network
 
+The following steps take rococo-parachain for example, because `sudo` will be removed for litentry-parachain and [was removed](https://github.com/litentry/litentry-parachain/issues/775) for litmus-parachain. But generally speaking, lauching a local network works with either of the three chain-settings.
+
 To start a local network with 2 relaychain nodes and 1 parachain node, there're two ways:
 
-### 1. use docker images for both polkadot and litentry-parachain (preferred)
-Take the litentry-parachain for example:
+### 1. use docker images for both polkadot and parachain (preferred)
 ```
-make launch-docker-litentry
+make launch-docker-rococo
 ```
 [parachain-launch](https://github.com/open-web3-stack/parachain-launch) will be installed and used to generate chain-specs and docker-compose files.
 
-The generated files will be under `docker/generated-litentry/`.
+The generated files will be under `docker/generated-rococo/`.
 
 When finished with the network, run
 ```
-make clean-docker-litentry
+make clean-docker-rococo
 ```
 to stop the processes and tidy things up.
 
-### 2. use raw binaries for both polkadot and litentry-parachain
+### 2. use raw binaries for both polkadot and parachain
 
 Only when option 1 doesn't work and you suspect the docker-image went wrong.
 
@@ -69,34 +71,34 @@ In this case we could try to launch the network with raw binaries.
 **On Linux host:**
 
 - you should have the locally compiled `./target/release/litentry-collator` binary.
-- run `make launch-binary-litentry`
+- run `make launch-binary-rococo`
 
 **On Non-Linux host:**
 
 - you should have locally compiled binaries, for both `polkadot` and `litentry-collator`
-- run `./scripts/launch-local-binary.sh litentry path-to-polkadot-bin path-to-litentry-parachain-bin`
+- run `./scripts/launch-local-binary.sh rococo path-to-polkadot-bin path-to-litentry-parachain-bin`
 
 When finished with the network, run
 ```
 make clean-binary
 ```
 to stop the processes and tidy things up.
-Note this command should work for both litentry and litmus (you don't have to differentiate them).
+Note this command should work for all parachain types (you don't have to differentiate them).
 
 ## run ts tests locally
 
 To run the ts tests locally, similar to launching the networks, it's possible to run them in either docker or binary mode:
 ```
-make test-ts-docker-litentry
+make test-ts-docker-rococo
 ```
 or
 ```
 # if on Linux
-make test-ts-binary-litentry
+make test-ts-binary-rococo
 
 # otherwise
-./scripts/launch-local-binary.sh litentry path-to-polkadot-bin path-to-litentry-parachain-bin
-./scripts/run-ts-test.sh litentry
+./scripts/launch-local-binary.sh rococo path-to-polkadot-bin path-to-litentry-parachain-bin
+./scripts/run-ts-test.sh rococo
 ```
 Remember to run the clean-up afterwards.
 
