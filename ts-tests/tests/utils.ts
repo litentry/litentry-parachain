@@ -64,12 +64,6 @@ export async function initApiPromise(config: any): Promise<ParachainConfig> {
         '0x8c35b97c56099cf3b5c631d1f296abbb11289857e74a8f60936290080d56da6d'
     );
 
-    // Set Eve's balance to 1000000000000000
-    const eve_info = await api.query.system.account(eve.address);
-    if (eve_info.data.free.lt(new BN(1000000000000000))) {
-        const txSetBalance = await sudoWrapper(api, api.tx.balances.setBalance(eve.address, 1000000000000000, 0))
-        await signAndSend(txSetBalance, alice);
-    }
     const { nonce: nonceAlice, data: balanceAlice } = await api.query.system.account(alice.address);
     const { nonce: nonceBob, data: balanceBob } = await api.query.system.account(bob.address);
     const { nonce: nonceEve, data: balanceEve } = await api.query.system.account(eve.address);
