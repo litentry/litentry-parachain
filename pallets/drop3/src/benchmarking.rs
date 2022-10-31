@@ -38,11 +38,11 @@ const TRANSFER_ED_MULTIPLIER: u32 = 2;
 //   execution trapped...
 // - maybe have to make more careful thoughts of benchmarking the worst case scenario
 
-fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
+fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	frame_system::Pallet::<T>::assert_last_event(generic_event.into());
 }
 
-fn assert_event<T: Config>(generic_event: <T as Config>::Event) {
+fn assert_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	frame_system::Pallet::<T>::assert_has_event(generic_event.into());
 }
 
@@ -119,7 +119,7 @@ benchmarks! {
 		*/
 		let old_admin= <Admin<T>>::get();
 		let admin: T::AccountId = account("admin", 0, SEED);
-	}: _<T::Origin>(origin, admin)
+	}: _<T::RuntimeOrigin>(origin, admin)
 	verify {
 		assert_last_event::<T>(Event::AdminChanged { old_admin }.into());
 	}

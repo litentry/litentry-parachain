@@ -59,17 +59,17 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + bridge::Config {
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// Specifies the origin check provided by the bridge for calls that can only be called by
 		/// the bridge pallet
-		type BridgeOrigin: EnsureOrigin<Self::Origin, Success = Self::AccountId>;
+		type BridgeOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
 
 		/// The priviledged accounts to call the transfer_native
 		type TransferNativeMembers: SortedMembers<Self::AccountId>;
 
 		/// The privileged origin to call update_maximum_issuance
-		type SetMaximumIssuanceOrigin: EnsureOrigin<Self::Origin>;
+		type SetMaximumIssuanceOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		#[pallet::constant]
 		type NativeTokenResourceId: Get<ResourceId>;
