@@ -781,7 +781,6 @@ impl pallet_teerex::Config for Runtime {
 impl pallet_sidechain::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = ();
-	type EarlyBlockProposalLenience = ConstU64<100>;
 }
 
 impl pallet_teeracle::Config for Runtime {
