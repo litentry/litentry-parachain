@@ -15,8 +15,7 @@ RUN apt-get update && \
 	apt-get install -yq openssl clang libclang-dev cmake
 
 # install sccache
-cargo install sccache
-ENV PATH "$HOME/.cargo/bin:$PATH"
+RUN cargo install sccache
 RUN type sccache && sccache --version
 ENV SCCACHE_CACHE_SIZE="10G"
 ENV SCCACHE_DIR=$HOME/.cache/sccache
