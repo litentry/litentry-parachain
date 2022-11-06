@@ -313,6 +313,9 @@ jobs:
           restore-keys: |
             sccache-
 
+      - name: start sccache server
+        run: sccache --start-server
+
       - name: Run runtime integration tests
         if: needs.check-file-change.outputs.src == 'true'
         run: cargo test --release -p ${{ matrix.chain }}-parachain-runtime --lib
@@ -320,6 +323,9 @@ jobs:
       - name: Print sccache stats
         if: needs.check-file-change.outputs.src == 'true'
         run: sccache --show-stats
+
+      - name: stop sccache server
+        run: sccache --stop-server || true
 
       - name: Fail-fast; cancel other jobs
         if: failure()
