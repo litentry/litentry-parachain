@@ -19,6 +19,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  DOCKER_BUILDKIT: 1
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -110,7 +111,7 @@ jobs:
     # - 15 min with cache
     # on a standard github runner it takes 1 hour+
     # see also https://github.com/litentry/litentry-parachain/issues/259
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [check-cargo-fmt, check-file-change]
     steps:
       - name: Checkout codes
@@ -118,22 +119,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup docker buildx
-        uses: docker/setup-buildx-action@v1
-
       - name: Build docker image
+        timeout-minutes: 60
         if: needs.check-file-change.outputs.src == 'true'
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          tags: litentry/litentry-parachain:latest
-          outputs: type=docker,dest=litentry-parachain.tar
-          push: false
-          file: docker/Dockerfile
-          build-args: |
-            PROFILE=release
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+        run: |
+          ./scripts/build-docker.sh release
+          echo "============================="
+          docker images
 
       - name: Pull docker image optinally
         if: needs.check-file-change.outputs.src == 'false'

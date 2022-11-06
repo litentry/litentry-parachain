@@ -14,9 +14,25 @@ RUN apt-get update && \
 	apt-get upgrade -y && \
 	apt-get install -yq openssl clang libclang-dev cmake
 
+# install sccache
+cargo install sccache
+ENV PATH "$HOME/.cargo/bin:$PATH"
+RUN type sccache && sccache --version
+ENV SCCACHE_CACHE_SIZE="10G"
+ENV SCCACHE_DIR=$HOME/.cache/sccache
+ENV RUSTC_WRAPPER=sccache
+
 ARG BUILD_ARGS
 ARG PROFILE
-RUN cargo build --locked --profile $PROFILE $BUILD_ARGS
+
+# please note this only works for self-hosted runner (i.e. on the same host)
+# CI across different GH-runners won't work well, my understanding is docker only considers
+# image layers as "bulid cache", and sccache doesn't belong to it and therefore not
+# exported/imported with build-push-action
+#
+# see https://github.com/docker/build-push-action/issues/716
+#     https://github.com/moby/buildkit/issues/1673
+RUN --mount=type=cache,target=$HOME/.cache/sccache cargo build --locked --profile $PROFILE $BUILD_ARGS && sccache --show-stats
 
 # ==========================
 # stage 2: packaging
