@@ -53,7 +53,7 @@ jobs:
             echo "::error::Please select at least one release type."
             exit 1
           fi
-          echo "::set-output name=release_type::${release_type}"
+          echo "release_type=${release_type}" >> $GITHUB_OUTPUT
     outputs:
       release_type: ${{ steps.vars.outputs.release_type }}
 
