@@ -261,7 +261,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Set or update the user's shielding key
+		/// Set or update user's shielding key
 		#[pallet::weight(195_000_000)]
 		pub fn set_user_shielding_key(
 			origin: OriginFor<T>,
