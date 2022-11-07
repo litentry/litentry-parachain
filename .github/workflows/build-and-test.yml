@@ -20,6 +20,9 @@ on:
 env:
   CARGO_TERM_COLOR: always
   DOCKER_BUILDKIT: 1
+  # the branch or tag on which this workflow is triggered
+  # `head_ref` will only be set if the triggering event is `pull_request`
+  REF_VERSION: ${{ github.head_ref || github.ref_name }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -272,14 +275,6 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
-      - name: Set env for non-PR
-        if: github.event_name != 'push'
-        run: echo "REF_VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
-
-      - name: Set env for PR
-        if: github.event_name == 'push'
-        run: echo "REF_VERSION=${{ github.base_ref }}" >> $GITHUB_ENV
 
       - name: Install toolchain
         if: needs.check-file-change.outputs.src == 'true'
