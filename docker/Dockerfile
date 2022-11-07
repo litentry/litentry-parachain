@@ -7,6 +7,7 @@ ARG PROFILE
 # our host is based on bullseye/sid => rust:latest
 # ==========================
 FROM rust:latest as builder
+
 WORKDIR /litentry
 COPY . /litentry
 
@@ -14,12 +15,14 @@ RUN apt-get update && \
 	apt-get upgrade -y && \
 	apt-get install -yq openssl clang libclang-dev cmake
 
+# install sccache, must before `ARG RUSTC_WRAPPER`
+# otherwise the wrapper is set but sccache is not installed
+RUN cargo install sccache
+
 ARG BUILD_ARGS
 ARG PROFILE
 ARG RUSTC_WRAPPER
 
-# install sccache
-RUN cargo install sccache
 RUN type sccache && sccache --version
 ENV SCCACHE_CACHE_SIZE=10G
 ENV SCCACHE_DIR=/root/.cache/sccache
