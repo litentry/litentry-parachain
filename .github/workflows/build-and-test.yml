@@ -268,6 +268,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set env
+        run: echo "REF_VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+
       - name: Install toolchain
         if: needs.check-file-change.outputs.src == 'true'
         uses: actions-rs/toolchain@v1
@@ -299,9 +302,9 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: cargo-${{ env.GITHUB_REF_NAME }}-${{ hashFiles('**/Cargo.lock') }}
+          key: cargo-${{ env.REF_VERSION }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            cargo-${{ env.GITHUB_REF_NAME }}-
+            cargo-${{ env.REF_VERSION }}-
             cargo-
 
       - name: Cache sccache
@@ -310,9 +313,9 @@ jobs:
         continue-on-error: false
         with:
           path: /home/runner/.cache/sccache
-          key: sccache-${{ env.GITHUB_REF_NAME }}-${{ hashFiles('**/Cargo.lock') }}
+          key: sccache-${{ env.REF_VERSION }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            sccache-${{ env.GITHUB_REF_NAME }}-
+            sccache-${{ env.REF_VERSION }}-
             sccache-
 
       - name: Run runtime integration tests
