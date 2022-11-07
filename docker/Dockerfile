@@ -17,8 +17,8 @@ RUN apt-get update && \
 # install sccache
 RUN cargo install sccache
 RUN type sccache && sccache --version
-ENV SCCACHE_CACHE_SIZE="10G"
-ENV SCCACHE_DIR=$HOME/.cache/sccache
+ENV SCCACHE_CACHE_SIZE=10G
+ENV SCCACHE_DIR=/root/.cache/sccache
 ENV RUSTC_WRAPPER=sccache
 
 ARG BUILD_ARGS
@@ -31,7 +31,7 @@ ARG PROFILE
 #
 # see https://github.com/docker/build-push-action/issues/716
 #     https://github.com/moby/buildkit/issues/1673
-RUN --mount=type=cache,target=$HOME/.cache/sccache cargo build --locked --profile $PROFILE $BUILD_ARGS && sccache --show-stats
+RUN --mount=type=cache,target=/root/.cache/sccache cargo build --locked --profile $PROFILE $BUILD_ARGS && sccache --show-stats
 
 # ==========================
 # stage 2: packaging
