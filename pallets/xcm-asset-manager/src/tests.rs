@@ -240,7 +240,11 @@ fn test_regular_user_cannot_call_extrinsics() {
 		);
 
 		assert_noop!(
-			AssetManager::update_foreign_asset_metadata(RuntimeOrigin::signed(1), 0, asset_metadata_1),
+			AssetManager::update_foreign_asset_metadata(
+				RuntimeOrigin::signed(1),
+				0,
+				asset_metadata_1
+			),
 			sp_runtime::DispatchError::BadOrigin
 		);
 
@@ -297,7 +301,11 @@ fn test_root_can_add_asset_type() {
 			asset_metadata_2.clone()
 		));
 
-		assert_ok!(AssetManager::add_asset_type(RuntimeOrigin::root(), 0, MockAssetType::MockAsset(3)));
+		assert_ok!(AssetManager::add_asset_type(
+			RuntimeOrigin::root(),
+			0,
+			MockAssetType::MockAsset(3)
+		));
 
 		assert_noop!(
 			AssetManager::add_asset_type(RuntimeOrigin::root(), 0, MockAssetType::MockAsset(2)),
@@ -395,8 +403,16 @@ fn test_root_can_remove_asset_type() {
 
 		assert_ok!(AssetManager::set_asset_units_per_second(RuntimeOrigin::root(), 0, 100u128));
 
-		assert_ok!(AssetManager::add_asset_type(RuntimeOrigin::root(), 0, MockAssetType::MockAsset(2)));
-		assert_ok!(AssetManager::add_asset_type(RuntimeOrigin::root(), 0, MockAssetType::MockAsset(3)));
+		assert_ok!(AssetManager::add_asset_type(
+			RuntimeOrigin::root(),
+			0,
+			MockAssetType::MockAsset(2)
+		));
+		assert_ok!(AssetManager::add_asset_type(
+			RuntimeOrigin::root(),
+			0,
+			MockAssetType::MockAsset(3)
+		));
 
 		assert!(AssetManager::payment_is_supported(MockAssetType::MockAsset(1)));
 		assert_eq!(AssetManager::asset_id_units_per_second(0), 100);
@@ -473,8 +489,16 @@ fn test_malicious_remove_asset_type_fail() {
 			MockAssetType::MockAsset(2),
 			asset_metadata_1
 		));
-		assert_ok!(AssetManager::add_asset_type(RuntimeOrigin::root(), 0, MockAssetType::MockAsset(3)));
-		assert_ok!(AssetManager::add_asset_type(RuntimeOrigin::root(), 1, MockAssetType::MockAsset(4)));
+		assert_ok!(AssetManager::add_asset_type(
+			RuntimeOrigin::root(),
+			0,
+			MockAssetType::MockAsset(3)
+		));
+		assert_ok!(AssetManager::add_asset_type(
+			RuntimeOrigin::root(),
+			1,
+			MockAssetType::MockAsset(4)
+		));
 
 		// try assign asset_type=4 (which belongs to asset_id=1) to asset_id=0
 		assert_noop!(
@@ -562,7 +586,11 @@ fn test_asset_type_does_not_exist_error() {
 			asset_metadata_1
 		));
 		assert_noop!(
-			AssetManager::remove_asset_type(RuntimeOrigin::root(), MockAssetType::MockAsset(2), None),
+			AssetManager::remove_asset_type(
+				RuntimeOrigin::root(),
+				MockAssetType::MockAsset(2),
+				None
+			),
 			Error::<Test>::AssetTypeDoesNotExist
 		);
 		assert_noop!(
@@ -591,10 +619,18 @@ fn test_default_asset_type_removed_error() {
 			MockAssetType::MockAsset(1),
 			asset_metadata_1
 		));
-		assert_ok!(AssetManager::add_asset_type(RuntimeOrigin::root(), 0, MockAssetType::MockAsset(2)));
+		assert_ok!(AssetManager::add_asset_type(
+			RuntimeOrigin::root(),
+			0,
+			MockAssetType::MockAsset(2)
+		));
 
 		assert_noop!(
-			AssetManager::remove_asset_type(RuntimeOrigin::root(), MockAssetType::MockAsset(2), None),
+			AssetManager::remove_asset_type(
+				RuntimeOrigin::root(),
+				MockAssetType::MockAsset(2),
+				None
+			),
 			Error::<Test>::DefaultAssetTypeRemoved
 		);
 		assert_noop!(

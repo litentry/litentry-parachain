@@ -19,9 +19,9 @@
 use super::{
 	bridge,
 	mock::{
-		assert_events, balances, new_test_ext, Balances, Bridge, BridgeTransfer, RuntimeCall, RuntimeEvent,
-		NativeTokenResourceId, RuntimeOrigin, ProposalLifetime, Test, TreasuryAccount, ENDOWED_BALANCE,
-		MAXIMUM_ISSURANCE, RELAYER_A, RELAYER_B, RELAYER_C,
+		assert_events, balances, new_test_ext, Balances, Bridge, BridgeTransfer,
+		NativeTokenResourceId, ProposalLifetime, RuntimeCall, RuntimeEvent, RuntimeOrigin, Test,
+		TreasuryAccount, ENDOWED_BALANCE, MAXIMUM_ISSURANCE, RELAYER_A, RELAYER_B, RELAYER_C,
 	},
 	*,
 };
@@ -74,8 +74,15 @@ fn transfer_native() {
 		let dest_bridge_id: bridge::BridgeChainId = 0;
 		let resource_id = NativeTokenResourceId::get();
 		let dest_account: Vec<u8> = vec![1];
-		assert_ok!(pallet_bridge::Pallet::<Test>::update_fee(RuntimeOrigin::root(), dest_bridge_id, 10));
-		assert_ok!(pallet_bridge::Pallet::<Test>::whitelist_chain(RuntimeOrigin::root(), dest_bridge_id));
+		assert_ok!(pallet_bridge::Pallet::<Test>::update_fee(
+			RuntimeOrigin::root(),
+			dest_bridge_id,
+			10
+		));
+		assert_ok!(pallet_bridge::Pallet::<Test>::whitelist_chain(
+			RuntimeOrigin::root(),
+			dest_bridge_id
+		));
 		assert_ok!(Pallet::<Test>::transfer_native(
 			RuntimeOrigin::signed(RELAYER_A),
 			100,
@@ -313,7 +320,10 @@ fn test_external_balances_adjusted() {
 		// Whitelist setup
 		let dest_chain = 0;
 		assert_ok!(pallet_bridge::Pallet::<Test>::update_fee(RuntimeOrigin::root(), dest_chain, 0));
-		assert_ok!(pallet_bridge::Pallet::<Test>::whitelist_chain(RuntimeOrigin::root(), dest_chain));
+		assert_ok!(pallet_bridge::Pallet::<Test>::whitelist_chain(
+			RuntimeOrigin::root(),
+			dest_chain
+		));
 		assert_ok!(BridgeTransfer::transfer_native(
 			RuntimeOrigin::signed(RELAYER_A),
 			5,
@@ -330,7 +340,10 @@ fn test_external_balances_adjusted() {
 fn set_maximum_issuance() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(pallet::MaximumIssuance::<Test>::get(), mock::MaximumIssuance::get());
-		assert_ok!(pallet::Pallet::<Test>::set_maximum_issuance(RuntimeOrigin::signed(RELAYER_A), 2));
+		assert_ok!(pallet::Pallet::<Test>::set_maximum_issuance(
+			RuntimeOrigin::signed(RELAYER_A),
+			2
+		));
 		assert_eq!(pallet::MaximumIssuance::<Test>::get(), 2);
 		frame_system::Pallet::<Test>::assert_last_event(
 			crate::Event::<Test>::MaximumIssuanceChanged {

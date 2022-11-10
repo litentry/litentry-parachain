@@ -25,13 +25,13 @@ where
 	T: frame_system::Config,
 {
 	#[cfg(feature = "try-runtime")]
-	fn pre_upgrade() -> Result<(), &'static str> {
+	fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
 		log::info!("Pre check pallet Sudo exists");
 		assert!(
 			frame_support::storage::migration::have_storage_value(b"Sudo", b"Key", b"",),
 			"Storage query fails: Sudo Key"
 		);
-		Ok(())
+		Ok(vec![])
 	}
 
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
@@ -49,7 +49,7 @@ where
 	}
 
 	#[cfg(feature = "try-runtime")]
-	fn post_upgrade() -> Result<(), &'static str> {
+	fn post_upgrade(_state: Vec<u8>) -> Result<(), &'static str> {
 		use sp_io::KillStorageResult;
 
 		log::info!("Post check Sudo");

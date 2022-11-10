@@ -226,9 +226,9 @@ pub fn setup_user_shieding_key(
 	// enrypt the result
 	let key = IdentityManagementMock::user_shielding_keys(&who).unwrap();
 	let aes_encrypted_account = aes_encrypt_default(&key, who.encode().as_slice());
-	System::assert_has_event(RuntimeEvent::IdentityManagementMock(crate::Event::UserShieldingKeySet {
-		account: aes_encrypted_account,
-	}));
+	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
+		crate::Event::UserShieldingKeySet { account: aes_encrypted_account },
+	));
 	key
 }
 
@@ -245,16 +245,15 @@ pub fn setup_link_identity(
 		encrypted_identity.to_vec(),
 		None
 	));
-	System::assert_has_event(RuntimeEvent::IdentityManagementMock(crate::Event::IdentityLinkedPlain {
-		account: who,
-		identity: identity.clone(),
-	}));
+	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
+		crate::Event::IdentityLinkedPlain { account: who, identity: identity.clone() },
+	));
 	// encrypt the result
 	let aes_encrypted_account = aes_encrypt_default(&key, who.encode().as_slice());
 	let aes_encrypted_identity = aes_encrypt_default(&key, identity.encode().as_slice());
-	System::assert_has_event(RuntimeEvent::IdentityManagementMock(crate::Event::UserShieldingKeySet {
-		account: aes_encrypted_account.clone(),
-	}));
+	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
+		crate::Event::UserShieldingKeySet { account: aes_encrypted_account.clone() },
+	));
 
 	// double check the challenge code
 	let code = blake2_128(bn.encode().as_slice());
@@ -262,11 +261,13 @@ pub fn setup_link_identity(
 		crate::Event::ChallengeCodeGeneratedPlain { account: who, identity, code },
 	));
 	let aes_encrypted_code = aes_encrypt_default(&key, code.encode().as_slice());
-	System::assert_has_event(RuntimeEvent::IdentityManagementMock(crate::Event::ChallengeCodeGenerated {
-		account: aes_encrypted_account,
-		identity: aes_encrypted_identity,
-		code: aes_encrypted_code,
-	}));
+	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
+		crate::Event::ChallengeCodeGenerated {
+			account: aes_encrypted_account,
+			identity: aes_encrypted_identity,
+			code: aes_encrypted_code,
+		},
+	));
 }
 
 pub fn setup_verify_twitter_identity(

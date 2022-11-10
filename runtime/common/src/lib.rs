@@ -25,11 +25,12 @@ pub mod tests;
 pub mod xcm_impl;
 
 use frame_support::{
+	pallet_prelude::DispatchClass,
 	parameter_types, sp_runtime,
 	traits::{Currency, EitherOfDiverse, EnsureOrigin, OnUnbalanced, OriginTrait},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
-		DispatchClass, Weight,
+		Weight,
 	},
 };
 use frame_system::{limits, EnsureRoot};
@@ -122,7 +123,7 @@ pub struct ToAuthor<R>(sp_std::marker::PhantomData<R>);
 impl<R> OnUnbalanced<NegativeImbalance<R>> for ToAuthor<R>
 where
 	R: pallet_balances::Config + pallet_authorship::Config,
-	<R as frame_system::Config>::Event: From<pallet_balances::Event<R>>,
+	<R as frame_system::Config>::RuntimeEvent: From<pallet_balances::Event<R>>,
 {
 	fn on_nonzero_unbalanced(amount: NegativeImbalance<R>) {
 		if let Some(author) = <pallet_authorship::Pallet<R>>::author() {
@@ -148,7 +149,7 @@ macro_rules! impl_runtime_transaction_payment_fees {
 		where
 			R: pallet_balances::Config + pallet_treasury::Config + pallet_authorship::Config,
 			pallet_treasury::Pallet<R>: OnUnbalanced<NegativeImbalance<R>>,
-			<R as frame_system::Config>::Event: From<pallet_balances::Event<R>>,
+			<R as frame_system::Config>::RuntimeEvent: From<pallet_balances::Event<R>>,
 		{
 			fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance<R>>) {
 				if let Some(fees) = fees_then_tips.next() {
@@ -304,17 +305,17 @@ where
 // EnsureOrigin implementation to make sure the extrinsic origin
 // must come from one of the registered enclaves
 pub struct EnsureEnclaveSigner<T>(PhantomData<T>);
-impl<T> EnsureOrigin<T::Origin> for EnsureEnclaveSigner<T>
+impl<T> EnsureOrigin<T::RuntimeOrigin> for EnsureEnclaveSigner<T>
 where
 	T: frame_system::Config + pallet_teerex::Config,
 {
 	type Success = T::AccountId;
-	fn try_origin(o: T::Origin) -> Result<Self::Success, T::Origin> {
+	fn try_origin(o: T::RuntimeOrigin) -> Result<Self::Success, T::RuntimeOrigin> {
 		o.into().and_then(|o| match o {
 			frame_system::RawOrigin::Signed(ref who)
 				if pallet_teerex::Pallet::<T>::is_registered_enclave(who) == Ok(true) =>
 				Ok(who.clone()),
-			r => Err(T::Origin::from(r)),
+			r => Err(T::RuntimeOrigin::from(r)),
 		})
 	}
 }

@@ -47,9 +47,9 @@ fn link_identity_works() {
 			vec![1u8; 2048],
 			Some(vec![1u8; 2048])
 		));
-		System::assert_last_event(RuntimeEvent::IdentityManagement(crate::Event::LinkIdentityRequested {
-			shard,
-		}));
+		System::assert_last_event(RuntimeEvent::IdentityManagement(
+			crate::Event::LinkIdentityRequested { shard },
+		));
 	});
 }
 
@@ -57,7 +57,11 @@ fn link_identity_works() {
 fn unlink_identity_works() {
 	new_test_ext().execute_with(|| {
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
-		assert_ok!(IdentityManagement::unlink_identity(RuntimeOrigin::signed(1), shard, vec![1u8; 2048]));
+		assert_ok!(IdentityManagement::unlink_identity(
+			RuntimeOrigin::signed(1),
+			shard,
+			vec![1u8; 2048]
+		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
 			crate::Event::UnlinkIdentityRequested { shard },
 		));
@@ -89,7 +93,11 @@ fn tee_callback_with_registered_enclave_works() {
 			URL.to_vec()
 		));
 
-		assert_ok!(IdentityManagement::some_error(RuntimeOrigin::signed(1), vec![1u8; 16], vec![2u8; 16]));
+		assert_ok!(IdentityManagement::some_error(
+			RuntimeOrigin::signed(1),
+			vec![1u8; 16],
+			vec![2u8; 16]
+		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(crate::Event::SomeError {
 			func: vec![1u8; 16],
 			error: vec![2u8; 16],

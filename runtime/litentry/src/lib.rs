@@ -103,10 +103,11 @@ pub type SignedExtra = (
 );
 
 /// Unchecked extrinsic type as expected by this runtime.
-pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
+pub type UncheckedExtrinsic =
+	generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
 
 /// Extrinsic type that has already been checked.
-pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, Call, SignedExtra>;
+pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra>;
 
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
@@ -257,26 +258,33 @@ impl Default for ProxyType {
 	}
 }
 
-impl InstanceFilter<Call> for ProxyType {
-	fn filter(&self, c: &Call) -> bool {
+impl InstanceFilter<RuntimeCall> for ProxyType {
+	fn filter(&self, c: &RuntimeCall) -> bool {
 		match self {
 			ProxyType::Any => true,
 			ProxyType::NonTransfer => !matches!(
 				c,
-				Call::Balances(..) | Call::Vesting(pallet_vesting::Call::vested_transfer { .. })
+				RuntimeCall::Balances(..) |
+					RuntimeCall::Vesting(pallet_vesting::Call::vested_transfer { .. })
 			),
 			ProxyType::CancelProxy => matches!(
 				c,
-				Call::Proxy(pallet_proxy::Call::reject_announcement { .. }) |
-					Call::Utility(..) | Call::Multisig(..)
+				RuntimeCall::Proxy(pallet_proxy::Call::reject_announcement { .. }) |
+					RuntimeCall::Utility(..) |
+					RuntimeCall::Multisig(..)
 			),
-			ProxyType::Collator =>
-				matches!(c, Call::ParachainStaking(..) | Call::Utility(..) | Call::Multisig(..)),
+			ProxyType::Collator => matches!(
+				c,
+				RuntimeCall::ParachainStaking(..) |
+					RuntimeCall::Utility(..) |
+					RuntimeCall::Multisig(..)
+			),
 			ProxyType::Governance => matches!(
 				c,
-				Call::Democracy(..) |
-					Call::Council(..) | Call::TechnicalCommittee(..) |
-					Call::Treasury(..)
+				RuntimeCall::Democracy(..) |
+					RuntimeCall::Council(..) |
+					RuntimeCall::TechnicalCommittee(..) |
+					RuntimeCall::Treasury(..)
 			),
 		}
 	}
@@ -308,7 +316,7 @@ impl pallet_proxy::Config for Runtime {
 	type ProxyDepositBase = ProxyDepositBase;
 	type ProxyDepositFactor = ProxyDepositFactor;
 	type MaxProxies = ConstU32<32>;
-	type WeightInfo = weights::pallet_proxy::WeightInfo<Runtime>;
+	type WeightInfo = ();
 	type MaxPending = ConstU32<32>;
 	type CallHasher = BlakeTwo256;
 	type AnnouncementDepositBase = AnnouncementDepositBase;
@@ -416,7 +424,7 @@ parameter_types! {
 }
 
 impl pallet_democracy::Config for Runtime {
-	type Proposal = Call;
+	type Proposal = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type EnactmentPeriod = EnactmentPeriod;
@@ -464,7 +472,7 @@ parameter_types! {
 
 impl pallet_collective::Config<CouncilInstance> for Runtime {
 	type RuntimeOrigin = RuntimeOrigin;
-	type Proposal = Call;
+	type Proposal = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
 	type MotionDuration = CouncilMotionDuration;
 	type MaxProposals = ConstU32<100>;
@@ -492,7 +500,7 @@ parameter_types! {
 
 impl pallet_collective::Config<TechnicalCommitteeInstance> for Runtime {
 	type RuntimeOrigin = RuntimeOrigin;
-	type Proposal = Call;
+	type Proposal = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
 	type MotionDuration = TechnicalMotionDuration;
 	type MaxProposals = ConstU32<100>;
@@ -720,7 +728,7 @@ parameter_types! {
 impl pallet_bridge::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type BridgeCommitteeOrigin = EnsureRootOrHalfCouncil;
-	type Proposal = Call;
+	type Proposal = RuntimeCall;
 	type BridgeChainId = BridgeChainId;
 	type Currency = Balances;
 	type ProposalLifetime = ProposalLifetime;
@@ -864,15 +872,16 @@ construct_runtime! {
 }
 
 pub struct BaseCallFilter;
-impl Contains<Call> for BaseCallFilter {
-	fn contains(call: &Call) -> bool {
+impl Contains<RuntimeCall> for BaseCallFilter {
+	fn contains(call: &RuntimeCall) -> bool {
 		if matches!(
 			call,
-			Call::Sudo(_) |
-				Call::System(_) | Call::Timestamp(_) |
-				Call::ParachainSystem(_) |
-				Call::ExtrinsicFilter(_) |
-				Call::Multisig(_)
+			RuntimeCall::Sudo(_) |
+				RuntimeCall::System(_) |
+				RuntimeCall::Timestamp(_) |
+				RuntimeCall::ParachainSystem(_) |
+				RuntimeCall::ExtrinsicFilter(_) |
+				RuntimeCall::Multisig(_)
 		) {
 			// always allow core calls
 			return true
@@ -883,38 +892,38 @@ impl Contains<Call> for BaseCallFilter {
 }
 
 pub struct SafeModeFilter;
-impl Contains<Call> for SafeModeFilter {
-	fn contains(_call: &Call) -> bool {
+impl Contains<RuntimeCall> for SafeModeFilter {
+	fn contains(_call: &RuntimeCall) -> bool {
 		false
 	}
 }
 
 pub struct NormalModeFilter;
-impl Contains<Call> for NormalModeFilter {
-	fn contains(call: &Call) -> bool {
+impl Contains<RuntimeCall> for NormalModeFilter {
+	fn contains(call: &RuntimeCall) -> bool {
 		matches!(
 			call,
 			// Vesting::vest
-			Call::Vesting(pallet_vesting::Call::vest { .. }) |
+			RuntimeCall::Vesting(pallet_vesting::Call::vest { .. }) |
 			// ChainBridge
-			Call::ChainBridge(_) |
+			RuntimeCall::ChainBridge(_) |
 			// BridgeTransfer
-			Call::BridgeTransfer(_) |
+			RuntimeCall::BridgeTransfer(_) |
 			// Utility
-			Call::Utility(_) |
+			RuntimeCall::Utility(_) |
 			// Session
-			Call::Session(_) |
+			RuntimeCall::Session(_) |
 			// ParachainStaking; Only the collator part
-			Call::ParachainStaking(pallet_parachain_staking::Call::join_candidates { .. }) |
-			Call::ParachainStaking(pallet_parachain_staking::Call::schedule_leave_candidates { .. }) |
-			Call::ParachainStaking(pallet_parachain_staking::Call::execute_leave_candidates { .. }) |
-			Call::ParachainStaking(pallet_parachain_staking::Call::cancel_leave_candidates { .. }) |
-			Call::ParachainStaking(pallet_parachain_staking::Call::go_offline { .. }) |
-			Call::ParachainStaking(pallet_parachain_staking::Call::go_online { .. }) |
-			Call::ParachainStaking(pallet_parachain_staking::Call::candidate_bond_more { .. }) |
-			Call::ParachainStaking(pallet_parachain_staking::Call::schedule_candidate_bond_less { .. }) |
-			Call::ParachainStaking(pallet_parachain_staking::Call::execute_candidate_bond_less { .. }) |
-			Call::ParachainStaking(pallet_parachain_staking::Call::cancel_candidate_bond_less { .. })
+			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::join_candidates { .. }) |
+			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::schedule_leave_candidates { .. }) |
+			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::execute_leave_candidates { .. }) |
+			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::cancel_leave_candidates { .. }) |
+			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::go_offline { .. }) |
+			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::go_online { .. }) |
+			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::candidate_bond_more { .. }) |
+			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::schedule_candidate_bond_less { .. }) |
+			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::execute_candidate_bond_less { .. }) |
+			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::cancel_candidate_bond_less { .. })
 		)
 	}
 }

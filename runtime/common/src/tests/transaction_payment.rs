@@ -16,11 +16,8 @@
 
 use frame_support::{
 	assert_ok,
-	dispatch::RawOrigin,
-	weights::{
-		constants::ExtrinsicBaseWeight, DispatchClass, DispatchInfo, IdentityFee, PostDispatchInfo,
-		Weight, WeightToFee,
-	},
+	dispatch::{DispatchClass, DispatchInfo, PostDispatchInfo, RawOrigin},
+	weights::{constants::ExtrinsicBaseWeight, IdentityFee, Weight, WeightToFee},
 };
 use pallet_balances::Call as BalancesCall;
 use pallet_transaction_payment::{Multiplier, OnChargeTransaction};
@@ -64,15 +61,15 @@ pub fn multiplier_can_grow_from_zero<R: BaseRuntimeRequirements>() {
 }
 
 pub fn transaction_payment_works<
-	R: BaseRuntimeRequirements + frame_system::Config<Call = Call>,
+	R: BaseRuntimeRequirements + frame_system::Config<RuntimeCall = Call>,
 	TransactionByteFee: frame_support::traits::Get<Balance>,
 	Origin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
-	Call: Clone + Dispatchable<Origin = Origin> + From<pallet_balances::Call<R>>,
+	Call: Clone + Dispatchable<RuntimeOrigin = Origin> + From<pallet_balances::Call<R>>,
 >()
 where
 	<<R as frame_system::Config>::Lookup as sp_runtime::traits::StaticLookup>::Source:
 		From<sp_runtime::AccountId32>,
-	<R as frame_system::Config>::Call:
+	<R as frame_system::Config>::RuntimeCall:
 		Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo>,
 	<R as pallet_transaction_payment::Config>::OnChargeTransaction:
 		OnChargeTransaction<R, Balance = Balance, LiquidityInfo = Option<NegativeImbalance<R>>>,
@@ -161,8 +158,8 @@ macro_rules! run_transaction_payment_tests {
 			transaction_payment::transaction_payment_works::<
 				Runtime,
 				TransactionByteFee,
-				Origin,
-				Call,
+				RuntimeOrigin,
+				RuntimeCall,
 			>();
 		}
 	};
