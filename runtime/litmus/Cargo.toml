@@ -16,45 +16,45 @@ primitives = { path = "../../primitives", default-features = false }
 
 # Substrate Dependencies
 ## Substrate Primitive Dependencies
-sp-api = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-sp-block-builder = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-sp-consensus-aura = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-sp-inherents = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-sp-io = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-sp-offchain = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-sp-session = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-sp-transaction-pool = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-sp-version = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
+sp-api = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+sp-block-builder = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+sp-consensus-aura = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+sp-core = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+sp-inherents = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+sp-io = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+sp-offchain = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+sp-runtime = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+sp-session = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+sp-std = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+sp-transaction-pool = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+sp-version = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
 
 ## Substrate FRAME Dependencies
-frame-executive = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-frame-try-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, optional = true, branch = "polkadot-v0.9.30" }
+frame-executive = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+frame-support = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+frame-system = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+frame-system-rpc-runtime-api = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+frame-try-runtime = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, optional = true, branch = "polkadot-v0.9.30" }
 
 ## Substrate Pallet Dependencies
-pallet-aura = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-pallet-authorship = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-pallet-balances = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-pallet-bounties = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-pallet-collective = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-pallet-democracy = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-pallet-membership = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-pallet-multisig = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-pallet-preimage = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-pallet-proxy = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-pallet-scheduler = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-pallet-session = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-pallet-timestamp = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-pallet-treasury = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-pallet-utility = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
-pallet-vesting = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
+pallet-aura = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+pallet-authorship = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+pallet-balances = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+pallet-bounties = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+pallet-collective = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+pallet-democracy = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+pallet-membership = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+pallet-multisig = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+pallet-preimage = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+pallet-proxy = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+pallet-scheduler = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+pallet-session = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+pallet-timestamp = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+pallet-transaction-payment = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+pallet-treasury = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+pallet-utility = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+pallet-vesting = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
 
 # Cumulus dependencies
 cumulus-pallet-aura-ext = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.30" }
@@ -81,8 +81,8 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", default-features = false, branch = "polkadot-v0.9.30" }
 
 cumulus-pallet-session-benchmarking = { git = 'https://github.com/paritytech/cumulus', default-features = false, branch = "polkadot-v0.9.30", optional = true }
-frame-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30", optional = true }
-frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30", optional = true }
+frame-benchmarking = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30", optional = true }
+frame-system-benchmarking = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30", optional = true }
 
 # Litmus pallets
 pallet-asset-manager = { path = "../../pallets/xcm-asset-manager", default-features = false }
@@ -107,11 +107,11 @@ hex-literal = "0.3.4"
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.30" }
 polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.30" }
 runtime-common = { path = '../common', default-features = false, features = ["tests"] }
-sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sp-state-machine = { git = "https://github.com/litentry/litentry-substrate.git", branch = "polkadot-v0.9.30" }
 xcm-simulator = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.30" }
 
 [build-dependencies]
-substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+substrate-wasm-builder = { git = "https://github.com/litentry/litentry-substrate.git", branch = "polkadot-v0.9.30" }
 
 [features]
 default = ["std"]

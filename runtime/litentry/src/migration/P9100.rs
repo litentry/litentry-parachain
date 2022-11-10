@@ -31,7 +31,7 @@ where
 	<T as frame_system::Config>::Event: From<pallet_parachain_staking::Event<T>>,
 {
 	#[cfg(feature = "try-runtime")]
-	fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
+	fn pre_upgrade() -> Result<(), &'static str> {
 		use frame_support::traits::OnRuntimeUpgradeHelpersExt;
 		use primitives::AccountId;
 
@@ -86,7 +86,7 @@ where
 			),
 			"ParachainStaking Total Storage Already Exist"
 		);
-		Ok(vec![])
+		Ok(())
 	}
 
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
@@ -232,7 +232,7 @@ where
 	}
 
 	#[cfg(feature = "try-runtime")]
-	fn post_upgrade(_state: Vec<u8>) -> Result<(), &'static str> {
+	fn post_upgrade() -> Result<(), &'static str> {
 		use frame_support::traits::OnRuntimeUpgradeHelpersExt;
 		use primitives::AccountId;
 		use sp_io::KillStorageResult;
