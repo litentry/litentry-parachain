@@ -136,8 +136,9 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("litentry-parachain"),
 	impl_name: create_runtime_str!("litentry-parachain"),
 	authoring_version: 1,
-	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9110,
+	// same versioning-mechanism as polkadot:
+	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
+	spec_version: 9115,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -638,11 +639,11 @@ impl pallet_aura::Config for Runtime {
 
 parameter_types! {
 	/// Default fixed percent a collator takes off the top of due rewards
-	pub const DefaultCollatorCommission: Perbill = Perbill::from_percent(0);
+	pub const DefaultCollatorCommission: Perbill = Perbill::from_percent(33);
 	/// Default percent of inflation set aside for parachain bond every round
 	pub const DefaultParachainBondReservePercent: Percent = Percent::from_percent(0);
-	pub const MinCollatorStk: Balance = 50 * DOLLARS;
-	pub const MinCandidateStk: Balance = 50 * DOLLARS;
+	pub const MinCollatorStk: Balance = 5000 * DOLLARS;
+	pub const MinCandidateStk: Balance = 5000 * DOLLARS;
 	pub const MinDelegation: Balance = 50 * DOLLARS;
 	pub const MinDelegatorStk: Balance = 50 * DOLLARS;
 }
