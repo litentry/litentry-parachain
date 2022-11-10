@@ -145,8 +145,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("litmus-parachain"),
 	impl_name: create_runtime_str!("litmus-parachain"),
 	authoring_version: 1,
-	// same versioning-mechanism as polkadot:
-	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
+	// same versioning-mechanism as polkadot: use last digit for minor updates
 	spec_version: 9115,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
