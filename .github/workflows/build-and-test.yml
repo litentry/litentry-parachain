@@ -128,13 +128,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install dependencies
-        timeout-minutes: 60
-        if: needs.check-file-change.outputs.src == 'true'
-        run: |
-          ./scripts/install-dependencies.sh
-          echo "============================"
-
       - name: Build docker image
         timeout-minutes: 60
         if: needs.check-file-change.outputs.src == 'true'
