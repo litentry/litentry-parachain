@@ -299,6 +299,12 @@ jobs:
           chmod +x $HOME/.local/bin/sccache
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
+      - name: Install protobuf
+        run: |
+          apt-get update && \
+          apt-get upgrade -y && \
+          apt-get install -yq openssl clang libclang-dev cmake  protobuf-compiler
+
       - name: Cache cargo registry
         if: needs.check-file-change.outputs.src == 'true'
         uses: actions/cache@v3
