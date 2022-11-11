@@ -14,13 +14,13 @@ smallvec = "1.8.0"
 
 # Substrate Dependencies
 ## Substrate Primitive Dependencies
-sp-io = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
-sp-runtime = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
-sp-std = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+sp-io = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
+sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
 
 ## Substrate FRAME Dependencies
-frame-support = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
-frame-system = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
+frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
 
 # Polkadot dependencies
 xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.30", default-features = false }
@@ -29,11 +29,11 @@ xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.3
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", default-features = false, branch = "polkadot-v0.9.30" }
 
 # Benchmarks
-frame-benchmarking = { git = "https://github.com/litentry/litentry-substrate.git", branch = "polkadot-v0.9.30", optional = true, default-features = false }
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30", optional = true, default-features = false }
 
 [dev-dependencies]
-pallet-balances = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
-sp-core = { git = "https://github.com/litentry/litentry-substrate.git", default-features = false, branch = "polkadot-v0.9.30" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
+sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.30" }
 
 [features]
 default = ["std"]
