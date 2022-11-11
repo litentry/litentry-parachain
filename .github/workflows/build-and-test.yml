@@ -132,12 +132,8 @@ jobs:
         timeout-minutes: 60
         if: needs.check-file-change.outputs.src == 'true'
         run: |
-          apt-get update && \
-          apt-get install -y --no-install-recommends \
-          cmake pkg-config libssl-dev git gcc build-essential git clang libclang-dev libudev-dev curl llvm protobuf-compiler \
-          && rm -rf /var/lib/apt/lists/*
-          
-          echo "will build docker images"
+          ./script/install-dependencies.sh
+          echo "============================"
 
       - name: Build docker image
         timeout-minutes: 60
