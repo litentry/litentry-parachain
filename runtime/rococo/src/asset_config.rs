@@ -1,5 +1,5 @@
 use super::{
-	weights, AccountId, Amount, AssetId, AssetManager, Balance, Balances, Event, Runtime,
+	weights, AccountId, Amount, AssetId, AssetManager, Balance, Balances, Runtime, RuntimeEvent,
 	TreasuryPalletId,
 };
 use frame_support::{
@@ -29,7 +29,7 @@ impl Contains<AccountId> for DustRemovalWhitelist {
 pub type ReserveIdentifier = [u8; 8];
 
 impl orml_tokens::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type Amount = Amount;
 	type CurrencyId = AssetId;
@@ -43,10 +43,13 @@ impl orml_tokens::Config for Runtime {
 	type WeightInfo = ();
 	type OnNewTokenAccount = ();
 	type OnKilledTokenAccount = ();
+	type OnTransfer = ();
+	type OnSlash = ();
+	type OnDeposit = ();
 }
 
 impl pallet_asset_manager::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type AssetId = AssetId;
 	type ForeignAssetType = CurrencyId<Runtime>;

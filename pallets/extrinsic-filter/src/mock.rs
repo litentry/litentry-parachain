@@ -55,8 +55,8 @@ impl system::Config for Test {
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
-	type Origin = Origin;
-	type Call = Call;
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeCall = RuntimeCall;
 	type Index = u64;
 	type BlockNumber = u64;
 	type Hash = H256;
@@ -64,7 +64,7 @@ impl system::Config for Test {
 	type AccountId = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
@@ -89,7 +89,7 @@ impl pallet_balances::Config for Test {
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
 	type Balance = Balance; // the type that is relevant to us
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type DustRemoval = ();
 	type ExistentialDeposit = ConstU128<1>;
 	type AccountStore = System;
@@ -97,21 +97,24 @@ impl pallet_balances::Config for Test {
 }
 
 pub struct SafeModeFilter;
-impl Contains<Call> for SafeModeFilter {
-	fn contains(call: &Call) -> bool {
-		matches!(call, Call::System(_) | Call::ExtrinsicFilter(_))
+impl Contains<RuntimeCall> for SafeModeFilter {
+	fn contains(call: &RuntimeCall) -> bool {
+		matches!(call, RuntimeCall::System(_) | RuntimeCall::ExtrinsicFilter(_))
 	}
 }
 
 pub struct NormalModeFilter;
-impl Contains<Call> for NormalModeFilter {
-	fn contains(call: &Call) -> bool {
-		matches!(call, Call::System(_) | Call::ExtrinsicFilter(_) | Call::Timestamp(_))
+impl Contains<RuntimeCall> for NormalModeFilter {
+	fn contains(call: &RuntimeCall) -> bool {
+		matches!(
+			call,
+			RuntimeCall::System(_) | RuntimeCall::ExtrinsicFilter(_) | RuntimeCall::Timestamp(_)
+		)
 	}
 }
 
 impl pallet_extrinsic_filter::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type UpdateOrigin = EnsureRoot<Self::AccountId>;
 	type SafeModeFilter = SafeModeFilter;
 	type NormalModeFilter = NormalModeFilter;

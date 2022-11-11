@@ -34,7 +34,7 @@ type Block = frame_system::mocking::MockBlock<Test>;
 
 pub type Balance = u128;
 
-type SystemOrigin = <Test as frame_system::Config>::Origin;
+type SystemOrigin = <Test as frame_system::Config>::RuntimeOrigin;
 type SystemAccountId = <Test as frame_system::Config>::AccountId;
 
 // Similar to `runtime_common`, just don't want to pull in the whole dependency
@@ -77,8 +77,8 @@ impl system::Config for Test {
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
-	type Origin = Origin;
-	type Call = Call;
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeCall = RuntimeCall;
 	type Index = u64;
 	type BlockNumber = u64;
 	type Hash = H256;
@@ -86,7 +86,7 @@ impl system::Config for Test {
 	type AccountId = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
@@ -111,7 +111,7 @@ impl pallet_balances::Config for Test {
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
 	type Balance = Balance; // the type that is relevant to us
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type DustRemoval = ();
 	type ExistentialDeposit = ConstU128<1>;
 	type AccountStore = System;
@@ -124,7 +124,7 @@ parameter_types! {
 }
 
 impl pallet_teerex::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type MomentsPerDay = MomentsPerDay;
 	type MaxSilenceTime = MaxSilenceTime;
@@ -132,7 +132,7 @@ impl pallet_teerex::Config for Test {
 }
 
 impl pallet_identity_management::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = ();
 	type TEECallOrigin = EnsureEnclaveSigner;
 }

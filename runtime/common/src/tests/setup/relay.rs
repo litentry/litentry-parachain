@@ -87,8 +87,8 @@ macro_rules! decl_test_relay_chain_runtime {
 		type Block = frame_system::mocking::MockBlock<RelayChainRuntime>;
 
 		impl frame_system::Config for RelayChainRuntime {
-			type Origin = Origin;
-			type Call = Call;
+			type RuntimeOrigin = RuntimeOrigin;
+			type RuntimeCall = RuntimeCall;
 			type Index = u64;
 			type BlockNumber = u64;
 			type Hash = H256;
@@ -96,7 +96,7 @@ macro_rules! decl_test_relay_chain_runtime {
 			type AccountId = AccountId;
 			type Lookup = IdentityLookup<Self::AccountId>;
 			type Header = Header;
-			type Event = Event;
+			type RuntimeEvent = RuntimeEvent;
 			type BlockHashCount = BlockHashCount;
 			type BlockWeights = ();
 			type BlockLength = ();
@@ -116,7 +116,7 @@ macro_rules! decl_test_relay_chain_runtime {
 		impl pallet_balances::Config for RelayChainRuntime {
 			type MaxLocks = ConstU32<50>;
 			type Balance = Balance;
-			type Event = Event;
+			type RuntimeEvent = RuntimeEvent;
 			type DustRemoval = ();
 			type ExistentialDeposit = ConstU128<1>;
 			type AccountStore = System;
@@ -147,15 +147,15 @@ macro_rules! decl_test_relay_chain_runtime {
 
 		pub struct XcmConfig;
 		impl xcm_executor::Config for XcmConfig {
-			type Call = Call;
+			type RuntimeCall = RuntimeCall;
 			type XcmSender = XcmRouter;
 			type AssetTransactor = LocalAssetTransactor<RelayChainRuntime>;
-			type OriginConverter = LocalOriginConverter<Origin>;
+			type OriginConverter = LocalOriginConverter<RuntimeOrigin>;
 			type IsReserve = ();
 			type IsTeleporter = ();
 			type LocationInverter = LocationInverter<Ancestry>;
 			type Barrier = Barrier; // This is the setting should be same from Kusama
-			type Weigher = FixedWeightBounds<ConstU64<10>, Call, ConstU32<100>>;
+			type Weigher = FixedWeightBounds<ConstU64<10>, RuntimeCall, ConstU32<100>>;
 			type Trader =
 				UsingComponents<IdentityFee<Balance>, KsmLocation, AccountId, Balances, ()>;
 			type ResponseHandler = ();
@@ -164,28 +164,28 @@ macro_rules! decl_test_relay_chain_runtime {
 			type SubscriptionService = XcmPallet;
 		}
 
-		pub type LocalOriginToLocation = SignedToAccountId32<Origin, AccountId, KusamaNetwork>;
+		pub type LocalOriginToLocation = SignedToAccountId32<RuntimeOrigin, AccountId, KusamaNetwork>;
 
 		impl pallet_xcm::Config for RelayChainRuntime {
-			type Event = Event;
-			type SendXcmOrigin = xcm_builder::EnsureXcmOrigin<Origin, LocalOriginToLocation>;
+			type RuntimeEvent = RuntimeEvent;
+			type SendXcmOrigin = xcm_builder::EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
 			type XcmRouter = XcmRouter;
 			// Anyone can execute XCM messages locally...
-			type ExecuteXcmOrigin = xcm_builder::EnsureXcmOrigin<Origin, LocalOriginToLocation>;
+			type ExecuteXcmOrigin = xcm_builder::EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
 			type XcmExecuteFilter = Everything;
 			type XcmExecutor = XcmExecutor<XcmConfig>;
 			type XcmTeleportFilter = Everything;
 			type XcmReserveTransferFilter = Everything;
-			type Weigher = FixedWeightBounds<ConstU64<10>, Call, ConstU32<100>>;
+			type Weigher = FixedWeightBounds<ConstU64<10>, RuntimeCall, ConstU32<100>>;
 			type LocationInverter = LocationInverter<Ancestry>;
-			type Origin = Origin;
-			type Call = Call;
+			type RuntimeOrigin = RuntimeOrigin;
+			type RuntimeCall = RuntimeCall;
 			const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
 			type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
 		}
 
 		impl ump::Config for RelayChainRuntime {
-			type Event = Event;
+			type RuntimeEvent = RuntimeEvent;
 			type UmpSink = ump::XcmSink<XcmExecutor<XcmConfig>, RelayChainRuntime>;
 			type FirstMessageFactorPercent = ConstU64<100>;
 			type ExecuteOverweightOrigin = EnsureRoot<AccountId>;

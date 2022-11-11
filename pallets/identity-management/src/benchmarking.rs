@@ -27,7 +27,7 @@ use sp_std::vec;
 
 const TEST_MRENCLAVE: [u8; 32] = [2u8; 32];
 
-fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
+fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	frame_system::Pallet::<T>::assert_last_event(generic_event.into());
 }
 
