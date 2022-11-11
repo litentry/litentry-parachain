@@ -301,9 +301,9 @@ jobs:
 
       - name: Install protobuf
         run: |
-          apt-get update && \
-          apt-get upgrade -y && \
-          apt-get install -yq openssl clang libclang-dev cmake  protobuf-compiler
+         sudo apt-get update && \
+         sudo apt-get upgrade -y && \
+         sudo apt-get install -yq openssl clang libclang-dev cmake  protobuf-compiler
 
       - name: Cache cargo registry
         if: needs.check-file-change.outputs.src == 'true'
