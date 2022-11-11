@@ -128,6 +128,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install dependencies
+        timeout-minutes: 60
+        if: needs.check-file-change.outputs.src == 'true'
+        run: |
+          sudo apt update -y &&
+          sudo apt install -y cmake pkg-config libssl-dev git gcc build-essential git clang libclang-dev libudev-dev curl llvm protobuf-compiler 
+          echo "will build docker images"
+
       - name: Build docker image
         timeout-minutes: 60
         if: needs.check-file-change.outputs.src == 'true'
