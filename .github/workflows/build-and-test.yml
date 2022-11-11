@@ -132,7 +132,7 @@ jobs:
         timeout-minutes: 60
         if: needs.check-file-change.outputs.src == 'true'
         run: |
-          ./script/install-dependencies.sh
+          ./scripts/install-dependencies.sh
           echo "============================"
 
       - name: Build docker image
