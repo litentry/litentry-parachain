@@ -21,6 +21,8 @@ on:
         default: ''
         required: false
 
+env:
+    DOCKER_BUILDKIT: 1
 
 jobs:
   ## build docker image of client binary with args ##
