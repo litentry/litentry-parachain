@@ -559,7 +559,7 @@ dependencies = [
  "beefy-gadget",
  "beefy-primitives",
  "futures 0.3.25",
- "jsonrpsee",
+ "jsonrpsee 0.15.1",
  "log",
  "parity-scale-codec 3.2.1",
  "parking_lot 0.12.1",
@@ -1957,7 +1957,7 @@ dependencies = [
  "cumulus-relay-chain-interface",
  "futures 0.3.25",
  "futures-timer",
- "jsonrpsee",
+ "jsonrpsee 0.15.1",
  "parity-scale-codec 3.2.1",
  "parking_lot 0.12.1",
  "polkadot-service",
@@ -3710,6 +3710,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "jsonrpsee"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e0ee76536f6a303b67c13a99ecae0002bb388674dbf416094dde808263ea229c"
+
+[[package]]
 name = "jsonrpsee-client-transport"
 version = "0.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4714,7 +4720,7 @@ dependencies = [
  "frame-benchmarking-cli",
  "futures 0.3.25",
  "hex-literal",
- "jsonrpsee",
+ "jsonrpsee 0.16.0",
  "litentry-parachain-runtime",
  "litmus-parachain-runtime",
  "log",
@@ -6271,7 +6277,7 @@ name = "pallet-mmr-rpc"
 version = "3.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30#a3ed0119c45cdd0d571ad34e5b3ee7518c8cef8d"
 dependencies = [
- "jsonrpsee",
+ "jsonrpsee 0.15.1",
  "parity-scale-codec 3.2.1",
  "serde",
  "sp-api",
@@ -6707,7 +6713,7 @@ name = "pallet-transaction-payment-rpc"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30#a3ed0119c45cdd0d571ad34e5b3ee7518c8cef8d"
 dependencies = [
- "jsonrpsee",
+ "jsonrpsee 0.15.1",
  "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec 3.2.1",
  "sp-api",
@@ -8020,7 +8026,7 @@ source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.30#0645
 dependencies = [
  "beefy-gadget",
  "beefy-gadget-rpc",
- "jsonrpsee",
+ "jsonrpsee 0.15.1",
  "pallet-mmr-rpc",
  "pallet-transaction-payment-rpc",
  "polkadot-primitives",
@@ -9094,7 +9100,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30#a3ed0119c45cdd0d571ad34e5b3ee7518c8cef8d"
 dependencies = [
  "env_logger",
- "jsonrpsee",
+ "jsonrpsee 0.15.1",
  "log",
  "parity-scale-codec 3.2.1",
  "serde",
@@ -9905,7 +9911,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30#a3ed0119c45cdd0d571ad34e5b3ee7518c8cef8d"
 dependencies = [
  "futures 0.3.25",
- "jsonrpsee",
+ "jsonrpsee 0.15.1",
  "sc-consensus-babe",
  "sc-consensus-epochs",
  "sc-rpc-api",
@@ -10084,7 +10090,7 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30#a3
 dependencies = [
  "finality-grandpa",
  "futures 0.3.25",
- "jsonrpsee",
+ "jsonrpsee 0.15.1",
  "log",
  "parity-scale-codec 3.2.1",
  "sc-client-api",
@@ -10368,7 +10374,7 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30#a3
 dependencies = [
  "futures 0.3.25",
  "hash-db",
- "jsonrpsee",
+ "jsonrpsee 0.15.1",
  "log",
  "parity-scale-codec 3.2.1",
  "parking_lot 0.12.1",
@@ -10397,7 +10403,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30#a3ed0119c45cdd0d571ad34e5b3ee7518c8cef8d"
 dependencies = [
  "futures 0.3.25",
- "jsonrpsee",
+ "jsonrpsee 0.15.1",
  "log",
  "parity-scale-codec 3.2.1",
  "parking_lot 0.12.1",
@@ -10420,7 +10426,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30#a3ed0119c45cdd0d571ad34e5b3ee7518c8cef8d"
 dependencies = [
  "futures 0.3.25",
- "jsonrpsee",
+ "jsonrpsee 0.15.1",
  "log",
  "serde_json",
  "substrate-prometheus-endpoint",
@@ -10438,7 +10444,7 @@ dependencies = [
  "futures 0.3.25",
  "futures-timer",
  "hash-db",
- "jsonrpsee",
+ "jsonrpsee 0.15.1",
  "log",
  "parity-scale-codec 3.2.1",
  "parity-util-mem",
@@ -10516,7 +10522,7 @@ name = "sc-sync-state-rpc"
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30#a3ed0119c45cdd0d571ad34e5b3ee7518c8cef8d"
 dependencies = [
- "jsonrpsee",
+ "jsonrpsee 0.15.1",
  "parity-scale-codec 3.2.1",
  "sc-chain-spec",
  "sc-client-api",
@@ -12079,7 +12085,7 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30#a3
 dependencies = [
  "frame-system-rpc-runtime-api",
  "futures 0.3.25",
- "jsonrpsee",
+ "jsonrpsee 0.15.1",
  "log",
  "parity-scale-codec 3.2.1",
  "sc-client-api",
@@ -12111,7 +12117,7 @@ name = "substrate-state-trie-migration-rpc"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30#a3ed0119c45cdd0d571ad34e5b3ee7518c8cef8d"
 dependencies = [
- "jsonrpsee",
+ "jsonrpsee 0.15.1",
  "log",
  "parity-scale-codec 3.2.1",
  "sc-client-api",
@@ -12672,7 +12678,7 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.30#a3
 dependencies = [
  "clap",
  "frame-try-runtime",
- "jsonrpsee",
+ "jsonrpsee 0.15.1",
  "log",
  "parity-scale-codec 3.2.1",
  "remote-externalities",
