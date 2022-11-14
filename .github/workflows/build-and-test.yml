@@ -110,7 +110,6 @@ jobs:
       - name: Install protobuf
         run: |
           sudo apt-get update && \
-          sudo apt-get upgrade -y && \
           sudo apt-get install -yq openssl clang libclang-dev cmake  protobuf-compiler    
           
       - name: Run cargo clippy check
@@ -308,7 +307,6 @@ jobs:
       - name: Install protobuf
         run: |
          sudo apt-get update && \
-         sudo apt-get upgrade -y && \
          sudo apt-get install -yq openssl clang libclang-dev cmake  protobuf-compiler
 
       - name: Cache cargo registry
