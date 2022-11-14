@@ -327,7 +327,7 @@ impl pallet_proxy::Config for Runtime {
 	type ProxyDepositBase = ProxyDepositBase;
 	type ProxyDepositFactor = ProxyDepositFactor;
 	type MaxProxies = ConstU32<32>;
-	type WeightInfo = ();
+	type WeightInfo = weight::pallet_proxy::WeightInfo<Runtime>;
 	type MaxPending = ConstU32<32>;
 	type CallHasher = BlakeTwo256;
 	type AnnouncementDepositBase = AnnouncementDepositBase;
@@ -567,10 +567,9 @@ impl pallet_treasury::Config for Runtime {
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
 	type BurnDestination = ();
-	// type SpendFunds = Bounties;
 	// Bounties is not enabled yet
 	type SpendFunds = ();
-	type WeightInfo = ();
+	type WeightInfo = weight::pallet_treasury::WeightInfo<Runtime>;
 	type MaxApprovals = ConstU32<100>;
 }
 
@@ -778,18 +777,18 @@ impl pallet_teerex::Config for Runtime {
 	type Currency = Balances;
 	type MomentsPerDay = MomentsPerDay;
 	type MaxSilenceTime = MaxSilenceTime;
-	type WeightInfo = ();
+	type WeightInfo = pallet::pallet_teerex::WeightInfo<Runtime>;
 }
 
 impl pallet_sidechain::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = ();
+	type WeightInfo = pallet::pallet_sidechain::WeightInfo<Runtime>;
 	type EarlyBlockProposalLenience = ConstU64<100>;
 }
 
 impl pallet_teeracle::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = ();
+	type WeightInfo = pallet::pallet_teeracle::WeightInfo<Runtime>;
 	type MaxWhitelistedReleases = ConstU32<10>;
 }
 
