@@ -298,6 +298,7 @@ jobs:
       steps:
         - name: Update litmus image version
           uses: "OnFinality-io/action-onf-release@v1"
+          continue-on-error: true
           with:
             # These keys should be in your GitHub secrets
             # https://documentation.onfinality.io/support/onfinality-cli-tool-and-access-keys
@@ -312,6 +313,7 @@ jobs:
 
         - name: Update litentry image version
           uses: "OnFinality-io/action-onf-release@v1"
+          continue-on-error: true
           with:
             # These keys should be in your GitHub secrets
             # https://documentation.onfinality.io/support/onfinality-cli-tool-and-access-keys
