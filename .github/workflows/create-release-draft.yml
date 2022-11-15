@@ -288,3 +288,38 @@ jobs:
             *-parachain-runtime/*-parachain-srtool-digest.json
             *-parachain-runtime/*-parachain-runtime.compact.compressed.wasm
             litentry-collator/*
+
+    ## update the image version at onfinality ##
+    update-onfinality-image:
+    runs-on: ubuntu-latest
+    needs:
+      - create-release-draft
+    if: ${{ github.event.inputs.release_client == 'true' }}
+    steps:
+      - name: Update litmus image version
+        uses: "OnFinality-io/action-onf-release@v1"
+        with:
+          # These keys should be in your GitHub secrets
+          # https://documentation.onfinality.io/support/onfinality-cli-tool-and-access-keys
+          onf-access-key: ${{ secrets.ONF_ACCESS_KEY }}
+          onf-secret-key: ${{ secrets.ONF_SECRET_KEY }}
+          onf-workspace-id: ${{ secrets.ONF_WORKSPACE_ID }}
+          onf-network-key: ${{ secrets.ONF_LITMUS_NETWORK_KEY }}
+          # Add a new image version to network spec
+          onf-sub-command: image
+          onf-action: add
+          image-version: ${{ env.RELEASE_TAG }}
+
+      - name: Update litentry image version
+        uses: "OnFinality-io/action-onf-release@v1"
+        with:
+          # These keys should be in your GitHub secrets
+          # https://documentation.onfinality.io/support/onfinality-cli-tool-and-access-keys
+          onf-access-key: ${{ secrets.ONF_ACCESS_KEY }}
+          onf-secret-key: ${{ secrets.ONF_SECRET_KEY }}
+          onf-workspace-id: ${{ secrets.ONF_WORKSPACE_ID }}
+          onf-network-key: ${{ secrets.ONF_LITENTRY_NETWORK_KEY }}
+          # Add a new image version to network spec
+          onf-sub-command: image
+          onf-action: add
+          image-version: ${{ env.RELEASE_TAG }}
