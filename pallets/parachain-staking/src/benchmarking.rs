@@ -682,7 +682,7 @@ benchmarks! {
 			}],
 		);
 	}
-
+	// this problem  ====>  reward for delegator '' set to zero due to pending revoke request
 	execute_revoke_delegation {
 		let collator: T::AccountId = create_funded_collator::<T>(
 			"collator",
@@ -780,6 +780,7 @@ benchmarks! {
 		);
 	}
 
+	// this problem    log=====>  reward for delegator '' reduced by set amount due to pending decrease request
 	cancel_delegator_bond_less {
 		let collator: T::AccountId = create_funded_collator::<T>(
 			"collator",
@@ -816,7 +817,7 @@ benchmarks! {
 	}
 
 	// ON_INITIALIZE
-
+	// it cost 4 hours at least
 	round_transition_on_initialize {
 		// TOTAL SELECTED COLLATORS PER ROUND
 		let x in 8..100;
