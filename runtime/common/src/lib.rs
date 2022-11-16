@@ -35,7 +35,7 @@ use frame_support::{
 };
 use frame_system::{limits, EnsureRoot};
 use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
-use sp_runtime::{FixedPointNumber, Perbill, Perquintill};
+use sp_runtime::{traits::Bounded, FixedPointNumber, Perbill, Perquintill};
 
 use xcm::latest::prelude::*;
 
@@ -85,6 +85,9 @@ parameter_types! {
 	/// See `multiplier_can_grow_from_zero`.
 	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000u128);
 
+	/// Maximus amount of the multiplier
+	pub MaximumMultiplier: Multiplier = Bounded::max_value();
+
 	/// Maximum length of block. Up to 5MB.
 	pub BlockLength: limits::BlockLength = limits::BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
 
@@ -115,8 +118,13 @@ parameter_types! {
 
 /// Parameterized slow adjusting fee updated based on
 /// https://research.web3.foundation/en/latest/polkadot/overview/2-token-economics.html#-2.-slow-adjusting-mechanism
-pub type SlowAdjustingFeeUpdate<R> =
-	TargetedFeeAdjustment<R, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
+pub type SlowAdjustingFeeUpdate<R> = TargetedFeeAdjustment<
+	R,
+	TargetBlockFullness,
+	AdjustmentVariable,
+	MinimumMultiplier,
+	MaximumMultiplier,
+>;
 
 /// Logic for the author to get a portion of fees.
 pub struct ToAuthor<R>(sp_std::marker::PhantomData<R>);

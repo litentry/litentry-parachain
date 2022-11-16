@@ -29,6 +29,7 @@ use frame_support::{
 	construct_runtime, ord_parameter_types, parameter_types,
 	traits::{
 		ConstU16, ConstU32, ConstU64, ConstU8, Contains, Everything, InstanceFilter, SortedMembers,
+		WithdrawReasons,
 	},
 	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
 	PalletId, RuntimeDebug,
@@ -364,8 +365,7 @@ impl pallet_scheduler::Config for Runtime {
 	type MaxScheduledPerBlock = ConstU32<50>;
 	type WeightInfo = weights::pallet_scheduler::WeightInfo<Runtime>;
 	type OriginPrivilegeCmp = frame_support::traits::EqualPrivilegeOnly;
-	type PreimageProvider = Preimage;
-	type NoPreimagePostponement = ();
+	type Preimages = Preimage;
 }
 
 parameter_types! {
@@ -378,7 +378,6 @@ impl pallet_preimage::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type ManagerOrigin = EnsureRootOrAllCouncil;
-	type MaxSize = PreimageMaxSize;
 	type BaseDeposit = PreimageBaseDeposit;
 	type ByteDeposit = PreimageByteDeposit;
 }
@@ -436,7 +435,7 @@ parameter_types! {
 }
 
 impl pallet_democracy::Config for Runtime {
-	type Proposal = RuntimeCall;
+	type Preimages = Preimage;
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type EnactmentPeriod = EnactmentPeriod;
@@ -467,14 +466,14 @@ impl pallet_democracy::Config for Runtime {
 	// only do it once and it lasts only for the cool-off period.
 	type VetoOrigin = pallet_collective::EnsureMember<AccountId, TechnicalCommitteeInstance>;
 	type CooloffPeriod = CooloffPeriod;
-	type PreimageByteDeposit = PreimageByteDeposit;
-	type OperationalPreimageOrigin = pallet_collective::EnsureMember<AccountId, CouncilInstance>;
 	type Slash = Treasury;
 	type Scheduler = Scheduler;
 	type PalletsOrigin = OriginCaller;
 	type MaxVotes = ConstU32<100>;
 	type WeightInfo = weights::pallet_democracy::WeightInfo<Runtime>;
 	type MaxProposals = ConstU32<100>;
+	type MaxBlacklisted = ConstU32<100>;
+	type MaxDeposits = ConstU32<100>;
 }
 
 parameter_types! {
@@ -676,6 +675,8 @@ impl pallet_collator_selection::Config for Runtime {
 
 parameter_types! {
 	pub const MinVestedTransfer: Balance = 10 * CENTS;
+	pub UnvestedFundsAllowedWithdrawReasons: WithdrawReasons =
+			WithdrawReasons::except(WithdrawReasons::TRANSFER | WithdrawReasons::RESERVE);
 }
 
 impl pallet_vesting::Config for Runtime {
@@ -687,6 +688,7 @@ impl pallet_vesting::Config for Runtime {
 	// `VestingInfo` encode length is 36bytes. 28 schedules gets encoded as 1009 bytes, which is the
 	// highest number of schedules that encodes less than 2^10.
 	const MAX_VESTING_SCHEDULES: u32 = 28;
+	type UnvestedFundsAllowedWithdrawReasons = UnvestedFundsAllowedWithdrawReasons;
 }
 
 parameter_types! {
