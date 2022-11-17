@@ -912,17 +912,8 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::Utility(_) |
 			// Session
 			RuntimeCall::Session(_) |
-			// ParachainStaking; Only the collator part
-			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::join_candidates { .. }) |
-			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::schedule_leave_candidates { .. }) |
-			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::execute_leave_candidates { .. }) |
-			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::cancel_leave_candidates { .. }) |
-			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::go_offline { .. }) |
-			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::go_online { .. }) |
-			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::candidate_bond_more { .. }) |
-			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::schedule_candidate_bond_less { .. }) |
-			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::execute_candidate_bond_less { .. }) |
-			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::cancel_candidate_bond_less { .. })
+			// ParachainStaking
+			RuntimeCall::ParachainStaking(_)
 		)
 	}
 }
