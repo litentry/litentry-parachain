@@ -128,7 +128,7 @@ jobs:
     # see https://github.com/actions/runner/issues/491
     # seems to be the only way to achieve this
     needs:
-      - build-wasm
+      # - build-wasm
       - run-ts-tests
       - set-release-type
     if: |
