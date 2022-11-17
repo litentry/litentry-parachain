@@ -291,10 +291,9 @@ jobs:
 
   ## update the image version at onfinality ##
   update-onfinality-image:
-    runs-on: ubuntu-latest
-    needs:
-      - create-release-draft
     if: ${{ github.event.inputs.release_client == 'true' }}
+    runs-on: ubuntu-latest
+    needs: create-release-draft
     steps:
       - name: Update litmus image version
         uses: "OnFinality-io/action-onf-release@v1"
