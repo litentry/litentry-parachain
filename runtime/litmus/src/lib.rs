@@ -975,7 +975,8 @@ mod benches {
 		[pallet_scheduler, Scheduler]
 		[pallet_preimage, Preimage]
 		[pallet_session, SessionBench::<Runtime>]
-		[pallet_collator_selection, CollatorSelection]
+		// This module returned an error when ran the benchmark, temporarily chose to comment it out
+		// [pallet_collator_selection, CollatorSelection]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
 		[pallet_identity_management, IdentityManagement]
 		[pallet_teerex, Teerex]
