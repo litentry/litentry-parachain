@@ -56,8 +56,8 @@ esac
     --pallet="$PALLET" \
     --extrinsic=* \
     --heap-pages=4096 \
-    --steps=2 \
-    --repeat=5 \
+    --steps=20 \
+    --repeat=50 \
     --header=./LICENSE_HEADER \
     $TEMPLATE \
     $OUTPUT
