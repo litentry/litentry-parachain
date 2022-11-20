@@ -105,6 +105,7 @@ ord_parameter_types! {
 impl pallet_vc_management::Config for Test {
 	type Event = Event;
 	type TEECallOrigin = EnsureSignedBy<One, u64>;
+	type SetAdminOrigin = EnsureSignedBy<One, u64>;
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {

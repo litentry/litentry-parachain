@@ -16,7 +16,9 @@
 
 //! A pallet to serve as the interface for F/E for verifiable credentials (VC)
 //! management. Similar to IMP pallet, the actual processing will be done within TEE.
-
+//
+// Note:
+// - the admin account can only be set by SetAdminOrigin, which will be bound at runtime.
 // TODO: benchmark and weights: we need worst-case scenarios
 
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -39,11 +41,16 @@ pub use vc_context::*;
 mod assertion;
 pub use assertion::*;
 
+mod schema;
+pub use schema::*;
+
 // fn types for xt handling inside tee-worker
 pub type GenerateVCFn = ([u8; 2], ShardIdentifier, u32);
 
 // VCID type in the registry, maybe we want a "did:...." format?
 pub type VCID = u64;
+
+pub type SchemaID = u64;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -60,12 +67,24 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		// some extrinsics should only be called by origins from TEE
 		type TEECallOrigin: EnsureOrigin<Self::Origin>;
+		/// The origin who can set the admin account
+		type SetAdminOrigin: EnsureOrigin<Self::Origin>;
 	}
 
 	// a map VCID -> VC context
 	#[pallet::storage]
 	#[pallet::getter(fn vc_registry)]
 	pub type VCRegistry<T: Config> = StorageMap<_, Blake2_256, VCID, VCContext<T>>;
+
+	// the Schema admin account
+	#[pallet::storage]
+	#[pallet::getter(fn schema_admin)]
+	pub type SchemaAdmin<T: Config> = StorageValue<_, T::AccountId>;
+
+	// the Schema contents
+	#[pallet::storage]
+	#[pallet::getter(fn vc_schema)]
+	pub type SchemaRegistry<T: Config> = StorageMap<_, Blake2_256, SchemaID, VCSchema<T>>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -84,6 +103,15 @@ pub mod pallet {
 		// TODO: maybe use concrete errors instead of events when we are more sure
 		// see also the comment at the beginning
 		SomeError { func: Vec<u8>, error: Vec<u8> },
+
+		/// Admin acccount was changed, the \[ old admin \] is provided
+		SchemaAdminChanged { old_admin: Option<T::AccountId> },
+		// a Schema is issued
+		SchemaIssued { account: T::AccountId, id: Vec<u8>, content: Vec<u8> },
+		// a Schema is disabled
+		SchemaDisable { account: T::AccountId, id: Vec<u8>, content: Vec<u8> },
+		// a Schema is revoked
+		SchemaRevoked { account: T::AccountId, id: Vec<u8>, content: Vec<u8> },
 	}
 
 	#[pallet::error]
@@ -96,6 +124,15 @@ pub mod pallet {
 		VCSubjectMismatch,
 		/// The VC is already disabled
 		VCAlreadyDisabled,
+
+		/// Error when the caller account is not the admin
+		RequireSchemaAdmin,
+		/// Schema Id already exists
+		SchemaAlreadyExists,
+		/// Schema Id not exists
+		SchemaNotExists,
+		/// new Schema requires Admin
+		SchemaRequireAdmin,
 	}
 
 	#[pallet::call]
@@ -163,6 +200,16 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::SomeError { func, error });
+			Ok(Pays::No.into())
+		}
+
+		// Change the schema admin account
+		#[pallet::weight(195_000_000)]
+		pub fn set_admin(origin: OriginFor<T>, new: T::AccountId) -> DispatchResultWithPostInfo {
+			T::SetAdminOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::SchemaAdminChanged { old_admin: Self::schema_admin() });
+			<SchemaAdmin<T>>::put(new);
+			// Do not pay a fee
 			Ok(Pays::No.into())
 		}
 	}
