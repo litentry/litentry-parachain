@@ -1595,12 +1595,9 @@ pub mod pallet {
 				.map(|mut bond| {
 					bond.amount = match requests.get(&bond.owner) {
 						None => bond.amount,
-						Some(DelegationAction::Revoke(_)) => {
-							BalanceOf::<T>::zero()
-						},
-						Some(DelegationAction::Decrease(amount)) => {
-							bond.amount.saturating_sub(*amount)
-						},
+						Some(DelegationAction::Revoke(_)) => BalanceOf::<T>::zero(),
+						Some(DelegationAction::Decrease(amount)) =>
+							bond.amount.saturating_sub(*amount),
 					};
 
 					bond

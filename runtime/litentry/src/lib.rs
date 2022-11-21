@@ -939,7 +939,7 @@ mod benches {
 		[pallet_session, SessionBench::<Runtime>]
 		// Since this module benchmark times out, comment it out for now
 		// https://github.com/litentry/litentry-parachain/actions/runs/3155868677/jobs/5134984739
-		// [pallet_parachain_staking, ParachainStaking]
+		[pallet_parachain_staking, ParachainStaking]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
 		[pallet_bridge,ChainBridge]
 		[pallet_bridge_transfer,BridgeTransfer]
