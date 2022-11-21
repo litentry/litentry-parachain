@@ -61,8 +61,8 @@ for p in $PALLETS; do
   if [[ $p == *"pallet-parachain-staking"* ]]; then
 
       echo "will run $p pallet benchmark code"
-      STEPS=5
-      REPEAT=2
+      STEPS=50
+      REPEAT=20
 
   else
       echo "will run other $p pallet benchmark code"
