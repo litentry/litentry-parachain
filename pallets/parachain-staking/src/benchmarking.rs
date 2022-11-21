@@ -30,7 +30,7 @@ use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::traits::{Currency, Get, OnFinalize, OnInitialize, ReservableCurrency};
 use frame_system::RawOrigin;
 use pallet_authorship::EventHandler;
-use sp_runtime::{Perbill, Percent};
+use sp_runtime::{Perbill, Percent, Saturating};
 use sp_std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 
 /// Minimum collator candidate stake
@@ -224,9 +224,11 @@ benchmarks! {
 		assert_eq!(Pallet::<T>::total_selected(), 100u32);
 	}
 
-	set_collator_commission {}: _(RawOrigin::Root, Perbill::from_percent(33))
+	set_collator_commission {
+		let new_perbill = <T as Config>::DefaultCollatorCommission::get().saturating_add(Perbill::from_percent(1));
+	}: _(RawOrigin::Root, new_perbill)
 	verify {
-		assert_eq!(Pallet::<T>::collator_commission(), Perbill::from_percent(33));
+		assert_eq!(Pallet::<T>::collator_commission(), new_perbill);
 	}
 
 	set_blocks_per_round {}: _(RawOrigin::Root, 1200u32)

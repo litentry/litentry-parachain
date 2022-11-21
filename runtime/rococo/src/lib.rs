@@ -148,7 +148,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9115,
+	spec_version: 9120,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -328,7 +328,7 @@ impl pallet_proxy::Config for Runtime {
 	type ProxyDepositBase = ProxyDepositBase;
 	type ProxyDepositFactor = ProxyDepositFactor;
 	type MaxProxies = ConstU32<32>;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_proxy::WeightInfo<Runtime>;
 	type MaxPending = ConstU32<32>;
 	type CallHasher = BlakeTwo256;
 	type AnnouncementDepositBase = AnnouncementDepositBase;
@@ -406,7 +406,7 @@ impl pallet_utility::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
 	type PalletsOrigin = OriginCaller;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_utility::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -572,7 +572,7 @@ impl pallet_treasury::Config for Runtime {
 	type BurnDestination = ();
 	// Rcococo bounty enabled
 	type SpendFunds = Bounties;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_treasury::WeightInfo<Runtime>;
 	type MaxApprovals = ConstU32<100>;
 }
 
@@ -853,18 +853,18 @@ impl pallet_teerex::Config for Runtime {
 	type Currency = Balances;
 	type MomentsPerDay = MomentsPerDay;
 	type MaxSilenceTime = MaxSilenceTime;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_teerex::WeightInfo<Runtime>;
 }
 
 impl pallet_sidechain::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_sidechain::WeightInfo<Runtime>;
 	type EarlyBlockProposalLenience = ConstU64<100>;
 }
 
 impl pallet_teeracle::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_teeracle::WeightInfo<Runtime>;
 	type MaxWhitelistedReleases = ConstU32<10>;
 }
 

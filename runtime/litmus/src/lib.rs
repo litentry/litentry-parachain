@@ -147,7 +147,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("litmus-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9115,
+	spec_version: 9120,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -327,7 +327,7 @@ impl pallet_proxy::Config for Runtime {
 	type ProxyDepositBase = ProxyDepositBase;
 	type ProxyDepositFactor = ProxyDepositFactor;
 	type MaxProxies = ConstU32<32>;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_proxy::WeightInfo<Runtime>;
 	type MaxPending = ConstU32<32>;
 	type CallHasher = BlakeTwo256;
 	type AnnouncementDepositBase = AnnouncementDepositBase;
@@ -567,10 +567,9 @@ impl pallet_treasury::Config for Runtime {
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
 	type BurnDestination = ();
-	// type SpendFunds = Bounties;
 	// Bounties is not enabled yet
 	type SpendFunds = ();
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_treasury::WeightInfo<Runtime>;
 	type MaxApprovals = ConstU32<100>;
 }
 
@@ -778,18 +777,18 @@ impl pallet_teerex::Config for Runtime {
 	type Currency = Balances;
 	type MomentsPerDay = MomentsPerDay;
 	type MaxSilenceTime = MaxSilenceTime;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_teerex::WeightInfo<Runtime>;
 }
 
 impl pallet_sidechain::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_sidechain::WeightInfo<Runtime>;
 	type EarlyBlockProposalLenience = ConstU64<100>;
 }
 
 impl pallet_teeracle::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_teeracle::WeightInfo<Runtime>;
 	type MaxWhitelistedReleases = ConstU32<10>;
 }
 
@@ -976,7 +975,7 @@ mod benches {
 		[pallet_scheduler, Scheduler]
 		[pallet_preimage, Preimage]
 		[pallet_session, SessionBench::<Runtime>]
-		//This module returned an error when ran the benchmark, temporarily chose to comment it out
+		// This module returned an error when ran the benchmark, temporarily chose to comment it out
 		// [pallet_collator_selection, CollatorSelection]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
 		[pallet_identity_management, IdentityManagement]
