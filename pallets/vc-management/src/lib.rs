@@ -50,8 +50,6 @@ pub type GenerateVCFn = ([u8; 2], ShardIdentifier, u32);
 // VCID type in the registry, maybe we want a "did:...." format?
 pub type VCID = u64;
 
-pub type SchemaID = u64;
-
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
@@ -79,39 +77,66 @@ pub mod pallet {
 	// the Schema admin account
 	#[pallet::storage]
 	#[pallet::getter(fn schema_admin)]
-	pub type SchemaAdmin<T: Config> = StorageValue<_, T::AccountId>;
+	pub type SchemaAdmin<T: Config> = StorageValue<_, T::AccountId, OptionQuery>;
 
-	// the Schema contents
+	// the Schema contents storage, key is the hash() of scheme content
 	#[pallet::storage]
-	#[pallet::getter(fn vc_schema)]
-	pub type SchemaRegistry<T: Config> = StorageMap<_, Blake2_256, SchemaID, VCSchema<T>>;
+	#[pallet::getter(fn schema_registry)]
+	pub type SchemaRegistry<T: Config> = StorageMap<_, Blake2_256, H256, VCSchema<T>>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		// TODO: do we need account as event parameter? This needs to be decided by F/E
-		VCRequested { shard: ShardIdentifier, assertion: Assertion },
+		VCRequested {
+			shard: ShardIdentifier,
+			assertion: Assertion,
+		},
 		// a VC is disabled on chain
-		VCDisabled { id: VCID },
+		VCDisabled {
+			id: VCID,
+		},
 		// a VC is revoked on chain
-		VCRevoked { id: VCID },
+		VCRevoked {
+			id: VCID,
+		},
 		// event that should be triggered by TEECallOrigin
 		// a VC is just issued
-		VCIssued { account: T::AccountId, id: VCID, vc: AesOutput },
+		VCIssued {
+			account: T::AccountId,
+			id: VCID,
+			vc: AesOutput,
+		},
 		// some error happened during processing in TEE, we use string-like
 		// parameters for more "generic" error event reporting
 		// TODO: maybe use concrete errors instead of events when we are more sure
 		// see also the comment at the beginning
-		SomeError { func: Vec<u8>, error: Vec<u8> },
+		SomeError {
+			func: Vec<u8>,
+			error: Vec<u8>,
+		},
 
 		/// Admin acccount was changed, the \[ old admin \] is provided
-		SchemaAdminChanged { old_admin: Option<T::AccountId> },
+		SchemaAdminChanged {
+			old_admin: Option<T::AccountId>,
+		},
 		// a Schema is issued
-		SchemaIssued { account: T::AccountId, id: Vec<u8>, content: Vec<u8> },
+		SchemaIssued {
+			account: T::AccountId,
+			hash: H256,
+			id: Vec<u8>,
+			content: Vec<u8>,
+		},
 		// a Schema is disabled
-		SchemaDisable { account: T::AccountId, id: Vec<u8>, content: Vec<u8> },
+		SchemaDisable {
+			account: T::AccountId,
+			hash: H256,
+		},
 		// a Schema is revoked
-		SchemaRevoked { account: T::AccountId, id: Vec<u8>, content: Vec<u8> },
+		SchemaRevoked {
+			account: T::AccountId,
+			hash: H256,
+		},
 	}
 
 	#[pallet::error]
@@ -131,8 +156,8 @@ pub mod pallet {
 		SchemaAlreadyExists,
 		/// Schema Id not exists
 		SchemaNotExists,
-		/// new Schema requires Admin
-		SchemaRequireAdmin,
+		/// Schema is already disabled
+		SchemaAlreadyDisabled,
 	}
 
 	#[pallet::call]
@@ -203,14 +228,61 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
-		// Change the schema admin account
+		// Change the schema Admin account
 		#[pallet::weight(195_000_000)]
-		pub fn set_admin(origin: OriginFor<T>, new: T::AccountId) -> DispatchResultWithPostInfo {
+		pub fn set_schema_admin(
+			origin: OriginFor<T>,
+			new: T::AccountId,
+		) -> DispatchResultWithPostInfo {
 			T::SetAdminOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::SchemaAdminChanged { old_admin: Self::schema_admin() });
 			<SchemaAdmin<T>>::put(new);
-			// Do not pay a fee
 			Ok(Pays::No.into())
+		}
+
+		// It requires the schema Admin account
+		#[pallet::weight(195_000_000)]
+		pub fn add_schema(
+			origin: OriginFor<T>,
+			hash: H256,
+			id: Vec<u8>,
+			content: Vec<u8>,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+			ensure!(Some(sender.clone()) == Self::schema_admin(), Error::<T>::RequireSchemaAdmin);
+			ensure!(!SchemaRegistry::<T>::contains_key(hash), Error::<T>::SchemaAlreadyExists);
+			SchemaRegistry::<T>::insert(
+				hash,
+				VCSchema::<T>::new(id.clone(), sender.clone(), content.clone()),
+			);
+			Self::deposit_event(Event::SchemaIssued { account: sender, hash, id, content });
+			Ok(().into())
+		}
+
+		#[pallet::weight(195_000_000)]
+		pub fn disable_schema(origin: OriginFor<T>, hash: H256) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+			ensure!(Some(sender.clone()) == Self::schema_admin(), Error::<T>::RequireSchemaAdmin);
+
+			SchemaRegistry::<T>::try_mutate(hash, |context| {
+				let mut c = context.take().ok_or(Error::<T>::SchemaNotExists)?;
+				ensure!(c.status == Status::Active, Error::<T>::SchemaAlreadyDisabled);
+				c.status = Status::Disabled;
+				*context = Some(c);
+				Self::deposit_event(Event::SchemaDisable { account: sender, hash });
+				Ok(().into())
+			})
+		}
+
+		#[pallet::weight(195_000_000)]
+		pub fn revoke_schema(origin: OriginFor<T>, hash: H256) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+			ensure!(Some(sender.clone()) == Self::schema_admin(), Error::<T>::RequireSchemaAdmin);
+
+			let context = SchemaRegistry::<T>::get(hash).ok_or(Error::<T>::SchemaNotExists)?;
+			SchemaRegistry::<T>::remove(hash);
+			Self::deposit_event(Event::SchemaRevoked { account: sender, hash });
+			Ok(().into())
 		}
 	}
 }

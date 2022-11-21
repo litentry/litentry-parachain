@@ -19,6 +19,7 @@ use frame_support::{assert_noop, assert_ok};
 use sp_core::H256;
 
 const TEST_MRENCLAVE: [u8; 32] = [2u8; 32];
+const TEST_SCHEMA_HASH: [u8; 32] = [2u8; 32];
 
 #[test]
 fn request_vc_works() {
@@ -160,5 +161,153 @@ fn revoke_vc_with_other_subject_fails() {
 			Error::<Test>::VCSubjectMismatch
 		);
 		assert_eq!(VCManagement::vc_registry(0).unwrap().status, Status::Active);
+	});
+}
+
+#[test]
+fn set_schema_admin_works() {
+	new_test_ext().execute_with(|| {
+		assert_eq!(VCManagement::schema_admin().unwrap(), 1);
+		assert_ok!(VCManagement::set_schema_admin(Origin::signed(1), 2));
+		assert_eq!(VCManagement::schema_admin().unwrap(), 2);
+		System::assert_last_event(Event::VCManagement(crate::Event::SchemaAdminChanged {
+			old_admin: Some(1),
+		}));
+	});
+}
+
+#[test]
+fn set_schema_admin_fails_with_unprivileged_origin() {
+	new_test_ext().execute_with(|| {
+		assert_eq!(VCManagement::schema_admin().unwrap(), 1);
+		assert_noop!(
+			VCManagement::set_schema_admin(Origin::signed(2), 2),
+			sp_runtime::DispatchError::BadOrigin
+		);
+		assert_eq!(VCManagement::schema_admin().unwrap(), 1);
+	});
+}
+
+#[test]
+fn add_schema_works() {
+	new_test_ext().execute_with(|| {
+		let hash = H256::from_slice(&TEST_SCHEMA_HASH);
+		let id: Vec<u8> = vec![1, 2, 3, 4].try_into().unwrap();
+		let content: Vec<u8> = vec![5, 6, 7, 8].try_into().unwrap();
+		assert_ok!(VCManagement::add_schema(Origin::signed(1), hash, id.clone(), content.clone()));
+		System::assert_last_event(Event::VCManagement(crate::Event::SchemaIssued {
+			account: 1,
+			hash,
+			id,
+			content,
+		}));
+	});
+}
+
+#[test]
+fn add_schema_with_unpriviledged_origin_fails() {
+	new_test_ext().execute_with(|| {
+		let hash = H256::from_slice(&TEST_SCHEMA_HASH);
+		let id: Vec<u8> = vec![1, 2, 3, 4].try_into().unwrap();
+		let content: Vec<u8> = vec![5, 6, 7, 8].try_into().unwrap();
+		assert_noop!(
+			VCManagement::add_schema(Origin::signed(2), hash, id, content),
+			Error::<Test>::RequireSchemaAdmin
+		);
+	});
+}
+
+#[test]
+fn add_schema_with_duplicated_id_fails() {
+	new_test_ext().execute_with(|| {
+		let hash = H256::from_slice(&TEST_SCHEMA_HASH);
+		let id: Vec<u8> = vec![1, 2, 3, 4].try_into().unwrap();
+		let content: Vec<u8> = vec![5, 6, 7, 8].try_into().unwrap();
+		assert_ok!(VCManagement::add_schema(Origin::signed(1), hash, id.clone(), content.clone()));
+		assert_noop!(
+			VCManagement::add_schema(Origin::signed(1), hash, id, content),
+			Error::<Test>::SchemaAlreadyExists
+		);
+	});
+}
+
+#[test]
+fn disable_schema_works() {
+	new_test_ext().execute_with(|| {
+		let hash = H256::from_slice(&TEST_SCHEMA_HASH);
+		let id: Vec<u8> = vec![1, 2, 3, 4].try_into().unwrap();
+		let content: Vec<u8> = vec![5, 6, 7, 8].try_into().unwrap();
+		assert_ok!(VCManagement::add_schema(Origin::signed(1), hash.clone(), id, content));
+
+		assert!(VCManagement::schema_registry(hash).is_some());
+		assert_ok!(VCManagement::disable_schema(Origin::signed(1), hash));
+		assert!(VCManagement::schema_registry(hash).is_some());
+		let context = VCManagement::schema_registry(hash).unwrap();
+		assert_eq!(context.status, Status::Disabled);
+	});
+}
+
+#[test]
+fn disable_schema_with_non_existent_fails() {
+	new_test_ext().execute_with(|| {
+		assert_noop!(
+			VCManagement::disable_schema(Origin::signed(1), H256::from_slice(&TEST_SCHEMA_HASH)),
+			Error::<Test>::SchemaNotExists
+		);
+	});
+}
+
+#[test]
+fn disable_schema_with_unpriviledged_origin_fails() {
+	new_test_ext().execute_with(|| {
+		let hash = H256::from_slice(&TEST_SCHEMA_HASH);
+		let id: Vec<u8> = vec![1, 2, 3, 4].try_into().unwrap();
+		let content: Vec<u8> = vec![5, 6, 7, 8].try_into().unwrap();
+		assert_ok!(VCManagement::add_schema(Origin::signed(1), hash.clone(), id, content));
+
+		assert_noop!(
+			VCManagement::disable_schema(Origin::signed(2), hash),
+			Error::<Test>::RequireSchemaAdmin
+		);
+	});
+}
+
+#[test]
+fn revoke_schema_works() {
+	new_test_ext().execute_with(|| {
+		let hash = H256::from_slice(&TEST_SCHEMA_HASH);
+		let id: Vec<u8> = vec![1, 2, 3, 4].try_into().unwrap();
+		let content: Vec<u8> = vec![5, 6, 7, 8].try_into().unwrap();
+		assert_ok!(VCManagement::add_schema(Origin::signed(1), hash.clone(), id, content));
+
+		assert!(VCManagement::schema_registry(hash).is_some());
+		assert_ok!(VCManagement::revoke_schema(Origin::signed(1), hash));
+		// schema is deleted
+		assert!(VCManagement::schema_registry(hash).is_none());
+	});
+}
+
+#[test]
+fn revoke_schema_with_non_existent_fails() {
+	new_test_ext().execute_with(|| {
+		assert_noop!(
+			VCManagement::revoke_schema(Origin::signed(1), H256::from_slice(&TEST_SCHEMA_HASH)),
+			Error::<Test>::SchemaNotExists
+		);
+	});
+}
+
+#[test]
+fn revoke_schema_with_unpriviledged_origin_fails() {
+	new_test_ext().execute_with(|| {
+		let hash = H256::from_slice(&TEST_SCHEMA_HASH);
+		let id: Vec<u8> = vec![1, 2, 3, 4].try_into().unwrap();
+		let content: Vec<u8> = vec![5, 6, 7, 8].try_into().unwrap();
+		assert_ok!(VCManagement::add_schema(Origin::signed(1), hash.clone(), id, content));
+
+		assert_noop!(
+			VCManagement::revoke_schema(Origin::signed(2), hash),
+			Error::<Test>::RequireSchemaAdmin
+		);
 	});
 }
