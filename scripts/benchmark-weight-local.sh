@@ -51,7 +51,7 @@ esac
 if [[ $PALLET == *"parachain_staking"* ]]; then
 
     echo "will run  pallet ($PALLET) benchmark code"
-    STEPS=20
+    STEPS=30
     REPEAT=20
     echo "steps  ${STEPS} <====> repeat  ${REPEAT} "
 
