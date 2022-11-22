@@ -48,29 +48,31 @@ case "$3" in
         ;;
 esac
 
-if [[ $PALLET == "pallet-parachain-staking" ]]; then
+if [[ $PALLET == *"parachain_staking"* ]]; then
 
     echo "will run  pallet ($PALLET) benchmark code"
-    STEPS=50
+    STEPS=20
     REPEAT=20
-    echo "${STEPS} <====> ${REPEAT} "
+    echo "steps  ${STEPS} <====> repeat  ${REPEAT} "
+
 else
     echo "will run other pallet ($PALLET) benchmark code"
     STEPS=20
     REPEAT=50
-    echo "${STEPS} <====> ${REPEAT} "
+    echo "steps  ${STEPS} <====> repeat  ${REPEAT} "
+
 fi
 
 ./target/release/litentry-collator benchmark pallet \
-      $CHAIN \
-      --execution=wasm  \
-      --db-cache=20 \
-      --wasm-execution=compiled \
-      --pallet="$PALLET" \
-      --extrinsic=* \
-      --heap-pages=4096 \
-      --steps="${STEPS}" \
-      --repeat="${REPEAT}" \
-      --header=./LICENSE_HEADER \
-      $TEMPLATE \
-      $OUTPUT
+          $CHAIN \
+          --execution=wasm  \
+          --db-cache=20 \
+          --wasm-execution=compiled \
+          --pallet="$PALLET" \
+          --extrinsic=* \
+          --heap-pages=4096 \
+          --steps="$STEPS" \
+          --repeat="$REPEAT" \
+          --header=./LICENSE_HEADER \
+          $TEMPLATE \
+          $OUTPUT

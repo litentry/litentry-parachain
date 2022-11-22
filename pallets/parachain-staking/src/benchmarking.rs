@@ -824,7 +824,7 @@ benchmarks! {
 		// TOTAL SELECTED COLLATORS PER ROUND
 		let x in 8..100;
 		// DELEGATIONS
-		let y in 0..(<<T as Config>::MaxTopDelegationsPerCandidate as Get<u32>>::get() * 100);
+		let y in 0..<<T as Config>::MaxTopDelegationsPerCandidate as Get<u32>>::get();
 		let max_delegators_per_collator=
 			<<T as Config>::MaxTopDelegationsPerCandidate as Get<u32>>::get();
 		let max_delegations = x * max_delegators_per_collator;
