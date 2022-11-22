@@ -310,7 +310,7 @@ pub mod pallet {
 		fn on_initialize(_n: T::BlockNumber) -> Weight {
 			// Clear all bridge transfer data
 			BridgeEvents::<T>::kill();
-			0
+			Weight::zero()
 		}
 	}
 

@@ -33,7 +33,7 @@ use frame_support::{
 	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
 	PalletId, RuntimeDebug,
 };
-use frame_system::{EnsureRoot, EnsureSignedBy};
+use frame_system::EnsureSignedBy;
 use hex_literal::hex;
 
 // for TEE
@@ -80,6 +80,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 pub mod asset_config;
 pub mod constants;
+pub mod migration;
 pub mod weights;
 pub mod xcm_config;
 
@@ -144,9 +145,8 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("litmus-parachain"),
 	impl_name: create_runtime_str!("litmus-parachain"),
 	authoring_version: 1,
-	// same versioning-mechanism as polkadot:
-	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9101,
+	// same versioning-mechanism as polkadot: use last digit for minor updates
+	spec_version: 9115,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -352,7 +352,7 @@ impl pallet_scheduler::Config for Runtime {
 	type PalletsOrigin = OriginCaller;
 	type Call = Call;
 	type MaximumWeight = MaximumSchedulerWeight;
-	type ScheduleOrigin = EnsureRoot<AccountId>;
+	type ScheduleOrigin = EnsureRootOrAllCouncil;
 	type MaxScheduledPerBlock = ConstU32<50>;
 	type WeightInfo = weights::pallet_scheduler::WeightInfo<Runtime>;
 	type OriginPrivilegeCmp = frame_support::traits::EqualPrivilegeOnly;
@@ -369,7 +369,7 @@ impl pallet_preimage::Config for Runtime {
 	type WeightInfo = weights::pallet_preimage::WeightInfo<Runtime>;
 	type Event = Event;
 	type Currency = Balances;
-	type ManagerOrigin = EnsureRoot<AccountId>;
+	type ManagerOrigin = EnsureRootOrAllCouncil;
 	type MaxSize = PreimageMaxSize;
 	type BaseDeposit = PreimageBaseDeposit;
 	type ByteDeposit = PreimageByteDeposit;
@@ -454,7 +454,7 @@ impl pallet_democracy::Config for Runtime {
 	// To cancel a proposal before it has been passed, the technical committee must be unanimous or
 	// Root must agree.
 	type CancelProposalOrigin = EnsureRootOrAllTechnicalCommittee;
-	type BlacklistOrigin = EnsureRoot<AccountId>;
+	type BlacklistOrigin = EnsureRootOrAllCouncil;
 	// Any single technical committee member may veto a coming council proposal, however they can
 	// only do it once and it lasts only for the cool-off period.
 	type VetoOrigin = pallet_collective::EnsureMember<AccountId, TechnicalCommitteeInstance>;
@@ -581,14 +581,9 @@ impl pallet_bounties::Config for Runtime {
 	type ChildBountyManager = ();
 }
 
-impl pallet_sudo::Config for Runtime {
-	type Call = Call;
-	type Event = Event;
-}
-
 parameter_types! {
-	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
-	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
+	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
+	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
 }
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
@@ -613,8 +608,8 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type ChannelInfo = ParachainSystem;
 	// We use pallet_xcm to confirm the version of xcm
 	type VersionWrapper = PolkadotXcm;
-	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
-	type ControllerOrigin = EnsureRoot<AccountId>;
+	type ExecuteOverweightOrigin = EnsureRootOrAllCouncil;
+	type ControllerOrigin = EnsureRootOrAllCouncil;
 	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
 	type WeightInfo = weights::cumulus_pallet_xcmp_queue::WeightInfo<Runtime>;
 }
@@ -622,7 +617,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 impl cumulus_pallet_dmp_queue::Config for Runtime {
 	type Event = Event;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
+	type ExecuteOverweightOrigin = EnsureRootOrAllCouncil;
 }
 
 parameter_types! {
@@ -801,7 +796,7 @@ ord_parameter_types! {
 
 impl pallet_identity_management_mock::Config for Runtime {
 	type Event = Event;
-	type ManageWhitelistOrigin = EnsureRoot<Self::AccountId>;
+	type ManageWhitelistOrigin = EnsureRootOrAllCouncil;
 	type MaxVerificationDelay = ConstU32<10>;
 	// intentionally use ALICE for the IMP mock
 	type TEECallOrigin = EnsureSignedBy<ALICE, AccountId>;
@@ -891,9 +886,6 @@ construct_runtime! {
 
 		// Mock
 		IdentityManagementMock: pallet_identity_management_mock = 100,
-
-		// TMP
-		Sudo: pallet_sudo = 255,
 	}
 }
 
@@ -903,8 +895,8 @@ impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
 		if matches!(
 			call,
-			Call::Sudo(_) |
-				Call::System(_) | Call::Timestamp(_) |
+			Call::System(_) |
+				Call::Timestamp(_) |
 				Call::ParachainSystem(_) |
 				Call::ExtrinsicFilter(_) |
 				Call::Multisig(_) |
@@ -1098,12 +1090,20 @@ impl_runtime_apis! {
 			// NOTE: intentional unwrap: we don't want to propagate the error backwards, and want to
 			// have a backtrace here. If any of the pre/post migration checks fail, we shall stop
 			// right here and right now.
+			log::info!("try-runtime::on_runtime_upgrade Litmus.");
 			let weight = Executive::try_runtime_upgrade().unwrap();
 			(weight, RuntimeBlockWeights::get().max_block)
 		}
 
-		fn execute_block_no_check(block: Block) -> Weight {
-			Executive::execute_block_no_check(block)
+		fn execute_block(block: Block, state_root_check: bool, select: frame_try_runtime::TryStateSelect) -> Weight {
+			log::info!(
+				target: "runtime::Litmus", "try-runtime: executing block #{} ({:?}) / root checks: {:?} / sanity-checks: {:?}",
+				block.header.number,
+				block.header.hash(),
+				state_root_check,
+				select,
+			);
+			Executive::try_execute_block(block, state_root_check, select).expect("try_execute_block failed")
 		}
 	}
 
