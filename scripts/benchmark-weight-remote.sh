@@ -58,18 +58,18 @@ fi
 for p in $PALLETS; do
   echo "benchmarking $p ..."
 
-  if [[ $p == *"pallet-parachain-staking"* ]]; then
-
-      echo "will run $p pallet benchmark code"
-      STEPS=50
-      REPEAT=20
-
-  else
-      echo "will run other $p pallet benchmark code"
-      STEPS=20
-      REPEAT=50
-
-  fi
+#  if [[ $p == *"pallet-parachain-staking"* ]]; then
+#
+#      echo "will run $p pallet benchmark code"
+#      STEPS=50
+#      REPEAT=20
+#
+#  else
+#      echo "will run other $p pallet benchmark code"
+#      STEPS=20
+#      REPEAT=50
+#
+#  fi
 
   # filter out the flooding warnings from pallet_scheduler:
   # Warning: There are more items queued in the Scheduler than expected from the runtime configuration.
@@ -82,8 +82,8 @@ for p in $PALLETS; do
         --pallet="$p" \
         --extrinsic=* \
         --heap-pages=4096 \
-        --steps="${STEPS}" \
-        --repeat="${REPEAT}" \
+        --steps=50 \
+        --repeat=20 \
         --header=./LICENSE_HEADER \
         --output=./runtime/$1/src/weights/"$p".rs
 
