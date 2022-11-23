@@ -1059,7 +1059,7 @@ benchmarks! {
 			true,
 		)?;
 		let start = <frame_system::Pallet<T>>::block_number();
-		Pallet::<T>::note_author(author.clone());::<T>(collator.clone());
+		Pallet::<T>::note_author(author.clone());
 		<frame_system::Pallet<T>>::on_finalize(start);
 		<frame_system::Pallet<T>>::set_block_number(
 			start + 1u32.into()
