@@ -19,7 +19,7 @@
 use frame_support::{
 	match_types, parameter_types,
 	traits::{Everything, Nothing},
-	weights::{IdentityFee, Weight},
+	weights::IdentityFee,
 	PalletId,
 };
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
@@ -39,7 +39,7 @@ use xcm_builder::{
 };
 use xcm_executor::{traits::JustTry, XcmExecutor};
 
-use primitives::AccountId;
+use primitives::{AccountId, XcmV2Weight};
 use runtime_common::{
 	xcm_impl::{
 		AccountIdToMultiLocation, AssetIdMuliLocationConvert, CurrencyId,
@@ -148,7 +148,7 @@ pub type XcmOriginToTransactDispatchOrigin = (
 parameter_types! {
 	// One XCM operation is 1_000_000_000 weight - almost certainly a conservative estimate.
 	// How much we charge for XCM from remote chain per XCM command.
-	pub UnitWeightCost: Weight = 200_000_000;
+	pub UnitWeightCost: XcmV2Weight = 200_000_000u64;
 	pub const MaxInstructions: u32 = 100;
 }
 
@@ -278,7 +278,7 @@ parameter_types! {
 			Parachain(ParachainInfo::parachain_id().into())
 		)
 	};
-	pub const BaseXcmWeight: Weight = 100_000_000;
+	pub const BaseXcmWeight: XcmV2Weight = 100_000_000u64;
 	pub const MaxAssetsForTransfer: usize = 3;
 }
 

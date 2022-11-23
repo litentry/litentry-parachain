@@ -138,7 +138,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9101,
+	spec_version: 9115,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -575,8 +575,8 @@ impl pallet_sudo::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
-	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
+	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
+	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
 }
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
@@ -639,11 +639,11 @@ impl pallet_aura::Config for Runtime {
 
 parameter_types! {
 	/// Default fixed percent a collator takes off the top of due rewards
-	pub const DefaultCollatorCommission: Perbill = Perbill::from_percent(0);
+	pub const DefaultCollatorCommission: Perbill = Perbill::from_percent(33);
 	/// Default percent of inflation set aside for parachain bond every round
 	pub const DefaultParachainBondReservePercent: Percent = Percent::from_percent(0);
-	pub const MinCollatorStk: Balance = 50 * DOLLARS;
-	pub const MinCandidateStk: Balance = 50 * DOLLARS;
+	pub const MinCollatorStk: Balance = 5000 * DOLLARS;
+	pub const MinCandidateStk: Balance = 5000 * DOLLARS;
 	pub const MinDelegation: Balance = 50 * DOLLARS;
 	pub const MinDelegatorStk: Balance = 50 * DOLLARS;
 }
@@ -736,33 +736,28 @@ parameter_types! {
 	pub const NativeTokenResourceId: [u8; 32] = hex_literal::hex!("00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001");
 }
 
-pub struct TechnicalCommitteeProvider;
-impl SortedMembers<AccountId> for TechnicalCommitteeProvider {
+// allow anyone to call transfer_native
+pub struct TransferNativeAnyone;
+impl SortedMembers<AccountId> for TransferNativeAnyone {
 	fn sorted_members() -> Vec<AccountId> {
-		TechnicalCommittee::members()
+		vec![]
 	}
 
-	#[cfg(not(feature = "runtime-benchmarks"))]
-	fn contains(who: &AccountId) -> bool {
-		TechnicalCommittee::is_member(who)
+	fn contains(_who: &AccountId) -> bool {
+		true
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
 	fn add(_: &AccountId) {
 		unimplemented!()
 	}
-	// To ensure that the benchmark code runs through
-	#[cfg(feature = "runtime-benchmarks")]
-	fn contains(_who: &AccountId) -> bool {
-		true
-	}
 }
 
 impl pallet_bridge_transfer::Config for Runtime {
 	type Event = Event;
 	type BridgeOrigin = pallet_bridge::EnsureBridge<Runtime>;
+	type TransferNativeMembers = TransferNativeAnyone;
 	type SetMaximumIssuanceOrigin = EnsureRootOrHalfCouncil;
-	type TransferNativeMembers = TechnicalCommitteeProvider;
 	type NativeTokenResourceId = NativeTokenResourceId;
 	type DefaultMaximumIssuance = MaximumIssuance;
 	type ExternalTotalIssuance = ExternalTotalIssuance;
@@ -1064,12 +1059,20 @@ impl_runtime_apis! {
 			// NOTE: intentional unwrap: we don't want to propagate the error backwards, and want to
 			// have a backtrace here. If any of the pre/post migration checks fail, we shall stop
 			// right here and right now.
+			log::info!("try-runtime::on_runtime_upgrade Lientry.");
 			let weight = Executive::try_runtime_upgrade().unwrap();
 			(weight, RuntimeBlockWeights::get().max_block)
 		}
 
-		fn execute_block_no_check(block: Block) -> Weight {
-			Executive::execute_block_no_check(block)
+		fn execute_block(block: Block, state_root_check: bool, select: frame_try_runtime::TryStateSelect) -> Weight {
+			log::info!(
+				target: "runtime::Litentry", "try-runtime: executing block #{} ({:?}) / root checks: {:?} / sanity-checks: {:?}",
+				block.header.number,
+				block.header.hash(),
+				state_root_check,
+				select,
+			);
+			Executive::try_execute_block(block, state_root_check, select).expect("try_execute_block failed")
 		}
 	}
 
