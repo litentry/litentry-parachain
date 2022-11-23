@@ -23,9 +23,10 @@
 
 //! Benchmarking
 use crate::{
-	AwardedPts, BalanceOf, Call, CandidateBondLessRequest, Config, DelegationAction, Event, Pallet,
-	Points, Range, Round, ScheduledRequest,
+	BalanceOf, Call, CandidateBondLessRequest, Config, DelegationAction, Event, Pallet, Round,
+	Range ,ScheduledRequest,
 };
+use pallet_authorship::EventHandler;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::traits::{Currency, Get, OnFinalize, OnInitialize, ReservableCurrency};
 use frame_system::RawOrigin;
@@ -1059,7 +1060,7 @@ benchmarks! {
 			true,
 		)?;
 		let start = <frame_system::Pallet<T>>::block_number();
-		Pallet::<T>::note_author(author.clone());
+		Pallet::<T>::note_author(collator);
 		<frame_system::Pallet<T>>::on_finalize(start);
 		<frame_system::Pallet<T>>::set_block_number(
 			start + 1u32.into()
