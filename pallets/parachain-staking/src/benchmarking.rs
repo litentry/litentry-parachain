@@ -23,13 +23,12 @@
 
 //! Benchmarking
 use crate::{
-	BalanceOf, Call, CandidateBondLessRequest, Config, DelegationAction, Event, Pallet, Range,
-	Round, ScheduledRequest,
+	AwardedPts, BalanceOf, Call, CandidateBondLessRequest, Config, DelegationAction, Event, Pallet,
+	Points, Range, Round, ScheduledRequest,
 };
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::traits::{Currency, Get, OnFinalize, OnInitialize, ReservableCurrency};
 use frame_system::RawOrigin;
-use pallet_authorship::EventHandler;
 use sp_runtime::{Perbill, Percent, Saturating};
 use sp_std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 
@@ -98,7 +97,7 @@ fn roll_to_and_author<T: Config>(round_delay: u32, author: T::AccountId) {
 	let mut now = <frame_system::Pallet<T>>::block_number() + 1u32.into();
 	let end = Pallet::<T>::round().first + (round_length * total_rounds.into());
 	while now < end {
-		Pallet::<T>::note_author(author.clone());
+		parachain_staking_on_finalize::<T>(author.clone());
 		<frame_system::Pallet<T>>::on_finalize(<frame_system::Pallet<T>>::block_number());
 		<frame_system::Pallet<T>>::set_block_number(
 			<frame_system::Pallet<T>>::block_number() + 1u32.into(),
@@ -108,6 +107,14 @@ fn roll_to_and_author<T: Config>(round_delay: u32, author: T::AccountId) {
 		now += 1u32.into();
 	}
 }
+// Simulate staking on finalize by manually setting points
+fn parachain_staking_on_finalize<T: Config>(author: T::AccountId) {
+	let now = <Round<T>>::get().current;
+	let score_plus_20 = <AwardedPts<T>>::get(now, &author).saturating_add(20);
+	<AwardedPts<T>>::insert(now, author, score_plus_20);
+	<Points<T>>::mutate(now, |x| *x = x.saturating_add(20));
+}
+
 fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	frame_system::Pallet::<T>::assert_last_event(generic_event.into());
 }
@@ -933,7 +940,7 @@ benchmarks! {
 		// SET collators as authors for blocks from now - end
 		while now < end {
 			let author = collators[counter % collators.len()].clone();
-			Pallet::<T>::note_author(author);
+			parachain_staking_on_finalize::<T>(author.clone());
 			<frame_system::Pallet<T>>::on_finalize(<frame_system::Pallet<T>>::block_number());
 			<frame_system::Pallet<T>>::set_block_number(
 				<frame_system::Pallet<T>>::block_number() + 1u32.into()
@@ -943,7 +950,7 @@ benchmarks! {
 			now += 1u32.into();
 			counter += 1usize;
 		}
-		Pallet::<T>::note_author(collators[counter % collators.len()].clone());
+		parachain_staking_on_finalize::<T>(collators[counter % collators.len()].clone());
 		<frame_system::Pallet<T>>::on_finalize(<frame_system::Pallet<T>>::block_number());
 		<frame_system::Pallet<T>>::set_block_number(
 			<frame_system::Pallet<T>>::block_number() + 1u32.into()
@@ -1060,7 +1067,7 @@ benchmarks! {
 			true,
 		)?;
 		let start = <frame_system::Pallet<T>>::block_number();
-		Pallet::<T>::note_author(collator);
+		parachain_staking_on_finalize::<T>(collator.clone());
 		<frame_system::Pallet<T>>::on_finalize(start);
 		<frame_system::Pallet<T>>::set_block_number(
 			start + 1u32.into()
