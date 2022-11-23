@@ -48,7 +48,7 @@ std = [
   "sp-runtime/std",
   "sp-std/std",
   "xcm/std",
-  "frame-benchmarking/std",
+  "frame-benchmarking?/std",
 ]
 
 runtime-benchmarks = [

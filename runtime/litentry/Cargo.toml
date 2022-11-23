@@ -200,7 +200,7 @@ std = [
   "xcm/std",
   "xcm-builder/std",
   "xcm-executor/std",
-  "frame-benchmarking/std",
+  "frame-benchmarking?/std",
   'runtime-common/std',
   "pallet-bridge/std",
   "pallet-bridge-transfer/std",

@@ -51,7 +51,7 @@ std = [
   "sp-arithmetic/std",
   "frame-support/std",
   "frame-system/std",
-  "frame-benchmarking/std",
+  "frame-benchmarking?/std",
   "primitives/std",
   "pallet-teerex/std",
 ]
