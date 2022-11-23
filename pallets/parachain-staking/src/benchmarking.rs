@@ -23,13 +23,13 @@
 
 //! Benchmarking
 use crate::{
-	BalanceOf, Call, CandidateBondLessRequest, Config, DelegationAction, Event, Pallet, Round,
-	Range ,ScheduledRequest,
+	BalanceOf, Call, CandidateBondLessRequest, Config, DelegationAction, Event, Pallet, Range,
+	Round, ScheduledRequest,
 };
-use pallet_authorship::EventHandler;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::traits::{Currency, Get, OnFinalize, OnInitialize, ReservableCurrency};
 use frame_system::RawOrigin;
+use pallet_authorship::EventHandler;
 use sp_runtime::{Perbill, Percent, Saturating};
 use sp_std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 
