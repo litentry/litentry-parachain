@@ -59,16 +59,13 @@ for p in $PALLETS; do
   echo "benchmarking $p ..."
 
   if [[ $p == *"parachain_staking"* ]]; then
-
-      echo "will run $p pallet benchmark code"
-      STEPS=30
+      echo "will run $p benchmark code"
+      STEPS=50
       REPEAT=20
-
   else
-      echo "will run other $p pallet benchmark code"
+      echo "will run other pallet ($p) benchmark code"
       STEPS=20
       REPEAT=50
-
   fi
 
   # filter out the flooding warnings from pallet_scheduler:

@@ -49,18 +49,13 @@ case "$3" in
 esac
 
 if [[ $PALLET == *"parachain_staking"* ]]; then
-
-    echo "will run  pallet ($PALLET) benchmark code"
-    STEPS=30
+    echo "will run $PALLET benchmark code"
+    STEPS=50
     REPEAT=20
-    echo "steps  ${STEPS} <====> repeat  ${REPEAT} "
-
 else
     echo "will run other pallet ($PALLET) benchmark code"
     STEPS=20
     REPEAT=50
-    echo "steps  ${STEPS} <====> repeat  ${REPEAT} "
-
 fi
 
 ./target/release/litentry-collator benchmark pallet \
