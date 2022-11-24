@@ -2,6 +2,7 @@ use crate::{vc_context::Status, Config};
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
+use sp_std::vec::Vec;
 
 type MaxStringLength = ConstU32<64>;
 pub type ContentString = BoundedVec<u8, MaxStringLength>;

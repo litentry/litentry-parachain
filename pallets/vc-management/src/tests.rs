@@ -298,7 +298,7 @@ fn revoke_schema_with_non_existent_fails() {
 }
 
 #[test]
-fn revoke_schema_with_unpriviledged_origin_fails() {
+fn revoke_schema_with_unprivileged_origin_fails() {
 	new_test_ext().execute_with(|| {
 		let hash = H256::from_slice(&TEST_SCHEMA_HASH);
 		let id: Vec<u8> = vec![1, 2, 3, 4].try_into().unwrap();

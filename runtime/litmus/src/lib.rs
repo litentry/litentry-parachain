@@ -810,6 +810,7 @@ impl pallet_identity_management_mock::Config for Runtime {
 impl pallet_vc_management::Config for Runtime {
 	type Event = Event;
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
+	type SetAdminOrigin = EnsureRootOrHalfCouncil;
 }
 
 impl runtime_common::BaseRuntimeRequirements for Runtime {}
