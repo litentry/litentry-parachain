@@ -49,7 +49,7 @@ GITREPO=litentry-parachain
 # Build the image
 echo "------------------------------------------------------------"
 echo "Building ${GITUSER}/${GITREPO}:${TAG} docker image ..."
-docker build ${NOCACHE_FLAG} --pull -f ./docker/Dockerfile \
+DOCKER_BUILDKIT=1 docker build ${NOCACHE_FLAG} --pull -f ./docker/Dockerfile \
     --build-arg PROFILE="$PROFILE" \
     --build-arg BUILD_ARGS="$ARGS" \
     --build-arg RUSTC_WRAPPER="$RUSTC_WRAPPER" \
