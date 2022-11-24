@@ -5924,10 +5924,7 @@ fn test_set_auto_compound_inserts_if_not_exists() {
 				value: Percent::from_percent(50),
 			});
 			assert_eq!(
-				vec![AutoCompoundConfig {
-					delegator: 2,
-					value: Percent::from_percent(50),
-				}],
+				vec![AutoCompoundConfig { delegator: 2, value: Percent::from_percent(50) }],
 				ParachainStaking::auto_compounding_delegations(&1),
 			);
 		});
@@ -5958,10 +5955,7 @@ fn test_set_auto_compound_updates_if_existing() {
 				value: Percent::from_percent(50),
 			});
 			assert_eq!(
-				vec![AutoCompoundConfig {
-					delegator: 2,
-					value: Percent::from_percent(50),
-				}],
+				vec![AutoCompoundConfig { delegator: 2, value: Percent::from_percent(50) }],
 				ParachainStaking::auto_compounding_delegations(&1),
 			);
 		});
@@ -6013,10 +6007,7 @@ fn test_execute_revoke_delegation_removes_auto_compounding_from_state_for_delega
 				3,
 				Percent::from_percent(50),
 			));
-			assert_ok!(ParachainStaking::schedule_revoke_delegation(
-				RuntimeOrigin::signed(2),
-				1
-			));
+			assert_ok!(ParachainStaking::schedule_revoke_delegation(RuntimeOrigin::signed(2), 1));
 			roll_to(10);
 			assert_ok!(ParachainStaking::execute_delegation_request(
 				RuntimeOrigin::signed(2),
@@ -6057,14 +6048,9 @@ fn test_execute_leave_delegators_removes_auto_compounding_state() {
 				Percent::from_percent(50),
 			));
 
-			assert_ok!(ParachainStaking::schedule_leave_delegators(RuntimeOrigin::signed(
-				2
-			)));
+			assert_ok!(ParachainStaking::schedule_leave_delegators(RuntimeOrigin::signed(2)));
 			roll_to(10);
-			assert_ok!(ParachainStaking::execute_leave_delegators(
-				RuntimeOrigin::signed(2),
-				2,
-			));
+			assert_ok!(ParachainStaking::execute_leave_delegators(RuntimeOrigin::signed(2), 2,));
 
 			assert!(
 				!ParachainStaking::auto_compounding_delegations(&1)
@@ -6083,8 +6069,8 @@ fn test_execute_leave_delegators_removes_auto_compounding_state() {
 
 // #[allow(deprecated)]
 // #[test]
-// fn test_execute_leave_delegators_with_deprecated_status_leaving_removes_auto_compounding_state() {
-// 	ExtBuilder::default()
+// fn test_execute_leave_delegators_with_deprecated_status_leaving_removes_auto_compounding_state()
+// { 	ExtBuilder::default()
 // 		.with_balances(vec![(1, 30), (2, 20), (3, 20)])
 // 		.with_candidates(vec![(1, 30), (3, 20)])
 // 		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
@@ -6151,14 +6137,9 @@ fn test_execute_leave_candidates_removes_auto_compounding_state() {
 				Percent::from_percent(50),
 			));
 
-			assert_ok!(ParachainStaking::schedule_leave_candidates(
-				RuntimeOrigin::signed(1),
-			));
+			assert_ok!(ParachainStaking::schedule_leave_candidates(RuntimeOrigin::signed(1),));
 			roll_to(10);
-			assert_ok!(ParachainStaking::execute_leave_candidates(
-				RuntimeOrigin::signed(1),
-				1,
-			));
+			assert_ok!(ParachainStaking::execute_leave_candidates(RuntimeOrigin::signed(1), 1,));
 
 			assert!(
 				!ParachainStaking::auto_compounding_delegations(&1)
@@ -6245,28 +6226,15 @@ fn test_rewards_do_not_auto_compound_on_payment_if_delegation_scheduled_revoke_e
 			roll_to_round_begin(3);
 
 			// schedule revoke for delegator 2; no rewards should be compounded
-			assert_ok!(ParachainStaking::schedule_revoke_delegation(
-				RuntimeOrigin::signed(2),
-				1
-			));
+			assert_ok!(ParachainStaking::schedule_revoke_delegation(RuntimeOrigin::signed(2), 1));
 			roll_to_round_begin(4);
 
 			assert_eq_last_events!(vec![
 				// no compound since revoke request exists
-				Event::<Test>::Rewarded {
-					account: 2,
-					rewards: 8,
-				},
+				Event::<Test>::Rewarded { account: 2, rewards: 8 },
 				// 50%
-				Event::<Test>::Rewarded {
-					account: 3,
-					rewards: 8,
-				},
-				Event::<Test>::Compounded {
-					candidate: 1,
-					delegator: 3,
-					amount: 4,
-				},
+				Event::<Test>::Rewarded { account: 3, rewards: 8 },
+				Event::<Test>::Compounded { candidate: 1, delegator: 3, amount: 4 },
 			]);
 		});
 }
@@ -6299,35 +6267,15 @@ fn test_rewards_auto_compound_on_payment_as_per_auto_compound_config() {
 
 			assert_eq_last_events!(vec![
 				// 0%
-				Event::<Test>::Rewarded {
-					account: 2,
-					rewards: 8,
-				},
+				Event::<Test>::Rewarded { account: 2, rewards: 8 },
 				// 50%
-				Event::<Test>::Rewarded {
-					account: 3,
-					rewards: 8,
-				},
-				Event::<Test>::Compounded {
-					candidate: 1,
-					delegator: 3,
-					amount: 4,
-				},
+				Event::<Test>::Rewarded { account: 3, rewards: 8 },
+				Event::<Test>::Compounded { candidate: 1, delegator: 3, amount: 4 },
 				// 100%
-				Event::<Test>::Rewarded {
-					account: 4,
-					rewards: 8,
-				},
-				Event::<Test>::Compounded {
-					candidate: 1,
-					delegator: 4,
-					amount: 8,
-				},
+				Event::<Test>::Rewarded { account: 4, rewards: 8 },
+				Event::<Test>::Compounded { candidate: 1, delegator: 4, amount: 8 },
 				// no-config
-				Event::<Test>::Rewarded {
-					account: 5,
-					rewards: 8,
-				},
+				Event::<Test>::Rewarded { account: 5, rewards: 8 },
 			]);
 		});
 }
@@ -6448,10 +6396,7 @@ fn test_delegate_with_auto_compound_sets_auto_compound_config() {
 				auto_compound: Percent::from_percent(50),
 			});
 			assert_eq!(
-				vec![AutoCompoundConfig {
-					delegator: 2,
-					value: Percent::from_percent(50),
-				}],
+				vec![AutoCompoundConfig { delegator: 2, value: Percent::from_percent(50) }],
 				ParachainStaking::auto_compounding_delegations(&1),
 			);
 		});
@@ -6488,10 +6433,7 @@ fn test_delegate_with_auto_compound_reserves_balance() {
 		.with_candidates(vec![(1, 30)])
 		.build()
 		.execute_with(|| {
-			assert_eq!(
-				ParachainStaking::get_delegator_stakable_free_balance(&2),
-				10
-			);
+			assert_eq!(ParachainStaking::get_delegator_stakable_free_balance(&2), 10);
 			assert_ok!(ParachainStaking::delegate_with_auto_compound(
 				RuntimeOrigin::signed(2),
 				1,
@@ -6580,10 +6522,7 @@ fn test_delegate_with_auto_compound_can_delegate_to_other_if_revoking() {
 		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
 		.build()
 		.execute_with(|| {
-			assert_ok!(ParachainStaking::schedule_revoke_delegation(
-				RuntimeOrigin::signed(2),
-				1
-			));
+			assert_ok!(ParachainStaking::schedule_revoke_delegation(RuntimeOrigin::signed(2), 1));
 			assert_ok!(ParachainStaking::delegate_with_auto_compound(
 				RuntimeOrigin::signed(2),
 				4,
@@ -6674,10 +6613,7 @@ fn test_delegate_with_auto_compound_can_delegate_if_greater_than_lowest_bottom()
 				candidate: 1,
 				unstaked_amount: 10
 			});
-			assert_event_emitted!(Event::DelegatorLeft {
-				delegator: 10,
-				unstaked_amount: 10
-			});
+			assert_event_emitted!(Event::DelegatorLeft { delegator: 10, unstaked_amount: 10 });
 		});
 }
 
@@ -6689,9 +6625,7 @@ fn test_delegate_with_auto_compound_can_still_delegate_to_other_if_leaving() {
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
 		.execute_with(|| {
-			assert_ok!(ParachainStaking::schedule_leave_delegators(RuntimeOrigin::signed(
-				2
-			)));
+			assert_ok!(ParachainStaking::schedule_leave_delegators(RuntimeOrigin::signed(2)));
 			assert_ok!(ParachainStaking::delegate_with_auto_compound(
 				RuntimeOrigin::signed(2),
 				3,

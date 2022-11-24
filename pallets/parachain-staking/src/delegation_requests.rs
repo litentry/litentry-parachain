@@ -26,8 +26,7 @@ use crate::{
 		Event, Pallet, Round, RoundIndex, Total,
 	},
 	weights::WeightInfo,
-	AutoCompoundDelegations,
-	Delegator,
+	AutoCompoundDelegations, Delegator,
 };
 use frame_support::{
 	dispatch::DispatchResultWithPostInfo,
@@ -473,9 +472,8 @@ impl<T: Config> Pallet<T> {
 			unstaked_amount: state.total,
 		});
 		<DelegatorState<T>>::remove(&delegator);
-		let actual_weight = Some(T::WeightInfo::execute_leave_delegators(
-			state.delegations.0.len() as u32,
-		));
+		let actual_weight =
+			Some(T::WeightInfo::execute_leave_delegators(state.delegations.0.len() as u32));
 		Ok(actual_weight.into())
 	}
 

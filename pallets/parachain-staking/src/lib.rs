@@ -89,9 +89,7 @@ pub mod pallet {
 		set::OrderedSet,
 		traits::*,
 		types::*,
-		AutoCompoundConfig,
-		AutoCompoundDelegations,
-		InflationInfo, Range, WeightInfo,
+		AutoCompoundConfig, AutoCompoundDelegations, InflationInfo, Range, WeightInfo,
 	};
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
@@ -933,7 +931,10 @@ pub mod pallet {
 				candidates.insert(Bond { owner: acc.clone(), amount: bond }),
 				Error::<T>::CandidateExists
 			);
-			ensure!(<Pallet<T>>::get_delegator_stakable_free_balance(&acc) >= bond, Error::<T>::InsufficientBalance);
+			ensure!(
+				<Pallet<T>>::get_delegator_stakable_free_balance(&acc) >= bond,
+				Error::<T>::InsufficientBalance
+			);
 			T::Currency::reserve(&acc, bond)?;
 			let candidate = CandidateMetadata::new(bond);
 			<CandidateInfo<T>>::insert(&acc, candidate);
@@ -1044,9 +1045,8 @@ pub mod pallet {
 				unlocked_amount: total_backing,
 				new_total_amt_locked: new_total_staked,
 			});
-			let actual_weight = Some(T::WeightInfo::execute_leave_candidates(
-				state.delegation_count as u32,
-			));
+			let actual_weight =
+				Some(T::WeightInfo::execute_leave_candidates(state.delegation_count as u32));
 			Ok(actual_weight.into())
 		}
 		#[pallet::weight(< T as Config >::WeightInfo::cancel_leave_candidates(< CandidatePool < T >>::get().0.len() as u32))]
@@ -1311,15 +1311,8 @@ pub mod pallet {
 			value: Percent,
 		) -> DispatchResultWithPostInfo {
 			let delegator = ensure_signed(origin)?;
-			<AutoCompoundDelegations<T>>::set_auto_compound(
-				candidate,
-				delegator,
-				value,
-			)
+			<AutoCompoundDelegations<T>>::set_auto_compound(candidate, delegator, value)
 		}
-
-
-
 	}
 	impl<T: Config> Pallet<T> {
 		pub fn is_delegator(acc: &T::AccountId) -> bool {
@@ -1518,12 +1511,7 @@ pub mod pallet {
 							collator_reward,
 						));
 					// pay delegators due portion
-					for BondWithAutoCompound {
-						owner,
-						amount,
-						auto_compound,
-					} in state.delegations
-					{
+					for BondWithAutoCompound { owner, amount, auto_compound } in state.delegations {
 						let percent = Perbill::from_rational(amount, state.total);
 						let due = percent * amt_due;
 						if !due.is_zero() {
@@ -1610,10 +1598,8 @@ pub mod pallet {
 				collator_count = collator_count.saturating_add(1u32);
 				delegation_count = delegation_count.saturating_add(state.delegation_count);
 				total = total.saturating_add(state.total_counted);
-				let CountedDelegations {
-					uncounted_stake,
-					rewardable_delegations,
-				} = Self::get_rewardable_delegators(&account);
+				let CountedDelegations { uncounted_stake, rewardable_delegations } =
+					Self::get_rewardable_delegators(&account);
 				let total_counted = state.total_counted.saturating_sub(uncounted_stake);
 
 				let auto_compounding_delegations = <AutoCompoundingDelegations<T>>::get(&account)
@@ -1695,10 +1681,7 @@ pub mod pallet {
 					bond
 				})
 				.collect();
-			CountedDelegations {
-				uncounted_stake,
-				rewardable_delegations,
-			}
+			CountedDelegations { uncounted_stake, rewardable_delegations }
 		}
 
 		/// This function exists as a helper to delegator_bond_more & auto_compound functionality.
@@ -1739,9 +1722,7 @@ pub mod pallet {
 			candidate: T::AccountId,
 			delegator: T::AccountId,
 		) {
-			if let Ok(amount_transferred) =
-				T::Currency::deposit_into_existing(&delegator, amt)
-			{
+			if let Ok(amount_transferred) = T::Currency::deposit_into_existing(&delegator, amt) {
 				Self::deposit_event(Event::Rewarded {
 					account: delegator.clone(),
 					rewards: amount_transferred.peek(),
@@ -1749,7 +1730,7 @@ pub mod pallet {
 
 				let compound_amount = compound_percent.mul_ceil(amount_transferred.peek());
 				if compound_amount.is_zero() {
-					return;
+					return
 				}
 
 				if let Err(err) = Self::delegation_bond_more_without_event(
@@ -1763,7 +1744,7 @@ pub mod pallet {
 								delegator,
 								err
 							);
-					return;
+					return
 				};
 
 				Pallet::<T>::deposit_event(Event::Compounded {
@@ -1773,8 +1754,6 @@ pub mod pallet {
 				});
 			};
 		}
-
-
 	}
 
 	/// Add reward points to block authors:

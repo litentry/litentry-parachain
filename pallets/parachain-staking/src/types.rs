@@ -21,8 +21,9 @@
 //! Types for parachain-staking
 
 use crate::{
-	auto_compound::AutoCompoundDelegations, set::OrderedSet, BalanceOf, BottomDelegations, CandidateInfo, Config, DelegatorState, Error,
-	Event, Pallet, Round, RoundIndex, TopDelegations, Total,
+	auto_compound::AutoCompoundDelegations, set::OrderedSet, BalanceOf, BottomDelegations,
+	CandidateInfo, Config, DelegatorState, Error, Event, Pallet, Round, RoundIndex, TopDelegations,
+	Total,
 };
 use frame_support::{pallet_prelude::*, traits::ReservableCurrency};
 use parity_scale_codec::{Decode, Encode};
@@ -136,8 +137,10 @@ impl<A: PartialEq, B: PartialEq> PartialEq for CollatorSnapshot<A, B> {
 		if !must_be_true {
 			return false
 		}
-		for (BondWithAutoCompound { owner: o1, amount: a1, auto_compound: c1, }, BondWithAutoCompound { owner: o2, amount: a2, auto_compound: c2, }) in
-			self.delegations.iter().zip(other.delegations.iter())
+		for (
+			BondWithAutoCompound { owner: o1, amount: a1, auto_compound: c1 },
+			BondWithAutoCompound { owner: o2, amount: a2, auto_compound: c2 },
+		) in self.delegations.iter().zip(other.delegations.iter())
 		{
 			if o1 != o2 || a1 != a2 || c1 != c2 {
 				return false
@@ -342,7 +345,10 @@ impl<
 	where
 		BalanceOf<T>: From<Balance>,
 	{
-		ensure!(<Pallet<T>>::get_delegator_stakable_free_balance(&who) >= more.into(), Error::<T>::InsufficientBalance,);
+		ensure!(
+			<Pallet<T>>::get_delegator_stakable_free_balance(&who) >= more.into(),
+			Error::<T>::InsufficientBalance,
+		);
 		T::Currency::reserve(&who, more.into())?;
 		let new_total = <Total<T>>::get().saturating_add(more.into());
 		<Total<T>>::put(new_total);
@@ -1165,7 +1171,7 @@ impl<
 				<Total<T>>::put(new_total_staked);
 				let nom_st: Delegator<T::AccountId, BalanceOf<T>> = self.clone().into();
 				<DelegatorState<T>>::insert(&delegator_id, nom_st);
-				return Ok(in_top);
+				return Ok(in_top)
 			}
 		}
 		Err(Error::<T>::DelegationDNE.into())

@@ -198,10 +198,8 @@ impl ExtBuilder {
 		mut self,
 		delegations: Vec<(AccountId, AccountId, Balance)>,
 	) -> Self {
-		self.delegations = delegations
-			.into_iter()
-			.map(|d| (d.0, d.1, d.2, Percent::zero()))
-			.collect();
+		self.delegations =
+			delegations.into_iter().map(|d| (d.0, d.1, d.2, Percent::zero())).collect();
 		self
 	}
 
