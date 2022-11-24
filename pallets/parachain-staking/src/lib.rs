@@ -1186,9 +1186,9 @@ pub mod pallet {
 			// Max CandidateDelegationCount
 			<T as Config>::MaxTopDelegationsPerCandidate::get() + <T as Config>::MaxBottomDelegationsPerCandidate::get(),
 			// Max CandidateAutoCompoundingDelegationCount
-			<T as Config>::MaxDelegationsPerDelegator::get(), 
+			<T as Config>::MaxDelegationsPerDelegator::get(),
 			// Max DelegationCount
-			<T as Config>::MaxDelegationsPerDelegator::get(), 
+			<T as Config>::MaxDelegationsPerDelegator::get(),
 		))]
 		pub fn delegate_with_auto_compound(
 			origin: OriginFor<T>,
@@ -1301,7 +1301,7 @@ pub mod pallet {
 		/// Sets the auto-compounding reward percentage for a delegation.
 		#[pallet::weight(<T as Config>::WeightInfo::set_auto_compound(
 			// Max CandidateAutoCompoundingDelegationCount
-			<T as Config>::MaxDelegationsPerDelegator::get(), 
+			<T as Config>::MaxDelegationsPerDelegator::get(),
 			// Max DelegationCount
 			<T as Config>::MaxDelegationsPerDelegator::get(),
 		))]
