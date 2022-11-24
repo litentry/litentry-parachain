@@ -108,6 +108,7 @@ fn roll_to_and_author<T: Config>(round_delay: u32, author: T::AccountId) {
 		now += 1u32.into();
 	}
 }
+
 fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	frame_system::Pallet::<T>::assert_last_event(generic_event.into());
 }
@@ -742,6 +743,7 @@ benchmarks! {
 		);
 	}
 
+
 	cancel_delegator_bond_less {
 		let collator: T::AccountId = create_funded_collator::<T>(
 			"collator",
@@ -778,12 +780,11 @@ benchmarks! {
 	}
 
 	// ON_INITIALIZE
-
 	round_transition_on_initialize {
 		// TOTAL SELECTED COLLATORS PER ROUND
 		let x in 8..100;
 		// DELEGATIONS
-		let y in 0..(<<T as Config>::MaxTopDelegationsPerCandidate as Get<u32>>::get() * 100);
+		let y in 0..(<<T as Config>::MaxTopDelegationsPerCandidate as Get<u32>>::get() * 5);
 		let max_delegators_per_collator=
 			<<T as Config>::MaxTopDelegationsPerCandidate as Get<u32>>::get();
 		let max_delegations = x * max_delegators_per_collator;
@@ -892,7 +893,7 @@ benchmarks! {
 		// SET collators as authors for blocks from now - end
 		while now < end {
 			let author = collators[counter % collators.len()].clone();
-			Pallet::<T>::note_author(author);
+			Pallet::<T>::note_author(author.clone());
 			<frame_system::Pallet<T>>::on_finalize(<frame_system::Pallet<T>>::block_number());
 			<frame_system::Pallet<T>>::set_block_number(
 				<frame_system::Pallet<T>>::block_number() + 1u32.into()

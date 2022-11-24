@@ -48,17 +48,26 @@ case "$3" in
         ;;
 esac
 
-./target/release/litentry-collator benchmark pallet \
-    $CHAIN \
-    --execution=wasm  \
-    --db-cache=20 \
-    --wasm-execution=compiled \
-    --pallet="$PALLET" \
-    --extrinsic=* \
-    --heap-pages=4096 \
-    --steps=20 \
-    --repeat=50 \
-    --header=./LICENSE_HEADER \
-    $TEMPLATE \
-    $OUTPUT
+if [[ $PALLET == *"parachain_staking"* ]]; then
+    echo "will run $PALLET benchmark code"
+    STEPS=25
+    REPEAT=20
+else
+    echo "will run other pallet ($PALLET) benchmark code"
+    STEPS=20
+    REPEAT=50
+fi
 
+./target/release/litentry-collator benchmark pallet \
+          $CHAIN \
+          --execution=wasm  \
+          --db-cache=20 \
+          --wasm-execution=compiled \
+          --pallet="$PALLET" \
+          --extrinsic=* \
+          --heap-pages=4096 \
+          --steps="$STEPS" \
+          --repeat="$REPEAT" \
+          --header=./LICENSE_HEADER \
+          $TEMPLATE \
+          $OUTPUT
