@@ -128,6 +128,20 @@ fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 // }
 
 const USER_SEED: u32 = 999666;
+struct Seed {
+	pub inner: u32,
+}
+impl Seed {
+	fn new() -> Self {
+		Seed { inner: USER_SEED }
+	}
+
+	pub fn take(&mut self) -> u32 {
+		let v = self.inner;
+		self.inner += 1;
+		v
+	}
+}
 
 benchmarks! {
 
@@ -472,60 +486,6 @@ benchmarks! {
 		assert!(
 			Pallet::<T>::candidate_info(&caller).unwrap().request.is_none()
 		);
-	}
-
-	delegate {
-		let x in 3..<<T as Config>::MaxDelegationsPerDelegator as Get<u32>>::get();
-		let y in 2..<<T as Config>::MaxTopDelegationsPerCandidate as Get<u32>>::get();
-		// Worst Case is full of delegations before calling `delegate`
-		let mut collators: Vec<T::AccountId> = Vec::new();
-		// Initialize MaxDelegationsPerDelegator collator candidates
-		for i in 2..x {
-			let seed = USER_SEED - i;
-			let collator = create_funded_collator::<T>(
-				"collator",
-				seed,
-				0u32.into(),
-				true,
-			)?;
-			collators.push(collator.clone());
-		}
-		let bond = <<T as Config>::MinDelegatorStk as Get<BalanceOf<T>>>::get();
-		let extra = if (bond * (collators.len() as u32 + 1u32).into()) > min_candidate_stk::<T>() {
-			(bond * (collators.len() as u32 + 1u32).into()) - min_candidate_stk::<T>()
-		} else {
-			0u32.into()
-		};
-		let (caller, _) = create_funded_user::<T>("caller", USER_SEED, extra);
-		// Delegation count
-		// Nominate MaxDelegationsPerDelegators collator candidates
-		for (del_del_count, col) in collators.clone().into_iter().enumerate(){
-			Pallet::<T>::delegate(
-				RawOrigin::Signed(caller.clone()).into(), col, bond
-			)?;
-		}
-		// Last collator to be delegated
-		let collator: T::AccountId = create_funded_collator::<T>(
-			"collator",
-			USER_SEED,
-			0u32.into(),
-			true,
-		)?;
-		// Worst Case Complexity is insertion into an almost full collator
-		//let mut col_del_count = 0u32;
-		for i in 1..y {
-			let seed = USER_SEED + i;
-			let _ = create_funded_delegator::<T>(
-				"delegator",
-				seed,
-				0u32.into(),
-				collator.clone(),
-				true,
-			)?;
-		}
-	}: _(RawOrigin::Signed(caller.clone()), collator, bond)
-	verify {
-		assert!(Pallet::<T>::is_delegator(&caller));
 	}
 
 	schedule_leave_delegators {
@@ -968,7 +928,7 @@ benchmarks! {
 
 		// must come after 'let foo in 0..` statements for macro
 		use crate::{
-			DelayedPayout, DelayedPayouts, AtStake, CollatorSnapshot, Bond, Points,
+			DelayedPayout, DelayedPayouts, AtStake, CollatorSnapshot, BondWithAutoCompound, Points,
 			AwardedPts,
 		};
 
@@ -1012,11 +972,12 @@ benchmarks! {
 			collator_commission: Perbill::from_rational(1u32, 100u32),
 		});
 
-		let mut delegations: Vec<Bond<T::AccountId, BalanceOf<T>>> = Vec::new();
+		let mut delegations: Vec<BondWithAutoCompound<T::AccountId, BalanceOf<T>>> = Vec::new();
 		for delegator in &delegators {
-			delegations.push(Bond {
+			delegations.push(BondWithAutoCompound {
 				owner: delegator.clone(),
 				amount: 100u32.into(),
+				auto_compound: Percent::zero(),
 			});
 		}
 
@@ -1070,6 +1031,171 @@ benchmarks! {
 	verify {
 		// Round transitions
 		assert_eq!(start + 1u32.into(), end);
+	}
+
+	set_auto_compound {
+		// x controls number of distinct auto-compounding delegations the prime collator will have
+		// y controls number of distinct delegations the prime delegator will have
+		let x in 0..<<T as Config>::MaxTopDelegationsPerCandidate as Get<u32>>::get();
+		let y in 0..<<T as Config>::MaxDelegationsPerDelegator as Get<u32>>::get();
+
+		use crate::auto_compound::AutoCompoundDelegations;
+
+		let min_candidate_stake = min_candidate_stk::<T>();
+		let min_delegator_stake = min_delegator_stk::<T>();
+		let mut seed = Seed::new();
+
+		// initialize the prime collator
+		let prime_candidate = create_funded_collator::<T>(
+			"collator",
+			seed.take(),
+			min_candidate_stake,
+			true,
+		)?;
+
+		// initialize the prime delegator
+		let prime_delegator = create_funded_delegator::<T>(
+			"delegator",
+			seed.take(),
+			min_delegator_stake * (x+1).into(),
+			prime_candidate.clone(),
+			true,
+		)?;
+
+		// have x-1 distinct auto-compounding delegators delegate to prime collator
+		// we directly set the storage, since benchmarks don't work when the same extrinsic is
+		// called from within the benchmark.
+		let mut auto_compounding_state = <AutoCompoundDelegations<T>>::get_storage(&prime_candidate);
+		for i in 1..x {
+			let delegator = create_funded_delegator::<T>(
+				"delegator",
+				seed.take(),
+				min_delegator_stake,
+				prime_candidate.clone(),
+				true,
+			)?;
+			auto_compounding_state.set_for_delegator(
+				delegator,
+				Percent::from_percent(100),
+			);
+		}
+		auto_compounding_state.set_storage(&prime_candidate);
+
+		// delegate to y-1 distinct collators from the prime delegator
+		for i in 1..y {
+			let collator = create_funded_collator::<T>(
+				"collator",
+				seed.take(),
+				min_candidate_stake,
+				true,
+			)?;
+			Pallet::<T>::delegate(
+				RawOrigin::Signed(prime_delegator.clone()).into(),
+				collator,
+				min_delegator_stake,
+			)?;
+		}
+	}: {
+		Pallet::<T>::set_auto_compound(
+			RawOrigin::Signed(prime_delegator.clone()).into(),
+			prime_candidate.clone(),
+			Percent::from_percent(50),
+		)?;
+	}
+	verify {
+		let actual_auto_compound = <AutoCompoundDelegations<T>>::get_storage(&prime_candidate)
+			.get_for_delegator(&prime_delegator);
+		let expected_auto_compound = Some(Percent::from_percent(50));
+		assert_eq!(
+			expected_auto_compound,
+			actual_auto_compound,
+			"delegation must have an auto-compound entry",
+		);
+	}
+
+	delegate_with_auto_compound {
+		// x controls number of distinct delegations the prime collator will have
+		// y controls number of distinct auto-compounding delegations the prime collator will have
+		// z controls number of distinct delegations the prime delegator will have
+		let x in 0..(<<T as Config>::MaxTopDelegationsPerCandidate as Get<u32>>::get()
+		+ <<T as Config>::MaxBottomDelegationsPerCandidate as Get<u32>>::get());
+		let y in 0..<<T as Config>::MaxTopDelegationsPerCandidate as Get<u32>>::get()
+		+ <<T as Config>::MaxBottomDelegationsPerCandidate as Get<u32>>::get();
+		let z in 0..<<T as Config>::MaxDelegationsPerDelegator as Get<u32>>::get();
+
+		use crate::auto_compound::AutoCompoundDelegations;
+
+		let min_candidate_stake = min_candidate_stk::<T>();
+		let min_delegator_stake = min_delegator_stk::<T>();
+		let mut seed = Seed::new();
+
+		// initialize the prime collator
+		let prime_candidate = create_funded_collator::<T>(
+			"collator",
+			seed.take(),
+			min_candidate_stake,
+			true,
+		)?;
+
+		// initialize the future delegator
+		let (prime_delegator, _) = create_funded_user::<T>(
+			"delegator",
+			seed.take(),
+			min_delegator_stake * (x+1).into(),
+		);
+
+		// have x-1 distinct delegators delegate to prime collator, of which y are auto-compounding.
+		// we can directly set the storage here.
+		let auto_compound_z = x * y / 100;
+		for i in 1..x {
+			let delegator = create_funded_delegator::<T>(
+				"delegator",
+				seed.take(),
+				min_delegator_stake,
+				prime_candidate.clone(),
+				true,
+			)?;
+			if i <= y {
+				Pallet::<T>::set_auto_compound(
+					RawOrigin::Signed(delegator.clone()).into(),
+					prime_candidate.clone(),
+					Percent::from_percent(100),
+				)?;
+			}
+		}
+
+		// delegate to z-1 distinct collators from the prime delegator
+		for i in 1..z {
+			let collator = create_funded_collator::<T>(
+				"collator",
+				seed.take(),
+				min_candidate_stake,
+				true,
+			)?;
+			Pallet::<T>::delegate(
+				RawOrigin::Signed(prime_delegator.clone()).into(),
+				collator,
+				min_delegator_stake,
+			)?;
+		}
+	}: {
+		Pallet::<T>::delegate_with_auto_compound(
+			RawOrigin::Signed(prime_delegator.clone()).into(),
+			prime_candidate.clone(),
+			min_delegator_stake,
+			Percent::from_percent(50),
+		)?;
+	}
+	verify {
+		assert!(Pallet::<T>::is_delegator(&prime_delegator));
+		let actual_auto_compound = <AutoCompoundDelegations<T>>::get_storage(&prime_candidate)
+			.get_for_delegator(&prime_delegator);
+		let expected_auto_compound = Some(Percent::from_percent(50));
+		assert_eq!(
+			expected_auto_compound,
+			actual_auto_compound,
+			"delegation must have an auto-compound entry",
+		);
 	}
 }
 
@@ -1200,13 +1326,6 @@ mod tests {
 	fn bench_cancel_candidate_bond_less() {
 		new_test_ext().execute_with(|| {
 			assert_ok!(Pallet::<Test>::test_benchmark_cancel_candidate_bond_less());
-		});
-	}
-
-	#[test]
-	fn bench_delegate() {
-		new_test_ext().execute_with(|| {
-			assert_ok!(Pallet::<Test>::test_benchmark_delegate());
 		});
 	}
 

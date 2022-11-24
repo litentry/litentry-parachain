@@ -25,6 +25,8 @@ use crate::{
 		BalanceOf, CandidateInfo, Config, DelegationScheduledRequests, DelegatorState, Error,
 		Event, Pallet, Round, RoundIndex, Total,
 	},
+	weights::WeightInfo,
+	AutoCompoundDelegations,
 	Delegator,
 };
 use frame_support::{
@@ -231,6 +233,9 @@ impl<T: Config> Pallet<T> {
 
 				// remove delegation from delegator state
 				state.rm_delegation(&collator);
+
+				// remove delegation from auto-compounding info
+				<AutoCompoundDelegations<T>>::remove_auto_compound(&collator, &delegator);
 
 				// remove delegation from collator state delegations
 				Self::delegator_leaves_candidate(collator.clone(), delegator.clone(), amount)?;
@@ -451,7 +456,10 @@ impl<T: Config> Pallet<T> {
 
 			// remove the scheduled request, since it is fulfilled
 			scheduled_requests.remove(request_idx).action.amount();
-			updated_scheduled_requests.push((collator, scheduled_requests));
+			updated_scheduled_requests.push((collator.clone(), scheduled_requests));
+
+			// remove the auto-compounding entry for the delegation
+			<AutoCompoundDelegations<T>>::remove_auto_compound(&collator, &delegator);
 		}
 
 		updated_scheduled_requests
@@ -465,8 +473,10 @@ impl<T: Config> Pallet<T> {
 			unstaked_amount: state.total,
 		});
 		<DelegatorState<T>>::remove(&delegator);
-
-		Ok(().into())
+		let actual_weight = Some(T::WeightInfo::execute_leave_delegators(
+			state.delegations.0.len() as u32,
+		));
+		Ok(actual_weight.into())
 	}
 
 	/// Removes the delegator's existing [ScheduledRequest] towards a given collator, if exists.

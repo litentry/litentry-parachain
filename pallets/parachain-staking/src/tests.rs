@@ -31,6 +31,7 @@
 use crate::{
 	assert_eq_events, assert_eq_last_events, assert_event_emitted, assert_last_event,
 	assert_tail_eq,
+	auto_compound::{AutoCompoundConfig, AutoCompoundDelegations},
 	delegation_requests::{CancelledScheduledRequest, DelegationAction, ScheduledRequest},
 	mock::{
 		roll_one_block, roll_to, roll_to_round_begin, roll_to_round_end, set_author, Balances,
@@ -1499,6 +1500,7 @@ fn delegate_event_emits_correctly() {
 				locked_amount: 10,
 				candidate: 1,
 				delegator_position: DelegatorAdded::AddedToTop { new_total: 40 },
+				auto_compound: Percent::zero(),
 			}));
 		});
 }
@@ -3487,9 +3489,9 @@ fn parachain_bond_inflation_reserve_matches_config() {
 					selected_collators_number: 5,
 					total_balance: 130,
 				},
-				Event::Rewarded { account: 1, rewards: 24 },
-				Event::Rewarded { account: 7, rewards: 6 },
-				Event::Rewarded { account: 10, rewards: 6 },
+				Event::Rewarded { account: 1, rewards: 26 },
+				Event::Rewarded { account: 7, rewards: 7 },
+				Event::Rewarded { account: 10, rewards: 7 },
 			];
 			expected.append(&mut new2);
 			assert_eq_events!(expected.clone());
@@ -3519,9 +3521,9 @@ fn parachain_bond_inflation_reserve_matches_config() {
 					selected_collators_number: 5,
 					total_balance: 130,
 				},
-				Event::Rewarded { account: 1, rewards: 20 },
-				Event::Rewarded { account: 7, rewards: 4 },
-				Event::Rewarded { account: 10, rewards: 4 },
+				Event::Rewarded { account: 1, rewards: 21 },
+				Event::Rewarded { account: 7, rewards: 5 },
+				Event::Rewarded { account: 10, rewards: 5 },
 			];
 			expected.append(&mut new3);
 			assert_eq_events!(expected.clone());
@@ -3530,7 +3532,7 @@ fn parachain_bond_inflation_reserve_matches_config() {
 			roll_to(40);
 			// no more paying 6
 			let mut new4 = vec![
-				Event::ReservedForParachainBond { account: 11, value: 31 },
+				Event::ReservedForParachainBond { account: 11, value: 32 },
 				Event::CollatorChosen { round: 9, collator_account: 1, total_exposed_amount: 40 },
 				Event::CollatorChosen { round: 9, collator_account: 2, total_exposed_amount: 40 },
 				Event::CollatorChosen { round: 9, collator_account: 3, total_exposed_amount: 20 },
@@ -3548,7 +3550,7 @@ fn parachain_bond_inflation_reserve_matches_config() {
 			];
 			expected.append(&mut new4);
 			assert_eq_events!(expected.clone());
-			assert_eq!(Balances::free_balance(&11), 126);
+			assert_eq!(Balances::free_balance(&11), 127);
 			set_author(8, 1, 100);
 			assert_ok!(ParachainStaking::delegate(RuntimeOrigin::signed(8), 1, 10));
 			roll_to(45);
@@ -3559,6 +3561,7 @@ fn parachain_bond_inflation_reserve_matches_config() {
 					locked_amount: 10,
 					candidate: 1,
 					delegator_position: DelegatorAdded::AddedToTop { new_total: 50 },
+					auto_compound: Percent::zero(),
 				},
 				Event::ReservedForParachainBond { account: 11, value: 33 },
 				Event::CollatorChosen { round: 10, collator_account: 1, total_exposed_amount: 50 },
@@ -3578,7 +3581,7 @@ fn parachain_bond_inflation_reserve_matches_config() {
 			];
 			expected.append(&mut new5);
 			assert_eq_events!(expected.clone());
-			assert_eq!(Balances::free_balance(&11), 159);
+			assert_eq!(Balances::free_balance(&11), 160);
 			set_author(9, 1, 100);
 			set_author(10, 1, 100);
 			roll_to(50);
@@ -3602,11 +3605,11 @@ fn parachain_bond_inflation_reserve_matches_config() {
 			];
 			expected.append(&mut new6);
 			assert_eq_events!(expected.clone());
-			assert_eq!(Balances::free_balance(&11), 194);
+			assert_eq!(Balances::free_balance(&11), 195);
 			roll_to(55);
 			// new delegation is rewarded, 2 rounds after joining (`RewardPaymentDelay` is 2)
 			let mut new7 = vec![
-				Event::ReservedForParachainBond { account: 11, value: 36 },
+				Event::ReservedForParachainBond { account: 11, value: 37 },
 				Event::CollatorChosen { round: 12, collator_account: 1, total_exposed_amount: 50 },
 				Event::CollatorChosen { round: 12, collator_account: 2, total_exposed_amount: 40 },
 				Event::CollatorChosen { round: 12, collator_account: 3, total_exposed_amount: 20 },
@@ -3625,7 +3628,7 @@ fn parachain_bond_inflation_reserve_matches_config() {
 			];
 			expected.append(&mut new7);
 			assert_eq_events!(expected);
-			assert_eq!(Balances::free_balance(&11), 230);
+			assert_eq!(Balances::free_balance(&11), 232);
 		});
 }
 
@@ -3673,12 +3676,14 @@ fn paid_collator_commission_matches_config() {
 					locked_amount: 10,
 					candidate: 4,
 					delegator_position: DelegatorAdded::AddedToTop { new_total: 30 },
+					auto_compound: Percent::zero(),
 				},
 				Event::Delegation {
 					delegator: 6,
 					locked_amount: 10,
 					candidate: 4,
 					delegator_position: DelegatorAdded::AddedToTop { new_total: 40 },
+					auto_compound: Percent::zero(),
 				},
 				Event::CollatorChosen { round: 3, collator_account: 1, total_exposed_amount: 40 },
 				Event::CollatorChosen { round: 3, collator_account: 4, total_exposed_amount: 40 },
@@ -4114,18 +4119,21 @@ fn multiple_delegations() {
 					locked_amount: 10,
 					candidate: 2,
 					delegator_position: DelegatorAdded::AddedToTop { new_total: 50 },
+					auto_compound: Percent::zero(),
 				},
 				Event::Delegation {
 					delegator: 6,
 					locked_amount: 10,
 					candidate: 3,
 					delegator_position: DelegatorAdded::AddedToTop { new_total: 30 },
+					auto_compound: Percent::zero(),
 				},
 				Event::Delegation {
 					delegator: 6,
 					locked_amount: 10,
 					candidate: 4,
 					delegator_position: DelegatorAdded::AddedToTop { new_total: 30 },
+					auto_compound: Percent::zero(),
 				},
 				Event::CollatorChosen { round: 3, collator_account: 1, total_exposed_amount: 50 },
 				Event::CollatorChosen { round: 3, collator_account: 2, total_exposed_amount: 50 },
@@ -4173,12 +4181,14 @@ fn multiple_delegations() {
 					locked_amount: 80,
 					candidate: 2,
 					delegator_position: DelegatorAdded::AddedToTop { new_total: 130 },
+					auto_compound: Percent::zero(),
 				},
 				Event::Delegation {
 					delegator: 10,
 					locked_amount: 10,
 					candidate: 2,
 					delegator_position: DelegatorAdded::AddedToBottom,
+					auto_compound: Percent::zero(),
 				},
 				Event::CollatorChosen { round: 6, collator_account: 1, total_exposed_amount: 50 },
 				Event::CollatorChosen { round: 6, collator_account: 2, total_exposed_amount: 130 },
@@ -4415,9 +4425,9 @@ fn payouts_follow_delegation_changes() {
 					selected_collators_number: 5,
 					total_balance: 130,
 				},
-				Event::Rewarded { account: 1, rewards: 30 },
-				Event::Rewarded { account: 7, rewards: 9 },
-				Event::Rewarded { account: 10, rewards: 9 },
+				Event::Rewarded { account: 1, rewards: 35 },
+				Event::Rewarded { account: 7, rewards: 11 },
+				Event::Rewarded { account: 10, rewards: 11 },
 				Event::CollatorChosen { round: 8, collator_account: 1, total_exposed_amount: 40 },
 				Event::CollatorChosen { round: 8, collator_account: 2, total_exposed_amount: 40 },
 				Event::CollatorChosen { round: 8, collator_account: 3, total_exposed_amount: 20 },
@@ -4429,9 +4439,9 @@ fn payouts_follow_delegation_changes() {
 					selected_collators_number: 5,
 					total_balance: 130,
 				},
-				Event::Rewarded { account: 1, rewards: 31 },
-				Event::Rewarded { account: 7, rewards: 10 },
-				Event::Rewarded { account: 10, rewards: 10 },
+				Event::Rewarded { account: 1, rewards: 36 },
+				Event::Rewarded { account: 7, rewards: 12 },
+				Event::Rewarded { account: 10, rewards: 12 },
 			];
 			expected.append(&mut new3);
 			assert_eq_events!(expected.clone());
@@ -4451,8 +4461,8 @@ fn payouts_follow_delegation_changes() {
 					total_balance: 130,
 				},
 				Event::Rewarded { account: 1, rewards: 38 },
-				Event::Rewarded { account: 7, rewards: 12 },
-				Event::Rewarded { account: 10, rewards: 12 },
+				Event::Rewarded { account: 7, rewards: 13 },
+				Event::Rewarded { account: 10, rewards: 13 },
 			];
 			expected.append(&mut new4);
 			assert_eq_events!(expected.clone());
@@ -4466,6 +4476,7 @@ fn payouts_follow_delegation_changes() {
 					locked_amount: 10,
 					candidate: 1,
 					delegator_position: DelegatorAdded::AddedToTop { new_total: 50 },
+					auto_compound: Percent::zero(),
 				},
 				Event::CollatorChosen { round: 10, collator_account: 1, total_exposed_amount: 50 },
 				Event::CollatorChosen { round: 10, collator_account: 2, total_exposed_amount: 40 },
@@ -4478,7 +4489,7 @@ fn payouts_follow_delegation_changes() {
 					selected_collators_number: 5,
 					total_balance: 140,
 				},
-				Event::Rewarded { account: 1, rewards: 39 },
+				Event::Rewarded { account: 1, rewards: 40 },
 				Event::Rewarded { account: 7, rewards: 13 },
 				Event::Rewarded { account: 10, rewards: 13 },
 			];
@@ -4499,7 +4510,7 @@ fn payouts_follow_delegation_changes() {
 					selected_collators_number: 5,
 					total_balance: 140,
 				},
-				Event::Rewarded { account: 1, rewards: 41 },
+				Event::Rewarded { account: 1, rewards: 42 },
 				Event::Rewarded { account: 7, rewards: 14 },
 				Event::Rewarded { account: 10, rewards: 14 },
 			];
@@ -4520,7 +4531,7 @@ fn payouts_follow_delegation_changes() {
 					selected_collators_number: 5,
 					total_balance: 140,
 				},
-				Event::Rewarded { account: 1, rewards: 38 },
+				Event::Rewarded { account: 1, rewards: 39 },
 				Event::Rewarded { account: 7, rewards: 12 },
 				Event::Rewarded { account: 10, rewards: 12 },
 				Event::Rewarded { account: 8, rewards: 12 },
@@ -4758,6 +4769,7 @@ fn delegation_events_convey_correct_position() {
 				locked_amount: 15,
 				candidate: 1,
 				delegator_position: DelegatorAdded::AddedToTop { new_total: 74 },
+				auto_compound: Percent::zero(),
 			});
 			let collator1_state = ParachainStaking::candidate_info(1).unwrap();
 			// 12 + 13 + 14 + 15 + 20 = 70 (top 4 + self bond)
@@ -4769,6 +4781,7 @@ fn delegation_events_convey_correct_position() {
 				locked_amount: 10,
 				candidate: 1,
 				delegator_position: DelegatorAdded::AddedToBottom,
+				auto_compound: Percent::zero(),
 			});
 			let collator1_state = ParachainStaking::candidate_info(1).unwrap();
 			// 12 + 13 + 14 + 15 + 20 = 70 (top 4 + self bond)
@@ -5344,7 +5357,7 @@ fn test_delegator_scheduled_for_revoke_is_rewarded_for_previous_rounds_but_not_f
 
 			roll_to_round_begin(4);
 			assert_eq_last_events!(
-				vec![Event::<Test>::Rewarded { account: 1, rewards: 4 }],
+				vec![Event::<Test>::Rewarded { account: 1, rewards: 5 }],
 				"delegator was rewarded unexpectedly"
 			);
 			let collator_snapshot =
@@ -5355,7 +5368,7 @@ fn test_delegator_scheduled_for_revoke_is_rewarded_for_previous_rounds_but_not_f
 				"collator snapshot's delegator count was reduced unexpectedly"
 			);
 			assert_eq!(
-				30, collator_snapshot.total,
+				20, collator_snapshot.total,
 				"collator snapshot's total was reduced unexpectedly",
 			);
 		});
@@ -5391,7 +5404,7 @@ fn test_delegator_scheduled_for_revoke_is_rewarded_when_request_cancelled() {
 
 			roll_to_round_begin(4);
 			assert_eq_last_events!(
-				vec![Event::<Test>::Rewarded { account: 1, rewards: 4 }],
+				vec![Event::<Test>::Rewarded { account: 1, rewards: 5 }],
 				"delegator was rewarded unexpectedly",
 			);
 			let collator_snapshot =
@@ -5459,7 +5472,7 @@ fn test_delegator_scheduled_for_bond_decrease_is_rewarded_for_previous_rounds_bu
 			roll_to_round_begin(4);
 			assert_eq_last_events!(
 				vec![
-					Event::<Test>::Rewarded { account: 1, rewards: 3 },
+					Event::<Test>::Rewarded { account: 1, rewards: 4 },
 					Event::<Test>::Rewarded { account: 2, rewards: 1 },
 				],
 				"delegator was rewarded unexpectedly"
@@ -5472,7 +5485,7 @@ fn test_delegator_scheduled_for_bond_decrease_is_rewarded_for_previous_rounds_bu
 				"collator snapshot's delegator count was reduced unexpectedly"
 			);
 			assert_eq!(
-				40, collator_snapshot.total,
+				30, collator_snapshot.total,
 				"collator snapshot's total was reduced unexpectedly",
 			);
 		});
@@ -5513,7 +5526,7 @@ fn test_delegator_scheduled_for_bond_decrease_is_rewarded_when_request_cancelled
 			roll_to_round_begin(4);
 			assert_eq_last_events!(
 				vec![
-					Event::<Test>::Rewarded { account: 1, rewards: 3 },
+					Event::<Test>::Rewarded { account: 1, rewards: 4 },
 					Event::<Test>::Rewarded { account: 2, rewards: 1 },
 				],
 				"delegator was rewarded unexpectedly",
@@ -5576,7 +5589,7 @@ fn test_delegator_scheduled_for_leave_is_rewarded_for_previous_rounds_but_not_fo
 
 			roll_to_round_begin(4);
 			assert_eq_last_events!(
-				vec![Event::<Test>::Rewarded { account: 1, rewards: 4 },],
+				vec![Event::<Test>::Rewarded { account: 1, rewards: 5 },],
 				"delegator was rewarded unexpectedly"
 			);
 			let collator_snapshot =
@@ -5587,7 +5600,7 @@ fn test_delegator_scheduled_for_leave_is_rewarded_for_previous_rounds_but_not_fo
 				"collator snapshot's delegator count was reduced unexpectedly"
 			);
 			assert_eq!(
-				30, collator_snapshot.total,
+				20, collator_snapshot.total,
 				"collator snapshot's total was reduced unexpectedly",
 			);
 		});
@@ -5622,7 +5635,7 @@ fn test_delegator_scheduled_for_leave_is_rewarded_when_request_cancelled() {
 
 			roll_to_round_begin(4);
 			assert_eq_last_events!(
-				vec![Event::<Test>::Rewarded { account: 1, rewards: 4 },],
+				vec![Event::<Test>::Rewarded { account: 1, rewards: 5 },],
 				"delegator was rewarded unexpectedly",
 			);
 			let collator_snapshot =
@@ -5837,17 +5850,17 @@ fn staked_capacity() {
 			assert_noop!(
 				ParachainStaking::candidate_bond_more(RuntimeOrigin::signed(3), 500),
 				DispatchError::Module(ModuleError {
-					index: 2,
-					error: [8, 0, 0, 0],
-					message: Some("InsufficientBalance")
+					index: 1,
+					error: [1, 0, 0, 0],
+					message: Some("LiquidityRestrictions")
 				})
 			);
 			assert_noop!(
 				ParachainStaking::delegate(RuntimeOrigin::signed(6), 1, 500),
 				DispatchError::Module(ModuleError {
-					index: 2,
-					error: [8, 0, 0, 0],
-					message: Some("InsufficientBalance")
+					index: 1,
+					error: [1, 0, 0, 0],
+					message: Some("LiquidityRestrictions")
 				})
 			);
 
@@ -5888,6 +5901,883 @@ fn staked_capacity() {
 				candidate: 2,
 				amount: 5,
 				new_bond: 595,
+			}));
+		});
+}
+
+#[test]
+fn test_set_auto_compound_inserts_if_not_exists() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 30), (2, 25)])
+		.with_candidates(vec![(1, 30)])
+		.with_delegations(vec![(2, 1, 10)])
+		.build()
+		.execute_with(|| {
+			assert_ok!(ParachainStaking::set_auto_compound(
+				RuntimeOrigin::signed(2),
+				1,
+				Percent::from_percent(50),
+			));
+			assert_event_emitted!(Event::AutoCompoundSet {
+				candidate: 1,
+				delegator: 2,
+				value: Percent::from_percent(50),
+			});
+			assert_eq!(
+				vec![AutoCompoundConfig {
+					delegator: 2,
+					value: Percent::from_percent(50),
+				}],
+				ParachainStaking::auto_compounding_delegations(&1),
+			);
+		});
+}
+
+#[test]
+fn test_set_auto_compound_updates_if_existing() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 30), (2, 25)])
+		.with_candidates(vec![(1, 30)])
+		.with_delegations(vec![(2, 1, 10)])
+		.build()
+		.execute_with(|| {
+			<AutoCompoundDelegations<Test>>::new(vec![AutoCompoundConfig {
+				delegator: 2,
+				value: Percent::from_percent(10),
+			}])
+			.set_storage(&1);
+
+			assert_ok!(ParachainStaking::set_auto_compound(
+				RuntimeOrigin::signed(2),
+				1,
+				Percent::from_percent(50),
+			));
+			assert_event_emitted!(Event::AutoCompoundSet {
+				candidate: 1,
+				delegator: 2,
+				value: Percent::from_percent(50),
+			});
+			assert_eq!(
+				vec![AutoCompoundConfig {
+					delegator: 2,
+					value: Percent::from_percent(50),
+				}],
+				ParachainStaking::auto_compounding_delegations(&1),
+			);
+		});
+}
+
+#[test]
+fn test_set_auto_compound_removes_if_auto_compound_zero_percent() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 30), (2, 25)])
+		.with_candidates(vec![(1, 30)])
+		.with_delegations(vec![(2, 1, 10)])
+		.build()
+		.execute_with(|| {
+			<AutoCompoundDelegations<Test>>::new(vec![AutoCompoundConfig {
+				delegator: 2,
+				value: Percent::from_percent(10),
+			}])
+			.set_storage(&1);
+
+			assert_ok!(ParachainStaking::set_auto_compound(
+				RuntimeOrigin::signed(2),
+				1,
+				Percent::zero(),
+			));
+			assert_event_emitted!(Event::AutoCompoundSet {
+				candidate: 1,
+				delegator: 2,
+				value: Percent::zero(),
+			});
+			assert_eq!(0, ParachainStaking::auto_compounding_delegations(&1).len(),);
+		});
+}
+
+#[test]
+fn test_execute_revoke_delegation_removes_auto_compounding_from_state_for_delegation_revoke() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 30), (2, 30), (3, 20)])
+		.with_candidates(vec![(1, 30), (3, 20)])
+		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
+		.build()
+		.execute_with(|| {
+			assert_ok!(ParachainStaking::set_auto_compound(
+				RuntimeOrigin::signed(2),
+				1,
+				Percent::from_percent(50),
+			));
+			assert_ok!(ParachainStaking::set_auto_compound(
+				RuntimeOrigin::signed(2),
+				3,
+				Percent::from_percent(50),
+			));
+			assert_ok!(ParachainStaking::schedule_revoke_delegation(
+				RuntimeOrigin::signed(2),
+				1
+			));
+			roll_to(10);
+			assert_ok!(ParachainStaking::execute_delegation_request(
+				RuntimeOrigin::signed(2),
+				2,
+				1
+			));
+			assert!(
+				!ParachainStaking::auto_compounding_delegations(&1)
+					.iter()
+					.any(|x| x.delegator == 2),
+				"delegation auto-compound config was not removed"
+			);
+			assert!(
+				ParachainStaking::auto_compounding_delegations(&3)
+					.iter()
+					.any(|x| x.delegator == 2),
+				"delegation auto-compound config was erroneously removed"
+			);
+		});
+}
+
+#[test]
+fn test_execute_leave_delegators_removes_auto_compounding_state() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 30), (2, 20), (3, 20)])
+		.with_candidates(vec![(1, 30), (3, 20)])
+		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
+		.build()
+		.execute_with(|| {
+			assert_ok!(ParachainStaking::set_auto_compound(
+				RuntimeOrigin::signed(2),
+				1,
+				Percent::from_percent(50),
+			));
+			assert_ok!(ParachainStaking::set_auto_compound(
+				RuntimeOrigin::signed(2),
+				3,
+				Percent::from_percent(50),
+			));
+
+			assert_ok!(ParachainStaking::schedule_leave_delegators(RuntimeOrigin::signed(
+				2
+			)));
+			roll_to(10);
+			assert_ok!(ParachainStaking::execute_leave_delegators(
+				RuntimeOrigin::signed(2),
+				2,
+			));
+
+			assert!(
+				!ParachainStaking::auto_compounding_delegations(&1)
+					.iter()
+					.any(|x| x.delegator == 2),
+				"delegation auto-compound config was not removed"
+			);
+			assert!(
+				!ParachainStaking::auto_compounding_delegations(&3)
+					.iter()
+					.any(|x| x.delegator == 2),
+				"delegation auto-compound config was not removed"
+			);
+		});
+}
+
+// #[allow(deprecated)]
+// #[test]
+// fn test_execute_leave_delegators_with_deprecated_status_leaving_removes_auto_compounding_state() {
+// 	ExtBuilder::default()
+// 		.with_balances(vec![(1, 30), (2, 20), (3, 20)])
+// 		.with_candidates(vec![(1, 30), (3, 20)])
+// 		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
+// 		.build()
+// 		.execute_with(|| {
+// 			assert_ok!(ParachainStaking::set_auto_compound(
+// 				RuntimeOrigin::signed(2),
+// 				1,
+// 				Percent::from_percent(50),
+// 				0,
+// 				2,
+// 			));
+// 			assert_ok!(ParachainStaking::set_auto_compound(
+// 				RuntimeOrigin::signed(2),
+// 				3,
+// 				Percent::from_percent(50),
+// 				0,
+// 				2,
+// 			));
+
+// 			<DelegatorState<Test>>::mutate(2, |value| {
+// 				value.as_mut().map(|mut state| {
+// 					state.status = DelegatorStatus::Leaving(2);
+// 				})
+// 			});
+// 			roll_to(10);
+// 			assert_ok!(ParachainStaking::execute_leave_delegators(
+// 				RuntimeOrigin::signed(2),
+// 				2,
+// 				2,
+// 			));
+
+// 			assert!(
+// 				!ParachainStaking::auto_compounding_delegations(&1)
+// 					.iter()
+// 					.any(|x| x.delegator == 2),
+// 				"delegation auto-compound config was not removed"
+// 			);
+// 			assert!(
+// 				!ParachainStaking::auto_compounding_delegations(&3)
+// 					.iter()
+// 					.any(|x| x.delegator == 2),
+// 				"delegation auto-compound config was not removed"
+// 			);
+// 		});
+// }
+
+#[test]
+fn test_execute_leave_candidates_removes_auto_compounding_state() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 30), (2, 20), (3, 20)])
+		.with_candidates(vec![(1, 30), (3, 20)])
+		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
+		.build()
+		.execute_with(|| {
+			assert_ok!(ParachainStaking::set_auto_compound(
+				RuntimeOrigin::signed(2),
+				1,
+				Percent::from_percent(50),
+			));
+			assert_ok!(ParachainStaking::set_auto_compound(
+				RuntimeOrigin::signed(2),
+				3,
+				Percent::from_percent(50),
+			));
+
+			assert_ok!(ParachainStaking::schedule_leave_candidates(
+				RuntimeOrigin::signed(1),
+			));
+			roll_to(10);
+			assert_ok!(ParachainStaking::execute_leave_candidates(
+				RuntimeOrigin::signed(1),
+				1,
+			));
+
+			assert!(
+				!ParachainStaking::auto_compounding_delegations(&1)
+					.iter()
+					.any(|x| x.delegator == 2),
+				"delegation auto-compound config was not removed"
+			);
+			assert!(
+				ParachainStaking::auto_compounding_delegations(&3)
+					.iter()
+					.any(|x| x.delegator == 2),
+				"delegation auto-compound config was erroneously removed"
+			);
+		});
+}
+
+#[test]
+fn test_delegation_kicked_from_bottom_delegation_removes_auto_compounding_state() {
+	ExtBuilder::default()
+		.with_balances(vec![
+			(1, 30),
+			(2, 29),
+			(3, 20),
+			(4, 20),
+			(5, 20),
+			(6, 20),
+			(7, 20),
+			(8, 20),
+			(9, 20),
+			(10, 20),
+			(11, 30),
+		])
+		.with_candidates(vec![(1, 30), (11, 30)])
+		.with_delegations(vec![
+			(2, 11, 10), // extra delegation to avoid leaving the delegator set
+			(2, 1, 19),
+			(3, 1, 20),
+			(4, 1, 20),
+			(5, 1, 20),
+			(6, 1, 20),
+			(7, 1, 20),
+			(8, 1, 20),
+			(9, 1, 20),
+		])
+		.build()
+		.execute_with(|| {
+			assert_ok!(ParachainStaking::set_auto_compound(
+				RuntimeOrigin::signed(2),
+				1,
+				Percent::from_percent(50),
+			));
+
+			// kicks lowest delegation (2, 19)
+			assert_ok!(ParachainStaking::delegate(RuntimeOrigin::signed(10), 1, 20));
+
+			assert!(
+				!ParachainStaking::auto_compounding_delegations(&1)
+					.iter()
+					.any(|x| x.delegator == 2),
+				"delegation auto-compound config was not removed"
+			);
+		});
+}
+
+#[test]
+fn test_rewards_do_not_auto_compound_on_payment_if_delegation_scheduled_revoke_exists() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 100), (2, 200), (3, 200)])
+		.with_candidates(vec![(1, 100)])
+		.with_delegations(vec![(2, 1, 200), (3, 1, 200)])
+		.build()
+		.execute_with(|| {
+			(2..=5).for_each(|round| set_author(round, 1, 1));
+			assert_ok!(ParachainStaking::set_auto_compound(
+				RuntimeOrigin::signed(2),
+				1,
+				Percent::from_percent(50),
+			));
+			assert_ok!(ParachainStaking::set_auto_compound(
+				RuntimeOrigin::signed(3),
+				1,
+				Percent::from_percent(50),
+			));
+			roll_to_round_begin(3);
+
+			// schedule revoke for delegator 2; no rewards should be compounded
+			assert_ok!(ParachainStaking::schedule_revoke_delegation(
+				RuntimeOrigin::signed(2),
+				1
+			));
+			roll_to_round_begin(4);
+
+			assert_eq_last_events!(vec![
+				// no compound since revoke request exists
+				Event::<Test>::Rewarded {
+					account: 2,
+					rewards: 8,
+				},
+				// 50%
+				Event::<Test>::Rewarded {
+					account: 3,
+					rewards: 8,
+				},
+				Event::<Test>::Compounded {
+					candidate: 1,
+					delegator: 3,
+					amount: 4,
+				},
+			]);
+		});
+}
+
+#[test]
+fn test_rewards_auto_compound_on_payment_as_per_auto_compound_config() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 100), (2, 200), (3, 200), (4, 200), (5, 200)])
+		.with_candidates(vec![(1, 100)])
+		.with_delegations(vec![(2, 1, 200), (3, 1, 200), (4, 1, 200), (5, 1, 200)])
+		.build()
+		.execute_with(|| {
+			(2..=6).for_each(|round| set_author(round, 1, 1));
+			assert_ok!(ParachainStaking::set_auto_compound(
+				RuntimeOrigin::signed(2),
+				1,
+				Percent::from_percent(0),
+			));
+			assert_ok!(ParachainStaking::set_auto_compound(
+				RuntimeOrigin::signed(3),
+				1,
+				Percent::from_percent(50),
+			));
+			assert_ok!(ParachainStaking::set_auto_compound(
+				RuntimeOrigin::signed(4),
+				1,
+				Percent::from_percent(100),
+			));
+			roll_to_round_begin(4);
+
+			assert_eq_last_events!(vec![
+				// 0%
+				Event::<Test>::Rewarded {
+					account: 2,
+					rewards: 8,
+				},
+				// 50%
+				Event::<Test>::Rewarded {
+					account: 3,
+					rewards: 8,
+				},
+				Event::<Test>::Compounded {
+					candidate: 1,
+					delegator: 3,
+					amount: 4,
+				},
+				// 100%
+				Event::<Test>::Rewarded {
+					account: 4,
+					rewards: 8,
+				},
+				Event::<Test>::Compounded {
+					candidate: 1,
+					delegator: 4,
+					amount: 8,
+				},
+				// no-config
+				Event::<Test>::Rewarded {
+					account: 5,
+					rewards: 8,
+				},
+			]);
+		});
+}
+
+// #[allow(deprecated)]
+// #[test]
+// fn test_migrated_at_stake_handles_deprecated_storage_value() {
+// 	use crate::deprecated::CollatorSnapshot as DeprecatedCollatorSnapshot;
+// 	use crate::mock::{AccountId, Balance};
+
+// 	ExtBuilder::default()
+// 		.with_balances(vec![(1, 100), (2, 100)])
+// 		.with_candidates(vec![(1, 100)])
+// 		.with_delegations(vec![(2, 1, 100)])
+// 		.build()
+// 		.execute_with(|| {
+// 			(1..=6).for_each(|round| set_author(round, 1, 1));
+// 			roll_to_round_begin(1);
+// 			// force store deprecated CollatorSnapshot format for round 1
+// 			frame_support::storage::unhashed::put(
+// 				&<AtStake<Test>>::hashed_key_for(1, 1),
+// 				&DeprecatedCollatorSnapshot {
+// 					bond: 100 as Balance,
+// 					delegations: vec![Bond {
+// 						owner: 2 as AccountId,
+// 						amount: 100 as Balance,
+// 					}],
+// 					total: 200 as Balance,
+// 				},
+// 			);
+// 			// reset migrated at storage
+// 			<MigratedAtStake<Test>>::kill();
+
+// 			// assert MigratedAtStake storage is updated at round 2, and set auto-compound value
+// 			roll_to_round_begin(2);
+// 			assert_eq!(Some(2), <MigratedAtStake<Test>>::get());
+// 			assert_ok!(ParachainStaking::set_auto_compound(
+// 				RuntimeOrigin::signed(2),
+// 				1,
+// 				Percent::from_percent(50),
+// 				0,
+// 				1,
+// 			));
+
+// 			// assert rewards were correctly given with deprecated CollatorSnapshot
+// 			roll_to_round_begin(3);
+// 			assert_eq_last_events!(
+// 				vec![
+// 					Event::<Test>::Rewarded {
+// 						account: 1,
+// 						rewards: 6,
+// 					},
+// 					Event::<Test>::Rewarded {
+// 						account: 2,
+// 						rewards: 4,
+// 					},
+// 				],
+// 				"incorrect rewards at round 3 with deprecated CollatorSnapshot",
+// 			);
+
+// 			// assert rewards were correctly given with new CollatorSnapshot, but without compound
+// 			roll_to_round_begin(4);
+// 			assert_eq_last_events!(
+// 				vec![
+// 					Event::<Test>::Rewarded {
+// 						account: 1,
+// 						rewards: 6,
+// 					},
+// 					Event::<Test>::Rewarded {
+// 						account: 2,
+// 						rewards: 4,
+// 					},
+// 				],
+// 				"incorrect rewards without compounding at round 4",
+// 			);
+
+// 			// assert rewards were correctly given with new CollatorSnapshot and with compound
+// 			roll_to_round_begin(5);
+// 			assert_eq_last_events!(
+// 				vec![
+// 					Event::<Test>::Rewarded {
+// 						account: 1,
+// 						rewards: 6,
+// 					},
+// 					Event::<Test>::Rewarded {
+// 						account: 2,
+// 						rewards: 4,
+// 					},
+// 					Event::<Test>::Compounded {
+// 						candidate: 1,
+// 						delegator: 2,
+// 						amount: 2,
+// 					},
+// 				],
+// 				"incorrect compounding rewards at round 5",
+// 			);
+// 		});
+// }
+
+#[test]
+fn test_delegate_with_auto_compound_sets_auto_compound_config() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 30), (2, 25)])
+		.with_candidates(vec![(1, 30)])
+		.build()
+		.execute_with(|| {
+			assert_ok!(ParachainStaking::delegate_with_auto_compound(
+				RuntimeOrigin::signed(2),
+				1,
+				10,
+				Percent::from_percent(50),
+			));
+			assert_event_emitted!(Event::Delegation {
+				delegator: 2,
+				locked_amount: 10,
+				candidate: 1,
+				delegator_position: DelegatorAdded::AddedToTop { new_total: 40 },
+				auto_compound: Percent::from_percent(50),
+			});
+			assert_eq!(
+				vec![AutoCompoundConfig {
+					delegator: 2,
+					value: Percent::from_percent(50),
+				}],
+				ParachainStaking::auto_compounding_delegations(&1),
+			);
+		});
+}
+
+#[test]
+fn test_delegate_with_auto_compound_skips_storage_but_emits_event_for_zero_auto_compound() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 30), (2, 10)])
+		.with_candidates(vec![(1, 30)])
+		.build()
+		.execute_with(|| {
+			assert_ok!(ParachainStaking::delegate_with_auto_compound(
+				RuntimeOrigin::signed(2),
+				1,
+				10,
+				Percent::zero(),
+			));
+			assert_eq!(0, ParachainStaking::auto_compounding_delegations(&1).len(),);
+			assert_last_event!(MetaEvent::ParachainStaking(Event::Delegation {
+				delegator: 2,
+				locked_amount: 10,
+				candidate: 1,
+				delegator_position: DelegatorAdded::AddedToTop { new_total: 40 },
+				auto_compound: Percent::zero(),
+			}));
+		});
+}
+
+#[test]
+fn test_delegate_with_auto_compound_reserves_balance() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 30), (2, 10)])
+		.with_candidates(vec![(1, 30)])
+		.build()
+		.execute_with(|| {
+			assert_eq!(
+				ParachainStaking::get_delegator_stakable_free_balance(&2),
+				10
+			);
+			assert_ok!(ParachainStaking::delegate_with_auto_compound(
+				RuntimeOrigin::signed(2),
+				1,
+				10,
+				Percent::from_percent(50),
+			));
+			assert_eq!(ParachainStaking::get_delegator_stakable_free_balance(&2), 0);
+		});
+}
+
+#[test]
+fn test_delegate_with_auto_compound_updates_delegator_state() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 30), (2, 10)])
+		.with_candidates(vec![(1, 30)])
+		.build()
+		.execute_with(|| {
+			assert!(ParachainStaking::delegator_state(2).is_none());
+			assert_ok!(ParachainStaking::delegate_with_auto_compound(
+				RuntimeOrigin::signed(2),
+				1,
+				10,
+				Percent::from_percent(50),
+			));
+			let delegator_state =
+				ParachainStaking::delegator_state(2).expect("just delegated => exists");
+			assert_eq!(delegator_state.total, 10);
+			assert_eq!(delegator_state.delegations.0[0].owner, 1);
+			assert_eq!(delegator_state.delegations.0[0].amount, 10);
+		});
+}
+
+#[test]
+fn test_delegate_with_auto_compound_updates_collator_state() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 30), (2, 10)])
+		.with_candidates(vec![(1, 30)])
+		.build()
+		.execute_with(|| {
+			let candidate_state =
+				ParachainStaking::candidate_info(1).expect("registered in genesis");
+			assert_eq!(candidate_state.total_counted, 30);
+			let top_delegations =
+				ParachainStaking::top_delegations(1).expect("registered in genesis");
+			assert!(top_delegations.delegations.is_empty());
+			assert!(top_delegations.total.is_zero());
+			assert_ok!(ParachainStaking::delegate_with_auto_compound(
+				RuntimeOrigin::signed(2),
+				1,
+				10,
+				Percent::from_percent(50),
+			));
+			let candidate_state =
+				ParachainStaking::candidate_info(1).expect("just delegated => exists");
+			assert_eq!(candidate_state.total_counted, 40);
+			let top_delegations =
+				ParachainStaking::top_delegations(1).expect("just delegated => exists");
+			assert_eq!(top_delegations.delegations[0].owner, 2);
+			assert_eq!(top_delegations.delegations[0].amount, 10);
+			assert_eq!(top_delegations.total, 10);
+		});
+}
+
+#[test]
+fn test_delegate_with_auto_compound_can_delegate_immediately_after_other_join_candidates() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 20), (2, 20)])
+		.build()
+		.execute_with(|| {
+			assert_ok!(ParachainStaking::add_candidates_whitelist(RuntimeOrigin::root(), 1));
+			assert_ok!(ParachainStaking::join_candidates(RuntimeOrigin::signed(1), 20));
+			assert_ok!(ParachainStaking::delegate_with_auto_compound(
+				RuntimeOrigin::signed(2),
+				1,
+				20,
+				Percent::from_percent(50),
+			));
+		});
+}
+
+#[test]
+fn test_delegate_with_auto_compound_can_delegate_to_other_if_revoking() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 20), (2, 30), (3, 20), (4, 20)])
+		.with_candidates(vec![(1, 20), (3, 20), (4, 20)])
+		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
+		.build()
+		.execute_with(|| {
+			assert_ok!(ParachainStaking::schedule_revoke_delegation(
+				RuntimeOrigin::signed(2),
+				1
+			));
+			assert_ok!(ParachainStaking::delegate_with_auto_compound(
+				RuntimeOrigin::signed(2),
+				4,
+				10,
+				Percent::from_percent(50),
+			));
+		});
+}
+
+#[test]
+fn test_delegate_with_auto_compound_cannot_delegate_if_less_than_or_equal_lowest_bottom() {
+	ExtBuilder::default()
+		.with_balances(vec![
+			(1, 20),
+			(2, 10),
+			(3, 10),
+			(4, 10),
+			(5, 10),
+			(6, 10),
+			(7, 10),
+			(8, 10),
+			(9, 10),
+			(10, 10),
+			(11, 10),
+		])
+		.with_candidates(vec![(1, 20)])
+		.with_delegations(vec![
+			(2, 1, 10),
+			(3, 1, 10),
+			(4, 1, 10),
+			(5, 1, 10),
+			(6, 1, 10),
+			(8, 1, 10),
+			(9, 1, 10),
+			(10, 1, 10),
+		])
+		.build()
+		.execute_with(|| {
+			assert_noop!(
+				ParachainStaking::delegate_with_auto_compound(
+					RuntimeOrigin::signed(11),
+					1,
+					10,
+					Percent::from_percent(50),
+				),
+				Error::<Test>::CannotDelegateLessThanOrEqualToLowestBottomWhenFull
+			);
+		});
+}
+
+#[test]
+fn test_delegate_with_auto_compound_can_delegate_if_greater_than_lowest_bottom() {
+	ExtBuilder::default()
+		.with_balances(vec![
+			(1, 20),
+			(2, 10),
+			(3, 10),
+			(4, 10),
+			(5, 10),
+			(6, 10),
+			(7, 10),
+			(8, 10),
+			(9, 10),
+			(10, 10),
+			(11, 11),
+		])
+		.with_candidates(vec![(1, 20)])
+		.with_delegations(vec![
+			(2, 1, 10),
+			(3, 1, 10),
+			(4, 1, 10),
+			(5, 1, 10),
+			(6, 1, 10),
+			(8, 1, 10),
+			(9, 1, 10),
+			(10, 1, 10),
+		])
+		.build()
+		.execute_with(|| {
+			assert_ok!(ParachainStaking::delegate_with_auto_compound(
+				RuntimeOrigin::signed(11),
+				1,
+				11,
+				Percent::from_percent(50),
+			));
+			assert_event_emitted!(Event::DelegationKicked {
+				delegator: 10,
+				candidate: 1,
+				unstaked_amount: 10
+			});
+			assert_event_emitted!(Event::DelegatorLeft {
+				delegator: 10,
+				unstaked_amount: 10
+			});
+		});
+}
+
+#[test]
+fn test_delegate_with_auto_compound_can_still_delegate_to_other_if_leaving() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 20), (2, 20), (3, 20)])
+		.with_candidates(vec![(1, 20), (3, 20)])
+		.with_delegations(vec![(2, 1, 10)])
+		.build()
+		.execute_with(|| {
+			assert_ok!(ParachainStaking::schedule_leave_delegators(RuntimeOrigin::signed(
+				2
+			)));
+			assert_ok!(ParachainStaking::delegate_with_auto_compound(
+				RuntimeOrigin::signed(2),
+				3,
+				10,
+				Percent::from_percent(50),
+			),);
+		});
+}
+
+#[test]
+fn test_delegate_with_auto_compound_cannot_delegate_if_candidate() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 20), (2, 30)])
+		.with_candidates(vec![(1, 20), (2, 20)])
+		.build()
+		.execute_with(|| {
+			assert_noop!(
+				ParachainStaking::delegate_with_auto_compound(
+					RuntimeOrigin::signed(2),
+					1,
+					10,
+					Percent::from_percent(50),
+				),
+				Error::<Test>::CandidateExists
+			);
+		});
+}
+
+#[test]
+fn test_delegate_with_auto_compound_cannot_delegate_if_already_delegated() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 20), (2, 30)])
+		.with_candidates(vec![(1, 20)])
+		.with_delegations(vec![(2, 1, 20)])
+		.build()
+		.execute_with(|| {
+			assert_noop!(
+				ParachainStaking::delegate_with_auto_compound(
+					RuntimeOrigin::signed(2),
+					1,
+					10,
+					Percent::from_percent(50),
+				),
+				Error::<Test>::AlreadyDelegatedCandidate
+			);
+		});
+}
+
+#[test]
+fn test_delegate_with_auto_compound_cannot_delegate_more_than_max_delegations() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 20), (2, 50), (3, 20), (4, 20), (5, 20), (6, 20)])
+		.with_candidates(vec![(1, 20), (3, 20), (4, 20), (5, 20), (6, 20)])
+		.with_delegations(vec![(2, 1, 10), (2, 3, 10), (2, 4, 10), (2, 5, 10)])
+		.build()
+		.execute_with(|| {
+			assert_noop!(
+				ParachainStaking::delegate_with_auto_compound(
+					RuntimeOrigin::signed(2),
+					6,
+					10,
+					Percent::from_percent(50),
+				),
+				Error::<Test>::ExceedMaxDelegationsPerDelegator,
+			);
+		});
+}
+
+#[test]
+fn test_delegate_skips_auto_compound_storage_but_emits_event_for_zero_auto_compound() {
+	ExtBuilder::default()
+		.with_balances(vec![(1, 30), (2, 20), (3, 30)])
+		.with_candidates(vec![(1, 30)])
+		.with_auto_compounding_delegations(vec![(3, 1, 10, Percent::from_percent(50))])
+		.build()
+		.execute_with(|| {
+			// We already have an auto-compounding delegation from 3 -> 1, so the hint validation
+			// would cause a failure if the auto-compounding isn't skipped properly.
+			assert_ok!(ParachainStaking::delegate(RuntimeOrigin::signed(2), 1, 10,));
+			assert_eq!(1, ParachainStaking::auto_compounding_delegations(&1).len(),);
+			assert_last_event!(MetaEvent::ParachainStaking(Event::Delegation {
+				delegator: 2,
+				locked_amount: 10,
+				candidate: 1,
+				delegator_position: DelegatorAdded::AddedToTop { new_total: 50 },
+				auto_compound: Percent::zero(),
 			}));
 		});
 }
