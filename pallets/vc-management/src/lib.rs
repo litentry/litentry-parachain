@@ -50,6 +50,14 @@ pub type GenerateVCFn = ([u8; 2], ShardIdentifier, u32);
 // VCID type in the registry, maybe we want a "did:...." format?
 pub type VCID = u64;
 
+// fn types for handling inside tee-worker
+pub type VCSchemaIssuedFn = ([u8; 2], ShardIdentifier, Vec<u8>);
+pub type VCSchemaDisabledFn = ([u8; 2], ShardIdentifier, Vec<u8>);
+pub type VCSchemaRevokedFn = ([u8; 2], ShardIdentifier, Vec<u8>);
+
+/// An index of a schema. Just a `u64`.
+pub type SchemaIndex = u64;
+
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
@@ -79,10 +87,15 @@ pub mod pallet {
 	#[pallet::getter(fn schema_admin)]
 	pub type SchemaAdmin<T: Config> = StorageValue<_, T::AccountId, OptionQuery>;
 
-	// the Schema contents storage, key is the hash() of scheme content
+	/// Number of schemas
+	#[pallet::storage]
+	#[pallet::getter(fn schema_count)]
+	pub type SchemaCount<T: Config> = StorageValue<_, SchemaIndex, ValueQuery>;
+
+	// the VC Schema storage
 	#[pallet::storage]
 	#[pallet::getter(fn schema_registry)]
-	pub type SchemaRegistry<T: Config> = StorageMap<_, Blake2_256, H256, VCSchema<T>>;
+	pub type SchemaRegistry<T: Config> = StorageMap<_, Blake2_256, SchemaIndex, VCSchema<T>>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -124,19 +137,22 @@ pub mod pallet {
 		// a Schema is issued
 		SchemaIssued {
 			account: T::AccountId,
-			hash: H256,
-			id: Vec<u8>,
-			content: Vec<u8>,
+			index: SchemaIndex,
 		},
 		// a Schema is disabled
 		SchemaDisabled {
 			account: T::AccountId,
-			hash: H256,
+			index: SchemaIndex,
+		},
+		// a Schema is active
+		SchemaActivated {
+			account: T::AccountId,
+			index: SchemaIndex,
 		},
 		// a Schema is revoked
 		SchemaRevoked {
 			account: T::AccountId,
-			hash: H256,
+			index: SchemaIndex,
 		},
 	}
 
@@ -153,12 +169,12 @@ pub mod pallet {
 
 		/// Error when the caller account is not the admin
 		RequireSchemaAdmin,
-		/// Schema Id already exists
-		SchemaAlreadyExists,
-		/// Schema Id not exists
+		/// Schema not exists
 		SchemaNotExists,
 		/// Schema is already disabled
 		SchemaAlreadyDisabled,
+		/// Schema is active
+		SchemaAlreadyActivated,
 	}
 
 	#[pallet::call]
@@ -248,44 +264,71 @@ pub mod pallet {
 		#[pallet::weight(195_000_000)]
 		pub fn add_schema(
 			origin: OriginFor<T>,
-			hash: H256,
 			id: Vec<u8>,
 			content: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			ensure!(Some(sender.clone()) == Self::schema_admin(), Error::<T>::RequireSchemaAdmin);
-			ensure!(!SchemaRegistry::<T>::contains_key(hash), Error::<T>::SchemaAlreadyExists);
+
+			let index = Self::schema_count();
+			<SchemaCount<T>>::put(index + 1);
 			SchemaRegistry::<T>::insert(
-				hash,
+				index,
 				VCSchema::<T>::new(id.clone(), sender.clone(), content.clone()),
 			);
-			Self::deposit_event(Event::SchemaIssued { account: sender, hash, id, content });
+			Self::deposit_event(Event::SchemaIssued { account: sender, index });
 			Ok(().into())
 		}
 
+		// It requires the schema Admin account
 		#[pallet::weight(195_000_000)]
-		pub fn disable_schema(origin: OriginFor<T>, hash: H256) -> DispatchResultWithPostInfo {
+		pub fn disable_schema(
+			origin: OriginFor<T>,
+			index: SchemaIndex,
+		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			ensure!(Some(sender.clone()) == Self::schema_admin(), Error::<T>::RequireSchemaAdmin);
 
-			SchemaRegistry::<T>::try_mutate(hash, |context| {
+			SchemaRegistry::<T>::try_mutate(index, |context| {
 				let mut c = context.take().ok_or(Error::<T>::SchemaNotExists)?;
 				ensure!(c.status == Status::Active, Error::<T>::SchemaAlreadyDisabled);
 				c.status = Status::Disabled;
 				*context = Some(c);
-				Self::deposit_event(Event::SchemaDisabled { account: sender, hash });
+				Self::deposit_event(Event::SchemaDisabled { account: sender, index });
 				Ok(().into())
 			})
 		}
 
+		// It requires the schema Admin account
 		#[pallet::weight(195_000_000)]
-		pub fn revoke_schema(origin: OriginFor<T>, hash: H256) -> DispatchResultWithPostInfo {
+		pub fn active_schema(
+			origin: OriginFor<T>,
+			index: SchemaIndex,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+			ensure!(Some(sender.clone()) == Self::schema_admin(), Error::<T>::RequireSchemaAdmin);
+			SchemaRegistry::<T>::try_mutate(index, |context| {
+				let mut c = context.take().ok_or(Error::<T>::SchemaNotExists)?;
+				ensure!(c.status == Status::Disabled, Error::<T>::SchemaAlreadyActivated);
+				c.status = Status::Active;
+				*context = Some(c);
+				Self::deposit_event(Event::SchemaActivated { account: sender, index });
+				Ok(().into())
+			})
+		}
+
+		// It requires the schema Admin account
+		#[pallet::weight(195_000_000)]
+		pub fn revoke_schema(
+			origin: OriginFor<T>,
+			index: SchemaIndex,
+		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			ensure!(Some(sender.clone()) == Self::schema_admin(), Error::<T>::RequireSchemaAdmin);
 
-			let context = SchemaRegistry::<T>::get(hash).ok_or(Error::<T>::SchemaNotExists)?;
-			SchemaRegistry::<T>::remove(hash);
-			Self::deposit_event(Event::SchemaRevoked { account: sender, hash });
+			let context = SchemaRegistry::<T>::get(index).ok_or(Error::<T>::SchemaNotExists)?;
+			SchemaRegistry::<T>::remove(index);
+			Self::deposit_event(Event::SchemaRevoked { account: sender, index });
 			Ok(().into())
 		}
 	}
