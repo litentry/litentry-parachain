@@ -116,9 +116,10 @@ pub mod pallet {
 			error: Vec<u8>,
 		},
 
-		/// Admin acccount was changed, the \[ old admin \] is provided
+		/// Admin acccount was changed
 		SchemaAdminChanged {
 			old_admin: Option<T::AccountId>,
+			new_admin: Option<T::AccountId>,
 		},
 		// a Schema is issued
 		SchemaIssued {
@@ -128,7 +129,7 @@ pub mod pallet {
 			content: Vec<u8>,
 		},
 		// a Schema is disabled
-		SchemaDisable {
+		SchemaDisabled {
 			account: T::AccountId,
 			hash: H256,
 		},
@@ -235,7 +236,10 @@ pub mod pallet {
 			new: T::AccountId,
 		) -> DispatchResultWithPostInfo {
 			T::SetAdminOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::SchemaAdminChanged { old_admin: Self::schema_admin() });
+			Self::deposit_event(Event::SchemaAdminChanged {
+				old_admin: Self::schema_admin(),
+				new_admin: Some(new.clone()),
+			});
 			<SchemaAdmin<T>>::put(new);
 			Ok(Pays::No.into())
 		}
@@ -269,7 +273,7 @@ pub mod pallet {
 				ensure!(c.status == Status::Active, Error::<T>::SchemaAlreadyDisabled);
 				c.status = Status::Disabled;
 				*context = Some(c);
-				Self::deposit_event(Event::SchemaDisable { account: sender, hash });
+				Self::deposit_event(Event::SchemaDisabled { account: sender, hash });
 				Ok(().into())
 			})
 		}
