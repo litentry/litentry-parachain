@@ -56,7 +56,7 @@ fn create_funded_user<T: Config>(
 	// If we have InsufficientBalance Issue
 	// Then we should care about ED of pallet_balances here
 	let min_candidate_stk = min_candidate_stk::<T>();
-	let total = min_candidate_stk * 10u32.into() + extra;
+	let total = min_candidate_stk * 100u32.into() + extra;
 	T::Currency::make_free_balance_be(&user, total);
 	T::Currency::issue(total);
 	(user, total)
@@ -463,7 +463,7 @@ benchmarks! {
 			caller.clone()
 		)?;
 	} verify {
-		let expected_bond = min_candidate_stk * 10u32.into();
+		let expected_bond = min_candidate_stk * 100u32.into();
 		assert_eq!(T::Currency::reserved_balance(&caller),expected_bond);
 	}
 
