@@ -18,6 +18,7 @@ cleanup() {
 
 UPSTREAM="https://github.com/integritee-network/worker"
 ROOTDIR=$(git rev-parse --show-toplevel)
+ROOTDIR="$ROOTDIR/tee-worker"
 cd "$ROOTDIR"
 
 if [ -f upstream_commit ]; then

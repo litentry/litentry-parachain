@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ROOTDIR=$(git rev-parse --show-toplevel)
+ROOTDIR="$ROOTDIR/tee-worker"
 DESTDIR="$ROOTDIR/docker/litentry"
 PARACHAIN_DIR=$(mktemp -d)
 git clone https://github.com/litentry/litentry-parachain "$PARACHAIN_DIR"

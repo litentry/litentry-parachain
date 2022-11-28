@@ -2,6 +2,8 @@
 set -euo pipefail
 
 ROOTDIR=$(git rev-parse --show-toplevel)
+ROOTDIR="$ROOTDIR/tee-worker"
+
 cd "$ROOTDIR"
 # with '#' so that it filters out the pallet dependency
 SHA=$(grep -F 'https://github.com/litentry/litentry-parachain.git?branch=tee-dev#' Cargo.lock | head -n1 | sed 's/.*#//;s/"$//')

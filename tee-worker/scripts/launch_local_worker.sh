@@ -4,6 +4,7 @@
 # Example: ./launch_local_worker.sh 2 true
 
 ROOTDIR=$(git rev-parse --show-toplevel)
+ROOTDIR="$ROOTDIR/tee-worker"
 
 workers=${1:-1}
 reset=$2

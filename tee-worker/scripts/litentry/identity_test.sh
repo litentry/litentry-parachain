@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 root_dir=$(git rev-parse --show-toplevel)
+root_dir="$root_dir/tee-worker"
 
 #CLIENT_BIN="$root_dir/bin/integritee-cli"
 
