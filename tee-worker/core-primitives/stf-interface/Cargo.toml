@@ -1,0 +1,17 @@
+[package]
+authors = ["Integritee AG <hello@integritee.network>"]
+edition = "2021"
+name = "itp-stf-interface"
+version = "0.8.0"
+
+[dependencies]
+itp-node-api-metadata = { path = "../node-api/metadata", default-features = false }
+itp-node-api-metadata-provider = { path = "../node-api/metadata-provider", default-features = false }
+itp-types = { default-features = false, path = "../types" }
+
+[features]
+default = ["std"]
+mocks = []
+std = [
+  "itp-types/std",
+]
