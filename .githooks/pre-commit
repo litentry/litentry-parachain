@@ -10,9 +10,5 @@ if [ ! -z "$files" ]; then
   echo "[cargo fmt] and [git add] the following files:"
   echo "$files"
   make fmt
-  cd tee-worker
-  make fmt
-  taplo fmt
-  cd ..
   git add $(echo "$files" | paste -s -d " " -)
 fi
