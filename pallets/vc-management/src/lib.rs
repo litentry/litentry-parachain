@@ -271,6 +271,8 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			ensure!(Some(sender.clone()) == Self::schema_admin(), Error::<T>::RequireSchemaAdmin);
 
+			
+
 			let index = Self::schema_count();
 			<SchemaCount<T>>::put(index + 1);
 			SchemaRegistry::<T>::insert(
@@ -329,6 +331,10 @@ pub mod pallet {
 
 			let context = SchemaRegistry::<T>::get(index).ok_or(Error::<T>::SchemaNotExists)?;
 			SchemaRegistry::<T>::remove(index);
+			let index = Self::schema_count();
+			if index > 0 {
+				<SchemaCount<T>>::put(index - 1);
+			}
 			Self::deposit_event(Event::SchemaRevoked { account: sender, index });
 			Ok(().into())
 		}
