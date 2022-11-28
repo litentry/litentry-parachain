@@ -22,7 +22,6 @@ env:
   LOG_DIR: logs
   BUILD_CONTAINER_NAME: integritee_worker_enclave_test
   UPLOAD_DOWNLOAD_DIR_PREFIX: /tmp
-  DEFAULT_WORKING_DIRECTORY: tee-worker
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -32,7 +31,7 @@ concurrency:
 # please note it only applies to the `run` command, not `use` command
 defaults:
   run:
-    working-directory: ${{ env.DEFAULT_WORKING_DIRECTORY }}
+    working-directory: tee-worker
 
 jobs:
   check-file-change:
@@ -406,7 +405,8 @@ jobs:
           body: |
             ${{ steps.Changelog.outputs.changelog }}
           draft: true
+          # note the path change
           files: |
-            integritee-client
-            integritee-demo-validateer
-            enclave.signed.so
+            tee-worker/integritee-client
+            tee-worker/integritee-demo-validateer
+            tee-worker/enclave.signed.so
