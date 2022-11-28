@@ -1,17 +1,13 @@
-name: TEE-worker CI
+name: Build, Test, Clippy
 
 on:
   workflow_dispatch:
   push:
-    branches:
-      - dev
-      - tee-dev
+    branches: [ dev ]
     tags:
       - '[0-9]+.[0-9]+.[0-9]+'
   pull_request:
-    branches:
-      - dev
-      - tee-dev
+    branches: [ dev ]
 
 env:
   CARGO_TERM_COLOR: always
@@ -34,12 +30,10 @@ jobs:
 
       - name: Build docker image
         run: |
-          ./tee-worker/scripts/litentry/build_parachain_docker.sh
-
+          ./scripts/litentry/build_parachain_docker.sh
       - name: Save docker image
         run: |
           docker save litentry/litentry-parachain:tee-dev -o litentry-parachain.tar
-
       - name: Upload docker image
         uses: actions/upload-artifact@v3
         with:
@@ -82,7 +76,6 @@ jobs:
           --target deployed-worker
           --build-arg WORKER_MODE_ARG=${{ matrix.mode }} --build-arg ADDITIONAL_FEATURES_ARG=${{ matrix.additional_features }}
           -f build.Dockerfile .
-
       - name: Build CLI client
         env:
           DOCKER_BUILDKIT: 1
@@ -91,7 +84,6 @@ jobs:
           --target deployed-client
           --build-arg WORKER_MODE_ARG=${{ matrix.mode }} --build-arg ADDITIONAL_FEATURES_ARG=${{ matrix.additional_features }}
           -f build.Dockerfile .
-
       - run: docker images --all
 
       - name: Test Enclave # cargo test is not supported in the enclave, see: https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
@@ -101,7 +93,6 @@ jobs:
         run: |
           docker image save integritee-worker-${{ matrix.flavor_id }}-${{ github.sha }} | gzip > integritee-worker-${{ matrix.flavor_id }}-${{ github.sha }}.tar.gz
           docker image save integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }} | gzip > integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }}.tar.gz
-
       - name: Upload worker image
         uses: actions/upload-artifact@v3
         with:
@@ -132,22 +123,18 @@ jobs:
         run: |
           cargo clippy --features evm -- -D warnings
           cd enclave-runtime && cargo clippy --features evm -- -D warnings
-
       - name: Clippy with Sidechain feature
         run: |
           cargo clippy --features sidechain -- -D warnings
           cd enclave-runtime && cargo clippy --features sidechain -- -D warnings
-
       - name: Clippy with Teeracle feature
         run: |
           cargo clippy --features teeracle -- -D warnings
           cd enclave-runtime && cargo clippy --features teeracle -- -D warnings
-
       - name: Clippy with Offchain-worker feature
         run: |
           cargo clippy --features offchain-worker -- -D warnings
           cd enclave-runtime && cargo clippy --features offchain-worker -- -D warnings
-
       - name: Fail-fast; cancel other jobs
         if: failure()
         uses: andymckay/cancel-action@0.2
@@ -223,7 +210,6 @@ jobs:
       - name: Pull polkadot image
         run: |
           docker pull parity/polkadot:latest
-
       - uses: actions/download-artifact@v3
         with:
           name: parachain-artifact
@@ -231,7 +217,6 @@ jobs:
       - name: Load docker image
         run: |
           docker load -i litentry-parachain.tar
-
       - name: Download Worker Image
         uses: actions/download-artifact@v3
         with:
@@ -251,33 +236,27 @@ jobs:
           docker image load --input integritee-worker-${{ matrix.flavor_id }}-${{ github.sha }}.tar.gz
           docker image load --input integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }}.tar.gz
           docker images --all
-
       - name: Re-name Image Tags
         run: |
           docker tag integritee-worker-${{ matrix.flavor_id }}-${{ github.sha }} ${{ env.WORKER_IMAGE_TAG }}
           docker tag integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }} ${{ env.CLIENT_IMAGE_TAG }}
           docker images --all
-
       - name: Generate parachain artefacts
         run: |
           ./scripts/litentry/generate_parachain_artefacts.sh
-
       - name: Build litentry parachain docker images
         run: |
           cd docker
           docker-compose -f litentry-parachain.build.yml build
-
       - name: Integration Test ${{ matrix.test }}-${{ matrix.flavor_id }}
         timeout-minutes: 30
         run: |
           cd docker
           docker-compose -f docker-compose.yml -f ${{ matrix.demo_name }}.yml up --no-build --exit-code-from ${{ matrix.demo_name }} -- ${{ matrix.demo_name }}
-
       - name: Stop docker containers
         run: |
           cd docker
           docker compose -f docker-compose.yml -f ${{ matrix.demo_name }}.yml stop
-
       - name: Collect Docker Logs
         continue-on-error: true
         if: always()
@@ -308,7 +287,6 @@ jobs:
       - name: Load docker image
         run: |
           docker load -i litentry-parachain.tar
-
       - name: Dockerhub login
         uses: docker/login-action@v1
         with:

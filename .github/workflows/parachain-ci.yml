@@ -51,6 +51,7 @@ jobs:
               - 'pallets/**'
               - 'primitives/**'
               - 'runtime/**'
+              - 'mock-tee-primitives/**'
               - 'docker/Dockerfile'
               - '**/Cargo.lock'
               - '**/Cargo.toml'
