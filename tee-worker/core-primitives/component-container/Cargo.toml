@@ -17,10 +17,10 @@ thiserror = { version = "1.0", optional = true }
 [features]
 default = ["std"]
 sgx = [
-  # sgx
-  "sgx_tstd",
-  "thiserror_sgx",
+    # sgx
+    "sgx_tstd",
+    "thiserror_sgx",
 ]
 std = [
-  "thiserror",
+    "thiserror",
 ]

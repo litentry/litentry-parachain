@@ -23,12 +23,12 @@ its-primitives = { path = "../primitives", default_features = false, features = 
 [features]
 default = ["std"]
 sgx = [
-  "sgx_tstd",
+    "sgx_tstd",
 ]
 std = [
-  "codec/std",
-  "itp-types/std",
-  "its-primitives/std",
-  # substrate
-  "sp-core/std",
+    "codec/std",
+    "itp-types/std",
+    "its-primitives/std",
+    # substrate
+    "sp-core/std",
 ]

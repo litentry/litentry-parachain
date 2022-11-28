@@ -43,25 +43,25 @@ tokio = { version = "1.6.1", features = ["full"] }
 [features]
 default = ["std"]
 sgx = [
-  "itp-sgx-io/sgx",
-  "itp-time-utils/sgx",
-  "its-consensus-common/sgx",
-  "sgx_tstd",
+    "itp-sgx-io/sgx",
+    "itp-time-utils/sgx",
+    "its-consensus-common/sgx",
+    "sgx_tstd",
 ]
 std = [
-  "codec/std",
-  "log/std",
-  # only for slot-stream
-  "futures",
-  "futures-timer",
-  # substrate
-  "sp-consensus-slots/std",
-  "sp-runtime/std",
-  # local
-  "itp-sgx-io/std",
-  "itp-time-utils/std",
-  "itp-types/std",
-  "its-primitives/std",
-  "its-block-verification/std",
-  "its-consensus-common/std",
+    "codec/std",
+    "log/std",
+    # only for slot-stream
+    "futures",
+    "futures-timer",
+    # substrate
+    "sp-consensus-slots/std",
+    "sp-runtime/std",
+    # local
+    "itp-sgx-io/std",
+    "itp-time-utils/std",
+    "itp-types/std",
+    "its-primitives/std",
+    "its-block-verification/std",
+    "its-consensus-common/std",
 ]

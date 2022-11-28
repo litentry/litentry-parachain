@@ -16,11 +16,11 @@ sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sd
 [features]
 default = ["std"]
 sgx = [
-  "sgx_tstd",
+    "sgx_tstd",
 ]
 std = [
-  "codec/std",
-  "itp-types/std",
-  "serde/std",
-  "serde_json/std",
+    "codec/std",
+    "itp-types/std",
+    "serde/std",
+    "serde_json/std",
 ]

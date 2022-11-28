@@ -30,22 +30,22 @@ thiserror-sgx = { package = "thiserror", git = "https://github.com/mesalock-linu
 [features]
 default = ["std"]
 sgx = [
-  "itp-utils/sgx",
-  "sgx_tstd",
-  "thiserror-sgx",
+    "itp-utils/sgx",
+    "sgx_tstd",
+    "thiserror-sgx",
 ]
 std = [
-  "log/std",
-  "thiserror",
-  # local
-  "itp-types/std",
-  "itp-utils/std",
-  "its-primitives/std",
-  # substrate
-  "frame-support/std",
-  "sp-consensus-slots/std",
-  "sp-core/std",
-  "sp-runtime/std",
+    "log/std",
+    "thiserror",
+    # local
+    "itp-types/std",
+    "itp-utils/std",
+    "its-primitives/std",
+    # substrate
+    "frame-support/std",
+    "sp-consensus-slots/std",
+    "sp-core/std",
+    "sp-runtime/std",
 ]
 
 [dev-dependencies]

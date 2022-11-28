@@ -48,29 +48,29 @@ default = ["std"]
 mocks = []
 offchain-worker = []
 sgx = [
-  "sgx_tstd",
-  "jsonrpc-core_sgx",
-  "ita-stf/sgx",
-  "itp-enclave-metrics/sgx",
-  "itp-sgx-crypto/sgx",
-  "itp-stf-state-handler/sgx",
-  "itp-top-pool/sgx",
-  "itp-utils/sgx",
-  "thiserror_sgx",
+    "sgx_tstd",
+    "jsonrpc-core_sgx",
+    "ita-stf/sgx",
+    "itp-enclave-metrics/sgx",
+    "itp-sgx-crypto/sgx",
+    "itp-stf-state-handler/sgx",
+    "itp-top-pool/sgx",
+    "itp-utils/sgx",
+    "thiserror_sgx",
 ]
 sidechain = []
 std = [
-  "ita-stf/std",
-  "itp-sgx-crypto/std",
-  "itp-enclave-metrics/std",
-  "itp-ocall-api/std",
-  "itp-stf-state-handler/std",
-  "itp-top-pool/std",
-  "itp-types/std",
-  "itp-utils/std",
-  "jsonrpc-core",
-  "log/std",
-  "thiserror",
+    "ita-stf/std",
+    "itp-sgx-crypto/std",
+    "itp-enclave-metrics/std",
+    "itp-ocall-api/std",
+    "itp-stf-state-handler/std",
+    "itp-top-pool/std",
+    "itp-types/std",
+    "itp-utils/std",
+    "jsonrpc-core",
+    "log/std",
+    "thiserror",
 ]
 teeracle = []
 test = ["itp-test/sgx", "itp-top-pool/mocks"]

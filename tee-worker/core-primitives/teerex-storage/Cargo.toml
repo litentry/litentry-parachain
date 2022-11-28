@@ -13,6 +13,6 @@ itp-storage = { path = "../storage", default-features = false }
 [features]
 default = ["std"]
 std = [
-  "sp-std/std",
-  "itp-storage/std",
+    "sp-std/std",
+    "itp-storage/std",
 ]

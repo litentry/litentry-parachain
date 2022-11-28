@@ -55,8 +55,8 @@ litentry-primitives = { path = "../litentry/primitives" }
 [features]
 default = []
 evm = [
-  "ita-stf/evm_std",
-  "pallet-evm",
+    "ita-stf/evm_std",
+    "pallet-evm",
 ]
 mockserver = []
 offchain-worker = []

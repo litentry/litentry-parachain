@@ -24,13 +24,13 @@ itp-types = { path = "../../core-primitives/types", default-features = false }
 [features]
 default = ["std"]
 std = [
-  "codec/std",
-  "sp-core/std",
-  "sp-runtime/std",
-  "sp-std/std",
-  "itp-types/std",
-  "itp-storage/std",
-  "itp-ocall-api/std",
+    "codec/std",
+    "sp-core/std",
+    "sp-runtime/std",
+    "sp-std/std",
+    "itp-types/std",
+    "itp-storage/std",
+    "itp-ocall-api/std",
 ]
 
 [dev-dependencies]

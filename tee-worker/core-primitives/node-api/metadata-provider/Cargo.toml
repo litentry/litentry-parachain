@@ -22,11 +22,11 @@ itp-node-api-metadata = { default-features = false, path = "../metadata" }
 [features]
 default = ["std"]
 sgx = [
-  "sgx_tstd",
-  "thiserror_sgx",
+    "sgx_tstd",
+    "thiserror_sgx",
 ]
 std = [
-  "thiserror",
+    "thiserror",
 ]
 # used for unit testing only!
 mocks = []

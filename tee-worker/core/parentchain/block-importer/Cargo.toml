@@ -32,31 +32,31 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 [features]
 default = ["std"]
 sgx = [
-  # sgx
-  "sgx_tstd",
-  # local
-  "ita-stf/sgx",
-  "itc-parentchain-indirect-calls-executor/sgx",
-  "itc-parentchain-light-client/sgx",
-  "itp-extrinsics-factory/sgx",
-  "itp-stf-executor/sgx",
-  # sgx enabled external libraries
-  "thiserror_sgx",
+    # sgx
+    "sgx_tstd",
+    # local
+    "ita-stf/sgx",
+    "itc-parentchain-indirect-calls-executor/sgx",
+    "itc-parentchain-light-client/sgx",
+    "itp-extrinsics-factory/sgx",
+    "itp-stf-executor/sgx",
+    # sgx enabled external libraries
+    "thiserror_sgx",
 ]
 std = [
-  # local
-  "ita-stf/std",
-  "itc-parentchain-indirect-calls-executor/std",
-  "itc-parentchain-light-client/std",
-  "itp-extrinsics-factory/std",
-  "itp-stf-executor/std",
-  "itp-types/std",
-  # no-std compatible libraries
-  "codec/std",
-  "log/std",
-  "sp-runtime/std",
-  # std compatible external
-  "thiserror",
+    # local
+    "ita-stf/std",
+    "itc-parentchain-indirect-calls-executor/std",
+    "itc-parentchain-light-client/std",
+    "itp-extrinsics-factory/std",
+    "itp-stf-executor/std",
+    "itp-types/std",
+    # no-std compatible libraries
+    "codec/std",
+    "log/std",
+    "sp-runtime/std",
+    # std compatible external
+    "thiserror",
 ]
 
 # feature to export mock implementations, only to be used for dev-dependencies!

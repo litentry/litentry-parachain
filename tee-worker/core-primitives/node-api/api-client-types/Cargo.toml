@@ -16,7 +16,7 @@ sp-core = { optional = true, git = "https://github.com/paritytech/substrate.git"
 [features]
 default = ["std"]
 std = [
-  "substrate-api-client/std",
-  "substrate-api-client/ws-client",
-  "sp-core",
+    "substrate-api-client/std",
+    "substrate-api-client/ws-client",
+    "sp-core",
 ]

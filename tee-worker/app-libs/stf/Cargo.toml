@@ -53,49 +53,49 @@ sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "po
 default = ["std"]
 evm = ["ita-sgx-runtime/evm"]
 evm_std = [
-  "evm",
-  "ita-sgx-runtime/evm_std",
+    "evm",
+    "ita-sgx-runtime/evm_std",
 ]
 mockserver = []
 sgx = [
-  "sgx_tstd",
-  "itp-sgx-externalities/sgx",
-  "itp-utils/sgx",
-  "sp-io/sgx",
-  "itp-node-api/sgx",
-  "litentry-primitives/sgx",
-  "lc-stf-task-sender/sgx",
-  "rand-sgx",
+    "sgx_tstd",
+    "itp-sgx-externalities/sgx",
+    "itp-utils/sgx",
+    "sp-io/sgx",
+    "itp-node-api/sgx",
+    "litentry-primitives/sgx",
+    "lc-stf-task-sender/sgx",
+    "rand-sgx",
 ]
 std = [
-  # crates.io
-  "codec/std",
-  "log/std",
-  "rlp/std",
-  # local
-  "ita-sgx-runtime/std",
-  "itp-hashing/std",
-  "itp-sgx-externalities/std",
-  "itp-stf-interface/std",
-  "itp-storage/std",
-  "itp-types/std",
-  "itp-utils/std",
-  # substrate
-  "sp-core/std",
-  "pallet-balances/std",
-  "pallet-sudo/std",
-  "frame-system/std",
-  "frame-support/std",
-  "sp-application-crypto/std",
-  "sp-runtime/std",
-  # litentry
-  "pallet-parentchain/std",
-  "sp-io/std",
-  "ita-sgx-runtime/std",
-  "itp-node-api/std",
-  "litentry-primitives/std",
-  "parentchain-primitives/std",
-  "lc-stf-task-sender/std",
-  "rand",
+    # crates.io
+    "codec/std",
+    "log/std",
+    "rlp/std",
+    # local
+    "ita-sgx-runtime/std",
+    "itp-hashing/std",
+    "itp-sgx-externalities/std",
+    "itp-stf-interface/std",
+    "itp-storage/std",
+    "itp-types/std",
+    "itp-utils/std",
+    # substrate
+    "sp-core/std",
+    "pallet-balances/std",
+    "pallet-sudo/std",
+    "frame-system/std",
+    "frame-support/std",
+    "sp-application-crypto/std",
+    "sp-runtime/std",
+    # litentry
+    "pallet-parentchain/std",
+    "sp-io/std",
+    "ita-sgx-runtime/std",
+    "itp-node-api/std",
+    "litentry-primitives/std",
+    "parentchain-primitives/std",
+    "lc-stf-task-sender/std",
+    "rand",
 ]
 test = []

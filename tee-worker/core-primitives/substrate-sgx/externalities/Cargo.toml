@@ -25,16 +25,16 @@ itp-hashing = { default-features = false, path = "../../hashing" }
 [features]
 default = ["std"]
 sgx = [
-  "sgx_tstd",
-  "environmental/sgx",
+    "sgx_tstd",
+    "environmental/sgx",
 ]
 std = [
-  "codec/std",
-  "environmental/std",
-  "itp-hashing/std",
-  "log/std",
-  "postcard/use-std",
-  "serde/std",
-  # substrate
-  "sp-core/std",
+    "codec/std",
+    "environmental/std",
+    "itp-hashing/std",
+    "log/std",
+    "postcard/use-std",
+    "serde/std",
+    # substrate
+    "sp-core/std",
 ]

@@ -20,21 +20,21 @@ itp-types = { default-features = false, path = "../../../core-primitives/types" 
 [features]
 default = ["std"]
 mocks = [
-  "itc-parentchain-block-import-dispatcher/mocks",
-  "itc-parentchain-light-client/mocks",
+    "itc-parentchain-block-import-dispatcher/mocks",
+    "itc-parentchain-light-client/mocks",
 ]
 sgx = [
-  "itc-parentchain-block-import-dispatcher/sgx",
-  "itc-parentchain-block-importer/sgx",
-  "itc-parentchain-indirect-calls-executor/sgx",
-  "itc-parentchain-light-client/sgx",
+    "itc-parentchain-block-import-dispatcher/sgx",
+    "itc-parentchain-block-importer/sgx",
+    "itc-parentchain-indirect-calls-executor/sgx",
+    "itc-parentchain-light-client/sgx",
 ]
 std = [
-  "codec/std",
-  "sp-runtime/std",
-  "itc-parentchain-block-import-dispatcher/std",
-  "itc-parentchain-block-importer/std",
-  "itc-parentchain-indirect-calls-executor/std",
-  "itc-parentchain-light-client/std",
-  "itp-types/std",
+    "codec/std",
+    "sp-runtime/std",
+    "itc-parentchain-block-import-dispatcher/std",
+    "itc-parentchain-block-importer/std",
+    "itc-parentchain-indirect-calls-executor/std",
+    "itc-parentchain-light-client/std",
+    "itp-types/std",
 ]

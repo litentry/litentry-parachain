@@ -31,16 +31,16 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 default = ["std"]
 mocks = []
 sgx = [
-  "itp-node-api/sgx",
-  "itp-nonce-cache/sgx",
-  "sgx_tstd",
-  "thiserror_sgx",
+    "itp-node-api/sgx",
+    "itp-nonce-cache/sgx",
+    "sgx_tstd",
+    "thiserror_sgx",
 ]
 std = [
-  "itp-node-api/std",
-  "itp-nonce-cache/std",
-  "itp-types/std",
-  "log/std",
-  "substrate-api-client/std",
-  "thiserror",
+    "itp-node-api/std",
+    "itp-nonce-cache/std",
+    "itp-types/std",
+    "log/std",
+    "substrate-api-client/std",
+    "thiserror",
 ]

@@ -27,17 +27,17 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 [features]
 default = ["std"]
 std = [
-  "codec/std",
-  "chrono/std",
-  "serde/std",
-  "serde_json/std",
-  "primitive-types/std",
-  "itp-sgx-runtime-primitives/std",
-  # substrate
-  "frame-system/std",
-  "pallet-balances/std",
-  "sp-std/std",
-  "sp-core/std",
-  "sp-runtime/std",
+    "codec/std",
+    "chrono/std",
+    "serde/std",
+    "serde_json/std",
+    "primitive-types/std",
+    "itp-sgx-runtime-primitives/std",
+    # substrate
+    "frame-system/std",
+    "pallet-balances/std",
+    "sp-std/std",
+    "sp-core/std",
+    "sp-runtime/std",
 ]
 test = []

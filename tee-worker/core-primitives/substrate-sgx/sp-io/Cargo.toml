@@ -32,27 +32,27 @@ environmental = { path = "../environmental", default-features = false }
 [features]
 default = ["std"]
 sgx = [
-  "sgx_tstd",
-  "sgx_types",
-  "itp-sgx-externalities/sgx",
-  "sp-runtime-interface/disable_target_static_assertions",
-  #local
-  "environmental/sgx",
+    "sgx_tstd",
+    "sgx_types",
+    "itp-sgx-externalities/sgx",
+    "sp-runtime-interface/disable_target_static_assertions",
+    #local
+    "environmental/sgx",
 ]
 std = [
-  "log/std",
-  "sp-core/std",
-  "codec/std",
-  "sp-std/std",
-  "hash-db/std",
-  "libsecp256k1/std",
-  "sp-runtime-interface/std",
-  "sp-wasm-interface/std",
-  "futures",
-  "parking_lot",
-  "itp-sgx-externalities/std",
-  # local
-  "environmental/std",
+    "log/std",
+    "sp-core/std",
+    "codec/std",
+    "sp-std/std",
+    "hash-db/std",
+    "libsecp256k1/std",
+    "sp-runtime-interface/std",
+    "sp-wasm-interface/std",
+    "futures",
+    "parking_lot",
+    "itp-sgx-externalities/std",
+    # local
+    "environmental/std",
 ]
 
 # These two features are used for `no_std` builds for the environments which already provides

@@ -29,23 +29,23 @@ serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 [features]
 default = ["std"]
 sgx = [
-  "http-sgx",
-  "http_req-sgx",
-  "sgx_types",
-  "sgx_tstd",
-  "thiserror_sgx",
-  "url_sgx",
-  "base64_sgx",
+    "http-sgx",
+    "http_req-sgx",
+    "sgx_types",
+    "sgx_tstd",
+    "thiserror_sgx",
+    "url_sgx",
+    "base64_sgx",
 ]
 std = [
-  # std only
-  "http",
-  "http_req",
-  "thiserror",
-  "url",
-  # no_std
-  "base64/std",
-  "serde/std",
-  "serde_json/std",
-  "log/std",
+    # std only
+    "http",
+    "http_req",
+    "thiserror",
+    "url",
+    # no_std
+    "base64/std",
+    "serde/std",
+    "serde_json/std",
+    "log/std",
 ]

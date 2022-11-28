@@ -15,8 +15,8 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 [features]
 default = ["std"]
 std = [
-  "frame-system/std",
-  "pallet-balances/std",
-  "sp-core/std",
-  "sp-runtime/std",
+    "frame-system/std",
+    "pallet-balances/std",
+    "sp-core/std",
+    "sp-runtime/std",
 ]

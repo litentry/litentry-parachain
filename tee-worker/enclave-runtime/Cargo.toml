@@ -14,40 +14,40 @@ name = "enclave_runtime"
 [features]
 default = []
 evm = [
-  "ita-sgx-runtime/evm",
-  "ita-stf/evm",
+    "ita-sgx-runtime/evm",
+    "ita-stf/evm",
 ]
 mockserver = [
-  "ita-stf/mockserver",
-  "lc-stf-task-receiver/mockserver",
+    "ita-stf/mockserver",
+    "lc-stf-task-receiver/mockserver",
 ]
 offchain-worker = [
-  "itp-settings/offchain-worker",
-  "itp-top-pool-author/offchain-worker",
+    "itp-settings/offchain-worker",
+    "itp-top-pool-author/offchain-worker",
 ]
 production = ["itp-settings/production"]
 sidechain = ["itp-settings/sidechain", "itp-top-pool-author/sidechain"]
 teeracle = [
-  "ita-exchange-oracle",
-  "itp-settings/teeracle",
-  "itp-top-pool-author/teeracle",
+    "ita-exchange-oracle",
+    "itp-settings/teeracle",
+    "itp-top-pool-author/teeracle",
 ]
 test = [
-  "ita-stf/test",
-  "itc-parentchain/mocks",
-  "itp-attestation-handler/test",
-  "itp-extrinsics-factory/mocks",
-  "itp-sgx-crypto/mocks",
-  "itp-stf-executor/test",
-  "itp-stf-executor/mocks",
-  "itp-stf-state-handler/test",
-  "itp-stf-state-observer/mocks",
-  "itp-storage/test",
-  "itp-test/sgx",
-  "itp-top-pool-author/test",
-  "itp-top-pool-author/mocks",
-  # substrate
-  "frame-system",
+    "ita-stf/test",
+    "itc-parentchain/mocks",
+    "itp-attestation-handler/test",
+    "itp-extrinsics-factory/mocks",
+    "itp-sgx-crypto/mocks",
+    "itp-stf-executor/test",
+    "itp-stf-executor/mocks",
+    "itp-stf-state-handler/test",
+    "itp-stf-state-observer/mocks",
+    "itp-storage/test",
+    "itp-test/sgx",
+    "itp-top-pool-author/test",
+    "itp-top-pool-author/mocks",
+    # substrate
+    "frame-system",
 ]
 
 [target.'cfg(not(target_env = "sgx"))'.dependencies]

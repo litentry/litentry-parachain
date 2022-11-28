@@ -54,46 +54,46 @@ itp-stf-state-observer = { path = "../stf-state-observer", features = ["mocks"] 
 default = ["std"]
 mocks = []
 sgx = [
-  "sgx_tstd",
-  "ita-stf/sgx",
-  "itp-node-api/sgx",
-  "itp-sgx-crypto/sgx",
-  "itp-sgx-externalities/sgx",
-  "itp-stf-state-handler/sgx",
-  "itp-stf-state-observer/sgx",
-  "itp-top-pool-author/sgx",
-  "itp-storage/sgx",
-  "itp-time-utils/sgx",
-  "thiserror_sgx",
+    "sgx_tstd",
+    "ita-stf/sgx",
+    "itp-node-api/sgx",
+    "itp-sgx-crypto/sgx",
+    "itp-sgx-externalities/sgx",
+    "itp-stf-state-handler/sgx",
+    "itp-stf-state-observer/sgx",
+    "itp-top-pool-author/sgx",
+    "itp-storage/sgx",
+    "itp-time-utils/sgx",
+    "thiserror_sgx",
 ]
 std = [
-  # local
-  "ita-stf/std",
-  "ita-sgx-runtime/std",
-  "itp-node-api/std",
-  "itp-ocall-api/std",
-  "itp-sgx-crypto/std",
-  "itp-sgx-externalities/std",
-  "itp-stf-interface/std",
-  "itp-stf-state-handler/std",
-  "itp-stf-state-observer/std",
-  "itp-top-pool-author/std",
-  "itp-storage/std",
-  "itp-types/std",
-  "itp-time-utils/std",
-  # crates.io
-  "log/std",
-  "codec/std",
-  # scs
-  "substrate-api-client/std",
-  # substrate
-  "sp-core/std",
-  "sp-runtime/std",
-  "thiserror",
+    # local
+    "ita-stf/std",
+    "ita-sgx-runtime/std",
+    "itp-node-api/std",
+    "itp-ocall-api/std",
+    "itp-sgx-crypto/std",
+    "itp-sgx-externalities/std",
+    "itp-stf-interface/std",
+    "itp-stf-state-handler/std",
+    "itp-stf-state-observer/std",
+    "itp-top-pool-author/std",
+    "itp-storage/std",
+    "itp-types/std",
+    "itp-time-utils/std",
+    # crates.io
+    "log/std",
+    "codec/std",
+    # scs
+    "substrate-api-client/std",
+    # substrate
+    "sp-core/std",
+    "sp-runtime/std",
+    "thiserror",
 ]
 test = [
-  "itc-parentchain-test",
-  "itp-node-api/mocks",
-  "itp-test",
-  "sgx-crypto-helper",
+    "itc-parentchain-test",
+    "itp-node-api/mocks",
+    "itp-test",
+    "sgx-crypto-helper",
 ]

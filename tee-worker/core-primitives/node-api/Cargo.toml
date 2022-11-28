@@ -14,15 +14,15 @@ itp-node-api-metadata-provider = { default-features = false, path = "metadata-pr
 [features]
 default = ["std"]
 mocks = [
-  "itp-node-api-metadata/mocks",
+    "itp-node-api-metadata/mocks",
 ]
 sgx = [
-  "itp-node-api-metadata-provider/sgx",
+    "itp-node-api-metadata-provider/sgx",
 ]
 std = [
-  "itp-api-client-extensions",
-  "itp-api-client-types/std",
-  "itp-node-api-factory",
-  "itp-node-api-metadata/std",
-  "itp-node-api-metadata-provider/std",
+    "itp-api-client-extensions",
+    "itp-api-client-types/std",
+    "itp-node-api-factory",
+    "itp-node-api-metadata/std",
+    "itp-node-api-metadata-provider/std",
 ]

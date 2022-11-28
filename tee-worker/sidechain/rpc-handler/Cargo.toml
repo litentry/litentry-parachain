@@ -32,20 +32,20 @@ sp-core = { default-features = false, features = ["full_crypto"], git = "https:/
 [features]
 default = ["std"]
 sgx = [
-  "sgx_tstd",
-  "itp-rpc/sgx",
-  "itp-top-pool-author/sgx",
-  "itp-utils/sgx",
-  "jsonrpc-core_sgx",
-  "rust-base58_sgx",
+    "sgx_tstd",
+    "itp-rpc/sgx",
+    "itp-top-pool-author/sgx",
+    "itp-utils/sgx",
+    "jsonrpc-core_sgx",
+    "rust-base58_sgx",
 ]
 std = [
-  "itp-rpc/std",
-  "itp-top-pool-author/std",
-  "itp-types/std",
-  "itp-utils/std",
-  "its-primitives/std",
-  "jsonrpc-core",
-  "log/std",
-  "rust-base58",
+    "itp-rpc/std",
+    "itp-top-pool-author/std",
+    "itp-types/std",
+    "itp-utils/std",
+    "its-primitives/std",
+    "jsonrpc-core",
+    "log/std",
+    "rust-base58",
 ]

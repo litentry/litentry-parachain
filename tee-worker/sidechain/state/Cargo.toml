@@ -36,27 +36,27 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 [features]
 default = ["std"]
 sgx = [
-  # teaclave
-  "sgx_tstd",
-  # local crates
-  "itp-sgx-externalities/sgx",
-  "itp-storage/sgx",
-  "sp-io/sgx",
-  # sgx versions of std crates
-  "thiserror_sgx",
+    # teaclave
+    "sgx_tstd",
+    # local crates
+    "itp-sgx-externalities/sgx",
+    "itp-storage/sgx",
+    "sp-io/sgx",
+    # sgx versions of std crates
+    "thiserror_sgx",
 ]
 std = [
-  "log/std",
-  "serde/std",
-  # substrate
-  "sp-std/std",
-  "sp-core/std",
-  # local crates
-  "itp-sgx-externalities/std",
-  "itp-storage/std",
-  "its-primitives/std",
-  "sp-io/std",
-  # optional std crates
-  "codec/std",
-  "thiserror",
+    "log/std",
+    "serde/std",
+    # substrate
+    "sp-std/std",
+    "sp-core/std",
+    # local crates
+    "itp-sgx-externalities/std",
+    "itp-storage/std",
+    "its-primitives/std",
+    "sp-io/std",
+    # optional std crates
+    "codec/std",
+    "thiserror",
 ]

@@ -24,12 +24,12 @@ log = { version = "0.4", default-features = false }
 default = ["std"]
 mocks = []
 sgx = [
-  "sgx_tstd",
-  "thiserror_sgx",
+    "sgx_tstd",
+    "thiserror_sgx",
 ]
 std = [
-  "codec/std",
-  "itp-types/std",
-  "log/std",
-  "thiserror",
+    "codec/std",
+    "itp-types/std",
+    "log/std",
+    "thiserror",
 ]

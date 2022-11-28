@@ -43,33 +43,33 @@ itp-test = { path = "../../../core-primitives/test" }
 [features]
 default = ["std"]
 mocks = [
-  "itc-parentchain-test",
+    "itc-parentchain-test",
 ]
 sgx = [
-  "sgx_tstd",
-  "thiserror-sgx",
-  "itp-sgx-io/sgx",
-  "itp-storage/sgx",
+    "sgx_tstd",
+    "thiserror-sgx",
+    "itp-sgx-io/sgx",
+    "itp-storage/sgx",
 ]
 std = [
-  "codec/std",
-  "hash-db/std",
-  "num/std",
-  "log/std",
-  "finality-grandpa/std",
-  "thiserror",
+    "codec/std",
+    "hash-db/std",
+    "num/std",
+    "log/std",
+    "finality-grandpa/std",
+    "thiserror",
 
-  # substrate deps
-  "frame-system/std",
-  "sp-core/std",
-  "sp-application-crypto/std",
-  "sp-finality-grandpa/std",
-  "sp-runtime/std",
-  "sp-trie/std",
+    # substrate deps
+    "frame-system/std",
+    "sp-core/std",
+    "sp-application-crypto/std",
+    "sp-finality-grandpa/std",
+    "sp-runtime/std",
+    "sp-trie/std",
 
-  # local deps
-  "itp-ocall-api/std",
-  "itp-storage/std",
-  "itp-sgx-io/std",
-  "itp-types/std",
+    # local deps
+    "itp-ocall-api/std",
+    "itp-storage/std",
+    "itp-sgx-io/std",
+    "itp-types/std",
 ]

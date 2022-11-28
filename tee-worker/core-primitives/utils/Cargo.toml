@@ -26,13 +26,13 @@ thiserror = { version = "1.0", optional = true }
 [features]
 default = ["std"]
 sgx = [
-  "sgx_tstd",
-  "thiserror_sgx",
+    "sgx_tstd",
+    "thiserror_sgx",
 ]
 std = [
-  "codec/std",
-  "frame-support/std",
-  "hex/std",
-  "sp-core/std",
-  "thiserror",
+    "codec/std",
+    "frame-support/std",
+    "hex/std",
+    "sp-core/std",
+    "thiserror",
 ]

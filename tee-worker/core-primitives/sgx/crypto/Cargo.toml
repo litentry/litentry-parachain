@@ -33,19 +33,19 @@ itp-sgx-io = { path = "../io", default-features = false }
 default = ["std"]
 mocks = []
 sgx = [
-  "sgx-crypto-helper/mesalock_sgx",
-  "sgx_tstd",
-  "sgx_rand",
-  "itp-sgx-io/sgx",
-  "serde_json-sgx",
-  "serde-sgx",
+    "sgx-crypto-helper/mesalock_sgx",
+    "sgx_tstd",
+    "sgx_rand",
+    "itp-sgx-io/sgx",
+    "serde_json-sgx",
+    "serde-sgx",
 ]
 std = [
-  "codec/std",
-  "log/std",
-  "itp-sgx-io/std",
-  "sp-core/std",
-  "serde/std",
-  "serde_json/std",
-  "sgx-crypto-helper/default",
+    "codec/std",
+    "log/std",
+    "itp-sgx-io/std",
+    "sp-core/std",
+    "serde/std",
+    "serde_json/std",
+    "sgx-crypto-helper/default",
 ]

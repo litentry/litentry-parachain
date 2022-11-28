@@ -31,19 +31,19 @@ sp-state-machine = { git = "https://github.com/paritytech/substrate.git", branch
 [features]
 default = ["std"]
 sgx = [
-  "sgx_tstd",
-  "thiserror-sgx",
+    "sgx_tstd",
+    "thiserror-sgx",
 ]
 std = [
-  "codec/std",
-  "frame-metadata/std",
-  "frame-support/std",
-  "hash-db/std",
-  "itp-types/std",
-  "sp-core/std",
-  "sp-runtime/std",
-  "sp-std/std",
-  "sp-trie/std",
-  "thiserror",
+    "codec/std",
+    "frame-metadata/std",
+    "frame-support/std",
+    "hash-db/std",
+    "itp-types/std",
+    "sp-core/std",
+    "sp-runtime/std",
+    "sp-std/std",
+    "sp-trie/std",
+    "thiserror",
 ]
 test = []
