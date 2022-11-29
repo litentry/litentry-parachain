@@ -129,28 +129,34 @@ pub mod pallet {
 		IdentityLinkedPlain {
 			account: T::AccountId,
 			identity: Identity,
+			id_graph: Vec<(Identity, IdentityContext<T>)>,
 		},
 		IdentityLinked {
 			account: AesOutput,
 			identity: AesOutput,
+			id_graph: AesOutput,
 		},
 		// unlink identity
 		IdentityUnlinkedPlain {
 			account: T::AccountId,
 			identity: Identity,
+			id_graph: Vec<(Identity, IdentityContext<T>)>,
 		},
 		IdentityUnlinked {
 			account: AesOutput,
 			identity: AesOutput,
+			id_graph: AesOutput,
 		},
 		// verify identity
 		IdentityVerifiedPlain {
 			account: T::AccountId,
 			identity: Identity,
+			id_graph: Vec<(Identity, IdentityContext<T>)>,
 		},
 		IdentityVerified {
 			account: AesOutput,
 			identity: AesOutput,
+			id_graph: AesOutput,
 		},
 		// some error happened during processing in TEE, we use string-like
 		// parameters for more "generic" error event reporting
@@ -341,10 +347,12 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::IdentityLinkedPlain {
 				account: who.clone(),
 				identity: identity.clone(),
+				id_graph: Self::get_id_graph(&who),
 			});
 			Self::deposit_event(Event::<T>::IdentityLinked {
 				account: aes_encrypt_default(&key, who.encode().as_slice()),
 				identity: aes_encrypt_default(&key, identity.encode().as_slice()),
+				id_graph: aes_encrypt_default(&key, Self::get_id_graph(&who).encode().as_slice()),
 			});
 			Ok(())
 		}
@@ -372,10 +380,12 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::IdentityUnlinkedPlain {
 				account: who.clone(),
 				identity: identity.clone(),
+				id_graph: Self::get_id_graph(&who),
 			});
 			Self::deposit_event(Event::<T>::IdentityUnlinked {
 				account: aes_encrypt_default(&key, who.encode().as_slice()),
 				identity: aes_encrypt_default(&key, identity.encode().as_slice()),
+				id_graph: aes_encrypt_default(&key, Self::get_id_graph(&who).encode().as_slice()),
 			});
 
 			Ok(())
@@ -447,10 +457,15 @@ pub mod pallet {
 				Self::deposit_event(Event::<T>::IdentityVerifiedPlain {
 					account: who.clone(),
 					identity: identity.clone(),
+					id_graph: Self::get_id_graph(&who),
 				});
 				Self::deposit_event(Event::<T>::IdentityVerified {
 					account: aes_encrypt_default(&key, who.encode().as_slice()),
 					identity: aes_encrypt_default(&key, identity.encode().as_slice()),
+					id_graph: aes_encrypt_default(
+						&key,
+						Self::get_id_graph(&who).encode().as_slice(),
+					),
 				});
 				Ok(())
 			})
@@ -484,9 +499,10 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			account: AesOutput,
 			identity: AesOutput,
+			id_graph: AesOutput,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityLinked { account, identity });
+			Self::deposit_event(Event::IdentityLinked { account, identity, id_graph });
 			Ok(Pays::No.into())
 		}
 
@@ -495,9 +511,10 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			account: AesOutput,
 			identity: AesOutput,
+			id_graph: AesOutput,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityUnlinked { account, identity });
+			Self::deposit_event(Event::IdentityUnlinked { account, identity, id_graph });
 			Ok(Pays::No.into())
 		}
 
@@ -506,9 +523,10 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			account: AesOutput,
 			identity: AesOutput,
+			id_graph: AesOutput,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityVerified { account, identity });
+			Self::deposit_event(Event::IdentityVerified { account, identity, id_graph });
 			Ok(Pays::No.into())
 		}
 
@@ -655,6 +673,10 @@ pub mod pallet {
 			let mut addr = [0u8; 20];
 			addr[..20].copy_from_slice(&hashed_pk[12..32]);
 			Ok(addr)
+		}
+
+		pub fn get_id_graph(who: &T::AccountId) -> Vec<(Identity, IdentityContext<T>)> {
+			IDGraphs::iter_prefix(who).collect::<Vec<_>>()
 		}
 	}
 }

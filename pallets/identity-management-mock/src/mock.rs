@@ -245,10 +245,13 @@ pub fn setup_link_identity(
 		encrypted_identity.to_vec(),
 		None
 	));
-	System::assert_has_event(Event::IdentityManagementMock(crate::Event::IdentityLinkedPlain {
-		account: who,
-		identity: identity.clone(),
-	}));
+	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
+		crate::Event::IdentityLinkedPlain {
+			account: who,
+			identity: identity.clone(),
+			id_graph: IdentityManagementMock::get_id_graph(&who),
+		},
+	));
 	// encrypt the result
 	let aes_encrypted_account = aes_encrypt_default(&key, who.encode().as_slice());
 	let aes_encrypted_identity = aes_encrypt_default(&key, identity.encode().as_slice());

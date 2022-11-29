@@ -15,13 +15,14 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use codec::{Decode, Encode, MaxEncodedLen};
+use frame_support::RuntimeDebugNoBound;
 use scale_info::TypeInfo;
 
 use crate::{BlockNumberOf, Config, Metadata};
 
 // The context associated with the (litentry-account, did) pair
 // TODO: maybe we have better naming
-#[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, TypeInfo, MaxEncodedLen)]
+#[derive(Clone, Eq, PartialEq, RuntimeDebugNoBound, Encode, Decode, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
 #[codec(mel_bound())]
 pub struct IdentityContext<T: Config> {
