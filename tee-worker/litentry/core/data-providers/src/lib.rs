@@ -53,6 +53,8 @@ pub mod discord_official;
 pub mod twitter_litentry;
 pub mod twitter_official;
 
+pub mod graphql;
+
 const TIMEOUT: Duration = Duration::from_secs(3u64);
 
 #[cfg(all(not(test), not(feature = "mockserver")))]
@@ -62,6 +64,9 @@ pub mod base_url {
 
 	pub(crate) const DISCORD_OFFICIAL: &str = "https://discordapp.com";
 	pub(crate) const DISCORD_LITENTRY: &str = "http://47.57.13.126:8080";
+
+	pub(crate) const GRAPHQL_URL: &str = "https://graph.tdf-labs.io/";
+	pub(crate) const GRAPHQL_AUTH_KEY: &str = "ac2115ec-e327-4862-84c5-f25b6b7d4533";
 }
 
 // #[cfg(test)]
@@ -80,6 +85,9 @@ pub enum Error {
 
 	#[error("UTF8 error: {0}")]
 	Utf8Error(String),
+
+	#[error("GraphQL error: {0}")]
+	GraphQLError(String),
 }
 
 pub trait UserInfo {

@@ -30,7 +30,7 @@ pub fn build(guild_id: ParameterString, handler: ParameterString) -> Result<()> 
 	let mut client = DiscordLitentryClient::new();
 	match client.check_id_hubber(guild_id.into_inner(), handler.into_inner()) {
 		Err(e) => {
-			log::error!("error build assertion2: {:?}", e);
+			log::error!("error build assertion3: {:?}", e);
 			Err(Error::Assertion3Error(format!("{:?}", e)))
 		},
 		Ok(_response) => {

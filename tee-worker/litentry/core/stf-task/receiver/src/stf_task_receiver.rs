@@ -18,11 +18,22 @@ use crate::{
 	format, AuthorApi, Error, HandleState, Hash, SgxExternalitiesTrait, ShardIdentifier,
 	ShieldingCryptoDecrypt, ShieldingCryptoEncrypt, StfEnclaveSigning, StfTaskContext,
 };
+
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use crate::chrono::{offset::Utc as TzUtc, TimeZone};
+
+#[cfg(feature = "std")]
+use chrono::{offset::Utc as TzUtc, TimeZone};
+
 use codec::Decode;
 use ita_sgx_runtime::IdentityManagement;
 use lc_stf_task_sender::{stf_task_sender, RequestType};
 use litentry_primitives::{Assertion, IdentityWebType, Web2Network};
 use log::*;
+use std::string::ToString;
+
+const LIT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
+const DOT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
 
 // lifetime elision: StfTaskContext is guaranteed to outlive the fn
 pub fn run_stf_task_receiver<K, A, S, H>(context: &StfTaskContext<K, A, S, H>) -> Result<(), Error>
@@ -108,6 +119,21 @@ where
 						}
 					}
 				},
+				Assertion::A4 => {
+					let from_date = "2022-10-16T00:00:00Z".to_string();
+					#[cfg(feature = "clock")]
+					let from_date = format!("{:?}", TzUtc::now());
+					let token_address = LIT_TOKEN_ADDRESS.to_string();
+					let mini_balance = 0f64;
+					if let Err(e) = lc_assertion_build::a4_7_12::build(
+						request.vec_identity,
+						from_date,
+						token_address,
+						mini_balance,
+					) {
+						error!("error verify assertion4: {:?}", e)
+					}
+				},
 				Assertion::A5(twitter_account, original_tweet_id) =>
 					match lc_assertion_build::a5::build(
 						request.vec_identity.to_vec(),
@@ -125,6 +151,40 @@ where
 					Err(e) => {
 						log::error!("error verify assertion6: {:?}", e)
 					},
+				},
+				Assertion::A7(mini_balance, year) => {
+					#[cfg(feature = "std")]
+					let dt1 = TzUtc.with_ymd_and_hms(year as i32, 1, 1, 0, 0, 0);
+					#[cfg(all(not(feature = "std"), feature = "sgx"))]
+					let dt1 = TzUtc.ymd(year as i32, 1, 1).and_hms(0, 0, 0);
+					let from_date = format!("{:?}", dt1);
+					let token_address = DOT_TOKEN_ADDRESS.to_string();
+					let mini_balance: f64 = (mini_balance / (10 ^ 12)) as f64;
+					if let Err(e) = lc_assertion_build::a4_7_12::build(
+						request.vec_identity,
+						from_date,
+						token_address,
+						mini_balance,
+					) {
+						error!("error verify assertion7: {:?}", e)
+					}
+				},
+				Assertion::A12(mini_balance, year) => {
+					#[cfg(feature = "std")]
+					let dt1 = TzUtc.with_ymd_and_hms(year as i32, 1, 1, 0, 0, 0);
+					#[cfg(all(not(feature = "std"), feature = "sgx"))]
+					let dt1 = TzUtc.ymd(year as i32, 1, 1).and_hms(0, 0, 0);
+					let from_date = format!("{:?}", dt1);
+					let token_address = LIT_TOKEN_ADDRESS.to_string();
+					let mini_balance: f64 = (mini_balance / (10 ^ 12)) as f64;
+					if let Err(e) = lc_assertion_build::a4_7_12::build(
+						request.vec_identity,
+						from_date,
+						token_address,
+						mini_balance,
+					) {
+						error!("error verify assertion7: {:?}", e)
+					}
 				},
 				_ => {
 					unimplemented!()
