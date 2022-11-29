@@ -121,9 +121,7 @@ runtime-benchmarks = [
   "pallet-democracy/runtime-benchmarks",
   "pallet-membership/runtime-benchmarks",
   "pallet-multisig/runtime-benchmarks",
-  #  This module timed out for some reason and had to be commented out temporarily
-  #  https://github.com/litentry/litentry-parachain/actions/runs/3155868677/jobs/5134984739
-  #  "pallet-parachain-staking/runtime-benchmarks",
+  "pallet-parachain-staking/runtime-benchmarks",
   "pallet-preimage/runtime-benchmarks",
   "pallet-proxy/runtime-benchmarks",
   "pallet-scheduler/runtime-benchmarks",

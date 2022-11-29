@@ -941,6 +941,8 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::BridgeTransfer(_) |
 			// XTokens::transfer for normal users
 			RuntimeCall::XTokens(orml_xtokens::Call::transfer { .. }) |
+			// PolkadotXcm
+			RuntimeCall::PolkadotXcm(_) |
 			// memberships
 			RuntimeCall::CouncilMembership(_) |
 			RuntimeCall::TechnicalCommitteeMembership(_) |
@@ -975,7 +977,7 @@ mod benches {
 		[pallet_scheduler, Scheduler]
 		[pallet_preimage, Preimage]
 		[pallet_session, SessionBench::<Runtime>]
-		//This module returned an error when ran the benchmark, temporarily chose to comment it out
+		// This module returned an error when ran the benchmark, temporarily chose to comment it out
 		// [pallet_collator_selection, CollatorSelection]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
 		[pallet_identity_management, IdentityManagement]
