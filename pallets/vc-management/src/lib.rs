@@ -51,10 +51,10 @@ pub type GenerateVCFn = ([u8; 2], ShardIdentifier, u32);
 pub type VCID = u64;
 
 // fn types for handling inside tee-worker
-pub type VCSchemaIssuedFn = ([u8; 2], ShardIdentifier, Vec<u8>, Vec<u8>);
-pub type VCSchemaDisabledFn = ([u8; 2], ShardIdentifier, u64);
-pub type VCSchemaActivatedFn = ([u8; 2], ShardIdentifier, u64);
-pub type VCSchemaRevokedFn = ([u8; 2], ShardIdentifier, u64);
+pub type VCSchemaIssuedFn = ([u8; 2], Vec<u8>, Vec<u8>);
+pub type VCSchemaDisabledFn = ([u8; 2], u64);
+pub type VCSchemaActivatedFn = ([u8; 2], u64);
+pub type VCSchemaRevokedFn = ([u8; 2], u64);
 
 /// An index of a schema. Just a `u64`.
 pub type SchemaIndex = u64;
@@ -270,9 +270,6 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			ensure!(Some(sender.clone()) == Self::schema_admin(), Error::<T>::RequireSchemaAdmin);
-
-			
-
 			let index = Self::schema_count();
 			<SchemaCount<T>>::put(index + 1);
 			SchemaRegistry::<T>::insert(
