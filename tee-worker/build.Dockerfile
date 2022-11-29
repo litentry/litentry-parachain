@@ -36,8 +36,8 @@ ENV WORKER_MODE=$WORKER_MODE_ARG
 ARG ADDITIONAL_FEATURES_ARG
 ENV ADDITIONAL_FEATURES=$ADDITIONAL_FEATURES_ARG
 
-WORKDIR $HOME/worker
-COPY . .
+WORKDIR $HOME/tee-worker
+COPY . $HOME
 
 RUN make
 
@@ -71,8 +71,8 @@ ENV RUSTC_WRAPPER="/usr/local/cargo/bin/sccache"
 ARG WORKER_MODE_ARG
 ENV WORKER_MODE=$WORKER_MODE_ARG
 
-WORKDIR $HOME/worker
-COPY . .
+WORKDIR $HOME/tee-worker
+COPY . $HOME
 
 RUN --mount=type=cache,id=cargo,target=/root/work/.cache/sccache make && sccache --show-stats
 
@@ -99,8 +99,8 @@ ARG LOG_DIR=/usr/local/log
 ENV SCRIPT_DIR ${SCRIPT_DIR}
 ENV LOG_DIR ${LOG_DIR}
 
-COPY --from=builder /root/work/worker/bin/integritee-cli /usr/local/bin
-COPY ./cli/*.sh /usr/local/worker-cli/
+COPY --from=builder /root/work/tee-worker/bin/integritee-cli /usr/local/bin
+COPY ./tee-worker/cli/*.sh /usr/local/worker-cli/
 
 RUN chmod +x /usr/local/bin/integritee-cli ${SCRIPT_DIR}/*.sh
 RUN mkdir ${LOG_DIR}
@@ -128,7 +128,7 @@ ENV LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${SGX_SDK}/lib64"
 WORKDIR /usr/local/bin
 
 COPY --from=builder /opt/sgxsdk/lib64 /opt/sgxsdk/lib64
-COPY --from=builder /root/work/worker/bin/* ./
+COPY --from=builder /root/work/tee-worker/bin/* ./
 
 RUN touch spid.txt key.txt
 RUN chmod +x /usr/local/bin/integritee-service
