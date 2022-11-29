@@ -2,7 +2,7 @@
 authors = ["Litentry Dev"]
 edition = '2021'
 name = 'litmus-parachain-runtime'
-version = '0.9.11'
+version = '0.9.12'
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len"] }
@@ -203,8 +203,8 @@ runtime-benchmarks = [
   "pallet-asset-manager/runtime-benchmarks",
   "pallet-balances/runtime-benchmarks",
   "pallet-bounties/runtime-benchmarks",
-  #This module returned an error when ran the benchmark, temporarily chose to comment it out
-  #  "pallet-collator-selection/runtime-benchmarks",
+  # This module returned an error when ran the benchmark, temporarily chose to comment it out
+  #"pallet-collator-selection/runtime-benchmarks",
   "pallet-collective/runtime-benchmarks",
   "pallet-democracy/runtime-benchmarks",
   "pallet-membership/runtime-benchmarks",
