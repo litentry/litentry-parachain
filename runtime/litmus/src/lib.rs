@@ -941,6 +941,8 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::BridgeTransfer(_) |
 			// XTokens::transfer for normal users
 			RuntimeCall::XTokens(orml_xtokens::Call::transfer { .. }) |
+			// PolkadotXcm
+			RuntimeCall::PolkadotXcm(_) |
 			// memberships
 			RuntimeCall::CouncilMembership(_) |
 			RuntimeCall::TechnicalCommitteeMembership(_) |
