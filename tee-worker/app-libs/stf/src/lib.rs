@@ -33,9 +33,7 @@ pub use parentchain_primitives::{Balance, BlockNumber, Index};
 
 use codec::{Compact, Decode, Encode};
 use derive_more::Display;
-use ita_sgx_runtime::{
-	pallet_identity_management::MetadataOf, IdentityManagement, Runtime, System,
-};
+use ita_sgx_runtime::{pallet_imt::MetadataOf, IdentityManagement, Runtime, System};
 use itp_node_api_metadata::Error as MetadataError;
 use itp_node_api_metadata_provider::Error as MetadataProviderError;
 use sp_core::{crypto::AccountId32, ed25519, sr25519, Pair, H256};
