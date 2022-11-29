@@ -19,6 +19,8 @@
 #![allow(clippy::upper_case_acronyms)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate core;
+
 #[cfg(feature = "tests")]
 pub mod tests;
 

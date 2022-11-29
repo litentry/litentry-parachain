@@ -15,11 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use codec::{Decode, Encode};
-use frame_support::{
-	assert_noop, assert_ok,
-	pallet_prelude::Weight,
-	traits::{VestingSchedule, WrapperKeepOpaque},
-};
+use frame_support::{assert_noop, assert_ok, pallet_prelude::Weight, traits::VestingSchedule};
 use frame_system::RawOrigin;
 use sp_runtime::traits::Dispatchable;
 
@@ -31,7 +27,6 @@ use crate::{
 	BaseRuntimeRequirements,
 };
 
-type OpaqueCall<R> = WrapperKeepOpaque<<R as pallet_multisig::Config>::RuntimeCall>;
 type ExtrinsicFilter<R> = pallet_extrinsic_filter::Pallet<R>;
 type System<R> = frame_system::Pallet<R>;
 type Balances<R> = pallet_balances::Pallet<R>;
@@ -45,7 +40,7 @@ pub fn default_mode<R: BaseRuntimeRequirements>() {
 }
 
 pub fn multisig_enabled<
-	R: BaseRuntimeRequirements,
+	R: BaseRuntimeRequirements + pallet_multisig::Config<RuntimeCall = Call>,
 	Origin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
 	Call: Clone
 		+ Dispatchable<RuntimeOrigin = Origin>
@@ -64,14 +59,14 @@ where
 		.build()
 		.execute_with(|| {
 			let _ = Multisig::<R>::multi_account_id(&[alice(), bob(), charlie()][..], 2);
-			let remark_call: Call = frame_system::Call::remark { remark: vec![] }.into();
-			let data = remark_call.encode();
+			let remark_call = frame_system::Call::remark { remark: vec![] }.into();
+			// let data = remark_call.encode();
+			let call = Box::new(remark_call);
 			let multisig_call: Call = pallet_multisig::Call::as_multi {
 				threshold: 2,
 				other_signatories: vec![bob(), charlie()],
 				maybe_timepoint: None,
-				call: OpaqueCall::<R>::from_encoded(data),
-				store_call: false,
+				call,
 				max_weight: Weight::zero(),
 			}
 			.into();
