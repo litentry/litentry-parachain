@@ -34,29 +34,8 @@ defaults:
     working-directory: tee-worker
 
 jobs:
-  check-file-change:
-    runs-on: ubuntu-latest
-    # see https://github.com/orgs/community/discussions/25722
-    if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
-    outputs:
-      src: ${{ steps.filter.outputs.src }}
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      # Checks to see if any files in the PR/commit match one of the listed file types.
-      # We can use this filter to decide whether or not to build docker images
-      - uses: dorny/paths-filter@v2
-        id: filter
-        with:
-          filters: |
-            src:
-              - 'tee-worker/**'
-
   build-parachain-docker:
     runs-on: ubuntu-latest
-    needs: check-file-change
     steps:
       - uses: actions/checkout@v3
 
