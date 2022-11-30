@@ -440,9 +440,8 @@ where
 					Ok(code) => {
 						debug!("link_identity {} OK", account_id_to_string(&who));
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
-							let id_graph = ita_sgx_runtime::pallet_identity_management::Pallet::<
-								Runtime,
-							>::get_id_graph(&who);
+							let id_graph =
+								ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.identity_linked_call_indexes())??,
@@ -490,9 +489,8 @@ where
 					Ok(()) => {
 						debug!("unlink_identity {} OK", account_id_to_string(&who));
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
-							let id_graph = ita_sgx_runtime::pallet_identity_management::Pallet::<
-								Runtime,
-							>::get_id_graph(&who);
+							let id_graph =
+								ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.identity_unlinked_call_indexes())??,
@@ -543,9 +541,8 @@ where
 					Ok(()) => {
 						debug!("verify_identity {} OK", account_id_to_string(&who));
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
-							let id_graph = ita_sgx_runtime::pallet_identity_management::Pallet::<
-								Runtime,
-							>::get_id_graph(&who);
+							let id_graph =
+								ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.identity_verified_call_indexes())??,

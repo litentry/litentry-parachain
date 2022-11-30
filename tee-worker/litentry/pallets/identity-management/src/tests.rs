@@ -141,8 +141,8 @@ fn get_id_graph_works() {
 		));
 		assert_ok!(IMT::verify_identity(Origin::signed(1), 2, alice_web2_identity.clone(), 2));
 
-		let did_contex = IMT::get_id_graph(&2);
-		assert_eq!(did_contex.len(), 2);
+		let id_graph = IMT::get_id_graph(&2);
+		assert_eq!(id_graph.len(), 2);
 	});
 }
 
