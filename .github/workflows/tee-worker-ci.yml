@@ -29,9 +29,9 @@ concurrency:
 
 # to minimise the changes by setting a default working directory
 # please note it only applies to the `run` command, not `use` command
-# defaults:
-#   run:
-#     working-directory: tee-worker
+defaults:
+  run:
+    working-directory: tee-worker
 
 jobs:
   build-parachain-docker:
@@ -60,6 +60,8 @@ jobs:
       - build-parachain-docker
     if: ${{ success() }}
     steps:
+      - uses: actions/checkout@v3
+
       - uses: actions/download-artifact@v3
         with:
           name: parachain-artifact
@@ -73,7 +75,7 @@ jobs:
           docker load -i ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/litentry-parachain.tar
 
       - name: Dockerhub login
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
