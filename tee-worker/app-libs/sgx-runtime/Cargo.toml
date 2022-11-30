@@ -50,7 +50,7 @@ pallet-parentchain = { default-features = false, git = "https://github.com/integ
 
 # Litentry
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
-pallet-identity-management = { path = "../../litentry/pallets/identity-management", default-features = false }
+pallet-imt = { package = "pallet-identity-management-tee", path = "../../litentry/pallets/identity-management", default-features = false }
 
 [features]
 default = ["std"]
@@ -85,7 +85,7 @@ std = [
     "pallet-timestamp/std",
     "pallet-transaction-payment/std",
     "pallet-parentchain/std",
-    "pallet-identity-management/std",
+    "pallet-imt/std",
     "pallet-grandpa/std",
     "sp-api/std",
     "sp-core/std",
