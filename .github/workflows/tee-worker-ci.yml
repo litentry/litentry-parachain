@@ -53,6 +53,7 @@ jobs:
           filters: |
             src:
               - 'tee-worker/**'
+              - '.github/workflows/tee-worker-ci.yml'
 
   build-parachain-docker:
     runs-on: ubuntu-latest
