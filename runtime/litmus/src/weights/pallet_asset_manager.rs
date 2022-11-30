@@ -52,36 +52,36 @@ impl<T: frame_system::Config> pallet_asset_manager::WeightInfo for WeightInfo<T>
 	// Storage: AssetManager AssetIdType (r:0 w:1)
 	// Storage: AssetManager AssetIdMetadata (r:0 w:1)
 	fn register_foreign_asset_type() -> Weight {
-		(30_249_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+		Weight::from_ref_time(30_249_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(4 as u64))
 	}
 	// Storage: AssetManager AssetIdType (r:1 w:0)
 	// Storage: AssetManager AssetIdMetadata (r:0 w:1)
 	fn update_foreign_asset_metadata() -> Weight {
-		(19_194_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(19_194_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: AssetManager AssetIdType (r:1 w:0)
 	// Storage: AssetManager AssetIdUnitsPerSecond (r:0 w:1)
 	fn set_asset_units_per_second() -> Weight {
-		(18_161_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		Weight::from_ref_time(18_161_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: AssetManager AssetIdType (r:1 w:1)
 	// Storage: AssetManager AssetTypeId (r:1 w:1)
 	fn add_asset_type() -> Weight {
-		(23_072_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(23_072_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	// Storage: AssetManager AssetTypeId (r:2 w:1)
 	// Storage: AssetManager AssetIdType (r:0 w:1)
 	fn remove_asset_type() -> Weight {
-		(29_598_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(29_598_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 }

@@ -33,6 +33,8 @@ env:
   INSTANCE_ID: ${{ secrets.BENCHMARK_INSTANCE_ID }}  # remote AWS host to run benchmarking
   BENCHMARK_SSH_USER: ${{ secrets.BENCHMARK_SSH_USER }}
   BENCHMARK_SSH_KEYPATH: ${{ secrets.BENCHMARK_SSH_KEYPATH }}
+  DOCKER_BUILDKIT: 1
+
 jobs:
   ## build docker image with runtime-benchmarks feature
   build-docker:
@@ -112,7 +114,7 @@ jobs:
           echo "Remote instance reachable now after $SECONDS seconds"
           remote_ip=`aws ec2 describe-instances --filters 'Name=instance-state-name,Values=running' 'Name=instance-id,Values=${{ env.INSTANCE_ID }}' --query 'Reservations[*].Instances[*].[PublicIpAddress]' --output text`
           echo "Running instances ip address: $remote_ip"
-          echo "::set-output name=remote_ip::$remote_ip"
+          echo "remote_ip=$remote_ip" >> $GITHUB_OUTPUT
 
       # exit status should propagate through ssh
       - name: Remotely benchmark pallets ${{ github.event.inputs.pallets }} for ${{ env.CHAIN }}

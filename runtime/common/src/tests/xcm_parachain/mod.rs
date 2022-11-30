@@ -21,6 +21,7 @@ use cumulus_primitives_core::{ParaId, PersistedValidationData};
 use cumulus_primitives_parachain_inherent::ParachainInherentData;
 use frame_support::{
 	assert_noop, assert_ok,
+	pallet_prelude::Weight,
 	traits::{Currency, Get, OriginTrait, PalletInfoAccess},
 };
 use frame_system::RawOrigin;
@@ -38,7 +39,7 @@ use xcm::prelude::{
 use xcm_executor::traits::Convert as xcmConvert;
 use xcm_simulator::TestExt;
 
-use primitives::{AccountId, AssetId, Balance};
+use primitives::{AccountId, AssetId, Balance, XcmV2Weight};
 
 use crate::{
 	currency::{CENTS, MILLICENTS, UNIT},
@@ -109,7 +110,7 @@ pub trait TestXCMRequirements {
 	type RelayRuntime: frame_system::Config<AccountId = AccountId, Origin = Self::RelayOrigin>
 		+ pallet_xcm::Config
 		+ pallet_balances::Config<Balance = Balance>;
-	type UnitWeightCost: frame_support::traits::Get<frame_support::weights::Weight>;
+	type UnitWeightCost: frame_support::traits::Get<XcmV2Weight>;
 	type LocationToAccountId: xcmConvert<MultiLocation, AccountId32>;
 
 	fn reset();
@@ -681,7 +682,7 @@ pub fn test_methods_pallet_xcm_expected_fail<R: TestXCMRequirements>() {
 			PolkadotXcm::<R::ParaRuntime>::execute(
 				R::ParaOrigin::signed(alice()),
 				Box::new(xcm::VersionedXcm::V2(message)),
-				R::UnitWeightCost::get() * 4
+				Weight::from_ref_time(R::UnitWeightCost::get() * 4)
 			),
 			pallet_xcm::Error::<R::ParaRuntime>::Filtered
 		);

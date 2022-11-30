@@ -53,8 +53,8 @@ impl<T: frame_system::Config> pallet_sidechain::WeightInfo for WeightInfo<T> {
 	// Storage: Sidechain SidechainBlockConfirmationQueue (r:1 w:0)
 	// Storage: Sidechain WorkerForShard (r:0 w:1)
 	fn confirm_imported_sidechain_block() -> Weight {
-		(32_557_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+		Weight::from_ref_time(32_557_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(4 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 }
