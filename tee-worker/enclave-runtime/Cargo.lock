@@ -1492,7 +1492,7 @@ dependencies = [
  "pallet-balances",
  "pallet-evm",
  "pallet-grandpa",
- "pallet-identity-management 0.1.0",
+ "pallet-identity-management-tee",
  "pallet-parentchain",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
@@ -1649,7 +1649,7 @@ dependencies = [
  "itp-types",
  "litentry-primitives",
  "log",
- "pallet-identity-management 0.1.0 (git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev)",
+ "pallet-identity-management",
  "parity-scale-codec",
  "sgx_tstd",
  "sgx_types",
@@ -3012,6 +3012,23 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex 0.4.3",
+ "log",
+ "parity-scale-codec",
+ "primitives",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-identity-management-tee"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "hex 0.4.3",
  "litentry-primitives",
  "log",
  "parity-scale-codec",
@@ -3021,24 +3038,6 @@ dependencies = [
  "serde_json 1.0.89",
  "sp-core",
  "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-identity-management"
-version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#469f769c725ee058a9be22c055ebe5f359800493"
-dependencies = [
- "frame-support",
- "frame-system",
- "hex 0.4.3",
- "log",
- "parity-scale-codec",
- "primitives",
- "scale-info",
- "sp-arithmetic",
- "sp-core",
  "sp-runtime",
  "sp-std",
 ]
@@ -3273,7 +3272,6 @@ dependencies = [
 [[package]]
 name = "primitives"
 version = "0.9.11"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#469f769c725ee058a9be22c055ebe5f359800493"
 dependencies = [
  "parity-scale-codec",
  "scale-info",

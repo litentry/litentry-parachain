@@ -4287,7 +4287,7 @@ dependencies = [
  "pallet-balances",
  "pallet-evm",
  "pallet-grandpa",
- "pallet-identity-management 0.1.0",
+ "pallet-identity-management-tee",
  "pallet-parentchain",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
@@ -4462,7 +4462,7 @@ dependencies = [
  "itp-types",
  "litentry-primitives",
  "log 0.4.17",
- "pallet-identity-management 0.1.0 (git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev)",
+ "pallet-identity-management",
  "parity-scale-codec",
  "sgx_tstd",
  "sgx_types",
@@ -7120,7 +7120,6 @@ dependencies = [
 [[package]]
 name = "mock-tee-primitives"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#469f769c725ee058a9be22c055ebe5f359800493"
 dependencies = [
  "parity-scale-codec",
  "primitives",
@@ -7959,7 +7958,6 @@ dependencies = [
 [[package]]
 name = "pallet-asset-manager"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#469f769c725ee058a9be22c055ebe5f359800493"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8137,7 +8135,6 @@ dependencies = [
 [[package]]
 name = "pallet-bridge"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#469f769c725ee058a9be22c055ebe5f359800493"
 dependencies = [
  "blake2-rfc",
  "frame-benchmarking",
@@ -8155,7 +8152,6 @@ dependencies = [
 [[package]]
 name = "pallet-bridge-transfer"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#469f769c725ee058a9be22c055ebe5f359800493"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8226,7 +8222,6 @@ dependencies = [
 [[package]]
 name = "pallet-drop3"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#469f769c725ee058a9be22c055ebe5f359800493"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8305,7 +8300,6 @@ dependencies = [
 [[package]]
 name = "pallet-extrinsic-filter"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#469f769c725ee058a9be22c055ebe5f359800493"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8363,29 +8357,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex 0.4.3",
- "litentry-primitives",
- "log 0.4.17",
- "pallet-balances",
- "parity-scale-codec",
- "scale-info",
- "serde 1.0.147",
- "serde_derive 1.0.147",
- "serde_json 1.0.89",
- "sp-core",
- "sp-io 6.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.29)",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-identity-management"
-version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#469f769c725ee058a9be22c055ebe5f359800493"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "hex 0.4.3",
  "log 0.4.17",
  "parity-scale-codec",
  "primitives",
@@ -8399,7 +8370,6 @@ dependencies = [
 [[package]]
 name = "pallet-identity-management-mock"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#469f769c725ee058a9be22c055ebe5f359800493"
 dependencies = [
  "aes-gcm 0.10.1",
  "frame-benchmarking",
@@ -8409,13 +8379,35 @@ dependencies = [
  "hex-literal",
  "log 0.4.17",
  "mock-tee-primitives",
- "pallet-identity-management 0.1.0 (git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev)",
+ "pallet-identity-management",
  "parity-scale-codec",
  "primitives",
  "rsa",
  "scale-info",
  "sha2 0.10.6",
  "sp-arithmetic",
+ "sp-core",
+ "sp-io 6.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.29)",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-identity-management-tee"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex 0.4.3",
+ "litentry-primitives",
+ "log 0.4.17",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "serde 1.0.147",
+ "serde_derive 1.0.147",
+ "serde_json 1.0.89",
  "sp-core",
  "sp-io 6.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.29)",
  "sp-runtime",
@@ -8568,7 +8560,6 @@ dependencies = [
 [[package]]
 name = "pallet-parachain-staking"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#469f769c725ee058a9be22c055ebe5f359800493"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8903,7 +8894,6 @@ dependencies = [
 [[package]]
 name = "pallet-vc-management"
 version = "0.1.0"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#469f769c725ee058a9be22c055ebe5f359800493"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -10543,7 +10533,6 @@ dependencies = [
 [[package]]
 name = "primitives"
 version = "0.9.11"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#469f769c725ee058a9be22c055ebe5f359800493"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -11207,7 +11196,6 @@ dependencies = [
 [[package]]
 name = "rococo-parachain-runtime"
 version = "0.9.11"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#469f769c725ee058a9be22c055ebe5f359800493"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
@@ -11239,7 +11227,7 @@ dependencies = [
  "pallet-democracy",
  "pallet-drop3",
  "pallet-extrinsic-filter",
- "pallet-identity-management 0.1.0 (git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev)",
+ "pallet-identity-management",
  "pallet-identity-management-mock",
  "pallet-membership",
  "pallet-multisig",
@@ -11336,7 +11324,6 @@ dependencies = [
 [[package]]
 name = "runtime-common"
 version = "0.9.11"
-source = "git+https://github.com/litentry/litentry-parachain.git?branch=tee-dev#469f769c725ee058a9be22c055ebe5f359800493"
 dependencies = [
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-core",

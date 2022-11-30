@@ -186,8 +186,7 @@ impl TrustedCallSigned {
 		who: AccountId,
 		assertion: Assertion,
 	) -> StfResult<()> {
-		let v_identity_context =
-			ita_sgx_runtime::pallet_identity_management::Pallet::<Runtime>::get_id_graph(&who);
+		let v_identity_context = ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
 
 		let mut vec_identity: BoundedVec<Identity, MaxIdentityLength> = vec![].try_into().unwrap();
 

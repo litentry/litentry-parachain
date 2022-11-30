@@ -77,7 +77,7 @@ pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
 // litentry
-pub use pallet_identity_management::{self, Call as IdentityManagementCall};
+pub use pallet_imt::{self, Call as IdentityManagementCall};
 
 /// Block type as expected by this sgx-runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
@@ -260,7 +260,7 @@ impl pallet_parentchain::Config for Runtime {
 	type WeightInfo = ();
 }
 
-impl pallet_identity_management::Config for Runtime {
+impl pallet_imt::Config for Runtime {
 	type Event = Event;
 	type ManageOrigin = EnsureRoot<AccountId>;
 	type MaxMetadataLength = ConstU32<128>;
@@ -281,7 +281,7 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		Parentchain: pallet_parentchain::{Pallet, Call, Storage},
-		IdentityManagement: pallet_identity_management,
+		IdentityManagement: pallet_imt,
 	}
 );
 
@@ -302,7 +302,7 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>},
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		Parentchain: pallet_parentchain::{Pallet, Call, Storage},
-		IdentityManagement: pallet_identity_management,
+		IdentityManagement: pallet_imt,
 
 		Evm: pallet_evm::{Pallet, Call, Storage, Config, Event<T>},
 	}

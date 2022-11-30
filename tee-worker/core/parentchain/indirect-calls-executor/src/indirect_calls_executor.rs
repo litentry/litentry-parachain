@@ -24,7 +24,7 @@ use crate::error::Result;
 use beefy_merkle_tree::{merkle_root, Keccak256};
 use codec::{Decode, Encode};
 use futures::executor;
-use ita_sgx_runtime::{pallet_identity_management::MetadataOf, Runtime};
+use ita_sgx_runtime::{pallet_imt::MetadataOf, Runtime};
 use ita_stf::{AccountId, TrustedCall, TrustedOperation};
 use itp_node_api::{
 	api_client::ParentchainUncheckedExtrinsic,

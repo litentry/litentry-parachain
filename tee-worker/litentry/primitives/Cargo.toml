@@ -17,7 +17,7 @@ sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 # sgx dependencies
 sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master", optional = true, features = ["net", "thread"] }
 
-parentchain-primitives = { package = "primitives", git = "https://github.com/litentry/litentry-parachain.git", branch = "tee-dev", default-features = false }
+parentchain-primitives = { package = "primitives", path = "../../../primitives", default-features = false }
 
 [features]
 default = ["std"]
