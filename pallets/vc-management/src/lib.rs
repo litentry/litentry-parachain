@@ -176,6 +176,7 @@ pub mod pallet {
 		SchemaAlreadyDisabled,
 		/// Schema is active
 		SchemaAlreadyActivated,
+		SchemaIndexOverFlow,
 	}
 
 	#[pallet::call]
@@ -271,7 +272,10 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			ensure!(Some(sender.clone()) == Self::schema_admin(), Error::<T>::RequireSchemaAdmin);
 			let index = Self::schema_count();
-			<SchemaCount<T>>::put(index + 1);
+			let new_index = index.checked_add(1u64).ok_or(Error::<T>::SchemaIndexOverFlow);
+			if new_index.is_ok() {
+				<SchemaCount<T>>::put(new_index.as_ref().unwrap());
+			}
 			SchemaRegistry::<T>::insert(
 				index,
 				VCSchema::<T>::new(id.clone(), sender.clone(), content.clone()),
@@ -301,7 +305,7 @@ pub mod pallet {
 
 		// It requires the schema Admin account
 		#[pallet::weight(195_000_000)]
-		pub fn active_schema(
+		pub fn activate_schema(
 			origin: OriginFor<T>,
 			index: SchemaIndex,
 		) -> DispatchResultWithPostInfo {
@@ -328,10 +332,6 @@ pub mod pallet {
 
 			let context = SchemaRegistry::<T>::get(index).ok_or(Error::<T>::SchemaNotExists)?;
 			SchemaRegistry::<T>::remove(index);
-			let index = Self::schema_count();
-			if index > 0 {
-				<SchemaCount<T>>::put(index - 1);
-			}
 			Self::deposit_event(Event::SchemaRevoked { account: sender, index });
 			Ok(().into())
 		}

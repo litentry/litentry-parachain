@@ -271,7 +271,7 @@ fn disable_schema_with_unpriviledged_origin_fails() {
 }
 
 #[test]
-fn active_schema_works() {
+fn activate_schema_works() {
 	new_test_ext().execute_with(|| {
 		let id: Vec<u8> = vec![1, 2, 3, 4].try_into().unwrap();
 		let content: Vec<u8> = vec![5, 6, 7, 8].try_into().unwrap();
@@ -281,13 +281,13 @@ fn active_schema_works() {
 		// schema is disabled
 		assert_eq!(VCManagement::schema_registry(0).unwrap().status, Status::Disabled);
 		// schema is activated
-		assert_ok!(VCManagement::active_schema(Origin::signed(1), 0));
+		assert_ok!(VCManagement::activate_schema(Origin::signed(1), 0));
 		assert_eq!(VCManagement::schema_registry(0).unwrap().status, Status::Active);
 	});
 }
 
 #[test]
-fn active_an_actived_schema_fails() {
+fn activate_already_activated_schema_fails() {
 	new_test_ext().execute_with(|| {
 		let id: Vec<u8> = vec![1, 2, 3, 4].try_into().unwrap();
 		let content: Vec<u8> = vec![5, 6, 7, 8].try_into().unwrap();
@@ -295,7 +295,7 @@ fn active_an_actived_schema_fails() {
 		assert!(VCManagement::schema_registry(0).is_some());
 
 		assert_noop!(
-			VCManagement::active_schema(Origin::signed(1), 0),
+			VCManagement::activate_schema(Origin::signed(1), 0),
 			Error::<Test>::SchemaAlreadyActivated
 		);
 	});
