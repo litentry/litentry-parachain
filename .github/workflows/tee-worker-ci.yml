@@ -29,9 +29,9 @@ concurrency:
 
 # to minimise the changes by setting a default working directory
 # please note it only applies to the `run` command, not `use` command
-defaults:
-  run:
-    working-directory: tee-worker
+# defaults:
+#   run:
+#     working-directory: tee-worker
 
 jobs:
   build-parachain-docker:
