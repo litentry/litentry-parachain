@@ -69,6 +69,7 @@ jobs:
         run: |
           ls -l ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}
           ls -l ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/litentry-parachain.tar
+          pwd
           docker load -i ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/litentry-parachain.tar
 
       - name: Dockerhub login
