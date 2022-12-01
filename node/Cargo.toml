@@ -28,14 +28,14 @@ serde_json = "1.0"
 # Substrate dependencies
 sc-basic-authorship = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
 sc-chain-spec = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
-sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32", features = ["wasmtime"] }
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
 sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
-sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
+sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32", features = ["wasmtime"] }
 sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
 sc-network-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
 sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
-sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32", features = ["wasmtime"] }
 sc-sysinfo = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
 sc-telemetry = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
 sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
@@ -74,8 +74,8 @@ cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", branc
 cumulus-primitives-parachain-inherent = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.32" }
 cumulus-relay-chain-inprocess-interface = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.32" }
 cumulus-relay-chain-interface = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.32" }
-cumulus-relay-chain-rpc-interface = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.32" }
 cumulus-relay-chain-minimal-node = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.32" }
+cumulus-relay-chain-rpc-interface = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.32" }
 
 # Polkadot dependencies
 polkadot-cli = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.32" }

@@ -204,7 +204,7 @@ runtime-benchmarks = [
   "pallet-balances/runtime-benchmarks",
   "pallet-bounties/runtime-benchmarks",
   # This module returned an error when ran the benchmark, temporarily chose to comment it out
-#  "pallet-collator-selection/runtime-benchmarks",
+  #  "pallet-collator-selection/runtime-benchmarks",
   "pallet-collective/runtime-benchmarks",
   "pallet-democracy/runtime-benchmarks",
   "pallet-membership/runtime-benchmarks",
