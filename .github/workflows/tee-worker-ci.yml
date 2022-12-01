@@ -84,13 +84,6 @@ jobs:
         include:
           - flavor_id: sidechain
             mode: sidechain
-          - flavor_id: offchain-worker
-            mode: offchain-worker
-          - flavor_id: teeracle
-            mode: teeracle
-          - flavor_id: sidechain-evm
-            mode: sidechain
-            additional_features: evm
           - flavor_id: mockserver
             mode: sidechain
             additional_features: mockserver
@@ -225,18 +218,9 @@ jobs:
           - test: Sidechain
             flavor_id: sidechain
             demo_name: demo-sidechain
-          - test: M6
-            flavor_id: offchain-worker
-            demo_name: demo-indirect-invocation
-          - test: Teeracle
-            flavor_id: teeracle
-            demo_name: demo-teeracle
           - test: Benchmark
             flavor_id: sidechain
             demo_name: sidechain-benchmark
-          - test: EVM
-            flavor_id: sidechain-evm
-            demo_name: demo-smart-contract
           # Litentry
           - test: user-shielding-key
             flavor_id: sidechain
