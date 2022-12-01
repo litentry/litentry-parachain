@@ -38,7 +38,7 @@ fn set_user_shielding_key_works() {
 }
 
 #[test]
-fn link_identity_works() {
+fn create_identity_works() {
 	new_test_ext().execute_with(|| {
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
 		assert_ok!(IdentityManagement::create_identity(
@@ -54,7 +54,7 @@ fn link_identity_works() {
 }
 
 #[test]
-fn unlink_identity_works() {
+fn remove_identity_works() {
 	new_test_ext().execute_with(|| {
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
 		assert_ok!(IdentityManagement::remove_identity(Origin::signed(1), shard, vec![1u8; 2048]));

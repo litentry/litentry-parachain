@@ -22,8 +22,8 @@ const IMPMOCK: &str = "IdentityManagemenMock";
 
 pub trait IMPMockCallIndexes {
 	fn set_user_shielding_key_call_indexes(&self) -> Result<[u8; 2]>;
-	fn link_identity_call_indexes(&self) -> Result<[u8; 2]>;
-	fn unlink_identity_call_indexes(&self) -> Result<[u8; 2]>;
+	fn create_identity_call_indexes(&self) -> Result<[u8; 2]>;
+	fn remove_identity_call_indexes(&self) -> Result<[u8; 2]>;
 	fn verify_identity_call_indexes(&self) -> Result<[u8; 2]>;
 
 	fn user_shielding_key_set_call_indexes(&self) -> Result<[u8; 2]>;
@@ -39,11 +39,11 @@ impl IMPMockCallIndexes for NodeMetadata {
 		self.call_indexes(IMPMOCK, "set_user_shielding_key")
 	}
 
-	fn link_identity_call_indexes(&self) -> Result<[u8; 2]> {
+	fn create_identity_call_indexes(&self) -> Result<[u8; 2]> {
 		self.call_indexes(IMPMOCK, "create_identity")
 	}
 
-	fn unlink_identity_call_indexes(&self) -> Result<[u8; 2]> {
+	fn remove_identity_call_indexes(&self) -> Result<[u8; 2]> {
 		self.call_indexes(IMPMOCK, "remove_identity")
 	}
 

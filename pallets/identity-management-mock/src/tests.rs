@@ -50,7 +50,7 @@ fn set_user_shielding_key_works() {
 fn link_twitter_identity_works() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(5);
-		setup_link_identity(2, create_mock_twitter_identity(), 5);
+		setup_create_identity(2, create_mock_twitter_identity(), 5);
 	});
 }
 
@@ -59,7 +59,7 @@ fn link_polkadot_identity_works() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(3);
 		let p = sp_core::sr25519::Pair::from_string("//Alice", None).unwrap();
-		setup_link_identity(2, create_mock_polkadot_identity(p.public().0), 3);
+		setup_create_identity(2, create_mock_polkadot_identity(p.public().0), 3);
 	});
 }
 
@@ -68,7 +68,7 @@ fn link_eth_identity_works() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(3);
 		let p = Random.generate();
-		setup_link_identity(2, create_mock_eth_identity(p.address().0), 3);
+		setup_create_identity(2, create_mock_eth_identity(p.address().0), 3);
 	});
 }
 

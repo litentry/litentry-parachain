@@ -102,14 +102,14 @@ pub enum TrustedCall {
 	// litentry
 	set_user_shielding_key_preflight(AccountId, AccountId, UserShieldingKeyType), // (Root, AccountIncognito, Key) -- root as signer, only for testing
 	set_user_shielding_key_runtime(AccountId, AccountId, UserShieldingKeyType), // (EnclaveSigner, AccountIncognito, Key)
-	link_identity_runtime(
+	create_identity_runtime(
 		AccountId,
 		AccountId,
 		Identity,
 		Option<MetadataOf<Runtime>>,
 		ParentchainBlockNumber,
 	), // (EnclaveSigner, Account, identity, metadata, blocknumber)
-	unlink_identity_runtime(AccountId, AccountId, Identity), // (EnclaveSigner, Account, identity)
+	remove_identity_runtime(AccountId, AccountId, Identity), // (EnclaveSigner, Account, identity)
 	verify_identity_preflight(
 		AccountId,
 		AccountId,
@@ -139,8 +139,8 @@ impl TrustedCall {
 			// litentry
 			TrustedCall::set_user_shielding_key_preflight(account, _, _) => account,
 			TrustedCall::set_user_shielding_key_runtime(account, _, _) => account,
-			TrustedCall::link_identity_runtime(account, _, _, _, _) => account,
-			TrustedCall::unlink_identity_runtime(account, _, _) => account,
+			TrustedCall::create_identity_runtime(account, _, _, _, _) => account,
+			TrustedCall::remove_identity_runtime(account, _, _) => account,
 			TrustedCall::verify_identity_preflight(account, _, _, _, _) => account,
 			TrustedCall::verify_identity_runtime(account, _, _, _) => account,
 			TrustedCall::set_challenge_code_runtime(account, _, _, _) => account,
@@ -428,7 +428,7 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::link_identity_runtime(enclave_account, who, identity, metadata, bn) => {
+			TrustedCall::create_identity_runtime(enclave_account, who, identity, metadata, bn) => {
 				ensure_enclave_signer_account(&enclave_account)?;
 				debug!(
 					"create_identity, who: {}, identity: {:?}, metadata: {:?}",
@@ -436,7 +436,7 @@ where
 					identity,
 					metadata
 				);
-				match Self::link_identity_runtime(who.clone(), identity.clone(), metadata, bn) {
+				match Self::create_identity_runtime(who.clone(), identity.clone(), metadata, bn) {
 					Ok(code) => {
 						debug!("create_identity {} OK", account_id_to_string(&who));
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
@@ -475,14 +475,14 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::unlink_identity_runtime(enclave_account, who, identity) => {
+			TrustedCall::remove_identity_runtime(enclave_account, who, identity) => {
 				ensure_enclave_signer_account(&enclave_account)?;
 				debug!(
 					"remove_identity, who: {}, identity: {:?}",
 					account_id_to_string(&who),
 					identity,
 				);
-				match Self::unlink_identity_runtime(who.clone(), identity.clone()) {
+				match Self::remove_identity_runtime(who.clone(), identity.clone()) {
 					Ok(()) => {
 						debug!("remove_identity {} OK", account_id_to_string(&who));
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
@@ -583,8 +583,8 @@ where
 				debug!("No storage updates needed..."),
 			TrustedCall::set_user_shielding_key_runtime(..) =>
 				debug!("No storage updates needed..."),
-			TrustedCall::link_identity_runtime(..) => debug!("No storage updates needed..."),
-			TrustedCall::unlink_identity_runtime(..) => debug!("No storage updates needed..."),
+			TrustedCall::create_identity_runtime(..) => debug!("No storage updates needed..."),
+			TrustedCall::remove_identity_runtime(..) => debug!("No storage updates needed..."),
 			TrustedCall::verify_identity_preflight(..) => debug!("No storage updates needed..."),
 			TrustedCall::verify_identity_runtime(..) => debug!("No storage updates needed..."),
 			TrustedCall::set_challenge_code_runtime(..) => debug!("No storage updates needed..."),

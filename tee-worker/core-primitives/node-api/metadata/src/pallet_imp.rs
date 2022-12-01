@@ -22,8 +22,8 @@ const IMP: &str = "IdentityManagement";
 
 pub trait IMPCallIndexes {
 	fn set_user_shielding_key_call_indexes(&self) -> Result<[u8; 2]>;
-	fn link_identity_call_indexes(&self) -> Result<[u8; 2]>;
-	fn unlink_identity_call_indexes(&self) -> Result<[u8; 2]>;
+	fn create_identity_call_indexes(&self) -> Result<[u8; 2]>;
+	fn remove_identity_call_indexes(&self) -> Result<[u8; 2]>;
 	fn verify_identity_call_indexes(&self) -> Result<[u8; 2]>;
 
 	fn user_shielding_key_set_call_indexes(&self) -> Result<[u8; 2]>;
@@ -39,11 +39,11 @@ impl IMPCallIndexes for NodeMetadata {
 		self.call_indexes(IMP, "set_user_shielding_key")
 	}
 
-	fn link_identity_call_indexes(&self) -> Result<[u8; 2]> {
+	fn create_identity_call_indexes(&self) -> Result<[u8; 2]> {
 		self.call_indexes(IMP, "create_identity")
 	}
 
-	fn unlink_identity_call_indexes(&self) -> Result<[u8; 2]> {
+	fn remove_identity_call_indexes(&self) -> Result<[u8; 2]> {
 		self.call_indexes(IMP, "remove_identity")
 	}
 

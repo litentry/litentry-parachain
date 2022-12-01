@@ -37,7 +37,7 @@ fn set_user_shielding_key_works() {
 }
 
 #[test]
-fn link_identity_works() {
+fn create_identity_works() {
 	new_test_ext().execute_with(|| {
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		assert_ok!(IMT::create_identity(
@@ -60,7 +60,7 @@ fn link_identity_works() {
 }
 
 #[test]
-fn unlink_identity_works() {
+fn remove_identity_works() {
 	new_test_ext().execute_with(|| {
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		assert_noop!(
