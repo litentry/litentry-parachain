@@ -37,17 +37,12 @@ impl orml_tokens::Config for Runtime {
 	type CurrencyId = AssetId;
 	// Get this info from pallet_asset_manager metadata
 	type ExistentialDeposits = AssetManager;
-	type OnDust = orml_tokens::TransferDust<Runtime, LitTreasuryAccount>;
 	type MaxLocks = ConstU32<50>;
 	type MaxReserves = ConstU32<50>;
 	type ReserveIdentifier = ReserveIdentifier;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 	type WeightInfo = ();
-	type OnNewTokenAccount = ();
-	type OnKilledTokenAccount = ();
-	type OnTransfer = ();
-	type OnSlash = ();
-	type OnDeposit = ();
+	type CurrencyHooks = ();
 }
 
 impl pallet_asset_manager::Config for Runtime {

@@ -21,7 +21,6 @@ use cumulus_primitives_core::{ParaId, PersistedValidationData};
 use cumulus_primitives_parachain_inherent::ParachainInherentData;
 use frame_support::{
 	assert_noop, assert_ok,
-	pallet_prelude::Weight,
 	traits::{Currency, Get, OriginTrait, PalletInfoAccess},
 };
 use frame_system::RawOrigin;
@@ -127,7 +126,7 @@ pub fn test_xtokens_recognize_multilocation<R: TestXCMRequirements>() {
 				CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData::default()),
 				UNIT,
 				Box::new((Parent, Parachain(2)).into()),
-				R::UnitWeightCost::get() * 4
+				xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
 			),
 			orml_xtokens::Error::<R::ParaRuntime>::NotSupportedMultiLocation
 		);
@@ -139,7 +138,7 @@ pub fn test_xtokens_recognize_multilocation<R: TestXCMRequirements>() {
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
-			R::UnitWeightCost::get() * 4
+			xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
@@ -176,7 +175,7 @@ pub fn test_xtokens_recognize_multilocation<R: TestXCMRequirements>() {
 			Box::new(
 				(Parent, Parachain(1), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
-			R::UnitWeightCost::get() * 4
+			xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
 		));
 	});
 
@@ -207,7 +206,7 @@ pub fn test_xtokens_weight_parameter<R: TestXCMRequirements>() {
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
-			R::UnitWeightCost::get()
+			xcm_simulator::Limited(R::UnitWeightCost::get())
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
@@ -240,7 +239,8 @@ pub fn test_xtokens_weight_parameter<R: TestXCMRequirements>() {
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
-			R::UnitWeightCost::get() * 5
+			// R::UnitWeightCost::get() * 5
+			xcm_simulator::Limited(R::UnitWeightCost::get() * 5)
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
@@ -386,7 +386,7 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
-			R::UnitWeightCost::get() * 4
+			xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
@@ -406,7 +406,7 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
-			R::UnitWeightCost::get() * 4
+			xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
@@ -437,7 +437,7 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
-			R::UnitWeightCost::get() * 4
+			xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
@@ -459,7 +459,7 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
-			R::UnitWeightCost::get() * 4
+			xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
@@ -486,7 +486,7 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
-			R::UnitWeightCost::get() * 4
+			xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
@@ -522,7 +522,8 @@ pub fn test_methods_xtokens_expected_fail<R: TestXCMRequirements>() {
 				Box::new(
 					(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
 				),
-				R::UnitWeightCost::get() * 4
+				// R::UnitWeightCost::get() * 4
+				xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
 			),
 			orml_xtokens::Error::<R::ParaRuntime>::XcmExecutionFailed
 		);
@@ -682,7 +683,7 @@ pub fn test_methods_pallet_xcm_expected_fail<R: TestXCMRequirements>() {
 			PolkadotXcm::<R::ParaRuntime>::execute(
 				R::ParaOrigin::signed(alice()),
 				Box::new(xcm::VersionedXcm::V2(message)),
-				Weight::from_ref_time(R::UnitWeightCost::get() * 4)
+				R::UnitWeightCost::get() * 4
 			),
 			pallet_xcm::Error::<R::ParaRuntime>::Filtered
 		);
