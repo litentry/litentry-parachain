@@ -15,7 +15,6 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 #![allow(deprecated)]
 use frame_support::{
-	inherent::Vec,
 	storage,
 	traits::{Get, OnRuntimeUpgrade},
 };
@@ -23,11 +22,18 @@ use pallet_parachain_staking::{
 	AtStake, BalanceOf, BondWithAutoCompound, CollatorSnapshot, Round, RoundIndex,
 };
 use sp_runtime::Percent;
-use sp_std::marker::PhantomData;
+use sp_std::{marker::PhantomData, vec, vec::Vec};
+
+use codec::{Decode, Encode};
+extern crate alloc;
+#[cfg(feature = "try-runtime")]
+use alloc::{format, string::ToString};
+#[cfg(feature = "try-runtime")]
+use scale_info::prelude::string::String;
 
 mod deprecated {
-	use codec::{Decode, Encode};
-	use frame_support::{inherent::Vec, traits::OnRuntimeUpgrade, RuntimeDebug};
+	use super::*;
+	use frame_support::RuntimeDebug;
 	use pallet_parachain_staking::Bond;
 	use scale_info::TypeInfo;
 	// CollatorSnapshot
@@ -70,42 +76,6 @@ mod deprecated {
 			CollatorSnapshot { bond: B::default(), delegations: Vec::new(), total: B::default() }
 		}
 	}
-
-	/// Prefix to be used (optionally) for implementing [`OnRuntimeUpgradeHelpersExt::storage_key`].
-	const ON_RUNTIME_UPGRADE_PREFIX: &[u8] = b"__ON_RUNTIME_UPGRADE__";
-
-	/// Some helper functions for [`OnRuntimeUpgrade`] during `try-runtime` testing.
-	pub trait OnRuntimeUpgradeHelpersExt {
-		/// Generate a storage key unique to this runtime upgrade.
-		///
-		/// This can be used to communicate data from pre-upgrade to post-upgrade state and check
-		/// them. See [`Self::set_temp_storage`] and [`Self::get_temp_storage`].
-		fn storage_key(ident: &str) -> [u8; 32] {
-			frame_support::storage::storage_prefix(ON_RUNTIME_UPGRADE_PREFIX, ident.as_bytes())
-		}
-
-		/// Get temporary storage data written by [`Self::set_temp_storage`].
-		///
-		/// Returns `None` if either the data is unavailable or un-decodable.
-		///
-		/// A `at` storage identifier must be provided to indicate where the storage is being read
-		/// from.
-		fn get_temp_storage<T: codec::Decode>(at: &str) -> Option<T> {
-			sp_io::storage::get(&Self::storage_key(at))
-				.and_then(|bytes| codec::Decode::decode(&mut &*bytes).ok())
-		}
-
-		/// Write some temporary data to a specific storage that can be read (potentially in
-		/// post-upgrade hook) via [`Self::get_temp_storage`].
-		///
-		/// A `at` storage identifier must be provided to indicate where the storage is being
-		/// written to.
-		fn set_temp_storage<T: codec::Encode>(data: T, at: &str) {
-			sp_io::storage::set(&Self::storage_key(at), &data.encode());
-		}
-	}
-
-	impl<U: OnRuntimeUpgrade> OnRuntimeUpgradeHelpersExt for U {}
 }
 use deprecated::CollatorSnapshot as OldCollatorSnapshot;
 pub struct MigrateAtStakeAutoCompound<T>(PhantomData<T>);
@@ -130,33 +100,35 @@ where
 {
 	#[cfg(feature = "try-runtime")]
 	fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
-		use deprecated::OnRuntimeUpgradeHelpersExt;
 		let mut num_to_update = 0u32;
-		let mut rounds_candidates = vec![];
+		let mut rounds_candidates: Vec<(RoundIndex, T::AccountId)> = vec![];
+		use sp_std::collections::btree_map::BTreeMap;
+		let mut state_map: BTreeMap<String, String> = BTreeMap::new();
+
 		for (round, candidate, key) in Self::unpaid_rounds_keys() {
 			let state: OldCollatorSnapshot<T::AccountId, BalanceOf<T>> =
 				storage::unhashed::get(&key).expect("unable to decode value");
 
 			num_to_update = num_to_update.saturating_add(1);
-			rounds_candidates.push((round, candidate.clone()));
+			rounds_candidates.push((round.clone(), candidate.clone()));
 			let mut delegation_str = vec![];
 			for d in state.delegations {
-				delegation_str
-					.push(format!("owner={:?}_amount={:?}_autoCompound=0%", d.owner, d.amount));
+				delegation_str.push(format!(
+					"owner={:?}_amount={:?}_autoCompound=0%",
+					d.owner, d.amount
+				));
 			}
-			Self::set_temp_storage(
+			state_map.insert(
+				(&*format!("round_{:?}_candidate_{:?}", round, candidate)).to_string(),
 				format!(
 					"bond={:?}_total={:?}_delegations={:?}",
 					state.bond, state.total, delegation_str
 				),
-				&format!("round_{:?}_candidate_{:?}", round, candidate),
 			);
 		}
 
 		rounds_candidates.sort();
-		Self::set_temp_storage(format!("{:?}", rounds_candidates), "rounds_candidates");
-		Self::set_temp_storage(num_to_update, "num_to_update");
-		Ok(Vec::new())
+		Ok((state_map, rounds_candidates, num_to_update).encode())
 	}
 
 	fn on_runtime_upgrade() -> frame_support::weights::Weight {
@@ -195,14 +167,21 @@ where
 	}
 
 	#[cfg(feature = "try-runtime")]
-	fn post_upgrade(_state: Vec<u8>) -> Result<(), &'static str> {
-		use deprecated::OnRuntimeUpgradeHelpersExt;
+	fn post_upgrade(state: Vec<u8>) -> Result<(), &'static str> {
+		use sp_std::collections::btree_map::BTreeMap;
+
+		let (state_map, rounds_candidates_received, num_updated_received): (
+			BTreeMap<String, String>,
+			Vec<(RoundIndex, T::AccountId)>,
+			u32,
+		) = Decode::decode(&mut &state[..]).expect("pre_upgrade provides a valid state; qed");
+
 		let mut num_updated = 0u32;
 		let mut rounds_candidates = vec![];
 		for (round, candidate, _) in Self::unpaid_rounds_keys() {
-			let state = <AtStake<T>>::get(round, &candidate);
+			let state = <AtStake<T>>::get(&round, &candidate);
 			num_updated = num_updated.saturating_add(1);
-			rounds_candidates.push((round, candidate.clone()));
+			rounds_candidates.push((round.clone(), candidate.clone()));
 			let mut delegation_str = vec![];
 			for d in state.delegations {
 				delegation_str.push(format!(
@@ -211,11 +190,12 @@ where
 				));
 			}
 			assert_eq!(
-				Some(format!(
+				Some(&format!(
 					"bond={:?}_total={:?}_delegations={:?}",
 					state.bond, state.total, delegation_str
 				)),
-				Self::get_temp_storage(&format!("round_{:?}_candidate_{:?}", round, candidate)),
+				state_map
+					.get(&((&*format!("round_{:?}_candidate_{:?}", round, candidate)).to_string())),
 				"incorrect delegations migration for round_{:?}_candidate_{:?}",
 				round,
 				candidate,
@@ -223,11 +203,8 @@ where
 		}
 
 		rounds_candidates.sort();
-		assert_eq!(
-			Some(format!("{:?}", rounds_candidates)),
-			Self::get_temp_storage("rounds_candidates")
-		);
-		assert_eq!(Some(num_updated), Self::get_temp_storage("num_to_update"));
+		assert_eq!(rounds_candidates, rounds_candidates_received);
+		assert_eq!(num_updated, num_updated_received);
 		Ok(())
 	}
 }
