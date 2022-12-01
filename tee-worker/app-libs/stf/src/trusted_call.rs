@@ -478,13 +478,13 @@ where
 			TrustedCall::unlink_identity_runtime(enclave_account, who, identity) => {
 				ensure_enclave_signer_account(&enclave_account)?;
 				debug!(
-					"unlink_identity, who: {}, identity: {:?}",
+					"remove_identity, who: {}, identity: {:?}",
 					account_id_to_string(&who),
 					identity,
 				);
 				match Self::unlink_identity_runtime(who.clone(), identity.clone()) {
 					Ok(()) => {
-						debug!("unlink_identity {} OK", account_id_to_string(&who));
+						debug!("remove_identity {} OK", account_id_to_string(&who));
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
@@ -502,11 +502,11 @@ where
 						}
 					},
 					Err(err) => {
-						debug!("unlink_identity {} error: {}", account_id_to_string(&who), err);
+						debug!("remove_identity {} error: {}", account_id_to_string(&who), err);
 						calls.push(OpaqueCall::from_tuple(&(
 							node_metadata_repo
 								.get_from_metadata(|m| m.some_error_call_indexes())??,
-							"unlink_identity".as_bytes(),
+							"remove_identity".as_bytes(),
 							format!("{:?}", err).as_bytes(),
 						)));
 					},

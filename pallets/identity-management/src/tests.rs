@@ -57,7 +57,7 @@ fn link_identity_works() {
 fn unlink_identity_works() {
 	new_test_ext().execute_with(|| {
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
-		assert_ok!(IdentityManagement::unlink_identity(Origin::signed(1), shard, vec![1u8; 2048]));
+		assert_ok!(IdentityManagement::remove_identity(Origin::signed(1), shard, vec![1u8; 2048]));
 		System::assert_last_event(Event::IdentityManagement(
 			crate::Event::UnlinkIdentityRequested { shard },
 		));

@@ -204,7 +204,7 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(15_000_000)]
-		pub fn unlink_identity(
+		pub fn remove_identity(
 			origin: OriginFor<T>,
 			who: T::AccountId,
 			identity: Identity,

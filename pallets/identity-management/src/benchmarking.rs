@@ -45,9 +45,9 @@ benchmarks! {
 		assert_last_event::<T>(Event::LinkIdentityRequested{ shard }.into());
 	}
 
-	// Benchmark `unlink_identity`. There are no worst conditions. The benchmark showed that
+	// Benchmark `remove_identity`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
-	unlink_identity {
+	remove_identity {
 		let caller = whitelisted_caller();
 		let shard = H256::from_slice(&TEST_MRENCLAVE);
 		let encrypted_did = vec![1u8; 2048];

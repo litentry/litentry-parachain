@@ -101,7 +101,7 @@ impl TrustedCallSigned {
 
 	pub fn unlink_identity_runtime(who: AccountId, identity: Identity) -> StfResult<()> {
 		debug!("who.str = {:?}, identity = {:?}", account_id_to_string(&who), identity,);
-		ita_sgx_runtime::IdentityManagementCall::<Runtime>::unlink_identity { who, identity }
+		ita_sgx_runtime::IdentityManagementCall::<Runtime>::remove_identity { who, identity }
 			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
 			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 		Ok(())

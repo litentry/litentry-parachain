@@ -64,7 +64,7 @@ fn unlink_identity_works() {
 	new_test_ext().execute_with(|| {
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		assert_noop!(
-			IMT::unlink_identity(Origin::signed(1), 2, ALICE_WEB3_IDENTITY.clone()),
+			IMT::remove_identity(Origin::signed(1), 2, ALICE_WEB3_IDENTITY.clone()),
 			Error::<Test>::IdentityNotExist
 		);
 		assert_ok!(IMT::create_identity(
@@ -83,7 +83,7 @@ fn unlink_identity_works() {
 				is_verified: false,
 			}
 		);
-		assert_ok!(IMT::unlink_identity(Origin::signed(1), 2, ALICE_WEB3_IDENTITY.clone()));
+		assert_ok!(IMT::remove_identity(Origin::signed(1), 2, ALICE_WEB3_IDENTITY.clone()));
 		assert_eq!(IMT::id_graphs(2, ALICE_WEB3_IDENTITY), None);
 	});
 }

@@ -50,7 +50,7 @@ impl<T: frame_system::Config> pallet_identity_management::WeightInfo for WeightI
 	fn create_identity() -> Weight {
 		Weight::from_ref_time(16_109_000 as u64)
 	}
-	fn unlink_identity() -> Weight {
+	fn remove_identity() -> Weight {
 		Weight::from_ref_time(14_568_000 as u64)
 	}
 	fn verify_identity() -> Weight {

@@ -123,8 +123,8 @@ pub mod pallet {
 		}
 
 		/// Unlink an identity
-		#[pallet::weight(<T as Config>::WeightInfo::unlink_identity())]
-		pub fn unlink_identity(
+		#[pallet::weight(<T as Config>::WeightInfo::remove_identity())]
+		pub fn remove_identity(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
 			encrypted_identity: Vec<u8>,

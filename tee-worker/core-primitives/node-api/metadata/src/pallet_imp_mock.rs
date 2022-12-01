@@ -44,7 +44,7 @@ impl IMPMockCallIndexes for NodeMetadata {
 	}
 
 	fn unlink_identity_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(IMPMOCK, "unlink_identity")
+		self.call_indexes(IMPMOCK, "remove_identity")
 	}
 
 	fn verify_identity_call_indexes(&self) -> Result<[u8; 2]> {
