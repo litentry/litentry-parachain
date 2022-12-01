@@ -77,7 +77,7 @@ impl TrustedCallSigned {
 			bn
 		);
 
-		ita_sgx_runtime::IdentityManagementCall::<Runtime>::link_identity {
+		ita_sgx_runtime::IdentityManagementCall::<Runtime>::create_identity {
 			who: who.clone(),
 			identity: identity.clone(),
 			metadata,

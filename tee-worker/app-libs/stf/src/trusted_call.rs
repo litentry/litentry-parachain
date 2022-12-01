@@ -431,14 +431,14 @@ where
 			TrustedCall::link_identity_runtime(enclave_account, who, identity, metadata, bn) => {
 				ensure_enclave_signer_account(&enclave_account)?;
 				debug!(
-					"link_identity, who: {}, identity: {:?}, metadata: {:?}",
+					"create_identity, who: {}, identity: {:?}, metadata: {:?}",
 					account_id_to_string(&who),
 					identity,
 					metadata
 				);
 				match Self::link_identity_runtime(who.clone(), identity.clone(), metadata, bn) {
 					Ok(code) => {
-						debug!("link_identity {} OK", account_id_to_string(&who));
+						debug!("create_identity {} OK", account_id_to_string(&who));
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
@@ -464,11 +464,11 @@ where
 						}
 					},
 					Err(err) => {
-						debug!("link_identity {} error: {}", account_id_to_string(&who), err);
+						debug!("create_identity {} error: {}", account_id_to_string(&who), err);
 						calls.push(OpaqueCall::from_tuple(&(
 							node_metadata_repo
 								.get_from_metadata(|m| m.some_error_call_indexes())??,
-							"link_identity".as_bytes(),
+							"create_identity".as_bytes(),
 							format!("{:?}", err).as_bytes(),
 						)));
 					},
@@ -551,7 +551,7 @@ where
 						}
 					},
 					Err(err) => {
-						debug!("link_identity {} error: {}", account_id_to_string(&who), err);
+						debug!("create_identity {} error: {}", account_id_to_string(&who), err);
 						calls.push(OpaqueCall::from_tuple(&(
 							node_metadata_repo
 								.get_from_metadata(|m| m.some_error_call_indexes())??,

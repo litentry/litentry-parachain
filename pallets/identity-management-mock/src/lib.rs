@@ -285,7 +285,7 @@ pub mod pallet {
 
 		/// Link an identity
 		#[pallet::weight(195_000_000)]
-		pub fn link_identity(
+		pub fn create_identity(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
 			encrypted_identity: Vec<u8>,

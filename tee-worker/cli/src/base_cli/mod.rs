@@ -21,7 +21,8 @@ use crate::{
 		faucet::FaucetCommand,
 		listen::ListenCommand,
 		litentry::{
-			link_identity::LinkIdentityCommand, set_user_shielding_key::SetUserShieldingKeyCommand,
+			create_identity::LinkIdentityCommand,
+			set_user_shielding_key::SetUserShieldingKeyCommand,
 		},
 		shield_funds::ShieldFundsCommand,
 		transfer::TransferCommand,

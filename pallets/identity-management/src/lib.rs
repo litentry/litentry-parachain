@@ -110,8 +110,8 @@ pub mod pallet {
 		}
 
 		/// Link an identity
-		#[pallet::weight(<T as Config>::WeightInfo::link_identity())]
-		pub fn link_identity(
+		#[pallet::weight(<T as Config>::WeightInfo::create_identity())]
+		pub fn create_identity(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
 			encrypted_identity: Vec<u8>,

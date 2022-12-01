@@ -40,7 +40,7 @@ impl IMPCallIndexes for NodeMetadata {
 	}
 
 	fn link_identity_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(IMP, "link_identity")
+		self.call_indexes(IMP, "create_identity")
 	}
 
 	fn unlink_identity_call_indexes(&self) -> Result<[u8; 2]> {

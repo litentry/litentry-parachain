@@ -181,7 +181,7 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(15_000_000)]
-		pub fn link_identity(
+		pub fn create_identity(
 			origin: OriginFor<T>,
 			who: T::AccountId,
 			identity: Identity,

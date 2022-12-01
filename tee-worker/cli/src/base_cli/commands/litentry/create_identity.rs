@@ -65,8 +65,13 @@ impl LinkIdentityCommand {
 		let tee_shielding_key = get_shielding_key(cli).unwrap();
 		let encrypted_identity = tee_shielding_key.encrypt(&identity.unwrap().encode()).unwrap();
 
-		let xt: UncheckedExtrinsicV4<_, _> =
-			compose_extrinsic!(chain_api, IMP, "link_identity", shard, encrypted_identity.to_vec());
+		let xt: UncheckedExtrinsicV4<_, _> = compose_extrinsic!(
+			chain_api,
+			IMP,
+			"create_identity",
+			shard,
+			encrypted_identity.to_vec()
+		);
 
 		let tx_hash = chain_api.send_extrinsic(xt.hex_encode(), XtStatus::Finalized).unwrap();
 		println!("[+] TrustedOperation got finalized. Hash: {:?}\n", tx_hash);

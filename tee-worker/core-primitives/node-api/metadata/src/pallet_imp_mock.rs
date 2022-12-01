@@ -40,7 +40,7 @@ impl IMPMockCallIndexes for NodeMetadata {
 	}
 
 	fn link_identity_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(IMPMOCK, "link_identity")
+		self.call_indexes(IMPMOCK, "create_identity")
 	}
 
 	fn unlink_identity_call_indexes(&self) -> Result<[u8; 2]> {

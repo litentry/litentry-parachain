@@ -33,9 +33,9 @@ fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 
 benchmarks! {
 
-	// Benchmark `link_identity`. There are no worst conditions. The benchmark showed that
+	// Benchmark `create_identity`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
-	link_identity {
+	create_identity {
 		let caller = whitelisted_caller();
 		let shard = H256::from_slice(&TEST_MRENCLAVE);
 		let encrypted_did = vec![1u8; 2048];

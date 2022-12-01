@@ -239,7 +239,7 @@ pub fn setup_link_identity(
 ) {
 	let key = setup_user_shieding_key(who);
 	let encrypted_identity = tee_encrypt(identity.encode().as_slice());
-	assert_ok!(IdentityManagementMock::link_identity(
+	assert_ok!(IdentityManagementMock::create_identity(
 		Origin::signed(who),
 		H256::random(),
 		encrypted_identity.to_vec(),
