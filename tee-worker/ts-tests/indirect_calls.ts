@@ -18,10 +18,10 @@ export async function setUserShieldingKey(context: IntegrationTestContext, signe
     return undefined
 }
 
-export async function linkIdentity(context: IntegrationTestContext, signer: KeyringPair, aesKey: HexString, listening: boolean, identity: LitentryIdentity): Promise<HexString[] | undefined> {
+export async function createIdentity(context: IntegrationTestContext, signer: KeyringPair, aesKey: HexString, listening: boolean, identity: LitentryIdentity): Promise<HexString[] | undefined> {
     const encode = context.substrate.createType("LitentryIdentity", identity).toHex()
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex')
-    await context.substrate.tx.identityManagement.linkIdentity(context.shard, `0x${ciphertext}`, null).signAndSend(signer)
+    await context.substrate.tx.identityManagement.createIdentity(context.shard, `0x${ciphertext}`, null).signAndSend(signer)
     if (listening) {
         const event = await listenEncryptedEvents(context, aesKey, {
             module: "identityManagement",
@@ -35,10 +35,10 @@ export async function linkIdentity(context: IntegrationTestContext, signer: Keyr
 
 }
 
-export async function unlinkIdentity(context: IntegrationTestContext, signer: KeyringPair, aesKey: HexString, listening: boolean, identity: LitentryIdentity): Promise<HexString | undefined> {
+export async function removeIdentity(context: IntegrationTestContext, signer: KeyringPair, aesKey: HexString, listening: boolean, identity: LitentryIdentity): Promise<HexString | undefined> {
     const encode = context.substrate.createType("LitentryIdentity", identity).toHex()
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex')
-    await context.substrate.tx.identityManagement.unlinkIdentity(context.shard, `0x${ciphertext}`).signAndSend(signer)
+    await context.substrate.tx.identityManagement.removeIdentity(context.shard, `0x${ciphertext}`).signAndSend(signer)
     if (listening) {
         const event = await listenEncryptedEvents(context, aesKey, {
             module: "identityManagement",

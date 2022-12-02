@@ -49,8 +49,8 @@ use sp_std::vec::Vec;
 
 // fn types for handling inside tee-worker
 pub type SetUserShieldingKeyFn = ([u8; 2], ShardIdentifier, Vec<u8>);
-pub type LinkIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>, Option<Vec<u8>>);
-pub type UnlinkIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>);
+pub type CreateIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>, Option<Vec<u8>>);
+pub type RemoveIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>);
 pub type VerifyIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>, Vec<u8>);
 
 #[frame_support::pallet]
@@ -75,8 +75,8 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		// TODO: do we need account as event parameter? This needs to be decided by F/E
-		LinkIdentityRequested { shard: ShardIdentifier },
-		UnlinkIdentityRequested { shard: ShardIdentifier },
+		CreateIdentityRequested { shard: ShardIdentifier },
+		RemoveIdentityRequested { shard: ShardIdentifier },
 		VerifyIdentityRequested { shard: ShardIdentifier },
 		SetUserShieldingKeyRequested { shard: ShardIdentifier },
 		// event that should be triggered by TEECallOrigin
@@ -118,7 +118,7 @@ pub mod pallet {
 			encrypted_metadata: Option<Vec<u8>>,
 		) -> DispatchResultWithPostInfo {
 			let _ = ensure_signed(origin)?;
-			Self::deposit_event(Event::LinkIdentityRequested { shard });
+			Self::deposit_event(Event::CreateIdentityRequested { shard });
 			Ok(().into())
 		}
 
@@ -130,7 +130,7 @@ pub mod pallet {
 			encrypted_identity: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let _ = ensure_signed(origin)?;
-			Self::deposit_event(Event::UnlinkIdentityRequested { shard });
+			Self::deposit_event(Event::RemoveIdentityRequested { shard });
 			Ok(().into())
 		}
 

@@ -42,7 +42,7 @@ benchmarks! {
 		let encrypted_metadata = Some(vec![1u8; 2048]);
 	}: _(RawOrigin::Signed(caller), shard, encrypted_did, encrypted_metadata)
 	verify {
-		assert_last_event::<T>(Event::LinkIdentityRequested{ shard }.into());
+		assert_last_event::<T>(Event::CreateIdentityRequested{ shard }.into());
 	}
 
 	// Benchmark `remove_identity`. There are no worst conditions. The benchmark showed that
@@ -53,7 +53,7 @@ benchmarks! {
 		let encrypted_did = vec![1u8; 2048];
 	}: _(RawOrigin::Signed(caller), shard, encrypted_did )
 	verify {
-		assert_last_event::<T>(Event::UnlinkIdentityRequested{ shard }.into());
+		assert_last_event::<T>(Event::RemoveIdentityRequested{ shard }.into());
 	}
 
 	// Benchmark `verify_identity`. There are no worst conditions. The benchmark showed that

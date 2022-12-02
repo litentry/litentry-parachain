@@ -30,7 +30,7 @@ use sp_core::sr25519 as sr25519_core;
 use substrate_api_client::{compose_extrinsic, UncheckedExtrinsicV4, XtStatus};
 
 #[derive(Parser)]
-pub struct LinkIdentityCommand {
+pub struct CreateIdentityCommand {
 	/// AccountId in ss58check format
 	account: String,
 	/// Identity to link
@@ -39,7 +39,7 @@ pub struct LinkIdentityCommand {
 	shard: String,
 }
 
-impl LinkIdentityCommand {
+impl CreateIdentityCommand {
 	pub(crate) fn run(&self, cli: &Cli) {
 		let chain_api = get_chain_api(cli);
 

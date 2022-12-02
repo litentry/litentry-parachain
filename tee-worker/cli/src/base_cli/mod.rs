@@ -21,7 +21,7 @@ use crate::{
 		faucet::FaucetCommand,
 		listen::ListenCommand,
 		litentry::{
-			create_identity::LinkIdentityCommand,
+			create_identity::CreateIdentityCommand,
 			set_user_shielding_key::SetUserShieldingKeyCommand,
 		},
 		shield_funds::ShieldFundsCommand,
@@ -82,7 +82,7 @@ pub enum BaseCli {
 	/// set the user's shielding key
 	SetUserShieldingKey(SetUserShieldingKeyCommand),
 
-	LinkIdentity(LinkIdentityCommand),
+	CreateIdentity(CreateIdentityCommand),
 }
 
 impl BaseCli {
@@ -100,7 +100,7 @@ impl BaseCli {
 			BaseCli::ShieldFunds(cmd) => cmd.run(cli),
 			// Litentry's commands below
 			BaseCli::SetUserShieldingKey(cmd) => cmd.run(cli),
-			BaseCli::LinkIdentity(cmd) => cmd.run(cli),
+			BaseCli::CreateIdentity(cmd) => cmd.run(cli),
 		}
 	}
 }

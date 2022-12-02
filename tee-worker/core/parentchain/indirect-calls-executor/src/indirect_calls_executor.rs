@@ -38,7 +38,7 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{CallWorkerFn, OpaqueCall, ShardIdentifier, ShieldFundsFn, H256};
 use litentry_primitives::{Identity, UserShieldingKeyType, ValidationData};
 use log::*;
-use pallet_imp::{LinkIdentityFn, SetUserShieldingKeyFn, UnlinkIdentityFn, VerifyIdentityFn};
+use pallet_imp::{CreateIdentityFn, SetUserShieldingKeyFn, RemoveIdentityFn, VerifyIdentityFn};
 use sp_core::blake2_256;
 use sp_runtime::traits::{AccountIdLookup, Block as ParentchainBlockTrait, Header, StaticLookup};
 use std::{sync::Arc, vec::Vec};
@@ -274,8 +274,8 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 				}
 			}
 
-			// Found LinkIdentityFn extrinsic
-			if let Ok(xt) = ParentchainUncheckedExtrinsic::<LinkIdentityFn>::decode(
+			// Found CreateIdentityFn extrinsic
+			if let Ok(xt) = ParentchainUncheckedExtrinsic::<CreateIdentityFn>::decode(
 				&mut encoded_xt_opaque.as_slice(),
 			) {
 				if self.is_create_identity_funciton(&xt.function.0) {
@@ -317,8 +317,8 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 				}
 			}
 
-			// Found UnlinkIdentityFn extrinsic
-			if let Ok(xt) = ParentchainUncheckedExtrinsic::<UnlinkIdentityFn>::decode(
+			// Found RemoveIdentityFn extrinsic
+			if let Ok(xt) = ParentchainUncheckedExtrinsic::<RemoveIdentityFn>::decode(
 				&mut encoded_xt_opaque.as_slice(),
 			) {
 				if self.is_remove_identity_funciton(&xt.function.0) {

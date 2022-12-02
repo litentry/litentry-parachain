@@ -92,10 +92,10 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		// Events from this pallet
-		LinkIdentityRequested {
+		CreateIdentityRequested {
 			shard: ShardIdentifier,
 		},
-		UnlinkIdentityRequested {
+		RemoveIdentityRequested {
 			shard: ShardIdentifier,
 		},
 		VerifyIdentityRequested {
@@ -293,7 +293,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			ensure!(WhitelistedCallers::<T>::contains_key(&who), Error::<T>::CallerNotWhitelisted);
-			Self::deposit_event(Event::LinkIdentityRequested { shard });
+			Self::deposit_event(Event::CreateIdentityRequested { shard });
 
 			let decrypted_identitty = Self::decrypt_with_tee_shielding_key(&encrypted_identity)?;
 			let identity = Identity::decode(&mut decrypted_identitty.as_slice())
@@ -358,7 +358,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			ensure!(WhitelistedCallers::<T>::contains_key(&who), Error::<T>::CallerNotWhitelisted);
-			Self::deposit_event(Event::UnlinkIdentityRequested { shard });
+			Self::deposit_event(Event::RemoveIdentityRequested { shard });
 
 			let decrypted_identitty = Self::decrypt_with_tee_shielding_key(&encrypted_identity)?;
 			let identity = Identity::decode(&mut decrypted_identitty.as_slice())
