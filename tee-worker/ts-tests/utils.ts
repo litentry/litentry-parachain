@@ -22,7 +22,7 @@ import { KeyObject } from "crypto";
 import { EventRecord } from "@polkadot/types/interfaces";
 import { after, before, describe } from "mocha";
 import { randomAsHex } from "@polkadot/util-crypto";
-import { getSinger } from "./web3/setup";
+import { generateChallengeCode, getSinger } from "./web3/setup";
 const base58 = require("micro-base58");
 const crypto = require("crypto");
 // in order to handle self-signed certificates we need to turn off the validation
@@ -305,6 +305,8 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
     });
 }
 
-export function generateChallengeCode(): HexString {
-    return crypto.randomBytes(16).toString("hex");
+export function getMessage(address: string, wallet: string): string {
+    const challengeCode = generateChallengeCode();
+    const messgae = `Signing in ${process.env.ID_HUB_URL} with ${address} using ${wallet} and challenge code is: ${challengeCode}`;
+    return messgae;
 }
