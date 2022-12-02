@@ -305,3 +305,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
         cb(context);
     });
 }
+
+export function generateChallengeCode(): HexString {
+    return crypto.randomBytes(16).toString("hex");
+}
