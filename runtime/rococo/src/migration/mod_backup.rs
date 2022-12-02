@@ -22,10 +22,9 @@ use pallet_parachain_staking::{
 	AtStake, BalanceOf, BondWithAutoCompound, CollatorSnapshot, Round, RoundIndex,
 };
 use sp_runtime::Percent;
-use sp_std::{convert::TryInto, marker::PhantomData, vec, vec::Vec};
-use sp_std::{cmp::Ordering, collections::btree_map::BTreeMap, prelude::*};
+use sp_std::{marker::PhantomData, vec, vec::Vec};
 
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, Encode};
 extern crate alloc;
 #[cfg(feature = "try-runtime")]
 use alloc::{format, string::ToString};
@@ -103,31 +102,8 @@ where
 	fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
 		let mut num_to_update = 0u32;
 		let mut rounds_candidates: Vec<(RoundIndex, T::AccountId)> = vec![];
+		use sp_std::collections::btree_map::BTreeMap;
 		let mut state_map: BTreeMap<String, String> = BTreeMap::new();
-
-		// /// ????? Test purpose only------
-		// ///  BTreeMap::<u8, u8> ------- encode YES, decode YES
-		// let a= Encode::encode(&BTreeMap::<u8, u8>::new());
-		// let a0: &[u8] = &a;
-		// let a1: BTreeMap::<u8, u8> = Decode::decode::<&[u8]>(&mut a0).expect("pre_upgrade provides a valid state; qed");
-
-		// ///  String ------- encode NO
-		// let b = Encode::encode(&String::new());
-		// // YES
-		// // let b = String::new().encode();
-
-		// /// BTreeMap<String, String> ------- encode NO
-		// let c = Encode::encode(&BTreeMap::<String, String>::new());
-
-		// ///  String Vec<u8> vs [u8]------- encode YES, decode NO
-		// let d_raw = format!(
-		// 	"bond={:?}_total={:?}_delegations={:?}",
-		// 	1, 1, 1
-		// );
-		// let d = d_raw.encode();
-		// let d0: &[u8] = &d;
-		// let d1: String = Decode::decode::<&[u8]>(&mut d0).expect("pre_upgrade provides a valid state; qed");
-		// /// ????? Test purpose only------
 
 		for (round, candidate, key) in Self::unpaid_rounds_keys() {
 			let state: OldCollatorSnapshot<T::AccountId, BalanceOf<T>> =
@@ -192,13 +168,13 @@ where
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade(state: Vec<u8>) -> Result<(), &'static str> {
-		let (state_map_raw, rounds_candidates_received, num_updated_received): (
-			BTreeMap<u8, u8>,
+		use sp_std::collections::btree_map::BTreeMap;
+
+		let (state_map, rounds_candidates_received, num_updated_received): (
+			BTreeMap<String, String>,
 			Vec<(RoundIndex, T::AccountId)>,
 			u32,
 		) = Decode::decode(&mut &state[..]).expect("pre_upgrade provides a valid state; qed");
-
-		let state_map: BTreeMap<String, String>= BTreeMap::new();
 
 		let mut num_updated = 0u32;
 		let mut rounds_candidates = vec![];

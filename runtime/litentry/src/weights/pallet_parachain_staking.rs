@@ -232,24 +232,6 @@ impl<T: frame_system::Config> pallet_parachain_staking::WeightInfo for WeightInf
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
-	// Storage: System Account (r:1 w:1)
-	// Storage: ParachainStaking DelegatorState (r:1 w:1)
-	// Storage: ParachainStaking CandidateInfo (r:1 w:1)
-	// Storage: ParachainStaking TopDelegations (r:1 w:1)
-	// Storage: ParachainStaking CandidatePool (r:1 w:1)
-	// Storage: ParachainStaking Total (r:1 w:1)
-	/// The range of component `x` is `[3, 100]`.
-	/// The range of component `y` is `[2, 1000]`.
-	fn delegate(x: u32, y: u32, ) -> Weight {
-		// Minimum execution time: 200_331 nanoseconds.
-		Weight::from_ref_time(223_297_293 as u64)
-			// Standard Error: 120_796
-			.saturating_add(Weight::from_ref_time(216_743 as u64).saturating_mul(x as u64))
-			// Standard Error: 11_760
-			.saturating_add(Weight::from_ref_time(314_199 as u64).saturating_mul(y as u64))
-			.saturating_add(T::DbWeight::get().reads(6 as u64))
-			.saturating_add(T::DbWeight::get().writes(6 as u64))
-	}
 	// Storage: ParachainStaking DelegatorState (r:1 w:1)
 	// Storage: ParachainStaking Round (r:1 w:0)
 	// Storage: ParachainStaking DelegationScheduledRequests (r:1 w:1)
