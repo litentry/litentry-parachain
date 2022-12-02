@@ -76,6 +76,7 @@ use std::{string::String, sync::Arc, time::Duration, vec::Vec};
 pub extern "C" fn test_main_entrance() -> size_t {
 	rsgx_unit_tests!(
 		itp_attestation_handler::attestation_handler::tests::decode_spid_works,
+		itp_attestation_handler::attestation_handler::tests::encode_gid_works,
 		stf_sgx_tests::enclave_account_initialization_works,
 		stf_sgx_tests::shield_funds_increments_signer_account_nonce,
 		stf_sgx_tests::test_root_account_exists_after_initialization,

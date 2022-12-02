@@ -591,4 +591,13 @@ pub mod tests {
 		let decoded_spid = decode_spid(spid_encoded).unwrap();
 		assert_eq!(decoded_spid.id, expected_spid.id);
 	}
+
+	pub fn encode_gid_works() {
+		let gid_encoded = "00000c1d";
+
+		let eg_num: i32 = 3101;
+		let gid = hex::encode(eg_num.to_be_bytes());
+
+		assert_eq!(gid_encoded, gid)
+	}
 }
