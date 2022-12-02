@@ -47,9 +47,9 @@ fn create_identity_works() {
 			vec![1u8; 2048],
 			Some(vec![1u8; 2048])
 		));
-		System::assert_last_event(Event::IdentityManagement(crate::Event::CreateIdentityRequested {
-			shard,
-		}));
+		System::assert_last_event(Event::IdentityManagement(
+			crate::Event::CreateIdentityRequested { shard },
+		));
 	});
 }
 

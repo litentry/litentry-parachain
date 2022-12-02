@@ -38,7 +38,7 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{CallWorkerFn, OpaqueCall, ShardIdentifier, ShieldFundsFn, H256};
 use litentry_primitives::{Identity, UserShieldingKeyType, ValidationData};
 use log::*;
-use pallet_imp::{CreateIdentityFn, SetUserShieldingKeyFn, RemoveIdentityFn, VerifyIdentityFn};
+use pallet_imp::{CreateIdentityFn, RemoveIdentityFn, SetUserShieldingKeyFn, VerifyIdentityFn};
 use sp_core::blake2_256;
 use sp_runtime::traits::{AccountIdLookup, Block as ParentchainBlockTrait, Header, StaticLookup};
 use std::{sync::Arc, vec::Vec};
