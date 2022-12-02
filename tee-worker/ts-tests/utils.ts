@@ -1,7 +1,7 @@
 import "./config";
 import WebSocketAsPromised = require("websocket-as-promised");
 import WebSocket = require("ws");
-import Options = require("websocket-as-promised/types/options");
+import Options from "websocket-as-promised/types/options";
 import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
 import { StorageKey, Vec } from "@polkadot/types";
 import {
@@ -22,6 +22,7 @@ import { KeyObject } from "crypto";
 import { EventRecord } from "@polkadot/types/interfaces";
 import { after, before, describe } from "mocha";
 import { randomAsHex } from "@polkadot/util-crypto";
+import { getSinger } from "./web3/setup";
 const base58 = require("micro-base58");
 const crypto = require("crypto");
 // in order to handle self-signed certificates we need to turn off the validation
@@ -108,15 +109,13 @@ export async function initIntegrationTestContext(
     }));
     await wsp.open();
 
-    const keyring = new Keyring({ type: "sr25519" });
-
     const teeShieldingKey = await getTEEShieldingKey(wsp, api);
     return <IntegrationTestContext>{
         tee: wsp,
         substrate: api,
         teeShieldingKey,
         shard,
-        defaultSigner: keyring.addFromUri("//Alice", { name: "Alice" }),
+        defaultSigner: getSinger(0),
     };
 }
 
