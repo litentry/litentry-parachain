@@ -47,6 +47,7 @@ trait IdentifyChain {
 	fn is_litmus(&self) -> bool;
 	fn is_rococo(&self) -> bool;
 	fn is_dev(&self) -> bool;
+	fn is_standalone(&self) -> bool;
 }
 
 impl IdentifyChain for dyn sc_service::ChainSpec {
@@ -65,6 +66,9 @@ impl IdentifyChain for dyn sc_service::ChainSpec {
 	fn is_dev(&self) -> bool {
 		self.id().ends_with("dev")
 	}
+	fn is_standalone(&self) -> bool {
+		self.id().eq("standalone")
+	}
 }
 
 impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
@@ -80,12 +84,16 @@ impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
 	fn is_dev(&self) -> bool {
 		<dyn sc_service::ChainSpec>::is_dev(self)
 	}
+	fn is_standalone(&self) -> bool {
+		<dyn sc_service::ChainSpec>::is_standalone(self)
+	}
 }
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
-		// `--dev` to start a standalone node in dev network, using rococo-dev
-		"dev" => Box::new(chain_specs::rococo::get_chain_spec_dev()),
+		// `--standalone` to start a standalone node in dev network, using rococo-dev
+		// mainly based on Acala's `dev` implementation
+		"standalone" => Box::new(chain_specs::rococo::get_chain_spec_dev()),
 		// Litentry
 		"litentry-dev" => Box::new(chain_specs::litentry::get_chain_spec_dev()),
 		"litentry-staging" => Box::new(chain_specs::litentry::get_chain_spec_staging()),
@@ -215,18 +223,21 @@ macro_rules! construct_benchmark_partials {
 		if $config.chain_spec.is_litmus() {
 			let $partials = new_partial::<litmus_parachain_runtime::RuntimeApi, _>(
 				&$config,
+				false,
 				crate::service::build_import_queue::<litmus_parachain_runtime::RuntimeApi>,
 			)?;
 			$code
 		} else if $config.chain_spec.is_litentry() {
 			let $partials = new_partial::<litentry_parachain_runtime::RuntimeApi, _>(
 				&$config,
+				false,
 				crate::service::build_import_queue::<litentry_parachain_runtime::RuntimeApi>,
 			)?;
 			$code
 		} else if $config.chain_spec.is_rococo() {
 			let $partials = new_partial::<rococo_parachain_runtime::RuntimeApi, _>(
 				&$config,
+				false,
 				crate::service::build_import_queue::<rococo_parachain_runtime::RuntimeApi>,
 			)?;
 			$code
@@ -247,6 +258,7 @@ macro_rules! construct_async_run {
 					_
 				>(
 					&$config,
+					false,
 					crate::service::build_import_queue::<litmus_parachain_runtime::RuntimeApi>,
 				)?;
 				let task_manager = $components.task_manager;
@@ -259,6 +271,7 @@ macro_rules! construct_async_run {
 					_
 				>(
 					&$config,
+					false,
 					crate::service::build_import_queue::<litentry_parachain_runtime::RuntimeApi>,
 				)?;
 				let task_manager = $components.task_manager;
@@ -271,6 +284,7 @@ macro_rules! construct_async_run {
 					_
 				>(
 					&$config,
+					false,
 					crate::service::build_import_queue::<rococo_parachain_runtime::RuntimeApi>,
 				)?;
 				let task_manager = $components.task_manager;
@@ -442,8 +456,17 @@ pub fn run() -> Result<()> {
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 			let collator_options = cli.run.collator_options();
+			let is_standalone = runner.config().chain_spec.is_standalone();
 
 			runner.run_node_until_exit(|config| async move {
+				if is_standalone {
+					return crate::service::start_standalone_node::<rococo_parachain_runtime::RuntimeApi>(
+						config
+					)
+					.await
+					.map_err(Into::into)
+				}
+
 				let hwbench = if !cli.no_hardware_benchmarks {
 					config.database.path().map(|database_path| {
 						let _ = std::fs::create_dir_all(database_path);
