@@ -84,6 +84,8 @@ impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
+		// `--dev` to start a standalone node in dev network, using rococo-dev
+		"dev" => Box::new(chain_specs::rococo::get_chain_spec_dev()),
 		// Litentry
 		"litentry-dev" => Box::new(chain_specs::litentry::get_chain_spec_dev()),
 		"litentry-staging" => Box::new(chain_specs::litentry::get_chain_spec_staging()),
