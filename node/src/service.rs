@@ -36,7 +36,7 @@ use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayC
 use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node;
 use polkadot_service::CollatorPair;
 
-use crate::rpc;
+use crate::{rpc, standalone_block_import::StandaloneBlockImport};
 pub use primitives::{AccountId, Balance, Block, Hash, Header, Index as Nonce};
 
 use sc_consensus::LongestChain;
@@ -718,8 +718,7 @@ where
 			slot_duration: sc_consensus_aura::slot_duration(&*client)?,
 			client: client.clone(),
 			select_chain,
-			// block_import: instant_finalize::InstantFinalizeBlockImport::new(client.clone()),
-			block_import: client.clone(),
+			block_import: StandaloneBlockImport::new(client.clone()),
 			proposer_factory,
 			create_inherent_data_providers: move |block: Hash, ()| {
 				let current_para_block = client_for_cidp

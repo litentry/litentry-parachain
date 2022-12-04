@@ -67,7 +67,7 @@ impl IdentifyChain for dyn sc_service::ChainSpec {
 		self.id().ends_with("dev")
 	}
 	fn is_standalone(&self) -> bool {
-		self.id().eq("standalone")
+		self.id().eq("standalone") || self.id().eq("dev")
 	}
 }
 
@@ -91,9 +91,9 @@ impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
-		// `--standalone` to start a standalone node in dev network, using rococo-dev
-		// mainly based on Acala's `dev` implementation
-		"standalone" => Box::new(chain_specs::rococo::get_chain_spec_dev()),
+		// `--chain=standalone or --chain=dev` to start a standalone node using rococo-dev chain
+		// spec mainly based on Acala's `dev` implementation
+		"dev" | "standalone" => Box::new(chain_specs::rococo::get_chain_spec_dev(true)),
 		// Litentry
 		"litentry-dev" => Box::new(chain_specs::litentry::get_chain_spec_dev()),
 		"litentry-staging" => Box::new(chain_specs::litentry::get_chain_spec_staging()),
@@ -107,7 +107,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 			&include_bytes!("../res/chain_specs/litmus.json")[..],
 		)?),
 		// Rococo
-		"rococo-dev" => Box::new(chain_specs::rococo::get_chain_spec_dev()),
+		"rococo-dev" => Box::new(chain_specs::rococo::get_chain_spec_dev(false)),
 		"rococo-staging" => Box::new(chain_specs::rococo::get_chain_spec_staging()),
 		"rococo" => Box::new(chain_specs::rococo::ChainSpec::from_json_bytes(
 			&include_bytes!("../res/chain_specs/rococo-170000.json")[..],
