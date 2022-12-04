@@ -141,7 +141,7 @@ fn wrong_polkadot_verification_message_fails() {
 
 		assert_noop!(
 			IdentityManagementMock::verify_identity(
-				RuntimeOrigin::signed(who),
+				Origin::signed(who),
 				H256::random(),
 				encrypted_identity,
 				tee_encrypt(validation_data.encode().as_slice()),
