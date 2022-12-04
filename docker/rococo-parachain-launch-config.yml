@@ -13,11 +13,17 @@ relaychain:
     - --execution=wasm
   nodes:
     - name: alice
+      wsPort: 9946
+      rpcPort: 9936
+      port: 30336
     - name: bob
+      wsPort: 9947
+      rpcPort: 9937
+      port: 30337
 
 # Parachain Configuration
 parachains:
-- image: litentry/litentry-parachain:latest
+- image: litentry/litentry-parachain:tmp
   chain: rococo-dev
   id: 2106
   parachain: true
@@ -33,3 +39,6 @@ parachains:
   nodes:
   - flags:
     - --alice
+    wsPort: 9944
+    rpcPort: 9933
+    port: 30333

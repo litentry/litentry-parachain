@@ -6,6 +6,6 @@
     "genesis_state_path": "/tmp/parachain_dev/genesis-state",
     "genesis_wasm_path": "/tmp/parachain_dev/genesis-wasm",
     "parachain_ws": "ws://127.0.0.1:9944",
-    "relaynode_ws": "ws://127.0.0.1:9946",
+    "relaychain_ws": "ws://127.0.0.1:9946",
     "bridge_path": "/tmp/parachain_dev/chainbridge"
 }
