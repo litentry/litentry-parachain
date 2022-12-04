@@ -50,7 +50,7 @@ describeLitentry('Test Identity', (context) => {
         assert.equal(who, u8aToHex(context.defaultSigner.addressRaw), "check caller error")
     })
 
-    step('link twitter identity', async function () {
+    step('create twitter identity', async function () {
         const r = await createIdentity(context, context.defaultSigner, aesKey, true, twitterIdentity)
         if (r) {
             const [_who, challengeCode] = r
@@ -66,7 +66,7 @@ describeLitentry('Test Identity', (context) => {
         assert.equal(who, u8aToHex(context.defaultSigner.addressRaw), "check caller error")
     })
 
-    step('unlink identity', async function () {
+    step('remove identity', async function () {
         const who = await removeIdentity(context, context.defaultSigner, aesKey, true, twitterIdentity)
         assert.equal(who, u8aToHex(context.defaultSigner.addressRaw), "check caller error")
     })

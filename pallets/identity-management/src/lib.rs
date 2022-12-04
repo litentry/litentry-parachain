@@ -82,8 +82,8 @@ pub mod pallet {
 		// event that should be triggered by TEECallOrigin
 		UserShieldingKeySet { account: AesOutput },
 		ChallengeCodeGenerated { account: AesOutput, identity: AesOutput, code: AesOutput },
-		IdentityLinked { account: AesOutput, identity: AesOutput },
-		IdentityUnlinked { account: AesOutput, identity: AesOutput },
+		IdentityCreated { account: AesOutput, identity: AesOutput },
+		IdentityRemoved { account: AesOutput, identity: AesOutput },
 		IdentityVerified { account: AesOutput, identity: AesOutput },
 		// some error happened during processing in TEE, we use string-like
 		// parameters for more "generic" error event reporting
@@ -109,7 +109,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Link an identity
+		/// Create an identity
 		#[pallet::weight(<T as Config>::WeightInfo::create_identity())]
 		pub fn create_identity(
 			origin: OriginFor<T>,
@@ -122,7 +122,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Unlink an identity
+		/// Remove an identity
 		#[pallet::weight(<T as Config>::WeightInfo::remove_identity())]
 		pub fn remove_identity(
 			origin: OriginFor<T>,
@@ -134,7 +134,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Verify a linked identity
+		/// Verify an identity
 		#[pallet::weight(<T as Config>::WeightInfo::verify_identity())]
 		pub fn verify_identity(
 			origin: OriginFor<T>,
@@ -173,24 +173,24 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(195_000_000)]
-		pub fn identity_linked(
+		pub fn identity_created(
 			origin: OriginFor<T>,
 			account: AesOutput,
 			identity: AesOutput,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityLinked { account, identity });
+			Self::deposit_event(Event::IdentityCreated { account, identity });
 			Ok(Pays::No.into())
 		}
 
 		#[pallet::weight(195_000_000)]
-		pub fn identity_unlinked(
+		pub fn identity_removed(
 			origin: OriginFor<T>,
 			account: AesOutput,
 			identity: AesOutput,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityUnlinked { account, identity });
+			Self::deposit_event(Event::IdentityRemoved { account, identity });
 			Ok(Pays::No.into())
 		}
 

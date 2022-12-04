@@ -42,8 +42,8 @@ export async function removeIdentity(context: IntegrationTestContext, signer: Ke
     if (listening) {
         const event = await listenEncryptedEvents(context, aesKey, {
             module: "identityManagement",
-            method: "identityUnlinked",
-            event: "IdentityUnlinked"
+            method: "identityRemoved",
+            event: "IdentityRemoved"
         })
         const [who, _identity] = event.eventData;
         return who

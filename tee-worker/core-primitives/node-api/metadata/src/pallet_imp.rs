@@ -28,8 +28,8 @@ pub trait IMPCallIndexes {
 
 	fn user_shielding_key_set_call_indexes(&self) -> Result<[u8; 2]>;
 	fn challenge_code_generated_call_indexes(&self) -> Result<[u8; 2]>;
-	fn identity_linked_call_indexes(&self) -> Result<[u8; 2]>;
-	fn identity_unlinked_call_indexes(&self) -> Result<[u8; 2]>;
+	fn identity_created_call_indexes(&self) -> Result<[u8; 2]>;
+	fn identity_removed_call_indexes(&self) -> Result<[u8; 2]>;
 	fn identity_verified_call_indexes(&self) -> Result<[u8; 2]>;
 	fn some_error_call_indexes(&self) -> Result<[u8; 2]>;
 }
@@ -59,12 +59,12 @@ impl IMPCallIndexes for NodeMetadata {
 		self.call_indexes(IMP, "challenge_code_generated")
 	}
 
-	fn identity_linked_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(IMP, "identity_linked")
+	fn identity_created_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(IMP, "identity_created")
 	}
 
-	fn identity_unlinked_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(IMP, "identity_unlinked")
+	fn identity_removed_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(IMP, "identity_removed")
 	}
 
 	fn identity_verified_call_indexes(&self) -> Result<[u8; 2]> {

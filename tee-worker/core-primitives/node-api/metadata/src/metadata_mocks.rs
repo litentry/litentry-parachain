@@ -40,8 +40,8 @@ pub struct NodeMetadataMock {
 	imp_verify_identity: u8,
 	imp_user_shielding_key_set: u8,
 	imp_challenge_code_generated: u8,
-	imp_identity_linked: u8,
-	imp_identity_unlinked: u8,
+	imp_identity_created: u8,
+	imp_identity_removed: u8,
 	imp_identity_verified: u8,
 	imp_some_error: u8,
 	// IMP mock
@@ -52,8 +52,8 @@ pub struct NodeMetadataMock {
 	imp_mock_verify_identity: u8,
 	imp_mock_user_shielding_key_set: u8,
 	imp_mock_challenge_code_generated: u8,
-	imp_mock_identity_linked: u8,
-	imp_mock_identity_unlinked: u8,
+	imp_mock_identity_created: u8,
+	imp_mock_identity_removed: u8,
 	imp_mock_identity_verified: u8,
 	imp_mock_some_error: u8,
 
@@ -81,8 +81,8 @@ impl NodeMetadataMock {
 			imp_verify_identity: 3u8,
 			imp_user_shielding_key_set: 4u8,
 			imp_challenge_code_generated: 5u8,
-			imp_identity_linked: 6u8,
-			imp_identity_unlinked: 7u8,
+			imp_identity_created: 6u8,
+			imp_identity_removed: 7u8,
 			imp_identity_verified: 8u8,
 			imp_some_error: 9u8,
 
@@ -93,8 +93,8 @@ impl NodeMetadataMock {
 			imp_mock_verify_identity: 3u8,
 			imp_mock_user_shielding_key_set: 4u8,
 			imp_mock_challenge_code_generated: 5u8,
-			imp_mock_identity_linked: 6u8,
-			imp_mock_identity_unlinked: 7u8,
+			imp_mock_identity_created: 6u8,
+			imp_mock_identity_removed: 7u8,
 			imp_mock_identity_verified: 8u8,
 			imp_mock_some_error: 9u8,
 
@@ -162,12 +162,12 @@ impl IMPCallIndexes for NodeMetadataMock {
 		Ok([self.imp_module, self.imp_challenge_code_generated])
 	}
 
-	fn identity_linked_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.imp_module, self.imp_identity_linked])
+	fn identity_created_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_module, self.imp_identity_created])
 	}
 
-	fn identity_unlinked_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.imp_module, self.imp_identity_unlinked])
+	fn identity_removed_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_module, self.imp_identity_removed])
 	}
 
 	fn identity_verified_call_indexes(&self) -> Result<[u8; 2]> {
@@ -204,12 +204,12 @@ impl IMPMockCallIndexes for NodeMetadataMock {
 		Ok([self.imp_mock_module, self.imp_mock_challenge_code_generated])
 	}
 
-	fn identity_linked_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.imp_mock_module, self.imp_mock_identity_linked])
+	fn identity_created_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_mock_module, self.imp_mock_identity_created])
 	}
 
-	fn identity_unlinked_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.imp_mock_module, self.imp_mock_identity_unlinked])
+	fn identity_removed_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_mock_module, self.imp_mock_identity_removed])
 	}
 
 	fn identity_verified_call_indexes(&self) -> Result<[u8; 2]> {

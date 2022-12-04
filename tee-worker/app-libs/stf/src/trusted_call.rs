@@ -442,7 +442,7 @@ where
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
-									.get_from_metadata(|m| m.identity_linked_call_indexes())??,
+									.get_from_metadata(|m| m.identity_created_call_indexes())??,
 								aes_encrypt_default(&key, &who.encode()),
 								aes_encrypt_default(&key, &identity.encode()),
 							)));
@@ -488,7 +488,7 @@ where
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
-									.get_from_metadata(|m| m.identity_unlinked_call_indexes())??,
+									.get_from_metadata(|m| m.identity_removed_call_indexes())??,
 								aes_encrypt_default(&key, &who.encode()),
 								aes_encrypt_default(&key, &identity.encode()),
 							)));

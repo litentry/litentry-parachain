@@ -82,9 +82,9 @@ pub mod pallet {
 		/// challenge code was removed
 		ChallengeCodeRemoved { who: T::AccountId, identity: Identity },
 		/// an identity was linked
-		IdentityLinked { who: T::AccountId, identity: Identity },
+		IdentityCreated { who: T::AccountId, identity: Identity },
 		/// an identity was removed
-		IdentityUnlinked { who: T::AccountId, identity: Identity },
+		IdentityRemoved { who: T::AccountId, identity: Identity },
 	}
 
 	#[pallet::error]
@@ -199,7 +199,7 @@ pub mod pallet {
 				..Default::default()
 			};
 			IDGraphs::<T>::insert(&who, &identity, context);
-			Self::deposit_event(Event::IdentityLinked { who, identity });
+			Self::deposit_event(Event::IdentityCreated { who, identity });
 			Ok(())
 		}
 
@@ -212,7 +212,7 @@ pub mod pallet {
 			T::ManageOrigin::ensure_origin(origin)?;
 			ensure!(IDGraphs::<T>::contains_key(&who, &identity), Error::<T>::IdentityNotExist);
 			IDGraphs::<T>::remove(&who, &identity);
-			Self::deposit_event(Event::IdentityUnlinked { who, identity });
+			Self::deposit_event(Event::IdentityRemoved { who, identity });
 			Ok(())
 		}
 

@@ -245,7 +245,7 @@ pub fn setup_create_identity(
 		encrypted_identity.to_vec(),
 		None
 	));
-	System::assert_has_event(Event::IdentityManagementMock(crate::Event::IdentityLinkedPlain {
+	System::assert_has_event(Event::IdentityManagementMock(crate::Event::IdentityCreatedPlain {
 		account: who,
 		identity: identity.clone(),
 	}));
