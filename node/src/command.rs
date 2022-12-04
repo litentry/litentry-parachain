@@ -91,8 +91,8 @@ impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
-		// `--chain=standalone or --chain=dev` to start a standalone node using rococo-dev chain
-		// spec mainly based on Acala's `dev` implementation
+		// `--chain=standalone or --chain=dev` to start a standalone node with rococo-dev chain spec
+		// mainly based on Acala's `dev` implementation
 		"dev" | "standalone" => Box::new(chain_specs::rococo::get_chain_spec_dev(true)),
 		// Litentry
 		"litentry-dev" => Box::new(chain_specs::litentry::get_chain_spec_dev()),
