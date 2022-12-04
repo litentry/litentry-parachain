@@ -17,9 +17,6 @@
 #![allow(clippy::type_complexity)]
 #![allow(clippy::too_many_arguments)]
 
-// rpc
-use jsonrpsee::RpcModule;
-
 use cumulus_client_cli::CollatorOptions;
 use cumulus_client_consensus_aura::{AuraConsensus, BuildAuraConsensusParams, SlotProportion};
 use cumulus_client_consensus_common::ParachainConsensus;
@@ -34,6 +31,7 @@ use cumulus_primitives_parachain_inherent::{
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
 use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
 use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node;
+use jsonrpsee::RpcModule;
 use polkadot_service::CollatorPair;
 
 use crate::{rpc, standalone_block_import::StandaloneBlockImport};
@@ -60,6 +58,7 @@ type HostFunctions = sp_io::SubstrateHostFunctions;
 #[cfg(feature = "runtime-benchmarks")]
 type HostFunctions =
 	(sp_io::SubstrateHostFunctions, frame_benchmarking::benchmarking::HostFunctions);
+
 // Native executor instance.
 pub struct LitentryParachainRuntimeExecutor;
 
