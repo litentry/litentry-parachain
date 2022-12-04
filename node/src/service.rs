@@ -567,7 +567,7 @@ where
 			sc_consensus_aura::ImportQueueParams {
 				block_import: client.clone(),
 				justification_import: None,
-				client: client.clone(),
+				client,
 				create_inherent_data_providers: move |block: Hash, ()| {
 					let current_para_block = client_for_cidp
 						.number(block)
