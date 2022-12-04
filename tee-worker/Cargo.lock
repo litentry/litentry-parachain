@@ -4463,6 +4463,7 @@ dependencies = [
  "litentry-primitives",
  "log 0.4.17",
  "pallet-identity-management",
+ "pallet-vc-management",
  "parity-scale-codec",
  "sgx_tstd",
  "sgx_types",

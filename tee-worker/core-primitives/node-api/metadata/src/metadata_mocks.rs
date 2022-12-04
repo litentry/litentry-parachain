@@ -18,6 +18,7 @@
 use crate::{
 	error::Result, pallet_imp::IMPCallIndexes, pallet_imp_mock::IMPMockCallIndexes,
 	pallet_sidechain::SidechainCallIndexes, pallet_teerex::TeerexCallIndexes,
+	pallet_vcm::VCMCallIndexes,
 };
 use codec::{Decode, Encode};
 
@@ -56,6 +57,9 @@ pub struct NodeMetadataMock {
 	imp_mock_identity_unlinked: u8,
 	imp_mock_identity_verified: u8,
 	imp_mock_some_error: u8,
+	// VCM
+	vcm_module: u8,
+	vcm_schema_issued: u8,
 
 	imported_sidechain_block: u8,
 	runtime_spec_version: u32,
@@ -97,6 +101,9 @@ impl NodeMetadataMock {
 			imp_mock_identity_unlinked: 7u8,
 			imp_mock_identity_verified: 8u8,
 			imp_mock_some_error: 9u8,
+
+			vcm_module: 60u8,
+			vcm_schema_issued: 6u8,
 
 			imported_sidechain_block: 0u8,
 			runtime_spec_version: 25,
@@ -218,5 +225,11 @@ impl IMPMockCallIndexes for NodeMetadataMock {
 
 	fn some_error_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.imp_mock_module, self.imp_mock_some_error])
+	}
+}
+
+impl VCMCallIndexes for NodeMetadataMock {
+	fn vc_schema_issued_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.vcm_module, self.vcm_schema_issued])
 	}
 }

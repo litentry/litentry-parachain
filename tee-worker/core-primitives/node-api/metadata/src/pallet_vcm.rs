@@ -14,27 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std)]
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate sgx_tstd as std;
+use crate::{error::Result, NodeMetadata};
 
-mod ethereum_signature;
-mod identity;
-// mod trusted_call;
-mod assertion;
-mod validation_data;
+/// Pallet name:
+const VCM: &str = "VCManagement";
 
-pub use ethereum_signature::*;
-pub use identity::*;
-pub use parentchain_primitives::{
-	AesOutput, BlockNumber as ParentchainBlockNumber, UserShieldingKeyType, USER_SHIELDING_KEY_LEN,
-	USER_SHIELDING_KEY_NONCE_LEN, USER_SHIELDING_KEY_TAG_LEN,
-};
-// pub use trusted_call::*;
-pub use assertion::*;
-pub use validation_data::*;
+pub trait VCMCallIndexes {
+	fn vc_schema_issued_call_indexes(&self) -> Result<[u8; 2]>;
+}
 
-pub type ChallengeCode = [u8; 16];
-
-pub type VCSchemaId = [u8; 256];
-pub type VCSchemaContent = [u8; 2048];
+impl VCMCallIndexes for NodeMetadata {
+	fn vc_schema_issued_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(VCM, "add_schema")
+	}
+}

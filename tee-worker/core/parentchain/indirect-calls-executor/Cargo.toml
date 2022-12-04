@@ -43,6 +43,7 @@ substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git"
 ita-sgx-runtime = { path = "../../../app-libs/sgx-runtime", default-features = false }
 litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
 pallet-imp = { package = "pallet-identity-management", path = "../../../../pallets/identity-management", default-features = false }
+pallet-vcm = { package = "pallet-vc-management", path = "../../../../pallets/vc-management", default-features = false }
 
 [dev-dependencies]
 env_logger = "0.9.0"

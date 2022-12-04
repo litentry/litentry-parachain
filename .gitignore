@@ -13,7 +13,6 @@ docker/generated-*/
 ts-tests/package-lock.json
 
 tags.lock
-
 recipe.json
-
 gethdata
+setup_worker.sh

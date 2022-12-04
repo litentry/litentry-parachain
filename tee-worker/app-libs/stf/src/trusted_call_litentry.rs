@@ -31,7 +31,7 @@ use lc_stf_task_sender::{
 };
 use litentry_primitives::{
 	Assertion, ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType,
-	ValidationData,
+	VCSchemaContent, VCSchemaId, ValidationData,
 };
 use log::*;
 use sp_runtime::BoundedVec;
@@ -219,6 +219,25 @@ impl TrustedCallSigned {
 		}
 		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
 		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		Ok(())
+	}
+
+	pub fn vc_schema_issue_runtime(
+		who: AccountId,
+		id: VCSchemaId,
+		content: VCSchemaContent,
+	) -> StfResult<()> {
+		info!(
+			"vc_schema_issue_runtime, who.str = {:?}, id = {:?}, content = {:?}",
+			account_id_to_string(&who),
+			id,
+			content,
+		);
+		/**
+		* ita_sgx_runtime::IdentityManagementCall::<Runtime>::unlink_identity { who, identity }
+		   .dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+		   .map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		*/
 		Ok(())
 	}
 }
