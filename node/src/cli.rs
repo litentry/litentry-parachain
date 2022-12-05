@@ -63,7 +63,7 @@ pub enum Subcommand {
 	TryRuntime(try_runtime_cli::TryRuntimeCmd),
 }
 
-#[derive(Debug, clap::Parser)]
+#[derive(Debug, Parser)]
 #[command(
 	propagate_version = true,
 	args_conflicts_with_subcommands = true,

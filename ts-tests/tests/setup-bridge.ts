@@ -210,7 +210,7 @@ function generateBridgeConfig(
                 name: 'sub',
                 type: 'substrate',
                 id: parachainChainID.toString(),
-                endpoint: 'ws://127.0.0.1:9946',
+                endpoint: 'ws://127.0.0.1:9944',
                 from: parachainRelayer,
                 opts: {
                     useExtendedCall: 'true',

@@ -24,8 +24,8 @@ use crate::{
 	set::OrderedSet, BalanceOf, BottomDelegations, CandidateInfo, Config, DelegatorState, Error,
 	Event, Pallet, Round, RoundIndex, TopDelegations, Total,
 };
+use codec::{Decode, Encode};
 use frame_support::{pallet_prelude::*, traits::ReservableCurrency};
-use parity_scale_codec::{Decode, Encode};
 use sp_runtime::{
 	traits::{Saturating, Zero},
 	Perbill, Percent, RuntimeDebug,

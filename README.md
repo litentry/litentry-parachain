@@ -42,7 +42,15 @@ The wasms should be located under `target/release/wbuild/litentry-parachain-runt
 
 Similarly, use `make build-runtime-litmus` and `make build-runtime-rococo` to build the litmus-parachain-runtime and rococo-parachain-runtime, respectively.
 
-## launch of local network
+## launch a standalone node
+
+Simply run
+```
+make launch-standalone
+```
+A standalone node will be launched without relaychain, where blocks are finalised immediately. The node is accessible via ws 9944 port.
+
+## launch a local network with relaychain + parachain
 
 The following steps take rococo-parachain for example, because `sudo` will be removed for litentry-parachain and [was removed](https://github.com/litentry/litentry-parachain/issues/775) for litmus-parachain. But generally speaking, lauching a local network works with either of the three chain-settings.
 
@@ -77,6 +85,8 @@ In this case we could try to launch the network with raw binaries.
 
 - you should have locally compiled binaries, for both `polkadot` and `litentry-collator`
 - run `./scripts/launch-local-binary.sh rococo path-to-polkadot-bin path-to-litentry-parachain-bin`
+
+After launching, the parachain node is reachable via ws 9944 port and the relaychain nodes are reachable via ws 9946/9947 ports.
 
 When finished with the network, run
 ```
