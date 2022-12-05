@@ -102,10 +102,10 @@ if [ ! -f data/fork.json ]; then
   exit 2
 fi
 
-FORK_JSON_PATH="$(pwd)/data/fork.json"
+cp -f data/fork.json "$ROOTDIR/docker/"
 
 cd "$ROOTDIR"
-sed -i.bak "s;$FORK_CHAIN;$FORK_JSON_PATH;" docker/$CHAIN_TYPE-parachain-launch-config.yml
+sed -i.bak "s;$FORK_CHAIN;fork.json;" docker/$CHAIN_TYPE-parachain-launch-config.yml
 
 # start the network
 # make launch-docker-$CHAIN_TYPE
