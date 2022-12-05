@@ -86,6 +86,8 @@ In this case we could try to launch the network with raw binaries.
 - you should have locally compiled binaries, for both `polkadot` and `litentry-collator`
 - run `./scripts/launch-local-binary.sh rococo path-to-polkadot-bin path-to-litentry-parachain-bin`
 
+After launching, the parachain node is reachable via ws 9944 port and the relaychain nodes are reachable via ws 9946/9947 ports.
+
 When finished with the network, run
 ```
 make clean-binary
