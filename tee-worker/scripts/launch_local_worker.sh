@@ -103,6 +103,7 @@ run --skip-ra ${FSUBCMD_DEV} ${FSUBCMD_REQ_STATE}"
 	eval "${launch_command}" > "${ROOTDIR}"/log/${worker_name}.log 2>&1 &
 	echo "${worker_name}(integritee-service) started successfully. log: ${ROOTDIR}/log/${worker_name}.log"
 
+	# How to get dockerirze: wget https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize-linux-amd64-v0.6.1.tar.gz
 	if ((${WORKER_NUM} > 0)); then
 		"${ROOTDIR}"/dockerize -wait-retry-interval 10s -wait http://localhost:${untrusted_http_port}/is_initialized -timeout 600s
 	fi
