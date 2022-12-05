@@ -18,14 +18,12 @@ function print_divider() {
 
 function usage() {
   print_divider
-  echo "Usage: $0 [http-rpc-endpoint] [orig-chain] [fork-chain] [binary]"
-  echo 
-  echo "the http-rpc-endpoint has to be a reachabale HTTP-RPC URL (do not mix it up with ws port)"
+  echo "Usage: $0 [ws-rpc-endpoint] [orig-chain] [fork-chain] [binary]"
   echo 
   echo "default:"
-  echo "http-rpc-endpoint: http://localhost:9933"
-  echo "orig-chain:        litmus"
-  echo "fork-chain:        litmus-dev"
+  echo "ws-rpc-endpoint:   ws://127.0.0.1:9944"
+  echo "orig-chain:        rococo"
+  echo "fork-chain:        rococo-dev"
   echo "binary:            the binary copied from litentry/litentry-parachain:latest"
   print_divider
 }
@@ -41,9 +39,9 @@ case "$1" in
     ;;
 esac
 
-ENDPOINT="${1:-http://localhost:9933}"
-ORIG_CHAIN=${2:-litmus}
-FORK_CHAIN=${3:-litmus-dev}
+ENDPOINT="${1:-ws://127.0.0.1:9944}"
+ORIG_CHAIN=${2:-rococo}
+FORK_CHAIN=${3:-rococo-dev}
 CHAIN_TYPE=
 
 case "$FORK_CHAIN" in
@@ -51,6 +49,8 @@ case "$FORK_CHAIN" in
     CHAIN_TYPE=litmus ;;
   litentry*)
     CHAIN_TYPE=litentry ;;
+  rococo*)
+    CHAIN_TYPE=rococo ;;
   *)
     echo "unsupported chain type"
     exit 1 ;;
@@ -59,6 +59,7 @@ esac
 echo "TMPDIR is $TMPDIR"
 cd "$TMPDIR"
 git clone "$FORK_OFF_SUBSTRATE_REPO"
+git checkout wss-fork
 cd fork-off-substrate
 npm i
 
@@ -88,7 +89,7 @@ jq .result | sed 's/"//g;s/^0x//' | xxd -r -p > runtime.wasm
 # write .env file
 cd ..
 cat << EOF > .env
-HTTP_RPC_ENDPOINT=$ENDPOINT
+WS_RPC_ENDPOINT=$ENDPOINT
 ALICE=1
 ORIG_CHAIN=$ORIG_CHAIN
 FORK_CHAIN=$FORK_CHAIN
@@ -107,4 +108,4 @@ cd "$ROOTDIR"
 sed -i.bak "s;$FORK_CHAIN;$FORK_JSON_PATH;" docker/$CHAIN_TYPE-parachain-launch-config.yml
 
 # start the network
-make launch-docker-$CHAIN_TYPE
+# make launch-docker-$CHAIN_TYPE
