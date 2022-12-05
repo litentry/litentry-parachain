@@ -16,7 +16,7 @@ cleanup() {
   exit
 }
 
-trap 'cleanup' INT TERM EXIT
+trap 'cleanup $TMPDIR' INT TERM EXIT
 
 FORK_OFF_SUBSTRATE_REPO="https://github.com/litentry/fork-off-substrate.git"
 
