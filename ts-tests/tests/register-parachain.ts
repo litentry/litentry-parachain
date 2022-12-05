@@ -32,7 +32,7 @@ async function registerParachain(api: ApiPromise, config: any) {
     console.log('Register parachain ...');
     const config = loadConfig();
 
-    const provider = new WsProvider(config.relaynode_ws);
+    const provider = new WsProvider(config.relaychain_ws);
     const api = await ApiPromise.create({
         provider: provider,
     });
