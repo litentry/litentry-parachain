@@ -10,6 +10,14 @@ set -eo pipefail
 ROOTDIR=$(git rev-parse --show-toplevel)
 TMPDIR=$(mktemp -d /tmp/XXXXXX)
 
+cleanup() {
+  echo "removing $1 ..."
+  rm -rf "$1"
+  exit
+}
+
+trap 'cleanup' INT TERM EXIT
+
 FORK_OFF_SUBSTRATE_REPO="https://github.com/litentry/fork-off-substrate.git"
 
 function print_divider() {
@@ -18,12 +26,14 @@ function print_divider() {
 
 function usage() {
   print_divider
-  echo "Usage: $0 [ws-rpc-endpoint] [rococo|litmus|litentry] [binary]"
-  echo 
-  echo "default:"
-  echo "ws-rpc-endpoint:   ws://127.0.0.1:9944"
-  echo "chain:             rococo"
-  echo "binary:            the binary copied from litentry/litentry-parachain:latest"
+  echo "Usage: $0 [chain] [ws-rpc-endpoint] [binary]"
+  echo
+  echo "chain:             rococo|litmus|litentry"
+  echo "                   default: rococo"
+  echo "ws-rpc-endpoint:   the ws rpc endpoint of the parachain"
+  echo "                   default: litentry-rococo's rpc endpoint"
+  echo "binary:            path to the litentry parachain binary"
+  echo "                   default: the binary copied from litentry/litentry-parachain:latest"
   print_divider
 }
 
@@ -38,12 +48,18 @@ case "$1" in
     ;;
 esac
 
-ENDPOINT="${1:-ws://127.0.0.1:9944}"
-ORIG_CHAIN=${2:-rococo}
+ORIG_CHAIN=${1:-rococo}
 FORK_CHAIN=${ORIG_CHAIN}-dev
 
 case "$ORIG_CHAIN" in
-  litmus|rococo|litentry)
+  rococo)
+    ENDPOINT="${2:-wss://rpc.rococo-parachain-sg.litentry.io}"
+    ;;
+  litmus)
+    ENDPOINT="${2:-wss://rpc.litmus-parachain.litentry.io}"
+    ;;
+  litentry)
+    ENDPOINT="${2:-wss://rpc.litentry-parachain.litentry.io}"
     ;;
   *)
     echo "unsupported chain type"
@@ -60,10 +76,10 @@ npm i
 mkdir data && cd data
 
 # copy the binary
-if [ -z "$4" ]; then
-  docker cp $(docker create --rm litentry/litentry-parachain:latest):/usr/local/bin/litentry-collator binary
+if [ -z "$3" ]; then
+  docker cp "$(docker create --rm litentry/litentry-parachain:latest):/usr/local/bin/litentry-collator" binary
 else
-  cp "$4" binary
+  cp -f "$3" binary
 fi
 chmod a+x binary
 
@@ -86,7 +102,7 @@ fi
 cp -f data/fork.json "$ROOTDIR/docker/"
 
 cd "$ROOTDIR"
-sed -i.bak "s;$FORK_CHAIN;fork.json;" docker/$ORIG_CHAIN-parachain-launch-config.yml
+sed -i.bak "s;$FORK_CHAIN;fork.json;" "docker/$ORIG_CHAIN-parachain-launch-config.yml"
 
 # start the network
-make launch-docker-$ORIG_CHAIN
+make "launch-docker-$ORIG_CHAIN"
