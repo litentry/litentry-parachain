@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 #![allow(deprecated)]
-#![allow(type_complexity)]
+#![allow(clippy::type_complexity)]
 use frame_support::{
 	storage,
 	traits::{Get, OnRuntimeUpgrade},
@@ -175,9 +175,9 @@ where
 		let mut num_updated = 0u32;
 		let mut rounds_candidates = vec![];
 		for (round, candidate, _) in Self::unpaid_rounds_keys() {
-			let state = <AtStake<T>>::get(&round, &candidate);
+			let state = <AtStake<T>>::get(round, &candidate);
 			num_updated = num_updated.saturating_add(1);
-			rounds_candidates.push((round.clone(), candidate.clone()));
+			rounds_candidates.push((round, candidate.clone()));
 			let mut delegation_str = vec![];
 			for d in state.delegations {
 				delegation_str.push(format!(
