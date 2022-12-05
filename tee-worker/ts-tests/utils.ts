@@ -82,20 +82,20 @@ export async function initIntegrationTestContext(
         types: teeTypes,
     });
     await cryptoWaitReady();
-    // const keys = (await api.query.sidechain.workerForShard.entries()) as [StorageKey, Codec][];
-    // let shard = "";
-    // for (let i = 0; i < keys.length; i++) {
-    //     //TODO shard may be different from mr_enclave. The default value of shard is mr_enclave
-    //     shard = keys[i][0].args[0].toHex();
-    //     console.log("query worker shard: ", shard);
-    //     break;
-    // }
-    // if (shard == "") {
-    //     throw new Error("shard not found");
-    // }
+    const keys = (await api.query.sidechain.workerForShard.entries()) as [StorageKey, Codec][];
+    let shard = "";
+    for (let i = 0; i < keys.length; i++) {
+        //TODO shard may be different from mr_enclave. The default value of shard is mr_enclave
+        shard = keys[i][0].args[0].toHex();
+        console.log("query worker shard: ", shard);
+        break;
+    }
+    if (shard == "") {
+        throw new Error("shard not found");
+    }
 
     // random shard for testing
-    let shard = randomAsHex(32);
+    // let shard = randomAsHex(32);
 
     // const endpoint = "wss://localhost:2000"
     const wsp = new WebSocketAsPromised(workerEndpoint, <Options>(<unknown>{
