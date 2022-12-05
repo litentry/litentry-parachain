@@ -16,7 +16,7 @@
 
 #![cfg(test)]
 
-use crate::{
+pub use crate::{
 	self as pallet_identity_management_mock,
 	key::{aes_encrypt_default, tee_encrypt},
 	ChallengeCode,
@@ -32,7 +32,7 @@ use frame_support::{
 	traits::{ConstU128, ConstU16, ConstU32, ConstU64, Everything},
 };
 use frame_system as system;
-use mock_tee_primitives::{
+pub use mock_tee_primitives::{
 	EthereumSignature, EvmNetwork, Identity, IdentityHandle, IdentityMultiSignature,
 	IdentityWebType, SubstrateNetwork, TwitterValidationData, UserShieldingKeyType, ValidationData,
 	Web2Network, Web2ValidationData, Web3CommonValidationData, Web3Network, Web3ValidationData,
@@ -142,11 +142,11 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	ext
 }
 
-pub fn create_mock_twitter_identity() -> Identity {
+pub fn create_mock_twitter_identity(twitter_handle: &[u8]) -> Identity {
 	Identity {
 		web_type: IdentityWebType::Web2(Web2Network::Twitter),
 		handle: IdentityHandle::String(
-			b"aliceTwitterHandle".to_vec().try_into().expect("convert to BoundedVec failed"),
+			twitter_handle.to_vec().try_into().expect("convert to BoundedVec failed"),
 		),
 	}
 }

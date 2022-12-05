@@ -4,4 +4,4 @@ set -o pipefail
 
 cd /ts-tests
 yarn install
-yarn run test-identity
+yarn run test-identity:staging
