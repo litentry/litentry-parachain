@@ -7,7 +7,7 @@ jobs:
   release-bot:
     runs-on: ubuntu-latest
     # this means the release contains a new docker image (thus a new client)
-    if: contains(github.event.release.body, 'docker')
+    if: contains(github.event.release.body, 'litentry/litentry-parachain:v')
     steps:
       - name: Post discord message
         env:
