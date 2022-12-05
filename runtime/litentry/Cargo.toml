@@ -5,7 +5,7 @@ name = 'litentry-parachain-runtime'
 version = '0.9.12'
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len"] }
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len", "full"] }
 hex-literal = { version = '0.3.4' }
 log = { version = "0.4", default-features = false }
 scale-info = { version = "2.3.0", default-features = false, features = ["derive"] }

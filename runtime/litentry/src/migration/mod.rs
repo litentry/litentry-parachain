@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 #![allow(deprecated)]
+#![allow(type_complexity)]
 use frame_support::{
 	storage,
 	traits::{Get, OnRuntimeUpgrade},
@@ -22,10 +23,9 @@ use pallet_parachain_staking::{
 	AtStake, BalanceOf, BondWithAutoCompound, CollatorSnapshot, Round, RoundIndex,
 };
 use sp_runtime::Percent;
-use sp_std::{convert::TryInto, marker::PhantomData, vec, vec::Vec};
-use sp_std::{cmp::Ordering, collections::btree_map::BTreeMap, prelude::*};
+use sp_std::{collections::btree_map::BTreeMap, marker::PhantomData, prelude::*, vec, vec::Vec};
 
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, Encode};
 extern crate alloc;
 #[cfg(feature = "try-runtime")]
 use alloc::{format, string::ToString};
@@ -105,45 +105,19 @@ where
 		let mut rounds_candidates: Vec<(RoundIndex, T::AccountId)> = vec![];
 		let mut state_map: BTreeMap<String, String> = BTreeMap::new();
 
-		// /// ????? Test purpose only------
-		// ///  BTreeMap::<u8, u8> ------- encode YES, decode YES
-		// let a= Encode::encode(&BTreeMap::<u8, u8>::new());
-		// let a0: &[u8] = &a;
-		// let a1: BTreeMap::<u8, u8> = Decode::decode::<&[u8]>(&mut a0).expect("pre_upgrade provides a valid state; qed");
-
-		// ///  String ------- encode NO
-		// let b = Encode::encode(&String::new());
-		// // YES
-		// // let b = String::new().encode();
-
-		// /// BTreeMap<String, String> ------- encode NO
-		// let c = Encode::encode(&BTreeMap::<String, String>::new());
-
-		// ///  String Vec<u8> vs [u8]------- encode YES, decode NO
-		// let d_raw = format!(
-		// 	"bond={:?}_total={:?}_delegations={:?}",
-		// 	1, 1, 1
-		// );
-		// let d = d_raw.encode();
-		// let d0: &[u8] = &d;
-		// let d1: String = Decode::decode::<&[u8]>(&mut d0).expect("pre_upgrade provides a valid state; qed");
-		// /// ????? Test purpose only------
-
 		for (round, candidate, key) in Self::unpaid_rounds_keys() {
 			let state: OldCollatorSnapshot<T::AccountId, BalanceOf<T>> =
 				storage::unhashed::get(&key).expect("unable to decode value");
 
 			num_to_update = num_to_update.saturating_add(1);
-			rounds_candidates.push((round.clone(), candidate.clone()));
+			rounds_candidates.push((round, candidate.clone()));
 			let mut delegation_str = vec![];
 			for d in state.delegations {
-				delegation_str.push(format!(
-					"owner={:?}_amount={:?}_autoCompound=0%",
-					d.owner, d.amount
-				));
+				delegation_str
+					.push(format!("owner={:?}_amount={:?}_autoCompound=0%", d.owner, d.amount));
 			}
 			state_map.insert(
-				(&*format!("round_{:?}_candidate_{:?}", round, candidate)).to_string(),
+				(*format!("round_{:?}_candidate_{:?}", round, candidate)).to_string(),
 				format!(
 					"bond={:?}_total={:?}_delegations={:?}",
 					state.bond, state.total, delegation_str
@@ -192,13 +166,11 @@ where
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade(state: Vec<u8>) -> Result<(), &'static str> {
-		let (state_map_raw, rounds_candidates_received, num_updated_received): (
-			BTreeMap<u8, u8>,
+		let (state_map, rounds_candidates_received, num_updated_received): (
+			BTreeMap<String, String>,
 			Vec<(RoundIndex, T::AccountId)>,
 			u32,
 		) = Decode::decode(&mut &state[..]).expect("pre_upgrade provides a valid state; qed");
-
-		let state_map: BTreeMap<String, String>= BTreeMap::new();
 
 		let mut num_updated = 0u32;
 		let mut rounds_candidates = vec![];
@@ -219,7 +191,7 @@ where
 					state.bond, state.total, delegation_str
 				)),
 				state_map
-					.get(&((&*format!("round_{:?}_candidate_{:?}", round, candidate)).to_string())),
+					.get(&((*format!("round_{:?}_candidate_{:?}", round, candidate)).to_string())),
 				"incorrect delegations migration for round_{:?}_candidate_{:?}",
 				round,
 				candidate,

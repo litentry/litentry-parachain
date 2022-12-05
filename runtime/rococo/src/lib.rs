@@ -131,7 +131,7 @@ pub type Executive = frame_executive::Executive<
 	// it was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
-	// migration::MigrateAtStakeAutoCompound<Runtime>,
+	migration::MigrateAtStakeAutoCompound<Runtime>,
 >;
 
 impl_opaque_keys! {
@@ -153,7 +153,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_version: 9120,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 1,
+	transaction_version: 2,
 	state_version: 0,
 };
 
