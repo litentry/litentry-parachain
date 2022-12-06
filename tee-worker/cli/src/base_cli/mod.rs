@@ -82,6 +82,7 @@ pub enum BaseCli {
 	/// set the user's shielding key
 	SetUserShieldingKey(SetUserShieldingKeyCommand),
 
+	/// create idenity graph
 	CreateIdentity(CreateIdentityCommand),
 }
 

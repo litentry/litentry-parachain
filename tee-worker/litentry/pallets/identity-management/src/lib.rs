@@ -81,7 +81,7 @@ pub mod pallet {
 		ChallengeCodeSet { who: T::AccountId, identity: Identity, code: ChallengeCode },
 		/// challenge code was removed
 		ChallengeCodeRemoved { who: T::AccountId, identity: Identity },
-		/// an identity was linked
+		/// an identity was created
 		IdentityCreated { who: T::AccountId, identity: Identity },
 		/// an identity was removed
 		IdentityRemoved { who: T::AccountId, identity: Identity },
@@ -95,8 +95,8 @@ pub mod pallet {
 		IdentityAlreadyExist,
 		/// the pair (litentry-account, identity) doesn't exist
 		IdentityNotExist,
-		/// the identity was not linked before verification
-		IdentityNotLinked,
+		/// the identity was not created before verification
+		IdentityNotCreated,
 		/// a verification reqeust comes too early
 		VerificationRequestTooEarly,
 		/// a verification reqeust comes too late
@@ -241,7 +241,7 @@ pub mod pallet {
 					*context = Some(c);
 					Ok(())
 				} else {
-					Err(Error::<T>::IdentityNotLinked.into())
+					Err(Error::<T>::IdentityNotCreated.into())
 				}
 			})
 		}

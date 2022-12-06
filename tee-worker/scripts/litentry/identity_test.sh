@@ -28,7 +28,7 @@ validation_data='{"Web2":{"Twitter":{"tweet_id":[49,53,55,49,56,50,57,56,54,51,5
 identity='{"web_type":{"Web2":"Twitter"},"handle":{"String":[108,105,116,101,110,116,114,121]}}'
 
 echo "create_identity"
-RUST_LOG=warn ${CLIENT} trusted --mrenclave ${MRENCLAVE} link-identity "//Alice" "$identity"
+RUST_LOG=warn ${CLIENT} trusted --mrenclave ${MRENCLAVE} create-identity "//Alice" "$identity"
 
 echo "set-challenge-code"
 ${CLIENT} trusted --mrenclave ${MRENCLAVE} set-challenge-code "//Alice" "$identity" 1134

@@ -33,7 +33,7 @@ use substrate_api_client::{compose_extrinsic, UncheckedExtrinsicV4, XtStatus};
 pub struct CreateIdentityCommand {
 	/// AccountId in ss58check format
 	account: String,
-	/// Identity to link
+	/// Identity to be created
 	identity: String,
 	/// Shard identifier
 	shard: String,

@@ -39,7 +39,7 @@ export async function createIdentity(
     const encode = context.substrate.createType("LitentryIdentity", identity).toHex();
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString("hex");
     await context.substrate.tx.identityManagement
-        .linkIdentity(context.shard, `0x${ciphertext}`, null)
+        .createIdentity(context.shard, `0x${ciphertext}`, null)
         .signAndSend(signer);
     if (listening) {
         const event = await listenEncryptedEvents(context, aesKey, {
@@ -63,13 +63,13 @@ export async function removeIdentity(
     const encode = context.substrate.createType("LitentryIdentity", identity).toHex();
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString("hex");
     await context.substrate.tx.identityManagement
-        .unlinkIdentity(context.shard, `0x${ciphertext}`)
+        .removeIdentity(context.shard, `0x${ciphertext}`)
         .signAndSend(signer);
     if (listening) {
         const event = await listenEncryptedEvents(context, aesKey, {
             module: "identityManagement",
-            method: "identityUnlinked",
-            event: "IdentityUnlinked",
+            method: "identityRemoved",
+            event: "IdentityRemoved",
         });
         const [who, _identity] = event.eventData;
         return who;
