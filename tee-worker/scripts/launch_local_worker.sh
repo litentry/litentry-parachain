@@ -17,10 +17,8 @@ if [ "${reset}" = 'true' ]; then
 fi
 
 worker_endpoint="localhost"
-#node_url="ws://integritee-node"
-#node_port="9912"
 node_url="ws://host.docker.internal"
-node_port="9946"
+node_port="9944"
 
 RUST_LOG="info,integritee_service=info,ws=warn,sp_io=error,substrate_api_client=warn,\
 itc_parentchain_light_client=debug,\
@@ -30,7 +28,6 @@ its_consensus_aura=warn,aura*=warn,its_consensus_slots=warn"
 
 #./integritee-service init-shard H8wzxGBcKa1k5tXMALACo9P7uKS5rYFL8e3mMAEVe7Ln
 echo "Number of workers: ${workers}"
-
 
 for ((i = 0; i < workers; i++)); do
 	if ((i > 0)); then
@@ -75,6 +72,6 @@ run --skip-ra ${option_dev} ${option_request_state}"
 	echo "${worker_name}(integritee-service) started successfully. log: ${ROOTDIR}/log/${worker_name}.log"
 
 	if ((workers > 0)); then
-		"${ROOTDIR}"/dockerize -wait-retry-interval 10s -wait http://localhost:${untrusted_http_port}/is_initialized -timeout 600s
+		"${ROOTDIR}"/dockerize -wait-retry-interval 10s -wait http://localhost:${untrusted_http_port}/is_initialized -timeout 250s
 	fi
 done

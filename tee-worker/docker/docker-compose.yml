@@ -19,8 +19,10 @@ services:
       - RUST_LOG=warn,ws=warn,sp_io=warn,substrate_api_client=warn,jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=warn,integritee_service=warn,ita_stf=warn,enclave_runtime::top_pool_execution=info
     networks:
       - integritee-test-network
-    entrypoint: "dockerize -wait tcp://integritee-node:9912 -timeout 600s
-      /usr/local/bin/integritee-service --clean-reset --ws-external -M integritee-worker-1 -T wss://integritee-worker-1
+    # sleep 20 to give the node a bit time to be fully ready, otherwise the enclave
+    # registration extrinsic is sent too early for the node to handle
+    entrypoint: "dockerize -wait tcp://integritee-node:9912 -timeout 30s
+      sleep 20 && /usr/local/bin/integritee-service --clean-reset --ws-external -M integritee-worker-1 -T wss://integritee-worker-1
       -u ws://integritee-node -U ws://integritee-worker-1 -P 2011 -w 2101 -p 9912 -h 4645
       run --dev --skip-ra"
     restart: "no"
@@ -36,7 +38,7 @@ services:
       - RUST_LOG=warn,ws=warn,sp_io=warn,substrate_api_client=warn,jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=warn,integritee_service=warn,ita_stf=warn
     networks:
       - integritee-test-network
-    entrypoint: "dockerize -wait http://integritee-worker-1:4645/is_initialized -timeout 600s
+    entrypoint: "dockerize -wait http://integritee-worker-1:4645/is_initialized -timeout 150s
       /usr/local/bin/integritee-service --clean-reset --ws-external -M integritee-worker-2 -T wss://integritee-worker-2
       -u ws://integritee-node -U ws://integritee-worker-2 -P 2012 -w 2102 -p 9912 -h 4646
       run --dev --skip-ra --request-state"
