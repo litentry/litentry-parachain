@@ -78,6 +78,7 @@ pub use sp_runtime::{Perbill, Permill};
 
 // litentry
 pub use pallet_imt::{self, Call as IdentityManagementCall};
+pub use pallet_vcmt::{self, Call as VCManagementCall};
 
 /// Block type as expected by this sgx-runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
@@ -267,6 +268,13 @@ impl pallet_imt::Config for Runtime {
 	type MaxVerificationDelay = ConstU32<20>;
 }
 
+impl pallet_vcmt::Config for Runtime {
+	type Event = Event;
+	type ManageOrigin = EnsureRoot<AccountId>;
+	type MaxMetadataLength = ConstU32<128>;
+	type MaxVerificationDelay = ConstU32<20>;
+}
+
 // The plain sgx-runtime without the `evm-pallet`
 #[cfg(not(feature = "evm"))]
 construct_runtime!(
@@ -282,6 +290,7 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		Parentchain: pallet_parentchain::{Pallet, Call, Storage},
 		IdentityManagement: pallet_imt,
+		VCManagement: pallet_vcmt,
 	}
 );
 
@@ -303,6 +312,7 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		Parentchain: pallet_parentchain::{Pallet, Call, Storage},
 		IdentityManagement: pallet_imt,
+		VCManagement: pallet_vcmt,
 
 		Evm: pallet_evm::{Pallet, Call, Storage, Config, Event<T>},
 	}

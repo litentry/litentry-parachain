@@ -227,17 +227,17 @@ impl TrustedCallSigned {
 		id: VCSchemaId,
 		content: VCSchemaContent,
 	) -> StfResult<()> {
-		info!(
+		debug!(
 			"vc_schema_issue_runtime, who.str = {:?}, id = {:?}, content = {:?}",
 			account_id_to_string(&who),
 			id,
 			content,
 		);
-		/**
-		* ita_sgx_runtime::IdentityManagementCall::<Runtime>::unlink_identity { who, identity }
-		   .dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
-		   .map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
-		*/
+
+		let value = 2u64;
+		ita_sgx_runtime::VCManagementCall::<Runtime>::update_schema_storage { who, value }
+			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 		Ok(())
 	}
 }

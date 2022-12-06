@@ -518,23 +518,13 @@ where
 			},
 			TrustedCall::vc_schema_issue_runtime(enclave_account, account, id, content) => {
 				ensure_enclave_signer_account(&enclave_account)?;
-				info!(
-					"vc_schema_issue, account: {}, id: {:?}, content: {:?}",
-					account_id_to_string(&account),
-					id,
-					content
-				);
 				match Self::vc_schema_issue_runtime(account.clone(), id.clone(), content.clone()) {
 					Ok(()) => {
-						info!(
-							"match vc_schema_issue_runtime {} OK. id: {:?}",
-							account_id_to_string(&account),
-							id.clone()
-						);
+						debug!("vc_schema_issue_runtime {} OK", account_id_to_string(&account));
 					},
 					Err(err) => {
-						info!(
-							"match vc_schema_issue_runtime {} error: {}",
+						debug!(
+							"vc_schema_issue_runtime {} error: {}",
 							account_id_to_string(&account),
 							err
 						);

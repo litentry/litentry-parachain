@@ -144,6 +144,8 @@ where
 	}
 
 	fn submit_trusted_call(&self, shard: ShardIdentifier, encrypted_trusted_call: Vec<u8>) {
+		info!("start submit_trusted_call");
+
 		let top_submit_future =
 			async { self.top_pool_author.submit_top(encrypted_trusted_call, shard).await };
 		if let Err(e) = executor::block_on(top_submit_future) {
@@ -397,25 +399,21 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 			if let Ok(xt) = ParentchainUncheckedExtrinsic::<VCSchemaIssuedFn>::decode(
 				&mut encoded_xt_opaque.as_slice(),
 			) {
-				let call = self
-					.node_meta_data_provider
-					.get_from_metadata(|meta_data| meta_data.vc_schema_issued_call_indexes())??;
-
 				if self.is_vc_schema_issued_function(&xt.function.0) {
 					let (_, shard, schema_id, schema_content) = xt.function;
 					let shielding_key = self.shielding_key_repo.retrieve_key()?;
 
-					info!(
-							"Found Schema Issued extrinsic in block: \nSchema Id {:?} \nSchema Content: {}",
-							bs58::encode(schema_id.clone()).into_string(),
-							bs58::encode(schema_content.clone()).into_string()
-						);
 					if let Some((multiaddress_account, _, _)) = xt.signature {
 						let account = AccountIdLookup::lookup(multiaddress_account)?;
 						let enclave_account_id = self.stf_enclave_signer.get_enclave_account()?;
 
-						let id = VCSchemaId::decode(&mut schema_id.as_slice())?;
-						let content = VCSchemaContent::decode(&mut schema_content.as_slice())?;
+						debug!(
+							"start decode, id len {}, content len {}",
+							schema_id.len(),
+							schema_content.len()
+						);
+						let id: VCSchemaId = schema_id.try_into().unwrap();
+						let content: VCSchemaContent = schema_content.try_into().unwrap();
 
 						let trusted_call = TrustedCall::vc_schema_issue_runtime(
 							enclave_account_id,
@@ -423,14 +421,13 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 							id,
 							content,
 						);
-
 						let signed_trusted_call =
 							self.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
 						let trusted_operation =
 							TrustedOperation::indirect_call(signed_trusted_call);
-
 						let encrypted_trusted_call =
 							shielding_key.encrypt(&trusted_operation.encode())?;
+
 						self.submit_trusted_call(shard, encrypted_trusted_call);
 					}
 				}

@@ -4294,6 +4294,7 @@ dependencies = [
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
+ "pallet-vc-management-tee",
  "parity-scale-codec",
  "scale-info",
  "serde 1.0.147",
@@ -8906,6 +8907,28 @@ dependencies = [
  "scale-info",
  "sp-arithmetic",
  "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-vc-management-tee"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex 0.4.3",
+ "litentry-primitives",
+ "log 0.4.17",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "serde 1.0.147",
+ "serde_derive 1.0.147",
+ "serde_json 1.0.89",
+ "sp-core",
+ "sp-io 6.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.29)",
  "sp-runtime",
  "sp-std",
 ]
