@@ -275,15 +275,6 @@ jobs:
           docker tag integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }} ${{ env.CLIENT_IMAGE_TAG }}
           docker images --all
 
-      - name: Generate parachain artefacts
-        run: |
-          ./scripts/litentry/generate_parachain_artefacts.sh
-
-      - name: Build litentry parachain docker images
-        run: |
-          cd docker
-          docker-compose -f litentry-parachain.build.yml build
-
       - name: Integration Test ${{ matrix.test }}-${{ matrix.flavor_id }}
         timeout-minutes: 30
         run: |
