@@ -81,10 +81,10 @@ pub mod pallet {
 		ChallengeCodeSet { who: T::AccountId, identity: Identity, code: ChallengeCode },
 		/// challenge code was removed
 		ChallengeCodeRemoved { who: T::AccountId, identity: Identity },
-		/// an identity was linked
-		IdentityLinked { who: T::AccountId, identity: Identity },
+		/// an identity was created
+		IdentityCreated { who: T::AccountId, identity: Identity },
 		/// an identity was removed
-		IdentityUnlinked { who: T::AccountId, identity: Identity },
+		IdentityRemoved { who: T::AccountId, identity: Identity },
 	}
 
 	#[pallet::error]
@@ -95,8 +95,8 @@ pub mod pallet {
 		IdentityAlreadyExist,
 		/// the pair (litentry-account, identity) doesn't exist
 		IdentityNotExist,
-		/// the identity was not linked before verification
-		IdentityNotLinked,
+		/// the identity was not created before verification
+		IdentityNotCreated,
 		/// a verification reqeust comes too early
 		VerificationRequestTooEarly,
 		/// a verification reqeust comes too late
@@ -181,7 +181,7 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(15_000_000)]
-		pub fn link_identity(
+		pub fn create_identity(
 			origin: OriginFor<T>,
 			who: T::AccountId,
 			identity: Identity,
@@ -199,12 +199,12 @@ pub mod pallet {
 				..Default::default()
 			};
 			IDGraphs::<T>::insert(&who, &identity, context);
-			Self::deposit_event(Event::IdentityLinked { who, identity });
+			Self::deposit_event(Event::IdentityCreated { who, identity });
 			Ok(())
 		}
 
 		#[pallet::weight(15_000_000)]
-		pub fn unlink_identity(
+		pub fn remove_identity(
 			origin: OriginFor<T>,
 			who: T::AccountId,
 			identity: Identity,
@@ -212,7 +212,7 @@ pub mod pallet {
 			T::ManageOrigin::ensure_origin(origin)?;
 			ensure!(IDGraphs::<T>::contains_key(&who, &identity), Error::<T>::IdentityNotExist);
 			IDGraphs::<T>::remove(&who, &identity);
-			Self::deposit_event(Event::IdentityUnlinked { who, identity });
+			Self::deposit_event(Event::IdentityRemoved { who, identity });
 			Ok(())
 		}
 
@@ -241,7 +241,7 @@ pub mod pallet {
 					*context = Some(c);
 					Ok(())
 				} else {
-					Err(Error::<T>::IdentityNotLinked.into())
+					Err(Error::<T>::IdentityNotCreated.into())
 				}
 			})
 		}
