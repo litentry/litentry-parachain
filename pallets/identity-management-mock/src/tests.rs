@@ -48,28 +48,28 @@ fn set_user_shielding_key_works() {
 // TODO: maybe add more types
 
 #[test]
-fn link_twitter_identity_works() {
+fn create_twitter_identity_works() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(5);
-		setup_link_identity(2, create_mock_twitter_identity(b"alice"), 5);
+		setup_create_identity(2, create_mock_twitter_identity(b"alice"), 5);
 	});
 }
 
 #[test]
-fn link_polkadot_identity_works() {
+fn create_polkadot_identity_works() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(3);
 		let p = sp_core::sr25519::Pair::from_string("//Alice", None).unwrap();
-		setup_link_identity(2, create_mock_polkadot_identity(p.public().0), 3);
+		setup_create_identity(2, create_mock_polkadot_identity(p.public().0), 3);
 	});
 }
 
 #[test]
-fn link_eth_identity_works() {
+fn create_eth_identity_works() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(3);
 		let p = Random.generate();
-		setup_link_identity(2, create_mock_eth_identity(p.address().0), 3);
+		setup_create_identity(2, create_mock_eth_identity(p.address().0), 3);
 	});
 }
 
@@ -102,14 +102,14 @@ fn verify_eth_identity_works() {
 }
 
 #[test]
-fn double_link_twitter_identity_works() {
+fn double_create_twitter_identity_works() {
 	new_test_ext().execute_with(|| {
-		// link and verify the first twitter handle
+		// create and verify the first twitter handle
 		System::set_block_number(3);
 		setup_verify_twitter_identity(2, create_mock_twitter_identity(b"alice"), 3);
-		// link second twitter handle works
+		// create second twitter handle works
 		System::set_block_number(4);
-		setup_link_identity(2, create_mock_twitter_identity(b"bob"), 4);
+		setup_create_identity(2, create_mock_twitter_identity(b"bob"), 4);
 	});
 }
 
@@ -120,7 +120,7 @@ fn wrong_polkadot_verification_message_fails() {
 		let p = sp_core::sr25519::Pair::from_string("//Alice", None).unwrap();
 		let identity = create_mock_polkadot_identity(p.public().0);
 		let who = 2;
-		setup_link_identity(who, identity.clone(), 3);
+		setup_create_identity(who, identity.clone(), 3);
 
 		System::set_block_number(4);
 		let encrypted_identity = tee_encrypt(identity.encode().as_slice());
