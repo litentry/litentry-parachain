@@ -67,7 +67,7 @@ pub mod pallet {
 		/// maximum metadata length
 		#[pallet::constant]
 		type MaxMetadataLength: Get<u32>;
-		/// maximum delay in block numbers between linking an identity and verifying an identity
+		/// maximum delay in block numbers between creating an identity and verifying an identity
 		#[pallet::constant]
 		type MaxVerificationDelay: Get<ParentchainBlockNumber>;
 	}
@@ -186,7 +186,7 @@ pub mod pallet {
 			who: T::AccountId,
 			identity: Identity,
 			metadata: Option<MetadataOf<T>>,
-			linking_request_block: ParentchainBlockNumber,
+			creation_request_block: ParentchainBlockNumber,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 			ensure!(
@@ -195,7 +195,7 @@ pub mod pallet {
 			);
 			let context = IdentityContext {
 				metadata,
-				linking_request_block: Some(linking_request_block),
+				creation_request_block: Some(creation_request_block),
 				..Default::default()
 			};
 			IDGraphs::<T>::insert(&who, &identity, context);
@@ -227,7 +227,7 @@ pub mod pallet {
 			IDGraphs::<T>::try_mutate(&who, &identity, |context| -> DispatchResult {
 				let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
 
-				if let Some(b) = c.linking_request_block {
+				if let Some(b) = c.creation_request_block {
 					ensure!(
 						b <= verification_request_block,
 						Error::<T>::VerificationRequestTooEarly

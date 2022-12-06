@@ -81,7 +81,7 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// origin to manage caller whitelist
 		type ManageWhitelistOrigin: EnsureOrigin<Self::Origin>;
-		// maximum delay in block numbers between linking an identity and verifying an identity
+		// maximum delay in block numbers between creating an identity and verifying an identity
 		#[pallet::constant]
 		type MaxVerificationDelay: Get<BlockNumberOf<Self>>;
 		// some extrinsics should only be called by origins from TEE
@@ -171,9 +171,9 @@ pub mod pallet {
 		ShieldingKeyDecryptionFailed,
 		/// unexpected decoded type
 		WrongDecodedType,
-		/// identity already exists when linking an identity
+		/// identity already exists when creating an identity
 		IdentityAlreadyExist,
-		/// identity not exist when unlinking an identity
+		/// identity not exist when removing an identity
 		IdentityNotExist,
 		/// no shielding key for a given AccountId
 		ShieldingKeyNotExist,
@@ -187,8 +187,8 @@ pub mod pallet {
 		RecoverSubstratePubkeyFailed,
 		/// verify evm signature failed
 		VerifyEvmSignatureFailed,
-		/// the linking request block is zero
-		LinkingRequestBlockZero,
+		/// the creation request block is zero
+		CreationRequestBlockZero,
 		/// the challenge code doesn't exist
 		ChallengeCodeNotExist,
 		/// wrong signature type
@@ -333,7 +333,7 @@ pub mod pallet {
 			// emit the IdentityCreated event
 			let context = IdentityContext {
 				metadata,
-				linking_request_block: Some(<frame_system::Pallet<T>>::block_number()),
+				creation_request_block: Some(<frame_system::Pallet<T>>::block_number()),
 				verification_request_block: None,
 				is_verified: false,
 			};
@@ -381,7 +381,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Verify a linked identity
+		/// Verify a created identity
 		#[pallet::weight(195_000_000)]
 		pub fn verify_identity(
 			origin: OriginFor<T>,
@@ -424,11 +424,11 @@ pub mod pallet {
 
 			IDGraphs::<T>::try_mutate(&who, &identity, |context| -> DispatchResult {
 				let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
-				let linking_request_block =
-					c.linking_request_block.ok_or(Error::<T>::LinkingRequestBlockZero)?;
-				ensure!(linking_request_block <= now, Error::<T>::VerificationRequestTooEarly);
+				let creation_request_block =
+					c.creation_request_block.ok_or(Error::<T>::CreationRequestBlockZero)?;
+				ensure!(creation_request_block <= now, Error::<T>::VerificationRequestTooEarly);
 				ensure!(
-					now - linking_request_block <= T::MaxVerificationDelay::get(),
+					now - creation_request_block <= T::MaxVerificationDelay::get(),
 					Error::<T>::VerificationRequestTooLate
 				);
 				c.is_verified = true;

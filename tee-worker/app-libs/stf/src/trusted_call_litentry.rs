@@ -81,7 +81,7 @@ impl TrustedCallSigned {
 			who: who.clone(),
 			identity: identity.clone(),
 			metadata,
-			linking_request_block: bn,
+			creation_request_block: bn,
 		}
 		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
 		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
