@@ -47,8 +47,8 @@ use sp_std::marker::PhantomData;
 
 /// Weight functions needed for pallet_identity_management.
 pub trait WeightInfo {
-	fn link_identity() -> Weight;
-	fn unlink_identity() -> Weight;
+	fn create_identity() -> Weight;
+	fn remove_identity() -> Weight;
 	fn verify_identity() -> Weight;
 	fn set_user_shielding_key() -> Weight;
 }
@@ -56,10 +56,10 @@ pub trait WeightInfo {
 /// Weights for pallet_identity_management using the Litentry node and recommended hardware.
 pub struct LitentryWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
-	fn link_identity() -> Weight {
+	fn create_identity() -> Weight {
 		Weight::from_ref_time(17_000_000 as u64)
 	}
-	fn unlink_identity() -> Weight {
+	fn remove_identity() -> Weight {
 		Weight::from_ref_time(17_000_000 as u64)
 	}
 	fn verify_identity() -> Weight {
@@ -72,10 +72,10 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
-	fn link_identity() -> Weight {
+	fn create_identity() -> Weight {
 		Weight::from_ref_time(17_000_000 as u64)
 	}
-	fn unlink_identity() -> Weight {
+	fn remove_identity() -> Weight {
 		Weight::from_ref_time(17_000_000 as u64)
 	}
 	fn verify_identity() -> Weight {

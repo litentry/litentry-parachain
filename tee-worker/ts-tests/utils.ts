@@ -1,7 +1,7 @@
 import "./config";
 import WebSocketAsPromised = require("websocket-as-promised");
 import WebSocket = require("ws");
-import Options = require("websocket-as-promised/types/options");
+import Options from "websocket-as-promised/types/options";
 import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
 import { StorageKey, Vec } from "@polkadot/types";
 import {
@@ -22,6 +22,7 @@ import { KeyObject } from "crypto";
 import { EventRecord } from "@polkadot/types/interfaces";
 import { after, before, describe } from "mocha";
 import { randomAsHex } from "@polkadot/util-crypto";
+import { generateChallengeCode, getSinger } from "./web3/setup";
 const base58 = require("micro-base58");
 const crypto = require("crypto");
 // in order to handle self-signed certificates we need to turn off the validation
@@ -81,20 +82,20 @@ export async function initIntegrationTestContext(
         types: teeTypes,
     });
     await cryptoWaitReady();
-    // const keys = (await api.query.sidechain.workerForShard.entries()) as [StorageKey, Codec][];
-    // let shard = "";
-    // for (let i = 0; i < keys.length; i++) {
-    //     //TODO shard may be different from mr_enclave. The default value of shard is mr_enclave
-    //     shard = keys[i][0].args[0].toHex();
-    //     console.log("query worker shard: ", shard);
-    //     break;
-    // }
-    // if (shard == "") {
-    //     throw new Error("shard not found");
-    // }
+    const keys = (await api.query.sidechain.workerForShard.entries()) as [StorageKey, Codec][];
+    let shard = "";
+    for (let i = 0; i < keys.length; i++) {
+        //TODO shard may be different from mr_enclave. The default value of shard is mr_enclave
+        shard = keys[i][0].args[0].toHex();
+        console.log("query worker shard: ", shard);
+        break;
+    }
+    if (shard == "") {
+        throw new Error("shard not found");
+    }
 
     // random shard for testing
-    let shard = randomAsHex(32);
+    // let shard = randomAsHex(32);
 
     // const endpoint = "wss://localhost:2000"
     const wsp = new WebSocketAsPromised(workerEndpoint, <Options>(<unknown>{
@@ -108,15 +109,13 @@ export async function initIntegrationTestContext(
     }));
     await wsp.open();
 
-    const keyring = new Keyring({ type: "sr25519" });
-
     const teeShieldingKey = await getTEEShieldingKey(wsp, api);
     return <IntegrationTestContext>{
         tee: wsp,
         substrate: api,
         teeShieldingKey,
         shard,
-        defaultSigner: keyring.addFromUri("//Alice", { name: "Alice" }),
+        defaultSigner: getSinger(0),
     };
 }
 
@@ -304,4 +303,10 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
 
         cb(context);
     });
+}
+
+export function getMessage(address: string, wallet: string): string {
+    const challengeCode = generateChallengeCode();
+    const messgae = `Signing in ${process.env.ID_HUB_URL} with ${address} using ${wallet} and challenge code is: ${challengeCode}`;
+    return messgae;
 }

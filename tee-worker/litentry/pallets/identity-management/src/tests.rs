@@ -37,10 +37,10 @@ fn set_user_shielding_key_works() {
 }
 
 #[test]
-fn link_identity_works() {
+fn create_identity_works() {
 	new_test_ext().execute_with(|| {
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
-		assert_ok!(IMT::link_identity(
+		assert_ok!(IMT::create_identity(
 			Origin::signed(1),
 			2,
 			ALICE_WEB3_IDENTITY.clone(),
@@ -60,14 +60,14 @@ fn link_identity_works() {
 }
 
 #[test]
-fn unlink_identity_works() {
+fn remove_identity_works() {
 	new_test_ext().execute_with(|| {
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		assert_noop!(
-			IMT::unlink_identity(Origin::signed(1), 2, ALICE_WEB3_IDENTITY.clone()),
+			IMT::remove_identity(Origin::signed(1), 2, ALICE_WEB3_IDENTITY.clone()),
 			Error::<Test>::IdentityNotExist
 		);
-		assert_ok!(IMT::link_identity(
+		assert_ok!(IMT::create_identity(
 			Origin::signed(1),
 			2,
 			ALICE_WEB3_IDENTITY.clone(),
@@ -83,7 +83,7 @@ fn unlink_identity_works() {
 				is_verified: false,
 			}
 		);
-		assert_ok!(IMT::unlink_identity(Origin::signed(1), 2, ALICE_WEB3_IDENTITY.clone()));
+		assert_ok!(IMT::remove_identity(Origin::signed(1), 2, ALICE_WEB3_IDENTITY.clone()));
 		assert_eq!(IMT::id_graphs(2, ALICE_WEB3_IDENTITY), None);
 	});
 }
@@ -92,7 +92,7 @@ fn unlink_identity_works() {
 fn verify_identity_works() {
 	new_test_ext().execute_with(|| {
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
-		assert_ok!(IMT::link_identity(
+		assert_ok!(IMT::create_identity(
 			Origin::signed(1),
 			2,
 			ALICE_WEB3_IDENTITY.clone(),
@@ -116,7 +116,7 @@ fn verify_identity_works() {
 fn get_identity_and_identity_context_works() {
 	new_test_ext().execute_with(|| {
 		let metadata3: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
-		assert_ok!(IMT::link_identity(
+		assert_ok!(IMT::create_identity(
 			Origin::signed(1),
 			2,
 			ALICE_WEB3_IDENTITY.clone(),
@@ -132,7 +132,7 @@ fn get_identity_and_identity_context_works() {
 			),
 		};
 		let metadata2: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
-		assert_ok!(IMT::link_identity(
+		assert_ok!(IMT::create_identity(
 			Origin::signed(1),
 			2,
 			alice_web2_identity.clone(),
@@ -153,7 +153,7 @@ fn verify_identity_fails_when_too_early() {
 		const VERIFICATION_REQUEST_BLOCK: ParentchainBlockNumber = 1;
 
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
-		assert_ok!(IMT::link_identity(
+		assert_ok!(IMT::create_identity(
 			Origin::signed(1),
 			2,
 			ALICE_WEB3_IDENTITY.clone(),
@@ -188,7 +188,7 @@ fn verify_identity_fails_when_too_late() {
 		const VERIFICATION_REQUEST_BLOCK: ParentchainBlockNumber = 5;
 
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
-		assert_ok!(IMT::link_identity(
+		assert_ok!(IMT::create_identity(
 			Origin::signed(1),
 			2,
 			ALICE_WEB3_IDENTITY.clone(),
