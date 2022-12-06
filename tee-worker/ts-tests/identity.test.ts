@@ -10,6 +10,8 @@ import { step } from "mocha-steps";
 import { assert } from "chai";
 import { LitentryIdentity, LitentryValidationData } from "./type-definitions";
 import { Sign } from "./web3/functions";
+import { generateTestKeys } from "./web3/functions";
+import { ethers } from "ethers";
 const twitterIdentity = <LitentryIdentity>{
     handle: {
         PlainString: `0x${Buffer.from("mock_user", "utf8").toString("hex")}`,
@@ -53,6 +55,7 @@ describeLitentry("Test Identity", (context) => {
         //get signature
         // const message = getMessage(context.defaultSigner.address, "polkadot-js");
         // const signature = await Sign(message, context.defaultSigner);
+        console.log(context.ethersWallet.alice);
 
         const who = await setUserShieldingKey(context, context.defaultSigner, aesKey, true);
         assert.equal(who, u8aToHex(context.defaultSigner.addressRaw), "check caller error");
