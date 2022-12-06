@@ -47,10 +47,10 @@ use sp_std::marker::PhantomData;
 /// Weight functions for `pallet_identity_management`.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_identity_management::WeightInfo for WeightInfo<T> {
-	fn link_identity() -> Weight {
+	fn create_identity() -> Weight {
 		Weight::from_ref_time(15_164_000 as u64)
 	}
-	fn unlink_identity() -> Weight {
+	fn remove_identity() -> Weight {
 		Weight::from_ref_time(14_108_000 as u64)
 	}
 	fn verify_identity() -> Weight {

@@ -232,20 +232,20 @@ pub fn setup_user_shieding_key(
 	key
 }
 
-pub fn setup_link_identity(
+pub fn setup_create_identity(
 	who: <Test as frame_system::Config>::AccountId,
 	identity: Identity,
 	bn: <Test as frame_system::Config>::BlockNumber,
 ) {
 	let key = setup_user_shieding_key(who);
 	let encrypted_identity = tee_encrypt(identity.encode().as_slice());
-	assert_ok!(IdentityManagementMock::link_identity(
+	assert_ok!(IdentityManagementMock::create_identity(
 		Origin::signed(who),
 		H256::random(),
 		encrypted_identity.to_vec(),
 		None
 	));
-	System::assert_has_event(Event::IdentityManagementMock(crate::Event::IdentityLinkedPlain {
+	System::assert_has_event(Event::IdentityManagementMock(crate::Event::IdentityCreatedPlain {
 		account: who,
 		identity: identity.clone(),
 	}));
@@ -274,7 +274,7 @@ pub fn setup_verify_twitter_identity(
 	identity: Identity,
 	bn: <Test as frame_system::Config>::BlockNumber,
 ) {
-	setup_link_identity(who, identity.clone(), bn);
+	setup_create_identity(who, identity.clone(), bn);
 	let encrypted_identity = tee_encrypt(identity.encode().as_slice());
 	let validation_data = match &identity.web_type {
 		IdentityWebType::Web2(Web2Network::Twitter) => create_mock_twitter_validation_data(),
@@ -294,7 +294,7 @@ pub fn setup_verify_polkadot_identity(
 	bn: <Test as frame_system::Config>::BlockNumber,
 ) {
 	let identity = create_mock_polkadot_identity(p.public().0);
-	setup_link_identity(who, identity.clone(), bn);
+	setup_create_identity(who, identity.clone(), bn);
 	let encrypted_identity = tee_encrypt(identity.encode().as_slice());
 	let code = IdentityManagementMock::challenge_codes(&who, &identity).unwrap();
 	let validation_data = match &identity.web_type {
@@ -321,7 +321,7 @@ pub fn setup_verify_eth_identity(
 	bn: <Test as frame_system::Config>::BlockNumber,
 ) {
 	let identity = create_mock_eth_identity(p.address().0);
-	setup_link_identity(who, identity.clone(), bn);
+	setup_create_identity(who, identity.clone(), bn);
 	let encrypted_identity = tee_encrypt(identity.encode().as_slice());
 	let code = IdentityManagementMock::challenge_codes(&who, &identity).unwrap();
 	let validation_data = match &identity.web_type {

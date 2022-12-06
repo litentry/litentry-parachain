@@ -30,16 +30,16 @@ use sp_core::sr25519 as sr25519_core;
 use substrate_api_client::{compose_extrinsic, UncheckedExtrinsicV4, XtStatus};
 
 #[derive(Parser)]
-pub struct LinkIdentityCommand {
+pub struct CreateIdentityCommand {
 	/// AccountId in ss58check format
 	account: String,
-	/// Identity to link
+	/// Identity to be created
 	identity: String,
 	/// Shard identifier
 	shard: String,
 }
 
-impl LinkIdentityCommand {
+impl CreateIdentityCommand {
 	pub(crate) fn run(&self, cli: &Cli) {
 		let chain_api = get_chain_api(cli);
 
@@ -65,8 +65,13 @@ impl LinkIdentityCommand {
 		let tee_shielding_key = get_shielding_key(cli).unwrap();
 		let encrypted_identity = tee_shielding_key.encrypt(&identity.unwrap().encode()).unwrap();
 
-		let xt: UncheckedExtrinsicV4<_, _> =
-			compose_extrinsic!(chain_api, IMP, "link_identity", shard, encrypted_identity.to_vec());
+		let xt: UncheckedExtrinsicV4<_, _> = compose_extrinsic!(
+			chain_api,
+			IMP,
+			"create_identity",
+			shard,
+			encrypted_identity.to_vec()
+		);
 
 		let tx_hash = chain_api.send_extrinsic(xt.hex_encode(), XtStatus::Finalized).unwrap();
 		println!("[+] TrustedOperation got finalized. Hash: {:?}\n", tx_hash);
