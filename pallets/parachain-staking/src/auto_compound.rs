@@ -24,13 +24,13 @@ use crate::{
 	types::{Bond, Delegator},
 	weights::WeightInfo,
 };
+use codec::{Decode, Encode};
 use frame_support::{
 	dispatch::DispatchResultWithPostInfo,
 	ensure,
 	traits::{Get, ReservableCurrency},
 	RuntimeDebug,
 };
-use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::Saturating, Percent};
 use sp_std::{prelude::*, vec::Vec};
