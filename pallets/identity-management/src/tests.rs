@@ -38,28 +38,28 @@ fn set_user_shielding_key_works() {
 }
 
 #[test]
-fn link_identity_works() {
+fn create_identity_works() {
 	new_test_ext().execute_with(|| {
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
-		assert_ok!(IdentityManagement::link_identity(
+		assert_ok!(IdentityManagement::create_identity(
 			Origin::signed(1),
 			shard,
 			vec![1u8; 2048],
 			Some(vec![1u8; 2048])
 		));
-		System::assert_last_event(Event::IdentityManagement(crate::Event::LinkIdentityRequested {
-			shard,
-		}));
+		System::assert_last_event(Event::IdentityManagement(
+			crate::Event::CreateIdentityRequested { shard },
+		));
 	});
 }
 
 #[test]
-fn unlink_identity_works() {
+fn remove_identity_works() {
 	new_test_ext().execute_with(|| {
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
-		assert_ok!(IdentityManagement::unlink_identity(Origin::signed(1), shard, vec![1u8; 2048]));
+		assert_ok!(IdentityManagement::remove_identity(Origin::signed(1), shard, vec![1u8; 2048]));
 		System::assert_last_event(Event::IdentityManagement(
-			crate::Event::UnlinkIdentityRequested { shard },
+			crate::Event::RemoveIdentityRequested { shard },
 		));
 	});
 }
