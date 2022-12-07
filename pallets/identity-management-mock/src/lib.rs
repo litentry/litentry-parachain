@@ -171,8 +171,8 @@ pub mod pallet {
 		ShieldingKeyDecryptionFailed,
 		/// unexpected decoded type
 		WrongDecodedType,
-		/// identity already exists when creating an identity
-		IdentityAlreadyExist,
+		/// identity already verified when creating an identity
+		IdentityAlreadyVerified,
 		/// identity not exist when removing an identity
 		IdentityNotExist,
 		/// no shielding key for a given AccountId
@@ -310,14 +310,17 @@ pub mod pallet {
 				},
 			};
 
-			ensure!(
-				!IDGraphs::<T>::contains_key(&who, &identity),
-				Error::<T>::IdentityAlreadyExist
-			);
+			if let Some(c) = IDGraphs::<T>::get(&who, &identity) {
+				ensure!(!c.is_verified, Error::<T>::IdentityAlreadyVerified);
+			}
+
 			let key = UserShieldingKeys::<T>::get(&who).ok_or(Error::<T>::ShieldingKeyNotExist)?;
 
 			// emit the challenge code event, TODO: use randomness pallet
-			let code = Self::get_mock_challenge_code();
+			let code = Self::get_mock_challenge_code(
+				<frame_system::Pallet<T>>::block_number(),
+				ChallengeCodes::<T>::get(&who, &identity).clone(),
+			);
 			ChallengeCodes::<T>::insert(&who, &identity, &code);
 			Self::deposit_event(Event::<T>::ChallengeCodeGeneratedPlain {
 				account: who.clone(),
@@ -534,9 +537,13 @@ pub mod pallet {
 		}
 
 		// TODO: maybe use randomness pallet
-		fn get_mock_challenge_code() -> ChallengeCode {
-			let now = <frame_system::Pallet<T>>::block_number();
-			blake2_128(&now.encode())
+		pub fn get_mock_challenge_code(
+			bn: BlockNumberOf<T>,
+			maybe_code: Option<ChallengeCode>,
+		) -> ChallengeCode {
+			let mut code = bn.encode();
+			code.append(&mut maybe_code.encode());
+			blake2_128(&code)
 		}
 
 		fn verify_substrate_signature(
