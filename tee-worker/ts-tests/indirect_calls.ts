@@ -38,9 +38,10 @@ export async function linkIdentity(
 ): Promise<HexString[] | undefined> {
     const encode = context.substrate.createType("LitentryIdentity", identity).toHex();
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString("hex");
+    const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
     await context.substrate.tx.identityManagement
         .linkIdentity(context.shard, `0x${ciphertext}`, null)
-        .signAndSend(signer);
+        .signAndSend(signer, { nonce });
     if (listening) {
         const event = await listenEncryptedEvents(context, aesKey, {
             module: "identityManagement",
@@ -62,9 +63,11 @@ export async function unlinkIdentity(
 ): Promise<HexString | undefined> {
     const encode = context.substrate.createType("LitentryIdentity", identity).toHex();
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString("hex");
+    const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
+
     await context.substrate.tx.identityManagement
         .unlinkIdentity(context.shard, `0x${ciphertext}`)
-        .signAndSend(signer);
+        .signAndSend(signer, { nonce });
     if (listening) {
         const event = await listenEncryptedEvents(context, aesKey, {
             module: "identityManagement",
@@ -95,9 +98,11 @@ export async function verifyIdentity(
         context.teeShieldingKey,
         validation_encode
     ).toString("hex");
+    const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
+
     await context.substrate.tx.identityManagement
         .verifyIdentity(context.shard, `0x${identity_ciphertext}`, `0x${validation_ciphertext}`)
-        .signAndSend(signer);
+        .signAndSend(signer, { nonce });
     if (listening) {
         const event = await listenEncryptedEvents(context, aesKey, {
             module: "identityManagement",
