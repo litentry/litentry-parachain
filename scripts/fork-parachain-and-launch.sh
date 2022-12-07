@@ -68,9 +68,8 @@ esac
 
 echo "TMPDIR is $TMPDIR"
 cd "$TMPDIR"
-git clone "$FORK_OFF_SUBSTRATE_REPO"
+git clone -b wss-fork "$FORK_OFF_SUBSTRATE_REPO"
 cd fork-off-substrate
-git checkout wss-fork
 npm i
 
 mkdir data && cd data
