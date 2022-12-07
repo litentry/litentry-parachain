@@ -14,7 +14,7 @@ async function runtime_upgrade(api: ApiPromise, config: any) {
     const alice = keyring.addFromUri('//Alice');
 
     const code_path = "./docker/*-parachain-runtime.compact.compressed.wasm"
-    const tx = api.tx.sudo.sudoUncheckWeight(
+    const tx = api.tx.sudo.sudoUncheckedWeight(
         api.tx.system.setCode(
             code_path
         )

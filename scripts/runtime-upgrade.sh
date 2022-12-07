@@ -18,12 +18,12 @@ set -eo pipefail
 
 function usage() {
   echo
-  echo "Usage:   $0 litentry|litmus|rococo will download runtime.wasm"
+  echo "Usage:   $0 litentry|litmus|rococo  [release_tag] will download runtime.wasm"
   echo "         both are of Linux verion"
 }
 
 CHAIN_TYPE=${1:-rococo}
-
+RELEASE_TAG=${2}
 
 case "$CHAIN_TYPE" in
   rococo)
@@ -49,10 +49,9 @@ function print_divider() {
 function download_new_wasm() {
     echo "will download $CHAIN_TYPE runtime.wasm please wait a later ~~"
     #https://github.com/litentry/litentry-parachain/releases/download/v0.9.13/rococo-parachain-runtime.compact.compressed.wasm
-    url="https://github.com/litentry/litentry-parachain/releases/download/v0.9.13/$CHAIN_TYPE-parachain-runtime.compact.compressed.wasm"
+    url="https://github.com/litentry/litentry-parachain/releases/download/$RELEASE_TAG/$CHAIN_TYPE-parachain-runtime.compact.compressed.wasm"
 
     echo "$url"
-    #NEW_WASM="$(pwd)/docker/$CHAIN_TYPE-parachain-runtime.compact.compressed.wasm"
     cd "$(pwd)/docker"
     wget -q "$url"
     echo "right download successful!"
@@ -69,6 +68,7 @@ cd "$ROOTDIR/ts-tests"
 echo "NODE_ENV=ci" > .env
 yarn
 yarn runtime-upgrade 2>&1 | tee "$TMPDIR/runtime-upgrade.log"
+
 print_divider
 
 
