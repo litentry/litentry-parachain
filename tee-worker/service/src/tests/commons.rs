@@ -50,5 +50,11 @@ pub fn local_worker_config(
 		"8787".to_string(),
 		"4545".to_string(),
 		None,
+		Default::default(),
+		Default::default(),
+		Default::default(),
+		Default::default(),
+		Default::default(),
+		Default::default(),
 	)
 }

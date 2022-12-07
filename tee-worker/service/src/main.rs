@@ -69,6 +69,7 @@ use its_peer_fetch::{
 };
 use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
 use its_storage::{interface::FetchBlocks, BlockPruner, SidechainStorageLock};
+use lc_data_providers::G_DATA_PROVIDERS;
 use log::*;
 use my_node_runtime::{Event, Hash, Header};
 use sgx_types::*;
@@ -122,6 +123,29 @@ fn main() {
 	let config = Config::from(&matches);
 
 	GlobalTokioHandle::initialize();
+
+	// init data-providers global variable.
+	{
+		let mut mut_handle = G_DATA_PROVIDERS.write().unwrap();
+		#[cfg(all(not(test), not(feature = "mockserver")))]
+		{
+			mut_handle.set_twitter_official_url(config.twitter_official_url.clone());
+			mut_handle.set_twitter_litentry_url(config.twitter_litentry_url.clone());
+			mut_handle.set_twitter_auth_token(config.twitter_auth_token.clone());
+			mut_handle.set_discord_official_url(config.discord_official_url.clone());
+			mut_handle.set_discord_litentry_url(config.discord_litentry_url.clone());
+			mut_handle.set_discord_auth_token(config.discord_auth_token.clone());
+		}
+		#[cfg(any(test, feature = "mockserver"))]
+		{
+			mut_handle.set_twitter_official_url("http://localhost:9527".to_string());
+			mut_handle.set_twitter_litentry_url("http://localhost:9527".to_string());
+			mut_handle.set_twitter_auth_token("".to_string());
+			mut_handle.set_discord_official_url("http://localhost:9527".to_string());
+			mut_handle.set_discord_litentry_url("http://localhost:9527".to_string());
+			mut_handle.set_discord_auth_token("".to_string());
+		}
+	}
 
 	// log this information, don't println because some python scripts for GA rely on the
 	// stdout from the service

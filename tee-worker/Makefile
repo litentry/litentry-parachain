@@ -148,7 +148,7 @@ Signed_RustEnclave_Name := bin/enclave.signed.so
 
 ######## Targets ########
 .PHONY: all
-all: fmt $(Worker_Name) $(Client_Name) $(Signed_RustEnclave_Name)
+all: $(Worker_Name) $(Client_Name) $(Signed_RustEnclave_Name)
 service: $(Worker_Name)
 client: $(Client_Name)
 githooks: .git/hooks/pre-commit

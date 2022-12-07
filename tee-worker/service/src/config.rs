@@ -27,6 +27,12 @@ static DEFAULT_UNTRUSTED_PORT: &str = "2001";
 static DEFAULT_MU_RA_PORT: &str = "3443";
 static DEFAULT_METRICS_PORT: &str = "8787";
 static DEFAULT_UNTRUSTED_HTTP_PORT: &str = "4545";
+static DEFAULT_TWITTER_OFFICIAL_URL: &str = "https://api.twitter.com";
+static DEFAULT_TWITTER_LITENTRY_URL: &str = "";
+static DEFAULT_TWITTER_AUTH_TOKEN: &str = "";
+static DEFAULT_DISCORD_OFFICIAL_URL: &str = "https://discordapp.com";
+static DEFAULT_DISCORD_LITENTRY_URL: &str = "";
+static DEFAULT_DISCORD_AUTH_TOKEN: &str = "";
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Config {
@@ -53,6 +59,20 @@ pub struct Config {
 	pub untrusted_http_port: String,
 	/// Config of the 'run' subcommand
 	pub run_config: Option<RunConfig>,
+
+	// Litentry parameters
+	/// Twitter official url
+	pub twitter_official_url: String,
+	/// Twitter litentry url
+	pub twitter_litentry_url: String,
+	/// Twitter authorization token
+	pub twitter_auth_token: String,
+	/// Discord official url
+	pub discord_official_url: String,
+	/// Discord litentry url
+	pub discord_litentry_url: String,
+	/// Discord authorization token
+	pub discord_auth_token: String,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -71,6 +91,12 @@ impl Config {
 		metrics_server_port: String,
 		untrusted_http_port: String,
 		run_config: Option<RunConfig>,
+		twitter_official_url: String,
+		twitter_litentry_url: String,
+		twitter_auth_token: String,
+		discord_official_url: String,
+		discord_litentry_url: String,
+		discord_auth_token: String,
 	) -> Self {
 		Self {
 			node_ip,
@@ -86,6 +112,12 @@ impl Config {
 			metrics_server_port,
 			untrusted_http_port,
 			run_config,
+			twitter_official_url,
+			twitter_litentry_url,
+			twitter_auth_token,
+			discord_official_url,
+			discord_litentry_url,
+			discord_auth_token,
 		}
 	}
 
@@ -167,6 +199,24 @@ impl From<&ArgMatches<'_>> for Config {
 			metrics_server_port.to_string(),
 			untrusted_http_port.to_string(),
 			run_config,
+			m.value_of("twitter-official-url")
+				.unwrap_or(DEFAULT_TWITTER_OFFICIAL_URL)
+				.to_string(),
+			m.value_of("twitter-litentry-url")
+				.unwrap_or(DEFAULT_TWITTER_LITENTRY_URL)
+				.to_string(),
+			m.value_of("twitter-auth-token")
+				.unwrap_or(DEFAULT_TWITTER_AUTH_TOKEN)
+				.to_string(),
+			m.value_of("discord-official-url")
+				.unwrap_or(DEFAULT_DISCORD_OFFICIAL_URL)
+				.to_string(),
+			m.value_of("discord-litentry-url")
+				.unwrap_or(DEFAULT_DISCORD_LITENTRY_URL)
+				.to_string(),
+			m.value_of("discord-auth-token")
+				.unwrap_or(DEFAULT_DISCORD_AUTH_TOKEN)
+				.to_string(),
 		)
 	}
 }
@@ -240,6 +290,12 @@ mod test {
 		assert!(!config.enable_metrics_server);
 		assert_eq!(config.untrusted_http_port, DEFAULT_UNTRUSTED_HTTP_PORT);
 		assert!(config.run_config.is_none());
+		assert_eq!(config.twitter_official_url, DEFAULT_TWITTER_OFFICIAL_URL);
+		assert_eq!(config.twitter_litentry_url, DEFAULT_TWITTER_LITENTRY_URL);
+		assert_eq!(config.twitter_auth_token, DEFAULT_TWITTER_AUTH_TOKEN);
+		assert_eq!(config.discord_official_url, DEFAULT_DISCORD_OFFICIAL_URL);
+		assert_eq!(config.discord_litentry_url, DEFAULT_DISCORD_LITENTRY_URL);
+		assert_eq!(config.discord_auth_token, DEFAULT_DISCORD_AUTH_TOKEN);
 	}
 
 	#[test]
@@ -265,6 +321,13 @@ mod test {
 		let mu_ra_port = "99";
 		let untrusted_http_port = "4321";
 
+		let twitter_official_url = "https://api.twitter.com";
+		let twitter_litentry_url = "https://api.twitterlitentry.com";
+		let twitter_auth_token = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		let discord_official_url = "https://discordapp.com";
+		let discord_litentry_url = "https://discordlitentry.com";
+		let discord_auth_token = "abcdefghijklmnopqrstuvwxyz";
+
 		let mut args = ArgMatches::default();
 		args.args = HashMap::from([
 			("node-server", Default::default()),
@@ -277,6 +340,12 @@ mod test {
 			("untrusted-worker-port", Default::default()),
 			("trusted-worker-port", Default::default()),
 			("untrusted-http-port", Default::default()),
+			("twitter-official-url", Default::default()),
+			("twitter-litentry-url", Default::default()),
+			("twitter-auth-token", Default::default()),
+			("discord-official-url", Default::default()),
+			("discord-litentry-url", Default::default()),
+			("discord-auth-token", Default::default()),
 		]);
 		// Workaround because MatchedArg is private.
 		args.args.get_mut("node-server").unwrap().vals = vec![node_ip.into()];
@@ -289,6 +358,12 @@ mod test {
 		args.args.get_mut("untrusted-worker-port").unwrap().vals = vec![untrusted_port.into()];
 		args.args.get_mut("trusted-worker-port").unwrap().vals = vec![trusted_port.into()];
 		args.args.get_mut("untrusted-http-port").unwrap().vals = vec![untrusted_http_port.into()];
+		args.args.get_mut("twitter-official-url").unwrap().vals = vec![twitter_official_url.into()];
+		args.args.get_mut("twitter-litentry-url").unwrap().vals = vec![twitter_litentry_url.into()];
+		args.args.get_mut("twitter-auth-token").unwrap().vals = vec![twitter_auth_token.into()];
+		args.args.get_mut("discord-official-url").unwrap().vals = vec![discord_official_url.into()];
+		args.args.get_mut("discord-litentry-url").unwrap().vals = vec![discord_litentry_url.into()];
+		args.args.get_mut("discord-auth-token").unwrap().vals = vec![discord_auth_token.into()];
 
 		let config = Config::from(&args);
 
@@ -301,6 +376,12 @@ mod test {
 		assert_eq!(config.untrusted_external_worker_address, Some(untrusted_ext_addr.to_string()));
 		assert_eq!(config.mu_ra_external_address, Some(mu_ra_ext_addr.to_string()));
 		assert_eq!(config.untrusted_http_port, untrusted_http_port.to_string());
+		assert_eq!(config.twitter_official_url, twitter_official_url.to_string());
+		assert_eq!(config.twitter_litentry_url, twitter_litentry_url.to_string());
+		assert_eq!(config.twitter_auth_token, twitter_auth_token.to_string());
+		assert_eq!(config.discord_official_url, discord_official_url.to_string());
+		assert_eq!(config.discord_litentry_url, discord_litentry_url.to_string());
+		assert_eq!(config.discord_auth_token, discord_auth_token.to_string());
 	}
 
 	#[test]

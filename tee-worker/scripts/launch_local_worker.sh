@@ -24,6 +24,13 @@ WORKER_NUM=${worker_num:-1}
 NODE_URL=${node_url:-"ws://127.0.0.1"}	# "ws://host.docker.internal"
 NODE_PORT=${node_port:-"9944"}			# "9946"
 
+TWITTER_OFFICIAL_URL="https://api.twitter.com"
+TWITTER_LITENTRY_URL="https://api.twitter.litentry.com"
+TWITTER_AUTH_TOKEN="AABB"
+DISCORD_OFFICIAL_URL="https://discordapp.com"
+DISCORD_LITENTRY_URL="https://discordapp.litentry.com"
+DISCORD_AUTH_TOKEN="aabb"
+
 # Fixed values:
 WORKER_ENDPOINT="localhost"
 MU_RA_PORT="3443"
@@ -97,6 +104,12 @@ for ((i = 0; i < ${WORKER_NUM}; i++)); do
 --untrusted-external-address ws://${WORKER_ENDPOINT} \
 --untrusted-http-port ${untrusted_http_port} \
 --untrusted-worker-port ${untrusted_worker_port} \
+--twitter-official-url ${TWITTER_OFFICIAL_URL} \
+--twitter-litentry-url ${TWITTER_LITENTRY_URL} \
+--twitter-auth-token ${TWITTER_AUTH_TOKEN} \
+--discord-official-url ${DISCORD_OFFICIAL_URL} \
+--discord-litentry-url ${DISCORD_LITENTRY_URL} \
+--discord-auth-token ${DISCORD_AUTH_TOKEN} \
 run --skip-ra ${FSUBCMD_DEV} ${FSUBCMD_REQ_STATE}"
 
 	echo "${worker_name} command: ${launch_command}"

@@ -68,7 +68,8 @@ sp-finality-grandpa = { git = "https://github.com/paritytech/substrate.git", bra
 sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.29" }
 sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.29" }
 
-# mock server
+# local litentry dependencies
+lc-data-providers = { path = "../litentry/core/data-providers" }
 lc-mock-server = { path = "../litentry/core/mock-server" }
 
 [features]
