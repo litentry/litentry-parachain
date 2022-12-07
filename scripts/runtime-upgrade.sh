@@ -9,7 +9,6 @@ set -eo pipefail
 # pre-knowledge:
 # Get the latest snapshot of the blockchain and export it. Start the chain locally with the obtained snapshot,
 # and then run the runtime-upgrade program to check the consistency of the status before and after the upgrade.
-# If the upgrade is successful, the upgrade is successful.
 
 
 # This script should do:
@@ -64,11 +63,11 @@ download_new_wasm
 
 
 #2. upload runtime.wasm  reference ts-test  register-parachain.ts
-echo "register parachain now ..."
+echo "runtime upgrade now ..."
 cd "$ROOTDIR/ts-tests"
 echo "NODE_ENV=ci" > .env
 yarn
-yarn register-parachain 2>&1 | tee "$TMPDIR/register-parachain.log"
+yarn runtime-upgrade 2>&1 | tee "$TMPDIR/runtime-upgrade.log"
 print_divider
 
 

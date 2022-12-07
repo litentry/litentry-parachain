@@ -9,23 +9,18 @@ import { Bytes } from '@polkadot/types';
 
 import { loadConfig, signAndSend } from './utils';
 
-async function registerParachain(api: ApiPromise, config: any) {
+async function runtime_upgrade(api: ApiPromise, config: any) {
     // Get keyring of Alice, who is also the sudo in dev chain spec
     const keyring = new Keyring({ type: 'sr25519' });
     const alice = keyring.addFromUri('//Alice');
 
-    const genesisHeadBytes = fs.readFileSync(config.genesis_state_path, 'utf8');
-    const validationCodeBytes = fs.readFileSync(config.genesis_wasm_path, 'utf8');
-
     const registry = new TypeRegistry();
-
-    const tx = api.tx.sudo.sudo(
-        api.tx.parasSudoWrapper.sudoScheduleParaInitialize(process.env.PARACHAIN_ID, {
-            genesisHead: new Bytes(registry, genesisHeadBytes),
-            validationCode: new Bytes(registry, validationCodeBytes),
-            parachain: true,
-        })
-    );
+    const code_path="./docker/*-parachain-runtime.compact.compressed.wasm"
+    const tx = api.tx.sudo.sudoUncheckWeight(
+            api.tx.system.setCode(
+                    code_path
+                )
+        );
 
     console.log(`Parachain registration tx Sent!`);
     return signAndSend(tx, alice);
@@ -40,7 +35,7 @@ async function registerParachain(api: ApiPromise, config: any) {
         provider: provider,
     });
 
-    await registerParachain(api, config);
+    await runtime_upgrade(api, config);
     await api.disconnect();
     provider.on('disconnected', () => {
         console.log('Disconnect from relaychain');
