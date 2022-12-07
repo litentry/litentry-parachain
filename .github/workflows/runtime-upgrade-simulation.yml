@@ -40,7 +40,7 @@ job:
       - name: download-new-runtime.wasm && runtime upgrade
         run:
 #          or same above add the command in makefile
-          @./script/runtime-upgrade.sh ${{ matrix.chain }}
+          ./scripts/runtime-upgrade.sh ${{ matrix.chain }}
 #          make runtime-upgrade-${{ matrix.chain }}
 
 

@@ -62,6 +62,7 @@ function download_new_wasm() {
 download_new_wasm
 
 
+sleep 10
 #2. upload runtime.wasm  reference ts-test  register-parachain.ts
 echo "runtime upgrade now ..."
 cd "$ROOTDIR/ts-tests"
