@@ -69,6 +69,11 @@ pub struct DataProvidersStatic {
 	pub discord_litentry_url: String,
 	pub discord_auth_token: String,
 }
+impl Default for DataProvidersStatic {
+	fn default() -> Self {
+		Self::new()
+	}
+}
 impl DataProvidersStatic {
 	pub fn new() -> Self {
 		#[cfg(all(not(test), not(feature = "mockserver")))]
