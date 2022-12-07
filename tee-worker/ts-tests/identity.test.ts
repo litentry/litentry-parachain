@@ -6,9 +6,9 @@ import {
 } from "./utils";
 import { hexToU8a, u8aToHex, stringToU8a } from "@polkadot/util";
 import {
-    linkIdentity,
+    createIdentity,
     setUserShieldingKey,
-    unlinkIdentity,
+    removeIdentity,
     verifyIdentity,
 } from "./indirect_calls";
 import { step } from "mocha-steps";
@@ -110,9 +110,9 @@ describeLitentry("Test Identity", (context) => {
         assert.equal(who, u8aToHex(context.defaultSigner.addressRaw), "check caller error");
     });
 
-    step("link identity", async function () {
-        //link twitter identity
-        const resp_twitter = await linkIdentity(
+    step("create identity", async function () {
+        //create twitter identity
+        const resp_twitter = await createIdentity(
             context,
             context.defaultSigner,
             aesKey,
@@ -131,8 +131,8 @@ describeLitentry("Test Identity", (context) => {
             console.log("post verification msg to twitter: ", msg);
             assert.isNotEmpty(challengeCode, "challengeCode empty");
         }
-        //lin ethereum identity
-        const resp_ethereum = await linkIdentity(
+        //create ethereum identity
+        const resp_ethereum = await createIdentity(
             context,
             context.defaultSigner,
             aesKey,
@@ -155,8 +155,8 @@ describeLitentry("Test Identity", (context) => {
             ethereumValidationData!.Web3Validation!.Evm!.signature!.Ethereum = signature_ethereum;
             assert.isNotEmpty(challengeCode, "challengeCode empty");
         }
-        // link substrate identity
-        const resp_substrate = await linkIdentity(
+        // create substrate identity
+        const resp_substrate = await createIdentity(
             context,
             context.defaultSigner,
             aesKey,
@@ -221,9 +221,9 @@ describeLitentry("Test Identity", (context) => {
         assert.equal(who, u8aToHex(context.defaultSigner.addressRaw), "check caller error");
     });
 
-    step("unlink identity", async function () {
-        //unlink twitter identity
-        const who_twitter = await unlinkIdentity(
+    step("remove identity", async function () {
+        //remove twitter identity
+        const who_twitter = await removeIdentity(
             context,
             context.defaultSigner,
             aesKey,
@@ -232,8 +232,8 @@ describeLitentry("Test Identity", (context) => {
         );
         assert.equal(who_twitter, u8aToHex(context.defaultSigner.addressRaw), "check caller error");
 
-        //unlink ethereum identity
-        const who_ethereum = await unlinkIdentity(
+        //remove ethereum identity
+        const who_ethereum = await removeIdentity(
             context,
             context.defaultSigner,
             aesKey,
@@ -246,8 +246,8 @@ describeLitentry("Test Identity", (context) => {
             "check caller error"
         );
 
-        //unlink substrate identity
-        const who_substrate = await unlinkIdentity(
+        //remove substrate identity
+        const who_substrate = await removeIdentity(
             context,
             context.defaultSigner,
             aesKey,
@@ -261,163 +261,3 @@ describeLitentry("Test Identity", (context) => {
         );
     });
 });
-
-// describeLitentry("Test link Web3(Ethereum) ", (context) => {
-//     const aesKey = "0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12";
-//     var signature = "";
-
-//     // step("unlink identity", async function () {
-//     //     console.log(context.ethersWallet.alice.address);
-
-//     //     const who = await unlinkIdentity(
-//     //         context,
-//     //         context.defaultSigner,
-//     //         aesKey,
-//     //         true,
-//     //         ethereumIdentity
-//     //     );
-//     //     assert.equal(who, u8aToHex(context.defaultSigner.addressRaw), "check caller error");
-//     // });
-//     step("set user shielding key", async function () {
-//         const who = await setUserShieldingKey(context, context.defaultSigner, aesKey, true);
-//         assert.equal(who, u8aToHex(context.defaultSigner.addressRaw), "check caller error");
-//     });
-
-//     step("link web3 identity", async function () {
-//         // ethereumIdentity.handle.Address20 = context.ethersWallet.alice.address;
-
-//         const r = await linkIdentity(
-//             context,
-//             context.defaultSigner,
-//             aesKey,
-//             true,
-//             ethereumIdentity
-//         );
-//         if (r) {
-//             const [_who, challengeCode] = r;
-//             console.log("challengeCode: ", challengeCode);
-//             const msg = generateVerificationMessage(
-//                 context,
-//                 hexToU8a(challengeCode),
-//                 context.defaultSigner.addressRaw,
-//                 ethereumIdentity
-//             );
-
-//             console.log("post verification msg to evm: ", msg);
-//             ethereumValidationData!.Web3Validation!.Evm!.message = msg;
-//             const msgHash = ethers.utils.arrayify(msg);
-//             signature = await context.ethersWallet.alice.signMessage(msgHash);
-
-//             ethereumValidationData!.Web3Validation!.Evm!.signature!.Ethereum = signature;
-//             assert.isNotEmpty(challengeCode, "challengeCode empty");
-//         }
-//     });
-
-//     step("verify web3 identity", async function () {
-//         // console.log("ethereumValidationData", ethereumValidationData);
-//         // console.log("ethereumIdentity", ethereumIdentity);
-
-//         const who = await verifyIdentity(
-//             context,
-//             context.defaultSigner,
-//             aesKey,
-//             true,
-//             ethereumIdentity,
-//             ethereumValidationData
-//         );
-//         assert.equal(who, u8aToHex(context.defaultSigner.addressRaw), "check caller error");
-//     });
-
-//     step("unlink identity", async function () {
-//         const who = await unlinkIdentity(
-//             context,
-//             context.defaultSigner,
-//             aesKey,
-//             true,
-//             ethereumIdentity
-//         );
-//         assert.equal(who, u8aToHex(context.defaultSigner.addressRaw), "check caller error");
-//     });
-// });
-
-// describeLitentry("Test link Web3(Substrate) ", (context) => {
-//     const aesKey = "0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12";
-//     var signature;
-
-//     step("unlink identity", async function () {
-//         console.log(context.ethersWallet.alice.address);
-
-//         const who = await unlinkIdentity(
-//             context,
-//             context.defaultSigner,
-//             aesKey,
-//             true,
-//             substrateIdentity
-//         );
-//         assert.equal(who, u8aToHex(context.defaultSigner.addressRaw), "check caller error");
-//     });
-//     step("set user shielding key", async function () {
-//         console.log(u8aToHex(context.defaultSigner.addressRaw));
-
-//         const who = await setUserShieldingKey(context, context.defaultSigner, aesKey, true);
-//         assert.equal(who, u8aToHex(context.defaultSigner.addressRaw), "check caller error");
-//     });
-
-//     step("link web3 identity", async function () {
-//         const r = await linkIdentity(
-//             context,
-//             context.defaultSigner,
-//             aesKey,
-//             true,
-//             substrateIdentity
-//         );
-//         if (r) {
-//             const [_who, challengeCode] = r;
-//             console.log("challengeCode: ", challengeCode);
-//             const msg = generateVerificationMessage(
-//                 context,
-//                 hexToU8a(challengeCode),
-//                 context.defaultSigner.addressRaw,
-//                 substrateIdentity
-//             );
-
-//             console.log("post verification msg to evm: ", msg);
-
-//             substrateValidationData!.Web3Validation!.Substrate!.message = msg;
-//             // const msgHash = ethers.utils.arrayify(msg);
-//             signature = context.defaultSigner.sign(msg);
-//             console.log("signature: ", signature);
-
-//             // ethereumValidationData!.Web3Validation!.Substrate!.signature!.Sr25519 = signature;
-//             substrateValidationData!.Web3Validation!.Substrate!.signature!.Sr25519 =
-//                 u8aToHex(signature);
-//             assert.isNotEmpty(challengeCode, "challengeCode empty");
-//         }
-//     });
-
-//     step("verify web3 identity", async function () {
-//         // console.log("ethereumValidationData", ethereumValidationData);
-//         // console.log("ethereumIdentity", ethereumIdentity);
-
-//         const who = await verifyIdentity(
-//             context,
-//             context.defaultSigner,
-//             aesKey,
-//             true,
-//             substrateIdentity,
-//             substrateValidationData
-//         );
-//         assert.equal(who, u8aToHex(context.defaultSigner.addressRaw), "check caller error");
-//     });
-
-//     step("unlink identity", async function () {
-//         const who = await unlinkIdentity(
-//             context,
-//             context.defaultSigner,
-//             aesKey,
-//             true,
-//             substrateIdentity
-//         );
-//         assert.equal(who, u8aToHex(context.defaultSigner.addressRaw), "check caller error");
-//     });
-// });
