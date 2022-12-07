@@ -29,7 +29,7 @@ export async function setUserShieldingKey(
     return undefined;
 }
 
-export async function linkIdentity(
+export async function createIdentity(
     context: IntegrationTestContext,
     signer: KeyringPair,
     aesKey: HexString,
@@ -40,7 +40,7 @@ export async function linkIdentity(
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString("hex");
     const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
     await context.substrate.tx.identityManagement
-        .linkIdentity(context.shard, `0x${ciphertext}`, null)
+        .createIdentity(context.shard, `0x${ciphertext}`, null)
         .signAndSend(signer, { nonce });
     if (listening) {
         const event = await listenEncryptedEvents(context, aesKey, {
@@ -54,7 +54,7 @@ export async function linkIdentity(
     return undefined;
 }
 
-export async function unlinkIdentity(
+export async function removeIdentity(
     context: IntegrationTestContext,
     signer: KeyringPair,
     aesKey: HexString,
@@ -66,7 +66,7 @@ export async function unlinkIdentity(
     const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
 
     await context.substrate.tx.identityManagement
-        .unlinkIdentity(context.shard, `0x${ciphertext}`)
+        .removeIdentity(context.shard, `0x${ciphertext}`)
         .signAndSend(signer, { nonce });
     if (listening) {
         const event = await listenEncryptedEvents(context, aesKey, {
