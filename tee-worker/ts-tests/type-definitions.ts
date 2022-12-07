@@ -128,9 +128,16 @@ export const teeTypes = {
         message: "Vec<u8>",
         signature: "IdentityMultiSignature",
     },
+
     IdentityMultiSignature: {
-        _enum: {},
+        _enum: {
+            Ed25519: "ed25519::Signature",
+            Sr25519: "sr25519::Signature",
+            Ecdsa: "ecdsa::Signature",
+            Ethereum: "EthereumSignature",
+        },
     },
+    EthereumSignature: "([u8; 65])",
 };
 
 export type WorkerRpcReturnValue = {
@@ -176,20 +183,45 @@ export type IdentityWebType = {
 };
 
 export type IdentityHandle = {
-    Address32: `0x${string}`;
-    Address20: `0x${string},`;
-    PlainString: `0x${string}`;
+    Address32?: HexString;
+    Address20?: HexString;
+    PlainString?: `0x${string}`;
 };
 
 export type LitentryValidationData = {
     Web2Validation?: Web2ValidationData;
-    Web3Validation?: string;
+    Web3Validation?: Web3ValidationData;
 };
 
 export type Web2ValidationData = {
     Twitter?: TwitterValidationData;
     Discord?: DiscordValidationData;
 };
+
+export type Web3ValidationData = {
+    Substrate?: Web3CommonValidationData;
+    Evm?: Web3CommonValidationData;
+};
+
+export type Web3CommonValidationData = {
+    message: HexString;
+    signature: IdentityMultiSignature;
+};
+
+export type IdentityMultiSignature = {
+    Ethereum?: HexString;
+    Ed25519: HexString;
+    Sr25519: HexString;
+};
+
+export type Ed25519Signature = {
+    Ed25519: HexString;
+    Sr25519: HexString;
+    Ecdsa: HexString;
+    Ethereum: EthereumSignature;
+};
+
+export type EthereumSignature = HexString;
 
 export type TwitterValidationData = {
     tweet_id: HexString;
@@ -204,8 +236,8 @@ export type DiscordValidationData = {
 // export type DiscordValidationData = {}
 
 export type Web3Network = {
-    Substrate: SubstrateNetwork;
-    Evm: EvmNetwork;
+    Substrate?: SubstrateNetwork;
+    Evm?: EvmNetwork;
 };
 
 export type Web2Network = "Twitter" | "Discord" | "Github";
