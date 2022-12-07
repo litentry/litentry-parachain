@@ -319,7 +319,7 @@ pub mod pallet {
 			// emit the challenge code event, TODO: use randomness pallet
 			let code = Self::get_mock_challenge_code(
 				<frame_system::Pallet<T>>::block_number(),
-				ChallengeCodes::<T>::get(&who, &identity).clone(),
+				ChallengeCodes::<T>::get(&who, &identity),
 			);
 			ChallengeCodes::<T>::insert(&who, &identity, &code);
 			Self::deposit_event(Event::<T>::ChallengeCodeGeneratedPlain {

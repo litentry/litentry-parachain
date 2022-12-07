@@ -91,8 +91,8 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// challenge code doesn't exist
 		ChallengeCodeNotExist,
-		/// the pair (litentry-account, identity) already exists
-		IdentityAlreadyExist,
+		/// the pair (litentry-account, identity) already verified when creating an identity
+		IdentityAlreadyVerified,
 		/// the pair (litentry-account, identity) doesn't exist
 		IdentityNotExist,
 		/// the identity was not created before verification
@@ -189,10 +189,9 @@ pub mod pallet {
 			creation_request_block: ParentchainBlockNumber,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
-			ensure!(
-				!IDGraphs::<T>::contains_key(&who, &identity),
-				Error::<T>::IdentityAlreadyExist
-			);
+			if let Some(c) = IDGraphs::<T>::get(&who, &identity) {
+				ensure!(!c.is_verified, Error::<T>::IdentityAlreadyVerified);
+			}
 			let context = IdentityContext {
 				metadata,
 				creation_request_block: Some(creation_request_block),
