@@ -49,8 +49,8 @@ use sp_std::vec::Vec;
 
 // fn types for handling inside tee-worker
 pub type SetUserShieldingKeyFn = ([u8; 2], ShardIdentifier, Vec<u8>);
-pub type LinkIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>, Option<Vec<u8>>);
-pub type UnlinkIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>);
+pub type CreateIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>, Option<Vec<u8>>);
+pub type RemoveIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>);
 pub type VerifyIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>, Vec<u8>);
 
 #[frame_support::pallet]
@@ -75,15 +75,15 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		// TODO: do we need account as event parameter? This needs to be decided by F/E
-		LinkIdentityRequested { shard: ShardIdentifier },
-		UnlinkIdentityRequested { shard: ShardIdentifier },
+		CreateIdentityRequested { shard: ShardIdentifier },
+		RemoveIdentityRequested { shard: ShardIdentifier },
 		VerifyIdentityRequested { shard: ShardIdentifier },
 		SetUserShieldingKeyRequested { shard: ShardIdentifier },
 		// event that should be triggered by TEECallOrigin
 		UserShieldingKeySet { account: AesOutput },
 		ChallengeCodeGenerated { account: AesOutput, identity: AesOutput, code: AesOutput },
-		IdentityLinked { account: AesOutput, identity: AesOutput },
-		IdentityUnlinked { account: AesOutput, identity: AesOutput },
+		IdentityCreated { account: AesOutput, identity: AesOutput },
+		IdentityRemoved { account: AesOutput, identity: AesOutput },
 		IdentityVerified { account: AesOutput, identity: AesOutput },
 		// some error happened during processing in TEE, we use string-like
 		// parameters for more "generic" error event reporting
@@ -109,32 +109,32 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Link an identity
-		#[pallet::weight(<T as Config>::WeightInfo::link_identity())]
-		pub fn link_identity(
+		/// Create an identity
+		#[pallet::weight(<T as Config>::WeightInfo::create_identity())]
+		pub fn create_identity(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
 			encrypted_identity: Vec<u8>,
 			encrypted_metadata: Option<Vec<u8>>,
 		) -> DispatchResultWithPostInfo {
 			let _ = ensure_signed(origin)?;
-			Self::deposit_event(Event::LinkIdentityRequested { shard });
+			Self::deposit_event(Event::CreateIdentityRequested { shard });
 			Ok(().into())
 		}
 
-		/// Unlink an identity
-		#[pallet::weight(<T as Config>::WeightInfo::unlink_identity())]
-		pub fn unlink_identity(
+		/// Remove an identity
+		#[pallet::weight(<T as Config>::WeightInfo::remove_identity())]
+		pub fn remove_identity(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
 			encrypted_identity: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let _ = ensure_signed(origin)?;
-			Self::deposit_event(Event::UnlinkIdentityRequested { shard });
+			Self::deposit_event(Event::RemoveIdentityRequested { shard });
 			Ok(().into())
 		}
 
-		/// Verify a linked identity
+		/// Verify an identity
 		#[pallet::weight(<T as Config>::WeightInfo::verify_identity())]
 		pub fn verify_identity(
 			origin: OriginFor<T>,
@@ -173,24 +173,24 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(195_000_000)]
-		pub fn identity_linked(
+		pub fn identity_created(
 			origin: OriginFor<T>,
 			account: AesOutput,
 			identity: AesOutput,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityLinked { account, identity });
+			Self::deposit_event(Event::IdentityCreated { account, identity });
 			Ok(Pays::No.into())
 		}
 
 		#[pallet::weight(195_000_000)]
-		pub fn identity_unlinked(
+		pub fn identity_removed(
 			origin: OriginFor<T>,
 			account: AesOutput,
 			identity: AesOutput,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityUnlinked { account, identity });
+			Self::deposit_event(Event::IdentityRemoved { account, identity });
 			Ok(Pays::No.into())
 		}
 

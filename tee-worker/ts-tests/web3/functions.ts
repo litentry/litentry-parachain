@@ -23,5 +23,6 @@ export function generateTestKeys(): {
         result.fill(name, secp256k1PrivateKeyLength - Buffer.from(name, "utf8").length);
         keys.push(result.toString("hex"));
     }
+
     return { alice: keys[0], bob: keys[1], charlie: keys[2], dave: keys[3], eve: keys[4] };
 }
