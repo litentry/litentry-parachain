@@ -63,7 +63,7 @@ impl TrustedCallSigned {
 		Ok(())
 	}
 
-	pub fn link_identity_runtime(
+	pub fn create_identity_runtime(
 		who: AccountId,
 		identity: Identity,
 		metadata: Option<MetadataOf<Runtime>>,
@@ -77,7 +77,7 @@ impl TrustedCallSigned {
 			bn
 		);
 
-		ita_sgx_runtime::IdentityManagementCall::<Runtime>::link_identity {
+		ita_sgx_runtime::IdentityManagementCall::<Runtime>::create_identity {
 			who: who.clone(),
 			identity: identity.clone(),
 			metadata,
@@ -99,9 +99,9 @@ impl TrustedCallSigned {
 		Ok(code)
 	}
 
-	pub fn unlink_identity_runtime(who: AccountId, identity: Identity) -> StfResult<()> {
+	pub fn remove_identity_runtime(who: AccountId, identity: Identity) -> StfResult<()> {
 		debug!("who.str = {:?}, identity = {:?}", account_id_to_string(&who), identity,);
-		ita_sgx_runtime::IdentityManagementCall::<Runtime>::unlink_identity { who, identity }
+		ita_sgx_runtime::IdentityManagementCall::<Runtime>::remove_identity { who, identity }
 			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
 			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 		Ok(())

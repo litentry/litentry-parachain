@@ -92,10 +92,10 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		// Events from this pallet
-		LinkIdentityRequested {
+		CreateIdentityRequested {
 			shard: ShardIdentifier,
 		},
-		UnlinkIdentityRequested {
+		RemoveIdentityRequested {
 			shard: ShardIdentifier,
 		},
 		VerifyIdentityRequested {
@@ -115,7 +115,7 @@ pub mod pallet {
 		UserShieldingKeySet {
 			account: AesOutput,
 		},
-		// link identity
+		// create identity
 		ChallengeCodeGeneratedPlain {
 			account: T::AccountId,
 			identity: Identity,
@@ -126,23 +126,23 @@ pub mod pallet {
 			identity: AesOutput,
 			code: AesOutput,
 		},
-		IdentityLinkedPlain {
+		IdentityCreatedPlain {
 			account: T::AccountId,
 			identity: Identity,
 			id_graph: Vec<(Identity, IdentityContext<T>)>,
 		},
-		IdentityLinked {
+		IdentityCreated {
 			account: AesOutput,
 			identity: AesOutput,
 			id_graph: AesOutput,
 		},
-		// unlink identity
-		IdentityUnlinkedPlain {
+		// remove identity
+		IdentityRemovedPlain {
 			account: T::AccountId,
 			identity: Identity,
 			id_graph: Vec<(Identity, IdentityContext<T>)>,
 		},
-		IdentityUnlinked {
+		IdentityRemoved {
 			account: AesOutput,
 			identity: AesOutput,
 			id_graph: AesOutput,
@@ -289,9 +289,9 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Link an identity
+		/// Create an identity
 		#[pallet::weight(195_000_000)]
-		pub fn link_identity(
+		pub fn create_identity(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
 			encrypted_identity: Vec<u8>,
@@ -299,7 +299,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			ensure!(WhitelistedCallers::<T>::contains_key(&who), Error::<T>::CallerNotWhitelisted);
-			Self::deposit_event(Event::LinkIdentityRequested { shard });
+			Self::deposit_event(Event::CreateIdentityRequested { shard });
 
 			let decrypted_identitty = Self::decrypt_with_tee_shielding_key(&encrypted_identity)?;
 			let identity = Identity::decode(&mut decrypted_identitty.as_slice())
@@ -336,7 +336,7 @@ pub mod pallet {
 				code: aes_encrypt_default(&key, code.as_ref()),
 			});
 
-			// emit the IdentityLinked event
+			// emit the IdentityCreated event
 			let context = IdentityContext {
 				metadata,
 				linking_request_block: Some(<frame_system::Pallet<T>>::block_number()),
@@ -344,12 +344,12 @@ pub mod pallet {
 				is_verified: false,
 			};
 			IDGraphs::<T>::insert(&who, &identity, context);
-			Self::deposit_event(Event::<T>::IdentityLinkedPlain {
+			Self::deposit_event(Event::<T>::IdentityCreatedPlain {
 				account: who.clone(),
 				identity: identity.clone(),
 				id_graph: Self::get_id_graph(&who),
 			});
-			Self::deposit_event(Event::<T>::IdentityLinked {
+			Self::deposit_event(Event::<T>::IdentityCreated {
 				account: aes_encrypt_default(&key, who.encode().as_slice()),
 				identity: aes_encrypt_default(&key, identity.encode().as_slice()),
 				id_graph: aes_encrypt_default(&key, Self::get_id_graph(&who).encode().as_slice()),
@@ -357,16 +357,16 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Unlink an identity
+		/// Remove an identity
 		#[pallet::weight(195_000_000)]
-		pub fn unlink_identity(
+		pub fn remove_identity(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
 			encrypted_identity: Vec<u8>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			ensure!(WhitelistedCallers::<T>::contains_key(&who), Error::<T>::CallerNotWhitelisted);
-			Self::deposit_event(Event::UnlinkIdentityRequested { shard });
+			Self::deposit_event(Event::RemoveIdentityRequested { shard });
 
 			let decrypted_identitty = Self::decrypt_with_tee_shielding_key(&encrypted_identity)?;
 			let identity = Identity::decode(&mut decrypted_identitty.as_slice())
@@ -375,14 +375,14 @@ pub mod pallet {
 			ensure!(IDGraphs::<T>::contains_key(&who, &identity), Error::<T>::IdentityNotExist);
 			let key = UserShieldingKeys::<T>::get(&who).ok_or(Error::<T>::ShieldingKeyNotExist)?;
 
-			// emit the IdentityUnlinked event
+			// emit the IdentityRemoved event
 			IDGraphs::<T>::remove(&who, &identity);
-			Self::deposit_event(Event::<T>::IdentityUnlinkedPlain {
+			Self::deposit_event(Event::<T>::IdentityRemovedPlain {
 				account: who.clone(),
 				identity: identity.clone(),
 				id_graph: Self::get_id_graph(&who),
 			});
-			Self::deposit_event(Event::<T>::IdentityUnlinked {
+			Self::deposit_event(Event::<T>::IdentityRemoved {
 				account: aes_encrypt_default(&key, who.encode().as_slice()),
 				identity: aes_encrypt_default(&key, identity.encode().as_slice()),
 				id_graph: aes_encrypt_default(&key, Self::get_id_graph(&who).encode().as_slice()),
@@ -495,26 +495,26 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(195_000_000)]
-		pub fn identity_linked(
+		pub fn identity_created(
 			origin: OriginFor<T>,
 			account: AesOutput,
 			identity: AesOutput,
 			id_graph: AesOutput,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityLinked { account, identity, id_graph });
+			Self::deposit_event(Event::IdentityCreated { account, identity, id_graph });
 			Ok(Pays::No.into())
 		}
 
 		#[pallet::weight(195_000_000)]
-		pub fn identity_unlinked(
+		pub fn identity_removed(
 			origin: OriginFor<T>,
 			account: AesOutput,
 			identity: AesOutput,
 			id_graph: AesOutput,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityUnlinked { account, identity, id_graph });
+			Self::deposit_event(Event::IdentityRemoved { account, identity, id_graph });
 			Ok(Pays::No.into())
 		}
 

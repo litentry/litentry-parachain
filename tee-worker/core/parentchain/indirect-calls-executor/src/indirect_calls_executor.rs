@@ -38,7 +38,7 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{CallWorkerFn, OpaqueCall, ShardIdentifier, ShieldFundsFn, H256};
 use litentry_primitives::{Identity, UserShieldingKeyType, ValidationData};
 use log::*;
-use pallet_imp::{LinkIdentityFn, SetUserShieldingKeyFn, UnlinkIdentityFn, VerifyIdentityFn};
+use pallet_imp::{CreateIdentityFn, RemoveIdentityFn, SetUserShieldingKeyFn, VerifyIdentityFn};
 use sp_core::blake2_256;
 use sp_runtime::traits::{AccountIdLookup, Block as ParentchainBlockTrait, Header, StaticLookup};
 use std::{sync::Arc, vec::Vec};
@@ -174,8 +174,8 @@ where
 		is_set_user_shielding_key_function,
 		set_user_shielding_key_call_indexes
 	);
-	is_parentchain_function!(is_link_identity_funciton, link_identity_call_indexes);
-	is_parentchain_function!(is_unlink_identity_funciton, unlink_identity_call_indexes);
+	is_parentchain_function!(is_create_identity_funciton, create_identity_call_indexes);
+	is_parentchain_function!(is_remove_identity_funciton, remove_identity_call_indexes);
 	is_parentchain_function!(is_verify_identity_funciton, verify_identity_call_indexes);
 }
 
@@ -274,11 +274,11 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 				}
 			}
 
-			// Found LinkIdentityFn extrinsic
-			if let Ok(xt) = ParentchainUncheckedExtrinsic::<LinkIdentityFn>::decode(
+			// Found CreateIdentityFn extrinsic
+			if let Ok(xt) = ParentchainUncheckedExtrinsic::<CreateIdentityFn>::decode(
 				&mut encoded_xt_opaque.as_slice(),
 			) {
-				if self.is_link_identity_funciton(&xt.function.0) {
+				if self.is_create_identity_funciton(&xt.function.0) {
 					let (_, shard, encrypted_identity, encrypted_metadata) = xt.function;
 					let shielding_key = self.shielding_key_repo.retrieve_key()?;
 
@@ -296,7 +296,7 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 					if let Some((multiaddress_account, _, _)) = xt.signature {
 						let account = AccountIdLookup::lookup(multiaddress_account)?;
 						let enclave_account_id = self.stf_enclave_signer.get_enclave_account()?;
-						let trusted_call = TrustedCall::link_identity_runtime(
+						let trusted_call = TrustedCall::create_identity_runtime(
 							enclave_account_id,
 							account,
 							identity,
@@ -317,11 +317,11 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 				}
 			}
 
-			// Found UnlinkIdentityFn extrinsic
-			if let Ok(xt) = ParentchainUncheckedExtrinsic::<UnlinkIdentityFn>::decode(
+			// Found RemoveIdentityFn extrinsic
+			if let Ok(xt) = ParentchainUncheckedExtrinsic::<RemoveIdentityFn>::decode(
 				&mut encoded_xt_opaque.as_slice(),
 			) {
-				if self.is_unlink_identity_funciton(&xt.function.0) {
+				if self.is_remove_identity_funciton(&xt.function.0) {
 					let (_, shard, encrypted_identity) = xt.function;
 					let shielding_key = self.shielding_key_repo.retrieve_key()?;
 
@@ -332,7 +332,7 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 					if let Some((multiaddress_account, _, _)) = xt.signature {
 						let account = AccountIdLookup::lookup(multiaddress_account)?;
 						let enclave_account_id = self.stf_enclave_signer.get_enclave_account()?;
-						let trusted_call = TrustedCall::unlink_identity_runtime(
+						let trusted_call = TrustedCall::remove_identity_runtime(
 							enclave_account_id,
 							account,
 							identity,

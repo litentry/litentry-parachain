@@ -33,27 +33,27 @@ fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 
 benchmarks! {
 
-	// Benchmark `link_identity`. There are no worst conditions. The benchmark showed that
+	// Benchmark `create_identity`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
-	link_identity {
+	create_identity {
 		let caller = whitelisted_caller();
 		let shard = H256::from_slice(&TEST_MRENCLAVE);
 		let encrypted_did = vec![1u8; 2048];
 		let encrypted_metadata = Some(vec![1u8; 2048]);
 	}: _(RawOrigin::Signed(caller), shard, encrypted_did, encrypted_metadata)
 	verify {
-		assert_last_event::<T>(Event::LinkIdentityRequested{ shard }.into());
+		assert_last_event::<T>(Event::CreateIdentityRequested{ shard }.into());
 	}
 
-	// Benchmark `unlink_identity`. There are no worst conditions. The benchmark showed that
+	// Benchmark `remove_identity`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
-	unlink_identity {
+	remove_identity {
 		let caller = whitelisted_caller();
 		let shard = H256::from_slice(&TEST_MRENCLAVE);
 		let encrypted_did = vec![1u8; 2048];
 	}: _(RawOrigin::Signed(caller), shard, encrypted_did )
 	verify {
-		assert_last_event::<T>(Event::UnlinkIdentityRequested{ shard }.into());
+		assert_last_event::<T>(Event::RemoveIdentityRequested{ shard }.into());
 	}
 
 	// Benchmark `verify_identity`. There are no worst conditions. The benchmark showed that
