@@ -55,7 +55,7 @@ function download_new_wasm() {
     #NEW_WASM="$(pwd)/docker/$CHAIN_TYPE-parachain-runtime.compact.compressed.wasm"
     cd "$(pwd)/docker"
     wget -q "$url"
-    echo "right is download successful!"
+    echo "right download successful!"
 
 }
 
