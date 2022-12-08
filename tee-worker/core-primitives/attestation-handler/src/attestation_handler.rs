@@ -30,7 +30,11 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{cert, Error as EnclaveError, Error, Result as EnclaveResult};
+use crate::{
+	cert,
+	quote::{QuoteState, VCQuote},
+	Error as EnclaveError, Error, Result as EnclaveResult,
+};
 use codec::Encode;
 use core::default::Default;
 use itertools::Itertools;
@@ -52,6 +56,8 @@ use sgx_types::{
 	sgx_spid_t, sgx_status_t, sgx_target_info_t, SgxResult,
 };
 use sp_core::Pair;
+#[cfg(feature = "sgx")]
+use std::sync::SgxRwLock as RwLock;
 use std::{
 	borrow::ToOwned,
 	format,
@@ -99,6 +105,7 @@ pub trait AttestationHandler {
 
 pub struct IasAttestationHandler<OCallApi> {
 	ocall_api: Arc<OCallApi>,
+	vc_quote: Arc<RwLock<VCQuote>>,
 }
 
 impl<OCallApi> AttestationHandler for IasAttestationHandler<OCallApi>
@@ -208,7 +215,7 @@ where
 	OCallApi: EnclaveAttestationOCallApi,
 {
 	pub fn new(ocall_api: Arc<OCallApi>) -> Self {
-		Self { ocall_api }
+		Self { ocall_api, vc_quote: Arc::new(RwLock::new(Default::default())) }
 	}
 
 	fn parse_response_attn_report(&self, resp: &[u8]) -> EnclaveResult<(String, String, String)> {
@@ -450,6 +457,10 @@ where
 		let mut report_data: sgx_report_data_t = sgx_report_data_t::default();
 		report_data.d[..32].clone_from_slice(&pub_k[..]);
 
+		// Add report inputs
+		let mut vc_quote = self.vc_quote.write().unwrap();
+		vc_quote.add_report_inputs(target_info.clone(), report_data.clone());
+
 		let report = match rsgx_create_report(&target_info, &report_data) {
 			Ok(r) => {
 				debug!(
@@ -482,11 +493,22 @@ where
 
 		let spid: sgx_spid_t = Self::load_spid(RA_SPID_FILE)?;
 
+		// Add quote inputs
+		vc_quote.add_quote_inputs(
+			sign_type.clone(),
+			spid.clone(),
+			quote_nonce.clone(),
+			sigrl_vec.clone(),
+		);
+
 		let quote_result =
 			self.ocall_api.get_quote(sigrl_vec, report, sign_type, spid, quote_nonce)?;
 
 		let qe_report = quote_result.0;
 		let quote_content = quote_result.1;
+
+		// Add Outputs
+		vc_quote.add_outputs(quote_content.clone(), base64::encode(&quote_content[..]));
 
 		// Added 09-28-2018
 		// Perform a check on qe_report to verify if the qe_report is valid
@@ -553,6 +575,17 @@ where
 		io::read_to_string(RA_API_KEY_FILE)
 			.map(|key| key.trim_end().to_owned())
 			.map_err(|e| EnclaveError::Other(e.into()))
+	}
+}
+
+impl<OCallApi> QuoteState for IasAttestationHandler<OCallApi>
+where
+	OCallApi: EnclaveAttestationOCallApi,
+{
+	fn load(&self) -> EnclaveResult<Arc<RwLock<VCQuote>>> {
+		// let quote = self.vc_quote.read().unwrap();
+		let quote = Arc::clone(&self.vc_quote);
+		Ok(quote)
 	}
 }
 

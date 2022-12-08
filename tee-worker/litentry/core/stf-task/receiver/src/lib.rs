@@ -37,6 +37,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 use codec::{Decode, Encode};
 use futures::executor;
 use ita_stf::{Hash, ShardIdentifier, TrustedCall, TrustedOperation};
+use itp_attestation_handler::quote::QuoteState;
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
@@ -65,11 +66,13 @@ pub struct StfTaskContext<
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
 	H: HandleState,
+	Q: QuoteState,
 > {
 	shielding_key: K,
 	author_api: Arc<A>,
 	enclave_signer: Arc<S>,
 	pub state_handler: Arc<H>,
+	pub attestation_handler: Arc<Q>,
 }
 
 impl<
@@ -77,7 +80,8 @@ impl<
 		A: AuthorApi<Hash, Hash>,
 		S: StfEnclaveSigning,
 		H: HandleState,
-	> StfTaskContext<K, A, S, H>
+		Q: QuoteState,
+	> StfTaskContext<K, A, S, H, Q>
 where
 	H::StateT: SgxExternalitiesTrait,
 {
@@ -86,8 +90,9 @@ where
 		author_api: Arc<A>,
 		enclave_signer: Arc<S>,
 		state_handler: Arc<H>,
+		attestation_handler: Arc<Q>,
 	) -> Self {
-		Self { shielding_key, author_api, enclave_signer, state_handler }
+		Self { shielding_key, author_api, enclave_signer, state_handler, attestation_handler }
 	}
 
 	pub fn decode_and_submit_trusted_call(

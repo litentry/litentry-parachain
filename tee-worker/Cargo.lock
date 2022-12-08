@@ -6001,6 +6001,7 @@ dependencies = [
  "ita-sgx-runtime",
  "ita-stf",
  "itc-rest-client",
+ "itp-attestation-handler",
  "itp-extrinsics-factory",
  "itp-ocall-api",
  "itp-sgx-crypto",

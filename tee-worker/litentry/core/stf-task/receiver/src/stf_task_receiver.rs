@@ -15,8 +15,9 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	format, AuthorApi, Error, HandleState, Hash, SgxExternalitiesTrait, ShardIdentifier,
-	ShieldingCryptoDecrypt, ShieldingCryptoEncrypt, StfEnclaveSigning, StfTaskContext,
+	format, AuthorApi, Error, HandleState, Hash, QuoteState, SgxExternalitiesTrait,
+	ShardIdentifier, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt, StfEnclaveSigning,
+	StfTaskContext,
 };
 use codec::Decode;
 use ita_sgx_runtime::IdentityManagement;
@@ -25,13 +26,16 @@ use litentry_primitives::{Assertion, IdentityWebType, Web2Network};
 use log::*;
 
 // lifetime elision: StfTaskContext is guaranteed to outlive the fn
-pub fn run_stf_task_receiver<K, A, S, H>(context: &StfTaskContext<K, A, S, H>) -> Result<(), Error>
+pub fn run_stf_task_receiver<K, A, S, H, Q>(
+	context: &StfTaskContext<K, A, S, H, Q>,
+) -> Result<(), Error>
 where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
 	H: HandleState,
 	H::StateT: SgxExternalitiesTrait,
+	Q: QuoteState,
 {
 	let receiver = stf_task_sender::init_stf_task_sender_storage()
 		.map_err(|e| Error::OtherError(format!("read storage error:{:?}", e)))?;
