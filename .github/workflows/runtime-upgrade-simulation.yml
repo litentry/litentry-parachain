@@ -33,9 +33,9 @@ env:
   DOCKER_BUILDKIT: 1
 
 
-job:
+jobs:
   fork-parachain-and-launch:
-    run-on: ubuntu-latest
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         chain:
