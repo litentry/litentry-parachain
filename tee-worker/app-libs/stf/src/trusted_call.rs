@@ -36,10 +36,10 @@ use itp_stf_interface::ExecuteCall;
 use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
-	ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType, VCSchemaContent,
-	VCSchemaId, ValidationData,
+	ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType, ValidationData,
 };
 use log::*;
+use parentchain_primitives::{SchemaContentString, SchemaIdString};
 use sp_io::hashing::blake2_256;
 use sp_runtime::{traits::Verify, MultiAddress};
 use std::{format, prelude::v1::*, sync::Arc};
@@ -119,8 +119,8 @@ pub enum TrustedCall {
 		ParentchainBlockNumber,
 	), // (EnclaveSigner, Account, identity, validation, blocknumber)
 	verify_identity_runtime(AccountId, AccountId, Identity, ParentchainBlockNumber), // (EnclaveSigner, Account, identity, blocknumber)
-	vc_schema_issue_runtime(AccountId, AccountId, VCSchemaId, VCSchemaContent), // (EnclaveSigner, Account, SchemaId, SchemaContent)
-	set_challenge_code_runtime(AccountId, AccountId, Identity, ChallengeCode),  // only for testing
+	vc_schema_issue_runtime(AccountId, AccountId, SchemaIdString, SchemaContentString), // (EnclaveSigner, Account, SchemaId, SchemaContent)
+	set_challenge_code_runtime(AccountId, AccountId, Identity, ChallengeCode), // only for testing
 }
 
 impl TrustedCall {
