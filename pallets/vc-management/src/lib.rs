@@ -31,17 +31,17 @@ mod mock;
 mod tests;
 
 pub use pallet::*;
-use primitives::{AesOutput, ShardIdentifier};
+use primitives::{AesOutput, SchemaIndex, ShardIdentifier, SCHEMA_CONTENT_LEN, SCHEMA_ID_LEN};
 use sp_core::H256;
 use sp_std::vec::Vec;
 
-mod vc_context;
+pub mod vc_context;
 pub use vc_context::*;
 
 mod assertion;
 pub use assertion::*;
 
-mod schema;
+pub mod schema;
 pub use schema::*;
 
 // fn types for xt handling inside tee-worker
@@ -55,9 +55,6 @@ pub type VCSchemaIssuedFn = ([u8; 2], ShardIdentifier, Vec<u8>, Vec<u8>);
 pub type VCSchemaDisabledFn = ([u8; 2], ShardIdentifier, u64);
 pub type VCSchemaActivatedFn = ([u8; 2], ShardIdentifier, u64);
 pub type VCSchemaRevokedFn = ([u8; 2], ShardIdentifier, u64);
-
-/// An index of a schema. Just a `u64`.
-pub type SchemaIndex = u64;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -181,6 +178,7 @@ pub mod pallet {
 		/// Schema is active
 		SchemaAlreadyActivated,
 		SchemaIndexOverFlow,
+		LengthMismatch,
 	}
 
 	#[pallet::call]
@@ -276,6 +274,9 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			ensure!(Some(sender.clone()) == Self::schema_admin(), Error::<T>::RequireSchemaAdmin);
+			ensure!((id.len() as u32) == SCHEMA_ID_LEN, Error::<T>::LengthMismatch);
+			ensure!((content.len() as u32) == SCHEMA_CONTENT_LEN, Error::<T>::LengthMismatch);
+
 			let index = Self::schema_count();
 			let new_index = index.checked_add(1u64).ok_or(Error::<T>::SchemaIndexOverFlow);
 			if new_index.is_ok() {
@@ -338,7 +339,7 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			ensure!(Some(sender.clone()) == Self::schema_admin(), Error::<T>::RequireSchemaAdmin);
 
-			let context = SchemaRegistry::<T>::get(index).ok_or(Error::<T>::SchemaNotExists)?;
+			let _ = SchemaRegistry::<T>::get(index).ok_or(Error::<T>::SchemaNotExists)?;
 			SchemaRegistry::<T>::remove(index);
 			Self::deposit_event(Event::SchemaRevoked { account: sender, shard, index });
 			Ok(().into())

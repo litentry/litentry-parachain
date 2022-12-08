@@ -14,26 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std)]
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate sgx_tstd as std;
+// Define the user shielding key constant and struct
+// Put it in primitives as it will be used by multiple pallets/external crates
 
-mod ethereum_signature;
-mod identity;
-// mod trusted_call;
-mod assertion;
-mod validation_data;
-mod vc;
+#[cfg(feature = "std")]
+extern crate std;
 
-pub use ethereum_signature::*;
-pub use identity::*;
-pub use parentchain_primitives::{
-	AesOutput, BlockNumber as ParentchainBlockNumber, UserShieldingKeyType, USER_SHIELDING_KEY_LEN,
-	USER_SHIELDING_KEY_NONCE_LEN, USER_SHIELDING_KEY_TAG_LEN,
-};
-// pub use trusted_call::*;
-pub use assertion::*;
-pub use validation_data::*;
-pub use vc::*;
+use sp_runtime::{traits::ConstU32, BoundedVec};
 
-pub type ChallengeCode = [u8; 16];
+#[cfg(not(feature = "std"))]
+use sp_std::prelude::*;
+
+// vc schema
+pub const SCHEMA_ID_LEN: u32 = 512;
+pub const SCHEMA_CONTENT_LEN: u32 = 2048;
+
+/// An index of a schema. Just a `u64`.
+pub type SchemaIndex = u64;
+
+pub type MaxIdLength = ConstU32<SCHEMA_ID_LEN>;
+pub type SchemaIdString = BoundedVec<u8, MaxIdLength>;
+
+pub type MaxContentLength = ConstU32<SCHEMA_CONTENT_LEN>;
+pub type SchemaContentString = BoundedVec<u8, MaxContentLength>;

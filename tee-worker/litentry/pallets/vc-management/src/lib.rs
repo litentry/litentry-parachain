@@ -36,13 +36,12 @@ pub use pallet::*;
 
 use frame_support::{pallet_prelude::*, traits::StorageVersion};
 use frame_system::pallet_prelude::*;
-pub use litentry_primitives::{
-	ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType,
+pub use litentry_primitives::{ParentchainBlockNumber, Status, VCSchema};
+pub use parentchain_primitives::{
+	SchemaContentString, SchemaIdString, SchemaIndex, SCHEMA_CONTENT_LEN, SCHEMA_ID_LEN,
 };
 pub type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
 pub type MetadataOf<T> = BoundedVec<u8, <T as Config>::MaxMetadataLength>;
-
-use sp_std::vec::Vec;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -72,29 +71,99 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		VCSchemaAdd { who: T::AccountId, value: u64 },
+		SchemaAdd { who: T::AccountId, index: SchemaIndex },
+		SchemaDisabled { who: T::AccountId, index: SchemaIndex },
+		SchemaActivated { who: T::AccountId, index: SchemaIndex },
+		SchemaRevoked { who: T::AccountId, index: SchemaIndex },
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
-		VCSchemaNotExist,
+		SchemaNotExist,
+		SchemaAlreadyDisabled,
+		SchemaAlreadyActivated,
+		SchemaIndexOverFlow,
 	}
 
+	/// Number of schemas
 	#[pallet::storage]
-	#[pallet::getter(fn vc_schema)]
-	pub type VCSchemas<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, u64, OptionQuery>;
+	#[pallet::getter(fn schema_count)]
+	pub type SchemaCount<T: Config> = StorageValue<_, SchemaIndex, ValueQuery>;
+
+	/// schema: key is SchemaIndex, vaule is VCSchema
+	#[pallet::storage]
+	#[pallet::getter(fn schema_registry)]
+	pub type SchemaRegistry<T: Config> = StorageMap<_, Blake2_256, SchemaIndex, VCSchema>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(15_000_000)]
-		pub fn update_schema_storage(
+		pub fn add_schema(
 			origin: OriginFor<T>,
 			who: T::AccountId,
-			value: u64,
+			id: SchemaIdString,
+			content: SchemaContentString,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
-			<VCSchemas<T>>::insert(who.clone(), value.clone());
-			Self::deposit_event(Event::VCSchemaAdd { who, value });
+
+			let index = Self::schema_count();
+			let new_index = index.checked_add(1u64).ok_or(Error::<T>::SchemaIndexOverFlow);
+			if new_index.is_ok() {
+				<SchemaCount<T>>::put(new_index.as_ref().unwrap());
+			}
+
+			SchemaRegistry::<T>::insert(index, VCSchema::new(id.clone(), content.clone()));
+			Self::deposit_event(Event::SchemaAdd { who, index });
+			Ok(())
+		}
+
+		#[pallet::weight(195_000_000)]
+		pub fn disable_schema(
+			origin: OriginFor<T>,
+			who: T::AccountId,
+			index: SchemaIndex,
+		) -> DispatchResult {
+			T::ManageOrigin::ensure_origin(origin)?;
+
+			SchemaRegistry::<T>::try_mutate(index, |context| {
+				let mut c = context.take().ok_or(Error::<T>::SchemaNotExist)?;
+				ensure!(c.status == Status::Active, Error::<T>::SchemaAlreadyDisabled);
+				c.status = Status::Disabled;
+				*context = Some(c);
+				Self::deposit_event(Event::SchemaDisabled { who, index });
+				Ok(())
+			})
+		}
+
+		#[pallet::weight(195_000_000)]
+		pub fn activate_schema(
+			origin: OriginFor<T>,
+			who: T::AccountId,
+			index: SchemaIndex,
+		) -> DispatchResult {
+			T::ManageOrigin::ensure_origin(origin)?;
+
+			SchemaRegistry::<T>::try_mutate(index, |context| {
+				let mut c = context.take().ok_or(Error::<T>::SchemaNotExist)?;
+				ensure!(c.status == Status::Disabled, Error::<T>::SchemaAlreadyActivated);
+				c.status = Status::Active;
+				*context = Some(c);
+				Self::deposit_event(Event::SchemaActivated { who, index });
+				Ok(())
+			})
+		}
+
+		#[pallet::weight(195_000_000)]
+		pub fn revoke_schema(
+			origin: OriginFor<T>,
+			who: T::AccountId,
+			index: SchemaIndex,
+		) -> DispatchResult {
+			T::ManageOrigin::ensure_origin(origin)?;
+
+			let _ = SchemaRegistry::<T>::get(index).ok_or(Error::<T>::SchemaNotExist)?;
+			SchemaRegistry::<T>::remove(index);
+			Self::deposit_event(Event::SchemaRevoked { who, index });
 			Ok(())
 		}
 	}

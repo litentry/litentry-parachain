@@ -44,6 +44,7 @@ ita-sgx-runtime = { path = "../../../app-libs/sgx-runtime", default-features = f
 litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
 pallet-imp = { package = "pallet-identity-management", path = "../../../../pallets/identity-management", default-features = false }
 pallet-vcm = { package = "pallet-vc-management", path = "../../../../pallets/vc-management", default-features = false }
+parentchain-primitives = { package = "primitives", path = "../../../../primitives", default-features = false }
 
 [dev-dependencies]
 env_logger = "0.9.0"

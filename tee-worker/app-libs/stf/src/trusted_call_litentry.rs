@@ -31,9 +31,12 @@ use lc_stf_task_sender::{
 };
 use litentry_primitives::{
 	Assertion, ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType,
-	VCSchemaContent, VCSchemaId, ValidationData,
+	ValidationData,
 };
 use log::*;
+use parentchain_primitives::{
+	SchemaContentString, SchemaIdString, SchemaIndex, SCHEMA_CONTENT_LEN, SCHEMA_ID_LEN,
+};
 use sp_runtime::BoundedVec;
 use std::{format, string::ToString, vec};
 
@@ -224,18 +227,17 @@ impl TrustedCallSigned {
 
 	pub fn vc_schema_issue_runtime(
 		who: AccountId,
-		id: VCSchemaId,
-		content: VCSchemaContent,
+		id: SchemaIdString,
+		content: SchemaContentString,
 	) -> StfResult<()> {
 		debug!(
 			"vc_schema_issue_runtime, who.str = {:?}, id = {:?}, content = {:?}",
 			account_id_to_string(&who),
-			id,
-			content,
+			id.clone(),
+			content.clone(),
 		);
 
-		let value = 2u64;
-		ita_sgx_runtime::VCManagementCall::<Runtime>::update_schema_storage { who, value }
+		ita_sgx_runtime::VCManagementCall::<Runtime>::add_schema { who, id, content }
 			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
 			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 		Ok(())

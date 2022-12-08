@@ -37,12 +37,13 @@ use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, Shieldin
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{CallWorkerFn, OpaqueCall, ShardIdentifier, ShieldFundsFn, H256};
-use litentry_primitives::{
-	Identity, UserShieldingKeyType, VCSchemaContent, VCSchemaId, ValidationData,
-};
+use litentry_primitives::{Identity, UserShieldingKeyType, ValidationData};
 use log::*;
 use pallet_imp::{CreateIdentityFn, RemoveIdentityFn, SetUserShieldingKeyFn, VerifyIdentityFn};
 use pallet_vcm::{VCSchemaActivatedFn, VCSchemaDisabledFn, VCSchemaIssuedFn, VCSchemaRevokedFn};
+use parentchain_primitives::{
+	SchemaContentString, SchemaIdString, SCHEMA_CONTENT_LEN, SCHEMA_ID_LEN,
+};
 use sp_core::blake2_256;
 use sp_runtime::traits::{AccountIdLookup, Block as ParentchainBlockTrait, Header, StaticLookup};
 use std::{sync::Arc, vec::Vec};
@@ -412,8 +413,9 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 							schema_id.len(),
 							schema_content.len()
 						);
-						let id: VCSchemaId = schema_id.try_into().unwrap();
-						let content: VCSchemaContent = schema_content.try_into().unwrap();
+
+						let id: SchemaIdString = schema_id.try_into().unwrap();
+						let content: SchemaContentString = schema_content.try_into().unwrap();
 
 						let trusted_call = TrustedCall::vc_schema_issue_runtime(
 							enclave_account_id,

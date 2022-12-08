@@ -25,7 +25,9 @@ serde = { version = "1.0", default-features = false, features = ["derive", "allo
 serde_derive = { version = "1.0", default-features = false }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 
+# litentry
 litentry-primitives = { path = "../../primitives", default-features = false }
+parentchain-primitives = { package = "primitives", path = "../../../../primitives", default-features = false }
 
 [dev-dependencies]
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29", default-features = false }
