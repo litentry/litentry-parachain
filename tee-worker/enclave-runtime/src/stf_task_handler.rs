@@ -25,7 +25,7 @@ use std::sync::Arc;
 use crate::{
 	error::{Error, Result},
 	initialization::global_components::{
-		EnclaveStfEnclaveSigner, GLOBAL_OCALL_API_COMPONENT,
+		EnclaveStfEnclaveSigner, GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_OCALL_API_COMPONENT,
 		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
 		GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 	},
@@ -50,7 +50,7 @@ fn run_stf_task_handler_internal() -> Result<()> {
 	let author_api = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
-
+	let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	let shielding_key = Rsa3072Seal::unseal_from_static_file().unwrap();
 
@@ -63,8 +63,13 @@ fn run_stf_task_handler_internal() -> Result<()> {
 		author_api.clone(),
 	));
 
-	let stf_task_context =
-		StfTaskContext::new(shielding_key, author_api, stf_enclave_signer, state_handler);
+	let stf_task_context = StfTaskContext::new(
+		shielding_key,
+		author_api,
+		stf_enclave_signer,
+		state_handler,
+		attestation_handler,
+	);
 
 	run_stf_task_receiver(&stf_task_context).map_err(Error::StfTaskReceiver)
 }

@@ -39,6 +39,8 @@ pub mod sgx_reexport_prelude {
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod attestation_handler;
 
+pub mod quote;
+
 pub mod cert;
 
 pub mod error;
