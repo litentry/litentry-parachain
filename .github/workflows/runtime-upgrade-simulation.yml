@@ -1,12 +1,6 @@
 name: Runtime upgrade simulation
 
 on:
-  push:
-    branches:
-      - 378-GA-for-runtime-upgrade-simulation
-    paths-ignore:
-      - "**/dependabot.yml"
-      - "**/README.md"
   pull_request:
     branches:
       - 378-GA-for-runtime-upgrade-simulation
@@ -17,27 +11,20 @@ on:
       - ready_for_review
   workflow_dispatch:
     inputs:
-      ReLEASE_TAG:
+      release_tag:
         type: string
         description: release_tag
         required: ${{ github.event.release.tag_name }}
         default: ${{ github.event.release.tag_name }}
-      litentry:
-        type: boolean
-        description: litentry
-        required: true
-        default: false
-      rococo:
-        type: boolean
-        description: rococo
-        required: true
-        default: false
-
+      inputs:
+        chain:
+          type: choice
+          description: The chain whose runtime upgrade
+          options:
+            - litentry
+            - rococo
 
 env:
-#  RELEASE_TAG: ${{ github.event.release.tag_name }}
-  DIFF_TAG: ${{ github.event.release.diff_tag }}
-  GENESIS_RELEASE: ${{ github.event.inputs.genesis_release }}
   DOCKER_BUILDKIT: 1
 
 
@@ -50,12 +37,11 @@ job:
           - litentry
           - rococo
     steps:
-      - name: fork-parachain
+      - name: fork-parachain-and-launch
         run:
-          ./scripts/fork-parachain-and-launch.sh ${{matrix.chain}}
+          ./scripts/fork-parachain-and-launch.sh ${{ github.event.inputs.chain }}
 
       - name: download-new-runtime.wasm && runtime upgrade
         timeout-minutes: 10
         run:
-          RELEASE_TAG=${{ env.RELEASE_TAG }}
-          ./scripts/runtime-upgrade.sh ${{ matrix.chain }} $RELEASE_TAG
+          ./scripts/runtime-upgrade.sh ${{ github.event.inputs.chain }} ${{ github.event.release.tag_name }}
