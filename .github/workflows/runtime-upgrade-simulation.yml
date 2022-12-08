@@ -1,20 +1,19 @@
 name: Runtime upgrade
 
 on:
-  push:
-    branches:
-      - 378-GA-for-runtime-upgrade-simulation
-    paths-ignore:
-      - "**/dependabot.yml"
-      - "**/README.md"
-  pull_request:
-    branches:
-      - 378-GA-for-runtime-upgrade-simulation
-    types:
-      - opened
-      - reopened
-      - synchronize
-      - ready_for_review
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        type: string
+        description: release_tag
+        required: ${{ github.event.release.tag_name }}
+        default: ${{ github.event.release.tag_name }}
+      chain:
+        type: choice
+        description: The chain whose runtime upgrade
+        options:
+          - litentry
+          - rococo
 
 env:
   DOCKER_BUILDKIT: 1
