@@ -19,8 +19,7 @@ on:
     inputs:
       ReLEASE_TAG:
         type: string
-        # if the runtime-benchmarks image should be rebuilt or pulled from hub
-        description: rebuild-docker
+        description: release_tag
         required: ${{ github.event.release.tag_name }}
         default: ${{ github.event.release.tag_name }}
       litentry:
@@ -60,9 +59,3 @@ job:
         run:
           RELEASE_TAG=${{ env.RELEASE_TAG }}
           ./scripts/runtime-upgrade.sh ${{ matrix.chain }} $RELEASE_TAG
-
-
-
-
-
-
