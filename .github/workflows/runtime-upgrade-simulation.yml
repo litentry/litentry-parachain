@@ -1,4 +1,4 @@
-name: Runtime Upgrade Simulation
+name: Runtime upgrade
 
 on:
   push:
@@ -15,19 +15,6 @@ on:
       - reopened
       - synchronize
       - ready_for_review
-  workflow_dispatch:
-    inputs:
-      release_tag:
-        type: string
-        description: release_tag
-        required: ${{ github.event.release.tag_name }}
-        default: ${{ github.event.release.tag_name }}
-      chain:
-        type: choice
-        description: The chain whose runtime upgrade
-        options:
-          - litentry
-          - rococo
 
 env:
   DOCKER_BUILDKIT: 1
@@ -50,3 +37,4 @@ jobs:
         timeout-minutes: 10
         run:
           ./scripts/runtime-upgrade.sh ${{ github.event.inputs.chain }} ${{ github.event.release.tag_name }}
+
