@@ -1,10 +1,11 @@
-import { ApiPromise, Keyring } from "@polkadot/api";
-import { KeyObject } from "crypto";
-import { HexString } from "@polkadot/util/types";
+import {ApiPromise, Keyring} from "@polkadot/api";
+import {KeyObject} from "crypto";
+import {HexString} from "@polkadot/util/types";
 import WebSocketAsPromised = require("websocket-as-promised");
-import { KeyringPair } from "@polkadot/keyring/types";
-import { Web3Provider } from "@ethersproject/providers";
-import { ethers, Wallet } from "ethers";
+import {KeyringPair} from "@polkadot/keyring/types";
+import {Web3Provider} from "@ethersproject/providers";
+import {ethers, Wallet} from "ethers";
+
 export const teeTypes = {
     WorkerRpcReturnString: {
         vec: "Bytes",
@@ -138,6 +139,18 @@ export const teeTypes = {
         },
     },
     EthereumSignature: "([u8; 65])",
+
+    IdentityGenericEvent: {
+        who: "AccountId",
+        identity: "LitentryIdentity",
+        id_graph: "Vec<(LitentryIdentity, IdentityContext)>",
+    },
+    IdentityContext: {
+        metadata: "Option<Vec<u8>>",
+        linking_request_block: "Option<BlockNumber>",
+        verification_request_block: "Option<BlockNumber>",
+        is_verified: "bool",
+    }
 };
 
 export type WorkerRpcReturnValue = {
@@ -243,3 +256,16 @@ export type Web3Network = {
 export type Web2Network = "Twitter" | "Discord" | "Github";
 export type SubstrateNetwork = "Polkadot" | "Kusama" | "Litentry" | "Litmus";
 export type EvmNetwork = "Ethereum" | "BSC";
+
+export type IdentityGenericEvent = {
+    who: HexString,
+    identity: LitentryIdentity,
+    idGraph: [LitentryIdentity, IdentityContext][]
+}
+
+export type IdentityContext = {
+    metadata?: HexString
+    linking_request_block?: number,
+    verification_request_block?: number,
+    is_verified: boolean,
+}
