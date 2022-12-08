@@ -258,9 +258,7 @@ function assertIdentityVerified(signer: KeyringPair, identityEvent: IdentityGene
 function assertIdentityRemoved(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
     let idGraphExist = false
     if (identityEvent) {
-        console.log("all2", JSON.stringify(identityEvent.idGraph), identityEvent.identity)
         for (let i = 0; i < identityEvent.idGraph.length; i++) {
-            console.log("2", JSON.stringify(identityEvent.identity))
             if (JSON.stringify(identityEvent.idGraph[i][0]) == JSON.stringify(identityEvent.identity)) {
                 idGraphExist = true
             }
