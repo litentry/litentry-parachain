@@ -105,6 +105,7 @@ describeLitentry("Test Identity", (context) => {
     const aesKey = "0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12";
     var signature_ethereum;
     var signature_substrate;
+
     step("set user shielding key", async function () {
         const who = await setUserShieldingKey(context, context.defaultSigner, aesKey, true);
         assert.equal(who, u8aToHex(context.defaultSigner.addressRaw), "check caller error");

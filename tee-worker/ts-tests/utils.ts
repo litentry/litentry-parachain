@@ -22,7 +22,7 @@ import { KeyObject } from "crypto";
 import { EventRecord } from "@polkadot/types/interfaces";
 import { after, before, describe } from "mocha";
 import { randomAsHex } from "@polkadot/util-crypto";
-import { generateChallengeCode, getSinger } from "./web3/setup";
+import { generateChallengeCode, getSigner } from "./web3/setup";
 import { ethers } from "ethers";
 import { Web3Provider } from "@ethersproject/providers";
 import { generateTestKeys } from "./web3/functions";
@@ -128,7 +128,7 @@ export async function initIntegrationTestContext(
         substrate: api,
         teeShieldingKey,
         shard,
-        defaultSigner: getSinger(0),
+        defaultSigner: getSigner(0),
         ethersProvider,
         ethersWallet,
     };
