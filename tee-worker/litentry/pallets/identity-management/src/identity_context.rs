@@ -28,8 +28,8 @@ use litentry_primitives::ParentchainBlockNumber;
 pub struct IdentityContext<T: Config> {
 	// the metadata
 	pub metadata: Option<MetadataOf<T>>,
-	// the block number (of parent chain) where the linking was intially requested
-	pub linking_request_block: Option<ParentchainBlockNumber>,
+	// the block number (of parent chain) where the creation was intially requested
+	pub creation_request_block: Option<ParentchainBlockNumber>,
 	// the block number (of parent chain) where the verification was intially requested
 	pub verification_request_block: Option<ParentchainBlockNumber>,
 	// if this did is verified
@@ -42,7 +42,7 @@ impl<T: Config> Default for IdentityContext<T> {
 	fn default() -> Self {
 		Self {
 			metadata: None,
-			linking_request_block: None,
+			creation_request_block: None,
 			verification_request_block: None,
 			is_verified: false,
 		}
@@ -51,12 +51,12 @@ impl<T: Config> Default for IdentityContext<T> {
 
 impl<T: Config> IdentityContext<T> {
 	pub fn new(
-		linking_request_block: ParentchainBlockNumber,
+		creation_request_block: ParentchainBlockNumber,
 		verification_request_block: ParentchainBlockNumber,
 	) -> Self {
 		Self {
 			metadata: None,
-			linking_request_block: Some(linking_request_block),
+			creation_request_block: Some(creation_request_block),
 			verification_request_block: Some(verification_request_block),
 			is_verified: false,
 		}

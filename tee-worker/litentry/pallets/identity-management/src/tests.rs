@@ -51,7 +51,7 @@ fn create_identity_works() {
 			IMT::id_graphs(2, ALICE_WEB3_IDENTITY).unwrap(),
 			IdentityContext {
 				metadata: Some(metadata),
-				linking_request_block: Some(1),
+				creation_request_block: Some(1),
 				verification_request_block: None,
 				is_verified: false,
 			}
@@ -78,7 +78,7 @@ fn remove_identity_works() {
 			IMT::id_graphs(2, ALICE_WEB3_IDENTITY.clone()).unwrap(),
 			IdentityContext {
 				metadata: Some(metadata),
-				linking_request_block: Some(1),
+				creation_request_block: Some(1),
 				verification_request_block: None,
 				is_verified: false,
 			}
@@ -104,7 +104,7 @@ fn verify_identity_works() {
 			IMT::id_graphs(2, ALICE_WEB3_IDENTITY).unwrap(),
 			IdentityContext {
 				metadata: Some(metadata),
-				linking_request_block: Some(1),
+				creation_request_block: Some(1),
 				verification_request_block: Some(1),
 				is_verified: true,
 			}
@@ -149,7 +149,7 @@ fn get_identity_and_identity_context_works() {
 #[test]
 fn verify_identity_fails_when_too_early() {
 	new_test_ext().execute_with(|| {
-		const LINKNIG_REQUEST_BLOCK: ParentchainBlockNumber = 2;
+		const CREATION_REQUEST_BLOCK: ParentchainBlockNumber = 2;
 		const VERIFICATION_REQUEST_BLOCK: ParentchainBlockNumber = 1;
 
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
@@ -158,7 +158,7 @@ fn verify_identity_fails_when_too_early() {
 			2,
 			ALICE_WEB3_IDENTITY.clone(),
 			Some(metadata.clone()),
-			LINKNIG_REQUEST_BLOCK
+			CREATION_REQUEST_BLOCK
 		));
 		assert_noop!(
 			IMT::verify_identity(
@@ -173,7 +173,7 @@ fn verify_identity_fails_when_too_early() {
 			IMT::id_graphs(2, ALICE_WEB3_IDENTITY).unwrap(),
 			IdentityContext {
 				metadata: Some(metadata),
-				linking_request_block: Some(LINKNIG_REQUEST_BLOCK),
+				creation_request_block: Some(CREATION_REQUEST_BLOCK),
 				verification_request_block: None,
 				is_verified: false,
 			}
@@ -184,7 +184,7 @@ fn verify_identity_fails_when_too_early() {
 #[test]
 fn verify_identity_fails_when_too_late() {
 	new_test_ext().execute_with(|| {
-		const LINKNIG_REQUEST_BLOCK: ParentchainBlockNumber = 1;
+		const CREATION_REQUEST_BLOCK: ParentchainBlockNumber = 1;
 		const VERIFICATION_REQUEST_BLOCK: ParentchainBlockNumber = 5;
 
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
@@ -193,7 +193,7 @@ fn verify_identity_fails_when_too_late() {
 			2,
 			ALICE_WEB3_IDENTITY.clone(),
 			Some(metadata.clone()),
-			LINKNIG_REQUEST_BLOCK
+			CREATION_REQUEST_BLOCK
 		));
 		assert_noop!(
 			IMT::verify_identity(
@@ -208,7 +208,7 @@ fn verify_identity_fails_when_too_late() {
 			IMT::id_graphs(2, ALICE_WEB3_IDENTITY).unwrap(),
 			IdentityContext {
 				metadata: Some(metadata),
-				linking_request_block: Some(LINKNIG_REQUEST_BLOCK),
+				creation_request_block: Some(CREATION_REQUEST_BLOCK),
 				verification_request_block: None,
 				is_verified: false,
 			}
