@@ -3,23 +3,41 @@ name: Runtime upgrade simulation
 on:
   push:
     branches:
-      - dev
+      - 378-GA-for-runtime-upgrade-simulation
     paths-ignore:
       - "**/dependabot.yml"
       - "**/README.md"
   pull_request:
     branches:
-      - dev
+      - 378-GA-for-runtime-upgrade-simulation
     types:
       - opened
       - reopened
       - synchronize
       - ready_for_review
   workflow_dispatch:
+    inputs:
+      ReLEASE_TAG:
+        type: string
+        # if the runtime-benchmarks image should be rebuilt or pulled from hub
+        description: rebuild-docker
+        required: ${{ github.event.release.tag_name }}
+        default: ${{ github.event.release.tag_name }}
+      litentry:
+        type: boolean
+        description: litentry
+        required: true
+        default: false
+      rococo:
+        type: boolean
+        description: rococo
+        required: true
+        default: false
+
 
 env:
-  RELEASE_TAG: ${{ github.event.inputs.release_tag }}
-  DIFF_TAG: ${{ github.event.inputs.diff_tag }}
+#  RELEASE_TAG: ${{ github.event.release.tag_name }}
+  DIFF_TAG: ${{ github.event.release.diff_tag }}
   GENESIS_RELEASE: ${{ github.event.inputs.genesis_release }}
   DOCKER_BUILDKIT: 1
 
@@ -30,19 +48,19 @@ job:
     strategy:
       matrix:
         chain:
-          - litmus
           - litentry
           - rococo
     steps:
       - name: fork-parachain
         run:
-          make fork-parachain-${{ matrix.chain }}
+          ./scripts/fork-parachain-and-launch.sh ${{matrix.chain}}
+
       - name: download-new-runtime.wasm && runtime upgrade
+        timeout-minutes: 10
         run:
           RELEASE_TAG=${{ env.RELEASE_TAG }}
-#          or same above add the command in makefile
-          ./scripts/runtime-upgrade.sh ${{ matrix.chain }} RELEASE_TAG
-#          make runtime-upgrade-${{ matrix.chain }}
+          ./scripts/runtime-upgrade.sh ${{ matrix.chain }} $RELEASE_TAG
+
 
 
 

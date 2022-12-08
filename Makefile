@@ -211,20 +211,6 @@ clippyfix:
 .PHONY: cargofix ## cargo fix
 cargofix:
 	cargo fix --allow-dirty --allow-staged --workspace --all-targets --all-features
-
-#fork parachain && runtime update
-.PHONY:runtime-upgrade-litentry
-runtime-upgrade-litentry:
-	@./scripts/fork-parachain-and-launch.sh litentry
-
-.PHONY:runtime-upgrade-litmus
-runtime-upgrade-litentry:
-	@./scripts/fork-parachain-and-launch.sh litmus
-
-.PHONY:runtime-upgrade-rococo
-runtime-upgrade-litentry:
-	@./scripts/fork-parachain-and-launch.sh rococo
-
 define pkgid
 $(shell cargo pkgid $1)
 endef

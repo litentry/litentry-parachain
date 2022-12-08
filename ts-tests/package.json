@@ -8,6 +8,7 @@
     },
     "scripts": {
         "register-parachain": "ts-node tests/register-parachain.ts",
+        "runtime-upgrade": "ts-node tests/runtime-upgrade.ts",
         "test-filter": "mocha --exit --sort -r ts-node/register 'tests/base-filter.test.ts'",
         "test-bridge": "mocha --exit --sort -r ts-node/register 'tests/bridge.test.ts'",
         "test-all": "mocha --exit --sort -r ts-node/register 'tests/**/*.test.ts'"
