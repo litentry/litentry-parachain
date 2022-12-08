@@ -22,13 +22,12 @@ on:
         description: release_tag
         required: ${{ github.event.release.tag_name }}
         default: ${{ github.event.release.tag_name }}
-      inputs:
-        chain:
-          type: choice
-          description: The chain whose runtime upgrade
-          options:
-            - litentry
-            - rococo
+      chain:
+        type: choice
+        description: The chain whose runtime upgrade
+        options:
+          - litentry
+          - rococo
 
 env:
   DOCKER_BUILDKIT: 1
