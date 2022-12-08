@@ -71,8 +71,8 @@ export async function removeIdentity(
     if (listening) {
         const event = await listenEncryptedEvents(context, aesKey, {
             module: "identityManagement",
-            method: "indentityRemoved",
-            event: "IndentityRemoved",
+            method: "identityRemoved",
+            event: "IdentityRemoved",
         });
         const [who, _identity] = event.eventData;
         return who;
