@@ -1,24 +1,11 @@
-import {
-    describeLitentry,
-    generateVerificationMessage,
-    getMessage,
-    listenEncryptedEvents,
-} from "./utils";
-import { hexToU8a, u8aToHex, stringToU8a } from "@polkadot/util";
-import {
-    createIdentity,
-    setUserShieldingKey,
-    removeIdentity,
-    verifyIdentity,
-} from "./indirect_calls";
-import { step } from "mocha-steps";
-import { assert } from "chai";
-import { LitentryIdentity, LitentryValidationData, IdentityGenericEvent } from "./type-definitions";
-import { Sign } from "./web3/functions";
-import { generateTestKeys } from "./web3/functions";
-import { ethers } from "ethers";
-import { HexString } from "@polkadot/util/types";
-import { KeyringPair } from "@polkadot/keyring/types";
+import {describeLitentry, generateVerificationMessage,} from "./utils";
+import {hexToU8a, u8aToHex} from "@polkadot/util";
+import {createIdentity, removeIdentity, setUserShieldingKey, verifyIdentity,} from "./indirect_calls";
+import {step} from "mocha-steps";
+import {assert} from "chai";
+import {IdentityGenericEvent, LitentryIdentity, LitentryValidationData} from "./type-definitions";
+import {ethers} from "ethers";
+import {KeyringPair} from "@polkadot/keyring/types";
 
 const twitterIdentity = <LitentryIdentity>{
     handle: {
@@ -255,20 +242,25 @@ describeLitentry("Test Identity", (context) => {
 
 
 function assertIdentityVerified(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
+    let idGraphExist = false
     if (identityEvent) {
         for (let i = 0; i < identityEvent.idGraph.length; i++) {
             if (JSON.stringify(identityEvent.idGraph[i][0]) == JSON.stringify(identityEvent.identity)) {
+                idGraphExist = true;
                 assert.isTrue(identityEvent.idGraph[i][1].is_verified, "identity should be verified");
             }
         }
     }
+    assert.isTrue(idGraphExist, "id_graph should exist")
     assert.equal(identityEvent?.who, u8aToHex(signer.addressRaw), "check caller error");
 }
 
 function assertIdentityRemoved(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
     let idGraphExist = false
     if (identityEvent) {
+        console.log("all2", JSON.stringify(identityEvent.idGraph), identityEvent.identity)
         for (let i = 0; i < identityEvent.idGraph.length; i++) {
+            console.log("2", JSON.stringify(identityEvent.identity))
             if (JSON.stringify(identityEvent.idGraph[i][0]) == JSON.stringify(identityEvent.identity)) {
                 idGraphExist = true
             }

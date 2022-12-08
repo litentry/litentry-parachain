@@ -4,7 +4,7 @@ import {
     LitentryIdentity,
     LitentryValidationData,
 } from "./type-definitions";
-import {encryptWithTeeShieldingKey, listenEncryptedEvents} from "./utils";
+import {encryptWithTeeShieldingKey, listenEncryptedEvents, sendTxUntilInBlock} from "./utils";
 import {KeyringPair} from "@polkadot/keyring/types";
 import {HexString} from "@polkadot/util/types";
 import {generateChallengeCode} from "./web3/setup";
@@ -66,11 +66,10 @@ export async function removeIdentity(
 ): Promise<IdentityGenericEvent | undefined> {
     const encode = context.substrate.createType("LitentryIdentity", identity).toHex();
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString("hex");
-    const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
 
-    await context.substrate.tx.identityManagement
-        .removeIdentity(context.shard, `0x${ciphertext}`)
-        .signAndSend(signer, {nonce});
+    const tx = context.substrate.tx.identityManagement.removeIdentity(context.shard, `0x${ciphertext}`)
+    await sendTxUntilInBlock(context.substrate, tx, signer)
+
     if (listening) {
         const event = await listenEncryptedEvents(context, aesKey, {
             module: "identityManagement",
@@ -101,11 +100,11 @@ export async function verifyIdentity(
         context.teeShieldingKey,
         validation_encode
     ).toString("hex");
-    const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
 
-    await context.substrate.tx.identityManagement
+    const tx = context.substrate.tx.identityManagement
         .verifyIdentity(context.shard, `0x${identity_ciphertext}`, `0x${validation_ciphertext}`)
-        .signAndSend(signer, {nonce});
+    await sendTxUntilInBlock(context.substrate, tx, signer)
+
     if (listening) {
         const event = await listenEncryptedEvents(context, aesKey, {
             module: "identityManagement",
@@ -128,3 +127,4 @@ function decodeIdentityEvent(api: ApiPromise, who: HexString, identityString: He
         idGraph,
     };
 }
+
