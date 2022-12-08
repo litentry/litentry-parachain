@@ -1,6 +1,12 @@
-name: Runtime upgrade simulation
+name: Runtime Upgrade Simulation
 
 on:
+  push:
+    branches:
+      - dev
+    paths-ignore:
+      - "**/dependabot.yml"
+      - "**/README.md"
   pull_request:
     branches:
       - 378-GA-for-runtime-upgrade-simulation
@@ -45,3 +51,4 @@ job:
         timeout-minutes: 10
         run:
           ./scripts/runtime-upgrade.sh ${{ github.event.inputs.chain }} ${{ github.event.release.tag_name }}
+        
