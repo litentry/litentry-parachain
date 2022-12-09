@@ -73,6 +73,59 @@ fn create_eth_identity_works() {
 	});
 }
 
+#[test]
+fn create_two_distinct_twitter_identities_works() {
+	new_test_ext().execute_with(|| {
+		// create and verify the first twitter handle
+		System::set_block_number(3);
+		setup_verify_twitter_identity(2, create_mock_twitter_identity(b"alice"), 3);
+		// create second twitter handle works
+		System::set_block_number(4);
+		setup_create_identity(2, create_mock_twitter_identity(b"bob"), 4);
+	});
+}
+
+#[test]
+fn create_twitter_identity_twice_works() {
+	new_test_ext().execute_with(|| {
+		let who = 2;
+		let identity = create_mock_twitter_identity(b"alice");
+		// create a twitter identity
+		System::set_block_number(3);
+		setup_create_identity(who, identity.clone(), 3);
+		let old_code = IdentityManagementMock::challenge_codes(who, &identity).unwrap();
+		// create the same twitter identity for the second time
+		// it should succeed and generate a new challenge code
+		System::set_block_number(5);
+		setup_create_identity(who, identity.clone(), 5);
+		let new_code = IdentityManagementMock::challenge_codes(who, &identity).unwrap();
+		assert!(old_code != new_code);
+		let c = IdentityManagementMock::id_graphs(who, &identity).unwrap();
+		assert!(c.creation_request_block == Some(5));
+	});
+}
+
+#[test]
+fn create_twitter_identity_after_verification_fails() {
+	new_test_ext().execute_with(|| {
+		let who = 2;
+		let identity = create_mock_twitter_identity(b"alice");
+		System::set_block_number(3);
+		setup_verify_twitter_identity(who, identity.clone(), 3);
+		System::set_block_number(4);
+		let encrypted_identity = tee_encrypt(identity.encode().as_slice());
+		assert_noop!(
+			IdentityManagementMock::create_identity(
+				Origin::signed(who),
+				H256::random(),
+				encrypted_identity.to_vec(),
+				None
+			),
+			Error::<Test>::IdentityAlreadyVerified
+		);
+	});
+}
+
 // actually it should always be successful, as we don't have on-chain web2 verification
 // for the mock pallet
 #[test]
@@ -98,18 +151,6 @@ fn verify_eth_identity_works() {
 		System::set_block_number(4);
 		let p = Random.generate();
 		setup_verify_eth_identity(2, p, 4);
-	});
-}
-
-#[test]
-fn double_create_twitter_identity_works() {
-	new_test_ext().execute_with(|| {
-		// create and verify the first twitter handle
-		System::set_block_number(3);
-		setup_verify_twitter_identity(2, create_mock_twitter_identity(b"alice"), 3);
-		// create second twitter handle works
-		System::set_block_number(4);
-		setup_create_identity(2, create_mock_twitter_identity(b"bob"), 4);
 	});
 }
 

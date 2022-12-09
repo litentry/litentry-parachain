@@ -1,7 +1,9 @@
 import "./config";
+import WebSocketAsPromised = require("websocket-as-promised");
+import WebSocket = require("ws");
 import Options from "websocket-as-promised/types/options";
-import {ApiPromise, WsProvider} from "@polkadot/api";
-import {StorageKey, Vec} from "@polkadot/types";
+import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
+import { StorageKey, Vec } from "@polkadot/types";
 import {
     AESOutput,
     IntegrationTestContext,
@@ -11,21 +13,19 @@ import {
     WorkerRpcReturnString,
     WorkerRpcReturnValue,
 } from "./type-definitions";
-import {blake2AsHex, cryptoWaitReady} from "@polkadot/util-crypto";
-import {KeyringPair} from "@polkadot/keyring/types";
-import {Codec} from "@polkadot/types/types";
-import {HexString,} from "@polkadot/util/types";
-import {ApiTypes, SubmittableExtrinsic} from '@polkadot/api/types';
-import {hexToU8a, u8aToHex} from "@polkadot/util";
-import {KeyObject} from "crypto";
-import {EventRecord} from "@polkadot/types/interfaces";
-import {after, before, describe} from "mocha";
-import {generateChallengeCode, getSigner} from "./web3/setup";
-import {ethers} from "ethers";
-import {Web3Provider} from "@ethersproject/providers";
-import {generateTestKeys} from "./web3/functions";
-import WebSocketAsPromised = require("websocket-as-promised");
-import WebSocket = require("ws");
+import { blake2AsHex, cryptoWaitReady } from "@polkadot/util-crypto";
+import { KeyringPair } from "@polkadot/keyring/types";
+import { Codec } from "@polkadot/types/types";
+import { HexString } from "@polkadot/util/types";
+import { hexToU8a, u8aToHex } from "@polkadot/util";
+import { KeyObject } from "crypto";
+import { EventRecord } from "@polkadot/types/interfaces";
+import { after, before, describe } from "mocha";
+import { randomAsHex } from "@polkadot/util-crypto";
+import { generateChallengeCode, getSigner } from "./web3/setup";
+import { ethers } from "ethers";
+import { Web3Provider } from "@ethersproject/providers";
+import { generateTestKeys } from "./web3/functions";
 
 const base58 = require("micro-base58");
 const crypto = require("crypto");
@@ -44,7 +44,7 @@ export async function sendRequest(
     request: any,
     api: ApiPromise
 ): Promise<WorkerRpcReturnValue> {
-    const resp = await wsClient.sendRequest(request, {requestId: 1, timeout: 6000});
+    const resp = await wsClient.sendRequest(request, { requestId: 1, timeout: 6000 });
     const resp_json = api
         .createType("WorkerRpcReturnValue", resp.result)
         .toJSON() as WorkerRpcReturnValue;
@@ -55,7 +55,7 @@ export async function getTEEShieldingKey(
     wsClient: WebSocketAsPromised,
     api: ApiPromise
 ): Promise<KeyObject> {
-    let request = {jsonrpc: "2.0", method: "author_getShieldingKey", params: [], id: 1};
+    let request = { jsonrpc: "2.0", method: "author_getShieldingKey", params: [], id: 1 };
     let respJSON = await sendRequest(wsClient, request, api);
 
     const pubKeyHex = api
@@ -117,7 +117,7 @@ export async function initIntegrationTestContext(
         packMessage: (data: any) => JSON.stringify(data),
         unpackMessage: (data: string | ArrayBuffer | Blob) => JSON.parse(data.toString()),
         attachRequestId: (data: any, requestId: string | number) =>
-            Object.assign({id: requestId}, data),
+            Object.assign({ id: requestId }, data),
         extractRequestId: (data: any) => data && data.id, // read requestId from message `id` field
     }));
     await wsp.open();
@@ -132,22 +132,6 @@ export async function initIntegrationTestContext(
         ethersProvider,
         ethersWallet,
     };
-}
-
-export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrinsic<ApiTypes>, signer: KeyringPair) {
-    return new Promise<{ block: string }>(async (resolve, reject) => {
-        const nonce = await api.rpc.system.accountNextIndex(signer.address);
-        await tx.signAndSend(signer, {nonce}, (result) => {
-            if (result.status.isInBlock) {
-                console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
-                resolve({
-                    block: result.status.asInBlock.toString(),
-                });
-            } else if (result.status.isInvalid) {
-                reject(`Transaction is ${result.status}`);
-            }
-        });
-    });
 }
 
 export async function listenEncryptedEvents(
@@ -181,7 +165,7 @@ export async function listenEncryptedEvents(
                     return;
                 }
                 allEvents
-                    .filter(({phase, event}) => {
+                    .filter(({ phase, event }) => {
                         return (
                             phase.isApplyExtrinsic &&
                             phase.asApplyExtrinsic.eq(index) &&
@@ -189,14 +173,14 @@ export async function listenEncryptedEvents(
                             event.method == filterObj.event
                         );
                     })
-                    .forEach(({event}) => {
+                    .forEach(({ event }) => {
                         // const eventData = event.data as AESOutput;
                         const data = event.data as AESOutput[];
                         const eventData: HexString[] = [];
                         for (let i = 0; i < data.length; i++) {
                             eventData.push(decryptWithAES(aesKey, data[i]));
                         }
-                        resolve({eventData});
+                        resolve({ eventData });
                         unsubscribe();
                         return;
                     });
@@ -335,8 +319,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
             context.ethersWallet = tmp.ethersWallet;
         });
 
-        after(async function () {
-        });
+        after(async function () {});
 
         cb(context);
     });

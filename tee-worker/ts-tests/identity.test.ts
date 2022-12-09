@@ -1,12 +1,23 @@
-import {describeLitentry, generateVerificationMessage,} from "./utils";
-import {hexToU8a, u8aToHex} from "@polkadot/util";
-import {createIdentity, removeIdentity, setUserShieldingKey, verifyIdentity,} from "./indirect_calls";
-import {step} from "mocha-steps";
-import {assert} from "chai";
-import {IdentityGenericEvent, LitentryIdentity, LitentryValidationData} from "./type-definitions";
-import {ethers} from "ethers";
-import {KeyringPair} from "@polkadot/keyring/types";
-
+import {
+    describeLitentry,
+    generateVerificationMessage,
+    getMessage,
+    listenEncryptedEvents,
+} from "./utils";
+import { hexToU8a, u8aToHex, stringToU8a } from "@polkadot/util";
+import {
+    createIdentity,
+    setUserShieldingKey,
+    removeIdentity,
+    verifyIdentity,
+} from "./indirect_calls";
+import { step } from "mocha-steps";
+import { assert } from "chai";
+import { LitentryIdentity, LitentryValidationData } from "./type-definitions";
+import { Sign } from "./web3/functions";
+import { generateTestKeys } from "./web3/functions";
+import { ethers } from "ethers";
+import { HexString } from "@polkadot/util/types";
 const twitterIdentity = <LitentryIdentity>{
     handle: {
         PlainString: `0x${Buffer.from("mock_user", "utf8").toString("hex")}`,
@@ -174,7 +185,7 @@ describeLitentry("Test Identity", (context) => {
 
     step("verify identity", async function () {
         //verify twitter identity
-        const twitter_identity_verified = await verifyIdentity(
+        const who_twitter = await verifyIdentity(
             context,
             context.defaultSigner,
             aesKey,
@@ -182,10 +193,10 @@ describeLitentry("Test Identity", (context) => {
             twitterIdentity,
             twitterValidationData
         );
-        assertIdentityVerified(context.defaultSigner, twitter_identity_verified);
+        assert.equal(who_twitter, u8aToHex(context.defaultSigner.addressRaw), "check caller error");
 
         // verify ethereum identity
-        const ethereum_identity_verified = await verifyIdentity(
+        const who_ethereum = await verifyIdentity(
             context,
             context.defaultSigner,
             aesKey,
@@ -193,10 +204,14 @@ describeLitentry("Test Identity", (context) => {
             ethereumIdentity,
             ethereumValidationData
         );
-        assertIdentityVerified(context.defaultSigner, ethereum_identity_verified);
+        assert.equal(
+            who_ethereum,
+            u8aToHex(context.defaultSigner.addressRaw),
+            "check caller error"
+        );
 
         //verify substrate identity
-        const substrate_identity_verified = await verifyIdentity(
+        const who = await verifyIdentity(
             context,
             context.defaultSigner,
             aesKey,
@@ -204,66 +219,46 @@ describeLitentry("Test Identity", (context) => {
             substrateIdentity,
             substrateValidationData
         );
-        assertIdentityVerified(context.defaultSigner, substrate_identity_verified);
+        assert.equal(who, u8aToHex(context.defaultSigner.addressRaw), "check caller error");
     });
 
     step("remove identity", async function () {
         //remove twitter identity
-        const twitter_identity_removed = await removeIdentity(
+        const who_twitter = await removeIdentity(
             context,
             context.defaultSigner,
             aesKey,
             true,
             twitterIdentity
         );
-        assertIdentityRemoved(context.defaultSigner, twitter_identity_removed)
+        assert.equal(who_twitter, u8aToHex(context.defaultSigner.addressRaw), "check caller error");
 
-        // remove ethereum identity
-        const ethereum_identity_removed = await removeIdentity(
+        //remove ethereum identity
+        const who_ethereum = await removeIdentity(
             context,
             context.defaultSigner,
             aesKey,
             true,
             ethereumIdentity
         );
-        assertIdentityRemoved(context.defaultSigner, ethereum_identity_removed)
+        assert.equal(
+            who_ethereum,
+            u8aToHex(context.defaultSigner.addressRaw),
+            "check caller error"
+        );
 
-        // remove substrate identity
-        const substrate_identity_removed = await removeIdentity(
+        //remove substrate identity
+        const who_substrate = await removeIdentity(
             context,
             context.defaultSigner,
             aesKey,
             true,
             substrateIdentity
         );
-        assertIdentityRemoved(context.defaultSigner, substrate_identity_removed)
+        assert.equal(
+            who_substrate,
+            u8aToHex(context.defaultSigner.addressRaw),
+            "check caller error"
+        );
     });
 });
-
-
-function assertIdentityVerified(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
-    let idGraphExist = false
-    if (identityEvent) {
-        for (let i = 0; i < identityEvent.idGraph.length; i++) {
-            if (JSON.stringify(identityEvent.idGraph[i][0]) == JSON.stringify(identityEvent.identity)) {
-                idGraphExist = true;
-                assert.isTrue(identityEvent.idGraph[i][1].is_verified, "identity should be verified");
-            }
-        }
-    }
-    assert.isTrue(idGraphExist, "id_graph should exist")
-    assert.equal(identityEvent?.who, u8aToHex(signer.addressRaw), "check caller error");
-}
-
-function assertIdentityRemoved(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
-    let idGraphExist = false
-    if (identityEvent) {
-        for (let i = 0; i < identityEvent.idGraph.length; i++) {
-            if (JSON.stringify(identityEvent.idGraph[i][0]) == JSON.stringify(identityEvent.identity)) {
-                idGraphExist = true
-            }
-        }
-    }
-    assert.isFalse(idGraphExist, "id_graph should be empty")
-    assert.equal(identityEvent?.who, u8aToHex(signer.addressRaw), "check caller error");
-}
