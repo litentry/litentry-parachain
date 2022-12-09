@@ -1,50 +1,37 @@
 name: Runtime upgrade
 
 on:
-  push:
-    branches:
-      - 378-GA-for-runtime-upgrade-simulation
-    paths-ignore:
-      - "**/dependabot.yml"
-      - "**/README.md"
-  pull_request:
-    branches:
-      - 378-GA-for-runtime-upgrade-simulation
-    types:
-      - opened
-      - reopened
-      - synchronize
-      - ready_for_review
+  release:
+    types: [released]
+
   workflow_dispatch:
     inputs:
       release_tag:
-        type: string
-        description: release_tag
+        description: runtime.wasm release_tag
+        default: "v0.9.13"
+        required: true
       chain:
         type: choice
+        default: rococo
         description: The chain whose runtime upgrade
         options:
           - litentry
           - rococo
 
-env:
-  DOCKER_BUILDKIT: 1
-
-
 jobs:
   fork-parachain-and-launch:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        chain:
-          - litentry
-          - rococo
     steps:
+      - name: Checkout codes on ${{ github.ref }}
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
       - name: fork-parachain-and-launch
-        run:
+        run: |
           ./scripts/fork-parachain-and-launch.sh ${{ github.event.inputs.chain }}
 
       - name: download-new-runtime.wasm && runtime upgrade
         timeout-minutes: 10
-        run:
+        run: |
           ./scripts/runtime-upgrade.sh ${{ github.event.inputs.chain }} ${{ github.event.inputs.release_tag }}
