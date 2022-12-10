@@ -23,7 +23,7 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
         const beforeAccountData = await context.parachainConfig.api.query.system.account(
             context.parachainConfig.ferdie.address
         );
-        console.log("before deposit: ", beforeAccountData.toString())
+        console.log('before deposit: ', beforeAccountData.toString());
 
         // approve
         await erc20.approve(context.ethConfig.erc20Handler.address, depositAmount);
@@ -37,7 +37,7 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
         const afterAccountData = await context.parachainConfig.api.query.system.account(
             context.parachainConfig.ferdie.address
         );
-        console.log("after deposit: ", afterAccountData.toString())
+        console.log('after deposit: ', afterAccountData.toString());
 
         assert.equal(
             bn100e12.add(beforeAccountData.data.free.toBn()).toString(),

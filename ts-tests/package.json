@@ -8,9 +8,9 @@
     },
     "scripts": {
         "register-parachain": "ts-node tests/register-parachain.ts",
-        "runtime-upgrade": "ts-node tests/runtime-upgrade.ts",
         "test-filter": "mocha --exit --sort -r ts-node/register 'tests/base-filter.test.ts'",
         "test-bridge": "mocha --exit --sort -r ts-node/register 'tests/bridge.test.ts'",
+        "test-runtime-upgrade": "mocha --exit --sort -r ts-node/register 'tests/runtime-upgrade.test.ts'",
         "test-all": "mocha --exit --sort -r ts-node/register 'tests/**/*.test.ts'"
     },
     "author": "Han Zhao",
@@ -22,7 +22,7 @@
         "gts": "^3.1.0",
         "mocha": "^10.0.0",
         "mocha-steps": "^1.3.0",
-        "prettier": "2.7.1",
+        "prettier": "2.8.1",
         "ts-node": "^10.8.1",
         "typescript": "^4.7.3"
     },

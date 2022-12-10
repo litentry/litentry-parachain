@@ -5,14 +5,7 @@ import { Contract, ethers, Wallet } from 'ethers';
 import { BN } from '@polkadot/util';
 import fs from 'fs';
 import { spawn } from 'child_process';
-import {
-    initApiPromise,
-    loadConfig,
-    ParachainConfig,
-    signAndSend,
-    sleep,
-    sudoWrapper
-} from './utils';
+import { initApiPromise, loadConfig, ParachainConfig, signAndSend, sleep, sudoWrapper } from './utils';
 import { toWei } from 'web3-utils';
 
 const path = require('path');
@@ -119,7 +112,7 @@ async function setupCrossChainTransfer(
     let opts = { gasLimit: 85000, gasPrice: 20000000000 };
     const parachainFee = new BN(10).pow(new BN(12)); // 1 unit
     const sourceChainID = 0; //ethereum
-    const destChainID = parseInt(pConfig.api.consts.chainBridge.bridgeChainId.toString()) //parachain
+    const destChainID = parseInt(pConfig.api.consts.chainBridge.bridgeChainId.toString()); //parachain
     const depositNonce = await pConfig.api.query.chainBridge.votes.entries(sourceChainID);
 
     const destResourceId = pConfig.api.consts.bridgeTransfer.nativeTokenResourceId.toHex();
@@ -161,7 +154,10 @@ async function setupCrossChainTransfer(
     const resource = await pConfig.api.query.chainBridge.resources(destResourceId);
     if (resource.toHuman() !== 'BridgeTransfer.transfer') {
         extrinsic.push(
-            await sudoWrapper(pConfig.api, pConfig.api.tx.chainBridge.setResource(destResourceId, 'BridgeTransfer.transfer'))
+            await sudoWrapper(
+                pConfig.api,
+                pConfig.api.tx.chainBridge.setResource(destResourceId, 'BridgeTransfer.transfer')
+            )
         );
     }
 
@@ -242,20 +238,28 @@ async function startChainBridge(
     require('dotenv').config();
     const dataDir = './bridge/data';
     if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir, {recursive: true});
+        fs.mkdirSync(dataDir, { recursive: true });
     }
     emptyDir(dataDir);
     const ethBlock = await ethConfig.wallets.bob.provider.getBlockNumber();
     const subBlock = await parachainConfig.api.rpc.chain.getHeader();
-    const parachainChainID = parseInt(parachainConfig.api.consts.chainBridge.bridgeChainId.toString()) //parachain
+    const parachainChainID = parseInt(parachainConfig.api.consts.chainBridge.bridgeChainId.toString()); //parachain
 
-    generateBridgeConfig(ethConfig, ethRelayer, parachainRelayer, ethBlock, subBlock.number.toNumber(), parachainChainID, config);
-    const logging = fs.createWriteStream(log, {flags: 'w+'});
+    generateBridgeConfig(
+        ethConfig,
+        ethRelayer,
+        parachainRelayer,
+        ethBlock,
+        subBlock.number.toNumber(),
+        parachainChainID,
+        config
+    );
+    const logging = fs.createWriteStream(log, { flags: 'w+' });
     const lsProcess = spawn(
         // `${process.env.GOPATH}/bin/chainbridge`,
         bridgePath,
         ['--verbosity', 'trace', '--blockstore', dataDir, '--config', config, '--keystore', './bridge/keys'],
-        {env: {STAGE: 'dev'}}
+        { env: { STAGE: 'dev' } }
     );
     lsProcess.stdout.pipe(logging);
     lsProcess.stderr.pipe(logging);
@@ -303,13 +307,7 @@ export function describeCrossChainTransfer(
                 dave: new ethers.Wallet(generateTestKeys().dave, provider),
                 eve: new ethers.Wallet(generateTestKeys().eve, provider),
             };
-            const {
-                bridge,
-                erc20Handler,
-                erc721Handler,
-                genericHandler,
-                erc20
-            } = await deployBridgeContracts(
+            const { bridge, erc20Handler, erc721Handler, genericHandler, erc20 } = await deployBridgeContracts(
                 wallets.alice
             );
 
@@ -344,8 +342,7 @@ export function describeCrossChainTransfer(
             await sleep(5);
         });
 
-        after(async function () {
-        });
+        after(async function () {});
 
         cb(context);
     });

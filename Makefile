@@ -211,6 +211,7 @@ clippyfix:
 .PHONY: cargofix ## cargo fix
 cargofix:
 	cargo fix --allow-dirty --allow-staged --workspace --all-targets --all-features
+
 define pkgid
 $(shell cargo pkgid $1)
 endef

@@ -2,55 +2,61 @@
 # set -eo we don't allow any command failed in this script.
 set -eo pipefail
 
-# the script is used to simulation runtime upgrade,See issue_378 for details
+ROOTDIR=$(git rev-parse --show-toplevel)
+
+# the script is used to simulate runtime upgrade, see:
 # https://github.com/litentry/litentry-parachain/issues/378
 
-# pre-knowledge:
-# Get the latest snapshot of the blockchain and export it. Start the chain locally with the obtained snapshot,
-# and then run the runtime-upgrade program to check the consistency of the status before and after the upgrade.
+# The latest state of the blockchain is scraped and used to bootstrap a chain locally via fork-off-substrate,
+# see ./scripts/fork-parachain-and-launch.sh
+#
+# After that, this script:
+# 1. get the runtime wasm
+# 2. do runtime upgrade using wasm from step 1
+# 3. verify if the runtime upgrade is successful
 
-# This script should do:
-# 1.new runtime.wasm is already?
-# 2.upload runtime.wasm
-# 3.update successful
+output_wasm=/tmp/runtime.wasm
 
 function usage() {
   echo
-  echo "Usage:   $0 litentry|litmus|rococo  [release_tag] will download runtime.wasm && runtime upgrade"
-  echo "         both are of Linux verion"
+  echo "Usage: $0 wasm-path"
+  echo "       wasm-path can be either local file path or https URL"
 }
 
-CHAIN_TYPE=${1:-rococo}
-RELEASE_TAG=${2}
+[ $# -ne 1 ] && (usage; exit 1)
 
 function print_divider() {
   echo "------------------------------------------------------------"
 }
 
-function download_new_wasm() {
-  echo "will download $CHAIN_TYPE runtime.wasm please wait a later ~~"
+print_divider
 
-  url="https://github.com/litentry/litentry-parachain/releases/download/$RELEASE_TAG/$CHAIN_TYPE-parachain-runtime.compact.compressed.wasm"
+# download runtime wasm
+echo "Get runtime wasm from $1"
+case "$1" in
+  https*)
+    wget -q "$1" -O "$output_wasm" ;;
+  *)
+    cp -f "$1" "$output_wasm" ;;
+esac
 
-  echo "$url"
-  cd "$(pwd)/docker"
-  wget -q "$url"
-  mv $CHAIN_TYPE-parachain-runtime.compact.compressed.wasm runtime.compact.compressed.wasm
-  echo "right download successful!"
-  cd ..
-}
+echo "Done"
 
-download_new_wasm
-
-sleep 10
-#2. upload runtime.wasm  reference ts-test  register-parachain.ts
-echo "simulation runtime upgrade now ..."
-cd "$(pwd)/ts-tests"
-echo "NODE_ENV=ci" >.env
-yarn
-yarn runtime-upgrade 2>&1 | tee "$TMPDIR/runtime-upgrade.log"
+if [ -f "$output_wasm" ]; then
+  ls -l "$output_wasm"
+else
+  echo "Cannot find $output_wasm, quit"
+  exit 1
+fi
 
 print_divider
 
-#3.succeccful
-echo "simulation runtime upgrade successful!"
+# 2. do runtime upgrade and verify
+echo "Do runtime upgrade and verify ..."
+cd "$ROOTDIR/ts-tests"
+echo "NODE_ENV=ci" > .env
+yarn && yarn test-runtime-upgrade 2>&1
+
+print_divider
+
+echo "Done"
