@@ -72,7 +72,7 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
                 handlerBalance
                     .div(BigNumber.from(1000000))
                     .add(BigNumber.from(100))
-                    .add(BigNumber.from(fee.toString())),
+                    .add(BigNumber.from(fee.toString())).toString(),
                 receipt,
                 0
             ),
@@ -107,7 +107,7 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
         const fee = await context.parachainConfig.api.query.chainBridge.bridgeFee(0);
         await signAndSend(
             context.parachainConfig.api.tx.bridgeTransfer.transferNative(
-                handlerBalance.div(BigNumber.from(1000000)).add(BigNumber.from(fee.toString())),
+                handlerBalance.div(BigNumber.from(1000000)).add(BigNumber.from(fee.toString())).toString(),
                 receipt,
                 0
             ),
