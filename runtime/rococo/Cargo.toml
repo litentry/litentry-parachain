@@ -98,11 +98,10 @@ pallet-parachain-staking = { path = "../../pallets/parachain-staking", default-f
 pallet-vc-management = { path = "../../pallets/vc-management", default-features = false }
 runtime-common = { path = '../common', default-features = false }
 
-# TEE pallets
-# TODO: change to `master`\`polkadot-v0.9.32` branch temporarily for aligning upstream codebase: tee-worker/#113
-pallet-sidechain = { git = "https://github.com/litentry/integritee-pallets.git", branch = "polkadot-v0.9.32", default-features = false }
-pallet-teeracle = { git = "https://github.com/litentry/integritee-pallets.git", branch = "polkadot-v0.9.32", default-features = false }
-pallet-teerex = { git = "https://github.com/litentry/integritee-pallets.git", branch = "polkadot-v0.9.32", default-features = false }
+# TEE
+pallet-sidechain = { git = "https://github.com/integritee-network/pallets.git", branch = "master", default-features = false }
+pallet-teeracle = { git = "https://github.com/integritee-network/pallets.git", branch = "master", default-features = false }
+pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", branch = "master", default-features = false }
 
 [dev-dependencies]
 cumulus-primitives-parachain-inherent = { git = 'https://github.com/paritytech/cumulus', branch = "polkadot-v0.9.32" }
