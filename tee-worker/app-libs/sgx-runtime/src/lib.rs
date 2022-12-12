@@ -77,6 +77,7 @@ pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
 // litentry
+use litentry_primitives::MINUTES;
 pub use pallet_imt::{self, Call as IdentityManagementCall};
 pub use pallet_vcmt::{self, Call as VCManagementCall};
 
@@ -265,7 +266,7 @@ impl pallet_imt::Config for Runtime {
 	type Event = Event;
 	type ManageOrigin = EnsureRoot<AccountId>;
 	type MaxMetadataLength = ConstU32<128>;
-	type MaxVerificationDelay = ConstU32<20>;
+	type MaxVerificationDelay = ConstU32<{ 30 * MINUTES }>;
 }
 
 impl pallet_vcmt::Config for Runtime {
