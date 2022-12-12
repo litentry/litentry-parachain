@@ -39,7 +39,7 @@ pub use mock_tee_primitives::{
 };
 pub use parity_crypto::publickey::{sign, Generator, KeyPair as EvmPair, Message, Random};
 use sp_core::sr25519::Pair as SubstratePair; // TODO: maybe use more generic struct
-use sp_core::{blake2_128, Pair, H256};
+use sp_core::{Pair, H256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
@@ -239,6 +239,10 @@ pub fn setup_create_identity(
 ) {
 	let key = setup_user_shieding_key(who);
 	let encrypted_identity = tee_encrypt(identity.encode().as_slice());
+	let code = IdentityManagementMock::get_mock_challenge_code(
+		bn,
+		IdentityManagementMock::challenge_codes(&who, &identity),
+	);
 	assert_ok!(IdentityManagementMock::create_identity(
 		Origin::signed(who),
 		H256::random(),
@@ -256,12 +260,10 @@ pub fn setup_create_identity(
 		account: aes_encrypted_account.clone(),
 	}));
 
-	// double check the challenge code
-	let code = blake2_128(bn.encode().as_slice());
 	System::assert_has_event(Event::IdentityManagementMock(
 		crate::Event::ChallengeCodeGeneratedPlain { account: who, identity, code },
 	));
-	let aes_encrypted_code = aes_encrypt_default(&key, code.encode().as_slice());
+	let aes_encrypted_code = aes_encrypt_default(&key, code.as_slice());
 	System::assert_has_event(Event::IdentityManagementMock(crate::Event::ChallengeCodeGenerated {
 		account: aes_encrypted_account,
 		identity: aes_encrypted_identity,
