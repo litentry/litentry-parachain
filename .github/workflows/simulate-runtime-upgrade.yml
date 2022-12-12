@@ -1,0 +1,40 @@
+name: Simulate runtime upgrade
+
+on:
+  release:
+    types: [released]
+
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: runtime.wasm release_tag
+        required: true
+
+env:
+  RELEASE_TAG: ${{ github.event.inputs.release_tag || github.event.release.tag_name }}
+
+jobs:
+  simulate-runtime-upgrade:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        chain:
+          # litmus is not supported, as sudo was removed
+          # TODO: add runtime upgrade via governance
+          - litentry
+          - rococo
+    steps:
+      - name: Checkout codes on ${{ github.ref }}
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Fork ${{ matrix.chain }} and launch parachain
+        timeout-minutes: 10
+        run: |
+          ./scripts/fork-parachain-and-launch.sh ${{ matrix.chain }}
+
+      - name: Test runtime upgrade
+        timeout-minutes: 10
+        run: |
+          ./scripts/runtime-upgrade.sh https://github.com/litentry/litentry-parachain/releases/download/${{ env.RELEASE_TAG }}/${{ matrix.chain }}-parachain-runtime.compact.compressed.wasm

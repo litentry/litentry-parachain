@@ -41,8 +41,8 @@ describeLitentry('Test Base Filter', ``, (context) => {
         // only work for litentry|rococo
         const parachain = (await context.api.rpc.system.chain()).toString().toLowerCase();
         if (parachain === 'litmus-dev') {
-            console.log("skip test.")
-            return
+            console.log('skip test.');
+            return;
         }
         // Get the initial balance of Alice and Bob
         const { nonce: aliceInitNonce, data: aliceInitBalance } = await context.api.query.system.account(
