@@ -34,9 +34,7 @@ use litentry_primitives::{
 	ValidationData,
 };
 use log::*;
-use parentchain_primitives::{
-	SchemaContentString, SchemaIdString, SchemaIndex, SCHEMA_CONTENT_LEN, SCHEMA_ID_LEN,
-};
+use parentchain_primitives::{SchemaContentString, SchemaIdString, SchemaIndex};
 use sp_runtime::BoundedVec;
 use std::{format, string::ToString, vec};
 
@@ -238,6 +236,33 @@ impl TrustedCallSigned {
 		);
 
 		ita_sgx_runtime::VCManagementCall::<Runtime>::add_schema { who, id, content }
+			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		Ok(())
+	}
+
+	pub fn vc_schema_disable_runtime(who: AccountId, index: SchemaIndex) -> StfResult<()> {
+		debug!("who.str = {:?}, index = {:?}", account_id_to_string(&who), index.clone(),);
+
+		ita_sgx_runtime::VCManagementCall::<Runtime>::disable_schema { who, index }
+			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		Ok(())
+	}
+
+	pub fn vc_schema_activate_runtime(who: AccountId, index: SchemaIndex) -> StfResult<()> {
+		debug!("who.str = {:?}, index = {:?}", account_id_to_string(&who), index.clone(),);
+
+		ita_sgx_runtime::VCManagementCall::<Runtime>::activate_schema { who, index }
+			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		Ok(())
+	}
+
+	pub fn vc_schema_revoke_runtime(who: AccountId, index: SchemaIndex) -> StfResult<()> {
+		debug!("who.str = {:?}, index = {:?}", account_id_to_string(&who), index.clone(),);
+
+		ita_sgx_runtime::VCManagementCall::<Runtime>::revoke_schema { who, index }
 			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
 			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 		Ok(())

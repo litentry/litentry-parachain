@@ -39,7 +39,7 @@ use litentry_primitives::{
 	ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType, ValidationData,
 };
 use log::*;
-use parentchain_primitives::{SchemaContentString, SchemaIdString};
+use parentchain_primitives::{SchemaContentString, SchemaIdString, SchemaIndex};
 use sp_io::hashing::blake2_256;
 use sp_runtime::{traits::Verify, MultiAddress};
 use std::{format, prelude::v1::*, sync::Arc};
@@ -120,6 +120,9 @@ pub enum TrustedCall {
 	), // (EnclaveSigner, Account, identity, validation, blocknumber)
 	verify_identity_runtime(AccountId, AccountId, Identity, ParentchainBlockNumber), // (EnclaveSigner, Account, identity, blocknumber)
 	vc_schema_issue_runtime(AccountId, AccountId, SchemaIdString, SchemaContentString), // (EnclaveSigner, Account, SchemaId, SchemaContent)
+	vc_schema_disable_runtime(AccountId, AccountId, SchemaIndex), // (EnclaveSigner, Account, SchemaIndex)
+	vc_schema_activate_runtime(AccountId, AccountId, SchemaIndex), // (EnclaveSigner, Account, SchemaIndex)
+	vc_schema_revoke_runtime(AccountId, AccountId, SchemaIndex), // (EnclaveSigner, Account, SchemaIndex)
 	set_challenge_code_runtime(AccountId, AccountId, Identity, ChallengeCode), // only for testing
 }
 
@@ -146,6 +149,9 @@ impl TrustedCall {
 			TrustedCall::verify_identity_preflight(account, _, _, _, _) => account,
 			TrustedCall::verify_identity_runtime(account, _, _, _) => account,
 			TrustedCall::vc_schema_issue_runtime(account, _, _, _) => account,
+			TrustedCall::vc_schema_disable_runtime(account, _, _) => account,
+			TrustedCall::vc_schema_activate_runtime(account, _, _) => account,
+			TrustedCall::vc_schema_revoke_runtime(account, _, _) => account,
 			TrustedCall::set_challenge_code_runtime(account, _, _, _) => account,
 		}
 	}
@@ -532,6 +538,54 @@ where
 				}
 				Ok(())
 			},
+			TrustedCall::vc_schema_disable_runtime(enclave_account, account, index) => {
+				ensure_enclave_signer_account(&enclave_account)?;
+				match Self::vc_schema_disable_runtime(account.clone(), index.clone()) {
+					Ok(()) => {
+						debug!("vc_schema_disable_runtime {} OK", account_id_to_string(&account));
+					},
+					Err(err) => {
+						debug!(
+							"vc_schema_disable_runtime {} error: {}",
+							account_id_to_string(&account),
+							err
+						);
+					},
+				}
+				Ok(())
+			},
+			TrustedCall::vc_schema_activate_runtime(enclave_account, account, index) => {
+				ensure_enclave_signer_account(&enclave_account)?;
+				match Self::vc_schema_activate_runtime(account.clone(), index.clone()) {
+					Ok(()) => {
+						debug!("vc_schema_activate_runtime {} OK", account_id_to_string(&account));
+					},
+					Err(err) => {
+						debug!(
+							"vc_schema_activate_runtime {} error: {}",
+							account_id_to_string(&account),
+							err
+						);
+					},
+				}
+				Ok(())
+			},
+			TrustedCall::vc_schema_revoke_runtime(enclave_account, account, index) => {
+				ensure_enclave_signer_account(&enclave_account)?;
+				match Self::vc_schema_revoke_runtime(account.clone(), index.clone()) {
+					Ok(()) => {
+						debug!("vc_schema_revoke_runtime {} OK", account_id_to_string(&account));
+					},
+					Err(err) => {
+						debug!(
+							"vc_schema_revoke_runtime {} error: {}",
+							account_id_to_string(&account),
+							err
+						);
+					},
+				}
+				Ok(())
+			},
 			TrustedCall::verify_identity_runtime(enclave_account, who, identity, bn) => {
 				ensure_enclave_signer_account(&enclave_account)?;
 				debug!(
@@ -607,6 +661,9 @@ where
 			TrustedCall::verify_identity_preflight(..) => debug!("No storage updates needed..."),
 			TrustedCall::verify_identity_runtime(..) => debug!("No storage updates needed..."),
 			TrustedCall::vc_schema_issue_runtime(..) => debug!("No storage updates needed..."),
+			TrustedCall::vc_schema_disable_runtime(..) => debug!("No storage updates needed..."),
+			TrustedCall::vc_schema_activate_runtime(..) => debug!("No storage updates needed..."),
+			TrustedCall::vc_schema_revoke_runtime(..) => debug!("No storage updates needed..."),
 			TrustedCall::set_challenge_code_runtime(..) => debug!("No storage updates needed..."),
 			#[cfg(feature = "evm")]
 			_ => debug!("No storage updates needed..."),

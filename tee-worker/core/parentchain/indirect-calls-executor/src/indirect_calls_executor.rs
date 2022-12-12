@@ -41,9 +41,7 @@ use litentry_primitives::{Identity, UserShieldingKeyType, ValidationData};
 use log::*;
 use pallet_imp::{CreateIdentityFn, RemoveIdentityFn, SetUserShieldingKeyFn, VerifyIdentityFn};
 use pallet_vcm::{VCSchemaActivatedFn, VCSchemaDisabledFn, VCSchemaIssuedFn, VCSchemaRevokedFn};
-use parentchain_primitives::{
-	SchemaContentString, SchemaIdString, SCHEMA_CONTENT_LEN, SCHEMA_ID_LEN,
-};
+use parentchain_primitives::{SchemaContentString, SchemaIdString};
 use sp_core::blake2_256;
 use sp_runtime::traits::{AccountIdLookup, Block as ParentchainBlockTrait, Header, StaticLookup};
 use std::{sync::Arc, vec::Vec};
@@ -185,6 +183,9 @@ where
 	is_parentchain_function!(is_remove_identity_funciton, remove_identity_call_indexes);
 	is_parentchain_function!(is_verify_identity_funciton, verify_identity_call_indexes);
 	is_parentchain_function!(is_vc_schema_issued_function, vc_schema_issued_call_indexes);
+	is_parentchain_function!(is_vc_schema_disabled_function, vc_schema_disabled_call_indexes);
+	is_parentchain_function!(is_vc_schema_activated_function, vc_schema_activate_call_indexes);
+	is_parentchain_function!(is_vc_schema_revoked_function, vc_schema_revoke_call_indexes);
 }
 
 impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
@@ -409,7 +410,7 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 						let enclave_account_id = self.stf_enclave_signer.get_enclave_account()?;
 
 						debug!(
-							"start decode, id len {}, content len {}",
+							"issue schema, id len {}, content len {}",
 							schema_id.len(),
 							schema_content.len()
 						);
@@ -422,6 +423,99 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 							account,
 							id,
 							content,
+						);
+						let signed_trusted_call =
+							self.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
+						let trusted_operation =
+							TrustedOperation::indirect_call(signed_trusted_call);
+						let encrypted_trusted_call =
+							shielding_key.encrypt(&trusted_operation.encode())?;
+
+						self.submit_trusted_call(shard, encrypted_trusted_call);
+					}
+				}
+			}
+
+			//Found VC VCSchemaDisabledFn extrinsic
+			if let Ok(xt) = ParentchainUncheckedExtrinsic::<VCSchemaDisabledFn>::decode(
+				&mut encoded_xt_opaque.as_slice(),
+			) {
+				if self.is_vc_schema_disabled_function(&xt.function.0) {
+					let (_, shard, index) = xt.function;
+					let shielding_key = self.shielding_key_repo.retrieve_key()?;
+
+					if let Some((multiaddress_account, _, _)) = xt.signature {
+						let account = AccountIdLookup::lookup(multiaddress_account)?;
+						let enclave_account_id = self.stf_enclave_signer.get_enclave_account()?;
+
+						debug!("disable schema index {:?}", index);
+
+						let trusted_call = TrustedCall::vc_schema_disable_runtime(
+							enclave_account_id,
+							account,
+							index,
+						);
+						let signed_trusted_call =
+							self.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
+						let trusted_operation =
+							TrustedOperation::indirect_call(signed_trusted_call);
+						let encrypted_trusted_call =
+							shielding_key.encrypt(&trusted_operation.encode())?;
+
+						self.submit_trusted_call(shard, encrypted_trusted_call);
+					}
+				}
+			}
+
+			//Found VC VCSchemaActivatedFn extrinsic
+			if let Ok(xt) = ParentchainUncheckedExtrinsic::<VCSchemaActivatedFn>::decode(
+				&mut encoded_xt_opaque.as_slice(),
+			) {
+				if self.is_vc_schema_activated_function(&xt.function.0) {
+					let (_, shard, index) = xt.function;
+					let shielding_key = self.shielding_key_repo.retrieve_key()?;
+
+					if let Some((multiaddress_account, _, _)) = xt.signature {
+						let account = AccountIdLookup::lookup(multiaddress_account)?;
+						let enclave_account_id = self.stf_enclave_signer.get_enclave_account()?;
+
+						debug!("activate schema index {:?}", index);
+
+						let trusted_call = TrustedCall::vc_schema_activate_runtime(
+							enclave_account_id,
+							account,
+							index,
+						);
+						let signed_trusted_call =
+							self.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
+						let trusted_operation =
+							TrustedOperation::indirect_call(signed_trusted_call);
+						let encrypted_trusted_call =
+							shielding_key.encrypt(&trusted_operation.encode())?;
+
+						self.submit_trusted_call(shard, encrypted_trusted_call);
+					}
+				}
+			}
+
+			//Found VC VCSchemaRevokedFn extrinsic
+			if let Ok(xt) = ParentchainUncheckedExtrinsic::<VCSchemaRevokedFn>::decode(
+				&mut encoded_xt_opaque.as_slice(),
+			) {
+				if self.is_vc_schema_revoked_function(&xt.function.0) {
+					let (_, shard, index) = xt.function;
+					let shielding_key = self.shielding_key_repo.retrieve_key()?;
+
+					if let Some((multiaddress_account, _, _)) = xt.signature {
+						let account = AccountIdLookup::lookup(multiaddress_account)?;
+						let enclave_account_id = self.stf_enclave_signer.get_enclave_account()?;
+
+						debug!("revoke schema index {:?}", index);
+
+						let trusted_call = TrustedCall::vc_schema_revoke_runtime(
+							enclave_account_id,
+							account,
+							index,
 						);
 						let signed_trusted_call =
 							self.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;

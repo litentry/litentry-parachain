@@ -22,9 +22,6 @@ extern crate std;
 
 use sp_runtime::{traits::ConstU32, BoundedVec};
 
-#[cfg(not(feature = "std"))]
-use sp_std::prelude::*;
-
 // vc schema
 pub const SCHEMA_ID_LEN: u32 = 512;
 pub const SCHEMA_CONTENT_LEN: u32 = 2048;

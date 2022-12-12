@@ -60,6 +60,9 @@ pub struct NodeMetadataMock {
 	// VCM
 	vcm_module: u8,
 	vcm_schema_issued: u8,
+	vcm_schema_disabled: u8,
+	vcm_schema_activated: u8,
+	vcm_schema_revoked: u8,
 
 	imported_sidechain_block: u8,
 	runtime_spec_version: u32,
@@ -104,6 +107,9 @@ impl NodeMetadataMock {
 
 			vcm_module: 60u8,
 			vcm_schema_issued: 6u8,
+			vcm_schema_disabled: 7u8,
+			vcm_schema_activated: 8u8,
+			vcm_schema_revoked: 9u8,
 
 			imported_sidechain_block: 0u8,
 			runtime_spec_version: 25,
@@ -231,5 +237,17 @@ impl IMPMockCallIndexes for NodeMetadataMock {
 impl VCMCallIndexes for NodeMetadataMock {
 	fn vc_schema_issued_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.vcm_module, self.vcm_schema_issued])
+	}
+
+	fn vc_schema_disabled_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.vcm_module, self.vcm_schema_disabled])
+	}
+
+	fn vc_schema_activate_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.vcm_module, self.vcm_schema_activated])
+	}
+
+	fn vc_schema_revoke_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.vcm_module, self.vcm_schema_revoked])
 	}
 }

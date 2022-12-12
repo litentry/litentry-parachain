@@ -21,10 +21,25 @@ const VCM: &str = "VCManagement";
 
 pub trait VCMCallIndexes {
 	fn vc_schema_issued_call_indexes(&self) -> Result<[u8; 2]>;
+	fn vc_schema_disabled_call_indexes(&self) -> Result<[u8; 2]>;
+	fn vc_schema_activate_call_indexes(&self) -> Result<[u8; 2]>;
+	fn vc_schema_revoke_call_indexes(&self) -> Result<[u8; 2]>;
 }
 
 impl VCMCallIndexes for NodeMetadata {
 	fn vc_schema_issued_call_indexes(&self) -> Result<[u8; 2]> {
 		self.call_indexes(VCM, "add_schema")
+	}
+
+	fn vc_schema_disabled_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(VCM, "disable_schema")
+	}
+
+	fn vc_schema_activate_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(VCM, "activate_schema")
+	}
+
+	fn vc_schema_revoke_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(VCM, "revoke_schema")
 	}
 }
