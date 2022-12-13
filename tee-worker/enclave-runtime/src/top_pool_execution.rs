@@ -114,6 +114,7 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 		sidechain_block_import_queue_worker.process_queue(&current_parentchain_header)?;
 
 	info!(
+		target: "consensus::elapsed_time",
 		"Elapsed time to process sidechain block import queue: {} ms",
 		start_time.elapsed().as_millis()
 	);

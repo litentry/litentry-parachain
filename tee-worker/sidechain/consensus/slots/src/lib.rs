@@ -193,6 +193,8 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 
 		let remaining_duration = self.proposing_remaining_duration(&slot_info);
 
+		warn!("remaining_duration:{:?}", remaining_duration);
+
 		if remaining_duration == Duration::default() {
 			debug!(
 				target: logging_target,
@@ -202,6 +204,7 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 			return None
 		}
 
+		let start_time = std::time::Instant::now();
 		let latest_parentchain_header = match self.peek_latest_parentchain_header() {
 			Ok(Some(peeked_header)) => peeked_header,
 			Ok(None) => slot_info.last_imported_parentchain_head.clone(),
@@ -213,7 +216,12 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 				return None
 			},
 		};
+		info!(
+			target: "consensus::elapsed_time",
+			"Elapsed time to peek_latest_parentchain_header: {} ms", start_time.elapsed().as_millis()
+		);
 
+		let start_time = std::time::Instant::now();
 		let epoch_data = match self.epoch_data(&latest_parentchain_header, slot) {
 			Ok(epoch_data) => epoch_data,
 			Err(e) => {
@@ -227,6 +235,10 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 				return None
 			},
 		};
+		info!(
+			target: "consensus::elapsed_time",
+			"Elapsed time to epoch_data: {} ms", start_time.elapsed().as_millis()
+		);
 
 		let authorities_len = self.authorities_len(&epoch_data);
 
@@ -239,6 +251,7 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 
 		let _claim = self.claim_slot(&latest_parentchain_header, slot, &epoch_data)?;
 
+		let start_time = std::time::Instant::now();
 		// Import the peeked parentchain header(s).
 		let last_imported_header =
 			match self.import_parentchain_blocks_until(&latest_parentchain_header.hash()) {
@@ -251,6 +264,12 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 					return None
 				},
 			};
+
+		info!(
+			target: "consensus::elapsed_time",
+			"Elapsed time to import_parentchain_blocks_until: {} ms",
+			start_time.elapsed().as_millis()
+		);
 
 		let proposer = match self.proposer(latest_parentchain_header.clone(), shard) {
 			Ok(p) => p,
@@ -271,7 +290,7 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 		if !timestamp_within_slot(&slot_info, &proposing.block) {
 			warn!(
 				target: logging_target,
-				"⌛️ Discarding proposal for slot {}, block number {}; block production took too long", 
+				"⌛️ Discarding proposal for slot {}, block number {}; block production took too long",
 				*slot, proposing.block.block().header().block_number(),
 			);
 

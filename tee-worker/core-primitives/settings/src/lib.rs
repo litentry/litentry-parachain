@@ -95,7 +95,7 @@ pub mod worker {
 pub mod sidechain {
 	use core::time::Duration;
 
-	pub static SLOT_DURATION: Duration = Duration::from_millis(6000);
+	pub static SLOT_DURATION: Duration = Duration::from_millis(2000);
 }
 
 /// Settings concerning the enclave
