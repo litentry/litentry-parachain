@@ -24,8 +24,7 @@ function help {
     echo "  ${0}                       " "list all benchmarks and provide a selection to choose from"
     echo "  ${0} --check               " "list all benchmarks and provide a selection to choose from, runs in 'check' mode (reduced steps and repetitions)"
     echo "  ${0} foo bar               " "run a benchmark for pallet 'foo' and benchmark 'bar'"
-    echo "  ${0} foo bar --all         " "run a benchmark for all pallets"
-    echo "  ${0} foo bar --all --check " "run a benchmark for all pallets in 'check' mode (reduced steps and repetitions)"
+    echo "  ${0} foo bar all           " "run the pallet all benchmark method"
 }
 
 WEIGHTS_PATH="$(pwd)/weights"
@@ -36,7 +35,14 @@ fi
 
 CHAIN_TYPE="--chain=${1}-dev"
 PALLET=${2//-/_}
-EXTRINSIC=${3//-/_}
+
+EXTRINSIC=
+
+if [[ ${3} == 'all' ]];then
+ EXTRINSIC=*
+else
+  EXTRINSIC=${3//-/_}
+fi
 
 function choose_and_bench {
     readarray -t options < <(${BINARY} benchmark pallet --list $CHAIN_TYPE | sed 1d)
