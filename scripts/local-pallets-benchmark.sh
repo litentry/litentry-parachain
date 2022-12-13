@@ -12,7 +12,7 @@ BINARY="./target/release/litentry-collator"
 
 if [[ ! -f "${BINARY}" ]]; then
     echo "binary '${BINARY}' does not exist."
-    echo "ensure that the litentry binary is compiled with 'make build-node-benchmarks ' nd in release mode."
+    echo "ensure that the litentry binary is compiled with 'make build-node-benchmarks' and in release mode."
     exit 1
 fi
 
@@ -36,6 +36,7 @@ fi
 
 CHAIN_TYPE="--chain=${1}-dev"
 PALLET=${2//-/_}
+EXTRINSIC=${3//-/_}
 
 function choose_and_bench {
     readarray -t options < <(${BINARY} benchmark pallet --list $CHAIN_TYPE | sed 1d)
@@ -72,7 +73,7 @@ function bench {
               --db-cache=20 \
               --wasm-execution=compiled \
               --pallet="$PALLET" \
-              --extrinsic="${3}" \
+              --extrinsic="$EXTRINSIC" \
               --heap-pages=4096 \
               --steps="$STEPS" \
               --repeat="$REPEAT" \
