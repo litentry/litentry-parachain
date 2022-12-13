@@ -228,8 +228,8 @@ impl TrustedCallSigned {
 		debug!(
 			"vc_schema_issue_runtime, who.str = {:?}, id = {:?}, content = {:?}",
 			account_id_to_string(&who),
-			id.clone(),
-			content.clone(),
+			id,
+			content,
 		);
 
 		ita_sgx_runtime::VCManagementCall::<Runtime>::add_schema { who, id, content }

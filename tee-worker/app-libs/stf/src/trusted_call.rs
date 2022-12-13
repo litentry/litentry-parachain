@@ -530,7 +530,7 @@ where
 			},
 			TrustedCall::vc_schema_issue_runtime(enclave_account, account, id, content) => {
 				ensure_enclave_signer_account(&enclave_account)?;
-				match Self::vc_schema_issue_runtime(account.clone(), id.clone(), content.clone()) {
+				match Self::vc_schema_issue_runtime(account.clone(), id, content) {
 					Ok(()) => {
 						debug!("vc_schema_issue_runtime {} OK", account_id_to_string(&account));
 					},
@@ -546,7 +546,7 @@ where
 			},
 			TrustedCall::vc_schema_disable_runtime(enclave_account, account, index) => {
 				ensure_enclave_signer_account(&enclave_account)?;
-				match Self::vc_schema_disable_runtime(account.clone(), index.clone()) {
+				match Self::vc_schema_disable_runtime(account.clone(), index) {
 					Ok(()) => {
 						debug!("vc_schema_disable_runtime {} OK", account_id_to_string(&account));
 					},
@@ -562,7 +562,7 @@ where
 			},
 			TrustedCall::vc_schema_activate_runtime(enclave_account, account, index) => {
 				ensure_enclave_signer_account(&enclave_account)?;
-				match Self::vc_schema_activate_runtime(account.clone(), index.clone()) {
+				match Self::vc_schema_activate_runtime(account.clone(), index) {
 					Ok(()) => {
 						debug!("vc_schema_activate_runtime {} OK", account_id_to_string(&account));
 					},
@@ -578,7 +578,7 @@ where
 			},
 			TrustedCall::vc_schema_revoke_runtime(enclave_account, account, index) => {
 				ensure_enclave_signer_account(&enclave_account)?;
-				match Self::vc_schema_revoke_runtime(account.clone(), index.clone()) {
+				match Self::vc_schema_revoke_runtime(account.clone(), index) {
 					Ok(()) => {
 						debug!("vc_schema_revoke_runtime {} OK", account_id_to_string(&account));
 					},
