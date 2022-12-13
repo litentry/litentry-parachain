@@ -14,25 +14,88 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{
-	identity_context::IdentityContext, mock::*, Error, MetadataOf, ParentchainBlockNumber,
-	UserShieldingKeyType,
-};
+use crate::{mock::*, Error};
 use frame_support::{assert_noop, assert_ok};
-use litentry_primitives::{
-	Identity, IdentityHandle, IdentityString, IdentityWebType, Web2Network, USER_SHIELDING_KEY_LEN,
-};
+use litentry_primitives::Status;
+use parentchain_primitives::{SchemaContentString, SchemaIdString};
 
 #[test]
 fn add_vc_schema_works() {
 	new_test_ext().execute_with(|| {
-		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
-		assert_eq!(IMT::user_shielding_keys(2), None);
-		assert_ok!(IMT::set_user_shielding_key(Origin::signed(1), 2, shielding_key.clone()));
-		assert_eq!(IMT::user_shielding_keys(2), Some(shielding_key.clone()));
-		System::assert_last_event(Event::IMT(crate::Event::UserShieldingKeySet {
-			who: 2,
-			key: shielding_key,
-		}));
+		assert_eq!(VCMT::schema_index(), 0);
+		let id: SchemaIdString = vec![1, 2, 3, 4].try_into().unwrap();
+		let content: SchemaContentString = vec![5, 6, 7, 8].try_into().unwrap();
+		assert_ok!(VCMT::add_schema(Origin::signed(1), 2, id, content));
+		System::assert_last_event(Event::VCMT(crate::Event::SchemaAdd { who: 2, index: 0 }));
+		assert_eq!(VCMT::schema_index(), 1);
+		assert!(VCMT::schema_registry(0).is_some());
+		let schema = VCMT::schema_registry(0).unwrap();
+		assert_eq!(schema.status, Status::Active);
+	});
+}
+
+#[test]
+fn add_two_schema_works() {
+	new_test_ext().execute_with(|| {
+		assert_eq!(VCMT::schema_index(), 0);
+		let id: SchemaIdString = vec![1, 2, 3, 4].try_into().unwrap();
+		let content: SchemaContentString = vec![5, 6, 7, 8].try_into().unwrap();
+		assert_ok!(VCMT::add_schema(Origin::signed(1), 2, id.clone(), content.clone()));
+		assert_ok!(VCMT::add_schema(Origin::signed(1), 2, id, content));
+		System::assert_last_event(Event::VCMT(crate::Event::SchemaAdd { who: 2, index: 1 }));
+		assert_eq!(VCMT::schema_index(), 2);
+	});
+}
+
+#[test]
+fn disable_schema_works() {
+	new_test_ext().execute_with(|| {
+		let id: SchemaIdString = vec![1, 2, 3, 4].try_into().unwrap();
+		let content: SchemaContentString = vec![5, 6, 7, 8].try_into().unwrap();
+		assert_ok!(VCMT::add_schema(Origin::signed(1), 2, id, content));
+		System::assert_last_event(Event::VCMT(crate::Event::SchemaAdd { who: 2, index: 0 }));
+		assert_ok!(VCMT::disable_schema(Origin::signed(1), 2, 0));
+		assert_eq!(VCMT::schema_index(), 1);
+		assert!(VCMT::schema_registry(0).is_some());
+		let schema = VCMT::schema_registry(0).unwrap();
+		assert_eq!(schema.status, Status::Disabled);
+	});
+}
+
+#[test]
+fn disable_schema_with_non_existent_fails() {
+	new_test_ext().execute_with(|| {
+		assert_noop!(VCMT::disable_schema(Origin::signed(1), 2, 1), Error::<Test>::SchemaNotExist);
+	});
+}
+
+#[test]
+fn activate_schema_works() {
+	new_test_ext().execute_with(|| {
+		let id: SchemaIdString = vec![1, 2, 3, 4].try_into().unwrap();
+		let content: SchemaContentString = vec![5, 6, 7, 8].try_into().unwrap();
+		assert_ok!(VCMT::add_schema(Origin::signed(1), 2, id, content));
+		System::assert_last_event(Event::VCMT(crate::Event::SchemaAdd { who: 2, index: 0 }));
+		assert_ok!(VCMT::disable_schema(Origin::signed(1), 2, 0));
+		assert!(VCMT::schema_registry(0).is_some());
+		// schema is activated
+		assert_ok!(VCMT::activate_schema(Origin::signed(1), 2, 0));
+		System::assert_last_event(Event::VCMT(crate::Event::SchemaActivated { who: 2, index: 0 }));
+		assert_eq!(VCMT::schema_registry(0).unwrap().status, Status::Active);
+	});
+}
+
+#[test]
+fn revoke_schema_works() {
+	new_test_ext().execute_with(|| {
+		let id: SchemaIdString = vec![1, 2, 3, 4].try_into().unwrap();
+		let content: SchemaContentString = vec![5, 6, 7, 8].try_into().unwrap();
+		assert_ok!(VCMT::add_schema(Origin::signed(1), 2, id, content));
+		System::assert_last_event(Event::VCMT(crate::Event::SchemaAdd { who: 2, index: 0 }));
+		assert!(VCMT::schema_registry(0).is_some());
+		assert_ok!(VCMT::revoke_schema(Origin::signed(1), 2, 0));
+		System::assert_last_event(Event::VCMT(crate::Event::SchemaRevoked { who: 2, index: 0 }));
+		// schema is deleted
+		assert!(VCMT::schema_registry(0).is_none());
 	});
 }

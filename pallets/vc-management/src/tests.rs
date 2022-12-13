@@ -191,7 +191,7 @@ fn set_schema_admin_fails_with_unprivileged_origin() {
 #[test]
 fn add_schema_works() {
 	new_test_ext().execute_with(|| {
-		assert_eq!(VCManagement::schema_count(), 0);
+		assert_eq!(VCManagement::schema_index(), 0);
 		let id: Vec<u8> = vec![1, 2, 3, 4].try_into().unwrap();
 		let content: Vec<u8> = vec![5, 6, 7, 8].try_into().unwrap();
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
@@ -201,7 +201,7 @@ fn add_schema_works() {
 			shard,
 			index: 0,
 		}));
-		assert_eq!(VCManagement::schema_count(), 1);
+		assert_eq!(VCManagement::schema_index(), 1);
 	});
 }
 
@@ -221,7 +221,7 @@ fn add_schema_with_unpriviledged_origin_fails() {
 #[test]
 fn add_two_schemas_works() {
 	new_test_ext().execute_with(|| {
-		assert_eq!(VCManagement::schema_count(), 0);
+		assert_eq!(VCManagement::schema_index(), 0);
 		let id: Vec<u8> = vec![1, 2, 3, 4].try_into().unwrap();
 		let content: Vec<u8> = vec![5, 6, 7, 8].try_into().unwrap();
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
@@ -232,7 +232,7 @@ fn add_two_schemas_works() {
 			shard,
 			index: 1,
 		}));
-		assert_eq!(VCManagement::schema_count(), 2);
+		assert_eq!(VCManagement::schema_index(), 2);
 	});
 }
 

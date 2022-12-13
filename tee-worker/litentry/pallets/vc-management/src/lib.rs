@@ -87,8 +87,8 @@ pub mod pallet {
 
 	/// Number of schemas
 	#[pallet::storage]
-	#[pallet::getter(fn schema_count)]
-	pub type SchemaCount<T: Config> = StorageValue<_, SchemaIndex, ValueQuery>;
+	#[pallet::getter(fn schema_index)]
+	pub type SchemaRegistryIndex<T: Config> = StorageValue<_, SchemaIndex, ValueQuery>;
 
 	/// schema: key is SchemaIndex, vaule is VCSchema
 	#[pallet::storage]
@@ -106,10 +106,10 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 
-			let index = Self::schema_count();
+			let index = Self::schema_index();
 			let new_index = index.checked_add(1u64).ok_or(Error::<T>::SchemaIndexOverFlow);
 			if new_index.is_ok() {
-				<SchemaCount<T>>::put(new_index.as_ref().unwrap());
+				<SchemaRegistryIndex<T>>::put(new_index.as_ref().unwrap());
 			}
 
 			SchemaRegistry::<T>::insert(index, VCSchema::new(id.clone(), content.clone()));

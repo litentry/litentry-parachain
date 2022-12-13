@@ -85,10 +85,9 @@ pub mod pallet {
 	#[pallet::getter(fn schema_admin)]
 	pub type SchemaAdmin<T: Config> = StorageValue<_, T::AccountId, OptionQuery>;
 
-	/// Number of schemas
 	#[pallet::storage]
-	#[pallet::getter(fn schema_count)]
-	pub type SchemaCount<T: Config> = StorageValue<_, SchemaIndex, ValueQuery>;
+	#[pallet::getter(fn schema_index)]
+	pub type SchemaRegistryIndex<T: Config> = StorageValue<_, SchemaIndex, ValueQuery>;
 
 	// the VC Schema storage
 	#[pallet::storage]
@@ -277,10 +276,10 @@ pub mod pallet {
 			ensure!((id.len() as u32) <= SCHEMA_ID_LEN, Error::<T>::LengthMismatch);
 			ensure!((content.len() as u32) <= SCHEMA_CONTENT_LEN, Error::<T>::LengthMismatch);
 
-			let index = Self::schema_count();
+			let index = Self::schema_index();
 			let new_index = index.checked_add(1u64).ok_or(Error::<T>::SchemaIndexOverFlow);
 			if new_index.is_ok() {
-				<SchemaCount<T>>::put(new_index.as_ref().unwrap());
+				<SchemaRegistryIndex<T>>::put(new_index.as_ref().unwrap());
 			}
 			SchemaRegistry::<T>::insert(
 				index,
