@@ -62,8 +62,8 @@ function bench {
         REPEAT=20
     else
         echo "will run other pallet (${1}) benchmark code"
-        STEPS=2
-        REPEAT=5
+        STEPS=20
+        REPEAT=50
     fi
 
     WASMTIME_BACKTRACE_DETAILS=1 ${BINARY} benchmark pallet \
