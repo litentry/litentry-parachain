@@ -38,7 +38,7 @@ use crate::Result as EnclaveResult;
 use std::sync::{Arc, SgxRwLock as RwLock};
 
 #[cfg(feature = "std")]
-use std::sync::{Arc, RwLock, RwLockWriteGuard};
+use std::sync::{Arc, RwLock};
 
 #[derive(Default, Clone)]
 pub struct ReportInputs {
