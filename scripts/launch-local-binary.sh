@@ -52,8 +52,8 @@ fi
 
 if [ -z "$PARACHAIN_BIN" ]; then
   echo "no litentry-collator binary provided, build it now ..."
-  # make build-node
-  PARACHAIN_BIN="$ROOTDIR/target/debug/litentry-collator"
+  make build-node
+  PARACHAIN_BIN="$ROOTDIR/target/release/litentry-collator"
   chmod a+x "$PARACHAIN_BIN"
 fi
 

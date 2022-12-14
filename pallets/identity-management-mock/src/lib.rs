@@ -79,19 +79,25 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		/// Event
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		/// origin to manage caller whitelist
-		type ManageWhitelistOrigin: EnsureOrigin<Self::Origin>;
 		// maximum delay in block numbers between creating an identity and verifying an identity
 		#[pallet::constant]
 		type MaxVerificationDelay: Get<BlockNumberOf<Self>>;
 		// some extrinsics should only be called by origins from TEE
 		type TEECallOrigin: EnsureOrigin<Self::Origin>;
+		/// origin to manage authorised delegatee list
+		type DelegateeAdminOrigin: EnsureOrigin<Self::Origin>;
 	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		// Events from this pallet
+		DelegateeAdded {
+			account: T::AccountId,
+		},
+		DelegateeRemoved {
+			account: T::AccountId,
+		},
 		CreateIdentityRequested {
 			shard: ShardIdentifier,
 		},
@@ -171,8 +177,10 @@ pub mod pallet {
 	/// These are the errors that are immediately emitted from this mock pallet
 	#[pallet::error]
 	pub enum Error<T> {
-		/// caller is not in whitelist (therefore disallowed to call some extrinsics)
-		CallerNotWhitelisted,
+		/// a delegatee doesn't exist
+		DelegateeNotExist,
+		/// a `create_identity` request from unauthorised user
+		UnauthorisedUser,
 		/// Error when decrypting using TEE'shielding key
 		ShieldingKeyDecryptionFailed,
 		/// unexpected decoded type
@@ -209,10 +217,11 @@ pub mod pallet {
 		UnexpectedMessage,
 	}
 
+	/// delegatees who are authorised to send extrinsics(currently only `create_identity`)
+	/// on behalf of the users
 	#[pallet::storage]
-	#[pallet::getter(fn whitelisted_callers)]
-	pub type WhitelistedCallers<T: Config> =
-		StorageMap<_, Twox64Concat, T::AccountId, (), OptionQuery>;
+	#[pallet::getter(fn delegatee)]
+	pub type Delegatee<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, (), OptionQuery>;
 
 	/// user shielding key is per Litentry account
 	#[pallet::storage]
@@ -248,22 +257,23 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// add an account to the whitelist
+		/// add an account to the delegatees
 		#[pallet::weight(195_000_000)]
-		pub fn add_to_whitelist(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
-			let _ = T::ManageWhitelistOrigin::ensure_origin(origin)?;
-			WhitelistedCallers::<T>::insert(account, ());
+		pub fn add_delegatee(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
+			let _ = T::DelegateeAdminOrigin::ensure_origin(origin)?;
+			// we don't care if `account` already exists
+			Delegatee::<T>::insert(account.clone(), ());
+			Self::deposit_event(Event::DelegateeAdded { account });
 			Ok(())
 		}
 
-		/// remove an account from the whitelist
+		/// remove an account from the delegatees
 		#[pallet::weight(195_000_000)]
-		pub fn remove_from_whitelist(
-			origin: OriginFor<T>,
-			account: T::AccountId,
-		) -> DispatchResult {
-			let _ = T::ManageWhitelistOrigin::ensure_origin(origin)?;
-			WhitelistedCallers::<T>::remove(account);
+		pub fn remove_delegatee(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
+			let _ = T::DelegateeAdminOrigin::ensure_origin(origin)?;
+			ensure!(Delegatee::<T>::contains_key(&account), Error::<T>::DelegateeNotExist);
+			Delegatee::<T>::remove(account.clone());
+			Self::deposit_event(Event::DelegateeRemoved { account });
 			Ok(())
 		}
 
@@ -275,7 +285,6 @@ pub mod pallet {
 			encrypted_key: Vec<u8>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			ensure!(WhitelistedCallers::<T>::contains_key(&who), Error::<T>::CallerNotWhitelisted);
 			Self::deposit_event(Event::SetUserShieldingKeyRequested { shard });
 
 			let decrypted_key = Self::decrypt_with_tee_shielding_key(&encrypted_key)?;
@@ -294,11 +303,15 @@ pub mod pallet {
 		pub fn create_identity(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
+			user: T::AccountId,
 			encrypted_identity: Vec<u8>,
 			encrypted_metadata: Option<Vec<u8>>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			ensure!(WhitelistedCallers::<T>::contains_key(&who), Error::<T>::CallerNotWhitelisted);
+			ensure!(
+				who == user || Delegatee::<T>::contains_key(&who),
+				Error::<T>::UnauthorisedUser
+			);
 			Self::deposit_event(Event::CreateIdentityRequested { shard });
 
 			let decrypted_identitty = Self::decrypt_with_tee_shielding_key(&encrypted_identity)?;
@@ -368,7 +381,6 @@ pub mod pallet {
 			encrypted_identity: Vec<u8>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			ensure!(WhitelistedCallers::<T>::contains_key(&who), Error::<T>::CallerNotWhitelisted);
 			Self::deposit_event(Event::RemoveIdentityRequested { shard });
 
 			let decrypted_identitty = Self::decrypt_with_tee_shielding_key(&encrypted_identity)?;
@@ -403,7 +415,6 @@ pub mod pallet {
 			encrypted_validation_data: Vec<u8>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			ensure!(WhitelistedCallers::<T>::contains_key(&who), Error::<T>::CallerNotWhitelisted);
 			Self::deposit_event(Event::VerifyIdentityRequested { shard });
 
 			let now = <frame_system::Pallet<T>>::block_number();

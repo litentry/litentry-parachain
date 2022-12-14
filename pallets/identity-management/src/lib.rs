@@ -69,11 +69,15 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 		// some extrinsics should only be called by origins from TEE
 		type TEECallOrigin: EnsureOrigin<Self::Origin>;
+		/// origin to manage authorised delegatee list
+		type DelegateeAdminOrigin: EnsureOrigin<Self::Origin>;
 	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
+		DelegateeAdded { account: T::AccountId },
+		DelegateeRemoved { account: T::AccountId },
 		// TODO: do we need account as event parameter? This needs to be decided by F/E
 		CreateIdentityRequested { shard: ShardIdentifier },
 		RemoveIdentityRequested { shard: ShardIdentifier },
@@ -92,13 +96,42 @@ pub mod pallet {
 		SomeError { func: Vec<u8>, error: Vec<u8> },
 	}
 
+	/// delegatees who are authorised to send extrinsics(currently only `create_identity`)
+	/// on behalf of the users
+	#[pallet::storage]
+	#[pallet::getter(fn delegatee)]
+	pub type Delegatee<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, (), OptionQuery>;
+
 	#[pallet::error]
 	pub enum Error<T> {
-		SomeTmpError,
+		/// a delegatee doesn't exist
+		DelegateeNotExist,
+		/// a `create_identity` request from unauthorised user
+		UnauthorisedUser,
 	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// add an account to the delegatees
+		#[pallet::weight(195_000_000)]
+		pub fn add_delegatee(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
+			let _ = T::DelegateeAdminOrigin::ensure_origin(origin)?;
+			// we don't care if `account` already exists
+			Delegatee::<T>::insert(account.clone(), ());
+			Self::deposit_event(Event::DelegateeAdded { account });
+			Ok(())
+		}
+
+		/// remove an account from the delegatees
+		#[pallet::weight(195_000_000)]
+		pub fn remove_delegatee(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
+			let _ = T::DelegateeAdminOrigin::ensure_origin(origin)?;
+			ensure!(Delegatee::<T>::contains_key(&account), Error::<T>::DelegateeNotExist);
+			Delegatee::<T>::remove(account.clone());
+			Self::deposit_event(Event::DelegateeRemoved { account });
+			Ok(())
+		}
+
 		/// Set or update user's shielding key
 		#[pallet::weight(<T as Config>::WeightInfo::set_user_shielding_key())]
 		pub fn set_user_shielding_key(
@@ -112,17 +145,24 @@ pub mod pallet {
 		}
 
 		/// Create an identity
+		/// We do the origin check for this extrinsic, it has to be
+		/// - either the caller him/herself, i.e. ensure_signed(origin)? == who
+		/// - or from a delegatee in the list
 		#[pallet::weight(<T as Config>::WeightInfo::create_identity())]
 		pub fn create_identity(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
+			user: T::AccountId,
 			encrypted_identity: Vec<u8>,
 			encrypted_metadata: Option<Vec<u8>>,
 		) -> DispatchResultWithPostInfo {
-			let _ = ensure_signed(origin)?;
-			return Err(Error::<T>::SomeTmpError.into())
-			// Self::deposit_event(Event::CreateIdentityRequested { shard });
-			// Ok(().into())
+			let who = ensure_signed(origin)?;
+			ensure!(
+				who == user || Delegatee::<T>::contains_key(&who),
+				Error::<T>::UnauthorisedUser
+			);
+			Self::deposit_event(Event::CreateIdentityRequested { shard });
+			Ok(().into())
 		}
 
 		/// Remove an identity

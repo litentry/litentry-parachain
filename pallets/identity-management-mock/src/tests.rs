@@ -21,20 +21,6 @@ use frame_support::assert_noop;
 use sp_core::{blake2_256, Pair, H256};
 
 #[test]
-fn unpriveledged_origin_call_fails() {
-	new_test_ext().execute_with(|| {
-		assert_noop!(
-			IdentityManagementMock::set_user_shielding_key(
-				Origin::signed(2),
-				H256::random(),
-				vec![]
-			),
-			Error::<Test>::CallerNotWhitelisted
-		);
-	});
-}
-
-#[test]
 fn set_user_shielding_key_works() {
 	new_test_ext().execute_with(|| {
 		let _ = setup_user_shieding_key(2);
@@ -116,8 +102,9 @@ fn create_twitter_identity_after_verification_fails() {
 		let encrypted_identity = tee_encrypt(identity.encode().as_slice());
 		assert_noop!(
 			IdentityManagementMock::create_identity(
-				Origin::signed(who),
+				Origin::signed(who.clone()),
 				H256::random(),
+				who,
 				encrypted_identity.to_vec(),
 				None
 			),
