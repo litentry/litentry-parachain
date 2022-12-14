@@ -18,7 +18,7 @@
 #[cfg(feature = "test")]
 use crate::test_genesis::test_genesis_setup;
 
-use crate::{helpers::enclave_signer_account, ShardIdentifier, Stf, StfError, ENCLAVE_ACCOUNT_KEY};
+use crate::{helpers::enclave_signer_account, Stf, StfError, ENCLAVE_ACCOUNT_KEY};
 use codec::Encode;
 use frame_support::traits::{OriginTrait, UnfilteredDispatchable};
 use itp_node_api::metadata::{
@@ -31,6 +31,7 @@ use itp_stf_interface::{
 	system_pallet::{SystemPalletAccountInterface, SystemPalletEventInterface},
 	ExecuteCall, ExecuteGetter, InitState, StateCallInterface, StateGetterInterface, UpdateState,
 };
+use itp_stf_primitives::types::ShardIdentifier;
 use itp_storage::storage_value_key;
 use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
@@ -198,7 +199,7 @@ where
 	State: SgxExternalitiesTrait,
 	Runtime: frame_system::Config,
 {
-	type EventRecord = frame_system::EventRecord<Runtime::Event, Runtime::Hash>;
+	type EventRecord = frame_system::EventRecord<Runtime::RuntimeEvent, Runtime::Hash>;
 	type EventIndex = u32; // For some reason this is not a pub type in frame_system
 	type BlockNumber = Runtime::BlockNumber;
 	type Hash = Runtime::Hash;
@@ -237,7 +238,7 @@ where
 	) -> Result<(), Self::Error> {
 		state.execute_with(|| {
 			pallet_parentchain::Call::<Runtime>::set_block { header }
-				.dispatch_bypass_filter(Runtime::Origin::root())
+				.dispatch_bypass_filter(Runtime::RuntimeOrigin::root())
 				.map_err(|e| {
 					Self::Error::Dispatch(format!("Update parentchain block error: {:?}", e.error))
 				})
@@ -271,7 +272,7 @@ where
 		new_free: 1000.into(),
 		new_reserved: 0.into(),
 	}
-	.dispatch_bypass_filter(Runtime::Origin::root())
+	.dispatch_bypass_filter(Runtime::RuntimeOrigin::root())
 	.map_err(|e| {
 		StfError::Dispatch(format!("Set Balance for enclave signer account error: {:?}", e.error))
 	})
