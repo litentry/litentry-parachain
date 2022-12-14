@@ -50,6 +50,7 @@ runtime-benchmarks = [
   "frame-system/runtime-benchmarks",
 ]
 std = [
+  "log/std",
   "codec/std",
   "sp-std/std",
   "sp-runtime/std",

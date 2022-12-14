@@ -16,13 +16,18 @@ import {
 import { blake2AsHex, cryptoWaitReady } from "@polkadot/util-crypto";
 import { KeyringPair } from "@polkadot/keyring/types";
 import { Codec } from "@polkadot/types/types";
+import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { HexString } from "@polkadot/util/types";
 import { hexToU8a, u8aToHex } from "@polkadot/util";
 import { KeyObject } from "crypto";
 import { EventRecord } from "@polkadot/types/interfaces";
 import { after, before, describe } from "mocha";
 import { randomAsHex } from "@polkadot/util-crypto";
-import { generateChallengeCode, getSinger } from "./web3/setup";
+import { generateChallengeCode, getSigner } from "./web3/setup";
+import { ethers } from "ethers";
+import { Web3Provider } from "@ethersproject/providers";
+import { generateTestKeys } from "./web3/functions";
+
 const base58 = require("micro-base58");
 const crypto = require("crypto");
 // in order to handle self-signed certificates we need to turn off the validation
@@ -74,9 +79,19 @@ export async function getTEEShieldingKey(
 
 export async function initIntegrationTestContext(
     workerEndpoint: string,
-    substrateEndpoint: string
+    substrateEndpoint: string,
+    ethereumEndpoint: string
 ): Promise<IntegrationTestContext> {
     const provider = new WsProvider(substrateEndpoint);
+    const ethersProvider = new ethers.providers.JsonRpcProvider(ethereumEndpoint);
+    const ethersWallet = {
+        alice: new ethers.Wallet(generateTestKeys().alice, ethersProvider),
+        bob: new ethers.Wallet(generateTestKeys().bob, ethersProvider),
+        charlie: new ethers.Wallet(generateTestKeys().charlie, ethersProvider),
+        dave: new ethers.Wallet(generateTestKeys().dave, ethersProvider),
+        eve: new ethers.Wallet(generateTestKeys().eve, ethersProvider),
+    };
+
     const api = await ApiPromise.create({
         provider,
         types: teeTypes,
@@ -93,7 +108,6 @@ export async function initIntegrationTestContext(
     if (shard == "") {
         throw new Error("shard not found");
     }
-
     // random shard for testing
     // let shard = randomAsHex(32);
 
@@ -115,8 +129,26 @@ export async function initIntegrationTestContext(
         substrate: api,
         teeShieldingKey,
         shard,
-        defaultSigner: getSinger(0),
+        defaultSigner: getSigner(0),
+        ethersProvider,
+        ethersWallet,
     };
+}
+
+export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrinsic<ApiTypes>, signer: KeyringPair) {
+    return new Promise<{ block: string }>(async (resolve, reject) => {
+        const nonce = await api.rpc.system.accountNextIndex(signer.address);
+        await tx.signAndSend(signer, {nonce}, (result) => {
+            if (result.status.isInBlock) {
+                console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
+                resolve({
+                    block: result.status.asInBlock.toString(),
+                });
+            } else if (result.status.isInvalid) {
+                reject(`Transaction is ${result.status}`);
+            }
+        });
+    });
 }
 
 export async function listenEncryptedEvents(
@@ -283,13 +315,16 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
             substrate: {} as ApiPromise,
             tee: {} as WebSocketAsPromised,
             teeShieldingKey: {} as KeyObject,
+            ethersProvider: {} as Web3Provider,
+            ethersWallet: {},
         };
 
         before("Starting Litentry(parachain&tee)", async function () {
             //env url
             const tmp = await initIntegrationTestContext(
                 process.env.WORKER_END_POINT!,
-                process.env.SUBSTRATE_END_POINT!
+                process.env.SUBSTRATE_END_POINT!,
+                process.env.ETH_END_POINT!
             );
 
             context.defaultSigner = tmp.defaultSigner;
@@ -297,6 +332,8 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
             context.substrate = tmp.substrate;
             context.tee = tmp.tee;
             context.teeShieldingKey = tmp.teeShieldingKey;
+            context.ethersProvider = tmp.ethersProvider;
+            context.ethersWallet = tmp.ethersWallet;
         });
 
         after(async function () {});

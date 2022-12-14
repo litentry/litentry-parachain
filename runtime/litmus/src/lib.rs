@@ -797,7 +797,7 @@ ord_parameter_types! {
 impl pallet_identity_management_mock::Config for Runtime {
 	type Event = Event;
 	type ManageWhitelistOrigin = EnsureRootOrAllCouncil;
-	type MaxVerificationDelay = ConstU32<10>;
+	type MaxVerificationDelay = ConstU32<{ 30 * MINUTES }>;
 	// intentionally use ALICE for the IMP mock
 	type TEECallOrigin = EnsureSignedBy<ALICE, AccountId>;
 }
