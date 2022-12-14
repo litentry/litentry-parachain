@@ -25,7 +25,7 @@ fn unpriveledged_origin_call_fails() {
 	new_test_ext().execute_with(|| {
 		assert_noop!(
 			IdentityManagementMock::set_user_shielding_key(
-				Origin::signed(2),
+				RuntimeOrigin::signed(2),
 				H256::random(),
 				vec![]
 			),

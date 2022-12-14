@@ -7,7 +7,7 @@ homepage = 'https://litentry.com/'
 license = 'GPL-3.0'
 name = 'litentry-collator'
 repository = 'https://github.com/litentry/litentry-parachain'
-version = '0.9.11'
+version = '0.9.13'
 
 [[bin]]
 name = 'litentry-collator'
@@ -17,7 +17,7 @@ targets = ['x86_64-unknown-linux-gnu']
 
 [dependencies]
 async-trait = "0.1.57"
-clap = { version = "3.2", features = ["derive"] }
+clap = { version = "4.0.17", features = ["derive"] }
 codec = { package = "parity-scale-codec", version = "3.0.0" }
 futures = { version = "0.3.24", features = ["compat"] }
 hex-literal = "0.3.4"
@@ -28,14 +28,15 @@ serde_json = "1.0"
 # Substrate dependencies
 sc-basic-authorship = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
 sc-chain-spec = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
-sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32", features = ["wasmtime"] }
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
 sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
-sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
+sc-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
+sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32", features = ["wasmtime"] }
 sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
 sc-network-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
 sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
-sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32", features = ["wasmtime"] }
 sc-sysinfo = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
 sc-telemetry = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
 sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
@@ -74,6 +75,7 @@ cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", branc
 cumulus-primitives-parachain-inherent = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.32" }
 cumulus-relay-chain-inprocess-interface = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.32" }
 cumulus-relay-chain-interface = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.32" }
+cumulus-relay-chain-minimal-node = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.32" }
 cumulus-relay-chain-rpc-interface = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.32" }
 
 # Polkadot dependencies
@@ -97,7 +99,7 @@ primitives = { path = "../primitives" }
 rococo-parachain-runtime = { path = "../runtime/rococo" }
 
 [build-dependencies]
-substrate-build-script-utils = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
+substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
 
 [features]
 default = []
@@ -111,12 +113,14 @@ runtime-benchmarks = [
   "litmus-parachain-runtime/runtime-benchmarks",
   "rococo-parachain-runtime/runtime-benchmarks",
   "polkadot-service/runtime-benchmarks",
+  "polkadot-cli/runtime-benchmarks",
 ]
 try-runtime = [
   "litentry-parachain-runtime/try-runtime",
   "litmus-parachain-runtime/try-runtime",
   "rococo-parachain-runtime/try-runtime",
   "polkadot-service/try-runtime",
+  "polkadot-cli/try-runtime",
 ]
 # allow workers to register without remote attestation for dev purposes
 # currently only available on litmus and rococo

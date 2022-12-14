@@ -38,7 +38,7 @@ jobs:
       - name: Install additional dependencies
         run: |
             sudo apt update -y &&
-            sudo apt install -y cmake pkg-config libssl-dev git gcc build-essential git clang libclang-dev
+            sudo apt install -y cmake pkg-config libssl-dev git gcc build-essential git clang libclang-dev 
 
       - name: Install cargo-tarpaulin
         run: |

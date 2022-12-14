@@ -74,6 +74,11 @@ build-node-tryruntime:
 	cargo build --locked --features try-runtime --release
 
 # launch a local network
+
+.PHONY: launch-standalone ## Launch a local standalone node without relaychain network
+launch-standalone:
+	@./scripts/launch-standalone.sh
+
 .PHONY: launch-docker-bridge
 launch-docker-bridge:
 	@./scripts/launch-local-bridge-docker.sh

@@ -11,9 +11,11 @@ FROM rust:latest as builder
 WORKDIR /litentry
 COPY . /litentry
 
-RUN apt-get update && \
-	apt-get upgrade -y && \
-	apt-get install -yq openssl clang libclang-dev cmake
+RUN apt-get update && apt-get install -yq clang libclang-dev cmake protobuf-compiler
+
+# install sccache, must before `ARG RUSTC_WRAPPER`
+# otherwise the wrapper is set but sccache is not installed
+RUN cargo install sccache
 
 # install sccache, must before `ARG RUSTC_WRAPPER`
 # otherwise the wrapper is set but sccache is not installed

@@ -15,10 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use codec::Decode;
-use frame_support::{
-	traits::GenesisBuild,
-	weights::{DispatchInfo, PostDispatchInfo, Weight},
-};
+use frame_support::{dispatch::*, traits::GenesisBuild, weights::Weight};
 pub use pallet_balances::Call as BalancesCall;
 use sp_runtime::SaturatedConversion;
 pub use sp_std::cell::RefCell;

@@ -2,13 +2,13 @@
 authors = ["Litentry Dev"]
 edition = '2021'
 name = 'litmus-parachain-runtime'
-version = '0.9.11'
+version = '0.9.13'
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len"] }
 hex-literal = { version = '0.3.4' }
 log = { version = "0.4", default-features = false }
-scale-info = { version = "2.3.0", default-features = false, features = ["derive"] }
+scale-info = { version = "2.3.1", default-features = false, features = ["derive"] }
 serde = { version = "1.0", optional = true, features = ["derive"] }
 smallvec = "1.9.0"
 
@@ -95,10 +95,10 @@ pallet-identity-management-mock = { path = "../../pallets/identity-management-mo
 pallet-vc-management = { path = "../../pallets/vc-management", default-features = false }
 runtime-common = { path = '../common', default-features = false }
 
-# TEE pallets
-pallet-sidechain = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "master" }
-pallet-teeracle = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "master" }
-pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", default-features = false, branch = "master" }
+# TEE
+pallet-sidechain = { git = "https://github.com/integritee-network/pallets.git", branch = "master", default-features = false }
+pallet-teeracle = { git = "https://github.com/integritee-network/pallets.git", branch = "master", default-features = false }
+pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", branch = "master", default-features = false }
 
 [dev-dependencies]
 cumulus-primitives-parachain-inherent = { git = 'https://github.com/paritytech/cumulus', branch = "polkadot-v0.9.32" }
@@ -135,7 +135,8 @@ std = [
   "frame-executive/std",
   "frame-support/std",
   "frame-system/std",
-  "frame-try-runtime/std",
+  "frame-system-benchmarking?/std",
+  "frame-try-runtime?/std",
   "frame-system-rpc-runtime-api/std",
   "orml-tokens/std",
   "orml-traits/std",
@@ -175,7 +176,7 @@ std = [
   "xcm/std",
   "xcm-builder/std",
   "xcm-executor/std",
-  "frame-benchmarking/std",
+  "frame-benchmarking?/std",
   'runtime-common/std',
   "pallet-bridge/std",
   "pallet-bridge-transfer/std",
@@ -196,12 +197,12 @@ runtime-benchmarks = [
   "cumulus-pallet-session-benchmarking/runtime-benchmarks",
   "frame-benchmarking/runtime-benchmarks",
   "frame-support/runtime-benchmarks",
-  "frame-system-benchmarking",
+  "frame-system-benchmarking/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
   "pallet-asset-manager/runtime-benchmarks",
   "pallet-balances/runtime-benchmarks",
   "pallet-bounties/runtime-benchmarks",
-  #This module returned an error when ran the benchmark, temporarily chose to comment it out
+  # This module returned an error when ran the benchmark, temporarily chose to comment it out
   #  "pallet-collator-selection/runtime-benchmarks",
   "pallet-collective/runtime-benchmarks",
   "pallet-democracy/runtime-benchmarks",

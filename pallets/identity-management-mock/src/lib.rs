@@ -78,14 +78,14 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// Event
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		/// origin to manage caller whitelist
-		type ManageWhitelistOrigin: EnsureOrigin<Self::Origin>;
+		type ManageWhitelistOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		// maximum delay in block numbers between creating an identity and verifying an identity
 		#[pallet::constant]
 		type MaxVerificationDelay: Get<BlockNumberOf<Self>>;
 		// some extrinsics should only be called by origins from TEE
-		type TEECallOrigin: EnsureOrigin<Self::Origin>;
+		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
 
 	#[pallet::event]

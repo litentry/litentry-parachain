@@ -19,9 +19,9 @@
 use super::{
 	bridge,
 	mock::{
-		assert_events, balances, new_test_ext, Balances, Bridge, BridgeTransfer, Call, Event,
-		NativeTokenResourceId, Origin, ProposalLifetime, Test, TreasuryAccount, ENDOWED_BALANCE,
-		MAXIMUM_ISSURANCE, RELAYER_A, RELAYER_B, RELAYER_C,
+		assert_events, balances, new_test_ext, Balances, Bridge, BridgeTransfer,
+		NativeTokenResourceId, ProposalLifetime, RuntimeCall, RuntimeEvent, RuntimeOrigin, Test,
+		TreasuryAccount, ENDOWED_BALANCE, MAXIMUM_ISSURANCE, RELAYER_A, RELAYER_B, RELAYER_C,
 	},
 	*,
 };
@@ -31,10 +31,10 @@ use hex_literal::hex;
 
 const TEST_THRESHOLD: u32 = 2;
 
-fn make_transfer_proposal(to: u64, amount: u64) -> Call {
+fn make_transfer_proposal(to: u64, amount: u64) -> RuntimeCall {
 	let rid = NativeTokenResourceId::get();
 	// let amount
-	Call::BridgeTransfer(crate::Call::transfer { to, amount, rid })
+	RuntimeCall::BridgeTransfer(crate::Call::transfer { to, amount, rid })
 }
 
 #[test]
@@ -54,14 +54,14 @@ fn transfer() {
 		assert_eq!(Balances::free_balance(&bridge_id), ENDOWED_BALANCE);
 		// Transfer and check result
 		assert_ok!(BridgeTransfer::transfer(
-			Origin::signed(Bridge::account_id()),
+			RuntimeOrigin::signed(Bridge::account_id()),
 			RELAYER_A,
 			10,
 			resource_id,
 		));
 		assert_eq!(Balances::free_balance(RELAYER_A), ENDOWED_BALANCE + 10);
 
-		assert_events(vec![Event::Balances(balances::Event::Deposit {
+		assert_events(vec![RuntimeEvent::Balances(balances::Event::Deposit {
 			who: RELAYER_A,
 			amount: 10,
 		})]);
@@ -74,10 +74,17 @@ fn transfer_native() {
 		let dest_bridge_id: bridge::BridgeChainId = 0;
 		let resource_id = NativeTokenResourceId::get();
 		let dest_account: Vec<u8> = vec![1];
-		assert_ok!(pallet_bridge::Pallet::<Test>::update_fee(Origin::root(), dest_bridge_id, 10));
-		assert_ok!(pallet_bridge::Pallet::<Test>::whitelist_chain(Origin::root(), dest_bridge_id));
+		assert_ok!(pallet_bridge::Pallet::<Test>::update_fee(
+			RuntimeOrigin::root(),
+			dest_bridge_id,
+			10
+		));
+		assert_ok!(pallet_bridge::Pallet::<Test>::whitelist_chain(
+			RuntimeOrigin::root(),
+			dest_bridge_id
+		));
 		assert_ok!(Pallet::<Test>::transfer_native(
-			Origin::signed(RELAYER_A),
+			RuntimeOrigin::signed(RELAYER_A),
 			100,
 			dest_account.clone(),
 			dest_bridge_id
@@ -91,11 +98,11 @@ fn transfer_native() {
 			ENDOWED_BALANCE - 100
 		);
 		assert_events(vec![
-			mock::Event::Balances(pallet_balances::Event::Deposit {
+			mock::RuntimeEvent::Balances(pallet_balances::Event::Deposit {
 				who: TreasuryAccount::get(),
 				amount: 10,
 			}),
-			Event::Bridge(bridge::Event::FungibleTransfer(
+			RuntimeEvent::Bridge(bridge::Event::FungibleTransfer(
 				dest_bridge_id,
 				1,
 				resource_id,
@@ -115,7 +122,7 @@ fn mint_overflow() {
 
 		assert_noop!(
 			BridgeTransfer::transfer(
-				Origin::signed(Bridge::account_id()),
+				RuntimeOrigin::signed(Bridge::account_id()),
 				RELAYER_A,
 				u64::MAX,
 				resource_id,
@@ -134,7 +141,7 @@ fn exceed_max_supply() {
 
 		assert_noop!(
 			BridgeTransfer::transfer(
-				Origin::signed(Bridge::account_id()),
+				RuntimeOrigin::signed(Bridge::account_id()),
 				RELAYER_A,
 				MAXIMUM_ISSURANCE + 1,
 				resource_id,
@@ -152,7 +159,7 @@ fn exceed_max_supply_second() {
 		assert_eq!(Balances::free_balance(&bridge_id), ENDOWED_BALANCE);
 
 		assert_ok!(BridgeTransfer::transfer(
-			Origin::signed(Bridge::account_id()),
+			RuntimeOrigin::signed(Bridge::account_id()),
 			RELAYER_A,
 			MAXIMUM_ISSURANCE - Balances::total_issuance(),
 			resource_id,
@@ -160,7 +167,7 @@ fn exceed_max_supply_second() {
 
 		assert_noop!(
 			BridgeTransfer::transfer(
-				Origin::signed(Bridge::account_id()),
+				RuntimeOrigin::signed(Bridge::account_id()),
 				RELAYER_A,
 				10,
 				resource_id,
@@ -180,7 +187,7 @@ fn transfer_to_regular_account() {
 
 		assert_noop!(
 			BridgeTransfer::transfer(
-				Origin::signed(Bridge::account_id()),
+				RuntimeOrigin::signed(Bridge::account_id()),
 				RELAYER_A,
 				amount,
 				asset,
@@ -199,16 +206,16 @@ fn create_successful_transfer_proposal() {
 		let resource = b"BridgeTransfer.transfer".to_vec();
 		let proposal = make_transfer_proposal(RELAYER_A, 10);
 
-		assert_ok!(Bridge::set_threshold(Origin::root(), TEST_THRESHOLD,));
-		assert_ok!(Bridge::add_relayer(Origin::root(), RELAYER_A));
-		assert_ok!(Bridge::add_relayer(Origin::root(), RELAYER_B));
-		assert_ok!(Bridge::add_relayer(Origin::root(), RELAYER_C));
-		assert_ok!(Bridge::whitelist_chain(Origin::root(), src_id));
-		assert_ok!(Bridge::set_resource(Origin::root(), r_id, resource));
+		assert_ok!(Bridge::set_threshold(RuntimeOrigin::root(), TEST_THRESHOLD,));
+		assert_ok!(Bridge::add_relayer(RuntimeOrigin::root(), RELAYER_A));
+		assert_ok!(Bridge::add_relayer(RuntimeOrigin::root(), RELAYER_B));
+		assert_ok!(Bridge::add_relayer(RuntimeOrigin::root(), RELAYER_C));
+		assert_ok!(Bridge::whitelist_chain(RuntimeOrigin::root(), src_id));
+		assert_ok!(Bridge::set_resource(RuntimeOrigin::root(), r_id, resource));
 
 		// Create proposal (& vote)
 		assert_ok!(Bridge::acknowledge_proposal(
-			Origin::signed(RELAYER_A),
+			RuntimeOrigin::signed(RELAYER_A),
 			prop_id,
 			src_id,
 			r_id,
@@ -225,7 +232,7 @@ fn create_successful_transfer_proposal() {
 
 		// Second relayer votes against
 		assert_ok!(Bridge::reject_proposal(
-			Origin::signed(RELAYER_B),
+			RuntimeOrigin::signed(RELAYER_B),
 			prop_id,
 			src_id,
 			r_id,
@@ -242,7 +249,7 @@ fn create_successful_transfer_proposal() {
 
 		// Third relayer votes in favour
 		assert_ok!(Bridge::acknowledge_proposal(
-			Origin::signed(RELAYER_C),
+			RuntimeOrigin::signed(RELAYER_C),
 			prop_id,
 			src_id,
 			r_id,
@@ -260,12 +267,12 @@ fn create_successful_transfer_proposal() {
 		assert_eq!(Balances::free_balance(RELAYER_A), ENDOWED_BALANCE + 10);
 
 		assert_events(vec![
-			Event::Bridge(bridge::Event::VoteFor(src_id, prop_id, RELAYER_A)),
-			Event::Bridge(bridge::Event::VoteAgainst(src_id, prop_id, RELAYER_B)),
-			Event::Bridge(bridge::Event::VoteFor(src_id, prop_id, RELAYER_C)),
-			Event::Bridge(bridge::Event::ProposalApproved(src_id, prop_id)),
-			Event::Balances(balances::Event::Deposit { who: RELAYER_A, amount: 10 }),
-			Event::Bridge(bridge::Event::ProposalSucceeded(src_id, prop_id)),
+			RuntimeEvent::Bridge(bridge::Event::VoteFor(src_id, prop_id, RELAYER_A)),
+			RuntimeEvent::Bridge(bridge::Event::VoteAgainst(src_id, prop_id, RELAYER_B)),
+			RuntimeEvent::Bridge(bridge::Event::VoteFor(src_id, prop_id, RELAYER_C)),
+			RuntimeEvent::Bridge(bridge::Event::ProposalApproved(src_id, prop_id)),
+			RuntimeEvent::Balances(balances::Event::Deposit { who: RELAYER_A, amount: 10 }),
+			RuntimeEvent::Bridge(bridge::Event::ProposalSucceeded(src_id, prop_id)),
 		]);
 	})
 }
@@ -276,13 +283,13 @@ fn test_external_balances_adjusted() {
 		// Set the new external_balances
 		assert_noop!(
 			BridgeTransfer::set_external_balances(
-				Origin::signed(Bridge::account_id()),
+				RuntimeOrigin::signed(Bridge::account_id()),
 				MaximumIssuance::<Test>::get() / 2
 			),
 			sp_runtime::DispatchError::BadOrigin
 		);
 		assert_ok!(BridgeTransfer::set_external_balances(
-			Origin::root(),
+			RuntimeOrigin::root(),
 			MaximumIssuance::<Test>::get() / 2
 		));
 
@@ -294,7 +301,7 @@ fn test_external_balances_adjusted() {
 		// Check the external_balances
 		assert_eq!(ExternalBalances::<Test>::get(), MaximumIssuance::<Test>::get() / 2);
 		assert_ok!(BridgeTransfer::transfer(
-			Origin::signed(Bridge::account_id()),
+			RuntimeOrigin::signed(Bridge::account_id()),
 			RELAYER_A,
 			10,
 			resource_id,
@@ -304,7 +311,7 @@ fn test_external_balances_adjusted() {
 		// Check the external_balances
 		assert_eq!(ExternalBalances::<Test>::get(), MaximumIssuance::<Test>::get() / 2 - 10);
 
-		assert_events(vec![Event::Balances(balances::Event::Deposit {
+		assert_events(vec![RuntimeEvent::Balances(balances::Event::Deposit {
 			who: RELAYER_A,
 			amount: 10,
 		})]);
@@ -312,10 +319,13 @@ fn test_external_balances_adjusted() {
 		// Token cross out of parachain
 		// Whitelist setup
 		let dest_chain = 0;
-		assert_ok!(pallet_bridge::Pallet::<Test>::update_fee(Origin::root(), dest_chain, 0));
-		assert_ok!(pallet_bridge::Pallet::<Test>::whitelist_chain(Origin::root(), dest_chain));
+		assert_ok!(pallet_bridge::Pallet::<Test>::update_fee(RuntimeOrigin::root(), dest_chain, 0));
+		assert_ok!(pallet_bridge::Pallet::<Test>::whitelist_chain(
+			RuntimeOrigin::root(),
+			dest_chain
+		));
 		assert_ok!(BridgeTransfer::transfer_native(
-			Origin::signed(RELAYER_A),
+			RuntimeOrigin::signed(RELAYER_A),
 			5,
 			vec![0u8, 0u8, 0u8, 0u8], // no meaning
 			dest_chain,
@@ -330,7 +340,10 @@ fn test_external_balances_adjusted() {
 fn set_maximum_issuance() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(pallet::MaximumIssuance::<Test>::get(), mock::MaximumIssuance::get());
-		assert_ok!(pallet::Pallet::<Test>::set_maximum_issuance(Origin::signed(RELAYER_A), 2));
+		assert_ok!(pallet::Pallet::<Test>::set_maximum_issuance(
+			RuntimeOrigin::signed(RELAYER_A),
+			2
+		));
 		assert_eq!(pallet::MaximumIssuance::<Test>::get(), 2);
 		frame_system::Pallet::<Test>::assert_last_event(
 			crate::Event::<Test>::MaximumIssuanceChanged {
@@ -346,7 +359,7 @@ fn set_maximum_issuance_fails_with_unprivileged_origin() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(pallet::MaximumIssuance::<Test>::get(), mock::MaximumIssuance::get());
 		assert_noop!(
-			pallet::Pallet::<Test>::set_maximum_issuance(Origin::signed(RELAYER_B), 2),
+			pallet::Pallet::<Test>::set_maximum_issuance(RuntimeOrigin::signed(RELAYER_B), 2),
 			sp_runtime::DispatchError::BadOrigin
 		);
 		assert_eq!(pallet::MaximumIssuance::<Test>::get(), mock::MaximumIssuance::get());
