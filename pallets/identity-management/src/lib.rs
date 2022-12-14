@@ -93,7 +93,9 @@ pub mod pallet {
 	}
 
 	#[pallet::error]
-	pub enum Error<T> {}
+	pub enum Error<T> {
+		SomeTmpError,
+	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -118,8 +120,9 @@ pub mod pallet {
 			encrypted_metadata: Option<Vec<u8>>,
 		) -> DispatchResultWithPostInfo {
 			let _ = ensure_signed(origin)?;
-			Self::deposit_event(Event::CreateIdentityRequested { shard });
-			Ok(().into())
+			return Err(Error::<T>::SomeTmpError.into())
+			// Self::deposit_event(Event::CreateIdentityRequested { shard });
+			// Ok(().into())
 		}
 
 		/// Remove an identity
