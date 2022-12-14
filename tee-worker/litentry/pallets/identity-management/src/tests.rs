@@ -113,7 +113,7 @@ fn verify_identity_works() {
 }
 
 #[test]
-fn get_identity_and_identity_context_works() {
+fn get_id_graph_works() {
 	new_test_ext().execute_with(|| {
 		let metadata3: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		assert_ok!(IMT::create_identity(
@@ -141,8 +141,8 @@ fn get_identity_and_identity_context_works() {
 		));
 		assert_ok!(IMT::verify_identity(Origin::signed(1), 2, alice_web2_identity.clone(), 2));
 
-		let did_contex = IMT::get_identity_and_identity_context(&2);
-		assert_eq!(did_contex.len(), 2);
+		let id_graph = IMT::get_id_graph(&2);
+		assert_eq!(id_graph.len(), 2);
 	});
 }
 

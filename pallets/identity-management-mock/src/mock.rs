@@ -252,6 +252,7 @@ pub fn setup_create_identity(
 	System::assert_has_event(Event::IdentityManagementMock(crate::Event::IdentityCreatedPlain {
 		account: who,
 		identity: identity.clone(),
+		id_graph: IdentityManagementMock::get_id_graph(&who),
 	}));
 	// encrypt the result
 	let aes_encrypted_account = aes_encrypt_default(&key, who.encode().as_slice());

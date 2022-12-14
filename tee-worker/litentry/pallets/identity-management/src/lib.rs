@@ -247,9 +247,7 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub fn get_identity_and_identity_context(
-			who: &T::AccountId,
-		) -> Vec<(Identity, IdentityContext<T>)> {
+		pub fn get_id_graph(who: &T::AccountId) -> Vec<(Identity, IdentityContext<T>)> {
 			IDGraphs::iter_prefix(who).collect::<Vec<_>>()
 		}
 	}

@@ -82,9 +82,9 @@ pub mod pallet {
 		// event that should be triggered by TEECallOrigin
 		UserShieldingKeySet { account: AesOutput },
 		ChallengeCodeGenerated { account: AesOutput, identity: AesOutput, code: AesOutput },
-		IdentityCreated { account: AesOutput, identity: AesOutput },
-		IdentityRemoved { account: AesOutput, identity: AesOutput },
-		IdentityVerified { account: AesOutput, identity: AesOutput },
+		IdentityCreated { account: AesOutput, identity: AesOutput, id_graph: AesOutput },
+		IdentityRemoved { account: AesOutput, identity: AesOutput, id_graph: AesOutput },
+		IdentityVerified { account: AesOutput, identity: AesOutput, id_graph: AesOutput },
 		// some error happened during processing in TEE, we use string-like
 		// parameters for more "generic" error event reporting
 		// TODO: maybe use concrete errors instead of events when we are more sure
@@ -177,9 +177,10 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			account: AesOutput,
 			identity: AesOutput,
+			id_graph: AesOutput,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityCreated { account, identity });
+			Self::deposit_event(Event::IdentityCreated { account, identity, id_graph });
 			Ok(Pays::No.into())
 		}
 
@@ -188,9 +189,10 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			account: AesOutput,
 			identity: AesOutput,
+			id_graph: AesOutput,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityRemoved { account, identity });
+			Self::deposit_event(Event::IdentityRemoved { account, identity, id_graph });
 			Ok(Pays::No.into())
 		}
 
@@ -199,9 +201,10 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			account: AesOutput,
 			identity: AesOutput,
+			id_graph: AesOutput,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityVerified { account, identity });
+			Self::deposit_event(Event::IdentityVerified { account, identity, id_graph });
 			Ok(Pays::No.into())
 		}
 

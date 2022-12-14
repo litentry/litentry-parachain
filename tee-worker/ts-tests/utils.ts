@@ -16,6 +16,7 @@ import {
 import { blake2AsHex, cryptoWaitReady } from "@polkadot/util-crypto";
 import { KeyringPair } from "@polkadot/keyring/types";
 import { Codec } from "@polkadot/types/types";
+import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { HexString } from "@polkadot/util/types";
 import { hexToU8a, u8aToHex } from "@polkadot/util";
 import { KeyObject } from "crypto";
@@ -132,6 +133,22 @@ export async function initIntegrationTestContext(
         ethersProvider,
         ethersWallet,
     };
+}
+
+export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrinsic<ApiTypes>, signer: KeyringPair) {
+    return new Promise<{ block: string }>(async (resolve, reject) => {
+        const nonce = await api.rpc.system.accountNextIndex(signer.address);
+        await tx.signAndSend(signer, {nonce}, (result) => {
+            if (result.status.isInBlock) {
+                console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
+                resolve({
+                    block: result.status.asInBlock.toString(),
+                });
+            } else if (result.status.isInvalid) {
+                reject(`Transaction is ${result.status}`);
+            }
+        });
+    });
 }
 
 export async function listenEncryptedEvents(

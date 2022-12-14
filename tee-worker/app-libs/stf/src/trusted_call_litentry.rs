@@ -186,16 +186,13 @@ impl TrustedCallSigned {
 		who: AccountId,
 		assertion: Assertion,
 	) -> StfResult<()> {
-		let v_identity_context =
-			ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_identity_and_identity_context(&who);
+		let id_graph = ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
 
 		let mut vec_identity: BoundedVec<Identity, MaxIdentityLength> = vec![].try_into().unwrap();
 
-		for identity_ctx in &v_identity_context {
-			if identity_ctx.1.is_verified {
-				vec_identity
-					.try_push(identity_ctx.0.clone())
-					.map_err(|_| StfError::AssertionBuildFail)?;
+		for id in &id_graph {
+			if id.1.is_verified {
+				vec_identity.try_push(id.0.clone()).map_err(|_| StfError::AssertionBuildFail)?;
 			}
 		}
 
