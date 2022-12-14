@@ -37,9 +37,7 @@ use ita_sgx_runtime::{pallet_imt::MetadataOf, IdentityManagement, Runtime, Syste
 use itp_node_api_metadata::Error as MetadataError;
 use itp_node_api_metadata_provider::Error as MetadataProviderError;
 use itp_stf_primitives::types::AccountId;
-use sp_core::{crypto::AccountId32, ed25519, sr25519, Pair, H256};
-use sp_runtime::{traits::Verify, MultiSignature};
-use std::{boxed::Box, string::String};
+use std::string::String;
 
 pub use getter::*;
 pub use stf_sgx_primitives::{types::*, Stf};

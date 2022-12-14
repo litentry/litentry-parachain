@@ -10459,7 +10459,7 @@ dependencies = [
 
 [[package]]
 name = "primitives"
-version = "0.9.11"
+version = "0.9.12"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -11111,7 +11111,7 @@ dependencies = [
 
 [[package]]
 name = "rococo-parachain-runtime"
-version = "0.9.11"
+version = "0.9.13"
 dependencies = [
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
@@ -11125,6 +11125,7 @@ dependencies = [
  "frame-executive",
  "frame-support",
  "frame-system",
+ "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal",
@@ -11250,7 +11251,7 @@ dependencies = [
 
 [[package]]
 name = "runtime-common"
-version = "0.9.11"
+version = "0.9.13"
 dependencies = [
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-core",
