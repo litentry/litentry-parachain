@@ -108,6 +108,11 @@ jobs:
           target: wasm32-unknown-unknown
           default: true
 
+      - name: Install dependencies
+        run: |
+          sudo apt-get update && \
+          sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
+          
       - name: Run cargo clippy check
         run: make clippy
 
@@ -299,6 +304,11 @@ jobs:
           mv -f $SCCACHE_FILE/sccache $HOME/.local/bin/sccache
           chmod +x $HOME/.local/bin/sccache
           echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+         sudo apt-get update && \
+         sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
 
       - name: Cache cargo registry
         if: needs.check-file-change.outputs.src == 'true'

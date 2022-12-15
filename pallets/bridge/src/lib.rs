@@ -34,12 +34,11 @@ pub use weights::WeightInfo;
 pub mod pallet {
 	use crate::weights::WeightInfo;
 	use codec::{Decode, Encode, EncodeLike};
-	use frame_support::traits::{
-		fungible::Mutate, Currency, ExistenceRequirement::AllowDeath, WithdrawReasons,
+	use frame_support::{
+		dispatch::GetDispatchInfo,
+		traits::{fungible::Mutate, Currency, ExistenceRequirement::AllowDeath, WithdrawReasons},
 	};
-	pub use frame_support::{
-		pallet_prelude::*, traits::StorageVersion, weights::GetDispatchInfo, PalletId, Parameter,
-	};
+	pub use frame_support::{pallet_prelude::*, traits::StorageVersion, PalletId, Parameter};
 	use frame_system::{
 		pallet_prelude::*,
 		{self as system},
@@ -150,15 +149,16 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		/// Origin used to administer the pallet
-		type BridgeCommitteeOrigin: EnsureOrigin<Self::Origin>;
+		type BridgeCommitteeOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		/// Proposed dispatchable call
 		type Proposal: Parameter
-			+ Dispatchable<Origin = Self::Origin>
-			+ EncodeLike
+			+ Dispatchable<RuntimeOrigin = Self::RuntimeOrigin>
 			+ GetDispatchInfo
-			+ From<frame_system::Call<Self>>;
+			+ EncodeLike
+			+ From<frame_system::Call<Self>>
+			+ IsType<<Self as frame_system::Config>::RuntimeCall>;
 		/// The identifier for this chain.
 		/// This must be unique and must not collide with existing IDs within a set of bridged
 		/// chains.
@@ -722,20 +722,20 @@ pub mod pallet {
 
 	/// Simple ensure origin for the bridge account
 	pub struct EnsureBridge<T>(sp_std::marker::PhantomData<T>);
-	impl<T: Config> EnsureOrigin<T::Origin> for EnsureBridge<T> {
+	impl<T: Config> EnsureOrigin<T::RuntimeOrigin> for EnsureBridge<T> {
 		type Success = T::AccountId;
-		fn try_origin(o: T::Origin) -> Result<Self::Success, T::Origin> {
+		fn try_origin(o: T::RuntimeOrigin) -> Result<Self::Success, T::RuntimeOrigin> {
 			let bridge_id = MODULE_ID.into_account_truncating();
 			o.into().and_then(|o| match o {
 				system::RawOrigin::Signed(who) if who == bridge_id => Ok(bridge_id),
-				r => Err(T::Origin::from(r)),
+				r => Err(T::RuntimeOrigin::from(r)),
 			})
 		}
 
 		#[cfg(feature = "runtime-benchmarks")]
-		fn successful_origin() -> T::Origin {
+		fn successful_origin() -> T::RuntimeOrigin {
 			let bridge_id = MODULE_ID.into_account_truncating();
-			T::Origin::from(system::RawOrigin::Signed(bridge_id))
+			T::RuntimeOrigin::from(system::RawOrigin::Signed(bridge_id))
 		}
 	}
 }

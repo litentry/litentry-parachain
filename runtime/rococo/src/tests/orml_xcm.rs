@@ -14,26 +14,28 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{xcm_config::LocalOriginToLocation, Call, CouncilInstance, Origin, Runtime};
+use crate::{
+	xcm_config::LocalOriginToLocation, CouncilInstance, Runtime, RuntimeCall, RuntimeOrigin,
+};
 use runtime_common::tests::orml_xcm;
 
 #[test]
 fn orml_xcm_root_works() {
-	orml_xcm::orml_xcm_root_works::<Runtime, Origin, LocalOriginToLocation, Call>();
+	orml_xcm::orml_xcm_root_works::<Runtime, RuntimeOrigin, LocalOriginToLocation, RuntimeCall>();
 }
 
 #[test]
 fn orml_xcm_signed_works() {
-	orml_xcm::orml_xcm_signed_works::<Runtime, Origin, LocalOriginToLocation, Call>();
+	orml_xcm::orml_xcm_signed_works::<Runtime, RuntimeOrigin, LocalOriginToLocation, RuntimeCall>();
 }
 
 #[test]
 fn orml_xcm_two_thirds_council_works() {
 	orml_xcm::orml_xcm_two_thirds_councli_works::<
 		Runtime,
-		Origin,
+		RuntimeOrigin,
 		LocalOriginToLocation,
-		Call,
+		RuntimeCall,
 		CouncilInstance,
 	>();
 }
@@ -42,9 +44,9 @@ fn orml_xcm_two_thirds_council_works() {
 fn orml_xcm_one_four_council_works() {
 	orml_xcm::orml_xcm_one_four_councli_works::<
 		Runtime,
-		Origin,
+		RuntimeOrigin,
 		LocalOriginToLocation,
-		Call,
+		RuntimeCall,
 		CouncilInstance,
 	>();
 }
@@ -53,15 +55,20 @@ fn orml_xcm_one_four_council_works() {
 fn orml_xcm_half_council_works() {
 	orml_xcm::orml_xcm_half_councli_works::<
 		Runtime,
-		Origin,
+		RuntimeOrigin,
 		LocalOriginToLocation,
-		Call,
+		RuntimeCall,
 		CouncilInstance,
 	>();
 }
 
 #[test]
 fn orml_xcm_member_works() {
-	orml_xcm::orml_xcm_member_works::<Runtime, Origin, LocalOriginToLocation, Call, CouncilInstance>(
-	);
+	orml_xcm::orml_xcm_member_works::<
+		Runtime,
+		RuntimeOrigin,
+		LocalOriginToLocation,
+		RuntimeCall,
+		CouncilInstance,
+	>();
 }

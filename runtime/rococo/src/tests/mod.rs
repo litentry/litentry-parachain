@@ -24,7 +24,7 @@ pub mod setup {
 }
 
 mod transaction_payment {
-	use crate::{Call, Origin, Runtime, TransactionByteFee};
+	use crate::{Runtime, RuntimeCall, RuntimeOrigin, TransactionByteFee};
 
 	runtime_common::run_transaction_payment_tests!();
 }
@@ -32,11 +32,11 @@ mod transaction_payment {
 mod xcm_parachain {
 	use crate::{
 		tests::setup::{
-			Call as RelayCall, Origin as RelayOrigin, ParaA, ParaB, Relay, RelayChainRuntime,
-			TestNet,
+			ParaA, ParaB, Relay, RelayChainRuntime, RuntimeCall as RelayCall,
+			RuntimeOrigin as RelayOrigin, TestNet,
 		},
 		xcm_config::{LocationToAccountId, UnitWeightCost},
-		Call, Origin, Runtime,
+		Runtime, RuntimeCall, RuntimeOrigin,
 	};
 
 	runtime_common::run_xcm_tests!();

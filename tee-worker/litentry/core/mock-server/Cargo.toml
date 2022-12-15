@@ -13,7 +13,7 @@ tokio = { version = "1.5", features = ["sync", "macros", "rt-multi-thread", "sig
 
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 litentry-primitives = { path = "../../primitives", default-features = false }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29", default-features = false }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32", default-features = false }
 
 lc-data-providers = { path = "../data-providers" }
 

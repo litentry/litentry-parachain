@@ -2,16 +2,16 @@
 authors = ["Litentry Dev"]
 edition = '2021'
 name = 'primitives'
-version = '0.9.11'
+version = '0.9.12'
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len"] }
-scale-info = { version = "2.3.0", default-features = false, features = ["derive"] }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29", default-features = false }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29", default-features = false }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.29", default-features = false }
+scale-info = { version = "2.3.1", default-features = false, features = ["derive"] }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32", default-features = false }
 
-xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.29", default-features = false }
+xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.32", default-features = false }
 
 [features]
 default = ["std"]

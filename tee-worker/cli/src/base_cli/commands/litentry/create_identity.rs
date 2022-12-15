@@ -21,8 +21,8 @@ use crate::{
 };
 use base58::FromBase58;
 use codec::{Decode, Encode};
-use ita_stf::ShardIdentifier;
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
+use itp_stf_primitives::types::ShardIdentifier;
 use litentry_primitives::Identity;
 use log::*;
 

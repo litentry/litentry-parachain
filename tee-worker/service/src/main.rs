@@ -71,7 +71,7 @@ use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
 use its_storage::{interface::FetchBlocks, BlockPruner, SidechainStorageLock};
 use lc_data_providers::G_DATA_PROVIDERS;
 use log::*;
-use my_node_runtime::{Event, Hash, Header};
+use my_node_runtime::{Hash, Header, RuntimeEvent};
 use sgx_types::*;
 use sp_core::crypto::{AccountId32, Ss58Codec};
 use sp_keyring::AccountKeyring;
@@ -250,7 +250,10 @@ fn main() {
 		setup::generate_signing_key_file(enclave.as_ref());
 	} else if matches.is_present("dump-ra") {
 		info!("*** Perform RA and dump cert to disk");
-		enclave.dump_ra_to_disk().unwrap();
+		#[cfg(not(feature = "dcap"))]
+		enclave.dump_ias_ra_cert_to_disk().unwrap();
+		#[cfg(feature = "dcap")]
+		enclave.dump_dcap_ra_cert_to_disk().unwrap();
 	} else if matches.is_present("mrenclave") {
 		println!("{}", enclave.get_mrenclave().unwrap().encode().to_base58());
 	} else if let Some(sub_matches) = matches.subcommand_matches("init-shard") {
@@ -315,11 +318,16 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	InitializationHandler: TrackInitialization + IsInitialized + Sync + Send + 'static,
 	WorkerModeProvider: ProvideWorkerMode,
 {
+	let run_config = config.run_config.clone().expect("Run config missing");
+	let skip_ra = run_config.skip_ra;
+
 	println!("Integritee Worker v{}", VERSION);
 	info!("starting worker on shard {}", shard.encode().to_base58());
 	// ------------------------------------------------------------------------
 	// check for required files
-	check_files();
+	if !skip_ra {
+		check_files();
+	}
 	// ------------------------------------------------------------------------
 	// initialize the enclave
 	let mrenclave = enclave.get_mrenclave().unwrap();
@@ -329,8 +337,6 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	// ------------------------------------------------------------------------
 	// let new workers call us for key provisioning
 	println!("MU-RA server listening on {}", config.mu_ra_url());
-	let run_config = config.run_config.clone().expect("Run config missing");
-	let skip_ra = run_config.skip_ra;
 	let is_development_mode = run_config.dev;
 	let ra_url = config.mu_ra_url();
 	let enclave_api_key_prov = enclave.clone();
@@ -451,7 +457,10 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	} else {
 		println!("[!] creating remote attestation report and create enclave register extrinsic.");
 	};
-	let uxt = enclave.perform_ra(&trusted_url, skip_ra).unwrap();
+	#[cfg(not(feature = "dcap"))]
+	let uxt = enclave.generate_ias_ra_extrinsic(&trusted_url, skip_ra).unwrap();
+	#[cfg(feature = "dcap")]
+	let uxt = enclave.generate_dcap_ra_extrinsic(&trusted_url, skip_ra).unwrap();
 
 	let mut xthex = hex::encode(uxt);
 	xthex.insert_str(0, "0x");
@@ -594,7 +603,7 @@ fn spawn_worker_for_shard_polling<InitializationHandler>(
 	});
 }
 
-type Events = Vec<frame_system::EventRecord<Event, Hash>>;
+type Events = Vec<frame_system::EventRecord<RuntimeEvent, Hash>>;
 
 fn parse_events(event: String) -> Result<Events, String> {
 	let _unhex = Vec::from_hex(event).map_err(|_| "Decoding Events Failed".to_string())?;
@@ -606,7 +615,7 @@ fn print_events(events: Events, _sender: Sender<String>) {
 	for evr in &events {
 		debug!("Decoded: phase = {:?}, event = {:?}", evr.phase, evr.event);
 		match &evr.event {
-			Event::Balances(be) => {
+			RuntimeEvent::Balances(be) => {
 				info!("[+] Received balances event");
 				debug!("{:?}", be);
 				match &be {
@@ -624,7 +633,7 @@ fn print_events(events: Events, _sender: Sender<String>) {
 					},
 				}
 			},
-			Event::Teerex(re) => {
+			RuntimeEvent::Teerex(re) => {
 				debug!("{:?}", re);
 				match &re {
 					my_node_runtime::pallet_teerex::Event::AddedEnclave(sender, worker_url) => {
@@ -664,7 +673,7 @@ fn print_events(events: Events, _sender: Sender<String>) {
 				}
 			},
 			#[cfg(feature = "teeracle")]
-			Event::Teeracle(re) => {
+			RuntimeEvent::Teeracle(re) => {
 				debug!("{:?}", re);
 				match &re {
 					my_node_runtime::pallet_teeracle::Event::ExchangeRateUpdated(
@@ -707,7 +716,7 @@ fn print_events(events: Events, _sender: Sender<String>) {
 				}
 			},
 			#[cfg(feature = "sidechain")]
-			Event::Sidechain(re) => match &re {
+			RuntimeEvent::Sidechain(re) => match &re {
 				my_node_runtime::pallet_sidechain::Event::ProposedSidechainBlock(
 					sender,
 					payload,

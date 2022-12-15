@@ -22,6 +22,7 @@ mod service;
 mod cli;
 mod command;
 mod rpc;
+mod standalone_block_import;
 
 fn main() -> sc_cli::Result<()> {
 	command::run()

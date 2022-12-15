@@ -120,7 +120,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// Overarching event type
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		/// The currency type
 		/// We make Currency Lockable on purpose
 		/// So we can test its interaction with Locks
@@ -128,7 +128,7 @@ pub mod pallet {
 			+ ReservableCurrency<Self::AccountId>
 			+ LockableCurrency<Self::AccountId>;
 		/// The origin for monetary governance
-		type MonetaryGovernanceOrigin: EnsureOrigin<Self::Origin>;
+		type MonetaryGovernanceOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		/// Minimum number of blocks per round
 		#[pallet::constant]
 		type MinBlocksPerRound: Get<u32>;
@@ -661,7 +661,7 @@ pub mod pallet {
 				);
 
 				if let Err(error) = <Pallet<T>>::join_candidates(
-					T::Origin::from(Some(candidate.clone()).into()),
+					T::RuntimeOrigin::from(Some(candidate.clone()).into()),
 					balance,
 				) {
 					log::warn!("Join candidates failed in genesis with error {:?}", error);
@@ -678,7 +678,7 @@ pub mod pallet {
 					"Account does not have enough balance to place delegation."
 				);
 				if let Err(error) = <Pallet<T>>::delegate(
-					T::Origin::from(Some(delegator.clone()).into()),
+					T::RuntimeOrigin::from(Some(delegator.clone()).into()),
 					target.clone(),
 					balance,
 				) {
@@ -1595,22 +1595,9 @@ pub mod pallet {
 				.map(|mut bond| {
 					bond.amount = match requests.get(&bond.owner) {
 						None => bond.amount,
-						Some(DelegationAction::Revoke(_)) => {
-							log::warn!(
-								"reward for delegator '{:?}' set to zero due to pending \
-								revoke request",
-								bond.owner
-							);
-							BalanceOf::<T>::zero()
-						},
-						Some(DelegationAction::Decrease(amount)) => {
-							log::warn!(
-								"reward for delegator '{:?}' reduced by set amount due to pending \
-								decrease request",
-								bond.owner
-							);
-							bond.amount.saturating_sub(*amount)
-						},
+						Some(DelegationAction::Revoke(_)) => BalanceOf::<T>::zero(),
+						Some(DelegationAction::Decrease(amount)) =>
+							bond.amount.saturating_sub(*amount),
 					};
 
 					bond

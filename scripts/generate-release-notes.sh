@@ -36,9 +36,9 @@ if [ "$2" != "runtime" ]; then
   fi
 fi
 
-SUBSTRATE_DEP=$(grep sp-core node/Cargo.toml | sed 's/.*branch = "//;s/".*//')
-CUMULUS_DEP=$(grep cumulus-client-cli node/Cargo.toml | sed 's/.*branch = "//;s/".*//')
-POLKADOT_DEP=$(grep polkadot-cli node/Cargo.toml | sed 's/.*branch = "//;s/".*//')
+SUBSTRATE_DEP=$(grep -F 'https://github.com/paritytech/substrate' node/Cargo.toml | head -n1 | sed 's/.*branch = "//;s/".*//')
+POLKADOT_DEP=$(grep -F 'https://github.com/paritytech/polkadot' node/Cargo.toml | head -n1 | sed 's/.*branch = "//;s/".*//')
+CUMULUS_DEP=$(grep -F 'https://github.com/paritytech/cumulus' node/Cargo.toml | head -n1 | sed 's/.*branch = "//;s/".*//')
 
 echo > "$1"
 echo "## This is a release for:" >> "$1"
