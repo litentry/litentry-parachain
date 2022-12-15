@@ -27,11 +27,11 @@ fn set_user_shielding_key_works() {
 	new_test_ext().execute_with(|| {
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
 		assert_ok!(IdentityManagement::set_user_shielding_key(
-			Origin::signed(1),
+			RuntimeOrigin::signed(1),
 			shard,
 			vec![1u8; 2048]
 		));
-		System::assert_last_event(Event::IdentityManagement(
+		System::assert_last_event(RuntimeEvent::IdentityManagement(
 			crate::Event::SetUserShieldingKeyRequested { shard },
 		));
 	});
@@ -42,13 +42,13 @@ fn create_identity_without_delegatee_works() {
 	new_test_ext().execute_with(|| {
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
 		assert_ok!(IdentityManagement::create_identity(
-			Origin::signed(1),
+			RuntimeOrigin::signed(1),
 			shard,
 			1,
 			vec![1u8; 2048],
 			Some(vec![1u8; 2048])
 		));
-		System::assert_last_event(Event::IdentityManagement(
+		System::assert_last_event(RuntimeEvent::IdentityManagement(
 			crate::Event::CreateIdentityRequested { shard },
 		));
 	});
@@ -92,8 +92,12 @@ fn create_identity_with_unauthorised_delegatee_fails() {
 fn remove_identity_works() {
 	new_test_ext().execute_with(|| {
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
-		assert_ok!(IdentityManagement::remove_identity(Origin::signed(1), shard, vec![1u8; 2048]));
-		System::assert_last_event(Event::IdentityManagement(
+		assert_ok!(IdentityManagement::remove_identity(
+			RuntimeOrigin::signed(1),
+			shard,
+			vec![1u8; 2048]
+		));
+		System::assert_last_event(RuntimeEvent::IdentityManagement(
 			crate::Event::RemoveIdentityRequested { shard },
 		));
 	});
@@ -104,12 +108,12 @@ fn verify_identity_works() {
 	new_test_ext().execute_with(|| {
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
 		assert_ok!(IdentityManagement::verify_identity(
-			Origin::signed(1),
+			RuntimeOrigin::signed(1),
 			shard,
 			vec![1u8; 2048],
 			vec![1u8; 2048]
 		));
-		System::assert_last_event(Event::IdentityManagement(
+		System::assert_last_event(RuntimeEvent::IdentityManagement(
 			crate::Event::VerifyIdentityRequested { shard },
 		));
 	});
@@ -119,13 +123,17 @@ fn verify_identity_works() {
 fn tee_callback_with_registered_enclave_works() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(Teerex::register_enclave(
-			Origin::signed(1),
+			RuntimeOrigin::signed(1),
 			TEST_MRENCLAVE.to_vec(),
 			URL.to_vec()
 		));
 
-		assert_ok!(IdentityManagement::some_error(Origin::signed(1), vec![1u8; 16], vec![2u8; 16]));
-		System::assert_last_event(Event::IdentityManagement(crate::Event::SomeError {
+		assert_ok!(IdentityManagement::some_error(
+			RuntimeOrigin::signed(1),
+			vec![1u8; 16],
+			vec![2u8; 16]
+		));
+		System::assert_last_event(RuntimeEvent::IdentityManagement(crate::Event::SomeError {
 			func: vec![1u8; 16],
 			error: vec![2u8; 16],
 		}));
@@ -136,7 +144,7 @@ fn tee_callback_with_registered_enclave_works() {
 fn tee_callback_with_unregistered_enclave_fails() {
 	new_test_ext().execute_with(|| {
 		assert_noop!(
-			IdentityManagement::some_error(Origin::signed(1), vec![1u8; 16], vec![2u8; 16]),
+			IdentityManagement::some_error(RuntimeOrigin::signed(1), vec![1u8; 16], vec![2u8; 16]),
 			sp_runtime::DispatchError::BadOrigin,
 		);
 	});

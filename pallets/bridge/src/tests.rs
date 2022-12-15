@@ -18,9 +18,9 @@
 
 use super::{
 	mock::{
-		assert_events, new_test_ext, new_test_ext_initialized, Balances, Bridge, Call, Event,
-		Origin, ProposalLifetime, System, Test, TestChainId, TreasuryAccount, ENDOWED_BALANCE,
-		RELAYER_A, RELAYER_B, RELAYER_C, TEST_THRESHOLD,
+		assert_events, new_test_ext, new_test_ext_initialized, Balances, Bridge, ProposalLifetime,
+		RuntimeCall, RuntimeEvent, RuntimeOrigin, System, Test, TestChainId, TreasuryAccount,
+		ENDOWED_BALANCE, RELAYER_A, RELAYER_B, RELAYER_C, TEST_THRESHOLD,
 	},
 	pallet::Event as PalletEvent,
 	*,
@@ -99,13 +99,13 @@ fn setup_resources() {
 		let method = "Pallet.do_something".as_bytes().to_vec();
 		let method2 = "Pallet.do_somethingElse".as_bytes().to_vec();
 
-		assert_ok!(Bridge::set_resource(Origin::root(), id, method.clone()));
+		assert_ok!(Bridge::set_resource(RuntimeOrigin::root(), id, method.clone()));
 		assert_eq!(Bridge::resources(id), Some(method));
 
-		assert_ok!(Bridge::set_resource(Origin::root(), id, method2.clone()));
+		assert_ok!(Bridge::set_resource(RuntimeOrigin::root(), id, method2.clone()));
 		assert_eq!(Bridge::resources(id), Some(method2));
 
-		assert_ok!(Bridge::remove_resource(Origin::root(), id));
+		assert_ok!(Bridge::remove_resource(RuntimeOrigin::root(), id));
 		assert_eq!(Bridge::resources(id), None);
 	})
 }
@@ -115,13 +115,13 @@ fn whitelist_chain() {
 	new_test_ext().execute_with(|| {
 		assert!(!Bridge::chain_whitelisted(0));
 
-		assert_ok!(Bridge::whitelist_chain(Origin::root(), 0));
+		assert_ok!(Bridge::whitelist_chain(RuntimeOrigin::root(), 0));
 		assert_noop!(
-			Bridge::whitelist_chain(Origin::root(), TestChainId::get()),
+			Bridge::whitelist_chain(RuntimeOrigin::root(), TestChainId::get()),
 			Error::<Test>::InvalidChainId
 		);
 
-		assert_events(vec![Event::Bridge(PalletEvent::ChainWhitelisted(0))]);
+		assert_events(vec![RuntimeEvent::Bridge(PalletEvent::ChainWhitelisted(0))]);
 	})
 }
 
@@ -130,15 +130,15 @@ fn set_get_threshold() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(<RelayerThreshold<Test>>::get(), 1);
 
-		assert_ok!(Bridge::set_threshold(Origin::root(), TEST_THRESHOLD));
+		assert_ok!(Bridge::set_threshold(RuntimeOrigin::root(), TEST_THRESHOLD));
 		assert_eq!(<RelayerThreshold<Test>>::get(), TEST_THRESHOLD);
 
-		assert_ok!(Bridge::set_threshold(Origin::root(), 5));
+		assert_ok!(Bridge::set_threshold(RuntimeOrigin::root(), 5));
 		assert_eq!(<RelayerThreshold<Test>>::get(), 5);
 
 		assert_events(vec![
-			Event::Bridge(PalletEvent::RelayerThresholdChanged(TEST_THRESHOLD)),
-			Event::Bridge(PalletEvent::RelayerThresholdChanged(5)),
+			RuntimeEvent::Bridge(PalletEvent::RelayerThresholdChanged(TEST_THRESHOLD)),
+			RuntimeEvent::Bridge(PalletEvent::RelayerThresholdChanged(5)),
 		]);
 	})
 }
@@ -146,40 +146,40 @@ fn set_get_threshold() {
 #[test]
 fn add_remove_relayer() {
 	new_test_ext().execute_with(|| {
-		assert_ok!(Bridge::set_threshold(Origin::root(), TEST_THRESHOLD,));
+		assert_ok!(Bridge::set_threshold(RuntimeOrigin::root(), TEST_THRESHOLD,));
 		assert_eq!(Bridge::relayer_count(), 0);
 
-		assert_ok!(Bridge::add_relayer(Origin::root(), RELAYER_A));
-		assert_ok!(Bridge::add_relayer(Origin::root(), RELAYER_B));
-		assert_ok!(Bridge::add_relayer(Origin::root(), RELAYER_C));
+		assert_ok!(Bridge::add_relayer(RuntimeOrigin::root(), RELAYER_A));
+		assert_ok!(Bridge::add_relayer(RuntimeOrigin::root(), RELAYER_B));
+		assert_ok!(Bridge::add_relayer(RuntimeOrigin::root(), RELAYER_C));
 		assert_eq!(Bridge::relayer_count(), 3);
 
 		// Already exists
 		assert_noop!(
-			Bridge::add_relayer(Origin::root(), RELAYER_A),
+			Bridge::add_relayer(RuntimeOrigin::root(), RELAYER_A),
 			Error::<Test>::RelayerAlreadyExists
 		);
 
 		// Confirm removal
-		assert_ok!(Bridge::remove_relayer(Origin::root(), RELAYER_B));
+		assert_ok!(Bridge::remove_relayer(RuntimeOrigin::root(), RELAYER_B));
 		assert_eq!(Bridge::relayer_count(), 2);
 		assert_noop!(
-			Bridge::remove_relayer(Origin::root(), RELAYER_B),
+			Bridge::remove_relayer(RuntimeOrigin::root(), RELAYER_B),
 			Error::<Test>::RelayerInvalid
 		);
 		assert_eq!(Bridge::relayer_count(), 2);
 
 		assert_events(vec![
-			Event::Bridge(PalletEvent::RelayerAdded(RELAYER_A)),
-			Event::Bridge(PalletEvent::RelayerAdded(RELAYER_B)),
-			Event::Bridge(PalletEvent::RelayerAdded(RELAYER_C)),
-			Event::Bridge(PalletEvent::RelayerRemoved(RELAYER_B)),
+			RuntimeEvent::Bridge(PalletEvent::RelayerAdded(RELAYER_A)),
+			RuntimeEvent::Bridge(PalletEvent::RelayerAdded(RELAYER_B)),
+			RuntimeEvent::Bridge(PalletEvent::RelayerAdded(RELAYER_C)),
+			RuntimeEvent::Bridge(PalletEvent::RelayerRemoved(RELAYER_B)),
 		]);
 	})
 }
 
-fn make_proposal(remark: Vec<u8>) -> Call {
-	Call::System(system::Call::remark { remark })
+fn make_proposal(remark: Vec<u8>) -> RuntimeCall {
+	RuntimeCall::System(system::Call::remark { remark })
 }
 
 #[test]
@@ -193,7 +193,7 @@ fn create_sucessful_proposal() {
 
 		// Create proposal (& vote)
 		assert_ok!(Bridge::acknowledge_proposal(
-			Origin::signed(RELAYER_A),
+			RuntimeOrigin::signed(RELAYER_A),
 			prop_id,
 			src_id,
 			r_id,
@@ -210,7 +210,7 @@ fn create_sucessful_proposal() {
 
 		// Second relayer votes against
 		assert_ok!(Bridge::reject_proposal(
-			Origin::signed(RELAYER_B),
+			RuntimeOrigin::signed(RELAYER_B),
 			prop_id,
 			src_id,
 			r_id,
@@ -227,7 +227,7 @@ fn create_sucessful_proposal() {
 
 		// Third relayer votes in favour
 		assert_ok!(Bridge::acknowledge_proposal(
-			Origin::signed(RELAYER_C),
+			RuntimeOrigin::signed(RELAYER_C),
 			prop_id,
 			src_id,
 			r_id,
@@ -243,11 +243,11 @@ fn create_sucessful_proposal() {
 		assert_eq!(prop, expected);
 
 		assert_events(vec![
-			Event::Bridge(PalletEvent::VoteFor(src_id, prop_id, RELAYER_A)),
-			Event::Bridge(PalletEvent::VoteAgainst(src_id, prop_id, RELAYER_B)),
-			Event::Bridge(PalletEvent::VoteFor(src_id, prop_id, RELAYER_C)),
-			Event::Bridge(PalletEvent::ProposalApproved(src_id, prop_id)),
-			Event::Bridge(PalletEvent::ProposalSucceeded(src_id, prop_id)),
+			RuntimeEvent::Bridge(PalletEvent::VoteFor(src_id, prop_id, RELAYER_A)),
+			RuntimeEvent::Bridge(PalletEvent::VoteAgainst(src_id, prop_id, RELAYER_B)),
+			RuntimeEvent::Bridge(PalletEvent::VoteFor(src_id, prop_id, RELAYER_C)),
+			RuntimeEvent::Bridge(PalletEvent::ProposalApproved(src_id, prop_id)),
+			RuntimeEvent::Bridge(PalletEvent::ProposalSucceeded(src_id, prop_id)),
 		]);
 	})
 }
@@ -263,7 +263,7 @@ fn create_unsucessful_proposal() {
 
 		// Create proposal (& vote)
 		assert_ok!(Bridge::acknowledge_proposal(
-			Origin::signed(RELAYER_A),
+			RuntimeOrigin::signed(RELAYER_A),
 			prop_id,
 			src_id,
 			r_id,
@@ -280,7 +280,7 @@ fn create_unsucessful_proposal() {
 
 		// Second relayer votes against
 		assert_ok!(Bridge::reject_proposal(
-			Origin::signed(RELAYER_B),
+			RuntimeOrigin::signed(RELAYER_B),
 			prop_id,
 			src_id,
 			r_id,
@@ -297,7 +297,7 @@ fn create_unsucessful_proposal() {
 
 		// Third relayer votes against
 		assert_ok!(Bridge::reject_proposal(
-			Origin::signed(RELAYER_C),
+			RuntimeOrigin::signed(RELAYER_C),
 			prop_id,
 			src_id,
 			r_id,
@@ -316,10 +316,10 @@ fn create_unsucessful_proposal() {
 		assert_eq!(Balances::free_balance(Bridge::account_id()), ENDOWED_BALANCE);
 
 		assert_events(vec![
-			Event::Bridge(PalletEvent::VoteFor(src_id, prop_id, RELAYER_A)),
-			Event::Bridge(PalletEvent::VoteAgainst(src_id, prop_id, RELAYER_B)),
-			Event::Bridge(PalletEvent::VoteAgainst(src_id, prop_id, RELAYER_C)),
-			Event::Bridge(PalletEvent::ProposalRejected(src_id, prop_id)),
+			RuntimeEvent::Bridge(PalletEvent::VoteFor(src_id, prop_id, RELAYER_A)),
+			RuntimeEvent::Bridge(PalletEvent::VoteAgainst(src_id, prop_id, RELAYER_B)),
+			RuntimeEvent::Bridge(PalletEvent::VoteAgainst(src_id, prop_id, RELAYER_C)),
+			RuntimeEvent::Bridge(PalletEvent::ProposalRejected(src_id, prop_id)),
 		]);
 	})
 }
@@ -335,7 +335,7 @@ fn execute_after_threshold_change() {
 
 		// Create proposal (& vote)
 		assert_ok!(Bridge::acknowledge_proposal(
-			Origin::signed(RELAYER_A),
+			RuntimeOrigin::signed(RELAYER_A),
 			prop_id,
 			src_id,
 			r_id,
@@ -351,11 +351,11 @@ fn execute_after_threshold_change() {
 		assert_eq!(prop, expected);
 
 		// Change threshold
-		assert_ok!(Bridge::set_threshold(Origin::root(), 1));
+		assert_ok!(Bridge::set_threshold(RuntimeOrigin::root(), 1));
 
 		// Attempt to execute
 		assert_ok!(Bridge::eval_vote_state(
-			Origin::signed(RELAYER_A),
+			RuntimeOrigin::signed(RELAYER_A),
 			prop_id,
 			src_id,
 			Box::new(proposal.clone())
@@ -374,10 +374,10 @@ fn execute_after_threshold_change() {
 		assert_eq!(Balances::free_balance(Bridge::account_id()), ENDOWED_BALANCE);
 
 		assert_events(vec![
-			Event::Bridge(PalletEvent::VoteFor(src_id, prop_id, RELAYER_A)),
-			Event::Bridge(PalletEvent::RelayerThresholdChanged(1)),
-			Event::Bridge(PalletEvent::ProposalApproved(src_id, prop_id)),
-			Event::Bridge(PalletEvent::ProposalSucceeded(src_id, prop_id)),
+			RuntimeEvent::Bridge(PalletEvent::VoteFor(src_id, prop_id, RELAYER_A)),
+			RuntimeEvent::Bridge(PalletEvent::RelayerThresholdChanged(1)),
+			RuntimeEvent::Bridge(PalletEvent::ProposalApproved(src_id, prop_id)),
+			RuntimeEvent::Bridge(PalletEvent::ProposalSucceeded(src_id, prop_id)),
 		]);
 	})
 }
@@ -393,7 +393,7 @@ fn proposal_expires() {
 
 		// Create proposal (& vote)
 		assert_ok!(Bridge::acknowledge_proposal(
-			Origin::signed(RELAYER_A),
+			RuntimeOrigin::signed(RELAYER_A),
 			prop_id,
 			src_id,
 			r_id,
@@ -414,7 +414,7 @@ fn proposal_expires() {
 		// Attempt to submit a vote should fail
 		assert_noop!(
 			Bridge::reject_proposal(
-				Origin::signed(RELAYER_B),
+				RuntimeOrigin::signed(RELAYER_B),
 				prop_id,
 				src_id,
 				r_id,
@@ -436,7 +436,7 @@ fn proposal_expires() {
 		// eval_vote_state should have no effect
 		assert_noop!(
 			Bridge::eval_vote_state(
-				Origin::signed(RELAYER_C),
+				RuntimeOrigin::signed(RELAYER_C),
 				prop_id,
 				src_id,
 				Box::new(proposal.clone())
@@ -452,7 +452,7 @@ fn proposal_expires() {
 		};
 		assert_eq!(prop, expected);
 
-		assert_events(vec![Event::Bridge(PalletEvent::VoteFor(src_id, prop_id, RELAYER_A))]);
+		assert_events(vec![RuntimeEvent::Bridge(PalletEvent::VoteFor(src_id, prop_id, RELAYER_A))]);
 	})
 }
 
@@ -462,8 +462,8 @@ fn transfer_fungible() {
 		let dest_id: BridgeChainId = 0;
 		let resource_id = derive_resource_id(dest_id, b"remark");
 		let dest_account: Vec<u8> = vec![1];
-		assert_ok!(Pallet::<Test>::update_fee(Origin::root(), dest_id, 10));
-		assert_ok!(Pallet::<Test>::whitelist_chain(Origin::root(), dest_id));
+		assert_ok!(Pallet::<Test>::update_fee(RuntimeOrigin::root(), dest_id, 10));
+		assert_ok!(Pallet::<Test>::whitelist_chain(RuntimeOrigin::root(), dest_id));
 		assert_ok!(Pallet::<Test>::transfer_fungible(
 			RELAYER_A,
 			dest_id,
@@ -481,11 +481,11 @@ fn transfer_fungible() {
 			ENDOWED_BALANCE - 100
 		);
 		assert_events(vec![
-			mock::Event::Balances(pallet_balances::Event::Deposit {
+			mock::RuntimeEvent::Balances(pallet_balances::Event::Deposit {
 				who: TreasuryAccount::get(),
 				amount: 10,
 			}),
-			Event::Bridge(PalletEvent::FungibleTransfer(
+			RuntimeEvent::Bridge(PalletEvent::FungibleTransfer(
 				dest_id,
 				1,
 				resource_id,
@@ -502,7 +502,7 @@ fn transfer_fungible_no_fee() {
 		let dest_id: BridgeChainId = 0;
 		let resource_id = derive_resource_id(dest_id, b"remark");
 		let dest_account: Vec<u8> = vec![1];
-		assert_ok!(Pallet::<Test>::whitelist_chain(Origin::root(), dest_id));
+		assert_ok!(Pallet::<Test>::whitelist_chain(RuntimeOrigin::root(), dest_id));
 		assert_noop!(
 			Pallet::<Test>::transfer_fungible(RELAYER_A, dest_id, resource_id, dest_account, 100,),
 			Error::<Test>::CannotPayAsFee
@@ -531,8 +531,8 @@ fn transfer_fungible_insufficient_funds_fee() {
 		let dest_account: Vec<u8> = vec![1];
 		let fee: BalanceOf<Test> = 10;
 		let transfer_amount = fee;
-		assert_ok!(Pallet::<Test>::update_fee(Origin::root(), dest_id, fee));
-		assert_ok!(Pallet::<Test>::whitelist_chain(Origin::root(), dest_id));
+		assert_ok!(Pallet::<Test>::update_fee(RuntimeOrigin::root(), dest_id, fee));
+		assert_ok!(Pallet::<Test>::whitelist_chain(RuntimeOrigin::root(), dest_id));
 		assert_noop!(
 			Pallet::<Test>::transfer_fungible(
 				RELAYER_A,
@@ -554,8 +554,8 @@ fn transfer_fungible_insufficient_free_balance() {
 		let dest_account: Vec<u8> = vec![1];
 		let fee: BalanceOf<Test> = 10;
 		let transfer_amount = 100;
-		assert_ok!(Pallet::<Test>::update_fee(Origin::root(), dest_id, fee));
-		assert_ok!(Pallet::<Test>::whitelist_chain(Origin::root(), dest_id));
+		assert_ok!(Pallet::<Test>::update_fee(RuntimeOrigin::root(), dest_id, fee));
+		assert_ok!(Pallet::<Test>::whitelist_chain(RuntimeOrigin::root(), dest_id));
 		assert_noop!(
 			Pallet::<Test>::transfer_fungible(
 				0x7,

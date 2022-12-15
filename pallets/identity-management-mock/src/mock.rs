@@ -74,8 +74,8 @@ impl system::Config for Test {
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
-	type Origin = Origin;
-	type Call = Call;
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeCall = RuntimeCall;
 	type Index = u64;
 	type BlockNumber = u64;
 	type Hash = H256;
@@ -83,7 +83,7 @@ impl system::Config for Test {
 	type AccountId = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
@@ -108,7 +108,7 @@ impl pallet_balances::Config for Test {
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
 	type Balance = Balance; // the type that is relevant to us
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type DustRemoval = ();
 	type ExistentialDeposit = ConstU128<1>;
 	type AccountStore = System;
@@ -120,7 +120,7 @@ ord_parameter_types! {
 }
 
 impl pallet_identity_management_mock::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type MaxVerificationDelay = ConstU64<10>;
 	type TEECallOrigin = EnsureSignedBy<One, u64>;
 	type DelegateeAdminOrigin = EnsureRoot<Self::AccountId>;
@@ -213,19 +213,19 @@ pub fn setup_user_shieding_key(
 	let encrpted_shielding_key = tee_encrypt(&shielding_key);
 	// whitelist caller
 	assert_ok!(IdentityManagementMock::set_user_shielding_key(
-		Origin::signed(who),
+		RuntimeOrigin::signed(who),
 		H256::random(),
 		encrpted_shielding_key.to_vec()
 	));
-	System::assert_has_event(Event::IdentityManagementMock(
+	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
 		crate::Event::UserShieldingKeySetPlain { account: who },
 	));
 	// enrypt the result
 	let key = IdentityManagementMock::user_shielding_keys(&who).unwrap();
 	let aes_encrypted_account = aes_encrypt_default(&key, who.encode().as_slice());
-	System::assert_has_event(Event::IdentityManagementMock(crate::Event::UserShieldingKeySet {
-		account: aes_encrypted_account,
-	}));
+	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
+		crate::Event::UserShieldingKeySet { account: aes_encrypted_account },
+	));
 	key
 }
 
@@ -241,33 +241,37 @@ pub fn setup_create_identity(
 		IdentityManagementMock::challenge_codes(&who, &identity),
 	);
 	assert_ok!(IdentityManagementMock::create_identity(
-		Origin::signed(who.clone()),
+		RuntimeOrigin::signed(who.clone()),
 		H256::random(),
 		who,
 		encrypted_identity.to_vec(),
 		None
 	));
-	System::assert_has_event(Event::IdentityManagementMock(crate::Event::IdentityCreatedPlain {
-		account: who,
-		identity: identity.clone(),
-		id_graph: IdentityManagementMock::get_id_graph(&who),
-	}));
+	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
+		crate::Event::IdentityCreatedPlain {
+			account: who,
+			identity: identity.clone(),
+			id_graph: IdentityManagementMock::get_id_graph(&who),
+		},
+	));
 	// encrypt the result
 	let aes_encrypted_account = aes_encrypt_default(&key, who.encode().as_slice());
 	let aes_encrypted_identity = aes_encrypt_default(&key, identity.encode().as_slice());
-	System::assert_has_event(Event::IdentityManagementMock(crate::Event::UserShieldingKeySet {
-		account: aes_encrypted_account.clone(),
-	}));
+	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
+		crate::Event::UserShieldingKeySet { account: aes_encrypted_account.clone() },
+	));
 
-	System::assert_has_event(Event::IdentityManagementMock(
+	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
 		crate::Event::ChallengeCodeGeneratedPlain { account: who, identity, code },
 	));
 	let aes_encrypted_code = aes_encrypt_default(&key, code.as_slice());
-	System::assert_has_event(Event::IdentityManagementMock(crate::Event::ChallengeCodeGenerated {
-		account: aes_encrypted_account,
-		identity: aes_encrypted_identity,
-		code: aes_encrypted_code,
-	}));
+	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
+		crate::Event::ChallengeCodeGenerated {
+			account: aes_encrypted_account,
+			identity: aes_encrypted_identity,
+			code: aes_encrypted_code,
+		},
+	));
 }
 
 pub fn setup_verify_twitter_identity(
@@ -282,7 +286,7 @@ pub fn setup_verify_twitter_identity(
 		_ => panic!("unxpected web_type"),
 	};
 	assert_ok!(IdentityManagementMock::verify_identity(
-		Origin::signed(who),
+		RuntimeOrigin::signed(who),
 		H256::random(),
 		encrypted_identity,
 		tee_encrypt(validation_data.encode().as_slice()),
@@ -309,7 +313,7 @@ pub fn setup_verify_polkadot_identity(
 		validation_data.encode().as_slice().len()
 	);
 	assert_ok!(IdentityManagementMock::verify_identity(
-		Origin::signed(who),
+		RuntimeOrigin::signed(who),
 		H256::random(),
 		encrypted_identity,
 		tee_encrypt(validation_data.encode().as_slice()),
@@ -331,7 +335,7 @@ pub fn setup_verify_eth_identity(
 		_ => panic!("unxpected web_type"),
 	};
 	assert_ok!(IdentityManagementMock::verify_identity(
-		Origin::signed(who),
+		RuntimeOrigin::signed(who),
 		H256::random(),
 		encrypted_identity,
 		tee_encrypt(validation_data.encode().as_slice()),

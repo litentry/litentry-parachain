@@ -15,11 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use codec::{Decode, Encode};
-use frame_support::{
-	assert_noop, assert_ok,
-	pallet_prelude::Weight,
-	traits::{VestingSchedule, WrapperKeepOpaque},
-};
+use frame_support::{assert_noop, assert_ok, pallet_prelude::Weight, traits::VestingSchedule};
 use frame_system::RawOrigin;
 use sp_runtime::traits::Dispatchable;
 
@@ -31,7 +27,6 @@ use crate::{
 	BaseRuntimeRequirements,
 };
 
-type OpaqueCall<R> = WrapperKeepOpaque<<R as pallet_multisig::Config>::Call>;
 type ExtrinsicFilter<R> = pallet_extrinsic_filter::Pallet<R>;
 type System<R> = frame_system::Pallet<R>;
 type Balances<R> = pallet_balances::Pallet<R>;
@@ -45,16 +40,16 @@ pub fn default_mode<R: BaseRuntimeRequirements>() {
 }
 
 pub fn multisig_enabled<
-	R: BaseRuntimeRequirements,
+	R: BaseRuntimeRequirements + pallet_multisig::Config<RuntimeCall = Call>,
 	Origin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
 	Call: Clone
-		+ Dispatchable<Origin = Origin>
+		+ Dispatchable<RuntimeOrigin = Origin>
 		+ From<pallet_multisig::Call<R>>
 		+ From<frame_system::Call<R>>
 		+ Encode,
 >()
 where
-	<R as frame_system::Config>::Call: Decode,
+	<R as frame_system::Config>::RuntimeCall: Decode,
 	<<R as frame_system::Config>::Lookup as sp_runtime::traits::StaticLookup>::Source:
 		From<sp_runtime::AccountId32>,
 	<Call as Dispatchable>::PostInfo: sp_std::fmt::Debug + Default,
@@ -64,14 +59,14 @@ where
 		.build()
 		.execute_with(|| {
 			let _ = Multisig::<R>::multi_account_id(&[alice(), bob(), charlie()][..], 2);
-			let remark_call: Call = frame_system::Call::remark { remark: vec![] }.into();
-			let data = remark_call.encode();
+			let remark_call = frame_system::Call::remark { remark: vec![] }.into();
+			// let data = remark_call.encode();
+			let call = Box::new(remark_call);
 			let multisig_call: Call = pallet_multisig::Call::as_multi {
 				threshold: 2,
 				other_signatories: vec![bob(), charlie()],
 				maybe_timepoint: None,
-				call: OpaqueCall::<R>::from_encoded(data),
-				store_call: false,
+				call,
 				max_weight: Weight::zero(),
 			}
 			.into();
@@ -82,7 +77,7 @@ where
 pub fn balance_transfer_works<
 	R: BaseRuntimeRequirements,
 	Origin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
-	Call: Clone + Dispatchable<Origin = Origin> + From<pallet_balances::Call<R>> + Encode,
+	Call: Clone + Dispatchable<RuntimeOrigin = Origin> + From<pallet_balances::Call<R>> + Encode,
 >()
 where
 	<<R as frame_system::Config>::Lookup as sp_runtime::traits::StaticLookup>::Source:
@@ -103,7 +98,7 @@ where
 pub fn balance_transfer_disabled<
 	R: BaseRuntimeRequirements,
 	Origin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
-	Call: Clone + Dispatchable<Origin = Origin> + From<pallet_balances::Call<R>> + Encode,
+	Call: Clone + Dispatchable<RuntimeOrigin = Origin> + From<pallet_balances::Call<R>> + Encode,
 >()
 where
 	<<R as frame_system::Config>::Lookup as sp_runtime::traits::StaticLookup>::Source:
@@ -126,7 +121,7 @@ where
 pub fn balance_transfer_with_sudo_works<
 	R: BaseRuntimeRequirements,
 	Origin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
-	Call: Clone + Dispatchable<Origin = Origin> + From<pallet_balances::Call<R>> + Encode,
+	Call: Clone + Dispatchable<RuntimeOrigin = Origin> + From<pallet_balances::Call<R>> + Encode,
 >()
 where
 	<<R as frame_system::Config>::Lookup as sp_runtime::traits::StaticLookup>::Source:
@@ -150,9 +145,9 @@ where
 }
 
 pub fn block_core_call_has_no_effect<
-	R: BaseRuntimeRequirements + frame_system::Config<Origin = Origin>,
+	R: BaseRuntimeRequirements + frame_system::Config<RuntimeOrigin = Origin>,
 	Origin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
-	Call: Clone + Dispatchable<Origin = Origin> + From<frame_system::Call<R>> + Encode,
+	Call: Clone + Dispatchable<RuntimeOrigin = Origin> + From<frame_system::Call<R>> + Encode,
 >()
 where
 	<<R as frame_system::Config>::Lookup as sp_runtime::traits::StaticLookup>::Source:
@@ -186,10 +181,10 @@ where
 
 pub fn block_non_core_call_works<
 	R: BaseRuntimeRequirements
-		+ frame_system::Config<Origin = Origin>
+		+ frame_system::Config<RuntimeOrigin = Origin>
 		+ pallet_vesting::Config<Currency = Balances<R>>,
 	Origin: frame_support::traits::OriginTrait<AccountId = AccountId> + From<RawOrigin<AccountId>>,
-	Call: Clone + Dispatchable<Origin = Origin> + From<pallet_vesting::Call<R>>,
+	Call: Clone + Dispatchable<RuntimeOrigin = Origin> + From<pallet_vesting::Call<R>>,
 >()
 where
 	<<R as frame_system::Config>::Lookup as sp_runtime::traits::StaticLookup>::Source:
@@ -249,22 +244,24 @@ macro_rules! run_call_filter_tests {
 
 		#[test]
 		fn multisig_enabled() {
-			base_call_filter::multisig_enabled::<Runtime, Origin, Call>();
+			base_call_filter::multisig_enabled::<Runtime, RuntimeOrigin, RuntimeCall>();
 		}
 
 		#[test]
 		fn balance_transfer_with_sudo_works() {
-			base_call_filter::balance_transfer_with_sudo_works::<Runtime, Origin, Call>();
+			base_call_filter::balance_transfer_with_sudo_works::<Runtime, RuntimeOrigin, RuntimeCall>(
+			);
 		}
 
 		#[test]
 		fn block_core_call_has_no_effect() {
-			base_call_filter::block_core_call_has_no_effect::<Runtime, Origin, Call>();
+			base_call_filter::block_core_call_has_no_effect::<Runtime, RuntimeOrigin, RuntimeCall>(
+			);
 		}
 
 		#[test]
 		fn block_non_core_call_works() {
-			base_call_filter::block_non_core_call_works::<Runtime, Origin, Call>();
+			base_call_filter::block_non_core_call_works::<Runtime, RuntimeOrigin, RuntimeCall>();
 		}
 	};
 }

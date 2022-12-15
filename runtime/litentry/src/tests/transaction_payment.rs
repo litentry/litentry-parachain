@@ -16,7 +16,7 @@
 
 use runtime_common::tests::transaction_payment;
 
-use crate::{Call, Origin, Runtime, TransactionByteFee};
+use crate::{RuntimeCall, RuntimeOrigin, Runtime, TransactionByteFee};
 
 #[test]
 fn multiplier_can_grow_from_zero() {
@@ -25,5 +25,5 @@ fn multiplier_can_grow_from_zero() {
 
 #[test]
 fn transaction_payment_works() {
-	transaction_payment::transaction_payment_works::<Runtime, TransactionByteFee, Origin, Call>();
+	transaction_payment::transaction_payment_works::<Runtime, TransactionByteFee, RuntimeOrigin, RuntimeCall>();
 }

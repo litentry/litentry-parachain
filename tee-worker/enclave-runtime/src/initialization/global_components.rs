@@ -29,7 +29,7 @@ use crate::{
 	tls_ra::seal_handler::SealHandler,
 };
 use ita_sgx_runtime::Runtime;
-use ita_stf::{Getter, Hash, State as StfState, Stf, TrustedCallSigned};
+use ita_stf::{Getter, State as StfState, Stf, TrustedCallSigned};
 use itc_direct_rpc_server::{
 	rpc_connection_registry::ConnectionRegistry, rpc_responder::RpcResponder,
 	rpc_watch_extractor::RpcWatchExtractor, rpc_ws_handler::RpcWsHandler,
@@ -49,18 +49,18 @@ use itc_parentchain::{
 use itc_tls_websocket_server::{
 	config_provider::FromFileConfigProvider, ws_server::TungsteniteWsServer, ConnectionToken,
 };
-use itp_attestation_handler::IasAttestationHandler;
+use itp_attestation_handler::IntelAttestationHandler;
 use itp_block_import_queue::BlockImportQueue;
 use itp_component_container::ComponentContainer;
 use itp_extrinsics_factory::ExtrinsicsFactory;
 use itp_node_api::metadata::{provider::NodeMetadataRepository, NodeMetadata};
 use itp_nonce_cache::NonceCache;
 use itp_sgx_crypto::{key_repository::KeyRepository, Aes, AesSeal, Rsa3072Seal};
-use itp_sgx_externalities::SgxExternalities;
 use itp_stf_executor::{
 	enclave_signer::StfEnclaveSigner, executor::StfExecutor, getter_executor::GetterExecutor,
 	state_getter::StfStateGetter,
 };
+use itp_stf_primitives::types::Hash;
 use itp_stf_state_handler::{
 	file_io::sgx::SgxStateFileIo, state_initializer::StateInitializer,
 	state_snapshot_repository::StateSnapshotRepository, StateHandler,
@@ -80,7 +80,6 @@ use its_sidechain::{
 	aura::block_importer::BlockImporter as SidechainBlockImporter,
 	block_composer::BlockComposer,
 	consensus_common::{BlockImportConfirmationHandler, BlockImportQueueWorker, PeerBlockSync},
-	state::SidechainDB,
 };
 use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
 use sp_core::ed25519::Pair;
@@ -109,7 +108,7 @@ pub type EnclaveStfEnclaveSigner = StfEnclaveSigner<
 	EnclaveStf,
 	EnclaveTopPoolAuthor,
 >;
-pub type EnclaveAttestationHandler = IasAttestationHandler<EnclaveOCallApi>;
+pub type EnclaveAttestationHandler = IntelAttestationHandler<EnclaveOCallApi>;
 
 pub type EnclaveRpcConnectionRegistry = ConnectionRegistry<Hash, ConnectionToken>;
 pub type EnclaveRpcWsHandler =
@@ -152,8 +151,6 @@ pub type EnclaveParentchainBlockImportDispatcher = BlockImportDispatcher<
 >;
 
 /// Sidechain types
-pub type EnclaveSidechainState =
-	SidechainDB<<SignedSidechainBlock as SignedSidechainBlockTrait>::Block, SgxExternalities>;
 pub type EnclaveTopPool = BasicPool<EnclaveSidechainApi, ParentchainBlock, EnclaveRpcResponder>;
 
 pub type EnclaveTopPoolAuthor = Author<
@@ -170,7 +167,6 @@ pub type EnclaveSidechainBlockImporter = SidechainBlockImporter<
 	ParentchainBlock,
 	SignedSidechainBlock,
 	EnclaveOCallApi,
-	EnclaveSidechainState,
 	EnclaveStateHandler,
 	EnclaveStateKeyRepository,
 	EnclaveTopPoolAuthor,

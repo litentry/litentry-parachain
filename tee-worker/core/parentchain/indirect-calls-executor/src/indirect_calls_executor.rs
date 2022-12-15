@@ -25,7 +25,7 @@ use beefy_merkle_tree::{merkle_root, Keccak256};
 use codec::{Decode, Encode};
 use futures::executor;
 use ita_sgx_runtime::{pallet_imt::MetadataOf, Runtime};
-use ita_stf::{AccountId, TrustedCall, TrustedOperation};
+use ita_stf::{TrustedCall, TrustedOperation};
 use itp_node_api::{
 	api_client::ParentchainUncheckedExtrinsic,
 	metadata::{
@@ -34,6 +34,7 @@ use itp_node_api::{
 };
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::StfEnclaveSigning;
+use itp_stf_primitives::types::AccountId;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{CallWorkerFn, OpaqueCall, ShardIdentifier, ShieldFundsFn, H256};
 use litentry_primitives::{Identity, UserShieldingKeyType, ValidationData};
@@ -163,7 +164,7 @@ where
 			meta_data.confirm_processed_parentchain_block_call_indexes()
 		})??;
 
-		let root: H256 = merkle_root::<Keccak256, _, _>(extrinsics).into();
+		let root: H256 = merkle_root::<Keccak256, _>(extrinsics);
 		Ok(OpaqueCall::from_tuple(&(call, block_hash, block_number, root)))
 	}
 

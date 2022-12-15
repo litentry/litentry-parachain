@@ -81,7 +81,7 @@ benchmarks! {
 	set_maximum_issuance{
 		let origin = T::SetMaximumIssuanceOrigin::successful_origin();
 		let maximum_issuance:balance<T> = 2u32.into();
-	}:_<T::Origin>(origin,maximum_issuance)
+	}:_<T::RuntimeOrigin>(origin,maximum_issuance)
 	verify{
 		assert_eq!(MaximumIssuance::<T>::get(),maximum_issuance);
 	}

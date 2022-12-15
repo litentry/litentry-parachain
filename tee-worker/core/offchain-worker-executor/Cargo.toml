@@ -28,13 +28,14 @@ itp-top-pool-author = { path = "../../core-primitives/top-pool-author", default-
 itp-types = { path = "../../core-primitives/types", default-features = false }
 
 # Substrate dependencies
-sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.29" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.29" }
+sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
 
 # no-std compatible libraries
 log = { version = "0.4", default-features = false }
 
 [dev-dependencies]
+itp-stf-primitives = { path = "../../core-primitives/stf-primitives", default-features = false }
 codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive"] }
 ita-stf = { path = "../../app-libs/stf" }
 itc-parentchain-light-client = { path = "../../core/parentchain/light-client", features = ["mocks"] }

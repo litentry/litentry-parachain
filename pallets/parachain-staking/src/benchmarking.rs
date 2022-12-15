@@ -30,7 +30,7 @@ use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::traits::{Currency, Get, OnFinalize, OnInitialize, ReservableCurrency};
 use frame_system::RawOrigin;
 use pallet_authorship::EventHandler;
-use sp_runtime::{Perbill, Percent};
+use sp_runtime::{Perbill, Percent, Saturating};
 use sp_std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 
 /// Minimum collator candidate stake
@@ -108,7 +108,8 @@ fn roll_to_and_author<T: Config>(round_delay: u32, author: T::AccountId) {
 		now += 1u32.into();
 	}
 }
-fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
+
+fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	frame_system::Pallet::<T>::assert_last_event(generic_event.into());
 }
 
@@ -224,9 +225,11 @@ benchmarks! {
 		assert_eq!(Pallet::<T>::total_selected(), 100u32);
 	}
 
-	set_collator_commission {}: _(RawOrigin::Root, Perbill::from_percent(33))
+	set_collator_commission {
+		let new_perbill = <T as Config>::DefaultCollatorCommission::get().saturating_add(Perbill::from_percent(1));
+	}: _(RawOrigin::Root, new_perbill)
 	verify {
-		assert_eq!(Pallet::<T>::collator_commission(), Perbill::from_percent(33));
+		assert_eq!(Pallet::<T>::collator_commission(), new_perbill);
 	}
 
 	set_blocks_per_round {}: _(RawOrigin::Root, 1200u32)
@@ -780,6 +783,7 @@ benchmarks! {
 		);
 	}
 
+
 	cancel_delegator_bond_less {
 		let collator: T::AccountId = create_funded_collator::<T>(
 			"collator",
@@ -816,12 +820,11 @@ benchmarks! {
 	}
 
 	// ON_INITIALIZE
-
 	round_transition_on_initialize {
 		// TOTAL SELECTED COLLATORS PER ROUND
 		let x in 8..100;
 		// DELEGATIONS
-		let y in 0..(<<T as Config>::MaxTopDelegationsPerCandidate as Get<u32>>::get() * 100);
+		let y in 0..(<<T as Config>::MaxTopDelegationsPerCandidate as Get<u32>>::get() * 5);
 		let max_delegators_per_collator=
 			<<T as Config>::MaxTopDelegationsPerCandidate as Get<u32>>::get();
 		let max_delegations = x * max_delegators_per_collator;
@@ -930,7 +933,7 @@ benchmarks! {
 		// SET collators as authors for blocks from now - end
 		while now < end {
 			let author = collators[counter % collators.len()].clone();
-			Pallet::<T>::note_author(author);
+			Pallet::<T>::note_author(author.clone());
 			<frame_system::Pallet<T>>::on_finalize(<frame_system::Pallet<T>>::block_number());
 			<frame_system::Pallet<T>>::set_block_number(
 				<frame_system::Pallet<T>>::block_number() + 1u32.into()
