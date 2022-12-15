@@ -151,7 +151,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: check-file-change
     if: needs.check-file-change.outputs.src == 'true'
-    container: "integritee/integritee-dev:0.1.9"
+    container: "integritee/integritee-dev:0.1.10"
     steps:
       - uses: actions/checkout@v3
       - name: init rust

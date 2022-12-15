@@ -42,7 +42,7 @@ export async function createIdentity(
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString("hex");
     const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
     await context.substrate.tx.identityManagement
-        .createIdentity(context.shard, `0x${ciphertext}`, null)
+        .createIdentity(context.shard, signer.address, `0x${ciphertext}`, null)
         .signAndSend(signer, { nonce });
     if (listening) {
         const event = await listenEncryptedEvents(context, aesKey, {

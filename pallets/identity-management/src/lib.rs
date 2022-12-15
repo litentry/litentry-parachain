@@ -47,12 +47,6 @@ pub use pallet::*;
 pub use primitives::{AesOutput, ShardIdentifier};
 use sp_std::vec::Vec;
 
-// fn types for handling inside tee-worker
-pub type SetUserShieldingKeyFn = ([u8; 2], ShardIdentifier, Vec<u8>);
-pub type CreateIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>, Option<Vec<u8>>);
-pub type RemoveIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>);
-pub type VerifyIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>, Vec<u8>);
-
 #[frame_support::pallet]
 pub mod pallet {
 	use super::{AesOutput, ShardIdentifier, Vec, WeightInfo};

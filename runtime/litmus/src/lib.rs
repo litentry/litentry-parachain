@@ -798,6 +798,7 @@ impl pallet_identity_management::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = ();
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
+	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
 }
 
 ord_parameter_types! {
