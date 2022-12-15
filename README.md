@@ -54,8 +54,6 @@ A standalone node will be launched without relaychain, where blocks are finalise
 
 The following steps take rococo-parachain for example, because `sudo` will be removed for litentry-parachain and [was removed](https://github.com/litentry/litentry-parachain/issues/775) for litmus-parachain. But generally speaking, lauching a local network works with either of the three chain-settings.
 
-The following steps take rococo-parachain for example, because `sudo` will be removed for litentry-parachain and [was removed](https://github.com/litentry/litentry-parachain/issues/775) for litmus-parachain. But generally speaking, lauching a local network works with either of the three chain-settings.
-
 To start a local network with 2 relaychain nodes and 1 parachain node, there're two ways:
 
 ### 1. use docker images for both polkadot and parachain (preferred)
