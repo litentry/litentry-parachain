@@ -78,7 +78,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 pub use pallet::*;
-use sp_std::{prelude::*, vec::Vec};
+use sp_std::prelude::*;
 
 use scale_info::TypeInfo;
 pub use weights::WeightInfo;
@@ -115,15 +115,15 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// The overarching event type.
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The priviledged origin to perform all operations
-		type UpdateOrigin: EnsureOrigin<Self::Origin>;
+		type UpdateOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		/// Filters that will be specified in runtime binding
-		type NormalModeFilter: Contains<Self::Call>;
-		type SafeModeFilter: Contains<Self::Call>;
-		type TestModeFilter: Contains<Self::Call>;
+		type NormalModeFilter: Contains<Self::RuntimeCall>;
+		type SafeModeFilter: Contains<Self::RuntimeCall>;
+		type TestModeFilter: Contains<Self::RuntimeCall>;
 
 		/// Weights
 		type WeightInfo: WeightInfo;
@@ -254,11 +254,11 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> Contains<T::Call> for Pallet<T>
+	impl<T: Config> Contains<T::RuntimeCall> for Pallet<T>
 	where
-		<T as frame_system::Config>::Call: GetCallMetadata,
+		<T as frame_system::Config>::RuntimeCall: GetCallMetadata,
 	{
-		fn contains(call: &T::Call) -> bool {
+		fn contains(call: &T::RuntimeCall) -> bool {
 			let allowed_by_mode = match Self::mode() {
 				OperationalMode::Normal => T::NormalModeFilter::contains(call),
 				OperationalMode::Safe => T::SafeModeFilter::contains(call),

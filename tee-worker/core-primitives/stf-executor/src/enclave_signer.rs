@@ -22,11 +22,12 @@ use crate::{
 };
 use core::marker::PhantomData;
 use ita_sgx_runtime::Index;
-use ita_stf::{AccountId, KeyPair, TrustedCall, TrustedCallSigned, TrustedOperation};
+use ita_stf::{TrustedCall, TrustedCallSigned, TrustedOperation};
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::{ed25519_derivation::DeriveEd25519, key_repository::AccessKey};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_interface::system_pallet::SystemPalletAccountInterface;
+use itp_stf_primitives::types::{AccountId, KeyPair};
 use itp_stf_state_observer::traits::ObserveState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::ShardIdentifier;

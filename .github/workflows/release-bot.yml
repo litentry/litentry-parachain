@@ -1,0 +1,52 @@
+name: 'Release bot'
+on:
+  release:
+    types: [released]
+
+jobs:
+  release-bot:
+    runs-on: ubuntu-latest
+    # this means the release contains a new docker image (thus a new client)
+    if: contains(github.event.release.body, 'litentry/litentry-parachain:v')
+    steps:
+      - name: Post discord message
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.RELEASE_BOT_DISCORD_WEBHOOK }}
+        uses: Ilshidur/action-discord@0.3.2
+        continue-on-error: true
+        with:
+          args: |
+            Hi @everyone,
+            🚀 A new client release has been built: https://github.com/litentry/litentry-parachain/releases/tag/${{ github.event.release.tag_name }}
+            ✨ Please update the client using the docker image litentry/litentry-parachain:${{ github.event.release.tag_name }}
+
+      - name: Update litmus image version
+        uses: "OnFinality-io/action-onf-release@v1"
+        continue-on-error: true
+        with:
+          # These keys should be in your GitHub secrets
+          # https://documentation.onfinality.io/support/onfinality-cli-tool-and-access-keys
+          onf-access-key: ${{ secrets.ONF_ACCESS_KEY }}
+          onf-secret-key: ${{ secrets.ONF_SECRET_KEY }}
+          onf-workspace-id: ${{ secrets.ONF_WORKSPACE_ID }}
+          onf-network-key: litmus-onfinality-key
+          # Add a new image version to network spec
+          onf-sub-command: image
+          onf-action: add
+          image-version: ${{ github.event.release.tag_name }}
+
+      - name: Update litentry image version
+        uses: "OnFinality-io/action-onf-release@v1"
+        continue-on-error: true
+        with:
+          # These keys should be in your GitHub secrets
+          # https://documentation.onfinality.io/support/onfinality-cli-tool-and-access-keys
+          onf-access-key: ${{ secrets.ONF_ACCESS_KEY }}
+          onf-secret-key: ${{ secrets.ONF_SECRET_KEY }}
+          onf-workspace-id: ${{ secrets.ONF_WORKSPACE_ID }}
+          onf-network-key: litentry
+          # Add a new image version to network spec
+          onf-sub-command: image
+          onf-action: add
+          image-version: ${{ github.event.release.tag_name }}
+

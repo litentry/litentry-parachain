@@ -139,9 +139,9 @@ where
 						Error::OtherError(format!("error decoding ShardIdentifier {:?}", e))
 					})?;
 
-				let mut state = context
+				let (mut state, _) = context
 					.state_handler
-					.load(&shard)
+					.load_cloned(&shard)
 					.map_err(|e| Error::OtherError(format!("load state failed: {:?}", e)))?;
 
 				let key =
