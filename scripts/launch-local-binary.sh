@@ -12,7 +12,7 @@
 function usage() {
   echo
   echo "Usage:   $0 litentry|litmus|rococo [path-to-polkadot-bin] [path-to-litentry-collator]"
-  echo "Default: polkadot bin from parity/polkadot:latest image"
+  echo "Default: polkadot bin from the latest official release"
   echo "         litentry-collator bin from litentry/litentry-parachain:latest image"
   echo "         both are of Linux verion"
 }
@@ -39,9 +39,20 @@ print_divider
 
 if [ -z "$POLKADOT_BIN" ]; then
   echo "no polkadot binary provided, download now ..."
-  docker pull parity/polkadot
-  docker cp $(docker create --rm parity/polkadot):/usr/bin/polkadot "$TMPDIR/"
+  # TODO: find a way to get stable download link
+  # https://api.github.com/repos/paritytech/polkadot/releases/latest is not reliable as
+  # polkadot could publish release which has no binary
+  #
+  # TODO: v0.9.33 isn't working, see issue #1097
+  url="https://github.com/paritytech/polkadot/releases/download/v0.9.32/polkadot"
   POLKADOT_BIN="$TMPDIR/polkadot"
+  wget -O "$POLKADOT_BIN" -q "$url"
+  chmod a+x "$POLKADOT_BIN"
+fi
+
+if [ ! -s "$POLKADOT_BIN" ]; then
+  echo "$POLKADOT_BIN is 0 bytes, download URL: $url"
+  exit 1
 fi
 
 if ! "$POLKADOT_BIN" --version &> /dev/null; then
