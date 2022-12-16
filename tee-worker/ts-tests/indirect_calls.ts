@@ -9,6 +9,7 @@ import { KeyringPair } from "@polkadot/keyring/types";
 import { HexString } from "@polkadot/util/types";
 import { generateChallengeCode } from "./web3/setup";
 import {ApiPromise} from "@polkadot/api";
+
 export async function setUserShieldingKey(
     context: IntegrationTestContext,
     signer: KeyringPair,
@@ -55,7 +56,6 @@ export async function createIdentity(
     }
     return undefined;
 }
-
 
 export async function removeIdentity(
     context: IntegrationTestContext,

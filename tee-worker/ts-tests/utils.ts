@@ -108,10 +108,7 @@ export async function initIntegrationTestContext(
     if (shard == "") {
         throw new Error("shard not found");
     }
-    // random shard for testing
-    // let shard = randomAsHex(32);
 
-    // const endpoint = "wss://localhost:2000"
     const wsp = new WebSocketAsPromised(workerEndpoint, <Options>(<unknown>{
         createWebSocket: (url: any) => new WebSocket(url),
         extractMessageData: (event: any) => event,
@@ -191,7 +188,6 @@ export async function listenEncryptedEvents(
                         );
                     })
                     .forEach(({ event }) => {
-                        // const eventData = event.data as AESOutput;
                         const data = event.data as AESOutput[];
                         const eventData: HexString[] = [];
                         for (let i = 0; i < data.length; i++) {
@@ -205,25 +201,6 @@ export async function listenEncryptedEvents(
         });
     });
 }
-
-// export function encryptWithAES(key: HexString, plaintext: HexString): [Buffer, Buffer, Buffer] {
-//     console.log("plaintext: ", plaintext)
-//     const iv = new Buffer(crypto.randomBytes(12), 'utf8');
-//     const secretKey = crypto.createSecretKey(hexToU8a(key))
-//     console.log(secretKey)
-//     const cipher = crypto.createCipheriv('aes-256-gcm', secretKey, iv);
-//     cipher.setAAD(Buffer.from('', 'hex'))
-//     let enc1 = cipher.update(hexToU8a(plaintext));
-//     let enc2 = cipher.final();
-//     console.log('111', enc1.toString('hex'), enc2.toString('hex'))
-//
-//     const decipher = crypto.createDecipheriv('aes-256-gcm', secretKey, iv);
-//     decipher.setAuthTag(cipher.getAuthTag())
-//     console.log(decipher.update(enc1).toString('hex'))
-//     console.log(decipher.final().toString('hex'))
-//     console.log(`0x${iv.toString('hex')}`)
-//     return [Buffer.concat([enc1, enc2]), iv, cipher.getAuthTag()];
-// }
 
 export function decryptWithAES(key: HexString, aesOutput: AESOutput): HexString {
     const secretKey = crypto.createSecretKey(hexToU8a(key));
@@ -292,7 +269,6 @@ export function encryptWithTeeShieldingKey(
 }
 
 //<challeng-code> + <litentry-AccountId32> + <Identity>
-
 export function generateVerificationMessage(
     context: IntegrationTestContext,
     challengeCode: Uint8Array,
@@ -301,7 +277,6 @@ export function generateVerificationMessage(
 ): HexString {
     const encode = context.substrate.createType("LitentryIdentity", identity).toU8a();
     const msg = Buffer.concat([challengeCode, signerAddress, encode]);
-    // return encryptWithTeeShieldingKey(context.teeShieldingKey, `0x${msg.toString('hex')}`)
     return blake2AsHex(msg, 256);
 }
 
