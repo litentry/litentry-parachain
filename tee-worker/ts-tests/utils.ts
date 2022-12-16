@@ -1,9 +1,9 @@
-import "./config";
-import WebSocketAsPromised = require("websocket-as-promised");
-import WebSocket = require("ws");
-import Options from "websocket-as-promised/types/options";
-import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
-import { StorageKey, Vec } from "@polkadot/types";
+import './config';
+import WebSocketAsPromised = require('websocket-as-promised');
+import WebSocket = require('ws');
+import Options from 'websocket-as-promised/types/options';
+import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
+import { StorageKey, Vec } from '@polkadot/types';
 import {
     AESOutput,
     IntegrationTestContext,
@@ -12,27 +12,27 @@ import {
     teeTypes,
     WorkerRpcReturnString,
     WorkerRpcReturnValue,
-} from "./type-definitions";
-import { blake2AsHex, cryptoWaitReady } from "@polkadot/util-crypto";
-import { KeyringPair } from "@polkadot/keyring/types";
-import { Codec } from "@polkadot/types/types";
+} from './type-definitions';
+import { blake2AsHex, cryptoWaitReady } from '@polkadot/util-crypto';
+import { KeyringPair } from '@polkadot/keyring/types';
+import { Codec } from '@polkadot/types/types';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
-import { HexString } from "@polkadot/util/types";
-import { hexToU8a, u8aToHex } from "@polkadot/util";
-import { KeyObject } from "crypto";
-import { EventRecord } from "@polkadot/types/interfaces";
-import { after, before, describe } from "mocha";
-import { randomAsHex } from "@polkadot/util-crypto";
-import { generateChallengeCode, getSigner } from "./web3/setup";
-import { ethers } from "ethers";
-import { Web3Provider } from "@ethersproject/providers";
-import { generateTestKeys } from "./web3/functions";
+import { HexString } from '@polkadot/util/types';
+import { hexToU8a, u8aToHex } from '@polkadot/util';
+import { KeyObject } from 'crypto';
+import { EventRecord } from '@polkadot/types/interfaces';
+import { after, before, describe } from 'mocha';
+import { randomAsHex } from '@polkadot/util-crypto';
+import { generateChallengeCode, getSigner } from './web3/setup';
+import { ethers } from 'ethers';
+import { Web3Provider } from '@ethersproject/providers';
+import { generateTestKeys } from './web3/functions';
 
-const base58 = require("micro-base58");
-const crypto = require("crypto");
+const base58 = require('micro-base58');
+const crypto = require('crypto');
 // in order to handle self-signed certificates we need to turn off the validation
 // TODO add self signed certificate ??
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 export function sleep(secs: number) {
     return new Promise((resolve) => {
@@ -46,34 +46,27 @@ export async function sendRequest(
     api: ApiPromise
 ): Promise<WorkerRpcReturnValue> {
     const resp = await wsClient.sendRequest(request, { requestId: 1, timeout: 6000 });
-    const resp_json = api
-        .createType("WorkerRpcReturnValue", resp.result)
-        .toJSON() as WorkerRpcReturnValue;
+    const resp_json = api.createType('WorkerRpcReturnValue', resp.result).toJSON() as WorkerRpcReturnValue;
     return resp_json;
 }
 
-export async function getTEEShieldingKey(
-    wsClient: WebSocketAsPromised,
-    api: ApiPromise
-): Promise<KeyObject> {
-    let request = { jsonrpc: "2.0", method: "author_getShieldingKey", params: [], id: 1 };
+export async function getTEEShieldingKey(wsClient: WebSocketAsPromised, api: ApiPromise): Promise<KeyObject> {
+    let request = { jsonrpc: '2.0', method: 'author_getShieldingKey', params: [], id: 1 };
     let respJSON = await sendRequest(wsClient, request, api);
 
-    const pubKeyHex = api
-        .createType("WorkerRpcReturnString", respJSON.value)
-        .toJSON() as WorkerRpcReturnString;
-    let chunk = Buffer.from(pubKeyHex.vec.slice(2), "hex");
-    let pubKeyJSON = JSON.parse(chunk.toString("utf-8")) as PubicKeyJson;
+    const pubKeyHex = api.createType('WorkerRpcReturnString', respJSON.value).toJSON() as WorkerRpcReturnString;
+    let chunk = Buffer.from(pubKeyHex.vec.slice(2), 'hex');
+    let pubKeyJSON = JSON.parse(chunk.toString('utf-8')) as PubicKeyJson;
 
     return crypto.createPublicKey({
         key: {
-            alg: "RSA-OAEP-256",
-            kty: "RSA",
-            use: "enc",
-            n: Buffer.from(pubKeyJSON.n.reverse()).toString("base64url"),
-            e: Buffer.from(pubKeyJSON.e.reverse()).toString("base64url"),
+            alg: 'RSA-OAEP-256',
+            kty: 'RSA',
+            use: 'enc',
+            n: Buffer.from(pubKeyJSON.n.reverse()).toString('base64url'),
+            e: Buffer.from(pubKeyJSON.e.reverse()).toString('base64url'),
         },
-        format: "jwk",
+        format: 'jwk',
     });
 }
 
@@ -98,15 +91,15 @@ export async function initIntegrationTestContext(
     });
     await cryptoWaitReady();
     const keys = (await api.query.sidechain.workerForShard.entries()) as [StorageKey, Codec][];
-    let shard = "";
+    let shard = '';
     for (let i = 0; i < keys.length; i++) {
         //TODO shard may be different from mr_enclave. The default value of shard is mr_enclave
         shard = keys[i][0].args[0].toHex();
-        console.log("query worker shard: ", shard);
+        console.log('query worker shard: ', shard);
         break;
     }
-    if (shard == "") {
-        throw new Error("shard not found");
+    if (shard == '') {
+        throw new Error('shard not found');
     }
 
     const wsp = new WebSocketAsPromised(workerEndpoint, <Options>(<unknown>{
@@ -114,8 +107,7 @@ export async function initIntegrationTestContext(
         extractMessageData: (event: any) => event,
         packMessage: (data: any) => JSON.stringify(data),
         unpackMessage: (data: string | ArrayBuffer | Blob) => JSON.parse(data.toString()),
-        attachRequestId: (data: any, requestId: string | number) =>
-            Object.assign({ id: requestId }, data),
+        attachRequestId: (data: any, requestId: string | number) => Object.assign({ id: requestId }, data),
         extractRequestId: (data: any) => data && data.id, // read requestId from message `id` field
     }));
     await wsp.open();
@@ -135,7 +127,7 @@ export async function initIntegrationTestContext(
 export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrinsic<ApiTypes>, signer: KeyringPair) {
     return new Promise<{ block: string }>(async (resolve, reject) => {
         const nonce = await api.rpc.system.accountNextIndex(signer.address);
-        await tx.signAndSend(signer, {nonce}, (result) => {
+        await tx.signAndSend(signer, { nonce }, (result) => {
             if (result.status.isInBlock) {
                 console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
                 resolve({
@@ -160,22 +152,15 @@ export async function listenEncryptedEvents(
             const currentBlockNumber = header.number.toNumber();
             if (startBlock == 0) startBlock = currentBlockNumber;
             if (currentBlockNumber > startBlock + timeout) {
-                reject("timeout");
+                reject('timeout');
                 return;
             }
             console.log(`Chain is at block: #${header.number}`);
             const signedBlock = await context.substrate.rpc.chain.getBlock(header.hash);
 
-            const allEvents = (await context.substrate.query.system.events.at(
-                header.hash
-            )) as Vec<EventRecord>;
+            const allEvents = (await context.substrate.query.system.events.at(header.hash)) as Vec<EventRecord>;
             signedBlock.block.extrinsics.forEach((ex, index) => {
-                if (
-                    !(
-                        ex.method.section === filterObj.module &&
-                        ex.method.method === filterObj.method
-                    )
-                ) {
+                if (!(ex.method.section === filterObj.module && ex.method.method === filterObj.method)) {
                     return;
                 }
                 allEvents
@@ -205,23 +190,19 @@ export async function listenEncryptedEvents(
 export function decryptWithAES(key: HexString, aesOutput: AESOutput): HexString {
     const secretKey = crypto.createSecretKey(hexToU8a(key));
     const tagSize = 16;
-    const ciphertext = aesOutput.ciphertext ? aesOutput.ciphertext : hexToU8a("0x");
-    const initialization_vector = aesOutput.nonce ? aesOutput.nonce : hexToU8a("0x");
-    const aad = aesOutput.aad ? aesOutput.aad : hexToU8a("0x");
+    const ciphertext = aesOutput.ciphertext ? aesOutput.ciphertext : hexToU8a('0x');
+    const initialization_vector = aesOutput.nonce ? aesOutput.nonce : hexToU8a('0x');
+    const aad = aesOutput.aad ? aesOutput.aad : hexToU8a('0x');
 
     // notice!!! extract author_tag from ciphertext
     // maybe this code only works with rust aes encryption
     const authorTag = ciphertext.subarray(ciphertext.length - tagSize);
-    const decipher = crypto.createDecipheriv("aes-256-gcm", secretKey, initialization_vector);
+    const decipher = crypto.createDecipheriv('aes-256-gcm', secretKey, initialization_vector);
     decipher.setAAD(aad);
     decipher.setAuthTag(authorTag);
 
-    let part1 = decipher.update(
-        ciphertext.subarray(0, ciphertext.length - tagSize),
-        undefined,
-        "hex"
-    );
-    let part2 = decipher.final("hex");
+    let part1 = decipher.update(ciphertext.subarray(0, ciphertext.length - tagSize), undefined, 'hex');
+    let part2 = decipher.final('hex');
     return `0x${part1 + part2}`;
 }
 
@@ -235,7 +216,7 @@ export async function createTrustedCallSigned(
     params: Array<any>
 ) {
     const [variant, argType] = trustedCall;
-    const call = api.createType("TrustedCall", {
+    const call = api.createType('TrustedCall', {
         [variant]: api.createType(argType, params),
     });
     const payload = Uint8Array.from([
@@ -244,25 +225,22 @@ export async function createTrustedCallSigned(
         ...base58.decode(mrenclave),
         ...hexToU8a(shard),
     ]);
-    const signature = api.createType("MultiSignature", {
+    const signature = api.createType('MultiSignature', {
         Sr25519: u8aToHex(account.sign(payload)),
     });
-    return api.createType("TrustedCallSigned", {
+    return api.createType('TrustedCallSigned', {
         call: call,
         index: nonce,
         signature: signature,
     });
 }
 
-export function encryptWithTeeShieldingKey(
-    teeShieldingKey: KeyObject,
-    plaintext: HexString
-): Buffer {
+export function encryptWithTeeShieldingKey(teeShieldingKey: KeyObject, plaintext: HexString): Buffer {
     return crypto.publicEncrypt(
         {
             key: teeShieldingKey,
             padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-            oaepHash: "sha256",
+            oaepHash: 'sha256',
         },
         hexToU8a(plaintext)
     );
@@ -275,7 +253,7 @@ export function generateVerificationMessage(
     signerAddress: Uint8Array,
     identity: LitentryIdentity
 ): HexString {
-    const encode = context.substrate.createType("LitentryIdentity", identity).toU8a();
+    const encode = context.substrate.createType('LitentryIdentity', identity).toU8a();
     const msg = Buffer.concat([challengeCode, signerAddress, encode]);
     return blake2AsHex(msg, 256);
 }
@@ -286,7 +264,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
         this.timeout(6000000);
         let context: IntegrationTestContext = {
             defaultSigner: {} as KeyringPair,
-            shard: "0x11" as HexString,
+            shard: '0x11' as HexString,
             substrate: {} as ApiPromise,
             tee: {} as WebSocketAsPromised,
             teeShieldingKey: {} as KeyObject,
@@ -294,7 +272,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
             ethersWallet: {},
         };
 
-        before("Starting Litentry(parachain&tee)", async function () {
+        before('Starting Litentry(parachain&tee)', async function () {
             //env url
             const tmp = await initIntegrationTestContext(
                 process.env.WORKER_END_POINT!,
