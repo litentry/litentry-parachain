@@ -102,7 +102,7 @@ fn create_twitter_identity_after_verification_fails() {
 		let encrypted_identity = tee_encrypt(identity.encode().as_slice());
 		assert_noop!(
 			IdentityManagementMock::create_identity(
-				RuntimeOrigin::signed(who.clone()),
+				RuntimeOrigin::signed(who),
 				H256::random(),
 				who,
 				encrypted_identity.to_vec(),

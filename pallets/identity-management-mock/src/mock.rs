@@ -241,7 +241,7 @@ pub fn setup_create_identity(
 		IdentityManagementMock::challenge_codes(&who, &identity),
 	);
 	assert_ok!(IdentityManagementMock::create_identity(
-		RuntimeOrigin::signed(who.clone()),
+		RuntimeOrigin::signed(who),
 		H256::random(),
 		who,
 		encrypted_identity.to_vec(),

@@ -145,7 +145,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| {
 		// add `5` to delegatee
-		let _ = IdentityManagement::add_delegatee(Origin::root(), 5u64);
+		let _ = IdentityManagement::add_delegatee(RuntimeOrigin::root(), 5u64);
 		System::set_block_number(1);
 	});
 	ext
