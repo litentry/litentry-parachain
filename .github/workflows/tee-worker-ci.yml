@@ -72,6 +72,7 @@ jobs:
 
       - name: Build docker image
         run: |
+          cd ..
           make build-docker-release
           echo "============================="
           docker images
