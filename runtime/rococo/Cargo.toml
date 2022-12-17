@@ -234,7 +234,6 @@ std = [
 tee-dev = [
   "pallet-teerex/skip-ias-check",
 ]
-
 try-runtime = [
   "cumulus-pallet-aura-ext/try-runtime",
   "cumulus-pallet-dmp-queue/try-runtime",
