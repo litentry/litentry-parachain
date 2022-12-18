@@ -46,10 +46,15 @@ pub fn build(guild_id: ParameterString, handler: ParameterString) -> Result<()> 
 mod tests {
 	use crate::a3::build;
 	use frame_support::BoundedVec;
+	use lc_data_providers::G_DATA_PROVIDERS;
 	use log;
 
 	#[test]
 	fn assertion3_verification_works() {
+		G_DATA_PROVIDERS
+			.write()
+			.unwrap()
+			.set_discord_litentry_url("http://localhost:9527".to_string());
 		let guildid: u64 = 919848390156767232;
 		let guild_id_vec: Vec<u8> = format!("{}", guildid).as_bytes().to_vec();
 		let handler_vec: Vec<u8> = "ericzhang.eth#0114".to_string().as_bytes().to_vec();
