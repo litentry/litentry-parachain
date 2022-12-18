@@ -21,7 +21,6 @@ use cumulus_primitives_core::{ParaId, PersistedValidationData};
 use cumulus_primitives_parachain_inherent::ParachainInherentData;
 use frame_support::{
 	assert_noop, assert_ok,
-	pallet_prelude::Weight,
 	traits::{Currency, Get, OriginTrait, PalletInfoAccess},
 };
 use frame_system::RawOrigin;
@@ -88,11 +87,11 @@ pub trait TestXCMRequirements {
 	type ParaOrigin: frame_support::traits::OriginTrait<AccountId = AccountId>
 		+ From<RawOrigin<AccountId>>;
 	type ParaCall: Clone
-		+ Dispatchable<Origin = Self::ParaOrigin>
+		+ Dispatchable<RuntimeOrigin = Self::ParaOrigin>
 		+ From<pallet_balances::Call<Self::ParaRuntime>>
 		+ Encode;
 	type ParaRuntime: ParaRuntimeRequirements
-		+ frame_system::Config<AccountId = AccountId, Origin = Self::ParaOrigin>
+		+ frame_system::Config<AccountId = AccountId, RuntimeOrigin = Self::ParaOrigin>
 		+ orml_xtokens::Config<Balance = Balance, CurrencyId = CurrencyId<Self::ParaRuntime>>
 		+ orml_tokens::Config<Balance = Balance, CurrencyId = AssetId>
 		+ pallet_asset_manager::Config<ForeignAssetType = CurrencyId<Self::ParaRuntime>>
@@ -104,10 +103,10 @@ pub trait TestXCMRequirements {
 	type RelayOrigin: frame_support::traits::OriginTrait<AccountId = AccountId>
 		+ From<RawOrigin<AccountId>>;
 	type RelayCall: Clone
-		+ Dispatchable<Origin = Self::RelayOrigin>
+		+ Dispatchable<RuntimeOrigin = Self::RelayOrigin>
 		+ From<pallet_balances::Call<Self::RelayRuntime>>
 		+ Encode;
-	type RelayRuntime: frame_system::Config<AccountId = AccountId, Origin = Self::RelayOrigin>
+	type RelayRuntime: frame_system::Config<AccountId = AccountId, RuntimeOrigin = Self::RelayOrigin>
 		+ pallet_xcm::Config
 		+ pallet_balances::Config<Balance = Balance>;
 	type UnitWeightCost: frame_support::traits::Get<XcmV2Weight>;
@@ -127,7 +126,7 @@ pub fn test_xtokens_recognize_multilocation<R: TestXCMRequirements>() {
 				CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData::default()),
 				UNIT,
 				Box::new((Parent, Parachain(2)).into()),
-				R::UnitWeightCost::get() * 4
+				xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
 			),
 			orml_xtokens::Error::<R::ParaRuntime>::NotSupportedMultiLocation
 		);
@@ -139,7 +138,7 @@ pub fn test_xtokens_recognize_multilocation<R: TestXCMRequirements>() {
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
-			R::UnitWeightCost::get() * 4
+			xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
@@ -176,7 +175,7 @@ pub fn test_xtokens_recognize_multilocation<R: TestXCMRequirements>() {
 			Box::new(
 				(Parent, Parachain(1), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
-			R::UnitWeightCost::get() * 4
+			xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
 		));
 	});
 
@@ -207,7 +206,7 @@ pub fn test_xtokens_weight_parameter<R: TestXCMRequirements>() {
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
-			R::UnitWeightCost::get()
+			xcm_simulator::Limited(R::UnitWeightCost::get())
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
@@ -240,7 +239,8 @@ pub fn test_xtokens_weight_parameter<R: TestXCMRequirements>() {
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
-			R::UnitWeightCost::get() * 5
+			// R::UnitWeightCost::get() * 5
+			xcm_simulator::Limited(R::UnitWeightCost::get() * 5)
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
@@ -271,7 +271,7 @@ pub fn test_xtokens_weight_parameter<R: TestXCMRequirements>() {
 
 pub fn test_pallet_xcm_recognize_multilocation<R: TestXCMRequirements>()
 where
-	<R::ParaRuntime as frame_system::Config>::Event: From<pallet_xcm::Event<R::ParaRuntime>>,
+	<R::ParaRuntime as frame_system::Config>::RuntimeEvent: From<pallet_xcm::Event<R::ParaRuntime>>,
 {
 	relaychain_parachains_set_up::<R>();
 	R::ParaA::execute_with(|| {
@@ -386,7 +386,7 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
-			R::UnitWeightCost::get() * 4
+			xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
@@ -406,7 +406,7 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
-			R::UnitWeightCost::get() * 4
+			xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
@@ -437,7 +437,7 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
-			R::UnitWeightCost::get() * 4
+			xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
@@ -459,7 +459,7 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
-			R::UnitWeightCost::get() * 4
+			xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
@@ -486,7 +486,7 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
-			R::UnitWeightCost::get() * 4
+			xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
@@ -522,7 +522,8 @@ pub fn test_methods_xtokens_expected_fail<R: TestXCMRequirements>() {
 				Box::new(
 					(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
 				),
-				R::UnitWeightCost::get() * 4
+				// R::UnitWeightCost::get() * 4
+				xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
 			),
 			orml_xtokens::Error::<R::ParaRuntime>::XcmExecutionFailed
 		);
@@ -541,7 +542,7 @@ pub fn test_methods_xtokens_expected_fail<R: TestXCMRequirements>() {
 
 pub fn test_methods_pallet_xcm_expected_succeed<R: TestXCMRequirements>()
 where
-	<R::ParaRuntime as frame_system::Config>::Event: From<pallet_xcm::Event<R::ParaRuntime>>,
+	<R::ParaRuntime as frame_system::Config>::RuntimeEvent: From<pallet_xcm::Event<R::ParaRuntime>>,
 {
 	relaychain_parachains_set_up::<R>();
 
@@ -682,7 +683,7 @@ pub fn test_methods_pallet_xcm_expected_fail<R: TestXCMRequirements>() {
 			PolkadotXcm::<R::ParaRuntime>::execute(
 				R::ParaOrigin::signed(alice()),
 				Box::new(xcm::VersionedXcm::V2(message)),
-				Weight::from_ref_time(R::UnitWeightCost::get() * 4)
+				R::UnitWeightCost::get() * 4
 			),
 			pallet_xcm::Error::<R::ParaRuntime>::Filtered
 		);
@@ -1069,7 +1070,8 @@ pub fn test_pallet_xcm_send_capacity_without_transact<R: TestXCMRequirements>() 
 // Relay root manipulate its own sovereign account on Parachain A by Xcm::Transact (Flawed)
 pub fn test_pallet_xcm_send_capacity_relay_manipulation<R: TestXCMRequirements>()
 where
-	<R::RelayRuntime as frame_system::Config>::Event: From<pallet_xcm::Event<R::RelayRuntime>>,
+	<R::RelayRuntime as frame_system::Config>::RuntimeEvent:
+		From<pallet_xcm::Event<R::RelayRuntime>>,
 	<<R::ParaRuntime as frame_system::Config>::Lookup as sp_runtime::traits::StaticLookup>::Source:
 		From<AccountId32>,
 {
@@ -1162,7 +1164,7 @@ where
 // Parachain root manipulate its own sovereign account on Relay by Xcm::Transact succeed
 pub fn test_pallet_xcm_send_capacity_parachain_manipulation<R: TestXCMRequirements>()
 where
-	<R::ParaRuntime as frame_system::Config>::Event: From<pallet_xcm::Event<R::ParaRuntime>>,
+	<R::ParaRuntime as frame_system::Config>::RuntimeEvent: From<pallet_xcm::Event<R::ParaRuntime>>,
 	<<R::RelayRuntime as frame_system::Config>::Lookup as sp_runtime::traits::StaticLookup>::Source:
 		From<AccountId32>,
 {
@@ -1319,8 +1321,8 @@ macro_rules! run_xcm_tests {
 		struct XCMRequirements;
 
 		impl TestXCMRequirements for XCMRequirements {
-			type ParaOrigin = Origin;
-			type ParaCall = Call;
+			type ParaOrigin = RuntimeOrigin;
+			type ParaCall = RuntimeCall;
 			type ParaRuntime = Runtime;
 			type ParaA = ParaA;
 			type ParaB = ParaB;

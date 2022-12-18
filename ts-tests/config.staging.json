@@ -3,5 +3,5 @@
     "private_key": "0xe82c0c4259710bb0d6cf9f9e8d0ad73419c1278a14d375e5ca691e7618103011",
     "ocw_account": "5FEYX9NES9mAJt1Xg4WebmHWywxyeGQK8G3oEBXtyfZrRePX",
     "parachain_ws": "wss://parachain.staging.litentry.io",
-    "relaynode_ws": "wss://relayer-sg-1.staging.litentry.io"
+    "relaychain_ws": "wss://relayer-sg-1.staging.litentry.io"
 }

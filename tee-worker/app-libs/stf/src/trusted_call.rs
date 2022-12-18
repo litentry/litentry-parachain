@@ -23,8 +23,7 @@ use std::vec::Vec;
 
 use crate::{
 	helpers::{aes_encrypt_default, ensure_enclave_signer_account},
-	AccountId, IdentityManagement, KeyPair, MetadataOf, Runtime, ShardIdentifier, Signature,
-	StfError, System, TrustedOperation,
+	IdentityManagement, MetadataOf, Runtime, StfError, System, TrustedOperation,
 };
 use codec::{Decode, Encode};
 use frame_support::{ensure, traits::UnfilteredDispatchable};
@@ -33,6 +32,7 @@ use itp_node_api::metadata::{
 	pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata,
 };
 use itp_stf_interface::ExecuteCall;
+use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier, Signature};
 use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
@@ -234,14 +234,14 @@ where
 					new_free: free_balance,
 					new_reserved: reserved_balance,
 				}
-				.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 				.map_err(|e| {
 					Self::Error::Dispatch(format!("Balance Set Balance error: {:?}", e.error))
 				})?;
 				Ok(())
 			},
 			TrustedCall::balance_transfer(from, to, value) => {
-				let origin = ita_sgx_runtime::Origin::signed(from.clone());
+				let origin = ita_sgx_runtime::RuntimeOrigin::signed(from.clone());
 				debug!(
 					"balance_transfer({}, {}, {})",
 					account_id_to_string(&from),
@@ -286,7 +286,7 @@ where
 			TrustedCall::evm_withdraw(from, address, value) => {
 				debug!("evm_withdraw({}, {}, {})", account_id_to_string(&from), address, value);
 				ita_sgx_runtime::EvmCall::<Runtime>::withdraw { address, value }
-					.dispatch_bypass_filter(ita_sgx_runtime::Origin::signed(from))
+					.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(from))
 					.map_err(|e| {
 						Self::Error::Dispatch(format!("Evm Withdraw error: {:?}", e.error))
 					})?;
@@ -322,7 +322,7 @@ where
 					nonce,
 					access_list,
 				}
-				.dispatch_bypass_filter(ita_sgx_runtime::Origin::signed(from))
+				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(from))
 				.map_err(|e| Self::Error::Dispatch(format!("Evm Call error: {:?}", e.error)))?;
 				Ok(())
 			},
@@ -356,7 +356,7 @@ where
 					nonce,
 					access_list,
 				}
-				.dispatch_bypass_filter(ita_sgx_runtime::Origin::signed(from))
+				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(from))
 				.map_err(|e| Self::Error::Dispatch(format!("Evm Create error: {:?}", e.error)))?;
 				let contract_address = evm_create_address(source, nonce_evm_account);
 				info!("Trying to create evm contract with address {:?}", contract_address);
@@ -393,7 +393,7 @@ where
 					nonce,
 					access_list,
 				}
-				.dispatch_bypass_filter(ita_sgx_runtime::Origin::signed(from))
+				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(from))
 				.map_err(|e| Self::Error::Dispatch(format!("Evm Create2 error: {:?}", e.error)))?;
 				let contract_address = evm_create2_address(source, salt, code_hash);
 				info!("Trying to create evm contract with address {:?}", contract_address);
@@ -615,7 +615,7 @@ fn unshield_funds(account: AccountId, amount: u128) -> Result<(), StfError> {
 		new_free: account_info.data.free - amount,
 		new_reserved: account_info.data.reserved,
 	}
-	.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+	.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 	.map_err(|e| StfError::Dispatch(format!("Unshield funds error: {:?}", e.error)))?;
 	Ok(())
 }
@@ -627,7 +627,7 @@ fn shield_funds(account: AccountId, amount: u128) -> Result<(), StfError> {
 		new_free: account_info.data.free + amount,
 		new_reserved: account_info.data.reserved,
 	}
-	.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+	.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 	.map_err(|e| StfError::Dispatch(format!("Shield funds error: {:?}", e.error)))?;
 
 	Ok(())
@@ -644,6 +644,7 @@ where
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use itp_stf_primitives::types::KeyPair;
 	use sp_keyring::AccountKeyring;
 
 	#[test]

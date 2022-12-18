@@ -17,14 +17,14 @@
 
 use crate::{
 	error::{Error, Result},
-	traits::{StatePostProcessing, StateUpdateProposer, StfExecuteGenericUpdate, StfUpdateState},
+	traits::{StatePostProcessing, StateUpdateProposer, StfUpdateState},
 	BatchExecutionResult, ExecutedOperation,
 };
 use codec::{Decode, Encode};
 use ita_stf::{
 	hash::{Hash, TrustedOperationOrHash},
 	stf_sgx::{shards_key_hash, storage_hashes_to_update_per_shard},
-	ParentchainHeader, ShardIdentifier, StfError, TrustedCallSigned, TrustedOperation,
+	ParentchainHeader, StfError, TrustedCallSigned, TrustedOperation,
 };
 use itp_node_api::metadata::{
 	pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata,
@@ -34,14 +34,15 @@ use itp_sgx_externalities::{SgxExternalitiesTrait, StateHash};
 use itp_stf_interface::{
 	parentchain_pallet::ParentchainPalletInterface, ExecuteCall, StateCallInterface, UpdateState,
 };
+use itp_stf_primitives::types::ShardIdentifier;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
 use itp_time_utils::duration_now;
 use itp_types::{storage::StorageEntryVerified, OpaqueCall, H256};
 use log::*;
 use sp_runtime::traits::Header as HeaderTrait;
 use std::{
-	boxed::Box, collections::BTreeMap, fmt::Debug, format, marker::PhantomData,
-	result::Result as StdResult, sync::Arc, time::Duration, vec::Vec,
+	boxed::Box, collections::BTreeMap, fmt::Debug, marker::PhantomData, sync::Arc, time::Duration,
+	vec::Vec,
 };
 
 pub struct StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf> {
@@ -182,6 +183,8 @@ where
 			.map(into_map)?;
 
 		// Update parentchain block on all states.
+		// TODO: Investigate if this is still necessary. We load and clone the entire state here,
+		// which scales badly for increasing state size.
 		let shards = self.state_handler.list_shards()?;
 		for shard_id in shards {
 			let (state_lock, mut state) = self.state_handler.load_for_mutation(&shard_id)?;
@@ -262,8 +265,7 @@ where
 	{
 		let ends_at = duration_now() + max_exec_duration;
 
-		let state = self.state_handler.load(shard)?;
-		let state_hash_before_execution = state.hash();
+		let (state, state_hash_before_execution) = self.state_handler.load_cloned(shard)?;
 
 		// Execute any pre-processing steps.
 		let mut state = prepare_state_function(state);
@@ -273,6 +275,7 @@ where
 		for trusted_call_signed in trusted_calls.into_iter() {
 			// Break if allowed time window is over.
 			if ends_at < duration_now() {
+				info!("Aborting execution of trusted calls because slot time is up");
 				break
 			}
 
@@ -297,44 +300,6 @@ where
 			state_hash_before_execution,
 			state_after_execution: state,
 		})
-	}
-}
-
-impl<OCallApi, StateHandler, NodeMetadataRepository, Stf> StfExecuteGenericUpdate
-	for StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf>
-where
-	StateHandler: HandleState<HashType = H256>,
-	StateHandler::StateT: SgxExternalitiesTrait + Encode,
-	NodeMetadataRepository: AccessNodeMetadata,
-	Stf: UpdateState<
-		StateHandler::StateT,
-		<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType,
-	>,
-	<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType:
-		IntoIterator<Item = (Vec<u8>, Option<Vec<u8>>)>,
-{
-	type Externalities = StateHandler::StateT;
-
-	fn execute_update<F, ResultT, ErrorT>(
-		&self,
-		shard: &ShardIdentifier,
-		update_function: F,
-	) -> Result<(ResultT, H256)>
-	where
-		F: FnOnce(Self::Externalities) -> StdResult<(Self::Externalities, ResultT), ErrorT>,
-		ErrorT: Debug,
-	{
-		let (state_lock, state) = self.state_handler.load_for_mutation(&shard)?;
-
-		let (new_state, result) = update_function(state).map_err(|e| {
-			Error::Other(format!("Failed to run update function on STF state: {:?}", e).into())
-		})?;
-
-		let new_state_hash = self
-			.state_handler
-			.write_after_mutation(new_state, state_lock, shard)
-			.map_err(|e| Error::StateHandler(e))?;
-		Ok((result, new_state_hash))
 	}
 }
 

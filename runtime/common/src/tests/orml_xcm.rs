@@ -31,7 +31,7 @@ use xcm::latest::prelude::*;
 use xcm_executor::traits::Convert;
 
 pub fn orml_xcm_root_works<
-	R: BaseRuntimeRequirements + frame_system::Config<Call = Call>,
+	R: BaseRuntimeRequirements + frame_system::Config<RuntimeCall = Call>,
 	Origin: OriginTrait
 		+ From<RawOrigin<AccountId>>
 		+ Clone
@@ -39,7 +39,7 @@ pub fn orml_xcm_root_works<
 			pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_collective::Instance1>,
 		>,
 	LocalOriginToLocation: Convert<Origin, MultiLocation>,
-	Call: Clone + Dispatchable<Origin = Origin> + From<frame_system::Call<R>>,
+	Call: Clone + Dispatchable<RuntimeOrigin = Origin> + From<frame_system::Call<R>>,
 >()
 where
 	<<R as frame_system::Config>::Lookup as sp_runtime::traits::StaticLookup>::Source:
@@ -65,7 +65,7 @@ where
 }
 
 pub fn orml_xcm_signed_works<
-	R: BaseRuntimeRequirements + frame_system::Config<Call = Call>,
+	R: BaseRuntimeRequirements + frame_system::Config<RuntimeCall = Call>,
 	Origin: OriginTrait
 		+ From<RawOrigin<AccountId>>
 		+ Clone
@@ -73,7 +73,7 @@ pub fn orml_xcm_signed_works<
 			pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_collective::Instance1>,
 		>,
 	LocalOriginToLocation: Convert<Origin, MultiLocation>,
-	Call: Clone + Dispatchable<Origin = Origin> + From<frame_system::Call<R>>,
+	Call: Clone + Dispatchable<RuntimeOrigin = Origin> + From<frame_system::Call<R>>,
 >()
 where
 	<<R as frame_system::Config>::Lookup as sp_runtime::traits::StaticLookup>::Source:
@@ -99,7 +99,7 @@ where
 }
 
 pub fn orml_xcm_two_thirds_councli_works<
-	R: BaseRuntimeRequirements + frame_system::Config<Call = Call>,
+	R: BaseRuntimeRequirements + frame_system::Config<RuntimeCall = Call>,
 	Origin: OriginTrait
 		+ From<RawOrigin<AccountId>>
 		+ Clone
@@ -107,7 +107,7 @@ pub fn orml_xcm_two_thirds_councli_works<
 			pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_collective::Instance1>,
 		> + std::convert::From<pallet_collective::RawOrigin<sp_runtime::AccountId32, I>>,
 	LocalOriginToLocation: Convert<Origin, MultiLocation>,
-	Call: Clone + Dispatchable<Origin = Origin> + From<frame_system::Call<R>>,
+	Call: Clone + Dispatchable<RuntimeOrigin = Origin> + From<frame_system::Call<R>>,
 	I,
 >()
 where
@@ -136,7 +136,7 @@ where
 }
 
 pub fn orml_xcm_one_four_councli_works<
-	R: BaseRuntimeRequirements + frame_system::Config<Call = Call>,
+	R: BaseRuntimeRequirements + frame_system::Config<RuntimeCall = Call>,
 	Origin: OriginTrait
 		+ From<RawOrigin<AccountId>>
 		+ Clone
@@ -144,7 +144,7 @@ pub fn orml_xcm_one_four_councli_works<
 			pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_collective::Instance1>,
 		> + std::convert::From<pallet_collective::RawOrigin<sp_runtime::AccountId32, I>>,
 	LocalOriginToLocation: Convert<Origin, MultiLocation>,
-	Call: Clone + Dispatchable<Origin = Origin> + From<frame_system::Call<R>>,
+	Call: Clone + Dispatchable<RuntimeOrigin = Origin> + From<frame_system::Call<R>>,
 	I,
 >()
 where
@@ -173,7 +173,7 @@ where
 }
 
 pub fn orml_xcm_half_councli_works<
-	R: BaseRuntimeRequirements + frame_system::Config<Call = Call>,
+	R: BaseRuntimeRequirements + frame_system::Config<RuntimeCall = Call>,
 	Origin: OriginTrait
 		+ From<RawOrigin<AccountId>>
 		+ Clone
@@ -181,7 +181,7 @@ pub fn orml_xcm_half_councli_works<
 			pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_collective::Instance1>,
 		> + std::convert::From<pallet_collective::RawOrigin<sp_runtime::AccountId32, I>>,
 	LocalOriginToLocation: Convert<Origin, MultiLocation>,
-	Call: Clone + Dispatchable<Origin = Origin> + From<frame_system::Call<R>>,
+	Call: Clone + Dispatchable<RuntimeOrigin = Origin> + From<frame_system::Call<R>>,
 	I,
 >()
 where
@@ -210,7 +210,7 @@ where
 }
 
 pub fn orml_xcm_member_works<
-	R: BaseRuntimeRequirements + frame_system::Config<Call = Call>,
+	R: BaseRuntimeRequirements + frame_system::Config<RuntimeCall = Call>,
 	Origin: OriginTrait
 		+ From<RawOrigin<AccountId>>
 		+ Clone
@@ -218,7 +218,7 @@ pub fn orml_xcm_member_works<
 			pallet_collective::RawOrigin<sp_runtime::AccountId32, pallet_collective::Instance1>,
 		> + std::convert::From<pallet_collective::RawOrigin<sp_runtime::AccountId32, I>>,
 	LocalOriginToLocation: Convert<Origin, MultiLocation>,
-	Call: Clone + Dispatchable<Origin = Origin> + From<frame_system::Call<R>>,
+	Call: Clone + Dispatchable<RuntimeOrigin = Origin> + From<frame_system::Call<R>>,
 	I,
 >()
 where

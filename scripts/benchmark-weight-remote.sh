@@ -57,19 +57,31 @@ fi
 
 for p in $PALLETS; do
   echo "benchmarking $p ..."
+
+  if [[ $p == *"parachain_staking"* ]]; then
+      echo "will run $p benchmark code"
+      STEPS=25
+      REPEAT=20
+  else
+      echo "will run other pallet ($p) benchmark code"
+      STEPS=20
+      REPEAT=50
+  fi
+
   # filter out the flooding warnings from pallet_scheduler:
   # Warning: There are more items queued in the Scheduler than expected from the runtime configuration.
   #          An update might be needed
   RUST_LOG=runtime::scheduler=error ./litentry-collator benchmark pallet \
-      --chain=$1-dev \
-      --execution=wasm  \
-      --db-cache=20 \
-      --wasm-execution=compiled \
-      --pallet="$p" \
-      --extrinsic=* \
-      --heap-pages=4096 \
-      --steps=20 \
-      --repeat=50 \
-      --header=./LICENSE_HEADER \
-      --output=./runtime/$1/src/weights/"$p".rs
+        --chain=$1-dev \
+        --execution=wasm  \
+        --db-cache=20 \
+        --wasm-execution=compiled \
+        --pallet="$p" \
+        --extrinsic=* \
+        --heap-pages=4096 \
+        --steps="$STEPS" \
+        --repeat="$REPEAT" \
+        --header=./LICENSE_HEADER \
+        --output=./runtime/$1/src/weights/"$p".rs
+
 done

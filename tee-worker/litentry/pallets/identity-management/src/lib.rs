@@ -61,9 +61,9 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// the event
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		/// the manager origin for extrincis
-		type ManageOrigin: EnsureOrigin<Self::Origin>;
+		type ManageOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		/// maximum metadata length
 		#[pallet::constant]
 		type MaxMetadataLength: Get<u32>;
