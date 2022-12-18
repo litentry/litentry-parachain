@@ -83,42 +83,11 @@ args:
         long: clean-reset
         short: c
         help: Cleans and purges any previous state and key files and generates them anew before starting.
-    - twitter-official-url:
-        long: twitter-official-url
-        default_value: "https://api.twitter.com"
-        help: Twitter offical url for account information verification.
+    - running-mode:
+        long: running-mode
+        help: Litentry TEE service running mode <dev/stage/prod>
         takes_value: true
-        required: false
-    - twitter-litentry-url:
-        long: twitter-litentry-url
-        default_value: "https://api.twitter.litentry.com"
-        help: Twitter information within litentry ID-Graph url for account information verification.
-        takes_value: true
-        required: true
-    - twitter-auth-token:
-        long: twitter-auth-token
-        default_value: "AABB"
-        help: Twitter authorization token
-        takes_value: true
-        required: true
-    - discord-official-url:
-        long: discord-official-url
-        default_value: "https://discordapp.com"
-        help: Discord offical url for account information verification.
-        takes_value: true
-        required: false
-    - discord-litentry-url:
-        long: discord-litentry-url
-        default_value: "https://discordapp.litentry.com"
-        help: Discord information within litentry ID-Graph url for account information verification.
-        takes_value: true
-        required: true
-    - discord-auth-token:
-        long: discord-auth-token
-        default_value: "aabb"
-        help: Discord authorization token
-        takes_value: true
-        required: true
+        default_value: "dev"
 
 subcommands:
     - run:
