@@ -1,8 +1,8 @@
 # litentry-parachain
-[![Build & Test](https://github.com/litentry/litentry-parachain/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/build-and-test.yml)
-[![Build wasm](https://github.com/litentry/litentry-parachain/actions/workflows/build-wasm.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/build-wasm.yml)
-[![Benchmark runtime weights](https://github.com/litentry/litentry-parachain/actions/workflows/benchmark-runtime-weights.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/benchmark-runtime-weights.yml)
-[![Release](https://github.com/litentry/litentry-parachain/actions/workflows/create-release-draft.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/create-release-draft.yml)
+[![parachain](https://github.com/litentry/litentry-parachain/actions/workflows/parachain-ci.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/parachain-ci.yml)
+[![tee-worker](https://github.com/litentry/litentry-parachain/actions/workflows/tee-worker-ci.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/tee-worker-ci.yml)
+[![release](https://github.com/litentry/litentry-parachain/actions/workflows/create-release-draft.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/create-release-draft.yml)
+[![runtime upgrade](https://github.com/litentry/litentry-parachain/actions/workflows/runtime-upgrade-simulation.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/runtime-upgrade-simulation.yml)
 
 The Litentry parachain.
 
