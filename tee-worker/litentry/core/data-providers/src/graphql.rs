@@ -17,10 +17,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{
-	base_url::{GRAPHQL_AUTH_KEY, GRAPHQL_URL},
-	build_client, Error, HttpError,
-};
+use crate::{build_client, Error, HttpError, G_DATA_PROVIDERS};
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -124,8 +121,12 @@ impl GraphQLClient {
 	pub fn new() -> Self {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
-		headers.insert(AUTHORIZATION.as_str(), GRAPHQL_AUTH_KEY);
-		let client = build_client(GRAPHQL_URL, headers);
+		headers.insert(
+			AUTHORIZATION.as_str(),
+			G_DATA_PROVIDERS.read().unwrap().graphql_auth_key.clone().as_str(),
+		);
+		let client =
+			build_client(G_DATA_PROVIDERS.read().unwrap().graphql_url.clone().as_str(), headers);
 		GraphQLClient { client }
 	}
 
@@ -177,7 +178,7 @@ mod tests {
 		let response = client.verified_credentials_is_hodler(credentials);
 
 		if let Ok(is_hodler_out) = response {
-			assert_eq!(is_hodler_out.verified_credentials_is_hodler[0].is_hodler, true);
+			assert_eq!(is_hodler_out.verified_credentials_is_hodler[0].is_hodler, false);
 			assert_eq!(is_hodler_out.verified_credentials_is_hodler[1].is_hodler, false);
 		} else {
 			assert!(false);
