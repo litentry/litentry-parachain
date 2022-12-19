@@ -147,6 +147,18 @@ jobs:
           name: integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }}.tar.gz
           path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }}.tar.gz
 
+  build-test-status-check:
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    needs: build-test
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          case "${{ needs.build-test.result }}" in
+            success|skipped) exit 0 ;;
+            *) exit 1 ;;
+          esac
+
   clippy:
     runs-on: ubuntu-latest
     needs: check-file-change
@@ -318,6 +330,18 @@ jobs:
         with:
           name: logs-${{ matrix.test }}-${{ matrix.flavor_id }}
           path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/${{ env.LOG_DIR }}
+
+  integration-tests-status-check:
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          case "${{ needs.integration-tests.result }}" in
+            success|skipped) exit 0 ;;
+            *) exit 1 ;;
+          esac
 
   # Only push docker image when tests are passed and it's a push event
   push-docker-image:
