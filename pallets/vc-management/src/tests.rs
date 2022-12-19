@@ -185,9 +185,9 @@ fn revoke_vc_with_other_subject_fails() {
 fn set_schema_admin_works() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(VCManagement::schema_admin().unwrap(), 1);
-		assert_ok!(VCManagement::set_schema_admin(Origin::signed(1), 2));
+		assert_ok!(VCManagement::set_schema_admin(RuntimeOrigin::signed(1), 2));
 		assert_eq!(VCManagement::schema_admin().unwrap(), 2);
-		System::assert_last_event(Event::VCManagement(crate::Event::SchemaAdminChanged {
+		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::SchemaAdminChanged {
 			old_admin: Some(1),
 			new_admin: Some(2),
 		}));
@@ -199,7 +199,7 @@ fn set_schema_admin_fails_with_unprivileged_origin() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(VCManagement::schema_admin().unwrap(), 1);
 		assert_noop!(
-			VCManagement::set_schema_admin(Origin::signed(2), 2),
+			VCManagement::set_schema_admin(RuntimeOrigin::signed(2), 2),
 			sp_runtime::DispatchError::BadOrigin
 		);
 		assert_eq!(VCManagement::schema_admin().unwrap(), 1);
@@ -213,8 +213,13 @@ fn add_schema_works() {
 		let id: Vec<u8> = vec![1, 2, 3, 4].try_into().unwrap();
 		let content: Vec<u8> = vec![5, 6, 7, 8].try_into().unwrap();
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
-		assert_ok!(VCManagement::add_schema(Origin::signed(1), shard, id.clone(), content.clone()));
-		System::assert_last_event(Event::VCManagement(crate::Event::SchemaIssued {
+		assert_ok!(VCManagement::add_schema(
+			RuntimeOrigin::signed(1),
+			shard,
+			id.clone(),
+			content.clone()
+		));
+		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::SchemaIssued {
 			account: 1,
 			shard,
 			index: 0,
@@ -230,7 +235,7 @@ fn add_schema_with_unpriviledged_origin_fails() {
 		let content: Vec<u8> = vec![5, 6, 7, 8].try_into().unwrap();
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
 		assert_noop!(
-			VCManagement::add_schema(Origin::signed(2), shard, id, content),
+			VCManagement::add_schema(RuntimeOrigin::signed(2), shard, id, content),
 			Error::<Test>::RequireSchemaAdmin
 		);
 	});
@@ -243,9 +248,19 @@ fn add_two_schemas_works() {
 		let id: Vec<u8> = vec![1, 2, 3, 4].try_into().unwrap();
 		let content: Vec<u8> = vec![5, 6, 7, 8].try_into().unwrap();
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
-		assert_ok!(VCManagement::add_schema(Origin::signed(1), shard, id.clone(), content.clone()));
-		assert_ok!(VCManagement::add_schema(Origin::signed(1), shard, id.clone(), content.clone()));
-		System::assert_last_event(Event::VCManagement(crate::Event::SchemaIssued {
+		assert_ok!(VCManagement::add_schema(
+			RuntimeOrigin::signed(1),
+			shard,
+			id.clone(),
+			content.clone()
+		));
+		assert_ok!(VCManagement::add_schema(
+			RuntimeOrigin::signed(1),
+			shard,
+			id.clone(),
+			content.clone()
+		));
+		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::SchemaIssued {
 			account: 1,
 			shard,
 			index: 1,
@@ -260,9 +275,9 @@ fn disable_schema_works() {
 		let id: Vec<u8> = vec![1, 2, 3, 4].try_into().unwrap();
 		let content: Vec<u8> = vec![5, 6, 7, 8].try_into().unwrap();
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
-		assert_ok!(VCManagement::add_schema(Origin::signed(1), shard, id, content));
+		assert_ok!(VCManagement::add_schema(RuntimeOrigin::signed(1), shard, id, content));
 		assert!(VCManagement::schema_registry(0).is_some());
-		assert_ok!(VCManagement::disable_schema(Origin::signed(1), shard, 0));
+		assert_ok!(VCManagement::disable_schema(RuntimeOrigin::signed(1), shard, 0));
 		assert!(VCManagement::schema_registry(0).is_some());
 		let context = VCManagement::schema_registry(0).unwrap();
 		assert_eq!(context.status, Status::Disabled);
@@ -274,7 +289,7 @@ fn disable_schema_with_non_existent_fails() {
 	new_test_ext().execute_with(|| {
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
 		assert_noop!(
-			VCManagement::disable_schema(Origin::signed(1), shard, 2),
+			VCManagement::disable_schema(RuntimeOrigin::signed(1), shard, 2),
 			Error::<Test>::SchemaNotExists
 		);
 	});
@@ -286,9 +301,9 @@ fn disable_schema_with_unpriviledged_origin_fails() {
 		let id: Vec<u8> = vec![1, 2, 3, 4].try_into().unwrap();
 		let content: Vec<u8> = vec![5, 6, 7, 8].try_into().unwrap();
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
-		assert_ok!(VCManagement::add_schema(Origin::signed(1), shard, id, content));
+		assert_ok!(VCManagement::add_schema(RuntimeOrigin::signed(1), shard, id, content));
 		assert_noop!(
-			VCManagement::disable_schema(Origin::signed(2), shard, 0),
+			VCManagement::disable_schema(RuntimeOrigin::signed(2), shard, 0),
 			Error::<Test>::RequireSchemaAdmin
 		);
 	});
@@ -300,13 +315,13 @@ fn activate_schema_works() {
 		let id: Vec<u8> = vec![1, 2, 3, 4].try_into().unwrap();
 		let content: Vec<u8> = vec![5, 6, 7, 8].try_into().unwrap();
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
-		assert_ok!(VCManagement::add_schema(Origin::signed(1), shard, id, content));
+		assert_ok!(VCManagement::add_schema(RuntimeOrigin::signed(1), shard, id, content));
 		assert!(VCManagement::schema_registry(0).is_some());
-		assert_ok!(VCManagement::disable_schema(Origin::signed(1), shard, 0));
+		assert_ok!(VCManagement::disable_schema(RuntimeOrigin::signed(1), shard, 0));
 		// schema is disabled
 		assert_eq!(VCManagement::schema_registry(0).unwrap().status, Status::Disabled);
 		// schema is activated
-		assert_ok!(VCManagement::activate_schema(Origin::signed(1), shard, 0));
+		assert_ok!(VCManagement::activate_schema(RuntimeOrigin::signed(1), shard, 0));
 		assert_eq!(VCManagement::schema_registry(0).unwrap().status, Status::Active);
 	});
 }
@@ -317,10 +332,10 @@ fn activate_already_activated_schema_fails() {
 		let id: Vec<u8> = vec![1, 2, 3, 4].try_into().unwrap();
 		let content: Vec<u8> = vec![5, 6, 7, 8].try_into().unwrap();
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
-		assert_ok!(VCManagement::add_schema(Origin::signed(1), shard, id, content));
+		assert_ok!(VCManagement::add_schema(RuntimeOrigin::signed(1), shard, id, content));
 		assert!(VCManagement::schema_registry(0).is_some());
 		assert_noop!(
-			VCManagement::activate_schema(Origin::signed(1), shard, 0),
+			VCManagement::activate_schema(RuntimeOrigin::signed(1), shard, 0),
 			Error::<Test>::SchemaAlreadyActivated
 		);
 	});
@@ -332,9 +347,9 @@ fn revoke_schema_works() {
 		let id: Vec<u8> = vec![1, 2, 3, 4].try_into().unwrap();
 		let content: Vec<u8> = vec![5, 6, 7, 8].try_into().unwrap();
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
-		assert_ok!(VCManagement::add_schema(Origin::signed(1), shard, id, content));
+		assert_ok!(VCManagement::add_schema(RuntimeOrigin::signed(1), shard, id, content));
 		assert!(VCManagement::schema_registry(0).is_some());
-		assert_ok!(VCManagement::revoke_schema(Origin::signed(1), shard, 0));
+		assert_ok!(VCManagement::revoke_schema(RuntimeOrigin::signed(1), shard, 0));
 		// schema is deleted
 		assert!(VCManagement::schema_registry(0).is_none());
 	});
@@ -345,7 +360,7 @@ fn revoke_schema_with_non_existent_fails() {
 	new_test_ext().execute_with(|| {
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
 		assert_noop!(
-			VCManagement::revoke_schema(Origin::signed(1), shard, 2),
+			VCManagement::revoke_schema(RuntimeOrigin::signed(1), shard, 2),
 			Error::<Test>::SchemaNotExists
 		);
 	});
@@ -357,9 +372,9 @@ fn revoke_schema_with_unprivileged_origin_fails() {
 		let id: Vec<u8> = vec![1, 2, 3, 4].try_into().unwrap();
 		let content: Vec<u8> = vec![5, 6, 7, 8].try_into().unwrap();
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
-		assert_ok!(VCManagement::add_schema(Origin::signed(1), shard, id, content));
+		assert_ok!(VCManagement::add_schema(RuntimeOrigin::signed(1), shard, id, content));
 		assert_noop!(
-			VCManagement::revoke_schema(Origin::signed(2), shard, 0),
+			VCManagement::revoke_schema(RuntimeOrigin::signed(2), shard, 0),
 			Error::<Test>::RequireSchemaAdmin
 		);
 	});

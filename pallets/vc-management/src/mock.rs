@@ -114,7 +114,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| {
 		System::set_block_number(1);
-		let _ = VCManagement::set_schema_admin(Origin::signed(1), 1);
+		let _ = VCManagement::set_schema_admin(RuntimeOrigin::signed(1), 1);
 	});
 	ext
 }

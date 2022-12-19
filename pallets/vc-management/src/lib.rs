@@ -70,9 +70,9 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		// some extrinsics should only be called by origins from TEE
-		type TEECallOrigin: EnsureOrigin<Self::Origin>;
+		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		/// The origin who can set the admin account
-		type SetAdminOrigin: EnsureOrigin<Self::Origin>;
+		type SetAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
 
 	// a map VCID -> VC context
