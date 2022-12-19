@@ -12,4 +12,3 @@ if [ ! -z "$files" ]; then
   make fmt
   git add $(echo "$files" | paste -s -d " " -)
 fi
-

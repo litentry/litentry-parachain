@@ -193,6 +193,7 @@ taplocheck:
 fmt:
 	cargo fmt --all
 	taplo fmt
+	cd tee-worker && make fmt && taplo fmt
 
 .PHONY: githooks ## install the githooks
 githooks:

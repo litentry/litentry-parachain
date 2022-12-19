@@ -1,0 +1,36 @@
+[package]
+authors = ["Litentry Dev"]
+edition = "2021"
+name = "litentry-primitives"
+version = "0.1.0"
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+hex = { version = "0.4.3", default-features = false, optional = true }
+scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
+serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
+serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32", default-features = false }
+
+# sgx dependencies
+sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master", optional = true, features = ["net", "thread"] }
+
+parentchain-primitives = { package = "primitives", path = "../../../primitives", default-features = false }
+
+[features]
+default = ["std"]
+production = []
+sgx = [
+    "sgx_tstd",
+]
+std = [
+    "hex/std",
+    "serde/std",
+    "serde_json/std",
+    "sp-core/std",
+    "sp-std/std",
+    "sp-runtime/std",
+    "parentchain-primitives/std",
+]
