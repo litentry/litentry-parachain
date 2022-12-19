@@ -14,8 +14,9 @@
 	limitations under the License.
 
 */
+use derive_more::From;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, From)]
 pub enum Error {
 	/// Metadata has not been set
 	MetadataNotSet,

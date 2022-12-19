@@ -17,13 +17,12 @@
 
 use crate::{error::Result, BatchExecutionResult};
 use codec::Encode;
-use ita_stf::{
-	AccountId, ParentchainHeader, ShardIdentifier, TrustedCall, TrustedCallSigned, TrustedOperation,
-};
+use ita_stf::{ParentchainHeader, TrustedCall, TrustedCallSigned, TrustedOperation};
 use itp_sgx_externalities::SgxExternalitiesTrait;
+use itp_stf_primitives::types::{AccountId, ShardIdentifier};
 use itp_types::H256;
 use sp_runtime::traits::Header as HeaderTrait;
-use std::{fmt::Debug, result::Result as StdResult, time::Duration};
+use std::time::Duration;
 
 /// Post-processing steps after executing STF
 pub enum StatePostProcessing {
@@ -63,20 +62,6 @@ pub trait StateUpdateProposer {
 	where
 		PH: HeaderTrait<Hash = H256>,
 		F: FnOnce(Self::Externalities) -> Self::Externalities;
-}
-
-/// Execute a generic function on the STF state
-pub trait StfExecuteGenericUpdate {
-	type Externalities: SgxExternalitiesTrait + Encode;
-
-	fn execute_update<F, ResultT, ErrorT>(
-		&self,
-		shard: &ShardIdentifier,
-		update_function: F,
-	) -> Result<(ResultT, H256)>
-	where
-		F: FnOnce(Self::Externalities) -> StdResult<(Self::Externalities, ResultT), ErrorT>,
-		ErrorT: Debug;
 }
 
 /// Updates the STF state for a specific header.

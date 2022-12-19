@@ -43,6 +43,7 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
+use itp_types::ShardIdentifier;
 use sp_std::vec::Vec;
 use std::{format, string::String, sync::Arc};
 

@@ -55,10 +55,11 @@ struct GenesisInfo {
 	telemetry_endpoints: Vec<String>,
 }
 
-pub fn get_chain_spec_dev() -> ChainSpec {
+pub fn get_chain_spec_dev(is_standalone: bool) -> ChainSpec {
+	let id = if is_standalone { "standalone" } else { "litentry-rococo-dev" };
 	ChainSpec::from_genesis(
 		"Litentry-rococo-dev",
-		"litentry-rococo-dev",
+		id,
 		ChainType::Development,
 		move || {
 			generate_genesis(

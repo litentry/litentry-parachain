@@ -22,11 +22,12 @@ use crate::{
 };
 use base58::FromBase58;
 use codec::{Decode, Encode};
-use ita_stf::{Getter, ShardIdentifier, TrustedOperation};
+use ita_stf::{Getter, TrustedOperation};
 use itc_rpc_client::direct_client::{DirectApi, DirectClient};
 use itp_node_api::api_client::TEEREX;
 use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
+use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::{BlockNumber, DirectRequestStatus, Header, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use log::*;
@@ -37,7 +38,7 @@ use std::{
 	sync::mpsc::{channel, Receiver},
 	time::Instant,
 };
-use substrate_api_client::{compose_extrinsic, XtStatus};
+use substrate_api_client::{compose_extrinsic, StaticEvent, XtStatus};
 use teerex_primitives::Request;
 
 pub(crate) fn perform_trusted_operation(
@@ -132,14 +133,8 @@ fn send_request(
 	_chain_api.subscribe_events(events_in).unwrap();
 
 	loop {
-		let ret: ProcessedParentchainBlockArgs = _chain_api
-			.wait_for_event::<ProcessedParentchainBlockArgs>(
-				TEEREX,
-				"ProcessedParentchainBlock",
-				None,
-				&events_out,
-			)
-			.unwrap();
+		let ret: ProcessedParentchainBlockArgs =
+			_chain_api.wait_for_event::<ProcessedParentchainBlockArgs>(&events_out).unwrap();
 		info!("Confirmation of ProcessedParentchainBlock received");
 		debug!("Expected block Hash: {:?}", block_hash);
 		debug!("Confirmed stf block Hash: {:?}", ret.block_hash);
@@ -348,4 +343,9 @@ struct ProcessedParentchainBlockArgs {
 	block_hash: H256,
 	merkle_root: H256,
 	block_number: BlockNumber,
+}
+
+impl StaticEvent for ProcessedParentchainBlockArgs {
+	const PALLET: &'static str = TEEREX;
+	const EVENT: &'static str = "ProcessedParentchainBlock";
 }

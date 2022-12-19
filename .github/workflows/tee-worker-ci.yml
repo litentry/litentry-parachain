@@ -9,13 +9,21 @@ name: Tee-worker CI
 # tried symbolic link -- didn't work, see https://stackoverflow.com/a/71704019
 
 on:
-  workflow_dispatch:
   push:
     branches:
-      - tee-dev
+      - dev
+    paths-ignore:
+      - "**/dependabot.yml"
+      - "**/README.md"
   pull_request:
     branches:
-      - tee-dev
+      - dev
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always

@@ -57,8 +57,8 @@ impl system::Config for Test {
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
-	type Origin = Origin;
-	type Call = Call;
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeCall = RuntimeCall;
 	type Index = u64;
 	type BlockNumber = u64;
 	type Hash = H256;
@@ -66,7 +66,7 @@ impl system::Config for Test {
 	type AccountId = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
@@ -84,7 +84,7 @@ impl pallet_balances::Config for Test {
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
 	type Balance = Balance; // the type that is relevant to us
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type DustRemoval = ();
 	type ExistentialDeposit = ConstU128<1>;
 	type AccountStore = System;
@@ -100,7 +100,7 @@ ord_parameter_types! {
 }
 
 impl pallet_drop3::Config for Test {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type PoolId = PoolId;
 	type SetAdminOrigin = EnsureSignedBy<One, u64>;
 	type Currency = Balances;
@@ -144,7 +144,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	ext.execute_with(|| {
 		System::set_block_number(1);
 		// set 1 as admin account
-		let _ = Drop3::set_admin(Origin::signed(1), 1);
+		let _ = Drop3::set_admin(RuntimeOrigin::signed(1), 1);
 	});
 	ext
 }

@@ -19,10 +19,11 @@ extern crate sgx_tstd as std;
 
 use crate::{
 	helpers::{enclave_signer_account, generate_challenge_code},
-	AccountId, Encode, IdentityManagement, MetadataOf, Runtime, ShardIdentifier, StfError,
-	StfResult, TrustedCall, TrustedCallSigned,
+	AccountId, Encode, IdentityManagement, MetadataOf, Runtime, StfError, StfResult, TrustedCall,
+	TrustedCallSigned,
 };
 use frame_support::dispatch::UnfilteredDispatchable;
+use itp_stf_primitives::types::ShardIdentifier;
 use itp_utils::stringify::account_id_to_string;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
@@ -59,7 +60,7 @@ impl TrustedCallSigned {
 		key: UserShieldingKeyType,
 	) -> StfResult<()> {
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_user_shielding_key { who, key }
-			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+			.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 		Ok(())
 	}
@@ -84,7 +85,7 @@ impl TrustedCallSigned {
 			metadata,
 			creation_request_block: bn,
 		}
-		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+		.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 
 		// generate challenge code
@@ -94,7 +95,7 @@ impl TrustedCallSigned {
 			identity,
 			code,
 		}
-		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+		.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 
 		Ok(code)
@@ -103,7 +104,7 @@ impl TrustedCallSigned {
 	pub fn remove_identity_runtime(who: AccountId, identity: Identity) -> StfResult<()> {
 		debug!("who.str = {:?}, identity = {:?}", account_id_to_string(&who), identity,);
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::remove_identity { who, identity }
-			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+			.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 		Ok(())
 	}
@@ -171,12 +172,12 @@ impl TrustedCallSigned {
 			identity: identity.clone(),
 			verification_request_block: bn,
 		}
-		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+		.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 
 		// remove challenge code
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::remove_challenge_code { who, identity }
-			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+			.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 
 		Ok(())
@@ -215,7 +216,7 @@ impl TrustedCallSigned {
 			identity,
 			code,
 		}
-		.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+		.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 		Ok(())
 	}

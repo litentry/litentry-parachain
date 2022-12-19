@@ -19,22 +19,25 @@
 #![allow(clippy::upper_case_acronyms)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate core;
+
 #[cfg(feature = "tests")]
 pub mod tests;
 
 pub mod xcm_impl;
 
 use frame_support::{
+	pallet_prelude::DispatchClass,
 	parameter_types, sp_runtime,
 	traits::{Currency, EitherOfDiverse, EnsureOrigin, OnUnbalanced, OriginTrait},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, WEIGHT_PER_SECOND},
-		DispatchClass, Weight,
+		Weight,
 	},
 };
 use frame_system::{limits, EnsureRoot};
 use pallet_transaction_payment::{Multiplier, TargetedFeeAdjustment};
-use sp_runtime::{FixedPointNumber, Perbill, Perquintill};
+use sp_runtime::{traits::Bounded, FixedPointNumber, Perbill, Perquintill};
 
 use xcm::latest::prelude::*;
 
@@ -53,7 +56,9 @@ pub const AVERAGE_ON_INITIALIZE_RATIO: Perbill = Perbill::from_percent(10);
 pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
-pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND.saturating_div(2);
+pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND
+	.saturating_div(2)
+	.set_proof_size(cumulus_primitives_core::relay_chain::v2::MAX_POV_SIZE as u64);
 
 pub mod currency {
 	use primitives::Balance;
@@ -83,6 +88,9 @@ parameter_types! {
 	/// that combined with `AdjustmentVariable`, we can recover from the minimum.
 	/// See `multiplier_can_grow_from_zero`.
 	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000u128);
+
+	/// Maximus amount of the multiplier
+	pub MaximumMultiplier: Multiplier = Bounded::max_value();
 
 	/// Maximum length of block. Up to 5MB.
 	pub BlockLength: limits::BlockLength = limits::BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
@@ -114,15 +122,20 @@ parameter_types! {
 
 /// Parameterized slow adjusting fee updated based on
 /// https://research.web3.foundation/en/latest/polkadot/overview/2-token-economics.html#-2.-slow-adjusting-mechanism
-pub type SlowAdjustingFeeUpdate<R> =
-	TargetedFeeAdjustment<R, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
+pub type SlowAdjustingFeeUpdate<R> = TargetedFeeAdjustment<
+	R,
+	TargetBlockFullness,
+	AdjustmentVariable,
+	MinimumMultiplier,
+	MaximumMultiplier,
+>;
 
 /// Logic for the author to get a portion of fees.
 pub struct ToAuthor<R>(sp_std::marker::PhantomData<R>);
 impl<R> OnUnbalanced<NegativeImbalance<R>> for ToAuthor<R>
 where
 	R: pallet_balances::Config + pallet_authorship::Config,
-	<R as frame_system::Config>::Event: From<pallet_balances::Event<R>>,
+	<R as frame_system::Config>::RuntimeEvent: From<pallet_balances::Event<R>>,
 {
 	fn on_nonzero_unbalanced(amount: NegativeImbalance<R>) {
 		if let Some(author) = <pallet_authorship::Pallet<R>>::author() {
@@ -148,7 +161,7 @@ macro_rules! impl_runtime_transaction_payment_fees {
 		where
 			R: pallet_balances::Config + pallet_treasury::Config + pallet_authorship::Config,
 			pallet_treasury::Pallet<R>: OnUnbalanced<NegativeImbalance<R>>,
-			<R as frame_system::Config>::Event: From<pallet_balances::Event<R>>,
+			<R as frame_system::Config>::RuntimeEvent: From<pallet_balances::Event<R>>,
 		{
 			fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance<R>>) {
 				if let Some(fees) = fees_then_tips.next() {
@@ -304,17 +317,17 @@ where
 // EnsureOrigin implementation to make sure the extrinsic origin
 // must come from one of the registered enclaves
 pub struct EnsureEnclaveSigner<T>(PhantomData<T>);
-impl<T> EnsureOrigin<T::Origin> for EnsureEnclaveSigner<T>
+impl<T> EnsureOrigin<T::RuntimeOrigin> for EnsureEnclaveSigner<T>
 where
 	T: frame_system::Config + pallet_teerex::Config,
 {
 	type Success = T::AccountId;
-	fn try_origin(o: T::Origin) -> Result<Self::Success, T::Origin> {
+	fn try_origin(o: T::RuntimeOrigin) -> Result<Self::Success, T::RuntimeOrigin> {
 		o.into().and_then(|o| match o {
 			frame_system::RawOrigin::Signed(ref who)
 				if pallet_teerex::Pallet::<T>::is_registered_enclave(who) == Ok(true) =>
 				Ok(who.clone()),
-			r => Err(T::Origin::from(r)),
+			r => Err(T::RuntimeOrigin::from(r)),
 		})
 	}
 }

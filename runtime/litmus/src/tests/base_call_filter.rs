@@ -14,11 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{Call, Origin, Runtime};
+use crate::{Runtime, RuntimeCall, RuntimeOrigin};
 
 runtime_common::run_call_filter_tests!();
 
 #[test]
 fn balance_transfer_works() {
-	base_call_filter::balance_transfer_works::<Runtime, Origin, Call>();
+	base_call_filter::balance_transfer_works::<Runtime, RuntimeOrigin, RuntimeCall>();
 }

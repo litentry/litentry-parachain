@@ -19,7 +19,8 @@ use crate::{
 	trusted_operation::perform_trusted_operation, Cli,
 };
 use codec::Decode;
-use ita_stf::{KeyPair, TrustedGetter, TrustedOperation};
+use ita_stf::{TrustedGetter, TrustedOperation};
+use itp_stf_primitives::types::KeyPair;
 use litentry_primitives::UserShieldingKeyType;
 use sp_core::Pair;
 

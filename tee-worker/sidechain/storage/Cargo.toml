@@ -9,7 +9,7 @@ version = "0.9.0"
 codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive"] }
 log = "0.4"
 parking_lot = "0.12.1"
-rocksdb = { version = "0.18.0", default_features = false }
+rocksdb = { version = "0.19.0", default_features = false }
 thiserror = "1.0"
 
 # integritee
@@ -17,7 +17,7 @@ itp-types = { path = "../../core-primitives/types" }
 its-primitives = { path = "../primitives" }
 
 # Substrate dependencies
-sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.29" }
+sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
 
 [dev-dependencies]
 # crate.io
