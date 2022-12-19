@@ -47,7 +47,6 @@ itp-storage = { path = "../../../../core-primitives/storage", default-features =
 itp-top-pool-author = { path = "../../../../core-primitives/top-pool-author", default-features = false }
 itp-utils = { path = "../../../../core-primitives/utils", default-features = false }
 
-
 # litentry
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
 ita-sgx-runtime = { path = "../../../../app-libs/sgx-runtime", default-features = false }

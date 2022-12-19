@@ -144,8 +144,6 @@ where
 	}
 
 	fn submit_trusted_call(&self, shard: ShardIdentifier, encrypted_trusted_call: Vec<u8>) {
-		info!("start submit_trusted_call");
-
 		let top_submit_future =
 			async { self.top_pool_author.submit_top(encrypted_trusted_call, shard).await };
 		if let Err(e) = executor::block_on(top_submit_future) {
