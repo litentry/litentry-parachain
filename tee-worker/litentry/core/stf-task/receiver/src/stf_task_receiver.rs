@@ -33,7 +33,6 @@ use log::*;
 use std::string::ToString;
 
 const LIT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
-const DOT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
 
 // lifetime elision: StfTaskContext is guaranteed to outlive the fn
 pub fn run_stf_task_receiver<K, A, S, H>(context: &StfTaskContext<K, A, S, H>) -> Result<(), Error>
@@ -158,14 +157,10 @@ where
 					#[cfg(all(not(feature = "std"), feature = "sgx"))]
 					let dt1 = TzUtc.ymd(year as i32, 1, 1).and_hms(0, 0, 0);
 					let from_date = format!("{:?}", dt1);
-					let token_address = DOT_TOKEN_ADDRESS.to_string();
 					let mini_balance: f64 = (mini_balance / (10 ^ 12)) as f64;
-					if let Err(e) = lc_assertion_build::a4_7_12::build(
-						request.vec_identity,
-						from_date,
-						token_address,
-						mini_balance,
-					) {
+					if let Err(e) =
+						lc_assertion_build::a7::build(request.vec_identity, from_date, mini_balance)
+					{
 						error!("error verify assertion7: {:?}", e)
 					}
 				},

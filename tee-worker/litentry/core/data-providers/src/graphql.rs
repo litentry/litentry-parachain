@@ -18,6 +18,7 @@
 use crate::sgx_reexport_prelude::*;
 
 use crate::{build_client, Error, HttpError, G_DATA_PROVIDERS};
+use core::ops::Not;
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -44,6 +45,7 @@ impl Default for GraphQLClient {
 	}
 }
 
+#[derive(PartialEq)]
 pub enum VerifiedCredentialsNetwork {
 	Litentry,
 	Litmus,
@@ -86,7 +88,9 @@ impl VerifiedCredentialsIsHodlerIn {
 			VerifiedCredentialsNetwork::Khala => flat += "network:khala",
 			VerifiedCredentialsNetwork::Ethereum => flat += "network:ethereum",
 		}
-		flat += &format!(",tokenAddress:\"{}\"", &self.token_address.clone());
+		if self.token_address.is_empty().not() {
+			flat += &format!(",tokenAddress:\"{}\"", &self.token_address.clone());
+		}
 		flat += &format!(",minimumBalance:{:?}", self.mini_balance.clone());
 		flat
 	}
