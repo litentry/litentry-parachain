@@ -112,7 +112,7 @@ jobs:
         run: |
           sudo apt-get update && \
           sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
-          
+
       - name: Run cargo clippy check
         run: make clippy
 
@@ -217,12 +217,10 @@ jobs:
     needs: run-ts-tests
     steps:
       - run: |
-        result="${{ needs.run-ts-tests.result }}"
-        if [[ $result == "success" || $result == "skipped" ]]; then
-          exit 0
-        else
-          exit 1
-        fi
+          case "${{ needs.run-ts-tests.result }}" in
+            success|skipped) exit 0 ;;
+            *) exit 1 ;;
+          esac
 
   run-cargo-unit-tests:
     runs-on: ubuntu-latest
@@ -356,12 +354,10 @@ jobs:
     needs: run-cargo-runtime-tests
     steps:
       - run: |
-        result="${{ needs.run-cargo-runtime-tests.result }}"
-        if [[ $result == "success" || $result == "skipped" ]]; then
-          exit 0
-        else
-          exit 1
-        fi
+          case "${{ needs.run-cargo-runtime-tests.result }}" in
+            success|skipped) exit 0 ;;
+            *) exit 1 ;;
+          esac
 
   # Secrets are not passed to the runner when a workflow is triggered from a forked repository,
   # see https://docs.github.com/en/actions/security-guides/encrypted-secrets#using-encrypted-secrets-in-a-workflow
