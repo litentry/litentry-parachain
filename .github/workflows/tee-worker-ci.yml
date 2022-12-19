@@ -152,6 +152,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-test
     steps:
+      - uses: actions/checkout@v3
       - run: |
           case "${{ needs.build-test.result }}" in
             success|skipped) exit 0 ;;
@@ -335,6 +336,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: integration-tests
     steps:
+      - uses: actions/checkout@v3
       - run: |
           case "${{ needs.integration-tests.result }}" in
             success|skipped) exit 0 ;;
