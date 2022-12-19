@@ -36,7 +36,8 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 use codec::{Decode, Encode};
 use futures::executor;
-use ita_stf::{Hash, ShardIdentifier, TrustedCall, TrustedOperation};
+use ita_sgx_runtime::Hash;
+use ita_stf::{TrustedCall, TrustedOperation};
 use itp_attestation_handler::quote::QuoteState;
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;

@@ -271,7 +271,7 @@ impl pallet_imt::Config for Runtime {
 }
 
 impl pallet_vcmt::Config for Runtime {
-	type Event = Event;
+	type RuntimeEvent = RuntimeEvent;
 	type ManageOrigin = EnsureRoot<AccountId>;
 	type MaxMetadataLength = ConstU32<128>;
 	type MaxVerificationDelay = ConstU32<20>;

@@ -24,7 +24,7 @@ pub use types::*;
 mod key;
 pub use key::*;
 
-mod vc;
+pub mod vc;
 pub use vc::*;
 
 /// Common types of parachains.

@@ -234,7 +234,7 @@ impl TrustedCallSigned {
 		);
 
 		ita_sgx_runtime::VCManagementCall::<Runtime>::add_schema { who, id, content }
-			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+			.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 		Ok(())
 	}
@@ -243,7 +243,7 @@ impl TrustedCallSigned {
 		debug!("who.str = {:?}, index = {:?}", account_id_to_string(&who), index.clone(),);
 
 		ita_sgx_runtime::VCManagementCall::<Runtime>::disable_schema { who, index }
-			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+			.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 		Ok(())
 	}
@@ -252,7 +252,7 @@ impl TrustedCallSigned {
 		debug!("who.str = {:?}, index = {:?}", account_id_to_string(&who), index.clone(),);
 
 		ita_sgx_runtime::VCManagementCall::<Runtime>::activate_schema { who, index }
-			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+			.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 		Ok(())
 	}
@@ -261,7 +261,7 @@ impl TrustedCallSigned {
 		debug!("who.str = {:?}, index = {:?}", account_id_to_string(&who), index.clone(),);
 
 		ita_sgx_runtime::VCManagementCall::<Runtime>::revoke_schema { who, index }
-			.dispatch_bypass_filter(ita_sgx_runtime::Origin::root())
+			.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 		Ok(())
 	}
