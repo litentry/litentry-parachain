@@ -46,35 +46,32 @@ pub fn build(
 	let mut client = GraphQLClient::new();
 
 	for identity in identities {
-		if let IdentityWebType::Web3(web3_type) = identity.web_type {
-			match web3_type {
-				Web3Network::Substrate(SubstrateNetwork::Polkadot) => {
-					let mut addresses: Vec<String> = vec![];
-					match identity.handle {
-						IdentityHandle::Address20(addr) =>
-							addresses.push(from_utf8(&addr).unwrap().to_string()),
-						IdentityHandle::Address32(addr) =>
-							addresses.push(from_utf8(&addr).unwrap().to_string()),
-						IdentityHandle::String(addr) =>
-							addresses.push(from_utf8(&addr).unwrap().to_string()),
-					}
-					let credentials = VerifiedCredentialsIsHodlerIn {
-						addresses,
-						from_date: from_date.clone(),
-						network: VerifiedCredentialsNetwork::Polkadot,
-						token_address: String::from(""),
-						mini_balance,
-					};
-					let is_hodler_out = client.verified_credentials_is_hodler(credentials);
-					if let Ok(_hodler_out) = is_hodler_out {
-						// TODO: generate VC
-
-						return Ok(())
-					}
-				},
-				_ => (),
+		if let IdentityWebType::Web3(Web3Network::Substrate(SubstrateNetwork::Polkadot)) =
+			identity.web_type
+		{
+			let mut addresses: Vec<String> = vec![];
+			match identity.handle {
+				IdentityHandle::Address20(addr) =>
+					addresses.push(from_utf8(&addr).unwrap().to_string()),
+				IdentityHandle::Address32(addr) =>
+					addresses.push(from_utf8(&addr).unwrap().to_string()),
+				IdentityHandle::String(addr) =>
+					addresses.push(from_utf8(&addr).unwrap().to_string()),
 			}
-		};
+			let credentials = VerifiedCredentialsIsHodlerIn {
+				addresses,
+				from_date: from_date.clone(),
+				network: VerifiedCredentialsNetwork::Polkadot,
+				token_address: String::from(""),
+				mini_balance,
+			};
+			let is_hodler_out = client.verified_credentials_is_hodler(credentials);
+			if let Ok(_hodler_out) = is_hodler_out {
+				// TODO: generate VC
+
+				return Ok(())
+			}
+		}
 	}
 
 	Err(Error::Assertion7Error("no valid response".to_string()))

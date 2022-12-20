@@ -38,10 +38,11 @@ use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
 
+const LIT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
+
 pub fn build(
 	identities: BoundedVec<Identity, MaxIdentityLength>,
 	from_date: String,
-	token_address: String,
 	mini_balance: f64,
 ) -> Result<()> {
 	let mut client = GraphQLClient::new();
@@ -75,7 +76,7 @@ pub fn build(
 			}
 			let mut tmp_token_addr = String::from("");
 			if network == VerifiedCredentialsNetwork::Ethereum {
-				tmp_token_addr = token_address.clone();
+				tmp_token_addr = LIT_TOKEN_ADDRESS.to_string();
 			}
 			let credentials = VerifiedCredentialsIsHodlerIn {
 				addresses,
@@ -90,8 +91,6 @@ pub fn build(
 
 				return Ok(())
 			}
-		} else {
-			continue
 		}
 	}
 

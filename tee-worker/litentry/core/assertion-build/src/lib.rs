@@ -38,7 +38,6 @@ pub mod a1;
 pub mod a2;
 pub mod a3;
 pub mod a4;
-pub mod a4_7_12;
 pub mod a5;
 pub mod a6;
 pub mod a7;
@@ -58,9 +57,6 @@ pub enum Error {
 
 	#[error("Assertion4 error: {0}")]
 	Assertion4Error(String),
-
-	#[error("Assertion4/7/12 error: {0}")]
-	Assertion4_7_12Error(String),
 
 	#[error("Assertion5 error: {0}")]
 	Assertion5Error(String),
