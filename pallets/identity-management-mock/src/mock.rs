@@ -121,9 +121,9 @@ ord_parameter_types! {
 
 impl pallet_identity_management_mock::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type ManageWhitelistOrigin = EnsureRoot<Self::AccountId>;
 	type MaxVerificationDelay = ConstU64<10>;
 	type TEECallOrigin = EnsureSignedBy<One, u64>;
+	type DelegateeAdminOrigin = EnsureRoot<Self::AccountId>;
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
@@ -135,8 +135,6 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| {
-		// add to `One` to whitelist
-		let _ = IdentityManagementMock::add_to_whitelist(RuntimeOrigin::root(), 1u64);
 		System::set_block_number(1);
 	});
 	ext
@@ -214,7 +212,6 @@ pub fn setup_user_shieding_key(
 	let shielding_key = Aes256Gcm::generate_key(&mut OsRng);
 	let encrpted_shielding_key = tee_encrypt(&shielding_key);
 	// whitelist caller
-	assert_ok!(IdentityManagementMock::add_to_whitelist(RuntimeOrigin::root(), who));
 	assert_ok!(IdentityManagementMock::set_user_shielding_key(
 		RuntimeOrigin::signed(who),
 		H256::random(),
@@ -246,6 +243,7 @@ pub fn setup_create_identity(
 	assert_ok!(IdentityManagementMock::create_identity(
 		RuntimeOrigin::signed(who),
 		H256::random(),
+		who,
 		encrypted_identity.to_vec(),
 		None
 	));
