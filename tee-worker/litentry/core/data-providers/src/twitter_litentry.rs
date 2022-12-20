@@ -17,7 +17,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{base_url::TWITTER_LITENTRY, build_client, vec_to_string, Error, HttpError};
+use crate::{build_client, vec_to_string, Error, HttpError, G_DATA_PROVIDERS};
 use http::header::CONNECTION;
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -60,7 +60,10 @@ impl TwitterLitentryClient {
 	pub fn new() -> Self {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
-		let client = build_client(TWITTER_LITENTRY, headers);
+		let client = build_client(
+			G_DATA_PROVIDERS.read().unwrap().twitter_litentry_url.clone().as_str(),
+			headers,
+		);
 		TwitterLitentryClient { client }
 	}
 

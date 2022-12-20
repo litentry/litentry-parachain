@@ -40,8 +40,10 @@ print_divider
 if [ -z "$POLKADOT_BIN" ]; then
   echo "no polkadot binary provided, download now ..."
   # TODO: find a way to get stable download link
-  # https://api.github.com/repos/paritytech/polkadot/releases/latest is not reliable as 
+  # https://api.github.com/repos/paritytech/polkadot/releases/latest is not reliable as
   # polkadot could publish release which has no binary
+  #
+  # TODO: v0.9.33 isn't working, see issue #1097
   url="https://github.com/paritytech/polkadot/releases/download/v0.9.32/polkadot"
   POLKADOT_BIN="$TMPDIR/polkadot"
   wget -O "$POLKADOT_BIN" -q "$url"
