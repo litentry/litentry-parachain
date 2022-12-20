@@ -33,9 +33,9 @@ pub mod sgx {
 	use itp_sgx_io::{seal, unseal, SealedIO, StaticSealedIO};
 	use log::*;
 	use sgx_rand::{Rng, StdRng};
+	use sgx_tstd::vec::Vec;
 	use sp_core::{crypto::Pair, ed25519};
 	use std::{path::Path, sgxfs::SgxFile};
-	use sgx_tstd::vec::Vec;
 
 	impl StaticSealedIO for Ed25519Seal {
 		type Error = Error;
