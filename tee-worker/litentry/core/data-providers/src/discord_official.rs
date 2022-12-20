@@ -17,7 +17,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{base_url::DISCORD_OFFICIAL, build_client, vec_to_string, Error, HttpError, UserInfo};
+use crate::{build_client, vec_to_string, Error, HttpError, UserInfo, G_DATA_PROVIDERS};
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -68,11 +68,14 @@ impl DiscordOfficialClient {
 	pub fn new() -> Self {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
-		let token = std::env::var("DISCORD_AUTHORIZATION_TOKEN");
-		if let Ok(token) = token {
-			headers.insert(AUTHORIZATION.as_str(), token.as_str());
-		}
-		let client = build_client(DISCORD_OFFICIAL, headers);
+		headers.insert(
+			AUTHORIZATION.as_str(),
+			G_DATA_PROVIDERS.read().unwrap().discord_auth_token.clone().as_str(),
+		);
+		let client = build_client(
+			G_DATA_PROVIDERS.read().unwrap().discord_official_url.clone().as_str(),
+			headers,
+		);
 		DiscordOfficialClient { client }
 	}
 
