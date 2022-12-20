@@ -80,9 +80,14 @@ args:
         takes_value: true
         required: false
     - clean-reset:
-          long: clean-reset
-          short: c
-          help: Cleans and purges any previous state and key files and generates them anew before starting.
+        long: clean-reset
+        short: c
+        help: Cleans and purges any previous state and key files and generates them anew before starting.
+    - running-mode:
+        long: running-mode
+        help: Litentry TEE service running mode <dev/staging/prod>
+        takes_value: true
+        default_value: "dev"
 
 subcommands:
     - run:

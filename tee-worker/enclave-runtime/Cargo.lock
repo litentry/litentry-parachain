@@ -2506,6 +2506,7 @@ dependencies = [
  "http",
  "http_req",
  "itc-rest-client",
+ "lazy_static",
  "litentry-primitives",
  "log",
  "serde 1.0.151",

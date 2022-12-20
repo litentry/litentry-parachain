@@ -17,7 +17,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{base_url::TWITTER_OFFICIAL, build_client, vec_to_string, Error, HttpError, UserInfo};
+use crate::{build_client, vec_to_string, Error, HttpError, UserInfo, G_DATA_PROVIDERS};
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use serde::{Deserialize, Serialize};
@@ -100,11 +100,14 @@ impl TwitterOfficialClient {
 	pub fn new() -> Self {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
-		let token = std::env::var("TWITTER_AUTHORIZATION_TOKEN");
-		if let Ok(token) = token {
-			headers.insert(AUTHORIZATION.as_str(), token.as_str());
-		}
-		let client = build_client(TWITTER_OFFICIAL, headers);
+		headers.insert(
+			AUTHORIZATION.as_str(),
+			G_DATA_PROVIDERS.read().unwrap().twitter_auth_token.clone().as_str(),
+		);
+		let client = build_client(
+			G_DATA_PROVIDERS.read().unwrap().twitter_official_url.clone().as_str(),
+			headers,
+		);
 		TwitterOfficialClient { client }
 	}
 
@@ -262,8 +265,6 @@ mod tests {
 
 	#[test]
 	fn query_user_work() {
-		std::env::set_var("TWITTER_AUTHORIZATION_TOKEN", "Bearer ");
-
 		standalone_server();
 		let server = httpmock::MockServer::connect("localhost:9527");
 
