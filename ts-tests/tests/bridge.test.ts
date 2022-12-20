@@ -72,7 +72,8 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
                 handlerBalance
                     .div(BigNumber.from(1000000))
                     .add(BigNumber.from(100))
-                    .add(BigNumber.from(fee.toString())).toString(),
+                    .add(BigNumber.from(fee.toString()))
+                    .toString(),
                 receipt,
                 0
             ),

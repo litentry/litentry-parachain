@@ -22,6 +22,7 @@ use crate::teeracle::start_interval_market_update;
 
 use crate::{
 	account_funding::{setup_account_funding, EnclaveAccountInfoProvider},
+	config::Config,
 	error::Error,
 	globals::tokio_handle::{GetTokioHandle, GlobalTokioHandle},
 	initialized_service::{
@@ -41,7 +42,6 @@ use crate::{
 use base58::ToBase58;
 use clap::{load_yaml, App};
 use codec::{Decode, Encode};
-use config::Config;
 use enclave::{
 	api::enclave_init,
 	tls_ra::{enclave_request_state_provisioning, enclave_run_state_provisioning_server},
@@ -69,6 +69,7 @@ use its_peer_fetch::{
 };
 use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
 use its_storage::{interface::FetchBlocks, BlockPruner, SidechainStorageLock};
+use lc_data_providers::G_DATA_PROVIDERS;
 use log::*;
 use my_node_runtime::{Hash, Header, RuntimeEvent};
 use sgx_types::*;
@@ -86,6 +87,7 @@ use std::{
 };
 use substrate_api_client::{utils::FromHexString, Header as HeaderTrait, XtStatus};
 use teerex_primitives::ShardIdentifier;
+extern crate config as rs_config;
 
 mod account_funding;
 mod config;
@@ -122,6 +124,60 @@ fn main() {
 	let config = Config::from(&matches);
 
 	GlobalTokioHandle::initialize();
+
+	// init data-providers global variable.
+	{
+		let mut mut_handle = G_DATA_PROVIDERS.write().unwrap();
+		#[cfg(all(not(test), not(feature = "mockserver")))]
+		{
+			let mut config_file = "./local-setup/worker_config_dev.json";
+			if config.running_mode == "staging" {
+				config_file = "./local-setup/worker_config_stage.json";
+			} else if config.running_mode == "prod" {
+				config_file = "./local-setup/worker_config_prod.json";
+			}
+
+			let worker_config = rs_config::Config::builder()
+				.add_source(rs_config::File::with_name(config_file))
+				.build()
+				.unwrap();
+
+			let twitter_official_url = worker_config
+				.get_string("twitter_official_url")
+				.unwrap_or_else(|_e| "https://api.twitter.com".to_string());
+			let twitter_litentry_url = worker_config
+				.get_string("twitter_litentry_url")
+				.unwrap_or_else(|_e| "".to_string());
+			let twitter_auth_token = worker_config
+				.get_string("twitter_auth_token")
+				.unwrap_or_else(|_e| "abcdefghijklmnopqrstuvwxyz".to_string());
+			let discord_official_url = worker_config
+				.get_string("discord_official_url")
+				.unwrap_or_else(|_e| "https://discordapp.com".to_string());
+			let discord_litentry_url = worker_config
+				.get_string("discord_litentry_url")
+				.unwrap_or_else(|_e| "".to_string());
+			let discord_auth_token = worker_config
+				.get_string("discord_auth_token")
+				.unwrap_or_else(|_e| "ABCDEFGHIJKLMNOPQRSTUVWXYZ".to_string());
+
+			mut_handle.set_twitter_official_url(twitter_official_url);
+			mut_handle.set_twitter_litentry_url(twitter_litentry_url);
+			mut_handle.set_twitter_auth_token(twitter_auth_token);
+			mut_handle.set_discord_official_url(discord_official_url);
+			mut_handle.set_discord_litentry_url(discord_litentry_url);
+			mut_handle.set_discord_auth_token(discord_auth_token);
+		}
+		#[cfg(any(test, feature = "mockserver"))]
+		{
+			mut_handle.set_twitter_official_url("http://localhost:9527".to_string());
+			mut_handle.set_twitter_litentry_url("http://localhost:9527".to_string());
+			mut_handle.set_twitter_auth_token("".to_string());
+			mut_handle.set_discord_official_url("http://localhost:9527".to_string());
+			mut_handle.set_discord_litentry_url("http://localhost:9527".to_string());
+			mut_handle.set_discord_auth_token("".to_string());
+		}
+	}
 
 	// log this information, don't println because some python scripts for GA rely on the
 	// stdout from the service

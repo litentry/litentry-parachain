@@ -798,6 +798,7 @@ impl pallet_identity_management::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = ();
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
+	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
 }
 
 ord_parameter_types! {
@@ -806,10 +807,10 @@ ord_parameter_types! {
 
 impl pallet_identity_management_mock::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type ManageWhitelistOrigin = EnsureRootOrAllCouncil;
-	type MaxVerificationDelay = ConstU32<10>;
+	type MaxVerificationDelay = ConstU32<{ 30 * MINUTES }>;
 	// intentionally use ALICE for the IMP mock
 	type TEECallOrigin = EnsureSignedBy<ALICE, AccountId>;
+	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
 }
 
 impl pallet_vc_management::Config for Runtime {

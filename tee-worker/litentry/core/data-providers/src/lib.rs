@@ -39,6 +39,12 @@ use itc_rest_client::{
 	http_client::{DefaultSend, HttpClient},
 	rest_client::RestClient,
 };
+use lazy_static::lazy_static;
+#[cfg(feature = "std")]
+use std::sync::RwLock;
+#[cfg(feature = "sgx")]
+use std::sync::SgxRwLock as RwLock;
+
 use std::{
 	string::{String, ToString},
 	vec::Vec,
@@ -55,22 +61,67 @@ pub mod twitter_official;
 
 const TIMEOUT: Duration = Duration::from_secs(3u64);
 
-#[cfg(all(not(test), not(feature = "mockserver")))]
-pub mod base_url {
-	pub(crate) const TWITTER_OFFICIAL: &str = "https://api.twitter.com";
-	pub(crate) const TWITTER_LITENTRY: &str = "http://47.57.13.126:8080";
-
-	pub(crate) const DISCORD_OFFICIAL: &str = "https://discordapp.com";
-	pub(crate) const DISCORD_LITENTRY: &str = "http://47.57.13.126:8080";
+pub struct DataProvidersStatic {
+	pub twitter_official_url: String,
+	pub twitter_litentry_url: String,
+	pub twitter_auth_token: String,
+	pub discord_official_url: String,
+	pub discord_litentry_url: String,
+	pub discord_auth_token: String,
+}
+impl Default for DataProvidersStatic {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+impl DataProvidersStatic {
+	pub fn new() -> Self {
+		#[cfg(all(not(test), not(feature = "mockserver")))]
+		{
+			DataProvidersStatic {
+				twitter_official_url: "".to_string(),
+				twitter_litentry_url: "".to_string(),
+				twitter_auth_token: "".to_string(),
+				discord_official_url: "".to_string(),
+				discord_litentry_url: "".to_string(),
+				discord_auth_token: "".to_string(),
+			}
+		}
+		#[cfg(any(test, feature = "mockserver"))]
+		{
+			DataProvidersStatic {
+				twitter_official_url: "http://localhost:9527".to_string(),
+				twitter_litentry_url: "http://localhost:9527".to_string(),
+				twitter_auth_token: "Bearer ".to_string(),
+				discord_official_url: "http://localhost:9527".to_string(),
+				discord_litentry_url: "http://localhost:9527".to_string(),
+				discord_auth_token: "".to_string(),
+			}
+		}
+	}
+	pub fn set_twitter_official_url(&mut self, v: String) {
+		self.twitter_official_url = v;
+	}
+	pub fn set_twitter_litentry_url(&mut self, v: String) {
+		self.twitter_litentry_url = v;
+	}
+	pub fn set_twitter_auth_token(&mut self, v: String) {
+		self.twitter_auth_token = v;
+	}
+	pub fn set_discord_official_url(&mut self, v: String) {
+		self.discord_official_url = v;
+	}
+	pub fn set_discord_litentry_url(&mut self, v: String) {
+		self.discord_litentry_url = v;
+	}
+	pub fn set_discord_auth_token(&mut self, v: String) {
+		self.discord_auth_token = v;
+	}
 }
 
-// #[cfg(test)]
-#[cfg(any(test, feature = "mockserver"))]
-pub mod base_url {
-	pub(crate) const TWITTER_OFFICIAL: &str = "http://localhost:9527";
-	pub(crate) const TWITTER_LITENTRY: &str = "http://localhost:9527";
-	pub(crate) const DISCORD_OFFICIAL: &str = "http://localhost:9527";
-	pub(crate) const DISCORD_LITENTRY: &str = "http://localhost:9527";
+lazy_static! {
+	pub static ref G_DATA_PROVIDERS: RwLock<DataProvidersStatic> =
+		RwLock::new(DataProvidersStatic::new());
 }
 
 #[derive(Debug, thiserror::Error, Clone)]

@@ -1,12 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-PARACHAIN_DIR=/tmp/litentry-parachain
-[ -d "$PARACHAIN_DIR" ] && rm -rf "$PARACHAIN_DIR"
-git clone https://github.com/litentry/litentry-parachain "$PARACHAIN_DIR"
-cd "$PARACHAIN_DIR"
-git checkout tee-dev
+ROOTDIR=$(git rev-parse --show-toplevel)
+cd "$ROOTDIR"
 
-cp -f docker/rococo-parachain-launch-config.tee-dev.yml docker/rococo-parachain-launch-config.yml
-
+sed -i.bak "s;litentry-parachain:latest;litentry-parachain:tee-dev;" docker/rococo-parachain-launch-config.yml
 make launch-docker-rococo

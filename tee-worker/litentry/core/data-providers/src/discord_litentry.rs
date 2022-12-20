@@ -17,7 +17,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{base_url::DISCORD_LITENTRY, build_client, vec_to_string, Error, HttpError};
+use crate::{build_client, vec_to_string, Error, HttpError, G_DATA_PROVIDERS};
 use http::header::CONNECTION;
 use http_req::response::Headers;
 
@@ -66,7 +66,10 @@ impl DiscordLitentryClient {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
 
-		let client = build_client(DISCORD_LITENTRY, headers);
+		let client = build_client(
+			G_DATA_PROVIDERS.write().unwrap().discord_litentry_url.clone().as_str(),
+			headers,
+		);
 		DiscordLitentryClient { client }
 	}
 
