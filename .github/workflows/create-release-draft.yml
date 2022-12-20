@@ -218,8 +218,7 @@ jobs:
           echo "Chain: $chain" >> output-$chain.txt
           echo "----------------------------------------------------------------------" >> output-$chain.txt
           echo "Running parachain: $chain"
-#          docker run --pull always --rm --name=$PARACHAIN_NAME -d -p 9944:9944 litentry/litentry-parachain:$RELEASE_TAG --chain=$chain --rpc-cors=all --ws-external --tmp -- --dev
-          # local launch parachain and comparison
+
           ./scripts/fork-parachain-and-launch.sh ${{ matrix.chain }}
 
           sleep 3
