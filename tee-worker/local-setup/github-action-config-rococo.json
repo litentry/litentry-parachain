@@ -15,7 +15,9 @@
         "-u",
         "wss://parachain-eu-0.staging.litentry.io",
         "-p",
-        "443"
+        "443",
+        "running-mode",
+        "staging"
       ],
       "subcommand_flags": [
         "--skip-ra",
@@ -37,7 +39,9 @@
         "-u",
         "wss://parachain-eu-0.staging.litentry.io",
         "-p",
-        "443"
+        "443",
+        "running-mode",
+        "staging"
       ],
       "subcommand_flags": [
         "--skip-ra",
