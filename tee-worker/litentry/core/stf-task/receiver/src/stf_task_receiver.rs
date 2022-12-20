@@ -23,6 +23,7 @@ use ita_sgx_runtime::IdentityManagement;
 use lc_stf_task_sender::{stf_task_sender, RequestType};
 use litentry_primitives::{Assertion, IdentityWebType, Web2Network};
 use log::*;
+use itp_sgx_crypto::sign;
 
 // lifetime elision: StfTaskContext is guaranteed to outlive the fn
 pub fn run_stf_task_receiver<K, A, S, H>(context: &StfTaskContext<K, A, S, H>) -> Result<(), Error>

@@ -35,6 +35,7 @@ pub mod sgx {
 	use sgx_rand::{Rng, StdRng};
 	use sp_core::{crypto::Pair, ed25519};
 	use std::{path::Path, sgxfs::SgxFile};
+	use sgx_tstd::vec::Vec;
 
 	impl StaticSealedIO for Ed25519Seal {
 		type Error = Error;
@@ -84,5 +85,36 @@ pub mod sgx {
 		rand.fill_bytes(&mut seed);
 
 		Ok(seal(&seed, SEALED_SIGNER_SEED_FILE)?)
+	}
+
+	pub fn sign(payload: &Vec<u8>) -> Result<(Vec<u8>, Vec<u8>)> {
+		let signer = Ed25519Seal::unseal_from_static_file()?;
+		let signed_value = signer.sign(payload.as_slice());
+
+		let mut public_key = [0_u8; 32];
+		public_key.clone_from_slice(&signer.public().0);
+
+		Ok((signed_value.0.to_vec(), public_key.to_vec()))
+	}
+
+	pub fn verify(sig: &ed25519::Signature, msg: &Vec<u8>) -> Result<bool> {
+		let signer = Ed25519Seal::unseal_from_static_file()?;
+		let ret = ed25519::Pair::verify(sig, msg, &ed25519::Public(signer.public().0));
+		Ok(ret)
+	}
+}
+
+#[cfg(feature = "test")]
+pub mod tests {
+
+	use super::*;
+	use sp_core::ed25519::Signature;
+
+	pub fn sign_verify_works() {
+		let payload = "payload".as_bytes().to_vec();
+		let (sig, _pubk) = sign(&payload).unwrap();
+		let ret = verify(&Signature::from_slice(&sig).unwrap(), &payload).unwrap();
+
+		assert_eq!(ret, true);
 	}
 }

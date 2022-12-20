@@ -49,3 +49,4 @@ std = [
     "serde_json/std",
     "sgx-crypto-helper/default",
 ]
+test = []
