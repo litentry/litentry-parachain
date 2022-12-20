@@ -27,7 +27,7 @@ static DEFAULT_UNTRUSTED_PORT: &str = "2001";
 static DEFAULT_MU_RA_PORT: &str = "3443";
 static DEFAULT_METRICS_PORT: &str = "8787";
 static DEFAULT_UNTRUSTED_HTTP_PORT: &str = "4545";
-// running mode for litentry: dev / stage / prod
+// running mode for litentry: dev / staging / prod
 static DEFAULT_RUNNING_MODE: &str = "dev";
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -57,7 +57,7 @@ pub struct Config {
 	pub run_config: Option<RunConfig>,
 
 	// Litentry parameters
-	/// Litentry TEE service running mode: dev/stage/prod
+	/// Litentry TEE service running mode: dev/staging/prod
 	pub running_mode: String,
 }
 
@@ -275,7 +275,7 @@ mod test {
 		let mu_ra_port = "99";
 		let untrusted_http_port = "4321";
 
-		// running mode for litentry: dev / stage / prod
+		// running mode for litentry: dev / staging / prod
 		let running_mode = "dev";
 
 		let mut args = ArgMatches::default();

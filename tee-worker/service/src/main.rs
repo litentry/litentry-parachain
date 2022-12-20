@@ -131,7 +131,7 @@ fn main() {
 		#[cfg(all(not(test), not(feature = "mockserver")))]
 		{
 			let mut config_file = "./local-setup/worker_config_dev.json";
-			if config.running_mode == "stage" {
+			if config.running_mode == "staging" {
 				config_file = "./local-setup/worker_config_stage.json";
 			} else if config.running_mode == "prod" {
 				config_file = "./local-setup/worker_config_prod.json";

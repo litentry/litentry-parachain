@@ -40,7 +40,7 @@ function start_worker_for_staging() {
     port=443
     echo "------------------------------------------------------------"
     echo "Start ${worker_num} workers with staging ${PARACHAIN} ..."
-    ./scripts/launch_local_worker.sh -c true -n ${worker_num} -u ${url} -p ${port} -m "stage"
+    ./scripts/launch_local_worker.sh -c true -n ${worker_num} -u ${url} -p ${port} -m "staging"
 }
 
 function start_worker_for_prod() {

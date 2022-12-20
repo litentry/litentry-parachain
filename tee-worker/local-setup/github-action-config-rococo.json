@@ -17,7 +17,7 @@
         "-p",
         "443",
         "running-mode",
-        "stage"
+        "staging"
       ],
       "subcommand_flags": [
         "--skip-ra",
@@ -41,7 +41,7 @@
         "-p",
         "443",
         "running-mode",
-        "stage"
+        "staging"
       ],
       "subcommand_flags": [
         "--skip-ra",
