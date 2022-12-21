@@ -169,7 +169,7 @@ generate-docker-compose-litentry:
 generate-docker-compose-litmus:
 	@./scripts/generate-docker-files.sh litmus
 
-.PHONY: generate-docker-compose-rococo ## Generate docker-compose files for litmus local network
+.PHONY: generate-docker-compose-rococo ## Generate docker-compose files for rococo local network
 generate-docker-compose-rococo:
 	@./scripts/generate-docker-files.sh rococo
 
