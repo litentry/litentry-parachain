@@ -19,11 +19,12 @@ function start_local_parachain() {
     cd ${ROOTDIR}
     echo "------------------------------------------------------------"
     echo "Start local parachain: ${PARACHAIN} ..."
-    ./scripts/litentry/start_parachain.sh ${PARACHAIN}
+    # TODO: only `rococo` is supported for the moment. And it's hard-coded inside `start_parachain.sh`
+    ./scripts/litentry/start_parachain.sh
 }
 
 function start_worker_for_dev() {
-    start_local_parachain
+    # start_local_parachain
     cd ${ROOTDIR}
     worker_num=2
     echo "------------------------------------------------------------"

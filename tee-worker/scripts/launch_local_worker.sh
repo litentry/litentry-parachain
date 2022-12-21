@@ -77,6 +77,9 @@ for ((i = 0; i < ${WORKER_NUM}; i++)); do
 	for Item in 'enclave.signed.so' 'key.txt' 'spid.txt' 'integritee-service' 'integritee-cli'; do
 		cp "${ROOTDIR}/bin/${Item}" "${ROOTDIR}"/tmp/"${worker_name}"
 	done
+	for Item in 'worker-config-dev.json' 'worker-config-prod.json' 'worker-config-staging.json'; do
+		cp "${ROOTDIR}/local-setup/${Item}" "${ROOTDIR}"/tmp/"${worker_name}"
+	done
 
 	cd "${ROOTDIR}"/tmp/${worker_name} || exit
 	echo "enter ${ROOTDIR}/tmp/${worker_name}"
