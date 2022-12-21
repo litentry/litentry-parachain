@@ -835,9 +835,6 @@ impl pallet_drop3::Config for Runtime {
 impl pallet_extrinsic_filter::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type UpdateOrigin = EnsureRootOrHalfTechnicalCommittee;
-	#[cfg(feature = "tee-dev")]
-	type NormalModeFilter = Everything;
-	#[cfg(not(feature = "tee-dev"))]
 	type NormalModeFilter = NormalModeFilter;
 	type SafeModeFilter = SafeModeFilter;
 	type TestModeFilter = Everything;
@@ -1034,7 +1031,6 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			// Balance
 			RuntimeCall::Balances(_) |
 			// IMP Mock, only allowed on rococo for testing
-			// we should use `tee-dev` branch if we want to test it on Litmus
 			RuntimeCall::IdentityManagementMock(_) |
 			RuntimeCall::IdentityManagement(_) |
 			RuntimeCall::VCManagement(_) |
