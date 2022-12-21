@@ -19,6 +19,7 @@ log = "0.4"
 parking_lot = "0.12.1"
 parse_duration = "2.1.1"
 # for litentry-parachain: otherwise we have a conflict in substrate-prometheus-endpoint
+config = "0.13.3"
 prometheus = { version = "0.13.0", features = ["process"], default-features = false }
 serde = "1.0"
 serde_derive = "1.0"
@@ -68,7 +69,8 @@ sp-finality-grandpa = { git = "https://github.com/paritytech/substrate.git", bra
 sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
 sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
 
-# mock server
+# local litentry dependencies
+lc-data-providers = { path = "../litentry/core/data-providers" }
 lc-mock-server = { path = "../litentry/core/mock-server" }
 
 [features]
