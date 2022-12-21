@@ -130,11 +130,11 @@ fn main() {
 		let mut mut_handle = G_DATA_PROVIDERS.write().unwrap();
 		#[cfg(all(not(test), not(feature = "mockserver")))]
 		{
-			let mut config_file = "./local-setup/worker_config_dev.json";
+			let mut config_file = "worker-config-dev.json";
 			if config.running_mode == "staging" {
-				config_file = "./local-setup/worker_config_stage.json";
+				config_file = "worker-config-staging.json";
 			} else if config.running_mode == "prod" {
-				config_file = "./local-setup/worker_config_prod.json";
+				config_file = "worker-config-prod.json";
 			}
 
 			let worker_config = rs_config::Config::builder()

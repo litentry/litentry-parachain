@@ -69,3 +69,5 @@ bin/light_client_db.bin.1
 
 # generated upstream patch
 upstream.patch
+
+dockerize*
