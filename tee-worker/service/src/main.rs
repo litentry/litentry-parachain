@@ -85,8 +85,11 @@ use std::{
 	thread,
 	time::Duration,
 };
-use substrate_api_client::{utils::FromHexString, Header as HeaderTrait, XtStatus};
-use teerex_primitives::ShardIdentifier;
+use substrate_api_client::{
+	utils::{storage_key, FromHexString},
+	Header as HeaderTrait, StorageKey, XtStatus,
+};
+use teerex_primitives::{Enclave as TeerexEnclave, ShardIdentifier};
 extern crate config as rs_config;
 
 mod account_funding;
@@ -506,15 +509,59 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		return
 	}
 
-	println!("[>] Register the enclave (send the extrinsic)");
-	let register_enclave_xt_hash = node_api.send_extrinsic(xthex, XtStatus::Finalized).unwrap();
-	println!("[<] Extrinsic got finalized. Hash: {:?}\n", register_enclave_xt_hash);
+	let mut register_enclave_xt_header: Option<Header> = None;
+	let mut we_are_primary_validateer: bool = false;
 
-	let register_enclave_xt_header =
-		node_api.get_header(register_enclave_xt_hash).unwrap().unwrap();
+	// litentry, Check if the enclave is already registered
+	match node_api.get_keys(storage_key("Teerex", "EnclaveRegistry"), None) {
+		Ok(Some(keys)) => {
+			let trusted_url = trusted_url.as_bytes().to_vec();
+			let mrenclave = mrenclave.to_vec();
+			let mut found = false;
+			for key in keys {
+				let key = if key.starts_with("0x") {
+					let bytes = &key.as_bytes()[b"0x".len()..];
+					hex::decode(bytes).unwrap()
+				} else {
+					hex::decode(key.as_bytes()).unwrap()
+				};
+				match node_api.get_storage_by_key_hash::<TeerexEnclave<AccountId32, Vec<u8>>>(
+					StorageKey(key.clone()),
+					None,
+				) {
+					Ok(Some(value)) => {
+						if value.mr_enclave.to_vec() == mrenclave && value.url == trusted_url {
+							// After calling the perform_ra function, the nonce will be incremented by 1,
+							// so enclave is already registered, we should reset the nonce_cache
+							enclave
+								.set_nonce(nonce)
+								.expect("Could not set nonce of enclave. Returning here...");
+							found = true;
+							info!("fond enclave: {:?}", value);
+							break
+						}
+					},
+					Ok(None) => {
+						warn!("not found from key: {:?}", key);
+					},
+					Err(_) => {},
+				}
+			}
+			if !found {
+				println!("[>] Register the enclave (send the extrinsic)");
+				let register_enclave_xt_hash =
+					node_api.send_extrinsic(xthex, XtStatus::Finalized).unwrap();
+				println!("[<] Extrinsic got finalized. Hash: {:?}\n", register_enclave_xt_hash);
+				register_enclave_xt_header = node_api.get_header(register_enclave_xt_hash).unwrap();
+			}
+		},
+		_ => panic!("unknown error"),
+	}
 
-	let we_are_primary_validateer =
-		we_are_primary_validateer(&node_api, &register_enclave_xt_header).unwrap();
+	if let Some(register_enclave_xt_header) = register_enclave_xt_header.clone() {
+		we_are_primary_validateer =
+			check_we_are_primary_validateer(&node_api, &register_enclave_xt_header).unwrap();
+	}
 
 	if we_are_primary_validateer {
 		println!("[+] We are the primary validateer");
@@ -555,7 +602,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		if WorkerModeProvider::worker_mode() == WorkerMode::Sidechain {
 			last_synced_header = sidechain_init_block_production(
 				enclave,
-				&register_enclave_xt_header,
+				register_enclave_xt_header,
 				we_are_primary_validateer,
 				parentchain_handler.clone(),
 				sidechain_storage,
@@ -805,7 +852,7 @@ fn enclave_account<E: EnclaveBase>(enclave_api: &E) -> AccountId32 {
 }
 
 /// Checks if we are the first validateer to register on the parentchain.
-fn we_are_primary_validateer(
+fn check_we_are_primary_validateer(
 	node_api: &ParentchainApi,
 	register_enclave_xt_header: &Header,
 ) -> Result<bool, Error> {
