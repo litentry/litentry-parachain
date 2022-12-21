@@ -25,10 +25,10 @@ mkdir_p(log_dir)
 node_log = open(f'{log_dir}/node.log', 'w+')
 
 
-def setup_worker(work_dir: str, source_dir: str, std_err: Union[None, int, IO]):
+def setup_worker(work_dir: str, source_dir: str, config_dir: str, std_err: Union[None, int, IO]):
     print(f'Setting up worker in {work_dir}')
     print(f'Copying files from {source_dir}')
-    worker = Worker(cwd=work_dir, source_dir=source_dir, std_err=std_err)
+    worker = Worker(cwd=work_dir, source_dir=source_dir, config_dir=config_dir, std_err=std_err)
     worker.init_clean()
     print('Initialized worker.')
     return worker
@@ -36,24 +36,26 @@ def setup_worker(work_dir: str, source_dir: str, std_err: Union[None, int, IO]):
 
 def run_worker(config, i: int):
     log = open(f'{log_dir}/worker{i}.log', 'w+')
-    w = setup_worker(f'tmp/w{i}', config["source"], log)
+    # TODO: either hard-code 'local-setup' directory, or take from input config.json
+    w = setup_worker(f'tmp/w{i}', config["source"], f'local-setup', log)
 
     print(f'Starting worker {i} in background')
     return w.run_in_background(log_file=log, flags=config["flags"], subcommand_flags=config["subcommand_flags"])
 
 
-def main(processes, config_path):
+def main(processes, config_path, parachain_type):
     print('Starting litentry-parachain in background')
 
     with open(config_path) as config_file:
         config = json.load(config_file)
 
-    # litentry: start parachain via shell script
-    # TODO: use Popen and copy the stdout also to node.log
-    run(['./scripts/litentry/start_parachain.sh'])
+    if parachain_type == "local" :
+        # litentry: start parachain via shell script
+        # TODO: use Popen and copy the stdout also to node.log
+        run(['./scripts/litentry/start_parachain.sh'])
 
-    print('Starting litentry-parachain done')
-    print('----------------------------------------')
+        print('Starting litentry-parachain done')
+        print('----------------------------------------')
 
     i = 1
     for w_conf in config["workers"]:
@@ -76,8 +78,9 @@ def main(processes, config_path):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run a setup consisting of a node and some workers')
     parser.add_argument('config', type=str, help='Config for the node and workers')
+    parser.add_argument('parachain', nargs='?', default="local", type=str, help='Config for parachain selection: local / remote')
     args = parser.parse_args()
 
     process_list = []
     killer = GracefulKiller(process_list)
-    main(process_list, args.config)
+    main(process_list, args.config, args.parachain)

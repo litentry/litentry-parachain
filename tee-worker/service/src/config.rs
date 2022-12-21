@@ -27,6 +27,8 @@ static DEFAULT_UNTRUSTED_PORT: &str = "2001";
 static DEFAULT_MU_RA_PORT: &str = "3443";
 static DEFAULT_METRICS_PORT: &str = "8787";
 static DEFAULT_UNTRUSTED_HTTP_PORT: &str = "4545";
+// running mode for litentry: dev / staging / prod
+static DEFAULT_RUNNING_MODE: &str = "dev";
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Config {
@@ -53,6 +55,10 @@ pub struct Config {
 	pub untrusted_http_port: String,
 	/// Config of the 'run' subcommand
 	pub run_config: Option<RunConfig>,
+
+	// Litentry parameters
+	/// Litentry TEE service running mode: dev/staging/prod
+	pub running_mode: String,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -71,6 +77,7 @@ impl Config {
 		metrics_server_port: String,
 		untrusted_http_port: String,
 		run_config: Option<RunConfig>,
+		running_mode: String,
 	) -> Self {
 		Self {
 			node_ip,
@@ -86,6 +93,7 @@ impl Config {
 			metrics_server_port,
 			untrusted_http_port,
 			run_config,
+			running_mode,
 		}
 	}
 
@@ -167,6 +175,7 @@ impl From<&ArgMatches<'_>> for Config {
 			metrics_server_port.to_string(),
 			untrusted_http_port.to_string(),
 			run_config,
+			m.value_of("running-mode").unwrap_or(DEFAULT_RUNNING_MODE).to_string(),
 		)
 	}
 }
@@ -240,6 +249,7 @@ mod test {
 		assert!(!config.enable_metrics_server);
 		assert_eq!(config.untrusted_http_port, DEFAULT_UNTRUSTED_HTTP_PORT);
 		assert!(config.run_config.is_none());
+		assert_eq!(config.running_mode, DEFAULT_RUNNING_MODE);
 	}
 
 	#[test]
@@ -265,6 +275,9 @@ mod test {
 		let mu_ra_port = "99";
 		let untrusted_http_port = "4321";
 
+		// running mode for litentry: dev / staging / prod
+		let running_mode = "dev";
+
 		let mut args = ArgMatches::default();
 		args.args = HashMap::from([
 			("node-server", Default::default()),
@@ -277,6 +290,7 @@ mod test {
 			("untrusted-worker-port", Default::default()),
 			("trusted-worker-port", Default::default()),
 			("untrusted-http-port", Default::default()),
+			("running-mode", Default::default()),
 		]);
 		// Workaround because MatchedArg is private.
 		args.args.get_mut("node-server").unwrap().vals = vec![node_ip.into()];
@@ -289,6 +303,7 @@ mod test {
 		args.args.get_mut("untrusted-worker-port").unwrap().vals = vec![untrusted_port.into()];
 		args.args.get_mut("trusted-worker-port").unwrap().vals = vec![trusted_port.into()];
 		args.args.get_mut("untrusted-http-port").unwrap().vals = vec![untrusted_http_port.into()];
+		args.args.get_mut("running-mode").unwrap().vals = vec![running_mode.into()];
 
 		let config = Config::from(&args);
 
@@ -301,6 +316,7 @@ mod test {
 		assert_eq!(config.untrusted_external_worker_address, Some(untrusted_ext_addr.to_string()));
 		assert_eq!(config.mu_ra_external_address, Some(mu_ra_ext_addr.to_string()));
 		assert_eq!(config.untrusted_http_port, untrusted_http_port.to_string());
+		assert_eq!(config.running_mode, running_mode.to_string());
 	}
 
 	#[test]

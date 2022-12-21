@@ -42,9 +42,16 @@ pub use itp_sgx_runtime_primitives::types::*;
 pub type IpfsHash = [u8; 46];
 pub type MrEnclave = [u8; 32];
 
+// pallet teerex
 pub type ConfirmCallFn = ([u8; 2], ShardIdentifier, H256, Vec<u8>);
 pub type ShieldFundsFn = ([u8; 2], Vec<u8>, Balance, ShardIdentifier);
 pub type CallWorkerFn = ([u8; 2], Request);
+
+// pallet IMP
+pub type SetUserShieldingKeyFn = ([u8; 2], ShardIdentifier, Vec<u8>);
+pub type CreateIdentityFn = ([u8; 2], ShardIdentifier, AccountId, Vec<u8>, Option<Vec<u8>>);
+pub type RemoveIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>);
+pub type VerifyIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>, Vec<u8>);
 
 pub type Enclave = EnclaveGen<AccountId>;
 

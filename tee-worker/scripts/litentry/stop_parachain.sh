@@ -1,8 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-PARACHAIN_DIR=/tmp/litentry-parachain
-
-cd "$PARACHAIN_DIR"
+ROOTDIR=$(git rev-parse --show-toplevel)
+cd "$ROOTDIR"
 make clean-docker-rococo || true
-rm -rf "$PARACHAIN_DIR"
