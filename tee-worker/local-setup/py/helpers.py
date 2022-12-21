@@ -26,6 +26,10 @@ def setup_working_dir(source_dir: str, target_dir: str):
     files_to_copy = ['enclave.signed.so', 'key.txt', 'spid.txt', 'integritee-service']
     [shutil.copy(f'{source_dir}/{f}', f'{target_dir}/{f}') for f in files_to_copy]
 
+def copy_config_files(source_dir: str, target_dir: str):
+    files_to_copy = ['worker-config-dev.json', 'worker-config-prod.json', 'worker-config-staging.json']
+    [shutil.copy(f'{source_dir}/{f}', f'{target_dir}/{f}') for f in files_to_copy]
+
 
 def mkdir_p(path):
     """ Surprisingly, there is no simple function in python to create a dir if it does not exist."""
