@@ -108,6 +108,7 @@ async function killWorker(worker: ChildProcess) {
     // https://azimi.me/2014/12/31/kill-child_process-node-js.html
     if (worker.pid) {
         process.kill(-worker.pid, 9)
+        await sleep(2)
     }
 }
 
@@ -120,8 +121,8 @@ async function latestBlock(connection: WebSocketAsPromised, shard: string): Prom
     }, {requestId: 1, timeout: 6000});
 }
 
-async function waitWorkerProducingBlock(connection: WebSocketAsPromised, shard: string, atLeast: number) {
-    return new Promise<void>(async (resolve, reject) => {
+async function waitWorkerProducingBlock(connection: WebSocketAsPromised, shard: string, atLeast: number): Promise<number> {
+    return new Promise<number>(async (resolve, reject) => {
         let block_number = 0
         let start_block_number = 0
         do {
@@ -134,8 +135,9 @@ async function waitWorkerProducingBlock(connection: WebSocketAsPromised, shard: 
                 console.log("current block:", block_number)
             }
             await sleep(1)
-        } while (block_number >= start_block_number + atLeast)
-        resolve()
+            // console.log(block_number >= (start_block_number + atLeast))
+        } while (block_number < (start_block_number + atLeast))
+        resolve(block_number)
     })
 }
 
@@ -152,14 +154,19 @@ async function waitWorkerProducingBlock(connection: WebSocketAsPromised, shard: 
     await sleep(15);
     let connection0 = await initWorkerConnection(`ws://localhost:${commands.worker0.untrusted_ws_port}`)
     console.log("shard:", shard);
-    await waitWorkerProducingBlock(connection0, shard, 2)
+    const current_block = await waitWorkerProducingBlock(connection0, shard, 2)
     await killWorker(worker0);
-    await sleep(3)
+    await sleep(5)
     let {
         shard: _,
         process: worker0_1
     } = await launchWorker(binary_dir, tmp_dir, commands.worker0.commands.resume, false)
-    await sleep(30)
+    await sleep(1)
+    connection0 = await initWorkerConnection(`ws://localhost:${commands.worker0.untrusted_ws_port}`)
+    console.log("resume block: ", await waitWorkerProducingBlock(connection0, shard, 0))
+
+    // await killWorker(worker0_1)
     // worker0_1.kill(9)
+    await sleep(3)
     process.exit(-1)
 })()
