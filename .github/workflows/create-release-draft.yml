@@ -218,9 +218,7 @@ jobs:
           echo "Chain: $chain" >> output-$chain.txt
           echo "----------------------------------------------------------------------" >> output-$chain.txt
           echo "Running parachain: $chain"
-
-          ./scripts/fork-parachain-and-launch.sh ${{ matrix.chain }}
-
+          docker run --pull always --rm --name=$PARACHAIN_NAME -d -p 9944:9944 litentry/litentry-parachain:$RELEASE_TAG --chain=$chain-dev --rpc-cors=all --ws-external --tmp -- --dev
           sleep 3
           CMD="docker run --pull always --network host jacogr/polkadot-js-tools metadata $REF_URL $BASE_URL"
           echo -e "Running:\n$CMD"
