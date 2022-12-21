@@ -20,7 +20,10 @@ use mockall::predicate::*;
 #[cfg(test)]
 use mockall::*;
 
-use super::{storage::SidechainStorage, Result};
+use super::{
+	storage::{LastSidechainBlock, SidechainStorage},
+	Result,
+};
 use its_primitives::{
 	traits::{ShardIdentifierFor, SignedBlock as SignedBlockT},
 	types::{BlockHash, BlockNumber},
@@ -77,6 +80,11 @@ pub trait FetchBlocks<SignedBlock: SignedBlockT> {
 		block_hash_until: &BlockHash,
 		shard_identifier: &ShardIdentifierFor<SignedBlock>,
 	) -> Result<Vec<SignedBlock>>;
+
+	fn latest_block(
+		&self,
+		shard_identifier: &ShardIdentifierFor<SignedBlock>,
+	) -> Option<LastSidechainBlock>;
 }
 
 impl<SignedBlock: SignedBlockT> BlockStorage<SignedBlock> for SidechainStorageLock<SignedBlock> {
@@ -109,5 +117,12 @@ impl<SignedBlock: SignedBlockT> FetchBlocks<SignedBlock> for SidechainStorageLoc
 		self.storage
 			.read()
 			.get_blocks_in_range(block_hash_from, block_hash_until, shard_identifier)
+	}
+
+	fn latest_block(
+		&self,
+		shard_identifier: &ShardIdentifierFor<SignedBlock>,
+	) -> Option<LastSidechainBlock> {
+		self.storage.read().last_block_of_shard(shard_identifier).map(|e| e.clone())
 	}
 }

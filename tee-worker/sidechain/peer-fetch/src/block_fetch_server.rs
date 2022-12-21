@@ -17,7 +17,9 @@
 
 use crate::error::Result;
 use its_primitives::types::{BlockHash, ShardIdentifier, SignedBlock};
-use its_rpc_handler::constants::RPC_METHOD_NAME_FETCH_BLOCKS_FROM_PEER;
+use its_rpc_handler::constants::{
+	RPC_METHOD_NAME_FETCH_BLOCKS_FROM_PEER, RPC_METHOD_NAME_LATEST_BLOCK,
+};
 use its_storage::interface::FetchBlocks;
 use jsonrpsee::{types::error::CallError, RpcModule};
 use log::*;
@@ -48,7 +50,7 @@ where
 				let (from_block_hash, maybe_until_block_hash, shard_identifier) =
 					params.one::<(BlockHash, Option<BlockHash>, ShardIdentifier)>()?;
 				info!("Got request to fetch sidechain blocks from peer. Fetching sidechain blocks from storage \
-					(last imported block hash: {:?}, until block hash: {:?}, shard: {}", 
+					(last imported block hash: {:?}, until block hash: {:?}, shard: {}",
 					from_block_hash, maybe_until_block_hash, shard_identifier);
 
 				match maybe_until_block_hash {
@@ -68,6 +70,18 @@ where
 							error!("Failed to fetch sidechain blocks from storage: {:?}", e);
 							CallError::Failed(e.into())
 						}),
+				}
+			},
+		)?;
+
+		fetch_sidechain_blocks_module.register_method(
+			RPC_METHOD_NAME_LATEST_BLOCK,
+			|params, sidechain_block_fetcher| {
+				debug!("{}: {:?}", RPC_METHOD_NAME_LATEST_BLOCK, params);
+				let shard = params.parse::<ShardIdentifier>()?;
+				match sidechain_block_fetcher.latest_block(&shard) {
+					None => Ok(None),
+					Some(e) => Ok(Some(e)),
 				}
 			},
 		)?;
