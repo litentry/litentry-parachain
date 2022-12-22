@@ -17,7 +17,6 @@
 
 //! Teeracle pallet benchmarking
 #![allow(dead_code, unused_imports, const_item_mutation)]
-
 #![cfg(any(test, feature = "runtime-benchmarks"))]
 
 use super::*;

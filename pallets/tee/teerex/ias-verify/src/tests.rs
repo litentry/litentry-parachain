@@ -3,7 +3,7 @@
 use super::*;
 use codec::Decode;
 use frame_support::assert_err;
-use hex_literal::hex; 
+use hex_literal::hex;
 // reproduce with "integritee_service dump_ra"
 const TEST1_CERT: &[u8] = include_bytes!("../test/test_ra_cert_MRSIGNER1_MRENCLAVE1.der");
 const TEST2_CERT: &[u8] = include_bytes!("../test/test_ra_cert_MRSIGNER2_MRENCLAVE2.der");
