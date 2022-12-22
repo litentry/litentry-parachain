@@ -166,6 +166,7 @@ describe("Resume worker", function () {
         } = await launchWorker("worker0", binary_dir, worker0_dir, commands.worker0.commands.resume, false)
         await worker0_conn.open() //reopen connection
         const resume_block = await latestBlock(worker0_conn, shard);
+        // TODO compare the block hash
         assert.isNotEmpty(resume_block.result, "the latest block can't be empty")
         assert.isTrue(resume_block!.result!.number >= current_block, "failed to resume worker")
         // await killWorker(r_worker)
