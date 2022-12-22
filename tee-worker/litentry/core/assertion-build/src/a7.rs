@@ -41,7 +41,7 @@ use lc_data_providers::graphql::{
 pub fn build(
 	identities: BoundedVec<Identity, MaxIdentityLength>,
 	from_date: String,
-	mini_balance: f64,
+	min_balance: f64,
 ) -> Result<()> {
 	let mut client = GraphQLClient::new();
 
@@ -63,9 +63,9 @@ pub fn build(
 				from_date: from_date.clone(),
 				network: VerifiedCredentialsNetwork::Polkadot,
 				token_address: String::from(""),
-				mini_balance,
+				min_balance,
 			};
-			let is_hodler_out = client.verified_credentials_is_hodler(credentials);
+			let is_hodler_out = client.check_verified_credentials_is_hodler(credentials);
 			if let Ok(_hodler_out) = is_hodler_out {
 				// TODO: generate VC
 

@@ -38,12 +38,13 @@ use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
 
+// ERC20 LIT token address
 const LIT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
 
 pub fn build(
 	identities: BoundedVec<Identity, MaxIdentityLength>,
 	from_date: String,
-	mini_balance: f64,
+	min_balance: f64,
 ) -> Result<()> {
 	let mut client = GraphQLClient::new();
 
@@ -83,9 +84,9 @@ pub fn build(
 				from_date: from_date.clone(),
 				network,
 				token_address: tmp_token_addr,
-				mini_balance,
+				min_balance,
 			};
-			let is_hodler_out = client.verified_credentials_is_hodler(credentials);
+			let is_hodler_out = client.check_verified_credentials_is_hodler(credentials);
 			if let Ok(_hodler_out) = is_hodler_out {
 				// TODO: generate VC
 

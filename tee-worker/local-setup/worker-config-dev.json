@@ -4,5 +4,7 @@
     "twitter_auth_token": "abcdefghijklmnopqrstuvwxyz",
     "discord_official_url": "https://discordapp.com",
     "discord_litentry_url": "",
-    "discord_auth_token": "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "discord_auth_token": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    "graphql_url": "https://graph.tdf-labs.io/",
+    "graphql_auth_key": "ac2115ec-e327-4862-84c5-f25b6b7d4533"
 }

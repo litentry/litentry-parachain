@@ -59,7 +59,7 @@ pub struct VerifiedCredentialsIsHodlerIn {
 	pub from_date: String,
 	pub network: VerifiedCredentialsNetwork,
 	pub token_address: String,
-	pub mini_balance: f64,
+	pub min_balance: f64,
 }
 
 impl VerifiedCredentialsIsHodlerIn {
@@ -68,9 +68,9 @@ impl VerifiedCredentialsIsHodlerIn {
 		from_date: String,
 		network: VerifiedCredentialsNetwork,
 		token_address: String,
-		mini_balance: f64,
+		min_balance: f64,
 	) -> Self {
-		VerifiedCredentialsIsHodlerIn { addresses, from_date, network, token_address, mini_balance }
+		VerifiedCredentialsIsHodlerIn { addresses, from_date, network, token_address, min_balance }
 	}
 
 	pub fn conv_to_string(&self) -> String {
@@ -91,7 +91,7 @@ impl VerifiedCredentialsIsHodlerIn {
 		if self.token_address.is_empty().not() {
 			flat += &format!(",tokenAddress:\"{}\"", &self.token_address.clone());
 		}
-		flat += &format!(",minimumBalance:{:?}", self.mini_balance.clone());
+		flat += &format!(",minimumBalance:{:?}", self.min_balance.clone());
 		flat
 	}
 }
@@ -134,7 +134,7 @@ impl GraphQLClient {
 		GraphQLClient { client }
 	}
 
-	pub fn verified_credentials_is_hodler(
+	pub fn check_verified_credentials_is_hodler(
 		&mut self,
 		credentials: VerifiedCredentialsIsHodlerIn,
 	) -> Result<IsHodlerOut, Error> {
@@ -149,6 +149,7 @@ impl GraphQLClient {
 			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
 
 		if let Some(value) = response.data.get("data") {
+			// Valid response will always match the IsHodlerOut structure.
 			let is_hodler_out: IsHodlerOut = serde_json::from_value(value.clone()).unwrap();
 			Ok(is_hodler_out)
 		} else {
@@ -177,9 +178,9 @@ mod tests {
 			from_date: "2022-10-16T00:00:00Z".to_string(),
 			network: VerifiedCredentialsNetwork::Ethereum,
 			token_address: LIT_TOKEN_ADDRESS.to_string(),
-			mini_balance: 0.00000056,
+			min_balance: 0.00000056,
 		};
-		let response = client.verified_credentials_is_hodler(credentials);
+		let response = client.check_verified_credentials_is_hodler(credentials);
 
 		if let Ok(is_hodler_out) = response {
 			assert_eq!(is_hodler_out.verified_credentials_is_hodler[0].is_hodler, false);
