@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOTDIR=$(git rev-parse --show-toplevel)
-DESTDIR="$ROOTDIR/docker/litentry"
+DESTDIR="$ROOTDIR/tee-worker/docker/litentry"
 
 # generate files
 cd "$ROOTDIR"
