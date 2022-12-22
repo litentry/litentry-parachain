@@ -1,0 +1,73 @@
+[package]
+authors = ["Integritee AG <hello@integritee.network>"]
+description = "A pallet to store cryptocurrency market data"
+edition = "2021"
+homepage = "https://integritee.network/"
+license = "Apache-2.0"
+name = "pallet-teeracle"
+repository = "https://github.com/integritee-network/pallets/"
+version = "0.1.0"
+
+[dependencies]
+codec = { version = "3.0.0", default-features = false, features = ["derive"], package = "parity-scale-codec" }
+log = { version = "0.4.14", default-features = false }
+scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
+
+# local
+pallet-teerex = { path = "../teerex", default-features = false }
+teeracle-primitives = { path = "../primitives/teeracle", default-features = false }
+
+# encointer
+substrate-fixed = { tag = "v0.5.9", default-features = false, git = "https://github.com/encointer/substrate-fixed.git" }
+
+# substrate
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
+
+# benchmarking
+frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
+hex-literal = { version = "0.3.2", optional = true }
+test-utils = { path = "../test-utils", optional = true, default-features = false }
+timestamp = { package = "pallet-timestamp", default-features = false, optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
+
+[dev-dependencies]
+externalities = { package = "sp-externalities", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
+frame-benchmarking = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
+hex-literal = "0.3.2"
+pallet-balances = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
+sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
+test-utils = { path = "../test-utils" }
+timestamp = { package = "pallet-timestamp", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
+
+
+[features]
+default = ["std"]
+runtime-benchmarks = [
+  "frame-benchmarking",
+  "hex-literal",
+  "test-utils",
+  "timestamp/runtime-benchmarks",
+]
+std = [
+  "codec/std",
+  "log/std",
+  "scale-info/std",
+  # local
+  "pallet-teerex/std",
+  "teeracle-primitives/std",
+  # encointer
+  "substrate-fixed/std",
+  # substrate
+  "frame-support/std",
+  "frame-system/std",
+  "sp-core/std",
+  "sp-io/std",
+  "sp-runtime/std",
+  "sp-std/std",
+]
+
+try-runtime = ["frame-support/try-runtime"]

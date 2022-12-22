@@ -1,0 +1,26 @@
+[package]
+authors = ["Integritee AG <hello@integritee.network>"]
+description = "A crate for common utilities for tests"
+edition = "2021"
+homepage = "https://integritee.network/"
+license = "Apache-2.0"
+name = "test-utils"
+repository = "https://github.com/integritee-network/pallets/"
+version = "0.1.0"
+
+[dependencies]
+hex-literal = { version = "0.3.2" }
+log = { version = "0.4.14", default-features = false }
+
+[dependencies.teerex-primitives]
+default-features = false
+package = "teerex-primitives"
+path = "../primitives/teerex"
+
+
+[features]
+default = ['std']
+std = [
+  "log/std",
+  "teerex-primitives/std",
+]

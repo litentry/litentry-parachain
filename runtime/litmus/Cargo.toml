@@ -96,9 +96,9 @@ pallet-vc-management = { path = "../../pallets/vc-management", default-features 
 runtime-common = { path = '../common', default-features = false }
 
 # TEE
-pallet-sidechain = { git = "https://github.com/integritee-network/pallets.git", branch = "master", default-features = false }
-pallet-teeracle = { git = "https://github.com/integritee-network/pallets.git", branch = "master", default-features = false }
-pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", branch = "master", default-features = false }
+pallet-sidechain = { path = "../../pallets/tee/sidechain", default-features = false }
+pallet-teeracle = { path = "../../pallets/tee/teeracle", default-features = false }
+pallet-teerex = { path = "../../pallets/tee/teerex", default-features = false }
 
 [dev-dependencies]
 cumulus-primitives-parachain-inherent = { git = 'https://github.com/paritytech/cumulus', branch = "polkadot-v0.9.32" }

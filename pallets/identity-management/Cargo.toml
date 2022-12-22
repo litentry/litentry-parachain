@@ -31,7 +31,7 @@ primitives = { path = "../../primitives", default-features = false }
 
 [dev-dependencies]
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
-pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", branch = "master", features = ["skip-ias-check"] }
+pallet-teerex = { path = "../tee/teerex", features = ["skip-ias-check"] }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
 

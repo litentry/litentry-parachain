@@ -42,12 +42,10 @@ xcm = { git = "https://github.com/paritytech/polkadot", default-features = false
 xcm-builder = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.32" }
 xcm-executor = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.32" }
 
-# TEE
-pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", branch = "master", default-features = false }
-
 # local
 pallet-asset-manager = { path = "../../pallets/xcm-asset-manager", default-features = false }
 pallet-extrinsic-filter = { path = "../../pallets/extrinsic-filter", default-features = false }
+pallet-teerex = { path = "../../pallets/tee/teerex", default-features = false }
 primitives = { path = "../../primitives", default-features = false }
 
 # Dev dependencies
