@@ -255,6 +255,9 @@ jobs:
           - test: ts-tests
             flavor_id: mockserver
             demo_name: ts-tests
+          - test: resume-worker
+            flavor_id: sidechain
+            demo_name: resume-worker
 
     steps:
       - uses: actions/checkout@v3
@@ -309,9 +312,17 @@ jobs:
 
       - name: Integration Test ${{ matrix.test }}-${{ matrix.flavor_id }}
         timeout-minutes: 30
+        if: ${{ matrix.test != 'resume-worker' }}
         run: |
           cd docker
           docker-compose -f docker-compose.yml -f ${{ matrix.demo_name }}.yml up --no-build --exit-code-from ${{ matrix.demo_name }} -- ${{ matrix.demo_name }}
+
+      - name: Integration Test ${{ matrix.test }}-${{ matrix.flavor_id }}
+        timeout-minutes: 30
+        if: ${{ matrix.test == 'resume-worker' }}
+        run: |
+          cd docker
+          docker-compose -f docker-compose.yml -f ${{ matrix.demo_name }}.yml up relaychain-alice relaychain-bob integritee-node --no-build --exit-code-from ${{ matrix.demo_name }} -- ${{ matrix.demo_name }}
 
       - name: Stop docker containers
         run: |
