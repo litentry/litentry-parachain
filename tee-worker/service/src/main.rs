@@ -90,7 +90,6 @@ use substrate_api_client::{
 	Header as HeaderTrait, StorageKey, XtStatus,
 };
 use teerex_primitives::{Enclave as TeerexEnclave, ShardIdentifier};
-
 extern crate config as rs_config;
 
 mod account_funding;
@@ -116,7 +115,7 @@ mod worker_peers_updater;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub type EnclaveWorker =
-Worker<Config, NodeApiFactory, Enclave, InitializationHandler<WorkerModeProvider>>;
+	Worker<Config, NodeApiFactory, Enclave, InitializationHandler<WorkerModeProvider>>;
 
 fn main() {
 	// Setup logging
@@ -194,10 +193,8 @@ fn main() {
 
 	#[cfg(feature = "mockserver")]
 	thread::spawn(move || {
-		if !config.disable_mock_server {
-			info!("*** Starting mock server");
-			lc_mock_server::run();
-		}
+		info!("*** Starting mock server");
+		lc_mock_server::run();
 	});
 
 	let clean_reset = matches.is_present("clean-reset");
@@ -322,7 +319,7 @@ fn main() {
 				&shard,
 				sub_matches.is_present("skip-ra"),
 			)
-				.unwrap();
+			.unwrap();
 			println!("[+] Done!");
 		} else {
 			tests::run_enclave_tests(sub_matches);
@@ -345,13 +342,13 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 ) where
 	T: GetTokioHandle,
 	E: EnclaveBase
-	+ DirectRequest
-	+ Sidechain
-	+ RemoteAttestation
-	+ TlsRemoteAttestation
-	+ TeeracleApi
-	+ StfTaskHandler
-	+ Clone,
+		+ DirectRequest
+		+ Sidechain
+		+ RemoteAttestation
+		+ TlsRemoteAttestation
+		+ TeeracleApi
+		+ StfTaskHandler
+		+ Clone,
 	D: BlockPruner + FetchBlocks<SignedSidechainBlock> + Sync + Send + 'static,
 	InitializationHandler: TrackInitialization + IsInitialized + Sync + Send + 'static,
 	WorkerModeProvider: ProvideWorkerMode,
@@ -391,7 +388,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	let tokio_handle = tokio_handle_getter.get_handle();
 
 	#[cfg(feature = "teeracle")]
-		let teeracle_tokio_handle = tokio_handle.clone();
+	let teeracle_tokio_handle = tokio_handle.clone();
 
 	// ------------------------------------------------------------------------
 	// Get the public key of our TEE.
@@ -467,7 +464,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 			node_api.clone(),
 			enclave.clone(),
 		)
-			.unwrap(),
+		.unwrap(),
 	);
 	let last_synced_header = parentchain_handler.init_parentchain_components().unwrap();
 	let nonce = node_api.get_nonce_of(&tee_accountid).unwrap();
@@ -496,9 +493,9 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		println!("[!] creating remote attestation report and create enclave register extrinsic.");
 	};
 	#[cfg(not(feature = "dcap"))]
-		let uxt = enclave.generate_ias_ra_extrinsic(&trusted_url, skip_ra).unwrap();
+	let uxt = enclave.generate_ias_ra_extrinsic(&trusted_url, skip_ra).unwrap();
 	#[cfg(feature = "dcap")]
-		let uxt = enclave.generate_dcap_ra_extrinsic(&trusted_url, skip_ra).unwrap();
+	let uxt = enclave.generate_dcap_ra_extrinsic(&trusted_url, skip_ra).unwrap();
 
 	let mut xthex = hex::encode(uxt);
 	xthex.insert_str(0, "0x");
@@ -509,7 +506,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	{
 		error!("Starting worker failed: {:?}", x);
 		// Return without registering the enclave. This will fail and the transaction will be banned for 30min.
-		return;
+		return
 	}
 
 	let mut register_enclave_xt_header: Option<Header> = None;
@@ -541,13 +538,13 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 								.expect("Could not set nonce of enclave. Returning here...");
 							found = true;
 							info!("fond enclave: {:?}", value);
-							break;
+							break
 						}
-					}
+					},
 					Ok(None) => {
 						warn!("not found from key: {:?}", key);
-					}
-					Err(_) => {}
+					},
+					Err(_) => {},
 				}
 			}
 			if !found {
@@ -557,7 +554,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 				println!("[<] Extrinsic got finalized. Hash: {:?}\n", register_enclave_xt_hash);
 				register_enclave_xt_header = node_api.get_header(register_enclave_xt_hash).unwrap();
 			}
-		}
+		},
 		_ => panic!("unknown error"),
 	}
 
@@ -611,7 +608,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 				sidechain_storage,
 				&last_synced_header,
 			)
-				.unwrap();
+			.unwrap();
 		}
 
 		// ------------------------------------------------------------------------
@@ -678,7 +675,7 @@ fn spawn_worker_for_shard_polling<InitializationHandler>(
 				// Set that the service is initialized.
 				initialization_handler.worker_for_shard_registered();
 				println!("[+] Found `WorkerForShard` on parentchain state");
-				break;
+				break
 			}
 			thread::sleep(Duration::from_secs(POLL_INTERVAL_SECS));
 		}
@@ -709,12 +706,12 @@ fn print_events(events: Events, _sender: Sender<String>) {
 						debug!("    Transactor:  {:?}", transactor.to_ss58check());
 						debug!("    Destination: {:?}", dest.to_ss58check());
 						debug!("    Value:       {:?}", value);
-					}
+					},
 					_ => {
 						trace!("Ignoring unsupported balances event");
-					}
+					},
 				}
-			}
+			},
 			RuntimeEvent::Teerex(re) => {
 				debug!("{:?}", re);
 				match &re {
@@ -722,13 +719,13 @@ fn print_events(events: Events, _sender: Sender<String>) {
 						println!("[+] Received AddedEnclave event");
 						println!("    Sender (Worker):  {:?}", sender);
 						println!("    Registered URL: {:?}", str::from_utf8(worker_url).unwrap());
-					}
+					},
 					my_node_runtime::pallet_teerex::Event::Forwarded(shard) => {
 						println!(
 							"[+] Received trusted call for shard {}",
 							shard.encode().to_base58()
 						);
-					}
+					},
 					my_node_runtime::pallet_teerex::Event::ProcessedParentchainBlock(
 						sender,
 						block_hash,
@@ -740,20 +737,20 @@ fn print_events(events: Events, _sender: Sender<String>) {
 						debug!("    Block Hash: {:?}", hex::encode(block_hash));
 						debug!("    Merkle Root: {:?}", hex::encode(merkle_root));
 						debug!("    Block Number: {:?}", block_number);
-					}
+					},
 					my_node_runtime::pallet_teerex::Event::ShieldFunds(incognito_account) => {
 						info!("[+] Received ShieldFunds event");
 						debug!("    For:    {:?}", incognito_account);
-					}
+					},
 					my_node_runtime::pallet_teerex::Event::UnshieldedFunds(incognito_account) => {
 						info!("[+] Received UnshieldedFunds event");
 						debug!("    For:    {:?}", incognito_account);
-					}
+					},
 					_ => {
 						trace!("Ignoring unsupported pallet_teerex event");
-					}
+					},
 				}
-			}
+			},
 			#[cfg(feature = "teeracle")]
 			RuntimeEvent::Teeracle(re) => {
 				debug!("{:?}", re);
@@ -767,7 +764,7 @@ fn print_events(events: Events, _sender: Sender<String>) {
 						println!("    Data source:  {:?}", source);
 						println!("    Currency:  {:?}", currency);
 						println!("    Exchange rate: {:?}", new_value);
-					}
+					},
 					my_node_runtime::pallet_teeracle::Event::ExchangeRateDeleted(
 						source,
 						currency,
@@ -775,7 +772,7 @@ fn print_events(events: Events, _sender: Sender<String>) {
 						println!("[+] Received ExchangeRateDeleted event");
 						println!("    Data source:  {:?}", source);
 						println!("    Currency:  {:?}", currency);
-					}
+					},
 					my_node_runtime::pallet_teeracle::Event::AddedToWhitelist(
 						source,
 						mrenclave,
@@ -783,7 +780,7 @@ fn print_events(events: Events, _sender: Sender<String>) {
 						println!("[+] Received AddedToWhitelist event");
 						println!("    Data source:  {:?}", source);
 						println!("    Currency:  {:?}", mrenclave);
-					}
+					},
 					my_node_runtime::pallet_teeracle::Event::RemovedFromWhitelist(
 						source,
 						mrenclave,
@@ -791,12 +788,12 @@ fn print_events(events: Events, _sender: Sender<String>) {
 						println!("[+] Received RemovedFromWhitelist event");
 						println!("    Data source:  {:?}", source);
 						println!("    Currency:  {:?}", mrenclave);
-					}
+					},
 					_ => {
 						trace!("Ignoring unsupported pallet_teeracle event");
-					}
+					},
 				}
-			}
+			},
 			#[cfg(feature = "sidechain")]
 			RuntimeEvent::Sidechain(re) => match &re {
 				my_node_runtime::pallet_sidechain::Event::ProposedSidechainBlock(
@@ -806,14 +803,14 @@ fn print_events(events: Events, _sender: Sender<String>) {
 					info!("[+] Received ProposedSidechainBlock event");
 					debug!("    From:    {:?}", sender);
 					debug!("    Payload: {:?}", hex::encode(payload));
-				}
+				},
 				_ => {
 					trace!("Ignoring unsupported pallet_sidechain event");
-				}
+				},
 			},
 			_ => {
 				trace!("Ignoring event {:?}", evr);
-			}
+			},
 		}
 	}
 }
