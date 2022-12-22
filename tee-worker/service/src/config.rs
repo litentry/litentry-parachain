@@ -181,7 +181,7 @@ impl From<&ArgMatches<'_>> for Config {
 			untrusted_http_port.to_string(),
 			run_config,
 			m.value_of("running-mode").unwrap_or(DEFAULT_RUNNING_MODE).to_string(),
-			is_mock_server_disabled
+			is_mock_server_disabled,
 		)
 	}
 }
@@ -226,7 +226,7 @@ fn add_port_if_necessary(url: &str, port: &str) -> String {
 				// url is of format 127.0.0.1:4000, port was added
 				url.to_string()
 			}
-		}
+		},
 		1 => format!("{}:{}", url, port),
 		_ => panic!("Invalid worker url format in url input {:?}", url),
 	}
