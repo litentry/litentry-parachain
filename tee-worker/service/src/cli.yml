@@ -88,6 +88,9 @@ args:
         help: Litentry TEE service running mode <dev/staging/prod>
         takes_value: true
         default_value: "dev"
+    - disable-mock-server:
+        long: disable-mock-server
+        help: Set this flag to disable starting the mock server.
 
 subcommands:
     - run:
