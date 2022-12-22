@@ -20,6 +20,8 @@ use its_primitives::{
 	traits::ShardIdentifierFor,
 	types::{BlockHash, SignedBlock},
 };
+use its_primitives::traits::Block;
+use crate::storage::LastSidechainBlock;
 
 #[derive(Default)]
 pub struct FetchBlocksMock {
@@ -49,5 +51,14 @@ impl FetchBlocks<SignedBlock> for FetchBlocksMock {
 		_shard_identifier: &ShardIdentifierFor<SignedBlock>,
 	) -> Result<Vec<SignedBlock>> {
 		Ok(self.blocks_to_be_fetched.clone())
+	}
+
+	fn latest_block(&self, _shard_identifier: &ShardIdentifierFor<SignedBlock>) -> Option<LastSidechainBlock> {
+		self.blocks_to_be_fetched.get(0).map(|block| {
+			LastSidechainBlock {
+				hash: block.block.hash(),
+				number: block.block.header.block_number,
+			}
+		})
 	}
 }

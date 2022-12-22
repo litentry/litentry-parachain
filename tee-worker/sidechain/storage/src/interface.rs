@@ -123,6 +123,6 @@ impl<SignedBlock: SignedBlockT> FetchBlocks<SignedBlock> for SidechainStorageLoc
 		&self,
 		shard_identifier: &ShardIdentifierFor<SignedBlock>,
 	) -> Option<LastSidechainBlock> {
-		self.storage.read().last_block_of_shard(shard_identifier).map(|e| e.clone())
+		self.storage.read().last_block_of_shard(shard_identifier).map(|e| LastSidechainBlock{ hash: e.hash, number: e.number })
 	}
 }
