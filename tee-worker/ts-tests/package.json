@@ -3,6 +3,7 @@
 	"scripts": {
 		"test-identity:staging": "cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register 'identity.test.ts'",
 		"test-identity:local": "cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register 'identity.test.ts'",
+		"test-resuming-worker:staging": "cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register 'resuming_worker.test.ts'",
 		"test-resuming-worker:local": "cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register 'resuming_worker.test.ts'"
 	},
 	"dependencies": {

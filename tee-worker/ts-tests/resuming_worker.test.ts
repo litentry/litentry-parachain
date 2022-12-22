@@ -63,28 +63,23 @@ async function launchWorker(name: string, binary_dir: string, working_dir: strin
         fs.closeSync(fs.openSync(`${working_dir}/key.txt`, 'w'))
     }
 
-    const serviceENV = {
-        RUST_LOG: 'warn,sp_io::storage=error,substrate_api_client=warn',
-        PATH: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/sgxsdk/bin:/opt/sgxsdk/bin/x64",
-        SGX_SDK: "/opt/sgxsdk",
-        LD_RUN_PATH: "/usr/lib:/usr/local/lib",
-        LD_LIBRARY_PATH: "/usr/lib:/usr/local/lib:/opt/sgxsdk/sdk_libs"
-    }
-
     return new Promise<{ shard: string, process: ChildProcess }>(async (resolve, reject) => {
-        const process = spawn(
+        const job = spawn(
             `./integritee-service`,
             [command],
             {
                 cwd: working_dir,
                 shell: "/bin/sh",
-                env: serviceENV,
+                env: {
+                    RUST_LOG: 'warn,sp_io::storage=error,substrate_api_client=warn',
+                    ...process.env
+                },
                 detached: true,
             }
         );
-        process.stdout.setEncoding("utf8")
+        job.stdout.setEncoding("utf8")
         let shard = ""
-        process.stdout.on("data", (data: string) => {
+        job.stdout.on("data", (data: string) => {
             if (data.includes("Successfully initialized shard")) {
                 const regex = /^Successfully initialized shard (0x[\w\d]{64}).*/g;
                 const groups = regex.exec(data)
@@ -93,15 +88,15 @@ async function launchWorker(name: string, binary_dir: string, working_dir: strin
                 }
             }
             if (data.includes("Untrusted RPC server is spawned on")) {
-                resolve({shard, process})
+                resolve({shard, process: job})
             }
             console.log(name, data)
         })
-        process.stderr.setEncoding("utf8")
-        process.stderr.on("data", (data: string) => {
+        job.stderr.setEncoding("utf8")
+        job.stderr.on("data", (data: string) => {
             console.log(name, data)
         })
-        process.on('close', (code) => {
+        job.on('close', (code) => {
             console.log(`${name} close: ${code}`);
         });
     });
