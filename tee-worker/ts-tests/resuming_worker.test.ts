@@ -3,6 +3,9 @@ import fs from "fs";
 import {initWorkerConnection, sleep} from "./utils";
 import * as path from "path";
 import * as process from "process";
+import {describe} from 'mocha';
+import {step} from 'mocha-steps';
+import {assert} from "chai";
 import WebSocketAsPromised = require("websocket-as-promised");
 
 export type WorkerConfig = {
@@ -13,7 +16,7 @@ export type WorkerConfig = {
     }
 }
 
-function genCommands(node_url: string, node_port: number): { worker0: WorkerConfig, worker1: WorkerConfig } {
+function genCommands(node_url: string, node_port: string): { worker0: WorkerConfig, worker1: WorkerConfig } {
     return {
         worker0: {
             untrusted_ws_port: 3000,
@@ -34,13 +37,13 @@ function genCommands(node_url: string, node_port: number): { worker0: WorkerConf
         worker1: {
             untrusted_ws_port: 3001,
             commands: {
-                first_launch: "--clean-reset --mu-ra-external-address localhost --mu-ra-port 3444" +
+                first_launch: "--disable-mock-server --clean-reset --mu-ra-external-address localhost --mu-ra-port 3444" +
                     " --untrusted-http-port 4546 --ws-external --trusted-external-address wss://localhost" +
                     " --trusted-worker-port 2001 --untrusted-external-address ws://localhost" +
                     " --untrusted-worker-port 3001 --node-url " + node_url +
-                    " --node-port " + node_port + " run --skip-ra --request-state",
+                    " --node-port " + node_port + " run --skip-ra --request-state --dev",
 
-                resume: "--mu-ra-external-address localhost --mu-ra-port 3444" +
+                resume: "--disable-mock-server --mu-ra-external-address localhost --mu-ra-port 3444" +
                     " --untrusted-http-port 4546 --ws-external --trusted-external-address wss://localhost" +
                     " --trusted-worker-port 2001 --untrusted-external-address ws://localhost" +
                     " --untrusted-worker-port 3001 --node-url " + node_url +
@@ -50,7 +53,7 @@ function genCommands(node_url: string, node_port: number): { worker0: WorkerConf
     }
 }
 
-async function launchWorker(binary_dir: string, working_dir: string, command: string, init_files: boolean): Promise<{ shard: string, process: ChildProcess }> {
+async function launchWorker(name: string, binary_dir: string, working_dir: string, command: string, init_files: boolean): Promise<{ shard: string, process: ChildProcess }> {
     // const logging = fs.createWriteStream(log, {flags: 'w+'});
     if (init_files) {
         fs.mkdirSync(working_dir, {recursive: true})
@@ -92,14 +95,14 @@ async function launchWorker(binary_dir: string, working_dir: string, command: st
             if (data.includes("Untrusted RPC server is spawned on")) {
                 resolve({shard, process})
             }
-            console.log(data)
+            console.log(name, data)
         })
         process.stderr.setEncoding("utf8")
         process.stderr.on("data", (data: string) => {
-            console.log(data)
+            console.log(name, data)
         })
         process.on('close', (code) => {
-            console.log("close: ", code);
+            console.log(`${name} close: ${code}`);
         });
     });
 }
@@ -132,41 +135,71 @@ async function waitWorkerProducingBlock(connection: WebSocketAsPromised, shard: 
                 if (start_block_number == 0) {
                     start_block_number = block_number
                 }
-                console.log("current block:", block_number)
+
+                console.log(`${connection.ws.url} current block: ${block_number}`)
             }
-            await sleep(1)
+            await sleep(2)
             // console.log(block_number >= (start_block_number + atLeast))
         } while (block_number < (start_block_number + atLeast))
         resolve(block_number)
     })
 }
 
+describe("Resume worker", function () {
+    this.timeout(6000000);
 
-(async () => {
-    let binary_dir = path.join(__dirname, "../bin");
-    let tmp_dir = path.join(__dirname, "./tmp");
-    let commands = genCommands("ws://host.docker.internal", 9944)
-    let {
-        shard: shard,
-        process: worker0
-    } = await launchWorker(binary_dir, tmp_dir, commands.worker0.commands.first_launch, true)
+    let binary_dir = process.env.BINARY_DIR!;
+    let [_, node_url, node_port] = process.env.SUBSTRATE_END_POINT!.split(":");
+    let worker0_dir = path.join(__dirname, "./tmp/worker0");
+    let worker1_dir = path.join(__dirname, "./tmp/worker1");
+    let commands = genCommands(`ws:${node_url}`, node_port)
 
-    await sleep(15);
-    let connection0 = await initWorkerConnection(`ws://localhost:${commands.worker0.untrusted_ws_port}`)
-    console.log("shard:", shard);
-    const current_block = await waitWorkerProducingBlock(connection0, shard, 2)
-    await killWorker(worker0);
-    await sleep(5)
-    let {
-        shard: _,
-        process: worker0_1
-    } = await launchWorker(binary_dir, tmp_dir, commands.worker0.commands.resume, false)
-    await sleep(1)
-    connection0 = await initWorkerConnection(`ws://localhost:${commands.worker0.untrusted_ws_port}`)
-    console.log("resume block: ", await waitWorkerProducingBlock(connection0, shard, 0))
+    step("One worker", async function () {
+        // first launch worker
+        let {
+            shard: shard,
+            process: worker
+        } = await launchWorker("worker", binary_dir, worker0_dir, commands.worker0.commands.first_launch, true)
+        let worker_conn = await initWorkerConnection(`ws://localhost:${commands.worker0.untrusted_ws_port}`)
+        const current_block = await waitWorkerProducingBlock(worker_conn, shard, 4)
+        await killWorker(worker);
+        console.log("=========== worker stopped ==================")
 
-    // await killWorker(worker0_1)
-    // worker0_1.kill(9)
-    await sleep(3)
-    process.exit(-1)
-})()
+        // resume worker
+        let {
+            process: r_worker
+        } = await launchWorker("worker", binary_dir, worker0_dir, commands.worker0.commands.resume, false)
+        await worker_conn.open() //reopen connection
+        const resume_block = await latestBlock(worker_conn, shard);
+        assert.isNotEmpty(resume_block.result, "the latest block can't be empty")
+        assert.isTrue(resume_block!.result!.number >= current_block, "failed to resume worker")
+        // await killWorker(r_worker)
+        await sleep(1)
+    })
+
+    // Continue with the above test case to test
+    step("Two workers & resume worker1", async function () {
+        // 2 workers were actually launched
+        // first launch worker1
+        let {
+            shard: shard,
+            process: worker1
+        } = await launchWorker("worker1", binary_dir, worker1_dir, commands.worker1.commands.first_launch, true)
+        let worker1_conn = await initWorkerConnection(`ws://localhost:${commands.worker1.untrusted_ws_port}`)
+        const worker1_current_block = await waitWorkerProducingBlock(worker1_conn, shard, 4)
+        await killWorker(worker1);
+        console.log("=========== worker1 stopped ==================")
+
+
+        // resume worker1
+        let {
+            process: r_worker1
+        } = await launchWorker("worker1", binary_dir, worker1_dir, commands.worker1.commands.resume, false)
+        await worker1_conn.open() //reopen connection
+        const resume_block = await latestBlock(worker1_conn, shard);
+        assert.isNotEmpty(resume_block.result, "the latest block can't be empty")
+        assert.isTrue(resume_block!.result!.number >= worker1_current_block, "failed to resume worker")
+
+        await sleep(30)
+    })
+});
