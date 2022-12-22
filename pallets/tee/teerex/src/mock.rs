@@ -14,6 +14,7 @@
 	limitations under the License.
 
 */
+#![allow(dead_code, unused_imports, const_item_mutation)]
 
 // Creating mock runtime here
 use crate as pallet_teerex;

@@ -14,6 +14,8 @@
 	limitations under the License.
 
 */
+#![allow(dead_code, unused_imports, const_item_mutation)]
+
 use crate::{mock::*, ExchangeRates};
 use frame_support::{assert_err, assert_noop, assert_ok};
 use hex_literal::hex;
