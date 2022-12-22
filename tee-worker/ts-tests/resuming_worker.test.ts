@@ -47,7 +47,7 @@ function genCommands(node_url: string, node_port: string): { worker0: WorkerConf
                     " --untrusted-http-port 4546 --ws-external --trusted-external-address wss://localhost" +
                     " --trusted-worker-port 2001 --untrusted-external-address ws://localhost" +
                     " --untrusted-worker-port 3001 --node-url " + node_url +
-                    " --node-port " + node_port + " run --skip-ra --request-state",
+                    " --node-port " + node_port + " run --skip-ra",
             }
         }
     }
@@ -158,19 +158,19 @@ describe("Resume worker", function () {
         // first launch worker
         let {
             shard: shard,
-            process: worker
-        } = await launchWorker("worker", binary_dir, worker0_dir, commands.worker0.commands.first_launch, true)
-        let worker_conn = await initWorkerConnection(`ws://localhost:${commands.worker0.untrusted_ws_port}`)
-        const current_block = await waitWorkerProducingBlock(worker_conn, shard, 4)
-        await killWorker(worker);
+            process: worker0
+        } = await launchWorker("worker0", binary_dir, worker0_dir, commands.worker0.commands.first_launch, true)
+        let worker0_conn = await initWorkerConnection(`ws://localhost:${commands.worker0.untrusted_ws_port}`)
+        const current_block = await waitWorkerProducingBlock(worker0_conn, shard, 4)
+        await killWorker(worker0);
         console.log("=========== worker stopped ==================")
 
         // resume worker
         let {
-            process: r_worker
-        } = await launchWorker("worker", binary_dir, worker0_dir, commands.worker0.commands.resume, false)
-        await worker_conn.open() //reopen connection
-        const resume_block = await latestBlock(worker_conn, shard);
+            process: r_worker0
+        } = await launchWorker("worker0", binary_dir, worker0_dir, commands.worker0.commands.resume, false)
+        await worker0_conn.open() //reopen connection
+        const resume_block = await latestBlock(worker0_conn, shard);
         assert.isNotEmpty(resume_block.result, "the latest block can't be empty")
         assert.isTrue(resume_block!.result!.number >= current_block, "failed to resume worker")
         // await killWorker(r_worker)
@@ -189,7 +189,7 @@ describe("Resume worker", function () {
         const worker1_current_block = await waitWorkerProducingBlock(worker1_conn, shard, 4)
         await killWorker(worker1);
         console.log("=========== worker1 stopped ==================")
-
+        await sleep(20)
 
         // resume worker1
         let {
@@ -199,7 +199,6 @@ describe("Resume worker", function () {
         const resume_block = await latestBlock(worker1_conn, shard);
         assert.isNotEmpty(resume_block.result, "the latest block can't be empty")
         assert.isTrue(resume_block!.result!.number >= worker1_current_block, "failed to resume worker")
-
-        await sleep(30)
+        await sleep(60)
     })
 });
