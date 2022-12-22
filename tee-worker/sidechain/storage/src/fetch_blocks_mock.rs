@@ -15,13 +15,11 @@
 
 */
 
-use crate::{error::Result, interface::FetchBlocks};
+use crate::{error::Result, interface::FetchBlocks, storage::LastSidechainBlock};
 use its_primitives::{
-	traits::ShardIdentifierFor,
+	traits::{Block, ShardIdentifierFor},
 	types::{BlockHash, SignedBlock},
 };
-use its_primitives::traits::Block;
-use crate::storage::LastSidechainBlock;
 
 #[derive(Default)]
 pub struct FetchBlocksMock {
@@ -53,12 +51,13 @@ impl FetchBlocks<SignedBlock> for FetchBlocksMock {
 		Ok(self.blocks_to_be_fetched.clone())
 	}
 
-	fn latest_block(&self, _shard_identifier: &ShardIdentifierFor<SignedBlock>) -> Option<LastSidechainBlock> {
-		self.blocks_to_be_fetched.get(0).map(|block| {
-			LastSidechainBlock {
-				hash: block.block.hash(),
-				number: block.block.header.block_number,
-			}
+	fn latest_block(
+		&self,
+		_shard_identifier: &ShardIdentifierFor<SignedBlock>,
+	) -> Option<LastSidechainBlock> {
+		self.blocks_to_be_fetched.get(0).map(|block| LastSidechainBlock {
+			hash: block.block.hash(),
+			number: block.block.header.block_number,
 		})
 	}
 }
