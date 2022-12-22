@@ -14,12 +14,28 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std)]
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate sgx_tstd as std;
+use codec::{Decode, Encode, MaxEncodedLen};
+use parentchain_primitives::{SchemaContentString, SchemaIdString};
+use scale_info::TypeInfo;
 
-mod credentials;
-pub use credentials::*;
+#[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, TypeInfo, MaxEncodedLen)]
+pub enum Status {
+	Active,
+	Disabled,
+}
 
-mod schema;
-pub use schema::*;
+#[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, TypeInfo, MaxEncodedLen)]
+pub struct Schema {
+	// the schema id
+	pub id: SchemaIdString,
+	// schema content
+	pub content: SchemaContentString,
+	// status of the Schema
+	pub status: Status,
+}
+
+impl Schema {
+	pub fn new(id: SchemaIdString, content: SchemaContentString) -> Self {
+		Self { id, content, status: Status::Active }
+	}
+}
