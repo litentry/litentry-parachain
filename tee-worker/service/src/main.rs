@@ -193,8 +193,10 @@ fn main() {
 
 	#[cfg(feature = "mockserver")]
 	thread::spawn(move || {
-		info!("*** Starting mock server");
-		lc_mock_server::run();
+		if !config.disable_mock_server {
+			info!("*** Starting mock server");
+			lc_mock_server::run();
+		}
 	});
 
 	let clean_reset = matches.is_present("clean-reset");
