@@ -180,3 +180,192 @@ fn revoke_vc_with_other_subject_fails() {
 		assert_eq!(VCManagement::vc_registry(0).unwrap().status, Status::Active);
 	});
 }
+
+#[test]
+fn set_schema_admin_works() {
+	new_test_ext().execute_with(|| {
+		assert_eq!(VCManagement::schema_admin().unwrap(), 1);
+		assert_ok!(VCManagement::set_schema_admin(RuntimeOrigin::signed(1), 2));
+		assert_eq!(VCManagement::schema_admin().unwrap(), 2);
+		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::SchemaAdminChanged {
+			old_admin: Some(1),
+			new_admin: Some(2),
+		}));
+	});
+}
+
+#[test]
+fn set_schema_admin_fails_with_unprivileged_origin() {
+	new_test_ext().execute_with(|| {
+		assert_eq!(VCManagement::schema_admin().unwrap(), 1);
+		assert_noop!(
+			VCManagement::set_schema_admin(RuntimeOrigin::signed(2), 2),
+			sp_runtime::DispatchError::BadOrigin
+		);
+		assert_eq!(VCManagement::schema_admin().unwrap(), 1);
+	});
+}
+
+#[test]
+fn add_schema_works() {
+	new_test_ext().execute_with(|| {
+		assert_eq!(VCManagement::schema_index(), 0);
+		let id: Vec<u8> = vec![1, 2, 3, 4];
+		let content: Vec<u8> = vec![5, 6, 7, 8];
+		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
+		assert_ok!(VCManagement::add_schema(RuntimeOrigin::signed(1), shard, id, content));
+		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::SchemaIssued {
+			account: 1,
+			shard,
+			index: 0,
+		}));
+		assert_eq!(VCManagement::schema_index(), 1);
+	});
+}
+
+#[test]
+fn add_schema_with_unpriviledged_origin_fails() {
+	new_test_ext().execute_with(|| {
+		let id: Vec<u8> = vec![1, 2, 3, 4];
+		let content: Vec<u8> = vec![5, 6, 7, 8];
+		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
+		assert_noop!(
+			VCManagement::add_schema(RuntimeOrigin::signed(2), shard, id, content),
+			Error::<Test>::RequireSchemaAdmin
+		);
+	});
+}
+
+#[test]
+fn add_two_schemas_works() {
+	new_test_ext().execute_with(|| {
+		assert_eq!(VCManagement::schema_index(), 0);
+		let id: Vec<u8> = vec![1, 2, 3, 4];
+		let content: Vec<u8> = vec![5, 6, 7, 8];
+		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
+		assert_ok!(VCManagement::add_schema(
+			RuntimeOrigin::signed(1),
+			shard,
+			id.clone(),
+			content.clone()
+		));
+		assert_ok!(VCManagement::add_schema(RuntimeOrigin::signed(1), shard, id, content));
+		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::SchemaIssued {
+			account: 1,
+			shard,
+			index: 1,
+		}));
+		assert_eq!(VCManagement::schema_index(), 2);
+	});
+}
+
+#[test]
+fn disable_schema_works() {
+	new_test_ext().execute_with(|| {
+		let id: Vec<u8> = vec![1, 2, 3, 4];
+		let content: Vec<u8> = vec![5, 6, 7, 8];
+		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
+		assert_ok!(VCManagement::add_schema(RuntimeOrigin::signed(1), shard, id, content));
+		assert!(VCManagement::schema_registry(0).is_some());
+		assert_ok!(VCManagement::disable_schema(RuntimeOrigin::signed(1), shard, 0));
+		assert!(VCManagement::schema_registry(0).is_some());
+		let context = VCManagement::schema_registry(0).unwrap();
+		assert_eq!(context.status, Status::Disabled);
+	});
+}
+
+#[test]
+fn disable_schema_with_non_existent_fails() {
+	new_test_ext().execute_with(|| {
+		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
+		assert_noop!(
+			VCManagement::disable_schema(RuntimeOrigin::signed(1), shard, 2),
+			Error::<Test>::SchemaNotExists
+		);
+	});
+}
+
+#[test]
+fn disable_schema_with_unpriviledged_origin_fails() {
+	new_test_ext().execute_with(|| {
+		let id: Vec<u8> = vec![1, 2, 3, 4];
+		let content: Vec<u8> = vec![5, 6, 7, 8];
+		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
+		assert_ok!(VCManagement::add_schema(RuntimeOrigin::signed(1), shard, id, content));
+		assert_noop!(
+			VCManagement::disable_schema(RuntimeOrigin::signed(2), shard, 0),
+			Error::<Test>::RequireSchemaAdmin
+		);
+	});
+}
+
+#[test]
+fn activate_schema_works() {
+	new_test_ext().execute_with(|| {
+		let id: Vec<u8> = vec![1, 2, 3, 4];
+		let content: Vec<u8> = vec![5, 6, 7, 8];
+		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
+		assert_ok!(VCManagement::add_schema(RuntimeOrigin::signed(1), shard, id, content));
+		assert!(VCManagement::schema_registry(0).is_some());
+		assert_ok!(VCManagement::disable_schema(RuntimeOrigin::signed(1), shard, 0));
+		// schema is disabled
+		assert_eq!(VCManagement::schema_registry(0).unwrap().status, Status::Disabled);
+		// schema is activated
+		assert_ok!(VCManagement::activate_schema(RuntimeOrigin::signed(1), shard, 0));
+		assert_eq!(VCManagement::schema_registry(0).unwrap().status, Status::Active);
+	});
+}
+
+#[test]
+fn activate_already_activated_schema_fails() {
+	new_test_ext().execute_with(|| {
+		let id: Vec<u8> = vec![1, 2, 3, 4];
+		let content: Vec<u8> = vec![5, 6, 7, 8];
+		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
+		assert_ok!(VCManagement::add_schema(RuntimeOrigin::signed(1), shard, id, content));
+		assert!(VCManagement::schema_registry(0).is_some());
+		assert_noop!(
+			VCManagement::activate_schema(RuntimeOrigin::signed(1), shard, 0),
+			Error::<Test>::SchemaAlreadyActivated
+		);
+	});
+}
+
+#[test]
+fn revoke_schema_works() {
+	new_test_ext().execute_with(|| {
+		let id: Vec<u8> = vec![1, 2, 3, 4];
+		let content: Vec<u8> = vec![5, 6, 7, 8];
+		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
+		assert_ok!(VCManagement::add_schema(RuntimeOrigin::signed(1), shard, id, content));
+		assert!(VCManagement::schema_registry(0).is_some());
+		assert_ok!(VCManagement::revoke_schema(RuntimeOrigin::signed(1), shard, 0));
+		// schema is deleted
+		assert!(VCManagement::schema_registry(0).is_none());
+	});
+}
+
+#[test]
+fn revoke_schema_with_non_existent_fails() {
+	new_test_ext().execute_with(|| {
+		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
+		assert_noop!(
+			VCManagement::revoke_schema(RuntimeOrigin::signed(1), shard, 2),
+			Error::<Test>::SchemaNotExists
+		);
+	});
+}
+
+#[test]
+fn revoke_schema_with_unprivileged_origin_fails() {
+	new_test_ext().execute_with(|| {
+		let id: Vec<u8> = vec![1, 2, 3, 4];
+		let content: Vec<u8> = vec![5, 6, 7, 8];
+		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
+		assert_ok!(VCManagement::add_schema(RuntimeOrigin::signed(1), shard, id, content));
+		assert_noop!(
+			VCManagement::revoke_schema(RuntimeOrigin::signed(2), shard, 0),
+			Error::<Test>::RequireSchemaAdmin
+		);
+	});
+}
