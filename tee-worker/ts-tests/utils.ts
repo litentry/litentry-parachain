@@ -22,10 +22,8 @@ import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { KeyObject } from 'crypto';
 import { EventRecord } from '@polkadot/types/interfaces';
 import { after, before, describe } from 'mocha';
-import { randomAsHex } from '@polkadot/util-crypto';
 import { generateChallengeCode, getSigner } from './web3/setup';
 import { ethers } from 'ethers';
-import { Web3Provider } from '@ethersproject/providers';
 import { generateTestKeys } from './web3/functions';
 
 const base58 = require('micro-base58');
@@ -76,13 +74,12 @@ export async function initIntegrationTestContext(
     ethereumEndpoint: string
 ): Promise<IntegrationTestContext> {
     const provider = new WsProvider(substrateEndpoint);
-    const ethersProvider = new ethers.providers.JsonRpcProvider(ethereumEndpoint);
     const ethersWallet = {
-        alice: new ethers.Wallet(generateTestKeys().alice, ethersProvider),
-        bob: new ethers.Wallet(generateTestKeys().bob, ethersProvider),
-        charlie: new ethers.Wallet(generateTestKeys().charlie, ethersProvider),
-        dave: new ethers.Wallet(generateTestKeys().dave, ethersProvider),
-        eve: new ethers.Wallet(generateTestKeys().eve, ethersProvider),
+        alice: new ethers.Wallet(generateTestKeys().alice),
+        bob: new ethers.Wallet(generateTestKeys().bob),
+        charlie: new ethers.Wallet(generateTestKeys().charlie),
+        dave: new ethers.Wallet(generateTestKeys().dave),
+        eve: new ethers.Wallet(generateTestKeys().eve),
     };
 
     const api = await ApiPromise.create({
@@ -119,7 +116,6 @@ export async function initIntegrationTestContext(
         teeShieldingKey,
         shard,
         defaultSigner: getSigner(0),
-        ethersProvider,
         ethersWallet,
     };
 }
@@ -268,7 +264,6 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
             substrate: {} as ApiPromise,
             tee: {} as WebSocketAsPromised,
             teeShieldingKey: {} as KeyObject,
-            ethersProvider: {} as Web3Provider,
             ethersWallet: {},
         };
 
@@ -285,7 +280,6 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
             context.substrate = tmp.substrate;
             context.tee = tmp.tee;
             context.teeShieldingKey = tmp.teeShieldingKey;
-            context.ethersProvider = tmp.ethersProvider;
             context.ethersWallet = tmp.ethersWallet;
         });
 
