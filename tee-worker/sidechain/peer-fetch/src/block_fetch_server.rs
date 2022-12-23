@@ -17,7 +17,10 @@
 
 use crate::error::Result;
 use its_primitives::types::{BlockHash, BlockNumber, ShardIdentifier, SignedBlock};
-use its_rpc_handler::constants::{RPC_METHOD_NAME_BLOCK_HASH, RPC_METHOD_NAME_FETCH_BLOCKS_FROM_PEER, RPC_METHOD_NAME_LATEST_BLOCK};
+use its_rpc_handler::constants::{
+	RPC_METHOD_NAME_BLOCK_HASH, RPC_METHOD_NAME_FETCH_BLOCKS_FROM_PEER,
+	RPC_METHOD_NAME_LATEST_BLOCK,
+};
 use its_storage::interface::FetchBlocks;
 use jsonrpsee::{types::error::CallError, RpcModule};
 use log::*;
@@ -29,10 +32,10 @@ pub struct BlockFetchServerModuleBuilder<FetchBlocksFromStorage> {
 }
 
 impl<FetchBlocksFromStorage> BlockFetchServerModuleBuilder<FetchBlocksFromStorage>
-	where
+where
 	// Have to use the concrete `SignedBlock` type, because the ShardIdentifier type
 	// does not have the Serialize/Deserialize trait bound.
-		FetchBlocksFromStorage: FetchBlocks<SignedBlock> + Send + Sync + 'static,
+	FetchBlocksFromStorage: FetchBlocks<SignedBlock> + Send + Sync + 'static,
 {
 	pub fn new(sidechain_block_fetcher: Arc<FetchBlocksFromStorage>) -> Self {
 		BlockFetchServerModuleBuilder { sidechain_block_fetcher }
@@ -88,8 +91,7 @@ impl<FetchBlocksFromStorage> BlockFetchServerModuleBuilder<FetchBlocksFromStorag
 			RPC_METHOD_NAME_BLOCK_HASH,
 			|params, sidechain_block_fetcher| {
 				debug!("{}: {:?}", RPC_METHOD_NAME_BLOCK_HASH, params);
-				let (block_number, shard) =
-					params.parse::<(BlockNumber, ShardIdentifier)>()?;
+				let (block_number, shard) = params.parse::<(BlockNumber, ShardIdentifier)>()?;
 				match sidechain_block_fetcher.block_hash(block_number, &shard) {
 					None => Ok(None),
 					Some(e) => Ok(Some(e)),

@@ -18,9 +18,8 @@
 use crate::{error::Result, interface::FetchBlocks, storage::LastSidechainBlock};
 use its_primitives::{
 	traits::{Block, ShardIdentifierFor},
-	types::{BlockHash, SignedBlock},
+	types::{BlockHash, BlockNumber, SignedBlock},
 };
-use its_primitives::types::BlockNumber;
 
 #[derive(Default)]
 pub struct FetchBlocksMock {
@@ -62,7 +61,11 @@ impl FetchBlocks<SignedBlock> for FetchBlocksMock {
 		})
 	}
 
-	fn block_hash(&self, _block_number: BlockNumber, _shard_identifier: &ShardIdentifierFor<SignedBlock>) -> Option<LastSidechainBlock> {
+	fn block_hash(
+		&self,
+		_block_number: BlockNumber,
+		_shard_identifier: &ShardIdentifierFor<SignedBlock>,
+	) -> Option<LastSidechainBlock> {
 		None
 	}
 }
