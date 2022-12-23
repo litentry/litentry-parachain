@@ -1035,6 +1035,10 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::IdentityManagementMock(_) |
 			RuntimeCall::IdentityManagement(_) |
 			RuntimeCall::VCManagement(_) |
+			// TEE pallets
+			RuntimeCall::Teerex(_) |
+			RuntimeCall::Sidechain(_) |
+			RuntimeCall::Teeracle(_) |
 			// ParachainStaking; Only the collator part
 			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::join_candidates { .. }) |
 			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::schedule_leave_candidates { .. }) |
