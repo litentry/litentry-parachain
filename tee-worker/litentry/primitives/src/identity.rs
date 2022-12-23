@@ -76,7 +76,6 @@ pub enum IdentityWebType {
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum IdentityHandle {
 	Address32([u8; 32]),
-	/// Its a 20 byte representation.
 	Address20([u8; 20]),
 	String(IdentityString),
 }
