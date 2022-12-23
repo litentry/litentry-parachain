@@ -97,6 +97,20 @@ describeLitentry('Test Identity', (context) => {
     });
 
     step('create identity', async function () {
+        //create twitter identity
+        const resp_twitter = await createIdentity(context, context.defaultSigner, aesKey, true, twitterIdentity);
+        if (resp_twitter) {
+            const [_who, challengeCode] = resp_twitter;
+            console.log('twitterIdentity challengeCode: ', challengeCode);
+            const msg = generateVerificationMessage(
+                context,
+                hexToU8a(challengeCode),
+                context.defaultSigner.addressRaw,
+                twitterIdentity
+            );
+            console.log('post verification msg to twitter: ', msg);
+            assert.isNotEmpty(challengeCode, 'challengeCode empty');
+        }
         //create ethereum identity
         const resp_ethereum = await createIdentity(context, context.defaultSigner, aesKey, true, ethereumIdentity);
         if (resp_ethereum) {
@@ -136,6 +150,17 @@ describeLitentry('Test Identity', (context) => {
     });
 
     step('verify identity', async function () {
+        //verify twitter identity
+        const twitter_identity_verified = await verifyIdentity(
+            context,
+            context.defaultSigner,
+            aesKey,
+            true,
+            twitterIdentity,
+            twitterValidationData
+        );
+        assertIdentityVerified(context.defaultSigner, twitter_identity_verified);
+
         // verify ethereum identity
         const ethereum_identity_verified = await verifyIdentity(
             context,
@@ -145,7 +170,6 @@ describeLitentry('Test Identity', (context) => {
             ethereumIdentity,
             ethereumValidationData
         );
-
         assertIdentityVerified(context.defaultSigner, ethereum_identity_verified);
 
         //verify substrate identity
@@ -161,6 +185,16 @@ describeLitentry('Test Identity', (context) => {
     });
 
     step('remove identity', async function () {
+        //remove twitter identity
+        const twitter_identity_removed = await removeIdentity(
+            context,
+            context.defaultSigner,
+            aesKey,
+            true,
+            twitterIdentity
+        );
+        assertIdentityRemoved(context.defaultSigner, twitter_identity_removed);
+
         // remove ethereum identity
         const ethereum_identity_removed = await removeIdentity(
             context,
