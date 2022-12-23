@@ -479,6 +479,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
 
 [[package]]
+name = "core-primitives"
+version = "0.9.12"
+dependencies = [
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+]
+
+[[package]]
 name = "cpufeatures"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2671,8 +2683,8 @@ dependencies = [
 name = "litentry-primitives"
 version = "0.1.0"
 dependencies = [
+ "core-primitives",
  "parity-scale-codec",
- "primitives",
  "scale-info",
  "serde 1.0.151",
  "serde_json 1.0.91",
@@ -3018,12 +3030,12 @@ dependencies = [
 name = "pallet-identity-management"
 version = "0.1.0"
 dependencies = [
+ "core-primitives",
  "frame-support",
  "frame-system",
  "hex 0.4.3",
  "log",
  "parity-scale-codec",
- "primitives",
  "scale-info",
  "sp-arithmetic",
  "sp-core",
@@ -3277,18 +3289,6 @@ dependencies = [
  "impl-serde",
  "scale-info",
  "uint",
-]
-
-[[package]]
-name = "primitives"
-version = "0.9.12"
-dependencies = [
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-runtime",
- "sp-std",
- "xcm",
 ]
 
 [[package]]
