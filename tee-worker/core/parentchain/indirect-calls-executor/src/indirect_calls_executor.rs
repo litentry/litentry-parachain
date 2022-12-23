@@ -36,10 +36,12 @@ use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, Shieldin
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_primitives::types::AccountId;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{CallWorkerFn, OpaqueCall, ShardIdentifier, ShieldFundsFn, H256};
+use itp_types::{
+	CallWorkerFn, CreateIdentityFn, OpaqueCall, RemoveIdentityFn, SetUserShieldingKeyFn,
+	ShardIdentifier, ShieldFundsFn, VerifyIdentityFn, H256,
+};
 use litentry_primitives::{Identity, UserShieldingKeyType, ValidationData};
 use log::*;
-use pallet_imp::{CreateIdentityFn, RemoveIdentityFn, SetUserShieldingKeyFn, VerifyIdentityFn};
 use sp_core::blake2_256;
 use sp_runtime::traits::{AccountIdLookup, Block as ParentchainBlockTrait, Header, StaticLookup};
 use std::{sync::Arc, vec::Vec};
@@ -280,7 +282,7 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 				&mut encoded_xt_opaque.as_slice(),
 			) {
 				if self.is_create_identity_funciton(&xt.function.0) {
-					let (_, shard, encrypted_identity, encrypted_metadata) = xt.function;
+					let (_, shard, account, encrypted_identity, encrypted_metadata) = xt.function;
 					let shielding_key = self.shielding_key_repo.retrieve_key()?;
 
 					let identity: Identity = Identity::decode(
@@ -294,8 +296,7 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 						},
 					};
 
-					if let Some((multiaddress_account, _, _)) = xt.signature {
-						let account = AccountIdLookup::lookup(multiaddress_account)?;
+					if xt.signature.is_some() {
 						let enclave_account_id = self.stf_enclave_signer.get_enclave_account()?;
 						let trusted_call = TrustedCall::create_identity_runtime(
 							enclave_account_id,
