@@ -269,10 +269,10 @@ pub mod pallet {
 			ensure!((content.len() as u32) <= SCHEMA_CONTENT_LEN, Error::<T>::LengthMismatch);
 
 			let index = Self::schema_index();
-			let new_index = index.checked_add(1u64).ok_or(Error::<T>::SchemaIndexOverFlow);
-			if new_index.is_ok() {
-				<SchemaRegistryIndex<T>>::put(new_index.as_ref().unwrap());
-			}
+			<SchemaRegistryIndex<T>>::put(
+				index.checked_add(1u64).ok_or(Error::<T>::SchemaIndexOverFlow)?,
+			);
+
 			SchemaRegistry::<T>::insert(
 				index,
 				VCSchema::<T>::new(id.clone(), sender.clone(), content.clone()),
