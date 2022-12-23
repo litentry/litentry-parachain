@@ -34,7 +34,7 @@ use substrate_fixed::{
 	types::{I32F32, I64F64},
 };
 
-use primitives::*;
+use core_primitives::*;
 pub const BLOCKS_PER_YEAR: u32 = YEARS;
 
 fn rounds_per_year<T: Config>() -> u32 {

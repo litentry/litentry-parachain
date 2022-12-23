@@ -28,8 +28,8 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+use core_primitives::{AesOutput, ShardIdentifier};
 pub use pallet::*;
-use primitives::{AesOutput, ShardIdentifier};
 use sp_core::H256;
 use sp_std::vec::Vec;
 

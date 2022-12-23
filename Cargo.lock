@@ -1197,6 +1197,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5827cebf4670468b8772dd191856768aedcb1b0278a04f989f7766351917b9dc"
 
 [[package]]
+name = "core-primitives"
+version = "0.9.12"
+dependencies = [
+ "parity-scale-codec 3.2.1",
+ "scale-info",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+]
+
+[[package]]
 name = "core2"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4572,6 +4584,7 @@ version = "0.9.13"
 dependencies = [
  "async-trait",
  "clap",
+ "core-primitives",
  "cumulus-client-cli",
  "cumulus-client-collator",
  "cumulus-client-consensus-aura",
@@ -4599,7 +4612,6 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-service",
- "primitives",
  "rococo-parachain-runtime",
  "sc-basic-authorship",
  "sc-chain-spec",
@@ -4644,6 +4656,7 @@ dependencies = [
 name = "litentry-parachain-runtime"
 version = "0.9.13"
 dependencies = [
+ "core-primitives",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
@@ -4697,7 +4710,6 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-runtime-parachains",
- "primitives",
  "runtime-common",
  "scale-info",
  "serde",
@@ -4726,6 +4738,7 @@ dependencies = [
 name = "litmus-parachain-runtime"
 version = "0.9.13"
 dependencies = [
+ "core-primitives",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
@@ -4784,7 +4797,6 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-runtime-parachains",
- "primitives",
  "runtime-common",
  "scale-info",
  "serde",
@@ -5037,9 +5049,9 @@ dependencies = [
 name = "mock-tee-primitives"
 version = "0.1.0"
 dependencies = [
+ "core-primitives",
  "hex",
  "parity-scale-codec 3.2.1",
- "primitives",
  "scale-info",
  "serde",
  "serde_json",
@@ -6093,6 +6105,7 @@ dependencies = [
 name = "pallet-identity-management"
 version = "0.1.0"
 dependencies = [
+ "core-primitives",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -6102,7 +6115,6 @@ dependencies = [
  "pallet-teerex",
  "pallet-timestamp",
  "parity-scale-codec 3.2.1",
- "primitives",
  "scale-info",
  "sp-arithmetic",
  "sp-core",
@@ -6116,6 +6128,7 @@ name = "pallet-identity-management-mock"
 version = "0.1.0"
 dependencies = [
  "aes-gcm 0.10.1",
+ "core-primitives",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -6128,7 +6141,6 @@ dependencies = [
  "pallet-timestamp",
  "parity-crypto",
  "parity-scale-codec 3.2.1",
- "primitives",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
  "rsa",
@@ -6336,6 +6348,7 @@ dependencies = [
 name = "pallet-parachain-staking"
 version = "0.1.0"
 dependencies = [
+ "core-primitives",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -6344,7 +6357,6 @@ dependencies = [
  "pallet-balances",
  "pallet-session",
  "parity-scale-codec 3.2.1",
- "primitives",
  "scale-info",
  "serde",
  "similar-asserts",
@@ -6759,6 +6771,7 @@ dependencies = [
 name = "pallet-vc-management"
 version = "0.1.0"
 dependencies = [
+ "core-primitives",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -6767,7 +6780,6 @@ dependencies = [
  "pallet-balances",
  "pallet-timestamp",
  "parity-scale-codec 3.2.1",
- "primitives",
  "scale-info",
  "sp-arithmetic",
  "sp-core",
@@ -8524,18 +8536,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "primitives"
-version = "0.9.12"
-dependencies = [
- "parity-scale-codec 3.2.1",
- "scale-info",
- "sp-core",
- "sp-runtime",
- "sp-std",
- "xcm",
-]
-
-[[package]]
 name = "prioritized-metered-channel"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9191,6 +9191,7 @@ dependencies = [
 name = "rococo-parachain-runtime"
 version = "0.9.13"
 dependencies = [
+ "core-primitives",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
@@ -9251,7 +9252,6 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-runtime-parachains",
- "primitives",
  "runtime-common",
  "scale-info",
  "serde",
@@ -9435,6 +9435,7 @@ dependencies = [
 name = "runtime-common"
 version = "0.9.13"
 dependencies = [
+ "core-primitives",
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-core",
  "cumulus-primitives-parachain-inherent",
@@ -9461,7 +9462,6 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-runtime-parachains",
- "primitives",
  "scale-info",
  "sp-core",
  "sp-io",

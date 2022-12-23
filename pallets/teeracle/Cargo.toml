@@ -15,7 +15,7 @@ scale-info = { version = "2.0.1", default-features = false, features = ["derive"
 
 # local
 pallet-teerex = { path = "../teerex", default-features = false }
-teeracle-primitives = { path = "../primitives/teeracle", default-features = false }
+teeracle-primitives = { path = "../../primitives/teeracle", default-features = false }
 
 # encointer
 substrate-fixed = { tag = "v0.5.9", default-features = false, git = "https://github.com/encointer/substrate-fixed.git" }

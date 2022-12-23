@@ -15,7 +15,7 @@ log = { version = "0.4.14", default-features = false }
 [dependencies.teerex-primitives]
 default-features = false
 package = "teerex-primitives"
-path = "../primitives/teerex"
+path = "../../primitives/teerex"
 
 
 [features]

@@ -27,11 +27,11 @@ frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch =
 hex = { version = "0.4", default-features = false }
 
 # local
-primitives = { path = "../../primitives", default-features = false }
+core-primitives = { path = "../../primitives/core", default-features = false }
 
 [dev-dependencies]
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
-pallet-teerex = { path = "../tee/teerex", features = ["skip-ias-check"] }
+pallet-teerex = { path = "../teerex", features = ["skip-ias-check"] }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
 
@@ -52,7 +52,7 @@ std = [
   "frame-support/std",
   "frame-system/std",
   "frame-benchmarking?/std",
-  "primitives/std",
+  "core-primitives/std",
   "pallet-teerex/std",
 ]
 try-runtime = ["frame-support/try-runtime"]
