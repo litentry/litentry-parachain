@@ -256,7 +256,7 @@ jobs:
             flavor_id: mockserver
             demo_name: ts-tests
           - test: resume-worker
-            flavor_id: sidechain
+            flavor_id: mockserver
             demo_name: resume-worker
 
     steps:
