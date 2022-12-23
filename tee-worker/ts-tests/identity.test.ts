@@ -31,7 +31,7 @@ const ethereumIdentity = <LitentryIdentity>{
 
 const substrateIdentity = <LitentryIdentity>{
     handle: {
-        Address32: `0x91fe1e29ddfc3306c7f2c864fc5599b7a060ecf5c972b810b0c2f8e7d42cff77`, //alice
+        Address32: `0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d`, //alice
     },
     web_type: {
         Web3Identity: {
