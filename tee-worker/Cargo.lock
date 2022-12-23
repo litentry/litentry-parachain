@@ -5474,6 +5474,7 @@ dependencies = [
  "parity-scale-codec",
  "parking_lot 0.12.1",
  "rocksdb",
+ "serde 1.0.151",
  "sp-core",
  "temp-dir",
  "thiserror 1.0.38",

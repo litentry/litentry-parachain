@@ -20,9 +20,9 @@ use itp_rpc::RpcResponse;
 use itp_utils::ToHexPrefixed;
 use its_primitives::{
 	traits::ShardIdentifierFor,
-	types::{BlockHash, SignedBlock, SignedBlock as SignedSidechainBlock},
+	types::{BlockHash, BlockNumber, SignedBlock, SignedBlock as SignedSidechainBlock},
 };
-use its_storage::interface::FetchBlocks;
+use its_storage::{interface::FetchBlocks, LastSidechainBlock};
 use parity_scale_codec::Encode;
 
 pub struct TestEnclave;
@@ -51,5 +51,20 @@ impl FetchBlocks<SignedSidechainBlock> for MockSidechainBlockFetcher {
 		_shard_identifier: &ShardIdentifierFor<SignedBlock>,
 	) -> its_storage::Result<Vec<SignedBlock>> {
 		Ok(Vec::new())
+	}
+
+	fn latest_block(
+		&self,
+		_shard_identifier: &ShardIdentifierFor<SignedBlock>,
+	) -> Option<its_storage::LastSidechainBlock> {
+		Some(LastSidechainBlock::default())
+	}
+
+	fn block_hash(
+		&self,
+		_block_number: BlockNumber,
+		_shard_identifier: &ShardIdentifierFor<SignedBlock>,
+	) -> Option<LastSidechainBlock> {
+		Some(LastSidechainBlock::default())
 	}
 }

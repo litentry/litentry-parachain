@@ -23,8 +23,10 @@ use its_primitives::{
 };
 use log::*;
 use rocksdb::WriteBatch;
+use serde::Serialize;
 use sp_core::H256;
 use std::{collections::HashMap, fmt::Debug, path::PathBuf};
+
 /// key value of sidechain db of last block
 const LAST_BLOCK_KEY: &[u8] = b"last_sidechainblock";
 /// key value of the stored shards vector
@@ -36,7 +38,7 @@ type ShardIdentifierFor<B> =
 
 /// Helper struct, contains the blocknumber
 /// and blockhash of the last sidechain block
-#[derive(PartialEq, Eq, Clone, Copy, Encode, Decode, Debug, Default)]
+#[derive(PartialEq, Eq, Clone, Copy, Encode, Decode, Debug, Default, Serialize)]
 pub struct LastSidechainBlock {
 	/// hash of the last sidechain block
 	pub hash: H256,
