@@ -20,6 +20,7 @@ use its_primitives::{
 	traits::{Block, ShardIdentifierFor},
 	types::{BlockHash, SignedBlock},
 };
+use its_primitives::types::BlockNumber;
 
 #[derive(Default)]
 pub struct FetchBlocksMock {
@@ -59,5 +60,9 @@ impl FetchBlocks<SignedBlock> for FetchBlocksMock {
 			hash: block.block.hash(),
 			number: block.block.header.block_number,
 		})
+	}
+
+	fn block_hash(&self, _block_number: BlockNumber, _shard_identifier: &ShardIdentifierFor<SignedBlock>) -> Option<LastSidechainBlock> {
+		None
 	}
 }
