@@ -322,7 +322,7 @@ jobs:
         if: ${{ matrix.test == 'resume-worker' }}
         run: |
           cd docker
-          docker-compose -f docker-compose.yml -f ${{ matrix.demo_name }}.yml up relaychain-alice relaychain-bob integritee-node --no-build --exit-code-from ${{ matrix.demo_name }} -- ${{ matrix.demo_name }}
+          docker-compose -f docker-compose.yml -f resume-worker.yml up --no-build --exit-code-from resume-worker relaychain-alice relaychain-bob integritee-node resume-worker -- resume-worker
 
       - name: Stop docker containers
         run: |
