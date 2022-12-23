@@ -70,8 +70,7 @@ export async function getTEEShieldingKey(wsClient: WebSocketAsPromised, api: Api
 
 export async function initIntegrationTestContext(
     workerEndpoint: string,
-    substrateEndpoint: string,
-    ethereumEndpoint: string
+    substrateEndpoint: string
 ): Promise<IntegrationTestContext> {
     const provider = new WsProvider(substrateEndpoint);
     const ethersWallet = {
@@ -271,8 +270,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
             //env url
             const tmp = await initIntegrationTestContext(
                 process.env.WORKER_END_POINT!,
-                process.env.SUBSTRATE_END_POINT!,
-                process.env.ETH_END_POINT!
+                process.env.SUBSTRATE_END_POINT!
             );
 
             context.defaultSigner = tmp.defaultSigner;
