@@ -31,7 +31,7 @@ const ethereumIdentity = <LitentryIdentity>{
 
 const substrateIdentity = <LitentryIdentity>{
     handle: {
-        Address32: `0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d`, //alice
+        Address32: `0x91fe1e29ddfc3306c7f2c864fc5599b7a060ecf5c972b810b0c2f8e7d42cff77`, //alice
     },
     web_type: {
         Web3Identity: {
@@ -52,10 +52,7 @@ const ethereumValidationData = <LitentryValidationData>{
         Evm: {
             message: `0x${Buffer.from('mock_message', 'utf8').toString('hex')}`,
             signature: {
-                Ethereum: `0x${Buffer.from(
-                    '10ee76e356d944d17bce552a4fd0d4554ccc97dc81213f470367bd3b99c441c51',
-                    'utf8'
-                ).toString('hex')}`,
+                Ethereum: '' as HexString,
             },
         },
     },
@@ -65,10 +62,7 @@ const substrateValidationData = <LitentryValidationData>{
         Substrate: {
             message: `0x${Buffer.from('mock_message', 'utf8').toString('hex')}`,
             signature: {
-                Sr25519: `0x${Buffer.from(
-                    '10ee76e356d944d17bce552a4fd0d4554ccc97dc81213f470367bd3b99c441c51',
-                    'utf8'
-                ).toString('hex')}`,
+                Sr25519: '' as HexString,
             },
         },
     },
@@ -103,20 +97,6 @@ describeLitentry('Test Identity', (context) => {
     });
 
     step('create identity', async function () {
-        //create twitter identity
-        const resp_twitter = await createIdentity(context, context.defaultSigner, aesKey, true, twitterIdentity);
-        if (resp_twitter) {
-            const [_who, challengeCode] = resp_twitter;
-            console.log('twitterIdentity challengeCode: ', challengeCode);
-            const msg = generateVerificationMessage(
-                context,
-                hexToU8a(challengeCode),
-                context.defaultSigner.addressRaw,
-                twitterIdentity
-            );
-            console.log('post verification msg to twitter: ', msg);
-            assert.isNotEmpty(challengeCode, 'challengeCode empty');
-        }
         //create ethereum identity
         const resp_ethereum = await createIdentity(context, context.defaultSigner, aesKey, true, ethereumIdentity);
         if (resp_ethereum) {
@@ -156,17 +136,6 @@ describeLitentry('Test Identity', (context) => {
     });
 
     step('verify identity', async function () {
-        //verify twitter identity
-        const twitter_identity_verified = await verifyIdentity(
-            context,
-            context.defaultSigner,
-            aesKey,
-            true,
-            twitterIdentity,
-            twitterValidationData
-        );
-        assertIdentityVerified(context.defaultSigner, twitter_identity_verified);
-
         // verify ethereum identity
         const ethereum_identity_verified = await verifyIdentity(
             context,
@@ -176,6 +145,7 @@ describeLitentry('Test Identity', (context) => {
             ethereumIdentity,
             ethereumValidationData
         );
+
         assertIdentityVerified(context.defaultSigner, ethereum_identity_verified);
 
         //verify substrate identity
@@ -191,16 +161,6 @@ describeLitentry('Test Identity', (context) => {
     });
 
     step('remove identity', async function () {
-        //remove twitter identity
-        const twitter_identity_removed = await removeIdentity(
-            context,
-            context.defaultSigner,
-            aesKey,
-            true,
-            twitterIdentity
-        );
-        assertIdentityRemoved(context.defaultSigner, twitter_identity_removed);
-
         // remove ethereum identity
         const ethereum_identity_removed = await removeIdentity(
             context,
