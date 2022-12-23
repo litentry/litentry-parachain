@@ -43,6 +43,7 @@ pub mod fetch_blocks_mock;
 
 pub use error::{Error, Result};
 pub use interface::{BlockPruner, BlockStorage, SidechainStorageLock};
+pub use storage::LastSidechainBlock;
 
 pub fn start_sidechain_pruning_loop<D>(
 	storage: &Arc<D>,

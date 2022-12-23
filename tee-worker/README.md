@@ -4,6 +4,12 @@ This tee-worker is based on [Integritee](https://integritee.network)'s [worker](
 
 The following is the original README from integritee-worker.
 
+If you think parachain-node launch too slowly, can use this branch: [litentry-runtime](https://github.com/litentry/integritee-node/tree/litentry-runtime) and need to use the following command to build
+``` bash
+# build integritee-node(not parachain-node)
+cargo build --release --features "skip-extrinsic-filtering skip-ias-check"
+```
+
 ## Build and Run
 Please see our [Integritee Book](https://docs.integritee.network/4-development/4.4-sdk) to learn how to build and run this.
 
