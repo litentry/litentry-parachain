@@ -18,11 +18,19 @@ use crate::{
 	format, AuthorApi, Error, HandleState, Hash, SgxExternalitiesTrait, ShardIdentifier,
 	ShieldingCryptoDecrypt, ShieldingCryptoEncrypt, StfEnclaveSigning, StfTaskContext,
 };
+
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use crate::chrono::{offset::Utc as TzUtc, TimeZone};
+
+#[cfg(feature = "std")]
+use chrono::{offset::Utc as TzUtc, TimeZone};
+
 use codec::Decode;
 use ita_sgx_runtime::IdentityManagement;
 use lc_stf_task_sender::{stf_task_sender, RequestType};
 use litentry_primitives::{Assertion, IdentityWebType, Web2Network};
 use log::*;
+use std::string::String;
 
 // lifetime elision: StfTaskContext is guaranteed to outlive the fn
 pub fn run_stf_task_receiver<K, A, S, H>(context: &StfTaskContext<K, A, S, H>) -> Result<(), Error>
@@ -108,6 +116,16 @@ where
 						}
 					}
 				},
+				Assertion::A4(mini_balance, from_date) => {
+					let mini_balance: f64 = (mini_balance / (10 ^ 12)) as f64;
+					if let Err(e) = lc_assertion_build::a4::build(
+						request.vec_identity,
+						String::from_utf8(from_date.into_inner()).unwrap(),
+						mini_balance,
+					) {
+						error!("error verify assertion4: {:?}", e)
+					}
+				},
 				Assertion::A5(twitter_account, original_tweet_id) =>
 					match lc_assertion_build::a5::build(
 						request.vec_identity.to_vec(),
@@ -125,6 +143,19 @@ where
 					Err(e) => {
 						log::error!("error verify assertion6: {:?}", e)
 					},
+				},
+				Assertion::A7(mini_balance, year) => {
+					#[cfg(feature = "std")]
+					let dt1 = TzUtc.with_ymd_and_hms(year as i32, 1, 1, 0, 0, 0);
+					#[cfg(all(not(feature = "std"), feature = "sgx"))]
+					let dt1 = TzUtc.ymd(year as i32, 1, 1).and_hms(0, 0, 0);
+					let from_date = format!("{:?}", dt1);
+					let mini_balance: f64 = (mini_balance / (10 ^ 12)) as f64;
+					if let Err(e) =
+						lc_assertion_build::a7::build(request.vec_identity, from_date, mini_balance)
+					{
+						error!("error verify assertion7: {:?}", e)
+					}
 				},
 				_ => {
 					unimplemented!()
