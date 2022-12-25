@@ -5501,6 +5501,7 @@ dependencies = [
  "parity-scale-codec",
  "parking_lot 0.12.1",
  "rocksdb",
+ "serde 1.0.151",
  "sp-core",
  "temp-dir",
  "thiserror 1.0.38",
@@ -6020,6 +6021,7 @@ dependencies = [
 name = "lc-data-providers"
 version = "0.1.0"
 dependencies = [
+ "chrono 0.4.23",
  "hex 0.4.0",
  "hex 0.4.3",
  "http 0.2.1",
@@ -6101,6 +6103,8 @@ dependencies = [
 name = "lc-stf-task-receiver"
 version = "0.1.0"
 dependencies = [
+ "chrono 0.4.11",
+ "chrono 0.4.23",
  "frame-support",
  "futures 0.3.25",
  "futures 0.3.8",

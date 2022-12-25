@@ -59,6 +59,8 @@ pub mod discord_official;
 pub mod twitter_litentry;
 pub mod twitter_official;
 
+pub mod graphql;
+
 const TIMEOUT: Duration = Duration::from_secs(3u64);
 
 pub struct DataProvidersStatic {
@@ -68,6 +70,8 @@ pub struct DataProvidersStatic {
 	pub discord_official_url: String,
 	pub discord_litentry_url: String,
 	pub discord_auth_token: String,
+	pub graphql_url: String,
+	pub graphql_auth_key: String,
 }
 impl Default for DataProvidersStatic {
 	fn default() -> Self {
@@ -85,6 +89,8 @@ impl DataProvidersStatic {
 				discord_official_url: "".to_string(),
 				discord_litentry_url: "".to_string(),
 				discord_auth_token: "".to_string(),
+				graphql_url: "".to_string(),
+				graphql_auth_key: "".to_string(),
 			}
 		}
 		#[cfg(any(test, feature = "mockserver"))]
@@ -96,6 +102,8 @@ impl DataProvidersStatic {
 				discord_official_url: "http://localhost:9527".to_string(),
 				discord_litentry_url: "http://localhost:9527".to_string(),
 				discord_auth_token: "".to_string(),
+				graphql_url: "https://graph.tdf-labs.io/".to_string(),
+				graphql_auth_key: "ac2115ec-e327-4862-84c5-f25b6b7d4533".to_string(),
 			}
 		}
 	}
@@ -117,6 +125,12 @@ impl DataProvidersStatic {
 	pub fn set_discord_auth_token(&mut self, v: String) {
 		self.discord_auth_token = v;
 	}
+	pub fn set_graphql_url(&mut self, v: String) {
+		self.graphql_url = v;
+	}
+	pub fn set_graphql_auth_key(&mut self, v: String) {
+		self.graphql_auth_key = v;
+	}
 }
 
 lazy_static! {
@@ -131,6 +145,9 @@ pub enum Error {
 
 	#[error("UTF8 error: {0}")]
 	Utf8Error(String),
+
+	#[error("GraphQL error: {0}")]
+	GraphQLError(String),
 }
 
 pub trait UserInfo {
