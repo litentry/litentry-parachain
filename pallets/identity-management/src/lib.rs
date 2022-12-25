@@ -36,7 +36,7 @@ mod benchmarking;
 #[cfg(test)]
 mod mock;
 
-#[cfg(test)]
+#[cfg(all(test, feature = "skip-ias-check"))]
 mod tests;
 
 pub mod weights;

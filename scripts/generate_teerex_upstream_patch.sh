@@ -18,7 +18,6 @@ cleanup() {
 
 UPSTREAM="https://github.com/integritee-network/pallets.git"
 ROOTDIR=$(git rev-parse --show-toplevel)
-ROOTDIR="$ROOTDIR/pallets/tee"
 cd "$ROOTDIR"
 
 if [ -f upstream_commit ]; then
