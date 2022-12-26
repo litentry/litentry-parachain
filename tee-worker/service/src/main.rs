@@ -163,6 +163,12 @@ fn main() {
 			let discord_auth_token = worker_config
 				.get_string("discord_auth_token")
 				.unwrap_or_else(|_e| "ABCDEFGHIJKLMNOPQRSTUVWXYZ".to_string());
+			let graphql_url = worker_config
+				.get_string("graphql_url")
+				.unwrap_or_else(|_e| "https://graph.tdf-labs.io/".to_string());
+			let graphql_auth_key = worker_config
+				.get_string("graphql_auth_key")
+				.unwrap_or_else(|_e| "ac2115ec-e327-4862-84c5-f25b6b7d4533".to_string());
 
 			mut_handle.set_twitter_official_url(twitter_official_url);
 			mut_handle.set_twitter_litentry_url(twitter_litentry_url);
@@ -170,6 +176,8 @@ fn main() {
 			mut_handle.set_discord_official_url(discord_official_url);
 			mut_handle.set_discord_litentry_url(discord_litentry_url);
 			mut_handle.set_discord_auth_token(discord_auth_token);
+			mut_handle.set_graphql_url(graphql_url);
+			mut_handle.set_graphql_auth_key(graphql_auth_key);
 		}
 		#[cfg(any(test, feature = "mockserver"))]
 		{
@@ -179,6 +187,8 @@ fn main() {
 			mut_handle.set_discord_official_url("http://localhost:9527".to_string());
 			mut_handle.set_discord_litentry_url("http://localhost:9527".to_string());
 			mut_handle.set_discord_auth_token("".to_string());
+			mut_handle.set_graphql_url("https://graph.tdf-labs.io/".to_string());
+			mut_handle.set_graphql_auth_key("ac2115ec-e327-4862-84c5-f25b6b7d4533".to_string());
 		}
 	}
 
@@ -193,8 +203,10 @@ fn main() {
 
 	#[cfg(feature = "mockserver")]
 	thread::spawn(move || {
-		info!("*** Starting mock server");
-		lc_mock_server::run();
+		if !config.disable_mock_server {
+			info!("*** Starting mock server");
+			lc_mock_server::run();
+		}
 	});
 
 	let clean_reset = matches.is_present("clean-reset");
