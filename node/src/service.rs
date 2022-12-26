@@ -112,7 +112,8 @@ type ParachainBackend = TFullBackend<Block>;
 
 type MaybeSelectChain = Option<LongestChain<ParachainBackend, Block>>;
 
-type ParachainBlockImport<RuntimeApi> = TParachainBlockImport<Arc<ParachainClient<RuntimeApi>>>;
+type ParachainBlockImport<RuntimeApi> =
+	TParachainBlockImport<Block, Arc<ParachainClient<RuntimeApi>>, ParachainBackend>;
 
 /// Starts a `ServiceBuilder` for a full service.
 ///
@@ -200,7 +201,7 @@ where
 
 	let select_chain = if is_standalone { Some(LongestChain::new(backend.clone())) } else { None };
 
-	let block_import = ParachainBlockImport::new(client.clone());
+	let block_import = ParachainBlockImport::new(client.clone(),backend.clone());
 
 	let import_queue = build_import_queue(
 		client.clone(),
