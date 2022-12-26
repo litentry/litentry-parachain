@@ -16,7 +16,7 @@
 
 #![cfg(test)]
 
-use crate::{
+pub use crate::{
 	self as pallet_identity_management_mock,
 	key::{aes_encrypt_default, tee_encrypt},
 	ChallengeCode,
@@ -32,14 +32,14 @@ use frame_support::{
 	traits::{ConstU128, ConstU16, ConstU32, ConstU64, Everything},
 };
 use frame_system as system;
-use mock_tee_primitives::{
+pub use mock_tee_primitives::{
 	EthereumSignature, EvmNetwork, Identity, IdentityHandle, IdentityMultiSignature,
 	IdentityWebType, SubstrateNetwork, TwitterValidationData, UserShieldingKeyType, ValidationData,
 	Web2Network, Web2ValidationData, Web3CommonValidationData, Web3Network, Web3ValidationData,
 };
 pub use parity_crypto::publickey::{sign, Generator, KeyPair as EvmPair, Message, Random};
 use sp_core::sr25519::Pair as SubstratePair; // TODO: maybe use more generic struct
-use sp_core::{blake2_128, Pair, H256};
+use sp_core::{Pair, H256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
@@ -121,9 +121,9 @@ ord_parameter_types! {
 
 impl pallet_identity_management_mock::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type ManageWhitelistOrigin = EnsureRoot<Self::AccountId>;
 	type MaxVerificationDelay = ConstU64<10>;
 	type TEECallOrigin = EnsureSignedBy<One, u64>;
+	type DelegateeAdminOrigin = EnsureRoot<Self::AccountId>;
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
@@ -135,18 +135,16 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| {
-		// add to `One` to whitelist
-		let _ = IdentityManagementMock::add_to_whitelist(RuntimeOrigin::root(), 1u64);
 		System::set_block_number(1);
 	});
 	ext
 }
 
-pub fn create_mock_twitter_identity() -> Identity {
+pub fn create_mock_twitter_identity(twitter_handle: &[u8]) -> Identity {
 	Identity {
 		web_type: IdentityWebType::Web2(Web2Network::Twitter),
 		handle: IdentityHandle::String(
-			b"aliceTwitterHandle".to_vec().try_into().expect("convert to BoundedVec failed"),
+			twitter_handle.to_vec().try_into().expect("convert to BoundedVec failed"),
 		),
 	}
 }
@@ -214,7 +212,6 @@ pub fn setup_user_shieding_key(
 	let shielding_key = Aes256Gcm::generate_key(&mut OsRng);
 	let encrpted_shielding_key = tee_encrypt(&shielding_key);
 	// whitelist caller
-	assert_ok!(IdentityManagementMock::add_to_whitelist(RuntimeOrigin::root(), who));
 	assert_ok!(IdentityManagementMock::set_user_shielding_key(
 		RuntimeOrigin::signed(who),
 		H256::random(),
@@ -232,21 +229,30 @@ pub fn setup_user_shieding_key(
 	key
 }
 
-pub fn setup_link_identity(
+pub fn setup_create_identity(
 	who: <Test as frame_system::Config>::AccountId,
 	identity: Identity,
 	bn: <Test as frame_system::Config>::BlockNumber,
 ) {
 	let key = setup_user_shieding_key(who);
 	let encrypted_identity = tee_encrypt(identity.encode().as_slice());
-	assert_ok!(IdentityManagementMock::link_identity(
+	let code = IdentityManagementMock::get_mock_challenge_code(
+		bn,
+		IdentityManagementMock::challenge_codes(&who, &identity),
+	);
+	assert_ok!(IdentityManagementMock::create_identity(
 		RuntimeOrigin::signed(who),
 		H256::random(),
+		who,
 		encrypted_identity.to_vec(),
 		None
 	));
 	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
-		crate::Event::IdentityLinkedPlain { account: who, identity: identity.clone() },
+		crate::Event::IdentityCreatedPlain {
+			account: who,
+			identity: identity.clone(),
+			id_graph: IdentityManagementMock::get_id_graph(&who),
+		},
 	));
 	// encrypt the result
 	let aes_encrypted_account = aes_encrypt_default(&key, who.encode().as_slice());
@@ -255,12 +261,10 @@ pub fn setup_link_identity(
 		crate::Event::UserShieldingKeySet { account: aes_encrypted_account.clone() },
 	));
 
-	// double check the challenge code
-	let code = blake2_128(bn.encode().as_slice());
 	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
 		crate::Event::ChallengeCodeGeneratedPlain { account: who, identity, code },
 	));
-	let aes_encrypted_code = aes_encrypt_default(&key, code.encode().as_slice());
+	let aes_encrypted_code = aes_encrypt_default(&key, code.as_slice());
 	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
 		crate::Event::ChallengeCodeGenerated {
 			account: aes_encrypted_account,
@@ -275,7 +279,7 @@ pub fn setup_verify_twitter_identity(
 	identity: Identity,
 	bn: <Test as frame_system::Config>::BlockNumber,
 ) {
-	setup_link_identity(who, identity.clone(), bn);
+	setup_create_identity(who, identity.clone(), bn);
 	let encrypted_identity = tee_encrypt(identity.encode().as_slice());
 	let validation_data = match &identity.web_type {
 		IdentityWebType::Web2(Web2Network::Twitter) => create_mock_twitter_validation_data(),
@@ -295,7 +299,7 @@ pub fn setup_verify_polkadot_identity(
 	bn: <Test as frame_system::Config>::BlockNumber,
 ) {
 	let identity = create_mock_polkadot_identity(p.public().0);
-	setup_link_identity(who, identity.clone(), bn);
+	setup_create_identity(who, identity.clone(), bn);
 	let encrypted_identity = tee_encrypt(identity.encode().as_slice());
 	let code = IdentityManagementMock::challenge_codes(&who, &identity).unwrap();
 	let validation_data = match &identity.web_type {
@@ -322,7 +326,7 @@ pub fn setup_verify_eth_identity(
 	bn: <Test as frame_system::Config>::BlockNumber,
 ) {
 	let identity = create_mock_eth_identity(p.address().0);
-	setup_link_identity(who, identity.clone(), bn);
+	setup_create_identity(who, identity.clone(), bn);
 	let encrypted_identity = tee_encrypt(identity.encode().as_slice());
 	let code = IdentityManagementMock::challenge_codes(&who, &identity).unwrap();
 	let validation_data = match &identity.web_type {

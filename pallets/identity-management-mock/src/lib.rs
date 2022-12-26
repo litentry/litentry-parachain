@@ -79,23 +79,29 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		/// Event
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-		/// origin to manage caller whitelist
-		type ManageWhitelistOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-		// maximum delay in block numbers between linking an identity and verifying an identity
+		// maximum delay in block numbers between creating an identity and verifying an identity
 		#[pallet::constant]
 		type MaxVerificationDelay: Get<BlockNumberOf<Self>>;
 		// some extrinsics should only be called by origins from TEE
 		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		/// origin to manage authorised delegatee list
+		type DelegateeAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		// Events from this pallet
-		LinkIdentityRequested {
+		DelegateeAdded {
+			account: T::AccountId,
+		},
+		DelegateeRemoved {
+			account: T::AccountId,
+		},
+		CreateIdentityRequested {
 			shard: ShardIdentifier,
 		},
-		UnlinkIdentityRequested {
+		RemoveIdentityRequested {
 			shard: ShardIdentifier,
 		},
 		VerifyIdentityRequested {
@@ -115,7 +121,7 @@ pub mod pallet {
 		UserShieldingKeySet {
 			account: AesOutput,
 		},
-		// link identity
+		// create identity
 		ChallengeCodeGeneratedPlain {
 			account: T::AccountId,
 			identity: Identity,
@@ -126,31 +132,37 @@ pub mod pallet {
 			identity: AesOutput,
 			code: AesOutput,
 		},
-		IdentityLinkedPlain {
+		IdentityCreatedPlain {
 			account: T::AccountId,
 			identity: Identity,
+			id_graph: Vec<(Identity, IdentityContext<T>)>,
 		},
-		IdentityLinked {
+		IdentityCreated {
 			account: AesOutput,
 			identity: AesOutput,
+			id_graph: AesOutput,
 		},
-		// unlink identity
-		IdentityUnlinkedPlain {
+		// remove identity
+		IdentityRemovedPlain {
 			account: T::AccountId,
 			identity: Identity,
+			id_graph: Vec<(Identity, IdentityContext<T>)>,
 		},
-		IdentityUnlinked {
+		IdentityRemoved {
 			account: AesOutput,
 			identity: AesOutput,
+			id_graph: AesOutput,
 		},
 		// verify identity
 		IdentityVerifiedPlain {
 			account: T::AccountId,
 			identity: Identity,
+			id_graph: Vec<(Identity, IdentityContext<T>)>,
 		},
 		IdentityVerified {
 			account: AesOutput,
 			identity: AesOutput,
+			id_graph: AesOutput,
 		},
 		// some error happened during processing in TEE, we use string-like
 		// parameters for more "generic" error event reporting
@@ -165,15 +177,17 @@ pub mod pallet {
 	/// These are the errors that are immediately emitted from this mock pallet
 	#[pallet::error]
 	pub enum Error<T> {
-		/// caller is not in whitelist (therefore disallowed to call some extrinsics)
-		CallerNotWhitelisted,
+		/// a delegatee doesn't exist
+		DelegateeNotExist,
+		/// a `create_identity` request from unauthorised user
+		UnauthorisedUser,
 		/// Error when decrypting using TEE'shielding key
 		ShieldingKeyDecryptionFailed,
 		/// unexpected decoded type
 		WrongDecodedType,
-		/// identity already exists when linking an identity
-		IdentityAlreadyExist,
-		/// identity not exist when unlinking an identity
+		/// identity already verified when creating an identity
+		IdentityAlreadyVerified,
+		/// identity not exist when removing an identity
 		IdentityNotExist,
 		/// no shielding key for a given AccountId
 		ShieldingKeyNotExist,
@@ -187,8 +201,8 @@ pub mod pallet {
 		RecoverSubstratePubkeyFailed,
 		/// verify evm signature failed
 		VerifyEvmSignatureFailed,
-		/// the linking request block is zero
-		LinkingRequestBlockZero,
+		/// the creation request block is zero
+		CreationRequestBlockZero,
 		/// the challenge code doesn't exist
 		ChallengeCodeNotExist,
 		/// wrong signature type
@@ -203,10 +217,11 @@ pub mod pallet {
 		UnexpectedMessage,
 	}
 
+	/// delegatees who are authorised to send extrinsics(currently only `create_identity`)
+	/// on behalf of the users
 	#[pallet::storage]
-	#[pallet::getter(fn whitelisted_callers)]
-	pub type WhitelistedCallers<T: Config> =
-		StorageMap<_, Twox64Concat, T::AccountId, (), OptionQuery>;
+	#[pallet::getter(fn delegatee)]
+	pub type Delegatee<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, (), OptionQuery>;
 
 	/// user shielding key is per Litentry account
 	#[pallet::storage]
@@ -242,22 +257,23 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// add an account to the whitelist
+		/// add an account to the delegatees
 		#[pallet::weight(195_000_000)]
-		pub fn add_to_whitelist(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
-			let _ = T::ManageWhitelistOrigin::ensure_origin(origin)?;
-			WhitelistedCallers::<T>::insert(account, ());
+		pub fn add_delegatee(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
+			let _ = T::DelegateeAdminOrigin::ensure_origin(origin)?;
+			// we don't care if `account` already exists
+			Delegatee::<T>::insert(account.clone(), ());
+			Self::deposit_event(Event::DelegateeAdded { account });
 			Ok(())
 		}
 
-		/// remove an account from the whitelist
+		/// remove an account from the delegatees
 		#[pallet::weight(195_000_000)]
-		pub fn remove_from_whitelist(
-			origin: OriginFor<T>,
-			account: T::AccountId,
-		) -> DispatchResult {
-			let _ = T::ManageWhitelistOrigin::ensure_origin(origin)?;
-			WhitelistedCallers::<T>::remove(account);
+		pub fn remove_delegatee(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
+			let _ = T::DelegateeAdminOrigin::ensure_origin(origin)?;
+			ensure!(Delegatee::<T>::contains_key(&account), Error::<T>::DelegateeNotExist);
+			Delegatee::<T>::remove(account.clone());
+			Self::deposit_event(Event::DelegateeRemoved { account });
 			Ok(())
 		}
 
@@ -269,7 +285,6 @@ pub mod pallet {
 			encrypted_key: Vec<u8>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			ensure!(WhitelistedCallers::<T>::contains_key(&who), Error::<T>::CallerNotWhitelisted);
 			Self::deposit_event(Event::SetUserShieldingKeyRequested { shard });
 
 			let decrypted_key = Self::decrypt_with_tee_shielding_key(&encrypted_key)?;
@@ -283,17 +298,21 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Link an identity
+		/// Create an identity
 		#[pallet::weight(195_000_000)]
-		pub fn link_identity(
+		pub fn create_identity(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
+			user: T::AccountId,
 			encrypted_identity: Vec<u8>,
 			encrypted_metadata: Option<Vec<u8>>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			ensure!(WhitelistedCallers::<T>::contains_key(&who), Error::<T>::CallerNotWhitelisted);
-			Self::deposit_event(Event::LinkIdentityRequested { shard });
+			ensure!(
+				who == user || Delegatee::<T>::contains_key(&who),
+				Error::<T>::UnauthorisedUser
+			);
+			Self::deposit_event(Event::CreateIdentityRequested { shard });
 
 			let decrypted_identitty = Self::decrypt_with_tee_shielding_key(&encrypted_identity)?;
 			let identity = Identity::decode(&mut decrypted_identitty.as_slice())
@@ -310,14 +329,17 @@ pub mod pallet {
 				},
 			};
 
-			ensure!(
-				!IDGraphs::<T>::contains_key(&who, &identity),
-				Error::<T>::IdentityAlreadyExist
-			);
+			if let Some(c) = IDGraphs::<T>::get(&who, &identity) {
+				ensure!(!c.is_verified, Error::<T>::IdentityAlreadyVerified);
+			}
+
 			let key = UserShieldingKeys::<T>::get(&who).ok_or(Error::<T>::ShieldingKeyNotExist)?;
 
 			// emit the challenge code event, TODO: use randomness pallet
-			let code = Self::get_mock_challenge_code();
+			let code = Self::get_mock_challenge_code(
+				<frame_system::Pallet<T>>::block_number(),
+				ChallengeCodes::<T>::get(&who, &identity),
+			);
 			ChallengeCodes::<T>::insert(&who, &identity, &code);
 			Self::deposit_event(Event::<T>::ChallengeCodeGeneratedPlain {
 				account: who.clone(),
@@ -330,35 +352,36 @@ pub mod pallet {
 				code: aes_encrypt_default(&key, code.as_ref()),
 			});
 
-			// emit the IdentityLinked event
+			// emit the IdentityCreated event
 			let context = IdentityContext {
 				metadata,
-				linking_request_block: Some(<frame_system::Pallet<T>>::block_number()),
+				creation_request_block: Some(<frame_system::Pallet<T>>::block_number()),
 				verification_request_block: None,
 				is_verified: false,
 			};
 			IDGraphs::<T>::insert(&who, &identity, context);
-			Self::deposit_event(Event::<T>::IdentityLinkedPlain {
+			Self::deposit_event(Event::<T>::IdentityCreatedPlain {
 				account: who.clone(),
 				identity: identity.clone(),
+				id_graph: Self::get_id_graph(&who),
 			});
-			Self::deposit_event(Event::<T>::IdentityLinked {
+			Self::deposit_event(Event::<T>::IdentityCreated {
 				account: aes_encrypt_default(&key, who.encode().as_slice()),
 				identity: aes_encrypt_default(&key, identity.encode().as_slice()),
+				id_graph: aes_encrypt_default(&key, Self::get_id_graph(&who).encode().as_slice()),
 			});
 			Ok(())
 		}
 
-		/// Unlink an identity
+		/// Remove an identity
 		#[pallet::weight(195_000_000)]
-		pub fn unlink_identity(
+		pub fn remove_identity(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
 			encrypted_identity: Vec<u8>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			ensure!(WhitelistedCallers::<T>::contains_key(&who), Error::<T>::CallerNotWhitelisted);
-			Self::deposit_event(Event::UnlinkIdentityRequested { shard });
+			Self::deposit_event(Event::RemoveIdentityRequested { shard });
 
 			let decrypted_identitty = Self::decrypt_with_tee_shielding_key(&encrypted_identity)?;
 			let identity = Identity::decode(&mut decrypted_identitty.as_slice())
@@ -367,21 +390,23 @@ pub mod pallet {
 			ensure!(IDGraphs::<T>::contains_key(&who, &identity), Error::<T>::IdentityNotExist);
 			let key = UserShieldingKeys::<T>::get(&who).ok_or(Error::<T>::ShieldingKeyNotExist)?;
 
-			// emit the IdentityUnlinked event
+			// emit the IdentityRemoved event
 			IDGraphs::<T>::remove(&who, &identity);
-			Self::deposit_event(Event::<T>::IdentityUnlinkedPlain {
+			Self::deposit_event(Event::<T>::IdentityRemovedPlain {
 				account: who.clone(),
 				identity: identity.clone(),
+				id_graph: Self::get_id_graph(&who),
 			});
-			Self::deposit_event(Event::<T>::IdentityUnlinked {
+			Self::deposit_event(Event::<T>::IdentityRemoved {
 				account: aes_encrypt_default(&key, who.encode().as_slice()),
 				identity: aes_encrypt_default(&key, identity.encode().as_slice()),
+				id_graph: aes_encrypt_default(&key, Self::get_id_graph(&who).encode().as_slice()),
 			});
 
 			Ok(())
 		}
 
-		/// Verify a linked identity
+		/// Verify a created identity
 		#[pallet::weight(195_000_000)]
 		pub fn verify_identity(
 			origin: OriginFor<T>,
@@ -390,7 +415,6 @@ pub mod pallet {
 			encrypted_validation_data: Vec<u8>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			ensure!(WhitelistedCallers::<T>::contains_key(&who), Error::<T>::CallerNotWhitelisted);
 			Self::deposit_event(Event::VerifyIdentityRequested { shard });
 
 			let now = <frame_system::Pallet<T>>::block_number();
@@ -424,11 +448,11 @@ pub mod pallet {
 
 			IDGraphs::<T>::try_mutate(&who, &identity, |context| -> DispatchResult {
 				let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
-				let linking_request_block =
-					c.linking_request_block.ok_or(Error::<T>::LinkingRequestBlockZero)?;
-				ensure!(linking_request_block <= now, Error::<T>::VerificationRequestTooEarly);
+				let creation_request_block =
+					c.creation_request_block.ok_or(Error::<T>::CreationRequestBlockZero)?;
+				ensure!(creation_request_block <= now, Error::<T>::VerificationRequestTooEarly);
 				ensure!(
-					now - linking_request_block <= T::MaxVerificationDelay::get(),
+					now - creation_request_block <= T::MaxVerificationDelay::get(),
 					Error::<T>::VerificationRequestTooLate
 				);
 				c.is_verified = true;
@@ -447,10 +471,15 @@ pub mod pallet {
 				Self::deposit_event(Event::<T>::IdentityVerifiedPlain {
 					account: who.clone(),
 					identity: identity.clone(),
+					id_graph: Self::get_id_graph(&who),
 				});
 				Self::deposit_event(Event::<T>::IdentityVerified {
 					account: aes_encrypt_default(&key, who.encode().as_slice()),
 					identity: aes_encrypt_default(&key, identity.encode().as_slice()),
+					id_graph: aes_encrypt_default(
+						&key,
+						Self::get_id_graph(&who).encode().as_slice(),
+					),
 				});
 				Ok(())
 			})
@@ -480,24 +509,26 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(195_000_000)]
-		pub fn identity_linked(
+		pub fn identity_created(
 			origin: OriginFor<T>,
 			account: AesOutput,
 			identity: AesOutput,
+			id_graph: AesOutput,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityLinked { account, identity });
+			Self::deposit_event(Event::IdentityCreated { account, identity, id_graph });
 			Ok(Pays::No.into())
 		}
 
 		#[pallet::weight(195_000_000)]
-		pub fn identity_unlinked(
+		pub fn identity_removed(
 			origin: OriginFor<T>,
 			account: AesOutput,
 			identity: AesOutput,
+			id_graph: AesOutput,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityUnlinked { account, identity });
+			Self::deposit_event(Event::IdentityRemoved { account, identity, id_graph });
 			Ok(Pays::No.into())
 		}
 
@@ -506,9 +537,10 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			account: AesOutput,
 			identity: AesOutput,
+			id_graph: AesOutput,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityVerified { account, identity });
+			Self::deposit_event(Event::IdentityVerified { account, identity, id_graph });
 			Ok(Pays::No.into())
 		}
 
@@ -534,9 +566,13 @@ pub mod pallet {
 		}
 
 		// TODO: maybe use randomness pallet
-		fn get_mock_challenge_code() -> ChallengeCode {
-			let now = <frame_system::Pallet<T>>::block_number();
-			blake2_128(&now.encode())
+		pub fn get_mock_challenge_code(
+			bn: BlockNumberOf<T>,
+			maybe_code: Option<ChallengeCode>,
+		) -> ChallengeCode {
+			let mut code = bn.encode();
+			code.append(&mut maybe_code.encode());
+			blake2_128(&code)
 		}
 
 		fn verify_substrate_signature(
@@ -655,6 +691,10 @@ pub mod pallet {
 			let mut addr = [0u8; 20];
 			addr[..20].copy_from_slice(&hashed_pk[12..32]);
 			Ok(addr)
+		}
+
+		pub fn get_id_graph(who: &T::AccountId) -> Vec<(Identity, IdentityContext<T>)> {
+			IDGraphs::iter_prefix(who).collect::<Vec<_>>()
 		}
 	}
 }

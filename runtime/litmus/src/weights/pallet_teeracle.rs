@@ -71,4 +71,11 @@ impl<T: frame_system::Config> pallet_teeracle::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
+	// Storage: Teeracle Whitelists (r:1 w:1)
+	fn update_oracle() -> Weight {
+		// Minimum execution time: 29_760 nanoseconds.
+		Weight::from_ref_time(31_058_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
+	}
 }

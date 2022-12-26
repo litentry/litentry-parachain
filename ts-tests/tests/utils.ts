@@ -107,9 +107,9 @@ export function signAndSend(tx: SubmittableExtrinsic<ApiTypes>, account: Address
 export async function sudoWrapper(api: ApiPromise, tx: SubmittableExtrinsic<ApiTypes>) {
     const chain = (await api.rpc.system.chain()).toString().toLowerCase();
     if (chain == 'litmus-dev') {
-        const threshold = api.createType("Compact<u32>", 1);
-        const call = api.createType("Call", tx);
-        return api.tx.council.propose(threshold, call, api.createType("Compact<u32>", tx.length))
+        const threshold = api.createType('Compact<u32>', 1);
+        const call = api.createType('Call', tx);
+        return api.tx.council.propose(threshold, call, api.createType('Compact<u32>', tx.length));
     } else {
         return api.tx.sudo.sudo(tx);
     }

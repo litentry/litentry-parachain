@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{mock::*, ShardIdentifier};
+use crate::{mock::*, Error, ShardIdentifier};
 use frame_support::{assert_noop, assert_ok};
 use sp_core::H256;
 
@@ -38,32 +38,67 @@ fn set_user_shielding_key_works() {
 }
 
 #[test]
-fn link_identity_works() {
+fn create_identity_without_delegatee_works() {
 	new_test_ext().execute_with(|| {
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
-		assert_ok!(IdentityManagement::link_identity(
+		assert_ok!(IdentityManagement::create_identity(
 			RuntimeOrigin::signed(1),
 			shard,
+			1,
 			vec![1u8; 2048],
 			Some(vec![1u8; 2048])
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
-			crate::Event::LinkIdentityRequested { shard },
+			crate::Event::CreateIdentityRequested { shard },
 		));
 	});
 }
 
 #[test]
-fn unlink_identity_works() {
+fn create_identity_with_authorised_delegatee_works() {
 	new_test_ext().execute_with(|| {
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
-		assert_ok!(IdentityManagement::unlink_identity(
+		assert_ok!(IdentityManagement::create_identity(
+			RuntimeOrigin::signed(5), // authorised delegatee set in initialisation
+			shard,
+			1,
+			vec![1u8; 2048],
+			Some(vec![1u8; 2048])
+		));
+		System::assert_last_event(RuntimeEvent::IdentityManagement(
+			crate::Event::CreateIdentityRequested { shard },
+		));
+	});
+}
+
+#[test]
+fn create_identity_with_unauthorised_delegatee_fails() {
+	new_test_ext().execute_with(|| {
+		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
+		assert_noop!(
+			IdentityManagement::create_identity(
+				RuntimeOrigin::signed(3),
+				shard,
+				1,
+				vec![1u8; 2048],
+				Some(vec![1u8; 2048])
+			),
+			Error::<Test>::UnauthorisedUser
+		);
+	});
+}
+
+#[test]
+fn remove_identity_works() {
+	new_test_ext().execute_with(|| {
+		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
+		assert_ok!(IdentityManagement::remove_identity(
 			RuntimeOrigin::signed(1),
 			shard,
 			vec![1u8; 2048]
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
-			crate::Event::UnlinkIdentityRequested { shard },
+			crate::Event::RemoveIdentityRequested { shard },
 		));
 	});
 }

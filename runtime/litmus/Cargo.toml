@@ -8,7 +8,7 @@ version = '0.9.13'
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len"] }
 hex-literal = { version = '0.3.4' }
 log = { version = "0.4", default-features = false }
-scale-info = { version = "2.3.0", default-features = false, features = ["derive"] }
+scale-info = { version = "2.3.1", default-features = false, features = ["derive"] }
 serde = { version = "1.0", optional = true, features = ["derive"] }
 smallvec = "1.9.0"
 
@@ -96,10 +96,9 @@ pallet-vc-management = { path = "../../pallets/vc-management", default-features 
 runtime-common = { path = '../common', default-features = false }
 
 # TEE pallets
-# TODO: change to `master`/`polkadot-v0.9.36` branch temporarily for aligning upstream codebase: tee-worker/#113
-pallet-sidechain = { git = "https://github.com/litentry/integritee-pallets.git", branch = "polkadot-v0.9.36", default-features = false }
-pallet-teeracle = { git = "https://github.com/litentry/integritee-pallets.git", branch = "polkadot-v0.9.36", default-features = false }
-pallet-teerex = { git = "https://github.com/litentry/integritee-pallets.git", branch = "polkadot-v0.9.36", default-features = false }
+pallet-sidechain = { git = "https://github.com/integritee-network/pallets.git", branch = "master", default-features = false }
+pallet-teeracle = { git = "https://github.com/integritee-network/pallets.git", branch = "master", default-features = false }
+pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", branch = "master", default-features = false }
 
 [dev-dependencies]
 cumulus-primitives-parachain-inherent = { git = 'https://github.com/paritytech/cumulus', branch = "polkadot-v0.9.36" }
@@ -116,6 +115,41 @@ substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", bran
 [features]
 default = ["std"]
 fast-runtime = []
+runtime-benchmarks = [
+  "cumulus-pallet-session-benchmarking/runtime-benchmarks",
+  "frame-benchmarking/runtime-benchmarks",
+  "frame-support/runtime-benchmarks",
+  "frame-system-benchmarking/runtime-benchmarks",
+  "frame-system/runtime-benchmarks",
+  "pallet-asset-manager/runtime-benchmarks",
+  "pallet-balances/runtime-benchmarks",
+  "pallet-bounties/runtime-benchmarks",
+  # This module returned an error when ran the benchmark, temporarily chose to comment it out
+  #  "pallet-collator-selection/runtime-benchmarks",
+  "pallet-collective/runtime-benchmarks",
+  "pallet-democracy/runtime-benchmarks",
+  "pallet-membership/runtime-benchmarks",
+  "pallet-multisig/runtime-benchmarks",
+  "pallet-preimage/runtime-benchmarks",
+  "pallet-proxy/runtime-benchmarks",
+  "pallet-scheduler/runtime-benchmarks",
+  "pallet-timestamp/runtime-benchmarks",
+  "pallet-treasury/runtime-benchmarks",
+  "pallet-utility/runtime-benchmarks",
+  "pallet-xcm/runtime-benchmarks",
+  "sp-runtime/runtime-benchmarks",
+  "xcm-builder/runtime-benchmarks",
+  "pallet-bridge/runtime-benchmarks",
+  "pallet-bridge-transfer/runtime-benchmarks",
+  "pallet-drop3/runtime-benchmarks",
+  "pallet-extrinsic-filter/runtime-benchmarks",
+  "cumulus-pallet-xcmp-queue/runtime-benchmarks",
+  "pallet-identity-management/runtime-benchmarks",
+  "pallet-teerex/runtime-benchmarks",
+  "pallet-sidechain/runtime-benchmarks",
+  "pallet-teeracle/runtime-benchmarks",
+  "pallet-vc-management/runtime-benchmarks",
+]
 std = [
   "codec/std",
   "log/std",
@@ -192,42 +226,6 @@ std = [
 ]
 tee-dev = [
   "pallet-teerex/skip-ias-check",
-]
-
-runtime-benchmarks = [
-  "cumulus-pallet-session-benchmarking/runtime-benchmarks",
-  "frame-benchmarking/runtime-benchmarks",
-  "frame-support/runtime-benchmarks",
-  "frame-system-benchmarking/runtime-benchmarks",
-  "frame-system/runtime-benchmarks",
-  "pallet-asset-manager/runtime-benchmarks",
-  "pallet-balances/runtime-benchmarks",
-  "pallet-bounties/runtime-benchmarks",
-  # This module returned an error when ran the benchmark, temporarily chose to comment it out
-  #  "pallet-collator-selection/runtime-benchmarks",
-  "pallet-collective/runtime-benchmarks",
-  "pallet-democracy/runtime-benchmarks",
-  "pallet-membership/runtime-benchmarks",
-  "pallet-multisig/runtime-benchmarks",
-  "pallet-preimage/runtime-benchmarks",
-  "pallet-proxy/runtime-benchmarks",
-  "pallet-scheduler/runtime-benchmarks",
-  "pallet-timestamp/runtime-benchmarks",
-  "pallet-treasury/runtime-benchmarks",
-  "pallet-utility/runtime-benchmarks",
-  "pallet-xcm/runtime-benchmarks",
-  "sp-runtime/runtime-benchmarks",
-  "xcm-builder/runtime-benchmarks",
-  "pallet-bridge/runtime-benchmarks",
-  "pallet-bridge-transfer/runtime-benchmarks",
-  "pallet-drop3/runtime-benchmarks",
-  "pallet-extrinsic-filter/runtime-benchmarks",
-  "cumulus-pallet-xcmp-queue/runtime-benchmarks",
-  "pallet-identity-management/runtime-benchmarks",
-  "pallet-teerex/runtime-benchmarks",
-  "pallet-sidechain/runtime-benchmarks",
-  "pallet-teeracle/runtime-benchmarks",
-  "pallet-vc-management/runtime-benchmarks",
 ]
 try-runtime = [
   "cumulus-pallet-aura-ext/try-runtime",

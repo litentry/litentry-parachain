@@ -760,9 +760,6 @@ impl pallet_drop3::Config for Runtime {
 impl pallet_extrinsic_filter::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type UpdateOrigin = EnsureRootOrHalfTechnicalCommittee;
-	#[cfg(feature = "tee-dev")]
-	type NormalModeFilter = Everything;
-	#[cfg(not(feature = "tee-dev"))]
 	type NormalModeFilter = NormalModeFilter;
 	type SafeModeFilter = SafeModeFilter;
 	type TestModeFilter = Everything;
@@ -785,19 +782,20 @@ impl pallet_teerex::Config for Runtime {
 impl pallet_sidechain::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = weights::pallet_sidechain::WeightInfo<Runtime>;
-	type EarlyBlockProposalLenience = ConstU64<100>;
 }
 
 impl pallet_teeracle::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = weights::pallet_teeracle::WeightInfo<Runtime>;
 	type MaxWhitelistedReleases = ConstU32<10>;
+	type MaxOracleBlobLen = ConstU32<4096>;
 }
 
 impl pallet_identity_management::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = ();
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
+	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
 }
 
 ord_parameter_types! {
@@ -806,15 +804,16 @@ ord_parameter_types! {
 
 impl pallet_identity_management_mock::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type ManageWhitelistOrigin = EnsureRootOrAllCouncil;
-	type MaxVerificationDelay = ConstU32<10>;
+	type MaxVerificationDelay = ConstU32<{ 30 * MINUTES }>;
 	// intentionally use ALICE for the IMP mock
 	type TEECallOrigin = EnsureSignedBy<ALICE, AccountId>;
+	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
 }
 
 impl pallet_vc_management::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
+	type SetAdminOrigin = EnsureRootOrHalfCouncil;
 }
 
 impl runtime_common::BaseRuntimeRequirements for Runtime {}
