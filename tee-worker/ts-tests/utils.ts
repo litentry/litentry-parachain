@@ -68,6 +68,19 @@ export async function getTEEShieldingKey(wsClient: WebSocketAsPromised, api: Api
     });
 }
 
+export async function initWorkerConnection(endpoint: string): Promise<WebSocketAsPromised> {
+    const wsp = new WebSocketAsPromised(endpoint, <Options>(<unknown>{
+        createWebSocket: (url: any) => new WebSocket(url),
+        extractMessageData: (event: any) => event,
+        packMessage: (data: any) => JSON.stringify(data),
+        unpackMessage: (data: string | ArrayBuffer | Blob) => JSON.parse(data.toString()),
+        attachRequestId: (data: any, requestId: string | number) => Object.assign({ id: requestId }, data),
+        extractRequestId: (data: any) => data && data.id, // read requestId from message `id` field
+    }));
+    await wsp.open();
+    return wsp;
+}
+
 export async function initIntegrationTestContext(
     workerEndpoint: string,
     substrateEndpoint: string
@@ -98,15 +111,7 @@ export async function initIntegrationTestContext(
         throw new Error('shard not found');
     }
 
-    const wsp = new WebSocketAsPromised(workerEndpoint, <Options>(<unknown>{
-        createWebSocket: (url: any) => new WebSocket(url),
-        extractMessageData: (event: any) => event,
-        packMessage: (data: any) => JSON.stringify(data),
-        unpackMessage: (data: string | ArrayBuffer | Blob) => JSON.parse(data.toString()),
-        attachRequestId: (data: any, requestId: string | number) => Object.assign({ id: requestId }, data),
-        extractRequestId: (data: any) => data && data.id, // read requestId from message `id` field
-    }));
-    await wsp.open();
+    const wsp = await initWorkerConnection(workerEndpoint);
 
     const teeShieldingKey = await getTEEShieldingKey(wsp, api);
     return <IntegrationTestContext>{
@@ -142,11 +147,14 @@ export async function listenEncryptedEvents(
 ) {
     return new Promise<{ eventData: HexString[] }>(async (resolve, reject) => {
         let startBlock = 0;
-        let timeout = 10; // 10 block number timeout
+        const slotDuration = await context.substrate.call.auraApi.slotDuration();
+        const timeout = 3 * 60 * 1000; // 3 min
+        let maximumWaitingBlock = timeout / parseInt(slotDuration.toString());
+        console.log('maximumWaitingBlock', maximumWaitingBlock);
         const unsubscribe = await context.substrate.rpc.chain.subscribeNewHeads(async (header) => {
             const currentBlockNumber = header.number.toNumber();
             if (startBlock == 0) startBlock = currentBlockNumber;
-            if (currentBlockNumber > startBlock + timeout) {
+            if (currentBlockNumber > startBlock + maximumWaitingBlock) {
                 reject('timeout');
                 return;
             }
