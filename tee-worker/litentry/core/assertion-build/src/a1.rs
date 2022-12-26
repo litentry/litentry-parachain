@@ -30,6 +30,8 @@ use std::string::ToString;
 use litentry_primitives::Identity;
 use sp_runtime::BoundedVec;
 
+use lc_credentials_tee::Credential;
+
 pub fn build(identities: BoundedVec<Identity, MaxIdentityLength>) -> Result<()> {
 	let mut web2_cnt = 0;
 	let mut web3_cnt = 0;
