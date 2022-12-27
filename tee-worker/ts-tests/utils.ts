@@ -2,8 +2,8 @@ import './config';
 import WebSocketAsPromised = require('websocket-as-promised');
 import WebSocket = require('ws');
 import Options from 'websocket-as-promised/types/options';
-import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
-import {StorageKey, Vec} from '@polkadot/types';
+import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
+import { StorageKey, Vec } from '@polkadot/types';
 import {
     AESOutput,
     IntegrationTestContext,
@@ -13,20 +13,18 @@ import {
     WorkerRpcReturnString,
     WorkerRpcReturnValue,
 } from './type-definitions';
-import {blake2AsHex, cryptoWaitReady} from '@polkadot/util-crypto';
-import {KeyringPair} from '@polkadot/keyring/types';
-import {Codec} from '@polkadot/types/types';
-import {ApiTypes, SubmittableExtrinsic} from '@polkadot/api/types';
-import {HexString} from '@polkadot/util/types';
-import {hexToU8a, u8aToHex} from '@polkadot/util';
-import {KeyObject} from 'crypto';
-import {EventRecord} from '@polkadot/types/interfaces';
-import {after, before, describe} from 'mocha';
-import {randomAsHex} from '@polkadot/util-crypto';
-import {generateChallengeCode, getSigner} from './web3/setup';
-import {ethers} from 'ethers';
-import {Web3Provider} from '@ethersproject/providers';
-import {generateTestKeys} from './web3/functions';
+import { blake2AsHex, cryptoWaitReady } from '@polkadot/util-crypto';
+import { KeyringPair } from '@polkadot/keyring/types';
+import { Codec } from '@polkadot/types/types';
+import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
+import { HexString } from '@polkadot/util/types';
+import { hexToU8a, u8aToHex } from '@polkadot/util';
+import { KeyObject } from 'crypto';
+import { EventRecord } from '@polkadot/types/interfaces';
+import { after, before, describe } from 'mocha';
+import { generateChallengeCode, getSigner } from './web3/setup';
+import { ethers } from 'ethers';
+import { generateTestKeys } from './web3/functions';
 
 const base58 = require('micro-base58');
 const crypto = require('crypto');
@@ -45,13 +43,13 @@ export async function sendRequest(
     request: any,
     api: ApiPromise
 ): Promise<WorkerRpcReturnValue> {
-    const resp = await wsClient.sendRequest(request, {requestId: 1, timeout: 6000});
+    const resp = await wsClient.sendRequest(request, { requestId: 1, timeout: 6000 });
     const resp_json = api.createType('WorkerRpcReturnValue', resp.result).toJSON() as WorkerRpcReturnValue;
     return resp_json;
 }
 
 export async function getTEEShieldingKey(wsClient: WebSocketAsPromised, api: ApiPromise): Promise<KeyObject> {
-    let request = {jsonrpc: '2.0', method: 'author_getShieldingKey', params: [], id: 1};
+    let request = { jsonrpc: '2.0', method: 'author_getShieldingKey', params: [], id: 1 };
     let respJSON = await sendRequest(wsClient, request, api);
 
     const pubKeyHex = api.createType('WorkerRpcReturnString', respJSON.value).toJSON() as WorkerRpcReturnString;
@@ -71,32 +69,29 @@ export async function getTEEShieldingKey(wsClient: WebSocketAsPromised, api: Api
 }
 
 export async function initWorkerConnection(endpoint: string): Promise<WebSocketAsPromised> {
-    const wsp = new WebSocketAsPromised(endpoint, <Options>({
+    const wsp = new WebSocketAsPromised(endpoint, <Options>(<unknown>{
         createWebSocket: (url: any) => new WebSocket(url),
         extractMessageData: (event: any) => event,
         packMessage: (data: any) => JSON.stringify(data),
         unpackMessage: (data: string | ArrayBuffer | Blob) => JSON.parse(data.toString()),
-        attachRequestId: (data: any, requestId: string | number) =>
-            Object.assign({id: requestId}, data),
+        attachRequestId: (data: any, requestId: string | number) => Object.assign({ id: requestId }, data),
         extractRequestId: (data: any) => data && data.id, // read requestId from message `id` field
     }));
     await wsp.open();
-    return wsp
+    return wsp;
 }
 
 export async function initIntegrationTestContext(
     workerEndpoint: string,
-    substrateEndpoint: string,
-    ethereumEndpoint: string
+    substrateEndpoint: string
 ): Promise<IntegrationTestContext> {
     const provider = new WsProvider(substrateEndpoint);
-    const ethersProvider = new ethers.providers.JsonRpcProvider(ethereumEndpoint);
     const ethersWallet = {
-        alice: new ethers.Wallet(generateTestKeys().alice, ethersProvider),
-        bob: new ethers.Wallet(generateTestKeys().bob, ethersProvider),
-        charlie: new ethers.Wallet(generateTestKeys().charlie, ethersProvider),
-        dave: new ethers.Wallet(generateTestKeys().dave, ethersProvider),
-        eve: new ethers.Wallet(generateTestKeys().eve, ethersProvider),
+        alice: new ethers.Wallet(generateTestKeys().alice),
+        bob: new ethers.Wallet(generateTestKeys().bob),
+        charlie: new ethers.Wallet(generateTestKeys().charlie),
+        dave: new ethers.Wallet(generateTestKeys().dave),
+        eve: new ethers.Wallet(generateTestKeys().eve),
     };
 
     const api = await ApiPromise.create({
@@ -125,7 +120,6 @@ export async function initIntegrationTestContext(
         teeShieldingKey,
         shard,
         defaultSigner: getSigner(0),
-        ethersProvider,
         ethersWallet,
     };
 }
@@ -133,7 +127,7 @@ export async function initIntegrationTestContext(
 export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrinsic<ApiTypes>, signer: KeyringPair) {
     return new Promise<{ block: string }>(async (resolve, reject) => {
         const nonce = await api.rpc.system.accountNextIndex(signer.address);
-        await tx.signAndSend(signer, {nonce}, (result) => {
+        await tx.signAndSend(signer, { nonce }, (result) => {
             if (result.status.isInBlock) {
                 console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
                 resolve({
@@ -153,15 +147,15 @@ export async function listenEncryptedEvents(
 ) {
     return new Promise<{ eventData: HexString[] }>(async (resolve, reject) => {
         let startBlock = 0;
-        const slotDuration = await context.substrate.call.auraApi.slotDuration()
+        const slotDuration = await context.substrate.call.auraApi.slotDuration();
         const timeout = 3 * 60 * 1000; // 3 min
         let maximumWaitingBlock = timeout / parseInt(slotDuration.toString());
-        console.log('maximumWaitingBlock', maximumWaitingBlock)
+        console.log('maximumWaitingBlock', maximumWaitingBlock);
         const unsubscribe = await context.substrate.rpc.chain.subscribeNewHeads(async (header) => {
             const currentBlockNumber = header.number.toNumber();
             if (startBlock == 0) startBlock = currentBlockNumber;
             if (currentBlockNumber > startBlock + maximumWaitingBlock) {
-                reject("timeout");
+                reject('timeout');
                 return;
             }
             console.log(`Chain is at block: #${header.number}`);
@@ -173,7 +167,7 @@ export async function listenEncryptedEvents(
                     return;
                 }
                 allEvents
-                    .filter(({phase, event}) => {
+                    .filter(({ phase, event }) => {
                         return (
                             phase.isApplyExtrinsic &&
                             phase.asApplyExtrinsic.eq(index) &&
@@ -181,13 +175,13 @@ export async function listenEncryptedEvents(
                             event.method == filterObj.event
                         );
                     })
-                    .forEach(({event}) => {
+                    .forEach(({ event }) => {
                         const data = event.data as AESOutput[];
                         const eventData: HexString[] = [];
                         for (let i = 0; i < data.length; i++) {
                             eventData.push(decryptWithAES(aesKey, data[i]));
                         }
-                        resolve({eventData});
+                        resolve({ eventData });
                         unsubscribe();
                         return;
                     });
@@ -277,7 +271,6 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
             substrate: {} as ApiPromise,
             tee: {} as WebSocketAsPromised,
             teeShieldingKey: {} as KeyObject,
-            ethersProvider: {} as Web3Provider,
             ethersWallet: {},
         };
 
@@ -285,8 +278,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
             //env url
             const tmp = await initIntegrationTestContext(
                 process.env.WORKER_END_POINT!,
-                process.env.SUBSTRATE_END_POINT!,
-                process.env.ETH_END_POINT!
+                process.env.SUBSTRATE_END_POINT!
             );
 
             context.defaultSigner = tmp.defaultSigner;
@@ -294,12 +286,10 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
             context.substrate = tmp.substrate;
             context.tee = tmp.tee;
             context.teeShieldingKey = tmp.teeShieldingKey;
-            context.ethersProvider = tmp.ethersProvider;
             context.ethersWallet = tmp.ethersWallet;
         });
 
-        after(async function () {
-        });
+        after(async function () {});
 
         cb(context);
     });
