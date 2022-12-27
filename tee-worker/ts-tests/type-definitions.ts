@@ -3,8 +3,6 @@ import { KeyObject } from 'crypto';
 import { HexString } from '@polkadot/util/types';
 import WebSocketAsPromised = require('websocket-as-promised');
 import { KeyringPair } from '@polkadot/keyring/types';
-import { Web3Provider } from '@ethersproject/providers';
-import { ethers, Wallet } from 'ethers';
 export const teeTypes = {
     WorkerRpcReturnString: {
         vec: 'Bytes',
@@ -173,7 +171,6 @@ export type IntegrationTestContext = {
     teeShieldingKey: KeyObject;
     shard: HexString;
     defaultSigner: KeyringPair;
-    ethersProvider: Web3Provider;
     //@todo add type
     ethersWallet: any;
 };
