@@ -52,10 +52,7 @@ const ethereumValidationData = <LitentryValidationData>{
         Evm: {
             message: `0x${Buffer.from('mock_message', 'utf8').toString('hex')}`,
             signature: {
-                Ethereum: `0x${Buffer.from(
-                    '10ee76e356d944d17bce552a4fd0d4554ccc97dc81213f470367bd3b99c441c51',
-                    'utf8'
-                ).toString('hex')}`,
+                Ethereum: '' as HexString,
             },
         },
     },
@@ -65,10 +62,7 @@ const substrateValidationData = <LitentryValidationData>{
         Substrate: {
             message: `0x${Buffer.from('mock_message', 'utf8').toString('hex')}`,
             signature: {
-                Sr25519: `0x${Buffer.from(
-                    '10ee76e356d944d17bce552a4fd0d4554ccc97dc81213f470367bd3b99c441c51',
-                    'utf8'
-                ).toString('hex')}`,
+                Sr25519: '' as HexString,
             },
         },
     },
