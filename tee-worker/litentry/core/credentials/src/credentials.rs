@@ -35,11 +35,11 @@ use crate::sgx_reexport_prelude::*;
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 use chrono::{DateTime, FixedOffset};
+use itp_attestation_handler::AttestationHandler;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 pub const PROOF_PURPOSE: &str = "assertionMethod";
-pub const CREDENTIAL_TYPE: &str = "CredentialType";
 
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]
@@ -62,20 +62,14 @@ pub enum Error {
 	Json(#[from] serde_json::Error),
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct Context {
-	#[serde(rename = "@context")]
-	context: Vec<String>,
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 #[serde(try_from = "String")]
 #[serde(into = "String")]
 pub struct VCDateTime {
-	/// The date-time
+	// rfc3339
 	date_time: DateTime<FixedOffset>,
-	/// Whether to use "Z" or "+00:00" when formatting the date-time in UTC
+	// Whether to use "Z" or "+00:00" when formatting the date-time in UTC
 	use_z: bool,
 }
 
@@ -120,14 +114,14 @@ where
 	}
 }
 
-// #[derive(Serialize, Deserialize, Clone, Debug)]
-// pub enum CredentialType {
-// 	VerifiableCredential,
-// }
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum ProofType {
 	Ed25519Signature2020,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum CredentialType {
+	VerifiableCredential,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -185,8 +179,6 @@ pub struct Proof {
 
 impl Proof {
 	pub fn new(type_: ProofType) -> Proof {
-		//let datetime = Utc::now();
-
 		Proof {
 			created: None,
 			proof_type: type_,
@@ -210,14 +202,13 @@ pub struct ValidationResult {
 #[serde(rename_all = "camelCase")]
 pub struct Credential {
 	#[serde(rename = "@context")]
-	pub context: Context,
+	pub context: Vec<String>,
 	pub id: String,
 	pub subject: String,
 	#[serde(rename = "type")]
-	pub types: Vec<String>,
+	pub types: Vec<CredentialType>,
 	pub credential_subject: CredentialSubject,
 	pub issuer: Issuer,
-	// rfc3339
 	pub issuance_date: Option<VCDateTime>,
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub expiration_date: Option<VCDateTime>,
@@ -236,11 +227,12 @@ impl Credential {
 		if self.proof.is_empty() {
 			return Err(Error::EmptyCredentialProof)
 		}
+		//ToDo: validate_proof
 		Ok(())
 	}
 
 	pub fn validate_unsigned(&self) -> Result<(), Error> {
-		if !self.types.contains(&CREDENTIAL_TYPE.to_string()) {
+		if !self.types.contains(&CredentialType::VerifiableCredential) {
 			return Err(Error::EmptyCredentialType)
 		}
 
@@ -259,6 +251,12 @@ impl Credential {
 		Ok(())
 	}
 
+	pub fn add_issuer(&self) -> Result<Issuer, Error> {
+		let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
+
+		Ok(())
+	}
+
 	// pub fn sign_proof(&self) -> Result<Proof, Error> {}
 
 	//pub fn validate_proof(&self) -> Result<ValidationResult, Error> {}
@@ -270,61 +268,10 @@ mod tests {
 
 	#[test]
 	fn eval_simple_success() {
-		let data = r#"
-        {
-            "@context": [
-                "https://www.w3.org/2018/credentials/v1", 
-                "https://w3id.org/security/suites/ed25519-2020/v1"
-            ], 
-            "id": "http://litentry.com/2022/credentials/twitter/follower", 
-            "type": [
-                "VerifiableCredential"
-            ], 
-            "issuer": {
-                "id": "did:litentry:7f8ca8982f6cc6e8ea087bd9457ab8024bd2", 
-                "enclaveId": "enclave id or registered hash", 
-                "name": "Litentry TEE Worker"
-            }, 
-            "subject": "did:litentry:owner's Litentry address", 
-            "issuanceDate": "2022-09-01T12:01:20Z", 
-            "expirationDate": "2022-09-14T12:01:20Z", 
-            "credentialSubject": {
-                "id": "did:litentry:97c30de767f084ce3080168ee293053ba33b235d71", 
-                "description": "1000-2000 Twitter followers", 
-                "type": "TwitterFollower", 
-                "tag": [
-                    "Twitter", 
-                    "IDHub"
-                ], 
-                "dataSoure": [
-                    {
-                        "dataProvider": "https://litentry.com/endpoint/graphql", 
-                        "dataProviderId": 1
-                    }
-                ], 
-                "assertions": "return 1+20", 
-                "values": [
-                    true
-                ], 
-                "endpoint": "https://litentry.com/parachain/extrinsic"
-            }, 
-            "proof": {
-                "created": "2022-09-01T12:01:20Z", 
-                "type": "Ed25519Signature2020", 
-                "proofPurpose": "assertionMethod", 
-                "proofValue": "f66944a454904a19f30a2b045ea80534547ffb522cdf2f8d9b949c76331d9d2c8359c4668b0775362d697985f52645d2479fbde0792dacdad9fdea09c4120c0d", 
-                "verificationMethod": "did:litentry:issuer's Litentry pubkey"
-            }
-        }
-        "#;
+		let data = include_str!("templates/a1.json");
 
 		let vc: Credential = Credential::from_json(data).unwrap();
 		println!("{:?}", vc);
-		assert_eq!(vc.subject, "did:litentry:owner's Litentry address");
 		assert_eq!(vc.proof.proof_purpose, "assertionMethod");
-		assert_eq!(
-			vc.credential_subject.id,
-			"did:litentry:97c30de767f084ce3080168ee293053ba33b235d71"
-		);
 	}
 }

@@ -2478,6 +2478,7 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lazy_static",
+ "lc-credentials-tee",
  "lc-data-providers",
  "lc-stf-task-sender",
  "litentry-primitives",
@@ -2492,6 +2493,22 @@ dependencies = [
  "sp-std",
  "thiserror 1.0.9",
  "url",
+]
+
+[[package]]
+name = "lc-credentials-tee"
+version = "0.1.0"
+dependencies = [
+ "chrono 0.4.23",
+ "itc-rest-client",
+ "lazy_static",
+ "litentry-primitives",
+ "log",
+ "parity-scale-codec",
+ "primitives",
+ "scale-info",
+ "serde 1.0.151",
+ "serde_json 1.0.91",
 ]
 
 [[package]]
