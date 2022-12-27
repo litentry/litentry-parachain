@@ -38,7 +38,7 @@ export async function createIdentity(
     aesKey: HexString,
     listening: boolean,
     identity: LitentryIdentity
-): Promise<HexString[] | undefined> {
+): Promise<IdentityGenericEvent | undefined> {
     const encode = context.substrate.createType('LitentryIdentity', identity).toHex();
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
     const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
@@ -46,13 +46,19 @@ export async function createIdentity(
         .createIdentity(context.shard, signer.address, `0x${ciphertext}`, null)
         .signAndSend(signer, { nonce });
     if (listening) {
-        const event = await listenEncryptedEvents(context, aesKey, {
+        const identityEvent = await listenEncryptedEvents(context, aesKey, {
+            module: 'identityManagement',
+            method: 'identityCreated',
+            event: 'IdentityCreated',
+        });
+        const codeEvent = await listenEncryptedEvents(context, aesKey, {
             module: 'identityManagement',
             method: 'challengeCodeGenerated',
             event: 'ChallengeCodeGenerated',
         });
-        const [who, _identity, challengeCode] = event.eventData;
-        return [who, challengeCode];
+        const [challengeCode] = [...codeEvent.eventData].reverse();
+        const [who, _identity, idGraph] = identityEvent.eventData;
+        return decodeIdentityEvent(context.substrate, who, _identity, idGraph, challengeCode);
     }
     return undefined;
 }
@@ -111,6 +117,7 @@ export async function verifyIdentity(
             event: 'IdentityVerified',
         });
         const [who, identity, idGraph] = event.eventData;
+
         return decodeIdentityEvent(context.substrate, who, identity, idGraph);
     }
     return undefined;
@@ -120,7 +127,8 @@ function decodeIdentityEvent(
     api: ApiPromise,
     who: HexString,
     identityString: HexString,
-    idGraphString: HexString
+    idGraphString: HexString,
+    challengeCode?: HexString
 ): IdentityGenericEvent {
     let identity = api.createType('LitentryIdentity', identityString).toJSON();
     let idGraph = api.createType('Vec<(LitentryIdentity, IdentityContext)>', idGraphString).toJSON();
@@ -128,5 +136,6 @@ function decodeIdentityEvent(
         who,
         identity,
         idGraph,
+        challengeCode,
     };
 }
