@@ -257,6 +257,7 @@ export type IdentityGenericEvent = {
     who: HexString;
     identity: LitentryIdentity;
     idGraph: [LitentryIdentity, IdentityContext][];
+    challengeCode?: HexString;
 };
 
 export type IdentityContext = {
