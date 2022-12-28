@@ -81,6 +81,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 pub mod asset_config;
 pub mod constants;
+pub mod migration;
 #[cfg(test)]
 mod tests;
 pub mod weights;
@@ -130,6 +131,7 @@ pub type Executive = frame_executive::Executive<
 	// it was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
+	migration::MigrateAtStakeAutoCompound<Runtime>,
 >;
 
 impl_opaque_keys! {
@@ -1073,9 +1075,7 @@ mod benches {
 		[pallet_scheduler, Scheduler]
 		[pallet_preimage, Preimage]
 		[pallet_session, SessionBench::<Runtime>]
-		// Since this module benchmark times out, comment it out for now
-		// https://github.com/litentry/litentry-parachain/actions/runs/3155868677/jobs/5134984739
-		// [pallet_parachain_staking, ParachainStaking]
+		[pallet_parachain_staking, ParachainStaking]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
 		[pallet_identity_management, IdentityManagement]
 		[pallet_teerex, Teerex]
