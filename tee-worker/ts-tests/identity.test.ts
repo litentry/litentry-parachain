@@ -102,7 +102,6 @@ describeLitentry('Test Identity', (context) => {
         assertIdentityCreated(context.defaultSigner, resp_twitter);
 
         if (resp_twitter) {
-            // const [_who, challengeCode] = resp_twitter;
             console.log('twitterIdentity challengeCode: ', resp_twitter.challengeCode);
             const msg = generateVerificationMessage(
                 context,
@@ -118,7 +117,6 @@ describeLitentry('Test Identity', (context) => {
         assertIdentityCreated(context.defaultSigner, resp_ethereum);
 
         if (resp_ethereum) {
-            // const [_who, challengeCode] = resp_ethereum;
             console.log('ethereumIdentity challengeCode: ', resp_ethereum.challengeCode);
             const msg = generateVerificationMessage(
                 context,
@@ -138,7 +136,6 @@ describeLitentry('Test Identity', (context) => {
         assertIdentityCreated(context.defaultSigner, resp_substrate);
 
         if (resp_substrate) {
-            // const [_who, challengeCode] = resp_substrate;
             console.log('substrateIdentity challengeCode: ', resp_substrate.challengeCode);
             const msg = generateVerificationMessage(
                 context,
