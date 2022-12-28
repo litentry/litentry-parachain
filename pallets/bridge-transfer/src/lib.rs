@@ -134,6 +134,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Transfers some amount of the native token to some recipient on a (whitelisted)
 		/// destination chain.
+		#[pallet::call_index(0)]
 		#[pallet::weight(<T as Config>::WeightInfo::transfer_native())]
 		#[transactional]
 		pub fn transfer_native(
@@ -154,6 +155,7 @@ pub mod pallet {
 		}
 
 		/// Executes a simple currency transfer using the bridge account as the source
+		#[pallet::call_index(1)]
 		#[pallet::weight(<T as Config>::WeightInfo::transfer())]
 		pub fn transfer(
 			origin: OriginFor<T>,
@@ -181,6 +183,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		#[pallet::call_index(2)]
 		#[pallet::weight(<T as Config>::WeightInfo::set_maximum_issuance())]
 		pub fn set_maximum_issuance(
 			origin: OriginFor<T>,
@@ -194,6 +197,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		#[pallet::call_index(3)]
 		#[pallet::weight(<T as Config>::WeightInfo::set_external_balances())]
 		pub fn set_external_balances(
 			origin: OriginFor<T>,
