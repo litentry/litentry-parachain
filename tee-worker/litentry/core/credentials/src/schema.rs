@@ -14,6 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+#[cfg(all(feature = "std", feature = "sgx"))]
+compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
+
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+extern crate sgx_tstd as std;
+
 use codec::{Decode, Encode, MaxEncodedLen};
 use parentchain_primitives::{SchemaContentString, SchemaIdString};
 use scale_info::TypeInfo;

@@ -72,6 +72,7 @@ sgx = [
     "itp-top-pool-author/sgx",
     "litentry-primitives/sgx",
     "lc-stf-task-sender/sgx",
+    "lc-credentials-tee/sgx",
 ]
 std = [
     "futures",
@@ -97,4 +98,5 @@ std = [
     "frame-support/std",
     "litentry-primitives/std",
     "lc-stf-task-sender/std",
+    "lc-credentials-tee/std",
 ]

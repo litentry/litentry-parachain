@@ -13,13 +13,22 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
-
 #![cfg_attr(not(feature = "std"), no_std)]
+
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-mod credentials;
-pub use credentials::*;
+// re-export module to properly feature gate sgx and regular std environment
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+pub mod sgx_reexport_prelude {
+	pub use thiserror_sgx as thiserror;
+}
 
-mod schema;
-pub use schema::*;
+#[cfg(all(feature = "std", feature = "sgx"))]
+compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
+
+use frame_support::pallet_prelude::*;
+
+pub mod credentials;
+pub mod error;
+pub mod schema;

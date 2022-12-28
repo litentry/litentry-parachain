@@ -14,53 +14,29 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std)]
-
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate sgx_tstd as std;
-
-// re-export module to properly feature gate sgx and regular std environment
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-pub mod sgx_reexport_prelude {
-	pub use futures_sgx as futures;
-	pub use hex_sgx as hex;
-	pub use thiserror_sgx as thiserror;
-	pub use url_sgx as url;
-}
-
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use crate::sgx_reexport_prelude::*;
+// #[cfg(all(not(feature = "std"), feature = "sgx"))]
+// use crate::sgx_reexport_prelude::*;
 
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+extern crate sgx_tstd as std;
+
+//use crate::ocall::OcallApi;
+use crate::{ensure, error::Error};
 use chrono::{DateTime, FixedOffset};
-use itp_attestation_handler::AttestationHandler;
+use itp_attestation_handler::IntelAttestationHandler;
+use litentry_primitives::Assertion;
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
+use std::{
+	fmt::Debug,
+	str::FromStr,
+	string::{String, ToString},
+	vec::Vec,
+};
 
 pub const PROOF_PURPOSE: &str = "assertionMethod";
-
-#[derive(Debug, thiserror::Error)]
-#[non_exhaustive]
-pub enum Error {
-	#[error("Empty Credential Proof")]
-	EmptyCredentialProof,
-	#[error("Empty Credential Type")]
-	EmptyCredentialType,
-	#[error("Empty Credential Issuer")]
-	EmptyCredentialIssuer,
-	#[error("Empty Credential Subject")]
-	EmptyCredentialSubject,
-	#[error("Empty Issuance Date")]
-	EmptyIssuanceDate,
-	#[error("Pass Error: {0}")]
-	ParseError(String),
-	#[error("Runtime Error: {0}")]
-	RuntimeError(String),
-	#[error(transparent)]
-	Json(#[from] serde_json::Error),
-}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -183,8 +159,8 @@ impl Proof {
 			created: None,
 			proof_type: type_,
 			proof_purpose: PROOF_PURPOSE.to_string(),
-			proof_value: "".to_owned(),
-			verification_method: "".to_owned(),
+			proof_value: "".to_string(),
+			verification_method: "".to_string(),
 		}
 	}
 
@@ -196,6 +172,7 @@ impl Proof {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ValidationResult {
 	pub result: bool,
+	pub msg: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -251,15 +228,45 @@ impl Credential {
 		Ok(())
 	}
 
-	pub fn add_issuer(&self) -> Result<Issuer, Error> {
-		let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
+	pub fn get_issuer(&self) -> Result<Issuer, Error> {
+		//let attestation_handler = IntelAttestationHandler::new(OcallApi);
 
 		Ok(())
 	}
 
-	// pub fn sign_proof(&self) -> Result<Proof, Error> {}
+	pub fn sign_proof(&self) -> Result<Proof, Error> {
+		if self.issuer.is_empty() {
+			return Err(Error::EmptyCredentialIssuer)
+		}
 
-	//pub fn validate_proof(&self) -> Result<ValidationResult, Error> {}
+		Ok(())
+	}
+
+	pub fn validate_proof(&self) -> Result<ValidationResult, Error> {
+		Ok(())
+	}
+
+	pub fn generate_credential(&self, assertion: Assertion) -> Result<Credential, Error> {
+		match assertion {
+			Assertion::A1 => {
+				let data = include_str!("templates/a1.json");
+				let vc: Credential = Credential::from_json(data).unwrap();
+			},
+			Assertion::A2(ParameterString, ParameterString) => {},
+			Assertion::A3(ParameterString, ParameterString) => {},
+			Assertion::A4(Balance, ParameterString) => {},
+			Assertion::A5(ParameterString, ParameterString) => {},
+			Assertion::A6 => {},
+			Assertion::A7(Balance, u32) => {},
+			Assertion::A8(u64) => {},
+			Assertion::A9 => {},
+			Assertion::A10(Balance, u32) => {},
+			Assertion::A11(Balance, u32) => {},
+			Assertion::A13(u32) => {},
+			_ => return Err(Error::UnsupportedAssertion),
+		}
+		Ok(())
+	}
 }
 
 #[cfg(test)]
