@@ -67,7 +67,7 @@ build-docker-production:
 
 .PHONY: build-node-benchmarks ## Build release node with `runtime-benchmarks` feature
 build-node-benchmarks:
-	cargo build --locked --features runtime-benchmarks --release
+	cargo build --locked --features runtime-benchmarks --release --no-default-features
 
 .PHONY: build-node-tryruntime ## Build release node with `try-runtime` feature
 build-node-tryruntime:
