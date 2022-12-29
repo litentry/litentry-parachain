@@ -24,7 +24,7 @@ use xcm_builder::{
 	SovereignSignedViaLocation,
 };
 
-use primitives::AccountId;
+use core_primitives::AccountId;
 
 parameter_types! {
 	pub const KsmLocation: MultiLocation = Here.into();
@@ -63,7 +63,7 @@ macro_rules! decl_test_relay_chain_runtime {
             weights::IdentityFee,
         };
         use cumulus_primitives_core::ParaId;
-		use primitives::{Balance, AccountId};
+		use core_primitives::{Balance, AccountId};
         use runtime_common::BlockHashCount;
 		use xcm_executor::XcmExecutor;
         use frame_system::EnsureRoot;

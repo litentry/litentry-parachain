@@ -21,9 +21,9 @@ frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch =
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32", default-features = false }
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32", default-features = false }
 
+core-primitives = { path = "../../primitives/core", default-features = false }
 mock-tee-primitives = { path = "../../mock-tee-primitives", default-features = false }
 pallet-identity-management = { path = "../../pallets/identity-management", default-features = false }
-primitives = { path = "../../primitives", default-features = false }
 
 aes-gcm = { git = "https://github.com/RustCrypto/AEADs", default-features = false, features = ["aes", "alloc"] }
 hex = { version = "0.4", default-features = false }

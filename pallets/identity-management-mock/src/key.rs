@@ -29,7 +29,7 @@ use aes_gcm::{
 	Aes256Gcm,
 };
 
-pub use primitives::{AesOutput, USER_SHIELDING_KEY_LEN, USER_SHIELDING_KEY_NONCE_LEN};
+pub use core_primitives::{AesOutput, USER_SHIELDING_KEY_LEN, USER_SHIELDING_KEY_NONCE_LEN};
 
 #[rustfmt::skip]
 // The hardcoded exemplary shielding keys for mocking

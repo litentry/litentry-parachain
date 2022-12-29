@@ -26,7 +26,7 @@ use crate::{
 	tests::setup::{bob, ExtBuilder},
 	BaseRuntimeRequirements, EnsureRootOrTwoThirdsCouncil, FilterEnsureOrigin,
 };
-use primitives::*;
+use core_primitives::*;
 use xcm::latest::prelude::*;
 use xcm_executor::traits::Convert;
 

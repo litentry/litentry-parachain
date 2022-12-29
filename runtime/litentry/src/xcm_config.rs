@@ -39,7 +39,7 @@ use xcm_builder::{
 };
 use xcm_executor::{traits::JustTry, XcmExecutor};
 
-use primitives::{AccountId, XcmV2Weight};
+use core_primitives::{AccountId, XcmV2Weight};
 use runtime_common::{
 	xcm_impl::{
 		AccountIdToMultiLocation, AssetIdMuliLocationConvert, CurrencyId,
