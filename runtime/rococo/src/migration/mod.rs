@@ -15,6 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 #![allow(deprecated)]
 #![allow(clippy::type_complexity)]
+#![allow(unused_imports)]
 use frame_support::{
 	storage,
 	traits::{Get, OnRuntimeUpgrade},
