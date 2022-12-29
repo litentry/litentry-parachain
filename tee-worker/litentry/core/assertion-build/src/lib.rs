@@ -29,10 +29,7 @@ pub mod sgx_reexport_prelude {
 	pub use url_sgx as url;
 }
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use crate::sgx_reexport_prelude::*;
-
-use std::{fmt::Debug, string::String};
+use std::format;
 
 pub mod a1;
 pub mod a2;
@@ -42,28 +39,11 @@ pub mod a5;
 pub mod a6;
 pub mod a7;
 
+use litentry_primitives::IMPError as Error;
 pub type Result<T> = core::result::Result<T, Error>;
 
-#[derive(Debug, thiserror::Error, Clone)]
-pub enum Error {
-	#[error("Assertion1 error: {0}")]
-	Assertion1Error(String),
-
-	#[error("Assertion2 error: {0}")]
-	Assertion2Error(String),
-
-	#[error("Assertion3 error: {0}")]
-	Assertion3Error(String),
-
-	#[error("Assertion4 error: {0}")]
-	Assertion4Error(String),
-
-	#[error("Assertion5 error: {0}")]
-	Assertion5Error(String),
-
-	#[error("Assertion7 error: {0}")]
-	Assertion7Error(String),
-
-	#[error("Other error: {0}")]
-	AssertionOtherError(String),
+pub(crate) fn from_data_provider_error(e: lc_data_providers::Error) -> Error {
+	Error::HttpRequestFailed(litentry_primitives::ErrorString::truncate_from(
+		format!("{:?}", e).as_bytes().to_vec(),
+	))
 }

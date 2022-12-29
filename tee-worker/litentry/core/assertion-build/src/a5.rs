@@ -24,7 +24,9 @@ use crate::Error;
 use lc_data_providers::{
 	twitter_litentry::TwitterLitentryClient, twitter_official::TwitterOfficialClient,
 };
-use litentry_primitives::{Identity, ParameterString, Web2Network};
+use litentry_primitives::{
+	Identity, IdentityHandle, IdentityWebType, ParameterString, Web2Network,
+};
 use std::{
 	string::{String, ToString},
 	vec::Vec,
@@ -71,5 +73,6 @@ pub fn build(
 			}
 		}
 	}
-	Err(Error::Assertion5Error("not match any identities".to_string()))
+	// not match any identities
+	Err(Error::Assertion5Failed)
 }

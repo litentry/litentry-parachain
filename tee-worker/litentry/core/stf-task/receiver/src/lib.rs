@@ -39,14 +39,22 @@ use codec::{Decode, Encode};
 use futures::executor;
 use ita_sgx_runtime::Hash;
 use ita_stf::{TrustedCall, TrustedOperation};
+use itp_extrinsics_factory::CreateExtrinsics;
+use itp_node_api::metadata::{pallet_imp::IMPCallIndexes, provider::AccessNodeMetadata};
+use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::ShardIdentifier;
-use sp_std::vec::Vec;
-use std::{format, string::String, sync::Arc};
+use itp_types::{OpaqueCall, ShardIdentifier};
+use litentry_primitives::IMPError;
+use log::error;
+use std::{format, string::String, sync::Arc, vec, vec::Vec};
+
+mod assertion;
+mod identity_verification;
+pub mod stf_task_receiver;
 
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum Error {
@@ -60,16 +68,20 @@ pub enum Error {
 	OtherError(String),
 }
 
-pub mod stf_task_receiver;
-
 #[allow(dead_code)]
 pub struct StfTaskContext<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
+	O: EnclaveOnChainOCallApi,
+	C: CreateExtrinsics,
+	M: AccessNodeMetadata,
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
 	H: HandleState,
 > {
 	shielding_key: K,
+	ocall_api: Arc<O>,
+	create_extrinsics: Arc<C>,
+	node_metadata: Arc<M>,
 	author_api: Arc<A>,
 	enclave_signer: Arc<S>,
 	pub state_handler: Arc<H>,
@@ -77,20 +89,35 @@ pub struct StfTaskContext<
 
 impl<
 		K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
+		O: EnclaveOnChainOCallApi,
+		C: CreateExtrinsics,
+		M: AccessNodeMetadata,
 		A: AuthorApi<Hash, Hash>,
 		S: StfEnclaveSigning,
 		H: HandleState,
-	> StfTaskContext<K, A, S, H>
+	> StfTaskContext<K, O, C, M, A, S, H>
 where
 	H::StateT: SgxExternalitiesTrait,
+	M::MetadataType: IMPCallIndexes,
 {
 	pub fn new(
 		shielding_key: K,
+		ocall_api: Arc<O>,
+		create_extrinsics: Arc<C>,
+		node_metadata: Arc<M>,
 		author_api: Arc<A>,
 		enclave_signer: Arc<S>,
 		state_handler: Arc<H>,
 	) -> Self {
-		Self { shielding_key, author_api, enclave_signer, state_handler }
+		Self {
+			shielding_key,
+			ocall_api,
+			create_extrinsics,
+			node_metadata,
+			author_api,
+			enclave_signer,
+			state_handler,
+		}
 	}
 
 	pub fn decode_and_submit_trusted_call(
@@ -132,4 +159,50 @@ where
 	}
 
 	// TODO: maybe add a wrapper to read the state and eliminate the public access to `state_handler`
+}
+
+trait TaskHandler {
+	type Error;
+	type Result;
+	fn start(&self) {
+		match self.on_process() {
+			Ok(r) => self.on_success(r),
+			Err(e) => self.on_failure(e),
+		}
+	}
+	fn on_process(&self) -> Result<Self::Result, Self::Error>;
+	fn on_success(&self, r: Self::Result);
+	fn on_failure(&self, e: Self::Error);
+}
+
+pub(crate) fn submit_error_extrinsics<O, C, M>(
+	error: IMPError,
+	ocall_api: Arc<O>,
+	create_extrinsics: Arc<C>,
+	node_metadata: Arc<M>,
+) where
+	O: EnclaveOnChainOCallApi,
+	C: CreateExtrinsics,
+	M: AccessNodeMetadata,
+	M::MetadataType: IMPCallIndexes,
+{
+	match node_metadata.get_from_metadata(|m| m.some_error_call_indexes()) {
+		Ok(Ok(call_index)) => {
+			let call = OpaqueCall::from_tuple(&(call_index, error).encode());
+			match create_extrinsics.create_extrinsics(vec![call].as_slice(), None) {
+				Err(e) => {
+					error!("create_extrinsics failed. Due to: {:?}", e);
+				},
+				Ok(xt) => {
+					let _ = ocall_api.send_to_parentchain(xt);
+				},
+			}
+		},
+		Ok(Err(e)) => {
+			error!("get metadata failed. Due to: {:?}", e);
+		},
+		Err(e) => {
+			error!("get metadata failed. Due to: {:?}", e);
+		},
+	}
 }

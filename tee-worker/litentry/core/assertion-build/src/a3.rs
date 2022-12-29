@@ -20,26 +20,19 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{Error, Result};
-use std::format;
-
+use crate::{from_data_provider_error, Result};
 use lc_data_providers::discord_litentry::DiscordLitentryClient;
 use litentry_primitives::ParameterString;
 
 pub fn build(guild_id: ParameterString, handler: ParameterString) -> Result<()> {
 	let mut client = DiscordLitentryClient::new();
-	match client.check_id_hubber(guild_id.into_inner(), handler.into_inner()) {
-		Err(e) => {
-			log::error!("error build assertion3: {:?}", e);
-			Err(Error::Assertion3Error(format!("{:?}", e)))
-		},
-		Ok(_response) => {
-			// TODO:
-			// generate_vc(who, identity, ...)
+	let _response = client
+		.check_id_hubber(guild_id.into_inner(), handler.into_inner())
+		.map_err(from_data_provider_error)?;
+	Ok(())
 
-			Ok(())
-		},
-	}
+	// TODO:
+	// generate_vc(who, identity, ...)
 }
 
 #[cfg(test)]

@@ -20,30 +20,23 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{Error, Result};
-use std::format;
-
+use crate::{from_data_provider_error, Result};
 use lc_data_providers::discord_litentry::DiscordLitentryClient;
 use litentry_primitives::ParameterString;
 
 pub fn build(guild_id: ParameterString, handler: ParameterString) -> Result<()> {
 	let mut client = DiscordLitentryClient::new();
-	match client.check_join(guild_id.into_inner(), handler.into_inner()) {
-		Err(e) => {
-			log::error!("error build assertion2: {:?}", e);
-			Err(Error::Assertion2Error(format!("{:?}", e)))
-		},
-		Ok(_response) => {
-			// TODO:
-			// generate_vc(who, identity, ...)
+	let _response = client
+		.check_join(guild_id.into_inner(), handler.into_inner())
+		.map_err(from_data_provider_error)?;
+	Ok(())
 
-			// After receiving VC, F/E is expected to assign 'IDHubber' role and align with bot
-			// https://github.com/litentry/tee-worker/issues/35
-			// https://github.com/litentry/tee-worker/issues/36
+	// TODO:
+	// generate_vc(who, identity, ...)
 
-			Ok(())
-		},
-	}
+	// After receiving VC, F/E is expected to assign 'IDHubber' role and align with bot
+	// https://github.com/litentry/tee-worker/issues/35
+	// https://github.com/litentry/tee-worker/issues/36
 }
 
 #[cfg(test)]

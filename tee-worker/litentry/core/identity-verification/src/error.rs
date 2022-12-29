@@ -15,35 +15,24 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
-use crate::sgx_reexport_prelude::*;
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use std::string::String;
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use crate::sgx_reexport_prelude::*;
+
+use litentry_primitives::IMPError as Error;
+use std::format;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
-// identity verification errors
-#[derive(Debug, thiserror::Error)]
-pub enum Error {
-	#[error("unexpected message")]
-	UnexpectedMessage,
-	#[error("wrong signature type")]
-	WrongSignatureType,
-	#[error("failed to verify substrate signature")]
-	VerifySubstrateSignatureFailed,
-	#[error("failed to recover substrate public key")]
-	RecoverSubstratePubkeyFailed,
-	#[error("failed to verify evm signature")]
-	VerifyEvmSignatureFailed,
-	#[error("failed to recover evm address")]
-	RecoverEvmAddressFailed,
-	#[error("Request error: {0}")]
-	RequestError(String),
-	#[error("Other error: {0}")]
-	OtherError(String),
-	#[error("Invalid identity")]
-	InvalidIdentity,
-	// #[error(transparent)]
-	// Other(#[from] std::boxed::Box<dyn std::error::Error + Sync + Send + 'static>),
+pub(crate) fn from_hex_error(e: hex::FromHexError) -> Error {
+	Error::DecodeHexFailed(litentry_primitives::ErrorString::truncate_from(
+		format!("{:?}", e).as_bytes().to_vec(),
+	))
+}
+
+pub(crate) fn from_data_provider_error(e: lc_data_providers::Error) -> Error {
+	Error::HttpRequestFailed(litentry_primitives::ErrorString::truncate_from(
+		format!("{:?}", e).as_bytes().to_vec(),
+	))
 }
