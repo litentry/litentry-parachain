@@ -240,7 +240,7 @@ jobs:
           default: true
 
       - name: Run unittests
-        run: cargo test --locked --release -p pallet-* --lib
+        run: cargo test --features=skip-ias-check --locked --release -p pallet-* --lib
 
       - name: Fail-fast; cancel other jobs
         if: failure()
@@ -264,7 +264,7 @@ jobs:
           default: true
 
       - name: Run benchmarks
-        run: cargo test --locked --release -p pallet-* --lib --features runtime-benchmarks
+        run: cargo test --features=skip-ias-check --locked --release -p pallet-* --lib --features runtime-benchmarks
 
       - name: Fail-fast; cancel other jobs
         if: failure()

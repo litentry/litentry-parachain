@@ -36,8 +36,8 @@ use xcm_executor::traits::{
 };
 
 use crate::{BaseRuntimeRequirements, ParaRuntimeRequirements};
+use core_primitives::{AccountId, AssetId};
 use pallet_asset_manager::{AssetTypeGetter, Pallet as AssetManager, UnitsToWeightRatio};
-use primitives::{AccountId, AssetId};
 
 use super::WEIGHT_PER_SECOND;
 

@@ -93,9 +93,9 @@ frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", bran
 try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
 
 # Local dependencies
+core-primitives = { path = "../primitives/core" }
 litentry-parachain-runtime = { path = "../runtime/litentry" }
 litmus-parachain-runtime = { path = "../runtime/litmus" }
-primitives = { path = "../primitives" }
 rococo-parachain-runtime = { path = "../runtime/rococo" }
 
 [build-dependencies]
