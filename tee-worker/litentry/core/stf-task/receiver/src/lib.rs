@@ -188,7 +188,7 @@ pub(crate) fn submit_error_extrinsics<O, C, M>(
 {
 	match node_metadata.get_from_metadata(|m| m.some_error_call_indexes()) {
 		Ok(Ok(call_index)) => {
-			let call = OpaqueCall::from_tuple(&(call_index, error).encode());
+			let call = OpaqueCall::from_tuple(&(call_index, error));
 			match create_extrinsics.create_extrinsics(vec![call].as_slice(), None) {
 				Err(e) => {
 					error!("create_extrinsics failed. Due to: {:?}", e);

@@ -2747,7 +2747,6 @@ name = "litentry-primitives"
 version = "0.1.0"
 dependencies = [
  "core-primitives",
- "frame-support",
  "parity-scale-codec",
  "scale-info",
  "serde 1.0.151",
