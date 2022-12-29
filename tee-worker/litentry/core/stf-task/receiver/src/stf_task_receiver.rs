@@ -15,27 +15,31 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	format, AuthorApi, Error, HandleState, Hash, SgxExternalitiesTrait, ShardIdentifier,
-	ShieldingCryptoDecrypt, ShieldingCryptoEncrypt, StfEnclaveSigning, StfTaskContext,
+	assertion::AssertionHandler, format, identity_verification::IdentityVerificationHandler,
+	AccessNodeMetadata, AuthorApi, CreateExtrinsics, Error, HandleState, Hash, IMPCallIndexes,
+	SgxExternalitiesTrait, ShardIdentifier, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt,
+	StfEnclaveSigning, StfTaskContext, TaskHandler,
 };
-
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use crate::chrono::{offset::Utc as TzUtc, TimeZone};
 
 #[cfg(feature = "std")]
 use chrono::{offset::Utc as TzUtc, TimeZone};
 
 use codec::Decode;
 use ita_sgx_runtime::IdentityManagement;
+use itp_ocall_api::EnclaveOnChainOCallApi;
 use lc_stf_task_sender::{stf_task_sender, RequestType};
-use litentry_primitives::{Assertion, IdentityWebType, Web2Network};
 use log::*;
-use std::string::String;
-
+use std::sync::Arc;
 // lifetime elision: StfTaskContext is guaranteed to outlive the fn
-pub fn run_stf_task_receiver<K, A, S, H>(context: &StfTaskContext<K, A, S, H>) -> Result<(), Error>
+pub fn run_stf_task_receiver<K, O, C, M, A, S, H>(
+	context: Arc<StfTaskContext<K, O, C, M, A, S, H>>,
+) -> Result<(), Error>
 where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
+	O: EnclaveOnChainOCallApi,
+	C: CreateExtrinsics,
+	M: AccessNodeMetadata,
+	M::MetadataType: IMPCallIndexes,
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
 	H: HandleState,
@@ -52,114 +56,13 @@ where
 			.recv()
 			.map_err(|e| Error::OtherError(format!("receiver error:{:?}", e)))?;
 
-		match request_type {
-			RequestType::Web2IdentityVerification(request) =>
-				match lc_identity_verification::web2::verify(request.clone()) {
-					Err(e) => {
-						error!("error verify web2: {:?}", e)
-					},
-					Ok(_) => {
-						context.decode_and_submit_trusted_call(
-							request.encoded_shard,
-							request.encoded_callback,
-						)?;
-					},
-				},
-			RequestType::Web3IdentityVerification(request) =>
-				match lc_identity_verification::web3::verify(
-					request.who.clone(),
-					request.identity.clone(),
-					request.challenge_code,
-					request.validation_data.clone(),
-				) {
-					Err(e) => {
-						error!("error verify web3: {:?}", e)
-					},
-					Ok(_) => {
-						context.decode_and_submit_trusted_call(
-							request.encoded_shard,
-							request.encoded_callback,
-						)?;
-					},
-				},
-			RequestType::AssertionVerification(request) => match request.assertion {
-				Assertion::A1 => {
-					if let Err(e) = lc_assertion_build::a1::build(request.vec_identity) {
-						error!("error verify assertion1: {:?}", e)
-					}
-				},
-				Assertion::A2(guild_id, handler) => {
-					for identity in request.vec_identity {
-						if identity.web_type == IdentityWebType::Web2(Web2Network::Discord) {
-							if let Err(e) =
-								lc_assertion_build::a2::build(guild_id.clone(), handler.clone())
-							{
-								error!("error verify assertion2: {:?}", e)
-							} else {
-								// When result is Ok,
-								break
-							}
-						}
-					}
-				},
-				Assertion::A3(guild_id, handler) => {
-					for identity in request.vec_identity {
-						if identity.web_type == IdentityWebType::Web2(Web2Network::Discord) {
-							if let Err(e) =
-								lc_assertion_build::a3::build(guild_id.clone(), handler.clone())
-							{
-								error!("error verify assertion3: {:?}", e)
-							} else {
-								// When result is Ok,
-								break
-							}
-						}
-					}
-				},
-				Assertion::A4(mini_balance, from_date) => {
-					let mini_balance: f64 = (mini_balance / (10 ^ 12)) as f64;
-					if let Err(e) = lc_assertion_build::a4::build(
-						request.vec_identity,
-						String::from_utf8(from_date.into_inner()).unwrap(),
-						mini_balance,
-					) {
-						error!("error verify assertion4: {:?}", e)
-					}
-				},
-				Assertion::A5(twitter_account, original_tweet_id) =>
-					match lc_assertion_build::a5::build(
-						request.vec_identity.to_vec(),
-						twitter_account,
-						original_tweet_id,
-					) {
-						Ok(_) => {},
-						Err(e) => {
-							log::error!("error verify assertion5: {:?}", e)
-						},
-					},
-				Assertion::A6 => match lc_assertion_build::a6::build(request.vec_identity.to_vec())
-				{
-					Ok(_) => {},
-					Err(e) => {
-						log::error!("error verify assertion6: {:?}", e)
-					},
-				},
-				Assertion::A7(mini_balance, year) => {
-					#[cfg(feature = "std")]
-					let dt1 = TzUtc.with_ymd_and_hms(year as i32, 1, 1, 0, 0, 0);
-					#[cfg(all(not(feature = "std"), feature = "sgx"))]
-					let dt1 = TzUtc.ymd(year as i32, 1, 1).and_hms(0, 0, 0);
-					let from_date = format!("{:?}", dt1);
-					let mini_balance: f64 = (mini_balance / (10 ^ 12)) as f64;
-					if let Err(e) =
-						lc_assertion_build::a7::build(request.vec_identity, from_date, mini_balance)
-					{
-						error!("error verify assertion7: {:?}", e)
-					}
-				},
-				_ => {
-					unimplemented!()
-				},
+		match request_type.clone() {
+			RequestType::Web2IdentityVerification(_) | RequestType::Web3IdentityVerification(_) => {
+				IdentityVerificationHandler { req: request_type.clone(), context: context.clone() }
+					.start();
+			},
+			RequestType::AssertionVerification(request) => {
+				AssertionHandler { req: request.clone(), context: context.clone() }.start();
 			},
 			// only used for testing
 			// demonstrate how to read the storage in the stf-task handling with the loaded state

@@ -27,10 +27,7 @@ use lc_data_providers::{
 use litentry_primitives::{
 	Identity, IdentityHandle, IdentityWebType, ParameterString, Web2Network,
 };
-use std::{
-	string::{String, ToString},
-	vec::Vec,
-};
+use std::{string::String, vec::Vec};
 
 pub fn build(
 	identities: Vec<Identity>,
@@ -73,5 +70,6 @@ pub fn build(
 			}
 		}
 	}
-	Err(Error::Assertion5Error("not match any identities".to_string()))
+	// not match any identities
+	Err(Error::Assertion5Failed)
 }

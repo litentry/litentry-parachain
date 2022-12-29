@@ -25,8 +25,6 @@ extern crate sgx_tstd as std;
 
 use crate::{Error, Result};
 use lc_stf_task_sender::MaxIdentityLength;
-use std::string::ToString;
-
 use litentry_primitives::Identity;
 use sp_runtime::BoundedVec;
 
@@ -46,6 +44,6 @@ pub fn build(identities: BoundedVec<Identity, MaxIdentityLength>) -> Result<()> 
 		// TODO: generate_vc();
 		Ok(())
 	} else {
-		Err(Error::Assertion1Error("Assertion1 fail.".to_string()))
+		Err(Error::Assertion1Failed)
 	}
 }

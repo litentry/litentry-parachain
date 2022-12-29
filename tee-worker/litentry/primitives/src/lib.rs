@@ -22,6 +22,7 @@ mod ethereum_signature;
 mod identity;
 // mod trusted_call;
 mod assertion;
+mod error;
 mod validation_data;
 
 pub use ethereum_signature::*;
@@ -32,6 +33,7 @@ pub use parentchain_primitives::{
 };
 // pub use trusted_call::*;
 pub use assertion::*;
+pub use error::*;
 pub use validation_data::*;
 
 pub type ChallengeCode = [u8; 16];

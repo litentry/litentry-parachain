@@ -14,14 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{
-	ensure,
-	error::{Error, Result},
-	get_expected_payload, AccountId, ToString,
-};
+use crate::{ensure, error::Result, get_expected_payload, AccountId, ToString};
 use litentry_primitives::{
-	ChallengeCode, Identity, IdentityHandle, IdentityMultiSignature, IdentityWebType,
-	Web3CommonValidationData, Web3Network, Web3ValidationData,
+	ChallengeCode, IMPError as Error, Identity, IdentityHandle, IdentityMultiSignature,
+	IdentityWebType, Web3CommonValidationData, Web3Network, Web3ValidationData,
 };
 use sp_core::{ed25519, sr25519};
 use sp_io::{
@@ -58,7 +54,7 @@ fn verify_substrate_signature(
 	let substrate_address = match &identity.web_type {
 		IdentityWebType::Web3(Web3Network::Substrate(_)) => match &identity.handle {
 			IdentityHandle::Address32(handle) => handle,
-			_ => return Err(Error::WrongIdentityHanldeType),
+			_ => return Err(Error::WrongIdentityHandleType),
 		},
 		_ => return Err(Error::WrongWeb3NetworkType),
 	};
@@ -107,7 +103,7 @@ fn verify_evm_signature(
 		let evm_address = match &identity.web_type {
 			IdentityWebType::Web3(Web3Network::Evm(_)) => match &identity.handle {
 				IdentityHandle::Address20(handle) => handle,
-				_ => return Err(Error::WrongIdentityHanldeType),
+				_ => return Err(Error::WrongIdentityHandleType),
 			},
 			_ => return Err(Error::WrongWeb3NetworkType),
 		};

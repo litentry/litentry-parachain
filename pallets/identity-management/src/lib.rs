@@ -52,6 +52,7 @@ pub mod pallet {
 	use super::{AesOutput, ShardIdentifier, Vec, WeightInfo};
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
+	use litentry_primitives::IMPError;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -102,6 +103,25 @@ pub mod pallet {
 		DelegateeNotExist,
 		/// a `create_identity` request from unauthorised user
 		UnauthorisedUser,
+
+		/// copy from litentry_primitives::IMPError
+		DecodeHexFailed,
+		HttpRequestFailed,
+		WrongWeb2Handle,
+		UnexpectedMessage,
+		WrongIdentityHandleType,
+		WrongSignatureType,
+		WrongWeb3NetworkType,
+		VerifySubstrateSignatureFailed,
+		RecoverSubstratePubkeyFailed,
+		VerifyEvmSignatureFailed,
+		RecoverEvmAddressFailed,
+		Assertion1Failed,
+		Assertion2Failed,
+		Assertion3Failed,
+		Assertion4Failed,
+		Assertion5Failed,
+		Assertion7Failed,
 	}
 
 	#[pallet::call]
@@ -245,15 +265,60 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		// #[pallet::weight(195_000_000)]
+		// pub fn some_error(
+		// 	origin: OriginFor<T>,
+		// 	func: Vec<u8>,
+		// 	error: Vec<u8>,
+		// ) -> DispatchResultWithPostInfo {
+		// 	let _ = T::TEECallOrigin::ensure_origin(origin)?;
+		// 	Self::deposit_event(Event::SomeError { func, error });
+		// 	Ok(Pays::No.into())
+		// }
+
 		#[pallet::weight(195_000_000)]
 		pub fn some_error(
 			origin: OriginFor<T>,
-			func: Vec<u8>,
-			error: Vec<u8>,
+			error: litentry_primitives::IMPError,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::SomeError { func, error });
-			Ok(Pays::No.into())
+			match error {
+				IMPError::DecodeHexFailed(s) => {
+					log::error!("deocode hex: {:?}", s);
+					Err(Error::<T>::DecodeHexFailed.into())
+				},
+				IMPError::HttpRequestFailed(s) => {
+					log::error!("request failed:{:?}", s);
+					Err(Error::<T>::HttpRequestFailed.into())
+				},
+				IMPError::WrongWeb2Handle => Err(Error::<T>::WrongWeb2Handle.into()),
+				IMPError::UnexpectedMessage => Err(Error::<T>::UnexpectedMessage.into()),
+				IMPError::WrongIdentityHandleType =>
+					Err(Error::<T>::WrongIdentityHandleType.into()),
+				IMPError::WrongSignatureType => Err(Error::<T>::WrongSignatureType.into()),
+				IMPError::WrongWeb3NetworkType => Err(Error::<T>::WrongWeb3NetworkType.into()),
+				IMPError::VerifySubstrateSignatureFailed =>
+					Err(Error::<T>::VerifySubstrateSignatureFailed.into()),
+				IMPError::RecoverSubstratePubkeyFailed =>
+					Err(Error::<T>::RecoverSubstratePubkeyFailed.into()),
+				IMPError::VerifyEvmSignatureFailed =>
+					Err(Error::<T>::VerifyEvmSignatureFailed.into()),
+				IMPError::RecoverEvmAddressFailed =>
+					Err(Error::<T>::RecoverEvmAddressFailed.into()),
+				IMPError::Assertion1Failed => Err(Error::<T>::Assertion1Failed.into()),
+				IMPError::Assertion2Failed => Err(Error::<T>::Assertion2Failed.into()),
+				IMPError::Assertion3Failed => Err(Error::<T>::Assertion3Failed.into()),
+				IMPError::Assertion4Failed => Err(Error::<T>::Assertion4Failed.into()),
+				IMPError::Assertion5Failed => Err(Error::<T>::Assertion5Failed.into()),
+				IMPError::Assertion7Failed => Err(Error::<T>::Assertion7Failed.into()),
+			}
+			// match error {
+			// 	IMPError::IdentityVerificationError(e) => Err(DispatchErrorWithPostInfo {
+			// 		post_info: PostDispatchInfo { actual_weight: None, pays_fee: Pays::No },
+			// 		error: Error::<T>::IdentityError(e).into(),
+			// 	}),
+			// }
+			// Ok(Pays::No.into())
 		}
 	}
 }
