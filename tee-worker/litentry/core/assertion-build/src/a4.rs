@@ -29,9 +29,7 @@ use std::{
 };
 
 use lc_stf_task_sender::MaxIdentityLength;
-use litentry_primitives::{
-	EvmNetwork, Identity, IdentityHandle, IdentityWebType, SubstrateNetwork, Web3Network,
-};
+use litentry_primitives::Identity;
 use sp_runtime::BoundedVec;
 
 use lc_data_providers::graphql::{
@@ -48,32 +46,28 @@ pub fn build(
 ) -> Result<()> {
 	let mut client = GraphQLClient::new();
 
-	for identity in identities {
+	for identity in identities.iter() {
 		let mut network = VerifiedCredentialsNetwork::Polkadot;
-		if let IdentityWebType::Web3(web3_type) = identity.web_type {
-			match web3_type {
-				Web3Network::Substrate(SubstrateNetwork::Litentry) =>
-					network = VerifiedCredentialsNetwork::Litentry,
-				Web3Network::Substrate(SubstrateNetwork::Litmus) =>
-					network = VerifiedCredentialsNetwork::Litmus,
-				Web3Network::Evm(EvmNetwork::Ethereum) =>
-					network = VerifiedCredentialsNetwork::Ethereum,
-				_ => (),
+		if identity.is_web3() {
+			match identity {
+				Identity::Substrate(id) => network = id.network.into(),
+				Identity::Evm(id) => network = id.network.into(),
+				_ => {},
 			}
-		};
-
-		if network == VerifiedCredentialsNetwork::Litentry
-			|| network == VerifiedCredentialsNetwork::Litmus
-			|| network == VerifiedCredentialsNetwork::Ethereum
-		{
+		}
+		if matches!(
+			network,
+			VerifiedCredentialsNetwork::Litentry
+				| VerifiedCredentialsNetwork::Litmus
+				| VerifiedCredentialsNetwork::Ethereum
+		) {
 			let mut addresses: Vec<String> = vec![];
-			match identity.handle {
-				IdentityHandle::Address20(addr) =>
-					addresses.push(from_utf8(&addr).unwrap().to_string()),
-				IdentityHandle::Address32(addr) =>
-					addresses.push(from_utf8(&addr).unwrap().to_string()),
-				IdentityHandle::String(addr) =>
-					addresses.push(from_utf8(&addr).unwrap().to_string()),
+			match &identity {
+				Identity::Evm(id) =>
+					addresses.push(from_utf8(id.address.as_ref()).unwrap().to_string()),
+				Identity::Substrate(id) =>
+					addresses.push(from_utf8(id.address.as_ref()).unwrap().to_string()),
+				Identity::Web2(id) => addresses.push(from_utf8(&id.address).unwrap().to_string()),
 			}
 			let mut tmp_token_addr = String::from("");
 			if network == VerifiedCredentialsNetwork::Ethereum {

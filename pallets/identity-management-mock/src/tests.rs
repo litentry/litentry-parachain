@@ -170,10 +170,14 @@ fn wrong_polkadot_verification_message_fails() {
 			signature: IdentityMultiSignature::Sr25519(sig),
 		};
 
-		let validation_data = match &identity.web_type {
-			IdentityWebType::Web3(Web3Network::Substrate(SubstrateNetwork::Polkadot)) =>
-				ValidationData::Web3(Web3ValidationData::Substrate(common_validation_data)),
-			_ => panic!("unxpected web_type"),
+		let validation_data = if let Identity::Substrate(id) = identity {
+			match id.network {
+				SubstrateNetwork::Polkadot =>
+					ValidationData::Web3(Web3ValidationData::Substrate(common_validation_data)),
+				_ => panic!("unexpected network"),
+			}
+		} else {
+			panic!("unexpected network")
 		};
 
 		assert_noop!(

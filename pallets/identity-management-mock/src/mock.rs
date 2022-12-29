@@ -33,10 +33,11 @@ use frame_support::{
 };
 use frame_system as system;
 pub use mock_tee_primitives::{
-	EthereumSignature, EvmNetwork, Identity, IdentityHandle, IdentityMultiSignature,
-	IdentityWebType, SubstrateNetwork, TwitterValidationData, UserShieldingKeyType, ValidationData,
-	Web2Network, Web2ValidationData, Web3CommonValidationData, Web3Network, Web3ValidationData,
+	EthereumSignature, EvmNetwork, Identity, IdentityMultiSignature, IdentityString,
+	SubstrateNetwork, TwitterValidationData, UserShieldingKeyType, ValidationData, Web2Network,
+	Web2ValidationData, Web3CommonValidationData, Web3ValidationData,
 };
+use mock_tee_primitives::{EvmIdentity, SubstrateIdentity, Web2Identity};
 pub use parity_crypto::publickey::{sign, Generator, KeyPair as EvmPair, Message, Random};
 use sp_core::sr25519::Pair as SubstratePair; // TODO: maybe use more generic struct
 use sp_core::{Pair, H256};
@@ -141,26 +142,17 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 }
 
 pub fn create_mock_twitter_identity(twitter_handle: &[u8]) -> Identity {
-	Identity {
-		web_type: IdentityWebType::Web2(Web2Network::Twitter),
-		handle: IdentityHandle::String(
-			twitter_handle.to_vec().try_into().expect("convert to BoundedVec failed"),
-		),
-	}
+	let address =
+		IdentityString::try_from(twitter_handle.to_vec()).expect("convert to BoundedVec failed");
+	Web2Identity { network: Web2Network::Twitter, address }.into()
 }
 
 pub fn create_mock_polkadot_identity(address: [u8; 32]) -> Identity {
-	Identity {
-		web_type: IdentityWebType::Web3(Web3Network::Substrate(SubstrateNetwork::Polkadot)),
-		handle: IdentityHandle::Address32(address),
-	}
+	SubstrateIdentity { network: SubstrateNetwork::Polkadot, address: address.into() }.into()
 }
 
 pub fn create_mock_eth_identity(address: [u8; 20]) -> Identity {
-	Identity {
-		web_type: IdentityWebType::Web3(Web3Network::Evm(EvmNetwork::Ethereum)),
-		handle: IdentityHandle::Address20(address),
-	}
+	EvmIdentity { network: EvmNetwork::Ethereum, address: address.into() }.into()
 }
 
 pub fn create_mock_twitter_validation_data() -> ValidationData {
@@ -286,9 +278,13 @@ pub fn setup_verify_twitter_identity(
 ) {
 	setup_create_identity(who, identity.clone(), bn);
 	let encrypted_identity = tee_encrypt(identity.encode().as_slice());
-	let validation_data = match &identity.web_type {
-		IdentityWebType::Web2(Web2Network::Twitter) => create_mock_twitter_validation_data(),
-		_ => panic!("unxpected web_type"),
+	let validation_data = if let Identity::Web2(id) = identity {
+		match id.network {
+			Web2Network::Twitter => create_mock_twitter_validation_data(),
+			_ => panic!("unexpected network, expect twitter network"),
+		}
+	} else {
+		panic!("invalid identity type")
 	};
 	assert_ok!(IdentityManagementMock::verify_identity(
 		RuntimeOrigin::signed(who),
@@ -315,10 +311,10 @@ pub fn setup_verify_polkadot_identity(
 	setup_create_identity(who, identity.clone(), bn);
 	let encrypted_identity = tee_encrypt(identity.encode().as_slice());
 	let code = IdentityManagementMock::challenge_codes(&who, &identity).unwrap();
-	let validation_data = match &identity.web_type {
-		IdentityWebType::Web3(Web3Network::Substrate(SubstrateNetwork::Polkadot)) =>
-			create_mock_polkadot_validation_data(who, p, code, is_wrapped_signature),
-		_ => panic!("unxpected web_type"),
+	let validation_data = if let Identity::Substrate(_) = &identity {
+		create_mock_polkadot_validation_data(who, p, code)
+	} else {
+		panic!("unxpected network")
 	};
 	assert_ok!(IdentityManagementMock::verify_identity(
 		RuntimeOrigin::signed(who),
@@ -344,10 +340,10 @@ pub fn setup_verify_eth_identity(
 	setup_create_identity(who, identity.clone(), bn);
 	let encrypted_identity = tee_encrypt(identity.encode().as_slice());
 	let code = IdentityManagementMock::challenge_codes(&who, &identity).unwrap();
-	let validation_data = match &identity.web_type {
-		IdentityWebType::Web3(Web3Network::Evm(EvmNetwork::Ethereum)) =>
-			create_mock_eth_validation_data(who, p, code),
-		_ => panic!("unxpected web_type"),
+	let validation_data = if let Identity::Evm(_) = identity {
+		create_mock_eth_validation_data(who, p, code)
+	} else {
+		panic!("unexpected network, expect Evm")
 	};
 	assert_ok!(IdentityManagementMock::verify_identity(
 		RuntimeOrigin::signed(who),

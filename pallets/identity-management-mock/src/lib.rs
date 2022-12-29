@@ -41,8 +41,7 @@ use codec::alloc::string::ToString;
 use core_primitives::{ShardIdentifier, UserShieldingKeyType};
 use frame_support::{pallet_prelude::*, traits::ConstU32};
 use mock_tee_primitives::{
-	Identity, IdentityHandle, IdentityMultiSignature, IdentityWebType, ValidationData,
-	Web3CommonValidationData, Web3Network, Web3ValidationData,
+	Identity, IdentityMultiSignature, ValidationData, Web3CommonValidationData, Web3ValidationData,
 };
 pub use pallet::*;
 use sha2::Sha256;
@@ -207,10 +206,8 @@ pub mod pallet {
 		ChallengeCodeNotExist,
 		/// wrong signature type
 		WrongSignatureType,
-		/// wrong web3 network type
-		WrongWeb3NetworkType,
-		/// wrong identity handle type
-		WrongIdentityHanldeType,
+		/// wrong identity type
+		WrongIdentityType,
 		/// fail to recover evm address
 		RecoverEvmAddressFailed,
 		/// the message in validation data is unexpected
@@ -602,13 +599,10 @@ pub mod pallet {
 				raw_msg.as_slice() == validation_data.message.as_slice(),
 				Error::<T>::UnexpectedMessage
 			);
-
-			let substrate_address = match &identity.web_type {
-				IdentityWebType::Web3(Web3Network::Substrate(_)) => match &identity.handle {
-					IdentityHandle::Address32(handle) => handle,
-					_ => return Err(Error::<T>::WrongIdentityHanldeType.into()),
-				},
-				_ => return Err(Error::<T>::WrongWeb3NetworkType.into()),
+			let substrate_address = if let Identity::Substrate(id) = identity {
+				id.address
+			} else {
+				return Err(Error::<T>::WrongIdentityType.into())
 			};
 
 			// we accept both the raw_msg's signature and the wrapped_msg's signature
@@ -666,15 +660,13 @@ pub mod pallet {
 			if let IdentityMultiSignature::Ethereum(sig) = &validation_data.signature {
 				let recovered_evm_address = Self::recover_evm_address(&digest, sig.as_ref())
 					.map_err(|_| Error::<T>::RecoverEvmAddressFailed)?;
-				let evm_address = match &identity.web_type {
-					IdentityWebType::Web3(Web3Network::Evm(_)) => match &identity.handle {
-						IdentityHandle::Address20(handle) => handle,
-						_ => return Err(Error::<T>::WrongIdentityHanldeType.into()),
-					},
-					_ => return Err(Error::<T>::WrongWeb3NetworkType.into()),
+				let evm_address = if let Identity::Evm(id) = identity {
+					id.address
+				} else {
+					return Err(Error::<T>::WrongIdentityType.into())
 				};
 				ensure!(
-					&recovered_evm_address == evm_address,
+					&recovered_evm_address == evm_address.as_ref(),
 					Error::<T>::VerifyEvmSignatureFailed
 				);
 			} else {

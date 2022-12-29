@@ -20,8 +20,7 @@ use crate::{
 	get_expected_raw_message, get_expected_wrapped_message, AccountId, ToString,
 };
 use litentry_primitives::{
-	ChallengeCode, Identity, IdentityHandle, IdentityMultiSignature, IdentityWebType,
-	Web3CommonValidationData, Web3Network, Web3ValidationData,
+	ChallengeCode, Identity, IdentityMultiSignature, Web3CommonValidationData, Web3ValidationData,
 };
 use sp_core::{ed25519, sr25519};
 use sp_io::{
@@ -55,13 +54,10 @@ fn verify_substrate_signature(
 	let wrapped_msg = get_expected_wrapped_message(raw_msg.clone());
 
 	ensure!(raw_msg.as_slice() == validation_data.message.as_slice(), Error::UnexpectedMessage);
-
-	let substrate_address = match &identity.web_type {
-		IdentityWebType::Web3(Web3Network::Substrate(_)) => match &identity.handle {
-			IdentityHandle::Address32(handle) => handle,
-			_ => return Err(Error::WrongIdentityHanldeType),
-		},
-		_ => return Err(Error::WrongWeb3NetworkType),
+	let substrate_address = if let Identity::Substrate{address, ..} = identity {
+		address
+	} else {
+		return Err(Error::InvalidIdentity)
 	};
 
 	// we accept both the raw_msg's signature and the wrapped_msg's signature
@@ -115,17 +111,15 @@ fn verify_evm_signature(
 ) -> Result<()> {
 	let msg = get_expected_raw_message(who, identity, code);
 	let digest = compute_evm_msg_digest(&msg);
+	let evm_address = if let Identity::Evm(evm) = identity {
+		&evm.address
+	} else {
+		return Err(Error::InvalidIdentity)
+	};
 	if let IdentityMultiSignature::Ethereum(sig) = &validation_data.signature {
 		let recovered_evm_address = recover_evm_address(&digest, sig.as_ref())
 			.map_err(|_| Error::RecoverEvmAddressFailed)?;
-		let evm_address = match &identity.web_type {
-			IdentityWebType::Web3(Web3Network::Evm(_)) => match &identity.handle {
-				IdentityHandle::Address20(handle) => handle,
-				_ => return Err(Error::WrongIdentityHanldeType),
-			},
-			_ => return Err(Error::WrongWeb3NetworkType),
-		};
-		ensure!(&recovered_evm_address == evm_address, Error::VerifyEvmSignatureFailed);
+		ensure!(&recovered_evm_address == evm_address.as_ref(), Error::VerifyEvmSignatureFailed);
 	} else {
 		return Err(Error::WrongSignatureType)
 	}

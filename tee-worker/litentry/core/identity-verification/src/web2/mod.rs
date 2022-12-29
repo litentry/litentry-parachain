@@ -20,6 +20,8 @@ extern crate sgx_tstd as std;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
+use crate::error::{Error, Result};
+
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
@@ -40,18 +42,8 @@ use lc_data_providers::{
 };
 use lc_stf_task_sender::Web2IdentityVerificationRequest;
 use litentry_primitives::{
-	DiscordValidationData, IdentityHandle, TwitterValidationData, Web2ValidationData,
+	DiscordValidationData, Identity, TwitterValidationData, Web2ValidationData,
 };
-
-// TODO: maybe split this file into smaller mods
-#[derive(Debug, thiserror::Error, Clone)]
-pub enum Error {
-	#[error("Request error: {0}")]
-	RequestError(String),
-
-	#[error("Other error: {0}")]
-	OtherError(String),
-}
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct Web2IdentityVerification {
@@ -59,10 +51,10 @@ pub struct Web2IdentityVerification {
 }
 
 pub trait DecryptionVerificationPayload<K: ShieldingCryptoDecrypt> {
-	fn decrypt_ciphertext(&self, key: K) -> Result<Vec<u8>, Error>;
+	fn decrypt_ciphertext(&self, key: K) -> Result<Vec<u8>>;
 }
 
-fn payload_from_tweet(tweet: &Tweet) -> Result<Vec<u8>, Error> {
+fn payload_from_tweet(tweet: &Tweet) -> Result<Vec<u8>> {
 	if tweet.text.starts_with("0x") {
 		let bytes = &tweet.text.as_bytes()[b"0x".len()..];
 		hex::decode(bytes).map_err(|e| Error::OtherError(format!("Hex error: {:?}", e)))
@@ -72,7 +64,7 @@ fn payload_from_tweet(tweet: &Tweet) -> Result<Vec<u8>, Error> {
 	}
 }
 
-fn payload_from_discord(discord: &DiscordMessage) -> Result<Vec<u8>, Error> {
+fn payload_from_discord(discord: &DiscordMessage) -> Result<Vec<u8>> {
 	let data = &discord.content;
 	if data.starts_with("0x") {
 		let bytes = &data.as_bytes()[b"0x".len()..];
@@ -82,7 +74,7 @@ fn payload_from_discord(discord: &DiscordMessage) -> Result<Vec<u8>, Error> {
 	}
 }
 
-pub fn verify(request: Web2IdentityVerificationRequest) -> Result<(), Error> {
+pub fn verify(request: Web2IdentityVerificationRequest) -> Result<()> {
 	let (user_id, payload) = match request.validation_data {
 		Web2ValidationData::Twitter(TwitterValidationData { ref tweet_id }) => {
 			let mut client = TwitterOfficialClient::new();
@@ -96,7 +88,7 @@ pub fn verify(request: Web2IdentityVerificationRequest) -> Result<(), Error> {
 
 			let payload = payload_from_tweet(&tweet)?;
 
-			Ok((user_id, payload))
+			Ok::<(String, Vec<u8>), Error>((user_id, payload))
 		},
 		Web2ValidationData::Discord(DiscordValidationData {
 			ref channel_id,
@@ -119,17 +111,13 @@ pub fn verify(request: Web2IdentityVerificationRequest) -> Result<(), Error> {
 	}?;
 
 	// the user_id must match, is it case sensitive?
-	match request.identity.handle {
-		IdentityHandle::String(ref handle) => {
-			let handle = std::str::from_utf8(handle.as_slice())
-				.map_err(|_| Error::OtherError("convert IdentityHandle error".to_string()))?;
-			if !user_id.eq(handle) {
-				return Err(Error::OtherError("user_id not match".to_string()))
-			}
-		},
-		_ => return Err(Error::OtherError("IdentityHandle not support".to_string())),
-	}
-
+	let handle = if let Identity::Web2(ref web2) = request.identity {
+		std::str::from_utf8(web2.address.as_slice())
+			.map_err(|_| Error::OtherError("convert IdentityHandle error".to_string()))
+	} else {
+		Err(Error::InvalidIdentity)
+	}?;
+	ensure!(user_id.eq(handle), Error::OtherError("user_id does not match".to_string()));
 	// the payload must match
 	// TODO: maybe move it to common place
 	ensure!(

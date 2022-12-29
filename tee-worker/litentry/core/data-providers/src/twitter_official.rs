@@ -171,9 +171,7 @@ mod tests {
 	use super::*;
 	use httpmock::prelude::*;
 	use lc_mock_server::{mock_tweet_payload, standalone_server};
-	use litentry_primitives::{
-		ChallengeCode, Identity, IdentityHandle, IdentityString, IdentityWebType, Web2Network,
-	};
+	use litentry_primitives::{ChallengeCode, IdentityString, Web2Identity, Web2Network};
 	use sp_core::crypto::AccountId32 as AccountId;
 
 	#[test]
@@ -184,12 +182,11 @@ mod tests {
 		let tweet_id = "100";
 
 		let account_id = AccountId::new([0u8; 32]);
-		let twitter_identity = Identity {
-			web_type: IdentityWebType::Web2(Web2Network::Twitter),
-			handle: IdentityHandle::String(
-				IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
-			),
-		};
+		let twitter_identity = Web2Identity {
+			network: Web2Network::Twitter,
+			address: IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
+		}
+		.into();
 		let chanllenge_code: ChallengeCode =
 			[8, 104, 90, 56, 35, 213, 18, 250, 213, 210, 119, 241, 2, 174, 24, 8];
 		let payload = mock_tweet_payload(&account_id, &twitter_identity, &chanllenge_code);
@@ -223,12 +220,11 @@ mod tests {
 		let id = "100";
 
 		let account_id = AccountId::new([0u8; 32]);
-		let twitter_identity = Identity {
-			web_type: IdentityWebType::Web2(Web2Network::Twitter),
-			handle: IdentityHandle::String(
-				IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
-			),
-		};
+		let twitter_identity = Web2Identity {
+			network: Web2Network::Twitter,
+			address: IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
+		}
+		.into();
 		let chanllenge_code: ChallengeCode =
 			[8, 104, 90, 56, 35, 213, 18, 250, 213, 210, 119, 241, 2, 174, 24, 8];
 		let payload = mock_tweet_payload(&account_id, &twitter_identity, &chanllenge_code);
