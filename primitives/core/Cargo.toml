@@ -1,7 +1,7 @@
 [package]
 authors = ["Litentry Dev"]
 edition = '2021'
-name = 'primitives'
+name = 'core-primitives'
 version = '0.9.12'
 
 [dependencies]

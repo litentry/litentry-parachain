@@ -31,7 +31,7 @@ use serde::{Deserialize, Serialize};
 use sp_runtime::{PerThing, Perbill, RuntimeDebug};
 use substrate_fixed::{transcendental::pow as floatpow, types::I64F64};
 
-use primitives::*;
+use core_primitives::*;
 pub const BLOCKS_PER_YEAR: u32 = YEARS;
 
 fn rounds_per_year<T: Config>() -> u32 {

@@ -14,7 +14,7 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36", default-features = false }
 
-parentchain-primitives = { package = "primitives", path = "../primitives", default-features = false }
+parentchain-primitives = { package = "core-primitives", path = "../primitives/core", default-features = false }
 
 [features]
 default = ["std"]

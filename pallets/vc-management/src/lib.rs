@@ -30,8 +30,8 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+use core_primitives::{AesOutput, SchemaIndex, ShardIdentifier, SCHEMA_CONTENT_LEN, SCHEMA_ID_LEN};
 pub use pallet::*;
-use primitives::{AesOutput, SchemaIndex, ShardIdentifier, SCHEMA_CONTENT_LEN, SCHEMA_ID_LEN};
 use sp_core::H256;
 use sp_std::vec::Vec;
 

@@ -36,7 +36,7 @@ mod benchmarking;
 #[cfg(test)]
 mod mock;
 
-#[cfg(test)]
+#[cfg(all(test, feature = "skip-ias-check"))]
 mod tests;
 
 pub mod weights;
@@ -44,7 +44,7 @@ pub mod weights;
 pub use crate::weights::WeightInfo;
 pub use pallet::*;
 
-pub use primitives::{AesOutput, ShardIdentifier};
+pub use core_primitives::{AesOutput, ShardIdentifier};
 use sp_std::vec::Vec;
 
 #[frame_support::pallet]

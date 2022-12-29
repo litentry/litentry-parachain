@@ -63,7 +63,7 @@ use sp_version::RuntimeVersion;
 use xcm_executor::XcmExecutor;
 
 pub use constants::currency::deposit;
-pub use primitives::{opaque, Index, *};
+pub use core_primitives::{opaque, Index, *};
 pub use runtime_common::currency::*;
 use runtime_common::{
 	impl_runtime_transaction_payment_fees, prod_or_fast, BlockHashCount, BlockLength,
