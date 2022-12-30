@@ -1,3 +1,4 @@
+SHELL=/bin/bash
 all:
 	@make help
 
