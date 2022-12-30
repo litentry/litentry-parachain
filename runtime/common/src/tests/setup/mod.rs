@@ -20,7 +20,7 @@ pub use pallet_balances::Call as BalancesCall;
 use sp_runtime::SaturatedConversion;
 pub use sp_std::cell::RefCell;
 
-use primitives::{AccountId, Balance, BlockNumber};
+use core_primitives::{AccountId, Balance, BlockNumber};
 
 use crate::{currency::UNIT, BaseRuntimeRequirements};
 

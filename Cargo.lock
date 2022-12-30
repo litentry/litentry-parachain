@@ -1044,9 +1044,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.0.29"
+version = "4.0.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4d63b9e9c07271b9957ad22c173bae2a4d9a81127680962039296abcd2f8251d"
+checksum = "a7db700bc935f9e43e88d00b0850dae18a63773cfbec6d8e070fccf7fef89a39"
 dependencies = [
  "bitflags",
  "clap_derive",
@@ -1124,7 +1124,6 @@ dependencies = [
 [[package]]
 name = "common-primitives"
 version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=master#35da218b0f9a59739d8ed8023e33fc58d4ce7983"
 dependencies = [
  "sp-std",
 ]
@@ -1196,6 +1195,18 @@ name = "core-foundation-sys"
 version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5827cebf4670468b8772dd191856768aedcb1b0278a04f989f7766351917b9dc"
+
+[[package]]
+name = "core-primitives"
+version = "0.9.12"
+dependencies = [
+ "parity-scale-codec 3.2.1",
+ "scale-info",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
+ "xcm",
+]
 
 [[package]]
 name = "core2"
@@ -3500,11 +3511,11 @@ dependencies = [
 [[package]]
 name = "ias-verify"
 version = "0.1.4"
-source = "git+https://github.com/integritee-network/pallets.git?branch=master#35da218b0f9a59739d8ed8023e33fc58d4ce7983"
 dependencies = [
  "base64",
  "chrono",
  "frame-support",
+ "hex-literal",
  "parity-scale-codec 3.2.1",
  "scale-info",
  "serde_json",
@@ -4573,6 +4584,7 @@ version = "0.9.13"
 dependencies = [
  "async-trait",
  "clap",
+ "core-primitives",
  "cumulus-client-cli",
  "cumulus-client-collator",
  "cumulus-client-consensus-aura",
@@ -4600,7 +4612,6 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-service",
- "primitives",
  "rococo-parachain-runtime",
  "sc-basic-authorship",
  "sc-chain-spec",
@@ -4645,6 +4656,7 @@ dependencies = [
 name = "litentry-parachain-runtime"
 version = "0.9.13"
 dependencies = [
+ "core-primitives",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
@@ -4698,7 +4710,6 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-runtime-parachains",
- "primitives",
  "runtime-common",
  "scale-info",
  "serde",
@@ -4727,6 +4738,7 @@ dependencies = [
 name = "litmus-parachain-runtime"
 version = "0.9.13"
 dependencies = [
+ "core-primitives",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
@@ -4785,7 +4797,6 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-runtime-parachains",
- "primitives",
  "runtime-common",
  "scale-info",
  "serde",
@@ -5038,9 +5049,9 @@ dependencies = [
 name = "mock-tee-primitives"
 version = "0.1.0"
 dependencies = [
+ "core-primitives",
  "hex",
  "parity-scale-codec 3.2.1",
- "primitives",
  "scale-info",
  "serde",
  "serde_json",
@@ -6094,6 +6105,7 @@ dependencies = [
 name = "pallet-identity-management"
 version = "0.1.0"
 dependencies = [
+ "core-primitives",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -6103,7 +6115,6 @@ dependencies = [
  "pallet-teerex",
  "pallet-timestamp",
  "parity-scale-codec 3.2.1",
- "primitives",
  "scale-info",
  "sp-arithmetic",
  "sp-core",
@@ -6117,6 +6128,7 @@ name = "pallet-identity-management-mock"
 version = "0.1.0"
 dependencies = [
  "aes-gcm 0.10.1",
+ "core-primitives",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -6129,7 +6141,6 @@ dependencies = [
  "pallet-timestamp",
  "parity-crypto",
  "parity-scale-codec 3.2.1",
- "primitives",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
  "rsa",
@@ -6337,6 +6348,7 @@ dependencies = [
 name = "pallet-parachain-staking"
 version = "0.1.0"
 dependencies = [
+ "core-primitives",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -6345,7 +6357,6 @@ dependencies = [
  "pallet-balances",
  "pallet-session",
  "parity-scale-codec 3.2.1",
- "primitives",
  "scale-info",
  "serde",
  "similar-asserts",
@@ -6496,8 +6507,8 @@ dependencies = [
 [[package]]
 name = "pallet-sidechain"
 version = "0.9.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=master#35da218b0f9a59739d8ed8023e33fc58d4ce7983"
 dependencies = [
+ "env_logger",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -6511,7 +6522,9 @@ dependencies = [
  "serde",
  "sidechain-primitives",
  "sp-core",
+ "sp-externalities",
  "sp-io",
+ "sp-keyring",
  "sp-runtime",
  "sp-std",
  "teerex-primitives",
@@ -6592,19 +6605,21 @@ dependencies = [
 [[package]]
 name = "pallet-teeracle"
 version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=master#35da218b0f9a59739d8ed8023e33fc58d4ce7983"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "hex-literal",
  "log",
+ "pallet-balances",
  "pallet-teerex",
  "pallet-timestamp",
  "parity-scale-codec 3.2.1",
  "scale-info",
  "sp-core",
+ "sp-externalities",
  "sp-io",
+ "sp-keyring",
  "sp-runtime",
  "sp-std",
  "substrate-fixed 0.5.9 (git+https://github.com/encointer/substrate-fixed.git?tag=v0.5.9)",
@@ -6615,8 +6630,8 @@ dependencies = [
 [[package]]
 name = "pallet-teerex"
 version = "0.9.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=master#35da218b0f9a59739d8ed8023e33fc58d4ce7983"
 dependencies = [
+ "env_logger",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -6629,7 +6644,9 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-core",
+ "sp-externalities",
  "sp-io",
+ "sp-keyring",
  "sp-runtime",
  "sp-std",
  "teerex-primitives",
@@ -6754,6 +6771,7 @@ dependencies = [
 name = "pallet-vc-management"
 version = "0.1.0"
 dependencies = [
+ "core-primitives",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -6762,7 +6780,6 @@ dependencies = [
  "pallet-balances",
  "pallet-timestamp",
  "parity-scale-codec 3.2.1",
- "primitives",
  "scale-info",
  "sp-arithmetic",
  "sp-core",
@@ -8519,18 +8536,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "primitives"
-version = "0.9.12"
-dependencies = [
- "parity-scale-codec 3.2.1",
- "scale-info",
- "sp-core",
- "sp-runtime",
- "sp-std",
- "xcm",
-]
-
-[[package]]
 name = "prioritized-metered-channel"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9186,6 +9191,7 @@ dependencies = [
 name = "rococo-parachain-runtime"
 version = "0.9.13"
 dependencies = [
+ "core-primitives",
  "cumulus-pallet-aura-ext",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
@@ -9246,7 +9252,6 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-runtime-parachains",
- "primitives",
  "runtime-common",
  "scale-info",
  "serde",
@@ -9430,6 +9435,7 @@ dependencies = [
 name = "runtime-common"
 version = "0.9.13"
 dependencies = [
+ "core-primitives",
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-core",
  "cumulus-primitives-parachain-inherent",
@@ -9456,7 +9462,6 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-runtime-parachains",
- "primitives",
  "scale-info",
  "sp-core",
  "sp-io",
@@ -10877,18 +10882,18 @@ checksum = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
 
 [[package]]
 name = "serde"
-version = "1.0.151"
+version = "1.0.152"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97fed41fc1a24994d044e6db6935e69511a1153b52c15eb42493b26fa87feba0"
+checksum = "bb7d1f0d3021d347a83e556fc4683dea2ea09d87bccdf88ff5c12545d89d5efb"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.151"
+version = "1.0.152"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "255abe9a125a985c05190d687b320c12f9b1f0b99445e608c21ba0782c719ad8"
+checksum = "af487d118eecd09402d70a5d72551860e788df87b464af30e5ea6a38c75c541e"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -11003,7 +11008,6 @@ checksum = "43b2853a4d09f215c24cc5489c992ce46052d359b5109343cbafbf26bc62f8a3"
 [[package]]
 name = "sidechain-primitives"
 version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=master#35da218b0f9a59739d8ed8023e33fc58d4ce7983"
 dependencies = [
  "parity-scale-codec 3.2.1",
  "scale-info",
@@ -12239,7 +12243,6 @@ checksum = "9410d0f6853b1d94f0e519fb95df60f29d2c1eff2d921ffdf01a4c8a3b54f12d"
 [[package]]
 name = "teeracle-primitives"
 version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=master#35da218b0f9a59739d8ed8023e33fc58d4ce7983"
 dependencies = [
  "common-primitives",
  "sp-std",
@@ -12249,7 +12252,6 @@ dependencies = [
 [[package]]
 name = "teerex-primitives"
 version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=master#35da218b0f9a59739d8ed8023e33fc58d4ce7983"
 dependencies = [
  "ias-verify",
  "parity-scale-codec 3.2.1",
@@ -12302,7 +12304,6 @@ checksum = "95059e91184749cb66be6dc994f67f182b6d897cb3df74a5bf66b5e709295fd8"
 [[package]]
 name = "test-utils"
 version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=master#35da218b0f9a59739d8ed8023e33fc58d4ce7983"
 dependencies = [
  "hex-literal",
  "log",

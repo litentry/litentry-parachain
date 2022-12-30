@@ -38,13 +38,13 @@ mod mock;
 mod tests;
 
 use codec::alloc::string::ToString;
+use core_primitives::{ShardIdentifier, UserShieldingKeyType};
 use frame_support::{pallet_prelude::*, traits::ConstU32};
 use mock_tee_primitives::{
 	Identity, IdentityHandle, IdentityMultiSignature, IdentityWebType, ValidationData,
 	Web3CommonValidationData, Web3Network, Web3ValidationData,
 };
 pub use pallet::*;
-use primitives::{ShardIdentifier, UserShieldingKeyType};
 use sha2::Sha256;
 use sp_core::{ed25519, sr25519};
 use sp_io::{
