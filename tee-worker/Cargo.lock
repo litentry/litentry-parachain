@@ -6023,6 +6023,7 @@ name = "lc-credentials-tee"
 version = "0.1.0"
 dependencies = [
  "chrono 0.4.23",
+ "core-primitives",
  "frame-support",
  "futures 0.3.25",
  "futures 0.3.8",
@@ -6047,7 +6048,6 @@ dependencies = [
  "lc-stf-task-sender",
  "litentry-primitives",
  "parity-scale-codec",
- "primitives",
  "scale-info",
  "serde 1.0.151",
  "serde_json 1.0.91",

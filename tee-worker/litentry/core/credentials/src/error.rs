@@ -17,10 +17,10 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use std::string::String;
+use std::{boxed::Box, string::String};
+use thiserror::Error;
 
-#[derive(Debug, thiserror::Error)]
-#[non_exhaustive]
+#[derive(Debug, Error)]
 pub enum Error {
 	#[error("Empty Credential Proof")]
 	EmptyCredentialProof,
@@ -32,12 +32,18 @@ pub enum Error {
 	EmptyCredentialSubject,
 	#[error("Empty Issuance Date")]
 	EmptyIssuanceDate,
+	#[error("Credential Is Too Long")]
+	CredentialIsTooLong,
 	#[error("Pass Error: {0}")]
 	ParseError(String),
 	#[error("Unsupported Assertion")]
 	UnsupportedAssertion,
+	#[error("Invalid date or time")]
+	InvalidDateOrTimeError,
 	#[error("Runtime Error: {0}")]
 	RuntimeError(String),
+	// #[error(transparent)]
+	// Json(serde_json::Error),
 	#[error(transparent)]
-	Json(#[from] serde_json::Error),
+	Other(#[from] Box<dyn std::error::Error + Sync + Send + 'static>),
 }

@@ -16,6 +16,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
+#[macro_use]
 extern crate sgx_tstd as std;
 
 // re-export module to properly feature gate sgx and regular std environment
@@ -31,4 +32,5 @@ use frame_support::pallet_prelude::*;
 
 pub mod credentials;
 pub mod error;
+pub use error::Error;
 pub mod schema;

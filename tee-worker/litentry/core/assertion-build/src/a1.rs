@@ -25,12 +25,11 @@ extern crate sgx_tstd as std;
 
 use crate::{Error, Result};
 use lc_stf_task_sender::MaxIdentityLength;
+use litentry_primitives::{Assertion, Identity};
+use sp_runtime::BoundedVec;
 use std::string::ToString;
 
-use litentry_primitives::Identity;
-use sp_runtime::BoundedVec;
-
-use lc_credentials_tee::Credential;
+use lc_credentials_tee::credentials::*;
 
 pub fn build(identities: BoundedVec<Identity, MaxIdentityLength>) -> Result<()> {
 	let mut web2_cnt = 0;
@@ -46,6 +45,9 @@ pub fn build(identities: BoundedVec<Identity, MaxIdentityLength>) -> Result<()> 
 
 	if web2_cnt > 0 && web3_cnt > 0 {
 		// TODO: generate_vc();
+		let result = Credential::generate_unsigned_credential(Assertion::A1);
+		if let Ok(credential_unsigned) = result {}
+
 		Ok(())
 	} else {
 		Err(Error::Assertion1Error("Assertion1 fail.".to_string()))

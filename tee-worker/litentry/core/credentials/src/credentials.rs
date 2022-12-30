@@ -14,19 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-// #[cfg(all(not(feature = "std"), feature = "sgx"))]
-// use crate::sgx_reexport_prelude::*;
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use crate::sgx_reexport_prelude::*;
 
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate sgx_tstd as std;
-
-//use crate::ocall::OcallApi;
-use crate::{ensure, error::Error};
+use crate::error::Error;
 use chrono::{DateTime, FixedOffset};
-use itp_attestation_handler::IntelAttestationHandler;
 use litentry_primitives::Assertion;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -37,16 +32,15 @@ use std::{
 };
 
 pub const PROOF_PURPOSE: &str = "assertionMethod";
+pub const MAX_CREDENTIAL_SIZE: usize = 2048;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 #[serde(try_from = "String")]
 #[serde(into = "String")]
 pub struct VCDateTime {
-	// rfc3339
-	date_time: DateTime<FixedOffset>,
-	// Whether to use "Z" or "+00:00" when formatting the date-time in UTC
-	use_z: bool,
+	date_time: DateTime<FixedOffset>, // rfc3339
+	use_z: bool, // Whether to use "Z" or "+00:00" when formatting the date-time in UTC
 }
 
 impl FromStr for VCDateTime {
@@ -119,6 +113,10 @@ impl Issuer {
 	pub fn is_empty(&self) -> bool {
 		self.enclave_id.is_empty()
 	}
+
+	pub fn new(id: String, name: String, enclave_id: String) -> Self {
+		Self { id, name, enclave_id }
+	}
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -144,7 +142,6 @@ impl CredentialSubject {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Proof {
-	// rfc3339
 	pub created: Option<VCDateTime>,
 	#[serde(rename = "type")]
 	pub proof_type: ProofType,
@@ -154,8 +151,8 @@ pub struct Proof {
 }
 
 impl Proof {
-	pub fn new(type_: ProofType) -> Proof {
-		Proof {
+	pub fn new(type_: ProofType) -> Self {
+		Self {
 			created: None,
 			proof_type: type_,
 			proof_purpose: PROOF_PURPOSE.to_string(),
@@ -167,12 +164,6 @@ impl Proof {
 	pub fn is_empty(&self) -> bool {
 		self.proof_value.is_empty()
 	}
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct ValidationResult {
-	pub result: bool,
-	pub msg: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -194,27 +185,46 @@ pub struct Credential {
 
 impl Credential {
 	pub fn from_json(s: &str) -> Result<Self, Error> {
-		let vc: Self = serde_json::from_str(s)?;
+		let vc: Self =
+			serde_json::from_str(s).map_err(|e| Error::Other(format!("{:?}", e).into()))?;
 		vc.validate()?;
 		Ok(vc)
 	}
 
+	pub fn to_json(&self) -> Result<String, Error> {
+		Ok(serde_json::to_string(&self).map_err(|e| Error::Other(format!("{:?}", e).into()))?)
+	}
+
 	pub fn validate(&self) -> Result<(), Error> {
 		self.validate_unsigned()?;
+
+		if self.issuer.is_empty() {
+			return Err(Error::EmptyCredentialIssuer)
+		}
+
 		if self.proof.is_empty() {
 			return Err(Error::EmptyCredentialProof)
 		}
-		//ToDo: validate_proof
+
+		if self.proof.created.is_none() {
+			return Err(Error::InvalidDateOrTimeError)
+		}
+
+		//ToDo: validate proof signature
+
+		//ToDo: validate the timestamp of proof, it's must be after credential issuance timestamp
+
+		let exported = self.to_json().unwrap();
+		if exported.len() > MAX_CREDENTIAL_SIZE {
+			return Err(Error::CredentialIsTooLong)
+		}
+
 		Ok(())
 	}
 
 	pub fn validate_unsigned(&self) -> Result<(), Error> {
 		if !self.types.contains(&CredentialType::VerifiableCredential) {
 			return Err(Error::EmptyCredentialType)
-		}
-
-		if self.issuer.is_empty() {
-			return Err(Error::EmptyCredentialIssuer)
 		}
 
 		if self.credential_subject.is_empty() {
@@ -228,10 +238,27 @@ impl Credential {
 		Ok(())
 	}
 
-	pub fn get_issuer(&self) -> Result<Issuer, Error> {
-		//let attestation_handler = IntelAttestationHandler::new(OcallApi);
+	pub fn validate_schema(&self) -> Result<(), Error> {
+		//ToDo: fetch schema status from Parentchain storage
 
 		Ok(())
+	}
+
+	pub fn generate_unsigned_credential(assertion: Assertion) -> Result<Credential, Error> {
+		match assertion {
+			Assertion::A1 => {
+				let raw = include_str!("templates/a1.json");
+				let vc: Credential = Credential::from_json(raw).unwrap();
+				return Ok(vc)
+			},
+			_ => return Err(Error::UnsupportedAssertion),
+		}
+	}
+
+	pub fn generate_issuer(&self) -> Result<Issuer, Error> {
+		let issuer = Issuer::new("".to_string(), "".to_string(), "".to_string());
+
+		Ok(issuer)
 	}
 
 	pub fn sign_proof(&self) -> Result<Proof, Error> {
@@ -239,32 +266,11 @@ impl Credential {
 			return Err(Error::EmptyCredentialIssuer)
 		}
 
-		Ok(())
+		let proof = Proof::new(ProofType::Ed25519Signature2020);
+		Ok(proof)
 	}
 
-	pub fn validate_proof(&self) -> Result<ValidationResult, Error> {
-		Ok(())
-	}
-
-	pub fn generate_credential(&self, assertion: Assertion) -> Result<Credential, Error> {
-		match assertion {
-			Assertion::A1 => {
-				let data = include_str!("templates/a1.json");
-				let vc: Credential = Credential::from_json(data).unwrap();
-			},
-			Assertion::A2(ParameterString, ParameterString) => {},
-			Assertion::A3(ParameterString, ParameterString) => {},
-			Assertion::A4(Balance, ParameterString) => {},
-			Assertion::A5(ParameterString, ParameterString) => {},
-			Assertion::A6 => {},
-			Assertion::A7(Balance, u32) => {},
-			Assertion::A8(u64) => {},
-			Assertion::A9 => {},
-			Assertion::A10(Balance, u32) => {},
-			Assertion::A11(Balance, u32) => {},
-			Assertion::A13(u32) => {},
-			_ => return Err(Error::UnsupportedAssertion),
-		}
+	pub fn validate_proof(&self) -> Result<(), Error> {
 		Ok(())
 	}
 }
@@ -280,5 +286,8 @@ mod tests {
 		let vc: Credential = Credential::from_json(data).unwrap();
 		println!("{:?}", vc);
 		assert_eq!(vc.proof.proof_purpose, "assertionMethod");
+
+		let exported = vc.to_json().unwrap();
+		println!("{}", exported);
 	}
 }
