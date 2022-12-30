@@ -114,7 +114,7 @@ launch-binary-rococo:
 test-cargo-all:
 	@cargo test --release --all
 
-.PHONY: test-cargo-all-benchmarks
+.PHONY: test-cargo-all-benchmarks ## cargo test --all --features runtime-benchmarks
 test-cargo-all-benchmarks:
 	@cargo test --release --all --features runtime-benchmarks
 
