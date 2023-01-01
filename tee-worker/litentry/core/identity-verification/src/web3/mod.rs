@@ -17,7 +17,7 @@
 use crate::{
 	ensure,
 	error::{Error, Result},
-	get_expected_payload, AccountId, ToString,
+	get_expected_raw_message, get_expected_wrapped_message, AccountId, ToString,
 };
 use litentry_primitives::{
 	ChallengeCode, Identity, IdentityHandle, IdentityMultiSignature, IdentityWebType,
@@ -51,9 +51,10 @@ fn verify_substrate_signature(
 	code: &ChallengeCode,
 	validation_data: &Web3CommonValidationData,
 ) -> Result<()> {
-	let msg = get_expected_payload(who, identity, code);
+	let raw_msg = get_expected_raw_message(who, identity, code);
+	let wrapped_msg = get_expected_wrapped_message(raw_msg.clone());
 
-	ensure!(msg.as_slice() == validation_data.message.as_slice(), Error::UnexpectedMessage);
+	ensure!(raw_msg.as_slice() == validation_data.message.as_slice(), Error::UnexpectedMessage);
 
 	let substrate_address = match &identity.web_type {
 		IdentityWebType::Web3(Web3Network::Substrate(_)) => match &identity.handle {
@@ -63,34 +64,48 @@ fn verify_substrate_signature(
 		_ => return Err(Error::WrongWeb3NetworkType),
 	};
 
-	match &validation_data.signature {
-		IdentityMultiSignature::Sr25519(sig) => {
-			ensure!(
-				sr25519_verify(sig, &msg, &sr25519::Public(*substrate_address)),
-				Error::VerifySubstrateSignatureFailed
-			);
-		},
-		IdentityMultiSignature::Ed25519(sig) => {
-			ensure!(
-				ed25519_verify(sig, &msg, &ed25519::Public(*substrate_address)),
-				Error::VerifySubstrateSignatureFailed
-			);
-		},
+	// we accept both the raw_msg's signature and the wrapped_msg's signature
+	ensure!(
+		verify_substrate_signature_internal(
+			&raw_msg,
+			&validation_data.signature,
+			substrate_address
+		) || verify_substrate_signature_internal(
+			&wrapped_msg,
+			&validation_data.signature,
+			substrate_address
+		),
+		Error::VerifySubstrateSignatureFailed
+	);
+	Ok(())
+}
+
+fn verify_substrate_signature_internal(
+	msg: &[u8],
+	signature: &IdentityMultiSignature,
+	address: &[u8; 32],
+) -> bool {
+	let r = match signature {
+		IdentityMultiSignature::Sr25519(sig) =>
+			sr25519_verify(sig, msg, &sr25519::Public(*address)),
+		IdentityMultiSignature::Ed25519(sig) =>
+			ed25519_verify(sig, msg, &ed25519::Public(*address)),
 		// We can' use `ecdsa_verify` directly we don't have the raw 33-bytes publick key
 		// instead we only have AccountId which is blake2_256(pubkey)
 		IdentityMultiSignature::Ecdsa(sig) => {
 			// see https://github.com/paritytech/substrate/blob/493b58bd4a475080d428ce47193ee9ea9757a808/primitives/runtime/src/traits.rs#L132
-			let digest = blake2_256(&msg);
-			let recovered_substrate_pubkey = secp256k1_ecdsa_recover_compressed(&sig.0, &digest)
-				.map_err(|_| Error::RecoverSubstratePubkeyFailed)?;
-			ensure!(
-				&blake2_256(&recovered_substrate_pubkey) == substrate_address,
-				Error::VerifySubstrateSignatureFailed
-			);
+			let digest = blake2_256(msg);
+			if let Ok(recovered_substrate_pubkey) =
+				secp256k1_ecdsa_recover_compressed(&sig.0, &digest)
+			{
+				&blake2_256(&recovered_substrate_pubkey) == address
+			} else {
+				false
+			}
 		},
-		_ => return Err(Error::WrongSignatureType),
-	}
-	Ok(())
+		_ => false,
+	};
+	r
 }
 
 fn verify_evm_signature(
@@ -99,7 +114,7 @@ fn verify_evm_signature(
 	code: &ChallengeCode,
 	validation_data: &Web3CommonValidationData,
 ) -> Result<()> {
-	let msg = get_expected_payload(who, identity, code);
+	let msg = get_expected_raw_message(who, identity, code);
 	let digest = compute_evm_msg_digest(&msg);
 	if let IdentityMultiSignature::Ethereum(sig) = &validation_data.signature {
 		let recovered_evm_address = recover_evm_address(&digest, sig.as_ref())
