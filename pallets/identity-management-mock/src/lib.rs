@@ -619,7 +619,7 @@ pub mod pallet {
 			signature: &IdentityMultiSignature,
 			address: &[u8; 32],
 		) -> bool {
-			let r = match signature {
+			match signature {
 				IdentityMultiSignature::Sr25519(sig) =>
 					sr25519_verify(sig, msg, &sr25519::Public(*address)),
 				IdentityMultiSignature::Ed25519(sig) =>
@@ -638,8 +638,7 @@ pub mod pallet {
 					}
 				},
 				_ => false,
-			};
-			r
+			}
 		}
 
 		fn verify_evm_signature(

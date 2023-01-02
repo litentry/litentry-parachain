@@ -85,7 +85,7 @@ fn verify_substrate_signature_internal(
 	signature: &IdentityMultiSignature,
 	address: &[u8; 32],
 ) -> bool {
-	let r = match signature {
+	match signature {
 		IdentityMultiSignature::Sr25519(sig) =>
 			sr25519_verify(sig, msg, &sr25519::Public(*address)),
 		IdentityMultiSignature::Ed25519(sig) =>
@@ -104,8 +104,7 @@ fn verify_substrate_signature_internal(
 			}
 		},
 		_ => false,
-	};
-	r
+	}
 }
 
 fn verify_evm_signature(
