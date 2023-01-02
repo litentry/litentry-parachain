@@ -198,6 +198,13 @@ pub mod pallet {
 				sender,
 				block_hash
 			);
+
+			let sender_index = <EnclaveIndex<T>>::get(sender.clone());
+			let mut sender_enclave =
+				<EnclaveRegistry<T>>::get(sender_index).ok_or(Error::<T>::EmptyEnclaveRegistry)?;
+			sender_enclave.timestamp = <timestamp::Pallet<T>>::get().saturated_into();
+			<EnclaveRegistry<T>>::insert(sender_index, sender_enclave);
+
 			Self::deposit_event(Event::ProcessedParentchainBlock(
 				sender,
 				block_hash,
