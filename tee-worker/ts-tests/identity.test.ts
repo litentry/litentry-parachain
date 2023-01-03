@@ -1,4 +1,4 @@
-import { describeLitentry, generateVerificationMessage, getMessage, listenEncryptedEvents } from './utils';
+import { describeLitentry, generateVerificationMessage } from './utils';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
 import { createIdentity, setUserShieldingKey, removeIdentity, verifyIdentity } from './indirect_calls';
 import { step } from 'mocha-steps';
