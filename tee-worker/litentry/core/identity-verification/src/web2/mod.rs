@@ -23,7 +23,7 @@ use crate::sgx_reexport_prelude::*;
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
-use crate::{ensure, get_expected_payload};
+use crate::{ensure, get_expected_raw_message};
 use codec::{Decode, Encode};
 use std::{
 	fmt::Debug,
@@ -133,7 +133,8 @@ pub fn verify(request: Web2IdentityVerificationRequest) -> Result<(), Error> {
 	// the payload must match
 	// TODO: maybe move it to common place
 	ensure!(
-		payload == get_expected_payload(&request.who, &request.identity, &request.challenge_code),
+		payload
+			== get_expected_raw_message(&request.who, &request.identity, &request.challenge_code),
 		Error::OtherError("payload not match".to_string())
 	);
 	Ok(())
