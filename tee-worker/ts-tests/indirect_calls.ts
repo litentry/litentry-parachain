@@ -4,7 +4,12 @@ import {
     LitentryIdentity,
     LitentryValidationData,
 } from './type-definitions';
-import { encryptWithTeeShieldingKey, listenEncryptedEvents, sendTxUntilInBlock } from './utils';
+import {
+    encryptWithTeeShieldingKey,
+    listenEncryptedEvents,
+    sendTxUntilInBlock,
+    listenCreatedIdentityEvents,
+} from './utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { HexString } from '@polkadot/util/types';
 import { generateChallengeCode } from './web3/setup';
@@ -38,7 +43,7 @@ export async function createIdentity(
     aesKey: HexString,
     listening: boolean,
     identity: LitentryIdentity
-): Promise<HexString[] | undefined> {
+): Promise<IdentityGenericEvent | undefined> {
     const encode = context.substrate.createType('LitentryIdentity', identity).toHex();
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
     const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
@@ -46,13 +51,9 @@ export async function createIdentity(
         .createIdentity(context.shard, signer.address, `0x${ciphertext}`, null)
         .signAndSend(signer, { nonce });
     if (listening) {
-        const event = await listenEncryptedEvents(context, aesKey, {
-            module: 'identityManagement',
-            method: 'challengeCodeGenerated',
-            event: 'ChallengeCodeGenerated',
-        });
-        const [who, _identity, challengeCode] = event.eventData;
-        return [who, challengeCode];
+        const event = await listenCreatedIdentityEvents(context, aesKey);
+        const [who, _identity, idGraph, challengeCode] = event.eventData;
+        return decodeIdentityEvent(context.substrate, who, _identity, idGraph, challengeCode);
     }
     return undefined;
 }
@@ -66,7 +67,6 @@ export async function removeIdentity(
 ): Promise<IdentityGenericEvent | undefined> {
     const encode = context.substrate.createType('LitentryIdentity', identity).toHex();
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
-
     const tx = context.substrate.tx.identityManagement.removeIdentity(context.shard, `0x${ciphertext}`);
     await sendTxUntilInBlock(context.substrate, tx, signer);
 
@@ -111,6 +111,7 @@ export async function verifyIdentity(
             event: 'IdentityVerified',
         });
         const [who, identity, idGraph] = event.eventData;
+
         return decodeIdentityEvent(context.substrate, who, identity, idGraph);
     }
     return undefined;
@@ -120,7 +121,8 @@ function decodeIdentityEvent(
     api: ApiPromise,
     who: HexString,
     identityString: HexString,
-    idGraphString: HexString
+    idGraphString: HexString,
+    challengeCode?: HexString
 ): IdentityGenericEvent {
     let identity = api.createType('LitentryIdentity', identityString).toJSON();
     let idGraph = api.createType('Vec<(LitentryIdentity, IdentityContext)>', idGraphString).toJSON();
@@ -128,5 +130,6 @@ function decodeIdentityEvent(
         who,
         identity,
         idGraph,
+        challengeCode,
     };
 }

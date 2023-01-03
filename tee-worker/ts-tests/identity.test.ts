@@ -1,4 +1,4 @@
-import { describeLitentry, generateVerificationMessage, getMessage, listenEncryptedEvents } from './utils';
+import { describeLitentry, generateVerificationMessage } from './utils';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
 import { createIdentity, setUserShieldingKey, removeIdentity, verifyIdentity } from './indirect_calls';
 import { step } from 'mocha-steps';
@@ -97,26 +97,28 @@ describeLitentry('Test Identity', (context) => {
     step('create identity', async function () {
         //create twitter identity
         const resp_twitter = await createIdentity(context, context.defaultSigner, aesKey, true, twitterIdentity);
+        assertIdentityCreated(context.defaultSigner, resp_twitter);
+
         if (resp_twitter) {
-            const [_who, challengeCode] = resp_twitter;
-            console.log('twitterIdentity challengeCode: ', challengeCode);
+            console.log('twitterIdentity challengeCode: ', resp_twitter.challengeCode);
             const msg = generateVerificationMessage(
                 context,
-                hexToU8a(challengeCode),
+                hexToU8a(resp_twitter.challengeCode),
                 context.defaultSigner.addressRaw,
                 twitterIdentity
             );
             console.log('post verification msg to twitter: ', msg);
-            assert.isNotEmpty(challengeCode, 'challengeCode empty');
+            assert.isNotEmpty(resp_twitter.challengeCode, 'challengeCode empty');
         }
         //create ethereum identity
         const resp_ethereum = await createIdentity(context, context.defaultSigner, aesKey, true, ethereumIdentity);
+        assertIdentityCreated(context.defaultSigner, resp_ethereum);
+
         if (resp_ethereum) {
-            const [_who, challengeCode] = resp_ethereum;
-            console.log('ethereumIdentity challengeCode: ', challengeCode);
+            console.log('ethereumIdentity challengeCode: ', resp_ethereum.challengeCode);
             const msg = generateVerificationMessage(
                 context,
-                hexToU8a(challengeCode),
+                hexToU8a(resp_ethereum.challengeCode),
                 context.defaultSigner.addressRaw,
                 ethereumIdentity
             );
@@ -125,16 +127,17 @@ describeLitentry('Test Identity', (context) => {
             const msgHash = ethers.utils.arrayify(msg);
             signature_ethereum = await context.ethersWallet.alice.signMessage(msgHash);
             ethereumValidationData!.Web3Validation!.Evm!.signature!.Ethereum = signature_ethereum;
-            assert.isNotEmpty(challengeCode, 'challengeCode empty');
+            assert.isNotEmpty(resp_ethereum.challengeCode, 'challengeCode empty');
         }
         // create substrate identity
         const resp_substrate = await createIdentity(context, context.defaultSigner, aesKey, true, substrateIdentity);
+        assertIdentityCreated(context.defaultSigner, resp_substrate);
+
         if (resp_substrate) {
-            const [_who, challengeCode] = resp_substrate;
-            console.log('substrateIdentity challengeCode: ', challengeCode);
+            console.log('substrateIdentity challengeCode: ', resp_substrate.challengeCode);
             const msg = generateVerificationMessage(
                 context,
-                hexToU8a(challengeCode),
+                hexToU8a(resp_substrate.challengeCode),
                 context.defaultSigner.addressRaw,
                 substrateIdentity
             );
@@ -143,7 +146,7 @@ describeLitentry('Test Identity', (context) => {
             substrateValidationData!.Web3Validation!.Substrate!.message = msg;
             signature_substrate = context.defaultSigner.sign(msg);
             substrateValidationData!.Web3Validation!.Substrate!.signature!.Sr25519 = u8aToHex(signature_substrate);
-            assert.isNotEmpty(challengeCode, 'challengeCode empty');
+            assert.isNotEmpty(resp_substrate.challengeCode, 'challengeCode empty');
         }
     });
 
@@ -219,11 +222,10 @@ describeLitentry('Test Identity', (context) => {
         // create substrate identity again
         const resp_substrate = await createIdentity(context, context.defaultSigner, aesKey, true, substrateIdentity);
         if (resp_substrate) {
-            const [_who, challengeCode] = resp_substrate;
-            console.log('substrateIdentity challengeCode: ', challengeCode);
+            console.log('substrateIdentity challengeCode: ', resp_substrate.challengeCode);
             const msg = generateVerificationMessage(
                 context,
-                hexToU8a(challengeCode),
+                hexToU8a(resp_substrate.challengeCode),
                 context.defaultSigner.addressRaw,
                 substrateIdentity
             );
@@ -235,7 +237,7 @@ describeLitentry('Test Identity', (context) => {
                 u8aConcat(stringToU8a('<Bytes>'), u8aToU8a(msg), stringToU8a('</Bytes>'))
             );
             substrateValidationData!.Web3Validation!.Substrate!.signature!.Sr25519 = u8aToHex(signature_substrate);
-            assert.isNotEmpty(challengeCode, 'challengeCode empty');
+            assert.isNotEmpty(resp_substrate.challengeCode, 'challengeCode empty');
         }
         //verify substrate identity
         const substrate_identity_verified = await verifyIdentity(
@@ -250,8 +252,23 @@ describeLitentry('Test Identity', (context) => {
     });
 });
 
+function assertIdentityCreated(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
+    let idGraphExist = false;
+    if (identityEvent) {
+        for (let i = 0; i < identityEvent.idGraph.length; i++) {
+            if (JSON.stringify(identityEvent.idGraph[i][0]) == JSON.stringify(identityEvent.identity)) {
+                idGraphExist = true;
+                assert.isFalse(identityEvent.idGraph[i][1].is_verified, 'identity should not be verified');
+            }
+        }
+    }
+    assert.isTrue(idGraphExist, 'id_graph should exist');
+    assert.equal(identityEvent?.who, u8aToHex(signer.addressRaw), 'check caller error');
+}
+
 function assertIdentityVerified(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
     let idGraphExist = false;
+
     if (identityEvent) {
         for (let i = 0; i < identityEvent.idGraph.length; i++) {
             if (JSON.stringify(identityEvent.idGraph[i][0]) == JSON.stringify(identityEvent.identity)) {
