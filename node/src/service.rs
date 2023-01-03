@@ -35,7 +35,7 @@ use jsonrpsee::RpcModule;
 use polkadot_service::CollatorPair;
 
 use crate::{rpc, standalone_block_import::StandaloneBlockImport};
-pub use primitives::{AccountId, Balance, Block, Hash, Header, Index as Nonce};
+pub use core_primitives::{AccountId, Balance, Block, Hash, Header, Index as Nonce};
 
 use sc_consensus::LongestChain;
 use sc_consensus_aura::StartAuraParams;

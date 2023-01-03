@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use core_primitives::{AccountId, Balance};
 use frame_support::{
 	assert_ok,
 	dispatch::{DispatchClass, DispatchInfo, PostDispatchInfo, RawOrigin},
@@ -21,7 +22,6 @@ use frame_support::{
 };
 use pallet_balances::Call as BalancesCall;
 use pallet_transaction_payment::{Multiplier, OnChargeTransaction};
-use primitives::{AccountId, Balance};
 use sp_runtime::traits::{Convert, Dispatchable, SignedExtension};
 
 use crate::{

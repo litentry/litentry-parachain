@@ -16,7 +16,7 @@
 
 #![allow(clippy::derive_partial_eq_without_eq)]
 
-use primitives::{AccountId, Signature};
+use core_primitives::{AccountId, Signature};
 pub use sc_chain_spec::Properties;
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use serde::{Deserialize, Serialize};

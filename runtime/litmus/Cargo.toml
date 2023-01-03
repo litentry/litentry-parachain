@@ -12,7 +12,7 @@ scale-info = { version = "2.3.1", default-features = false, features = ["derive"
 serde = { version = "1.0", optional = true, features = ["derive"] }
 smallvec = "1.9.0"
 
-primitives = { path = "../../primitives", default-features = false }
+core-primitives = { path = "../../primitives/core", default-features = false }
 
 # Substrate Dependencies
 ## Substrate Primitive Dependencies
@@ -96,9 +96,9 @@ pallet-vc-management = { path = "../../pallets/vc-management", default-features 
 runtime-common = { path = '../common', default-features = false }
 
 # TEE
-pallet-sidechain = { git = "https://github.com/integritee-network/pallets.git", branch = "master", default-features = false }
-pallet-teeracle = { git = "https://github.com/integritee-network/pallets.git", branch = "master", default-features = false }
-pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", branch = "master", default-features = false }
+pallet-sidechain = { path = "../../pallets/sidechain", default-features = false }
+pallet-teeracle = { path = "../../pallets/teeracle", default-features = false }
+pallet-teerex = { path = "../../pallets/teerex", default-features = false }
 
 [dev-dependencies]
 cumulus-primitives-parachain-inherent = { git = 'https://github.com/paritytech/cumulus', branch = "polkadot-v0.9.32" }
@@ -195,7 +195,7 @@ std = [
   "pallet-treasury/std",
   "pallet-utility/std",
   "pallet-vesting/std",
-  "primitives/std",
+  "core-primitives/std",
   "cumulus-pallet-aura-ext/std",
   "cumulus-pallet-dmp-queue/std",
   "cumulus-pallet-parachain-system/std",

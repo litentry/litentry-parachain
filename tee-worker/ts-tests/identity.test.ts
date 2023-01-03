@@ -1,11 +1,9 @@
 import { describeLitentry, generateVerificationMessage, getMessage, listenEncryptedEvents } from './utils';
-import { hexToU8a, u8aToHex, stringToU8a } from '@polkadot/util';
+import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
 import { createIdentity, setUserShieldingKey, removeIdentity, verifyIdentity } from './indirect_calls';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import { IdentityGenericEvent, LitentryIdentity, LitentryValidationData } from './type-definitions';
-import { Sign } from './web3/functions';
-import { generateTestKeys } from './web3/functions';
 import { ethers } from 'ethers';
 import { HexString } from '@polkadot/util/types';
 import { KeyringPair } from '@polkadot/keyring/types';
@@ -214,6 +212,41 @@ describeLitentry('Test Identity', (context) => {
             substrateIdentity
         );
         assertIdentityRemoved(context.defaultSigner, substrate_identity_removed);
+    });
+
+    // see https://github.com/litentry/litentry-parachain/issues/1137
+    step('verify identity with wrapped signature', async function () {
+        // create substrate identity again
+        const resp_substrate = await createIdentity(context, context.defaultSigner, aesKey, true, substrateIdentity);
+        if (resp_substrate) {
+            const [_who, challengeCode] = resp_substrate;
+            console.log('substrateIdentity challengeCode: ', challengeCode);
+            const msg = generateVerificationMessage(
+                context,
+                hexToU8a(challengeCode),
+                context.defaultSigner.addressRaw,
+                substrateIdentity
+            );
+
+            console.log('post verification msg to substrate: ', msg);
+            substrateValidationData!.Web3Validation!.Substrate!.message = msg;
+            // sign the wrapped version as in polkadot-extension
+            signature_substrate = context.defaultSigner.sign(
+                u8aConcat(stringToU8a('<Bytes>'), u8aToU8a(msg), stringToU8a('</Bytes>'))
+            );
+            substrateValidationData!.Web3Validation!.Substrate!.signature!.Sr25519 = u8aToHex(signature_substrate);
+            assert.isNotEmpty(challengeCode, 'challengeCode empty');
+        }
+        //verify substrate identity
+        const substrate_identity_verified = await verifyIdentity(
+            context,
+            context.defaultSigner,
+            aesKey,
+            true,
+            substrateIdentity,
+            substrateValidationData
+        );
+        assertIdentityVerified(context.defaultSigner, substrate_identity_verified);
     });
 });
 

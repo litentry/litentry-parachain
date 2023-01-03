@@ -41,7 +41,7 @@ use sp_runtime::{traits::Bounded, FixedPointNumber, Perbill, Perquintill};
 
 use xcm::latest::prelude::*;
 
-use primitives::{AccountId, AssetId, Balance, BlockNumber};
+use core_primitives::{AccountId, AssetId, Balance, BlockNumber};
 
 pub type NegativeImbalance<T> = <pallet_balances::Pallet<T> as Currency<
 	<T as frame_system::Config>::AccountId,
@@ -61,7 +61,7 @@ pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND
 	.set_proof_size(cumulus_primitives_core::relay_chain::v2::MAX_POV_SIZE as u64);
 
 pub mod currency {
-	use primitives::Balance;
+	use core_primitives::Balance;
 
 	pub const UNIT: Balance = 1_000_000_000_000;
 	pub const DOLLARS: Balance = UNIT; // 1_000_000_000_000

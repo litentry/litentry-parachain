@@ -19,7 +19,7 @@
 
 use crate::{vc_context::Status, Config};
 use codec::{Decode, Encode, MaxEncodedLen};
-use primitives::{SchemaContentString, SchemaIdString};
+use core_primitives::{SchemaContentString, SchemaIdString};
 use scale_info::TypeInfo;
 use sp_std::vec::Vec;
 

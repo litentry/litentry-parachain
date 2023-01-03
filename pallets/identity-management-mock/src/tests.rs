@@ -124,11 +124,20 @@ fn verify_twitter_identity_works() {
 }
 
 #[test]
-fn verify_polkadot_identity_works() {
+fn verify_polkadot_identity_raw_signature_works() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(3);
 		let p = sp_core::sr25519::Pair::from_string("//Alice", None).unwrap();
-		setup_verify_polkadot_identity(2, p, 3);
+		setup_verify_polkadot_identity(2, p, 3, false);
+	});
+}
+
+#[test]
+fn verify_polkadot_identity_wrapped_signature_works() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(3);
+		let p = sp_core::sr25519::Pair::from_string("//Alice", None).unwrap();
+		setup_verify_polkadot_identity(2, p, 3, true);
 	});
 }
 
