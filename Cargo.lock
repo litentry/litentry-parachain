@@ -2802,7 +2802,7 @@ name = "frame-remote-externalities"
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.36#cb4f2491b00af7d7817f3a54209c26b20faa1f51"
 dependencies = [
- "env_logger",
+ "env_logger 0.9.3",
  "futures 0.3.25",
  "log",
  "parity-scale-codec 3.2.1",
@@ -9006,7 +9006,6 @@ name = "regex-syntax"
 version = "0.6.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "456c603be3e8d448b072f410900c09faf164fbce2d480456f50eea6e25f9c848"
-
 
 [[package]]
 name = "remove_dir_all"
