@@ -15,20 +15,21 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use codec::{Decode, Encode, MaxEncodedLen};
+use frame_support::RuntimeDebugNoBound;
 use scale_info::TypeInfo;
 
 use crate::{BlockNumberOf, Config, Metadata};
 
 // The context associated with the (litentry-account, did) pair
 // TODO: maybe we have better naming
-#[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, TypeInfo, MaxEncodedLen)]
+#[derive(Clone, Eq, PartialEq, RuntimeDebugNoBound, Encode, Decode, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
 #[codec(mel_bound())]
 pub struct IdentityContext<T: Config> {
 	// the metadata
 	pub metadata: Option<Metadata>,
-	// the block number (of parent chain) where the linking was intially requested
-	pub linking_request_block: Option<BlockNumberOf<T>>,
+	// the block number (of parent chain) where the creation was intially requested
+	pub creation_request_block: Option<BlockNumberOf<T>>,
 	// the block number (of parent chain) where the verification was intially requested
 	pub verification_request_block: Option<BlockNumberOf<T>>,
 	// if this did is verified
@@ -41,7 +42,7 @@ impl<T: Config> Default for IdentityContext<T> {
 	fn default() -> Self {
 		Self {
 			metadata: None,
-			linking_request_block: None,
+			creation_request_block: None,
 			verification_request_block: None,
 			is_verified: false,
 		}
@@ -50,12 +51,12 @@ impl<T: Config> Default for IdentityContext<T> {
 
 impl<T: Config> IdentityContext<T> {
 	pub fn new(
-		linking_request_block: BlockNumberOf<T>,
+		creation_request_block: BlockNumberOf<T>,
 		verification_request_block: BlockNumberOf<T>,
 	) -> Self {
 		Self {
 			metadata: None,
-			linking_request_block: Some(linking_request_block),
+			creation_request_block: Some(creation_request_block),
 			verification_request_block: Some(verification_request_block),
 			is_verified: false,
 		}

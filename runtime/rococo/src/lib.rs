@@ -63,7 +63,7 @@ use sp_version::RuntimeVersion;
 use xcm_executor::XcmExecutor;
 
 pub use constants::currency::deposit;
-pub use primitives::{opaque, Index, *};
+pub use core_primitives::{opaque, Index, *};
 pub use runtime_common::currency::*;
 use runtime_common::{
 	impl_runtime_transaction_payment_fees, prod_or_fast, BlockHashCount, BlockLength,
@@ -81,6 +81,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 pub mod asset_config;
 pub mod constants;
+pub mod migration;
 #[cfg(test)]
 mod tests;
 pub mod weights;
@@ -130,6 +131,7 @@ pub type Executive = frame_executive::Executive<
 	// it was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
+	migration::MigrateAtStakeAutoCompound<Runtime>,
 >;
 
 impl_opaque_keys! {
@@ -835,9 +837,6 @@ impl pallet_drop3::Config for Runtime {
 impl pallet_extrinsic_filter::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type UpdateOrigin = EnsureRootOrHalfTechnicalCommittee;
-	#[cfg(feature = "tee-dev")]
-	type NormalModeFilter = Everything;
-	#[cfg(not(feature = "tee-dev"))]
 	type NormalModeFilter = NormalModeFilter;
 	type SafeModeFilter = SafeModeFilter;
 	type TestModeFilter = Everything;
@@ -860,19 +859,20 @@ impl pallet_teerex::Config for Runtime {
 impl pallet_sidechain::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = weights::pallet_sidechain::WeightInfo<Runtime>;
-	type EarlyBlockProposalLenience = ConstU64<100>;
 }
 
 impl pallet_teeracle::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = weights::pallet_teeracle::WeightInfo<Runtime>;
 	type MaxWhitelistedReleases = ConstU32<10>;
+	type MaxOracleBlobLen = ConstU32<4096>;
 }
 
 impl pallet_identity_management::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = ();
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
+	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
 }
 
 ord_parameter_types! {
@@ -881,15 +881,16 @@ ord_parameter_types! {
 
 impl pallet_identity_management_mock::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type ManageWhitelistOrigin = EnsureRoot<Self::AccountId>;
-	type MaxVerificationDelay = ConstU32<10>;
+	type MaxVerificationDelay = ConstU32<{ 30 * MINUTES }>;
 	// intentionally use ALICE for the IMP mock
 	type TEECallOrigin = EnsureSignedBy<ALICE, AccountId>;
+	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
 }
 
 impl pallet_vc_management::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
+	type SetAdminOrigin = EnsureRootOrHalfCouncil;
 }
 
 impl runtime_common::BaseRuntimeRequirements for Runtime {}
@@ -1033,10 +1034,13 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			// Balance
 			RuntimeCall::Balances(_) |
 			// IMP Mock, only allowed on rococo for testing
-			// we should use `tee-dev` branch if we want to test it on Litmus
 			RuntimeCall::IdentityManagementMock(_) |
 			RuntimeCall::IdentityManagement(_) |
 			RuntimeCall::VCManagement(_) |
+			// TEE pallets
+			RuntimeCall::Teerex(_) |
+			RuntimeCall::Sidechain(_) |
+			RuntimeCall::Teeracle(_) |
 			// ParachainStaking; Only the collator part
 			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::join_candidates { .. }) |
 			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::schedule_leave_candidates { .. }) |
@@ -1071,9 +1075,7 @@ mod benches {
 		[pallet_scheduler, Scheduler]
 		[pallet_preimage, Preimage]
 		[pallet_session, SessionBench::<Runtime>]
-		// Since this module benchmark times out, comment it out for now
-		// https://github.com/litentry/litentry-parachain/actions/runs/3155868677/jobs/5134984739
-		// [pallet_parachain_staking, ParachainStaking]
+		[pallet_parachain_staking, ParachainStaking]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
 		[pallet_identity_management, IdentityManagement]
 		[pallet_teerex, Teerex]

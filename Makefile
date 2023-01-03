@@ -1,3 +1,4 @@
+SHELL=/bin/bash
 all:
 	@make help
 
@@ -67,7 +68,7 @@ build-docker-production:
 
 .PHONY: build-node-benchmarks ## Build release node with `runtime-benchmarks` feature
 build-node-benchmarks:
-	cargo build --locked --features runtime-benchmarks --release
+	cargo build --locked --features runtime-benchmarks --release --no-default-features
 
 .PHONY: build-node-tryruntime ## Build release node with `try-runtime` feature
 build-node-tryruntime:
@@ -111,11 +112,11 @@ launch-binary-rococo:
 
 .PHONY: test-cargo-all ## cargo test --all
 test-cargo-all:
-	@cargo test --release --all
+	@cargo test --release --all --features=skip-ias-check
 
-.PHONY: test-cargo-all-benchmarks
+.PHONY: test-cargo-all-benchmarks ## cargo test --all --features runtime-benchmarks
 test-cargo-all-benchmarks:
-	@cargo test --release --all --features runtime-benchmarks
+	@cargo test --release --all --features runtime-benchmarks --features=skip-ias-check
 
 .PHONY: test-ts-docker-litentry ## Run litentry ts tests with docker without clean-up
 test-ts-docker-litentry: launch-docker-litentry launch-docker-bridge
@@ -169,7 +170,7 @@ generate-docker-compose-litentry:
 generate-docker-compose-litmus:
 	@./scripts/generate-docker-files.sh litmus
 
-.PHONY: generate-docker-compose-rococo ## Generate docker-compose files for litmus local network
+.PHONY: generate-docker-compose-rococo ## Generate docker-compose files for rococo local network
 generate-docker-compose-rococo:
 	@./scripts/generate-docker-files.sh rococo
 
@@ -193,6 +194,7 @@ taplocheck:
 fmt:
 	cargo fmt --all
 	taplo fmt
+	cd tee-worker && make fmt && taplo fmt
 
 .PHONY: githooks ## install the githooks
 githooks:

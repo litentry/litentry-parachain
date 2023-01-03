@@ -10,7 +10,8 @@ version = '0.1.0'
 # third-party dependencies
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len"] }
 log = { version = "0.4", default-features = false }
-scale-info = { version = "2.3.0", default-features = false, features = ["derive"] }
+pallet-teerex = { path = "../teerex", default-features = false }
+scale-info = { version = "2.3.1", default-features = false, features = ["derive"] }
 
 # primitives
 sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32", default-features = false }
@@ -27,11 +28,10 @@ frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch =
 hex = { version = "0.4", default-features = false }
 
 # local
-primitives = { path = "../../primitives", default-features = false }
+core-primitives = { path = "../../primitives/core", default-features = false }
 
 [dev-dependencies]
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
-pallet-teerex = { git = "https://github.com/litentry/integritee-pallets.git", branch = "polkadot-v0.9.32", features = ["skip-ias-check"] }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
 
@@ -42,6 +42,7 @@ runtime-benchmarks = [
   "frame-support/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
 ]
+skip-ias-check = []
 std = [
   "codec/std",
   "sp-std/std",
@@ -52,7 +53,7 @@ std = [
   "frame-support/std",
   "frame-system/std",
   "frame-benchmarking?/std",
-  "primitives/std",
+  "core-primitives/std",
   "pallet-teerex/std",
 ]
 try-runtime = ["frame-support/try-runtime"]

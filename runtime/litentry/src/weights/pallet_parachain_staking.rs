@@ -155,6 +155,7 @@ impl<T: frame_system::Config> pallet_parachain_staking::WeightInfo for WeightInf
 	// Storage: System Account (r:2 w:2)
 	// Storage: ParachainStaking DelegatorState (r:1 w:1)
 	// Storage: ParachainStaking DelegationScheduledRequests (r:1 w:1)
+	// Storage: ParachainStaking AutoCompoundingDelegations (r:1 w:1)
 	// Storage: ParachainStaking BottomDelegations (r:1 w:1)
 	// Storage: ParachainStaking Total (r:1 w:1)
 	/// The range of component `x` is `[2, 1200]`.
@@ -231,24 +232,6 @@ impl<T: frame_system::Config> pallet_parachain_staking::WeightInfo for WeightInf
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
-	// Storage: System Account (r:1 w:1)
-	// Storage: ParachainStaking DelegatorState (r:1 w:1)
-	// Storage: ParachainStaking CandidateInfo (r:1 w:1)
-	// Storage: ParachainStaking TopDelegations (r:1 w:1)
-	// Storage: ParachainStaking CandidatePool (r:1 w:1)
-	// Storage: ParachainStaking Total (r:1 w:1)
-	/// The range of component `x` is `[3, 100]`.
-	/// The range of component `y` is `[2, 1000]`.
-	fn delegate(x: u32, y: u32, ) -> Weight {
-		// Minimum execution time: 200_331 nanoseconds.
-		Weight::from_ref_time(223_297_293 as u64)
-			// Standard Error: 120_796
-			.saturating_add(Weight::from_ref_time(216_743 as u64).saturating_mul(x as u64))
-			// Standard Error: 11_760
-			.saturating_add(Weight::from_ref_time(314_199 as u64).saturating_mul(y as u64))
-			.saturating_add(T::DbWeight::get().reads(6 as u64))
-			.saturating_add(T::DbWeight::get().writes(6 as u64))
-	}
 	// Storage: ParachainStaking DelegatorState (r:1 w:1)
 	// Storage: ParachainStaking Round (r:1 w:0)
 	// Storage: ParachainStaking DelegationScheduledRequests (r:1 w:1)
@@ -266,6 +249,7 @@ impl<T: frame_system::Config> pallet_parachain_staking::WeightInfo for WeightInf
 	// Storage: ParachainStaking CandidatePool (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	// Storage: ParachainStaking Total (r:1 w:1)
+	// Storage: ParachainStaking AutoCompoundingDelegations (r:1 w:0)
 	/// The range of component `x` is `[2, 100]`.
 	fn execute_leave_delegators(x: u32, ) -> Weight {
 		// Minimum execution time: 141_067 nanoseconds.
@@ -319,6 +303,7 @@ impl<T: frame_system::Config> pallet_parachain_staking::WeightInfo for WeightInf
 	// Storage: ParachainStaking DelegatorState (r:1 w:1)
 	// Storage: ParachainStaking DelegationScheduledRequests (r:1 w:1)
 	// Storage: ParachainStaking Round (r:1 w:0)
+	// Storage: ParachainStaking AutoCompoundingDelegations (r:1 w:0)
 	// Storage: ParachainStaking CandidateInfo (r:1 w:1)
 	// Storage: ParachainStaking TopDelegations (r:1 w:1)
 	// Storage: ParachainStaking CandidatePool (r:1 w:1)
@@ -372,6 +357,7 @@ impl<T: frame_system::Config> pallet_parachain_staking::WeightInfo for WeightInf
 	// Storage: ParachainStaking CandidateInfo (r:8 w:0)
 	// Storage: ParachainStaking DelegationScheduledRequests (r:8 w:0)
 	// Storage: ParachainStaking TopDelegations (r:8 w:0)
+	// Storage: ParachainStaking AutoCompoundingDelegations (r:8 w:0)
 	// Storage: ParachainStaking Total (r:1 w:0)
 	// Storage: ParachainStaking AwardedPts (r:2 w:1)
 	// Storage: ParachainStaking AtStake (r:1 w:9)
@@ -410,5 +396,40 @@ impl<T: frame_system::Config> pallet_parachain_staking::WeightInfo for WeightInf
 		// Minimum execution time: 9_268 nanoseconds.
 		Weight::from_ref_time(9_640_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
+	}
+	// Storage: ParachainStaking DelegatorState (r:1 w:0)
+	// Storage: ParachainStaking AutoCompoundingDelegations (r:1 w:1)
+	/// The range of component `x` is `[0, 1000]`.
+	/// The range of component `y` is `[0, 100]`.
+	fn set_auto_compound(x: u32, y: u32, ) -> Weight {
+		Weight::from_ref_time(113_179_000 as u64)
+			// Standard Error: 2_122
+			.saturating_add(Weight::from_ref_time(219_930 as u64).saturating_mul(x as u64))
+			// Standard Error: 21_250
+			.saturating_add(Weight::from_ref_time(319_794 as u64).saturating_mul(y as u64))
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
+	}
+	// Storage: System Account (r:1 w:1)
+	// Storage: ParachainStaking DelegatorState (r:1 w:1)
+	// Storage: ParachainStaking CandidateInfo (r:1 w:1)
+	// Storage: ParachainStaking AutoCompoundingDelegations (r:1 w:1)
+	// Storage: ParachainStaking TopDelegations (r:1 w:1)
+	// Storage: ParachainStaking CandidatePool (r:1 w:1)
+	// Storage: ParachainStaking Total (r:1 w:1)
+	// Storage: ParachainStaking BottomDelegations (r:1 w:1)
+	/// The range of component `x` is `[0, 1200]`.
+	/// The range of component `y` is `[0, 1200]`.
+	/// The range of component `z` is `[0, 100]`.
+	fn delegate_with_auto_compound(x: u32, y: u32, z: u32, ) -> Weight {
+		Weight::from_ref_time(186_530_000 as u64)
+			// Standard Error: 2_068
+			.saturating_add(Weight::from_ref_time(245_875 as u64).saturating_mul(x as u64))
+			// Standard Error: 2_068
+			.saturating_add(Weight::from_ref_time(49_210 as u64).saturating_mul(y as u64))
+			// Standard Error: 24_765
+			.saturating_add(Weight::from_ref_time(83_443 as u64).saturating_mul(z as u64))
+			.saturating_add(T::DbWeight::get().reads(6 as u64))
+			.saturating_add(T::DbWeight::get().writes(6 as u64))
 	}
 }

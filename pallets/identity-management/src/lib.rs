@@ -36,7 +36,7 @@ mod benchmarking;
 #[cfg(test)]
 mod mock;
 
-#[cfg(test)]
+#[cfg(all(test, feature = "skip-ias-check"))]
 mod tests;
 
 pub mod weights;
@@ -44,14 +44,8 @@ pub mod weights;
 pub use crate::weights::WeightInfo;
 pub use pallet::*;
 
-pub use primitives::{AesOutput, ShardIdentifier};
+pub use core_primitives::{AesOutput, ShardIdentifier};
 use sp_std::vec::Vec;
-
-// fn types for handling inside tee-worker
-pub type SetUserShieldingKeyFn = ([u8; 2], ShardIdentifier, Vec<u8>);
-pub type LinkIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>, Option<Vec<u8>>);
-pub type UnlinkIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>);
-pub type VerifyIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>, Vec<u8>);
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -69,22 +63,26 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 		// some extrinsics should only be called by origins from TEE
 		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		/// origin to manage authorised delegatee list
+		type DelegateeAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
+		DelegateeAdded { account: T::AccountId },
+		DelegateeRemoved { account: T::AccountId },
 		// TODO: do we need account as event parameter? This needs to be decided by F/E
-		LinkIdentityRequested { shard: ShardIdentifier },
-		UnlinkIdentityRequested { shard: ShardIdentifier },
+		CreateIdentityRequested { shard: ShardIdentifier },
+		RemoveIdentityRequested { shard: ShardIdentifier },
 		VerifyIdentityRequested { shard: ShardIdentifier },
 		SetUserShieldingKeyRequested { shard: ShardIdentifier },
 		// event that should be triggered by TEECallOrigin
 		UserShieldingKeySet { account: AesOutput },
 		ChallengeCodeGenerated { account: AesOutput, identity: AesOutput, code: AesOutput },
-		IdentityLinked { account: AesOutput, identity: AesOutput },
-		IdentityUnlinked { account: AesOutput, identity: AesOutput },
-		IdentityVerified { account: AesOutput, identity: AesOutput },
+		IdentityCreated { account: AesOutput, identity: AesOutput, id_graph: AesOutput },
+		IdentityRemoved { account: AesOutput, identity: AesOutput, id_graph: AesOutput },
+		IdentityVerified { account: AesOutput, identity: AesOutput, id_graph: AesOutput },
 		// some error happened during processing in TEE, we use string-like
 		// parameters for more "generic" error event reporting
 		// TODO: maybe use concrete errors instead of events when we are more sure
@@ -92,11 +90,42 @@ pub mod pallet {
 		SomeError { func: Vec<u8>, error: Vec<u8> },
 	}
 
+	/// delegatees who are authorised to send extrinsics(currently only `create_identity`)
+	/// on behalf of the users
+	#[pallet::storage]
+	#[pallet::getter(fn delegatee)]
+	pub type Delegatee<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, (), OptionQuery>;
+
 	#[pallet::error]
-	pub enum Error<T> {}
+	pub enum Error<T> {
+		/// a delegatee doesn't exist
+		DelegateeNotExist,
+		/// a `create_identity` request from unauthorised user
+		UnauthorisedUser,
+	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// add an account to the delegatees
+		#[pallet::weight(195_000_000)]
+		pub fn add_delegatee(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
+			let _ = T::DelegateeAdminOrigin::ensure_origin(origin)?;
+			// we don't care if `account` already exists
+			Delegatee::<T>::insert(account.clone(), ());
+			Self::deposit_event(Event::DelegateeAdded { account });
+			Ok(())
+		}
+
+		/// remove an account from the delegatees
+		#[pallet::weight(195_000_000)]
+		pub fn remove_delegatee(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
+			let _ = T::DelegateeAdminOrigin::ensure_origin(origin)?;
+			ensure!(Delegatee::<T>::contains_key(&account), Error::<T>::DelegateeNotExist);
+			Delegatee::<T>::remove(account.clone());
+			Self::deposit_event(Event::DelegateeRemoved { account });
+			Ok(())
+		}
+
 		/// Set or update user's shielding key
 		#[pallet::weight(<T as Config>::WeightInfo::set_user_shielding_key())]
 		pub fn set_user_shielding_key(
@@ -109,32 +138,40 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Link an identity
-		#[pallet::weight(<T as Config>::WeightInfo::link_identity())]
-		pub fn link_identity(
+		/// Create an identity
+		/// We do the origin check for this extrinsic, it has to be
+		/// - either the caller him/herself, i.e. ensure_signed(origin)? == who
+		/// - or from a delegatee in the list
+		#[pallet::weight(<T as Config>::WeightInfo::create_identity())]
+		pub fn create_identity(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
+			user: T::AccountId,
 			encrypted_identity: Vec<u8>,
 			encrypted_metadata: Option<Vec<u8>>,
 		) -> DispatchResultWithPostInfo {
-			let _ = ensure_signed(origin)?;
-			Self::deposit_event(Event::LinkIdentityRequested { shard });
+			let who = ensure_signed(origin)?;
+			ensure!(
+				who == user || Delegatee::<T>::contains_key(&who),
+				Error::<T>::UnauthorisedUser
+			);
+			Self::deposit_event(Event::CreateIdentityRequested { shard });
 			Ok(().into())
 		}
 
-		/// Unlink an identity
-		#[pallet::weight(<T as Config>::WeightInfo::unlink_identity())]
-		pub fn unlink_identity(
+		/// Remove an identity
+		#[pallet::weight(<T as Config>::WeightInfo::remove_identity())]
+		pub fn remove_identity(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
 			encrypted_identity: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let _ = ensure_signed(origin)?;
-			Self::deposit_event(Event::UnlinkIdentityRequested { shard });
+			Self::deposit_event(Event::RemoveIdentityRequested { shard });
 			Ok(().into())
 		}
 
-		/// Verify a linked identity
+		/// Verify an identity
 		#[pallet::weight(<T as Config>::WeightInfo::verify_identity())]
 		pub fn verify_identity(
 			origin: OriginFor<T>,
@@ -173,24 +210,26 @@ pub mod pallet {
 		}
 
 		#[pallet::weight(195_000_000)]
-		pub fn identity_linked(
+		pub fn identity_created(
 			origin: OriginFor<T>,
 			account: AesOutput,
 			identity: AesOutput,
+			id_graph: AesOutput,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityLinked { account, identity });
+			Self::deposit_event(Event::IdentityCreated { account, identity, id_graph });
 			Ok(Pays::No.into())
 		}
 
 		#[pallet::weight(195_000_000)]
-		pub fn identity_unlinked(
+		pub fn identity_removed(
 			origin: OriginFor<T>,
 			account: AesOutput,
 			identity: AesOutput,
+			id_graph: AesOutput,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityUnlinked { account, identity });
+			Self::deposit_event(Event::IdentityRemoved { account, identity, id_graph });
 			Ok(Pays::No.into())
 		}
 
@@ -199,9 +238,10 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			account: AesOutput,
 			identity: AesOutput,
+			id_graph: AesOutput,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityVerified { account, identity });
+			Self::deposit_event(Event::IdentityVerified { account, identity, id_graph });
 			Ok(Pays::No.into())
 		}
 

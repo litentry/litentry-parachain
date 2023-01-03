@@ -40,9 +40,11 @@ print_divider
 if [ -z "$POLKADOT_BIN" ]; then
   echo "no polkadot binary provided, download now ..."
   # TODO: find a way to get stable download link
-  # https://api.github.com/repos/paritytech/polkadot/releases/latest is not reliable as 
+  # https://api.github.com/repos/paritytech/polkadot/releases/latest is not reliable as
   # polkadot could publish release which has no binary
-  url="https://github.com/paritytech/polkadot/releases/download/v0.9.18/polkadot"
+  #
+  # TODO: v0.9.33 isn't working, see issue #1097
+  url="https://github.com/paritytech/polkadot/releases/download/v0.9.32/polkadot"
   POLKADOT_BIN="$TMPDIR/polkadot"
   wget -O "$POLKADOT_BIN" -q "$url"
   chmod a+x "$POLKADOT_BIN"
@@ -96,6 +98,7 @@ sleep 10
 
 # run a litentry-collator instance
 $PARACHAIN_BIN --alice --collator --force-authoring --tmp --chain $CHAIN-dev \
+  --unsafe-ws-external --unsafe-rpc-external --rpc-cors=all \
   --port 30333 --ws-port 9944 --rpc-port 9933 --execution wasm \
   -- \
   --execution wasm --chain $ROCOCO_CHAINSPEC --port 30332 --ws-port 9943 --rpc-port 9932 \

@@ -17,7 +17,7 @@ targets = ['x86_64-unknown-linux-gnu']
 
 [dependencies]
 async-trait = "0.1.57"
-clap = { version = "4.0.17", features = ["derive"] }
+clap = { version = "4.0.32", features = ["derive"] }
 codec = { package = "parity-scale-codec", version = "3.0.0" }
 futures = { version = "0.3.24", features = ["compat"] }
 hex-literal = "0.3.4"
@@ -93,16 +93,18 @@ frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", bran
 try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
 
 # Local dependencies
+core-primitives = { path = "../primitives/core" }
 litentry-parachain-runtime = { path = "../runtime/litentry" }
 litmus-parachain-runtime = { path = "../runtime/litmus" }
-primitives = { path = "../primitives" }
 rococo-parachain-runtime = { path = "../runtime/rococo" }
 
 [build-dependencies]
 substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.32" }
 
 [features]
-default = []
+default = [
+  "tee-dev",
+]
 fast-runtime = [
   "litentry-parachain-runtime/fast-runtime",
   "litmus-parachain-runtime/fast-runtime",
