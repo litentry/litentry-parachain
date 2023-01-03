@@ -1,3 +1,4 @@
+SHELL=/bin/bash
 all:
 	@make help
 
@@ -113,7 +114,7 @@ launch-binary-rococo:
 test-cargo-all:
 	@cargo test --release --all --features=skip-ias-check
 
-.PHONY: test-cargo-all-benchmarks
+.PHONY: test-cargo-all-benchmarks ## cargo test --all --features runtime-benchmarks
 test-cargo-all-benchmarks:
 	@cargo test --release --all --features runtime-benchmarks --features=skip-ias-check
 
