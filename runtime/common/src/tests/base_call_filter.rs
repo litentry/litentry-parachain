@@ -19,7 +19,7 @@ use frame_support::{assert_noop, assert_ok, pallet_prelude::Weight, traits::Vest
 use frame_system::RawOrigin;
 use sp_runtime::traits::Dispatchable;
 
-use primitives::AccountId;
+use core_primitives::AccountId;
 
 use crate::{
 	currency::UNIT,

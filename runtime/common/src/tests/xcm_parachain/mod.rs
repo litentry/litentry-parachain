@@ -38,7 +38,7 @@ use xcm::prelude::{
 use xcm_executor::traits::Convert as xcmConvert;
 use xcm_simulator::TestExt;
 
-use primitives::{AccountId, AssetId, Balance, XcmV2Weight};
+use core_primitives::{AccountId, AssetId, Balance, XcmV2Weight};
 
 use crate::{
 	currency::{CENTS, MILLICENTS, UNIT},

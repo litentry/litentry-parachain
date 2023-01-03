@@ -29,7 +29,7 @@ use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 // Litentry: The CheckAccount implementation is forced by the bug of FungiblesAdapter.
 // We should replace () regarding fake_pallet_id account after our PR passed.
-use primitives::{AccountId, XcmV2Weight};
+use core_primitives::{AccountId, XcmV2Weight};
 use runtime_common::xcm_impl::{
 	AccountIdToMultiLocation, AssetIdMuliLocationConvert, CurrencyId,
 	CurrencyIdMultiLocationConvert, FirstAssetTrader, MultiNativeAsset, NewAnchoringSelfReserve,
