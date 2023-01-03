@@ -1,11 +1,9 @@
 import { describeLitentry, generateVerificationMessage, getMessage, listenEncryptedEvents } from './utils';
-import { hexToU8a, u8aToHex, stringToU8a } from '@polkadot/util';
+import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { createIdentity, setUserShieldingKey, removeIdentity, verifyIdentity } from './indirect_calls';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import { IdentityGenericEvent, LitentryIdentity, LitentryValidationData } from './type-definitions';
-import { Sign } from './web3/functions';
-import { generateTestKeys } from './web3/functions';
 import { ethers } from 'ethers';
 import { HexString } from '@polkadot/util/types';
 import { KeyringPair } from '@polkadot/keyring/types';
