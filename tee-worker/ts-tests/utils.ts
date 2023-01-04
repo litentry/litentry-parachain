@@ -189,7 +189,54 @@ export async function listenEncryptedEvents(
         });
     });
 }
-
+export async function listenCreatedIdentityEvents(context: IntegrationTestContext, aesKey: HexString) {
+    return new Promise<{ eventData: HexString[] }>(async (resolve, reject) => {
+        let startBlock = 0;
+        const slotDuration = await context.substrate.call.auraApi.slotDuration();
+        const timeout = 3 * 60 * 1000; // 3 min
+        let maximumWaitingBlock = timeout / parseInt(slotDuration.toString());
+        console.log('maximumWaitingBlock', maximumWaitingBlock);
+        const unsubscribe = await context.substrate.rpc.chain.subscribeNewHeads(async (header) => {
+            const currentBlockNumber = header.number.toNumber();
+            if (startBlock == 0) startBlock = currentBlockNumber;
+            if (currentBlockNumber > startBlock + maximumWaitingBlock) {
+                reject('timeout');
+                return;
+            }
+            console.log(`Chain is at block: #${header.number}`);
+            const signedBlock = await context.substrate.rpc.chain.getBlock(header.hash);
+            const allEvents = (await context.substrate.query.system.events.at(header.hash)) as Vec<EventRecord>;
+            signedBlock.block.extrinsics.forEach((ex, index) => {
+                if (!(ex.method.section === 'identityManagement')) {
+                    return;
+                }
+                const list = allEvents
+                    .filter(({ phase, event }) => {
+                        return (
+                            phase.isApplyExtrinsic &&
+                            event.section == 'identityManagement' &&
+                            (event.method == 'IdentityCreated' || event.method == 'ChallengeCodeGenerated')
+                        );
+                    })
+                    .map(({ event }) => {
+                        const data = event.data as AESOutput[];
+                        return data;
+                    });
+                if (list.length) {
+                    const eventData: HexString[] = [];
+                    for (let i = 0; i < list.length; i++) {
+                        for (let j = 0; j < list[i].length; j++) {
+                            eventData.push(decryptWithAES(aesKey, list[i][j]));
+                        }
+                    }
+                    resolve({ eventData: [...new Set(eventData)] });
+                    unsubscribe();
+                    return;
+                }
+            });
+        });
+    });
+}
 export function decryptWithAES(key: HexString, aesOutput: AESOutput): HexString {
     const secretKey = crypto.createSecretKey(hexToU8a(key));
     const tagSize = 16;

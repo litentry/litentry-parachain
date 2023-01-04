@@ -23,7 +23,7 @@ use pallet_parachain_staking::{
 	AtStake, BalanceOf, BondWithAutoCompound, CollatorSnapshot, Round, RoundIndex,
 };
 use sp_runtime::Percent;
-use sp_std::{collections::btree_map::BTreeMap, marker::PhantomData, prelude::*, vec, vec::Vec};
+use sp_std::{marker::PhantomData, prelude::*, vec::Vec};
 
 use codec::{Decode, Encode};
 extern crate alloc;
@@ -31,6 +31,8 @@ extern crate alloc;
 use alloc::{format, string::ToString};
 #[cfg(feature = "try-runtime")]
 use scale_info::prelude::string::String;
+#[cfg(feature = "try-runtime")]
+use sp_std::{collections::btree_map::BTreeMap, vec};
 
 mod deprecated {
 	use super::*;
