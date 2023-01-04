@@ -119,7 +119,7 @@ pub enum TrustedCall {
 		ParentchainBlockNumber,
 	), // (EnclaveSigner, Account, identity, validation, blocknumber)
 	verify_identity_runtime(AccountId, AccountId, Identity, ParentchainBlockNumber), // (EnclaveSigner, Account, identity, blocknumber)
-	build_assertion(ShardIdentifier, AccountId, Assertion), // (Shard, Account, Assertion)
+	build_assertion(AccountId, AccountId, Assertion, ShardIdentifier), // (Account, Account, Assertion, Shard)
 	set_challenge_code_runtime(AccountId, AccountId, Identity, ChallengeCode), // only for testing
 }
 
@@ -145,7 +145,7 @@ impl TrustedCall {
 			TrustedCall::remove_identity_runtime(account, _, _) => account,
 			TrustedCall::verify_identity_preflight(account, _, _, _, _) => account,
 			TrustedCall::verify_identity_runtime(account, _, _, _) => account,
-			TrustedCall::build_assertion(_, account, _) => account,
+			TrustedCall::build_assertion(account, _, _, _) => account,
 			TrustedCall::set_challenge_code_runtime(account, _, _, _) => account,
 		}
 	}
@@ -574,12 +574,8 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::build_assertion(shard, account, assertion) => {
-				debug!(
-					"build_assertion, who: {}, assertion: {:?}",
-					account_id_to_string(&account),
-					assertion,
-				);
+			TrustedCall::build_assertion(enclave_account, account, assertion, shard) => {
+				ensure_enclave_signer_account(&enclave_account)?;
 				Self::build_assertion(&shard, account, assertion)
 			},
 			TrustedCall::set_challenge_code_runtime(enclave_account, account, did, code) => {

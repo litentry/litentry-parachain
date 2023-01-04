@@ -403,7 +403,14 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 
 					if let Some((multiaddress_account, _, _)) = xt.signature {
 						let account = AccountIdLookup::lookup(multiaddress_account)?;
-						let trusted_call = TrustedCall::build_assertion(shard, account, assertion);
+						let enclave_account_id = self.stf_enclave_signer.get_enclave_account()?;
+
+						let trusted_call = TrustedCall::build_assertion(
+							enclave_account_id,
+							account,
+							assertion,
+							shard,
+						);
 						let signed_trusted_call =
 							self.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
 						let trusted_operation =

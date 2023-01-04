@@ -187,7 +187,7 @@ impl TrustedCallSigned {
 		who: AccountId,
 		assertion: Assertion,
 	) -> StfResult<()> {
-		debug!("who.str = {:?}, assertion = {:?}", account_id_to_string(&who), assertion);
+		debug!("who {:?}, assertion {:?}", account_id_to_string(&who), assertion);
 
 		let id_graph = ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
 
