@@ -466,8 +466,10 @@ pub mod pallet {
 					Error::<T>::ChallengeCodeNotExist
 				);
 				ChallengeCodes::<T>::remove(&who, &identity);
-
-				// emit the IdentityVerified event
+				Ok(())
+			})
+			.map(|_| {
+				// emit the IdentityVerified event when the mutation is done
 				Self::deposit_event(Event::<T>::IdentityVerifiedPlain {
 					account: who.clone(),
 					identity: identity.clone(),
@@ -481,7 +483,6 @@ pub mod pallet {
 						Self::get_id_graph(&who).encode().as_slice(),
 					),
 				});
-				Ok(())
 			})
 		}
 
