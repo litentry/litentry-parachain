@@ -81,7 +81,9 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 pub mod asset_config;
 pub mod constants;
-pub mod migration;
+// rococo already upgraded to runtime 9130
+// TODO: delete the commented lines and rename the migration file
+// pub mod migration;
 #[cfg(test)]
 mod tests;
 pub mod weights;
@@ -131,7 +133,7 @@ pub type Executive = frame_executive::Executive<
 	// it was reverse order before.
 	// See the comment before collation related pallets too.
 	AllPalletsWithSystem,
-	migration::MigrateAtStakeAutoCompound<Runtime>,
+	// migration::MigrateAtStakeAutoCompound<Runtime>,
 >;
 
 impl_opaque_keys! {
@@ -150,7 +152,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9130,
+	spec_version: 9135,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
