@@ -446,7 +446,7 @@ pub mod pallet {
 
 			let key = UserShieldingKeys::<T>::get(&who).ok_or(Error::<T>::ShieldingKeyNotExist)?;
 
-			let r = IDGraphs::<T>::try_mutate(&who, &identity, |context| -> DispatchResult {
+			IDGraphs::<T>::try_mutate(&who, &identity, |context| -> DispatchResult {
 				let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
 				let creation_request_block =
 					c.creation_request_block.ok_or(Error::<T>::CreationRequestBlockZero)?;
@@ -467,8 +467,8 @@ pub mod pallet {
 				);
 				ChallengeCodes::<T>::remove(&who, &identity);
 				Ok(())
-			});
-			if r.is_ok() {
+			})
+			.map(|_| {
 				// emit the IdentityVerified event when the mutation is done
 				Self::deposit_event(Event::<T>::IdentityVerifiedPlain {
 					account: who.clone(),
@@ -483,8 +483,7 @@ pub mod pallet {
 						Self::get_id_graph(&who).encode().as_slice(),
 					),
 				});
-			}
-			r
+			})
 		}
 
 		// The following extrinsics are supposed to be called by TEE only
