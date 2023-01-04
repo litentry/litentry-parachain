@@ -107,7 +107,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn user_shielding_keys)]
 	pub type UserShieldingKeys<T: Config> =
-	StorageMap<_, Blake2_128Concat, T::AccountId, UserShieldingKeyType, OptionQuery>;
+		StorageMap<_, Blake2_128Concat, T::AccountId, UserShieldingKeyType, OptionQuery>;
 
 	/// challenge code is per Litentry account + identity
 	#[pallet::storage]
