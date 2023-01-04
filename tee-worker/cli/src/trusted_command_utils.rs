@@ -81,7 +81,7 @@ pub(crate) fn get_keystore_path(trusted_args: &TrustedCli) -> PathBuf {
 	PathBuf::from(&format!("{}/{}", TRUSTED_KEYSTORE_PATH, shard.encode().to_base58()))
 }
 
-pub(crate) fn get_identifiers(trusted_args: &TrustedArgs) -> ([u8; 32], ShardIdentifier) {
+pub(crate) fn get_identifiers(trusted_args: &TrustedCli) -> ([u8; 32], ShardIdentifier) {
 	let mrenclave = mrenclave_from_base58(&trusted_args.mrenclave);
 	let shard = match &trusted_args.shard {
 		Some(val) =>

@@ -16,8 +16,8 @@
 
 use crate::{
 	get_layer_two_nonce,
+	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_accountid_from_str, get_identifiers, get_pair_from_str},
-	trusted_commands::TrustedArgs,
 	trusted_operation::perform_trusted_operation,
 	Cli,
 };
@@ -39,7 +39,7 @@ pub struct VerifyIdentityPreflightCommand {
 // TODO: we'd need an "integration-test" with parentchain "verify_identity"
 //       the origin of it needs to be re-considered if we want individual steps
 impl VerifyIdentityPreflightCommand {
-	pub(crate) fn run(&self, cli: &Cli, trusted_args: &TrustedArgs) {
+	pub(crate) fn run(&self, cli: &Cli, trusted_args: &TrustedCli) {
 		let who = get_accountid_from_str(&self.account);
 		let root = get_pair_from_str(trusted_args, "//Alice");
 

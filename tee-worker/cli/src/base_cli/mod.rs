@@ -47,7 +47,7 @@ use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 mod commands;
 
 #[derive(Subcommand)]
-pub enum BaseCommand  {
+pub enum BaseCommand {
 	/// query parentchain balance for AccountId
 	Balance(BalanceCommand),
 
@@ -86,7 +86,7 @@ pub enum BaseCommand  {
 	CreateIdentity(CreateIdentityCommand),
 }
 
-impl BaseCommand  {
+impl BaseCommand {
 	pub fn run(&self, cli: &Cli) {
 		match self {
 			BaseCommand::Balance(cmd) => cmd.run(cli),
