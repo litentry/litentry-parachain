@@ -296,6 +296,13 @@ pub fn setup_verify_twitter_identity(
 		encrypted_identity,
 		tee_encrypt(validation_data.encode().as_slice()),
 	));
+	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
+		crate::Event::IdentityVerifiedPlain {
+			account: who,
+			identity,
+			id_graph: IdentityManagementMock::get_id_graph(&who),
+		},
+	));
 }
 
 pub fn setup_verify_polkadot_identity(
@@ -313,16 +320,18 @@ pub fn setup_verify_polkadot_identity(
 			create_mock_polkadot_validation_data(who, p, code, is_wrapped_signature),
 		_ => panic!("unxpected web_type"),
 	};
-	println!(
-		"encoded identity len = {}, encoded vd len = {}",
-		identity.encode().as_slice().len(),
-		validation_data.encode().as_slice().len()
-	);
 	assert_ok!(IdentityManagementMock::verify_identity(
 		RuntimeOrigin::signed(who),
 		H256::random(),
 		encrypted_identity,
 		tee_encrypt(validation_data.encode().as_slice()),
+	));
+	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
+		crate::Event::IdentityVerifiedPlain {
+			account: who,
+			identity,
+			id_graph: IdentityManagementMock::get_id_graph(&who),
+		},
 	));
 }
 
@@ -345,5 +354,12 @@ pub fn setup_verify_eth_identity(
 		H256::random(),
 		encrypted_identity,
 		tee_encrypt(validation_data.encode().as_slice()),
+	));
+	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
+		crate::Event::IdentityVerifiedPlain {
+			account: who,
+			identity,
+			id_graph: IdentityManagementMock::get_id_graph(&who),
+		},
 	));
 }
