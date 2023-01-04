@@ -29,7 +29,7 @@ use crate::{
 		unshield_funds::UnshieldFundsCommand,
 	},
 	trusted_command_utils::get_keystore_path,
-	trusted_commands::TrustedArgs,
+	trusted_cli::TrustedCli,
 	Cli,
 };
 use log::*;
@@ -40,7 +40,7 @@ use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 mod commands;
 
 #[derive(Subcommand)]
-pub enum TrustedBaseCli {
+pub enum TrustedBaseCommand {
 	/// generates a new incognito account for the given shard
 	NewAccount,
 
@@ -71,34 +71,34 @@ pub enum TrustedBaseCli {
 	SetUserShieldingKeyPreflight(SetUserShieldingKeyPreflightCommand),
 }
 
-impl TrustedBaseCli {
-	pub fn run(&self, cli: &Cli, trusted_args: &TrustedArgs) {
+impl TrustedBaseCommand {
+	pub fn run(&self, cli: &Cli, trusted_cli: &TrustedArgs) {
 		match self {
-			TrustedBaseCli::NewAccount => new_account(trusted_args),
-			TrustedBaseCli::ListAccounts => list_accounts(trusted_args),
-			TrustedBaseCli::Transfer(cmd) => cmd.run(cli, trusted_args),
-			TrustedBaseCli::SetBalance(cmd) => cmd.run(cli, trusted_args),
-			TrustedBaseCli::Balance(cmd) => cmd.run(cli, trusted_args),
-			TrustedBaseCli::UnshieldFunds(cmd) => cmd.run(cli, trusted_args),
+			TrustedBaseCommand::NewAccount => new_account(trusted_cli),
+			TrustedBaseCommand::ListAccounts => list_accounts(trusted_cli),
+			TrustedBaseCommand::Transfer(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::SetBalance(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::Balance(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::UnshieldFunds(cmd) => cmd.run(cli, trusted_cli),
 			// Litentry's commands below
-			TrustedBaseCli::UserShieldingKey(cmd) => cmd.run(cli, trusted_args),
-			TrustedBaseCli::SetChallengeCode(cmd) => cmd.run(cli, trusted_args),
-			TrustedBaseCli::VerifyIdentityPreflight(cmd) => cmd.run(cli, trusted_args),
-			TrustedBaseCli::SetUserShieldingKeyPreflight(cmd) => cmd.run(cli, trusted_args),
+			TrustedBaseCommand::UserShieldingKey(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::SetChallengeCode(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::VerifyIdentityPreflight(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::SetUserShieldingKeyPreflight(cmd) => cmd.run(cli, trusted_cli),
 		}
 	}
 }
 
-fn new_account(trusted_args: &TrustedArgs) {
-	let store = LocalKeystore::open(get_keystore_path(trusted_args), None).unwrap();
+fn new_account(trusted_cli: &TrustedArgs) {
+	let store = LocalKeystore::open(get_keystore_path(trusted_cli), None).unwrap();
 	let key: sr25519::AppPair = store.generate().unwrap();
 	drop(store);
 	info!("new account {}", key.public().to_ss58check());
 	println!("{}", key.public().to_ss58check());
 }
 
-fn list_accounts(trusted_args: &TrustedArgs) {
-	let store = LocalKeystore::open(get_keystore_path(trusted_args), None).unwrap();
+fn list_accounts(trusted_cli: &TrustedArgs) {
+	let store = LocalKeystore::open(get_keystore_path(trusted_cli), None).unwrap();
 	info!("sr25519 keys:");
 	for pubkey in store.public_keys::<sr25519::AppPublic>().unwrap().into_iter() {
 		println!("{}", pubkey.to_ss58check());
