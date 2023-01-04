@@ -10,7 +10,7 @@ async-trait = "0.1.50"
 base58 = "0.2"
 clap = { version = "2.33", features = ["yaml"] }
 dirs = "3.0.2"
-env_logger = "0.9"
+env_logger = "0.10.0"
 futures = "0.3"
 hex = "0.4.3"
 jsonrpsee = { version = "0.2.0", features = ["client", "ws-server", "macros"] }
@@ -57,17 +57,17 @@ its-storage = { path = "../sidechain/storage" }
 
 # scs / integritee
 my-node-runtime = { package = "rococo-parachain-runtime", path = "../../runtime/rococo" }
-substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.32" }
+substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.36" }
 teerex-primitives = { git = "https://github.com/integritee-network/pallets.git", branch = "master" }
 
 # Substrate dependencies
-frame-support = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
-frame-system = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
-pallet-balances = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
-sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
-sp-finality-grandpa = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
-sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
-sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
+frame-support = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
+frame-system = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
+pallet-balances = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
+sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
+sp-finality-grandpa = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
+sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
+sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
 
 # local litentry dependencies
 lc-data-providers = { path = "../litentry/core/data-providers" }
