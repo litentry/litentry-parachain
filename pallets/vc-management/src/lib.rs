@@ -44,9 +44,6 @@ pub use assertion::*;
 mod schema;
 pub use schema::*;
 
-// fn types for xt handling inside tee-worker
-pub type GenerateVCFn = ([u8; 2], ShardIdentifier, u32);
-
 // VCID type in the registry, maybe we want a "did:...." format?
 pub type VCID = u64;
 

@@ -1723,6 +1723,7 @@ dependencies = [
  "litentry-primitives",
  "log",
  "pallet-identity-management",
+ "pallet-vc-management",
  "parity-scale-codec",
  "sgx_tstd",
  "sgx_types",
@@ -2254,6 +2255,7 @@ dependencies = [
  "chrono 0.4.23",
  "frame-system",
  "itp-sgx-runtime-primitives",
+ "litentry-primitives",
  "pallet-balances",
  "parity-scale-codec",
  "primitive-types",
@@ -3267,6 +3269,23 @@ dependencies = [
  "sp-api",
  "sp-runtime",
  "sp-weights",
+]
+
+[[package]]
+name = "pallet-vc-management"
+version = "0.1.0"
+dependencies = [
+ "core-primitives",
+ "frame-support",
+ "frame-system",
+ "hex 0.4.3",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
