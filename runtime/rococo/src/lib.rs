@@ -81,9 +81,6 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 pub mod asset_config;
 pub mod constants;
-// rococo already upgraded to runtime 9130
-// TODO: delete the commented lines and rename the migration file
-// pub mod migration;
 #[cfg(test)]
 mod tests;
 pub mod weights;
