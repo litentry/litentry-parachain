@@ -277,7 +277,7 @@ pub fn setup_verify_twitter_identity(
 ) {
 	setup_create_identity(who, identity.clone(), bn);
 	let encrypted_identity = tee_encrypt(identity.encode().as_slice());
-	let validation_data = if let Identity::Web2 { network, address } = identity {
+	let validation_data = if let Identity::Web2 { network, .. } = &identity {
 		match network {
 			Web2Network::Twitter => create_mock_twitter_validation_data(),
 			_ => panic!("unexpected network, expect twitter network"),
@@ -311,7 +311,7 @@ pub fn setup_verify_polkadot_identity(
 	let encrypted_identity = tee_encrypt(identity.encode().as_slice());
 	let code = IdentityManagementMock::challenge_codes(&who, &identity).unwrap();
 	let validation_data = if let Identity::Substrate { .. } = &identity {
-		create_mock_polkadot_validation_data(who, p, code, false)
+		create_mock_polkadot_validation_data(who, p, code, is_wrapped_signature)
 	} else {
 		panic!("unxpected network")
 	};
