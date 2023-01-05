@@ -137,6 +137,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		#[pallet::call_index(0)]
 		#[pallet::weight(15_000_000)]
 		pub fn set_user_shielding_key(
 			origin: OriginFor<T>,
@@ -150,6 +151,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		#[pallet::call_index(1)]
 		#[pallet::weight(15_000_000)]
 		pub fn set_challenge_code(
 			origin: OriginFor<T>,
@@ -164,6 +166,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		#[pallet::call_index(2)]
 		#[pallet::weight(15_000_000)]
 		pub fn remove_challenge_code(
 			origin: OriginFor<T>,
@@ -180,6 +183,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		#[pallet::call_index(3)]
 		#[pallet::weight(15_000_000)]
 		pub fn create_identity(
 			origin: OriginFor<T>,
@@ -202,6 +206,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		#[pallet::call_index(4)]
 		#[pallet::weight(15_000_000)]
 		pub fn remove_identity(
 			origin: OriginFor<T>,
@@ -215,6 +220,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		#[pallet::call_index(5)]
 		#[pallet::weight(15_000_000)]
 		pub fn verify_identity(
 			origin: OriginFor<T>,
