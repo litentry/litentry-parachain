@@ -237,6 +237,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Change the admin account
 		/// similar to sudo.set_key, the old account will be supplied in event
+		#[pallet::call_index(0)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::set_admin())]
 		pub fn set_admin(origin: OriginFor<T>, new: T::AccountId) -> DispatchResultWithPostInfo {
 			T::SetAdminOrigin::ensure_origin(origin)?;
@@ -247,6 +248,7 @@ pub mod pallet {
 		}
 
 		/// Approve a RewardPool proposal, must be called from admin
+		#[pallet::call_index(1)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::approve_reward_pool())]
 		pub fn approve_reward_pool(
 			origin: OriginFor<T>,
@@ -265,6 +267,7 @@ pub mod pallet {
 		}
 
 		/// Reject a RewardPool proposal, must be called from admin
+		#[pallet::call_index(2)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::reject_reward_pool())]
 		pub fn reject_reward_pool(
 			origin: OriginFor<T>,
@@ -295,6 +298,7 @@ pub mod pallet {
 		}
 
 		/// Start a reward pool, can be called by admin or reward pool owner
+		#[pallet::call_index(3)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::start_reward_pool())]
 		pub fn start_reward_pool(
 			origin: OriginFor<T>,
@@ -317,6 +321,7 @@ pub mod pallet {
 		}
 
 		/// Stop a reward pool, can be called by admin or reward pool owner
+		#[pallet::call_index(4)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::stop_reward_pool())]
 		pub fn stop_reward_pool(origin: OriginFor<T>, id: T::PoolId) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
@@ -339,6 +344,7 @@ pub mod pallet {
 		///
 		/// Note here `approved` state is not required, which gives the owner a
 		/// chance to close it before the admin evaluates the proposal
+		#[pallet::call_index(5)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::close_reward_pool())]
 		pub fn close_reward_pool(
 			origin: OriginFor<T>,
@@ -355,6 +361,7 @@ pub mod pallet {
 		}
 
 		/// Create a RewardPool proposal, can be called by any signed account
+		#[pallet::call_index(6)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::propose_reward_pool(T::MaximumNameLength::get()))]
 		pub fn propose_reward_pool(
 			origin: OriginFor<T>,
@@ -399,6 +406,7 @@ pub mod pallet {
 		/// TODO:
 		/// `repatriate_reserved()` requires that the destination account is active
 		/// otherwise `DeadAccount` error is returned. Is it OK in our case?
+		#[pallet::call_index(7)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::send_reward())]
 		pub fn send_reward(
 			origin: OriginFor<T>,

@@ -36,7 +36,8 @@ use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier, Signature};
 use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
-	ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType, ValidationData,
+	Assertion, ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType,
+	ValidationData,
 };
 use log::*;
 use sp_io::hashing::blake2_256;
@@ -118,7 +119,8 @@ pub enum TrustedCall {
 		ParentchainBlockNumber,
 	), // (EnclaveSigner, Account, identity, validation, blocknumber)
 	verify_identity_runtime(AccountId, AccountId, Identity, ParentchainBlockNumber), // (EnclaveSigner, Account, identity, blocknumber)
-	set_challenge_code_runtime(AccountId, AccountId, Identity, ChallengeCode),       // only for testing
+	build_assertion(AccountId, AccountId, Assertion, ShardIdentifier), // (Account, Account, Assertion, Shard)
+	set_challenge_code_runtime(AccountId, AccountId, Identity, ChallengeCode), // only for testing
 }
 
 impl TrustedCall {
@@ -143,6 +145,7 @@ impl TrustedCall {
 			TrustedCall::remove_identity_runtime(account, _, _) => account,
 			TrustedCall::verify_identity_preflight(account, _, _, _, _) => account,
 			TrustedCall::verify_identity_runtime(account, _, _, _) => account,
+			TrustedCall::build_assertion(account, _, _, _) => account,
 			TrustedCall::set_challenge_code_runtime(account, _, _, _) => account,
 		}
 	}
@@ -571,6 +574,10 @@ where
 				}
 				Ok(())
 			},
+			TrustedCall::build_assertion(enclave_account, account, assertion, shard) => {
+				ensure_enclave_signer_account(&enclave_account)?;
+				Self::build_assertion(&shard, account, assertion)
+			},
 			TrustedCall::set_challenge_code_runtime(enclave_account, account, did, code) => {
 				ensure_enclave_signer_account(&enclave_account)?;
 				Self::set_challenge_code_runtime(account, did, code)
@@ -596,6 +603,7 @@ where
 			TrustedCall::remove_identity_runtime(..) => debug!("No storage updates needed..."),
 			TrustedCall::verify_identity_preflight(..) => debug!("No storage updates needed..."),
 			TrustedCall::verify_identity_runtime(..) => debug!("No storage updates needed..."),
+			TrustedCall::build_assertion(..) => debug!("No storage updates needed..."),
 			TrustedCall::set_challenge_code_runtime(..) => debug!("No storage updates needed..."),
 			#[cfg(feature = "evm")]
 			_ => debug!("No storage updates needed..."),

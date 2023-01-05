@@ -44,9 +44,6 @@ pub use assertion::*;
 mod schema;
 pub use schema::*;
 
-// fn types for xt handling inside tee-worker
-pub type GenerateVCFn = ([u8; 2], ShardIdentifier, u32);
-
 // VCID type in the registry, maybe we want a "did:...." format?
 pub type VCID = u64;
 
@@ -174,6 +171,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		#[pallet::call_index(0)]
 		#[pallet::weight(195_000_000)]
 		pub fn request_vc(
 			origin: OriginFor<T>,
@@ -185,6 +183,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		#[pallet::call_index(1)]
 		#[pallet::weight(195_000_000)]
 		pub fn disable_vc(origin: OriginFor<T>, id: VCID) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
@@ -200,6 +199,7 @@ pub mod pallet {
 			})
 		}
 
+		#[pallet::call_index(2)]
 		#[pallet::weight(195_000_000)]
 		pub fn revoke_vc(origin: OriginFor<T>, id: VCID) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
@@ -214,6 +214,7 @@ pub mod pallet {
 		/// ---------------------------------------------------
 		/// The following extrinsics are supposed to be called by TEE only
 		/// ---------------------------------------------------
+		#[pallet::call_index(3)]
 		#[pallet::weight(195_000_000)]
 		pub fn vc_issued(
 			origin: OriginFor<T>,
@@ -229,6 +230,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		#[pallet::call_index(4)]
 		#[pallet::weight(195_000_000)]
 		pub fn some_error(
 			origin: OriginFor<T>,
@@ -241,6 +243,7 @@ pub mod pallet {
 		}
 
 		// Change the schema Admin account
+		#[pallet::call_index(5)]
 		#[pallet::weight(195_000_000)]
 		pub fn set_schema_admin(
 			origin: OriginFor<T>,
@@ -256,6 +259,7 @@ pub mod pallet {
 		}
 
 		// It requires the schema Admin account
+		#[pallet::call_index(6)]
 		#[pallet::weight(195_000_000)]
 		pub fn add_schema(
 			origin: OriginFor<T>,
@@ -282,6 +286,7 @@ pub mod pallet {
 		}
 
 		// It requires the schema Admin account
+		#[pallet::call_index(7)]
 		#[pallet::weight(195_000_000)]
 		pub fn disable_schema(
 			origin: OriginFor<T>,
@@ -302,6 +307,7 @@ pub mod pallet {
 		}
 
 		// It requires the schema Admin account
+		#[pallet::call_index(8)]
 		#[pallet::weight(195_000_000)]
 		pub fn activate_schema(
 			origin: OriginFor<T>,
@@ -321,6 +327,7 @@ pub mod pallet {
 		}
 
 		// It requires the schema Admin account
+		#[pallet::call_index(9)]
 		#[pallet::weight(195_000_000)]
 		pub fn revoke_schema(
 			origin: OriginFor<T>,

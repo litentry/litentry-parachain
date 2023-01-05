@@ -47,7 +47,7 @@ use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 mod commands;
 
 #[derive(Subcommand)]
-pub enum BaseCli {
+pub enum BaseCommand {
 	/// query parentchain balance for AccountId
 	Balance(BalanceCommand),
 
@@ -86,22 +86,22 @@ pub enum BaseCli {
 	CreateIdentity(CreateIdentityCommand),
 }
 
-impl BaseCli {
+impl BaseCommand {
 	pub fn run(&self, cli: &Cli) {
 		match self {
-			BaseCli::Balance(cmd) => cmd.run(cli),
-			BaseCli::NewAccount => new_account(),
-			BaseCli::ListAccounts => list_accounts(),
-			BaseCli::PrintMetadata => print_metadata(cli),
-			BaseCli::PrintSgxMetadata => print_sgx_metadata(cli),
-			BaseCli::Faucet(cmd) => cmd.run(cli),
-			BaseCli::Transfer(cmd) => cmd.run(cli),
-			BaseCli::ListWorkers => list_workers(cli),
-			BaseCli::Listen(cmd) => cmd.run(cli),
-			BaseCli::ShieldFunds(cmd) => cmd.run(cli),
+			BaseCommand::Balance(cmd) => cmd.run(cli),
+			BaseCommand::NewAccount => new_account(),
+			BaseCommand::ListAccounts => list_accounts(),
+			BaseCommand::PrintMetadata => print_metadata(cli),
+			BaseCommand::PrintSgxMetadata => print_sgx_metadata(cli),
+			BaseCommand::Faucet(cmd) => cmd.run(cli),
+			BaseCommand::Transfer(cmd) => cmd.run(cli),
+			BaseCommand::ListWorkers => list_workers(cli),
+			BaseCommand::Listen(cmd) => cmd.run(cli),
+			BaseCommand::ShieldFunds(cmd) => cmd.run(cli),
 			// Litentry's commands below
-			BaseCli::SetUserShieldingKey(cmd) => cmd.run(cli),
-			BaseCli::CreateIdentity(cmd) => cmd.run(cli),
+			BaseCommand::SetUserShieldingKey(cmd) => cmd.run(cli),
+			BaseCommand::CreateIdentity(cmd) => cmd.run(cli),
 		}
 	}
 }

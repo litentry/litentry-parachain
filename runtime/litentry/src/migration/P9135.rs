@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 #![allow(deprecated)]
+#![allow(clippy::type_complexity)]
 use frame_support::{
 	storage,
 	traits::{Get, OnRuntimeUpgrade},
@@ -22,7 +23,7 @@ use pallet_parachain_staking::{
 	AtStake, BalanceOf, BondWithAutoCompound, CollatorSnapshot, Round, RoundIndex,
 };
 use sp_runtime::Percent;
-use sp_std::{marker::PhantomData, vec, vec::Vec};
+use sp_std::{marker::PhantomData, prelude::*, vec::Vec};
 
 use codec::{Decode, Encode};
 extern crate alloc;
@@ -30,6 +31,8 @@ extern crate alloc;
 use alloc::{format, string::ToString};
 #[cfg(feature = "try-runtime")]
 use scale_info::prelude::string::String;
+#[cfg(feature = "try-runtime")]
+use sp_std::{collections::btree_map::BTreeMap, vec};
 
 mod deprecated {
 	use super::*;
@@ -102,7 +105,6 @@ where
 	fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
 		let mut num_to_update = 0u32;
 		let mut rounds_candidates: Vec<(RoundIndex, T::AccountId)> = vec![];
-		use sp_std::collections::btree_map::BTreeMap;
 		let mut state_map: BTreeMap<String, String> = BTreeMap::new();
 
 		for (round, candidate, key) in Self::unpaid_rounds_keys() {
@@ -110,16 +112,14 @@ where
 				storage::unhashed::get(&key).expect("unable to decode value");
 
 			num_to_update = num_to_update.saturating_add(1);
-			rounds_candidates.push((round.clone(), candidate.clone()));
+			rounds_candidates.push((round, candidate.clone()));
 			let mut delegation_str = vec![];
 			for d in state.delegations {
-				delegation_str.push(format!(
-					"owner={:?}_amount={:?}_autoCompound=0%",
-					d.owner, d.amount
-				));
+				delegation_str
+					.push(format!("owner={:?}_amount={:?}_autoCompound=0%", d.owner, d.amount));
 			}
 			state_map.insert(
-				(&*format!("round_{:?}_candidate_{:?}", round, candidate)).to_string(),
+				(*format!("round_{:?}_candidate_{:?}", round, candidate)).to_string(),
 				format!(
 					"bond={:?}_total={:?}_delegations={:?}",
 					state.bond, state.total, delegation_str
@@ -168,8 +168,6 @@ where
 
 	#[cfg(feature = "try-runtime")]
 	fn post_upgrade(state: Vec<u8>) -> Result<(), &'static str> {
-		use sp_std::collections::btree_map::BTreeMap;
-
 		let (state_map, rounds_candidates_received, num_updated_received): (
 			BTreeMap<String, String>,
 			Vec<(RoundIndex, T::AccountId)>,
@@ -179,9 +177,9 @@ where
 		let mut num_updated = 0u32;
 		let mut rounds_candidates = vec![];
 		for (round, candidate, _) in Self::unpaid_rounds_keys() {
-			let state = <AtStake<T>>::get(&round, &candidate);
+			let state = <AtStake<T>>::get(round, &candidate);
 			num_updated = num_updated.saturating_add(1);
-			rounds_candidates.push((round.clone(), candidate.clone()));
+			rounds_candidates.push((round, candidate.clone()));
 			let mut delegation_str = vec![];
 			for d in state.delegations {
 				delegation_str.push(format!(
@@ -195,7 +193,7 @@ where
 					state.bond, state.total, delegation_str
 				)),
 				state_map
-					.get(&((&*format!("round_{:?}_candidate_{:?}", round, candidate)).to_string())),
+					.get(&((*format!("round_{:?}_candidate_{:?}", round, candidate)).to_string())),
 				"incorrect delegations migration for round_{:?}_candidate_{:?}",
 				round,
 				candidate,

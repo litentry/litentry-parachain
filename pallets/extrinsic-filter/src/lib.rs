@@ -175,6 +175,7 @@ pub mod pallet {
 		/// See the test `set_mode_should_not_clear_blocked_extrinsics()`
 		///
 		/// Weights should be 2 DB writes: 1 for mode and 1 for event
+		#[pallet::call_index(0)]
 		#[pallet::weight(2 * T::DbWeight::get().write)]
 		pub fn set_mode(origin: OriginFor<T>, mode: OperationalMode) -> DispatchResultWithPostInfo {
 			T::UpdateOrigin::ensure_origin(origin)?;
@@ -191,6 +192,7 @@ pub mod pallet {
 		/// block the given extrinsics
 		/// (pallet_name_bytes, function_name_bytes) can uniquely identify an extrinsic
 		/// if function_name_bytes is None, all extrinsics in `pallet_name_bytes` will be blocked
+		#[pallet::call_index(1)]
 		#[pallet::weight(10_000)]
 		#[transactional]
 		pub fn block_extrinsics(
@@ -228,6 +230,7 @@ pub mod pallet {
 		/// unblock the given extrinsics
 		/// (pallet_name_bytes, function_name_bytes) can uniquely identify an extrinsic
 		/// if function_name_bytes is None, all extrinsics in `pallet_name_bytes` will be unblocked
+		#[pallet::call_index(2)]
 		#[pallet::weight(10_000)]
 		#[transactional]
 		pub fn unblock_extrinsics(
