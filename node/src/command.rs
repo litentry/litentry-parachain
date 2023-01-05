@@ -32,10 +32,7 @@ use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
 	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
 };
-use sc_service::{
-	config::{BasePath, PrometheusConfig},
-	TaskManager,
-};
+use sc_service::config::{BasePath, PrometheusConfig};
 use sp_core::{hexdisplay::HexDisplay, Encode};
 use sp_runtime::traits::AccountIdConversion;
 use std::net::SocketAddr;
@@ -421,38 +418,49 @@ pub fn run() -> Result<()> {
 				_ => Err("Benchmarking sub-command unsupported".into()),
 			}
 		},
+		#[cfg(feature = "try-runtime")]
 		Some(Subcommand::TryRuntime(cmd)) => {
-			if cfg!(feature = "try-runtime") {
-				let runner = cli.create_runner(cmd)?;
+			let runner = cli.create_runner(cmd)?;
 
-				// grab the task manager.
-				let registry = &runner.config().prometheus_config.as_ref().map(|cfg| &cfg.registry);
-				let task_manager =
-					TaskManager::new(runner.config().tokio_handle.clone(), *registry)
-						.map_err(|e| format!("Error: {:?}", e))?;
+			// grab the task manager.
+			let registry = &runner.config().prometheus_config.as_ref().map(|cfg| &cfg.registry);
+			let task_manager =
+				sc_service::TaskManager::new(runner.config().tokio_handle.clone(), *registry)
+					.map_err(|e| format!("Error: {:?}", e))?;
+			use sc_executor::{sp_wasm_interface::ExtendedHostFunctions, NativeExecutionDispatch};
+			type HostFunctionsOf<E> = ExtendedHostFunctions<
+				sp_io::SubstrateHostFunctions,
+				<E as NativeExecutionDispatch>::ExtendHostFunctions,
+			>;
 
-				if runner.config().chain_spec.is_litmus() {
-					runner.async_run(|config| {
-						Ok((cmd.run::<Block, LitmusParachainRuntimeExecutor>(config), task_manager))
-					})
-				} else if runner.config().chain_spec.is_litentry() {
-					runner.async_run(|config| {
-						Ok((
-							cmd.run::<Block, LitentryParachainRuntimeExecutor>(config),
-							task_manager,
-						))
-					})
-				} else if runner.config().chain_spec.is_rococo() {
-					runner.async_run(|config| {
-						Ok((cmd.run::<Block, RococoParachainRuntimeExecutor>(config), task_manager))
-					})
-				} else {
-					Err(UNSUPPORTED_CHAIN_MESSAGE.into())
-				}
+			if runner.config().chain_spec.is_litmus() {
+				runner.async_run(|_| {
+					Ok((
+						cmd.run::<Block, HostFunctionsOf<LitmusParachainRuntimeExecutor>>(),
+						task_manager,
+					))
+				})
+			} else if runner.config().chain_spec.is_litentry() {
+				runner.async_run(|_| {
+					Ok((
+						cmd.run::<Block, HostFunctionsOf<LitentryParachainRuntimeExecutor>>(),
+						task_manager,
+					))
+				})
+			} else if runner.config().chain_spec.is_rococo() {
+				runner.async_run(|_| {
+					Ok((
+						cmd.run::<Block, HostFunctionsOf<RococoParachainRuntimeExecutor>>(),
+						task_manager,
+					))
+				})
 			} else {
-				Err("Try-runtime must be enabled by `--features try-runtime`.".into())
+				Err(UNSUPPORTED_CHAIN_MESSAGE.into())
 			}
 		},
+		#[cfg(not(feature = "try-runtime"))]
+		Some(Subcommand::TryRuntime) =>
+			Err("Try-runtime must be enabled by `--features try-runtime`".into()),
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 			let collator_options = cli.run.collator_options();
@@ -505,7 +513,7 @@ pub fn run() -> Result<()> {
 				info!("Parachain genesis state: {}", genesis_state);
 				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
 
-				if collator_options.relay_chain_rpc_url.is_some() && !cli.relay_chain_args.is_empty() {
+				if !collator_options.relay_chain_rpc_urls.is_empty() && !cli.relay_chain_args.is_empty() {
 					warn!("Detected relay chain node arguments together with --relay-chain-rpc-url. This command starts a minimal Polkadot node that only uses a network-related subset of all relay chain CLI options.");
 				}
 				if config.chain_spec.is_litmus() {

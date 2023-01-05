@@ -80,6 +80,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// The integritee worker calls this function for every imported sidechain_block.
+		#[pallet::call_index(0)]
 		#[pallet::weight((<T as Config>::WeightInfo::confirm_imported_sidechain_block(), DispatchClass::Normal, Pays::Yes))]
 		pub fn confirm_imported_sidechain_block(
 			origin: OriginFor<T>,

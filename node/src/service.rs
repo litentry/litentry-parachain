@@ -19,7 +19,9 @@
 
 use cumulus_client_cli::CollatorOptions;
 use cumulus_client_consensus_aura::{AuraConsensus, BuildAuraConsensusParams, SlotProportion};
-use cumulus_client_consensus_common::ParachainConsensus;
+use cumulus_client_consensus_common::{
+	ParachainBlockImport as TParachainBlockImport, ParachainConsensus,
+};
 use cumulus_client_network::BlockAnnounceValidator;
 use cumulus_client_service::{
 	prepare_node_config, start_collator, start_full_node, StartCollatorParams, StartFullNodeParams,
@@ -37,7 +39,7 @@ use polkadot_service::CollatorPair;
 use crate::{rpc, standalone_block_import::StandaloneBlockImport};
 pub use core_primitives::{AccountId, Balance, Block, Hash, Header, Index as Nonce};
 
-use sc_consensus::LongestChain;
+use sc_consensus::{ImportQueue, LongestChain};
 use sc_consensus_aura::StartAuraParams;
 use sc_executor::WasmExecutor;
 use sc_network::NetworkService;
@@ -110,6 +112,9 @@ type ParachainBackend = TFullBackend<Block>;
 
 type MaybeSelectChain = Option<LongestChain<ParachainBackend, Block>>;
 
+type ParachainBlockImport<RuntimeApi> =
+	TParachainBlockImport<Block, Arc<ParachainClient<RuntimeApi>>, ParachainBackend>;
+
 /// Starts a `ServiceBuilder` for a full service.
 ///
 /// Use this macro if you don't actually need the full service, but just the builder in order to
@@ -125,7 +130,7 @@ pub fn new_partial<RuntimeApi, BIQ>(
 		MaybeSelectChain,
 		sc_consensus::DefaultImportQueue<Block, ParachainClient<RuntimeApi>>,
 		sc_transaction_pool::FullPool<Block, ParachainClient<RuntimeApi>>,
-		(Option<Telemetry>, Option<TelemetryWorkerHandle>),
+		(ParachainBlockImport<RuntimeApi>, Option<Telemetry>, Option<TelemetryWorkerHandle>),
 	>,
 	sc_service::Error,
 >
@@ -142,6 +147,7 @@ where
 	sc_client_api::StateBackendFor<ParachainBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
 	BIQ: FnOnce(
 		Arc<ParachainClient<RuntimeApi>>,
+		ParachainBlockImport<RuntimeApi>,
 		&Configuration,
 		Option<TelemetryHandle>,
 		&TaskManager,
@@ -195,8 +201,11 @@ where
 
 	let select_chain = if is_standalone { Some(LongestChain::new(backend.clone())) } else { None };
 
+	let block_import = ParachainBlockImport::new(client.clone(), backend.clone());
+
 	let import_queue = build_import_queue(
 		client.clone(),
+		block_import.clone(),
 		config,
 		telemetry.as_ref().map(|telemetry| telemetry.handle()),
 		&task_manager,
@@ -211,7 +220,7 @@ where
 		task_manager,
 		transaction_pool,
 		select_chain,
-		other: (telemetry, telemetry_worker_handle),
+		other: (block_import, telemetry, telemetry_worker_handle),
 	};
 
 	Ok(params)
@@ -225,16 +234,21 @@ async fn build_relay_chain_interface(
 	collator_options: CollatorOptions,
 	hwbench: Option<sc_sysinfo::HwBench>,
 ) -> RelayChainResult<(Arc<(dyn RelayChainInterface + 'static)>, Option<CollatorPair>)> {
-	match collator_options.relay_chain_rpc_url {
-		Some(relay_chain_url) =>
-			build_minimal_relay_chain_node(polkadot_config, task_manager, relay_chain_url).await,
-		None => build_inprocess_relay_chain(
+	if !collator_options.relay_chain_rpc_urls.is_empty() {
+		build_minimal_relay_chain_node(
+			polkadot_config,
+			task_manager,
+			collator_options.relay_chain_rpc_urls,
+		)
+		.await
+	} else {
+		build_inprocess_relay_chain(
 			polkadot_config,
 			parachain_config,
 			telemetry_worker_handle,
 			task_manager,
 			hwbench,
-		),
+		)
 	}
 }
 
@@ -271,6 +285,7 @@ where
 		+ 'static,
 	BIQ: FnOnce(
 			Arc<ParachainClient<RuntimeApi>>,
+			ParachainBlockImport<RuntimeApi>,
 			&Configuration,
 			Option<TelemetryHandle>,
 			&TaskManager,
@@ -281,6 +296,7 @@ where
 		> + 'static,
 	BIC: FnOnce(
 		Arc<ParachainClient<RuntimeApi>>,
+		ParachainBlockImport<RuntimeApi>,
 		Option<&Registry>,
 		Option<TelemetryHandle>,
 		&TaskManager,
@@ -294,7 +310,7 @@ where
 	let parachain_config = prepare_node_config(parachain_config);
 
 	let params = new_partial::<RuntimeApi, BIQ>(&parachain_config, false, build_import_queue)?;
-	let (mut telemetry, telemetry_worker_handle) = params.other;
+	let (block_import, mut telemetry, telemetry_worker_handle) = params.other;
 
 	let client = params.client.clone();
 	let backend = params.backend.clone();
@@ -320,14 +336,14 @@ where
 	let validator = parachain_config.role.is_authority();
 	let prometheus_registry = parachain_config.prometheus_registry().cloned();
 	let transaction_pool = params.transaction_pool.clone();
-	let import_queue = cumulus_client_service::SharedImportQueue::new(params.import_queue);
+	let import_queue_service = params.import_queue.service();
 	let (network, system_rpc_tx, tx_handler_controller, start_network) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
 			config: &parachain_config,
 			client: client.clone(),
 			transaction_pool: transaction_pool.clone(),
 			spawn_handle: task_manager.spawn_handle(),
-			import_queue: import_queue.clone(),
+			import_queue: params.import_queue,
 			block_announce_validator_builder: Some(Box::new(|_| {
 				Box::new(block_announce_validator)
 			})),
@@ -386,6 +402,7 @@ where
 	if validator {
 		let parachain_consensus = build_consensus(
 			client.clone(),
+			block_import,
 			prometheus_registry.as_ref(),
 			telemetry.as_ref().map(|t| t.handle()),
 			&task_manager,
@@ -407,7 +424,7 @@ where
 			relay_chain_interface: relay_chain_interface.clone(),
 			spawner,
 			parachain_consensus,
-			import_queue,
+			import_queue: import_queue_service,
 			collator_key: collator_key.expect("Command line arguments do not allow this. qed"),
 			relay_chain_slot_duration,
 		};
@@ -421,7 +438,7 @@ where
 			para_id: id,
 			relay_chain_interface,
 			relay_chain_slot_duration,
-			import_queue,
+			import_queue: import_queue_service,
 		};
 
 		start_full_node(params)?;
@@ -464,6 +481,7 @@ where
 		|_| Ok(RpcModule::new(())),
 		build_import_queue::<RuntimeApi>,
 		|client,
+		 block_import,
 		 prometheus_registry,
 		 telemetry,
 		 task_manager,
@@ -481,7 +499,6 @@ where
 				prometheus_registry,
 				telemetry.clone(),
 			);
-
 			Ok(AuraConsensus::build::<sp_consensus_aura::sr25519::AuthorityPair, _, _, _, _, _, _>(
 				BuildAuraConsensusParams {
 					proposer_factory,
@@ -513,7 +530,7 @@ where
 							Ok((slot, timestamp, parachain_inherent))
 						}
 					},
-					block_import: client.clone(),
+					block_import,
 					para_client: client,
 					backoff_authoring_blocks: Option::<()>::None,
 					sync_oracle,
@@ -536,6 +553,7 @@ where
 /// Build the import queue for the litmus/litentry/rococo runtime.
 pub fn build_import_queue<RuntimeApi>(
 	client: Arc<ParachainClient<RuntimeApi>>,
+	block_import: ParachainBlockImport<RuntimeApi>,
 	config: &Configuration,
 	telemetry: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
@@ -564,7 +582,7 @@ where
 
 		sc_consensus_aura::import_queue::<sp_consensus_aura::sr25519::AuthorityPair, _, _, _, _, _>(
 			sc_consensus_aura::ImportQueueParams {
-				block_import: client.clone(),
+				block_import,
 				justification_import: None,
 				client,
 				create_inherent_data_providers: move |block: Hash, ()| {
@@ -605,6 +623,7 @@ where
 				registry: config.prometheus_registry(),
 				check_for_equivocation: Default::default(),
 				telemetry,
+				compatibility_mode: Default::default(),
 			},
 		)
 		.map_err(Into::into)
@@ -619,7 +638,7 @@ where
 			_,
 			_,
 		>(cumulus_client_consensus_aura::ImportQueueParams {
-			block_import: client.clone(),
+			block_import,
 			client,
 			create_inherent_data_providers: move |_, _| async move {
 				let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
@@ -668,7 +687,7 @@ where
 		keystore_container,
 		select_chain: maybe_select_chain,
 		transaction_pool,
-		other: (_, _),
+		other: (_, _, _),
 	} = new_partial::<RuntimeApi, _>(&config, true, build_import_queue::<RuntimeApi>)?;
 
 	let (network, system_rpc_tx, tx_handler_controller, start_network) =
@@ -763,6 +782,7 @@ where
 			// And a maximum of 750ms if slots are skipped
 			max_block_proposal_slot_portion: Some(SlotProportion::new(1f32 / 16f32)),
 			telemetry: None,
+			compatibility_mode: Default::default(),
 		})?;
 
 		// the AURA authoring task is considered essential, i.e. if it

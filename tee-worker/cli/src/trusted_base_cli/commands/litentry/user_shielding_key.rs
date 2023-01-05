@@ -15,7 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	trusted_command_utils::get_pair_from_str, trusted_commands::TrustedArgs,
+	trusted_cli::TrustedCli, trusted_command_utils::get_pair_from_str,
 	trusted_operation::perform_trusted_operation, Cli,
 };
 use codec::Decode;
@@ -31,12 +31,12 @@ pub struct UserShiledingKeyCommand {
 }
 
 impl UserShiledingKeyCommand {
-	pub(crate) fn run(&self, cli: &Cli, trusted_args: &TrustedArgs) {
-		let who = get_pair_from_str(trusted_args, &self.account);
+	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) {
+		let who = get_pair_from_str(trusted_cli, &self.account);
 		let top: TrustedOperation = TrustedGetter::user_shielding_key(who.public().into())
 			.sign(&KeyPair::Sr25519(Box::new(who)))
 			.into();
-		let key = perform_trusted_operation(cli, trusted_args, &top)
+		let key = perform_trusted_operation(cli, trusted_cli, &top)
 			.and_then(|v| UserShieldingKeyType::decode(&mut v.as_slice()).ok());
 		println!("{}", hex::encode(key.unwrap()));
 	}
