@@ -311,7 +311,7 @@ pub fn setup_verify_polkadot_identity(
 	let encrypted_identity = tee_encrypt(identity.encode().as_slice());
 	let code = IdentityManagementMock::challenge_codes(&who, &identity).unwrap();
 	let validation_data = if let Identity::Substrate { .. } = &identity {
-		create_mock_polkadot_validation_data(who, p, code)
+		create_mock_polkadot_validation_data(who, p, code, false)
 	} else {
 		panic!("unxpected network")
 	};
