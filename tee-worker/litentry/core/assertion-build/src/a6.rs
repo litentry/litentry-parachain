@@ -36,9 +36,9 @@ pub fn build(identities: Vec<Identity>) -> Result<(), Error> {
 	let mut client = TwitterOfficialClient::new();
 	let mut sum: u32 = 0;
 	for identity in identities {
-		if let Identity::Web2(id) = identity {
-			if matches!(id.network, Web2Network::Twitter) {
-				let twitter_id = id.address.to_vec();
+		if let Identity::Web2 { network, address } = identity {
+			if matches!(network, Web2Network::Twitter) {
+				let twitter_id = address.to_vec();
 				match client.query_user(twitter_id) {
 					Ok(user) => sum += user.public_metrics.followers_count,
 					Err(e) => log::warn!("Assertion6 request error:{:?}", e),

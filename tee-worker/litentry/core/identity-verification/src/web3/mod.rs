@@ -54,8 +54,8 @@ fn verify_substrate_signature(
 	let wrapped_msg = get_expected_wrapped_message(raw_msg.clone());
 
 	ensure!(raw_msg.as_slice() == validation_data.message.as_slice(), Error::UnexpectedMessage);
-	let substrate_address = if let Identity::Substrate{address, ..} = identity {
-		address
+	let substrate_address = if let Identity::Substrate { address, .. } = identity {
+		address.as_ref()
 	} else {
 		return Err(Error::InvalidIdentity)
 	};
@@ -111,8 +111,8 @@ fn verify_evm_signature(
 ) -> Result<()> {
 	let msg = get_expected_raw_message(who, identity, code);
 	let digest = compute_evm_msg_digest(&msg);
-	let evm_address = if let Identity::Evm(evm) = identity {
-		&evm.address
+	let evm_address = if let Identity::Evm { address, .. } = identity {
+		address
 	} else {
 		return Err(Error::InvalidIdentity)
 	};

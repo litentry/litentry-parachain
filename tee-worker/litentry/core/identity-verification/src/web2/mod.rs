@@ -111,8 +111,8 @@ pub fn verify(request: Web2IdentityVerificationRequest) -> Result<()> {
 	}?;
 
 	// the user_id must match, is it case sensitive?
-	let handle = if let Identity::Web2(ref web2) = request.identity {
-		std::str::from_utf8(web2.address.as_slice())
+	let handle = if let Identity::Web2 { ref address, .. } = request.identity {
+		std::str::from_utf8(address.as_slice())
 			.map_err(|_| Error::OtherError("convert IdentityHandle error".to_string()))
 	} else {
 		Err(Error::InvalidIdentity)

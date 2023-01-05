@@ -599,8 +599,8 @@ pub mod pallet {
 				raw_msg.as_slice() == validation_data.message.as_slice(),
 				Error::<T>::UnexpectedMessage
 			);
-			let substrate_address = if let Identity::Substrate(id) = identity {
-				id.address
+			let substrate_address = if let Identity::Substrate { address, .. } = identity {
+				address.as_ref()
 			} else {
 				return Err(Error::<T>::WrongIdentityType.into())
 			};
@@ -660,8 +660,8 @@ pub mod pallet {
 			if let IdentityMultiSignature::Ethereum(sig) = &validation_data.signature {
 				let recovered_evm_address = Self::recover_evm_address(&digest, sig.as_ref())
 					.map_err(|_| Error::<T>::RecoverEvmAddressFailed)?;
-				let evm_address = if let Identity::Evm(id) = identity {
-					id.address
+				let evm_address = if let Identity::Evm { address, .. } = identity {
+					address
 				} else {
 					return Err(Error::<T>::WrongIdentityType.into())
 				};

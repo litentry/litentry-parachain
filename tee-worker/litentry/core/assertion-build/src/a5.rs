@@ -38,9 +38,9 @@ pub fn build(
 	let mut twitter_litentry_client = TwitterLitentryClient::new();
 	let mut twitter_official_client = TwitterOfficialClient::new();
 	for identity in identities {
-		if let Identity::Web2(id) = identity {
-			if matches!(id.network, Web2Network::Twitter) {
-				let twitter_id = id.address.to_vec();
+		if let Identity::Web2 { network, address } = identity {
+			if matches!(network, Web2Network::Twitter) {
+				let twitter_id = address.to_vec();
 				match twitter_litentry_client
 					.check_follow(twitter_id.clone(), twitter_account.to_vec())
 				{

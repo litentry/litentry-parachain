@@ -21,7 +21,7 @@ use frame_support::{
 };
 use frame_system as system;
 use frame_system::EnsureSignedBy;
-use litentry_primitives::{Identity, SubstrateIdentity, SubstrateNetwork};
+use litentry_primitives::{Identity, SubstrateNetwork};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -104,7 +104,7 @@ const ALICE_KEY: &str = "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a568
 pub fn alice_web3_identity() -> Identity {
 	let alice_key_hex: [u8; 32] =
 		hex::decode(ALICE_KEY.strip_prefix("0x").unwrap()).unwrap().try_into().unwrap();
-	SubstrateIdentity { network: SubstrateNetwork::Polkadot, address: alice_key_hex.into() }.into()
+	Identity::Substrate { network: SubstrateNetwork::Polkadot, address: alice_key_hex.into() }
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {

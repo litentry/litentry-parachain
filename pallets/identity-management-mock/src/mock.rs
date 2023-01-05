@@ -37,7 +37,6 @@ pub use mock_tee_primitives::{
 	SubstrateNetwork, TwitterValidationData, UserShieldingKeyType, ValidationData, Web2Network,
 	Web2ValidationData, Web3CommonValidationData, Web3ValidationData,
 };
-use mock_tee_primitives::{EvmIdentity, SubstrateIdentity, Web2Identity};
 pub use parity_crypto::publickey::{sign, Generator, KeyPair as EvmPair, Message, Random};
 use sp_core::sr25519::Pair as SubstratePair; // TODO: maybe use more generic struct
 use sp_core::{Pair, H256};
@@ -144,15 +143,15 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 pub fn create_mock_twitter_identity(twitter_handle: &[u8]) -> Identity {
 	let address =
 		IdentityString::try_from(twitter_handle.to_vec()).expect("convert to BoundedVec failed");
-	Web2Identity { network: Web2Network::Twitter, address }.into()
+	Identity::Web2 { network: Web2Network::Twitter, address }
 }
 
 pub fn create_mock_polkadot_identity(address: [u8; 32]) -> Identity {
-	SubstrateIdentity { network: SubstrateNetwork::Polkadot, address: address.into() }.into()
+	Identity::Substrate { network: SubstrateNetwork::Polkadot, address: address.into() }
 }
 
 pub fn create_mock_eth_identity(address: [u8; 20]) -> Identity {
-	EvmIdentity { network: EvmNetwork::Ethereum, address: address.into() }.into()
+	Identity::Evm { network: EvmNetwork::Ethereum, address: address.into() }
 }
 
 pub fn create_mock_twitter_validation_data() -> ValidationData {
@@ -278,8 +277,8 @@ pub fn setup_verify_twitter_identity(
 ) {
 	setup_create_identity(who, identity.clone(), bn);
 	let encrypted_identity = tee_encrypt(identity.encode().as_slice());
-	let validation_data = if let Identity::Web2(id) = identity {
-		match id.network {
+	let validation_data = if let Identity::Web2 { network, address } = identity {
+		match network {
 			Web2Network::Twitter => create_mock_twitter_validation_data(),
 			_ => panic!("unexpected network, expect twitter network"),
 		}
@@ -311,7 +310,7 @@ pub fn setup_verify_polkadot_identity(
 	setup_create_identity(who, identity.clone(), bn);
 	let encrypted_identity = tee_encrypt(identity.encode().as_slice());
 	let code = IdentityManagementMock::challenge_codes(&who, &identity).unwrap();
-	let validation_data = if let Identity::Substrate(_) = &identity {
+	let validation_data = if let Identity::Substrate { .. } = &identity {
 		create_mock_polkadot_validation_data(who, p, code)
 	} else {
 		panic!("unxpected network")
@@ -340,7 +339,7 @@ pub fn setup_verify_eth_identity(
 	setup_create_identity(who, identity.clone(), bn);
 	let encrypted_identity = tee_encrypt(identity.encode().as_slice());
 	let code = IdentityManagementMock::challenge_codes(&who, &identity).unwrap();
-	let validation_data = if let Identity::Evm(_) = identity {
+	let validation_data = if let Identity::Evm { .. } = identity {
 		create_mock_eth_validation_data(who, p, code)
 	} else {
 		panic!("unexpected network, expect Evm")

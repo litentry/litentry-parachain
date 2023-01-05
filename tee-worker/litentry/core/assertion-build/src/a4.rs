@@ -47,36 +47,37 @@ pub fn build(
 	let mut client = GraphQLClient::new();
 
 	for identity in identities.iter() {
-		let mut network = VerifiedCredentialsNetwork::Polkadot;
+		let mut verified_network = VerifiedCredentialsNetwork::Polkadot;
 		if identity.is_web3() {
 			match identity {
-				Identity::Substrate(id) => network = id.network.into(),
-				Identity::Evm(id) => network = id.network.into(),
+				Identity::Substrate { network, .. } => verified_network = (*network).into(),
+				Identity::Evm { network, .. } => verified_network = (*network).into(),
 				_ => {},
 			}
 		}
 		if matches!(
-			network,
+			verified_network,
 			VerifiedCredentialsNetwork::Litentry
 				| VerifiedCredentialsNetwork::Litmus
 				| VerifiedCredentialsNetwork::Ethereum
 		) {
 			let mut addresses: Vec<String> = vec![];
 			match &identity {
-				Identity::Evm(id) =>
-					addresses.push(from_utf8(id.address.as_ref()).unwrap().to_string()),
-				Identity::Substrate(id) =>
-					addresses.push(from_utf8(id.address.as_ref()).unwrap().to_string()),
-				Identity::Web2(id) => addresses.push(from_utf8(&id.address).unwrap().to_string()),
+				Identity::Evm { address, .. } =>
+					addresses.push(from_utf8(address.as_ref()).unwrap().to_string()),
+				Identity::Substrate { address, .. } =>
+					addresses.push(from_utf8(address.as_ref()).unwrap().to_string()),
+				Identity::Web2 { address, .. } =>
+					addresses.push(from_utf8(&address).unwrap().to_string()),
 			}
 			let mut tmp_token_addr = String::from("");
-			if network == VerifiedCredentialsNetwork::Ethereum {
+			if verified_network == VerifiedCredentialsNetwork::Ethereum {
 				tmp_token_addr = LIT_TOKEN_ADDRESS.to_string();
 			}
 			let credentials = VerifiedCredentialsIsHodlerIn {
 				addresses,
 				from_date: from_date.clone(),
-				network,
+				network: verified_network,
 				token_address: tmp_token_addr,
 				min_balance,
 			};

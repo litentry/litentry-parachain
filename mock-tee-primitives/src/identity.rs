@@ -14,7 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+#[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "std")]
 use sp_core::hexdisplay::HexDisplay;
 
 use codec::{Decode, Encode, MaxEncodedLen};
@@ -81,83 +83,38 @@ pub enum Web2Network {
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct SubstrateIdentity {
-	pub network: SubstrateNetwork,
-	pub address: Address32,
-}
-
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct EvmIdentity {
-	pub network: EvmNetwork,
-	pub address: Address20,
-}
-
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct Web2Identity {
-	pub network: Web2Network,
-	pub address: IdentityString,
-}
-
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum Identity {
-	Substrate(SubstrateIdentity),
-	Evm(EvmIdentity),
-	Web2(Web2Identity),
-}
-
-impl From<SubstrateIdentity> for Identity {
-	fn from(id: SubstrateIdentity) -> Self {
-		Self::Substrate(id)
-	}
-}
-
-impl From<EvmIdentity> for Identity {
-	fn from(id: EvmIdentity) -> Self {
-		Self::Evm(id)
-	}
-}
-
-impl From<Web2Identity> for Identity {
-	fn from(id: Web2Identity) -> Self {
-		Self::Web2(id)
-	}
+	Substrate { network: SubstrateNetwork, address: Address32 },
+	Evm { network: EvmNetwork, address: Address20 },
+	Web2 { network: Web2Network, address: IdentityString },
 }
 
 impl Identity {
-	#[cfg(any(feature = "std", feature = "sgx"))]
+	#[cfg(feature = "std")]
 	pub fn flat(&self) -> Vec<u8> {
 		match &self {
-			Identity::Substrate(identity) => {
-				let mut data = format!("did:{:?}:web3:substrate:", identity.network)
+			Identity::Substrate { network, address } => {
+				let mut data = format!("did:{:?}:web3:substrate:", network)
 					.to_ascii_lowercase()
 					.as_bytes()
 					.to_vec();
-				let mut suffix = format!("0x{}", HexDisplay::from(identity.address.as_ref()))
-					.as_bytes()
-					.to_vec();
+				let mut suffix =
+					format!("0x{}", HexDisplay::from(address.as_ref())).as_bytes().to_vec();
 				data.append(&mut suffix);
 				data
 			},
-			Identity::Evm(identity) => {
-				let mut data = format!("did:{:?}:web3:evm:", identity.network)
-					.to_ascii_lowercase()
-					.as_bytes()
-					.to_vec();
-				let mut suffix = format!("0x{}", HexDisplay::from(identity.address.as_ref()))
-					.as_bytes()
-					.to_vec();
+			Identity::Evm { network, address } => {
+				let mut data =
+					format!("did:{:?}:web3:evm:", network).to_ascii_lowercase().as_bytes().to_vec();
+				let mut suffix =
+					format!("0x{}", HexDisplay::from(address.as_ref())).as_bytes().to_vec();
 				data.append(&mut suffix);
 				data
 			},
-			Identity::Web2(identity) => {
-				let mut data = format!("did:{:?}:web2:_:", identity.network)
-					.to_ascii_lowercase()
-					.as_bytes()
-					.to_vec();
-				let mut suffix = identity.address.to_vec();
+			Identity::Web2 { network, address } => {
+				let mut data =
+					format!("did:{:?}:web2:_:", network).to_ascii_lowercase().as_bytes().to_vec();
+				let mut suffix = address.to_vec();
 				data.append(&mut suffix);
 				data
 			},
@@ -165,36 +122,32 @@ impl Identity {
 	}
 
 	pub fn is_web2(&self) -> bool {
-		matches!(self, Identity::Web2(_))
+		matches!(self, Identity::Web2 { .. })
 	}
 
 	pub fn is_web3(&self) -> bool {
-		matches!(self, Identity::Evm(_) | Identity::Substrate(_))
+		matches!(self, Identity::Evm { .. } | Identity::Substrate { .. })
 	}
 }
 
 #[cfg(test)]
 mod tests {
-	use crate::{
-		Identity, IdentityString, SubstrateIdentity, SubstrateNetwork, Web2Identity, Web2Network,
-	};
+	use crate::{Identity, IdentityString, SubstrateNetwork, Web2Network};
 	use sp_core::Pair;
 
 	#[test]
 	fn identity() {
 		let sub_pair = sp_core::sr25519::Pair::from_string("//Alice", None).unwrap();
 		// let eth_pair = sp_core::ed25519::Pair::from_string("//Alice", None).unwrap();
-		let polkadot_identity: Identity = SubstrateIdentity {
+		let polkadot_identity: Identity = Identity::Substrate {
 			network: SubstrateNetwork::Polkadot,
 			address: sub_pair.public().0.into(),
-		}
-		.into();
+		};
 
-		let twitter_identity: Identity = Web2Identity {
+		let twitter_identity: Identity = Identity::Web2 {
 			network: Web2Network::Twitter,
 			address: IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
-		}
-		.into();
+		};
 
 		assert_eq!(
 			"did:polkadot:web3:substrate:0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",

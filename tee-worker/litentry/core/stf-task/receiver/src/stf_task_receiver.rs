@@ -90,8 +90,8 @@ where
 				},
 				Assertion::A2(guild_id, handler) => {
 					for identity in request.vec_identity {
-						if let Identity::Web2(id) = identity {
-							if matches!(id.network, Web2Network::Discord) {
+						if let Identity::Web2 { network, .. } = identity {
+							if matches!(network, Web2Network::Discord) {
 								if let Err(e) =
 									lc_assertion_build::a2::build(guild_id.clone(), handler.clone())
 								{
@@ -106,8 +106,8 @@ where
 				},
 				Assertion::A3(guild_id, handler) => {
 					for identity in request.vec_identity {
-						if let Identity::Web2(id) = identity {
-							if matches!(id.network, Web2Network::Discord) {
+						if let Identity::Web2 { network, .. } = identity {
+							if matches!(network, Web2Network::Discord) {
 								if let Err(e) =
 									lc_assertion_build::a3::build(guild_id.clone(), handler.clone())
 								{

@@ -42,9 +42,9 @@ pub fn build(
 ) -> Result<()> {
 	let mut client = GraphQLClient::new();
 	for id in identities {
-		if let Identity::Substrate(id) = id {
-			if matches!(id.network, SubstrateNetwork::Polkadot) {
-				let address = from_utf8(id.address.as_ref()).unwrap().to_string();
+		if let Identity::Substrate { network, address } = id {
+			if matches!(network, SubstrateNetwork::Polkadot) {
+				let address = from_utf8(address.as_ref()).unwrap().to_string();
 				let addresses = vec![address];
 				let credentials = VerifiedCredentialsIsHodlerIn {
 					addresses,

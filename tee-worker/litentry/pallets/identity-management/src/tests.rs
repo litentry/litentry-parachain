@@ -19,9 +19,7 @@ use crate::{
 	UserShieldingKeyType,
 };
 use frame_support::{assert_noop, assert_ok};
-use litentry_primitives::{
-	Identity, IdentityString, Web2Identity, Web2Network, USER_SHIELDING_KEY_LEN,
-};
+use litentry_primitives::{Identity, IdentityString, Web2Network, USER_SHIELDING_KEY_LEN};
 #[test]
 fn set_user_shielding_key_works() {
 	new_test_ext().execute_with(|| {
@@ -125,10 +123,10 @@ fn get_id_graph_works() {
 		));
 		assert_ok!(IMT::verify_identity(RuntimeOrigin::signed(1), 2, alice_web3_identity(), 3));
 
-		let alice_web2_identity = Identity::Web2(Web2Identity {
+		let alice_web2_identity = Identity::Web2 {
 			network: Web2Network::Twitter,
 			address: IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
-		});
+		};
 		let metadata2: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		assert_ok!(IMT::create_identity(
 			RuntimeOrigin::signed(1),
