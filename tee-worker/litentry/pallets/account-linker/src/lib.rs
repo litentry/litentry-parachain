@@ -50,7 +50,7 @@ pub mod pallet {
 
 	use weights::WeightInfo;
 	pub const EXPIRING_BLOCK_NUMBER_MAX: u32 = 10 * 60 * 24 * 30; // 30 days for 6s per block
-pub const MAX_ETH_LINKS: usize = 3;
+	pub const MAX_ETH_LINKS: usize = 3;
 	pub const MAX_BTC_LINKS: usize = 3;
 	pub const MAX_SUB_LINKS: usize = 3;
 
