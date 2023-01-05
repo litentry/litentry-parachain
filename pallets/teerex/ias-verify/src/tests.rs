@@ -13,6 +13,7 @@ const TEST5_CERT: &[u8] = include_bytes!("../test/ra_dump_cert_TEST5.der");
 const TEST6_CERT: &[u8] = include_bytes!("../test/ra_dump_cert_TEST6.der");
 const TEST7_CERT: &[u8] = include_bytes!("../test/ra_dump_cert_TEST7.der");
 const TEST8_CERT: &[u8] = include_bytes!("../test/ra_dump_cert_TEST8_PRODUCTION.der");
+const TEST9_CERT: &[u8] = include_bytes!("../test/ra_dump_cert_TEST9_enclave_add.der");
 
 const TEST1_SIGNER_ATTN: &[u8] =
 	include_bytes!("../test/test_ra_signer_attn_MRSIGNER1_MRENCLAVE1.bin");
@@ -181,4 +182,17 @@ fn verify_sgx_build_mode_works() {
 	let report = verify_ias_report(TEST8_CERT);
 	let report = report.unwrap();
 	assert_eq!(report.build_mode, SgxBuildMode::Production);
+}
+
+#[test]
+fn parse_ias_report_works() {
+	let enclave_metadata = parse_ias_report(TEST9_CERT).unwrap();
+	assert_eq!(enclave_metadata.quote_status, SgxStatus::ConfigurationAndSwHardeningNeeded);
+
+	let spid = [220_u8, 102, 69, 18, 100, 146, 156, 242, 117, 174, 42, 236, 164, 33, 3, 41];
+	let nonce = [75_u8, 204, 66, 106, 207, 13, 55, 57, 95, 35, 64, 23, 132, 88, 148, 16];
+	let sig_rl = Vec::<u8>::new();
+	assert_eq!(enclave_metadata.quote_inputs.spid, spid);
+	assert_eq!(enclave_metadata.quote_inputs.nonce, nonce);
+	assert_eq!(enclave_metadata.quote_inputs.sig_rl, sig_rl);
 }

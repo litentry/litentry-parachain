@@ -24,13 +24,14 @@ use frame_support::{
 	traits::{Currency, ExistenceRequirement, Get, OnTimestampSet},
 };
 use frame_system::{self, ensure_signed};
+use ias_verify::{SgxEnclaveMetadata, SgxStatus};
 use sp_core::H256;
 use sp_runtime::traits::SaturatedConversion;
 use sp_std::{prelude::*, str};
 use teerex_primitives::*;
 
 #[cfg(not(feature = "skip-ias-check"))]
-use ias_verify::{verify_ias_report, SgxReport};
+use ias_verify::{parse_ias_report, verify_ias_report, SgxReport};
 
 pub use crate::weights::WeightInfo;
 use ias_verify::SgxBuildMode;
@@ -71,6 +72,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		AddedEnclave(T::AccountId, Vec<u8>),
+		AddedEnclaveMetadata(SgxStatus),
 		RemovedEnclave(T::AccountId),
 		Forwarded(ShardIdentifier),
 		ShieldFunds(Vec<u8>),
@@ -84,6 +86,11 @@ pub mod pallet {
 	#[pallet::getter(fn enclave)]
 	pub type EnclaveRegistry<T: Config> =
 		StorageMap<_, Blake2_128Concat, u64, Enclave<T::AccountId, Vec<u8>>, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn enclave_metadata)]
+	pub type EnclaveMetadataRegistry<T: Config> =
+		StorageMap<_, Blake2_128Concat, u64, SgxEnclaveMetadata, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn enclave_count)]
@@ -125,13 +132,14 @@ pub mod pallet {
 			worker_url: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			log::info!("teerex: called into runtime call register_enclave()");
+
 			let sender = ensure_signed(origin)?;
 			ensure!(ra_report.len() <= MAX_RA_REPORT_LEN, <Error<T>>::RaReportTooLong);
 			ensure!(worker_url.len() <= MAX_URL_LEN, <Error<T>>::EnclaveUrlTooLong);
 			log::info!("teerex: parameter lenght ok");
 
 			#[cfg(not(feature = "skip-ias-check"))]
-			let enclave = Self::verify_report(&sender, ra_report).map(|report| {
+			let enclave = Self::verify_report(&sender, ra_report.clone()).map(|report| {
 				Enclave::new(
 					sender.clone(),
 					report.mr_enclave,
@@ -140,6 +148,9 @@ pub mod pallet {
 					report.build_mode,
 				)
 			})?;
+
+			#[cfg(not(feature = "skip-ias-check"))]
+			let enclave_metadata = Self::parse_enclave_metadata(&sender, ra_report.clone()).unwrap();
 
 			#[cfg(not(feature = "skip-ias-check"))]
 			if !<AllowSGXDebugMode<T>>::get() && enclave.sgx_mode == SgxBuildMode::Debug {
@@ -160,8 +171,18 @@ pub mod pallet {
 				SgxBuildMode::default(),
 			);
 
+			#[cfg(feature = "skip-ias-check")]
+			let enclave_metadata = SgxEnclaveMetadata::default();
+
+			#[cfg(not(feature = "skip-ias-check"))]
+			log::info!("[teerex] enclave_metadata = {:?}", enclave_metadata);
+
 			Self::add_enclave(&sender, &enclave)?;
+			Self::add_enclave_metadata(&sender, &enclave_metadata)?;
+
 			Self::deposit_event(Event::AddedEnclave(sender, worker_url));
+			Self::deposit_event(Event::AddedEnclaveMetadata(enclave_metadata.quote_status));
+
 			Ok(().into())
 		}
 
@@ -315,6 +336,27 @@ impl<T: Config> Pallet<T> {
 		Ok(().into())
 	}
 
+	pub fn add_enclave_metadata(
+		sender: &T::AccountId,
+		enclave_metadata: &SgxEnclaveMetadata,
+	) -> DispatchResultWithPostInfo {
+		let enclave_idx = if <EnclaveIndex<T>>::contains_key(sender) {
+			log::info!("Updating already registered enclave");
+			<EnclaveIndex<T>>::get(sender)
+		} else {
+			let enclaves_count = Self::enclave_count()
+				.checked_add(1)
+				.ok_or("[Teerex]: Overflow adding new enclave to registry")?;
+			<EnclaveIndex<T>>::insert(sender, enclaves_count);
+			<EnclaveCount<T>>::put(enclaves_count);
+			enclaves_count
+		};
+
+		<EnclaveMetadataRegistry<T>>::insert(enclave_idx, enclave_metadata);
+
+		Ok(().into())
+	}
+
 	fn remove_enclave(sender: &T::AccountId) -> DispatchResultWithPostInfo {
 		ensure!(<EnclaveIndex<T>>::contains_key(sender), <Error<T>>::EnclaveIsNotRegistered);
 		let index_to_remove = <EnclaveIndex<T>>::take(sender);
@@ -392,6 +434,22 @@ impl<T: Config> Pallet<T> {
 
 		Self::ensure_timestamp_within_24_hours(report.timestamp)?;
 		Ok(report)
+	}
+
+	#[cfg(not(feature = "skip-ias-check"))]
+	fn parse_enclave_metadata(
+		sender: &T::AccountId,
+		ra_report: Vec<u8>,
+	) -> Result<SgxEnclaveMetadata, DispatchErrorWithPostInfo> {
+		let metadata = parse_ias_report(&ra_report)
+			.map_err(|_| <Error<T>>::RemoteAttestationVerificationFailed)?;
+
+		let enclave_signer = T::AccountId::decode(&mut &metadata.report_inputs.report_data[..])
+			.map_err(|_| <Error<T>>::EnclaveSignerDecodeError)?;
+
+		ensure!(sender == &enclave_signer, <Error<T>>::SenderIsNotAttestedEnclave);
+
+		Ok(metadata)
 	}
 
 	#[cfg(not(feature = "skip-ias-check"))]

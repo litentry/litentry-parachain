@@ -1,4 +1,4 @@
-use crate::{utils::length_from_raw_data, CertDer};
+use crate::{utils::length_from_raw_data, CertDer, SgxQuoteAdd, SgxQuoteInputs};
 use frame_support::ensure;
 use sp_std::{convert::TryFrom, prelude::Vec};
 
@@ -6,6 +6,7 @@ pub struct NetscapeComment<'a> {
 	pub attestation_raw: &'a [u8],
 	pub sig: Vec<u8>,
 	pub sig_cert: Vec<u8>,
+	pub quote_add: Option<SgxQuoteAdd>,
 }
 
 pub const NS_CMT_OID: &[u8; 11] =
@@ -36,13 +37,60 @@ impl<'a> TryFrom<CertDer<'a>> for NetscapeComment<'a> {
 			.ok_or("Index out of bounds")?
 			.split(|x| *x == 0x7C)
 			.collect::<Vec<&[u8]>>();
-		ensure!(netscape_raw.len() == 3, "Invalid netscape payload");
+		ensure!(netscape_raw.len() >= 3, "Invalid netscape payload");
 
 		let sig = base64::decode(netscape_raw[1]).map_err(|_| "Signature Decoding Error")?;
 
 		let sig_cert = base64::decode_config(netscape_raw[2], base64::STANDARD)
 			.map_err(|_| "Cert Decoding Error")?;
 
-		Ok(NetscapeComment { attestation_raw: netscape_raw[0], sig, sig_cert })
+		if netscape_raw.len() > 3 {
+			let quote_add = Self::try_quote_add(&netscape_raw)?;
+
+			return Ok(NetscapeComment {
+				attestation_raw: netscape_raw[0],
+				sig,
+				sig_cert,
+				quote_add: Some(quote_add),
+			})
+		}
+
+		Ok(NetscapeComment { attestation_raw: netscape_raw[0], sig, sig_cert, quote_add: None })
+	}
+}
+
+impl<'a> NetscapeComment<'a> {
+	pub fn try_quote_add(netscape_raw: &Vec<&[u8]>) -> Result<SgxQuoteAdd, &'static str> {
+		let spid = base64::decode_config(netscape_raw[3], base64::STANDARD)
+			.map_err(|_| "Cert Decoding Error")?;
+
+		let mut nonce = Vec::<u8>::new();
+		if netscape_raw.len() > 4 {
+			nonce = base64::decode_config(netscape_raw[4], base64::STANDARD)
+				.map_err(|_| "Cert Decoding Error")?;
+		}
+
+		let mut sig_rl = Vec::<u8>::new();
+		if netscape_raw.len() > 5 {
+			sig_rl = base64::decode_config(netscape_raw[5], base64::STANDARD)
+				.map_err(|_| "Cert Decoding Error")?;
+		}
+
+		#[cfg(test)]
+		{
+			println!("spid: {:?}", spid);
+			println!("nonce : {:?}", nonce);
+			println!("sig_rl: {:?}", sig_rl);
+		}
+
+		let mut d_spid = [0_u8; 16];
+		d_spid.copy_from_slice(&spid[..16]);
+
+		let mut d_nonce = [0_u8; 16];
+		d_nonce.copy_from_slice(&nonce[..16]);
+
+		let quote_inputs = SgxQuoteInputs { spid: d_spid, nonce: d_nonce, sig_rl };
+
+		Ok(SgxQuoteAdd { quote_inputs })
 	}
 }

@@ -14,26 +14,31 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std)]
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate sgx_tstd as std;
+use base64_sgx as base64;
 
-mod ethereum_signature;
-mod identity;
-// mod trusted_call;
-mod assertion;
-mod enclave_quote;
-mod validation_data;
+use codec::{Decode, Encode};
+use std::{string::String, vec::Vec};
 
-pub use ethereum_signature::*;
-pub use identity::*;
-pub use parentchain_primitives::{
-	AesOutput, BlockNumber as ParentchainBlockNumber, UserShieldingKeyType, MINUTES,
-	USER_SHIELDING_KEY_LEN, USER_SHIELDING_KEY_NONCE_LEN, USER_SHIELDING_KEY_TAG_LEN,
-};
-// pub use trusted_call::*;
-pub use assertion::*;
-pub use enclave_quote::*;
-pub use validation_data::*;
+#[derive(Encode, Decode, Clone, Debug)]
+pub struct EnclaveAdd {
+	pub spid: [u8; 16],
+	pub nonce: [u8; 16],
+	pub sig_rl: Vec<u8>,
+}
 
-pub type ChallengeCode = [u8; 16];
+impl EnclaveAdd {
+	pub fn new(spid: [u8; 16], nonce: [u8; 16], sig_rl: Vec<u8>) -> Self {
+		EnclaveAdd { spid, nonce, sig_rl }
+	}
+
+	// correspond with create_ra_report_and_signature
+	// concat the information
+	pub fn format(&self) -> String {
+		let spid: String = base64::encode(self.spid);
+		let nonce: String = base64::encode(self.nonce);
+		let sig_rl: String = base64::encode(self.sig_rl.clone());
+
+		spid + "|" + &nonce + "|" + &sig_rl
+	}
+}

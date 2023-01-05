@@ -39,7 +39,7 @@ pub struct SgxReportData {
 	d: [u8; SGX_REPORT_DATA_SIZE],
 }
 
-#[derive(Encode, Decode, Copy, Clone, TypeInfo)]
+#[derive(Encode, Decode, Copy, Clone, TypeInfo, sp_core::RuntimeDebug)]
 pub struct SGXAttributes {
 	flags: u64,
 	xfrm: u64,
@@ -99,6 +99,7 @@ pub struct SgxQuote {
 	basename: [u8; 32],         /* 16 */
 	report_body: SgxReportBody, /* 48 */
 }
+
 #[derive(Encode, Decode, Copy, Clone, PartialEq, Eq, sp_core::RuntimeDebug, TypeInfo)]
 pub enum SgxBuildMode {
 	Debug,
@@ -117,6 +118,11 @@ pub enum SgxStatus {
 	GroupOutOfDate,
 	GroupRevoked,
 	ConfigurationNeeded,
+	SignatureRevoked,
+	KeyRevoked,
+	SigrlVersionMismatch,
+	SwHardeningNeeded,
+	ConfigurationAndSwHardeningNeeded,
 }
 impl Default for SgxStatus {
 	fn default() -> Self {
@@ -131,6 +137,70 @@ pub struct SgxReport {
 	pub status: SgxStatus,
 	pub timestamp: u64, // unix timestamp in milliseconds
 	pub build_mode: SgxBuildMode,
+}
+
+#[derive(Encode, Decode, Clone, TypeInfo, sp_core::RuntimeDebug, Default)]
+pub struct SgxQuoteInputs {
+	pub spid: [u8; 16],
+	pub nonce: [u8; 16],
+
+	// the revocation list
+	pub sig_rl: Vec<u8>,
+}
+
+#[derive(Encode, Decode, Clone, TypeInfo, Default, sp_core::RuntimeDebug)]
+pub struct SgxQuoteAdd {
+	pub quote_inputs: SgxQuoteInputs,
+}
+
+#[derive(Encode, Decode, Clone, TypeInfo, sp_core::RuntimeDebug)]
+pub struct SgxTargetInfo {
+	// target info
+	pub mr_enclave: [u8; 32],
+	pub attributes: SGXAttributes,
+	pub reserved1: [u8; SGX_REPORT_BODY_RESERVED1_BYTES],
+	pub config_svn: u16,
+	pub misc_select: [u8; 4],
+	pub reserved2: [u8; SGX_REPORT_BODY_RESERVED2_BYTES],
+	pub config_id: [u8; 64],
+	pub reserved3: [u8; SGX_REPORT_BODY_RESERVED3_BYTES],
+}
+impl Default for SgxTargetInfo {
+	fn default() -> Self {
+		SgxTargetInfo {
+			mr_enclave: [0_u8; 32],
+			attributes: SGXAttributes { flags: 0_u64, xfrm: 0_u64 },
+			reserved1: [0_u8; SGX_REPORT_BODY_RESERVED1_BYTES],
+			config_svn: 0_u16,
+			misc_select: [0_u8; 4],
+			reserved2: [0_u8; SGX_REPORT_BODY_RESERVED2_BYTES],
+			config_id: [0_u8; 64],
+			reserved3: [0_u8; SGX_REPORT_BODY_RESERVED3_BYTES],
+		}
+	}
+}
+
+#[derive(Encode, Decode, Clone, TypeInfo, sp_core::RuntimeDebug)]
+pub struct SgxReportInputs {
+	pub target_info: SgxTargetInfo,
+	pub report_data: [u8; SGX_REPORT_DATA_SIZE],
+}
+impl Default for SgxReportInputs {
+	fn default() -> Self {
+		SgxReportInputs {
+			target_info: SgxTargetInfo::default(),
+			report_data: [0_u8; SGX_REPORT_DATA_SIZE],
+		}
+	}
+}
+
+#[derive(Encode, Decode, Clone, TypeInfo, Default, sp_core::RuntimeDebug)]
+pub struct SgxEnclaveMetadata {
+	pub report_inputs: SgxReportInputs,
+	pub quote_inputs: SgxQuoteInputs,
+
+	pub quote_status: SgxStatus,
+	pub quote_body: Vec<u8>,
 }
 
 type SignatureAlgorithms = &'static [&'static webpki::SignatureAlgorithm];
@@ -214,6 +284,114 @@ pub fn verify_ias_report(cert_der: &[u8]) -> Result<SgxReport, &'static str> {
 	verify_server_cert(&sig_cert, valid_until)?;
 
 	parse_report(netscape.attestation_raw)
+}
+
+pub fn parse_ias_report(cert_der: &[u8]) -> Result<SgxEnclaveMetadata, &'static str> {
+	#[cfg(test)]
+	println!("verifyRA: start verifying RA cert");
+
+	let cert = CertDer(cert_der);
+	let netscape = NetscapeComment::try_from(cert)?;
+	let sig_cert = webpki::EndEntityCert::from(&netscape.sig_cert).map_err(|_| "Bad der")?;
+
+	verify_signature(&sig_cert, netscape.attestation_raw, &netscape.sig)?;
+
+	// FIXME: now hardcoded. but certificate renewal would have to be done manually anyway...
+	// chain wasm update or by some sudo call
+	let valid_until = webpki::Time::from_seconds_since_unix_epoch(1573419050);
+	verify_server_cert(&sig_cert, valid_until)?;
+
+	let quote_add = netscape.quote_add.unwrap();
+	let quote_inputs = quote_add.quote_inputs;
+	let (report_inputs, quote_status, quote_body) = parse_sgx_quote(netscape.attestation_raw)?;
+
+	Ok(SgxEnclaveMetadata { report_inputs, quote_inputs, quote_status, quote_body })
+}
+
+fn parse_sgx_quote(
+	report_raw: &[u8],
+) -> Result<(SgxReportInputs, SgxStatus, Vec<u8>), &'static str> {
+	// parse attestation report
+	let attn_report: Value = match serde_json::from_slice(report_raw) {
+		Ok(report) => report,
+		Err(_) => return Err("RA report parsing error"),
+	};
+
+	let _ra_timestamp = match &attn_report["timestamp"] {
+		Value::String(time) => {
+			let time_fixed = time.clone() + "+0000";
+			match DateTime::parse_from_str(&time_fixed, "%Y-%m-%dT%H:%M:%S%.f%z") {
+				Ok(d) => d.timestamp(),
+				Err(_) => return Err("RA report timestamp parsing error"),
+			}
+		},
+		_ => return Err("Failed to fetch timestamp from attestation report"),
+	};
+
+	// get quote status (mandatory field)
+	let ra_status = match &attn_report["isvEnclaveQuoteStatus"] {
+		Value::String(quote_status) => match quote_status.as_ref() {
+			"OK" => SgxStatus::Ok,
+			"GROUP_OUT_OF_DATE" => SgxStatus::GroupOutOfDate,
+			"GROUP_REVOKED" => SgxStatus::GroupRevoked,
+			"CONFIGURATION_NEEDED" => SgxStatus::ConfigurationNeeded,
+			"SIGNATURE_REVOKED" => SgxStatus::SignatureRevoked,
+			"KEY_REVOKED" => SgxStatus::KeyRevoked,
+			"SIGRL_VERSION_MISMATCH" => SgxStatus::SigrlVersionMismatch,
+			"SW_HARDENING_NEEDED" => SgxStatus::SwHardeningNeeded,
+			"CONFIGURATION_AND_SW_HARDENING_NEEDED" => SgxStatus::ConfigurationAndSwHardeningNeeded,
+
+			_ => SgxStatus::Invalid,
+		},
+		_ => return Err("Failed to fetch isvEnclaveQuoteStatus from attestation report"),
+	};
+
+	#[cfg(test)]
+	println!("verifyRA attestation status is: {:?}", ra_status);
+
+	// parse quote body
+	if let Value::String(quote_raw) = &attn_report["isvEnclaveQuoteBody"] {
+		let quote = match base64::decode(quote_raw) {
+			Ok(q) => q,
+			Err(_) => return Err("Quote Decoding Error"),
+		};
+
+		#[cfg(test)]
+		println!("Quote read. len={}", quote.len());
+
+		// TODO: lack security check here
+		let sgx_quote: SgxQuote = match Decode::decode(&mut &quote[..]) {
+			Ok(q) => q,
+			Err(_) => return Err("could not decode quote"),
+		};
+
+		#[cfg(test)]
+		{
+			println!("sgx quote version = {}", sgx_quote.version);
+			println!("sgx quote signature type = {}", sgx_quote.sign_type);
+			//println!("sgx quote report_data = {:?}", sgx_quote.report_body.report_data.d[..32]);
+			println!("sgx quote mr_enclave = {:x?}", sgx_quote.report_body.mr_enclave);
+			println!("sgx quote mr_signer = {:x?}", sgx_quote.report_body.mr_signer);
+			println!("sgx quote report_data = {:x?}", sgx_quote.report_body.report_data.d.to_vec());
+		}
+
+		let target_info = SgxTargetInfo {
+			mr_enclave: sgx_quote.report_body.mr_enclave,
+			attributes: sgx_quote.report_body.attributes,
+			reserved1: sgx_quote.report_body.reserved1,
+			config_svn: sgx_quote.report_body.config_svn,
+			misc_select: sgx_quote.report_body.misc_select,
+			reserved2: sgx_quote.report_body.reserved2,
+			config_id: sgx_quote.report_body.config_id,
+			reserved3: sgx_quote.report_body.reserved3,
+		};
+		let report_data = sgx_quote.report_body.report_data.d;
+		let report_inputs = SgxReportInputs { target_info, report_data };
+
+		Ok((report_inputs, ra_status, quote))
+	} else {
+		Err("Failed to parse isvEnclaveQuoteBody from attestation report")
+	}
 }
 
 fn parse_report(report_raw: &[u8]) -> Result<SgxReport, &'static str> {
