@@ -18,6 +18,7 @@
 use crate::{
 	error::Result, pallet_imp::IMPCallIndexes, pallet_imp_mock::IMPMockCallIndexes,
 	pallet_sidechain::SidechainCallIndexes, pallet_teerex::TeerexCallIndexes,
+	pallet_vcmp::VCMPCallIndexes,
 };
 use codec::{Decode, Encode};
 
@@ -56,6 +57,10 @@ pub struct NodeMetadataMock {
 	imp_mock_identity_removed: u8,
 	imp_mock_identity_verified: u8,
 	imp_mock_some_error: u8,
+	// VCMP
+	vcmp_module: u8,
+	vcmp_request_vc: u8,
+	vcmp_some_error: u8,
 
 	imported_sidechain_block: u8,
 	runtime_spec_version: u32,
@@ -85,6 +90,10 @@ impl NodeMetadataMock {
 			imp_identity_removed: 7u8,
 			imp_identity_verified: 8u8,
 			imp_some_error: 9u8,
+
+			vcmp_module: 66u8,
+			vcmp_request_vc: 0u8,
+			vcmp_some_error: 9u8,
 
 			imp_mock_module: 100u8,
 			imp_mock_set_user_shielding_key: 0u8,
@@ -218,5 +227,15 @@ impl IMPMockCallIndexes for NodeMetadataMock {
 
 	fn some_error_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.imp_mock_module, self.imp_mock_some_error])
+	}
+}
+
+impl VCMPCallIndexes for NodeMetadataMock {
+	fn request_vc_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.vcmp_module, self.vcmp_request_vc])
+	}
+
+	fn some_error_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.vcmp_module, self.vcmp_some_error])
 	}
 }

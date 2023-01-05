@@ -37,6 +37,8 @@ pub type PalletString = String;
 
 pub use sp_core::{crypto::AccountId32 as AccountId, H256};
 
+use litentry_primitives::Assertion;
+
 pub use itp_sgx_runtime_primitives::types::*;
 
 pub type IpfsHash = [u8; 46];
@@ -52,6 +54,9 @@ pub type SetUserShieldingKeyFn = ([u8; 2], ShardIdentifier, Vec<u8>);
 pub type CreateIdentityFn = ([u8; 2], ShardIdentifier, AccountId, Vec<u8>, Option<Vec<u8>>);
 pub type RemoveIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>);
 pub type VerifyIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>, Vec<u8>);
+
+// pallet VCMP
+pub type RequestVCFn = ([u8; 2], ShardIdentifier, Assertion);
 
 pub type Enclave = EnclaveGen<AccountId>;
 
