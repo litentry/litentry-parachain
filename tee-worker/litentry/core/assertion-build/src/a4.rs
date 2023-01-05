@@ -68,7 +68,7 @@ pub fn build(
 				Identity::Substrate { address, .. } =>
 					addresses.push(from_utf8(address.as_ref()).unwrap().to_string()),
 				Identity::Web2 { address, .. } =>
-					addresses.push(from_utf8(&address).unwrap().to_string()),
+					addresses.push(from_utf8(address).unwrap().to_string()),
 			}
 			let mut tmp_token_addr = String::from("");
 			if verified_network == VerifiedCredentialsNetwork::Ethereum {
