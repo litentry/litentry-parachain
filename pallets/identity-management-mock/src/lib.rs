@@ -466,8 +466,10 @@ pub mod pallet {
 					Error::<T>::ChallengeCodeNotExist
 				);
 				ChallengeCodes::<T>::remove(&who, &identity);
-
-				// emit the IdentityVerified event
+				Ok(())
+			})
+			.map(|_| {
+				// emit the IdentityVerified event when the mutation is done
 				Self::deposit_event(Event::<T>::IdentityVerifiedPlain {
 					account: who.clone(),
 					identity: identity.clone(),
@@ -481,7 +483,6 @@ pub mod pallet {
 						Self::get_id_graph(&who).encode().as_slice(),
 					),
 				});
-				Ok(())
 			})
 		}
 
@@ -582,10 +583,11 @@ pub mod pallet {
 		) -> DispatchResult {
 			let code =
 				Self::challenge_codes(who, identity).ok_or(Error::<T>::ChallengeCodeNotExist)?;
-			let msg = Self::get_expected_payload(who, identity, &code)?;
+			let raw_msg = Self::get_expected_raw_message(who, identity, &code)?;
+			let wrapped_msg = Self::get_expected_wrapped_message(raw_msg.clone());
 
 			ensure!(
-				msg.as_slice() == validation_data.message.as_slice(),
+				raw_msg.as_slice() == validation_data.message.as_slice(),
 				Error::<T>::UnexpectedMessage
 			);
 
@@ -597,35 +599,47 @@ pub mod pallet {
 				_ => return Err(Error::<T>::WrongWeb3NetworkType.into()),
 			};
 
-			match &validation_data.signature {
-				IdentityMultiSignature::Sr25519(sig) => {
-					ensure!(
-						sr25519_verify(sig, &msg, &sr25519::Public(*substrate_address)),
-						Error::<T>::VerifySubstrateSignatureFailed
-					);
-				},
-				IdentityMultiSignature::Ed25519(sig) => {
-					ensure!(
-						ed25519_verify(sig, &msg, &ed25519::Public(*substrate_address)),
-						Error::<T>::VerifySubstrateSignatureFailed
-					);
-				},
+			// we accept both the raw_msg's signature and the wrapped_msg's signature
+			ensure!(
+				Self::verify_substrate_signature_internal(
+					&raw_msg,
+					&validation_data.signature,
+					substrate_address
+				) || Self::verify_substrate_signature_internal(
+					&wrapped_msg,
+					&validation_data.signature,
+					substrate_address
+				),
+				Error::<T>::VerifySubstrateSignatureFailed
+			);
+			Ok(())
+		}
+
+		fn verify_substrate_signature_internal(
+			msg: &[u8],
+			signature: &IdentityMultiSignature,
+			address: &[u8; 32],
+		) -> bool {
+			match signature {
+				IdentityMultiSignature::Sr25519(sig) =>
+					sr25519_verify(sig, msg, &sr25519::Public(*address)),
+				IdentityMultiSignature::Ed25519(sig) =>
+					ed25519_verify(sig, msg, &ed25519::Public(*address)),
 				// We can' use `ecdsa_verify` directly we don't have the raw 33-bytes publick key
 				// instead we only have AccountId which is blake2_256(pubkey)
 				IdentityMultiSignature::Ecdsa(sig) => {
 					// see https://github.com/paritytech/substrate/blob/493b58bd4a475080d428ce47193ee9ea9757a808/primitives/runtime/src/traits.rs#L132
-					let digest = blake2_256(&msg);
-					let recovered_substrate_pubkey =
+					let digest = blake2_256(msg);
+					if let Ok(recovered_substrate_pubkey) =
 						secp256k1_ecdsa_recover_compressed(&sig.0, &digest)
-							.map_err(|_| Error::<T>::RecoverSubstratePubkeyFailed)?;
-					ensure!(
-						&blake2_256(&recovered_substrate_pubkey) == substrate_address,
-						Error::<T>::VerifySubstrateSignatureFailed
-					);
+					{
+						&blake2_256(&recovered_substrate_pubkey) == address
+					} else {
+						false
+					}
 				},
-				_ => return Err(Error::<T>::WrongSignatureType.into()),
+				_ => false,
 			}
-			Ok(())
 		}
 
 		fn verify_evm_signature(
@@ -635,7 +649,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let code =
 				Self::challenge_codes(who, identity).ok_or(Error::<T>::ChallengeCodeNotExist)?;
-			let msg = Self::get_expected_payload(who, identity, &code)?;
+			let msg = Self::get_expected_raw_message(who, identity, &code)?;
 			let digest = Self::compute_evm_msg_digest(&msg);
 			if let IdentityMultiSignature::Ethereum(sig) = &validation_data.signature {
 				let recovered_evm_address = Self::recover_evm_address(&digest, sig.as_ref())
@@ -659,7 +673,7 @@ pub mod pallet {
 
 		// Payload format: blake2_256(<challeng-code> + <litentry-AccountId32> + <Identity>), where
 		// <> means SCALE-encoded. It applies to both web2 and web3 message
-		pub fn get_expected_payload(
+		pub fn get_expected_raw_message(
 			who: &T::AccountId,
 			identity: &Identity,
 			code: &ChallengeCode,
@@ -668,6 +682,12 @@ pub mod pallet {
 			msg.append(&mut who.encode());
 			msg.append(&mut identity.encode());
 			Ok(blake2_256(&msg).to_vec())
+		}
+
+		// Get the wrapped version of the raw msg: <Bytes>raw_msg</Bytes>,
+		// see https://github.com/litentry/litentry-parachain/issues/1137
+		pub fn get_expected_wrapped_message(raw_msg: Vec<u8>) -> Vec<u8> {
+			["<Bytes>".as_bytes(), raw_msg.as_slice(), "</Bytes>".as_bytes()].concat()
 		}
 
 		// we use an EIP-191 message has computing

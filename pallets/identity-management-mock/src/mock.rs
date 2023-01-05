@@ -173,11 +173,16 @@ pub fn create_mock_polkadot_validation_data(
 	who: <Test as frame_system::Config>::AccountId,
 	p: SubstratePair,
 	code: ChallengeCode,
+	is_wrapped_signature: bool,
 ) -> ValidationData {
 	let identity = create_mock_polkadot_identity(p.public().0);
-	let msg = IdentityManagementMock::get_expected_payload(&who, &identity, &code)
+	let msg = IdentityManagementMock::get_expected_raw_message(&who, &identity, &code)
 		.expect("cannot calculate web3 message");
-	let sig = p.sign(&msg);
+	let mut sig = p.sign(&msg);
+
+	if !is_wrapped_signature {
+		sig = p.sign(&IdentityManagementMock::get_expected_wrapped_message(msg.clone()));
+	}
 
 	let common_validation_data = Web3CommonValidationData {
 		message: msg.try_into().unwrap(),
@@ -192,7 +197,7 @@ pub fn create_mock_eth_validation_data(
 	code: ChallengeCode,
 ) -> ValidationData {
 	let identity = create_mock_eth_identity(p.address().0);
-	let msg = IdentityManagementMock::get_expected_payload(&who, &identity, &code)
+	let msg = IdentityManagementMock::get_expected_raw_message(&who, &identity, &code)
 		.expect("cannot calculate web3 message");
 	let digest = IdentityManagementMock::compute_evm_msg_digest(&msg);
 	let sig = sign(p.secret(), &Message::from(digest)).unwrap();
@@ -291,12 +296,20 @@ pub fn setup_verify_twitter_identity(
 		encrypted_identity,
 		tee_encrypt(validation_data.encode().as_slice()),
 	));
+	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
+		crate::Event::IdentityVerifiedPlain {
+			account: who,
+			identity,
+			id_graph: IdentityManagementMock::get_id_graph(&who),
+		},
+	));
 }
 
 pub fn setup_verify_polkadot_identity(
 	who: <Test as frame_system::Config>::AccountId,
 	p: SubstratePair,
 	bn: <Test as frame_system::Config>::BlockNumber,
+	is_wrapped_signature: bool,
 ) {
 	let identity = create_mock_polkadot_identity(p.public().0);
 	setup_create_identity(who, identity.clone(), bn);
@@ -304,19 +317,21 @@ pub fn setup_verify_polkadot_identity(
 	let code = IdentityManagementMock::challenge_codes(&who, &identity).unwrap();
 	let validation_data = match &identity.web_type {
 		IdentityWebType::Web3(Web3Network::Substrate(SubstrateNetwork::Polkadot)) =>
-			create_mock_polkadot_validation_data(who, p, code),
+			create_mock_polkadot_validation_data(who, p, code, is_wrapped_signature),
 		_ => panic!("unxpected web_type"),
 	};
-	println!(
-		"encoded identity len = {}, encoded vd len = {}",
-		identity.encode().as_slice().len(),
-		validation_data.encode().as_slice().len()
-	);
 	assert_ok!(IdentityManagementMock::verify_identity(
 		RuntimeOrigin::signed(who),
 		H256::random(),
 		encrypted_identity,
 		tee_encrypt(validation_data.encode().as_slice()),
+	));
+	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
+		crate::Event::IdentityVerifiedPlain {
+			account: who,
+			identity,
+			id_graph: IdentityManagementMock::get_id_graph(&who),
+		},
 	));
 }
 
@@ -339,5 +354,12 @@ pub fn setup_verify_eth_identity(
 		H256::random(),
 		encrypted_identity,
 		tee_encrypt(validation_data.encode().as_slice()),
+	));
+	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
+		crate::Event::IdentityVerifiedPlain {
+			account: who,
+			identity,
+			id_graph: IdentityManagementMock::get_id_graph(&who),
+		},
 	));
 }
