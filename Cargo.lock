@@ -5500,7 +5500,7 @@ dependencies = [
 [[package]]
 name = "orml-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/UniqueNetwork/open-runtime-module-library?branch=feature/polkadot-v0.9.36#3f70b9adb6c0599db7b8688abb49d0d459634b68"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.36#4f5a3f34d8cbd98b7bc2e295219a3e7b99b9ecaf"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -5515,7 +5515,7 @@ dependencies = [
 [[package]]
 name = "orml-traits"
 version = "0.4.1-dev"
-source = "git+https://github.com/UniqueNetwork/open-runtime-module-library?branch=feature/polkadot-v0.9.36#3f70b9adb6c0599db7b8688abb49d0d459634b68"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.36#4f5a3f34d8cbd98b7bc2e295219a3e7b99b9ecaf"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
@@ -5533,7 +5533,7 @@ dependencies = [
 [[package]]
 name = "orml-utilities"
 version = "0.4.1-dev"
-source = "git+https://github.com/UniqueNetwork/open-runtime-module-library?branch=feature/polkadot-v0.9.36#3f70b9adb6c0599db7b8688abb49d0d459634b68"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.36#4f5a3f34d8cbd98b7bc2e295219a3e7b99b9ecaf"
 dependencies = [
  "frame-support",
  "parity-scale-codec 3.2.1",
@@ -5547,7 +5547,7 @@ dependencies = [
 [[package]]
 name = "orml-xcm-support"
 version = "0.4.1-dev"
-source = "git+https://github.com/UniqueNetwork/open-runtime-module-library?branch=feature/polkadot-v0.9.36#3f70b9adb6c0599db7b8688abb49d0d459634b68"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.36#4f5a3f34d8cbd98b7bc2e295219a3e7b99b9ecaf"
 dependencies = [
  "frame-support",
  "orml-traits",
@@ -5561,7 +5561,7 @@ dependencies = [
 [[package]]
 name = "orml-xtokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/UniqueNetwork/open-runtime-module-library?branch=feature/polkadot-v0.9.36#3f70b9adb6c0599db7b8688abb49d0d459634b68"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v0.9.36#4f5a3f34d8cbd98b7bc2e295219a3e7b99b9ecaf"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
