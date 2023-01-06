@@ -25,11 +25,12 @@ pub struct EnclaveAdd {
 	pub spid: [u8; 16],
 	pub nonce: [u8; 16],
 	pub sig_rl: Vec<u8>,
+	pub quote: Vec<u8>,
 }
 
 impl EnclaveAdd {
-	pub fn new(spid: [u8; 16], nonce: [u8; 16], sig_rl: Vec<u8>) -> Self {
-		EnclaveAdd { spid, nonce, sig_rl }
+	pub fn new(spid: [u8; 16], nonce: [u8; 16], sig_rl: Vec<u8>, quote: Vec<u8>) -> Self {
+		EnclaveAdd { spid, nonce, sig_rl, quote }
 	}
 
 	// correspond with create_ra_report_and_signature
@@ -38,7 +39,8 @@ impl EnclaveAdd {
 		let spid: String = base64::encode(self.spid);
 		let nonce: String = base64::encode(self.nonce);
 		let sig_rl: String = base64::encode(self.sig_rl.clone());
+		let quote: String = base64::encode(self.quote.clone());
 
-		spid + "|" + &nonce + "|" + &sig_rl
+		spid + "|" + &nonce + "|" + &sig_rl + "|" + &quote
 	}
 }

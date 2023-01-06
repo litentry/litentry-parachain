@@ -42,7 +42,7 @@ pub type BalanceOf<T> = <<T as Config>::Currency as Currency<AccountId<T>>>::Bal
 
 pub use pallet::*;
 
-const MAX_RA_REPORT_LEN: usize = 4096;
+const MAX_RA_REPORT_LEN: usize = 5244;
 const MAX_URL_LEN: usize = 256;
 
 #[frame_support::pallet]
@@ -176,7 +176,10 @@ pub mod pallet {
 			let enclave_metadata = SgxEnclaveMetadata::default();
 
 			#[cfg(not(feature = "skip-ias-check"))]
-			log::info!("[teerex] enclave_metadata = {:?}", enclave_metadata);
+			{
+				log::debug!("[teerex] status = {:?}", enclave_metadata.quote_status);
+				log::debug!("[teerex] isv_enclave_quote = {:?}", enclave_metadata.isv_enclave_quote);
+			}
 
 			Self::add_enclave(&sender, &enclave)?;
 			Self::add_enclave_metadata(&sender, &enclave_metadata)?;

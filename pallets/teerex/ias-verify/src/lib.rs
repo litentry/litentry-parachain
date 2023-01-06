@@ -148,9 +148,27 @@ pub struct SgxQuoteInputs {
 	pub sig_rl: Vec<u8>,
 }
 
+impl SgxQuoteInputs {
+	pub fn new(spid: Vec<u8>, nonce: Vec<u8>, sig_rl: Vec<u8>) -> Self {
+		let mut d_spid = [0_u8; 16];
+		d_spid.copy_from_slice(&spid[..16]);
+
+		let mut d_nonce = [0_u8; 16];
+		d_nonce.copy_from_slice(&nonce[..16]);
+
+		SgxQuoteInputs { spid: d_spid, nonce: d_nonce, sig_rl }
+	}
+}
+
 #[derive(Encode, Decode, Clone, TypeInfo, Default, sp_core::RuntimeDebug)]
 pub struct SgxQuoteAdd {
 	pub quote_inputs: SgxQuoteInputs,
+	pub quote: Vec<u8>,
+}
+impl SgxQuoteAdd {
+	pub fn new(quote_inputs: SgxQuoteInputs, quote: Vec<u8>) -> Self {
+		SgxQuoteAdd { quote_inputs, quote }
+	}
 }
 
 #[derive(Encode, Decode, Clone, TypeInfo, sp_core::RuntimeDebug)]
@@ -198,7 +216,7 @@ impl Default for SgxReportInputs {
 pub struct SgxEnclaveMetadata {
 	pub report_inputs: SgxReportInputs,
 	pub quote_inputs: SgxQuoteInputs,
-
+	pub isv_enclave_quote: Vec<u8>,
 	pub quote_status: SgxStatus,
 	pub quote_body: Vec<u8>,
 }
@@ -303,9 +321,16 @@ pub fn parse_ias_report(cert_der: &[u8]) -> Result<SgxEnclaveMetadata, &'static 
 
 	let quote_add = netscape.quote_add.unwrap();
 	let quote_inputs = quote_add.quote_inputs;
+	let isv_enclave_quote = quote_add.quote;
 	let (report_inputs, quote_status, quote_body) = parse_sgx_quote(netscape.attestation_raw)?;
 
-	Ok(SgxEnclaveMetadata { report_inputs, quote_inputs, quote_status, quote_body })
+	Ok(SgxEnclaveMetadata {
+		report_inputs,
+		quote_inputs,
+		isv_enclave_quote,
+		quote_status,
+		quote_body,
+	})
 }
 
 fn parse_sgx_quote(
@@ -369,7 +394,6 @@ fn parse_sgx_quote(
 		{
 			println!("sgx quote version = {}", sgx_quote.version);
 			println!("sgx quote signature type = {}", sgx_quote.sign_type);
-			//println!("sgx quote report_data = {:?}", sgx_quote.report_body.report_data.d[..32]);
 			println!("sgx quote mr_enclave = {:x?}", sgx_quote.report_body.mr_enclave);
 			println!("sgx quote mr_signer = {:x?}", sgx_quote.report_body.mr_signer);
 			println!("sgx quote report_data = {:x?}", sgx_quote.report_body.report_data.d.to_vec());

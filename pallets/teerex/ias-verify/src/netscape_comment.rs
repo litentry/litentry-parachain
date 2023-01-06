@@ -55,25 +55,34 @@ impl<'a> TryFrom<CertDer<'a>> for NetscapeComment<'a> {
 			})
 		}
 
-		Ok(NetscapeComment { attestation_raw: netscape_raw[0], sig, sig_cert, quote_add: None })
+		let quote_add =
+			if netscape_raw.len() > 3 { Some(Self::try_quote_add(&netscape_raw)?) } else { None };
+
+		Ok(NetscapeComment { attestation_raw: netscape_raw[0], sig, sig_cert, quote_add })
 	}
 }
 
 impl<'a> NetscapeComment<'a> {
 	pub fn try_quote_add(netscape_raw: &Vec<&[u8]>) -> Result<SgxQuoteAdd, &'static str> {
 		let spid = base64::decode_config(netscape_raw[3], base64::STANDARD)
-			.map_err(|_| "Cert Decoding Error")?;
+			.map_err(|_| "quote spid Decoding Error")?;
 
 		let mut nonce = Vec::<u8>::new();
 		if netscape_raw.len() > 4 {
 			nonce = base64::decode_config(netscape_raw[4], base64::STANDARD)
-				.map_err(|_| "Cert Decoding Error")?;
+				.map_err(|_| "quote nonce Decoding Error")?;
 		}
 
 		let mut sig_rl = Vec::<u8>::new();
 		if netscape_raw.len() > 5 {
 			sig_rl = base64::decode_config(netscape_raw[5], base64::STANDARD)
-				.map_err(|_| "Cert Decoding Error")?;
+				.map_err(|_| "quote sigrl Decoding Error")?;
+		}
+
+		let mut quote = Vec::<u8>::new();
+		if netscape_raw.len() > 6 {
+			quote = base64::decode_config(netscape_raw[6], base64::STANDARD)
+				.map_err(|_| "quote Decoding Error")?;
 		}
 
 		#[cfg(test)]
@@ -81,16 +90,10 @@ impl<'a> NetscapeComment<'a> {
 			println!("spid: {:?}", spid);
 			println!("nonce : {:?}", nonce);
 			println!("sig_rl: {:?}", sig_rl);
+			println!("quote: {:?}", quote);
 		}
 
-		let mut d_spid = [0_u8; 16];
-		d_spid.copy_from_slice(&spid[..16]);
-
-		let mut d_nonce = [0_u8; 16];
-		d_nonce.copy_from_slice(&nonce[..16]);
-
-		let quote_inputs = SgxQuoteInputs { spid: d_spid, nonce: d_nonce, sig_rl };
-
-		Ok(SgxQuoteAdd { quote_inputs })
+		let quote_inputs = SgxQuoteInputs::new(spid, nonce, sig_rl);
+		Ok(SgxQuoteAdd::new(quote_inputs, quote))
 	}
 }

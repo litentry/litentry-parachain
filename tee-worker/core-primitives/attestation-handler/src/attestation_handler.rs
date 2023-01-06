@@ -221,6 +221,7 @@ where
 			debug!("              spid        		= {:?}", enclave_add.spid);
 			debug!("              nonce       		= {:?}", enclave_add.nonce);
 			debug!("              sig_rl      		= {:?}", enclave_add.sig_rl);
+			debug!("              quote      		= {:?}", enclave_add.quote);
 
 			// concat the information
 			attn_report + "|" + &sig + "|" + &cert + "|" + &enclave_add.format()
@@ -241,6 +242,8 @@ where
 
 		let _ = ecc_handle.close();
 		info!("    [Enclave] Generate ECC Certificate successful");
+		info!("    [Enclave] cert_der: {}", cert_der.len());
+
 		Ok((key_der, cert_der))
 	}
 
@@ -627,7 +630,8 @@ where
 
 		let (attn_report, sig, cert) =
 			self.get_report_from_intel(ias_socket, quote_content.clone())?;
-		let enclave_add = EnclaveAdd::new(spid.id.clone(), quote_nonce.rand.clone(), sigrl_vec);
+		let enclave_add =
+			EnclaveAdd::new(spid.id.clone(), quote_nonce.rand.clone(), sigrl_vec, quote_content);
 
 		Ok((attn_report, sig, cert, enclave_add))
 	}
