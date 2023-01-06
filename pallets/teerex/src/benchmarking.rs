@@ -54,11 +54,7 @@ fn add_enclaves_to_registry<T: Config>(accounts: &[T::AccountId]) {
 
 fn add_enclaves_metadata_to_registry<T: Config>(accounts: &[T::AccountId]) {
 	for a in accounts.iter() {
-		Teerex::<T>::add_enclave_metadata(
-			a,
-			&SgxEnclaveMetadata::default(),
-		)
-		.unwrap();
+		Teerex::<T>::add_enclave_metadata(a, &SgxEnclaveMetadata::default()).unwrap();
 	}
 }
 
