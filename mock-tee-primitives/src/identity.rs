@@ -14,18 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate sgx_tstd as std;
-
-#[cfg(any(feature = "std", feature = "sgx"))]
-use std::format;
-
-#[cfg(all(not(feature = "sgx"), feature = "std"))]
+#[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-#[cfg(any(feature = "std", feature = "sgx"))]
+#[cfg(feature = "std")]
 use sp_core::hexdisplay::HexDisplay;
-#[cfg(any(feature = "std", feature = "sgx"))]
-use std::vec::Vec;
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -34,7 +26,38 @@ use sp_runtime::{traits::ConstU32, BoundedVec};
 pub type MaxStringLength = ConstU32<64>;
 pub type IdentityString = BoundedVec<u8, MaxStringLength>;
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, Copy, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct Address20([u8; 20]);
+
+impl AsRef<[u8; 20]> for Address20 {
+	fn as_ref(&self) -> &[u8; 20] {
+		&self.0
+	}
+}
+
+impl From<[u8; 20]> for Address20 {
+	fn from(value: [u8; 20]) -> Self {
+		Self(value)
+	}
+}
+
+#[derive(Encode, Decode, Copy, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct Address32([u8; 32]);
+impl AsRef<[u8; 32]> for Address32 {
+	fn as_ref(&self) -> &[u8; 32] {
+		&self.0
+	}
+}
+
+impl From<[u8; 32]> for Address32 {
+	fn from(value: [u8; 32]) -> Self {
+		Self(value)
+	}
+}
+
+#[derive(Encode, Decode, Copy, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum SubstrateNetwork {
 	Polkadot,
@@ -43,21 +66,14 @@ pub enum SubstrateNetwork {
 	Litmus,
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, Copy, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum EvmNetwork {
 	Ethereum,
 	BSC,
 }
 
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub enum Web3Network {
-	Substrate(SubstrateNetwork),
-	Evm(EvmNetwork),
-}
-
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, Copy, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum Web2Network {
 	Twitter,
@@ -67,97 +83,79 @@ pub enum Web2Network {
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub enum IdentityWebType {
-	Web2(Web2Network),
-	Web3(Web3Network),
-}
-
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub enum IdentityHandle {
-	Address32([u8; 32]),
-	/// Its a 20 byte representation.
-	Address20([u8; 20]),
-	String(IdentityString),
-}
-
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct Identity {
-	pub web_type: IdentityWebType,
-	pub handle: IdentityHandle,
+pub enum Identity {
+	Substrate { network: SubstrateNetwork, address: Address32 },
+	Evm { network: EvmNetwork, address: Address20 },
+	Web2 { network: Web2Network, address: IdentityString },
 }
 
 impl Identity {
-	#[cfg(any(feature = "std", feature = "sgx"))]
+	#[cfg(feature = "std")]
 	pub fn flat(&self) -> Vec<u8> {
-		let mut display = match &self.web_type {
-			IdentityWebType::Web3(Web3Network::Substrate(sub)) =>
-				format!("did:{:?}:web3:substrate:", sub)
+		match &self {
+			Identity::Substrate { network, address } => {
+				let mut data = format!("did:{:?}:web3:substrate:", network)
 					.to_ascii_lowercase()
 					.as_bytes()
-					.to_vec(),
-			IdentityWebType::Web3(Web3Network::Evm(evm)) =>
-				format!("did:{:?}:web3:evm:", evm).to_ascii_lowercase().as_bytes().to_vec(),
-			IdentityWebType::Web2(web2) =>
-				format!("did:{:?}:web2:_:", web2).to_ascii_lowercase().as_bytes().to_vec(),
-		};
-		let mut suffix: Vec<u8> = match &self.handle {
-			IdentityHandle::String(inner) => inner.to_vec(),
-			IdentityHandle::Address32(inner) =>
-				format!("0x{}", HexDisplay::from(inner)).as_bytes().to_vec(),
-			IdentityHandle::Address20(inner) =>
-				format!("0x{}", HexDisplay::from(inner)).as_bytes().to_vec(),
-		};
-		display.append(&mut suffix);
-		display
+					.to_vec();
+				let mut suffix =
+					format!("0x{}", HexDisplay::from(address.as_ref())).as_bytes().to_vec();
+				data.append(&mut suffix);
+				data
+			},
+			Identity::Evm { network, address } => {
+				let mut data =
+					format!("did:{:?}:web3:evm:", network).to_ascii_lowercase().as_bytes().to_vec();
+				let mut suffix =
+					format!("0x{}", HexDisplay::from(address.as_ref())).as_bytes().to_vec();
+				data.append(&mut suffix);
+				data
+			},
+			Identity::Web2 { network, address } => {
+				let mut data =
+					format!("did:{:?}:web2:_:", network).to_ascii_lowercase().as_bytes().to_vec();
+				let mut suffix = address.to_vec();
+				data.append(&mut suffix);
+				data
+			},
+		}
 	}
 
 	pub fn is_web2(&self) -> bool {
-		match &self.web_type {
-			IdentityWebType::Web2(_) => true,
-			IdentityWebType::Web3(_) => false,
-		}
+		matches!(self, Identity::Web2 { .. })
 	}
 
 	pub fn is_web3(&self) -> bool {
-		match &self.web_type {
-			IdentityWebType::Web2(_) => false,
-			IdentityWebType::Web3(_) => true,
-		}
+		matches!(self, Identity::Evm { .. } | Identity::Substrate { .. })
 	}
 }
 
 #[cfg(test)]
 mod tests {
-	use crate::{
-		Identity, IdentityHandle, IdentityString, IdentityWebType, SubstrateNetwork, Web2Network,
-		Web3Network,
-	};
+	use crate::{Identity, IdentityString, SubstrateNetwork, Web2Network};
 	use sp_core::Pair;
-	use std::string;
 
 	#[test]
 	fn identity() {
 		let sub_pair = sp_core::sr25519::Pair::from_string("//Alice", None).unwrap();
 		// let eth_pair = sp_core::ed25519::Pair::from_string("//Alice", None).unwrap();
-		let polkadot_identity = Identity {
-			web_type: IdentityWebType::Web3(Web3Network::Substrate(SubstrateNetwork::Polkadot)),
-			handle: IdentityHandle::Address32(sub_pair.public().0),
+		let polkadot_identity: Identity = Identity::Substrate {
+			network: SubstrateNetwork::Polkadot,
+			address: sub_pair.public().0.into(),
 		};
-		let twitter_identity = Identity {
-			web_type: IdentityWebType::Web2(Web2Network::Twitter),
-			handle: IdentityHandle::String(
-				IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
-			),
+
+		let twitter_identity: Identity = Identity::Web2 {
+			network: Web2Network::Twitter,
+			address: IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
 		};
+
 		assert_eq!(
 			"did:polkadot:web3:substrate:0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
-			string::String::from_utf8(polkadot_identity.flat()).unwrap()
+			String::from_utf8(polkadot_identity.flat()).unwrap()
 		);
 		assert_eq!(
 			"did:twitter:web2:_:litentry",
-			string::String::from_utf8(twitter_identity.flat()).unwrap()
+			String::from_utf8(twitter_identity.flat()).unwrap()
 		);
 	}
 }
