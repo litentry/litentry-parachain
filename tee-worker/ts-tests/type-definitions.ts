@@ -68,10 +68,26 @@ export const teeTypes = {
     },
     IdentityWebType: {
         _enum: {
-            Web2Identity: 'Web2Network',
-            Web3Identity: 'Web3Network',
+            Substrate: 'SubstrateIdentity',
+            Evm: 'EvmIdentity',
+            Web2: 'Web2Identity',
         },
     },
+    SubstrateIdentity: {
+        network: 'SubstrateNetwork',
+        address: 'Address32',
+    },
+    EvmIdentity: {
+        network: 'EvmNetwork',
+        address: 'Address20',
+    },
+    Web2Identity: {
+        network: 'Web2Network',
+        address: 'IdentityString',
+    },
+    Address32: '[u8;32]',
+    Address20: '[u8;20]',
+    IdentityString: 'Vec<u8>',
     Web2Network: {
         _enum: ['Twitter', 'Discord', 'Github'],
     },
@@ -182,13 +198,24 @@ export class AESOutput {
 }
 
 export type LitentryIdentity = {
-    web_type: IdentityWebType;
-    handle: IdentityHandle;
+    Substrate?: SubstrateIdentity;
+    Evm?: EvmIdentity;
+    Web2?: Web2Identity;
 };
 
-export type IdentityWebType = {
-    Web2Identity?: Web2Network;
-    Web3Identity?: Web3Network;
+export type SubstrateIdentity = {
+    network: SubstrateNetwork;
+    address: HexString;
+};
+
+export type EvmIdentity = {
+    network: EvmNetwork;
+    address: HexString;
+};
+
+export type Web2Identity = {
+    network: Web2Network;
+    address: string;
 };
 
 export type IdentityHandle = {
