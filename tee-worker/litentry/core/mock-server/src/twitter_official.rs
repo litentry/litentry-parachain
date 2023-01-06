@@ -16,9 +16,7 @@
 
 use httpmock::{Method::GET, MockServer};
 use lc_data_providers::twitter_official::*;
-use litentry_primitives::{
-	ChallengeCode, Identity, IdentityHandle, IdentityString, IdentityWebType, Web2Network,
-};
+use litentry_primitives::{ChallengeCode, Identity, IdentityString, Web2Network};
 use sp_core::crypto::AccountId32 as AccountId;
 
 use crate::{mock_tweet_payload, Mock};
@@ -50,11 +48,10 @@ impl TwitterOfficialAPI for TwitterOfficial {
 			212, 53, 147, 199, 21, 253, 211, 28, 97, 20, 26, 189, 4, 169, 159, 214, 130, 44, 133,
 			88, 133, 76, 205, 227, 154, 86, 132, 231, 165, 109, 162, 125,
 		]); // Alice
-		let twitter_identity = Identity {
-			web_type: IdentityWebType::Web2(Web2Network::Twitter),
-			handle: IdentityHandle::String(
-				IdentityString::try_from("mock_user".as_bytes().to_vec()).unwrap(),
-			),
+
+		let twitter_identity = Identity::Web2 {
+			network: Web2Network::Twitter,
+			address: IdentityString::try_from("mock_user".as_bytes().to_vec()).unwrap(),
 		};
 		let chanllenge_code: ChallengeCode =
 			[8, 104, 90, 56, 35, 213, 18, 250, 213, 210, 119, 241, 2, 174, 24, 8];
@@ -77,11 +74,9 @@ impl TwitterOfficialAPI for TwitterOfficial {
 		let id = "100";
 
 		let account_id = AccountId::new([0u8; 32]);
-		let twitter_identity = Identity {
-			web_type: IdentityWebType::Web2(Web2Network::Twitter),
-			handle: IdentityHandle::String(
-				IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
-			),
+		let twitter_identity = Identity::Web2 {
+			network: Web2Network::Twitter,
+			address: IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
 		};
 		let chanllenge_code: ChallengeCode =
 			[8, 104, 90, 56, 35, 213, 18, 250, 213, 210, 119, 241, 2, 174, 24, 8];
