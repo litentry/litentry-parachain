@@ -1,8 +1,9 @@
-import { ApiPromise, Keyring } from '@polkadot/api';
-import { KeyObject } from 'crypto';
-import { HexString } from '@polkadot/util/types';
+import {ApiPromise, Keyring} from '@polkadot/api';
+import {KeyObject} from 'crypto';
+import {HexString} from '@polkadot/util/types';
 import WebSocketAsPromised = require('websocket-as-promised');
-import { KeyringPair } from '@polkadot/keyring/types';
+import {KeyringPair} from '@polkadot/keyring/types';
+
 export const teeTypes = {
     WorkerRpcReturnString: {
         vec: 'Bytes',
@@ -63,27 +64,23 @@ export const teeTypes = {
 
     /// identity
     LitentryIdentity: {
-        web_type: 'IdentityWebType',
-        handle: 'IdentityHandle',
-    },
-    IdentityWebType: {
         _enum: {
-            Substrate: 'SubstrateIdentity',
-            Evm: 'EvmIdentity',
-            Web2: 'Web2Identity',
+            Substrate: "SubstrateIdentity",
+            Evm: "EvmIdentity",
+            Web2: "Web2Identity"
         },
     },
     SubstrateIdentity: {
         network: 'SubstrateNetwork',
-        address: 'Address32',
+        address: 'Address32'
     },
     EvmIdentity: {
         network: 'EvmNetwork',
-        address: 'Address20',
+        address: 'Address20'
     },
     Web2Identity: {
         network: 'Web2Network',
-        address: 'IdentityString',
+        address: 'IdentityString'
     },
     Address32: '[u8;32]',
     Address20: '[u8;20]',
@@ -91,24 +88,11 @@ export const teeTypes = {
     Web2Network: {
         _enum: ['Twitter', 'Discord', 'Github'],
     },
-    Web3Network: {
-        _enum: {
-            Substrate: 'SubstrateNetwork',
-            Evm: 'EvmNetwork',
-        },
-    },
     SubstrateNetwork: {
         _enum: ['Polkadot', 'Kusama', 'Litentry', 'Litmus'],
     },
     EvmNetwork: {
         _enum: ['Ethereum', 'BSC'],
-    },
-    IdentityHandle: {
-        _enum: {
-            Address32: '[u8;32]',
-            Address20: '[u8;20]',
-            PlainString: 'Vec<u8>',
-        },
     },
 
     /// Validation Data
@@ -198,24 +182,24 @@ export class AESOutput {
 }
 
 export type LitentryIdentity = {
-    Substrate?: SubstrateIdentity;
-    Evm?: EvmIdentity;
-    Web2?: Web2Identity;
+    Substrate?: SubstrateIdentity,
+    Evm?: EvmIdentity,
+    Web2?: Web2Identity
 };
 
 export type SubstrateIdentity = {
-    network: SubstrateNetwork;
-    address: HexString;
+    network: SubstrateNetwork,
+    address: HexString
 };
 
-export type EvmIdentity = {
-    network: EvmNetwork;
-    address: HexString;
+export type  EvmIdentity = {
+    network: EvmNetwork,
+    address: HexString
 };
 
 export type Web2Identity = {
-    network: Web2Network;
-    address: string;
+    network: Web2Network,
+    address: string,
 };
 
 export type IdentityHandle = {
