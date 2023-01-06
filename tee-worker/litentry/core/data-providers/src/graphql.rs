@@ -157,7 +157,7 @@ impl GraphQLClient {
 		GraphQLClient { client }
 	}
 
-	pub fn check_verified_credentials_is_holder(
+	pub fn check_verified_credentials_is_hodler(
 		&mut self,
 		credentials: VerifiedCredentialsIsHodlerIn,
 	) -> Result<IsHodlerOut, Error> {
