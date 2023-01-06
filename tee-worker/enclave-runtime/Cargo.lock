@@ -928,9 +928,9 @@ dependencies = [
 
 [[package]]
 name = "finality-grandpa"
-version = "0.16.0"
+version = "0.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b22349c6a11563a202d95772a68e0fcf56119e74ea8a2a19cf2301460fcd0df5"
+checksum = "e24e6c429951433ccb7c87fd528c60084834dcd14763182c1f83291bcde24c34"
 dependencies = [
  "either",
  "futures 0.3.25",
@@ -3133,7 +3133,7 @@ dependencies = [
 [[package]]
 name = "pallet-parentchain"
 version = "0.9.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=master#5bae18ea57c554ac5ad8a76f5133ac39553d86c9"
+source = "git+https://github.com/integritee-network/pallets.git?branch=master#07d17756d7c60fe85b973a75446827961fe55ec4"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -3192,24 +3192,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
-]
-
-[[package]]
-name = "pallet-teerex"
-version = "0.9.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "ias-verify",
- "log",
- "pallet-timestamp",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "teerex-primitives",
 ]
 
 [[package]]
