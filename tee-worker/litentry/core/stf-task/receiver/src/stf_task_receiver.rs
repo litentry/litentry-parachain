@@ -28,7 +28,7 @@ use chrono::{offset::Utc as TzUtc, TimeZone};
 use codec::Decode;
 use ita_sgx_runtime::IdentityManagement;
 use lc_stf_task_sender::{stf_task_sender, RequestType};
-use litentry_primitives::{Assertion, IdentityWebType, Web2Network};
+use litentry_primitives::{Assertion, Identity, Web2Network};
 use log::*;
 use std::string::String;
 
@@ -90,28 +90,32 @@ where
 				},
 				Assertion::A2(guild_id, handler) => {
 					for identity in request.vec_identity {
-						if identity.web_type == IdentityWebType::Web2(Web2Network::Discord) {
-							if let Err(e) =
-								lc_assertion_build::a2::build(guild_id.clone(), handler.clone())
-							{
-								error!("error verify assertion2: {:?}", e)
-							} else {
-								// When result is Ok,
-								break
+						if let Identity::Web2 { network, .. } = identity {
+							if matches!(network, Web2Network::Discord) {
+								if let Err(e) =
+									lc_assertion_build::a2::build(guild_id.clone(), handler.clone())
+								{
+									error!("error verify assertion2: {:?}", e)
+								} else {
+									// When result is Ok,
+									break
+								}
 							}
 						}
 					}
 				},
 				Assertion::A3(guild_id, handler) => {
 					for identity in request.vec_identity {
-						if identity.web_type == IdentityWebType::Web2(Web2Network::Discord) {
-							if let Err(e) =
-								lc_assertion_build::a3::build(guild_id.clone(), handler.clone())
-							{
-								error!("error verify assertion3: {:?}", e)
-							} else {
-								// When result is Ok,
-								break
+						if let Identity::Web2 { network, .. } = identity {
+							if matches!(network, Web2Network::Discord) {
+								if let Err(e) =
+									lc_assertion_build::a3::build(guild_id.clone(), handler.clone())
+								{
+									error!("error verify assertion3: {:?}", e)
+								} else {
+									// When result is Ok,
+									break
+								}
 							}
 						}
 					}

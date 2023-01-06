@@ -21,9 +21,7 @@ use frame_support::{
 };
 use frame_system as system;
 use frame_system::EnsureSignedBy;
-use litentry_primitives::{
-	Identity, IdentityHandle, IdentityWebType, SubstrateNetwork, Web3Network,
-};
+use litentry_primitives::{Identity, SubstrateNetwork};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -101,16 +99,13 @@ impl pallet_tee_identity_management::Config for Test {
 	type MaxVerificationDelay = ConstU32<2>;
 }
 
-// account id of Alice 0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d
-pub const ALICE_KEY: [u8; 32] = [
-	0xd4, 0x35, 0x93, 0xc7, 0x15, 0xfd, 0xd3, 0x1c, 0x61, 0x14, 0x1a, 0xbd, 0x04, 0xa9, 0x9f, 0xd6,
-	0x82, 0x2c, 0x85, 0x58, 0x85, 0x4c, 0xcd, 0xe3, 0x9a, 0x56, 0x84, 0xe7, 0xa5, 0x6d, 0xa2, 0x7d,
-];
+const ALICE_KEY: &str = "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d";
 
-pub const ALICE_WEB3_IDENTITY: Identity = Identity {
-	web_type: IdentityWebType::Web3(Web3Network::Substrate(SubstrateNetwork::Polkadot)),
-	handle: IdentityHandle::Address32(ALICE_KEY),
-};
+pub fn alice_web3_identity() -> Identity {
+	let alice_key_hex: [u8; 32] =
+		hex::decode(ALICE_KEY.strip_prefix("0x").unwrap()).unwrap().try_into().unwrap();
+	Identity::Substrate { network: SubstrateNetwork::Polkadot, address: alice_key_hex.into() }
+}
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let t = system::GenesisConfig::default().build_storage::<Test>().unwrap();

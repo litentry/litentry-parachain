@@ -16,7 +16,10 @@
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
-use std::boxed::Box;
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+extern crate sgx_tstd as std;
+
+use std::string::String;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
@@ -25,12 +28,8 @@ pub type Result<T> = core::result::Result<T, Error>;
 pub enum Error {
 	#[error("unexpected message")]
 	UnexpectedMessage,
-	#[error("wrong identity handle type")]
-	WrongIdentityHanldeType,
 	#[error("wrong signature type")]
 	WrongSignatureType,
-	#[error("wrong web3 network type")]
-	WrongWeb3NetworkType,
 	#[error("failed to verify substrate signature")]
 	VerifySubstrateSignatureFailed,
 	#[error("failed to recover substrate public key")]
@@ -39,6 +38,12 @@ pub enum Error {
 	VerifyEvmSignatureFailed,
 	#[error("failed to recover evm address")]
 	RecoverEvmAddressFailed,
-	#[error(transparent)]
-	Other(#[from] Box<dyn std::error::Error + Sync + Send + 'static>),
+	#[error("Request error: {0}")]
+	RequestError(String),
+	#[error("Other error: {0}")]
+	OtherError(String),
+	#[error("Invalid identity")]
+	InvalidIdentity,
+	// #[error(transparent)]
+	// Other(#[from] std::boxed::Box<dyn std::error::Error + Sync + Send + 'static>),
 }
