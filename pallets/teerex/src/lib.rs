@@ -31,7 +31,7 @@ use sp_std::{prelude::*, str};
 use teerex_primitives::*;
 
 #[cfg(not(feature = "skip-ias-check"))]
-use ias_verify::{parse_ias_report, verify_ias_report, SgxReport};
+use ias_verify::{parse_enclave_metadata, verify_ias_report, SgxReport};
 
 pub use crate::weights::WeightInfo;
 use ias_verify::SgxBuildMode;
@@ -74,6 +74,7 @@ pub mod pallet {
 		AddedEnclave(T::AccountId, Vec<u8>),
 		AddedEnclaveMetadata(SgxStatus),
 		RemovedEnclave(T::AccountId),
+		RemovedEnclaveMetadata(T::AccountId),
 		Forwarded(ShardIdentifier),
 		ShieldFunds(Vec<u8>),
 		UnshieldedFunds(T::AccountId),
@@ -151,7 +152,7 @@ pub mod pallet {
 			})?;
 
 			#[cfg(not(feature = "skip-ias-check"))]
-			let enclave_metadata = Self::parse_enclave_metadata(&sender, ra_report.clone()).unwrap();
+			let enclave_metadata = Self::verify_enclave_metadata(&sender, ra_report.clone()).unwrap();
 
 			#[cfg(not(feature = "skip-ias-check"))]
 			if !<AllowSGXDebugMode<T>>::get() && enclave.sgx_mode == SgxBuildMode::Debug {
@@ -178,7 +179,10 @@ pub mod pallet {
 			#[cfg(not(feature = "skip-ias-check"))]
 			{
 				log::debug!("[teerex] status = {:?}", enclave_metadata.quote_status);
-				log::debug!("[teerex] isv_enclave_quote = {:?}", enclave_metadata.isv_enclave_quote);
+				log::debug!(
+					"[teerex] isv_enclave_quote = {:?}",
+					enclave_metadata.isv_enclave_quote
+				);
 			}
 
 			Self::add_enclave(&sender, &enclave)?;
@@ -196,7 +200,10 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 
 			Self::remove_enclave(&sender)?;
-			Self::deposit_event(Event::RemovedEnclave(sender));
+
+			Self::deposit_event(Event::RemovedEnclave(sender.clone()));
+			Self::deposit_event(Event::RemovedEnclaveMetadata(sender));
+
 			Ok(().into())
 		}
 
@@ -321,6 +328,8 @@ pub mod pallet {
 		RaReportTooLong,
 		/// No enclave is registered.
 		EmptyEnclaveRegistry,
+		/// No enclavemetadata is registered.
+		EmptyEnclaveMetadataRegistry,
 	}
 }
 
@@ -389,10 +398,18 @@ impl<T: Config> Pallet<T> {
 			let last_enclave = <EnclaveRegistry<T>>::get(new_enclaves_count)
 				.ok_or(Error::<T>::EmptyEnclaveRegistry)?;
 			<EnclaveRegistry<T>>::insert(index_to_remove, &last_enclave);
+
+			// remove enclave metadata
+			let last_enclave_metadata = <EnclaveMetadataRegistry<T>>::get(new_enclaves_count)
+				.ok_or(Error::<T>::EmptyEnclaveMetadataRegistry)?;
+			<EnclaveMetadataRegistry<T>>::insert(index_to_remove, last_enclave_metadata);
+
 			<EnclaveIndex<T>>::insert(last_enclave.pubkey, index_to_remove);
 		}
 
 		<EnclaveRegistry<T>>::remove(new_enclaves_count);
+		<EnclaveMetadataRegistry<T>>::remove(new_enclaves_count);
+
 		Ok(().into())
 	}
 
@@ -406,7 +423,8 @@ impl<T: Config> Pallet<T> {
 			match result {
 				Ok(_) => {
 					log::info!("Unregister enclave because silent worker : {:?}", index);
-					Self::deposit_event(Event::RemovedEnclave(index));
+					Self::deposit_event(Event::RemovedEnclave(index.clone()));
+					Self::deposit_event(Event::RemovedEnclaveMetadata(index));
 				},
 				Err(e) => {
 					log::error!("Cannot unregister enclave : {:?}", e);
@@ -434,6 +452,7 @@ impl<T: Config> Pallet<T> {
 
 		let enclave_signer = T::AccountId::decode(&mut &report.pubkey[..])
 			.map_err(|_| <Error<T>>::EnclaveSignerDecodeError)?;
+
 		ensure!(sender == &enclave_signer, <Error<T>>::SenderIsNotAttestedEnclave);
 
 		// TODO: activate state checks as soon as we've fixed our setup
@@ -446,11 +465,11 @@ impl<T: Config> Pallet<T> {
 	}
 
 	#[cfg(not(feature = "skip-ias-check"))]
-	fn parse_enclave_metadata(
+	fn verify_enclave_metadata(
 		sender: &T::AccountId,
 		ra_report: Vec<u8>,
 	) -> Result<SgxEnclaveMetadata, DispatchErrorWithPostInfo> {
-		let metadata = parse_ias_report(&ra_report)
+		let metadata = parse_enclave_metadata(&ra_report)
 			.map_err(|_| <Error<T>>::RemoteAttestationVerificationFailed)?;
 
 		let enclave_signer = T::AccountId::decode(&mut &metadata.report_inputs.report_data[..])

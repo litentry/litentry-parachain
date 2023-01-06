@@ -16,17 +16,21 @@
 */
 
 use crate::{
-	mock::*, Enclave, EnclaveRegistry, Error, Event as TeerexEvent, ExecutedCalls, Request,
-	ShardIdentifier,
+	mock::*, Enclave, EnclaveMetadataRegistry, EnclaveRegistry, Error, Event as TeerexEvent,
+	ExecutedCalls, Request, ShardIdentifier,
 };
 use frame_support::{assert_err, assert_ok};
-use ias_verify::SgxBuildMode;
+use ias_verify::{SgxBuildMode, SgxEnclaveMetadata, SgxStatus};
 use sp_core::H256;
 use sp_keyring::AccountKeyring;
 use test_utils::ias::consts::*;
 
 fn list_enclaves() -> Vec<(u64, Enclave<AccountId, Vec<u8>>)> {
 	<EnclaveRegistry<Test>>::iter().collect::<Vec<(u64, Enclave<AccountId, Vec<u8>>)>>()
+}
+
+fn list_enclave_metadata() -> Vec<(u64, SgxEnclaveMetadata)> {
+	<EnclaveMetadataRegistry<Test>>::iter().collect::<Vec<(u64, SgxEnclaveMetadata)>>()
 }
 
 // give get_signer a concrete type
@@ -51,6 +55,26 @@ fn add_enclave_works() {
 }
 
 #[test]
+fn add_enclave_metadata_works() {
+	new_test_ext().execute_with(|| {
+		// set the now in the runtime such that the remote attestation reports are within accepted
+		// range (24h)
+		Timestamp::set_timestamp(TEST9_TIMESTAMP);
+		let signer = get_signer(TEST9_SIGNER_PUB);
+		assert_ok!(Teerex::register_enclave(
+			RuntimeOrigin::signed(signer),
+			TEST9_CERT.to_vec(),
+			URL.to_vec()
+		));
+
+		let index = Teerex::enclave_count();
+		assert_eq!(index, 1);
+		let meta = Teerex::enclave_metadata(1).unwrap();
+		assert_eq!(meta.quote_status, SgxStatus::ConfigurationAndSwHardeningNeeded);
+	})
+}
+
+#[test]
 fn add_and_remove_enclave_works() {
 	new_test_ext().execute_with(|| {
 		env_logger::init();
@@ -65,6 +89,24 @@ fn add_and_remove_enclave_works() {
 		assert_ok!(Teerex::unregister_enclave(RuntimeOrigin::signed(signer)));
 		assert_eq!(Teerex::enclave_count(), 0);
 		assert_eq!(list_enclaves(), vec![])
+	})
+}
+
+#[test]
+fn add_and_remove_enclave_metadata_works() {
+	new_test_ext().execute_with(|| {
+		env_logger::init();
+		Timestamp::set_timestamp(TEST9_TIMESTAMP);
+		let signer = get_signer(TEST9_SIGNER_PUB);
+		assert_ok!(Teerex::register_enclave(
+			RuntimeOrigin::signed(signer.clone()),
+			TEST9_CERT.to_vec(),
+			URL.to_vec()
+		));
+		assert_eq!(Teerex::enclave_count(), 1);
+		assert_ok!(Teerex::unregister_enclave(RuntimeOrigin::signed(signer)));
+		assert_eq!(Teerex::enclave_count(), 0);
+		assert_eq!(list_enclave_metadata().len(), 0)
 	})
 }
 

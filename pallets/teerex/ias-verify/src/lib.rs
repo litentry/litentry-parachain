@@ -198,18 +198,10 @@ impl Default for SgxTargetInfo {
 	}
 }
 
-#[derive(Encode, Decode, Clone, TypeInfo, sp_core::RuntimeDebug)]
+#[derive(Encode, Decode, Clone, TypeInfo, Default, sp_core::RuntimeDebug)]
 pub struct SgxReportInputs {
 	pub target_info: SgxTargetInfo,
-	pub report_data: [u8; SGX_REPORT_DATA_SIZE],
-}
-impl Default for SgxReportInputs {
-	fn default() -> Self {
-		SgxReportInputs {
-			target_info: SgxTargetInfo::default(),
-			report_data: [0_u8; SGX_REPORT_DATA_SIZE],
-		}
-	}
+	pub report_data: [u8; 32],
 }
 
 #[derive(Encode, Decode, Clone, TypeInfo, Default, sp_core::RuntimeDebug)]
@@ -304,7 +296,7 @@ pub fn verify_ias_report(cert_der: &[u8]) -> Result<SgxReport, &'static str> {
 	parse_report(netscape.attestation_raw)
 }
 
-pub fn parse_ias_report(cert_der: &[u8]) -> Result<SgxEnclaveMetadata, &'static str> {
+pub fn parse_enclave_metadata(cert_der: &[u8]) -> Result<SgxEnclaveMetadata, &'static str> {
 	#[cfg(test)]
 	println!("verifyRA: start verifying RA cert");
 
@@ -319,9 +311,13 @@ pub fn parse_ias_report(cert_der: &[u8]) -> Result<SgxEnclaveMetadata, &'static 
 	let valid_until = webpki::Time::from_seconds_since_unix_epoch(1573419050);
 	verify_server_cert(&sig_cert, valid_until)?;
 
-	let quote_add = netscape.quote_add.unwrap();
-	let quote_inputs = quote_add.quote_inputs;
-	let isv_enclave_quote = quote_add.quote;
+	let mut quote_inputs = SgxQuoteInputs::default();
+	let mut isv_enclave_quote = Vec::<u8>::new();
+	if let Some(quote_add) = netscape.quote_add {
+		quote_inputs = quote_add.quote_inputs;
+		isv_enclave_quote = quote_add.quote;
+	}
+
 	let (report_inputs, quote_status, quote_body) = parse_sgx_quote(netscape.attestation_raw)?;
 
 	Ok(SgxEnclaveMetadata {
@@ -409,7 +405,10 @@ fn parse_sgx_quote(
 			config_id: sgx_quote.report_body.config_id,
 			reserved3: sgx_quote.report_body.reserved3,
 		};
-		let report_data = sgx_quote.report_body.report_data.d;
+
+		let mut report_data = [0u8; 32];
+		report_data.copy_from_slice(&sgx_quote.report_body.report_data.d[..32]);
+
 		let report_inputs = SgxReportInputs { target_info, report_data };
 
 		Ok((report_inputs, ra_status, quote))
@@ -477,9 +476,9 @@ fn parse_report(report_raw: &[u8]) -> Result<SgxReport, &'static str> {
 			println!("sgx quote version = {}", sgx_quote.version);
 			println!("sgx quote signature type = {}", sgx_quote.sign_type);
 			//println!("sgx quote report_data = {:?}", sgx_quote.report_body.report_data.d[..32]);
-			println!("sgx quote mr_enclave = {:x?}", sgx_quote.report_body.mr_enclave);
-			println!("sgx quote mr_signer = {:x?}", sgx_quote.report_body.mr_signer);
-			println!("sgx quote report_data = {:x?}", sgx_quote.report_body.report_data.d.to_vec());
+			println!("sgx quote mr_enclave = {:?}", sgx_quote.report_body.mr_enclave);
+			println!("sgx quote mr_signer = {:?}", sgx_quote.report_body.mr_signer);
+			println!("sgx quote report_data = {:?}", sgx_quote.report_body.report_data.d.to_vec());
 		}
 
 		let mut xt_signer_array = [0u8; 32];

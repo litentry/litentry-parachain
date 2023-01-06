@@ -185,8 +185,8 @@ fn verify_sgx_build_mode_works() {
 }
 
 #[test]
-fn parse_ias_report_works() {
-	let enclave_metadata = parse_ias_report(TEST9_CERT).unwrap();
+fn parse_enclave_metadata_works() {
+	let enclave_metadata = parse_enclave_metadata(TEST9_CERT).unwrap();
 	assert_eq!(enclave_metadata.quote_status, SgxStatus::ConfigurationAndSwHardeningNeeded);
 
 	let spid = [220_u8, 102, 69, 18, 100, 146, 156, 242, 117, 174, 42, 236, 164, 33, 3, 41];

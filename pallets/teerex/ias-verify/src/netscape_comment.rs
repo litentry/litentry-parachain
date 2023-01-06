@@ -44,17 +44,6 @@ impl<'a> TryFrom<CertDer<'a>> for NetscapeComment<'a> {
 		let sig_cert = base64::decode_config(netscape_raw[2], base64::STANDARD)
 			.map_err(|_| "Cert Decoding Error")?;
 
-		if netscape_raw.len() > 3 {
-			let quote_add = Self::try_quote_add(&netscape_raw)?;
-
-			return Ok(NetscapeComment {
-				attestation_raw: netscape_raw[0],
-				sig,
-				sig_cert,
-				quote_add: Some(quote_add),
-			})
-		}
-
 		let quote_add =
 			if netscape_raw.len() > 3 { Some(Self::try_quote_add(&netscape_raw)?) } else { None };
 
