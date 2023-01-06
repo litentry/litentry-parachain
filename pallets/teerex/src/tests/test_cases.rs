@@ -95,7 +95,6 @@ fn add_and_remove_enclave_works() {
 #[test]
 fn add_and_remove_enclave_metadata_works() {
 	new_test_ext().execute_with(|| {
-		env_logger::init();
 		Timestamp::set_timestamp(TEST9_TIMESTAMP);
 		let signer = get_signer(TEST9_SIGNER_PUB);
 		assert_ok!(Teerex::register_enclave(
