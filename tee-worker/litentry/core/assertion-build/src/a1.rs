@@ -27,7 +27,6 @@ use crate::{Error, Result};
 use lc_stf_task_sender::MaxIdentityLength;
 use litentry_primitives::Identity;
 use sp_runtime::BoundedVec;
-use std::string::ToString;
 
 pub fn build(identities: BoundedVec<Identity, MaxIdentityLength>) -> Result<()> {
 	let mut web2_cnt = 0;

@@ -20,12 +20,11 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{from_data_provider_error, Error, Result};
+use crate::{Error, Result};
 use std::{
 	str::from_utf8,
 	string::{String, ToString},
 	vec,
-	vec::Vec,
 };
 
 use lc_stf_task_sender::MaxIdentityLength;

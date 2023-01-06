@@ -21,19 +21,17 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::{from_data_provider_error, Error, Result};
+use lc_data_providers::graphql::{
+	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
+};
+use lc_stf_task_sender::MaxIdentityLength;
+use litentry_primitives::Identity;
+use sp_runtime::BoundedVec;
 use std::{
 	str::from_utf8,
 	string::{String, ToString},
 	vec,
 	vec::Vec,
-};
-
-use lc_stf_task_sender::MaxIdentityLength;
-use litentry_primitives::Identity;
-use sp_runtime::BoundedVec;
-
-use lc_data_providers::graphql::{
-	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
 
 // ERC20 LIT token address
@@ -76,13 +74,13 @@ pub fn build(
 			}
 			let credentials = VerifiedCredentialsIsHodlerIn {
 				addresses,
-				from_date: from_date.clone(),
+				from_date,
 				network: verified_network,
 				token_address: tmp_token_addr,
 				min_balance,
 			};
 			let _is_holder_out = client
-				.check_verified_credentials_is_holder(credentials)
+				.check_verified_credentials_is_hodler(credentials)
 				.map_err(from_data_provider_error)?;
 			// TODO: generate VC
 			return Ok(())

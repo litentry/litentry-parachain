@@ -6770,6 +6770,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex",
+ "litentry-primitives",
  "log",
  "pallet-balances",
  "pallet-timestamp",

@@ -40,7 +40,9 @@ use futures::executor;
 use ita_sgx_runtime::Hash;
 use ita_stf::{TrustedCall, TrustedOperation};
 use itp_extrinsics_factory::CreateExtrinsics;
-use itp_node_api::metadata::{pallet_imp::IMPCallIndexes, provider::AccessNodeMetadata};
+use itp_node_api::metadata::{
+	pallet_imp::IMPCallIndexes, pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata,
+};
 use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
@@ -48,7 +50,6 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{OpaqueCall, ShardIdentifier};
-use litentry_primitives::IMPError;
 use log::error;
 use std::{format, string::String, sync::Arc, vec, vec::Vec};
 
@@ -98,7 +99,7 @@ impl<
 	> StfTaskContext<K, O, C, M, A, S, H>
 where
 	H::StateT: SgxExternalitiesTrait,
-	M::MetadataType: IMPCallIndexes,
+	M::MetadataType: IMPCallIndexes + VCMPCallIndexes,
 {
 	pub fn new(
 		shielding_key: K,
@@ -175,34 +176,20 @@ trait TaskHandler {
 	fn on_failure(&self, e: Self::Error);
 }
 
-pub(crate) fn submit_error_extrinsics<O, C, M>(
-	error: IMPError,
+pub(crate) fn submit_extrinsics<O, C>(
+	call: OpaqueCall,
 	ocall_api: Arc<O>,
 	create_extrinsics: Arc<C>,
-	node_metadata: Arc<M>,
 ) where
 	O: EnclaveOnChainOCallApi,
 	C: CreateExtrinsics,
-	M: AccessNodeMetadata,
-	M::MetadataType: IMPCallIndexes,
 {
-	match node_metadata.get_from_metadata(|m| m.some_error_call_indexes()) {
-		Ok(Ok(call_index)) => {
-			let call = OpaqueCall::from_tuple(&(call_index, error));
-			match create_extrinsics.create_extrinsics(vec![call].as_slice(), None) {
-				Err(e) => {
-					error!("create_extrinsics failed. Due to: {:?}", e);
-				},
-				Ok(xt) => {
-					let _ = ocall_api.send_to_parentchain(xt);
-				},
-			}
-		},
-		Ok(Err(e)) => {
-			error!("get metadata failed. Due to: {:?}", e);
-		},
+	match create_extrinsics.create_extrinsics(vec![call].as_slice(), None) {
 		Err(e) => {
-			error!("get metadata failed. Due to: {:?}", e);
+			error!("failed to create extrinsics. Due to: {:?}", e);
+		},
+		Ok(xt) => {
+			let _ = ocall_api.send_to_parentchain(xt);
 		},
 	}
 }

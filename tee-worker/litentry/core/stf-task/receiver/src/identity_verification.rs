@@ -14,16 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{submit_error_extrinsics, StfTaskContext, TaskHandler};
+use crate::{submit_extrinsics, StfTaskContext, TaskHandler};
 use ita_sgx_runtime::Hash;
 use itp_extrinsics_factory::CreateExtrinsics;
-use itp_node_api::metadata::{pallet_imp::IMPCallIndexes, provider::AccessNodeMetadata};
+use itp_node_api::metadata::{
+	pallet_imp::IMPCallIndexes, pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata,
+};
 use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
+use itp_types::OpaqueCall;
 use lc_stf_task_sender::RequestType;
 use litentry_primitives::IMPError;
 use log::error;
@@ -48,7 +51,7 @@ where
 	O: EnclaveOnChainOCallApi,
 	C: CreateExtrinsics,
 	M: AccessNodeMetadata,
-	M::MetadataType: IMPCallIndexes,
+	M::MetadataType: IMPCallIndexes + VCMPCallIndexes,
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
 	H: HandleState,
@@ -58,7 +61,7 @@ where
 	type Result = (Vec<u8>, Vec<u8>);
 
 	fn on_process(&self) -> Result<(Vec<u8>, Vec<u8>), Self::Error> {
-		match &self.req {
+		match self.req.clone() {
 			RequestType::Web2IdentityVerification(ref req) =>
 				lc_identity_verification::web2::verify(req)
 					.map(|_| (req.encoded_shard.clone(), req.encoded_callback.clone())),
@@ -87,12 +90,26 @@ where
 		}
 	}
 
-	fn on_failure(&self, e: Self::Error) {
-		submit_error_extrinsics(
-			e,
-			self.context.ocall_api.clone(),
-			self.context.create_extrinsics.clone(),
-			self.context.node_metadata.clone(),
-		)
+	fn on_failure(&self, error: Self::Error) {
+		match self
+			.context
+			.node_metadata
+			.get_from_metadata(|m| IMPCallIndexes::some_error_call_indexes(m))
+		{
+			Ok(Ok(call_index)) => {
+				let call = OpaqueCall::from_tuple(&(call_index, error));
+				submit_extrinsics(
+					call,
+					self.context.ocall_api.clone(),
+					self.context.create_extrinsics.clone(),
+				)
+			},
+			Ok(Err(e)) => {
+				error!("failed to get metadata. Due to: {:?}", e);
+			},
+			Err(e) => {
+				error!("failed to get metadata. Due to: {:?}", e);
+			},
+		}
 	}
 }

@@ -107,21 +107,15 @@ pub mod pallet {
 		/// copy from litentry_primitives::IMPError
 		DecodeHexFailed,
 		HttpRequestFailed,
+		InvalidIdentity,
 		WrongWeb2Handle,
 		UnexpectedMessage,
 		WrongIdentityHandleType,
 		WrongSignatureType,
-		WrongWeb3NetworkType,
 		VerifySubstrateSignatureFailed,
 		RecoverSubstratePubkeyFailed,
 		VerifyEvmSignatureFailed,
 		RecoverEvmAddressFailed,
-		Assertion1Failed,
-		Assertion2Failed,
-		Assertion3Failed,
-		Assertion4Failed,
-		Assertion5Failed,
-		Assertion7Failed,
 	}
 
 	#[pallet::call]
@@ -278,10 +272,7 @@ pub mod pallet {
 
 		#[pallet::call_index(11)]
 		#[pallet::weight(195_000_000)]
-		pub fn some_error(
-			origin: OriginFor<T>,
-			error: litentry_primitives::IMPError,
-		) -> DispatchResultWithPostInfo {
+		pub fn some_error(origin: OriginFor<T>, error: IMPError) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			match error {
 				IMPError::DecodeHexFailed(s) => {
@@ -292,12 +283,12 @@ pub mod pallet {
 					log::error!("request failed:{:?}", s);
 					Err(Error::<T>::HttpRequestFailed.into())
 				},
+				IMPError::InvalidIdentity => Err(Error::<T>::InvalidIdentity.into()),
 				IMPError::WrongWeb2Handle => Err(Error::<T>::WrongWeb2Handle.into()),
 				IMPError::UnexpectedMessage => Err(Error::<T>::UnexpectedMessage.into()),
 				IMPError::WrongIdentityHandleType =>
 					Err(Error::<T>::WrongIdentityHandleType.into()),
 				IMPError::WrongSignatureType => Err(Error::<T>::WrongSignatureType.into()),
-				IMPError::WrongWeb3NetworkType => Err(Error::<T>::WrongWeb3NetworkType.into()),
 				IMPError::VerifySubstrateSignatureFailed =>
 					Err(Error::<T>::VerifySubstrateSignatureFailed.into()),
 				IMPError::RecoverSubstratePubkeyFailed =>
@@ -306,20 +297,7 @@ pub mod pallet {
 					Err(Error::<T>::VerifyEvmSignatureFailed.into()),
 				IMPError::RecoverEvmAddressFailed =>
 					Err(Error::<T>::RecoverEvmAddressFailed.into()),
-				IMPError::Assertion1Failed => Err(Error::<T>::Assertion1Failed.into()),
-				IMPError::Assertion2Failed => Err(Error::<T>::Assertion2Failed.into()),
-				IMPError::Assertion3Failed => Err(Error::<T>::Assertion3Failed.into()),
-				IMPError::Assertion4Failed => Err(Error::<T>::Assertion4Failed.into()),
-				IMPError::Assertion5Failed => Err(Error::<T>::Assertion5Failed.into()),
-				IMPError::Assertion7Failed => Err(Error::<T>::Assertion7Failed.into()),
 			}
-			// match error {
-			// 	IMPError::IdentityVerificationError(e) => Err(DispatchErrorWithPostInfo {
-			// 		post_info: PostDispatchInfo { actual_weight: None, pays_fee: Pays::No },
-			// 		error: Error::<T>::IdentityError(e).into(),
-			// 	}),
-			// }
-			// Ok(Pays::No.into())
 		}
 	}
 }

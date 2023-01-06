@@ -15,12 +15,12 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	ensure,
-	error::{Error, Result},
-	get_expected_raw_message, get_expected_wrapped_message, AccountId, ToString,
+	ensure, error::Result, get_expected_raw_message, get_expected_wrapped_message, AccountId,
+	ToString,
 };
 use litentry_primitives::{
-	ChallengeCode, Identity, IdentityMultiSignature, Web3CommonValidationData, Web3ValidationData,
+	ChallengeCode, IMPError as Error, Identity, IdentityMultiSignature, Web3CommonValidationData,
+	Web3ValidationData,
 };
 use sp_core::{ed25519, sr25519};
 use sp_io::{

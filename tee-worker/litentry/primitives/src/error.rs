@@ -30,16 +30,21 @@ pub enum IMPError {
 	HttpRequestFailed(ErrorString),
 
 	// identity verification errors
+	InvalidIdentity,
 	WrongWeb2Handle,
 	UnexpectedMessage,
 	WrongIdentityHandleType,
 	WrongSignatureType,
-	WrongWeb3NetworkType,
 	VerifySubstrateSignatureFailed,
 	RecoverSubstratePubkeyFailed,
 	VerifyEvmSignatureFailed,
 	RecoverEvmAddressFailed,
+}
 
+// Verified Credential(VC) Management Pallet Error
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+pub enum VCMPError {
+	HttpRequestFailed(ErrorString),
 	// Assertion
 	Assertion1Failed,
 	Assertion2Failed,

@@ -24,13 +24,8 @@ use crate::Error;
 use lc_data_providers::{
 	twitter_litentry::TwitterLitentryClient, twitter_official::TwitterOfficialClient,
 };
-use litentry_primitives::{
-	Identity, IdentityHandle, IdentityWebType, ParameterString, Web2Network,
-};
-use std::{
-	string::{String, ToString},
-	vec::Vec,
-};
+use litentry_primitives::{Identity, ParameterString, Web2Network};
+use std::{string::String, vec::Vec};
 
 pub fn build(
 	identities: Vec<Identity>,

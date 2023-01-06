@@ -24,6 +24,7 @@ frame-system = { git = "https://github.com/paritytech/substrate", branch = "polk
 
 # local
 core-primitives = { path = "../../primitives/core", default-features = false }
+litentry-primitives = { path = "../../tee-worker/litentry/primitives", default-features = false }
 
 # benchmarking
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36", default-features = false, optional = true }
