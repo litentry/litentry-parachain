@@ -13,7 +13,7 @@ rcgen = { package = "rcgen", default-features = false, git = "https://github.com
 sgx_tstd = { optional = true, features = ["net", "thread"], git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master" }
 sgx_types = { optional = true, git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master" }
 # Todo: should not be needed here: #848
-sgx_crypto_helper = { default-features = false, optional = true, features = ["mesalock_sgx"], version = "1.1.6", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "v1.1.6-testing" }
+sgx_crypto_helper = { default-features = false, optional = true, features = ["mesalock_sgx"], version = "1.1.6", git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master" }
 
 # sgx enabled external libraries
 mio-extras = { optional = true, default-features = false, git = "https://github.com/integritee-network/mio-extras-sgx", rev = "963234b" }
@@ -33,13 +33,13 @@ webpki = { version = "0.21", optional = true }
 yasna = { version = "0.4", optional = true, features = ["bit-vec", "num-bigint", "chrono", "std"] }
 
 # Substrate dependencies
-sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
+sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
 
 # no-std compatible libraries
 log = { version = "0.4", default-features = false }
 
 [dev-dependencies]
-env_logger = "0.9.0"
+env_logger = "0.10.0"
 rustls = { version = "0.19", features = ["dangerous_configuration"] }
 url = { version = "2.0.0" }
 

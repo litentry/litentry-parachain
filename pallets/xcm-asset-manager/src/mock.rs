@@ -123,7 +123,7 @@ impl From<MockAssetType> for AssetId {
 impl From<Option<MultiLocation>> for MockAssetType {
 	fn from(location: Option<MultiLocation>) -> Self {
 		match location {
-			None => Self::Xcm(Box::new(MultiLocation::default())),
+			None => Self::Xcm(Box::default()),
 			Some(multi) => Self::Xcm(Box::new(multi)),
 		}
 	}

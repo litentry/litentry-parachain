@@ -134,6 +134,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		#[pallet::call_index(0)]
 		#[pallet::weight(<T as Config>::WeightInfo::add_to_whitelist())]
 		pub fn add_to_whitelist(
 			origin: OriginFor<T>,
@@ -153,6 +154,7 @@ pub mod pallet {
 			Self::deposit_event(Event::AddedToWhitelist(data_source, mrenclave));
 			Ok(())
 		}
+		#[pallet::call_index(1)]
 		#[pallet::weight(<T as Config>::WeightInfo::remove_from_whitelist())]
 		pub fn remove_from_whitelist(
 			origin: OriginFor<T>,
@@ -171,6 +173,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		#[pallet::call_index(2)]
 		#[pallet::weight(<T as Config>::WeightInfo::update_oracle())]
 		pub fn update_oracle(
 			origin: OriginFor<T>,
@@ -203,6 +206,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		#[pallet::call_index(3)]
 		#[pallet::weight(<T as Config>::WeightInfo::update_exchange_rate())]
 		pub fn update_exchange_rate(
 			origin: OriginFor<T>,
