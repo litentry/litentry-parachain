@@ -29,7 +29,8 @@ use ita_stf::{TrustedCall, TrustedOperation};
 use itp_node_api::{
 	api_client::ParentchainUncheckedExtrinsic,
 	metadata::{
-		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata,
+		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, pallet_vcmp::VCMPCallIndexes,
+		provider::AccessNodeMetadata,
 	},
 };
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
@@ -37,8 +38,8 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_primitives::types::AccountId;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{
-	CallWorkerFn, CreateIdentityFn, OpaqueCall, RemoveIdentityFn, SetUserShieldingKeyFn,
-	ShardIdentifier, ShieldFundsFn, VerifyIdentityFn, H256,
+	CallWorkerFn, CreateIdentityFn, OpaqueCall, RemoveIdentityFn, RequestVCFn,
+	SetUserShieldingKeyFn, ShardIdentifier, ShieldFundsFn, VerifyIdentityFn, H256,
 };
 use litentry_primitives::{Identity, UserShieldingKeyType, ValidationData};
 use log::*;
@@ -100,7 +101,7 @@ where
 	StfEnclaveSigner: StfEnclaveSigning,
 	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
-	NodeMetadataProvider::MetadataType: TeerexCallIndexes + IMPCallIndexes,
+	NodeMetadataProvider::MetadataType: TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes,
 {
 	pub fn new(
 		shielding_key_repo: Arc<ShieldingKeyRepository>,
@@ -180,6 +181,7 @@ where
 	is_parentchain_function!(is_create_identity_funciton, create_identity_call_indexes);
 	is_parentchain_function!(is_remove_identity_funciton, remove_identity_call_indexes);
 	is_parentchain_function!(is_verify_identity_funciton, verify_identity_call_indexes);
+	is_parentchain_function!(is_request_vc_funciton, request_vc_call_indexes);
 }
 
 impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
@@ -196,7 +198,7 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 	StfEnclaveSigner: StfEnclaveSigning,
 	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
-	NodeMetadataProvider::MetadataType: TeerexCallIndexes + IMPCallIndexes,
+	NodeMetadataProvider::MetadataType: TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes,
 {
 	fn execute_indirect_calls_in_extrinsics<ParentchainBlock>(
 		&self,
@@ -377,6 +379,37 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 							block_number
 								.try_into()
 								.map_err(|_| crate::error::Error::ConvertParentchainBlockNumber)?,
+						);
+						let signed_trusted_call =
+							self.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
+						let trusted_operation =
+							TrustedOperation::indirect_call(signed_trusted_call);
+
+						let encrypted_trusted_call =
+							shielding_key.encrypt(&trusted_operation.encode())?;
+						self.submit_trusted_call(shard, encrypted_trusted_call);
+					}
+				}
+			}
+
+			// Found RequestVC extrinsic
+			if let Ok(xt) = ParentchainUncheckedExtrinsic::<RequestVCFn>::decode(
+				&mut encoded_xt_opaque.as_slice(),
+			) {
+				if self.is_request_vc_funciton(&xt.function.0) {
+					let (_, shard, assertion) = xt.function;
+					let shielding_key = self.shielding_key_repo.retrieve_key()?;
+					debug!("Requested VC Assertion {:?}", assertion);
+
+					if let Some((multiaddress_account, _, _)) = xt.signature {
+						let account = AccountIdLookup::lookup(multiaddress_account)?;
+						let enclave_account_id = self.stf_enclave_signer.get_enclave_account()?;
+
+						let trusted_call = TrustedCall::build_assertion(
+							enclave_account_id,
+							account,
+							assertion,
+							shard,
 						);
 						let signed_trusted_call =
 							self.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;

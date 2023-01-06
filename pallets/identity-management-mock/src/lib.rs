@@ -258,6 +258,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// add an account to the delegatees
+		#[pallet::call_index(0)]
 		#[pallet::weight(195_000_000)]
 		pub fn add_delegatee(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
 			let _ = T::DelegateeAdminOrigin::ensure_origin(origin)?;
@@ -268,6 +269,7 @@ pub mod pallet {
 		}
 
 		/// remove an account from the delegatees
+		#[pallet::call_index(1)]
 		#[pallet::weight(195_000_000)]
 		pub fn remove_delegatee(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
 			let _ = T::DelegateeAdminOrigin::ensure_origin(origin)?;
@@ -278,6 +280,7 @@ pub mod pallet {
 		}
 
 		/// Set or update user's shielding key
+		#[pallet::call_index(2)]
 		#[pallet::weight(195_000_000)]
 		pub fn set_user_shielding_key(
 			origin: OriginFor<T>,
@@ -299,6 +302,7 @@ pub mod pallet {
 		}
 
 		/// Create an identity
+		#[pallet::call_index(3)]
 		#[pallet::weight(195_000_000)]
 		pub fn create_identity(
 			origin: OriginFor<T>,
@@ -374,6 +378,7 @@ pub mod pallet {
 		}
 
 		/// Remove an identity
+		#[pallet::call_index(4)]
 		#[pallet::weight(195_000_000)]
 		pub fn remove_identity(
 			origin: OriginFor<T>,
@@ -407,6 +412,7 @@ pub mod pallet {
 		}
 
 		/// Verify a created identity
+		#[pallet::call_index(5)]
 		#[pallet::weight(195_000_000)]
 		pub fn verify_identity(
 			origin: OriginFor<T>,
@@ -466,8 +472,10 @@ pub mod pallet {
 					Error::<T>::ChallengeCodeNotExist
 				);
 				ChallengeCodes::<T>::remove(&who, &identity);
-
-				// emit the IdentityVerified event
+				Ok(())
+			})
+			.map(|_| {
+				// emit the IdentityVerified event when the mutation is done
 				Self::deposit_event(Event::<T>::IdentityVerifiedPlain {
 					account: who.clone(),
 					identity: identity.clone(),
@@ -481,11 +489,11 @@ pub mod pallet {
 						Self::get_id_graph(&who).encode().as_slice(),
 					),
 				});
-				Ok(())
 			})
 		}
 
 		// The following extrinsics are supposed to be called by TEE only
+		#[pallet::call_index(6)]
 		#[pallet::weight(195_000_000)]
 		pub fn user_shielding_key_set(
 			origin: OriginFor<T>,
@@ -496,6 +504,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		#[pallet::call_index(7)]
 		#[pallet::weight(195_000_000)]
 		pub fn challenge_code_generated(
 			origin: OriginFor<T>,
@@ -508,6 +517,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		#[pallet::call_index(8)]
 		#[pallet::weight(195_000_000)]
 		pub fn identity_created(
 			origin: OriginFor<T>,
@@ -520,6 +530,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		#[pallet::call_index(9)]
 		#[pallet::weight(195_000_000)]
 		pub fn identity_removed(
 			origin: OriginFor<T>,
@@ -532,6 +543,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		#[pallet::call_index(10)]
 		#[pallet::weight(195_000_000)]
 		pub fn identity_verified(
 			origin: OriginFor<T>,
@@ -544,6 +556,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		#[pallet::call_index(11)]
 		#[pallet::weight(195_000_000)]
 		pub fn some_error(
 			origin: OriginFor<T>,

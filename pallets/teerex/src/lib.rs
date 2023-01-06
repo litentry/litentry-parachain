@@ -118,6 +118,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		// the integritee-service wants to register his enclave
+		#[pallet::call_index(0)]
 		#[pallet::weight((<T as Config>::WeightInfo::register_enclave(), DispatchClass::Normal, Pays::Yes))]
 		pub fn register_enclave(
 			origin: OriginFor<T>,
@@ -165,6 +166,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		#[pallet::call_index(1)]
 		#[pallet::weight((<T as Config>::WeightInfo::unregister_enclave(), DispatchClass::Normal, Pays::Yes))]
 		pub fn unregister_enclave(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
@@ -174,6 +176,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		#[pallet::call_index(2)]
 		#[pallet::weight((<T as Config>::WeightInfo::call_worker(), DispatchClass::Normal, Pays::Yes))]
 		pub fn call_worker(origin: OriginFor<T>, request: Request) -> DispatchResult {
 			let _sender = ensure_signed(origin)?;
@@ -184,6 +187,7 @@ pub mod pallet {
 
 		/// The integritee worker calls this function for every processed parentchain_block to
 		/// confirm a state update.
+		#[pallet::call_index(3)]
 		#[pallet::weight((<T as Config>::WeightInfo::confirm_processed_parentchain_block(), DispatchClass::Normal, Pays::Yes))]
 		pub fn confirm_processed_parentchain_block(
 			origin: OriginFor<T>,
@@ -212,6 +216,7 @@ pub mod pallet {
 		/// not have a private key as the balance on this account is exclusively managed from
 		/// withing the pallet_teerex. Note: The bonding_account is bit-equivalent to the worker
 		/// shard.
+		#[pallet::call_index(4)]
 		#[pallet::weight((1000, DispatchClass::Normal, Pays::No))]
 		pub fn shield_funds(
 			origin: OriginFor<T>,
@@ -231,6 +236,7 @@ pub mod pallet {
 		}
 
 		/// Sent by enclaves only as a result of an `unshield` request from a client to an enclave.
+		#[pallet::call_index(5)]
 		#[pallet::weight((1000, DispatchClass::Normal, Pays::No))]
 		pub fn unshield_funds(
 			origin: OriginFor<T>,

@@ -218,6 +218,7 @@ pub mod pallet {
 		/// Register new asset with the asset manager
 		/// TODO::Reserve native token multilocation through GenesisBuild/RuntimeUpgrade
 		/// TODO::Add Multilocation filter for register
+		#[pallet::call_index(0)]
 		#[pallet::weight(T::WeightInfo::register_foreign_asset_type())]
 		#[transactional]
 		pub fn register_foreign_asset_type(
@@ -245,6 +246,7 @@ pub mod pallet {
 		}
 
 		// Update asset metadata
+		#[pallet::call_index(1)]
 		#[pallet::weight(T::WeightInfo::update_foreign_asset_metadata())]
 		pub fn update_foreign_asset_metadata(
 			origin: OriginFor<T>,
@@ -263,6 +265,7 @@ pub mod pallet {
 		/// Change the amount of units we are charging per execution second
 		/// for a given ForeignAssetType
 		/// 0 means not support
+		#[pallet::call_index(2)]
 		#[pallet::weight(T::WeightInfo::set_asset_units_per_second())]
 		pub fn set_asset_units_per_second(
 			origin: OriginFor<T>,
@@ -281,6 +284,7 @@ pub mod pallet {
 
 		/// Add the xcm type mapping for a existing assetId, other assetType still exists if any.
 		/// TODO: Change add_asset_type with internal function wrapper
+		#[pallet::call_index(3)]
 		#[pallet::weight(T::WeightInfo::add_asset_type())]
 		pub fn add_asset_type(
 			origin: OriginFor<T>,
@@ -311,6 +315,7 @@ pub mod pallet {
 		/// assigned to existing AssetId Both asset_type and potential new_default_asset_type must
 		/// be an existing relation with asset_id
 		/// TODO: Change remove_asset_type with internal function wrapper
+		#[pallet::call_index(4)]
 		#[pallet::weight(T::WeightInfo::remove_asset_type())]
 		#[transactional]
 		pub fn remove_asset_type(
