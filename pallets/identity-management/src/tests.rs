@@ -16,6 +16,7 @@
 
 use crate::{mock::*, Error, ShardIdentifier};
 use frame_support::{assert_noop, assert_ok};
+use litentry_primitives::IMPError;
 use sp_core::H256;
 
 const TEST_MRENCLAVE: [u8; 32] = [2u8; 32];
@@ -128,15 +129,10 @@ fn tee_callback_with_registered_enclave_works() {
 			URL.to_vec()
 		));
 
-		assert_ok!(IdentityManagement::some_error(
-			RuntimeOrigin::signed(1),
-			vec![1u8; 16],
-			vec![2u8; 16]
-		));
-		System::assert_last_event(RuntimeEvent::IdentityManagement(crate::Event::SomeError {
-			func: vec![1u8; 16],
-			error: vec![2u8; 16],
-		}));
+		assert_noop!(
+			IdentityManagement::some_error(RuntimeOrigin::signed(1), IMPError::WrongWeb2Handle),
+			Error::<Test>::WrongWeb2Handle
+		);
 	});
 }
 
@@ -144,7 +140,7 @@ fn tee_callback_with_registered_enclave_works() {
 fn tee_callback_with_unregistered_enclave_fails() {
 	new_test_ext().execute_with(|| {
 		assert_noop!(
-			IdentityManagement::some_error(RuntimeOrigin::signed(1), vec![1u8; 16], vec![2u8; 16]),
+			IdentityManagement::some_error(RuntimeOrigin::signed(1), IMPError::WrongWeb2Handle),
 			sp_runtime::DispatchError::BadOrigin,
 		);
 	});
