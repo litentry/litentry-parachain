@@ -38,13 +38,13 @@ itc-rest-client = { path = "../../../../core/rest-client", default-features = fa
 itp-types = { path = "../../../../core-primitives/types", default-features = false }
 
 itp-extrinsics-factory = { path = "../../../../core-primitives/extrinsics-factory", default-features = false }
+itp-node-api = { path = "../../../../core-primitives/node-api", default-features = false }
 itp-ocall-api = { path = "../../../../core-primitives/ocall-api", default-features = false }
 itp-sgx-crypto = { path = "../../../../core-primitives/sgx/crypto", default-features = false }
 itp-sgx-externalities = { path = "../../../../core-primitives/substrate-sgx/externalities", default-features = false }
 itp-stf-executor = { path = "../../../../core-primitives/stf-executor", default-features = false }
 itp-stf-state-handler = { path = "../../../../core-primitives/stf-state-handler", default-features = false }
 itp-stf-state-observer = { path = "../../../../core-primitives/stf-state-observer", default-features = false }
-itp-node-api = { path = "../../../../core-primitives/node-api", default-features = false }
 itp-storage = { path = "../../../../core-primitives/storage", default-features = false }
 itp-top-pool-author = { path = "../../../../core-primitives/top-pool-author", default-features = false }
 itp-utils = { path = "../../../../core-primitives/utils", default-features = false }
