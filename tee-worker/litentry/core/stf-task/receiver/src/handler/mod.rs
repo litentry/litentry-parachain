@@ -14,12 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use itp_extrinsics_factory::CreateExtrinsics;
-use itp_ocall_api::EnclaveOnChainOCallApi;
-use itp_types::OpaqueCall;
-use log::error;
-use std::{sync::Arc, vec};
-
 pub mod assertion;
 pub mod identity_verification;
 

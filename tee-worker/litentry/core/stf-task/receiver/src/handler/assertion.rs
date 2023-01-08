@@ -14,10 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{
-	handler::{submit_extrinsics, TaskHandler},
-	StfTaskContext,
-};
+use crate::{handler::TaskHandler, StfTaskContext};
 use ita_sgx_runtime::Hash;
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{
