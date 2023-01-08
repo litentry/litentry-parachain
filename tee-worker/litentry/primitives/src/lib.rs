@@ -22,7 +22,6 @@ mod ethereum_signature;
 mod identity;
 // mod trusted_call;
 mod assertion;
-mod error;
 mod validation_data;
 
 pub use ethereum_signature::*;
