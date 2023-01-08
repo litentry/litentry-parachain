@@ -157,11 +157,7 @@ where
 		{
 			Ok(Ok(call_index)) => {
 				let call = OpaqueCall::from_tuple(&(call_index, error));
-				submit_extrinsics(
-					call,
-					self.context.ocall_api.clone(),
-					self.context.create_extrinsics.clone(),
-				)
+				self.context.submit_to_parechain(call)
 			},
 			Ok(Err(e)) => {
 				error!("failed to get metadata. Due to: {:?}", e);

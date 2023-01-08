@@ -36,21 +36,3 @@ pub trait TaskHandler {
 	fn on_success(&self, r: Self::Result);
 	fn on_failure(&self, e: Self::Error);
 }
-
-pub(crate) fn submit_extrinsics<O, C>(
-	call: OpaqueCall,
-	ocall_api: Arc<O>,
-	create_extrinsics: Arc<C>,
-) where
-	O: EnclaveOnChainOCallApi,
-	C: CreateExtrinsics,
-{
-	match create_extrinsics.create_extrinsics(vec![call].as_slice(), None) {
-		Err(e) => {
-			error!("failed to create extrinsics. Due to: {:?}", e);
-		},
-		Ok(xt) => {
-			let _ = ocall_api.send_to_parentchain(xt);
-		},
-	}
-}

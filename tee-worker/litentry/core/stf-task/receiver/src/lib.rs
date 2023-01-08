@@ -54,7 +54,7 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::ShardIdentifier;
+use itp_types::{OpaqueCall, ShardIdentifier};
 use lc_stf_task_sender::{stf_task_sender, RequestType};
 use log::{debug, error};
 use std::{format, string::String, sync::Arc, vec::Vec};
@@ -159,6 +159,17 @@ where
 		})?;
 
 		Ok(())
+	}
+
+	fn submit_to_parechain(&self, call: OpaqueCall) {
+		match self.create_extrinsics.create_extrinsics(vec![call].as_slice(), None) {
+			Err(e) => {
+				error!("failed to create extrinsics. Due to: {:?}", e);
+			},
+			Ok(xt) => {
+				let _ = self.ocall_api.send_to_parentchain(xt);
+			},
+		}
 	}
 
 	// TODO: maybe add a wrapper to read the state and eliminate the public access to `state_handler`
