@@ -14,7 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{submit_extrinsics, StfTaskContext, TaskHandler};
+use crate::{
+	handler::{submit_extrinsics, TaskHandler},
+	StfTaskContext,
+};
 use ita_sgx_runtime::Hash;
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{
@@ -28,8 +31,8 @@ use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::OpaqueCall;
 use lc_stf_task_sender::RequestType;
-use litentry_primitives::IMPError;
 use log::error;
+use parachain_core_primitives::IMPError;
 use std::{sync::Arc, vec::Vec};
 
 pub(crate) struct IdentityVerificationHandler<
