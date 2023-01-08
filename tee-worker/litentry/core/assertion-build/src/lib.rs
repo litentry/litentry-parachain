@@ -39,11 +39,11 @@ pub mod a5;
 pub mod a6;
 pub mod a7;
 
-use litentry_primitives::VCMPError as Error;
+use parachain_core_primitives::VCMPError as Error;
 pub type Result<T> = core::result::Result<T, Error>;
 
 pub(crate) fn from_data_provider_error(e: lc_data_providers::Error) -> Error {
-	Error::HttpRequestFailed(litentry_primitives::ErrorString::truncate_from(
+	Error::HttpRequestFailed(parachain_core_primitives::ErrorString::truncate_from(
 		format!("{:?}", e).as_bytes().to_vec(),
 	))
 }

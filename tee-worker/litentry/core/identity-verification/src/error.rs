@@ -20,19 +20,19 @@ extern crate sgx_tstd as std;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use litentry_primitives::IMPError as Error;
+pub use parachain_core_primitives::IMPError as Error;
 use std::format;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
 pub(crate) fn from_hex_error(e: hex::FromHexError) -> Error {
-	Error::DecodeHexFailed(litentry_primitives::ErrorString::truncate_from(
+	Error::DecodeHexFailed(parachain_core_primitives::ErrorString::truncate_from(
 		format!("{:?}", e).as_bytes().to_vec(),
 	))
 }
 
 pub(crate) fn from_data_provider_error(e: lc_data_providers::Error) -> Error {
-	Error::HttpRequestFailed(litentry_primitives::ErrorString::truncate_from(
+	Error::HttpRequestFailed(parachain_core_primitives::ErrorString::truncate_from(
 		format!("{:?}", e).as_bytes().to_vec(),
 	))
 }

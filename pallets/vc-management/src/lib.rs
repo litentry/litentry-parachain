@@ -50,9 +50,9 @@ pub type VCID = u64;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
+	use core_primitives::VCMPError;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-	use litentry_primitives::VCMPError;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]

@@ -1146,6 +1146,7 @@ checksum = "5827cebf4670468b8772dd191856768aedcb1b0278a04f989f7766351917b9dc"
 name = "core-primitives"
 version = "0.9.12"
 dependencies = [
+ "frame-support",
  "parity-scale-codec 3.2.1",
  "scale-info",
  "sp-core",
@@ -3306,11 +3307,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hashbrown_tstd"
-version = "0.12.0"
-source = "git+https://github.com/apache/teaclave-sgx-sdk.git?branch=master#27bd225ae6dbcd1d0a6d4d9590acc4d73c5195c2"
-
-[[package]]
 name = "heck"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4717,22 +4713,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "litentry-primitives"
-version = "0.1.0"
-dependencies = [
- "core-primitives",
- "hex",
- "parity-scale-codec 3.2.1",
- "scale-info",
- "serde",
- "serde_json",
- "sgx_tstd",
- "sp-core",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "litmus-parachain-runtime"
 version = "0.9.13"
 dependencies = [
@@ -6084,7 +6064,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex",
- "litentry-primitives",
  "log",
  "pallet-balances",
  "pallet-teerex",
@@ -6770,7 +6749,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex",
- "litentry-primitives",
  "log",
  "pallet-balances",
  "pallet-timestamp",
@@ -10841,86 +10819,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e44969a61f5d316be20a42ff97816efb3b407a924d06824c3d8a49fa8450de0e"
 dependencies = [
  "serde",
-]
-
-[[package]]
-name = "sgx_alloc"
-version = "1.1.6"
-source = "git+https://github.com/apache/teaclave-sgx-sdk.git?branch=master#27bd225ae6dbcd1d0a6d4d9590acc4d73c5195c2"
-
-[[package]]
-name = "sgx_backtrace_sys"
-version = "1.1.6"
-source = "git+https://github.com/apache/teaclave-sgx-sdk.git?branch=master#27bd225ae6dbcd1d0a6d4d9590acc4d73c5195c2"
-dependencies = [
- "cc",
- "sgx_build_helper",
- "sgx_libc",
-]
-
-[[package]]
-name = "sgx_build_helper"
-version = "1.1.6"
-source = "git+https://github.com/apache/teaclave-sgx-sdk.git?branch=master#27bd225ae6dbcd1d0a6d4d9590acc4d73c5195c2"
-
-[[package]]
-name = "sgx_demangle"
-version = "1.1.6"
-source = "git+https://github.com/apache/teaclave-sgx-sdk.git?branch=master#27bd225ae6dbcd1d0a6d4d9590acc4d73c5195c2"
-
-[[package]]
-name = "sgx_libc"
-version = "1.1.6"
-source = "git+https://github.com/apache/teaclave-sgx-sdk.git?branch=master#27bd225ae6dbcd1d0a6d4d9590acc4d73c5195c2"
-dependencies = [
- "sgx_types",
-]
-
-[[package]]
-name = "sgx_tprotected_fs"
-version = "1.1.6"
-source = "git+https://github.com/apache/teaclave-sgx-sdk.git?branch=master#27bd225ae6dbcd1d0a6d4d9590acc4d73c5195c2"
-dependencies = [
- "sgx_trts",
- "sgx_types",
-]
-
-[[package]]
-name = "sgx_trts"
-version = "1.1.6"
-source = "git+https://github.com/apache/teaclave-sgx-sdk.git?branch=master#27bd225ae6dbcd1d0a6d4d9590acc4d73c5195c2"
-dependencies = [
- "sgx_libc",
- "sgx_types",
-]
-
-[[package]]
-name = "sgx_tstd"
-version = "1.1.6"
-source = "git+https://github.com/apache/teaclave-sgx-sdk.git?branch=master#27bd225ae6dbcd1d0a6d4d9590acc4d73c5195c2"
-dependencies = [
- "hashbrown_tstd",
- "sgx_alloc",
- "sgx_backtrace_sys",
- "sgx_demangle",
- "sgx_libc",
- "sgx_tprotected_fs",
- "sgx_trts",
- "sgx_types",
- "sgx_unwind",
-]
-
-[[package]]
-name = "sgx_types"
-version = "1.1.6"
-source = "git+https://github.com/apache/teaclave-sgx-sdk.git?branch=master#27bd225ae6dbcd1d0a6d4d9590acc4d73c5195c2"
-
-[[package]]
-name = "sgx_unwind"
-version = "1.1.6"
-source = "git+https://github.com/apache/teaclave-sgx-sdk.git?branch=master#27bd225ae6dbcd1d0a6d4d9590acc4d73c5195c2"
-dependencies = [
- "sgx_build_helper",
 ]
 
 [[package]]

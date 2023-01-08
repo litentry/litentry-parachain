@@ -50,9 +50,9 @@ use sp_std::vec::Vec;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::{AesOutput, ShardIdentifier, Vec, WeightInfo};
+	use core_primitives::IMPError;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-	use litentry_primitives::IMPError;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]

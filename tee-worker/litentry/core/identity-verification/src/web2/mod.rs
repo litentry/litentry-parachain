@@ -25,7 +25,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 use crate::{
 	ensure,
-	error::{from_data_provider_error, from_hex_error},
+	error::{from_data_provider_error, from_hex_error, Error},
 	get_expected_raw_message,
 };
 use codec::{Decode, Encode};
@@ -37,7 +37,7 @@ use lc_data_providers::{
 };
 use lc_stf_task_sender::Web2IdentityVerificationRequest;
 use litentry_primitives::{
-	DiscordValidationData, IMPError as Error, Identity, TwitterValidationData, Web2ValidationData,
+	DiscordValidationData, Identity, TwitterValidationData, Web2ValidationData,
 };
 use std::{fmt::Debug, vec::Vec};
 

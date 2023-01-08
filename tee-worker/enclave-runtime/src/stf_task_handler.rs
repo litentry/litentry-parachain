@@ -17,7 +17,7 @@
 use itp_component_container::ComponentGetter;
 use itp_sgx_crypto::Rsa3072Seal;
 use itp_sgx_io::StaticSealedIO;
-use lc_stf_task_receiver::{stf_task_receiver::run_stf_task_receiver, StfTaskContext};
+use lc_stf_task_receiver::{run_stf_task_receiver, StfTaskContext};
 use log::*;
 use sgx_types::sgx_status_t;
 use std::sync::Arc;

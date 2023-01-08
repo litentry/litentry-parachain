@@ -29,7 +29,6 @@ hex = { version = "0.4", default-features = false }
 
 # local
 core-primitives = { path = "../../primitives/core", default-features = false }
-litentry-primitives = { path = "../../tee-worker/litentry/primitives", default-features = false }
 
 [dev-dependencies]
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }

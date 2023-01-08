@@ -15,8 +15,8 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{mock::*, Error, ShardIdentifier};
+use core_primitives::IMPError;
 use frame_support::{assert_noop, assert_ok};
-use litentry_primitives::IMPError;
 use sp_core::H256;
 
 const TEST_MRENCLAVE: [u8; 32] = [2u8; 32];
