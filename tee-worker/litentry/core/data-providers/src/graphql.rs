@@ -203,7 +203,7 @@ mod tests {
 			token_address: LIT_TOKEN_ADDRESS.to_string(),
 			min_balance: 0.00000056,
 		};
-		let response = client.check_verified_credentials_is_holder(credentials);
+		let response = client.check_verified_credentials_is_hodler(credentials);
 
 		if let Ok(is_hodler_out) = response {
 			assert_eq!(is_hodler_out.verified_credentials_is_hodler[0].is_hodler, false);
