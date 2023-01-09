@@ -40,6 +40,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 };
 use lazy_static::lazy_static;
+use log::debug;
 #[cfg(feature = "std")]
 use std::sync::RwLock;
 #[cfg(feature = "sgx")]
@@ -108,27 +109,35 @@ impl DataProvidersStatic {
 		}
 	}
 	pub fn set_twitter_official_url(&mut self, v: String) {
+		debug!("set_twitter_official_url: {:?}", v);
 		self.twitter_official_url = v;
 	}
 	pub fn set_twitter_litentry_url(&mut self, v: String) {
+		debug!("set_twitter_litentry_url: {:?}", v);
 		self.twitter_litentry_url = v;
 	}
 	pub fn set_twitter_auth_token(&mut self, v: String) {
+		debug!("set_twitter_auth_token: {:?}", v);
 		self.twitter_auth_token = v;
 	}
 	pub fn set_discord_official_url(&mut self, v: String) {
+		debug!("set_discord_official_url: {:?}", v);
 		self.discord_official_url = v;
 	}
 	pub fn set_discord_litentry_url(&mut self, v: String) {
+		debug!("set_discord_litentry_url: {:?}", v);
 		self.discord_litentry_url = v;
 	}
 	pub fn set_discord_auth_token(&mut self, v: String) {
+		debug!("set_discord_auth_token: {:?}", v);
 		self.discord_auth_token = v;
 	}
 	pub fn set_graphql_url(&mut self, v: String) {
+		debug!("set_graphql_url: {:?}", v);
 		self.graphql_url = v;
 	}
 	pub fn set_graphql_auth_key(&mut self, v: String) {
+		debug!("set_graphql_auth_key: {:?}", v);
 		self.graphql_auth_key = v;
 	}
 }
@@ -164,7 +173,7 @@ pub fn vec_to_string(vec: Vec<u8>) -> Result<String, Error> {
 }
 
 pub fn build_client(base_url: &str, headers: Headers) -> RestClient<HttpClient<DefaultSend>> {
-	// println!("base_url: {}", base_url);
+	debug!("base_url: {}", base_url);
 	let base_url = Url::parse(base_url).unwrap();
 	let http_client = HttpClient::new(DefaultSend {}, true, Some(TIMEOUT), Some(headers), None);
 	RestClient::new(http_client, base_url)

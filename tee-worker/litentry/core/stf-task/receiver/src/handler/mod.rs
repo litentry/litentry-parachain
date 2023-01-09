@@ -14,25 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate sgx_tstd as std;
+pub mod assertion;
+pub mod identity_verification;
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use crate::sgx_reexport_prelude::*;
-
-pub use parachain_core_primitives::IMPError as Error;
-use std::format;
-
-pub type Result<T> = core::result::Result<T, Error>;
-
-pub(crate) fn from_hex_error(e: hex::FromHexError) -> Error {
-	Error::DecodeHexFailed(parachain_core_primitives::ErrorString::truncate_from(
-		format!("{:?}", e).as_bytes().to_vec(),
-	))
-}
-
-pub(crate) fn from_data_provider_error(e: lc_data_providers::Error) -> Error {
-	Error::HttpRequestFailed(parachain_core_primitives::ErrorString::truncate_from(
-		format!("{:?}", e).as_bytes().to_vec(),
-	))
+pub trait TaskHandler {
+	type Error;
+	type Result;
+	fn start(&self) {
+		match self.on_process() {
+			Ok(r) => self.on_success(r),
+			Err(e) => self.on_failure(e),
+		}
+	}
+	fn on_process(&self) -> Result<Self::Result, Self::Error>;
+	fn on_success(&self, r: Self::Result);
+	fn on_failure(&self, e: Self::Error);
 }

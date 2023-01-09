@@ -505,6 +505,7 @@ checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
 name = "core-primitives"
 version = "0.9.12"
 dependencies = [
+ "frame-support",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
@@ -2520,6 +2521,7 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 name = "lc-assertion-build"
 version = "0.1.0"
 dependencies = [
+ "core-primitives",
  "frame-support",
  "futures 0.3.8",
  "hex 0.4.0",
@@ -2574,6 +2576,7 @@ dependencies = [
 name = "lc-identity-verification"
 version = "0.1.0"
 dependencies = [
+ "core-primitives",
  "frame-support",
  "futures 0.3.8",
  "hex 0.4.0",
@@ -2608,6 +2611,7 @@ name = "lc-stf-task-receiver"
 version = "0.1.0"
 dependencies = [
  "chrono 0.4.11",
+ "core-primitives",
  "frame-support",
  "futures 0.3.8",
  "hex 0.4.0",
@@ -2617,6 +2621,7 @@ dependencies = [
  "ita-stf",
  "itc-rest-client",
  "itp-extrinsics-factory",
+ "itp-node-api",
  "itp-ocall-api",
  "itp-sgx-crypto",
  "itp-sgx-externalities",
