@@ -17,7 +17,7 @@
 use itp_component_container::ComponentGetter;
 use itp_sgx_crypto::Rsa3072Seal;
 use itp_sgx_io::StaticSealedIO;
-use lc_stf_task_receiver::{stf_task_receiver::run_stf_task_receiver, StfTaskContext};
+use lc_stf_task_receiver::{run_stf_task_receiver, StfTaskContext};
 use log::*;
 use sgx_types::sgx_status_t;
 use std::sync::Arc;
@@ -28,6 +28,10 @@ use crate::{
 		EnclaveStfEnclaveSigner, GLOBAL_OCALL_API_COMPONENT,
 		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
 		GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
+	},
+	utils::{
+		get_extrinsic_factory_from_solo_or_parachain,
+		get_node_metadata_repository_from_solo_or_parachain,
 	},
 	GLOBAL_STATE_HANDLER_COMPONENT,
 };
@@ -56,15 +60,25 @@ fn run_stf_task_handler_internal() -> Result<()> {
 
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 
+	let node_metadata = get_node_metadata_repository_from_solo_or_parachain()?;
+	let extrinsic_factory = get_extrinsic_factory_from_solo_or_parachain()?;
+
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
 		state_observer,
-		ocall_api,
+		ocall_api.clone(),
 		shielding_key_repository,
 		author_api.clone(),
 	));
 
-	let stf_task_context =
-		StfTaskContext::new(shielding_key, author_api, stf_enclave_signer, state_handler);
+	let stf_task_context = StfTaskContext::new(
+		shielding_key,
+		ocall_api,
+		extrinsic_factory,
+		node_metadata,
+		author_api,
+		stf_enclave_signer,
+		state_handler,
+	);
 
-	run_stf_task_receiver(&stf_task_context).map_err(Error::StfTaskReceiver)
+	run_stf_task_receiver(Arc::new(stf_task_context)).map_err(Error::StfTaskReceiver)
 }

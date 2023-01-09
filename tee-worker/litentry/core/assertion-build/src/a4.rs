@@ -20,20 +20,18 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{Error, Result};
+use crate::{from_data_provider_error, Error, Result};
+use lc_data_providers::graphql::{
+	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
+};
+use lc_stf_task_sender::MaxIdentityLength;
+use litentry_primitives::Identity;
+use sp_runtime::BoundedVec;
 use std::{
 	str::from_utf8,
 	string::{String, ToString},
 	vec,
 	vec::Vec,
-};
-
-use lc_stf_task_sender::MaxIdentityLength;
-use litentry_primitives::Identity;
-use sp_runtime::BoundedVec;
-
-use lc_data_providers::graphql::{
-	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
 
 // ERC20 LIT token address
@@ -76,19 +74,19 @@ pub fn build(
 			}
 			let credentials = VerifiedCredentialsIsHodlerIn {
 				addresses,
-				from_date: from_date.clone(),
+				from_date,
 				network: verified_network,
 				token_address: tmp_token_addr,
 				min_balance,
 			};
-			let is_hodler_out = client.check_verified_credentials_is_hodler(credentials);
-			if let Ok(_hodler_out) = is_hodler_out {
-				// TODO: generate VC
-
-				return Ok(())
-			}
+			let _is_holder_out = client
+				.check_verified_credentials_is_hodler(credentials)
+				.map_err(from_data_provider_error)?;
+			// TODO: generate VC
+			return Ok(())
 		}
 	}
 
-	Err(Error::Assertion4Error("no valid response".to_string()))
+	// no valid response
+	Err(Error::Assertion4Failed)
 }
