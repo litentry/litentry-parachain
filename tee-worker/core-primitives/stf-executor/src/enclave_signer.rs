@@ -36,7 +36,6 @@ use std::{boxed::Box, sync::Arc};
 pub struct StfEnclaveSigner<OCallApi, StateObserver, ShieldingKeyRepository, Stf, TopPoolAuthor> {
 	state_observer: Arc<StateObserver>,
 	ocall_api: Arc<OCallApi>,
-	top_pool_author: Arc<TopPoolAuthor>,
 	shielding_key_repo: Arc<ShieldingKeyRepository>,
 	top_pool_author: Arc<TopPoolAuthor>,
 	_phantom: PhantomData<Stf>,
