@@ -77,7 +77,6 @@ pub fn enclave_signer_signatures_are_valid() {
 }
 
 pub fn nonce_is_computed_correctly() {
-
 	let top_pool_author = Arc::new(AuthorApiMock::default());
 	let ocall_api = Arc::new(OnchainMock::default());
 	let shielding_key_repo = Arc::new(ShieldingKeyRepositoryMock::default());
@@ -126,9 +125,21 @@ pub fn nonce_is_computed_correctly() {
 	);
 
 	assert_eq!(0, TestStf::get_account_nonce(&mut state, &enclave_account));
-	assert!(TestStf::execute_call(&mut state, &shard, trusted_call_1_signed, &mut Vec::new(), [0u8, 1u8])
-		.is_ok());
-	assert!(TestStf::execute_call(&mut state,&shard, trusted_call_2_signed, &mut Vec::new(), [0u8, 1u8])
-		.is_ok());
+	assert!(TestStf::execute_call(
+		&mut state,
+		&shard,
+		trusted_call_1_signed,
+		&mut Vec::new(),
+		[0u8, 1u8]
+	)
+	.is_ok());
+	assert!(TestStf::execute_call(
+		&mut state,
+		&shard,
+		trusted_call_2_signed,
+		&mut Vec::new(),
+		[0u8, 1u8]
+	)
+	.is_ok());
 	assert_eq!(2, TestStf::get_account_nonce(&mut state, &enclave_account));
 }
