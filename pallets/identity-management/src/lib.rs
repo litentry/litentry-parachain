@@ -50,6 +50,7 @@ use sp_std::vec::Vec;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::{AesOutput, ShardIdentifier, Vec, WeightInfo};
+	use core_primitives::IMPError;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
@@ -102,11 +103,25 @@ pub mod pallet {
 		DelegateeNotExist,
 		/// a `create_identity` request from unauthorised user
 		UnauthorisedUser,
+
+		/// copy from litentry_primitives::IMPError
+		DecodeHexFailed,
+		HttpRequestFailed,
+		InvalidIdentity,
+		WrongWeb2Handle,
+		UnexpectedMessage,
+		WrongIdentityHandleType,
+		WrongSignatureType,
+		VerifySubstrateSignatureFailed,
+		RecoverSubstratePubkeyFailed,
+		VerifyEvmSignatureFailed,
+		RecoverEvmAddressFailed,
 	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// add an account to the delegatees
+		#[pallet::call_index(0)]
 		#[pallet::weight(195_000_000)]
 		pub fn add_delegatee(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
 			let _ = T::DelegateeAdminOrigin::ensure_origin(origin)?;
@@ -117,6 +132,7 @@ pub mod pallet {
 		}
 
 		/// remove an account from the delegatees
+		#[pallet::call_index(1)]
 		#[pallet::weight(195_000_000)]
 		pub fn remove_delegatee(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
 			let _ = T::DelegateeAdminOrigin::ensure_origin(origin)?;
@@ -127,6 +143,7 @@ pub mod pallet {
 		}
 
 		/// Set or update user's shielding key
+		#[pallet::call_index(2)]
 		#[pallet::weight(<T as Config>::WeightInfo::set_user_shielding_key())]
 		pub fn set_user_shielding_key(
 			origin: OriginFor<T>,
@@ -142,6 +159,7 @@ pub mod pallet {
 		/// We do the origin check for this extrinsic, it has to be
 		/// - either the caller him/herself, i.e. ensure_signed(origin)? == who
 		/// - or from a delegatee in the list
+		#[pallet::call_index(3)]
 		#[pallet::weight(<T as Config>::WeightInfo::create_identity())]
 		pub fn create_identity(
 			origin: OriginFor<T>,
@@ -160,6 +178,7 @@ pub mod pallet {
 		}
 
 		/// Remove an identity
+		#[pallet::call_index(4)]
 		#[pallet::weight(<T as Config>::WeightInfo::remove_identity())]
 		pub fn remove_identity(
 			origin: OriginFor<T>,
@@ -172,6 +191,7 @@ pub mod pallet {
 		}
 
 		/// Verify an identity
+		#[pallet::call_index(5)]
 		#[pallet::weight(<T as Config>::WeightInfo::verify_identity())]
 		pub fn verify_identity(
 			origin: OriginFor<T>,
@@ -187,6 +207,7 @@ pub mod pallet {
 		/// ---------------------------------------------------
 		/// The following extrinsics are supposed to be called by TEE only
 		/// ---------------------------------------------------
+		#[pallet::call_index(6)]
 		#[pallet::weight(195_000_000)]
 		pub fn user_shielding_key_set(
 			origin: OriginFor<T>,
@@ -197,6 +218,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		#[pallet::call_index(7)]
 		#[pallet::weight(195_000_000)]
 		pub fn challenge_code_generated(
 			origin: OriginFor<T>,
@@ -209,6 +231,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		#[pallet::call_index(8)]
 		#[pallet::weight(195_000_000)]
 		pub fn identity_created(
 			origin: OriginFor<T>,
@@ -221,6 +244,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		#[pallet::call_index(9)]
 		#[pallet::weight(195_000_000)]
 		pub fn identity_removed(
 			origin: OriginFor<T>,
@@ -233,6 +257,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		#[pallet::call_index(10)]
 		#[pallet::weight(195_000_000)]
 		pub fn identity_verified(
 			origin: OriginFor<T>,
@@ -245,15 +270,34 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		#[pallet::call_index(11)]
 		#[pallet::weight(195_000_000)]
-		pub fn some_error(
-			origin: OriginFor<T>,
-			func: Vec<u8>,
-			error: Vec<u8>,
-		) -> DispatchResultWithPostInfo {
+		pub fn some_error(origin: OriginFor<T>, error: IMPError) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::SomeError { func, error });
-			Ok(Pays::No.into())
+			match error {
+				IMPError::DecodeHexFailed(s) => {
+					log::error!("deocode hex: {:?}", s);
+					Err(Error::<T>::DecodeHexFailed.into())
+				},
+				IMPError::HttpRequestFailed(s) => {
+					log::error!("request failed:{:?}", s);
+					Err(Error::<T>::HttpRequestFailed.into())
+				},
+				IMPError::InvalidIdentity => Err(Error::<T>::InvalidIdentity.into()),
+				IMPError::WrongWeb2Handle => Err(Error::<T>::WrongWeb2Handle.into()),
+				IMPError::UnexpectedMessage => Err(Error::<T>::UnexpectedMessage.into()),
+				IMPError::WrongIdentityHandleType =>
+					Err(Error::<T>::WrongIdentityHandleType.into()),
+				IMPError::WrongSignatureType => Err(Error::<T>::WrongSignatureType.into()),
+				IMPError::VerifySubstrateSignatureFailed =>
+					Err(Error::<T>::VerifySubstrateSignatureFailed.into()),
+				IMPError::RecoverSubstratePubkeyFailed =>
+					Err(Error::<T>::RecoverSubstratePubkeyFailed.into()),
+				IMPError::VerifyEvmSignatureFailed =>
+					Err(Error::<T>::VerifyEvmSignatureFailed.into()),
+				IMPError::RecoverEvmAddressFailed =>
+					Err(Error::<T>::RecoverEvmAddressFailed.into()),
+			}
 		}
 	}
 }

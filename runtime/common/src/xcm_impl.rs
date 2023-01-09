@@ -39,7 +39,7 @@ use crate::{BaseRuntimeRequirements, ParaRuntimeRequirements};
 use core_primitives::{AccountId, AssetId};
 use pallet_asset_manager::{AssetTypeGetter, Pallet as AssetManager, UnitsToWeightRatio};
 
-use super::WEIGHT_PER_SECOND;
+use super::WEIGHT_REF_TIME_PER_SECOND;
 
 // We need to know how to charge for incoming assets
 // This takes the first fungible asset, and takes whatever UnitPerSecondGetter establishes
@@ -79,7 +79,7 @@ impl<
 				if let Some(units_per_second) = AssetIdInfoGetter::get_units_per_second(asset_type)
 				{
 					let amount = units_per_second.saturating_mul(weight as u128) /
-						(WEIGHT_PER_SECOND.ref_time() as u128);
+						(WEIGHT_REF_TIME_PER_SECOND as u128);
 
 					// We dont need to proceed if the amount is 0
 					// For cases (specially tests) where the asset is very cheap with respect
@@ -132,8 +132,7 @@ impl<
 		if let Some((id, prev_amount, units_per_second)) = self.1.clone() {
 			let weight = weight.min(self.0);
 			self.0 -= weight;
-			let amount =
-				units_per_second * (weight as u128) / (WEIGHT_PER_SECOND.ref_time() as u128);
+			let amount = units_per_second * (weight as u128) / (WEIGHT_REF_TIME_PER_SECOND as u128);
 			self.1 = Some((id.clone(), prev_amount.saturating_sub(amount), units_per_second));
 			Some(MultiAsset { fun: Fungibility::Fungible(amount), id: xcmAssetId::Concrete(id) })
 		} else {
@@ -334,7 +333,7 @@ impl<R: BaseRuntimeRequirements> From<Option<MultiLocation>> for CurrencyId<R> {
 	fn from(location: Option<MultiLocation>) -> Self {
 		match location {
 			Some(multi) => Self::from(multi),
-			None => CurrencyId::ParachainReserve(Box::new(MultiLocation::default())),
+			None => CurrencyId::ParachainReserve(Box::default()),
 		}
 	}
 }

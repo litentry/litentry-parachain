@@ -27,7 +27,6 @@ use crate::{Error, Result};
 use lc_stf_task_sender::MaxIdentityLength;
 use litentry_primitives::{Assertion, Identity};
 use sp_runtime::BoundedVec;
-use std::string::ToString;
 
 //use lc_credentials_tee::credentials::Credential;
 
@@ -50,6 +49,6 @@ pub fn build(identities: BoundedVec<Identity, MaxIdentityLength>) -> Result<()> 
 
 		Ok(())
 	} else {
-		Err(Error::Assertion1Error("Assertion1 fail.".to_string()))
+		Err(Error::Assertion1Failed)
 	}
 }

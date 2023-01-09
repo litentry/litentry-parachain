@@ -20,22 +20,18 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{Error, Result};
+use crate::{from_data_provider_error, Error, Result};
+use lc_data_providers::graphql::{
+	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
+};
+use lc_stf_task_sender::MaxIdentityLength;
+use litentry_primitives::Identity;
+use sp_runtime::BoundedVec;
 use std::{
 	str::from_utf8,
 	string::{String, ToString},
 	vec,
 	vec::Vec,
-};
-
-use lc_stf_task_sender::MaxIdentityLength;
-use litentry_primitives::{
-	EvmNetwork, Identity, IdentityHandle, IdentityWebType, SubstrateNetwork, Web3Network,
-};
-use sp_runtime::BoundedVec;
-
-use lc_data_providers::graphql::{
-	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
 
 // ERC20 LIT token address
@@ -48,52 +44,49 @@ pub fn build(
 ) -> Result<()> {
 	let mut client = GraphQLClient::new();
 
-	for identity in identities {
-		let mut network = VerifiedCredentialsNetwork::Polkadot;
-		if let IdentityWebType::Web3(web3_type) = identity.web_type {
-			match web3_type {
-				Web3Network::Substrate(SubstrateNetwork::Litentry) =>
-					network = VerifiedCredentialsNetwork::Litentry,
-				Web3Network::Substrate(SubstrateNetwork::Litmus) =>
-					network = VerifiedCredentialsNetwork::Litmus,
-				Web3Network::Evm(EvmNetwork::Ethereum) =>
-					network = VerifiedCredentialsNetwork::Ethereum,
-				_ => (),
+	for identity in identities.iter() {
+		let mut verified_network = VerifiedCredentialsNetwork::Polkadot;
+		if identity.is_web3() {
+			match identity {
+				Identity::Substrate { network, .. } => verified_network = (*network).into(),
+				Identity::Evm { network, .. } => verified_network = (*network).into(),
+				_ => {},
 			}
-		};
-
-		if network == VerifiedCredentialsNetwork::Litentry
-			|| network == VerifiedCredentialsNetwork::Litmus
-			|| network == VerifiedCredentialsNetwork::Ethereum
-		{
+		}
+		if matches!(
+			verified_network,
+			VerifiedCredentialsNetwork::Litentry
+				| VerifiedCredentialsNetwork::Litmus
+				| VerifiedCredentialsNetwork::Ethereum
+		) {
 			let mut addresses: Vec<String> = vec![];
-			match identity.handle {
-				IdentityHandle::Address20(addr) =>
-					addresses.push(from_utf8(&addr).unwrap().to_string()),
-				IdentityHandle::Address32(addr) =>
-					addresses.push(from_utf8(&addr).unwrap().to_string()),
-				IdentityHandle::String(addr) =>
-					addresses.push(from_utf8(&addr).unwrap().to_string()),
+			match &identity {
+				Identity::Evm { address, .. } =>
+					addresses.push(from_utf8(address.as_ref()).unwrap().to_string()),
+				Identity::Substrate { address, .. } =>
+					addresses.push(from_utf8(address.as_ref()).unwrap().to_string()),
+				Identity::Web2 { address, .. } =>
+					addresses.push(from_utf8(address).unwrap().to_string()),
 			}
 			let mut tmp_token_addr = String::from("");
-			if network == VerifiedCredentialsNetwork::Ethereum {
+			if verified_network == VerifiedCredentialsNetwork::Ethereum {
 				tmp_token_addr = LIT_TOKEN_ADDRESS.to_string();
 			}
 			let credentials = VerifiedCredentialsIsHodlerIn {
 				addresses,
-				from_date: from_date.clone(),
-				network,
+				from_date,
+				network: verified_network,
 				token_address: tmp_token_addr,
 				min_balance,
 			};
-			let is_hodler_out = client.check_verified_credentials_is_hodler(credentials);
-			if let Ok(_hodler_out) = is_hodler_out {
-				// TODO: generate VC
-
-				return Ok(())
-			}
+			let _is_holder_out = client
+				.check_verified_credentials_is_hodler(credentials)
+				.map_err(from_data_provider_error)?;
+			// TODO: generate VC
+			return Ok(())
 		}
 	}
 
-	Err(Error::Assertion4Error("no valid response".to_string()))
+	// no valid response
+	Err(Error::Assertion4Failed)
 }

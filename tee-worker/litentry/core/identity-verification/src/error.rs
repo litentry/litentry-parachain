@@ -15,30 +15,24 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
+extern crate sgx_tstd as std;
+
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
-use std::boxed::Box;
+
+pub use parachain_core_primitives::IMPError as Error;
+use std::format;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
-// identity verification errors
-#[derive(Debug, thiserror::Error)]
-pub enum Error {
-	#[error("unexpected message")]
-	UnexpectedMessage,
-	#[error("wrong identity handle type")]
-	WrongIdentityHanldeType,
-	#[error("wrong signature type")]
-	WrongSignatureType,
-	#[error("wrong web3 network type")]
-	WrongWeb3NetworkType,
-	#[error("failed to verify substrate signature")]
-	VerifySubstrateSignatureFailed,
-	#[error("failed to recover substrate public key")]
-	RecoverSubstratePubkeyFailed,
-	#[error("failed to verify evm signature")]
-	VerifyEvmSignatureFailed,
-	#[error("failed to recover evm address")]
-	RecoverEvmAddressFailed,
-	#[error(transparent)]
-	Other(#[from] Box<dyn std::error::Error + Sync + Send + 'static>),
+pub(crate) fn from_hex_error(e: hex::FromHexError) -> Error {
+	Error::DecodeHexFailed(parachain_core_primitives::ErrorString::truncate_from(
+		format!("{:?}", e).as_bytes().to_vec(),
+	))
+}
+
+pub(crate) fn from_data_provider_error(e: lc_data_providers::Error) -> Error {
+	Error::HttpRequestFailed(parachain_core_primitives::ErrorString::truncate_from(
+		format!("{:?}", e).as_bytes().to_vec(),
+	))
 }

@@ -35,18 +35,29 @@ use crate::sgx_reexport_prelude::*;
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
+mod handler;
+
 use codec::{Decode, Encode};
 use futures::executor;
-use ita_sgx_runtime::Hash;
+use handler::{
+	assertion::AssertionHandler, identity_verification::IdentityVerificationHandler, TaskHandler,
+};
+use ita_sgx_runtime::{Hash, IdentityManagement};
 use ita_stf::{TrustedCall, TrustedOperation};
+use itp_extrinsics_factory::CreateExtrinsics;
+use itp_node_api::metadata::{
+	pallet_imp::IMPCallIndexes, pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata,
+};
+use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::ShardIdentifier;
-use sp_std::vec::Vec;
-use std::{format, string::String, sync::Arc};
+use itp_types::{OpaqueCall, ShardIdentifier};
+use lc_stf_task_sender::{stf_task_sender, RequestType};
+use log::{debug, error};
+use std::{format, string::String, sync::Arc, vec, vec::Vec};
 
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum Error {
@@ -60,16 +71,20 @@ pub enum Error {
 	OtherError(String),
 }
 
-pub mod stf_task_receiver;
-
 #[allow(dead_code)]
 pub struct StfTaskContext<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
+	O: EnclaveOnChainOCallApi,
+	C: CreateExtrinsics,
+	M: AccessNodeMetadata,
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
 	H: HandleState,
 > {
 	shielding_key: K,
+	ocall_api: Arc<O>,
+	create_extrinsics: Arc<C>,
+	node_metadata: Arc<M>,
 	author_api: Arc<A>,
 	enclave_signer: Arc<S>,
 	pub state_handler: Arc<H>,
@@ -77,20 +92,35 @@ pub struct StfTaskContext<
 
 impl<
 		K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
+		O: EnclaveOnChainOCallApi,
+		C: CreateExtrinsics,
+		M: AccessNodeMetadata,
 		A: AuthorApi<Hash, Hash>,
 		S: StfEnclaveSigning,
 		H: HandleState,
-	> StfTaskContext<K, A, S, H>
+	> StfTaskContext<K, O, C, M, A, S, H>
 where
 	H::StateT: SgxExternalitiesTrait,
+	M::MetadataType: IMPCallIndexes + VCMPCallIndexes,
 {
 	pub fn new(
 		shielding_key: K,
+		ocall_api: Arc<O>,
+		create_extrinsics: Arc<C>,
+		node_metadata: Arc<M>,
 		author_api: Arc<A>,
 		enclave_signer: Arc<S>,
 		state_handler: Arc<H>,
 	) -> Self {
-		Self { shielding_key, author_api, enclave_signer, state_handler }
+		Self {
+			shielding_key,
+			ocall_api,
+			create_extrinsics,
+			node_metadata,
+			author_api,
+			enclave_signer,
+			state_handler,
+		}
 	}
 
 	pub fn decode_and_submit_trusted_call(
@@ -131,5 +161,78 @@ where
 		Ok(())
 	}
 
+	fn submit_to_parentchain(&self, call: OpaqueCall) {
+		match self.create_extrinsics.create_extrinsics(vec![call].as_slice(), None) {
+			Err(e) => {
+				error!("failed to create extrinsics. Due to: {:?}", e);
+			},
+			Ok(xt) => {
+				let _ = self.ocall_api.send_to_parentchain(xt);
+			},
+		}
+	}
+
 	// TODO: maybe add a wrapper to read the state and eliminate the public access to `state_handler`
+}
+
+// lifetime elision: StfTaskContext is guaranteed to outlive the fn
+pub fn run_stf_task_receiver<K, O, C, M, A, S, H>(
+	context: Arc<StfTaskContext<K, O, C, M, A, S, H>>,
+) -> Result<(), Error>
+where
+	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
+	O: EnclaveOnChainOCallApi,
+	C: CreateExtrinsics,
+	M: AccessNodeMetadata,
+	M::MetadataType: IMPCallIndexes + VCMPCallIndexes,
+	A: AuthorApi<Hash, Hash>,
+	S: StfEnclaveSigning,
+	H: HandleState,
+	H::StateT: SgxExternalitiesTrait,
+{
+	let receiver = stf_task_sender::init_stf_task_sender_storage()
+		.map_err(|e| Error::OtherError(format!("read storage error:{:?}", e)))?;
+
+	// TODO: When an error occurs, send the extrinsic (error message) to the parachain
+	// TODO: error handling still incomplete, we only print logs but no error handling
+	// TODO: we can further simplify the handling logic
+	loop {
+		let request_type = receiver
+			.recv()
+			.map_err(|e| Error::OtherError(format!("receiver error:{:?}", e)))?;
+
+		match request_type.clone() {
+			RequestType::Web2IdentityVerification(_) | RequestType::Web3IdentityVerification(_) => {
+				IdentityVerificationHandler { req: request_type.clone(), context: context.clone() }
+					.start();
+			},
+			RequestType::AssertionVerification(request) => {
+				AssertionHandler { req: request.clone(), context: context.clone() }.start();
+			},
+			// only used for testing
+			// demonstrate how to read the storage in the stf-task handling with the loaded state
+			// in real cases we prefer to read the state ahead and sent the related storage as parameters in `Request`
+			RequestType::SetUserShieldingKey(request) => {
+				let shard = ShardIdentifier::decode(&mut request.encoded_shard.as_slice())
+					.map_err(|e| {
+						Error::OtherError(format!("error decoding ShardIdentifier {:?}", e))
+					})?;
+
+				let (mut state, _) = context
+					.state_handler
+					.load_cloned(&shard)
+					.map_err(|e| Error::OtherError(format!("load state failed: {:?}", e)))?;
+
+				let key =
+					state.execute_with(|| IdentityManagement::user_shielding_keys(&request.who));
+
+				debug!("in RequestType::SetUserShieldingKey read key is: {:?}", key);
+
+				context.decode_and_submit_trusted_call(
+					request.encoded_shard,
+					request.encoded_callback,
+				)?;
+			},
+		}
+	}
 }

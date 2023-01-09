@@ -50,6 +50,7 @@ pub type VCID = u64;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
+	use core_primitives::VCMPError;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
@@ -167,10 +168,20 @@ pub mod pallet {
 		SchemaAlreadyActivated,
 		SchemaIndexOverFlow,
 		LengthMismatch,
+
+		/// copy from litentry_primitives::VCMPError
+		HttpRequestFailed,
+		Assertion1Failed,
+		Assertion2Failed,
+		Assertion3Failed,
+		Assertion4Failed,
+		Assertion5Failed,
+		Assertion7Failed,
 	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		#[pallet::call_index(0)]
 		#[pallet::weight(195_000_000)]
 		pub fn request_vc(
 			origin: OriginFor<T>,
@@ -182,6 +193,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		#[pallet::call_index(1)]
 		#[pallet::weight(195_000_000)]
 		pub fn disable_vc(origin: OriginFor<T>, id: VCID) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
@@ -197,6 +209,7 @@ pub mod pallet {
 			})
 		}
 
+		#[pallet::call_index(2)]
 		#[pallet::weight(195_000_000)]
 		pub fn revoke_vc(origin: OriginFor<T>, id: VCID) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
@@ -211,6 +224,7 @@ pub mod pallet {
 		/// ---------------------------------------------------
 		/// The following extrinsics are supposed to be called by TEE only
 		/// ---------------------------------------------------
+		#[pallet::call_index(3)]
 		#[pallet::weight(195_000_000)]
 		pub fn vc_issued(
 			origin: OriginFor<T>,
@@ -226,18 +240,26 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		#[pallet::call_index(4)]
 		#[pallet::weight(195_000_000)]
-		pub fn some_error(
-			origin: OriginFor<T>,
-			func: Vec<u8>,
-			error: Vec<u8>,
-		) -> DispatchResultWithPostInfo {
+		pub fn some_error(origin: OriginFor<T>, error: VCMPError) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::SomeError { func, error });
-			Ok(Pays::No.into())
+			match error {
+				VCMPError::HttpRequestFailed(s) => {
+					log::error!("request failed:{:?}", s);
+					Err(Error::<T>::HttpRequestFailed.into())
+				},
+				VCMPError::Assertion1Failed => Err(Error::<T>::Assertion1Failed.into()),
+				VCMPError::Assertion2Failed => Err(Error::<T>::Assertion2Failed.into()),
+				VCMPError::Assertion3Failed => Err(Error::<T>::Assertion3Failed.into()),
+				VCMPError::Assertion4Failed => Err(Error::<T>::Assertion4Failed.into()),
+				VCMPError::Assertion5Failed => Err(Error::<T>::Assertion5Failed.into()),
+				VCMPError::Assertion7Failed => Err(Error::<T>::Assertion7Failed.into()),
+			}
 		}
 
 		// Change the schema Admin account
+		#[pallet::call_index(5)]
 		#[pallet::weight(195_000_000)]
 		pub fn set_schema_admin(
 			origin: OriginFor<T>,
@@ -253,6 +275,7 @@ pub mod pallet {
 		}
 
 		// It requires the schema Admin account
+		#[pallet::call_index(6)]
 		#[pallet::weight(195_000_000)]
 		pub fn add_schema(
 			origin: OriginFor<T>,
@@ -279,6 +302,7 @@ pub mod pallet {
 		}
 
 		// It requires the schema Admin account
+		#[pallet::call_index(7)]
 		#[pallet::weight(195_000_000)]
 		pub fn disable_schema(
 			origin: OriginFor<T>,
@@ -299,6 +323,7 @@ pub mod pallet {
 		}
 
 		// It requires the schema Admin account
+		#[pallet::call_index(8)]
 		#[pallet::weight(195_000_000)]
 		pub fn activate_schema(
 			origin: OriginFor<T>,
@@ -318,6 +343,7 @@ pub mod pallet {
 		}
 
 		// It requires the schema Admin account
+		#[pallet::call_index(9)]
 		#[pallet::weight(195_000_000)]
 		pub fn revoke_schema(
 			origin: OriginFor<T>,

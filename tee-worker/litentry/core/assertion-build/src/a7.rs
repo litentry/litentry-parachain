@@ -25,13 +25,10 @@ use std::{
 	str::from_utf8,
 	string::{String, ToString},
 	vec,
-	vec::Vec,
 };
 
 use lc_stf_task_sender::MaxIdentityLength;
-use litentry_primitives::{
-	Identity, IdentityHandle, IdentityWebType, SubstrateNetwork, Web3Network,
-};
+use litentry_primitives::{Identity, SubstrateNetwork};
 use sp_runtime::BoundedVec;
 
 use lc_data_providers::graphql::{
@@ -44,35 +41,27 @@ pub fn build(
 	min_balance: f64,
 ) -> Result<()> {
 	let mut client = GraphQLClient::new();
+	for id in identities {
+		if let Identity::Substrate { network, address } = id {
+			if matches!(network, SubstrateNetwork::Polkadot) {
+				let address = from_utf8(address.as_ref()).unwrap().to_string();
+				let addresses = vec![address];
+				let credentials = VerifiedCredentialsIsHodlerIn {
+					addresses,
+					from_date: from_date.clone(),
+					network: VerifiedCredentialsNetwork::Polkadot,
+					token_address: String::from(""),
+					min_balance,
+				};
+				let is_hodler_out = client.check_verified_credentials_is_hodler(credentials);
+				if let Ok(_hodler_out) = is_hodler_out {
+					// TODO: generate VC
 
-	for identity in identities {
-		if let IdentityWebType::Web3(Web3Network::Substrate(SubstrateNetwork::Polkadot)) =
-			identity.web_type
-		{
-			let mut addresses: Vec<String> = vec![];
-			match identity.handle {
-				IdentityHandle::Address20(addr) =>
-					addresses.push(from_utf8(&addr).unwrap().to_string()),
-				IdentityHandle::Address32(addr) =>
-					addresses.push(from_utf8(&addr).unwrap().to_string()),
-				IdentityHandle::String(addr) =>
-					addresses.push(from_utf8(&addr).unwrap().to_string()),
-			}
-			let credentials = VerifiedCredentialsIsHodlerIn {
-				addresses,
-				from_date: from_date.clone(),
-				network: VerifiedCredentialsNetwork::Polkadot,
-				token_address: String::from(""),
-				min_balance,
-			};
-			let is_hodler_out = client.check_verified_credentials_is_hodler(credentials);
-			if let Ok(_hodler_out) = is_hodler_out {
-				// TODO: generate VC
-
-				return Ok(())
+					return Ok(())
+				}
 			}
 		}
 	}
-
-	Err(Error::Assertion7Error("no valid response".to_string()))
+	// no valid response
+	Err(Error::Assertion7Failed)
 }

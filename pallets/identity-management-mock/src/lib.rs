@@ -41,8 +41,7 @@ use codec::alloc::string::ToString;
 use core_primitives::{ShardIdentifier, UserShieldingKeyType};
 use frame_support::{pallet_prelude::*, traits::ConstU32};
 use mock_tee_primitives::{
-	Identity, IdentityHandle, IdentityMultiSignature, IdentityWebType, ValidationData,
-	Web3CommonValidationData, Web3Network, Web3ValidationData,
+	Identity, IdentityMultiSignature, ValidationData, Web3CommonValidationData, Web3ValidationData,
 };
 pub use pallet::*;
 use sha2::Sha256;
@@ -207,10 +206,8 @@ pub mod pallet {
 		ChallengeCodeNotExist,
 		/// wrong signature type
 		WrongSignatureType,
-		/// wrong web3 network type
-		WrongWeb3NetworkType,
-		/// wrong identity handle type
-		WrongIdentityHanldeType,
+		/// wrong identity type
+		WrongIdentityType,
 		/// fail to recover evm address
 		RecoverEvmAddressFailed,
 		/// the message in validation data is unexpected
@@ -258,6 +255,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// add an account to the delegatees
+		#[pallet::call_index(0)]
 		#[pallet::weight(195_000_000)]
 		pub fn add_delegatee(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
 			let _ = T::DelegateeAdminOrigin::ensure_origin(origin)?;
@@ -268,6 +266,7 @@ pub mod pallet {
 		}
 
 		/// remove an account from the delegatees
+		#[pallet::call_index(1)]
 		#[pallet::weight(195_000_000)]
 		pub fn remove_delegatee(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
 			let _ = T::DelegateeAdminOrigin::ensure_origin(origin)?;
@@ -278,6 +277,7 @@ pub mod pallet {
 		}
 
 		/// Set or update user's shielding key
+		#[pallet::call_index(2)]
 		#[pallet::weight(195_000_000)]
 		pub fn set_user_shielding_key(
 			origin: OriginFor<T>,
@@ -299,6 +299,7 @@ pub mod pallet {
 		}
 
 		/// Create an identity
+		#[pallet::call_index(3)]
 		#[pallet::weight(195_000_000)]
 		pub fn create_identity(
 			origin: OriginFor<T>,
@@ -374,6 +375,7 @@ pub mod pallet {
 		}
 
 		/// Remove an identity
+		#[pallet::call_index(4)]
 		#[pallet::weight(195_000_000)]
 		pub fn remove_identity(
 			origin: OriginFor<T>,
@@ -407,6 +409,7 @@ pub mod pallet {
 		}
 
 		/// Verify a created identity
+		#[pallet::call_index(5)]
 		#[pallet::weight(195_000_000)]
 		pub fn verify_identity(
 			origin: OriginFor<T>,
@@ -487,6 +490,7 @@ pub mod pallet {
 		}
 
 		// The following extrinsics are supposed to be called by TEE only
+		#[pallet::call_index(6)]
 		#[pallet::weight(195_000_000)]
 		pub fn user_shielding_key_set(
 			origin: OriginFor<T>,
@@ -497,6 +501,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		#[pallet::call_index(7)]
 		#[pallet::weight(195_000_000)]
 		pub fn challenge_code_generated(
 			origin: OriginFor<T>,
@@ -509,6 +514,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		#[pallet::call_index(8)]
 		#[pallet::weight(195_000_000)]
 		pub fn identity_created(
 			origin: OriginFor<T>,
@@ -521,6 +527,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		#[pallet::call_index(9)]
 		#[pallet::weight(195_000_000)]
 		pub fn identity_removed(
 			origin: OriginFor<T>,
@@ -533,6 +540,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		#[pallet::call_index(10)]
 		#[pallet::weight(195_000_000)]
 		pub fn identity_verified(
 			origin: OriginFor<T>,
@@ -545,6 +553,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		#[pallet::call_index(11)]
 		#[pallet::weight(195_000_000)]
 		pub fn some_error(
 			origin: OriginFor<T>,
@@ -590,13 +599,10 @@ pub mod pallet {
 				raw_msg.as_slice() == validation_data.message.as_slice(),
 				Error::<T>::UnexpectedMessage
 			);
-
-			let substrate_address = match &identity.web_type {
-				IdentityWebType::Web3(Web3Network::Substrate(_)) => match &identity.handle {
-					IdentityHandle::Address32(handle) => handle,
-					_ => return Err(Error::<T>::WrongIdentityHanldeType.into()),
-				},
-				_ => return Err(Error::<T>::WrongWeb3NetworkType.into()),
+			let substrate_address = if let Identity::Substrate { address, .. } = identity {
+				address.as_ref()
+			} else {
+				return Err(Error::<T>::WrongIdentityType.into())
 			};
 
 			// we accept both the raw_msg's signature and the wrapped_msg's signature
@@ -654,15 +660,13 @@ pub mod pallet {
 			if let IdentityMultiSignature::Ethereum(sig) = &validation_data.signature {
 				let recovered_evm_address = Self::recover_evm_address(&digest, sig.as_ref())
 					.map_err(|_| Error::<T>::RecoverEvmAddressFailed)?;
-				let evm_address = match &identity.web_type {
-					IdentityWebType::Web3(Web3Network::Evm(_)) => match &identity.handle {
-						IdentityHandle::Address20(handle) => handle,
-						_ => return Err(Error::<T>::WrongIdentityHanldeType.into()),
-					},
-					_ => return Err(Error::<T>::WrongWeb3NetworkType.into()),
+				let evm_address = if let Identity::Evm { address, .. } = identity {
+					address
+				} else {
+					return Err(Error::<T>::WrongIdentityType.into())
 				};
 				ensure!(
-					&recovered_evm_address == evm_address,
+					&recovered_evm_address == evm_address.as_ref(),
 					Error::<T>::VerifyEvmSignatureFailed
 				);
 			} else {

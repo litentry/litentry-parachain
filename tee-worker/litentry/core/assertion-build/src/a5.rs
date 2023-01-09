@@ -24,13 +24,8 @@ use crate::Error;
 use lc_data_providers::{
 	twitter_litentry::TwitterLitentryClient, twitter_official::TwitterOfficialClient,
 };
-use litentry_primitives::{
-	Identity, IdentityHandle, IdentityWebType, ParameterString, Web2Network,
-};
-use std::{
-	string::{String, ToString},
-	vec::Vec,
-};
+use litentry_primitives::{Identity, ParameterString, Web2Network};
+use std::{string::String, vec::Vec};
 
 pub fn build(
 	identities: Vec<Identity>,
@@ -40,9 +35,9 @@ pub fn build(
 	let mut twitter_litentry_client = TwitterLitentryClient::new();
 	let mut twitter_official_client = TwitterOfficialClient::new();
 	for identity in identities {
-		if identity.web_type == IdentityWebType::Web2(Web2Network::Twitter) {
-			if let IdentityHandle::String(twitter_id) = identity.handle {
-				let twitter_id = twitter_id.to_vec();
+		if let Identity::Web2 { network, address } = identity {
+			if matches!(network, Web2Network::Twitter) {
+				let twitter_id = address.to_vec();
 				match twitter_litentry_client
 					.check_follow(twitter_id.clone(), twitter_account.to_vec())
 				{
@@ -73,5 +68,6 @@ pub fn build(
 			}
 		}
 	}
-	Err(Error::Assertion5Error("not match any identities".to_string()))
+	// not match any identities
+	Err(Error::Assertion5Failed)
 }
