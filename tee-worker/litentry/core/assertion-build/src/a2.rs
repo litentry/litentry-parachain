@@ -57,7 +57,7 @@ mod tests {
 	use crate::a2::build;
 	use frame_support::BoundedVec;
 	use lc_data_providers::G_DATA_PROVIDERS;
-	use litentry_primitives::{Identity, Web2Network};
+	use litentry_primitives::{Identity, IdentityString, Web2Network};
 	use log;
 	use std::{format, vec, vec::Vec};
 
@@ -70,8 +70,10 @@ mod tests {
 		let guildid: u64 = 919848390156767232;
 		let guild_id_vec: Vec<u8> = format!("{}", guildid).as_bytes().to_vec();
 		let handler_vec: Vec<u8> = "againstwar%234779".to_string().as_bytes().to_vec();
-		let identities =
-			vec![Identity::Web2 { network: Web2Network::Discord, address: handler_vec.into() }];
+		let identities = vec![Identity::Web2 {
+			network: Web2Network::Discord,
+			address: IdentityString::truncate_from(handler_vec.clone()),
+		}];
 		let guild_id = BoundedVec::try_from(guild_id_vec).unwrap();
 		let handler = BoundedVec::try_from(handler_vec).unwrap();
 
