@@ -161,7 +161,7 @@ where
 		Ok(())
 	}
 
-	fn submit_to_parechain(&self, call: OpaqueCall) {
+	fn submit_to_parentchain(&self, call: OpaqueCall) {
 		match self.create_extrinsics.create_extrinsics(vec![call].as_slice(), None) {
 			Err(e) => {
 				error!("failed to create extrinsics. Due to: {:?}", e);

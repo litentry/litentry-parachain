@@ -98,7 +98,7 @@ where
 		{
 			Ok(Ok(call_index)) => {
 				let call = OpaqueCall::from_tuple(&(call_index, error));
-				self.context.submit_to_parechain(call)
+				self.context.submit_to_parentchain(call)
 			},
 			Ok(Err(e)) => {
 				error!("failed to get metadata. Due to: {:?}", e);
