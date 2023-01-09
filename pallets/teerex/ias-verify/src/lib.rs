@@ -25,6 +25,7 @@ use serde_json::Value;
 use sp_std::{
 	convert::{TryFrom, TryInto},
 	prelude::*,
+	str::FromStr,
 };
 
 mod ephemeral_key;
@@ -127,6 +128,27 @@ pub enum SgxStatus {
 impl Default for SgxStatus {
 	fn default() -> Self {
 		SgxStatus::Invalid
+	}
+}
+
+impl FromStr for SgxStatus {
+	type Err = &'static str;
+
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		match s {
+			"OK" => Ok(SgxStatus::Ok),
+			"GROUP_OUT_OF_DATE" => Ok(SgxStatus::GroupOutOfDate),
+			"GROUP_REVOKED" => Ok(SgxStatus::GroupRevoked),
+			"CONFIGURATION_NEEDED" => Ok(SgxStatus::ConfigurationNeeded),
+			"SIGNATURE_REVOKED" => Ok(SgxStatus::SignatureRevoked),
+			"KEY_REVOKED" => Ok(SgxStatus::KeyRevoked),
+			"SIGRL_VERSION_MISMATCH" => Ok(SgxStatus::SigrlVersionMismatch),
+			"SW_HARDENING_NEEDED" => Ok(SgxStatus::SwHardeningNeeded),
+			"CONFIGURATION_AND_SW_HARDENING_NEEDED" =>
+				Ok(SgxStatus::ConfigurationAndSwHardeningNeeded),
+
+			_ => Ok(SgxStatus::Invalid),
+		}
 	}
 }
 
@@ -351,19 +373,7 @@ fn parse_sgx_quote(
 
 	// get quote status (mandatory field)
 	let ra_status = match &attn_report["isvEnclaveQuoteStatus"] {
-		Value::String(quote_status) => match quote_status.as_ref() {
-			"OK" => SgxStatus::Ok,
-			"GROUP_OUT_OF_DATE" => SgxStatus::GroupOutOfDate,
-			"GROUP_REVOKED" => SgxStatus::GroupRevoked,
-			"CONFIGURATION_NEEDED" => SgxStatus::ConfigurationNeeded,
-			"SIGNATURE_REVOKED" => SgxStatus::SignatureRevoked,
-			"KEY_REVOKED" => SgxStatus::KeyRevoked,
-			"SIGRL_VERSION_MISMATCH" => SgxStatus::SigrlVersionMismatch,
-			"SW_HARDENING_NEEDED" => SgxStatus::SwHardeningNeeded,
-			"CONFIGURATION_AND_SW_HARDENING_NEEDED" => SgxStatus::ConfigurationAndSwHardeningNeeded,
-
-			_ => SgxStatus::Invalid,
-		},
+		Value::String(quote_status) => SgxStatus::from_str(quote_status).unwrap(),
 		_ => return Err("Failed to fetch isvEnclaveQuoteStatus from attestation report"),
 	};
 
@@ -445,13 +455,7 @@ fn parse_report(report_raw: &[u8]) -> Result<SgxReport, &'static str> {
 
 	// get quote status (mandatory field)
 	let ra_status = match &attn_report["isvEnclaveQuoteStatus"] {
-		Value::String(quote_status) => match quote_status.as_ref() {
-			"OK" => SgxStatus::Ok,
-			"GROUP_OUT_OF_DATE" => SgxStatus::GroupOutOfDate,
-			"GROUP_REVOKED" => SgxStatus::GroupRevoked,
-			"CONFIGURATION_NEEDED" => SgxStatus::ConfigurationNeeded,
-			_ => SgxStatus::Invalid,
-		},
+		Value::String(quote_status) => SgxStatus::from_str(quote_status).unwrap(),
 		_ => return Err("Failed to fetch isvEnclaveQuoteStatus from attestation report"),
 	};
 
