@@ -79,7 +79,7 @@ impl<'a> NetscapeComment<'a> {
 			println!("spid: {:?}", spid);
 			println!("nonce : {:?}", nonce);
 			println!("sig_rl: {:?}", sig_rl);
-			println!("quote: {:?}", quote);
+			println!("isv_enclave_quote: {:?}", base64::encode(&quote));
 		}
 
 		let quote_inputs = SgxQuoteInputs::new(spid, nonce, sig_rl);

@@ -186,8 +186,8 @@ fn verify_sgx_build_mode_works() {
 
 #[test]
 fn parse_enclave_metadata_works() {
-	let enclave_metadata = parse_enclave_metadata(TEST9_CERT).unwrap();
-	assert_eq!(enclave_metadata.quote_status, SgxStatus::ConfigurationAndSwHardeningNeeded);
+	let report = verify_ias_report(TEST9_CERT).unwrap();
+	assert_eq!(report.status, SgxStatus::ConfigurationAndSwHardeningNeeded);
 
 	let spid = [220_u8, 102, 69, 18, 100, 146, 156, 242, 117, 174, 42, 236, 164, 33, 3, 41];
 	let nonce = [200_u8, 253, 140, 194, 153, 34, 106, 241, 252, 37, 235, 176, 218, 195, 5, 87];
@@ -247,8 +247,9 @@ fn parse_enclave_metadata_works() {
 		137, 163, 128, 134, 204, 230, 46, 210, 63, 187,
 	];
 
-	assert_eq!(enclave_metadata.quote_inputs.spid, spid);
-	assert_eq!(enclave_metadata.quote_inputs.nonce, nonce);
-	assert_eq!(enclave_metadata.quote_inputs.sig_rl, sig_rl);
-	assert_eq!(enclave_metadata.isv_enclave_quote, isv_enclave_quote);
+	let metadata = report.metadata;
+	assert_eq!(metadata.quote_inputs.spid, spid);
+	assert_eq!(metadata.quote_inputs.nonce, nonce);
+	assert_eq!(metadata.quote_inputs.sig_rl, sig_rl);
+	assert_eq!(metadata.isv_enclave_quote, isv_enclave_quote);
 }

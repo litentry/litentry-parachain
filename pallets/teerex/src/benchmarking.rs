@@ -52,12 +52,6 @@ fn add_enclaves_to_registry<T: Config>(accounts: &[T::AccountId]) {
 	}
 }
 
-fn add_enclaves_metadata_to_registry<T: Config>(accounts: &[T::AccountId]) {
-	for a in accounts.iter() {
-		Teerex::<T>::add_enclave_metadata(a, &SgxEnclaveMetadata::default()).unwrap();
-	}
-}
-
 benchmarks! {
 	// Note: The storage-map structure has the following complexity for updating:
 	//   DB Reads: O(1) Encoding: O(1) DB Writes: O(1)
@@ -94,7 +88,6 @@ benchmarks! {
 		let enclave_count = 3;
 		let accounts: Vec<T::AccountId> = generate_accounts::<T>(enclave_count);
 		add_enclaves_to_registry::<T>(&accounts);
-		add_enclaves_metadata_to_registry::<T>(&accounts);
 
 	}: _(RawOrigin::Signed(accounts[0].clone()))
 	verify {
@@ -114,7 +107,6 @@ benchmarks! {
 	confirm_processed_parentchain_block {
 		let accounts: Vec<T::AccountId> = generate_accounts::<T>(1);
 		add_enclaves_to_registry::<T>(&accounts);
-		add_enclaves_metadata_to_registry::<T>(&accounts);
 
 		let block_hash: H256 = [2; 32].into();
 		let merkle_root: H256 = [4; 32].into();
