@@ -109,32 +109,35 @@ impl DataProvidersStatic {
 		}
 	}
 	pub fn set_twitter_official_url(&mut self, v: String) {
-		debug!("set_twitter_official_url:{:?}", v);
+		debug!("set_twitter_official_url: {:?}", v);
 		self.twitter_official_url = v;
 	}
 	pub fn set_twitter_litentry_url(&mut self, v: String) {
-		debug!("set_twitter_litentry_url:{:?}", v);
+		debug!("set_twitter_litentry_url: {:?}", v);
 		self.twitter_litentry_url = v;
 	}
 	pub fn set_twitter_auth_token(&mut self, v: String) {
+		debug!("set_twitter_auth_token: {:?}", v);
 		self.twitter_auth_token = v;
 	}
 	pub fn set_discord_official_url(&mut self, v: String) {
-		debug!("set_discord_official_url:{:?}", v);
+		debug!("set_discord_official_url: {:?}", v);
 		self.discord_official_url = v;
 	}
 	pub fn set_discord_litentry_url(&mut self, v: String) {
-		debug!("set_discord_litentry_url:{:?}", v);
+		debug!("set_discord_litentry_url: {:?}", v);
 		self.discord_litentry_url = v;
 	}
 	pub fn set_discord_auth_token(&mut self, v: String) {
+		debug!("set_discord_auth_token: {:?}", v);
 		self.discord_auth_token = v;
 	}
 	pub fn set_graphql_url(&mut self, v: String) {
-		debug!("set_graphql_url:{:?}", v);
+		debug!("set_graphql_url: {:?}", v);
 		self.graphql_url = v;
 	}
 	pub fn set_graphql_auth_key(&mut self, v: String) {
+		debug!("set_graphql_auth_key: {:?}", v);
 		self.graphql_auth_key = v;
 	}
 }
