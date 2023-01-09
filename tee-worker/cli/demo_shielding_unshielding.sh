@@ -101,7 +101,7 @@ echo "  Alice's incognito account = ${ICGACCOUNTALICE}"
 echo ""
 
 echo "* Create a new incognito account for Bob"
-ICGACCOUNTBOB=$(${CLIENT} trusted --mrenclave ${MRENCLAVE} new-account )
+ICGACCOUNTBOB=$(${CLIENT} trusted --mrenclave ${MRENCLAVE} new-account)
 echo "  Bob's incognito account = ${ICGACCOUNTBOB}"
 echo ""
 
@@ -116,12 +116,16 @@ echo "* Waiting 30 seconds"
 sleep 30
 echo ""
 
+echo "* Get balance of Alice's on-chain account"
+${CLIENT} balance "//Alice"
+echo ""
+
 echo "Get balance of Alice's incognito account"
 ${CLIENT} trusted --mrenclave ${MRENCLAVE} balance ${ICGACCOUNTALICE}
 echo ""
 
-echo "* Get balance of Alice's on-chain account"
-${CLIENT} balance "//Alice"
+echo "Get balance of Bob's incognito account"
+${CLIENT} trusted --mrenclave ${MRENCLAVE} balance ${ICGACCOUNTBOB}
 echo ""
 
 echo "* Send ${AMOUNTTRANSFER} funds from Alice's incognito account to Bob's incognito account"
@@ -172,8 +176,9 @@ case $TEST in
         fi
         ;;
     second)
-        # doubled
-        if [ "$BALANCE_INCOGNITO_ALICE" -eq $(( 6 * UNIT)) ] && [ "$BALANCE_INCOGNITO_BOB" -eq $(( 4 * UNIT)) ]; then
+        # Incognito Alice: 3 + 6 - 2 - 1 = 6 (doubled)
+        # Incognito Bob:   2 (as Bob has a new account each time)
+        if [ "$BALANCE_INCOGNITO_ALICE" -eq $(( 6 * UNIT)) ] && [ "$BALANCE_INCOGNITO_BOB" -eq $(( 2 * UNIT)) ]; then
             echo "test passed (2nd time)"
             exit 0
         else
