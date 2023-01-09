@@ -29,9 +29,7 @@ use std::{
 };
 
 use lc_stf_task_sender::MaxIdentityLength;
-use litentry_primitives::{
-	EvmNetwork, Identity, IdentityHandle, IdentityWebType, SubstrateNetwork, Web3Network,
-};
+use litentry_primitives::Identity;
 use sp_runtime::BoundedVec;
 
 use lc_data_providers::graphql::{
@@ -48,41 +46,38 @@ pub fn build(
 ) -> Result<()> {
 	let mut client = GraphQLClient::new();
 
-	for identity in identities {
-		let mut network = VerifiedCredentialsNetwork::Polkadot;
-		if let IdentityWebType::Web3(web3_type) = identity.web_type {
-			match web3_type {
-				Web3Network::Substrate(SubstrateNetwork::Litentry) =>
-					network = VerifiedCredentialsNetwork::Litentry,
-				Web3Network::Substrate(SubstrateNetwork::Litmus) =>
-					network = VerifiedCredentialsNetwork::Litmus,
-				Web3Network::Evm(EvmNetwork::Ethereum) =>
-					network = VerifiedCredentialsNetwork::Ethereum,
-				_ => (),
+	for identity in identities.iter() {
+		let mut verified_network = VerifiedCredentialsNetwork::Polkadot;
+		if identity.is_web3() {
+			match identity {
+				Identity::Substrate { network, .. } => verified_network = (*network).into(),
+				Identity::Evm { network, .. } => verified_network = (*network).into(),
+				_ => {},
 			}
-		};
-
-		if network == VerifiedCredentialsNetwork::Litentry
-			|| network == VerifiedCredentialsNetwork::Litmus
-			|| network == VerifiedCredentialsNetwork::Ethereum
-		{
+		}
+		if matches!(
+			verified_network,
+			VerifiedCredentialsNetwork::Litentry
+				| VerifiedCredentialsNetwork::Litmus
+				| VerifiedCredentialsNetwork::Ethereum
+		) {
 			let mut addresses: Vec<String> = vec![];
-			match identity.handle {
-				IdentityHandle::Address20(addr) =>
-					addresses.push(from_utf8(&addr).unwrap().to_string()),
-				IdentityHandle::Address32(addr) =>
-					addresses.push(from_utf8(&addr).unwrap().to_string()),
-				IdentityHandle::String(addr) =>
-					addresses.push(from_utf8(&addr).unwrap().to_string()),
+			match &identity {
+				Identity::Evm { address, .. } =>
+					addresses.push(from_utf8(address.as_ref()).unwrap().to_string()),
+				Identity::Substrate { address, .. } =>
+					addresses.push(from_utf8(address.as_ref()).unwrap().to_string()),
+				Identity::Web2 { address, .. } =>
+					addresses.push(from_utf8(address).unwrap().to_string()),
 			}
 			let mut tmp_token_addr = String::from("");
-			if network == VerifiedCredentialsNetwork::Ethereum {
+			if verified_network == VerifiedCredentialsNetwork::Ethereum {
 				tmp_token_addr = LIT_TOKEN_ADDRESS.to_string();
 			}
 			let credentials = VerifiedCredentialsIsHodlerIn {
 				addresses,
 				from_date: from_date.clone(),
-				network,
+				network: verified_network,
 				token_address: tmp_token_addr,
 				min_balance,
 			};

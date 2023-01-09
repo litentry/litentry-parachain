@@ -26,6 +26,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
+use litentry_primitives::{EvmNetwork, SubstrateNetwork};
 use serde::{Deserialize, Serialize};
 use std::{
 	default::Default,
@@ -54,6 +55,28 @@ pub enum VerifiedCredentialsNetwork {
 	Khala,
 	Ethereum,
 }
+
+impl From<SubstrateNetwork> for VerifiedCredentialsNetwork {
+	fn from(network: SubstrateNetwork) -> Self {
+		match network {
+			SubstrateNetwork::Litmus => Self::Litmus,
+			SubstrateNetwork::Litentry => Self::Litentry,
+			SubstrateNetwork::Polkadot => Self::Polkadot,
+			SubstrateNetwork::Kusama => Self::Kusama,
+		}
+	}
+}
+
+impl From<EvmNetwork> for VerifiedCredentialsNetwork {
+	fn from(network: EvmNetwork) -> Self {
+		match network {
+			EvmNetwork::Ethereum => Self::Ethereum,
+			// TODO: how about BSC?
+			EvmNetwork::BSC => unreachable!("support BSC?"),
+		}
+	}
+}
+
 pub struct VerifiedCredentialsIsHodlerIn {
 	pub addresses: Vec<String>,
 	pub from_date: String,

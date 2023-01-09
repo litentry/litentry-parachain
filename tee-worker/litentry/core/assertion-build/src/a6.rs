@@ -22,7 +22,7 @@ extern crate sgx_tstd as std;
 
 use crate::Error;
 use lc_data_providers::twitter_official::TwitterOfficialClient;
-use litentry_primitives::{Identity, IdentityHandle, IdentityWebType, Web2Network};
+use litentry_primitives::{Identity, Web2Network};
 use std::vec::Vec;
 
 /// Following ranges:
@@ -36,15 +36,12 @@ pub fn build(identities: Vec<Identity>) -> Result<(), Error> {
 	let mut client = TwitterOfficialClient::new();
 	let mut sum: u32 = 0;
 	for identity in identities {
-		if identity.web_type == IdentityWebType::Web2(Web2Network::Twitter) {
-			if let IdentityHandle::String(twitter_id) = identity.handle {
-				match client.query_user(twitter_id.to_vec()) {
-					Ok(user) => {
-						sum += user.public_metrics.followers_count;
-					},
-					Err(e) => {
-						log::warn!("Assertion6 request error:{:?}", e)
-					},
+		if let Identity::Web2 { network, address } = identity {
+			if matches!(network, Web2Network::Twitter) {
+				let twitter_id = address.to_vec();
+				match client.query_user(twitter_id) {
+					Ok(user) => sum += user.public_metrics.followers_count,
+					Err(e) => log::warn!("Assertion6 request error:{:?}", e),
 				}
 			}
 		}
