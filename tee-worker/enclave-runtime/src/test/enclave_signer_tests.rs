@@ -14,7 +14,7 @@
 	limitations under the License.
 
 */
-use crate::test::fixtures::test_setup::test_setup;
+
 use codec::Encode;
 use ita_sgx_runtime::Runtime;
 use ita_stf::{Stf, TrustedCall, TrustedCallSigned, TrustedOperation};
@@ -77,8 +77,6 @@ pub fn enclave_signer_signatures_are_valid() {
 }
 
 pub fn nonce_is_computed_correctly() {
-
-	let (_, _,shard,_, ..) = test_setup();
 
 	let top_pool_author = Arc::new(AuthorApiMock::default());
 	let ocall_api = Arc::new(OnchainMock::default());
