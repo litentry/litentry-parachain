@@ -14,20 +14,24 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use crate::sgx_reexport_prelude::*;
+//#[cfg(all(not(feature = "std"), feature = "sgx"))]
+//use crate::sgx_reexport_prelude::*;
 
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 use crate::error::Error;
-use chrono::{DateTime, FixedOffset};
+use chrono::{DateTime, FixedOffset, NaiveDateTime};
+use itp_types::AccountId;
+use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::Assertion;
+use log::*;
 use serde::{Deserialize, Serialize};
 use std::{
 	fmt::Debug,
 	str::FromStr,
 	string::{String, ToString},
+	time::{SystemTime, UNIX_EPOCH},
 	vec::Vec,
 };
 
@@ -84,6 +88,17 @@ where
 	}
 }
 
+impl VCDateTime {
+	pub fn now() -> Self {
+		let ts = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+		let naive =
+			NaiveDateTime::from_timestamp_opt(ts.as_secs() as i64, ts.subsec_nanos() as u32)
+				.unwrap();
+		let now = DateTime::from_utc(naive, FixedOffset::east_opt(0).unwrap());
+		Self { date_time: now, use_z: true }
+	}
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum ProofType {
 	Ed25519Signature2020,
@@ -127,7 +142,9 @@ pub struct CredentialSubject {
 	#[serde(rename = "type")]
 	pub types: String,
 	pub tag: Vec<String>,
-	pub data_soure: Vec<DataSoure>,
+	#[serde(skip_serializing_if = "Option::is_none")]
+	#[serde(skip_deserializing)]
+	pub data_soure: Option<Vec<DataSoure>>,
 	pub assertions: String,
 	pub values: Vec<bool>,
 	pub endpoint: String,
@@ -137,11 +154,16 @@ impl CredentialSubject {
 	pub fn is_empty(&self) -> bool {
 		self.id.is_empty()
 	}
+
+	pub fn set_subject_id(&mut self, who: &AccountId) {
+		self.id = account_id_to_string(who);
+	}
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Proof {
+	#[serde(skip_deserializing)]
 	pub created: Option<VCDateTime>,
 	#[serde(rename = "type")]
 	pub proof_type: ProofType,
@@ -153,7 +175,7 @@ pub struct Proof {
 impl Proof {
 	pub fn new(type_: ProofType) -> Self {
 		Self {
-			created: None,
+			created: Some(VCDateTime::now()),
 			proof_type: type_,
 			proof_purpose: PROOF_PURPOSE.to_string(),
 			proof_value: "".to_string(),
@@ -177,17 +199,21 @@ pub struct Credential {
 	pub types: Vec<CredentialType>,
 	pub credential_subject: CredentialSubject,
 	pub issuer: Issuer,
+	#[serde(skip_deserializing)]
 	pub issuance_date: Option<VCDateTime>,
 	#[serde(skip_serializing_if = "Option::is_none")]
+	#[serde(skip_deserializing)]
 	pub expiration_date: Option<VCDateTime>,
 	pub proof: Proof,
 }
 
 impl Credential {
-	pub fn from_json(s: &str) -> Result<Self, Error> {
-		let vc: Self =
+	pub fn from_template(s: &str, who: &AccountId) -> Result<Self, Error> {
+		let mut vc: Self =
 			serde_json::from_str(s).map_err(|e| Error::Other(format!("{:?}", e).into()))?;
-		vc.validate()?;
+		vc.issuance_date = Some(VCDateTime::now());
+		vc.credential_subject.set_subject_id(who);
+		vc.validate_unsigned()?;
 		Ok(vc)
 	}
 
@@ -198,17 +224,18 @@ impl Credential {
 	pub fn validate(&self) -> Result<(), Error> {
 		self.validate_unsigned()?;
 
-		if self.issuer.is_empty() {
-			return Err(Error::EmptyCredentialIssuer)
-		}
+		// if self.issuer.is_empty() {
+		// 	return Err(Error::EmptyCredentialIssuer)
+		// }
 
-		if self.proof.is_empty() {
-			return Err(Error::EmptyCredentialProof)
-		}
+		// validate proof
+		// if self.proof.is_empty() {
+		// 	return Err(Error::EmptyCredentialProof)
+		// }
 
-		if self.proof.created.is_none() {
-			return Err(Error::InvalidDateOrTimeError)
-		}
+		// if self.proof.created.is_none() {
+		// 	return Err(Error::InvalidDateOrTimeError)
+		// }
 
 		//ToDo: validate proof signature
 
@@ -244,11 +271,15 @@ impl Credential {
 		Ok(())
 	}
 
-	pub fn generate_unsigned_credential(assertion: Assertion) -> Result<Credential, Error> {
+	pub fn generate_unsigned_credential(
+		who: &AccountId,
+		assertion: &Assertion,
+	) -> Result<Credential, Error> {
+		info!("start generate_unsigned_credential {:?}", assertion);
 		match assertion {
 			Assertion::A1 => {
 				let raw = include_str!("templates/a1.json");
-				let vc: Credential = Credential::from_json(raw).unwrap();
+				let vc: Credential = Credential::from_template(raw, who)?;
 				return Ok(vc)
 			},
 			_ => return Err(Error::UnsupportedAssertion),
@@ -281,9 +312,10 @@ mod tests {
 
 	#[test]
 	fn eval_simple_success() {
+		let who = AccountId::from([0; 32]);
 		let data = include_str!("templates/a1.json");
 
-		let vc: Credential = Credential::from_json(data).unwrap();
+		let vc: Credential = Credential::from_template(data, &who).unwrap();
 		println!("{:?}", vc);
 		assert_eq!(vc.proof.proof_purpose, "assertionMethod");
 

@@ -42,8 +42,6 @@ pub enum Error {
 	InvalidDateOrTimeError,
 	#[error("Runtime Error: {0}")]
 	RuntimeError(String),
-	// #[error(transparent)]
-	// Json(serde_json::Error),
 	#[error(transparent)]
 	Other(#[from] Box<dyn std::error::Error + Sync + Send + 'static>),
 }

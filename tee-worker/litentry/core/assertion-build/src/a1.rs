@@ -29,7 +29,7 @@ use litentry_primitives::{Assertion, Identity};
 use sp_runtime::BoundedVec;
 use std::string::ToString;
 
-use lc_credentials_tee::credentials::*;
+//use lc_credentials_tee::credentials::Credential;
 
 pub fn build(identities: BoundedVec<Identity, MaxIdentityLength>) -> Result<()> {
 	let mut web2_cnt = 0;
@@ -45,8 +45,8 @@ pub fn build(identities: BoundedVec<Identity, MaxIdentityLength>) -> Result<()> 
 
 	if web2_cnt > 0 && web3_cnt > 0 {
 		// TODO: generate_vc();
-		let result = Credential::generate_unsigned_credential(Assertion::A1);
-		if let Ok(credential_unsigned) = result {}
+		// let result = Credential::generate_unsigned_credential(&Assertion::A1);
+		// if let Ok(credential_unsigned) = result {}
 
 		Ok(())
 	} else {

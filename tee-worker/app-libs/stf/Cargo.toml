@@ -39,6 +39,7 @@ sp-core = { default-features = false, features = ["full_crypto"], git = "https:/
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
 
 # litentry
+lc-credentials-tee = { path = "../../litentry/core/credentials", default-features = false }
 lc-stf-task-sender = { path = "../../litentry/core/stf-task/sender", default-features = false }
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
 pallet-parentchain = { default-features = false, git = "https://github.com/integritee-network/pallets.git", branch = "master" }
@@ -67,6 +68,7 @@ sgx = [
     "litentry-primitives/sgx",
     "lc-stf-task-sender/sgx",
     "rand-sgx",
+    "lc-credentials-tee/sgx",
 ]
 std = [
     # crates.io
@@ -89,7 +91,6 @@ std = [
     "frame-support/std",
     "sp-application-crypto/std",
     "sp-runtime/std",
-    # litentry
     "pallet-parentchain/std",
     "sp-io/std",
     "ita-sgx-runtime/std",
@@ -98,5 +99,6 @@ std = [
     "parentchain-primitives/std",
     "lc-stf-task-sender/std",
     "rand",
+    "lc-credentials-tee/std",
 ]
 test = []
