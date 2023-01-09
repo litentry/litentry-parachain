@@ -21,7 +21,6 @@ use crate::{
 	H256,
 };
 use core::marker::PhantomData;
-use ita_sgx_runtime::Index;
 use ita_stf::{TrustedCall, TrustedCallSigned, TrustedOperation};
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::{ed25519_derivation::DeriveEd25519, key_repository::AccessKey};
@@ -30,7 +29,7 @@ use itp_stf_interface::system_pallet::SystemPalletAccountInterface;
 use itp_stf_primitives::types::{AccountId, KeyPair};
 use itp_stf_state_observer::traits::ObserveState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::ShardIdentifier;
+use itp_types::{Index, ShardIdentifier};
 use sp_core::{ed25519::Pair as Ed25519Pair, Pair};
 use std::{boxed::Box, sync::Arc};
 
@@ -39,11 +38,12 @@ pub struct StfEnclaveSigner<OCallApi, StateObserver, ShieldingKeyRepository, Stf
 	ocall_api: Arc<OCallApi>,
 	top_pool_author: Arc<TopPoolAuthor>,
 	shielding_key_repo: Arc<ShieldingKeyRepository>,
+	top_pool_author: Arc<TopPoolAuthor>,
 	_phantom: PhantomData<Stf>,
 }
 
-impl<OCallApi, StateObserver, ShieldingKeyRepository, Stf, Author>
-	StfEnclaveSigner<OCallApi, StateObserver, ShieldingKeyRepository, Stf, Author>
+impl<OCallApi, StateObserver, ShieldingKeyRepository, Stf, TopPoolAuthor>
+	StfEnclaveSigner<OCallApi, StateObserver, ShieldingKeyRepository, Stf, TopPoolAuthor>
 where
 	OCallApi: EnclaveAttestationOCallApi,
 	StateObserver: ObserveState,
@@ -52,20 +52,20 @@ where
 	<ShieldingKeyRepository as AccessKey>::KeyType: DeriveEd25519,
 	Stf: SystemPalletAccountInterface<StateObserver::StateType, AccountId>,
 	Stf::Index: Into<Index>,
-	Author: AuthorApi<H256, H256> + Send + Sync + 'static,
+	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 {
 	pub fn new(
 		state_observer: Arc<StateObserver>,
 		ocall_api: Arc<OCallApi>,
 		shielding_key_repo: Arc<ShieldingKeyRepository>,
-		top_pool_author: Arc<Author>,
+		top_pool_author: Arc<TopPoolAuthor>,
 	) -> Self {
 		Self {
 			state_observer,
 			ocall_api,
 			shielding_key_repo,
-			_phantom: Default::default(),
 			top_pool_author,
+			_phantom: Default::default(),
 		}
 	}
 
@@ -84,8 +84,8 @@ where
 	}
 }
 
-impl<OCallApi, StateObserver, ShieldingKeyRepository, Stf, Author> StfEnclaveSigning
-	for StfEnclaveSigner<OCallApi, StateObserver, ShieldingKeyRepository, Stf, Author>
+impl<OCallApi, StateObserver, ShieldingKeyRepository, Stf, TopPoolAuthor> StfEnclaveSigning
+	for StfEnclaveSigner<OCallApi, StateObserver, ShieldingKeyRepository, Stf, TopPoolAuthor>
 where
 	OCallApi: EnclaveAttestationOCallApi,
 	StateObserver: ObserveState,
@@ -94,7 +94,7 @@ where
 	<ShieldingKeyRepository as AccessKey>::KeyType: DeriveEd25519,
 	Stf: SystemPalletAccountInterface<StateObserver::StateType, AccountId>,
 	Stf::Index: Into<Index>,
-	Author: AuthorApi<H256, H256> + Send + Sync + 'static,
+	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 {
 	fn get_enclave_account(&self) -> Result<AccountId> {
 		let enclave_call_signing_key = self.get_enclave_call_signing_key()?;
