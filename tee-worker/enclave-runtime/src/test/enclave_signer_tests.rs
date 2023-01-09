@@ -14,11 +14,11 @@
 	limitations under the License.
 
 */
-
 use codec::Encode;
 use ita_sgx_runtime::Runtime;
 use ita_stf::{Stf, TrustedCall, TrustedCallSigned, TrustedOperation};
 use itp_ocall_api::EnclaveAttestationOCallApi;
+use itp_node_api::metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository};
 use itp_sgx_crypto::{
 	ed25519_derivation::DeriveEd25519, key_repository::AccessKey, mocks::KeyRepositoryMock,
 };
@@ -124,13 +124,15 @@ pub fn nonce_is_computed_correctly() {
 			.len()
 	);
 
+	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
+
 	assert_eq!(0, TestStf::get_account_nonce(&mut state, &enclave_account));
 	assert!(TestStf::execute_call(
 		&mut state,
 		&shard,
 		trusted_call_1_signed,
 		&mut Vec::new(),
-		[0u8, 1u8]
+		&repo,
 	)
 	.is_ok());
 	assert!(TestStf::execute_call(
@@ -138,7 +140,7 @@ pub fn nonce_is_computed_correctly() {
 		&shard,
 		trusted_call_2_signed,
 		&mut Vec::new(),
-		[0u8, 1u8]
+		&repo,
 	)
 	.is_ok());
 	assert_eq!(2, TestStf::get_account_nonce(&mut state, &enclave_account));
