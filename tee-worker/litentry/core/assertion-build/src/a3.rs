@@ -49,7 +49,7 @@ pub fn build(
 			}
 		}
 	}
-	return Err(Error::Assertion3Failed)
+	Err(Error::Assertion3Failed)
 }
 
 #[cfg(test)]

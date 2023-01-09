@@ -71,17 +71,11 @@ where
 		match self.req.assertion.clone() {
 			Assertion::A1 => lc_assertion_build::a1::build(self.req.vec_identity.clone()),
 
-			Assertion::A2(guild_id, handler) => lc_assertion_build::a2::build(
-				self.req.vec_identity.to_vec(),
-				guild_id.clone(),
-				handler.clone(),
-			),
+			Assertion::A2(guild_id, handler) =>
+				lc_assertion_build::a2::build(self.req.vec_identity.to_vec(), guild_id, handler),
 
-			Assertion::A3(guild_id, handler) => lc_assertion_build::a3::build(
-				self.req.vec_identity.to_vec(),
-				guild_id.clone(),
-				handler.clone(),
-			),
+			Assertion::A3(guild_id, handler) =>
+				lc_assertion_build::a3::build(self.req.vec_identity.to_vec(), guild_id, handler),
 
 			Assertion::A4(mini_balance, from_date) => {
 				let mini_balance: f64 = (mini_balance / (10 ^ 12)) as f64;
