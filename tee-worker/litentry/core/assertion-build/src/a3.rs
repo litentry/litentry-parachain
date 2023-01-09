@@ -20,19 +20,36 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{from_data_provider_error, Result};
+use crate::{Error, Result};
 use lc_data_providers::discord_litentry::DiscordLitentryClient;
-use litentry_primitives::ParameterString;
+use litentry_primitives::{Identity, ParameterString, Web2Network};
+use std::vec::Vec;
 
-pub fn build(guild_id: ParameterString, handler: ParameterString) -> Result<()> {
+pub fn build(
+	identities: Vec<Identity>,
+	guild_id: ParameterString,
+	handler: ParameterString,
+) -> Result<()> {
 	let mut client = DiscordLitentryClient::new();
-	let _response = client
-		.check_id_hubber(guild_id.into_inner(), handler.into_inner())
-		.map_err(from_data_provider_error)?;
-	Ok(())
+	for identity in identities {
+		if let Identity::Web2 { network, address: _addr } = identity {
+			// TODO not sure if addr = handler ?
+			if matches!(network, Web2Network::Discord) {
+				if let Ok(response) = client.check_id_hubber(guild_id.to_vec(), handler.to_vec()) {
+					if response.data {
+						// TODO:
+						// generate_vc(who, identity, ...)
 
-	// TODO:
-	// generate_vc(who, identity, ...)
+						// After receiving VC, F/E is expected to assign 'IDHubber' role and align with bot
+						// https://github.com/litentry/tee-worker/issues/35
+						// https://github.com/litentry/tee-worker/issues/36
+						return Ok(())
+					}
+				}
+			}
+		}
+	}
+	return Err(Error::Assertion3Failed)
 }
 
 #[cfg(test)]
