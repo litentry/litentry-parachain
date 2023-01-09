@@ -129,7 +129,7 @@ where
 				#[cfg(all(not(feature = "std"), feature = "sgx"))]
 				let dt1 = TzUtc.ymd(year as i32, 1, 1).and_hms(0, 0, 0);
 				let from_date = format!("{:?}", dt1);
-				let mini_balance: f64 = (min_balance / (10 ^ 12)) as f64;
+				let min_balance: f64 = (min_balance / (10 ^ 12)) as f64;
 				lc_assertion_build::a7::build(self.req.vec_identity.clone(), from_date, min_balance)
 			},
 			_ => {
