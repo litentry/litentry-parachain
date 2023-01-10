@@ -26,6 +26,21 @@ async function registerParachain(api: ApiPromise, config: any) {
 
     console.log(`Parachain registration tx Sent!`);
     return signAndSend(tx, alice);
+
+}
+
+async function onboarding_parachain(api:ApiPromise,config: any){
+    const keyring = new Keyring({ type: 'sr25519' });
+    const alice = keyring.addFromUri('//Alice');
+
+    // user can set the number
+    const Period_conut = 100;
+    const ob_boarding  = await api.tx.sudo.sudo(
+        api.tx.slots.forceLease(process.env.PARACHAIN_ID, alice.address, 1, 1, Period_conut)
+    );
+
+    console.log(`Parachain registration tx Sent!`);
+    return signAndSend(ob_boarding, alice);
 }
 
 (async () => {
@@ -38,6 +53,7 @@ async function registerParachain(api: ApiPromise, config: any) {
     });
 
     await registerParachain(api, config);
+    await onboarding_parachain(api,config);
     await api.disconnect();
     provider.on('disconnected', () => {
         console.log('Disconnect from relaychain');
