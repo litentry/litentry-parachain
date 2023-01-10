@@ -29,7 +29,7 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::OpaqueCall;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::Assertion;
-use log::error;
+use log::*;
 use parachain_core_primitives::VCMPError;
 use std::{format, string::String, sync::Arc};
 
@@ -69,7 +69,16 @@ where
 
 	fn on_process(&self) -> Result<Self::Result, Self::Error> {
 		match self.req.assertion.clone() {
-			Assertion::A1 => lc_assertion_build::a1::build(self.req.vec_identity.clone()),
+			Assertion::A1 => match lc_assertion_build::a1::build(
+				self.req.vec_identity.clone(),
+				self.req.credential.clone(),
+			) {
+				Ok(credential_built) => {
+					info!("on_process got credential_built {:?}", &credential_built);
+					Ok(())
+				},
+				Err(e) => Err(e),
+			},
 
 			Assertion::A2(guild_id, handler) =>
 				lc_assertion_build::a2::build(self.req.vec_identity.to_vec(), guild_id, handler),
@@ -108,15 +117,21 @@ where
 		}
 	}
 
-	fn on_success(&self, _r: Self::Result) {
-		// nothing
+	fn on_success(&self, _result: Self::Result) {
+		// let (shard, callback) = result;
+		// match self.context.decode_and_submit_trusted_call(shard, callback) {
+		// 	Ok(_) => {},
+		// 	Err(e) => {
+		// 		error!("decode_and_submit_trusted_call failed. Due to: {:?}", e);
+		// 	},
+		// }
 	}
 
 	fn on_failure(&self, error: Self::Error) {
 		match self
 			.context
 			.node_metadata
-			.get_from_metadata(|m| VCMPCallIndexes::some_error_call_indexes(m))
+			.get_from_metadata(|m| VCMPCallIndexes::vc_some_error_call_indexes(m))
 		{
 			Ok(Ok(call_index)) => {
 				let call = OpaqueCall::from_tuple(&(call_index, error));

@@ -35,13 +35,13 @@ pub mod error;
 pub mod stf_task_sender;
 pub use error::Result;
 
-use sp_runtime::{traits::ConstU32, BoundedVec};
-use sp_std::vec::Vec;
-
 use codec::{Decode, Encode};
+use lc_credentials_tee::credentials::Credential;
 use litentry_primitives::{
 	Assertion, ChallengeCode, Identity, Web2ValidationData, Web3ValidationData,
 };
+use sp_runtime::{traits::ConstU32, BoundedVec};
+use sp_std::vec::Vec;
 
 /// Here a few Request structs are defined for asynchronously stf-tasks handling.
 /// A `callback` exists for some request types to submit a callback TrustedCall to top pool.
@@ -98,6 +98,8 @@ pub struct AssertionBuildRequest {
 	pub who: AccountId,
 	pub assertion: Assertion,
 	pub vec_identity: BoundedVec<Identity, MaxIdentityLength>,
+	pub credential: Credential,
+	pub encoded_callback: Vec<u8>,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]

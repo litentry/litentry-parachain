@@ -37,6 +37,7 @@ itp-types = { path = "../../../../core-primitives/types", default-features = fal
 itp-utils = { path = "../../../../core-primitives/utils", default-features = false }
 
 # litentry
+lc-credentials-tee = { path = "../../credentials", default-features = false }
 litentry-primitives = { path = "../../../primitives", default-features = false }
 
 [features]

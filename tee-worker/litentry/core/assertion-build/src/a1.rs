@@ -20,17 +20,16 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-// #[cfg(all(not(feature = "std"), feature = "sgx"))]
-// use crate::sgx_reexport_prelude::*;
-
 use crate::{Error, Result};
+use lc_credentials_tee::credentials::Credential;
 use lc_stf_task_sender::MaxIdentityLength;
-use litentry_primitives::{Assertion, Identity};
+use litentry_primitives::Identity;
 use sp_runtime::BoundedVec;
 
-//use lc_credentials_tee::credentials::Credential;
-
-pub fn build(identities: BoundedVec<Identity, MaxIdentityLength>) -> Result<()> {
+pub fn build(
+	identities: BoundedVec<Identity, MaxIdentityLength>,
+	credential_unsigned: Credential,
+) -> Result<Credential> {
 	let mut web2_cnt = 0;
 	let mut web3_cnt = 0;
 
@@ -43,11 +42,9 @@ pub fn build(identities: BoundedVec<Identity, MaxIdentityLength>) -> Result<()> 
 	}
 
 	if web2_cnt > 0 && web3_cnt > 0 {
-		// TODO: generate_vc();
-		// let result = Credential::generate_unsigned_credential(&Assertion::A1);
-		// if let Ok(credential_unsigned) = result {}
-
-		Ok(())
+		let mut credential_built = credential_unsigned;
+		credential_built.add_assertion_a1(web2_cnt, web3_cnt);
+		Ok(credential_built)
 	} else {
 		Err(Error::Assertion1Failed)
 	}

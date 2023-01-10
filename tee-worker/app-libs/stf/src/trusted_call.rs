@@ -121,7 +121,8 @@ pub enum TrustedCall {
 		ParentchainBlockNumber,
 	), // (EnclaveSigner, Account, identity, validation, blocknumber)
 	verify_identity_runtime(AccountId, AccountId, Identity, ParentchainBlockNumber), // (EnclaveSigner, Account, identity, blocknumber)
-	build_assertion(AccountId, AccountId, Assertion, ShardIdentifier), // (Account, Account, Assertion, Shard)
+	build_assertion_preflight(AccountId, AccountId, Assertion, ShardIdentifier), // (Account, Account, Assertion, Shard)
+	build_assertion_runtime(AccountId, AccountId, Credential), // (Account, Account, Credential)
 	set_challenge_code_runtime(AccountId, AccountId, Identity, ChallengeCode), // only for testing
 }
 
@@ -147,7 +148,8 @@ impl TrustedCall {
 			TrustedCall::remove_identity_runtime(account, _, _) => account,
 			TrustedCall::verify_identity_preflight(account, _, _, _, _) => account,
 			TrustedCall::verify_identity_runtime(account, _, _, _) => account,
-			TrustedCall::build_assertion(account, _, _, _) => account,
+			TrustedCall::build_assertion_preflight(account, _, _, _) => account,
+			TrustedCall::build_assertion_runtime(account, _, _) => account,
 			TrustedCall::set_challenge_code_runtime(account, _, _, _) => account,
 		}
 	}
@@ -577,25 +579,28 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::build_assertion(enclave_account, who, assertion, shard) => {
+			TrustedCall::build_assertion_preflight(enclave_account, who, assertion, shard) => {
 				ensure_enclave_signer_account(&enclave_account)?;
-
-				match Credential::generate_unsigned_credential(&who, &assertion) {
-					Ok(credential_unsigned) => {
-						let credential_unsigned_str = credential_unsigned.to_json().unwrap();
+				Self::build_assertion_preflight(&shard, who, assertion)
+			},
+			TrustedCall::build_assertion_runtime(enclave_account, who, credential) => {
+				ensure_enclave_signer_account(&enclave_account)?;
+				match credential.to_json() {
+					Ok(credential_str) => {
 						debug!(
 							"build_assertion got result {:?} length {}",
-							credential_unsigned_str,
-							credential_unsigned_str.len()
+							credential_str,
+							credential_str.len()
 						);
-
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
+							let vc_hash = blake2_256(&credential_str.clone().as_bytes());
+
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.vc_issued_call_indexes())??,
-								0u64,
-								call_hash,
-								aes_encrypt_default(&key, &credential_unsigned_str.as_bytes()),
+								who.clone(),
+								vc_hash,
+								aes_encrypt_default(&key, &credential_str.as_bytes()),
 							)));
 						} else {
 							calls.push(OpaqueCall::from_tuple(&(
@@ -607,18 +612,17 @@ where
 						}
 					},
 					Err(error) => {
-						debug!("build_assertion got error {:?}", error);
+						debug!("credential to_json() got error {:?}", error);
 
 						calls.push(OpaqueCall::from_tuple(&(
 							node_metadata_repo
 								.get_from_metadata(|m| m.vc_some_error_call_indexes())??,
-							"build_assertion_error".as_bytes(),
+							"credential_to_json_error".as_bytes(),
 							"error".as_bytes(),
 						)));
 					},
 				}
-
-				Self::build_assertion(&shard, who, assertion)
+				Ok(())
 			},
 			TrustedCall::set_challenge_code_runtime(enclave_account, account, did, code) => {
 				ensure_enclave_signer_account(&enclave_account)?;
@@ -645,7 +649,8 @@ where
 			TrustedCall::remove_identity_runtime(..) => debug!("No storage updates needed..."),
 			TrustedCall::verify_identity_preflight(..) => debug!("No storage updates needed..."),
 			TrustedCall::verify_identity_runtime(..) => debug!("No storage updates needed..."),
-			TrustedCall::build_assertion(..) => debug!("No storage updates needed..."),
+			TrustedCall::build_assertion_preflight(..) => debug!("No storage updates needed..."),
+			TrustedCall::build_assertion_runtime(..) => debug!("No storage updates needed..."),
 			TrustedCall::set_challenge_code_runtime(..) => debug!("No storage updates needed..."),
 			#[cfg(feature = "evm")]
 			_ => debug!("No storage updates needed..."),

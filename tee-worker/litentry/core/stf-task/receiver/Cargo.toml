@@ -59,7 +59,6 @@ litentry-primitives = { path = "../../../primitives", default-features = false }
 parachain-core-primitives = { package = "core-primitives", path = "../../../../../primitives/core", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36", default-features = false }
 
-
 [features]
 default = ["std"]
 mockserver = [

@@ -25,6 +25,7 @@ use crate::{
 use frame_support::dispatch::UnfilteredDispatchable;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_utils::stringify::account_id_to_string;
+use lc_credentials_tee::credentials::Credential;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
 	AssertionBuildRequest, MaxIdentityLength, RequestType, SetUserShieldingKeyRequest,
@@ -182,7 +183,7 @@ impl TrustedCallSigned {
 		Ok(())
 	}
 
-	pub fn build_assertion(
+	pub fn build_assertion_preflight(
 		shard: &ShardIdentifier,
 		who: AccountId,
 		assertion: Assertion,
@@ -190,21 +191,41 @@ impl TrustedCallSigned {
 		debug!("who {:?}, assertion {:?}", account_id_to_string(&who), assertion);
 
 		let id_graph = ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
-
 		let mut vec_identity: BoundedVec<Identity, MaxIdentityLength> = vec![].try_into().unwrap();
-
 		for id in &id_graph {
 			if id.1.is_verified {
 				vec_identity.try_push(id.0.clone()).map_err(|_| StfError::AssertionBuildFail)?;
 			}
 		}
 
-		let encoded_shard = shard.encode();
-		let request: RequestType =
-			AssertionBuildRequest { encoded_shard, who, assertion, vec_identity }.into();
+		match Credential::generate_unsigned_credential(&assertion) {
+			Ok(credential_unsigned) => {
+				let encoded_shard = shard.encode();
+				let encoded_callback = TrustedCall::build_assertion_runtime(
+					enclave_signer_account(),
+					who.clone(),
+					credential_unsigned.clone(),
+				)
+				.encode();
 
-		let sender = StfRequestSender::new();
-		sender.send_stf_request(request).map_err(|_| StfError::AssertionBuildFail)
+				let request: RequestType = AssertionBuildRequest {
+					encoded_shard,
+					who,
+					assertion,
+					vec_identity,
+					credential: credential_unsigned,
+					encoded_callback,
+				}
+				.into();
+
+				let sender = StfRequestSender::new();
+				sender.send_stf_request(request).map_err(|_| StfError::AssertionBuildFail)
+			},
+			Err(e) => {
+				error!("Generate unsigned credential failed {:?}", e);
+				Err(StfError::AssertionBuildFail)
+			},
+		}
 	}
 
 	pub fn set_challenge_code_runtime(
