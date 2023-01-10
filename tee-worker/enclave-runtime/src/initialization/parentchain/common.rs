@@ -49,13 +49,12 @@ pub(crate) fn create_parentchain_block_importer(
 	let top_pool_author = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
-	let author_api = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
 		state_observer,
 		ocall_api,
 		shielding_key_repository.clone(),
-		author_api,
+		top_pool_author.clone(),
 	));
 	let indirect_calls_executor = Arc::new(EnclaveIndirectCallsExecutor::new(
 		shielding_key_repository,
