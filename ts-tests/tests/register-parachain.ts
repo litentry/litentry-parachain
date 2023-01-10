@@ -26,7 +26,6 @@ async function registerParachain(api: ApiPromise, config: any) {
 
     console.log(`Parachain registration tx Sent!`);
     return signAndSend(tx, alice);
-
 }
 
 async function onboarding_parachain(api:ApiPromise,config: any){
@@ -39,7 +38,7 @@ async function onboarding_parachain(api:ApiPromise,config: any){
         api.tx.slots.forceLease(process.env.PARACHAIN_ID, alice.address, 1, 1, Period_conut)
     );
 
-    console.log(`Parachain registration tx Sent!`);
+    console.log(`Parachain onboarding tx Sent!`);
     return signAndSend(ob_boarding, alice);
 }
 
