@@ -18,8 +18,8 @@ cleanup() {
 # The patch will be generated under ./pallets/upstream.patch
 
 UPSTREAM="https://github.com/integritee-network/pallets"
-ROOTDIR=$(git rev-parse --show-toplevel)
-ROOTDIR="$ROOTDIR/pallets"
+ROOTDIR0=$(git rev-parse --show-toplevel)
+ROOTDIR="$ROOTDIR0/pallets"
 cd "$ROOTDIR"
 
 if [ -f upstream_commit ]; then
@@ -52,9 +52,15 @@ git rev-parse --short HEAD > "$ROOTDIR/upstream_commit"
 echo "======================================================================="
 echo "upstream_commit is updated."
 echo "be sure to fetch the upstream to update the hashes of files."
-echo "upstream.patch is generated, to apply it, run:"
-echo "  # git am -3 --include=test-utils --include=teerex --include=teeracle --include=sidechain --include=primitives --directory=pallets < upstream.patch"
+echo ""
+echo "upstream.patch is generated, to apply it, RUN FROM $ROOTDIR0:"
+echo "  git am -3 --directory=pallets < pallets/upstream.patch"
+echo ""
 echo "after that, please:"
+echo "- pay special attention: "
+echo "    ALL changes/conflicts should ONLY apply into:"
+echo "    - pallets/(sidechain, teeracle, teerex, test-utils)"
+echo "    - primitives/(common, sidechain, teeracle, teerex)"
 echo "- resolve any conflicts"
 echo "- optionally update Cargo.lock file"
 echo "======================================================================="

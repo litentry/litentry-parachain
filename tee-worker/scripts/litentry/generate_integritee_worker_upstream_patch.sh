@@ -15,8 +15,8 @@ cleanup() {
 # The patch will be generated under tee-worker/upstream.patch
 
 UPSTREAM="https://github.com/integritee-network/worker"
-ROOTDIR=$(git rev-parse --show-toplevel)
-ROOTDIR="$ROOTDIR/tee-worker"
+ROOTDIR0=$(git rev-parse --show-toplevel)
+ROOTDIR="$ROOTDIR0/tee-worker"
 cd "$ROOTDIR"
 
 if [ -f upstream_commit ]; then
@@ -49,8 +49,10 @@ git rev-parse --short HEAD > "$ROOTDIR/upstream_commit"
 echo "======================================================================="
 echo "upstream_commit is updated."
 echo "be sure to fetch the upstream to update the hashes of files."
-echo "upstream.patch is generated, to apply it, run:"
-echo '  git am -3 --exclude=tee-worker/Cargo.lock --exclude=tee-worker/enclave-runtime/Cargo.lock --directory=tee-worker < tee-worker/upstream.patch'
+echo ""
+echo "upstream.patch is generated, to apply it, RUN FROM $ROOTDIR0:"
+echo "  git am -3 --exclude=tee-worker/Cargo.lock --exclude=tee-worker/enclave-runtime/Cargo.lock --directory=tee-worker < tee-worker/upstream.patch"
+echo ""
 echo "after that, please:"
 echo "- resolve any conflicts"
 echo "- optionally update both Cargo.lock files"
