@@ -21,7 +21,6 @@ use crate::{
 	H256,
 };
 use core::marker::PhantomData;
-use ita_sgx_runtime::Index;
 use ita_stf::{TrustedCall, TrustedCallSigned, TrustedOperation};
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::{ed25519_derivation::DeriveEd25519, key_repository::AccessKey};
@@ -30,20 +29,20 @@ use itp_stf_interface::system_pallet::SystemPalletAccountInterface;
 use itp_stf_primitives::types::{AccountId, KeyPair};
 use itp_stf_state_observer::traits::ObserveState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::ShardIdentifier;
+use itp_types::{Index, ShardIdentifier};
 use sp_core::{ed25519::Pair as Ed25519Pair, Pair};
 use std::{boxed::Box, sync::Arc};
 
 pub struct StfEnclaveSigner<OCallApi, StateObserver, ShieldingKeyRepository, Stf, TopPoolAuthor> {
 	state_observer: Arc<StateObserver>,
 	ocall_api: Arc<OCallApi>,
-	top_pool_author: Arc<TopPoolAuthor>,
 	shielding_key_repo: Arc<ShieldingKeyRepository>,
+	top_pool_author: Arc<TopPoolAuthor>,
 	_phantom: PhantomData<Stf>,
 }
 
-impl<OCallApi, StateObserver, ShieldingKeyRepository, Stf, Author>
-	StfEnclaveSigner<OCallApi, StateObserver, ShieldingKeyRepository, Stf, Author>
+impl<OCallApi, StateObserver, ShieldingKeyRepository, Stf, TopPoolAuthor>
+	StfEnclaveSigner<OCallApi, StateObserver, ShieldingKeyRepository, Stf, TopPoolAuthor>
 where
 	OCallApi: EnclaveAttestationOCallApi,
 	StateObserver: ObserveState,
@@ -52,20 +51,20 @@ where
 	<ShieldingKeyRepository as AccessKey>::KeyType: DeriveEd25519,
 	Stf: SystemPalletAccountInterface<StateObserver::StateType, AccountId>,
 	Stf::Index: Into<Index>,
-	Author: AuthorApi<H256, H256> + Send + Sync + 'static,
+	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 {
 	pub fn new(
 		state_observer: Arc<StateObserver>,
 		ocall_api: Arc<OCallApi>,
 		shielding_key_repo: Arc<ShieldingKeyRepository>,
-		top_pool_author: Arc<Author>,
+		top_pool_author: Arc<TopPoolAuthor>,
 	) -> Self {
 		Self {
 			state_observer,
 			ocall_api,
 			shielding_key_repo,
-			_phantom: Default::default(),
 			top_pool_author,
+			_phantom: Default::default(),
 		}
 	}
 
@@ -84,8 +83,8 @@ where
 	}
 }
 
-impl<OCallApi, StateObserver, ShieldingKeyRepository, Stf, Author> StfEnclaveSigning
-	for StfEnclaveSigner<OCallApi, StateObserver, ShieldingKeyRepository, Stf, Author>
+impl<OCallApi, StateObserver, ShieldingKeyRepository, Stf, TopPoolAuthor> StfEnclaveSigning
+	for StfEnclaveSigner<OCallApi, StateObserver, ShieldingKeyRepository, Stf, TopPoolAuthor>
 where
 	OCallApi: EnclaveAttestationOCallApi,
 	StateObserver: ObserveState,
@@ -94,7 +93,7 @@ where
 	<ShieldingKeyRepository as AccessKey>::KeyType: DeriveEd25519,
 	Stf: SystemPalletAccountInterface<StateObserver::StateType, AccountId>,
 	Stf::Index: Into<Index>,
-	Author: AuthorApi<H256, H256> + Send + Sync + 'static,
+	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 {
 	fn get_enclave_account(&self) -> Result<AccountId> {
 		let enclave_call_signing_key = self.get_enclave_call_signing_key()?;
@@ -107,27 +106,21 @@ where
 		shard: &ShardIdentifier,
 	) -> Result<TrustedCallSigned> {
 		let mr_enclave = self.ocall_api.get_mrenclave_of_self()?;
-		let enclave_account_id = self.get_enclave_account()?;
+		let enclave_account = self.get_enclave_account()?;
 		let enclave_call_signing_key = self.get_enclave_call_signing_key()?;
 
 		let current_nonce = self.get_enclave_account_nonce(shard)?;
-		let pending_tx = self
+		let pending_tx_count = self
 			.top_pool_author
-			.get_pending_trusted_calls(shard.clone())
-			.iter()
-			.filter(|v| match v {
-				TrustedOperation::indirect_call(ref call) =>
-					call.call.sender_account().eq(&enclave_account_id),
-				TrustedOperation::direct_call(ref call) =>
-					call.call.sender_account().eq(&enclave_account_id),
-				_ => false,
-			})
-			.count();
-		let pending_tx = Index::try_from(pending_tx).map_err(|e| Error::Other(e.into()))?;
-		let adjust_nonce: Index = current_nonce.into() + pending_tx;
+			.get_pending_trusted_calls_for(*shard, &enclave_account)
+			.len();
+		let pending_tx_count =
+			Index::try_from(pending_tx_count).map_err(|e| Error::Other(e.into()))?;
+		let adjusted_nonce: Index = current_nonce.into() + pending_tx_count;
+
 		Ok(trusted_call.sign(
 			&KeyPair::Ed25519(Box::new(enclave_call_signing_key)),
-			adjust_nonce,
+			adjusted_nonce,
 			&mr_enclave.m,
 			shard,
 		))
