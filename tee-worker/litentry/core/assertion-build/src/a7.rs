@@ -21,25 +21,18 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::{Error, Result};
+use lc_data_providers::graphql::{
+	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
+};
+use litentry_primitives::{Identity, SubstrateNetwork};
 use std::{
 	str::from_utf8,
 	string::{String, ToString},
 	vec,
+	vec::Vec,
 };
 
-use lc_stf_task_sender::MaxIdentityLength;
-use litentry_primitives::{Identity, SubstrateNetwork};
-use sp_runtime::BoundedVec;
-
-use lc_data_providers::graphql::{
-	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
-};
-
-pub fn build(
-	identities: BoundedVec<Identity, MaxIdentityLength>,
-	from_date: String,
-	min_balance: f64,
-) -> Result<()> {
+pub fn build(identities: Vec<Identity>, from_date: String, min_balance: f64) -> Result<()> {
 	let mut client = GraphQLClient::new();
 	for id in identities {
 		if let Identity::Substrate { network, address } = id {

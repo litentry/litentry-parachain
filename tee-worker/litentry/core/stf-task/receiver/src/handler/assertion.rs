@@ -80,7 +80,7 @@ where
 			Assertion::A4(min_balance, from_date) => {
 				let min_balance: f64 = (min_balance / (10 ^ 12)) as f64;
 				lc_assertion_build::a4::build(
-					self.req.vec_identity.clone(),
+					self.req.vec_identity.to_vec(),
 					String::from_utf8(from_date.into_inner()).unwrap(),
 					min_balance,
 				)
@@ -96,7 +96,7 @@ where
 			Assertion::A7(min_balance, year) => {
 				let min_balance: f64 = (min_balance / (10 ^ 12)) as f64;
 				lc_assertion_build::a7::build(
-					self.req.vec_identity.clone(),
+					self.req.vec_identity.to_vec(),
 					year_to_date(year),
 					min_balance,
 				)
