@@ -54,9 +54,7 @@ pub fn build(identities: Vec<Identity>) -> Result<()> {
 		};
 		if let Some(query) = query {
 			if let Ok(result) = client.query_total_transactions(query) {
-				result.iter().for_each(|v| {
-					total_txs += v.total_transactions;
-				})
+				total_txs += result.iter().map(|v| v.total_transactions).sum::<u64>();
 			}
 		}
 	}
