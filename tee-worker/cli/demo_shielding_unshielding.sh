@@ -61,9 +61,14 @@ echo "Using node uri ${NODEURL}:${NPORT}"
 echo "Using trusted-worker uri ${WORKER1URL}:${WORKER1PORT}"
 echo ""
 
-AMOUNTSHIELD=50000000000
-AMOUNTTRANSFER=25000000000
-AMOUNTUNSHIELD=15000000000
+# the parachain LIT is 12 decimal
+UNIT=$(( 10 ** 12 ))
+
+# we have to make these amounts greater than ED, see
+# https://github.com/litentry/litentry-parachain/issues/1162
+AMOUNTSHIELD=$(( 6 * UNIT ))
+AMOUNTTRANSFER=$(( 2 * UNIT ))
+AMOUNTUNSHIELD=$(( 1 * UNIT ))
 
 CLIENT="${CLIENT_BIN} -p ${NPORT} -P ${WORKER1PORT} -u ${NODEURL} -U ${WORKER1URL}"
 
@@ -91,13 +96,12 @@ ${CLIENT} balance "//Bob"
 echo ""
 
 echo "* Create a new incognito account for Alice"
-#ICGACCOUNTALICE=$(${CLIENT} trusted new-account --mrenclave ${MRENCLAVE})
 ICGACCOUNTALICE=//AliceIncognito
 echo "  Alice's incognito account = ${ICGACCOUNTALICE}"
 echo ""
 
 echo "* Create a new incognito account for Bob"
-ICGACCOUNTBOB=$(${CLIENT} trusted --mrenclave ${MRENCLAVE} new-account )
+ICGACCOUNTBOB=$(${CLIENT} trusted --mrenclave ${MRENCLAVE} new-account)
 echo "  Bob's incognito account = ${ICGACCOUNTBOB}"
 echo ""
 
@@ -112,12 +116,16 @@ echo "* Waiting 30 seconds"
 sleep 30
 echo ""
 
+echo "* Get balance of Alice's on-chain account"
+${CLIENT} balance "//Alice"
+echo ""
+
 echo "Get balance of Alice's incognito account"
 ${CLIENT} trusted --mrenclave ${MRENCLAVE} balance ${ICGACCOUNTALICE}
 echo ""
 
-echo "* Get balance of Alice's on-chain account"
-${CLIENT} balance "//Alice"
+echo "Get balance of Bob's incognito account"
+${CLIENT} trusted --mrenclave ${MRENCLAVE} balance ${ICGACCOUNTBOB}
 echo ""
 
 echo "* Send ${AMOUNTTRANSFER} funds from Alice's incognito account to Bob's incognito account"
@@ -141,8 +149,12 @@ sleep 30
 echo ""
 
 echo "Get balance of Alice's incognito account"
-RESULT=$(${CLIENT} trusted --mrenclave ${MRENCLAVE} balance ${ICGACCOUNTALICE}  | xargs)
-echo $RESULT
+BALANCE_INCOGNITO_ALICE=$(${CLIENT} trusted --mrenclave ${MRENCLAVE} balance ${ICGACCOUNTALICE}  | xargs)
+echo $BALANCE_INCOGNITO_ALICE
+
+echo "Get balance of Bob's incognito account"
+BALANCE_INCOGNITO_BOB=$(${CLIENT} trusted --mrenclave ${MRENCLAVE} balance ${ICGACCOUNTBOB}  | xargs)
+echo $BALANCE_INCOGNITO_BOB
 
 echo "* Get balance of Alice's on-chain account"
 ${CLIENT} balance "//Alice"
@@ -153,7 +165,9 @@ echo ""
 # They only work if you're running from fresh genesis.
 case $TEST in
     first)
-        if [ "10000000000" = "$RESULT" ]; then
+        # Incognito Alice: 6 - 2 - 1 = 3
+        # Incognito Bob:   2
+        if [ "$BALANCE_INCOGNITO_ALICE" -eq $(( 3 * UNIT)) ] && [ "$BALANCE_INCOGNITO_BOB" -eq $(( 2 * UNIT)) ]; then
             echo "test passed (1st time)"
             exit 0
         else
@@ -162,13 +176,19 @@ case $TEST in
         fi
         ;;
     second)
-        if [ "20000000000" = "$RESULT" ]; then
+        # Incognito Alice: 3 + 6 - 2 - 1 = 6 (doubled)
+        # Incognito Bob:   2 (as Bob has a new account each time)
+        if [ "$BALANCE_INCOGNITO_ALICE" -eq $(( 6 * UNIT)) ] && [ "$BALANCE_INCOGNITO_BOB" -eq $(( 2 * UNIT)) ]; then
             echo "test passed (2nd time)"
             exit 0
         else
             echo "test ran through but balance is wrong. is this really the second time you run this since genesis?"
             exit 1
         fi
+        ;;
+    *)
+        echo "unsupported test mode"
+        exit 1
         ;;
 esac
 

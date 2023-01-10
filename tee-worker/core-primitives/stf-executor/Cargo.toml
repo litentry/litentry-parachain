@@ -54,19 +54,6 @@ itp-stf-state-observer = { path = "../stf-state-observer", features = ["mocks"] 
 [features]
 default = ["std"]
 mocks = []
-sgx = [
-    "sgx_tstd",
-    "ita-stf/sgx",
-    "itp-node-api/sgx",
-    "itp-sgx-crypto/sgx",
-    "itp-sgx-externalities/sgx",
-    "itp-stf-state-handler/sgx",
-    "itp-stf-state-observer/sgx",
-    "itp-top-pool-author/sgx",
-    "itp-storage/sgx",
-    "itp-time-utils/sgx",
-    "thiserror_sgx",
-]
 std = [
     # local
     "ita-stf/std",
@@ -91,6 +78,19 @@ std = [
     "sp-core/std",
     "sp-runtime/std",
     "thiserror",
+]
+sgx = [
+    "sgx_tstd",
+    "ita-stf/sgx",
+    "itp-node-api/sgx",
+    "itp-sgx-crypto/sgx",
+    "itp-sgx-externalities/sgx",
+    "itp-stf-state-handler/sgx",
+    "itp-stf-state-observer/sgx",
+    "itp-top-pool-author/sgx",
+    "itp-storage/sgx",
+    "itp-time-utils/sgx",
+    "thiserror_sgx",
 ]
 test = [
     "itc-parentchain-test",
