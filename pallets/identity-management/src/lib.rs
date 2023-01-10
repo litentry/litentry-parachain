@@ -50,6 +50,7 @@ use sp_std::vec::Vec;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::{AesOutput, ShardIdentifier, Vec, WeightInfo};
+	use core_primitives::IMPError;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
@@ -102,6 +103,19 @@ pub mod pallet {
 		DelegateeNotExist,
 		/// a `create_identity` request from unauthorised user
 		UnauthorisedUser,
+
+		/// copy from litentry_primitives::IMPError
+		DecodeHexFailed,
+		HttpRequestFailed,
+		InvalidIdentity,
+		WrongWeb2Handle,
+		UnexpectedMessage,
+		WrongIdentityHandleType,
+		WrongSignatureType,
+		VerifySubstrateSignatureFailed,
+		RecoverSubstratePubkeyFailed,
+		VerifyEvmSignatureFailed,
+		RecoverEvmAddressFailed,
 	}
 
 	#[pallet::call]
@@ -258,14 +272,32 @@ pub mod pallet {
 
 		#[pallet::call_index(11)]
 		#[pallet::weight(195_000_000)]
-		pub fn some_error(
-			origin: OriginFor<T>,
-			func: Vec<u8>,
-			error: Vec<u8>,
-		) -> DispatchResultWithPostInfo {
+		pub fn some_error(origin: OriginFor<T>, error: IMPError) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::SomeError { func, error });
-			Ok(Pays::No.into())
+			match error {
+				IMPError::DecodeHexFailed(s) => {
+					log::error!("deocode hex: {:?}", s);
+					Err(Error::<T>::DecodeHexFailed.into())
+				},
+				IMPError::HttpRequestFailed(s) => {
+					log::error!("request failed:{:?}", s);
+					Err(Error::<T>::HttpRequestFailed.into())
+				},
+				IMPError::InvalidIdentity => Err(Error::<T>::InvalidIdentity.into()),
+				IMPError::WrongWeb2Handle => Err(Error::<T>::WrongWeb2Handle.into()),
+				IMPError::UnexpectedMessage => Err(Error::<T>::UnexpectedMessage.into()),
+				IMPError::WrongIdentityHandleType =>
+					Err(Error::<T>::WrongIdentityHandleType.into()),
+				IMPError::WrongSignatureType => Err(Error::<T>::WrongSignatureType.into()),
+				IMPError::VerifySubstrateSignatureFailed =>
+					Err(Error::<T>::VerifySubstrateSignatureFailed.into()),
+				IMPError::RecoverSubstratePubkeyFailed =>
+					Err(Error::<T>::RecoverSubstratePubkeyFailed.into()),
+				IMPError::VerifyEvmSignatureFailed =>
+					Err(Error::<T>::VerifyEvmSignatureFailed.into()),
+				IMPError::RecoverEvmAddressFailed =>
+					Err(Error::<T>::RecoverEvmAddressFailed.into()),
+			}
 		}
 	}
 }

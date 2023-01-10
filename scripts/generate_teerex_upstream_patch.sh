@@ -44,7 +44,7 @@ cd worker
 [ ! -z "$1" ] && git checkout "$1"
 echo "generating patch ..."
 git diff $OLD_COMMIT HEAD > "$ROOTDIR/upstream.patch"
-git rev-parse --short HEAD > "$ROOTDIR/upstream_commit"
+git rev-parse --short HEAD > "$ROOTDIR/pallets/upstream_commit"
 
 echo "======================================================================="
 echo "upstream_commit is updated."

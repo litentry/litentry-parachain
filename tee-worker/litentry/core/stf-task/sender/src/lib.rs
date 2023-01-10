@@ -107,6 +107,7 @@ pub struct SetUserShieldingKeyRequest {
 	pub encoded_callback: Vec<u8>,
 }
 
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub enum RequestType {
 	Web2IdentityVerification(Web2IdentityVerificationRequest),
 	Web3IdentityVerification(Web3IdentityVerificationRequest),
