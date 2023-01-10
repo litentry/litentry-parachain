@@ -237,11 +237,8 @@ impl GraphQLClient {
 					for x in element {
 						// aggregate total_transactions from different networks, like group_by.
 						if let Ok(obj) = serde_json::from_value::<TotalTxsStruct>(x.clone()) {
-							if result.contains_key(&obj.address) {
-								result.get_mut(&obj.address).and_then(|origin| {
-									origin.total_transactions += obj.total_transactions;
-									None::<u8>
-								});
+							if let Some(origin) = result.get_mut(&obj.address) {
+								origin.total_transactions += obj.total_transactions;
 							} else {
 								result.insert(obj.address.clone(), obj.clone());
 							}
@@ -278,20 +275,16 @@ mod tests {
 
 		let credentials = VerifiedCredentialsIsHodlerIn {
 			addresses: vec![ACCOUNT_ADDRESS1.to_string(), ACCOUNT_ADDRESS2.to_string()],
-			// from_date: format!("{:?}", Utc::now()),
 			from_date: "2022-10-16T00:00:00Z".to_string(),
 			network: VerifiedCredentialsNetwork::Ethereum,
 			token_address: LIT_TOKEN_ADDRESS.to_string(),
 			min_balance: 0.00000056,
 		};
 		let response = client.check_verified_credentials_is_hodler(credentials);
-
-		if let Ok(is_hodler_out) = response {
-			assert_eq!(is_hodler_out.verified_credentials_is_hodler[0].is_hodler, false);
-			assert_eq!(is_hodler_out.verified_credentials_is_hodler[1].is_hodler, false);
-		} else {
-			assert!(false);
-		}
+		assert!(response.is_ok());
+		let is_hodler_out = response.unwrap();
+		assert_eq!(is_hodler_out.verified_credentials_is_hodler[0].is_hodler, false);
+		assert_eq!(is_hodler_out.verified_credentials_is_hodler[1].is_hodler, false);
 	}
 
 	#[test]
@@ -304,10 +297,10 @@ mod tests {
 			],
 		};
 		let mut client = GraphQLClient::new();
-		if let Ok(r) = client.query_total_transactions(query) {
-			assert!(r.get(0).unwrap().total_transactions >= 41)
-		} else {
-			assert!(false)
-		}
+		let r = client.query_total_transactions(query);
+		assert!(r.is_ok());
+		let r = r.unwrap();
+		assert!(!r.is_empty());
+		assert!(r.get(0).unwrap().total_transactions >= 41)
 	}
 }
