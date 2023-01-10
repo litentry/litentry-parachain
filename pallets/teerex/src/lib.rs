@@ -64,7 +64,7 @@ pub mod pallet {
 		type Currency: Currency<<Self as frame_system::Config>::AccountId>;
 		type MomentsPerDay: Get<Self::Moment>;
 		type WeightInfo: WeightInfo;
-		type MaxSilenceTime: Get<Self::Moment>;
+		type HeartbeatTimeout: Get<Self::Moment>;
 	}
 
 	#[pallet::event]
@@ -359,7 +359,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn unregister_silent_workers(now: T::Moment) {
-		let minimum = (now - T::MaxSilenceTime::get()).saturated_into::<u64>();
+		let minimum = (now - T::HeartbeatTimeout::get()).saturated_into::<u64>();
 		let silent_workers = <EnclaveRegistry<T>>::iter()
 			.filter(|e| e.1.timestamp < minimum)
 			.map(|e| e.1.pubkey);

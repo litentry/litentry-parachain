@@ -127,14 +127,14 @@ impl timestamp::Config for Test {
 
 parameter_types! {
 	pub const MomentsPerDay: u64 = 86_400_000; // [ms/d]
-	pub const MaxSilenceTime: u64 = 172_800_000; // 48h
+	pub const HeartbeatTimeout: u64 = 172_800_000; // 48h
 }
 
 impl Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type MomentsPerDay = MomentsPerDay;
-	type MaxSilenceTime = MaxSilenceTime;
+	type HeartbeatTimeout = HeartbeatTimeout;
 	type WeightInfo = ();
 }
 
