@@ -38,6 +38,7 @@ itc-rest-client = { path = "../../../../core/rest-client", default-features = fa
 itp-types = { path = "../../../../core-primitives/types", default-features = false }
 
 itp-extrinsics-factory = { path = "../../../../core-primitives/extrinsics-factory", default-features = false }
+itp-node-api = { path = "../../../../core-primitives/node-api", default-features = false }
 itp-ocall-api = { path = "../../../../core-primitives/ocall-api", default-features = false }
 itp-sgx-crypto = { path = "../../../../core-primitives/sgx/crypto", default-features = false }
 itp-sgx-externalities = { path = "../../../../core-primitives/substrate-sgx/externalities", default-features = false }
@@ -55,7 +56,9 @@ lc-assertion-build = { path = "../../assertion-build", default-features = false 
 lc-identity-verification = { path = "../../identity-verification", default-features = false }
 lc-stf-task-sender = { path = "../sender", default-features = false }
 litentry-primitives = { path = "../../../primitives", default-features = false }
+parachain-core-primitives = { package = "core-primitives", path = "../../../../../primitives/core", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36", default-features = false }
+
 
 [features]
 default = ["std"]

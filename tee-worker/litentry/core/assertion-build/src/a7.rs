@@ -62,5 +62,6 @@ pub fn build(
 			}
 		}
 	}
-	Err(Error::Assertion7Error("no valid response".to_string()))
+	// no valid response
+	Err(Error::Assertion7Failed)
 }

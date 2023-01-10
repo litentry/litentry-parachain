@@ -21,6 +21,9 @@ pub use constants::*;
 pub use opaque::*;
 pub use types::*;
 
+mod error;
+pub use error::*;
+
 mod key;
 pub use key::*;
 
