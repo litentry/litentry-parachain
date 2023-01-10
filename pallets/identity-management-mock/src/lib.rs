@@ -69,6 +69,7 @@ pub(crate) type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
 pub mod pallet {
 	use super::*;
 	use frame_system::pallet_prelude::*;
+	use mock_tee_primitives::SubstrateNetwork;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -188,6 +189,8 @@ pub mod pallet {
 		IdentityAlreadyVerified,
 		/// identity not exist when removing an identity
 		IdentityNotExist,
+		/// identity should be disallowed
+		IdentityShouldBeDisallowed,
 		/// no shielding key for a given AccountId
 		ShieldingKeyNotExist,
 		/// a verification reqeust comes too early
@@ -318,7 +321,12 @@ pub mod pallet {
 			let decrypted_identitty = Self::decrypt_with_tee_shielding_key(&encrypted_identity)?;
 			let identity = Identity::decode(&mut decrypted_identitty.as_slice())
 				.map_err(|_| Error::<T>::WrongDecodedType)?;
-
+			if let Identity::Substrate { network, .. } = identity {
+				ensure!(
+					network != SubstrateNetwork::Litentry,
+					Error::<T>::IdentityShouldBeDisallowed
+				);
+			}
 			let metadata = match encrypted_metadata {
 				None => None,
 				Some(m) => {

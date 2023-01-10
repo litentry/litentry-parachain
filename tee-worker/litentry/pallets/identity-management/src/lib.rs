@@ -48,8 +48,8 @@ use sp_std::vec::Vec;
 
 #[frame_support::pallet]
 pub mod pallet {
-
 	use super::*;
+	use litentry_primitives::SubstrateNetwork;
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
@@ -97,6 +97,8 @@ pub mod pallet {
 		IdentityNotExist,
 		/// the identity was not created before verification
 		IdentityNotCreated,
+		/// the identity should be disallowed
+		IdentityShouldBeDisallowed,
 		/// a verification reqeust comes too early
 		VerificationRequestTooEarly,
 		/// a verification reqeust comes too late
@@ -195,6 +197,12 @@ pub mod pallet {
 			T::ManageOrigin::ensure_origin(origin)?;
 			if let Some(c) = IDGraphs::<T>::get(&who, &identity) {
 				ensure!(!c.is_verified, Error::<T>::IdentityAlreadyVerified);
+			}
+			if let Identity::Substrate { network, .. } = identity {
+				ensure!(
+					network != SubstrateNetwork::Litentry,
+					Error::<T>::IdentityShouldBeDisallowed
+				);
 			}
 			let context = IdentityContext {
 				metadata,
