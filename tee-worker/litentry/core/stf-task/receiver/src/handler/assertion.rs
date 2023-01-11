@@ -15,6 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{handler::TaskHandler, StfTaskContext};
+use codec::{Decode, Encode};
 use ita_sgx_runtime::Hash;
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{
@@ -26,18 +27,49 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::OpaqueCall;
+use itp_types::{AccountId, OpaqueCall};
+use lc_credentials_tee::credentials::Credential;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::Assertion;
 use log::*;
 use parachain_core_primitives::VCMPError;
-use std::{format, string::String, sync::Arc};
+use std::{format, string::String, sync::Arc, vec::Vec};
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::chrono::{offset::Utc as TzUtc, TimeZone};
 
 #[cfg(feature = "std")]
 use chrono::{offset::Utc as TzUtc, TimeZone};
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+#[allow(non_camel_case_types)]
+pub enum TrustedCallFork {
+	balance_set_balance(),
+	balance_transfer(),
+	balance_unshield(), // (AccountIncognito, BeneficiaryPublicAccount, Amount, Shard)
+	balance_shield(),   // (Root, AccountIncognito, Amount)
+	#[cfg(feature = "evm")]
+	evm_withdraw(), // (Origin, Address EVM Account, Value)
+	// (Origin, Source, Target, Input, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
+	#[cfg(feature = "evm")]
+	evm_call(),
+	// (Origin, Source, Init, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
+	#[cfg(feature = "evm")]
+	evm_create(),
+	// (Origin, Source, Init, Salt, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
+	#[cfg(feature = "evm")]
+	evm_create2(),
+	// litentry
+	set_user_shielding_key_preflight(), // (Root, AccountIncognito, Key) -- root as signer, only for testing
+	set_user_shielding_key_runtime(),   // (EnclaveSigner, AccountIncognito, Key)
+	create_identity_runtime(),          // (EnclaveSigner, Account, identity, metadata, blocknumber)
+	remove_identity_runtime(),          // (EnclaveSigner, Account, identity)
+	verify_identity_preflight(),        // (EnclaveSigner, Account, identity, validation, blocknumber)
+	verify_identity_runtime(),          // (EnclaveSigner, Account, identity, blocknumber)
+	build_assertion_preflight(),        // (Account, Account, Assertion, Shard)
+	build_assertion_runtime(AccountId, AccountId, Credential), // (Account, Account, Credential)
+	set_challenge_code_runtime(),       // only for testing
+}
 
 pub(crate) struct AssertionHandler<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
@@ -65,26 +97,31 @@ where
 	H::StateT: SgxExternalitiesTrait,
 {
 	type Error = VCMPError;
-	type Result = ();
+	type Result = Option<(Vec<u8>, Vec<u8>)>;
 
 	fn on_process(&self) -> Result<Self::Result, Self::Error> {
 		match self.req.assertion.clone() {
-			Assertion::A1 => match lc_assertion_build::a1::build(
+			Assertion::A1 => lc_assertion_build::a1::build(
 				self.req.vec_identity.clone(),
 				self.req.credential.clone(),
-			) {
-				Ok(credential_built) => {
-					info!("on_process got credential_built {:?}", &credential_built);
-					Ok(())
-				},
-				Err(e) => Err(e),
-			},
+			)
+			.map(|credential| {
+				let re_encodes_callback = TrustedCallFork::build_assertion_runtime(
+					self.context.enclave_signer.get_enclave_account().unwrap(),
+					self.req.who.clone(),
+					credential.clone(),
+				)
+				.encode();
+				Some((self.req.encoded_shard.clone(), re_encodes_callback.clone()))
+			}),
 
 			Assertion::A2(guild_id, handler) =>
-				lc_assertion_build::a2::build(self.req.vec_identity.to_vec(), guild_id, handler),
+				lc_assertion_build::a2::build(self.req.vec_identity.to_vec(), guild_id, handler)
+					.map(|_| Some((self.req.encoded_shard.clone(), self.req.encoded_shard.clone()))),
 
 			Assertion::A3(guild_id, handler) =>
-				lc_assertion_build::a3::build(self.req.vec_identity.to_vec(), guild_id, handler),
+				lc_assertion_build::a3::build(self.req.vec_identity.to_vec(), guild_id, handler)
+					.map(|_| Some((self.req.encoded_shard.clone(), self.req.encoded_shard.clone()))),
 
 			Assertion::A4(min_balance, from_date) => {
 				let min_balance: f64 = (min_balance / (10 ^ 12)) as f64;
@@ -93,15 +130,17 @@ where
 					String::from_utf8(from_date.into_inner()).unwrap(),
 					min_balance,
 				)
+				.map(|_| Some((self.req.encoded_shard.clone(), self.req.encoded_shard.clone())))
 			},
 
 			Assertion::A5(twitter_account, original_tweet_id) => lc_assertion_build::a5::build(
 				self.req.vec_identity.to_vec(),
 				twitter_account,
 				original_tweet_id,
-			),
-			Assertion::A6 => lc_assertion_build::a6::build(self.req.vec_identity.to_vec()),
-
+			)
+			.map(|_| Some((self.req.encoded_shard.clone(), self.req.encoded_shard.clone()))),
+			Assertion::A6 => lc_assertion_build::a6::build(self.req.vec_identity.to_vec())
+				.map(|_| Some((self.req.encoded_shard.clone(), self.req.encoded_shard.clone()))),
 			Assertion::A7(min_balance, year) => {
 				#[cfg(feature = "std")]
 				let dt1 = TzUtc.with_ymd_and_hms(year as i32, 1, 1, 0, 0, 0);
@@ -110,6 +149,7 @@ where
 				let from_date = format!("{:?}", dt1);
 				let min_balance: f64 = (min_balance / (10 ^ 12)) as f64;
 				lc_assertion_build::a7::build(self.req.vec_identity.clone(), from_date, min_balance)
+					.map(|_| Some((self.req.encoded_shard.clone(), self.req.encoded_shard.clone())))
 			},
 			_ => {
 				unimplemented!()
@@ -117,14 +157,14 @@ where
 		}
 	}
 
-	fn on_success(&self, _result: Self::Result) {
-		// let (shard, callback) = result;
-		// match self.context.decode_and_submit_trusted_call(shard, callback) {
-		// 	Ok(_) => {},
-		// 	Err(e) => {
-		// 		error!("decode_and_submit_trusted_call failed. Due to: {:?}", e);
-		// 	},
-		// }
+	fn on_success(&self, result: Self::Result) {
+		let (shard, callback) = result.unwrap();
+		match self.context.decode_and_submit_trusted_call(shard, callback) {
+			Ok(_) => {},
+			Err(e) => {
+				error!("decode_and_submit_trusted_call failed. Due to: {:?}", e);
+			},
+		}
 	}
 
 	fn on_failure(&self, error: Self::Error) {

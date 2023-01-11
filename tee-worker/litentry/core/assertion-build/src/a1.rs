@@ -20,7 +20,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{Error, Result};
+use crate::Result;
 use lc_credentials_tee::credentials::Credential;
 use lc_stf_task_sender::MaxIdentityLength;
 use litentry_primitives::Identity;
@@ -41,11 +41,14 @@ pub fn build(
 		}
 	}
 
+	let mut credential_built = credential_unsigned;
+	credential_built.add_assertion_a1(web2_cnt, web3_cnt);
+
 	if web2_cnt > 0 && web3_cnt > 0 {
-		let mut credential_built = credential_unsigned;
-		credential_built.add_assertion_a1(web2_cnt, web3_cnt);
-		Ok(credential_built)
+		credential_built.credential_subject.set_value(true);
 	} else {
-		Err(Error::Assertion1Failed)
+		credential_built.credential_subject.set_value(false);
 	}
+
+	Ok(credential_built)
 }
