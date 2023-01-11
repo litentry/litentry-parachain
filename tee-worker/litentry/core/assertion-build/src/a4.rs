@@ -24,9 +24,7 @@ use crate::{from_data_provider_error, Error, Result};
 use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
-use lc_stf_task_sender::MaxIdentityLength;
 use litentry_primitives::Identity;
-use sp_runtime::BoundedVec;
 use std::{
 	str::from_utf8,
 	string::{String, ToString},
@@ -37,11 +35,7 @@ use std::{
 // ERC20 LIT token address
 const LIT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
 
-pub fn build(
-	identities: BoundedVec<Identity, MaxIdentityLength>,
-	from_date: String,
-	min_balance: f64,
-) -> Result<()> {
+pub fn build(identities: Vec<Identity>, from_date: String, min_balance: f64) -> Result<()> {
 	let mut client = GraphQLClient::new();
 
 	for identity in identities.iter() {
