@@ -69,7 +69,7 @@ where
 
 	fn on_process(&self) -> Result<Self::Result, Self::Error> {
 		match self.req.assertion.clone() {
-			Assertion::A1 => lc_assertion_build::a1::build(self.req.vec_identity.clone()),
+			Assertion::A1 => lc_assertion_build::a1::build(self.req.vec_identity.to_vec()),
 
 			Assertion::A2(guild_id, handler) =>
 				lc_assertion_build::a2::build(self.req.vec_identity.to_vec(), guild_id, handler),
@@ -80,7 +80,7 @@ where
 			Assertion::A4(min_balance, from_date) => {
 				let min_balance: f64 = (min_balance / (10 ^ 12)) as f64;
 				lc_assertion_build::a4::build(
-					self.req.vec_identity.clone(),
+					self.req.vec_identity.to_vec(),
 					String::from_utf8(from_date.into_inner()).unwrap(),
 					min_balance,
 				)
@@ -94,13 +94,24 @@ where
 			Assertion::A6 => lc_assertion_build::a6::build(self.req.vec_identity.to_vec()),
 
 			Assertion::A7(min_balance, year) => {
-				#[cfg(feature = "std")]
-				let dt1 = TzUtc.with_ymd_and_hms(year as i32, 1, 1, 0, 0, 0);
-				#[cfg(all(not(feature = "std"), feature = "sgx"))]
-				let dt1 = TzUtc.ymd(year as i32, 1, 1).and_hms(0, 0, 0);
-				let from_date = format!("{:?}", dt1);
 				let min_balance: f64 = (min_balance / (10 ^ 12)) as f64;
-				lc_assertion_build::a7::build(self.req.vec_identity.clone(), from_date, min_balance)
+				lc_assertion_build::a7::build(
+					self.req.vec_identity.to_vec(),
+					year_to_date(year),
+					min_balance,
+				)
+			},
+
+			Assertion::A8 => lc_assertion_build::a8::build(self.req.vec_identity.to_vec()),
+
+			Assertion::A10(min_balance, year) => {
+				// WBTC decimals is 8.
+				let min_balance: f64 = (min_balance / (10 ^ 8)) as f64;
+				lc_assertion_build::a10::build(
+					self.req.vec_identity.to_vec(),
+					year_to_date(year),
+					min_balance,
+				)
 			},
 			_ => {
 				unimplemented!()
@@ -130,4 +141,12 @@ where
 			},
 		};
 	}
+}
+
+fn year_to_date(year: u32) -> String {
+	#[cfg(feature = "std")]
+	let dt1 = TzUtc.with_ymd_and_hms(year as i32, 1, 1, 0, 0, 0);
+	#[cfg(all(not(feature = "std"), feature = "sgx"))]
+	let dt1 = TzUtc.ymd(year as i32, 1, 1).and_hms(0, 0, 0);
+	format!("{:?}", dt1)
 }
