@@ -23,7 +23,7 @@ async function registerParathread(api: ApiPromise, config: any) {
         })
     );
 
-    console.log(`Parachain registration tx Sent!`);
+    console.log(`Parathread registration tx Sent!`);
     return signAndSend(tx, alice);
 }
 

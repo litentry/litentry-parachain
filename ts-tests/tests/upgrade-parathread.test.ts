@@ -26,7 +26,7 @@ async function upgrade_parathread_to_parachain(api:ApiPromise){
 }
 
 (async () => {
-    console.log('Register parachain ...');
+    console.log('update to parachain ...');
     const config = loadConfig();
 
     const provider = new WsProvider(config.relaychain_ws);
