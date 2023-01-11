@@ -7,7 +7,8 @@
         "test": "tests"
     },
     "scripts": {
-        "register-parachain": "ts-node tests/register-parachain.ts",
+        "register-parathread": "ts-node tests/register-parathread.ts",
+        "upgrade-parathread": "ts-node tests/upgrade-parathread.ts",
         "test-filter": "mocha --exit --sort -r ts-node/register 'tests/base-filter.test.ts'",
         "test-bridge": "mocha --exit --sort -r ts-node/register 'tests/bridge.test.ts'",
         "test-runtime-upgrade": "mocha --exit --sort -r ts-node/register 'tests/runtime-upgrade.test.ts'",
