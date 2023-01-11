@@ -322,7 +322,12 @@ pub mod pallet {
 			let identity = Identity::decode(&mut decrypted_identitty.as_slice())
 				.map_err(|_| Error::<T>::WrongDecodedType)?;
 			if let Identity::Substrate { network, address } = identity {
-				if network == SubstrateNetwork::Litentry {
+				// see all the address prefix:
+				// https://github.com/paritytech/ss58-registry/blob/main/ss58-registry.json
+				let ss58_prefix = T::SS58Prefix::get();
+				if (network == SubstrateNetwork::Litentry && ss58_prefix == 31) ||
+					(network == SubstrateNetwork::Litmus && ss58_prefix == 131)
+				{
 					let address_raw: [u8; 32] = who
 						.encode()
 						.try_into()

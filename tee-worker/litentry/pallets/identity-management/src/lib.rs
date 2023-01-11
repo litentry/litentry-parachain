@@ -199,7 +199,12 @@ pub mod pallet {
 				ensure!(!c.is_verified, Error::<T>::IdentityAlreadyVerified);
 			}
 			if let Identity::Substrate { network, address } = identity {
-				if network == SubstrateNetwork::Litentry {
+				// see all the address prefix:
+				// https://github.com/paritytech/ss58-registry/blob/main/ss58-registry.json
+				let ss58_prefix = T::SS58Prefix::get();
+				if (network == SubstrateNetwork::Litentry && ss58_prefix == 31)
+					|| (network == SubstrateNetwork::Litmus && ss58_prefix == 131)
+				{
 					let address_raw: [u8; 32] = who
 						.encode()
 						.try_into()
