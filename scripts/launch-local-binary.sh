@@ -119,7 +119,7 @@ sleep 90
 cd "$ROOTDIR/ts-tests"
 echo "NODE_ENV=ci" > .env
 yarn
-yarn upgrade-parathread 2>&1 | tee "$TMPDIR/upgrad-parathread.log"
+yarn upgrade-parathread 2>&1 | tee "$TMPDIR/upgrade-parathread.log"
 print_divider
 
 echo "done. please check $TMPDIR for generated files if need"
