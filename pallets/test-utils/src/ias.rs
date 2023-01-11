@@ -33,6 +33,7 @@ impl<AccountId, Url: Default> TestEnclave<AccountId, Url> for Enclave<AccountId,
 			Default::default(),
 			Default::default(),
 			Default::default(),
+			Default::default(),
 		)
 	}
 
@@ -106,6 +107,7 @@ pub mod consts {
 	pub const TEST6_CERT: &[u8] = include_bytes!("./ias-data/ra_dump_cert_TEST6.der");
 	pub const TEST7_CERT: &[u8] = include_bytes!("./ias-data/ra_dump_cert_TEST7.der");
 	pub const TEST8_CERT: &[u8] = include_bytes!("./ias-data/ra_dump_cert_TEST8_PRODUCTION.der");
+	pub const TEST9_CERT: &[u8] = include_bytes!("./ias-data/ra_dump_cert_TEST9_enclave_add.der");
 
 	// reproduce with integritee-service signing-key
 	pub const TEST4_SIGNER_PUB: &[u8; 32] =
@@ -120,6 +122,8 @@ pub mod consts {
 		include_bytes!("./ias-data/enclave-signing-pubkey-TEST7.bin");
 	pub const TEST8_SIGNER_PUB: &[u8; 32] =
 		include_bytes!("./ias-data/enclave-signing-pubkey-TEST8-PRODUCTION.bin");
+	pub const TEST9_SIGNER_PUB: &[u8; 32] =
+		include_bytes!("./ias-data/enclave-signing-pubkey-TEST9.bin");
 
 	// reproduce with "make mrenclave" in worker repo root
 	// MRSIGNER is always 83d719e77deaca1470f6baf62a4d774303c899db69020f9c70ee1dfc08c7ce9e
@@ -135,6 +139,8 @@ pub mod consts {
 	// MRSIGNER is 117f95f65f06afb5764b572156b8b525c6230db7d6b1c94e8ebdb7fba068f4e8
 	pub const TEST8_MRENCLAVE: [u8; 32] =
 		hex!("bcf66abfc6b3ef259e9ecfe4cf8df667a7f5a546525dee16822741b38f6e6050");
+	pub const TEST9_MRENCLAVE: [u8; 32] =
+		hex!("318d72b1fee37a7844da18a108be720561b7e75c4276e0216a0a07760fc421be");
 
 	// unix epoch. must be later than this
 	pub const TEST4_TIMESTAMP: u64 = 1587899785000;
@@ -142,6 +148,7 @@ pub mod consts {
 	pub const TEST6_TIMESTAMP: u64 = 1587900233000;
 	pub const TEST7_TIMESTAMP: u64 = 1587900450000;
 	pub const TEST8_TIMESTAMP: u64 = 1634156700000;
+	pub const TEST9_TIMESTAMP: u64 = 1673007200000;
 
 	pub const TWENTY_FOUR_HOURS: u64 = 60 * 60 * 24 * 1000;
 

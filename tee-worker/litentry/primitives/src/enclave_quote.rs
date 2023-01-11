@@ -14,35 +14,33 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#[cfg(all(feature = "std", feature = "sgx"))]
-compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
-
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate sgx_tstd as std;
+use base64_sgx as base64;
 
-// #[cfg(all(not(feature = "std"), feature = "sgx"))]
-// use crate::sgx_reexport_prelude::*;
+use codec::{Decode, Encode};
+use std::{string::String, vec::Vec};
 
-use crate::{Error, Result};
-use litentry_primitives::Identity;
-use std::vec::Vec;
+#[derive(Encode, Decode, Clone, Debug)]
+pub struct EnclaveAdd {
+	pub spid: [u8; 16],
+	pub nonce: [u8; 16],
+	pub sig_rl: Vec<u8>,
+	pub quote: Vec<u8>,
+}
 
-pub fn build(identities: Vec<Identity>) -> Result<()> {
-	let mut web2_cnt = 0;
-	let mut web3_cnt = 0;
-
-	for identity in &identities {
-		if identity.is_web2() {
-			web2_cnt += 1;
-		} else if identity.is_web3() {
-			web3_cnt += 1;
-		}
+impl EnclaveAdd {
+	pub fn new(spid: [u8; 16], nonce: [u8; 16], sig_rl: Vec<u8>, quote: Vec<u8>) -> Self {
+		EnclaveAdd { spid, nonce, sig_rl, quote }
 	}
 
-	if web2_cnt > 0 && web3_cnt > 0 {
-		// TODO: generate_vc();
-		Ok(())
-	} else {
-		Err(Error::Assertion1Failed)
+	// correspond with create_ra_report_and_signature
+	// concat the information
+	pub fn format(&self) -> String {
+		let spid: String = base64::encode(self.spid);
+		let nonce: String = base64::encode(self.nonce);
+		let sig_rl: String = base64::encode(self.sig_rl.clone());
+		let quote: String = base64::encode(self.quote.clone());
+
+		spid + "|" + &nonce + "|" + &sig_rl + "|" + &quote
 	}
 }

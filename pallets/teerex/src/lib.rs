@@ -41,7 +41,7 @@ pub type BalanceOf<T> = <<T as Config>::Currency as Currency<AccountId<T>>>::Bal
 
 pub use pallet::*;
 
-const MAX_RA_REPORT_LEN: usize = 4096;
+const MAX_RA_REPORT_LEN: usize = 5244;
 const MAX_URL_LEN: usize = 256;
 
 #[frame_support::pallet]
@@ -136,19 +136,21 @@ pub mod pallet {
 			worker_url: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			log::info!("teerex: called into runtime call register_enclave()");
+
 			let sender = ensure_signed(origin)?;
 			ensure!(ra_report.len() <= MAX_RA_REPORT_LEN, <Error<T>>::RaReportTooLong);
 			ensure!(worker_url.len() <= MAX_URL_LEN, <Error<T>>::EnclaveUrlTooLong);
 			log::info!("teerex: parameter lenght ok");
 
 			#[cfg(not(feature = "skip-ias-check"))]
-			let enclave = Self::verify_report(&sender, ra_report).map(|report| {
+			let enclave = Self::verify_report(&sender, ra_report.clone()).map(|report| {
 				Enclave::new(
 					sender.clone(),
 					report.mr_enclave,
 					report.timestamp,
 					worker_url.clone(),
 					report.build_mode,
+					report.metadata,
 				)
 			})?;
 
@@ -169,10 +171,20 @@ pub mod pallet {
 				<timestamp::Pallet<T>>::get().saturated_into(),
 				worker_url.clone(),
 				SgxBuildMode::default(),
+				Default::default(),
 			);
+
+			#[cfg(not(feature = "skip-ias-check"))]
+			{
+				log::debug!(
+					"[teerex] isv_enclave_quote = {:?}",
+					enclave.sgx_metadata.isv_enclave_quote
+				);
+			}
 
 			Self::add_enclave(&sender, &enclave)?;
 			Self::deposit_event(Event::AddedEnclave(sender, worker_url));
+
 			Ok(().into())
 		}
 
@@ -183,6 +195,7 @@ pub mod pallet {
 
 			Self::remove_enclave(&sender)?;
 			Self::deposit_event(Event::RemovedEnclave(sender));
+
 			Ok(().into())
 		}
 
@@ -379,6 +392,7 @@ impl<T: Config> Pallet<T> {
 		}
 
 		<EnclaveRegistry<T>>::remove(new_enclaves_count);
+
 		Ok(().into())
 	}
 
@@ -392,7 +406,7 @@ impl<T: Config> Pallet<T> {
 			match result {
 				Ok(_) => {
 					log::info!("Unregister enclave because silent worker : {:?}", index);
-					Self::deposit_event(Event::RemovedEnclave(index));
+					Self::deposit_event(Event::RemovedEnclave(index.clone()));
 				},
 				Err(e) => {
 					log::error!("Cannot unregister enclave : {:?}", e);
@@ -420,6 +434,7 @@ impl<T: Config> Pallet<T> {
 
 		let enclave_signer = T::AccountId::decode(&mut &report.pubkey[..])
 			.map_err(|_| <Error<T>>::EnclaveSignerDecodeError)?;
+
 		ensure!(sender == &enclave_signer, <Error<T>>::SenderIsNotAttestedEnclave);
 
 		// TODO: activate state checks as soon as we've fixed our setup

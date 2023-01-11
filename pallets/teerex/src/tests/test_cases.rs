@@ -20,7 +20,7 @@ use crate::{
 	ShardIdentifier,
 };
 use frame_support::{assert_err, assert_ok};
-use ias_verify::SgxBuildMode;
+use ias_verify::{SgxBuildMode, SgxEnclaveMetadata, SgxStatus};
 use sp_core::H256;
 use sp_keyring::AccountKeyring;
 use test_utils::ias::consts::*;
@@ -79,6 +79,7 @@ fn list_enclaves_works() {
 			timestamp: TEST4_TIMESTAMP,
 			url: URL.to_vec(),
 			sgx_mode: SgxBuildMode::Debug,
+			sgx_metadata: SgxEnclaveMetadata::default(),
 		};
 		assert_ok!(Teerex::register_enclave(
 			RuntimeOrigin::signed(signer.clone()),
@@ -109,6 +110,7 @@ fn remove_middle_enclave_works() {
 			timestamp: TEST5_TIMESTAMP,
 			url: URL.to_vec(),
 			sgx_mode: SgxBuildMode::Debug,
+			sgx_metadata: SgxEnclaveMetadata::default(),
 		};
 
 		let e_2: Enclave<AccountId, Vec<u8>> = Enclave {
@@ -117,6 +119,7 @@ fn remove_middle_enclave_works() {
 			timestamp: TEST6_TIMESTAMP,
 			url: URL.to_vec(),
 			sgx_mode: SgxBuildMode::Debug,
+			sgx_metadata: SgxEnclaveMetadata::default(),
 		};
 
 		let e_3: Enclave<AccountId, Vec<u8>> = Enclave {
@@ -125,6 +128,7 @@ fn remove_middle_enclave_works() {
 			timestamp: TEST7_TIMESTAMP,
 			url: URL.to_vec(),
 			sgx_mode: SgxBuildMode::Debug,
+			sgx_metadata: SgxEnclaveMetadata::default(),
 		};
 
 		assert_ok!(Teerex::register_enclave(
@@ -224,6 +228,7 @@ fn update_enclave_url_works() {
 			timestamp: TEST4_TIMESTAMP,
 			url: url2.to_vec(),
 			sgx_mode: SgxBuildMode::Debug,
+			sgx_metadata: SgxEnclaveMetadata::default(),
 		};
 
 		assert_ok!(Teerex::register_enclave(
@@ -362,6 +367,7 @@ fn timestamp_callback_works() {
 			timestamp: TEST6_TIMESTAMP,
 			url: URL.to_vec(),
 			sgx_mode: SgxBuildMode::Debug,
+			sgx_metadata: SgxEnclaveMetadata::default(),
 		};
 
 		let e_3: Enclave<AccountId, Vec<u8>> = Enclave {
@@ -370,6 +376,7 @@ fn timestamp_callback_works() {
 			timestamp: TEST7_TIMESTAMP,
 			url: URL.to_vec(),
 			sgx_mode: SgxBuildMode::Debug,
+			sgx_metadata: SgxEnclaveMetadata::default(),
 		};
 
 		//Register 3 enclaves: 5, 6 ,7
@@ -433,6 +440,7 @@ fn debug_mode_enclave_attest_works_when_sgx_debug_mode_is_allowed() {
 			timestamp: TEST4_TIMESTAMP,
 			url: URL.to_vec(),
 			sgx_mode: SgxBuildMode::Debug,
+			sgx_metadata: SgxEnclaveMetadata::default(),
 		};
 
 		//Register an enclave compiled in debug mode
@@ -459,6 +467,7 @@ fn production_mode_enclave_attest_works_when_sgx_debug_mode_is_allowed() {
 				timestamp: TEST8_TIMESTAMP,
 				url: URL.to_vec(),
 				sgx_mode: SgxBuildMode::Production,
+				sgx_metadata: SgxEnclaveMetadata::default(),
 			};
 
 			//Register an enclave compiled in production mode
@@ -502,6 +511,7 @@ fn production_mode_enclave_attest_works_when_sgx_debug_mode_not_allowed() {
 			timestamp: TEST8_TIMESTAMP,
 			url: URL.to_vec(),
 			sgx_mode: SgxBuildMode::Production,
+			sgx_metadata: SgxEnclaveMetadata::default(),
 		};
 
 		//Register an enclave compiled in production mode
