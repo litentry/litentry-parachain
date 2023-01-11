@@ -18,12 +18,12 @@
 //!Primitives for teerex
 #![cfg_attr(not(feature = "std"), no_std)]
 use codec::{Decode, Encode};
-use ias_verify::SgxBuildMode;
+use ias_verify::{SgxBuildMode, SgxEnclaveMetadata};
 use scale_info::TypeInfo;
 use sp_core::H256;
 use sp_std::prelude::*;
 
-#[derive(Encode, Decode, Default, Copy, Clone, PartialEq, Eq, sp_core::RuntimeDebug, TypeInfo)]
+#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, sp_core::RuntimeDebug, TypeInfo)]
 pub struct Enclave<PubKey, Url> {
 	pub pubkey: PubKey, // FIXME: this is redundant information
 	pub mr_enclave: [u8; 32],
@@ -31,6 +31,7 @@ pub struct Enclave<PubKey, Url> {
 	pub timestamp: u64, // unix epoch in milliseconds
 	pub url: Url,       // utf8 encoded url
 	pub sgx_mode: SgxBuildMode,
+	pub sgx_metadata: SgxEnclaveMetadata,
 }
 
 impl<PubKey, Url> Enclave<PubKey, Url> {
@@ -40,8 +41,9 @@ impl<PubKey, Url> Enclave<PubKey, Url> {
 		timestamp: u64,
 		url: Url,
 		sgx_build_mode: SgxBuildMode,
+		sgx_metadata: SgxEnclaveMetadata,
 	) -> Self {
-		Enclave { pubkey, mr_enclave, timestamp, url, sgx_mode: sgx_build_mode }
+		Enclave { pubkey, mr_enclave, timestamp, url, sgx_mode: sgx_build_mode, sgx_metadata }
 	}
 }
 
