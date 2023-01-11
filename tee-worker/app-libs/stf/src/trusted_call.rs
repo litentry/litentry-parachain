@@ -593,7 +593,7 @@ where
 							credential_str.len()
 						);
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
-							let vc_hash = blake2_256(&credential_str.clone().as_bytes());
+							let vc_hash = blake2_256(&credential_str.as_bytes());
 
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
@@ -612,7 +612,7 @@ where
 						}
 					},
 					Err(error) => {
-						debug!("credential to_json() got error {:?}", error);
+						error!("credential to_json() {:?}", error);
 
 						calls.push(OpaqueCall::from_tuple(&(
 							node_metadata_repo

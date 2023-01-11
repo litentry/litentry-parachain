@@ -49,6 +49,7 @@ sgx = [
     "sgx_tstd",
     "thiserror_sgx",
     "url_sgx",
+    "lc-credentials-tee/sgx",
 ]
 std = [
     "http",
@@ -63,4 +64,5 @@ std = [
     "url",
     "itp-types/std",
     "itp-utils/std",
+    "lc-credentials-tee/std",
 ]

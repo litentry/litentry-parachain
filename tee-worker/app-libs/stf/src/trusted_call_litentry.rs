@@ -198,7 +198,7 @@ impl TrustedCallSigned {
 			}
 		}
 
-		match Credential::generate_unsigned_credential(&assertion) {
+		match Credential::generate_unsigned_credential(&assertion, &who) {
 			Ok(credential_unsigned) => {
 				let encoded_shard = shard.encode();
 				let encoded_callback = TrustedCall::build_assertion_runtime(

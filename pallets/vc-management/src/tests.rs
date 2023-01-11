@@ -19,7 +19,7 @@ use frame_support::{assert_noop, assert_ok};
 use sp_core::H256;
 
 const TEST_MRENCLAVE: [u8; 32] = [2u8; 32];
-const VC_HASH: H256 = H256::default();
+const VC_HASH: H256 = H256::zero();
 
 #[test]
 fn request_vc_works() {
@@ -164,7 +164,7 @@ fn revoke_vc_with_other_subject_fails() {
 			VCManagement::revoke_vc(RuntimeOrigin::signed(1), VC_HASH),
 			Error::<Test>::VCSubjectMismatch
 		);
-		assert_eq!(VCManagement::vc_registry(0).unwrap().status, Status::Active);
+		assert_eq!(VCManagement::vc_registry(VC_HASH).unwrap().status, Status::Active);
 	});
 }
 

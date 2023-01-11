@@ -99,8 +99,8 @@ impl CredentialSubject {
 		self.id.is_empty()
 	}
 
-	pub fn set_subject_id(&mut self, who: &AccountId) {
-		self.id = account_id_to_string(who);
+	pub fn set_value(&mut self, value: bool) {
+		self.values[0] = value;
 	}
 }
 
@@ -149,9 +149,10 @@ pub struct Credential {
 }
 
 impl Credential {
-	pub fn from_template(s: &str) -> Result<Self, Error> {
+	pub fn from_template(s: &str, who: &AccountId) -> Result<Self, Error> {
 		let mut vc: Self =
 			serde_json::from_str(s).map_err(|e| Error::Other(format!("{:?}", e).into()))?;
+		vc.subject = account_id_to_string(who);
 		vc.issuance_date = Some(now());
 		vc.validate_unsigned()?;
 		Ok(vc)
@@ -159,6 +160,22 @@ impl Credential {
 
 	pub fn to_json(&self) -> Result<String, Error> {
 		Ok(serde_json::to_string(&self).map_err(|e| Error::Other(format!("{:?}", e).into()))?)
+	}
+
+	pub fn validate_unsigned(&self) -> Result<(), Error> {
+		if !self.types.contains(&CredentialType::VerifiableCredential) {
+			return Err(Error::EmptyCredentialType)
+		}
+
+		if self.subject.is_empty() {
+			return Err(Error::EmptySubject)
+		}
+
+		if self.issuance_date.is_none() {
+			return Err(Error::EmptyIssuanceDate)
+		}
+
+		Ok(())
 	}
 
 	pub fn validate(&self) -> Result<(), Error> {
@@ -173,8 +190,6 @@ impl Credential {
 		// 	return Err(Error::EmptyCredentialIssuer)
 		// }
 
-		// ToDo: validate subject
-
 		//ToDo: validate the proof timestamp that is must be equal or after issuance timestamp
 		if self.proof.created.is_none() {
 			return Err(Error::InvalidDateOrTimeError)
@@ -187,22 +202,11 @@ impl Credential {
 
 		//ToDo: validate proof signature
 
-		let exported = self.to_json().unwrap();
+		let exported = self.to_json()?;
 		if exported.len() > MAX_CREDENTIAL_SIZE {
 			return Err(Error::CredentialIsTooLong)
 		}
 
-		Ok(())
-	}
-
-	pub fn validate_unsigned(&self) -> Result<(), Error> {
-		if !self.types.contains(&CredentialType::VerifiableCredential) {
-			return Err(Error::EmptyCredentialType)
-		}
-
-		if self.issuance_date.is_none() {
-			return Err(Error::EmptyIssuanceDate)
-		}
 		Ok(())
 	}
 
@@ -211,12 +215,15 @@ impl Credential {
 		Ok(())
 	}
 
-	pub fn generate_unsigned_credential(assertion: &Assertion) -> Result<Credential, Error> {
+	pub fn generate_unsigned_credential(
+		assertion: &Assertion,
+		who: &AccountId,
+	) -> Result<Credential, Error> {
 		debug!("generate unsigned credential {:?}", assertion);
 		match assertion {
 			Assertion::A1 => {
 				let raw = include_str!("templates/a1.json");
-				let credential: Credential = Credential::from_template(raw)?;
+				let credential: Credential = Credential::from_template(raw, who)?;
 				Ok(credential)
 			},
 			_ => return Err(Error::UnsupportedAssertion),
@@ -254,8 +261,7 @@ mod tests {
 		let who = AccountId::from([0; 32]);
 		let data = include_str!("templates/a1.json");
 
-		let mut vc: Credential = Credential::from_template(data).unwrap();
-		vc.credential_subject.set_subject_id(&who);
+		let vc = Credential::from_template(data, &who).unwrap();
 		assert_eq!(vc.proof.proof_purpose, "assertionMethod");
 	}
 }
