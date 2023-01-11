@@ -49,7 +49,7 @@ use sp_std::vec::Vec;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use litentry_primitives::SubstrateNetwork;
+	use litentry_primitives::{Address32, SubstrateNetwork};
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
@@ -198,9 +198,14 @@ pub mod pallet {
 			if let Some(c) = IDGraphs::<T>::get(&who, &identity) {
 				ensure!(!c.is_verified, Error::<T>::IdentityAlreadyVerified);
 			}
-			if let Identity::Substrate { network, .. } = identity {
+			if let Identity::Substrate { network, address } = identity {
+				let address_raw: [u8; 32] = who
+					.encode()
+					.try_into()
+					.map_err(|_| DispatchError::Other("invalid account id"))?;
+				let user_address: Address32 = address_raw.into();
 				ensure!(
-					network != SubstrateNetwork::Litentry,
+					!(network == SubstrateNetwork::Litentry && user_address == address),
 					Error::<T>::IdentityShouldBeDisallowed
 				);
 			}

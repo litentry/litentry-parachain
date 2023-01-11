@@ -69,7 +69,7 @@ pub(crate) type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
 pub mod pallet {
 	use super::*;
 	use frame_system::pallet_prelude::*;
-	use mock_tee_primitives::SubstrateNetwork;
+	use mock_tee_primitives::{Address32, SubstrateNetwork};
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -321,9 +321,14 @@ pub mod pallet {
 			let decrypted_identitty = Self::decrypt_with_tee_shielding_key(&encrypted_identity)?;
 			let identity = Identity::decode(&mut decrypted_identitty.as_slice())
 				.map_err(|_| Error::<T>::WrongDecodedType)?;
-			if let Identity::Substrate { network, .. } = identity {
+			if let Identity::Substrate { network, address } = identity {
+				let address_raw: [u8; 32] = who
+					.encode()
+					.try_into()
+					.map_err(|_| DispatchError::Other("invalid account id"))?;
+				let user_address: Address32 = address_raw.into();
 				ensure!(
-					network != SubstrateNetwork::Litentry,
+					!(network == SubstrateNetwork::Litentry && user_address == address),
 					Error::<T>::IdentityShouldBeDisallowed
 				);
 			}
