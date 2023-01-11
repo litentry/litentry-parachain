@@ -4755,6 +4755,7 @@ dependencies = [
  "itp-sgx-io",
  "itp-time-utils",
  "itp-types",
+ "litentry-primitives",
  "log 0.4.17",
  "num-bigint 0.2.5",
  "parity-scale-codec",
@@ -6690,6 +6691,8 @@ checksum = "f051f77a7c8e6957c0696eac88f26b0117e54f52d3fc682ab19397a8812846a4"
 name = "litentry-primitives"
 version = "0.1.0"
 dependencies = [
+ "base64 0.13.0 (git+https://github.com/mesalock-linux/rust-base64-sgx?rev=sgx_1.1.3)",
+ "base64 0.13.1",
  "core-primitives",
  "hex 0.4.3",
  "parity-scale-codec",

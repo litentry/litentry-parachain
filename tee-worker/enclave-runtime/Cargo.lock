@@ -1846,6 +1846,7 @@ dependencies = [
  "itp-sgx-io",
  "itp-time-utils",
  "itp-types",
+ "litentry-primitives",
  "log",
  "num-bigint",
  "parity-scale-codec",
@@ -2769,6 +2770,7 @@ dependencies = [
 name = "litentry-primitives"
 version = "0.1.0"
 dependencies = [
+ "base64 0.13.0 (git+https://github.com/mesalock-linux/rust-base64-sgx?rev=sgx_1.1.3)",
  "core-primitives",
  "parity-scale-codec",
  "scale-info",

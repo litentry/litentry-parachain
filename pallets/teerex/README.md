@@ -37,3 +37,13 @@ Run all unit tests with
 cargo test --all
 ```
 
+## Verify quote on IAS
+
+```shell
+HTTP request
+URI POST https://api.trustedservices.intel.com/sgx/attestation/v4/report
+Headers Ocp-Apim-Subscription-Key
+Body {
+    "isvEnclaveQuote":"AAEAAAEAAA+yth5<…encoded_quote…>GuOKBJ+5cs0PQcnZp"
+}
+```
