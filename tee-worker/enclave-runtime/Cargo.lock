@@ -2666,6 +2666,7 @@ dependencies = [
  "itp-utils",
  "lazy_static",
  "lc-assertion-build",
+ "lc-credentials-tee",
  "lc-identity-verification",
  "lc-stf-task-sender",
  "litentry-primitives",

@@ -201,20 +201,12 @@ impl TrustedCallSigned {
 		match Credential::generate_unsigned_credential(&assertion, &who) {
 			Ok(credential_unsigned) => {
 				let encoded_shard = shard.encode();
-				let encoded_callback = TrustedCall::build_assertion_runtime(
-					enclave_signer_account(),
-					who.clone(),
-					credential_unsigned.clone(),
-				)
-				.encode();
-
 				let request: RequestType = AssertionBuildRequest {
 					encoded_shard,
 					who,
 					assertion,
 					vec_identity,
 					credential: credential_unsigned,
-					encoded_callback,
 				}
 				.into();
 

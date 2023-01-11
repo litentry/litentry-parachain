@@ -38,10 +38,9 @@ pub const MAX_CREDENTIAL_SIZE: usize = 2048;
 
 pub fn now() -> String {
 	let ts = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-	let naive =
-		NaiveDateTime::from_timestamp_opt(ts.as_secs() as i64, ts.subsec_nanos() as u32).unwrap();
+	let naive = NaiveDateTime::from_timestamp_opt(ts.as_secs() as i64, ts.subsec_nanos()).unwrap();
 	let datenow_time = DateTime::<FixedOffset>::from_utc(naive, FixedOffset::east_opt(0).unwrap());
-	datenow_time.to_rfc3339_opts(SecondsFormat::Secs, true).to_string()
+	datenow_time.to_rfc3339_opts(SecondsFormat::Secs, true)
 }
 
 #[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
@@ -151,7 +150,7 @@ pub struct Credential {
 impl Credential {
 	pub fn from_template(s: &str, who: &AccountId) -> Result<Self, Error> {
 		let mut vc: Self =
-			serde_json::from_str(s).map_err(|e| Error::Other(format!("{:?}", e).into()))?;
+			serde_json::from_str(s).map_err(|err| Error::ParseError(format!("{}", err)))?;
 		vc.subject = account_id_to_string(who);
 		vc.issuance_date = Some(now());
 		vc.validate_unsigned()?;
@@ -159,7 +158,9 @@ impl Credential {
 	}
 
 	pub fn to_json(&self) -> Result<String, Error> {
-		Ok(serde_json::to_string(&self).map_err(|e| Error::Other(format!("{:?}", e).into()))?)
+		let json_str =
+			serde_json::to_string(&self).map_err(|err| Error::ParseError(format!("{}", err)))?;
+		Ok(json_str)
 	}
 
 	pub fn validate_unsigned(&self) -> Result<(), Error> {
@@ -226,12 +227,12 @@ impl Credential {
 				let credential: Credential = Credential::from_template(raw, who)?;
 				Ok(credential)
 			},
-			_ => return Err(Error::UnsupportedAssertion),
+			_ => Err(Error::UnsupportedAssertion),
 		}
 	}
 
 	pub fn add_assertion_a1(&mut self, _web2_cnt: i32, _web3_cnt: i32) {
-		self.credential_subject.assertions = "assertion_a1".to_string();
+		self.credential_subject.assertions = "\"or\": [{\"src\": \"$web2_account_cnt\", \"op\": \">\", \"dsc\": \"0\",},{\"src\": \"$web3_account_cnt\", \"op\": \">\", \"dsc\": \"0\",}]".to_string();
 	}
 
 	pub fn generate_issuer() -> Result<Issuer, Error> {
@@ -262,6 +263,7 @@ mod tests {
 		let data = include_str!("templates/a1.json");
 
 		let vc = Credential::from_template(data, &who).unwrap();
+		assert!(vc.validate_unsigned().is_ok());
 		assert_eq!(vc.proof.proof_purpose, "assertionMethod");
 	}
 }

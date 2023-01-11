@@ -44,8 +44,6 @@ pub enum Error {
 	InvalidDateOrTimeError,
 	#[error("Runtime Error: {0}")]
 	RuntimeError(String),
-	// #[error("Other Error: {0}")]
-	// OtherError(String),
 	#[error(transparent)]
 	Other(#[from] Box<dyn std::error::Error + Sync + Send + 'static>),
 }

@@ -33,7 +33,7 @@ use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::Assertion;
 use log::*;
 use parachain_core_primitives::VCMPError;
-use std::{format, string::String, sync::Arc, vec::Vec};
+use std::{boxed::Box, format, string::String, sync::Arc, vec::Vec};
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::chrono::{offset::Utc as TzUtc, TimeZone};
@@ -41,6 +41,10 @@ use crate::chrono::{offset::Utc as TzUtc, TimeZone};
 #[cfg(feature = "std")]
 use chrono::{offset::Utc as TzUtc, TimeZone};
 
+/// Copyed from tee-worker/app-libs/stf/src/trusted_call.rs.
+/// As the `credential_unsigned` needs to be unpdated from TrustedCall::build_assertion_preflight()
+/// to TrustedCall::build_assertion_runtime(),
+/// the TrustedCall has to be re-encoded here.
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum TrustedCallFork {
@@ -67,8 +71,8 @@ pub enum TrustedCallFork {
 	verify_identity_preflight(),        // (EnclaveSigner, Account, identity, validation, blocknumber)
 	verify_identity_runtime(),          // (EnclaveSigner, Account, identity, blocknumber)
 	build_assertion_preflight(),        // (Account, Account, Assertion, Shard)
-	build_assertion_runtime(AccountId, AccountId, Credential), // (Account, Account, Credential)
-	set_challenge_code_runtime(),       // only for testing
+	build_assertion_runtime(AccountId, AccountId, Box<Credential>), // (Account, Account, Box<Credential>)
+	set_challenge_code_runtime(),                                   // only for testing
 }
 
 pub(crate) struct AssertionHandler<
@@ -106,22 +110,22 @@ where
 				self.req.credential.clone(),
 			)
 			.map(|credential| {
-				let re_encodes_callback = TrustedCallFork::build_assertion_runtime(
+				let encoded_callback = TrustedCallFork::build_assertion_runtime(
 					self.context.enclave_signer.get_enclave_account().unwrap(),
 					self.req.who.clone(),
-					credential.clone(),
+					Box::new(credential),
 				)
 				.encode();
-				Some((self.req.encoded_shard.clone(), re_encodes_callback.clone()))
+				Some((self.req.encoded_shard.clone(), encoded_callback))
 			}),
 
 			Assertion::A2(guild_id, handler) =>
 				lc_assertion_build::a2::build(self.req.vec_identity.to_vec(), guild_id, handler)
-					.map(|_| Some((self.req.encoded_shard.clone(), self.req.encoded_shard.clone()))),
+					.map(|_| None),
 
 			Assertion::A3(guild_id, handler) =>
 				lc_assertion_build::a3::build(self.req.vec_identity.to_vec(), guild_id, handler)
-					.map(|_| Some((self.req.encoded_shard.clone(), self.req.encoded_shard.clone()))),
+					.map(|_| None),
 
 			Assertion::A4(min_balance, from_date) => {
 				let min_balance: f64 = (min_balance / (10 ^ 12)) as f64;
@@ -130,7 +134,7 @@ where
 					String::from_utf8(from_date.into_inner()).unwrap(),
 					min_balance,
 				)
-				.map(|_| Some((self.req.encoded_shard.clone(), self.req.encoded_shard.clone())))
+				.map(|_| None)
 			},
 
 			Assertion::A5(twitter_account, original_tweet_id) => lc_assertion_build::a5::build(
@@ -138,9 +142,11 @@ where
 				twitter_account,
 				original_tweet_id,
 			)
-			.map(|_| Some((self.req.encoded_shard.clone(), self.req.encoded_shard.clone()))),
-			Assertion::A6 => lc_assertion_build::a6::build(self.req.vec_identity.to_vec())
-				.map(|_| Some((self.req.encoded_shard.clone(), self.req.encoded_shard.clone()))),
+			.map(|_| None),
+
+			Assertion::A6 =>
+				lc_assertion_build::a6::build(self.req.vec_identity.to_vec()).map(|_| None),
+
 			Assertion::A7(min_balance, year) => {
 				let min_balance: f64 = (min_balance / (10 ^ 12)) as f64;
 				lc_assertion_build::a7::build(
@@ -148,11 +154,11 @@ where
 					year_to_date(year),
 					min_balance,
 				)
-				.map(|_| Some((self.req.encoded_shard.clone(), self.req.encoded_shard.clone())))
+				.map(|_| None)
 			},
 
-			Assertion::A8 => lc_assertion_build::a8::build(self.req.vec_identity.to_vec())
-				.map(|_| Some((self.req.encoded_shard.clone(), self.req.encoded_shard.clone()))),
+			Assertion::A8 =>
+				lc_assertion_build::a8::build(self.req.vec_identity.to_vec()).map(|_| None),
 
 			Assertion::A10(min_balance, year) => {
 				// WBTC decimals is 8.
@@ -162,7 +168,7 @@ where
 					year_to_date(year),
 					min_balance,
 				)
-				.map(|_| Some((self.req.encoded_shard.clone(), self.req.encoded_shard.clone())))
+				.map(|_| None)
 			},
 			_ => {
 				unimplemented!()

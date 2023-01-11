@@ -122,7 +122,7 @@ pub enum TrustedCall {
 	), // (EnclaveSigner, Account, identity, validation, blocknumber)
 	verify_identity_runtime(AccountId, AccountId, Identity, ParentchainBlockNumber), // (EnclaveSigner, Account, identity, blocknumber)
 	build_assertion_preflight(AccountId, AccountId, Assertion, ShardIdentifier), // (Account, Account, Assertion, Shard)
-	build_assertion_runtime(AccountId, AccountId, Credential), // (Account, Account, Credential)
+	build_assertion_runtime(AccountId, AccountId, Box<Credential>), // (Account, Account, Box<Credential>)
 	set_challenge_code_runtime(AccountId, AccountId, Identity, ChallengeCode), // only for testing
 }
 
@@ -585,7 +585,7 @@ where
 			},
 			TrustedCall::build_assertion_runtime(enclave_account, who, credential) => {
 				ensure_enclave_signer_account(&enclave_account)?;
-				match credential.to_json() {
+				match (*credential).to_json() {
 					Ok(credential_str) => {
 						debug!(
 							"build_assertion got result {:?} length {}",
@@ -593,14 +593,14 @@ where
 							credential_str.len()
 						);
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
-							let vc_hash = blake2_256(&credential_str.as_bytes());
+							let vc_hash = blake2_256(credential_str.as_bytes());
 
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.vc_issued_call_indexes())??,
-								who.clone(),
+								who,
 								vc_hash,
-								aes_encrypt_default(&key, &credential_str.as_bytes()),
+								aes_encrypt_default(&key, credential_str.as_bytes()),
 							)));
 						} else {
 							calls.push(OpaqueCall::from_tuple(&(
