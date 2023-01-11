@@ -76,6 +76,7 @@ pub mod pallet {
 		ShieldFunds(Vec<u8>),
 		UnshieldedFunds(T::AccountId),
 		ProcessedParentchainBlock(T::AccountId, H256, H256, T::BlockNumber),
+		SetHeartbeatTimeoutStorage(u64),
 	}
 
 	// Watch out: we start indexing with 1 instead of zero in order to
@@ -101,6 +102,15 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn allow_sgx_debug_mode)]
 	pub type AllowSGXDebugMode<T: Config> = StorageValue<_, bool, ValueQuery>;
+
+	#[pallet::type_value]
+	pub fn HeartbeatTimeoutDefault() -> u64 {
+		172_800_000
+	} // 48h
+	#[pallet::storage]
+	#[pallet::getter(fn heartbeat_timeout_storage)]
+	pub type HeartbeatTimeoutStorage<T: Config> =
+		StorageValue<_, u64, ValueQuery, HeartbeatTimeoutDefault>;
 
 	#[pallet::genesis_config]
 	#[cfg_attr(feature = "std", derive(Default))]
@@ -279,6 +289,20 @@ pub mod pallet {
 			<ExecutedCalls<T>>::mutate(call_hash, |confirmations| *confirmations += 1);
 			Ok(().into())
 		}
+
+		#[pallet::call_index(6)]
+		#[pallet::weight((1000, DispatchClass::Normal, Pays::No))]
+		pub fn set_heartbeat_timeout_storage(
+			origin: OriginFor<T>,
+			timeout: u64,
+		) -> DispatchResultWithPostInfo {
+			ensure_signed(origin)?;
+
+			<HeartbeatTimeoutStorage<T>>::put(timeout);
+
+			Self::deposit_event(Event::SetHeartbeatTimeoutStorage(timeout));
+			Ok(().into())
+		}
 	}
 
 	#[pallet::error]
@@ -359,7 +383,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn unregister_silent_workers(now: T::Moment) {
-		let minimum = (now - T::HeartbeatTimeout::get()).saturated_into::<u64>();
+		let minimum = now.saturated_into::<u64>() - Self::heartbeat_timeout_storage();
 		let silent_workers = <EnclaveRegistry<T>>::iter()
 			.filter(|e| e.1.timestamp < minimum)
 			.map(|e| e.1.pubkey);
