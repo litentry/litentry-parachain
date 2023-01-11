@@ -14,6 +14,7 @@ import { KeyringPair } from '@polkadot/keyring/types';
 import { HexString } from '@polkadot/util/types';
 import { generateChallengeCode } from './web3/setup';
 import { ApiPromise } from '@polkadot/api';
+import { Assertion } from './type-definitions';
 
 export async function setUserShieldingKey(
     context: IntegrationTestContext,
@@ -115,6 +116,25 @@ export async function verifyIdentity(
         return decodeIdentityEvent(context.substrate, who, identity, idGraph);
     }
     return undefined;
+}
+
+export async function requestVC(
+    context: IntegrationTestContext,
+    signer: KeyringPair,
+    aesKey: HexString,
+    listening: boolean,
+    shard: HexString,
+    assertion: string
+): Promise<any> {
+    const tx = context.substrate.tx.vcManagement.requestVc(shard, assertion);
+    await sendTxUntilInBlock(context.substrate, tx, signer);
+    if (listening) {
+        const event = await listenEncryptedEvents(context, aesKey, {
+            module: 'vcManagement',
+            method: 'requestVc',
+            event: 'VCRequested',
+        });
+    }
 }
 
 function decodeIdentityEvent(
