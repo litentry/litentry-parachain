@@ -199,15 +199,14 @@ pub mod pallet {
 				ensure!(!c.is_verified, Error::<T>::IdentityAlreadyVerified);
 			}
 			if let Identity::Substrate { network, address } = identity {
-				let address_raw: [u8; 32] = who
-					.encode()
-					.try_into()
-					.map_err(|_| DispatchError::Other("invalid account id"))?;
-				let user_address: Address32 = address_raw.into();
-				ensure!(
-					!(network == SubstrateNetwork::Litentry && user_address == address),
-					Error::<T>::IdentityShouldBeDisallowed
-				);
+				if network == SubstrateNetwork::Litentry {
+					let address_raw: [u8; 32] = who
+						.encode()
+						.try_into()
+						.map_err(|_| DispatchError::Other("invalid account id"))?;
+					let user_address: Address32 = address_raw.into();
+					ensure!(user_address != address, Error::<T>::IdentityShouldBeDisallowed);
+				}
 			}
 			let context = IdentityContext {
 				metadata,
