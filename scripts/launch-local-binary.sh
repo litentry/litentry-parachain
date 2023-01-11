@@ -43,8 +43,7 @@ if [ -z "$POLKADOT_BIN" ]; then
   # https://api.github.com/repos/paritytech/polkadot/releases/latest is not reliable as
   # polkadot could publish release which has no binary
   #
-  # TODO: v0.9.33 isn't working, see issue #1097
-  url="https://github.com/paritytech/polkadot/releases/download/v0.9.32/polkadot"
+  url="https://github.com/paritytech/polkadot/releases/download/v0.9.36/polkadot"
   POLKADOT_BIN="$TMPDIR/polkadot"
   wget -O "$POLKADOT_BIN" -q "$url"
   chmod a+x "$POLKADOT_BIN"
@@ -105,11 +104,22 @@ $PARACHAIN_BIN --alice --collator --force-authoring --tmp --chain $CHAIN-dev \
   --bootnodes /ip4/127.0.0.1/tcp/30336/p2p/$RELAY_ALICE_IDENTITY &> "para.alice.log" &
 sleep 10
 
-echo "register parachain now ..."
+echo "register parathread now ..."
 cd "$ROOTDIR/ts-tests"
 echo "NODE_ENV=ci" > .env
 yarn
-yarn register-parachain 2>&1 | tee "$TMPDIR/register-parachain.log"
+yarn register-parathread 2>&1 | tee "$TMPDIR/register-parathread.log"
+print_divider
+
+echo "start upgrading parathread to parachain now, Please wait a moment"
+# Wait for the parathread to complete the registration
+# Wait for 90s because need to wait 1 minute to confirm after registering parathread,
+# so set the waiting time to 90s to ensure normal upgrades.
+sleep 90
+cd "$ROOTDIR/ts-tests"
+echo "NODE_ENV=ci" > .env
+yarn
+yarn upgrade-parathread 2>&1 | tee "$TMPDIR/upgrad-parathread.log"
 print_divider
 
 echo "done. please check $TMPDIR for generated files if need"
