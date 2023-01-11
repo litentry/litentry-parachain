@@ -24,11 +24,10 @@ extern crate sgx_tstd as std;
 // use crate::sgx_reexport_prelude::*;
 
 use crate::{Error, Result};
-use lc_stf_task_sender::MaxIdentityLength;
 use litentry_primitives::Identity;
-use sp_runtime::BoundedVec;
+use std::vec::Vec;
 
-pub fn build(identities: BoundedVec<Identity, MaxIdentityLength>) -> Result<()> {
+pub fn build(identities: Vec<Identity>) -> Result<()> {
 	let mut web2_cnt = 0;
 	let mut web3_cnt = 0;
 
