@@ -64,6 +64,8 @@ pub mod pallet {
 		type Currency: Currency<<Self as frame_system::Config>::AccountId>;
 		type MomentsPerDay: Get<Self::Moment>;
 		type WeightInfo: WeightInfo;
+		/// origin to manage authorised delegatee list
+		type DelegateeAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
 
 	#[pallet::event]
@@ -103,13 +105,13 @@ pub mod pallet {
 	pub type AllowSGXDebugMode<T: Config> = StorageValue<_, bool, ValueQuery>;
 
 	#[pallet::type_value]
-	pub fn HeartbeatTimeoutDefault() -> u64 {
-		172_800_000
-	} // 48h
+	pub fn HeartbeatTimeoutDefault<T: Config>() -> T::Moment {
+		T::Moment::saturated_from::<u64>(172_800_000) // default 48h
+	}
 	#[pallet::storage]
 	#[pallet::getter(fn heartbeat_timeout_storage)]
-	pub type HeartbeatTimeoutStorage<T: Config> =
-		StorageValue<_, u64, ValueQuery, HeartbeatTimeoutDefault>;
+	pub type HeartbeatTimeout<T: Config> =
+		StorageValue<_, T::Moment, ValueQuery, HeartbeatTimeoutDefault<T>>;
 
 	#[pallet::genesis_config]
 	#[cfg_attr(feature = "std", derive(Default))]
@@ -308,10 +310,8 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			timeout: u64,
 		) -> DispatchResultWithPostInfo {
-			ensure_signed(origin)?;
-
-			<HeartbeatTimeoutStorage<T>>::put(timeout);
-
+			T::DelegateeAdminOrigin::ensure_origin(origin)?;
+			<HeartbeatTimeout<T>>::put(T::Moment::saturated_from(timeout));
 			Self::deposit_event(Event::SetHeartbeatTimeoutStorage(timeout));
 			Ok(().into())
 		}
@@ -396,7 +396,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn unregister_silent_workers(now: T::Moment) {
-		let minimum = now.saturated_into::<u64>() - Self::heartbeat_timeout_storage();
+		let minimum = (now - Self::heartbeat_timeout_storage()).saturated_into::<u64>();
 		let silent_workers = <EnclaveRegistry<T>>::iter()
 			.filter(|e| e.1.timestamp < minimum)
 			.map(|e| e.1.pubkey);

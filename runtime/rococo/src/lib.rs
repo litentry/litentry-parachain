@@ -850,6 +850,7 @@ impl pallet_teerex::Config for Runtime {
 	type Currency = Balances;
 	type MomentsPerDay = MomentsPerDay;
 	type WeightInfo = weights::pallet_teerex::WeightInfo<Runtime>;
+	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
 }
 
 impl pallet_sidechain::Config for Runtime {

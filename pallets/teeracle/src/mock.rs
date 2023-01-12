@@ -17,6 +17,7 @@
 use crate as pallet_teeracle;
 use frame_support::{pallet_prelude::GenesisBuild, parameter_types};
 use frame_system as system;
+use frame_system::EnsureRoot;
 use pallet_teeracle::Config;
 use sp_core::H256;
 use sp_keyring::AccountKeyring;
@@ -130,6 +131,7 @@ impl pallet_teerex::Config for Test {
 	type Currency = Balances;
 	type MomentsPerDay = MomentsPerDay;
 	type WeightInfo = ();
+	type DelegateeAdminOrigin = EnsureRoot<Self::AccountId>;
 }
 
 impl Config for Test {

@@ -24,6 +24,7 @@ use frame_support::{
 	traits::{OnFinalize, OnInitialize},
 };
 use frame_system as system;
+use frame_system::EnsureRoot;
 use pallet_teerex::Config;
 use sp_core::H256;
 use sp_keyring::AccountKeyring;
@@ -134,6 +135,7 @@ impl Config for Test {
 	type Currency = Balances;
 	type MomentsPerDay = MomentsPerDay;
 	type WeightInfo = ();
+	type DelegateeAdminOrigin = EnsureRoot<Self::AccountId>;
 }
 
 // This function basically just builds a genesis storage key/value store according to
