@@ -43,7 +43,7 @@ echo "Using trusted-worker uri $WORKER1URL:$WORKER1PORT"
 echo ""
 
 ACC=//Bob
-TIMEOUT=100000 # 100 seconds
+TIMEOUT=5000 # 5 seconds, smaller than 12s (the block duration)
 
 CLIENT="$CLIENT_BIN -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
 echo "CLIENT is $CLIENT"
@@ -70,9 +70,13 @@ echo "* Set $ACC 's heartbeat timeout to $TIMEOUT"
 ${CLIENT} set-heartbeat-timeout-storage "$ACC" "$TIMEOUT"
 echo ""
 
-if grep -qr "Received SetHeartbeatTimeoutStorage" $LOG_FOLDER; then
-    echo "SetHeartbeatTimeoutStorage test passed"
+sleep 60
+
+read MRENCLAVE <<< $($CLIENT list-workers | awk '/  MRENCLAVE: / { print $2; exit }')
+if [[ -z $MRENCLAVE ]]
+then
+    echo "All workers removed, test passed"
 else
-    echo "No SetHeartbeatTimeoutStorage event found"
+    echo "Worker(s) still exist(s), test fail"
     exit 1
 fi
