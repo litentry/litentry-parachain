@@ -3,16 +3,16 @@
 set -eo pipefail
 
 cleanup() {
-  rm -rf "$1"
-  echo "cleaned up $1"
+	rm -rf "$1"
+	echo "cleaned up $1"
 }
 
 print_help() {
-  echo "Usage:"
-  echo "	$0 [-p <tag|branch|commit-hash>] [-w <tag|branch|commit-hash>]"
-  echo "	without any parameter, the script will generate upstream patch for both pallets and tee-worker"
-  echo "		-p specify the tag|branch|commit-hash for upstream pallets"
-  echo "		-w specify the tag|branch|commit-hash for upstream worker"
+	echo "Usage:"
+	echo "	$0 [-p <tag|branch|commit-hash>] [-w <tag|branch|commit-hash>]"
+	echo "	without any parameter, the script will generate upstream patch for both pallets and tee-worker"
+	echo "		-p specify the tag|branch|commit-hash for upstream pallets"
+	echo "		-w specify the tag|branch|commit-hash for upstream worker"
 }
 
 # This function generates a patch for the diffs between commit-A and commit-B
@@ -23,9 +23,8 @@ print_help() {
 # A patch will be generated under ./<TARGET_DIR>/upstream.patch
 generate_upstream_patch() {
 	local TARGET_DIR=$1
-	local UPSTREAM_NAME=$2
-	local UPSTREAM_URL=$3
-	# If $4 exists, it would be the target commit
+	local UPSTREAM_URL=$2
+	# If $3 exists, it would be the target commit
 
 	cd $TARGET_DIR
 
@@ -41,9 +40,9 @@ generate_upstream_patch() {
 	echo "cloning $UPSTREAM_URL to $tmp_dir"
 	git clone -q $UPSTREAM_URL repo
 	cd repo
-	[ "" != "$4" ] && git checkout "$4"
-	echo "generating $UPSTREAM_NAME.patch"
-	git diff $OLD_COMMIT HEAD > "$TARGET_DIR/$UPSTREAM_NAME.patch"
+	[ "" != "$3" ] && git checkout "$3"
+	echo "generating patch ..."
+	git diff $OLD_COMMIT HEAD > "$TARGET_DIR/upstream.patch"
 	git rev-parse --short HEAD > "$TARGET_DIR/upstream_commit"
 	cleanup $tmp_dir
 	echo
@@ -62,8 +61,8 @@ while getopts ":p:w:h:" opt; do
 			pallets_commit=$OPTARG
 			;;
 		w)
-			HAS_WORKER=true
-			WORKER_COMMIT=$OPTARG
+			has_worker=true
+			worker_commit=$OPTARG
 			;;
 	esac
 done
@@ -94,11 +93,11 @@ then
 	# only 'teerex', 'teeracle', 'sidechain' and 'primitives' are taken in.
 	if $HAS_PALLETS == "true"
 	then
-		generate_upstream_patch $PALLETS_DIR "upstream_pallets" $UPSTREAM_PALLETS_URL $PALLETS_COMMIT
+		generate_upstream_patch $PALLETS_DIR $UPSTREAM_PALLETS_URL $PALLETS_COMMIT
 	fi
 	if $HAS_WORKER == "true"
 	then
-		generate_upstream_patch $WORKER_DIR "upstream_worker" $UPSTREAM_WORKER_URL $WORKER_COMMIT
+		generate_upstream_patch $WORKER_DIR $UPSTREAM_WORKER_URL $WORKER_COMMIT
 	fi
 	echo "======================================================================="
 	echo "upstream_commit(s) are updated."
@@ -107,11 +106,11 @@ then
 	echo "upstream.patch(s) are generated, to apply it, RUN FROM $ROOTDIR:"
 	if $HAS_PALLETS == "true"
 	then
-		echo "  git am -3 --directory=pallets < pallets/upstream_pallets.patch"
+		echo "  git am -3 --directory=pallets < pallets/upstream.patch"
 	fi
 	if $HAS_WORKER == "true"
 	then
-		echo "  git am -3 --exclude=tee-worker/Cargo.lock --exclude=tee-worker/enclave-runtime/Cargo.lock --directory=tee-worker < tee-worker/upstream_worker.patch"
+		echo "  git am -3 --exclude=tee-worker/Cargo.lock --exclude=tee-worker/enclave-runtime/Cargo.lock --directory=tee-worker < tee-worker/upstream.patch"
 	fi
 	echo ""
 	echo "after that, please:"
@@ -119,7 +118,7 @@ then
 	if $HAS_PALLETS == "true"
 	then
 		echo "  * ALL changes/conflicts from pallets/upstream.patch should ONLY apply into:"
-		echo "    - pallets/(sidechain, teeracle, teerex, test-utils)"
+		echo "    - pallets/(parentchain, sidechain, teeracle, teerex, test-utils)"
 		echo "    - primitives/(common, sidechain, teeracle, teerex)"
 	fi
 	if $HAS_WORKER == "true"
