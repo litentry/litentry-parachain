@@ -64,7 +64,6 @@ pub mod pallet {
 		type Currency: Currency<<Self as frame_system::Config>::AccountId>;
 		type MomentsPerDay: Get<Self::Moment>;
 		type WeightInfo: WeightInfo;
-		type HeartbeatTimeout: Get<Self::Moment>;
 	}
 
 	#[pallet::event]
