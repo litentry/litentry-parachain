@@ -33,15 +33,15 @@ pub mod sgx_reexport_prelude {
 use itp_types::AccountId;
 pub mod error;
 pub mod stf_task_sender;
-pub use error::Result;
-
-use sp_runtime::{traits::ConstU32, BoundedVec};
-use sp_std::vec::Vec;
-
 use codec::{Decode, Encode};
+pub use error::Result;
+use lc_credentials_tee::credentials::Credential;
 use litentry_primitives::{
 	Assertion, ChallengeCode, Identity, Web2ValidationData, Web3ValidationData,
 };
+use sp_runtime::{traits::ConstU32, BoundedVec};
+use sp_std::vec::Vec;
+use std::boxed::Box;
 
 /// Here a few Request structs are defined for asynchronously stf-tasks handling.
 /// A `callback` exists for some request types to submit a callback TrustedCall to top pool.
@@ -98,6 +98,7 @@ pub struct AssertionBuildRequest {
 	pub who: AccountId,
 	pub assertion: Assertion,
 	pub vec_identity: BoundedVec<Identity, MaxIdentityLength>,
+	pub credential: Credential,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
@@ -111,7 +112,7 @@ pub struct SetUserShieldingKeyRequest {
 pub enum RequestType {
 	Web2IdentityVerification(Web2IdentityVerificationRequest),
 	Web3IdentityVerification(Web3IdentityVerificationRequest),
-	AssertionVerification(AssertionBuildRequest),
+	AssertionVerification(Box<AssertionBuildRequest>),
 	// set the user shielding key async - just to showcase how to
 	// async process the request in stf-task-receiver
 	// In real scenario it should be done synchronously
@@ -132,7 +133,7 @@ impl From<Web3IdentityVerificationRequest> for RequestType {
 
 impl From<AssertionBuildRequest> for RequestType {
 	fn from(r: AssertionBuildRequest) -> Self {
-		RequestType::AssertionVerification(r)
+		RequestType::AssertionVerification(Box::new(r))
 	}
 }
 

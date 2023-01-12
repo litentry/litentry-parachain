@@ -14,22 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-//#[cfg(all(not(feature = "std"), feature = "sgx"))]
-//use crate::sgx_reexport_prelude::*;
-
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 use crate::error::Error;
-use chrono::{DateTime, FixedOffset, NaiveDateTime};
+use chrono::{DateTime, FixedOffset, NaiveDateTime, SecondsFormat};
+use codec::{Decode, Encode};
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::Assertion;
 use log::*;
+use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
 use std::{
 	fmt::Debug,
-	str::FromStr,
 	string::{String, ToString},
 	time::{SystemTime, UNIX_EPOCH},
 	vec::Vec,
@@ -38,85 +36,31 @@ use std::{
 pub const PROOF_PURPOSE: &str = "assertionMethod";
 pub const MAX_CREDENTIAL_SIZE: usize = 2048;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-#[serde(try_from = "String")]
-#[serde(into = "String")]
-pub struct VCDateTime {
-	date_time: DateTime<FixedOffset>, // rfc3339
-	use_z: bool, // Whether to use "Z" or "+00:00" when formatting the date-time in UTC
+pub fn now() -> String {
+	let ts = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+	let naive = NaiveDateTime::from_timestamp_opt(ts.as_secs() as i64, ts.subsec_nanos()).unwrap();
+	let datenow_time = DateTime::<FixedOffset>::from_utc(naive, FixedOffset::east_opt(0).unwrap());
+	datenow_time.to_rfc3339_opts(SecondsFormat::Secs, true)
 }
 
-impl FromStr for VCDateTime {
-	type Err = chrono::format::ParseError;
-	fn from_str(date_time: &str) -> Result<Self, Self::Err> {
-		let use_z = date_time.ends_with('Z');
-		let date_time = DateTime::parse_from_rfc3339(date_time)?;
-		Ok(VCDateTime { date_time, use_z })
-	}
-}
-
-impl TryFrom<String> for VCDateTime {
-	type Error = chrono::format::ParseError;
-	fn try_from(date_time: String) -> Result<Self, Self::Error> {
-		Self::from_str(&date_time)
-	}
-}
-
-impl From<VCDateTime> for String {
-	fn from(z_date_time: VCDateTime) -> String {
-		let VCDateTime { date_time, use_z } = z_date_time;
-		date_time.to_rfc3339_opts(chrono::SecondsFormat::AutoSi, use_z)
-	}
-}
-
-impl<Tz: chrono::TimeZone> From<DateTime<Tz>> for VCDateTime
-where
-	chrono::DateTime<chrono::FixedOffset>: From<chrono::DateTime<Tz>>,
-{
-	fn from(date_time: DateTime<Tz>) -> Self {
-		Self { date_time: date_time.into(), use_z: true }
-	}
-}
-
-impl<Tz: chrono::TimeZone> From<VCDateTime> for DateTime<Tz>
-where
-	chrono::DateTime<Tz>: From<chrono::DateTime<chrono::FixedOffset>>,
-{
-	fn from(vc_date_time: VCDateTime) -> Self {
-		Self::from(vc_date_time.date_time)
-	}
-}
-
-impl VCDateTime {
-	pub fn now() -> Self {
-		let ts = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-		let naive =
-			NaiveDateTime::from_timestamp_opt(ts.as_secs() as i64, ts.subsec_nanos() as u32)
-				.unwrap();
-		let now = DateTime::from_utc(naive, FixedOffset::east_opt(0).unwrap());
-		Self { date_time: now, use_z: true }
-	}
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
 pub enum ProofType {
 	Ed25519Signature2020,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
 pub enum CredentialType {
 	VerifiableCredential,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
 #[serde(rename_all = "camelCase")]
 pub struct DataSoure {
 	pub data_provider_id: u32,
 	pub data_provider: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
 #[serde(rename_all = "camelCase")]
 pub struct Issuer {
 	pub id: String,
@@ -134,7 +78,7 @@ impl Issuer {
 	}
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
 #[serde(rename_all = "camelCase")]
 pub struct CredentialSubject {
 	pub id: String,
@@ -143,7 +87,6 @@ pub struct CredentialSubject {
 	pub types: String,
 	pub tag: Vec<String>,
 	#[serde(skip_serializing_if = "Option::is_none")]
-	#[serde(skip_deserializing)]
 	pub data_soure: Option<Vec<DataSoure>>,
 	pub assertions: String,
 	pub values: Vec<bool>,
@@ -155,16 +98,15 @@ impl CredentialSubject {
 		self.id.is_empty()
 	}
 
-	pub fn set_subject_id(&mut self, who: &AccountId) {
-		self.id = account_id_to_string(who);
+	pub fn set_value(&mut self, value: bool) {
+		self.values[0] = value;
 	}
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
 #[serde(rename_all = "camelCase")]
 pub struct Proof {
-	#[serde(skip_deserializing)]
-	pub created: Option<VCDateTime>,
+	pub created: Option<String>,
 	#[serde(rename = "type")]
 	pub proof_type: ProofType,
 	pub proof_purpose: String,
@@ -175,7 +117,7 @@ pub struct Proof {
 impl Proof {
 	pub fn new(type_: ProofType) -> Self {
 		Self {
-			created: Some(VCDateTime::now()),
+			created: Some(now()),
 			proof_type: type_,
 			proof_purpose: PROOF_PURPOSE.to_string(),
 			proof_value: "".to_string(),
@@ -188,7 +130,7 @@ impl Proof {
 	}
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
 #[serde(rename_all = "camelCase")]
 pub struct Credential {
 	#[serde(rename = "@context")]
@@ -199,54 +141,26 @@ pub struct Credential {
 	pub types: Vec<CredentialType>,
 	pub credential_subject: CredentialSubject,
 	pub issuer: Issuer,
-	#[serde(skip_deserializing)]
-	pub issuance_date: Option<VCDateTime>,
+	pub issuance_date: Option<String>,
 	#[serde(skip_serializing_if = "Option::is_none")]
-	#[serde(skip_deserializing)]
-	pub expiration_date: Option<VCDateTime>,
+	pub expiration_date: Option<String>,
 	pub proof: Proof,
 }
 
 impl Credential {
 	pub fn from_template(s: &str, who: &AccountId) -> Result<Self, Error> {
 		let mut vc: Self =
-			serde_json::from_str(s).map_err(|e| Error::Other(format!("{:?}", e).into()))?;
-		vc.issuance_date = Some(VCDateTime::now());
-		vc.credential_subject.set_subject_id(who);
+			serde_json::from_str(s).map_err(|err| Error::ParseError(format!("{}", err)))?;
+		vc.subject = account_id_to_string(who);
+		vc.issuance_date = Some(now());
 		vc.validate_unsigned()?;
 		Ok(vc)
 	}
 
 	pub fn to_json(&self) -> Result<String, Error> {
-		Ok(serde_json::to_string(&self).map_err(|e| Error::Other(format!("{:?}", e).into()))?)
-	}
-
-	pub fn validate(&self) -> Result<(), Error> {
-		self.validate_unsigned()?;
-
-		// if self.issuer.is_empty() {
-		// 	return Err(Error::EmptyCredentialIssuer)
-		// }
-
-		// validate proof
-		// if self.proof.is_empty() {
-		// 	return Err(Error::EmptyCredentialProof)
-		// }
-
-		// if self.proof.created.is_none() {
-		// 	return Err(Error::InvalidDateOrTimeError)
-		// }
-
-		//ToDo: validate proof signature
-
-		//ToDo: validate the timestamp of proof, it's must be after credential issuance timestamp
-
-		let exported = self.to_json().unwrap();
-		if exported.len() > MAX_CREDENTIAL_SIZE {
-			return Err(Error::CredentialIsTooLong)
-		}
-
-		Ok(())
+		let json_str =
+			serde_json::to_string(&self).map_err(|err| Error::ParseError(format!("{}", err)))?;
+		Ok(json_str)
 	}
 
 	pub fn validate_unsigned(&self) -> Result<(), Error> {
@@ -254,8 +168,8 @@ impl Credential {
 			return Err(Error::EmptyCredentialType)
 		}
 
-		if self.credential_subject.is_empty() {
-			return Err(Error::EmptyCredentialSubject)
+		if self.subject.is_empty() {
+			return Err(Error::EmptySubject)
 		}
 
 		if self.issuance_date.is_none() {
@@ -265,30 +179,64 @@ impl Credential {
 		Ok(())
 	}
 
-	pub fn validate_schema(&self) -> Result<(), Error> {
-		//ToDo: fetch schema status from Parentchain storage
+	pub fn validate(&self) -> Result<(), Error> {
+		self.validate_unsigned()?;
+
+		if self.credential_subject.is_empty() {
+			return Err(Error::EmptyCredentialSubject)
+		}
+
+		// ToDo: validate issuer
+		// if self.issuer.is_empty() {
+		// 	return Err(Error::EmptyCredentialIssuer)
+		// }
+
+		//ToDo: validate the proof timestamp that is must be equal or after issuance timestamp
+		if self.proof.created.is_none() {
+			return Err(Error::InvalidDateOrTimeError)
+		}
+
+		// ToDo: validate proof
+		// if self.proof.is_empty() {
+		// 	return Err(Error::EmptyCredentialProof)
+		// }
+
+		//ToDo: validate proof signature
+
+		let exported = self.to_json()?;
+		if exported.len() > MAX_CREDENTIAL_SIZE {
+			return Err(Error::CredentialIsTooLong)
+		}
 
 		Ok(())
 	}
 
+	pub fn validate_schema(&self) -> Result<(), Error> {
+		//ToDo: fetch and check schema status from Parentchain storage
+		Ok(())
+	}
+
 	pub fn generate_unsigned_credential(
-		who: &AccountId,
 		assertion: &Assertion,
+		who: &AccountId,
 	) -> Result<Credential, Error> {
-		info!("start generate_unsigned_credential {:?}", assertion);
+		debug!("generate unsigned credential {:?}", assertion);
 		match assertion {
 			Assertion::A1 => {
 				let raw = include_str!("templates/a1.json");
-				let vc: Credential = Credential::from_template(raw, who)?;
-				return Ok(vc)
+				let credential: Credential = Credential::from_template(raw, who)?;
+				Ok(credential)
 			},
-			_ => return Err(Error::UnsupportedAssertion),
+			_ => Err(Error::UnsupportedAssertion),
 		}
 	}
 
-	pub fn generate_issuer(&self) -> Result<Issuer, Error> {
-		let issuer = Issuer::new("".to_string(), "".to_string(), "".to_string());
+	pub fn add_assertion_a1(&mut self, _web2_cnt: i32, _web3_cnt: i32) {
+		self.credential_subject.assertions = "\"or\": [{\"src\": \"$web2_account_cnt\", \"op\": \">\", \"dsc\": \"0\",},{\"src\": \"$web3_account_cnt\", \"op\": \">\", \"dsc\": \"0\",}]".to_string();
+	}
 
+	pub fn generate_issuer() -> Result<Issuer, Error> {
+		let issuer = Issuer::new("".to_string(), "".to_string(), "".to_string());
 		Ok(issuer)
 	}
 
@@ -296,7 +244,6 @@ impl Credential {
 		if self.issuer.is_empty() {
 			return Err(Error::EmptyCredentialIssuer)
 		}
-
 		let proof = Proof::new(ProofType::Ed25519Signature2020);
 		Ok(proof)
 	}
@@ -315,11 +262,8 @@ mod tests {
 		let who = AccountId::from([0; 32]);
 		let data = include_str!("templates/a1.json");
 
-		let vc: Credential = Credential::from_template(data, &who).unwrap();
-		println!("{:?}", vc);
+		let vc = Credential::from_template(data, &who).unwrap();
+		assert!(vc.validate_unsigned().is_ok());
 		assert_eq!(vc.proof.proof_purpose, "assertionMethod");
-
-		let exported = vc.to_json().unwrap();
-		println!("{}", exported);
 	}
 }

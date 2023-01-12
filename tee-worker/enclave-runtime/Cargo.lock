@@ -1846,6 +1846,7 @@ dependencies = [
  "itp-sgx-io",
  "itp-time-utils",
  "itp-types",
+ "litentry-primitives",
  "log",
  "num-bigint",
  "parity-scale-codec",
@@ -2580,8 +2581,8 @@ dependencies = [
  "serde_json 1.0.60 (git+https://github.com/mesalock-linux/serde-json-sgx?tag=sgx_1.1.3)",
  "serde_json 1.0.91",
  "sgx_tstd",
- "sp-runtime 6.0.0",
- "sp-std 4.0.0",
+ "sp-runtime",
+ "sp-std",
  "thiserror 1.0.9",
  "url",
 ]
@@ -2666,6 +2667,7 @@ dependencies = [
  "itp-utils",
  "lazy_static",
  "lc-assertion-build",
+ "lc-credentials-tee",
  "lc-identity-verification",
  "lc-stf-task-sender",
  "litentry-primitives",
@@ -2692,6 +2694,7 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lazy_static",
+ "lc-credentials-tee",
  "litentry-primitives",
  "log",
  "parity-scale-codec",
@@ -2767,6 +2770,7 @@ dependencies = [
 name = "litentry-primitives"
 version = "0.1.0"
 dependencies = [
+ "base64 0.13.0 (git+https://github.com/mesalock-linux/rust-base64-sgx?rev=sgx_1.1.3)",
  "core-primitives",
  "parity-scale-codec",
  "scale-info",

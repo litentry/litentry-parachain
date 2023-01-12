@@ -22,6 +22,8 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
+	#[error("Empty Subject")]
+	EmptySubject,
 	#[error("Empty Credential Proof")]
 	EmptyCredentialProof,
 	#[error("Empty Credential Type")]

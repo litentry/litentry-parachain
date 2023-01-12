@@ -37,6 +37,7 @@ itp-types = { path = "../../../../core-primitives/types", default-features = fal
 itp-utils = { path = "../../../../core-primitives/utils", default-features = false }
 
 # litentry
+lc-credentials-tee = { path = "../../credentials", default-features = false }
 litentry-primitives = { path = "../../../primitives", default-features = false }
 
 [features]
@@ -48,6 +49,7 @@ sgx = [
     "sgx_tstd",
     "thiserror_sgx",
     "url_sgx",
+    "lc-credentials-tee/sgx",
 ]
 std = [
     "http",
@@ -62,4 +64,5 @@ std = [
     "url",
     "itp-types/std",
     "itp-utils/std",
+    "lc-credentials-tee/std",
 ]
