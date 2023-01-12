@@ -135,4 +135,12 @@ impl TrustedOperation {
 			_ => None,
 		}
 	}
+
+	pub fn signed_caller_account(&self) -> Option<&AccountId> {
+		match self {
+			TrustedOperation::direct_call(c) => Some(c.call.sender_account()),
+			TrustedOperation::indirect_call(c) => Some(c.call.sender_account()),
+			_ => None,
+		}
+	}
 }

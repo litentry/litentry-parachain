@@ -399,13 +399,12 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 				if self.is_request_vc_funciton(&xt.function.0) {
 					let (_, shard, assertion) = xt.function;
 					let shielding_key = self.shielding_key_repo.retrieve_key()?;
-					debug!("Requested VC Assertion {:?}", assertion);
 
 					if let Some((multiaddress_account, _, _)) = xt.signature {
 						let account = AccountIdLookup::lookup(multiaddress_account)?;
 						let enclave_account_id = self.stf_enclave_signer.get_enclave_account()?;
 
-						let trusted_call = TrustedCall::build_assertion(
+						let trusted_call = TrustedCall::build_assertion_preflight(
 							enclave_account_id,
 							account,
 							assertion,
