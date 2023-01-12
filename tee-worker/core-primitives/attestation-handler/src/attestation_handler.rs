@@ -43,6 +43,7 @@ use itp_sgx_crypto::Ed25519Seal;
 use itp_sgx_io as io;
 use itp_sgx_io::StaticSealedIO;
 use itp_time_utils::now_as_secs;
+use litentry_primitives::EnclaveAdd;
 use log::*;
 use sgx_rand::{os, Rng};
 use sgx_tcrypto::{rsgx_sha256_slice, SgxEccHandle};
@@ -205,7 +206,7 @@ where
 
 		let payload = if !skip_ra {
 			info!("    [Enclave] Create attestation report");
-			let (attn_report, sig, cert) =
+			let (attn_report, sig, cert, enclave_add) =
 				match self.create_attestation_report(&chain_signer.public().0, sign_type) {
 					Ok(r) => r,
 					Err(e) => {
@@ -214,12 +215,16 @@ where
 					},
 				};
 			println!("    [Enclave] Create attestation report successful");
-			debug!("              attn_report = {:?}", attn_report);
-			debug!("              sig         = {:?}", sig);
-			debug!("              cert        = {:?}", cert);
+			debug!("              attn_report 		= {:?}", attn_report);
+			debug!("              sig         		= {:?}", sig);
+			debug!("              cert        		= {:?}", cert);
+			debug!("              spid        		= {:?}", enclave_add.spid);
+			debug!("              nonce       		= {:?}", enclave_add.nonce);
+			debug!("              sig_rl      		= {:?}", enclave_add.sig_rl);
+			debug!("              quote      		= {:?}", enclave_add.quote);
 
 			// concat the information
-			attn_report + "|" + &sig + "|" + &cert
+			attn_report + "|" + &sig + "|" + &cert + "|" + &enclave_add.format()
 		} else {
 			Default::default()
 		};
@@ -237,6 +242,8 @@ where
 
 		let _ = ecc_handle.close();
 		info!("    [Enclave] Generate ECC Certificate successful");
+		info!("    [Enclave] cert_der: {}", cert_der.len());
+
 		Ok((key_der, cert_der))
 	}
 
@@ -506,7 +513,7 @@ where
 		&self,
 		pub_k: &[u8; 32],
 		sign_type: sgx_quote_sign_type_t,
-	) -> SgxResult<(String, String, String)> {
+	) -> SgxResult<(String, String, String, EnclaveAdd)> {
 		// Workflow:
 		// (1) ocall to get the target_info structure (ti) and epid group id (eg)
 		// (1.5) get sigrl
@@ -568,7 +575,8 @@ where
 		let spid: sgx_spid_t = Self::load_spid(RA_SPID_FILE)?;
 
 		let quote_result =
-			self.ocall_api.get_quote(sigrl_vec, report, sign_type, spid, quote_nonce)?;
+			self.ocall_api
+				.get_quote(sigrl_vec.clone(), report, sign_type, spid, quote_nonce)?;
 
 		let qe_report = quote_result.0;
 		let quote_content = quote_result.1;
@@ -620,8 +628,12 @@ where
 			return Err(sgx_status_t::SGX_ERROR_UNEXPECTED)
 		}
 
-		let (attn_report, sig, cert) = self.get_report_from_intel(ias_socket, quote_content)?;
-		Ok((attn_report, sig, cert))
+		let (attn_report, sig, cert) =
+			self.get_report_from_intel(ias_socket, quote_content.clone())?;
+		let enclave_add =
+			EnclaveAdd::new(spid.id.clone(), quote_nonce.rand.clone(), sigrl_vec, quote_content);
+
+		Ok((attn_report, sig, cert, enclave_add))
 	}
 
 	fn load_spid(filename: &str) -> SgxResult<sgx_spid_t> {

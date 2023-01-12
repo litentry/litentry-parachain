@@ -24,7 +24,7 @@ use crate::{Error, Result};
 use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
-use litentry_primitives::{Identity, SubstrateNetwork};
+use litentry_primitives::{EvmNetwork, Identity};
 use std::{
 	str::from_utf8,
 	string::{String, ToString},
@@ -32,26 +32,33 @@ use std::{
 	vec::Vec,
 };
 
+const WBTC_TOKEN_ADDRESS: &str = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
+
+// WBTC holder
 pub fn build(identities: Vec<Identity>, from_date: String, min_balance: f64) -> Result<()> {
 	let mut client = GraphQLClient::new();
-	for id in identities {
-		if let Identity::Substrate { network, address } = id {
-			if matches!(network, SubstrateNetwork::Polkadot) {
-				let address = from_utf8(address.as_ref()).unwrap().to_string();
-				let addresses = vec![address];
-				let credentials = VerifiedCredentialsIsHodlerIn {
-					addresses,
-					from_date: from_date.clone(),
-					network: VerifiedCredentialsNetwork::Polkadot,
-					token_address: String::from(""),
-					min_balance,
-				};
-				let is_hodler_out = client.check_verified_credentials_is_hodler(credentials);
-				if let Ok(_hodler_out) = is_hodler_out {
-					// TODO: generate VC
 
-					return Ok(())
-				}
+	for id in identities {
+		if let Identity::Evm { network, address } = id {
+			if matches!(network, EvmNetwork::Ethereum) {
+				if let Ok(addr) = from_utf8(address.as_ref()) {
+					if let Ok(response) = client.check_verified_credentials_is_hodler(
+						VerifiedCredentialsIsHodlerIn::new(
+							vec![addr.to_string()],
+							from_date.clone(),
+							VerifiedCredentialsNetwork::Ethereum,
+							WBTC_TOKEN_ADDRESS.to_string(),
+							min_balance,
+						),
+					) {
+						for item in response.verified_credentials_is_hodler {
+							if item.is_hodler {
+								// TODO: generate VC
+								return Ok(())
+							}
+						}
+					}
+				};
 			}
 		}
 	}
