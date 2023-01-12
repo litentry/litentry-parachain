@@ -2587,6 +2587,44 @@ dependencies = [
 ]
 
 [[package]]
+name = "lc-credentials-tee"
+version = "0.1.0"
+dependencies = [
+ "chrono 0.4.23",
+ "frame-support",
+ "futures 0.3.8",
+ "hex 0.4.0",
+ "http",
+ "http_req",
+ "ita-stf",
+ "itc-rest-client",
+ "itp-attestation-handler",
+ "itp-ocall-api",
+ "itp-sgx-crypto",
+ "itp-sgx-externalities",
+ "itp-stf-executor",
+ "itp-storage",
+ "itp-top-pool-author",
+ "itp-types",
+ "itp-utils",
+ "lc-data-providers",
+ "lc-stf-task-sender",
+ "litentry-primitives",
+ "parity-scale-codec",
+ "primitives",
+ "scale-info",
+ "serde 1.0.151",
+ "serde_json 1.0.91",
+ "sgx_tstd",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "thiserror 1.0.9",
+ "url",
+]
+
+[[package]]
 name = "lc-data-providers"
 version = "0.1.0"
 dependencies = [
