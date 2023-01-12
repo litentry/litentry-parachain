@@ -13,30 +13,26 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
+#![cfg_attr(not(feature = "std"), no_std)]
 
-// TODO: maybe use macros to simplify this
-use crate::{error::Result, NodeMetadata};
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+#[macro_use]
+extern crate sgx_tstd as std;
 
-const VCMP: &str = "VCManagement";
-
-pub trait VCMPCallIndexes {
-	fn request_vc_call_indexes(&self) -> Result<[u8; 2]>;
-
-	fn vc_issued_call_indexes(&self) -> Result<[u8; 2]>;
-
-	fn vc_some_error_call_indexes(&self) -> Result<[u8; 2]>;
+// re-export module to properly feature gate sgx and regular std environment
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+pub mod sgx_reexport_prelude {
+	pub use chrono_sgx as chrono;
+	pub use serde_json_sgx as serde_json;
+	pub use thiserror_sgx as thiserror;
 }
 
-impl VCMPCallIndexes for NodeMetadata {
-	fn request_vc_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(VCMP, "request_vc")
-	}
+#[cfg(all(feature = "std", feature = "sgx"))]
+compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
-	fn vc_issued_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(VCMP, "vc_issued")
-	}
+//use frame_support::pallet_prelude::*;
 
-	fn vc_some_error_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(VCMP, "some_error")
-	}
-}
+pub mod credentials;
+pub mod error;
+pub use error::Error;
+pub mod schema;

@@ -1,8 +1,8 @@
-import {ApiPromise, Keyring} from '@polkadot/api';
-import {KeyObject} from 'crypto';
-import {HexString} from '@polkadot/util/types';
+import { ApiPromise, Keyring } from '@polkadot/api';
+import { KeyObject } from 'crypto';
+import { HexString } from '@polkadot/util/types';
 import WebSocketAsPromised = require('websocket-as-promised');
-import {KeyringPair} from '@polkadot/keyring/types';
+import { KeyringPair } from '@polkadot/keyring/types';
 
 export const teeTypes = {
     WorkerRpcReturnString: {
@@ -65,22 +65,22 @@ export const teeTypes = {
     /// identity
     LitentryIdentity: {
         _enum: {
-            Substrate: "SubstrateIdentity",
-            Evm: "EvmIdentity",
-            Web2: "Web2Identity"
+            Substrate: 'SubstrateIdentity',
+            Evm: 'EvmIdentity',
+            Web2: 'Web2Identity',
         },
     },
     SubstrateIdentity: {
         network: 'SubstrateNetwork',
-        address: 'Address32'
+        address: 'Address32',
     },
     EvmIdentity: {
         network: 'EvmNetwork',
-        address: 'Address20'
+        address: 'Address20',
     },
     Web2Identity: {
         network: 'Web2Network',
-        address: 'IdentityString'
+        address: 'IdentityString',
     },
     Address32: '[u8;32]',
     Address20: '[u8;20]',
@@ -148,6 +148,12 @@ export const teeTypes = {
         verification_request_block: 'Option<BlockNumber>',
         is_verified: 'bool',
     },
+
+    // vc management
+    VCRequested: {
+        shard: 'ShardIdentifier',
+        assertion: 'Assertion',
+    },
 };
 
 export type WorkerRpcReturnValue = {
@@ -182,24 +188,24 @@ export class AESOutput {
 }
 
 export type LitentryIdentity = {
-    Substrate?: SubstrateIdentity,
-    Evm?: EvmIdentity,
-    Web2?: Web2Identity
+    Substrate?: SubstrateIdentity;
+    Evm?: EvmIdentity;
+    Web2?: Web2Identity;
 };
 
 export type SubstrateIdentity = {
-    network: SubstrateNetwork,
-    address: HexString
+    network: SubstrateNetwork;
+    address: HexString;
 };
 
-export type  EvmIdentity = {
-    network: EvmNetwork,
-    address: HexString
+export type EvmIdentity = {
+    network: EvmNetwork;
+    address: HexString;
 };
 
 export type Web2Identity = {
-    network: Web2Network,
-    address: string,
+    network: Web2Network;
+    address: string;
 };
 
 export type IdentityHandle = {
@@ -276,4 +282,24 @@ export type IdentityContext = {
     linking_request_block?: number;
     verification_request_block?: number;
     is_verified: boolean;
+};
+
+//vc types
+export type VCRequested = {
+    shard: HexString;
+    assertion: Assertion;
+};
+export type Assertion = {
+    A1?: string;
+    A2?: [string, string];
+    A3?: [string, string];
+    A4?: [number, string];
+    A5?: [string, string];
+    A6?: string;
+    A7?: [number, number];
+    A8?: [number];
+    A9?: string;
+    A10?: [number, number];
+    A11?: [number, number];
+    A13?: [number];
 };

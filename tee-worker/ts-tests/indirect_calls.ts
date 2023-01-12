@@ -124,7 +124,7 @@ export async function requestVC(
     aesKey: HexString,
     listening: boolean,
     shard: HexString,
-    assertion: string
+    assertion: Assertion
 ): Promise<any> {
     const tx = context.substrate.tx.vcManagement.requestVc(shard, assertion);
     await sendTxUntilInBlock(context.substrate, tx, signer);

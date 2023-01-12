@@ -20,35 +20,28 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-// #[cfg(all(not(feature = "std"), feature = "sgx"))]
-// use crate::sgx_reexport_prelude::*;
+use codec::{Decode, Encode, MaxEncodedLen};
+use parentchain_primitives::{SchemaContentString, SchemaIdString};
+use scale_info::TypeInfo;
 
-use crate::{Error, Result};
-use lc_stf_task_sender::MaxIdentityLength;
-use litentry_primitives::{Assertion, Identity};
-use sp_runtime::BoundedVec;
+#[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, TypeInfo, MaxEncodedLen)]
+pub enum Status {
+	Active,
+	Disabled,
+}
 
-//use lc_credentials_tee::credentials::Credential;
+#[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, TypeInfo, MaxEncodedLen)]
+pub struct Schema {
+	// the schema id
+	pub id: SchemaIdString,
+	// schema content
+	pub content: SchemaContentString,
+	// status of the Schema
+	pub status: Status,
+}
 
-pub fn build(identities: BoundedVec<Identity, MaxIdentityLength>) -> Result<()> {
-	let mut web2_cnt = 0;
-	let mut web3_cnt = 0;
-
-	for identity in &identities {
-		if identity.is_web2() {
-			web2_cnt += 1;
-		} else if identity.is_web3() {
-			web3_cnt += 1;
-		}
-	}
-
-	if web2_cnt > 0 && web3_cnt > 0 {
-		// TODO: generate_vc();
-		// let result = Credential::generate_unsigned_credential(&Assertion::A1);
-		// if let Ok(credential_unsigned) = result {}
-
-		Ok(())
-	} else {
-		Err(Error::Assertion1Failed)
+impl Schema {
+	pub fn new(id: SchemaIdString, content: SchemaContentString) -> Self {
+		Self { id, content, status: Status::Active }
 	}
 }

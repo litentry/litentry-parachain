@@ -4,7 +4,9 @@
 		"test-identity:staging": "cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register 'identity.test.ts'",
 		"test-identity:local": "cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register 'identity.test.ts'",
 		"test-resuming-worker:staging": "cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register 'resuming_worker.test.ts'",
-		"test-resuming-worker:local": "cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register 'resuming_worker.test.ts'"
+		"test-resuming-worker:local": "cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register 'resuming_worker.test.ts'",
+		"test-vc:local": "cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register 'vc.test.ts'",
+		"test-integration:local": "cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register 'integration.test.ts'"
 	},
 	"dependencies": {
 		"@polkadot/api": "^9.5.2",

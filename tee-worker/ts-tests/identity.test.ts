@@ -1,30 +1,25 @@
-import {describeLitentry, generateVerificationMessage} from './utils';
-import {hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a} from '@polkadot/util';
-import {
-    createIdentity,
-    setUserShieldingKey,
-    removeIdentity,
-    verifyIdentity
-} from './indirect_calls';
-import {step} from 'mocha-steps';
-import {assert} from 'chai';
+import { describeLitentry, generateVerificationMessage } from './utils';
+import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
+import { createIdentity, setUserShieldingKey, removeIdentity, verifyIdentity } from './indirect_calls';
+import { step } from 'mocha-steps';
+import { assert } from 'chai';
 import {
     EvmIdentity,
     IdentityGenericEvent,
     LitentryIdentity,
-    LitentryValidationData, SubstrateIdentity,
-    Web2Identity
+    LitentryValidationData,
+    SubstrateIdentity,
+    Web2Identity,
 } from './type-definitions';
-import {ethers} from 'ethers';
-import {HexString} from '@polkadot/util/types';
-import {KeyringPair} from '@polkadot/keyring/types';
-
+import { ethers } from 'ethers';
+import { HexString } from '@polkadot/util/types';
+import { KeyringPair } from '@polkadot/keyring/types';
 
 const twitterIdentity = <LitentryIdentity>{
     Web2: <Web2Identity>{
         address: 'mock_user',
-        network: "Twitter"
-    }
+        network: 'Twitter',
+    },
 };
 
 const ethereumIdentity = <LitentryIdentity>{
@@ -37,7 +32,7 @@ const ethereumIdentity = <LitentryIdentity>{
 const substrateIdentity = <LitentryIdentity>{
     Substrate: <SubstrateIdentity>{
         address: '0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d', //alice
-        network: 'Litentry'
+        network: 'Litentry',
     },
 };
 

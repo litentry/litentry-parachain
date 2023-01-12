@@ -15,6 +15,7 @@
 
 */
 
+use itp_node_api_metadata::pallet_vcmp::VCMPCallIndexes;
 #[cfg(feature = "evm")]
 use sp_core::{H160, H256, U256};
 
@@ -35,6 +36,7 @@ use itp_stf_interface::ExecuteCall;
 use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier, Signature};
 use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
+use lc_credentials_tee::credentials::Credential;
 use litentry_primitives::{
 	Assertion, ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType,
 	ValidationData,
@@ -207,7 +209,7 @@ impl TrustedReturnValue
 impl<NodeMetadataRepository> ExecuteCall<NodeMetadataRepository> for TrustedCallSigned
 where
 	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes,
+	NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes,
 {
 	type Error = StfError;
 
@@ -219,6 +221,7 @@ where
 	) -> Result<(), Self::Error> {
 		let sender = self.call.sender_account().clone();
 		let call_hash = blake2_256(&self.call.encode());
+
 		ensure!(
 			self.nonce == System::account_nonce(&sender),
 			Self::Error::InvalidNonce(self.nonce)
@@ -574,9 +577,48 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::build_assertion(enclave_account, account, assertion, shard) => {
+			TrustedCall::build_assertion(enclave_account, who, assertion, shard) => {
 				ensure_enclave_signer_account(&enclave_account)?;
-				Self::build_assertion(&shard, account, assertion)
+
+				match Credential::generate_unsigned_credential(&who, &assertion) {
+					Ok(credential_unsigned) => {
+						let credential_unsigned_str = credential_unsigned.to_json().unwrap();
+						debug!(
+							"build_assertion got result {:?} length {}",
+							credential_unsigned_str,
+							credential_unsigned_str.len()
+						);
+
+						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
+							calls.push(OpaqueCall::from_tuple(&(
+								node_metadata_repo
+									.get_from_metadata(|m| m.vc_issued_call_indexes())??,
+								0u64,
+								call_hash,
+								aes_encrypt_default(&key, &credential_unsigned_str.as_bytes()),
+							)));
+						} else {
+							calls.push(OpaqueCall::from_tuple(&(
+								node_metadata_repo
+									.get_from_metadata(|m| m.vc_some_error_call_indexes())??,
+								"get_user_shielding_key".as_bytes(),
+								"error".as_bytes(),
+							)));
+						}
+					},
+					Err(error) => {
+						debug!("build_assertion got error {:?}", error);
+
+						calls.push(OpaqueCall::from_tuple(&(
+							node_metadata_repo
+								.get_from_metadata(|m| m.vc_some_error_call_indexes())??,
+							"build_assertion_error".as_bytes(),
+							"error".as_bytes(),
+						)));
+					},
+				}
+
+				Self::build_assertion(&shard, who, assertion)
 			},
 			TrustedCall::set_challenge_code_runtime(enclave_account, account, did, code) => {
 				ensure_enclave_signer_account(&enclave_account)?;
