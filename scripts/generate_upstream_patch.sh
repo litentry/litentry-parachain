@@ -2,6 +2,7 @@
 
 set -eo pipefail
 
+
 cleanup() {
 	rm -rf "$1"
 	echo "cleaned up $1"
@@ -15,6 +16,18 @@ print_help() {
 	echo "		-w specify the tag|branch|commit-hash for upstream worker"
 }
 
+check_upstream() {
+	local TARGET=$1
+	local UPSTREAM_URL="$UPSTREAM_URL_PREFIX/$TARGET"
+	if [ "$(git remote get-url upstream_$TARGET 2>/dev/null)" != "$UPSTREAM_URL" ]; then
+		echo >&2 "please set your $1 upstream"
+		echo >&2 "  e.g.: git remote add upstream_$TARGET $UPSTREAM_URL"
+		echo "false"
+	else
+		echo "true"
+	fi
+}
+
 # This function generates a patch for the diffs between commit-A and commit-B
 # of the upstream repo, where
 # commit-A: the commit recorded in ./<TARGET_DIR>/upstream_commit
@@ -22,9 +35,14 @@ print_help() {
 #
 # A patch will be generated under ./<TARGET_DIR>/upstream.patch
 generate_upstream_patch() {
-	local TARGET_DIR=$1
-	local UPSTREAM_URL=$2
-	# If $3 exists, it would be the target commit
+	local TARGET=$1
+	local TARGET_DIR="$ROOTDIR/$TARGET"
+	if [[ $TARGET == "worker" ]]
+	then
+		TARGET_DIR="$ROOTDIR/tee-worker"
+	fi
+	local UPSTREAM_URL="$UPSTREAM_URL_PREFIX/$TARGET"
+	# If $2 exists, it would be the target commit
 
 	cd $TARGET_DIR
 
@@ -35,18 +53,22 @@ generate_upstream_patch() {
 		exit 1
 	fi
 
+	echo "fetch upstream_$TARGET"
+	git fetch -q "upstream_$TARGET"
+
 	local tmp_dir=$(mktemp -d)
 	cd "$tmp_dir"
 	echo "cloning $UPSTREAM_URL to $tmp_dir"
 	git clone -q $UPSTREAM_URL repo
 	cd repo
-	[ "" != "$3" ] && git checkout "$3"
+	[ "" != "$2" ] && git checkout "$2"
 	echo "generating patch ..."
 	git diff $OLD_COMMIT HEAD > "$TARGET_DIR/upstream.patch"
 	git rev-parse --short HEAD > "$TARGET_DIR/upstream_commit"
 	cleanup $tmp_dir
 	echo
 }
+
 
 if [[ "-h" == "$1" ]]
 then
@@ -80,48 +102,54 @@ then
 	echo
 fi
 
-UPSTREAM_PALLETS_URL="https://github.com/integritee-network/pallets"
-UPSTREAM_WORKER_URL="https://github.com/integritee-network/worker"
-
+UPSTREAM_URL_PREFIX="https://github.com/integritee-network"
 ROOTDIR=$(git rev-parse --show-toplevel)
-PALLETS_DIR="$ROOTDIR/pallets"
-WORKER_DIR="$ROOTDIR/tee-worker"
 
-if [ $HAS_PALLETS == "true" ] || [ $HAS_WORKER == "true" ]
+if $HAS_PALLETS == "true"
+then
+	STATUS_P=$( check_upstream "pallets" )
+fi
+
+if $HAS_WORKER == "true"
+then
+	STATUS_W=$( check_upstream "worker" )
+fi
+
+
+if [ $STATUS_P == "true" ] || [ $STATUS_W == "true" ]
 then
 	# From upstream pallets (https://github.com/integritee-network/pallets),
 	# only 'teerex', 'teeracle', 'sidechain' and 'primitives' are taken in.
-	if $HAS_PALLETS == "true"
+	if $STATUS_P == "true"
 	then
-		generate_upstream_patch $PALLETS_DIR $UPSTREAM_PALLETS_URL $PALLETS_COMMIT
+		generate_upstream_patch "pallets" $PALLETS_COMMIT
 	fi
-	if $HAS_WORKER == "true"
+	if $STATUS_W == "true"
 	then
-		generate_upstream_patch $WORKER_DIR $UPSTREAM_WORKER_URL $WORKER_COMMIT
+		generate_upstream_patch "worker" $WORKER_COMMIT
 	fi
 	echo "======================================================================="
 	echo "upstream_commit(s) are updated."
-	echo "be sure to fetch the upstream to update the hashes of files."
-	echo ""
-	echo "upstream.patch(s) are generated, to apply it, RUN FROM $ROOTDIR:"
-	if $HAS_PALLETS == "true"
+	echo "upstream.patch(s) are generated."
+	echo "To apply it, RUN FROM $ROOTDIR:"
+	if $STATUS_P == "true"
 	then
 		echo "  git am -3 --directory=pallets < pallets/upstream.patch"
 	fi
-	if $HAS_WORKER == "true"
+	if $STATUS_W == "true"
 	then
 		echo "  git am -3 --exclude=tee-worker/Cargo.lock --exclude=tee-worker/enclave-runtime/Cargo.lock --directory=tee-worker < tee-worker/upstream.patch"
 	fi
 	echo ""
 	echo "after that, please:"
 	echo "- pay special attention: "
-	if $HAS_PALLETS == "true"
+	if $STATUS_P == "true"
 	then
 		echo "  * ALL changes/conflicts from pallets/upstream.patch should ONLY apply into:"
 		echo "    - pallets/(parentchain, sidechain, teeracle, teerex, test-utils)"
 		echo "    - primitives/(common, sidechain, teeracle, teerex)"
 	fi
-	if $HAS_WORKER == "true"
+	if $STATUS_W == "true"
 	then
 		echo "  * ALL changes/conflicts from tee-worker/upstream.patch patch should ONLY apply into:"
 		echo "    - tee-worker"
