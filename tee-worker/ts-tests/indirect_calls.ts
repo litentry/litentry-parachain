@@ -23,6 +23,9 @@ export async function setUserShieldingKey(
     listening: boolean
 ): Promise<HexString | undefined> {
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, aesKey).toString('hex');
+    const info = await context.substrate.tx.identityManagement
+        .setUserShieldingKey(context.shard, `0x${ciphertext}`)
+        .paymentInfo(signer);
     await context.substrate.tx.identityManagement
         .setUserShieldingKey(context.shard, `0x${ciphertext}`)
         .signAndSend(signer);
@@ -128,13 +131,13 @@ export async function requestVC(
 ): Promise<any> {
     const tx = context.substrate.tx.vcManagement.requestVc(shard, assertion);
     await sendTxUntilInBlock(context.substrate, tx, signer);
-    if (listening) {
-        const event = await listenEncryptedEvents(context, aesKey, {
-            module: 'vcManagement',
-            method: 'requestVc',
-            event: 'VCRequested',
-        });
-    }
+    // if (listening) {
+    //     const event = await listenEncryptedEvents(context, aesKey, {
+    //         module: 'vcManagement',
+    //         method: 'requestVc',
+    //         event: 'VCRequested',
+    //     });
+    // }
 }
 
 function decodeIdentityEvent(
