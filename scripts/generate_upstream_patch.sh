@@ -112,7 +112,7 @@ then
 fi
 
 
-if [ "$STATUS_P" == "true" ] || [ "$STATUS_W" == "true" ]
+if [ "$HAS_PALLETS" == "true" ] || [ "$HAS_WORKER" == "true" ]
 then
 	# From upstream pallets (https://github.com/integritee-network/pallets),
 	# only 'teerex', 'teeracle', 'sidechain' and 'primitives' are taken in.
