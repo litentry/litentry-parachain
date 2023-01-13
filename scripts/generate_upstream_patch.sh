@@ -16,6 +16,14 @@ print_help() {
 	echo "		-w specify the tag|branch|commit-hash for upstream worker"
 }
 
+check_upstream() {
+	local TARGET=$1
+	local UPSTREAM_URL="$UPSTREAM_URL_PREFIX/$TARGET"
+	if [ "$(git remote get-url upstream_$TARGET 2>/dev/null)" != "$UPSTREAM_URL" ]; then
+		git remote add upstream_$TARGET $UPSTREAM_URL
+	fi
+}
+
 # This function generates a patch for the diffs between commit-A and commit-B
 # of the upstream repo, where
 # commit-A: the commit recorded in ./<TARGET_DIR>/upstream_commit
@@ -41,8 +49,7 @@ generate_upstream_patch() {
 		exit 1
 	fi
 
-	echo "set upstream_$TARGET and fetch"
-	git remote add upstream_$TARGET $UPSTREAM_URL
+	echo "fetch upstream_$TARGET"
 	git fetch -q "upstream_$TARGET"
 
 	local tmp_dir=$(mktemp -d)
@@ -94,7 +101,18 @@ fi
 UPSTREAM_URL_PREFIX="https://github.com/integritee-network"
 ROOTDIR=$(git rev-parse --show-toplevel)
 
-if [ "$HAS_PALLETS" == "true" ] || [ "$HAS_WORKER" == "true" ]
+if $HAS_PALLETS == "true"
+then
+	check_upstream "pallets"
+fi
+
+if $HAS_WORKER == "true"
+then
+	check_upstream "worker"
+fi
+
+
+if [ "$STATUS_P" == "true" ] || [ "$STATUS_W" == "true" ]
 then
 	# From upstream pallets (https://github.com/integritee-network/pallets),
 	# only 'teerex', 'teeracle', 'sidechain' and 'primitives' are taken in.
@@ -134,6 +152,10 @@ then
 	fi
 	echo "- resolve any conflicts"
 	echo "- optionally update Cargo.lock file"
+	if [ "$HAS_WORKER" == "true" ]
+	then
+		echo "- apply the changes to $ROOTDIR/.github/workflows/tee-worker-ci.yml"
+	fi
 	echo "======================================================================="
 	if [ "$HAS_PALLETS" == "true" ] && [ "$HAS_WORKER" == "true" ]
 	then
