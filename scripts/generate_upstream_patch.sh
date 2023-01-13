@@ -16,18 +16,6 @@ print_help() {
 	echo "		-w specify the tag|branch|commit-hash for upstream worker"
 }
 
-check_upstream() {
-	local TARGET=$1
-	local UPSTREAM_URL="$UPSTREAM_URL_PREFIX/$TARGET"
-	if [ "$(git remote get-url upstream_$TARGET 2>/dev/null)" != "$UPSTREAM_URL" ]; then
-		echo >&2 "please set your $1 upstream"
-		echo >&2 "  e.g.: git remote add upstream_$TARGET $UPSTREAM_URL"
-		echo "false"
-	else
-		echo "true"
-	fi
-}
-
 # This function generates a patch for the diffs between commit-A and commit-B
 # of the upstream repo, where
 # commit-A: the commit recorded in ./<TARGET_DIR>/upstream_commit
@@ -53,7 +41,8 @@ generate_upstream_patch() {
 		exit 1
 	fi
 
-	echo "fetch upstream_$TARGET"
+	echo "set upstream_$TARGET and fetch"
+	git remote add upstream_$TARGET $UPSTREAM_URL
 	git fetch -q "upstream_$TARGET"
 
 	local tmp_dir=$(mktemp -d)
@@ -105,26 +94,15 @@ fi
 UPSTREAM_URL_PREFIX="https://github.com/integritee-network"
 ROOTDIR=$(git rev-parse --show-toplevel)
 
-if $HAS_PALLETS == "true"
-then
-	STATUS_P=$( check_upstream "pallets" )
-fi
-
-if $HAS_WORKER == "true"
-then
-	STATUS_W=$( check_upstream "worker" )
-fi
-
-
-if [ "$STATUS_P" == "true" ] || [ "$STATUS_W" == "true" ]
+if [ "$HAS_PALLETS" == "true" ] || [ "$HAS_WORKER" == "true" ]
 then
 	# From upstream pallets (https://github.com/integritee-network/pallets),
 	# only 'teerex', 'teeracle', 'sidechain' and 'primitives' are taken in.
-	if [ "$STATUS_P" == "true" ]
+	if [ "$HAS_PALLETS" == "true" ]
 	then
 		generate_upstream_patch "pallets" $PALLETS_COMMIT
 	fi
-	if [ "$STATUS_W" == "true" ]
+	if [ "$HAS_WORKER" == "true" ]
 	then
 		generate_upstream_patch "worker" $WORKER_COMMIT
 	fi
@@ -132,24 +110,24 @@ then
 	echo "upstream_commit(s) are updated."
 	echo "upstream.patch(s) are generated."
 	echo "To apply it, RUN FROM $ROOTDIR:"
-	if [ "$STATUS_P" == "true" ]
+	if [ "$HAS_PALLETS" == "true" ]
 	then
 		echo "  git am -3 --directory=pallets < pallets/upstream.patch"
 	fi
-	if [ "$STATUS_W" == "true" ]
+	if [ "$HAS_WORKER" == "true" ]
 	then
 		echo "  git am -3 --exclude=tee-worker/Cargo.lock --exclude=tee-worker/enclave-runtime/Cargo.lock --directory=tee-worker < tee-worker/upstream.patch"
 	fi
 	echo ""
 	echo "after that, please:"
 	echo "- pay special attention: "
-	if [ "$STATUS_P" == "true" ]
+	if [ "$HAS_PALLETS" == "true" ]
 	then
 		echo "  * ALL changes/conflicts from pallets/upstream.patch should ONLY apply into:"
 		echo "    - pallets/(parentchain, sidechain, teeracle, teerex, test-utils)"
 		echo "    - primitives/(common, sidechain, teeracle, teerex)"
 	fi
-	if [ "$STATUS_W" == "true" ]
+	if [ "$HAS_WORKER" == "true" ]
 	then
 		echo "  * ALL changes/conflicts from tee-worker/upstream.patch patch should ONLY apply into:"
 		echo "    - tee-worker"
@@ -157,7 +135,7 @@ then
 	echo "- resolve any conflicts"
 	echo "- optionally update Cargo.lock file"
 	echo "======================================================================="
-	if [ "$STATUS_P" == "true" ] && [ "$STATUS_W" == "true" ]
+	if [ "$HAS_PALLETS" == "true" ] && [ "$HAS_WORKER" == "true" ]
 	then
 		echo "***********************************************************************"
 		echo "It is HIGHLY RECOMMENDED to apply patch and commit separately."
