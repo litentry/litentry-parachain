@@ -27,7 +27,7 @@ my-node-runtime = { package = "rococo-parachain-runtime", path = "../../runtime/
 pallet-evm = { optional = true, git = "https://github.com/integritee-network/frontier.git", branch = "polkadot-v0.9.36" }
 substrate-api-client = { features = ["ws-client"], git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.36" }
 substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.36" }
-teerex-primitives = { git = "https://github.com/integritee-network/pallets.git", branch = "master" }
+teerex-primitives = { path = "../../primitives/teerex", default-features = false }
 
 # substrate dependencies
 frame-system = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
