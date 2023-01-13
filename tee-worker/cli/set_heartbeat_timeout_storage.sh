@@ -70,7 +70,7 @@ echo "* Set $ACC 's heartbeat timeout to $TIMEOUT"
 ${CLIENT} set-heartbeat-timeout-storage "$ACC" "$TIMEOUT"
 echo ""
 
-sleep 60
+sleep 300
 
 read MRENCLAVE <<< $($CLIENT list-workers | awk '/  MRENCLAVE: / { print $2; exit }')
 if [[ -z $MRENCLAVE ]]
