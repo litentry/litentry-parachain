@@ -17,3 +17,4 @@ tags.lock
 recipe.json
 
 gethdata
+tee-worker/ts-tests/SingerList.json
