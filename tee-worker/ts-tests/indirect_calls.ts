@@ -135,25 +135,6 @@ export async function verifyIdentity(
     return undefined;
 }
 
-export async function requestVC(
-    context: IntegrationTestContext,
-    signer: KeyringPair,
-    aesKey: HexString,
-    listening: boolean,
-    shard: HexString,
-    assertion: Assertion
-): Promise<any> {
-    const tx = context.substrate.tx.vcManagement.requestVc(shard, assertion);
-    await sendTxUntilInBlock(context.substrate, tx, signer);
-    // if (listening) {
-    //     const event = await listenEncryptedEvents(context, aesKey, {
-    //         module: 'vcManagement',
-    //         method: 'requestVc',
-    //         event: 'VCRequested',
-    //     });
-    // }
-}
-
 function decodeIdentityEvent(
     api: ApiPromise,
     who: HexString,
