@@ -69,7 +69,7 @@ pub(crate) type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
 pub mod pallet {
 	use super::*;
 	use frame_system::pallet_prelude::*;
-	use mock_tee_primitives::{Address32, SubstrateNetwork};
+	use mock_tee_primitives::Address32;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -325,9 +325,7 @@ pub mod pallet {
 				// see all the address prefix:
 				// https://github.com/paritytech/ss58-registry/blob/main/ss58-registry.json
 				let ss58_prefix = T::SS58Prefix::get();
-				if (network == SubstrateNetwork::Litentry && ss58_prefix == 31) ||
-					(network == SubstrateNetwork::Litmus && ss58_prefix == 131)
-				{
+				if network.ss58_prefix() == ss58_prefix {
 					let address_raw: [u8; 32] = who
 						.encode()
 						.try_into()

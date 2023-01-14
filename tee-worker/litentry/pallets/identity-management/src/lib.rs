@@ -49,7 +49,7 @@ use sp_std::vec::Vec;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use litentry_primitives::{Address32, SubstrateNetwork};
+	use litentry_primitives::Address32;
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
@@ -193,18 +193,14 @@ pub mod pallet {
 			identity: Identity,
 			metadata: Option<MetadataOf<T>>,
 			creation_request_block: ParentchainBlockNumber,
+			parent_ss58_prefix: u16,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 			if let Some(c) = IDGraphs::<T>::get(&who, &identity) {
 				ensure!(!c.is_verified, Error::<T>::IdentityAlreadyVerified);
 			}
 			if let Identity::Substrate { network, address } = identity {
-				// see all the address prefix:
-				// https://github.com/paritytech/ss58-registry/blob/main/ss58-registry.json
-				let ss58_prefix = T::SS58Prefix::get();
-				if (network == SubstrateNetwork::Litentry && ss58_prefix == 31)
-					|| (network == SubstrateNetwork::Litmus && ss58_prefix == 131)
-				{
+				if network.ss58_prefix() == parent_ss58_prefix {
 					let address_raw: [u8; 32] = who
 						.encode()
 						.try_into()
