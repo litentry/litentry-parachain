@@ -25,7 +25,7 @@ use crate::{
 use frame_support::dispatch::UnfilteredDispatchable;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_utils::stringify::account_id_to_string;
-use lc_credentials_tee::credentials::Credential;
+use lc_credentials_tee::Credential;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
 	AssertionBuildRequest, MaxIdentityLength, RequestType, SetUserShieldingKeyRequest,

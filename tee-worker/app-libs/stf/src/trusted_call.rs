@@ -36,7 +36,7 @@ use itp_stf_interface::ExecuteCall;
 use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier, Signature};
 use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
-use lc_credentials_tee::credentials::Credential;
+use lc_credentials_tee::Credential;
 use litentry_primitives::{
 	Assertion, ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType,
 	ValidationData,
