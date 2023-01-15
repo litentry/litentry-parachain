@@ -219,10 +219,8 @@ where
 	) -> Result<(), Self::Error> {
 		let sender = self.call.sender_account().clone();
 		let call_hash = blake2_256(&self.call.encode());
-		ensure!(
-			self.nonce == System::account_nonce(&sender),
-			Self::Error::InvalidNonce(self.nonce)
-		);
+		let system_nonce = System::account_nonce(&sender);
+		ensure!(self.nonce == system_nonce, Self::Error::InvalidNonce(self.nonce, system_nonce));
 		match self.call {
 			TrustedCall::balance_set_balance(root, who, free_balance, reserved_balance) => {
 				ensure!(is_root::<Runtime, AccountId>(&root), Self::Error::MissingPrivileges(root));
