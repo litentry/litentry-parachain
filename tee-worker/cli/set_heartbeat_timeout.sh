@@ -42,7 +42,7 @@ echo "Using node uri $NODEURL:$NPORT"
 echo "Using trusted-worker uri $WORKER1URL:$WORKER1PORT"
 echo ""
 
-ACC=//Bob
+ACC=//Alice
 TIMEOUT=5000 # 5 seconds, smaller than 12s (the block duration)
 
 CLIENT="$CLIENT_BIN -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
