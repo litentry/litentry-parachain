@@ -59,14 +59,12 @@ fn create_identity_without_delegatee_works() {
 fn create_identity_with_authorised_delegatee_works() {
 	new_test_ext().execute_with(|| {
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
-		let ss58_prefix = 131_u16;
 		assert_ok!(IdentityManagement::create_identity(
 			RuntimeOrigin::signed(5), // authorised delegatee set in initialisation
 			shard,
 			1,
 			vec![1u8; 2048],
 			Some(vec![1u8; 2048]),
-			ss58_prefix,
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
 			crate::Event::CreateIdentityRequested { shard },
@@ -78,7 +76,6 @@ fn create_identity_with_authorised_delegatee_works() {
 fn create_identity_with_unauthorised_delegatee_fails() {
 	new_test_ext().execute_with(|| {
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
-		let ss58_prefix = 131_u16;
 		assert_noop!(
 			IdentityManagement::create_identity(
 				RuntimeOrigin::signed(3),
@@ -86,7 +83,6 @@ fn create_identity_with_unauthorised_delegatee_fails() {
 				1,
 				vec![1u8; 2048],
 				Some(vec![1u8; 2048]),
-				ss58_prefix,
 			),
 			Error::<Test>::UnauthorisedUser
 		);
