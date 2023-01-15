@@ -77,7 +77,7 @@ pub mod pallet {
 		ShieldFunds(Vec<u8>),
 		UnshieldedFunds(T::AccountId),
 		ProcessedParentchainBlock(T::AccountId, H256, H256, T::BlockNumber),
-		SetHeartbeatTimeoutStorage(u64),
+		SetHeartbeatTimeout(u64),
 	}
 
 	// Watch out: we start indexing with 1 instead of zero in order to
@@ -306,13 +306,13 @@ pub mod pallet {
 
 		#[pallet::call_index(6)]
 		#[pallet::weight((1000, DispatchClass::Normal, Pays::No))]
-		pub fn set_heartbeat_timeout_storage(
+		pub fn set_heartbeat_timeout(
 			origin: OriginFor<T>,
 			timeout: u64,
 		) -> DispatchResultWithPostInfo {
 			T::DelegateeAdminOrigin::ensure_origin(origin)?;
 			<HeartbeatTimeout<T>>::put(T::Moment::saturated_from(timeout));
-			Self::deposit_event(Event::SetHeartbeatTimeoutStorage(timeout));
+			Self::deposit_event(Event::SetHeartbeatTimeout(timeout));
 			Ok(().into())
 		}
 	}

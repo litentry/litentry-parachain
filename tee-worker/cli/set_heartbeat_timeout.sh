@@ -67,10 +67,10 @@ fi
 # indirect call that will be sent to the parachain, it will be synchronously handled
 sleep 10
 echo "* Set $ACC 's heartbeat timeout to $TIMEOUT"
-${CLIENT} set-heartbeat-timeout-storage "$ACC" "$TIMEOUT"
+${CLIENT} set-heartbeat-timeout "$ACC" "$TIMEOUT"
 echo ""
 
-sleep 300
+sleep 60
 
 read MRENCLAVE <<< $($CLIENT list-workers | awk '/  MRENCLAVE: / { print $2; exit }')
 if [[ -z $MRENCLAVE ]]

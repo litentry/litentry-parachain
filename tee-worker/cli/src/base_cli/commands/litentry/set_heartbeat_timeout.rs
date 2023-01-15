@@ -25,7 +25,7 @@ use sp_core::sr25519 as sr25519_core;
 use substrate_api_client::{compose_extrinsic, UncheckedExtrinsicV4, XtStatus};
 
 #[derive(Parser)]
-pub struct SetHeartbeatTimeoutStorageCommand {
+pub struct SetHeartbeatTimeoutCommand {
 	/// Sender's parentchain AccountId in ss58check format
 	account: String,
 
@@ -33,7 +33,7 @@ pub struct SetHeartbeatTimeoutStorageCommand {
 	timeout: u64,
 }
 
-impl SetHeartbeatTimeoutStorageCommand {
+impl SetHeartbeatTimeoutCommand {
 	pub(crate) fn run(&self, cli: &Cli) {
 		let chain_api = get_chain_api(cli);
 
@@ -43,7 +43,7 @@ impl SetHeartbeatTimeoutStorageCommand {
 
 		// compose the extrinsic
 		let xt: UncheckedExtrinsicV4<_, _> =
-			compose_extrinsic!(chain_api, TEEREX, "set_heartbeat_timeout_storage", self.timeout);
+			compose_extrinsic!(chain_api, TEEREX, "set_heartbeat_timeout", self.timeout);
 
 		let tx_hash = chain_api.send_extrinsic(xt.hex_encode(), XtStatus::Finalized).unwrap();
 		println!("[+] TrustedOperation got finalized. Hash: {:?}\n", tx_hash);

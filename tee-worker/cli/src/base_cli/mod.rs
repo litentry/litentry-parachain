@@ -22,7 +22,7 @@ use crate::{
 		listen::ListenCommand,
 		litentry::{
 			create_identity::CreateIdentityCommand,
-			set_heartbeat_timeout_storage::SetHeartbeatTimeoutStorageCommand,
+			set_heartbeat_timeout::SetHeartbeatTimeoutCommand,
 			set_user_shielding_key::SetUserShieldingKeyCommand,
 		},
 		shield_funds::ShieldFundsCommand,
@@ -87,7 +87,7 @@ pub enum BaseCommand {
 	CreateIdentity(CreateIdentityCommand),
 
 	/// Set heartbeat timeout storage
-	SetHeartbeatTimeoutStorage(SetHeartbeatTimeoutStorageCommand),
+	SetHeartbeatTimeout(SetHeartbeatTimeoutCommand),
 }
 
 impl BaseCommand {
@@ -106,7 +106,7 @@ impl BaseCommand {
 			// Litentry's commands below
 			BaseCommand::SetUserShieldingKey(cmd) => cmd.run(cli),
 			BaseCommand::CreateIdentity(cmd) => cmd.run(cli),
-			BaseCommand::SetHeartbeatTimeoutStorage(cmd) => cmd.run(cli),
+			BaseCommand::SetHeartbeatTimeout(cmd) => cmd.run(cli),
 		}
 	}
 }
