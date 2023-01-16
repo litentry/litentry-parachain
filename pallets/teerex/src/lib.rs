@@ -184,6 +184,7 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 
 			Self::remove_enclave(&sender)?;
+			log::info!("simple test log: unregister_enclave");
 			Self::deposit_event(Event::RemovedEnclave(sender));
 
 			Ok(().into())
