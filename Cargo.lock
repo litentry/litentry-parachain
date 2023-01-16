@@ -118,7 +118,7 @@ dependencies = [
 [[package]]
 name = "aes-gcm"
 version = "0.10.1"
-source = "git+https://github.com/RustCrypto/AEADs#2751627e3f936bd6501b65c340defe70e95e6bf3"
+source = "git+https://github.com/RustCrypto/AEADs#167111d7b10c0016a0bde530b36ee22bda6913cb"
 dependencies = [
  "aead 0.5.1",
  "aes 0.8.2",
