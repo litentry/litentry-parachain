@@ -19,6 +19,7 @@
 use crate as pallet_sidechain;
 use frame_support::{pallet_prelude::GenesisBuild, parameter_types};
 use frame_system as system;
+use frame_system::EnsureRoot;
 use pallet_sidechain::Config;
 use sp_core::H256;
 use sp_keyring::AccountKeyring;
@@ -130,12 +131,11 @@ impl pallet_teerex::Config for Test {
 	type Currency = Balances;
 	type MomentsPerDay = MomentsPerDay;
 	type WeightInfo = ();
-	type MaxSilenceTime = MaxSilenceTime;
+	type DelegateeAdminOrigin = EnsureRoot<Self::AccountId>;
 }
 
 parameter_types! {
 	pub const MomentsPerDay: u64 = 86_400_000; // [ms/d]
-	pub const MaxSilenceTime: u64 = 172_800_000; // 48h
 }
 
 impl Config for Test {

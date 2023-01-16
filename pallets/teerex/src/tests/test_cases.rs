@@ -662,12 +662,19 @@ fn confirm_processed_parentchain_block_works() {
 		));
 		assert_eq!(Teerex::enclave_count(), 1);
 
+		let enclaves = list_enclaves();
+		let old_timestamp = enclaves[0].1.timestamp;
+
 		assert_ok!(Teerex::confirm_processed_parentchain_block(
 			RuntimeOrigin::signed(signer7.clone()),
 			block_hash,
 			block_number,
 			merkle_root,
 		));
+
+		let enclaves = list_enclaves();
+		let new_timestamp = enclaves[0].1.timestamp;
+		assert_ne!(old_timestamp, new_timestamp);
 
 		let expected_event = RuntimeEvent::Teerex(TeerexEvent::ProcessedParentchainBlock(
 			signer7,
