@@ -35,16 +35,17 @@ WORKER1URL=${WORKER1URL:-"wss://127.0.0.1"}
 
 CLIENT_BIN=${CLIENT_BIN:-"./../bin/integritee-cli"}
 
+LOG_FOLDER="./../log"
+
 echo "Using client binary $CLIENT_BIN"
 echo "Using node uri $NODEURL:$NPORT"
 echo "Using trusted-worker uri $WORKER1URL:$WORKER1PORT"
 echo ""
 
-ACC=//Bob
-KEY="22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12"
+ACC=//Alice
+TIMEOUT=5000 # 5 seconds, smaller than 12s (the block duration)
 
 CLIENT="$CLIENT_BIN -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
-echo "CLIENT is $CLIENT"
 
 echo "* Query on-chain enclave registry:"
 WORKERS=$($CLIENT list-workers)
@@ -63,42 +64,20 @@ else
 fi
 [[ -z $MRENCLAVE ]] && { echo "MRENCLAVE is empty. cannot continue" ; exit 1; }
 
+
 # indirect call that will be sent to the parachain, it will be synchronously handled
 sleep 10
-echo "* Set $ACC 's shielding key to $KEY"
-${CLIENT} set-user-shielding-key "$ACC" "$KEY" ${MRENCLAVE}
+echo "* Set $ACC 's heartbeat timeout to $TIMEOUT"
+${CLIENT} set-heartbeat-timeout "$ACC" "$TIMEOUT"
 echo ""
 
-sleep 20
-echo "* Get $ACC 's shielding key"
-ACTUAL_KEY=$($CLIENT trusted --mrenclave $MRENCLAVE --direct user-shielding-key $ACC)
-echo ""
+sleep 60
 
-if [ "$ACTUAL_KEY" = "$KEY" ]; then
-    echo "KEY identical: $KEY"
-    echo "test indirect call passed"
+read MRENCLAVE <<< $($CLIENT list-workers | awk '/  MRENCLAVE: / { print $2; exit }')
+if [[ -z $MRENCLAVE ]]
+then
+    echo "All workers removed, test passed"
 else
-    echo "KEY non-identical: expected: $KEY actual: $ACTUAL_KEY"
-    exit 1
-fi
-
-echo "------------------------------"
-# direct call that will be asynchronously handled
-KEY="8378193a4ce64180814bd60591d1054a04dbc4da02afde453799cd6888ee0c6c"
-sleep 10
-echo "* Set $ACC 's shielding key to $KEY"
-${CLIENT} trusted --mrenclave $MRENCLAVE --direct set-user-shielding-key-preflight "$ACC" "$KEY"
-echo ""
-
-sleep 35
-echo "* Get $ACC 's shielding key"
-ACTUAL_KEY=$($CLIENT trusted --mrenclave $MRENCLAVE --direct user-shielding-key $ACC)
-echo ""
-
-if [ "$ACTUAL_KEY" = "$KEY" ]; then
-    echo "KEY identical: $KEY"
-    echo "test direct call passed"
-else
-    echo "KEY non-identical: expected: $KEY actual: $ACTUAL_KEY"
+    echo "Worker(s) still exist(s), test fail"
     exit 1
 fi
