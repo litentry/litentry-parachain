@@ -196,6 +196,7 @@ pub mod pallet {
 
 			Self::remove_enclave(&sender)?;
 			Self::deposit_event(Event::RemovedEnclave(sender));
+			log::info!("test: unregister_enclave");
 
 			Ok(().into())
 		}
