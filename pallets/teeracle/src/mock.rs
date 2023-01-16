@@ -17,6 +17,7 @@
 use crate as pallet_teeracle;
 use frame_support::{pallet_prelude::GenesisBuild, parameter_types};
 use frame_system as system;
+use frame_system::EnsureRoot;
 use pallet_teeracle::Config;
 use sp_core::H256;
 use sp_keyring::AccountKeyring;
@@ -121,7 +122,6 @@ impl timestamp::Config for Test {
 
 parameter_types! {
 	pub const MomentsPerDay: u64 = 86_400_000; // [ms/d]
-	pub const MaxSilenceTime: u64 = 172_800_000; // 48h
 	pub const MaxWhitelistedReleases: u32 = 10;
 	pub const MaxOracleBlobLen: u32 = 4096;
 }
@@ -131,7 +131,7 @@ impl pallet_teerex::Config for Test {
 	type Currency = Balances;
 	type MomentsPerDay = MomentsPerDay;
 	type WeightInfo = ();
-	type MaxSilenceTime = MaxSilenceTime;
+	type DelegateeAdminOrigin = EnsureRoot<Self::AccountId>;
 }
 
 impl Config for Test {
