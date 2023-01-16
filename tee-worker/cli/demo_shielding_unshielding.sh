@@ -154,6 +154,7 @@ wait_until_balance ${MRENCLAVE} ${ICGACCOUNTALICE} $(( BALANCE_INCOGNITO_ALICE +
 
 echo "* Wait and assert Bob's incognito account balance"
 wait_until_balance ${MRENCLAVE} ${ICGACCOUNTBOB} 0
+echo ""
 
 echo "* Send ${AMOUNT_TRANSFER} funds from Alice's incognito account to Bob's incognito account"
 $CLIENT trusted --mrenclave ${MRENCLAVE} transfer ${ICGACCOUNTALICE} ${ICGACCOUNTBOB} ${AMOUNT_TRANSFER}
@@ -164,6 +165,7 @@ wait_until_balance ${MRENCLAVE} ${ICGACCOUNTALICE} $(( BALANCE_INCOGNITO_ALICE +
 
 echo "* Wait and assert Bob's incognito account balance"
 wait_until_balance ${MRENCLAVE} ${ICGACCOUNTBOB} ${AMOUNT_TRANSFER}
+echo ""
 
 echo "* Un-shield ${AMOUNT_UNSHIELD} tokens from Alice's incognito account"
 ${CLIENT} trusted --mrenclave ${MRENCLAVE} --xt-signer //Alice unshield-funds ${ICGACCOUNTALICE} //Alice ${AMOUNT_UNSHIELD}
@@ -175,4 +177,8 @@ wait_until_balance ${MRENCLAVE} ${ICGACCOUNTALICE} $(( BALANCE_INCOGNITO_ALICE +
 echo "* Wait and assert Bob's incognito account balance"
 wait_until_balance ${MRENCLAVE} ${ICGACCOUNTBOB} ${AMOUNT_TRANSFER}
 
+echo ""
+echo "-----------------------"
 echo "The $TEST test passed!"
+echo "-----------------------"
+echo ""
