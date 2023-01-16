@@ -22,6 +22,9 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use codec::{Decode, Error, Input};
+use sp_std::vec::Vec;
+
 pub use substrate_api_client::{
 	PlainTip, PlainTipExtrinsicParams, PlainTipExtrinsicParamsBuilder, SubstrateDefaultSignedExtra,
 	UncheckedExtrinsicV4,
@@ -41,6 +44,30 @@ pub type ParentchainExtrinsicParamsBuilder = PlainTipExtrinsicParamsBuilder;
 
 pub type ParentchainUncheckedExtrinsic<Call> =
 	UncheckedExtrinsicV4<Call, SubstrateDefaultSignedExtra<PlainTip>>;
+
+#[derive(Clone, Eq, PartialEq, Debug)]
+pub struct ParentchainUncheckedExtrinsicWithStatus<Call> {
+	pub xt: UncheckedExtrinsicV4<Call, SubstrateDefaultSignedExtra<PlainTip>>,
+	pub status: bool,
+}
+
+impl<Call> Decode for ParentchainUncheckedExtrinsicWithStatus<Call>
+where
+	UncheckedExtrinsicV4<Call, SubstrateDefaultSignedExtra<PlainTip>>: Decode,
+{
+	fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
+		// This is a little more complicated than usual since the binary format must be compatible
+		// with substrate's generic `Vec<u8>` type. Basically this just means accepting that there
+		// will be a prefix of vector length (we don't need
+		// to use this).
+		let _length_do_not_remove_me_see_above: Vec<()> = Decode::decode(input)?;
+
+		Ok(ParentchainUncheckedExtrinsicWithStatus::<Call> {
+			xt: Decode::decode(input)?,
+			status: Decode::decode(input)?,
+		})
+	}
+}
 
 #[cfg(feature = "std")]
 pub use api::*;

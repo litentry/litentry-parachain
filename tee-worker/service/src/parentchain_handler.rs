@@ -17,18 +17,23 @@
 */
 
 use crate::error::{Error, ServiceResult};
+use codec::Encode;
 use itc_parentchain::{
 	light_client::light_client_init_params::{GrandpaParams, SimpleParams},
 	primitives::ParentchainInitParams,
 };
 use itp_enclave_api::{enclave_base::EnclaveBase, sidechain::Sidechain};
 use itp_node_api::api_client::ChainApi;
-use itp_types::SignedBlock;
+use itp_types::{extrinsics::OpaqueExtrinsicWithStatus, SignedBlock};
 use log::*;
 use my_node_runtime::Header;
 use sp_finality_grandpa::VersionedAuthorityList;
-use sp_runtime::traits::Header as HeaderTrait;
+use sp_runtime::{
+	traits::{Block, Header as HeaderTrait},
+	OpaqueExtrinsic,
+};
 use std::{cmp::min, sync::Arc};
+use substrate_api_client::{Events, Phase};
 
 const BLOCK_SYNC_BATCH_SIZE: u32 = 1000;
 
@@ -133,7 +138,7 @@ where
 
 		let mut until_synced_header = last_synced_header;
 		loop {
-			let block_chunk_to_sync = self.parentchain_api.get_blocks(
+			let mut block_chunk_to_sync = self.parentchain_api.get_blocks(
 				until_synced_header.number + 1,
 				min(until_synced_header.number + BLOCK_SYNC_BATCH_SIZE, curr_block_number),
 			)?;
@@ -141,6 +146,53 @@ where
 			if block_chunk_to_sync.is_empty() {
 				return Ok(until_synced_header)
 			}
+
+			let mut events: Vec<Events> = vec![];
+			for block in &block_chunk_to_sync {
+				let block_events = self.parentchain_api.events(Some(block.block.hash()))?;
+				events.push(block_events);
+			}
+			block_chunk_to_sync
+				.iter_mut()
+				.enumerate()
+				.for_each(|(block_index, signed_block)| {
+					let mut extrinsics: Vec<OpaqueExtrinsic> = vec![];
+					let block_events = events.get(block_index).unwrap();
+					for (i, xt) in signed_block.block.extrinsics.iter().enumerate() {
+						// Check if the tx was successful
+						let success = block_events
+							.iter()
+							.filter(|event| {
+								if let Ok(event) = event {
+									event.pallet_name() == "System"
+										&& event.variant_name() == "ExtrinsicSuccess"
+										&& event.phase() == Phase::ApplyExtrinsic(i as u32)
+								} else {
+									false
+								}
+							})
+							.count() > 0;
+						if !success {
+							warn!(
+								"block:{:?}, extrinsic index: {:?}, success: {:?}",
+								&signed_block.block.header.number, i, success,
+							);
+						}
+
+						// `indirect_calls_executor` should know the if tx was successful.
+						// if we change the block type `sp_runtime::generic::Block` or `sp_runtime::generic::SignedBlock`,
+						// this change will affect many structs or files, like block_importer, block_import_dispatcher, consensus and so on.
+						// `OpaqueExtrinsic` (Vec<u8>) encoded value contains tx status, and decode Vec<u8> in `indirect_calls_executor`,
+						// this solution is probably the least change
+						let op_with_status =
+							OpaqueExtrinsicWithStatus { xt: xt.clone(), status: success };
+						let new_op_xt =
+							OpaqueExtrinsic::from_bytes(op_with_status.encode().as_slice())
+								.unwrap();
+						extrinsics.push(new_op_xt);
+					}
+					signed_block.block.extrinsics = extrinsics;
+				});
 
 			self.enclave_api.sync_parentchain(block_chunk_to_sync.as_slice(), 0)?;
 
