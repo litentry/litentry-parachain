@@ -95,7 +95,7 @@ fn disable_vc_works() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(1),
-			1,
+			2,
 			VC_INDEX,
 			VC_HASH,
 			AesOutput::default()
@@ -124,7 +124,7 @@ fn disable_vc_with_other_subject_fails() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(1),
-			1,
+			2,
 			VC_INDEX,
 			VC_HASH,
 			AesOutput::default()
@@ -142,7 +142,7 @@ fn revoke_vc_works() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(1),
-			1,
+			2,
 			VC_INDEX,
 			VC_HASH,
 			AesOutput::default()
@@ -169,7 +169,7 @@ fn revoke_vc_with_other_subject_fails() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(1),
-			1,
+			2,
 			VC_INDEX,
 			VC_HASH,
 			AesOutput::default()
