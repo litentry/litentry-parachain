@@ -758,6 +758,10 @@ fn print_events(events: Events, _sender: Sender<String>) {
 						info!("[+] Received UnshieldedFunds event");
 						debug!("    For:    {:?}", incognito_account);
 					},
+					my_node_runtime::pallet_teerex::Event::SetHeartbeatTimeout(timeout) => {
+						info!("[+] Received SetHeartbeatTimeout");
+						debug!("    For:    {:?}", timeout);
+					},
 					_ => {
 						trace!("Ignoring unsupported pallet_teerex event");
 					},
