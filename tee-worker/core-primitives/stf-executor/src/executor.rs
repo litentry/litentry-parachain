@@ -240,8 +240,7 @@ where
 	StateHandler::StateT: SgxExternalitiesTrait + Encode + StateHash,
 	<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesType: Encode,
 	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes,
-	<NodeMetadataRepository as AccessNodeMetadata>::MetadataType: SystemSs58Prefix,
+	NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes + SystemSs58Prefix,
 	Stf: UpdateState<
 			StateHandler::StateT,
 			<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType,
