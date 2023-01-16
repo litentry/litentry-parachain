@@ -258,6 +258,9 @@ jobs:
           - test: resume-worker
             flavor_id: mockserver
             demo_name: resume-worker
+          - test: set-heartbeat-timeout
+            flavor_id: sidechain
+            demo_name: set-heartbeat-timeout
 
     steps:
       - uses: actions/checkout@v3
