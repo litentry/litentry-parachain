@@ -154,8 +154,10 @@ pub(crate) fn get_pending_trusted_calls_for(
 
 	if rpc_return_value.status == DirectRequestStatus::Error {
 		println!("[Error] {}", String::decode(&mut rpc_return_value.value.as_slice()).unwrap());
+		direct_api.close().unwrap();
 		return vec![]
 	}
 
+	direct_api.close().unwrap();
 	Decode::decode(&mut rpc_return_value.value.as_slice()).unwrap_or_default()
 }

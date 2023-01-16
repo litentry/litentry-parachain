@@ -94,6 +94,7 @@ function wait_until_balance()
             :
         fi
     done
+    echo
     echo "Assert $2 balance failed, expected = $3, actual = $balance"
     exit 1
 }
@@ -140,8 +141,8 @@ case $TEST in
     first)
         wait_until_balance ${MRENCLAVE} ${ICGACCOUNTALICE} 0 ;;
     second)
-        wait_until_balance ${MRENCLAVE} ${ICGACCOUNTALICE} $(( AMOUNT_SHIELD - AMOUNT_TRANSFER + AMOUNT_UNSHIELD ))
-        BALANCE_INCOGNITO_ALICE=$(( AMOUNT_SHIELD - AMOUNT_TRANSFER + AMOUNT_UNSHIELD )) ;;
+        wait_until_balance ${MRENCLAVE} ${ICGACCOUNTALICE} $(( AMOUNT_SHIELD - AMOUNT_TRANSFER - AMOUNT_UNSHIELD ))
+        BALANCE_INCOGNITO_ALICE=$(( AMOUNT_SHIELD - AMOUNT_TRANSFER - AMOUNT_UNSHIELD )) ;;
     *)
         echo "unsupported test mode"
         exit 1 ;;
@@ -151,36 +152,42 @@ echo "* Shield ${AMOUNT_SHIELD} tokens to Alice's incognito account"
 ${CLIENT} shield-funds //Alice ${ICGACCOUNTALICE} ${AMOUNT_SHIELD} ${MRENCLAVE}
 echo ""
 
-echo "* Wait and assert Alice's incognito account balance"
+echo "* Wait and assert Alice's incognito account balance... "
 wait_until_balance ${MRENCLAVE} ${ICGACCOUNTALICE} $(( BALANCE_INCOGNITO_ALICE + AMOUNT_SHIELD ))
+echo "✔ ok"
 
-echo "* Wait and assert Bob's incognito account balance"
+echo "* Wait and assert Bob's incognito account balance... "
 wait_until_balance ${MRENCLAVE} ${ICGACCOUNTBOB} 0
+echo "✔ ok"
 echo ""
 
 echo "* Send ${AMOUNT_TRANSFER} funds from Alice's incognito account to Bob's incognito account"
 $CLIENT trusted --mrenclave ${MRENCLAVE} transfer ${ICGACCOUNTALICE} ${ICGACCOUNTBOB} ${AMOUNT_TRANSFER}
 echo ""
 
-echo "* Wait and assert Alice's incognito account balance"
+echo "* Wait and assert Alice's incognito account balance... "
 wait_until_balance ${MRENCLAVE} ${ICGACCOUNTALICE} $(( BALANCE_INCOGNITO_ALICE + AMOUNT_SHIELD - AMOUNT_TRANSFER ))
+echo "✔ ok"
 
-echo "* Wait and assert Bob's incognito account balance"
+echo "* Wait and assert Bob's incognito account balance... "
 wait_until_balance ${MRENCLAVE} ${ICGACCOUNTBOB} ${AMOUNT_TRANSFER}
+echo "✔ ok"
 echo ""
 
 echo "* Un-shield ${AMOUNT_UNSHIELD} tokens from Alice's incognito account"
 ${CLIENT} trusted --mrenclave ${MRENCLAVE} --xt-signer //Alice unshield-funds ${ICGACCOUNTALICE} //Alice ${AMOUNT_UNSHIELD}
 echo ""
 
-echo "* Wait and assert Alice's incognito account balance"
+echo "* Wait and assert Alice's incognito account balance... "
 wait_until_balance ${MRENCLAVE} ${ICGACCOUNTALICE} $(( BALANCE_INCOGNITO_ALICE + AMOUNT_SHIELD - AMOUNT_TRANSFER - AMOUNT_UNSHIELD ))
+echo "✔ ok"
 
-echo "* Wait and assert Bob's incognito account balance"
+echo "* Wait and assert Bob's incognito account balance... "
 wait_until_balance ${MRENCLAVE} ${ICGACCOUNTBOB} ${AMOUNT_TRANSFER}
+echo "✔ ok"
 
 echo ""
 echo "-----------------------"
-echo "The $TEST test passed!"
+echo "✔ The $TEST test passed!"
 echo "-----------------------"
 echo ""
