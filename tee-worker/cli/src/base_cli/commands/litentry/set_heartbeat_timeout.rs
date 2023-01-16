@@ -22,7 +22,7 @@ use crate::{
 use itp_node_api::api_client::TEEREX;
 use log::*;
 use sp_core::sr25519 as sr25519_core;
-use substrate_api_client::{compose_extrinsic, UncheckedExtrinsicV4, XtStatus};
+use substrate_api_client::{compose_call, compose_extrinsic, UncheckedExtrinsicV4, XtStatus};
 
 #[derive(Parser)]
 pub struct SetHeartbeatTimeoutCommand {
@@ -41,9 +41,11 @@ impl SetHeartbeatTimeoutCommand {
 		let from = get_pair_from_str(&self.account);
 		let chain_api = chain_api.set_signer(sr25519_core::Pair::from(from));
 
-		// compose the extrinsic
-		let xt: UncheckedExtrinsicV4<_, _> =
-			compose_extrinsic!(chain_api, TEEREX, "set_heartbeat_timeout", self.timeout);
+		// this call can only be called by sudo
+		#[allow(clippy::redundant_clone)]
+		let call = compose_call!(chain_api.metadata.clone(), TEEREX, "set_heartbeat_timeout", self.timeout);
+		#[allow(clippy::redundant_clone)]
+		let xt: UncheckedExtrinsicV4<_, _> = compose_extrinsic!(chain_api, "Sudo", "sudo", call);
 
 		let tx_hash = chain_api.send_extrinsic(xt.hex_encode(), XtStatus::Finalized).unwrap();
 		println!("[+] TrustedOperation got finalized. Hash: {:?}\n", tx_hash);
