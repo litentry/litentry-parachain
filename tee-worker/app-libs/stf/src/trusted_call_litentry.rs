@@ -187,6 +187,7 @@ impl TrustedCallSigned {
 		shard: &ShardIdentifier,
 		who: AccountId,
 		assertion: Assertion,
+		bn: ParentchainBlockNumber,
 	) -> StfResult<()> {
 		debug!("who {:?}, assertion {:?}", account_id_to_string(&who), assertion);
 
@@ -198,7 +199,7 @@ impl TrustedCallSigned {
 			}
 		}
 
-		match Credential::generate_unsigned_credential(&assertion, &who) {
+		match Credential::generate_unsigned_credential(&assertion, &who, bn) {
 			Ok(credential_unsigned) => {
 				let encoded_shard = shard.encode();
 				let request: RequestType = AssertionBuildRequest {

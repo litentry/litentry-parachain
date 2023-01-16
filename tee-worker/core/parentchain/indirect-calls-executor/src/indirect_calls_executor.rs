@@ -409,6 +409,9 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 							account,
 							assertion,
 							shard,
+							block_number
+								.try_into()
+								.map_err(|_| crate::error::Error::ConvertParentchainBlockNumber)?,
 						);
 						let signed_trusted_call =
 							self.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;

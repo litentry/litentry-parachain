@@ -22,8 +22,6 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
-	#[error("Empty Subject")]
-	EmptySubject,
 	#[error("Empty Credential Proof")]
 	EmptyCredentialProof,
 	#[error("Empty Credential Type")]
@@ -32,8 +30,12 @@ pub enum Error {
 	EmptyCredentialIssuer,
 	#[error("Empty Credential Subject")]
 	EmptyCredentialSubject,
-	#[error("Empty Issuance Date")]
-	EmptyIssuanceDate,
+	#[error("Empty Issuance Block Number")]
+	EmptyIssuanceBlockNumber,
+	#[error("Empty Proof Block Number")]
+	EmptyProofBlockNumber,
+	#[error("Invalid Proof")]
+	InvalidProof,
 	#[error("Credential Is Too Long")]
 	CredentialIsTooLong,
 	#[error("Pass Error: {0}")]
