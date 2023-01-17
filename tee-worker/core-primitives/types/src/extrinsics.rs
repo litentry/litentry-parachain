@@ -14,9 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use codec::Encode;
+use codec::{Decode, Encode, Error, Input};
 use sp_runtime::OpaqueExtrinsic;
 use sp_std::vec::Vec;
+use substrate_api_client::{PlainTip, SubstrateDefaultSignedExtra, UncheckedExtrinsicV4};
+
 /// Same function as in primitives::generic. Needed to be copied as it is private there.
 fn encode_with_vec_prefix<T: Encode, F: Fn(&mut Vec<u8>)>(encoder: F) -> Vec<u8> {
 	let size = sp_std::mem::size_of::<T>();
@@ -51,6 +53,30 @@ impl Encode for OpaqueExtrinsicWithStatus {
 		encode_with_vec_prefix::<Self, _>(|v| {
 			self.xt.encode_to(v);
 			self.status.encode_to(v);
+		})
+	}
+}
+
+#[derive(Clone, Eq, PartialEq, Debug)]
+pub struct ParentchainUncheckedExtrinsicWithStatus<Call> {
+	pub xt: UncheckedExtrinsicV4<Call, SubstrateDefaultSignedExtra<PlainTip>>,
+	pub status: bool,
+}
+
+impl<Call> Decode for ParentchainUncheckedExtrinsicWithStatus<Call>
+where
+	UncheckedExtrinsicV4<Call, SubstrateDefaultSignedExtra<PlainTip>>: Decode,
+{
+	fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
+		// This is a little more complicated than usual since the binary format must be compatible
+		// with substrate's generic `Vec<u8>` type. Basically this just means accepting that there
+		// will be a prefix of vector length (we don't need
+		// to use this).
+		let _length_do_not_remove_me_see_above: Vec<()> = Decode::decode(input)?;
+
+		Ok(ParentchainUncheckedExtrinsicWithStatus::<Call> {
+			xt: Decode::decode(input)?,
+			status: Decode::decode(input)?,
 		})
 	}
 }
