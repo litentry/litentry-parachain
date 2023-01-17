@@ -67,13 +67,11 @@ jobs:
           fetch-depth: 0
 
       - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
           toolchain: nightly
           components: rustfmt
           target: wasm32-unknown-unknown
-          default: true
 
       - name: Run cargo fmt check
         run: make fmtcheck
@@ -100,13 +98,11 @@ jobs:
           fetch-depth: 0
 
       - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
           toolchain: nightly
           components: clippy
           target: wasm32-unknown-unknown
-          default: true
 
       - name: Install dependencies
         run: |
@@ -232,12 +228,10 @@ jobs:
           fetch-depth: 0
 
       - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
           toolchain: nightly
           target: wasm32-unknown-unknown
-          default: true
 
       - name: Run unittests
         run: cargo test --features=skip-ias-check --locked --release -p pallet-* --lib
@@ -256,12 +250,10 @@ jobs:
           fetch-depth: 0
 
       - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
           toolchain: nightly
           target: wasm32-unknown-unknown
-          default: true
 
       - name: Run benchmarks
         run: cargo test --features=skip-ias-check --locked --release -p pallet-* --lib --features runtime-benchmarks
@@ -292,12 +284,10 @@ jobs:
           fetch-depth: 0
 
       - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
           toolchain: nightly
           target: wasm32-unknown-unknown
-          default: true
 
       # use sccache to accelerate binary compilation
       # see https://www.infinyon.com/blog/2021/04/github-actions-best-practices/

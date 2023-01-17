@@ -74,6 +74,18 @@ pub enum SubstrateNetwork {
 	Litmus,
 }
 
+impl SubstrateNetwork {
+	/// get the ss58 prefix, see https://github.com/paritytech/ss58-registry/blob/main/ss58-registry.json
+	pub fn ss58_prefix(&self) -> u16 {
+		match self {
+			Self::Polkadot => 0,
+			Self::Kusama => 2,
+			Self::Litentry => 31,
+			Self::Litmus => 131,
+		}
+	}
+}
+
 #[derive(Encode, Decode, Copy, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum EvmNetwork {
