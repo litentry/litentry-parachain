@@ -67,7 +67,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           profile: minimal
           toolchain: nightly
@@ -100,7 +100,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           profile: minimal
           toolchain: nightly
@@ -232,7 +232,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           profile: minimal
           toolchain: nightly
@@ -256,7 +256,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           profile: minimal
           toolchain: nightly
@@ -292,7 +292,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           profile: minimal
           toolchain: nightly
