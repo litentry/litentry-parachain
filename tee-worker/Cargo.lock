@@ -4716,7 +4716,6 @@ version = "0.9.0"
 dependencies = [
  "parity-scale-codec",
  "sp-core",
- "sp-std",
  "substrate-api-client",
 ]
 
