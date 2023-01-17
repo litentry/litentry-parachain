@@ -64,7 +64,7 @@ fn create_identity_with_authorised_delegatee_works() {
 			shard,
 			1,
 			vec![1u8; 2048],
-			Some(vec![1u8; 2048])
+			Some(vec![1u8; 2048]),
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
 			crate::Event::CreateIdentityRequested { shard },
@@ -82,7 +82,7 @@ fn create_identity_with_unauthorised_delegatee_fails() {
 				shard,
 				1,
 				vec![1u8; 2048],
-				Some(vec![1u8; 2048])
+				Some(vec![1u8; 2048]),
 			),
 			Error::<Test>::UnauthorisedUser
 		);

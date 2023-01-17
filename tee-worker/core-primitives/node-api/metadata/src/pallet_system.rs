@@ -14,7 +14,8 @@
 	limitations under the License.
 
 */
-use crate::{error::Result, NodeMetadata};
+use crate::{error::Result, Error, NodeMetadata};
+use codec::Decode;
 use sp_core::storage::StorageKey;
 
 /// Pallet' name:
@@ -33,5 +34,22 @@ impl SystemStorageIndexes for NodeMetadata {
 
 	fn system_account_storage_map_key(&self, index: u64) -> Result<StorageKey> {
 		self.storage_map_key(SYSTEM, "Account", index)
+	}
+}
+
+pub trait SystemSs58Prefix {
+	fn system_ss58_prefix(&self) -> Result<u16>;
+}
+
+impl SystemSs58Prefix for NodeMetadata {
+	fn system_ss58_prefix(&self) -> Result<u16> {
+		match &self.node_metadata {
+			None => Err(Error::MetadataNotSet),
+			Some(meta_data) => {
+				let pallet = meta_data.pallets.get(SYSTEM).ok_or(Error::MetadataNotSet)?;
+				let mut raw = pallet.constants.get("SS58Prefix").unwrap().value.as_slice();
+				u16::decode(&mut raw).map_err(|_| Error::InvalidMetadata)
+			},
+		}
 	}
 }

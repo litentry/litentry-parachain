@@ -20,6 +20,8 @@ use derive_more::From;
 pub enum Error {
 	/// Metadata has not been set
 	MetadataNotSet,
+	/// Invalid Metadata
+	InvalidMetadata,
 	/// Api-client metadata error
 	NodeMetadata(substrate_api_client::MetadataError),
 }
