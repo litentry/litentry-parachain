@@ -69,6 +69,7 @@ pub(crate) type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
 pub mod pallet {
 	use super::*;
 	use frame_system::pallet_prelude::*;
+	use mock_tee_primitives::Address32;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -188,6 +189,8 @@ pub mod pallet {
 		IdentityAlreadyVerified,
 		/// identity not exist when removing an identity
 		IdentityNotExist,
+		/// identity should be disallowed
+		IdentityShouldBeDisallowed,
 		/// no shielding key for a given AccountId
 		ShieldingKeyNotExist,
 		/// a verification reqeust comes too early
@@ -318,7 +321,19 @@ pub mod pallet {
 			let decrypted_identitty = Self::decrypt_with_tee_shielding_key(&encrypted_identity)?;
 			let identity = Identity::decode(&mut decrypted_identitty.as_slice())
 				.map_err(|_| Error::<T>::WrongDecodedType)?;
-
+			if let Identity::Substrate { network, address } = identity {
+				// see all the address prefix:
+				// https://github.com/paritytech/ss58-registry/blob/main/ss58-registry.json
+				let ss58_prefix = T::SS58Prefix::get();
+				if network.ss58_prefix() == ss58_prefix {
+					let address_raw: [u8; 32] = who
+						.encode()
+						.try_into()
+						.map_err(|_| DispatchError::Other("invalid account id"))?;
+					let user_address: Address32 = address_raw.into();
+					ensure!(user_address != address, Error::<T>::IdentityShouldBeDisallowed);
+				}
+			}
 			let metadata = match encrypted_metadata {
 				None => None,
 				Some(m) => {
