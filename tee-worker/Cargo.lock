@@ -4714,7 +4714,6 @@ dependencies = [
 name = "itp-api-client-types"
 version = "0.9.0"
 dependencies = [
- "parity-scale-codec",
  "sp-core",
  "substrate-api-client",
 ]
