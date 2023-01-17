@@ -48,8 +48,8 @@ use sp_std::vec::Vec;
 
 #[frame_support::pallet]
 pub mod pallet {
-
 	use super::*;
+	use litentry_primitives::Address32;
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
@@ -97,6 +97,8 @@ pub mod pallet {
 		IdentityNotExist,
 		/// the identity was not created before verification
 		IdentityNotCreated,
+		/// the identity should be disallowed
+		IdentityShouldBeDisallowed,
 		/// a verification reqeust comes too early
 		VerificationRequestTooEarly,
 		/// a verification reqeust comes too late
@@ -191,10 +193,21 @@ pub mod pallet {
 			identity: Identity,
 			metadata: Option<MetadataOf<T>>,
 			creation_request_block: ParentchainBlockNumber,
+			parent_ss58_prefix: u16,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 			if let Some(c) = IDGraphs::<T>::get(&who, &identity) {
 				ensure!(!c.is_verified, Error::<T>::IdentityAlreadyVerified);
+			}
+			if let Identity::Substrate { network, address } = identity {
+				if network.ss58_prefix() == parent_ss58_prefix {
+					let address_raw: [u8; 32] = who
+						.encode()
+						.try_into()
+						.map_err(|_| DispatchError::Other("invalid account id"))?;
+					let user_address: Address32 = address_raw.into();
+					ensure!(user_address != address, Error::<T>::IdentityShouldBeDisallowed);
+				}
 			}
 			let context = IdentityContext {
 				metadata,

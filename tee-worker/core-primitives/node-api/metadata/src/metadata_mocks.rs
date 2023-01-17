@@ -17,8 +17,8 @@
 
 use crate::{
 	error::Result, pallet_imp::IMPCallIndexes, pallet_imp_mock::IMPMockCallIndexes,
-	pallet_sidechain::SidechainCallIndexes, pallet_teerex::TeerexCallIndexes,
-	pallet_vcmp::VCMPCallIndexes,
+	pallet_sidechain::SidechainCallIndexes, pallet_system::SystemSs58Prefix,
+	pallet_teerex::TeerexCallIndexes, pallet_vcmp::VCMPCallIndexes,
 };
 use codec::{Decode, Encode};
 
@@ -237,5 +237,11 @@ impl VCMPCallIndexes for NodeMetadataMock {
 
 	fn some_error_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.vcmp_module, self.vcmp_some_error])
+	}
+}
+
+impl SystemSs58Prefix for NodeMetadataMock {
+	fn system_ss58_prefix(&self) -> Result<u16> {
+		Ok(131)
 	}
 }
