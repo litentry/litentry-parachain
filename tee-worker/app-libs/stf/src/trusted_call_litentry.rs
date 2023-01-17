@@ -69,13 +69,15 @@ impl TrustedCallSigned {
 		identity: Identity,
 		metadata: Option<MetadataOf<Runtime>>,
 		bn: ParentchainBlockNumber,
+		parent_ss58_prefix: u16,
 	) -> StfResult<ChallengeCode> {
 		debug!(
-			"who.str = {:?}, identity = {:?}, metadata = {:?}, bn = {:?}",
+			"who.str = {:?}, identity = {:?}, metadata = {:?}, bn = {:?}, parent_ss58_prefix = {}",
 			account_id_to_string(&who),
 			identity,
 			metadata,
-			bn
+			bn,
+			parent_ss58_prefix,
 		);
 
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::create_identity {
@@ -83,6 +85,7 @@ impl TrustedCallSigned {
 			identity: identity.clone(),
 			metadata,
 			creation_request_block: bn,
+			parent_ss58_prefix,
 		}
 		.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
