@@ -33,5 +33,11 @@ pub mod sgx_reexport_prelude {
 }
 pub mod error;
 pub mod indirect_calls_executor;
-
+pub mod litentry;
 pub use indirect_calls_executor::*;
+
+pub enum ExecutionStatus {
+	Success,
+	NextExecutor,
+	Skip,
+}

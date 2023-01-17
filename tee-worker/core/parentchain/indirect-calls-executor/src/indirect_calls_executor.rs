@@ -20,11 +20,17 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::error::Result;
+use crate::{
+	error::Result,
+	litentry::{
+		create_identity::CreateIdentity, set_user_shielding_key::SetUserShieldingKey,
+		DecodeAndExecute, ExcuteIndirectCall,
+	},
+	ExecutionStatus,
+};
 use beefy_merkle_tree::{merkle_root, Keccak256};
 use codec::{Decode, Encode};
 use futures::executor;
-use ita_sgx_runtime::{pallet_imt::MetadataOf, Runtime};
 use ita_stf::{TrustedCall, TrustedOperation};
 use itp_node_api::{
 	api_client::ParentchainUncheckedExtrinsic,
@@ -38,14 +44,14 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_primitives::types::AccountId;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{
-	CallWorkerFn, CreateIdentityFn, OpaqueCall, RemoveIdentityFn, RequestVCFn,
-	SetUserShieldingKeyFn, ShardIdentifier, ShieldFundsFn, VerifyIdentityFn, H256,
+	CallWorkerFn, OpaqueCall, RemoveIdentityFn, RequestVCFn, SetUserShieldingKeyFn,
+	ShardIdentifier, ShieldFundsFn, VerifyIdentityFn, H256,
 };
 use litentry_primitives::{Identity, UserShieldingKeyType, ValidationData};
 use log::*;
 use sp_core::blake2_256;
 use sp_runtime::traits::{AccountIdLookup, Block as ParentchainBlockTrait, Header, StaticLookup};
-use std::{sync::Arc, vec::Vec};
+use std::{sync::Arc, vec, vec::Vec};
 
 /// Trait to execute the indirect calls found in the extrinsics of a block.
 pub trait ExecuteIndirectCalls {
@@ -86,10 +92,10 @@ pub struct IndirectCallsExecutor<
 	TopPoolAuthor,
 	NodeMetadataProvider,
 > {
-	shielding_key_repo: Arc<ShieldingKeyRepository>,
-	stf_enclave_signer: Arc<StfEnclaveSigner>,
-	top_pool_author: Arc<TopPoolAuthor>,
-	node_meta_data_provider: Arc<NodeMetadataProvider>,
+	pub(crate) shielding_key_repo: Arc<ShieldingKeyRepository>,
+	pub(crate) stf_enclave_signer: Arc<StfEnclaveSigner>,
+	pub(crate) top_pool_author: Arc<TopPoolAuthor>,
+	pub(crate) node_meta_data_provider: Arc<NodeMetadataProvider>,
 }
 
 impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
@@ -143,7 +149,11 @@ where
 		Ok(())
 	}
 
-	fn submit_trusted_call(&self, shard: ShardIdentifier, encrypted_trusted_call: Vec<u8>) {
+	pub(crate) fn submit_trusted_call(
+		&self,
+		shard: ShardIdentifier,
+		encrypted_trusted_call: Vec<u8>,
+	) {
 		let top_submit_future =
 			async { self.top_pool_author.submit_top(encrypted_trusted_call, shard).await };
 		if let Err(e) = executor::block_on(top_submit_future) {
@@ -247,6 +257,27 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 			}
 
 			// litentry
+			let create_identity = CreateIdentity {
+				block_number: block_number
+					.try_into()
+					.map_err(|_| crate::error::Error::ConvertParentchainBlockNumber)?,
+			};
+			let set_user_shielding_key = SetUserShieldingKey {};
+			let executors: Vec<
+				&dyn DecodeAndExecute<
+					ShieldingKeyRepository,
+					StfEnclaveSigner,
+					TopPoolAuthor,
+					NodeMetadataProvider,
+				>,
+			> = vec![&set_user_shielding_key, &create_identity];
+			for executor in executors {
+				match executor.decode_and_execute(&self, &mut encoded_xt_opaque.as_slice()) {
+					Ok(ExecutionStatus::Success) | Ok(ExecutionStatus::Skip) => break,
+					Ok(ExecutionStatus::NextExecutor) => continue,
+					Err(_) => {},
+				}
+			}
 			// Found SetUserShieldingKey extrinsic
 			if let Ok(xt) = ParentchainUncheckedExtrinsic::<SetUserShieldingKeyFn>::decode(
 				&mut encoded_xt_opaque.as_slice(),
@@ -280,46 +311,6 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 			}
 
 			// Found CreateIdentityFn extrinsic
-			if let Ok(xt) = ParentchainUncheckedExtrinsic::<CreateIdentityFn>::decode(
-				&mut encoded_xt_opaque.as_slice(),
-			) {
-				if self.is_create_identity_funciton(&xt.function.0) {
-					let (_, shard, account, encrypted_identity, encrypted_metadata) = xt.function;
-					let shielding_key = self.shielding_key_repo.retrieve_key()?;
-
-					let identity: Identity = Identity::decode(
-						&mut shielding_key.decrypt(&encrypted_identity).unwrap().as_slice(),
-					)?;
-					let metadata = match encrypted_metadata {
-						None => None,
-						Some(m) => {
-							let decrypted_metadata = shielding_key.decrypt(&m)?;
-							Some(MetadataOf::<Runtime>::decode(&mut decrypted_metadata.as_slice())?)
-						},
-					};
-
-					if xt.signature.is_some() {
-						let enclave_account_id = self.stf_enclave_signer.get_enclave_account()?;
-						let trusted_call = TrustedCall::create_identity_runtime(
-							enclave_account_id,
-							account,
-							identity,
-							metadata,
-							block_number
-								.try_into()
-								.map_err(|_| crate::error::Error::ConvertParentchainBlockNumber)?,
-						);
-						let signed_trusted_call =
-							self.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
-						let trusted_operation =
-							TrustedOperation::indirect_call(signed_trusted_call);
-
-						let encrypted_trusted_call =
-							shielding_key.encrypt(&trusted_operation.encode())?;
-						self.submit_trusted_call(shard, encrypted_trusted_call);
-					}
-				}
-			}
 
 			// Found RemoveIdentityFn extrinsic
 			if let Ok(xt) = ParentchainUncheckedExtrinsic::<RemoveIdentityFn>::decode(
