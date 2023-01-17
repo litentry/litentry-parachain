@@ -322,8 +322,10 @@ mod tests {
 		let who = AccountId::from([0; 32]);
 		let data = include_str!("templates/vc.json");
 
-		let vc = Credential::from_template(data, &who, 0u32).unwrap();
+		let vc = Credential::from_template(data, &who, 1u32).unwrap();
 		assert!(vc.validate_unsigned().is_ok());
+		let id: String = vc.credential_subject.id.clone();
+		assert_eq!(id, account_id_to_string(&who));
 		assert_eq!(vc.proof.proof_purpose, "assertionMethod");
 	}
 }
