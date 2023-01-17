@@ -1,0 +1,44 @@
+name: Cleanup caches after PR closed
+on:
+  pull_request:
+    # branches:
+    #   - dev
+    types:
+      - closed
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Extract branch name
+        shell: bash
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        id: extract_branch
+
+      - name: Cleanup
+        run: |
+          gh extension install actions/gh-actions-cache
+
+          REPO=${{ github.repository }}
+          BRANCH=${{ github.head_ref }}
+
+          cacheKeysForPR=$(gh actions-cache list -R $REPO | cut -f 1 )
+
+          ## Setting this to not fail the workflow while deleting cache keys.
+          set +e
+          echo "Deleting caches after PR closed for branch=$BRANCH ..."
+          for cacheKey in $cacheKeysForPR
+          do
+              if [[ $cacheKey == *"$BRANCH"* ]]
+              then
+                echo "  Delete cache: $cacheKey"
+                gh actions-cache delete $cacheKey -R $REPO --confirm
+              fi
+          done
+          echo "Done"
+        env:
+          GH_TOKEN: ${{ github.token }}
