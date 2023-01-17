@@ -48,6 +48,7 @@ use std::{format, prelude::v1::*, sync::Arc};
 
 #[cfg(feature = "evm")]
 use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
+use itp_node_api_metadata::pallet_system::SystemSs58Prefix;
 
 #[cfg(feature = "evm")]
 use crate::evm_helpers::{create_code_hash, evm_create2_address, evm_create_address};
@@ -217,7 +218,8 @@ impl TrustedReturnValue
 impl<NodeMetadataRepository> ExecuteCall<NodeMetadataRepository> for TrustedCallSigned
 where
 	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes,
+	NodeMetadataRepository::MetadataType:
+		TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix,
 {
 	type Error = StfError;
 
@@ -450,7 +452,15 @@ where
 					identity,
 					metadata
 				);
-				match Self::create_identity_runtime(who.clone(), identity.clone(), metadata, bn) {
+				let parent_ss58_prefix =
+					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
+				match Self::create_identity_runtime(
+					who.clone(),
+					identity.clone(),
+					metadata,
+					bn,
+					parent_ss58_prefix,
+				) {
 					Ok(code) => {
 						debug!("create_identity {} OK", account_id_to_string(&who));
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
@@ -593,11 +603,7 @@ where
 				ensure_enclave_signer_account(&enclave_account)?;
 				match (*credential).to_json() {
 					Ok(credential_str) => {
-						debug!(
-							"build_assertion got result {:?} length {}",
-							credential_str,
-							credential_str.len()
-						);
+						debug!("got credential {} length {}", credential_str, credential_str.len());
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
 							let vc_hash = blake2_256(credential_str.as_bytes());
 
