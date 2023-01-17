@@ -29,11 +29,9 @@ jobs:
       - name: Install toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
           toolchain: nightly
           components: rustfmt
           target: wasm32-unknown-unknown
-          default: true
 
       - name: Install additional dependencies
         run: |
