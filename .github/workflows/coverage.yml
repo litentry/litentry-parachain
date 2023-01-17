@@ -27,13 +27,11 @@ jobs:
           fetch-depth: 0
 
       - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
           toolchain: nightly
           components: rustfmt
           target: wasm32-unknown-unknown
-          default: true
 
       - name: Install additional dependencies
         run: |
