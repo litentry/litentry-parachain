@@ -21,7 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::Result;
-use lc_credentials_tee::credentials::Credential;
+use lc_credentials_tee::Credential;
 use lc_stf_task_sender::MaxIdentityLength;
 use litentry_primitives::Identity;
 use sp_runtime::BoundedVec;

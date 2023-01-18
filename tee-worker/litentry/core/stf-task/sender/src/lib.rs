@@ -35,7 +35,7 @@ pub mod error;
 pub mod stf_task_sender;
 use codec::{Decode, Encode};
 pub use error::Result;
-use lc_credentials_tee::credentials::Credential;
+use lc_credentials_tee::Credential;
 use litentry_primitives::{
 	Assertion, ChallengeCode, Identity, Web2ValidationData, Web3ValidationData,
 };

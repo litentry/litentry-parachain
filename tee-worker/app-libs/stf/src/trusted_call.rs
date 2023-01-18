@@ -36,7 +36,7 @@ use itp_stf_interface::ExecuteCall;
 use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier, Signature};
 use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
-use lc_credentials_tee::credentials::Credential;
+use lc_credentials_tee::Credential;
 use litentry_primitives::{
 	Assertion, ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType,
 	ValidationData,
@@ -48,6 +48,7 @@ use std::{format, prelude::v1::*, sync::Arc};
 
 #[cfg(feature = "evm")]
 use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
+use itp_node_api_metadata::pallet_system::SystemSs58Prefix;
 
 #[cfg(feature = "evm")]
 use crate::evm_helpers::{create_code_hash, evm_create2_address, evm_create_address};
@@ -121,7 +122,13 @@ pub enum TrustedCall {
 		ParentchainBlockNumber,
 	), // (EnclaveSigner, Account, identity, validation, blocknumber)
 	verify_identity_runtime(AccountId, AccountId, Identity, ParentchainBlockNumber), // (EnclaveSigner, Account, identity, blocknumber)
-	build_assertion_preflight(AccountId, AccountId, Assertion, ShardIdentifier), // (Account, Account, Assertion, Shard)
+	build_assertion_preflight(
+		AccountId,
+		AccountId,
+		Assertion,
+		ShardIdentifier,
+		ParentchainBlockNumber,
+	), // (Account, Account, Assertion, shard, blocknumber)
 	build_assertion_runtime(AccountId, AccountId, Box<Credential>), // (Account, Account, Box<Credential>)
 	set_challenge_code_runtime(AccountId, AccountId, Identity, ChallengeCode), // only for testing
 }
@@ -148,7 +155,7 @@ impl TrustedCall {
 			TrustedCall::remove_identity_runtime(account, _, _) => account,
 			TrustedCall::verify_identity_preflight(account, _, _, _, _) => account,
 			TrustedCall::verify_identity_runtime(account, _, _, _) => account,
-			TrustedCall::build_assertion_preflight(account, _, _, _) => account,
+			TrustedCall::build_assertion_preflight(account, _, _, _, _) => account,
 			TrustedCall::build_assertion_runtime(account, _, _) => account,
 			TrustedCall::set_challenge_code_runtime(account, _, _, _) => account,
 		}
@@ -211,7 +218,8 @@ impl TrustedReturnValue
 impl<NodeMetadataRepository> ExecuteCall<NodeMetadataRepository> for TrustedCallSigned
 where
 	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes,
+	NodeMetadataRepository::MetadataType:
+		TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix,
 {
 	type Error = StfError;
 
@@ -444,7 +452,15 @@ where
 					identity,
 					metadata
 				);
-				match Self::create_identity_runtime(who.clone(), identity.clone(), metadata, bn) {
+				let parent_ss58_prefix =
+					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
+				match Self::create_identity_runtime(
+					who.clone(),
+					identity.clone(),
+					metadata,
+					bn,
+					parent_ss58_prefix,
+				) {
 					Ok(code) => {
 						debug!("create_identity {} OK", account_id_to_string(&who));
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
@@ -579,26 +595,28 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::build_assertion_preflight(enclave_account, who, assertion, shard) => {
+			TrustedCall::build_assertion_preflight(enclave_account, who, assertion, shard, bn) => {
 				ensure_enclave_signer_account(&enclave_account)?;
-				Self::build_assertion_preflight(&shard, who, assertion)
+				Self::build_assertion_preflight(&shard, who, assertion, bn)
 			},
 			TrustedCall::build_assertion_runtime(enclave_account, who, credential) => {
 				ensure_enclave_signer_account(&enclave_account)?;
 				match (*credential).to_json() {
 					Ok(credential_str) => {
-						debug!(
-							"build_assertion got result {:?} length {}",
-							credential_str,
-							credential_str.len()
-						);
+						debug!("got credential {} length {}", credential_str, credential_str.len());
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
 							let vc_hash = blake2_256(credential_str.as_bytes());
+
+							let mut ext_hash = blake2_256(&who.encode()).to_vec();
+							ext_hash.append(&mut vc_hash.to_vec());
+							ext_hash.append(&mut call_hash.to_vec());
+							let vc_index = blake2_256(ext_hash.as_slice());
 
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.vc_issued_call_indexes())??,
 								who,
+								vc_index,
 								vc_hash,
 								aes_encrypt_default(&key, credential_str.as_bytes()),
 							)));

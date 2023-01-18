@@ -14,18 +14,10 @@
 	limitations under the License.
 
 */
-#![allow(dead_code, unused_imports, const_item_mutation)]
-
-// Creating mock runtime here
-use crate as pallet_teerex;
-use frame_support::{
-	pallet_prelude::GenesisBuild,
-	parameter_types,
-	traits::{OnFinalize, OnInitialize},
-};
+use crate as pallet_parentchain;
+use frame_support::parameter_types;
 use frame_system as system;
-use frame_system::EnsureRoot;
-use pallet_teerex::Config;
+use pallet_parentchain::Config;
 use sp_core::H256;
 use sp_keyring::AccountKeyring;
 use sp_runtime::{
@@ -60,14 +52,18 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Timestamp: timestamp::{Pallet, Call, Storage, Inherent},
-		Teerex: pallet_teerex::{Pallet, Call, Storage, Event<T>},
+		Parentchain: pallet_parentchain::{Pallet, Call, Storage},
 	}
 );
+
+impl Config for Test {
+	type WeightInfo = ();
+}
 
 parameter_types! {
 	pub const BlockHashCount: u32 = 250;
 }
+
 impl frame_system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;
 	type BlockWeights = ();
@@ -113,31 +109,6 @@ impl pallet_balances::Config for Test {
 	type ReserveIdentifier = ();
 }
 
-parameter_types! {
-		pub const MinimumPeriod: u64 = 6000 / 2;
-}
-
-pub type Moment = u64;
-
-impl timestamp::Config for Test {
-	type Moment = Moment;
-	type OnTimestampSet = Teerex;
-	type MinimumPeriod = MinimumPeriod;
-	type WeightInfo = ();
-}
-
-parameter_types! {
-	pub const MomentsPerDay: u64 = 86_400_000; // [ms/d]
-}
-
-impl Config for Test {
-	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
-	type MomentsPerDay = MomentsPerDay;
-	type WeightInfo = ();
-	type DelegateeAdminOrigin = EnsureRoot<Self::AccountId>;
-}
-
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup. RA from enclave compiled in debug mode is allowed
 pub fn new_test_ext() -> sp_io::TestExternalities {
@@ -147,44 +118,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
-	let teerex_config = crate::GenesisConfig { allow_sgx_debug_mode: true };
-	GenesisBuild::<Test>::assimilate_storage(&teerex_config, &mut t).unwrap();
-
 	let mut ext: sp_io::TestExternalities = t.into();
 	ext.execute_with(|| System::set_block_number(1));
 	ext
-}
-
-//Build genesis storage for mockup, where RA from enclave compiled in debug mode is NOT allowed
-pub fn new_test_production_ext() -> sp_io::TestExternalities {
-	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
-	pallet_balances::GenesisConfig::<Test> {
-		balances: vec![(AccountKeyring::Alice.to_account_id(), 1 << 60)],
-	}
-	.assimilate_storage(&mut t)
-	.unwrap();
-
-	let teerex_config = crate::GenesisConfig { allow_sgx_debug_mode: false };
-	GenesisBuild::<Test>::assimilate_storage(&teerex_config, &mut t).unwrap();
-
-	let mut ext: sp_io::TestExternalities = t.into();
-	ext.execute_with(|| System::set_block_number(1));
-	ext
-}
-
-//Help method for the OnTimestampSet to be called
-pub fn set_timestamp(t: u64) {
-	let _ = timestamp::Pallet::<Test>::set(RuntimeOrigin::none(), t);
-}
-
-/// Run until a particular block.
-pub fn run_to_block(n: u32) {
-	while System::block_number() < n {
-		if System::block_number() > 1 {
-			System::on_finalize(System::block_number());
-		}
-		Timestamp::on_finalize(System::block_number());
-		System::set_block_number(System::block_number() + 1);
-		System::on_initialize(System::block_number());
-	}
 }

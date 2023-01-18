@@ -28,7 +28,7 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{AccountId, OpaqueCall};
-use lc_credentials_tee::credentials::Credential;
+use lc_credentials_tee::Credential;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::Assertion;
 use log::*;

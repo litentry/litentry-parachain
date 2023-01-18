@@ -44,8 +44,7 @@ pub use assertion::*;
 mod schema;
 pub use schema::*;
 
-// hash of a VC, computed via blake2_256
-pub type VCHASH = H256;
+pub type VCIndex = H256;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -67,10 +66,10 @@ pub mod pallet {
 		type SetAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
 
-	// a map VCHASH -> VC context
+	// a map VCIndex -> VC context
 	#[pallet::storage]
 	#[pallet::getter(fn vc_registry)]
-	pub type VCRegistry<T: Config> = StorageMap<_, Blake2_256, VCHASH, VCContext<T>>;
+	pub type VCRegistry<T: Config> = StorageMap<_, Blake2_256, VCIndex, VCContext<T>>;
 
 	// the Schema admin account
 	#[pallet::storage]
@@ -96,17 +95,17 @@ pub mod pallet {
 		},
 		// a VC is disabled on chain
 		VCDisabled {
-			hash: VCHASH,
+			index: VCIndex,
 		},
 		// a VC is revoked on chain
 		VCRevoked {
-			hash: VCHASH,
+			index: VCIndex,
 		},
 		// event that should be triggered by TEECallOrigin
 		// a VC is just issued
 		VCIssued {
 			account: T::AccountId,
-			hash: VCHASH,
+			index: VCIndex,
 			vc: AesOutput,
 		},
 		// some error happened during processing in TEE, we use string-like
@@ -117,7 +116,7 @@ pub mod pallet {
 			func: Vec<u8>,
 			error: Vec<u8>,
 		},
-		/// Admin acccount was changed
+		/// Admin account was changed
 		SchemaAdminChanged {
 			old_admin: Option<T::AccountId>,
 			new_admin: Option<T::AccountId>,
@@ -195,30 +194,29 @@ pub mod pallet {
 
 		#[pallet::call_index(1)]
 		#[pallet::weight(195_000_000)]
-		pub fn disable_vc(origin: OriginFor<T>, hash: VCHASH) -> DispatchResultWithPostInfo {
+		pub fn disable_vc(origin: OriginFor<T>, index: VCIndex) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 
-			VCRegistry::<T>::try_mutate(hash, |context| {
+			VCRegistry::<T>::try_mutate(index, |context| {
 				let mut c = context.take().ok_or(Error::<T>::VCNotExist)?;
 				ensure!(who == c.subject, Error::<T>::VCSubjectMismatch);
 				ensure!(c.status == Status::Active, Error::<T>::VCAlreadyDisabled);
 				c.status = Status::Disabled;
 				*context = Some(c);
-				Self::deposit_event(Event::VCDisabled { hash });
+				Self::deposit_event(Event::VCDisabled { index });
 				Ok(().into())
 			})
 		}
 
 		#[pallet::call_index(2)]
 		#[pallet::weight(195_000_000)]
-		pub fn revoke_vc(origin: OriginFor<T>, hash: VCHASH) -> DispatchResultWithPostInfo {
+		pub fn revoke_vc(origin: OriginFor<T>, index: VCIndex) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 
-			let context = VCRegistry::<T>::get(hash).ok_or(Error::<T>::VCNotExist)?;
-			// ToDo: VC could be revoked by admin as well
+			let context = VCRegistry::<T>::get(index).ok_or(Error::<T>::VCNotExist)?;
 			ensure!(who == context.subject, Error::<T>::VCSubjectMismatch);
-			VCRegistry::<T>::remove(hash);
-			Self::deposit_event(Event::VCRevoked { hash });
+			VCRegistry::<T>::remove(index);
+			Self::deposit_event(Event::VCRevoked { index });
 			Ok(().into())
 		}
 
@@ -230,13 +228,14 @@ pub mod pallet {
 		pub fn vc_issued(
 			origin: OriginFor<T>,
 			account: T::AccountId,
-			hash: VCHASH,
+			index: H256,
+			hash: H256,
 			vc: AesOutput,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			ensure!(!VCRegistry::<T>::contains_key(hash), Error::<T>::VCAlreadyExists);
-			VCRegistry::<T>::insert(hash, VCContext::<T>::new(account.clone()));
-			Self::deposit_event(Event::VCIssued { account, hash, vc });
+			ensure!(!VCRegistry::<T>::contains_key(index), Error::<T>::VCAlreadyExists);
+			VCRegistry::<T>::insert(index, VCContext::<T>::new(account.clone(), hash));
+			Self::deposit_event(Event::VCIssued { account, index, vc });
 			Ok(Pays::No.into())
 		}
 

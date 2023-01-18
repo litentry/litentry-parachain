@@ -63,7 +63,9 @@ CLIENT="$CLIENT -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
 echo "CLIENT is $CLIENT"
 
 echo "* Query on-chain enclave registry:"
-${CLIENT} list-workers
+WORKERS=$($CLIENT list-workers)
+echo "WORKERS: "
+echo "${WORKERS}"
 echo ""
 
 if [ "$READMRENCLAVE" = "file" ]
@@ -72,7 +74,7 @@ then
     echo "Reading MRENCLAVE from file: ${MRENCLAVE}"
 else
     # this will always take the first MRENCLAVE found in the registry !!
-    read MRENCLAVE <<< $($CLIENT list-workers | awk '/  MRENCLAVE: / { print $2; exit }')
+    read MRENCLAVE <<< $(echo "$WORKERS" | awk '/  MRENCLAVE: / { print $2; exit }')
     echo "Reading MRENCLAVE from worker list: ${MRENCLAVE}"
 fi
 [[ -z $MRENCLAVE ]] && { echo "MRENCLAVE is empty. cannot continue" ; exit 1; }

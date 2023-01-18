@@ -25,7 +25,7 @@ use crate::{
 use frame_support::dispatch::UnfilteredDispatchable;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_utils::stringify::account_id_to_string;
-use lc_credentials_tee::credentials::Credential;
+use lc_credentials_tee::Credential;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
 	AssertionBuildRequest, MaxIdentityLength, RequestType, SetUserShieldingKeyRequest,
@@ -70,13 +70,15 @@ impl TrustedCallSigned {
 		identity: Identity,
 		metadata: Option<MetadataOf<Runtime>>,
 		bn: ParentchainBlockNumber,
+		parent_ss58_prefix: u16,
 	) -> StfResult<ChallengeCode> {
 		debug!(
-			"who.str = {:?}, identity = {:?}, metadata = {:?}, bn = {:?}",
+			"who.str = {:?}, identity = {:?}, metadata = {:?}, bn = {:?}, parent_ss58_prefix = {}",
 			account_id_to_string(&who),
 			identity,
 			metadata,
-			bn
+			bn,
+			parent_ss58_prefix,
 		);
 
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::create_identity {
@@ -84,6 +86,7 @@ impl TrustedCallSigned {
 			identity: identity.clone(),
 			metadata,
 			creation_request_block: bn,
+			parent_ss58_prefix,
 		}
 		.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
@@ -187,6 +190,7 @@ impl TrustedCallSigned {
 		shard: &ShardIdentifier,
 		who: AccountId,
 		assertion: Assertion,
+		bn: ParentchainBlockNumber,
 	) -> StfResult<()> {
 		debug!("who {:?}, assertion {:?}", account_id_to_string(&who), assertion);
 
@@ -198,7 +202,7 @@ impl TrustedCallSigned {
 			}
 		}
 
-		match Credential::generate_unsigned_credential(&assertion, &who) {
+		match Credential::generate_unsigned_credential(&assertion, &who, bn) {
 			Ok(credential_unsigned) => {
 				let encoded_shard = shard.encode();
 				let request: RequestType = AssertionBuildRequest {

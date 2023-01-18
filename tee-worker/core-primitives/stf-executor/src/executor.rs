@@ -27,8 +27,8 @@ use ita_stf::{
 	ParentchainHeader, StfError, TrustedCallSigned, TrustedOperation,
 };
 use itp_node_api::metadata::{
-	pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, pallet_vcmp::VCMPCallIndexes,
-	provider::AccessNodeMetadata,
+	pallet_imp::IMPCallIndexes, pallet_system::SystemSs58Prefix, pallet_teerex::TeerexCallIndexes,
+	pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata,
 };
 use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_externalities::{SgxExternalitiesTrait, StateHash};
@@ -61,6 +61,7 @@ where
 	StateHandler::StateT: SgxExternalitiesTrait + Encode,
 	NodeMetadataRepository: AccessNodeMetadata,
 	NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes,
+	<NodeMetadataRepository as AccessNodeMetadata>::MetadataType: SystemSs58Prefix,
 	Stf: UpdateState<
 			StateHandler::StateT,
 			<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType,
@@ -239,7 +240,7 @@ where
 	StateHandler::StateT: SgxExternalitiesTrait + Encode + StateHash,
 	<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesType: Encode,
 	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes,
+	NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix,
 	Stf: UpdateState<
 			StateHandler::StateT,
 			<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType,
@@ -262,7 +263,7 @@ where
 	) -> Result<BatchExecutionResult<Self::Externalities>>
 	where
 		PH: HeaderTrait<Hash = H256>,
-		F: FnOnce(Self::Externalities) -> Self::Externalities,
+		F: FnOnce(Self::Externalities) -> Self::Externalities
 	{
 		let ends_at = duration_now() + max_exec_duration;
 

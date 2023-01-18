@@ -17,3 +17,5 @@ tags.lock
 recipe.json
 
 gethdata
+
+*.patch

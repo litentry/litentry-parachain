@@ -125,6 +125,11 @@ impl ListenCommand {
 									) => {
 										println!("UnshieldFunds for {:?}", public_account);
 									},
+									my_node_runtime::pallet_teerex::Event::SetHeartbeatTimeout(
+										timeout
+									) => {
+										println!("SetHeartbeatTimeout for {:?}",timeout);
+									},
 									_ => debug!("ignoring unsupported teerex event: {:?}", ee),
 								}
 							},
