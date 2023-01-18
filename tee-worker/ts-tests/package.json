@@ -7,8 +7,8 @@
 		"test-resuming-worker:local": "cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register 'resuming_worker.test.ts'"
 	},
 	"dependencies": {
-		"@polkadot/api": "^9.5.2",
-		"@polkadot/types": "^9.5.2",
+		"@polkadot/api": "^9.10.5",
+		"@polkadot/types": "^9.10.5",
 		"chai": "^4.3.6",
 		"micro-base58": "^0.5.1",
 		"mocha": "^10.1.0",
