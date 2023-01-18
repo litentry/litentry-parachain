@@ -31,9 +31,12 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::H256;
 
 pub mod create_identity;
+pub mod remove_identity;
+pub mod request_vc;
 pub mod set_user_shielding_key;
+pub mod verify_identity;
 
-pub(crate) trait ExcuteIndirectCall<
+pub(crate) trait Executor<
 	ShieldingKeyRepository,
 	StfEnclaveSigner,
 	TopPoolAuthor,
@@ -59,7 +62,7 @@ pub(crate) trait ExcuteIndirectCall<
 	fn is_target_call(&self, call: Self::Call, node_metadata: &NodeMetadataProvider) -> bool {
 		node_metadata
 			.get_from_metadata(|m| match self.call_index_from_metadata(m) {
-				Ok(call_index) => &self.call_index(call) == &call_index,
+				Ok(call_index) => self.call_index(call) == call_index,
 				Err(_e) => false,
 			})
 			.unwrap_or(false)
@@ -106,7 +109,7 @@ pub(crate) trait ExcuteIndirectCall<
 	}
 }
 
-pub(crate) trait DecodeAndExecute<
+pub(crate) trait DecorateExecutor<
 	ShieldingKeyRepository,
 	StfEnclaveSigner,
 	TopPoolAuthor,
@@ -126,17 +129,12 @@ pub(crate) trait DecodeAndExecute<
 }
 
 impl<
-		E: ExcuteIndirectCall<
-			ShieldingKeyRepository,
-			StfEnclaveSigner,
-			TopPoolAuthor,
-			NodeMetadataProvider,
-		>,
+		E: Executor<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>,
 		ShieldingKeyRepository,
 		StfEnclaveSigner,
 		TopPoolAuthor,
 		NodeMetadataProvider,
-	> DecodeAndExecute<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
+	> DecorateExecutor<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
 	for E
 where
 	ShieldingKeyRepository: AccessKey,
@@ -157,6 +155,6 @@ where
 		>,
 		input: &mut &[u8],
 	) -> Result<ExecutionStatus, Error> {
-		ExcuteIndirectCall::decode_and_execute(self, context, input)
+		Executor::decode_and_execute(self, context, input)
 	}
 }

@@ -23,8 +23,9 @@ use crate::sgx_reexport_prelude::*;
 use crate::{
 	error::Result,
 	litentry::{
-		create_identity::CreateIdentity, set_user_shielding_key::SetUserShieldingKey,
-		DecodeAndExecute, ExcuteIndirectCall,
+		create_identity::CreateIdentity, remove_identity::RemoveIdentity, request_vc::RequestVC,
+		set_user_shielding_key::SetUserShieldingKey, verify_identity::VerifyIdentity,
+		DecorateExecutor,
 	},
 	ExecutionStatus,
 };
@@ -43,14 +44,11 @@ use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, Shieldin
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_primitives::types::AccountId;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{
-	CallWorkerFn, OpaqueCall, RemoveIdentityFn, RequestVCFn, SetUserShieldingKeyFn,
-	ShardIdentifier, ShieldFundsFn, VerifyIdentityFn, H256,
-};
-use litentry_primitives::{Identity, UserShieldingKeyType, ValidationData};
+use itp_types::{CallWorkerFn, OpaqueCall, ShardIdentifier, ShieldFundsFn, H256};
+use litentry_primitives::ParentchainBlockNumber;
 use log::*;
 use sp_core::blake2_256;
-use sp_runtime::traits::{AccountIdLookup, Block as ParentchainBlockTrait, Header, StaticLookup};
+use sp_runtime::traits::{Block as ParentchainBlockTrait, Header};
 use std::{sync::Arc, vec, vec::Vec};
 
 /// Trait to execute the indirect calls found in the extrinsics of a block.
@@ -183,15 +181,6 @@ where
 
 	is_parentchain_function!(is_shield_funds_function, shield_funds_call_indexes);
 	is_parentchain_function!(is_call_worker_function, call_worker_call_indexes);
-
-	is_parentchain_function!(
-		is_set_user_shielding_key_function,
-		set_user_shielding_key_call_indexes
-	);
-	is_parentchain_function!(is_create_identity_funciton, create_identity_call_indexes);
-	is_parentchain_function!(is_remove_identity_funciton, remove_identity_call_indexes);
-	is_parentchain_function!(is_verify_identity_funciton, verify_identity_call_indexes);
-	is_parentchain_function!(is_request_vc_funciton, request_vc_call_indexes);
 }
 
 impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
@@ -257,160 +246,39 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 			}
 
 			// litentry
-			let create_identity = CreateIdentity {
-				block_number: block_number
-					.try_into()
-					.map_err(|_| crate::error::Error::ConvertParentchainBlockNumber)?,
-			};
+			let parentchain_block_number: ParentchainBlockNumber = block_number
+				.try_into()
+				.map_err(|_| crate::error::Error::ConvertParentchainBlockNumber)?;
+			// Found SetUserShieldingKey extrinsic
 			let set_user_shielding_key = SetUserShieldingKey {};
+			// Found CreateIdentityFn extrinsic
+			let create_identity = CreateIdentity { block_number: parentchain_block_number };
+			// Found RemoveIdentityFn extrinsic
+			let remove_identity = RemoveIdentity {};
+			// Found VerifyIdentity extrinsic
+			let verify_identity = VerifyIdentity { block_number: parentchain_block_number };
+			// Found RequestVC extrinsic
+			let request_vc = RequestVC {};
+
 			let executors: Vec<
-				&dyn DecodeAndExecute<
+				&dyn DecorateExecutor<
 					ShieldingKeyRepository,
 					StfEnclaveSigner,
 					TopPoolAuthor,
 					NodeMetadataProvider,
 				>,
-			> = vec![&set_user_shielding_key, &create_identity];
+			> = vec![
+				&set_user_shielding_key,
+				&create_identity,
+				&remove_identity,
+				&verify_identity,
+				&request_vc,
+			];
 			for executor in executors {
-				match executor.decode_and_execute(&self, &mut encoded_xt_opaque.as_slice()) {
+				match executor.decode_and_execute(self, &mut encoded_xt_opaque.as_slice()) {
 					Ok(ExecutionStatus::Success) | Ok(ExecutionStatus::Skip) => break,
 					Ok(ExecutionStatus::NextExecutor) => continue,
 					Err(_) => {},
-				}
-			}
-			// Found SetUserShieldingKey extrinsic
-			if let Ok(xt) = ParentchainUncheckedExtrinsic::<SetUserShieldingKeyFn>::decode(
-				&mut encoded_xt_opaque.as_slice(),
-			) {
-				if self.is_set_user_shielding_key_function(&xt.function.0) {
-					let (_, shard, encrypted_key) = xt.function;
-					let shielding_key = self.shielding_key_repo.retrieve_key()?;
-
-					let key = UserShieldingKeyType::decode(
-						&mut shielding_key.decrypt(&encrypted_key)?.as_slice(),
-					)?;
-
-					if let Some((multiaddress_account, _, _)) = xt.signature {
-						let account = AccountIdLookup::lookup(multiaddress_account)?;
-						let enclave_account_id = self.stf_enclave_signer.get_enclave_account()?;
-						let trusted_call = TrustedCall::set_user_shielding_key_runtime(
-							enclave_account_id,
-							account,
-							key,
-						);
-						let signed_trusted_call =
-							self.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
-						let trusted_operation =
-							TrustedOperation::indirect_call(signed_trusted_call);
-
-						let encrypted_trusted_call =
-							shielding_key.encrypt(&trusted_operation.encode())?;
-						self.submit_trusted_call(shard, encrypted_trusted_call);
-					}
-				}
-			}
-
-			// Found CreateIdentityFn extrinsic
-
-			// Found RemoveIdentityFn extrinsic
-			if let Ok(xt) = ParentchainUncheckedExtrinsic::<RemoveIdentityFn>::decode(
-				&mut encoded_xt_opaque.as_slice(),
-			) {
-				if self.is_remove_identity_funciton(&xt.function.0) {
-					let (_, shard, encrypted_identity) = xt.function;
-					let shielding_key = self.shielding_key_repo.retrieve_key()?;
-
-					let identity: Identity = Identity::decode(
-						&mut shielding_key.decrypt(&encrypted_identity).unwrap().as_slice(),
-					)?;
-
-					if let Some((multiaddress_account, _, _)) = xt.signature {
-						let account = AccountIdLookup::lookup(multiaddress_account)?;
-						let enclave_account_id = self.stf_enclave_signer.get_enclave_account()?;
-						let trusted_call = TrustedCall::remove_identity_runtime(
-							enclave_account_id,
-							account,
-							identity,
-						);
-						let signed_trusted_call =
-							self.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
-						let trusted_operation =
-							TrustedOperation::indirect_call(signed_trusted_call);
-
-						let encrypted_trusted_call =
-							shielding_key.encrypt(&trusted_operation.encode())?;
-						self.submit_trusted_call(shard, encrypted_trusted_call);
-					}
-				}
-			}
-
-			// Found VerifyIdentity extrinsic
-			if let Ok(xt) = ParentchainUncheckedExtrinsic::<VerifyIdentityFn>::decode(
-				&mut encoded_xt_opaque.as_slice(),
-			) {
-				if self.is_verify_identity_funciton(&xt.function.0) {
-					let (_, shard, encrypted_identity, encrypted_validation_data) = xt.function;
-					let shielding_key = self.shielding_key_repo.retrieve_key()?;
-
-					let identity: Identity = Identity::decode(
-						&mut shielding_key.decrypt(&encrypted_identity).unwrap().as_slice(),
-					)?;
-					let validation_data = ValidationData::decode(
-						&mut shielding_key.decrypt(&encrypted_validation_data).unwrap().as_slice(),
-					)?;
-
-					if let Some((multiaddress_account, _, _)) = xt.signature {
-						let account = AccountIdLookup::lookup(multiaddress_account)?;
-						let enclave_account_id = self.stf_enclave_signer.get_enclave_account()?;
-						let trusted_call = TrustedCall::verify_identity_preflight(
-							enclave_account_id,
-							account,
-							identity,
-							validation_data,
-							block_number
-								.try_into()
-								.map_err(|_| crate::error::Error::ConvertParentchainBlockNumber)?,
-						);
-						let signed_trusted_call =
-							self.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
-						let trusted_operation =
-							TrustedOperation::indirect_call(signed_trusted_call);
-
-						let encrypted_trusted_call =
-							shielding_key.encrypt(&trusted_operation.encode())?;
-						self.submit_trusted_call(shard, encrypted_trusted_call);
-					}
-				}
-			}
-
-			// Found RequestVC extrinsic
-			if let Ok(xt) = ParentchainUncheckedExtrinsic::<RequestVCFn>::decode(
-				&mut encoded_xt_opaque.as_slice(),
-			) {
-				if self.is_request_vc_funciton(&xt.function.0) {
-					let (_, shard, assertion) = xt.function;
-					let shielding_key = self.shielding_key_repo.retrieve_key()?;
-					debug!("Requested VC Assertion {:?}", assertion);
-
-					if let Some((multiaddress_account, _, _)) = xt.signature {
-						let account = AccountIdLookup::lookup(multiaddress_account)?;
-						let enclave_account_id = self.stf_enclave_signer.get_enclave_account()?;
-
-						let trusted_call = TrustedCall::build_assertion(
-							enclave_account_id,
-							account,
-							assertion,
-							shard,
-						);
-						let signed_trusted_call =
-							self.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
-						let trusted_operation =
-							TrustedOperation::indirect_call(signed_trusted_call);
-
-						let encrypted_trusted_call =
-							shielding_key.encrypt(&trusted_operation.encode())?;
-						self.submit_trusted_call(shard, encrypted_trusted_call);
-					}
 				}
 			}
 		}

@@ -27,15 +27,17 @@ use itp_node_api::{
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{SetUserShieldingKeyFn, H256};
-use litentry_primitives::UserShieldingKeyType;
+use itp_types::{VerifyIdentityFn, H256};
+use litentry_primitives::{Identity, ParentchainBlockNumber, ValidationData};
 use sp_runtime::traits::{AccountIdLookup, StaticLookup};
 
-pub(crate) struct SetUserShieldingKey {}
+pub(crate) struct VerifyIdentity {
+	pub(crate) block_number: ParentchainBlockNumber,
+}
 
 impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
 	Executor<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
-	for SetUserShieldingKey
+	for VerifyIdentity
 where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
@@ -45,7 +47,7 @@ where
 	NodeMetadataProvider: AccessNodeMetadata,
 	NodeMetadataProvider::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
 {
-	type Call = SetUserShieldingKeyFn;
+	type Call = VerifyIdentityFn;
 
 	fn call_index(&self, call: Self::Call) -> [u8; 2] {
 		call.0
@@ -55,7 +57,7 @@ where
 		&self,
 		metadata_type: &NodeMetadataProvider::MetadataType,
 	) -> Result<[u8; 2], MetadataError> {
-		metadata_type.set_user_shielding_key_call_indexes()
+		metadata_type.verify_identity_call_indexes()
 	}
 
 	fn execute(
@@ -68,17 +70,25 @@ where
 		>,
 		extrinsic: UncheckedExtrinsicV4<Self::Call, SubstrateDefaultSignedExtra<PlainTip>>,
 	) -> Result<ExecutionStatus, Error> {
-		let (_, shard, encrypted_key) = extrinsic.function;
+		let (_, shard, encrypted_identity, encrypted_validation_data) = extrinsic.function;
 		let shielding_key = context.shielding_key_repo.retrieve_key()?;
 
-		let key =
-			UserShieldingKeyType::decode(&mut shielding_key.decrypt(&encrypted_key)?.as_slice())?;
+		let identity: Identity =
+			Identity::decode(&mut shielding_key.decrypt(&encrypted_identity).unwrap().as_slice())?;
+		let validation_data = ValidationData::decode(
+			&mut shielding_key.decrypt(&encrypted_validation_data).unwrap().as_slice(),
+		)?;
 
 		if let Some((multiaddress_account, _, _)) = extrinsic.signature {
 			let account = AccountIdLookup::lookup(multiaddress_account)?;
 			let enclave_account_id = context.stf_enclave_signer.get_enclave_account()?;
-			let trusted_call =
-				TrustedCall::set_user_shielding_key_runtime(enclave_account_id, account, key);
+			let trusted_call = TrustedCall::verify_identity_preflight(
+				enclave_account_id,
+				account,
+				identity,
+				validation_data,
+				self.block_number,
+			);
 			let signed_trusted_call =
 				context.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
 			let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);

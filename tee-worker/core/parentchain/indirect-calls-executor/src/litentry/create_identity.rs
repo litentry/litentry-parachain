@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{error::Error, litentry::ExcuteIndirectCall, ExecutionStatus, IndirectCallsExecutor};
+use crate::{error::Error, litentry::Executor, ExecutionStatus, IndirectCallsExecutor};
 use codec::{Decode, Encode};
 use ita_sgx_runtime::{pallet_imt::MetadataOf, Runtime};
 use ita_stf::{TrustedCall, TrustedOperation};
@@ -31,17 +31,13 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{CreateIdentityFn, H256};
 use litentry_primitives::{Identity, ParentchainBlockNumber};
 
-pub struct CreateIdentity {
+pub(crate) struct CreateIdentity {
 	pub(crate) block_number: ParentchainBlockNumber,
 }
 
 impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
-	ExcuteIndirectCall<
-		ShieldingKeyRepository,
-		StfEnclaveSigner,
-		TopPoolAuthor,
-		NodeMetadataProvider,
-	> for CreateIdentity
+	Executor<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
+	for CreateIdentity
 where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
