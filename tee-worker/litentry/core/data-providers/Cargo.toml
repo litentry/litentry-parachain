@@ -42,7 +42,6 @@ chrono = { version = "0.4.23" }
 
 [features]
 default = ["std"]
-mockserver = []
 sgx = [
     "hex-sgx",
     "http-sgx",

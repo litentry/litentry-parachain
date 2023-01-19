@@ -18,7 +18,7 @@
 extern crate lazy_static;
 
 use std::{
-	sync::Mutex,
+	sync::{Arc, Mutex},
 	thread::{spawn, JoinHandle},
 };
 
@@ -35,6 +35,7 @@ pub mod twitter_official;
 
 pub use discord_litentry::*;
 pub use discord_official::*;
+use itp_enclave_api::{challenge_code_cache::ChallengeCodeCache, Enclave};
 pub use twitter_litentry::*;
 pub use twitter_official::*;
 pub fn standalone_server() {
@@ -80,8 +81,10 @@ impl MockServerManager {
 		}
 	}
 }
-pub fn run() {
+
+pub fn run(enclave: Arc<Enclave>) {
 	standalone_server();
+	let _ = enclave.enable_challenge_code_cache();
 
 	let mut mock_server_manager = MockServerManager::new();
 
@@ -94,7 +97,7 @@ pub fn run() {
 	let twitter_litentry = Box::new(TwitterLitentry::new());
 	mock_server_manager.register(twitter_litentry);
 
-	let twitter_official = Box::new(TwitterOfficial::new());
+	let twitter_official = Box::new(TwitterOfficial { enclave });
 	mock_server_manager.register(twitter_official);
 
 	mock_server_manager.run();

@@ -74,23 +74,23 @@ args:
         default_value: "8787"
         required: false
     - untrusted-http-port:
-        short: h
+          short: h
         long: untrusted-http-port
         help: Set the port for the untrusted HTTP server
         takes_value: true
-        required: false
-    - clean-reset:
-        long: clean-reset
-        short: c
-        help: Cleans and purges any previous state and key files and generates them anew before starting.
-    - running-mode:
-        long: running-mode
-        help: Litentry TEE service running mode <dev/staging/prod>
-        takes_value: true
-        default_value: "dev"
-    - disable-mock-server:
-        long: disable-mock-server
-        help: Set this flag to disable starting the mock server.
+          required: false
+    -   clean-reset:
+            long: clean-reset
+            short: c
+            help: Cleans and purges any previous state and key files and generates them anew before starting.
+    -   running-mode:
+            long: running-mode
+            help: Litentry TEE service running mode <dev/staging/prod>
+            takes_value: true
+            default_value: "dev"
+    -   mock-server:
+            long: mock-server
+            help: Set this flag to enable starting the mock server.
 
 subcommands:
     - run:

@@ -5,6 +5,7 @@ version = "0.1.0"
 
 [dependencies]
 hex = "0.4.3"
+log = "0.4"
 httpmock = "0.6"
 isahc = "1.7"
 lazy_static = "1.4"
@@ -15,7 +16,8 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 litentry-primitives = { path = "../../primitives", default-features = false }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36", default-features = false }
 
+itp-enclave-api = { path = "../../../core-primitives/enclave-api" }
 lc-data-providers = { path = "../data-providers" }
 
 [features]
-mockserver = []
+default = []

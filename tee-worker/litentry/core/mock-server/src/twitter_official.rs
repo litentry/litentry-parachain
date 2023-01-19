@@ -15,33 +15,28 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use httpmock::{Method::GET, MockServer};
+use itp_enclave_api::{challenge_code_cache::ChallengeCodeCache, Enclave};
 use lc_data_providers::twitter_official::*;
-use litentry_primitives::{ChallengeCode, Identity, IdentityString, Web2Network};
+use litentry_primitives::{
+	ChallengeCode, Identity, IdentityString, Web2Network, CHALLENGE_CODE_SIZE,
+};
 use sp_core::crypto::AccountId32 as AccountId;
+use std::sync::Arc;
 
 use crate::{mock_tweet_payload, Mock};
 
 pub trait TwitterOfficialAPI {
-	fn query_tweet(mock_server: &MockServer);
-	fn query_retweet(mock_server: &MockServer);
-	fn query_user(mock_server: &MockServer);
+	fn query_tweet(&self, mock_server: &MockServer);
+	fn query_retweet(&self, mock_server: &MockServer);
+	fn query_user(&self, mock_server: &MockServer);
 }
 
-pub struct TwitterOfficial {}
-impl TwitterOfficial {
-	pub fn new() -> Self {
-		TwitterOfficial {}
-	}
-}
-
-impl Default for TwitterOfficial {
-	fn default() -> Self {
-		Self::new()
-	}
+pub struct TwitterOfficial {
+	pub(crate) enclave: Arc<Enclave>,
 }
 
 impl TwitterOfficialAPI for TwitterOfficial {
-	fn query_tweet(mock_server: &MockServer) {
+	fn query_tweet(&self, mock_server: &MockServer) {
 		let tweet_id = "100";
 
 		let account_id = AccountId::new([
@@ -53,23 +48,26 @@ impl TwitterOfficialAPI for TwitterOfficial {
 			network: Web2Network::Twitter,
 			address: IdentityString::try_from("mock_user".as_bytes().to_vec()).unwrap(),
 		};
-		let chanllenge_code: ChallengeCode =
-			[8, 104, 90, 56, 35, 213, 18, 250, 213, 210, 119, 241, 2, 174, 24, 8];
-		let payload = mock_tweet_payload(&account_id, &twitter_identity, &chanllenge_code);
 
-		let tweet = Tweet { author_id: "mock_user".into(), id: tweet_id.into(), text: payload };
-
-		let path = format! {"/2/tweets/{}", tweet_id};
 		mock_server.mock(|when, then| {
 			when.method(GET)
-				.path(path)
+				.path(format! {"/2/tweets/{}", tweet_id})
 				.query_param("ids", tweet_id)
 				.query_param("expansions", "author_id");
+
+			let challenge_code = self
+				.enclave
+				.get_challenge_code(twitter_identity.clone())
+				.unwrap_or([0u8; CHALLENGE_CODE_SIZE]);
+			let payload = mock_tweet_payload(&account_id, &twitter_identity, &challenge_code);
+			log::warn!("code: {}", sp_core::hexdisplay::HexDisplay::from(&challenge_code));
+
+			let tweet = Tweet { author_id: "mock_user".into(), id: tweet_id.into(), text: payload };
 			then.status(200).body(serde_json::to_string(&tweet).unwrap());
 		});
 	}
 
-	fn query_retweet(mock_server: &MockServer) {
+	fn query_retweet(&self, mock_server: &MockServer) {
 		let author_id = "ericzhangeth";
 		let id = "100";
 
@@ -104,7 +102,7 @@ impl TwitterOfficialAPI for TwitterOfficial {
 		});
 	}
 
-	fn query_user(mock_server: &MockServer) {
+	fn query_user(&self, mock_server: &MockServer) {
 		let user = "1256908613857226756";
 
 		let twitter_user_data = TwitterUser {
@@ -129,9 +127,9 @@ impl TwitterOfficialAPI for TwitterOfficial {
 }
 
 impl Mock for TwitterOfficial {
-	fn mock(&self, mock_server: &httpmock::MockServer) {
-		TwitterOfficial::query_tweet(mock_server);
-		TwitterOfficial::query_retweet(mock_server);
-		TwitterOfficial::query_user(mock_server);
+	fn mock(&self, mock_server: &MockServer) {
+		self.query_tweet(mock_server);
+		self.query_retweet(mock_server);
+		self.query_user(mock_server);
 	}
 }

@@ -61,7 +61,7 @@ pub struct Config {
 	pub running_mode: String,
 
 	/// Litentry
-	pub disable_mock_server: bool,
+	pub mock_server: bool,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -81,7 +81,7 @@ impl Config {
 		untrusted_http_port: String,
 		run_config: Option<RunConfig>,
 		running_mode: String,
-		disable_mock_server: bool,
+		mock_server: bool,
 	) -> Self {
 		Self {
 			node_ip,
@@ -98,7 +98,7 @@ impl Config {
 			untrusted_http_port,
 			run_config,
 			running_mode,
-			disable_mock_server,
+			mock_server,
 		}
 	}
 
@@ -162,7 +162,7 @@ impl From<&ArgMatches<'_>> for Config {
 		let untrusted_http_port =
 			m.value_of("untrusted-http-port").unwrap_or(DEFAULT_UNTRUSTED_HTTP_PORT);
 		let run_config = m.subcommand_matches("run").map(RunConfig::from);
-		let is_mock_server_disabled = m.is_present("disable-mock-server");
+		let is_mock_server_enabled = m.is_present("mock-server");
 		Self::new(
 			m.value_of("node-server").unwrap_or(DEFAULT_NODE_SERVER).into(),
 			m.value_of("node-port").unwrap_or(DEFAULT_NODE_PORT).into(),
@@ -181,7 +181,7 @@ impl From<&ArgMatches<'_>> for Config {
 			untrusted_http_port.to_string(),
 			run_config,
 			m.value_of("running-mode").unwrap_or(DEFAULT_RUNNING_MODE).to_string(),
-			is_mock_server_disabled,
+			is_mock_server_enabled,
 		)
 	}
 }

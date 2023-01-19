@@ -47,6 +47,7 @@ use enclave::{
 	tls_ra::{enclave_request_state_provisioning, enclave_run_state_provisioning_server},
 };
 use itp_enclave_api::{
+	challenge_code_cache::ChallengeCodeCache,
 	direct_request::DirectRequest,
 	enclave_base::EnclaveBase,
 	remote_attestation::{RemoteAttestation, TlsRemoteAttestation},
@@ -137,14 +138,6 @@ fn main() {
 
 	info!("*** Running worker in mode: {:?} \n", WorkerModeProvider::worker_mode());
 
-	#[cfg(feature = "mockserver")]
-	thread::spawn(move || {
-		if !config.disable_mock_server {
-			info!("*** Starting mock server");
-			lc_mock_server::run();
-		}
-	});
-
 	let clean_reset = matches.is_present("clean-reset");
 	if clean_reset {
 		setup::purge_files_from_cwd().unwrap();
@@ -186,6 +179,15 @@ fn main() {
 		tokio_handle.clone(),
 		enclave_metrics_receiver,
 	)));
+
+	if config.mock_server {
+		let _ = enclave.as_ref().enable_challenge_code_cache();
+		let enclave_clone = enclave.clone();
+		thread::spawn(move || {
+			info!("*** Starting mock server");
+			lc_mock_server::run(enclave_clone);
+		});
+	}
 
 	if let Some(run_config) = &config.run_config {
 		let shard = extract_shard(&run_config.shard, enclave.as_ref());

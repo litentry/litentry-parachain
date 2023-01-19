@@ -17,10 +17,6 @@ evm = [
     "ita-sgx-runtime/evm",
     "ita-stf/evm",
 ]
-mockserver = [
-    "ita-stf/mockserver",
-    "lc-stf-task-receiver/mockserver",
-]
 offchain-worker = [
     "itp-settings/offchain-worker",
     "itp-top-pool-author/offchain-worker",
@@ -136,6 +132,7 @@ lc-data-providers = { path = "../litentry/core/data-providers", default-features
 lc-stf-task-receiver = { path = "../litentry/core/stf-task/receiver", default-features = false, features = ["sgx"] }
 lc-stf-task-sender = { path = "../litentry/core/stf-task/sender", default-features = false, features = ["sgx"] }
 litentry-primitives = { path = "../litentry/primitives", default-features = false, features = ["sgx"] }
+lc-challenge-code-cache = { path = "../litentry/core/challenge-code-cache", default-features = false, features = ["sgx"] }
 
 # substrate deps
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
