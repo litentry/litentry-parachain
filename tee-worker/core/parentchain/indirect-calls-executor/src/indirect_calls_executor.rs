@@ -276,7 +276,7 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 			];
 			for executor in executors {
 				match executor.decode_and_execute(self, &mut encoded_xt_opaque.as_slice()) {
-					Ok(ExecutionStatus::Success) | Ok(ExecutionStatus::Skip) => break,
+					Ok(ExecutionStatus::Success) => break,
 					Ok(ExecutionStatus::NextExecutor) => continue,
 					Err(e) => {
 						log::error!("fail to execute indirect_call. due to {:?} ", e);

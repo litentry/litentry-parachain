@@ -86,27 +86,6 @@ pub(crate) trait Executor<
 		>,
 		extrinsic: UncheckedExtrinsicV4<Self::Call, SubstrateDefaultSignedExtra<PlainTip>>,
 	) -> Result<ExecutionStatus, Error>;
-
-	fn decode_and_execute(
-		&self,
-		context: &IndirectCallsExecutor<
-			ShieldingKeyRepository,
-			StfEnclaveSigner,
-			TopPoolAuthor,
-			NodeMetadataProvider,
-		>,
-		input: &mut &[u8],
-	) -> Result<ExecutionStatus, Error> {
-		if let Ok(xt) = self.decode(input) {
-			if self.is_target_call(xt.function.clone(), context.node_meta_data_provider.as_ref()) {
-				self.execute(context, xt)
-			} else {
-				Ok(ExecutionStatus::NextExecutor)
-			}
-		} else {
-			Ok(ExecutionStatus::NextExecutor)
-		}
-	}
 }
 
 pub(crate) trait DecorateExecutor<
@@ -128,15 +107,11 @@ pub(crate) trait DecorateExecutor<
 	) -> Result<ExecutionStatus, Error>;
 }
 
-impl<
-		E: Executor<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>,
-		ShieldingKeyRepository,
-		StfEnclaveSigner,
-		TopPoolAuthor,
-		NodeMetadataProvider,
-	> DecorateExecutor<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
+impl<E, ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
+	DecorateExecutor<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
 	for E
 where
+	E: Executor<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>,
 	ShieldingKeyRepository: AccessKey,
 	ShieldingKeyRepository::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
 		+ ShieldingCryptoEncrypt<Error = itp_sgx_crypto::Error>,
@@ -155,6 +130,14 @@ where
 		>,
 		input: &mut &[u8],
 	) -> Result<ExecutionStatus, Error> {
-		Executor::decode_and_execute(self, context, input)
+		if let Ok(xt) = self.decode(input) {
+			if self.is_target_call(xt.function.clone(), context.node_meta_data_provider.as_ref()) {
+				self.execute(context, xt)
+			} else {
+				Ok(ExecutionStatus::NextExecutor)
+			}
+		} else {
+			Ok(ExecutionStatus::NextExecutor)
+		}
 	}
 }

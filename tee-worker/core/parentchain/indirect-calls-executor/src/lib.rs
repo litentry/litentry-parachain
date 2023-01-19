@@ -39,5 +39,4 @@ pub use indirect_calls_executor::*;
 pub enum ExecutionStatus {
 	Success,
 	NextExecutor,
-	Skip,
 }
