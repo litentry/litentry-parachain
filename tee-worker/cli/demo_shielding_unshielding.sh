@@ -79,23 +79,43 @@ CLIENT="${CLIENT_BIN} -p ${NPORT} -P ${WORKER1PORT} -u ${NODEURL} -U ${WORKER1UR
 WAIT_INTERVAL_SECONDS=10
 WAIT_ROUNDS=20
 
-# Wait until the given account's balance is equal to expected,
+# Poll and assert the given account's state is equal to expected,
 # with timeout WAIT_INTERVAL_SECONDS * WAIT_ROUNDS
 # usage:
-#   wait_until_balance <mrenclave> <account> <expected-balance>
-function wait_until_balance()
+#   wait_assert_state <mrenclave> <account> <state-name> <expected-state>
+#   the `state-name` has to be the supported subcommand, e.g. `balance`, `nonce`
+function wait_assert_state()
 {
     for i in $(seq 1 $WAIT_ROUNDS); do
         sleep $WAIT_INTERVAL_SECONDS
-        balance=$(${CLIENT} trusted --mrenclave "$1" balance "$2")
-        if [ $balance -eq "$3" ]; then
+        state=$(${CLIENT} trusted --mrenclave "$1" "$3" "$2")
+        if [ $state -eq "$4" ]; then
             return
         else
             :
         fi
     done
     echo
-    echo "Assert $2 balance failed, expected = $3, actual = $balance"
+    echo "Assert $2 $3 failed, expected = $4, actual = $state"
+    exit 1
+}
+
+# Do a live query and assert the given account's state is equal to expected
+# usage:
+#   assert_state <mrenclave> <account> <state-name> <expected-state>
+function assert_state()
+{
+    state=$(${CLIENT} trusted --mrenclave "$1" "$3" "$2")
+    if [ -z "$state" ]; then
+        echo "Query $2 $3 failed"
+        exit 1
+    fi
+
+    if [ $state -eq "$4" ]; then
+        return
+    fi
+    echo
+    echo "Assert $2 $3 failed, expected = $4, actual = $state"
     exit 1
 }
 
@@ -116,14 +136,6 @@ else
 fi
 [[ -z $MRENCLAVE ]] && { echo "MRENCLAVE is empty. cannot continue" ; exit 1; }
 
-echo "* Get balance of Alice's on-chain account"
-${CLIENT} balance "//Alice"
-echo ""
-
-echo "* Get balance of Bob's on-chain account"
-${CLIENT} balance "//Bob"
-echo ""
-
 echo "* Create a new incognito account for Alice"
 ICGACCOUNTALICE=//AliceIncognito
 echo "  Alice's incognito account = ${ICGACCOUNTALICE}"
@@ -139,9 +151,9 @@ echo ""
 BALANCE_INCOGNITO_ALICE=0
 case $TEST in
     first)
-        wait_until_balance ${MRENCLAVE} ${ICGACCOUNTALICE} 0 ;;
+        wait_assert_state ${MRENCLAVE} ${ICGACCOUNTALICE} balance 0 ;;
     second)
-        wait_until_balance ${MRENCLAVE} ${ICGACCOUNTALICE} $(( AMOUNT_SHIELD - AMOUNT_TRANSFER - AMOUNT_UNSHIELD ))
+        wait_assert_state ${MRENCLAVE} ${ICGACCOUNTALICE} balance $(( AMOUNT_SHIELD - AMOUNT_TRANSFER - AMOUNT_UNSHIELD ))
         BALANCE_INCOGNITO_ALICE=$(( AMOUNT_SHIELD - AMOUNT_TRANSFER - AMOUNT_UNSHIELD )) ;;
     *)
         echo "unsupported test mode"
@@ -153,11 +165,11 @@ ${CLIENT} shield-funds //Alice ${ICGACCOUNTALICE} ${AMOUNT_SHIELD} ${MRENCLAVE}
 echo ""
 
 echo "* Wait and assert Alice's incognito account balance... "
-wait_until_balance ${MRENCLAVE} ${ICGACCOUNTALICE} $(( BALANCE_INCOGNITO_ALICE + AMOUNT_SHIELD ))
+wait_assert_state ${MRENCLAVE} ${ICGACCOUNTALICE} balance $(( BALANCE_INCOGNITO_ALICE + AMOUNT_SHIELD ))
 echo "✔ ok"
 
 echo "* Wait and assert Bob's incognito account balance... "
-wait_until_balance ${MRENCLAVE} ${ICGACCOUNTBOB} 0
+wait_assert_state ${MRENCLAVE} ${ICGACCOUNTBOB} balance 0
 echo "✔ ok"
 echo ""
 
@@ -166,11 +178,11 @@ $CLIENT trusted --mrenclave ${MRENCLAVE} transfer ${ICGACCOUNTALICE} ${ICGACCOUN
 echo ""
 
 echo "* Wait and assert Alice's incognito account balance... "
-wait_until_balance ${MRENCLAVE} ${ICGACCOUNTALICE} $(( BALANCE_INCOGNITO_ALICE + AMOUNT_SHIELD - AMOUNT_TRANSFER ))
+wait_assert_state ${MRENCLAVE} ${ICGACCOUNTALICE} balance $(( BALANCE_INCOGNITO_ALICE + AMOUNT_SHIELD - AMOUNT_TRANSFER ))
 echo "✔ ok"
 
 echo "* Wait and assert Bob's incognito account balance... "
-wait_until_balance ${MRENCLAVE} ${ICGACCOUNTBOB} ${AMOUNT_TRANSFER}
+wait_assert_state ${MRENCLAVE} ${ICGACCOUNTBOB} balance ${AMOUNT_TRANSFER}
 echo "✔ ok"
 echo ""
 
@@ -179,11 +191,60 @@ ${CLIENT} trusted --mrenclave ${MRENCLAVE} --xt-signer //Alice unshield-funds ${
 echo ""
 
 echo "* Wait and assert Alice's incognito account balance... "
-wait_until_balance ${MRENCLAVE} ${ICGACCOUNTALICE} $(( BALANCE_INCOGNITO_ALICE + AMOUNT_SHIELD - AMOUNT_TRANSFER - AMOUNT_UNSHIELD ))
+wait_assert_state ${MRENCLAVE} ${ICGACCOUNTALICE} balance $(( BALANCE_INCOGNITO_ALICE + AMOUNT_SHIELD - AMOUNT_TRANSFER - AMOUNT_UNSHIELD ))
 echo "✔ ok"
 
 echo "* Wait and assert Bob's incognito account balance... "
-wait_until_balance ${MRENCLAVE} ${ICGACCOUNTBOB} ${AMOUNT_TRANSFER}
+wait_assert_state ${MRENCLAVE} ${ICGACCOUNTBOB} balance ${AMOUNT_TRANSFER}
+echo "✔ ok"
+
+# Test the nonce handling, using Bob's incognito account as the sender as Alice's
+# balance needs to be verified in the second round while Bob is newly created each time
+
+echo "* Create a new incognito account for Charlie"
+ICGACCOUNTCHARLIE=$(${CLIENT} trusted --mrenclave ${MRENCLAVE} new-account)
+echo "  Charlie's incognito account = ${ICGACCOUNTCHARLIE}"
+echo ""
+
+echo "* Assert Bob's incognito initial nonce..."
+assert_state ${MRENCLAVE} ${ICGACCOUNTBOB} nonce 0
+echo "✔ ok"
+echo ""
+
+echo "* Send 3 consecutive 0.2 UNIT balance Transfer Bob -> Charlie"
+for i in $(seq 1 3); do
+    # use direct calls so they are submitted to the top pool synchronously
+    $CLIENT trusted --direct --mrenclave ${MRENCLAVE} transfer ${ICGACCOUNTBOB} ${ICGACCOUNTCHARLIE} $(( AMOUNT_TRANSFER / 10 ))
+done
+echo ""
+
+echo "* Assert Bob's incognito current nonce..."
+wait_assert_state ${MRENCLAVE} ${ICGACCOUNTBOB} nonce 3
+echo "✔ ok"
+echo ""
+
+echo "* Send a 2 UNIT balance Transfer Bob -> Charlie (that will fail)"
+$CLIENT trusted --direct --mrenclave ${MRENCLAVE} transfer ${ICGACCOUNTBOB} ${ICGACCOUNTCHARLIE} ${AMOUNT_TRANSFER}
+echo ""
+
+echo "* Assert Bob's incognito nonce..."
+# the nonce should be increased nontheless, even for the failed tx
+wait_assert_state ${MRENCLAVE} ${ICGACCOUNTBOB} nonce 4
+echo "✔ ok"
+echo ""
+
+echo "* Send another 0.2 UNIT balance Transfer Bob -> Charlie"
+$CLIENT trusted --direct --mrenclave ${MRENCLAVE} transfer ${ICGACCOUNTBOB} ${ICGACCOUNTCHARLIE} $(( AMOUNT_TRANSFER / 10 ))
+echo ""
+
+echo "* Assert Bob's incognito nonce..."
+wait_assert_state ${MRENCLAVE} ${ICGACCOUNTBOB} nonce 5
+echo "✔ ok"
+echo ""
+
+echo "* Wait and assert Bob's incognito account balance... "
+# in total 4 balance transfer should go through => 1.2 UNIT remaining
+wait_assert_state ${MRENCLAVE} ${ICGACCOUNTBOB} balance $(( AMOUNT_TRANSFER * 6 / 10 ))
 echo "✔ ok"
 
 echo ""

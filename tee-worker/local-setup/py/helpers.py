@@ -74,7 +74,7 @@ class GracefulKiller:
                 p.kill()
             except:
                 pass
-        print('Cleaning logs in /tmp dir')
+        print('Cleaning tmp files, cwd = {}'.format(os.getcwd()))
         i = 1
         while os.path.isdir(f'tmp/w{i}'):
             shutil.rmtree(f'tmp/w{i}')
