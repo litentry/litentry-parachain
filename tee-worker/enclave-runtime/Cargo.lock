@@ -748,6 +748,7 @@ dependencies = [
  "its-sidechain",
  "jsonrpc-core",
  "lazy_static",
+ "lc-data-providers",
  "lc-stf-task-receiver",
  "lc-stf-task-sender",
  "litentry-primitives",

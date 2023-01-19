@@ -128,7 +128,16 @@ enclave {
 
 		public size_t test_main_entrance();
 
-		public size_t run_stf_task_handler();
+		public size_t run_stf_task_handler(
+			[in, size=twitter_official_url_len] uint8_t* twitter_official_url, uint32_t twitter_official_url_len,
+			[in, size=twitter_litentry_url_len] uint8_t* twitter_litentry_url, uint32_t twitter_litentry_url_len,
+			[in, size=twitter_auth_token_len] uint8_t* twitter_auth_token, uint32_t twitter_auth_token_len,
+			[in, size=discord_official_url_len] uint8_t* discord_official_url, uint32_t discord_official_url_len,
+			[in, size=discord_litentry_url_len] uint8_t* discord_litentry_url, uint32_t discord_litentry_url_len,
+			[in, size=discord_auth_token_len] uint8_t* discord_auth_token, uint32_t discord_auth_token_len,
+			[in, size=graphql_url_len] uint8_t* graphql_url, uint32_t graphql_url_len,
+			[in, size=graphql_auth_key_len] uint8_t* graphql_auth_key, uint32_t graphql_auth_key_len
+		);
 	};
 
 	untrusted {

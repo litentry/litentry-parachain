@@ -4154,7 +4154,6 @@ dependencies = [
  "its-test",
  "jsonrpsee 0.2.0",
  "lazy_static",
- "lc-data-providers",
  "lc-mock-server",
  "log 0.4.17",
  "mockall",

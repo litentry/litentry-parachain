@@ -14,13 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use codec::{Decode, Input};
 use itp_component_container::ComponentGetter;
 use itp_sgx_crypto::Rsa3072Seal;
 use itp_sgx_io::StaticSealedIO;
+use lc_data_providers::G_DATA_PROVIDERS;
 use lc_stf_task_receiver::{run_stf_task_receiver, StfTaskContext};
 use log::*;
 use sgx_types::sgx_status_t;
-use std::sync::Arc;
+use std::{slice, string::String, sync::Arc};
 
 use crate::{
 	error::{Error, Result},
@@ -37,7 +39,113 @@ use crate::{
 };
 
 #[no_mangle]
-pub unsafe extern "C" fn run_stf_task_handler() -> sgx_status_t {
+pub unsafe extern "C" fn run_stf_task_handler(
+	twitter_official_url: *const u8,
+	twitter_official_url_size: u32,
+	twitter_litentry_url: *const u8,
+	twitter_litentry_url_size: u32,
+	twitter_auth_token: *const u8,
+	twitter_auth_token_size: u32,
+	discord_official_url: *const u8,
+	discord_official_url_size: u32,
+	discord_litentry_url: *const u8,
+	discord_litentry_url_size: u32,
+	discord_auth_token: *const u8,
+	discord_auth_token_size: u32,
+	graphql_url: *const u8,
+	graphql_url_size: u32,
+	graphql_auth_key: *const u8,
+	graphql_auth_key_size: u32,
+) -> sgx_status_t {
+	let mut twitter_official_url_slice =
+		slice::from_raw_parts(twitter_official_url, twitter_official_url_size as usize);
+	let tw_o_url = match String::decode(&mut twitter_official_url_slice) {
+		Ok(val) => val,
+		Err(e) => {
+			error!("Could not decode longitude: {:?}", e);
+			return sgx_status_t::SGX_ERROR_UNEXPECTED
+		},
+	};
+
+	let mut twitter_litentry_url_slice =
+		slice::from_raw_parts(twitter_litentry_url, twitter_litentry_url_size as usize);
+	let tw_l_url = match String::decode(&mut twitter_litentry_url_slice) {
+		Ok(val) => val,
+		Err(e) => {
+			error!("Could not decode longitude: {:?}", e);
+			return sgx_status_t::SGX_ERROR_UNEXPECTED
+		},
+	};
+
+	let mut twitter_auth_token_slice =
+		slice::from_raw_parts(twitter_auth_token, twitter_auth_token_size as usize);
+	let tw_auth_t = match String::decode(&mut twitter_auth_token_slice) {
+		Ok(val) => val,
+		Err(e) => {
+			error!("Could not decode longitude: {:?}", e);
+			return sgx_status_t::SGX_ERROR_UNEXPECTED
+		},
+	};
+
+	let mut discord_official_url_slice =
+		slice::from_raw_parts(discord_official_url, discord_official_url_size as usize);
+	let dis_o_url = match String::decode(&mut discord_official_url_slice) {
+		Ok(val) => val,
+		Err(e) => {
+			error!("Could not decode longitude: {:?}", e);
+			return sgx_status_t::SGX_ERROR_UNEXPECTED
+		},
+	};
+
+	let mut discord_litentry_url_slice =
+		slice::from_raw_parts(discord_litentry_url, discord_litentry_url_size as usize);
+	let dis_l_url = match String::decode(&mut discord_litentry_url_slice) {
+		Ok(val) => val,
+		Err(e) => {
+			error!("Could not decode longitude: {:?}", e);
+			return sgx_status_t::SGX_ERROR_UNEXPECTED
+		},
+	};
+
+	let mut discord_auth_token_slice =
+		slice::from_raw_parts(discord_auth_token, discord_auth_token_size as usize);
+	let dis_auth_t = match String::decode(&mut discord_auth_token_slice) {
+		Ok(val) => val,
+		Err(e) => {
+			error!("Could not decode longitude: {:?}", e);
+			return sgx_status_t::SGX_ERROR_UNEXPECTED
+		},
+	};
+
+	let mut graphql_url_slice = slice::from_raw_parts(graphql_url, graphql_url_size as usize);
+	let gql_url = match String::decode(&mut graphql_url_slice) {
+		Ok(val) => val,
+		Err(e) => {
+			error!("Could not decode longitude: {:?}", e);
+			return sgx_status_t::SGX_ERROR_UNEXPECTED
+		},
+	};
+
+	let mut graphql_auth_key_slice =
+		slice::from_raw_parts(graphql_auth_key, graphql_auth_key_size as usize);
+	let gql_key = match String::decode(&mut graphql_auth_key_slice) {
+		Ok(val) => val,
+		Err(e) => {
+			error!("Could not decode longitude: {:?}", e);
+			return sgx_status_t::SGX_ERROR_UNEXPECTED
+		},
+	};
+
+	let mut mut_handle = G_DATA_PROVIDERS.write().unwrap();
+	mut_handle.set_twitter_official_url(tw_o_url);
+	mut_handle.set_twitter_litentry_url(tw_l_url);
+	mut_handle.set_twitter_auth_token(tw_auth_t);
+	mut_handle.set_discord_official_url(dis_o_url);
+	mut_handle.set_discord_litentry_url(dis_l_url);
+	mut_handle.set_discord_auth_token(dis_auth_t);
+	mut_handle.set_graphql_url(gql_url);
+	mut_handle.set_graphql_auth_key(gql_key);
+
 	if let Err(e) = run_stf_task_handler_internal() {
 		error!("Error while running stf task handler thread: {:?}", e);
 		return e.into()
