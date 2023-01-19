@@ -31,8 +31,8 @@ function print_divider() {
 
 print_divider
 
-# download runtime wasm
-echo "Get runtime wasm from $1"
+# 1. download runtime wasm
+echo "Download runtime wasm from $1 ..."
 case "$1" in
   https*)
     wget -q "$1" -O "$output_wasm" ;;
@@ -42,16 +42,34 @@ esac
 
 echo "Done"
 
-if [ -f "$output_wasm" ]; then
+if [ -f "$output_wasm" ] && [ -s "$output_wasm" ]; then
   ls -l "$output_wasm"
 else
-  echo "Cannot find $output_wasm, quit"
-  exit 1
+  echo "Cannot find $output_wasm or it has 0 bytes, quit"
+  exit 0
 fi
 
 print_divider
 
-# 2. do runtime upgrade and verify
+# 2. check if the released runtime version is greater than the on-chain runtime version,
+#    which should be now accessible via localhost:9933
+onchain_version=$(curl -s -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "state_getRuntimeVersion", "params": [] }' http://localhost:9933 | jq .result.specVersion)
+release_version=$(subwasm --json info "$output_wasm" | jq .core_version.specVersion)
+
+echo "Check runtime version ..."
+echo "On-chain: $onchain_version"
+echo "Release:  $release_version"
+
+if [ -n "$release_version" ] && \
+   [ -n "$onchain_version" ] && \
+   [ "$onchain_version" -ge "$release_version" ]; then
+  echo "Runtime version not increased, quit"
+  exit 0
+fi
+
+print_divider
+
+# 3. do runtime upgrade and verify
 echo "Do runtime upgrade and verify ..."
 cd "$ROOTDIR/ts-tests"
 echo "NODE_ENV=ci" > .env
