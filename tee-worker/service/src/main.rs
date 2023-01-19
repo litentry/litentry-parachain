@@ -521,56 +521,57 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	// ------------------------------------------------------------------------
 	// Start stf task handler thread
 	let enclave_api_stf_task_handler = enclave.clone();
-	let mut config_file = "worker-config-dev.json";
-	if config.running_mode == "staging" {
-		config_file = "worker-config-staging.json";
-	} else if config.running_mode == "prod" {
-		config_file = "worker-config-prod.json";
+	let mut stf_configs: Vec<Vec<u8>> = Vec::new();
+	{
+		let mut config_file = "worker-config-dev.json";
+		if config.running_mode == "staging" {
+			config_file = "worker-config-staging.json";
+		} else if config.running_mode == "prod" {
+			config_file = "worker-config-prod.json";
+		}
+
+		let worker_config = rs_config::Config::builder()
+			.add_source(rs_config::File::with_name(config_file))
+			.build()
+			.unwrap();
+
+		let twitter_official_url = worker_config
+			.get_string("twitter_official_url")
+			.unwrap_or_else(|_e| "https://api.twitter.com".to_string());
+		let twitter_litentry_url = worker_config
+			.get_string("twitter_litentry_url")
+			.unwrap_or_else(|_e| "".to_string());
+		let twitter_auth_token = worker_config
+			.get_string("twitter_auth_token")
+			.unwrap_or_else(|_e| "abcdefghijklmnopqrstuvwxyz".to_string());
+		let discord_official_url = worker_config
+			.get_string("discord_official_url")
+			.unwrap_or_else(|_e| "https://discordapp.com".to_string());
+		let discord_litentry_url = worker_config
+			.get_string("discord_litentry_url")
+			.unwrap_or_else(|_e| "".to_string());
+		let discord_auth_token = worker_config
+			.get_string("discord_auth_token")
+			.unwrap_or_else(|_e| "ABCDEFGHIJKLMNOPQRSTUVWXYZ".to_string());
+		let graphql_url = worker_config
+			.get_string("graphql_url")
+			.unwrap_or_else(|_e| "https://graph.tdf-labs.io/".to_string());
+		let graphql_auth_key = worker_config
+			.get_string("graphql_auth_key")
+			.unwrap_or_else(|_e| "ac2115ec-e327-4862-84c5-f25b6b7d4533".to_string());
+
+		stf_configs.push(twitter_official_url.into_bytes());
+		stf_configs.push(twitter_litentry_url.into_bytes());
+		stf_configs.push(twitter_auth_token.into_bytes());
+		stf_configs.push(discord_official_url.into_bytes());
+		stf_configs.push(discord_litentry_url.into_bytes());
+		stf_configs.push(discord_auth_token.into_bytes());
+		stf_configs.push(graphql_url.into_bytes());
+		stf_configs.push(graphql_auth_key.into_bytes());
 	}
 
-	let worker_config = rs_config::Config::builder()
-		.add_source(rs_config::File::with_name(config_file))
-		.build()
-		.unwrap();
-
-	let twitter_official_url = worker_config
-		.get_string("twitter_official_url")
-		.unwrap_or_else(|_e| "https://api.twitter.com".to_string());
-	let twitter_litentry_url = worker_config
-		.get_string("twitter_litentry_url")
-		.unwrap_or_else(|_e| "".to_string());
-	let twitter_auth_token = worker_config
-		.get_string("twitter_auth_token")
-		.unwrap_or_else(|_e| "abcdefghijklmnopqrstuvwxyz".to_string());
-	let discord_official_url = worker_config
-		.get_string("discord_official_url")
-		.unwrap_or_else(|_e| "https://discordapp.com".to_string());
-	let discord_litentry_url = worker_config
-		.get_string("discord_litentry_url")
-		.unwrap_or_else(|_e| "".to_string());
-	let discord_auth_token = worker_config
-		.get_string("discord_auth_token")
-		.unwrap_or_else(|_e| "ABCDEFGHIJKLMNOPQRSTUVWXYZ".to_string());
-	let graphql_url = worker_config
-		.get_string("graphql_url")
-		.unwrap_or_else(|_e| "https://graph.tdf-labs.io/".to_string());
-	let graphql_auth_key = worker_config
-		.get_string("graphql_auth_key")
-		.unwrap_or_else(|_e| "ac2115ec-e327-4862-84c5-f25b6b7d4533".to_string());
-
 	thread::spawn(move || {
-		enclave_api_stf_task_handler
-			.run_stf_task_handler(
-				twitter_official_url.into_bytes(),
-				twitter_litentry_url.into_bytes(),
-				twitter_auth_token.into_bytes(),
-				discord_official_url.into_bytes(),
-				discord_litentry_url.into_bytes(),
-				discord_auth_token.into_bytes(),
-				graphql_url.into_bytes(),
-				graphql_auth_key.into_bytes(),
-			)
-			.unwrap();
+		enclave_api_stf_task_handler.run_stf_task_handler(stf_configs).unwrap();
 	});
 
 	// ------------------------------------------------------------------------

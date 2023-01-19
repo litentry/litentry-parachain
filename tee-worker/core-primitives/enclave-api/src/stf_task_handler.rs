@@ -21,53 +21,33 @@ use sgx_types::*;
 
 /// Trait to run a stf task handling thread inside the enclave.
 pub trait StfTaskHandler {
-	fn run_stf_task_handler(
-		&self,
-		twitter_official_url: Vec<u8>,
-		twitter_litentry_url: Vec<u8>,
-		twitter_auth_token: Vec<u8>,
-		discord_official_url: Vec<u8>,
-		discord_litentry_url: Vec<u8>,
-		discord_auth_token: Vec<u8>,
-		graphql_url: Vec<u8>,
-		graphql_auth_key: Vec<u8>,
-	) -> EnclaveResult<()>;
+	fn run_stf_task_handler(&self, stf_configs: Vec<Vec<u8>>) -> EnclaveResult<()>;
 }
 
 impl StfTaskHandler for Enclave {
-	fn run_stf_task_handler(
-		&self,
-		twitter_official_url: Vec<u8>,
-		twitter_litentry_url: Vec<u8>,
-		twitter_auth_token: Vec<u8>,
-		discord_official_url: Vec<u8>,
-		discord_litentry_url: Vec<u8>,
-		discord_auth_token: Vec<u8>,
-		graphql_url: Vec<u8>,
-		graphql_auth_key: Vec<u8>,
-	) -> EnclaveResult<()> {
+	fn run_stf_task_handler(&self, stf_configs: Vec<Vec<u8>>) -> EnclaveResult<()> {
 		let mut retval = sgx_status_t::SGX_SUCCESS;
 
 		let result = unsafe {
 			ffi::run_stf_task_handler(
 				self.eid,
 				&mut retval,
-				twitter_official_url.as_ptr(),
-				twitter_official_url.len() as u32,
-				twitter_litentry_url.as_ptr(),
-				twitter_litentry_url.len() as u32,
-				twitter_auth_token.as_ptr(),
-				twitter_auth_token.len() as u32,
-				discord_official_url.as_ptr(),
-				discord_official_url.len() as u32,
-				discord_litentry_url.as_ptr(),
-				discord_litentry_url.len() as u32,
-				discord_auth_token.as_ptr(),
-				discord_auth_token.len() as u32,
-				graphql_url.as_ptr(),
-				graphql_url.len() as u32,
-				graphql_auth_key.as_ptr(),
-				graphql_auth_key.len() as u32,
+				stf_configs[0].as_ptr(),
+				stf_configs[0].len() as u32,
+				stf_configs[1].as_ptr(),
+				stf_configs[1].len() as u32,
+				stf_configs[2].as_ptr(),
+				stf_configs[2].len() as u32,
+				stf_configs[3].as_ptr(),
+				stf_configs[3].len() as u32,
+				stf_configs[4].as_ptr(),
+				stf_configs[4].len() as u32,
+				stf_configs[5].as_ptr(),
+				stf_configs[5].len() as u32,
+				stf_configs[6].as_ptr(),
+				stf_configs[6].len() as u32,
+				stf_configs[7].as_ptr(),
+				stf_configs[7].len() as u32,
 			)
 		};
 
