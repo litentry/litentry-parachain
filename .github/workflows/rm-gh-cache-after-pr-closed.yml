@@ -19,15 +19,19 @@ jobs:
           REPO=${{ github.repository }}
           BRANCH=${{ github.head_ref }}
 
-          cacheKeysForPR=$(gh actions-cache list -R $REPO | cut -f 1 | grep "$BRANCH")
+          if [ -z "$BRANCH" ]; then
+            echo "Branch is empty, quit now"
+            exit 0
+          fi
 
-          ## Setting this to not fail the workflow while deleting cache keys.
-          set +e
-          echo "Deleting caches after PR closed for branch=$BRANCH ..."
+          # BRANCH doesn't necessarily have a cache
+          cacheKeysForPR=$(gh actions-cache list -R $REPO | cut -f 1 | grep "$BRANCH" || true)
+
+          echo "Deleting caches after PR closed for branch $BRANCH ..."
           for cacheKey in $cacheKeysForPR
           do
             echo "  Delete cache: $cacheKey"
-            gh actions-cache delete $cacheKey -R $REPO --confirm
+            gh actions-cache delete $cacheKey -R $REPO --confirm || true
           done
           echo "Done"
         env:
