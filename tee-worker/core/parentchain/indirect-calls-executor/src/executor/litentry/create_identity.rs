@@ -14,10 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{
-	error::Error, executor::Executor, indirect_calls_executor::hash_of, ExecutionStatus,
-	IndirectCallsExecutor,
-};
+use crate::{error::Error, executor::Executor, hash_of, ExecutionStatus, IndirectCallsExecutor};
 use codec::{Decode, Encode};
 use ita_sgx_runtime::{pallet_imt::MetadataOf, Runtime};
 use ita_stf::{TrustedCall, TrustedOperation};
