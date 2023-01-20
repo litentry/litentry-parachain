@@ -21,7 +21,7 @@ use crate::{
 	H256,
 };
 use core::marker::PhantomData;
-use ita_stf::{TrustedCall, TrustedCallSigned, TrustedOperation};
+use ita_stf::{TrustedCall, TrustedCallSigned};
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::{ed25519_derivation::DeriveEd25519, key_repository::AccessKey};
 use itp_sgx_externalities::SgxExternalitiesTrait;
