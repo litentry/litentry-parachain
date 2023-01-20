@@ -15,39 +15,33 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{error::Error, Enclave, EnclaveResult};
+use codec::Encode;
 use frame_support::ensure;
 use itp_enclave_api_ffi as ffi;
+use lc_data_providers::DataProvidersStatic;
 use sgx_types::*;
 
 /// Trait to run a stf task handling thread inside the enclave.
 pub trait StfTaskHandler {
-	fn run_stf_task_handler(&self, stf_configs: Vec<Vec<u8>>) -> EnclaveResult<()>;
+	fn run_stf_task_handler(&self, data_providers_static: DataProvidersStatic)
+		-> EnclaveResult<()>;
 }
 
 impl StfTaskHandler for Enclave {
-	fn run_stf_task_handler(&self, stf_configs: Vec<Vec<u8>>) -> EnclaveResult<()> {
+	fn run_stf_task_handler(
+		&self,
+		data_providers_static: DataProvidersStatic,
+	) -> EnclaveResult<()> {
 		let mut retval = sgx_status_t::SGX_SUCCESS;
+
+		let data_providers_static_enc = data_providers_static.encode();
 
 		let result = unsafe {
 			ffi::run_stf_task_handler(
 				self.eid,
 				&mut retval,
-				stf_configs[0].as_ptr(),
-				stf_configs[0].len() as u32,
-				stf_configs[1].as_ptr(),
-				stf_configs[1].len() as u32,
-				stf_configs[2].as_ptr(),
-				stf_configs[2].len() as u32,
-				stf_configs[3].as_ptr(),
-				stf_configs[3].len() as u32,
-				stf_configs[4].as_ptr(),
-				stf_configs[4].len() as u32,
-				stf_configs[5].as_ptr(),
-				stf_configs[5].len() as u32,
-				stf_configs[6].as_ptr(),
-				stf_configs[6].len() as u32,
-				stf_configs[7].as_ptr(),
-				stf_configs[7].len() as u32,
+				data_providers_static_enc.as_ptr(),
+				data_providers_static_enc.len(),
 			)
 		};
 

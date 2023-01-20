@@ -178,21 +178,7 @@ extern "C" {
 	pub fn run_stf_task_handler(
 		eid: sgx_enclave_id_t,
 		retval: *mut sgx_status_t,
-		twitter_official_url: *const u8,
-		twitter_official_url_size: u32,
-		twitter_litentry_url: *const u8,
-		twitter_litentry_url_size: u32,
-		twitter_auth_token: *const u8,
-		twitter_auth_token_size: u32,
-		discord_official_url: *const u8,
-		discord_official_url_size: u32,
-		discord_litentry_url: *const u8,
-		discord_litentry_url_size: u32,
-		discord_auth_token: *const u8,
-		discord_auth_token_size: u32,
-		graphql_url: *const u8,
-		graphql_url_size: u32,
-		graphql_auth_key: *const u8,
-		graphql_auth_key_size: u32,
+		data_providers_static: *const u8,
+		data_providers_static_size: usize,
 	) -> sgx_status_t;
 }

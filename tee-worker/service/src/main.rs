@@ -69,6 +69,7 @@ use its_peer_fetch::{
 };
 use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
 use its_storage::{interface::FetchBlocks, BlockPruner, SidechainStorageLock};
+use lc_data_providers::DataProvidersStatic;
 use log::*;
 use my_node_runtime::{Hash, Header, RuntimeEvent};
 use sgx_types::*;
@@ -521,7 +522,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	// ------------------------------------------------------------------------
 	// Start stf task handler thread
 	let enclave_api_stf_task_handler = enclave.clone();
-	let mut stf_configs: Vec<Vec<u8>> = Vec::new();
+	let mut data_providers_static = DataProvidersStatic::default();
 	{
 		let mut config_file = "worker-config-dev.json";
 		if config.running_mode == "staging" {
@@ -560,18 +561,20 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 			.get_string("graphql_auth_key")
 			.unwrap_or_else(|_e| "ac2115ec-e327-4862-84c5-f25b6b7d4533".to_string());
 
-		stf_configs.push(twitter_official_url.into_bytes());
-		stf_configs.push(twitter_litentry_url.into_bytes());
-		stf_configs.push(twitter_auth_token.into_bytes());
-		stf_configs.push(discord_official_url.into_bytes());
-		stf_configs.push(discord_litentry_url.into_bytes());
-		stf_configs.push(discord_auth_token.into_bytes());
-		stf_configs.push(graphql_url.into_bytes());
-		stf_configs.push(graphql_auth_key.into_bytes());
+		data_providers_static.set_twitter_official_url(twitter_official_url);
+		data_providers_static.set_twitter_litentry_url(twitter_litentry_url);
+		data_providers_static.set_twitter_auth_token(twitter_auth_token);
+		data_providers_static.set_discord_official_url(discord_official_url);
+		data_providers_static.set_discord_litentry_url(discord_litentry_url);
+		data_providers_static.set_discord_auth_token(discord_auth_token);
+		data_providers_static.set_graphql_url(graphql_url);
+		data_providers_static.set_graphql_auth_key(graphql_auth_key);
 	}
 
 	thread::spawn(move || {
-		enclave_api_stf_task_handler.run_stf_task_handler(stf_configs).unwrap();
+		enclave_api_stf_task_handler
+			.run_stf_task_handler(data_providers_static)
+			.unwrap();
 	});
 
 	// ------------------------------------------------------------------------
