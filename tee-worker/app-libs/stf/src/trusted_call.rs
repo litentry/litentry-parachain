@@ -229,11 +229,14 @@ where
 	) -> Result<(), Self::Error> {
 		let sender = self.call.sender_account().clone();
 		let call_hash = blake2_256(&self.call.encode());
+		let system_nonce = System::account_nonce(&sender);
+		ensure!(self.nonce == system_nonce, Self::Error::InvalidNonce(self.nonce, system_nonce));
 
-		ensure!(
-			self.nonce == System::account_nonce(&sender),
-			Self::Error::InvalidNonce(self.nonce)
-		);
+		// increment the nonce, no matter if the call succeeds or fails.
+		// The call must have entered the transaction pool already,
+		// so it should be considered as valid
+		System::inc_account_nonce(&sender);
+
 		match self.call {
 			TrustedCall::balance_set_balance(root, who, free_balance, reserved_balance) => {
 				ensure!(is_root::<Runtime, AccountId>(&root), Self::Error::MissingPrivileges(root));
@@ -602,7 +605,6 @@ where
 				Self::set_challenge_code_runtime(account, did, code)
 			},
 		}?;
-		System::inc_account_nonce(&sender);
 		Ok(())
 	}
 

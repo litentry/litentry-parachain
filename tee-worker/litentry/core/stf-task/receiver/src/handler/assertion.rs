@@ -15,7 +15,6 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{handler::TaskHandler, StfTaskContext};
-use codec::{Decode, Encode};
 use ita_sgx_runtime::Hash;
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{
@@ -35,7 +34,7 @@ use litentry_primitives::{aes_encrypt_default, Assertion, UserShieldingKeyType};
 use log::*;
 use parachain_core_primitives::VCMPError;
 use sp_core::hashing::blake2_256;
-use std::{boxed::Box, format, string::String, sync::Arc};
+use std::{format, string::String, sync::Arc};
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::chrono::{offset::Utc as TzUtc, TimeZone};

@@ -74,12 +74,15 @@ class GracefulKiller:
                 p.kill()
             except:
                 pass
-        print('Cleaning logs in /tmp dir')
+        print('Cleaning tmp files, cwd = {}'.format(os.getcwd()))
         i = 1
-        while os.path.isdir(f'/tmp/w{i}'):
-            shutil.rmtree(f'/tmp/w{i}')
-            print(f'Removed /tmp/w{i}')
+        while os.path.isdir(f'tmp/w{i}'):
+            shutil.rmtree(f'tmp/w{i}')
+            print(f'Removed tmp/w{i}')
             i += 1
+        if os.path.isdir(f'log'):
+            shutil.rmtree(f'log')
+            print(f'Removed log')
         print("Cleaning up litentry-parachain...")
         subprocess.run(['./scripts/litentry/stop_parachain.sh', '||', 'true'])
         sys.exit(0)
