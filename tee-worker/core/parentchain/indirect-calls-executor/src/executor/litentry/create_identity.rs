@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{error::Error, executor::Executor, hash_of, ExecutionStatus, IndirectCallsExecutor};
+use crate::{error::Error, executor::Executor, IndirectCallsExecutor};
 use codec::{Decode, Encode};
 use ita_sgx_runtime::{pallet_imt::MetadataOf, Runtime};
 use ita_stf::{TrustedCall, TrustedOperation};
@@ -69,9 +69,8 @@ where
 			NodeMetadataProvider,
 		>,
 		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
-	) -> Result<ExecutionStatus<H256>, Error> {
-		let (_, shard, account, encrypted_identity, encrypted_metadata) =
-			extrinsic.function.clone();
+	) -> Result<(), Error> {
+		let (_, shard, account, encrypted_identity, encrypted_metadata) = extrinsic.function;
 		let shielding_key = context.shielding_key_repo.retrieve_key()?;
 
 		let identity: Identity =
@@ -100,6 +99,6 @@ where
 			let encrypted_trusted_call = shielding_key.encrypt(&trusted_operation.encode())?;
 			context.submit_trusted_call(shard, encrypted_trusted_call);
 		}
-		Ok(ExecutionStatus::Success(hash_of(&extrinsic)))
+		Ok(())
 	}
 }

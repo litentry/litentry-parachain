@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{error::Error, ExecutionStatus, IndirectCallsExecutor};
+use crate::{error::Error, hash_of, ExecutionStatus, IndirectCallsExecutor};
 use codec::{Decode, Encode, Error as CodecError};
 use itp_node_api::{
 	api_client::ParentchainUncheckedExtrinsic,
@@ -81,7 +81,7 @@ pub(crate) trait Executor<
 			NodeMetadataProvider,
 		>,
 		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
-	) -> Result<ExecutionStatus<H256>, Error>;
+	) -> Result<(), Error>;
 }
 
 pub(crate) trait DecorateExecutor<
@@ -128,7 +128,8 @@ where
 	) -> Result<ExecutionStatus<H256>, Error> {
 		if let Ok(xt) = self.decode(input) {
 			if self.is_target_call(xt.function.clone(), context.node_meta_data_provider.as_ref()) {
-				self.execute(context, xt)
+				self.execute(context, xt.clone())
+					.map(|_| ExecutionStatus::Success(hash_of(&xt)))
 			} else {
 				Ok(ExecutionStatus::NextExecutor)
 			}

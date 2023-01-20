@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{error::Error, executor::Executor, hash_of, ExecutionStatus, IndirectCallsExecutor};
+use crate::{error::Error, executor::Executor, IndirectCallsExecutor};
 use codec::{Decode, Encode};
 use ita_stf::{TrustedCall, TrustedOperation};
 use itp_node_api::{
@@ -67,14 +67,14 @@ where
 			NodeMetadataProvider,
 		>,
 		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
-	) -> Result<ExecutionStatus<H256>, Error> {
-		let (_, shard, encrypted_identity) = extrinsic.function.clone();
+	) -> Result<(), Error> {
+		let (_, shard, encrypted_identity) = extrinsic.function;
 		let shielding_key = context.shielding_key_repo.retrieve_key()?;
 
 		let identity: Identity =
 			Identity::decode(&mut shielding_key.decrypt(&encrypted_identity).unwrap().as_slice())?;
 
-		if let Some((multiaddress_account, _, _)) = extrinsic.signature.clone() {
+		if let Some((multiaddress_account, _, _)) = extrinsic.signature {
 			let account = AccountIdLookup::lookup(multiaddress_account)?;
 			let enclave_account_id = context.stf_enclave_signer.get_enclave_account()?;
 			let trusted_call =
@@ -86,6 +86,6 @@ where
 			let encrypted_trusted_call = shielding_key.encrypt(&trusted_operation.encode())?;
 			context.submit_trusted_call(shard, encrypted_trusted_call);
 		}
-		Ok(ExecutionStatus::Success(hash_of(&extrinsic)))
+		Ok(())
 	}
 }

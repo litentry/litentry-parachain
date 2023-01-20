@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{error::Error, executor::Executor, hash_of, ExecutionStatus, IndirectCallsExecutor};
+use crate::{error::Error, executor::Executor, IndirectCallsExecutor};
 use codec::{Decode, Encode};
 use ita_stf::{TrustedCall, TrustedOperation};
 use itp_node_api::{
@@ -67,8 +67,8 @@ where
 			NodeMetadataProvider,
 		>,
 		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
-	) -> Result<ExecutionStatus<H256>, Error> {
-		let (call, account_encrypted, amount, shard) = extrinsic.function.clone();
+	) -> Result<(), Error> {
+		let (call, account_encrypted, amount, shard) = extrinsic.function;
 		info!("Found ShieldFunds extrinsic in block: \nCall: {:?} \nAccount Encrypted {:?} \nAmount: {} \nShard: {}",
         	call, account_encrypted, amount, bs58::encode(shard.encode()).into_string());
 
@@ -87,6 +87,6 @@ where
 
 		let encrypted_trusted_call = shielding_key.encrypt(&trusted_operation.encode())?;
 		context.submit_trusted_call(shard, encrypted_trusted_call);
-		Ok(ExecutionStatus::Success(hash_of(&extrinsic)))
+		Ok(())
 	}
 }
