@@ -28,10 +28,13 @@ use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, Shieldin
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{RequestVCFn, H256};
+use litentry_primitives::ParentchainBlockNumber;
 use log::debug;
 use sp_runtime::traits::{AccountIdLookup, StaticLookup};
 
-pub(crate) struct RequestVC {}
+pub(crate) struct RequestVC {
+	pub(crate) block_number: ParentchainBlockNumber,
+}
 
 impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
 	Executor<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
@@ -76,8 +79,13 @@ where
 			let account = AccountIdLookup::lookup(multiaddress_account)?;
 			let enclave_account_id = context.stf_enclave_signer.get_enclave_account()?;
 
-			let trusted_call =
-				TrustedCall::build_assertion(enclave_account_id, account, assertion, shard);
+			let trusted_call = TrustedCall::build_assertion(
+				enclave_account_id,
+				account,
+				assertion,
+				shard,
+				self.block_number,
+			);
 			let signed_trusted_call =
 				context.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
 			let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);

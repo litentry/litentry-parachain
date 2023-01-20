@@ -228,7 +228,7 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 			// Found VerifyIdentity extrinsic
 			let verify_identity = VerifyIdentity { block_number: parentchain_block_number };
 			// Found RequestVC extrinsic
-			let request_vc = RequestVC {};
+			let request_vc = RequestVC { block_number: parentchain_block_number };
 
 			let executors: Vec<
 				&dyn DecorateExecutor<
