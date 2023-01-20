@@ -22,29 +22,29 @@ use crate::sgx_reexport_prelude::*;
 
 use crate::{
 	error::Result,
-	litentry::{
-		create_identity::CreateIdentity, remove_identity::RemoveIdentity, request_vc::RequestVC,
-		set_user_shielding_key::SetUserShieldingKey, verify_identity::VerifyIdentity,
+	executor::{
+		call_worker::CallWorker,
+		litentry::{
+			create_identity::CreateIdentity, remove_identity::RemoveIdentity,
+			request_vc::RequestVC, set_user_shielding_key::SetUserShieldingKey,
+			verify_identity::VerifyIdentity,
+		},
+		shield_funds::ShieldFunds,
 		DecorateExecutor,
 	},
 	ExecutionStatus,
 };
 use beefy_merkle_tree::{merkle_root, Keccak256};
-use codec::{Decode, Encode};
+use codec::Encode;
 use futures::executor;
-use ita_stf::{TrustedCall, TrustedOperation};
-use itp_node_api::{
-	api_client::ParentchainUncheckedExtrinsic,
-	metadata::{
-		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, pallet_vcmp::VCMPCallIndexes,
-		provider::AccessNodeMetadata,
-	},
+use itp_node_api::metadata::{
+	pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, pallet_vcmp::VCMPCallIndexes,
+	provider::AccessNodeMetadata,
 };
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::StfEnclaveSigning;
-use itp_stf_primitives::types::AccountId;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{CallWorkerFn, OpaqueCall, ShardIdentifier, ShieldFundsFn, H256};
+use itp_types::{OpaqueCall, ShardIdentifier, H256};
 use litentry_primitives::ParentchainBlockNumber;
 use log::*;
 use sp_core::blake2_256;
@@ -65,6 +65,7 @@ pub trait ExecuteIndirectCalls {
 }
 
 // Seems macro can't be pre-/suffix'ed, `concat_ident` doesn'tw work either
+#[allow(unused_macros)]
 macro_rules! is_parentchain_function {
 	($fn_name:ident, $call_index_name:ident) => {
 		fn $fn_name(&self, function: &[u8; 2]) -> bool {
@@ -121,32 +122,6 @@ where
 		}
 	}
 
-	fn handle_shield_funds_xt(
-		&self,
-		xt: ParentchainUncheckedExtrinsic<ShieldFundsFn>,
-	) -> Result<()> {
-		let (call, account_encrypted, amount, shard) = xt.function;
-		info!("Found ShieldFunds extrinsic in block: \nCall: {:?} \nAccount Encrypted {:?} \nAmount: {} \nShard: {}",
-        	call, account_encrypted, amount, bs58::encode(shard.encode()).into_string());
-
-		debug!("decrypt the account id");
-
-		let shielding_key = self.shielding_key_repo.retrieve_key()?;
-		let account_vec = shielding_key.decrypt(&account_encrypted)?;
-
-		let account = AccountId::decode(&mut account_vec.as_slice())?;
-
-		let enclave_account_id = self.stf_enclave_signer.get_enclave_account()?;
-		let trusted_call = TrustedCall::balance_shield(enclave_account_id, account, amount);
-		let signed_trusted_call =
-			self.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
-		let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
-
-		let encrypted_trusted_call = shielding_key.encrypt(&trusted_operation.encode())?;
-		self.submit_trusted_call(shard, encrypted_trusted_call);
-		Ok(())
-	}
-
 	pub(crate) fn submit_trusted_call(
 		&self,
 		shard: ShardIdentifier,
@@ -178,9 +153,6 @@ where
 		let root: H256 = merkle_root::<Keccak256, _>(extrinsics);
 		Ok(OpaqueCall::from_tuple(&(call, block_hash, block_number, root)))
 	}
-
-	is_parentchain_function!(is_shield_funds_function, shield_funds_call_indexes);
-	is_parentchain_function!(is_call_worker_function, call_worker_call_indexes);
 }
 
 impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
@@ -214,36 +186,21 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 			let encoded_xt_opaque = xt_opaque.encode();
 
 			// Found ShieldFunds extrinsic in block.
-			if let Ok(xt) = ParentchainUncheckedExtrinsic::<ShieldFundsFn>::decode(
-				&mut encoded_xt_opaque.as_slice(),
-			) {
-				if self.is_shield_funds_function(&xt.function.0) {
+			let shield_funds = ShieldFunds {};
+			match shield_funds.decode_and_execute(self, &mut encoded_xt_opaque.as_slice()) {
+				Ok(ExecutionStatus::Success(xt)) => {
 					let hash_of_xt = hash_of(&xt);
-
-					match self.handle_shield_funds_xt(xt) {
-						Err(e) => {
-							error!("Error performing shield funds. Error: {:?}", e);
-						},
-						Ok(_) => {
-							// Cache successfully executed shielding call.
-							executed_shielding_calls.push(hash_of_xt)
-						},
-					}
-				}
-			}
+					executed_shielding_calls.push(hash_of_xt);
+				},
+				Err(e) => {
+					error!("Error performing shield funds. Error: {:?}", e);
+				},
+				_ => {},
+			};
 
 			// Found CallWorker extrinsic in block.
 			// No else-if here! Because the same opaque extrinsic can contain multiple Fns at once (this lead to intermittent M6 failures)
-			if let Ok(xt) = ParentchainUncheckedExtrinsic::<CallWorkerFn>::decode(
-				&mut encoded_xt_opaque.as_slice(),
-			) {
-				if self.is_call_worker_function(&xt.function.0) {
-					let (_, request) = xt.function;
-					let (shard, cypher_text) = (request.shard, request.cyphertext);
-					debug!("Found trusted call extrinsic, submitting it to the top pool");
-					self.submit_trusted_call(shard, cypher_text);
-				}
-			}
+			let call_worker = CallWorker {};
 
 			// litentry
 			let parentchain_block_number: ParentchainBlockNumber = block_number
@@ -262,12 +219,14 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 
 			let executors: Vec<
 				&dyn DecorateExecutor<
+					_,
 					ShieldingKeyRepository,
 					StfEnclaveSigner,
 					TopPoolAuthor,
 					NodeMetadataProvider,
 				>,
 			> = vec![
+				&call_worker,
 				&set_user_shielding_key,
 				&create_identity,
 				&remove_identity,
@@ -276,12 +235,13 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 			];
 			for executor in executors {
 				match executor.decode_and_execute(self, &mut encoded_xt_opaque.as_slice()) {
-					Ok(ExecutionStatus::Success) => break,
+					Ok(ExecutionStatus::Success(_)) => break,
 					Ok(ExecutionStatus::NextExecutor) => continue,
 					Err(e) => {
 						log::error!("fail to execute indirect_call. due to {:?} ", e);
-						// continue or return error???
-						continue
+						// We should keep the same error handling as the original function `handle_shield_funds_xt`.
+						// `create_processed_parentchain_block_call` needs to be called in any case.
+						break
 					},
 				}
 			}

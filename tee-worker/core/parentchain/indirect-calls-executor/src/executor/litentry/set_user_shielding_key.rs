@@ -14,12 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{error::Error, litentry::Executor, ExecutionStatus, IndirectCallsExecutor};
+use crate::{error::Error, executor::Executor, ExecutionStatus, IndirectCallsExecutor};
 use codec::{Decode, Encode};
-use ita_sgx_runtime::{pallet_imt::MetadataOf, Runtime};
 use ita_stf::{TrustedCall, TrustedOperation};
 use itp_node_api::{
-	api_client::{PlainTip, SubstrateDefaultSignedExtra, UncheckedExtrinsicV4},
+	api_client::ParentchainUncheckedExtrinsic,
 	metadata::{
 		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, pallet_vcmp::VCMPCallIndexes,
 		provider::AccessNodeMetadata, Error as MetadataError,
@@ -28,16 +27,15 @@ use itp_node_api::{
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{CreateIdentityFn, H256};
-use litentry_primitives::{Identity, ParentchainBlockNumber};
+use itp_types::{SetUserShieldingKeyFn, H256};
+use litentry_primitives::UserShieldingKeyType;
+use sp_runtime::traits::{AccountIdLookup, StaticLookup};
 
-pub(crate) struct CreateIdentity {
-	pub(crate) block_number: ParentchainBlockNumber,
-}
+pub(crate) struct SetUserShieldingKey {}
 
 impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
 	Executor<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
-	for CreateIdentity
+	for SetUserShieldingKey
 where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
@@ -47,7 +45,9 @@ where
 	NodeMetadataProvider: AccessNodeMetadata,
 	NodeMetadataProvider::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
 {
-	type Call = CreateIdentityFn;
+	type Call = SetUserShieldingKeyFn;
+
+	type Result = ();
 
 	fn call_index(&self, call: Self::Call) -> [u8; 2] {
 		call.0
@@ -57,7 +57,7 @@ where
 		&self,
 		metadata_type: &NodeMetadataProvider::MetadataType,
 	) -> Result<[u8; 2], MetadataError> {
-		metadata_type.create_identity_call_indexes()
+		metadata_type.set_user_shielding_key_call_indexes()
 	}
 
 	fn execute(
@@ -68,30 +68,19 @@ where
 			TopPoolAuthor,
 			NodeMetadataProvider,
 		>,
-		extrinsic: UncheckedExtrinsicV4<Self::Call, SubstrateDefaultSignedExtra<PlainTip>>,
-	) -> Result<ExecutionStatus, Error> {
-		let (_, shard, account, encrypted_identity, encrypted_metadata) = extrinsic.function;
+		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
+	) -> Result<ExecutionStatus<Self::Result>, Error> {
+		let (_, shard, encrypted_key) = extrinsic.function;
 		let shielding_key = context.shielding_key_repo.retrieve_key()?;
 
-		let identity: Identity =
-			Identity::decode(&mut shielding_key.decrypt(&encrypted_identity).unwrap().as_slice())?;
-		let metadata = match encrypted_metadata {
-			None => None,
-			Some(m) => {
-				let decrypted_metadata = shielding_key.decrypt(&m)?;
-				Some(MetadataOf::<Runtime>::decode(&mut decrypted_metadata.as_slice())?)
-			},
-		};
+		let key =
+			UserShieldingKeyType::decode(&mut shielding_key.decrypt(&encrypted_key)?.as_slice())?;
 
-		if extrinsic.signature.is_some() {
+		if let Some((multiaddress_account, _, _)) = extrinsic.signature {
+			let account = AccountIdLookup::lookup(multiaddress_account)?;
 			let enclave_account_id = context.stf_enclave_signer.get_enclave_account()?;
-			let trusted_call = TrustedCall::create_identity_runtime(
-				enclave_account_id,
-				account,
-				identity,
-				metadata,
-				self.block_number,
-			);
+			let trusted_call =
+				TrustedCall::set_user_shielding_key_runtime(enclave_account_id, account, key);
 			let signed_trusted_call =
 				context.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
 			let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
@@ -99,6 +88,6 @@ where
 			let encrypted_trusted_call = shielding_key.encrypt(&trusted_operation.encode())?;
 			context.submit_trusted_call(shard, encrypted_trusted_call);
 		}
-		Ok(ExecutionStatus::Success)
+		Ok(ExecutionStatus::Success(()))
 	}
 }

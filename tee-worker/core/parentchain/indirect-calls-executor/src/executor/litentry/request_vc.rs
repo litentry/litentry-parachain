@@ -14,11 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{error::Error, litentry::Executor, ExecutionStatus, IndirectCallsExecutor};
+use crate::{error::Error, executor::Executor, ExecutionStatus, IndirectCallsExecutor};
 use codec::Encode;
 use ita_stf::{TrustedCall, TrustedOperation};
 use itp_node_api::{
-	api_client::{PlainTip, SubstrateDefaultSignedExtra, UncheckedExtrinsicV4},
+	api_client::ParentchainUncheckedExtrinsic,
 	metadata::{
 		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, pallet_vcmp::VCMPCallIndexes,
 		provider::AccessNodeMetadata, Error as MetadataError,
@@ -47,6 +47,8 @@ where
 {
 	type Call = RequestVCFn;
 
+	type Result = ();
+
 	fn call_index(&self, call: Self::Call) -> [u8; 2] {
 		call.0
 	}
@@ -66,8 +68,8 @@ where
 			TopPoolAuthor,
 			NodeMetadataProvider,
 		>,
-		extrinsic: UncheckedExtrinsicV4<Self::Call, SubstrateDefaultSignedExtra<PlainTip>>,
-	) -> Result<ExecutionStatus, Error> {
+		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
+	) -> Result<ExecutionStatus<Self::Result>, Error> {
 		let (_, shard, assertion) = extrinsic.function;
 		let shielding_key = context.shielding_key_repo.retrieve_key()?;
 		debug!("Requested VC Assertion {:?}", assertion);
@@ -85,6 +87,6 @@ where
 			let encrypted_trusted_call = shielding_key.encrypt(&trusted_operation.encode())?;
 			context.submit_trusted_call(shard, encrypted_trusted_call);
 		}
-		Ok(ExecutionStatus::Success)
+		Ok(ExecutionStatus::Success(()))
 	}
 }

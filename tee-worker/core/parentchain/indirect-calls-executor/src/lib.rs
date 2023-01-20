@@ -32,11 +32,12 @@ pub mod sgx_reexport_prelude {
 	pub use thiserror_sgx as thiserror;
 }
 pub mod error;
+pub mod executor;
 pub mod indirect_calls_executor;
-pub mod litentry;
 pub use indirect_calls_executor::*;
 
-pub enum ExecutionStatus {
-	Success,
+#[derive(Clone)]
+pub enum ExecutionStatus<R> {
+	Success(R),
 	NextExecutor,
 }

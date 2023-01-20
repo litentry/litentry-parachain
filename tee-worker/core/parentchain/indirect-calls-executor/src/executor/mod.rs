@@ -17,9 +17,7 @@
 use crate::{error::Error, ExecutionStatus, IndirectCallsExecutor};
 use codec::{Decode, Encode, Error as CodecError};
 use itp_node_api::{
-	api_client::{
-		ParentchainUncheckedExtrinsic, PlainTip, SubstrateDefaultSignedExtra, UncheckedExtrinsicV4,
-	},
+	api_client::ParentchainUncheckedExtrinsic,
 	metadata::{
 		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, pallet_vcmp::VCMPCallIndexes,
 		provider::AccessNodeMetadata, Error as MetadataError,
@@ -30,11 +28,9 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::H256;
 
-pub mod create_identity;
-pub mod remove_identity;
-pub mod request_vc;
-pub mod set_user_shielding_key;
-pub mod verify_identity;
+pub mod call_worker;
+pub mod litentry;
+pub mod shield_funds;
 
 pub(crate) trait Executor<
 	ShieldingKeyRepository,
@@ -51,6 +47,8 @@ pub(crate) trait Executor<
 	NodeMetadataProvider::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
 {
 	type Call: Decode + Encode + Clone;
+
+	type Result: Clone;
 
 	fn call_index(&self, call: Self::Call) -> [u8; 2];
 
@@ -84,11 +82,12 @@ pub(crate) trait Executor<
 			TopPoolAuthor,
 			NodeMetadataProvider,
 		>,
-		extrinsic: UncheckedExtrinsicV4<Self::Call, SubstrateDefaultSignedExtra<PlainTip>>,
-	) -> Result<ExecutionStatus, Error>;
+		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
+	) -> Result<ExecutionStatus<Self::Result>, Error>;
 }
 
 pub(crate) trait DecorateExecutor<
+	R,
 	ShieldingKeyRepository,
 	StfEnclaveSigner,
 	TopPoolAuthor,
@@ -104,14 +103,26 @@ pub(crate) trait DecorateExecutor<
 			NodeMetadataProvider,
 		>,
 		input: &mut &[u8],
-	) -> Result<ExecutionStatus, Error>;
+	) -> Result<ExecutionStatus<R>, Error>;
 }
 
-impl<E, ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
-	DecorateExecutor<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
-	for E
+impl<E, R, ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
+	DecorateExecutor<
+		R,
+		ShieldingKeyRepository,
+		StfEnclaveSigner,
+		TopPoolAuthor,
+		NodeMetadataProvider,
+	> for E
 where
-	E: Executor<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>,
+	E: Executor<
+		ShieldingKeyRepository,
+		StfEnclaveSigner,
+		TopPoolAuthor,
+		NodeMetadataProvider,
+		Result = R,
+	>,
+	R: Clone,
 	ShieldingKeyRepository: AccessKey,
 	ShieldingKeyRepository::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
 		+ ShieldingCryptoEncrypt<Error = itp_sgx_crypto::Error>,
@@ -129,7 +140,7 @@ where
 			NodeMetadataProvider,
 		>,
 		input: &mut &[u8],
-	) -> Result<ExecutionStatus, Error> {
+	) -> Result<ExecutionStatus<R>, Error> {
 		if let Ok(xt) = self.decode(input) {
 			if self.is_target_call(xt.function.clone(), context.node_meta_data_provider.as_ref()) {
 				self.execute(context, xt)
