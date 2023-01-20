@@ -14,7 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{error::Error, executor::Executor, ExecutionStatus, IndirectCallsExecutor};
+use crate::{
+	error::Error, executor::Executor, indirect_calls_executor::hash_of, ExecutionStatus,
+	IndirectCallsExecutor,
+};
 use itp_node_api::{
 	api_client::ParentchainUncheckedExtrinsic,
 	metadata::{
@@ -43,8 +46,6 @@ where
 {
 	type Call = CallWorkerFn;
 
-	type Result = ();
-
 	fn call_index(&self, call: Self::Call) -> [u8; 2] {
 		call.0
 	}
@@ -65,11 +66,11 @@ where
 			NodeMetadataProvider,
 		>,
 		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
-	) -> Result<ExecutionStatus<Self::Result>, Error> {
-		let (_, request) = extrinsic.function;
+	) -> Result<ExecutionStatus<H256>, Error> {
+		let (_, request) = extrinsic.function.clone();
 		let (shard, cypher_text) = (request.shard, request.cyphertext);
 		log::debug!("Found trusted call extrinsic, submitting it to the top pool");
 		context.submit_trusted_call(shard, cypher_text);
-		Ok(ExecutionStatus::Success(()))
+		Ok(ExecutionStatus::Success(hash_of(&extrinsic)))
 	}
 }

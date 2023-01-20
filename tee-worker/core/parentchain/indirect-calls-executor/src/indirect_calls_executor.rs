@@ -181,22 +181,12 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 		let block_number = *block.header().number();
 		let block_hash = block.hash();
 		debug!("Scanning block {:?} for relevant xt", block_number);
-		let mut executed_shielding_calls = Vec::<H256>::new();
+		let mut executed_calls = Vec::<H256>::new();
 		for xt_opaque in block.extrinsics().iter() {
 			let encoded_xt_opaque = xt_opaque.encode();
 
 			// Found ShieldFunds extrinsic in block.
 			let shield_funds = ShieldFunds {};
-			match shield_funds.decode_and_execute(self, &mut encoded_xt_opaque.as_slice()) {
-				Ok(ExecutionStatus::Success(xt)) => {
-					let hash_of_xt = hash_of(&xt);
-					executed_shielding_calls.push(hash_of_xt);
-				},
-				Err(e) => {
-					error!("Error performing shield funds. Error: {:?}", e);
-				},
-				_ => {},
-			};
 
 			// Found CallWorker extrinsic in block.
 			// No else-if here! Because the same opaque extrinsic can contain multiple Fns at once (this lead to intermittent M6 failures)
@@ -219,13 +209,13 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 
 			let executors: Vec<
 				&dyn DecorateExecutor<
-					_,
 					ShieldingKeyRepository,
 					StfEnclaveSigner,
 					TopPoolAuthor,
 					NodeMetadataProvider,
 				>,
 			> = vec![
+				&shield_funds,
 				&call_worker,
 				&set_user_shielding_key,
 				&create_identity,
@@ -235,7 +225,10 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 			];
 			for executor in executors {
 				match executor.decode_and_execute(self, &mut encoded_xt_opaque.as_slice()) {
-					Ok(ExecutionStatus::Success(_)) => break,
+					Ok(ExecutionStatus::Success(hash)) => {
+						executed_calls.push(hash);
+						break
+					},
 					Ok(ExecutionStatus::NextExecutor) => continue,
 					Err(e) => {
 						log::error!("fail to execute indirect_call. due to {:?} ", e);
@@ -250,13 +243,13 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 		// Include a processed parentchain block confirmation for each block.
 		self.create_processed_parentchain_block_call::<ParentchainBlock>(
 			block_hash,
-			executed_shielding_calls,
+			executed_calls,
 			block_number,
 		)
 	}
 }
 
-fn hash_of<T: Encode>(xt: &T) -> H256 {
+pub(crate) fn hash_of<T: Encode>(xt: &T) -> H256 {
 	blake2_256(&xt.encode()).into()
 }
 
