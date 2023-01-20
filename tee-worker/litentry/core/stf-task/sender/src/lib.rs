@@ -33,15 +33,15 @@ pub mod sgx_reexport_prelude {
 use itp_types::AccountId;
 pub mod error;
 pub mod stf_task_sender;
+use codec::{Decode, Encode};
 pub use error::Result;
-
+use itp_stf_primitives::types::ShardIdentifier;
+use litentry_primitives::{
+	Assertion, ChallengeCode, Identity, UserShieldingKeyType, Web2ValidationData,
+	Web3ValidationData,
+};
 use sp_runtime::{traits::ConstU32, BoundedVec};
 use sp_std::vec::Vec;
-
-use codec::{Decode, Encode};
-use litentry_primitives::{
-	Assertion, ChallengeCode, Identity, Web2ValidationData, Web3ValidationData,
-};
 
 /// Here a few Request structs are defined for asynchronously stf-tasks handling.
 /// A `callback` exists for some request types to submit a callback TrustedCall to top pool.
@@ -94,10 +94,12 @@ pub type MaxIdentityLength = ConstU32<64>;
 /// TODO: adapt struct fields later
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct AssertionBuildRequest {
-	pub encoded_shard: Vec<u8>,
+	pub shard: ShardIdentifier,
 	pub who: AccountId,
 	pub assertion: Assertion,
 	pub vec_identity: BoundedVec<Identity, MaxIdentityLength>,
+	pub bn: litentry_primitives::ParentchainBlockNumber,
+	pub key: UserShieldingKeyType,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]

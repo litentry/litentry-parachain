@@ -15,15 +15,17 @@
 
 */
 
+use itp_node_api_metadata::pallet_vcmp::VCMPCallIndexes;
 #[cfg(feature = "evm")]
 use sp_core::{H160, H256, U256};
 
 #[cfg(feature = "evm")]
 use std::vec::Vec;
 
+//aes_encrypt_default
 use crate::{
-	helpers::{aes_encrypt_default, ensure_enclave_signer_account},
-	IdentityManagement, MetadataOf, Runtime, StfError, System, TrustedOperation,
+	helpers::ensure_enclave_signer_account, IdentityManagement, MetadataOf, Runtime, StfError,
+	System, TrustedOperation,
 };
 use codec::{Decode, Encode};
 use frame_support::{ensure, traits::UnfilteredDispatchable};
@@ -36,8 +38,8 @@ use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier, Signature};
 use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
-	Assertion, ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType,
-	ValidationData,
+	aes_encrypt_default, Assertion, ChallengeCode, Identity, ParentchainBlockNumber,
+	UserShieldingKeyType, ValidationData,
 };
 use log::*;
 use sp_io::hashing::blake2_256;
@@ -120,8 +122,14 @@ pub enum TrustedCall {
 		ParentchainBlockNumber,
 	), // (EnclaveSigner, Account, identity, validation, blocknumber)
 	verify_identity_runtime(AccountId, AccountId, Identity, ParentchainBlockNumber), // (EnclaveSigner, Account, identity, blocknumber)
-	build_assertion(AccountId, AccountId, Assertion, ShardIdentifier), // (Account, Account, Assertion, Shard)
-	set_challenge_code_runtime(AccountId, AccountId, Identity, ChallengeCode), // only for testing
+	build_assertion_preflight(
+		AccountId,
+		AccountId,
+		Assertion,
+		ShardIdentifier,
+		ParentchainBlockNumber,
+	), // (Account, Account, Assertion, shard, blocknumber)
+	set_challenge_code_runtime(AccountId, AccountId, Identity, ChallengeCode),       // only for testing
 }
 
 impl TrustedCall {
@@ -146,7 +154,7 @@ impl TrustedCall {
 			TrustedCall::remove_identity_runtime(account, _, _) => account,
 			TrustedCall::verify_identity_preflight(account, _, _, _, _) => account,
 			TrustedCall::verify_identity_runtime(account, _, _, _) => account,
-			TrustedCall::build_assertion(account, _, _, _) => account,
+			TrustedCall::build_assertion_preflight(account, _, _, _, _) => account,
 			TrustedCall::set_challenge_code_runtime(account, _, _, _) => account,
 		}
 	}
@@ -208,7 +216,8 @@ impl TrustedReturnValue
 impl<NodeMetadataRepository> ExecuteCall<NodeMetadataRepository> for TrustedCallSigned
 where
 	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes + SystemSs58Prefix,
+	NodeMetadataRepository::MetadataType:
+		TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix,
 {
 	type Error = StfError;
 
@@ -587,9 +596,9 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::build_assertion(enclave_account, account, assertion, shard) => {
+			TrustedCall::build_assertion_preflight(enclave_account, who, assertion, shard, bn) => {
 				ensure_enclave_signer_account(&enclave_account)?;
-				Self::build_assertion(&shard, account, assertion)
+				Self::build_assertion_preflight(&shard, who, assertion, bn)
 			},
 			TrustedCall::set_challenge_code_runtime(enclave_account, account, did, code) => {
 				ensure_enclave_signer_account(&enclave_account)?;
@@ -615,7 +624,7 @@ where
 			TrustedCall::remove_identity_runtime(..) => debug!("No storage updates needed..."),
 			TrustedCall::verify_identity_preflight(..) => debug!("No storage updates needed..."),
 			TrustedCall::verify_identity_runtime(..) => debug!("No storage updates needed..."),
-			TrustedCall::build_assertion(..) => debug!("No storage updates needed..."),
+			TrustedCall::build_assertion_preflight(..) => debug!("No storage updates needed..."),
 			TrustedCall::set_challenge_code_runtime(..) => debug!("No storage updates needed..."),
 			#[cfg(feature = "evm")]
 			_ => debug!("No storage updates needed..."),
