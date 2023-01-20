@@ -31,9 +31,59 @@ pub use parentchain_primitives::{
 	AesOutput, BlockNumber as ParentchainBlockNumber, UserShieldingKeyType, MINUTES,
 	USER_SHIELDING_KEY_LEN, USER_SHIELDING_KEY_NONCE_LEN, USER_SHIELDING_KEY_TAG_LEN,
 };
+
+use ring::{
+	aead::{Aad, BoundKey, Nonce, NonceSequence, SealingKey, UnboundKey, AES_256_GCM},
+	error::Unspecified,
+};
+
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+extern crate rand_sgx as rand;
+
+use rand::Rng;
+
 // pub use trusted_call::*;
 pub use assertion::*;
 pub use enclave_quote::*;
 pub use validation_data::*;
 
 pub type ChallengeCode = [u8; 16];
+
+pub fn aes_encrypt_default(key: &UserShieldingKeyType, data: &[u8]) -> AesOutput {
+	let mut in_out = data.to_vec();
+
+	let nonce = RingAeadNonceSequence::new();
+	let aad = b"";
+	let unbound_key = UnboundKey::new(&AES_256_GCM, key.as_slice()).unwrap();
+	let mut sealing_key = SealingKey::new(unbound_key, nonce.clone());
+	sealing_key.seal_in_place_append_tag(Aad::from(aad), &mut in_out).unwrap();
+
+	AesOutput { ciphertext: in_out.to_vec(), aad: aad.to_vec(), nonce: nonce.nonce }
+}
+
+#[derive(Clone)]
+pub struct RingAeadNonceSequence {
+	pub nonce: [u8; USER_SHIELDING_KEY_NONCE_LEN],
+}
+
+impl RingAeadNonceSequence {
+	fn new() -> RingAeadNonceSequence {
+		RingAeadNonceSequence { nonce: [0u8; USER_SHIELDING_KEY_NONCE_LEN] }
+	}
+}
+
+impl NonceSequence for RingAeadNonceSequence {
+	fn advance(&mut self) -> Result<Nonce, Unspecified> {
+		let nonce = Nonce::assume_unique_for_key(self.nonce);
+
+		// FIXME: in function `ring::rand::sysrand::fill': undefined reference to `syscall'
+		// let mut nonce_vec = vec![0; USER_SHIELDING_KEY_NONCE_LEN];
+		// let rand = SystemRandom::new();
+		// rand.fill(&mut nonce_vec).unwrap();
+		let nonce_vec = rand::thread_rng().gen::<[u8; USER_SHIELDING_KEY_NONCE_LEN]>();
+
+		self.nonce.copy_from_slice(&nonce_vec[0..USER_SHIELDING_KEY_NONCE_LEN]);
+
+		Ok(nonce)
+	}
+}
