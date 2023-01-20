@@ -24,6 +24,7 @@ use crate::{
 			user_shielding_key::UserShiledingKeyCommand,
 			verify_identity_preflight::VerifyIdentityPreflightCommand,
 		},
+		nonce::NonceCommand,
 		set_balance::SetBalanceCommand,
 		transfer::TransferCommand,
 		unshield_funds::UnshieldFundsCommand,
@@ -59,6 +60,10 @@ pub enum TrustedBaseCommand {
 	/// Transfer funds from an incognito account to an parentchain account
 	UnshieldFunds(UnshieldFundsCommand),
 
+	/// gets the nonce of a given account, taking the pending trusted calls
+	/// in top pool in consideration
+	Nonce(NonceCommand),
+
 	// Litentry's commands below
 	// for commands that should trigger parentchain extrins, check non-trusted commands
 	/// query a user's shielding key, the setter is non-trusted command
@@ -80,6 +85,7 @@ impl TrustedBaseCommand {
 			TrustedBaseCommand::SetBalance(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::Balance(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::UnshieldFunds(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::Nonce(cmd) => cmd.run(cli, trusted_cli),
 			// Litentry's commands below
 			TrustedBaseCommand::UserShieldingKey(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::SetChallengeCode(cmd) => cmd.run(cli, trusted_cli),
