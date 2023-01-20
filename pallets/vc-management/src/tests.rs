@@ -19,6 +19,8 @@ use frame_support::{assert_noop, assert_ok};
 use sp_core::H256;
 
 const TEST_MRENCLAVE: [u8; 32] = [2u8; 32];
+const VC_HASH: H256 = H256::zero();
+const VC_INDEX: H256 = H256::zero();
 
 #[test]
 fn request_vc_works() {
@@ -38,14 +40,13 @@ fn vc_issued_works() {
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(1),
 			1,
-			0,
-			H256::default(),
+			VC_INDEX,
+			VC_HASH,
 			AesOutput::default()
 		));
-		assert!(VCManagement::vc_registry(0).is_some());
-		let context = VCManagement::vc_registry(0).unwrap();
+		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
+		let context = VCManagement::vc_registry(VC_INDEX).unwrap();
 		assert_eq!(context.subject, 1);
-		assert_eq!(context.hash, H256::default());
 		assert_eq!(context.status, Status::Active);
 	});
 }
@@ -56,8 +57,8 @@ fn vc_issued_with_unpriviledged_origin_fails() {
 		assert_noop!(
 			VCManagement::vc_issued(
 				RuntimeOrigin::signed(2),
-				2,
-				0,
+				1,
+				H256::default(),
 				H256::default(),
 				AesOutput::default()
 			),
@@ -67,21 +68,21 @@ fn vc_issued_with_unpriviledged_origin_fails() {
 }
 
 #[test]
-fn vc_issued_with_duplicated_id_fails() {
+fn vc_issued_with_duplicated_index_fails() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(1),
-			2,
-			0,
-			H256::default(),
+			1,
+			VC_INDEX,
+			VC_HASH,
 			AesOutput::default()
 		));
 		assert_noop!(
 			VCManagement::vc_issued(
 				RuntimeOrigin::signed(1),
-				2,
-				0,
-				H256::default(),
+				1,
+				VC_INDEX,
+				VC_HASH,
 				AesOutput::default()
 			),
 			Error::<Test>::VCAlreadyExists
@@ -95,15 +96,15 @@ fn disable_vc_works() {
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(1),
 			2,
-			0,
-			H256::default(),
+			VC_INDEX,
+			VC_HASH,
 			AesOutput::default()
 		));
-		assert!(VCManagement::vc_registry(0).is_some());
-		assert_ok!(VCManagement::disable_vc(RuntimeOrigin::signed(2), 0));
+		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
+		assert_ok!(VCManagement::disable_vc(RuntimeOrigin::signed(2), VC_INDEX));
 		// vc is not deleted
-		assert!(VCManagement::vc_registry(0).is_some());
-		let context = VCManagement::vc_registry(0).unwrap();
+		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
+		let context = VCManagement::vc_registry(VC_INDEX).unwrap();
 		assert_eq!(context.status, Status::Disabled);
 	});
 }
@@ -112,7 +113,7 @@ fn disable_vc_works() {
 fn disable_vc_with_non_existent_vc_fails() {
 	new_test_ext().execute_with(|| {
 		assert_noop!(
-			VCManagement::disable_vc(RuntimeOrigin::signed(1), 0),
+			VCManagement::disable_vc(RuntimeOrigin::signed(1), VC_INDEX),
 			Error::<Test>::VCNotExist
 		);
 	});
@@ -124,15 +125,15 @@ fn disable_vc_with_other_subject_fails() {
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(1),
 			2,
-			0,
-			H256::default(),
+			VC_INDEX,
+			VC_HASH,
 			AesOutput::default()
 		));
 		assert_noop!(
-			VCManagement::disable_vc(RuntimeOrigin::signed(1), 0),
+			VCManagement::disable_vc(RuntimeOrigin::signed(1), VC_HASH),
 			Error::<Test>::VCSubjectMismatch
 		);
-		assert_eq!(VCManagement::vc_registry(0).unwrap().status, Status::Active);
+		assert_eq!(VCManagement::vc_registry(VC_INDEX).unwrap().status, Status::Active);
 	});
 }
 
@@ -142,14 +143,14 @@ fn revoke_vc_works() {
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(1),
 			2,
-			0,
-			H256::default(),
+			VC_INDEX,
+			VC_HASH,
 			AesOutput::default()
 		));
-		assert!(VCManagement::vc_registry(0).is_some());
-		assert_ok!(VCManagement::revoke_vc(RuntimeOrigin::signed(2), 0));
+		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
+		assert_ok!(VCManagement::revoke_vc(RuntimeOrigin::signed(2), VC_INDEX));
 		// vc is deleted
-		assert!(VCManagement::vc_registry(0).is_none());
+		assert!(VCManagement::vc_registry(VC_INDEX).is_none());
 	});
 }
 
@@ -157,7 +158,7 @@ fn revoke_vc_works() {
 fn revokevc_with_non_existent_vc_fails() {
 	new_test_ext().execute_with(|| {
 		assert_noop!(
-			VCManagement::revoke_vc(RuntimeOrigin::signed(1), 0),
+			VCManagement::revoke_vc(RuntimeOrigin::signed(1), VC_INDEX),
 			Error::<Test>::VCNotExist
 		);
 	});
@@ -169,15 +170,15 @@ fn revoke_vc_with_other_subject_fails() {
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(1),
 			2,
-			0,
-			H256::default(),
+			VC_INDEX,
+			VC_HASH,
 			AesOutput::default()
 		));
 		assert_noop!(
-			VCManagement::revoke_vc(RuntimeOrigin::signed(1), 0),
+			VCManagement::revoke_vc(RuntimeOrigin::signed(1), VC_HASH),
 			Error::<Test>::VCSubjectMismatch
 		);
-		assert_eq!(VCManagement::vc_registry(0).unwrap().status, Status::Active);
+		assert_eq!(VCManagement::vc_registry(VC_INDEX).unwrap().status, Status::Active);
 	});
 }
 

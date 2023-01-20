@@ -89,7 +89,6 @@ std = [
     "frame-support/std",
     "sp-application-crypto/std",
     "sp-runtime/std",
-    # litentry
     "pallet-parentchain/std",
     "sp-io/std",
     "ita-sgx-runtime/std",

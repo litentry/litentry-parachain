@@ -14,37 +14,34 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+#[cfg(all(feature = "std", feature = "sgx"))]
+compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
+
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+extern crate sgx_tstd as std;
+
 use codec::{Decode, Encode, MaxEncodedLen};
+use parentchain_primitives::{SchemaContentString, SchemaIdString};
 use scale_info::TypeInfo;
-use sp_core::H256;
 
-use crate::Config;
-
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, TypeInfo, MaxEncodedLen)]
 pub enum Status {
 	Active,
 	Disabled,
-	// Revoked, // commented out for now, we can delete the VC entry when revoked
 }
 
 #[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, TypeInfo, MaxEncodedLen)]
-#[scale_info(skip_type_params(T))]
-#[codec(mel_bound())]
-pub struct VCContext<T: Config> {
-	// To be discussed: shall we make it public?
-	// pros: easier for the user to disable/revoke VCs, we'll need the AccountId to verify
-	//       the owner of VC. An alternative is to store such information within TEE.
-	// cons: this information is then public, everyone knows e.g. ALICE owns VC ID 1234 + 4321
-	// It's not bad though as it helps to verify the ownership of VC
-	pub subject: T::AccountId,
-	// hash of the VC, computed via blake2_256
-	pub hash: H256,
-	// status of the VC
+pub struct Schema {
+	// the schema id
+	pub id: SchemaIdString,
+	// schema content
+	pub content: SchemaContentString,
+	// status of the Schema
 	pub status: Status,
 }
 
-impl<T: Config> VCContext<T> {
-	pub fn new(subject: T::AccountId, hash: H256) -> Self {
-		Self { subject, hash, status: Status::Active }
+impl Schema {
+	pub fn new(id: SchemaIdString, content: SchemaContentString) -> Self {
+		Self { id, content, status: Status::Active }
 	}
 }

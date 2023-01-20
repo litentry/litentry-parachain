@@ -26,11 +26,14 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::OpaqueCall;
+use itp_types::{AccountId, OpaqueCall};
+use itp_utils::stringify::account_id_to_string;
+use lc_credentials::Credential;
 use lc_stf_task_sender::AssertionBuildRequest;
-use litentry_primitives::Assertion;
-use log::error;
+use litentry_primitives::{aes_encrypt_default, Assertion, UserShieldingKeyType};
+use log::*;
 use parachain_core_primitives::VCMPError;
+use sp_core::hashing::blake2_256;
 use std::{format, string::String, sync::Arc};
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
@@ -65,17 +68,25 @@ where
 	H::StateT: SgxExternalitiesTrait,
 {
 	type Error = VCMPError;
-	type Result = ();
+	type Result = Option<(Credential, AccountId)>;
 
 	fn on_process(&self) -> Result<Self::Result, Self::Error> {
 		match self.req.assertion.clone() {
-			Assertion::A1 => lc_assertion_build::a1::build(self.req.vec_identity.to_vec()),
+			Assertion::A1 => lc_assertion_build::a1::build(
+				self.req.vec_identity.clone(),
+				&self.req.shard,
+				&self.req.who,
+				self.req.bn,
+			)
+			.map(|credential| Some((credential, self.req.who.clone()))),
 
 			Assertion::A2(guild_id, handler) =>
-				lc_assertion_build::a2::build(self.req.vec_identity.to_vec(), guild_id, handler),
+				lc_assertion_build::a2::build(self.req.vec_identity.to_vec(), guild_id, handler)
+					.map(|_| None),
 
 			Assertion::A3(guild_id, handler) =>
-				lc_assertion_build::a3::build(self.req.vec_identity.to_vec(), guild_id, handler),
+				lc_assertion_build::a3::build(self.req.vec_identity.to_vec(), guild_id, handler)
+					.map(|_| None),
 
 			Assertion::A4(min_balance, from_date) => {
 				let min_balance: f64 = (min_balance / (10 ^ 12)) as f64;
@@ -84,14 +95,18 @@ where
 					String::from_utf8(from_date.into_inner()).unwrap(),
 					min_balance,
 				)
+				.map(|_| None)
 			},
 
 			Assertion::A5(twitter_account, original_tweet_id) => lc_assertion_build::a5::build(
 				self.req.vec_identity.to_vec(),
 				twitter_account,
 				original_tweet_id,
-			),
-			Assertion::A6 => lc_assertion_build::a6::build(self.req.vec_identity.to_vec()),
+			)
+			.map(|_| None),
+
+			Assertion::A6 =>
+				lc_assertion_build::a6::build(self.req.vec_identity.to_vec()).map(|_| None),
 
 			Assertion::A7(min_balance, year) => {
 				let min_balance: f64 = (min_balance / (10 ^ 12)) as f64;
@@ -100,9 +115,11 @@ where
 					year_to_date(year),
 					min_balance,
 				)
+				.map(|_| None)
 			},
 
-			Assertion::A8 => lc_assertion_build::a8::build(self.req.vec_identity.to_vec()),
+			Assertion::A8 =>
+				lc_assertion_build::a8::build(self.req.vec_identity.to_vec()).map(|_| None),
 
 			Assertion::A10(min_balance, year) => {
 				// WBTC decimals is 8.
@@ -112,6 +129,7 @@ where
 					year_to_date(year),
 					min_balance,
 				)
+				.map(|_| None)
 			},
 			_ => {
 				unimplemented!()
@@ -119,15 +137,50 @@ where
 		}
 	}
 
-	fn on_success(&self, _r: Self::Result) {
-		// nothing
+	fn on_success(&self, result: Self::Result) {
+		let (mut credential_unsigned, who) = result.unwrap();
+		let signer = self.context.enclave_signer.as_ref();
+		if let Ok(enclave_account) = signer.get_enclave_account() {
+			credential_unsigned.issuer.id = account_id_to_string(&enclave_account);
+			credential_unsigned.proof.verification_method = account_id_to_string(&enclave_account);
+
+			let key: UserShieldingKeyType = self.req.key;
+
+			if let Ok(vc_index) = credential_unsigned.get_index() {
+				let credential_str = credential_unsigned.to_json().unwrap();
+				info!("on_success {}", credential_str);
+
+				let vc_hash = blake2_256(credential_str.as_bytes());
+				let output = aes_encrypt_default(&key, credential_str.as_bytes());
+
+				match self
+					.context
+					.node_metadata
+					.get_from_metadata(|m| VCMPCallIndexes::vc_issued_call_indexes(m))
+				{
+					Ok(Ok(call_index)) => {
+						let call =
+							OpaqueCall::from_tuple(&(call_index, who, vc_index, vc_hash, output));
+						self.context.submit_to_parentchain(call)
+					},
+					Ok(Err(e)) => {
+						error!("failed to get metadata. Due to: {:?}", e);
+					},
+					Err(e) => {
+						error!("failed to get metadata. Due to: {:?}", e);
+					},
+				};
+			} else {
+				error!("failed to decode credential id");
+			}
+		}
 	}
 
 	fn on_failure(&self, error: Self::Error) {
 		match self
 			.context
 			.node_metadata
-			.get_from_metadata(|m| VCMPCallIndexes::some_error_call_indexes(m))
+			.get_from_metadata(|m| VCMPCallIndexes::vc_some_error_call_indexes(m))
 		{
 			Ok(Ok(call_index)) => {
 				let call = OpaqueCall::from_tuple(&(call_index, error));

@@ -28,7 +28,7 @@ use ita_stf::{
 };
 use itp_node_api::metadata::{
 	pallet_imp::IMPCallIndexes, pallet_system::SystemSs58Prefix, pallet_teerex::TeerexCallIndexes,
-	provider::AccessNodeMetadata,
+	pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata,
 };
 use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_externalities::{SgxExternalitiesTrait, StateHash};
@@ -60,7 +60,7 @@ where
 	StateHandler: HandleState<HashType = H256>,
 	StateHandler::StateT: SgxExternalitiesTrait + Encode,
 	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes,
+	NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes,
 	<NodeMetadataRepository as AccessNodeMetadata>::MetadataType: SystemSs58Prefix,
 	Stf: UpdateState<
 			StateHandler::StateT,
@@ -240,7 +240,7 @@ where
 	StateHandler::StateT: SgxExternalitiesTrait + Encode + StateHash,
 	<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesType: Encode,
 	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes + SystemSs58Prefix,
+	NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix,
 	Stf: UpdateState<
 			StateHandler::StateT,
 			<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType,
