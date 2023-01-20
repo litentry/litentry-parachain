@@ -28,52 +28,20 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{AccountId, OpaqueCall};
-use lc_credentials_tee::Credential;
+use itp_utils::stringify::account_id_to_string;
+use lc_credentials::Credential;
 use lc_stf_task_sender::AssertionBuildRequest;
-use litentry_primitives::Assertion;
+use litentry_primitives::{aes_encrypt_default, Assertion, UserShieldingKeyType};
 use log::*;
 use parachain_core_primitives::VCMPError;
-use std::{boxed::Box, format, string::String, sync::Arc, vec::Vec};
+use sp_core::hashing::blake2_256;
+use std::{boxed::Box, format, string::String, sync::Arc};
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::chrono::{offset::Utc as TzUtc, TimeZone};
 
 #[cfg(feature = "std")]
 use chrono::{offset::Utc as TzUtc, TimeZone};
-
-/// Copyed from tee-worker/app-libs/stf/src/trusted_call.rs.
-/// As the `credential_unsigned` needs to be unpdated from TrustedCall::build_assertion_preflight()
-/// to TrustedCall::build_assertion_runtime(),
-/// the TrustedCall has to be re-encoded here.
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-#[allow(non_camel_case_types)]
-pub enum TrustedCallFork {
-	balance_set_balance(),
-	balance_transfer(),
-	balance_unshield(), // (AccountIncognito, BeneficiaryPublicAccount, Amount, Shard)
-	balance_shield(),   // (Root, AccountIncognito, Amount)
-	#[cfg(feature = "evm")]
-	evm_withdraw(), // (Origin, Address EVM Account, Value)
-	// (Origin, Source, Target, Input, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
-	#[cfg(feature = "evm")]
-	evm_call(),
-	// (Origin, Source, Init, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
-	#[cfg(feature = "evm")]
-	evm_create(),
-	// (Origin, Source, Init, Salt, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
-	#[cfg(feature = "evm")]
-	evm_create2(),
-	// litentry
-	set_user_shielding_key_preflight(), // (Root, AccountIncognito, Key) -- root as signer, only for testing
-	set_user_shielding_key_runtime(),   // (EnclaveSigner, AccountIncognito, Key)
-	create_identity_runtime(),          // (EnclaveSigner, Account, identity, metadata, blocknumber)
-	remove_identity_runtime(),          // (EnclaveSigner, Account, identity)
-	verify_identity_preflight(),        // (EnclaveSigner, Account, identity, validation, blocknumber)
-	verify_identity_runtime(),          // (EnclaveSigner, Account, identity, blocknumber)
-	build_assertion_preflight(),        // (Account, Account, Assertion, Shard)
-	build_assertion_runtime(AccountId, AccountId, Box<Credential>), // (Account, Account, Box<Credential>)
-	set_challenge_code_runtime(),                                   // only for testing
-}
 
 pub(crate) struct AssertionHandler<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
@@ -101,23 +69,17 @@ where
 	H::StateT: SgxExternalitiesTrait,
 {
 	type Error = VCMPError;
-	type Result = Option<(Vec<u8>, Vec<u8>)>;
+	type Result = Option<(Credential, AccountId)>;
 
 	fn on_process(&self) -> Result<Self::Result, Self::Error> {
 		match self.req.assertion.clone() {
 			Assertion::A1 => lc_assertion_build::a1::build(
 				self.req.vec_identity.clone(),
-				self.req.credential.clone(),
+				&self.req.shard,
+				&self.req.who,
+				self.req.bn,
 			)
-			.map(|credential| {
-				let encoded_callback = TrustedCallFork::build_assertion_runtime(
-					self.context.enclave_signer.get_enclave_account().unwrap(),
-					self.req.who.clone(),
-					Box::new(credential),
-				)
-				.encode();
-				Some((self.req.encoded_shard.clone(), encoded_callback))
-			}),
+			.map(|credential| Some((credential, self.req.who.clone()))),
 
 			Assertion::A2(guild_id, handler) =>
 				lc_assertion_build::a2::build(self.req.vec_identity.to_vec(), guild_id, handler)
@@ -177,12 +139,41 @@ where
 	}
 
 	fn on_success(&self, result: Self::Result) {
-		let (shard, callback) = result.unwrap();
-		match self.context.decode_and_submit_trusted_call(shard, callback) {
-			Ok(_) => {},
-			Err(e) => {
-				error!("decode_and_submit_trusted_call failed. Due to: {:?}", e);
-			},
+		let (mut credential_unsigned, who) = result.unwrap();
+		let signer = self.context.enclave_signer.as_ref();
+		if let Ok(enclave_account) = signer.get_enclave_account() {
+			credential_unsigned.issuer.id = account_id_to_string(&enclave_account);
+			credential_unsigned.proof.verification_method = account_id_to_string(&enclave_account);
+
+			let key: UserShieldingKeyType = self.req.key;
+
+			if let Ok(vc_index) = credential_unsigned.get_index() {
+				let credential_str = credential_unsigned.to_json().unwrap();
+				info!("on_success {}", credential_str);
+
+				let vc_hash = blake2_256(credential_str.as_bytes());
+				let output = aes_encrypt_default(&key, credential_str.as_bytes());
+
+				match self
+					.context
+					.node_metadata
+					.get_from_metadata(|m| VCMPCallIndexes::vc_issued_call_indexes(m))
+				{
+					Ok(Ok(call_index)) => {
+						let call =
+							OpaqueCall::from_tuple(&(call_index, who, vc_index, vc_hash, output));
+						self.context.submit_to_parentchain(call)
+					},
+					Ok(Err(e)) => {
+						error!("failed to get metadata. Due to: {:?}", e);
+					},
+					Err(e) => {
+						error!("failed to get metadata. Due to: {:?}", e);
+					},
+				};
+			} else {
+				error!("failed to decode credential id");
+			}
 		}
 	}
 

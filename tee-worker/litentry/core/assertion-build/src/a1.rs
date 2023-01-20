@@ -21,14 +21,20 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::Result;
-use lc_credentials_tee::Credential;
+use itp_stf_primitives::types::ShardIdentifier;
+use itp_types::AccountId;
+use lc_credentials::Credential;
 use lc_stf_task_sender::MaxIdentityLength;
-use litentry_primitives::Identity;
+use litentry_primitives::{Assertion, Identity, ParentchainBlockNumber};
+use log::*;
+use parachain_core_primitives::VCMPError;
 use sp_runtime::BoundedVec;
 
 pub fn build(
 	identities: BoundedVec<Identity, MaxIdentityLength>,
-	credential_unsigned: Credential,
+	shard: &ShardIdentifier,
+	who: &AccountId,
+	bn: ParentchainBlockNumber,
 ) -> Result<Credential> {
 	let mut web2_cnt = 0;
 	let mut web3_cnt = 0;
@@ -41,14 +47,19 @@ pub fn build(
 		}
 	}
 
-	let mut credential_built = credential_unsigned;
-	credential_built.add_assertion_a1(web2_cnt, web3_cnt);
-
-	if web2_cnt > 0 && web3_cnt > 0 {
-		credential_built.credential_subject.set_value(true);
-	} else {
-		credential_built.credential_subject.set_value(false);
+	match Credential::generate_unsigned_credential(&Assertion::A1, who, &shard.clone(), bn) {
+		Ok(mut credential_unsigned) => {
+			credential_unsigned.add_assertion_a1(web2_cnt, web3_cnt);
+			if web2_cnt > 0 || web3_cnt > 0 {
+				credential_unsigned.credential_subject.set_value(true);
+			} else {
+				credential_unsigned.credential_subject.set_value(false);
+			}
+			Ok(credential_unsigned)
+		},
+		Err(e) => {
+			error!("Generate unsigned credential failed {:?}", e);
+			Err(VCMPError::Assertion1Failed)
+		},
 	}
-
-	Ok(credential_built)
 }

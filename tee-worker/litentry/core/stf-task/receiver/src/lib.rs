@@ -207,7 +207,7 @@ where
 					.start();
 			},
 			RequestType::AssertionVerification(request) => {
-				AssertionHandler { req: *request.clone(), context: context.clone() }.start();
+				AssertionHandler { req: request.clone(), context: context.clone() }.start();
 			},
 			// only used for testing
 			// demonstrate how to read the storage in the stf-task handling with the loaded state

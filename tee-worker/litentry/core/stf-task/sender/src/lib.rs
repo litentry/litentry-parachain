@@ -35,13 +35,13 @@ pub mod error;
 pub mod stf_task_sender;
 use codec::{Decode, Encode};
 pub use error::Result;
-use lc_credentials_tee::Credential;
+use itp_stf_primitives::types::ShardIdentifier;
 use litentry_primitives::{
-	Assertion, ChallengeCode, Identity, Web2ValidationData, Web3ValidationData,
+	Assertion, ChallengeCode, Identity, UserShieldingKeyType, Web2ValidationData,
+	Web3ValidationData,
 };
 use sp_runtime::{traits::ConstU32, BoundedVec};
 use sp_std::vec::Vec;
-use std::boxed::Box;
 
 /// Here a few Request structs are defined for asynchronously stf-tasks handling.
 /// A `callback` exists for some request types to submit a callback TrustedCall to top pool.
@@ -94,11 +94,12 @@ pub type MaxIdentityLength = ConstU32<64>;
 /// TODO: adapt struct fields later
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct AssertionBuildRequest {
-	pub encoded_shard: Vec<u8>,
+	pub shard: ShardIdentifier,
 	pub who: AccountId,
 	pub assertion: Assertion,
 	pub vec_identity: BoundedVec<Identity, MaxIdentityLength>,
-	pub credential: Credential,
+	pub bn: litentry_primitives::ParentchainBlockNumber,
+	pub key: UserShieldingKeyType,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
@@ -112,7 +113,7 @@ pub struct SetUserShieldingKeyRequest {
 pub enum RequestType {
 	Web2IdentityVerification(Web2IdentityVerificationRequest),
 	Web3IdentityVerification(Web3IdentityVerificationRequest),
-	AssertionVerification(Box<AssertionBuildRequest>),
+	AssertionVerification(AssertionBuildRequest),
 	// set the user shielding key async - just to showcase how to
 	// async process the request in stf-task-receiver
 	// In real scenario it should be done synchronously
@@ -133,7 +134,7 @@ impl From<Web3IdentityVerificationRequest> for RequestType {
 
 impl From<AssertionBuildRequest> for RequestType {
 	fn from(r: AssertionBuildRequest) -> Self {
-		RequestType::AssertionVerification(Box::new(r))
+		RequestType::AssertionVerification(r)
 	}
 }
 

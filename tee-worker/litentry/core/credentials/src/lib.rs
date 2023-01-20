@@ -36,17 +36,33 @@ pub mod sgx_reexport_prelude {
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 use codec::{Decode, Encode};
+use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{Assertion, ParentchainBlockNumber};
 use log::*;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
+use sp_core::{hashing::blake2_256, hexdisplay::HexDisplay};
 use std::{
 	fmt::Debug,
 	string::{String, ToString},
 	vec::Vec,
 };
+
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+extern crate rust_base58_sgx as rust_base58;
+
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+extern crate hex_sgx as hex;
+
+use rust_base58::ToBase58;
+
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+extern crate rand_sgx as rand;
+
+use rand::Rng;
+
 pub mod error;
 pub use error::Error;
 pub mod schema;
@@ -82,21 +98,16 @@ pub struct Issuer {
 	/// ID of the TEE Worker
 	pub id: String,
 	pub name: String,
-	/// Value of MRENCLAVE
-	pub mrenclave: String,
+	pub shard: String,
 }
 
 impl Issuer {
 	pub fn is_empty(&self) -> bool {
-		self.mrenclave.is_empty()
+		self.shard.is_empty() || self.shard.is_empty()
 	}
 
-	pub fn new(id: String, name: String, mrenclave: String) -> Self {
-		Self { id, name, mrenclave }
-	}
-
-	pub fn set_mrenclave(&mut self, value: String) {
-		self.mrenclave = value;
+	pub fn set_id(&mut self, id: &AccountId) {
+		self.id = account_id_to_string(id);
 	}
 }
 
@@ -206,22 +217,43 @@ impl Credential {
 	pub fn from_template(
 		s: &str,
 		who: &AccountId,
+		shard: &ShardIdentifier,
 		bn: ParentchainBlockNumber,
 	) -> Result<Self, Error> {
 		let mut vc: Self =
 			serde_json::from_str(s).map_err(|err| Error::ParseError(format!("{}", err)))?;
+		vc.issuer.shard = shard.encode().to_base58();
 		vc.credential_subject.id = account_id_to_string(who);
 		vc.issuance_block_number = bn;
+		vc.proof.created_block_number = bn;
 		vc.expiration_block_number = None;
 		vc.credential_schema = None;
+
+		vc.generate_id();
+
 		vc.validate_unsigned()?;
 		Ok(vc)
+	}
+
+	fn generate_id(&mut self) {
+		let seed = rand::thread_rng().gen::<[u8; 32]>();
+		let mut ext_hash = blake2_256(self.credential_subject.id.as_bytes()).to_vec();
+		ext_hash.append(&mut seed.to_vec());
+		let vc_id = blake2_256(ext_hash.as_slice());
+		self.id = format!("{}", HexDisplay::from(&vc_id.to_vec()));
 	}
 
 	pub fn to_json(&self) -> Result<String, Error> {
 		let json_str =
 			serde_json::to_string(&self).map_err(|err| Error::ParseError(format!("{}", err)))?;
 		Ok(json_str)
+	}
+
+	pub fn get_index(&self) -> Result<[u8; 32], Error> {
+		let index =
+			hex::decode(self.id.as_bytes()).map_err(|err| Error::ParseError(format!("{}", err)))?;
+		let vi: [u8; 32] = index.try_into().unwrap();
+		Ok(vi)
 	}
 
 	pub fn validate_unsigned(&self) -> Result<(), Error> {
@@ -237,11 +269,19 @@ impl Credential {
 			return Err(Error::EmptyIssuanceBlockNumber)
 		}
 
+		if self.id.is_empty() {
+			return Err(Error::InvalidCredential)
+		}
+
 		Ok(())
 	}
 
 	pub fn validate(&self) -> Result<(), Error> {
 		self.validate_unsigned()?;
+
+		if self.id.is_empty() {
+			return Err(Error::RuntimeError("Credential ID is invalid".to_string()))
+		}
 
 		if self.credential_subject.is_empty() {
 			return Err(Error::EmptyCredentialSubject)
@@ -253,7 +293,7 @@ impl Credential {
 		}
 
 		if self.proof.is_empty() {
-			return Err(Error::EmptyCredentialProof)
+			return Err(Error::InvalidProof)
 		}
 
 		if self.proof.created_block_number == 0 {
@@ -283,13 +323,14 @@ impl Credential {
 	pub fn generate_unsigned_credential(
 		assertion: &Assertion,
 		who: &AccountId,
+		shard: &ShardIdentifier,
 		bn: ParentchainBlockNumber,
 	) -> Result<Credential, Error> {
 		debug!("generate unsigned credential {:?}", assertion);
 		match assertion {
 			Assertion::A1 => {
-				let raw = include_str!("templates/vc.json");
-				let credential: Credential = Credential::from_template(raw, who, bn)?;
+				let raw = include_str!("templates/a1.json");
+				let credential: Credential = Credential::from_template(raw, who, shard, bn)?;
 				Ok(credential)
 			},
 			_ => Err(Error::UnsupportedAssertion),
@@ -298,18 +339,9 @@ impl Credential {
 
 	pub fn add_assertion_a1(&mut self, web2_cnt: i32, web3_cnt: i32) {
 		self.credential_subject.assertions = format!(
-			r#"{{"or": [{{"src": "$web2_account_cnt", "op": ">=", "dsc": "{}",}},{{"src": "$web3_account_cnt", "op": ">", "dsc": "{}"}}]}}"#,
+			r#"{{"or": [{{"src": "$web2_account_cnt", "op": ">", "dsc": "{}",}},{{"src": "$web3_account_cnt", "op": ">", "dsc": "{}"}}]}}"#,
 			web2_cnt, web3_cnt
 		);
-	}
-
-	pub fn generate_issuer() -> Result<Issuer, Error> {
-		let issuer = Issuer::new("".to_string(), "".to_string(), "".to_string());
-		Ok(issuer)
-	}
-
-	pub fn validate_proof(&self) -> Result<(), Error> {
-		Ok(())
 	}
 }
 
@@ -320,9 +352,10 @@ mod tests {
 	#[test]
 	fn eval_simple_success() {
 		let who = AccountId::from([0; 32]);
-		let data = include_str!("templates/vc.json");
+		let data = include_str!("templates/a1.json");
+		let shard = ShardIdentifier::default();
 
-		let vc = Credential::from_template(data, &who, 1u32).unwrap();
+		let vc = Credential::from_template(data, &who, &shard, 1u32).unwrap();
 		assert!(vc.validate_unsigned().is_ok());
 		let id: String = vc.credential_subject.id.clone();
 		assert_eq!(id, account_id_to_string(&who));

@@ -25,7 +25,6 @@ use crate::{
 use frame_support::dispatch::UnfilteredDispatchable;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_utils::stringify::account_id_to_string;
-use lc_credentials_tee::Credential;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
 	AssertionBuildRequest, MaxIdentityLength, RequestType, SetUserShieldingKeyRequest,
@@ -202,25 +201,19 @@ impl TrustedCallSigned {
 			}
 		}
 
-		match Credential::generate_unsigned_credential(&assertion, &who, bn) {
-			Ok(credential_unsigned) => {
-				let encoded_shard = shard.encode();
-				let request: RequestType = AssertionBuildRequest {
-					encoded_shard,
-					who,
-					assertion,
-					vec_identity,
-					credential: credential_unsigned,
-				}
-				.into();
-
-				let sender = StfRequestSender::new();
-				sender.send_stf_request(request).map_err(|_| StfError::AssertionBuildFail)
-			},
-			Err(e) => {
-				error!("Generate unsigned credential failed {:?}", e);
-				Err(StfError::AssertionBuildFail)
-			},
+		if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
+			let request: RequestType =
+				AssertionBuildRequest { shard: *shard, who, assertion, vec_identity, bn, key }
+					.into();
+			let sender = StfRequestSender::new();
+			sender.send_stf_request(request).map_err(|_| StfError::AssertionBuildFail)
+		} else {
+			error!(
+				"user shielding key is missing, {:?}, {:?}",
+				account_id_to_string(&who),
+				assertion
+			);
+			Err(StfError::AssertionBuildFail)
 		}
 	}
 

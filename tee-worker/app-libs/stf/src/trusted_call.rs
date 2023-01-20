@@ -22,9 +22,10 @@ use sp_core::{H160, H256, U256};
 #[cfg(feature = "evm")]
 use std::vec::Vec;
 
+//aes_encrypt_default
 use crate::{
-	helpers::{aes_encrypt_default, ensure_enclave_signer_account},
-	IdentityManagement, MetadataOf, Runtime, StfError, System, TrustedOperation,
+	helpers::ensure_enclave_signer_account, IdentityManagement, MetadataOf, Runtime, StfError,
+	System, TrustedOperation,
 };
 use codec::{Decode, Encode};
 use frame_support::{ensure, traits::UnfilteredDispatchable};
@@ -36,10 +37,9 @@ use itp_stf_interface::ExecuteCall;
 use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier, Signature};
 use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
-use lc_credentials_tee::Credential;
 use litentry_primitives::{
-	Assertion, ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType,
-	ValidationData,
+	aes_encrypt_default, Assertion, ChallengeCode, Identity, ParentchainBlockNumber,
+	UserShieldingKeyType, ValidationData,
 };
 use log::*;
 use sp_io::hashing::blake2_256;
@@ -129,8 +129,7 @@ pub enum TrustedCall {
 		ShardIdentifier,
 		ParentchainBlockNumber,
 	), // (Account, Account, Assertion, shard, blocknumber)
-	build_assertion_runtime(AccountId, AccountId, Box<Credential>), // (Account, Account, Box<Credential>)
-	set_challenge_code_runtime(AccountId, AccountId, Identity, ChallengeCode), // only for testing
+	set_challenge_code_runtime(AccountId, AccountId, Identity, ChallengeCode),       // only for testing
 }
 
 impl TrustedCall {
@@ -156,7 +155,6 @@ impl TrustedCall {
 			TrustedCall::verify_identity_preflight(account, _, _, _, _) => account,
 			TrustedCall::verify_identity_runtime(account, _, _, _) => account,
 			TrustedCall::build_assertion_preflight(account, _, _, _, _) => account,
-			TrustedCall::build_assertion_runtime(account, _, _) => account,
 			TrustedCall::set_challenge_code_runtime(account, _, _, _) => account,
 		}
 	}
@@ -599,49 +597,6 @@ where
 				ensure_enclave_signer_account(&enclave_account)?;
 				Self::build_assertion_preflight(&shard, who, assertion, bn)
 			},
-			TrustedCall::build_assertion_runtime(enclave_account, who, credential) => {
-				ensure_enclave_signer_account(&enclave_account)?;
-				match (*credential).to_json() {
-					Ok(credential_str) => {
-						debug!("got credential {} length {}", credential_str, credential_str.len());
-						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
-							let vc_hash = blake2_256(credential_str.as_bytes());
-
-							let mut ext_hash = blake2_256(&who.encode()).to_vec();
-							ext_hash.append(&mut vc_hash.to_vec());
-							ext_hash.append(&mut call_hash.to_vec());
-							let vc_index = blake2_256(ext_hash.as_slice());
-
-							calls.push(OpaqueCall::from_tuple(&(
-								node_metadata_repo
-									.get_from_metadata(|m| m.vc_issued_call_indexes())??,
-								who,
-								vc_index,
-								vc_hash,
-								aes_encrypt_default(&key, credential_str.as_bytes()),
-							)));
-						} else {
-							calls.push(OpaqueCall::from_tuple(&(
-								node_metadata_repo
-									.get_from_metadata(|m| m.vc_some_error_call_indexes())??,
-								"get_user_shielding_key".as_bytes(),
-								"error".as_bytes(),
-							)));
-						}
-					},
-					Err(error) => {
-						error!("credential to_json() {:?}", error);
-
-						calls.push(OpaqueCall::from_tuple(&(
-							node_metadata_repo
-								.get_from_metadata(|m| m.vc_some_error_call_indexes())??,
-							"credential_to_json_error".as_bytes(),
-							"error".as_bytes(),
-						)));
-					},
-				}
-				Ok(())
-			},
 			TrustedCall::set_challenge_code_runtime(enclave_account, account, did, code) => {
 				ensure_enclave_signer_account(&enclave_account)?;
 				Self::set_challenge_code_runtime(account, did, code)
@@ -668,7 +623,6 @@ where
 			TrustedCall::verify_identity_preflight(..) => debug!("No storage updates needed..."),
 			TrustedCall::verify_identity_runtime(..) => debug!("No storage updates needed..."),
 			TrustedCall::build_assertion_preflight(..) => debug!("No storage updates needed..."),
-			TrustedCall::build_assertion_runtime(..) => debug!("No storage updates needed..."),
 			TrustedCall::set_challenge_code_runtime(..) => debug!("No storage updates needed..."),
 			#[cfg(feature = "evm")]
 			_ => debug!("No storage updates needed..."),

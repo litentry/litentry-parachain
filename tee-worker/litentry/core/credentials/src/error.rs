@@ -22,8 +22,8 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
-	#[error("Empty Credential Proof")]
-	EmptyCredentialProof,
+	#[error("Invalid Credential")]
+	InvalidCredential,
 	#[error("Empty Credential Type")]
 	EmptyCredentialType,
 	#[error("Empty Credential Issuer")]
@@ -42,8 +42,6 @@ pub enum Error {
 	ParseError(String),
 	#[error("Unsupported Assertion")]
 	UnsupportedAssertion,
-	#[error("Invalid date or time")]
-	InvalidDateOrTimeError,
 	#[error("Runtime Error: {0}")]
 	RuntimeError(String),
 	#[error(transparent)]
