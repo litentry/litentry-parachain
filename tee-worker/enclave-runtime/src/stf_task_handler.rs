@@ -15,7 +15,6 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::utils::DecodeRaw;
-use codec::{Decode, Input};
 use itp_component_container::ComponentGetter;
 use itp_sgx_crypto::Rsa3072Seal;
 use itp_sgx_io::StaticSealedIO;
@@ -23,7 +22,7 @@ use lc_data_providers::{DataProvidersStatic, G_DATA_PROVIDERS};
 use lc_stf_task_receiver::{run_stf_task_receiver, StfTaskContext};
 use log::*;
 use sgx_types::sgx_status_t;
-use std::{slice, string::String, sync::Arc, vec::Vec};
+use std::sync::Arc;
 
 use crate::{
 	error::{Error, Result},
