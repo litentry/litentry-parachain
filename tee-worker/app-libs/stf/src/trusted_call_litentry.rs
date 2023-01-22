@@ -185,7 +185,7 @@ impl TrustedCallSigned {
 		Ok(())
 	}
 
-	pub fn build_assertion_preflight(
+	pub fn build_assertion(
 		shard: &ShardIdentifier,
 		who: AccountId,
 		assertion: Assertion,
