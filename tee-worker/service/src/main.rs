@@ -523,6 +523,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	// Start stf task handler thread
 	let enclave_api_stf_task_handler = enclave.clone();
 	let mut data_providers_static = DataProvidersStatic::default();
+	#[cfg(all(not(test), not(feature = "mockserver")))]
 	{
 		let mut config_file = "worker-config-dev.json";
 		if config.running_mode == "staging" {
@@ -569,6 +570,17 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		data_providers_static.set_discord_auth_token(discord_auth_token);
 		data_providers_static.set_graphql_url(graphql_url);
 		data_providers_static.set_graphql_auth_key(graphql_auth_key);
+	}
+	#[cfg(any(test, feature = "mockserver"))]
+	{
+		data_providers_static.set_twitter_official_url("http://localhost:9527".to_string());
+		data_providers_static.set_twitter_litentry_url("http://localhost:9527".to_string());
+		data_providers_static.set_twitter_auth_token("".to_string());
+		data_providers_static.set_discord_official_url("http://localhost:9527".to_string());
+		data_providers_static.set_discord_litentry_url("http://localhost:9527".to_string());
+		data_providers_static.set_discord_auth_token("".to_string());
+		data_providers_static.set_graphql_url("https://graph.tdf-labs.io/".to_string());
+		data_providers_static.set_graphql_auth_key("ac2115ec-e327-4862-84c5-f25b6b7d4533".to_string());
 	}
 
 	thread::spawn(move || {
