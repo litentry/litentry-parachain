@@ -69,7 +69,7 @@ use its_peer_fetch::{
 };
 use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
 use its_storage::{interface::FetchBlocks, BlockPruner, SidechainStorageLock};
-use lc_data_providers::G_DATA_PROVIDERS;
+use lc_data_providers::DataProvidersStatic;
 use log::*;
 use my_node_runtime::{Hash, Header, RuntimeEvent};
 use sgx_types::*;
@@ -127,70 +127,6 @@ fn main() {
 	let config = Config::from(&matches);
 
 	GlobalTokioHandle::initialize();
-
-	// init data-providers global variable.
-	{
-		let mut mut_handle = G_DATA_PROVIDERS.write().unwrap();
-		#[cfg(all(not(test), not(feature = "mockserver")))]
-		{
-			let mut config_file = "worker-config-dev.json";
-			if config.running_mode == "staging" {
-				config_file = "worker-config-staging.json";
-			} else if config.running_mode == "prod" {
-				config_file = "worker-config-prod.json";
-			}
-
-			let worker_config = rs_config::Config::builder()
-				.add_source(rs_config::File::with_name(config_file))
-				.build()
-				.unwrap();
-
-			let twitter_official_url = worker_config
-				.get_string("twitter_official_url")
-				.unwrap_or_else(|_e| "https://api.twitter.com".to_string());
-			let twitter_litentry_url = worker_config
-				.get_string("twitter_litentry_url")
-				.unwrap_or_else(|_e| "".to_string());
-			let twitter_auth_token = worker_config
-				.get_string("twitter_auth_token")
-				.unwrap_or_else(|_e| "abcdefghijklmnopqrstuvwxyz".to_string());
-			let discord_official_url = worker_config
-				.get_string("discord_official_url")
-				.unwrap_or_else(|_e| "https://discordapp.com".to_string());
-			let discord_litentry_url = worker_config
-				.get_string("discord_litentry_url")
-				.unwrap_or_else(|_e| "".to_string());
-			let discord_auth_token = worker_config
-				.get_string("discord_auth_token")
-				.unwrap_or_else(|_e| "ABCDEFGHIJKLMNOPQRSTUVWXYZ".to_string());
-			let graphql_url = worker_config
-				.get_string("graphql_url")
-				.unwrap_or_else(|_e| "https://graph.tdf-labs.io/".to_string());
-			let graphql_auth_key = worker_config
-				.get_string("graphql_auth_key")
-				.unwrap_or_else(|_e| "ac2115ec-e327-4862-84c5-f25b6b7d4533".to_string());
-
-			mut_handle.set_twitter_official_url(twitter_official_url);
-			mut_handle.set_twitter_litentry_url(twitter_litentry_url);
-			mut_handle.set_twitter_auth_token(twitter_auth_token);
-			mut_handle.set_discord_official_url(discord_official_url);
-			mut_handle.set_discord_litentry_url(discord_litentry_url);
-			mut_handle.set_discord_auth_token(discord_auth_token);
-			mut_handle.set_graphql_url(graphql_url);
-			mut_handle.set_graphql_auth_key(graphql_auth_key);
-		}
-		#[cfg(any(test, feature = "mockserver"))]
-		{
-			mut_handle.set_twitter_official_url("http://localhost:9527".to_string());
-			mut_handle.set_twitter_litentry_url("http://localhost:9527".to_string());
-			mut_handle.set_twitter_auth_token("".to_string());
-			mut_handle.set_discord_official_url("http://localhost:9527".to_string());
-			mut_handle.set_discord_litentry_url("http://localhost:9527".to_string());
-			mut_handle.set_discord_auth_token("".to_string());
-			mut_handle.set_graphql_url("https://graph.tdf-labs.io/".to_string());
-			mut_handle.set_graphql_auth_key("ac2115ec-e327-4862-84c5-f25b6b7d4533".to_string());
-		}
-	}
 
 	// log this information, don't println because some python scripts for GA rely on the
 	// stdout from the service
@@ -586,8 +522,72 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	// ------------------------------------------------------------------------
 	// Start stf task handler thread
 	let enclave_api_stf_task_handler = enclave.clone();
+	let mut data_providers_static = DataProvidersStatic::default();
+	#[cfg(all(not(test), not(feature = "mockserver")))]
+	{
+		let mut config_file = "worker-config-dev.json";
+		if config.running_mode == "staging" {
+			config_file = "worker-config-staging.json";
+		} else if config.running_mode == "prod" {
+			config_file = "worker-config-prod.json";
+		}
+
+		let worker_config = rs_config::Config::builder()
+			.add_source(rs_config::File::with_name(config_file))
+			.build()
+			.unwrap();
+
+		let twitter_official_url = worker_config
+			.get_string("twitter_official_url")
+			.unwrap_or_else(|_e| "https://api.twitter.com".to_string());
+		let twitter_litentry_url = worker_config
+			.get_string("twitter_litentry_url")
+			.unwrap_or_else(|_e| "".to_string());
+		let twitter_auth_token = worker_config
+			.get_string("twitter_auth_token")
+			.unwrap_or_else(|_e| "abcdefghijklmnopqrstuvwxyz".to_string());
+		let discord_official_url = worker_config
+			.get_string("discord_official_url")
+			.unwrap_or_else(|_e| "https://discordapp.com".to_string());
+		let discord_litentry_url = worker_config
+			.get_string("discord_litentry_url")
+			.unwrap_or_else(|_e| "".to_string());
+		let discord_auth_token = worker_config
+			.get_string("discord_auth_token")
+			.unwrap_or_else(|_e| "ABCDEFGHIJKLMNOPQRSTUVWXYZ".to_string());
+		let graphql_url = worker_config
+			.get_string("graphql_url")
+			.unwrap_or_else(|_e| "https://graph.tdf-labs.io/".to_string());
+		let graphql_auth_key = worker_config
+			.get_string("graphql_auth_key")
+			.unwrap_or_else(|_e| "ac2115ec-e327-4862-84c5-f25b6b7d4533".to_string());
+
+		data_providers_static.set_twitter_official_url(twitter_official_url);
+		data_providers_static.set_twitter_litentry_url(twitter_litentry_url);
+		data_providers_static.set_twitter_auth_token(twitter_auth_token);
+		data_providers_static.set_discord_official_url(discord_official_url);
+		data_providers_static.set_discord_litentry_url(discord_litentry_url);
+		data_providers_static.set_discord_auth_token(discord_auth_token);
+		data_providers_static.set_graphql_url(graphql_url);
+		data_providers_static.set_graphql_auth_key(graphql_auth_key);
+	}
+	#[cfg(any(test, feature = "mockserver"))]
+	{
+		data_providers_static.set_twitter_official_url("http://localhost:9527".to_string());
+		data_providers_static.set_twitter_litentry_url("http://localhost:9527".to_string());
+		data_providers_static.set_twitter_auth_token("".to_string());
+		data_providers_static.set_discord_official_url("http://localhost:9527".to_string());
+		data_providers_static.set_discord_litentry_url("http://localhost:9527".to_string());
+		data_providers_static.set_discord_auth_token("".to_string());
+		data_providers_static.set_graphql_url("https://graph.tdf-labs.io/".to_string());
+		data_providers_static
+			.set_graphql_auth_key("ac2115ec-e327-4862-84c5-f25b6b7d4533".to_string());
+	}
+
 	thread::spawn(move || {
-		enclave_api_stf_task_handler.run_stf_task_handler().unwrap();
+		enclave_api_stf_task_handler
+			.run_stf_task_handler(data_providers_static)
+			.unwrap();
 	});
 
 	// ------------------------------------------------------------------------
