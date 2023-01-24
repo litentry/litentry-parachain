@@ -580,7 +580,8 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		data_providers_static.set_discord_litentry_url("http://localhost:9527".to_string());
 		data_providers_static.set_discord_auth_token("".to_string());
 		data_providers_static.set_graphql_url("https://graph.tdf-labs.io/".to_string());
-		data_providers_static.set_graphql_auth_key("ac2115ec-e327-4862-84c5-f25b6b7d4533".to_string());
+		data_providers_static
+			.set_graphql_auth_key("ac2115ec-e327-4862-84c5-f25b6b7d4533".to_string());
 	}
 
 	thread::spawn(move || {
