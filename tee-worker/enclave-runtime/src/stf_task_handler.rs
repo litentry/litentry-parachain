@@ -14,9 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::utils::DecodeRaw;
 use itp_component_container::ComponentGetter;
 use itp_sgx_crypto::Rsa3072Seal;
 use itp_sgx_io::StaticSealedIO;
+use lc_data_providers::{DataProvidersStatic, G_DATA_PROVIDERS};
 use lc_stf_task_receiver::{run_stf_task_receiver, StfTaskContext};
 use log::*;
 use sgx_types::sgx_status_t;
@@ -37,7 +39,26 @@ use crate::{
 };
 
 #[no_mangle]
-pub unsafe extern "C" fn run_stf_task_handler() -> sgx_status_t {
+pub unsafe extern "C" fn run_stf_task_handler(
+	dps_to_sync: *const u8,
+	dps_to_sync_size: usize,
+) -> sgx_status_t {
+	let data_providers_static = match DataProvidersStatic::decode_raw(dps_to_sync, dps_to_sync_size)
+	{
+		Ok(dps) => dps,
+		Err(e) => return Error::Codec(e).into(),
+	};
+
+	let mut mut_handle = G_DATA_PROVIDERS.write().unwrap();
+	mut_handle.set_twitter_official_url(data_providers_static.twitter_official_url);
+	mut_handle.set_twitter_litentry_url(data_providers_static.twitter_litentry_url);
+	mut_handle.set_twitter_auth_token(data_providers_static.twitter_auth_token);
+	mut_handle.set_discord_official_url(data_providers_static.discord_official_url);
+	mut_handle.set_discord_litentry_url(data_providers_static.discord_litentry_url);
+	mut_handle.set_discord_auth_token(data_providers_static.discord_auth_token);
+	mut_handle.set_graphql_url(data_providers_static.graphql_url);
+	mut_handle.set_graphql_auth_key(data_providers_static.graphql_auth_key);
+
 	if let Err(e) = run_stf_task_handler_internal() {
 		error!("Error while running stf task handler thread: {:?}", e);
 		return e.into()

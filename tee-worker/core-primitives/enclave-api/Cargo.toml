@@ -23,3 +23,5 @@ itc-parentchain = { path = "../../core/parentchain/parentchain-crate" }
 itp-enclave-api-ffi = { path = "ffi" }
 itp-settings = { path = "../settings" }
 itp-types = { path = "../types" }
+
+lc-data-providers = { path = "../../litentry/core/data-providers" }

@@ -128,7 +128,9 @@ enclave {
 
 		public size_t test_main_entrance();
 
-		public size_t run_stf_task_handler();
+		public size_t run_stf_task_handler(
+			[in, size=data_providers_static_len] uint8_t* data_providers_static, uint32_t data_providers_static_len
+		);
 	};
 
 	untrusted {
