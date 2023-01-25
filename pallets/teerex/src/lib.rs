@@ -173,6 +173,7 @@ pub mod pallet {
 				<[u8; 32]>::decode(&mut ra_report.as_slice()).unwrap_or_default(),
 				<timestamp::Pallet<T>>::get().saturated_into(),
 				worker_url.clone(),
+				shielding_key,
 				SgxBuildMode::default(),
 				Default::default(),
 			);
