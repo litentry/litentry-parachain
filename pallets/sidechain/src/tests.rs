@@ -206,6 +206,7 @@ fn register_enclave(signer_pub_key: &[u8; 32], cert: &[u8], expected_enclave_cou
 		RuntimeOrigin::signed(signer7),
 		cert.to_vec(),
 		URL.to_vec(),
+		None,
 	));
 	assert_eq!(Teerex::<Test>::enclave_count(), expected_enclave_count);
 }

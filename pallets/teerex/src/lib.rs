@@ -109,7 +109,7 @@ pub mod pallet {
 		T::Moment::saturated_from::<u64>(172_800_000) // default 48h
 	}
 	#[pallet::storage]
-	#[pallet::getter(fn heartbeat_timeout_storage)]
+	#[pallet::getter(fn heartbeat_timeout)]
 	pub type HeartbeatTimeout<T: Config> =
 		StorageValue<_, T::Moment, ValueQuery, HeartbeatTimeoutDefault<T>>;
 
@@ -135,6 +135,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			ra_report: Vec<u8>,
 			worker_url: Vec<u8>,
+			shielding_key: Option<Vec<u8>>,
 		) -> DispatchResultWithPostInfo {
 			log::info!("teerex: called into runtime call register_enclave()");
 
@@ -150,6 +151,7 @@ pub mod pallet {
 					report.mr_enclave,
 					report.timestamp,
 					worker_url.clone(),
+					shielding_key,
 					report.build_mode,
 					report.metadata,
 				)
@@ -396,7 +398,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn unregister_silent_workers(now: T::Moment) {
-		let minimum = (now - Self::heartbeat_timeout_storage()).saturated_into::<u64>();
+		let minimum = (now - Self::heartbeat_timeout()).saturated_into::<u64>();
 		let silent_workers = <EnclaveRegistry<T>>::iter()
 			.filter(|e| e.1.timestamp < minimum)
 			.map(|e| e.1.pubkey);
