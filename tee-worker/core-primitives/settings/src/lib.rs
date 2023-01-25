@@ -71,7 +71,7 @@ pub mod files {
 /// Settings concerning the worker
 pub mod worker {
 	// the maximum size of any extrinsic that the enclave will ever generate in B
-	// `register_enclave` is now 6415 bytes
+	// Litentry: since #1221 `register_enclave` has 6415 bytes
 	pub const EXTRINSIC_MAX_SIZE: usize = 6500;
 	// the maximum size of the header
 	pub const HEADER_MAX_SIZE: usize = 200;
