@@ -28,7 +28,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 use crate::{
-	initialization::global_components::GLOBAL_ATTESTATION_HANDLER_COMPONENT,
+	initialization::global_components::{
+		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
+	},
 	utils::{
 		get_extrinsic_factory_from_solo_or_parachain,
 		get_node_metadata_repository_from_solo_or_parachain,
@@ -44,6 +46,7 @@ use itp_node_api::metadata::{
 	provider::{AccessNodeMetadata, Error as MetadataProviderError},
 };
 use itp_settings::worker::MR_ENCLAVE_SIZE;
+use itp_sgx_crypto::key_repository::AccessKey;
 use itp_types::OpaqueCall;
 use itp_utils::write_slice_and_whitespace_pad;
 use log::*;
@@ -172,7 +175,13 @@ fn generate_ias_ra_extrinsic_internal(
 		.get_from_metadata(|m| m.register_enclave_call_indexes())?
 		.map_err(MetadataProviderError::MetadataError)?;
 
-	let call = OpaqueCall::from_tuple(&(call_ids, cert_der, url));
+	let shielding_key = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT
+		.get()?
+		.retrieve_key()
+		.and_then(|k| serde_json::to_vec(&k).map_err(|e| e.into()))
+		.ok();
+
+	let call = OpaqueCall::from_tuple(&(call_ids, cert_der, url, shielding_key));
 
 	let extrinsics = extrinsics_factory.create_extrinsics(&[call], None)?;
 

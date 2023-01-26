@@ -51,7 +51,8 @@ impl EnclaveOnChainOCallApi for OcallApi {
 		req: Vec<WorkerRequest>,
 	) -> SgxResult<Vec<WorkerResponse<V>>> {
 		let mut rt: sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
-		let mut resp: Vec<u8> = vec![0; 4196 * 4];
+		// Litentry: since #1221 we need 28139 bytes
+		let mut resp: Vec<u8> = vec![0; 4196 * 8];
 		let request_encoded = req.encode();
 
 		let res = unsafe {
