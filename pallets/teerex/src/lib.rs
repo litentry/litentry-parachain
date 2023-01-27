@@ -64,8 +64,8 @@ pub mod pallet {
 		type Currency: Currency<<Self as frame_system::Config>::AccountId>;
 		type MomentsPerDay: Get<Self::Moment>;
 		type WeightInfo: WeightInfo;
-		/// origin to manage authorised delegatee list
-		type DelegateeAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		/// origin to manage enclave and parameters
+		type EnclaveAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
 
 	#[pallet::event]
@@ -78,6 +78,8 @@ pub mod pallet {
 		UnshieldedFunds(T::AccountId),
 		ProcessedParentchainBlock(T::AccountId, H256, H256, T::BlockNumber),
 		SetHeartbeatTimeout(u64),
+		UpdatedScheduledEnclave(u32, MREnclave),
+		RemovedScheduledEnclave(u32),
 	}
 
 	// Watch out: we start indexing with 1 instead of zero in order to
@@ -108,6 +110,20 @@ pub mod pallet {
 	pub fn HeartbeatTimeoutDefault<T: Config>() -> T::Moment {
 		T::Moment::saturated_from::<u64>(172_800_000) // default 48h
 	}
+
+	// keep track of a list of scheduled enchalves, mainly used for enclave updates,
+	// can only be modified by EnclaveAdminOrigin
+	// sidechain_block_number -> expected MREnclave
+	//
+	// about the first time enclave registration:
+	// prior to `register_enclave` this map needs to be populated with (0, expected-mrenclave),
+	// otherwise the registration will fail
+	//
+	// TODO: shall we consider inserting the first enclave in `register_enclave`?
+	#[pallet::storage]
+	#[pallet::getter(fn scheduled_enclave)]
+	pub type ScheduledEnclave<T: Config> = StorageMap<_, Blake2_128Concat, u32, MREnclave>;
+
 	#[pallet::storage]
 	#[pallet::getter(fn heartbeat_timeout)]
 	pub type HeartbeatTimeout<T: Config> =
@@ -313,9 +329,38 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			timeout: u64,
 		) -> DispatchResultWithPostInfo {
-			T::DelegateeAdminOrigin::ensure_origin(origin)?;
+			T::EnclaveAdminOrigin::ensure_origin(origin)?;
 			<HeartbeatTimeout<T>>::put(T::Moment::saturated_from(timeout));
 			Self::deposit_event(Event::SetHeartbeatTimeout(timeout));
+			Ok(().into())
+		}
+
+		#[pallet::call_index(7)]
+		#[pallet::weight((1000, DispatchClass::Normal, Pays::No))]
+		pub fn update_scheduled_enclave(
+			origin: OriginFor<T>,
+			sidechain_block_number: u32,
+			mr_enclave: MREnclave,
+		) -> DispatchResultWithPostInfo {
+			T::EnclaveAdminOrigin::ensure_origin(origin)?;
+			ScheduledEnclave::<T>::insert(sidechain_block_number, mr_enclave);
+			Self::deposit_event(Event::UpdatedScheduledEnclave(sidechain_block_number, mr_enclave));
+			Ok(().into())
+		}
+
+		#[pallet::call_index(8)]
+		#[pallet::weight((1000, DispatchClass::Normal, Pays::No))]
+		pub fn remove_scheduled_enclave(
+			origin: OriginFor<T>,
+			sidechain_block_number: u32,
+		) -> DispatchResultWithPostInfo {
+			T::EnclaveAdminOrigin::ensure_origin(origin)?;
+			ensure!(
+				ScheduledEnclave::<T>::contains_key(&sidechain_block_number),
+				Error::<T>::ScheduledEnclaveNotExist
+			);
+			ScheduledEnclave::<T>::remove(&sidechain_block_number);
+			Self::deposit_event(Event::RemovedScheduledEnclave(sidechain_block_number));
 			Ok(().into())
 		}
 	}
@@ -343,6 +388,8 @@ pub mod pallet {
 		RaReportTooLong,
 		/// No enclave is registered.
 		EmptyEnclaveRegistry,
+		/// Can not found the desired scheduled enclave.
+		ScheduledEnclaveNotExist,
 	}
 }
 
