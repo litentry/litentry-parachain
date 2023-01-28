@@ -33,6 +33,7 @@ pub mod sgx_reexport_prelude {
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
+use codec::{Decode, Encode};
 use core::time::Duration;
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -65,6 +66,7 @@ pub mod graphql;
 
 const TIMEOUT: Duration = Duration::from_secs(3u64);
 
+#[derive(PartialEq, Eq, Clone, Encode, Decode)]
 pub struct DataProvidersStatic {
 	pub twitter_official_url: String,
 	pub twitter_litentry_url: String,

@@ -175,5 +175,10 @@ extern "C" {
 		skip_ra: c_int,
 	) -> sgx_status_t;
 
-	pub fn run_stf_task_handler(eid: sgx_enclave_id_t, retval: *mut sgx_status_t) -> sgx_status_t;
+	pub fn run_stf_task_handler(
+		eid: sgx_enclave_id_t,
+		retval: *mut sgx_status_t,
+		data_providers_static: *const u8,
+		data_providers_static_size: usize,
+	) -> sgx_status_t;
 }

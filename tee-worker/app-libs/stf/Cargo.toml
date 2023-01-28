@@ -60,6 +60,7 @@ evm_std = [
 mockserver = []
 sgx = [
     "sgx_tstd",
+    "itp-node-api-metadata-provider/sgx",
     "itp-sgx-externalities/sgx",
     "itp-utils/sgx",
     "sp-io/sgx",
@@ -74,6 +75,8 @@ std = [
     "log/std",
     "rlp/std",
     # local
+    "itp-node-api-metadata/std",
+    "itp-node-api-metadata-provider/std",
     "ita-sgx-runtime/std",
     "itp-hashing/std",
     "itp-sgx-externalities/std",
@@ -89,7 +92,6 @@ std = [
     "frame-support/std",
     "sp-application-crypto/std",
     "sp-runtime/std",
-    # litentry
     "pallet-parentchain/std",
     "sp-io/std",
     "ita-sgx-runtime/std",

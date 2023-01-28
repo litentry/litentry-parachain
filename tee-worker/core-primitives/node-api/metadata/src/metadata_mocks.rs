@@ -60,6 +60,7 @@ pub struct NodeMetadataMock {
 	// VCMP
 	vcmp_module: u8,
 	vcmp_request_vc: u8,
+	vcmp_vc_issued: u8,
 	vcmp_some_error: u8,
 
 	imported_sidechain_block: u8,
@@ -93,6 +94,7 @@ impl NodeMetadataMock {
 
 			vcmp_module: 66u8,
 			vcmp_request_vc: 0u8,
+			vcmp_vc_issued: 3u8,
 			vcmp_some_error: 9u8,
 
 			imp_mock_module: 100u8,
@@ -235,7 +237,11 @@ impl VCMPCallIndexes for NodeMetadataMock {
 		Ok([self.vcmp_module, self.vcmp_request_vc])
 	}
 
-	fn some_error_call_indexes(&self) -> Result<[u8; 2]> {
+	fn vc_issued_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.vcmp_module, self.vcmp_vc_issued])
+	}
+
+	fn vc_some_error_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.vcmp_module, self.vcmp_some_error])
 	}
 }

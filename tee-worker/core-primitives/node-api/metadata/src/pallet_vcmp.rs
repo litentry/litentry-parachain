@@ -22,7 +22,9 @@ const VCMP: &str = "VCManagement";
 pub trait VCMPCallIndexes {
 	fn request_vc_call_indexes(&self) -> Result<[u8; 2]>;
 
-	fn some_error_call_indexes(&self) -> Result<[u8; 2]>;
+	fn vc_issued_call_indexes(&self) -> Result<[u8; 2]>;
+
+	fn vc_some_error_call_indexes(&self) -> Result<[u8; 2]>;
 }
 
 impl VCMPCallIndexes for NodeMetadata {
@@ -30,7 +32,11 @@ impl VCMPCallIndexes for NodeMetadata {
 		self.call_indexes(VCMP, "request_vc")
 	}
 
-	fn some_error_call_indexes(&self) -> Result<[u8; 2]> {
+	fn vc_issued_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(VCMP, "vc_issued")
+	}
+
+	fn vc_some_error_call_indexes(&self) -> Result<[u8; 2]> {
 		self.call_indexes(VCMP, "some_error")
 	}
 }

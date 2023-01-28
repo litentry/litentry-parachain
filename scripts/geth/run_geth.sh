@@ -53,7 +53,8 @@ start="${GETH_BIN} --datadir ${DATADIR} \
     --http.corsdomain='*' \
     --miner.gaslimit 8000000 \
     --allow-insecure-unlock \
-    --mine
+    --mine \
+    --miner.etherbase 0xff93B45308FD417dF303D6515aB04D9e89a750Ca
 "
 if [ ${DOCKER} = "local" ]; then
     eval ${start} 2>&1 &>'geth.log' &

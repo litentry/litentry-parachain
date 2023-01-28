@@ -189,25 +189,32 @@ impl TrustedCallSigned {
 		shard: &ShardIdentifier,
 		who: AccountId,
 		assertion: Assertion,
+		bn: ParentchainBlockNumber,
 	) -> StfResult<()> {
 		debug!("who {:?}, assertion {:?}", account_id_to_string(&who), assertion);
 
 		let id_graph = ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
-
 		let mut vec_identity: BoundedVec<Identity, MaxIdentityLength> = vec![].try_into().unwrap();
-
 		for id in &id_graph {
 			if id.1.is_verified {
 				vec_identity.try_push(id.0.clone()).map_err(|_| StfError::AssertionBuildFail)?;
 			}
 		}
 
-		let encoded_shard = shard.encode();
-		let request: RequestType =
-			AssertionBuildRequest { encoded_shard, who, assertion, vec_identity }.into();
-
-		let sender = StfRequestSender::new();
-		sender.send_stf_request(request).map_err(|_| StfError::AssertionBuildFail)
+		if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
+			let request: RequestType =
+				AssertionBuildRequest { shard: *shard, who, assertion, vec_identity, bn, key }
+					.into();
+			let sender = StfRequestSender::new();
+			sender.send_stf_request(request).map_err(|_| StfError::AssertionBuildFail)
+		} else {
+			error!(
+				"user shielding key is missing, {:?}, {:?}",
+				account_id_to_string(&who),
+				assertion
+			);
+			Err(StfError::AssertionBuildFail)
+		}
 	}
 
 	pub fn set_challenge_code_runtime(
