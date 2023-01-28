@@ -5,8 +5,8 @@ version = "0.1.0"
 
 [dependencies]
 hex = "0.4.3"
-httpmock = "0.6"
-isahc = "1.7"
+#httpmock = "0.6"
+#isahc = "1.7"
 lazy_static = "1.4"
 log = "0.4"
 serde_json = { version = "1.0", features = ["alloc"] }
@@ -20,6 +20,3 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 # Internal dependencies
 litentry-primitives = { path = "../../primitives" }
 lc-data-providers = { path = "../data-providers" }
-
-[features]
-mockserver = []

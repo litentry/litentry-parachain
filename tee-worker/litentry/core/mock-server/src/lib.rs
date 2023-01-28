@@ -13,21 +13,63 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
-
 use codec::Encode;
+
+#[macro_use]
+extern crate lazy_static;
+
 use litentry_primitives::{ChallengeCode, Identity};
 use sp_core::{blake2_256, crypto::AccountId32 as AccountId};
+use std::{
+	sync::Mutex,
+	thread::{spawn, JoinHandle},
+};
+use tokio::task::LocalSet;
 use warp::Filter;
 
-// pub mod discord_litentry;
-// pub mod discord_official;
-// pub mod twitter_litentry;
+pub mod discord_litentry;
+pub mod discord_official;
+pub mod graphql;
+pub mod twitter_litentry;
 pub mod twitter_official;
-//
-// pub use discord_litentry::*;
-// pub use discord_official::*;
-// pub use twitter_litentry::*;
-// pub use twitter_official::*;
+
+lazy_static! {
+	static ref STANDALONE_SERVER: Mutex<JoinHandle<()>> = Mutex::new(spawn(|| {
+		let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
+		LocalSet::new().block_on(&runtime, async {
+			let (_addr, srv) = warp::serve(
+				twitter_official::query_tweet()
+					.or(twitter_official::query_retweet())
+					.or(twitter_official::query_user())
+					.or(twitter_litentry::check_follow())
+					.or(discord_official::query_message())
+					.or(discord_litentry::check_id_hubber())
+					.or(discord_litentry::check_join()),
+			)
+			.bind_with_graceful_shutdown(([127, 0, 0, 1], 9527), shutdown_signal());
+			let join = tokio::task::spawn_local(srv);
+			let _ = join.await;
+		});
+	}));
+}
+
+// It should only works on UNIX.
+async fn shutdown_signal() {
+	let mut hangup_stream = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::hangup())
+		.expect("Cannot install SIGINT signal handler");
+	let mut sigint_stream =
+		tokio::signal::unix::signal(tokio::signal::unix::SignalKind::interrupt())
+			.expect("Cannot install SIGINT signal handler");
+	let mut sigterm_stream =
+		tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+			.expect("Cannot install SIGINT signal handler");
+
+	tokio::select! {
+		_val = hangup_stream.recv() => log::info!("Received SIGINT"),
+		_val = sigint_stream.recv() => log::info!("Received SIGINT"),
+		_val = sigterm_stream.recv() => log::info!("Received SIGTERM"),
+	}
+}
 
 pub fn mock_tweet_payload(who: &AccountId, identity: &Identity, code: &ChallengeCode) -> String {
 	let mut payload = code.encode();
@@ -36,28 +78,6 @@ pub fn mock_tweet_payload(who: &AccountId, identity: &Identity, code: &Challenge
 	hex::encode(blake2_256(payload.as_slice()))
 }
 
-pub async fn run() {
-	warp::serve(
-		twitter_official::query_tweet()
-			.or(twitter_official::query_retweet())
-			.or(twitter_official::query_user()),
-	)
-	.run(([0, 0, 0, 0], 9527))
-	.await;
-
-	// let mut mock_server_manager = MockServerManager::new();
-	//
-	// let discord_litentry = Box::new(DiscordLitentry::new());
-	// mock_server_manager.register(discord_litentry);
-	//
-	// let discord_official = Box::new(DiscordOfficial::new());
-	// mock_server_manager.register(discord_official);
-	//
-	// let twitter_litentry = Box::new(TwitterLitentry::new());
-	// mock_server_manager.register(twitter_litentry);
-	//
-	// let twitter_official = Box::new(TwitterOfficial::new());
-	// mock_server_manager.register(twitter_official);
-	//
-	// mock_server_manager.run();
+pub fn run() {
+	let _server = STANDALONE_SERVER.lock().unwrap_or_else(|e| e.into_inner());
 }

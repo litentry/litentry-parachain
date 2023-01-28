@@ -122,7 +122,6 @@ pub(crate) fn query_user(
 					},
 				};
 				let body = TwitterAPIV2Response { data: Some(twitter_user_data), meta: None };
-				println!("kekek");
 				Response::builder().body(serde_json::to_string(&body).unwrap())
 			}
 		})

@@ -109,73 +109,30 @@ impl DiscordLitentryClient {
 
 #[cfg(test)]
 mod tests {
-	// use super::*;
-	// use httpmock::prelude::*;
-	// use lc_mock_server::standalone_server;
-	// use std::vec::Vec;
+	use super::*;
+	use lc_mock_server::run;
 
-	// #[test]
-	// fn check_join_work() {
-	// 	standalone_server();
-	// 	let server = httpmock::MockServer::connect("localhost:9527");
-	//
-	// 	let body = DiscordResponse {
-	// 		data: true,
-	// 		message: "success".into(),
-	// 		has_errors: false,
-	// 		msg_code: 200,
-	// 		success: true,
-	// 	};
-	//
-	// 	let path = "/discord/joined";
-	// 	server.mock(|when, then| {
-	// 		when.method(GET)
-	// 			.path(path)
-	// 			.query_param("guildid", "919848390156767232")
-	// 			.query_param("handler", "againstwar#4779");
-	// 		then.status(200).body(serde_json::to_string(&body).unwrap());
-	// 	});
-	//
-	// 	let guildid = "919848390156767232";
-	// 	let handler = "againstwar#4779";
-	// 	let guild_id_vec = guildid.as_bytes().to_vec();
-	// 	let handler_vec = handler.as_bytes().to_vec();
-	//
-	// 	let mut client = DiscordLitentryClient::new();
-	// 	let response = client.check_join(guild_id_vec, handler_vec);
-	//
-	// 	assert!(response.is_ok(), "check join discord error: {:?}", response);
-	// }
-	//
-	// #[test]
-	// fn check_id_hubber_work() {
-	// 	standalone_server();
-	// 	let server = httpmock::MockServer::connect("localhost:9527");
-	//
-	// 	let body = DiscordResponse {
-	// 		data: true,
-	// 		message: "success".into(),
-	// 		has_errors: false,
-	// 		msg_code: 200,
-	// 		success: true,
-	// 	};
-	//
-	// 	server.mock(|when, then| {
-	// 		when.method(GET)
-	// 			.path("/discord/commented/idhubber")
-	// 			.query_param("guildid", "919848390156767232")
-	// 			.query_param("handler", "ericzhang.eth#0114");
-	//
-	// 		then.status(200).body(serde_json::to_string(&body).unwrap());
-	// 	});
-	//
-	// 	let guildid: u64 = 919848390156767232;
-	// 	let guild_id_vec: Vec<u8> = format!("{}", guildid).as_bytes().to_vec();
-	// 	let handler_vec: Vec<u8> = "ericzhang.eth#0114".as_bytes().to_vec();
-	//
-	// 	let mut client = DiscordLitentryClient::new();
-	// 	let response = client.check_id_hubber(guild_id_vec, handler_vec);
-	//
-	// 	assert!(response.is_ok(), "check discord id hubber error: {:?}", response);
-	// }
+	#[test]
+	fn check_join_work() {
+		let _ = env_logger::builder().is_test(true).try_init();
+		run();
+
+		let guild_id = "919848390156767232".as_bytes().to_vec();
+		let handler = "againstwar#4779".as_bytes().to_vec();
+		let mut client = DiscordLitentryClient::new();
+		let response = client.check_join(guild_id, handler);
+		assert!(response.is_ok(), "check join discord error: {:?}", response);
+	}
+
+	#[test]
+	fn check_id_hubber_work() {
+		let _ = env_logger::builder().is_test(true).try_init();
+		run();
+
+		let guild_id = "919848390156767232".as_bytes().to_vec();
+		let handler = "ericzhang.eth#0114".as_bytes().to_vec();
+		let mut client = DiscordLitentryClient::new();
+		let response = client.check_id_hubber(guild_id, handler);
+		assert!(response.is_ok(), "check discord id hubber error: {:?}", response);
+	}
 }

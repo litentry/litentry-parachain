@@ -171,25 +171,20 @@ mod tests {
 	use super::*;
 	use lc_mock_server::run;
 
-	fn start_server() -> tokio::task::JoinHandle<()> {
-		tokio::spawn(async {
-			run().await;
-		})
-	}
-
-	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-	async fn query_tweet_work() {
+	#[test]
+	fn query_tweet_work() {
 		let _ = env_logger::builder().is_test(true).try_init();
-		let _ = start_server();
+		run();
 
 		let mut client = TwitterOfficialClient::new();
 		let result = client.query_tweet("100".as_bytes().to_vec());
 		assert!(result.is_ok(), "error: {:?}", result);
 	}
 
-	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-	async fn query_retweet_work() {
-		let _ = start_server();
+	#[test]
+	fn query_retweet_work() {
+		let _ = env_logger::builder().is_test(true).try_init();
+		run();
 
 		let mut client = TwitterOfficialClient::new();
 		let user = "ericzhangeth".clone().as_bytes().to_vec();
@@ -199,9 +194,10 @@ mod tests {
 		assert!(response.is_ok(), "error: {:?}", response);
 	}
 
-	#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-	async fn query_user_work() {
-		let _ = start_server();
+	#[test]
+	fn query_user_work() {
+		let _ = env_logger::builder().is_test(true).try_init();
+		run();
 
 		let user = "1256908613857226756";
 
