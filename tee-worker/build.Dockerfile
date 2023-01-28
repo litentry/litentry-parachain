@@ -140,4 +140,6 @@ RUN ls -al /usr/local/bin
 RUN ldd /usr/local/bin/integritee-service && \
 	/usr/local/bin/integritee-service --version
 
+RUN apt-get install -y curl
+
 ENTRYPOINT ["/usr/local/bin/integritee-service"]

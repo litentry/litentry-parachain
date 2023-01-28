@@ -55,6 +55,9 @@ RUN useradd -m -u 1000 -U -s /bin/sh -d /litentry litentry && \
 # check if executable works in this container
 	/usr/local/bin/litentry-collator --version
 
+# install netcat for healthcheck
+RUN apt-get install -yq netcat
+
 USER litentry
 EXPOSE 30333 9933 9944 9615
 VOLUME ["/data"]
