@@ -115,7 +115,8 @@ mod tests {
 	#[test]
 	fn check_join_work() {
 		let _ = env_logger::builder().is_test(true).try_init();
-		run();
+		let url = run(0).unwrap();
+		G_DATA_PROVIDERS.write().unwrap().set_discord_litentry_url(url.clone());
 
 		let guild_id = "919848390156767232".as_bytes().to_vec();
 		let handler = "againstwar#4779".as_bytes().to_vec();
@@ -127,7 +128,8 @@ mod tests {
 	#[test]
 	fn check_id_hubber_work() {
 		let _ = env_logger::builder().is_test(true).try_init();
-		run();
+		let url = run(0).unwrap();
+		G_DATA_PROVIDERS.write().unwrap().set_discord_litentry_url(url.clone());
 
 		let guild_id = "919848390156767232".as_bytes().to_vec();
 		let handler = "ericzhang.eth#0114".as_bytes().to_vec();

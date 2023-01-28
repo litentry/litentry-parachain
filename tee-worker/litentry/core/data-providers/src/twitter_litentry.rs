@@ -92,7 +92,8 @@ mod tests {
 	#[test]
 	fn check_follow_work() {
 		let _ = env_logger::builder().is_test(true).try_init();
-		run();
+		let url = run(0).unwrap();
+		G_DATA_PROVIDERS.write().unwrap().set_twitter_litentry_url(url.clone());
 
 		let mut client = TwitterLitentryClient::new();
 		let source = "ericzhangeth".as_bytes().to_vec();

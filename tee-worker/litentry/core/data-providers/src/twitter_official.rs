@@ -174,7 +174,8 @@ mod tests {
 	#[test]
 	fn query_tweet_work() {
 		let _ = env_logger::builder().is_test(true).try_init();
-		run();
+		let url = run(0).unwrap();
+		G_DATA_PROVIDERS.write().unwrap().set_twitter_official_url(url.clone());
 
 		let mut client = TwitterOfficialClient::new();
 		let result = client.query_tweet("100".as_bytes().to_vec());
@@ -184,7 +185,8 @@ mod tests {
 	#[test]
 	fn query_retweet_work() {
 		let _ = env_logger::builder().is_test(true).try_init();
-		run();
+		let url = run(0).unwrap();
+		G_DATA_PROVIDERS.write().unwrap().set_twitter_official_url(url.clone());
 
 		let mut client = TwitterOfficialClient::new();
 		let user = "ericzhangeth".clone().as_bytes().to_vec();
@@ -197,7 +199,8 @@ mod tests {
 	#[test]
 	fn query_user_work() {
 		let _ = env_logger::builder().is_test(true).try_init();
-		run();
+		let url = run(0).unwrap();
+		G_DATA_PROVIDERS.write().unwrap().set_twitter_official_url(url.clone());
 
 		let user = "1256908613857226756";
 

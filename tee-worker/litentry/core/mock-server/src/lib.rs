@@ -15,16 +15,13 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 use codec::Encode;
 
-#[macro_use]
-extern crate lazy_static;
-
 use litentry_primitives::{ChallengeCode, Identity};
 use sp_core::{blake2_256, crypto::AccountId32 as AccountId};
-use std::{
-	sync::Mutex,
-	thread::{spawn, JoinHandle},
+use std::thread;
+use tokio::{
+	sync::oneshot::{channel, error::RecvError},
+	task::LocalSet,
 };
-use tokio::task::LocalSet;
 use warp::Filter;
 
 pub mod discord_litentry;
@@ -32,26 +29,6 @@ pub mod discord_official;
 pub mod graphql;
 pub mod twitter_litentry;
 pub mod twitter_official;
-
-lazy_static! {
-	static ref STANDALONE_SERVER: Mutex<JoinHandle<()>> = Mutex::new(spawn(|| {
-		let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
-		LocalSet::new().block_on(&runtime, async {
-			let (_addr, srv) = warp::serve(
-				twitter_official::query_tweet()
-					.or(twitter_official::query_retweet())
-					.or(twitter_official::query_user())
-					.or(twitter_litentry::check_follow())
-					.or(discord_official::query_message())
-					.or(discord_litentry::check_id_hubber())
-					.or(discord_litentry::check_join()),
-			)
-			.bind_with_graceful_shutdown(([127, 0, 0, 1], 9527), shutdown_signal());
-			let join = tokio::task::spawn_local(srv);
-			let _ = join.await;
-		});
-	}));
-}
 
 // It should only works on UNIX.
 async fn shutdown_signal() {
@@ -78,6 +55,26 @@ pub fn mock_tweet_payload(who: &AccountId, identity: &Identity, code: &Challenge
 	hex::encode(blake2_256(payload.as_slice()))
 }
 
-pub fn run() {
-	let _server = STANDALONE_SERVER.lock().unwrap_or_else(|e| e.into_inner());
+pub fn run(port: u16) -> Result<String, RecvError> {
+	let (result_in, result_out) = channel();
+	thread::spawn(move || {
+		let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
+		LocalSet::new().block_on(&runtime, async {
+			let (addr, srv) = warp::serve(
+				twitter_official::query_tweet()
+					.or(twitter_official::query_retweet())
+					.or(twitter_official::query_user())
+					.or(twitter_litentry::check_follow())
+					.or(discord_official::query_message())
+					.or(discord_litentry::check_id_hubber())
+					.or(discord_litentry::check_join()),
+			)
+			.bind_with_graceful_shutdown(([127, 0, 0, 1], port), shutdown_signal());
+			log::info!("listen on addr:{:?}", addr);
+			let _ = result_in.send(format!("http://{:?}", addr));
+			let join = tokio::task::spawn_local(srv);
+			let _ = join.await;
+		});
+	});
+	result_out.blocking_recv()
 }
