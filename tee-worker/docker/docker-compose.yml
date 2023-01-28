@@ -116,7 +116,7 @@ services:
     networks:
       - integritee-test-network
     healthcheck:
-      test: curl -f http://localhost:4645/is_initialized || exit 1
+      test: curl -s -f http://localhost:4645/is_initialized || exit 1
       interval: 30s
       timeout: 10s
       retries: 20
@@ -142,7 +142,7 @@ services:
     networks:
       - integritee-test-network
     healthcheck:
-      test: curl -f http://localhost:4646/is_initialized || exit 1
+      test: curl -s -f http://localhost:4646/is_initialized || exit 1
       interval: 30s
       timeout: 10s
       retries: 20

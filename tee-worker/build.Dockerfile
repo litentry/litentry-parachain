@@ -85,8 +85,6 @@ FROM ubuntu:20.04 AS runner
 
 RUN apt update && apt install -y libssl-dev iproute2
 
-COPY --from=powerman/dockerize /usr/local/bin/dockerize /usr/local/bin/dockerize
-
 
 ### Deployed CLI client
 ##################################################
