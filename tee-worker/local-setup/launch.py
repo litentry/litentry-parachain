@@ -49,13 +49,16 @@ def main(processes, config_path, parachain_type):
     with open(config_path) as config_file:
         config = json.load(config_file)
 
+    # Litentry
     if parachain_type == "local" :
-        # litentry: start parachain via shell script
+        # start parachain via shell script
         # TODO: use Popen and copy the stdout also to node.log
         run(['./scripts/litentry/start_parachain.sh'])
 
         print('Starting litentry-parachain done')
         print('----------------------------------------')
+
+        # register the expected MRENCLAVE on parachain
 
     i = 1
     for w_conf in config["workers"]:

@@ -202,6 +202,12 @@ pub mod pallet {
 				);
 			}
 
+			// TODO: should we consider the sidechain block number?
+			ensure!(
+				ScheduledEnclave::<T>::iter_values().any(|m| m == enclave.mr_enclave),
+				Error::<T>::EnclaveNotInSchedule
+			);
+
 			Self::add_enclave(&sender, &enclave)?;
 			Self::deposit_event(Event::AddedEnclave(sender, worker_url));
 
@@ -390,6 +396,8 @@ pub mod pallet {
 		EmptyEnclaveRegistry,
 		/// Can not found the desired scheduled enclave.
 		ScheduledEnclaveNotExist,
+		/// Enclave not in the scheduled list, therefore unexpected.
+		EnclaveNotInSchedule,
 	}
 }
 
