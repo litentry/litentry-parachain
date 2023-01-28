@@ -76,7 +76,7 @@ services:
       dockerfile: parachain-2106.Dockerfile
     depends_on: ['relaychain-alice', 'relaychain-bob']
     healthcheck:
-      test: nc -z localhost 9912 || exit 1
+      test: ["CMD", "nc", "-z", "localhost", "9912"]
       interval: 30s
       timeout: 10s
       retries: 20
