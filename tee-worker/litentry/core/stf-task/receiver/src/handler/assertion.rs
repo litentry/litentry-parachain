@@ -142,7 +142,6 @@ where
 		let signer = self.context.enclave_signer.as_ref();
 		if let Ok(enclave_account) = signer.get_enclave_account() {
 			credential_unsigned.issuer.id = account_id_to_string(&enclave_account);
-			credential_unsigned.proof.verification_method = account_id_to_string(&enclave_account);
 
 			let key: UserShieldingKeyType = self.req.key;
 
