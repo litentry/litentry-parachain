@@ -25,6 +25,7 @@ import { after, before, describe } from 'mocha';
 import { generateChallengeCode, getSigner } from './web3/setup';
 import { ethers } from 'ethers';
 import { generateTestKeys } from './web3/functions';
+import { generateAccouns } from './utils/crypto';
 
 const base58 = require('micro-base58');
 const crypto = require('crypto');
@@ -93,7 +94,6 @@ export async function initIntegrationTestContext(
         dave: new ethers.Wallet(generateTestKeys().dave),
         eve: new ethers.Wallet(generateTestKeys().eve),
     };
-
     const api = await ApiPromise.create({
         provider,
         types: teeTypes,
@@ -177,10 +177,12 @@ export async function listenEncryptedEvents(
                     })
                     .forEach(({ event }) => {
                         const data = event.data as AESOutput[];
+
                         const eventData: HexString[] = [];
                         for (let i = 0; i < data.length; i++) {
                             eventData.push(decryptWithAES(aesKey, data[i]));
                         }
+
                         resolve({ eventData });
                         unsubscribe();
                         return;
@@ -238,22 +240,31 @@ export async function listenCreatedIdentityEvents(context: IntegrationTestContex
     });
 }
 export function decryptWithAES(key: HexString, aesOutput: AESOutput): HexString {
-    const secretKey = crypto.createSecretKey(hexToU8a(key));
-    const tagSize = 16;
-    const ciphertext = aesOutput.ciphertext ? aesOutput.ciphertext : hexToU8a('0x');
-    const initialization_vector = aesOutput.nonce ? aesOutput.nonce : hexToU8a('0x');
-    const aad = aesOutput.aad ? aesOutput.aad : hexToU8a('0x');
+    //If aesOutput.nonce does not exist, the code cannot continue running
+    if (aesOutput.ciphertext && aesOutput.nonce) {
+        const secretKey = crypto.createSecretKey(hexToU8a(key));
+        const tagSize = 16;
+        const ciphertext = aesOutput.ciphertext ? aesOutput.ciphertext : hexToU8a('0x');
+        const initialization_vector = aesOutput.nonce ? aesOutput.nonce : hexToU8a('0x');
+        const aad = aesOutput.aad ? aesOutput.aad : hexToU8a('0x');
 
-    // notice!!! extract author_tag from ciphertext
-    // maybe this code only works with rust aes encryption
-    const authorTag = ciphertext.subarray(ciphertext.length - tagSize);
-    const decipher = crypto.createDecipheriv('aes-256-gcm', secretKey, initialization_vector);
-    decipher.setAAD(aad);
-    decipher.setAuthTag(authorTag);
+        // notice!!! extract author_tag from ciphertext
+        // maybe this code only works with rust aes encryption
 
-    let part1 = decipher.update(ciphertext.subarray(0, ciphertext.length - tagSize), undefined, 'hex');
-    let part2 = decipher.final('hex');
-    return `0x${part1 + part2}`;
+        const authorTag = ciphertext.subarray(ciphertext.length - tagSize);
+
+        const decipher = crypto.createDecipheriv('aes-256-gcm', secretKey, initialization_vector);
+        decipher.setAAD(aad);
+        decipher.setAuthTag(authorTag);
+
+        let part1 = decipher.update(ciphertext.subarray(0, ciphertext.length - tagSize), undefined, 'hex');
+
+        let part2 = decipher.final('hex');
+
+        return `0x${part1 + part2}`;
+    } else {
+        return u8aToHex();
+    }
 }
 
 export async function createTrustedCallSigned(
@@ -342,8 +353,77 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
     });
 }
 
+export function describeIntegration(title: string, cb: (context: any) => void) {
+    describe(title, function () {
+        // Set timeout to 6000 seconds
+        this.timeout(6000000);
+        let context: any = {
+            signerList: [],
+            shard: '0x11' as HexString,
+            substrate: {} as ApiPromise,
+            tee: {} as WebSocketAsPromised,
+            teeShieldingKey: {} as KeyObject,
+        };
+
+        before('Starting Litentry(parachain&tee)', async function () {
+            //env url
+            const tmp = await initMultipleAccountsContext(
+                process.env.WORKER_END_POINT!,
+                process.env.SUBSTRATE_END_POINT!
+            );
+
+            context.shard = tmp.shard;
+            context.substrate = tmp.substrate;
+            context.tee = tmp.tee;
+            context.teeShieldingKey = tmp.teeShieldingKey;
+            context.signerList = tmp.signerList;
+        });
+
+        after(async function () {});
+
+        cb(context);
+    });
+}
+
+export async function initMultipleAccountsContext(workerEndpoint: string, substrateEndpoint: string): Promise<any> {
+    const provider = new WsProvider(substrateEndpoint);
+
+    const signerList = generateAccouns(10);
+
+    const api = await ApiPromise.create({
+        provider,
+        types: teeTypes,
+    });
+    await cryptoWaitReady();
+
+    const keys = (await api.query.sidechain.workerForShard.entries()) as [StorageKey, Codec][];
+    let shard = '';
+    for (let i = 0; i < keys.length; i++) {
+        //TODO shard may be different from mr_enclave. The default value of shard is mr_enclave
+        shard = keys[i][0].args[0].toHex();
+        console.log('query worker shard: ', shard);
+        break;
+    }
+    if (shard == '') {
+        throw new Error('shard not found');
+    }
+
+    const wsp = await initWorkerConnection(workerEndpoint);
+
+    const teeShieldingKey = await getTEEShieldingKey(wsp, api);
+    return <any>{
+        tee: wsp,
+        substrate: api,
+        teeShieldingKey,
+        shard,
+        signerList,
+    };
+}
+
 export function getMessage(address: string, wallet: string): string {
     const challengeCode = generateChallengeCode();
     const messgae = `Signing in ${process.env.ID_HUB_URL} with ${address} using ${wallet} and challenge code is: ${challengeCode}`;
     return messgae;
 }
+
+export function tokenTransfer() {}
