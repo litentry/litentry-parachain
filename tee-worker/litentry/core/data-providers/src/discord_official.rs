@@ -99,11 +99,15 @@ mod tests {
 	use super::*;
 	use lc_mock_server::run;
 
-	#[test]
-	fn query_message_work() {
+	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(0).unwrap();
 		G_DATA_PROVIDERS.write().unwrap().set_discord_official_url(url.clone());
+	}
+
+	#[test]
+	fn query_message_work() {
+		init();
 
 		let channel_id = "919848392035794945".as_bytes().to_vec();
 		let message_id = "1".as_bytes().to_vec();

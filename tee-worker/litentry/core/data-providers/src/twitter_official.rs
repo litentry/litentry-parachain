@@ -171,11 +171,15 @@ mod tests {
 	use super::*;
 	use lc_mock_server::run;
 
-	#[test]
-	fn query_tweet_work() {
+	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(0).unwrap();
 		G_DATA_PROVIDERS.write().unwrap().set_twitter_official_url(url.clone());
+	}
+
+	#[test]
+	fn query_tweet_work() {
+		init();
 
 		let mut client = TwitterOfficialClient::new();
 		let result = client.query_tweet("100".as_bytes().to_vec());
@@ -184,9 +188,7 @@ mod tests {
 
 	#[test]
 	fn query_retweet_work() {
-		let _ = env_logger::builder().is_test(true).try_init();
-		let url = run(0).unwrap();
-		G_DATA_PROVIDERS.write().unwrap().set_twitter_official_url(url.clone());
+		init();
 
 		let mut client = TwitterOfficialClient::new();
 		let user = "ericzhangeth".clone().as_bytes().to_vec();
@@ -198,9 +200,7 @@ mod tests {
 
 	#[test]
 	fn query_user_work() {
-		let _ = env_logger::builder().is_test(true).try_init();
-		let url = run(0).unwrap();
-		G_DATA_PROVIDERS.write().unwrap().set_twitter_official_url(url.clone());
+		init();
 
 		let user = "1256908613857226756";
 
