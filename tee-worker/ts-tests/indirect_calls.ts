@@ -12,9 +12,7 @@ import {
 } from './utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { HexString } from '@polkadot/util/types';
-import { generateChallengeCode } from './web3/setup';
 import { ApiPromise } from '@polkadot/api';
-import { Assertion } from './type-definitions';
 
 export async function setUserShieldingKey(
     context: IntegrationTestContext,
@@ -23,9 +21,19 @@ export async function setUserShieldingKey(
     listening: boolean
 ): Promise<HexString | undefined> {
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, aesKey).toString('hex');
+
     await context.substrate.tx.identityManagement
         .setUserShieldingKey(context.shard, `0x${ciphertext}`)
-        .signAndSend(signer);
+        .paymentInfo(signer);
+
+    const tx =context.substrate.tx.identityManagement
+        .setUserShieldingKey(context.shard, `0x${ciphertext}`)
+    
+    //The purpose of paymentInfo is to check whether the version of polkadot/api is suitable for the current test and to determine whether the transaction is successful.
+    await tx.paymentInfo(signer);
+
+    await sendTxUntilInBlock(context.substrate, tx, signer);
+    
     if (listening) {
         const event = await listenEncryptedEvents(context, aesKey, {
             module: 'identityManagement',
@@ -47,10 +55,15 @@ export async function createIdentity(
 ): Promise<IdentityGenericEvent | undefined> {
     const encode = context.substrate.createType('LitentryIdentity', identity).toHex();
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
-    const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
-    await context.substrate.tx.identityManagement
+
+    const tx =context.substrate.tx.identityManagement
         .createIdentity(context.shard, signer.address, `0x${ciphertext}`, null)
-        .signAndSend(signer, { nonce });
+    
+    //The purpose of paymentInfo is to check whether the version of polkadot/api is suitable for the current test and to determine whether the transaction is successful.
+    await tx.paymentInfo(signer);
+
+    await sendTxUntilInBlock(context.substrate, tx, signer);
+    
     if (listening) {
         const event = await listenCreatedIdentityEvents(context, aesKey);
         const [who, _identity, idGraph, challengeCode] = event.eventData;
@@ -68,7 +81,11 @@ export async function removeIdentity(
 ): Promise<IdentityGenericEvent | undefined> {
     const encode = context.substrate.createType('LitentryIdentity', identity).toHex();
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
+
     const tx = context.substrate.tx.identityManagement.removeIdentity(context.shard, `0x${ciphertext}`);
+
+    //The purpose of paymentInfo is to check whether the version of polkadot/api is suitable for the current test and to determine whether the transaction is successful.
+    await tx.paymentInfo(signer);
     await sendTxUntilInBlock(context.substrate, tx, signer);
 
     if (listening) {
@@ -97,12 +114,17 @@ export async function verifyIdentity(
     const validation_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, validation_encode).toString(
         'hex'
     );
+ 
 
     const tx = context.substrate.tx.identityManagement.verifyIdentity(
         context.shard,
         `0x${identity_ciphertext}`,
         `0x${validation_ciphertext}`
     );
+
+    //The purpose of paymentInfo is to check whether the version of polkadot/api is suitable for the current test and to determine whether the transaction is successful.
+    await tx.paymentInfo(signer);
+    
     await sendTxUntilInBlock(context.substrate, tx, signer);
 
     if (listening) {
@@ -114,29 +136,6 @@ export async function verifyIdentity(
         const [who, identity, idGraph] = event.eventData;
 
         return decodeIdentityEvent(context.substrate, who, identity, idGraph);
-    }
-    return undefined;
-}
-
-export async function requestVC(
-    context: IntegrationTestContext,
-    signer: KeyringPair,
-    aesKey: HexString,
-    listening: boolean,
-    shard: HexString,
-    assertion: Assertion
-): Promise<HexString | undefined> {
-    const tx = context.substrate.tx.vcManagement.requestVc(shard, assertion);
-    await sendTxUntilInBlock(context.substrate, tx, signer);
-    if (listening) {
-        const event = await listenEncryptedEvents(context, aesKey, {
-            module: 'vcManagement',
-            method: 'vcIssued',
-            event: 'VCIssued',
-        });
-
-        const [who, hash, vc] = event.eventData;
-        return vc;
     }
     return undefined;
 }
