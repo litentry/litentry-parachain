@@ -700,14 +700,14 @@ dependencies = [
 name = "enclave-runtime"
 version = "0.9.0"
 dependencies = [
- "cid",
- "derive_more",
- "env_logger",
- "frame-support",
- "frame-system",
- "hex 0.4.3",
- "ipfs-unixfs",
- "ita-oracle",
+	"cid",
+	"derive_more",
+	"env_logger",
+	"frame-support",
+	"frame-system",
+	"hex 0.4.3",
+	"ipfs-unixfs",
+	"ita-oracle",
 	"ita-sgx-runtime",
 	"ita-stf",
 	"itc-direct-rpc-server",
