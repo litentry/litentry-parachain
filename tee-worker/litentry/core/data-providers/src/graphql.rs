@@ -248,7 +248,7 @@ mod tests {
 		VerifiedCredentialsTotalTxs, G_DATA_PROVIDERS,
 	};
 	use lc_mock_server::run;
-	use litentry_primitives::ChallengeCode;
+	use litentry_primitives::{ChallengeCode, Identity};
 	use std::sync::Arc;
 
 	const ACCOUNT_ADDRESS1: &str = "0x61f2270153bb68dc0ddb3bc4e4c1bd7522e918ad";
@@ -257,7 +257,7 @@ mod tests {
 
 	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
-		let url = run(Arc::new(|| ChallengeCode::default()), 0).unwrap();
+		let url = run(Arc::new(|_: &Identity| ChallengeCode::default()), 0).unwrap();
 		G_DATA_PROVIDERS.write().unwrap().set_graphql_url(url.clone());
 	}
 

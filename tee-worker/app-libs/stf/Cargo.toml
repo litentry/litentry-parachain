@@ -39,8 +39,8 @@ sp-core = { default-features = false, features = ["full_crypto"], git = "https:/
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
 
 # litentry
+lc-challenge-code-cache = { path = "../../litentry/core/challenge-code-cache", default-features = false }
 lc-stf-task-sender = { path = "../../litentry/core/stf-task/sender", default-features = false }
-lc-challenge-code-cache = {path="../../litentry/core/challenge-code-cache", default-features = false }
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
 pallet-parentchain = { path = "../../../pallets/parentchain", default-features = false }
 parentchain-primitives = { package = "core-primitives", path = "../../../primitives/core", default-features = false, optional = true }

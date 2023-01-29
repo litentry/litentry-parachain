@@ -25,17 +25,9 @@ extern crate sgx_tstd as std;
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use std::sync::SgxRwLock as RwLock;
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use std::sync::SgxRwLockReadGuard as RwLockReadGuard;
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use std::sync::SgxRwLockWriteGuard as RwLockWriteGuard;
-
-// use std::sync::
 
 #[cfg(feature = "std")]
 use std::sync::RwLock;
-#[cfg(feature = "std")]
-use std::sync::RwLockWriteGuard;
 
 use lazy_static::lazy_static;
 use litentry_primitives::{ChallengeCode, Identity};
@@ -49,7 +41,7 @@ lazy_static! {
 }
 
 /// Local challenge_code cache
-///	This struct is for testing
+/// This struct is for testing
 #[derive(Default)]
 pub struct ChallengeCodeCache {
 	codes: RwLock<HashMap<Vec<u8>, Vec<u8>>>,
@@ -60,7 +52,7 @@ impl ChallengeCodeCache {
 	pub fn insert_challenge_code(&self, identity: Identity, code: ChallengeCode) {
 		if self.enable.read().map_or(false, |r| *r) {
 			if let Ok(mut codes_lock) = self.codes.write() {
-				log::debug!("cahce challenge_code: {:?}, code:{:?}", identity.clone(), code);
+				log::debug!("cahce challenge_code: {:?}, code:{:?}", identity, code);
 				codes_lock.insert(identity.flat(), code.to_vec());
 			}
 		}
@@ -79,7 +71,7 @@ impl ChallengeCodeCache {
 
 	pub fn get_challenge_code(&self, identity: Vec<u8>) -> Option<Vec<u8>> {
 		if let Ok(codes) = self.codes.read() {
-			return codes.get(&identity).map(|f| f.clone())
+			return codes.get(&identity).cloned()
 		}
 		None
 	}

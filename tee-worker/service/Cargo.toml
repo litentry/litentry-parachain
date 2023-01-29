@@ -71,8 +71,8 @@ sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "po
 
 # local litentry dependencies
 lc-data-providers = { path = "../litentry/core/data-providers" }
-litentry-primitives = { path = "../litentry/primitives" }
 lc-mock-server = { path = "../litentry/core/mock-server" }
+litentry-primitives = { path = "../litentry/primitives" }
 
 [features]
 default = []
