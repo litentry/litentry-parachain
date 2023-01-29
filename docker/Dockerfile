@@ -46,6 +46,9 @@ ARG PROFILE
 
 COPY --from=builder /litentry/target/$PROFILE/litentry-collator /usr/local/bin
 
+# install netcat for healthcheck
+RUN apt-get update && apt-get install -yq netcat && cp /usr/bin/nc /usr/local/bin/
+
 RUN useradd -m -u 1000 -U -s /bin/sh -d /litentry litentry && \
 	mkdir -p /data /litentry/.local/share && \
 	chown -R litentry:litentry /data && \
