@@ -85,8 +85,6 @@ FROM ubuntu:20.04 AS runner
 
 RUN apt update && apt install -y libssl-dev iproute2
 
-COPY --from=powerman/dockerize /usr/local/bin/dockerize /usr/local/bin/dockerize
-
 
 ### Deployed CLI client
 ##################################################
@@ -139,5 +137,7 @@ RUN ls -al /usr/local/bin
 # checks
 RUN ldd /usr/local/bin/integritee-service && \
 	/usr/local/bin/integritee-service --version
+
+RUN apt-get install -y curl
 
 ENTRYPOINT ["/usr/local/bin/integritee-service"]

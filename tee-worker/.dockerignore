@@ -2,7 +2,10 @@
 .githooks
 .github
 .idea
-ci/
+bin/*.bin
+bin/key.txt
+bin/spid.txt
+bin/sidechain_db/
 docker/
 docs/
 local-setup/
