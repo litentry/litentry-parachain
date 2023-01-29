@@ -138,6 +138,18 @@ fn main() {
 
 	info!("*** Running worker in mode: {:?} \n", WorkerModeProvider::worker_mode());
 
+	#[cfg(feature = "mockserver")]
+	thread::spawn(move || {
+		if !config.disable_mock_server {
+			info!("*** Starting mock server");
+			let getter = Arc::new(|| {
+				println!("Test getting challenge_code from enclave");
+				[8, 104, 90, 56, 35, 213, 18, 250, 213, 210, 119, 241, 2, 174, 24, 8]
+			});
+			let _ = lc_mock_server::run(getting, 9527);
+		}
+	});
+
 	let clean_reset = matches.is_present("clean-reset");
 	if clean_reset {
 		setup::purge_files_from_cwd().unwrap();

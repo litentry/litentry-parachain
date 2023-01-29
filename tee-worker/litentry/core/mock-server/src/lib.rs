@@ -13,41 +13,39 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
-
-#[macro_use]
-extern crate lazy_static;
-
-use std::{
-	sync::{Arc, Mutex},
-	thread::{spawn, JoinHandle},
-};
-
 use codec::Encode;
-use httpmock::{standalone::start_standalone_server, MockServer};
+
 use litentry_primitives::{ChallengeCode, Identity};
 use sp_core::{blake2_256, crypto::AccountId32 as AccountId};
-use tokio::task::LocalSet;
+use std::{sync::Arc, thread};
+use tokio::{
+	sync::oneshot::{channel, error::RecvError},
+	task::LocalSet,
+};
+use warp::Filter;
 
 pub mod discord_litentry;
 pub mod discord_official;
+pub mod graphql;
 pub mod twitter_litentry;
 pub mod twitter_official;
 
-pub use discord_litentry::*;
-pub use discord_official::*;
-use itp_enclave_api::{challenge_code_cache::ChallengeCodeCache, Enclave};
-pub use twitter_litentry::*;
-pub use twitter_official::*;
-pub fn standalone_server() {
-	let _server = STANDALONE_SERVER.lock().unwrap_or_else(|e| e.into_inner());
-}
+// It should only works on UNIX.
+async fn shutdown_signal() {
+	let mut hangup_stream = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::hangup())
+		.expect("Cannot install SIGINT signal handler");
+	let mut sigint_stream =
+		tokio::signal::unix::signal(tokio::signal::unix::SignalKind::interrupt())
+			.expect("Cannot install SIGINT signal handler");
+	let mut sigterm_stream =
+		tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+			.expect("Cannot install SIGINT signal handler");
 
-lazy_static! {
-	static ref STANDALONE_SERVER: Mutex<JoinHandle<Result<(), String>>> = Mutex::new(spawn(|| {
-		let srv = start_standalone_server(9527, false, None, false, usize::MAX);
-		let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
-		LocalSet::new().block_on(&runtime, srv)
-	}));
+	tokio::select! {
+		_val = hangup_stream.recv() => log::info!("Received SIGINT"),
+		_val = sigint_stream.recv() => log::info!("Received SIGINT"),
+		_val = sigterm_stream.recv() => log::info!("Received SIGTERM"),
+	}
 }
 
 pub fn mock_tweet_payload(who: &AccountId, identity: &Identity, code: &ChallengeCode) -> String {
@@ -57,48 +55,30 @@ pub fn mock_tweet_payload(who: &AccountId, identity: &Identity, code: &Challenge
 	hex::encode(blake2_256(payload.as_slice()))
 }
 
-pub trait Mock {
-	fn mock(&self, mock_server: &MockServer);
-}
-
-struct MockServerManager {
-	servers: Vec<Box<dyn Mock>>,
-	mock_server: MockServer,
-}
-impl MockServerManager {
-	pub fn new() -> Self {
-		let mock_server = MockServer::connect("localhost:9527");
-		MockServerManager { servers: vec![], mock_server }
-	}
-
-	pub fn register(&mut self, server: Box<dyn Mock>) {
-		self.servers.push(server);
-	}
-
-	pub fn run(&self) {
-		for server in &self.servers {
-			server.mock(&self.mock_server);
-		}
-	}
-}
-
-pub fn run(enclave: Arc<Enclave>) {
-	standalone_server();
-	let _ = enclave.enable_challenge_code_cache();
-
-	let mut mock_server_manager = MockServerManager::new();
-
-	let discord_litentry = Box::new(DiscordLitentry::new());
-	mock_server_manager.register(discord_litentry);
-
-	let discord_official = Box::new(DiscordOfficial::new());
-	mock_server_manager.register(discord_official);
-
-	let twitter_litentry = Box::new(TwitterLitentry::new());
-	mock_server_manager.register(twitter_litentry);
-
-	let twitter_official = Box::new(TwitterOfficial { enclave });
-	mock_server_manager.register(twitter_official);
-
-	mock_server_manager.run();
+pub fn run<F>(getter: Arc<F>, port: u16) -> Result<String, RecvError>
+where
+	F: Fn() -> ChallengeCode + Send + Sync + 'static,
+{
+	let (result_in, result_out) = channel();
+	thread::spawn(move || {
+		let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
+		LocalSet::new().block_on(&runtime, async {
+			let (addr, srv) = warp::serve(
+				twitter_official::query_tweet(getter.clone())
+					.or(twitter_official::query_retweet(getter))
+					.or(twitter_official::query_user())
+					.or(twitter_litentry::check_follow())
+					.or(discord_official::query_message())
+					.or(discord_litentry::check_id_hubber())
+					.or(discord_litentry::check_join())
+					.or(graphql::query()),
+			)
+			.bind_with_graceful_shutdown(([127, 0, 0, 1], port), shutdown_signal());
+			log::info!("listen on addr:{:?}", addr);
+			let _ = result_in.send(format!("http://{:?}", addr));
+			let join = tokio::task::spawn_local(srv);
+			let _ = join.await;
+		});
+	});
+	result_out.blocking_recv()
 }
