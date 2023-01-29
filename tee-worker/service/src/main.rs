@@ -145,7 +145,7 @@ fn main() {
 				println!("Test getting challenge_code from enclave");
 				[8, 104, 90, 56, 35, 213, 18, 250, 213, 210, 119, 241, 2, 174, 24, 8]
 			});
-			let _ = lc_mock_server::run(getting, 9527);
+			let _ = lc_mock_server::run(getter, 9527);
 		}
 	});
 
