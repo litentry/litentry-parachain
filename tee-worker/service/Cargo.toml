@@ -73,12 +73,10 @@ sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "po
 lc-data-providers = { path = "../litentry/core/data-providers" }
 litentry-primitives = { path = "../litentry/primitives" }
 lc-mock-server = { path = "../litentry/core/mock-server" }
-lc-mock-server = { path = "../litentry/core/mock-server", optional = true }
 
 [features]
 default = []
 evm = []
-mockserver = ["lc-mock-server"]
 offchain-worker = ["itp-settings/offchain-worker"]
 production = ["itp-settings/production"]
 sidechain = ["itp-settings/sidechain"]

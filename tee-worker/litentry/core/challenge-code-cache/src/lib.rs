@@ -60,7 +60,7 @@ impl ChallengeCodeCache {
 	pub fn insert_challenge_code(&self, identity: Identity, code: ChallengeCode) {
 		if self.enable.read().map_or(false, |r| *r) {
 			if let Ok(mut codes_lock) = self.codes.write() {
-				log::warn!("cahce challenge_code: {:?}, code:{:?}", identity.clone(), code);
+				log::debug!("cahce challenge_code: {:?}, code:{:?}", identity.clone(), code);
 				codes_lock.insert(identity.flat(), code.to_vec());
 			}
 		}

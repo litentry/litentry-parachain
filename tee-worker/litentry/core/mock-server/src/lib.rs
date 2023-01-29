@@ -57,7 +57,7 @@ pub fn mock_tweet_payload(who: &AccountId, identity: &Identity, code: &Challenge
 
 pub fn run<F>(getter: Arc<F>, port: u16) -> Result<String, RecvError>
 where
-	F: Fn() -> ChallengeCode + Send + Sync + 'static,
+	F: Fn(&Identity) -> ChallengeCode + Send + Sync + 'static,
 {
 	let (result_in, result_out) = channel();
 	thread::spawn(move || {

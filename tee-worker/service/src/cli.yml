@@ -67,18 +67,18 @@ args:
         long: enable-metrics
         help: Enable the metrics HTTP server to serve metrics
     - metrics-port:
-        short: i
-        long: metrics-port
-        help: Set the port on which the metrics are served.
-        takes_value: true
-        default_value: "8787"
-        required: false
-    - untrusted-http-port:
-          short: h
-        long: untrusted-http-port
-        help: Set the port for the untrusted HTTP server
-        takes_value: true
+          short: i
+          long: metrics-port
+          help: Set the port on which the metrics are served.
+          takes_value: true
+          default_value: "8787"
           required: false
+    -   untrusted-http-port:
+            short: h
+            long: untrusted-http-port
+            help: Set the port for the untrusted HTTP server
+            takes_value: true
+            required: false
     -   clean-reset:
             long: clean-reset
             short: c

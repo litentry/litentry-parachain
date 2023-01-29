@@ -24,7 +24,7 @@ use sgx_types::*;
 pub trait ChallengeCodeCache {
 	fn enable_challenge_code_cache(&self) -> EnclaveResult<()>;
 
-	fn get_challenge_code(&self, identity: Identity) -> EnclaveResult<ChallengeCode>;
+	fn get_challenge_code(&self, identity: &Identity) -> EnclaveResult<ChallengeCode>;
 }
 
 impl ChallengeCodeCache for Enclave {
@@ -39,7 +39,7 @@ impl ChallengeCodeCache for Enclave {
 		Ok(())
 	}
 
-	fn get_challenge_code(&self, identity: Identity) -> EnclaveResult<ChallengeCode> {
+	fn get_challenge_code(&self, identity: &Identity) -> EnclaveResult<ChallengeCode> {
 		let mut retval = sgx_status_t::SGX_SUCCESS;
 		let identity = identity.flat();
 		let mut code = [0u8; CHALLENGE_CODE_SIZE];

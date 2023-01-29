@@ -27,7 +27,7 @@ WORKER_NUM=${worker_num:-1}
 NODE_URL=${node_url:-"ws://127.0.0.1"}	# "ws://host.docker.internal"
 NODE_PORT=${node_port:-"9944"}			# "9946"
 
-RUNNING_MODE=${mode:-"dev"}
+RUNNING_MODE=${mode:-"local"}
 
 # Fixed values:
 WORKER_ENDPOINT="localhost"
@@ -69,6 +69,10 @@ for ((i = 0; i < ${WORKER_NUM}; i++)); do
 		FSUBCMD_REQ_STATE="--request-state"
 	fi
 
+	if ((i == 0)); then
+		MOCK_SERVER="--mock-server"
+	fi
+
 	if [ "${CLEANUP}" = 'true' ]; then
 		echo "clear dir: ${ROOTDIR}/tmp/${worker_name}"
 		rm -rf "${ROOTDIR}"/tmp/"${worker_name}"
@@ -77,7 +81,7 @@ for ((i = 0; i < ${WORKER_NUM}; i++)); do
 	for Item in 'enclave.signed.so' 'key.txt' 'spid.txt' 'integritee-service' 'integritee-cli'; do
 		cp "${ROOTDIR}/bin/${Item}" "${ROOTDIR}"/tmp/"${worker_name}"
 	done
-	for Item in 'worker-config-dev.json' 'worker-config-prod.json' 'worker-config-staging.json'; do
+	for Item in 'worker-config-dev.json' 'worker-config-prod.json' 'worker-config-staging.json' 'worker-config-local.json'; do
 		cp "${ROOTDIR}/local-setup/${Item}" "${ROOTDIR}"/tmp/"${worker_name}"
 	done
 
@@ -105,7 +109,7 @@ for ((i = 0; i < ${WORKER_NUM}; i++)); do
 --untrusted-external-address ws://${WORKER_ENDPOINT} \
 --untrusted-http-port ${untrusted_http_port} \
 --untrusted-worker-port ${untrusted_worker_port} \
---running-mode ${RUNNING_MODE} \
+--running-mode ${RUNNING_MODE} ${MOCK_SERVER} \
 run --skip-ra ${FSUBCMD_DEV} ${FSUBCMD_REQ_STATE}"
 
 	echo "${worker_name} command: ${launch_command}"
