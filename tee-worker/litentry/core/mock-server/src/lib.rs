@@ -17,7 +17,7 @@ use codec::Encode;
 
 use litentry_primitives::{ChallengeCode, Identity};
 use sp_core::{blake2_256, crypto::AccountId32 as AccountId};
-use std::thread;
+use std::{sync::Arc, thread};
 use tokio::{
 	sync::oneshot::{channel, error::RecvError},
 	task::LocalSet,
@@ -55,14 +55,17 @@ pub fn mock_tweet_payload(who: &AccountId, identity: &Identity, code: &Challenge
 	hex::encode(blake2_256(payload.as_slice()))
 }
 
-pub fn run(port: u16) -> Result<String, RecvError> {
+pub fn run<F>(getter: Arc<F>, port: u16) -> Result<String, RecvError>
+where
+	F: Fn() -> ChallengeCode + Send + Sync + 'static,
+{
 	let (result_in, result_out) = channel();
 	thread::spawn(move || {
 		let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
 		LocalSet::new().block_on(&runtime, async {
 			let (addr, srv) = warp::serve(
-				twitter_official::query_tweet()
-					.or(twitter_official::query_retweet())
+				twitter_official::query_tweet(getter.clone())
+					.or(twitter_official::query_retweet(getter))
 					.or(twitter_official::query_user())
 					.or(twitter_litentry::check_follow())
 					.or(discord_official::query_message())

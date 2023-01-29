@@ -170,10 +170,12 @@ impl TwitterOfficialClient {
 mod tests {
 	use super::*;
 	use lc_mock_server::run;
+	use litentry_primitives::ChallengeCode;
+	use std::sync::Arc;
 
 	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
-		let url = run(0).unwrap();
+		let url = run(Arc::new(|| ChallengeCode::default()), 0).unwrap();
 		G_DATA_PROVIDERS.write().unwrap().set_twitter_official_url(url.clone());
 	}
 
@@ -203,7 +205,6 @@ mod tests {
 		init();
 
 		let user = "1256908613857226756";
-
 		let mut client = TwitterOfficialClient::new();
 		let result = client.query_user(user.as_bytes().to_vec());
 		assert!(result.is_ok(), "error: {:?}", result);

@@ -18,7 +18,6 @@
 use crate::sgx_reexport_prelude::*;
 
 use crate::{build_client, Error, HttpError, G_DATA_PROVIDERS};
-use core::ops::Not;
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -249,6 +248,8 @@ mod tests {
 		VerifiedCredentialsTotalTxs, G_DATA_PROVIDERS,
 	};
 	use lc_mock_server::run;
+	use litentry_primitives::ChallengeCode;
+	use std::sync::Arc;
 
 	const ACCOUNT_ADDRESS1: &str = "0x61f2270153bb68dc0ddb3bc4e4c1bd7522e918ad";
 	const ACCOUNT_ADDRESS2: &str = "0x3394caf8e5ccaffb936e6407599543af46525e0b";
@@ -256,7 +257,7 @@ mod tests {
 
 	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
-		let url = run(0).unwrap();
+		let url = run(Arc::new(|| ChallengeCode::default()), 0).unwrap();
 		G_DATA_PROVIDERS.write().unwrap().set_graphql_url(url.clone());
 	}
 

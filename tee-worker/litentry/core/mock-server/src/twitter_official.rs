@@ -19,29 +19,15 @@ use crate::mock_tweet_payload;
 use lc_data_providers::twitter_official::*;
 use litentry_primitives::{ChallengeCode, Identity, IdentityString, Web2Network};
 use sp_core::crypto::AccountId32 as AccountId;
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 use warp::{http::Response, Filter};
 
-pub(crate) fn query_tweet(
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-	let tweet_id = "100".to_string();
-
-	let account_id = AccountId::new([
-		212, 53, 147, 199, 21, 253, 211, 28, 97, 20, 26, 189, 4, 169, 159, 214, 130, 44, 133, 88,
-		133, 76, 205, 227, 154, 86, 132, 231, 165, 109, 162, 125,
-	]); // Alice
-
-	let twitter_identity = Identity::Web2 {
-		network: Web2Network::Twitter,
-		address: IdentityString::try_from("mock_user".as_bytes().to_vec()).unwrap(),
-	};
-
-	let chanllenge_code: ChallengeCode =
-		[8, 104, 90, 56, 35, 213, 18, 250, 213, 210, 119, 241, 2, 174, 24, 8];
-	let payload = mock_tweet_payload(&account_id, &twitter_identity, &chanllenge_code);
-
-	let tweet = Tweet { author_id: "mock_user".into(), id: tweet_id.clone(), text: payload };
-
+pub(crate) fn query_tweet<F>(
+	func: Arc<F>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone
+where
+	F: Fn() -> ChallengeCode + Send + Sync + 'static,
+{
 	warp::get()
 		.and(warp::path!("2" / "tweets" / u32))
 		.and(warp::query::<HashMap<String, String>>())
@@ -49,21 +35,39 @@ pub(crate) fn query_tweet(
 			let default = String::default();
 			let ids = p.get("ids").unwrap_or(&default);
 			let expansions = p.get("expansions").unwrap_or(&default);
+			let expected_tweet_id = "100".to_string();
 
-			if expansions.as_str() != "author_id" || ids != &tweet_id {
+			if expansions.as_str() != "author_id" || ids != &expected_tweet_id {
 				Response::builder().status(400).body(String::from("Error query"))
 			} else {
+				let account_id = AccountId::new([
+					212, 53, 147, 199, 21, 253, 211, 28, 97, 20, 26, 189, 4, 169, 159, 214, 130,
+					44, 133, 88, 133, 76, 205, 227, 154, 86, 132, 231, 165, 109, 162, 125,
+				]); // Alice
+				let twitter_identity = Identity::Web2 {
+					network: Web2Network::Twitter,
+					address: IdentityString::try_from("mock_user".as_bytes().to_vec()).unwrap(),
+				};
+				let chanllenge_code = func();
+				let payload = mock_tweet_payload(&account_id, &twitter_identity, &chanllenge_code);
+				let tweet =
+					Tweet { author_id: "mock_user".into(), id: expected_tweet_id, text: payload };
+
 				Response::builder().body(serde_json::to_string(&tweet).unwrap())
 			}
 		})
 }
 
-pub(crate) fn query_retweet(
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+pub(crate) fn query_retweet<F>(
+	func: Arc<F>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone
+where
+	F: Fn() -> ChallengeCode + Send + Sync + 'static,
+{
 	warp::get()
 		.and(warp::path!("2" / "tweets" / "search" / "recent"))
 		.and(warp::query::<HashMap<String, String>>())
-		.map(|p: HashMap<String, String>| {
+		.map(move |p: HashMap<String, String>| {
 			let default = String::default();
 			let query = p.get("query").unwrap_or(&default);
 			let expansions = p.get("expansions").unwrap_or(&default);
@@ -83,8 +87,7 @@ pub(crate) fn query_retweet(
 					network: Web2Network::Twitter,
 					address: IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
 				};
-				let chanllenge_code: ChallengeCode =
-					[8, 104, 90, 56, 35, 213, 18, 250, 213, 210, 119, 241, 2, 174, 24, 8];
+				let chanllenge_code = func();
 				let payload = mock_tweet_payload(&account_id, &twitter_identity, &chanllenge_code);
 
 				let tweets = vec![Tweet {
