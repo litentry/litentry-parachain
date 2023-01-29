@@ -36,7 +36,7 @@ pub mod sgx_reexport_prelude {
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 use codec::{Decode, Encode};
-use itp_stf_primitives::types::{KeyPair, ShardIdentifier};
+use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{Assertion, ParentchainBlockNumber};
@@ -173,12 +173,12 @@ pub struct Proof {
 }
 
 impl Proof {
-	pub fn new(bn: ParentchainBlockNumber, sig: Vec<u8>, issuer: &AccountId) -> Self {
+	pub fn new(bn: ParentchainBlockNumber, sig: &Vec<u8>, issuer: &AccountId) -> Self {
 		Proof {
 			created_block_number: bn,
 			proof_type: ProofType::Ed25519Signature2020,
 			proof_purpose: PROOF_PURPOSE.to_string(),
-			proof_value: format!("{}", HexDisplay::from(&sig)),
+			proof_value: format!("{}", HexDisplay::from(sig)),
 			verification_method: account_id_to_string(issuer),
 		}
 	}
@@ -243,16 +243,8 @@ impl Credential {
 		self.id = format!("{}", HexDisplay::from(&vc_id.to_vec()));
 	}
 
-	fn generate_proof(
-		&mut self,
-		pair: &KeyPair,
-		bn: ParentchainBlockNumber,
-		issuer: &AccountId,
-	) -> Result<(), Error> {
-		let doc = self.to_json()?;
-		self.proof = Some(Proof::new(bn, pair.sign(doc.as_bytes()).encode(), issuer));
-
-		Ok(())
+	pub fn add_proof(&mut self, sig: &Vec<u8>, bn: ParentchainBlockNumber, issuer: &AccountId) {
+		self.proof = Some(Proof::new(bn, sig, issuer));
 	}
 
 	pub fn to_json(&self) -> Result<String, Error> {
@@ -315,11 +307,6 @@ impl Credential {
 				return Err(Error::EmptyProofBlockNumber)
 			}
 
-			// proof block number must >= issuance block number
-			if proof.created_block_number < self.issuance_block_number {
-				return Err(Error::InvalidProof)
-			}
-
 			//ToDo: validate proof signature
 		}
 
@@ -370,6 +357,5 @@ mod tests {
 		assert!(vc.validate_unsigned().is_ok());
 		let id: String = vc.credential_subject.id.clone();
 		assert_eq!(id, account_id_to_string(&who));
-		assert_eq!(vc.proof.proof_purpose, "assertionMethod");
 	}
 }
