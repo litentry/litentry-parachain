@@ -7,16 +7,16 @@ version = "0.1.0"
 hex = "0.4.3"
 #httpmock = "0.6"
 #isahc = "1.7"
+codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive"] }
 lazy_static = "1.4"
 log = "0.4"
 serde_json = { version = "1.0", features = ["alloc"] }
 tokio = { version = "1.5", features = ["full"] }
 warp = "0.3"
-codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive"] }
 
 # Subtrate
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 
 # Internal dependencies
-litentry-primitives = { path = "../../primitives" }
 lc-data-providers = { path = "../data-providers" }
+litentry-primitives = { path = "../../primitives" }
