@@ -18,7 +18,7 @@
 use clap::ArgMatches;
 use parse_duration::parse;
 use serde::{Deserialize, Serialize};
-use std::time::Duration;
+use std::{str::FromStr, time::Duration};
 
 static DEFAULT_NODE_SERVER: &str = "ws://127.0.0.1";
 static DEFAULT_NODE_PORT: &str = "9944";
@@ -29,6 +29,7 @@ static DEFAULT_METRICS_PORT: &str = "8787";
 static DEFAULT_UNTRUSTED_HTTP_PORT: &str = "4545";
 // running mode for litentry: dev / staging / prod / local
 static DEFAULT_RUNNING_MODE: &str = "dev";
+static DEFAULT_MOCK_SERVER_PORT: &str = "9527";
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Config {
@@ -62,6 +63,7 @@ pub struct Config {
 
 	/// Litentry
 	pub mock_server: bool,
+	pub mock_server_port: u16,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -82,6 +84,7 @@ impl Config {
 		run_config: Option<RunConfig>,
 		running_mode: String,
 		mock_server: bool,
+		mock_server_port: u16,
 	) -> Self {
 		Self {
 			node_ip,
@@ -99,6 +102,7 @@ impl Config {
 			run_config,
 			running_mode,
 			mock_server,
+			mock_server_port,
 		}
 	}
 
@@ -163,6 +167,7 @@ impl From<&ArgMatches<'_>> for Config {
 			m.value_of("untrusted-http-port").unwrap_or(DEFAULT_UNTRUSTED_HTTP_PORT);
 		let run_config = m.subcommand_matches("run").map(RunConfig::from);
 		let is_mock_server_enabled = m.is_present("mock-server");
+		let mock_server_port = m.value_of("mock-server-port").unwrap_or(DEFAULT_MOCK_SERVER_PORT);
 		Self::new(
 			m.value_of("node-server").unwrap_or(DEFAULT_NODE_SERVER).into(),
 			m.value_of("node-port").unwrap_or(DEFAULT_NODE_PORT).into(),
@@ -182,6 +187,7 @@ impl From<&ArgMatches<'_>> for Config {
 			run_config,
 			m.value_of("running-mode").unwrap_or(DEFAULT_RUNNING_MODE).to_string(),
 			is_mock_server_enabled,
+			u16::from_str(mock_server_port).unwrap(),
 		)
 	}
 }

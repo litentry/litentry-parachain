@@ -191,7 +191,7 @@ fn main() {
 				println!("Test getting challenge_code from enclave");
 				enclave.get_challenge_code(identity).unwrap_or_default()
 			});
-			let _ = lc_mock_server::run(getter, 9527);
+			let _ = lc_mock_server::run(getter, config.mock_server_port);
 		});
 	}
 

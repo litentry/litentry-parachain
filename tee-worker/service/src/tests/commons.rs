@@ -52,5 +52,6 @@ pub fn local_worker_config(
 		None,
 		Default::default(),
 		false,
+		9527,
 	)
 }

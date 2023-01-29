@@ -74,7 +74,7 @@ where
 					.or(graphql::query()),
 			)
 			.bind_with_graceful_shutdown(([127, 0, 0, 1], port), shutdown_signal());
-			log::info!("listen on addr:{:?}", addr);
+			log::info!("mock-server listen on addr:{:?}", addr);
 			let _ = result_in.send(format!("http://{:?}", addr));
 			let join = tokio::task::spawn_local(srv);
 			let _ = join.await;
