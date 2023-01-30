@@ -71,6 +71,7 @@ use std::{sync::Arc, vec, vec::Vec};
 pub enum ExecutionStatus<R> {
 	Success(R),
 	NextExecutor,
+	Skip,
 }
 
 /// Trait to execute the indirect calls found in the extrinsics of a block.
@@ -253,6 +254,7 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 						break
 					},
 					Ok(ExecutionStatus::NextExecutor) => continue,
+					Ok(ExecutionStatus::Skip) => break,
 					Err(e) => {
 						log::error!("fail to execute indirect_call. due to {:?} ", e);
 						// We should keep the same error handling as the original function `handle_shield_funds_xt`.

@@ -26,7 +26,7 @@ use itp_node_api::{
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::H256;
+use itp_types::{extrinsics::ParentchainUncheckedExtrinsicWithStatus, H256};
 
 pub mod call_worker;
 pub mod litentry;
@@ -67,8 +67,8 @@ pub(crate) trait Executor<
 	fn decode(
 		&self,
 		input: &mut &[u8],
-	) -> Result<ParentchainUncheckedExtrinsic<Self::Call>, CodecError> {
-		ParentchainUncheckedExtrinsic::<Self::Call>::decode(input)
+	) -> Result<ParentchainUncheckedExtrinsicWithStatus<Self::Call>, CodecError> {
+		ParentchainUncheckedExtrinsicWithStatus::<Self::Call>::decode(input)
 	}
 
 	/// extrinisc in this function should execute successfully on parentchain
@@ -126,10 +126,15 @@ where
 		>,
 		input: &mut &[u8],
 	) -> Result<ExecutionStatus<H256>, Error> {
-		if let Ok(xt) = self.decode(input) {
+		if let Ok(ParentchainUncheckedExtrinsicWithStatus { xt, status }) = self.decode(input) {
 			if self.is_target_call(xt.function.clone(), context.node_meta_data_provider.as_ref()) {
-				self.execute(context, xt.clone())
-					.map(|_| ExecutionStatus::Success(hash_of(&xt)))
+				if status {
+					self.execute(context, xt.clone())
+						.map(|_| ExecutionStatus::Success(hash_of(&xt)))
+				} else {
+					log::warn!("extrinsic fail to execute on parentchain. ");
+					Ok(ExecutionStatus::Skip)
+				}
 			} else {
 				Ok(ExecutionStatus::NextExecutor)
 			}
