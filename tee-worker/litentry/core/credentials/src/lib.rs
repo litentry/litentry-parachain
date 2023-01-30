@@ -39,7 +39,7 @@ use codec::{Decode, Encode};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{Assertion, ParentchainBlockNumber};
+use litentry_primitives::{Assertion, AssertionLogic, Op, ParentchainBlockNumber};
 use log::*;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
@@ -126,7 +126,7 @@ pub struct CredentialSubject {
 	pub data_source: Option<Vec<DataSource>>,
 	/// Several sets of assertions.
 	/// Each assertion contains multiple steps to describe how to fetch data and calculate the value
-	pub assertions: String,
+	pub assertions: AssertionLogic,
 	/// Results of each set of assertions
 	pub values: Vec<bool>,
 	/// The extrinsic on Parentchain for credential verification purpose
@@ -338,10 +338,15 @@ impl Credential {
 	}
 
 	pub fn add_assertion_a1(&mut self, web2_cnt: i32, web3_cnt: i32) {
-		self.credential_subject.assertions = format!(
-			r#"{{"or": [{{"src": "$web2_account_cnt", "op": ">", "dsc": "{}",}},{{"src": "$web3_account_cnt", "op": ">", "dsc": "{}"}}]}}"#,
-			web2_cnt, web3_cnt
-		);
+		let web2_cnt = format!("{}", web2_cnt);
+		let web3_cnt = format!("{}", web3_cnt);
+
+		let web2_item = AssertionLogic::new_item("$web2_account_cnt", Op::GreaterEq, &web2_cnt);
+		let web3_item = AssertionLogic::new_item("$web3_account_cnt", Op::GreaterThan, &web3_cnt);
+
+		let assertion = AssertionLogic::new_or().add_item(web2_item).add_item(web3_item);
+
+		self.credential_subject.assertions = assertion;
 	}
 }
 
