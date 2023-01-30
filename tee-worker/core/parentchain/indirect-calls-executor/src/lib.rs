@@ -297,8 +297,8 @@ mod test {
 	use itp_test::mock::shielding_crypto_mock::ShieldingCryptoMock;
 	use itp_top_pool_author::mocks::AuthorApiMock;
 	use itp_types::{
-		extrinsics::{OpaqueExtrinsicWithStatus, ParentchainUncheckedExtrinsicWithStatus},
-		Block, CallWorkerFn, Request, ShardIdentifier, ShieldFundsFn,
+		extrinsics::fill_opaque_extrinsic_with_status, Block, CallWorkerFn, Request,
+		ShardIdentifier, ShieldFundsFn,
 	};
 	use sp_core::{ed25519, Pair};
 	use sp_runtime::{MultiSignature, OpaqueExtrinsic};
@@ -319,16 +319,6 @@ mod test {
 	type Seed = [u8; 32];
 	const TEST_SEED: Seed = *b"12345678901234567890123456789012";
 
-	fn fill_status_in_opaque_extrinsic(
-		opaque_extrinsic: OpaqueExtrinsic,
-		status: bool,
-	) -> OpaqueExtrinsic {
-		let opaque_extrinsic_with_status =
-			OpaqueExtrinsicWithStatus { xt: opaque_extrinsic, status };
-		return OpaqueExtrinsic::from_bytes(opaque_extrinsic_with_status.encode().as_slice())
-			.unwrap()
-	}
-
 	#[test]
 	fn indirect_call_can_be_added_to_pool_successfully() {
 		let _ = env_logger::builder().is_test(true).try_init();
@@ -341,7 +331,9 @@ mod test {
 				.unwrap();
 
 		let parentchain_block = ParentchainBlockBuilder::default()
-			.with_extrinsics(vec![fill_status_in_opaque_extrinsic(opaque_extrinsic, true)])
+			.with_extrinsics(vec![
+				fill_opaque_extrinsic_with_status(opaque_extrinsic, true).unwrap()
+			])
 			.build();
 
 		indirect_calls_executor
@@ -363,7 +355,9 @@ mod test {
 				.unwrap();
 
 		let parentchain_block = ParentchainBlockBuilder::default()
-			.with_extrinsics(vec![fill_status_in_opaque_extrinsic(opaque_extrinsic, false)])
+			.with_extrinsics(vec![
+				fill_opaque_extrinsic_with_status(opaque_extrinsic, false).unwrap()
+			])
 			.build();
 
 		indirect_calls_executor
@@ -388,7 +382,9 @@ mod test {
 		.unwrap();
 
 		let parentchain_block = ParentchainBlockBuilder::default()
-			.with_extrinsics(vec![fill_status_in_opaque_extrinsic(opaque_extrinsic, true)])
+			.with_extrinsics(vec![
+				fill_opaque_extrinsic_with_status(opaque_extrinsic, true).unwrap()
+			])
 			.build();
 
 		indirect_calls_executor

@@ -17,14 +17,13 @@
 */
 
 use crate::error::{Error, ServiceResult};
-use codec::Encode;
 use itc_parentchain::{
 	light_client::light_client_init_params::{GrandpaParams, SimpleParams},
 	primitives::ParentchainInitParams,
 };
 use itp_enclave_api::{enclave_base::EnclaveBase, sidechain::Sidechain};
 use itp_node_api::api_client::ChainApi;
-use itp_types::{extrinsics::OpaqueExtrinsicWithStatus, SignedBlock};
+use itp_types::{extrinsics::fill_opaque_extrinsic_with_status, SignedBlock};
 use log::*;
 use my_node_runtime::Header;
 use sp_finality_grandpa::VersionedAuthorityList;
@@ -184,12 +183,8 @@ where
 						// this change will affect many structs or files, like block_importer, block_import_dispatcher, consensus and so on.
 						// `OpaqueExtrinsic` (Vec<u8>) encoded value contains tx status, and decode Vec<u8> in `indirect_calls_executor`,
 						// this solution is probably the least change
-						let op_with_status =
-							OpaqueExtrinsicWithStatus { xt: xt.clone(), status: success };
-						let new_op_xt =
-							OpaqueExtrinsic::from_bytes(op_with_status.encode().as_slice())
-								.unwrap();
-						extrinsics.push(new_op_xt);
+						extrinsics
+							.push(fill_opaque_extrinsic_with_status(xt.clone(), success).unwrap());
 					}
 					signed_block.block.extrinsics = extrinsics;
 				});

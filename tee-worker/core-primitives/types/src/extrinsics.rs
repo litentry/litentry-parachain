@@ -81,6 +81,14 @@ where
 	}
 }
 
+pub fn fill_opaque_extrinsic_with_status(
+	opaque_extrinsic: OpaqueExtrinsic,
+	status: bool,
+) -> Result<OpaqueExtrinsic, codec::Error> {
+	let opaque_extrinsic_with_status = OpaqueExtrinsicWithStatus { xt: opaque_extrinsic, status };
+	OpaqueExtrinsic::from_bytes(opaque_extrinsic_with_status.encode().as_slice())
+}
+
 // #[cfg(test)]
 // mod tests {
 // 	use crate::extrinsics::OpaqueExtrinsicWithStatus;
