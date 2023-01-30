@@ -31,7 +31,7 @@ use itp_stf_state_observer::traits::ObserveState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{Index, ShardIdentifier};
 use sp_core::{ed25519::Pair as Ed25519Pair, Pair};
-use std::{boxed::Box, sync::Arc};
+use std::{boxed::Box, sync::Arc, vec::Vec};
 
 pub struct StfEnclaveSigner<OCallApi, StateObserver, ShieldingKeyRepository, Stf, TopPoolAuthor> {
 	state_observer: Arc<StateObserver>,
@@ -124,5 +124,11 @@ where
 			&mr_enclave.m,
 			shard,
 		))
+	}
+
+	fn sign_vc_with_self(&self, payload: &[u8]) -> Result<(AccountId, Vec<u8>)> {
+		let enclave_account = self.get_enclave_account()?;
+		let enclave_call_signing_key = self.get_enclave_call_signing_key()?;
+		Ok((enclave_account, enclave_call_signing_key.sign(payload).0.to_vec()))
 	}
 }
