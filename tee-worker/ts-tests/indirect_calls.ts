@@ -12,7 +12,10 @@ import {
 } from './utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { HexString } from '@polkadot/util/types';
+import { generateChallengeCode } from './web3/setup';
 import { ApiPromise } from '@polkadot/api';
+import { Assertion } from './type-definitions';
+
 
 export async function setUserShieldingKey(
     context: IntegrationTestContext,
@@ -139,7 +142,31 @@ export async function verifyIdentity(
     }
     return undefined;
 }
+export async function requestVC(
+    context: IntegrationTestContext,
+    signer: KeyringPair,
+    aesKey: HexString,
+    listening: boolean,
+    shard: HexString,
+    assertion: Assertion
+): Promise<HexString | undefined> {
+    const tx = context.substrate.tx.vcManagement.requestVc(shard, assertion);
+     //The purpose of paymentInfo is to check whether the version of polkadot/api is suitable for the current test and to determine whether the transaction is successful.
+    await tx.paymentInfo(signer);
+    
+    await sendTxUntilInBlock(context.substrate, tx, signer);
+    if (listening) {
+        const event = await listenEncryptedEvents(context, aesKey, {
+            module: 'vcManagement',
+            method: 'vcIssued',
+            event: 'VCIssued',
+        });
 
+        const [who, hash, vc] = event.eventData;
+        return vc;
+    }
+    return undefined;
+}
 function decodeIdentityEvent(
     api: ApiPromise,
     who: HexString,
