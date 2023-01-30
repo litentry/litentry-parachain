@@ -99,8 +99,11 @@ impl VerifiedCredentialsIsHodlerIn {
 	pub fn to_graphql(&self) -> String {
 		let addresses_str = format!("{:?}", self.addresses);
 		let network = format!("{:?}", self.network).to_lowercase();
-		let q = format!("VerifiedCredentialsIsHodler(addresses:{}, fromDate:\"{}\", network:{}, tokenAddress:\"{}\",minimumBalance:{:?}){{isHodler,address}}", addresses_str, self.from_date, network, self.token_address, self.min_balance);
-		format!("{{{}}}", q)
+		if self.token_address.is_empty() {
+			format!("{{VerifiedCredentialsIsHodler(addresses:{}, fromDate:\"{}\", network:{}, minimumBalance:{:?}){{isHodler,address}}}}", addresses_str, self.from_date, network, self.min_balance)
+		} else {
+			format!("{{VerifiedCredentialsIsHodler(addresses:{}, fromDate:\"{}\", network:{}, tokenAddress:\"{}\",minimumBalance:{:?}){{isHodler,address}}}}", addresses_str, self.from_date, network, self.token_address, self.min_balance)
+		}
 	}
 }
 
