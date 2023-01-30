@@ -13,73 +13,62 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
+#![allow(opaque_hidden_inferred_bound)]
 
-use httpmock::{Method::GET, MockServer};
 use lc_data_providers::discord_litentry::DiscordResponse;
+use std::collections::HashMap;
+use warp::{http::Response, Filter};
 
-use crate::Mock;
+pub(crate) fn check_join(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::get()
+		.and(warp::path!("discord" / "joined"))
+		.and(warp::query::<HashMap<String, String>>())
+		.map(move |p: HashMap<String, String>| {
+			let default = String::default();
+			let guild_id = p.get("guildid").unwrap_or(&default);
+			let handler = p.get("handler").unwrap_or(&default);
+			let expected_guild_id = "919848390156767232";
+			let expected_handler = "againstwar#4779";
 
-pub trait DiscordLitentryAPI {
-	fn check_join(mock_server: &MockServer);
-	fn check_id_hubber(mock_server: &MockServer);
+			if expected_guild_id == guild_id.as_str() && expected_handler == handler.as_str() {
+				let body = DiscordResponse {
+					data: true,
+					message: "success".into(),
+					has_errors: false,
+					msg_code: 200,
+					success: true,
+				};
+				Response::builder().body(serde_json::to_string(&body).unwrap())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
 }
 
-pub struct DiscordLitentry {}
-impl DiscordLitentry {
-	pub fn new() -> Self {
-		DiscordLitentry {}
-	}
-}
+pub(crate) fn check_id_hubber(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::get()
+		.and(warp::path!("discord" / "commented" / "idhubber"))
+		.and(warp::query::<HashMap<String, String>>())
+		.map(move |p: HashMap<String, String>| {
+			let default = String::default();
+			let guild_id = p.get("guildid").unwrap_or(&default);
+			let handler = p.get("handler").unwrap_or(&default);
+			let expected_guild_id = "919848390156767232";
+			let expected_handler = "ericzhang.eth#0114";
 
-impl Default for DiscordLitentry {
-	fn default() -> Self {
-		Self::new()
-	}
-}
-
-impl DiscordLitentryAPI for DiscordLitentry {
-	fn check_join(mock_server: &MockServer) {
-		let body = DiscordResponse {
-			data: true,
-			message: "success".into(),
-			has_errors: false,
-			msg_code: 200,
-			success: true,
-		};
-
-		let path = "/discord/joined";
-		mock_server.mock(|when, then| {
-			when.method(GET)
-				.path(path)
-				.query_param("guildid", "919848390156767232")
-				.query_param("handler", "againstwar#4779");
-			then.status(200).body(serde_json::to_string(&body).unwrap());
-		});
-	}
-
-	fn check_id_hubber(mock_server: &MockServer) {
-		let body = DiscordResponse {
-			data: true,
-			message: "success".into(),
-			has_errors: false,
-			msg_code: 200,
-			success: true,
-		};
-
-		mock_server.mock(|when, then| {
-			when.method(GET)
-				.path("/discord/commented/idhubber")
-				.query_param("guildid", "919848390156767232")
-				.query_param("handler", "ericzhang.eth#0114");
-
-			then.status(200).body(serde_json::to_string(&body).unwrap());
-		});
-	}
-}
-
-impl Mock for DiscordLitentry {
-	fn mock(&self, mock_server: &httpmock::MockServer) {
-		DiscordLitentry::check_join(mock_server);
-		DiscordLitentry::check_id_hubber(mock_server);
-	}
+			if expected_guild_id == guild_id.as_str() && expected_handler == handler.as_str() {
+				let body = DiscordResponse {
+					data: true,
+					message: "success".into(),
+					has_errors: false,
+					msg_code: 200,
+					success: true,
+				};
+				Response::builder().body(serde_json::to_string(&body).unwrap())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
 }
