@@ -16,6 +16,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate core;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
@@ -83,31 +84,15 @@ impl Default for DataProvidersStatic {
 }
 impl DataProvidersStatic {
 	pub fn new() -> Self {
-		#[cfg(all(not(test), not(feature = "mockserver")))]
-		{
-			DataProvidersStatic {
-				twitter_official_url: "".to_string(),
-				twitter_litentry_url: "".to_string(),
-				twitter_auth_token: "".to_string(),
-				discord_official_url: "".to_string(),
-				discord_litentry_url: "".to_string(),
-				discord_auth_token: "".to_string(),
-				graphql_url: "".to_string(),
-				graphql_auth_key: "".to_string(),
-			}
-		}
-		#[cfg(any(test, feature = "mockserver"))]
-		{
-			DataProvidersStatic {
-				twitter_official_url: "http://localhost:9527".to_string(),
-				twitter_litentry_url: "http://localhost:9527".to_string(),
-				twitter_auth_token: "Bearer ".to_string(),
-				discord_official_url: "http://localhost:9527".to_string(),
-				discord_litentry_url: "http://localhost:9527".to_string(),
-				discord_auth_token: "".to_string(),
-				graphql_url: "https://graph.tdf-labs.io/".to_string(),
-				graphql_auth_key: "ac2115ec-e327-4862-84c5-f25b6b7d4533".to_string(),
-			}
+		DataProvidersStatic {
+			twitter_official_url: "http://localhost:9527".to_string(),
+			twitter_litentry_url: "http://localhost:9527".to_string(),
+			twitter_auth_token: "Bearer ".to_string(),
+			discord_official_url: "http://localhost:9527".to_string(),
+			discord_litentry_url: "http://localhost:9527".to_string(),
+			discord_auth_token: "".to_string(),
+			graphql_url: "https://graph.tdf-labs.io/".to_string(),
+			graphql_auth_key: "ac2115ec-e327-4862-84c5-f25b6b7d4533".to_string(),
 		}
 	}
 	pub fn set_twitter_official_url(&mut self, v: String) {

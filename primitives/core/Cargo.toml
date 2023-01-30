@@ -18,6 +18,8 @@ xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.3
 default = ["std"]
 std = [
   "codec/std",
+  "scale-info/std",
+  "frame-support/std",
   "sp-core/std",
   "sp-runtime/std",
   "sp-std/std",
