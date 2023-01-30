@@ -132,7 +132,10 @@ where
 					self.execute(context, xt.clone())
 						.map(|_| ExecutionStatus::Success(hash_of(&xt)))
 				} else {
-					log::warn!("extrinsic fail to execute on parentchain. ");
+					log::warn!(
+						"extrinsic(call index: {:?}) fail to execute on parentchain.",
+						self.call_index(xt.function)
+					);
 					Ok(ExecutionStatus::Skip)
 				}
 			} else {

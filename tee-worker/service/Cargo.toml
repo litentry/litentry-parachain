@@ -87,6 +87,9 @@ dcap = []
 # crates.io
 anyhow = "1.0.40"
 mockall = "0.11"
+scale-info = { version = "2.1.1" }
+
+frame-metadata = { version = "15.0.0", default-features = false, git = "https://github.com/integritee-network/frame-metadata", features = ["v14", "full_derive"] }
 # local
 itc-parentchain-test = { path = "../core/parentchain/test" }
 its-peer-fetch = { path = "../sidechain/peer-fetch", features = ["mocks"] }
