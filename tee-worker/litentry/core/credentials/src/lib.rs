@@ -67,6 +67,7 @@ pub mod error;
 pub use error::Error;
 pub mod schema;
 
+pub const LITENTRY_ISSUER_NAME: &str = "Litentry TEE Worker";
 pub const PROOF_PURPOSE: &str = "assertionMethod";
 pub const MAX_CREDENTIAL_SIZE: usize = 2048;
 
@@ -172,13 +173,13 @@ pub struct Proof {
 }
 
 impl Proof {
-	pub fn new(type_: ProofType, bn: ParentchainBlockNumber) -> Self {
-		Self {
+	pub fn new(bn: ParentchainBlockNumber, sig: &Vec<u8>, issuer: &AccountId) -> Self {
+		Proof {
 			created_block_number: bn,
-			proof_type: type_,
+			proof_type: ProofType::Ed25519Signature2020,
 			proof_purpose: PROOF_PURPOSE.to_string(),
-			proof_value: "".to_string(),
-			verification_method: "".to_string(),
+			proof_value: format!("{}", HexDisplay::from(sig)),
+			verification_method: account_id_to_string(issuer),
 		}
 	}
 
@@ -207,7 +208,8 @@ pub struct Credential {
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub expiration_block_number: Option<ParentchainBlockNumber>,
 	/// Digital proof with the signature of Issuer
-	pub proof: Proof,
+	#[serde(skip_deserializing)]
+	pub proof: Option<Proof>,
 	#[serde(skip_deserializing)]
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub credential_schema: Option<CredentialSchema>,
@@ -223,14 +225,12 @@ impl Credential {
 		let mut vc: Self =
 			serde_json::from_str(s).map_err(|err| Error::ParseError(format!("{}", err)))?;
 		vc.issuer.shard = shard.encode().to_base58();
+		vc.issuer.name = LITENTRY_ISSUER_NAME.to_string();
 		vc.credential_subject.id = account_id_to_string(who);
 		vc.issuance_block_number = bn;
-		vc.proof.created_block_number = bn;
 		vc.expiration_block_number = None;
 		vc.credential_schema = None;
-
 		vc.generate_id();
-
 		vc.validate_unsigned()?;
 		Ok(vc)
 	}
@@ -241,6 +241,10 @@ impl Credential {
 		ext_hash.append(&mut seed.to_vec());
 		let vc_id = blake2_256(ext_hash.as_slice());
 		self.id = format!("{}", HexDisplay::from(&vc_id.to_vec()));
+	}
+
+	pub fn add_proof(&mut self, sig: &Vec<u8>, bn: ParentchainBlockNumber, issuer: &AccountId) {
+		self.proof = Some(Proof::new(bn, sig, issuer));
 	}
 
 	pub fn to_json(&self) -> Result<String, Error> {
@@ -277,39 +281,33 @@ impl Credential {
 	}
 
 	pub fn validate(&self) -> Result<(), Error> {
-		self.validate_unsigned()?;
+		let vc = self.clone();
 
-		if self.id.is_empty() {
-			return Err(Error::RuntimeError("Credential ID is invalid".to_string()))
-		}
+		vc.validate_unsigned()?;
 
-		if self.credential_subject.is_empty() {
+		if vc.credential_subject.is_empty() {
 			return Err(Error::EmptyCredentialSubject)
 		}
 
 		// ToDo: validate issuer
-		if self.issuer.is_empty() {
+		if vc.issuer.is_empty() {
 			return Err(Error::EmptyCredentialIssuer)
 		}
 
-		if self.proof.is_empty() {
-			return Err(Error::InvalidProof)
-		}
-
-		if self.proof.created_block_number == 0 {
-			return Err(Error::EmptyProofBlockNumber)
-		}
-
-		// the proof bn that is must be equal or after issuance bn
-		if self.proof.created_block_number < self.issuance_block_number {
-			return Err(Error::InvalidProof)
-		}
-
-		//ToDo: validate proof signature
-
-		let exported = self.to_json()?;
+		let exported = vc.to_json()?;
 		if exported.len() > MAX_CREDENTIAL_SIZE {
 			return Err(Error::CredentialIsTooLong)
+		}
+
+		if vc.proof.is_none() {
+			return Err(Error::InvalidProof)
+		} else {
+			let proof = vc.proof.unwrap();
+			if proof.created_block_number == 0 {
+				return Err(Error::EmptyProofBlockNumber)
+			}
+
+			//ToDo: validate proof signature
 		}
 
 		Ok(())
@@ -364,6 +362,5 @@ mod tests {
 		assert!(vc.validate_unsigned().is_ok());
 		let id: String = vc.credential_subject.id.clone();
 		assert_eq!(id, account_id_to_string(&who));
-		assert_eq!(vc.proof.proof_purpose, "assertionMethod");
 	}
 }
