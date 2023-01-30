@@ -93,7 +93,6 @@ export async function initIntegrationTestContext(
         dave: new ethers.Wallet(generateTestKeys().dave),
         eve: new ethers.Wallet(generateTestKeys().eve),
     };
-
     const api = await ApiPromise.create({
         provider,
         types: teeTypes,
@@ -177,10 +176,12 @@ export async function listenEncryptedEvents(
                     })
                     .forEach(({ event }) => {
                         const data = event.data as AESOutput[];
+
                         const eventData: HexString[] = [];
                         for (let i = 0; i < data.length; i++) {
                             eventData.push(decryptWithAES(aesKey, data[i]));
                         }
+
                         resolve({ eventData });
                         unsubscribe();
                         return;
@@ -238,22 +239,31 @@ export async function listenCreatedIdentityEvents(context: IntegrationTestContex
     });
 }
 export function decryptWithAES(key: HexString, aesOutput: AESOutput): HexString {
-    const secretKey = crypto.createSecretKey(hexToU8a(key));
-    const tagSize = 16;
-    const ciphertext = aesOutput.ciphertext ? aesOutput.ciphertext : hexToU8a('0x');
-    const initialization_vector = aesOutput.nonce ? aesOutput.nonce : hexToU8a('0x');
-    const aad = aesOutput.aad ? aesOutput.aad : hexToU8a('0x');
 
-    // notice!!! extract author_tag from ciphertext
-    // maybe this code only works with rust aes encryption
-    const authorTag = ciphertext.subarray(ciphertext.length - tagSize);
-    const decipher = crypto.createDecipheriv('aes-256-gcm', secretKey, initialization_vector);
-    decipher.setAAD(aad);
-    decipher.setAuthTag(authorTag);
+    if (aesOutput.ciphertext && aesOutput.nonce) {
+        const secretKey = crypto.createSecretKey(hexToU8a(key));
+        const tagSize = 16;
+        const ciphertext = aesOutput.ciphertext ? aesOutput.ciphertext : hexToU8a('0x');
+        const initialization_vector = aesOutput.nonce ? aesOutput.nonce : hexToU8a('0x');
+        const aad = aesOutput.aad ? aesOutput.aad : hexToU8a('0x');
 
-    let part1 = decipher.update(ciphertext.subarray(0, ciphertext.length - tagSize), undefined, 'hex');
-    let part2 = decipher.final('hex');
-    return `0x${part1 + part2}`;
+        // notice!!! extract author_tag from ciphertext
+        // maybe this code only works with rust aes encryption
+
+        const authorTag = ciphertext.subarray(ciphertext.length - tagSize);
+
+        const decipher = crypto.createDecipheriv('aes-256-gcm', secretKey, initialization_vector);
+        decipher.setAAD(aad);
+        decipher.setAuthTag(authorTag);
+
+        let part1 = decipher.update(ciphertext.subarray(0, ciphertext.length - tagSize), undefined, 'hex');
+
+        let part2 = decipher.final('hex');
+
+        return `0x${part1 + part2}`;
+    } else {
+        return u8aToHex();
+    }
 }
 
 export async function createTrustedCallSigned(
@@ -347,3 +357,4 @@ export function getMessage(address: string, wallet: string): string {
     const messgae = `Signing in ${process.env.ID_HUB_URL} with ${address} using ${wallet} and challenge code is: ${challengeCode}`;
     return messgae;
 }
+

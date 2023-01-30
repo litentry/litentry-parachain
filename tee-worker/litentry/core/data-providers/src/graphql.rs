@@ -18,7 +18,6 @@
 use crate::sgx_reexport_prelude::*;
 
 use crate::{build_client, Error, HttpError, G_DATA_PROVIDERS};
-use core::ops::Not;
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -97,26 +96,14 @@ impl VerifiedCredentialsIsHodlerIn {
 		VerifiedCredentialsIsHodlerIn { addresses, from_date, network, token_address, min_balance }
 	}
 
-	pub fn conv_to_string(&self) -> String {
-		let mut flat = "addresses:[".to_string();
-		for addr in self.addresses.iter() {
-			flat += &format!("\"{}\",", addr);
+	pub fn to_graphql(&self) -> String {
+		let addresses_str = format!("{:?}", self.addresses);
+		let network = format!("{:?}", self.network).to_lowercase();
+		if self.token_address.is_empty() {
+			format!("{{VerifiedCredentialsIsHodler(addresses:{}, fromDate:\"{}\", network:{}, minimumBalance:{:?}){{isHodler,address}}}}", addresses_str, self.from_date, network, self.min_balance)
+		} else {
+			format!("{{VerifiedCredentialsIsHodler(addresses:{}, fromDate:\"{}\", network:{}, tokenAddress:\"{}\",minimumBalance:{:?}){{isHodler,address}}}}", addresses_str, self.from_date, network, self.token_address, self.min_balance)
 		}
-		flat += "],";
-		flat += &format!("fromDate:\"{}\",", self.from_date.clone());
-		match &self.network {
-			VerifiedCredentialsNetwork::Litentry => flat += "network:litentry",
-			VerifiedCredentialsNetwork::Litmus => flat += "network:litmus",
-			VerifiedCredentialsNetwork::Polkadot => flat += "network:polkadot",
-			VerifiedCredentialsNetwork::Kusama => flat += "network:kusama",
-			VerifiedCredentialsNetwork::Khala => flat += "network:khala",
-			VerifiedCredentialsNetwork::Ethereum => flat += "network:ethereum",
-		}
-		if self.token_address.is_empty().not() {
-			flat += &format!(",tokenAddress:\"{}\"", &self.token_address.clone());
-		}
-		flat += &format!(",minimumBalance:{:?}", self.min_balance.clone());
-		flat
 	}
 }
 
@@ -199,13 +186,13 @@ impl GraphQLClient {
 		credentials: VerifiedCredentialsIsHodlerIn,
 	) -> Result<IsHodlerOut, Error> {
 		// FIXME: for the moment, the `path` is partially hard-code here.
-		let path = "latest/graphql?query=query{VerifiedCredentialsIsHodler(".to_string()
-			+ &credentials.conv_to_string()
-			+ "){isHodler, address}}";
+		let path = "latest/graphql".to_string();
+		let query_value = credentials.to_graphql();
+		let query = vec![("query", query_value.as_str())];
 
 		let response = self
 			.client
-			.get_with::<String, QLResponse>(path, vec![].as_slice())
+			.get_with::<String, QLResponse>(path, query.as_slice())
 			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
 
 		if let Some(value) = response.data.get("data") {
@@ -250,7 +237,6 @@ impl GraphQLClient {
 			None::<u8>
 		});
 		if !result.is_empty() {
-			// Ok(result.iter().map(|(_, v)| v.clone()).collect::<Vec<TotalTxsStruct>>())
 			Ok(result.values().cloned().collect::<Vec<TotalTxsStruct>>())
 		} else {
 			Err(Error::GraphQLError("Invalid GraphQL response".to_string()))
@@ -262,17 +248,27 @@ impl GraphQLClient {
 mod tests {
 	use crate::graphql::{
 		GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
-		VerifiedCredentialsTotalTxs,
+		VerifiedCredentialsTotalTxs, G_DATA_PROVIDERS,
 	};
+	use lc_mock_server::run;
+	use litentry_primitives::ChallengeCode;
+	use std::sync::Arc;
 
 	const ACCOUNT_ADDRESS1: &str = "0x61f2270153bb68dc0ddb3bc4e4c1bd7522e918ad";
 	const ACCOUNT_ADDRESS2: &str = "0x3394caf8e5ccaffb936e6407599543af46525e0b";
 	const LIT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
 
+	fn init() {
+		let _ = env_logger::builder().is_test(true).try_init();
+		let url = run(Arc::new(|| ChallengeCode::default()), 0).unwrap();
+		G_DATA_PROVIDERS.write().unwrap().set_graphql_url(url.clone());
+	}
+
 	#[test]
 	fn verified_credentials_is_hodler_work() {
-		let mut client = GraphQLClient::new();
+		init();
 
+		let mut client = GraphQLClient::new();
 		let credentials = VerifiedCredentialsIsHodlerIn {
 			addresses: vec![ACCOUNT_ADDRESS1.to_string(), ACCOUNT_ADDRESS2.to_string()],
 			from_date: "2022-10-16T00:00:00Z".to_string(),
@@ -281,7 +277,7 @@ mod tests {
 			min_balance: 0.00000056,
 		};
 		let response = client.check_verified_credentials_is_hodler(credentials);
-		assert!(response.is_ok());
+		assert!(response.is_ok(), "due to error:{:?}", response.unwrap_err());
 		let is_hodler_out = response.unwrap();
 		assert_eq!(is_hodler_out.verified_credentials_is_hodler[0].is_hodler, false);
 		assert_eq!(is_hodler_out.verified_credentials_is_hodler[1].is_hodler, false);
@@ -289,6 +285,8 @@ mod tests {
 
 	#[test]
 	fn verified_credentials_total_transactions_work() {
+		init();
+
 		let query = VerifiedCredentialsTotalTxs {
 			addresses: vec!["EGP7XztdTosm1EmaATZVMjSWujGEj9nNidhjqA2zZtttkFg".to_string()],
 			networks: vec![

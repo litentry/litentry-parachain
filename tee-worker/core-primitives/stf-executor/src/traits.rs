@@ -22,7 +22,7 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_primitives::types::{AccountId, ShardIdentifier};
 use itp_types::H256;
 use sp_runtime::traits::Header as HeaderTrait;
-use std::time::Duration;
+use std::{time::Duration, vec::Vec};
 
 /// Post-processing steps after executing STF
 pub enum StatePostProcessing {
@@ -30,7 +30,7 @@ pub enum StatePostProcessing {
 	Prune,
 }
 
-/// Allows signing of a trusted call with the enclave account that is registered in the STF.
+/// Allows signing of a trusted call or a credential with the enclave account that is registered in the STF.
 ///
 /// The signing key is derived from the shielding key, which guarantees that all enclaves sign the same key.
 pub trait StfEnclaveSigning {
@@ -41,6 +41,8 @@ pub trait StfEnclaveSigning {
 		trusted_call: &TrustedCall,
 		shard: &ShardIdentifier,
 	) -> Result<TrustedCallSigned>;
+
+	fn sign_vc_with_self(&self, payload: &[u8]) -> Result<(AccountId, Vec<u8>)>;
 }
 
 /// Proposes a state update to `Externalities`.
