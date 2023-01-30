@@ -352,6 +352,28 @@ mod test {
 	}
 
 	#[test]
+	fn indirect_call_can_not_be_added_to_pool() {
+		let _ = env_logger::builder().is_test(true).try_init();
+
+		let (indirect_calls_executor, top_pool_author, _) =
+			test_fixtures([0u8; 32], NodeMetadataMock::new());
+
+		let opaque_extrinsic =
+			OpaqueExtrinsic::from_bytes(call_worker_unchecked_extrinsic().encode().as_slice())
+				.unwrap();
+
+		let parentchain_block = ParentchainBlockBuilder::default()
+			.with_extrinsics(vec![fill_status_in_opaque_extrinsic(opaque_extrinsic, false)])
+			.build();
+
+		indirect_calls_executor
+			.execute_indirect_calls_in_extrinsics(&parentchain_block)
+			.unwrap();
+
+		assert_eq!(0, top_pool_author.pending_tops(shard_id()).unwrap().len());
+	}
+
+	#[test]
 	fn shielding_call_can_be_added_to_pool_successfully() {
 		let _ = env_logger::builder().is_test(true).try_init();
 
