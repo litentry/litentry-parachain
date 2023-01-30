@@ -13,55 +13,32 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
+#![allow(opaque_hidden_inferred_bound)]
 
-use httpmock::{Method::GET, MockServer};
 use lc_data_providers::discord_official::{DiscordMessage, DiscordMessageAuthor};
+use warp::{http::Response, Filter};
 
-use crate::Mock;
+pub(crate) fn query_message(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::get()
+		.and(warp::path!("api" / "channels" / String / "messages" / String))
+		.map(|channel_id, message_id| {
+			let expected_channel_id = "919848392035794945".to_string();
+			let expected_message_id = "1".to_string();
 
-pub trait DiscordOfficialAPI {
-	fn query_message(mock_server: &MockServer);
-}
-
-pub struct DiscordOfficial {}
-impl DiscordOfficial {
-	pub fn new() -> Self {
-		DiscordOfficial {}
-	}
-}
-
-impl Default for DiscordOfficial {
-	fn default() -> Self {
-		Self::new()
-	}
-}
-
-impl DiscordOfficialAPI for DiscordOfficial {
-	fn query_message(mock_server: &MockServer) {
-		let channel_id = "919848392035794945";
-		let message_id = "1";
-
-		let user_id = "001";
-		let username = "elon";
-		let author = DiscordMessageAuthor { id: user_id.into(), username: username.into() };
-
-		let body = DiscordMessage {
-			id: message_id.into(),
-			channel_id: channel_id.into(),
-			content: "Hello, litentry.".into(),
-			author,
-		};
-
-		let path = format! {"/api/channels/{}/messages/{}", channel_id, message_id};
-		mock_server.mock(|when, then| {
-			when.method(GET).path(path);
-			then.status(200).body(serde_json::to_string(&body).unwrap());
-		});
-	}
-}
-
-impl Mock for DiscordOfficial {
-	fn mock(&self, mock_server: &httpmock::MockServer) {
-		DiscordOfficial::query_message(mock_server);
-	}
+			if expected_channel_id == channel_id && expected_message_id == message_id {
+				let body = DiscordMessage {
+					id: message_id,
+					channel_id,
+					content: "Hello, litentry.".into(),
+					author: DiscordMessageAuthor {
+						id: "001".to_string(),
+						username: "elon".to_string(),
+					},
+				};
+				Response::builder().body(serde_json::to_string(&body).unwrap())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
 }
