@@ -1,4 +1,4 @@
-// Copyright 2020-2022 Litentry Technologies GmbH.
+// Copyright 2020-2023 Litentry Technologies GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -13,44 +13,26 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
+#![allow(opaque_hidden_inferred_bound)]
 
-use httpmock::{Method::GET, MockServer};
+use std::collections::HashMap;
+use warp::{http::Response, Filter};
 
-use crate::Mock;
+pub(crate) fn check_follow(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::get()
+		.and(warp::path!("twitter" / "followers" / "verification"))
+		.and(warp::query::<HashMap<String, String>>())
+		.map(move |p: HashMap<String, String>| {
+			let default = String::default();
+			let handler1 = p.get("handler1").unwrap_or(&default);
+			let handler2 = p.get("handler2").unwrap_or(&default);
 
-pub trait TwitterLitentryAPI {
-	fn check_follow(mock_server: &MockServer);
-}
-
-pub struct TwitterLitentry {}
-impl TwitterLitentry {
-	pub fn new() -> Self {
-		TwitterLitentry {}
-	}
-}
-
-impl Default for TwitterLitentry {
-	fn default() -> Self {
-		Self::new()
-	}
-}
-
-impl TwitterLitentryAPI for TwitterLitentry {
-	fn check_follow(mock_server: &MockServer) {
-		let body = r#"{ "data": false }"#;
-		let path = "/twitter/followers/verification";
-		mock_server.mock(|when, then| {
-			when.method(GET)
-				.path(path)
-				.query_param("handler1", "litentry")
-				.query_param("handler2", "ericzhangeth");
-			then.status(200).body(body);
-		});
-	}
-}
-
-impl Mock for TwitterLitentry {
-	fn mock(&self, mock_server: &httpmock::MockServer) {
-		TwitterLitentry::check_follow(mock_server);
-	}
+			let body = r#"{ "data": false }"#;
+			if handler1.as_str() == "litentry" && handler2 == "ericzhangeth" {
+				Response::builder().body(body.to_string())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
 }

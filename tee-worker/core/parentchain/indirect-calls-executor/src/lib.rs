@@ -87,27 +87,6 @@ pub trait ExecuteIndirectCalls {
 		ParentchainBlock: ParentchainBlockTrait<Hash = H256>;
 }
 
-// Seems macro can't be pre-/suffix'ed, `concat_ident` doesn'tw work either
-#[allow(unused_macros)]
-macro_rules! is_parentchain_function {
-	($fn_name:ident, $call_index_name:ident) => {
-		fn $fn_name(&self, function: &[u8; 2]) -> bool {
-			self.node_meta_data_provider
-				.get_from_metadata(|meta_data| {
-					let call = match meta_data.$call_index_name() {
-						Ok(c) => c,
-						Err(e) => {
-							error!("Failed to get the indexes for the $call_index_name call from the metadata: {:?}", e);
-							return false
-						},
-					};
-					function == &call
-				})
-				.unwrap_or(false)
-		}
-	};
-}
-
 pub struct IndirectCallsExecutor<
 	ShieldingKeyRepository,
 	StfEnclaveSigner,
@@ -150,9 +129,9 @@ where
 		shard: ShardIdentifier,
 		encrypted_trusted_call: Vec<u8>,
 	) {
-		let top_submit_future =
-			async { self.top_pool_author.submit_top(encrypted_trusted_call, shard).await };
-		if let Err(e) = futures::executor::block_on(top_submit_future) {
+		if let Err(e) = futures::executor::block_on(
+			self.top_pool_author.submit_top(encrypted_trusted_call, shard),
+		) {
 			error!("Error adding indirect trusted call to TOP pool: {:?}", e);
 		}
 	}

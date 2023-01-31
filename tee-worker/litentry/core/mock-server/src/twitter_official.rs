@@ -1,4 +1,4 @@
-// Copyright 2020-2022 Litentry Technologies GmbH.
+// Copyright 2020-2023 Litentry Technologies GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -13,125 +13,119 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
+#![allow(opaque_hidden_inferred_bound)]
 
-use httpmock::{Method::GET, MockServer};
+use crate::mock_tweet_payload;
 use lc_data_providers::twitter_official::*;
 use litentry_primitives::{ChallengeCode, Identity, IdentityString, Web2Network};
 use sp_core::crypto::AccountId32 as AccountId;
+use std::{collections::HashMap, sync::Arc};
+use warp::{http::Response, Filter};
 
-use crate::{mock_tweet_payload, Mock};
+pub(crate) fn query_tweet<F>(
+	func: Arc<F>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone
+where
+	F: Fn() -> ChallengeCode + Send + Sync + 'static,
+{
+	warp::get()
+		.and(warp::path!("2" / "tweets" / u32))
+		.and(warp::query::<HashMap<String, String>>())
+		.map(move |_tweet_id, p: HashMap<String, String>| {
+			let default = String::default();
+			let ids = p.get("ids").unwrap_or(&default);
+			let expansions = p.get("expansions").unwrap_or(&default);
+			let expected_tweet_id = "100".to_string();
 
-pub trait TwitterOfficialAPI {
-	fn query_tweet(mock_server: &MockServer);
-	fn query_retweet(mock_server: &MockServer);
-	fn query_user(mock_server: &MockServer);
+			if expansions.as_str() != "author_id" || ids != &expected_tweet_id {
+				Response::builder().status(400).body(String::from("Error query"))
+			} else {
+				let account_id = AccountId::new([
+					212, 53, 147, 199, 21, 253, 211, 28, 97, 20, 26, 189, 4, 169, 159, 214, 130,
+					44, 133, 88, 133, 76, 205, 227, 154, 86, 132, 231, 165, 109, 162, 125,
+				]); // Alice
+				let twitter_identity = Identity::Web2 {
+					network: Web2Network::Twitter,
+					address: IdentityString::try_from("mock_user".as_bytes().to_vec()).unwrap(),
+				};
+				let chanllenge_code = func();
+				let payload = mock_tweet_payload(&account_id, &twitter_identity, &chanllenge_code);
+				let tweet =
+					Tweet { author_id: "mock_user".into(), id: expected_tweet_id, text: payload };
+
+				Response::builder().body(serde_json::to_string(&tweet).unwrap())
+			}
+		})
 }
 
-pub struct TwitterOfficial {}
-impl TwitterOfficial {
-	pub fn new() -> Self {
-		TwitterOfficial {}
-	}
+pub(crate) fn query_retweet<F>(
+	func: Arc<F>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone
+where
+	F: Fn() -> ChallengeCode + Send + Sync + 'static,
+{
+	warp::get()
+		.and(warp::path!("2" / "tweets" / "search" / "recent"))
+		.and(warp::query::<HashMap<String, String>>())
+		.map(move |p: HashMap<String, String>| {
+			let default = String::default();
+			let query = p.get("query").unwrap_or(&default);
+			let expansions = p.get("expansions").unwrap_or(&default);
+
+			let user = "ericzhangeth";
+			let original_tweet_id = "100";
+			let expected_query =
+				format!("from: {} retweets_of_tweet_id: {}", user, original_tweet_id);
+			if expansions.as_str() != "author_id" || query != &expected_query {
+				Response::builder().status(400).body(String::from("Error query"))
+			} else {
+				let author_id = "ericzhangeth";
+				let id = "100";
+
+				let account_id = AccountId::new([0u8; 32]);
+				let twitter_identity = Identity::Web2 {
+					network: Web2Network::Twitter,
+					address: IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
+				};
+				let chanllenge_code = func();
+				let payload = mock_tweet_payload(&account_id, &twitter_identity, &chanllenge_code);
+
+				let tweets = vec![Tweet {
+					author_id: author_id.into(),
+					id: id.into(),
+					text: serde_json::to_string(&payload).unwrap(),
+				}];
+				let body = TwitterAPIV2Response { data: Some(tweets), meta: None };
+				Response::builder().body(serde_json::to_string(&body).unwrap())
+			}
+		})
 }
 
-impl Default for TwitterOfficial {
-	fn default() -> Self {
-		Self::new()
-	}
-}
+pub(crate) fn query_user(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::get()
+		.and(warp::path!("2" / "users" / String))
+		.and(warp::query::<HashMap<String, String>>())
+		.map(move |user_id, p: HashMap<String, String>| {
+			let expected_user_id = "1256908613857226756".to_string();
 
-impl TwitterOfficialAPI for TwitterOfficial {
-	fn query_tweet(mock_server: &MockServer) {
-		let tweet_id = "100";
+			let default = String::default();
+			let user_fields = p.get("user.fields").unwrap_or(&default);
 
-		let account_id = AccountId::new([
-			212, 53, 147, 199, 21, 253, 211, 28, 97, 20, 26, 189, 4, 169, 159, 214, 130, 44, 133,
-			88, 133, 76, 205, 227, 154, 86, 132, 231, 165, 109, 162, 125,
-		]); // Alice
-
-		let twitter_identity = Identity::Web2 {
-			network: Web2Network::Twitter,
-			address: IdentityString::try_from("mock_user".as_bytes().to_vec()).unwrap(),
-		};
-		let chanllenge_code: ChallengeCode =
-			[8, 104, 90, 56, 35, 213, 18, 250, 213, 210, 119, 241, 2, 174, 24, 8];
-		let payload = mock_tweet_payload(&account_id, &twitter_identity, &chanllenge_code);
-
-		let tweet = Tweet { author_id: "mock_user".into(), id: tweet_id.into(), text: payload };
-
-		let path = format! {"/2/tweets/{}", tweet_id};
-		mock_server.mock(|when, then| {
-			when.method(GET)
-				.path(path)
-				.query_param("ids", tweet_id)
-				.query_param("expansions", "author_id");
-			then.status(200).body(serde_json::to_string(&tweet).unwrap());
-		});
-	}
-
-	fn query_retweet(mock_server: &MockServer) {
-		let author_id = "ericzhangeth";
-		let id = "100";
-
-		let account_id = AccountId::new([0u8; 32]);
-		let twitter_identity = Identity::Web2 {
-			network: Web2Network::Twitter,
-			address: IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
-		};
-		let chanllenge_code: ChallengeCode =
-			[8, 104, 90, 56, 35, 213, 18, 250, 213, 210, 119, 241, 2, 174, 24, 8];
-		let payload = mock_tweet_payload(&account_id, &twitter_identity, &chanllenge_code);
-
-		let tweets = vec![Tweet {
-			author_id: author_id.into(),
-			id: id.into(),
-			text: serde_json::to_string(&payload).unwrap(),
-		}];
-		let body = TwitterAPIV2Response { data: Some(tweets), meta: None };
-
-		let path = "/2/tweets/search/recent";
-
-		let user = "ericzhangeth";
-		let original_tweet_id = "100";
-		let query_value = format!("from: {} retweets_of_tweet_id: {}", user, original_tweet_id);
-
-		mock_server.mock(|when, then| {
-			when.method(GET)
-				.path(path)
-				.query_param("query", query_value)
-				.query_param("expansions", "author_id");
-			then.status(200).body(serde_json::to_string(&body).unwrap());
-		});
-	}
-
-	fn query_user(mock_server: &MockServer) {
-		let user = "1256908613857226756";
-
-		let twitter_user_data = TwitterUser {
-			id: user.into(),
-			name: "ericzhang".into(),
-			username: "elon".into(),
-			public_metrics: TwitterUserPublicMetrics {
-				followers_count: 100_u32,
-				following_count: 99_u32,
-			},
-		};
-
-		let body = TwitterAPIV2Response { data: Some(twitter_user_data), meta: None };
-
-		let path = format! {"/2/users/{}", user};
-
-		mock_server.mock(|when, then| {
-			when.method(GET).path(path).query_param("user.fields", "public_metrics");
-			then.status(200).body(serde_json::to_string(&body).unwrap());
-		});
-	}
-}
-
-impl Mock for TwitterOfficial {
-	fn mock(&self, mock_server: &httpmock::MockServer) {
-		TwitterOfficial::query_tweet(mock_server);
-		TwitterOfficial::query_retweet(mock_server);
-		TwitterOfficial::query_user(mock_server);
-	}
+			if user_fields.as_str() != "public_metrics" || user_id != expected_user_id {
+				Response::builder().status(400).body(String::from("Error query"))
+			} else {
+				let twitter_user_data = TwitterUser {
+					id: expected_user_id,
+					name: "ericzhang".to_string(),
+					username: "elon".to_string(),
+					public_metrics: TwitterUserPublicMetrics {
+						followers_count: 100_u32,
+						following_count: 99_u32,
+					},
+				};
+				let body = TwitterAPIV2Response { data: Some(twitter_user_data), meta: None };
+				Response::builder().body(serde_json::to_string(&body).unwrap())
+			}
+		})
 }
