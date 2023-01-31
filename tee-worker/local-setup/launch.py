@@ -58,8 +58,6 @@ def main(processes, config_path, parachain_type):
         print('Starting litentry-parachain done')
         print('----------------------------------------')
 
-        # register the expected MRENCLAVE on parachain
-
     i = 1
     for w_conf in config["workers"]:
         processes.append(run_worker(w_conf, i))

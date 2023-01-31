@@ -111,7 +111,7 @@ pub mod pallet {
 		T::Moment::saturated_from::<u64>(172_800_000) // default 48h
 	}
 
-	// keep track of a list of scheduled enchalves, mainly used for enclave updates,
+	// keep track of a list of scheduled/allowed enchalves, mainly used for enclave updates,
 	// can only be modified by EnclaveAdminOrigin
 	// sidechain_block_number -> expected MREnclave
 	//
@@ -119,7 +119,10 @@ pub mod pallet {
 	// prior to `register_enclave` this map needs to be populated with (0, expected-mrenclave),
 	// otherwise the registration will fail
 	//
-	// TODO: shall we consider inserting the first enclave in `register_enclave`?
+	// Theorectically we could always push the enclave in `register_enclave`, but the problem is
+	// anyone could try to register it as long as the enclave is remotely attested:
+	// see https://github.com/litentry/litentry-parachain/issues/1163
+	// so we need an "enclave whitelist" anyway
 	#[pallet::storage]
 	#[pallet::getter(fn scheduled_enclave)]
 	pub type ScheduledEnclave<T: Config> = StorageMap<_, Blake2_128Concat, u32, MREnclave>;
@@ -202,7 +205,11 @@ pub mod pallet {
 				);
 			}
 
-			// TODO: should we consider the sidechain block number?
+			println!("teerex: mrenclave = {:?}", enclave.mr_enclave);
+			// TODO: imagine this fn is not called for the first time (e.g. when worker restarts),
+			//       should we check the current sidechain_blocknumber >= registered
+			// sidechain_blocknumber?
+			#[cfg(not(feature = "skip-scheduled-enclave-check"))]
 			ensure!(
 				ScheduledEnclave::<T>::iter_values().any(|m| m == enclave.mr_enclave),
 				Error::<T>::EnclaveNotInSchedule

@@ -123,8 +123,6 @@ fn verify_identity_works() {
 #[test]
 fn tee_callback_with_registered_enclave_works() {
 	new_test_ext().execute_with(|| {
-		assert_ok!(Teerex::update_scheduled_enclave(RuntimeOrigin::root(), 0u32, TEST_MRENCLAVE,));
-
 		assert_ok!(Teerex::register_enclave(
 			RuntimeOrigin::signed(1),
 			TEST_MRENCLAVE.to_vec(),
