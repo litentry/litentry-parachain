@@ -368,10 +368,10 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			T::EnclaveAdminOrigin::ensure_origin(origin)?;
 			ensure!(
-				ScheduledEnclave::<T>::contains_key(&sidechain_block_number),
+				ScheduledEnclave::<T>::contains_key(sidechain_block_number),
 				Error::<T>::ScheduledEnclaveNotExist
 			);
-			ScheduledEnclave::<T>::remove(&sidechain_block_number);
+			ScheduledEnclave::<T>::remove(sidechain_block_number);
 			Self::deposit_event(Event::RemovedScheduledEnclave(sidechain_block_number));
 			Ok(().into())
 		}
