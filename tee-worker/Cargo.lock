@@ -5812,26 +5812,26 @@ dependencies = [
 name = "lc-data-providers"
 version = "0.1.0"
 dependencies = [
-	"env_logger 0.10.0",
-	"hex 0.4.0",
-	"hex 0.4.3",
-	"http 0.2.1",
-	"http 0.2.8",
-	"http_req 0.8.1 (git+https://github.com/integritee-network/http_req?branch=master)",
-	"http_req 0.8.1 (git+https://github.com/integritee-network/http_req)",
-	"itc-rest-client",
-	"lazy_static",
-	"lc-mock-server",
-	"litentry-primitives",
-	"log 0.4.17",
-	"parity-scale-codec",
-	"serde 1.0.152",
-	"serde_json 1.0.91",
-	"sgx_tstd",
-	"thiserror 1.0.38",
-	"thiserror 1.0.9",
-	"url 2.1.1",
-	"url 2.3.1",
+ "env_logger 0.10.0",
+ "hex 0.4.0",
+ "hex 0.4.3",
+ "http 0.2.1",
+ "http 0.2.8",
+ "http_req 0.8.1 (git+https://github.com/integritee-network/http_req?branch=master)",
+ "http_req 0.8.1 (git+https://github.com/integritee-network/http_req)",
+ "itc-rest-client",
+ "lazy_static",
+ "lc-mock-server",
+ "litentry-primitives",
+ "log 0.4.17",
+ "parity-scale-codec",
+ "serde 1.0.152",
+ "serde_json 1.0.91",
+ "sgx_tstd",
+ "thiserror 1.0.38",
+ "thiserror 1.0.9",
+ "url 2.1.1",
+ "url 2.3.1",
 ]
 
 [[package]]
@@ -5878,16 +5878,16 @@ dependencies = [
 name = "lc-mock-server"
 version = "0.1.0"
 dependencies = [
-	"hex 0.4.3",
-	"lazy_static",
-	"lc-data-providers",
-	"litentry-primitives",
-	"log 0.4.17",
-	"parity-scale-codec",
-	"serde_json 1.0.91",
-	"sp-core",
-	"tokio",
-	"warp",
+ "hex 0.4.3",
+ "lazy_static",
+ "lc-data-providers",
+ "litentry-primitives",
+ "log 0.4.17",
+ "parity-scale-codec",
+ "serde_json 1.0.91",
+ "sp-core",
+ "tokio",
+ "warp",
 ]
 
 [[package]]
