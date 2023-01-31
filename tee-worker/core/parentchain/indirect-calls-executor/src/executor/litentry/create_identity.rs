@@ -49,7 +49,7 @@ where
 {
 	type Call = CreateIdentityFn;
 
-	fn call_index(&self, call: Self::Call) -> [u8; 2] {
+	fn call_index(&self, call: &Self::Call) -> [u8; 2] {
 		call.0
 	}
 
