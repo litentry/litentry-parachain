@@ -205,7 +205,6 @@ pub mod pallet {
 				);
 			}
 
-			println!("teerex: mrenclave = {:?}", enclave.mr_enclave);
 			// TODO: imagine this fn is not called for the first time (e.g. when worker restarts),
 			//       should we check the current sidechain_blocknumber >= registered
 			// sidechain_blocknumber?
