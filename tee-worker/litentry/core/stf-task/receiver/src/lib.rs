@@ -152,11 +152,14 @@ where
 			.encrypt(&trusted_operation.encode())
 			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
 
-		let top_submit_future =
-			async { self.author_api.submit_top(encrypted_trusted_call, *shard).await };
-		executor::block_on(top_submit_future).map_err(|e| {
-			Error::OtherError(format!("Error adding indirect trusted call to TOP pool: {:?}", e))
-		})?;
+		executor::block_on(self.author_api.submit_top(encrypted_trusted_call, *shard)).map_err(
+			|e| {
+				Error::OtherError(format!(
+					"Error adding indirect trusted call to TOP pool: {:?}",
+					e
+				))
+			},
+		)?;
 
 		Ok(())
 	}
