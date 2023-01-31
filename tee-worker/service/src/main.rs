@@ -187,8 +187,7 @@ fn main() {
 		thread::spawn(move || {
 			info!("*** Starting mock server");
 			let getter = Arc::new(move |identity: &Identity| {
-				println!("{:?}", enclave.get_challenge_code(identity));
-				println!("Test getting challenge_code from enclave");
+				debug!("challenge_code:{:?} from enclave ", enclave.get_challenge_code(identity));
 				enclave.get_challenge_code(identity).unwrap_or_default()
 			});
 			let _ = lc_mock_server::run(getter, config.mock_server_port);
