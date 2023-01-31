@@ -52,7 +52,7 @@ impl ChallengeCodeCache {
 	pub fn insert_challenge_code(&self, identity: Identity, code: ChallengeCode) {
 		if self.enable.read().map_or(false, |r| *r) {
 			if let Ok(mut codes_lock) = self.codes.write() {
-				log::debug!("cahce challenge_code: {:?}, code:{:?}", identity, code);
+				log::debug!("cache challenge_code: {:?}, code:{:?}", identity, code);
 				codes_lock.insert(identity.flat(), code.to_vec());
 			}
 		}
@@ -65,7 +65,7 @@ impl ChallengeCodeCache {
 		}
 	}
 
-	pub fn is_enable(&self) -> bool {
+	pub fn is_enabled(&self) -> bool {
 		self.enable.read().map_or(false, |r| *r)
 	}
 
