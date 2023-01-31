@@ -58,7 +58,7 @@ pub struct Config {
 	pub run_config: Option<RunConfig>,
 
 	// Litentry parameters
-	/// Litentry TEE service running mode: dev/staging/prod
+	/// Litentry TEE service running mode: dev/staging/prod/mock
 	pub running_mode: String,
 	pub enable_mock_server: bool,
 	pub mock_server_port: u16,

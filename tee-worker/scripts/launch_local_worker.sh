@@ -27,7 +27,7 @@ WORKER_NUM=${worker_num:-1}
 NODE_URL=${node_url:-"ws://127.0.0.1"}	# "ws://host.docker.internal"
 NODE_PORT=${node_port:-"9944"}			# "9946"
 
-RUNNING_MODE=${mode:-"local"}
+RUNNING_MODE=${mode:-"mock"}
 
 # Fixed values:
 WORKER_ENDPOINT="localhost"
@@ -81,7 +81,7 @@ for ((i = 0; i < ${WORKER_NUM}; i++)); do
 	for Item in 'enclave.signed.so' 'key.txt' 'spid.txt' 'integritee-service' 'integritee-cli'; do
 		cp "${ROOTDIR}/bin/${Item}" "${ROOTDIR}"/tmp/"${worker_name}"
 	done
-	for Item in 'worker-config-dev.json' 'worker-config-prod.json' 'worker-config-staging.json' 'worker-config-local.json'; do
+	for Item in 'worker-config-dev.json' 'worker-config-prod.json' 'worker-config-staging.json' 'worker-config-mock.json'; do
 		cp "${ROOTDIR}/local-setup/${Item}" "${ROOTDIR}"/tmp/"${worker_name}"
 	done
 

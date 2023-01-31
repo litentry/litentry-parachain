@@ -22,7 +22,7 @@ function genCommands(node_url: string, node_port: string): { worker0: WorkerConf
             untrusted_ws_port: 3000,
             commands: {
                 first_launch:
-                    '--running-mode local --enable-mock-server --clean-reset --mu-ra-external-address localhost --mu-ra-port 3443' +
+                    '--running-mode mock --enable-mock-server --clean-reset --mu-ra-external-address localhost --mu-ra-port 3443' +
                     ' --untrusted-http-port 4545 --ws-external --trusted-external-address wss://localhost' +
                     ' --trusted-worker-port 2000 --untrusted-external-address ws://localhost' +
                     ' --untrusted-worker-port 3000 --node-url ' +
@@ -32,7 +32,7 @@ function genCommands(node_url: string, node_port: string): { worker0: WorkerConf
                     ' run --skip-ra --dev',
 
                 resume:
-                    '--running-mode local --enable-mock-server --mu-ra-external-address localhost --mu-ra-port 3443' +
+                    '--running-mode mock --enable-mock-server --mu-ra-external-address localhost --mu-ra-port 3443' +
                     ' --untrusted-http-port 4545 --ws-external --trusted-external-address wss://localhost' +
                     ' --trusted-worker-port 2000 --untrusted-external-address ws://localhost' +
                     ' --untrusted-worker-port 3000 --node-url ' +
@@ -46,7 +46,7 @@ function genCommands(node_url: string, node_port: string): { worker0: WorkerConf
             untrusted_ws_port: 3001,
             commands: {
                 first_launch:
-                    '--running-mode local --clean-reset --mu-ra-external-address localhost --mu-ra-port 3444' +
+                    '--running-mode mock --clean-reset --mu-ra-external-address localhost --mu-ra-port 3444' +
                     ' --untrusted-http-port 4546 --ws-external --trusted-external-address wss://localhost' +
                     ' --trusted-worker-port 2001 --untrusted-external-address ws://localhost' +
                     ' --untrusted-worker-port 3001 --node-url ' +
@@ -56,7 +56,7 @@ function genCommands(node_url: string, node_port: string): { worker0: WorkerConf
                     ' run --skip-ra --request-state --dev',
 
                 resume:
-                    '--running-mode local --mu-ra-external-address localhost --mu-ra-port 3444' +
+                    '--running-mode mock --mu-ra-external-address localhost --mu-ra-port 3444' +
                     ' --untrusted-http-port 4546 --ws-external --trusted-external-address wss://localhost' +
                     ' --trusted-worker-port 2001 --untrusted-external-address ws://localhost' +
                     ' --untrusted-worker-port 3001 --node-url ' +
@@ -93,7 +93,7 @@ async function launchWorker(
             "graphql_url": "http://localhost:9527",
             "graphql_auth_key": ""
         }, null, 4);
-        fs.writeFileSync(`${working_dir}/worker-config-local.json`, data);
+        fs.writeFileSync(`${working_dir}/worker-config-mock.json`, data);
     }
 
     return new Promise<{ shard: string; process: ChildProcess }>(async (resolve, reject) => {

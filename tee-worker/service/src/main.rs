@@ -536,8 +536,8 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 			config_file = "worker-config-staging.json";
 		} else if config.running_mode == "prod" {
 			config_file = "worker-config-prod.json";
-		} else if config.running_mode == "local" {
-			config_file = "worker-config-local.json";
+		} else if config.running_mode == "mock" {
+			config_file = "worker-config-mock.json";
 		}
 
 		let worker_config = rs_config::Config::builder()
