@@ -70,7 +70,7 @@ for ((i = 0; i < ${WORKER_NUM}; i++)); do
 	fi
 
 	if ((i == 0)); then
-		MOCK_SERVER="--mock-server"
+		MOCK_SERVER="--enable-mock-server"
 	fi
 
 	if [ "${CLEANUP}" = 'true' ]; then

@@ -60,9 +60,7 @@ pub struct Config {
 	// Litentry parameters
 	/// Litentry TEE service running mode: dev/staging/prod
 	pub running_mode: String,
-
-	/// Litentry
-	pub mock_server: bool,
+	pub enable_mock_server: bool,
 	pub mock_server_port: u16,
 }
 
@@ -83,7 +81,7 @@ impl Config {
 		untrusted_http_port: String,
 		run_config: Option<RunConfig>,
 		running_mode: String,
-		mock_server: bool,
+		enable_mock_server: bool,
 		mock_server_port: u16,
 	) -> Self {
 		Self {
@@ -101,7 +99,7 @@ impl Config {
 			untrusted_http_port,
 			run_config,
 			running_mode,
-			mock_server,
+			enable_mock_server,
 			mock_server_port,
 		}
 	}
@@ -166,7 +164,7 @@ impl From<&ArgMatches<'_>> for Config {
 		let untrusted_http_port =
 			m.value_of("untrusted-http-port").unwrap_or(DEFAULT_UNTRUSTED_HTTP_PORT);
 		let run_config = m.subcommand_matches("run").map(RunConfig::from);
-		let is_mock_server_enabled = m.is_present("mock-server");
+		let is_mock_server_enabled = m.is_present("enable-mock-server");
 		let mock_server_port = m.value_of("mock-server-port").unwrap_or(DEFAULT_MOCK_SERVER_PORT);
 		Self::new(
 			m.value_of("node-server").unwrap_or(DEFAULT_NODE_SERVER).into(),

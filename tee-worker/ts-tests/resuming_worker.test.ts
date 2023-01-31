@@ -22,7 +22,7 @@ function genCommands(node_url: string, node_port: string): { worker0: WorkerConf
             untrusted_ws_port: 3000,
             commands: {
                 first_launch:
-                    '--running-mode local --mock-server --clean-reset --mu-ra-external-address localhost --mu-ra-port 3443' +
+                    '--running-mode local --enable-mock-server --clean-reset --mu-ra-external-address localhost --mu-ra-port 3443' +
                     ' --untrusted-http-port 4545 --ws-external --trusted-external-address wss://localhost' +
                     ' --trusted-worker-port 2000 --untrusted-external-address ws://localhost' +
                     ' --untrusted-worker-port 3000 --node-url ' +
@@ -32,7 +32,7 @@ function genCommands(node_url: string, node_port: string): { worker0: WorkerConf
                     ' run --skip-ra --dev',
 
                 resume:
-                    '--running-mode local --mock-server --mu-ra-external-address localhost --mu-ra-port 3443' +
+                    '--running-mode local --enable-mock-server --mu-ra-external-address localhost --mu-ra-port 3443' +
                     ' --untrusted-http-port 4545 --ws-external --trusted-external-address wss://localhost' +
                     ' --trusted-worker-port 2000 --untrusted-external-address ws://localhost' +
                     ' --untrusted-worker-port 3000 --node-url ' +

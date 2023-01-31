@@ -63,39 +63,39 @@ args:
         help: Set the mutual remote attestation worker address to be retrieved by a trusted rpc call. If no port is given, the same as in `mu-ra-port` will be used.
         takes_value: true
         required: false
-    -   enable-metrics:
-            long: enable-metrics
-            help: Enable the metrics HTTP server to serve metrics
-    -   metrics-port:
-            short: i
-            long: metrics-port
-            help: Set the port on which the metrics are served.
-            takes_value: true
-            default_value: "8787"
-            required: false
-    -   untrusted-http-port:
-            short: h
-            long: untrusted-http-port
-            help: Set the port for the untrusted HTTP server
-            takes_value: true
-            required: false
-    -   clean-reset:
-            long: clean-reset
-            short: c
-            help: Cleans and purges any previous state and key files and generates them anew before starting.
-    -   running-mode:
-            long: running-mode
-            help: Litentry TEE service running mode <dev/staging/prod/local>
-            takes_value: true
-            default_value: "dev"
-    -   mock-server:
-            long: mock-server
-            help: Set this flag to enable starting the mock server.
-    -   mock-server-port:
-            long: mock-server-port
-            help: Set the port for the mock-server HTTP server
-            required: false
-            default_value: "9527"
+    - enable-metrics:
+        long: enable-metrics
+        help: Enable the metrics HTTP server to serve metrics
+    - metrics-port:
+        short: i
+        long: metrics-port
+        help: Set the port on which the metrics are served.
+        takes_value: true
+        default_value: "8787"
+        required: false
+    - untrusted-http-port:
+        short: h
+        long: untrusted-http-port
+        help: Set the port for the untrusted HTTP server
+        takes_value: true
+        required: false
+    - clean-reset:
+        long: clean-reset
+        short: c
+        help: Cleans and purges any previous state and key files and generates them anew before starting.
+    - running-mode:
+        long: running-mode
+        help: Litentry TEE service running mode <dev/staging/prod/local>
+        takes_value: true
+        default_value: "dev"
+    - enable-mock-server:
+        long: enable-mock-server
+        help: Set this flag to enable starting the mock server.
+    - mock-server-port:
+        long: mock-server-port
+        help: Set the port for the mock-server HTTP server
+        required: false
+        default_value: "9527"
 
 subcommands:
     - run:

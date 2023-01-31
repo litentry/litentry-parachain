@@ -181,7 +181,7 @@ fn main() {
 		enclave_metrics_receiver,
 	)));
 
-	if config.mock_server {
+	if config.enable_mock_server {
 		let _ = enclave.as_ref().enable_challenge_code_cache();
 		let enclave = enclave.clone();
 		thread::spawn(move || {

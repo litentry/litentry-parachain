@@ -122,7 +122,7 @@ services:
       retries: 20
     entrypoint:
       "/usr/local/bin/integritee-service --clean-reset --ws-external -M integritee-worker-1 -T wss://integritee-worker-1
-      -u ws://integritee-node -U ws://integritee-worker-1 -P 2011 -w 2101 -p 9912 -h 4645 --mock-server --running-mode local
+      -u ws://integritee-node -U ws://integritee-worker-1 -P 2011 -w 2101 -p 9912 -h 4645 --enable-mock-server --running-mode local
       run --dev --skip-ra"
     restart: "no"
   integritee-worker-2:
