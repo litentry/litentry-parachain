@@ -1,4 +1,4 @@
-// Copyright 2020-2022 Litentry Technologies GmbH.
+// Copyright 2020-2023 Litentry Technologies GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -26,7 +26,7 @@ pub(crate) fn query_tweet<F>(
 	func: Arc<F>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone
 where
-	F: Fn(&Identity) -> ChallengeCode + Send + Sync + 'static,
+	F: Fn() -> ChallengeCode + Send + Sync + 'static,
 {
 	warp::get()
 		.and(warp::path!("2" / "tweets" / u32))
@@ -48,7 +48,7 @@ where
 					network: Web2Network::Twitter,
 					address: IdentityString::try_from("mock_user".as_bytes().to_vec()).unwrap(),
 				};
-				let chanllenge_code = func(&twitter_identity);
+				let chanllenge_code = func();
 				let payload = mock_tweet_payload(&account_id, &twitter_identity, &chanllenge_code);
 				let tweet =
 					Tweet { author_id: "mock_user".into(), id: expected_tweet_id, text: payload };
@@ -62,7 +62,7 @@ pub(crate) fn query_retweet<F>(
 	func: Arc<F>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone
 where
-	F: Fn(&Identity) -> ChallengeCode + Send + Sync + 'static,
+	F: Fn() -> ChallengeCode + Send + Sync + 'static,
 {
 	warp::get()
 		.and(warp::path!("2" / "tweets" / "search" / "recent"))
@@ -87,7 +87,7 @@ where
 					network: Web2Network::Twitter,
 					address: IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
 				};
-				let chanllenge_code = func(&twitter_identity);
+				let chanllenge_code = func();
 				let payload = mock_tweet_payload(&account_id, &twitter_identity, &chanllenge_code);
 
 				let tweets = vec![Tweet {

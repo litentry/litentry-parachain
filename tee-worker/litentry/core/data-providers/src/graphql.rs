@@ -1,4 +1,4 @@
-// Copyright 2020-2022 Litentry Technologies GmbH.
+// Copyright 2020-2023 Litentry Technologies GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -99,8 +99,11 @@ impl VerifiedCredentialsIsHodlerIn {
 	pub fn to_graphql(&self) -> String {
 		let addresses_str = format!("{:?}", self.addresses);
 		let network = format!("{:?}", self.network).to_lowercase();
-		let q = format!("VerifiedCredentialsIsHodler(addresses:{}, fromDate:\"{}\", network:{}, tokenAddress:\"{}\",minimumBalance:{:?}){{isHodler,address}}", addresses_str, self.from_date, network, self.token_address, self.min_balance);
-		format!("{{{}}}", q)
+		if self.token_address.is_empty() {
+			format!("{{VerifiedCredentialsIsHodler(addresses:{}, fromDate:\"{}\", network:{}, minimumBalance:{:?}){{isHodler,address}}}}", addresses_str, self.from_date, network, self.min_balance)
+		} else {
+			format!("{{VerifiedCredentialsIsHodler(addresses:{}, fromDate:\"{}\", network:{}, tokenAddress:\"{}\",minimumBalance:{:?}){{isHodler,address}}}}", addresses_str, self.from_date, network, self.token_address, self.min_balance)
+		}
 	}
 }
 
@@ -248,7 +251,7 @@ mod tests {
 		VerifiedCredentialsTotalTxs, G_DATA_PROVIDERS,
 	};
 	use lc_mock_server::run;
-	use litentry_primitives::{ChallengeCode, Identity};
+	use litentry_primitives::ChallengeCode;
 	use std::sync::Arc;
 
 	const ACCOUNT_ADDRESS1: &str = "0x61f2270153bb68dc0ddb3bc4e4c1bd7522e918ad";
@@ -257,7 +260,7 @@ mod tests {
 
 	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
-		let url = run(Arc::new(|_: &Identity| ChallengeCode::default()), 0).unwrap();
+		let url = run(Arc::new(|| ChallengeCode::default()), 0).unwrap();
 		G_DATA_PROVIDERS.write().unwrap().set_graphql_url(url.clone());
 	}
 

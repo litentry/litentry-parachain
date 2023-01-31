@@ -1,4 +1,4 @@
-// Copyright 2020-2022 Litentry Technologies GmbH.
+// Copyright 2020-2023 Litentry Technologies GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -57,7 +57,7 @@ pub fn mock_tweet_payload(who: &AccountId, identity: &Identity, code: &Challenge
 
 pub fn run<F>(getter: Arc<F>, port: u16) -> Result<String, RecvError>
 where
-	F: Fn(&Identity) -> ChallengeCode + Send + Sync + 'static,
+	F: Fn() -> ChallengeCode + Send + Sync + 'static,
 {
 	let (result_in, result_out) = channel();
 	thread::spawn(move || {
@@ -74,7 +74,7 @@ where
 					.or(graphql::query()),
 			)
 			.bind_with_graceful_shutdown(([127, 0, 0, 1], port), shutdown_signal());
-			log::info!("mock-server listen on addr:{:?}", addr);
+			log::info!("listen on addr:{:?}", addr);
 			let _ = result_in.send(format!("http://{:?}", addr));
 			let join = tokio::task::spawn_local(srv);
 			let _ = join.await;
