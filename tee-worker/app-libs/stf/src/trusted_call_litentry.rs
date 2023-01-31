@@ -93,7 +93,7 @@ impl TrustedCallSigned {
 
 		// generate challenge code
 		let code = generate_challenge_code();
-		// only work when the enable mockserver
+		// only works if mockserver is enabled
 		GLOBAL_CHALLENGE_CODE_CACHE.insert_challenge_code(identity.clone(), code);
 
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_challenge_code {
