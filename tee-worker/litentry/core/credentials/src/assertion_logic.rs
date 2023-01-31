@@ -16,8 +16,6 @@
 
 // This file includes the predefined rulesets and the corresponding parameters
 // when requesting VCs.
-//
-// See: https://www.notion.so/litentry/Expected-parameters-in-predefined-rulesets-14f74928aa2b43509167da12a3e75507
 
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
@@ -139,5 +137,14 @@ mod tests {
 		let a1_from_struct = AssertionLogic::new_or().add_item(web2_item).add_item(web3_item);
 
 		assert_eq!(a1_from_str, a1_from_struct);
+	}
+
+	#[test]
+	fn assertion_a1_eval_works() {
+		let web2_item = AssertionLogic::new_item("7", Op::GreaterEq, "7");
+		let web3_item = AssertionLogic::new_item("7", Op::GreaterThan, "3");
+
+		let a1 = AssertionLogic::new_or().add_item(web2_item).add_item(web3_item);
+		assert_eq!(a1.eval(), true);
 	}
 }

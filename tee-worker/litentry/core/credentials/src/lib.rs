@@ -39,7 +39,7 @@ use codec::{Decode, Encode};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{Assertion, AssertionLogic, Op, ParentchainBlockNumber};
+use litentry_primitives::{Assertion, ParentchainBlockNumber};
 use log::*;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
@@ -66,6 +66,9 @@ use rand::Rng;
 pub mod error;
 pub use error::Error;
 pub mod schema;
+
+pub mod assertion_logic;
+use assertion_logic::{AssertionLogic, Op};
 
 pub const LITENTRY_ISSUER_NAME: &str = "Litentry TEE Worker";
 pub const PROOF_PURPOSE: &str = "assertionMethod";

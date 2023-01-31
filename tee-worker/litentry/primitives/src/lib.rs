@@ -22,7 +22,6 @@ mod ethereum_signature;
 mod identity;
 // mod trusted_call;
 mod assertion;
-mod assertion_logic;
 mod enclave_quote;
 mod validation_data;
 
@@ -45,7 +44,6 @@ use rand::Rng;
 
 // pub use trusted_call::*;
 pub use assertion::*;
-pub use assertion_logic::*;
 pub use enclave_quote::*;
 pub use validation_data::*;
 
