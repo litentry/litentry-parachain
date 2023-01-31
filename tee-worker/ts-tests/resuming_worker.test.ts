@@ -22,7 +22,7 @@ function genCommands(node_url: string, node_port: string): { worker0: WorkerConf
             untrusted_ws_port: 3000,
             commands: {
                 first_launch:
-                    '--clean-reset --mu-ra-external-address localhost --mu-ra-port 3443' +
+                    '--running-mode local --mock-server --clean-reset --mu-ra-external-address localhost --mu-ra-port 3443' +
                     ' --untrusted-http-port 4545 --ws-external --trusted-external-address wss://localhost' +
                     ' --trusted-worker-port 2000 --untrusted-external-address ws://localhost' +
                     ' --untrusted-worker-port 3000 --node-url ' +
@@ -32,7 +32,7 @@ function genCommands(node_url: string, node_port: string): { worker0: WorkerConf
                     ' run --skip-ra --dev',
 
                 resume:
-                    '--mu-ra-external-address localhost --mu-ra-port 3443' +
+                    '--running-mode local --mock-server --mu-ra-external-address localhost --mu-ra-port 3443' +
                     ' --untrusted-http-port 4545 --ws-external --trusted-external-address wss://localhost' +
                     ' --trusted-worker-port 2000 --untrusted-external-address ws://localhost' +
                     ' --untrusted-worker-port 3000 --node-url ' +
@@ -46,7 +46,7 @@ function genCommands(node_url: string, node_port: string): { worker0: WorkerConf
             untrusted_ws_port: 3001,
             commands: {
                 first_launch:
-                    '--disable-mock-server --clean-reset --mu-ra-external-address localhost --mu-ra-port 3444' +
+                    '--running-mode local --clean-reset --mu-ra-external-address localhost --mu-ra-port 3444' +
                     ' --untrusted-http-port 4546 --ws-external --trusted-external-address wss://localhost' +
                     ' --trusted-worker-port 2001 --untrusted-external-address ws://localhost' +
                     ' --untrusted-worker-port 3001 --node-url ' +
@@ -56,7 +56,7 @@ function genCommands(node_url: string, node_port: string): { worker0: WorkerConf
                     ' run --skip-ra --request-state --dev',
 
                 resume:
-                    '--disable-mock-server --mu-ra-external-address localhost --mu-ra-port 3444' +
+                    '--running-mode local --mu-ra-external-address localhost --mu-ra-port 3444' +
                     ' --untrusted-http-port 4546 --ws-external --trusted-external-address wss://localhost' +
                     ' --trusted-worker-port 2001 --untrusted-external-address ws://localhost' +
                     ' --untrusted-worker-port 3001 --node-url ' +
@@ -83,6 +83,17 @@ async function launchWorker(
         fs.copyFileSync(`${binary_dir}/integritee-service`, `${working_dir}/integritee-service`);
         fs.closeSync(fs.openSync(`${working_dir}/spid.txt`, 'w'));
         fs.closeSync(fs.openSync(`${working_dir}/key.txt`, 'w'));
+        let data = JSON.stringify({
+            "twitter_official_url": "http://localhost:9527",
+            "twitter_litentry_url": "http://localhost:9527",
+            "twitter_auth_token": "",
+            "discord_official_url": "http://localhost:9527",
+            "discord_litentry_url": "http://localhost:9527",
+            "discord_auth_token": "",
+            "graphql_url": "http://localhost:9527",
+            "graphql_auth_key": ""
+        }, null, 4);
+        fs.writeFileSync(`${working_dir}/worker-config-local.json`, data);
     }
 
     return new Promise<{ shard: string; process: ChildProcess }>(async (resolve, reject) => {
