@@ -331,6 +331,15 @@ impl Credential {
 				let credential: Credential = Credential::from_template(raw, who, shard, bn)?;
 				Ok(credential)
 			},
+			Assertion::A4(min_balance, from_date) => {
+				let raw = include_str!("templates/a4.json");
+				let credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+
+				// add assertion
+				
+
+				Ok(credential)
+			}
 			_ => Err(Error::UnsupportedAssertion),
 		}
 	}
@@ -340,6 +349,10 @@ impl Credential {
 			r#"{{"or": [{{"src": "$web2_account_cnt", "op": ">", "dsc": "{}",}},{{"src": "$web3_account_cnt", "op": ">", "dsc": "{}"}}]}}"#,
 			web2_cnt, web3_cnt
 		);
+	}
+
+	pub fn add_assertion_a4(&mut self, min_balance: u128, from_date: String) {
+		
 	}
 }
 
