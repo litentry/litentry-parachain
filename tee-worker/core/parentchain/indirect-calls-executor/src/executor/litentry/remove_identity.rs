@@ -72,7 +72,7 @@ where
 		let shielding_key = context.shielding_key_repo.retrieve_key()?;
 
 		let identity: Identity =
-			Identity::decode(&mut shielding_key.decrypt(&encrypted_identity).unwrap().as_slice())?;
+			Identity::decode(&mut shielding_key.decrypt(&encrypted_identity)?.as_slice())?;
 
 		if let Some((multiaddress_account, _, _)) = extrinsic.signature {
 			let account = AccountIdLookup::lookup(multiaddress_account)?;

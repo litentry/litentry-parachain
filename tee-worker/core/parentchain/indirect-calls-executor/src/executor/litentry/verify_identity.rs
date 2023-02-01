@@ -74,9 +74,9 @@ where
 		let shielding_key = context.shielding_key_repo.retrieve_key()?;
 
 		let identity: Identity =
-			Identity::decode(&mut shielding_key.decrypt(&encrypted_identity).unwrap().as_slice())?;
+			Identity::decode(&mut shielding_key.decrypt(&encrypted_identity)?.as_slice())?;
 		let validation_data = ValidationData::decode(
-			&mut shielding_key.decrypt(&encrypted_validation_data).unwrap().as_slice(),
+			&mut shielding_key.decrypt(&encrypted_validation_data)?.as_slice(),
 		)?;
 
 		if let Some((multiaddress_account, _, _)) = extrinsic.signature {

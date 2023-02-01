@@ -74,7 +74,7 @@ where
 		let shielding_key = context.shielding_key_repo.retrieve_key()?;
 
 		let identity: Identity =
-			Identity::decode(&mut shielding_key.decrypt(&encrypted_identity).unwrap().as_slice())?;
+			Identity::decode(&mut shielding_key.decrypt(&encrypted_identity)?.as_slice())?;
 		let metadata = match encrypted_metadata {
 			None => None,
 			Some(m) => {
