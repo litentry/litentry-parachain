@@ -27,7 +27,10 @@
         "-w",
         "2091",
         "-h",
-        "4545"
+        "4545",
+        "--running-mode",
+        "mock",
+        "--enable-mock-server"
       ],
       "subcommand_flags": [
         "--skip-ra",
