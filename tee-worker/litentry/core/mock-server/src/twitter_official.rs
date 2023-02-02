@@ -32,6 +32,7 @@ where
 		.and(warp::path!("2" / "tweets" / u32))
 		.and(warp::query::<HashMap<String, String>>())
 		.map(move |_tweet_id, p: HashMap<String, String>| {
+			log::info!("query_tweet");
 			let default = String::default();
 			let ids = p.get("ids").unwrap_or(&default);
 			let expansions = p.get("expansions").unwrap_or(&default);
@@ -49,6 +50,10 @@ where
 					address: IdentityString::try_from("mock_user".as_bytes().to_vec()).unwrap(),
 				};
 				let chanllenge_code = func(&twitter_identity);
+				log::info!(
+					"query_tweet, challenge_code:{:?}",
+					sp_core::hexdisplay::HexDisplay::from(&chanllenge_code)
+				);
 				let payload = mock_tweet_payload(&account_id, &twitter_identity, &chanllenge_code);
 				let tweet =
 					Tweet { author_id: "mock_user".into(), id: expected_tweet_id, text: payload };
