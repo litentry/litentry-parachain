@@ -24,4 +24,6 @@ itp-enclave-api-ffi = { path = "ffi" }
 itp-settings = { path = "../settings" }
 itp-types = { path = "../types" }
 
+# litentry
 lc-data-providers = { path = "../../litentry/core/data-providers" }
+litentry-primitives = { path = "../../litentry/primitives" }
