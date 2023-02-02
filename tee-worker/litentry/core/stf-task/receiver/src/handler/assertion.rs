@@ -115,17 +115,15 @@ where
 			Assertion::A8 =>
 				lc_assertion_build::a8::build(self.req.vec_identity.to_vec()).map(|_| None),
 
-			Assertion::A10(min_balance, year) => {
-				// // WBTC decimals is 8.
-				// let min_balance: f64 = (min_balance / (10 ^ 8)) as f64;
-				lc_assertion_build::a10::build(
-					self.req.vec_identity.to_vec(),
-					// year_to_date(year),
-					year,
-					min_balance,
-				)
-				.map(|_| None)
-			},
+			Assertion::A10(min_balance, year) => lc_assertion_build::a10::build(
+				self.req.vec_identity.to_vec(),
+				year,
+				min_balance,
+				&self.req.shard,
+				&self.req.who,
+				self.req.bn,
+			)
+			.map(|credential| Some((credential, self.req.who.clone()))),
 			_ => {
 				unimplemented!()
 			},
