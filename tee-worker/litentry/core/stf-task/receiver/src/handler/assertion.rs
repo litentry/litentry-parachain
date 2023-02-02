@@ -112,8 +112,13 @@ where
 			)
 			.map(|credential| Some((credential, self.req.who.clone()))),
 
-			Assertion::A8 =>
-				lc_assertion_build::a8::build(self.req.vec_identity.to_vec()).map(|_| None),
+			Assertion::A8 => lc_assertion_build::a8::build(
+				self.req.vec_identity.to_vec(),
+				&self.req.shard,
+				&self.req.who,
+				self.req.bn,
+			)
+			.map(|credential| Some((credential, self.req.who.clone()))),
 
 			Assertion::A10(min_balance, year) => lc_assertion_build::a10::build(
 				self.req.vec_identity.to_vec(),

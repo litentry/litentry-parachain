@@ -176,6 +176,8 @@ pub mod pallet {
 		Assertion4Failed,
 		Assertion5Failed,
 		Assertion7Failed,
+		Assertion8Failed,
+		Assertion10Failed,
 	}
 
 	#[pallet::call]
@@ -254,6 +256,8 @@ pub mod pallet {
 				VCMPError::Assertion4Failed => Err(Error::<T>::Assertion4Failed.into()),
 				VCMPError::Assertion5Failed => Err(Error::<T>::Assertion5Failed.into()),
 				VCMPError::Assertion7Failed => Err(Error::<T>::Assertion7Failed.into()),
+				VCMPError::Assertion8Failed => Err(Error::<T>::Assertion8Failed.into()),
+				VCMPError::Assertion10Failed => Err(Error::<T>::Assertion10Failed.into()),
 			}
 		}
 
