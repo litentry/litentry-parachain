@@ -40,7 +40,6 @@ lc-mock-server = { path = "../mock-server" }
 
 [features]
 default = ["std"]
-mockserver = []
 sgx = [
     "hex-sgx",
     "http-sgx",

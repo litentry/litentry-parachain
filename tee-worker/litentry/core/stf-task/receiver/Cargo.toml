@@ -62,9 +62,6 @@ sp-std = { git = "https://github.com/paritytech/substrate.git", branch = "polkad
 
 [features]
 default = ["std"]
-mockserver = [
-    "lc-assertion-build/mockserver",
-]
 sgx = [
     "futures_sgx",
     "hex-sgx",
