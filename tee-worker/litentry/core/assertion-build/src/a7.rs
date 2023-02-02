@@ -64,11 +64,11 @@ pub fn build(
 					token_address: String::from(""),
 					min_balance: q_min_balance,
 				};
-				let is_holder_out = client
+				let is_hodler_out = client
 					.check_verified_credentials_is_hodler(credentials)
 					.map_err(from_data_provider_error)?;
-				for holder in is_holder_out.verified_credentials_is_hodler.iter() {
-					flag = flag || holder.is_hodler;
+				for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
+					flag = flag || hodler.is_hodler;
 				}
 			}
 		}
