@@ -1,0 +1,23 @@
+[package]
+authors = ["Litentry dev"]
+edition = "2021"
+name = "lc-challenge-code-cache"
+version = "0.1.0"
+
+[dependencies]
+log = "0.4"
+# sgx dependencies
+sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
+
+# no_std dependencies
+lazy_static = { version = "1.1.0", features = ["spin_no_std"] }
+
+# litentry
+litentry-primitives = { path = "../../primitives", default-features = false }
+
+[features]
+default = ["std"]
+sgx = [
+    "sgx_tstd",
+]
+std = []

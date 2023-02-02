@@ -50,7 +50,8 @@ pub use assertion::*;
 pub use enclave_quote::*;
 pub use validation_data::*;
 
-pub type ChallengeCode = [u8; 16];
+pub const CHALLENGE_CODE_SIZE: usize = 16;
+pub type ChallengeCode = [u8; CHALLENGE_CODE_SIZE];
 
 pub fn aes_encrypt_default(key: &UserShieldingKeyType, data: &[u8]) -> AesOutput {
 	let mut in_out = data.to_vec();

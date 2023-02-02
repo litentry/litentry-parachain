@@ -18,7 +18,7 @@
 use clap::ArgMatches;
 use parse_duration::parse;
 use serde::{Deserialize, Serialize};
-use std::time::Duration;
+use std::{str::FromStr, time::Duration};
 
 static DEFAULT_NODE_SERVER: &str = "ws://127.0.0.1";
 static DEFAULT_NODE_PORT: &str = "9944";
@@ -27,8 +27,9 @@ static DEFAULT_UNTRUSTED_PORT: &str = "2001";
 static DEFAULT_MU_RA_PORT: &str = "3443";
 static DEFAULT_METRICS_PORT: &str = "8787";
 static DEFAULT_UNTRUSTED_HTTP_PORT: &str = "4545";
-// running mode for litentry: dev / staging / prod
+// running mode for litentry: dev / staging / prod / local
 static DEFAULT_RUNNING_MODE: &str = "dev";
+static DEFAULT_MOCK_SERVER_PORT: &str = "9527";
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Config {
@@ -57,11 +58,10 @@ pub struct Config {
 	pub run_config: Option<RunConfig>,
 
 	// Litentry parameters
-	/// Litentry TEE service running mode: dev/staging/prod
+	/// Litentry TEE service running mode: dev/staging/prod/mock
 	pub running_mode: String,
-
-	/// Litentry
-	pub disable_mock_server: bool,
+	pub enable_mock_server: bool,
+	pub mock_server_port: u16,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -81,7 +81,8 @@ impl Config {
 		untrusted_http_port: String,
 		run_config: Option<RunConfig>,
 		running_mode: String,
-		disable_mock_server: bool,
+		enable_mock_server: bool,
+		mock_server_port: u16,
 	) -> Self {
 		Self {
 			node_ip,
@@ -98,7 +99,8 @@ impl Config {
 			untrusted_http_port,
 			run_config,
 			running_mode,
-			disable_mock_server,
+			enable_mock_server,
+			mock_server_port,
 		}
 	}
 
@@ -162,7 +164,8 @@ impl From<&ArgMatches<'_>> for Config {
 		let untrusted_http_port =
 			m.value_of("untrusted-http-port").unwrap_or(DEFAULT_UNTRUSTED_HTTP_PORT);
 		let run_config = m.subcommand_matches("run").map(RunConfig::from);
-		let is_mock_server_disabled = m.is_present("disable-mock-server");
+		let is_mock_server_enabled = m.is_present("enable-mock-server");
+		let mock_server_port = m.value_of("mock-server-port").unwrap_or(DEFAULT_MOCK_SERVER_PORT);
 		Self::new(
 			m.value_of("node-server").unwrap_or(DEFAULT_NODE_SERVER).into(),
 			m.value_of("node-port").unwrap_or(DEFAULT_NODE_PORT).into(),
@@ -181,7 +184,8 @@ impl From<&ArgMatches<'_>> for Config {
 			untrusted_http_port.to_string(),
 			run_config,
 			m.value_of("running-mode").unwrap_or(DEFAULT_RUNNING_MODE).to_string(),
-			is_mock_server_disabled,
+			is_mock_server_enabled,
+			u16::from_str(mock_server_port).unwrap(),
 		)
 	}
 }

@@ -748,6 +748,7 @@ dependencies = [
  "its-sidechain",
  "jsonrpc-core",
  "lazy_static",
+ "lc-challenge-code-cache",
  "lc-data-providers",
  "lc-stf-task-receiver",
  "lc-stf-task-sender",
@@ -1588,6 +1589,7 @@ dependencies = [
  "itp-storage",
  "itp-types",
  "itp-utils",
+ "lc-challenge-code-cache",
  "lc-stf-task-sender",
  "litentry-primitives",
  "log",
@@ -2557,6 +2559,16 @@ dependencies = [
  "sp-std",
  "thiserror 1.0.9",
  "url",
+]
+
+[[package]]
+name = "lc-challenge-code-cache"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "litentry-primitives",
+ "log",
+ "sgx_tstd",
 ]
 
 [[package]]

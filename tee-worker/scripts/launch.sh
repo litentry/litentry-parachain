@@ -7,7 +7,7 @@ ROOTDIR=$(git rev-parse --show-toplevel)
 ROOTDIR="${ROOTDIR}/tee-worker"
 
 function usage() {
-    echo "Usage: $0 <dev|staging|prod>"
+    echo "Usage: $0 <dev|staging|prod/mock>"
     echo ""
     echo "  All mode apply to ${PARACHAIN} context."
     echo "      dev: start worker(s) together with local ${PARACHAIN} for development"
@@ -28,8 +28,8 @@ function start_worker_for_dev() {
     cd ${ROOTDIR}
     worker_num=2
     echo "------------------------------------------------------------"
-    echo "Start ${worker_num} workers with local ${PARACHAIN} ..."
-    ./scripts/launch_local_worker.sh -c true -n ${worker_num}
+    echo "Start ${worker_num} workers with dev ${PARACHAIN} ..."
+    ./scripts/launch_local_worker.sh -c true -n ${worker_num} -m "dev"
 }
 
 function start_worker_for_staging() {
@@ -56,10 +56,20 @@ function start_worker_for_prod() {
     ./scripts/launch_local_worker.sh -c true -n ${worker_num} -u ${url} -p ${port} -m "prod"
 }
 
+function start_worker_for_mock() {
+    # start_local_parachain
+    cd ${ROOTDIR}
+    worker_num=2
+    echo "------------------------------------------------------------"
+    echo "Start ${worker_num} workers with local ${PARACHAIN} ..."
+    ./scripts/launch_local_worker.sh -c true -n ${worker_num} -m "mock"
+}
+
+
 [ $# -ne 1 ] && (usage; exit 1)
 MODE=$1
 
-if [ "$MODE" = "dev" ] || [ "$MODE" = "staging" ] || [ "$MODE" = "prod" ]; then
+if [ "$MODE" = "dev" ] || [ "$MODE" = "staging" ] || [ "$MODE" = "prod" ] || [ "$MODE" = "mock" ]; then
     echo "Launch in $MODE mode"
     start_worker_for_$MODE
 else

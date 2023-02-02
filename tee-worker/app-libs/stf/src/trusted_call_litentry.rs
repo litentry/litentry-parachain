@@ -25,6 +25,7 @@ use crate::{
 use frame_support::dispatch::UnfilteredDispatchable;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_utils::stringify::account_id_to_string;
+use lc_challenge_code_cache::GLOBAL_CHALLENGE_CODE_CACHE;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
 	AssertionBuildRequest, MaxIdentityLength, RequestType, SetUserShieldingKeyRequest,
@@ -92,6 +93,9 @@ impl TrustedCallSigned {
 
 		// generate challenge code
 		let code = generate_challenge_code();
+		// only works if mockserver is enabled
+		GLOBAL_CHALLENGE_CODE_CACHE.insert_challenge_code(identity.clone(), code);
+
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_challenge_code {
 			who,
 			identity,

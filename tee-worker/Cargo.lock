@@ -4008,6 +4008,7 @@ dependencies = [
  "lazy_static",
  "lc-data-providers",
  "lc-mock-server",
+ "litentry-primitives",
  "log 0.4.17",
  "mockall",
  "pallet-balances",
@@ -4208,6 +4209,7 @@ dependencies = [
  "itp-storage",
  "itp-types",
  "itp-utils",
+ "lc-challenge-code-cache",
  "lc-stf-task-sender",
  "litentry-primitives",
  "log 0.4.17",
@@ -4614,6 +4616,7 @@ dependencies = [
  "itp-settings",
  "itp-types",
  "lc-data-providers",
+ "litentry-primitives",
  "log 0.4.17",
  "parity-scale-codec",
  "serde_json 1.0.91",
@@ -5760,6 +5763,16 @@ dependencies = [
  "thiserror 1.0.9",
  "url 2.1.1",
  "url 2.3.1",
+]
+
+[[package]]
+name = "lc-challenge-code-cache"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "litentry-primitives",
+ "log 0.4.17",
+ "sgx_tstd",
 ]
 
 [[package]]
