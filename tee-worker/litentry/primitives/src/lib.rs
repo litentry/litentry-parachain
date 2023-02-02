@@ -40,6 +40,9 @@ use ring::{
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate rand_sgx as rand;
 
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+extern crate chrono_sgx as chrono;
+
 use rand::Rng;
 
 // pub use trusted_call::*;

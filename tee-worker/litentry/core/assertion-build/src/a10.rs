@@ -24,7 +24,7 @@ use crate::{Error, Result};
 use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
-use litentry_primitives::{EvmNetwork, Identity};
+use litentry_primitives::{year_to_date, EvmNetwork, Identity};
 use std::{
 	str::from_utf8,
 	string::{String, ToString},
@@ -35,7 +35,11 @@ use std::{
 const WBTC_TOKEN_ADDRESS: &str = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
 
 // WBTC holder
-pub fn build(identities: Vec<Identity>, from_date: String, min_balance: f64) -> Result<()> {
+pub fn build(identities: Vec<Identity>, year: u32, min_balance: u128) -> Result<()> {
+	// WBTC decimals is 8.
+	let q_min_balance: f64 = (min_balance / (10 ^ 8)) as f64;
+	let q_from_date: String = year_to_date(year);
+
 	let mut client = GraphQLClient::new();
 
 	for id in identities {
@@ -45,10 +49,10 @@ pub fn build(identities: Vec<Identity>, from_date: String, min_balance: f64) -> 
 					if let Ok(response) = client.check_verified_credentials_is_hodler(
 						VerifiedCredentialsIsHodlerIn::new(
 							vec![addr.to_string()],
-							from_date.clone(),
+							q_from_date.clone(),
 							VerifiedCredentialsNetwork::Ethereum,
 							WBTC_TOKEN_ADDRESS.to_string(),
-							min_balance,
+							q_min_balance,
 						),
 					) {
 						for item in response.verified_credentials_is_hodler {

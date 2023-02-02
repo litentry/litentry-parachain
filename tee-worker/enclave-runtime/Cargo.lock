@@ -2650,7 +2650,6 @@ dependencies = [
 name = "lc-stf-task-receiver"
 version = "0.1.0"
 dependencies = [
- "chrono 0.4.11",
  "core-primitives",
  "frame-support",
  "futures 0.3.8",
@@ -2778,6 +2777,7 @@ name = "litentry-primitives"
 version = "0.1.0"
 dependencies = [
  "base64 0.13.0 (git+https://github.com/mesalock-linux/rust-base64-sgx?rev=sgx_1.1.3)",
+ "chrono 0.4.11",
  "core-primitives",
  "parity-scale-codec",
  "rand 0.7.3",

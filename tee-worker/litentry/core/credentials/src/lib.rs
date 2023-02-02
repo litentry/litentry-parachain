@@ -39,7 +39,7 @@ use codec::{Decode, Encode};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{Assertion, ParentchainBlockNumber};
+use litentry_primitives::{year_to_date, Assertion, ParentchainBlockNumber};
 use log::*;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
@@ -332,6 +332,24 @@ impl Credential {
 			Assertion::A1 => {
 				let raw = include_str!("templates/a1.json");
 				let credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				Ok(credential)
+			},
+			Assertion::A7(min_balance, year) => {
+				let min_balance = format!("{}", min_balance);
+
+				let raw = include_str!("templates/a7.json");
+				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+
+				// add assertion
+				let lit_amounts =
+					AssertionLogic::new_item("$dot_amounts", Op::GreaterEq, &min_balance);
+				let timestamp =
+					AssertionLogic::new_item("$timestamp", Op::GreaterEq, &year_to_date(*year));
+
+				let assertion = AssertionLogic::new_add().add_item(lit_amounts).add_item(timestamp);
+
+				credential.credential_subject.assertions = assertion;
+
 				Ok(credential)
 			},
 			_ => Err(Error::UnsupportedAssertion),
