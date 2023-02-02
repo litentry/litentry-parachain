@@ -47,6 +47,7 @@ use enclave::{
 	tls_ra::{enclave_request_state_provisioning, enclave_run_state_provisioning_server},
 };
 use itp_enclave_api::{
+	challenge_code_cache::ChallengeCodeCache,
 	direct_request::DirectRequest,
 	enclave_base::EnclaveBase,
 	remote_attestation::{RemoteAttestation, TlsRemoteAttestation},
@@ -70,6 +71,7 @@ use its_peer_fetch::{
 use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
 use its_storage::{interface::FetchBlocks, BlockPruner, SidechainStorageLock};
 use lc_data_providers::DataProvidersStatic;
+use litentry_primitives::Identity;
 use log::*;
 use my_node_runtime::{Hash, Header, RuntimeEvent};
 use sgx_types::*;
@@ -137,18 +139,6 @@ fn main() {
 
 	info!("*** Running worker in mode: {:?} \n", WorkerModeProvider::worker_mode());
 
-	#[cfg(feature = "mockserver")]
-	thread::spawn(move || {
-		if !config.disable_mock_server {
-			info!("*** Starting mock server");
-			let getter = Arc::new(|| {
-				println!("Test getting challenge_code from enclave");
-				[8, 104, 90, 56, 35, 213, 18, 250, 213, 210, 119, 241, 2, 174, 24, 8]
-			});
-			let _ = lc_mock_server::run(getter, 9527);
-		}
-	});
-
 	let clean_reset = matches.is_present("clean-reset");
 	if clean_reset {
 		setup::purge_files_from_cwd().unwrap();
@@ -190,6 +180,19 @@ fn main() {
 		tokio_handle.clone(),
 		enclave_metrics_receiver,
 	)));
+
+	if config.enable_mock_server {
+		let _ = enclave.as_ref().enable_challenge_code_cache();
+		let enclave = enclave.clone();
+		thread::spawn(move || {
+			info!("*** Starting mock server");
+			let getter = Arc::new(move |identity: &Identity| {
+				debug!("challenge_code:{:?} from enclave ", enclave.get_challenge_code(identity));
+				enclave.get_challenge_code(identity).unwrap_or_default()
+			});
+			let _ = lc_mock_server::run(getter, config.mock_server_port);
+		});
+	}
 
 	if let Some(run_config) = &config.run_config {
 		let shard = extract_shard(&run_config.shard, enclave.as_ref());
@@ -527,13 +530,14 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	// Start stf task handler thread
 	let enclave_api_stf_task_handler = enclave.clone();
 	let mut data_providers_static = DataProvidersStatic::default();
-	#[cfg(all(not(test), not(feature = "mockserver")))]
 	{
 		let mut config_file = "worker-config-dev.json";
 		if config.running_mode == "staging" {
 			config_file = "worker-config-staging.json";
 		} else if config.running_mode == "prod" {
 			config_file = "worker-config-prod.json";
+		} else if config.running_mode == "mock" {
+			config_file = "worker-config-mock.json";
 		}
 
 		let worker_config = rs_config::Config::builder()
@@ -564,7 +568,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 			.unwrap_or_else(|_e| "https://graph.tdf-labs.io/".to_string());
 		let graphql_auth_key = worker_config
 			.get_string("graphql_auth_key")
-			.unwrap_or_else(|_e| "ac2115ec-e327-4862-84c5-f25b6b7d4533".to_string());
+			.unwrap_or_else(|_e| "ABCDEFGHIJKLMNOPQRSTUVWXYZ".to_string());
 
 		data_providers_static.set_twitter_official_url(twitter_official_url);
 		data_providers_static.set_twitter_litentry_url(twitter_litentry_url);
@@ -574,18 +578,6 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		data_providers_static.set_discord_auth_token(discord_auth_token);
 		data_providers_static.set_graphql_url(graphql_url);
 		data_providers_static.set_graphql_auth_key(graphql_auth_key);
-	}
-	#[cfg(any(test, feature = "mockserver"))]
-	{
-		data_providers_static.set_twitter_official_url("http://localhost:9527".to_string());
-		data_providers_static.set_twitter_litentry_url("http://localhost:9527".to_string());
-		data_providers_static.set_twitter_auth_token("".to_string());
-		data_providers_static.set_discord_official_url("http://localhost:9527".to_string());
-		data_providers_static.set_discord_litentry_url("http://localhost:9527".to_string());
-		data_providers_static.set_discord_auth_token("".to_string());
-		data_providers_static.set_graphql_url("https://graph.tdf-labs.io/".to_string());
-		data_providers_static
-			.set_graphql_auth_key("ac2115ec-e327-4862-84c5-f25b6b7d4533".to_string());
 	}
 
 	thread::spawn(move || {
