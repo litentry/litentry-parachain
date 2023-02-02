@@ -59,7 +59,6 @@ parachain-core-primitives = { package = "core-primitives", path = "../../../../p
 
 [features]
 default = ["std"]
-mockserver = ["lc-data-providers/mockserver"]
 sgx = [
     "futures_sgx",
     "hex-sgx",

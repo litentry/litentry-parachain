@@ -85,12 +85,17 @@ args:
         help: Cleans and purges any previous state and key files and generates them anew before starting.
     - running-mode:
         long: running-mode
-        help: Litentry TEE service running mode <dev/staging/prod>
+        help: Litentry TEE service running mode <dev/staging/prod/mock>
         takes_value: true
         default_value: "dev"
-    - disable-mock-server:
-        long: disable-mock-server
-        help: Set this flag to disable starting the mock server.
+    - enable-mock-server:
+        long: enable-mock-server
+        help: Set this flag to enable starting the mock server.
+    - mock-server-port:
+        long: mock-server-port
+        help: Set the port for the mock-server HTTP server
+        required: false
+        default_value: "9527"
 
 subcommands:
     - run:

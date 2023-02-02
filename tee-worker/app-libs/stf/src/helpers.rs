@@ -111,16 +111,6 @@ pub fn set_block_number(block_number: u32) {
 	sp_io::storage::set(&storage_value_key("System", "Number"), &block_number.encode());
 }
 
-#[cfg(feature = "mockserver")]
-pub fn generate_challenge_code() -> ChallengeCode {
-	// Hard Code ChallengeCode for mockserver test
-	// rand::thread_rng().gen::<ChallengeCode>()
-	// hex: 0x08685a3823d512fad5d277f102ae1808
-	let code: ChallengeCode = [8, 104, 90, 56, 35, 213, 18, 250, 213, 210, 119, 241, 2, 174, 24, 8];
-	code
-}
-
-#[cfg(not(feature = "mockserver"))]
 pub fn generate_challenge_code() -> ChallengeCode {
 	rand::thread_rng().gen::<ChallengeCode>()
 }
