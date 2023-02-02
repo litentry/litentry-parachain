@@ -59,7 +59,6 @@ evm = [
     "ita-stf/evm_std",
     "pallet-evm",
 ]
-mockserver = []
 offchain-worker = []
 production = []
 sidechain = []
