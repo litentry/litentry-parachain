@@ -21,7 +21,7 @@
 
 use super::*;
 
-use crate::Pallet as Teerex;
+use crate::{MREnclave, Pallet as Teerex};
 use frame_benchmarking::{account, benchmarks};
 use frame_system::RawOrigin;
 use sp_runtime::traits::CheckedConversion;
@@ -82,7 +82,7 @@ benchmarks! {
 			RawOrigin::Root.into(),
 			0u32,
 			#[cfg(feature = "skip-ias-check")]
-			<[u8; 32]>::decode(&mut TEST4_SETUP.cert).unwrap_or_default(),
+			MREnclave::decode(&mut TEST4_SETUP.cert).unwrap_or_default(),
 			#[cfg(not(feature = "skip-ias-check"))]
 			TEST4_MRENCLAVE,
 		).unwrap();
