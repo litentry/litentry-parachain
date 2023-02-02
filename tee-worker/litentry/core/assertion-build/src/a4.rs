@@ -67,14 +67,13 @@ pub fn build(
 				| VerifiedCredentialsNetwork::Litmus
 				| VerifiedCredentialsNetwork::Ethereum
 		) {
-			let q_min_balance: f64;
-			if verified_network == VerifiedCredentialsNetwork::Litentry
+			let q_min_balance: f64 = if verified_network == VerifiedCredentialsNetwork::Litentry
 				|| verified_network == VerifiedCredentialsNetwork::Litmus
 			{
-				q_min_balance = (min_balance / (10 ^ 12)) as f64;
+				(min_balance / (10 ^ 12)) as f64
 			} else {
-				q_min_balance = (min_balance / (10 ^ 18)) as f64;
-			}
+				(min_balance / (10 ^ 18)) as f64
+			};
 
 			let mut addresses: Vec<String> = vec![];
 			match &identity {
