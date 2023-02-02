@@ -98,7 +98,7 @@ pub fn build(
 		}
 	}
 
-	let a4 = Assertion::A4(min_balance, from_date.clone());
+	let a4 = Assertion::A4(min_balance, from_date);
 	match Credential::generate_unsigned_credential(&a4, who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.credential_subject.set_value(flag);
