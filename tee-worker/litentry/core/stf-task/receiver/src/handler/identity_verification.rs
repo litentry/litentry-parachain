@@ -91,6 +91,7 @@ where
 	}
 
 	fn on_failure(&self, error: Self::Error) {
+		log::error!("occur an error while verifying identity, due to:{:?}", error);
 		match self
 			.context
 			.node_metadata
