@@ -34,7 +34,7 @@ use litentry_primitives::{aes_encrypt_default, Assertion, UserShieldingKeyType};
 use log::*;
 use parachain_core_primitives::VCMPError;
 use sp_core::hashing::blake2_256;
-use std::{string::String, sync::Arc};
+use std::sync::Arc;
 
 pub(crate) struct AssertionHandler<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
