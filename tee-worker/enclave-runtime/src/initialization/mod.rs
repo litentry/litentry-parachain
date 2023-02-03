@@ -276,6 +276,9 @@ pub(crate) fn migrate_shard(
 ) -> EnclaveResult<()> {
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 	let _ = state_handler.initialize_shard(new_shard)?;
+	if let Ok((state,_)) = state_handler.load_cloned(&old_shard){		
+		let _ = state_handler.reset(state, &new_shard)?;
+	}
 	Ok(())
 }
 
