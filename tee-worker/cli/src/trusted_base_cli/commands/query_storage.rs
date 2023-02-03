@@ -43,7 +43,7 @@ impl QueryStorageCommand {
 				if let Ok(return_value) = RpcReturnValue::from_hex(&response.result) {
 					warn!("return_value:{:?}", &return_value);
 					match return_value.status {
-						DirectRequestStatus::Ok => {							
+						DirectRequestStatus::Ok => {
 							println!("{}", hex::encode(return_value.value));
 						},
 						DirectRequestStatus::Error => {
