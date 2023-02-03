@@ -2,7 +2,7 @@
 authors = ["Litentry Dev"]
 edition = '2021'
 name = 'rococo-parachain-runtime'
-version = '0.9.13'
+version = '0.9.14'
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len", "full"] }
@@ -231,6 +231,7 @@ std = [
 ]
 tee-dev = [
   "pallet-teerex/skip-ias-check",
+  "pallet-teerex/skip-scheduled-enclave-check",
 ]
 try-runtime = [
   "cumulus-pallet-aura-ext/try-runtime",

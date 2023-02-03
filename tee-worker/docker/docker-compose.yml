@@ -76,7 +76,7 @@ services:
       dockerfile: parachain-2106.Dockerfile
     depends_on: ['relaychain-alice', 'relaychain-bob']
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "9912"]
+      test: ["CMD", "nc", "-z", "integritee-node", "9912"]
       interval: 30s
       timeout: 10s
       retries: 20
@@ -112,17 +112,17 @@ services:
       integritee-node:
         condition: service_healthy
     environment:
-      - RUST_LOG=warn,ws=warn,sp_io=warn,substrate_api_client=warn,jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=warn,integritee_service=warn,ita_stf=warn
+      - RUST_LOG=info,ws=warn,sp_io=warn,substrate_api_client=warn,jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=warn,integritee_service=warn,ita_stf=warn
     networks:
       - integritee-test-network
     healthcheck:
-      test: curl -s -f http://localhost:4645/is_initialized || exit 1
+      test: curl -s -f http://integritee-worker-1:4645/is_initialized || exit 1
       interval: 30s
       timeout: 10s
       retries: 20
     entrypoint:
       "/usr/local/bin/integritee-service --clean-reset --ws-external -M integritee-worker-1 -T wss://integritee-worker-1
-      -u ws://integritee-node -U ws://integritee-worker-1 -P 2011 -w 2101 -p 9912 -h 4645
+      -u ws://integritee-node -U ws://integritee-worker-1 -P 2011 -w 2101 -p 9912 -h 4645 --enable-mock-server --running-mode mock
       run --dev --skip-ra"
     restart: "no"
   integritee-worker-2:
@@ -138,17 +138,17 @@ services:
       integritee-worker-1:
         condition: service_healthy
     environment:
-      - RUST_LOG=warn,ws=warn,sp_io=warn,substrate_api_client=warn,jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=warn,integritee_service=warn,ita_stf=warn
+      - RUST_LOG=info,ws=warn,sp_io=warn,substrate_api_client=warn,jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=warn,integritee_service=warn,ita_stf=warn
     networks:
       - integritee-test-network
     healthcheck:
-      test: curl -s -f http://localhost:4646/is_initialized || exit 1
+      test: curl -s -f http://integritee-worker-2:4646/is_initialized || exit 1
       interval: 30s
       timeout: 10s
       retries: 20
     entrypoint:
       "/usr/local/bin/integritee-service --clean-reset --ws-external -M integritee-worker-2 -T wss://integritee-worker-2
-      -u ws://integritee-node -U ws://integritee-worker-2 -P 2012 -w 2102 -p 9912 -h 4646
+      -u ws://integritee-node -U ws://integritee-worker-2 -P 2012 -w 2102 -p 9912 -h 4646 --enable-mock-server --running-mode mock
       run --dev --skip-ra --request-state"
     restart: "no"
 volumes:

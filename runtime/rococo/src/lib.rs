@@ -148,7 +148,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9135,
+	spec_version: 9140,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -850,7 +850,7 @@ impl pallet_teerex::Config for Runtime {
 	type Currency = Balances;
 	type MomentsPerDay = MomentsPerDay;
 	type WeightInfo = weights::pallet_teerex::WeightInfo<Runtime>;
-	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
+	type EnclaveAdminOrigin = EnsureRootOrAllCouncil;
 }
 
 impl pallet_sidechain::Config for Runtime {
