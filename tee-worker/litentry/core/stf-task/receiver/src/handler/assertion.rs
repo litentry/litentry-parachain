@@ -185,6 +185,7 @@ where
 	}
 
 	fn on_failure(&self, error: Self::Error) {
+		log::error!("occur an error while building assertion, due to:{:?}", error);
 		match self
 			.context
 			.node_metadata
