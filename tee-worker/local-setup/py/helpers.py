@@ -46,7 +46,7 @@ def setup_working_dir(source_dir: str, target_dir: str):
             print(f'{source} does not exist. Did you run make?')
 
 def copy_config_files(source_dir: str, target_dir: str):
-    files_to_copy = ['worker-config-dev.json', 'worker-config-prod.json', 'worker-config-staging.json']
+    files_to_copy = ['worker-config-dev.json', 'worker-config-mock.json', 'worker-config-prod.json', 'worker-config-staging.json']
     [shutil.copy(f'{source_dir}/{f}', f'{target_dir}/{f}') for f in files_to_copy]
 
 
