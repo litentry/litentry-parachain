@@ -50,6 +50,9 @@ pub trait EnclaveBase: Send + Sync + 'static {
 	/// Initialize a new shard.
 	fn init_shard(&self, shard: Vec<u8>) -> EnclaveResult<()>;
 
+	/// Migrate old shard to new shard.
+	fn migrate_shard(&self, old_shard: Vec<u8>, new_shard: Vec<u8>) -> EnclaveResult<()>;
+
 	/// Trigger the import of parentchain block explicitly. Used when initializing a light-client
 	/// with a triggered import dispatcher.
 	fn trigger_parentchain_block_import(&self) -> EnclaveResult<()>;
@@ -138,6 +141,25 @@ impl EnclaveBase for Enclave {
 
 		let result =
 			unsafe { ffi::init_shard(self.eid, &mut retval, shard.as_ptr(), shard.len() as u32) };
+
+		ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
+		ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
+
+		Ok(())
+	}
+
+	fn migrate_shard(&self, old_shard: Vec<u8>, new_shard: Vec<u8>) -> EnclaveResult<()> {
+		let mut retval = sgx_status_t::SGX_SUCCESS;
+
+		let result = unsafe {
+			ffi::migrate_shard(
+				self.eid,
+				&mut retval,
+				old_shard.as_ptr(),
+				new_shard.as_ptr(),
+				old_shard.len() as u32,
+			)
+		};
 
 		ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
 		ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));

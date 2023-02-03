@@ -39,7 +39,7 @@ use crate::{
 	worker::Worker,
 	worker_peers_updater::WorkerPeersUpdater,
 };
-use base58::ToBase58;
+use base58::{FromBase58, ToBase58};
 use clap::{load_yaml, App};
 use codec::{Decode, Encode};
 use enclave::{
@@ -287,15 +287,30 @@ fn main() {
 			tests::run_enclave_tests(sub_matches);
 		}
 	} else if let Some(sub_matches) = matches.subcommand_matches("migrate-shard") {
-		let old_shard = sub_matches.value_of("old-shard").unwrap();
-		let new_shard = sub_matches.value_of("new-shard").unwrap();
+		let old_shard = sub_matches
+			.value_of("old-shard")
+			.and_then(|value| {
+				let shard_vec = value.from_base58().expect("shard must be hex encoded");
+				let mut shard = [0u8; 32];
+				shard.copy_from_slice(&shard_vec[..]);
+				Some(ShardIdentifier::from_slice(&shard))
+			})
+			.unwrap_or_default();
+
+		let new_shard: ShardIdentifier = sub_matches
+			.value_of("new-shard")
+			.and_then(|value| {
+				let shard_vec = value.from_base58().expect("shard must be hex encoded");
+				let mut shard = [0u8; 32];
+				shard.copy_from_slice(&shard_vec[..]);
+				Some(ShardIdentifier::from_slice(&shard))
+			})
+			.unwrap_or_default();
+
 		if old_shard == new_shard {
 			println!("old_shard should not be the same as new_shard");
 		} else {
-			setup::init_shard(
-				enclave.as_ref(),
-				&extract_shard(&Some(new_shard.to_string()), enclave.as_ref()),
-			);
+			setup::migrate_shard(enclave.as_ref(), &old_shard, &new_shard);
 		}
 	} else {
 		println!("For options: use --help");
