@@ -151,14 +151,14 @@ pub(crate) fn init_enclave(mu_ra_url: String, untrusted_worker_url: String) -> E
 
 	let top_pool_author = create_top_pool_author(
 		connection_registry.clone(),
-		state_handler,
+		state_handler.clone(),
 		ocall_api.clone(),
 		shielding_key_repository,
 	);
 	GLOBAL_TOP_POOL_AUTHOR_COMPONENT.initialize(top_pool_author.clone());
 
 	let getter_executor = Arc::new(EnclaveGetterExecutor::new(state_observer));
-	let io_handler = public_api_rpc_handler(top_pool_author, getter_executor);
+	let io_handler = public_api_rpc_handler(top_pool_author, getter_executor, Some(state_handler));
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 	GLOBAL_RPC_WS_HANDLER_COMPONENT.initialize(rpc_handler);
 
