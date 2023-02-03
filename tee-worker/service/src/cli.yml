@@ -156,10 +156,12 @@ subcommands:
         args:
             - old-shard:
                 long: old-shard    
-                help: shard identifier base58 encoded            
+                help: shard identifier base58 encoded      
+                takes_value: true
             - new-shard:
                 long: new-shard
                 help: shard identifier base58 encoded
+                takes_value: true
     - test:
           about: Run tests involving the enclave
           takes_value: true
