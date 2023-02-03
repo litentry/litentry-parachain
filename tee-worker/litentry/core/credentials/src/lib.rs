@@ -334,6 +334,24 @@ impl Credential {
 				let credential: Credential = Credential::from_template(raw, who, shard, bn)?;
 				Ok(credential)
 			},
+			Assertion::A4(min_balance, from_date) => {
+				let min_balance = format!("{}", min_balance);
+				let from_date = String::from_utf8(from_date.clone().into_inner()).unwrap();
+
+				let raw = include_str!("templates/a4.json");
+				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+
+				// add assertion
+				let lit_amounts =
+					AssertionLogic::new_item("$lit_amounts", Op::GreaterEq, &min_balance);
+				let timestamp = AssertionLogic::new_item("$timestamp", Op::GreaterEq, &from_date);
+
+				let assertion = AssertionLogic::new_and().add_item(lit_amounts).add_item(timestamp);
+
+				credential.credential_subject.assertions = assertion;
+
+				Ok(credential)
+			},
 			Assertion::A7(min_balance, year) => {
 				let min_balance = format!("{}", min_balance);
 
@@ -346,7 +364,7 @@ impl Credential {
 				let timestamp =
 					AssertionLogic::new_item("$timestamp", Op::GreaterEq, &year_to_date(*year));
 
-				let assertion = AssertionLogic::new_add().add_item(lit_amounts).add_item(timestamp);
+				let assertion = AssertionLogic::new_and().add_item(lit_amounts).add_item(timestamp);
 
 				credential.credential_subject.assertions = assertion;
 
@@ -369,7 +387,7 @@ impl Credential {
 				let timestamp =
 					AssertionLogic::new_item("$timestamp", Op::GreaterEq, &year_to_date(*year));
 
-				let assertion = AssertionLogic::new_add().add_item(lit_amounts).add_item(timestamp);
+				let assertion = AssertionLogic::new_and().add_item(lit_amounts).add_item(timestamp);
 
 				credential.credential_subject.assertions = assertion;
 
@@ -398,7 +416,7 @@ impl Credential {
 		let web2_item = AssertionLogic::new_item("$total_txs", Op::GreaterThan, &min);
 		let web3_item = AssertionLogic::new_item("$total_txs", Op::LessEq, &max);
 
-		let assertion = AssertionLogic::new_add().add_item(web2_item).add_item(web3_item);
+		let assertion = AssertionLogic::new_and().add_item(web2_item).add_item(web3_item);
 
 		self.credential_subject.assertions = assertion;
 	}

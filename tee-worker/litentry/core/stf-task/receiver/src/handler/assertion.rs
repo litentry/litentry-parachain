@@ -82,15 +82,15 @@ where
 				lc_assertion_build::a3::build(self.req.vec_identity.to_vec(), guild_id, handler)
 					.map(|_| None),
 
-			Assertion::A4(min_balance, from_date) => {
-				let min_balance: f64 = (min_balance / (10 ^ 12)) as f64;
-				lc_assertion_build::a4::build(
-					self.req.vec_identity.to_vec(),
-					String::from_utf8(from_date.into_inner()).unwrap(),
-					min_balance,
-				)
-				.map(|_| None)
-			},
+			Assertion::A4(min_balance, from_date) => lc_assertion_build::a4::build(
+				self.req.vec_identity.to_vec(),
+				from_date,
+				min_balance,
+				&self.req.shard,
+				&self.req.who,
+				self.req.bn,
+			)
+			.map(|credential| Some((credential, self.req.who.clone()))),
 
 			Assertion::A5(twitter_account, original_tweet_id) => lc_assertion_build::a5::build(
 				self.req.vec_identity.to_vec(),
