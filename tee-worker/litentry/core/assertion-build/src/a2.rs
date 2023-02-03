@@ -20,36 +20,62 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{Error, Result};
+use crate::Result;
+use itp_stf_primitives::types::ShardIdentifier;
+use itp_types::AccountId;
+use lc_credentials::Credential;
 use lc_data_providers::discord_litentry::DiscordLitentryClient;
-use litentry_primitives::{Identity, ParameterString, Web2Network};
+use litentry_primitives::{
+	Assertion, Identity, ParameterString, ParentchainBlockNumber, Web2Network,
+};
+use log::*;
+use parachain_core_primitives::VCMPError;
 use std::vec::Vec;
 
 pub fn build(
 	identities: Vec<Identity>,
 	guild_id: ParameterString,
 	handler: ParameterString,
-) -> Result<()> {
+	shard: &ShardIdentifier,
+	who: &AccountId,
+	bn: ParentchainBlockNumber,
+) -> Result<Credential> {
+	let mut discord_cnt: i32 = 0;
+	let mut has_joined: bool = false;
+
 	let mut client = DiscordLitentryClient::new();
 	for identity in identities {
 		if let Identity::Web2 { network, address: _addr } = identity {
 			if matches!(network, Web2Network::Discord) {
-				// TODO not sure if addr = handler ?
+				discord_cnt += 1;
 				if let Ok(response) = client.check_join(guild_id.to_vec(), handler.to_vec()) {
 					if response.data {
-						// TODO:
-						// generate_vc(who, identity, ...)
-
-						// After receiving VC, F/E is expected to assign 'IDHubber' role and align with bot
-						// https://github.com/litentry/tee-worker/issues/35
-						// https://github.com/litentry/tee-worker/issues/36
-						return Ok(())
+						has_joined = true;
 					}
 				}
 			}
 		}
 	}
-	Err(Error::Assertion2Failed)
+
+	match Credential::generate_unsigned_credential(
+		&Assertion::A2(guild_id, handler),
+		who,
+		&shard.clone(),
+		bn,
+	) {
+		Ok(mut credential_unsigned) => {
+			if discord_cnt > 0 && has_joined {
+				credential_unsigned.credential_subject.set_value(true);
+			} else {
+				credential_unsigned.credential_subject.set_value(false);
+			}
+			Ok(credential_unsigned)
+		},
+		Err(e) => {
+			error!("Generate unsigned credential A2 failed {:?}", e);
+			Err(VCMPError::Assertion2Failed)
+		},
+	}
 }
 
 #[cfg(test)]

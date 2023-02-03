@@ -80,9 +80,15 @@ where
 			)
 			.map(|credential| Some((credential, self.req.who.clone()))),
 
-			Assertion::A2(guild_id, handler) =>
-				lc_assertion_build::a2::build(self.req.vec_identity.to_vec(), guild_id, handler)
-					.map(|_| None),
+			Assertion::A2(guild_id, handler) => lc_assertion_build::a2::build(
+				self.req.vec_identity.to_vec(),
+				guild_id,
+				handler,
+				&self.req.shard,
+				&self.req.who,
+				self.req.bn,
+			)
+			.map(|credential| Some((credential, self.req.who.clone()))),
 
 			Assertion::A3(guild_id, handler) =>
 				lc_assertion_build::a3::build(self.req.vec_identity.to_vec(), guild_id, handler)

@@ -334,6 +334,11 @@ impl Credential {
 				let credential: Credential = Credential::from_template(raw, who, shard, bn)?;
 				Ok(credential)
 			},
+			Assertion::A2(guild_id, handler) => {
+				let raw = include_str!("templates/a2.json");
+				let credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				Ok(credential)
+			},
 			Assertion::A4(min_balance, from_date) => {
 				let min_balance = format!("{}", min_balance);
 				let from_date = String::from_utf8(from_date.clone().into_inner()).unwrap();
