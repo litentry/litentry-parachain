@@ -334,8 +334,13 @@ impl Credential {
 				let credential: Credential = Credential::from_template(raw, who, shard, bn)?;
 				Ok(credential)
 			},
-			Assertion::A2(guild_id, handler) => {
+			Assertion::A2(_, _) => {
 				let raw = include_str!("templates/a2.json");
+				let credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				Ok(credential)
+			},
+			Assertion::A3(_, _) => {
+				let raw = include_str!("templates/a3.json");
 				let credential: Credential = Credential::from_template(raw, who, shard, bn)?;
 				Ok(credential)
 			},
