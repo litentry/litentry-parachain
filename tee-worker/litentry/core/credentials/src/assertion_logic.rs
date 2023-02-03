@@ -64,7 +64,7 @@ pub enum AssertionLogic {
 }
 
 impl AssertionLogic {
-	pub fn new_add() -> Self {
+	pub fn new_and() -> Self {
 		Self::And { items: vec![] }
 	}
 

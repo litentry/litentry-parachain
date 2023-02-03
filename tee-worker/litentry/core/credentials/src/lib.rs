@@ -334,6 +334,24 @@ impl Credential {
 				let credential: Credential = Credential::from_template(raw, who, shard, bn)?;
 				Ok(credential)
 			},
+			Assertion::A4(min_balance, from_date) => {
+				let min_balance = format!("{}", min_balance);
+				let from_date = String::from_utf8(from_date.clone().into_inner()).unwrap();
+
+				let raw = include_str!("templates/a4.json");
+				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+
+				// add assertion
+				let lit_amounts =
+					AssertionLogic::new_item("$lit_amounts", Op::GreaterEq, &min_balance);
+				let timestamp = AssertionLogic::new_item("$timestamp", Op::GreaterEq, &from_date);
+
+				let assertion = AssertionLogic::new_and().add_item(lit_amounts).add_item(timestamp);
+
+				credential.credential_subject.assertions = assertion;
+
+				Ok(credential)
+			},
 			_ => Err(Error::UnsupportedAssertion),
 		}
 	}
