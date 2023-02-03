@@ -176,7 +176,7 @@ export type IntegrationTestContext = {
     substrate: ApiPromise;
     teeShieldingKey: KeyObject;
     shard: HexString;
-    defaultSigner: KeyringPair;
+    defaultSigner: KeyringPair[];
     //@todo add type
     ethersWallet: any;
 };
