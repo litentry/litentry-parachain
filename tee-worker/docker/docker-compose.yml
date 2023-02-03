@@ -148,7 +148,7 @@ services:
       retries: 20
     entrypoint:
       "/usr/local/bin/integritee-service --clean-reset --ws-external -M integritee-worker-2 -T wss://integritee-worker-2
-      -u ws://integritee-node -U ws://integritee-worker-2 -P 2012 -w 2102 -p 9912 -h 4646
+      -u ws://integritee-node -U ws://integritee-worker-2 -P 2012 -w 2102 -p 9912 -h 4646 --enable-mock-server --running-mode mock
       run --dev --skip-ra --request-state"
     restart: "no"
 volumes:
