@@ -155,7 +155,7 @@ where
 }
 
 // converts the rpc methods vector to a string and adds commas and brackets for readability
-fn decode_shard_from_base58(shard_base58: &str) -> Result<ShardIdentifier, String> {
+pub fn decode_shard_from_base58(shard_base58: &str) -> Result<ShardIdentifier, String> {
 	let shard_vec = match shard_base58.from_base58() {
 		Ok(vec) => vec,
 		Err(_) => return Err("Invalid base58 format of shard id".to_owned()),

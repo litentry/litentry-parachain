@@ -25,6 +25,7 @@ use crate::{
 			verify_identity_preflight::VerifyIdentityPreflightCommand,
 		},
 		nonce::NonceCommand,
+		query_storage::QueryStorageCommand,
 		set_balance::SetBalanceCommand,
 		transfer::TransferCommand,
 		unshield_funds::UnshieldFundsCommand,
@@ -74,6 +75,8 @@ pub enum TrustedBaseCommand {
 	VerifyIdentityPreflight(VerifyIdentityPreflightCommand),
 
 	SetUserShieldingKeyPreflight(SetUserShieldingKeyPreflightCommand),
+
+	QueryStorage(QueryStorageCommand),
 }
 
 impl TrustedBaseCommand {
@@ -91,6 +94,7 @@ impl TrustedBaseCommand {
 			TrustedBaseCommand::SetChallengeCode(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::VerifyIdentityPreflight(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::SetUserShieldingKeyPreflight(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::QueryStorage(cmd) => cmd.run(cli, trusted_cli),
 		}
 	}
 }

@@ -17,18 +17,29 @@
 
 use codec::Encode;
 use core::result::Result;
+use frame_support::sp_tracing::warn;
 use ita_sgx_runtime::Runtime;
 use itp_primitives_cache::{GetPrimitives, GLOBAL_PRIMITIVES_CACHE};
 use itp_rpc::RpcReturnValue;
 use itp_sgx_crypto::Rsa3072Seal;
+use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::getter_executor::ExecuteGetter;
+use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{DirectRequestStatus, Request, ShardIdentifier, H256};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use its_primitives::types::block::SignedBlock;
-use its_sidechain::rpc_handler::{direct_top_pool_api, import_block_api};
+use its_sidechain::rpc_handler::{
+	direct_top_pool_api, direct_top_pool_api::decode_shard_from_base58, import_block_api,
+};
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
-use std::{borrow::ToOwned, format, str, string::String, sync::Arc, vec::Vec};
+use std::{
+	borrow::ToOwned,
+	format, str,
+	string::{String, ToString},
+	sync::Arc,
+	vec::Vec,
+};
 
 fn compute_hex_encoded_return_error(error_msg: &str) -> String {
 	RpcReturnValue::from_error_message(error_msg).to_hex()
@@ -44,10 +55,16 @@ fn get_all_rpc_methods_string(io_handler: &IoHandler) -> String {
 	format!("methods: [{}]", method_string)
 }
 
-pub fn public_api_rpc_handler<R, G>(top_pool_author: Arc<R>, getter_executor: Arc<G>) -> IoHandler
+pub fn public_api_rpc_handler<R, G, S>(
+	top_pool_author: Arc<R>,
+	getter_executor: Arc<G>,
+	state: Option<Arc<S>>,
+) -> IoHandler
 where
 	R: AuthorApi<H256, H256> + Send + Sync + 'static,
 	G: ExecuteGetter + Send + Sync + 'static,
+	S: HandleState + Send + Sync + 'static,
+	S::StateT: SgxExternalitiesTrait,
 {
 	let io = IoHandler::new();
 
@@ -142,6 +159,52 @@ where
 		};
 		Ok(json!(json_value))
 	});
+
+	if let Some(state) = state {
+		// state_getStorage
+		let state_get_storage = "state_getStorage";
+		io.add_sync_method(state_get_storage, move |params: Params| {
+			// jsonrpc_core::serde::Deserialize<'de>` is not implemented for `H256`
+			// can not parse ShardIdentifier
+			// TODO: hanld error
+			match params.parse::<Vec<String>>() {
+				Ok(params) => {
+					let shard_str = params.get(0).map(|v| v.to_string()).unwrap_or_default();
+					let key = params.get(1).map(|v| v.to_string()).unwrap_or_default();
+
+					let key = key.strip_prefix("0x").unwrap_or_default();
+					let key = match hex::decode(key) {
+						Ok(key) => key,
+						Err(_) =>
+							return Ok(json!(compute_hex_encoded_return_error("docode key error"))),
+					};
+
+					let shard: ShardIdentifier = match decode_shard_from_base58(shard_str.as_str())
+					{
+						Ok(id) => id,
+						Err(msg) => {
+							let error_msg = format!("decode shard failure due to: {}", msg);
+							return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+						},
+					};
+					match state.load_cloned(&shard) {
+						Ok((state, _hash)) => {
+							let value = state.get(key.as_slice()).cloned().unwrap_or_default();
+							warn!("query storage value:{:?}", &value);
+							let json_value =
+								RpcReturnValue::new(value, false, DirectRequestStatus::Ok);
+							Ok(json!(json_value.to_hex()))
+						},
+						Err(e) => {
+							let error_msg = format!("load shard failure due to: {:?}", e);
+							return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+						},
+					}
+				},
+				Err(_err) => Ok(json!(compute_hex_encoded_return_error("parse error"))),
+			}
+		});
+	}
 
 	// system_health
 	let state_health_name: &str = "system_health";
