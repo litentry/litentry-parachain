@@ -286,6 +286,17 @@ fn main() {
 		} else {
 			tests::run_enclave_tests(sub_matches);
 		}
+	} else if let Some(sub_matches) = matches.subcommand_matches("migrate-shard") {
+		let old_shard = sub_matches.value_of("old-shard").unwrap();
+		let new_shard = sub_matches.value_of("new-shard").unwrap();
+		if old_shard == new_shard {
+			println!("old_shard should not be the same as new_shard");
+		} else {
+			setup::init_shard(
+				enclave.as_ref(),
+				&extract_shard(&Some(new_shard.to_string()), enclave.as_ref()),
+			);
+		}
 	} else {
 		println!("For options: use --help");
 	}
