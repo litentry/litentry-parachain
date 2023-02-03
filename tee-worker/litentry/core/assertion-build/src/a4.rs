@@ -21,10 +21,14 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::{from_data_provider_error, Error, Result};
+use itp_stf_primitives::types::ShardIdentifier;
+use itp_types::AccountId;
+use lc_credentials::Credential;
 use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
-use litentry_primitives::Identity;
+use litentry_primitives::{Assertion, Identity, ParameterString, ParentchainBlockNumber};
+use log::*;
 use std::{
 	str::from_utf8,
 	string::{String, ToString},
@@ -35,8 +39,18 @@ use std::{
 // ERC20 LIT token address
 const LIT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
 
-pub fn build(identities: Vec<Identity>, from_date: String, min_balance: f64) -> Result<()> {
+pub fn build(
+	identities: Vec<Identity>,
+	from_date: ParameterString,
+	min_balance: u128,
+	shard: &ShardIdentifier,
+	who: &AccountId,
+	bn: ParentchainBlockNumber,
+) -> Result<Credential> {
 	let mut client = GraphQLClient::new();
+	let mut flag = false;
+
+	let q_from_date = String::from_utf8(from_date.clone().into_inner()).unwrap();
 
 	for identity in identities.iter() {
 		let mut verified_network = VerifiedCredentialsNetwork::Polkadot;
@@ -53,6 +67,14 @@ pub fn build(identities: Vec<Identity>, from_date: String, min_balance: f64) -> 
 				| VerifiedCredentialsNetwork::Litmus
 				| VerifiedCredentialsNetwork::Ethereum
 		) {
+			let q_min_balance: f64 = if verified_network == VerifiedCredentialsNetwork::Litentry
+				|| verified_network == VerifiedCredentialsNetwork::Litmus
+			{
+				(min_balance / (10 ^ 12)) as f64
+			} else {
+				(min_balance / (10 ^ 18)) as f64
+			};
+
 			let mut addresses: Vec<String> = vec![];
 			match &identity {
 				Identity::Evm { address, .. } =>
@@ -68,19 +90,32 @@ pub fn build(identities: Vec<Identity>, from_date: String, min_balance: f64) -> 
 			}
 			let credentials = VerifiedCredentialsIsHodlerIn {
 				addresses,
-				from_date,
+				from_date: q_from_date.clone(),
 				network: verified_network,
 				token_address: tmp_token_addr,
-				min_balance,
+				min_balance: q_min_balance,
 			};
-			let _is_holder_out = client
+			let is_holder_out = client
 				.check_verified_credentials_is_hodler(credentials)
 				.map_err(from_data_provider_error)?;
-			// TODO: generate VC
-			return Ok(())
+
+			for holder in is_holder_out.verified_credentials_is_hodler.iter() {
+				flag = flag || holder.is_hodler;
+			}
 		}
 	}
 
-	// no valid response
+	let a4 = Assertion::A4(min_balance, from_date);
+	match Credential::generate_unsigned_credential(&a4, who, &shard.clone(), bn) {
+		Ok(mut credential_unsigned) => {
+			credential_unsigned.credential_subject.set_value(flag);
+
+			return Ok(credential_unsigned)
+		},
+		Err(e) => {
+			error!("Generate unsigned credential failed {:?}", e);
+		},
+	}
+
 	Err(Error::Assertion4Failed)
 }
