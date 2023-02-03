@@ -118,7 +118,7 @@ export async function initIntegrationTestContext(
         substrate: api,
         teeShieldingKey,
         shard,
-        defaultSigner: getSigner(0),
+        defaultSigner: getSigner(),
         ethersWallet,
     };
 }
@@ -239,7 +239,6 @@ export async function listenCreatedIdentityEvents(context: IntegrationTestContex
     });
 }
 export function decryptWithAES(key: HexString, aesOutput: AESOutput): HexString {
-
     if (aesOutput.ciphertext && aesOutput.nonce) {
         const secretKey = crypto.createSecretKey(hexToU8a(key));
         const tagSize = 16;
@@ -323,7 +322,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
         // Set timeout to 6000 seconds
         this.timeout(6000000);
         let context: IntegrationTestContext = {
-            defaultSigner: {} as KeyringPair,
+            defaultSigner: [] as KeyringPair[],
             shard: '0x11' as HexString,
             substrate: {} as ApiPromise,
             tee: {} as WebSocketAsPromised,
@@ -357,4 +356,3 @@ export function getMessage(address: string, wallet: string): string {
     const messgae = `Signing in ${process.env.ID_HUB_URL} with ${address} using ${wallet} and challenge code is: ${challengeCode}`;
     return messgae;
 }
-
