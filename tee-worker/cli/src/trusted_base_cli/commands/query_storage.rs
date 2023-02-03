@@ -12,7 +12,9 @@ use std::sync::mpsc::channel;
 #[derive(Parser)]
 pub struct QueryStorageCommand {
 	/// Storage Key
-	key: String,
+	module: String,
+
+	storage: String,
 }
 impl QueryStorageCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_args: &TrustedCli) {
@@ -20,7 +22,8 @@ impl QueryStorageCommand {
 
 		// let shard = read_shard(trusted_args).unwrap();
 
-		let key = storage_value_key("Parentchain", "Number");
+		// let key = storage_value_key("Parentchain", "Number");
+		let key = storage_value_key(self.module.as_str(), self.storage.as_str());
 		let key = format!("0x{}", hex::encode(key));
 
 		let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
@@ -40,11 +43,8 @@ impl QueryStorageCommand {
 				if let Ok(return_value) = RpcReturnValue::from_hex(&response.result) {
 					warn!("return_value:{:?}", &return_value);
 					match return_value.status {
-						DirectRequestStatus::Ok => {
-							// if let Ok(value) = BlockNumber::decode(&mut return_value.value.as_slice()) {
-							// info!("value {:?}", value);
-							// }
-							println!("{:?}", return_value.value);
+						DirectRequestStatus::Ok => {							
+							println!("{}", hex::encode(return_value.value));
 						},
 						DirectRequestStatus::Error => {
 							warn!("request status is error");
