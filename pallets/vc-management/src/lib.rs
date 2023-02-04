@@ -170,6 +170,7 @@ pub mod pallet {
 
 		/// copy from litentry_primitives::VCMPError
 		HttpRequestFailed,
+		RequestVCHandlingFailed,
 		Assertion1Failed,
 		Assertion2Failed,
 		Assertion3Failed,
@@ -248,6 +249,8 @@ pub mod pallet {
 					log::error!("request failed:{:?}", s);
 					Err(Error::<T>::HttpRequestFailed.into())
 				},
+				VCMPError::RequestVCHandlingFailed =>
+					Err(Error::<T>::RequestVCHandlingFailed.into()),
 				VCMPError::Assertion1Failed => Err(Error::<T>::Assertion1Failed.into()),
 				VCMPError::Assertion2Failed => Err(Error::<T>::Assertion2Failed.into()),
 				VCMPError::Assertion3Failed => Err(Error::<T>::Assertion3Failed.into()),

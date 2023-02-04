@@ -104,9 +104,13 @@ pub mod pallet {
 		/// a `create_identity` request from unauthorised user
 		UnauthorisedUser,
 
-		/// copy from litentry_primitives::IMPError
+		/// copied from core_primitives::IMPError
 		DecodeHexFailed,
 		HttpRequestFailed,
+		CreateIdentityHandlingFailed,
+		RemoveIdentityHandlingFailed,
+		VerifyIdentityHandlingFailed,
+		SetUserShieldingKeyHandlingFailed,
 		InvalidIdentity,
 		WrongWeb2Handle,
 		UnexpectedMessage,
@@ -283,6 +287,14 @@ pub mod pallet {
 					log::error!("request failed:{:?}", s);
 					Err(Error::<T>::HttpRequestFailed.into())
 				},
+				IMPError::CreateIdentityHandlingFailed =>
+					Err(Error::<T>::CreateIdentityHandlingFailed.into()),
+				IMPError::RemoveIdentityHandlingFailed =>
+					Err(Error::<T>::RemoveIdentityHandlingFailed.into()),
+				IMPError::VerifyIdentityHandlingFailed =>
+					Err(Error::<T>::VerifyIdentityHandlingFailed.into()),
+				IMPError::SetUserShieldingKeyHandlingFailed =>
+					Err(Error::<T>::SetUserShieldingKeyHandlingFailed.into()),
 				IMPError::InvalidIdentity => Err(Error::<T>::InvalidIdentity.into()),
 				IMPError::WrongWeb2Handle => Err(Error::<T>::WrongWeb2Handle.into()),
 				IMPError::UnexpectedMessage => Err(Error::<T>::UnexpectedMessage.into()),

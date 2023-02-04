@@ -14,7 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{error::Error, executor::Executor, IndirectCallsExecutor};
+use crate::{
+	error::{Error, IMPError},
+	executor::Executor,
+	IndirectCallsExecutor,
+};
 use codec::{Decode, Encode};
 use ita_stf::{TrustedCall, TrustedOperation};
 use itp_node_api::{
@@ -33,6 +37,68 @@ use sp_runtime::traits::{AccountIdLookup, StaticLookup};
 
 pub(crate) struct VerifyIdentity {
 	pub(crate) block_number: ParentchainBlockNumber,
+}
+
+impl VerifyIdentity {
+	fn execute_internal<
+		ShieldingKeyRepository,
+		StfEnclaveSigner,
+		TopPoolAuthor,
+		NodeMetadataProvider,
+	>(
+		&self,
+		context: &IndirectCallsExecutor<
+			ShieldingKeyRepository,
+			StfEnclaveSigner,
+			TopPoolAuthor,
+			NodeMetadataProvider,
+		>,
+		extrinsic: ParentchainUncheckedExtrinsic<
+			<Self as Executor<
+				ShieldingKeyRepository,
+				StfEnclaveSigner,
+				TopPoolAuthor,
+				NodeMetadataProvider,
+			>>::Call,
+		>,
+	) -> Result<(), Error>
+	where
+		ShieldingKeyRepository: AccessKey,
+		<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
+			+ ShieldingCryptoEncrypt<Error = itp_sgx_crypto::Error>,
+		StfEnclaveSigner: StfEnclaveSigning,
+		TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
+		NodeMetadataProvider: AccessNodeMetadata,
+		NodeMetadataProvider::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
+	{
+		let (_, shard, encrypted_identity, encrypted_validation_data) = extrinsic.function;
+		let shielding_key = context.shielding_key_repo.retrieve_key()?;
+
+		let identity: Identity =
+			Identity::decode(&mut shielding_key.decrypt(&encrypted_identity)?.as_slice())?;
+		let validation_data = ValidationData::decode(
+			&mut shielding_key.decrypt(&encrypted_validation_data)?.as_slice(),
+		)?;
+
+		if let Some((multiaddress_account, _, _)) = extrinsic.signature {
+			let account = AccountIdLookup::lookup(multiaddress_account)?;
+			let enclave_account_id = context.stf_enclave_signer.get_enclave_account()?;
+			let trusted_call = TrustedCall::verify_identity_preflight(
+				enclave_account_id,
+				account,
+				identity,
+				validation_data,
+				self.block_number,
+			);
+			let signed_trusted_call =
+				context.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
+			let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
+
+			let encrypted_trusted_call = shielding_key.encrypt(&trusted_operation.encode())?;
+			context.submit_trusted_call(shard, encrypted_trusted_call);
+		}
+		Ok(())
+	}
 }
 
 impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
@@ -70,32 +136,7 @@ where
 		>,
 		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
 	) -> Result<(), Error> {
-		let (_, shard, encrypted_identity, encrypted_validation_data) = extrinsic.function;
-		let shielding_key = context.shielding_key_repo.retrieve_key()?;
-
-		let identity: Identity =
-			Identity::decode(&mut shielding_key.decrypt(&encrypted_identity)?.as_slice())?;
-		let validation_data = ValidationData::decode(
-			&mut shielding_key.decrypt(&encrypted_validation_data)?.as_slice(),
-		)?;
-
-		if let Some((multiaddress_account, _, _)) = extrinsic.signature {
-			let account = AccountIdLookup::lookup(multiaddress_account)?;
-			let enclave_account_id = context.stf_enclave_signer.get_enclave_account()?;
-			let trusted_call = TrustedCall::verify_identity_preflight(
-				enclave_account_id,
-				account,
-				identity,
-				validation_data,
-				self.block_number,
-			);
-			let signed_trusted_call =
-				context.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
-			let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
-
-			let encrypted_trusted_call = shielding_key.encrypt(&trusted_operation.encode())?;
-			context.submit_trusted_call(shard, encrypted_trusted_call);
-		}
-		Ok(())
+		self.execute_internal(context, extrinsic)
+			.map_err(|_| Error::IMPHandlingError(IMPError::VerifyIdentityHandlingFailed))
 	}
 }

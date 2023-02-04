@@ -18,7 +18,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use parachain_core_primitives::{IMPError, VCMPError};
+pub use parachain_core_primitives::{IMPError, VCMPError};
 use sgx_types::sgx_status_t;
 use sp_runtime::traits::LookupError;
 use std::{boxed::Box, format};
@@ -77,5 +77,17 @@ impl From<itp_node_api::metadata::Error> for Error {
 impl From<LookupError> for Error {
 	fn from(_: LookupError) -> Self {
 		Self::AccountIdLookup
+	}
+}
+
+impl From<IMPError> for Error {
+	fn from(e: IMPError) -> Self {
+		Self::IMPHandlingError(e)
+	}
+}
+
+impl From<VCMPError> for Error {
+	fn from(e: VCMPError) -> Self {
+		Self::VCMPHandlingError(e)
 	}
 }
