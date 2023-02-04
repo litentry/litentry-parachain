@@ -235,6 +235,25 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 					Ok(ExecutionStatus::NextExecutor) => continue,
 					Err(e) => {
 						log::error!("fail to execute indirect_call. due to {:?} ", e);
+						match e {
+							// error handling: call the counter part on parachain to pass it back
+							error::Error::IMPHandlingError(e) => {
+								let call = self
+									.node_meta_data_provider
+									.get_from_metadata(|m| m.imp_some_error_call_indexes())??;
+
+								calls.push(OpaqueCall::from_tuple(&(call, e)))
+							},
+							error::Error::VCMPHandlingError(e) => {
+								let call = self
+									.node_meta_data_provider
+									.get_from_metadata(|m| m.vcmp_some_error_call_indexes())??;
+
+								calls.push(OpaqueCall::from_tuple(&(call, e)))
+							},
+							// nothing to do
+							_ => (),
+						}
 						// We should keep the same error handling as the original function `handle_shield_funds_xt`.
 						// `create_processed_parentchain_block_call` needs to be called in any case.
 						break

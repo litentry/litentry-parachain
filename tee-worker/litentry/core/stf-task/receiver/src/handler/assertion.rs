@@ -189,7 +189,7 @@ where
 		match self
 			.context
 			.node_metadata
-			.get_from_metadata(|m| VCMPCallIndexes::vc_some_error_call_indexes(m))
+			.get_from_metadata(|m| VCMPCallIndexes::vcmp_some_error_call_indexes(m))
 		{
 			Ok(Ok(call_index)) => {
 				let call = OpaqueCall::from_tuple(&(call_index, error));
