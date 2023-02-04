@@ -74,10 +74,14 @@ use lc_data_providers::DataProvidersStatic;
 use litentry_primitives::Identity;
 use log::*;
 use my_node_runtime::{Hash, Header, RuntimeEvent};
+use serde_json::Value;
 use sgx_types::*;
 use sp_core::crypto::{AccountId32, Ss58Codec};
 use sp_keyring::AccountKeyring;
 use std::{
+	env,
+	fs::File,
+	io::Read,
 	path::PathBuf,
 	str,
 	sync::{
@@ -529,61 +533,49 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	// ------------------------------------------------------------------------
 	// Start stf task handler thread
 	let enclave_api_stf_task_handler = enclave.clone();
-	let mut data_providers_static = DataProvidersStatic::default();
+	let mut data_provider_config: DataProvidersStatic;
 	{
-		let mut config_file = "worker-config-dev.json";
-		if config.running_mode == "staging" {
-			config_file = "worker-config-staging.json";
-		} else if config.running_mode == "prod" {
-			config_file = "worker-config-prod.json";
-		} else if config.running_mode == "mock" {
-			config_file = "worker-config-mock.json";
+		let build_in_mode = vec!["dev", "mock", "prod", "staging"];
+		let build_in_config: Value =
+			serde_json::from_slice(include_bytes!("running-mode-config.json")).unwrap();
+
+		if build_in_mode.contains(&config.running_mode.as_str()) {
+			let config = build_in_config.get(config.running_mode.as_str()).unwrap();
+			data_provider_config = serde_json::from_value(config.clone()).unwrap();
+		} else {
+			let mut file = File::open(config.running_mode.as_str()).unwrap();
+			let mut data = String::new();
+			file.read_to_string(&mut data).unwrap();
+			data_provider_config = serde_json::from_str(data.as_str()).unwrap();
 		}
 
-		let worker_config = rs_config::Config::builder()
-			.add_source(rs_config::File::with_name(config_file))
-			.build()
-			.unwrap();
-
-		let twitter_official_url = worker_config
-			.get_string("twitter_official_url")
-			.unwrap_or_else(|_e| "https://api.twitter.com".to_string());
-		let twitter_litentry_url = worker_config
-			.get_string("twitter_litentry_url")
-			.unwrap_or_else(|_e| "".to_string());
-		let twitter_auth_token = worker_config
-			.get_string("twitter_auth_token")
-			.unwrap_or_else(|_e| "abcdefghijklmnopqrstuvwxyz".to_string());
-		let discord_official_url = worker_config
-			.get_string("discord_official_url")
-			.unwrap_or_else(|_e| "https://discordapp.com".to_string());
-		let discord_litentry_url = worker_config
-			.get_string("discord_litentry_url")
-			.unwrap_or_else(|_e| "".to_string());
-		let discord_auth_token = worker_config
-			.get_string("discord_auth_token")
-			.unwrap_or_else(|_e| "ABCDEFGHIJKLMNOPQRSTUVWXYZ".to_string());
-		let graphql_url = worker_config
-			.get_string("graphql_url")
-			.unwrap_or_else(|_e| "https://graph.tdf-labs.io/".to_string());
-		let graphql_auth_key = worker_config
-			.get_string("graphql_auth_key")
-			.unwrap_or_else(|_e| "ABCDEFGHIJKLMNOPQRSTUVWXYZ".to_string());
-
-		data_providers_static.set_twitter_official_url(twitter_official_url);
-		data_providers_static.set_twitter_litentry_url(twitter_litentry_url);
-		data_providers_static.set_twitter_auth_token(twitter_auth_token);
-		data_providers_static.set_discord_official_url(discord_official_url);
-		data_providers_static.set_discord_litentry_url(discord_litentry_url);
-		data_providers_static.set_discord_auth_token(discord_auth_token);
-		data_providers_static.set_graphql_url(graphql_url);
-		data_providers_static.set_graphql_auth_key(graphql_auth_key);
+		if let Ok(v) = env::var("twitter_official_url") {
+			data_provider_config.set_twitter_official_url(v);
+		}
+		if let Ok(v) = env::var("twitter_litentry_url") {
+			data_provider_config.set_twitter_litentry_url(v);
+		}
+		if let Ok(v) = env::var("twitter_auth_token") {
+			data_provider_config.set_twitter_auth_token(v);
+		}
+		if let Ok(v) = env::var("discord_official_url") {
+			data_provider_config.set_discord_official_url(v);
+		}
+		if let Ok(v) = env::var("discord_litentry_url") {
+			data_provider_config.set_discord_litentry_url(v);
+		}
+		if let Ok(v) = env::var("discord_auth_token") {
+			data_provider_config.set_discord_auth_token(v);
+		}
+		if let Ok(v) = env::var("graphql_url") {
+			data_provider_config.set_graphql_url(v);
+		}
+		if let Ok(v) = env::var("graphql_auth_key") {
+			data_provider_config.set_graphql_auth_key(v);
+		}
 	}
-
 	thread::spawn(move || {
-		enclave_api_stf_task_handler
-			.run_stf_task_handler(data_providers_static)
-			.unwrap();
+		enclave_api_stf_task_handler.run_stf_task_handler(data_provider_config).unwrap();
 	});
 
 	// ------------------------------------------------------------------------
