@@ -66,4 +66,6 @@ pub enum VCMPError {
 	Assertion4Failed,
 	Assertion5Failed,
 	Assertion7Failed,
+	Assertion8Failed,
+	Assertion10Failed,
 }

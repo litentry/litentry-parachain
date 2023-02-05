@@ -20,14 +20,21 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::Result;
+use crate::{Error, Result};
+use itp_stf_primitives::types::ShardIdentifier;
+use itp_types::AccountId;
+use lc_credentials::Credential;
 use lc_data_providers::graphql::{GraphQLClient, VerifiedCredentialsTotalTxs};
-use litentry_primitives::Identity;
-use log::debug;
+use litentry_primitives::{Assertion, Identity, ParentchainBlockNumber};
+use log::*;
 use std::{str::from_utf8, string::ToString, vec, vec::Vec};
 
-// total transactions
-pub fn build(identities: Vec<Identity>) -> Result<()> {
+pub fn build(
+	identities: Vec<Identity>,
+	shard: &ShardIdentifier,
+	who: &AccountId,
+	bn: ParentchainBlockNumber,
+) -> Result<Credential> {
 	let mut client = GraphQLClient::new();
 	let mut total_txs: u64 = 0;
 
@@ -58,7 +65,45 @@ pub fn build(identities: Vec<Identity>) -> Result<()> {
 			}
 		}
 	}
-	//TODO generate vc
+
 	debug!("total_transactions: {}", total_txs);
-	Ok(())
+
+	let min: u64;
+	let max: u64;
+
+	match total_txs {
+		0 | 1 => {
+			min = 0;
+			max = 1;
+		},
+		2..=100 => {
+			min = 1;
+			max = 100;
+		},
+		101..=1000 => {
+			min = 100;
+			max = 1000
+		},
+		1001..=10000 => {
+			min = 1000;
+			max = 10000;
+		},
+		10001..=u64::MAX => {
+			min = 10000;
+			max = u64::MAX;
+		},
+	}
+
+	match Credential::generate_unsigned_credential(&Assertion::A8, who, &shard.clone(), bn) {
+		Ok(mut credential_unsigned) => {
+			credential_unsigned.add_assertion_a8(min, max);
+			credential_unsigned.credential_subject.set_value(true);
+			return Ok(credential_unsigned)
+		},
+		Err(e) => {
+			error!("Generate unsigned credential failed {:?}", e);
+		},
+	}
+
+	Err(Error::Assertion8Failed)
 }
