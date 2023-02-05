@@ -21,7 +21,7 @@
 
 use super::*;
 
-use crate::Pallet as Teerex;
+use crate::{MREnclave, Pallet as Teerex};
 use frame_benchmarking::{account, benchmarks};
 use frame_system::RawOrigin;
 use sp_runtime::traits::CheckedConversion;
@@ -35,6 +35,13 @@ fn ensure_not_skipping_ra_check() {
 	#[cfg(not(test))]
 	if cfg!(feature = "skip-ias-check") {
 		panic!("Benchmark does not allow the `skip-ias-check` flag.");
+	};
+}
+
+fn ensure_not_skipping_scheduled_enclave_check() {
+	#[cfg(not(test))]
+	if cfg!(feature = "skip-scheduled-enclave-check") {
+		panic!("Benchmark does not allow the `skip-scheduled-enclave-check` flag.");
 	};
 }
 
@@ -65,8 +72,20 @@ benchmarks! {
 	where_clause {  where T::AccountId: From<[u8; 32]> }
 	register_enclave {
 		ensure_not_skipping_ra_check();
+		ensure_not_skipping_scheduled_enclave_check();
 		timestamp::Pallet::<T>::set_timestamp(TEST4_SETUP.timestamp.checked_into().unwrap());
 		let signer: T::AccountId = get_signer(TEST4_SETUP.signer_pub);
+
+		// we need different parameters, unfortunately - since the way to calculate
+		// MRENCLAVE differs depending on if `skip-ias-check` feature is present.
+		Teerex::<T>::update_scheduled_enclave(
+			RawOrigin::Root.into(),
+			0u32,
+			#[cfg(feature = "skip-ias-check")]
+			MREnclave::decode(&mut TEST4_SETUP.cert).unwrap_or_default(),
+			#[cfg(not(feature = "skip-ias-check"))]
+			TEST4_MRENCLAVE,
+		).unwrap();
 
 		// simply register the enclave before to make sure it already
 		// exists when running the benchmark

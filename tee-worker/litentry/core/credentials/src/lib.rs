@@ -39,7 +39,7 @@ use codec::{Decode, Encode};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{Assertion, ParentchainBlockNumber};
+use litentry_primitives::{year_to_date, Assertion, ParentchainBlockNumber};
 use log::*;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
@@ -362,6 +362,47 @@ impl Credential {
 
 				Ok(credential)
 			},
+			Assertion::A7(min_balance, year) => {
+				let min_balance = format!("{}", min_balance);
+
+				let raw = include_str!("templates/a7.json");
+				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+
+				// add assertion
+				let lit_amounts =
+					AssertionLogic::new_item("$dot_amounts", Op::GreaterEq, &min_balance);
+				let timestamp =
+					AssertionLogic::new_item("$timestamp", Op::GreaterEq, &year_to_date(*year));
+
+				let assertion = AssertionLogic::new_and().add_item(lit_amounts).add_item(timestamp);
+
+				credential.credential_subject.assertions = assertion;
+
+				Ok(credential)
+			},
+			Assertion::A8 => {
+				let raw = include_str!("templates/a8.json");
+				let credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				Ok(credential)
+			},
+			Assertion::A10(min_balance, year) => {
+				let min_balance = format!("{}", min_balance);
+
+				let raw = include_str!("templates/a10.json");
+				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+
+				// add assertion
+				let lit_amounts =
+					AssertionLogic::new_item("$WBTC_amount", Op::GreaterEq, &min_balance);
+				let timestamp =
+					AssertionLogic::new_item("$timestamp", Op::GreaterEq, &year_to_date(*year));
+
+				let assertion = AssertionLogic::new_and().add_item(lit_amounts).add_item(timestamp);
+
+				credential.credential_subject.assertions = assertion;
+
+				Ok(credential)
+			},
 			_ => Err(Error::UnsupportedAssertion),
 		}
 	}
@@ -374,6 +415,18 @@ impl Credential {
 		let web3_item = AssertionLogic::new_item("$web3_account_cnt", Op::GreaterThan, &web3_cnt);
 
 		let assertion = AssertionLogic::new_or().add_item(web2_item).add_item(web3_item);
+
+		self.credential_subject.assertions = assertion;
+	}
+
+	pub fn add_assertion_a8(&mut self, min: u64, max: u64) {
+		let min = format!("{}", min);
+		let max = format!("{}", max);
+
+		let web2_item = AssertionLogic::new_item("$total_txs", Op::GreaterThan, &min);
+		let web3_item = AssertionLogic::new_item("$total_txs", Op::LessEq, &max);
+
+		let assertion = AssertionLogic::new_and().add_item(web2_item).add_item(web3_item);
 
 		self.credential_subject.assertions = assertion;
 	}

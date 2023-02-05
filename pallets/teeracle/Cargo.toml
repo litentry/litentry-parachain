@@ -39,6 +39,7 @@ externalities = { package = "sp-externalities", git = "https://github.com/parity
 frame-benchmarking = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
 hex-literal = "0.3.2"
 pallet-balances = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
+pallet-teerex = { path = "../teerex", features = ["skip-scheduled-enclave-check"] }
 sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
 test-utils = { path = "../test-utils" }
 timestamp = { package = "pallet-timestamp", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
@@ -69,5 +70,4 @@ std = [
   "sp-runtime/std",
   "sp-std/std",
 ]
-
 try-runtime = ["frame-support/try-runtime"]

@@ -10,6 +10,7 @@
 docker/yarn.lock
 docker/package.json
 docker/generated-*/
+tee-worker/docker/litentry/
 
 ts-tests/package-lock.json
 
