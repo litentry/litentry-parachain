@@ -96,7 +96,7 @@ pub fn verify(request: &Web2IdentityVerificationRequest) -> Result<(), Error> {
 				.get_user_info(message.author.id.clone())
 				.map_err(from_data_provider_error)?;
 
-			let mut user_id = message.author.id.clone();
+			let mut user_id = message.author.username.clone();
 			user_id.push_str(&"#".to_string());
 			user_id.push_str(&user.discriminator);
 
@@ -112,6 +112,7 @@ pub fn verify(request: &Web2IdentityVerificationRequest) -> Result<(), Error> {
 	} else {
 		Err(Error::InvalidIdentity)
 	}?;
+
 	ensure!(user_id.eq(handle), Error::WrongWeb2Handle);
 	// the payload must match
 	// TODO: maybe move it to common place
