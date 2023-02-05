@@ -84,13 +84,13 @@ pub fn build(
 			} else {
 				credential_unsigned.credential_subject.set_value(false);
 			}
-			Ok(credential_unsigned)
+			return Ok(credential_unsigned)
 		},
 		Err(e) => {
 			error!("Generate unsigned credential A2 failed {:?}", e);
-			Err(VCMPError::Assertion2Failed)
 		},
 	}
+	Err(VCMPError::Assertion2Failed)
 }
 
 #[cfg(test)]
