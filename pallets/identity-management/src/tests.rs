@@ -130,10 +130,11 @@ fn tee_callback_with_registered_enclave_works() {
 			None
 		));
 
-		assert_noop!(
-			IdentityManagement::some_error(RuntimeOrigin::signed(1), IMPError::WrongWeb2Handle),
-			Error::<Test>::WrongWeb2Handle
-		);
+		assert_ok!(IdentityManagement::some_error(
+			RuntimeOrigin::signed(1),
+			IMPError::WrongWeb2Handle
+		));
+		System::assert_last_event(RuntimeEvent::IdentityManagement(crate::Event::WrongWeb2Handle));
 	});
 }
 
