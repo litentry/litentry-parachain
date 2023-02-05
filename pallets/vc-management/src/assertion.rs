@@ -36,7 +36,7 @@ pub enum Assertion {
 	A5(ParameterString, ParameterString), // (twitter_account, tweet_id)
 	A6,
 	A7(Balance, u32), // (DOT_amount, year)
-	A8(u64),          // (tx_amount)
+	A8,
 	A9,
 	A10(Balance, u32), // (WBTC_amount, year)
 	A11(Balance, u32), // (ETH_amount, year)
