@@ -234,7 +234,7 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 					},
 					Ok(ExecutionStatus::NextExecutor) => continue,
 					Err(e) => {
-						log::error!("fail to execute indirect_call. due to {:?} ", e);
+						log::warn!("fail to execute indirect_call. due to {:?} ", e);
 						match e {
 							// error handling: call the counter part on parachain to pass it back
 							error::Error::IMPHandlingError(e) => {
