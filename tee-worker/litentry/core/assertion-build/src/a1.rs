@@ -50,11 +50,7 @@ pub fn build(
 	match Credential::generate_unsigned_credential(&Assertion::A1, who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_assertion_a1(web2_cnt, web3_cnt);
-			if web2_cnt > 0 || web3_cnt > 0 {
-				credential_unsigned.credential_subject.set_value(true);
-			} else {
-				credential_unsigned.credential_subject.set_value(false);
-			}
+			credential_unsigned.credential_subject.set_value(true);
 			Ok(credential_unsigned)
 		},
 		Err(e) => {

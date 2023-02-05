@@ -20,13 +20,14 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{Error, Result};
+use crate::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use lc_credentials::Credential;
 use lc_data_providers::graphql::{GraphQLClient, VerifiedCredentialsTotalTxs};
 use litentry_primitives::{Assertion, Identity, ParentchainBlockNumber};
 use log::*;
+use parachain_core_primitives::VCMPError;
 use std::{str::from_utf8, string::ToString, vec, vec::Vec};
 
 pub fn build(
@@ -105,5 +106,5 @@ pub fn build(
 		},
 	}
 
-	Err(Error::Assertion8Failed)
+	Err(VCMPError::Assertion8Failed)
 }

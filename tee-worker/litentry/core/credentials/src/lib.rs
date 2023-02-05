@@ -408,13 +408,13 @@ impl Credential {
 	}
 
 	pub fn add_assertion_a1(&mut self, web2_cnt: i32, web3_cnt: i32) {
-		let web2_cnt = format!("{}", web2_cnt);
-		let web3_cnt = format!("{}", web3_cnt);
+		let web2_item =
+			AssertionLogic::new_item("$web2_account_cnt", Op::Equal, &(format!("{}", web2_cnt)));
+		let web3_item =
+			AssertionLogic::new_item("$web3_account_cnt", Op::Equal, &(format!("{}", web3_cnt)));
 
-		let web2_item = AssertionLogic::new_item("$web2_account_cnt", Op::GreaterEq, &web2_cnt);
-		let web3_item = AssertionLogic::new_item("$web3_account_cnt", Op::GreaterThan, &web3_cnt);
-
-		let assertion = AssertionLogic::new_or().add_item(web2_item).add_item(web3_item);
+		let assertion =
+			AssertionLogic::new_or().add_item(web2_item.clone()).add_item(web3_item.clone());
 
 		self.credential_subject.assertions = assertion;
 	}
@@ -423,8 +423,8 @@ impl Credential {
 		let min = format!("{}", min);
 		let max = format!("{}", max);
 
-		let web2_item = AssertionLogic::new_item("$total_txs", Op::GreaterThan, &min);
-		let web3_item = AssertionLogic::new_item("$total_txs", Op::LessEq, &max);
+		let web2_item = AssertionLogic::new_item("$total_txs", Op::GreaterEq, &min);
+		let web3_item = AssertionLogic::new_item("$total_txs", Op::LessThan, &max);
 
 		let assertion = AssertionLogic::new_and().add_item(web2_item).add_item(web3_item);
 
