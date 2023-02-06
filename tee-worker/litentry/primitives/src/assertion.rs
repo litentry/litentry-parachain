@@ -19,9 +19,16 @@
 //
 // See: https://www.notion.so/litentry/Expected-parameters-in-predefined-rulesets-14f74928aa2b43509167da12a3e75507
 
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use chrono::{offset::Utc as TzUtc, TimeZone};
+
+#[cfg(feature = "std")]
+use chrono::{offset::Utc as TzUtc, TimeZone};
+
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
+use std::{format, string::String};
 
 type Balance = u128;
 type MaxStringLength = ConstU32<64>;
@@ -41,4 +48,12 @@ pub enum Assertion {
 	A10(Balance, u32), // (WBTC_amount, year)
 	A11(Balance, u32), // (ETH_amount, year)
 	A13(u32),          // (Karma_amount) - TODO: unsupported
+}
+
+pub fn year_to_date(year: u32) -> String {
+	#[cfg(feature = "std")]
+	let dt1 = TzUtc.with_ymd_and_hms(year as i32, 1, 1, 0, 0, 0);
+	#[cfg(all(not(feature = "std"), feature = "sgx"))]
+	let dt1 = TzUtc.ymd(year as i32, 1, 1).and_hms(0, 0, 0);
+	format!("{:?}", dt1)
 }
