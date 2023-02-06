@@ -198,6 +198,8 @@ fn main() {
 		});
 	}
 
+	let data_provider_config = data_provider(&config);
+
 	if let Some(run_config) = &config.run_config {
 		let shard = extract_shard(&run_config.shard, enclave.as_ref());
 
@@ -222,6 +224,7 @@ fn main() {
 		start_worker::<_, _, _, _, WorkerModeProvider>(
 			config,
 			&shard,
+			&data_provider_config,
 			enclave,
 			sidechain_blockstorage,
 			node_api,
@@ -293,6 +296,7 @@ fn main() {
 fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	config: Config,
 	shard: &ShardIdentifier,
+	data_provider_config: &DataProvidersStatic,
 	enclave: Arc<E>,
 	sidechain_storage: Arc<D>,
 	node_api: ParentchainApi,
@@ -533,44 +537,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	// ------------------------------------------------------------------------
 	// Start stf task handler thread
 	let enclave_api_stf_task_handler = enclave.clone();
-
-	let build_in_mode = vec!["dev", "mock", "prod", "staging"];
-	let build_in_config: Value =
-		serde_json::from_slice(include_bytes!("running-mode-config.json")).unwrap();
-
-	let mut data_provider_config = if build_in_mode.contains(&config.running_mode.as_str()) {
-		let config = build_in_config.get(config.running_mode.as_str()).unwrap();
-		serde_json::from_value::<DataProvidersStatic>(config.clone()).unwrap()
-	} else {
-		let mut file = File::open(config.running_mode.as_str()).unwrap();
-		let mut data = String::new();
-		file.read_to_string(&mut data).unwrap();
-		serde_json::from_str::<DataProvidersStatic>(data.as_str()).unwrap()
-	};
-	if let Ok(v) = env::var("TWITTER_OFFICIAL_URL") {
-		data_provider_config.set_twitter_official_url(v);
-	}
-	if let Ok(v) = env::var("TWITTER_LITENTRY_URL") {
-		data_provider_config.set_twitter_litentry_url(v);
-	}
-	if let Ok(v) = env::var("TWITTER_AUTH_TOKEN") {
-		data_provider_config.set_twitter_auth_token(v);
-	}
-	if let Ok(v) = env::var("DISCORD_OFFICIAL_URL") {
-		data_provider_config.set_discord_official_url(v);
-	}
-	if let Ok(v) = env::var("DISCORD_LITENTRY_URL") {
-		data_provider_config.set_discord_litentry_url(v);
-	}
-	if let Ok(v) = env::var("DISCORD_AUTH_TOKEN") {
-		data_provider_config.set_discord_auth_token(v);
-	}
-	if let Ok(v) = env::var("GRAPHQL_URL") {
-		data_provider_config.set_graphql_url(v);
-	}
-	if let Ok(v) = env::var("GRAPHQL_AUTH_KEY") {
-		data_provider_config.set_graphql_auth_key(v);
-	}
+	let data_provider_config = data_provider_config.clone();
 	thread::spawn(move || {
 		enclave_api_stf_task_handler.run_stf_task_handler(data_provider_config).unwrap();
 	});
@@ -860,4 +827,48 @@ fn check_we_are_primary_validateer(
 	let enclave_count_of_previous_block =
 		node_api.enclave_count(Some(*register_enclave_xt_header.parent_hash()))?;
 	Ok(enclave_count_of_previous_block == 0)
+}
+
+fn data_provider(config: &Config) -> DataProvidersStatic {
+	let build_in_mode = vec!["dev", "mock", "prod", "staging"];
+	let build_in_config: Value =
+		serde_json::from_slice(include_bytes!("running-mode-config.json")).unwrap();
+
+	let mut data_provider_config = if build_in_mode.contains(&config.running_mode.as_str()) {
+		let config = build_in_config.get(config.running_mode.as_str()).unwrap();
+		serde_json::from_value::<DataProvidersStatic>(config.clone()).unwrap()
+	} else {
+		let file_path = config.running_mode.as_str();
+		let mut file = File::open(file_path)
+			.map_err(|e| format!("{:?}, file:{}", e, file_path))
+			.unwrap();
+		let mut data = String::new();
+		file.read_to_string(&mut data).unwrap();
+		serde_json::from_str::<DataProvidersStatic>(data.as_str()).unwrap()
+	};
+	if let Ok(v) = env::var("TWITTER_OFFICIAL_URL") {
+		data_provider_config.set_twitter_official_url(v);
+	}
+	if let Ok(v) = env::var("TWITTER_LITENTRY_URL") {
+		data_provider_config.set_twitter_litentry_url(v);
+	}
+	if let Ok(v) = env::var("TWITTER_AUTH_TOKEN") {
+		data_provider_config.set_twitter_auth_token(v);
+	}
+	if let Ok(v) = env::var("DISCORD_OFFICIAL_URL") {
+		data_provider_config.set_discord_official_url(v);
+	}
+	if let Ok(v) = env::var("DISCORD_LITENTRY_URL") {
+		data_provider_config.set_discord_litentry_url(v);
+	}
+	if let Ok(v) = env::var("DISCORD_AUTH_TOKEN") {
+		data_provider_config.set_discord_auth_token(v);
+	}
+	if let Ok(v) = env::var("GRAPHQL_URL") {
+		data_provider_config.set_graphql_url(v);
+	}
+	if let Ok(v) = env::var("GRAPHQL_AUTH_KEY") {
+		data_provider_config.set_graphql_auth_key(v);
+	}
+	data_provider_config
 }
