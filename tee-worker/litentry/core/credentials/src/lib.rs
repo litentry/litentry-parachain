@@ -258,8 +258,8 @@ impl Credential {
 	}
 
 	pub fn get_index(&self) -> Result<[u8; 32], Error> {
-		let index =
-			hex::decode(self.id.as_bytes()).map_err(|err| Error::ParseError(format!("{}", err)))?;
+		let bytes = &self.id.as_bytes()[b"0x".len()..];
+		let index = hex::decode(bytes).map_err(|err| Error::ParseError(format!("{}", err)))?;
 		let vi: [u8; 32] = index.try_into().unwrap();
 		Ok(vi)
 	}
