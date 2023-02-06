@@ -78,11 +78,11 @@ pub enum ExecutionStatus<R> {
 pub trait ExecuteIndirectCalls {
 	/// Scans blocks for extrinsics that ask the enclave to execute some actions.
 	/// Executes indirect invocation calls, including shielding and unshielding calls.
-	/// Returns all unshielding call confirmations as opaque calls and the hashes of executed shielding calls.
+	/// Returns a vector of OpaqueCalls that should be sent to parentchain.
 	fn execute_indirect_calls_in_extrinsics<ParentchainBlock>(
 		&self,
 		block: &ParentchainBlock,
-	) -> Result<OpaqueCall>
+	) -> Result<Vec<OpaqueCall>>
 	where
 		ParentchainBlock: ParentchainBlockTrait<Hash = H256>;
 }
@@ -176,12 +176,13 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 	fn execute_indirect_calls_in_extrinsics<ParentchainBlock>(
 		&self,
 		block: &ParentchainBlock,
-	) -> Result<OpaqueCall>
+	) -> Result<Vec<OpaqueCall>>
 	where
 		ParentchainBlock: ParentchainBlockTrait<Hash = H256>,
 	{
 		let block_number = *block.header().number();
 		let block_hash = block.hash();
+		let mut calls = Vec::<OpaqueCall>::new();
 
 		let parentchain_block_number: ParentchainBlockNumber = block_number
 			.try_into()
@@ -235,7 +236,26 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 					Ok(ExecutionStatus::NextExecutor) => continue,
 					Ok(ExecutionStatus::Skip) => break,
 					Err(e) => {
-						log::error!("fail to execute indirect_call. due to {:?} ", e);
+						log::warn!("fail to execute indirect_call. due to {:?} ", e);
+						match e {
+							// error handling: call the counter part on parachain to pass it back
+							error::Error::IMPHandlingError(e) => {
+								let call = self
+									.node_meta_data_provider
+									.get_from_metadata(|m| m.imp_some_error_call_indexes())??;
+
+								calls.push(OpaqueCall::from_tuple(&(call, e)))
+							},
+							error::Error::VCMPHandlingError(e) => {
+								let call = self
+									.node_meta_data_provider
+									.get_from_metadata(|m| m.vcmp_some_error_call_indexes())??;
+
+								calls.push(OpaqueCall::from_tuple(&(call, e)))
+							},
+							// nothing to do
+							_ => (),
+						}
 						// We should keep the same error handling as the original function `handle_shield_funds_xt`.
 						// `create_processed_parentchain_block_call` needs to be called in any case.
 						break
@@ -245,11 +265,14 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 		}
 
 		// Include a processed parentchain block confirmation for each block.
-		self.create_processed_parentchain_block_call::<ParentchainBlock>(
-			block_hash,
-			executed_calls,
-			block_number,
-		)
+		let confirm_processed_parentchain_block_call = self
+			.create_processed_parentchain_block_call::<ParentchainBlock>(
+				block_hash,
+				executed_calls,
+				block_number,
+			)?;
+		calls.push(confirm_processed_parentchain_block_call);
+		Ok(calls)
 	}
 }
 

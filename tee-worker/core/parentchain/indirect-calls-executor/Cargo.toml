@@ -45,6 +45,7 @@ ita-sgx-runtime = { path = "../../../app-libs/sgx-runtime", default-features = f
 litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
 pallet-imp = { package = "pallet-identity-management", path = "../../../../pallets/identity-management", default-features = false }
 pallet-vcmp = { package = "pallet-vc-management", path = "../../../../pallets/vc-management", default-features = false }
+parachain-core-primitives = { package = "core-primitives", path = "../../../../primitives/core", default-features = false }
 
 [dev-dependencies]
 env_logger = "0.10.0"
@@ -85,7 +86,9 @@ std = [
     "sp-runtime/std",
     "substrate-api-client/std",
     "thiserror",
-    "litentry-primitives/std",
     "ita-sgx-runtime/std",
+    "litentry-primitives/std",
+    "parachain-core-primitives/std",
     "pallet-imp/std",
+    "pallet-vcmp/std",
 ]
