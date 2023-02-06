@@ -39,7 +39,22 @@ pub struct DiscordMessage {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DiscordMessageAuthor {
 	pub id: String, //user_id
+	// NOTE: username doesn't contain discriminator(the user's 4-digit discord-tag),
+	// so it can't compared with user handler
 	pub username: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct DiscordUser {
+	pub id: String,
+	pub username: String,
+	pub discriminator: String,
+}
+
+impl RestPath<String> for DiscordUser {
+	fn get_path(path: String) -> Result<String, HttpError> {
+		Ok(path)
+	}
 }
 
 impl Default for DiscordOfficialClient {
@@ -90,6 +105,14 @@ impl DiscordOfficialClient {
 		let query = vec![];
 		self.client
 			.get_with::<String, DiscordMessage>(path, query.as_slice())
+			.map_err(|e| Error::RequestError(format!("{:?}", e)))
+	}
+
+	pub fn get_user_info(&mut self, user_id: String) -> Result<DiscordUser, Error> {
+		let path = format!("/api/users/{}", user_id);
+		let query = vec![];
+		self.client
+			.get_with::<String, DiscordUser>(path, query.as_slice())
 			.map_err(|e| Error::RequestError(format!("{:?}", e)))
 	}
 }
