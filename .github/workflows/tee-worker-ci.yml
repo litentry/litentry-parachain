@@ -49,7 +49,7 @@ jobs:
     outputs:
       parachain_src: ${{ steps.filter.outputs.parachain_src }}
       tee_src: ${{ steps.filter.outputs.tee_src }}
-      tee_ts_tests: ${{ steps.filter.outputs.tee_ts_tests }}
+      tee_test: ${{ steps.filter.outputs.tee_test }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -61,6 +61,7 @@ jobs:
         id: filter
         with:
           filters: .github/file-filter.yml
+          list-files: shell
 
   build-parachain-docker:
     runs-on: ubuntu-latest
@@ -233,7 +234,7 @@ jobs:
     if: >
       needs.check-file-change.outputs.parachain_src == 'true' ||
       needs.check-file-change.outputs.tee_src == 'true' ||
-      needs.check-file-change.outputs.tee_ts_tests == 'true'
+      needs.check-file-change.outputs.tee_test == 'true'
     env:
       WORKER_IMAGE_TAG: integritee-worker:dev
       CLIENT_IMAGE_TAG: integritee-cli:dev

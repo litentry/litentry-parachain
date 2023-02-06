@@ -8,17 +8,23 @@ parachain_src: &parachain_src
   - 'runtime/**'
   - 'mock-tee-primitives/**'
   - 'docker/Dockerfile'
-  - 'docker/bridge.Dockerfile'
+  - 'docker/bridge.dockerfile'
   - 'Cargo.lock'
   - 'Cargo.toml'
   - 'rust-toolchain.toml'
 
-parachain_ts_tests: &parachain_ts_tests
+parachain_test: &parachain_test
   - 'ts-tests/**'
 
 tee_src: &tee_src
-  - '!(tee-worker)/ts-tests/**'
-  - 'tee-worker/**'
+  - 'tee-worker/**/*.rs'
+  - 'tee-worker/**/Cargo.toml'
+  - 'tee-worker/**/Cargo.lock'
+  - 'tee-worker/**/rust-toolchain.toml'
+  - 'tee-worker/build.Dockerfile'
+  - 'tee-worker/enclave-runtime/**'
 
-tee_ts_tests: &tee_ts_tests
+tee_test: &tee_test
   - 'tee-worker/ts-tests/**'
+  - 'tee-worker/docker/*.yml'
+  - 'tee-worker/cli/*.sh'
