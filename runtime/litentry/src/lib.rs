@@ -882,7 +882,9 @@ impl Contains<RuntimeCall> for BaseCallFilter {
 				RuntimeCall::Timestamp(_) |
 				RuntimeCall::ParachainSystem(_) |
 				RuntimeCall::ExtrinsicFilter(_) |
-				RuntimeCall::Multisig(_)
+				RuntimeCall::Multisig(_) |
+				RuntimeCall::Council(_) |
+				RuntimeCall::TechnicalCommittee(_)
 		) {
 			// always allow core calls
 			return true
@@ -915,7 +917,12 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			// Session
 			RuntimeCall::Session(_) |
 			// ParachainStaking
-			RuntimeCall::ParachainStaking(_)
+			RuntimeCall::ParachainStaking(_) |
+			// memberships
+			RuntimeCall::CouncilMembership(_) |
+			RuntimeCall::TechnicalCommitteeMembership(_) |
+			// democracy, we don't subdivide the calls, so we allow public proposals
+			RuntimeCall::Democracy(_)
 		)
 	}
 }
