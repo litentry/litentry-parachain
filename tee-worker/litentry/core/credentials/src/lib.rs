@@ -413,9 +413,7 @@ impl Credential {
 		let web3_item =
 			AssertionLogic::new_item("$web3_account_cnt", Op::Equal, &(format!("{}", web3_cnt)));
 
-		let assertion =
-			AssertionLogic::new_or().add_item(web2_item.clone()).add_item(web3_item.clone());
-
+		let assertion = AssertionLogic::new_or().add_item(web2_item).add_item(web3_item);
 		self.credential_subject.assertions = assertion;
 	}
 

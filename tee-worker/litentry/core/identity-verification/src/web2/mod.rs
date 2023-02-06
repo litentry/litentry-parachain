@@ -97,11 +97,10 @@ pub fn verify(request: &Web2IdentityVerificationRequest) -> Result<(), Error> {
 				.map_err(from_data_provider_error)?;
 
 			let mut user_id = message.author.username.clone();
-			user_id.push_str(&"#".to_string());
+			user_id.push_str(&'#'.to_string());
 			user_id.push_str(&user.discriminator);
 
 			let payload = payload_from_discord(&message)?;
-
 			Ok((user_id, payload))
 		},
 	}?;
