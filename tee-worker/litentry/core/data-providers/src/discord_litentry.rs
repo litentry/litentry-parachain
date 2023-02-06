@@ -73,6 +73,7 @@ impl DiscordLitentryClient {
 		DiscordLitentryClient { client }
 	}
 
+	// user has joined Discord guild
 	pub fn check_join(
 		&mut self,
 		guild_id: Vec<u8>,
@@ -88,6 +89,7 @@ impl DiscordLitentryClient {
 			.map_err(|e| Error::RequestError(format!("{:?}", e)))
 	}
 
+	// user has commented in channel with Role 'ID-Hubber'
 	pub fn check_id_hubber(
 		&mut self,
 		guild_id: Vec<u8>,
@@ -98,6 +100,24 @@ impl DiscordLitentryClient {
 		let path = "/discord/commented/idhubber".to_string();
 		let query = vec![("guildid", guild_id_s.as_str()), ("handler", handler_s.as_str())];
 
+		let res = self
+			.client
+			.get_with::<String, DiscordResponse>(path, query.as_slice())
+			.map_err(|e| Error::RequestError(format!("{:?}", e)));
+
+		res
+	}
+
+	// assign ID-Hubber Role to User
+	pub fn assign_id_hubber(
+		&mut self,
+		guild_id: Vec<u8>,
+		handler: Vec<u8>,
+	) -> Result<DiscordResponse, Error> {
+		let guild_id_s = vec_to_string(guild_id)?;
+		let handler_s = vec_to_string(handler)?;
+		let path = "/discord/assgin/idhubber".to_string();
+		let query = vec![("guildid", guild_id_s.as_str()), ("handler", handler_s.as_str())];
 		let res = self
 			.client
 			.get_with::<String, DiscordResponse>(path, query.as_slice())

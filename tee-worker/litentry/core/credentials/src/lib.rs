@@ -243,7 +243,8 @@ impl Credential {
 		let mut ext_hash = blake2_256(self.credential_subject.id.as_bytes()).to_vec();
 		ext_hash.append(&mut seed.to_vec());
 		let vc_id = blake2_256(ext_hash.as_slice());
-		self.id = format!("{}", HexDisplay::from(&vc_id.to_vec()));
+		self.id = "0x".to_string();
+		self.id.push_str(&(format!("{}", HexDisplay::from(&vc_id.to_vec()))));
 	}
 
 	pub fn add_proof(&mut self, sig: &Vec<u8>, bn: ParentchainBlockNumber, issuer: &AccountId) {
@@ -257,8 +258,8 @@ impl Credential {
 	}
 
 	pub fn get_index(&self) -> Result<[u8; 32], Error> {
-		let index =
-			hex::decode(self.id.as_bytes()).map_err(|err| Error::ParseError(format!("{}", err)))?;
+		let bytes = &self.id.as_bytes()[b"0x".len()..];
+		let index = hex::decode(bytes).map_err(|err| Error::ParseError(format!("{}", err)))?;
 		let vi: [u8; 32] = index.try_into().unwrap();
 		Ok(vi)
 	}
@@ -334,6 +335,16 @@ impl Credential {
 				let credential: Credential = Credential::from_template(raw, who, shard, bn)?;
 				Ok(credential)
 			},
+			Assertion::A2(_, _) => {
+				let raw = include_str!("templates/a2.json");
+				let credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				Ok(credential)
+			},
+			Assertion::A3(_, _) => {
+				let raw = include_str!("templates/a3.json");
+				let credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				Ok(credential)
+			},
 			Assertion::A4(min_balance, from_date) => {
 				let min_balance = format!("{}", min_balance);
 				let from_date = String::from_utf8(from_date.clone().into_inner()).unwrap();
@@ -398,14 +409,12 @@ impl Credential {
 	}
 
 	pub fn add_assertion_a1(&mut self, web2_cnt: i32, web3_cnt: i32) {
-		let web2_cnt = format!("{}", web2_cnt);
-		let web3_cnt = format!("{}", web3_cnt);
-
-		let web2_item = AssertionLogic::new_item("$web2_account_cnt", Op::GreaterEq, &web2_cnt);
-		let web3_item = AssertionLogic::new_item("$web3_account_cnt", Op::GreaterThan, &web3_cnt);
+		let web2_item =
+			AssertionLogic::new_item("$web2_account_cnt", Op::Equal, &(format!("{}", web2_cnt)));
+		let web3_item =
+			AssertionLogic::new_item("$web3_account_cnt", Op::Equal, &(format!("{}", web3_cnt)));
 
 		let assertion = AssertionLogic::new_or().add_item(web2_item).add_item(web3_item);
-
 		self.credential_subject.assertions = assertion;
 	}
 

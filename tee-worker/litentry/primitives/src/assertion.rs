@@ -16,8 +16,6 @@
 
 // This file includes the predefined rulesets and the corresponding parameters
 // when requesting VCs.
-//
-// See: https://www.notion.so/litentry/Expected-parameters-in-predefined-rulesets-14f74928aa2b43509167da12a3e75507
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use chrono::{offset::Utc as TzUtc, TimeZone};
