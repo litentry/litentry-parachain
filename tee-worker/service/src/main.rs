@@ -830,12 +830,12 @@ fn check_we_are_primary_validateer(
 }
 
 fn data_provider(config: &Config) -> DataProvidersStatic {
-	let build_in_mode = vec!["dev", "mock", "prod", "staging"];
-	let build_in_config: Value =
+	let built_in_modes = vec!["dev", "mock", "prod", "staging"];
+	let built_in_config: Value =
 		serde_json::from_slice(include_bytes!("running-mode-config.json")).unwrap();
 
-	let mut data_provider_config = if build_in_mode.contains(&config.running_mode.as_str()) {
-		let config = build_in_config.get(config.running_mode.as_str()).unwrap();
+	let mut data_provider_config = if built_in_modes.contains(&config.running_mode.as_str()) {
+		let config = built_in_config.get(config.running_mode.as_str()).unwrap();
 		serde_json::from_value::<DataProvidersStatic>(config.clone()).unwrap()
 	} else {
 		let file_path = config.running_mode.as_str();
