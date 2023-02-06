@@ -243,7 +243,8 @@ impl Credential {
 		let mut ext_hash = blake2_256(self.credential_subject.id.as_bytes()).to_vec();
 		ext_hash.append(&mut seed.to_vec());
 		let vc_id = blake2_256(ext_hash.as_slice());
-		self.id = format!("{}", HexDisplay::from(&vc_id.to_vec()));
+		self.id = "0x".to_string();
+		self.id.push_str(&(format!("{}", HexDisplay::from(&vc_id.to_vec()))));
 	}
 
 	pub fn add_proof(&mut self, sig: &Vec<u8>, bn: ParentchainBlockNumber, issuer: &AccountId) {
@@ -421,8 +422,8 @@ impl Credential {
 		let min = format!("{}", min);
 		let max = format!("{}", max);
 
-		let web2_item = AssertionLogic::new_item("$total_txs", Op::GreaterEq, &min);
-		let web3_item = AssertionLogic::new_item("$total_txs", Op::LessThan, &max);
+		let web2_item = AssertionLogic::new_item("$total_txs", Op::GreaterThan, &min);
+		let web3_item = AssertionLogic::new_item("$total_txs", Op::LessEq, &max);
 
 		let assertion = AssertionLogic::new_and().add_item(web2_item).add_item(web3_item);
 
