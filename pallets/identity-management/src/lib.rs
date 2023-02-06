@@ -89,6 +89,10 @@ pub mod pallet {
 		// see https://github.com/litentry/litentry-parachain/issues/1275
 		DecodeHexFailed { reason: ErrorString },
 		HttpRequestFailed { reason: ErrorString },
+		CreateIdentityHandlingFailed,
+		RemoveIdentityHandlingFailed,
+		VerifyIdentityHandlingFailed,
+		SetUserShieldingKeyHandlingFailed,
 		InvalidIdentity,
 		WrongWeb2Handle,
 		UnexpectedMessage,
@@ -276,6 +280,14 @@ pub mod pallet {
 				IMPError::HttpRequestFailed(s) =>
 					Self::deposit_event(Event::HttpRequestFailed { reason: s }),
 				IMPError::InvalidIdentity => Self::deposit_event(Event::InvalidIdentity),
+				IMPError::CreateIdentityHandlingFailed =>
+					Self::deposit_event(Event::CreateIdentityHandlingFailed),
+				IMPError::RemoveIdentityHandlingFailed =>
+					Self::deposit_event(Event::RemoveIdentityHandlingFailed),
+				IMPError::VerifyIdentityHandlingFailed =>
+					Self::deposit_event(Event::VerifyIdentityHandlingFailed),
+				IMPError::SetUserShieldingKeyHandlingFailed =>
+					Self::deposit_event(Event::SetUserShieldingKeyHandlingFailed),
 				IMPError::WrongWeb2Handle => Self::deposit_event(Event::WrongWeb2Handle),
 				IMPError::UnexpectedMessage => Self::deposit_event(Event::UnexpectedMessage),
 				IMPError::WrongIdentityHandleType =>

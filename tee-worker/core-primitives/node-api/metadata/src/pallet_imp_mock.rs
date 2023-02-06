@@ -31,7 +31,7 @@ pub trait IMPMockCallIndexes {
 	fn identity_created_call_indexes(&self) -> Result<[u8; 2]>;
 	fn identity_removed_call_indexes(&self) -> Result<[u8; 2]>;
 	fn identity_verified_call_indexes(&self) -> Result<[u8; 2]>;
-	fn some_error_call_indexes(&self) -> Result<[u8; 2]>;
+	fn imp_some_error_call_indexes(&self) -> Result<[u8; 2]>;
 }
 
 impl IMPMockCallIndexes for NodeMetadata {
@@ -71,7 +71,7 @@ impl IMPMockCallIndexes for NodeMetadata {
 		self.call_indexes(IMPMOCK, "identity_verified")
 	}
 
-	fn some_error_call_indexes(&self) -> Result<[u8; 2]> {
+	fn imp_some_error_call_indexes(&self) -> Result<[u8; 2]> {
 		self.call_indexes(IMPMOCK, "some_error")
 	}
 }
