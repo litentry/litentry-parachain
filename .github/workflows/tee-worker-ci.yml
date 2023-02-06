@@ -47,7 +47,9 @@ jobs:
     # see https://github.com/orgs/community/discussions/25722
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
     outputs:
-      src: ${{ steps.filter.outputs.src }}
+      parachain_src: ${{ steps.filter.outputs.parachain_src }}
+      tee_src: ${{ steps.filter.outputs.tee_src }}
+      tee_ts_tests: ${{ steps.filter.outputs.tee_ts_tests }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -58,24 +60,26 @@ jobs:
       - uses: dorny/paths-filter@v2
         id: filter
         with:
-          filters: |
-            src:
-              - 'tee-worker/**'
-              - '.github/workflows/tee-worker-ci.yml'
+          filters: .github/file-filter.yml
 
   build-parachain-docker:
     runs-on: ubuntu-latest
     needs: check-file-change
-    if: needs.check-file-change.outputs.src == 'true'
     steps:
       - uses: actions/checkout@v3
 
       - name: Build docker image
+        if: needs.check-file-change.outputs.parachain_src == 'true'
         run: |
           cd ..
           make build-docker-release
           echo "============================="
           docker images
+
+      - name: Pull docker image optinally
+        if: needs.check-file-change.outputs.parachain_src == 'false'
+        run: |
+          docker pull litentry/litentry-parachain:latest
 
       - name: Save docker image
         run: |
@@ -90,7 +94,7 @@ jobs:
   build-test:
     runs-on: ubuntu-20.04
     needs: check-file-change
-    if: needs.check-file-change.outputs.src == 'true'
+    if: needs.check-file-change.outputs.tee_src == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -108,44 +112,46 @@ jobs:
           driver: docker-container
 
       - name: Build Worker & Run Cargo Test
+        if: needs.check-file-change.outputs.tee_src == 'true'
         env:
           DOCKER_BUILDKIT: 1
         run: >
-          cd .. && docker build -t integritee-worker-${{ matrix.flavor_id }}-${{ github.sha }}
+          cd .. && docker build -t integritee-worker-${{ matrix.flavor_id }}
           --target deployed-worker
           --build-arg WORKER_MODE_ARG=${{ matrix.mode }} --build-arg ADDITIONAL_FEATURES_ARG=${{ matrix.additional_features }}
           -f tee-worker/build.Dockerfile .
 
       - name: Build CLI client
+        if: needs.check-file-change.outputs.tee_src == 'true'
         env:
           DOCKER_BUILDKIT: 1
         run: >
-          cd .. && docker build -t integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }}
+          cd .. && docker build -t integritee-cli-{{ matrix.flavor_id }}
           --target deployed-client
           --build-arg WORKER_MODE_ARG=${{ matrix.mode }} --build-arg ADDITIONAL_FEATURES_ARG=${{ matrix.additional_features }}
           -f tee-worker/build.Dockerfile .
 
+      - name: Pull and tag worker and cli image optionally
+        if: needs.check-file-change.outputs.tee_src == 'false'
+        run: |
+          docker pull litentry/integritee-worker-{{ matrix.flavor_id }}
+          docker pull litentry/integritee-cli-{{ matrix.flavor_id }}
+
       - run: docker images --all
 
       - name: Test Enclave # cargo test is not supported in the enclave, see: https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
-        run: docker run --name ${{ env.BUILD_CONTAINER_NAME }} integritee-worker-${{ matrix.flavor_id }}-${{ github.sha }} test --all
+        run: docker run --name ${{ env.BUILD_CONTAINER_NAME }} integritee-worker-{{ matrix.flavor_id }} test --all
 
-      - name: Export worker image(s)
-        run: |
-          docker image save integritee-worker-${{ matrix.flavor_id }}-${{ github.sha }} | gzip > ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/integritee-worker-${{ matrix.flavor_id }}-${{ github.sha }}.tar.gz
-          docker image save integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }} | gzip > ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }}.tar.gz
+      - name: Save docker images
+        run: >
+          docker image save integritee-worker-{{ matrix.flavor_id }} integritee-cli-{{ matrix.flavor_id }}
+          -o ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/litentry-tee-{{ matrix.flavor_id }}.tar
 
-      - name: Upload worker image
+      - name: Upload docker images
         uses: actions/upload-artifact@v3
         with:
-          name: integritee-worker-${{ matrix.flavor_id }}-${{ github.sha }}.tar.gz
-          path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/integritee-worker-${{ matrix.flavor_id }}-${{ github.sha }}.tar.gz
-
-      - name: Upload CLI client image
-        uses: actions/upload-artifact@v3
-        with:
-          name: integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }}.tar.gz
-          path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }}.tar.gz
+          name: tee-{{ matrix.flavor_id }}-artifact
+          path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/litentry-tee-{{ matrix.flavor_id }}.tar
 
   build-test-status-check:
     if: ${{ always() }}
@@ -162,7 +168,7 @@ jobs:
   clippy:
     runs-on: ubuntu-latest
     needs: check-file-change
-    if: needs.check-file-change.outputs.src == 'true'
+    if: needs.check-file-change.outputs.tee_src == 'true'
     container: "integritee/integritee-dev:0.1.10"
     steps:
       - uses: actions/checkout@v3
@@ -198,7 +204,7 @@ jobs:
   fmt:
     runs-on: ubuntu-latest
     needs: check-file-change
-    if: needs.check-file-change.outputs.src == 'true'
+    if: needs.check-file-change.outputs.tee_src == 'true'
     steps:
       - uses: actions/checkout@v3
       - name: init rust
@@ -223,6 +229,11 @@ jobs:
     needs:
       - build-parachain-docker
       - build-test
+      - check-file-change
+    if: >
+      needs.check-file-change.outputs.parachain_src == 'true' ||
+      needs.check-file-change.outputs.tee_src == 'true' ||
+      needs.check-file-change.outputs.tee_ts_tests == 'true'
     env:
       WORKER_IMAGE_TAG: integritee-worker:dev
       CLIENT_IMAGE_TAG: integritee-cli:dev
@@ -271,34 +282,20 @@ jobs:
           name: parachain-artifact
           path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}
 
+      - uses: actions/download-artifact@v3
+        with:
+          name: tee-{{ matrix.flavor_id }}-artifact
+          path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}
+
       - name: Load docker image
         run: |
           docker load -i ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/litentry-parachain.tar
-
-      - name: Download Worker Image
-        uses: actions/download-artifact@v3
-        with:
-          name: integritee-worker-${{ matrix.flavor_id }}-${{ github.sha }}.tar.gz
-          path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}
-
-      - name: Download CLI client Image
-        uses: actions/download-artifact@v3
-        with:
-          name: integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }}.tar.gz
-          path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}
-
-      - name: Load Worker & Client Images
-        env:
-          DOCKER_BUILDKIT: 1
-        run: |
-          docker image load --input ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/integritee-worker-${{ matrix.flavor_id }}-${{ github.sha }}.tar.gz
-          docker image load --input ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }}.tar.gz
-          docker images --all
+          docker load -i ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/litentry-tee-{{ matrix.flavor_id }}.tar
 
       - name: Re-name Image Tags
         run: |
-          docker tag integritee-worker-${{ matrix.flavor_id }}-${{ github.sha }} ${{ env.WORKER_IMAGE_TAG }}
-          docker tag integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }} ${{ env.CLIENT_IMAGE_TAG }}
+          docker tag integritee-worker-${{ matrix.flavor_id }} ${{ env.WORKER_IMAGE_TAG }}
+          docker tag integritee-cli-${{ matrix.flavor_id }} ${{ env.CLIENT_IMAGE_TAG }}
           docker images --all
 
       - name: Generate parachain artefacts
@@ -334,7 +331,6 @@ jobs:
         if: always()
         uses: jwalton/gh-docker-logs@v2
         with:
-          #images: '${{ env.WORKER_IMAGE_TAG }},${{ env.CLIENT_IMAGE_TAG }}'
           tail: all
           dest: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/${{ env.LOG_DIR }}
 
@@ -344,6 +340,19 @@ jobs:
         with:
           name: logs-${{ matrix.test }}-${{ matrix.flavor_id }}
           path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/${{ env.LOG_DIR }}
+
+      - name: Dockerhub login
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Push docker images
+        if: ${{ success() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
+        run: |
+          docker push litentry/litentry-parachain
+          docker push litentry/integritee-worker-{{ matrix.flavor_id }}
+          docker push litentry/integritee-cli-{{ matrix.flavor_id }}
 
   integration-tests-status-check:
     if: ${{ always() }}
@@ -357,33 +366,7 @@ jobs:
             *) exit 1 ;;
           esac
 
-  # Only push docker image when tests are passed and pushing to `dev` branch
-  push-docker-image:
-    runs-on: ubuntu-latest
-    needs:
-      - integration-tests
-    if: ${{ success() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: parachain-artifact
-          path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}
-
-      - name: Load docker image
-        run: |
-          docker load -i ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/litentry-parachain.tar
-
-      - name: Dockerhub login
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-
-      - name: Push docker image
-        run: docker push litentry/litentry-parachain:latest
-
+  # TODO: this "release" section is from the original yml -- unmaintained
   release:
     name: Draft Release
     if: startsWith(github.ref, 'refs/tags/')
