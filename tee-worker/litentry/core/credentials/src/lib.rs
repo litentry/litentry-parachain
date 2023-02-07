@@ -408,16 +408,6 @@ impl Credential {
 		}
 	}
 
-	pub fn add_assertion_a1(&mut self, web2_cnt: i32, web3_cnt: i32) {
-		let web2_item =
-			AssertionLogic::new_item("$web2_account_cnt", Op::Equal, &(format!("{}", web2_cnt)));
-		let web3_item =
-			AssertionLogic::new_item("$web3_account_cnt", Op::Equal, &(format!("{}", web3_cnt)));
-
-		let assertion = AssertionLogic::new_or().add_item(web2_item).add_item(web3_item);
-		self.credential_subject.assertions = assertion;
-	}
-
 	pub fn add_assertion_a8(&mut self, min: u64, max: u64) {
 		let min = format!("{}", min);
 		let max = format!("{}", max);
