@@ -66,7 +66,7 @@ pub fn build(
 	) {
 		Ok(mut credential_unsigned) => {
 			if discord_cnt > 0 && has_joined {
-				credential_unsigned.credential_subject.set_value(true);
+				credential_unsigned.credential_subject.values.push(true);
 
 				//Assign Role "ID-Hubber" to User
 				match client.assign_id_hubber(guild_id.to_vec(), handler.to_vec()) {
@@ -82,7 +82,7 @@ pub fn build(
 					},
 				}
 			} else {
-				credential_unsigned.credential_subject.set_value(false);
+				credential_unsigned.credential_subject.values.push(false);
 			}
 			return Ok(credential_unsigned)
 		},
