@@ -247,17 +247,6 @@ jobs:
         if: failure()
         uses: andymckay/cancel-action@0.3
 
-  build-tee-docker-status-check:
-    if: ${{ always() }}
-    runs-on: ubuntu-latest
-    needs: build-tee-docker
-    steps:
-      - run: |
-          case "${{ needs.build-tee-docker.result }}" in
-            success|skipped) exit 0 ;;
-            *) exit 1 ;;
-          esac
-
   parachain-ts-tests:
     runs-on: ubuntu-latest
     needs: [check-file-change, build-parachain-docker]
