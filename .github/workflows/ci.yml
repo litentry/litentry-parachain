@@ -457,7 +457,6 @@ jobs:
 
   tee-integration-tests:
     runs-on: ubuntu-20.04
-    working-directory: ./tee-worker
     needs:
       - build-parachain-docker
       - build-tee-docker
@@ -530,30 +529,30 @@ jobs:
 
       - name: Generate parachain artefacts
         run: |
-          ./scripts/litentry/generate_parachain_artefacts.sh
+          ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
 
       - name: Build litentry parachain docker images
         run: |
-          cd docker
+          cd tee-worker/docker
           docker-compose -f litentry-parachain.build.yml build
 
       - name: Integration Test ${{ matrix.test }}-${{ matrix.flavor_id }}
         timeout-minutes: 30
         if: ${{ matrix.test != 'resume-worker' }}
         run: |
-          cd docker
+          cd tee-worker/docker
           docker-compose -f docker-compose.yml -f ${{ matrix.demo_name }}.yml up --no-build --exit-code-from ${{ matrix.demo_name }} -- ${{ matrix.demo_name }}
 
       - name: Integration Test ${{ matrix.test }}-${{ matrix.flavor_id }}
         timeout-minutes: 30
         if: ${{ matrix.test == 'resume-worker' }}
         run: |
-          cd docker
+          cd tee-worker/docker
           docker-compose -f docker-compose.yml -f resume-worker.yml up --no-build --exit-code-from resume-worker --attach resume-worker relaychain-alice relaychain-bob integritee-node resume-worker
 
       - name: Stop docker containers
         run: |
-          cd docker
+          cd tee-worker/docker
           docker compose -f docker-compose.yml -f ${{ matrix.demo_name }}.yml stop
 
       - name: Collect Docker Logs
@@ -585,14 +584,13 @@ jobs:
           docker push litentry/integritee-worker-${{ matrix.flavor_id }}
           docker push litentry/integritee-cli-${{ matrix.flavor_id }}
 
-  integration-tests-status-check:
+  tee-integration-tests-status-check:
     if: ${{ always() }}
     runs-on: ubuntu-latest
-    needs: integration-tests
+    needs: tee-integration-tests
     steps:
-      - uses: actions/checkout@v3
       - run: |
-          case "${{ needs.integration-tests.result }}" in
+          case "${{ needs.tee-integration-tests.result }}" in
             success|skipped) exit 0 ;;
             *) exit 1 ;;
           esac
