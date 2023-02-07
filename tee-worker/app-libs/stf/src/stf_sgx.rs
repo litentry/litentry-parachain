@@ -21,12 +21,14 @@ use crate::test_genesis::test_genesis_setup;
 use crate::{helpers::enclave_signer_account, Stf, StfError, ENCLAVE_ACCOUNT_KEY};
 use codec::Encode;
 use frame_support::traits::{OriginTrait, UnfilteredDispatchable};
+use ita_sgx_runtime::Executive;
 use itp_node_api::metadata::{
 	pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata,
 };
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_interface::{
 	parentchain_pallet::ParentchainPalletInterface,
+	runtime_upgrade::RuntimeUpgradeInterface,
 	sudo_pallet::SudoPalletInterface,
 	system_pallet::{SystemPalletAccountInterface, SystemPalletEventInterface},
 	ExecuteCall, ExecuteGetter, InitState, StateCallInterface, StateGetterInterface, UpdateState,
@@ -243,6 +245,22 @@ where
 					Self::Error::Dispatch(format!("Update parentchain block error: {:?}", e.error))
 				})
 		})?;
+		Ok(())
+	}
+}
+
+impl<Call, Getter, State, Runtime> RuntimeUpgradeInterface<State>
+	for Stf<Call, Getter, State, Runtime>
+where
+	State: SgxExternalitiesTrait,
+	Runtime: frame_system::Config,
+{
+	type Error = StfError;
+
+	fn on_runtime_upgrade(state: &mut State) -> Result<(), Self::Error> {
+		state.execute_with(|| {			
+			Executive::execute_on_runtime_upgrade();			
+		});
 		Ok(())
 	}
 }
