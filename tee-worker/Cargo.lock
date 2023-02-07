@@ -4336,6 +4336,7 @@ version = "0.9.0"
 dependencies = [
  "beefy-merkle-tree",
  "bs58",
+ "core-primitives",
  "env_logger 0.10.0",
  "futures 0.3.26",
  "futures 0.3.8",

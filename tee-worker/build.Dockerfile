@@ -83,7 +83,7 @@ RUN --mount=type=cache,id=cargo,target=/root/work/.cache/sccache cargo test --re
 ##################################################
 FROM ubuntu:20.04 AS runner
 
-RUN apt update && apt install -y libssl-dev iproute2
+RUN apt update && apt install -y libssl-dev iproute2 curl
 
 
 ### Deployed CLI client
@@ -107,7 +107,6 @@ RUN ldd /usr/local/bin/integritee-cli && \
 	/usr/local/bin/integritee-cli --version
 
 ## ts-tests
-RUN apt-get install -y curl
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash
 RUN apt-get install -y nodejs
 RUN npm install -g yarn
@@ -137,7 +136,5 @@ RUN ls -al /usr/local/bin
 # checks
 RUN ldd /usr/local/bin/integritee-service && \
 	/usr/local/bin/integritee-service --version
-
-RUN apt-get install -y curl
 
 ENTRYPOINT ["/usr/local/bin/integritee-service"]

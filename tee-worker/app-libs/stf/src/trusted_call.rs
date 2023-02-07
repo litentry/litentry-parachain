@@ -431,7 +431,7 @@ where
 						debug!("set_user_shielding_key error: {}", err);
 						calls.push(OpaqueCall::from_tuple(&(
 							node_metadata_repo
-								.get_from_metadata(|m| m.some_error_call_indexes())??,
+								.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
 							"set_user_shielding_key".as_bytes(),
 							format!("{:?}", err).as_bytes(),
 						)));
@@ -479,7 +479,7 @@ where
 						} else {
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
-									.get_from_metadata(|m| m.some_error_call_indexes())??,
+									.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
 								"get_user_shielding_key".as_bytes(),
 								"error".as_bytes(),
 							)));
@@ -489,7 +489,7 @@ where
 						debug!("create_identity {} error: {}", account_id_to_string(&who), err);
 						calls.push(OpaqueCall::from_tuple(&(
 							node_metadata_repo
-								.get_from_metadata(|m| m.some_error_call_indexes())??,
+								.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
 							"create_identity".as_bytes(),
 							format!("{:?}", err).as_bytes(),
 						)));
@@ -520,7 +520,7 @@ where
 						} else {
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
-									.get_from_metadata(|m| m.some_error_call_indexes())??,
+									.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
 								"get_user_shielding_key".as_bytes(),
 								"error".as_bytes(),
 							)));
@@ -530,7 +530,7 @@ where
 						debug!("remove_identity {} error: {}", account_id_to_string(&who), err);
 						calls.push(OpaqueCall::from_tuple(&(
 							node_metadata_repo
-								.get_from_metadata(|m| m.some_error_call_indexes())??,
+								.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
 							"remove_identity".as_bytes(),
 							format!("{:?}", err).as_bytes(),
 						)));
@@ -572,7 +572,7 @@ where
 						} else {
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
-									.get_from_metadata(|m| m.some_error_call_indexes())??,
+									.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
 								"get_user_shielding_key".as_bytes(),
 								"error".as_bytes(),
 							)));
@@ -582,7 +582,7 @@ where
 						debug!("create_identity {} error: {}", account_id_to_string(&who), err);
 						calls.push(OpaqueCall::from_tuple(&(
 							node_metadata_repo
-								.get_from_metadata(|m| m.some_error_call_indexes())??,
+								.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
 							"verify_identity".as_bytes(),
 							format!("{:?}", err).as_bytes(),
 						)));

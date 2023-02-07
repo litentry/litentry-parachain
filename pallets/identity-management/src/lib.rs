@@ -50,7 +50,7 @@ use sp_std::vec::Vec;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::{AesOutput, ShardIdentifier, Vec, WeightInfo};
-	use core_primitives::IMPError;
+	use core_primitives::{ErrorString, IMPError};
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
@@ -84,11 +84,24 @@ pub mod pallet {
 		IdentityCreated { account: AesOutput, identity: AesOutput, id_graph: AesOutput },
 		IdentityRemoved { account: AesOutput, identity: AesOutput, id_graph: AesOutput },
 		IdentityVerified { account: AesOutput, identity: AesOutput, id_graph: AesOutput },
-		// some error happened during processing in TEE, we use string-like
-		// parameters for more "generic" error event reporting
-		// TODO: maybe use concrete errors instead of events when we are more sure
-		// see also the comment at the beginning
-		SomeError { func: Vec<u8>, error: Vec<u8> },
+		// event errors caused by processing in TEE
+		// copied from core_primitives::IMPError, we use events instead of pallet::errors,
+		// see https://github.com/litentry/litentry-parachain/issues/1275
+		DecodeHexFailed { reason: ErrorString },
+		HttpRequestFailed { reason: ErrorString },
+		CreateIdentityHandlingFailed,
+		RemoveIdentityHandlingFailed,
+		VerifyIdentityHandlingFailed,
+		SetUserShieldingKeyHandlingFailed,
+		InvalidIdentity,
+		WrongWeb2Handle,
+		UnexpectedMessage,
+		WrongIdentityHandleType,
+		WrongSignatureType,
+		VerifySubstrateSignatureFailed,
+		RecoverSubstratePubkeyFailed,
+		VerifyEvmSignatureFailed,
+		RecoverEvmAddressFailed,
 	}
 
 	/// delegatees who are authorised to send extrinsics(currently only `create_identity`)
@@ -103,19 +116,6 @@ pub mod pallet {
 		DelegateeNotExist,
 		/// a `create_identity` request from unauthorised user
 		UnauthorisedUser,
-
-		/// copy from litentry_primitives::IMPError
-		DecodeHexFailed,
-		HttpRequestFailed,
-		InvalidIdentity,
-		WrongWeb2Handle,
-		UnexpectedMessage,
-		WrongIdentityHandleType,
-		WrongSignatureType,
-		VerifySubstrateSignatureFailed,
-		RecoverSubstratePubkeyFailed,
-		VerifyEvmSignatureFailed,
-		RecoverEvmAddressFailed,
 	}
 
 	#[pallet::call]
@@ -275,29 +275,34 @@ pub mod pallet {
 		pub fn some_error(origin: OriginFor<T>, error: IMPError) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			match error {
-				IMPError::DecodeHexFailed(s) => {
-					log::error!("deocode hex: {:?}", s);
-					Err(Error::<T>::DecodeHexFailed.into())
-				},
-				IMPError::HttpRequestFailed(s) => {
-					log::error!("request failed:{:?}", s);
-					Err(Error::<T>::HttpRequestFailed.into())
-				},
-				IMPError::InvalidIdentity => Err(Error::<T>::InvalidIdentity.into()),
-				IMPError::WrongWeb2Handle => Err(Error::<T>::WrongWeb2Handle.into()),
-				IMPError::UnexpectedMessage => Err(Error::<T>::UnexpectedMessage.into()),
+				IMPError::DecodeHexFailed(s) =>
+					Self::deposit_event(Event::DecodeHexFailed { reason: s }),
+				IMPError::HttpRequestFailed(s) =>
+					Self::deposit_event(Event::HttpRequestFailed { reason: s }),
+				IMPError::InvalidIdentity => Self::deposit_event(Event::InvalidIdentity),
+				IMPError::CreateIdentityHandlingFailed =>
+					Self::deposit_event(Event::CreateIdentityHandlingFailed),
+				IMPError::RemoveIdentityHandlingFailed =>
+					Self::deposit_event(Event::RemoveIdentityHandlingFailed),
+				IMPError::VerifyIdentityHandlingFailed =>
+					Self::deposit_event(Event::VerifyIdentityHandlingFailed),
+				IMPError::SetUserShieldingKeyHandlingFailed =>
+					Self::deposit_event(Event::SetUserShieldingKeyHandlingFailed),
+				IMPError::WrongWeb2Handle => Self::deposit_event(Event::WrongWeb2Handle),
+				IMPError::UnexpectedMessage => Self::deposit_event(Event::UnexpectedMessage),
 				IMPError::WrongIdentityHandleType =>
-					Err(Error::<T>::WrongIdentityHandleType.into()),
-				IMPError::WrongSignatureType => Err(Error::<T>::WrongSignatureType.into()),
+					Self::deposit_event(Event::WrongIdentityHandleType),
+				IMPError::WrongSignatureType => Self::deposit_event(Event::WrongSignatureType),
 				IMPError::VerifySubstrateSignatureFailed =>
-					Err(Error::<T>::VerifySubstrateSignatureFailed.into()),
+					Self::deposit_event(Event::VerifySubstrateSignatureFailed),
 				IMPError::RecoverSubstratePubkeyFailed =>
-					Err(Error::<T>::RecoverSubstratePubkeyFailed.into()),
+					Self::deposit_event(Event::RecoverSubstratePubkeyFailed),
 				IMPError::VerifyEvmSignatureFailed =>
-					Err(Error::<T>::VerifyEvmSignatureFailed.into()),
+					Self::deposit_event(Event::VerifyEvmSignatureFailed),
 				IMPError::RecoverEvmAddressFailed =>
-					Err(Error::<T>::RecoverEvmAddressFailed.into()),
+					Self::deposit_event(Event::RecoverEvmAddressFailed),
 			}
+			Ok(Pays::No.into())
 		}
 	}
 }
