@@ -20,9 +20,6 @@ impl QueryStorageCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_args: &TrustedCli) {
 		let direct_api = get_worker_api_direct(cli);
 
-		// let shard = read_shard(trusted_args).unwrap();
-
-		// let key = storage_value_key("Parentchain", "Number");
 		let key = storage_value_key(self.module.as_str(), self.storage.as_str());
 		let key = format!("0x{}", hex::encode(key));
 
@@ -43,7 +40,7 @@ impl QueryStorageCommand {
 				if let Ok(return_value) = RpcReturnValue::from_hex(&response.result) {
 					warn!("return_value:{:?}", &return_value);
 					match return_value.status {
-						DirectRequestStatus::Ok => {							
+						DirectRequestStatus::Ok => {
 							println!("{}", hex::encode(return_value.value));
 						},
 						DirectRequestStatus::Error => {
