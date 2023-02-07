@@ -116,7 +116,7 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
         run: >
-          cd .. && docker build -t integritee-worker-${{ matrix.flavor_id }}
+          cd .. && docker build -t litentry/integritee-worker-${{ matrix.flavor_id }}
           --target deployed-worker
           --build-arg WORKER_MODE_ARG=${{ matrix.mode }} --build-arg ADDITIONAL_FEATURES_ARG=${{ matrix.additional_features }}
           -f tee-worker/build.Dockerfile .
@@ -126,7 +126,7 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
         run: >
-          cd .. && docker build -t integritee-cli-${{ matrix.flavor_id }}
+          cd .. && docker build -t litentry/integritee-cli-${{ matrix.flavor_id }}
           --target deployed-client
           --build-arg WORKER_MODE_ARG=${{ matrix.mode }} --build-arg ADDITIONAL_FEATURES_ARG=${{ matrix.additional_features }}
           -f tee-worker/build.Dockerfile .
@@ -140,11 +140,11 @@ jobs:
       - run: docker images --all
 
       - name: Test Enclave # cargo test is not supported in the enclave, see: https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
-        run: docker run --name ${{ env.BUILD_CONTAINER_NAME }} integritee-worker-${{ matrix.flavor_id }} test --all
+        run: docker run --name ${{ env.BUILD_CONTAINER_NAME }} litentry/integritee-worker-${{ matrix.flavor_id }} test --all
 
       - name: Save docker images
         run: >
-          docker save integritee-worker-${{ matrix.flavor_id }} integritee-cli-${{ matrix.flavor_id }}
+          docker save litentry/integritee-worker-${{ matrix.flavor_id }} litentry/integritee-cli-${{ matrix.flavor_id }}
           -o ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/litentry-tee-${{ matrix.flavor_id }}.tar
 
       - name: Upload docker images
@@ -294,8 +294,8 @@ jobs:
 
       - name: Re-name Image Tags
         run: |
-          docker tag integritee-worker-${{ matrix.flavor_id }} ${{ env.WORKER_IMAGE_TAG }}
-          docker tag integritee-cli-${{ matrix.flavor_id }} ${{ env.CLIENT_IMAGE_TAG }}
+          docker tag litentry/integritee-worker-${{ matrix.flavor_id }} ${{ env.WORKER_IMAGE_TAG }}
+          docker tag litentry/integritee-cli-${{ matrix.flavor_id }} ${{ env.CLIENT_IMAGE_TAG }}
           docker images --all
 
       - name: Generate parachain artefacts
