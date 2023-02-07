@@ -16,7 +16,6 @@ import { generateChallengeCode } from './web3/setup';
 import { ApiPromise } from '@polkadot/api';
 import { Assertion } from './type-definitions';
 
-
 export async function setUserShieldingKey(
     context: IntegrationTestContext,
     signer: KeyringPair,
@@ -29,14 +28,13 @@ export async function setUserShieldingKey(
         .setUserShieldingKey(context.shard, `0x${ciphertext}`)
         .paymentInfo(signer);
 
-    const tx =context.substrate.tx.identityManagement
-        .setUserShieldingKey(context.shard, `0x${ciphertext}`)
-    
+    const tx = context.substrate.tx.identityManagement.setUserShieldingKey(context.shard, `0x${ciphertext}`);
+
     //The purpose of paymentInfo is to check whether the version of polkadot/api is suitable for the current test and to determine whether the transaction is successful.
     await tx.paymentInfo(signer);
 
     await sendTxUntilInBlock(context.substrate, tx, signer);
-    
+
     if (listening) {
         const event = await listenEncryptedEvents(context, aesKey, {
             module: 'identityManagement',
@@ -59,14 +57,18 @@ export async function createIdentity(
     const encode = context.substrate.createType('LitentryIdentity', identity).toHex();
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
 
-    const tx =context.substrate.tx.identityManagement
-        .createIdentity(context.shard, signer.address, `0x${ciphertext}`, null)
-    
+    const tx = context.substrate.tx.identityManagement.createIdentity(
+        context.shard,
+        signer.address,
+        `0x${ciphertext}`,
+        null
+    );
+
     //The purpose of paymentInfo is to check whether the version of polkadot/api is suitable for the current test and to determine whether the transaction is successful.
     await tx.paymentInfo(signer);
 
     await sendTxUntilInBlock(context.substrate, tx, signer);
-    
+
     if (listening) {
         const event = await listenCreatedIdentityEvents(context, aesKey);
         const [who, _identity, idGraph, challengeCode] = event.eventData;
@@ -117,7 +119,6 @@ export async function verifyIdentity(
     const validation_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, validation_encode).toString(
         'hex'
     );
- 
 
     const tx = context.substrate.tx.identityManagement.verifyIdentity(
         context.shard,
@@ -127,7 +128,7 @@ export async function verifyIdentity(
 
     //The purpose of paymentInfo is to check whether the version of polkadot/api is suitable for the current test and to determine whether the transaction is successful.
     await tx.paymentInfo(signer);
-    
+
     await sendTxUntilInBlock(context.substrate, tx, signer);
 
     if (listening) {
@@ -149,11 +150,12 @@ export async function requestVC(
     listening: boolean,
     shard: HexString,
     assertion: Assertion
-): Promise<HexString | undefined> {
+): Promise<HexString[] | undefined> {
     const tx = context.substrate.tx.vcManagement.requestVc(shard, assertion);
-     //The purpose of paymentInfo is to check whether the version of polkadot/api is suitable for the current test and to determine whether the transaction is successful.
+
+    //The purpose of paymentInfo is to check whether the version of polkadot/api is suitable for the current test and to determine whether the transaction is successful.
     await tx.paymentInfo(signer);
-    
+
     await sendTxUntilInBlock(context.substrate, tx, signer);
     if (listening) {
         const event = await listenEncryptedEvents(context, aesKey, {
@@ -162,8 +164,8 @@ export async function requestVC(
             event: 'VCIssued',
         });
 
-        const [who, hash, vc] = event.eventData;
-        return vc;
+        const [who, index, vc] = event.eventData;
+        return [who, index, vc];
     }
     return undefined;
 }
