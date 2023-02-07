@@ -6,8 +6,8 @@ import { assert } from 'chai';
 import { u8aToHex } from '@polkadot/util';
 const assertion = <Assertion>{
     A1: 'A1',
-    // A2: ['A2', 'A2'],
-    // A3: ['A3', 'A3'],
+    A2: ['A2', 'A2'],
+    A3: ['A3', 'A3'],
     A4: [10, 'A4'],
     // A5: ['A5', 'A5'],
     // A6: 'A6',
