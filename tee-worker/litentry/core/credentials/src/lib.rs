@@ -141,14 +141,6 @@ impl CredentialSubject {
 	pub fn is_empty(&self) -> bool {
 		self.id.is_empty()
 	}
-
-	pub fn set_assertion(&mut self, assertion: AssertionLogic) {
-		self.assertions[0] = assertion;
-	}
-
-	pub fn set_value(&mut self, value: bool) {
-		self.values[0] = value;
-	}
 }
 
 /// Verifiable Credentials JSON Schema 2022, W3C, 8 November 2022
@@ -362,7 +354,7 @@ impl Credential {
 				let timestamp = AssertionLogic::new_item("$timestamp", Op::GreaterEq, &from_date);
 
 				let assertion = AssertionLogic::new_and().add_item(lit_amounts).add_item(timestamp);
-				credential.credential_subject.set_assertion(assertion);
+				credential.credential_subject.assertions.push(assertion);
 
 				Ok(credential)
 			},
@@ -379,7 +371,7 @@ impl Credential {
 					AssertionLogic::new_item("$timestamp", Op::GreaterEq, &year_to_date(*year));
 
 				let assertion = AssertionLogic::new_and().add_item(lit_amounts).add_item(timestamp);
-				credential.credential_subject.set_assertion(assertion);
+				credential.credential_subject.assertions.push(assertion);
 
 				Ok(credential)
 			},
@@ -401,7 +393,7 @@ impl Credential {
 					AssertionLogic::new_item("$timestamp", Op::GreaterEq, &year_to_date(*year));
 
 				let assertion = AssertionLogic::new_and().add_item(lit_amounts).add_item(timestamp);
-				credential.credential_subject.set_assertion(assertion);
+				credential.credential_subject.assertions.push(assertion);
 
 				Ok(credential)
 			},
@@ -416,7 +408,7 @@ impl Credential {
 			AssertionLogic::new_item("$web3_account_cnt", Op::Equal, &(format!("{}", web3_cnt)));
 
 		let assertion = AssertionLogic::new_or().add_item(web2_item).add_item(web3_item);
-		self.credential_subject.set_assertion(assertion);
+		self.credential_subject.assertions.push(assertion);
 	}
 
 	pub fn add_assertion_a8(&mut self, min: u64, max: u64) {
@@ -427,7 +419,7 @@ impl Credential {
 		let web3_item = AssertionLogic::new_item("$total_txs", Op::LessEq, &max);
 
 		let assertion = AssertionLogic::new_and().add_item(web2_item).add_item(web3_item);
-		self.credential_subject.set_assertion(assertion);
+		self.credential_subject.assertions.push(assertion);
 	}
 }
 
