@@ -193,12 +193,6 @@ jobs:
   build-tee-docker:
     runs-on: ubuntu-20.04
     needs: check-file-change
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - flavor_id: sidechain
-            mode: sidechain
 
     steps:
       - uses: actions/checkout@v3
@@ -209,47 +203,47 @@ jobs:
           buildkitd-flags: --debug
           driver: docker-container
 
-      - name: Build Worker & Run Cargo Test
+      - name: Build worker (sidechain)
         if: needs.check-file-change.outputs.tee_src == 'true'
         env:
           DOCKER_BUILDKIT: 1
         run: >
-          docker build -t litentry/integritee-worker-${{ matrix.flavor_id }}
+          docker build -t litentry/integritee-worker
           --target deployed-worker
-          --build-arg WORKER_MODE_ARG=${{ matrix.mode }} --build-arg ADDITIONAL_FEATURES_ARG=${{ matrix.additional_features }}
+          --build-arg WORKER_MODE_ARG=sidechain --build-arg ADDITIONAL_FEATURES_ARG=
           -f tee-worker/build.Dockerfile .
 
-      - name: Build CLI client
+      - name: Build cli (sidechain)
         if: needs.check-file-change.outputs.tee_src == 'true'
         env:
           DOCKER_BUILDKIT: 1
         run: >
-          docker build -t litentry/integritee-cli-${{ matrix.flavor_id }}
+          docker build -t litentry/integritee-cli
           --target deployed-client
-          --build-arg WORKER_MODE_ARG=${{ matrix.mode }} --build-arg ADDITIONAL_FEATURES_ARG=${{ matrix.additional_features }}
+          --build-arg WORKER_MODE_ARG=sidechain --build-arg ADDITIONAL_FEATURES_ARG=
           -f tee-worker/build.Dockerfile .
 
       - name: Pull and tag worker and cli image optionally
         if: needs.check-file-change.outputs.tee_src == 'false'
         run: |
-          docker pull litentry/integritee-worker-${{ matrix.flavor_id }}
-          docker pull litentry/integritee-cli-${{ matrix.flavor_id }}
+          docker pull litentry/integritee-worker
+          docker pull litentry/integritee-cli
 
       - run: docker images --all
 
-      - name: Test Enclave # cargo test is not supported in the enclave, see: https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
-        run: docker run litentry/integritee-worker-${{ matrix.flavor_id }} test --all
+      - name: Test enclave
+        # cargo test is not supported in the enclave
+        # see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
+        run: docker run litentry/integritee-worker test --all
 
       - name: Save docker images
-        run: >
-          docker save litentry/integritee-worker-${{ matrix.flavor_id }} litentry/integritee-cli-${{ matrix.flavor_id }}
-          -o litentry-tee-${{ matrix.flavor_id }}.tar
+        run: docker save litentry/integritee-worker litentry/integritee-cli -o litentry-tee.tar
 
       - name: Upload docker images
         uses: actions/upload-artifact@v3
         with:
-          name: tee-${{ matrix.flavor_id }}-artifact
-          path: litentry-tee-${{ matrix.flavor_id }}.tar
+          name: tee-artifact
+          path: litentry-tee.tar
 
       - name: Fail early
         if: failure()
@@ -424,37 +418,6 @@ jobs:
             *) exit 1 ;;
           esac
 
-  # Secrets are not passed to the runner when a workflow is triggered from a forked repository,
-  # see https://docs.github.com/en/actions/security-guides/encrypted-secrets#using-encrypted-secrets-in-a-workflow
-  # Only push docker image when tests are passed on dev branch
-  push-parachain-docker:
-    runs-on: ubuntu-latest
-    needs:
-      [
-        "parachain-clippy",
-        "parachain-unit-tests",
-        "parachain-runtime-tests",
-        "parachain-ts-tests",
-      ]
-    if: ${{ success() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
-    steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: parachain-artifact
-
-      - name: Load docker image
-        run: |
-          docker load -i litentry-parachain.tar
-
-      - name: Dockerhub login
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-
-      - name: Push docker image
-        run: docker push litentry/litentry-parachain:latest
-
   tee-integration-tests:
     runs-on: ubuntu-20.04
     needs:
@@ -476,29 +439,21 @@ jobs:
       matrix:
         include:
           - test: M6
-            flavor_id: sidechain
             demo_name: demo-indirect-invocation
           - test: M8
-            flavor_id: sidechain
             demo_name: demo-direct-call
           - test: Sidechain
-            flavor_id: sidechain
             demo_name: demo-sidechain
           - test: Benchmark
-            flavor_id: sidechain
             demo_name: sidechain-benchmark
           # Litentry
           - test: user-shielding-key
-            flavor_id: sidechain
             demo_name: user-shielding-key
           - test: ts-tests
-            flavor_id: sidechain
             demo_name: ts-tests
           - test: resume-worker
-            flavor_id: sidechain
             demo_name: resume-worker
           - test: set-heartbeat-timeout
-            flavor_id: sidechain
             demo_name: set-heartbeat-timeout
 
     steps:
@@ -514,17 +469,17 @@ jobs:
 
       - uses: actions/download-artifact@v3
         with:
-          name: tee-${{ matrix.flavor_id }}-artifact
+          name: tee-artifact
 
       - name: Load docker image
         run: |
           docker load -i litentry-parachain.tar
-          docker load -i litentry-tee-${{ matrix.flavor_id }}.tar
+          docker load -i litentry-tee.tar
 
       - name: Re-name Image Tags
         run: |
-          docker tag litentry/integritee-worker-${{ matrix.flavor_id }} ${{ env.WORKER_IMAGE_TAG }}
-          docker tag litentry/integritee-cli-${{ matrix.flavor_id }} ${{ env.CLIENT_IMAGE_TAG }}
+          docker tag litentry/integritee-worker ${{ env.WORKER_IMAGE_TAG }}
+          docker tag litentry/integritee-cli ${{ env.CLIENT_IMAGE_TAG }}
           docker images --all
 
       - name: Generate parachain artefacts
@@ -536,14 +491,14 @@ jobs:
           cd tee-worker/docker
           docker-compose -f litentry-parachain.build.yml build
 
-      - name: Integration Test ${{ matrix.test }}-${{ matrix.flavor_id }}
+      - name: Integration Test ${{ matrix.test }}
         timeout-minutes: 30
         if: ${{ matrix.test != 'resume-worker' }}
         run: |
           cd tee-worker/docker
           docker-compose -f docker-compose.yml -f ${{ matrix.demo_name }}.yml up --no-build --exit-code-from ${{ matrix.demo_name }} -- ${{ matrix.demo_name }}
 
-      - name: Integration Test ${{ matrix.test }}-${{ matrix.flavor_id }}
+      - name: Integration Test ${{ matrix.test }}
         timeout-minutes: 30
         if: ${{ matrix.test == 'resume-worker' }}
         run: |
@@ -561,28 +516,14 @@ jobs:
         uses: jwalton/gh-docker-logs@v2
         with:
           tail: all
-          dest: ${{ env.LOG_DIR }}
+          dest: logs
 
       - name: Upload logs
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: logs-${{ matrix.test }}-${{ matrix.flavor_id }}
-          path: ${{ env.LOG_DIR }}
-
-      - name: Dockerhub login
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-
-      - name: Push tee docker image
-        # Only push docker image when tests are passed on dev branch,
-        # it's put here because we need the matrix args
-        if: ${{ success() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
-        run: |
-          docker push litentry/integritee-worker-${{ matrix.flavor_id }}
-          docker push litentry/integritee-cli-${{ matrix.flavor_id }}
+          name: logs-${{ matrix.test }}
+          path: logs
 
   tee-integration-tests-status-check:
     if: ${{ always() }}
@@ -594,3 +535,43 @@ jobs:
             success|skipped) exit 0 ;;
             *) exit 1 ;;
           esac
+
+  # Secrets are not passed to the runner when a workflow is triggered from a forked repository,
+  # see https://docs.github.com/en/actions/security-guides/encrypted-secrets#using-encrypted-secrets-in-a-workflow
+  # Only push docker image when tests are passed on dev branch
+  push-parachain-docker:
+    runs-on: ubuntu-latest
+    needs:
+      [
+        parachain-clippy,
+        parachain-unit-tests,
+        parachain-runtime-tests,
+        parachain-ts-tests,
+        tee-integration-tests
+      ]
+    if: ${{ success() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: parachain-artifact
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: tee-artifact
+
+      - name: Load docker image
+        run: |
+          docker load -i litentry-parachain.tar
+          docker load -i litentry-tee.tar
+
+      - name: Dockerhub login
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Push docker image
+        run: |
+          docker push litentry/litentry-parachain:latest
+          docker push litentry/integritee-worker
+          docker push litentry/integritee-cli
