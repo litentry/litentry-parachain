@@ -41,7 +41,7 @@ impl QueryStorageCommand {
 					warn!("return_value:{:?}", &return_value);
 					match return_value.status {
 						DirectRequestStatus::Ok => {
-							println!("{}", hex::encode(return_value.value));
+							println!("0x{}", hex::encode(return_value.value));
 						},
 						DirectRequestStatus::Error => {
 							warn!("request status is error");
