@@ -34,7 +34,6 @@ use frame_support::{
 	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
 	PalletId, RuntimeDebug,
 };
-use frame_system::EnsureRoot;
 use sp_api::impl_runtime_apis;
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};

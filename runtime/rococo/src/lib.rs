@@ -34,7 +34,7 @@ use frame_support::{
 	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
 	PalletId, RuntimeDebug,
 };
-use frame_system::{EnsureRoot, EnsureSignedBy};
+use frame_system::EnsureSignedBy;
 use hex_literal::hex;
 
 // for TEE
