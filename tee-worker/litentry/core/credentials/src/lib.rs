@@ -130,7 +130,7 @@ pub struct CredentialSubject {
 	pub data_source: Option<Vec<DataSource>>,
 	/// Several sets of assertions.
 	/// Each assertion contains multiple steps to describe how to fetch data and calculate the value
-	pub assertions: AssertionLogic,
+	pub assertions: Vec<AssertionLogic>,
 	/// Results of each set of assertions
 	pub values: Vec<bool>,
 	/// The extrinsic on Parentchain for credential verification purpose
@@ -140,10 +140,6 @@ pub struct CredentialSubject {
 impl CredentialSubject {
 	pub fn is_empty(&self) -> bool {
 		self.id.is_empty()
-	}
-
-	pub fn set_value(&mut self, value: bool) {
-		self.values[0] = value;
 	}
 }
 
@@ -358,8 +354,7 @@ impl Credential {
 				let timestamp = AssertionLogic::new_item("$timestamp", Op::GreaterEq, &from_date);
 
 				let assertion = AssertionLogic::new_and().add_item(lit_amounts).add_item(timestamp);
-
-				credential.credential_subject.assertions = assertion;
+				credential.credential_subject.assertions.push(assertion);
 
 				Ok(credential)
 			},
@@ -376,8 +371,7 @@ impl Credential {
 					AssertionLogic::new_item("$timestamp", Op::GreaterEq, &year_to_date(*year));
 
 				let assertion = AssertionLogic::new_and().add_item(lit_amounts).add_item(timestamp);
-
-				credential.credential_subject.assertions = assertion;
+				credential.credential_subject.assertions.push(assertion);
 
 				Ok(credential)
 			},
@@ -399,8 +393,7 @@ impl Credential {
 					AssertionLogic::new_item("$timestamp", Op::GreaterEq, &year_to_date(*year));
 
 				let assertion = AssertionLogic::new_and().add_item(lit_amounts).add_item(timestamp);
-
-				credential.credential_subject.assertions = assertion;
+				credential.credential_subject.assertions.push(assertion);
 
 				Ok(credential)
 			},
@@ -415,7 +408,7 @@ impl Credential {
 			AssertionLogic::new_item("$web3_account_cnt", Op::Equal, &(format!("{}", web3_cnt)));
 
 		let assertion = AssertionLogic::new_or().add_item(web2_item).add_item(web3_item);
-		self.credential_subject.assertions = assertion;
+		self.credential_subject.assertions.push(assertion);
 	}
 
 	pub fn add_assertion_a8(&mut self, min: u64, max: u64) {
@@ -426,8 +419,7 @@ impl Credential {
 		let web3_item = AssertionLogic::new_item("$total_txs", Op::LessEq, &max);
 
 		let assertion = AssertionLogic::new_and().add_item(web2_item).add_item(web3_item);
-
-		self.credential_subject.assertions = assertion;
+		self.credential_subject.assertions.push(assertion);
 	}
 }
 
