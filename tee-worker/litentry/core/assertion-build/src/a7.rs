@@ -77,7 +77,7 @@ pub fn build(
 	let a7 = Assertion::A7(min_balance, year);
 	match Credential::generate_unsigned_credential(&a7, who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.credential_subject.set_value(flag);
+			credential_unsigned.credential_subject.values.push(flag);
 
 			return Ok(credential_unsigned)
 		},

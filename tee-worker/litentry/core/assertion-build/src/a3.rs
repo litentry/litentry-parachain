@@ -64,9 +64,9 @@ pub fn build(
 	) {
 		Ok(mut credential_unsigned) => {
 			if has_commented {
-				credential_unsigned.credential_subject.set_value(true);
+				credential_unsigned.credential_subject.values.push(true);
 			} else {
-				credential_unsigned.credential_subject.set_value(false);
+				credential_unsigned.credential_subject.values.push(false);
 			}
 			Ok(credential_unsigned)
 		},

@@ -102,7 +102,7 @@ pub fn build(
 	match Credential::generate_unsigned_credential(&Assertion::A8, who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_assertion_a8(min, max);
-			credential_unsigned.credential_subject.set_value(true);
+			credential_unsigned.credential_subject.values.push(true);
 			return Ok(credential_unsigned)
 		},
 		Err(e) => {
