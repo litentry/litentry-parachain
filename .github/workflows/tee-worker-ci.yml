@@ -95,7 +95,6 @@ jobs:
   build-test:
     runs-on: ubuntu-20.04
     needs: check-file-change
-    if: needs.check-file-change.outputs.tee_src == 'true'
     strategy:
       fail-fast: false
       matrix:
