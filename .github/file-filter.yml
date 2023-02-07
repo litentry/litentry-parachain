@@ -1,0 +1,30 @@
+# This is used by the action https://github.com/dorny/paths-filter to run jobs conditionally
+# Put all defined set of files here, similar to https://github.com/getsentry/sentry/blob/master/.github/workflows/getsentry-dispatch.yml
+
+parachain_src: &parachain_src
+  - 'node/**'
+  - 'pallets/**'
+  - 'primitives/**'
+  - 'runtime/**'
+  - 'mock-tee-primitives/**'
+  - 'docker/Dockerfile'
+  - 'docker/bridge.dockerfile'
+  - 'Cargo.lock'
+  - 'Cargo.toml'
+  - 'rust-toolchain.toml'
+
+parachain_test: &parachain_test
+  - 'ts-tests/**'
+
+tee_src: &tee_src
+  - 'tee-worker/**/*.rs'
+  - 'tee-worker/**/Cargo.toml'
+  - 'tee-worker/**/Cargo.lock'
+  - 'tee-worker/**/rust-toolchain.toml'
+  - 'tee-worker/build.Dockerfile'
+  - 'tee-worker/enclave-runtime/**'
+
+tee_test: &tee_test
+  - 'tee-worker/ts-tests/**'
+  - 'tee-worker/docker/*.yml'
+  - 'tee-worker/cli/*.sh'
