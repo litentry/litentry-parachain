@@ -128,17 +128,10 @@ jobs:
   tee-clippy:
     runs-on: ubuntu-latest
     needs: check-file-change
+    container: "integritee/integritee-dev:0.1.10"
     if: needs.check-file-change.outputs.parachain_src == 'true'
     steps:
       - uses: actions/checkout@v3
-
-      - name: Install rust toolchain
-        run: rustup show
-
-      - name: Install dependencies
-        run: >
-          sudo apt-get update &&
-          sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
 
       - name: Tee-worker clippy
         working-directory: ./tee-worker
