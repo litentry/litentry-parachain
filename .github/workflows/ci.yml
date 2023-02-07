@@ -17,6 +17,7 @@ on:
   push:
     branches:
       - dev
+      - 1285-merge-ci
     paths-ignore:
       - "**/dependabot.yml"
       - "**/README.md"
