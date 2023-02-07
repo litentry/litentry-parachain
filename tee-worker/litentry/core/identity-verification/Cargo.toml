@@ -90,4 +90,5 @@ std = [
     "lc-data-providers/std",
     "litentry-primitives/std",
     "lc-stf-task-sender/std",
+    "parachain-core-primitives/std",
 ]

@@ -43,6 +43,8 @@ use itc_rest_client::{
 };
 use lazy_static::lazy_static;
 use log::debug;
+use serde::{Deserialize, Serialize};
+
 #[cfg(feature = "std")]
 use std::sync::RwLock;
 #[cfg(feature = "sgx")]
@@ -66,7 +68,7 @@ pub mod graphql;
 
 const TIMEOUT: Duration = Duration::from_secs(3u64);
 
-#[derive(PartialEq, Eq, Clone, Encode, Decode)]
+#[derive(PartialEq, Eq, Clone, Encode, Decode, Serialize, Deserialize)]
 pub struct DataProvidersStatic {
 	pub twitter_official_url: String,
 	pub twitter_litentry_url: String,
@@ -85,14 +87,14 @@ impl Default for DataProvidersStatic {
 impl DataProvidersStatic {
 	pub fn new() -> Self {
 		DataProvidersStatic {
-			twitter_official_url: "http://localhost:9527".to_string(),
-			twitter_litentry_url: "http://localhost:9527".to_string(),
+			twitter_official_url: "https://api.twitter.com".to_string(),
+			twitter_litentry_url: "".to_string(),
 			twitter_auth_token: "Bearer ".to_string(),
-			discord_official_url: "http://localhost:9527".to_string(),
-			discord_litentry_url: "http://localhost:9527".to_string(),
+			discord_official_url: "https://discordapp.com".to_string(),
+			discord_litentry_url: "".to_string(),
 			discord_auth_token: "".to_string(),
 			graphql_url: "https://graph.tdf-labs.io/".to_string(),
-			graphql_auth_key: "ac2115ec-e327-4862-84c5-f25b6b7d4533".to_string(),
+			graphql_auth_key: "".to_string(),
 		}
 	}
 	pub fn set_twitter_official_url(&mut self, v: String) {

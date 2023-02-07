@@ -18,6 +18,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
+pub use parachain_core_primitives::{IMPError, VCMPError};
 use sgx_types::sgx_status_t;
 use sp_runtime::traits::LookupError;
 use std::{boxed::Box, format};
@@ -43,6 +44,10 @@ pub enum Error {
 	AccountIdLookup,
 	#[error("convert parent chain block number error")]
 	ConvertParentchainBlockNumber,
+	#[error("IMP handling error: {0:?}")]
+	IMPHandlingError(IMPError),
+	#[error("VCMP handling error: {0:?}")]
+	VCMPHandlingError(VCMPError),
 }
 
 impl From<sgx_status_t> for Error {
@@ -72,5 +77,17 @@ impl From<itp_node_api::metadata::Error> for Error {
 impl From<LookupError> for Error {
 	fn from(_: LookupError) -> Self {
 		Self::AccountIdLookup
+	}
+}
+
+impl From<IMPError> for Error {
+	fn from(e: IMPError) -> Self {
+		Self::IMPHandlingError(e)
+	}
+}
+
+impl From<VCMPError> for Error {
+	fn from(e: VCMPError) -> Self {
+		Self::VCMPHandlingError(e)
 	}
 }

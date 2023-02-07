@@ -110,4 +110,5 @@ std = [
     "frame-support/std",
     "sp-std/std",
     "lc-credentials/std",
+    "parachain-core-primitives/std",
 ]

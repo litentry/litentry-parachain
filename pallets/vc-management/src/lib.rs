@@ -111,6 +111,7 @@ pub mod pallet {
 		// copied from core_primitives::IMPError, we use events instead of pallet::errors,
 		// see https://github.com/litentry/litentry-parachain/issues/1275
 		HttpRequestFailed { reason: ErrorString },
+		RequestVCHandlingFailed,
 		Assertion1Failed,
 		Assertion2Failed,
 		Assertion3Failed,
@@ -211,6 +212,8 @@ pub mod pallet {
 			match error {
 				VCMPError::HttpRequestFailed(s) =>
 					Self::deposit_event(Event::HttpRequestFailed { reason: s }),
+				VCMPError::RequestVCHandlingFailed =>
+					Self::deposit_event(Event::RequestVCHandlingFailed),
 				VCMPError::Assertion1Failed => Self::deposit_event(Event::Assertion1Failed),
 				VCMPError::Assertion2Failed => Self::deposit_event(Event::Assertion2Failed),
 				VCMPError::Assertion3Failed => Self::deposit_event(Event::Assertion3Failed),
