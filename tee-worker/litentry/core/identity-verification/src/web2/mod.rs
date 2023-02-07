@@ -39,7 +39,7 @@ use lc_stf_task_sender::Web2IdentityVerificationRequest;
 use litentry_primitives::{
 	DiscordValidationData, Identity, TwitterValidationData, Web2ValidationData,
 };
-use std::{fmt::Debug, vec::Vec};
+use std::{fmt::Debug, string::ToString, vec::Vec};
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct Web2IdentityVerification {
@@ -92,10 +92,15 @@ pub fn verify(request: &Web2IdentityVerificationRequest) -> Result<(), Error> {
 				.query_message(channel_id.to_vec(), message_id.to_vec())
 				.map_err(from_data_provider_error)?;
 
-			let user_id = message.get_user_id().ok_or(Error::WrongWeb2Handle)?;
+			let user = client
+				.get_user_info(message.author.id.clone())
+				.map_err(from_data_provider_error)?;
+
+			let mut user_id = message.author.username.clone();
+			user_id.push_str(&'#'.to_string());
+			user_id.push_str(&user.discriminator);
 
 			let payload = payload_from_discord(&message)?;
-
 			Ok((user_id, payload))
 		},
 	}?;
@@ -106,6 +111,7 @@ pub fn verify(request: &Web2IdentityVerificationRequest) -> Result<(), Error> {
 	} else {
 		Err(Error::InvalidIdentity)
 	}?;
+
 	ensure!(user_id.eq(handle), Error::WrongWeb2Handle);
 	// the payload must match
 	// TODO: maybe move it to common place

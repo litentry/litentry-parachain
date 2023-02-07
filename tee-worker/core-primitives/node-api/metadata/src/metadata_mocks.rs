@@ -185,7 +185,7 @@ impl IMPCallIndexes for NodeMetadataMock {
 		Ok([self.imp_module, self.imp_identity_verified])
 	}
 
-	fn some_error_call_indexes(&self) -> Result<[u8; 2]> {
+	fn imp_some_error_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.imp_module, self.imp_some_error])
 	}
 }
@@ -227,7 +227,7 @@ impl IMPMockCallIndexes for NodeMetadataMock {
 		Ok([self.imp_mock_module, self.imp_mock_identity_verified])
 	}
 
-	fn some_error_call_indexes(&self) -> Result<[u8; 2]> {
+	fn imp_some_error_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.imp_mock_module, self.imp_mock_some_error])
 	}
 }
@@ -241,7 +241,7 @@ impl VCMPCallIndexes for NodeMetadataMock {
 		Ok([self.vcmp_module, self.vcmp_vc_issued])
 	}
 
-	fn vc_some_error_call_indexes(&self) -> Result<[u8; 2]> {
+	fn vcmp_some_error_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.vcmp_module, self.vcmp_some_error])
 	}
 }
