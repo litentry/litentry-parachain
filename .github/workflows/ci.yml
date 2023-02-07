@@ -43,7 +43,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check-file-change:
+  file-change:
     runs-on: ubuntu-latest
     # see https://github.com/orgs/community/discussions/25722
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
@@ -105,8 +105,8 @@ jobs:
 
   parachain-clippy:
     runs-on: ubuntu-latest
-    needs: check-file-change
-    if: needs.check-file-change.outputs.parachain_src == 'true'
+    needs: file-change
+    if: needs.file-change.outputs.parachain_src == 'true'
     steps:
       - uses: actions/checkout@v3
 
@@ -127,9 +127,9 @@ jobs:
 
   tee-clippy:
     runs-on: ubuntu-latest
-    needs: check-file-change
+    needs: file-change
     container: "integritee/integritee-dev:0.1.10"
-    if: needs.check-file-change.outputs.parachain_src == 'true'
+    if: needs.file-change.outputs.parachain_src == 'true'
     steps:
       - uses: actions/checkout@v3
 
@@ -157,21 +157,21 @@ jobs:
         if: failure()
         uses: andymckay/cancel-action@0.3
 
-  build-parachain-docker:
+  parachain-build:
     runs-on: ubuntu-latest
-    needs: check-file-change
+    needs: file-change
     steps:
       - uses: actions/checkout@v3
 
       - name: Build docker image
-        if: needs.check-file-change.outputs.parachain_src == 'true'
+        if: needs.file-change.outputs.parachain_src == 'true'
         run: |
           make build-docker-release
           echo "============================="
           docker images
 
       - name: Pull docker image optinally
-        if: needs.check-file-change.outputs.parachain_src == 'false'
+        if: needs.file-change.outputs.parachain_src == 'false'
         run: |
           docker pull litentry/litentry-parachain
 
@@ -189,9 +189,9 @@ jobs:
         if: failure()
         uses: andymckay/cancel-action@0.3
 
-  build-tee-docker:
+  tee-build:
     runs-on: ubuntu-20.04
-    needs: check-file-change
+    needs: file-change
 
     steps:
       - uses: actions/checkout@v3
@@ -203,7 +203,7 @@ jobs:
           driver: docker-container
 
       - name: Build worker (sidechain)
-        if: needs.check-file-change.outputs.tee_src == 'true'
+        if: needs.file-change.outputs.tee_src == 'true'
         env:
           DOCKER_BUILDKIT: 1
         run: >
@@ -213,7 +213,7 @@ jobs:
           -f tee-worker/build.Dockerfile .
 
       - name: Build cli (sidechain)
-        if: needs.check-file-change.outputs.tee_src == 'true'
+        if: needs.file-change.outputs.tee_src == 'true'
         env:
           DOCKER_BUILDKIT: 1
         run: >
@@ -223,7 +223,7 @@ jobs:
           -f tee-worker/build.Dockerfile .
 
       - name: Pull and tag worker and cli image optionally
-        if: needs.check-file-change.outputs.tee_src == 'false'
+        if: needs.file-change.outputs.tee_src == 'false'
         run: |
           docker pull litentry/integritee-worker
           docker pull litentry/integritee-cli
@@ -248,10 +248,10 @@ jobs:
         if: failure()
         uses: andymckay/cancel-action@0.3
 
-  parachain-ts-tests:
+  parachain-ts-test:
     runs-on: ubuntu-latest
-    needs: [check-file-change, build-parachain-docker]
-    if: needs.check-file-change.outputs.parachain_src == 'true' || needs.check-file-change.outputs.parachain_test == 'true'
+    needs: [file-change, parachain-build]
+    if: needs.file-change.outputs.parachain_src == 'true' || needs.file-change.outputs.parachain_test == 'true'
     strategy:
       matrix:
         chain:
@@ -291,26 +291,25 @@ jobs:
         if: failure()
         uses: andymckay/cancel-action@0.3
 
-  # This is used to set github merge rules to protected branch, it's useful for
-  # checking the matrix status, where we need to cover
-  # - "successful" status (e.g. parachain-ts-tests(litmus)), and
-  # - "skipped" status (parachain-ts-tests).
+  # This "hook" is used in branch protection rules, where we need to cover the matrix in both
+  #   - "successful" status (e.g. parachain-ts-test(litmus)), and
+  #   - "skipped" status (parachain-ts-test).
   # see https://github.com/orgs/community/discussions/26822
-  parachain-ts-tests-status-check:
+  parachain-ts-test-hook:
     if: ${{ always() }}
     runs-on: ubuntu-latest
-    needs: parachain-ts-tests
+    needs: parachain-ts-test
     steps:
       - run: |
-          case "${{ needs.parachain-ts-tests.result }}" in
+          case "${{ needs.parachain-ts-test.result }}" in
             success|skipped) exit 0 ;;
             *) exit 1 ;;
           esac
 
-  parachain-unit-tests:
+  parachain-unit-test:
     runs-on: ubuntu-latest
-    needs: [fmt, check-file-change]
-    if: needs.check-file-change.outputs.parachain_src == 'true'
+    needs: [fmt, file-change]
+    if: needs.file-change.outputs.parachain_src == 'true'
     steps:
       - uses: actions/checkout@v3
 
@@ -324,10 +323,10 @@ jobs:
         if: failure()
         uses: andymckay/cancel-action@0.3
 
-  parachain-runtime-tests:
+  parachain-runtime-test:
     runs-on: ubuntu-latest
-    needs: [fmt, check-file-change]
-    if: needs.check-file-change.outputs.parachain_src == 'true'
+    needs: [fmt, file-change]
+    if: needs.file-change.outputs.parachain_src == 'true'
     strategy:
       fail-fast: true
       matrix:
@@ -353,27 +352,27 @@ jobs:
         if: failure()
         uses: andymckay/cancel-action@0.3
 
-  parachain-runtime-tests-status-check:
+  parachain-runtime-test-hook:
     if: ${{ always() }}
     runs-on: ubuntu-latest
-    needs: parachain-runtime-tests
+    needs: parachain-runtime-test
     steps:
       - run: |
-          case "${{ needs.parachain-runtime-tests.result }}" in
+          case "${{ needs.parachain-runtime-test.result }}" in
             success|skipped) exit 0 ;;
             *) exit 1 ;;
           esac
 
-  tee-integration-tests:
+  tee-cli-test:
     runs-on: ubuntu-20.04
     needs:
-      - build-parachain-docker
-      - build-tee-docker
-      - check-file-change
+      - parachain-build
+      - tee-build
+      - file-change
     if: >
-      needs.check-file-change.outputs.parachain_src == 'true' ||
-      needs.check-file-change.outputs.tee_src == 'true' ||
-      needs.check-file-change.outputs.tee_test == 'true'
+      needs.file-change.outputs.parachain_src == 'true' ||
+      needs.file-change.outputs.tee_src == 'true' ||
+      needs.file-change.outputs.tee_test == 'true'
     env:
       WORKER_IMAGE_TAG: integritee-worker:dev
       CLIENT_IMAGE_TAG: integritee-cli:dev
@@ -463,13 +462,13 @@ jobs:
           name: logs-${{ matrix.test_name }}
           path: logs
 
-  tee-integration-tests-status-check:
+  tee-cli-test-hook:
     if: ${{ always() }}
     runs-on: ubuntu-latest
-    needs: tee-integration-tests
+    needs: tee-cli-test
     steps:
       - run: |
-          case "${{ needs.tee-integration-tests.result }}" in
+          case "${{ needs.tee-cli-test.result }}" in
             success|skipped) exit 0 ;;
             *) exit 1 ;;
           esac
@@ -482,10 +481,10 @@ jobs:
     needs:
       [
         parachain-clippy,
-        parachain-unit-tests,
-        parachain-runtime-tests,
-        parachain-ts-tests,
-        tee-integration-tests
+        parachain-unit-test,
+        parachain-runtime-test,
+        parachain-ts-test,
+        tee-cli-test
       ]
     if: ${{ success() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
     steps:
