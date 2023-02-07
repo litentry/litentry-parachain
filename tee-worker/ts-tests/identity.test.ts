@@ -114,7 +114,7 @@ describeLitentry('Test Identity', (context) => {
     });
 
     step('create identity', async function () {
-        // create twitter identity
+        //create twitter identity
         const resp_twitter = await createIdentity(context, context.defaultSigner[0], aesKey, true, twitterIdentity);
         assertIdentityCreated(context.defaultSigner[0], resp_twitter);
 
@@ -129,7 +129,7 @@ describeLitentry('Test Identity', (context) => {
             console.log('post verification msg to twitter: ', msg);
             assert.isNotEmpty(resp_twitter.challengeCode, 'challengeCode empty');
         }
-        // create ethereum identity
+        //create ethereum identity
         const resp_ethereum = await createIdentity(context, context.defaultSigner[0], aesKey, true, ethereumIdentity);
         assertIdentityCreated(context.defaultSigner[0], resp_ethereum);
 
