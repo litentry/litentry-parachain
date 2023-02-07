@@ -261,7 +261,7 @@ export function decryptWithAES(key: HexString, aesOutput: AESOutput): HexString 
 
         return `0x${part1 + part2}`;
     } else {
-        return u8aToHex();
+        return u8aToHex(aesOutput as Uint8Array);
     }
 }
 
