@@ -7,6 +7,7 @@ version = "0.1.0"
 [dependencies]
 base64 = { version = "0.13", default-features = false, features = ["alloc"], optional = true }
 base64_sgx = { package = "base64", rev = "sgx_1.1.3", git = "https://github.com/mesalock-linux/rust-base64-sgx", optional = true }
+chrono = { version = "0.4.23", optional = true }
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 hex = { version = "0.4.3", default-features = false, optional = true }
 rand = { version = "0.7", optional = true }
@@ -20,6 +21,7 @@ sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkad
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36", default-features = false }
 
 # sgx dependencies
+chrono_sgx = { package = "chrono", git = "https://github.com/mesalock-linux/chrono-sgx", optional = true }
 sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master", optional = true, features = ["net", "thread"] }
 
 parentchain-primitives = { package = "core-primitives", path = "../../../primitives/core", default-features = false }
@@ -31,6 +33,7 @@ sgx = [
     "sgx_tstd",
     "base64_sgx",
     "rand-sgx",
+    "chrono_sgx",
 ]
 std = [
     "hex/std",
@@ -42,4 +45,5 @@ std = [
     "sp-runtime/std",
     "parentchain-primitives/std",
     "rand",
+    "chrono",
 ]

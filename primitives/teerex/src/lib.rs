@@ -23,10 +23,13 @@ use scale_info::TypeInfo;
 use sp_core::H256;
 use sp_std::prelude::*;
 
+pub type ShardIdentifier = H256;
+pub type MREnclave = [u8; 32];
+
 #[derive(Encode, Decode, Default, Clone, PartialEq, Eq, sp_core::RuntimeDebug, TypeInfo)]
 pub struct Enclave<PubKey, Url> {
 	pub pubkey: PubKey, // FIXME: this is redundant information
-	pub mr_enclave: [u8; 32],
+	pub mr_enclave: MREnclave,
 	// Todo: make timestamp: Moment
 	pub timestamp: u64,                 // unix epoch in milliseconds
 	pub url: Url,                       // utf8 encoded url
@@ -38,7 +41,7 @@ pub struct Enclave<PubKey, Url> {
 impl<PubKey, Url> Enclave<PubKey, Url> {
 	pub fn new(
 		pubkey: PubKey,
-		mr_enclave: [u8; 32],
+		mr_enclave: MREnclave,
 		timestamp: u64,
 		url: Url,
 		shielding_key: Option<Vec<u8>>,
@@ -56,8 +59,6 @@ impl<PubKey, Url> Enclave<PubKey, Url> {
 		}
 	}
 }
-
-pub type ShardIdentifier = H256;
 
 #[derive(Encode, Decode, Default, Clone, PartialEq, Eq, sp_core::RuntimeDebug, TypeInfo)]
 pub struct Request {

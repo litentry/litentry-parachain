@@ -26,8 +26,13 @@ pub type ErrorString = BoundedVec<u8, MaxStringLength>;
 pub enum IMPError {
 	// UTF8Error,
 	DecodeHexFailed(ErrorString),
-
 	HttpRequestFailed(ErrorString),
+
+	// Indirect call handling errors when importing parachain blocks
+	CreateIdentityHandlingFailed,
+	RemoveIdentityHandlingFailed,
+	VerifyIdentityHandlingFailed,
+	SetUserShieldingKeyHandlingFailed,
 
 	// identity verification errors
 	InvalidIdentity,
@@ -50,6 +55,10 @@ impl frame_support::traits::PalletError for IMPError {
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 pub enum VCMPError {
 	HttpRequestFailed(ErrorString),
+
+	// Indirect call handling errors when importing parachain blocks
+	RequestVCHandlingFailed,
+
 	// Assertion
 	Assertion1Failed,
 	Assertion2Failed,
@@ -57,4 +66,6 @@ pub enum VCMPError {
 	Assertion4Failed,
 	Assertion5Failed,
 	Assertion7Failed,
+	Assertion8Failed,
+	Assertion10Failed,
 }

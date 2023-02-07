@@ -21,11 +21,11 @@ const assertion = <Assertion>{
 describeLitentry('VC test', async (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     step('set user shielding key', async function () {
-        const who = await setUserShieldingKey(context, context.defaultSigner, aesKey, true);
-        assert.equal(who, u8aToHex(context.defaultSigner.addressRaw), 'check caller error');
+        const who = await setUserShieldingKey(context, context.defaultSigner[0], aesKey, true);
+        assert.equal(who, u8aToHex(context.defaultSigner[0].addressRaw), 'check caller error');
     });
     step('Request VC', async () => {
-        const vc = await requestVC(context, context.defaultSigner, aesKey, true, context.shard, {
+        const vc = await requestVC(context, context.defaultSigner[0], aesKey, true, context.shard, {
             A1: assertion.A1,
         });
         assert(vc !== u8aToHex());

@@ -91,10 +91,11 @@ where
 	}
 
 	fn on_failure(&self, error: Self::Error) {
+		log::error!("occur an error while verifying identity, due to:{:?}", error);
 		match self
 			.context
 			.node_metadata
-			.get_from_metadata(|m| IMPCallIndexes::some_error_call_indexes(m))
+			.get_from_metadata(|m| IMPCallIndexes::imp_some_error_call_indexes(m))
 		{
 			Ok(Ok(call_index)) => {
 				let call = OpaqueCall::from_tuple(&(call_index, error));

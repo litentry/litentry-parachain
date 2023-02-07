@@ -20,11 +20,17 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{Error, Result};
+use crate::{from_data_provider_error, Error, Result};
+use itp_stf_primitives::types::ShardIdentifier;
+use itp_types::AccountId;
+use lc_credentials::Credential;
 use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
-use litentry_primitives::{Identity, SubstrateNetwork};
+use litentry_primitives::{
+	year_to_date, Assertion, Identity, ParentchainBlockNumber, SubstrateNetwork,
+};
+use log::*;
 use std::{
 	str::from_utf8,
 	string::{String, ToString},
@@ -32,8 +38,20 @@ use std::{
 	vec::Vec,
 };
 
-pub fn build(identities: Vec<Identity>, from_date: String, min_balance: f64) -> Result<()> {
+pub fn build(
+	identities: Vec<Identity>,
+	year: u32,
+	min_balance: u128,
+	shard: &ShardIdentifier,
+	who: &AccountId,
+	bn: ParentchainBlockNumber,
+) -> Result<Credential> {
+	let q_min_balance: f64 = (min_balance / (10 ^ 12)) as f64;
+	let q_from_date: String = year_to_date(year);
+
 	let mut client = GraphQLClient::new();
+	let mut flag = false;
+
 	for id in identities {
 		if let Identity::Substrate { network, address } = id {
 			if matches!(network, SubstrateNetwork::Polkadot) {
@@ -41,20 +59,32 @@ pub fn build(identities: Vec<Identity>, from_date: String, min_balance: f64) -> 
 				let addresses = vec![address];
 				let credentials = VerifiedCredentialsIsHodlerIn {
 					addresses,
-					from_date: from_date.clone(),
+					from_date: q_from_date.clone(),
 					network: VerifiedCredentialsNetwork::Polkadot,
 					token_address: String::from(""),
-					min_balance,
+					min_balance: q_min_balance,
 				};
-				let is_hodler_out = client.check_verified_credentials_is_hodler(credentials);
-				if let Ok(_hodler_out) = is_hodler_out {
-					// TODO: generate VC
-
-					return Ok(())
+				let is_hodler_out = client
+					.check_verified_credentials_is_hodler(credentials)
+					.map_err(from_data_provider_error)?;
+				for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
+					flag = flag || hodler.is_hodler;
 				}
 			}
 		}
 	}
-	// no valid response
+
+	let a7 = Assertion::A7(min_balance, year);
+	match Credential::generate_unsigned_credential(&a7, who, &shard.clone(), bn) {
+		Ok(mut credential_unsigned) => {
+			credential_unsigned.credential_subject.set_value(flag);
+
+			return Ok(credential_unsigned)
+		},
+		Err(e) => {
+			error!("Generate unsigned credential failed {:?}", e);
+		},
+	}
+
 	Err(Error::Assertion7Failed)
 }

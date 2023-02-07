@@ -49,7 +49,7 @@ pub type VCIndex = H256;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use core_primitives::VCMPError;
+	use core_primitives::{ErrorString, VCMPError};
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
@@ -89,62 +89,37 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		// TODO: do we need account as event parameter? This needs to be decided by F/E
-		VCRequested {
-			shard: ShardIdentifier,
-			assertion: Assertion,
-		},
+		VCRequested { shard: ShardIdentifier, assertion: Assertion },
 		// a VC is disabled on chain
-		VCDisabled {
-			index: VCIndex,
-		},
+		VCDisabled { index: VCIndex },
 		// a VC is revoked on chain
-		VCRevoked {
-			index: VCIndex,
-		},
+		VCRevoked { index: VCIndex },
 		// event that should be triggered by TEECallOrigin
 		// a VC is just issued
-		VCIssued {
-			account: T::AccountId,
-			index: VCIndex,
-			vc: AesOutput,
-		},
-		// some error happened during processing in TEE, we use string-like
-		// parameters for more "generic" error event reporting
-		// TODO: maybe use concrete errors instead of events when we are more sure
-		// see also the comment at the beginning
-		SomeError {
-			func: Vec<u8>,
-			error: Vec<u8>,
-		},
-		/// Admin account was changed
-		SchemaAdminChanged {
-			old_admin: Option<T::AccountId>,
-			new_admin: Option<T::AccountId>,
-		},
+		VCIssued { account: T::AccountId, index: VCIndex, vc: AesOutput },
+		// Admin account was changed
+		SchemaAdminChanged { old_admin: Option<T::AccountId>, new_admin: Option<T::AccountId> },
 		// a Schema is issued
-		SchemaIssued {
-			account: T::AccountId,
-			shard: ShardIdentifier,
-			index: SchemaIndex,
-		},
+		SchemaIssued { account: T::AccountId, shard: ShardIdentifier, index: SchemaIndex },
 		// a Schema is disabled
-		SchemaDisabled {
-			account: T::AccountId,
-			shard: ShardIdentifier,
-			index: SchemaIndex,
-		},
+		SchemaDisabled { account: T::AccountId, shard: ShardIdentifier, index: SchemaIndex },
 		// a Schema is activated
-		SchemaActivated {
-			account: T::AccountId,
-			shard: ShardIdentifier,
-			index: SchemaIndex,
-		},
+		SchemaActivated { account: T::AccountId, shard: ShardIdentifier, index: SchemaIndex },
 		// a Schema is revoked
-		SchemaRevoked {
-			account: T::AccountId,
-			shard: ShardIdentifier,
-			index: SchemaIndex,
-		},
+		SchemaRevoked { account: T::AccountId, shard: ShardIdentifier, index: SchemaIndex },
+		// event errors caused by processing in TEE
+		// copied from core_primitives::IMPError, we use events instead of pallet::errors,
+		// see https://github.com/litentry/litentry-parachain/issues/1275
+		HttpRequestFailed { reason: ErrorString },
+		RequestVCHandlingFailed,
+		Assertion1Failed,
+		Assertion2Failed,
+		Assertion3Failed,
+		Assertion4Failed,
+		Assertion5Failed,
+		Assertion7Failed,
+		Assertion8Failed,
+		Assertion10Failed,
 	}
 
 	#[pallet::error]
@@ -167,15 +142,6 @@ pub mod pallet {
 		SchemaAlreadyActivated,
 		SchemaIndexOverFlow,
 		LengthMismatch,
-
-		/// copy from litentry_primitives::VCMPError
-		HttpRequestFailed,
-		Assertion1Failed,
-		Assertion2Failed,
-		Assertion3Failed,
-		Assertion4Failed,
-		Assertion5Failed,
-		Assertion7Failed,
 	}
 
 	#[pallet::call]
@@ -244,17 +210,20 @@ pub mod pallet {
 		pub fn some_error(origin: OriginFor<T>, error: VCMPError) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			match error {
-				VCMPError::HttpRequestFailed(s) => {
-					log::error!("request failed:{:?}", s);
-					Err(Error::<T>::HttpRequestFailed.into())
-				},
-				VCMPError::Assertion1Failed => Err(Error::<T>::Assertion1Failed.into()),
-				VCMPError::Assertion2Failed => Err(Error::<T>::Assertion2Failed.into()),
-				VCMPError::Assertion3Failed => Err(Error::<T>::Assertion3Failed.into()),
-				VCMPError::Assertion4Failed => Err(Error::<T>::Assertion4Failed.into()),
-				VCMPError::Assertion5Failed => Err(Error::<T>::Assertion5Failed.into()),
-				VCMPError::Assertion7Failed => Err(Error::<T>::Assertion7Failed.into()),
+				VCMPError::HttpRequestFailed(s) =>
+					Self::deposit_event(Event::HttpRequestFailed { reason: s }),
+				VCMPError::RequestVCHandlingFailed =>
+					Self::deposit_event(Event::RequestVCHandlingFailed),
+				VCMPError::Assertion1Failed => Self::deposit_event(Event::Assertion1Failed),
+				VCMPError::Assertion2Failed => Self::deposit_event(Event::Assertion2Failed),
+				VCMPError::Assertion3Failed => Self::deposit_event(Event::Assertion3Failed),
+				VCMPError::Assertion4Failed => Self::deposit_event(Event::Assertion4Failed),
+				VCMPError::Assertion5Failed => Self::deposit_event(Event::Assertion5Failed),
+				VCMPError::Assertion7Failed => Self::deposit_event(Event::Assertion7Failed),
+				VCMPError::Assertion8Failed => Self::deposit_event(Event::Assertion8Failed),
+				VCMPError::Assertion10Failed => Self::deposit_event(Event::Assertion10Failed),
 			}
+			Ok(Pays::No.into())
 		}
 
 		// Change the schema Admin account

@@ -20,11 +20,16 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{Error, Result};
+use crate::{from_data_provider_error, Result};
+use itp_stf_primitives::types::ShardIdentifier;
+use itp_types::AccountId;
+use lc_credentials::Credential;
 use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
-use litentry_primitives::{EvmNetwork, Identity};
+use litentry_primitives::{year_to_date, Assertion, EvmNetwork, Identity, ParentchainBlockNumber};
+use log::*;
+use parachain_core_primitives::VCMPError;
 use std::{
 	str::from_utf8,
 	string::{String, ToString},
@@ -35,33 +40,55 @@ use std::{
 const WBTC_TOKEN_ADDRESS: &str = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
 
 // WBTC holder
-pub fn build(identities: Vec<Identity>, from_date: String, min_balance: f64) -> Result<()> {
+pub fn build(
+	identities: Vec<Identity>,
+	year: u32,
+	min_balance: u128,
+	shard: &ShardIdentifier,
+	who: &AccountId,
+	bn: ParentchainBlockNumber,
+) -> Result<Credential> {
+	// WBTC decimals is 8.
+	let q_min_balance: f64 = (min_balance / (10 ^ 8)) as f64;
+	let q_from_date: String = year_to_date(year);
+
 	let mut client = GraphQLClient::new();
+	let mut flag = false;
 
 	for id in identities {
 		if let Identity::Evm { network, address } = id {
 			if matches!(network, EvmNetwork::Ethereum) {
 				if let Ok(addr) = from_utf8(address.as_ref()) {
-					if let Ok(response) = client.check_verified_credentials_is_hodler(
-						VerifiedCredentialsIsHodlerIn::new(
-							vec![addr.to_string()],
-							from_date.clone(),
-							VerifiedCredentialsNetwork::Ethereum,
-							WBTC_TOKEN_ADDRESS.to_string(),
-							min_balance,
-						),
-					) {
-						for item in response.verified_credentials_is_hodler {
-							if item.is_hodler {
-								// TODO: generate VC
-								return Ok(())
-							}
-						}
+					let credentials = VerifiedCredentialsIsHodlerIn::new(
+						vec![addr.to_string()],
+						q_from_date.clone(),
+						VerifiedCredentialsNetwork::Ethereum,
+						WBTC_TOKEN_ADDRESS.to_string(),
+						q_min_balance,
+					);
+
+					let is_hodler_out = client
+						.check_verified_credentials_is_hodler(credentials)
+						.map_err(from_data_provider_error)?;
+					for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
+						flag = flag || hodler.is_hodler;
 					}
 				};
 			}
 		}
 	}
-	// no valid response
-	Err(Error::Assertion7Failed)
+
+	let a10 = Assertion::A10(min_balance, year);
+	match Credential::generate_unsigned_credential(&a10, who, &shard.clone(), bn) {
+		Ok(mut credential_unsigned) => {
+			credential_unsigned.credential_subject.set_value(flag);
+
+			return Ok(credential_unsigned)
+		},
+		Err(e) => {
+			error!("Generate unsigned credential failed {:?}", e);
+		},
+	}
+
+	Err(VCMPError::Assertion10Failed)
 }

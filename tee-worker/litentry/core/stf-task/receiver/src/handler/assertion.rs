@@ -34,13 +34,7 @@ use litentry_primitives::{aes_encrypt_default, Assertion, UserShieldingKeyType};
 use log::*;
 use parachain_core_primitives::VCMPError;
 use sp_core::hashing::blake2_256;
-use std::{format, string::String, sync::Arc};
-
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use crate::chrono::{offset::Utc as TzUtc, TimeZone};
-
-#[cfg(feature = "std")]
-use chrono::{offset::Utc as TzUtc, TimeZone};
+use std::sync::Arc;
 
 pub(crate) struct AssertionHandler<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
@@ -80,13 +74,25 @@ where
 			)
 			.map(|credential| Some((credential, self.req.who.clone()))),
 
-			Assertion::A2(guild_id, handler) =>
-				lc_assertion_build::a2::build(self.req.vec_identity.to_vec(), guild_id, handler)
-					.map(|_| None),
+			Assertion::A2(guild_id, handler) => lc_assertion_build::a2::build(
+				self.req.vec_identity.to_vec(),
+				guild_id,
+				handler,
+				&self.req.shard,
+				&self.req.who,
+				self.req.bn,
+			)
+			.map(|credential| Some((credential, self.req.who.clone()))),
 
-			Assertion::A3(guild_id, handler) =>
-				lc_assertion_build::a3::build(self.req.vec_identity.to_vec(), guild_id, handler)
-					.map(|_| None),
+			Assertion::A3(guild_id, handler) => lc_assertion_build::a3::build(
+				self.req.vec_identity.to_vec(),
+				guild_id,
+				handler,
+				&self.req.shard,
+				&self.req.who,
+				self.req.bn,
+			)
+			.map(|credential| Some((credential, self.req.who.clone()))),
 
 			Assertion::A4(min_balance, from_date) => lc_assertion_build::a4::build(
 				self.req.vec_identity.to_vec(),
@@ -108,29 +114,33 @@ where
 			Assertion::A6 =>
 				lc_assertion_build::a6::build(self.req.vec_identity.to_vec()).map(|_| None),
 
-			Assertion::A7(min_balance, year) => {
-				let min_balance: f64 = (min_balance / (10 ^ 12)) as f64;
-				lc_assertion_build::a7::build(
-					self.req.vec_identity.to_vec(),
-					year_to_date(year),
-					min_balance,
-				)
-				.map(|_| None)
-			},
+			Assertion::A7(min_balance, year) => lc_assertion_build::a7::build(
+				self.req.vec_identity.to_vec(),
+				year,
+				min_balance,
+				&self.req.shard,
+				&self.req.who,
+				self.req.bn,
+			)
+			.map(|credential| Some((credential, self.req.who.clone()))),
 
-			Assertion::A8 =>
-				lc_assertion_build::a8::build(self.req.vec_identity.to_vec()).map(|_| None),
+			Assertion::A8 => lc_assertion_build::a8::build(
+				self.req.vec_identity.to_vec(),
+				&self.req.shard,
+				&self.req.who,
+				self.req.bn,
+			)
+			.map(|credential| Some((credential, self.req.who.clone()))),
 
-			Assertion::A10(min_balance, year) => {
-				// WBTC decimals is 8.
-				let min_balance: f64 = (min_balance / (10 ^ 8)) as f64;
-				lc_assertion_build::a10::build(
-					self.req.vec_identity.to_vec(),
-					year_to_date(year),
-					min_balance,
-				)
-				.map(|_| None)
-			},
+			Assertion::A10(min_balance, year) => lc_assertion_build::a10::build(
+				self.req.vec_identity.to_vec(),
+				year,
+				min_balance,
+				&self.req.shard,
+				&self.req.who,
+				self.req.bn,
+			)
+			.map(|credential| Some((credential, self.req.who.clone()))),
 			_ => {
 				unimplemented!()
 			},
@@ -185,10 +195,11 @@ where
 	}
 
 	fn on_failure(&self, error: Self::Error) {
+		log::error!("occur an error while building assertion, due to:{:?}", error);
 		match self
 			.context
 			.node_metadata
-			.get_from_metadata(|m| VCMPCallIndexes::vc_some_error_call_indexes(m))
+			.get_from_metadata(|m| VCMPCallIndexes::vcmp_some_error_call_indexes(m))
 		{
 			Ok(Ok(call_index)) => {
 				let call = OpaqueCall::from_tuple(&(call_index, error));
@@ -202,12 +213,4 @@ where
 			},
 		};
 	}
-}
-
-fn year_to_date(year: u32) -> String {
-	#[cfg(feature = "std")]
-	let dt1 = TzUtc.with_ymd_and_hms(year as i32, 1, 1, 0, 0, 0);
-	#[cfg(all(not(feature = "std"), feature = "sgx"))]
-	let dt1 = TzUtc.ymd(year as i32, 1, 1).and_hms(0, 0, 0);
-	format!("{:?}", dt1)
 }
