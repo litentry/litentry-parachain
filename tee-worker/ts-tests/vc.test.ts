@@ -10,10 +10,10 @@ const assertion = <Assertion>{
     A1: 'A1',
     A2: ['A2', 'A2'],
     A3: ['A3', 'A3'],
-    A4: [10, 'A4'],
-    A7: [10, 10],
+    A4: [10],
+    A7: [10],
     A8: 'A8',
-    A10: [10, 10],
+    A10: [10],
 };
 describeLitentry('VC test', async (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
