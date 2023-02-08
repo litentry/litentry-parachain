@@ -1,5 +1,5 @@
 services:
-    ts-tests:
+    vc-test:
         image: integritee-cli:dev
         container_name: integritee-ts-tests
         volumes:
