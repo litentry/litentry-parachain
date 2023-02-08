@@ -1,4 +1,4 @@
-name: parachain and tee-worker CI
+name: General CI
 
 # this file is a joint CI of parachain and tee-worker, it contains:
 # - build (of docker images)
