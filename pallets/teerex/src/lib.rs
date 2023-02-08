@@ -127,14 +127,14 @@ pub mod pallet {
 	#[pallet::getter(fn scheduled_enclave)]
 	pub type ScheduledEnclave<T: Config> = StorageMap<_, Blake2_128Concat, u32, MREnclave>;
 
-	/// store the last MrEnclave Index, the biggest one
+	/// store the last MrEnclave Index
 	/// Watch out: we start indexing with 1 instead of zero in order to
 	/// avoid ambiguity between Null and 0.
 	#[pallet::storage]
 	#[pallet::getter(fn scheduled_enclave_count)]
 	pub type ScheduledEnclaveCount<T: Config> = StorageValue<_, u64, ValueQuery>;
 
-	/// storage map of the enclave_index <-> MrEnclave, starts from 1
+	/// Storage map of the mrenclave_index <-> MrEnclave, starts from 1
 	/// Watch out: we start indexing with 1 instead of zero in order to
 	/// avoid ambiguity between Null and 0.
 	#[pallet::storage]
