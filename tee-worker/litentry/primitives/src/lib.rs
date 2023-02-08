@@ -58,11 +58,14 @@ pub fn aes_encrypt_default(key: &UserShieldingKeyType, data: &[u8]) -> AesOutput
 
 	let nonce = RingAeadNonceSequence::new();
 	let aad = b"";
-	let unbound_key = UnboundKey::new(&AES_256_GCM, key.as_slice()).unwrap();
-	let mut sealing_key = SealingKey::new(unbound_key, nonce.clone());
-	sealing_key.seal_in_place_append_tag(Aad::from(aad), &mut in_out).unwrap();
+	if let Ok(unbound_key) = UnboundKey::new(&AES_256_GCM, key.as_slice()) {
+		let mut sealing_key = SealingKey::new(unbound_key, nonce.clone());
+		if sealing_key.seal_in_place_append_tag(Aad::from(aad), &mut in_out).is_ok() {
+			return AesOutput { ciphertext: in_out.to_vec(), aad: aad.to_vec(), nonce: nonce.nonce }
+		}
+	}
 
-	AesOutput { ciphertext: in_out.to_vec(), aad: aad.to_vec(), nonce: nonce.nonce }
+	AesOutput::default()
 }
 
 #[derive(Clone)]
