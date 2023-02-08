@@ -12,7 +12,15 @@ name: General CI
 # the original file (`tee-worker/.github/workflows/build_and_test.yml`) is kept to sync
 # upstream changes, therefore we need to manually apply the changes to this file.
 
-# tried symbolic link -- didn't work, see https://stackoverflow.com/a/71704019
+# please beware that if a job in `needs` is skipped, its dependent job will also be skipped,
+# see https://github.com/actions/runner/issues/491
+#
+# jobs that will always be executed:
+# - fmt
+# - check-file-change
+# - parachain-build
+# - tee-build
+
 on:
   push:
     branches:
@@ -259,7 +267,9 @@ jobs:
     needs:
       - check-file-change
       - parachain-build
-    if: needs.check-file-change.outputs.parachain_src == 'true' || needs.check-file-change.outputs.parachain_test == 'true'
+    if: >
+      needs.check-file-change.outputs.parachain_src == 'true' ||
+      needs.check-file-change.outputs.parachain_test == 'true'
     strategy:
       matrix:
         chain:
@@ -316,7 +326,9 @@ jobs:
 
   parachain-unit-test:
     runs-on: ubuntu-latest
-    needs: [fmt, check-file-change]
+    needs:
+      - fmt
+      - check-file-change
     if: needs.check-file-change.outputs.parachain_src == 'true'
     steps:
       - uses: actions/checkout@v3
@@ -374,7 +386,6 @@ jobs:
       - check-file-change
       - parachain-build
       - tee-build
-      - tee-clippy
     if: >
       needs.check-file-change.outputs.parachain_src == 'true' ||
       needs.check-file-change.outputs.tee_src == 'true' ||
