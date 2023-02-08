@@ -1,0 +1,519 @@
+name: General CI
+
+# this file is a joint CI of parachain and tee-worker, it contains:
+# - build (of docker images)
+# - format check
+# - unit tests
+# - integration tests
+
+# the tee-worker part is a modified version of tee-worker/.github/workflows/build_and_test.yml
+# with extra triggering control.
+#
+# the original file (`tee-worker/.github/workflows/build_and_test.yml`) is kept to sync
+# upstream changes, therefore we need to manually apply the changes to this file.
+
+# tried symbolic link -- didn't work, see https://stackoverflow.com/a/71704019
+on:
+  push:
+    branches:
+      - dev
+    paths-ignore:
+      - "**/dependabot.yml"
+      - "**/README.md"
+  pull_request:
+    branches:
+      - dev
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  DOCKER_BUILDKIT: 1
+  # the branch or tag on which this workflow is triggered
+  # `head_ref` will only be set if the triggering event is `pull_request`
+  REF_VERSION: ${{ github.head_ref || github.ref_name }}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-file-change:
+    runs-on: ubuntu-latest
+    # see https://github.com/orgs/community/discussions/25722
+    if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
+    outputs:
+      parachain_src: ${{ steps.filter.outputs.parachain_src }}
+      parachain_test: ${{ steps.filter.outputs.parachain_test }}
+      tee_src: ${{ steps.filter.outputs.tee_src }}
+      tee_test: ${{ steps.filter.outputs.tee_test }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      # Checks to see if any files in the PR/commit match one of the listed file types.
+      # We can use this filter to decide whether or not to build docker images
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: .github/file-filter.yml
+          list-files: shell
+
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install rust toolchain
+        run: rustup show
+
+      - name: Install pre-built taplo
+        run: |
+          mkdir -p $HOME/.local/bin
+          wget -q https://github.com/tamasfe/taplo/releases/latest/download/taplo-linux-x86_64.gz
+          gzip -d taplo-linux-x86_64.gz
+          cp taplo-linux-x86_64 $HOME/.local/bin/taplo
+          chmod a+x $HOME/.local/bin/taplo
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Parachain fmt check
+        run: |
+          make fmtcheck
+          make taplocheck
+
+      - name: Tee-worker fmt check
+        working-directory: ./tee-worker
+        run: |
+          cargo fmt --all -- --check
+          taplo fmt --check
+
+      - name: Enclave-runtime fmt check
+        working-directory: ./tee-worker/enclave-runtime
+        run: |
+          cargo fmt --all -- --check
+          # TODO: no taplo check in enclave-runtime
+
+      - name: Fail early
+        if: failure()
+        uses: andymckay/cancel-action@0.3
+
+  parachain-clippy:
+    runs-on: ubuntu-latest
+    needs:
+      - fmt
+      - check-file-change
+    if: needs.check-file-change.outputs.parachain_src == 'true'
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install rust toolchain
+        run: rustup show
+
+      - name: Install dependencies
+        run: >
+          sudo apt-get update &&
+          sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
+
+      - name: Run cargo clippy check
+        run: make clippy
+
+      - name: Fail early
+        if: failure()
+        uses: andymckay/cancel-action@0.3
+
+  tee-clippy:
+    runs-on: ubuntu-latest
+    needs:
+      - fmt
+      - check-file-change
+    container: "integritee/integritee-dev:0.1.10"
+    if: needs.check-file-change.outputs.parachain_src == 'true'
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Tee-worker clippy
+        working-directory: ./tee-worker
+        run: |
+          rustup show
+          cargo clippy -- -D warnings
+          cargo clippy --features evm -- -D warnings
+          cargo clippy --features sidechain -- -D warnings
+          cargo clippy --features teeracle -- -D warnings
+          cargo clippy --features offchain-worker -- -D warnings
+
+      - name: Tee-enclave clippy
+        working-directory: ./tee-worker/enclave-runtime
+        run: |
+          rustup show
+          cargo clippy -- -D warnings
+          cargo clippy --features evm -- -D warnings
+          cargo clippy --features sidechain -- -D warnings
+          cargo clippy --features teeracle -- -D warnings
+          cargo clippy --features offchain-worker -- -D warnings
+
+      - name: Fail early
+        if: failure()
+        uses: andymckay/cancel-action@0.3
+
+  parachain-build:
+    runs-on: ubuntu-latest
+    needs:
+      - fmt
+      - check-file-change
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build docker image
+        if: needs.check-file-change.outputs.parachain_src == 'true'
+        run: |
+          make build-docker-release
+          echo "============================="
+          docker images
+
+      - name: Pull docker image optinally
+        if: needs.check-file-change.outputs.parachain_src == 'false'
+        run: |
+          docker pull litentry/litentry-parachain
+
+      - name: Save docker image
+        run: |
+          docker save litentry/litentry-parachain -o litentry-parachain.tar
+
+      - name: Upload docker image
+        uses: actions/upload-artifact@v3
+        with:
+          name: parachain-artifact
+          path: litentry-parachain.tar
+
+      - name: Fail early
+        if: failure()
+        uses: andymckay/cancel-action@0.3
+
+  tee-build:
+    runs-on: ubuntu-20.04
+    needs:
+      - fmt
+      - check-file-change
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          buildkitd-flags: --debug
+          driver: docker-container
+
+      - name: Build worker (sidechain)
+        if: needs.check-file-change.outputs.tee_src == 'true'
+        env:
+          DOCKER_BUILDKIT: 1
+        run: >
+          docker build -t litentry/integritee-worker
+          --target deployed-worker
+          --build-arg WORKER_MODE_ARG=sidechain --build-arg ADDITIONAL_FEATURES_ARG=
+          -f tee-worker/build.Dockerfile .
+
+      - name: Build cli (sidechain)
+        if: needs.check-file-change.outputs.tee_src == 'true'
+        env:
+          DOCKER_BUILDKIT: 1
+        run: >
+          docker build -t litentry/integritee-cli
+          --target deployed-client
+          --build-arg WORKER_MODE_ARG=sidechain --build-arg ADDITIONAL_FEATURES_ARG=
+          -f tee-worker/build.Dockerfile .
+
+      - name: Pull and tag worker and cli image optionally
+        if: needs.check-file-change.outputs.tee_src == 'false'
+        run: |
+          docker pull litentry/integritee-worker
+          docker pull litentry/integritee-cli
+
+      - run: docker images --all
+
+      - name: Test enclave
+        # cargo test is not supported in the enclave
+        # see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
+        run: docker run litentry/integritee-worker test --all
+
+      - name: Save docker images
+        run: docker save litentry/integritee-worker litentry/integritee-cli -o litentry-tee.tar
+
+      - name: Upload docker images
+        uses: actions/upload-artifact@v3
+        with:
+          name: tee-artifact
+          path: litentry-tee.tar
+
+      - name: Fail early
+        if: failure()
+        uses: andymckay/cancel-action@0.3
+
+  parachain-ts-test:
+    runs-on: ubuntu-latest
+    needs:
+      - check-file-change
+      - parachain-build
+    if: needs.check-file-change.outputs.parachain_src == 'true' || needs.check-file-change.outputs.parachain_test == 'true'
+    strategy:
+      matrix:
+        chain:
+          - litmus
+          - litentry
+          - rococo
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: parachain-artifact
+
+      - name: Load docker image
+        run: |
+          docker load -i litentry-parachain.tar
+
+      - name: Run ts tests for ${{ matrix.chain }}
+        timeout-minutes: 20
+        run: |
+          make test-ts-docker-${{ matrix.chain }}
+
+      - name: Archive logs if test fails
+        uses: actions/upload-artifact@v3
+        if: ${{ failure() }}
+        with:
+          name: ${{ matrix.chain }}-ts-tests-artifacts
+          path: /tmp/parachain_dev/
+          retention-days: 3
+
+      - name: Clean up for ${{ matrix.chain }}
+        if: ${{ always() }}
+        run: |
+          make clean-docker-${{ matrix.chain }}
+
+      - name: Fail early
+        if: failure()
+        uses: andymckay/cancel-action@0.3
+
+  # This "hook" is used in branch protection rules, where we need to cover the matrix in both
+  #   - "successful" status (e.g. parachain-ts-test(litmus)), and
+  #   - "skipped" status (parachain-ts-test).
+  # see https://github.com/orgs/community/discussions/26822
+  parachain-ts-test-hook:
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    needs: parachain-ts-test
+    steps:
+      - run: |
+          case "${{ needs.parachain-ts-test.result }}" in
+            success|skipped) exit 0 ;;
+            *) exit 1 ;;
+          esac
+
+  parachain-unit-test:
+    runs-on: ubuntu-latest
+    needs: [fmt, check-file-change]
+    if: needs.check-file-change.outputs.parachain_src == 'true'
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run unittests
+        run: |
+          rustup show
+          cargo test --features=skip-ias-check --locked --release -p pallet-* --lib
+          cargo test --features=skip-ias-check --locked --release -p pallet-* --lib --features runtime-benchmarks
+
+      - name: Fail early
+        if: failure()
+        uses: andymckay/cancel-action@0.3
+
+  parachain-runtime-test:
+    runs-on: ubuntu-latest
+    needs:
+      - fmt
+      - check-file-change
+    if: needs.check-file-change.outputs.parachain_src == 'true'
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install toolchain
+        run: rustup show
+
+      - name: Install dependencies
+        run: |
+         sudo apt-get update && \
+         sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
+
+      - name: Run runtime integration tests
+        run: cargo test --locked --release -p ${{ matrix.chain }}-parachain-runtime --lib
+
+      # We could use matrix but don't have to. Since this ci has many jobs already,
+      # we execute the runtime tests sequentially for a cleaner GHA visualisation graph.
+      # It won't take much longer as we run them back to back.
+      # We intentionally write 3 steps for better readability in GHA tab if one of them fails.
+      - name: Run rococo runtime test
+        run: cargo test --locked --release -p rococo-parachain-runtime --lib
+
+      - name: Run litmus runtime test
+        run: cargo test --locked --release -p litmus-parachain-runtime --lib
+
+      - name: Run litentry runtime test
+        run: cargo test --locked --release -p litentry-parachain-runtime --lib
+
+      - name: Fail early
+        if: failure()
+        uses: andymckay/cancel-action@0.3
+
+  tee-integration-test:
+    runs-on: ubuntu-20.04
+    needs:
+      - check-file-change
+      - parachain-build
+      - tee-build
+      - tee-clippy
+    if: >
+      needs.check-file-change.outputs.parachain_src == 'true' ||
+      needs.check-file-change.outputs.tee_src == 'true' ||
+      needs.check-file-change.outputs.tee_test == 'true'
+    env:
+      WORKER_IMAGE_TAG: integritee-worker:dev
+      CLIENT_IMAGE_TAG: integritee-cli:dev
+      COINMARKETCAP_KEY: ${{ secrets.COINMARKETCAP_KEY }}
+      TEERACLE_INTERVAL_SECONDS: 4
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - test_name: demo-indirect-invocation
+          - test_name: demo-direct-call
+          - test_name: demo-sidechain
+          - test_name: sidechain-benchmark
+          # Litentry
+          - test_name: user-shielding-key
+          - test_name: resume-worker
+          - test_name: set-heartbeat-timeout
+          - test_name: vc-test
+          - test_name: identity-test
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Pull polkadot image
+        run: |
+          docker pull parity/polkadot
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: parachain-artifact
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: tee-artifact
+
+      - name: Load docker image
+        run: |
+          docker load -i litentry-parachain.tar
+          docker load -i litentry-tee.tar
+
+      - name: Re-name Image Tags
+        run: |
+          docker tag litentry/integritee-worker ${{ env.WORKER_IMAGE_TAG }}
+          docker tag litentry/integritee-cli ${{ env.CLIENT_IMAGE_TAG }}
+          docker images --all
+
+      - name: Generate parachain artefacts
+        run: |
+          ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
+
+      - name: Build litentry parachain docker images
+        run: |
+          cd tee-worker/docker
+          docker-compose -f litentry-parachain.build.yml build
+
+      - name: Integration Test ${{ matrix.test_name }}
+        timeout-minutes: 30
+        if: ${{ matrix.test_name != 'resume-worker' }}
+        run: |
+          cd tee-worker/docker
+          docker-compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} -- ${{ matrix.test_name }}
+
+      - name: Integration Test ${{ matrix.test_name }}
+        timeout-minutes: 30
+        if: ${{ matrix.test_name == 'resume-worker' }}
+        run: |
+          cd tee-worker/docker
+          docker-compose -f docker-compose.yml -f resume-worker.yml up --no-build --exit-code-from resume-worker --attach resume-worker relaychain-alice relaychain-bob integritee-node resume-worker
+
+      - name: Stop docker containers
+        run: |
+          cd tee-worker/docker
+          docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml stop
+
+      - name: Collect Docker Logs
+        continue-on-error: true
+        if: always()
+        uses: jwalton/gh-docker-logs@v2
+        with:
+          tail: all
+          dest: logs
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: logs-${{ matrix.test_name }}
+          path: logs
+
+  tee-integration-test-hook:
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    needs: tee-integration-test
+    steps:
+      - run: |
+          case "${{ needs.tee-integration-test.result }}" in
+            success|skipped) exit 0 ;;
+            *) exit 1 ;;
+          esac
+
+  # Secrets are not passed to the runner when a workflow is triggered from a forked repository,
+  # see https://docs.github.com/en/actions/security-guides/encrypted-secrets#using-encrypted-secrets-in-a-workflow
+  # Only push docker image when tests are passed on dev branch
+  push-docker:
+    runs-on: ubuntu-latest
+    needs:
+      - parachain-clippy
+      - parachain-unit-test
+      - parachain-runtime-test
+      - parachain-ts-test
+      - tee-integration-test
+    if: ${{ success() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: parachain-artifact
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: tee-artifact
+
+      - name: Load docker image
+        run: |
+          docker load -i litentry-parachain.tar
+          docker load -i litentry-tee.tar
+
+      - name: Dockerhub login
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Push docker image
+        run: |
+          docker push litentry/litentry-parachain
+          docker push litentry/integritee-worker
+          docker push litentry/integritee-cli
