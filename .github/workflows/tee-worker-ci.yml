@@ -300,7 +300,7 @@ jobs:
           docker tag litentry/integritee-worker-${{ matrix.flavor_id }} ${{ env.WORKER_IMAGE_TAG }}
           docker tag litentry/integritee-cli-${{ matrix.flavor_id }} ${{ env.CLIENT_IMAGE_TAG }}
           docker images --all
-
+          docker cp cli/*.sh litentry/integritee-cli-${{ matrix.flavor_id }} ${{ env.CLIENT_IMAGE_TAG }}:/usr/local/worker-cli/
       - name: Generate parachain artefacts
         run: |
           ./scripts/litentry/generate_parachain_artefacts.sh
