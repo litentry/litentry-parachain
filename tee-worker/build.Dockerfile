@@ -91,18 +91,13 @@ RUN apt update && apt install -y libssl-dev iproute2 curl
 FROM runner AS deployed-client
 LABEL maintainer="zoltan@integritee.network"
 
-ARG SCRIPT_DIR=/usr/local/worker-cli
 ARG LOG_DIR=/usr/local/log
-
-ENV SCRIPT_DIR ${SCRIPT_DIR}
 ENV LOG_DIR ${LOG_DIR}
 
 COPY --from=builder /root/work/tee-worker/bin/integritee-cli /usr/local/bin
-COPY ./tee-worker/cli/*.sh /usr/local/worker-cli/
 
-RUN chmod +x /usr/local/bin/integritee-cli ${SCRIPT_DIR}/*.sh
+RUN chmod +x /usr/local/bin/integritee-cli
 RUN mkdir ${LOG_DIR}
-
 RUN ldd /usr/local/bin/integritee-cli && \
 	/usr/local/bin/integritee-cli --version
 
