@@ -338,6 +338,13 @@ jobs:
       - fmt
       - check-file-change
     if: needs.check-file-change.outputs.parachain_src == 'true'
+    strategy:
+      fail-fast: true
+      matrix:
+        chain:
+          - litmus
+          - litentry
+          - rococo
     steps:
       - uses: actions/checkout@v3
 
@@ -349,18 +356,21 @@ jobs:
          sudo apt-get update && \
          sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
 
+      - name: Run runtime integration tests
+        run: cargo test --locked --release -p ${{ matrix.chain }}-parachain-runtime --lib
+
       # We could use matrix but don't have to. Since this ci has many jobs already,
       # we execute the runtime tests sequentially for a cleaner GHA visualisation graph.
       # It won't take much longer as we run them back to back.
       # We intentionally write 3 steps for better readability in GHA tab if one of them fails.
-      - name: Run rococo runtime test
-        run: cargo test --locked --release -p rococo-parachain-runtime --lib
+      # - name: Run rococo runtime test
+      #   run: cargo test --locked --release -p rococo-parachain-runtime --lib
 
-      - name: Run litmus runtime test
-        run: cargo test --locked --release -p litmus-parachain-runtime --lib
+      # - name: Run litmus runtime test
+      #   run: cargo test --locked --release -p litmus-parachain-runtime --lib
 
-      - name: Run litentry runtime test
-        run: cargo test --locked --release -p litentry-parachain-runtime --lib
+      # - name: Run litentry runtime test
+      #   run: cargo test --locked --release -p litentry-parachain-runtime --lib
 
       - name: Fail early
         if: failure()
