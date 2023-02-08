@@ -18,11 +18,10 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-mod ethereum_signature;
-mod identity;
-// mod trusted_call;
 mod assertion;
 mod enclave_quote;
+mod ethereum_signature;
+mod identity;
 mod validation_data;
 
 pub use ethereum_signature::*;
@@ -45,7 +44,6 @@ extern crate chrono_sgx as chrono;
 
 use rand::Rng;
 
-// pub use trusted_call::*;
 pub use assertion::*;
 pub use enclave_quote::*;
 pub use validation_data::*;
@@ -53,6 +51,10 @@ pub use validation_data::*;
 pub const CHALLENGE_CODE_SIZE: usize = 16;
 pub type ChallengeCode = [u8; CHALLENGE_CODE_SIZE];
 
+// Returns the default if any error happens
+// We don't propagate the error to upper level as this fn is used in too many places,
+// it's too verbose to handle them all and pass back to the parentchain with extra information.
+// We rely on the parentchain event consumers to handle them correctly.
 pub fn aes_encrypt_default(key: &UserShieldingKeyType, data: &[u8]) -> AesOutput {
 	let mut in_out = data.to_vec();
 
