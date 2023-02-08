@@ -266,6 +266,9 @@ jobs:
           - test: resume-worker
             flavor_id: sidechain
             demo_name: resume-worker
+          - test: vc-test
+            flavor_id: sidechain
+            demo_name: vc-test
           - test: set-heartbeat-timeout
             flavor_id: sidechain
             demo_name: set-heartbeat-timeout
