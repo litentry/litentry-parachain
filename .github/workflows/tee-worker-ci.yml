@@ -9,427 +9,427 @@ name: Tee-worker CI
 # tried symbolic link -- didn't work, see https://stackoverflow.com/a/71704019
 
 on:
-    push:
-        branches:
-            - dev
-        paths-ignore:
-            - "**/dependabot.yml"
-            - "**/README.md"
-    pull_request:
-        branches:
-            - dev
-        types:
-            - opened
-            - reopened
-            - synchronize
-            - ready_for_review
-    workflow_dispatch:
+  push:
+    branches:
+      - dev
+    paths-ignore:
+      - "**/dependabot.yml"
+      - "**/README.md"
+  pull_request:
+    branches:
+      - dev
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+  workflow_dispatch:
 
 env:
-    CARGO_TERM_COLOR: always
-    LOG_DIR: logs
-    BUILD_CONTAINER_NAME: integritee_worker_enclave_test
-    UPLOAD_DOWNLOAD_DIR_PREFIX: /tmp
+  CARGO_TERM_COLOR: always
+  LOG_DIR: logs
+  BUILD_CONTAINER_NAME: integritee_worker_enclave_test
+  UPLOAD_DOWNLOAD_DIR_PREFIX: /tmp
 
 concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}
-    cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 # to minimise the changes by setting a default working directory
 # please note it only applies to the `run` command, not `use` command
 defaults:
-    run:
-        working-directory: tee-worker
+  run:
+    working-directory: tee-worker
 
 jobs:
-    check-file-change:
-        runs-on: ubuntu-latest
-        # see https://github.com/orgs/community/discussions/25722
-        if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
-        outputs:
-            parachain_src: ${{ steps.filter.outputs.parachain_src }}
-            tee_src: ${{ steps.filter.outputs.tee_src }}
-            tee_test: ${{ steps.filter.outputs.tee_test }}
-        steps:
-            - uses: actions/checkout@v3
-              with:
-                  fetch-depth: 0
+  check-file-change:
+    runs-on: ubuntu-latest
+    # see https://github.com/orgs/community/discussions/25722
+    if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
+    outputs:
+      parachain_src: ${{ steps.filter.outputs.parachain_src }}
+      tee_src: ${{ steps.filter.outputs.tee_src }}
+      tee_test: ${{ steps.filter.outputs.tee_test }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-            # Checks to see if any files in the PR/commit match one of the listed file types.
-            # We can use this filter to decide whether or not to build docker images
-            - uses: dorny/paths-filter@v2
-              id: filter
-              with:
-                  filters: .github/file-filter.yml
-                  list-files: shell
+      # Checks to see if any files in the PR/commit match one of the listed file types.
+      # We can use this filter to decide whether or not to build docker images
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: .github/file-filter.yml
+          list-files: shell
 
-    build-parachain-docker:
-        runs-on: ubuntu-latest
-        needs: check-file-change
-        steps:
-            - uses: actions/checkout@v3
+  build-parachain-docker:
+    runs-on: ubuntu-latest
+    needs: check-file-change
+    steps:
+      - uses: actions/checkout@v3
 
-            - name: Build docker image
-              if: needs.check-file-change.outputs.parachain_src == 'true'
-              run: |
-                  cd ..
-                  make build-docker-release
-                  echo "============================="
-                  docker images
+      - name: Build docker image
+        if: needs.check-file-change.outputs.parachain_src == 'true'
+        run: |
+          cd ..
+          make build-docker-release
+          echo "============================="
+          docker images
 
-            - name: Pull docker image optinally
-              if: needs.check-file-change.outputs.parachain_src == 'false'
-              run: |
-                  docker pull litentry/litentry-parachain:latest
+      - name: Pull docker image optinally
+        if: needs.check-file-change.outputs.parachain_src == 'false'
+        run: |
+          docker pull litentry/litentry-parachain:latest
 
-            - name: Save docker image
-              run: |
-                  docker save litentry/litentry-parachain:latest -o ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/litentry-parachain.tar
+      - name: Save docker image
+        run: |
+          docker save litentry/litentry-parachain:latest -o ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/litentry-parachain.tar
 
-            - name: Upload docker image
-              uses: actions/upload-artifact@v3
-              with:
-                  name: parachain-artifact
-                  path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/litentry-parachain.tar
+      - name: Upload docker image
+        uses: actions/upload-artifact@v3
+        with:
+          name: parachain-artifact
+          path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/litentry-parachain.tar
 
-    build-test:
-        runs-on: ubuntu-20.04
-        needs: check-file-change
-        strategy:
-            fail-fast: false
-            matrix:
-                include:
-                    - flavor_id: sidechain
-                      mode: sidechain
+  build-test:
+    runs-on: ubuntu-20.04
+    needs: check-file-change
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - flavor_id: sidechain
+            mode: sidechain
 
-        steps:
-            - uses: actions/checkout@v3
+    steps:
+      - uses: actions/checkout@v3
 
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v2
-              with:
-                  buildkitd-flags: --debug
-                  driver: docker-container
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          buildkitd-flags: --debug
+          driver: docker-container
 
-            - name: Build Worker & Run Cargo Test
-              if: needs.check-file-change.outputs.tee_src == 'true'
-              env:
-                  DOCKER_BUILDKIT: 1
-              run: >
-                  cd .. && docker build -t litentry/integritee-worker-${{ matrix.flavor_id }}
-                  --target deployed-worker
-                  --build-arg WORKER_MODE_ARG=${{ matrix.mode }} --build-arg ADDITIONAL_FEATURES_ARG=${{ matrix.additional_features }}
-                  -f tee-worker/build.Dockerfile .
-
-            - name: Build CLI client
-              if: needs.check-file-change.outputs.tee_src == 'true'
-              env:
-                  DOCKER_BUILDKIT: 1
-              run: >
-                  cd .. && docker build -t litentry/integritee-cli-${{ matrix.flavor_id }}
-                  --target deployed-client
-                  --build-arg WORKER_MODE_ARG=${{ matrix.mode }} --build-arg ADDITIONAL_FEATURES_ARG=${{ matrix.additional_features }}
-                  -f tee-worker/build.Dockerfile .
-
-            - name: Pull and tag worker and cli image optionally
-              if: needs.check-file-change.outputs.tee_src == 'false'
-              run: |
-                  docker pull litentry/integritee-worker-${{ matrix.flavor_id }}
-                  docker pull litentry/integritee-cli-${{ matrix.flavor_id }}
-
-            - run: docker images --all
-
-            - name: Test Enclave # cargo test is not supported in the enclave, see: https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
-              run: docker run --name ${{ env.BUILD_CONTAINER_NAME }} litentry/integritee-worker-${{ matrix.flavor_id }} test --all
-
-            - name: Save docker images
-              run: >
-                  docker save litentry/integritee-worker-${{ matrix.flavor_id }} litentry/integritee-cli-${{ matrix.flavor_id }}
-                  -o ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/litentry-tee-${{ matrix.flavor_id }}.tar
-
-            - name: Upload docker images
-              uses: actions/upload-artifact@v3
-              with:
-                  name: tee-${{ matrix.flavor_id }}-artifact
-                  path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/litentry-tee-${{ matrix.flavor_id }}.tar
-
-    build-test-status-check:
-        if: ${{ always() }}
-        runs-on: ubuntu-latest
-        needs: build-test
-        steps:
-            - uses: actions/checkout@v3
-            - run: |
-                  case "${{ needs.build-test.result }}" in
-                    success|skipped) exit 0 ;;
-                    *) exit 1 ;;
-                  esac
-
-    clippy:
-        runs-on: ubuntu-latest
-        needs: check-file-change
+      - name: Build Worker & Run Cargo Test
         if: needs.check-file-change.outputs.tee_src == 'true'
-        container: "integritee/integritee-dev:0.1.10"
-        steps:
-            - uses: actions/checkout@v3
-            - name: init rust
-              # enclave is not in the same workspace
-              run: rustup show && cd enclave-runtime && rustup show
-
-            - name: Clippy default features
-              run: cargo clippy -- -D warnings
-            - name: Enclave # Enclave is separate as it's not in the workspace
-              run: cd enclave-runtime && cargo clippy -- -D warnings
-
-            - name: Clippy with EVM feature
-              run: |
-                  cargo clippy --features evm -- -D warnings
-                  cd enclave-runtime && cargo clippy --features evm -- -D warnings
-            - name: Clippy with Sidechain feature
-              run: |
-                  cargo clippy --features sidechain -- -D warnings
-                  cd enclave-runtime && cargo clippy --features sidechain -- -D warnings
-            - name: Clippy with Teeracle feature
-              run: |
-                  cargo clippy --features teeracle -- -D warnings
-                  cd enclave-runtime && cargo clippy --features teeracle -- -D warnings
-            - name: Clippy with Offchain-worker feature
-              run: |
-                  cargo clippy --features offchain-worker -- -D warnings
-                  cd enclave-runtime && cargo clippy --features offchain-worker -- -D warnings
-            - name: Fail-fast; cancel other jobs
-              if: failure()
-              uses: andymckay/cancel-action@0.2
-
-    fmt:
-        runs-on: ubuntu-latest
-        needs: check-file-change
-        if: needs.check-file-change.outputs.tee_src == 'true'
-        steps:
-            - uses: actions/checkout@v3
-            - name: init rust
-              run: rustup show
-
-            - name: Worker & Client
-              run: cargo fmt --all -- --check
-            - name: Enclave # Enclave is separate as it's not in the workspace
-              run: cd enclave-runtime && cargo fmt --all -- --check
-
-            - name: Install taplo
-              run: cargo install taplo-cli --locked
-            - name: Cargo.toml fmt
-              run: taplo fmt --check
-
-            - name: Fail-fast; cancel other jobs
-              if: failure()
-              uses: andymckay/cancel-action@0.2
-
-    integration-tests:
-        runs-on: ubuntu-20.04
-        needs:
-            - build-parachain-docker
-            - build-test
-            - check-file-change
-        if: >
-            needs.check-file-change.outputs.parachain_src == 'true' ||
-            needs.check-file-change.outputs.tee_src == 'true' ||
-            needs.check-file-change.outputs.tee_test == 'true'
         env:
-            WORKER_IMAGE_TAG: integritee-worker:dev
-            CLIENT_IMAGE_TAG: integritee-cli:dev
-            COINMARKETCAP_KEY: ${{ secrets.COINMARKETCAP_KEY }}
-            TEERACLE_INTERVAL_SECONDS: 4
+          DOCKER_BUILDKIT: 1
+        run: >
+          cd .. && docker build -t litentry/integritee-worker-${{ matrix.flavor_id }}
+          --target deployed-worker
+          --build-arg WORKER_MODE_ARG=${{ matrix.mode }} --build-arg ADDITIONAL_FEATURES_ARG=${{ matrix.additional_features }}
+          -f tee-worker/build.Dockerfile .
 
-        strategy:
-            fail-fast: false
-            matrix:
-                include:
-                    - test: M6
-                      flavor_id: sidechain
-                      demo_name: demo-indirect-invocation
-                    - test: M8
-                      flavor_id: sidechain
-                      demo_name: demo-direct-call
-                    - test: Sidechain
-                      flavor_id: sidechain
-                      demo_name: demo-sidechain
-                    - test: Benchmark
-                      flavor_id: sidechain
-                      demo_name: sidechain-benchmark
-                    # Litentry
-                    - test: user-shielding-key
-                      flavor_id: sidechain
-                      demo_name: user-shielding-key
-                    - test: identity-test
-                      flavor_id: sidechain
-                      demo_name: identity-test
-                    - test: resume-worker
-                      flavor_id: sidechain
-                      demo_name: resume-worker
-                    - test: vc-test
-                      flavor_id: sidechain
-                      demo_name: vc-test
-                    - test: set-heartbeat-timeout
-                      flavor_id: sidechain
-                      demo_name: set-heartbeat-timeout
+      - name: Build CLI client
+        if: needs.check-file-change.outputs.tee_src == 'true'
+        env:
+          DOCKER_BUILDKIT: 1
+        run: >
+          cd .. && docker build -t litentry/integritee-cli-${{ matrix.flavor_id }}
+          --target deployed-client
+          --build-arg WORKER_MODE_ARG=${{ matrix.mode }} --build-arg ADDITIONAL_FEATURES_ARG=${{ matrix.additional_features }}
+          -f tee-worker/build.Dockerfile .
 
-        steps:
-            - uses: actions/checkout@v3
+      - name: Pull and tag worker and cli image optionally
+        if: needs.check-file-change.outputs.tee_src == 'false'
+        run: |
+          docker pull litentry/integritee-worker-${{ matrix.flavor_id }}
+          docker pull litentry/integritee-cli-${{ matrix.flavor_id }}
 
-            - name: Pull polkadot image
-              run: |
-                  docker pull parity/polkadot:latest
+      - run: docker images --all
 
-            - uses: actions/download-artifact@v3
-              with:
-                  name: parachain-artifact
-                  path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}
+      - name: Test Enclave # cargo test is not supported in the enclave, see: https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
+        run: docker run --name ${{ env.BUILD_CONTAINER_NAME }} litentry/integritee-worker-${{ matrix.flavor_id }} test --all
 
-            - uses: actions/download-artifact@v3
-              with:
-                  name: tee-${{ matrix.flavor_id }}-artifact
-                  path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}
+      - name: Save docker images
+        run: >
+          docker save litentry/integritee-worker-${{ matrix.flavor_id }} litentry/integritee-cli-${{ matrix.flavor_id }}
+          -o ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/litentry-tee-${{ matrix.flavor_id }}.tar
 
-            - name: Load docker image
-              run: |
-                  docker load -i ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/litentry-parachain.tar
-                  docker load -i ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/litentry-tee-${{ matrix.flavor_id }}.tar
+      - name: Upload docker images
+        uses: actions/upload-artifact@v3
+        with:
+          name: tee-${{ matrix.flavor_id }}-artifact
+          path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/litentry-tee-${{ matrix.flavor_id }}.tar
 
-            - name: Re-name Image Tags
-              run: |
-                  docker tag litentry/integritee-worker-${{ matrix.flavor_id }} ${{ env.WORKER_IMAGE_TAG }}
-                  docker tag litentry/integritee-cli-${{ matrix.flavor_id }} ${{ env.CLIENT_IMAGE_TAG }}
-                  docker images --all
+  build-test-status-check:
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    needs: build-test
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          case "${{ needs.build-test.result }}" in
+            success|skipped) exit 0 ;;
+            *) exit 1 ;;
+          esac
 
-            - name: Generate parachain artefacts
-              run: |
-                  ./scripts/litentry/generate_parachain_artefacts.sh
+  clippy:
+    runs-on: ubuntu-latest
+    needs: check-file-change
+    if: needs.check-file-change.outputs.tee_src == 'true'
+    container: "integritee/integritee-dev:0.1.10"
+    steps:
+      - uses: actions/checkout@v3
+      - name: init rust
+        # enclave is not in the same workspace
+        run: rustup show && cd enclave-runtime && rustup show
 
-            - name: Build litentry parachain docker images
-              run: |
-                  cd docker
-                  docker-compose -f litentry-parachain.build.yml build
+      - name: Clippy default features
+        run: cargo clippy -- -D warnings
+      - name: Enclave # Enclave is separate as it's not in the workspace
+        run: cd enclave-runtime && cargo clippy -- -D warnings
 
-            - name: Integration Test ${{ matrix.test }}-${{ matrix.flavor_id }}
-              timeout-minutes: 30
-              if: ${{ matrix.test != 'resume-worker' }}
-              run: |
-                  cd docker
-                  docker-compose -f docker-compose.yml -f ${{ matrix.demo_name }}.yml up --no-build --exit-code-from ${{ matrix.demo_name }} -- ${{ matrix.demo_name }}
+      - name: Clippy with EVM feature
+        run: |
+          cargo clippy --features evm -- -D warnings
+          cd enclave-runtime && cargo clippy --features evm -- -D warnings
+      - name: Clippy with Sidechain feature
+        run: |
+          cargo clippy --features sidechain -- -D warnings
+          cd enclave-runtime && cargo clippy --features sidechain -- -D warnings
+      - name: Clippy with Teeracle feature
+        run: |
+          cargo clippy --features teeracle -- -D warnings
+          cd enclave-runtime && cargo clippy --features teeracle -- -D warnings
+      - name: Clippy with Offchain-worker feature
+        run: |
+          cargo clippy --features offchain-worker -- -D warnings
+          cd enclave-runtime && cargo clippy --features offchain-worker -- -D warnings
+      - name: Fail-fast; cancel other jobs
+        if: failure()
+        uses: andymckay/cancel-action@0.2
 
-            - name: Integration Test ${{ matrix.test }}-${{ matrix.flavor_id }}
-              timeout-minutes: 30
-              if: ${{ matrix.test == 'resume-worker' }}
-              run: |
-                  cd docker
-                  docker-compose -f docker-compose.yml -f resume-worker.yml up --no-build --exit-code-from resume-worker --attach resume-worker relaychain-alice relaychain-bob integritee-node resume-worker
+  fmt:
+    runs-on: ubuntu-latest
+    needs: check-file-change
+    if: needs.check-file-change.outputs.tee_src == 'true'
+    steps:
+      - uses: actions/checkout@v3
+      - name: init rust
+        run: rustup show
 
-            - name: Stop docker containers
-              run: |
-                  cd docker
-                  docker compose -f docker-compose.yml -f ${{ matrix.demo_name }}.yml stop
+      - name: Worker & Client
+        run: cargo fmt --all -- --check
+      - name: Enclave # Enclave is separate as it's not in the workspace
+        run: cd enclave-runtime && cargo fmt --all -- --check
 
-            - name: Collect Docker Logs
-              continue-on-error: true
-              if: always()
-              uses: jwalton/gh-docker-logs@v2
-              with:
-                  tail: all
-                  dest: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/${{ env.LOG_DIR }}
+      - name: Install taplo
+        run: cargo install taplo-cli --locked
+      - name: Cargo.toml fmt
+        run: taplo fmt --check
 
-            - name: Upload logs
-              if: always()
-              uses: actions/upload-artifact@v3
-              with:
-                  name: logs-${{ matrix.test }}-${{ matrix.flavor_id }}
-                  path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/${{ env.LOG_DIR }}
+      - name: Fail-fast; cancel other jobs
+        if: failure()
+        uses: andymckay/cancel-action@0.2
 
-            - name: Dockerhub login
-              uses: docker/login-action@v2
-              with:
-                  username: ${{ secrets.DOCKERHUB_USERNAME }}
-                  password: ${{ secrets.DOCKERHUB_PASSWORD }}
+  integration-tests:
+    runs-on: ubuntu-20.04
+    needs:
+      - build-parachain-docker
+      - build-test
+      - check-file-change
+    if: >
+      needs.check-file-change.outputs.parachain_src == 'true' ||
+      needs.check-file-change.outputs.tee_src == 'true' ||
+      needs.check-file-change.outputs.tee_test == 'true'
+    env:
+      WORKER_IMAGE_TAG: integritee-worker:dev
+      CLIENT_IMAGE_TAG: integritee-cli:dev
+      COINMARKETCAP_KEY: ${{ secrets.COINMARKETCAP_KEY }}
+      TEERACLE_INTERVAL_SECONDS: 4
 
-            - name: Push docker images
-              if: ${{ success() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
-              run: |
-                  docker push litentry/litentry-parachain
-                  docker push litentry/integritee-worker-${{ matrix.flavor_id }}
-                  docker push litentry/integritee-cli-${{ matrix.flavor_id }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - test: M6
+            flavor_id: sidechain
+            demo_name: demo-indirect-invocation
+          - test: M8
+            flavor_id: sidechain
+            demo_name: demo-direct-call
+          - test: Sidechain
+            flavor_id: sidechain
+            demo_name: demo-sidechain
+          - test: Benchmark
+            flavor_id: sidechain
+            demo_name: sidechain-benchmark
+          # Litentry
+          - test: user-shielding-key
+            flavor_id: sidechain
+            demo_name: user-shielding-key
+          - test: identity-test
+            flavor_id: sidechain
+            demo_name: identity-test
+          - test: resume-worker
+            flavor_id: sidechain
+            demo_name: resume-worker
+          - test: vc-test
+            flavor_id: sidechain
+            demo_name: vc-test
+          - test: set-heartbeat-timeout
+            flavor_id: sidechain
+            demo_name: set-heartbeat-timeout
 
-    integration-tests-status-check:
-        if: ${{ always() }}
-        runs-on: ubuntu-latest
-        needs: integration-tests
-        steps:
-            - uses: actions/checkout@v3
-            - run: |
-                  case "${{ needs.integration-tests.result }}" in
-                    success|skipped) exit 0 ;;
-                    *) exit 1 ;;
-                  esac
+    steps:
+      - uses: actions/checkout@v3
 
-    # TODO: this "release" section is from the original yml -- unmaintained
-    release:
-        name: Draft Release
-        if: startsWith(github.ref, 'refs/tags/')
-        runs-on: ubuntu-latest
-        needs: [build-test, integration-tests]
-        outputs:
-            release_url: ${{ steps.create-release.outputs.html_url }}
-            asset_upload_url: ${{ steps.create-release.outputs.upload_url }}
-        steps:
-            - uses: actions/checkout@v3
+      - name: Pull polkadot image
+        run: |
+          docker pull parity/polkadot:latest
 
-            - name: Download Integritee Service
-              uses: actions/download-artifact@v3
-              with:
-                  name: integritee-worker-sidechain-${{ github.sha }}
-                  path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/integritee-worker-tmp
+      - uses: actions/download-artifact@v3
+        with:
+          name: parachain-artifact
+          path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}
 
-            - name: Download Integritee Client
-              uses: actions/download-artifact@v3
-              with:
-                  name: integritee-client-sidechain-${{ github.sha }}
-                  path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/integritee-client-tmp
+      - uses: actions/download-artifact@v3
+        with:
+          name: tee-${{ matrix.flavor_id }}-artifact
+          path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}
 
-            - name: Download Enclave Signed
-              uses: actions/download-artifact@v3
-              with:
-                  name: enclave-signed-sidechain-${{ github.sha }}
-                  path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/enclave-signed-tmp
+      - name: Load docker image
+        run: |
+          docker load -i ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/litentry-parachain.tar
+          docker load -i ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/litentry-tee-${{ matrix.flavor_id }}.tar
 
-            - name: Move service binaries
-              run: mv ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/integritee-worker-tmp/integritee-service ./integritee-demo-validateer
+      - name: Re-name Image Tags
+        run: |
+          docker tag litentry/integritee-worker-${{ matrix.flavor_id }} ${{ env.WORKER_IMAGE_TAG }}
+          docker tag litentry/integritee-cli-${{ matrix.flavor_id }} ${{ env.CLIENT_IMAGE_TAG }}
+          docker images --all
 
-            - name: Move service client binaries
-              run: mv ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/integritee-client-tmp/integritee-cli ./integritee-client
+      - name: Generate parachain artefacts
+        run: |
+          ./scripts/litentry/generate_parachain_artefacts.sh
 
-            - name: Move service client binaries
-              run: mv ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/enclave-signed-tmp/enclave.signed.so ./enclave.signed.so
+      - name: Build litentry parachain docker images
+        run: |
+          cd docker
+          docker-compose -f litentry-parachain.build.yml build
 
-            - name: Create required package.json
-              run: test -f package.json || echo '{}' >package.json
+      - name: Integration Test ${{ matrix.test }}-${{ matrix.flavor_id }}
+        timeout-minutes: 30
+        if: ${{ matrix.test != 'resume-worker' }}
+        run: |
+          cd docker
+          docker-compose -f docker-compose.yml -f ${{ matrix.demo_name }}.yml up --no-build --exit-code-from ${{ matrix.demo_name }} -- ${{ matrix.demo_name }}
 
-            - name: Changelog
-              uses: scottbrenner/generate-changelog-action@master
-              id: Changelog
+      - name: Integration Test ${{ matrix.test }}-${{ matrix.flavor_id }}
+        timeout-minutes: 30
+        if: ${{ matrix.test == 'resume-worker' }}
+        run: |
+          cd docker
+          docker-compose -f docker-compose.yml -f resume-worker.yml up --no-build --exit-code-from resume-worker --attach resume-worker relaychain-alice relaychain-bob integritee-node resume-worker
 
-            - name: Display structure of downloaded files
-              run: ls -R
-              working-directory: .
+      - name: Stop docker containers
+        run: |
+          cd docker
+          docker compose -f docker-compose.yml -f ${{ matrix.demo_name }}.yml stop
 
-            - name: Release
-              id: create-release
-              uses: softprops/action-gh-release@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  body: |
-                      ${{ steps.Changelog.outputs.changelog }}
-                  draft: true
-                  # note the path change
-                  files: |
-                      tee-worker/integritee-client
-                      tee-worker/integritee-demo-validateer
-                      tee-worker/enclave.signed.so
+      - name: Collect Docker Logs
+        continue-on-error: true
+        if: always()
+        uses: jwalton/gh-docker-logs@v2
+        with:
+          tail: all
+          dest: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/${{ env.LOG_DIR }}
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: logs-${{ matrix.test }}-${{ matrix.flavor_id }}
+          path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/${{ env.LOG_DIR }}
+
+      - name: Dockerhub login
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Push docker images
+        if: ${{ success() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
+        run: |
+          docker push litentry/litentry-parachain
+          docker push litentry/integritee-worker-${{ matrix.flavor_id }}
+          docker push litentry/integritee-cli-${{ matrix.flavor_id }}
+
+  integration-tests-status-check:
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          case "${{ needs.integration-tests.result }}" in
+            success|skipped) exit 0 ;;
+            *) exit 1 ;;
+          esac
+
+  # TODO: this "release" section is from the original yml -- unmaintained
+  release:
+    name: Draft Release
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    needs: [build-test, integration-tests]
+    outputs:
+      release_url: ${{ steps.create-release.outputs.html_url }}
+      asset_upload_url: ${{ steps.create-release.outputs.upload_url }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download Integritee Service
+        uses: actions/download-artifact@v3
+        with:
+          name: integritee-worker-sidechain-${{ github.sha }}
+          path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/integritee-worker-tmp
+
+      - name: Download Integritee Client
+        uses: actions/download-artifact@v3
+        with:
+          name: integritee-client-sidechain-${{ github.sha }}
+          path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/integritee-client-tmp
+
+      - name: Download Enclave Signed
+        uses: actions/download-artifact@v3
+        with:
+          name: enclave-signed-sidechain-${{ github.sha }}
+          path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/enclave-signed-tmp
+
+      - name: Move service binaries
+        run: mv ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/integritee-worker-tmp/integritee-service ./integritee-demo-validateer
+
+      - name: Move service client binaries
+        run: mv ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/integritee-client-tmp/integritee-cli ./integritee-client
+
+      - name: Move service client binaries
+        run: mv ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/enclave-signed-tmp/enclave.signed.so ./enclave.signed.so
+
+      - name: Create required package.json
+        run: test -f package.json || echo '{}' >package.json
+
+      - name: Changelog
+        uses: scottbrenner/generate-changelog-action@master
+        id: Changelog
+
+      - name: Display structure of downloaded files
+        run: ls -R
+        working-directory: .
+
+      - name: Release
+        id: create-release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          body: |
+            ${{ steps.Changelog.outputs.changelog }}
+          draft: true
+          # note the path change
+          files: |
+            tee-worker/integritee-client
+            tee-worker/integritee-demo-validateer
+            tee-worker/enclave.signed.so
