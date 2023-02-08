@@ -127,6 +127,21 @@ pub mod pallet {
 	#[pallet::getter(fn scheduled_enclave)]
 	pub type ScheduledEnclave<T: Config> = StorageMap<_, Blake2_128Concat, u32, MREnclave>;
 
+	/// store the last MrEnclave Index, the biggest one
+	/// Watch out: we start indexing with 1 instead of zero in order to
+	/// avoid ambiguity between Null and 0.
+	#[pallet::storage]
+	#[pallet::getter(fn scheduled_enclave_count)]
+	pub type ScheduledEnclaveCount<T: Config> = StorageValue<_, u64, ValueQuery>;
+
+	/// storage map of the enclave_index <-> MrEnclave, starts from 1
+	/// Watch out: we start indexing with 1 instead of zero in order to
+	/// avoid ambiguity between Null and 0.
+	#[pallet::storage]
+	#[pallet::getter(fn scheduled_enclave_index)]
+	pub type ScheduledEnclaveRegistry<T: Config> =
+		StorageMap<_, Blake2_128Concat, u64, MREnclave, ValueQuery>;
+
 	#[pallet::storage]
 	#[pallet::getter(fn heartbeat_timeout)]
 	pub type HeartbeatTimeout<T: Config> =
@@ -355,8 +370,13 @@ pub mod pallet {
 			mr_enclave: MREnclave,
 		) -> DispatchResultWithPostInfo {
 			T::EnclaveAdminOrigin::ensure_origin(origin)?;
+			// TODO: check if the mr_enclave already inserted
 			ScheduledEnclave::<T>::insert(sidechain_block_number, mr_enclave);
 			Self::deposit_event(Event::UpdatedScheduledEnclave(sidechain_block_number, mr_enclave));
+			let enclave_idx = Self::scheduled_enclave_count()
+				.checked_add(1)
+				.ok_or("[Teerex]: Overflow adding new MrEnclave to registry")?;
+			<ScheduledEnclaveRegistry<T>>::insert(enclave_idx, mr_enclave);
 			Ok(().into())
 		}
 

@@ -16,7 +16,7 @@
 */
 
 use itp_node_api::api_client::{ApiResult, PalletTeerexApi};
-use itp_types::{Enclave, ShardIdentifier, H256 as Hash};
+use itp_types::{Enclave, MrEnclave, ShardIdentifier, H256 as Hash};
 
 pub struct TestNodeApi;
 
@@ -34,12 +34,36 @@ impl PalletTeerexApi for TestNodeApi {
 	fn enclave(&self, index: u64, _at_block: Option<Hash>) -> ApiResult<Option<Enclave>> {
 		Ok(Some(enclaves().remove(index as usize)))
 	}
+
 	fn enclave_count(&self, _at_block: Option<Hash>) -> ApiResult<u64> {
 		unreachable!()
 	}
 
 	fn all_enclaves(&self, _at_block: Option<Hash>) -> ApiResult<Vec<Enclave>> {
 		Ok(enclaves())
+	}
+
+	fn schedule_enclave(
+		&self,
+		index: u64,
+		_at_block: Option<Hash>,
+	) -> ApiResult<Option<MrEnclave>> {
+		let enclaves = enclaves();
+		if index == 1 {
+			Ok(Some(enclaves[0].mr_enclave))
+		} else {
+			Ok(Some(enclaves[1].mr_enclave))
+		}
+	}
+
+	fn schedule_enclaves_count(&self, _at_block: Option<Hash>) -> ApiResult<u64> {
+		Ok(2)
+	}
+
+	fn all_schedule_mr_enclaves(&self, _at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>> {
+		let enclaves = enclaves();
+		let mr_enclaves = enclaves.into_iter().map(|e| e.mr_enclave).collect();
+		Ok(mr_enclaves)
 	}
 
 	fn worker_for_shard(
@@ -49,6 +73,7 @@ impl PalletTeerexApi for TestNodeApi {
 	) -> ApiResult<Option<Enclave>> {
 		unreachable!()
 	}
+
 	fn latest_ipfs_hash(
 		&self,
 		_: &ShardIdentifier,

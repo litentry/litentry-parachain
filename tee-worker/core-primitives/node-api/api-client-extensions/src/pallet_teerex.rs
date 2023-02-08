@@ -16,7 +16,7 @@
 */
 
 use crate::ApiResult;
-use itp_types::{Enclave, IpfsHash, ShardIdentifier};
+use itp_types::{Enclave, IpfsHash, MrEnclave, ShardIdentifier};
 use sp_core::{Pair, H256 as Hash};
 use sp_runtime::MultiSignature;
 use substrate_api_client::{Api, ExtrinsicParams, RpcClient};
@@ -29,6 +29,9 @@ pub trait PalletTeerexApi {
 	fn enclave(&self, index: u64, at_block: Option<Hash>) -> ApiResult<Option<Enclave>>;
 	fn enclave_count(&self, at_block: Option<Hash>) -> ApiResult<u64>;
 	fn all_enclaves(&self, at_block: Option<Hash>) -> ApiResult<Vec<Enclave>>;
+	fn schedule_enclave(&self, index: u64, at_block: Option<Hash>) -> ApiResult<Option<MrEnclave>>;
+	fn schedule_enclaves_count(&self, at_block: Option<Hash>) -> ApiResult<u64>;
+	fn all_schedule_mr_enclaves(&self, at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>>;
 	fn worker_for_shard(
 		&self,
 		shard: &ShardIdentifier,
@@ -50,7 +53,7 @@ where
 	}
 
 	fn enclave_count(&self, at_block: Option<Hash>) -> ApiResult<u64> {
-		Ok(self.get_storage_value(TEEREX, "EnclaveCount", at_block)?.unwrap_or(0u64))
+		Ok(self.get_storage_value(TEEREX, "EnclaveCount", at_block)?.unwrap_or_default())
 	}
 
 	fn all_enclaves(&self, at_block: Option<Hash>) -> ApiResult<Vec<Enclave>> {
@@ -60,6 +63,27 @@ where
 			enclaves.push(self.enclave(n, at_block)?.expect("None enclave"))
 		}
 		Ok(enclaves)
+	}
+
+	fn schedule_enclave(&self, index: u64, at_block: Option<Hash>) -> ApiResult<Option<MrEnclave>> {
+		self.get_storage_map(TEEREX, "ScheduledEnclaveRegistry", index, at_block)
+	}
+
+	fn schedule_enclaves_count(&self, at_block: Option<Hash>) -> ApiResult<u64> {
+		Ok(self
+			.get_storage_value(TEEREX, "ScheduledEnclaveCount", at_block)?
+			.unwrap_or_default())
+	}
+
+	fn all_schedule_mr_enclaves(&self, at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>> {
+		let count = self.schedule_enclaves_count(at_block)?;
+		let mut mr_enclaves = Vec::with_capacity(count as usize);
+		for n in 1..=count {
+			if let Ok(Some(m)) = self.schedule_enclave(n, at_block) {
+				mr_enclaves.push(m)
+			}
+		}
+		Ok(mr_enclaves)
 	}
 
 	fn worker_for_shard(
