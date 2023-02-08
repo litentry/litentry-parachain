@@ -260,12 +260,12 @@ jobs:
           - test: user-shielding-key
             flavor_id: sidechain
             demo_name: user-shielding-key
-          - test: identity-test
-            flavor_id: sidechain
-            demo_name: identity-test
           - test: resume-worker
             flavor_id: sidechain
             demo_name: resume-worker
+          - test: identity-test
+            flavor_id: sidechain
+            demo_name: identity-test
           - test: vc-test
             flavor_id: sidechain
             demo_name: vc-test
