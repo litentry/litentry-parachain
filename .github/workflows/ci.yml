@@ -105,7 +105,9 @@ jobs:
 
   parachain-clippy:
     runs-on: ubuntu-latest
-    needs: [fmt, file-change]
+    needs:
+      - fmt
+      - file-change
     if: needs.file-change.outputs.parachain_src == 'true'
     steps:
       - uses: actions/checkout@v3
@@ -127,7 +129,9 @@ jobs:
 
   tee-clippy:
     runs-on: ubuntu-latest
-    needs: file-change
+    needs:
+      - fmt
+      - file-change
     container: "integritee/integritee-dev:0.1.10"
     if: needs.file-change.outputs.parachain_src == 'true'
     steps:
@@ -159,7 +163,9 @@ jobs:
 
   parachain-build:
     runs-on: ubuntu-latest
-    needs: [fmt, file-change]
+    needs:
+      - fmt
+      - file-change
     steps:
       - uses: actions/checkout@v3
 
@@ -191,7 +197,9 @@ jobs:
 
   tee-build:
     runs-on: ubuntu-20.04
-    needs: file-change
+    needs:
+      - fmt
+      - file-change
     steps:
       - uses: actions/checkout@v3
 
@@ -249,7 +257,9 @@ jobs:
 
   parachain-ts-test:
     runs-on: ubuntu-latest
-    needs: [file-change, parachain-build]
+    needs:
+      - ile-change
+      - parachain-build
     if: needs.file-change.outputs.parachain_src == 'true' || needs.file-change.outputs.parachain_test == 'true'
     strategy:
       matrix:
@@ -324,7 +334,9 @@ jobs:
 
   parachain-runtime-test:
     runs-on: ubuntu-latest
-    needs: [fmt, file-change]
+    needs:
+      - fmt
+      - file-change
     if: needs.file-change.outputs.parachain_src == 'true'
     steps:
       - uses: actions/checkout@v3
@@ -357,9 +369,10 @@ jobs:
   tee-integration-test:
     runs-on: ubuntu-20.04
     needs:
+      - file-change
       - parachain-build
       - tee-build
-      - file-change
+      - tee-clippy
     if: >
       needs.file-change.outputs.parachain_src == 'true' ||
       needs.file-change.outputs.tee_src == 'true' ||
@@ -470,13 +483,11 @@ jobs:
   push-docker:
     runs-on: ubuntu-latest
     needs:
-      [
-        parachain-clippy,
-        parachain-unit-test,
-        parachain-runtime-test,
-        parachain-ts-test,
-        tee-integration-test
-      ]
+      - parachain-clippy
+      - parachain-unit-test
+      - parachain-runtime-test
+      - parachain-ts-test
+      - tee-integration-test
     if: ${{ success() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
     steps:
       - uses: actions/download-artifact@v3
