@@ -327,13 +327,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: [fmt, file-change]
     if: needs.file-change.outputs.parachain_src == 'true'
-    strategy:
-      fail-fast: true
-      matrix:
-        chain:
-          - litmus
-          - litentry
-          - rococo
     steps:
       - uses: actions/checkout@v3
 
@@ -345,25 +338,24 @@ jobs:
          sudo apt-get update && \
          sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
 
-      - name: Run runtime integration tests
-        run: cargo test --locked --release -p ${{ matrix.chain }}-parachain-runtime --lib
+      # We could use matrix but don't have to. Since this ci has many jobs already,
+      # we execute the runtime tests sequentially for a cleaner GHA visualisation graph.
+      # It won't take much longer as we run them back to back.
+      # We intentionally write 3 steps for better readability in GHA tab if one of them fails.
+      - name: Run rococo runtime test
+        run: cargo test --locked --release -p rococo-parachain-runtime --lib
+
+      - name: Run litmus runtime test
+        run: cargo test --locked --release -p litmus-parachain-runtime --lib
+
+      - name: Run litentry runtime test
+        run: cargo test --locked --release -p litentry-parachain-runtime --lib
 
       - name: Fail early
         if: failure()
         uses: andymckay/cancel-action@0.3
 
-  parachain-runtime-test-hook:
-    if: ${{ always() }}
-    runs-on: ubuntu-latest
-    needs: parachain-runtime-test
-    steps:
-      - run: |
-          case "${{ needs.parachain-runtime-test.result }}" in
-            success|skipped) exit 0 ;;
-            *) exit 1 ;;
-          esac
-
-  tee-cli-test:
+  tee-integration-test:
     runs-on: ubuntu-20.04
     needs:
       - parachain-build
@@ -462,13 +454,13 @@ jobs:
           name: logs-${{ matrix.test_name }}
           path: logs
 
-  tee-cli-test-hook:
+  tee-integration-test-hook:
     if: ${{ always() }}
     runs-on: ubuntu-latest
-    needs: tee-cli-test
+    needs: tee-integration-test
     steps:
       - run: |
-          case "${{ needs.tee-cli-test.result }}" in
+          case "${{ needs.tee-integration-test.result }}" in
             success|skipped) exit 0 ;;
             *) exit 1 ;;
           esac
@@ -484,7 +476,7 @@ jobs:
         parachain-unit-test,
         parachain-runtime-test,
         parachain-ts-test,
-        tee-cli-test
+        tee-integration-test
       ]
     if: ${{ success() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
     steps:
