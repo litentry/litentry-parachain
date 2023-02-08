@@ -3,7 +3,7 @@ services:
     image: integritee-cli:dev
     container_name: integritee-identity-test
     volumes:
-      - ../ts-tests:/ts-tests
+      - ../cli:/usr/local/worker-cli
     build:
       context: ..
       dockerfile: build.Dockerfile
