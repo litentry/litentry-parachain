@@ -27,22 +27,18 @@ use lc_credentials::Credential;
 use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
-use litentry_primitives::{year_to_date, Assertion, EvmNetwork, Identity, ParentchainBlockNumber};
+use litentry_primitives::{
+	Assertion, EvmNetwork, Identity, ParentchainBlockNumber, ASSERTION_FROM_DATE,
+};
 use log::*;
 use parachain_core_primitives::VCMPError;
-use std::{
-	str::from_utf8,
-	string::{String, ToString},
-	vec,
-	vec::Vec,
-};
+use std::{str::from_utf8, string::ToString, vec, vec::Vec};
 
 const WBTC_TOKEN_ADDRESS: &str = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
 
 // WBTC holder
 pub fn build(
 	identities: Vec<Identity>,
-	year: u32,
 	min_balance: u128,
 	shard: &ShardIdentifier,
 	who: &AccountId,
@@ -50,7 +46,6 @@ pub fn build(
 ) -> Result<Credential> {
 	// WBTC decimals is 8.
 	let q_min_balance: f64 = (min_balance / (10 ^ 8)) as f64;
-	let q_from_date: String = year_to_date(year);
 
 	let mut client = GraphQLClient::new();
 	let mut flag = false;
@@ -59,26 +54,34 @@ pub fn build(
 		if let Identity::Evm { network, address } = id {
 			if matches!(network, EvmNetwork::Ethereum) {
 				if let Ok(addr) = from_utf8(address.as_ref()) {
-					let credentials = VerifiedCredentialsIsHodlerIn::new(
-						vec![addr.to_string()],
-						q_from_date.clone(),
-						VerifiedCredentialsNetwork::Ethereum,
-						WBTC_TOKEN_ADDRESS.to_string(),
-						q_min_balance,
-					);
+					let addresses = vec![addr.to_string()];
 
-					let is_hodler_out = client
-						.check_verified_credentials_is_hodler(credentials)
-						.map_err(from_data_provider_error)?;
-					for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
-						flag = flag || hodler.is_hodler;
+					for from_date in ASSERTION_FROM_DATE.iter() {
+						// if flag is true, no need to check it continually
+						if flag {
+							break
+						}
+						let credentials = VerifiedCredentialsIsHodlerIn::new(
+							addresses.clone(),
+							from_date.to_string(),
+							VerifiedCredentialsNetwork::Ethereum,
+							WBTC_TOKEN_ADDRESS.to_string(),
+							q_min_balance,
+						);
+
+						let is_hodler_out = client
+							.check_verified_credentials_is_hodler(credentials)
+							.map_err(from_data_provider_error)?;
+						for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
+							flag = flag || hodler.is_hodler;
+						}
 					}
 				};
 			}
 		}
 	}
 
-	let a10 = Assertion::A10(min_balance, year);
+	let a10 = Assertion::A10(min_balance);
 	match Credential::generate_unsigned_credential(&a10, who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.credential_subject.values.push(flag);

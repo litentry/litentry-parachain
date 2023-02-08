@@ -27,7 +27,7 @@ use lc_credentials::Credential;
 use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
-use litentry_primitives::{Assertion, Identity, ParameterString, ParentchainBlockNumber};
+use litentry_primitives::{Assertion, Identity, ParentchainBlockNumber, ASSERTION_FROM_DATE};
 use log::*;
 use std::{
 	str::from_utf8,
@@ -41,7 +41,6 @@ const LIT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
 
 pub fn build(
 	identities: Vec<Identity>,
-	from_date: ParameterString,
 	min_balance: u128,
 	shard: &ShardIdentifier,
 	who: &AccountId,
@@ -49,8 +48,6 @@ pub fn build(
 ) -> Result<Credential> {
 	let mut client = GraphQLClient::new();
 	let mut flag = false;
-
-	let q_from_date = String::from_utf8(from_date.clone().into_inner()).unwrap();
 
 	for identity in identities.iter() {
 		let mut verified_network = VerifiedCredentialsNetwork::Polkadot;
@@ -88,28 +85,35 @@ pub fn build(
 			if verified_network == VerifiedCredentialsNetwork::Ethereum {
 				tmp_token_addr = LIT_TOKEN_ADDRESS.to_string();
 			}
-			let credentials = VerifiedCredentialsIsHodlerIn {
-				addresses,
-				from_date: q_from_date.clone(),
-				network: verified_network,
-				token_address: tmp_token_addr,
-				min_balance: q_min_balance,
-			};
-			let is_holder_out = client
-				.check_verified_credentials_is_hodler(credentials)
-				.map_err(from_data_provider_error)?;
 
-			for holder in is_holder_out.verified_credentials_is_hodler.iter() {
-				flag = flag || holder.is_hodler;
+			for from_date in ASSERTION_FROM_DATE.iter() {
+				// if flag is true, no need to check it continually
+				if flag {
+					break
+				}
+
+				let credentials = VerifiedCredentialsIsHodlerIn {
+					addresses: addresses.clone(),
+					from_date: from_date.to_string(),
+					network: verified_network.clone(),
+					token_address: tmp_token_addr.clone(),
+					min_balance: q_min_balance,
+				};
+				let is_hodler_out = client
+					.check_verified_credentials_is_hodler(credentials)
+					.map_err(from_data_provider_error)?;
+
+				for holder in is_hodler_out.verified_credentials_is_hodler.iter() {
+					flag = flag || holder.is_hodler;
+				}
 			}
 		}
 	}
 
-	let a4 = Assertion::A4(min_balance, from_date);
+	let a4 = Assertion::A4(min_balance);
 	match Credential::generate_unsigned_credential(&a4, who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.credential_subject.values.push(flag);
-
 			return Ok(credential_unsigned)
 		},
 		Err(e) => {
