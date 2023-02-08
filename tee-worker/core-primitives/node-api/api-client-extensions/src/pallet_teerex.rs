@@ -32,6 +32,7 @@ pub trait PalletTeerexApi {
 	fn schedule_enclave(&self, index: u64, at_block: Option<Hash>) -> ApiResult<Option<MrEnclave>>;
 	fn schedule_enclaves_count(&self, at_block: Option<Hash>) -> ApiResult<u64>;
 	fn all_schedule_mr_enclaves(&self, at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>>;
+	fn all_schedule_height(&self, at_block: Option<Hash>) -> ApiResult<Vec<u64>>;
 	fn worker_for_shard(
 		&self,
 		shard: &ShardIdentifier,
