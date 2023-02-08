@@ -12,7 +12,6 @@ parachain_src: &parachain_src
   - 'Cargo.lock'
   - 'Cargo.toml'
   - 'rust-toolchain.toml'
-  - '.github/workflows/**'
 
 parachain_test: &parachain_test
   - 'ts-tests/**'
@@ -24,7 +23,6 @@ tee_src: &tee_src
   - 'tee-worker/**/rust-toolchain.toml'
   - 'tee-worker/build.Dockerfile'
   - 'tee-worker/enclave-runtime/**'
-  - '.github/workflows/**'
 
 tee_test: &tee_test
   - 'tee-worker/ts-tests/**'
