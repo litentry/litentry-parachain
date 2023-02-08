@@ -146,6 +146,11 @@ where
 				return Ok(until_synced_header)
 			}
 
+			// `indirect_calls_executor` should know the if tx was successful.
+			// if we change the block type `sp_runtime::generic::Block` or `sp_runtime::generic::SignedBlock`,
+			// this change will affect many structs or files, like block_importer, block_import_dispatcher, consensus and so on.
+			// `OpaqueExtrinsic` (Vec<u8>) encoded value contains tx status, and decode Vec<u8> in `indirect_calls_executor`,
+			// this solution is probably the least change.			
 			let mut events: Vec<Events> = vec![];
 			for block in &block_chunk_to_sync {
 				let block_events = self.parentchain_api.events(Some(block.block.hash()))?;
@@ -178,11 +183,6 @@ where
 							);
 						}
 
-						// `indirect_calls_executor` should know the if tx was successful.
-						// if we change the block type `sp_runtime::generic::Block` or `sp_runtime::generic::SignedBlock`,
-						// this change will affect many structs or files, like block_importer, block_import_dispatcher, consensus and so on.
-						// `OpaqueExtrinsic` (Vec<u8>) encoded value contains tx status, and decode Vec<u8> in `indirect_calls_executor`,
-						// this solution is probably the least change
 						extrinsics
 							.push(fill_opaque_extrinsic_with_status(xt.clone(), success).unwrap());
 					}

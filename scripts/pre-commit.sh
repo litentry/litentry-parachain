@@ -8,15 +8,15 @@ make fmt
 taplo fmt
 
 root_dir=$(git rev-parse --show-toplevel)
-CARGO_TARGET_DIR=${root_dir}/tmp
+CARGO_TARGET_DIR=${root_dir}/target
 
 cd "${root_dir}/tee-worker" || exit
 taplo fmt
-CARGO_TARGET_DIR=${CARGO_TARGET_DIR} cargo clippy -- -D warnings || exit
+CARGO_TARGET_DIR=${CARGO_TARGET_DIR} cargo clippy --release -- -D warnings || exit
 
 cd "${root_dir}/tee-worker/enclave-runtime" || exit
 taplo fmt
-CARGO_TARGET_DIR=${CARGO_TARGET_DIR} cargo clippy -- -D warnings || exit
+CARGO_TARGET_DIR=${CARGO_TARGET_DIR} cargo clippy --release -- -D warnings || exit
 
 cd "${root_dir}/tee-worker" || exit
 #RUST_LOG=info CARGO_TARGET_DIR=/root/work/tmp SKIP_WASM_BUILD=1 cargo test --release -- --show-output

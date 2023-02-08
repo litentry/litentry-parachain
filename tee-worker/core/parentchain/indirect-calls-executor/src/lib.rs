@@ -346,7 +346,7 @@ mod test {
 	}
 
 	#[test]
-	fn indirect_call_can_not_be_added_to_pool() {
+	fn failed_indirect_call_is_skipped() {
 		let _ = env_logger::builder().is_test(true).try_init();
 
 		let (indirect_calls_executor, top_pool_author, _) =
