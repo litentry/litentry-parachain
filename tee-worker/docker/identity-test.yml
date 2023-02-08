@@ -1,5 +1,5 @@
 services:
-  ts-tests:
+  identity-test:
     image: integritee-cli:dev
     container_name: integritee-identity-test
     volumes:
