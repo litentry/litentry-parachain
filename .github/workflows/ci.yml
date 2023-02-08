@@ -145,7 +145,7 @@ jobs:
           cargo clippy --features sidechain -- -D warnings
           cargo clippy --features teeracle -- -D warnings
           cargo clippy --features offchain-worker -- -D warnings
-  
+
       - name: Tee-enclave clippy
         working-directory: ./tee-worker/enclave-runtime
         run: |
@@ -395,9 +395,10 @@ jobs:
           - test_name: sidechain-benchmark
           # Litentry
           - test_name: user-shielding-key
-          - test_name: ts-tests
           - test_name: resume-worker
           - test_name: set-heartbeat-timeout
+          - test_name: vc-test
+          - test_name: identity-test
 
     steps:
       - uses: actions/checkout@v3

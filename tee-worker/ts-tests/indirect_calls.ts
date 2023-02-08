@@ -12,7 +12,6 @@ import {
 } from './utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { HexString } from '@polkadot/util/types';
-import { generateChallengeCode } from './web3/setup';
 import { ApiPromise } from '@polkadot/api';
 import { Assertion } from './type-definitions';
 
@@ -143,6 +142,8 @@ export async function verifyIdentity(
     }
     return undefined;
 }
+
+//vcManagement
 export async function requestVC(
     context: IntegrationTestContext,
     signer: KeyringPair,
@@ -169,6 +170,59 @@ export async function requestVC(
     }
     return undefined;
 }
+
+export async function disableVC(
+    context: IntegrationTestContext,
+    signer: KeyringPair,
+    aesKey: HexString,
+    listening: boolean,
+    index: HexString
+): Promise<HexString | undefined> {
+    const tx = context.substrate.tx.vcManagement.disableVc(index);
+
+    //The purpose of paymentInfo is to check whether the version of polkadot/api is suitable for the current test and to determine whether the transaction is successful.
+    await tx.paymentInfo(signer);
+
+    await sendTxUntilInBlock(context.substrate, tx, signer);
+    if (listening) {
+        const event = await listenEncryptedEvents(context, aesKey, {
+            module: 'vcManagement',
+            method: 'disableVc',
+            event: 'VCDisabled',
+        });
+
+        const [index] = event.eventData;
+        return index;
+    }
+    return undefined;
+}
+
+export async function revokeVC(
+    context: IntegrationTestContext,
+    signer: KeyringPair,
+    aesKey: HexString,
+    listening: boolean,
+    index: HexString
+): Promise<HexString | undefined> {
+    const tx = context.substrate.tx.vcManagement.revokeVc(index);
+
+    //The purpose of paymentInfo is to check whether the version of polkadot/api is suitable for the current test and to determine whether the transaction is successful.
+    await tx.paymentInfo(signer);
+
+    await sendTxUntilInBlock(context.substrate, tx, signer);
+    if (listening) {
+        const event = await listenEncryptedEvents(context, aesKey, {
+            module: 'vcManagement',
+            method: 'revokeVc',
+            event: 'VCRevoked',
+        });
+
+        const [index] = event.eventData;
+        return index;
+    }
+    return undefined;
+}
+
 function decodeIdentityEvent(
     api: ApiPromise,
     who: HexString,

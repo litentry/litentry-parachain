@@ -1,9 +1,10 @@
 services:
-  ts-tests:
+  identity-test:
     image: integritee-cli:dev
-    container_name: integritee-ts-tests
+    container_name: integritee-identity-test
     volumes:
       - ../ts-tests:/ts-tests
+      - ../cli:/usr/local/worker-cli
     build:
       context: ..
       dockerfile: build.Dockerfile
@@ -18,7 +19,7 @@ services:
     networks:
       - integritee-test-network
     entrypoint:
-      "/usr/local/worker-cli/ts_tests.sh 2>&1"
+      "/usr/local/worker-cli/identity_test.sh 2>&1"
     restart: "no"
 networks:
   integritee-test-network:
