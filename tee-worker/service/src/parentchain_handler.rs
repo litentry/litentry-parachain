@@ -150,7 +150,9 @@ where
 			// if we change the block type `sp_runtime::generic::Block` or `sp_runtime::generic::SignedBlock`,
 			// this change will affect many structs or files, like block_importer, block_import_dispatcher, consensus and so on.
 			// `OpaqueExtrinsic` (Vec<u8>) encoded value contains tx status, and decode Vec<u8> in `indirect_calls_executor`,
-			// this solution is probably the least change.			
+			// this solution is probably the least change.
+			// Also dropping failed extrinsics might not be a good solution.
+			// In certain cases, we may need to know which extrinsics failed or need to count which extrinsics failed
 			let mut events: Vec<Events> = vec![];
 			for block in &block_chunk_to_sync {
 				let block_events = self.parentchain_api.events(Some(block.block.hash()))?;
