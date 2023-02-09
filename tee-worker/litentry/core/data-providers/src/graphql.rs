@@ -46,7 +46,7 @@ impl Default for GraphQLClient {
 	}
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum VerifiedCredentialsNetwork {
 	Litentry,
 	Litmus,

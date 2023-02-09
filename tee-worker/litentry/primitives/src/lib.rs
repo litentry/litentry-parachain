@@ -40,8 +40,11 @@ use ring::{
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate rand_sgx as rand;
 
+// re-export module to properly feature gate sgx and regular std environment
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate chrono_sgx as chrono;
+pub mod sgx_reexport_prelude {
+	pub use chrono_sgx as chrono;
+}
 
 use rand::Rng;
 

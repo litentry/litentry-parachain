@@ -39,7 +39,9 @@ use codec::{Decode, Encode};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{year_to_date, Assertion, ParentchainBlockNumber};
+use litentry_primitives::{
+	format_assertion_from_date, format_assertion_to_date, Assertion, ParentchainBlockNumber,
+};
 use log::*;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
@@ -328,77 +330,77 @@ impl Credential {
 		match assertion {
 			Assertion::A1 => {
 				let raw = include_str!("templates/a1.json");
-				let credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				credential.credential_subject.values.clear();
 				Ok(credential)
 			},
 			Assertion::A2(_, _) => {
 				let raw = include_str!("templates/a2.json");
-				let credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				credential.credential_subject.values.clear();
 				Ok(credential)
 			},
 			Assertion::A3(_, _) => {
 				let raw = include_str!("templates/a3.json");
-				let credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				credential.credential_subject.values.clear();
 				Ok(credential)
 			},
-			Assertion::A4(min_balance, from_date) => {
-				let min_balance = format!("{}", min_balance);
-				let from_date = String::from_utf8(from_date.clone().into_inner()).unwrap();
-
+			Assertion::A4(minimum_amount) => {
 				let raw = include_str!("templates/a4.json");
 				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
-
-				// add assertion
-				let lit_amounts =
-					AssertionLogic::new_item("$lit_amounts", Op::GreaterEq, &min_balance);
-				let timestamp = AssertionLogic::new_item("$timestamp", Op::GreaterEq, &from_date);
-
-				let assertion = AssertionLogic::new_and().add_item(lit_amounts).add_item(timestamp);
-				credential.credential_subject.assertions.push(assertion);
+				// remove default assertions from template
+				credential.credential_subject.assertions.clear();
+				credential.credential_subject.values.clear();
+				credential.add_assertion_hodler(*minimum_amount);
 
 				Ok(credential)
 			},
-			Assertion::A7(min_balance, year) => {
-				let min_balance = format!("{}", min_balance);
-
+			Assertion::A7(minimum_amount) => {
 				let raw = include_str!("templates/a7.json");
 				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
-
-				// add assertion
-				let lit_amounts =
-					AssertionLogic::new_item("$dot_amounts", Op::GreaterEq, &min_balance);
-				let timestamp =
-					AssertionLogic::new_item("$timestamp", Op::GreaterEq, &year_to_date(*year));
-
-				let assertion = AssertionLogic::new_and().add_item(lit_amounts).add_item(timestamp);
-				credential.credential_subject.assertions.push(assertion);
+				credential.credential_subject.assertions.clear();
+				credential.credential_subject.values.clear();
+				credential.add_assertion_hodler(*minimum_amount);
 
 				Ok(credential)
 			},
 			Assertion::A8 => {
 				let raw = include_str!("templates/a8.json");
-				let credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				credential.credential_subject.assertions.clear();
+				credential.credential_subject.values.clear();
 				Ok(credential)
 			},
-			Assertion::A10(min_balance, year) => {
-				let min_balance = format!("{}", min_balance);
-
+			Assertion::A10(minimum_amount) => {
 				let raw = include_str!("templates/a10.json");
 				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
-
-				// add assertion
-				let lit_amounts =
-					AssertionLogic::new_item("$WBTC_amount", Op::GreaterEq, &min_balance);
-				let timestamp =
-					AssertionLogic::new_item("$timestamp", Op::GreaterEq, &year_to_date(*year));
-
-				let assertion = AssertionLogic::new_and().add_item(lit_amounts).add_item(timestamp);
-				credential.credential_subject.assertions.push(assertion);
+				credential.credential_subject.assertions.clear();
+				credential.credential_subject.values.clear();
+				credential.add_assertion_hodler(*minimum_amount);
 
 				Ok(credential)
 			},
 			_ => Err(Error::UnsupportedAssertion),
 		}
+	}
+
+	// Including assertion 4/7/10
+	pub fn add_assertion_hodler(&mut self, minimum_amount: u128) {
+		let minimum_amount = format!("{}", minimum_amount);
+		let from_date = format_assertion_from_date();
+		let to_date = format_assertion_to_date();
+
+		let minimum_amount =
+			AssertionLogic::new_item("$minimum_amount", Op::GreaterEq, &minimum_amount);
+		let from_date = AssertionLogic::new_item("$from_date", Op::GreaterEq, &from_date);
+		let to_date = AssertionLogic::new_item("$to_date", Op::LessEq, &to_date);
+
+		let assertion = AssertionLogic::new_and()
+			.add_item(minimum_amount)
+			.add_item(from_date)
+			.add_item(to_date);
+		self.credential_subject.assertions.push(assertion);
 	}
 
 	pub fn add_assertion_a8(&mut self, min: u64, max: u64) {

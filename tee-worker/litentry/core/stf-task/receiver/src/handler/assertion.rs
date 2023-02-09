@@ -94,9 +94,8 @@ where
 			)
 			.map(|credential| Some((credential, self.req.who.clone()))),
 
-			Assertion::A4(min_balance, from_date) => lc_assertion_build::a4::build(
+			Assertion::A4(min_balance) => lc_assertion_build::a4::build(
 				self.req.vec_identity.to_vec(),
-				from_date,
 				min_balance,
 				&self.req.shard,
 				&self.req.who,
@@ -114,9 +113,8 @@ where
 			Assertion::A6 =>
 				lc_assertion_build::a6::build(self.req.vec_identity.to_vec()).map(|_| None),
 
-			Assertion::A7(min_balance, year) => lc_assertion_build::a7::build(
+			Assertion::A7(min_balance) => lc_assertion_build::a7::build(
 				self.req.vec_identity.to_vec(),
-				year,
 				min_balance,
 				&self.req.shard,
 				&self.req.who,
@@ -132,9 +130,8 @@ where
 			)
 			.map(|credential| Some((credential, self.req.who.clone()))),
 
-			Assertion::A10(min_balance, year) => lc_assertion_build::a10::build(
+			Assertion::A10(min_balance) => lc_assertion_build::a10::build(
 				self.req.vec_identity.to_vec(),
-				year,
 				min_balance,
 				&self.req.shard,
 				&self.req.who,
