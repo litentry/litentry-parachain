@@ -377,7 +377,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			T::EnclaveAdminOrigin::ensure_origin(origin)?;
 			ensure!(
-				!ScheduledEnclaveIndex::<T>::contains_key(&mr_enclave),
+				!ScheduledEnclaveIndex::<T>::contains_key(mr_enclave),
 				Error::<T>::ScheduledEnclaveAlreadyExist
 			);
 			ScheduledEnclave::<T>::insert(sidechain_block_number, mr_enclave);
