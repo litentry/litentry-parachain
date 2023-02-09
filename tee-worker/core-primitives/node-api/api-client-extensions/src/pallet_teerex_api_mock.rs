@@ -55,7 +55,7 @@ impl PalletTeerexApi for PalletTeerexApiMock {
 		index: u64,
 		_at_block: Option<Hash>,
 	) -> ApiResult<Option<MrEnclave>> {
-		let mr_enclave = self.scheduled_mr_enclaves.get(&index).map(|m| *m);
+		let mr_enclave = self.scheduled_mr_enclaves.get(&index).copied();
 		Ok(mr_enclave)
 	}
 
@@ -65,7 +65,7 @@ impl PalletTeerexApi for PalletTeerexApiMock {
 	}
 
 	fn all_schedule_mr_enclaves(&self, _at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>> {
-		let mr_enclaves = self.scheduled_mr_enclaves.values().map(|m| *m).collect();
+		let mr_enclaves = self.scheduled_mr_enclaves.values().copied().collect();
 		Ok(mr_enclaves)
 	}
 
