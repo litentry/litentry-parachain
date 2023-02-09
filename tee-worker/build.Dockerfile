@@ -121,7 +121,6 @@ WORKDIR /usr/local/bin
 
 COPY --from=builder /opt/sgxsdk/lib64 /opt/sgxsdk/lib64
 COPY --from=builder /root/work/tee-worker/bin/* ./
-COPY --from=builder /root/work/tee-worker/local-setup/worker-config-*.json ./
 COPY --from=builder /lib/x86_64-linux-gnu /lib/x86_64-linux-gnu
 
 RUN touch spid.txt key.txt
