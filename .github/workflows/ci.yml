@@ -272,10 +272,7 @@ jobs:
       needs.check-file-change.outputs.parachain_test == 'true'
     strategy:
       matrix:
-        chain:
-          - litmus
-          - litentry
-          - rococo
+        chain: [litmus, litentry, rococo]
     steps:
       - uses: actions/checkout@v3
 
