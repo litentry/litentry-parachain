@@ -15,13 +15,21 @@
 
 */
 
+use codec::{Decode, Encode};
+use frame_metadata::{
+	v14::{ExtrinsicMetadata, PalletEventMetadata, PalletMetadata, RuntimeMetadataV14},
+	RuntimeMetadataPrefixed,
+};
 use itc_parentchain_test::{
 	parentchain_block_builder::ParentchainBlockBuilder,
 	parentchain_header_builder::ParentchainHeaderBuilder,
 };
 use itp_node_api::api_client::{ApiResult, ChainApi, StorageProof};
 use itp_types::{Header, SignedBlock, H256};
+use scale_info::{meta_type, TypeInfo};
 use sp_finality_grandpa::AuthorityList;
+use std::convert::TryFrom;
+use substrate_api_client::{Events, Metadata};
 
 pub struct ParentchainApiMock {
 	parentchain: Vec<SignedBlock>,
@@ -42,6 +50,34 @@ impl ParentchainApiMock {
 			.collect();
 		self
 	}
+}
+
+// Build fake metadata consisting of a single pallet that knows
+/// about the event type provided.
+fn metadata<E: TypeInfo + 'static>() -> Metadata {
+	let pallets = vec![PalletMetadata {
+		name: "Test",
+		storage: None,
+		calls: None,
+		event: Some(PalletEventMetadata { ty: meta_type::<E>() }),
+		constants: vec![],
+		error: None,
+		index: 0,
+	}];
+
+	let extrinsic =
+		ExtrinsicMetadata { ty: meta_type::<()>(), version: 0, signed_extensions: vec![] };
+
+	let v14 = RuntimeMetadataV14::new(pallets, extrinsic, meta_type::<()>());
+	let runtime_metadata: RuntimeMetadataPrefixed = v14.into();
+
+	Metadata::try_from(runtime_metadata).unwrap()
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Decode, Encode, TypeInfo)]
+enum Event {
+	A(u8),
+	B(bool),
 }
 
 impl ChainApi for ParentchainApiMock {
@@ -83,5 +119,10 @@ impl ChainApi for ParentchainApiMock {
 
 	fn grandpa_authorities_proof(&self, _hash: Option<H256>) -> ApiResult<StorageProof> {
 		todo!()
+	}
+
+	fn events(&self, _hash: Option<H256>) -> ApiResult<Events> {
+		let metadata = metadata::<Event>();
+		Ok(Events::new(metadata, H256::default(), vec![].into()))
 	}
 }

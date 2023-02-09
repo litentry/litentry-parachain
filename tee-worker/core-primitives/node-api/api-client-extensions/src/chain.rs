@@ -20,7 +20,7 @@ use itp_types::{Header, SignedBlock};
 use sp_core::{storage::StorageKey, Pair, H256};
 use sp_finality_grandpa::{AuthorityList, VersionedAuthorityList, GRANDPA_AUTHORITIES_KEY};
 use sp_runtime::MultiSignature;
-use substrate_api_client::{Api, ExtrinsicParams, RpcClient};
+use substrate_api_client::{Api, Events, ExtrinsicParams, RpcClient};
 
 pub type StorageProof = Vec<Vec<u8>>;
 
@@ -37,6 +37,7 @@ pub trait ChainApi {
 	fn is_grandpa_available(&self) -> ApiResult<bool>;
 	fn grandpa_authorities(&self, hash: Option<H256>) -> ApiResult<AuthorityList>;
 	fn grandpa_authorities_proof(&self, hash: Option<H256>) -> ApiResult<StorageProof>;
+	fn events(&self, hash: Option<H256>) -> ApiResult<Events>;
 }
 
 impl<P: Pair, Client: RpcClient, Params: ExtrinsicParams> ChainApi for Api<P, Client, Params>
@@ -98,5 +99,11 @@ where
 			)?
 			.map(|read_proof| read_proof.proof.into_iter().map(|bytes| bytes.0).collect())
 			.unwrap_or_default())
+	}
+
+	fn events(&self, at_block: Option<H256>) -> ApiResult<Events> {
+		let storagekey = self.metadata.storage_value_key("System", "Events")?;
+		let events_bytes = self.get_opaque_storage_by_key_hash(storagekey, at_block)?;
+		Ok(Events::new(self.metadata.clone(), at_block.unwrap(), events_bytes.unwrap()))
 	}
 }
