@@ -172,11 +172,6 @@ jobs:
     needs:
       - fmt
       - check-file-change
-    if: >
-      needs.check-file-change.outputs.parachain_src == 'true' ||
-      needs.check-file-change.outputs.parachain_test == 'true' ||
-      needs.check-file-change.outputs.tee_src == 'true' ||
-      needs.check-file-change.outputs.tee_test == 'true'
     steps:
       - uses: actions/checkout@v3
 
@@ -211,10 +206,6 @@ jobs:
     needs:
       - fmt
       - check-file-change
-    if: >
-      needs.check-file-change.outputs.parachain_src == 'true' ||
-      needs.check-file-change.outputs.tee_src == 'true' ||
-      needs.check-file-change.outputs.tee_test == 'true'
     steps:
       - uses: actions/checkout@v3
 
