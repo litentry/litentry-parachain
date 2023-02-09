@@ -346,9 +346,6 @@ jobs:
       - fmt
       - check-file-change
     if: needs.check-file-change.outputs.parachain_src == 'true'
-    strategy:
-      matrix:
-        chain: [litmus, litentry, rococo]
     steps:
       - uses: actions/checkout@v3
 
@@ -359,9 +356,6 @@ jobs:
         run: |
          sudo apt-get update && \
          sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
-
-      - name: Run runtime integration tests
-        run: cargo test --locked --release -p ${{ matrix.chain }}-parachain-runtime --lib
 
       # We could use matrix but don't have to. Since this ci has many jobs already,
       # we execute the runtime tests sequentially for a cleaner GHA visualisation graph.
