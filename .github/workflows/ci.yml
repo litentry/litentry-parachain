@@ -104,7 +104,6 @@ jobs:
         working-directory: ./tee-worker/enclave-runtime
         run: |
           cargo fmt --all -- --check
-          # TODO: no taplo check in enclave-runtime
 
       - name: Fail early
         if: failure()
@@ -140,7 +139,7 @@ jobs:
       - fmt
       - check-file-change
     container: "integritee/integritee-dev:0.1.10"
-    if: needs.check-file-change.outputs.parachain_src == 'true'
+    if: needs.check-file-change.outputs.tee_src == 'true'
     steps:
       - uses: actions/checkout@v3
 
