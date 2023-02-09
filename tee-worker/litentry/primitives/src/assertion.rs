@@ -49,9 +49,9 @@ pub enum Assertion {
 	A7(Balance), // (minimum_amount)
 	A8,
 	A9,
-	A10(Balance),      // (minimum_amount)
-	A11(Balance, u32), // (ETH_amount, year)
-	A13(u32),          // (Karma_amount) - TODO: unsupported
+	A10(Balance), // (minimum_amount)
+	A11(Balance), // (minimum_amount)
+	A13(u32),     // (Karma_amount) - TODO: unsupported
 }
 
 pub const ASSERTION_FROM_DATE: [&str; 7] = [
