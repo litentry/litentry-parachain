@@ -54,7 +54,10 @@ use itp_stf_executor::enclave_signer::StfEnclaveSigner;
 use itp_stf_state_observer::mock::ObserveStateMock;
 use itp_test::mock::metrics_ocall_mock::MetricsOCallMock;
 use itp_top_pool_author::{top_filter::AllowAllTopsFilter, traits::AuthorApi};
-use itp_types::{AccountId, Block, ShardIdentifier, ShieldFundsFn, H256};
+use itp_types::{
+	extrinsics::fill_opaque_extrinsic_with_status, AccountId, Block, ShardIdentifier,
+	ShieldFundsFn, H256,
+};
 use jsonrpc_core::futures::executor;
 use log::*;
 use sgx_crypto_helper::RsaKeyPair;
@@ -198,6 +201,6 @@ fn create_shielding_call_extrinsic<ShieldingKey: ShieldingCryptoEncrypt>(
 	.unwrap();
 
 	ParentchainBlockBuilder::default()
-		.with_extrinsics(vec![opaque_extrinsic])
+		.with_extrinsics(vec![fill_opaque_extrinsic_with_status(opaque_extrinsic, true).unwrap()])
 		.build()
 }

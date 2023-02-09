@@ -42,9 +42,9 @@ async fn shutdown_signal() {
 			.expect("Cannot install SIGINT signal handler");
 
 	tokio::select! {
-		_val = hangup_stream.recv() => log::info!("Received SIGINT"),
-		_val = sigint_stream.recv() => log::info!("Received SIGINT"),
-		_val = sigterm_stream.recv() => log::info!("Received SIGTERM"),
+		_val = hangup_stream.recv() => log::warn!("Received SIGINT"),
+		_val = sigint_stream.recv() => log::warn!("Received SIGINT"),
+		_val = sigterm_stream.recv() => log::warn!("Received SIGTERM"),
 	}
 }
 

@@ -71,6 +71,7 @@ use std::{sync::Arc, vec, vec::Vec};
 pub enum ExecutionStatus<R> {
 	Success(R),
 	NextExecutor,
+	Skip,
 }
 
 /// Trait to execute the indirect calls found in the extrinsics of a block.
@@ -233,6 +234,7 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 						break
 					},
 					Ok(ExecutionStatus::NextExecutor) => continue,
+					Ok(ExecutionStatus::Skip) => break,
 					Err(e) => {
 						log::warn!("fail to execute indirect_call. due to {:?} ", e);
 						match e {
@@ -296,7 +298,10 @@ mod test {
 	use itp_stf_primitives::types::AccountId;
 	use itp_test::mock::shielding_crypto_mock::ShieldingCryptoMock;
 	use itp_top_pool_author::mocks::AuthorApiMock;
-	use itp_types::{Block, CallWorkerFn, Request, ShardIdentifier, ShieldFundsFn};
+	use itp_types::{
+		extrinsics::fill_opaque_extrinsic_with_status, Block, CallWorkerFn, Request,
+		ShardIdentifier, ShieldFundsFn,
+	};
 	use sp_core::{ed25519, Pair};
 	use sp_runtime::{MultiSignature, OpaqueExtrinsic};
 	use std::assert_matches::assert_matches;
@@ -328,7 +333,9 @@ mod test {
 				.unwrap();
 
 		let parentchain_block = ParentchainBlockBuilder::default()
-			.with_extrinsics(vec![opaque_extrinsic])
+			.with_extrinsics(vec![
+				fill_opaque_extrinsic_with_status(opaque_extrinsic, true).unwrap()
+			])
 			.build();
 
 		indirect_calls_executor
@@ -336,6 +343,30 @@ mod test {
 			.unwrap();
 
 		assert_eq!(1, top_pool_author.pending_tops(shard_id()).unwrap().len());
+	}
+
+	#[test]
+	fn failed_indirect_call_is_skipped() {
+		let _ = env_logger::builder().is_test(true).try_init();
+
+		let (indirect_calls_executor, top_pool_author, _) =
+			test_fixtures([0u8; 32], NodeMetadataMock::new());
+
+		let opaque_extrinsic =
+			OpaqueExtrinsic::from_bytes(call_worker_unchecked_extrinsic().encode().as_slice())
+				.unwrap();
+
+		let parentchain_block = ParentchainBlockBuilder::default()
+			.with_extrinsics(vec![
+				fill_opaque_extrinsic_with_status(opaque_extrinsic, false).unwrap()
+			])
+			.build();
+
+		indirect_calls_executor
+			.execute_indirect_calls_in_extrinsics(&parentchain_block)
+			.unwrap();
+
+		assert_eq!(0, top_pool_author.pending_tops(shard_id()).unwrap().len());
 	}
 
 	#[test]
@@ -353,7 +384,9 @@ mod test {
 		.unwrap();
 
 		let parentchain_block = ParentchainBlockBuilder::default()
-			.with_extrinsics(vec![opaque_extrinsic])
+			.with_extrinsics(vec![
+				fill_opaque_extrinsic_with_status(opaque_extrinsic, true).unwrap()
+			])
 			.build();
 
 		indirect_calls_executor
