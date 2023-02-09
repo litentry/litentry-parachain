@@ -1,10 +1,10 @@
 services:
-  resume-worker:
+  lit-resume-worker:
     image: integritee-worker:dev
-    container_name: integritee-worker
+    container_name: litentry-worker
     volumes:
       - ../ts-tests:/ts-tests
-      - ../scripts/install_node.sh:/install_node.sh
+      - ../cli:/usr/local/worker-cli
     build:
       context: ..
       dockerfile: build.Dockerfile
@@ -12,7 +12,8 @@ services:
     depends_on: ['integritee-node']
     networks:
       - integritee-test-network
-    entrypoint: "bash -c '/install_node.sh && cd /ts-tests && yarn install && yarn run test-resuming-worker:staging'"
+    entrypoint:
+      "bash -c '/usr/local/worker-cli/lit_ts_test.sh test-resuming-worker 2>&1' "
     restart: "no"
 networks:
   integritee-test-network:
