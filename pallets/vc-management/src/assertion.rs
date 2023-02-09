@@ -32,13 +32,13 @@ pub enum Assertion {
 	A1,
 	A2(ParameterString, ParameterString), // (guild_id, user_id)
 	A3(ParameterString, ParameterString), // (guild_id, user_id)
-	A4(Balance, ParameterString),         // (LIT_amount, timestamp, e.g.: 2022-10-16T00:00:00Z)
+	A4(Balance),                          // (minimum_amount)
 	A5(ParameterString, ParameterString), // (twitter_account, tweet_id)
 	A6,
-	A7(Balance, u32), // (DOT_amount, year)
+	A7(Balance), // (minimum_amount)
 	A8,
 	A9,
-	A10(Balance, u32), // (WBTC_amount, year)
+	A10(Balance),      // (minimum_amount)
 	A11(Balance, u32), // (ETH_amount, year)
 	A13(u32),          // (Karma_amount) - TODO: unsupported
 }

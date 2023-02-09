@@ -28,7 +28,7 @@ use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
 use litentry_primitives::{
-	year_to_date, Assertion, Identity, ParentchainBlockNumber, SubstrateNetwork,
+	Assertion, Identity, ParentchainBlockNumber, SubstrateNetwork, ASSERTION_FROM_DATE,
 };
 use log::*;
 use std::{
@@ -40,14 +40,12 @@ use std::{
 
 pub fn build(
 	identities: Vec<Identity>,
-	year: u32,
 	min_balance: u128,
 	shard: &ShardIdentifier,
 	who: &AccountId,
 	bn: ParentchainBlockNumber,
 ) -> Result<Credential> {
 	let q_min_balance: f64 = (min_balance / (10 ^ 12)) as f64;
-	let q_from_date: String = year_to_date(year);
 
 	let mut client = GraphQLClient::new();
 	let mut flag = false;
@@ -57,24 +55,32 @@ pub fn build(
 			if matches!(network, SubstrateNetwork::Polkadot) {
 				let address = from_utf8(address.as_ref()).unwrap().to_string();
 				let addresses = vec![address];
-				let credentials = VerifiedCredentialsIsHodlerIn {
-					addresses,
-					from_date: q_from_date.clone(),
-					network: VerifiedCredentialsNetwork::Polkadot,
-					token_address: String::from(""),
-					min_balance: q_min_balance,
-				};
-				let is_hodler_out = client
-					.check_verified_credentials_is_hodler(credentials)
-					.map_err(from_data_provider_error)?;
-				for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
-					flag = flag || hodler.is_hodler;
+
+				for from_date in ASSERTION_FROM_DATE.iter() {
+					// if flag is true, no need to check it continually
+					if flag {
+						break
+					}
+
+					let credentials = VerifiedCredentialsIsHodlerIn::new(
+						addresses.clone(),
+						from_date.to_string(),
+						VerifiedCredentialsNetwork::Polkadot,
+						String::from(""),
+						q_min_balance,
+					);
+					let is_hodler_out = client
+						.check_verified_credentials_is_hodler(credentials)
+						.map_err(from_data_provider_error)?;
+					for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
+						flag = flag || hodler.is_hodler;
+					}
 				}
 			}
 		}
 	}
 
-	let a7 = Assertion::A7(min_balance, year);
+	let a7 = Assertion::A7(min_balance);
 	match Credential::generate_unsigned_credential(&a7, who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.credential_subject.values.push(flag);
