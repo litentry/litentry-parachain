@@ -55,9 +55,10 @@ pub const CHALLENGE_CODE_SIZE: usize = 16;
 pub type ChallengeCode = [u8; CHALLENGE_CODE_SIZE];
 
 // Returns the default if any error happens
-// We don't propagate the error to upper level as this fn is used in too many places,
-// it's too verbose to handle them all and pass back to the parentchain with extra information.
-// We rely on the parentchain event consumers to handle them correctly.
+// We don't propagate the error to upper level as this function is used in too many places,
+// it's too verbose to handle them all and pass back to the parentchain as events.
+// We rely on the parentchain event consumers to handle them correctly (and they kind of
+// have to, because they'll find all fields are 0)
 pub fn aes_encrypt_default(key: &UserShieldingKeyType, data: &[u8]) -> AesOutput {
 	let mut in_out = data.to_vec();
 
