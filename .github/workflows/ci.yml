@@ -346,6 +346,9 @@ jobs:
       - fmt
       - check-file-change
     if: needs.check-file-change.outputs.parachain_src == 'true'
+    strategy:
+      matrix:
+        chain: [litmus, litentry, rococo]
     steps:
       - uses: actions/checkout@v3
 
