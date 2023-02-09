@@ -94,6 +94,7 @@ pub mod pallet {
 		VCDisabled { index: VCIndex },
 		// a VC is revoked on chain
 		VCRevoked { index: VCIndex },
+		VCNotExist,
 		// event that should be triggered by TEECallOrigin
 		// a VC is just issued
 		VCIssued { account: T::AccountId, index: VCIndex, vc: AesOutput },
@@ -165,14 +166,20 @@ pub mod pallet {
 		#[pallet::weight(195_000_000)]
 		pub fn disable_vc(origin: OriginFor<T>, index: VCIndex) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-
 			VCRegistry::<T>::try_mutate(index, |context| {
-				let mut c = context.take().ok_or(Error::<T>::VCNotExist)?;
-				ensure!(who == c.subject, Error::<T>::VCSubjectMismatch);
-				ensure!(c.status == Status::Active, Error::<T>::VCAlreadyDisabled);
-				c.status = Status::Disabled;
-				*context = Some(c);
-				Self::deposit_event(Event::VCDisabled { index });
+				match context.take() {
+					Some(mut c) => {
+						ensure!(who == c.subject, Error::<T>::VCSubjectMismatch);
+						ensure!(c.status == Status::Active, Error::<T>::VCAlreadyDisabled);
+						c.status = Status::Disabled;
+						*context = Some(c);
+						Self::deposit_event(Event::VCDisabled { index });
+					},
+					None => {
+						Self::deposit_event(Event::VCNotExist);
+					},
+				}
+
 				Ok(().into())
 			})
 		}
