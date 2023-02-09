@@ -17,6 +17,9 @@ serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 # local dependencies
 itp-sgx-runtime-primitives = { path = "../../core-primitives/sgx-runtime-primitives", default-features = false }
 
+# scs
+substrate-api-client = { default-features = false, git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.36" }
+
 # substrate-deps
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
 pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
@@ -27,6 +30,12 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 # litentry
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
 
+[dev-dependencies]
+sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
+sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
+substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.36" }
+itp-api-client-types = { path = "../../core-primitives/node-api/api-client-types" }
+
 [features]
 default = ["std"]
 std = [
@@ -36,6 +45,7 @@ std = [
     "serde_json/std",
     "primitive-types/std",
     "itp-sgx-runtime-primitives/std",
+    "substrate-api-client/std",
     # substrate
     "frame-system/std",
     "pallet-balances/std",

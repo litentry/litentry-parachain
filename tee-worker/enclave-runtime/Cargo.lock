@@ -2218,6 +2218,7 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std",
+ "substrate-api-client",
 ]
 
 [[package]]

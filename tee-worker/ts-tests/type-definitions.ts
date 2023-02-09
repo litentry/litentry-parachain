@@ -293,11 +293,11 @@ export type Assertion = {
     A1?: string;
     A2?: [string, string];
     A3?: [string, string];
-    A4?: [number, string];
+    A4?: [number];
     A5?: [string, string];
     A6?: string;
-    A7?: [number, number];
+    A7?: [number];
     A8?: string;
     A9?: string;
-    A10?: [number, number];
+    A10?: [number];
 };
