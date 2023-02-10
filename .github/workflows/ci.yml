@@ -188,14 +188,6 @@ jobs:
           push: false
           build-args: |
             PROFILE=release
-            RUSTC_WRAPPER=sccache
-
-      - name: Build docker image
-        if: needs.check-file-change.outputs.parachain_src == 'true'
-        run: |
-          make build-docker-release
-          echo "============================="
-          docker images
 
       - name: Pull docker image optinally
         if: needs.check-file-change.outputs.parachain_src == 'false'
