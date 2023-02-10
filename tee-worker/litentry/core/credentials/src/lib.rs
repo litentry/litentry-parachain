@@ -40,7 +40,8 @@ use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
-	format_assertion_from_date, format_assertion_to_date, Assertion, ParentchainBlockNumber,
+	format_assertion_from_date, format_assertion_to_date, Assertion, Balance,
+	ParentchainBlockNumber,
 };
 use log::*;
 use scale_info::TypeInfo;
@@ -388,12 +389,21 @@ impl Credential {
 
 				Ok(credential)
 			},
+			Assertion::A11(minimum_amount) => {
+				let raw = include_str!("templates/a11.json");
+				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				credential.credential_subject.assertions.clear();
+				credential.credential_subject.values.clear();
+				credential.add_assertion_hodler(*minimum_amount);
+
+				Ok(credential)
+			},
 			_ => Err(Error::UnsupportedAssertion),
 		}
 	}
 
-	// Including assertion 4/7/10
-	pub fn add_assertion_hodler(&mut self, minimum_amount: u128) {
+	// Including assertion 4/7/10/11
+	pub fn add_assertion_hodler(&mut self, minimum_amount: Balance) {
 		let minimum_amount = format!("{}", minimum_amount);
 		let from_date = format_assertion_from_date();
 		let to_date = format_assertion_to_date();

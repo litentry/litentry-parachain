@@ -121,6 +121,7 @@ pub mod pallet {
 		Assertion7Failed,
 		Assertion8Failed,
 		Assertion10Failed,
+		Assertion11Failed,
 	}
 
 	#[pallet::error]
@@ -224,6 +225,7 @@ pub mod pallet {
 				VCMPError::Assertion7Failed => Self::deposit_event(Event::Assertion7Failed),
 				VCMPError::Assertion8Failed => Self::deposit_event(Event::Assertion8Failed),
 				VCMPError::Assertion10Failed => Self::deposit_event(Event::Assertion10Failed),
+				VCMPError::Assertion11Failed => Self::deposit_event(Event::Assertion11Failed),
 			}
 			Ok(Pays::No.into())
 		}

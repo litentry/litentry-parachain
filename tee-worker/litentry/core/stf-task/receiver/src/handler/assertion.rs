@@ -143,6 +143,16 @@ where
 				self.req.bn,
 			)
 			.map(|credential| Some((credential, self.req.who.clone()))),
+
+			Assertion::A11(min_balance) => lc_assertion_build::a11::build(
+				self.req.vec_identity.to_vec(),
+				min_balance,
+				&self.req.shard,
+				&self.req.who,
+				self.req.bn,
+			)
+			.map(|credential| Some((credential, self.req.who.clone()))),
+
 			_ => {
 				unimplemented!()
 			},
