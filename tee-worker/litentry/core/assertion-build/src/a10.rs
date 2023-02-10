@@ -28,7 +28,7 @@ use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
 use litentry_primitives::{
-	Assertion, EvmNetwork, Identity, ParentchainBlockNumber, ASSERTION_FROM_DATE,
+	Assertion, Balance, EvmNetwork, Identity, ParentchainBlockNumber, ASSERTION_FROM_DATE,
 };
 use log::*;
 use parachain_core_primitives::VCMPError;
@@ -39,7 +39,7 @@ const WBTC_TOKEN_ADDRESS: &str = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
 // WBTC holder
 pub fn build(
 	identities: Vec<Identity>,
-	min_balance: u128,
+	min_balance: Balance,
 	shard: &ShardIdentifier,
 	who: &AccountId,
 	bn: ParentchainBlockNumber,

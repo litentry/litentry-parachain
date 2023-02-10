@@ -28,7 +28,7 @@ use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
 use litentry_primitives::{
-	Assertion, Balance, Identity, ParentchainBlockNumber, SubstrateNetwork, ASSERTION_FROM_DATE,
+	Assertion, Balance, EvmNetwork, Identity, ParentchainBlockNumber, ASSERTION_FROM_DATE,
 };
 use log::*;
 use std::{
@@ -45,14 +45,15 @@ pub fn build(
 	who: &AccountId,
 	bn: ParentchainBlockNumber,
 ) -> Result<Credential> {
-	let q_min_balance: f64 = (min_balance / (10 ^ 12)) as f64;
+	// ETH decimals is 18.
+	let q_min_balance: f64 = (min_balance / (10 ^ 18)) as f64;
 
 	let mut client = GraphQLClient::new();
 	let mut flag = false;
 
 	for id in identities {
-		if let Identity::Substrate { network, address } = id {
-			if matches!(network, SubstrateNetwork::Polkadot) {
+		if let Identity::Evm { network, address } = id {
+			if matches!(network, EvmNetwork::Ethereum) {
 				let address = from_utf8(address.as_ref()).unwrap().to_string();
 				let addresses = vec![address];
 
@@ -65,7 +66,7 @@ pub fn build(
 					let credentials = VerifiedCredentialsIsHodlerIn::new(
 						addresses.clone(),
 						from_date.to_string(),
-						VerifiedCredentialsNetwork::Polkadot,
+						VerifiedCredentialsNetwork::Ethereum,
 						String::from(""),
 						q_min_balance,
 					);
@@ -80,8 +81,8 @@ pub fn build(
 		}
 	}
 
-	let a7 = Assertion::A7(min_balance);
-	match Credential::generate_unsigned_credential(&a7, who, &shard.clone(), bn) {
+	let a11 = Assertion::A11(min_balance);
+	match Credential::generate_unsigned_credential(&a11, who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.credential_subject.values.push(flag);
 
@@ -92,5 +93,5 @@ pub fn build(
 		},
 	}
 
-	Err(Error::Assertion7Failed)
+	Err(Error::Assertion11Failed)
 }
