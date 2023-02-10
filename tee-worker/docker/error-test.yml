@@ -1,5 +1,5 @@
 services:
-    vc-test:
+    error-test:
         image: integritee-cli:dev
         container_name: integritee-error-test
         volumes:
