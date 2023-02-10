@@ -165,9 +165,20 @@ impl TwitterOfficialClient {
 				query.as_slice(),
 			)
 			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
+
 		let tweets = resp.data.ok_or_else(|| Error::RequestError("tweet not found".to_string()))?;
 		if !tweets.is_empty() {
-			Ok(tweets.get(0).unwrap().clone())
+			let mut tweet = tweets[0].clone();
+
+			// have to replace user_id with includes -> users -> username, otherwise the handler verificaiton would fail
+			if let Some(tweet_users) = resp.includes {
+				if tweet_users.users.is_empty() {
+					return Err(Error::RequestError("user not found from tweet".to_string()))
+				}
+				tweet.author_id = tweet_users.users[0].username.clone();
+			}
+
+			Ok(tweet)
 		} else {
 			Err(Error::RequestError("tweet not found".to_string()))
 		}
