@@ -25,7 +25,6 @@ on:
   push:
     branches:
       - dev
-      - 849-arm64-image
     paths-ignore:
       - "**/dependabot.yml"
       - "**/README.md"
