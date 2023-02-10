@@ -238,6 +238,57 @@ export async function listenCreatedIdentityEvents(context: IntegrationTestContex
         });
     });
 }
+
+export async function listenErrorEvents(
+    context: IntegrationTestContext,
+    aesKey: HexString,
+    filterObj: { module: string; method: string; event: string; errorEvent: string }
+) {
+    return new Promise<string>(async (resolve, reject) => {
+        let startBlock = 0;
+        const slotDuration = await context.substrate.call.auraApi.slotDuration();
+        const timeout = 3 * 60 * 1000; // 3 min
+        let maximumWaitingBlock = timeout / parseInt(slotDuration.toString());
+        console.log('maximumWaitingBlock', maximumWaitingBlock);
+        const unsubscribe = await context.substrate.rpc.chain.subscribeNewHeads(async (header) => {
+            const currentBlockNumber = header.number.toNumber();
+            if (startBlock == 0) startBlock = currentBlockNumber;
+            if (currentBlockNumber > startBlock + maximumWaitingBlock) {
+                reject('timeout');
+                return;
+            }
+            console.log(`Chain is at block: #${header.number}`);
+            const signedBlock = await context.substrate.rpc.chain.getBlock(header.hash);
+
+            const allEvents = (await context.substrate.query.system.events.at(header.hash)) as Vec<EventRecord>;
+            signedBlock.block.extrinsics.forEach((ex, index) => {
+                if (
+                    !(
+                        ex.method.section === filterObj.module &&
+                        (ex.method.method === filterObj.method || ex.method.method === 'someError')
+                    )
+                ) {
+                    return;
+                }
+                allEvents
+                    .filter(({ phase, event }) => {
+                        return (
+                            phase.isApplyExtrinsic &&
+                            phase.asApplyExtrinsic.eq(index) &&
+                            event.section == filterObj.module &&
+                            event.method == filterObj.errorEvent
+                        );
+                    })
+                    .forEach(({ event }) => {
+                        resolve(event.method);
+                        unsubscribe();
+                        return;
+                    });
+            });
+        });
+    });
+}
+
 export function decryptWithAES(key: HexString, aesOutput: AESOutput): HexString {
     if (aesOutput.ciphertext && aesOutput.nonce) {
         const secretKey = crypto.createSecretKey(hexToU8a(key));
