@@ -45,10 +45,6 @@ export async function createErrorIdentity(
     listening: boolean,
     errorCiphertext: string
 ): Promise<string | undefined> {
-    // const encode = context.substrate.createType('LitentryIdentity', identity).toHex();
-
-    // const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
-
     const tx = context.substrate.tx.identityManagement.createIdentity(
         context.shard,
         signer.address,
