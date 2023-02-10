@@ -353,8 +353,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-         sudo apt-get update && \
-         sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
+          sudo apt-get update && \
+          sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
 
       # We could use matrix but don't have to. Since this ci has many jobs already,
       # we execute the runtime tests sequentially for a cleaner GHA visualisation graph.
@@ -403,6 +403,7 @@ jobs:
           - test_name: set-heartbeat-timeout
           - test_name: vc-test
           - test_name: identity-test
+          - test_name: error-test
 
     steps:
       - uses: actions/checkout@v3
