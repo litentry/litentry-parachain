@@ -12,6 +12,7 @@ parachain_src: &parachain_src
   - 'Cargo.lock'
   - 'Cargo.toml'
   - 'rust-toolchain.toml'
+  - './github/workflows/**'
 
 parachain_test: &parachain_test
   - 'ts-tests/**'
