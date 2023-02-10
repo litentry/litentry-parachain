@@ -356,6 +356,13 @@ impl Credential {
 
 				Ok(credential)
 			},
+			Assertion::A6 => {
+				let raw = include_str!("templates/a6.json");
+				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				credential.credential_subject.assertions.clear();
+				credential.credential_subject.values.clear();
+				Ok(credential)
+			},
 			Assertion::A7(minimum_amount) => {
 				let raw = include_str!("templates/a7.json");
 				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
@@ -400,6 +407,17 @@ impl Credential {
 			.add_item(minimum_amount)
 			.add_item(from_date)
 			.add_item(to_date);
+		self.credential_subject.assertions.push(assertion);
+	}
+
+	pub fn add_assertion_a6(&mut self, min: u64, max: u64) {
+		let min = format!("{}", min);
+		let max = format!("{}", max);
+
+		let follower_min = AssertionLogic::new_item("$total_followers", Op::GreaterThan, &min);
+		let follower_max = AssertionLogic::new_item("$total_followers", Op::LessEq, &max);
+
+		let assertion = AssertionLogic::new_and().add_item(follower_min).add_item(follower_max);
 		self.credential_subject.assertions.push(assertion);
 	}
 

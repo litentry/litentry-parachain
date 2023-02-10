@@ -20,6 +20,11 @@ use crate::sgx_reexport_prelude::*;
 use crate::{build_client, vec_to_string, Error, HttpError, UserInfo, G_DATA_PROVIDERS};
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
+use itc_rest_client::{
+	http_client::{DefaultSend, HttpClient},
+	rest_client::RestClient,
+	RestGet, RestPath,
+};
 use serde::{Deserialize, Serialize};
 use std::{
 	default::Default,
@@ -29,16 +34,11 @@ use std::{
 	vec::Vec,
 };
 
-use itc_rest_client::{
-	http_client::{DefaultSend, HttpClient},
-	rest_client::RestClient,
-	RestGet, RestPath,
-};
-
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TwitterAPIV2Response<T> {
 	pub data: Option<T>,
 	pub meta: Option<ResponseMeta>,
+	pub includes: Option<TwitterUsers>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -58,7 +58,12 @@ pub struct TwitterUser {
 	pub id: String,
 	pub name: String,
 	pub username: String,
-	pub public_metrics: TwitterUserPublicMetrics,
+	pub public_metrics: Option<TwitterUserPublicMetrics>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct TwitterUsers {
+	pub users: Vec<TwitterUser>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -108,6 +113,7 @@ impl TwitterOfficialClient {
 			G_DATA_PROVIDERS.read().unwrap().twitter_official_url.clone().as_str(),
 			headers,
 		);
+
 		TwitterOfficialClient { client }
 	}
 
@@ -115,11 +121,28 @@ impl TwitterOfficialClient {
 	pub fn query_tweet(&mut self, tweet_id: Vec<u8>) -> Result<Tweet, Error> {
 		let tweet_id = vec_to_string(tweet_id)?;
 		let path = format!("/2/tweets/{}", tweet_id);
-		let query: Vec<(&str, &str)> =
-			vec![("ids", tweet_id.as_str()), ("expansions", "author_id")];
-		self.client
-			.get_with::<String, Tweet>(path, query.as_slice())
-			.map_err(|e| Error::RequestError(format!("{:?}", e)))
+		let query: Vec<(&str, &str)> = vec![("expansions", "author_id")];
+
+		let resp = self
+			.client
+			.get_with::<String, TwitterAPIV2Response<Tweet>>(path, query.as_slice())
+			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
+
+		if resp.data.is_none() {
+			return Err(Error::RequestError("tweet not found".to_string()))
+		}
+
+		let mut tweet = resp.data.unwrap();
+
+		// have to replace user_id with includes -> users -> username, otherwise the handler verificaiton would fail
+		if let Some(tweet_users) = resp.includes {
+			if tweet_users.users.is_empty() {
+				return Err(Error::RequestError("user not found from tweet".to_string()))
+			}
+			tweet.author_id = tweet_users.users[0].username.clone();
+		}
+
+		Ok(tweet)
 	}
 
 	/// rate limit: 450/15min(per App) 180/15min(per User)
@@ -153,11 +176,12 @@ impl TwitterOfficialClient {
 	/// rate limit: 300/15min(per App) 900/15min(per User)
 	pub fn query_user(&mut self, user: Vec<u8>) -> Result<TwitterUser, Error> {
 		let user = vec_to_string(user)?;
+
 		let query = vec![("user.fields", "public_metrics")];
 		let resp = self
 			.client
 			.get_with::<String, TwitterAPIV2Response<TwitterUser>>(
-				format!("/2/users/{}", user),
+				format!("/2/users/by/username/{}", user),
 				query.as_slice(),
 			)
 			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
@@ -184,7 +208,7 @@ mod tests {
 		init();
 
 		let mut client = TwitterOfficialClient::new();
-		let result = client.query_tweet("100".as_bytes().to_vec());
+		let result = client.query_tweet("1623137735874846720".as_bytes().to_vec());
 		assert!(result.is_ok(), "error: {:?}", result);
 	}
 
@@ -204,7 +228,7 @@ mod tests {
 	fn query_user_work() {
 		init();
 
-		let user = "1256908613857226756";
+		let user = "ericzhangeth";
 		let mut client = TwitterOfficialClient::new();
 		let result = client.query_user(user.as_bytes().to_vec());
 		assert!(result.is_ok(), "error: {:?}", result);

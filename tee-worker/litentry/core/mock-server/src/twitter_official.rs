@@ -100,7 +100,7 @@ where
 					id: id.into(),
 					text: serde_json::to_string(&payload).unwrap(),
 				}];
-				let body = TwitterAPIV2Response { data: Some(tweets), meta: None };
+				let body = TwitterAPIV2Response { data: Some(tweets), meta: None, includes: None };
 				Response::builder().body(serde_json::to_string(&body).unwrap())
 			}
 		})
@@ -124,12 +124,16 @@ pub(crate) fn query_user(
 					id: expected_user_id,
 					name: "ericzhang".to_string(),
 					username: "elon".to_string(),
-					public_metrics: TwitterUserPublicMetrics {
+					public_metrics: Some(TwitterUserPublicMetrics {
 						followers_count: 100_u32,
 						following_count: 99_u32,
-					},
+					}),
 				};
-				let body = TwitterAPIV2Response { data: Some(twitter_user_data), meta: None };
+				let body = TwitterAPIV2Response {
+					data: Some(twitter_user_data),
+					meta: None,
+					includes: None,
+				};
 				Response::builder().body(serde_json::to_string(&body).unwrap())
 			}
 		})
