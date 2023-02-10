@@ -258,8 +258,28 @@ where
 	type Error = StfError;
 
 	fn on_runtime_upgrade(state: &mut State) -> Result<(), Self::Error> {
-		state.execute_with(|| {			
-			Executive::execute_on_runtime_upgrade();			
+		// Returns if the runtime was upgraded since the last time this function was called.
+		let runtime_upgraded =
+			|| -> bool {
+				let last = frame_system::LastRuntimeUpgrade::<Runtime>::get();
+				let current = <<Runtime as frame_system::Config>::Version as frame_support::traits::Get<_>>::get();
+
+				if last.map(|v| v.was_upgraded(&current)).unwrap_or(true) {
+					frame_system::LastRuntimeUpgrade::<Runtime>::put(
+						frame_system::LastRuntimeUpgradeInfo::from(current),
+					);
+					debug!("Do some migraions");
+					true
+				} else {
+					debug!("No need to migrate");
+					false
+				}
+			};
+
+		state.execute_with(|| {
+			if runtime_upgraded() {
+				Executive::execute_on_runtime_upgrade();
+			}
 		});
 		Ok(())
 	}

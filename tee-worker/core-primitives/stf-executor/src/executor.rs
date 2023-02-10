@@ -275,7 +275,7 @@ where
 		let mut state = prepare_state_function(state);
 		let mut executed_and_failed_calls = Vec::<ExecutedOperation>::new();
 
-		// TODO
+		// TODO: maybe we can move it to `prepare_state_function`. It seems more reasonable.
 		let _ = Stf::on_runtime_upgrade(&mut state);
 
 		// Iterate through all calls until time is over.

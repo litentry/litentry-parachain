@@ -3,6 +3,9 @@ use super::*;
 use crate::{pallet_imt::migrations, Runtime};
 use frame_support::{traits::OnRuntimeUpgrade, weights::Weight};
 
+// This is just an example of how to write a custom migration
+// It has no effect on tee-worker running
+// For more details, see: https://docs.substrate.io/maintain/runtime-upgrades/#storage-migration
 pub struct Upgrade;
 impl OnRuntimeUpgrade for Upgrade {
 	fn on_runtime_upgrade() -> Weight {
