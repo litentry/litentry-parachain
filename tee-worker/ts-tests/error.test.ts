@@ -2,21 +2,7 @@ import { describeLitentry } from './utils';
 import { step } from 'mocha-steps';
 import { setErrorUserShieldingKey, createErrorIdentity } from './indirect_error_calls';
 import { assert } from 'chai';
-import { u8aToHex } from '@polkadot/util';
-import {
-    EvmIdentity,
-    IdentityGenericEvent,
-    LitentryIdentity,
-    LitentryValidationData,
-    SubstrateIdentity,
-    Web2Identity,
-} from './type-definitions';
-const twitterIdentity = <LitentryIdentity>{
-    Web2: <Web2Identity>{
-        address: 'mock_user',
-        network: 'Twitter',
-    },
-};
+
 describeLitentry('setErrorUserShieldingKey test', async (context) => {
     const errorAseKey = '0xError';
     const errorCiphertext = '0xError';
