@@ -300,4 +300,5 @@ export type Assertion = {
     A8?: string;
     A9?: string;
     A10?: [number];
+    A11?: [number];
 };
