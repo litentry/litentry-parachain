@@ -34,7 +34,7 @@ use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
 use std::{format, string::String};
 
-type Balance = u128;
+pub type Balance = u128;
 type MaxStringLength = ConstU32<64>;
 pub type ParameterString = BoundedVec<u8, MaxStringLength>;
 

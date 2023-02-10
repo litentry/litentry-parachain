@@ -28,7 +28,7 @@ use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
 use litentry_primitives::{
-	Assertion, EvmNetwork, Identity, ParentchainBlockNumber, ASSERTION_FROM_DATE,
+	Assertion, Balance, EvmNetwork, Identity, ParentchainBlockNumber, ASSERTION_FROM_DATE,
 };
 use log::*;
 use std::{
@@ -40,7 +40,7 @@ use std::{
 
 pub fn build(
 	identities: Vec<Identity>,
-	min_balance: u128,
+	min_balance: Balance,
 	shard: &ShardIdentifier,
 	who: &AccountId,
 	bn: ParentchainBlockNumber,
@@ -93,5 +93,5 @@ pub fn build(
 		},
 	}
 
-	Err(Error::Assertion7Failed)
+	Err(Error::Assertion11Failed)
 }
