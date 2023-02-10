@@ -59,7 +59,7 @@ done
 
 # Using default port if none given as arguments.
 NPORT=${NPORT:-9944}
-NODEURL=${NODEURL:-"ws://host.docker.internal"}
+NODEURL=${NODEURL:-"ws://127.0.0.1"}
 
 WORKER1PORT=${WORKER1PORT:-2000}
 WORKER1URL=${WORKER1URL:-"wss://127.0.0.1"}
