@@ -33,13 +33,7 @@ use its_sidechain::rpc_handler::{
 	direct_top_pool_api, direct_top_pool_api::decode_shard_from_base58, import_block_api,
 };
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
-use std::{
-	borrow::ToOwned,
-	format, str,
-	string::{String, ToString},
-	sync::Arc,
-	vec::Vec,
-};
+use std::{borrow::ToOwned, format, str, string::String, sync::Arc, vec::Vec};
 
 fn compute_hex_encoded_return_error(error_msg: &str) -> String {
 	RpcReturnValue::from_error_message(error_msg).to_hex()
@@ -164,17 +158,15 @@ where
 		// state_getStorage
 		let state_get_storage = "state_getStorage";
 		io.add_sync_method(state_get_storage, move |params: Params| {
-			// jsonrpc_core::serde::Deserialize<'de>` is not implemented for `H256`
-			// can not parse ShardIdentifier
-			// TODO: hanld error
-			match params.parse::<Vec<String>>() {
-				Ok(params) => {
-					let shard_str = params.get(0).map(|v| v.to_string()).unwrap_or_default();
-					let key = params.get(1).map(|v| v.to_string()).unwrap_or_default();
-
-					let key = key.strip_prefix("0x").unwrap_or_default();
-					let key = match hex::decode(key) {
-						Ok(key) => key,
+			match params.parse::<(String, String)>() {
+				Ok((shard_str, key_hash)) => {
+					let key_hash = if key_hash.starts_with("0x") {
+						key_hash.strip_prefix("0x").unwrap()
+					} else {
+						key_hash.as_str()
+					};
+					let key_hash = match hex::decode(key_hash) {
+						Ok(key_hash) => key_hash,
 						Err(_) =>
 							return Ok(json!(compute_hex_encoded_return_error("docode key error"))),
 					};
@@ -189,7 +181,8 @@ where
 					};
 					match state.load_cloned(&shard) {
 						Ok((state, _hash)) => {
-							let value = state.get(key.as_slice()).cloned().unwrap_or_default();
+							// Get storage by key hash
+							let value = state.get(key_hash.as_slice()).cloned().unwrap_or_default();
 							warn!("query storage value:{:?}", &value);
 							let json_value =
 								RpcReturnValue::new(value, false, DirectRequestStatus::Ok);
