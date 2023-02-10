@@ -59,7 +59,7 @@ done
 
 # Using default port if none given as arguments.
 NPORT=${NPORT:-9944}
-NODEURL=${NODEURL:-"ws://127.0.0.1"}
+NODEURL=${NODEURL:-"ws://host.docker.internal"}
 
 WORKER1PORT=${WORKER1PORT:-2000}
 WORKER1URL=${WORKER1URL:-"wss://127.0.0.1"}
@@ -110,7 +110,9 @@ echo ""
 ${CLIENTWORKER1} trusted --mrenclave ${MRENCLAVE} --direct set-balance ${ICGACCOUNTBOB} 0
 
 echo "Get balance of Alice's incognito account (on worker 1)"
-${CLIENTWORKER1} trusted --mrenclave ${MRENCLAVE} balance ${ICGACCOUNTALICE}
+# ${CLIENTWORKER1} trusted --mrenclave ${MRENCLAVE} balance ${ICGACCOUNTALICE}
+# ICGACCOUNTALICE's public key is 0x50503350955afe8a107d6f115dc253eb5d75a3fe37a90b373db26cc12e3c6661
+${CLIENTWORKER1} trusted --mrenclave ${MRENCLAVE} get-storage System Account 0x50503350955afe8a107d6f115dc253eb5d75a3fe37a90b373db26cc12e3c6661
 echo ""
 
 # Send funds from Alice to Bobs account, on worker 1.

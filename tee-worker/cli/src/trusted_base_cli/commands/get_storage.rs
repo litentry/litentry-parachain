@@ -115,7 +115,6 @@ fn send_request(
 		Ok(response) => {
 			let response: RpcResponse = serde_json::from_str(&response).unwrap();
 			if let Ok(return_value) = RpcReturnValue::from_hex(&response.result) {
-				warn!("return_value:{:?}", &return_value);
 				match return_value.status {
 					DirectRequestStatus::Ok => Some(return_value.value),
 					DirectRequestStatus::Error => {
