@@ -241,7 +241,6 @@ export async function listenCreatedIdentityEvents(context: IntegrationTestContex
 
 export async function listenErrorEvents(
     context: IntegrationTestContext,
-    aesKey: HexString,
     filterObj: { module: string; method: string; event: string; errorEvent: string }
 ) {
     return new Promise<string>(async (resolve, reject) => {
