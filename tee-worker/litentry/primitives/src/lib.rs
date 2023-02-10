@@ -18,11 +18,10 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-mod ethereum_signature;
-mod identity;
-// mod trusted_call;
 mod assertion;
 mod enclave_quote;
+mod ethereum_signature;
+mod identity;
 mod validation_data;
 
 pub use ethereum_signature::*;
@@ -48,7 +47,6 @@ pub mod sgx_reexport_prelude {
 
 use rand::Rng;
 
-// pub use trusted_call::*;
 pub use assertion::*;
 pub use enclave_quote::*;
 pub use validation_data::*;
@@ -56,16 +54,24 @@ pub use validation_data::*;
 pub const CHALLENGE_CODE_SIZE: usize = 16;
 pub type ChallengeCode = [u8; CHALLENGE_CODE_SIZE];
 
+// Returns the default if any error happens
+// We don't propagate the error to upper level as this function is used in too many places,
+// it's too verbose to handle them all and pass back to the parentchain as events.
+// We rely on the parentchain event consumers to handle them correctly (and they kind of
+// have to, because they'll find all fields are 0)
 pub fn aes_encrypt_default(key: &UserShieldingKeyType, data: &[u8]) -> AesOutput {
 	let mut in_out = data.to_vec();
 
 	let nonce = RingAeadNonceSequence::new();
 	let aad = b"";
-	let unbound_key = UnboundKey::new(&AES_256_GCM, key.as_slice()).unwrap();
-	let mut sealing_key = SealingKey::new(unbound_key, nonce.clone());
-	sealing_key.seal_in_place_append_tag(Aad::from(aad), &mut in_out).unwrap();
+	if let Ok(unbound_key) = UnboundKey::new(&AES_256_GCM, key.as_slice()) {
+		let mut sealing_key = SealingKey::new(unbound_key, nonce.clone());
+		if sealing_key.seal_in_place_append_tag(Aad::from(aad), &mut in_out).is_ok() {
+			return AesOutput { ciphertext: in_out.to_vec(), aad: aad.to_vec(), nonce: nonce.nonce }
+		}
+	}
 
-	AesOutput { ciphertext: in_out.to_vec(), aad: aad.to_vec(), nonce: nonce.nonce }
+	AesOutput::default()
 }
 
 #[derive(Clone)]
