@@ -104,7 +104,6 @@ jobs:
         working-directory: ./tee-worker/enclave-runtime
         run: |
           cargo fmt --all -- --check
-          # TODO: no taplo check in enclave-runtime
 
       - name: Fail early
         if: failure()
@@ -140,7 +139,7 @@ jobs:
       - fmt
       - check-file-change
     container: "integritee/integritee-dev:0.1.10"
-    if: needs.check-file-change.outputs.parachain_src == 'true'
+    if: needs.check-file-change.outputs.tee_src == 'true'
     steps:
       - uses: actions/checkout@v3
 
@@ -374,7 +373,7 @@ jobs:
         if: failure()
         uses: andymckay/cancel-action@0.3
 
-  tee-integration-test:
+  tee-test:
     runs-on: ubuntu-20.04
     needs:
       - check-file-change
@@ -474,13 +473,13 @@ jobs:
           name: logs-${{ matrix.test_name }}
           path: logs
 
-  tee-integration-test-hook:
+  tee-test-hook:
     if: ${{ always() }}
     runs-on: ubuntu-latest
-    needs: tee-integration-test
+    needs: tee-test
     steps:
       - run: |
-          case "${{ needs.tee-integration-test.result }}" in
+          case "${{ needs.tee-test.result }}" in
             success|skipped) exit 0 ;;
             *) exit 1 ;;
           esac
@@ -495,7 +494,7 @@ jobs:
       - parachain-unit-test
       - parachain-runtime-test
       - parachain-ts-test
-      - tee-integration-test
+      - tee-test
     if: ${{ success() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
     steps:
       - uses: actions/download-artifact@v3
