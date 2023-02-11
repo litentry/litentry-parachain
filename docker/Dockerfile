@@ -35,7 +35,8 @@ ARG PROFILE
 #     https://github.com/moby/buildkit/issues/1512
 #     https://github.com/moby/buildkit/issues/1673
 # RUN --mount=type=cache,target=/root/.cache/sccache cargo build --locked --profile $PROFILE $BUILD_ARGS && sccache --show-stats
-RUN cargo build --locked --profile $PROFILE $BUILD_ARGS
+RUN cargo --version
+RUN cargo build -v --locked --profile $PROFILE $BUILD_ARGS
 
 # ==========================
 # stage 2: packaging
