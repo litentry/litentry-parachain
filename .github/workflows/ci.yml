@@ -399,11 +399,11 @@ jobs:
           - test_name: demo-sidechain
           - test_name: sidechain-benchmark
           # Litentry
-          - test_name: user-shielding-key
-          - test_name: resume-worker
-          - test_name: set-heartbeat-timeout
-          - test_name: vc-test
-          - test_name: identity-test
+          - test_name: lit-user-shielding-key
+          - test_name: lit-resume-worker
+          - test_name: lit-set-heartbeat-timeout
+          - test_name: lit-vc-test
+          - test_name: lit-identity-test
 
     steps:
       - uses: actions/checkout@v3

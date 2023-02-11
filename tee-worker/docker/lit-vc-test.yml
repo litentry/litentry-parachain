@@ -1,7 +1,7 @@
 services:
-  identity-test:
+  lit-vc-test:
     image: integritee-cli:dev
-    container_name: integritee-identity-test
+    container_name: litentry-vc-test
     volumes:
       - ../ts-tests:/ts-tests
       - ../cli:/usr/local/worker-cli
@@ -19,7 +19,7 @@ services:
     networks:
       - integritee-test-network
     entrypoint:
-      "/usr/local/worker-cli/identity_test.sh 2>&1"
+      "/usr/local/worker-cli/lit_ts_test.sh test-vc 2>&1"
     restart: "no"
 networks:
   integritee-test-network:
