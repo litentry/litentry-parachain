@@ -178,6 +178,10 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
+      # I don't think we need qemu or --platform=$BUILDPLATFORM:
+      #   - qemu is embeded in build-push-action
+      #   - --platform=$BUILDPLATFORM is for cross-compiling
+      # https://docs.docker.com/build/building/multi-platform/
       - name: Build and push Docker image
         if: needs.check-file-change.outputs.parachain_src == 'true'
         uses: docker/build-push-action@v4

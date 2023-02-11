@@ -15,16 +15,16 @@ RUN apt-get update && apt-get install -yq clang libclang-dev cmake protobuf-comp
 
 # install sccache, must before `ARG RUSTC_WRAPPER`
 # otherwise the wrapper is set but sccache is not installed
-RUN cargo install sccache
+# RUN cargo install sccache
 
 ARG BUILD_ARGS
 ARG PROFILE
-ARG RUSTC_WRAPPER
+# ARG RUSTC_WRAPPER
 
-RUN type sccache && sccache --version
-ENV SCCACHE_CACHE_SIZE=10G
-ENV SCCACHE_DIR=/root/.cache/sccache
-ENV RUSTC_WRAPPER=$RUSTC_WRAPPER
+# RUN type sccache && sccache --version
+# ENV SCCACHE_CACHE_SIZE=10G
+# ENV SCCACHE_DIR=/root/.cache/sccache
+# ENV RUSTC_WRAPPER=$RUSTC_WRAPPER
 
 # please note this only works for self-hosted runner (i.e. on the same host)
 # CI across different GH-runners won't work well, my understanding is docker only considers
@@ -34,7 +34,8 @@ ENV RUSTC_WRAPPER=$RUSTC_WRAPPER
 # see https://github.com/docker/build-push-action/issues/716
 #     https://github.com/moby/buildkit/issues/1512
 #     https://github.com/moby/buildkit/issues/1673
-RUN --mount=type=cache,target=/root/.cache/sccache cargo build --locked --profile $PROFILE $BUILD_ARGS && sccache --show-stats
+# RUN --mount=type=cache,target=/root/.cache/sccache cargo build --locked --profile $PROFILE $BUILD_ARGS && sccache --show-stats
+RUN cargo build --locked --profile $PROFILE $BUILD_ARGS
 
 # ==========================
 # stage 2: packaging
