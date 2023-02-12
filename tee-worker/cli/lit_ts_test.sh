@@ -20,4 +20,4 @@ TEST=$1
 
 cd /ts-tests
 yarn install
-yarn run &TEST:staging
+yarn run $TEST:staging
