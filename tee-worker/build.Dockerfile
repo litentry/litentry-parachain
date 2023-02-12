@@ -85,6 +85,11 @@ FROM ubuntu:20.04 AS runner
 
 RUN apt update && apt install -y libssl-dev iproute2 curl
 
+## ts-tests
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash
+RUN apt-get install -y nodejs
+RUN npm install -g yarn
+
 
 ### Deployed CLI client
 ##################################################
@@ -100,11 +105,6 @@ RUN chmod +x /usr/local/bin/integritee-cli
 RUN mkdir ${LOG_DIR}
 RUN ldd /usr/local/bin/integritee-cli && \
 	/usr/local/bin/integritee-cli --version
-
-## ts-tests
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash
-RUN apt-get install -y nodejs
-RUN npm install -g yarn
 
 ENTRYPOINT ["/usr/local/bin/integritee-cli"]
 

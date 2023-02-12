@@ -2,7 +2,7 @@
 
 # Copyright 2020-2023 Litentry Technologies GmbH.
 
-set -o pipefail
+set -euo pipefail
 
 function usage() {
     echo "Usage: $0 <Options>"
