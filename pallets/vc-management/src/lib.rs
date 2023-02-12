@@ -112,6 +112,7 @@ pub mod pallet {
 		// see https://github.com/litentry/litentry-parachain/issues/1275
 		HttpRequestFailed { reason: ErrorString },
 		RequestVCHandlingFailed,
+		ParseError,
 		Assertion1Failed,
 		Assertion2Failed,
 		Assertion3Failed,
@@ -216,6 +217,7 @@ pub mod pallet {
 					Self::deposit_event(Event::HttpRequestFailed { reason: s }),
 				VCMPError::RequestVCHandlingFailed =>
 					Self::deposit_event(Event::RequestVCHandlingFailed),
+				VCMPError::ParseError => Self::deposit_event(Event::ParseError),
 				VCMPError::Assertion1Failed => Self::deposit_event(Event::Assertion1Failed),
 				VCMPError::Assertion2Failed => Self::deposit_event(Event::Assertion2Failed),
 				VCMPError::Assertion3Failed => Self::deposit_event(Event::Assertion3Failed),

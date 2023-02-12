@@ -219,7 +219,7 @@ mod tests {
 		init();
 
 		let mut client = TwitterOfficialClient::new();
-		let result = client.query_tweet("1623137735874846720".as_bytes().to_vec());
+		let result = client.query_tweet("100".as_bytes().to_vec());
 		assert!(result.is_ok(), "error: {:?}", result);
 	}
 
@@ -239,7 +239,7 @@ mod tests {
 	fn query_user_work() {
 		init();
 
-		let user = "ericzhangeth";
+		let user = "1256908613857226756";
 		let mut client = TwitterOfficialClient::new();
 		let result = client.query_user(user.as_bytes().to_vec());
 		assert!(result.is_ok(), "error: {:?}", result);

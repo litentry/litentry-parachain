@@ -74,20 +74,20 @@ where
 			)
 			.map(|credential| Some((credential, self.req.who.clone()))),
 
-			Assertion::A2(guild_id, handler) => lc_assertion_build::a2::build(
+			Assertion::A2(guild_id) => lc_assertion_build::a2::build(
 				self.req.vec_identity.to_vec(),
 				guild_id,
-				handler,
 				&self.req.shard,
 				&self.req.who,
 				self.req.bn,
 			)
 			.map(|credential| Some((credential, self.req.who.clone()))),
 
-			Assertion::A3(guild_id, handler) => lc_assertion_build::a3::build(
+			Assertion::A3(guild_id, channel_id, role_id) => lc_assertion_build::a3::build(
 				self.req.vec_identity.to_vec(),
 				guild_id,
-				handler,
+				channel_id,
+				role_id,
 				&self.req.shard,
 				&self.req.who,
 				self.req.bn,
@@ -176,7 +176,7 @@ where
 			let key: UserShieldingKeyType = self.req.key;
 			if let Ok(vc_index) = credential.get_index() {
 				let credential_str = credential.to_json().unwrap();
-				info!("on_success {}, length {}", credential_str, credential_str.len());
+				debug!("on_success {}, length {}", credential_str, credential_str.len());
 
 				let vc_hash = blake2_256(credential_str.as_bytes());
 				let output = aes_encrypt_default(&key, credential_str.as_bytes());

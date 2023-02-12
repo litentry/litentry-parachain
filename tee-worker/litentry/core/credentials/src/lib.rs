@@ -335,15 +335,17 @@ impl Credential {
 				credential.credential_subject.values.clear();
 				Ok(credential)
 			},
-			Assertion::A2(_, _) => {
+			Assertion::A2(_) => {
 				let raw = include_str!("templates/a2.json");
 				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				credential.credential_subject.assertions.clear();
 				credential.credential_subject.values.clear();
 				Ok(credential)
 			},
-			Assertion::A3(_, _) => {
+			Assertion::A3(_, _, _) => {
 				let raw = include_str!("templates/a3.json");
 				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				credential.credential_subject.assertions.clear();
 				credential.credential_subject.values.clear();
 				Ok(credential)
 			},
@@ -417,6 +419,35 @@ impl Credential {
 			.add_item(minimum_amount)
 			.add_item(from_date)
 			.add_item(to_date);
+		self.credential_subject.assertions.push(assertion);
+	}
+
+	pub fn add_assertion_a2(&mut self, guild_id: String) {
+		let verified = AssertionLogic::new_item("$verified_discord_account", Op::GreaterThan, "0");
+		let has_joined = AssertionLogic::new_item("$has_joined", Op::Equal, "true");
+		let guild = AssertionLogic::new_item("$discord_guild_id", Op::Equal, guild_id.as_str());
+
+		let assertion = AssertionLogic::new_and()
+			.add_item(verified)
+			.add_item(has_joined)
+			.add_item(guild);
+		self.credential_subject.assertions.push(assertion);
+	}
+
+	pub fn add_assertion_a3(&mut self, guild_id: String, channel_id: String, role_id: String) {
+		let has_role = AssertionLogic::new_item("$has_role", Op::Equal, "true");
+		let has_commented = AssertionLogic::new_item("$has_commented", Op::Equal, "true");
+		let guild = AssertionLogic::new_item("$discord_guild_id", Op::Equal, guild_id.as_str());
+		let channel =
+			AssertionLogic::new_item("$discord_channel_id", Op::Equal, channel_id.as_str());
+		let role = AssertionLogic::new_item("$discord_role_id", Op::Equal, role_id.as_str());
+
+		let assertion = AssertionLogic::new_and()
+			.add_item(has_role)
+			.add_item(has_commented)
+			.add_item(guild)
+			.add_item(channel)
+			.add_item(role);
 		self.credential_subject.assertions.push(assertion);
 	}
 
