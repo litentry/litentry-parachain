@@ -16,11 +16,11 @@
 */
 
 use core::default::Default;
-use teerex_primitives::Enclave;
+use teerex_primitives::{Enclave, MrEnclave};
 
 pub trait TestEnclave<AccountId, Url> {
 	fn test_enclave(pubkey: AccountId) -> Enclave<AccountId, Url>;
-	fn with_mr_enclave(self, mr_enclave: [u8; 32]) -> Enclave<AccountId, Url>;
+	fn with_mr_enclave(self, mr_enclave: MrEnclave) -> Enclave<AccountId, Url>;
 	fn with_timestamp(self, timestamp: u64) -> Enclave<AccountId, Url>;
 	fn with_url(self, url: Url) -> Enclave<AccountId, Url>;
 }
@@ -38,7 +38,7 @@ impl<AccountId, Url: Default> TestEnclave<AccountId, Url> for Enclave<AccountId,
 		)
 	}
 
-	fn with_mr_enclave(mut self, mr_enclave: [u8; 32]) -> Self {
+	fn with_mr_enclave(mut self, mr_enclave: MrEnclave) -> Self {
 		self.mr_enclave = mr_enclave;
 		self
 	}
@@ -56,12 +56,13 @@ impl<AccountId, Url: Default> TestEnclave<AccountId, Url> for Enclave<AccountId,
 
 pub mod setups {
 	use super::consts::*;
+	use teerex_primitives::MrEnclave;
 
 	#[derive(Copy, Clone)]
 	pub struct IasSetup {
 		pub cert: &'static [u8],
 		pub signer_pub: &'static [u8; 32],
-		pub mrenclave: [u8; 32],
+		pub mrenclave: MrEnclave,
 		pub timestamp: u64,
 	}
 
@@ -96,6 +97,7 @@ pub mod setups {
 
 pub mod consts {
 	use hex_literal::hex;
+	use teerex_primitives::{MrEnclave, MrSigner};
 
 	pub const INCOGNITO_ACCOUNT: [u8; 32] = [
 		44, 106, 196, 170, 141, 51, 4, 200, 143, 12, 167, 255, 252, 221, 15, 119, 228, 141, 94, 2,
@@ -110,35 +112,37 @@ pub mod consts {
 	pub const TEST8_CERT: &[u8] = include_bytes!("./ias-data/ra_dump_cert_TEST8_PRODUCTION.der");
 	pub const TEST9_CERT: &[u8] = include_bytes!("./ias-data/ra_dump_cert_TEST9_enclave_add.der");
 
+	pub const TEST1_DCAP_QUOTE: &[u8] = include_bytes!("./ias-data/ra_dcap_dump_quote.ra");
+
 	// reproduce with integritee-service signing-key
-	pub const TEST4_SIGNER_PUB: &[u8; 32] =
+	pub const TEST4_SIGNER_PUB: &MrSigner =
 		include_bytes!("./ias-data/enclave-signing-pubkey-TEST4.bin");
 	// equal to TEST4! because of MRSIGNER policy it was possible to change the MRENCLAVE but keep
 	// the secret
-	pub const TEST5_SIGNER_PUB: &[u8; 32] =
+	pub const TEST5_SIGNER_PUB: &MrSigner =
 		include_bytes!("./ias-data/enclave-signing-pubkey-TEST5.bin");
-	pub const TEST6_SIGNER_PUB: &[u8; 32] =
+	pub const TEST6_SIGNER_PUB: &MrSigner =
 		include_bytes!("./ias-data/enclave-signing-pubkey-TEST6.bin");
-	pub const TEST7_SIGNER_PUB: &[u8; 32] =
+	pub const TEST7_SIGNER_PUB: &MrSigner =
 		include_bytes!("./ias-data/enclave-signing-pubkey-TEST7.bin");
-	pub const TEST8_SIGNER_PUB: &[u8; 32] =
+	pub const TEST8_SIGNER_PUB: &MrSigner =
 		include_bytes!("./ias-data/enclave-signing-pubkey-TEST8-PRODUCTION.bin");
 	pub const TEST9_SIGNER_PUB: &[u8; 32] =
 		include_bytes!("./ias-data/enclave-signing-pubkey-TEST9.bin");
 
 	// reproduce with "make mrenclave" in worker repo root
 	// MRSIGNER is always 83d719e77deaca1470f6baf62a4d774303c899db69020f9c70ee1dfc08c7ce9e
-	pub const TEST4_MRENCLAVE: [u8; 32] =
+	pub const TEST4_MRENCLAVE: MrEnclave =
 		hex!("7a3454ec8f42e265cb5be7dfd111e1d95ac6076ed82a0948b2e2a45cf17b62a0");
-	pub const TEST5_MRENCLAVE: [u8; 32] =
+	pub const TEST5_MRENCLAVE: MrEnclave =
 		hex!("f4dedfc9e5fcc48443332bc9b23161c34a3c3f5a692eaffdb228db27b704d9d1");
-	pub const TEST6_MRENCLAVE: [u8; 32] =
+	pub const TEST6_MRENCLAVE: MrEnclave =
 		hex!("f4dedfc9e5fcc48443332bc9b23161c34a3c3f5a692eaffdb228db27b704d9d1");
-	pub const TEST7_MRENCLAVE: [u8; 32] =
+	pub const TEST7_MRENCLAVE: MrEnclave =
 		hex!("f4dedfc9e5fcc48443332bc9b23161c34a3c3f5a692eaffdb228db27b704d9d1");
 	// production mode
 	// MRSIGNER is 117f95f65f06afb5764b572156b8b525c6230db7d6b1c94e8ebdb7fba068f4e8
-	pub const TEST8_MRENCLAVE: [u8; 32] =
+	pub const TEST8_MRENCLAVE: MrEnclave =
 		hex!("bcf66abfc6b3ef259e9ecfe4cf8df667a7f5a546525dee16822741b38f6e6050");
 	pub const TEST9_MRENCLAVE: [u8; 32] =
 		hex!("318d72b1fee37a7844da18a108be720561b7e75c4276e0216a0a07760fc421be");

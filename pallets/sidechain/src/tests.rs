@@ -18,6 +18,7 @@ limitations under the License.
 use crate::{mock::*, Error, Event as SidechainEvent, Teerex};
 use frame_support::{assert_err, assert_ok, dispatch::DispatchResultWithPostInfo};
 use sp_core::H256;
+use teerex_primitives::MrSigner;
 use test_utils::ias::consts::*;
 
 // give get_signer a concrete type
@@ -198,7 +199,7 @@ fn register_enclave7() {
 	register_enclave(TEST7_SIGNER_PUB, TEST7_CERT, 1);
 }
 
-fn register_enclave(signer_pub_key: &[u8; 32], cert: &[u8], expected_enclave_count: u64) {
+fn register_enclave(signer_pub_key: &MrSigner, cert: &[u8], expected_enclave_count: u64) {
 	let signer7 = get_signer(signer_pub_key);
 
 	//Ensure that enclave is registered
