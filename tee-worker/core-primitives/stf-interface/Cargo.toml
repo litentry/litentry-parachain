@@ -13,5 +13,7 @@ itp-types = { default-features = false, path = "../types" }
 default = ["std"]
 mocks = []
 std = [
+    "itp-node-api-metadata/std",
+    "itp-node-api-metadata-provider/std",
     "itp-types/std",
 ]
