@@ -291,8 +291,8 @@ export type VCRequested = {
 };
 export type Assertion = {
     A1?: string;
-    A2?: [string, string];
-    A3?: [string, string];
+    A2?: [string];
+    A3?: [string, string, string];
     A4?: [number];
     A5?: [string, string];
     A6?: string;
