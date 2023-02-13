@@ -109,28 +109,6 @@ impl pallet_balances::Config for Test {
 	type ReserveIdentifier = ();
 }
 
-parameter_types! {
-	pub const ShellRuntimeParaId: u32 = 2223u32;
-	pub const IntegriteeKsmParaId: u32 = 2015u32;
-}
-
-pub struct DummySendXcm;
-impl SendXcm for DummySendXcm {
-	fn send_xcm(_destination: impl Into<MultiLocation>, _message: Xcm<()>) -> SendResult {
-		Ok(())
-	}
-}
-
-impl pallet_xcm_transactor::Config for Test {
-	type RuntimeEvent = RuntimeEvent;
-	type RelayCallBuilder = RelayCallBuilder<IntegriteeKsmParaId>;
-	type XcmSender = DummySendXcm;
-	type SwapOrigin = EnsureRoot<AccountId>;
-	type ShellRuntimeParaId = ShellRuntimeParaId;
-	type IntegriteeKsmParaId = IntegriteeKsmParaId;
-	type WeightInfo = ();
-}
-
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup. RA from enclave compiled in debug mode is allowed
 pub fn new_test_ext() -> sp_io::TestExternalities {
