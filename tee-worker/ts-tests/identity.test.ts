@@ -14,6 +14,7 @@ import {
 import { ethers } from 'ethers';
 import { HexString } from '@polkadot/util/types';
 import { KeyringPair } from '@polkadot/keyring/types';
+import { createErrorIdentity, setErrorUserShieldingKey } from './indirect_error_calls';
 
 const twitterIdentity = <LitentryIdentity>{
     Web2: <Web2Identity>{
@@ -102,6 +103,8 @@ const discordValidationData = <LitentryValidationData>{
 
 describeLitentry('Test Identity', (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
+    const errorAseKey = '0xError';
+    const errorCiphertext = '0xError';
     var signature_ethereum;
     var signature_substrate;
 
@@ -290,6 +293,22 @@ describeLitentry('Test Identity', (context) => {
             substrateExtensionIdentity
         );
         assertIdentityRemoved(context.defaultSigner[1], substrate_extension_identity_removed);
+    });
+
+    step('set error user shielding key', async function () {
+        const result = await setErrorUserShieldingKey(context, context.defaultSigner[0], errorAseKey, true);
+
+        assert.equal(
+            result,
+            'SetUserShieldingKeyHandlingFailed',
+            'result is not equal to SetUserShieldingKeyHandlingFailed'
+        );
+    });
+
+    step('create error identity', async function () {
+        //The simulation generates the wrong Ciphertext
+        const result = await createErrorIdentity(context, context.defaultSigner[0], aesKey, true, errorCiphertext);
+        assert.equal(result, 'CreateIdentityHandlingFailed', 'result is not equal to CreateIdentityHandlingFailed');
     });
 });
 
