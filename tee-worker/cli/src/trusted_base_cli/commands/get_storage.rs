@@ -79,7 +79,7 @@ fn get_storage_value(
 	addr.append_entry_bytes(&metadata, &mut entry_bytes).unwrap();
 	debug!("storage_entry_key: 0x{}", hex::encode(&entry_bytes));
 
-	if let Some(value) = send_request(direct_api, mrenclave, &entry_bytes) {
+	if let Some(value) = send_get_storage_request(direct_api, mrenclave, &entry_bytes) {
 		let pallet_metadata = metadata.pallet(pallet_name).unwrap();
 		let storage_metadata = pallet_metadata.storage(storage_name).unwrap();
 		let return_ty_id = return_type_from_storage_entry_type(&storage_metadata.ty);
@@ -94,7 +94,7 @@ fn get_storage_value(
 	}
 }
 
-fn send_request(
+fn send_get_storage_request(
 	direct_api: DirectClient,
 	mrenclave: String,
 	storage_entry_key: &Vec<u8>,
