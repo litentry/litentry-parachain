@@ -34,11 +34,10 @@ where
 		.map(move |_tweet_id, p: HashMap<String, String>| {
 			log::info!("query_tweet");
 			let default = String::default();
-			let ids = p.get("ids").unwrap_or(&default);
+			let ids = "100".to_string();
 			let expansions = p.get("expansions").unwrap_or(&default);
-			let expected_tweet_id = "100".to_string();
 
-			if expansions.as_str() != "author_id" || ids != &expected_tweet_id {
+			if expansions.as_str() != "author_id" {
 				Response::builder().status(400).body(String::from("Error query"))
 			} else {
 				let account_id = AccountId::new([
@@ -55,10 +54,23 @@ where
 					sp_core::hexdisplay::HexDisplay::from(&chanllenge_code)
 				);
 				let payload = mock_tweet_payload(&account_id, &twitter_identity, &chanllenge_code);
-				let tweet =
-					Tweet { author_id: "mock_user".into(), id: expected_tweet_id, text: payload };
 
-				Response::builder().body(serde_json::to_string(&tweet).unwrap())
+				let tweet = Tweet { author_id: "mock_user".into(), id: ids.clone(), text: payload };
+				let twitter_users = TwitterUsers {
+					users: vec![TwitterUser {
+						id: ids,
+						name: "mock_user".to_string(),
+						username: "mock_user".to_string(),
+						public_metrics: None,
+					}],
+				};
+				let body = TwitterAPIV2Response {
+					data: Some(tweet),
+					meta: None,
+					includes: Some(twitter_users),
+				};
+
+				Response::builder().body(serde_json::to_string(&body).unwrap())
 			}
 		})
 }
@@ -100,7 +112,7 @@ where
 					id: id.into(),
 					text: serde_json::to_string(&payload).unwrap(),
 				}];
-				let body = TwitterAPIV2Response { data: Some(tweets), meta: None };
+				let body = TwitterAPIV2Response { data: Some(tweets), meta: None, includes: None };
 				Response::builder().body(serde_json::to_string(&body).unwrap())
 			}
 		})
@@ -109,7 +121,7 @@ where
 pub(crate) fn query_user(
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
 	warp::get()
-		.and(warp::path!("2" / "users" / String))
+		.and(warp::path!("2" / "users" / "by" / "username" / String))
 		.and(warp::query::<HashMap<String, String>>())
 		.map(move |user_id, p: HashMap<String, String>| {
 			let expected_user_id = "1256908613857226756".to_string();
@@ -124,12 +136,16 @@ pub(crate) fn query_user(
 					id: expected_user_id,
 					name: "ericzhang".to_string(),
 					username: "elon".to_string(),
-					public_metrics: TwitterUserPublicMetrics {
+					public_metrics: Some(TwitterUserPublicMetrics {
 						followers_count: 100_u32,
 						following_count: 99_u32,
-					},
+					}),
 				};
-				let body = TwitterAPIV2Response { data: Some(twitter_user_data), meta: None };
+				let body = TwitterAPIV2Response {
+					data: Some(twitter_user_data),
+					meta: None,
+					includes: None,
+				};
 				Response::builder().body(serde_json::to_string(&body).unwrap())
 			}
 		})
