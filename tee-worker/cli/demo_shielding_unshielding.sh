@@ -101,7 +101,7 @@ function wait_assert_state()
 }
 
 # usage:
-#   wait_assert_state <mrenclave> <account-pub-key> <jq-filter> <expected-state>
+#   wait_assert_account_state <mrenclave> <account-pub-key> <jq-filter> <expected-state>
 function wait_assert_account_state()
 {
     for i in $(seq 1 $WAIT_ROUNDS); do        
@@ -137,7 +137,7 @@ function assert_state()
 }
 
 # usage:
-#   assert_state <mrenclave> <account-pub-key> <jq-filter> <expected-state>
+#   assert_account_state <mrenclave> <account-pub-key> <jq-filter> <expected-state>
 function assert_account_state()
 {
     state=$(${CLIENT} trusted --mrenclave "$1" get-storage System Account "$2" | jq "$3")
