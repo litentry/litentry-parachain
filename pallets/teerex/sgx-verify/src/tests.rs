@@ -246,7 +246,7 @@ fn deserialize_tcb_info_works() {
 	let json_data = serde_json::to_vec(&json.tcb_info).unwrap();
 	let signature = hex::decode(json.signature).unwrap();
 
-	let e = deserialize_tcb_info(&json_data, &signature, &leaf_cert).unwrap();
+	let _e = deserialize_tcb_info(&json_data, &signature, &leaf_cert).unwrap();
 	assert_eq!(hex!("00906EA10000"), json.tcb_info.fmspc);
 }
 
@@ -266,7 +266,7 @@ fn verify_tcb_info_signature() {
 /// TODO: Implement CRL handling
 #[test]
 fn parse_pck_crl() {
-	let crl_decoded = hex::decode(&PCK_CRL).unwrap();
+	let crl_decoded = hex::decode(PCK_CRL).unwrap();
 	let crl: x509_cert::crl::CertificateList = der::Decode::from_der(&crl_decoded).unwrap();
 
 	let mut serials = vec![];

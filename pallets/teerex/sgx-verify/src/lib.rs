@@ -268,7 +268,7 @@ pub struct SgxReportBody {
 impl SgxReportBody {
 	pub fn sgx_build_mode(&self) -> SgxBuildMode {
 		#[cfg(test)]
-		println!("attributes flag : {}", format!("{:x}", self.attributes.flags));
+		println!("attributes flag : {:x}", self.attributes.flags);
 		if self.attributes.flags & SGX_FLAGS_DEBUG == SGX_FLAGS_DEBUG {
 			SgxBuildMode::Debug
 		} else {

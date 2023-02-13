@@ -25,14 +25,16 @@ use frame_support::{
 };
 use frame_system::{self, ensure_signed};
 use sp_core::H256;
-use sp_runtime::traits::{CheckedSub, SaturatedConversion};
+use sp_runtime::traits::SaturatedConversion;
 use sp_std::{prelude::*, str};
 use teerex_primitives::*;
 
 use sgx_verify::{
 	deserialize_enclave_identity, deserialize_tcb_info, extract_certs, verify_certificate_chain,
-	verify_dcap_quote, verify_ias_report, SgxReport,
 };
+
+#[cfg(not(feature = "skip-ias-check"))]
+use sgx_verify::{verify_dcap_quote, verify_ias_report, SgxReport};
 
 pub use crate::weights::WeightInfo;
 use teerex_primitives::SgxBuildMode;
