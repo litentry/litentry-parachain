@@ -71,7 +71,7 @@ where
 			.map(|key| {
 				let key = key.strip_prefix("0x").unwrap_or(key);
 				let raw_key = hex::decode(key).unwrap();
-				self.get_storage_by_key_hash::<MrEnclave>(StorageKey(raw_key.clone()), at_block)
+				self.get_storage_by_key_hash::<MrEnclave>(StorageKey(raw_key), at_block)
 			})
 			.filter(|enclave| matches!(enclave, Ok(Some(_))))
 			.map(|enclave| enclave.unwrap().unwrap())
