@@ -43,23 +43,6 @@ impl PalletTeerexApi for TestNodeApi {
 		Ok(enclaves())
 	}
 
-	fn schedule_enclave(
-		&self,
-		index: u64,
-		_at_block: Option<Hash>,
-	) -> ApiResult<Option<MrEnclave>> {
-		let enclaves = enclaves();
-		if index == 1 {
-			Ok(Some(enclaves[0].mr_enclave))
-		} else {
-			Ok(Some(enclaves[1].mr_enclave))
-		}
-	}
-
-	fn schedule_enclaves_count(&self, _at_block: Option<Hash>) -> ApiResult<u64> {
-		Ok(2)
-	}
-
 	fn all_schedule_mr_enclaves(&self, _at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>> {
 		let enclaves = enclaves();
 		let mr_enclaves = enclaves.into_iter().map(|e| e.mr_enclave).collect();

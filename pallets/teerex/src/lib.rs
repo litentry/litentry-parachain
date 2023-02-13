@@ -127,27 +127,6 @@ pub mod pallet {
 	#[pallet::getter(fn scheduled_enclave)]
 	pub type ScheduledEnclave<T: Config> = StorageMap<_, Blake2_128Concat, u32, MREnclave>;
 
-	/// store the last MrEnclave Index
-	/// Watch out: we start indexing with 1 instead of zero in order to
-	/// avoid ambiguity between Null and 0.
-	#[pallet::storage]
-	#[pallet::getter(fn scheduled_enclave_count)]
-	pub type ScheduledEnclaveCount<T: Config> = StorageValue<_, u64, ValueQuery>;
-
-	/// Storage map of the mrenclave_index <-> MrEnclave, starts from 1
-	/// Watch out: we start indexing with 1 instead of zero in order to
-	/// avoid ambiguity between Null and 0.
-	#[pallet::storage]
-	#[pallet::getter(fn scheduled_enclave_registry)]
-	pub type ScheduledEnclaveRegistry<T: Config> =
-		StorageMap<_, Blake2_128Concat, u64, MREnclave, ValueQuery>;
-
-	/// Restore the index of MrEnclave
-	#[pallet::storage]
-	#[pallet::getter(fn scheduled_enclave_index)]
-	pub type ScheduledEnclaveIndex<T: Config> =
-		StorageMap<_, Blake2_128Concat, MREnclave, u64, ValueQuery>;
-
 	#[pallet::storage]
 	#[pallet::getter(fn heartbeat_timeout)]
 	pub type HeartbeatTimeout<T: Config> =
@@ -376,18 +355,8 @@ pub mod pallet {
 			mr_enclave: MREnclave,
 		) -> DispatchResultWithPostInfo {
 			T::EnclaveAdminOrigin::ensure_origin(origin)?;
-			ensure!(
-				!ScheduledEnclaveIndex::<T>::contains_key(mr_enclave),
-				Error::<T>::ScheduledEnclaveAlreadyExist
-			);
 			ScheduledEnclave::<T>::insert(sidechain_block_number, mr_enclave);
 			Self::deposit_event(Event::UpdatedScheduledEnclave(sidechain_block_number, mr_enclave));
-			let enclave_idx = Self::scheduled_enclave_count()
-				.checked_add(1)
-				.ok_or("[Teerex]: Overflow adding new MrEnclave to registry")?;
-			<ScheduledEnclaveRegistry<T>>::insert(enclave_idx, mr_enclave);
-			<ScheduledEnclaveIndex<T>>::insert(mr_enclave, enclave_idx);
-			<ScheduledEnclaveCount<T>>::put(enclave_idx);
 			Ok(().into())
 		}
 
@@ -402,12 +371,8 @@ pub mod pallet {
 				ScheduledEnclave::<T>::contains_key(sidechain_block_number),
 				Error::<T>::ScheduledEnclaveNotExist
 			);
-			let mr_enclave = <ScheduledEnclave<T>>::get(sidechain_block_number)
-				.ok_or(Error::<T>::ScheduledEnclaveNotExist)?;
-			let removed_index = <ScheduledEnclaveIndex<T>>::get(mr_enclave);
 			// remove
 			ScheduledEnclave::<T>::remove(sidechain_block_number);
-			ScheduledEnclaveRegistry::<T>::remove(removed_index);
 			Self::deposit_event(Event::RemovedScheduledEnclave(sidechain_block_number));
 			Ok(().into())
 		}

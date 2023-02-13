@@ -17,9 +17,9 @@
 
 use crate::ApiResult;
 use itp_types::{Enclave, IpfsHash, MrEnclave, ShardIdentifier};
-use sp_core::{Pair, H256 as Hash};
+use sp_core::{storage::StorageKey, Pair, H256 as Hash};
 use sp_runtime::MultiSignature;
-use substrate_api_client::{Api, ExtrinsicParams, RpcClient};
+use substrate_api_client::{utils::storage_key, Api, ExtrinsicParams, RpcClient};
 
 pub const TEEREX: &str = "Teerex";
 pub const SIDECHAIN: &str = "Sidechain";
@@ -29,8 +29,6 @@ pub trait PalletTeerexApi {
 	fn enclave(&self, index: u64, at_block: Option<Hash>) -> ApiResult<Option<Enclave>>;
 	fn enclave_count(&self, at_block: Option<Hash>) -> ApiResult<u64>;
 	fn all_enclaves(&self, at_block: Option<Hash>) -> ApiResult<Vec<Enclave>>;
-	fn schedule_enclave(&self, index: u64, at_block: Option<Hash>) -> ApiResult<Option<MrEnclave>>;
-	fn schedule_enclaves_count(&self, at_block: Option<Hash>) -> ApiResult<u64>;
 	fn all_schedule_mr_enclaves(&self, at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>>;
 	fn worker_for_shard(
 		&self,
@@ -65,25 +63,20 @@ where
 		Ok(enclaves)
 	}
 
-	fn schedule_enclave(&self, index: u64, at_block: Option<Hash>) -> ApiResult<Option<MrEnclave>> {
-		self.get_storage_map(TEEREX, "ScheduledEnclaveRegistry", index, at_block)
-	}
-
-	fn schedule_enclaves_count(&self, at_block: Option<Hash>) -> ApiResult<u64> {
-		Ok(self
-			.get_storage_value(TEEREX, "ScheduledEnclaveCount", at_block)?
-			.unwrap_or_default())
-	}
-
 	fn all_schedule_mr_enclaves(&self, at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>> {
-		let count = self.schedule_enclaves_count(at_block)?;
-		let mut mr_enclaves = Vec::with_capacity(count as usize);
-		for n in 1..=count {
-			if let Ok(Some(m)) = self.schedule_enclave(n, at_block) {
-				mr_enclaves.push(m)
-			}
-		}
-		Ok(mr_enclaves)
+		let keys: Vec<_> = self
+			.get_keys(storage_key(TEEREX, "ScheduledEnclave"), at_block)?
+			.unwrap_or_default()
+			.iter()
+			.map(|key| {
+				let key = key.strip_prefix("0x").unwrap_or(key);
+				let raw_key = hex::decode(key).unwrap();
+				self.get_storage_by_key_hash::<MrEnclave>(StorageKey(raw_key.clone()), at_block)
+			})
+			.filter(|enclave| matches!(enclave, Ok(Some(_))))
+			.map(|enclave| enclave.unwrap().unwrap())
+			.collect();
+		Ok(keys)
 	}
 
 	fn worker_for_shard(

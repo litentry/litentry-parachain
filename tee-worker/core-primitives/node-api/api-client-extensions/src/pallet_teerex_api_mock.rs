@@ -50,20 +50,6 @@ impl PalletTeerexApi for PalletTeerexApiMock {
 		Ok(self.registered_enclaves.clone())
 	}
 
-	fn schedule_enclave(
-		&self,
-		index: u64,
-		_at_block: Option<Hash>,
-	) -> ApiResult<Option<MrEnclave>> {
-		let mr_enclave = self.scheduled_mr_enclaves.get(&index).copied();
-		Ok(mr_enclave)
-	}
-
-	fn schedule_enclaves_count(&self, _at_block: Option<Hash>) -> ApiResult<u64> {
-		let count = self.scheduled_mr_enclaves.len();
-		Ok(count as u64)
-	}
-
 	fn all_schedule_mr_enclaves(&self, _at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>> {
 		let mr_enclaves = self.scheduled_mr_enclaves.values().copied().collect();
 		Ok(mr_enclaves)
