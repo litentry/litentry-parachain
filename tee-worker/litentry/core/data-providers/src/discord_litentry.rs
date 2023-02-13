@@ -65,7 +65,6 @@ impl DiscordLitentryClient {
 	pub fn new() -> Self {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
-
 		let client = build_client(
 			G_DATA_PROVIDERS.write().unwrap().discord_litentry_url.clone().as_str(),
 			headers,
@@ -93,12 +92,21 @@ impl DiscordLitentryClient {
 	pub fn check_id_hubber(
 		&mut self,
 		guild_id: Vec<u8>,
+		channel_id: Vec<u8>,
+		role_id: Vec<u8>,
 		handler: Vec<u8>,
 	) -> Result<DiscordResponse, Error> {
 		let guild_id_s = vec_to_string(guild_id)?;
+		let channel_id_s = vec_to_string(channel_id)?;
+		let role_id_s = vec_to_string(role_id)?;
 		let handler_s = vec_to_string(handler)?;
 		let path = "/discord/commented/idhubber".to_string();
-		let query = vec![("guildid", guild_id_s.as_str()), ("handler", handler_s.as_str())];
+		let query = vec![
+			("guildid", guild_id_s.as_str()),
+			("channelid", channel_id_s.as_str()),
+			("roleid", role_id_s.as_str()),
+			("handler", handler_s.as_str()),
+		];
 
 		let res = self
 			.client
@@ -154,9 +162,11 @@ mod tests {
 	fn check_id_hubber_work() {
 		init();
 		let guild_id = "919848390156767232".as_bytes().to_vec();
+		let channel_id = "919848392035794945".as_bytes().to_vec();
+		let role_id = "1034083718425493544".as_bytes().to_vec();
 		let handler = "ericzhang.eth#0114".as_bytes().to_vec();
 		let mut client = DiscordLitentryClient::new();
-		let response = client.check_id_hubber(guild_id, handler);
+		let response = client.check_id_hubber(guild_id, channel_id, role_id, handler);
 		assert!(response.is_ok(), "check discord id hubber error: {:?}", response);
 	}
 }

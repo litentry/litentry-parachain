@@ -6,7 +6,9 @@
 		"test-resuming-worker:staging": "cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register 'resuming_worker.test.ts'",
 		"test-resuming-worker:local": "cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register 'resuming_worker.test.ts'",
 		"test-vc:local": "cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register 'vc.test.ts'",
-		"test-vc:staging": "cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register 'vc.test.ts'"
+		"test-vc:staging": "cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register 'vc.test.ts'",
+		"test-error:local": "cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register 'error.test.ts'",
+		"test-error:staging": "cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register 'error.test.ts'"
 	},
 	"dependencies": {
 		"@polkadot/api": "^9.10.5",
