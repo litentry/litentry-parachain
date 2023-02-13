@@ -830,7 +830,7 @@ fn check_we_are_primary_validateer(
 }
 
 fn data_provider(config: &Config) -> DataProvidersStatic {
-	let built_in_modes = vec!["dev", "staging", "prod", "mock"];
+	let built_in_modes = vec!["dev", "mock", "prod", "staging"];
 	let built_in_config: Value =
 		serde_json::from_slice(include_bytes!("running-mode-config.json")).unwrap();
 

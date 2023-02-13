@@ -27,7 +27,7 @@ static DEFAULT_UNTRUSTED_PORT: &str = "2001";
 static DEFAULT_MU_RA_PORT: &str = "3443";
 static DEFAULT_METRICS_PORT: &str = "8787";
 static DEFAULT_UNTRUSTED_HTTP_PORT: &str = "4545";
-// running mode for litentry: dev | staging | prod | mock
+// running mode for litentry: dev / staging / prod / local
 static DEFAULT_RUNNING_MODE: &str = "dev";
 static DEFAULT_MOCK_SERVER_PORT: &str = "9527";
 
