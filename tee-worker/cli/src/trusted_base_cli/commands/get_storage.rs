@@ -112,15 +112,19 @@ fn get_storage_value(
 			for ((key, _type_id), hasher) in storage_entry_keys.iter().zip(type_ids).zip(hashers) {
 				hash_bytes(key.as_slice(), &hasher, &mut entry_bytes);
 			}
-			println!("value name:{:?}", metadata.types.resolve(value.id()).unwrap());
 			value.id()
 		},
 	};
 
 	if let Some(value) = send_get_storage_request(direct_api, mrenclave, &entry_bytes) {
-		println!("type_id, {}, value: {:?}", return_ty_id, value.clone());
 		let mut bytes = if value.is_empty() { &storage_entry.default[..] } else { &value[..] };
-		Some(scale_value::scale::decode_as_type(&mut bytes, return_ty_id, &metadata.types).unwrap())
+		scale_value::scale::decode_as_type(&mut bytes, return_ty_id, &metadata.types).map_or_else(
+			|err| {
+				error!("decode error:{:?}", err);
+				None
+			},
+			Some,
+		)
 	} else {
 		None
 	}
@@ -199,69 +203,4 @@ fn hash_bytes(input: &[u8], hasher: &StorageHasher, bytes: &mut Vec<u8>) {
 			bytes.extend(input);
 		},
 	}
-}
-
-#[test]
-fn identity() {
-	let a = hex::decode("0200246d6f636b5f75736572").unwrap();
-	let a = litentry_primitives::Identity::decode(&mut a.as_slice()).unwrap();
-	println!("{:?}", a);
-	// let metadata = Metadata::try_from(Runtime::metadata()).unwrap();
-
-	// let storage_entry_key = Value::from_bytes(a);
-	// println!("{:?}", metadata.resolve_type(37));
-	// println!("");
-	// let mut input: Vec<u8> = Vec::new();
-	// storage_entry_key.encode_with_metadata(37, &metadata, &mut input).unwrap();
-	let direct_api = DirectClient::new("wss://localhost:2000".to_string());
-	if let Some(v) = get_storage_value(
-		direct_api.clone(),
-		"6FNtLbzq4NE25gpQJ9vBab2YBNdNZahumJdWwuCV2oD".to_string(),
-		"IdentityManagement",
-		"ChallengeCodes",
-		&vec![
-			"0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d".to_string(),
-			"0x0200246d6f636b5f75736572".to_string(),
-		],
-	){
-			println!("{}", v);
-	}
-
-	// if let Some(v) = get_storage_value(
-	// 	direct_api,
-	// 	"6FNtLbzq4NE25gpQJ9vBab2YBNdNZahumJdWwuCV2oD".to_string(),
-	// 	"System",
-	// 	"Account",
-	// 	&vec!["0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d".to_string()]
-	// ){
-	// 		println!("{}", v);
-	// }
-
-	// // let mrenclave = trusted_args.mrenclave.clone();
-	// let storage_entry_keys: Vec<Value> = vec![
-	// 	"0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
-	// 	"0x0200246d6f636b5f75736572",
-	// ]
-	// .iter()
-	// .map(|v| {
-	// 	let v = if v.starts_with("0x") {
-	// 		v.strip_prefix("0x").unwrap().as_bytes()
-	// 	} else {
-	// 		v.as_bytes()
-	// 	};
-	// 	Value::from_bytes(hex::decode(v).unwrap())
-	// })
-	// .collect();
-
-	// if let Some(v) = get_storage_value(
-	// 	direct_api,
-	// 	"6FNtLbzq4NE25gpQJ9vBab2YBNdNZahumJdWwuCV2oD".to_string(),
-	// 	"IdentityManagement",
-	// 	"ChallengeCodes",
-	// 	storage_entry_keys,
-	// ) {
-	// 	println!("{}", v);
-	// } else {
-	// 	println!("None");
-	// }
 }
