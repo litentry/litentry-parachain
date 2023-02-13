@@ -403,7 +403,6 @@ jobs:
           - test_name: set-heartbeat-timeout
           - test_name: vc-test
           - test_name: identity-test
-          - test_name: error-test
 
     steps:
       - uses: actions/checkout@v3

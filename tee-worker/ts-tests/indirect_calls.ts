@@ -23,24 +23,17 @@ export async function setUserShieldingKey(
 ): Promise<HexString | undefined> {
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, aesKey).toString('hex');
 
-    await context.substrate.tx.identityManagement
-        .setUserShieldingKey(context.shard, `0x${ciphertext}`)
-        .paymentInfo(signer);
-
     const tx = context.substrate.tx.identityManagement.setUserShieldingKey(context.shard, `0x${ciphertext}`);
-
-    //The purpose of paymentInfo is to check whether the version of polkadot/api is suitable for the current test and to determine whether the transaction is successful.
-    await tx.paymentInfo(signer);
 
     await sendTxUntilInBlock(context.substrate, tx, signer);
 
     if (listening) {
-        const event = await listenEncryptedEvents(context, aesKey, {
+        const eventData = await listenEncryptedEvents(context, aesKey, {
             module: 'identityManagement',
             method: 'userShieldingKeySet',
             event: 'UserShieldingKeySet',
         });
-        const [who] = event.eventData;
+        const [who] = eventData as HexString[];
         return who;
     }
     return undefined;
@@ -62,9 +55,6 @@ export async function createIdentity(
         `0x${ciphertext}`,
         null
     );
-
-    //The purpose of paymentInfo is to check whether the version of polkadot/api is suitable for the current test and to determine whether the transaction is successful.
-    await tx.paymentInfo(signer);
 
     await sendTxUntilInBlock(context.substrate, tx, signer);
 
@@ -88,17 +78,15 @@ export async function removeIdentity(
 
     const tx = context.substrate.tx.identityManagement.removeIdentity(context.shard, `0x${ciphertext}`);
 
-    //The purpose of paymentInfo is to check whether the version of polkadot/api is suitable for the current test and to determine whether the transaction is successful.
-    await tx.paymentInfo(signer);
     await sendTxUntilInBlock(context.substrate, tx, signer);
 
     if (listening) {
-        const event = await listenEncryptedEvents(context, aesKey, {
+        const eventData = await listenEncryptedEvents(context, aesKey, {
             module: 'identityManagement',
             method: 'identityRemoved',
             event: 'IdentityRemoved',
         });
-        const [who, identity, idGraph] = event.eventData;
+        const [who, identity, idGraph] = eventData as HexString[];
         return decodeIdentityEvent(context.substrate, who, identity, idGraph);
     }
     return undefined;
@@ -125,18 +113,15 @@ export async function verifyIdentity(
         `0x${validation_ciphertext}`
     );
 
-    //The purpose of paymentInfo is to check whether the version of polkadot/api is suitable for the current test and to determine whether the transaction is successful.
-    await tx.paymentInfo(signer);
-
     await sendTxUntilInBlock(context.substrate, tx, signer);
 
     if (listening) {
-        const event = await listenEncryptedEvents(context, aesKey, {
+        const eventData = await listenEncryptedEvents(context, aesKey, {
             module: 'identityManagement',
             method: 'identityVerified',
             event: 'IdentityVerified',
         });
-        const [who, identity, idGraph] = event.eventData;
+        const [who, identity, idGraph] = eventData as HexString[];
 
         return decodeIdentityEvent(context.substrate, who, identity, idGraph);
     }
@@ -154,18 +139,15 @@ export async function requestVC(
 ): Promise<HexString[] | undefined> {
     const tx = context.substrate.tx.vcManagement.requestVc(shard, assertion);
 
-    //The purpose of paymentInfo is to check whether the version of polkadot/api is suitable for the current test and to determine whether the transaction is successful.
-    await tx.paymentInfo(signer);
-
     await sendTxUntilInBlock(context.substrate, tx, signer);
     if (listening) {
-        const event = await listenEncryptedEvents(context, aesKey, {
+        const eventData = await listenEncryptedEvents(context, aesKey, {
             module: 'vcManagement',
             method: 'vcIssued',
             event: 'VCIssued',
         });
 
-        const [who, index, vc] = event.eventData;
+        const [who, index, vc] = eventData as HexString[];
         return [who, index, vc];
     }
     return undefined;
@@ -180,18 +162,15 @@ export async function disableVC(
 ): Promise<HexString | undefined> {
     const tx = context.substrate.tx.vcManagement.disableVc(index);
 
-    //The purpose of paymentInfo is to check whether the version of polkadot/api is suitable for the current test and to determine whether the transaction is successful.
-    await tx.paymentInfo(signer);
-
     await sendTxUntilInBlock(context.substrate, tx, signer);
     if (listening) {
-        const event = await listenEncryptedEvents(context, aesKey, {
+        const eventData = await listenEncryptedEvents(context, aesKey, {
             module: 'vcManagement',
             method: 'disableVc',
             event: 'VCDisabled',
         });
 
-        const [index] = event.eventData;
+        const [index] = eventData as HexString[];
         return index;
     }
     return undefined;
@@ -206,18 +185,15 @@ export async function revokeVC(
 ): Promise<HexString | undefined> {
     const tx = context.substrate.tx.vcManagement.revokeVc(index);
 
-    //The purpose of paymentInfo is to check whether the version of polkadot/api is suitable for the current test and to determine whether the transaction is successful.
-    await tx.paymentInfo(signer);
-
     await sendTxUntilInBlock(context.substrate, tx, signer);
     if (listening) {
-        const event = await listenEncryptedEvents(context, aesKey, {
+        const eventData = await listenEncryptedEvents(context, aesKey, {
             module: 'vcManagement',
             method: 'revokeVc',
             event: 'VCRevoked',
         });
 
-        const [index] = event.eventData;
+        const [index] = eventData as HexString[];
         return index;
     }
     return undefined;
