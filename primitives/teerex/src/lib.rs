@@ -34,7 +34,7 @@ impl Default for SgxBuildMode {
 	}
 }
 
-#[derive(Encode, Decode, Default, Copy, Clone, PartialEq, Eq, sp_core::RuntimeDebug, TypeInfo)]
+#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, sp_core::RuntimeDebug, TypeInfo)]
 pub struct Enclave<PubKey, Url> {
 	pub pubkey: PubKey, // FIXME: this is redundant information
 	pub mr_enclave: MrEnclave,
@@ -43,7 +43,6 @@ pub struct Enclave<PubKey, Url> {
 	pub url: Url,                       // utf8 encoded url
 	pub shielding_key: Option<Vec<u8>>, // JSON serialised enclave shielding key
 	pub sgx_mode: SgxBuildMode,
-	pub sgx_metadata: SgxEnclaveMetadata,
 }
 
 impl<PubKey, Url> Enclave<PubKey, Url> {
@@ -54,17 +53,8 @@ impl<PubKey, Url> Enclave<PubKey, Url> {
 		url: Url,
 		shielding_key: Option<Vec<u8>>,
 		sgx_build_mode: SgxBuildMode,
-		sgx_metadata: SgxEnclaveMetadata,
 	) -> Self {
-		Enclave {
-			pubkey,
-			mr_enclave,
-			timestamp,
-			url,
-			shielding_key,
-			sgx_mode: sgx_build_mode,
-			sgx_metadata,
-		}
+		Enclave { pubkey, mr_enclave, timestamp, url, shielding_key, sgx_mode: sgx_build_mode }
 	}
 }
 

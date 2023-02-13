@@ -65,7 +65,10 @@ use itp_settings::{
 	files::SIDECHAIN_STORAGE_PATH,
 	worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvider},
 };
+
+#[cfg(feature = "dcap")]
 use itp_utils::hex::hex_encode;
+
 use its_peer_fetch::{
 	block_fetch_client::BlockFetcher, untrusted_peer_fetch::UntrustedPeerFetcher,
 };
@@ -476,7 +479,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 	// Account funds
 	if let Err(x) =
-		setup_account_funding(&node_api, &tee_accountid, xthex.clone(), is_development_mode)
+		setup_account_funding(&node_api, &tee_accountid, &xthex.clone(), is_development_mode)
 	{
 		error!("Starting worker failed: {:?}", x);
 		// Return without registering the enclave. This will fail and the transaction will be banned for 30min.
@@ -809,6 +812,7 @@ fn register_collateral(
 	send_extrinsic(&uxt, api, accountid, is_development_mode);
 }
 
+#[cfg(feature = "dcap")]
 fn send_extrinsic(
 	extrinsic: &[u8],
 	api: &ParentchainApi,

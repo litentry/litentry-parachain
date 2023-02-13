@@ -25,10 +25,7 @@ use frame_support::{
 };
 use frame_system::{self, ensure_signed};
 use sp_core::H256;
-use sp_runtime::{
-	traits::{CheckedSub, SaturatedConversion},
-	Saturating,
-};
+use sp_runtime::traits::{CheckedSub, SaturatedConversion};
 use sp_std::{prelude::*, str};
 use teerex_primitives::*;
 
@@ -88,7 +85,7 @@ pub mod pallet {
 		UnshieldedFunds(T::AccountId),
 		ProcessedParentchainBlock(T::AccountId, H256, H256, T::BlockNumber),
 		SetHeartbeatTimeout(u64),
-		UpdatedScheduledEnclave(u32, MREnclave),
+		UpdatedScheduledEnclave(u32, MrEnclave),
 		RemovedScheduledEnclave(u32),
 		/// An enclave with [mr_enclave] has published some [hash] with some metadata [data].
 		PublishedHash {
@@ -138,7 +135,7 @@ pub mod pallet {
 
 	// keep track of a list of scheduled/allowed enchalves, mainly used for enclave updates,
 	// can only be modified by EnclaveAdminOrigin
-	// sidechain_block_number -> expected MREnclave
+	// sidechain_block_number -> expected MrEnclave
 	//
 	// about the first time enclave registration:
 	// prior to `register_enclave` this map needs to be populated with (0, expected-mrenclave),
@@ -150,7 +147,7 @@ pub mod pallet {
 	// so we need an "enclave whitelist" anyway
 	#[pallet::storage]
 	#[pallet::getter(fn scheduled_enclave)]
-	pub type ScheduledEnclave<T: Config> = StorageMap<_, Blake2_128Concat, u32, MREnclave>;
+	pub type ScheduledEnclave<T: Config> = StorageMap<_, Blake2_128Concat, u32, MrEnclave>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn heartbeat_timeout)]
@@ -195,6 +192,8 @@ pub mod pallet {
 
 			#[cfg(not(feature = "skip-ias-check"))]
 			let enclave = Self::verify_report(&sender, ra_report.clone()).map(|report| {
+				log::debug!("[teerex] isv_enclave_quote = {:?}", report.metadata.isv_enclave_quote);
+
 				Enclave::new(
 					sender.clone(),
 					report.mr_enclave,
@@ -202,7 +201,6 @@ pub mod pallet {
 					worker_url.clone(),
 					shielding_key,
 					report.build_mode,
-					report.metadata,
 				)
 			})?;
 
@@ -224,16 +222,7 @@ pub mod pallet {
 				worker_url.clone(),
 				shielding_key,
 				SgxBuildMode::default(),
-				Default::default(),
 			);
-
-			#[cfg(not(feature = "skip-ias-check"))]
-			{
-				log::debug!(
-					"[teerex] isv_enclave_quote = {:?}",
-					enclave.sgx_metadata.isv_enclave_quote
-				);
-			}
 
 			// TODO: imagine this fn is not called for the first time (e.g. when worker restarts),
 			//       should we check the current sidechain_blocknumber >= registered
@@ -376,6 +365,8 @@ pub mod pallet {
 			Self::deposit_event(Event::SetHeartbeatTimeout(timeout));
 			Ok(().into())
 		}
+
+		#[pallet::call_index(7)]
 		#[pallet::weight((<T as Config>::WeightInfo::register_dcap_enclave(), DispatchClass::Normal, Pays::Yes))]
 		pub fn register_dcap_enclave(
 			origin: OriginFor<T>,
@@ -388,6 +379,7 @@ pub mod pallet {
 			ensure!(worker_url.len() <= MAX_URL_LEN, <Error<T>>::EnclaveUrlTooLong);
 			log::info!("teerex: parameter length ok");
 
+			let dummy_shielding_key: Option<Vec<u8>> = Default::default();
 			#[cfg(not(feature = "skip-ias-check"))]
 			let enclave = Self::verify_dcap_quote(&sender, dcap_quote).map(|report| {
 				Enclave::new(
@@ -395,6 +387,7 @@ pub mod pallet {
 					report.mr_enclave,
 					report.timestamp,
 					worker_url.clone(),
+					dummy_shielding_key,
 					report.build_mode,
 				)
 			})?;
@@ -415,6 +408,7 @@ pub mod pallet {
 				<MrEnclave>::decode(&mut dcap_quote.as_slice()).unwrap_or_default(),
 				<timestamp::Pallet<T>>::get().saturated_into(),
 				worker_url.clone(),
+				dummy_shielding_key,
 				SgxBuildMode::default(),
 			);
 
@@ -423,18 +417,20 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::call_index(7)]
+		#[pallet::call_index(8)]
 		#[pallet::weight((1000, DispatchClass::Normal, Pays::No))]
 		pub fn update_scheduled_enclave(
 			origin: OriginFor<T>,
 			sidechain_block_number: u32,
-			mr_enclave: MREnclave,
+			mr_enclave: MrEnclave,
 		) -> DispatchResultWithPostInfo {
 			T::EnclaveAdminOrigin::ensure_origin(origin)?;
 			ScheduledEnclave::<T>::insert(sidechain_block_number, mr_enclave);
 			Self::deposit_event(Event::UpdatedScheduledEnclave(sidechain_block_number, mr_enclave));
 			Ok(().into())
 		}
+
+		#[pallet::call_index(9)]
 		#[pallet::weight((<T as Config>::WeightInfo::register_quoting_enclave(), DispatchClass::Normal, Pays::Yes))]
 		pub fn register_quoting_enclave(
 			origin: OriginFor<T>,
@@ -451,7 +447,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::call_index(8)]
+		#[pallet::call_index(10)]
 		#[pallet::weight((1000, DispatchClass::Normal, Pays::No))]
 		pub fn remove_scheduled_enclave(
 			origin: OriginFor<T>,
@@ -466,6 +462,8 @@ pub mod pallet {
 			Self::deposit_event(Event::RemovedScheduledEnclave(sidechain_block_number));
 			Ok(().into())
 		}
+
+		#[pallet::call_index(11)]
 		#[pallet::weight((<T as Config>::WeightInfo::register_dcap_enclave(), DispatchClass::Normal, Pays::Yes))]
 		pub fn register_tcb_info(
 			origin: OriginFor<T>,
@@ -489,7 +487,7 @@ pub mod pallet {
 		///
 		/// `data` can be anything worthwhile publishing related to the hash. If it is a
 		/// utf8-encoded string, the UIs will usually even render the text.
-		#[pallet::call_index(9)]
+		#[pallet::call_index(12)]
 		#[pallet::weight((<T as Config>::WeightInfo::publish_hash(), DispatchClass::Normal, Pays::Yes))]
 		pub fn publish_hash(
 			origin: OriginFor<T>,
