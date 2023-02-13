@@ -125,6 +125,8 @@ export async function initIntegrationTestContext(
 
 export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrinsic<ApiTypes>, signer: KeyringPair) {
     return new Promise<{ block: string }>(async (resolve, reject) => {
+        //The purpose of paymentInfo is to check whether the version of polkadot/api is suitable for the current test and to determine whether the transaction is successful.
+        await tx.paymentInfo(signer);
         const nonce = await api.rpc.system.accountNextIndex(signer.address);
         await tx.signAndSend(signer, { nonce }, (result) => {
             if (result.status.isInBlock) {
@@ -142,9 +144,9 @@ export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrins
 export async function listenEncryptedEvents(
     context: IntegrationTestContext,
     aesKey: HexString,
-    filterObj: { module: string; method: string; event: string }
+    filterObj: { module: string; method: string; event: string; errorEvent?: string }
 ) {
-    return new Promise<{ eventData: HexString[] }>(async (resolve, reject) => {
+    return new Promise<HexString[] | string>(async (resolve, reject) => {
         let startBlock = 0;
         const slotDuration = await context.substrate.call.auraApi.slotDuration();
         const timeout = 3 * 60 * 1000; // 3 min
@@ -162,7 +164,12 @@ export async function listenEncryptedEvents(
 
             const allEvents = (await context.substrate.query.system.events.at(header.hash)) as Vec<EventRecord>;
             signedBlock.block.extrinsics.forEach((ex, index) => {
-                if (!(ex.method.section === filterObj.module && ex.method.method === filterObj.method)) {
+                if (
+                    !(
+                        ex.method.section === filterObj.module &&
+                        (ex.method.method === filterObj.method || ex.method.method === 'someError')
+                    )
+                ) {
                     return;
                 }
                 allEvents
@@ -171,18 +178,23 @@ export async function listenEncryptedEvents(
                             phase.isApplyExtrinsic &&
                             phase.asApplyExtrinsic.eq(index) &&
                             event.section == filterObj.module &&
-                            event.method == filterObj.event
+                            (event.method == filterObj.event || event.method == filterObj.errorEvent)
                         );
                     })
                     .forEach(({ event }) => {
-                        const data = event.data as AESOutput[];
+                        if (event.method == filterObj.event) {
+                            const data = event.data as AESOutput[];
+                            const eventData: HexString[] = [];
+                            for (let i = 0; i < data.length; i++) {
+                                eventData.push(decryptWithAES(aesKey, data[i]));
+                            }
 
-                        const eventData: HexString[] = [];
-                        for (let i = 0; i < data.length; i++) {
-                            eventData.push(decryptWithAES(aesKey, data[i]));
+                            resolve(eventData);
+                        } else if (event.method == filterObj.errorEvent) {
+                            const error = event.method;
+
+                            resolve(error);
                         }
-
-                        resolve({ eventData });
                         unsubscribe();
                         return;
                     });
@@ -238,6 +250,56 @@ export async function listenCreatedIdentityEvents(context: IntegrationTestContex
         });
     });
 }
+
+export async function listenErrorEvents(
+    context: IntegrationTestContext,
+    filterObj: { module: string; method: string; event: string; errorEvent: string }
+) {
+    return new Promise<string>(async (resolve, reject) => {
+        let startBlock = 0;
+        const slotDuration = await context.substrate.call.auraApi.slotDuration();
+        const timeout = 3 * 60 * 1000; // 3 min
+        let maximumWaitingBlock = timeout / parseInt(slotDuration.toString());
+        console.log('maximumWaitingBlock', maximumWaitingBlock);
+        const unsubscribe = await context.substrate.rpc.chain.subscribeNewHeads(async (header) => {
+            const currentBlockNumber = header.number.toNumber();
+            if (startBlock == 0) startBlock = currentBlockNumber;
+            if (currentBlockNumber > startBlock + maximumWaitingBlock) {
+                reject('timeout');
+                return;
+            }
+            console.log(`Chain is at block: #${header.number}`);
+            const signedBlock = await context.substrate.rpc.chain.getBlock(header.hash);
+
+            const allEvents = (await context.substrate.query.system.events.at(header.hash)) as Vec<EventRecord>;
+            signedBlock.block.extrinsics.forEach((ex, index) => {
+                if (
+                    !(
+                        ex.method.section === filterObj.module &&
+                        (ex.method.method === filterObj.method || ex.method.method === 'someError')
+                    )
+                ) {
+                    return;
+                }
+                allEvents
+                    .filter(({ phase, event }) => {
+                        return (
+                            phase.isApplyExtrinsic &&
+                            phase.asApplyExtrinsic.eq(index) &&
+                            event.section == filterObj.module &&
+                            event.method == filterObj.errorEvent
+                        );
+                    })
+                    .forEach(({ event }) => {
+                        resolve(event.method);
+                        unsubscribe();
+                        return;
+                    });
+            });
+        });
+    });
+}
+
 export function decryptWithAES(key: HexString, aesOutput: AESOutput): HexString {
     if (aesOutput.ciphertext && aesOutput.nonce) {
         const secretKey = crypto.createSecretKey(hexToU8a(key));
