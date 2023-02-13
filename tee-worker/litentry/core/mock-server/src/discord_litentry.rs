@@ -54,11 +54,19 @@ pub(crate) fn check_id_hubber(
 		.map(move |p: HashMap<String, String>| {
 			let default = String::default();
 			let guild_id = p.get("guildid").unwrap_or(&default);
+			let channel_id = p.get("channelid").unwrap_or(&default);
+			let role_id = p.get("roleid").unwrap_or(&default);
 			let handler = p.get("handler").unwrap_or(&default);
 			let expected_guild_id = "919848390156767232";
+			let expected_channel_id = "919848392035794945";
+			let expected_role_id = "1034083718425493544";
 			let expected_handler = "ericzhang.eth#0114";
 
-			if expected_guild_id == guild_id.as_str() && expected_handler == handler.as_str() {
+			if expected_guild_id == guild_id.as_str()
+				&& expected_handler == handler.as_str()
+				&& expected_channel_id == channel_id.as_str()
+				&& expected_role_id == role_id.as_str()
+			{
 				let body = DiscordResponse {
 					data: true,
 					message: "success".into(),
