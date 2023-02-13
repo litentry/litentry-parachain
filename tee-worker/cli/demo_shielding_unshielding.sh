@@ -178,28 +178,29 @@ ICGACCOUNTALICE_PUBKEY=0x50503350955afe8a107d6f115dc253eb5d75a3fe37a90b373db26cc
 echo "  Alice's incognito account = ${ICGACCOUNTALICE}"
 echo ""
 
-echo "* Create a new incognito account for Bob"
-# ICGACCOUNTBOB=$(${CLIENT} trusted --mrenclave ${MRENCLAVE} new-account)
-ICGACCOUNTBOB=//BobIncognito
-ICGACCOUNTBOB_PUBKEY=0xc24c5b3969d8ec4ca8a655a98dcc136d5d4c29d1206ffe7721e80ebdfa1d0b77
-echo "  Bob's incognito account = ${ICGACCOUNTBOB}"
-echo ""
-
 # Asssert the initial balance of Alice incognito
-# The initial balance of Bob incognito should always be 0, as Bob is newly created
+# We create different (new) accounts for Bob incognito, hence his initial balance is always 0
 BALANCE_INCOGNITO_ALICE=0
 case $TEST in
     first)
         # wait_assert_state ${MRENCLAVE} ${ICGACCOUNTALICE} balance 0 ;;
-        wait_assert_account_state ${MRENCLAVE} ${ICGACCOUNTALICE_PUBKEY} ".data.free" 0 ;;
+        wait_assert_account_state ${MRENCLAVE} ${ICGACCOUNTALICE_PUBKEY} ".data.free" 0
+        ICGACCOUNTBOB=//BobIncognitoFirst
+        ICGACCOUNTBOB_PUBKEY=0xf073e0349517dcd85f4058d22d8bf585e3027b0d9826a4e2294c407aa55b7605 ;;
     second)
         # wait_assert_state ${MRENCLAVE} ${ICGACCOUNTALICE} balance $(( AMOUNT_SHIELD - AMOUNT_TRANSFER - AMOUNT_UNSHIELD ))
         wait_assert_account_state ${MRENCLAVE} ${ICGACCOUNTALICE_PUBKEY} ".data.free" $(( AMOUNT_SHIELD - AMOUNT_TRANSFER - AMOUNT_UNSHIELD ))
-        BALANCE_INCOGNITO_ALICE=$(( AMOUNT_SHIELD - AMOUNT_TRANSFER - AMOUNT_UNSHIELD )) ;;
+        BALANCE_INCOGNITO_ALICE=$(( AMOUNT_SHIELD - AMOUNT_TRANSFER - AMOUNT_UNSHIELD ))
+        ICGACCOUNTBOB=//BobIncognitoSecond
+        ICGACCOUNTBOB_PUBKEY=0x061d0c6eb3e940c885626236050a469eb2d44222f17d80e38d72a9379a073f46 ;;
     *)
         echo "unsupported test mode"
         exit 1 ;;
 esac
+
+echo "* Create a new incognito account for Bob"
+echo "  Bob's incognito account = ${ICGACCOUNTBOB}"
+echo ""
 
 echo "* Shield ${AMOUNT_SHIELD} tokens to Alice's incognito account"
 ${CLIENT} shield-funds //Alice ${ICGACCOUNTALICE} ${AMOUNT_SHIELD} ${MRENCLAVE}
