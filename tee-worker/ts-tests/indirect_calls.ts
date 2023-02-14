@@ -60,13 +60,13 @@ export async function createIdentity(
         expect(events[1].method).to.be.equal('ChallengeCodeGenerated');
         const data0 = events[0].data as any;
         const data1 = events[1].data as any;
-        const [who, _identity, idGraph, challengeCode] = [
+        return decodeIdentityEvent(
+            context.substrate,
             data0.account,
             decryptWithAES(aesKey, data0.identity),
             decryptWithAES(aesKey, data0.idGraph),
-            decryptWithAES(aesKey, data1.code),
-        ];
-        return decodeIdentityEvent(context.substrate, who, _identity, idGraph, challengeCode);
+            decryptWithAES(aesKey, data1.code)
+        );
     }
     return undefined;
 }
