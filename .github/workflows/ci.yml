@@ -398,11 +398,11 @@ jobs:
           - test_name: demo-sidechain
           - test_name: sidechain-benchmark
           # Litentry
-          - test_name: user-shielding-key
-          - test_name: resume-worker
-          - test_name: set-heartbeat-timeout
-          - test_name: vc-test
-          - test_name: identity-test
+          - test_name: lit-user-shielding-key
+          - test_name: lit-resume-worker
+          - test_name: lit-set-heartbeat-timeout
+          - test_name: lit-vc-test
+          - test_name: lit-identity-test
 
     steps:
       - uses: actions/checkout@v3
@@ -441,17 +441,17 @@ jobs:
 
       - name: Integration Test ${{ matrix.test_name }}
         timeout-minutes: 30
-        if: ${{ matrix.test_name != 'resume-worker' }}
+        if: ${{ matrix.test_name != 'lit-resume-worker' }}
         run: |
           cd tee-worker/docker
           docker-compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} -- ${{ matrix.test_name }}
 
       - name: Integration Test ${{ matrix.test_name }}
         timeout-minutes: 30
-        if: ${{ matrix.test_name == 'resume-worker' }}
+        if: ${{ matrix.test_name == 'lit-resume-worker' }}
         run: |
           cd tee-worker/docker
-          docker-compose -f docker-compose.yml -f resume-worker.yml up --no-build --exit-code-from resume-worker --attach resume-worker relaychain-alice relaychain-bob integritee-node resume-worker
+          docker-compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} --attach ${{ matrix.test_name }} relaychain-alice relaychain-bob integritee-node ${{ matrix.test_name }}
 
       - name: Stop docker containers
         run: |
