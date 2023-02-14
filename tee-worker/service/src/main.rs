@@ -287,25 +287,26 @@ fn main() {
 			tests::run_enclave_tests(sub_matches);
 		}
 	} else if let Some(sub_matches) = matches.subcommand_matches("migrate-shard") {
+		// This subcommand `migrate-shard` is only used for manual testing. Maybe deleted later.
 		let old_shard = sub_matches
 			.value_of("old-shard")
-			.and_then(|value| {
+			.map(|value| {
 				let shard_vec = value.from_base58().expect("shard must be hex encoded");
 				let mut shard = [0u8; 32];
 				shard.copy_from_slice(&shard_vec[..]);
-				Some(ShardIdentifier::from_slice(&shard))
+				ShardIdentifier::from_slice(&shard)
 			})
-			.unwrap_or_default();
+			.unwrap();
 
 		let new_shard: ShardIdentifier = sub_matches
 			.value_of("new-shard")
-			.and_then(|value| {
+			.map(|value| {
 				let shard_vec = value.from_base58().expect("shard must be hex encoded");
 				let mut shard = [0u8; 32];
 				shard.copy_from_slice(&shard_vec[..]);
-				Some(ShardIdentifier::from_slice(&shard))
+				ShardIdentifier::from_slice(&shard)
 			})
-			.unwrap_or_default();
+			.unwrap();
 
 		if old_shard == new_shard {
 			println!("old_shard should not be the same as new_shard");
