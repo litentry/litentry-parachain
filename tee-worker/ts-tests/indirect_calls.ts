@@ -62,7 +62,7 @@ export async function createIdentity(
         const data1 = events[1].data as any;
         return decodeIdentityEvent(
             context.substrate,
-            data0.account,
+            data0.account.toHex(),
             decryptWithAES(aesKey, data0.identity),
             decryptWithAES(aesKey, data0.idGraph),
             decryptWithAES(aesKey, data1.code)
@@ -89,7 +89,12 @@ export async function removeIdentity(
         const events = await listenEvent(context.substrate, 'identityManagement', ['IdentityRemoved']);
         expect(events.length).to.be.equal(1);
         const data = events[0].data as any;
-        return decodeIdentityEvent(context.substrate, data.account, data.identity, data.idGraph);
+        return decodeIdentityEvent(
+            context.substrate,
+            data.account.toHex(),
+            decryptWithAES(aesKey, data.identity),
+            decryptWithAES(aesKey, data.idGraph)
+        );
     }
     return undefined;
 }
@@ -121,7 +126,12 @@ export async function verifyIdentity(
         const events = await listenEvent(context.substrate, 'identityManagement', ['IdentityVerified']);
         expect(events.length).to.be.equal(1);
         const data = events[0].data as any;
-        return decodeIdentityEvent(context.substrate, data.account, data.identity, data.idGraph);
+        return decodeIdentityEvent(
+            context.substrate,
+            data.account.toHex(),
+            decryptWithAES(aesKey, data.identity),
+            decryptWithAES(aesKey, data.idGraph)
+        );
     }
     return undefined;
 }
