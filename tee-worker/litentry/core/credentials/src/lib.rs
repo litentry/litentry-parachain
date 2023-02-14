@@ -412,8 +412,8 @@ impl Credential {
 
 		let minimum_amount =
 			AssertionLogic::new_item("$minimum_amount", Op::GreaterEq, &minimum_amount);
-		let from_date = AssertionLogic::new_item("$from_date", Op::GreaterEq, &from_date);
-		let to_date = AssertionLogic::new_item("$to_date", Op::LessEq, &to_date);
+		let from_date = AssertionLogic::new_item("$from_date", Op::LessThan, &from_date);
+		let to_date = AssertionLogic::new_item("$to_date", Op::GreaterEq, &to_date);
 
 		let assertion = AssertionLogic::new_and()
 			.add_item(minimum_amount)
