@@ -94,7 +94,7 @@ pub mod pallet {
 		VCDisabled { index: VCIndex },
 		// a VC is revoked on chain
 		VCRevoked { index: VCIndex },
-		VCNotExist,
+		VCNotExist { index: VCIndex },
 		// event that should be triggered by TEECallOrigin
 		// a VC is just issued
 		VCIssued { account: T::AccountId, index: VCIndex, vc: AesOutput },
@@ -176,7 +176,7 @@ pub mod pallet {
 						Self::deposit_event(Event::VCDisabled { index });
 					},
 					None => {
-						Self::deposit_event(Event::VCNotExist);
+						Self::deposit_event(Event::VCNotExist { index });
 					},
 				}
 

@@ -113,7 +113,9 @@ fn disable_vc_works() {
 fn disable_vc_with_non_existent_vc_event() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(VCManagement::disable_vc(RuntimeOrigin::signed(1), VC_INDEX));
-		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::VCNotExist));
+		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::VCNotExist {
+			index: VC_INDEX,
+		}));
 	});
 }
 
