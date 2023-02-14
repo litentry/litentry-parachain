@@ -5,7 +5,7 @@ import subprocess
 from subprocess import Popen, STDOUT
 from typing import Union, TextIO, IO
 
-from .helpers import run_subprocess, setup_working_dir, copy_config_files, mkdir_p
+from .helpers import run_subprocess, setup_working_dir, mkdir_p
 
 
 class Worker:
@@ -43,8 +43,7 @@ class Worker:
 
     def setup_cwd(self):
         mkdir_p(self.cwd)
-        setup_working_dir(self.source_dir, self.cwd)
-        copy_config_files(self.config_dir, self.cwd)
+        setup_working_dir(self.source_dir, self.cwd)        
 
     def init_clean(self):
         """ Purges all db files first and initializes the environment afterwards. """
