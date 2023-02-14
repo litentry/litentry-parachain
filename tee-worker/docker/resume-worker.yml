@@ -9,7 +9,9 @@ services:
       context: ..
       dockerfile: build.Dockerfile
       target: deployed-worker
-    depends_on: ['integritee-node']
+    depends_on:
+      integritee-node:
+        condition: service_healthy
     networks:
       - integritee-test-network
     entrypoint: "bash -c '/install_node.sh && cd /ts-tests && yarn install && yarn run test-resuming-worker:staging'"
