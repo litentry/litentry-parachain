@@ -260,7 +260,7 @@ mod tests {
 
 	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
-		let url = run(Arc::new(|_: &Identity| ChallengeCode::default()), 0).unwrap();
+		let url = run(Arc::new(|_:&AccountId,_: &Identity| ChallengeCode::default()), 0).unwrap();
 		G_DATA_PROVIDERS.write().unwrap().set_graphql_url(url.clone());
 	}
 
