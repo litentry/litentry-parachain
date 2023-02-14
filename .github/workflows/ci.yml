@@ -230,7 +230,7 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
         run: >
-          ocker build -t litentry/integritee-cli
+          docker build -t litentry/integritee-cli
           --target deployed-client
           --build-arg WORKER_MODE_ARG=sidechain --build-arg ADDITIONAL_FEATURES_ARG=
           -f tee-worker/build.Dockerfile .
