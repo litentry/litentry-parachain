@@ -103,7 +103,7 @@ RUN ldd /usr/local/bin/integritee-cli && \
 
 ## ts-tests
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash
-RUN apt-get install -y nodejs
+RUN apt-get install -y nodejs jq
 RUN npm install -g yarn
 
 ENTRYPOINT ["/usr/local/bin/integritee-cli"]

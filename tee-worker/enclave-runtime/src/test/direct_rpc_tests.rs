@@ -27,6 +27,7 @@ use itc_tls_websocket_server::{ConnectionToken, WebSocketMessageHandler};
 use itp_rpc::{RpcRequest, RpcReturnValue};
 use itp_stf_executor::{getter_executor::GetterExecutor, mocks::GetStateMock};
 use itp_stf_state_observer::mock::ObserveStateMock;
+use itp_test::mock::handle_state_mock::HandleStateMock;
 use itp_top_pool_author::mocks::AuthorApiMock;
 use itp_types::{AccountId, DirectRequestStatus, Request, ShardIdentifier};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
@@ -40,12 +41,14 @@ pub fn get_state_request_works() {
 	let connection_registry = Arc::new(ConnectionRegistry::<Hash, ConnectionToken>::new());
 	let watch_extractor = Arc::new(create_determine_watch::<Hash>());
 
+	// HandleStateMock::default();
 	let state: TestState = 78234u64;
 	let state_observer = Arc::new(ObserveStateMock::<TestState>::new(state));
 	let getter_executor =
 		Arc::new(GetterExecutor::<_, GetStateMock<TestState>>::new(state_observer));
 	let top_pool_author = Arc::new(AuthorApiMock::default());
-	let io_handler = public_api_rpc_handler(top_pool_author, getter_executor);
+	let io_handler =
+		public_api_rpc_handler(top_pool_author, getter_executor, None::<Arc<HandleStateMock>>);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 
 	let getter = Getter::trusted(TrustedGetterSigned::new(
