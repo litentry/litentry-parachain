@@ -94,11 +94,13 @@ fi
 echo ""
 echo "* Create a new incognito account for Alice"
 ICGACCOUNTALICE=//AliceIncognito
+ICGACCOUNTALICE_PUBKEY=0x50503350955afe8a107d6f115dc253eb5d75a3fe37a90b373db26cc12e3c6661
 echo "  Alice's incognito account = ${ICGACCOUNTALICE}"
 echo ""
 
 echo "* Create a new incognito account for Bob"
 ICGACCOUNTBOB=//BobIncognito
+ICGACCOUNTBOB_PUBKEY=0xc24c5b3969d8ec4ca8a655a98dcc136d5d4c29d1206ffe7721e80ebdfa1d0b77
 echo "  Bob's incognito account = ${ICGACCOUNTBOB}"
 echo ""
 
@@ -110,7 +112,9 @@ echo ""
 ${CLIENTWORKER1} trusted --mrenclave ${MRENCLAVE} --direct set-balance ${ICGACCOUNTBOB} 0
 
 echo "Get balance of Alice's incognito account (on worker 1)"
-${CLIENTWORKER1} trusted --mrenclave ${MRENCLAVE} balance ${ICGACCOUNTALICE}
+# ${CLIENTWORKER1} trusted --mrenclave ${MRENCLAVE} balance ${ICGACCOUNTALICE}
+# ICGACCOUNTALICE's public key is 0x50503350955afe8a107d6f115dc253eb5d75a3fe37a90b373db26cc12e3c6661
+${CLIENTWORKER1} trusted --mrenclave ${MRENCLAVE} get-storage System Account ${ICGACCOUNTALICE_PUBKEY}
 echo ""
 
 # Send funds from Alice to Bobs account, on worker 1.
@@ -129,17 +133,19 @@ $CLIENTWORKER2 trusted --mrenclave ${MRENCLAVE} --direct transfer ${ICGACCOUNTAL
 echo ""
 
 # Prevent getter being executed too early and returning an outdated result, before the transfer was made.
-echo "* Waiting 2 seconds"
-sleep 2
+echo "* Waiting 6 seconds"
+sleep 6
 echo ""
 
 echo "* Get balance of Alice's incognito account (on worker 1)"
-ALICE_BALANCE=$(${CLIENTWORKER1} trusted --mrenclave ${MRENCLAVE} balance ${ICGACCOUNTALICE} | xargs)
+# ALICE_BALANCE=$(${CLIENTWORKER1} trusted --mrenclave ${MRENCLAVE} balance ${ICGACCOUNTALICE} | xargs)
+ALICE_BALANCE=$(${CLIENTWORKER1} trusted --mrenclave ${MRENCLAVE} get-storage System Account ${ICGACCOUNTALICE_PUBKEY} | jq ".data.free" | xargs)
 echo "$ALICE_BALANCE"
 echo ""
 
 echo "* Get balance of Bob's incognito account (on worker 1)"
-BOB_BALANCE=$(${CLIENTWORKER1} trusted --mrenclave ${MRENCLAVE} balance ${ICGACCOUNTBOB} | xargs)
+# BOB_BALANCE=$(${CLIENTWORKER1} trusted --mrenclave ${MRENCLAVE} balance ${ICGACCOUNTBOB} | xargs)
+BOB_BALANCE=$(${CLIENTWORKER1} trusted --mrenclave ${MRENCLAVE} get-storage System Account ${ICGACCOUNTBOB_PUBKEY} | jq ".data.free" | xargs)
 echo "$BOB_BALANCE"
 echo ""
 
