@@ -7,12 +7,13 @@ ROOTDIR=$(git rev-parse --show-toplevel)
 ROOTDIR="${ROOTDIR}/tee-worker"
 
 function usage() {
-    echo "Usage: $0 <dev|staging|prod/mock>"
+    echo "Usage: $0 <dev|staging|prod|mock>"
     echo ""
     echo "  All mode apply to ${PARACHAIN} context."
     echo "      dev: start worker(s) together with local ${PARACHAIN} for development"
     echo "  staging: start worker(s) sync with staging ${PARACHAIN} on tee-staging server"
     echo "     prod: start worker(s) sync with production ${PARACHAIN} on polkadot.js"
+    echo "     mock: start worker(s) together with local ${PARACHAIN} for development"
 }
 
 function start_local_parachain() {
@@ -24,7 +25,7 @@ function start_local_parachain() {
 }
 
 function start_worker_for_dev() {
-    # start_local_parachain
+    start_local_parachain
     cd ${ROOTDIR}
     worker_num=2
     echo "------------------------------------------------------------"
@@ -36,7 +37,7 @@ function start_worker_for_staging() {
     cd ${ROOTDIR}
     worker_num=2
     # staging_parachain_url
-    url="wss://parachain-eu-0.staging.litentry.io"
+    url="wss://tee-staging.litentry.io"
     # staging_parachain_port
     port=443
     echo "------------------------------------------------------------"
@@ -57,7 +58,7 @@ function start_worker_for_prod() {
 }
 
 function start_worker_for_mock() {
-    # start_local_parachain
+    start_local_parachain
     cd ${ROOTDIR}
     worker_num=2
     echo "------------------------------------------------------------"
