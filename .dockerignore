@@ -4,3 +4,18 @@
 .githooks/
 **/target
 **/ts-tests
+
+# stuff under tee-worker/
+tee-worker/.dockerignore
+tee-worker/bin/*.bin
+tee-worker/bin/key.txt
+tee-worker/bin/spid.txt
+tee-worker/bin/sidechain_db/
+tee-worker/docker/
+tee-worker/docs/
+tee-worker/local-setup/
+tee-worker/scripts/
+tee-worker/target/
+tee-worker/tmp/
+tee-worker/*.Dockerfile
+tee-worker/Dockerfile
