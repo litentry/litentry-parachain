@@ -147,6 +147,14 @@ export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrins
 // Subscribe to the chain until we get the first specified event with given `section` and `methods`.
 // We can listen to multiple `methods` as long as they are emitted in the same block.
 // The event consumer should do the decryption optionaly as it's event specific
+//
+// TODO: occassionally multiple events for an extrinsic are not included in the same block,
+//       e.g. `create_identity` => `IdentityCreated`, `ChallengeCodeGenerated`
+//       this is because the extrinsics are submitted asynchronously and in rare cases these two
+//       extrinsics are included in the different parentchain blocks
+// Solutions:
+//  1. (pallet change) use one single extrinsic to emit both events, if they should always be triggered on pair
+//  2. (ts-test change) only resolve this promise when both events are received, but not necessarily in the same block
 export async function listenEvent(api: ApiPromise, section: string, methods: string[]) {
     return new Promise<Event[]>(async (resolve, reject) => {
         let startBlock = 0;
@@ -157,11 +165,16 @@ export async function listenEvent(api: ApiPromise, section: string, methods: str
                 reject('timeout');
                 return;
             }
-            console.log(`--------- block #${header.number} ---------`);
+            console.log(`\n--------- block #${header.number}, hash ${header.hash} ---------\n`);
             const apiAt = await api.at(header.hash);
 
             const records: EventRecord[] = (await apiAt.query.system.events()) as any;
-            records.forEach((e, i) => console.log(`Event[${i}]: ${e.event.toHuman()}`));
+            records.forEach((e, i) => {
+                const s = (e.toHuman() as any).event.section;
+                const m = (e.toHuman() as any).event.method;
+                const d = e.event.data;
+                console.log(`Event[${i}]: ${s}.${m} ${d}`);
+            });
             const events = records.filter(
                 ({ phase, event }) =>
                     phase.isApplyExtrinsic && section === event.section && methods.includes(event.method)

@@ -52,19 +52,19 @@ export async function createIdentity(
 
     if (listening) {
         const events = await listenEvent(context.substrate, 'identityManagement', [
-            'ChallengeCodeGenerated',
             'IdentityCreated',
+            'ChallengeCodeGenerated',
         ]);
         expect(events.length).to.be.equal(2);
-        expect(events[0].method).to.be.equal('ChallengeCodeGenerated');
-        expect(events[1].method).to.be.equal('IdentityCreated');
+        expect(events[0].method).to.be.equal('IdentityCreated');
+        expect(events[1].method).to.be.equal('ChallengeCodeGenerated');
         const data0 = events[0].data as any;
         const data1 = events[1].data as any;
         const [who, _identity, idGraph, challengeCode] = [
-            data1.account,
-            decryptWithAES(aesKey, data1.identity),
-            decryptWithAES(aesKey, data1.idGraph),
-            decryptWithAES(aesKey, data0.code),
+            data0.account,
+            decryptWithAES(aesKey, data0.identity),
+            decryptWithAES(aesKey, data0.idGraph),
+            decryptWithAES(aesKey, data1.code),
         ];
         return decodeIdentityEvent(context.substrate, who, _identity, idGraph, challengeCode);
     }
