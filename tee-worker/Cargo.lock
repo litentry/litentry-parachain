@@ -4540,6 +4540,7 @@ checksum = "fad582f4b9e86b6caa621cabeb0963332d92eea04729ab12892c2533951e6440"
 name = "itp-api-client-extensions"
 version = "0.9.0"
 dependencies = [
+ "hex 0.4.3",
  "itp-types",
  "parity-scale-codec",
  "sp-core",

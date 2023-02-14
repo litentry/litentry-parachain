@@ -403,8 +403,6 @@ pub mod pallet {
 		EmptyEnclaveRegistry,
 		/// Can not found the desired scheduled enclave.
 		ScheduledEnclaveNotExist,
-		/// Enclave already stored in scheduled list
-		ScheduledEnclaveAlreadyExist,
 		/// Enclave not in the scheduled list, therefore unexpected.
 		EnclaveNotInSchedule,
 	}

@@ -87,6 +87,9 @@ async fn get_enclave_url_of_first_registered<NodeApi: PalletTeerexApi, EnclaveAp
 ) -> Result<String> {
 	let self_mr_enclave = enclave_api.get_mrenclave()?;
 	let all_scheduled_mr_enclaves = node_api.all_schedule_mr_enclaves(None)?;
+	if all_scheduled_mr_enclaves.is_empty() {
+		return Err(Error::NoParachainScheduledMrEnclaves)
+	}
 	if !all_scheduled_mr_enclaves.contains(&self_mr_enclave) {
 		return Err(Error::InvalidMrEnclave)
 	}

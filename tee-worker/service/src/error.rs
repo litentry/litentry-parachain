@@ -52,6 +52,8 @@ pub enum Error {
 	MissingLastFinalizedBlock,
 	#[error("Current enclave is not included in the parentchain")]
 	InvalidMrEnclave,
+	#[error("Parachain scheduled mrenclaves is empty")]
+	NoParachainScheduledMrEnclaves,
 	#[error("{0}")]
 	Custom(Box<dyn std::error::Error + Sync + Send + 'static>),
 }
