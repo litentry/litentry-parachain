@@ -157,10 +157,11 @@ export async function listenEvent(api: ApiPromise, section: string, methods: str
                 reject('timeout');
                 return;
             }
-            console.log(`--------- block #${header.number}, hash ${header.hash} ---------`);
+            console.log(`--------- block #${header.number} ---------`);
             const apiAt = await api.at(header.hash);
 
             const records: EventRecord[] = (await apiAt.query.system.events()) as any;
+            records.forEach((e, i) => console.log(`Event[${i}]: ${e.event.toHuman()}`));
             const events = records.filter(
                 ({ phase, event }) =>
                     phase.isApplyExtrinsic && section === event.section && methods.includes(event.method)
