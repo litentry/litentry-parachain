@@ -110,12 +110,12 @@ fn disable_vc_works() {
 }
 
 #[test]
-fn disable_vc_with_non_existent_vc_fails() {
+fn disable_vc_with_non_existent_vc_event() {
 	new_test_ext().execute_with(|| {
-		assert_noop!(
-			VCManagement::disable_vc(RuntimeOrigin::signed(1), VC_INDEX),
-			Error::<Test>::VCNotExist
-		);
+		assert_ok!(VCManagement::disable_vc(RuntimeOrigin::signed(1), VC_INDEX));
+		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::VCNotExist {
+			index: VC_INDEX,
+		}));
 	});
 }
 
@@ -133,6 +133,7 @@ fn disable_vc_with_other_subject_fails() {
 			VCManagement::disable_vc(RuntimeOrigin::signed(1), VC_HASH),
 			Error::<Test>::VCSubjectMismatch
 		);
+
 		assert_eq!(VCManagement::vc_registry(VC_INDEX).unwrap().status, Status::Active);
 	});
 }
