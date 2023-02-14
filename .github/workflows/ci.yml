@@ -220,20 +220,20 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
         run: >
-          docker build -t litentry/integritee-worker
+          cd tee-worker && docker build -t litentry/integritee-worker
           --target deployed-worker
           --build-arg WORKER_MODE_ARG=sidechain --build-arg ADDITIONAL_FEATURES_ARG=
-          -f tee-worker/build.Dockerfile .
+          -f build.Dockerfile .
 
       - name: Build cli (sidechain)
         if: needs.check-file-change.outputs.tee_src == 'true'
         env:
           DOCKER_BUILDKIT: 1
         run: >
-          docker build -t litentry/integritee-cli
+          cd tee-worker && docker build -t litentry/integritee-cli
           --target deployed-client
           --build-arg WORKER_MODE_ARG=sidechain --build-arg ADDITIONAL_FEATURES_ARG=
-          -f tee-worker/build.Dockerfile .
+          -f build.Dockerfile .
 
       - name: Pull and tag worker and cli image optionally
         if: needs.check-file-change.outputs.tee_src == 'false'
