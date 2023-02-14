@@ -1,7 +1,9 @@
-import { encryptWithTeeShieldingKey, listenEncryptedEvents, sendTxUntilInBlock } from './utils';
+import { encryptWithTeeShieldingKey, listenEvent, sendTxUntilInBlock } from './utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { HexString } from '@polkadot/util/types';
 import { IntegrationTestContext } from './type-definitions';
+import { expect } from 'chai';
+
 export async function setErrorUserShieldingKey(
     context: IntegrationTestContext,
     signer: KeyringPair,
@@ -9,20 +11,16 @@ export async function setErrorUserShieldingKey(
     listening: boolean
 ): Promise<string | undefined> {
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, aesKey).toString('hex');
-
     const tx = context.substrate.tx.identityManagement.setUserShieldingKey(context.shard, `0x${ciphertext}`);
 
     await sendTxUntilInBlock(context.substrate, tx, signer);
 
     if (listening) {
-        const result = await listenEncryptedEvents(context, aesKey, {
-            module: 'identityManagement',
-            method: 'userShieldingKeySet',
-            event: 'UserShieldingKeySet',
-            errorEvent: 'SetUserShieldingKeyHandlingFailed',
-        });
-
-        return result as string;
+        const events = await listenEvent(context.substrate, 'identityManagement', [
+            'SetUserShieldingKeyHandlingFailed',
+        ]);
+        expect(events.length).to.be.equal(1);
+        return events[0].method as string;
     }
     return undefined;
 }
@@ -44,14 +42,9 @@ export async function createErrorIdentity(
     await sendTxUntilInBlock(context.substrate, tx, signer);
 
     if (listening) {
-        const result = await listenEncryptedEvents(context, aesKey, {
-            module: 'identityManagement',
-            method: 'identityCreated',
-            event: 'IdentityCreated',
-            errorEvent: 'CreateIdentityHandlingFailed',
-        });
-
-        return result as string;
+        const events = await listenEvent(context.substrate, 'identityManagement', ['CreateIdentityHandlingFailed']);
+        expect(events.length).to.be.equal(1);
+        return events[0].method as string;
     }
     return undefined;
 }
