@@ -215,8 +215,7 @@ fn main() {
 					id: 1,
 				};
 
-				let r = client.get(serde_json::to_string(&request).unwrap().as_str());
-				match r {
+				match client.get(serde_json::to_string(&request).unwrap().as_str()) {
 					Ok(response) => {
 						let response: RpcResponse = serde_json::from_str(&response).unwrap();
 						if let Ok(return_value) =
