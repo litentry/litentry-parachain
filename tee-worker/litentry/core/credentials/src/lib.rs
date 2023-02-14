@@ -40,7 +40,8 @@ use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
-	format_assertion_from_date, format_assertion_to_date, Assertion, ParentchainBlockNumber,
+	format_assertion_from_date, format_assertion_to_date, Assertion, Balance,
+	ParentchainBlockNumber,
 };
 use log::*;
 use scale_info::TypeInfo;
@@ -334,15 +335,17 @@ impl Credential {
 				credential.credential_subject.values.clear();
 				Ok(credential)
 			},
-			Assertion::A2(_, _) => {
+			Assertion::A2(_) => {
 				let raw = include_str!("templates/a2.json");
 				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				credential.credential_subject.assertions.clear();
 				credential.credential_subject.values.clear();
 				Ok(credential)
 			},
-			Assertion::A3(_, _) => {
+			Assertion::A3(_, _, _) => {
 				let raw = include_str!("templates/a3.json");
 				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				credential.credential_subject.assertions.clear();
 				credential.credential_subject.values.clear();
 				Ok(credential)
 			},
@@ -354,6 +357,13 @@ impl Credential {
 				credential.credential_subject.values.clear();
 				credential.add_assertion_hodler(*minimum_amount);
 
+				Ok(credential)
+			},
+			Assertion::A6 => {
+				let raw = include_str!("templates/a6.json");
+				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				credential.credential_subject.assertions.clear();
+				credential.credential_subject.values.clear();
 				Ok(credential)
 			},
 			Assertion::A7(minimum_amount) => {
@@ -381,12 +391,21 @@ impl Credential {
 
 				Ok(credential)
 			},
+			Assertion::A11(minimum_amount) => {
+				let raw = include_str!("templates/a11.json");
+				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				credential.credential_subject.assertions.clear();
+				credential.credential_subject.values.clear();
+				credential.add_assertion_hodler(*minimum_amount);
+
+				Ok(credential)
+			},
 			_ => Err(Error::UnsupportedAssertion),
 		}
 	}
 
-	// Including assertion 4/7/10
-	pub fn add_assertion_hodler(&mut self, minimum_amount: u128) {
+	// Including assertion 4/7/10/11
+	pub fn add_assertion_hodler(&mut self, minimum_amount: Balance) {
 		let minimum_amount = format!("{}", minimum_amount);
 		let from_date = format_assertion_from_date();
 		let to_date = format_assertion_to_date();
@@ -400,6 +419,46 @@ impl Credential {
 			.add_item(minimum_amount)
 			.add_item(from_date)
 			.add_item(to_date);
+		self.credential_subject.assertions.push(assertion);
+	}
+
+	pub fn add_assertion_a2(&mut self, guild_id: String) {
+		let verified = AssertionLogic::new_item("$verified_discord_account", Op::GreaterThan, "0");
+		let has_joined = AssertionLogic::new_item("$has_joined", Op::Equal, "true");
+		let guild = AssertionLogic::new_item("$discord_guild_id", Op::Equal, guild_id.as_str());
+
+		let assertion = AssertionLogic::new_and()
+			.add_item(verified)
+			.add_item(has_joined)
+			.add_item(guild);
+		self.credential_subject.assertions.push(assertion);
+	}
+
+	pub fn add_assertion_a3(&mut self, guild_id: String, channel_id: String, role_id: String) {
+		let has_role = AssertionLogic::new_item("$has_role", Op::Equal, "true");
+		let has_commented = AssertionLogic::new_item("$has_commented", Op::Equal, "true");
+		let guild = AssertionLogic::new_item("$discord_guild_id", Op::Equal, guild_id.as_str());
+		let channel =
+			AssertionLogic::new_item("$discord_channel_id", Op::Equal, channel_id.as_str());
+		let role = AssertionLogic::new_item("$discord_role_id", Op::Equal, role_id.as_str());
+
+		let assertion = AssertionLogic::new_and()
+			.add_item(has_role)
+			.add_item(has_commented)
+			.add_item(guild)
+			.add_item(channel)
+			.add_item(role);
+		self.credential_subject.assertions.push(assertion);
+	}
+
+	pub fn add_assertion_a6(&mut self, min: u64, max: u64) {
+		let min = format!("{}", min);
+		let max = format!("{}", max);
+
+		let follower_min = AssertionLogic::new_item("$total_followers", Op::GreaterThan, &min);
+		let follower_max = AssertionLogic::new_item("$total_followers", Op::LessEq, &max);
+
+		let assertion = AssertionLogic::new_and().add_item(follower_min).add_item(follower_max);
 		self.credential_subject.assertions.push(assertion);
 	}
 

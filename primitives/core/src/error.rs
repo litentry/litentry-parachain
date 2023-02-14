@@ -55,17 +55,19 @@ impl frame_support::traits::PalletError for IMPError {
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 pub enum VCMPError {
 	HttpRequestFailed(ErrorString),
-
 	// Indirect call handling errors when importing parachain blocks
 	RequestVCHandlingFailed,
-
+	// UTF8Error
+	ParseError,
 	// Assertion
 	Assertion1Failed,
 	Assertion2Failed,
 	Assertion3Failed,
 	Assertion4Failed,
 	Assertion5Failed,
+	Assertion6Failed,
 	Assertion7Failed,
 	Assertion8Failed,
 	Assertion10Failed,
+	Assertion11Failed,
 }
