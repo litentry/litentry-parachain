@@ -67,7 +67,8 @@ echo ""
 # the parentchain token is 12 decimal
 UNIT=$(( 10 ** 12 ))
 
-# make these amounts greater than ED
+# we have to make these amounts greater than ED, see
+# https://github.com/litentry/litentry-parachain/issues/1162
 AMOUNT_SHIELD=$(( 6 * UNIT ))
 AMOUNT_TRANSFER=$(( 2 * UNIT ))
 AMOUNT_UNSHIELD=$(( 1 * UNIT ))
@@ -111,8 +112,8 @@ function wait_assert_state()
 #   wait_assert_account_state <mrenclave> <account-pub-key> <jq-filter> <expected-state>
 function wait_assert_account_state()
 {
-    for i in $(seq 1 $WAIT_ROUNDS); do        
-        state=$(${CLIENT} trusted --mrenclave "$1" get-storage System Account "$2" | jq "$3")        
+    for i in $(seq 1 $WAIT_ROUNDS); do
+        state=$(${CLIENT} trusted --mrenclave "$1" get-storage System Account "$2" | jq "$3")
         if [ $state -eq "$4" ]; then
             return
         else
