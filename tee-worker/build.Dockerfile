@@ -85,6 +85,11 @@ FROM ubuntu:20.04 AS runner
 
 RUN apt update && apt install -y libssl-dev iproute2 curl
 
+## ts-tests
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash
+RUN apt-get install -y nodejs jq
+RUN npm install -g yarn
+
 
 ### Deployed CLI client
 ##################################################
@@ -101,11 +106,6 @@ RUN mkdir ${LOG_DIR}
 RUN ldd /usr/local/bin/integritee-cli && \
 	/usr/local/bin/integritee-cli --version
 
-## ts-tests
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash
-RUN apt-get install -y nodejs jq
-RUN npm install -g yarn
-
 ENTRYPOINT ["/usr/local/bin/integritee-cli"]
 
 
@@ -121,7 +121,6 @@ WORKDIR /usr/local/bin
 
 COPY --from=builder /opt/sgxsdk/lib64 /opt/sgxsdk/lib64
 COPY --from=builder /root/work/tee-worker/bin/* ./
-COPY --from=builder /root/work/tee-worker/local-setup/worker-config-*.json ./
 COPY --from=builder /lib/x86_64-linux-gnu /lib/x86_64-linux-gnu
 
 RUN touch spid.txt key.txt

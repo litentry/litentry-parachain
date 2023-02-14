@@ -5,7 +5,7 @@ import subprocess
 from subprocess import Popen, STDOUT
 from typing import Union, TextIO, IO
 
-from .helpers import run_subprocess, setup_working_dir, copy_config_files, mkdir_p
+from .helpers import run_subprocess, setup_working_dir, mkdir_p
 
 
 class Worker:
@@ -13,7 +13,6 @@ class Worker:
                  worker_bin: str = './integritee-service',
                  cwd: str = './',
                  source_dir: str = './',
-                 config_dir: str = './',
                  std_err: Union[None, int, IO] = STDOUT,
                  ):
         """
@@ -36,7 +35,6 @@ class Worker:
         self.cwd = cwd
         self.cli = [worker_bin]
         self.source_dir = source_dir
-        self.config_dir = config_dir
         self.std_err = std_err
         # cache fields
         self._mrenclave = None
@@ -44,7 +42,6 @@ class Worker:
     def setup_cwd(self):
         mkdir_p(self.cwd)
         setup_working_dir(self.source_dir, self.cwd)
-        copy_config_files(self.config_dir, self.cwd)
 
     def init_clean(self):
         """ Purges all db files first and initializes the environment afterwards. """
