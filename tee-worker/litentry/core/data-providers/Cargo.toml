@@ -37,6 +37,7 @@ litentry-primitives = { path = "../../primitives", default-features = false }
 [dev-dependencies]
 env_logger = "0.10.0"
 lc-mock-server = { path = "../mock-server" }
+itp-stf-primitives = { path = "../../../core-primitives/stf-primitives" }
 
 [features]
 default = ["std"]

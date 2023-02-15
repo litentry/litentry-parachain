@@ -26,7 +26,7 @@ pub(crate) fn query_tweet<F>(
 	func: Arc<F>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone
 where
-	F: Fn(&Identity) -> ChallengeCode + Send + Sync + 'static,
+	F: Fn(&AccountId, &Identity) -> ChallengeCode + Send + Sync + 'static,
 {
 	warp::get()
 		.and(warp::path!("2" / "tweets" / u32))
@@ -48,7 +48,7 @@ where
 					network: Web2Network::Twitter,
 					address: IdentityString::try_from("mock_user".as_bytes().to_vec()).unwrap(),
 				};
-				let chanllenge_code = func(&twitter_identity);
+				let chanllenge_code = func(&account_id, &twitter_identity);
 				log::info!(
 					"query_tweet, challenge_code:{:?}",
 					sp_core::hexdisplay::HexDisplay::from(&chanllenge_code)
@@ -79,7 +79,7 @@ pub(crate) fn query_retweet<F>(
 	func: Arc<F>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone
 where
-	F: Fn(&Identity) -> ChallengeCode + Send + Sync + 'static,
+	F: Fn(&AccountId, &Identity) -> ChallengeCode + Send + Sync + 'static,
 {
 	warp::get()
 		.and(warp::path!("2" / "tweets" / "search" / "recent"))
@@ -99,12 +99,15 @@ where
 				let author_id = "ericzhangeth";
 				let id = "100";
 
-				let account_id = AccountId::new([0u8; 32]);
+				let account_id = AccountId::new([
+					212, 53, 147, 199, 21, 253, 211, 28, 97, 20, 26, 189, 4, 169, 159, 214, 130,
+					44, 133, 88, 133, 76, 205, 227, 154, 86, 132, 231, 165, 109, 162, 125,
+				]); // Alice
 				let twitter_identity = Identity::Web2 {
 					network: Web2Network::Twitter,
 					address: IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
 				};
-				let chanllenge_code = func(&twitter_identity);
+				let chanllenge_code = func(&account_id, &twitter_identity);
 				let payload = mock_tweet_payload(&account_id, &twitter_identity, &chanllenge_code);
 
 				let tweets = vec![Tweet {
