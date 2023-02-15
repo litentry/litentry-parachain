@@ -51,7 +51,7 @@ pub enum AssertionLogic {
 	Item {
 		src: String,
 		op: Op,
-		dsc: String,
+		dst: String,
 	},
 	And {
 		#[serde(rename = "and")]
@@ -72,8 +72,8 @@ impl AssertionLogic {
 		Self::Or { items: vec![] }
 	}
 
-	pub fn new_item<T: ToString>(src: T, op: Op, dsc: T) -> Self {
-		Self::Item { src: src.to_string(), op, dsc: dsc.to_string() }
+	pub fn new_item<T: ToString>(src: T, op: Op, dst: T) -> Self {
+		Self::Item { src: src.to_string(), op, dst: dst.to_string() }
 	}
 	pub fn add_item(mut self, item: AssertionLogic) -> Self {
 		match &mut self {
@@ -92,13 +92,13 @@ pub trait Logic {
 impl Logic for AssertionLogic {
 	fn eval(&self) -> bool {
 		match self {
-			Self::Item { src, op, dsc } => match op {
-				Op::GreaterThan => src > dsc,
-				Op::LessThan => src < dsc,
-				Op::GreaterEq => src >= dsc,
-				Op::LessEq => src <= dsc,
-				Op::Equal => src == dsc,
-				Op::NotEq => src != dsc,
+			Self::Item { src, op, dst } => match op {
+				Op::GreaterThan => src > dst,
+				Op::LessThan => src < dst,
+				Op::GreaterEq => src >= dst,
+				Op::LessEq => src <= dst,
+				Op::Equal => src == dst,
+				Op::NotEq => src != dst,
 			},
 			Self::And { items } => items.iter().all(|item| item.eval()),
 			Self::Or { items } => items.iter().any(|item| item.eval()),
@@ -118,12 +118,12 @@ mod tests {
                     {
                         "src":"$web2_account_cnt",
                         "op":">=",
-                        "dsc":"7"
+                        "dst":"7"
                     },
                     {
                         "src":"$web3_account_cnt",
                         "op":">",
-                        "dsc":"3"
+                        "dst":"3"
                     }
                 ]
             }

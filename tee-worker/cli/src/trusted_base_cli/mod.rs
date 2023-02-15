@@ -18,6 +18,7 @@
 use crate::{
 	trusted_base_cli::commands::{
 		balance::BalanceCommand,
+		get_storage::GetStorageCommand,
 		litentry::{
 			set_challenge_code::SetChallengeCodeCommand,
 			set_user_shielding_preflight::SetUserShieldingKeyPreflightCommand,
@@ -74,6 +75,8 @@ pub enum TrustedBaseCommand {
 	VerifyIdentityPreflight(VerifyIdentityPreflightCommand),
 
 	SetUserShieldingKeyPreflight(SetUserShieldingKeyPreflightCommand),
+
+	GetStorage(GetStorageCommand),
 }
 
 impl TrustedBaseCommand {
@@ -91,6 +94,7 @@ impl TrustedBaseCommand {
 			TrustedBaseCommand::SetChallengeCode(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::VerifyIdentityPreflight(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::SetUserShieldingKeyPreflight(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::GetStorage(cmd) => cmd.run(cli, trusted_cli),
 		}
 	}
 }
