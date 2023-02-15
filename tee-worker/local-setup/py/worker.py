@@ -13,7 +13,6 @@ class Worker:
                  worker_bin: str = './integritee-service',
                  cwd: str = './',
                  source_dir: str = './',
-                 config_dir: str = './',
                  std_err: Union[None, int, IO] = STDOUT,
                  ):
         """
@@ -36,14 +35,13 @@ class Worker:
         self.cwd = cwd
         self.cli = [worker_bin]
         self.source_dir = source_dir
-        self.config_dir = config_dir
         self.std_err = std_err
         # cache fields
         self._mrenclave = None
 
     def setup_cwd(self):
         mkdir_p(self.cwd)
-        setup_working_dir(self.source_dir, self.cwd)        
+        setup_working_dir(self.source_dir, self.cwd)
 
     def init_clean(self):
         """ Purges all db files first and initializes the environment afterwards. """

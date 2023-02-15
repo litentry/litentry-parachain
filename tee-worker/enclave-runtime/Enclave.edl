@@ -137,14 +137,6 @@ enclave {
 		public size_t run_stf_task_handler(
 			[in, size=data_providers_static_len] uint8_t* data_providers_static, uint32_t data_providers_static_len
 		);
-
-		public sgx_status_t enable_challenge_code_cache();
-
-		public sgx_status_t get_challenge_code(
-			[in, size=identity_size] uint8_t* identity, uint32_t identity_size,
-			[out, size=code_size] uint8_t* code, uint32_t code_size
-		);
-
 	};
 
 	untrusted {

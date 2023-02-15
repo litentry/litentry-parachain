@@ -54,7 +54,6 @@ use itp_sgx_crypto::{ed25519, Ed25519Seal, Rsa3072Seal};
 use itp_sgx_io::StaticSealedIO;
 use itp_types::{ShardIdentifier, SignedBlock};
 use itp_utils::write_slice_and_whitespace_pad;
-use lc_challenge_code_cache::GLOBAL_CHALLENGE_CODE_CACHE;
 use log::*;
 use sgx_types::sgx_status_t;
 use sp_core::crypto::Pair;
@@ -423,27 +422,4 @@ fn internal_trigger_parentchain_block_import() -> Result<()> {
 	let triggered_import_dispatcher = get_triggered_dispatcher_from_solo_or_parachain()?;
 	triggered_import_dispatcher.import_all()?;
 	Ok(())
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn enable_challenge_code_cache() -> sgx_status_t {
-	GLOBAL_CHALLENGE_CODE_CACHE.enable();
-	sgx_status_t::SGX_SUCCESS
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn get_challenge_code(
-	identity: *const u8,
-	identity_size: u32,
-	code: *mut u8,
-	code_size: u32,
-) -> sgx_status_t {
-	let identity: Vec<u8> = Vec::from(slice::from_raw_parts(identity, identity_size as usize));
-	let code_slice = slice::from_raw_parts_mut(code, code_size as usize);
-	if let Some(code) = GLOBAL_CHALLENGE_CODE_CACHE.get_challenge_code(identity) {
-		if let Err(e) = write_slice_and_whitespace_pad(code_slice, code) {
-			return Error::Other(Box::new(e)).into()
-		};
-	}
-	sgx_status_t::SGX_SUCCESS
 }

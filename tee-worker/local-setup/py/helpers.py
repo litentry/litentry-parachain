@@ -45,7 +45,6 @@ def setup_working_dir(source_dir: str, target_dir: str):
         else:
             print(f'{source} does not exist. Did you run make?')
 
-
 def mkdir_p(path):
     """ Surprisingly, there is no simple function in python to create a dir if it does not exist."""
     return subprocess.run(['mkdir', '-p', path])
