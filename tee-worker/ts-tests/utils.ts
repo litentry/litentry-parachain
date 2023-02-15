@@ -195,7 +195,7 @@ export async function listenEvent(api: ApiPromise, section: string, methods: str
     });
 }
 
-export function decryptWithAES(key: HexString, aesOutput: AESOutput): HexString {
+export function decryptWithAES(key: HexString, aesOutput: AESOutput, type: string): HexString {
     if (aesOutput.ciphertext && aesOutput.nonce) {
         const secretKey = crypto.createSecretKey(hexToU8a(key));
         const tagSize = 16;
@@ -212,9 +212,9 @@ export function decryptWithAES(key: HexString, aesOutput: AESOutput): HexString 
         decipher.setAAD(aad);
         decipher.setAuthTag(authorTag);
 
-        let part1 = decipher.update(ciphertext.subarray(0, ciphertext.length - tagSize), undefined, 'hex');
+        let part1 = decipher.update(ciphertext.subarray(0, ciphertext.length - tagSize), undefined, type);
 
-        let part2 = decipher.final('hex');
+        let part2 = decipher.final(type);
 
         return `0x${part1 + part2}`;
     } else {

@@ -63,9 +63,9 @@ export async function createIdentity(
         return decodeIdentityEvent(
             context.substrate,
             data0.account.toHex(),
-            decryptWithAES(aesKey, data0.identity),
-            decryptWithAES(aesKey, data0.idGraph),
-            decryptWithAES(aesKey, data1.code)
+            decryptWithAES(aesKey, data0.identity, 'hex'),
+            decryptWithAES(aesKey, data0.idGraph, 'hex'),
+            decryptWithAES(aesKey, data1.code, 'hex')
         );
     }
     return undefined;
@@ -92,8 +92,8 @@ export async function removeIdentity(
         return decodeIdentityEvent(
             context.substrate,
             data.account.toHex(),
-            decryptWithAES(aesKey, data.identity),
-            decryptWithAES(aesKey, data.idGraph)
+            decryptWithAES(aesKey, data.identity, 'hex'),
+            decryptWithAES(aesKey, data.idGraph, 'hex')
         );
     }
     return undefined;
@@ -129,8 +129,8 @@ export async function verifyIdentity(
         return decodeIdentityEvent(
             context.substrate,
             data.account.toHex(),
-            decryptWithAES(aesKey, data.identity),
-            decryptWithAES(aesKey, data.idGraph)
+            decryptWithAES(aesKey, data.identity, 'hex'),
+            decryptWithAES(aesKey, data.idGraph, 'hex')
         );
     }
     return undefined;
