@@ -199,7 +199,18 @@ pub mod pallet {
 
 			#[cfg(not(feature = "skip-ias-check"))]
 			let enclave = Self::verify_report(&sender, ra_report.clone()).map(|report| {
-				log::debug!("[teerex] isv_enclave_quote = {:?}", report.metadata.isv_enclave_quote);
+				#[cfg(test)]
+				{
+					return Enclave::new(
+						sender.clone(),
+						report.mr_enclave,
+						report.timestamp,
+						worker_url.clone(),
+						shielding_key,
+						vc_pubkey,
+						report.build_mode,
+					)
+				}
 
 				Enclave::new(
 					sender.clone(),

@@ -39,14 +39,16 @@ use crate::{
 };
 use codec::{Decode, Encode};
 use itp_attestation_handler::{AttestationHandler, SgxQlQveCollateral};
+use libflate::zlib::Encoder;
+
+use crate::std::io::Write;
 use itp_component_container::ComponentGetter;
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{
 	pallet_teerex::TeerexCallIndexes,
 	provider::{AccessNodeMetadata, Error as MetadataProviderError},
-	Error as MetadataError,
+	Error as MetadataError,NodeMetadata,
 };
-use itp_node_api_metadata::NodeMetadata;
 use itp_settings::worker::MR_ENCLAVE_SIZE;
 use itp_sgx_crypto::{
 	ed25519_derivation::DeriveEd25519, key_repository::AccessKey, Error as SgxCryptoError,
