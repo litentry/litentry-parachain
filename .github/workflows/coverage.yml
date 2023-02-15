@@ -64,7 +64,7 @@ jobs:
 
       - name: Install cargo-tarpaulin
         run: |
-            cargo add cargo-tarpaulin
+            cargo install cargo-tarpaulin
 
       - name: Run cargo-tarpaulin
         run: |
