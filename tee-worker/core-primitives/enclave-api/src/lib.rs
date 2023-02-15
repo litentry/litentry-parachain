@@ -16,7 +16,6 @@ use crate::error::Error;
 use sgx_types::*;
 use sgx_urts::SgxEnclave;
 
-pub mod challenge_code_cache;
 pub mod direct_request;
 pub mod enclave_base;
 pub mod enclave_test;
