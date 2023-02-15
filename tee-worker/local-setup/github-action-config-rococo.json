@@ -17,7 +17,8 @@
         "-p",
         "443",
         "--running-mode",
-        "staging"
+        "staging",
+        "--enable-mock-server"
       ],
       "subcommand_flags": [
         "--skip-ra",
