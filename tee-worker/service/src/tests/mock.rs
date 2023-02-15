@@ -15,6 +15,7 @@
 
 */
 
+use std::collections::HashSet;
 use itp_node_api::api_client::{ApiResult, PalletTeerexApi};
 use itp_types::{Enclave, MrEnclave, ShardIdentifier, H256 as Hash};
 
@@ -45,8 +46,8 @@ impl PalletTeerexApi for TestNodeApi {
 
 	fn all_schedule_mr_enclaves(&self, _at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>> {
 		let enclaves = enclaves();
-		let mr_enclaves = enclaves.into_iter().map(|e| e.mr_enclave).collect();
-		Ok(mr_enclaves)
+		let mr_enclaves: HashSet<_> = enclaves.into_iter().map(|e| e.mr_enclave).collect();
+		Ok(mr_enclaves.into_iter().collect())
 	}
 
 	fn worker_for_shard(
