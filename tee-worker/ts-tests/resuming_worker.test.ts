@@ -83,16 +83,20 @@ async function launchWorker(
         fs.copyFileSync(`${binary_dir}/integritee-service`, `${working_dir}/integritee-service`);
         fs.closeSync(fs.openSync(`${working_dir}/spid.txt`, 'w'));
         fs.closeSync(fs.openSync(`${working_dir}/key.txt`, 'w'));
-        let data = JSON.stringify({
-            "twitter_official_url": "http://localhost:9527",
-            "twitter_litentry_url": "http://localhost:9527",
-            "twitter_auth_token": "",
-            "discord_official_url": "http://localhost:9527",
-            "discord_litentry_url": "http://localhost:9527",
-            "discord_auth_token": "",
-            "graphql_url": "http://localhost:9527",
-            "graphql_auth_key": ""
-        }, null, 4);
+        let data = JSON.stringify(
+            {
+                twitter_official_url: 'http://localhost:9527',
+                twitter_litentry_url: 'http://localhost:9527',
+                twitter_auth_token: '',
+                discord_official_url: 'http://localhost:9527',
+                discord_litentry_url: 'http://localhost:9527',
+                discord_auth_token: '',
+                graphql_url: 'http://localhost:9527',
+                graphql_auth_key: '',
+            },
+            null,
+            4
+        );
         fs.writeFileSync(`${working_dir}/worker-config-mock.json`, data);
     }
 

@@ -4826,6 +4826,7 @@ dependencies = [
 name = "itp-sgx-runtime-primitives"
 version = "0.9.0"
 dependencies = [
+ "core-primitives",
  "frame-system",
  "pallet-balances",
  "sp-core",
@@ -4836,7 +4837,6 @@ dependencies = [
 name = "itp-stf-executor"
 version = "0.9.0"
 dependencies = [
- "ita-sgx-runtime",
  "ita-stf",
  "itc-parentchain-test",
  "itp-node-api",

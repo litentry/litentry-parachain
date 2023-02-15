@@ -3,17 +3,13 @@ import {
     IntegrationTestContext,
     LitentryIdentity,
     LitentryValidationData,
+    Assertion,
 } from './type-definitions';
-import {
-    encryptWithTeeShieldingKey,
-    listenEncryptedEvents,
-    sendTxUntilInBlock,
-    listenCreatedIdentityEvents,
-} from './utils';
+import { decryptWithAES, encryptWithTeeShieldingKey, listenEvent, sendTxUntilInBlock } from './utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { HexString } from '@polkadot/util/types';
 import { ApiPromise } from '@polkadot/api';
-import { Assertion } from './type-definitions';
+import { expect } from 'chai';
 
 export async function setUserShieldingKey(
     context: IntegrationTestContext,
@@ -28,13 +24,9 @@ export async function setUserShieldingKey(
     await sendTxUntilInBlock(context.substrate, tx, signer);
 
     if (listening) {
-        const eventData = await listenEncryptedEvents(context, aesKey, 'hex', {
-            module: 'identityManagement',
-            method: 'userShieldingKeySet',
-            event: 'UserShieldingKeySet',
-        });
-        const [who] = eventData as HexString[];
-        return who;
+        const events = await listenEvent(context.substrate, 'identityManagement', ['UserShieldingKeySet']);
+        expect(events.length).to.be.equal(1);
+        return (events[0].data as any).account.toHex();
     }
     return undefined;
 }
@@ -59,9 +51,22 @@ export async function createIdentity(
     await sendTxUntilInBlock(context.substrate, tx, signer);
 
     if (listening) {
-        const event = await listenCreatedIdentityEvents(context, aesKey, 'hex');
-        const [who, _identity, idGraph, challengeCode] = event.eventData as HexString[];
-        return decodeIdentityEvent(context.substrate, who, _identity, idGraph, challengeCode);
+        const events = await listenEvent(context.substrate, 'identityManagement', [
+            'IdentityCreated',
+            'ChallengeCodeGenerated',
+        ]);
+        expect(events.length).to.be.equal(2);
+        expect(events[0].method).to.be.equal('IdentityCreated');
+        expect(events[1].method).to.be.equal('ChallengeCodeGenerated');
+        const data0 = events[0].data as any;
+        const data1 = events[1].data as any;
+        return decodeIdentityEvent(
+            context.substrate,
+            data0.account.toHex(),
+            decryptWithAES(aesKey, data0.identity),
+            decryptWithAES(aesKey, data0.idGraph),
+            decryptWithAES(aesKey, data1.code)
+        );
     }
     return undefined;
 }
@@ -81,13 +86,15 @@ export async function removeIdentity(
     await sendTxUntilInBlock(context.substrate, tx, signer);
 
     if (listening) {
-        const eventData = await listenEncryptedEvents(context, aesKey, 'hex', {
-            module: 'identityManagement',
-            method: 'identityRemoved',
-            event: 'IdentityRemoved',
-        });
-        const [who, identity, idGraph] = eventData as HexString[];
-        return decodeIdentityEvent(context.substrate, who, identity, idGraph);
+        const events = await listenEvent(context.substrate, 'identityManagement', ['IdentityRemoved']);
+        expect(events.length).to.be.equal(1);
+        const data = events[0].data as any;
+        return decodeIdentityEvent(
+            context.substrate,
+            data.account.toHex(),
+            decryptWithAES(aesKey, data.identity),
+            decryptWithAES(aesKey, data.idGraph)
+        );
     }
     return undefined;
 }
@@ -116,14 +123,15 @@ export async function verifyIdentity(
     await sendTxUntilInBlock(context.substrate, tx, signer);
 
     if (listening) {
-        const eventData = await listenEncryptedEvents(context, aesKey, 'hex', {
-            module: 'identityManagement',
-            method: 'identityVerified',
-            event: 'IdentityVerified',
-        });
-        const [who, identity, idGraph] = eventData as HexString[];
-
-        return decodeIdentityEvent(context.substrate, who, identity, idGraph);
+        const events = await listenEvent(context.substrate, 'identityManagement', ['IdentityVerified']);
+        expect(events.length).to.be.equal(1);
+        const data = events[0].data as any;
+        return decodeIdentityEvent(
+            context.substrate,
+            data.account.toHex(),
+            decryptWithAES(aesKey, data.identity),
+            decryptWithAES(aesKey, data.idGraph)
+        );
     }
     return undefined;
 }
@@ -141,15 +149,10 @@ export async function requestVC(
 
     await sendTxUntilInBlock(context.substrate, tx, signer);
     if (listening) {
-        const eventData = await listenEncryptedEvents(context, aesKey, 'utf-8', {
-            module: 'vcManagement',
-            method: 'vcIssued',
-            event: 'VCIssued',
-        });
-
-        const [who, index, vc] = eventData as HexString[];
-
-        return [who, index, vc];
+        const events = await listenEvent(context.substrate, 'vcManagement', ['VCIssued']);
+        expect(events.length).to.be.equal(1);
+        const data = events[0].data as any;
+        return [data.account.toHex(), data.index.toHex(), data.vc];
     }
     return undefined;
 }
@@ -165,14 +168,10 @@ export async function disableVC(
 
     await sendTxUntilInBlock(context.substrate, tx, signer);
     if (listening) {
-        const eventData = await listenEncryptedEvents(context, aesKey, 'hex', {
-            module: 'vcManagement',
-            method: 'disableVc',
-            event: 'VCDisabled',
-        });
-
-        const [index] = eventData as HexString[];
-        return index;
+        const events = await listenEvent(context.substrate, 'vcManagement', ['VCDisabled']);
+        expect(events.length).to.be.equal(1);
+        const data = events[0].data as any;
+        return data.index.toHex();
     }
     return undefined;
 }
@@ -188,14 +187,10 @@ export async function revokeVC(
 
     await sendTxUntilInBlock(context.substrate, tx, signer);
     if (listening) {
-        const eventData = await listenEncryptedEvents(context, aesKey, 'hex', {
-            module: 'vcManagement',
-            method: 'revokeVc',
-            event: 'VCRevoked',
-        });
-
-        const [index] = eventData as HexString[];
-        return index;
+        const events = await listenEvent(context.substrate, 'vcManagement', ['VCRevoked']);
+        expect(events.length).to.be.equal(1);
+        const data = events[0].data as any;
+        return data.index.toHex();
     }
     return undefined;
 }
