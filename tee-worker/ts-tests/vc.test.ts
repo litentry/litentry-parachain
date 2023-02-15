@@ -1,14 +1,14 @@
-import { describeLitentry } from './utils';
+import { describeLitentry, verifyMsg } from './utils';
 import { step } from 'mocha-steps';
 import { requestVC, setUserShieldingKey, disableVC, revokeVC } from './indirect_calls';
 import { Assertion } from './type-definitions';
 import { assert } from 'chai';
-import { u8aToHex } from '@polkadot/util';
+import { u8aToHex, stringToU8a } from '@polkadot/util';
 import { HexString } from '@polkadot/util/types';
 
 const assertion = <Assertion>{
     A1: 'A1',
-    A2: ['A2',],
+    A2: ['A2'],
     A3: ['A3', 'A3', 'A3'],
     A4: [10],
     A7: [10],
@@ -28,7 +28,15 @@ describeLitentry('VC test', async (context) => {
             const eventData = await requestVC(context, context.defaultSigner[0], aesKey, true, context.shard, {
                 [key]: assertion[key as keyof Assertion],
             });
-            assert(eventData![0] == u8aToHex(context.defaultSigner[0].addressRaw) && eventData![1] && eventData![2]);
+
+            const data = JSON.parse(eventData![2]);
+            //It's always false with fake data except A8
+            assert.equal(data.credentialSubject.values[0], key === assertion.A8 ? true : false, 'check value error');
+
+            delete data.proof;
+            const isValid = verifyMsg(JSON.stringify(data), context.defaultSigner[0]);
+            assert(isValid, 'invalid signature');
+
             indexList.push(eventData![1]);
             const registry = (await context.substrate.query.vcManagement.vcRegistry(eventData![1])) as any;
             assert.equal(registry.toHuman()!['status'], 'Active');

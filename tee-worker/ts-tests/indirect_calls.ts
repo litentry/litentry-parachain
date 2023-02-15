@@ -28,7 +28,7 @@ export async function setUserShieldingKey(
     await sendTxUntilInBlock(context.substrate, tx, signer);
 
     if (listening) {
-        const eventData = await listenEncryptedEvents(context, aesKey, {
+        const eventData = await listenEncryptedEvents(context, aesKey, 'hex', {
             module: 'identityManagement',
             method: 'userShieldingKeySet',
             event: 'UserShieldingKeySet',
@@ -59,8 +59,8 @@ export async function createIdentity(
     await sendTxUntilInBlock(context.substrate, tx, signer);
 
     if (listening) {
-        const event = await listenCreatedIdentityEvents(context, aesKey);
-        const [who, _identity, idGraph, challengeCode] = event.eventData;
+        const event = await listenCreatedIdentityEvents(context, aesKey, 'hex');
+        const [who, _identity, idGraph, challengeCode] = event.eventData as HexString[];
         return decodeIdentityEvent(context.substrate, who, _identity, idGraph, challengeCode);
     }
     return undefined;
@@ -81,7 +81,7 @@ export async function removeIdentity(
     await sendTxUntilInBlock(context.substrate, tx, signer);
 
     if (listening) {
-        const eventData = await listenEncryptedEvents(context, aesKey, {
+        const eventData = await listenEncryptedEvents(context, aesKey, 'hex', {
             module: 'identityManagement',
             method: 'identityRemoved',
             event: 'IdentityRemoved',
@@ -116,7 +116,7 @@ export async function verifyIdentity(
     await sendTxUntilInBlock(context.substrate, tx, signer);
 
     if (listening) {
-        const eventData = await listenEncryptedEvents(context, aesKey, {
+        const eventData = await listenEncryptedEvents(context, aesKey, 'hex', {
             module: 'identityManagement',
             method: 'identityVerified',
             event: 'IdentityVerified',
@@ -141,13 +141,14 @@ export async function requestVC(
 
     await sendTxUntilInBlock(context.substrate, tx, signer);
     if (listening) {
-        const eventData = await listenEncryptedEvents(context, aesKey, {
+        const eventData = await listenEncryptedEvents(context, aesKey, 'utf-8', {
             module: 'vcManagement',
             method: 'vcIssued',
             event: 'VCIssued',
         });
 
         const [who, index, vc] = eventData as HexString[];
+
         return [who, index, vc];
     }
     return undefined;
@@ -164,7 +165,7 @@ export async function disableVC(
 
     await sendTxUntilInBlock(context.substrate, tx, signer);
     if (listening) {
-        const eventData = await listenEncryptedEvents(context, aesKey, {
+        const eventData = await listenEncryptedEvents(context, aesKey, 'hex', {
             module: 'vcManagement',
             method: 'disableVc',
             event: 'VCDisabled',
@@ -187,7 +188,7 @@ export async function revokeVC(
 
     await sendTxUntilInBlock(context.substrate, tx, signer);
     if (listening) {
-        const eventData = await listenEncryptedEvents(context, aesKey, {
+        const eventData = await listenEncryptedEvents(context, aesKey, 'hex', {
             module: 'vcManagement',
             method: 'revokeVc',
             event: 'VCRevoked',

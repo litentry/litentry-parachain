@@ -13,12 +13,12 @@ import {
     WorkerRpcReturnString,
     WorkerRpcReturnValue,
 } from './type-definitions';
-import { blake2AsHex, cryptoWaitReady } from '@polkadot/util-crypto';
+import { blake2AsHex, cryptoWaitReady, signatureVerify } from '@polkadot/util-crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { Codec } from '@polkadot/types/types';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { HexString } from '@polkadot/util/types';
-import { hexToU8a, u8aToHex } from '@polkadot/util';
+import { hexToU8a, u8aToHex, stringToU8a } from '@polkadot/util';
 import { KeyObject } from 'crypto';
 import { EventRecord } from '@polkadot/types/interfaces';
 import { after, before, describe } from 'mocha';
@@ -144,9 +144,10 @@ export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrins
 export async function listenEncryptedEvents(
     context: IntegrationTestContext,
     aesKey: HexString,
+    type: string,
     filterObj: { module: string; method: string; event: string; errorEvent?: string }
 ) {
-    return new Promise<HexString[] | string>(async (resolve, reject) => {
+    return new Promise<HexString[] | string[] | string>(async (resolve, reject) => {
         let startBlock = 0;
         const slotDuration = await context.substrate.call.auraApi.slotDuration();
         const timeout = 3 * 60 * 1000; // 3 min
@@ -184,9 +185,9 @@ export async function listenEncryptedEvents(
                     .forEach(({ event }) => {
                         if (event.method == filterObj.event) {
                             const data = event.data as AESOutput[];
-                            const eventData: HexString[] = [];
+                            const eventData: HexString | string[] = [];
                             for (let i = 0; i < data.length; i++) {
-                                eventData.push(decryptWithAES(aesKey, data[i]));
+                                eventData.push(decryptWithAES(aesKey, data[i], type));
                             }
 
                             resolve(eventData);
@@ -202,8 +203,8 @@ export async function listenEncryptedEvents(
         });
     });
 }
-export async function listenCreatedIdentityEvents(context: IntegrationTestContext, aesKey: HexString) {
-    return new Promise<{ eventData: HexString[] }>(async (resolve, reject) => {
+export async function listenCreatedIdentityEvents(context: IntegrationTestContext, aesKey: HexString, type: string) {
+    return new Promise<{ eventData: HexString | string[] }>(async (resolve, reject) => {
         let startBlock = 0;
         const slotDuration = await context.substrate.call.auraApi.slotDuration();
         const timeout = 3 * 60 * 1000; // 3 min
@@ -236,10 +237,10 @@ export async function listenCreatedIdentityEvents(context: IntegrationTestContex
                         return data;
                     });
                 if (list.length) {
-                    const eventData: HexString[] = [];
+                    const eventData: HexString | string[] = [];
                     for (let i = 0; i < list.length; i++) {
                         for (let j = 0; j < list[i].length; j++) {
-                            eventData.push(decryptWithAES(aesKey, list[i][j]));
+                            eventData.push(decryptWithAES(aesKey, list[i][j], type));
                         }
                     }
                     resolve({ eventData: [...new Set(eventData)] });
@@ -300,7 +301,7 @@ export async function listenErrorEvents(
     });
 }
 
-export function decryptWithAES(key: HexString, aesOutput: AESOutput): HexString {
+export function decryptWithAES(key: HexString, aesOutput: AESOutput, type: string): HexString | string {
     if (aesOutput.ciphertext && aesOutput.nonce) {
         const secretKey = crypto.createSecretKey(hexToU8a(key));
         const tagSize = 16;
@@ -317,11 +318,11 @@ export function decryptWithAES(key: HexString, aesOutput: AESOutput): HexString 
         decipher.setAAD(aad);
         decipher.setAuthTag(authorTag);
 
-        let part1 = decipher.update(ciphertext.subarray(0, ciphertext.length - tagSize), undefined, 'hex');
+        let part1 = decipher.update(ciphertext.subarray(0, ciphertext.length - tagSize), undefined, type);
 
-        let part2 = decipher.final('hex');
+        let part2 = decipher.final(type);
 
-        return `0x${part1 + part2}`;
+        return type === 'hex' ? `0x${part1 + part2}` : (part1 as string);
     } else {
         return u8aToHex(aesOutput as Uint8Array);
     }
@@ -417,4 +418,10 @@ export function getMessage(address: string, wallet: string): string {
     const challengeCode = generateChallengeCode();
     const messgae = `Signing in ${process.env.ID_HUB_URL} with ${address} using ${wallet} and challenge code is: ${challengeCode}`;
     return messgae;
+}
+
+export function verifyMsg(msg: string, signer: KeyringPair): boolean {
+    const signature = signer.sign(stringToU8a(JSON.stringify(msg)));
+    const { isValid } = signatureVerify(JSON.stringify(msg), signature, signer.addressRaw);
+    return isValid;
 }

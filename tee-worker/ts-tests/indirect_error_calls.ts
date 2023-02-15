@@ -15,7 +15,7 @@ export async function setErrorUserShieldingKey(
     await sendTxUntilInBlock(context.substrate, tx, signer);
 
     if (listening) {
-        const result = await listenEncryptedEvents(context, aesKey, {
+        const result = await listenEncryptedEvents(context, aesKey, 'hex', {
             module: 'identityManagement',
             method: 'userShieldingKeySet',
             event: 'UserShieldingKeySet',
@@ -44,7 +44,7 @@ export async function createErrorIdentity(
     await sendTxUntilInBlock(context.substrate, tx, signer);
 
     if (listening) {
-        const result = await listenEncryptedEvents(context, aesKey, {
+        const result = await listenEncryptedEvents(context, aesKey, 'hex', {
             module: 'identityManagement',
             method: 'identityCreated',
             event: 'IdentityCreated',
