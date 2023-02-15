@@ -206,18 +206,4 @@ extern "C" {
 		data_providers_static: *const u8,
 		data_providers_static_size: usize,
 	) -> sgx_status_t;
-
-	pub fn enable_challenge_code_cache(
-		eid: sgx_enclave_id_t,
-		retval: *mut sgx_status_t,
-	) -> sgx_status_t;
-
-	pub fn get_challenge_code(
-		eid: sgx_enclave_id_t,
-		retval: *mut sgx_status_t,
-		identity: *const u8,
-		identity_size: u32,
-		code: *mut u8,
-		code_size: u32,
-	) -> sgx_status_t;
 }

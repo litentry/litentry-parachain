@@ -33,7 +33,8 @@ use itp_node_api::metadata::{
 use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_externalities::{SgxExternalitiesTrait, StateHash};
 use itp_stf_interface::{
-	parentchain_pallet::ParentchainPalletInterface, ExecuteCall, StateCallInterface, UpdateState,
+	parentchain_pallet::ParentchainPalletInterface, runtime_upgrade::RuntimeUpgradeInterface,
+	ExecuteCall, StateCallInterface, UpdateState,
 };
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
@@ -244,12 +245,13 @@ where
 	Stf: UpdateState<
 			StateHandler::StateT,
 			<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType,
-		> + StateCallInterface<TrustedCallSigned, StateHandler::StateT, NodeMetadataRepository>,
+		> + StateCallInterface<TrustedCallSigned, StateHandler::StateT, NodeMetadataRepository> + RuntimeUpgradeInterface<StateHandler::StateT>,
 	<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType:
 		IntoIterator<Item = (Vec<u8>, Option<Vec<u8>>)>,
 	<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType:
 		From<BTreeMap<Vec<u8>, Option<Vec<u8>>>>,
 	<Stf as StateCallInterface<TrustedCallSigned, StateHandler::StateT, NodeMetadataRepository>>::Error: Debug,
+	<Stf as RuntimeUpgradeInterface<StateHandler::StateT>>::Error: Debug,
 {
 	type Externalities = StateHandler::StateT;
 
@@ -272,6 +274,9 @@ where
 		// Execute any pre-processing steps.
 		let mut state = prepare_state_function(state);
 		let mut executed_and_failed_calls = Vec::<ExecutedOperation>::new();
+
+		// TODO: maybe we can move it to `prepare_state_function`. It seems more reasonable.
+		let _ = Stf::on_runtime_upgrade(&mut state);
 
 		// Iterate through all calls until time is over.
 		for trusted_call_signed in trusted_calls.into_iter() {
