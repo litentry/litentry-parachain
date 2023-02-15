@@ -119,7 +119,7 @@ pub mod pallet {
 			account: T::AccountId,
 		},
 		UserShieldingKeySet {
-			account: AesOutput,
+			account: T::AccountId,
 		},
 		// create identity
 		ChallengeCodeGeneratedPlain {
@@ -128,7 +128,7 @@ pub mod pallet {
 			code: ChallengeCode,
 		},
 		ChallengeCodeGenerated {
-			account: AesOutput,
+			account: T::AccountId,
 			identity: AesOutput,
 			code: AesOutput,
 		},
@@ -138,7 +138,7 @@ pub mod pallet {
 			id_graph: Vec<(Identity, IdentityContext<T>)>,
 		},
 		IdentityCreated {
-			account: AesOutput,
+			account: T::AccountId,
 			identity: AesOutput,
 			id_graph: AesOutput,
 		},
@@ -149,7 +149,7 @@ pub mod pallet {
 			id_graph: Vec<(Identity, IdentityContext<T>)>,
 		},
 		IdentityRemoved {
-			account: AesOutput,
+			account: T::AccountId,
 			identity: AesOutput,
 			id_graph: AesOutput,
 		},
@@ -160,7 +160,7 @@ pub mod pallet {
 			id_graph: Vec<(Identity, IdentityContext<T>)>,
 		},
 		IdentityVerified {
-			account: AesOutput,
+			account: T::AccountId,
 			identity: AesOutput,
 			id_graph: AesOutput,
 		},
@@ -295,9 +295,7 @@ pub mod pallet {
 				.map_err(|_| Error::<T>::WrongDecodedType)?;
 			UserShieldingKeys::<T>::insert(&who, &key);
 			Self::deposit_event(Event::<T>::UserShieldingKeySetPlain { account: who.clone() });
-			Self::deposit_event(Event::<T>::UserShieldingKeySet {
-				account: aes_encrypt_default(&key, who.encode().as_slice()),
-			});
+			Self::deposit_event(Event::<T>::UserShieldingKeySet { account: who });
 			Ok(())
 		}
 
@@ -363,7 +361,7 @@ pub mod pallet {
 				code,
 			});
 			Self::deposit_event(Event::<T>::ChallengeCodeGenerated {
-				account: aes_encrypt_default(&key, who.encode().as_slice()),
+				account: who.clone(),
 				identity: aes_encrypt_default(&key, identity.encode().as_slice()),
 				code: aes_encrypt_default(&key, code.as_ref()),
 			});
@@ -382,7 +380,7 @@ pub mod pallet {
 				id_graph: Self::get_id_graph(&who),
 			});
 			Self::deposit_event(Event::<T>::IdentityCreated {
-				account: aes_encrypt_default(&key, who.encode().as_slice()),
+				account: who.clone(),
 				identity: aes_encrypt_default(&key, identity.encode().as_slice()),
 				id_graph: aes_encrypt_default(&key, Self::get_id_graph(&who).encode().as_slice()),
 			});
@@ -415,7 +413,7 @@ pub mod pallet {
 				id_graph: Self::get_id_graph(&who),
 			});
 			Self::deposit_event(Event::<T>::IdentityRemoved {
-				account: aes_encrypt_default(&key, who.encode().as_slice()),
+				account: who.clone(),
 				identity: aes_encrypt_default(&key, identity.encode().as_slice()),
 				id_graph: aes_encrypt_default(&key, Self::get_id_graph(&who).encode().as_slice()),
 			});
@@ -494,7 +492,7 @@ pub mod pallet {
 					id_graph: Self::get_id_graph(&who),
 				});
 				Self::deposit_event(Event::<T>::IdentityVerified {
-					account: aes_encrypt_default(&key, who.encode().as_slice()),
+					account: who.clone(),
 					identity: aes_encrypt_default(&key, identity.encode().as_slice()),
 					id_graph: aes_encrypt_default(
 						&key,
@@ -509,7 +507,7 @@ pub mod pallet {
 		#[pallet::weight(195_000_000)]
 		pub fn user_shielding_key_set(
 			origin: OriginFor<T>,
-			account: AesOutput,
+			account: T::AccountId,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::UserShieldingKeySet { account });
@@ -520,7 +518,7 @@ pub mod pallet {
 		#[pallet::weight(195_000_000)]
 		pub fn challenge_code_generated(
 			origin: OriginFor<T>,
-			account: AesOutput,
+			account: T::AccountId,
 			identity: AesOutput,
 			code: AesOutput,
 		) -> DispatchResultWithPostInfo {
@@ -533,7 +531,7 @@ pub mod pallet {
 		#[pallet::weight(195_000_000)]
 		pub fn identity_created(
 			origin: OriginFor<T>,
-			account: AesOutput,
+			account: T::AccountId,
 			identity: AesOutput,
 			id_graph: AesOutput,
 		) -> DispatchResultWithPostInfo {
@@ -546,7 +544,7 @@ pub mod pallet {
 		#[pallet::weight(195_000_000)]
 		pub fn identity_removed(
 			origin: OriginFor<T>,
-			account: AesOutput,
+			account: T::AccountId,
 			identity: AesOutput,
 			id_graph: AesOutput,
 		) -> DispatchResultWithPostInfo {
@@ -559,7 +557,7 @@ pub mod pallet {
 		#[pallet::weight(195_000_000)]
 		pub fn identity_verified(
 			origin: OriginFor<T>,
-			account: AesOutput,
+			account: T::AccountId,
 			identity: AesOutput,
 			id_graph: AesOutput,
 		) -> DispatchResultWithPostInfo {

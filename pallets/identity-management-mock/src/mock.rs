@@ -218,9 +218,8 @@ pub fn setup_user_shieding_key(
 	));
 	// enrypt the result
 	let key = IdentityManagementMock::user_shielding_keys(&who).unwrap();
-	let aes_encrypted_account = aes_encrypt_default(&key, who.encode().as_slice());
 	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
-		crate::Event::UserShieldingKeySet { account: aes_encrypted_account },
+		crate::Event::UserShieldingKeySet { account: who },
 	));
 	key
 }
@@ -251,10 +250,9 @@ pub fn setup_create_identity(
 		},
 	));
 	// encrypt the result
-	let aes_encrypted_account = aes_encrypt_default(&key, who.encode().as_slice());
 	let aes_encrypted_identity = aes_encrypt_default(&key, identity.encode().as_slice());
 	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
-		crate::Event::UserShieldingKeySet { account: aes_encrypted_account.clone() },
+		crate::Event::UserShieldingKeySet { account: who },
 	));
 
 	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
@@ -263,7 +261,7 @@ pub fn setup_create_identity(
 	let aes_encrypted_code = aes_encrypt_default(&key, code.as_slice());
 	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
 		crate::Event::ChallengeCodeGenerated {
-			account: aes_encrypted_account,
+			account: who,
 			identity: aes_encrypted_identity,
 			code: aes_encrypted_code,
 		},
