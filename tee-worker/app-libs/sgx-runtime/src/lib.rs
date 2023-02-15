@@ -31,6 +31,8 @@
 #[cfg(feature = "evm")]
 mod evm;
 
+mod migration;
+
 #[cfg(feature = "evm")]
 pub use evm::{
 	AddressMapping, EnsureAddressTruncated, EvmCall, FeeCalculator, FixedGasPrice,
@@ -106,6 +108,7 @@ pub type UncheckedExtrinsic =
 	generic::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
 /// Extrinsic type that has already been checked.
 pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra>;
+
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
 	Runtime,
@@ -113,6 +116,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
+	migration::Upgrade,
 >;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
