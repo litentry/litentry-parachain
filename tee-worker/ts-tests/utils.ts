@@ -32,13 +32,18 @@ const crypto = require('crypto');
 // TODO add self signed certificate ??
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-// maximum number of blocks that we wait in listening events before we timeout
-const listenTimeoutInBlock = 15;
+// maximum milliseconds that we wait in listening events before we timeout
+const listenTimeoutInMilliSeconds = 3 * 60 * 1000;
 
 export function sleep(secs: number) {
     return new Promise((resolve) => {
         setTimeout(resolve, secs * 1000);
     });
+}
+
+export async function getListenTimeoutInBlocks(api: ApiPromise) {
+    const slotDuration = await api.call.auraApi.slotDuration();
+    return listenTimeoutInMilliSeconds / parseInt(slotDuration.toString());
 }
 
 export async function sendRequest(
@@ -161,7 +166,8 @@ export async function listenEvent(api: ApiPromise, section: string, methods: str
         const unsubscribe = await api.rpc.chain.subscribeNewHeads(async (header) => {
             const currentBlockNumber = header.number.toNumber();
             if (startBlock == 0) startBlock = currentBlockNumber;
-            if (currentBlockNumber > startBlock + listenTimeoutInBlock) {
+            const timeout = await getListenTimeoutInBlocks(api);
+            if (currentBlockNumber > startBlock + timeout) {
                 reject('timeout');
                 return;
             }
@@ -170,8 +176,8 @@ export async function listenEvent(api: ApiPromise, section: string, methods: str
 
             const records: EventRecord[] = (await apiAt.query.system.events()) as any;
             records.forEach((e, i) => {
-                const s = (e.toHuman() as any).event.section;
-                const m = (e.toHuman() as any).event.method;
+                const s = e.event.section;
+                const m = e.event.method;
                 const d = e.event.data;
                 console.log(`Event[${i}]: ${s}.${m} ${d}`);
             });
