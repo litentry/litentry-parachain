@@ -21,12 +21,14 @@ use crate::test_genesis::test_genesis_setup;
 use crate::{helpers::enclave_signer_account, Stf, StfError, ENCLAVE_ACCOUNT_KEY};
 use codec::Encode;
 use frame_support::traits::{OriginTrait, UnfilteredDispatchable};
+use ita_sgx_runtime::Executive;
 use itp_node_api::metadata::{
 	pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata,
 };
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_interface::{
 	parentchain_pallet::ParentchainPalletInterface,
+	runtime_upgrade::RuntimeUpgradeInterface,
 	sudo_pallet::SudoPalletInterface,
 	system_pallet::{SystemPalletAccountInterface, SystemPalletEventInterface},
 	ExecuteCall, ExecuteGetter, InitState, StateCallInterface, StateGetterInterface, UpdateState,
@@ -243,6 +245,42 @@ where
 					Self::Error::Dispatch(format!("Update parentchain block error: {:?}", e.error))
 				})
 		})?;
+		Ok(())
+	}
+}
+
+impl<Call, Getter, State, Runtime> RuntimeUpgradeInterface<State>
+	for Stf<Call, Getter, State, Runtime>
+where
+	State: SgxExternalitiesTrait,
+	Runtime: frame_system::Config,
+{
+	type Error = StfError;
+
+	fn on_runtime_upgrade(state: &mut State) -> Result<(), Self::Error> {
+		// Returns if the runtime was upgraded since the last time this function was called.
+		let runtime_upgraded =
+			|| -> bool {
+				let last = frame_system::LastRuntimeUpgrade::<Runtime>::get();
+				let current = <<Runtime as frame_system::Config>::Version as frame_support::traits::Get<_>>::get();
+
+				if last.map(|v| v.was_upgraded(&current)).unwrap_or(true) {
+					frame_system::LastRuntimeUpgrade::<Runtime>::put(
+						frame_system::LastRuntimeUpgradeInfo::from(current),
+					);
+					debug!("Do some migraions");
+					true
+				} else {
+					debug!("No need to migrate");
+					false
+				}
+			};
+
+		state.execute_with(|| {
+			if runtime_upgraded() {
+				Executive::execute_on_runtime_upgrade();
+			}
+		});
 		Ok(())
 	}
 }

@@ -30,6 +30,7 @@ use itp_types::{OpaqueCall, ShardIdentifier};
 #[cfg(feature = "mocks")]
 pub mod mocks;
 pub mod parentchain_pallet;
+pub mod runtime_upgrade;
 pub mod sudo_pallet;
 pub mod system_pallet;
 

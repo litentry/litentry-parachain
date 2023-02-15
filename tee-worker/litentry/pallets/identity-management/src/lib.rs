@@ -32,6 +32,8 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+pub mod migrations;
+
 pub use pallet::*;
 pub mod identity_context;
 
