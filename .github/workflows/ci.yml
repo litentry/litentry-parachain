@@ -138,7 +138,7 @@ jobs:
     needs:
       - fmt
       - check-file-change
-    container: "integritee/integritee-dev:0.1.10"
+    container: "integritee/integritee-dev:0.1.12"
     if: needs.check-file-change.outputs.tee_src == 'true'
     steps:
       - uses: actions/checkout@v3
