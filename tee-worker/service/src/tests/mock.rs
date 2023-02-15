@@ -15,9 +15,9 @@
 
 */
 
-use std::collections::HashSet;
 use itp_node_api::api_client::{ApiResult, PalletTeerexApi};
 use itp_types::{Enclave, MrEnclave, ShardIdentifier, H256 as Hash};
+use std::collections::HashSet;
 
 pub struct TestNodeApi;
 
