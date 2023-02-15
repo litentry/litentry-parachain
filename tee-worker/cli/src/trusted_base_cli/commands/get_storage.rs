@@ -6,11 +6,11 @@ use itc_rpc_client::direct_client::{DirectApi, DirectClient};
 use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
 use itp_types::DirectRequestStatus;
 use itp_utils::FromHexPrefixed;
-use log::{debug, error, warn};
+use log::{error, warn};
 use my_node_runtime::Hash;
 use scale_value::{scale::TypeId, Value};
 use sp_application_crypto::scale_info::TypeDef;
-use std::{format, sync::mpsc::channel};
+use std::format;
 
 /// Usage:
 ///    Plain Storage: ./integritee-cli trusted --mrenclave $mrenclave get-storage Parentchain Number
@@ -138,19 +138,13 @@ fn send_get_storage_request(
 	mrenclave: String,
 	storage_entry_key: &Vec<u8>,
 ) -> Option<Vec<u8>> {
-	let (sender, receiver) = channel();
-
 	let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
 		"state_getStorage".to_string(),
 		vec![mrenclave, format!("0x{}", hex::encode(storage_entry_key))],
 	)
 	.unwrap();
 
-	direct_api.watch(jsonrpc_call, sender);
-
-	debug!("waiting for rpc response");
-
-	let value = match receiver.recv() {
+	let value = match direct_api.get(jsonrpc_call.as_str()) {
 		Ok(response) => {
 			let response: RpcResponse = serde_json::from_str(&response).unwrap();
 			if let Ok(return_value) = RpcReturnValue::from_hex(&response.result) {
@@ -176,7 +170,7 @@ fn send_get_storage_request(
 			}
 		},
 		Err(e) => {
-			error!("failed to receive rpc response: {:?}", e);
+			error!("failed to send request: {:?}", e);
 			None
 		},
 	};

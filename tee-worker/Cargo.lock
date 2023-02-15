@@ -4005,6 +4005,7 @@ dependencies = [
  "itp-enclave-api",
  "itp-enclave-metrics",
  "itp-node-api",
+ "itp-rpc",
  "itp-settings",
  "itp-types",
  "itp-utils",
@@ -4220,7 +4221,6 @@ dependencies = [
  "itp-storage",
  "itp-types",
  "itp-utils",
- "lc-challenge-code-cache",
  "lc-stf-task-sender",
  "litentry-primitives",
  "log 0.4.17",
@@ -5779,16 +5779,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lc-challenge-code-cache"
-version = "0.1.0"
-dependencies = [
- "lazy_static",
- "litentry-primitives",
- "log 0.4.17",
- "sgx_tstd",
-]
-
-[[package]]
 name = "lc-credentials"
 version = "0.1.0"
 dependencies = [
@@ -5842,6 +5832,7 @@ dependencies = [
  "http_req 0.8.1 (git+https://github.com/integritee-network/http_req?branch=master)",
  "http_req 0.8.1 (git+https://github.com/integritee-network/http_req)",
  "itc-rest-client",
+ "itp-stf-primitives",
  "lazy_static",
  "lc-mock-server",
  "litentry-primitives",

@@ -46,8 +46,8 @@ use enclave::{
 	api::enclave_init,
 	tls_ra::{enclave_request_state_provisioning, enclave_run_state_provisioning_server},
 };
+use itc_rpc_client::direct_client::{DirectApi, DirectClient};
 use itp_enclave_api::{
-	challenge_code_cache::ChallengeCodeCache,
 	direct_request::DirectRequest,
 	enclave_base::EnclaveBase,
 	remote_attestation::{RemoteAttestation, TlsRemoteAttestation},
@@ -61,17 +61,19 @@ use itp_node_api::{
 	metadata::NodeMetadata,
 	node_api_factory::{CreateNodeApi, NodeApiFactory},
 };
+use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
 use itp_settings::{
 	files::SIDECHAIN_STORAGE_PATH,
 	worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvider},
 };
+use itp_types::DirectRequestStatus;
 use its_peer_fetch::{
 	block_fetch_client::BlockFetcher, untrusted_peer_fetch::UntrustedPeerFetcher,
 };
 use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
 use its_storage::{interface::FetchBlocks, BlockPruner, SidechainStorageLock};
 use lc_data_providers::DataProvidersStatic;
-use litentry_primitives::Identity;
+use litentry_primitives::{ChallengeCode, Identity};
 use log::*;
 use my_node_runtime::{Hash, Header, RuntimeEvent};
 use serde_json::Value;
@@ -186,13 +188,68 @@ fn main() {
 	)));
 
 	if config.enable_mock_server {
-		let _ = enclave.as_ref().enable_challenge_code_cache();
 		let enclave = enclave.clone();
+		let trusted_server_url = format!("wss://localhost:{}", config.trusted_worker_port);
+		let base58_enclave = enclave.get_mrenclave().unwrap().encode().to_base58();
 		thread::spawn(move || {
 			info!("*** Starting mock server");
-			let getter = Arc::new(move |identity: &Identity| {
-				debug!("challenge_code:{:?} from enclave ", enclave.get_challenge_code(identity));
-				enclave.get_challenge_code(identity).unwrap_or_default()
+			let getter = Arc::new(move |account: &AccountId32, identity: &Identity| {
+				let client = DirectClient::new(trusted_server_url.clone());
+
+				let mut entry_bytes = sp_core::twox_128("IdentityManagement".as_bytes()).to_vec();
+				entry_bytes.extend(&sp_core::twox_128("ChallengeCodes".as_bytes())[..]);
+
+				let encoded_account: &[u8] = &account.encode();
+				let encoded_identity: &[u8] = &identity.encode();
+				// Key1: Blake2_128Concat
+				entry_bytes.extend(sp_core::blake2_128(encoded_account));
+				entry_bytes.extend(encoded_account);
+				// Key2: Blake2_128Concat
+				entry_bytes.extend(sp_core::blake2_128(encoded_identity));
+				entry_bytes.extend(encoded_identity);
+
+				let request = RpcRequest {
+					jsonrpc: "2.0".to_owned(),
+					method: "state_getStorage".to_string(),
+					params: vec![base58_enclave.clone(), format!("0x{}", hex::encode(entry_bytes))],
+					id: 1,
+				};
+
+				match client.get(serde_json::to_string(&request).unwrap().as_str()) {
+					Ok(response) => {
+						let response: RpcResponse = serde_json::from_str(&response).unwrap();
+						if let Ok(return_value) =
+							<RpcReturnValue as itp_utils::FromHexPrefixed>::from_hex(
+								&response.result,
+							) {
+							match return_value.status {
+								DirectRequestStatus::Ok => {
+									let mut value: &[u8] = &return_value.value;
+									ChallengeCode::decode(&mut value).unwrap_or_default()
+								},
+								DirectRequestStatus::Error => {
+									warn!("request status is error");
+									if let Ok(value) =
+										String::decode(&mut return_value.value.as_slice())
+									{
+										warn!("[Error] {}", value);
+									}
+									ChallengeCode::default()
+								},
+								DirectRequestStatus::TrustedOperationStatus(status) => {
+									warn!("request status is: {:?}", status);
+									ChallengeCode::default()
+								},
+							}
+						} else {
+							ChallengeCode::default()
+						}
+					},
+					Err(e) => {
+						error!("failed to send request: {:?}", e);
+						ChallengeCode::default()
+					},
+				}
 			});
 			let _ = lc_mock_server::run(getter, config.mock_server_port);
 		});
@@ -830,7 +887,7 @@ fn check_we_are_primary_validateer(
 }
 
 fn data_provider(config: &Config) -> DataProvidersStatic {
-	let built_in_modes = vec!["dev", "mock", "prod", "staging"];
+	let built_in_modes = vec!["dev", "staging", "prod", "mock"];
 	let built_in_config: Value =
 		serde_json::from_slice(include_bytes!("running-mode-config.json")).unwrap();
 
