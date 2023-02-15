@@ -17,7 +17,6 @@ services:
         condition: service_healthy
     environment:
       - RUST_LOG=warn,ws=warn,itc_rpc_client=warn
-      - FLAVOR_ID
     networks:
       - integritee-test-network
     entrypoint:
