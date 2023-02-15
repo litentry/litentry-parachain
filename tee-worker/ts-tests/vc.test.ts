@@ -8,7 +8,7 @@ import { HexString } from '@polkadot/util/types';
 
 const assertion = <Assertion>{
     A1: 'A1',
-    A2: ['A2',],
+    A2: ['A2'],
     A3: ['A3', 'A3', 'A3'],
     A4: [10],
     A7: [10],

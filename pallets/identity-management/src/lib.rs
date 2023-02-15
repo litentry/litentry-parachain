@@ -79,11 +79,13 @@ pub mod pallet {
 		VerifyIdentityRequested { shard: ShardIdentifier },
 		SetUserShieldingKeyRequested { shard: ShardIdentifier },
 		// event that should be triggered by TEECallOrigin
-		UserShieldingKeySet { account: AesOutput },
-		ChallengeCodeGenerated { account: AesOutput, identity: AesOutput, code: AesOutput },
-		IdentityCreated { account: AesOutput, identity: AesOutput, id_graph: AesOutput },
-		IdentityRemoved { account: AesOutput, identity: AesOutput, id_graph: AesOutput },
-		IdentityVerified { account: AesOutput, identity: AesOutput, id_graph: AesOutput },
+		// these events keep the `account` as public to be consistent with VCMP and better
+		// indexing see https://github.com/litentry/litentry-parachain/issues/1313
+		UserShieldingKeySet { account: T::AccountId },
+		ChallengeCodeGenerated { account: T::AccountId, identity: AesOutput, code: AesOutput },
+		IdentityCreated { account: T::AccountId, identity: AesOutput, id_graph: AesOutput },
+		IdentityRemoved { account: T::AccountId, identity: AesOutput, id_graph: AesOutput },
+		IdentityVerified { account: T::AccountId, identity: AesOutput, id_graph: AesOutput },
 		// event errors caused by processing in TEE
 		// copied from core_primitives::IMPError, we use events instead of pallet::errors,
 		// see https://github.com/litentry/litentry-parachain/issues/1275
@@ -211,7 +213,7 @@ pub mod pallet {
 		#[pallet::weight(195_000_000)]
 		pub fn user_shielding_key_set(
 			origin: OriginFor<T>,
-			account: AesOutput,
+			account: T::AccountId,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::UserShieldingKeySet { account });
@@ -222,7 +224,7 @@ pub mod pallet {
 		#[pallet::weight(195_000_000)]
 		pub fn challenge_code_generated(
 			origin: OriginFor<T>,
-			account: AesOutput,
+			account: T::AccountId,
 			identity: AesOutput,
 			code: AesOutput,
 		) -> DispatchResultWithPostInfo {
@@ -235,7 +237,7 @@ pub mod pallet {
 		#[pallet::weight(195_000_000)]
 		pub fn identity_created(
 			origin: OriginFor<T>,
-			account: AesOutput,
+			account: T::AccountId,
 			identity: AesOutput,
 			id_graph: AesOutput,
 		) -> DispatchResultWithPostInfo {
@@ -248,7 +250,7 @@ pub mod pallet {
 		#[pallet::weight(195_000_000)]
 		pub fn identity_removed(
 			origin: OriginFor<T>,
-			account: AesOutput,
+			account: T::AccountId,
 			identity: AesOutput,
 			id_graph: AesOutput,
 		) -> DispatchResultWithPostInfo {
@@ -261,7 +263,7 @@ pub mod pallet {
 		#[pallet::weight(195_000_000)]
 		pub fn identity_verified(
 			origin: OriginFor<T>,
-			account: AesOutput,
+			account: T::AccountId,
 			identity: AesOutput,
 			id_graph: AesOutput,
 		) -> DispatchResultWithPostInfo {

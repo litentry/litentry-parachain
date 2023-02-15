@@ -12,6 +12,8 @@ pallet-balances = { default-features = false, git = "https://github.com/parityte
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 
+parentchain-primitives = { package = "core-primitives", path = "../../../primitives/core", default-features = false }
+
 [features]
 default = ["std"]
 std = [
@@ -19,4 +21,5 @@ std = [
     "pallet-balances/std",
     "sp-core/std",
     "sp-runtime/std",
+    "parentchain-primitives/std",
 ]

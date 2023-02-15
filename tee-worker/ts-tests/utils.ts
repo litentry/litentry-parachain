@@ -1,6 +1,6 @@
 import './config';
-import WebSocketAsPromised = require('websocket-as-promised');
-import WebSocket = require('ws');
+import WebSocketAsPromised from 'websocket-as-promised';
+import WebSocket from 'ws';
 import Options from 'websocket-as-promised/types/options';
 import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
 import { StorageKey, Vec } from '@polkadot/types';
@@ -20,7 +20,7 @@ import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { HexString } from '@polkadot/util/types';
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { KeyObject } from 'crypto';
-import { EventRecord } from '@polkadot/types/interfaces';
+import { Event, EventRecord } from '@polkadot/types/interfaces';
 import { after, before, describe } from 'mocha';
 import { generateChallengeCode, getSigner } from './web3/setup';
 import { ethers } from 'ethers';
@@ -32,10 +32,18 @@ const crypto = require('crypto');
 // TODO add self signed certificate ??
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
+// maximum milliseconds that we wait in listening events before we timeout
+const listenTimeoutInMilliSeconds = 3 * 60 * 1000;
+
 export function sleep(secs: number) {
     return new Promise((resolve) => {
         setTimeout(resolve, secs * 1000);
     });
+}
+
+export async function getListenTimeoutInBlocks(api: ApiPromise) {
+    const slotDuration = await api.call.auraApi.slotDuration();
+    return listenTimeoutInMilliSeconds / parseInt(slotDuration.toString());
 }
 
 export async function sendRequest(
@@ -125,7 +133,7 @@ export async function initIntegrationTestContext(
 
 export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrinsic<ApiTypes>, signer: KeyringPair) {
     return new Promise<{ block: string }>(async (resolve, reject) => {
-        //The purpose of paymentInfo is to check whether the version of polkadot/api is suitable for the current test and to determine whether the transaction is successful.
+        // The purpose of paymentInfo is to check whether the version of polkadot/api is suitable for the current test and to determine whether the transaction is successful.
         await tx.paymentInfo(signer);
         const nonce = await api.rpc.system.accountNextIndex(signer.address);
         await tx.signAndSend(signer, { nonce }, (result) => {
@@ -141,161 +149,48 @@ export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrins
     });
 }
 
-export async function listenEncryptedEvents(
-    context: IntegrationTestContext,
-    aesKey: HexString,
-    filterObj: { module: string; method: string; event: string; errorEvent?: string }
-) {
-    return new Promise<HexString[] | string>(async (resolve, reject) => {
+// Subscribe to the chain until we get the first specified event with given `section` and `methods`.
+// We can listen to multiple `methods` as long as they are emitted in the same block.
+// The event consumer should do the decryption optionaly as it's event specific
+//
+// TODO: occassionally multiple events for an extrinsic are not included in the same block,
+//       e.g. `create_identity` => `IdentityCreated`, `ChallengeCodeGenerated`
+//       this is because the extrinsics are submitted asynchronously and in rare cases these two
+//       extrinsics are included in the different parentchain blocks
+// Solutions:
+//  1. (pallet change) use one single extrinsic to emit both events, if they should always be triggered on pair
+//  2. (ts-test change) only resolve this promise when both events are received, but not necessarily in the same block
+export async function listenEvent(api: ApiPromise, section: string, methods: string[]) {
+    return new Promise<Event[]>(async (resolve, reject) => {
         let startBlock = 0;
-        const slotDuration = await context.substrate.call.auraApi.slotDuration();
-        const timeout = 3 * 60 * 1000; // 3 min
-        let maximumWaitingBlock = timeout / parseInt(slotDuration.toString());
-        console.log('maximumWaitingBlock', maximumWaitingBlock);
-        const unsubscribe = await context.substrate.rpc.chain.subscribeNewHeads(async (header) => {
+        const unsubscribe = await api.rpc.chain.subscribeNewHeads(async (header) => {
             const currentBlockNumber = header.number.toNumber();
             if (startBlock == 0) startBlock = currentBlockNumber;
-            if (currentBlockNumber > startBlock + maximumWaitingBlock) {
+            const timeout = await getListenTimeoutInBlocks(api);
+            if (currentBlockNumber > startBlock + timeout) {
                 reject('timeout');
                 return;
             }
-            console.log(`Chain is at block: #${header.number}`);
-            const signedBlock = await context.substrate.rpc.chain.getBlock(header.hash);
+            console.log(`\n--------- block #${header.number}, hash ${header.hash} ---------\n`);
+            const apiAt = await api.at(header.hash);
 
-            const allEvents = (await context.substrate.query.system.events.at(header.hash)) as Vec<EventRecord>;
-            signedBlock.block.extrinsics.forEach((ex, index) => {
-                if (
-                    !(
-                        ex.method.section === filterObj.module &&
-                        (ex.method.method === filterObj.method || ex.method.method === 'someError')
-                    )
-                ) {
-                    return;
-                }
-                allEvents
-                    .filter(({ phase, event }) => {
-                        return (
-                            phase.isApplyExtrinsic &&
-                            phase.asApplyExtrinsic.eq(index) &&
-                            event.section == filterObj.module &&
-                            (event.method == filterObj.event || event.method == filterObj.errorEvent)
-                        );
-                    })
-                    .forEach(({ event }) => {
-                        if (event.method == filterObj.event) {
-                            const data = event.data as AESOutput[];
-                            const eventData: HexString[] = [];
-                            for (let i = 0; i < data.length; i++) {
-                                eventData.push(decryptWithAES(aesKey, data[i]));
-                            }
-
-                            resolve(eventData);
-                        } else if (event.method == filterObj.errorEvent) {
-                            const error = event.method;
-
-                            resolve(error);
-                        }
-                        unsubscribe();
-                        return;
-                    });
+            const records: EventRecord[] = (await apiAt.query.system.events()) as any;
+            records.forEach((e, i) => {
+                const s = e.event.section;
+                const m = e.event.method;
+                const d = e.event.data;
+                console.log(`Event[${i}]: ${s}.${m} ${d}`);
             });
-        });
-    });
-}
-export async function listenCreatedIdentityEvents(context: IntegrationTestContext, aesKey: HexString) {
-    return new Promise<{ eventData: HexString[] }>(async (resolve, reject) => {
-        let startBlock = 0;
-        const slotDuration = await context.substrate.call.auraApi.slotDuration();
-        const timeout = 3 * 60 * 1000; // 3 min
-        let maximumWaitingBlock = timeout / parseInt(slotDuration.toString());
-        console.log('maximumWaitingBlock', maximumWaitingBlock);
-        const unsubscribe = await context.substrate.rpc.chain.subscribeNewHeads(async (header) => {
-            const currentBlockNumber = header.number.toNumber();
-            if (startBlock == 0) startBlock = currentBlockNumber;
-            if (currentBlockNumber > startBlock + maximumWaitingBlock) {
-                reject('timeout');
+            const events = records.filter(
+                ({ phase, event }) =>
+                    phase.isApplyExtrinsic && section === event.section && methods.includes(event.method)
+            );
+
+            if (events.length) {
+                resolve(events.map((e) => e.event));
+                unsubscribe();
                 return;
             }
-            console.log(`Chain is at block: #${header.number}`);
-            const signedBlock = await context.substrate.rpc.chain.getBlock(header.hash);
-            const allEvents = (await context.substrate.query.system.events.at(header.hash)) as Vec<EventRecord>;
-            signedBlock.block.extrinsics.forEach((ex, index) => {
-                if (!(ex.method.section === 'identityManagement')) {
-                    return;
-                }
-                const list = allEvents
-                    .filter(({ phase, event }) => {
-                        return (
-                            phase.isApplyExtrinsic &&
-                            event.section == 'identityManagement' &&
-                            (event.method == 'IdentityCreated' || event.method == 'ChallengeCodeGenerated')
-                        );
-                    })
-                    .map(({ event }) => {
-                        const data = event.data as AESOutput[];
-                        return data;
-                    });
-                if (list.length) {
-                    const eventData: HexString[] = [];
-                    for (let i = 0; i < list.length; i++) {
-                        for (let j = 0; j < list[i].length; j++) {
-                            eventData.push(decryptWithAES(aesKey, list[i][j]));
-                        }
-                    }
-                    resolve({ eventData: [...new Set(eventData)] });
-                    unsubscribe();
-                    return;
-                }
-            });
-        });
-    });
-}
-
-export async function listenErrorEvents(
-    context: IntegrationTestContext,
-    filterObj: { module: string; method: string; event: string; errorEvent: string }
-) {
-    return new Promise<string>(async (resolve, reject) => {
-        let startBlock = 0;
-        const slotDuration = await context.substrate.call.auraApi.slotDuration();
-        const timeout = 3 * 60 * 1000; // 3 min
-        let maximumWaitingBlock = timeout / parseInt(slotDuration.toString());
-        console.log('maximumWaitingBlock', maximumWaitingBlock);
-        const unsubscribe = await context.substrate.rpc.chain.subscribeNewHeads(async (header) => {
-            const currentBlockNumber = header.number.toNumber();
-            if (startBlock == 0) startBlock = currentBlockNumber;
-            if (currentBlockNumber > startBlock + maximumWaitingBlock) {
-                reject('timeout');
-                return;
-            }
-            console.log(`Chain is at block: #${header.number}`);
-            const signedBlock = await context.substrate.rpc.chain.getBlock(header.hash);
-
-            const allEvents = (await context.substrate.query.system.events.at(header.hash)) as Vec<EventRecord>;
-            signedBlock.block.extrinsics.forEach((ex, index) => {
-                if (
-                    !(
-                        ex.method.section === filterObj.module &&
-                        (ex.method.method === filterObj.method || ex.method.method === 'someError')
-                    )
-                ) {
-                    return;
-                }
-                allEvents
-                    .filter(({ phase, event }) => {
-                        return (
-                            phase.isApplyExtrinsic &&
-                            phase.asApplyExtrinsic.eq(index) &&
-                            event.section == filterObj.module &&
-                            event.method == filterObj.errorEvent
-                        );
-                    })
-                    .forEach(({ event }) => {
-                        resolve(event.method);
-                        unsubscribe();
-                        return;
-                    });
-            });
         });
     });
 }
