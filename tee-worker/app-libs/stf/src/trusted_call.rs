@@ -29,7 +29,7 @@ use crate::{
 };
 use codec::{Decode, Encode};
 use frame_support::{ensure, traits::UnfilteredDispatchable};
-pub use ita_sgx_runtime::{Balance, Index};
+pub use ita_sgx_runtime::{Balance, ConvertAccountId, Index, SgxParentchainTypeConverter};
 use itp_node_api::metadata::{
 	pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata,
 };
@@ -424,7 +424,7 @@ where
 						calls.push(OpaqueCall::from_tuple(&(
 							node_metadata_repo
 								.get_from_metadata(|m| m.user_shielding_key_set_call_indexes())??,
-							aes_encrypt_default(&key, &who.encode()),
+							SgxParentchainTypeConverter::convert(who),
 						)));
 					},
 					Err(err) => {
@@ -464,7 +464,7 @@ where
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.identity_created_call_indexes())??,
-								aes_encrypt_default(&key, &who.encode()),
+								SgxParentchainTypeConverter::convert(who.clone()),
 								aes_encrypt_default(&key, &identity.encode()),
 								aes_encrypt_default(&key, &id_graph.encode()),
 							)));
@@ -472,7 +472,7 @@ where
 								node_metadata_repo.get_from_metadata(|m| {
 									m.challenge_code_generated_call_indexes()
 								})??,
-								aes_encrypt_default(&key, &who.encode()),
+								SgxParentchainTypeConverter::convert(who),
 								aes_encrypt_default(&key, &identity.encode()),
 								aes_encrypt_default(&key, &code.encode()),
 							)));
@@ -513,7 +513,7 @@ where
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.identity_removed_call_indexes())??,
-								aes_encrypt_default(&key, &who.encode()),
+								SgxParentchainTypeConverter::convert(who),
 								aes_encrypt_default(&key, &identity.encode()),
 								aes_encrypt_default(&key, &id_graph.encode()),
 							)));
@@ -565,7 +565,7 @@ where
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.identity_verified_call_indexes())??,
-								aes_encrypt_default(&key, &who.encode()),
+								SgxParentchainTypeConverter::convert(who),
 								aes_encrypt_default(&key, &identity.encode()),
 								aes_encrypt_default(&key, &id_graph.encode()),
 							)));

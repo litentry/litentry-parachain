@@ -1,11 +1,10 @@
+# Litentry note: this file is unused
+# Please edit the ../.dockerignore directly
 .git
 .githooks
 .github
 .idea
-bin/*.bin
-bin/key.txt
-bin/spid.txt
-bin/sidechain_db/
+ci/
 docker/
 docs/
 local-setup/
