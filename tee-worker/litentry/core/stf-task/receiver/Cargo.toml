@@ -28,7 +28,7 @@ lazy_static = { version = "1.1.0", features = ["spin_no_std"] }
 log = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
-sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
+sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 
 # internal dependencies
 ita-stf = { path = "../../../../app-libs/stf", default-features = false }
@@ -48,7 +48,7 @@ itp-top-pool-author = { path = "../../../../core-primitives/top-pool-author", de
 itp-utils = { path = "../../../../core-primitives/utils", default-features = false }
 
 # litentry
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 ita-sgx-runtime = { path = "../../../../app-libs/sgx-runtime", default-features = false }
 lc-assertion-build = { path = "../../assertion-build", default-features = false }
 lc-credentials = { path = "../../credentials", default-features = false }
@@ -56,7 +56,7 @@ lc-identity-verification = { path = "../../identity-verification", default-featu
 lc-stf-task-sender = { path = "../sender", default-features = false }
 litentry-primitives = { path = "../../../primitives", default-features = false }
 parachain-core-primitives = { package = "core-primitives", path = "../../../../../primitives/core", default-features = false }
-sp-std = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37", default-features = false }
 
 [features]
 default = ["std"]

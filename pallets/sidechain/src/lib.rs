@@ -92,7 +92,7 @@ pub mod pallet {
 			let confirmation = SidechainBlockConfirmation { block_number, block_header_hash };
 
 			let sender = ensure_signed(origin)?;
-			Teerex::<T>::is_registered_enclave(&sender)?;
+			Teerex::<T>::ensure_registered_enclave(&sender)?;
 			let sender_index = Teerex::<T>::enclave_index(&sender);
 			let sender_enclave = Teerex::<T>::enclave(sender_index)
 				.ok_or(pallet_teerex::Error::<T>::EmptyEnclaveRegistry)?;

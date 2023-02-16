@@ -32,7 +32,6 @@ const COINGECKO_SRC: &str = "https://api.coingecko.com";
 const COINMARKETCAP_SRC: &str = "https://coinmarketcap.com/";
 
 const DOT_USD_TRADING_PAIR: &str = "DOT/USD";
-const TEER_USD_TRADING_PAIR: &str = "TEER/USD";
 
 // give get_signer a concrete type
 fn get_signer(pubkey: &[u8; 32]) -> AccountId {

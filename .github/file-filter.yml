@@ -16,6 +16,10 @@ parachain_src: &parachain_src
 parachain_test: &parachain_test
   - 'ts-tests/**'
 
+coverage_src: &coverage_src
+  - *parachain_src
+  - '.github/workflows/coverage.yml'
+
 tee_src: &tee_src
   - 'tee-worker/**/*.rs'
   - 'tee-worker/**/Cargo.toml'

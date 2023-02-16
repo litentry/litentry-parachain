@@ -66,6 +66,10 @@ use itp_settings::{
 	files::SIDECHAIN_STORAGE_PATH,
 	worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvider},
 };
+
+#[cfg(feature = "dcap")]
+use itp_utils::hex::hex_encode;
+
 use itp_types::DirectRequestStatus;
 use its_peer_fetch::{
 	block_fetch_client::BlockFetcher, untrusted_peer_fetch::UntrustedPeerFetcher,
@@ -307,7 +311,14 @@ fn main() {
 		#[cfg(not(feature = "dcap"))]
 		enclave.dump_ias_ra_cert_to_disk().unwrap();
 		#[cfg(feature = "dcap")]
-		enclave.dump_dcap_ra_cert_to_disk().unwrap();
+		{
+			// Hard coded 6-byte FMSPC that represents the state of devsgx03
+			// TODO: either fetch this value from a list of pre-configured FMSPC values or
+			// extract the information out of the RA certificate
+			let fmspc = [00u8, 0x90, 0x6E, 0xA1, 00, 00];
+			enclave.dump_dcap_collateral_to_disk(fmspc).unwrap();
+			enclave.dump_dcap_ra_cert_to_disk().unwrap();
+		}
 	} else if matches.is_present("mrenclave") {
 		println!("{}", enclave.get_mrenclave().unwrap().encode().to_base58());
 	} else if let Some(sub_matches) = matches.subcommand_matches("init-shard") {
@@ -529,6 +540,9 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		)
 		.expect("Could not set the node metadata in the enclave");
 
+	#[cfg(feature = "dcap")]
+	register_collateral(&node_api, &*enclave, &tee_accountid, is_development_mode);
+
 	// ------------------------------------------------------------------------
 	// Perform a remote attestation and get an unchecked extrinsic back.
 	let trusted_url = config.trusted_worker_url_external();
@@ -549,7 +563,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 	// Account funds
 	if let Err(x) =
-		setup_account_funding(&node_api, &tee_accountid, xthex.clone(), is_development_mode)
+		setup_account_funding(&node_api, &tee_accountid, &xthex.clone(), is_development_mode)
 	{
 		error!("Starting worker failed: {:?}", x);
 		// Return without registering the enclave. This will fail and the transaction will be banned for 30min.
@@ -865,6 +879,42 @@ fn print_events(events: Events, _sender: Sender<String>) {
 			},
 		}
 	}
+}
+
+#[cfg(feature = "dcap")]
+fn register_collateral(
+	api: &ParentchainApi,
+	enclave: &dyn RemoteAttestation,
+	accountid: &AccountId32,
+	is_development_mode: bool,
+) {
+	let fmspc = [00u8, 0x90, 0x6E, 0xA1, 00, 00];
+	let uxt = enclave.generate_register_quoting_enclave_extrinsic(fmspc).unwrap();
+	send_extrinsic(&uxt, api, accountid, is_development_mode);
+
+	let uxt = enclave.generate_register_tcb_info_extrinsic(fmspc).unwrap();
+	send_extrinsic(&uxt, api, accountid, is_development_mode);
+}
+
+#[cfg(feature = "dcap")]
+fn send_extrinsic(
+	extrinsic: &[u8],
+	api: &ParentchainApi,
+	accountid: &AccountId32,
+	is_development_mode: bool,
+) -> Option<Hash> {
+	let xthex = hex_encode(extrinsic);
+	// Account funds
+	if let Err(x) = setup_account_funding(api, accountid, &xthex, is_development_mode) {
+		error!("Starting worker failed: {:?}", x);
+		// Return without registering the enclave. This will fail and the transaction will be banned for 30min.
+		return None
+	}
+
+	println!("[>] Register the TCB info (send the extrinsic)");
+	let register_qe_xt_hash = api.send_extrinsic(xthex, XtStatus::Finalized).unwrap();
+	println!("[<] Extrinsic got finalized. Hash: {:?}\n", register_qe_xt_hash);
+	register_qe_xt_hash
 }
 
 /// Subscribe to the node API finalized heads stream and trigger a parent chain sync

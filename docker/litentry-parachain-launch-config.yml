@@ -32,6 +32,8 @@ parachains:
     - --rpc-methods=unsafe
     - --force-authoring
     - --execution=wasm
+    - --state-pruning=archive
+    - --blocks-pruning=archive
   relaychainFlags:
     - --execution=wasm
   env:

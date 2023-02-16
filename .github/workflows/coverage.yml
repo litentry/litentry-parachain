@@ -22,8 +22,7 @@ jobs:
     # see https://github.com/orgs/community/discussions/25722
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
     outputs:
-      parachain_src: ${{ steps.filter.outputs.parachain_src }}
-      tee_src: ${{ steps.filter.outputs.tee_src }}
+      coverage_src: ${{ steps.filter.outputs.coverage_src }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -43,28 +42,22 @@ jobs:
     needs:
       - check-file-change
     if: >
-      needs.check-file-change.outputs.parachain_src == 'true'
+      needs.check-file-change.outputs.coverage_src == 'true'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
       - name: Install toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: nightly
-          components: rustfmt
-          target: wasm32-unknown-unknown
+        run: rustup show
 
       - name: Install additional dependencies
         run: |
-            sudo apt update -y &&
-            sudo apt install -y cmake pkg-config libssl-dev git gcc build-essential git clang libclang-dev
+          sudo apt update -y &&
+          sudo apt install -y cmake pkg-config libssl-dev git gcc build-essential git clang libclang-dev
 
       - name: Install cargo-tarpaulin
         run: |
-            cargo install cargo-tarpaulin
+          cargo install cargo-tarpaulin
 
       - name: Run cargo-tarpaulin
         run: |
