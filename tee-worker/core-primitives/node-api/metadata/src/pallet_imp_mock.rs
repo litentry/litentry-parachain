@@ -27,7 +27,6 @@ pub trait IMPMockCallIndexes {
 	fn verify_identity_call_indexes(&self) -> Result<[u8; 2]>;
 
 	fn user_shielding_key_set_call_indexes(&self) -> Result<[u8; 2]>;
-	fn challenge_code_generated_call_indexes(&self) -> Result<[u8; 2]>;
 	fn identity_created_call_indexes(&self) -> Result<[u8; 2]>;
 	fn identity_removed_call_indexes(&self) -> Result<[u8; 2]>;
 	fn identity_verified_call_indexes(&self) -> Result<[u8; 2]>;
@@ -53,10 +52,6 @@ impl IMPMockCallIndexes for NodeMetadata {
 
 	fn user_shielding_key_set_call_indexes(&self) -> Result<[u8; 2]> {
 		self.call_indexes(IMPMOCK, "user_shielding_key_set")
-	}
-
-	fn challenge_code_generated_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(IMPMOCK, "challenge_code_generated")
 	}
 
 	fn identity_created_call_indexes(&self) -> Result<[u8; 2]> {
