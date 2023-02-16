@@ -17,12 +17,13 @@
 
 use crate::{
 	mock::*, Enclave, EnclaveRegistry, Error, Event as TeerexEvent, ExecutedCalls, Request,
-	ShardIdentifier,
+	ShardIdentifier, DATA_LENGTH_LIMIT,
 };
 use frame_support::{assert_err, assert_ok};
-use ias_verify::{SgxBuildMode, SgxEnclaveMetadata, SgxStatus};
+use hex_literal::hex;
 use sp_core::H256;
 use sp_keyring::AccountKeyring;
+use teerex_primitives::SgxBuildMode;
 use test_utils::ias::consts::*;
 
 fn list_enclaves() -> Vec<(u64, Enclave<AccountId, Vec<u8>>)> {
@@ -32,6 +33,98 @@ fn list_enclaves() -> Vec<(u64, Enclave<AccountId, Vec<u8>>)> {
 // give get_signer a concrete type
 fn get_signer(pubkey: &[u8; 32]) -> AccountId {
 	test_utils::get_signer(pubkey)
+}
+
+/// Timestamp for which the collateral data must be valid. Represents 2022-12-21 08:12:27
+const VALID_TIMESTAMP: Moment = 1671606747000;
+
+#[test]
+fn add_and_remove_dcap_enclave_works() {
+	new_test_ext().execute_with(|| {
+		Timestamp::set_timestamp(VALID_TIMESTAMP);
+		register_quoting_enclave();
+		register_tcb_info();
+
+		let pubkey: [u8; 32] = [
+			65, 89, 193, 118, 86, 172, 17, 149, 206, 160, 174, 75, 219, 151, 51, 235, 110, 135, 20,
+			55, 147, 162, 106, 110, 143, 207, 57, 64, 67, 63, 203, 95,
+		];
+		let signer = get_signer(&pubkey);
+		assert_ok!(Teerex::register_dcap_enclave(
+			RuntimeOrigin::signed(signer.clone()),
+			TEST1_DCAP_QUOTE.to_vec(),
+			URL.to_vec()
+		));
+		assert_eq!(Teerex::enclave_count(), 1);
+		assert_eq!(Teerex::enclave(1).unwrap().timestamp, VALID_TIMESTAMP);
+		assert_ok!(Teerex::unregister_enclave(RuntimeOrigin::signed(signer)));
+		assert_eq!(Teerex::enclave_count(), 0);
+		assert_eq!(list_enclaves(), vec![])
+	})
+}
+
+fn register_quoting_enclave() {
+	let quoting_enclave = br#"{"id":"QE","version":2,"issueDate":"2022-12-04T22:45:33Z","nextUpdate":"2023-01-03T22:45:33Z","tcbEvaluationDataNumber":13,"miscselect":"00000000","miscselectMask":"FFFFFFFF","attributes":"11000000000000000000000000000000","attributesMask":"FBFFFFFFFFFFFFFF0000000000000000","mrsigner":"8C4F5775D796503E96137F77C68A829A0056AC8DED70140B081B094490C57BFF","isvprodid":1,"tcbLevels":[{"tcb":{"isvsvn":6},"tcbDate":"2022-11-09T00:00:00Z","tcbStatus":"UpToDate"},{"tcb":{"isvsvn":5},"tcbDate":"2020-11-11T00:00:00Z","tcbStatus":"OutOfDate","advisoryIDs":["INTEL-SA-00477"]},{"tcb":{"isvsvn":4},"tcbDate":"2019-11-13T00:00:00Z","tcbStatus":"OutOfDate","advisoryIDs":["INTEL-SA-00334","INTEL-SA-00477"]},{"tcb":{"isvsvn":2},"tcbDate":"2019-05-15T00:00:00Z","tcbStatus":"OutOfDate","advisoryIDs":["INTEL-SA-00219","INTEL-SA-00293","INTEL-SA-00334","INTEL-SA-00477"]},{"tcb":{"isvsvn":1},"tcbDate":"2018-08-15T00:00:00Z","tcbStatus":"OutOfDate","advisoryIDs":["INTEL-SA-00202","INTEL-SA-00219","INTEL-SA-00293","INTEL-SA-00334","INTEL-SA-00477"]}]}"#;
+	let signature = hex!("47accba321e57c20722a0d3d1db11c9b52661239857dc578ca1bde13976ee288cf39f72111ffe445c7389ef56447c79e30e6b83a8863ed9880de5bde4a8d5c91");
+	let certificate_chain =
+		include_bytes!("../../sgx-verify/test/dcap/qe_identity_issuer_chain.pem");
+
+	let pubkey: [u8; 32] = [
+		65, 89, 193, 118, 86, 172, 17, 149, 206, 160, 174, 75, 219, 151, 51, 235, 110, 135, 20, 55,
+		147, 162, 106, 110, 143, 207, 57, 64, 67, 63, 203, 95,
+	];
+	let signer = get_signer(&pubkey);
+	assert_ok!(Teerex::register_quoting_enclave(
+		RuntimeOrigin::signed(signer.clone()),
+		quoting_enclave.to_vec(),
+		signature.to_vec(),
+		certificate_chain.to_vec(),
+	));
+}
+
+#[test]
+fn register_quoting_enclave_works() {
+	new_test_ext().execute_with(|| {
+		let qe = Teerex::quoting_enclave();
+		assert_eq!(qe.mrsigner, [0u8; 32]);
+		assert_eq!(qe.isvprodid, 0);
+		Timestamp::set_timestamp(VALID_TIMESTAMP);
+		register_quoting_enclave();
+		let qe = Teerex::quoting_enclave();
+		assert_eq!(qe.isvprodid, 1);
+	})
+}
+
+fn register_tcb_info() {
+	let tcb_info = br#"{"id":"SGX","version":3,"issueDate":"2022-11-17T12:45:32Z","nextUpdate":"2023-04-16T12:45:32Z","fmspc":"00906EA10000","pceId":"0000","tcbType":0,"tcbEvaluationDataNumber":12,"tcbLevels":[{"tcb":{"sgxtcbcomponents":[{"svn":17},{"svn":17},{"svn":2},{"svn":4},{"svn":1},{"svn":128},{"svn":7},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0}],"pcesvn":11},"tcbDate":"2021-11-10T00:00:00Z","tcbStatus":"SWHardeningNeeded","advisoryIDs":["INTEL-SA-00334"]},{"tcb":{"sgxtcbcomponents":[{"svn":17},{"svn":17},{"svn":2},{"svn":4},{"svn":1},{"svn":128},{"svn":7},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0}],"pcesvn":10},"tcbDate":"2020-11-11T00:00:00Z","tcbStatus":"OutOfDate","advisoryIDs":["INTEL-SA-00161","INTEL-SA-00219","INTEL-SA-00289","INTEL-SA-00334"]},{"tcb":{"sgxtcbcomponents":[{"svn":17},{"svn":17},{"svn":2},{"svn":4},{"svn":1},{"svn":128},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0}],"pcesvn":11},"tcbDate":"2021-11-10T00:00:00Z","tcbStatus":"ConfigurationAndSWHardeningNeeded","advisoryIDs":["INTEL-SA-00161","INTEL-SA-00219","INTEL-SA-00289","INTEL-SA-00334"]},{"tcb":{"sgxtcbcomponents":[{"svn":17},{"svn":17},{"svn":2},{"svn":4},{"svn":1},{"svn":128},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0}],"pcesvn":10},"tcbDate":"2020-11-11T00:00:00Z","tcbStatus":"OutOfDateConfigurationNeeded","advisoryIDs":["INTEL-SA-00477","INTEL-SA-00161","INTEL-SA-00219","INTEL-SA-00289","INTEL-SA-00334"]},{"tcb":{"sgxtcbcomponents":[{"svn":15},{"svn":15},{"svn":2},{"svn":4},{"svn":1},{"svn":128},{"svn":7},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0}],"pcesvn":10},"tcbDate":"2020-06-10T00:00:00Z","tcbStatus":"OutOfDate","advisoryIDs":["INTEL-SA-00381","INTEL-SA-00389","INTEL-SA-00477","INTEL-SA-00161","INTEL-SA-00219","INTEL-SA-00289","INTEL-SA-00334"]},{"tcb":{"sgxtcbcomponents":[{"svn":15},{"svn":15},{"svn":2},{"svn":4},{"svn":1},{"svn":128},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0}],"pcesvn":10},"tcbDate":"2020-06-10T00:00:00Z","tcbStatus":"OutOfDateConfigurationNeeded","advisoryIDs":["INTEL-SA-00161","INTEL-SA-00219","INTEL-SA-00289","INTEL-SA-00381","INTEL-SA-00389","INTEL-SA-00477","INTEL-SA-00334"]},{"tcb":{"sgxtcbcomponents":[{"svn":14},{"svn":14},{"svn":2},{"svn":4},{"svn":1},{"svn":128},{"svn":7},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0}],"pcesvn":10},"tcbDate":"2019-12-11T00:00:00Z","tcbStatus":"OutOfDate","advisoryIDs":["INTEL-SA-00320","INTEL-SA-00329","INTEL-SA-00161","INTEL-SA-00219","INTEL-SA-00289","INTEL-SA-00381","INTEL-SA-00389","INTEL-SA-00477","INTEL-SA-00334"]},{"tcb":{"sgxtcbcomponents":[{"svn":14},{"svn":14},{"svn":2},{"svn":4},{"svn":1},{"svn":128},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0}],"pcesvn":10},"tcbDate":"2019-12-11T00:00:00Z","tcbStatus":"OutOfDateConfigurationNeeded","advisoryIDs":["INTEL-SA-00161","INTEL-SA-00219","INTEL-SA-00289","INTEL-SA-00320","INTEL-SA-00329","INTEL-SA-00381","INTEL-SA-00389","INTEL-SA-00477","INTEL-SA-00334"]},{"tcb":{"sgxtcbcomponents":[{"svn":13},{"svn":13},{"svn":2},{"svn":4},{"svn":1},{"svn":128},{"svn":3},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0}],"pcesvn":9},"tcbDate":"2019-11-13T00:00:00Z","tcbStatus":"OutOfDate","advisoryIDs":["INTEL-SA-00161","INTEL-SA-00219","INTEL-SA-00289","INTEL-SA-00320","INTEL-SA-00329","INTEL-SA-00381","INTEL-SA-00389","INTEL-SA-00477","INTEL-SA-00334"]},{"tcb":{"sgxtcbcomponents":[{"svn":13},{"svn":13},{"svn":2},{"svn":4},{"svn":1},{"svn":128},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0}],"pcesvn":9},"tcbDate":"2019-11-13T00:00:00Z","tcbStatus":"OutOfDateConfigurationNeeded","advisoryIDs":["INTEL-SA-00161","INTEL-SA-00219","INTEL-SA-00289","INTEL-SA-00320","INTEL-SA-00329","INTEL-SA-00381","INTEL-SA-00389","INTEL-SA-00477","INTEL-SA-00334"]},{"tcb":{"sgxtcbcomponents":[{"svn":6},{"svn":6},{"svn":2},{"svn":4},{"svn":1},{"svn":128},{"svn":1},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0}],"pcesvn":7},"tcbDate":"2019-05-15T00:00:00Z","tcbStatus":"OutOfDate","advisoryIDs":["INTEL-SA-00220","INTEL-SA-00270","INTEL-SA-00293","INTEL-SA-00161","INTEL-SA-00219","INTEL-SA-00289","INTEL-SA-00320","INTEL-SA-00329","INTEL-SA-00381","INTEL-SA-00389","INTEL-SA-00477","INTEL-SA-00334"]},{"tcb":{"sgxtcbcomponents":[{"svn":6},{"svn":6},{"svn":2},{"svn":4},{"svn":1},{"svn":128},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0}],"pcesvn":7},"tcbDate":"2019-05-15T00:00:00Z","tcbStatus":"OutOfDateConfigurationNeeded","advisoryIDs":["INTEL-SA-00161","INTEL-SA-00220","INTEL-SA-00270","INTEL-SA-00293","INTEL-SA-00219","INTEL-SA-00289","INTEL-SA-00320","INTEL-SA-00329","INTEL-SA-00381","INTEL-SA-00389","INTEL-SA-00477","INTEL-SA-00334"]},{"tcb":{"sgxtcbcomponents":[{"svn":5},{"svn":5},{"svn":2},{"svn":4},{"svn":1},{"svn":128},{"svn":1},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0}],"pcesvn":7},"tcbDate":"2019-01-09T00:00:00Z","tcbStatus":"OutOfDate","advisoryIDs":["INTEL-SA-00233","INTEL-SA-00161","INTEL-SA-00220","INTEL-SA-00270","INTEL-SA-00293","INTEL-SA-00219","INTEL-SA-00289","INTEL-SA-00320","INTEL-SA-00329","INTEL-SA-00381","INTEL-SA-00389","INTEL-SA-00477","INTEL-SA-00334"]},{"tcb":{"sgxtcbcomponents":[{"svn":5},{"svn":5},{"svn":2},{"svn":4},{"svn":1},{"svn":128},{"svn":1},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0}],"pcesvn":6},"tcbDate":"2018-08-15T00:00:00Z","tcbStatus":"OutOfDate","advisoryIDs":["INTEL-SA-00161","INTEL-SA-00233","INTEL-SA-00220","INTEL-SA-00270","INTEL-SA-00293","INTEL-SA-00219","INTEL-SA-00289","INTEL-SA-00320","INTEL-SA-00329","INTEL-SA-00381","INTEL-SA-00389","INTEL-SA-00477","INTEL-SA-00334"]},{"tcb":{"sgxtcbcomponents":[{"svn":5},{"svn":5},{"svn":2},{"svn":4},{"svn":1},{"svn":128},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0}],"pcesvn":7},"tcbDate":"2019-01-09T00:00:00Z","tcbStatus":"OutOfDateConfigurationNeeded","advisoryIDs":["INTEL-SA-00161","INTEL-SA-00233","INTEL-SA-00220","INTEL-SA-00270","INTEL-SA-00293","INTEL-SA-00219","INTEL-SA-00289","INTEL-SA-00320","INTEL-SA-00329","INTEL-SA-00381","INTEL-SA-00389","INTEL-SA-00477","INTEL-SA-00334"]},{"tcb":{"sgxtcbcomponents":[{"svn":5},{"svn":5},{"svn":2},{"svn":4},{"svn":1},{"svn":128},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0}],"pcesvn":6},"tcbDate":"2018-08-15T00:00:00Z","tcbStatus":"OutOfDateConfigurationNeeded","advisoryIDs":["INTEL-SA-00203","INTEL-SA-00161","INTEL-SA-00233","INTEL-SA-00220","INTEL-SA-00270","INTEL-SA-00293","INTEL-SA-00219","INTEL-SA-00289","INTEL-SA-00320","INTEL-SA-00329","INTEL-SA-00381","INTEL-SA-00389","INTEL-SA-00477","INTEL-SA-00334"]},{"tcb":{"sgxtcbcomponents":[{"svn":4},{"svn":4},{"svn":2},{"svn":4},{"svn":1},{"svn":128},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0}],"pcesvn":5},"tcbDate":"2018-01-04T00:00:00Z","tcbStatus":"OutOfDate","advisoryIDs":["INTEL-SA-00106","INTEL-SA-00115","INTEL-SA-00135","INTEL-SA-00203","INTEL-SA-00161","INTEL-SA-00233","INTEL-SA-00220","INTEL-SA-00270","INTEL-SA-00293","INTEL-SA-00219","INTEL-SA-00289","INTEL-SA-00320","INTEL-SA-00329","INTEL-SA-00381","INTEL-SA-00389","INTEL-SA-00477","INTEL-SA-00334"]},{"tcb":{"sgxtcbcomponents":[{"svn":2},{"svn":2},{"svn":2},{"svn":4},{"svn":1},{"svn":128},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0},{"svn":0}],"pcesvn":4},"tcbDate":"2017-07-26T00:00:00Z","tcbStatus":"OutOfDate","advisoryIDs":["INTEL-SA-00088","INTEL-SA-00106","INTEL-SA-00115","INTEL-SA-00135","INTEL-SA-00203","INTEL-SA-00161","INTEL-SA-00233","INTEL-SA-00220","INTEL-SA-00270","INTEL-SA-00293","INTEL-SA-00219","INTEL-SA-00289","INTEL-SA-00320","INTEL-SA-00329","INTEL-SA-00381","INTEL-SA-00389","INTEL-SA-00477","INTEL-SA-00334"]}]}"#;
+	let signature = hex!("71746f2148ecba04e35cf1ac77a7e6267ce99f6781c1031f724bb5bd94b8c1b6e4c07c01dc151692aa75be80dfba7350bb80c58314a6975189597e28e9bbc75c");
+	let certificate_chain = include_bytes!("../../sgx-verify/test/dcap/tcb_info_issuer_chain.pem");
+
+	let pubkey: [u8; 32] = [
+		65, 89, 193, 118, 86, 172, 17, 149, 206, 160, 174, 75, 219, 151, 51, 235, 110, 135, 20, 55,
+		147, 162, 106, 110, 143, 207, 57, 64, 67, 63, 203, 95,
+	];
+	let signer = get_signer(&pubkey);
+	assert_ok!(Teerex::register_tcb_info(
+		RuntimeOrigin::signed(signer.clone()),
+		tcb_info.to_vec(),
+		signature.to_vec(),
+		certificate_chain.to_vec(),
+	));
+}
+
+#[test]
+fn register_tcb_info_works() {
+	new_test_ext().execute_with(|| {
+		Timestamp::set_timestamp(VALID_TIMESTAMP);
+
+		register_tcb_info();
+		let fmspc = hex!("00906EA10000");
+		let tcb_info = Teerex::tcb_info(fmspc);
+		// This is the date that the is registered in register_tcb_info and represents the date
+		// 2023-04-16T12:45:32Z
+		assert_eq!(tcb_info.next_update, 1681649132000);
+	})
 }
 
 #[test]
@@ -71,6 +164,21 @@ fn add_and_remove_enclave_works() {
 }
 
 #[test]
+fn add_enclave_without_timestamp_fails() {
+	new_test_ext().execute_with(|| {
+		Timestamp::set_timestamp(0);
+		let signer = get_signer(TEST4_SIGNER_PUB);
+		assert!(Teerex::register_enclave(
+			RuntimeOrigin::signed(signer.clone()),
+			TEST4_CERT.to_vec(),
+			URL.to_vec(),
+		)
+		.is_err());
+		assert_eq!(Teerex::enclave_count(), 0);
+	})
+}
+
+#[test]
 fn list_enclaves_works() {
 	new_test_ext().execute_with(|| {
 		Timestamp::set_timestamp(TEST4_TIMESTAMP);
@@ -82,7 +190,6 @@ fn list_enclaves_works() {
 			url: URL.to_vec(),
 			shielding_key: None,
 			sgx_mode: SgxBuildMode::Debug,
-			sgx_metadata: SgxEnclaveMetadata::default(),
 		};
 		assert_ok!(Teerex::register_enclave(
 			RuntimeOrigin::signed(signer.clone()),
@@ -115,7 +222,6 @@ fn remove_middle_enclave_works() {
 			url: URL.to_vec(),
 			shielding_key: None,
 			sgx_mode: SgxBuildMode::Debug,
-			sgx_metadata: SgxEnclaveMetadata::default(),
 		};
 
 		let e_2: Enclave<AccountId, Vec<u8>> = Enclave {
@@ -125,7 +231,6 @@ fn remove_middle_enclave_works() {
 			url: URL.to_vec(),
 			shielding_key: None,
 			sgx_mode: SgxBuildMode::Debug,
-			sgx_metadata: SgxEnclaveMetadata::default(),
 		};
 
 		let e_3: Enclave<AccountId, Vec<u8>> = Enclave {
@@ -135,7 +240,6 @@ fn remove_middle_enclave_works() {
 			url: URL.to_vec(),
 			shielding_key: None,
 			sgx_mode: SgxBuildMode::Debug,
-			sgx_metadata: SgxEnclaveMetadata::default(),
 		};
 
 		assert_ok!(Teerex::register_enclave(
@@ -242,7 +346,6 @@ fn update_enclave_url_works() {
 			url: url2.to_vec(),
 			shielding_key: None,
 			sgx_mode: SgxBuildMode::Debug,
-			sgx_metadata: SgxEnclaveMetadata::default(),
 		};
 
 		assert_ok!(Teerex::register_enclave(
@@ -386,7 +489,6 @@ fn timestamp_callback_works() {
 			url: URL.to_vec(),
 			shielding_key: None,
 			sgx_mode: SgxBuildMode::Debug,
-			sgx_metadata: SgxEnclaveMetadata::default(),
 		};
 
 		let e_3: Enclave<AccountId, Vec<u8>> = Enclave {
@@ -396,7 +498,6 @@ fn timestamp_callback_works() {
 			url: URL.to_vec(),
 			shielding_key: None,
 			sgx_mode: SgxBuildMode::Debug,
-			sgx_metadata: SgxEnclaveMetadata::default(),
 		};
 
 		//Register 3 enclaves: 5, 6 ,7
@@ -464,7 +565,6 @@ fn debug_mode_enclave_attest_works_when_sgx_debug_mode_is_allowed() {
 			url: URL.to_vec(),
 			shielding_key: None,
 			sgx_mode: SgxBuildMode::Debug,
-			sgx_metadata: SgxEnclaveMetadata::default(),
 		};
 
 		//Register an enclave compiled in debug mode
@@ -493,7 +593,6 @@ fn production_mode_enclave_attest_works_when_sgx_debug_mode_is_allowed() {
 				url: URL.to_vec(),
 				shielding_key: None,
 				sgx_mode: SgxBuildMode::Production,
-				sgx_metadata: SgxEnclaveMetadata::default(),
 			};
 
 			//Register an enclave compiled in production mode
@@ -540,7 +639,6 @@ fn production_mode_enclave_attest_works_when_sgx_debug_mode_not_allowed() {
 			url: URL.to_vec(),
 			shielding_key: None,
 			sgx_mode: SgxBuildMode::Production,
-			sgx_metadata: SgxEnclaveMetadata::default(),
 		};
 
 		//Register an enclave compiled in production mode
@@ -720,7 +818,7 @@ fn confirm_processed_parentchain_block_works() {
 }
 
 #[test]
-fn verify_is_registered_enclave_works() {
+fn ensure_registered_enclave_works() {
 	new_test_ext().execute_with(|| {
 		Timestamp::set_timestamp(TEST4_TIMESTAMP);
 		let signer4 = get_signer(TEST4_SIGNER_PUB);
@@ -733,7 +831,137 @@ fn verify_is_registered_enclave_works() {
 			URL.to_vec(),
 			None,
 		));
-		assert_ok!(Teerex::is_registered_enclave(&signer4));
-		assert_err!(Teerex::is_registered_enclave(&signer6), Error::<Test>::EnclaveIsNotRegistered);
+		assert_ok!(Teerex::ensure_registered_enclave(&signer4));
+		assert_err!(
+			Teerex::ensure_registered_enclave(&signer6),
+			Error::<Test>::EnclaveIsNotRegistered
+		);
+	})
+}
+
+#[test]
+fn publish_hash_works() {
+	use frame_system::{EventRecord, Phase};
+
+	new_test_ext().execute_with(|| {
+		Timestamp::set_timestamp(TEST4_TIMESTAMP);
+		let signer4 = get_signer(TEST4_SIGNER_PUB);
+
+		//Ensure that enclave is registered
+		assert_ok!(Teerex::register_enclave(
+			RuntimeOrigin::signed(signer4.clone()),
+			TEST4_CERT.to_vec(),
+			URL.to_vec(),
+		));
+
+		// There are no events emitted at the genesis block.
+		System::set_block_number(1);
+		System::reset_events();
+
+		let hash = H256::from([1u8; 32]);
+		let extra_topics = vec![H256::from([2u8; 32]), H256::from([3u8; 32])];
+		let data = b"hello world".to_vec();
+
+		// publish with extra topics and data
+		assert_ok!(Teerex::publish_hash(
+			RuntimeOrigin::signed(signer4.clone()),
+			hash,
+			extra_topics.clone(),
+			data.clone()
+		));
+
+		// publish without extra topics and data
+		assert_ok!(Teerex::publish_hash(
+			RuntimeOrigin::signed(signer4.clone()),
+			hash,
+			vec![],
+			vec![]
+		));
+
+		let mr_enclave = Teerex::get_enclave(&signer4).unwrap().mr_enclave;
+		let mut topics = extra_topics;
+		topics.push(mr_enclave.into());
+
+		// Check that topics are reflected in the event record.
+		assert_eq!(
+			System::events(),
+			vec![
+				EventRecord {
+					phase: Phase::Initialization,
+					event: TeerexEvent::PublishedHash { mr_enclave, hash, data }.into(),
+					topics,
+				},
+				EventRecord {
+					phase: Phase::Initialization,
+					event: TeerexEvent::PublishedHash { mr_enclave, hash, data: vec![] }.into(),
+					topics: vec![mr_enclave.into()],
+				},
+			]
+		);
+	})
+}
+
+#[test]
+fn publish_hash_with_unregistered_enclave_fails() {
+	new_test_ext().execute_with(|| {
+		let signer4 = get_signer(TEST4_SIGNER_PUB);
+
+		assert_err!(
+			Teerex::publish_hash(RuntimeOrigin::signed(signer4), [1u8; 32].into(), vec![], vec![]),
+			Error::<Test>::EnclaveIsNotRegistered
+		);
+	})
+}
+
+#[test]
+fn publish_hash_with_too_many_topics_fails() {
+	new_test_ext().execute_with(|| {
+		Timestamp::set_timestamp(TEST4_TIMESTAMP);
+		let signer4 = get_signer(TEST4_SIGNER_PUB);
+
+		//Ensure that enclave is registered
+		assert_ok!(Teerex::register_enclave(
+			RuntimeOrigin::signed(signer4.clone()),
+			TEST4_CERT.to_vec(),
+			URL.to_vec(),
+		));
+
+		let hash = H256::from([1u8; 32]);
+		let extra_topics = vec![
+			H256::from([0u8; 32]),
+			H256::from([1u8; 32]),
+			H256::from([2u8; 32]),
+			H256::from([3u8; 32]),
+			H256::from([4u8; 32]),
+			H256::from([5u8; 32]),
+		];
+
+		assert_err!(
+			Teerex::publish_hash(RuntimeOrigin::signed(signer4), hash, extra_topics, vec![]),
+			Error::<Test>::TooManyTopics
+		);
+	})
+}
+
+#[test]
+fn publish_hash_with_too_much_data_fails() {
+	new_test_ext().execute_with(|| {
+		Timestamp::set_timestamp(TEST4_TIMESTAMP);
+		let signer4 = get_signer(TEST4_SIGNER_PUB);
+
+		//Ensure that enclave is registered
+		assert_ok!(Teerex::register_enclave(
+			RuntimeOrigin::signed(signer4.clone()),
+			TEST4_CERT.to_vec(),
+			URL.to_vec(),
+		));
+
+		let hash = H256::from([1u8; 32]);
+		let data = vec![0u8; DATA_LENGTH_LIMIT + 1];
+
+		assert_err!(
+			Teerex::publish_hash(RuntimeOrigin::signed(signer4), hash, vec![], data),
+			Error::<Test>::DataTooLong
+		);
 	})
 }

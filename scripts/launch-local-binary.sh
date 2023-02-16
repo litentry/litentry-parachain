@@ -43,7 +43,7 @@ if [ -z "$POLKADOT_BIN" ]; then
   # https://api.github.com/repos/paritytech/polkadot/releases/latest is not reliable as
   # polkadot could publish release which has no binary
   #
-  url="https://github.com/paritytech/polkadot/releases/download/v0.9.36/polkadot"
+  url="https://github.com/paritytech/polkadot/releases/download/v0.9.37/polkadot"
   POLKADOT_BIN="$TMPDIR/polkadot"
   wget -O "$POLKADOT_BIN" -q "$url"
   chmod a+x "$POLKADOT_BIN"

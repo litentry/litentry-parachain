@@ -1,0 +1,56 @@
+[package]
+edition = "2021"
+name = "sgx-verify-fuzz"
+publish = false
+version = "0.0.0"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+base64 = { version = "0.13", default-features = false, features = ["alloc"] }
+codec = { version = "3.0.0", default-features = false, features = ["derive"], package = "parity-scale-codec" }
+hex-literal = "0.3.4"
+libfuzzer-sys = "0.4"
+serde_json = { version = "1.0" }
+webpki = { default-features = false, git = "https://github.com/scs/webpki-nostd.git", branch = "master" }
+
+[dependencies.sgx-verify]
+path = ".."
+
+# Prevent this from interfering with workspaces
+[workspace]
+members = ["."]
+
+[profile.release]
+debug = 1
+
+[[bin]]
+doc = false
+name = "decode_quote"
+path = "fuzz_targets/decode_quote.rs"
+test = false
+
+[[bin]]
+doc = false
+name = "deserialize_json"
+path = "fuzz_targets/deserialize_json.rs"
+test = false
+
+[[bin]]
+doc = false
+name = "signature_check"
+path = "fuzz_targets/signature_check.rs"
+test = false
+
+[[bin]]
+doc = false
+name = "extract_tcb_info"
+path = "fuzz_targets/extract_tcb_info.rs"
+test = false
+
+[[bin]]
+doc = false
+name = "verify_ias_report"
+path = "fuzz_targets/verify_ias_report.rs"
+test = false

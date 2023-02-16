@@ -35,7 +35,7 @@ impl<'a> TryFrom<CertDer<'a>> for NetscapeComment<'a> {
 		let netscape_raw = cert_der
 			.get(offset..offset + len)
 			.ok_or("Index out of bounds")?
-			.split(|x| *x == 0x7C)
+			.split(|x| *x == 0x7C) // 0x7C is the character '|'
 			.collect::<Vec<&[u8]>>();
 		ensure!(netscape_raw.len() >= 3, "Invalid netscape payload");
 

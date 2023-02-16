@@ -326,7 +326,7 @@ where
 	fn try_origin(o: T::RuntimeOrigin) -> Result<Self::Success, T::RuntimeOrigin> {
 		o.into().and_then(|o| match o {
 			frame_system::RawOrigin::Signed(ref who)
-				if pallet_teerex::Pallet::<T>::is_registered_enclave(who) == Ok(true) =>
+				if pallet_teerex::Pallet::<T>::ensure_registered_enclave(who) == Ok(()) =>
 				Ok(who.clone()),
 			r => Err(T::RuntimeOrigin::from(r)),
 		})

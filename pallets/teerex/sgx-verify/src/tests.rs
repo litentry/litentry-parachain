@@ -1,9 +1,11 @@
 #![allow(dead_code, unused_imports, const_item_mutation)]
 
 use super::*;
+use crate::collateral::{EnclaveIdentitySigned, TcbInfoSigned};
 use codec::Decode;
 use frame_support::assert_err;
 use hex_literal::hex;
+
 // reproduce with "integritee_service dump_ra"
 const TEST1_CERT: &[u8] = include_bytes!("../test/test_ra_cert_MRSIGNER1_MRENCLAVE1.der");
 const TEST2_CERT: &[u8] = include_bytes!("../test/test_ra_cert_MRSIGNER2_MRENCLAVE2.der");
@@ -34,6 +36,9 @@ const TEST4_SIGNER_PUB: &[u8] = include_bytes!("../test/enclave-signing-pubkey-T
 const TEST5_SIGNER_PUB: &[u8] = include_bytes!("../test/enclave-signing-pubkey-TEST5.bin");
 const TEST6_SIGNER_PUB: &[u8] = include_bytes!("../test/enclave-signing-pubkey-TEST6.bin");
 const TEST7_SIGNER_PUB: &[u8] = include_bytes!("../test/enclave-signing-pubkey-TEST7.bin");
+const QE_IDENTITY_CERT: &str = include_str!("../test/dcap/qe_identity_cert.pem");
+const DCAP_QUOTE_CERT: &str = include_str!("../test/dcap/dcap_quote_cert.der");
+const PCK_CRL: &[u8] = include_bytes!("../test/dcap/pck_crl.der");
 
 // reproduce with "make mrenclave" in worker repo root
 const TEST1_MRENCLAVE: &[u8] = &[
@@ -50,26 +55,26 @@ const TEST3_MRENCLAVE: &[u8] = &[
 ];
 
 // MRSIGNER is 83d719e77deaca1470f6baf62a4d774303c899db69020f9c70ee1dfc08c7ce9e
-const TEST4_MRENCLAVE: [u8; 32] =
+const TEST4_MRENCLAVE: MrEnclave =
 	hex!("7a3454ec8f42e265cb5be7dfd111e1d95ac6076ed82a0948b2e2a45cf17b62a0");
-const TEST5_MRENCLAVE: [u8; 32] =
+const TEST5_MRENCLAVE: MrEnclave =
 	hex!("f4dedfc9e5fcc48443332bc9b23161c34a3c3f5a692eaffdb228db27b704d9d1");
 // equal to TEST5!
-const TEST6_MRENCLAVE: [u8; 32] =
+const TEST6_MRENCLAVE: MrEnclave =
 	hex!("f4dedfc9e5fcc48443332bc9b23161c34a3c3f5a692eaffdb228db27b704d9d1");
 // equal to TEST6!
-const TEST7_MRENCLAVE: [u8; 32] =
+const TEST7_MRENCLAVE: MrEnclave =
 	hex!("f4dedfc9e5fcc48443332bc9b23161c34a3c3f5a692eaffdb228db27b704d9d1");
 
 // production mode
 // MRSIGNER is 117f95f65f06afb5764b572156b8b525c6230db7d6b1c94e8ebdb7fba068f4e8
-const TEST8_MRENCLAVE: [u8; 32] =
+const TEST8_MRENCLAVE: MrEnclave =
 	hex!("bcf66abfc6b3ef259e9ecfe4cf8df667a7f5a546525dee16822741b38f6e6050");
 
 // unix epoch. must be later than this
 const TEST1_TIMESTAMP: i64 = 1580587262i64;
-const TEST2_TIMESTAMP: i64 = 1581259412i64;
-const TEST3_TIMESTAMP: i64 = 1581259975i64;
+/// Collateral test data mus be valid at this time (2022-10-11 14:01:02) for the tests to work
+const COLLATERAL_VERIFICATION_TIMESTAMP: u64 = 1665489662000;
 
 //const CERT: &[u8] =
 // b"0\x82\x0c\x8c0\x82\x0c2\xa0\x03\x02\x01\x02\x02\x01\x010\n\x06\x08*\x86H\xce=\x04\x03\x020\
@@ -185,71 +190,109 @@ fn verify_sgx_build_mode_works() {
 }
 
 #[test]
-fn parse_enclave_metadata_works() {
-	let report = verify_ias_report(TEST9_CERT).unwrap();
-	assert_eq!(report.status, SgxStatus::ConfigurationAndSwHardeningNeeded);
+fn decode_qe_authentication_data() {
+	assert!(QeAuthenticationData::decode(&mut &[0u8][..]).is_err());
+	assert!(QeAuthenticationData::decode(&mut &[1u8][..]).is_err());
+	assert_eq!(0, QeAuthenticationData::decode(&mut &[0u8, 0][..]).unwrap().size);
+	let d = QeAuthenticationData::decode(&mut &[1u8, 0, 5][..]).unwrap();
+	assert_eq!(1, d.size);
+	assert_eq!(5, d.certification_data[0]);
+}
 
-	let spid = [220_u8, 102, 69, 18, 100, 146, 156, 242, 117, 174, 42, 236, 164, 33, 3, 41];
-	let nonce = [200_u8, 253, 140, 194, 153, 34, 106, 241, 252, 37, 235, 176, 218, 195, 5, 87];
-	let sig_rl = Vec::<u8>::new();
-	let isv_enclave_quote = [
-		2_u8, 0, 0, 0, 88, 12, 0, 0, 13, 0, 13, 0, 0, 0, 0, 0, 220, 102, 69, 18, 100, 146, 156,
-		242, 117, 174, 42, 236, 164, 33, 3, 41, 92, 42, 81, 78, 112, 106, 91, 25, 241, 254, 78,
-		190, 78, 66, 55, 204, 19, 19, 255, 255, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0,
-		0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 49, 141, 114, 177, 254, 227, 122, 120, 68, 218, 24,
-		161, 8, 190, 114, 5, 97, 183, 231, 92, 66, 118, 224, 33, 106, 10, 7, 118, 15, 196, 33, 190,
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 131, 215, 25, 231, 125, 234, 202, 20, 112, 246, 186, 246, 42, 77, 119, 67, 3, 200,
-		153, 219, 105, 2, 15, 156, 112, 238, 29, 252, 8, 199, 206, 158, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 32, 235, 32, 225, 150, 102, 191, 132, 149, 65, 24, 111, 28, 102, 0, 165, 54, 94, 226,
-		57, 146, 159, 195, 82, 253, 207, 229, 255, 122, 155, 54, 168, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 168, 2, 0, 0, 75, 24,
-		193, 203, 163, 117, 77, 87, 240, 240, 126, 60, 112, 163, 75, 253, 210, 79, 29, 228, 136,
-		150, 64, 248, 40, 33, 82, 188, 117, 221, 250, 202, 111, 23, 115, 238, 243, 39, 33, 184,
-		211, 240, 72, 25, 65, 90, 203, 43, 237, 46, 159, 182, 120, 2, 249, 76, 95, 116, 56, 48,
-		135, 208, 204, 50, 237, 243, 61, 30, 25, 206, 125, 146, 16, 43, 176, 135, 203, 55, 20, 193,
-		205, 223, 14, 123, 194, 120, 143, 219, 235, 148, 16, 7, 248, 139, 216, 194, 110, 86, 211,
-		223, 250, 34, 85, 157, 150, 193, 141, 125, 30, 186, 159, 74, 125, 11, 217, 209, 59, 208,
-		68, 218, 171, 227, 26, 78, 141, 52, 233, 188, 28, 194, 2, 154, 212, 57, 180, 188, 209, 142,
-		146, 189, 105, 63, 83, 91, 107, 38, 82, 24, 143, 115, 90, 43, 187, 172, 183, 197, 245, 204,
-		93, 82, 130, 134, 89, 101, 249, 195, 60, 224, 249, 214, 101, 176, 98, 16, 159, 49, 28, 106,
-		161, 191, 108, 183, 180, 16, 158, 171, 6, 140, 106, 30, 58, 186, 185, 120, 64, 227, 148,
-		159, 214, 67, 227, 9, 26, 239, 23, 202, 105, 121, 172, 221, 47, 168, 243, 252, 218, 78,
-		201, 241, 182, 134, 141, 193, 111, 196, 39, 230, 193, 245, 6, 133, 168, 174, 240, 227, 68,
-		133, 218, 132, 93, 82, 93, 12, 146, 29, 230, 234, 203, 58, 76, 27, 216, 165, 159, 161, 161,
-		45, 59, 49, 133, 19, 241, 196, 63, 104, 88, 251, 12, 104, 215, 195, 83, 33, 169, 203, 234,
-		127, 64, 105, 141, 65, 108, 30, 40, 55, 183, 90, 39, 73, 140, 35, 11, 238, 91, 253, 25,
-		165, 125, 189, 23, 243, 104, 1, 0, 0, 217, 4, 245, 212, 142, 218, 189, 11, 131, 186, 13,
-		22, 247, 94, 25, 4, 86, 148, 6, 43, 180, 156, 175, 138, 115, 69, 132, 247, 74, 172, 183,
-		175, 243, 50, 231, 72, 231, 249, 167, 162, 61, 87, 226, 110, 43, 63, 222, 131, 53, 126,
-		124, 235, 40, 52, 186, 107, 195, 164, 17, 143, 60, 127, 80, 203, 162, 55, 69, 221, 82, 112,
-		106, 27, 61, 34, 68, 18, 108, 176, 31, 88, 253, 90, 215, 39, 50, 207, 214, 112, 54, 235,
-		57, 168, 26, 111, 34, 219, 205, 2, 136, 52, 230, 220, 49, 108, 236, 252, 156, 44, 21, 6,
-		24, 39, 131, 106, 68, 115, 160, 47, 202, 95, 93, 52, 150, 233, 250, 186, 117, 183, 161, 89,
-		218, 241, 25, 40, 224, 99, 132, 24, 166, 54, 167, 129, 161, 152, 77, 155, 7, 18, 55, 85,
-		12, 177, 45, 170, 59, 95, 177, 255, 188, 19, 198, 202, 80, 85, 50, 123, 46, 212, 169, 120,
-		25, 74, 100, 128, 159, 113, 103, 201, 218, 148, 87, 0, 104, 28, 42, 23, 138, 88, 220, 194,
-		172, 84, 116, 242, 162, 176, 101, 176, 195, 249, 49, 224, 22, 55, 134, 185, 76, 220, 73,
-		32, 197, 57, 74, 173, 159, 143, 44, 109, 100, 171, 47, 140, 130, 161, 121, 53, 101, 72,
-		228, 192, 232, 150, 194, 213, 228, 128, 121, 119, 240, 23, 204, 1, 198, 53, 173, 140, 105,
-		75, 83, 250, 59, 64, 186, 34, 79, 60, 85, 116, 227, 243, 75, 97, 230, 207, 147, 91, 8, 71,
-		20, 172, 93, 30, 147, 223, 246, 220, 123, 77, 166, 1, 147, 119, 245, 217, 140, 61, 252,
-		183, 56, 18, 52, 107, 252, 238, 55, 221, 202, 182, 171, 77, 93, 134, 77, 192, 184, 219, 29,
-		61, 134, 137, 210, 113, 218, 211, 101, 39, 8, 176, 111, 108, 230, 204, 63, 30, 81, 150,
-		189, 85, 190, 236, 47, 229, 119, 4, 177, 87, 105, 123, 141, 82, 94, 225, 231, 14, 120, 204,
-		64, 104, 103, 60, 28, 70, 238, 20, 176, 60, 226, 187, 217, 98, 218, 248, 175, 245, 250, 65,
-		137, 163, 128, 134, 204, 230, 46, 210, 63, 187,
-	];
+#[test]
+fn decode_qe_certification_data() {
+	assert!(QeCertificationData::decode(&mut &[0u8][..]).is_err());
+	assert!(QeCertificationData::decode(&mut &[1u8, 0, 0, 0, 0][..]).is_err());
+	assert_eq!(0, QeCertificationData::decode(&mut &[0u8, 0, 0, 0, 0, 0][..]).unwrap().size);
+	let d = QeCertificationData::decode(&mut &[0u8, 0, 1, 0, 0, 0, 5][..]).unwrap();
+	assert_eq!(1, d.size);
+	assert_eq!(5, d.certification_data[0]);
+	assert!(QeCertificationData::decode(&mut &[0u8, 0, 2, 0, 0, 0, 5][..]).is_err());
+}
 
-	let metadata = report.metadata;
-	assert_eq!(metadata.quote_inputs.spid, spid);
-	assert_eq!(metadata.quote_inputs.nonce, nonce);
-	assert_eq!(metadata.quote_inputs.sig_rl, sig_rl);
-	assert_eq!(metadata.isv_enclave_quote, isv_enclave_quote);
+#[test]
+fn deserialize_qe_identity_works() {
+	let certs = extract_certs(include_bytes!("../test/dcap/qe_identity_issuer_chain.pem"));
+	let intermediate_slices: Vec<&[u8]> = certs[1..].iter().map(Vec::as_slice).collect();
+	let leaf_cert = verify_certificate_chain(
+		&certs[0],
+		&intermediate_slices,
+		COLLATERAL_VERIFICATION_TIMESTAMP,
+	)
+	.unwrap();
+	let json: EnclaveIdentitySigned =
+		serde_json::from_slice(include_bytes!("../test/dcap/qe_identity.json")).unwrap();
+	let json_data = serde_json::to_vec(&json.enclave_identity).unwrap();
+	let signature = hex::decode(json.signature).unwrap();
+
+	let e = deserialize_enclave_identity(&json_data, &signature, &leaf_cert).unwrap();
+	assert_eq!(1, e.isvprodid);
+	assert_eq!(5, e.tcb_levels.len());
+}
+
+#[test]
+fn deserialize_tcb_info_works() {
+	let certs = extract_certs(include_bytes!("../test/dcap/tcb_info_issuer_chain.pem"));
+	let intermediate_slices: Vec<&[u8]> = certs[1..].iter().map(Vec::as_slice).collect();
+	let leaf_cert = verify_certificate_chain(
+		&certs[0],
+		&intermediate_slices,
+		COLLATERAL_VERIFICATION_TIMESTAMP,
+	)
+	.unwrap();
+	let json: TcbInfoSigned =
+		serde_json::from_slice(include_bytes!("../test/dcap/tcb_info.json")).unwrap();
+
+	let json_data = serde_json::to_vec(&json.tcb_info).unwrap();
+	let signature = hex::decode(json.signature).unwrap();
+
+	let _e = deserialize_tcb_info(&json_data, &signature, &leaf_cert).unwrap();
+	assert_eq!(hex!("00906EA10000"), json.tcb_info.fmspc);
+}
+
+#[test]
+fn verify_tcb_info_signature() {
+	let cert = QE_IDENTITY_CERT.replace('\n', "");
+	let leaf_cert = base64::decode(&cert).unwrap();
+	let cert = webpki::EndEntityCert::from(leaf_cert.as_slice()).unwrap();
+	let data = br#"{"version":2,"issueDate":"2022-10-18T21:45:02Z","nextUpdate":"2022-11-17T21:45:02Z","fmspc":"00906EA10000","pceId":"0000","tcbType":0,"tcbEvaluationDataNumber":12,"tcbLevels":[{"tcb":{"sgxtcbcomp01svn":17,"sgxtcbcomp02svn":17,"sgxtcbcomp03svn":2,"sgxtcbcomp04svn":4,"sgxtcbcomp05svn":1,"sgxtcbcomp06svn":128,"sgxtcbcomp07svn":7,"sgxtcbcomp08svn":0,"sgxtcbcomp09svn":0,"sgxtcbcomp10svn":0,"sgxtcbcomp11svn":0,"sgxtcbcomp12svn":0,"sgxtcbcomp13svn":0,"sgxtcbcomp14svn":0,"sgxtcbcomp15svn":0,"sgxtcbcomp16svn":0,"pcesvn":11},"tcbDate":"2021-11-10T00:00:00Z","tcbStatus":"SWHardeningNeeded"},{"tcb":{"sgxtcbcomp01svn":17,"sgxtcbcomp02svn":17,"sgxtcbcomp03svn":2,"sgxtcbcomp04svn":4,"sgxtcbcomp05svn":1,"sgxtcbcomp06svn":128,"sgxtcbcomp07svn":7,"sgxtcbcomp08svn":0,"sgxtcbcomp09svn":0,"sgxtcbcomp10svn":0,"sgxtcbcomp11svn":0,"sgxtcbcomp12svn":0,"sgxtcbcomp13svn":0,"sgxtcbcomp14svn":0,"sgxtcbcomp15svn":0,"sgxtcbcomp16svn":0,"pcesvn":10},"tcbDate":"2020-11-11T00:00:00Z","tcbStatus":"OutOfDate"},{"tcb":{"sgxtcbcomp01svn":17,"sgxtcbcomp02svn":17,"sgxtcbcomp03svn":2,"sgxtcbcomp04svn":4,"sgxtcbcomp05svn":1,"sgxtcbcomp06svn":128,"sgxtcbcomp07svn":0,"sgxtcbcomp08svn":0,"sgxtcbcomp09svn":0,"sgxtcbcomp10svn":0,"sgxtcbcomp11svn":0,"sgxtcbcomp12svn":0,"sgxtcbcomp13svn":0,"sgxtcbcomp14svn":0,"sgxtcbcomp15svn":0,"sgxtcbcomp16svn":0,"pcesvn":11},"tcbDate":"2021-11-10T00:00:00Z","tcbStatus":"ConfigurationAndSWHardeningNeeded"},{"tcb":{"sgxtcbcomp01svn":17,"sgxtcbcomp02svn":17,"sgxtcbcomp03svn":2,"sgxtcbcomp04svn":4,"sgxtcbcomp05svn":1,"sgxtcbcomp06svn":128,"sgxtcbcomp07svn":0,"sgxtcbcomp08svn":0,"sgxtcbcomp09svn":0,"sgxtcbcomp10svn":0,"sgxtcbcomp11svn":0,"sgxtcbcomp12svn":0,"sgxtcbcomp13svn":0,"sgxtcbcomp14svn":0,"sgxtcbcomp15svn":0,"sgxtcbcomp16svn":0,"pcesvn":10},"tcbDate":"2020-11-11T00:00:00Z","tcbStatus":"OutOfDateConfigurationNeeded"},{"tcb":{"sgxtcbcomp01svn":15,"sgxtcbcomp02svn":15,"sgxtcbcomp03svn":2,"sgxtcbcomp04svn":4,"sgxtcbcomp05svn":1,"sgxtcbcomp06svn":128,"sgxtcbcomp07svn":7,"sgxtcbcomp08svn":0,"sgxtcbcomp09svn":0,"sgxtcbcomp10svn":0,"sgxtcbcomp11svn":0,"sgxtcbcomp12svn":0,"sgxtcbcomp13svn":0,"sgxtcbcomp14svn":0,"sgxtcbcomp15svn":0,"sgxtcbcomp16svn":0,"pcesvn":10},"tcbDate":"2020-06-10T00:00:00Z","tcbStatus":"OutOfDate"},{"tcb":{"sgxtcbcomp01svn":15,"sgxtcbcomp02svn":15,"sgxtcbcomp03svn":2,"sgxtcbcomp04svn":4,"sgxtcbcomp05svn":1,"sgxtcbcomp06svn":128,"sgxtcbcomp07svn":0,"sgxtcbcomp08svn":0,"sgxtcbcomp09svn":0,"sgxtcbcomp10svn":0,"sgxtcbcomp11svn":0,"sgxtcbcomp12svn":0,"sgxtcbcomp13svn":0,"sgxtcbcomp14svn":0,"sgxtcbcomp15svn":0,"sgxtcbcomp16svn":0,"pcesvn":10},"tcbDate":"2020-06-10T00:00:00Z","tcbStatus":"OutOfDateConfigurationNeeded"},{"tcb":{"sgxtcbcomp01svn":14,"sgxtcbcomp02svn":14,"sgxtcbcomp03svn":2,"sgxtcbcomp04svn":4,"sgxtcbcomp05svn":1,"sgxtcbcomp06svn":128,"sgxtcbcomp07svn":7,"sgxtcbcomp08svn":0,"sgxtcbcomp09svn":0,"sgxtcbcomp10svn":0,"sgxtcbcomp11svn":0,"sgxtcbcomp12svn":0,"sgxtcbcomp13svn":0,"sgxtcbcomp14svn":0,"sgxtcbcomp15svn":0,"sgxtcbcomp16svn":0,"pcesvn":10},"tcbDate":"2019-12-11T00:00:00Z","tcbStatus":"OutOfDate"},{"tcb":{"sgxtcbcomp01svn":14,"sgxtcbcomp02svn":14,"sgxtcbcomp03svn":2,"sgxtcbcomp04svn":4,"sgxtcbcomp05svn":1,"sgxtcbcomp06svn":128,"sgxtcbcomp07svn":0,"sgxtcbcomp08svn":0,"sgxtcbcomp09svn":0,"sgxtcbcomp10svn":0,"sgxtcbcomp11svn":0,"sgxtcbcomp12svn":0,"sgxtcbcomp13svn":0,"sgxtcbcomp14svn":0,"sgxtcbcomp15svn":0,"sgxtcbcomp16svn":0,"pcesvn":10},"tcbDate":"2019-12-11T00:00:00Z","tcbStatus":"OutOfDateConfigurationNeeded"},{"tcb":{"sgxtcbcomp01svn":13,"sgxtcbcomp02svn":13,"sgxtcbcomp03svn":2,"sgxtcbcomp04svn":4,"sgxtcbcomp05svn":1,"sgxtcbcomp06svn":128,"sgxtcbcomp07svn":3,"sgxtcbcomp08svn":0,"sgxtcbcomp09svn":0,"sgxtcbcomp10svn":0,"sgxtcbcomp11svn":0,"sgxtcbcomp12svn":0,"sgxtcbcomp13svn":0,"sgxtcbcomp14svn":0,"sgxtcbcomp15svn":0,"sgxtcbcomp16svn":0,"pcesvn":9},"tcbDate":"2019-11-13T00:00:00Z","tcbStatus":"OutOfDate"},{"tcb":{"sgxtcbcomp01svn":13,"sgxtcbcomp02svn":13,"sgxtcbcomp03svn":2,"sgxtcbcomp04svn":4,"sgxtcbcomp05svn":1,"sgxtcbcomp06svn":128,"sgxtcbcomp07svn":0,"sgxtcbcomp08svn":0,"sgxtcbcomp09svn":0,"sgxtcbcomp10svn":0,"sgxtcbcomp11svn":0,"sgxtcbcomp12svn":0,"sgxtcbcomp13svn":0,"sgxtcbcomp14svn":0,"sgxtcbcomp15svn":0,"sgxtcbcomp16svn":0,"pcesvn":9},"tcbDate":"2019-11-13T00:00:00Z","tcbStatus":"OutOfDateConfigurationNeeded"},{"tcb":{"sgxtcbcomp01svn":6,"sgxtcbcomp02svn":6,"sgxtcbcomp03svn":2,"sgxtcbcomp04svn":4,"sgxtcbcomp05svn":1,"sgxtcbcomp06svn":128,"sgxtcbcomp07svn":1,"sgxtcbcomp08svn":0,"sgxtcbcomp09svn":0,"sgxtcbcomp10svn":0,"sgxtcbcomp11svn":0,"sgxtcbcomp12svn":0,"sgxtcbcomp13svn":0,"sgxtcbcomp14svn":0,"sgxtcbcomp15svn":0,"sgxtcbcomp16svn":0,"pcesvn":7},"tcbDate":"2019-05-15T00:00:00Z","tcbStatus":"OutOfDate"},{"tcb":{"sgxtcbcomp01svn":6,"sgxtcbcomp02svn":6,"sgxtcbcomp03svn":2,"sgxtcbcomp04svn":4,"sgxtcbcomp05svn":1,"sgxtcbcomp06svn":128,"sgxtcbcomp07svn":0,"sgxtcbcomp08svn":0,"sgxtcbcomp09svn":0,"sgxtcbcomp10svn":0,"sgxtcbcomp11svn":0,"sgxtcbcomp12svn":0,"sgxtcbcomp13svn":0,"sgxtcbcomp14svn":0,"sgxtcbcomp15svn":0,"sgxtcbcomp16svn":0,"pcesvn":7},"tcbDate":"2019-05-15T00:00:00Z","tcbStatus":"OutOfDateConfigurationNeeded"},{"tcb":{"sgxtcbcomp01svn":5,"sgxtcbcomp02svn":5,"sgxtcbcomp03svn":2,"sgxtcbcomp04svn":4,"sgxtcbcomp05svn":1,"sgxtcbcomp06svn":128,"sgxtcbcomp07svn":1,"sgxtcbcomp08svn":0,"sgxtcbcomp09svn":0,"sgxtcbcomp10svn":0,"sgxtcbcomp11svn":0,"sgxtcbcomp12svn":0,"sgxtcbcomp13svn":0,"sgxtcbcomp14svn":0,"sgxtcbcomp15svn":0,"sgxtcbcomp16svn":0,"pcesvn":7},"tcbDate":"2019-01-09T00:00:00Z","tcbStatus":"OutOfDate"},{"tcb":{"sgxtcbcomp01svn":5,"sgxtcbcomp02svn":5,"sgxtcbcomp03svn":2,"sgxtcbcomp04svn":4,"sgxtcbcomp05svn":1,"sgxtcbcomp06svn":128,"sgxtcbcomp07svn":1,"sgxtcbcomp08svn":0,"sgxtcbcomp09svn":0,"sgxtcbcomp10svn":0,"sgxtcbcomp11svn":0,"sgxtcbcomp12svn":0,"sgxtcbcomp13svn":0,"sgxtcbcomp14svn":0,"sgxtcbcomp15svn":0,"sgxtcbcomp16svn":0,"pcesvn":6},"tcbDate":"2018-08-15T00:00:00Z","tcbStatus":"OutOfDate"},{"tcb":{"sgxtcbcomp01svn":5,"sgxtcbcomp02svn":5,"sgxtcbcomp03svn":2,"sgxtcbcomp04svn":4,"sgxtcbcomp05svn":1,"sgxtcbcomp06svn":128,"sgxtcbcomp07svn":0,"sgxtcbcomp08svn":0,"sgxtcbcomp09svn":0,"sgxtcbcomp10svn":0,"sgxtcbcomp11svn":0,"sgxtcbcomp12svn":0,"sgxtcbcomp13svn":0,"sgxtcbcomp14svn":0,"sgxtcbcomp15svn":0,"sgxtcbcomp16svn":0,"pcesvn":7},"tcbDate":"2019-01-09T00:00:00Z","tcbStatus":"OutOfDateConfigurationNeeded"},{"tcb":{"sgxtcbcomp01svn":5,"sgxtcbcomp02svn":5,"sgxtcbcomp03svn":2,"sgxtcbcomp04svn":4,"sgxtcbcomp05svn":1,"sgxtcbcomp06svn":128,"sgxtcbcomp07svn":0,"sgxtcbcomp08svn":0,"sgxtcbcomp09svn":0,"sgxtcbcomp10svn":0,"sgxtcbcomp11svn":0,"sgxtcbcomp12svn":0,"sgxtcbcomp13svn":0,"sgxtcbcomp14svn":0,"sgxtcbcomp15svn":0,"sgxtcbcomp16svn":0,"pcesvn":6},"tcbDate":"2018-08-15T00:00:00Z","tcbStatus":"OutOfDateConfigurationNeeded"},{"tcb":{"sgxtcbcomp01svn":4,"sgxtcbcomp02svn":4,"sgxtcbcomp03svn":2,"sgxtcbcomp04svn":4,"sgxtcbcomp05svn":1,"sgxtcbcomp06svn":128,"sgxtcbcomp07svn":0,"sgxtcbcomp08svn":0,"sgxtcbcomp09svn":0,"sgxtcbcomp10svn":0,"sgxtcbcomp11svn":0,"sgxtcbcomp12svn":0,"sgxtcbcomp13svn":0,"sgxtcbcomp14svn":0,"sgxtcbcomp15svn":0,"sgxtcbcomp16svn":0,"pcesvn":5},"tcbDate":"2018-01-04T00:00:00Z","tcbStatus":"OutOfDate"},{"tcb":{"sgxtcbcomp01svn":2,"sgxtcbcomp02svn":2,"sgxtcbcomp03svn":2,"sgxtcbcomp04svn":4,"sgxtcbcomp05svn":1,"sgxtcbcomp06svn":128,"sgxtcbcomp07svn":0,"sgxtcbcomp08svn":0,"sgxtcbcomp09svn":0,"sgxtcbcomp10svn":0,"sgxtcbcomp11svn":0,"sgxtcbcomp12svn":0,"sgxtcbcomp13svn":0,"sgxtcbcomp14svn":0,"sgxtcbcomp15svn":0,"sgxtcbcomp16svn":0,"pcesvn":4},"tcbDate":"2017-07-26T00:00:00Z","tcbStatus":"OutOfDate"}]}"#;
+	let signature = hex!("e0cc3102e9ffdb21cf156ba30f13d027210ab11f3bff349e670e4c49b2f0cb6889c7eeb436149c7efe53e15c97e6ec3fc9f34c3440e732a4c760f8eb91834a36");
+	let signature = encode_as_der(&signature).unwrap();
+	verify_signature(&cert, data, &signature, &webpki::ECDSA_P256_SHA256).unwrap();
+}
+
+/// This is demo code of how a CRL certificate can be parsed and how the revoked serials can be
+/// extracted The part that is missing/open is how to verify the certificate chain of the CRL
+/// TODO: Implement CRL handling
+#[test]
+fn parse_pck_crl() {
+	let crl_decoded = hex::decode(PCK_CRL).unwrap();
+	let crl: x509_cert::crl::CertificateList = der::Decode::from_der(&crl_decoded).unwrap();
+
+	let mut serials = vec![];
+	if let Some(certs) = crl.tbs_cert_list.revoked_certificates {
+		for c in certs {
+			let serial = c.serial_number.as_bytes().to_vec();
+			serials.push(serial);
+		}
+	}
+	assert_eq!(3, serials.len());
+}
+
+#[test]
+fn parse_pck_certificate() {
+	let der = DCAP_QUOTE_CERT.replace('\n', "");
+	let der = base64::decode(&der).unwrap();
+
+	let ext = get_intel_extension(&der).unwrap();
+	assert_eq!(453, ext.len());
+
+	let fmspc = get_fmspc(&ext).unwrap();
+	assert_eq!(hex!("00906EA10000"), fmspc);
+
+	let cpusvn = get_cpusvn(&ext).unwrap();
+	assert_eq!(hex!("11110204018007000000000000000000"), cpusvn);
+
+	let pcesvn = get_pcesvn(&ext).unwrap();
+	assert_eq!(u16::from_be_bytes(hex!("000B")), pcesvn);
 }

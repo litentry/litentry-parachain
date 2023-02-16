@@ -21,10 +21,10 @@
 
 use super::*;
 
-use crate::{MREnclave, Pallet as Teerex};
+use crate::{MrEnclave, Pallet as Teerex};
 use frame_benchmarking::{account, benchmarks};
 use frame_system::RawOrigin;
-use sp_runtime::traits::CheckedConversion;
+use sp_runtime::traits::{CheckedConversion, Hash};
 use sp_std::vec;
 use test_utils::{
 	get_signer,
@@ -65,11 +65,11 @@ benchmarks! {
 	//
 	// Hence, it does not matter how many other enclaves are registered for the benchmark.
 
+	where_clause {  where T::AccountId: From<[u8; 32]>, T::Hash: From<[u8; 32]>,}
 
 	// Benchmark `register_enclave` with the worst possible conditions:
 	// * remote attestation is valid
 	// * enclave already exists
-	where_clause {  where T::AccountId: From<[u8; 32]> }
 	register_enclave {
 		ensure_not_skipping_ra_check();
 		ensure_not_skipping_scheduled_enclave_check();
@@ -82,7 +82,7 @@ benchmarks! {
 			RawOrigin::Root.into(),
 			0u32,
 			#[cfg(feature = "skip-ias-check")]
-			MREnclave::decode(&mut TEST4_SETUP.cert).unwrap_or_default(),
+			MrEnclave::decode(&mut TEST4_SETUP.cert).unwrap_or_default(),
 			#[cfg(not(feature = "skip-ias-check"))]
 			TEST4_MRENCLAVE,
 		).unwrap();
@@ -133,6 +133,48 @@ benchmarks! {
 		let block_number: u32 = 0;
 
 	}: _(RawOrigin::Signed(accounts[0].clone()), block_hash, block_number.into(), merkle_root)
+
+	// Benchmark `publish_hash` with the worst possible conditions:
+	// * sender enclave is registered
+	//
+	// and parametrize the benchmark with the variably sized parameters. Note: The initialization
+	// of `l`/`t` includes the upper borders.
+	publish_hash {
+		let l in 0 .. DATA_LENGTH_LIMIT as u32;
+		let t in 1 .. TOPICS_LIMIT as u32;
+
+		// There are no events emitted at the genesis block.
+		frame_system::Pallet::<T>::set_block_number(1u32.into());
+		frame_system::Pallet::<T>::reset_events();
+
+		let accounts: Vec<T::AccountId> = generate_accounts::<T>(1);
+		add_enclaves_to_registry::<T>(&accounts);
+		let account = accounts[0].clone();
+
+	}: _(RawOrigin::Signed(account), [1u8; 32].into(), topics::<T>(t), get_data(l))
+	verify {
+		// Event comparison in an actual node is way too cumbersome as the `RuntimeEvent`
+		// does not implement `PartialEq`. So we only verify that the event is emitted here,
+		// and we do more thorough checks in the normal cargo tests.
+		assert_eq!(frame_system::Pallet::<T>::events().len(), 1);
+	}
+}
+
+fn get_data(x: u32) -> Vec<u8> {
+	vec![0u8; x.try_into().unwrap()]
+}
+
+/// Returns [number] unique topics.
+fn topics<T: frame_system::Config>(number: u32) -> Vec<T::Hash> {
+	let vec = vec![
+		T::Hashing::hash(&[0u8; 32]),
+		T::Hashing::hash(&[1u8; 32]),
+		T::Hashing::hash(&[2u8; 32]),
+		T::Hashing::hash(&[3u8; 32]),
+		T::Hashing::hash(&[4u8; 32]),
+	];
+
+	vec[..number.try_into().unwrap()].to_vec()
 }
 
 #[cfg(test)]
