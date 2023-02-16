@@ -91,8 +91,7 @@ pub fn format_assertion_to_date() -> String {
 			NaiveDateTime::from_timestamp_opt(now.as_secs() as i64, now.subsec_nanos() as u32)
 				.unwrap();
 		let datetime: DateTime<TzUtc> = DateTime::from_utc(naive, TzUtc);
-		let now = datetime.format("%Y-%m-%d").to_string();
 
-		format!("{:?}", now)
+		datetime.format("%Y-%m-%d").to_string()
 	}
 }

@@ -50,6 +50,7 @@ pub fn build(
 
 	let mut client = GraphQLClient::new();
 	let mut flag = false;
+	let mut from_date_index = 0_usize;
 
 	for id in identities {
 		if let Identity::Evm { network, address } = id {
@@ -57,9 +58,10 @@ pub fn build(
 				let address = from_utf8(address.as_ref()).unwrap().to_string();
 				let addresses = vec![address];
 
-				for from_date in ASSERTION_FROM_DATE.iter() {
+				for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
 					// if flag is true, no need to check it continually
 					if flag {
+						from_date_index = index + 1;
 						break
 					}
 
@@ -84,8 +86,7 @@ pub fn build(
 	let a11 = Assertion::A11(min_balance);
 	match Credential::generate_unsigned_credential(&a11, who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.credential_subject.values.push(flag);
-
+			credential_unsigned.update_holder(from_date_index, min_balance);
 			return Ok(credential_unsigned)
 		},
 		Err(e) => {
