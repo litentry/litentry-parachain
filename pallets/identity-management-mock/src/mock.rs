@@ -15,7 +15,6 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 #![cfg(test)]
-
 pub use crate::{
 	self as pallet_identity_management_mock,
 	key::{aes_encrypt_default, tee_encrypt},
@@ -235,6 +234,11 @@ pub fn setup_create_identity(
 		bn,
 		IdentityManagementMock::challenge_codes(&who, &identity),
 	);
+
+	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
+		crate::Event::UserShieldingKeySet { account: who },
+	));
+
 	assert_ok!(IdentityManagementMock::create_identity(
 		RuntimeOrigin::signed(who),
 		H256::random(),
@@ -246,26 +250,22 @@ pub fn setup_create_identity(
 		crate::Event::IdentityCreatedPlain {
 			account: who,
 			identity: identity.clone(),
+			code,
 			id_graph: IdentityManagementMock::get_id_graph(&who),
 		},
 	));
 	// encrypt the result
 	let aes_encrypted_identity = aes_encrypt_default(&key, identity.encode().as_slice());
-	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
-		crate::Event::UserShieldingKeySet { account: who },
-	));
+	let aes_encrypted_code = aes_encrypt_default(&key, code.as_ref());
+	let aes_encrypted_id_graph =
+		aes_encrypt_default(&key, IdentityManagementMock::get_id_graph(&who).encode().as_slice());
 
-	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
-		crate::Event::ChallengeCodeGeneratedPlain { account: who, identity, code },
-	));
-	let aes_encrypted_code = aes_encrypt_default(&key, code.as_slice());
-	System::assert_has_event(RuntimeEvent::IdentityManagementMock(
-		crate::Event::ChallengeCodeGenerated {
-			account: who,
-			identity: aes_encrypted_identity,
-			code: aes_encrypted_code,
-		},
-	));
+	System::assert_has_event(RuntimeEvent::IdentityManagementMock(crate::Event::IdentityCreated {
+		account: who,
+		identity: aes_encrypted_identity,
+		code: aes_encrypted_code,
+		id_graph: aes_encrypted_id_graph,
+	}));
 }
 
 pub fn setup_verify_twitter_identity(
