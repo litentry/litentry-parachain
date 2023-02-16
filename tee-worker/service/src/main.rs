@@ -77,9 +77,9 @@ use its_peer_fetch::{
 use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
 use its_storage::{interface::FetchBlocks, BlockPruner, SidechainStorageLock};
 use lc_data_providers::DataProvidersStatic;
-use litentry_primitives::{ChallengeCode, Identity};
+use litentry_primitives::{ChallengeCode, Identity, ParentchainHash, ParentchainHeader};
 use log::*;
-use my_node_runtime::{Hash, Header, RuntimeEvent};
+use my_node_runtime::RuntimeEvent;
 use serde_json::Value;
 use sgx_types::*;
 use sp_core::crypto::{AccountId32, Ss58Codec};
@@ -543,7 +543,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		return
 	}
 
-	let mut register_enclave_xt_header: Option<Header> = None;
+	let mut register_enclave_xt_header: Option<ParentchainHeader> = None;
 	let mut we_are_primary_validateer: bool = false;
 
 	// litentry, Check if the enclave is already registered
@@ -717,7 +717,7 @@ fn spawn_worker_for_shard_polling<InitializationHandler>(
 	});
 }
 
-type Events = Vec<frame_system::EventRecord<RuntimeEvent, Hash>>;
+type Events = Vec<frame_system::EventRecord<RuntimeEvent, ParentchainHash>>;
 
 fn parse_events(event: String) -> Result<Events, String> {
 	let _unhex = Vec::from_hex(event).map_err(|_| "Decoding Events Failed".to_string())?;
@@ -894,7 +894,7 @@ fn send_extrinsic(
 /// upon receiving a new header.
 fn subscribe_to_parentchain_new_headers<E: EnclaveBase + Sidechain>(
 	parentchain_handler: Arc<ParentchainHandler<ParentchainApi, E>>,
-	mut last_synced_header: Header,
+	mut last_synced_header: ParentchainHeader,
 ) -> Result<(), Error> {
 	let (sender, receiver) = channel();
 	//TODO: this should be implemented by parentchain_handler directly, and not via
@@ -905,7 +905,7 @@ fn subscribe_to_parentchain_new_headers<E: EnclaveBase + Sidechain>(
 		.map_err(Error::ApiClient)?;
 
 	loop {
-		let new_header: Header = match receiver.recv() {
+		let new_header: ParentchainHeader = match receiver.recv() {
 			Ok(header_str) => serde_json::from_str(&header_str).map_err(Error::Serialization),
 			Err(e) => Err(Error::ApiSubscriptionDisconnected(e)),
 		}?;
@@ -929,7 +929,7 @@ fn enclave_account<E: EnclaveBase>(enclave_api: &E) -> AccountId32 {
 /// Checks if we are the first validateer to register on the parentchain.
 fn check_we_are_primary_validateer(
 	node_api: &ParentchainApi,
-	register_enclave_xt_header: &Header,
+	register_enclave_xt_header: &ParentchainHeader,
 ) -> Result<bool, Error> {
 	let enclave_count_of_previous_block =
 		node_api.enclave_count(Some(*register_enclave_xt_header.parent_hash()))?;
