@@ -122,24 +122,16 @@ pub mod pallet {
 			account: T::AccountId,
 		},
 		// create identity
-		ChallengeCodeGeneratedPlain {
-			account: T::AccountId,
-			identity: Identity,
-			code: ChallengeCode,
-		},
-		ChallengeCodeGenerated {
-			account: T::AccountId,
-			identity: AesOutput,
-			code: AesOutput,
-		},
 		IdentityCreatedPlain {
 			account: T::AccountId,
 			identity: Identity,
+			code: ChallengeCode,
 			id_graph: Vec<(Identity, IdentityContext<T>)>,
 		},
 		IdentityCreated {
 			account: T::AccountId,
 			identity: AesOutput,
+			code: AesOutput,
 			id_graph: AesOutput,
 		},
 		// remove identity
@@ -349,22 +341,12 @@ pub mod pallet {
 
 			let key = UserShieldingKeys::<T>::get(&who).ok_or(Error::<T>::ShieldingKeyNotExist)?;
 
-			// emit the challenge code event, TODO: use randomness pallet
+			// generate the challenge code, TODO: use randomness pallet
 			let code = Self::get_mock_challenge_code(
 				<frame_system::Pallet<T>>::block_number(),
 				ChallengeCodes::<T>::get(&who, &identity),
 			);
 			ChallengeCodes::<T>::insert(&who, &identity, &code);
-			Self::deposit_event(Event::<T>::ChallengeCodeGeneratedPlain {
-				account: who.clone(),
-				identity: identity.clone(),
-				code,
-			});
-			Self::deposit_event(Event::<T>::ChallengeCodeGenerated {
-				account: who.clone(),
-				identity: aes_encrypt_default(&key, identity.encode().as_slice()),
-				code: aes_encrypt_default(&key, code.as_ref()),
-			});
 
 			// emit the IdentityCreated event
 			let context = IdentityContext {
@@ -377,11 +359,13 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::IdentityCreatedPlain {
 				account: who.clone(),
 				identity: identity.clone(),
+				code,
 				id_graph: Self::get_id_graph(&who),
 			});
 			Self::deposit_event(Event::<T>::IdentityCreated {
 				account: who.clone(),
 				identity: aes_encrypt_default(&key, identity.encode().as_slice()),
+				code: aes_encrypt_default(&key, code.as_ref()),
 				id_graph: aes_encrypt_default(&key, Self::get_id_graph(&who).encode().as_slice()),
 			});
 			Ok(())
@@ -516,31 +500,19 @@ pub mod pallet {
 
 		#[pallet::call_index(7)]
 		#[pallet::weight(195_000_000)]
-		pub fn challenge_code_generated(
-			origin: OriginFor<T>,
-			account: T::AccountId,
-			identity: AesOutput,
-			code: AesOutput,
-		) -> DispatchResultWithPostInfo {
-			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::ChallengeCodeGenerated { account, identity, code });
-			Ok(Pays::No.into())
-		}
-
-		#[pallet::call_index(8)]
-		#[pallet::weight(195_000_000)]
 		pub fn identity_created(
 			origin: OriginFor<T>,
 			account: T::AccountId,
 			identity: AesOutput,
+			code: AesOutput,
 			id_graph: AesOutput,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityCreated { account, identity, id_graph });
+			Self::deposit_event(Event::IdentityCreated { account, identity, code, id_graph });
 			Ok(Pays::No.into())
 		}
 
-		#[pallet::call_index(9)]
+		#[pallet::call_index(8)]
 		#[pallet::weight(195_000_000)]
 		pub fn identity_removed(
 			origin: OriginFor<T>,
@@ -553,7 +525,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
-		#[pallet::call_index(10)]
+		#[pallet::call_index(9)]
 		#[pallet::weight(195_000_000)]
 		pub fn identity_verified(
 			origin: OriginFor<T>,
@@ -566,7 +538,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
-		#[pallet::call_index(11)]
+		#[pallet::call_index(10)]
 		#[pallet::weight(195_000_000)]
 		pub fn some_error(
 			origin: OriginFor<T>,

@@ -71,26 +71,56 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		DelegateeAdded { account: T::AccountId },
-		DelegateeRemoved { account: T::AccountId },
+		DelegateeAdded {
+			account: T::AccountId,
+		},
+		DelegateeRemoved {
+			account: T::AccountId,
+		},
 		// TODO: do we need account as event parameter? This needs to be decided by F/E
-		CreateIdentityRequested { shard: ShardIdentifier },
-		RemoveIdentityRequested { shard: ShardIdentifier },
-		VerifyIdentityRequested { shard: ShardIdentifier },
-		SetUserShieldingKeyRequested { shard: ShardIdentifier },
+		CreateIdentityRequested {
+			shard: ShardIdentifier,
+		},
+		RemoveIdentityRequested {
+			shard: ShardIdentifier,
+		},
+		VerifyIdentityRequested {
+			shard: ShardIdentifier,
+		},
+		SetUserShieldingKeyRequested {
+			shard: ShardIdentifier,
+		},
 		// event that should be triggered by TEECallOrigin
 		// these events keep the `account` as public to be consistent with VCMP and better
 		// indexing see https://github.com/litentry/litentry-parachain/issues/1313
-		UserShieldingKeySet { account: T::AccountId },
-		ChallengeCodeGenerated { account: T::AccountId, identity: AesOutput, code: AesOutput },
-		IdentityCreated { account: T::AccountId, identity: AesOutput, id_graph: AesOutput },
-		IdentityRemoved { account: T::AccountId, identity: AesOutput, id_graph: AesOutput },
-		IdentityVerified { account: T::AccountId, identity: AesOutput, id_graph: AesOutput },
+		UserShieldingKeySet {
+			account: T::AccountId,
+		},
+		IdentityCreated {
+			account: T::AccountId,
+			identity: AesOutput,
+			code: AesOutput,
+			id_graph: AesOutput,
+		},
+		IdentityRemoved {
+			account: T::AccountId,
+			identity: AesOutput,
+			id_graph: AesOutput,
+		},
+		IdentityVerified {
+			account: T::AccountId,
+			identity: AesOutput,
+			id_graph: AesOutput,
+		},
 		// event errors caused by processing in TEE
 		// copied from core_primitives::IMPError, we use events instead of pallet::errors,
 		// see https://github.com/litentry/litentry-parachain/issues/1275
-		DecodeHexFailed { reason: ErrorString },
-		HttpRequestFailed { reason: ErrorString },
+		DecodeHexFailed {
+			reason: ErrorString,
+		},
+		HttpRequestFailed {
+			reason: ErrorString,
+		},
 		CreateIdentityHandlingFailed,
 		RemoveIdentityHandlingFailed,
 		VerifyIdentityHandlingFailed,
@@ -222,31 +252,19 @@ pub mod pallet {
 
 		#[pallet::call_index(7)]
 		#[pallet::weight(195_000_000)]
-		pub fn challenge_code_generated(
-			origin: OriginFor<T>,
-			account: T::AccountId,
-			identity: AesOutput,
-			code: AesOutput,
-		) -> DispatchResultWithPostInfo {
-			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::ChallengeCodeGenerated { account, identity, code });
-			Ok(Pays::No.into())
-		}
-
-		#[pallet::call_index(8)]
-		#[pallet::weight(195_000_000)]
 		pub fn identity_created(
 			origin: OriginFor<T>,
 			account: T::AccountId,
 			identity: AesOutput,
+			code: AesOutput,
 			id_graph: AesOutput,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityCreated { account, identity, id_graph });
+			Self::deposit_event(Event::IdentityCreated { account, identity, code, id_graph });
 			Ok(Pays::No.into())
 		}
 
-		#[pallet::call_index(9)]
+		#[pallet::call_index(8)]
 		#[pallet::weight(195_000_000)]
 		pub fn identity_removed(
 			origin: OriginFor<T>,
@@ -259,7 +277,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
-		#[pallet::call_index(10)]
+		#[pallet::call_index(9)]
 		#[pallet::weight(195_000_000)]
 		pub fn identity_verified(
 			origin: OriginFor<T>,
@@ -272,7 +290,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
-		#[pallet::call_index(11)]
+		#[pallet::call_index(10)]
 		#[pallet::weight(195_000_000)]
 		pub fn some_error(origin: OriginFor<T>, error: IMPError) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;

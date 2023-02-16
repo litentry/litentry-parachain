@@ -466,15 +466,8 @@ where
 									.get_from_metadata(|m| m.identity_created_call_indexes())??,
 								SgxParentchainTypeConverter::convert(who.clone()),
 								aes_encrypt_default(&key, &identity.encode()),
-								aes_encrypt_default(&key, &id_graph.encode()),
-							)));
-							calls.push(OpaqueCall::from_tuple(&(
-								node_metadata_repo.get_from_metadata(|m| {
-									m.challenge_code_generated_call_indexes()
-								})??,
-								SgxParentchainTypeConverter::convert(who),
-								aes_encrypt_default(&key, &identity.encode()),
 								aes_encrypt_default(&key, &code.encode()),
+								aes_encrypt_default(&key, &id_graph.encode()),
 							)));
 						} else {
 							calls.push(OpaqueCall::from_tuple(&(
