@@ -15,7 +15,7 @@ impl<'a> TryFrom<CertDer<'a>> for EphemeralKey<'a> {
 			.position(|window| window == PRIME256V1_OID)
 			.ok_or("Certificate does not contain 'PRIME256V1_OID'")?;
 
-		offset += 11; // 10 + TAG (0x03)
+		offset += PRIME256V1_OID.len() + 1; // OID length + TAG (0x03)
 
 		// Obtain Public Key length
 		let len = length_from_raw_data(cert_der, &mut offset)?;

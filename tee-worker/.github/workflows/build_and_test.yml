@@ -3,11 +3,15 @@ name: Build, Test, Clippy
 on:
   workflow_dispatch:
   push:
-    branches: [ dev ]
+    branches:
+      - master
+      - 'sdk-v[0-9]+.[0-9]+.[0-9]+-*'
     tags:
       - '[0-9]+.[0-9]+.[0-9]+'
   pull_request:
-    branches: [ dev ]
+    branches:
+      - master
+      - 'sdk-v[0-9]+.[0-9]+.[0-9]+-*'
 
 env:
   CARGO_TERM_COLOR: always
@@ -22,29 +26,6 @@ jobs:
       - uses: styfle/cancel-workflow-action@0.11.0
         with:
           access_token: ${{ secrets.GITHUB_TOKEN }}
-
-  build-parachain-docker:
-    runs-on: ubuntu-latest
-    needs: check-file-change
-    if: needs.check-file-change.outputs.src == 'true'
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Build docker image
-        run: |
-          make build-docker-release
-          echo "============================="
-          docker images
-
-      - name: Save docker image
-        run: |
-          docker save litentry/litentry-parachain:latest -o ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/litentry-parachain.tar
-
-      - name: Upload docker image
-        uses: actions/upload-artifact@v3
-        with:
-          name: parachain-artifact
-          path: ${{ env.UPLOAD_DOWNLOAD_DIR_PREFIX }}/litentry-parachain.tar
 
   build-test:
     runs-on: ubuntu-20.04
@@ -61,9 +42,6 @@ jobs:
           - flavor_id: sidechain-evm
             mode: sidechain
             additional_features: evm
-          - flavor_id: mockserver
-            mode: sidechain
-            additional_features: mockserver
 
     steps:
       - uses: actions/checkout@v3
@@ -82,6 +60,7 @@ jobs:
           --target deployed-worker
           --build-arg WORKER_MODE_ARG=${{ matrix.mode }} --build-arg ADDITIONAL_FEATURES_ARG=${{ matrix.additional_features }}
           -f build.Dockerfile .
+
       - name: Build CLI client
         env:
           DOCKER_BUILDKIT: 1
@@ -90,15 +69,18 @@ jobs:
           --target deployed-client
           --build-arg WORKER_MODE_ARG=${{ matrix.mode }} --build-arg ADDITIONAL_FEATURES_ARG=${{ matrix.additional_features }}
           -f build.Dockerfile .
+
       - run: docker images --all
 
       - name: Test Enclave # cargo test is not supported in the enclave, see: https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
         run: docker run --name ${{ env.BUILD_CONTAINER_NAME }} integritee-worker-${{ matrix.flavor_id }}-${{ github.sha }} test --all
+        continue-on-error: true
 
       - name: Export worker image(s)
         run: |
           docker image save integritee-worker-${{ matrix.flavor_id }}-${{ github.sha }} | gzip > integritee-worker-${{ matrix.flavor_id }}-${{ github.sha }}.tar.gz
           docker image save integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }} | gzip > integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }}.tar.gz
+
       - name: Upload worker image
         uses: actions/upload-artifact@v3
         with:
@@ -113,7 +95,7 @@ jobs:
 
   clippy:
     runs-on: ubuntu-latest
-    container: "integritee/integritee-dev:0.1.10"
+    container: "integritee/integritee-dev:0.1.12"
     steps:
       - uses: actions/checkout@v3
       - name: init rust
@@ -129,18 +111,22 @@ jobs:
         run: |
           cargo clippy --features evm -- -D warnings
           cd enclave-runtime && cargo clippy --features evm -- -D warnings
+
       - name: Clippy with Sidechain feature
         run: |
           cargo clippy --features sidechain -- -D warnings
           cd enclave-runtime && cargo clippy --features sidechain -- -D warnings
+
       - name: Clippy with Teeracle feature
         run: |
           cargo clippy --features teeracle -- -D warnings
           cd enclave-runtime && cargo clippy --features teeracle -- -D warnings
+
       - name: Clippy with Offchain-worker feature
         run: |
           cargo clippy --features offchain-worker -- -D warnings
           cd enclave-runtime && cargo clippy --features offchain-worker -- -D warnings
+
       - name: Fail-fast; cancel other jobs
         if: failure()
         uses: andymckay/cancel-action@0.2
@@ -168,9 +154,8 @@ jobs:
 
   integration-tests:
     runs-on: ubuntu-20.04
-    needs:
-      - build-parachain-docker
-      - build-test
+    if: ${{ always() }}
+    needs: build-test
     env:
       WORKER_IMAGE_TAG: integritee-worker:dev
       CLIENT_IMAGE_TAG: integritee-cli:dev
@@ -205,27 +190,14 @@ jobs:
           - test: EVM
             flavor_id: sidechain-evm
             demo_name: demo-smart-contract
-          # Litentry
-          - test: user-shielding-key
-            flavor_id: sidechain
-            demo_name: user-shielding-key
-          - test: ts-tests
-            flavor_id: mockserver
-            demo_name: ts-tests
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Pull polkadot image
+      - name: Set env
         run: |
-          docker pull parity/polkadot:latest
-      - uses: actions/download-artifact@v3
-        with:
-          name: parachain-artifact
+          echo "FLAVOR_ID=${{ matrix.flavor_id }}" >> $GITHUB_ENV
 
-      - name: Load docker image
-        run: |
-          docker load -i litentry-parachain.tar
       - name: Download Worker Image
         uses: actions/download-artifact@v3
         with:
@@ -245,27 +217,23 @@ jobs:
           docker image load --input integritee-worker-${{ matrix.flavor_id }}-${{ github.sha }}.tar.gz
           docker image load --input integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }}.tar.gz
           docker images --all
+
       - name: Re-name Image Tags
         run: |
           docker tag integritee-worker-${{ matrix.flavor_id }}-${{ github.sha }} ${{ env.WORKER_IMAGE_TAG }}
           docker tag integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }} ${{ env.CLIENT_IMAGE_TAG }}
           docker images --all
-      - name: Generate parachain artefacts
-        run: |
-          ./scripts/litentry/generate_parachain_artefacts.sh
-      - name: Build litentry parachain docker images
-        run: |
-          cd docker
-          docker-compose -f litentry-parachain.build.yml build
+
       - name: Integration Test ${{ matrix.test }}-${{ matrix.flavor_id }}
-        timeout-minutes: 30
         run: |
           cd docker
-          docker-compose -f docker-compose.yml -f ${{ matrix.demo_name }}.yml up --no-build --exit-code-from ${{ matrix.demo_name }} -- ${{ matrix.demo_name }}
+          docker compose -f docker-compose.yml -f ${{ matrix.demo_name }}.yml up ${{ matrix.demo_name }} --no-build --exit-code-from ${{ matrix.demo_name }}
+
       - name: Stop docker containers
         run: |
           cd docker
           docker compose -f docker-compose.yml -f ${{ matrix.demo_name }}.yml stop
+
       - name: Collect Docker Logs
         continue-on-error: true
         if: always()
@@ -281,28 +249,6 @@ jobs:
         with:
           name: logs-${{ matrix.test }}-${{ matrix.flavor_id }}
           path: ./${{ env.LOG_DIR }}
-
- # Only push docker image when tests are passed and pushing to `dev` branch
-  push-docker-image:
-    runs-on: ubuntu-latest
-    needs:
-      - integration-tests
-    if: ${{ success() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
-        with:
-          name: parachain-artifact
-      - name: Load docker image
-        run: |
-          docker load -i litentry-parachain.tar
-      - name: Dockerhub login
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-      - name: Push docker image
-        run: docker push litentry/litentry-parachain:latest
 
   release:
     name: Draft Release

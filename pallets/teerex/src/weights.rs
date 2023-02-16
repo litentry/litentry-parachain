@@ -48,9 +48,12 @@ use sp_std::marker::PhantomData;
 /// Weight functions needed for pallet_teerex.
 pub trait WeightInfo {
 	fn register_enclave() -> Weight;
+	fn register_dcap_enclave() -> Weight;
+	fn register_quoting_enclave() -> Weight;
 	fn unregister_enclave() -> Weight;
 	fn call_worker() -> Weight;
 	fn confirm_processed_parentchain_block() -> Weight;
+	fn publish_hash() -> Weight;
 }
 
 /// Weights for pallet_teerex using the Litentry node and recommended hardware.
@@ -65,9 +68,18 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
-	// Storage: Teerex EnclaveIndex (r:1 w:2)
-	// Storage: Teerex EnclaveCount (r:1 w:1)
-	// Storage: Teerex EnclaveRegistry (r:1 w:2)
+	// TODO benchmark dcap registration
+	fn register_dcap_enclave() -> Weight {
+		Weight::from_ref_time(1_969_500_000)
+			.saturating_add(RocksDbWeight::get().reads(2))
+			.saturating_add(RocksDbWeight::get().writes(1))
+	}
+	// TODO benchmark dcap registration
+	fn register_quoting_enclave() -> Weight {
+		Weight::from_ref_time(1_969_500_000)
+			.saturating_add(RocksDbWeight::get().reads(2))
+			.saturating_add(RocksDbWeight::get().writes(1))
+	}
 	fn unregister_enclave() -> Weight {
 		Weight::from_ref_time(67_278_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
@@ -80,6 +92,11 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	fn confirm_processed_parentchain_block() -> Weight {
 		Weight::from_ref_time(23_024_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
+	}
+	fn publish_hash() -> Weight {
+		Weight::from_ref_time(1_969_500_000)
+			.saturating_add(T::DbWeight::get().reads(2))
+			.saturating_add(T::DbWeight::get().writes(1))
 	}
 }
 
@@ -94,9 +111,16 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(3 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
-	// Storage: Teerex EnclaveIndex (r:1 w:2)
-	// Storage: Teerex EnclaveCount (r:1 w:1)
-	// Storage: Teerex EnclaveRegistry (r:1 w:2)
+	fn register_dcap_enclave() -> Weight {
+		Weight::from_ref_time(1_969_500_000)
+			.saturating_add(RocksDbWeight::get().reads(2))
+			.saturating_add(RocksDbWeight::get().writes(1))
+	}
+	fn register_quoting_enclave() -> Weight {
+		Weight::from_ref_time(1_969_500_000)
+			.saturating_add(RocksDbWeight::get().reads(2))
+			.saturating_add(RocksDbWeight::get().writes(1))
+	}
 	fn unregister_enclave() -> Weight {
 		Weight::from_ref_time(67_278_000 as u64)
 			.saturating_add(RocksDbWeight::get().reads(3 as u64))
@@ -109,6 +133,11 @@ impl WeightInfo for () {
 	fn confirm_processed_parentchain_block() -> Weight {
 		Weight::from_ref_time(23_024_000 as u64)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+	}
+	fn publish_hash() -> Weight {
+		Weight::from_ref_time(1_969_500_000)
+			.saturating_add(RocksDbWeight::get().reads(2))
+			.saturating_add(RocksDbWeight::get().writes(1))
 	}
 }
 

@@ -15,7 +15,7 @@ tokio = { version = "1.5", features = ["full"] }
 warp = "0.3"
 
 # Substrate
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
 
 # Internal dependencies
 lc-data-providers = { path = "../data-providers" }

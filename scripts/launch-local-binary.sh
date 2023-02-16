@@ -43,7 +43,7 @@ if [ -z "$POLKADOT_BIN" ]; then
   # https://api.github.com/repos/paritytech/polkadot/releases/latest is not reliable as
   # polkadot could publish release which has no binary
   #
-  url="https://github.com/paritytech/polkadot/releases/download/v0.9.36/polkadot"
+  url="https://github.com/paritytech/polkadot/releases/download/v0.9.37/polkadot"
   POLKADOT_BIN="$TMPDIR/polkadot"
   wget -O "$POLKADOT_BIN" -q "$url"
   chmod a+x "$POLKADOT_BIN"
@@ -99,6 +99,7 @@ sleep 10
 $PARACHAIN_BIN --alice --collator --force-authoring --tmp --chain $CHAIN-dev \
   --unsafe-ws-external --unsafe-rpc-external --rpc-cors=all \
   --port 30333 --ws-port 9944 --rpc-port 9933 --execution wasm \
+  --state-pruning archive --blocks-pruning archive \
   -- \
   --execution wasm --chain $ROCOCO_CHAINSPEC --port 30332 --ws-port 9943 --rpc-port 9932 \
   --bootnodes /ip4/127.0.0.1/tcp/30336/p2p/$RELAY_ALICE_IDENTITY &> "para.alice.log" &

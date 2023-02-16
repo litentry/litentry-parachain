@@ -7,6 +7,8 @@ start=$(date +%s)
 make fmt
 taplo fmt
 
+make clippy
+
 root_dir=$(git rev-parse --show-toplevel)
 CARGO_TARGET_DIR=${root_dir}/target
 

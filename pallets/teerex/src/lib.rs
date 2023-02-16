@@ -26,14 +26,22 @@ use frame_support::{
 use frame_system::{self, ensure_signed};
 use sp_core::H256;
 use sp_runtime::traits::SaturatedConversion;
+
+#[cfg(not(feature = "skip-ias-check"))]
+use sp_runtime::traits::CheckedSub;
+
 use sp_std::{prelude::*, str};
 use teerex_primitives::*;
 
+use sgx_verify::{
+	deserialize_enclave_identity, deserialize_tcb_info, extract_certs, verify_certificate_chain,
+};
+
 #[cfg(not(feature = "skip-ias-check"))]
-use ias_verify::{verify_ias_report, SgxReport};
+use sgx_verify::{verify_dcap_quote, verify_ias_report, SgxReport};
 
 pub use crate::weights::WeightInfo;
-use ias_verify::SgxBuildMode;
+use teerex_primitives::SgxBuildMode;
 
 // Disambiguate associated types
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
@@ -42,7 +50,12 @@ pub type BalanceOf<T> = <<T as Config>::Currency as Currency<AccountId<T>>>::Bal
 pub use pallet::*;
 
 const MAX_RA_REPORT_LEN: usize = 5244;
+const MAX_DCAP_QUOTE_LEN: usize = 5000;
 const MAX_URL_LEN: usize = 256;
+/// Maximum number of topics for the `publish_hash` call.
+const TOPICS_LIMIT: usize = 5;
+/// Maximum number of bytes for the `data` in the `publish_hash` call.
+const DATA_LENGTH_LIMIT: usize = 100;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -78,8 +91,14 @@ pub mod pallet {
 		UnshieldedFunds(T::AccountId),
 		ProcessedParentchainBlock(T::AccountId, H256, H256, T::BlockNumber),
 		SetHeartbeatTimeout(u64),
-		UpdatedScheduledEnclave(u32, MREnclave),
+		UpdatedScheduledEnclave(u32, MrEnclave),
 		RemovedScheduledEnclave(u32),
+		/// An enclave with [mr_enclave] has published some [hash] with some metadata [data].
+		PublishedHash {
+			mr_enclave: MrEnclave,
+			hash: H256,
+			data: Vec<u8>,
+		},
 	}
 
 	// Watch out: we start indexing with 1 instead of zero in order to
@@ -92,6 +111,15 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn enclave_count)]
 	pub type EnclaveCount<T: Config> = StorageValue<_, u64, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn quoting_enclave)]
+	pub type QuotingEnclaveRegistry<T: Config> = StorageValue<_, QuotingEnclave, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn tcb_info)]
+	pub type TcbInfo<T: Config> =
+		StorageMap<_, Blake2_128Concat, Fmspc, TcbInfoOnChain, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn enclave_index)]
@@ -113,7 +141,7 @@ pub mod pallet {
 
 	// keep track of a list of scheduled/allowed enchalves, mainly used for enclave updates,
 	// can only be modified by EnclaveAdminOrigin
-	// sidechain_block_number -> expected MREnclave
+	// sidechain_block_number -> expected MrEnclave
 	//
 	// about the first time enclave registration:
 	// prior to `register_enclave` this map needs to be populated with (0, expected-mrenclave),
@@ -125,7 +153,7 @@ pub mod pallet {
 	// so we need an "enclave whitelist" anyway
 	#[pallet::storage]
 	#[pallet::getter(fn scheduled_enclave)]
-	pub type ScheduledEnclave<T: Config> = StorageMap<_, Blake2_128Concat, u32, MREnclave>;
+	pub type ScheduledEnclave<T: Config> = StorageMap<_, Blake2_128Concat, u32, MrEnclave>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn heartbeat_timeout)]
@@ -146,7 +174,12 @@ pub mod pallet {
 	}
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {
+	impl<T: Config> Pallet<T>
+	where
+		// Needed for the conversion of `mr_enclave` to a `Hash`.
+		// The condition holds for all known chains.
+		<T as frame_system::Config>::Hash: From<[u8; 32]>,
+	{
 		// the integritee-service wants to register his enclave
 		#[pallet::call_index(0)]
 		#[pallet::weight((<T as Config>::WeightInfo::register_enclave(), DispatchClass::Normal, Pays::Yes))]
@@ -161,10 +194,12 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			ensure!(ra_report.len() <= MAX_RA_REPORT_LEN, <Error<T>>::RaReportTooLong);
 			ensure!(worker_url.len() <= MAX_URL_LEN, <Error<T>>::EnclaveUrlTooLong);
-			log::info!("teerex: parameter lenght ok");
+			log::info!("teerex: parameter length ok");
 
 			#[cfg(not(feature = "skip-ias-check"))]
 			let enclave = Self::verify_report(&sender, ra_report.clone()).map(|report| {
+				log::debug!("[teerex] isv_enclave_quote = {:?}", report.metadata.isv_enclave_quote);
+
 				Enclave::new(
 					sender.clone(),
 					report.mr_enclave,
@@ -172,7 +207,6 @@ pub mod pallet {
 					worker_url.clone(),
 					shielding_key,
 					report.build_mode,
-					report.metadata,
 				)
 			})?;
 
@@ -189,21 +223,12 @@ pub mod pallet {
 			let enclave = Enclave::new(
 				sender.clone(),
 				// insert mrenclave if the ra_report represents one, otherwise insert default
-				<[u8; 32]>::decode(&mut ra_report.as_slice()).unwrap_or_default(),
+				<MrEnclave>::decode(&mut ra_report.as_slice()).unwrap_or_default(),
 				<timestamp::Pallet<T>>::get().saturated_into(),
 				worker_url.clone(),
 				shielding_key,
 				SgxBuildMode::default(),
-				Default::default(),
 			);
-
-			#[cfg(not(feature = "skip-ias-check"))]
-			{
-				log::debug!(
-					"[teerex] isv_enclave_quote = {:?}",
-					enclave.sgx_metadata.isv_enclave_quote
-				);
-			}
 
 			// TODO: imagine this fn is not called for the first time (e.g. when worker restarts),
 			//       should we check the current sidechain_blocknumber >= registered
@@ -223,6 +248,7 @@ pub mod pallet {
 		#[pallet::call_index(1)]
 		#[pallet::weight((<T as Config>::WeightInfo::unregister_enclave(), DispatchClass::Normal, Pays::Yes))]
 		pub fn unregister_enclave(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+			log::info!("teerex: called into runtime call unregister_enclave()");
 			let sender = ensure_signed(origin)?;
 
 			Self::remove_enclave(&sender)?;
@@ -251,7 +277,7 @@ pub mod pallet {
 			trusted_calls_merkle_root: H256,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			Self::is_registered_enclave(&sender)?;
+			Self::ensure_registered_enclave(&sender)?;
 			log::debug!(
 				"Processed parentchain block confirmed for mrenclave {:?}, block hash {:?}",
 				sender,
@@ -308,10 +334,9 @@ pub mod pallet {
 			call_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			Self::is_registered_enclave(&sender)?;
-			let sender_index = <EnclaveIndex<T>>::get(sender);
-			let sender_enclave =
-				<EnclaveRegistry<T>>::get(sender_index).ok_or(Error::<T>::EmptyEnclaveRegistry)?;
+			Self::ensure_registered_enclave(&sender)?;
+			let sender_enclave = Self::get_enclave(&sender)?;
+
 			ensure!(
 				sender_enclave.mr_enclave.encode() == bonding_account.encode(),
 				<Error<T>>::WrongMrenclaveForBondingAccount
@@ -348,11 +373,62 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(7)]
+		#[pallet::weight((<T as Config>::WeightInfo::register_dcap_enclave(), DispatchClass::Normal, Pays::Yes))]
+		pub fn register_dcap_enclave(
+			origin: OriginFor<T>,
+			dcap_quote: Vec<u8>,
+			worker_url: Vec<u8>,
+		) -> DispatchResultWithPostInfo {
+			log::info!("teerex: called into runtime call register_dcap_enclave()");
+			let sender = ensure_signed(origin)?;
+			ensure!(dcap_quote.len() <= MAX_DCAP_QUOTE_LEN, <Error<T>>::RaReportTooLong);
+			ensure!(worker_url.len() <= MAX_URL_LEN, <Error<T>>::EnclaveUrlTooLong);
+			log::info!("teerex: parameter length ok");
+
+			let dummy_shielding_key: Option<Vec<u8>> = Default::default();
+			#[cfg(not(feature = "skip-ias-check"))]
+			let enclave = Self::verify_dcap_quote(&sender, dcap_quote).map(|report| {
+				Enclave::new(
+					sender.clone(),
+					report.mr_enclave,
+					report.timestamp,
+					worker_url.clone(),
+					dummy_shielding_key,
+					report.build_mode,
+				)
+			})?;
+
+			#[cfg(not(feature = "skip-ias-check"))]
+			if !<AllowSGXDebugMode<T>>::get() && enclave.sgx_mode == SgxBuildMode::Debug {
+				log::error!("substraTEE_registry: debug mode is not allowed to attest!");
+				return Err(<Error<T>>::SgxModeNotAllowed.into())
+			}
+
+			#[cfg(feature = "skip-ias-check")]
+			log::warn!("[teerex]: Skipping remote attestation check. Only dev-chains are allowed to do this!");
+
+			#[cfg(feature = "skip-ias-check")]
+			let enclave = Enclave::new(
+				sender.clone(),
+				// insert mrenclave if the ra_report represents one, otherwise insert default
+				<MrEnclave>::decode(&mut dcap_quote.as_slice()).unwrap_or_default(),
+				<timestamp::Pallet<T>>::get().saturated_into(),
+				worker_url.clone(),
+				dummy_shielding_key,
+				SgxBuildMode::default(),
+			);
+
+			Self::add_enclave(&sender, &enclave)?;
+			Self::deposit_event(Event::AddedEnclave(sender, worker_url));
+			Ok(().into())
+		}
+
+		#[pallet::call_index(8)]
 		#[pallet::weight((1000, DispatchClass::Normal, Pays::No))]
 		pub fn update_scheduled_enclave(
 			origin: OriginFor<T>,
 			sidechain_block_number: u32,
-			mr_enclave: MREnclave,
+			mr_enclave: MrEnclave,
 		) -> DispatchResultWithPostInfo {
 			T::EnclaveAdminOrigin::ensure_origin(origin)?;
 			ScheduledEnclave::<T>::insert(sidechain_block_number, mr_enclave);
@@ -360,7 +436,24 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::call_index(8)]
+		#[pallet::call_index(9)]
+		#[pallet::weight((<T as Config>::WeightInfo::register_quoting_enclave(), DispatchClass::Normal, Pays::Yes))]
+		pub fn register_quoting_enclave(
+			origin: OriginFor<T>,
+			enclave_identity: Vec<u8>,
+			signature: Vec<u8>,
+			certificate_chain: Vec<u8>,
+		) -> DispatchResultWithPostInfo {
+			log::info!("teerex: called into runtime call register_quoting_enclave()");
+			// Quoting enclaves are registered globally and not for a specific sender
+			let _sender = ensure_signed(origin)?;
+			let quoting_enclave =
+				Self::verify_quoting_enclave(enclave_identity, signature, certificate_chain)?;
+			<QuotingEnclaveRegistry<T>>::put(quoting_enclave);
+			Ok(().into())
+		}
+
+		#[pallet::call_index(10)]
 		#[pallet::weight((1000, DispatchClass::Normal, Pays::No))]
 		pub fn remove_scheduled_enclave(
 			origin: OriginFor<T>,
@@ -374,6 +467,56 @@ pub mod pallet {
 			// remove
 			ScheduledEnclave::<T>::remove(sidechain_block_number);
 			Self::deposit_event(Event::RemovedScheduledEnclave(sidechain_block_number));
+			Ok(().into())
+		}
+
+		#[pallet::call_index(11)]
+		#[pallet::weight((<T as Config>::WeightInfo::register_dcap_enclave(), DispatchClass::Normal, Pays::Yes))]
+		pub fn register_tcb_info(
+			origin: OriginFor<T>,
+			tcb_info: Vec<u8>,
+			signature: Vec<u8>,
+			certificate_chain: Vec<u8>,
+		) -> DispatchResultWithPostInfo {
+			log::info!("teerex: called into runtime call register_tcb_info()");
+			// TCB info is registered globally and not for a specific sender
+			let _sender = ensure_signed(origin)?;
+			let (fmspc, on_chain_info) =
+				Self::verify_tcb_info(tcb_info, signature, certificate_chain)?;
+			<TcbInfo<T>>::insert(fmspc, on_chain_info);
+			Ok(().into())
+		}
+
+		/// Publish a hash as a result of an arbitrary enclave operation.
+		///
+		/// The `mrenclave` of the origin will be used as an event topic a client can subscribe to.
+		/// `extra_topics`, if any, will be used as additional event topics.
+		///
+		/// `data` can be anything worthwhile publishing related to the hash. If it is a
+		/// utf8-encoded string, the UIs will usually even render the text.
+		#[pallet::call_index(12)]
+		#[pallet::weight((<T as Config>::WeightInfo::publish_hash(), DispatchClass::Normal, Pays::Yes))]
+		pub fn publish_hash(
+			origin: OriginFor<T>,
+			hash: H256,
+			extra_topics: Vec<T::Hash>,
+			data: Vec<u8>,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+			Self::ensure_registered_enclave(&sender)?;
+			let enclave = Self::get_enclave(&sender)?;
+
+			ensure!(extra_topics.len() <= TOPICS_LIMIT, <Error<T>>::TooManyTopics);
+			ensure!(data.len() <= DATA_LENGTH_LIMIT, <Error<T>>::DataTooLong);
+
+			let mut topics = extra_topics;
+			topics.push(enclave.mr_enclave.into());
+
+			Self::deposit_event_indexed(
+				&topics,
+				Event::PublishedHash { mr_enclave: enclave.mr_enclave, hash, data },
+			);
+
 			Ok(().into())
 		}
 	}
@@ -405,6 +548,12 @@ pub mod pallet {
 		ScheduledEnclaveNotExist,
 		/// Enclave not in the scheduled list, therefore unexpected.
 		EnclaveNotInSchedule,
+		/// The provided collateral data is invalid
+		CollateralInvalid,
+		/// The number of `extra_topics` passed to `publish_hash` exceeds the limit.
+		TooManyTopics,
+		/// The length of the `data` passed to `publish_hash` exceeds the limit.
+		DataTooLong,
 	}
 }
 
@@ -444,6 +593,13 @@ impl<T: Config> Pallet<T> {
 		Ok(().into())
 	}
 
+	pub(crate) fn get_enclave(
+		sender: &T::AccountId,
+	) -> Result<Enclave<T::AccountId, Vec<u8>>, Error<T>> {
+		let sender_index = <EnclaveIndex<T>>::get(sender);
+		<EnclaveRegistry<T>>::get(sender_index).ok_or(Error::<T>::EmptyEnclaveRegistry)
+	}
+
 	/// Our list implementation would introduce holes in out list if if we try to remove elements
 	/// from the middle. As the order of the enclave entries is not important, we use the swap and
 	/// pop method to remove elements from the registry.
@@ -480,11 +636,21 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Check if the sender is a registered enclave
-	pub fn is_registered_enclave(
+	pub fn ensure_registered_enclave(
 		account: &T::AccountId,
-	) -> Result<bool, DispatchErrorWithPostInfo> {
+	) -> Result<(), DispatchErrorWithPostInfo> {
 		ensure!(<EnclaveIndex<T>>::contains_key(account), <Error<T>>::EnclaveIsNotRegistered);
-		Ok(true)
+		Ok(())
+	}
+
+	/// Deposit a pallets teerex event with the corresponding topics.
+	///
+	/// Handles the conversion to the overarching event type.
+	fn deposit_event_indexed(topics: &[T::Hash], event: Event<T>) {
+		<frame_system::Pallet<T>>::deposit_event_indexed(
+			topics,
+			<T as Config>::RuntimeEvent::from(event).into(),
+		)
 	}
 
 	#[cfg(not(feature = "skip-ias-check"))]
@@ -494,14 +660,14 @@ impl<T: Config> Pallet<T> {
 	) -> Result<SgxReport, DispatchErrorWithPostInfo> {
 		let report = verify_ias_report(&ra_report)
 			.map_err(|_| <Error<T>>::RemoteAttestationVerificationFailed)?;
-		log::info!("RA Report: {:?}", report);
+		log::info!("teerex: IAS report successfully verified");
 
 		let enclave_signer = T::AccountId::decode(&mut &report.pubkey[..])
 			.map_err(|_| <Error<T>>::EnclaveSignerDecodeError)?;
 
 		ensure!(sender == &enclave_signer, <Error<T>>::SenderIsNotAttestedEnclave);
 
-		// TODO: activate state checks as soon as we've fixed our setup
+		// TODO: activate state checks as soon as we've fixed our setup #83
 		// ensure!((report.status == SgxStatus::Ok) | (report.status ==
 		// SgxStatus::ConfigurationNeeded),     "RA status is insufficient");
 		// log::info!("teerex: status is acceptable");
@@ -511,9 +677,79 @@ impl<T: Config> Pallet<T> {
 	}
 
 	#[cfg(not(feature = "skip-ias-check"))]
-	fn ensure_timestamp_within_24_hours(report_timestamp: u64) -> DispatchResultWithPostInfo {
-		use sp_runtime::traits::CheckedSub;
+	fn verify_dcap_quote(
+		sender: &T::AccountId,
+		dcap_quote: Vec<u8>,
+	) -> Result<SgxReport, DispatchErrorWithPostInfo> {
+		let verification_time = <timestamp::Pallet<T>>::get();
 
+		let qe = <QuotingEnclaveRegistry<T>>::get();
+		let (fmspc, tcb_info, report) =
+			verify_dcap_quote(&dcap_quote, verification_time.saturated_into(), &qe).map_err(
+				|e| {
+					log::warn!("verify_dcap_quote failed: {:?}", e);
+					<Error<T>>::RemoteAttestationVerificationFailed
+				},
+			)?;
+
+		log::info!("teerex: DCAP quote verified. FMSPC from quote: {:?}", fmspc);
+		let tcb_info_on_chain = <TcbInfo<T>>::get(fmspc);
+		ensure!(tcb_info_on_chain.verify_examinee(&tcb_info), "tcb_info is outdated");
+
+		let enclave_signer = T::AccountId::decode(&mut &report.pubkey[..])
+			.map_err(|_| <Error<T>>::EnclaveSignerDecodeError)?;
+		ensure!(sender == &enclave_signer, <Error<T>>::SenderIsNotAttestedEnclave);
+
+		// TODO: activate state checks as soon as we've fixed our setup #83
+		// ensure!((report.status == SgxStatus::Ok) | (report.status ==
+		// SgxStatus::ConfigurationNeeded),     "RA status is insufficient");
+		// log::info!("teerex: status is acceptable");
+
+		Ok(report)
+	}
+
+	fn verify_quoting_enclave(
+		enclave_identity: Vec<u8>,
+		signature: Vec<u8>,
+		certificate_chain: Vec<u8>,
+	) -> Result<QuotingEnclave, DispatchErrorWithPostInfo> {
+		let verification_time: u64 = <timestamp::Pallet<T>>::get().saturated_into();
+		let certs = extract_certs(&certificate_chain);
+		ensure!(certs.len() >= 2, "Certificate chain must have at least two certificates");
+		let intermediate_slices: Vec<&[u8]> = certs[1..].iter().map(Vec::as_slice).collect();
+		let leaf_cert =
+			verify_certificate_chain(&certs[0], &intermediate_slices, verification_time)?;
+		let enclave_identity =
+			deserialize_enclave_identity(&enclave_identity, &signature, &leaf_cert)?;
+
+		if enclave_identity.is_valid(verification_time.try_into().unwrap()) {
+			Ok(enclave_identity.to_quoting_enclave())
+		} else {
+			Err(<Error<T>>::CollateralInvalid.into())
+		}
+	}
+
+	pub fn verify_tcb_info(
+		tcb_info: Vec<u8>,
+		signature: Vec<u8>,
+		certificate_chain: Vec<u8>,
+	) -> Result<(Fmspc, TcbInfoOnChain), DispatchErrorWithPostInfo> {
+		let verification_time: u64 = <timestamp::Pallet<T>>::get().saturated_into();
+		let certs = extract_certs(&certificate_chain);
+		ensure!(certs.len() >= 2, "Certificate chain must have at least two certificates");
+		let intermediate_slices: Vec<&[u8]> = certs[1..].iter().map(Vec::as_slice).collect();
+		let leaf_cert =
+			verify_certificate_chain(&certs[0], &intermediate_slices, verification_time)?;
+		let tcb_info = deserialize_tcb_info(&tcb_info, &signature, &leaf_cert)?;
+		if tcb_info.is_valid(verification_time.try_into().unwrap()) {
+			Ok(tcb_info.to_chain_tcb_info())
+		} else {
+			Err(<Error<T>>::CollateralInvalid.into())
+		}
+	}
+
+	#[cfg(not(feature = "skip-ias-check"))]
+	fn ensure_timestamp_within_24_hours(report_timestamp: u64) -> DispatchResultWithPostInfo {
 		let elapsed_time = <timestamp::Pallet<T>>::get()
 			.checked_sub(&T::Moment::saturated_from(report_timestamp))
 			.ok_or("Underflow while calculating elapsed time since report creation")?;
