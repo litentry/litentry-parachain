@@ -133,11 +133,10 @@ pub fn nonce_is_computed_correctly() {
 		&shard,
 		trusted_call_1_signed,
 		&mut Vec::new(),
-		repo,
+		repo.clone(),
 	)
 	.is_ok());
 
-	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
 	assert!(TestStf::execute_call(
 		&mut state,
 		&shard,
