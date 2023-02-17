@@ -22,7 +22,7 @@ use crate::{
 };
 use codec::{Decode, Encode};
 
-#[derive(Default, Encode, Decode, Debug, Clone)]
+#[derive(Encode, Decode, Debug, Clone)]
 pub struct NodeMetadataMock {
 	teerex_module: u8,
 	register_ias_enclave: u8,
@@ -68,6 +68,12 @@ pub struct NodeMetadataMock {
 	imported_sidechain_block: u8,
 	runtime_spec_version: u32,
 	runtime_transaction_version: u32,
+}
+
+impl Default for NodeMetadataMock {
+	fn default() -> Self {
+		NodeMetadataMock::new()
+	}
 }
 
 impl NodeMetadataMock {
