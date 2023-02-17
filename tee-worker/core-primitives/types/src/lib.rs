@@ -24,6 +24,8 @@ use codec::{Decode, Encode};
 use sgx_tstd as std;
 use sp_std::vec::Vec;
 
+#[cfg(feature = "std")]
+pub mod event;
 pub mod extrinsics;
 pub mod storage;
 

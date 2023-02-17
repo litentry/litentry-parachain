@@ -19,6 +19,7 @@ itp-sgx-runtime-primitives = { path = "../../core-primitives/sgx-runtime-primiti
 
 # scs
 substrate-api-client = { default-features = false, git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.37-tag-v0.7.0" }
+substrate-fixed = { tag = "v0.5.9", default-features = false, git = "https://github.com/encointer/substrate-fixed.git", optional = true }
 
 # substrate-deps
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
@@ -46,6 +47,7 @@ std = [
     "primitive-types/std",
     "itp-sgx-runtime-primitives/std",
     "substrate-api-client/std",
+    "substrate-fixed",
     # substrate
     "frame-system/std",
     "pallet-balances/std",

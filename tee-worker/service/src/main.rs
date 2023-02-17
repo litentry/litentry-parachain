@@ -58,7 +58,9 @@ use itp_enclave_api::{
 };
 use itp_node_api::{
 	api_client::{AccountApi, PalletTeerexApi, ParentchainApi},
-	metadata::NodeMetadata,
+	metadata::{
+		pallet_sidechain::SIDECHAIN, pallet_teeracle::TEERACLE, pallet_teerex::TEEREX, NodeMetadata,
+	},
 	node_api_factory::{CreateNodeApi, NodeApiFactory},
 };
 use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
@@ -69,17 +71,27 @@ use itp_settings::{
 
 #[cfg(feature = "dcap")]
 use itp_utils::hex::hex_encode;
+#[cfg(feature = "dcap")]
+use litentry_primitives::ParentchainHash as Hash;
 
-use itp_types::DirectRequestStatus;
+use itp_types::{
+	event::{
+		PalletBalancesTrasnfer, PalletSidechainProposedSidechainBlock,
+		PalletTeeracleAddedToWhitelist, PalletTeeracleExchangeRateDeleted,
+		PalletTeeracleExchangeRateUpdated, PalletTeeracleRemovedFromWhitelist,
+		PalletTeerexAddedEnclave, PalletTeerexForwarded, PalletTeerexProcessedParentchainBlock,
+		PalletTeerexSetHeartbeatTimeout, PalletTeerexShieldFunds, PalletTeerexUnshieldedFunds,
+	},
+	DirectRequestStatus,
+};
 use its_peer_fetch::{
 	block_fetch_client::BlockFetcher, untrusted_peer_fetch::UntrustedPeerFetcher,
 };
 use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
 use its_storage::{interface::FetchBlocks, BlockPruner, SidechainStorageLock};
 use lc_data_providers::DataProvidersStatic;
-use litentry_primitives::{ChallengeCode, Identity, ParentchainHash, ParentchainHeader};
+use litentry_primitives::{ChallengeCode, Identity, ParentchainHeader as Header};
 use log::*;
-use my_node_runtime::RuntimeEvent;
 use serde_json::Value;
 use sgx_types::*;
 use sp_core::crypto::{AccountId32, Ss58Codec};
@@ -90,16 +102,13 @@ use std::{
 	io::Read,
 	path::PathBuf,
 	str,
-	sync::{
-		mpsc::{channel, Sender},
-		Arc,
-	},
+	sync::{mpsc::channel, Arc},
 	thread,
 	time::Duration,
 };
 use substrate_api_client::{
 	utils::{storage_key, FromHexString},
-	Header as HeaderTrait, StorageKey, XtStatus,
+	EventDetails, Events, Header as HeaderTrait, StorageKey, XtStatus,
 };
 use teerex_primitives::{Enclave as TeerexEnclave, ShardIdentifier};
 extern crate config as rs_config;
@@ -543,7 +552,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		return
 	}
 
-	let mut register_enclave_xt_header: Option<ParentchainHeader> = None;
+	let mut register_enclave_xt_header: Option<Header> = None;
 	let mut we_are_primary_validateer: bool = false;
 
 	// litentry, Check if the enclave is already registered
@@ -670,20 +679,24 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	// subscribe to events and react on firing
 	println!("*** Subscribing to events");
 	let (sender, receiver) = channel();
-	let sender2 = sender.clone();
-	let _eventsubscriber = thread::Builder::new()
-		.name("eventsubscriber".to_owned())
+	let metadata = node_api.metadata.clone();
+	let _ = thread::Builder::new()
+		.name("event_subscriber".to_owned())
 		.spawn(move || {
-			node_api.subscribe_events(sender2).unwrap();
+			node_api.subscribe_events(sender).unwrap();
 		})
 		.unwrap();
 
 	println!("[+] Subscribed to events. waiting...");
-	let timeout = Duration::from_millis(10);
+	let timeout = Duration::from_secs(600);
 	loop {
-		if let Ok(msg) = receiver.recv_timeout(timeout) {
-			if let Ok(events) = parse_events(msg.clone()) {
-				print_events(events, sender.clone())
+		if let Ok(events_str) = receiver.recv_timeout(timeout) {
+			let event_bytes = Vec::from_hex(events_str).unwrap();
+			let events = Events::new(metadata.clone(), Default::default(), event_bytes);
+
+			for maybe_event_details in events.iter() {
+				let event_details = maybe_event_details.unwrap();
+				print_event(&event_details);
 			}
 		}
 	}
@@ -717,140 +730,153 @@ fn spawn_worker_for_shard_polling<InitializationHandler>(
 	});
 }
 
-type Events = Vec<frame_system::EventRecord<RuntimeEvent, ParentchainHash>>;
-
-fn parse_events(event: String) -> Result<Events, String> {
-	let _unhex = Vec::from_hex(event).map_err(|_| "Decoding Events Failed".to_string())?;
-	let mut _er_enc = _unhex.as_slice();
-	Events::decode(&mut _er_enc).map_err(|_| "Decoding Events Failed".to_string())
-}
-
-fn print_events(events: Events, _sender: Sender<String>) {
-	for evr in &events {
-		debug!("Decoded: phase = {:?}, event = {:?}", evr.phase, evr.event);
-		match &evr.event {
-			RuntimeEvent::Balances(be) => {
-				info!("[+] Received balances event");
-				debug!("{:?}", be);
-				match &be {
-					pallet_balances::Event::Transfer {
-						from: transactor,
-						to: dest,
-						amount: value,
-					} => {
-						debug!("    Transactor:  {:?}", transactor.to_ss58check());
-						debug!("    Destination: {:?}", dest.to_ss58check());
-						debug!("    Value:       {:?}", value);
-					},
-					_ => {
-						trace!("Ignoring unsupported balances event");
-					},
-				}
-			},
-			RuntimeEvent::Teerex(re) => {
-				debug!("{:?}", re);
-				match &re {
-					my_node_runtime::pallet_teerex::Event::AddedEnclave(sender, worker_url) => {
-						println!("[+] Received AddedEnclave event");
-						println!("    Sender (Worker):  {:?}", sender);
-						println!("    Registered URL: {:?}", str::from_utf8(worker_url).unwrap());
-					},
-					my_node_runtime::pallet_teerex::Event::Forwarded(shard) => {
-						println!(
-							"[+] Received trusted call for shard {}",
-							shard.encode().to_base58()
-						);
-					},
-					my_node_runtime::pallet_teerex::Event::ProcessedParentchainBlock(
-						sender,
-						block_hash,
-						merkle_root,
-						block_number,
-					) => {
-						info!("[+] Received ProcessedParentchainBlock event");
-						debug!("    From:    {:?}", sender);
-						debug!("    Block Hash: {:?}", hex::encode(block_hash));
-						debug!("    Merkle Root: {:?}", hex::encode(merkle_root));
-						debug!("    Block Number: {:?}", block_number);
-					},
-					my_node_runtime::pallet_teerex::Event::ShieldFunds(incognito_account) => {
-						info!("[+] Received ShieldFunds event");
-						debug!("    For:    {:?}", incognito_account);
-					},
-					my_node_runtime::pallet_teerex::Event::UnshieldedFunds(incognito_account) => {
-						info!("[+] Received UnshieldedFunds event");
-						debug!("    For:    {:?}", incognito_account);
-					},
-					my_node_runtime::pallet_teerex::Event::SetHeartbeatTimeout(timeout) => {
-						info!("[+] Received SetHeartbeatTimeout");
-						debug!("    For:    {:?}", timeout);
-					},
-					_ => {
-						trace!("Ignoring unsupported pallet_teerex event");
-					},
-				}
-			},
-			#[cfg(feature = "teeracle")]
-			RuntimeEvent::Teeracle(re) => {
-				debug!("{:?}", re);
-				match &re {
-					my_node_runtime::pallet_teeracle::Event::ExchangeRateUpdated(
-						source,
-						currency,
-						new_value,
-					) => {
-						println!("[+] Received ExchangeRateUpdated event");
-						println!("    Data source:  {:?}", source);
-						println!("    Currency:  {:?}", currency);
-						println!("    Exchange rate: {:?}", new_value);
-					},
-					my_node_runtime::pallet_teeracle::Event::ExchangeRateDeleted(
-						source,
-						currency,
-					) => {
-						println!("[+] Received ExchangeRateDeleted event");
-						println!("    Data source:  {:?}", source);
-						println!("    Currency:  {:?}", currency);
-					},
-					my_node_runtime::pallet_teeracle::Event::AddedToWhitelist(
-						source,
-						mrenclave,
-					) => {
-						println!("[+] Received AddedToWhitelist event");
-						println!("    Data source:  {:?}", source);
-						println!("    Currency:  {:?}", mrenclave);
-					},
-					my_node_runtime::pallet_teeracle::Event::RemovedFromWhitelist(
-						source,
-						mrenclave,
-					) => {
-						println!("[+] Received RemovedFromWhitelist event");
-						println!("    Data source:  {:?}", source);
-						println!("    Currency:  {:?}", mrenclave);
-					},
-					_ => {
-						trace!("Ignoring unsupported pallet_teeracle event");
-					},
-				}
-			},
-			#[cfg(feature = "sidechain")]
-			RuntimeEvent::Sidechain(re) => match &re {
-				my_node_runtime::pallet_sidechain::Event::ProposedSidechainBlock(
-					sender,
-					payload,
-				) => {
-					info!("[+] Received ProposedSidechainBlock event");
-					debug!("    From:    {:?}", sender);
-					debug!("    Payload: {:?}", hex::encode(payload));
-				},
-				_ => {
-					trace!("Ignoring unsupported pallet_sidechain event");
-				},
-			},
-			_ => {
-				trace!("Ignoring event {:?}", evr);
-			},
-		}
+fn print_event(event: &EventDetails) {
+	let pallet_name = event.pallet_name();
+	let event_name = event.event_metadata().event();
+	trace!(
+		"Decoded: phase = {:?}, pallet = {:?} event = {:?}",
+		event.phase(),
+		pallet_name,
+		event_name
+	);
+	let mut bytes = event.field_bytes();
+	match (pallet_name, event_name) {
+		("Balances", "Transfer") => {
+			if let Ok(PalletBalancesTrasnfer { from, to, amount }) =
+				PalletBalancesTrasnfer::decode(&mut bytes)
+			{
+				info!("[+] Received Trasnfer event");
+				debug!("    Transactor:  {:?}", from.to_ss58check());
+				debug!("    Destination: {:?}", to.to_ss58check());
+				debug!("    Value:       {:?}", amount);
+			} else {
+				warn!("Ignoring unsupported balances event");
+			}
+		},
+		(TEEREX, "AddedEnclave") => {
+			if let Ok(PalletTeerexAddedEnclave { sender, worker_url }) =
+				PalletTeerexAddedEnclave::decode(&mut bytes)
+			{
+				info!("[+] Received AddedEnclave event");
+				info!("    Sender (Worker):  {:?}", sender);
+				info!("    Registered URL: {:?}", worker_url);
+			} else {
+				warn!("Ignoring unsupported AddedEnclave event");
+			}
+		},
+		(TEEREX, "Forwarded") => {
+			if let Ok(PalletTeerexForwarded(shard)) = PalletTeerexForwarded::decode(&mut bytes) {
+				info!("[+] Received trusted call for shard {}", shard.encode().to_base58());
+			} else {
+				warn!("Ignoring unsupported trusted call for shard");
+			}
+		},
+		(TEEREX, "ProcessedParentchainBlock") => {
+			if let Ok(PalletTeerexProcessedParentchainBlock {
+				sender,
+				block_hash,
+				block_number,
+				merkle_root,
+			}) = PalletTeerexProcessedParentchainBlock::decode(&mut bytes)
+			{
+				info!("[+] Received ProcessedParentchainBlock event");
+				debug!("    From:    {:?}", sender.to_ss58check());
+				debug!("    Block Hash: {:?}", hex::encode(block_hash));
+				debug!("    Merkle Root: {:?}", hex::encode(merkle_root));
+				debug!("    Block Number: {:?}", block_number);
+			} else {
+				warn!("Ignoring unsupported ProcessedParentchainBlock event");
+			}
+		},
+		(TEEREX, "ShieldFunds") => {
+			if let Ok(PalletTeerexShieldFunds(incognito_account)) =
+				PalletTeerexShieldFunds::decode(&mut bytes)
+			{
+				info!("[+] Received ShieldFunds event");
+				debug!("    For:    {:?}", hex::encode(incognito_account));
+			} else {
+				warn!("Ignoring unsupported ShieldFunds event");
+			}
+		},
+		(TEEREX, "UnshieldedFunds") => {
+			if let Ok(PalletTeerexUnshieldedFunds(incognito_account)) =
+				PalletTeerexUnshieldedFunds::decode(&mut bytes)
+			{
+				info!("[+] Received UnshieldedFunds event");
+				debug!("    For:    {:?}", incognito_account.to_ss58check());
+			} else {
+				warn!("Ignoring unsupported UnshieldedFunds event");
+			}
+		},
+		(TEEREX, "SetHeartbeatTimeout") => {
+			if let Ok(PalletTeerexSetHeartbeatTimeout(timeout)) =
+				PalletTeerexSetHeartbeatTimeout::decode(&mut bytes)
+			{
+				info!("[+] Received SetHeartbeatTimeout event");
+				debug!("    For:    {:?}", timeout);
+			} else {
+				warn!("Ignoring unsupported SetHeartbeatTimeout event");
+			}
+		},
+		(TEERACLE, "ExchangeRateUpdated") => {
+			if let Ok(PalletTeeracleExchangeRateUpdated { data_source, currency, exchange_rate }) =
+				PalletTeeracleExchangeRateUpdated::decode(&mut bytes)
+			{
+				println!("[+] Received ExchangeRateUpdated event");
+				println!("    Data source:  {:?}", data_source);
+				println!("    Currency:  {:?}", currency);
+				println!("    Exchange rate: {:?}", exchange_rate);
+			} else {
+				warn!("Ignoring unsupported ExchangeRateUpdated event");
+			}
+		},
+		(TEERACLE, "ExchangeRateDeleted") => {
+			if let Ok(PalletTeeracleExchangeRateDeleted { data_source, currency }) =
+				PalletTeeracleExchangeRateDeleted::decode(&mut bytes)
+			{
+				println!("[+] Received ExchangeRateDeleted event");
+				println!("    Data source:  {:?}", data_source);
+				println!("    Currency:  {:?}", currency);
+			} else {
+				warn!("Ignoring unsupported ExchangeRateDeleted event");
+			}
+		},
+		(TEERACLE, "AddedToWhitelist") => {
+			if let Ok(PalletTeeracleAddedToWhitelist { data_source, mrenclave }) =
+				PalletTeeracleAddedToWhitelist::decode(&mut bytes)
+			{
+				println!("[+] Received AddedToWhitelist event");
+				println!("    Data source:  {:?}", data_source);
+				println!("    mrenclave:  {:?}", hex::encode(mrenclave));
+			} else {
+				warn!("Ignoring unsupported AddedToWhitelist event");
+			}
+		},
+		(TEERACLE, "RemovedFromWhitelist") => {
+			if let Ok(PalletTeeracleRemovedFromWhitelist { data_source, mrenclave }) =
+				PalletTeeracleRemovedFromWhitelist::decode(&mut bytes)
+			{
+				println!("[+] Received RemovedFromWhitelist event");
+				println!("    Data source:  {:?}", data_source);
+				println!("    mrenclave:  {:?}", hex::encode(mrenclave));
+			} else {
+				warn!("Ignoring unsupported RemovedFromWhitelist event");
+			}
+		},
+		(SIDECHAIN, "ProposedSidechainBlock") => {
+			if let Ok(PalletSidechainProposedSidechainBlock { sender, payload }) =
+				PalletSidechainProposedSidechainBlock::decode(&mut bytes)
+			{
+				info!("[+] Received ProposedSidechainBlock event");
+				debug!("    From:    {:?}", sender);
+				debug!("    Payload: {:?}", hex::encode(payload));
+			} else {
+				warn!("Ignoring unsupported ProposedSidechainBlock event");
+			}
+		},
+		_ => {
+			// 		trace!("Ignoring event {:?}", evr);
+		},
 	}
 }
 
@@ -894,7 +920,7 @@ fn send_extrinsic(
 /// upon receiving a new header.
 fn subscribe_to_parentchain_new_headers<E: EnclaveBase + Sidechain>(
 	parentchain_handler: Arc<ParentchainHandler<ParentchainApi, E>>,
-	mut last_synced_header: ParentchainHeader,
+	mut last_synced_header: Header,
 ) -> Result<(), Error> {
 	let (sender, receiver) = channel();
 	//TODO: this should be implemented by parentchain_handler directly, and not via
@@ -905,7 +931,7 @@ fn subscribe_to_parentchain_new_headers<E: EnclaveBase + Sidechain>(
 		.map_err(Error::ApiClient)?;
 
 	loop {
-		let new_header: ParentchainHeader = match receiver.recv() {
+		let new_header: Header = match receiver.recv() {
 			Ok(header_str) => serde_json::from_str(&header_str).map_err(Error::Serialization),
 			Err(e) => Err(Error::ApiSubscriptionDisconnected(e)),
 		}?;
@@ -929,7 +955,7 @@ fn enclave_account<E: EnclaveBase>(enclave_api: &E) -> AccountId32 {
 /// Checks if we are the first validateer to register on the parentchain.
 fn check_we_are_primary_validateer(
 	node_api: &ParentchainApi,
-	register_enclave_xt_header: &ParentchainHeader,
+	register_enclave_xt_header: &Header,
 ) -> Result<bool, Error> {
 	let enclave_count_of_previous_block =
 		node_api.enclave_count(Some(*register_enclave_xt_header.parent_hash()))?;

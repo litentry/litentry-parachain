@@ -17,7 +17,7 @@
 
 use crate::{error::Result, NodeMetadata};
 /// Pallet' name:
-const SIDECHAIN: &str = "Sidechain";
+pub const SIDECHAIN: &str = "Sidechain";
 
 pub trait SidechainCallIndexes {
 	fn confirm_imported_sidechain_block_indexes(&self) -> Result<[u8; 2]>;
