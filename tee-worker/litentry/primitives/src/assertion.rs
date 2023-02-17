@@ -23,16 +23,13 @@ use crate::sgx_reexport_prelude::chrono::{offset::Utc as TzUtc, DateTime, NaiveD
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use std::time::{SystemTime, UNIX_EPOCH};
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use std::string::ToString;
-
 #[cfg(feature = "std")]
 use chrono::offset::Utc as TzUtc;
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
-use std::string::String;
+use std::{format, string::String};
 
 pub type Balance = u128;
 type MaxStringLength = ConstU32<64>;

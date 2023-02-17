@@ -54,7 +54,7 @@ pub fn build(
 
 	for identity in identities.iter() {
 		if found {
-			break;
+			break
 		}
 
 		let mut verified_network = VerifiedCredentialsNetwork::Polkadot;

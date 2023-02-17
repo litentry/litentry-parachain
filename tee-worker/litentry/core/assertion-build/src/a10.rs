@@ -53,7 +53,7 @@ pub fn build(
 
 	for id in identities {
 		if found {
-			break;
+			break
 		}
 
 		if let Identity::Evm { network, address } = id {

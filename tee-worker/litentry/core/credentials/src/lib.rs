@@ -407,23 +407,31 @@ impl Credential {
 		if index == 0 {
 			let from_date = ASSERTION_FROM_DATE[0];
 			let from_date = AssertionLogic::new_item("$from_date", Op::LessThan, from_date);
-			let assertion = AssertionLogic::new_and().add_item(minimum_amount).add_item(from_date).add_item(to_date);
+			let assertion = AssertionLogic::new_and()
+				.add_item(minimum_amount)
+				.add_item(from_date)
+				.add_item(to_date);
 			self.credential_subject.assertions.push(assertion);
 			self.credential_subject.values.push(false);
 		} else if (1..7).contains(&index) {
 			let from_date = ASSERTION_FROM_DATE[index];
 			let from_date = AssertionLogic::new_item("$from_date", Op::LessThan, from_date);
-			let assertion = AssertionLogic::new_and().add_item(minimum_amount).add_item(from_date).add_item(to_date);
+			let assertion = AssertionLogic::new_and()
+				.add_item(minimum_amount)
+				.add_item(from_date)
+				.add_item(to_date);
 			self.credential_subject.assertions.push(assertion);
 			self.credential_subject.values.push(true);
 		} else {
 			let from_date = ASSERTION_FROM_DATE[index - 1];
 			let from_date = AssertionLogic::new_item("$from_date", Op::GreaterEq, from_date);
-			let assertion = AssertionLogic::new_and().add_item(minimum_amount).add_item(from_date).add_item(to_date);
+			let assertion = AssertionLogic::new_and()
+				.add_item(minimum_amount)
+				.add_item(from_date)
+				.add_item(to_date);
 			self.credential_subject.assertions.push(assertion);
 			self.credential_subject.values.push(true);
 		}
-
 	}
 
 	pub fn add_assertion_a2(&mut self, guild_id: String) {
@@ -507,7 +515,8 @@ mod tests {
 			let from_date = AssertionLogic::new_item("$from_date", Op::LessThan, "2017-01-01");
 
 			let a11 = Assertion::A11(min_balance);
-			let mut credential_unsigned = Credential::generate_unsigned_credential(&a11, &who, &shard.clone(), 1u32).unwrap();
+			let mut credential_unsigned =
+				Credential::generate_unsigned_credential(&a11, &who, &shard.clone(), 1u32).unwrap();
 			credential_unsigned.update_holder(from_date_index, min_balance);
 
 			let minimum_amount = format!("{}", min_balance);
@@ -521,6 +530,52 @@ mod tests {
 				.add_item(to_date);
 
 			assert_eq!(credential_unsigned.credential_subject.values[0], false);
+			assert_eq!(credential_unsigned.credential_subject.assertions[0], assertion)
+		}
+
+		{
+			// case 1: from_date_index = 1
+			let from_date_index = 1_usize;
+
+			let a11 = Assertion::A11(min_balance);
+			let mut credential_unsigned =
+				Credential::generate_unsigned_credential(&a11, &who, &shard.clone(), 1u32).unwrap();
+			credential_unsigned.update_holder(from_date_index, min_balance);
+
+			let minimum_amount = format!("{}", min_balance);
+			let minimum_amount =
+				AssertionLogic::new_item("$minimum_amount", Op::GreaterEq, &minimum_amount);
+			let from_date = AssertionLogic::new_item("$from_date", Op::LessThan, "2018-01-01");
+			let to_date = AssertionLogic::new_item("$to_date", Op::GreaterEq, &to_date);
+			let assertion = AssertionLogic::new_and()
+				.add_item(minimum_amount)
+				.add_item(from_date)
+				.add_item(to_date);
+
+			assert_eq!(credential_unsigned.credential_subject.values[0], true);
+			assert_eq!(credential_unsigned.credential_subject.assertions[0], assertion)
+		}
+
+		{
+			// case 1: from_date_index = 7
+			let from_date_index = 7_usize;
+
+			let a11 = Assertion::A11(min_balance);
+			let mut credential_unsigned =
+				Credential::generate_unsigned_credential(&a11, &who, &shard.clone(), 1u32).unwrap();
+			credential_unsigned.update_holder(from_date_index, min_balance);
+
+			let minimum_amount = format!("{}", min_balance);
+			let minimum_amount =
+				AssertionLogic::new_item("$minimum_amount", Op::GreaterEq, &minimum_amount);
+			let from_date = AssertionLogic::new_item("$from_date", Op::GreaterEq, "2023-01-01");
+			let to_date = AssertionLogic::new_item("$to_date", Op::GreaterEq, &to_date);
+			let assertion = AssertionLogic::new_and()
+				.add_item(minimum_amount)
+				.add_item(from_date)
+				.add_item(to_date);
+
+			assert_eq!(credential_unsigned.credential_subject.values[0], true);
 			assert_eq!(credential_unsigned.credential_subject.assertions[0], assertion)
 		}
 	}
