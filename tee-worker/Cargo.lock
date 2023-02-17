@@ -2546,6 +2546,7 @@ dependencies = [
  "ita-stf",
  "itc-rpc-client",
  "itp-node-api",
+ "itp-node-api-metadata",
  "itp-rpc",
  "itp-sgx-crypto",
  "itp-stf-primitives",
@@ -2600,6 +2601,7 @@ dependencies = [
  "itp-enclave-api",
  "itp-enclave-metrics",
  "itp-node-api",
+ "itp-node-api-metadata",
  "itp-rpc",
  "itp-settings",
  "itp-types",
@@ -3284,10 +3286,18 @@ dependencies = [
 name = "itp-node-api-metadata"
 version = "0.9.0"
 dependencies = [
+ "base58",
  "derive_more",
+ "hex 0.4.3",
+ "itp-sgx-runtime-primitives",
+ "itp-types",
+ "litentry-primitives",
+ "log 0.4.17",
  "parity-scale-codec",
+ "primitive-types",
  "sp-core",
  "substrate-api-client",
+ "substrate-fixed",
 ]
 
 [[package]]
@@ -3628,7 +3638,6 @@ dependencies = [
  "sp-runtime",
  "sp-std 5.0.0",
  "substrate-api-client",
- "substrate-fixed",
 ]
 
 [[package]]

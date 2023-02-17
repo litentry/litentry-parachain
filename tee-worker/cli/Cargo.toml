@@ -46,6 +46,7 @@ ita-sgx-runtime = { path = "../app-libs/sgx-runtime" }
 ita-stf = { path = "../app-libs/stf" }
 itc-rpc-client = { path = "../core/rpc-client" }
 itp-node-api = { path = "../core-primitives/node-api" }
+itp-node-api-metadata = { path = "../core-primitives/node-api/metadata" }
 itp-rpc = { path = "../core-primitives/rpc" }
 itp-sgx-crypto = { path = "../core-primitives/sgx/crypto" }
 itp-stf-primitives = { path = "../core-primitives/stf-primitives" }

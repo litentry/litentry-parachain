@@ -46,6 +46,7 @@ itc-rpc-server = { path = "../core/rpc-server" }
 itp-enclave-api = { path = "../core-primitives/enclave-api" }
 itp-enclave-metrics = { path = "../core-primitives/enclave-metrics" }
 itp-node-api = { path = "../core-primitives/node-api" }
+itp-node-api-metadata = { path = "../core-primitives/node-api/metadata" }
 itp-rpc = { path = "../core-primitives/rpc" }
 itp-settings = { path = "../core-primitives/settings" }
 itp-types = { path = "../core-primitives/types" }
