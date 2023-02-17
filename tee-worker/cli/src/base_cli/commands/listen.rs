@@ -73,13 +73,13 @@ impl ListenCommand {
 			let events = Events::new(metadata, Default::default(), event_bytes);
 			for maybe_event_details in events.iter() {
 				let event_details = maybe_event_details.unwrap();
-				print_event(count, &event_details);
+				print_event(&mut count, &event_details);
 			}
 		}
 	}
 }
 
-fn print_event(mut _count: u32, event: &EventDetails) {
+fn print_event(_count: &mut u32, event: &EventDetails) {
 	let pallet_name = event.pallet_name();
 	let event_name = event.event_metadata().event();
 	debug!(
@@ -129,6 +129,7 @@ fn print_event(mut _count: u32, event: &EventDetails) {
 				merkle_root,
 			}) = PalletTeerexProcessedParentchainBlock::decode(&mut bytes)
 			{
+				*_count += 1;
 				info!("[+] Received ProcessedParentchainBlock event");
 				debug!("    From:    {:?}", sender.to_ss58check());
 				debug!("    Block Hash: {:?}", hex::encode(block_hash));
@@ -214,7 +215,6 @@ fn print_event(mut _count: u32, event: &EventDetails) {
 			}
 		},
 		(SIDECHAIN, "ProposedSidechainBlock") => {
-			_count += 1;
 			if let Ok(PalletSidechainProposedSidechainBlock { sender, payload }) =
 				PalletSidechainProposedSidechainBlock::decode(&mut bytes)
 			{

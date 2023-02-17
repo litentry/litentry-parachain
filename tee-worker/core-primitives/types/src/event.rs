@@ -71,6 +71,12 @@ pub struct PalletTeeracleExchangeRateDeleted {
 }
 
 #[derive(Decode, Debug)]
+pub struct PalletTeeracleOracleUpdated {
+	pub oracle_data_name: String,
+	pub data_source: String,
+}
+
+#[derive(Decode, Debug)]
 pub struct PalletTeeracleAddedToWhitelist {
 	pub data_source: String,
 	pub mrenclave: [u8; 32],
