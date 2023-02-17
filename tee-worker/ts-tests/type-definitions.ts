@@ -50,7 +50,7 @@ export const teeTypes = {
         _enum: {
             balance_set_balance: '(AccountId, AccountId, Balance, Balance)',
             balance_transfer: '(AccountId, AccountId, Balance)',
-            balance_unshield: '(AccountId, AccountId, Balance, ShardIdentifier)',
+            balance_unshield: '(AccountId, AccountId, Balance, mrEnclaveIdentifier)',
         },
     },
     DirectRequestStatus: {
@@ -151,7 +151,7 @@ export const teeTypes = {
 
     // vc management
     VCRequested: {
-        shard: 'ShardIdentifier',
+        mrEnclave: 'mrEnclaveIdentifier',
         assertion: 'Assertion',
     },
 };
@@ -166,6 +166,11 @@ export type WorkerRpcReturnString = {
     vec: string;
 };
 
+export type EnclaveResult = {
+    mrEnclave: `0x${string}`;
+    shieldingKey: `0x${string}`;
+};
+
 export type PubicKeyJson = {
     n: Uint8Array;
     e: Uint8Array;
@@ -175,7 +180,7 @@ export type IntegrationTestContext = {
     tee: WebSocketAsPromised;
     substrate: ApiPromise;
     teeShieldingKey: KeyObject;
-    shard: HexString;
+    mrEnclave: HexString;
     defaultSigner: KeyringPair[];
     //@todo add type
     ethersWallet: any;
@@ -286,7 +291,7 @@ export type IdentityContext = {
 
 //vc types
 export type VCRequested = {
-    shard: HexString;
+    mrEnclave: HexString;
     assertion: Assertion;
 };
 export type Assertion = {

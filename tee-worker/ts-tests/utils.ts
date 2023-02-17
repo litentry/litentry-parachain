@@ -6,6 +6,7 @@ import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
 import { StorageKey, Vec } from '@polkadot/types';
 import {
     AESOutput,
+    EnclaveResult,
     IntegrationTestContext,
     LitentryIdentity,
     PubicKeyJson,
@@ -18,7 +19,7 @@ import { KeyringPair } from '@polkadot/keyring/types';
 import { Codec } from '@polkadot/types/types';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { HexString } from '@polkadot/util/types';
-import { hexToU8a, u8aToHex, stringToU8a } from '@polkadot/util';
+import { hexToU8a, u8aToHex, stringToU8a, stringToHex } from '@polkadot/util';
 import { KeyObject } from 'crypto';
 import { Event, EventRecord } from '@polkadot/types/interfaces';
 import { after, before, describe } from 'mocha';
@@ -56,26 +57,6 @@ export async function sendRequest(
     return resp_json;
 }
 
-export async function getTEEShieldingKey(wsClient: WebSocketAsPromised, api: ApiPromise): Promise<KeyObject> {
-    let request = { jsonrpc: '2.0', method: 'author_getShieldingKey', params: [], id: 1 };
-    let respJSON = await sendRequest(wsClient, request, api);
-
-    const pubKeyHex = api.createType('WorkerRpcReturnString', respJSON.value).toJSON() as WorkerRpcReturnString;
-    let chunk = Buffer.from(pubKeyHex.vec.slice(2), 'hex');
-    let pubKeyJSON = JSON.parse(chunk.toString('utf-8')) as PubicKeyJson;
-
-    return crypto.createPublicKey({
-        key: {
-            alg: 'RSA-OAEP-256',
-            kty: 'RSA',
-            use: 'enc',
-            n: Buffer.from(pubKeyJSON.n.reverse()).toString('base64url'),
-            e: Buffer.from(pubKeyJSON.e.reverse()).toString('base64url'),
-        },
-        format: 'jwk',
-    });
-}
-
 export async function initWorkerConnection(endpoint: string): Promise<WebSocketAsPromised> {
     const wsp = new WebSocketAsPromised(endpoint, <Options>(<unknown>{
         createWebSocket: (url: any) => new WebSocket(url),
@@ -106,26 +87,14 @@ export async function initIntegrationTestContext(
         types: teeTypes,
     });
     await cryptoWaitReady();
-    const keys = (await api.query.sidechain.workerForShard.entries()) as [StorageKey, Codec][];
-    let shard = '';
-    for (let i = 0; i < keys.length; i++) {
-        //TODO shard may be different from mr_enclave. The default value of shard is mr_enclave
-        shard = keys[i][0].args[0].toHex();
-        console.log('query worker shard: ', shard);
-        break;
-    }
-    if (shard == '') {
-        throw new Error('shard not found');
-    }
 
     const wsp = await initWorkerConnection(workerEndpoint);
-
-    const teeShieldingKey = await getTEEShieldingKey(wsp, api);
+    const { mrEnclave, teeShieldingKey } = await getEnclave(api);
     return <IntegrationTestContext>{
         tee: wsp,
         substrate: api,
         teeShieldingKey,
-        shard,
+        mrEnclave,
         defaultSigner: getSigner(),
         ethersWallet,
     };
@@ -227,7 +196,7 @@ export async function createTrustedCallSigned(
     trustedCall: [string, string],
     account: KeyringPair,
     mrenclave: string,
-    shard: string,
+    mrEnclave: string,
     nonce: Codec,
     params: Array<any>
 ) {
@@ -239,7 +208,7 @@ export async function createTrustedCallSigned(
         ...call.toU8a(),
         ...nonce.toU8a(),
         ...base58.decode(mrenclave),
-        ...hexToU8a(shard),
+        ...hexToU8a(mrEnclave),
     ]);
     const signature = api.createType('MultiSignature', {
         Sr25519: u8aToHex(account.sign(payload)),
@@ -280,7 +249,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
         this.timeout(6000000);
         let context: IntegrationTestContext = {
             defaultSigner: [] as KeyringPair[],
-            shard: '0x11' as HexString,
+            mrEnclave: '0x11' as HexString,
             substrate: {} as ApiPromise,
             tee: {} as WebSocketAsPromised,
             teeShieldingKey: {} as KeyObject,
@@ -295,7 +264,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
             );
 
             context.defaultSigner = tmp.defaultSigner;
-            context.shard = tmp.shard;
+            context.mrEnclave = tmp.mrEnclave;
             context.substrate = tmp.substrate;
             context.tee = tmp.tee;
             context.teeShieldingKey = tmp.teeShieldingKey;
@@ -314,8 +283,57 @@ export function getMessage(address: string, wallet: string): string {
     return messgae;
 }
 
-export function verifyMsg(msg: string, signer: KeyringPair): boolean {
-    const signature = signer.sign(stringToU8a(JSON.stringify(msg)));
-    const { isValid } = signatureVerify(JSON.stringify(msg), signature, signer.addressRaw);
-    return isValid;
+export async function getEnclave(api: ApiPromise): Promise<{
+    mrEnclave: string;
+    teeShieldingKey: KeyObject;
+}> {
+    const count = await api.query.teerex.enclaveCount();
+    const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as EnclaveResult;
+    const teeShieldingKey = crypto.createPublicKey({
+        key: {
+            alg: 'RSA-OAEP-256',
+            kty: 'RSA',
+            use: 'enc',
+            n: Buffer.from(JSON.parse(res.shieldingKey).n.reverse()).toString('base64url'),
+            e: Buffer.from(JSON.parse(res.shieldingKey).e.reverse()).toString('base64url'),
+        },
+        format: 'jwk',
+    });
+    const mrEnclave = res.mrEnclave;
+    return {
+        mrEnclave,
+        teeShieldingKey,
+    };
+}
+
+export async function verifyMsg(msg: any, context: any) {
+    delete msg.proof;
+    const publicKey1 = context.teeShieldingKey.export({ type: 'pkcs1', format: 'pem' });
+    console.log(publicKey1);
+    console.log(JSON.stringify(msg));
+    console.log(223344, context.teeShieldingKey);
+
+    const signature =
+        '261f914c556fdfa6963ecf33f5530757d675b23cdfb59a119958ec2964fef2453afc6cd82d3eecb429ed7db60c8e0d12a2618c8d1406f16534d30ea4d95d870e';
+    // var v = crypto.createVerify('RSA-SHA256');
+    // v.update(JSON.stringify(msg));
+    // var isValid = v.verify(Buffer.from(res.shieldingKey), Buffer.from(signature, 'hex'));
+    // console.log(999, isValid);
+    // const verifier = crypto.createVerify('RSA-SHA256');
+    // verifier.update(JSON.stringify(msg));
+    // const isValid = verifier.verify(publicKey, Buffer.from(signature).toString('base64url'), 'hex');
+    // console.log(999, isValid);
+    const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', {
+        modulusLength: 2048,
+    });
+    console.log(
+        privateKey,
+        publicKey,
+        crypto.sign(null, 'data', privateKey),
+        crypto.verify(null, 'data', publicKey, crypto.sign(null, 'data', privateKey))
+    );
+
+    console.log(crypto.verify(null, Buffer.from(JSON.stringify(msg)), context.teeShieldingKey, Buffer.from(signature)));
+
+    //     return isValid;
 }
