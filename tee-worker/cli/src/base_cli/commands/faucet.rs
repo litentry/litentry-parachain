@@ -19,8 +19,6 @@ use crate::{
 	command_utils::{get_accountid_from_str, get_chain_api},
 	Cli,
 };
-use codec::Encode;
-use itp_types::{AccountId, AccountIndex};
 use sp_keyring::AccountKeyring;
 use sp_runtime::MultiAddress;
 use std::vec::Vec;
@@ -33,12 +31,6 @@ pub struct FaucetCommand {
 	/// Account(s) to be funded, ss58check encoded
 	#[clap(min_values = 1, required = true)]
 	accounts: Vec<String>,
-}
-
-#[derive(Encode, PartialEq, Eq, Clone)]
-struct TransferRequest {
-	to: MultiAddress<AccountId, AccountIndex>,
-	value: u128,
 }
 
 impl FaucetCommand {
