@@ -403,26 +403,27 @@ impl Credential {
 		let minimum_amount =
 			AssertionLogic::new_item("$minimum_amount", Op::GreaterEq, &minimum_amount);
 		let to_date = AssertionLogic::new_item("$to_date", Op::GreaterEq, &to_date);
-		let assertion = AssertionLogic::new_and().add_item(minimum_amount).add_item(to_date);
 
 		if index == 0 {
 			let from_date = ASSERTION_FROM_DATE[0];
 			let from_date = AssertionLogic::new_item("$from_date", Op::LessThan, from_date);
-			assertion.clone().add_item(from_date);
+			let assertion = AssertionLogic::new_and().add_item(minimum_amount).add_item(from_date).add_item(to_date);
+			self.credential_subject.assertions.push(assertion);
 			self.credential_subject.values.push(false);
 		} else if (1..7).contains(&index) {
 			let from_date = ASSERTION_FROM_DATE[index];
 			let from_date = AssertionLogic::new_item("$from_date", Op::LessThan, from_date);
-			assertion.clone().add_item(from_date);
+			let assertion = AssertionLogic::new_and().add_item(minimum_amount).add_item(from_date).add_item(to_date);
+			self.credential_subject.assertions.push(assertion);
 			self.credential_subject.values.push(true);
 		} else {
 			let from_date = ASSERTION_FROM_DATE[index - 1];
 			let from_date = AssertionLogic::new_item("$from_date", Op::GreaterEq, from_date);
-			assertion.clone().add_item(from_date);
+			let assertion = AssertionLogic::new_and().add_item(minimum_amount).add_item(from_date).add_item(to_date);
+			self.credential_subject.assertions.push(assertion);
 			self.credential_subject.values.push(true);
 		}
 
-		self.credential_subject.assertions.push(assertion);
 	}
 
 	pub fn add_assertion_a2(&mut self, guild_id: String) {
@@ -496,7 +497,6 @@ mod tests {
 	#[test]
 	fn update_holder_works() {
 		let who = AccountId::from([0; 32]);
-		let data = include_str!("templates/a1.json");
 		let shard = ShardIdentifier::default();
 		let min_balance = 1;
 		let to_date = format_assertion_to_date();
@@ -506,13 +506,14 @@ mod tests {
 			let from_date_index = 0_usize;
 			let from_date = AssertionLogic::new_item("$from_date", Op::LessThan, "2017-01-01");
 
-			let mut credential_unsigned =
-				Credential::from_template(data, &who, &shard, 1u32).unwrap();
+			let a11 = Assertion::A11(min_balance);
+			let mut credential_unsigned = Credential::generate_unsigned_credential(&a11, &who, &shard.clone(), 1u32).unwrap();
 			credential_unsigned.update_holder(from_date_index, min_balance);
 
 			let minimum_amount = format!("{}", min_balance);
 			let minimum_amount =
 				AssertionLogic::new_item("$minimum_amount", Op::GreaterEq, &minimum_amount);
+			let to_date = AssertionLogic::new_item("$to_date", Op::GreaterEq, &to_date);
 
 			let assertion = AssertionLogic::new_and()
 				.add_item(minimum_amount)

@@ -49,18 +49,22 @@ pub fn build(
 	let q_min_balance: f64 = (min_balance / (10 ^ 18)) as f64;
 
 	let mut client = GraphQLClient::new();
-	let mut flag = false;
+	let mut found = false;
 	let mut from_date_index = 0_usize;
 
 	for id in identities {
+		if found {
+			break
+		}
+
 		if let Identity::Evm { network, address } = id {
 			if matches!(network, EvmNetwork::Ethereum) {
 				let address = from_utf8(address.as_ref()).unwrap().to_string();
 				let addresses = vec![address];
 
 				for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
-					// if flag is true, no need to check it continually
-					if flag {
+					// if found is true, no need to check it continually
+					if found {
 						from_date_index = index + 1;
 						break
 					}
@@ -76,7 +80,7 @@ pub fn build(
 						.check_verified_credentials_is_hodler(credentials)
 						.map_err(from_data_provider_error)?;
 					for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
-						flag = flag || hodler.is_hodler;
+						found = found || hodler.is_hodler;
 					}
 				}
 			}

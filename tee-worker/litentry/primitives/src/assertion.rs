@@ -32,7 +32,7 @@ use chrono::offset::Utc as TzUtc;
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
-use std::{format, string::String};
+use std::string::String;
 
 pub type Balance = u128;
 type MaxStringLength = ConstU32<64>;
@@ -79,7 +79,7 @@ pub fn format_assertion_to_date() -> String {
 	#[cfg(feature = "std")]
 	{
 		let now = TzUtc::now();
-		format!("{:?}", now)
+		format!("{}", now.format("%Y-%m-%d"))
 	}
 
 	#[cfg(all(not(feature = "std"), feature = "sgx"))]
@@ -92,6 +92,6 @@ pub fn format_assertion_to_date() -> String {
 				.unwrap();
 		let datetime: DateTime<TzUtc> = DateTime::from_utc(naive, TzUtc);
 
-		datetime.format("%Y-%m-%d").to_string()
+		format!("{}", datetime.format("%Y-%m-%d"))
 	}
 }
