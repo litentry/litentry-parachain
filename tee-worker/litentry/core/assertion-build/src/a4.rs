@@ -49,9 +49,14 @@ pub fn build(
 	bn: ParentchainBlockNumber,
 ) -> Result<Credential> {
 	let mut client = GraphQLClient::new();
-	let mut flag = false;
+	let mut found = false;
+	let mut from_date_index = 0_usize;
 
 	for identity in identities.iter() {
+		if found {
+			break
+		}
+
 		let mut verified_network = VerifiedCredentialsNetwork::Polkadot;
 		if identity.is_web3() {
 			match identity {
@@ -88,9 +93,10 @@ pub fn build(
 				tmp_token_addr = LIT_TOKEN_ADDRESS.to_string();
 			}
 
-			for from_date in ASSERTION_FROM_DATE.iter() {
-				// if flag is true, no need to check it continually
-				if flag {
+			for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
+				// if found is true, no need to check it continually
+				if found {
+					from_date_index = index + 1;
 					break
 				}
 
@@ -106,7 +112,7 @@ pub fn build(
 					.map_err(from_data_provider_error)?;
 
 				for holder in is_hodler_out.verified_credentials_is_hodler.iter() {
-					flag = flag || holder.is_hodler;
+					found = found || holder.is_hodler;
 				}
 			}
 		}
@@ -115,7 +121,7 @@ pub fn build(
 	let a4 = Assertion::A4(min_balance);
 	match Credential::generate_unsigned_credential(&a4, who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.credential_subject.values.push(flag);
+			credential_unsigned.update_holder(from_date_index, min_balance);
 			return Ok(credential_unsigned)
 		},
 		Err(e) => {
