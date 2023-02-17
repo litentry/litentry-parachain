@@ -17,9 +17,11 @@
 
 use crate::{command_utils::get_chain_api, Cli};
 use codec::Decode;
-use itp_node_api::{api_client::ParentchainApi, metadata::pallet_teeracle::TEERACLE};
+use itp_node_api::{
+	api_client::ParentchainApi,
+	metadata::{event::PalletTeeracleExchangeRateUpdated, pallet_teeracle::TEERACLE},
+};
 use itp_time_utils::{duration_now, remaining_time};
-use itp_types::event::PalletTeeracleExchangeRateUpdated;
 use log::{debug, info, warn};
 use std::{sync::mpsc::channel, time::Duration};
 use substrate_api_client::{Events, FromHexString};

@@ -17,12 +17,15 @@
 
 use crate::{command_utils::get_chain_api, Cli};
 use codec::Decode;
-use itp_node_api::{api_client::ParentchainApi, metadata::pallet_teeracle::TEERACLE};
+use itp_node_api::{
+	api_client::ParentchainApi,
+	metadata::{event::PalletTeeracleOracleUpdated, pallet_teeracle::TEERACLE},
+};
 use itp_time_utils::{duration_now, remaining_time};
-use itp_types::event::PalletTeeracleOracleUpdated;
 use log::{debug, warn};
 use std::{sync::mpsc::channel, time::Duration};
 use substrate_api_client::{Events, FromHexString};
+
 /// Listen to exchange rate events.
 #[derive(Debug, Clone, Parser)]
 pub struct ListenToOracleEventsCmd {
