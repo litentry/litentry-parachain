@@ -25,8 +25,8 @@ use crate::{
 use codec::Decode;
 use ita_stf::{Index, TrustedCall, TrustedGetter, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
+use litentry_primitives::ParentchainBalance as Balance;
 use log::*;
-use my_node_runtime::Balance;
 use sp_core::{crypto::Ss58Codec, Pair};
 use std::boxed::Box;
 

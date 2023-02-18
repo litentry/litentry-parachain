@@ -19,8 +19,8 @@ use crate::{
 	command_utils::{get_accountid_from_str, get_chain_api, *},
 	Cli,
 };
+use litentry_primitives::ParentchainBalance as Balance;
 use log::*;
-use my_node_runtime::Balance;
 use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
 use substrate_api_client::{GenericAddress, XtStatus};
 
