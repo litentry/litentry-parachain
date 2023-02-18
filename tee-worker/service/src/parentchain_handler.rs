@@ -24,8 +24,8 @@ use itc_parentchain::{
 use itp_enclave_api::{enclave_base::EnclaveBase, sidechain::Sidechain};
 use itp_node_api::api_client::ChainApi;
 use itp_types::{extrinsics::fill_opaque_extrinsic_with_status, SignedBlock};
+use litentry_primitives::ParentchainHeader as Header;
 use log::*;
-use my_node_runtime::Header;
 use sp_finality_grandpa::VersionedAuthorityList;
 use sp_runtime::{
 	traits::{Block, Header as HeaderTrait},
