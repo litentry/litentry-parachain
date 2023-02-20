@@ -55,7 +55,7 @@ use itp_component_container::ComponentContainer;
 use itp_extrinsics_factory::ExtrinsicsFactory;
 use itp_node_api::metadata::{provider::NodeMetadataRepository, NodeMetadata};
 use itp_nonce_cache::NonceCache;
-use itp_sgx_crypto::{key_repository::KeyRepository, Aes, AesSeal, Rsa3072Seal};
+use itp_sgx_crypto::{key_repository::KeyRepository, Aes, AesSeal, Rsa3072Seal, Ed25519Seal};
 use itp_stf_executor::{
 	enclave_signer::StfEnclaveSigner, executor::StfExecutor, getter_executor::GetterExecutor,
 	state_getter::StfStateGetter,
@@ -89,6 +89,7 @@ pub type EnclaveTrustedCallSigned = TrustedCallSigned;
 pub type EnclaveStf = Stf<EnclaveTrustedCallSigned, EnclaveGetter, StfState, Runtime>;
 pub type EnclaveStateKeyRepository = KeyRepository<Aes, AesSeal>;
 pub type EnclaveShieldingKeyRepository = KeyRepository<Rsa3072KeyPair, Rsa3072Seal>;
+pub type EnclaveVCSigningKeyRepository = KeyRepository<Pair, Ed25519Seal>;
 pub type EnclaveStateFileIo = SgxStateFileIo<EnclaveStateKeyRepository, StfState>;
 pub type EnclaveStateSnapshotRepository = StateSnapshotRepository<EnclaveStateFileIo>;
 pub type EnclaveStateObserver = StateObserver<StfState>;
@@ -107,6 +108,7 @@ pub type EnclaveStfEnclaveSigner = StfEnclaveSigner<
 	EnclaveShieldingKeyRepository,
 	EnclaveStf,
 	EnclaveTopPoolAuthor,
+	EnclaveVCSigningKeyRepository,
 >;
 pub type EnclaveAttestationHandler = IntelAttestationHandler<EnclaveOCallApi>;
 
@@ -216,6 +218,11 @@ pub static GLOBAL_STATE_KEY_REPOSITORY_COMPONENT: ComponentContainer<EnclaveStat
 pub static GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT: ComponentContainer<
 	EnclaveShieldingKeyRepository,
 > = ComponentContainer::new("Shielding key repository");
+
+/// VC Signing key repository
+pub static GLOBAL_VC_SIGNNING_KEY_REPOSITORY_COMPONENT: ComponentContainer<
+	EnclaveVCSigningKeyRepository,
+> = ComponentContainer::new("VC Signing key repository");
 
 /// O-Call API
 pub static GLOBAL_OCALL_API_COMPONENT: ComponentContainer<EnclaveOCallApi> =

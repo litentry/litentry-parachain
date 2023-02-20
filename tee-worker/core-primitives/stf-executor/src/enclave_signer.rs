@@ -33,16 +33,17 @@ use itp_types::{Index, ShardIdentifier};
 use sp_core::{ed25519::Pair as Ed25519Pair, Pair};
 use std::{boxed::Box, sync::Arc, vec::Vec};
 
-pub struct StfEnclaveSigner<OCallApi, StateObserver, ShieldingKeyRepository, Stf, TopPoolAuthor> {
+pub struct StfEnclaveSigner<OCallApi, StateObserver, ShieldingKeyRepository, Stf, TopPoolAuthor, VCSigningKeyRepository> {
 	state_observer: Arc<StateObserver>,
 	ocall_api: Arc<OCallApi>,
 	shielding_key_repo: Arc<ShieldingKeyRepository>,
 	top_pool_author: Arc<TopPoolAuthor>,
+	vc_signing_key_repo: Arc<VCSigningKeyRepository>,
 	_phantom: PhantomData<Stf>,
 }
 
-impl<OCallApi, StateObserver, ShieldingKeyRepository, Stf, TopPoolAuthor>
-	StfEnclaveSigner<OCallApi, StateObserver, ShieldingKeyRepository, Stf, TopPoolAuthor>
+impl<OCallApi, StateObserver, ShieldingKeyRepository, Stf, TopPoolAuthor, VCSigningKeyRepository>
+	StfEnclaveSigner<OCallApi, StateObserver, ShieldingKeyRepository, Stf, TopPoolAuthor, VCSigningKeyRepository>
 where
 	OCallApi: EnclaveAttestationOCallApi,
 	StateObserver: ObserveState,
@@ -52,18 +53,22 @@ where
 	Stf: SystemPalletAccountInterface<StateObserver::StateType, AccountId>,
 	Stf::Index: Into<Index>,
 	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
+	VCSigningKeyRepository: AccessKey,
+	VCSigningKeyRepository: AccessKey<KeyType = sp_core::ed25519::Pair>
 {
 	pub fn new(
 		state_observer: Arc<StateObserver>,
 		ocall_api: Arc<OCallApi>,
 		shielding_key_repo: Arc<ShieldingKeyRepository>,
 		top_pool_author: Arc<TopPoolAuthor>,
+		vc_signing_key_repo: Arc<VCSigningKeyRepository>,
 	) -> Self {
 		Self {
 			state_observer,
 			ocall_api,
 			shielding_key_repo,
 			top_pool_author,
+			vc_signing_key_repo,
 			_phantom: Default::default(),
 		}
 	}
@@ -78,13 +83,14 @@ where
 	}
 
 	fn get_enclave_call_signing_key(&self) -> Result<Ed25519Pair> {
-		let shielding_key = self.shielding_key_repo.retrieve_key()?;
-		shielding_key.derive_ed25519().map_err(|e| e.into())
+		// let shielding_key = self.shielding_key_repo.retrieve_key()?;
+		// shielding_key.derive_ed25519().map_err(|e| e.into())
+		self.vc_signing_key_repo.retrieve_key().map_err(|e| e.into())
 	}
 }
 
-impl<OCallApi, StateObserver, ShieldingKeyRepository, Stf, TopPoolAuthor> StfEnclaveSigning
-	for StfEnclaveSigner<OCallApi, StateObserver, ShieldingKeyRepository, Stf, TopPoolAuthor>
+impl<OCallApi, StateObserver, ShieldingKeyRepository, Stf, TopPoolAuthor, VCSigningKeyRepository> StfEnclaveSigning
+	for StfEnclaveSigner<OCallApi, StateObserver, ShieldingKeyRepository, Stf, TopPoolAuthor, VCSigningKeyRepository>
 where
 	OCallApi: EnclaveAttestationOCallApi,
 	StateObserver: ObserveState,
@@ -94,6 +100,8 @@ where
 	Stf: SystemPalletAccountInterface<StateObserver::StateType, AccountId>,
 	Stf::Index: Into<Index>,
 	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
+	VCSigningKeyRepository: AccessKey,
+	VCSigningKeyRepository: AccessKey<KeyType = sp_core::ed25519::Pair>
 {
 	fn get_enclave_account(&self) -> Result<AccountId> {
 		let enclave_call_signing_key = self.get_enclave_call_signing_key()?;

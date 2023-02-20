@@ -29,7 +29,7 @@ use crate::{
 	initialization::global_components::{
 		EnclaveStfEnclaveSigner, GLOBAL_OCALL_API_COMPONENT,
 		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
-		GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
+		GLOBAL_TOP_POOL_AUTHOR_COMPONENT, GLOBAL_VC_SIGNNING_KEY_REPOSITORY_COMPONENT,
 	},
 	utils::{
 		get_extrinsic_factory_from_solo_or_parachain,
@@ -84,11 +84,14 @@ fn run_stf_task_handler_internal() -> Result<()> {
 	let node_metadata = get_node_metadata_repository_from_solo_or_parachain()?;
 	let extrinsic_factory = get_extrinsic_factory_from_solo_or_parachain()?;
 
+	let vc_signing_key_repo = GLOBAL_VC_SIGNNING_KEY_REPOSITORY_COMPONENT.get()?;
+
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
 		state_observer,
 		ocall_api.clone(),
 		shielding_key_repository,
 		author_api.clone(),
+		vc_signing_key_repo.clone(),
 	));
 
 	let stf_task_context = StfTaskContext::new(

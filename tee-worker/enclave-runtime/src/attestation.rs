@@ -29,7 +29,7 @@
 
 use crate::{
 	initialization::global_components::{
-		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
+		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,GLOBAL_VC_SIGNNING_KEY_REPOSITORY_COMPONENT,
 	},
 	utils::{
 		get_extrinsic_factory_from_solo_or_parachain,
@@ -55,6 +55,7 @@ use log::*;
 use sgx_types::*;
 use sp_runtime::OpaqueExtrinsic;
 use std::{prelude::v1::*, slice, vec::Vec};
+use sp_core::Pair;
 
 #[no_mangle]
 pub unsafe extern "C" fn get_mrenclave(mrenclave: *mut u8, mrenclave_size: usize) -> sgx_status_t {
@@ -219,6 +220,14 @@ fn generate_ias_ra_extrinsic_internal(
 					serde_json::to_vec(&pubkey).map_err(|e| SgxCryptoError::Serialization(e).into())
 				})
 				.map_err(|e| SgxCryptoError::Other(Box::new(e)))
+		})
+		.ok();
+
+	let vc_signing_key = GLOBAL_VC_SIGNNING_KEY_REPOSITORY_COMPONENT
+		.get()?
+		.retrieve_key()
+		.and_then(|keypair| {
+			Ok(hex::encode(&keypair.public()))
 		})
 		.ok();
 
