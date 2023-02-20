@@ -40,10 +40,30 @@ F_CLEAN=""
 FSUBCMD_DEV=""
 FSUBCMD_REQ_STATE=""
 
+WAIT_INTERVAL_SECONDS=5
+WAIT_ROUNDS=20
+
 if [ "${CLEANUP}" = 'true' ]; then
 	F_CLEAN="--clean-reset"
 	FSUBCMD_DEV="--dev"
 fi
+
+function wait_worker_is_initialized()
+{	
+	for i in $(seq 1 $WAIT_ROUNDS); do
+		state=$(curl -s http://localhost:$1/is_initialized)
+		if [ "$state" == "I am initialized." ]; then
+			echo "Initialization successful: $state"
+            return
+        else
+			echo "sleep $WAIT_INTERVAL_SECONDS"
+            sleep $WAIT_INTERVAL_SECONDS
+        fi		
+    done
+	echo
+    echo "Worker initialization failed"
+    exit 1
+}
 
 echo "Number of WORKER_NUM: ${WORKER_NUM}"
 ##############################################################################
@@ -113,9 +133,8 @@ run --skip-ra ${FSUBCMD_DEV} ${FSUBCMD_REQ_STATE}"
 	eval "${launch_command}" > "${ROOTDIR}"/log/${worker_name}.log 2>&1 &
 	echo "${worker_name}(integritee-service) started successfully. log: ${ROOTDIR}/log/${worker_name}.log"
 
-	# How to get dockerirze: wget https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize-linux-amd64-v0.6.1.tar.gz
-	if ((${WORKER_NUM} > 0)); then
-		"${ROOTDIR}"/dockerize -wait-retry-interval 10s -wait http://localhost:${untrusted_http_port}/is_initialized -timeout 600s
+	if ((${WORKER_NUM} > 0)); then		
+		wait_worker_is_initialized ${untrusted_http_port}
 	fi
 done
 
