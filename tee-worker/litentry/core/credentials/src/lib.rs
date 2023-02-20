@@ -370,7 +370,7 @@ impl Credential {
 				credential.credential_subject.values.clear();
 				Ok(credential)
 			},
-			Assertion::A8 => {
+			Assertion::A8(_) => {
 				let raw = include_str!("templates/a8.json");
 				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
 				credential.credential_subject.assertions.clear();
