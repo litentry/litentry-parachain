@@ -51,22 +51,13 @@ pub trait DecryptionVerificationPayload<K: ShieldingCryptoDecrypt> {
 }
 
 fn payload_from_tweet(tweet: &Tweet) -> Result<Vec<u8>, Error> {
-	if tweet.text.starts_with("0x") {
-		let bytes = &tweet.text.as_bytes()[b"0x".len()..];
-		hex::decode(bytes).map_err(from_hex_error)
-	} else {
-		hex::decode(tweet.text.as_bytes()).map_err(from_hex_error)
-	}
+	hex::decode(tweet.text.strip_prefix("0x").unwrap_or(tweet.text.as_str()))
+		.map_err(from_hex_error)
 }
 
 fn payload_from_discord(discord: &DiscordMessage) -> Result<Vec<u8>, Error> {
 	let data = &discord.content;
-	if data.starts_with("0x") {
-		let bytes = &data.as_bytes()[b"0x".len()..];
-		hex::decode(bytes).map_err(from_hex_error)
-	} else {
-		hex::decode(data.as_bytes()).map_err(from_hex_error)
-	}
+	hex::decode(data.strip_prefix("0x").unwrap_or(data.as_str())).map_err(from_hex_error)
 }
 
 pub fn verify(request: &Web2IdentityVerificationRequest) -> Result<(), Error> {

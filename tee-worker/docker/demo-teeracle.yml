@@ -22,9 +22,9 @@ services:
       - integritee-test-network
     healthcheck:
       test: curl -s -f http://integritee-teeracle-worker:4645/is_initialized || exit 1
-      interval: 30s
+      interval: 10s
       timeout: 10s
-      retries: 20
+      retries: 25
     entrypoint:
         "/usr/local/bin/integritee-service --clean-reset --ws-external -M integritee-teeracle-worker -T wss://integritee-teeracle-worker
         -u ws://integritee-node -U ws://integritee-teeracle-worker -P 2011 -w 2101 -p 9912 -h 4645

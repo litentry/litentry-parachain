@@ -64,7 +64,7 @@ echo "Using node uri ${NODEURL}:${NPORT}"
 echo "Using trusted-worker uri ${WORKER1URL}:${WORKER1PORT}"
 echo ""
 
-# the parachain LIT is 12 decimal
+# the parentchain token is 12 decimal
 UNIT=$(( 10 ** 12 ))
 
 # we have to make these amounts greater than ED, see
@@ -74,6 +74,14 @@ AMOUNT_TRANSFER=$(( 2 * UNIT ))
 AMOUNT_UNSHIELD=$(( 1 * UNIT ))
 
 CLIENT="${CLIENT_BIN} -p ${NPORT} -P ${WORKER1PORT} -u ${NODEURL} -U ${WORKER1URL}"
+
+# offchain-worker only suppports indirect calls
+CALLTYPE=
+case "$FLAVOR_ID" in
+    sidechain) CALLTYPE="--direct" ;;
+    offchain-worker) : ;;
+    *) echo "unsupported flavor_id" ; exit 1 ;;
+esac
 
 # interval and max rounds to wait to check the given account balance in sidechain
 WAIT_INTERVAL_SECONDS=10
@@ -104,8 +112,8 @@ function wait_assert_state()
 #   wait_assert_account_state <mrenclave> <account-pub-key> <jq-filter> <expected-state>
 function wait_assert_account_state()
 {
-    for i in $(seq 1 $WAIT_ROUNDS); do        
-        state=$(${CLIENT} trusted --mrenclave "$1" get-storage System Account "$2" | jq "$3")        
+    for i in $(seq 1 $WAIT_ROUNDS); do
+        state=$(${CLIENT} trusted --mrenclave "$1" get-storage System Account "$2" | jq "$3")
         if [ $state -eq "$4" ]; then
             return
         else
@@ -263,7 +271,7 @@ echo ""
 echo "* Send 3 consecutive 0.2 UNIT balance Transfer Bob -> Charlie"
 for i in $(seq 1 3); do
     # use direct calls so they are submitted to the top pool synchronously
-    $CLIENT trusted --direct --mrenclave ${MRENCLAVE} transfer ${ICGACCOUNTBOB} ${ICGACCOUNTCHARLIE} $(( AMOUNT_TRANSFER / 10 ))
+    $CLIENT trusted $CALLTYPE --mrenclave ${MRENCLAVE} transfer ${ICGACCOUNTBOB} ${ICGACCOUNTCHARLIE} $(( AMOUNT_TRANSFER / 10 ))
 done
 echo ""
 
@@ -274,7 +282,7 @@ echo "✔ ok"
 echo ""
 
 echo "* Send a 2 UNIT balance Transfer Bob -> Charlie (that will fail)"
-$CLIENT trusted --direct --mrenclave ${MRENCLAVE} transfer ${ICGACCOUNTBOB} ${ICGACCOUNTCHARLIE} ${AMOUNT_TRANSFER}
+$CLIENT trusted $CALLTYPE --mrenclave ${MRENCLAVE} transfer ${ICGACCOUNTBOB} ${ICGACCOUNTCHARLIE} ${AMOUNT_TRANSFER}
 echo ""
 
 echo "* Assert Bob's incognito nonce..."
@@ -285,7 +293,7 @@ echo "✔ ok"
 echo ""
 
 echo "* Send another 0.2 UNIT balance Transfer Bob -> Charlie"
-$CLIENT trusted --direct --mrenclave ${MRENCLAVE} transfer ${ICGACCOUNTBOB} ${ICGACCOUNTCHARLIE} $(( AMOUNT_TRANSFER / 10 ))
+$CLIENT trusted $CALLTYPE --mrenclave ${MRENCLAVE} transfer ${ICGACCOUNTBOB} ${ICGACCOUNTCHARLIE} $(( AMOUNT_TRANSFER / 10 ))
 echo ""
 
 echo "* Assert Bob's incognito nonce..."

@@ -18,9 +18,9 @@ sgx_tstd = { branch = "master", features = ["untrusted_fs", "net", "backtrace"],
 # local crates
 ita-sgx-runtime = { default-features = false, path = "../sgx-runtime" }
 itp-hashing = { default-features = false, path = "../../core-primitives/hashing" }
-itp-node-api = { path = "../../core-primitives/node-api", default-features = false }
-itp-node-api-metadata = { path = "../../core-primitives/node-api/metadata", default-features = false }
-itp-node-api-metadata-provider = { path = "../../core-primitives/node-api/metadata-provider", default-features = false }
+itp-node-api = { default-features = false, path = "../../core-primitives/node-api" }
+itp-node-api-metadata = { default-features = false, path = "../../core-primitives/node-api/metadata" }
+itp-node-api-metadata-provider = { default-features = false, path = "../../core-primitives/node-api/metadata-provider" }
 itp-sgx-externalities = { default-features = false, path = "../../core-primitives/substrate-sgx/externalities" }
 itp-stf-interface = { default-features = false, path = "../../core-primitives/stf-interface" }
 itp-stf-primitives = { default-features = false, path = "../../core-primitives/stf-primitives" }
@@ -30,13 +30,13 @@ itp-utils = { default-features = false, path = "../../core-primitives/utils" }
 sp-io = { default-features = false, features = ["disable_oom", "disable_panic_handler", "disable_allocator"], path = "../../core-primitives/substrate-sgx/sp-io" }
 
 # Substrate dependencies
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
-frame-system = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
-pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
-pallet-sudo = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
-sp-application-crypto = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
-sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
+pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
+pallet-sudo = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
+sp-application-crypto = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
+sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 
 # litentry
 lc-stf-task-sender = { path = "../../litentry/core/stf-task/sender", default-features = false }
@@ -48,7 +48,7 @@ rand-sgx = { package = "rand", git = "https://github.com/mesalock-linux/rand-sgx
 ring = { version = "0.16.20", default-features = false }
 
 [dev-dependencies]
-sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.36" }
+sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 
 [features]
 default = ["std"]
@@ -59,7 +59,6 @@ evm_std = [
 ]
 sgx = [
     "sgx_tstd",
-    "itp-node-api-metadata-provider/sgx",
     "itp-sgx-externalities/sgx",
     "itp-utils/sgx",
     "sp-io/sgx",
@@ -67,6 +66,7 @@ sgx = [
     "litentry-primitives/sgx",
     "lc-stf-task-sender/sgx",
     "rand-sgx",
+    "itp-node-api-metadata-provider/sgx",
 ]
 std = [
     # crates.io
@@ -83,6 +83,9 @@ std = [
     "itp-storage/std",
     "itp-types/std",
     "itp-utils/std",
+    "itp-node-api/std",
+    "itp-node-api-metadata/std",
+    "itp-node-api-metadata-provider/std",
     # substrate
     "sp-core/std",
     "pallet-balances/std",

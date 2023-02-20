@@ -19,7 +19,9 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use crate::error::Result;
+use crate::{
+	error::Result, pallet_sidechain::SidechainCallIndexes, pallet_teerex::TeerexCallIndexes,
+};
 use codec::{Decode, Encode};
 use sp_core::storage::StorageKey;
 use substrate_api_client::{Metadata, MetadataError};
@@ -35,8 +37,14 @@ pub mod pallet_teeracle;
 pub mod pallet_teerex;
 pub mod pallet_vcmp;
 
+#[cfg(feature = "std")]
+pub mod event;
+
 #[cfg(feature = "mocks")]
 pub mod metadata_mocks;
+
+pub trait NodeMetadataTrait: TeerexCallIndexes + SidechainCallIndexes {}
+impl<T: TeerexCallIndexes + SidechainCallIndexes> NodeMetadataTrait for T {}
 
 #[derive(Default, Encode, Decode, Debug, Clone)]
 pub struct NodeMetadata {

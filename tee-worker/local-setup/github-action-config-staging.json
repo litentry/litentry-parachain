@@ -13,11 +13,12 @@
         "-h",
         "4545",
         "-u",
-        "wss://parachain-eu-0.staging.litentry.io",
+        "wss://tee-staging.litentry.io",
         "-p",
         "443",
-        "running-mode",
-        "staging"
+        "--running-mode",
+        "staging",
+        "--enable-mock-server"
       ],
       "subcommand_flags": [
         "--skip-ra",
@@ -37,10 +38,10 @@
         "-h",
         "4546",
         "-u",
-        "wss://parachain-eu-0.staging.litentry.io",
+        "wss://tee-staging.litentry.io",
         "-p",
         "443",
-        "running-mode",
+        "--running-mode",
         "staging"
       ],
       "subcommand_flags": [

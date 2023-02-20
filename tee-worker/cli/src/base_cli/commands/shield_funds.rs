@@ -24,8 +24,8 @@ use codec::{Decode, Encode};
 use itp_node_api::api_client::TEEREX;
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
+use litentry_primitives::ParentchainBalance as Balance;
 use log::*;
-use my_node_runtime::Balance;
 use sp_core::sr25519 as sr25519_core;
 use substrate_api_client::{compose_extrinsic, UncheckedExtrinsicV4, XtStatus};
 

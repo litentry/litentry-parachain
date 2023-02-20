@@ -51,21 +51,15 @@ export async function createIdentity(
     await sendTxUntilInBlock(context.substrate, tx, signer);
 
     if (listening) {
-        const events = await listenEvent(context.substrate, 'identityManagement', [
-            'IdentityCreated',
-            'ChallengeCodeGenerated',
-        ]);
-        expect(events.length).to.be.equal(2);
-        expect(events[0].method).to.be.equal('IdentityCreated');
-        expect(events[1].method).to.be.equal('ChallengeCodeGenerated');
-        const data0 = events[0].data as any;
-        const data1 = events[1].data as any;
+        const events = await listenEvent(context.substrate, 'identityManagement', ['IdentityCreated']);
+        expect(events.length).to.be.equal(1);
+        const data = events[0].data as any;
         return decodeIdentityEvent(
             context.substrate,
-            data0.account.toHex(),
-            decryptWithAES(aesKey, data0.identity, 'hex'),
-            decryptWithAES(aesKey, data0.idGraph, 'hex'),
-            decryptWithAES(aesKey, data1.code, 'hex')
+            data.account.toHex(),
+            decryptWithAES(aesKey, data.identity, 'hex'),
+            decryptWithAES(aesKey, data.idGraph, 'hex'),
+            decryptWithAES(aesKey, data.code, 'hex')
         );
     }
     return undefined;

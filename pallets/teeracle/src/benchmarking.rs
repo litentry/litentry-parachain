@@ -26,7 +26,7 @@ use frame_benchmarking::benchmarks;
 use frame_system::RawOrigin;
 use pallet_teerex::Pallet as Teerex;
 use sp_runtime::traits::CheckedConversion;
-use sp_std::{borrow::ToOwned, prelude::*};
+use sp_std::prelude::*;
 use teeracle_primitives::{DataSource, OracleDataName, TradingPairString};
 
 use test_utils::{
@@ -41,7 +41,7 @@ fn ensure_not_skipping_ra_check() {
 	};
 }
 benchmarks! {
-	where_clause {  where T::AccountId: From<[u8; 32]> }
+	where_clause {  where T::AccountId: From<[u8; 32]>, T::Hash: From<[u8; 32]> }
 	update_exchange_rate {
 		ensure_not_skipping_ra_check();
 		timestamp::Pallet::<T>::set_timestamp(TEST4_SETUP.timestamp.checked_into().unwrap());

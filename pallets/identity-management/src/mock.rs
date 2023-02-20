@@ -46,7 +46,7 @@ impl EnsureOrigin<SystemOrigin> for EnsureEnclaveSigner {
 		Into::<Result<frame_system::RawOrigin<SystemAccountId>, SystemOrigin>>::into(o).and_then(
 			|o| match o {
 				frame_system::RawOrigin::Signed(ref who)
-					if pallet_teerex::Pallet::<Test>::is_registered_enclave(who) == Ok(true) =>
+					if pallet_teerex::Pallet::<Test>::ensure_registered_enclave(who) == Ok(()) =>
 					Ok(*who),
 				r => Err(SystemOrigin::from(r)),
 			},

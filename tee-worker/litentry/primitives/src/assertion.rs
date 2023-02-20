@@ -23,9 +23,6 @@ use crate::sgx_reexport_prelude::chrono::{offset::Utc as TzUtc, DateTime, NaiveD
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use std::time::{SystemTime, UNIX_EPOCH};
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use std::string::ToString;
-
 #[cfg(feature = "std")]
 use chrono::offset::Utc as TzUtc;
 
@@ -79,7 +76,7 @@ pub fn format_assertion_to_date() -> String {
 	#[cfg(feature = "std")]
 	{
 		let now = TzUtc::now();
-		format!("{:?}", now)
+		format!("{}", now.format("%Y-%m-%d"))
 	}
 
 	#[cfg(all(not(feature = "std"), feature = "sgx"))]
@@ -91,8 +88,7 @@ pub fn format_assertion_to_date() -> String {
 			NaiveDateTime::from_timestamp_opt(now.as_secs() as i64, now.subsec_nanos() as u32)
 				.unwrap();
 		let datetime: DateTime<TzUtc> = DateTime::from_utc(naive, TzUtc);
-		let now = datetime.format("%Y-%m-%d").to_string();
 
-		format!("{:?}", now)
+		format!("{}", datetime.format("%Y-%m-%d"))
 	}
 }

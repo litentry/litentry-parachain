@@ -76,4 +76,7 @@ impl<T: frame_system::Config> pallet_teerex::WeightInfo for WeightInfo<T> {
 		Weight::from_ref_time(28_330_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
+	fn register_dcap_enclave() -> Weight { todo!() }
+	fn register_quoting_enclave() -> Weight { todo!() }
+	fn publish_hash() -> Weight { todo!() }
 }

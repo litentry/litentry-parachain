@@ -182,7 +182,7 @@ pub mod pallet {
 			new_blob: OracleDataBlob<T>,
 		) -> DispatchResultWithPostInfo {
 			let signer = ensure_signed(origin)?;
-			<pallet_teerex::Pallet<T>>::is_registered_enclave(&signer)?;
+			<pallet_teerex::Pallet<T>>::ensure_registered_enclave(&signer)?;
 			let signer_index = <pallet_teerex::Pallet<T>>::enclave_index(signer);
 			let signer_enclave = <pallet_teerex::Pallet<T>>::enclave(signer_index)
 				.ok_or(pallet_teerex::Error::<T>::EmptyEnclaveRegistry)?;
@@ -215,7 +215,7 @@ pub mod pallet {
 			new_value: Option<ExchangeRate>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			<pallet_teerex::Pallet<T>>::is_registered_enclave(&sender)?;
+			<pallet_teerex::Pallet<T>>::ensure_registered_enclave(&sender)?;
 			let sender_index = <pallet_teerex::Pallet<T>>::enclave_index(sender);
 			let sender_enclave = <pallet_teerex::Pallet<T>>::enclave(sender_index)
 				.ok_or(pallet_teerex::Error::<T>::EmptyEnclaveRegistry)?;

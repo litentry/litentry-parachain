@@ -16,15 +16,22 @@
 */
 
 use crate::{pallet_teerex::PalletTeerexApi, ApiResult};
-use itp_types::{Enclave, IpfsHash, ShardIdentifier, H256 as Hash};
+use itp_types::{Enclave, IpfsHash, MrEnclave, ShardIdentifier, H256 as Hash};
+use std::collections::HashMap;
 
 #[derive(Default)]
 pub struct PalletTeerexApiMock {
 	registered_enclaves: Vec<Enclave>,
+	scheduled_mr_enclaves: HashMap<u64, MrEnclave>,
 }
 
 impl PalletTeerexApiMock {
 	pub fn with_enclaves(mut self, enclaves: Vec<Enclave>) -> Self {
+		self.scheduled_mr_enclaves = enclaves
+			.iter()
+			.enumerate()
+			.map(|(index, e)| (index as u64, e.mr_enclave))
+			.collect();
 		self.registered_enclaves.extend(enclaves);
 		self
 	}
@@ -41,6 +48,11 @@ impl PalletTeerexApi for PalletTeerexApiMock {
 
 	fn all_enclaves(&self, _at_block: Option<Hash>) -> ApiResult<Vec<Enclave>> {
 		Ok(self.registered_enclaves.clone())
+	}
+
+	fn all_schedule_mr_enclaves(&self, _at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>> {
+		let mr_enclaves = self.scheduled_mr_enclaves.values().copied().collect();
+		Ok(mr_enclaves)
 	}
 
 	fn worker_for_shard(

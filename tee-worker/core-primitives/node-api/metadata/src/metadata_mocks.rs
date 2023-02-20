@@ -25,12 +25,16 @@ use codec::{Decode, Encode};
 #[derive(Default, Encode, Decode, Debug, Clone)]
 pub struct NodeMetadataMock {
 	teerex_module: u8,
-	register_enclave: u8,
+	register_ias_enclave: u8,
+	register_dcap_enclave: u8,
 	unregister_enclave: u8,
+	register_quoting_enclave: u8,
+	register_tcb_info: u8,
 	call_worker: u8,
 	processed_parentchain_block: u8,
 	shield_funds: u8,
 	unshield_funds: u8,
+	publish_hash: u8,
 	sidechain_module: u8,
 	// litentry
 	// IMP
@@ -40,7 +44,6 @@ pub struct NodeMetadataMock {
 	imp_remove_identity: u8,
 	imp_verify_identity: u8,
 	imp_user_shielding_key_set: u8,
-	imp_challenge_code_generated: u8,
 	imp_identity_created: u8,
 	imp_identity_removed: u8,
 	imp_identity_verified: u8,
@@ -52,7 +55,6 @@ pub struct NodeMetadataMock {
 	imp_mock_remove_identity: u8,
 	imp_mock_verify_identity: u8,
 	imp_mock_user_shielding_key_set: u8,
-	imp_mock_challenge_code_generated: u8,
 	imp_mock_identity_created: u8,
 	imp_mock_identity_removed: u8,
 	imp_mock_identity_verified: u8,
@@ -72,12 +74,16 @@ impl NodeMetadataMock {
 	pub fn new() -> Self {
 		NodeMetadataMock {
 			teerex_module: 50u8,
-			register_enclave: 0u8,
+			register_ias_enclave: 0u8,
+			register_dcap_enclave: 6,
 			unregister_enclave: 1u8,
+			register_quoting_enclave: 7,
+			register_tcb_info: 8,
 			call_worker: 2u8,
 			processed_parentchain_block: 3u8,
 			shield_funds: 4u8,
 			unshield_funds: 5u8,
+			publish_hash: 9u8,
 			sidechain_module: 53u8,
 			// litentry
 			imp_module: 64u8,
@@ -86,7 +92,6 @@ impl NodeMetadataMock {
 			imp_remove_identity: 2u8,
 			imp_verify_identity: 3u8,
 			imp_user_shielding_key_set: 4u8,
-			imp_challenge_code_generated: 5u8,
 			imp_identity_created: 6u8,
 			imp_identity_removed: 7u8,
 			imp_identity_verified: 8u8,
@@ -103,7 +108,6 @@ impl NodeMetadataMock {
 			imp_mock_remove_identity: 2u8,
 			imp_mock_verify_identity: 3u8,
 			imp_mock_user_shielding_key_set: 4u8,
-			imp_mock_challenge_code_generated: 5u8,
 			imp_mock_identity_created: 6u8,
 			imp_mock_identity_removed: 7u8,
 			imp_mock_identity_verified: 8u8,
@@ -117,12 +121,24 @@ impl NodeMetadataMock {
 }
 
 impl TeerexCallIndexes for NodeMetadataMock {
-	fn register_enclave_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teerex_module, self.register_enclave])
+	fn register_ias_enclave_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.teerex_module, self.register_ias_enclave])
+	}
+
+	fn register_dcap_enclave_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.teerex_module, self.register_dcap_enclave])
 	}
 
 	fn unregister_enclave_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.teerex_module, self.unregister_enclave])
+	}
+
+	fn register_quoting_enclave_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.teerex_module, self.register_quoting_enclave])
+	}
+
+	fn register_tcb_info_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.teerex_module, self.register_tcb_info])
 	}
 
 	fn call_worker_call_indexes(&self) -> Result<[u8; 2]> {
@@ -138,6 +154,10 @@ impl TeerexCallIndexes for NodeMetadataMock {
 	}
 
 	fn unshield_funds_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.teerex_module, self.unshield_funds])
+	}
+
+	fn publish_hash_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.teerex_module, self.unshield_funds])
 	}
 }
@@ -167,10 +187,6 @@ impl IMPCallIndexes for NodeMetadataMock {
 
 	fn user_shielding_key_set_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.imp_module, self.imp_user_shielding_key_set])
-	}
-
-	fn challenge_code_generated_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.imp_module, self.imp_challenge_code_generated])
 	}
 
 	fn identity_created_call_indexes(&self) -> Result<[u8; 2]> {
@@ -209,10 +225,6 @@ impl IMPMockCallIndexes for NodeMetadataMock {
 
 	fn user_shielding_key_set_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.imp_mock_module, self.imp_mock_user_shielding_key_set])
-	}
-
-	fn challenge_code_generated_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.imp_mock_module, self.imp_mock_challenge_code_generated])
 	}
 
 	fn identity_created_call_indexes(&self) -> Result<[u8; 2]> {
