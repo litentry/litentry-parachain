@@ -52,10 +52,10 @@ echo "Number of WORKER_NUM: ${WORKER_NUM}"
 
 ROOTDIR=$(git rev-parse --show-toplevel)
 ROOTDIR="${ROOTDIR}/tee-worker"
-RUST_LOG="info,integritee_service=info,ws=warn,sp_io=error,substrate_api_client=warn, \
-itc_parentchain_light_client=debug, \
-jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn, enclave_runtime=warn,ita_stf=debug, \
-its_rpc_handler=warn,itc_rpc_client=warn,its_consensus_common=debug,its_state=warn, \
+RUST_LOG="info,integritee_service=info,ws=warn,sp_io=error,substrate_api_client=warn,\
+itc_parentchain_light_client=warn,\
+jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=warn,ita_stf=debug,\
+its_rpc_handler=warn,itc_rpc_client=warn,its_consensus_common=debug,its_state=warn,\
 its_consensus_aura=warn,aura*=warn,its_consensus_slots=warn"
 
 #./integritee-service init-shard H8wzxGBcKa1k5tXMALACo9P7uKS5rYFL8e3mMAEVe7Ln
@@ -80,10 +80,7 @@ for ((i = 0; i < ${WORKER_NUM}; i++)); do
 	mkdir -p "${ROOTDIR}"/tmp/"${worker_name}"
 	for Item in 'enclave.signed.so' 'key.txt' 'spid.txt' 'integritee-service' 'integritee-cli'; do
 		cp "${ROOTDIR}/bin/${Item}" "${ROOTDIR}"/tmp/"${worker_name}"
-	done
-	for Item in 'worker-config-dev.json' 'worker-config-prod.json' 'worker-config-staging.json' 'worker-config-mock.json'; do
-		cp "${ROOTDIR}/local-setup/${Item}" "${ROOTDIR}"/tmp/"${worker_name}"
-	done
+	done	
 
 	cd "${ROOTDIR}"/tmp/${worker_name} || exit
 	echo "enter ${ROOTDIR}/tmp/${worker_name}"

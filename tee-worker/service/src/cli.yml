@@ -151,6 +151,17 @@ subcommands:
                 multiple: true
                 index: 1
                 help: shard identifier base58 encoded
+    - migrate-shard:
+        about: Migrate shard
+        args:
+            - old-shard:
+                long: old-shard    
+                help: shard identifier base58 encoded      
+                takes_value: true
+            - new-shard:
+                long: new-shard
+                help: shard identifier base58 encoded
+                takes_value: true
     - test:
           about: Run tests involving the enclave
           takes_value: true
