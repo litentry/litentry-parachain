@@ -40,10 +40,30 @@ F_CLEAN=""
 FSUBCMD_DEV=""
 FSUBCMD_REQ_STATE=""
 
+WAIT_INTERVAL_SECONDS=5
+WAIT_ROUNDS=20
+
 if [ "${CLEANUP}" = 'true' ]; then
 	F_CLEAN="--clean-reset"
 	FSUBCMD_DEV="--dev"
 fi
+
+function wait_worker_is_initialized()
+{	
+	for i in $(seq 1 $WAIT_ROUNDS); do
+		state=$(curl -s http://localhost:$1/is_initialized)
+		if [ "$state" == "I am initialized." ]; then
+			echo "Initialization successful: $state"
+            return
+        else
+			echo "sleep $WAIT_INTERVAL_SECONDS"
+            sleep $WAIT_INTERVAL_SECONDS
+        fi		
+    done
+	echo
+    echo "Worker initialization failed"
+    exit 1
+}
 
 echo "Number of WORKER_NUM: ${WORKER_NUM}"
 ##############################################################################
@@ -52,10 +72,10 @@ echo "Number of WORKER_NUM: ${WORKER_NUM}"
 
 ROOTDIR=$(git rev-parse --show-toplevel)
 ROOTDIR="${ROOTDIR}/tee-worker"
-RUST_LOG="info,integritee_service=info,ws=warn,sp_io=error,substrate_api_client=warn, \
-itc_parentchain_light_client=debug, \
-jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn, enclave_runtime=warn,ita_stf=debug, \
-its_rpc_handler=warn,itc_rpc_client=warn,its_consensus_common=debug,its_state=warn, \
+RUST_LOG="info,integritee_service=info,ws=warn,sp_io=error,substrate_api_client=warn,\
+itc_parentchain_light_client=warn,\
+jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=warn,ita_stf=debug,\
+its_rpc_handler=warn,itc_rpc_client=warn,its_consensus_common=debug,its_state=warn,\
 its_consensus_aura=warn,aura*=warn,its_consensus_slots=warn"
 
 #./integritee-service init-shard H8wzxGBcKa1k5tXMALACo9P7uKS5rYFL8e3mMAEVe7Ln
@@ -80,10 +100,7 @@ for ((i = 0; i < ${WORKER_NUM}; i++)); do
 	mkdir -p "${ROOTDIR}"/tmp/"${worker_name}"
 	for Item in 'enclave.signed.so' 'key.txt' 'spid.txt' 'integritee-service' 'integritee-cli'; do
 		cp "${ROOTDIR}/bin/${Item}" "${ROOTDIR}"/tmp/"${worker_name}"
-	done
-	for Item in 'worker-config-dev.json' 'worker-config-prod.json' 'worker-config-staging.json' 'worker-config-mock.json'; do
-		cp "${ROOTDIR}/local-setup/${Item}" "${ROOTDIR}"/tmp/"${worker_name}"
-	done
+	done	
 
 	cd "${ROOTDIR}"/tmp/${worker_name} || exit
 	echo "enter ${ROOTDIR}/tmp/${worker_name}"
@@ -116,9 +133,8 @@ run --skip-ra ${FSUBCMD_DEV} ${FSUBCMD_REQ_STATE}"
 	eval "${launch_command}" > "${ROOTDIR}"/log/${worker_name}.log 2>&1 &
 	echo "${worker_name}(integritee-service) started successfully. log: ${ROOTDIR}/log/${worker_name}.log"
 
-	# How to get dockerirze: wget https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize-linux-amd64-v0.6.1.tar.gz
-	if ((${WORKER_NUM} > 0)); then
-		"${ROOTDIR}"/dockerize -wait-retry-interval 10s -wait http://localhost:${untrusted_http_port}/is_initialized -timeout 600s
+	if ((${WORKER_NUM} > 0)); then		
+		wait_worker_is_initialized ${untrusted_http_port}
 	fi
 done
 

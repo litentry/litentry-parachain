@@ -116,6 +116,7 @@ pub extern "C" fn test_main_entrance() -> size_t {
 		handle_state_mock::tests::load_mutate_and_write_works,
 		handle_state_mock::tests::ensure_subsequent_state_loads_have_same_hash,
 		handle_state_mock::tests::ensure_encode_and_encrypt_does_not_affect_state_hash,
+		handle_state_mock::tests::migrate_shard_works,
 		// mra cert tests
 		test_verify_mra_cert_should_work,
 		test_verify_wrong_cert_is_err,

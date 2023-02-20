@@ -160,6 +160,15 @@ where
 		self.reset(initialized_state, &shard)
 	}
 
+	fn migrate_shard(
+		&self,
+		old_shard: ShardIdentifier,
+		new_shard: ShardIdentifier,
+	) -> Result<Self::HashType> {
+		let (state, _) = self.load_cloned(&old_shard)?;
+		self.reset(state, &new_shard)
+	}
+
 	fn execute_on_current<E, R>(&self, shard: &ShardIdentifier, executing_function: E) -> Result<R>
 	where
 		E: FnOnce(&Self::StateT, Self::HashType) -> R,

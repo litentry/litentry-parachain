@@ -89,38 +89,46 @@ pub fn fill_opaque_extrinsic_with_status(
 	OpaqueExtrinsic::from_bytes(opaque_extrinsic_with_status.encode().as_slice())
 }
 
-// #[cfg(test)]
-// mod tests {
-// 	use crate::extrinsics::OpaqueExtrinsicWithStatus;
-// 	use itp_api_client_types::ParentchainUncheckedExtrinsicWithStatus;
-// 	use sp_core::{hexdisplay::HexDisplay, Pair, H256 as Hash};
-// 	use sp_runtime::{generic::Era, testing::sr25519, MultiSignature, OpaqueExtrinsic};
-// 	use substrate_api_client::{
-// 		BaseExtrinsicParams, PlainTip, PlainTipExtrinsicParams, PlainTipExtrinsicParamsBuilder,
-// 		SubstrateDefaultSignedExtra, UncheckedExtrinsicV4,
-// 	};
-//
-// 	#[test]
-// 	fn encode_decode_works() {
-// 		let msg = &b"test-message"[..];
-// 		let (pair, _) = sr25519::Pair::generate();
-// 		let signature = pair.sign(msg);
-// 		let multi_sig = MultiSignature::from(signature);
-// 		let account: AccountId = pair.public().into();
-// 		let tx_params =
-// 			PlainTipExtrinsicParamsBuilder::new().era(Era::mortal(8, 0), Hash::from([0u8; 32]));
-//
-// 		let default_extra = BaseExtrinsicParams::new(0, 0, 2, Hash::from([0u8; 32]), tx_params);
-// 		let xt = UncheckedExtrinsicV4::new_signed(
-// 			vec![1, 1, 1],
-// 			account.into(),
-// 			multi_sig,
-// 			default_extra.signed_extra(),
-// 		);
-// 		let unchecked_with_status =
-// 			ParentchainUncheckedExtrinsicWithStatus { xt: xt.clone(), status: true };
-// 		let op_xt = OpaqueExtrinsic::from_bytes(xt.encode().as_slice()).unwrap();
-// 		let op_xt_with_status = OpaqueExtrinsicWithStatus { raw: op_xt, status: true };
-// 		assert_eq!(with_status, Decode::decode(&mut op_xt_with_status.encode().as_slice()).unwrap())
-// 	}
-// }
+#[cfg(test)]
+mod tests {
+	use crate::extrinsics::{
+		fill_opaque_extrinsic_with_status, ParentchainUncheckedExtrinsicWithStatus,
+	};
+	use codec::{Decode, Encode};
+	use sp_core::{Pair, H256 as Hash};
+	use sp_runtime::{
+		generic::Era, testing::sr25519, AccountId32 as AccountId, MultiSignature, OpaqueExtrinsic,
+	};
+	use substrate_api_client::{
+		BaseExtrinsicParams, ExtrinsicParams, PlainTip, PlainTipExtrinsicParamsBuilder,
+		SubstrateDefaultSignedExtra, UncheckedExtrinsicV4,
+	};
+
+	#[test]
+	fn fill_opaque_extrinsic_with_status_works() {
+		let msg = &b"test-message"[..];
+		let (pair, _) = sr25519::Pair::generate();
+		let signature = pair.sign(msg);
+		let multi_sig = MultiSignature::from(signature);
+		let account: AccountId = pair.public().into();
+		let tx_params =
+			PlainTipExtrinsicParamsBuilder::new().era(Era::mortal(8, 0), Hash::from([0u8; 32]));
+
+		let default_extra = BaseExtrinsicParams::new(0, 0, 2, Hash::from([0u8; 32]), tx_params);
+		let xt: UncheckedExtrinsicV4<Vec<i32>, SubstrateDefaultSignedExtra<PlainTip>> =
+			UncheckedExtrinsicV4::new_signed(
+				vec![1, 1, 1],
+				account.into(),
+				multi_sig,
+				default_extra.signed_extra(),
+			);
+		let mut input: &[u8] = &xt.encode();
+		let oq_xt = OpaqueExtrinsic::from_bytes(&mut input).unwrap();
+		let oq_xt_with_status = fill_opaque_extrinsic_with_status(oq_xt, true).unwrap();
+
+		let mut input: &[u8] = &oq_xt_with_status.encode();
+		let xt_with_status: ParentchainUncheckedExtrinsicWithStatus<Vec<i32>> =
+			ParentchainUncheckedExtrinsicWithStatus::decode(&mut input).unwrap();
+		assert_eq!(true, xt_with_status.status);
+	}
+}
