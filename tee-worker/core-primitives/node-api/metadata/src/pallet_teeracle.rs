@@ -18,7 +18,7 @@
 use crate::{error::Result, NodeMetadata};
 
 /// Pallet' name:
-const TEERACLE: &str = "Teeracle";
+pub const TEERACLE: &str = "Teeracle";
 
 pub trait TeeracleCallIndexes {
 	fn add_to_whitelist_call_indexes(&self) -> Result<[u8; 2]>;
