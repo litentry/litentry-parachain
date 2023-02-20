@@ -48,7 +48,7 @@ use itp_node_api::metadata::{
 };
 use itp_node_api_metadata::NodeMetadata;
 use itp_settings::worker::MR_ENCLAVE_SIZE;
-use itp_sgx_crypto::key_repository::AccessKey;
+use itp_sgx_crypto::{key_repository::AccessKey, Error as SgxCryptoError};
 use itp_types::OpaqueCall;
 use itp_utils::write_slice_and_whitespace_pad;
 use log::*;
@@ -212,7 +212,14 @@ fn generate_ias_ra_extrinsic_internal(
 	let shielding_key = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT
 		.get()?
 		.retrieve_key()
-		.and_then(|k| serde_json::to_vec(&k).map_err(|e| e.into()))
+		.and_then(|keypair| {
+			keypair
+				.export_pubkey()
+				.and_then(|pubkey| {
+					serde_json::to_vec(&pubkey).map_err(|e| SgxCryptoError::Serialization(e).into())
+				})
+				.map_err(|e| SgxCryptoError::Other(Box::new(e)))
+		})
 		.ok();
 
 	let call = OpaqueCall::from_tuple(&(call_ids, cert_der, url, shielding_key));
