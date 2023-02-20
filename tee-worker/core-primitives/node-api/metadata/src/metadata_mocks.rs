@@ -18,7 +18,8 @@
 use crate::{
 	error::Result, pallet_imp::IMPCallIndexes, pallet_imp_mock::IMPMockCallIndexes,
 	pallet_sidechain::SidechainCallIndexes, pallet_system::SystemSs58Prefix,
-	pallet_teerex::TeerexCallIndexes, pallet_vcmp::VCMPCallIndexes,
+	pallet_teerex::TeerexCallIndexes, pallet_utility::UTILCallIndexes,
+	pallet_vcmp::VCMPCallIndexes,
 };
 use codec::{Decode, Encode};
 
@@ -65,6 +66,13 @@ pub struct NodeMetadataMock {
 	vcmp_vc_issued: u8,
 	vcmp_some_error: u8,
 
+	utility_module: u8,
+	utility_batch: u8,
+	utility_as_derivative: u8,
+	utility_batch_all: u8,
+	utility_dispatch_as: u8,
+	utility_force_batch: u8,
+
 	imported_sidechain_block: u8,
 	runtime_spec_version: u32,
 	runtime_transaction_version: u32,
@@ -101,6 +109,13 @@ impl NodeMetadataMock {
 			vcmp_request_vc: 0u8,
 			vcmp_vc_issued: 3u8,
 			vcmp_some_error: 9u8,
+
+			utility_module: 80u8,
+			utility_batch: 0u8,
+			utility_as_derivative: 1u8,
+			utility_batch_all: 2u8,
+			utility_dispatch_as: 3u8,
+			utility_force_batch: 4u8,
 
 			imp_mock_module: 100u8,
 			imp_mock_set_user_shielding_key: 0u8,
@@ -255,6 +270,28 @@ impl VCMPCallIndexes for NodeMetadataMock {
 
 	fn vcmp_some_error_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.vcmp_module, self.vcmp_some_error])
+	}
+}
+
+impl UTILCallIndexes for NodeMetadataMock {
+	fn batch_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.utility_module, self.utility_batch])
+	}
+
+	fn as_derivative_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.utility_module, self.utility_as_derivative])
+	}
+
+	fn batch_all_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.utility_module, self.utility_batch_all])
+	}
+
+	fn dispatch_as_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.utility_module, self.utility_dispatch_as])
+	}
+
+	fn force_batch_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.utility_module, self.utility_force_batch])
 	}
 }
 

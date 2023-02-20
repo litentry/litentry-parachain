@@ -24,7 +24,8 @@ use ita_stf::{TrustedCall, TrustedOperation};
 use itp_node_api::{
 	api_client::ParentchainUncheckedExtrinsic,
 	metadata::{
-		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, pallet_vcmp::VCMPCallIndexes,
+		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes,
+		pallet_utility::UTILCallIndexes, pallet_vcmp::VCMPCallIndexes,
 		provider::AccessNodeMetadata, Error as MetadataError,
 	},
 };
@@ -67,7 +68,8 @@ impl SetUserShieldingKey {
 		StfEnclaveSigner: StfEnclaveSigning,
 		TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 		NodeMetadataProvider: AccessNodeMetadata,
-		NodeMetadataProvider::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
+		NodeMetadataProvider::MetadataType:
+			IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UTILCallIndexes,
 	{
 		let (_, shard, encrypted_key) = extrinsic.function;
 		let shielding_key = context.shielding_key_repo.retrieve_key()?;
@@ -101,7 +103,8 @@ where
 	StfEnclaveSigner: StfEnclaveSigning,
 	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
-	NodeMetadataProvider::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
+	NodeMetadataProvider::MetadataType:
+		IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UTILCallIndexes,
 {
 	type Call = SetUserShieldingKeyFn;
 

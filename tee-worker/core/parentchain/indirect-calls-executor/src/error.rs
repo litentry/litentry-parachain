@@ -48,6 +48,8 @@ pub enum Error {
 	IMPHandlingError(IMPError),
 	#[error("VCMP handling error: {0:?}")]
 	VCMPHandlingError(VCMPError),
+	#[error("BatchAll handling error")]
+	BatchAllHandlingError,
 }
 
 impl From<sgx_status_t> for Error {

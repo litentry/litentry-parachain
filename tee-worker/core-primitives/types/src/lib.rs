@@ -38,6 +38,8 @@ pub type PalletString = String;
 
 pub use sp_core::{crypto::AccountId32 as AccountId, H256};
 
+use sp_std::vec;
+
 use litentry_primitives::Assertion;
 
 pub use itp_sgx_runtime_primitives::types::*;
@@ -59,7 +61,23 @@ pub type VerifyIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>, Vec<u8>);
 // pallet VCMP
 pub type RequestVCFn = ([u8; 2], ShardIdentifier, Assertion);
 
+// pallet Utility
+pub type BatchAllFn = ([u8; 2], Vec<BatchRawCall>);
+
 pub type Enclave = EnclaveGen<AccountId>;
+
+#[derive(Clone, Encode)]
+pub struct BatchRawCall(pub Vec<u8>);
+
+impl Decode for BatchRawCall {
+	fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
+		let len = input.remaining_len()?.unwrap_or_default();
+		let mut call = vec![0u8; len];
+		let call_slice = call.as_mut_slice();
+		input.read(call_slice)?;
+		Ok(BatchRawCall(call_slice.to_vec()))
+	}
+}
 
 /// Simple blob to hold an encoded call
 #[derive(Debug, PartialEq, Eq, Clone, Default)]

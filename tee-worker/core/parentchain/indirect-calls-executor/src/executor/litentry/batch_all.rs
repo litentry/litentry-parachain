@@ -14,14 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{
-	error::{Error, IMPError},
-	executor::Executor,
-	IndirectCallsExecutor,
-};
-use codec::{Decode, Encode};
-use ita_sgx_runtime::{pallet_imt::MetadataOf, Runtime};
-use ita_stf::{TrustedCall, TrustedOperation};
+use crate::{error::Error, executor::Executor, IndirectCallsExecutor};
+use codec::Decode;
 use itp_node_api::{
 	api_client::ParentchainUncheckedExtrinsic,
 	metadata::{
@@ -33,14 +27,17 @@ use itp_node_api::{
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{CreateIdentityFn, H256};
-use litentry_primitives::{Identity, ParentchainBlockNumber};
+use itp_types::{BatchAllFn, CreateIdentityFn, H256};
 
-pub(crate) struct CreateIdentity {
+use litentry_primitives::ParentchainBlockNumber;
+
+use super::create_identity::CreateIdentity;
+
+pub(crate) struct BatchAll {
 	pub(crate) block_number: ParentchainBlockNumber,
 }
 
-impl CreateIdentity {
+impl BatchAll {
 	fn execute_internal<
 		ShieldingKeyRepository,
 		StfEnclaveSigner,
@@ -73,42 +70,35 @@ impl CreateIdentity {
 		NodeMetadataProvider::MetadataType:
 			IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UTILCallIndexes,
 	{
-		let (_, shard, account, encrypted_identity, encrypted_metadata) = extrinsic.function;
-		let shielding_key = context.shielding_key_repo.retrieve_key()?;
+		let (_, calls) = extrinsic.function;
 
-		let identity: Identity =
-			Identity::decode(&mut shielding_key.decrypt(&encrypted_identity)?.as_slice())?;
-		let metadata = match encrypted_metadata {
-			None => None,
-			Some(m) => {
-				let decrypted_metadata = shielding_key.decrypt(&m)?;
-				Some(MetadataOf::<Runtime>::decode(&mut decrypted_metadata.as_slice())?)
-			},
-		};
+		for call in calls.iter() {
+			let mut call = call.0.as_slice();
 
-		if extrinsic.signature.is_some() {
-			let enclave_account_id = context.stf_enclave_signer.get_enclave_account()?;
-			let trusted_call = TrustedCall::create_identity_runtime(
-				enclave_account_id,
-				account,
-				identity,
-				metadata,
-				self.block_number,
-			);
-			let signed_trusted_call =
-				context.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
-			let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
-
-			let encrypted_trusted_call = shielding_key.encrypt(&trusted_operation.encode())?;
-			context.submit_trusted_call(shard, encrypted_trusted_call);
+			if let Ok(call) = CreateIdentityFn::decode(&mut call) {
+				let create_identity = CreateIdentity { block_number: self.block_number };
+				if Executor::<
+					ShieldingKeyRepository,
+					StfEnclaveSigner,
+					TopPoolAuthor,
+					NodeMetadataProvider,
+				>::is_target_call(
+					&create_identity, &call, context.node_meta_data_provider.as_ref()
+				) {
+					let xt = ParentchainUncheckedExtrinsic {
+						function: call,
+						signature: extrinsic.signature.clone(),
+					};
+					create_identity.execute(context, xt)?;
+				}
+			}
 		}
 		Ok(())
 	}
 }
 
 impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
-	Executor<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
-	for CreateIdentity
+	Executor<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider> for BatchAll
 where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
@@ -119,7 +109,7 @@ where
 	NodeMetadataProvider::MetadataType:
 		IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UTILCallIndexes,
 {
-	type Call = CreateIdentityFn;
+	type Call = BatchAllFn;
 
 	fn call_index(&self, call: &Self::Call) -> [u8; 2] {
 		call.0
@@ -129,7 +119,7 @@ where
 		&self,
 		metadata_type: &NodeMetadataProvider::MetadataType,
 	) -> Result<[u8; 2], MetadataError> {
-		metadata_type.create_identity_call_indexes()
+		metadata_type.batch_all_call_indexes()
 	}
 
 	fn execute(
@@ -143,6 +133,6 @@ where
 		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
 	) -> Result<(), Error> {
 		self.execute_internal(context, extrinsic)
-			.map_err(|_| Error::IMPHandlingError(IMPError::CreateIdentityHandlingFailed))
+			.map_err(|_| Error::BatchAllHandlingError)
 	}
 }
