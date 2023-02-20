@@ -1,4 +1,4 @@
-import { describeLitentry, verifyMsg } from './utils';
+import { describeLitentry, verifySignature } from './utils';
 import { step } from 'mocha-steps';
 import { requestVC, setUserShieldingKey, disableVC, revokeVC } from './indirect_calls';
 import { Assertion } from './type-definitions';
@@ -34,7 +34,7 @@ describeLitentry('VC test', async (context) => {
             assert.equal(data.credentialSubject.values[0], key === assertion.A8 ? true : false, 'check value error');
 
             delete data.proof;
-            const isValid = verifyMsg(JSON.stringify(data), context.defaultSigner[0]);
+            const isValid = verifySignature(context.teeShieldingKey, JSON.stringify(data), context.substrate);
             assert(isValid, 'invalid signature');
 
             indexList.push(eventData![1]);
