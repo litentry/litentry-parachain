@@ -56,7 +56,15 @@ impl<PubKey, Url> Enclave<PubKey, Url> {
 		vc_pubkey: Option<Vec<u8>>,
 		sgx_build_mode: SgxBuildMode,
 	) -> Self {
-		Enclave { pubkey, mr_enclave, timestamp, url, shielding_key, vc_pubkey, sgx_mode: sgx_build_mode }
+		Enclave {
+			pubkey,
+			mr_enclave,
+			timestamp,
+			url,
+			shielding_key,
+			vc_pubkey,
+			sgx_mode: sgx_build_mode,
+		}
 	}
 }
 

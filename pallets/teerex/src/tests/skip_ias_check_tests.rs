@@ -42,7 +42,8 @@ fn register_enclave_with_empty_mrenclave_works() {
 			RuntimeOrigin::signed(AccountKeyring::Alice.to_account_id()),
 			Vec::new(),
 			URL.to_vec(),
-			None
+			None,
+			None,
 		));
 
 		assert_eq!(Teerex::enclave_count(), 1);
@@ -58,7 +59,8 @@ fn register_enclave_with_mrenclave_works() {
 			RuntimeOrigin::signed(AccountKeyring::Alice.to_account_id()),
 			TEST4_MRENCLAVE.to_vec(),
 			URL.to_vec(),
-			None
+			None,
+			None,
 		));
 
 		let enc = test_enclave().with_mr_enclave(TEST4_MRENCLAVE);
@@ -76,7 +78,8 @@ fn register_enclave_with_faulty_mrenclave_inserts_default() {
 			RuntimeOrigin::signed(AccountKeyring::Alice.to_account_id()),
 			[1u8, 2].to_vec(),
 			URL.to_vec(),
-			None
+			None,
+			None,
 		));
 
 		assert_eq!(Teerex::enclave_count(), 1);
@@ -92,7 +95,8 @@ fn register_enclave_with_empty_url_inserts_default() {
 			RuntimeOrigin::signed(AccountKeyring::Alice.to_account_id()),
 			Vec::new(),
 			Vec::new(),
-			None
+			None,
+			None,
 		));
 
 		let enc = test_enclave().with_url(Default::default());
@@ -115,7 +119,8 @@ fn register_enclave_with_scheduled_enclave_works() {
 			RuntimeOrigin::signed(AccountKeyring::Alice.to_account_id()),
 			Vec::new(),
 			Vec::new(),
-			None
+			None,
+			None,
 		));
 	})
 }
@@ -131,7 +136,8 @@ fn register_enclave_without_scheduled_enclave_fails() {
 				RuntimeOrigin::signed(AccountKeyring::Alice.to_account_id()),
 				Vec::new(),
 				Vec::new(),
-				None
+				None,
+				None,
 			),
 			Error::<Test>::EnclaveNotInSchedule
 		);
