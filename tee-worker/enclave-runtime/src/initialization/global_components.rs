@@ -55,7 +55,7 @@ use itp_component_container::ComponentContainer;
 use itp_extrinsics_factory::ExtrinsicsFactory;
 use itp_node_api::metadata::{provider::NodeMetadataRepository, NodeMetadata};
 use itp_nonce_cache::NonceCache;
-use itp_sgx_crypto::{key_repository::KeyRepository, Aes, AesSeal, Rsa3072Seal, Ed25519Seal};
+use itp_sgx_crypto::{key_repository::KeyRepository, Aes, AesSeal, Rsa3072Seal};
 use itp_stf_executor::{
 	enclave_signer::StfEnclaveSigner, executor::StfExecutor, getter_executor::GetterExecutor,
 	state_getter::StfStateGetter,

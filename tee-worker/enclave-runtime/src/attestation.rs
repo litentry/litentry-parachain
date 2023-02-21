@@ -48,16 +48,15 @@ use itp_node_api::metadata::{
 };
 use itp_node_api_metadata::NodeMetadata;
 use itp_settings::worker::MR_ENCLAVE_SIZE;
-use itp_sgx_crypto::key_repository::AccessKey;
-use itp_sgx_crypto::Ed25519Seal;
+use itp_sgx_crypto::{key_repository::AccessKey, Ed25519Seal};
 use itp_sgx_io::StaticSealedIO;
 use itp_types::OpaqueCall;
 use itp_utils::write_slice_and_whitespace_pad;
 use log::*;
 use sgx_types::*;
+use sp_core::Pair;
 use sp_runtime::OpaqueExtrinsic;
 use std::{prelude::v1::*, slice, vec::Vec};
-use sp_core::Pair;
 
 #[no_mangle]
 pub unsafe extern "C" fn get_mrenclave(mrenclave: *mut u8, mrenclave_size: usize) -> sgx_status_t {
@@ -224,13 +223,12 @@ fn generate_ias_ra_extrinsic_internal(
 				.map_err(|e| SgxCryptoError::Other(Box::new(e)))
 		})
 		.ok();
- 
-	let vc_signing_key = Ed25519Seal::unseal_from_static_file().and_then(|keypair| {
-		Ok(hex::encode(&keypair.public()))
-	})
-	.ok();
 
-	let call = OpaqueCall::from_tuple(&(call_ids, cert_der, url, shielding_key, vc_signing_key));
+	let vc_signing_pubkey = Ed25519Seal::unseal_from_static_file()
+		.map(|keypair| hex::encode(keypair.public()))
+		.ok();
+
+	let call = OpaqueCall::from_tuple(&(call_ids, cert_der, url, shielding_key, vc_signing_pubkey));
 
 	let extrinsics = extrinsics_factory.create_extrinsics(&[call], None)?;
 

@@ -16,6 +16,7 @@ itp-node-api = { path = "../node-api", default-features = false }
 itp-ocall-api = { path = "../ocall-api", default-features = false }
 itp-sgx-crypto = { path = "../sgx/crypto", default-features = false }
 itp-sgx-externalities = { default-features = false, path = "../substrate-sgx/externalities" }
+itp-sgx-io = { path = "../sgx/io", default-features = false }
 itp-stf-interface = { path = "../stf-interface", default-features = false }
 itp-stf-primitives = { path = "../stf-primitives", default-features = false }
 itp-stf-state-handler = { path = "../stf-state-handler", default-features = false }
@@ -24,7 +25,6 @@ itp-storage = { path = "../storage", default-features = false }
 itp-time-utils = { path = "../time-utils", default-features = false }
 itp-top-pool-author = { path = "../top-pool-author", default-features = false }
 itp-types = { path = "../types", default-features = false }
-itp-sgx-io = { path = "../sgx/io", default-features = false }
 
 # scs
 substrate-api-client = { default-features = false, git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.37-tag-v0.7.0" }

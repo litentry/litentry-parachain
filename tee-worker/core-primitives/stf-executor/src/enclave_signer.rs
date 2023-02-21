@@ -23,8 +23,9 @@ use crate::{
 use core::marker::PhantomData;
 use ita_stf::{TrustedCall, TrustedCallSigned};
 use itp_ocall_api::EnclaveAttestationOCallApi;
-use itp_sgx_crypto::{ed25519_derivation::DeriveEd25519, key_repository::AccessKey};
+use itp_sgx_crypto::{ed25519_derivation::DeriveEd25519, key_repository::AccessKey, Ed25519Seal};
 use itp_sgx_externalities::SgxExternalitiesTrait;
+use itp_sgx_io::StaticSealedIO;
 use itp_stf_interface::system_pallet::SystemPalletAccountInterface;
 use itp_stf_primitives::types::{AccountId, KeyPair};
 use itp_stf_state_observer::traits::ObserveState;
@@ -32,8 +33,6 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{Index, ShardIdentifier};
 use sp_core::{ed25519::Pair as Ed25519Pair, Pair};
 use std::{boxed::Box, sync::Arc, vec::Vec};
-use itp_sgx_crypto::Ed25519Seal;
-use itp_sgx_io::StaticSealedIO;
 
 pub struct StfEnclaveSigner<OCallApi, StateObserver, ShieldingKeyRepository, Stf, TopPoolAuthor> {
 	state_observer: Arc<StateObserver>,
