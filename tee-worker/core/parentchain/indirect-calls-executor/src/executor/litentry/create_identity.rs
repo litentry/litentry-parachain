@@ -73,7 +73,7 @@ impl CreateIdentity {
 		NodeMetadataProvider::MetadataType:
 			IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UTILCallIndexes,
 	{
-		let (_, shard, account, encrypted_identity, encrypted_metadata) = extrinsic.function;
+		let (_, (shard, account, encrypted_identity, encrypted_metadata)) = extrinsic.function;
 		let shielding_key = context.shielding_key_repo.retrieve_key()?;
 
 		let identity: Identity =

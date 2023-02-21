@@ -71,7 +71,7 @@ impl RemoveIdentity {
 		NodeMetadataProvider::MetadataType:
 			IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UTILCallIndexes,
 	{
-		let (_, shard, encrypted_identity) = extrinsic.function;
+		let (_, (shard, encrypted_identity)) = extrinsic.function;
 		let shielding_key = context.shielding_key_repo.retrieve_key()?;
 
 		let identity: Identity =

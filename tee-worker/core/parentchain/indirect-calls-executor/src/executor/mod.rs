@@ -67,6 +67,12 @@ pub(crate) trait Executor<
 
 	fn decode(
 		&self,
+		_context: &IndirectCallsExecutor<
+			ShieldingKeyRepository,
+			StfEnclaveSigner,
+			TopPoolAuthor,
+			NodeMetadataProvider,
+		>,
 		input: &mut &[u8],
 	) -> Result<ParentchainUncheckedExtrinsicWithStatus<Self::Call>, CodecError> {
 		ParentchainUncheckedExtrinsicWithStatus::<Self::Call>::decode(input)
@@ -127,7 +133,9 @@ where
 		>,
 		input: &mut &[u8],
 	) -> Result<ExecutionStatus<H256>, Error> {
-		if let Ok(ParentchainUncheckedExtrinsicWithStatus { xt, status }) = self.decode(input) {
+		if let Ok(ParentchainUncheckedExtrinsicWithStatus { xt, status }) =
+			self.decode(context, input)
+		{
 			if self.is_target_call(&xt.function, context.node_meta_data_provider.as_ref()) {
 				if status {
 					self.execute(context, xt.clone())

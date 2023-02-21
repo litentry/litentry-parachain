@@ -71,7 +71,7 @@ impl SetUserShieldingKey {
 		NodeMetadataProvider::MetadataType:
 			IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UTILCallIndexes,
 	{
-		let (_, shard, encrypted_key) = extrinsic.function;
+		let (_, (shard, encrypted_key)) = extrinsic.function;
 		let shielding_key = context.shielding_key_repo.retrieve_key()?;
 
 		let key =

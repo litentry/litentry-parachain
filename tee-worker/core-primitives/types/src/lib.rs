@@ -38,8 +38,6 @@ pub type PalletString = String;
 
 pub use sp_core::{crypto::AccountId32 as AccountId, H256};
 
-use sp_std::vec;
-
 use litentry_primitives::Assertion;
 
 pub use itp_sgx_runtime_primitives::types::*;
@@ -47,36 +45,40 @@ pub use itp_sgx_runtime_primitives::types::*;
 pub type IpfsHash = [u8; 46];
 pub type MrEnclave = [u8; 32];
 
+pub type CallIndex = [u8; 2];
+
 // pallet teerex
-pub type ConfirmCallFn = ([u8; 2], ShardIdentifier, H256, Vec<u8>);
-pub type ShieldFundsFn = ([u8; 2], Vec<u8>, Balance, ShardIdentifier);
-pub type CallWorkerFn = ([u8; 2], Request);
+pub type ConfirmCallFn = (CallIndex, ShardIdentifier, H256, Vec<u8>);
+pub type ShieldFundsFn = (CallIndex, Vec<u8>, Balance, ShardIdentifier);
+pub type CallWorkerFn = (CallIndex, Request);
 
 // pallet IMP
-pub type SetUserShieldingKeyFn = ([u8; 2], ShardIdentifier, Vec<u8>);
-pub type CreateIdentityFn = ([u8; 2], ShardIdentifier, AccountId, Vec<u8>, Option<Vec<u8>>);
-pub type RemoveIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>);
-pub type VerifyIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>, Vec<u8>);
+pub type SetUserShieldingKeyParameters = (ShardIdentifier, Vec<u8>);
+pub type SetUserShieldingKeyFn = (CallIndex, SetUserShieldingKeyParameters);
+
+pub type CreateIdentityParameters = (ShardIdentifier, AccountId, Vec<u8>, Option<Vec<u8>>);
+pub type CreateIdentityFn = (CallIndex, CreateIdentityParameters);
+
+pub type RemoveIdentityParameters = (ShardIdentifier, Vec<u8>);
+pub type RemoveIdentityFn = (CallIndex, RemoveIdentityParameters);
+
+pub type VerifyIdentityParameters = (ShardIdentifier, Vec<u8>, Vec<u8>);
+pub type VerifyIdentityFn = (CallIndex, VerifyIdentityParameters);
 
 // pallet VCMP
-pub type RequestVCFn = ([u8; 2], ShardIdentifier, Assertion);
+pub type RequestVCFn = (CallIndex, ShardIdentifier, Assertion);
 
 // pallet Utility
-pub type BatchAllFn = ([u8; 2], Vec<BatchRawCall>);
+pub type BatchAllFn = (CallIndex, Vec<SupportedCall>);
 
 pub type Enclave = EnclaveGen<AccountId>;
 
-#[derive(Clone, Encode)]
-pub struct BatchRawCall(pub Vec<u8>);
-
-impl Decode for BatchRawCall {
-	fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
-		let len = input.remaining_len()?.unwrap_or_default();
-		let mut call = vec![0u8; len];
-		let call_slice = call.as_mut_slice();
-		input.read(call_slice)?;
-		Ok(BatchRawCall(call_slice.to_vec()))
-	}
+#[derive(Clone, Encode, Decode)]
+pub enum SupportedCall {
+	SetUserShieldingKey(CallIndex, Option<SetUserShieldingKeyParameters>),
+	CreateIdentity(CallIndex, Option<CreateIdentityParameters>),
+	RemoveIdentity(CallIndex, Option<RemoveIdentityParameters>),
+	VerifyIdentity(CallIndex, Option<VerifyIdentityParameters>),
 }
 
 /// Simple blob to hold an encoded call

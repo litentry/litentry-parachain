@@ -55,7 +55,7 @@ use beefy_merkle_tree::{merkle_root, Keccak256};
 use codec::Encode;
 use itp_node_api::metadata::{
 	pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, pallet_utility::UTILCallIndexes,
-	pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata,
+	pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata, runtime_call::RuntimeCall,
 };
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::StfEnclaveSigning;
@@ -173,7 +173,7 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
 	NodeMetadataProvider::MetadataType:
-		TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + UTILCallIndexes,
+		TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + UTILCallIndexes + RuntimeCall,
 {
 	fn execute_indirect_calls_in_extrinsics<ParentchainBlock>(
 		&self,

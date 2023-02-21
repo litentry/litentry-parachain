@@ -19,7 +19,7 @@ use crate::{
 	error::Result, pallet_imp::IMPCallIndexes, pallet_imp_mock::IMPMockCallIndexes,
 	pallet_sidechain::SidechainCallIndexes, pallet_system::SystemSs58Prefix,
 	pallet_teerex::TeerexCallIndexes, pallet_utility::UTILCallIndexes,
-	pallet_vcmp::VCMPCallIndexes,
+	pallet_vcmp::VCMPCallIndexes, runtime_call::RuntimeCall,
 };
 use codec::{Decode, Encode};
 
@@ -292,6 +292,12 @@ impl UTILCallIndexes for NodeMetadataMock {
 
 	fn force_batch_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.utility_module, self.utility_force_batch])
+	}
+}
+
+impl RuntimeCall for NodeMetadataMock {
+	fn retrieve(&self) -> Result<u32> {
+		Err(crate::Error::MetadataNotSet)
 	}
 }
 

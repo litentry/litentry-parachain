@@ -73,7 +73,7 @@ impl VerifyIdentity {
 		NodeMetadataProvider::MetadataType:
 			IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UTILCallIndexes,
 	{
-		let (_, shard, encrypted_identity, encrypted_validation_data) = extrinsic.function;
+		let (_, (shard, encrypted_identity, encrypted_validation_data)) = extrinsic.function;
 		let shielding_key = context.shielding_key_repo.retrieve_key()?;
 
 		let identity: Identity =
