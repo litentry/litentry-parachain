@@ -1696,7 +1696,6 @@ dependencies = [
  "bs58",
  "core-primitives",
  "futures 0.3.8",
- "hex 0.4.3",
  "ita-sgx-runtime",
  "ita-stf",
  "itp-node-api",
