@@ -41,7 +41,6 @@ use sp_core::ed25519 as spEd25519;
 
 pub type TestSigner = spEd25519::Pair;
 pub type TestShieldingKey = Rsa3072KeyPair;
-pub type TestVCSigningKey = spEd25519::Pair;
 pub type TestStateKey = Aes;
 
 pub type TestGetter = Getter;
@@ -49,8 +48,6 @@ pub type TestCall = TrustedCallSigned;
 pub type TestStf = Stf<TestCall, TestGetter, SgxExternalities, Runtime>;
 
 pub type TestShieldingKeyRepo = KeyRepositoryMock<TestShieldingKey>;
-
-pub type TestVCSigningKeyRepo = KeyRepositoryMock<TestVCSigningKey>;
 
 pub type TestStateKeyRepo = KeyRepositoryMock<TestStateKey>;
 

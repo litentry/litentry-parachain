@@ -188,6 +188,7 @@ pub mod pallet {
 			ra_report: Vec<u8>,
 			worker_url: Vec<u8>,
 			shielding_key: Option<Vec<u8>>,
+			vc_pubkey: Option<Vec<u8>>,
 		) -> DispatchResultWithPostInfo {
 			log::info!("teerex: called into runtime call register_enclave()");
 
@@ -206,6 +207,7 @@ pub mod pallet {
 					report.timestamp,
 					worker_url.clone(),
 					shielding_key,
+					vc_pubkey,
 					report.build_mode,
 				)
 			})?;
@@ -227,6 +229,7 @@ pub mod pallet {
 				<timestamp::Pallet<T>>::get().saturated_into(),
 				worker_url.clone(),
 				shielding_key,
+				vc_pubkey,
 				SgxBuildMode::default(),
 			);
 
@@ -386,6 +389,7 @@ pub mod pallet {
 			log::info!("teerex: parameter length ok");
 
 			let dummy_shielding_key: Option<Vec<u8>> = Default::default();
+			let dummy_vc_pubkey: Option<Vec<u8>> = Default::default();
 			#[cfg(not(feature = "skip-ias-check"))]
 			let enclave = Self::verify_dcap_quote(&sender, dcap_quote).map(|report| {
 				Enclave::new(
@@ -394,6 +398,7 @@ pub mod pallet {
 					report.timestamp,
 					worker_url.clone(),
 					dummy_shielding_key,
+					dummy_vc_pubkey,
 					report.build_mode,
 				)
 			})?;
@@ -415,6 +420,7 @@ pub mod pallet {
 				<timestamp::Pallet<T>>::get().saturated_into(),
 				worker_url.clone(),
 				dummy_shielding_key,
+				dummy_vc_pubkey,
 				SgxBuildMode::default(),
 			);
 

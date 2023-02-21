@@ -139,6 +139,7 @@ fn add_enclave_works() {
 			TEST4_CERT.to_vec(),
 			URL.to_vec(),
 			None,
+			None,
 		));
 		assert_eq!(Teerex::enclave_count(), 1);
 	})
@@ -154,6 +155,7 @@ fn add_and_remove_enclave_works() {
 			RuntimeOrigin::signed(signer.clone()),
 			TEST4_CERT.to_vec(),
 			URL.to_vec(),
+			None,
 			None,
 		));
 		assert_eq!(Teerex::enclave_count(), 1);
@@ -172,6 +174,8 @@ fn add_enclave_without_timestamp_fails() {
 			RuntimeOrigin::signed(signer.clone()),
 			TEST4_CERT.to_vec(),
 			URL.to_vec(),
+			None,
+			None,
 		)
 		.is_err());
 		assert_eq!(Teerex::enclave_count(), 0);
@@ -189,12 +193,14 @@ fn list_enclaves_works() {
 			timestamp: TEST4_TIMESTAMP,
 			url: URL.to_vec(),
 			shielding_key: None,
+			vc_pubkey: None,
 			sgx_mode: SgxBuildMode::Debug,
 		};
 		assert_ok!(Teerex::register_enclave(
 			RuntimeOrigin::signed(signer.clone()),
 			TEST4_CERT.to_vec(),
 			URL.to_vec(),
+			None,
 			None,
 		));
 		assert_eq!(Teerex::enclave_count(), 1);
@@ -221,6 +227,7 @@ fn remove_middle_enclave_works() {
 			timestamp: TEST5_TIMESTAMP,
 			url: URL.to_vec(),
 			shielding_key: None,
+			vc_pubkey: None,
 			sgx_mode: SgxBuildMode::Debug,
 		};
 
@@ -230,6 +237,7 @@ fn remove_middle_enclave_works() {
 			timestamp: TEST6_TIMESTAMP,
 			url: URL.to_vec(),
 			shielding_key: None,
+			vc_pubkey: None,
 			sgx_mode: SgxBuildMode::Debug,
 		};
 
@@ -239,6 +247,7 @@ fn remove_middle_enclave_works() {
 			timestamp: TEST7_TIMESTAMP,
 			url: URL.to_vec(),
 			shielding_key: None,
+			vc_pubkey: None,
 			sgx_mode: SgxBuildMode::Debug,
 		};
 
@@ -246,6 +255,7 @@ fn remove_middle_enclave_works() {
 			RuntimeOrigin::signed(signer5),
 			TEST5_CERT.to_vec(),
 			URL.to_vec(),
+			None,
 			None,
 		));
 		assert_eq!(Teerex::enclave_count(), 1);
@@ -256,6 +266,7 @@ fn remove_middle_enclave_works() {
 			RuntimeOrigin::signed(signer6.clone()),
 			TEST6_CERT.to_vec(),
 			URL.to_vec(),
+			None,
 			None,
 		));
 		assert_eq!(Teerex::enclave_count(), 2);
@@ -268,6 +279,7 @@ fn remove_middle_enclave_works() {
 			RuntimeOrigin::signed(signer7),
 			TEST7_CERT.to_vec(),
 			URL.to_vec(),
+			None,
 			None,
 		));
 		assert_eq!(Teerex::enclave_count(), 3);
@@ -295,6 +307,7 @@ fn register_enclave_with_different_signer_fails() {
 				TEST5_CERT.to_vec(),
 				URL.to_vec(),
 				None,
+				None,
 			),
 			Error::<Test>::SenderIsNotAttestedEnclave
 		);
@@ -312,6 +325,7 @@ fn register_enclave_with_to_old_attestation_report_fails() {
 				TEST7_CERT.to_vec(),
 				URL.to_vec(),
 				None,
+				None,
 			),
 			Error::<Test>::RemoteAttestationTooOld
 		);
@@ -327,6 +341,7 @@ fn register_enclave_with_almost_too_old_report_works() {
 			RuntimeOrigin::signed(signer),
 			TEST7_CERT.to_vec(),
 			URL.to_vec(),
+			None,
 			None,
 		));
 	})
@@ -345,6 +360,7 @@ fn update_enclave_url_works() {
 			timestamp: TEST4_TIMESTAMP,
 			url: url2.to_vec(),
 			shielding_key: None,
+			vc_pubkey: None,
 			sgx_mode: SgxBuildMode::Debug,
 		};
 
@@ -353,6 +369,7 @@ fn update_enclave_url_works() {
 			TEST4_CERT.to_vec(),
 			URL.to_vec(),
 			None,
+			None,
 		));
 		assert_eq!(Teerex::enclave(1).unwrap().url, URL.to_vec());
 
@@ -360,6 +377,7 @@ fn update_enclave_url_works() {
 			RuntimeOrigin::signed(signer.clone()),
 			TEST4_CERT.to_vec(),
 			url2.to_vec(),
+			None,
 			None,
 		));
 		assert_eq!(Teerex::enclave(1).unwrap().url, url2.to_vec());
@@ -381,6 +399,7 @@ fn update_ipfs_hash_works() {
 			RuntimeOrigin::signed(signer.clone()),
 			TEST4_CERT.to_vec(),
 			URL.to_vec(),
+			None,
 			None,
 		));
 		assert_eq!(Teerex::enclave_count(), 1);
@@ -443,6 +462,7 @@ fn unshield_is_only_executed_once_for_the_same_call_hash() {
 			TEST4_CERT.to_vec(),
 			URL.to_vec(),
 			None,
+			None,
 		));
 
 		assert_ok!(Balances::transfer(
@@ -488,6 +508,7 @@ fn timestamp_callback_works() {
 			timestamp: TEST6_TIMESTAMP,
 			url: URL.to_vec(),
 			shielding_key: None,
+			vc_pubkey: None,
 			sgx_mode: SgxBuildMode::Debug,
 		};
 
@@ -497,6 +518,7 @@ fn timestamp_callback_works() {
 			timestamp: TEST7_TIMESTAMP,
 			url: URL.to_vec(),
 			shielding_key: None,
+			vc_pubkey: None,
 			sgx_mode: SgxBuildMode::Debug,
 		};
 
@@ -506,17 +528,20 @@ fn timestamp_callback_works() {
 			TEST5_CERT.to_vec(),
 			URL.to_vec(),
 			None,
+			None,
 		));
 		assert_ok!(Teerex::register_enclave(
 			RuntimeOrigin::signed(signer6.clone()),
 			TEST6_CERT.to_vec(),
 			URL.to_vec(),
 			None,
+			None,
 		));
 		assert_ok!(Teerex::register_enclave(
 			RuntimeOrigin::signed(signer7.clone()),
 			TEST7_CERT.to_vec(),
 			URL.to_vec(),
+			None,
 			None,
 		));
 		assert_eq!(Teerex::enclave_count(), 3);
@@ -564,6 +589,7 @@ fn debug_mode_enclave_attest_works_when_sgx_debug_mode_is_allowed() {
 			timestamp: TEST4_TIMESTAMP,
 			url: URL.to_vec(),
 			shielding_key: None,
+			vc_pubkey: None,
 			sgx_mode: SgxBuildMode::Debug,
 		};
 
@@ -572,6 +598,7 @@ fn debug_mode_enclave_attest_works_when_sgx_debug_mode_is_allowed() {
 			RuntimeOrigin::signed(signer4),
 			TEST4_CERT.to_vec(),
 			URL.to_vec(),
+			None,
 			None,
 		));
 		assert_eq!(Teerex::enclave_count(), 1);
@@ -592,6 +619,7 @@ fn production_mode_enclave_attest_works_when_sgx_debug_mode_is_allowed() {
 				timestamp: TEST8_TIMESTAMP,
 				url: URL.to_vec(),
 				shielding_key: None,
+				vc_pubkey: None,
 				sgx_mode: SgxBuildMode::Production,
 			};
 
@@ -600,6 +628,7 @@ fn production_mode_enclave_attest_works_when_sgx_debug_mode_is_allowed() {
 				RuntimeOrigin::signed(signer8),
 				TEST8_CERT.to_vec(),
 				URL.to_vec(),
+				None,
 				None,
 			));
 			assert_eq!(Teerex::enclave_count(), 1);
@@ -621,6 +650,7 @@ fn debug_mode_enclave_attest_fails_when_sgx_debug_mode_not_allowed() {
 				TEST4_CERT.to_vec(),
 				URL.to_vec(),
 				None,
+				None,
 			),
 			Error::<Test>::SgxModeNotAllowed
 		);
@@ -638,6 +668,7 @@ fn production_mode_enclave_attest_works_when_sgx_debug_mode_not_allowed() {
 			timestamp: TEST8_TIMESTAMP,
 			url: URL.to_vec(),
 			shielding_key: None,
+			vc_pubkey: None,
 			sgx_mode: SgxBuildMode::Production,
 		};
 
@@ -646,6 +677,7 @@ fn production_mode_enclave_attest_works_when_sgx_debug_mode_not_allowed() {
 			RuntimeOrigin::signed(signer8),
 			TEST8_CERT.to_vec(),
 			URL.to_vec(),
+			None,
 			None,
 		));
 		assert_eq!(Teerex::enclave_count(), 1);
@@ -668,6 +700,7 @@ fn verify_unshield_funds_works() {
 			RuntimeOrigin::signed(signer4.clone()),
 			TEST4_CERT.to_vec(),
 			URL.to_vec(),
+			None,
 			None,
 		));
 		assert_eq!(Teerex::enclave_count(), 1);
@@ -740,6 +773,7 @@ fn unshield_funds_from_enclave_neq_bonding_account_errs() {
 			TEST4_CERT.to_vec(),
 			URL.to_vec(),
 			None,
+			None,
 		));
 
 		//Ensure that bonding account has funds
@@ -790,6 +824,7 @@ fn confirm_processed_parentchain_block_works() {
 			TEST7_CERT.to_vec(),
 			URL.to_vec(),
 			None,
+			None,
 		));
 		assert_eq!(Teerex::enclave_count(), 1);
 
@@ -830,6 +865,7 @@ fn ensure_registered_enclave_works() {
 			TEST4_CERT.to_vec(),
 			URL.to_vec(),
 			None,
+			None,
 		));
 		assert_ok!(Teerex::ensure_registered_enclave(&signer4));
 		assert_err!(
@@ -852,6 +888,8 @@ fn publish_hash_works() {
 			RuntimeOrigin::signed(signer4.clone()),
 			TEST4_CERT.to_vec(),
 			URL.to_vec(),
+			None,
+			None,
 		));
 
 		// There are no events emitted at the genesis block.
@@ -924,6 +962,8 @@ fn publish_hash_with_too_many_topics_fails() {
 			RuntimeOrigin::signed(signer4.clone()),
 			TEST4_CERT.to_vec(),
 			URL.to_vec(),
+			None,
+			None,
 		));
 
 		let hash = H256::from([1u8; 32]);
@@ -954,6 +994,8 @@ fn publish_hash_with_too_much_data_fails() {
 			RuntimeOrigin::signed(signer4.clone()),
 			TEST4_CERT.to_vec(),
 			URL.to_vec(),
+			None,
+			None,
 		));
 
 		let hash = H256::from([1u8; 32]);

@@ -25,7 +25,7 @@ use crate::test::{
 		test_setup::TestStf,
 	},
 	mocks::types::{
-		TestShieldingKey, TestShieldingKeyRepo, TestSigner, TestStateHandler, TestTopPoolAuthor, TestVCSigningKeyRepo, TestVCSigningKey,
+		TestShieldingKey, TestShieldingKeyRepo, TestSigner, TestStateHandler, TestTopPoolAuthor,
 	},
 };
 use codec::Encode;
@@ -105,9 +105,6 @@ pub fn submit_shielding_call_to_top_pool() {
 	let shielding_key = TestShieldingKey::new().unwrap();
 	let shielding_key_repo = Arc::new(TestShieldingKeyRepo::new(shielding_key.clone()));
 
-	let vc_signing_key = TestVCSigningKey::from_seed(&[0u8;32]);
-	let vc_signing_key_repo = Arc::new(TestVCSigningKeyRepo::new(vc_signing_key.clone()));
-
 	let header = ParentchainHeaderBuilder::default().build();
 
 	let ocall_api = create_ocall_api(&header, &signer);
@@ -127,12 +124,11 @@ pub fn submit_shielding_call_to_top_pool() {
 		Arc::new(MetricsOCallMock::default()),
 	));
 
-	let enclave_signer = Arc::new(StfEnclaveSigner::<_, _, _, TestStf, _, _>::new(
+	let enclave_signer = Arc::new(StfEnclaveSigner::<_, _, _, TestStf, _>::new(
 		state_observer,
 		ocall_api.clone(),
 		shielding_key_repo.clone(),
 		top_pool_author.clone(),
-		vc_signing_key_repo.clone(),
 	));
 	let node_meta_data_repository = Arc::new(NodeMetadataRepository::default());
 	node_meta_data_repository.set_metadata(NodeMetadataMock::new());

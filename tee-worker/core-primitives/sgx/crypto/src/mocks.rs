@@ -32,14 +32,14 @@ use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
 #[derive(Default)]
 pub struct KeyRepositoryMock<KeyType>
 where
-	KeyType: Clone,
+	KeyType: Clone + Default,
 {
 	key: RwLock<KeyType>,
 }
 
 impl<KeyType> KeyRepositoryMock<KeyType>
 where
-	KeyType: Clone,
+	KeyType: Clone + Default,
 {
 	pub fn new(key: KeyType) -> Self {
 		KeyRepositoryMock { key: RwLock::new(key) }
@@ -48,7 +48,7 @@ where
 
 impl<KeyType> AccessKey for KeyRepositoryMock<KeyType>
 where
-	KeyType: Clone,
+	KeyType: Clone + Default,
 {
 	type KeyType = KeyType;
 
@@ -59,7 +59,7 @@ where
 
 impl<KeyType> MutateKey<KeyType> for KeyRepositoryMock<KeyType>
 where
-	KeyType: Clone,
+	KeyType: Clone + Default,
 {
 	fn update_key(&self, key: KeyType) -> Result<()> {
 		let mut lock = self.key.write().unwrap();

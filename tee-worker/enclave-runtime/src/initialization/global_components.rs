@@ -89,7 +89,6 @@ pub type EnclaveTrustedCallSigned = TrustedCallSigned;
 pub type EnclaveStf = Stf<EnclaveTrustedCallSigned, EnclaveGetter, StfState, Runtime>;
 pub type EnclaveStateKeyRepository = KeyRepository<Aes, AesSeal>;
 pub type EnclaveShieldingKeyRepository = KeyRepository<Rsa3072KeyPair, Rsa3072Seal>;
-pub type EnclaveVCSigningKeyRepository = KeyRepository<Pair, Ed25519Seal>;
 pub type EnclaveStateFileIo = SgxStateFileIo<EnclaveStateKeyRepository, StfState>;
 pub type EnclaveStateSnapshotRepository = StateSnapshotRepository<EnclaveStateFileIo>;
 pub type EnclaveStateObserver = StateObserver<StfState>;
@@ -108,7 +107,6 @@ pub type EnclaveStfEnclaveSigner = StfEnclaveSigner<
 	EnclaveShieldingKeyRepository,
 	EnclaveStf,
 	EnclaveTopPoolAuthor,
-	EnclaveVCSigningKeyRepository,
 >;
 pub type EnclaveAttestationHandler = IntelAttestationHandler<EnclaveOCallApi>;
 
@@ -218,11 +216,6 @@ pub static GLOBAL_STATE_KEY_REPOSITORY_COMPONENT: ComponentContainer<EnclaveStat
 pub static GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT: ComponentContainer<
 	EnclaveShieldingKeyRepository,
 > = ComponentContainer::new("Shielding key repository");
-
-/// VC Signing key repository
-pub static GLOBAL_VC_SIGNNING_KEY_REPOSITORY_COMPONENT: ComponentContainer<
-	EnclaveVCSigningKeyRepository,
-> = ComponentContainer::new("VC Signing key repository");
 
 /// O-Call API
 pub static GLOBAL_OCALL_API_COMPONENT: ComponentContainer<EnclaveOCallApi> =

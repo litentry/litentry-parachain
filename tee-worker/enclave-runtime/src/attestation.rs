@@ -29,7 +29,7 @@
 
 use crate::{
 	initialization::global_components::{
-		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,GLOBAL_VC_SIGNNING_KEY_REPOSITORY_COMPONENT,
+		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
 	},
 	utils::{
 		get_extrinsic_factory_from_solo_or_parachain,
@@ -48,7 +48,9 @@ use itp_node_api::metadata::{
 };
 use itp_node_api_metadata::NodeMetadata;
 use itp_settings::worker::MR_ENCLAVE_SIZE;
-use itp_sgx_crypto::{key_repository::AccessKey, Error as SgxCryptoError};
+use itp_sgx_crypto::key_repository::AccessKey;
+use itp_sgx_crypto::Ed25519Seal;
+use itp_sgx_io::StaticSealedIO;
 use itp_types::OpaqueCall;
 use itp_utils::write_slice_and_whitespace_pad;
 use log::*;
@@ -222,16 +224,13 @@ fn generate_ias_ra_extrinsic_internal(
 				.map_err(|e| SgxCryptoError::Other(Box::new(e)))
 		})
 		.ok();
+ 
+	let vc_signing_key = Ed25519Seal::unseal_from_static_file().and_then(|keypair| {
+		Ok(hex::encode(&keypair.public()))
+	})
+	.ok();
 
-	let vc_signing_key = GLOBAL_VC_SIGNNING_KEY_REPOSITORY_COMPONENT
-		.get()?
-		.retrieve_key()
-		.and_then(|keypair| {
-			Ok(hex::encode(&keypair.public()))
-		})
-		.ok();
-
-	let call = OpaqueCall::from_tuple(&(call_ids, cert_der, url, shielding_key));
+	let call = OpaqueCall::from_tuple(&(call_ids, cert_der, url, shielding_key, vc_signing_key));
 
 	let extrinsics = extrinsics_factory.create_extrinsics(&[call], None)?;
 
