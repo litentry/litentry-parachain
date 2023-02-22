@@ -169,6 +169,7 @@ export type WorkerRpcReturnString = {
 export type EnclaveResult = {
     mrEnclave: `0x${string}`;
     shieldingKey: `0x${string}`;
+    vcPubkey: `0x${string}`;
 };
 
 export type PubicKeyJson = {
