@@ -311,37 +311,41 @@ export async function getEnclave(api: ApiPromise): Promise<{
 export async function verifyMsg(data: string, publicKey: KeyObject, signature: string, api: ApiPromise) {
     const count = await api.query.teerex.enclaveCount();
     const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as EnclaveResult;
-
-    const hash = crypto.createHash('blake2s256').update(stringToU8a(res.shieldingKey)).digest();
+    // const hash = crypto.createHash('blake2s256').update(stringToU8a(res.shieldingKey)).digest();
     const message = JSON.parse(data);
-    console.log(message);
     delete message.proof;
-    console.log(999, hash);
-    const keyPair = ed25519.keyPair.fromSeed(hash);
-    console.log('keyPair', keyPair);
+    // console.log(999, hash);
+    // const keyPair = ed25519.keyPair.fromSeed(hash);
+    // console.log('keyPair', keyPair);
 
-    const isValid = ed25519.detached.verify(stringToU8a(message), hexToU8a(`0x${signature}`), keyPair.publicKey);
+    // const isValid = ed25519.detached.verify(stringToU8a(message), hexToU8a(`0x${signature}`), keyPair.publicKey);
+    // console.log('isValid', isValid);
+
+    // await crypto.generateKeyPair(
+    //     'ed25519',
+    //     {
+    //         publicKeyEncoding: {
+    //             type: 'spki',
+    //             format: 'pem',
+    //         },
+    //         privateKeyEncoding: {
+    //             type: 'pkcs8',
+    //             format: 'pem',
+    //             cipher: 'aes-256-cbc',
+    //             passphrase: hash,
+    //         },
+    //     },
+    //     (err: any, publicKey: any, privateKey: any) => {
+    //         if (err) throw err;
+
+    console.log(signatureVerify(stringToU8a(message), `0x${signature}`, `0x${res.vcPubkey}`));
+    //     }
+    // );
+
+    const verify = crypto.createVerify('ed25519');
+    verify.update(stringToU8a(message));
+    const isValid = verify.verify(`0x${res.vcPubkey}`, hexToU8a(`0x${signature}`));
     console.log('isValid', isValid);
-
-    await crypto.generateKeyPair(
-        'ed25519',
-        {
-            publicKeyEncoding: {
-                type: 'spki',
-                format: 'pem',
-            },
-            privateKeyEncoding: {
-                type: 'pkcs8',
-                format: 'pem',
-                cipher: 'aes-256-cbc',
-                passphrase: hash,
-            },
-        },
-        (err: any, publicKey: any, privateKey: any) => {
-            if (err) throw err;
-            console.log(crypto.verify(null, stringToU8a(message), publicKey, stringToU8a(signature)));
-        }
-    );
 }
 
 export async function verifySignature(publicKey: KeyObject, vc: string, api: ApiPromise): Promise<any> {
@@ -352,6 +356,8 @@ export async function verifySignature(publicKey: KeyObject, vc: string, api: Api
 
 //Check VC json fields
 export async function checkJSON(data: string): Promise<boolean> {
+    console.log('data', data);
+
     const vc = JSON.parse(data);
     const vcStatus = ['@context', 'type', 'credentialSubject', 'proof', 'issuer'].every(
         (key) =>
