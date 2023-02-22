@@ -48,8 +48,9 @@ use itp_node_api::metadata::{
 };
 use itp_node_api_metadata::NodeMetadata;
 use itp_settings::worker::MR_ENCLAVE_SIZE;
-use itp_sgx_crypto::{key_repository::AccessKey, Ed25519Seal};
-use itp_sgx_io::StaticSealedIO;
+use itp_sgx_crypto::{
+	ed25519_derivation::DeriveEd25519, key_repository::AccessKey, Error as SgxCryptoError,
+};
 use itp_types::OpaqueCall;
 use itp_utils::write_slice_and_whitespace_pad;
 use log::*;
@@ -211,7 +212,7 @@ fn generate_ias_ra_extrinsic_internal(
 		.get_from_metadata(|m| m.register_ias_enclave_call_indexes())?
 		.map_err(MetadataProviderError::MetadataError)?;
 
-	let shielding_key = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT
+	let shielding_pubkey = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT
 		.get()?
 		.retrieve_key()
 		.and_then(|keypair| {
@@ -224,11 +225,16 @@ fn generate_ias_ra_extrinsic_internal(
 		})
 		.ok();
 
-	let vc_signing_pubkey = Ed25519Seal::unseal_from_static_file()
-		.map(|keypair| hex::encode(keypair.public()))
+	let vc_pubkey = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT
+		.get()?
+		.retrieve_key()
+		.and_then(|keypair| {
+			// vc signing pubkey
+			keypair.derive_ed25519().map(|keypair| hex::encode(keypair.public()))
+		})
 		.ok();
 
-	let call = OpaqueCall::from_tuple(&(call_ids, cert_der, url, shielding_key, vc_signing_pubkey));
+	let call = OpaqueCall::from_tuple(&(call_ids, cert_der, url, shielding_pubkey, vc_pubkey));
 
 	let extrinsics = extrinsics_factory.create_extrinsics(&[call], None)?;
 

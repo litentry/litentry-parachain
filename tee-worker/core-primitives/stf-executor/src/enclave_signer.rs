@@ -23,9 +23,8 @@ use crate::{
 use core::marker::PhantomData;
 use ita_stf::{TrustedCall, TrustedCallSigned};
 use itp_ocall_api::EnclaveAttestationOCallApi;
-use itp_sgx_crypto::{ed25519_derivation::DeriveEd25519, key_repository::AccessKey, Ed25519Seal};
+use itp_sgx_crypto::{ed25519_derivation::DeriveEd25519, key_repository::AccessKey};
 use itp_sgx_externalities::SgxExternalitiesTrait;
-use itp_sgx_io::StaticSealedIO;
 use itp_stf_interface::system_pallet::SystemPalletAccountInterface;
 use itp_stf_primitives::types::{AccountId, KeyPair};
 use itp_stf_state_observer::traits::ObserveState;
@@ -79,11 +78,8 @@ where
 	}
 
 	fn get_enclave_call_signing_key(&self) -> Result<Ed25519Pair> {
-		// let shielding_key = self.shielding_key_repo.retrieve_key()?;
-		// shielding_key.derive_ed25519().map_err(|e| e.into())
-		Ed25519Seal::unseal_from_static_file().map_err(|e| e.into())
-
-		// self.vc_signing_key_repo.retrieve_key().map_err(|e| e.into())
+		let shielding_key = self.shielding_key_repo.retrieve_key()?;
+		shielding_key.derive_ed25519().map_err(|e| e.into())
 	}
 }
 
