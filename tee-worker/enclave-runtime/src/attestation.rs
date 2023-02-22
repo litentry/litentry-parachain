@@ -39,9 +39,6 @@ use crate::{
 };
 use codec::{Decode, Encode};
 use itp_attestation_handler::{AttestationHandler, SgxQlQveCollateral};
-use libflate::zlib::Encoder;
-
-use crate::std::io::Write;
 use itp_component_container::ComponentGetter;
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{
