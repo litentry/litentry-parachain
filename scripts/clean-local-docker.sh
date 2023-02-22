@@ -17,7 +17,7 @@ cd "$ROOTDIR/docker/generated-$CHAIN"
 docker images
 
 echo "stop and remove docker containers..."
-docker-compose rm -f -s -v
+docker compose rm -f -s -v
 docker container stop geth || true
 
 echo "remove docker volumes..."

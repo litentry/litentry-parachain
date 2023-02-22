@@ -21,4 +21,4 @@ networks:
   integritee-test-network:
     driver: bridge
 
-# docker-compose -f docker-compose.yml -f resume-worker.yml up relaychain-alice relaychain-bob integritee-node --no-build --exit-code-from resume-worker -- resume-worker
+# docker compose -f docker-compose.yml -f resume-worker.yml up relaychain-alice relaychain-bob integritee-node --no-build --exit-code-from resume-worker -- resume-worker
