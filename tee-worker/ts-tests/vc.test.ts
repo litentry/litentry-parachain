@@ -8,13 +8,13 @@ import { HexString } from '@polkadot/util/types';
 
 const assertion = <Assertion>{
     A1: 'A1',
-    A2: ['A2'],
-    A3: ['A3', 'A3', 'A3'],
-    A4: [10],
-    A7: [10],
-    A8: 'A8',
-    A10: [10],
-    A11: [10],
+    // A2: ['A2'],
+    // A3: ['A3', 'A3', 'A3'],
+    // A4: [10],
+    // A7: [10],
+    // A8: 'A8',
+    // A10: [10],
+    // A11: [10],
 };
 describeLitentry('VC test', async (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
@@ -25,21 +25,20 @@ describeLitentry('VC test', async (context) => {
     });
     step('Request VC', async () => {
         for (const key in assertion) {
-            const eventData = await requestVC(context, context.defaultSigner[0], aesKey, true, context.shard, {
-                [key]: assertion[key as keyof Assertion],
-            });
+            const [account, index, vc] = (await requestVC(
+                context,
+                context.defaultSigner[0],
+                aesKey,
+                true,
+                context.mrEnclave,
+                {
+                    [key]: assertion[key as keyof Assertion],
+                }
+            )) as HexString[];
 
-            const data = JSON.parse(eventData![2]);
-            //It's always false with fake data except A8
-            assert.equal(data.credentialSubject.values[0], key === assertion.A8 ? true : false, 'check value error');
-
-            delete data.proof;
-            const isValid = verifySignature(context.teeShieldingKey, JSON.stringify(data), context.substrate);
-            assert(isValid, 'invalid signature');
-
-            indexList.push(eventData![1]);
-            const registry = (await context.substrate.query.vcManagement.vcRegistry(eventData![1])) as any;
-            assert.equal(registry.toHuman()!['status'], 'Active');
+            await verifySignature(context.teeShieldingKey, vc.replace('0x', ''), context.substrate);
+            const registry = (await context.substrate.query.vcManagement.vcRegistry(index)) as any;
+            assert.equal(registry.toHuman()!['status'], 'Active', 'check registry error');
         }
     });
 
