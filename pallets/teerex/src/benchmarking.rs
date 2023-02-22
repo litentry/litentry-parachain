@@ -93,10 +93,11 @@ benchmarks! {
 			RawOrigin::Signed(signer.clone()).into(),
 			TEST4_SETUP.cert.to_vec(),
 			URL.to_vec(),
-			None
+			None,
+			None,
 		).unwrap();
 
-	}: _(RawOrigin::Signed(signer), TEST4_SETUP.cert.to_vec(), URL.to_vec(), None)
+	}: _(RawOrigin::Signed(signer), TEST4_SETUP.cert.to_vec(), URL.to_vec(), None, None)
 	verify {
 		assert_eq!(Teerex::<T>::enclave_count(), 1);
 	}

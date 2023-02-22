@@ -56,6 +56,7 @@ benchmarks! {
 			TEST4_SETUP.cert.to_vec(),
 			URL.to_vec(),
 			None,
+			None,
 		).unwrap();
 		let mrenclave = Teerex::<T>::enclave(1).unwrap().mr_enclave;
 		Teeracle::<T>::add_to_whitelist(RawOrigin::Root.into(), data_source.clone(), mrenclave).unwrap();
@@ -79,7 +80,8 @@ benchmarks! {
 			RawOrigin::Signed(signer.clone()).into(),
 			TEST4_SETUP.cert.to_vec(),
 			URL.to_vec(),
-			None
+			None,
+			None,
 		).unwrap();
 		let mrenclave = Teerex::<T>::enclave(1).unwrap().mr_enclave;
 		Teeracle::<T>::add_to_whitelist(RawOrigin::Root.into(), data_source.clone(), mrenclave).unwrap();

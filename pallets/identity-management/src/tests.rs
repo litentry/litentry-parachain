@@ -127,7 +127,8 @@ fn tee_callback_with_registered_enclave_works() {
 			RuntimeOrigin::signed(1),
 			TEST_MRENCLAVE.to_vec(),
 			URL.to_vec(),
-			None
+			None,
+			None,
 		));
 
 		assert_ok!(IdentityManagement::some_error(
