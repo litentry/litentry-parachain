@@ -4,10 +4,10 @@ use frame_metadata::{RuntimeMetadata, StorageEntryType, StorageHasher};
 use ita_sgx_runtime::Runtime;
 use itc_rpc_client::direct_client::{DirectApi, DirectClient};
 use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
+use itp_stf_primitives::types::Hash;
 use itp_types::DirectRequestStatus;
 use itp_utils::FromHexPrefixed;
 use log::{error, warn};
-use my_node_runtime::Hash;
 use scale_value::{scale::TypeId, Value};
 use sp_application_crypto::scale_info::TypeDef;
 use std::format;
@@ -79,13 +79,7 @@ fn get_storage_value(
 
 	let storage_entry_keys: Vec<Vec<u8>> = storage_entry_keys
 		.iter()
-		.map(|v| {
-			if v.starts_with("0x") {
-				hex::decode(v.strip_prefix("0x").unwrap().as_bytes()).unwrap()
-			} else {
-				hex::decode(v.as_bytes()).unwrap()
-			}
-		})
+		.map(|v| hex::decode(v.strip_prefix("0x").unwrap_or(v)).unwrap())
 		.collect();
 
 	let mut entry_bytes: Vec<u8> = vec![];
@@ -100,6 +94,10 @@ fn get_storage_value(
 				ty.id()
 			},
 		StorageEntryType::Map { hashers, key, value } => {
+			if hashers.len() != storage_entry_keys.len() {
+				panic!("Wrong Number Of Keys, expected: {}", hashers.len());
+			}
+
 			let ty = metadata.types.resolve(key.id()).unwrap();
 			// If the key is a tuple, we encode each value to the corresponding tuple type.
 			// If the key is not a tuple, encode a single value to the key type.
@@ -109,9 +107,6 @@ fn get_storage_value(
 					vec![key.id()]
 				},
 			};
-			if hashers.len() != storage_entry_keys.len() {
-				panic!("Wrong Number Of Keys, expected: {}", hashers.len());
-			}
 			for ((key, _type_id), hasher) in storage_entry_keys.iter().zip(type_ids).zip(hashers) {
 				hash_bytes(key.as_slice(), &hasher, &mut entry_bytes);
 			}

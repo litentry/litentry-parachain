@@ -59,6 +59,10 @@ impl EnclaveBase for EnclaveMock {
 		unimplemented!()
 	}
 
+	fn migrate_shard(&self, _old_shard: Vec<u8>, _new_shard: Vec<u8>) -> EnclaveResult<()> {
+		unimplemented!()
+	}
+
 	fn trigger_parentchain_block_import(&self) -> EnclaveResult<()> {
 		unimplemented!()
 	}

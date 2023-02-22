@@ -64,6 +64,24 @@ pub(crate) fn init_shard(enclave: &Enclave, shard_identifier: &ShardIdentifier) 
 	}
 }
 
+pub(crate) fn migrate_shard(
+	enclave: &Enclave,
+	old_shard: &ShardIdentifier,
+	new_shard: &ShardIdentifier,
+) {
+	match enclave.migrate_shard(old_shard.encode(), new_shard.encode()) {
+		Err(e) => {
+			println!(
+				"Failed to migrate old shard {:?} to new shard{:?}. {:?}",
+				old_shard, new_shard, e
+			);
+		},
+		Ok(_) => {
+			println!("Successfully migrate old shard {:?} to new shard{:?}", old_shard, new_shard);
+		},
+	}
+}
+
 pub(crate) fn generate_signing_key_file(enclave: &Enclave) {
 	info!("*** Get the signing key from the TEE\n");
 	let pubkey = enclave.get_ecc_signing_pubkey().unwrap();

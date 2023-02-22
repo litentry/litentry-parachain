@@ -18,7 +18,7 @@ use crate::{error::Result, NodeMetadata};
 use sp_core::storage::StorageKey;
 
 /// Pallet' name:
-const TEEREX: &str = "Teerex";
+pub const TEEREX: &str = "Teerex";
 
 pub trait TeerexCallIndexes {
 	fn register_ias_enclave_call_indexes(&self) -> Result<[u8; 2]>;

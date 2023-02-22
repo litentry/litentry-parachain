@@ -37,6 +37,9 @@ pub mod pallet_teeracle;
 pub mod pallet_teerex;
 pub mod pallet_vcmp;
 
+#[cfg(feature = "std")]
+pub mod event;
+
 #[cfg(feature = "mocks")]
 pub mod metadata_mocks;
 

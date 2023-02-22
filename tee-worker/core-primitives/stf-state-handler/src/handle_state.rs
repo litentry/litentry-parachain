@@ -35,6 +35,13 @@ pub trait HandleState {
 	/// Initializes a default state for the shard and returns its hash.
 	fn initialize_shard(&self, shard: ShardIdentifier) -> Result<Self::HashType>;
 
+	/// Migrate state from old shard to new shard
+	fn migrate_shard(
+		&self,
+		old_shard: ShardIdentifier,
+		new_shard: ShardIdentifier,
+	) -> Result<Self::HashType>;
+
 	/// Execute a function that acts (immutably) on the current state.
 	///
 	/// This allows access to the state, without any cloning.

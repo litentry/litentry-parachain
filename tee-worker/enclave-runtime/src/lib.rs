@@ -336,6 +336,26 @@ pub unsafe extern "C" fn init_shard(shard: *const u8, shard_size: u32) -> sgx_st
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn migrate_shard(
+	old_shard: *const u8,
+	new_shard: *const u8,
+	shard_size: u32,
+) -> sgx_status_t {
+	let old_shard_identifier =
+		ShardIdentifier::from_slice(slice::from_raw_parts(old_shard, shard_size as usize));
+
+	let new_shard_identifier =
+		ShardIdentifier::from_slice(slice::from_raw_parts(new_shard, shard_size as usize));
+
+	if let Err(e) = initialization::migrate_shard(old_shard_identifier, new_shard_identifier) {
+		error!("Failed to initialize shard ({:?}): {:?}", old_shard_identifier, e);
+		return sgx_status_t::SGX_ERROR_UNEXPECTED
+	}
+
+	sgx_status_t::SGX_SUCCESS
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn sync_parentchain(
 	blocks_to_sync: *const u8,
 	blocks_to_sync_size: usize,

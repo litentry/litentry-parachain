@@ -22,13 +22,13 @@ function print_divider() {
 ROOTDIR=$(git rev-parse --show-toplevel)
 cd "$ROOTDIR/docker/generated-$CHAIN/"
 
-docker-compose up -d --build
+docker compose up -d --build
 
-# sleep for a while to make sure `docker-compose` is ready
-# otherwise `docker-compose logs` could print empty output
+# sleep for a while to make sure `docker compose` is ready
+# otherwise `docker compose logs` could print empty output
 sleep 10
 
-parachain_service=$(docker-compose ps --services --filter 'status=running' | grep -F 'parachain-')
+parachain_service=$(docker compose ps --services --filter 'status=running' | grep -F 'parachain-')
 
 print_divider
 
@@ -36,7 +36,7 @@ echo "waiting for parachain to produce blocks ..."
 
 for i in $(seq 1 $WAIT_ROUNDS); do
   sleep $WAIT_INTERVAL_SECONDS
-  if docker-compose logs "$parachain_service" 2>&1 | grep -F '0 peers' 2>/dev/null | grep -Fq "best: #1" 2>/dev/null; then
+  if docker compose logs "$parachain_service" 2>&1 | grep -F '0 peers' 2>/dev/null | grep -Fq "best: #1" 2>/dev/null; then
     echo "parachain produced #1"
     BLOCK_PRODUCED=true
     break
@@ -54,7 +54,7 @@ echo "waiting for parachain to finalize blocks ..."
 
 for i in $(seq 1 $WAIT_ROUNDS); do
   sleep $WAIT_INTERVAL_SECONDS
-  if docker-compose logs "$parachain_service" 2>&1 | grep -F '0 peers' 2>/dev/null | grep -Fq "finalized #1" 2>/dev/null; then
+  if docker compose logs "$parachain_service" 2>&1 | grep -F '0 peers' 2>/dev/null | grep -Fq "finalized #1" 2>/dev/null; then
     echo "parachain finalized #1, all good. Quit now"
     exit 0
   fi

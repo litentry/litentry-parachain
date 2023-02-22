@@ -45,7 +45,8 @@ fn register_enclave_and_add_oracle_to_whitelist_ok(src: &str) {
 		RuntimeOrigin::signed(signer),
 		TEST4_CERT.to_vec(),
 		URL.to_vec(),
-		None
+		None,
+		None,
 	));
 	let mrenclave = Teerex::enclave(1).unwrap().mr_enclave;
 	assert_ok!(Teeracle::add_to_whitelist(RuntimeOrigin::root(), src.to_owned(), mrenclave));
@@ -229,7 +230,8 @@ fn update_exchange_rate_from_not_whitelisted_oracle_fails() {
 			RuntimeOrigin::signed(signer.clone()),
 			TEST4_CERT.to_vec(),
 			URL.to_vec(),
-			None
+			None,
+			None,
 		));
 
 		let rate = U32F32::from_num(43.65);
@@ -254,7 +256,8 @@ fn update_oracle_from_not_whitelisted_oracle_fails() {
 			RuntimeOrigin::signed(signer.clone()),
 			TEST4_CERT.to_vec(),
 			URL.to_vec(),
-			None
+			None,
+			None,
 		));
 
 		assert_noop!(

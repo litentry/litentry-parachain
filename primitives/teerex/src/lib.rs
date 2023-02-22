@@ -42,6 +42,7 @@ pub struct Enclave<PubKey, Url> {
 	pub timestamp: u64,                 // unix epoch in milliseconds
 	pub url: Url,                       // utf8 encoded url
 	pub shielding_key: Option<Vec<u8>>, // JSON serialised enclave shielding key
+	pub vc_pubkey: Option<Vec<u8>>,
 	pub sgx_mode: SgxBuildMode,
 }
 
@@ -52,9 +53,18 @@ impl<PubKey, Url> Enclave<PubKey, Url> {
 		timestamp: u64,
 		url: Url,
 		shielding_key: Option<Vec<u8>>,
+		vc_pubkey: Option<Vec<u8>>,
 		sgx_build_mode: SgxBuildMode,
 	) -> Self {
-		Enclave { pubkey, mr_enclave, timestamp, url, shielding_key, sgx_mode: sgx_build_mode }
+		Enclave {
+			pubkey,
+			mr_enclave,
+			timestamp,
+			url,
+			shielding_key,
+			vc_pubkey,
+			sgx_mode: sgx_build_mode,
+		}
 	}
 }
 
