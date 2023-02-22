@@ -16,7 +16,6 @@ itp-node-api = { path = "../node-api", default-features = false }
 itp-ocall-api = { path = "../ocall-api", default-features = false }
 itp-sgx-crypto = { path = "../sgx/crypto", default-features = false }
 itp-sgx-externalities = { default-features = false, path = "../substrate-sgx/externalities" }
-itp-sgx-io = { path = "../sgx/io", default-features = false }
 itp-stf-interface = { path = "../stf-interface", default-features = false }
 itp-stf-primitives = { path = "../stf-primitives", default-features = false }
 itp-stf-state-handler = { path = "../stf-state-handler", default-features = false }

@@ -3424,7 +3424,6 @@ dependencies = [
  "itp-ocall-api",
  "itp-sgx-crypto",
  "itp-sgx-externalities",
- "itp-sgx-io",
  "itp-stf-interface",
  "itp-stf-primitives",
  "itp-stf-state-handler",

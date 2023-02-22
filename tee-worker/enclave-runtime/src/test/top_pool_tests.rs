@@ -104,7 +104,6 @@ pub fn submit_shielding_call_to_top_pool() {
 	let signer = TestSigner::from_seed(b"42315678901234567890123456789012");
 	let shielding_key = TestShieldingKey::new().unwrap();
 	let shielding_key_repo = Arc::new(TestShieldingKeyRepo::new(shielding_key.clone()));
-
 	let header = ParentchainHeaderBuilder::default().build();
 
 	let ocall_api = create_ocall_api(&header, &signer);

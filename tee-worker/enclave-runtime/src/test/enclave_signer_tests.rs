@@ -34,7 +34,7 @@ use itp_test::mock::onchain_mock::OnchainMock;
 use itp_top_pool_author::{mocks::AuthorApiMock, traits::AuthorApi};
 use sgx_crypto_helper::{rsa3072::Rsa3072KeyPair, RsaKeyPair};
 use sp_core::Pair;
-use std::{default::Default, sync::Arc, vec::Vec};
+use std::{sync::Arc, vec::Vec};
 
 type ShieldingKeyRepositoryMock = KeyRepositoryMock<Rsa3072KeyPair>;
 type TestStf = Stf<TrustedCallSigned, GetterExecutorMock, SgxExternalities, Runtime>;
@@ -51,7 +51,6 @@ pub fn enclave_signer_signatures_are_valid() {
 	let top_pool_author = Arc::new(AuthorApiMock::default());
 	let ocall_api = Arc::new(OnchainMock::default());
 	let shielding_key_repo = Arc::new(ShieldingKeyRepositoryMock::default());
-
 	let enclave_account: AccountId = shielding_key_repo
 		.retrieve_key()
 		.unwrap()
