@@ -15,6 +15,7 @@ parachain_src: &parachain_src
 
 parachain_test: &parachain_test
   - 'ts-tests/**'
+  - 'docker/**'
 
 coverage_src: &coverage_src
   - *parachain_src
