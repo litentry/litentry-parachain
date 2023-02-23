@@ -14,8 +14,6 @@ function print_divider() {
 ROOTDIR=$(git rev-parse --show-toplevel)
 cd "$ROOTDIR/docker"
 
-PARCHAIN_LAUNCH_BIN="$ROOTDIR/docker/node_modules/.bin/parachain-launch"
-
 CHAIN=$1
 CONFIG=$CHAIN-parachain-launch-config.yml
 OUTDIR=generated-$CHAIN
@@ -23,7 +21,7 @@ OUTDIR=generated-$CHAIN
 print_divider
 
 echo "installing parachain-launch ..."
-yarn add -s @open-web3/parachain-launch
+yarn
 print_divider
 
 # pull the polkadot image to make sure we are using the latest
@@ -34,7 +32,7 @@ docker pull -q "$POLKADOT_IMAGE"
 
 print_divider
 
-"$PARCHAIN_LAUNCH_BIN" generate --config="$CONFIG" --output="$OUTDIR" --yes
+yarn start generate --config="$CONFIG" --output="$OUTDIR" --yes
 
 echo "Done, please check files under $ROOTDIR/docker/$OUTDIR/"
 print_divider
