@@ -44,7 +44,7 @@ use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{
 	pallet_teerex::TeerexCallIndexes,
 	provider::{AccessNodeMetadata, Error as MetadataProviderError},
-	Error as MetadataError,NodeMetadata,
+	Error as MetadataError, NodeMetadata,
 };
 use itp_settings::worker::MR_ENCLAVE_SIZE;
 use itp_sgx_crypto::{
@@ -223,16 +223,17 @@ fn generate_ias_ra_extrinsic_internal(
 				.map_err(|e| SgxCryptoError::Other(Box::new(e)))
 		})
 		.ok();
-	debug!("    [Enclave] shielding_pubkey size: {:?}", shielding_pubkey.clone().and_then(|key| Some(key.len())));
+	debug!(
+		"    [Enclave] shielding_pubkey size: {:?}",
+		shielding_pubkey.clone().map(|key| key.len())
+	);
 
 	let vc_pubkey = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT
 		.get()?
 		.retrieve_key()
 		.and_then(|keypair| {
 			// vc signing pubkey
-			keypair.derive_ed25519().map(|keypair| {
-				keypair.public().to_vec()
-			})
+			keypair.derive_ed25519().map(|keypair| keypair.public().to_vec())
 		})
 		.ok();
 	debug!("    [Enclave] VC pubkey: {:?}", vc_pubkey);

@@ -48,6 +48,7 @@ pub struct Enclave<PubKey, Url> {
 }
 
 impl<PubKey, Url> Enclave<PubKey, Url> {
+	#[allow(clippy::too_many_arguments)]
 	pub fn new(
 		pubkey: PubKey,
 		mr_enclave: MrEnclave,
@@ -79,16 +80,8 @@ pub struct SgxEnclaveMetadata {
 }
 
 impl SgxEnclaveMetadata {
-	pub fn new(
-		quote: Vec<u8>,
-		quote_sig: Vec<u8>,
-		quote_cert: Vec<u8>,
-	) -> Self {
-		SgxEnclaveMetadata {
-			quote,
-			quote_sig,
-			quote_cert,
-		}
+	pub fn new(quote: Vec<u8>, quote_sig: Vec<u8>, quote_cert: Vec<u8>) -> Self {
+		SgxEnclaveMetadata { quote, quote_sig, quote_cert }
 	}
 }
 

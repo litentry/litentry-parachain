@@ -213,6 +213,7 @@ pub mod pallet {
 					)
 				}
 
+				#[cfg(not(test))]
 				Enclave::new(
 					sender.clone(),
 					report.mr_enclave,

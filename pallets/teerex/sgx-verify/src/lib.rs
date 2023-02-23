@@ -49,7 +49,8 @@ use sp_std::{
 	prelude::*,
 };
 use teerex_primitives::{
-	Cpusvn, Fmspc, MrEnclave, MrSigner, Pcesvn, QuotingEnclave, SgxBuildMode, TcbVersionStatus, SgxEnclaveMetadata,
+	Cpusvn, Fmspc, MrEnclave, MrSigner, Pcesvn, QuotingEnclave, SgxBuildMode, SgxEnclaveMetadata,
+	TcbVersionStatus,
 };
 use webpki::SignatureAlgorithm;
 use x509_cert::Certificate;
@@ -615,12 +616,10 @@ pub fn verify_ias_report(cert_der: &[u8]) -> Result<SgxReport, &'static str> {
 	let valid_until = webpki::Time::from_seconds_since_unix_epoch(1573419050);
 	verify_server_cert(&sig_cert, valid_until)?;
 
-	// parse_report(netscape.attestation_raw)
 	parse_report(&netscape)
 }
 
 fn parse_report(netscape: &NetscapeComment) -> Result<SgxReport, &'static str> {
-// fn parse_report(report_raw: &[u8]) -> Result<SgxReport, &'static str> {
 	let report_raw: &[u8] = netscape.attestation_raw;
 	// parse attestation report
 	let attn_report: Value = match serde_json::from_slice(report_raw) {
@@ -693,7 +692,11 @@ fn parse_report(netscape: &NetscapeComment) -> Result<SgxReport, &'static str> {
 			pubkey: xt_signer_array,
 			timestamp: ra_timestamp,
 			build_mode: sgx_quote.report_body.sgx_build_mode(),
-			metadata: SgxEnclaveMetadata::new(netscape.attestation_raw.to_vec(), netscape.sig.clone(), netscape.sig_cert.clone()),
+			metadata: SgxEnclaveMetadata::new(
+				netscape.attestation_raw.to_vec(),
+				netscape.sig.clone(),
+				netscape.sig_cert.clone(),
+			),
 		})
 	} else {
 		Err("Failed to parse isvEnclaveQuoteBody from attestation report")

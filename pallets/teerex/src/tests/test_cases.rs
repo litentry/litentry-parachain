@@ -630,7 +630,7 @@ fn production_mode_enclave_attest_works_when_sgx_debug_mode_is_allowed() {
 				vc_pubkey: None,
 				sgx_mode: SgxBuildMode::Production,
 				sgx_metadata: Default::default(),
-		};
+			};
 
 			//Register an enclave compiled in production mode
 			assert_ok!(Teerex::register_enclave(
