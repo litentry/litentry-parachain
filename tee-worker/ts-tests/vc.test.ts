@@ -5,6 +5,7 @@ import { Assertion } from './type-definitions';
 import { assert } from 'chai';
 import { u8aToHex } from '@polkadot/util';
 import { HexString } from '@polkadot/util/types';
+import { Base64 } from 'js-base64';
 
 const assertion = <Assertion>{
     A1: 'A1',
@@ -51,5 +52,38 @@ describeLitentry('VC test', async (context) => {
             const registry = (await context.substrate.query.vcManagement.vcRegistry(index)) as any;
             assert.equal(registry.toHuman(), null);
         }
+    });
+
+    step('Issuer Attestation', async () => {
+        // TODO: 0. Get issuer field from VC
+
+        // TODO: 0.1 Iterater EnclaveRegistry by issuer's mrenclave field
+        
+        // 1. Decode Quote
+        const enclaveRegistry = (await context.substrate.query.teerex.enclaveRegistry(1)) as any;
+        const metadata = enclaveRegistry.toHuman()!['sgxMetadata'];
+        const quote = JSON.parse(Base64.decode(metadata!['quote']));
+        console.log('quote: ', quote);
+
+        // 2. Verify status
+        const status = quote!['isvEnclaveQuoteStatus'];
+        console.log('status: ', status);
+        if (status == 'OK') {
+            console.log("QUOTE verified correctly");
+        } else if (status == 'GROUP_OUT_OF_DATE') {
+            console.log("GROUP_OUT_OF_DATE");
+        } else if (status == 'CONFIGURATION_AND_SW_HARDENING_NEEDED') {
+            console.log("CONFIGURATION_AND_SW_HARDENING_NEEDED");
+        }
+        
+        // 3. Check timestamp is within 24H (90day is recommended by Intel)
+        const timestamp = Date.parse(quote!['timestamp']);
+        console.log('timestamp: ', timestamp);
+        const now = Date.now();
+        console.log('now: ', now);
+        const dt = now - timestamp;
+        console.log('dt: ', dt);
+
+        // TODO: more check
     });
 });
