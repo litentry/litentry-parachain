@@ -209,6 +209,7 @@ pub mod pallet {
 						shielding_key,
 						vc_pubkey,
 						report.build_mode,
+						Default::default(),
 					)
 				}
 
@@ -220,6 +221,7 @@ pub mod pallet {
 					shielding_key,
 					vc_pubkey,
 					report.build_mode,
+					report.metadata,
 				)
 			})?;
 
@@ -242,6 +244,7 @@ pub mod pallet {
 				shielding_key,
 				vc_pubkey,
 				SgxBuildMode::default(),
+				SgxEnclaveMetadata::default(),
 			);
 
 			// TODO: imagine this fn is not called for the first time (e.g. when worker restarts),
@@ -401,6 +404,7 @@ pub mod pallet {
 
 			let dummy_shielding_key: Option<Vec<u8>> = Default::default();
 			let dummy_vc_pubkey: Option<Vec<u8>> = Default::default();
+			let dummy_meta = Default::default();
 			#[cfg(not(feature = "skip-ias-check"))]
 			let enclave = Self::verify_dcap_quote(&sender, dcap_quote).map(|report| {
 				Enclave::new(
@@ -411,6 +415,7 @@ pub mod pallet {
 					dummy_shielding_key,
 					dummy_vc_pubkey,
 					report.build_mode,
+					dummy_meta,
 				)
 			})?;
 
@@ -433,6 +438,7 @@ pub mod pallet {
 				dummy_shielding_key,
 				dummy_vc_pubkey,
 				SgxBuildMode::default(),
+				dummy_meta,
 			);
 
 			Self::add_enclave(&sender, &enclave)?;

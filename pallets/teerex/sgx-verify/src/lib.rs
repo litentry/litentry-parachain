@@ -49,7 +49,7 @@ use sp_std::{
 	prelude::*,
 };
 use teerex_primitives::{
-	Cpusvn, Fmspc, MrEnclave, MrSigner, Pcesvn, QuotingEnclave, SgxBuildMode, TcbVersionStatus,
+	Cpusvn, Fmspc, MrEnclave, MrSigner, Pcesvn, QuotingEnclave, SgxBuildMode, TcbVersionStatus, SgxEnclaveMetadata,
 };
 use webpki::SignatureAlgorithm;
 use x509_cert::Certificate;
@@ -331,25 +331,7 @@ pub struct SgxReport {
 	pub status: SgxStatus,
 	pub timestamp: u64, // unix timestamp in milliseconds
 	pub build_mode: SgxBuildMode,
-	pub metadata: SgxEnclaveMetadata,
-}
-
-#[derive(Encode, Decode, Clone, TypeInfo, PartialEq, Eq, Default, sp_core::RuntimeDebug)]
-pub struct SgxEnclaveMetadata {
-	pub quote: Vec<u8>,
-	pub quote_sig: Vec<u8>,
-	pub quote_cert: Vec<u8>,
-}
-impl SgxEnclaveMetadata {
-	pub fn new(
-		netscape: &NetscapeComment,
-	) -> Self {
-		SgxEnclaveMetadata {
-			quote: netscape.attestation_raw.to_vec(),
-			quote_sig: netscape.sig.clone(),
-			quote_cert: netscape.sig_cert.clone(),
-		}
-	}
+	pub metadata: SgxEnclaveMetadata, // for vc verification
 }
 
 type SignatureAlgorithms = &'static [&'static webpki::SignatureAlgorithm];
@@ -633,10 +615,13 @@ pub fn verify_ias_report(cert_der: &[u8]) -> Result<SgxReport, &'static str> {
 	let valid_until = webpki::Time::from_seconds_since_unix_epoch(1573419050);
 	verify_server_cert(&sig_cert, valid_until)?;
 
-	parse_report(netscape.attestation_raw)
+	// parse_report(netscape.attestation_raw)
+	parse_report(&netscape)
 }
 
-fn parse_report(report_raw: &[u8]) -> Result<SgxReport, &'static str> {
+fn parse_report(netscape: &NetscapeComment) -> Result<SgxReport, &'static str> {
+// fn parse_report(report_raw: &[u8]) -> Result<SgxReport, &'static str> {
+	let report_raw: &[u8] = netscape.attestation_raw;
 	// parse attestation report
 	let attn_report: Value = match serde_json::from_slice(report_raw) {
 		Ok(report) => report,
@@ -708,7 +693,7 @@ fn parse_report(report_raw: &[u8]) -> Result<SgxReport, &'static str> {
 			pubkey: xt_signer_array,
 			timestamp: ra_timestamp,
 			build_mode: sgx_quote.report_body.sgx_build_mode(),
-			metadata: SgxEnclaveMetadata::default(),
+			metadata: SgxEnclaveMetadata::new(netscape.attestation_raw.to_vec(), netscape.sig.clone(), netscape.sig_cert.clone()),
 		})
 	} else {
 		Err("Failed to parse isvEnclaveQuoteBody from attestation report")
