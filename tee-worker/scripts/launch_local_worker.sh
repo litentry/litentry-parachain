@@ -49,20 +49,20 @@ if [ "${CLEANUP}" = 'true' ]; then
 fi
 
 function wait_worker_is_initialized()
-{	
-	for i in $(seq 1 $WAIT_ROUNDS); do
+{
+	for index in $(seq 1 $WAIT_ROUNDS); do
 		state=$(curl -s http://localhost:$1/is_initialized)
 		if [ "$state" == "I am initialized." ]; then
 			echo "Initialization successful: $state"
-            return
-        else
+			return
+		else
 			echo "sleep $WAIT_INTERVAL_SECONDS"
-            sleep $WAIT_INTERVAL_SECONDS
-        fi		
-    done
+			sleep $WAIT_INTERVAL_SECONDS
+		fi
+	done
 	echo
-    echo "Worker initialization failed"
-    exit 1
+	echo "Worker initialization failed"
+	exit 1
 }
 
 echo "Number of WORKER_NUM: ${WORKER_NUM}"
@@ -100,7 +100,7 @@ for ((i = 0; i < ${WORKER_NUM}; i++)); do
 	mkdir -p "${ROOTDIR}"/tmp/"${worker_name}"
 	for Item in 'enclave.signed.so' 'key.txt' 'spid.txt' 'integritee-service' 'integritee-cli'; do
 		cp "${ROOTDIR}/bin/${Item}" "${ROOTDIR}"/tmp/"${worker_name}"
-	done	
+	done
 
 	cd "${ROOTDIR}"/tmp/${worker_name} || exit
 	echo "enter ${ROOTDIR}/tmp/${worker_name}"
@@ -133,7 +133,7 @@ run --skip-ra ${FSUBCMD_DEV} ${FSUBCMD_REQ_STATE}"
 	eval "${launch_command}" > "${ROOTDIR}"/log/${worker_name}.log 2>&1 &
 	echo "${worker_name}(integritee-service) started successfully. log: ${ROOTDIR}/log/${worker_name}.log"
 
-	if ((${WORKER_NUM} > 0)); then		
+	if ((${WORKER_NUM} > 0)); then
 		wait_worker_is_initialized ${untrusted_http_port}
 	fi
 done
