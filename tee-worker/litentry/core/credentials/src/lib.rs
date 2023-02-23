@@ -104,12 +104,12 @@ pub struct Issuer {
 	/// ID of the TEE Worker
 	pub id: String,
 	pub name: String,
-	pub shard: String,
+	pub mrenclave: String,
 }
 
 impl Issuer {
 	pub fn is_empty(&self) -> bool {
-		self.shard.is_empty() || self.shard.is_empty()
+		self.mrenclave.is_empty() || self.mrenclave.is_empty()
 	}
 
 	pub fn set_id(&mut self, id: &AccountId) {
@@ -225,7 +225,7 @@ impl Credential {
 	) -> Result<Self, Error> {
 		let mut vc: Self =
 			serde_json::from_str(s).map_err(|err| Error::ParseError(format!("{}", err)))?;
-		vc.issuer.shard = shard.encode().to_base58();
+		vc.issuer.mrenclave = shard.encode().to_base58();
 		vc.issuer.name = LITENTRY_ISSUER_NAME.to_string();
 		vc.credential_subject.id = account_id_to_string(who);
 		vc.issuance_block_number = bn;
