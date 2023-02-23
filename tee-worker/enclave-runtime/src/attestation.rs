@@ -223,15 +223,19 @@ fn generate_ias_ra_extrinsic_internal(
 				.map_err(|e| SgxCryptoError::Other(Box::new(e)))
 		})
 		.ok();
+	debug!("    [Enclave] shielding_pubkey size: {:?}", shielding_pubkey.clone().and_then(|key| Some(key.len())));
 
 	let vc_pubkey = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT
 		.get()?
 		.retrieve_key()
 		.and_then(|keypair| {
 			// vc signing pubkey
-			keypair.derive_ed25519().map(|keypair| hex::encode(keypair.public()))
+			keypair.derive_ed25519().map(|keypair| {
+				keypair.public().to_vec()
+			})
 		})
 		.ok();
+	debug!("    [Enclave] VC pubkey: {:?}", vc_pubkey);
 
 	let call = OpaqueCall::from_tuple(&(call_ids, cert_der, url, shielding_pubkey, vc_pubkey));
 
