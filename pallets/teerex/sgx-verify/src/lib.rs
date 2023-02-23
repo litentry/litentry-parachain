@@ -693,7 +693,7 @@ fn parse_report(netscape: &NetscapeComment) -> Result<SgxReport, &'static str> {
 			timestamp: ra_timestamp,
 			build_mode: sgx_quote.report_body.sgx_build_mode(),
 			metadata: SgxEnclaveMetadata::new(
-				netscape.attestation_raw.to_vec(),
+				base64::encode(&netscape.attestation_raw).as_bytes().to_vec(),
 				netscape.sig.clone(),
 				netscape.sig_cert.clone(),
 			),
