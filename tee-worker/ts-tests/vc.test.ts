@@ -44,6 +44,7 @@ describeLitentry('VC test', async (context) => {
             assert.equal(registry.toHuman()!['status'], 'Active', 'check registry error');
             //check issuer attestation
             await checkIssuerAttestation(vc.replace('0x', ''), context.substrate);
+            console.log(`--------Assertion ${key} is pass-----------`);
         }
     });
 
