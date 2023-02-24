@@ -167,7 +167,7 @@ where
 		debug!("	[Assertion] payload: {}", payload);
 		debug!("	[Assertion] payload: {:?}", payload.as_bytes());
 
-		if let Ok((enclave_account, sig)) = signer.sign_vc_with_self(&payload.as_bytes()) {
+		if let Ok((enclave_account, sig)) = signer.sign_vc_with_self(payload.as_bytes()) {
 			debug!("	[Assertion] signature: {:?}", sig);
 
 			credential.issuer.id = account_id_to_string(&enclave_account);
