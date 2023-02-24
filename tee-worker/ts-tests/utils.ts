@@ -25,6 +25,7 @@ import { after, before, describe } from 'mocha';
 import { generateChallengeCode, getSigner } from './web3/setup';
 import { ethers } from 'ethers';
 import { generateTestKeys } from './web3/functions';
+import { Base64 } from 'js-base64';
 
 const base58 = require('micro-base58');
 const crypto = require('crypto');
@@ -312,4 +313,31 @@ export function getMessage(address: string, wallet: string): string {
     const challengeCode = generateChallengeCode();
     const messgae = `Signing in ${process.env.ID_HUB_URL} with ${address} using ${wallet} and challenge code is: ${challengeCode}`;
     return messgae;
+}
+
+export function issuerAttestation(metadata: any) {
+    // 1. Decode Quote
+    const quote = JSON.parse(Base64.decode(metadata!['quote']));
+    console.log('quote: ', quote);
+
+    // 2. Verify status
+    const status = quote!['isvEnclaveQuoteStatus'];
+    console.log('status: ', status);
+    if (status == 'OK') {
+        console.log("QUOTE verified correctly");
+    } else if (status == 'GROUP_OUT_OF_DATE') {
+        console.log("GROUP_OUT_OF_DATE");
+    } else if (status == 'CONFIGURATION_AND_SW_HARDENING_NEEDED') {
+        console.log("CONFIGURATION_AND_SW_HARDENING_NEEDED");
+    }
+    
+    // 3. Check timestamp is within 24H (90day is recommended by Intel)
+    const timestamp = Date.parse(quote!['timestamp']);
+    console.log('timestamp: ', timestamp);
+    const now = Date.now();
+    console.log('now: ', now);
+    const dt = now - timestamp;
+    console.log('dt: ', dt);
+
+    // TODO: more check
 }
