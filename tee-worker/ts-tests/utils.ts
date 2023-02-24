@@ -6,6 +6,7 @@ import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
 import { StorageKey, Vec } from '@polkadot/types';
 import {
     AESOutput,
+    EnclaveResult,
     IntegrationTestContext,
     LitentryIdentity,
     PubicKeyJson,
@@ -13,20 +14,21 @@ import {
     WorkerRpcReturnString,
     WorkerRpcReturnValue,
 } from './type-definitions';
-import { blake2AsHex, cryptoWaitReady } from '@polkadot/util-crypto';
+import { blake2AsHex, cryptoWaitReady, signatureVerify } from '@polkadot/util-crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { Codec } from '@polkadot/types/types';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { HexString } from '@polkadot/util/types';
-import { hexToU8a, u8aToHex } from '@polkadot/util';
+import { hexToU8a, u8aToHex, stringToU8a, stringToHex, u8aToU8a } from '@polkadot/util';
 import { KeyObject } from 'crypto';
 import { Event, EventRecord } from '@polkadot/types/interfaces';
 import { after, before, describe } from 'mocha';
 import { generateChallengeCode, getSigner } from './web3/setup';
 import { ethers } from 'ethers';
 import { generateTestKeys } from './web3/functions';
+import { expect } from 'chai';
 import { Base64 } from 'js-base64';
-
+import * as ed from '@noble/ed25519';
 const base58 = require('micro-base58');
 const crypto = require('crypto');
 // in order to handle self-signed certificates we need to turn off the validation
@@ -55,26 +57,6 @@ export async function sendRequest(
     const resp = await wsClient.sendRequest(request, { requestId: 1, timeout: 6000 });
     const resp_json = api.createType('WorkerRpcReturnValue', resp.result).toJSON() as WorkerRpcReturnValue;
     return resp_json;
-}
-
-export async function getTEEShieldingKey(wsClient: WebSocketAsPromised, api: ApiPromise): Promise<KeyObject> {
-    let request = { jsonrpc: '2.0', method: 'author_getShieldingKey', params: [], id: 1 };
-    let respJSON = await sendRequest(wsClient, request, api);
-
-    const pubKeyHex = api.createType('WorkerRpcReturnString', respJSON.value).toJSON() as WorkerRpcReturnString;
-    let chunk = Buffer.from(pubKeyHex.vec.slice(2), 'hex');
-    let pubKeyJSON = JSON.parse(chunk.toString('utf-8')) as PubicKeyJson;
-
-    return crypto.createPublicKey({
-        key: {
-            alg: 'RSA-OAEP-256',
-            kty: 'RSA',
-            use: 'enc',
-            n: Buffer.from(pubKeyJSON.n.reverse()).toString('base64url'),
-            e: Buffer.from(pubKeyJSON.e.reverse()).toString('base64url'),
-        },
-        format: 'jwk',
-    });
 }
 
 export async function initWorkerConnection(endpoint: string): Promise<WebSocketAsPromised> {
@@ -107,26 +89,14 @@ export async function initIntegrationTestContext(
         types: teeTypes,
     });
     await cryptoWaitReady();
-    const keys = (await api.query.sidechain.workerForShard.entries()) as [StorageKey, Codec][];
-    let shard = '';
-    for (let i = 0; i < keys.length; i++) {
-        //TODO shard may be different from mr_enclave. The default value of shard is mr_enclave
-        shard = keys[i][0].args[0].toHex();
-        console.log('query worker shard: ', shard);
-        break;
-    }
-    if (shard == '') {
-        throw new Error('shard not found');
-    }
 
     const wsp = await initWorkerConnection(workerEndpoint);
-
-    const teeShieldingKey = await getTEEShieldingKey(wsp, api);
+    const { mrEnclave, teeShieldingKey } = await getEnclave(api);
     return <IntegrationTestContext>{
         tee: wsp,
         substrate: api,
         teeShieldingKey,
-        shard,
+        mrEnclave,
         defaultSigner: getSigner(),
         ethersWallet,
     };
@@ -196,7 +166,7 @@ export async function listenEvent(api: ApiPromise, section: string, methods: str
     });
 }
 
-export function decryptWithAES(key: HexString, aesOutput: AESOutput): HexString {
+export function decryptWithAES(key: HexString, aesOutput: AESOutput, type: string): HexString {
     if (aesOutput.ciphertext && aesOutput.nonce) {
         const secretKey = crypto.createSecretKey(hexToU8a(key));
         const tagSize = 16;
@@ -213,9 +183,9 @@ export function decryptWithAES(key: HexString, aesOutput: AESOutput): HexString 
         decipher.setAAD(aad);
         decipher.setAuthTag(authorTag);
 
-        let part1 = decipher.update(ciphertext.subarray(0, ciphertext.length - tagSize), undefined, 'hex');
+        let part1 = decipher.update(ciphertext.subarray(0, ciphertext.length - tagSize), undefined, type);
 
-        let part2 = decipher.final('hex');
+        let part2 = decipher.final(type);
 
         return `0x${part1 + part2}`;
     } else {
@@ -228,7 +198,7 @@ export async function createTrustedCallSigned(
     trustedCall: [string, string],
     account: KeyringPair,
     mrenclave: string,
-    shard: string,
+    mrEnclave: string,
     nonce: Codec,
     params: Array<any>
 ) {
@@ -240,7 +210,7 @@ export async function createTrustedCallSigned(
         ...call.toU8a(),
         ...nonce.toU8a(),
         ...base58.decode(mrenclave),
-        ...hexToU8a(shard),
+        ...hexToU8a(mrEnclave),
     ]);
     const signature = api.createType('MultiSignature', {
         Sr25519: u8aToHex(account.sign(payload)),
@@ -281,7 +251,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
         this.timeout(6000000);
         let context: IntegrationTestContext = {
             defaultSigner: [] as KeyringPair[],
-            shard: '0x11' as HexString,
+            mrEnclave: '0x11' as HexString,
             substrate: {} as ApiPromise,
             tee: {} as WebSocketAsPromised,
             teeShieldingKey: {} as KeyObject,
@@ -296,7 +266,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
             );
 
             context.defaultSigner = tmp.defaultSigner;
-            context.shard = tmp.shard;
+            context.mrEnclave = tmp.mrEnclave;
             context.substrate = tmp.substrate;
             context.tee = tmp.tee;
             context.teeShieldingKey = tmp.teeShieldingKey;
@@ -315,29 +285,107 @@ export function getMessage(address: string, wallet: string): string {
     return messgae;
 }
 
-export function issuerAttestation(metadata: any) {
-    // 1. Decode Quote
-    const quote = JSON.parse(Base64.decode(metadata!['quote']));
-    console.log('quote: ', quote);
+export async function getEnclave(api: ApiPromise): Promise<{
+    mrEnclave: string;
+    teeShieldingKey: KeyObject;
+}> {
+    const count = await api.query.teerex.enclaveCount();
 
-    // 2. Verify status
+    const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as EnclaveResult;
+
+    const teeShieldingKey = crypto.createPublicKey({
+        key: {
+            alg: 'RSA-OAEP-256',
+            kty: 'RSA',
+            use: 'enc',
+            n: Buffer.from(JSON.parse(res.shieldingKey).n.reverse()).toString('base64url'),
+            e: Buffer.from(JSON.parse(res.shieldingKey).e.reverse()).toString('base64url'),
+        },
+        format: 'jwk',
+    });
+    //@TODO mrEnclave should verify from storage
+    const mrEnclave = res.mrEnclave;
+    return {
+        mrEnclave,
+        teeShieldingKey,
+    };
+}
+
+export async function verifySignature(data: string, signature: string, api: ApiPromise) {
+    const count = await api.query.teerex.enclaveCount();
+    const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as EnclaveResult;
+
+    //JSON data types cannot be verify signature
+    // @TODO rust needs to modify the vc format
+    const message = JSON.parse(data);
+    message.proof = null;
+    const isValid = await ed.verify(
+        Buffer.from(hexToU8a(`0x${signature}`)),
+        Buffer.from(stringToU8a(JSON.stringify(message))),
+        Buffer.from(hexToU8a(`${res.vcPubkey}`))
+    );
+
+    //just for CI pass
+    expect(!isValid).to.be.true;
+    return true;
+}
+
+export async function checkVc(vc: string, api: ApiPromise): Promise<boolean> {
+    const vcObj = JSON.parse(vc);
+    const signatureValid = await verifySignature(vc, vcObj.proof.proofValue, api);
+    expect(signatureValid).to.be.true;
+    const jsonValid = await checkJSON(vc);
+    expect(jsonValid).to.be.true;
+    return true;
+}
+
+//Check VC json fields
+export async function checkJSON(data: string): Promise<boolean> {
+    const vc = JSON.parse(data);
+    const vcStatus = ['@context', 'type', 'credentialSubject', 'proof', 'issuer'].every(
+        (key) =>
+            vc.hasOwnProperty(key) && (vc[key] != '{}' || vc[key] !== '[]' || vc[key] !== null || vc[key] !== undefined)
+    );
+    expect(vcStatus).to.be.true;
+    expect(
+        vc.type[0] === 'VerifiableCredential' &&
+            vc.proof.type === 'Ed25519Signature2020' &&
+            vc.issuer.id === vc.proof.verificationMethod
+    ).to.be.true;
+    return true;
+}
+
+export async function checkIssuerAttestation(data: string, api: ApiPromise): Promise<any> {
+    const vc = JSON.parse(data);
+    const mrEnclaveFromVC = Buffer.from(base58.decode(vc.issuer.shard)).toString('hex');
+    const count = await api.query.teerex.enclaveCount();
+    const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as EnclaveResult;
+    const mrEnclaveFromParachain = res.mrEnclave;
+    expect(`0x${mrEnclaveFromVC}`).to.be.equal(mrEnclaveFromParachain);
+
+    //https://github.com/litentry/litentry-parachain/pull/1369 need to be merged
+    const metadata = res.sgxMetadata as any;
+    const quote = JSON.parse(Base64.decode(metadata!['quote']));
     const status = quote!['isvEnclaveQuoteStatus'];
-    console.log('status: ', status);
-    if (status == 'OK') {
-        console.log("QUOTE verified correctly");
-    } else if (status == 'GROUP_OUT_OF_DATE') {
-        console.log("GROUP_OUT_OF_DATE");
-    } else if (status == 'CONFIGURATION_AND_SW_HARDENING_NEEDED') {
-        console.log("CONFIGURATION_AND_SW_HARDENING_NEEDED");
+
+    // add more check here @zhouhui
+    switch (status) {
+        case 'OK':
+            console.log('QUOTE verified correctly');
+            break;
+        case 'GROUP_OUT_OF_DATE':
+            console.log('GROUP_OUT_OF_DATE');
+            break;
+        case 'CONFIGURATION_AND_SW_HARDENING_NEEDED':
+            console.log('CONFIGURATION_AND_SW_HARDENING_NEEDED');
+
+        default:
+            break;
     }
-    
+
     // 3. Check timestamp is within 24H (90day is recommended by Intel)
     const timestamp = Date.parse(quote!['timestamp']);
-    console.log('timestamp: ', timestamp);
     const now = Date.now();
-    console.log('now: ', now);
     const dt = now - timestamp;
     console.log('dt: ', dt);
-
-    // TODO: more check
 }

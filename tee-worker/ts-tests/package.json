@@ -11,6 +11,7 @@
 		"test-error:staging": "cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register 'error.test.ts'"
 	},
 	"dependencies": {
+		"@noble/ed25519": "^1.7.3",
 		"@polkadot/api": "^9.10.5",
 		"@polkadot/types": "^9.10.5",
 		"chai": "^4.3.6",
