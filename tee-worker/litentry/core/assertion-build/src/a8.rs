@@ -24,11 +24,11 @@ use crate::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use lc_credentials::Credential;
-use lc_data_providers::graphql::{GraphQLClient, VerifiedCredentialsTotalTxs};
-use litentry_primitives::{Assertion, Identity, ParentchainBlockNumber, AssertionNetworks};
+use lc_data_providers::graphql::{GraphQLClient, VerifiedCredentialsTotalTxs, VerifiedCredentialsNetwork};
+use litentry_primitives::{Assertion, Identity, ParentchainBlockNumber, AssertionNetworks, Network};
 use log::*;
 use parachain_core_primitives::VCMPError;
-use std::{str::from_utf8, string::ToString, vec, vec::Vec};
+use std::{str::from_utf8, string::ToString, vec, vec::Vec, collections::{HashMap, HashSet}};
 
 pub fn build(
 	identities: Vec<Identity>,
@@ -42,27 +42,78 @@ pub fn build(
 	let mut client = GraphQLClient::new();
 	let mut total_txs: u64 = 0;
 
+	let mut sub_maps = HashMap::<[u8; 32], HashSet<VerifiedCredentialsNetwork>>::new();
+	let mut eth_maps = HashMap::<[u8; 20], HashSet<VerifiedCredentialsNetwork>>::new();
+
 	for identity in identities {
-		let query = match identity {
-			Identity::Substrate { network, address } =>
-				from_utf8(address.as_ref()).map_or(None, |addr| {
-					Some(VerifiedCredentialsTotalTxs::new(
-						vec![addr.to_string()],
-						vec![network.into()],
-					))
-				}),
-			Identity::Evm { network, address } =>
-				from_utf8(address.as_ref()).map_or(None, |addr| {
-					Some(VerifiedCredentialsTotalTxs::new(
-						vec![addr.to_string()],
-						vec![network.into()],
-					))
-				}),
+		match identity {
+			Identity::Substrate { network, address } => {
+				let key = address.as_ref();
+				if sub_maps.contains_key(key) {
+					let values = sub_maps.get_mut(key).unwrap();
+					values.insert(network.into());
+				} else {
+					let mut values = HashSet::<VerifiedCredentialsNetwork>::new();
+					values.insert(network.into());
+					sub_maps.insert(key.clone(), values);
+				}
+			},
+			Identity::Evm { network, address } => {
+				let key = address.as_ref();
+				if eth_maps.contains_key(key) {
+					let values = eth_maps.get_mut(key).unwrap();
+					values.insert(network.into());
+				} else {
+					let mut values = HashSet::<VerifiedCredentialsNetwork>::new();
+					values.insert(network.into());
+					eth_maps.insert(key.clone(), values);
+				}
+			},
 			_ => {
 				debug!("ignore identity: {:?}", identity);
-				None
 			},
 		};
+	}
+
+	let available_networks = if !networks.is_empty() {
+		let mut set = HashSet::new();
+		for n in networks {
+			set.insert(n);
+		}
+
+		set
+	 } else {
+		let litentry = Network::try_from("litentry".as_bytes().to_vec()).unwrap();
+		let litmus = Network::try_from("litmus".as_bytes().to_vec()).unwrap();
+		let polkadot = Network::try_from("polkadot".as_bytes().to_vec()).unwrap();
+		let kusama = Network::try_from("kusama".as_bytes().to_vec()).unwrap();
+		let khala = Network::try_from("khala".as_bytes().to_vec()).unwrap();
+		let ethereum = Network::try_from("ethereum".as_bytes().to_vec()).unwrap();
+		VerifiedCredentialsNetwork::from()
+		HashSet::from([litentry, litmus, kusama, polkadot, khala, ethereum])
+
+	};
+
+	// substrate networks
+	for (&key, mut v) in sub_maps.iter_mut() {
+		let intersection: HashSet<_> = *v.intersection(&available_networks).collect();
+		*v = intersection;
+	}
+
+	// eth networks
+	for (&key, mut v) in eth_maps.iter_mut() {
+		let intersection: HashSet<_> = *v.intersection(&available_networks).collect();
+		*v = intersection;
+	}
+
+	for (addr, v) in sub_maps {
+		let query = from_utf8(addr.as_ref()).map_or(None, |addr| {
+			Some(VerifiedCredentialsTotalTxs::new(
+				vec![addr.to_string()],
+				Vec::from_iter(v),
+			))
+		});
+
 		if let Some(query) = query {
 			if let Ok(result) = client.query_total_transactions(query) {
 				total_txs += result.iter().map(|v| v.total_transactions).sum::<u64>();
@@ -70,6 +121,21 @@ pub fn build(
 		}
 	}
 
+	for (addr, v) in eth_maps {
+		let query = from_utf8(addr.as_ref()).map_or(None, |addr| {
+			Some(VerifiedCredentialsTotalTxs::new(
+				vec![addr.to_string()],
+				Vec::from_iter(v),
+			))
+		});
+
+		if let Some(query) = query {
+			if let Ok(result) = client.query_total_transactions(query) {
+				total_txs += result.iter().map(|v| v.total_transactions).sum::<u64>();
+			}
+		}
+	}
+	
 	debug!("total_transactions: {}", total_txs);
 
 	let min: u64;

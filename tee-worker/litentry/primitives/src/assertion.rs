@@ -53,6 +53,15 @@ pub enum Assertion {
 	A13(u32),     // (Karma_amount) - TODO: unsupported
 }
 
+pub const ASSERTION_NETWORKS: [&str; 6] = [
+	"litentry",
+	"litmus",
+	"polkadot",
+	"kusama",
+	"khala",
+	"ethereum",
+];
+
 pub const ASSERTION_FROM_DATE: [&str; 7] = [
 	"2017-01-01",
 	"2018-01-01",
