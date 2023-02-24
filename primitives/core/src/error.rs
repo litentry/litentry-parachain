@@ -28,6 +28,9 @@ pub enum IMPError {
 	DecodeHexFailed(ErrorString),
 	HttpRequestFailed(ErrorString),
 
+	// tee stf error
+	StfError(ErrorString),
+
 	// Indirect call handling errors when importing parachain blocks
 	CreateIdentityHandlingFailed,
 	RemoveIdentityHandlingFailed,
@@ -35,6 +38,7 @@ pub enum IMPError {
 	SetUserShieldingKeyHandlingFailed,
 
 	// identity verification errors
+	InvalidUserShieldingKey,
 	InvalidIdentity,
 	WrongWeb2Handle,
 	UnexpectedMessage,
