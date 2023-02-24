@@ -398,7 +398,7 @@ jobs:
         uses: andymckay/cancel-action@0.3
 
   tee-test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     needs:
       - check-file-change
       - parachain-build
