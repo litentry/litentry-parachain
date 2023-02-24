@@ -1,0 +1,12 @@
+{
+  "name": "litentry-parachain-launch",
+  "version": "1.0.0",
+  "main": "",
+  "license": "GPL-3.0",
+  "scripts": {
+    "start": "node_modules/@open-web3/parachain-launch/bin/parachain-launch"
+  },
+  "dependencies": {
+    "@open-web3/parachain-launch": "^1.3.0"
+  }
+}
