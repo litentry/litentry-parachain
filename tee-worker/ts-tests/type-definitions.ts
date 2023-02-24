@@ -170,6 +170,7 @@ export type EnclaveResult = {
     mrEnclave: `0x${string}`;
     shieldingKey: `0x${string}`;
     vcPubkey: `0x${string}`;
+    sgxMetadata: {};
 };
 
 export type PubicKeyJson = {
