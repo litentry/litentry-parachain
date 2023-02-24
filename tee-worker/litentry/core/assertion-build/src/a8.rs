@@ -21,7 +21,6 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::Result;
-use frame_support::BoundedVec;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use lc_credentials::Credential;
@@ -38,6 +37,8 @@ pub fn build(
 	who: &AccountId,
 	bn: ParentchainBlockNumber,
 ) -> Result<Credential> {
+	log::debug!("	[AssertionBuild] A8 networks: {:?}", networks);
+
 	let mut client = GraphQLClient::new();
 	let mut total_txs: u64 = 0;
 
