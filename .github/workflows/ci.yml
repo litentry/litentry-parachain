@@ -46,8 +46,12 @@ env:
   REF_VERSION: ${{ github.head_ref || github.ref_name }}
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/dev' }}
+  # see https://stackoverflow.com/questions/74117321/if-condition-in-concurrency-in-gha
+  # it guarantees:
+  # - for push in dev: all triggered CIs will be run, none is cancelled
+  # - for PR: later triggered CIs will cancel previous runs, maximum one CI will be run
+  group: ${{ github.workflow }}-${{ github.head_ref && github.ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   check-file-change:
