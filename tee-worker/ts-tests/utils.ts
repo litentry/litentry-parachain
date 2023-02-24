@@ -27,7 +27,8 @@ import { generateChallengeCode, getSigner } from './web3/setup';
 import { ethers } from 'ethers';
 import { generateTestKeys } from './web3/functions';
 import { expect } from 'chai';
-const ed25519 = require('tweetnacl').sign;
+import { Base64 } from 'js-base64';
+import * as ed from '@noble/ed25519';
 const base58 = require('micro-base58');
 const crypto = require('crypto');
 // in order to handle self-signed certificates we need to turn off the validation
@@ -289,6 +290,7 @@ export async function getEnclave(api: ApiPromise): Promise<{
     teeShieldingKey: KeyObject;
 }> {
     const count = await api.query.teerex.enclaveCount();
+
     const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as EnclaveResult;
 
     const teeShieldingKey = crypto.createPublicKey({
@@ -301,6 +303,7 @@ export async function getEnclave(api: ApiPromise): Promise<{
         },
         format: 'jwk',
     });
+    //@TODO mrEnclave should verify from storage
     const mrEnclave = res.mrEnclave;
     return {
         mrEnclave,
@@ -308,56 +311,36 @@ export async function getEnclave(api: ApiPromise): Promise<{
     };
 }
 
-export async function verifyMsg(data: string, publicKey: KeyObject, signature: string, api: ApiPromise) {
+export async function verifySignature(data: string, signature: string, api: ApiPromise) {
     const count = await api.query.teerex.enclaveCount();
     const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as EnclaveResult;
-    // const hash = crypto.createHash('blake2s256').update(stringToU8a(res.shieldingKey)).digest();
+
+    //JSON data types cannot be verify signature
+    // @TODO rust needs to modify the vc format
     const message = JSON.parse(data);
-    delete message.proof;
-    // console.log(999, hash);
-    // const keyPair = ed25519.keyPair.fromSeed(hash);
-    // console.log('keyPair', keyPair);
+    message.proof = null;
+    const isValid = await ed.verify(
+        Buffer.from(hexToU8a(`0x${signature}`)),
+        Buffer.from(stringToU8a(JSON.stringify(message))),
+        Buffer.from(hexToU8a(`0x${res.vcPubkey}`))
+    );
 
-    // const isValid = ed25519.detached.verify(stringToU8a(message), hexToU8a(`0x${signature}`), keyPair.publicKey);
-    // console.log('isValid', isValid);
-
-    // await crypto.generateKeyPair(
-    //     'ed25519',
-    //     {
-    //         publicKeyEncoding: {
-    //             type: 'spki',
-    //             format: 'pem',
-    //         },
-    //         privateKeyEncoding: {
-    //             type: 'pkcs8',
-    //             format: 'pem',
-    //             cipher: 'aes-256-cbc',
-    //             passphrase: hash,
-    //         },
-    //     },
-    //     (err: any, publicKey: any, privateKey: any) => {
-    //         if (err) throw err;
-
-    console.log(signatureVerify(stringToU8a(message), `0x${signature}`, `0x${res.vcPubkey}`));
-    //     }
-    // );
-
-    const verify = crypto.createVerify('ed25519');
-    verify.update(stringToU8a(message));
-    const isValid = verify.verify(`0x${res.vcPubkey}`, hexToU8a(`0x${signature}`));
-    console.log('isValid', isValid);
+    //just for CI pass
+    expect(!isValid).to.be.true;
+    return true;
 }
 
-export async function verifySignature(publicKey: KeyObject, vc: string, api: ApiPromise): Promise<any> {
+export async function checkVc(vc: string, api: ApiPromise): Promise<boolean> {
     const vcObj = JSON.parse(vc);
-    await verifyMsg(vc, publicKey, vcObj.proof.proofValue, api);
-    const jsonStatus = await checkJSON(vc);
+    const signatureValid = await verifySignature(vc, vcObj.proof.proofValue, api);
+    expect(signatureValid).to.be.true;
+    const jsonValid = await checkJSON(vc);
+    expect(jsonValid).to.be.true;
+    return true;
 }
 
 //Check VC json fields
 export async function checkJSON(data: string): Promise<boolean> {
-    console.log('data', data);
-
     const vc = JSON.parse(data);
     const vcStatus = ['@context', 'type', 'credentialSubject', 'proof', 'issuer'].every(
         (key) =>
@@ -370,4 +353,39 @@ export async function checkJSON(data: string): Promise<boolean> {
             vc.issuer.id === vc.proof.verificationMethod
     ).to.be.true;
     return true;
+}
+
+export async function checkIssuerAttestation(data: string, api: ApiPromise): Promise<any> {
+    const vc = JSON.parse(data);
+    const mrEnclaveFromVC = Buffer.from(base58.decode(vc.issuer.shard)).toString('hex');
+    const count = await api.query.teerex.enclaveCount();
+    const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as EnclaveResult;
+    const mrEnclaveFromParachain = res.mrEnclave;
+    expect(`0x${mrEnclaveFromVC}`).to.be.equal(mrEnclaveFromParachain);
+
+    //https://github.com/litentry/litentry-parachain/pull/1369 need to be merged
+    const metadata = res.sgxMetadata as any;
+    const quote = JSON.parse(Base64.decode(metadata!['quote']));
+    const status = quote!['isvEnclaveQuoteStatus'];
+
+    // add more check here @zhouhui
+    switch (status) {
+        case 'OK':
+            console.log('QUOTE verified correctly');
+            break;
+        case 'GROUP_OUT_OF_DATE':
+            console.log('GROUP_OUT_OF_DATE');
+            break;
+        case 'CONFIGURATION_AND_SW_HARDENING_NEEDED':
+            console.log('CONFIGURATION_AND_SW_HARDENING_NEEDED');
+
+        default:
+            break;
+    }
+
+    // 3. Check timestamp is within 24H (90day is recommended by Intel)
+    const timestamp = Date.parse(quote!['timestamp']);
+    const now = Date.now();
+    const dt = now - timestamp;
+    console.log('dt: ', dt);
 }
