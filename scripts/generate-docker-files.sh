@@ -32,6 +32,7 @@ docker pull -q "$POLKADOT_IMAGE"
 
 print_divider
 
+yarn start --version
 yarn start generate --config="$CONFIG" --output="$OUTDIR" --yes
 
 echo "Done, please check files under $ROOTDIR/docker/$OUTDIR/"
