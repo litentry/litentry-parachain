@@ -132,7 +132,9 @@ jobs:
 
       - name: Print GITHUB_OUTPUT
         run: |
+          echo "::group::Github outputs"
           echo "$GITHUB_OUTPUT"
+          echo "::endgroup::"
 
   fmt:
     runs-on: ubuntu-latest
