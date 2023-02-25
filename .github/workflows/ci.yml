@@ -124,17 +124,11 @@ jobs:
           if [ "${{ steps.filter.outputs.tee_test }}" = "true" ] || [ "$rebuild_parachain" = "true" ] || [ "$rebuild_tee" = "true" ]; then
             run_tee_test=true
           fi
-          echo "rebuild_parachain=$rebuild_parachain" >> $GITHUB_OUTPUT
-          echo "rebuild_tee=$rebuild_tee" >> $GITHUB_OUTPUT
-          echo "push_docker=$push_docker" >> $GITHUB_OUTPUT
-          echo "run_parachain_test=$run_parachain_test" >> $GITHUB_OUTPUT
-          echo "run_tee_test=$run_tee_test" >> $GITHUB_OUTPUT
-
-      - name: Print GITHUB_OUTPUT
-        run: |
-          echo "::group::Github outputs"
-          cat "$GITHUB_OUTPUT"
-          echo "::endgroup::"
+          echo "rebuild_parachain=$rebuild_parachain" | tee -a $GITHUB_OUTPUT
+          echo "rebuild_tee=$rebuild_tee" | tee -a $GITHUB_OUTPUT
+          echo "push_docker=$push_docker" | tee -a $GITHUB_OUTPUT
+          echo "run_parachain_test=$run_parachain_test" | tee -a $GITHUB_OUTPUT
+          echo "run_tee_test=$run_tee_test" | tee -a $GITHUB_OUTPUT
 
   fmt:
     runs-on: ubuntu-latest
