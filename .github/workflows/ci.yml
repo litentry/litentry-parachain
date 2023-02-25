@@ -54,9 +54,9 @@ on:
         description: rebuild-tee-docker
         required: true
         default: true
-      force-push-docker:
+      push-docker:
         type: boolean
-        description: force-push-docker
+        description: push-docker
         required: true
         default: fasle
 
@@ -113,7 +113,7 @@ jobs:
           if [ "${{ github.event.inputs.rebuild-tee-docker }}" = "true" ] || [ "${{ steps.filter.outputs.tee_src }}" = "true" ]; then
             rebuild_tee=true
           fi
-          if [ "${{ github.event.inputs.force-push-docker }}" = "true" ]; then
+          if [ "${{ github.event.inputs.push-docker }}" = "true" ]; then
             push_docker=true
           elif [ "${{ github.event_name }}" = 'push' ] && [ "${{ github.ref }}" = 'refs/heads/dev' ]; then
             push_docker=true
@@ -561,15 +561,15 @@ jobs:
   # Secrets are not passed to the runner when a workflow is triggered from a forked repository,
   # see https://docs.github.com/en/actions/security-guides/encrypted-secrets#using-encrypted-secrets-in-a-workflow
   #
-  # Only push docker image when
-  #   - tests are passed on dev branch
+  # Only try to push docker image when
   #   - parachain-ts-test-hook passes
   #   - tee-test-hook passes
-  # These hooks will always be executed - even when the image didn't change. It shouldn't do harm
-  # even the image is simply downloaded and re-pushed.
+  #   - set-condition.outputs.push-docker is `true`
+  # Whether the parachain or tee-worker image will actually be pushed still depends on if a new image was built/rebuilt.
+  # This is important not to overwrite any other jobs where a rebuild **was** triggered.
   #
-  # We don't have to depend on jobs like `parachain-unit-test` as those jobs have the same file-filter dependencies as
-  # docker image build: `parachain_src` changed, so there must be no new image if `parachain-unit-test` is skipped.
+  # We don't have to depend on jobs like `parachain-unit-test` as they have the same trigger condition `rebuild_parachain`,
+  # so there must be no new image if `parachain-unit-test` is skipped.
   #
   # `!failure()` needs to be used to cover skipped jobs
   push-docker:
@@ -599,8 +599,15 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      - name: Push docker image
+      # only push the docker image if we rebuilt it
+      - name: Push parachain image
+        if: needs.set-condition.outputs.rebuild-parachain == 'true'
         run: |
           docker push litentry/litentry-parachain
+
+      # only push the docker image if we rebuilt it
+      - name: Push tee-worker image
+        if: needs.set-condition.outputs.rebuild-tee == 'true'
+        run: |
           docker push litentry/integritee-worker
           docker push litentry/integritee-cli
