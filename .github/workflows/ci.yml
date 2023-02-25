@@ -342,10 +342,12 @@ jobs:
     needs:
       - set-condition
       - parachain-build
-    if: needs.set-condition.outputs.run_parachain_test == 'true'
     strategy:
       matrix:
-        chain: [litmus, litentry, rococo]
+        chain:
+          - litmus
+          - litentry
+          - rococo
     steps:
       - uses: actions/checkout@v3
 
@@ -358,6 +360,7 @@ jobs:
           docker load -i litentry-parachain.tar
 
       - name: Run ts tests for ${{ matrix.chain }}
+        if: needs.set-condition.outputs.run_parachain_test == 'true'
         timeout-minutes: 20
         run: |
           make test-ts-docker-${{ matrix.chain }}
@@ -370,29 +373,9 @@ jobs:
           path: /tmp/parachain_dev/
           retention-days: 3
 
-      - name: Clean up for ${{ matrix.chain }}
-        if: ${{ always() }}
-        run: |
-          make clean-docker-${{ matrix.chain }}
-
       - name: Fail early
         if: failure()
         uses: andymckay/cancel-action@0.3
-
-  # This "hook" is used in branch protection rules, where we need to cover the matrix in both
-  #   - "successful" status (e.g. parachain-ts-test(litmus)), and
-  #   - "skipped" status (parachain-ts-test).
-  # see https://github.com/orgs/community/discussions/26822
-  parachain-ts-test-hook:
-    if: ${{ always() }}
-    runs-on: ubuntu-latest
-    needs: parachain-ts-test
-    steps:
-      - run: |
-          case "${{ needs.parachain-ts-test.result }}" in
-            success|skipped) exit 0 ;;
-            *) exit 1 ;;
-          esac
 
   parachain-unit-test:
     runs-on: ubuntu-latest
@@ -457,7 +440,6 @@ jobs:
       - set-condition
       - parachain-build
       - tee-build
-    if: needs.set-condition.outputs.run_tee_test == 'true'
     env:
       WORKER_IMAGE_TAG: integritee-worker:dev
       CLIENT_IMAGE_TAG: integritee-cli:dev
@@ -515,20 +497,19 @@ jobs:
           docker compose -f litentry-parachain.build.yml build
 
       - name: Integration Test ${{ matrix.test_name }}
+        if: needs.set-condition.outputs.run_tee_test == 'true'
         timeout-minutes: 30
-        if: ${{ matrix.test_name != 'lit-resume-worker' }}
         run: |
           cd tee-worker/docker
-          docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} -- ${{ matrix.test_name }}
-
-      - name: Integration Test ${{ matrix.test_name }}
-        timeout-minutes: 30
-        if: ${{ matrix.test_name == 'lit-resume-worker' }}
-        run: |
-          cd tee-worker/docker
-          docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} --attach ${{ matrix.test_name }} relaychain-alice relaychain-bob integritee-node ${{ matrix.test_name }}
+          if [ "${{ matrix.test_name }}" = "lit-resume-worker" ]; then
+            docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} \
+            --attach ${{ matrix.test_name }} relaychain-alice relaychain-bob integritee-node ${{ matrix.test_name }}
+          else
+            docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} -- ${{ matrix.test_name }}
+          fi
 
       - name: Stop docker containers
+        if: needs.set-condition.outputs.run_tee_test == 'true'
         run: |
           cd tee-worker/docker
           docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml stop
@@ -548,23 +529,12 @@ jobs:
           name: logs-${{ matrix.test_name }}
           path: logs
 
-  tee-test-hook:
-    if: ${{ always() }}
-    runs-on: ubuntu-latest
-    needs: tee-test
-    steps:
-      - run: |
-          case "${{ needs.tee-test.result }}" in
-            success|skipped) exit 0 ;;
-            *) exit 1 ;;
-          esac
-
   # Secrets are not passed to the runner when a workflow is triggered from a forked repository,
   # see https://docs.github.com/en/actions/security-guides/encrypted-secrets#using-encrypted-secrets-in-a-workflow
   #
   # Only try to push docker image when
-  #   - parachain-ts-test-hook passes
-  #   - tee-test-hook passes
+  #   - parachain-ts-test passes
+  #   - tee-test passes
   #   - set-condition.outputs.push-docker is `true`
   # Whether the parachain or tee-worker image will actually be pushed still depends on if a new image was built/rebuilt.
   # This is important not to overwrite any other jobs where a rebuild **was** triggered.
@@ -577,8 +547,8 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - set-condition
-      - parachain-ts-test-hook
-      - tee-test-hook
+      - parachain-ts-test
+      - tee-test
     if: ${{ !failure() && needs.set-condition.outputs.push-docker == 'true' }}
     steps:
       - uses: actions/download-artifact@v3
