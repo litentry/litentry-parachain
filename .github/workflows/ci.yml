@@ -270,6 +270,7 @@ jobs:
         with:
           name: parachain-artifact
           path: litentry-parachain.tar
+          if-no-files-found: error
 
       - name: Fail early
         if: failure()
@@ -332,6 +333,7 @@ jobs:
         with:
           name: tee-artifact
           path: litentry-tee.tar
+          if-no-files-found: error
 
       - name: Fail early
         if: failure()
@@ -371,6 +373,7 @@ jobs:
         with:
           name: ${{ matrix.chain }}-ts-tests-artifacts
           path: /tmp/parachain_dev/
+          if-no-files-found: ignore
           retention-days: 3
 
       - name: Fail early
@@ -528,6 +531,7 @@ jobs:
         with:
           name: logs-${{ matrix.test_name }}
           path: logs
+          if-no-files-found: ignore
 
   # Secrets are not passed to the runner when a workflow is triggered from a forked repository,
   # see https://docs.github.com/en/actions/security-guides/encrypted-secrets#using-encrypted-secrets-in-a-workflow
