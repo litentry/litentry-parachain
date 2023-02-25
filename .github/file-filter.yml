@@ -8,13 +8,13 @@ parachain_src: &parachain_src
   - 'runtime/**'
   - 'mock-tee-primitives/**'
   - 'docker/Dockerfile'
-  - 'docker/bridge.dockerfile'
   - 'Cargo.lock'
   - 'Cargo.toml'
   - 'rust-toolchain.toml'
 
 parachain_test: &parachain_test
   - 'ts-tests/**'
+  - 'docker/**'
 
 coverage_src: &coverage_src
   - *parachain_src
@@ -32,3 +32,4 @@ tee_test: &tee_test
   - 'tee-worker/ts-tests/**'
   - 'tee-worker/docker/*.yml'
   - 'tee-worker/cli/*.sh'
+  - 'docker/**'
