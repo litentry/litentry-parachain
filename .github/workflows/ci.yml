@@ -129,6 +129,8 @@ jobs:
           echo "push_docker=$push_docker" >> $GITHUB_OUTPUT
           echo "run_parachain_test=$run_parachain_test" >> $GITHUB_OUTPUT
           echo "run_tee_test=$run_tee_test" >> $GITHUB_OUTPUT
+          echo "$GITHUB_OUTPUT"
+
   fmt:
     runs-on: ubuntu-latest
     steps:
