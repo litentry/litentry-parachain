@@ -37,6 +37,22 @@ on:
       - synchronize
       - ready_for_review
   workflow_dispatch:
+    inputs:
+      rebuild-parachain-docker:
+        type: boolean
+        description: rebuild-parachain-docker
+        required: true
+        default: true
+      rebuild-tee-docker:
+        type: boolean
+        description: rebuild-tee-docker
+        required: true
+        default: true
+      force-push-docker:
+        type: boolean
+        description: force-push-docker
+        required: true
+        default: fasle
 
 env:
   CARGO_TERM_COLOR: always
@@ -75,6 +91,27 @@ jobs:
         with:
           filters: .github/file-filter.yml
           list-files: shell
+
+      - name: Set env
+        run: |
+          rebuild_parachain=false
+          rebuild_tee=false
+          push_docker=false
+          if [ "${{ github.event.inputs.rebuild-parachain-docker }}" = "true" ] || [ "${{ steps.filter.outputs.parachain_src }}" = "true" ]; then
+            rebuild_parachain=true
+          fi
+          if [ "${{ github.event.inputs.rebuild-tee-docker }}" = "true" ] || [ "${{ steps.filter.outputs.tee_src }}" = "true" ]; then
+            rebuild_tee=true
+          fi
+          if [ "${{ github.event.inputs.force-push-docker }}" = "true" ]; then
+            push_docker=true
+          elif [ "${{ github.event_name }}" = 'push' ] && [ "${{ github.ref }}" = 'refs/heads/dev' ]; then
+            push_docker=true
+          fi
+          echo "REBUILD_PARACHAIN=$rebuild_parachain" >> $GITHUB_ENV
+          echo "REBUILD_TEE=$rebuild_tee" >> $GITHUB_ENV
+          echo "PUSH_DOCKER=$push_docker" >> $GITHUB_ENV
+          env
 
   fmt:
     runs-on: ubuntu-latest
@@ -132,7 +169,7 @@ jobs:
       - fmt
       - check-file-change
       - sequentialise
-    if: needs.check-file-change.outputs.parachain_src == 'true'
+    if: ${{ env.REBUILD_PARACHAIN == 'true' }}
     steps:
       - uses: actions/checkout@v3
 
@@ -158,7 +195,7 @@ jobs:
       - check-file-change
       - sequentialise
     container: "integritee/integritee-dev:0.1.12"
-    if: needs.check-file-change.outputs.tee_src == 'true'
+    if: ${{ env.REBUILD_TEE == 'true' }}
     steps:
       - uses: actions/checkout@v3
 
@@ -196,14 +233,14 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Build docker image
-        if: needs.check-file-change.outputs.parachain_src == 'true'
+        if: ${{ env.REBUILD_PARACHAIN == 'true' }}
         run: |
           make build-docker-release
           echo "============================="
           docker images
 
       - name: Pull docker image optinally
-        if: needs.check-file-change.outputs.parachain_src == 'false'
+        if: ${{ env.REBUILD_PARACHAIN != 'true' }}
         run: |
           docker pull litentry/litentry-parachain
 
@@ -237,7 +274,7 @@ jobs:
           driver: docker-container
 
       - name: Build worker (sidechain)
-        if: needs.check-file-change.outputs.tee_src == 'true'
+        if: ${{ env.REBUILD_TEE == 'true' }}
         env:
           DOCKER_BUILDKIT: 1
         run: >
@@ -247,7 +284,7 @@ jobs:
           -f tee-worker/build.Dockerfile .
 
       - name: Build cli (sidechain)
-        if: needs.check-file-change.outputs.tee_src == 'true'
+        if: ${{ env.REBUILD_TEE == 'true' }}
         env:
           DOCKER_BUILDKIT: 1
         run: >
@@ -257,7 +294,7 @@ jobs:
           -f tee-worker/build.Dockerfile .
 
       - name: Pull and tag worker and cli image optionally
-        if: needs.check-file-change.outputs.tee_src == 'false'
+        if: ${{ env.REBUILD_TEE != 'true' }}
         run: |
           docker pull litentry/integritee-worker
           docker pull litentry/integritee-cli
@@ -286,10 +323,9 @@ jobs:
   parachain-ts-test:
     runs-on: ubuntu-latest
     needs:
-      - check-file-change
       - parachain-build
     if: >
-      needs.check-file-change.outputs.parachain_src == 'true' ||
+      env.REBUILD_PARACHAIN == 'true' ||
       needs.check-file-change.outputs.parachain_test == 'true'
     strategy:
       matrix:
@@ -348,7 +384,7 @@ jobs:
       - fmt
       - check-file-change
       - sequentialise
-    if: needs.check-file-change.outputs.parachain_src == 'true'
+    if: ${{ env.REBUILD_PARACHAIN == 'true' }}
     steps:
       - uses: actions/checkout@v3
 
@@ -368,7 +404,7 @@ jobs:
       - fmt
       - check-file-change
       - sequentialise
-    if: needs.check-file-change.outputs.parachain_src == 'true'
+    if: ${{ env.REBUILD_PARACHAIN == 'true' }}
     steps:
       - uses: actions/checkout@v3
 
@@ -404,8 +440,8 @@ jobs:
       - parachain-build
       - tee-build
     if: >
-      needs.check-file-change.outputs.parachain_src == 'true' ||
-      needs.check-file-change.outputs.tee_src == 'true' ||
+      env.REBUILD_PARACHAIN == 'true' ||
+      env.REBUILD_TEE == 'true' ||
       needs.check-file-change.outputs.tee_test == 'true'
     env:
       WORKER_IMAGE_TAG: integritee-worker:dev
@@ -527,7 +563,7 @@ jobs:
     needs:
       - parachain-ts-test-hook
       - tee-test-hook
-    if: ${{ !failure() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
+    if: ${{ !failure() && env.PUSH_DOCKER == 'true' }}
     steps:
       - uses: actions/download-artifact@v3
         with:
