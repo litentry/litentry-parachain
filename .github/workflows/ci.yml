@@ -539,7 +539,7 @@ jobs:
   # Only try to push docker image when
   #   - parachain-ts-test passes
   #   - tee-test passes
-  #   - set-condition.outputs.push-docker is `true`
+  #   - set-condition.outputs.push_docker is `true`
   # Whether the parachain or tee-worker image will actually be pushed still depends on if a new image was built/rebuilt.
   # This is important not to overwrite any other jobs where a rebuild **was** triggered.
   #
@@ -553,7 +553,7 @@ jobs:
       - set-condition
       - parachain-ts-test
       - tee-test
-    if: ${{ !failure() && needs.set-condition.outputs.push-docker == 'true' }}
+    if: ${{ !failure() && needs.set-condition.outputs.push_docker == 'true' }}
     steps:
       - uses: actions/download-artifact@v3
         with:
