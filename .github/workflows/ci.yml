@@ -84,8 +84,8 @@ jobs:
       rebuild_parachain: ${{ steps.env.outputs.rebuild_parachain }}
       rebuild_tee: ${{ steps.env.outputs.rebuild_tee }}
       push_docker: ${{ steps.env.outputs.push_docker }}
-      parachain_test: ${{ steps.filter.outputs.parachain_test }}
-      tee_test: ${{ steps.filter.outputs.tee_test }}
+      run_parachain_test: ${{ steps.env.outputs.run_parachain_test }}
+      run_tee_test: ${{ steps.env.outputs.run_tee_test }}
     steps:
       - uses: actions/checkout@v3
         with:
