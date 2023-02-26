@@ -5,7 +5,7 @@ TMPDIR=/tmp/parachain_dev
 
 ROOTDIR=$(git rev-parse --show-toplevel)
 
-GOPATH=${HOME}/go go install github.com/litentry/ChainBridge/cmd/chainbridge@dev
+GOPATH=${HOME}/go go install github.com/litentry/ChainBridge/cmd/chainbridge@minqi-dev
 
 cp ${HOME}/go/bin/chainbridge $TMPDIR/chainbridge
 

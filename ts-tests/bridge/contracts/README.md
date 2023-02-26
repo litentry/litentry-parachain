@@ -2,15 +2,15 @@
 
 ## Build Contracts
 
-These contracts come from [Repo: chainbridge-solidity](https://github.com/Phala-Network/chainbridge-solidity)
+These contracts come from [Repo: chainbridge-solidity](https://github.com/litentry/chainbridge-solidity)
 
 Run command: `make compile`in the project(chainbridge-solidity) root directory to generate the files.
 
 Copy files from chainbridge-solidity(build/contracts) to current directory.
 
-The smart contract version deployed on Rinkeby or Mainnet is: [Phala_audited version](https://github.com/Phala-Network/chainbridge-solidity/commit/0561b64da85f3242d8ddf63d1dde7c203e1a7f9a)
+The smart contract version deployed on Rinkeby or Mainnet is: [Phala_audited version](https://github.com/litentry/chainbridge-solidity/commit/**)
 
-In the CI test, the version is: [Branch: phala-bridge](https://github.com/Phala-Network/chainbridge-solidity/commit/9f0487a89b68abc8f60d1f77c92e0b5b4789b23f)
+In the CI test, the version is: [Branch: phala-bridge](https://github.com/litentry/chainbridge-solidity/commit/**)
 
 ## Why use different versions
 
@@ -26,4 +26,4 @@ There are some differences between the two versions of the contract code. These 
 
 Only some settings are changed, the core function like deposit, voteProposal, executeProposal have not changed
 
-For more details, see at [Compare diffs](https://github.com/Phala-Network/chainbridge-solidity/compare/btclottery..Phala-Network:chainbridge-solidity:phala-bridge)
+For more details, see at [Compare diffs](https://github.com/litentry/chainbridge-solidity/compare/minqi-dev..Phala-Network:chainbridge-solidity:phala-bridge)
