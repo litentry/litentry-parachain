@@ -99,7 +99,7 @@ jobs:
           filters: .github/file-filter.yml
           list-files: shell
 
-      - name: Set env
+      - name: Set condition
         id: env
         run: |
           rebuild_parachain=false
@@ -576,13 +576,13 @@ jobs:
 
       # only push the docker image if we rebuilt it
       - name: Push parachain image
-        if: needs.set-condition.outputs.rebuild-parachain == 'true'
+        if: needs.set-condition.outputs.rebuild_parachain == 'true'
         run: |
           docker push litentry/litentry-parachain
 
       # only push the docker image if we rebuilt it
       - name: Push tee-worker image
-        if: needs.set-condition.outputs.rebuild-tee == 'true'
+        if: needs.set-condition.outputs.rebuild_tee == 'true'
         run: |
           docker push litentry/integritee-worker
           docker push litentry/integritee-cli
