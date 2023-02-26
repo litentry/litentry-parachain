@@ -123,9 +123,9 @@ async function setupCrossChainTransfer(
     await eConfig.erc20.mint(eConfig.wallets.eve.address, toWei('100000'));
     await eConfig.erc20.mint(eConfig.erc20Handler.address, toWei('300'));
     await eConfig.bridge.adminSetResource(eConfig.erc20Handler.address, destResourceId, eConfig.erc20.address);
-    await eConfig.bridge.adminSetDecimals(eConfig.erc20Handler.address, eConfig.erc20.address, 18, 12, opts);
+    // await eConfig.bridge.adminSetDecimals(eConfig.erc20Handler.address, eConfig.erc20.address, 18, 12, opts);
     //  votes.entries equivalent to nonce
-    await eConfig.bridge.adminSetDepositNonce(destChainID, depositNonce.length, opts);
+    // await eConfig.bridge.adminSetDepositNonce(destChainID, depositNonce.length, opts);
     for (let i = 0; i < ethRelayers.length; i++) {
         await eConfig.bridge.adminAddRelayer(ethRelayers[i]);
     }
