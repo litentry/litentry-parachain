@@ -82,16 +82,24 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
         const provider = context.ethConfig.wallets.alice.provider;
         const currentBlock = await provider.getBlockNumber();
         await sleep(15);
+
+        let voteTransactionCount = 0;
         for (let i = currentBlock; i <= (await provider.getBlockNumber()); i++) {
             const block = await provider.getBlockWithTransactions(i);
             for (let j = 0; j < block.transactions.length; j++) {
                 if (block.transactions[j].to === context.ethConfig.bridge.address) {
                     const tx = block.transactions[j];
                     const decodedInput = inter.parseTransaction({ data: tx.data, value: tx.value });
-                    if (decodedInput.name === 'executeProposal') {
-                        const receipt = await provider.getTransactionReceipt(tx.hash);
-                        assert.equal(0, receipt.status, 'Expect the transaction fail, it actually succeeds');
-                        return;
+                    if (decodedInput.name === 'voteProposal') {
+                        voteTransactionCount++;
+                        // We have threshold = 1 in this. So it really does not matter
+                        if (voteTransactionCount === 1) {
+                            const receipt = await provider.getTransactionReceipt(tx.hash);
+                            assert.equal(1, receipt.status, 'Vote transaction should succeeds, yet the execution fails');
+                            // So the execution fails means balance no change
+                            assert.equal(handlerBalance.toString(), (await context.ethConfig.erc20.balanceOf(context.ethConfig.erc20Handler.address)).toString())
+                            return;
+                        }
                     }
                 }
             }
