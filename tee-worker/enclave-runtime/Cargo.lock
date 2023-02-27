@@ -1573,6 +1573,7 @@ dependencies = [
 name = "ita-stf"
 version = "0.9.0"
 dependencies = [
+ "core-primitives",
  "derive_more",
  "frame-support",
  "frame-system",

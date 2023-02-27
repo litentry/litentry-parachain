@@ -6,20 +6,26 @@ name: General CI
 # - unit tests
 # - integration tests
 
-# the tee-worker part is a modified version of tee-worker/.github/workflows/build_and_test.yml
+# Some notes:
+#
+# [1] the tee-worker part is a modified version of tee-worker/.github/workflows/build_and_test.yml
 # with extra triggering control.
 #
-# the original file (`tee-worker/.github/workflows/build_and_test.yml`) is kept to sync
+# [2] the original file (`tee-worker/.github/workflows/build_and_test.yml`) is kept to sync
 # upstream changes, therefore we need to manually apply the changes to this file.
 
-# please beware that if a job in `needs` is skipped, its dependent job will also be skipped,
+# [3] please beware that if a job in `needs` is skipped, its dependent job will also be skipped,
 # see https://github.com/actions/runner/issues/491
 #
 # jobs that will always be executed:
 # - fmt
-# - check-file-change
+# - set-condition
 # - parachain-build
 # - tee-build
+#
+# [4] please note that job-level if `env` is not supported:
+# https://github.com/actions/runner/issues/1189
+# as a workaround, we need to put it in a step-level or use `needs.outputs`
 
 on:
   push:
@@ -37,6 +43,22 @@ on:
       - synchronize
       - ready_for_review
   workflow_dispatch:
+    inputs:
+      rebuild-parachain-docker:
+        type: boolean
+        description: rebuild-parachain-docker
+        required: true
+        default: true
+      rebuild-tee-docker:
+        type: boolean
+        description: rebuild-tee-docker
+        required: true
+        default: true
+      push-docker:
+        type: boolean
+        description: push-docker
+        required: true
+        default: fasle
 
 env:
   CARGO_TERM_COLOR: always
@@ -46,19 +68,24 @@ env:
   REF_VERSION: ${{ github.head_ref || github.ref_name }}
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # see https://stackoverflow.com/questions/74117321/if-condition-in-concurrency-in-gha
+  # along with the `sequentialise` job below, it guarantees:
+  # - for push in dev: all triggered CIs will be run sequentially, none is cancelled
+  # - for PR: later triggered CIs will cancel previous runs, maximum one CI will be run
+  group: ${{ github.workflow }}-${{ github.head_ref && github.ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
-  check-file-change:
+  set-condition:
     runs-on: ubuntu-latest
     # see https://github.com/orgs/community/discussions/25722
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
     outputs:
-      parachain_src: ${{ steps.filter.outputs.parachain_src }}
-      parachain_test: ${{ steps.filter.outputs.parachain_test }}
-      tee_src: ${{ steps.filter.outputs.tee_src }}
-      tee_test: ${{ steps.filter.outputs.tee_test }}
+      rebuild_parachain: ${{ steps.env.outputs.rebuild_parachain }}
+      rebuild_tee: ${{ steps.env.outputs.rebuild_tee }}
+      push_docker: ${{ steps.env.outputs.push_docker }}
+      run_parachain_test: ${{ steps.env.outputs.run_parachain_test }}
+      run_tee_test: ${{ steps.env.outputs.run_tee_test }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -71,6 +98,37 @@ jobs:
         with:
           filters: .github/file-filter.yml
           list-files: shell
+
+      - name: Set condition
+        id: env
+        run: |
+          rebuild_parachain=false
+          rebuild_tee=false
+          push_docker=false
+          run_parachain_test=false
+          run_tee_test=false
+          if [ "${{ github.event.inputs.rebuild-parachain-docker }}" = "true" ] || [ "${{ steps.filter.outputs.parachain_src }}" = "true" ]; then
+            rebuild_parachain=true
+          fi
+          if [ "${{ github.event.inputs.rebuild-tee-docker }}" = "true" ] || [ "${{ steps.filter.outputs.tee_src }}" = "true" ]; then
+            rebuild_tee=true
+          fi
+          if [ "${{ github.event.inputs.push-docker }}" = "true" ]; then
+            push_docker=true
+          elif [ "${{ github.event_name }}" = 'push' ] && [ "${{ github.ref }}" = 'refs/heads/dev' ]; then
+            push_docker=true
+          fi
+          if [ "${{ steps.filter.outputs.parachain_test }}" = "true" ] || [ "$rebuild_parachain" = "true" ]; then
+            run_parachain_test=true
+          fi
+          if [ "${{ steps.filter.outputs.tee_test }}" = "true" ] || [ "$rebuild_parachain" = "true" ] || [ "$rebuild_tee" = "true" ]; then
+            run_tee_test=true
+          fi
+          echo "rebuild_parachain=$rebuild_parachain" | tee -a $GITHUB_OUTPUT
+          echo "rebuild_tee=$rebuild_tee" | tee -a $GITHUB_OUTPUT
+          echo "push_docker=$push_docker" | tee -a $GITHUB_OUTPUT
+          echo "run_parachain_test=$run_parachain_test" | tee -a $GITHUB_OUTPUT
+          echo "run_tee_test=$run_tee_test" | tee -a $GITHUB_OUTPUT
 
   fmt:
     runs-on: ubuntu-latest
@@ -109,12 +167,26 @@ jobs:
         if: failure()
         uses: andymckay/cancel-action@0.3
 
+  # sequentialise the workflow runs on `dev` branch
+  # the if condition is applied in step level to make this job always `successful`
+  sequentialise:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for previous run
+        if: ${{ !failure() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
+        uses: mktcode/consecutive-workflow-action@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          interval: 300
+          branch: dev
+
   parachain-clippy:
     runs-on: ubuntu-latest
     needs:
       - fmt
-      - check-file-change
-    if: needs.check-file-change.outputs.parachain_src == 'true'
+      - set-condition
+      - sequentialise
+    if: needs.set-condition.outputs.rebuild_parachain == 'true'
     steps:
       - uses: actions/checkout@v3
 
@@ -137,9 +209,10 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - fmt
-      - check-file-change
+      - set-condition
+      - sequentialise
+    if: needs.set-condition.outputs.rebuild_tee == 'true'
     container: "integritee/integritee-dev:0.1.12"
-    if: needs.check-file-change.outputs.tee_src == 'true'
     steps:
       - uses: actions/checkout@v3
 
@@ -171,19 +244,20 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - fmt
-      - check-file-change
+      - set-condition
+      - sequentialise
     steps:
       - uses: actions/checkout@v3
 
       - name: Build docker image
-        if: needs.check-file-change.outputs.parachain_src == 'true'
+        if: needs.set-condition.outputs.rebuild_parachain == 'true'
         run: |
           make build-docker-release
           echo "============================="
           docker images
 
       - name: Pull docker image optinally
-        if: needs.check-file-change.outputs.parachain_src == 'false'
+        if: needs.set-condition.outputs.rebuild_parachain == 'false'
         run: |
           docker pull litentry/litentry-parachain
 
@@ -196,6 +270,7 @@ jobs:
         with:
           name: parachain-artifact
           path: litentry-parachain.tar
+          if-no-files-found: error
 
       - name: Fail early
         if: failure()
@@ -205,7 +280,8 @@ jobs:
     runs-on: ubuntu-20.04
     needs:
       - fmt
-      - check-file-change
+      - set-condition
+      - sequentialise
     steps:
       - uses: actions/checkout@v3
 
@@ -216,7 +292,7 @@ jobs:
           driver: docker-container
 
       - name: Build worker (sidechain)
-        if: needs.check-file-change.outputs.tee_src == 'true'
+        if: needs.set-condition.outputs.rebuild_tee == 'true'
         env:
           DOCKER_BUILDKIT: 1
         run: >
@@ -226,7 +302,7 @@ jobs:
           -f tee-worker/build.Dockerfile .
 
       - name: Build cli (sidechain)
-        if: needs.check-file-change.outputs.tee_src == 'true'
+        if: needs.set-condition.outputs.rebuild_tee == 'true'
         env:
           DOCKER_BUILDKIT: 1
         run: >
@@ -236,7 +312,7 @@ jobs:
           -f tee-worker/build.Dockerfile .
 
       - name: Pull and tag worker and cli image optionally
-        if: needs.check-file-change.outputs.tee_src == 'false'
+        if: needs.set-condition.outputs.rebuild_tee == 'false'
         run: |
           docker pull litentry/integritee-worker
           docker pull litentry/integritee-cli
@@ -257,6 +333,7 @@ jobs:
         with:
           name: tee-artifact
           path: litentry-tee.tar
+          if-no-files-found: error
 
       - name: Fail early
         if: failure()
@@ -265,14 +342,14 @@ jobs:
   parachain-ts-test:
     runs-on: ubuntu-latest
     needs:
-      - check-file-change
+      - set-condition
       - parachain-build
-    if: >
-      needs.check-file-change.outputs.parachain_src == 'true' ||
-      needs.check-file-change.outputs.parachain_test == 'true'
     strategy:
       matrix:
-        chain: [litmus, litentry, rococo]
+        chain:
+          - litmus
+          - litentry
+          - rococo
     steps:
       - uses: actions/checkout@v3
 
@@ -285,6 +362,7 @@ jobs:
           docker load -i litentry-parachain.tar
 
       - name: Run ts tests for ${{ matrix.chain }}
+        if: needs.set-condition.outputs.run_parachain_test == 'true'
         timeout-minutes: 20
         run: |
           make test-ts-docker-${{ matrix.chain }}
@@ -295,38 +373,21 @@ jobs:
         with:
           name: ${{ matrix.chain }}-ts-tests-artifacts
           path: /tmp/parachain_dev/
+          if-no-files-found: ignore
           retention-days: 3
-
-      - name: Clean up for ${{ matrix.chain }}
-        if: ${{ always() }}
-        run: |
-          make clean-docker-${{ matrix.chain }}
 
       - name: Fail early
         if: failure()
         uses: andymckay/cancel-action@0.3
 
-  # This "hook" is used in branch protection rules, where we need to cover the matrix in both
-  #   - "successful" status (e.g. parachain-ts-test(litmus)), and
-  #   - "skipped" status (parachain-ts-test).
-  # see https://github.com/orgs/community/discussions/26822
-  parachain-ts-test-hook:
-    if: ${{ always() }}
-    runs-on: ubuntu-latest
-    needs: parachain-ts-test
-    steps:
-      - run: |
-          case "${{ needs.parachain-ts-test.result }}" in
-            success|skipped) exit 0 ;;
-            *) exit 1 ;;
-          esac
-
   parachain-unit-test:
     runs-on: ubuntu-latest
     needs:
       - fmt
-      - check-file-change
-    if: needs.check-file-change.outputs.parachain_src == 'true'
+      - set-condition
+      - sequentialise
+    # run_parachain_test is related to ts-tests only
+    if: needs.set-condition.outputs.rebuild_parachain == 'true'
     steps:
       - uses: actions/checkout@v3
 
@@ -344,8 +405,10 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - fmt
-      - check-file-change
-    if: needs.check-file-change.outputs.parachain_src == 'true'
+      - set-condition
+      - sequentialise
+    # run_parachain_test is related to ts-tests only
+    if: needs.set-condition.outputs.rebuild_parachain == 'true'
     steps:
       - uses: actions/checkout@v3
 
@@ -375,15 +438,11 @@ jobs:
         uses: andymckay/cancel-action@0.3
 
   tee-test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     needs:
-      - check-file-change
+      - set-condition
       - parachain-build
       - tee-build
-    if: >
-      needs.check-file-change.outputs.parachain_src == 'true' ||
-      needs.check-file-change.outputs.tee_src == 'true' ||
-      needs.check-file-change.outputs.tee_test == 'true'
     env:
       WORKER_IMAGE_TAG: integritee-worker:dev
       CLIENT_IMAGE_TAG: integritee-cli:dev
@@ -441,20 +500,19 @@ jobs:
           docker compose -f litentry-parachain.build.yml build
 
       - name: Integration Test ${{ matrix.test_name }}
+        if: needs.set-condition.outputs.run_tee_test == 'true'
         timeout-minutes: 30
-        if: ${{ matrix.test_name != 'lit-resume-worker' }}
         run: |
           cd tee-worker/docker
-          docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} -- ${{ matrix.test_name }}
-
-      - name: Integration Test ${{ matrix.test_name }}
-        timeout-minutes: 30
-        if: ${{ matrix.test_name == 'lit-resume-worker' }}
-        run: |
-          cd tee-worker/docker
-          docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} --attach ${{ matrix.test_name }} relaychain-alice relaychain-bob integritee-node ${{ matrix.test_name }}
+          if [ "${{ matrix.test_name }}" = "lit-resume-worker" ]; then
+            docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} \
+            --attach ${{ matrix.test_name }} relaychain-alice relaychain-bob integritee-node ${{ matrix.test_name }}
+          else
+            docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} -- ${{ matrix.test_name }}
+          fi
 
       - name: Stop docker containers
+        if: needs.set-condition.outputs.run_tee_test == 'true'
         run: |
           cd tee-worker/docker
           docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml stop
@@ -473,38 +531,29 @@ jobs:
         with:
           name: logs-${{ matrix.test_name }}
           path: logs
-
-  tee-test-hook:
-    if: ${{ always() }}
-    runs-on: ubuntu-latest
-    needs: tee-test
-    steps:
-      - run: |
-          case "${{ needs.tee-test.result }}" in
-            success|skipped) exit 0 ;;
-            *) exit 1 ;;
-          esac
+          if-no-files-found: ignore
 
   # Secrets are not passed to the runner when a workflow is triggered from a forked repository,
   # see https://docs.github.com/en/actions/security-guides/encrypted-secrets#using-encrypted-secrets-in-a-workflow
   #
-  # Only push docker image when
-  #   - tests are passed on dev branch
-  #   - parachain-ts-test-hook passes
-  #   - tee-test-hook passes
-  # These hooks will always be executed - even when the image didn't change. It shouldn't do harm
-  # even the image is simply downloaded and re-pushed.
+  # Only try to push docker image when
+  #   - parachain-ts-test passes
+  #   - tee-test passes
+  #   - set-condition.outputs.push_docker is `true`
+  # Whether the parachain or tee-worker image will actually be pushed still depends on if a new image was built/rebuilt.
+  # This is important not to overwrite any other jobs where a rebuild **was** triggered.
   #
-  # We don't have to depend on jobs like `parachain-unit-test` as those jobs have the same file-filter dependencies as
-  # docker image build: `parachain_src` changed, so there must be no new image if `parachain-unit-test` is skipped.
+  # We don't have to depend on jobs like `parachain-unit-test` as they have the same trigger condition `rebuild_parachain`,
+  # so there must be no new image if `parachain-unit-test` is skipped.
   #
   # `!failure()` needs to be used to cover skipped jobs
   push-docker:
     runs-on: ubuntu-latest
     needs:
-      - parachain-ts-test-hook
-      - tee-test-hook
-    if: ${{ !failure() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
+      - set-condition
+      - parachain-ts-test
+      - tee-test
+    if: ${{ !failure() && needs.set-condition.outputs.push_docker == 'true' }}
     steps:
       - uses: actions/download-artifact@v3
         with:
@@ -525,8 +574,15 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      - name: Push docker image
+      # only push the docker image if we rebuilt it
+      - name: Push parachain image
+        if: needs.set-condition.outputs.rebuild_parachain == 'true'
         run: |
           docker push litentry/litentry-parachain
+
+      # only push the docker image if we rebuilt it
+      - name: Push tee-worker image
+        if: needs.set-condition.outputs.rebuild_tee == 'true'
+        run: |
           docker push litentry/integritee-worker
           docker push litentry/integritee-cli
