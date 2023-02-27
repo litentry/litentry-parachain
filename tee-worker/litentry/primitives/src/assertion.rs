@@ -45,7 +45,7 @@ pub enum Assertion {
 	A4(Balance),                                           // (minimum_amount)
 	A5(ParameterString, ParameterString),                  // (twitter_account, tweet_id)
 	A6,
-	A7(Balance), // (minimum_amount)
+	A7(Balance),           // (minimum_amount)
 	A8(AssertionNetworks), // litentry, litmus, polkadot, kusama, khala, ethereum
 	A9,
 	A10(Balance), // (minimum_amount)
@@ -53,14 +53,8 @@ pub enum Assertion {
 	A13(u32),     // (Karma_amount) - TODO: unsupported
 }
 
-pub const ASSERTION_NETWORKS: [&str; 6] = [
-	"litentry",
-	"litmus",
-	"polkadot",
-	"kusama",
-	"khala",
-	"ethereum",
-];
+pub const ASSERTION_NETWORKS: [&str; 6] =
+	["litentry", "litmus", "polkadot", "kusama", "khala", "ethereum"];
 
 pub const ASSERTION_FROM_DATE: [&str; 7] = [
 	"2017-01-01",

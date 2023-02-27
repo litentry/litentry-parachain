@@ -487,7 +487,10 @@ impl Credential {
 		let min_item = AssertionLogic::new_item("$total_txs", Op::GreaterThan, &min);
 		let max_item = AssertionLogic::new_item("$total_txs", Op::LessEq, &max);
 
-		let assertion = AssertionLogic::new_and().add_item(min_item).add_item(max_item).add_item(or_logic);
+		let assertion = AssertionLogic::new_and()
+			.add_item(min_item)
+			.add_item(max_item)
+			.add_item(or_logic);
 		self.credential_subject.assertions.push(assertion);
 	}
 }

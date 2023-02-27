@@ -40,7 +40,7 @@ pub enum Assertion {
 	                                                        * until Twitter new API policy is
 	                                                        * published */
 	A6,
-	A7(Balance), // (minimum_amount)
+	A7(Balance),           // (minimum_amount)
 	A8(AssertionNetworks), // litentry, litmus, polkadot, kusama, khala, ethereum
 	A9,
 	A10(Balance), // (minimum_amount)
