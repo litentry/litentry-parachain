@@ -44,7 +44,7 @@ lazy_static! {
 		let litmus = VerifiedCredentialsNetwork::from(SubstrateNetwork::Litmus);
 		let polkadot = VerifiedCredentialsNetwork::from(SubstrateNetwork::Polkadot);
 		let kusama = VerifiedCredentialsNetwork::from(SubstrateNetwork::Kusama);
-		let khala = VerifiedCredentialsNetwork::from(SubstrateNetwork::Litentry);
+		let khala = VerifiedCredentialsNetwork::from(SubstrateNetwork::Khala);
 		let ethereum = VerifiedCredentialsNetwork::from(EvmNetwork::Ethereum);
 
 		m.insert(litentry);
@@ -99,7 +99,7 @@ fn assertion_networks_to_vc_networks(
 							},
 							"khala" => {
 								let khala =
-									VerifiedCredentialsNetwork::from(SubstrateNetwork::Litentry);
+									VerifiedCredentialsNetwork::from(SubstrateNetwork::Khala);
 								set.insert(khala);
 							},
 							"ethereum" => {
@@ -277,7 +277,7 @@ mod tests {
 		right.insert(VerifiedCredentialsNetwork::Litmus);
 		right.insert(VerifiedCredentialsNetwork::Polkadot);
 		right.insert(VerifiedCredentialsNetwork::Kusama);
-		right.insert(VerifiedCredentialsNetwork::Litentry);
+		right.insert(VerifiedCredentialsNetwork::Khala);
 		right.insert(VerifiedCredentialsNetwork::Ethereum);
 
 		assert_eq!(left, right);
@@ -295,7 +295,7 @@ mod tests {
 		right.insert(VerifiedCredentialsNetwork::Litmus);
 		right.insert(VerifiedCredentialsNetwork::Polkadot);
 		right.insert(VerifiedCredentialsNetwork::Kusama);
-		right.insert(VerifiedCredentialsNetwork::Litentry);
+		right.insert(VerifiedCredentialsNetwork::Khala);
 		right.insert(VerifiedCredentialsNetwork::Ethereum);
 
 		assert_eq!(left, right);

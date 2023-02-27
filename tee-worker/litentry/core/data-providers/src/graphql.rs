@@ -63,6 +63,7 @@ impl From<SubstrateNetwork> for VerifiedCredentialsNetwork {
 			SubstrateNetwork::Litentry => Self::Litentry,
 			SubstrateNetwork::Polkadot => Self::Polkadot,
 			SubstrateNetwork::Kusama => Self::Kusama,
+			SubstrateNetwork::Khala => Self::Khala,
 		}
 	}
 }
