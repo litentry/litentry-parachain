@@ -42,7 +42,7 @@ use litentry_primitives::{
 	UserShieldingKeyType, ValidationData,
 };
 use log::*;
-use parentchain_primitives::{ErrorString, IMPError};
+use parentchain_primitives::IMPError;
 use sp_io::hashing::blake2_256;
 use sp_runtime::{traits::Verify, MultiAddress};
 use std::{format, prelude::v1::*, sync::Arc};
@@ -449,7 +449,7 @@ where
 						calls.push(OpaqueCall::from_tuple(&(
 							node_metadata_repo
 								.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
-							convert_stf_error(err),
+							err.to_imp_error(),
 						)));
 					},
 				}
@@ -498,7 +498,7 @@ where
 						calls.push(OpaqueCall::from_tuple(&(
 							node_metadata_repo
 								.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
-							convert_stf_error(err),
+							err.to_imp_error(),
 						)));
 					},
 				}
@@ -537,7 +537,7 @@ where
 						calls.push(OpaqueCall::from_tuple(&(
 							node_metadata_repo
 								.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
-							convert_stf_error(err),
+							err.to_imp_error(),
 						)));
 					},
 				}
@@ -587,7 +587,7 @@ where
 						calls.push(OpaqueCall::from_tuple(&(
 							node_metadata_repo
 								.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
-							convert_stf_error(err),
+							err.to_imp_error(),
 						)));
 					},
 				}
@@ -665,14 +665,6 @@ where
 	AccountId: PartialEq,
 {
 	pallet_sudo::Pallet::<Runtime>::key().map_or(false, |k| account == &k)
-}
-
-pub(crate) fn convert_stf_error(e: StfError) -> IMPError {
-	match e {
-		StfError::Dispatch(s) =>
-			IMPError::StfError(ErrorString::truncate_from(s.as_bytes().to_vec())),
-		_ => IMPError::StfError(ErrorString::truncate_from(format!("{:?}", e).as_bytes().to_vec())),
-	}
 }
 
 #[cfg(test)]
