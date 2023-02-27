@@ -61,14 +61,15 @@ def main(processes, config_path, parachain_type):
         print('Starting litentry-parachain done')
         print('----------------------------------------')
 
+    UNTRUSTED_HTTP_PORT=4545
     c = pycurl.Curl()
-    c.setopt(pycurl.URL, 'http://localhost:4545/is_initialized')
-
     worker_i = 0
     worker_num = len(config["workers"])
     for w_conf in config["workers"]:
         processes.append(run_worker(w_conf, worker_i))
         print()
+        url = 'http://localhost:' + str(UNTRUSTED_HTTP_PORT+worker_i) + '/is_initialized'
+        c.setopt(pycurl.URL, url)
         if worker_i < worker_num:
             counter = 0
             while True:
