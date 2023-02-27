@@ -61,7 +61,7 @@ class GracefulKiller:
         signal.signal(signal.SIGTERM, self.exit_gracefully)
         self.processes = processes
 
-    def exit_gracefully(self, signum = signal.SIGTERM):
+    def exit_gracefully(self, signum = signal.SIGTERM, frame = None):
         print("\nReceived {} signal".format(self.signals[signum]))
         print("Cleaning up processes.")
         for p in self.processes:
