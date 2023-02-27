@@ -64,7 +64,7 @@ fn assertion_networks_to_vc_networks(
 	let mut set: HashSet<VerifiedCredentialsNetwork> = HashSet::new();
 
 	if networks.is_empty() {
-		return NETWORK_HASHSET.clone()
+		NETWORK_HASHSET.clone()
 	} else {
 		for network in networks {
 			let ret = from_utf8(network.as_ref());
@@ -120,11 +120,11 @@ fn assertion_networks_to_vc_networks(
 		}
 
 		if set.is_empty() {
-			return NETWORK_HASHSET.clone()
+			NETWORK_HASHSET.clone()
 		} else {
-			return set
+			set
 		}
-	};
+	}
 }
 
 fn vc_network_to_vec(networks: HashSet<VerifiedCredentialsNetwork>) -> Vec<&'static str> {
@@ -248,4 +248,56 @@ pub fn build(
 	}
 
 	Err(VCMPError::Assertion8Failed)
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use litentry_primitives::{AssertionNetworks, Network};
+
+	#[test]
+	fn assertion_networks_to_vc_networks_1_works() {
+		let litentry = Network::try_from("litentry".as_bytes().to_vec()).unwrap();
+		let mut networks = AssertionNetworks::with_bounded_capacity(1);
+		networks.try_push(litentry).unwrap();
+
+		let left = assertion_networks_to_vc_networks(&networks);
+		let mut right = HashSet::<VerifiedCredentialsNetwork>::new();
+		right.insert(VerifiedCredentialsNetwork::Litentry);
+
+		assert_eq!(left, right);
+	}
+
+	#[test]
+	fn assertion_networks_to_vc_networks_non_works() {
+		let networks = AssertionNetworks::with_bounded_capacity(1);
+		let left = assertion_networks_to_vc_networks(&networks);
+		let mut right = HashSet::<VerifiedCredentialsNetwork>::new();
+		right.insert(VerifiedCredentialsNetwork::Litentry);
+		right.insert(VerifiedCredentialsNetwork::Litmus);
+		right.insert(VerifiedCredentialsNetwork::Polkadot);
+		right.insert(VerifiedCredentialsNetwork::Kusama);
+		right.insert(VerifiedCredentialsNetwork::Litentry);
+		right.insert(VerifiedCredentialsNetwork::Ethereum);
+
+		assert_eq!(left, right);
+	}
+
+	#[test]
+	fn assertion_networks_to_vc_networks_with_err_works() {
+		let litentry = Network::try_from("error".as_bytes().to_vec()).unwrap();
+		let mut networks = AssertionNetworks::with_bounded_capacity(1);
+		networks.try_push(litentry).unwrap();
+
+		let left = assertion_networks_to_vc_networks(&networks);
+		let mut right = HashSet::<VerifiedCredentialsNetwork>::new();
+		right.insert(VerifiedCredentialsNetwork::Litentry);
+		right.insert(VerifiedCredentialsNetwork::Litmus);
+		right.insert(VerifiedCredentialsNetwork::Polkadot);
+		right.insert(VerifiedCredentialsNetwork::Kusama);
+		right.insert(VerifiedCredentialsNetwork::Litentry);
+		right.insert(VerifiedCredentialsNetwork::Ethereum);
+
+		assert_eq!(left, right);
+	}
 }
