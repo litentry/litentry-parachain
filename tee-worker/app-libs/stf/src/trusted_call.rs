@@ -42,6 +42,7 @@ use litentry_primitives::{
 	UserShieldingKeyType, ValidationData,
 };
 use log::*;
+use parentchain_primitives::IMPError;
 use sp_io::hashing::blake2_256;
 use sp_runtime::{traits::Verify, MultiAddress};
 use std::{format, prelude::v1::*, sync::Arc};
@@ -444,11 +445,11 @@ where
 					},
 					Err(err) => {
 						debug!("set_user_shielding_key error: {}", err);
+
 						calls.push(OpaqueCall::from_tuple(&(
 							node_metadata_repo
 								.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
-							"set_user_shielding_key".as_bytes(),
-							format!("{:?}", err).as_bytes(),
+							err.to_imp_error(),
 						)));
 					},
 				}
@@ -488,8 +489,7 @@ where
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
-								"get_user_shielding_key".as_bytes(),
-								"error".as_bytes(),
+								IMPError::InvalidUserShieldingKey,
 							)));
 						}
 					},
@@ -498,8 +498,7 @@ where
 						calls.push(OpaqueCall::from_tuple(&(
 							node_metadata_repo
 								.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
-							"create_identity".as_bytes(),
-							format!("{:?}", err).as_bytes(),
+							err.to_imp_error(),
 						)));
 					},
 				}
@@ -529,8 +528,7 @@ where
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
-								"get_user_shielding_key".as_bytes(),
-								"error".as_bytes(),
+								IMPError::InvalidUserShieldingKey,
 							)));
 						}
 					},
@@ -539,8 +537,7 @@ where
 						calls.push(OpaqueCall::from_tuple(&(
 							node_metadata_repo
 								.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
-							"remove_identity".as_bytes(),
-							format!("{:?}", err).as_bytes(),
+							err.to_imp_error(),
 						)));
 					},
 				}
@@ -581,8 +578,7 @@ where
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
-								"get_user_shielding_key".as_bytes(),
-								"error".as_bytes(),
+								IMPError::InvalidUserShieldingKey,
 							)));
 						}
 					},
@@ -591,8 +587,7 @@ where
 						calls.push(OpaqueCall::from_tuple(&(
 							node_metadata_repo
 								.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
-							"verify_identity".as_bytes(),
-							format!("{:?}", err).as_bytes(),
+							err.to_imp_error(),
 						)));
 					},
 				}
