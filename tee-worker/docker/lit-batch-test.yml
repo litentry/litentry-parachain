@@ -1,5 +1,5 @@
 services:
-  lit-vc-test:
+  lit-batch-test:
     image: integritee-cli:dev
     container_name: litentry-batch-test
     volumes:
