@@ -474,14 +474,20 @@ impl Credential {
 		self.credential_subject.assertions.push(assertion);
 	}
 
-	pub fn add_assertion_a8(&mut self, min: u64, max: u64) {
+	pub fn add_assertion_a8(&mut self, networks: Vec<&'static str>, min: u64, max: u64) {
 		let min = format!("{}", min);
 		let max = format!("{}", max);
+
+		let mut or_logic = AssertionLogic::new_or();
+		for network in networks {
+			let network_logic = AssertionLogic::new_item("$network", Op::Equal, network);
+			or_logic = or_logic.add_item(network_logic);
+		}
 
 		let min_item = AssertionLogic::new_item("$total_txs", Op::GreaterThan, &min);
 		let max_item = AssertionLogic::new_item("$total_txs", Op::LessEq, &max);
 
-		let assertion = AssertionLogic::new_and().add_item(min_item).add_item(max_item);
+		let assertion = AssertionLogic::new_and().add_item(min_item).add_item(max_item).add_item(or_logic);
 		self.credential_subject.assertions.push(assertion);
 	}
 }

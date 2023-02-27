@@ -25,10 +25,121 @@ use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use lc_credentials::Credential;
 use lc_data_providers::graphql::{GraphQLClient, VerifiedCredentialsTotalTxs, VerifiedCredentialsNetwork};
-use litentry_primitives::{Assertion, Identity, ParentchainBlockNumber, AssertionNetworks, Network};
+use litentry_primitives::{Assertion, Identity, ParentchainBlockNumber, ASSERTION_NETWORKS, AssertionNetworks, Network, SubstrateNetwork, EvmNetwork};
 use log::*;
 use parachain_core_primitives::VCMPError;
-use std::{str::from_utf8, string::ToString, vec, vec::Vec, collections::{HashMap, HashSet}};
+use std::{str::from_utf8, string::ToString, vec, vec::Vec, collections::HashSet};
+use lazy_static::lazy_static;
+
+lazy_static! {
+    pub static ref NETWORK_HASHSET: HashSet<VerifiedCredentialsNetwork> = {
+        let mut m = HashSet::new();
+        
+		let litentry = VerifiedCredentialsNetwork::from(SubstrateNetwork::Litentry);
+		let litmus = VerifiedCredentialsNetwork::from(SubstrateNetwork::Litmus);
+		let polkadot = VerifiedCredentialsNetwork::from(SubstrateNetwork::Polkadot);
+		let kusama = VerifiedCredentialsNetwork::from(SubstrateNetwork::Kusama);
+		let khala = VerifiedCredentialsNetwork::from(SubstrateNetwork::Litentry);
+		let ethereum = VerifiedCredentialsNetwork::from(EvmNetwork::Ethereum);
+
+		m.insert(litentry);
+		m.insert(litmus);
+		m.insert(polkadot);
+		m.insert(kusama);
+		m.insert(khala);
+		m.insert(ethereum);
+
+        m
+    };
+}
+
+fn assertion_networks_to_vc_networks(networks: AssertionNetworks) -> HashSet<VerifiedCredentialsNetwork> {
+	let mut set: HashSet<VerifiedCredentialsNetwork> = HashSet::new();
+
+	if networks.is_empty() { 
+		return NETWORK_HASHSET;
+	 } else { 
+		for network in networks {
+			let ret = from_utf8(network.as_ref());
+			match ret {
+				Ok(network) => {
+					let network = network.to_ascii_lowercase().as_str();
+					if ASSERTION_NETWORKS.contains(&network) {
+						debug!("	[AssertionBuild-A8] available networks: {}", network);
+
+						match network {
+							"litentry" => {
+								let litentry = VerifiedCredentialsNetwork::from(SubstrateNetwork::Litentry);
+								set.insert(litentry);
+							},
+							"litmus" => {
+								let litmus = VerifiedCredentialsNetwork::from(SubstrateNetwork::Litmus);
+								set.insert(litmus);
+							},
+							"polkadot" => {
+								let polkadot = VerifiedCredentialsNetwork::from(SubstrateNetwork::Polkadot);
+								set.insert(polkadot);
+							},
+							"kusama" => {
+								let kusama = VerifiedCredentialsNetwork::from(SubstrateNetwork::Kusama);
+								set.insert(kusama);						
+							},
+							"khala" => {
+								let khala = VerifiedCredentialsNetwork::from(SubstrateNetwork::Litentry);
+								set.insert(khala);
+							},
+							"ethereum" => {
+								let ethereum = VerifiedCredentialsNetwork::from(EvmNetwork::Ethereum);
+								set.insert(ethereum);
+							},
+							_ => {
+								info!("		[AssertionBuild-A8] Wrong Network!");
+							}
+						} 
+					}
+					else {
+						continue
+					}
+				},
+				Err(_) => continue
+			}
+		}
+
+		if set.is_empty() {
+			return NETWORK_HASHSET;
+		} else {
+			return set;
+		}
+	};
+}
+
+fn vc_network_to_vec(networks: HashSet<VerifiedCredentialsNetwork>) -> Vec<&'static str> {
+	let mut rets = Vec::<&str>::new();
+	for n in networks {
+		match n {
+			VerifiedCredentialsNetwork::Litentry => {
+				rets.push("litentry");
+			},
+			VerifiedCredentialsNetwork::Litmus => {
+				rets.push("litmus");
+			},
+			VerifiedCredentialsNetwork::Polkadot => {
+				rets.push("polkadot");
+			},
+			VerifiedCredentialsNetwork::Kusama => {
+				rets.push("kusama");
+			},
+			VerifiedCredentialsNetwork::Khala => {
+				rets.push("khala");
+			},
+			VerifiedCredentialsNetwork::Ethereum => {
+				rets.push("ethereum");
+			},
+		}
+	}
+
+	rets
+}
 
 pub fn build(
 	identities: Vec<Identity>,
@@ -41,101 +152,43 @@ pub fn build(
 
 	let mut client = GraphQLClient::new();
 	let mut total_txs: u64 = 0;
-
-	let mut sub_maps = HashMap::<[u8; 32], HashSet<VerifiedCredentialsNetwork>>::new();
-	let mut eth_maps = HashMap::<[u8; 20], HashSet<VerifiedCredentialsNetwork>>::new();
+	let target_networks = assertion_networks_to_vc_networks(networks);
 
 	for identity in identities {
-		match identity {
-			Identity::Substrate { network, address } => {
-				let key = address.as_ref();
-				if sub_maps.contains_key(key) {
-					let values = sub_maps.get_mut(key).unwrap();
-					values.insert(network.into());
+		let query = match identity {
+			Identity::Substrate { network, address } =>
+				if target_networks.contains(&network.into()) {
+					from_utf8(address.as_ref()).map_or(None, |addr| {
+						Some(VerifiedCredentialsTotalTxs::new(
+							vec![addr.to_string()],
+							vec![network.into()],
+						))
+					})
 				} else {
-					let mut values = HashSet::<VerifiedCredentialsNetwork>::new();
-					values.insert(network.into());
-					sub_maps.insert(key.clone(), values);
-				}
-			},
-			Identity::Evm { network, address } => {
-				let key = address.as_ref();
-				if eth_maps.contains_key(key) {
-					let values = eth_maps.get_mut(key).unwrap();
-					values.insert(network.into());
+					None
+				},
+			Identity::Evm { network, address } =>
+				if target_networks.contains(&network.into()) {
+					from_utf8(address.as_ref()).map_or(None, |addr| {
+						Some(VerifiedCredentialsTotalTxs::new(
+							vec![addr.to_string()],
+							vec![network.into()],
+						))
+					})
 				} else {
-					let mut values = HashSet::<VerifiedCredentialsNetwork>::new();
-					values.insert(network.into());
-					eth_maps.insert(key.clone(), values);
+					None
 				}
-			},
 			_ => {
 				debug!("ignore identity: {:?}", identity);
+				None
 			},
 		};
-	}
-
-	let available_networks = if !networks.is_empty() {
-		let mut set = HashSet::new();
-		for n in networks {
-			set.insert(n);
-		}
-
-		set
-	 } else {
-		let litentry = Network::try_from("litentry".as_bytes().to_vec()).unwrap();
-		let litmus = Network::try_from("litmus".as_bytes().to_vec()).unwrap();
-		let polkadot = Network::try_from("polkadot".as_bytes().to_vec()).unwrap();
-		let kusama = Network::try_from("kusama".as_bytes().to_vec()).unwrap();
-		let khala = Network::try_from("khala".as_bytes().to_vec()).unwrap();
-		let ethereum = Network::try_from("ethereum".as_bytes().to_vec()).unwrap();
-		VerifiedCredentialsNetwork::from()
-		HashSet::from([litentry, litmus, kusama, polkadot, khala, ethereum])
-
-	};
-
-	// substrate networks
-	for (&key, mut v) in sub_maps.iter_mut() {
-		let intersection: HashSet<_> = *v.intersection(&available_networks).collect();
-		*v = intersection;
-	}
-
-	// eth networks
-	for (&key, mut v) in eth_maps.iter_mut() {
-		let intersection: HashSet<_> = *v.intersection(&available_networks).collect();
-		*v = intersection;
-	}
-
-	for (addr, v) in sub_maps {
-		let query = from_utf8(addr.as_ref()).map_or(None, |addr| {
-			Some(VerifiedCredentialsTotalTxs::new(
-				vec![addr.to_string()],
-				Vec::from_iter(v),
-			))
-		});
-
 		if let Some(query) = query {
 			if let Ok(result) = client.query_total_transactions(query) {
 				total_txs += result.iter().map(|v| v.total_transactions).sum::<u64>();
 			}
 		}
-	}
-
-	for (addr, v) in eth_maps {
-		let query = from_utf8(addr.as_ref()).map_or(None, |addr| {
-			Some(VerifiedCredentialsTotalTxs::new(
-				vec![addr.to_string()],
-				Vec::from_iter(v),
-			))
-		});
-
-		if let Some(query) = query {
-			if let Ok(result) = client.query_total_transactions(query) {
-				total_txs += result.iter().map(|v| v.total_transactions).sum::<u64>();
-			}
-		}
-	}
-	
+	}	
 	debug!("total_transactions: {}", total_txs);
 
 	let min: u64;
@@ -171,7 +224,7 @@ pub fn build(
 	let a8 = Assertion::A8(networks);
 	match Credential::generate_unsigned_credential(&a8, who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_assertion_a8(min, max);
+			credential_unsigned.add_assertion_a8(vc_network_to_vec(target_networks), min, max);
 			credential_unsigned.credential_subject.values.push(true);
 			return Ok(credential_unsigned)
 		},
