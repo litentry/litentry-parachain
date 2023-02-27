@@ -257,15 +257,10 @@ where
 	NodeMetadataProvider::MetadataType:
 		TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + UTILCallIndexes,
 {
-	// TODO handle unwrap/error return error
 	let call_index: [u8; 2] = Decode::decode(input)?;
-
-	// TODO handle unwrap/error return error
 	let vector: Vec<()> = Decode::decode(input)?;
-
 	let mut supported_call: Vec<SupportedCall> = vec![];
 
-	// TODO handle unwrap/error return error
 	supported_call.push(metadata_repo.get_from_metadata(
 		|m| -> core::result::Result<SupportedCall, metadataProviderError> {
 			Ok(SupportedCall::SetUserShieldingKey(
@@ -302,7 +297,6 @@ where
 		},
 	)??);
 
-	// TODO handle unwrap/error return error
 	let mut actual_calls: Vec<SupportedCall> = vec![];
 	for _i in 0..vector.len() {
 		let call_index: CallIndex = Decode::decode(input)?;
