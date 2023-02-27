@@ -15,7 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	error::{Error, IMPError},
+	error::{Error, IMPError, Result},
 	executor::Executor,
 	IndirectCallsExecutor,
 };
@@ -26,7 +26,7 @@ use itp_node_api::{
 	metadata::{
 		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes,
 		pallet_utility::UTILCallIndexes, pallet_vcmp::VCMPCallIndexes,
-		provider::AccessNodeMetadata, Error as MetadataError,
+		provider::AccessNodeMetadata,
 	},
 };
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
@@ -62,7 +62,7 @@ impl VerifyIdentity {
 				NodeMetadataProvider,
 			>>::Call,
 		>,
-	) -> Result<(), Error>
+	) -> Result<()>
 	where
 		ShieldingKeyRepository: AccessKey,
 		<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
@@ -125,8 +125,8 @@ where
 	fn call_index_from_metadata(
 		&self,
 		metadata_type: &NodeMetadataProvider::MetadataType,
-	) -> Result<[u8; 2], MetadataError> {
-		metadata_type.verify_identity_call_indexes()
+	) -> Result<[u8; 2]> {
+		metadata_type.verify_identity_call_indexes().map_err(|e| e.into())
 	}
 
 	fn execute(
@@ -138,7 +138,7 @@ where
 			NodeMetadataProvider,
 		>,
 		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
-	) -> Result<(), Error> {
+	) -> Result<()> {
 		self.execute_internal(context, extrinsic)
 			.map_err(|_| Error::IMPHandlingError(IMPError::VerifyIdentityHandlingFailed))
 	}

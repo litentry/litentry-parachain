@@ -73,7 +73,7 @@ pub type BatchAllFn = (CallIndex, Vec<SupportedCall>);
 
 pub type Enclave = EnclaveGen<AccountId>;
 
-#[derive(Clone, Encode, Decode)]
+#[derive(Clone, Encode, Decode, Debug)]
 pub enum SupportedCall {
 	SetUserShieldingKey(CallIndex, Option<SetUserShieldingKeyParameters>),
 	CreateIdentity(CallIndex, Option<CreateIdentityParameters>),
