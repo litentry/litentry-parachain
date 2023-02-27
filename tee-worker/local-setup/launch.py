@@ -61,15 +61,25 @@ def main(processes, config_path, parachain_type):
         print('Starting litentry-parachain done')
         print('----------------------------------------')
 
-    UNTRUSTED_HTTP_PORT=4545
     c = pycurl.Curl()
     worker_i = 0
     worker_num = len(config["workers"])
     for w_conf in config["workers"]:
         processes.append(run_worker(w_conf, worker_i))
         print()
-        url = 'http://localhost:' + str(UNTRUSTED_HTTP_PORT+worker_i) + '/is_initialized'
+
+        idx = 0
+        if ( "-h" in w_conf["flags"] ):
+            idx = w_conf["flags"].index("-h") + 1
+        elif ( "--untrusted-http-port" in w_conf["flags"]):
+            idx = w_conf["flags"].index("--untrusted-http-port") + 1
+        else:
+            print("No \"--untrusted-http-port\" provided in config file")
+            return 0
+        untrusted_http_port = w_conf["flags"][idx]
+        url = 'http://localhost:' + str(untrusted_http_port) + '/is_initialized'
         c.setopt(pycurl.URL, url)
+
         if worker_i < worker_num:
             counter = 0
             while True:
@@ -79,6 +89,7 @@ def main(processes, config_path, parachain_type):
                 try:
                     c.perform()
                 except:
+                    print("Connect to worker: error")
                     return 0
 
                 if "I am initialized." == buffer.getvalue().decode('iso-8859-1'):
