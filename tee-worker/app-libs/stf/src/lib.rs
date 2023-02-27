@@ -39,7 +39,7 @@ use itp_node_api_metadata::Error as MetadataError;
 use itp_node_api_metadata_provider::Error as MetadataProviderError;
 use itp_stf_primitives::types::AccountId;
 use parentchain_primitives::{ErrorString, IMPError};
-use std::string::String;
+use std::{format, string::String};
 pub use stf_sgx_primitives::{types::*, Stf};
 pub use trusted_call::*;
 
