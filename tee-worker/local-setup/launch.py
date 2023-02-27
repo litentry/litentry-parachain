@@ -17,6 +17,9 @@ import sys
 from time import sleep
 from typing import Union, IO
 
+import pycurl
+from io import BytesIO
+
 from py.worker import Worker
 from py.helpers import GracefulKiller, mkdir_p
 
@@ -58,19 +61,36 @@ def main(processes, config_path, parachain_type):
         print('Starting litentry-parachain done')
         print('----------------------------------------')
 
-    i = 1
-    for w_conf in config["workers"]:
-        processes.append(run_worker(w_conf, i))
-        # sleep to prevent nonce clash when bootstrapping the enclave's account
-        sleep(3)
-        if i == 1:
-             # Give worker 1 some time to register itself, otherwise key & state sharing will not work.
-             #
-             # litentry: increase the gap between worker launch
-             #           we need a cleaner solution though, see https://github.com/integritee-network/worker/issues/731
-            sleep(180)
+    c = pycurl.Curl()
+    c.setopt(pycurl.URL, 'http://localhost:4545/is_initialized')
 
-        i += 1
+    worker_i = 0
+    worker_num = len(config["workers"])
+    for w_conf in config["workers"]:
+        processes.append(run_worker(w_conf, worker_i))
+        print()
+        if worker_i < worker_num:
+            counter = 0
+            while True:
+                sleep(5)
+                buffer = BytesIO()
+                c.setopt(c.WRITEDATA, buffer)
+                try:
+                    c.perform()
+                except:
+                    return 0
+
+                if "I am initialized." == buffer.getvalue().decode('iso-8859-1'):
+                    break
+                if counter >= 60:
+                    print("Worker initialization error. Exit")
+                    return 0
+                counter = counter + 1
+
+        worker_i += 1
+
+    c.close()
+    print("Worker(s) started!")
 
     # keep script alive until terminated
     signal.pause()
@@ -84,4 +104,5 @@ if __name__ == '__main__':
 
     process_list = []
     killer = GracefulKiller(process_list)
-    main(process_list, args.config, args.parachain)
+    if main(process_list, args.config, args.parachain) == 0:
+        killer.exit_gracefully()
