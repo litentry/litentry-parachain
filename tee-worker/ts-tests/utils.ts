@@ -368,24 +368,17 @@ export async function checkIssuerAttestation(data: string, api: ApiPromise): Pro
     const quote = JSON.parse(Base64.decode(metadata!['quote']));
     const status = quote!['isvEnclaveQuoteStatus'];
 
-    // add more check here @zhouhui
-    switch (status) {
-        case 'OK':
-            console.log('QUOTE verified correctly');
-            break;
-        case 'GROUP_OUT_OF_DATE':
-            console.log('GROUP_OUT_OF_DATE');
-            break;
-        case 'CONFIGURATION_AND_SW_HARDENING_NEEDED':
-            console.log('CONFIGURATION_AND_SW_HARDENING_NEEDED');
+    // 1. Verify quote status (mandatory field)
+    console.log('[IssuerAttestation] ISV Enclave Quote Status: ', status);
 
-        default:
-            break;
-    }
+    // 2. Verify quote body
+    const quoteBody = quote!['isvEnclaveQuoteBody'];
+    const sgxQuote = JSON.parse(Base64.decode(quoteBody));
+    console.log('[IssuerAttestation] sgxQuote: ', sgxQuote);
 
     // 3. Check timestamp is within 24H (90day is recommended by Intel)
     const timestamp = Date.parse(quote!['timestamp']);
     const now = Date.now();
     const dt = now - timestamp;
-    console.log('dt: ', dt);
+    console.log('[IssuerAttestation] ISV Enclave Quote Delta Time: ', dt);
 }
