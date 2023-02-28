@@ -39,7 +39,7 @@ pub mod error;
 pub mod executor;
 
 use crate::{
-	error::Result,
+	error::{Error, Result},
 	executor::{
 		call_worker::CallWorker,
 		litentry::{
@@ -53,6 +53,7 @@ use crate::{
 };
 use beefy_merkle_tree::{merkle_root, Keccak256};
 use codec::Encode;
+use ita_stf::{TrustedCall, TrustedOperation};
 use itp_node_api::metadata::{
 	pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, pallet_vcmp::VCMPCallIndexes,
 	provider::AccessNodeMetadata,
@@ -134,6 +135,29 @@ where
 		) {
 			error!("Error adding indirect trusted call to TOP pool: {:?}", e);
 		}
+	}
+
+	pub(crate) fn submit_trusted_call_from_error(
+		&self,
+		shard: ShardIdentifier,
+		err: &Error,
+	) -> Result<()> {
+		let enclave_account = self.stf_enclave_signer.get_enclave_account()?;
+		let shielding_key = self.shielding_key_repo.retrieve_key()?;
+		let trusted_call = match err {
+			error::Error::IMPHandlingError(e) =>
+				TrustedCall::handle_imp_error(enclave_account, e.clone()),
+			error::Error::VCMPHandlingError(e) =>
+				TrustedCall::handle_vcmp_error(enclave_account, e.clone()),
+			_ => return Err(Error::Other(("unsupported error").into())),
+		};
+		let signed_trusted_call =
+			self.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
+		let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
+
+		let encrypted_trusted_call = shielding_key.encrypt(&trusted_operation.encode())?;
+		self.submit_trusted_call(shard, encrypted_trusted_call);
+		Ok(())
 	}
 
 	/// Creates a processed_parentchain_block extrinsic for a given parentchain block hash and the merkle executed extrinsics.
@@ -238,26 +262,10 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 					Ok(ExecutionStatus::NextExecutor) => continue,
 					Ok(ExecutionStatus::Skip) => break,
 					Err(e) => {
-						log::warn!("fail to execute indirect_call. due to {:?} ", e);
-						match e {
-							// error handling: call the counter part on parachain to pass it back
-							error::Error::IMPHandlingError(e) => {
-								let call = self
-									.node_meta_data_provider
-									.get_from_metadata(|m| m.imp_some_error_call_indexes())??;
-
-								calls.push(OpaqueCall::from_tuple(&(call, e)))
-							},
-							error::Error::VCMPHandlingError(e) => {
-								let call = self
-									.node_meta_data_provider
-									.get_from_metadata(|m| m.vcmp_some_error_call_indexes())??;
-
-								calls.push(OpaqueCall::from_tuple(&(call, e)))
-							},
-							// nothing to do
-							_ => (),
-						}
+						// the error should already be handled (reported) in the executor
+						// we only log the error (again)
+						// note it can be an error during error-handling (e.g. fail to create the trusted call)
+						log::warn!("fail to execute indirect_call due to {:?} ", e);
 						// We should keep the same error handling as the original function `handle_shield_funds_xt`.
 						// `create_processed_parentchain_block_call` needs to be called in any case.
 						break
