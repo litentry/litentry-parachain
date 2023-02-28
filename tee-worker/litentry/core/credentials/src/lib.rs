@@ -104,12 +104,12 @@ pub struct Issuer {
 	/// ID of the TEE Worker
 	pub id: String,
 	pub name: String,
-	pub shard: String,
+	pub mrenclave: String,
 }
 
 impl Issuer {
 	pub fn is_empty(&self) -> bool {
-		self.shard.is_empty() || self.shard.is_empty()
+		self.mrenclave.is_empty() || self.mrenclave.is_empty()
 	}
 
 	pub fn set_id(&mut self, id: &AccountId) {
@@ -225,7 +225,7 @@ impl Credential {
 	) -> Result<Self, Error> {
 		let mut vc: Self =
 			serde_json::from_str(s).map_err(|err| Error::ParseError(format!("{}", err)))?;
-		vc.issuer.shard = shard.encode().to_base58();
+		vc.issuer.mrenclave = shard.encode().to_base58();
 		vc.issuer.name = LITENTRY_ISSUER_NAME.to_string();
 		vc.credential_subject.id = account_id_to_string(who);
 		vc.issuance_block_number = bn;
@@ -370,7 +370,7 @@ impl Credential {
 				credential.credential_subject.values.clear();
 				Ok(credential)
 			},
-			Assertion::A8 => {
+			Assertion::A8(_) => {
 				let raw = include_str!("templates/a8.json");
 				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
 				credential.credential_subject.assertions.clear();
@@ -474,14 +474,23 @@ impl Credential {
 		self.credential_subject.assertions.push(assertion);
 	}
 
-	pub fn add_assertion_a8(&mut self, min: u64, max: u64) {
+	pub fn add_assertion_a8(&mut self, networks: Vec<&'static str>, min: u64, max: u64) {
 		let min = format!("{}", min);
 		let max = format!("{}", max);
+
+		let mut or_logic = AssertionLogic::new_or();
+		for network in networks {
+			let network_logic = AssertionLogic::new_item("$network", Op::Equal, network);
+			or_logic = or_logic.add_item(network_logic);
+		}
 
 		let min_item = AssertionLogic::new_item("$total_txs", Op::GreaterThan, &min);
 		let max_item = AssertionLogic::new_item("$total_txs", Op::LessEq, &max);
 
-		let assertion = AssertionLogic::new_and().add_item(min_item).add_item(max_item);
+		let assertion = AssertionLogic::new_and()
+			.add_item(min_item)
+			.add_item(max_item)
+			.add_item(or_logic);
 		self.credential_subject.assertions.push(assertion);
 	}
 }
