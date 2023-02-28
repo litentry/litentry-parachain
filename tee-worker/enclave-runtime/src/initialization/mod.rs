@@ -74,10 +74,16 @@ use its_sidechain::block_composer::BlockComposer;
 use log::*;
 use sp_core::crypto::Pair;
 use std::{collections::HashMap, string::String, sync::Arc};
+use itc_parentchain_indirect_calls_executor::executor::litentry::get_scheduled_enclave::GLOBAL_SIDECHAIN_SCHEDULED_ENCLABES;
+use itp_enclave_scheduled::{ScheduledEnclaves, ScheduledEnclaveHandle};
 
 pub(crate) fn init_enclave(mu_ra_url: String, untrusted_worker_url: String) -> EnclaveResult<()> {
 	// Initialize the logging environment in the enclave.
 	env_logger::init();
+
+	// get the scheduled mr enclaves and initialize the scheduled enclaves
+	let scheduled_enclaves = ScheduledEnclaves::from_static_file()?;
+	GLOBAL_SIDECHAIN_SCHEDULED_ENCLABES.initialize(Arc::new(scheduled_enclaves));
 
 	ed25519::create_sealed_if_absent().map_err(Error::Crypto)?;
 	let signer = Ed25519Seal::unseal_from_static_file().map_err(Error::Crypto)?;

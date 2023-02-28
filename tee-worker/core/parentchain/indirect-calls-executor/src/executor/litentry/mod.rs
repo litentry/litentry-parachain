@@ -15,6 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 pub mod create_identity;
+pub mod get_scheduled_enclave;
 pub mod remove_identity;
 pub mod request_vc;
 pub mod set_user_shielding_key;

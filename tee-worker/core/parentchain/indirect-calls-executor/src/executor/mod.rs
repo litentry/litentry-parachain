@@ -39,13 +39,7 @@ pub(crate) trait Executor<
 	TopPoolAuthor,
 	NodeMetadataProvider,
 > where
-	ShieldingKeyRepository: AccessKey,
-	ShieldingKeyRepository::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
-		+ ShieldingCryptoEncrypt<Error = itp_sgx_crypto::Error>,
-	StfEnclaveSigner: StfEnclaveSigning,
-	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
-	NodeMetadataProvider::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
 {
 	type Call: Decode + Encode + Clone;
 
@@ -109,11 +103,6 @@ impl<E, ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataPro
 	for E
 where
 	E: Executor<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>,
-	ShieldingKeyRepository: AccessKey,
-	ShieldingKeyRepository::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
-		+ ShieldingCryptoEncrypt<Error = itp_sgx_crypto::Error>,
-	StfEnclaveSigner: StfEnclaveSigning,
-	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
 	NodeMetadataProvider::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
 {
