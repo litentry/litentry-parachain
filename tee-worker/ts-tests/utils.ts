@@ -365,20 +365,28 @@ export async function checkIssuerAttestation(data: string, api: ApiPromise): Pro
 
     //https://github.com/litentry/litentry-parachain/pull/1369 need to be merged
     const metadata = res.sgxMetadata as any;
-    const quote = JSON.parse(Base64.decode(metadata!['quote']));
-    const status = quote!['isvEnclaveQuoteStatus'];
+    console.log('   [IssuerAttestation] metadata: ', metadata);
+    if (metadata != null) {
+        const quoteFromData = metadata!['quote'];
+        console.log('   [IssuerAttestation] quoteFromData: ', quoteFromData);
+        if(quoteFromData.length == 0) {
+            return;
+        }
+        const quote = JSON.parse(Base64.decode(quoteFromData));
+        const status = quote!['isvEnclaveQuoteStatus'];
 
-    // 1. Verify quote status (mandatory field)
-    console.log('[IssuerAttestation] ISV Enclave Quote Status: ', status);
+        // 1. Verify quote status (mandatory field)
+        console.log('[IssuerAttestation] ISV Enclave Quote Status: ', status);
 
-    // 2. Verify quote body
-    const quoteBody = quote!['isvEnclaveQuoteBody'];
-    const sgxQuote = JSON.parse(Base64.decode(quoteBody));
-    console.log('[IssuerAttestation] sgxQuote: ', sgxQuote);
+        // 2. Verify quote body
+        const quoteBody = quote!['isvEnclaveQuoteBody'];
+        const sgxQuote = JSON.parse(Base64.decode(quoteBody));
+        console.log('[IssuerAttestation] sgxQuote: ', sgxQuote);
 
-    // 3. Check timestamp is within 24H (90day is recommended by Intel)
-    const timestamp = Date.parse(quote!['timestamp']);
-    const now = Date.now();
-    const dt = now - timestamp;
-    console.log('[IssuerAttestation] ISV Enclave Quote Delta Time: ', dt);
+        // 3. Check timestamp is within 24H (90day is recommended by Intel)
+        const timestamp = Date.parse(quote!['timestamp']);
+        const now = Date.now();
+        const dt = now - timestamp;
+        console.log('[IssuerAttestation] ISV Enclave Quote Delta Time: ', dt);    
+    }
 }
