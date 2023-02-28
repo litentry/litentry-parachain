@@ -61,10 +61,13 @@ fn transfer() {
 		));
 		assert_eq!(Balances::free_balance(RELAYER_A), ENDOWED_BALANCE + 10);
 
-		assert_events(vec![RuntimeEvent::Balances(balances::Event::Deposit {
-			who: RELAYER_A,
-			amount: 10,
-		})]);
+		assert_events(vec![
+			RuntimeEvent::Balances(balances::Event::Deposit { who: RELAYER_A, amount: 10 }),
+			RuntimeEvent::BridgeTransfer(crate::Event::NativeTokenMinted {
+				to: RELAYER_A,
+				amount: 10,
+			}),
+		]);
 	})
 }
 
@@ -272,6 +275,10 @@ fn create_successful_transfer_proposal() {
 			RuntimeEvent::Bridge(bridge::Event::VoteFor(src_id, prop_id, RELAYER_C)),
 			RuntimeEvent::Bridge(bridge::Event::ProposalApproved(src_id, prop_id)),
 			RuntimeEvent::Balances(balances::Event::Deposit { who: RELAYER_A, amount: 10 }),
+			RuntimeEvent::BridgeTransfer(crate::Event::NativeTokenMinted {
+				to: RELAYER_A,
+				amount: 10,
+			}),
 			RuntimeEvent::Bridge(bridge::Event::ProposalSucceeded(src_id, prop_id)),
 		]);
 	})
@@ -311,10 +318,13 @@ fn test_external_balances_adjusted() {
 		// Check the external_balances
 		assert_eq!(ExternalBalances::<Test>::get(), MaximumIssuance::<Test>::get() / 2 - 10);
 
-		assert_events(vec![RuntimeEvent::Balances(balances::Event::Deposit {
-			who: RELAYER_A,
-			amount: 10,
-		})]);
+		assert_events(vec![
+			RuntimeEvent::Balances(balances::Event::Deposit { who: RELAYER_A, amount: 10 }),
+			RuntimeEvent::BridgeTransfer(crate::Event::NativeTokenMinted {
+				to: RELAYER_A,
+				amount: 10,
+			}),
+		]);
 
 		// Token cross out of parachain
 		// Whitelist setup
