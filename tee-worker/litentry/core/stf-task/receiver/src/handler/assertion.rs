@@ -127,8 +127,9 @@ where
 			)
 			.map(|credential| Some((credential, self.req.who.clone()))),
 
-			Assertion::A8 => lc_assertion_build::a8::build(
+			Assertion::A8(networks) => lc_assertion_build::a8::build(
 				self.req.vec_identity.to_vec(),
+				networks,
 				&self.req.shard,
 				&self.req.who,
 				self.req.bn,

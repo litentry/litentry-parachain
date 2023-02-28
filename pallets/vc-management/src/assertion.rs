@@ -26,6 +26,8 @@ use sp_runtime::{traits::ConstU32, BoundedVec};
 
 type MaxStringLength = ConstU32<64>;
 pub type ParameterString = BoundedVec<u8, MaxStringLength>;
+pub type Network = BoundedVec<u8, MaxStringLength>;
+pub type AssertionNetworks = BoundedVec<Network, MaxStringLength>;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 pub enum Assertion {
@@ -38,8 +40,8 @@ pub enum Assertion {
 	                                                        * until Twitter new API policy is
 	                                                        * published */
 	A6,
-	A7(Balance), // (minimum_amount)
-	A8,
+	A7(Balance),           // (minimum_amount)
+	A8(AssertionNetworks), // litentry, litmus, polkadot, kusama, khala, ethereum
 	A9,
 	A10(Balance), // (minimum_amount)
 	A11(Balance), // (minimum_amount)
