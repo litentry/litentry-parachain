@@ -83,7 +83,7 @@ impl ScheduledEnclaveHandle for ScheduledEnclaves {
 	fn from_static_file() -> IOResult<Self> {
 		let raw = unseal(SCHEDULED_ENCLAVE_FILE)?;
 		if raw.is_empty() {
-			return Self::default()
+			return Ok(Self::default())
 		}
 		let s: Self = serde_json::from_slice(&raw).map_err(|e| Error::new(ErrorKind::Other, e))?;
 		Ok(s)

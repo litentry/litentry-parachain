@@ -24,10 +24,7 @@ use itp_node_api::{
 		provider::AccessNodeMetadata, Error as MetadataError,
 	},
 };
-use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
-use itp_stf_executor::traits::StfEnclaveSigning;
-use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{CallRemoveScheduledEnclaveFn, CallUpdateScheduledEnclaveFn, H256};
+use itp_types::{CallRemoveScheduledEnclaveFn, CallUpdateScheduledEnclaveFn};
 use litentry_primitives::ParentchainBlockNumber;
 use std::sync::Arc;
 
@@ -35,9 +32,7 @@ pub(crate) struct ScheduledEnclaveUpdate {
 	pub(crate) block_number: ParentchainBlockNumber,
 }
 
-pub(crate) struct ScheduledEnclaveRemove {
-	pub(crate) block_number: ParentchainBlockNumber,
-}
+pub(crate) struct ScheduledEnclaveRemove;
 
 /// sidechain enclave info
 pub static GLOBAL_SIDECHAIN_SCHEDULED_ENCLABES: ComponentContainer<ScheduledEnclaves> =
@@ -70,10 +65,10 @@ impl ScheduledEnclaveUpdate {
 			sidechain_block_number,
 			mr_enclave,
 		};
-		// TODO: remove unwrap
-		let old_enclaves = GLOBAL_SIDECHAIN_SCHEDULED_ENCLABES.get().unwrap();
+		let old_enclaves = GLOBAL_SIDECHAIN_SCHEDULED_ENCLABES.get()?;
+		// unwrap is safe here, because GLOBAL_SIDECHAIN_SCHEDULED_ENCLABES is initialized in `init_enclave()`
 		let mut scheduled_enclaves = Arc::<ScheduledEnclaves>::try_unwrap(old_enclaves).unwrap();
-		scheduled_enclaves.add_scheduled_enclave(scheduled_enclave).unwrap();
+		scheduled_enclaves.add_scheduled_enclave(scheduled_enclave)?;
 		GLOBAL_SIDECHAIN_SCHEDULED_ENCLABES.set(Arc::new(scheduled_enclaves));
 		Ok(())
 	}
@@ -135,10 +130,10 @@ impl ScheduledEnclaveRemove {
 		NodeMetadataProvider::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
 	{
 		let (_, sidechain_block_number) = extrinsic.function;
-		// TODO: remove unwrap()
-		let old_enclaves = GLOBAL_SIDECHAIN_SCHEDULED_ENCLABES.get().unwrap();
+		let old_enclaves = GLOBAL_SIDECHAIN_SCHEDULED_ENCLABES.get()?;
+		// `unwrap()` is safe here, because GLOBAL_SIDECHAIN_SCHEDULED_ENCLABES is initialized in `init_enclave()`
 		let mut scheduled_enclaves = Arc::<ScheduledEnclaves>::try_unwrap(old_enclaves).unwrap();
-		scheduled_enclaves.remove_scheduled_enclave(sidechain_block_number).unwrap();
+		scheduled_enclaves.remove_scheduled_enclave(sidechain_block_number)?;
 		GLOBAL_SIDECHAIN_SCHEDULED_ENCLABES.set(Arc::new(scheduled_enclaves));
 		Ok(())
 	}

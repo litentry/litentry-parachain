@@ -242,8 +242,7 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 			// Found Update Scheduled Enclave extrinisc
 			let scheduled_enclave_update =
 				ScheduledEnclaveUpdate { block_number: parentchain_block_number };
-			let scheduled_enclave_remove =
-				ScheduledEnclaveRemove { block_number: parentchain_block_number };
+			let scheduled_enclave_remove = ScheduledEnclaveRemove;
 
 			let executors: Vec<
 				&dyn DecorateExecutor<
