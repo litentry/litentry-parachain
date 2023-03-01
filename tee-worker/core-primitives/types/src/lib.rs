@@ -38,7 +38,7 @@ pub type PalletString = String;
 
 pub use sp_core::{crypto::AccountId32 as AccountId, H256};
 
-use litentry_primitives::Assertion;
+use parentchain_primitives::Assertion;
 
 pub use itp_sgx_runtime_primitives::types::*;
 

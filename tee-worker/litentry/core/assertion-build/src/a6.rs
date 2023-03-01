@@ -25,9 +25,9 @@ use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use lc_credentials::Credential;
 use lc_data_providers::twitter_official::TwitterOfficialClient;
-use litentry_primitives::{Assertion, Identity, ParentchainBlockNumber, Web2Network};
+use litentry_primitives::{Identity, ParentchainBlockNumber, Web2Network};
 use log::*;
-use parachain_core_primitives::VCMPError;
+use parachain_core_primitives::{Assertion, VCMPError};
 use std::vec::Vec;
 
 /// Following ranges:

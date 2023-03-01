@@ -30,9 +30,9 @@ use itp_types::{AccountId, OpaqueCall};
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_stf_task_sender::AssertionBuildRequest;
-use litentry_primitives::{aes_encrypt_default, Assertion, UserShieldingKeyType};
+use litentry_primitives::{aes_encrypt_default, UserShieldingKeyType};
 use log::*;
-use parachain_core_primitives::VCMPError;
+use parachain_core_primitives::{Assertion, VCMPError};
 use sp_core::hashing::blake2_256;
 use std::sync::Arc;
 

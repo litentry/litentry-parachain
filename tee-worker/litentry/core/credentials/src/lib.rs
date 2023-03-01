@@ -39,10 +39,9 @@ use codec::{Decode, Encode};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{
-	format_assertion_to_date, Assertion, Balance, ParentchainBlockNumber, ASSERTION_FROM_DATE,
-};
+use litentry_primitives::ParentchainBlockNumber;
 use log::*;
+use parentchain_primitives::{Assertion, Balance, ASSERTION_FROM_DATE};
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
 use sp_core::{hashing::blake2_256, hexdisplay::HexDisplay};
@@ -58,12 +57,20 @@ extern crate rust_base58_sgx as rust_base58;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate hex_sgx as hex;
 
-use rust_base58::ToBase58;
-
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate rand_sgx as rand;
 
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use crate::sgx_reexport_prelude::chrono::{offset::Utc as TzUtc, DateTime, NaiveDateTime};
+
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use std::time::{SystemTime, UNIX_EPOCH};
+
+#[cfg(feature = "std")]
+use chrono::offset::Utc as TzUtc;
+
 use rand::Rng;
+use rust_base58::ToBase58;
 
 pub mod error;
 pub use error::Error;
@@ -492,6 +499,27 @@ impl Credential {
 			.add_item(max_item)
 			.add_item(or_logic);
 		self.credential_subject.assertions.push(assertion);
+	}
+}
+
+pub fn format_assertion_to_date() -> String {
+	#[cfg(feature = "std")]
+	{
+		let now = TzUtc::now();
+		format!("{}", now.format("%Y-%m-%d"))
+	}
+
+	#[cfg(all(not(feature = "std"), feature = "sgx"))]
+	{
+		let now = SystemTime::now()
+			.duration_since(UNIX_EPOCH)
+			.expect("system time before Unix epoch");
+		let naive =
+			NaiveDateTime::from_timestamp_opt(now.as_secs() as i64, now.subsec_nanos() as u32)
+				.unwrap();
+		let datetime: DateTime<TzUtc> = DateTime::from_utc(naive, TzUtc);
+
+		format!("{}", datetime.format("%Y-%m-%d"))
 	}
 }
 

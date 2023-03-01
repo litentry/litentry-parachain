@@ -38,11 +38,11 @@ use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier, Signature};
 use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
-	aes_encrypt_default, Assertion, ChallengeCode, Identity, ParentchainBlockNumber,
-	UserShieldingKeyType, ValidationData,
+	aes_encrypt_default, ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType,
+	ValidationData,
 };
 use log::*;
-use parentchain_primitives::{IMPError, VCMPError};
+use parentchain_primitives::{Assertion, IMPError, VCMPError};
 use sp_io::hashing::blake2_256;
 use sp_runtime::{traits::Verify, MultiAddress};
 use std::{format, prelude::v1::*, sync::Arc};

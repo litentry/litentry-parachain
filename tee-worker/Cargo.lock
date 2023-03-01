@@ -3626,6 +3626,7 @@ name = "itp-types"
 version = "0.9.0"
 dependencies = [
  "chrono 0.4.23",
+ "core-primitives",
  "frame-system",
  "itp-api-client-types",
  "itp-sgx-runtime-primitives",
@@ -4408,6 +4409,7 @@ dependencies = [
 name = "lc-stf-task-sender"
 version = "0.1.0"
 dependencies = [
+ "core-primitives",
  "http 0.2.1",
  "http 0.2.8",
  "http_req 0.8.1 (git+https://github.com/integritee-network/http_req?branch=master)",

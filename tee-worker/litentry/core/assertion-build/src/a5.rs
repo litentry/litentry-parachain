@@ -24,7 +24,8 @@ use crate::Error;
 use lc_data_providers::{
 	twitter_litentry::TwitterLitentryClient, twitter_official::TwitterOfficialClient,
 };
-use litentry_primitives::{Identity, ParameterString, Web2Network};
+use litentry_primitives::{Identity, Web2Network};
+use parachain_core_primitives::ParameterString;
 use std::{string::String, vec::Vec};
 
 pub fn build(

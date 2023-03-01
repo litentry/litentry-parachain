@@ -28,12 +28,9 @@ use lc_credentials::Credential;
 use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsNetwork, VerifiedCredentialsTotalTxs,
 };
-use litentry_primitives::{
-	Assertion, AssertionNetworks, EvmNetwork, Identity, ParentchainBlockNumber, SubstrateNetwork,
-	ASSERTION_NETWORKS,
-};
+use litentry_primitives::{EvmNetwork, Identity, ParentchainBlockNumber, SubstrateNetwork};
 use log::*;
-use parachain_core_primitives::VCMPError;
+use parachain_core_primitives::{Assertion, AssertionNetworks, VCMPError, ASSERTION_NETWORKS};
 use std::{collections::HashSet, str::from_utf8, string::ToString, vec, vec::Vec};
 
 lazy_static! {
@@ -253,7 +250,7 @@ pub fn build(
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use litentry_primitives::{AssertionNetworks, Network};
+	use parachain_core_primitives::{AssertionNetworks, Network};
 
 	#[test]
 	fn assertion_networks_to_vc_networks_1_works() {

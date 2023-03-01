@@ -37,9 +37,9 @@ use codec::{Decode, Encode};
 pub use error::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use litentry_primitives::{
-	Assertion, ChallengeCode, Identity, UserShieldingKeyType, Web2ValidationData,
-	Web3ValidationData,
+	ChallengeCode, Identity, UserShieldingKeyType, Web2ValidationData, Web3ValidationData,
 };
+use parentchain_primitives::Assertion;
 use sp_runtime::{traits::ConstU32, BoundedVec};
 use sp_std::vec::Vec;
 

@@ -2248,6 +2248,7 @@ name = "itp-types"
 version = "0.9.0"
 dependencies = [
  "chrono 0.4.23",
+ "core-primitives",
  "frame-system",
  "itp-sgx-runtime-primitives",
  "litentry-primitives",
@@ -2702,6 +2703,7 @@ dependencies = [
 name = "lc-stf-task-sender"
 version = "0.1.0"
 dependencies = [
+ "core-primitives",
  "http",
  "http_req",
  "itc-rest-client",

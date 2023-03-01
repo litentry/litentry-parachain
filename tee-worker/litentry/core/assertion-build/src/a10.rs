@@ -27,11 +27,9 @@ use lc_credentials::Credential;
 use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
-use litentry_primitives::{
-	Assertion, Balance, EvmNetwork, Identity, ParentchainBlockNumber, ASSERTION_FROM_DATE,
-};
+use litentry_primitives::{EvmNetwork, Identity, ParentchainBlockNumber};
 use log::*;
-use parachain_core_primitives::VCMPError;
+use parachain_core_primitives::{Assertion, Balance, VCMPError, ASSERTION_FROM_DATE};
 use std::{str::from_utf8, string::ToString, vec, vec::Vec};
 
 const WBTC_TOKEN_ADDRESS: &str = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";

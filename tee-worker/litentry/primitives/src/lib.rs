@@ -18,7 +18,6 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-mod assertion;
 mod enclave_quote;
 mod ethereum_signature;
 mod identity;
@@ -49,7 +48,6 @@ pub mod sgx_reexport_prelude {
 
 use rand::Rng;
 
-pub use assertion::*;
 pub use enclave_quote::*;
 pub use validation_data::*;
 

@@ -27,10 +27,9 @@ use lc_credentials::Credential;
 use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
-use litentry_primitives::{
-	Assertion, Balance, Identity, ParentchainBlockNumber, ASSERTION_FROM_DATE,
-};
+use litentry_primitives::{Identity, ParentchainBlockNumber};
 use log::*;
+use parachain_core_primitives::{Assertion, Balance, ASSERTION_FROM_DATE};
 use std::{
 	str::from_utf8,
 	string::{String, ToString},
