@@ -172,7 +172,7 @@ pub fn new_test_production_ext() -> sp_io::TestExternalities {
 	ext
 }
 
-//Help method for the OnTimestampSet to be called
+/// Helper method for the OnTimestampSet to be called
 pub fn set_timestamp(t: u64) {
 	let _ = timestamp::Pallet::<Test>::set(RuntimeOrigin::none(), t);
 }
