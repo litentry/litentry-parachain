@@ -1,6 +1,6 @@
-import { describeLitentry, generateVerificationMessage, encryptWithTeeShieldingKey, sendTxUntilInBlock, listenEvent } from './utils';
-import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
-import { createIdentity, setUserShieldingKey, removeIdentity, verifyIdentity } from './indirect_calls';
+import { describeLitentry, generateVerificationMessage, encryptWithTeeShieldingKey, listenEvent, decryptWithAES } from './utils';
+import { hexToU8a, u8aToHex } from '@polkadot/util';
+import { setUserShieldingKey, decodeIdentityEvent, assertIdentityCreated, assertIdentityVerified, assertIdentityRemoved } from './indirect_calls';
 import { step } from 'mocha-steps';
 import { assert, expect } from 'chai';
 import {
@@ -72,6 +72,28 @@ describeLitentry('Test Batch Utility', (context) => {
 
         const events = await listenEvent(context.substrate, 'identityManagement', ['IdentityCreated', 'IdentityCreated']);
         expect(events.length).to.be.equal(2);
+        for (let i = 0; i < 2; i++)
+        {
+            const data = events[i].data as any;
+            const response = decodeIdentityEvent(
+                context.substrate,
+                data.account.toHex(),
+                decryptWithAES(aesKey, data.identity),
+                decryptWithAES(aesKey, data.idGraph),
+                decryptWithAES(aesKey, data.code));
+            assertIdentityCreated(context.defaultSigner[0], response);
+            if (response) {
+                console.log('twitterIdentity challengeCode: ', response.challengeCode);
+                const msg = generateVerificationMessage(
+                    context,
+                    hexToU8a(response.challengeCode),
+                    context.defaultSigner[0].addressRaw,
+                    twitterIdentity
+                );
+                console.log('post verification msg to twitter: ', msg);
+                assert.isNotEmpty(response.challengeCode, 'challengeCode empty');
+            }
+        }
     });
 
     step('batch test: verify identity', async function () {
@@ -98,6 +120,13 @@ describeLitentry('Test Batch Utility', (context) => {
 
         const events = await listenEvent(context.substrate, 'identityManagement', ['IdentityVerified']);
         expect(events.length).to.be.equal(1);
+        const data = events[0].data as any;
+        const response = decodeIdentityEvent(
+            context.substrate,
+            data.account.toHex(),
+            decryptWithAES(aesKey, data.identity),
+            decryptWithAES(aesKey, data.idGraph));
+        assertIdentityVerified(context.defaultSigner[0], response);
     });
 
     step('batch test: remove identities', async function () {
@@ -123,5 +152,15 @@ describeLitentry('Test Batch Utility', (context) => {
 
         const events = await listenEvent(context.substrate, 'identityManagement', ['IdentityRemoved', 'IdentityRemoved']);
         expect(events.length).to.be.equal(2);
+        for (let i = 0; i < 2; i++)
+        {
+            const data = events[i].data as any;
+            const response = decodeIdentityEvent(
+                context.substrate,
+                data.account.toHex(),
+                decryptWithAES(aesKey, data.identity),
+                decryptWithAES(aesKey, data.idGraph));
+            assertIdentityRemoved(context.defaultSigner[0], response);
+        }
     });
 });
