@@ -66,7 +66,8 @@ pub type VerifyIdentityParameters = (ShardIdentifier, Vec<u8>, Vec<u8>);
 pub type VerifyIdentityFn = (CallIndex, VerifyIdentityParameters);
 
 // pallet VCMP
-pub type RequestVCFn = (CallIndex, ShardIdentifier, Assertion);
+pub type RequestVCParameters = (ShardIdentifier, Assertion);
+pub type RequestVCFn = (CallIndex, RequestVCParameters);
 
 // pallet Utility
 pub type BatchAllFn = (CallIndex, Vec<SupportedCall>);
@@ -79,6 +80,7 @@ pub enum SupportedCall {
 	CreateIdentity(CallIndex, Option<CreateIdentityParameters>),
 	RemoveIdentity(CallIndex, Option<RemoveIdentityParameters>),
 	VerifyIdentity(CallIndex, Option<VerifyIdentityParameters>),
+	RequestVC(CallIndex, Option<RequestVCParameters>),
 }
 
 /// Simple blob to hold an encoded call

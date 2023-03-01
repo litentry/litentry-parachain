@@ -25,7 +25,7 @@ use itp_node_api::{
 	api_client::ParentchainUncheckedExtrinsic,
 	metadata::{
 		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes,
-		pallet_utility::UTILCallIndexes, pallet_vcmp::VCMPCallIndexes,
+		pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes,
 		provider::AccessNodeMetadata,
 	},
 };
@@ -72,9 +72,9 @@ impl RequestVC {
 		TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 		NodeMetadataProvider: AccessNodeMetadata,
 		NodeMetadataProvider::MetadataType:
-			IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UTILCallIndexes,
+			IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UtilityCallIndexes,
 	{
-		let (_, shard, assertion) = extrinsic.function;
+		let (_, (shard, assertion)) = extrinsic.function;
 		let shielding_key = context.shielding_key_repo.retrieve_key()?;
 		debug!("Requested VC Assertion {:?}", assertion);
 
@@ -111,7 +111,7 @@ where
 	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
 	NodeMetadataProvider::MetadataType:
-		IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UTILCallIndexes,
+		IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UtilityCallIndexes,
 {
 	type Call = RequestVCFn;
 
@@ -136,7 +136,7 @@ where
 		>,
 		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
 	) -> Result<()> {
-		let (_, shard, _) = extrinsic.function;
+		let (_, (shard, _)) = extrinsic.function;
 		let e = Error::VCMPHandlingError(VCMPError::RequestVCHandlingFailed);
 		if self.execute_internal(context, extrinsic).is_err() {
 			// try to handle the error internally, if we get another error, log it and return the

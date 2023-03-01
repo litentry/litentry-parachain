@@ -14,13 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-// use super::{create_identity::CreateIdentity, set_user_shielding_key::SetUserShieldingKey};
 use crate::{
 	error::{Error, Result},
 	executor::{
 		litentry::{
 			create_identity::CreateIdentity, remove_identity::RemoveIdentity,
-			set_user_shielding_key::SetUserShieldingKey, verify_identity::VerifyIdentity,
+			request_vc::RequestVC, set_user_shielding_key::SetUserShieldingKey,
+			verify_identity::VerifyIdentity,
 		},
 		Executor,
 	},
@@ -32,7 +32,7 @@ use itp_node_api::{
 	metadata::{
 		pallet_imp::IMPCallIndexes,
 		pallet_teerex::TeerexCallIndexes,
-		pallet_utility::UTILCallIndexes,
+		pallet_utility::UtilityCallIndexes,
 		pallet_vcmp::VCMPCallIndexes,
 		provider::{AccessNodeMetadata, Error as metadataProviderError},
 	},
@@ -42,8 +42,8 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{
 	extrinsics::ParentchainUncheckedExtrinsicWithStatus, BatchAllFn, CallIndex,
-	CreateIdentityParameters, RemoveIdentityParameters, SetUserShieldingKeyParameters,
-	SupportedCall, VerifyIdentityParameters, H256,
+	CreateIdentityParameters, RemoveIdentityParameters, RequestVCParameters,
+	SetUserShieldingKeyParameters, SupportedCall, VerifyIdentityParameters, H256,
 };
 use litentry_primitives::ParentchainBlockNumber;
 use sp_std::{vec, vec::Vec};
@@ -85,7 +85,7 @@ impl BatchAll {
 		TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 		NodeMetadataProvider: AccessNodeMetadata,
 		NodeMetadataProvider::MetadataType:
-			IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UTILCallIndexes,
+			IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UtilityCallIndexes,
 	{
 		let (_, calls) = extrinsic.function;
 		log::warn!("enter batch call, len:{}", calls.len());
@@ -128,6 +128,24 @@ impl BatchAll {
 						create_identity.execute(context, xt)?;
 					}
 				},
+				itp_types::SupportedCall::RemoveIdentity(call_index, Some(params)) => {
+					let remove_identity = RemoveIdentity {};
+					let call = (*call_index, params.clone());
+					if Executor::<
+						ShieldingKeyRepository,
+						StfEnclaveSigner,
+						TopPoolAuthor,
+						NodeMetadataProvider,
+					>::is_target_call(
+						&remove_identity, &call, context.node_meta_data_provider.as_ref()
+					) {
+						let xt = ParentchainUncheckedExtrinsic {
+							function: call,
+							signature: extrinsic.signature.clone(),
+						};
+						remove_identity.execute(context, xt)?;
+					}
+				},
 				itp_types::SupportedCall::VerifyIdentity(call_index, Some(params)) => {
 					let verify_identity = VerifyIdentity { block_number: self.block_number };
 					let call = (*call_index, params.clone());
@@ -146,8 +164,8 @@ impl BatchAll {
 						verify_identity.execute(context, xt)?;
 					}
 				},
-				itp_types::SupportedCall::RemoveIdentity(call_index, Some(params)) => {
-					let remove_identity = RemoveIdentity {};
+				itp_types::SupportedCall::RequestVC(call_index, Some(params)) => {
+					let request_vc = RequestVC { block_number: self.block_number };
 					let call = (*call_index, params.clone());
 					if Executor::<
 						ShieldingKeyRepository,
@@ -155,13 +173,13 @@ impl BatchAll {
 						TopPoolAuthor,
 						NodeMetadataProvider,
 					>::is_target_call(
-						&remove_identity, &call, context.node_meta_data_provider.as_ref()
+						&request_vc, &call, context.node_meta_data_provider.as_ref()
 					) {
 						let xt = ParentchainUncheckedExtrinsic {
 							function: call,
 							signature: extrinsic.signature.clone(),
 						};
-						remove_identity.execute(context, xt)?;
+						request_vc.execute(context, xt)?;
 					}
 				},
 				_ => {
@@ -183,7 +201,7 @@ where
 	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
 	NodeMetadataProvider::MetadataType:
-		IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UTILCallIndexes,
+		IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UtilityCallIndexes,
 {
 	type Call = BatchAllFn;
 
@@ -201,7 +219,7 @@ where
 		// with substrate's generic `Vec<u8>` type. Basically this just means accepting that there
 		// will be a prefix of vector length (we don't need
 		// to use this).
-		// OpaqueExtrinsicWithStatus & OpaqueExtrinsic together have two leyers encode with vec.
+		// OpaqueExtrinsicWithStatus & OpaqueExtrinsic together have two layers encode with vec.
 		let _length_do_not_remove_me_see_above: Vec<()> = Decode::decode(input)?;
 		let _length_do_not_remove_me_see_above: Vec<()> = Decode::decode(input)?;
 
@@ -255,7 +273,7 @@ pub(crate) fn decode_batch_call<NodeMetadataProvider>(
 where
 	NodeMetadataProvider: AccessNodeMetadata,
 	NodeMetadataProvider::MetadataType:
-		TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + UTILCallIndexes,
+		TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + UtilityCallIndexes,
 {
 	let call_index: [u8; 2] = Decode::decode(input)?;
 	let vector: Vec<()> = Decode::decode(input)?;
@@ -297,6 +315,12 @@ where
 		},
 	)??);
 
+	supported_call.push(metadata_repo.get_from_metadata(
+		|m| -> core::result::Result<SupportedCall, metadataProviderError> {
+			Ok(SupportedCall::RequestVC(VCMPCallIndexes::request_vc_call_indexes(m)?, None))
+		},
+	)??);
+
 	let mut actual_calls: Vec<SupportedCall> = vec![];
 	for _i in 0..vector.len() {
 		let call_index: CallIndex = Decode::decode(input)?;
@@ -326,6 +350,12 @@ where
 					let actual_params = VerifyIdentityParameters::decode(input).unwrap();
 					actual_calls
 						.push(SupportedCall::VerifyIdentity(call_index, Some(actual_params)));
+				}
+			},
+			SupportedCall::RequestVC(expected_call_idnex, _params) => {
+				if expected_call_idnex == &call_index {
+					let actual_params = RequestVCParameters::decode(input).unwrap();
+					actual_calls.push(SupportedCall::RequestVC(call_index, Some(actual_params)));
 				}
 			},
 		});

@@ -25,7 +25,7 @@ use itp_node_api::{
 	api_client::ParentchainUncheckedExtrinsic,
 	metadata::{
 		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes,
-		pallet_utility::UTILCallIndexes, pallet_vcmp::VCMPCallIndexes,
+		pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes,
 		provider::AccessNodeMetadata,
 	},
 };
@@ -71,7 +71,7 @@ impl VerifyIdentity {
 		TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 		NodeMetadataProvider: AccessNodeMetadata,
 		NodeMetadataProvider::MetadataType:
-			IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UTILCallIndexes,
+			IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UtilityCallIndexes,
 	{
 		let (_, (shard, encrypted_identity, encrypted_validation_data)) = extrinsic.function;
 		let shielding_key = context.shielding_key_repo.retrieve_key()?;
@@ -114,7 +114,7 @@ where
 	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
 	NodeMetadataProvider::MetadataType:
-		IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UTILCallIndexes,
+		IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UtilityCallIndexes,
 {
 	type Call = VerifyIdentityFn;
 

@@ -19,7 +19,7 @@ use crate::{error::Result, NodeMetadata};
 /// Pallet' name:
 const UTIL: &str = "Utility";
 
-pub trait UTILCallIndexes {
+pub trait UtilityCallIndexes {
 	fn batch_call_indexes(&self) -> Result<[u8; 2]>;
 	fn as_derivative_call_indexes(&self) -> Result<[u8; 2]>;
 	fn batch_all_call_indexes(&self) -> Result<[u8; 2]>;
@@ -27,7 +27,7 @@ pub trait UTILCallIndexes {
 	fn force_batch_call_indexes(&self) -> Result<[u8; 2]>;
 }
 
-impl UTILCallIndexes for NodeMetadata {
+impl UtilityCallIndexes for NodeMetadata {
 	fn batch_call_indexes(&self) -> Result<[u8; 2]> {
 		self.call_indexes(UTIL, "batch")
 	}

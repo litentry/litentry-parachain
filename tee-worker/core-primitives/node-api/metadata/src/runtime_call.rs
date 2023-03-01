@@ -26,7 +26,6 @@ impl RuntimeCall for NodeMetadata {
 			return Err(Error::MetadataNotSet)
 		}
 		let node_metadata = self.node_metadata.as_ref().unwrap();
-		// let registry = node_metadata.types();
 
 		let runtime_call = node_metadata.types().types().iter().find(|ty| {
 			let path = ty.ty().path().segments();
