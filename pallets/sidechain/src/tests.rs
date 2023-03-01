@@ -208,6 +208,7 @@ fn register_enclave(signer_pub_key: &MrSigner, cert: &[u8], expected_enclave_cou
 		cert.to_vec(),
 		URL.to_vec(),
 		None,
+		None,
 	));
 	assert_eq!(Teerex::<Test>::enclave_count(), expected_enclave_count);
 }
