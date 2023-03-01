@@ -1573,7 +1573,6 @@ dependencies = [
 name = "ita-stf"
 version = "0.9.0"
 dependencies = [
- "core-primitives",
  "derive_more",
  "frame-support",
  "frame-system",
@@ -2044,8 +2043,8 @@ dependencies = [
 name = "itp-sgx-runtime-primitives"
 version = "0.9.0"
 dependencies = [
- "core-primitives",
  "frame-system",
+ "litentry-primitives",
  "pallet-balances",
  "sp-core",
  "sp-runtime",
@@ -2248,7 +2247,6 @@ name = "itp-types"
 version = "0.9.0"
 dependencies = [
  "chrono 0.4.23",
- "core-primitives",
  "frame-system",
  "itp-sgx-runtime-primitives",
  "litentry-primitives",
@@ -2576,7 +2574,6 @@ version = "0.1.0"
 dependencies = [
  "chrono 0.4.11",
  "chrono 0.4.23",
- "core-primitives",
  "futures 0.3.8",
  "hex 0.4.0",
  "http",
@@ -2703,7 +2700,6 @@ dependencies = [
 name = "lc-stf-task-sender"
 version = "0.1.0"
 dependencies = [
- "core-primitives",
  "http",
  "http_req",
  "itc-rest-client",

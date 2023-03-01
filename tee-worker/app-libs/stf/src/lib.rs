@@ -29,7 +29,7 @@ extern crate sgx_tstd as std;
 #[cfg(feature = "sgx")]
 pub use ita_sgx_runtime::{Balance, BlockNumber, Index};
 #[cfg(feature = "std")]
-pub use parentchain_primitives::{Balance, BlockNumber, Index};
+pub use litentry_primitives::{Balance, BlockNumber, Index};
 
 use codec::{Decode, Encode};
 use derive_more::Display;
@@ -38,7 +38,7 @@ use ita_sgx_runtime::{pallet_imt::MetadataOf, IdentityManagement, Runtime, Syste
 use itp_node_api_metadata::Error as MetadataError;
 use itp_node_api_metadata_provider::Error as MetadataProviderError;
 use itp_stf_primitives::types::AccountId;
-use parentchain_primitives::{ErrorString, IMPError};
+use litentry_primitives::{ErrorString, IMPError};
 use std::{format, string::String};
 pub use stf_sgx_primitives::{types::*, Stf};
 pub use trusted_call::*;

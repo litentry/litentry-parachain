@@ -31,10 +31,10 @@ use lc_stf_task_sender::{
 	Web2IdentityVerificationRequest, Web3IdentityVerificationRequest,
 };
 use litentry_primitives::{
-	ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType, ValidationData,
+	Assertion, ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType,
+	ValidationData,
 };
 use log::*;
-use parentchain_primitives::Assertion;
 use sp_runtime::BoundedVec;
 use std::{format, string::ToString, vec};
 

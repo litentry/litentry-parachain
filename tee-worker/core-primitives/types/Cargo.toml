@@ -29,7 +29,6 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 
 # litentry
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
-parentchain-primitives = { package = "core-primitives", path = "../../../primitives/core", default-features = false }
 
 [dev-dependencies]
 sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
@@ -46,7 +45,6 @@ std = [
     "serde_json/std",
     "primitive-types/std",
     "litentry-primitives/std",
-    "parentchain-primitives/std",
     "itp-sgx-runtime-primitives/std",
     "substrate-api-client/std",
     # substrate

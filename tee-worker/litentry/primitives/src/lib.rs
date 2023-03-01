@@ -51,6 +51,8 @@ use rand::Rng;
 pub use enclave_quote::*;
 pub use validation_data::*;
 
+pub use parentchain_primitives::*;
+
 pub const CHALLENGE_CODE_SIZE: usize = 16;
 pub type ChallengeCode = [u8; CHALLENGE_CODE_SIZE];
 

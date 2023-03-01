@@ -39,7 +39,6 @@ itp-utils = { path = "../../../../core-primitives/utils", default-features = fal
 # litentry
 itp-stf-primitives = { default-features = false, path = "../../../../core-primitives/stf-primitives" }
 litentry-primitives = { path = "../../../primitives", default-features = false }
-parentchain-primitives = { package = "core-primitives", path = "../../../../../primitives/core", default-features = false }
 
 [features]
 default = ["std"]
@@ -64,5 +63,4 @@ std = [
     "url",
     "itp-types/std",
     "itp-utils/std",
-    "parentchain-primitives/std",
 ]
