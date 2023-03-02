@@ -311,13 +311,16 @@ export async function getEnclave(api: ApiPromise): Promise<{
     };
 }
 
-export async function verifySignature(data: string, signature: string, api: ApiPromise) {
+export async function verifySignature(data: string, index: HexString, signature: string, api: ApiPromise) {
     const count = await api.query.teerex.enclaveCount();
     const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as EnclaveResult;
 
     //JSON data types cannot be verify signature
     // @TODO rust needs to modify the vc format
     const message = JSON.parse(data);
+
+    //check vc index
+    expect(index).to.be.eq(message.id);
     message.proof = null;
     const isValid = await ed.verify(
         Buffer.from(hexToU8a(`0x${signature}`)),
@@ -330,9 +333,12 @@ export async function verifySignature(data: string, signature: string, api: ApiP
     return true;
 }
 
-export async function checkVc(vc: string, api: ApiPromise): Promise<boolean> {
+export async function checkVc(vc: string, index: HexString, api: ApiPromise): Promise<boolean> {
     const vcObj = JSON.parse(vc);
-    const signatureValid = await verifySignature(vc, vcObj.proof.proofValue, api);
+
+    console.log('----------vc json----------', vcObj);
+
+    const signatureValid = await verifySignature(vc, index, vcObj.proof.proofValue, api);
     expect(signatureValid).to.be.true;
     const jsonValid = await checkJSON(vc);
     expect(jsonValid).to.be.true;
@@ -369,7 +375,7 @@ export async function checkIssuerAttestation(data: string, api: ApiPromise): Pro
     if (metadata != null) {
         const quoteFromData = metadata!['quote'];
         console.log('   [IssuerAttestation] quoteFromData: ', quoteFromData);
-        if(quoteFromData.length == 0) {
+        if (quoteFromData.length == 0) {
             return;
         }
         const quote = JSON.parse(Base64.decode(quoteFromData));
@@ -387,6 +393,6 @@ export async function checkIssuerAttestation(data: string, api: ApiPromise): Pro
         const timestamp = Date.parse(quote!['timestamp']);
         const now = Date.now();
         const dt = now - timestamp;
-        console.log('[IssuerAttestation] ISV Enclave Quote Delta Time: ', dt);    
+        console.log('[IssuerAttestation] ISV Enclave Quote Delta Time: ', dt);
     }
 }
