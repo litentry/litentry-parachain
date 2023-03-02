@@ -21,6 +21,9 @@ pub use constants::*;
 pub use opaque::*;
 pub use types::*;
 
+mod assertion;
+pub use assertion::*;
+
 mod error;
 pub use error::*;
 

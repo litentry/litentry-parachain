@@ -195,6 +195,7 @@ fn list_enclaves_works() {
 			shielding_key: None,
 			vc_pubkey: None,
 			sgx_mode: SgxBuildMode::Debug,
+			sgx_metadata: Default::default(),
 		};
 		assert_ok!(Teerex::register_enclave(
 			RuntimeOrigin::signed(signer.clone()),
@@ -229,6 +230,7 @@ fn remove_middle_enclave_works() {
 			shielding_key: None,
 			vc_pubkey: None,
 			sgx_mode: SgxBuildMode::Debug,
+			sgx_metadata: Default::default(),
 		};
 
 		let e_2: Enclave<AccountId, Vec<u8>> = Enclave {
@@ -239,6 +241,7 @@ fn remove_middle_enclave_works() {
 			shielding_key: None,
 			vc_pubkey: None,
 			sgx_mode: SgxBuildMode::Debug,
+			sgx_metadata: Default::default(),
 		};
 
 		let e_3: Enclave<AccountId, Vec<u8>> = Enclave {
@@ -249,6 +252,7 @@ fn remove_middle_enclave_works() {
 			shielding_key: None,
 			vc_pubkey: None,
 			sgx_mode: SgxBuildMode::Debug,
+			sgx_metadata: Default::default(),
 		};
 
 		assert_ok!(Teerex::register_enclave(
@@ -362,6 +366,7 @@ fn update_enclave_url_works() {
 			shielding_key: None,
 			vc_pubkey: None,
 			sgx_mode: SgxBuildMode::Debug,
+			sgx_metadata: Default::default(),
 		};
 
 		assert_ok!(Teerex::register_enclave(
@@ -510,6 +515,7 @@ fn timestamp_callback_works() {
 			shielding_key: None,
 			vc_pubkey: None,
 			sgx_mode: SgxBuildMode::Debug,
+			sgx_metadata: Default::default(),
 		};
 
 		let e_3: Enclave<AccountId, Vec<u8>> = Enclave {
@@ -520,6 +526,7 @@ fn timestamp_callback_works() {
 			shielding_key: None,
 			vc_pubkey: None,
 			sgx_mode: SgxBuildMode::Debug,
+			sgx_metadata: Default::default(),
 		};
 
 		//Register 3 enclaves: 5, 6 ,7
@@ -591,6 +598,7 @@ fn debug_mode_enclave_attest_works_when_sgx_debug_mode_is_allowed() {
 			shielding_key: None,
 			vc_pubkey: None,
 			sgx_mode: SgxBuildMode::Debug,
+			sgx_metadata: Default::default(),
 		};
 
 		//Register an enclave compiled in debug mode
@@ -621,6 +629,7 @@ fn production_mode_enclave_attest_works_when_sgx_debug_mode_is_allowed() {
 				shielding_key: None,
 				vc_pubkey: None,
 				sgx_mode: SgxBuildMode::Production,
+				sgx_metadata: Default::default(),
 			};
 
 			//Register an enclave compiled in production mode
@@ -670,6 +679,7 @@ fn production_mode_enclave_attest_works_when_sgx_debug_mode_not_allowed() {
 			shielding_key: None,
 			vc_pubkey: None,
 			sgx_mode: SgxBuildMode::Production,
+			sgx_metadata: Default::default(),
 		};
 
 		//Register an enclave compiled in production mode

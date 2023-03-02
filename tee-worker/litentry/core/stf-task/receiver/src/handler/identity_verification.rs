@@ -28,8 +28,8 @@ use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::OpaqueCall;
 use lc_stf_task_sender::RequestType;
+use litentry_primitives::IMPError;
 use log::error;
-use parachain_core_primitives::IMPError;
 use std::{sync::Arc, vec::Vec};
 
 pub(crate) struct IdentityVerificationHandler<

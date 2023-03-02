@@ -30,10 +30,9 @@ use lc_data_providers::graphql::{
 };
 use litentry_primitives::{
 	Assertion, AssertionNetworks, EvmNetwork, Identity, ParentchainBlockNumber, SubstrateNetwork,
-	ASSERTION_NETWORKS,
+	VCMPError, ASSERTION_NETWORKS,
 };
 use log::*;
-use parachain_core_primitives::VCMPError;
 use std::{collections::HashSet, str::from_utf8, string::ToString, vec, vec::Vec};
 
 lazy_static! {

@@ -1,10 +1,12 @@
-import { describeLitentry } from './utils';
+import { describeLitentry, checkVc, checkIssuerAttestation } from './utils';
 import { step } from 'mocha-steps';
 import { requestVC, setUserShieldingKey, disableVC, revokeVC } from './indirect_calls';
 import { Assertion } from './type-definitions';
 import { assert } from 'chai';
-import { u8aToHex } from '@polkadot/util';
+import { u8aToHex, stringToU8a, stringToHex } from '@polkadot/util';
 import { HexString } from '@polkadot/util/types';
+import { blake2AsHex } from '@polkadot/util-crypto';
+const base58 = require('micro-base58');
 
 const assertion = <Assertion>{
     A1: 'A1',
@@ -25,13 +27,33 @@ describeLitentry('VC test', async (context) => {
     });
     step('Request VC', async () => {
         for (const key in assertion) {
-            const eventData = await requestVC(context, context.defaultSigner[0], aesKey, true, context.shard, {
-                [key]: assertion[key as keyof Assertion],
-            });
-            assert(eventData![0] == u8aToHex(context.defaultSigner[0].addressRaw) && eventData![1] && eventData![2]);
-            indexList.push(eventData![1]);
-            const registry = (await context.substrate.query.vcManagement.vcRegistry(eventData![1])) as any;
-            assert.equal(registry.toHuman()!['status'], 'Active');
+            const [account, index, vc] = (await requestVC(
+                context,
+                context.defaultSigner[0],
+                aesKey,
+                true,
+                context.mrEnclave,
+                {
+                    [key]: assertion[key as keyof Assertion],
+                }
+            )) as HexString[];
+
+            const vcString = vc.replace('0x', '');
+            const vcBlake2Hash = blake2AsHex(vcString);
+
+            const registry = (await context.substrate.query.vcManagement.vcRegistry(index)) as any;
+            assert.equal(registry.toHuman()!['status'], 'Active', 'check registry error');
+
+            assert.equal(vcBlake2Hash, registry.toHuman()!['hash_'], 'check vc json hash error');
+
+            //check vc
+            const vcValid = await checkVc(vcString, index, context.substrate);
+            assert.equal(vcValid, true, 'check vc error');
+            indexList.push(index);
+
+            //check issuer attestation
+            await checkIssuerAttestation(vcString, context.substrate);
+            console.log(`--------Assertion ${key} is pass-----------`);
         }
     });
 
