@@ -57,21 +57,21 @@ describeLitentry('VC test', async (context) => {
         }
     });
 
-    // step('Disable VC', async () => {
-    //     for (const index of indexList) {
-    //         const eventIndex = await disableVC(context, context.defaultSigner[0], aesKey, true, index);
-    //         assert.equal(eventIndex, index, 'check index error');
-    //         const registry = (await context.substrate.query.vcManagement.vcRegistry(index)) as any;
-    //         assert.equal(registry.toHuman()!['status'], 'Disabled');
-    //     }
-    // });
+    step('Disable VC', async () => {
+        for (const index of indexList) {
+            const eventIndex = await disableVC(context, context.defaultSigner[0], aesKey, true, index);
+            assert.equal(eventIndex, index, 'check index error');
+            const registry = (await context.substrate.query.vcManagement.vcRegistry(index)) as any;
+            assert.equal(registry.toHuman()!['status'], 'Disabled');
+        }
+    });
 
-    // step('Revoke VC', async () => {
-    //     for (const index of indexList) {
-    //         const eventIndex = await revokeVC(context, context.defaultSigner[0], aesKey, true, index);
-    //         assert.equal(eventIndex, index, 'check index error');
-    //         const registry = (await context.substrate.query.vcManagement.vcRegistry(index)) as any;
-    //         assert.equal(registry.toHuman(), null);
-    //     }
-    // });
+    step('Revoke VC', async () => {
+        for (const index of indexList) {
+            const eventIndex = await revokeVC(context, context.defaultSigner[0], aesKey, true, index);
+            assert.equal(eventIndex, index, 'check index error');
+            const registry = (await context.substrate.query.vcManagement.vcRegistry(index)) as any;
+            assert.equal(registry.toHuman(), null);
+        }
+    });
 });
