@@ -363,7 +363,7 @@ export async function checkJSON(data: string): Promise<boolean> {
 
 export async function checkIssuerAttestation(data: string, api: ApiPromise): Promise<any> {
     const vc = JSON.parse(data);
-    const mrEnclaveFromVC = Buffer.from(base58.decode(vc.issuer.shard)).toString('hex');
+    const mrEnclaveFromVC = Buffer.from(base58.decode(vc.issuer.mrenclave)).toString('hex');
     const count = await api.query.teerex.enclaveCount();
     const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as EnclaveResult;
     const mrEnclaveFromParachain = res.mrEnclave;

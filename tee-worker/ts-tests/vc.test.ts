@@ -52,7 +52,7 @@ describeLitentry('VC test', async (context) => {
             indexList.push(index);
 
             //check issuer attestation
-            await checkIssuerAttestation(vc.replace('0x', ''), context.substrate);
+            await checkIssuerAttestation(vcString, context.substrate);
             console.log(`--------Assertion ${key} is pass-----------`);
         }
     });
