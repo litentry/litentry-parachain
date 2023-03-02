@@ -21,7 +21,7 @@ use sp_runtime::{
 	MultiSignature, OpaqueExtrinsic,
 };
 
-use parentchain_primitives::AccountId as ParentchainAccountId;
+use litentry_primitives::ParentchainAccountId;
 
 /// The address format for describing accounts.
 pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
