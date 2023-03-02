@@ -55,7 +55,6 @@ lc-credentials = { path = "../../credentials", default-features = false }
 lc-identity-verification = { path = "../../identity-verification", default-features = false }
 lc-stf-task-sender = { path = "../sender", default-features = false }
 litentry-primitives = { path = "../../../primitives", default-features = false }
-parachain-core-primitives = { package = "core-primitives", path = "../../../../../primitives/core", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37", default-features = false }
 
 [features]
@@ -110,5 +109,4 @@ std = [
     "frame-support/std",
     "sp-std/std",
     "lc-credentials/std",
-    "parachain-core-primitives/std",
 ]

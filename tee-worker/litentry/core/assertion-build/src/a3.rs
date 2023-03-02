@@ -25,9 +25,8 @@ use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use lc_credentials::Credential;
 use lc_data_providers::{discord_litentry::DiscordLitentryClient, vec_to_string};
-use litentry_primitives::{Identity, ParentchainBlockNumber, Web2Network};
+use litentry_primitives::{Identity, ParentchainBlockNumber, Web2Network, Assertion, ParameterString, VCMPError};
 use log::*;
-use parachain_core_primitives::{Assertion, ParameterString, VCMPError};
 use std::vec::Vec;
 
 pub fn build(

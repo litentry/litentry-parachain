@@ -27,9 +27,8 @@ use lc_credentials::Credential;
 use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
-use litentry_primitives::{EvmNetwork, Identity, ParentchainBlockNumber};
+use litentry_primitives::{EvmNetwork, Identity, ParentchainBlockNumber, Assertion, ParentchainBalance, ASSERTION_FROM_DATE};
 use log::*;
-use parachain_core_primitives::{Assertion, Balance, ASSERTION_FROM_DATE};
 use std::{
 	str::from_utf8,
 	string::{String, ToString},
@@ -39,7 +38,7 @@ use std::{
 
 pub fn build(
 	identities: Vec<Identity>,
-	min_balance: Balance,
+	min_balance: ParentchainBalance,
 	shard: &ShardIdentifier,
 	who: &AccountId,
 	bn: ParentchainBlockNumber,

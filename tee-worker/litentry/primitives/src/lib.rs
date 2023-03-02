@@ -28,7 +28,7 @@ pub use identity::*;
 pub use parentchain_primitives::{
 	Assertion, AccountId as ParentchainAccountId, AesOutput, Balance as ParentchainBalance, BlockNumber as ParentchainBlockNumber,
 	Hash as ParentchainHash, Header as ParentchainHeader, Signature as ParentchainSignature, Index as ParentchainIndex,
-	UserShieldingKeyType, MINUTES, USER_SHIELDING_KEY_LEN, USER_SHIELDING_KEY_NONCE_LEN, ErrorString, IMPError, VCMPError, SchemaContentString, SchemaIdString,
+	UserShieldingKeyType, MINUTES, USER_SHIELDING_KEY_LEN, USER_SHIELDING_KEY_NONCE_LEN, ErrorString, IMPError, VCMPError, SchemaContentString, SchemaIdString, ParameterString, AssertionNetworks, Network, ASSERTION_NETWORKS,
 	USER_SHIELDING_KEY_TAG_LEN, ASSERTION_FROM_DATE,
 };
 

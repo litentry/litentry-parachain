@@ -25,9 +25,8 @@ use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use lc_credentials::Credential;
 use lc_stf_task_sender::MaxIdentityLength;
-use litentry_primitives::{Identity, ParentchainBlockNumber};
+use litentry_primitives::{Identity, ParentchainBlockNumber, Assertion, VCMPError};
 use log::*;
-use parachain_core_primitives::{Assertion, VCMPError};
 use sp_runtime::BoundedVec;
 
 pub fn build(

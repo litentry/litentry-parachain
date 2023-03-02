@@ -27,9 +27,8 @@ use lc_credentials::Credential;
 use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
-use litentry_primitives::{EvmNetwork, Identity, ParentchainBlockNumber};
+use litentry_primitives::{EvmNetwork, Identity, ParentchainBlockNumber, Assertion, ParentchainBalance, VCMPError, ASSERTION_FROM_DATE};
 use log::*;
-use parachain_core_primitives::{Assertion, Balance, VCMPError, ASSERTION_FROM_DATE};
 use std::{str::from_utf8, string::ToString, vec, vec::Vec};
 
 const WBTC_TOKEN_ADDRESS: &str = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
@@ -37,7 +36,7 @@ const WBTC_TOKEN_ADDRESS: &str = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
 // WBTC holder
 pub fn build(
 	identities: Vec<Identity>,
-	min_balance: Balance,
+	min_balance: ParentchainBalance,
 	shard: &ShardIdentifier,
 	who: &AccountId,
 	bn: ParentchainBlockNumber,
