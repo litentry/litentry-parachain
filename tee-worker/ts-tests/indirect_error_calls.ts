@@ -11,7 +11,7 @@ export async function setErrorUserShieldingKey(
     listening: boolean
 ): Promise<string | undefined> {
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, aesKey).toString('hex');
-    const tx = context.substrate.tx.identityManagement.setUserShieldingKey(context.shard, `0x${ciphertext}`);
+    const tx = context.substrate.tx.identityManagement.setUserShieldingKey(context.mrEnclave, `0x${ciphertext}`);
 
     await sendTxUntilInBlock(context.substrate, tx, signer);
 
@@ -33,7 +33,7 @@ export async function createErrorIdentity(
     errorCiphertext: string
 ): Promise<string | undefined> {
     const tx = context.substrate.tx.identityManagement.createIdentity(
-        context.shard,
+        context.mrEnclave,
         signer.address,
         errorCiphertext,
         null

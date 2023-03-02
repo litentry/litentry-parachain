@@ -19,7 +19,7 @@ export async function setUserShieldingKey(
 ): Promise<HexString | undefined> {
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, aesKey).toString('hex');
 
-    const tx = context.substrate.tx.identityManagement.setUserShieldingKey(context.shard, `0x${ciphertext}`);
+    const tx = context.substrate.tx.identityManagement.setUserShieldingKey(context.mrEnclave, `0x${ciphertext}`);
 
     await sendTxUntilInBlock(context.substrate, tx, signer);
 
@@ -42,7 +42,7 @@ export async function createIdentity(
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
 
     const tx = context.substrate.tx.identityManagement.createIdentity(
-        context.shard,
+        context.mrEnclave,
         signer.address,
         `0x${ciphertext}`,
         null
@@ -57,9 +57,9 @@ export async function createIdentity(
         return decodeIdentityEvent(
             context.substrate,
             data.account.toHex(),
-            decryptWithAES(aesKey, data.identity),
-            decryptWithAES(aesKey, data.idGraph),
-            decryptWithAES(aesKey, data.code)
+            decryptWithAES(aesKey, data.identity, 'hex'),
+            decryptWithAES(aesKey, data.idGraph, 'hex'),
+            decryptWithAES(aesKey, data.code, 'hex')
         );
     }
     return undefined;
@@ -75,7 +75,7 @@ export async function removeIdentity(
     const encode = context.substrate.createType('LitentryIdentity', identity).toHex();
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
 
-    const tx = context.substrate.tx.identityManagement.removeIdentity(context.shard, `0x${ciphertext}`);
+    const tx = context.substrate.tx.identityManagement.removeIdentity(context.mrEnclave, `0x${ciphertext}`);
 
     await sendTxUntilInBlock(context.substrate, tx, signer);
 
@@ -86,8 +86,8 @@ export async function removeIdentity(
         return decodeIdentityEvent(
             context.substrate,
             data.account.toHex(),
-            decryptWithAES(aesKey, data.identity),
-            decryptWithAES(aesKey, data.idGraph)
+            decryptWithAES(aesKey, data.identity, 'hex'),
+            decryptWithAES(aesKey, data.idGraph, 'hex')
         );
     }
     return undefined;
@@ -109,7 +109,7 @@ export async function verifyIdentity(
     );
 
     const tx = context.substrate.tx.identityManagement.verifyIdentity(
-        context.shard,
+        context.mrEnclave,
         `0x${identity_ciphertext}`,
         `0x${validation_ciphertext}`
     );
@@ -123,8 +123,8 @@ export async function verifyIdentity(
         return decodeIdentityEvent(
             context.substrate,
             data.account.toHex(),
-            decryptWithAES(aesKey, data.identity),
-            decryptWithAES(aesKey, data.idGraph)
+            decryptWithAES(aesKey, data.identity, 'hex'),
+            decryptWithAES(aesKey, data.idGraph, 'hex')
         );
     }
     return undefined;
@@ -136,17 +136,17 @@ export async function requestVC(
     signer: KeyringPair,
     aesKey: HexString,
     listening: boolean,
-    shard: HexString,
+    mrEnclave: HexString,
     assertion: Assertion
 ): Promise<HexString[] | undefined> {
-    const tx = context.substrate.tx.vcManagement.requestVc(shard, assertion);
+    const tx = context.substrate.tx.vcManagement.requestVc(mrEnclave, assertion);
 
     await sendTxUntilInBlock(context.substrate, tx, signer);
     if (listening) {
         const events = await listenEvent(context.substrate, 'vcManagement', ['VCIssued']);
         expect(events.length).to.be.equal(1);
-        const data = events[0].data as any;
-        return [data.account.toHex(), data.index.toHex(), data.vc];
+        const [account, index, vc] = events[0].data as any;
+        return [account.toHex(), index.toHex(), decryptWithAES(aesKey, vc, 'utf-8')];
     }
     return undefined;
 }

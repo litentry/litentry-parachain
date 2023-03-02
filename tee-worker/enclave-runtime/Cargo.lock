@@ -1845,7 +1845,6 @@ dependencies = [
  "itp-sgx-io",
  "itp-time-utils",
  "itp-types",
- "litentry-primitives",
  "log",
  "num-bigint",
  "parity-scale-codec",

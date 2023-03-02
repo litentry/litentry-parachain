@@ -44,9 +44,11 @@ pub struct Enclave<PubKey, Url> {
 	pub shielding_key: Option<Vec<u8>>, // JSON serialised enclave shielding key
 	pub vc_pubkey: Option<Vec<u8>>,
 	pub sgx_mode: SgxBuildMode,
+	pub sgx_metadata: SgxEnclaveMetadata,
 }
 
 impl<PubKey, Url> Enclave<PubKey, Url> {
+	#[allow(clippy::too_many_arguments)]
 	pub fn new(
 		pubkey: PubKey,
 		mr_enclave: MrEnclave,
@@ -55,6 +57,7 @@ impl<PubKey, Url> Enclave<PubKey, Url> {
 		shielding_key: Option<Vec<u8>>,
 		vc_pubkey: Option<Vec<u8>>,
 		sgx_build_mode: SgxBuildMode,
+		sgx_metadata: SgxEnclaveMetadata,
 	) -> Self {
 		Enclave {
 			pubkey,
@@ -64,7 +67,21 @@ impl<PubKey, Url> Enclave<PubKey, Url> {
 			shielding_key,
 			vc_pubkey,
 			sgx_mode: sgx_build_mode,
+			sgx_metadata,
 		}
+	}
+}
+
+#[derive(Encode, Decode, Clone, TypeInfo, PartialEq, Eq, Default, sp_core::RuntimeDebug)]
+pub struct SgxEnclaveMetadata {
+	pub quote: Vec<u8>,
+	pub quote_sig: Vec<u8>,
+	pub quote_cert: Vec<u8>,
+}
+
+impl SgxEnclaveMetadata {
+	pub fn new(quote: Vec<u8>, quote_sig: Vec<u8>, quote_cert: Vec<u8>) -> Self {
+		SgxEnclaveMetadata { quote, quote_sig, quote_cert }
 	}
 }
 

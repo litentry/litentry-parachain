@@ -35,6 +35,7 @@ impl<AccountId, Url: Default> TestEnclave<AccountId, Url> for Enclave<AccountId,
 			Default::default(),
 			Default::default(),
 			Default::default(),
+			Default::default(),
 		)
 	}
 

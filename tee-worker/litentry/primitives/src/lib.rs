@@ -18,7 +18,6 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-mod enclave_quote;
 mod ethereum_signature;
 mod identity;
 mod validation_data;
@@ -51,7 +50,6 @@ pub mod sgx_reexport_prelude {
 
 use rand::Rng;
 
-pub use enclave_quote::*;
 pub use validation_data::*;
 
 pub const CHALLENGE_CODE_SIZE: usize = 16;
