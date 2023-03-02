@@ -394,8 +394,14 @@ jobs:
       - name: Run unittests
         run: |
           rustup show
-          cargo test --features=skip-ias-check --locked --release -p pallet-* --lib
-          cargo test --features=skip-ias-check --locked --release -p pallet-* --lib --features runtime-benchmarks
+          # no `skip-ias-check` feature
+          cargo test --locked --release -p pallet-* --lib
+          # with `skip-ias-check` feature only
+          cargo test --locked --release -p pallet-* --lib --features=skip-ias-check
+          # with `runtime-benchmarks` feature only
+          cargo test --locked --release -p pallet-* --lib --features=runtime-benchmarks
+          # with both `skip-ias-check` and `runtime-benchmarks` features
+          cargo test --locked --release -p pallet-* --lib --features=skip-ias-check,runtime-benchmarks
 
       - name: Fail early
         if: failure()

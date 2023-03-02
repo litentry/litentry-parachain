@@ -28,7 +28,8 @@ use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
 use litentry_primitives::{
-	Assertion, Balance, Identity, ParentchainBlockNumber, SubstrateNetwork, ASSERTION_FROM_DATE,
+	Assertion, Identity, ParentchainBalance, ParentchainBlockNumber, SubstrateNetwork,
+	ASSERTION_FROM_DATE,
 };
 use log::*;
 use std::{
@@ -40,7 +41,7 @@ use std::{
 
 pub fn build(
 	identities: Vec<Identity>,
-	min_balance: Balance,
+	min_balance: ParentchainBalance,
 	shard: &ShardIdentifier,
 	who: &AccountId,
 	bn: ParentchainBlockNumber,

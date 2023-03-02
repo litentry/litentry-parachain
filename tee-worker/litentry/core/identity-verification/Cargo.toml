@@ -47,7 +47,6 @@ sp-std = { git = "https://github.com/paritytech/substrate.git", branch = "polkad
 lc-data-providers = { path = "../data-providers", default-features = false }
 lc-stf-task-sender = { path = "../stf-task/sender", default-features = false }
 litentry-primitives = { path = "../../primitives", default-features = false }
-parachain-core-primitives = { package = "core-primitives", path = "../../../../primitives/core", default-features = false }
 
 [features]
 default = ["std"]
@@ -90,5 +89,4 @@ std = [
     "lc-data-providers/std",
     "litentry-primitives/std",
     "lc-stf-task-sender/std",
-    "parachain-core-primitives/std",
 ]
