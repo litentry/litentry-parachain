@@ -127,13 +127,15 @@ impl ScheduledEnclaveHandle for ScheduledEnclaves {
 	) -> Option<ScheduledEnclaveInfo> {
 		self.scheduled_enclaves
 			.iter()
-			.filter_map(|(k, v)| {
-				if k > &current_side_chain_number {
-					Some(v.clone())
-				} else {
-					None
-				}
-			})
+			.filter_map(
+				|(k, v)| {
+					if k > &current_side_chain_number {
+						Some(v.clone())
+					} else {
+						None
+					}
+				},
+			)
 			.min_by_key(|v| v.sidechain_block_number)
 	}
 }
