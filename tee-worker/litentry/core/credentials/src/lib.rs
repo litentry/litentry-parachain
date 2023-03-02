@@ -39,7 +39,9 @@ use codec::{Decode, Encode};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{Assertion, ParentchainBalance, ParentchainBlockNumber, ASSERTION_FROM_DATE};
+use litentry_primitives::{
+	Assertion, ParentchainBalance, ParentchainBlockNumber, ASSERTION_FROM_DATE,
+};
 use log::*;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};

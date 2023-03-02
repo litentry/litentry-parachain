@@ -25,7 +25,9 @@ use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use lc_credentials::Credential;
 use lc_data_providers::{discord_litentry::DiscordLitentryClient, vec_to_string};
-use litentry_primitives::{Identity, ParentchainBlockNumber, Web2Network, Assertion, ParameterString, VCMPError};
+use litentry_primitives::{
+	Assertion, Identity, ParameterString, ParentchainBlockNumber, VCMPError, Web2Network,
+};
 use log::*;
 use std::vec::Vec;
 

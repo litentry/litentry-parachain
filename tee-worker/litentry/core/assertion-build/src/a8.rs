@@ -28,7 +28,10 @@ use lc_credentials::Credential;
 use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsNetwork, VerifiedCredentialsTotalTxs,
 };
-use litentry_primitives::{EvmNetwork, Identity, ParentchainBlockNumber, SubstrateNetwork, Assertion, AssertionNetworks, VCMPError, ASSERTION_NETWORKS};
+use litentry_primitives::{
+	Assertion, AssertionNetworks, EvmNetwork, Identity, ParentchainBlockNumber, SubstrateNetwork,
+	VCMPError, ASSERTION_NETWORKS,
+};
 use log::*;
 use std::{collections::HashSet, str::from_utf8, string::ToString, vec, vec::Vec};
 
