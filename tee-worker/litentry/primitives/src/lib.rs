@@ -18,7 +18,6 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-mod assertion;
 mod enclave_quote;
 mod ethereum_signature;
 mod identity;
@@ -27,9 +26,12 @@ mod validation_data;
 pub use ethereum_signature::*;
 pub use identity::*;
 pub use parentchain_primitives::{
-	AccountId, AesOutput, Balance as ParentchainBalance, BlockNumber as ParentchainBlockNumber,
-	Hash as ParentchainHash, Header as ParentchainHeader, Signature as ParentchainSignature,
-	UserShieldingKeyType, MINUTES, USER_SHIELDING_KEY_LEN, USER_SHIELDING_KEY_NONCE_LEN,
+	AccountId as ParentchainAccountId, AesOutput, Assertion, AssertionNetworks,
+	Balance as ParentchainBalance, BlockNumber as ParentchainBlockNumber, ErrorString,
+	Hash as ParentchainHash, Header as ParentchainHeader, IMPError, Index as ParentchainIndex,
+	Network, ParameterString, SchemaContentString, SchemaIdString,
+	Signature as ParentchainSignature, UserShieldingKeyType, VCMPError, ASSERTION_FROM_DATE,
+	ASSERTION_NETWORKS, MINUTES, USER_SHIELDING_KEY_LEN, USER_SHIELDING_KEY_NONCE_LEN,
 	USER_SHIELDING_KEY_TAG_LEN,
 };
 
@@ -49,7 +51,6 @@ pub mod sgx_reexport_prelude {
 
 use rand::Rng;
 
-pub use assertion::*;
 pub use enclave_quote::*;
 pub use validation_data::*;
 

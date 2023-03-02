@@ -133,7 +133,16 @@ where
 		>,
 		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
 	) -> Result<(), Error> {
-		self.execute_internal(context, extrinsic)
-			.map_err(|_| Error::VCMPHandlingError(VCMPError::RequestVCHandlingFailed))
+		let (_, shard, _) = extrinsic.function;
+		let e = Error::VCMPHandlingError(VCMPError::RequestVCHandlingFailed);
+		if self.execute_internal(context, extrinsic).is_err() {
+			// try to handle the error internally, if we get another error, log it and return the
+			// original error
+			if let Err(internal_e) = context.submit_trusted_call_from_error(shard, &e) {
+				log::warn!("fail to handle internal errors in request_vc: {:?}", internal_e);
+			}
+			return Err(e)
+		}
+		Ok(())
 	}
 }

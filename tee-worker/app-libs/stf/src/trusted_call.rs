@@ -38,11 +38,10 @@ use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier, Signature};
 use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
-	aes_encrypt_default, Assertion, ChallengeCode, Identity, ParentchainBlockNumber,
-	UserShieldingKeyType, ValidationData,
+	aes_encrypt_default, Assertion, ChallengeCode, IMPError, Identity, ParentchainBlockNumber,
+	UserShieldingKeyType, VCMPError, ValidationData,
 };
 use log::*;
-use parentchain_primitives::IMPError;
 use sp_io::hashing::blake2_256;
 use sp_runtime::{traits::Verify, MultiAddress};
 use std::{format, prelude::v1::*, sync::Arc};
@@ -125,6 +124,8 @@ pub enum TrustedCall {
 	verify_identity_runtime(AccountId, AccountId, Identity, ParentchainBlockNumber), // (EnclaveSigner, Account, identity, blocknumber)
 	build_assertion(AccountId, AccountId, Assertion, ShardIdentifier, ParentchainBlockNumber), // (Account, Account, Assertion, shard, blocknumber)
 	set_challenge_code_runtime(AccountId, AccountId, Identity, ChallengeCode), // only for testing
+	handle_imp_error(AccountId, IMPError),
+	handle_vcmp_error(AccountId, VCMPError),
 }
 
 impl TrustedCall {
@@ -151,6 +152,8 @@ impl TrustedCall {
 			TrustedCall::verify_identity_runtime(account, _, _, _) => account,
 			TrustedCall::build_assertion(account, _, _, _, _) => account,
 			TrustedCall::set_challenge_code_runtime(account, _, _, _) => account,
+			TrustedCall::handle_imp_error(account, _) => account,
+			TrustedCall::handle_vcmp_error(account, _) => account,
 		}
 	}
 
@@ -602,6 +605,23 @@ where
 				ensure_enclave_signer_account(&enclave_account)?;
 				Self::set_challenge_code_runtime(account, did, code)
 			},
+			TrustedCall::handle_imp_error(enclave_account, e) => {
+				ensure_enclave_signer_account(&enclave_account)?;
+				calls.push(OpaqueCall::from_tuple(&(
+					node_metadata_repo.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
+					e,
+				)));
+				Ok(())
+			},
+			TrustedCall::handle_vcmp_error(enclave_account, e) => {
+				ensure_enclave_signer_account(&enclave_account)?;
+				calls.push(OpaqueCall::from_tuple(&(
+					node_metadata_repo
+						.get_from_metadata(|m| m.vcmp_some_error_call_indexes())??,
+					e,
+				)));
+				Ok(())
+			},
 		}?;
 		Ok(())
 	}
@@ -624,6 +644,8 @@ where
 			TrustedCall::verify_identity_runtime(..) => debug!("No storage updates needed..."),
 			TrustedCall::build_assertion(..) => debug!("No storage updates needed..."),
 			TrustedCall::set_challenge_code_runtime(..) => debug!("No storage updates needed..."),
+			TrustedCall::handle_imp_error(..) => debug!("No storage updates needed..."),
+			TrustedCall::handle_vcmp_error(..) => debug!("No storage updates needed..."),
 			#[cfg(feature = "evm")]
 			_ => debug!("No storage updates needed..."),
 		};

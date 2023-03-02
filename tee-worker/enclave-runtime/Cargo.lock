@@ -1573,7 +1573,6 @@ dependencies = [
 name = "ita-stf"
 version = "0.9.0"
 dependencies = [
- "core-primitives",
  "derive_more",
  "frame-support",
  "frame-system",
@@ -1695,7 +1694,6 @@ version = "0.9.0"
 dependencies = [
  "beefy-merkle-tree",
  "bs58",
- "core-primitives",
  "futures 0.3.8",
  "ita-sgx-runtime",
  "ita-stf",
@@ -2044,8 +2042,8 @@ dependencies = [
 name = "itp-sgx-runtime-primitives"
 version = "0.9.0"
 dependencies = [
- "core-primitives",
  "frame-system",
+ "litentry-primitives",
  "pallet-balances",
  "sp-core",
  "sp-runtime",
@@ -2534,7 +2532,6 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 name = "lc-assertion-build"
 version = "0.1.0"
 dependencies = [
- "core-primitives",
  "frame-support",
  "futures 0.3.8",
  "hex 0.4.0",
@@ -2575,7 +2572,6 @@ version = "0.1.0"
 dependencies = [
  "chrono 0.4.11",
  "chrono 0.4.23",
- "core-primitives",
  "futures 0.3.8",
  "hex 0.4.0",
  "http",
@@ -2626,7 +2622,6 @@ dependencies = [
 name = "lc-identity-verification"
 version = "0.1.0"
 dependencies = [
- "core-primitives",
  "frame-support",
  "futures 0.3.8",
  "hex 0.4.0",
@@ -2660,7 +2655,6 @@ dependencies = [
 name = "lc-stf-task-receiver"
 version = "0.1.0"
 dependencies = [
- "core-primitives",
  "frame-support",
  "futures 0.3.8",
  "hex 0.4.0",

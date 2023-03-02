@@ -29,7 +29,7 @@ use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
 use litentry_primitives::{
-	Assertion, Balance, Identity, ParentchainBlockNumber, ASSERTION_FROM_DATE,
+	Assertion, Identity, ParentchainBalance, ParentchainBlockNumber, ASSERTION_FROM_DATE,
 };
 use log::*;
 use std::{
@@ -44,7 +44,7 @@ const LIT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
 
 pub fn build(
 	identities: Vec<Identity>,
-	min_balance: Balance,
+	min_balance: ParentchainBalance,
 	shard: &ShardIdentifier,
 	who: &AccountId,
 	bn: ParentchainBlockNumber,
