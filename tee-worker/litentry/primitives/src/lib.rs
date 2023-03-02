@@ -26,10 +26,10 @@ mod validation_data;
 pub use ethereum_signature::*;
 pub use identity::*;
 pub use parentchain_primitives::{
-	AccountId, AesOutput, Balance as ParentchainBalance, BlockNumber as ParentchainBlockNumber,
-	Hash as ParentchainHash, Header as ParentchainHeader, Signature as ParentchainSignature,
-	UserShieldingKeyType, MINUTES, USER_SHIELDING_KEY_LEN, USER_SHIELDING_KEY_NONCE_LEN,
-	USER_SHIELDING_KEY_TAG_LEN,
+	Assertion, AccountId as ParentchainAccountId, AesOutput, Balance as ParentchainBalance, BlockNumber as ParentchainBlockNumber,
+	Hash as ParentchainHash, Header as ParentchainHeader, Signature as ParentchainSignature, Index as ParentchainIndex,
+	UserShieldingKeyType, MINUTES, USER_SHIELDING_KEY_LEN, USER_SHIELDING_KEY_NONCE_LEN, ErrorString, IMPError, VCMPError, SchemaContentString, SchemaIdString,
+	USER_SHIELDING_KEY_TAG_LEN, ASSERTION_FROM_DATE,
 };
 
 use ring::{
@@ -50,8 +50,6 @@ use rand::Rng;
 
 pub use enclave_quote::*;
 pub use validation_data::*;
-
-pub use parentchain_primitives::*;
 
 pub const CHALLENGE_CODE_SIZE: usize = 16;
 pub type ChallengeCode = [u8; CHALLENGE_CODE_SIZE];

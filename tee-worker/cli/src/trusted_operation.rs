@@ -30,7 +30,7 @@ use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::{BlockNumber, DirectRequestStatus, Header, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
-use litentry_primitives::{AccountId, ParentchainHash as Hash};
+use litentry_primitives::{ParentchainAccountId as AccountId, ParentchainHash as Hash};
 use log::*;
 use sp_core::{sr25519 as sr25519_core, H256};
 use std::{

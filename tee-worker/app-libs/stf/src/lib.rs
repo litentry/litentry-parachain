@@ -29,7 +29,7 @@ extern crate sgx_tstd as std;
 #[cfg(feature = "sgx")]
 pub use ita_sgx_runtime::{Balance, BlockNumber, Index};
 #[cfg(feature = "std")]
-pub use litentry_primitives::{Balance, BlockNumber, Index};
+pub use litentry_primitives::{ParentchainBalance as Balance, ParentchainBlockNumber as BlockNumber, ParentchainIndex as Index};
 
 use codec::{Decode, Encode};
 use derive_more::Display;

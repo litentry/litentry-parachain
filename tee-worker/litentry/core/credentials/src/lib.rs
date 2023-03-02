@@ -39,7 +39,7 @@ use codec::{Decode, Encode};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{Assertion, Balance, ParentchainBlockNumber, ASSERTION_FROM_DATE};
+use litentry_primitives::{Assertion, ParentchainBalance, ParentchainBlockNumber, ASSERTION_FROM_DATE};
 use log::*;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
@@ -402,7 +402,7 @@ impl Credential {
 	}
 
 	// Including assertion 4/7/10/11
-	pub fn update_holder(&mut self, index: usize, minimum_amount: Balance) {
+	pub fn update_holder(&mut self, index: usize, minimum_amount: ParentchainBalance) {
 		let minimum_amount = format!("{}", minimum_amount);
 		let to_date = format_assertion_to_date();
 
