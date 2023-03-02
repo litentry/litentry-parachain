@@ -40,7 +40,7 @@ use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
-	format_assertion_to_date, Assertion, Balance, ParentchainBlockNumber, ASSERTION_FROM_DATE,
+	Assertion, ParentchainBalance, ParentchainBlockNumber, ASSERTION_FROM_DATE,
 };
 use log::*;
 use scale_info::TypeInfo;
@@ -58,12 +58,20 @@ extern crate rust_base58_sgx as rust_base58;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate hex_sgx as hex;
 
-use rust_base58::ToBase58;
-
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate rand_sgx as rand;
 
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use crate::sgx_reexport_prelude::chrono::{offset::Utc as TzUtc, DateTime, NaiveDateTime};
+
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use std::time::{SystemTime, UNIX_EPOCH};
+
+#[cfg(feature = "std")]
+use chrono::offset::Utc as TzUtc;
+
 use rand::Rng;
+use rust_base58::ToBase58;
 
 pub mod error;
 pub use error::Error;
@@ -104,12 +112,12 @@ pub struct Issuer {
 	/// ID of the TEE Worker
 	pub id: String,
 	pub name: String,
-	pub shard: String,
+	pub mrenclave: String,
 }
 
 impl Issuer {
 	pub fn is_empty(&self) -> bool {
-		self.shard.is_empty() || self.shard.is_empty()
+		self.mrenclave.is_empty() || self.mrenclave.is_empty()
 	}
 
 	pub fn set_id(&mut self, id: &AccountId) {
@@ -226,7 +234,7 @@ impl Credential {
 	) -> Result<Self, Error> {
 		let mut vc: Self =
 			serde_json::from_str(s).map_err(|err| Error::ParseError(format!("{}", err)))?;
-		vc.issuer.shard = shard.encode().to_base58();
+		vc.issuer.mrenclave = shard.encode().to_base58();
 		vc.issuer.name = LITENTRY_ISSUER_NAME.to_string();
 		vc.credential_subject.id = account_id_to_string(who);
 		vc.issuance_block_number = bn;
@@ -371,7 +379,7 @@ impl Credential {
 				credential.credential_subject.values.clear();
 				Ok(credential)
 			},
-			Assertion::A8 => {
+			Assertion::A8(_) => {
 				let raw = include_str!("templates/a8.json");
 				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
 				credential.credential_subject.assertions.clear();
@@ -397,7 +405,7 @@ impl Credential {
 	}
 
 	// Including assertion 4/7/10/11
-	pub fn update_holder(&mut self, index: usize, minimum_amount: Balance) {
+	pub fn update_holder(&mut self, index: usize, minimum_amount: ParentchainBalance) {
 		let minimum_amount = format!("{}", minimum_amount);
 		let to_date = format_assertion_to_date();
 
@@ -475,15 +483,45 @@ impl Credential {
 		self.credential_subject.assertions.push(assertion);
 	}
 
-	pub fn add_assertion_a8(&mut self, min: u64, max: u64) {
+	pub fn add_assertion_a8(&mut self, networks: Vec<&'static str>, min: u64, max: u64) {
 		let min = format!("{}", min);
 		let max = format!("{}", max);
+
+		let mut or_logic = AssertionLogic::new_or();
+		for network in networks {
+			let network_logic = AssertionLogic::new_item("$network", Op::Equal, network);
+			or_logic = or_logic.add_item(network_logic);
+		}
 
 		let min_item = AssertionLogic::new_item("$total_txs", Op::GreaterThan, &min);
 		let max_item = AssertionLogic::new_item("$total_txs", Op::LessEq, &max);
 
-		let assertion = AssertionLogic::new_and().add_item(min_item).add_item(max_item);
+		let assertion = AssertionLogic::new_and()
+			.add_item(min_item)
+			.add_item(max_item)
+			.add_item(or_logic);
 		self.credential_subject.assertions.push(assertion);
+	}
+}
+
+pub fn format_assertion_to_date() -> String {
+	#[cfg(feature = "std")]
+	{
+		let now = TzUtc::now();
+		format!("{}", now.format("%Y-%m-%d"))
+	}
+
+	#[cfg(all(not(feature = "std"), feature = "sgx"))]
+	{
+		let now = SystemTime::now()
+			.duration_since(UNIX_EPOCH)
+			.expect("system time before Unix epoch");
+		let naive =
+			NaiveDateTime::from_timestamp_opt(now.as_secs() as i64, now.subsec_nanos() as u32)
+				.unwrap();
+		let datetime: DateTime<TzUtc> = DateTime::from_utc(naive, TzUtc);
+
+		format!("{}", datetime.format("%Y-%m-%d"))
 	}
 }
 

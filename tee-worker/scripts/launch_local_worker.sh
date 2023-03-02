@@ -40,7 +40,7 @@ F_CLEAN=""
 FSUBCMD_DEV=""
 FSUBCMD_REQ_STATE=""
 
-WAIT_INTERVAL_SECONDS=5
+WAIT_INTERVAL_SECONDS=10
 WAIT_ROUNDS=20
 
 if [ "${CLEANUP}" = 'true' ]; then
@@ -78,7 +78,8 @@ jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=warn,ita_stf=d
 its_rpc_handler=warn,itc_rpc_client=warn,its_consensus_common=debug,its_state=warn,\
 its_consensus_aura=warn,aura*=warn,its_consensus_slots=warn"
 
-#./integritee-service init-shard H8wzxGBcKa1k5tXMALACo9P7uKS5rYFL8e3mMAEVe7Ln
+# Create the log directory, in case not existed.
+mkdir -p ${ROOTDIR}/log
 
 for ((i = 0; i < ${WORKER_NUM}; i++)); do
 	worker_name="worker${i}"

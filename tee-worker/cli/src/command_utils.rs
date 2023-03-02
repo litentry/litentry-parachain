@@ -19,7 +19,7 @@ use crate::Cli;
 use base58::FromBase58;
 use itc_rpc_client::direct_client::{DirectApi, DirectClient as DirectWorkerApi};
 use itp_node_api::api_client::{ParentchainApi, WsRpcClient};
-use litentry_primitives::{AccountId, ParentchainSignature as Signature};
+use litentry_primitives::{ParentchainAccountId as AccountId, ParentchainSignature as Signature};
 use log::*;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_application_crypto::sr25519;

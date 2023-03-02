@@ -21,7 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use codec::{Decode, Encode, MaxEncodedLen};
-use parentchain_primitives::{SchemaContentString, SchemaIdString};
+use litentry_primitives::{SchemaContentString, SchemaIdString};
 use scale_info::TypeInfo;
 
 #[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, TypeInfo, MaxEncodedLen)]

@@ -26,10 +26,9 @@ use itp_types::AccountId;
 use lc_credentials::Credential;
 use lc_data_providers::{discord_litentry::DiscordLitentryClient, vec_to_string};
 use litentry_primitives::{
-	Assertion, Identity, ParameterString, ParentchainBlockNumber, Web2Network,
+	Assertion, Identity, ParameterString, ParentchainBlockNumber, VCMPError, Web2Network,
 };
 use log::*;
-use parachain_core_primitives::VCMPError;
 use std::vec::Vec;
 
 pub fn build(

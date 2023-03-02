@@ -46,7 +46,7 @@ impl Default for GraphQLClient {
 	}
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Eq, Hash, Debug, Clone)]
 pub enum VerifiedCredentialsNetwork {
 	Litentry,
 	Litmus,
@@ -63,6 +63,7 @@ impl From<SubstrateNetwork> for VerifiedCredentialsNetwork {
 			SubstrateNetwork::Litentry => Self::Litentry,
 			SubstrateNetwork::Polkadot => Self::Polkadot,
 			SubstrateNetwork::Kusama => Self::Kusama,
+			SubstrateNetwork::Khala => Self::Khala,
 		}
 	}
 }

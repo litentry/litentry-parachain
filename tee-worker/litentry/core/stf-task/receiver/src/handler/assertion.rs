@@ -30,9 +30,8 @@ use itp_types::{AccountId, OpaqueCall};
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_stf_task_sender::AssertionBuildRequest;
-use litentry_primitives::{aes_encrypt_default, Assertion, UserShieldingKeyType};
+use litentry_primitives::{aes_encrypt_default, Assertion, UserShieldingKeyType, VCMPError};
 use log::*;
-use parachain_core_primitives::VCMPError;
 use sp_core::hashing::blake2_256;
 use std::sync::Arc;
 
@@ -127,8 +126,9 @@ where
 			)
 			.map(|credential| Some((credential, self.req.who.clone()))),
 
-			Assertion::A8 => lc_assertion_build::a8::build(
+			Assertion::A8(networks) => lc_assertion_build::a8::build(
 				self.req.vec_identity.to_vec(),
+				networks,
 				&self.req.shard,
 				&self.req.who,
 				self.req.bn,

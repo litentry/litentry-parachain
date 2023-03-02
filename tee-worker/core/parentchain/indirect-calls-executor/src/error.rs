@@ -18,7 +18,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-pub use parachain_core_primitives::{IMPError, VCMPError};
+pub use litentry_primitives::{IMPError, VCMPError};
 use sgx_types::sgx_status_t;
 use sp_runtime::traits::LookupError;
 use std::{boxed::Box, format};
