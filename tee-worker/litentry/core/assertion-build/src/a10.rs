@@ -23,6 +23,7 @@ extern crate sgx_tstd as std;
 use crate::{from_data_provider_error, Result};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
+use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
@@ -44,6 +45,13 @@ pub fn build(
 	who: &AccountId,
 	bn: ParentchainBlockNumber,
 ) -> Result<Credential> {
+	debug!(
+		"Assertion A10 build, who: {:?}, bn: {}, identities: {:?}",
+		account_id_to_string(&who),
+		bn,
+		identities,
+	);
+
 	// WBTC decimals is 8.
 	let q_min_balance: f64 = (min_balance / (10 ^ 8)) as f64;
 

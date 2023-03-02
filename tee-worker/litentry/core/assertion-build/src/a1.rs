@@ -23,6 +23,7 @@ extern crate sgx_tstd as std;
 use crate::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
+use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_stf_task_sender::MaxIdentityLength;
 use litentry_primitives::{Assertion, Identity, ParentchainBlockNumber};
@@ -36,6 +37,8 @@ pub fn build(
 	who: &AccountId,
 	bn: ParentchainBlockNumber,
 ) -> Result<Credential> {
+	debug!("Assertion A1 build, who: {:?}, bn: {}", account_id_to_string(&who), bn);
+
 	let mut web2_cnt = 0;
 	let mut web3_cnt = 0;
 

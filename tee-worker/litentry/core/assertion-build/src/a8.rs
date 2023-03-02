@@ -23,6 +23,7 @@ extern crate sgx_tstd as std;
 use crate::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
+use itp_utils::stringify::account_id_to_string;
 use lazy_static::lazy_static;
 use lc_credentials::Credential;
 use lc_data_providers::graphql::{
@@ -162,7 +163,13 @@ pub fn build(
 	who: &AccountId,
 	bn: ParentchainBlockNumber,
 ) -> Result<Credential> {
-	log::debug!("	[AssertionBuild] A8 networks: {:?}", networks);
+	debug!(
+		"Assertion A8 build, who: {:?}, bn: {}, identities: {:?}, networks:{:?}",
+		account_id_to_string(&who),
+		bn,
+		identities,
+		networks
+	);
 
 	let mut client = GraphQLClient::new();
 	let mut total_txs: u64 = 0;

@@ -23,6 +23,7 @@ extern crate sgx_tstd as std;
 use crate::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
+use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::{discord_litentry::DiscordLitentryClient, vec_to_string};
 use litentry_primitives::{
@@ -41,6 +42,13 @@ pub fn build(
 	who: &AccountId,
 	bn: ParentchainBlockNumber,
 ) -> Result<Credential> {
+	debug!(
+		"Assertion A3 build, who: {:?}, bn: {}, identities: {:?}",
+		account_id_to_string(&who),
+		bn,
+		identities
+	);
+
 	let mut has_commented: bool = false;
 
 	let guild_id_s = vec_to_string(guild_id.to_vec()).map_err(|_| VCMPError::ParseError)?;

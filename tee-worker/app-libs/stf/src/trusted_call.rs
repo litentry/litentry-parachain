@@ -433,6 +433,7 @@ where
 			},
 			TrustedCall::set_user_shielding_key_runtime(enclave_account, who, key) => {
 				ensure_enclave_signer_account(&enclave_account)?;
+				debug!("set user shielding key runtime, who: {}", account_id_to_string(&who),);
 				// TODO: we only checked if the extrinsic dispatch is successful,
 				//       is that enough? (i.e. is the state changed already?)
 				match Self::set_user_shielding_key_runtime(who.clone(), key) {
@@ -458,7 +459,7 @@ where
 			TrustedCall::create_identity_runtime(enclave_account, who, identity, metadata, bn) => {
 				ensure_enclave_signer_account(&enclave_account)?;
 				debug!(
-					"create_identity, who: {}, identity: {:?}, metadata: {:?}",
+					"create_identity runtime, who: {}, identity: {:?}, metadata: {:?}",
 					account_id_to_string(&who),
 					identity,
 					metadata
