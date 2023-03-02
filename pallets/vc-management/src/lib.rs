@@ -68,7 +68,7 @@ pub mod pallet {
 	// a map VCIndex -> VC context
 	#[pallet::storage]
 	#[pallet::getter(fn vc_registry)]
-	pub type VCRegistry<T: Config> = StorageMap<_, Blake2_256, VCIndex, VCContext<T>>;
+	pub type VCRegistry<T: Config> = StorageMap<_, Blake2_128Concat, VCIndex, VCContext<T>>;
 
 	// the Schema admin account
 	#[pallet::storage]
@@ -82,7 +82,7 @@ pub mod pallet {
 	// the VC Schema storage
 	#[pallet::storage]
 	#[pallet::getter(fn schema_registry)]
-	pub type SchemaRegistry<T: Config> = StorageMap<_, Blake2_256, SchemaIndex, VCSchema<T>>;
+	pub type SchemaRegistry<T: Config> = StorageMap<_, Blake2_128Concat, SchemaIndex, VCSchema<T>>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
