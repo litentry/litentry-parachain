@@ -20,8 +20,8 @@ use crate::error::{Error, ServiceResult};
 use codec::Encode;
 use itp_enclave_api::{enclave_base::EnclaveBase, Enclave};
 use itp_settings::files::{
-	LAST_SLOT_BIN, LIGHT_CLIENT_DB, SCHEDULED_ENCLAVE_FILE, SHARDS_PATH, SHIELDING_KEY_FILE,
-	SIDECHAIN_STORAGE_PATH, SIGNING_KEY_FILE,
+	LAST_SLOT_BIN, LIGHT_CLIENT_DB, SHARDS_PATH, SHIELDING_KEY_FILE, SIDECHAIN_STORAGE_PATH,
+	SIGNING_KEY_FILE,
 };
 use itp_types::ShardIdentifier;
 use log::*;
@@ -49,7 +49,6 @@ pub(crate) fn initialize_shard_and_keys(
 	println!("[+] Generate key files");
 	generate_signing_key_file(enclave);
 	generate_shielding_key_file(enclave);
-	generate_scheduled_enclave_file();
 
 	Ok(())
 }
@@ -97,14 +96,6 @@ pub(crate) fn generate_signing_key_file(enclave: &Enclave) {
 	}
 }
 
-pub(crate) fn generate_scheduled_enclave_file() {
-	info!("*** Get scheduled enclaves from the TEE\n");
-	let path = Path::new(SCHEDULED_ENCLAVE_FILE);
-	if !path.exists() {
-		let _file = File::create(SCHEDULED_ENCLAVE_FILE).unwrap();
-	}
-}
-
 pub(crate) fn generate_shielding_key_file(enclave: &Enclave) {
 	info!("*** Get the public key from the TEE\n");
 	let pubkey = enclave.get_rsa_shielding_pubkey().unwrap();
@@ -126,7 +117,6 @@ fn purge_files(root_directory: &Path) -> ServiceResult<()> {
 
 	remove_file_if_it_exists(root_directory, LAST_SLOT_BIN)?;
 	remove_file_if_it_exists(root_directory, LIGHT_CLIENT_DB)?;
-	remove_file_if_it_exists(root_directory, SCHEDULED_ENCLAVE_FILE)?;
 	remove_file_if_it_exists(root_directory, light_client_backup_file().as_str())?;
 
 	Ok(())

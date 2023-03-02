@@ -84,7 +84,7 @@ pub trait ScheduledEnclaveHandle {
 impl ScheduledEnclaveHandle for ScheduledEnclaves {
 	#[cfg(feature = "sgx")]
 	fn from_static_file() -> IOResult<Self> {
-		let raw = unseal(SCHEDULED_ENCLAVE_FILE)?;
+		let raw = unseal(SCHEDULED_ENCLAVE_FILE).unwrap_or_default();
 		if raw.is_empty() {
 			return Ok(Self::default())
 		}
