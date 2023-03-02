@@ -41,7 +41,7 @@ use frame_support::{pallet_prelude::*, traits::StorageVersion};
 use frame_system::pallet_prelude::*;
 pub use identity_context::IdentityContext;
 pub use litentry_primitives::{
-	ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType,
+	ChallengeCode, Identity, ParentchainBlockNumber, SubstrateNetwork, UserShieldingKeyType,
 };
 pub type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
 pub type MetadataOf<T> = BoundedVec<u8, <T as Config>::MaxMetadataLength>;
@@ -201,16 +201,32 @@ pub mod pallet {
 			if let Some(c) = IDGraphs::<T>::get(&who, &identity) {
 				ensure!(!c.is_verified, Error::<T>::IdentityAlreadyVerified);
 			}
+			let prime_address_raw: [u8; 32] = who
+				.encode()
+				.try_into()
+				.map_err(|_| DispatchError::Other("invalid account id"))?;
+			let prime_user_address: Address32 = prime_address_raw.into();
 			if let Identity::Substrate { network, address } = identity {
 				if network.ss58_prefix() == parent_ss58_prefix {
-					let address_raw: [u8; 32] = who
-						.encode()
-						.try_into()
-						.map_err(|_| DispatchError::Other("invalid account id"))?;
-					let user_address: Address32 = address_raw.into();
-					ensure!(user_address != address, Error::<T>::IdentityShouldBeDisallowed);
+					ensure!(prime_user_address != address, Error::<T>::IdentityShouldBeDisallowed);
 				}
 			}
+
+			let prime_id = Identity::Substrate {
+				network: SubstrateNetwork::Litentry,
+				address: prime_user_address,
+			};
+			if IDGraphs::<T>::get(&who, &prime_id).is_none() {
+				// Not existed, so create the prime entry.
+				let context = IdentityContext::<T> {
+					metadata: None,
+					creation_request_block: Some(0),
+					verification_request_block: Some(0),
+					is_verified: false,
+				};
+				IDGraphs::<T>::insert(&who, &prime_id, context);
+			}
+
 			let context = IdentityContext {
 				metadata,
 				creation_request_block: Some(creation_request_block),
