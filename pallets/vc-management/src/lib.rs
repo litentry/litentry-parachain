@@ -30,16 +30,15 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-use core_primitives::{AesOutput, SchemaIndex, ShardIdentifier, SCHEMA_CONTENT_LEN, SCHEMA_ID_LEN};
+use core_primitives::{
+	AesOutput, Assertion, SchemaIndex, ShardIdentifier, SCHEMA_CONTENT_LEN, SCHEMA_ID_LEN,
+};
 pub use pallet::*;
 use sp_core::H256;
 use sp_std::vec::Vec;
 
 mod vc_context;
 pub use vc_context::*;
-
-mod assertion;
-pub use assertion::*;
 
 mod schema;
 pub use schema::*;

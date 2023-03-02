@@ -14,7 +14,7 @@ const assertion = <Assertion>{
     A3: ['A3', 'A3', 'A3'],
     A4: [10],
     A7: [10],
-    A8: 'A8',
+    A8: ['litentry'],
     A10: [10],
     A11: [10],
 };

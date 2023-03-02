@@ -65,13 +65,14 @@ impl From<[u8; 32]> for Address32 {
 	}
 }
 
-#[derive(Encode, Decode, Copy, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, Copy, Clone, Debug, PartialEq, Eq, Hash, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum SubstrateNetwork {
 	Polkadot,
 	Kusama,
 	Litentry,
 	Litmus,
+	Khala,
 }
 
 impl SubstrateNetwork {
@@ -82,11 +83,12 @@ impl SubstrateNetwork {
 			Self::Kusama => 2,
 			Self::Litentry => 31,
 			Self::Litmus => 131,
+			Self::Khala => 30,
 		}
 	}
 }
 
-#[derive(Encode, Decode, Copy, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, Copy, Clone, Debug, PartialEq, Eq, Hash, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum EvmNetwork {
 	Ethereum,

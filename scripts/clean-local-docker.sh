@@ -19,6 +19,7 @@ docker images
 echo "stop and remove docker containers..."
 docker compose rm -f -s -v
 docker container stop geth || true
+docker container prune -f || true
 
 echo "remove docker volumes..."
 docker volume ls | grep generated-$CHAIN | sed 's/local *//' | xargs docker volume rm
@@ -39,5 +40,7 @@ IMG=$(docker images --filter=reference="generated-$CHAIN*" --format "{{.Reposito
 [ -z "$IMG" ] || docker rmi -f $IMG
 
 rm -rf "$TMPDIR"
+rm -rf "$ROOTDIR/ts-tests/bridge/bob.json"
+rm -rf "$ROOTDIR/ts-tests/bridge/data/"
 
 echo "cleaned up."

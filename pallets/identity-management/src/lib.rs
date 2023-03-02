@@ -121,10 +121,14 @@ pub mod pallet {
 		HttpRequestFailed {
 			reason: ErrorString,
 		},
+		StfError {
+			reason: ErrorString,
+		},
 		CreateIdentityHandlingFailed,
 		RemoveIdentityHandlingFailed,
 		VerifyIdentityHandlingFailed,
 		SetUserShieldingKeyHandlingFailed,
+		InvalidUserShieldingKey,
 		InvalidIdentity,
 		WrongWeb2Handle,
 		UnexpectedMessage,
@@ -299,6 +303,9 @@ pub mod pallet {
 					Self::deposit_event(Event::DecodeHexFailed { reason: s }),
 				IMPError::HttpRequestFailed(s) =>
 					Self::deposit_event(Event::HttpRequestFailed { reason: s }),
+				IMPError::StfError(s) => Self::deposit_event(Event::StfError { reason: s }),
+				IMPError::InvalidUserShieldingKey =>
+					Self::deposit_event(Event::InvalidUserShieldingKey),
 				IMPError::InvalidIdentity => Self::deposit_event(Event::InvalidIdentity),
 				IMPError::CreateIdentityHandlingFailed =>
 					Self::deposit_event(Event::CreateIdentityHandlingFailed),
