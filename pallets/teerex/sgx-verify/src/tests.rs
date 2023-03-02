@@ -15,7 +15,6 @@ const TEST5_CERT: &[u8] = include_bytes!("../test/ra_dump_cert_TEST5.der");
 const TEST6_CERT: &[u8] = include_bytes!("../test/ra_dump_cert_TEST6.der");
 const TEST7_CERT: &[u8] = include_bytes!("../test/ra_dump_cert_TEST7.der");
 const TEST8_CERT: &[u8] = include_bytes!("../test/ra_dump_cert_TEST8_PRODUCTION.der");
-const TEST9_CERT: &[u8] = include_bytes!("../test/ra_dump_cert_TEST9_enclave_add.der");
 
 const TEST1_SIGNER_ATTN: &[u8] =
 	include_bytes!("../test/test_ra_signer_attn_MRSIGNER1_MRENCLAVE1.bin");

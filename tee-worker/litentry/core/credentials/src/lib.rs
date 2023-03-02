@@ -218,6 +218,7 @@ pub struct Credential {
 	pub expiration_block_number: Option<ParentchainBlockNumber>,
 	/// Digital proof with the signature of Issuer
 	#[serde(skip_deserializing)]
+	#[serde(skip_serializing_if = "Option::is_none")]
 	pub proof: Option<Proof>,
 	#[serde(skip_deserializing)]
 	#[serde(skip_serializing_if = "Option::is_none")]

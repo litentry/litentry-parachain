@@ -199,8 +199,21 @@ pub mod pallet {
 
 			#[cfg(not(feature = "skip-ias-check"))]
 			let enclave = Self::verify_report(&sender, ra_report.clone()).map(|report| {
-				log::debug!("[teerex] isv_enclave_quote = {:?}", report.metadata.isv_enclave_quote);
+				#[cfg(test)]
+				{
+					return Enclave::new(
+						sender.clone(),
+						report.mr_enclave,
+						report.timestamp,
+						worker_url.clone(),
+						shielding_key,
+						vc_pubkey,
+						report.build_mode,
+						Default::default(),
+					)
+				}
 
+				#[cfg(not(test))]
 				Enclave::new(
 					sender.clone(),
 					report.mr_enclave,
@@ -209,6 +222,7 @@ pub mod pallet {
 					shielding_key,
 					vc_pubkey,
 					report.build_mode,
+					report.metadata,
 				)
 			})?;
 
@@ -231,6 +245,7 @@ pub mod pallet {
 				shielding_key,
 				vc_pubkey,
 				SgxBuildMode::default(),
+				SgxEnclaveMetadata::default(),
 			);
 
 			// TODO: imagine this fn is not called for the first time (e.g. when worker restarts),
@@ -390,6 +405,7 @@ pub mod pallet {
 
 			let dummy_shielding_key: Option<Vec<u8>> = Default::default();
 			let dummy_vc_pubkey: Option<Vec<u8>> = Default::default();
+			let dummy_meta = Default::default();
 			#[cfg(not(feature = "skip-ias-check"))]
 			let enclave = Self::verify_dcap_quote(&sender, dcap_quote).map(|report| {
 				Enclave::new(
@@ -400,6 +416,7 @@ pub mod pallet {
 					dummy_shielding_key,
 					dummy_vc_pubkey,
 					report.build_mode,
+					dummy_meta,
 				)
 			})?;
 
@@ -422,6 +439,7 @@ pub mod pallet {
 				dummy_shielding_key,
 				dummy_vc_pubkey,
 				SgxBuildMode::default(),
+				dummy_meta,
 			);
 
 			Self::add_enclave(&sender, &enclave)?;
