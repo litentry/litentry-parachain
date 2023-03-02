@@ -13,8 +13,8 @@ use litentry_primitives::ParentchainBlockNumber;
 #[cfg(feature = "sgx")]
 use serde::{Deserialize, Serialize};
 use std::{
+	collections::HashMap,
 	io::{Error, ErrorKind, Result as IOResult},
-	vec::Vec,
 };
 
 #[cfg(feature = "sgx")]
@@ -36,7 +36,7 @@ mod sgx_env {
 	#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 	pub struct ScheduledEnclaves {
 		#[serde(default)]
-		pub scheduled_enclaves: Vec<ScheduledEnclaveInfo>,
+		pub scheduled_enclaves: HashMap<SidechainBlockNumber, ScheduledEnclaveInfo>,
 	}
 }
 
@@ -53,7 +53,7 @@ mod std_env {
 
 	#[derive(Clone, Debug, Default)]
 	pub struct ScheduledEnclaves {
-		pub scheduled_enclaves: Vec<ScheduledEnclaveInfo>,
+		pub scheduled_enclaves: HashMap<SidechainBlockNumber, ScheduledEnclaveInfo>,
 	}
 }
 
@@ -67,11 +67,14 @@ pub trait ScheduledEnclaveHandle {
 	fn sync_to_static_file(&self) -> IOResult<()> {
 		Err(Error::new(ErrorKind::Other, "can't sync to static file"))
 	}
-	fn add_scheduled_enclave(&mut self, scheduled_enclave: ScheduledEnclaveInfo) -> IOResult<()>;
+	fn add_scheduled_enclave(
+		&mut self,
+		scheduled_enclave: ScheduledEnclaveInfo,
+	) -> IOResult<Option<ScheduledEnclaveInfo>>;
 	fn remove_scheduled_enclave(
 		&mut self,
 		sidechain_block_number: SidechainBlockNumber,
-	) -> IOResult<()>;
+	) -> IOResult<Option<ScheduledEnclaveInfo>>;
 	fn get_next_scheduled_enclave(
 		&self,
 		current_side_chain_number: SidechainBlockNumber,
@@ -95,20 +98,26 @@ impl ScheduledEnclaveHandle for ScheduledEnclaves {
 		seal(s.as_bytes(), SCHEDULED_ENCLAVE_FILE)
 	}
 
-	fn add_scheduled_enclave(&mut self, scheduled_enclave: ScheduledEnclaveInfo) -> IOResult<()> {
-		self.scheduled_enclaves.push(scheduled_enclave);
+	fn add_scheduled_enclave(
+		&mut self,
+		scheduled_enclave: ScheduledEnclaveInfo,
+	) -> IOResult<Option<ScheduledEnclaveInfo>> {
+		let old_enclave = self
+			.scheduled_enclaves
+			.insert(scheduled_enclave.sidechain_block_number, scheduled_enclave);
 		self.sync_to_static_file()?;
-		Ok(())
+		Ok(old_enclave)
 	}
 
 	fn remove_scheduled_enclave(
 		&mut self,
 		sidechain_block_number: SidechainBlockNumber,
-	) -> IOResult<()> {
-		self.scheduled_enclaves
-			.retain(|info| info.sidechain_block_number != sidechain_block_number);
-		self.sync_to_static_file()?;
-		Ok(())
+	) -> IOResult<Option<ScheduledEnclaveInfo>> {
+		let enclave_info = self.scheduled_enclaves.remove(&sidechain_block_number);
+		if enclave_info.is_some() {
+			self.sync_to_static_file()?;
+		}
+		Ok(enclave_info)
 	}
 
 	/// get the next scheduled enclave
@@ -118,7 +127,13 @@ impl ScheduledEnclaveHandle for ScheduledEnclaves {
 	) -> Option<ScheduledEnclaveInfo> {
 		self.scheduled_enclaves
 			.iter()
-			.find(|enclave_info| enclave_info.sidechain_block_number > current_side_chain_number)
-			.cloned()
+			.filter_map(|(k, v)| {
+				if k > &current_side_chain_number {
+					Some(v.clone())
+				} else {
+					None
+				}
+			})
+			.min_by_key(|v| v.sidechain_block_number)
 	}
 }
