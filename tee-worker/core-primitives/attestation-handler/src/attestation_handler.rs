@@ -43,7 +43,6 @@ use itp_sgx_crypto::Ed25519Seal;
 use itp_sgx_io as io;
 use itp_sgx_io::StaticSealedIO;
 use itp_time_utils::now_as_secs;
-use litentry_primitives::EnclaveAdd;
 use log::*;
 use sgx_rand::{os, Rng};
 use sgx_tcrypto::{rsgx_sha256_slice, SgxEccHandle};
@@ -209,7 +208,7 @@ where
 
 		let payload = if !skip_ra {
 			info!("    [Enclave] Create attestation report");
-			let (attn_report, sig, cert, enclave_add) =
+			let (attn_report, sig, cert) =
 				match self.create_attestation_report(&chain_signer.public().0, sign_type) {
 					Ok(r) => r,
 					Err(e) => {
@@ -221,13 +220,9 @@ where
 			debug!("              attn_report 		= {:?}", attn_report);
 			debug!("              sig         		= {:?}", sig);
 			debug!("              cert        		= {:?}", cert);
-			debug!("              spid        		= {:?}", enclave_add.spid);
-			debug!("              nonce       		= {:?}", enclave_add.nonce);
-			debug!("              sig_rl      		= {:?}", enclave_add.sig_rl);
-			debug!("              quote      		= {:?}", enclave_add.quote);
 
 			// concat the information
-			attn_report + "|" + &sig + "|" + &cert + "|" + &enclave_add.format()
+			attn_report + "|" + &sig + "|" + &cert
 		} else {
 			Default::default()
 		};
@@ -516,7 +511,7 @@ where
 		&self,
 		pub_k: &[u8; 32],
 		sign_type: sgx_quote_sign_type_t,
-	) -> SgxResult<(String, String, String, EnclaveAdd)> {
+	) -> SgxResult<(String, String, String)> {
 		// Workflow:
 		// (1) ocall to get the target_info structure (ti) and epid group id (eg)
 		// (1.5) get sigrl
@@ -633,10 +628,8 @@ where
 
 		let (attn_report, sig, cert) =
 			self.get_report_from_intel(ias_socket, quote_content.clone())?;
-		let enclave_add =
-			EnclaveAdd::new(spid.id.clone(), quote_nonce.rand.clone(), sigrl_vec, quote_content);
 
-		Ok((attn_report, sig, cert, enclave_add))
+		Ok((attn_report, sig, cert))
 	}
 
 	fn load_spid(filename: &str) -> SgxResult<sgx_spid_t> {
