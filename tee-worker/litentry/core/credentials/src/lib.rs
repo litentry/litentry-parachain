@@ -455,6 +455,13 @@ pub fn format_assertion_to_date() -> String {
 
 pub struct CredentialFactory;
 impl CredentialFactory {
+	pub fn from_template() -> Result<Credential, Error> {
+		let raw = include_str!("templates/credential.json");
+		let credential: Credential =
+			serde_json::from_str(raw).map_err(|err| Error::ParseError(format!("{}", err)))?;
+		Ok(credential)
+	}
+
 	pub fn build_unsigned_credential(
 		assertion: &Assertion,
 		who: &AccountId,
