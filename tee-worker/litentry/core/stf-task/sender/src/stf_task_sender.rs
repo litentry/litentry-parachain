@@ -56,7 +56,7 @@ impl Default for StfRequestSender {
 
 impl SendStfRequest for StfRequestSender {
 	fn send_stf_request(&self, request: RequestType) -> Result<()> {
-		debug!("send stf request: {:?}", request.clone());
+		debug!("send stf request: {:?}", request);
 
 		// Acquire lock on extrinsic sender
 		let mutex_guard = GLOBAL_STF_REQUEST_TASK.lock().map_err(|_| Error::MutexAccess)?;
