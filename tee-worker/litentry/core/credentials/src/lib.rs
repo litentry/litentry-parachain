@@ -37,7 +37,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 use codec::{Decode, Encode};
 use itp_stf_primitives::types::ShardIdentifier;
-use itp_types::AccountId;
+use itp_types::{AccountId, H256};
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
 	Assertion, ParentchainBalance, ParentchainBlockNumber, ASSERTION_FROM_DATE,
@@ -175,20 +175,23 @@ pub struct Proof {
 	pub proof_type: ProofType,
 	/// Purpose of this proof, generally it is expected as a fixed value, such as 'assertionMethod'
 	pub proof_purpose: String,
-	/// The digital signature value
+	/// The digital signature value(signature of hash)
 	pub proof_value: String,
 	/// The public key from Issuer
 	pub verification_method: String,
+	/// The hash of Credential payload(without Proof field)
+	pub hash: H256,
 }
 
 impl Proof {
-	pub fn new(bn: ParentchainBlockNumber, sig: &Vec<u8>, issuer: &AccountId) -> Self {
+	pub fn new(bn: ParentchainBlockNumber, sig: &Vec<u8>, issuer: &AccountId, hash: H256) -> Self {
 		Proof {
 			created_block_number: bn,
 			proof_type: ProofType::Ed25519Signature2020,
 			proof_purpose: PROOF_PURPOSE.to_string(),
 			proof_value: format!("{}", HexDisplay::from(sig)),
 			verification_method: account_id_to_string(issuer),
+			hash,
 		}
 	}
 
@@ -225,7 +228,7 @@ pub struct Credential {
 	pub credential_schema: Option<CredentialSchema>,
 }
 
-impl Credential {
+impl Credential { 
 	pub fn from_template(
 		s: &str,
 		who: &AccountId,
@@ -254,8 +257,8 @@ impl Credential {
 		self.id.push_str(&(format!("{}", HexDisplay::from(&vc_id.to_vec()))));
 	}
 
-	pub fn add_proof(&mut self, sig: &Vec<u8>, bn: ParentchainBlockNumber, issuer: &AccountId) {
-		self.proof = Some(Proof::new(bn, sig, issuer));
+	pub fn add_proof(&mut self, sig: &Vec<u8>, bn: ParentchainBlockNumber, issuer: &AccountId, hash: H256) {
+		self.proof = Some(Proof::new(bn, sig, issuer, hash));
 	}
 
 	pub fn to_json(&self) -> Result<String, Error> {

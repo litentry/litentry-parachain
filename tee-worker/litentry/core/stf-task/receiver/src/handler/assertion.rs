@@ -26,7 +26,7 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{AccountId, OpaqueCall};
+use itp_types::{AccountId, OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_stf_task_sender::AssertionBuildRequest;
@@ -164,14 +164,15 @@ where
 		let signer = self.context.enclave_signer.as_ref();
 
 		let payload = credential.to_json().unwrap();
+		let payload_hash = blake2_256(&payload.as_bytes());
 		debug!("	[Assertion] payload: {}", payload);
-		debug!("	[Assertion] payload: {:?}", payload.as_bytes());
+		debug!("	[Assertion] payload_hash: {:?}", payload_hash);
 
-		if let Ok((enclave_account, sig)) = signer.sign_vc_with_self(payload.as_bytes()) {
-			debug!("	[Assertion] signature: {:?}", sig);
+		if let Ok((enclave_account, sig)) = signer.sign_vc_with_self(&payload_hash) {
+			debug!("	[Assertion] Payload hash signature: {:?}", sig);
 
 			credential.issuer.id = account_id_to_string(&enclave_account);
-			credential.add_proof(&sig, credential.issuance_block_number, &enclave_account);
+			credential.add_proof(&sig, credential.issuance_block_number, &enclave_account, H256::from(payload_hash));
 
 			if credential.validate().is_err() {
 				error!("failed to validate credential");
