@@ -36,6 +36,8 @@ pub struct NodeMetadataMock {
 	unshield_funds: u8,
 	publish_hash: u8,
 	sidechain_module: u8,
+	update_scheduled_enclave: u8,
+	remvoe_scheduled_enclave: u8,
 	// litentry
 	// IMP
 	imp_module: u8,
@@ -84,6 +86,9 @@ impl NodeMetadataMock {
 			shield_funds: 4u8,
 			unshield_funds: 5u8,
 			publish_hash: 9u8,
+			update_scheduled_enclave: 10u8,
+			remvoe_scheduled_enclave: 11u8,
+			// sidechain
 			sidechain_module: 53u8,
 			// litentry
 			imp_module: 64u8,
@@ -159,6 +164,14 @@ impl TeerexCallIndexes for NodeMetadataMock {
 
 	fn publish_hash_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.teerex_module, self.unshield_funds])
+	}
+
+	fn update_scheduled_encalve(&self) -> Result<[u8; 2]> {
+		Ok([self.teerex_module, self.update_scheduled_enclave])
+	}
+
+	fn remove_scheduled_enclave(&self) -> Result<[u8; 2]> {
+		Ok([self.teerex_module, self.remvoe_scheduled_enclave])
 	}
 }
 
