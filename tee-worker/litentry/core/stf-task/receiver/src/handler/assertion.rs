@@ -164,11 +164,10 @@ where
 		let signer = self.context.enclave_signer.as_ref();
 
 		let payload = credential.to_json().unwrap();
-		debug!("	[Assertion] payload: {}", payload);
-		debug!("	[Assertion] payload: {:?}", payload.as_bytes());
+		debug!("Assertion payload: {}", payload);
 
 		if let Ok((enclave_account, sig)) = signer.sign_vc_with_self(payload.as_bytes()) {
-			debug!("	[Assertion] signature: {:?}", sig);
+			debug!("Assertion signature: {:?}", sig);
 
 			credential.issuer.id = account_id_to_string(&enclave_account);
 			credential.add_proof(&sig, credential.issuance_block_number, &enclave_account);
@@ -181,7 +180,7 @@ where
 			let key: UserShieldingKeyType = self.req.key;
 			if let Ok(vc_index) = credential.get_index() {
 				let credential_str = credential.to_json().unwrap();
-				debug!("signed credential: {}, length: {}", credential_str, credential_str.len());
+				debug!("Credential: {}, length: {}", credential_str, credential_str.len());
 
 				let vc_hash = blake2_256(credential_str.as_bytes());
 				let output = aes_encrypt_default(&key, credential_str.as_bytes());
