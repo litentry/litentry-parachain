@@ -23,7 +23,7 @@ extern crate sgx_tstd as std;
 use crate::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
-use lc_credentials::Credential;
+use lc_credentials::{Credential, CredentialFactory};
 use lc_data_providers::{discord_litentry::DiscordLitentryClient, vec_to_string};
 use litentry_primitives::{
 	Assertion, Identity, ParameterString, ParentchainBlockNumber, VCMPError, Web2Network,
@@ -69,7 +69,7 @@ pub fn build(
 		}
 	}
 
-	match Credential::generate_unsigned_credential(
+	match CredentialFactory::build_unsigned_credential(
 		&Assertion::A2(guild_id),
 		who,
 		&shard.clone(),

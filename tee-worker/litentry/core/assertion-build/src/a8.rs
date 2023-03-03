@@ -24,7 +24,7 @@ use crate::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use lazy_static::lazy_static;
-use lc_credentials::Credential;
+use lc_credentials::{Credential, CredentialFactory};
 use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsNetwork, VerifiedCredentialsTotalTxs,
 };
@@ -235,7 +235,7 @@ pub fn build(
 	}
 
 	let a8 = Assertion::A8(networks);
-	match Credential::generate_unsigned_credential(&a8, who, &shard.clone(), bn) {
+	match CredentialFactory::build_unsigned_credential(&a8, who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_assertion_a8(vc_network_to_vec(target_networks), min, max);
 			credential_unsigned.credential_subject.values.push(true);

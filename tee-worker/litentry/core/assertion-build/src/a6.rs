@@ -23,7 +23,7 @@ extern crate sgx_tstd as std;
 use crate::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
-use lc_credentials::Credential;
+use lc_credentials::{Credential, CredentialFactory};
 use lc_data_providers::twitter_official::TwitterOfficialClient;
 use litentry_primitives::{Assertion, Identity, ParentchainBlockNumber, VCMPError, Web2Network};
 use log::*;
@@ -94,7 +94,7 @@ pub fn build(
 		},
 	}
 
-	match Credential::generate_unsigned_credential(&Assertion::A6, who, &shard.clone(), bn) {
+	match CredentialFactory::build_unsigned_credential(&Assertion::A6, who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_assertion_a6(min, max);
 			credential_unsigned.credential_subject.values.push(true);

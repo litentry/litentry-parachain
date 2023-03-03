@@ -23,7 +23,7 @@ extern crate sgx_tstd as std;
 use crate::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
-use lc_credentials::Credential;
+use lc_credentials::{Credential, CredentialFactory};
 use lc_stf_task_sender::MaxIdentityLength;
 use litentry_primitives::{Assertion, Identity, ParentchainBlockNumber, VCMPError};
 use log::*;
@@ -46,7 +46,7 @@ pub fn build(
 		}
 	}
 
-	match Credential::generate_unsigned_credential(&Assertion::A1, who, &shard.clone(), bn) {
+	match CredentialFactory::build_unsigned_credential(&Assertion::A1, who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
 			let flag = web2_cnt != 0 && web3_cnt != 0;
 			credential_unsigned.credential_subject.values.push(flag);

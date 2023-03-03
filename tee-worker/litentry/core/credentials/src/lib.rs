@@ -332,81 +332,6 @@ impl Credential {
 		Ok(())
 	}
 
-	pub fn generate_unsigned_credential(
-		assertion: &Assertion,
-		who: &AccountId,
-		shard: &ShardIdentifier,
-		bn: ParentchainBlockNumber,
-	) -> Result<Credential, Error> {
-		debug!("generate unsigned credential {:?}", assertion);
-		match assertion {
-			Assertion::A1 => {
-				let raw = include_str!("templates/a1.json");
-				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
-				credential.credential_subject.values.clear();
-				Ok(credential)
-			},
-			Assertion::A2(_) => {
-				let raw = include_str!("templates/a2.json");
-				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
-				credential.credential_subject.assertions.clear();
-				credential.credential_subject.values.clear();
-				Ok(credential)
-			},
-			Assertion::A3(_, _, _) => {
-				let raw = include_str!("templates/a3.json");
-				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
-				credential.credential_subject.assertions.clear();
-				credential.credential_subject.values.clear();
-				Ok(credential)
-			},
-			Assertion::A4(_minimum_amount) => {
-				let raw = include_str!("templates/a4.json");
-				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
-				// remove default assertions from template
-				credential.credential_subject.assertions.clear();
-				credential.credential_subject.values.clear();
-				Ok(credential)
-			},
-			Assertion::A6 => {
-				let raw = include_str!("templates/a6.json");
-				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
-				credential.credential_subject.assertions.clear();
-				credential.credential_subject.values.clear();
-				Ok(credential)
-			},
-			Assertion::A7(_minimum_amount) => {
-				let raw = include_str!("templates/a7.json");
-				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
-				credential.credential_subject.assertions.clear();
-				credential.credential_subject.values.clear();
-				Ok(credential)
-			},
-			Assertion::A8(_) => {
-				let raw = include_str!("templates/a8.json");
-				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
-				credential.credential_subject.assertions.clear();
-				credential.credential_subject.values.clear();
-				Ok(credential)
-			},
-			Assertion::A10(_minimum_amount) => {
-				let raw = include_str!("templates/a10.json");
-				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
-				credential.credential_subject.assertions.clear();
-				credential.credential_subject.values.clear();
-				Ok(credential)
-			},
-			Assertion::A11(_minimum_amount) => {
-				let raw = include_str!("templates/a11.json");
-				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
-				credential.credential_subject.assertions.clear();
-				credential.credential_subject.values.clear();
-				Ok(credential)
-			},
-			_ => Err(Error::UnsupportedAssertion),
-		}
-	}
-
 	// Including assertion 4/7/10/11
 	pub fn update_holder(&mut self, index: usize, minimum_amount: ParentchainBalance) {
 		let minimum_amount = format!("{}", minimum_amount);
@@ -525,6 +450,84 @@ pub fn format_assertion_to_date() -> String {
 		let datetime: DateTime<TzUtc> = DateTime::from_utc(naive, TzUtc);
 
 		format!("{}", datetime.format("%Y-%m-%d"))
+	}
+}
+
+pub struct CredentialFactory;
+impl CredentialFactory {
+	pub fn build_unsigned_credential(
+		assertion: &Assertion,
+		who: &AccountId,
+		shard: &ShardIdentifier,
+		bn: ParentchainBlockNumber,
+	) -> Result<Credential, Error> {
+		debug!("generate unsigned credential {:?}", assertion);
+		match assertion {
+			Assertion::A1 => {
+				let raw = include_str!("templates/a1.json");
+				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				credential.credential_subject.values.clear();
+				Ok(credential)
+			},
+			Assertion::A2(_) => {
+				let raw = include_str!("templates/a2.json");
+				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				credential.credential_subject.assertions.clear();
+				credential.credential_subject.values.clear();
+				Ok(credential)
+			},
+			Assertion::A3(_, _, _) => {
+				let raw = include_str!("templates/a3.json");
+				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				credential.credential_subject.assertions.clear();
+				credential.credential_subject.values.clear();
+				Ok(credential)
+			},
+			Assertion::A4(_minimum_amount) => {
+				let raw = include_str!("templates/a4.json");
+				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				// remove default assertions from template
+				credential.credential_subject.assertions.clear();
+				credential.credential_subject.values.clear();
+				Ok(credential)
+			},
+			Assertion::A6 => {
+				let raw = include_str!("templates/a6.json");
+				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				credential.credential_subject.assertions.clear();
+				credential.credential_subject.values.clear();
+				Ok(credential)
+			},
+			Assertion::A7(_minimum_amount) => {
+				let raw = include_str!("templates/a7.json");
+				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				credential.credential_subject.assertions.clear();
+				credential.credential_subject.values.clear();
+				Ok(credential)
+			},
+			Assertion::A8(_) => {
+				let raw = include_str!("templates/a8.json");
+				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				credential.credential_subject.assertions.clear();
+				credential.credential_subject.values.clear();
+				Ok(credential)
+			},
+			Assertion::A10(_minimum_amount) => {
+				let raw = include_str!("templates/a10.json");
+				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				credential.credential_subject.assertions.clear();
+				credential.credential_subject.values.clear();
+				Ok(credential)
+			},
+			Assertion::A11(_minimum_amount) => {
+				let raw = include_str!("templates/a11.json");
+				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				credential.credential_subject.assertions.clear();
+				credential.credential_subject.values.clear();
+				Ok(credential)
+			},
+			_ => Err(Error::UnsupportedAssertion),
+		}
 	}
 }
 

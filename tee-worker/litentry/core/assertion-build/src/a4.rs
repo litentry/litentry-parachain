@@ -23,7 +23,7 @@ extern crate sgx_tstd as std;
 use crate::{from_data_provider_error, Error, Result};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
-use lc_credentials::Credential;
+use lc_credentials::{Credential, CredentialFactory};
 use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
@@ -119,7 +119,7 @@ pub fn build(
 	}
 
 	let a4 = Assertion::A4(min_balance);
-	match Credential::generate_unsigned_credential(&a4, who, &shard.clone(), bn) {
+	match CredentialFactory::build_unsigned_credential(&a4, who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.update_holder(from_date_index, min_balance);
 			return Ok(credential_unsigned)
