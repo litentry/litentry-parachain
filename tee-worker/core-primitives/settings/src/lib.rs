@@ -34,6 +34,7 @@ pub mod files {
 	// used by worker
 	pub static ENCLAVE_TOKEN: &str = "enclave.token";
 	pub static ENCLAVE_FILE: &str = "enclave.signed.so";
+	pub static SCHEDULED_ENCLAVE_FILE: &str = "scheduled_enclaves.json";
 	pub static SHIELDING_KEY_FILE: &str = "enclave-shielding-pubkey.json";
 	pub static SIGNING_KEY_FILE: &str = "enclave-signing-pubkey.bin";
 	/// sidechain database path

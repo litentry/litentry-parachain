@@ -49,6 +49,8 @@ pub type MrEnclave = [u8; 32];
 pub type ConfirmCallFn = ([u8; 2], ShardIdentifier, H256, Vec<u8>);
 pub type ShieldFundsFn = ([u8; 2], Vec<u8>, Balance, ShardIdentifier);
 pub type CallWorkerFn = ([u8; 2], Request);
+pub type CallUpdateScheduledEnclaveFn = ([u8; 2], SidechainBlockNumber, MrEnclave);
+pub type CallRemoveScheduledEnclaveFn = ([u8; 2], SidechainBlockNumber);
 
 // pallet IMP
 pub type SetUserShieldingKeyFn = ([u8; 2], ShardIdentifier, Vec<u8>);

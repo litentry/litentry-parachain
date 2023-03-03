@@ -138,6 +138,7 @@ pub mod pallet {
 		RecoverSubstratePubkeyFailed,
 		VerifyEvmSignatureFailed,
 		RecoverEvmAddressFailed,
+		ImportScheduledEnclaveFailed,
 	}
 
 	/// delegatees who are authorised to send extrinsics(currently only `create_identity`)
@@ -328,6 +329,8 @@ pub mod pallet {
 					Self::deposit_event(Event::VerifyEvmSignatureFailed),
 				IMPError::RecoverEvmAddressFailed =>
 					Self::deposit_event(Event::RecoverEvmAddressFailed),
+				IMPError::ImportScheduledEnclaveFailed =>
+					Self::deposit_event(Event::ImportScheduledEnclaveFailed),
 			}
 			Ok(Pays::No.into())
 		}

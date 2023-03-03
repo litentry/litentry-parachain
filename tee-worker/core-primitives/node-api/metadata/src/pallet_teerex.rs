@@ -40,6 +40,10 @@ pub trait TeerexCallIndexes {
 	fn unshield_funds_call_indexes(&self) -> Result<[u8; 2]>;
 
 	fn publish_hash_call_indexes(&self) -> Result<[u8; 2]>;
+
+	fn update_scheduled_encalve(&self) -> Result<[u8; 2]>;
+
+	fn remove_scheduled_enclave(&self) -> Result<[u8; 2]>;
 }
 
 pub trait TeerexStorageKey {
@@ -87,6 +91,14 @@ impl TeerexCallIndexes for NodeMetadata {
 
 	fn publish_hash_call_indexes(&self) -> Result<[u8; 2]> {
 		self.call_indexes(TEEREX, "publish_hash")
+	}
+
+	fn update_scheduled_encalve(&self) -> Result<[u8; 2]> {
+		self.call_indexes(TEEREX, "update_scheduled_enclave")
+	}
+
+	fn remove_scheduled_enclave(&self) -> Result<[u8; 2]> {
+		self.call_indexes(TEEREX, "remove_scheduled_enclave")
 	}
 }
 
