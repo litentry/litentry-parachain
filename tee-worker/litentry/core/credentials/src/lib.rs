@@ -455,10 +455,13 @@ pub fn format_assertion_to_date() -> String {
 
 pub struct CredentialFactory;
 impl CredentialFactory {
-	pub fn from_template() -> Result<Credential, Error> {
+	pub fn from_template(
+		who: &AccountId,
+		shard: &ShardIdentifier,
+		bn: ParentchainBlockNumber,
+	) -> Result<Credential, Error> {
 		let raw = include_str!("templates/credential.json");
-		let credential: Credential =
-			serde_json::from_str(raw).map_err(|err| Error::ParseError(format!("{}", err)))?;
+		let credential: Credential = Credential::from_template(raw, who, shard, bn)?;
 		Ok(credential)
 	}
 
