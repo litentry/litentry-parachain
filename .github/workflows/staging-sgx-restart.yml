@@ -7,9 +7,8 @@ on:
         type: choice
         description: Select the action
         required: true
-        default: restart
+        default: stop
         options: 
-        - restart
         - stop
         - start
 
@@ -19,19 +18,11 @@ jobs:
 
     steps:
       - name: restarting the service
-        if: "${{ github.event.inputs.action == 'restart' }}"
+        if: "${{ github.event.inputs.action == 'stop' }}"
         run: |
-          pkill -9 integritee-service
-          cd /home/ubuntu/litentry-parachain/tee-worker
-          ./local-setup/launch.py local-setup/github-action-config.json
+          sudo systemctl stop integritee.service
 
       - name: stoping the service
-        if: "${{ github.event.inputs.action == 'restart' }}"
+        if: "${{ github.event.inputs.action == 'start' }}"
         run: |
-          pkill -9 integritee-service
-
-      - name: starting the service
-        if: "${{ github.event.inputs.action == 'restart' }}"
-        run: |
-          cd /home/ubuntu/litentry-parachain/tee-worker
-          ./local-setup/launch.py local-setup/github-action-config.json
+          sudo systemctl start integritee.service
