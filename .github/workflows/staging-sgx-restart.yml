@@ -1,0 +1,37 @@
+name: Staging SGX parachain
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        type: choice
+        description: Select the action
+        required: true
+        default: restart
+        options: 
+        - restart
+        - stop
+        - start
+
+jobs:
+  action:
+    runs-on: self-hosted #tee-staging (162.19.84.27)
+
+    steps:
+      - name: restarting the service
+        if: "${{ github.event.inputs.action == 'restart' }}"
+        run: |
+          pkill -9 integritee-service
+          cd /home/ubuntu/litentry-parachain/tee-worker
+          ./local-setup/launch.py local-setup/github-action-config.json
+
+      - name: stoping the service
+        if: "${{ github.event.inputs.action == 'restart' }}"
+        run: |
+          pkill -9 integritee-service
+
+      - name: starting the service
+        if: "${{ github.event.inputs.action == 'restart' }}"
+        run: |
+          cd /home/ubuntu/litentry-parachain/tee-worker
+          ./local-setup/launch.py local-setup/github-action-config.json
