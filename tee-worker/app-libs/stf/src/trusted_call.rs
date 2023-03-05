@@ -219,6 +219,24 @@ where
 {
 	type Error = StfError;
 
+	// TODO(Kai@litentry):
+	// If this function returns Err(), it will feed the executor with Ok(ExecutedOperation::failed()),
+	// which will remove the failed op from its **own** top pool while preventing it from being included
+	// in a sidechain block - see `execute_trusted_call_on_stf`.
+	//
+	// As a result, when other workers import sidechain blocks, they will treat the op as
+	// "not yet executed" (before it's not recorded in the sidechain block) and try to execute it again from
+	// its own top pool (if the op is added to the top pool upon e.g. parentchain block import).
+	//
+	// The execution will most likely fail again. However, the state could have been changed already by applying
+	// the state diff from the imported sidechain block. This could cause an inconsistent/mismatching state,
+	// for example, the nonce. See the nonce handling below: we increased the nonce no matter the STF is executed
+	// successfully or not.
+	//
+	// This is probably the reason why the nonce-handling test in `demo_shielding_unshielding.sh` sometimes fails.
+	//
+	// for now we should always return Ok(()) for this function and propagate the exe, at least for
+	// litentry STFs. I believe this is the right way to go, but it still needs more discussions.
 	fn execute(
 		self,
 		shard: &ShardIdentifier,
