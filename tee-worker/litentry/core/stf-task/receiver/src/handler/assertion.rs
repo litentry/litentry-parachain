@@ -15,6 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{handler::TaskHandler, StfTaskContext};
+use codec::Encode;
 use ita_sgx_runtime::Hash;
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{
@@ -172,8 +173,8 @@ where
 			debug!("	[Assertion] Payload hash signature: {:?}", sig);
 
 			credential.issuer.id = account_id_to_string(&enclave_account);
-			credential.add_proof(&sig, credential.issuance_block_number, &enclave_account, H256::from(payload_hash));
-
+			// credential.add_proof(&sig, credential.issuance_block_number, &enclave_account, H256::from(payload_hash));
+			let vc_proof = Credential::proof(&sig, credential.issuance_block_number, &enclave_account, H256::from(payload_hash)).encode();
 			if credential.validate().is_err() {
 				error!("failed to validate credential");
 				return
@@ -194,7 +195,7 @@ where
 				{
 					Ok(Ok(call_index)) => {
 						let call =
-							OpaqueCall::from_tuple(&(call_index, who, vc_index, vc_hash, output));
+							OpaqueCall::from_tuple(&(call_index, who, vc_index, vc_hash, output, vc_proof));
 						self.context.submit_to_parentchain(call)
 					},
 					Ok(Err(e)) => {

@@ -198,6 +198,14 @@ impl Proof {
 	pub fn is_empty(&self) -> bool {
 		self.proof_value.is_empty()
 	}
+
+	pub fn is_valid(&self) -> Result<bool, Error> {
+		if self.created_block_number == 0 {
+			return Err(Error::EmptyProofBlockNumber)
+		}
+
+		Ok(true)
+	}
 }
 
 #[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
@@ -261,6 +269,10 @@ impl Credential {
 		self.proof = Some(Proof::new(bn, sig, issuer, hash));
 	}
 
+	pub fn proof(sig: &Vec<u8>, bn: ParentchainBlockNumber, issuer: &AccountId, hash: H256) -> Proof {
+		Proof::new(bn, sig, issuer, hash)
+	}
+
 	pub fn to_json(&self) -> Result<String, Error> {
 		let json_str =
 			serde_json::to_string(&self).map_err(|err| Error::ParseError(format!("{}", err)))?;
@@ -311,17 +323,6 @@ impl Credential {
 		let exported = vc.to_json()?;
 		if exported.len() > MAX_CREDENTIAL_SIZE {
 			return Err(Error::CredentialIsTooLong)
-		}
-
-		if vc.proof.is_none() {
-			return Err(Error::InvalidProof)
-		} else {
-			let proof = vc.proof.unwrap();
-			if proof.created_block_number == 0 {
-				return Err(Error::EmptyProofBlockNumber)
-			}
-
-			//ToDo: validate proof signature
 		}
 
 		Ok(())
@@ -571,7 +572,7 @@ mod tests {
 
 			let a11 = Assertion::A11(min_balance);
 			let mut credential_unsigned =
-				Credential::generate_unsigned_credential(&a11, &who, &shard.clone(), 1u32).unwrap();
+				CredentialFactory::build_unsigned_credential(&a11, &who, &shard.clone(), 1u32).unwrap();
 			credential_unsigned.update_holder(from_date_index, min_balance);
 
 			let minimum_amount = format!("{}", min_balance);
@@ -594,7 +595,7 @@ mod tests {
 
 			let a11 = Assertion::A11(min_balance);
 			let mut credential_unsigned =
-				Credential::generate_unsigned_credential(&a11, &who, &shard.clone(), 1u32).unwrap();
+				CredentialFactory::build_unsigned_credential(&a11, &who, &shard.clone(), 1u32).unwrap();
 			credential_unsigned.update_holder(from_date_index, min_balance);
 
 			let minimum_amount = format!("{}", min_balance);
@@ -617,7 +618,7 @@ mod tests {
 
 			let a11 = Assertion::A11(min_balance);
 			let mut credential_unsigned =
-				Credential::generate_unsigned_credential(&a11, &who, &shard.clone(), 1u32).unwrap();
+				CredentialFactory::build_unsigned_credential(&a11, &who, &shard.clone(), 1u32).unwrap();
 			credential_unsigned.update_holder(from_date_index, min_balance);
 
 			let minimum_amount = format!("{}", min_balance);
