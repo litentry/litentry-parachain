@@ -61,6 +61,8 @@ pub enum VCMPError {
 	HttpRequestFailed(ErrorString),
 	// Indirect call handling errors when importing parachain blocks
 	RequestVCHandlingFailed,
+	// tee stf error
+	StfError(ErrorString),
 	// UTF8Error
 	ParseError,
 	// Assertion

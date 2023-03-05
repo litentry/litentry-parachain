@@ -15,7 +15,6 @@
 
 */
 
-use itp_node_api_metadata::pallet_vcmp::VCMPCallIndexes;
 #[cfg(feature = "evm")]
 use sp_core::{H160, H256, U256};
 
@@ -33,6 +32,7 @@ pub use ita_sgx_runtime::{Balance, ConvertAccountId, Index, SgxParentchainTypeCo
 use itp_node_api::metadata::{
 	pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata,
 };
+use itp_node_api_metadata::{pallet_system::SystemSs58Prefix, pallet_vcmp::VCMPCallIndexes};
 use itp_stf_interface::ExecuteCall;
 use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier, Signature};
 use itp_types::OpaqueCall;
@@ -48,7 +48,6 @@ use std::{format, prelude::v1::*, sync::Arc};
 
 #[cfg(feature = "evm")]
 use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
-use itp_node_api_metadata::pallet_system::SystemSs58Prefix;
 
 #[cfg(feature = "evm")]
 use crate::evm_helpers::{create_code_hash, evm_create2_address, evm_create_address};
@@ -448,15 +447,22 @@ where
 				Ok(())
 			},
 			// litentry
+			// TODO: how to deal with the potential errors when retrieving call_indexes?
 			TrustedCall::set_user_shielding_key_preflight(root, who, key) => {
-				ensure!(is_root::<Runtime, AccountId>(&root), Self::Error::MissingPrivileges(root));
-				Self::set_user_shielding_key_preflight(shard, who, key)
+				if let Err(err) = Self::set_user_shielding_key_preflight(root, shard, who, key) {
+					debug!("set_user_shielding_key_preflight error: {}", err);
+					calls.push(OpaqueCall::from_tuple(&(
+						node_metadata_repo
+							.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
+						err.to_imp_error(),
+					)));
+				}
+				Ok(())
 			},
 			TrustedCall::set_user_shielding_key_runtime(enclave_account, who, key) => {
-				ensure_enclave_signer_account(&enclave_account)?;
 				// TODO: we only checked if the extrinsic dispatch is successful,
 				//       is that enough? (i.e. is the state changed already?)
-				match Self::set_user_shielding_key_runtime(who.clone(), key) {
+				match Self::set_user_shielding_key_runtime(enclave_account, who.clone(), key) {
 					Ok(()) => {
 						calls.push(OpaqueCall::from_tuple(&(
 							node_metadata_repo
@@ -477,7 +483,6 @@ where
 				Ok(())
 			},
 			TrustedCall::create_identity_runtime(enclave_account, who, identity, metadata, bn) => {
-				ensure_enclave_signer_account(&enclave_account)?;
 				debug!(
 					"create_identity, who: {}, identity: {:?}, metadata: {:?}",
 					account_id_to_string(&who),
@@ -487,6 +492,7 @@ where
 				let parent_ss58_prefix =
 					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
 				match Self::create_identity_runtime(
+					enclave_account,
 					who.clone(),
 					identity.clone(),
 					metadata,
@@ -526,13 +532,13 @@ where
 				Ok(())
 			},
 			TrustedCall::remove_identity_runtime(enclave_account, who, identity) => {
-				ensure_enclave_signer_account(&enclave_account)?;
 				debug!(
 					"remove_identity, who: {}, identity: {:?}",
 					account_id_to_string(&who),
 					identity,
 				);
-				match Self::remove_identity_runtime(who.clone(), identity.clone()) {
+				match Self::remove_identity_runtime(enclave_account, who.clone(), identity.clone())
+				{
 					Ok(()) => {
 						debug!("remove_identity {} OK", account_id_to_string(&who));
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
@@ -566,25 +572,43 @@ where
 			},
 			TrustedCall::verify_identity_preflight(
 				enclave_account,
-				account,
+				who,
 				identity,
 				validation_data,
 				bn,
 			) => {
-				ensure_enclave_signer_account(&enclave_account)?;
-				Self::verify_identity_preflight(shard, account, identity, validation_data, bn)
+				if let Err(err) = Self::verify_identity_preflight(
+					enclave_account,
+					shard,
+					who,
+					identity,
+					validation_data,
+					bn,
+				) {
+					debug!("verify_identity_preflight error: {}", err);
+					calls.push(OpaqueCall::from_tuple(&(
+						node_metadata_repo
+							.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
+						err.to_imp_error(),
+					)));
+				}
+				Ok(())
 			},
 			TrustedCall::verify_identity_runtime(enclave_account, who, identity, bn) => {
-				ensure_enclave_signer_account(&enclave_account)?;
 				debug!(
-					"verify_identity, who: {}, identity: {:?}, bn: {:?}",
+					"verify_identity_runtime, who: {}, identity: {:?}, bn: {:?}",
 					account_id_to_string(&who),
 					identity,
 					bn
 				);
-				match Self::verify_identity_runtime(who.clone(), identity.clone(), bn) {
+				match Self::verify_identity_runtime(
+					enclave_account,
+					who.clone(),
+					identity.clone(),
+					bn,
+				) {
 					Ok(()) => {
-						debug!("verify_identity {} OK", account_id_to_string(&who));
+						debug!("verify_identity_runtime {} OK", account_id_to_string(&who));
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
 							let id_graph =
 								ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
@@ -604,7 +628,11 @@ where
 						}
 					},
 					Err(err) => {
-						debug!("create_identity {} error: {}", account_id_to_string(&who), err);
+						debug!(
+							"verify_identity_runtime {} error: {}",
+							account_id_to_string(&who),
+							err
+						);
 						calls.push(OpaqueCall::from_tuple(&(
 							node_metadata_repo
 								.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
@@ -615,12 +643,26 @@ where
 				Ok(())
 			},
 			TrustedCall::build_assertion(enclave_account, who, assertion, shard, bn) => {
-				ensure_enclave_signer_account(&enclave_account)?;
-				Self::build_assertion(&shard, who, assertion, bn)
+				if let Err(err) = Self::build_assertion(enclave_account, &shard, who, assertion, bn)
+				{
+					calls.push(OpaqueCall::from_tuple(&(
+						node_metadata_repo
+							.get_from_metadata(|m| m.vcmp_some_error_call_indexes())??,
+						err.to_vcmp_error(),
+					)));
+				}
+				Ok(())
 			},
-			TrustedCall::set_challenge_code_runtime(enclave_account, account, did, code) => {
-				ensure_enclave_signer_account(&enclave_account)?;
-				Self::set_challenge_code_runtime(account, did, code)
+			TrustedCall::set_challenge_code_runtime(enclave_account, who, did, code) => {
+				if let Err(err) = Self::set_challenge_code_runtime(enclave_account, who, did, code)
+				{
+					calls.push(OpaqueCall::from_tuple(&(
+						node_metadata_repo
+							.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
+						err.to_imp_error(),
+					)));
+				}
+				Ok(())
 			},
 			TrustedCall::handle_imp_error(enclave_account, e) => {
 				ensure_enclave_signer_account(&enclave_account)?;
@@ -699,7 +741,7 @@ fn shield_funds(account: AccountId, amount: u128) -> Result<(), StfError> {
 	Ok(())
 }
 
-fn is_root<Runtime, AccountId>(account: &AccountId) -> bool
+pub(crate) fn is_root<Runtime, AccountId>(account: &AccountId) -> bool
 where
 	Runtime: frame_system::Config<AccountId = AccountId> + pallet_sudo::Config,
 	AccountId: PartialEq,
