@@ -140,6 +140,7 @@ pub struct CredentialSubject {
 	pub data_source: Option<Vec<DataSource>>,
 	/// Several sets of assertions.
 	/// Each assertion contains multiple steps to describe how to fetch data and calculate the value
+	#[serde(skip_deserializing)]
 	pub assertions: Vec<AssertionLogic>,
 	/// Results of each set of assertions
 	pub values: Vec<bool>,
@@ -236,7 +237,17 @@ pub struct Credential {
 	pub credential_schema: Option<CredentialSchema>,
 }
 
-impl Credential { 
+impl Credential {
+	pub fn new_default(		
+		who: &AccountId,
+		shard: &ShardIdentifier,
+		bn: ParentchainBlockNumber,
+	) -> Result<Credential, Error> {
+		let raw = include_str!("templates/credential.json");
+		let credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+		Ok(credential)
+	}
+
 	pub fn from_template(
 		s: &str,
 		who: &AccountId,
@@ -287,9 +298,9 @@ impl Credential {
 	}
 
 	pub fn validate_unsigned(&self) -> Result<(), Error> {
-		if !self.types.contains(&CredentialType::VerifiableCredential) {
-			return Err(Error::EmptyCredentialType)
-		}
+		// if !self.types.contains(&CredentialType::VerifiableCredential) {
+		// 	return Err(Error::EmptyCredentialType)
+		// }
 
 		if self.credential_subject.id.is_empty() {
 			return Err(Error::EmptyCredentialSubject)
@@ -370,6 +381,18 @@ impl Credential {
 			self.credential_subject.assertions.push(assertion);
 			self.credential_subject.values.push(true);
 		}
+	}
+
+	pub fn add_assertion_a1(&mut self, flag: bool) {
+		let has_web2_account = AssertionLogic::new_item("$has_web2_account", Op::Equal, "true");
+		let has_web3_account = AssertionLogic::new_item("$has_web3_account", Op::Equal, "true");
+		
+		let assertion = AssertionLogic::new_and()
+		.add_item(has_web2_account)
+		.add_item(has_web3_account);
+
+		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.values.push(flag);
 	}
 
 	pub fn add_assertion_a2(&mut self, guild_id: String) {
@@ -475,9 +498,9 @@ impl CredentialFactory {
 		debug!("generate unsigned credential {:?}", assertion);
 		match assertion {
 			Assertion::A1 => {
-				let raw = include_str!("templates/a1.json");
-				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
-				credential.credential_subject.values.clear();
+				let raw = include_str!("templates/credential.json");
+				let credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+				// credential.credential_subject.values.clear();
 				Ok(credential)
 			},
 			Assertion::A2(_) => {

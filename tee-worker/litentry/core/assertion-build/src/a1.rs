@@ -29,6 +29,9 @@ use litentry_primitives::{Assertion, Identity, ParentchainBlockNumber, VCMPError
 use log::*;
 use sp_runtime::BoundedVec;
 
+const VC_SUBJECT_DESCRIPTION: &'static str = "Identity Linked And Verified";
+const VC_SUBJECT_TYPE: &'static str = "IdentityLinkedVerified";
+
 pub fn build(
 	identities: BoundedVec<Identity, MaxIdentityLength>,
 	shard: &ShardIdentifier,
@@ -46,10 +49,16 @@ pub fn build(
 		}
 	}
 
-	match CredentialFactory::build_unsigned_credential(&Assertion::A1, who, &shard.clone(), bn) {
+	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
+			// update subject info
+			credential_unsigned.credential_subject.description = VC_SUBJECT_DESCRIPTION.into();
+			credential_unsigned.credential_subject.types = VC_SUBJECT_TYPE.into();
+
+			// add assertion
 			let flag = web2_cnt != 0 && web3_cnt != 0;
-			credential_unsigned.credential_subject.values.push(flag);
+			credential_unsigned.add_assertion_a1(flag);
+
 			Ok(credential_unsigned)
 		},
 		Err(e) => {
