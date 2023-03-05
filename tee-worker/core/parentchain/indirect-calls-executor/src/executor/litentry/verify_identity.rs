@@ -32,7 +32,9 @@ use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, Shieldin
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{VerifyIdentityFn, H256};
+use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{Identity, ParentchainBlockNumber, ValidationData};
+use log::debug;
 use sp_runtime::traits::{AccountIdLookup, StaticLookup};
 
 pub(crate) struct VerifyIdentity {
@@ -82,6 +84,13 @@ impl VerifyIdentity {
 
 		if let Some((multiaddress_account, _, _)) = extrinsic.signature {
 			let account = AccountIdLookup::lookup(multiaddress_account)?;
+			debug!(
+				"indirect call VerifyIdentity, who:{:?}, identity: {:?}, validation_data: {:?}",
+				account_id_to_string(&account),
+				identity,
+				validation_data
+			);
+
 			let enclave_account_id = context.stf_enclave_signer.get_enclave_account()?;
 			let trusted_call = TrustedCall::verify_identity_preflight(
 				enclave_account_id,

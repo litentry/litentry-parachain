@@ -62,11 +62,7 @@ impl TrustedCallSigned {
 		who: AccountId,
 		key: UserShieldingKeyType,
 	) -> StfResult<()> {
-		debug!(
-			"set user shielding key runtime, who = {:?}, key = {:?}",
-			account_id_to_string(&who),
-			key.clone()
-		);
+		debug!("set user shielding key runtime, who = {:?}", account_id_to_string(&who));
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_user_shielding_key { who, key }
 			.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
@@ -237,7 +233,7 @@ impl TrustedCallSigned {
 		identity: Identity,
 		code: ChallengeCode,
 	) -> StfResult<()> {
-		debug!("set challenge code runtime, who {:?}", account_id_to_string(&who));
+		debug!("set challenge code runtime, who: {:?}", account_id_to_string(&who));
 
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_challenge_code {
 			who,

@@ -2929,6 +2929,7 @@ dependencies = [
  "itp-test",
  "itp-top-pool-author",
  "itp-types",
+ "itp-utils",
  "litentry-primitives",
  "log 0.4.17",
  "pallet-identity-management",

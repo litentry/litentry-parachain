@@ -274,7 +274,6 @@ where
 					debug!("Do some migraions");
 					true
 				} else {
-					debug!("No need to migrate");
 					false
 				}
 			};

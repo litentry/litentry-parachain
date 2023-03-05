@@ -32,6 +32,7 @@ use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, Shieldin
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{RequestVCFn, H256};
+use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::ParentchainBlockNumber;
 use log::debug;
 use sp_runtime::traits::{AccountIdLookup, StaticLookup};
@@ -74,10 +75,15 @@ impl RequestVC {
 	{
 		let (_, shard, assertion) = extrinsic.function;
 		let shielding_key = context.shielding_key_repo.retrieve_key()?;
-		debug!("Requested VC Assertion {:?}", assertion);
 
 		if let Some((multiaddress_account, _, _)) = extrinsic.signature {
 			let account = AccountIdLookup::lookup(multiaddress_account)?;
+			debug!(
+				"indirect call Requested VC, who:{:?}, assertion: {:?}",
+				account_id_to_string(&account),
+				assertion
+			);
+
 			let enclave_account_id = context.stf_enclave_signer.get_enclave_account()?;
 
 			let trusted_call = TrustedCall::build_assertion(

@@ -25,6 +25,7 @@ use itp_node_api::{
 	},
 };
 use itp_types::{extrinsics::ParentchainUncheckedExtrinsicWithStatus, H256};
+use log::*;
 
 pub mod call_worker;
 pub mod litentry;
@@ -116,6 +117,11 @@ where
 		if let Ok(ParentchainUncheckedExtrinsicWithStatus { xt, status }) = self.decode(input) {
 			if self.is_target_call(&xt.function, context.node_meta_data_provider.as_ref()) {
 				if status {
+					debug!(
+						"found extrinsic(call index: {:?}) with status {}",
+						self.call_index(&xt.function),
+						status
+					);
 					self.execute(context, xt.clone())
 						.map(|_| ExecutionStatus::Success(hash_of(&xt)))
 				} else {

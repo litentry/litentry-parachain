@@ -89,7 +89,7 @@ where
 			debug!("Enclave wants to send {} extrinsics", extrinsics.len());
 			let api = self.node_api_factory.create_api()?;
 			for call in extrinsics.into_iter() {
-				debug!("Start send extrinsic, length: {}", call.to_hex().len());
+				debug!("Send extrinsic, call length: {}", call.to_hex().len());
 				if let Err(e) = api.send_extrinsic(call.to_hex(), XtStatus::Ready) {
 					error!("Could not send extrsinic to node: {:?}", e);
 				}

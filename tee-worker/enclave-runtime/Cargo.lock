@@ -711,11 +711,13 @@ dependencies = [
  "itc-direct-rpc-server",
  "itc-offchain-worker-executor",
  "itc-parentchain",
+ "itc-parentchain-indirect-calls-executor",
  "itc-parentchain-test",
  "itc-tls-websocket-server",
  "itp-attestation-handler",
  "itp-block-import-queue",
  "itp-component-container",
+ "itp-enclave-scheduled",
  "itp-extrinsics-factory",
  "itp-hashing",
  "itp-node-api",
@@ -1694,9 +1696,12 @@ version = "0.9.0"
 dependencies = [
  "beefy-merkle-tree",
  "bs58",
+ "core-primitives",
  "futures 0.3.8",
  "ita-sgx-runtime",
  "ita-stf",
+ "itp-component-container",
+ "itp-enclave-scheduled",
  "itp-node-api",
  "itp-ocall-api",
  "itp-sgx-crypto",
@@ -1704,6 +1709,7 @@ dependencies = [
  "itp-stf-primitives",
  "itp-top-pool-author",
  "itp-types",
+ "itp-utils",
  "litentry-primitives",
  "log",
  "pallet-identity-management",
@@ -1887,6 +1893,20 @@ dependencies = [
  "parity-scale-codec",
  "sgx_tstd",
  "substrate-fixed",
+]
+
+[[package]]
+name = "itp-enclave-scheduled"
+version = "0.8.0"
+dependencies = [
+ "itp-settings",
+ "itp-sgx-io",
+ "itp-types",
+ "litentry-primitives",
+ "log",
+ "serde 1.0.118 (git+https://github.com/mesalock-linux/serde-sgx)",
+ "serde_json 1.0.60 (git+https://github.com/mesalock-linux/serde-json-sgx?tag=sgx_1.1.3)",
+ "sgx_tstd",
 ]
 
 [[package]]
