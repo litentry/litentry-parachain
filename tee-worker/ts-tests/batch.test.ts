@@ -78,9 +78,9 @@ describeLitentry('Test Batch Utility', (context) => {
             const response = decodeIdentityEvent(
                 context.substrate,
                 data.account.toHex(),
-                decryptWithAES(aesKey, data.identity),
-                decryptWithAES(aesKey, data.idGraph),
-                decryptWithAES(aesKey, data.code));
+                decryptWithAES(aesKey, data.identity, 'hex'),
+                decryptWithAES(aesKey, data.idGraph, 'hex'),
+                decryptWithAES(aesKey, data.code, 'hex'));
             assertIdentityCreated(context.defaultSigner[0], response);
             if (response) {
                 console.log('twitterIdentity challengeCode: ', response.challengeCode);
@@ -124,8 +124,8 @@ describeLitentry('Test Batch Utility', (context) => {
         const response = decodeIdentityEvent(
             context.substrate,
             data.account.toHex(),
-            decryptWithAES(aesKey, data.identity),
-            decryptWithAES(aesKey, data.idGraph));
+            decryptWithAES(aesKey, data.identity, 'hex'),
+            decryptWithAES(aesKey, data.idGraph, 'hex'));
         assertIdentityVerified(context.defaultSigner[0], response);
     });
 
@@ -158,8 +158,8 @@ describeLitentry('Test Batch Utility', (context) => {
             const response = decodeIdentityEvent(
                 context.substrate,
                 data.account.toHex(),
-                decryptWithAES(aesKey, data.identity),
-                decryptWithAES(aesKey, data.idGraph));
+                decryptWithAES(aesKey, data.identity, 'hex'),
+                decryptWithAES(aesKey, data.idGraph, 'hex'));
             assertIdentityRemoved(context.defaultSigner[0], response);
         }
     });
