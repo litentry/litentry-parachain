@@ -38,11 +38,11 @@ describeLitentry('VC test', async (context) => {
                 }
             )) as any;
 
-            const hash = JSON.parse(proof.toHuman()).hash;
             const vcString = vc.replace('0x', '');
             const vcBlake2Hash = blake2AsHex(vcString);
-
+            const hash = '0x' + Buffer.from(JSON.parse(proof.toHuman()).hash).toString('hex');
             assert.equal(vcBlake2Hash, hash, 'check vc json hash error');
+
             const registry = (await context.substrate.query.vcManagement.vcRegistry(index)) as any;
             assert.equal(registry.toHuman()!['status'], 'Active', 'check registry error');
 
