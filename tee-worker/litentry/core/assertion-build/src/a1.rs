@@ -23,7 +23,7 @@ extern crate sgx_tstd as std;
 use crate::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
-use lc_credentials::{Credential};
+use lc_credentials::Credential;
 use lc_stf_task_sender::MaxIdentityLength;
 use litentry_primitives::{Identity, ParentchainBlockNumber, VCMPError};
 use log::*;

@@ -28,8 +28,7 @@ use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
 use litentry_primitives::{
-	Identity, ParentchainBalance, ParentchainBlockNumber, SubstrateNetwork,
-	ASSERTION_FROM_DATE,
+	Identity, ParentchainBalance, ParentchainBlockNumber, SubstrateNetwork, ASSERTION_FROM_DATE,
 };
 use log::*;
 use std::{

@@ -23,13 +23,12 @@ extern crate sgx_tstd as std;
 use crate::{from_data_provider_error, Error, Result};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
-use lc_credentials::{Credential};
+use lc_credentials::Credential;
 use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
 use litentry_primitives::{
-	EvmNetwork, Identity, ParentchainBalance, ParentchainBlockNumber,
-	ASSERTION_FROM_DATE,
+	EvmNetwork, Identity, ParentchainBalance, ParentchainBlockNumber, ASSERTION_FROM_DATE,
 };
 use log::*;
 use std::{

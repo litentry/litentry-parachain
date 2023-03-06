@@ -42,7 +42,8 @@ fn vc_issued_works() {
 			1,
 			VC_INDEX,
 			VC_HASH,
-			AesOutput::default()
+			AesOutput::default(),
+			Default::default(),
 		));
 		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
 		let context = VCManagement::vc_registry(VC_INDEX).unwrap();
@@ -60,7 +61,8 @@ fn vc_issued_with_unpriviledged_origin_fails() {
 				1,
 				H256::default(),
 				H256::default(),
-				AesOutput::default()
+				AesOutput::default(),
+				Default::default(),
 			),
 			sp_runtime::DispatchError::BadOrigin
 		);
@@ -75,7 +77,8 @@ fn vc_issued_with_duplicated_index_fails() {
 			1,
 			VC_INDEX,
 			VC_HASH,
-			AesOutput::default()
+			AesOutput::default(),
+			Default::default(),
 		));
 		assert_noop!(
 			VCManagement::vc_issued(
@@ -83,7 +86,8 @@ fn vc_issued_with_duplicated_index_fails() {
 				1,
 				VC_INDEX,
 				VC_HASH,
-				AesOutput::default()
+				AesOutput::default(),
+				Default::default(),
 			),
 			Error::<Test>::VCAlreadyExists
 		);
@@ -98,7 +102,8 @@ fn disable_vc_works() {
 			2,
 			VC_INDEX,
 			VC_HASH,
-			AesOutput::default()
+			AesOutput::default(),
+			Default::default(),
 		));
 		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
 		assert_ok!(VCManagement::disable_vc(RuntimeOrigin::signed(2), VC_INDEX));
@@ -127,7 +132,8 @@ fn disable_vc_with_other_subject_fails() {
 			2,
 			VC_INDEX,
 			VC_HASH,
-			AesOutput::default()
+			AesOutput::default(),
+			Default::default(),
 		));
 		assert_noop!(
 			VCManagement::disable_vc(RuntimeOrigin::signed(1), VC_HASH),
@@ -146,7 +152,8 @@ fn revoke_vc_works() {
 			2,
 			VC_INDEX,
 			VC_HASH,
-			AesOutput::default()
+			AesOutput::default(),
+			Default::default(),
 		));
 		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
 		assert_ok!(VCManagement::revoke_vc(RuntimeOrigin::signed(2), VC_INDEX));
@@ -173,7 +180,8 @@ fn revoke_vc_with_other_subject_fails() {
 			2,
 			VC_INDEX,
 			VC_HASH,
-			AesOutput::default()
+			AesOutput::default(),
+			Default::default(),
 		));
 		assert_noop!(
 			VCManagement::revoke_vc(RuntimeOrigin::signed(1), VC_HASH),

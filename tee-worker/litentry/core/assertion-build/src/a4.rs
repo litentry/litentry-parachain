@@ -40,7 +40,8 @@ use std::{
 
 // ERC20 LIT token address
 const LIT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
-const VC_SUBJECT_DESCRIPTION: &'static str = "Check whether any of the linked accounts hold a minimum amount of LIT NOW";
+const VC_SUBJECT_DESCRIPTION: &'static str =
+	"Check whether any of the linked accounts hold a minimum amount of LIT NOW";
 const VC_SUBJECT_TYPE: &'static str = "LIT Holder";
 
 pub fn build(

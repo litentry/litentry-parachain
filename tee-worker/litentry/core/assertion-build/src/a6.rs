@@ -23,7 +23,7 @@ extern crate sgx_tstd as std;
 use crate::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
-use lc_credentials::{Credential};
+use lc_credentials::Credential;
 use lc_data_providers::twitter_official::TwitterOfficialClient;
 use litentry_primitives::{Identity, ParentchainBlockNumber, VCMPError, Web2Network};
 use log::*;

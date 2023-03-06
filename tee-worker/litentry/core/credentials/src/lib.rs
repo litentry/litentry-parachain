@@ -39,9 +39,7 @@ use codec::{Decode, Encode};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::{AccountId, H256};
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{
-	ParentchainBalance, ParentchainBlockNumber, ASSERTION_FROM_DATE,
-};
+use litentry_primitives::{ParentchainBalance, ParentchainBlockNumber, ASSERTION_FROM_DATE};
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
 use sp_core::{hashing::blake2_256, hexdisplay::HexDisplay};
@@ -237,7 +235,7 @@ pub struct Credential {
 }
 
 impl Credential {
-	pub fn new_default(		
+	pub fn new_default(
 		who: &AccountId,
 		shard: &ShardIdentifier,
 		bn: ParentchainBlockNumber,
@@ -275,11 +273,22 @@ impl Credential {
 		self.id.push_str(&(format!("{}", HexDisplay::from(&vc_id.to_vec()))));
 	}
 
-	pub fn add_proof(&mut self, sig: &Vec<u8>, bn: ParentchainBlockNumber, issuer: &AccountId, hash: H256) {
+	pub fn add_proof(
+		&mut self,
+		sig: &Vec<u8>,
+		bn: ParentchainBlockNumber,
+		issuer: &AccountId,
+		hash: H256,
+	) {
 		self.proof = Some(Proof::new(bn, sig, issuer, hash));
 	}
 
-	pub fn proof(sig: &Vec<u8>, bn: ParentchainBlockNumber, issuer: &AccountId, hash: H256) -> Proof {
+	pub fn proof(
+		sig: &Vec<u8>,
+		bn: ParentchainBlockNumber,
+		issuer: &AccountId,
+		hash: H256,
+	) -> Proof {
 		Proof::new(bn, sig, issuer, hash)
 	}
 
@@ -390,10 +399,9 @@ impl Credential {
 	pub fn add_assertion_a1(&mut self, value: bool) {
 		let has_web2_account = AssertionLogic::new_item("$has_web2_account", Op::Equal, "true");
 		let has_web3_account = AssertionLogic::new_item("$has_web3_account", Op::Equal, "true");
-		
-		let assertion = AssertionLogic::new_and()
-		.add_item(has_web2_account)
-		.add_item(has_web3_account);
+
+		let assertion =
+			AssertionLogic::new_and().add_item(has_web2_account).add_item(has_web3_account);
 
 		self.credential_subject.assertions.push(assertion);
 		self.credential_subject.values.push(value);
@@ -412,7 +420,13 @@ impl Credential {
 		self.credential_subject.values.push(value);
 	}
 
-	pub fn add_assertion_a3(&mut self, value: bool, guild_id: String, channel_id: String, role_id: String) {
+	pub fn add_assertion_a3(
+		&mut self,
+		value: bool,
+		guild_id: String,
+		channel_id: String,
+		role_id: String,
+	) {
 		let has_role = AssertionLogic::new_item("$has_role", Op::Equal, "true");
 		let has_commented = AssertionLogic::new_item("$has_commented", Op::Equal, "true");
 		let guild = AssertionLogic::new_item("$discord_guild_id", Op::Equal, guild_id.as_str());
@@ -492,7 +506,7 @@ mod tests {
 	#[test]
 	fn eval_simple_success() {
 		let who = AccountId::from([0; 32]);
-		let data = include_str!("templates/a1.json");
+		let data = include_str!("templates/credential.json");
 		let shard = ShardIdentifier::default();
 
 		let vc = Credential::from_template(data, &who, &shard, 1u32).unwrap();

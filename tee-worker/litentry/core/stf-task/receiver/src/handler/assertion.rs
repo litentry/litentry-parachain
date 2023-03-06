@@ -174,7 +174,13 @@ where
 
 			credential.issuer.id = account_id_to_string(&enclave_account);
 			// credential.add_proof(&sig, credential.issuance_block_number, &enclave_account, H256::from(payload_hash));
-			let vc_proof = Credential::proof(&sig, credential.issuance_block_number, &enclave_account, H256::from(payload_hash)).encode();
+			let vc_proof = Credential::proof(
+				&sig,
+				credential.issuance_block_number,
+				&enclave_account,
+				H256::from(payload_hash),
+			)
+			.encode();
 			if credential.validate().is_err() {
 				error!("failed to validate credential");
 				return
@@ -194,8 +200,9 @@ where
 					.get_from_metadata(|m| VCMPCallIndexes::vc_issued_call_indexes(m))
 				{
 					Ok(Ok(call_index)) => {
-						let call =
-							OpaqueCall::from_tuple(&(call_index, who, vc_index, vc_hash, output, vc_proof));
+						let call = OpaqueCall::from_tuple(&(
+							call_index, who, vc_index, vc_hash, output, vc_proof,
+						));
 						self.context.submit_to_parentchain(call)
 					},
 					Ok(Err(e)) => {
