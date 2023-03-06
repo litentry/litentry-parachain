@@ -138,7 +138,7 @@ export async function requestVC(
     listening: boolean,
     mrEnclave: HexString,
     assertion: Assertion
-): Promise<HexString[] | undefined> {
+): Promise<any[] | undefined> {
     const tx = context.substrate.tx.vcManagement.requestVc(mrEnclave, assertion);
 
     await sendTxUntilInBlock(context.substrate, tx, signer);
@@ -146,7 +146,7 @@ export async function requestVC(
         const events = await listenEvent(context.substrate, 'vcManagement', ['VCIssued']);
         expect(events.length).to.be.equal(1);
         const [account, index, vc, proof] = events[0].data as any;
-        return [account.toHex(), index.toHex(), decryptWithAES(aesKey, vc, 'utf-8'), proof];
+        return [account.toHex(), index.toHex(), decryptWithAES(aesKey, vc, 'utf-8'), proof as Uint8Array];
     }
     return undefined;
 }
