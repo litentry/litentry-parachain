@@ -10,7 +10,7 @@ on:
         - restart
 jobs:
   action:
-    runs-on: self-hosted #tee-dev
+    runs-on: tee-dev #tee-dev
     steps:
       - name: stoping the service
         if: "${{ github.event.inputs.action == 'stop' }}"
