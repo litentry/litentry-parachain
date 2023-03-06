@@ -201,6 +201,7 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 
 			return None
 		}
+		// TODO: check schedule enclave matches
 
 		let latest_parentchain_header = match self.peek_latest_parentchain_header() {
 			Ok(Some(peeked_header)) => peeked_header,
@@ -271,7 +272,7 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 		if !timestamp_within_slot(&slot_info, &proposing.block) {
 			warn!(
 				target: logging_target,
-				"⌛️ Discarding proposal for slot {}, block number {}; block production took too long", 
+				"⌛️ Discarding proposal for slot {}, block number {}; block production took too long",
 				*slot, proposing.block.block().header().block_number(),
 			);
 
