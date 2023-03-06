@@ -43,6 +43,7 @@ use crate::{
 	executor::{
 		call_worker::CallWorker,
 		litentry::{
+			batch_all::BatchAll,
 			create_identity::CreateIdentity,
 			get_scheduled_enclave::{ScheduledEnclaveRemove, ScheduledEnclaveUpdate},
 			remove_identity::RemoveIdentity,
@@ -58,8 +59,9 @@ use beefy_merkle_tree::{merkle_root, Keccak256};
 use codec::Encode;
 use ita_stf::{TrustedCall, TrustedOperation};
 use itp_node_api::metadata::{
-	pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, pallet_vcmp::VCMPCallIndexes,
-	provider::AccessNodeMetadata,
+	pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes,
+	pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata,
+	runtime_call::RuntimeCall,
 };
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::StfEnclaveSigning;
@@ -112,7 +114,8 @@ where
 	StfEnclaveSigner: StfEnclaveSigning,
 	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
-	NodeMetadataProvider::MetadataType: TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes,
+	NodeMetadataProvider::MetadataType:
+		TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + UtilityCallIndexes,
 {
 	pub fn new(
 		shielding_key_repo: Arc<ShieldingKeyRepository>,
@@ -198,7 +201,8 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 	StfEnclaveSigner: StfEnclaveSigning,
 	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
-	NodeMetadataProvider::MetadataType: TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes,
+	NodeMetadataProvider::MetadataType:
+		TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + UtilityCallIndexes + RuntimeCall,
 {
 	fn execute_indirect_calls_in_extrinsics<ParentchainBlock>(
 		&self,
@@ -228,6 +232,9 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 			// No else-if here! Because the same opaque extrinsic can contain multiple Fns at once (this lead to intermittent M6 failures)
 			let call_worker = CallWorker {};
 
+			// Found BatchAll extrinsic in block.
+			let batch_all = BatchAll { block_number: parentchain_block_number };
+
 			// litentry
 			// Found SetUserShieldingKey extrinsic
 			let set_user_shielding_key = SetUserShieldingKey {};
@@ -254,6 +261,7 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 			> = vec![
 				&shield_funds,
 				&call_worker,
+				&batch_all,
 				&set_user_shielding_key,
 				&create_identity,
 				&remove_identity,

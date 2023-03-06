@@ -14,10 +14,29 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-pub mod batch_all;
-pub mod create_identity;
-pub mod get_scheduled_enclave;
-pub mod remove_identity;
-pub mod request_vc;
-pub mod set_user_shielding_key;
-pub mod verify_identity;
+use crate::{error::Result, Error, NodeMetadata};
+
+pub trait RuntimeCall {
+	fn retrieve(&self) -> Result<u32>;
+}
+
+impl RuntimeCall for NodeMetadata {
+	fn retrieve(&self) -> Result<u32> {
+		if self.node_metadata.as_ref().is_none() {
+			return Err(Error::MetadataNotSet)
+		}
+		let node_metadata = self.node_metadata.as_ref().unwrap();
+
+		let runtime_call = node_metadata.types().types().iter().find(|ty| {
+			let path = ty.ty().path().segments();
+			path.len() == 2 && path[1].as_str() == "RuntimeCall"
+		});
+
+		match runtime_call {
+			Some(runtime_call) => Ok(runtime_call.id()),
+			None => Err(Error::NodeMetadata(substrate_api_client::MetadataError::CallNotFound(
+				"RuntimeCall not found",
+			))),
+		}
+	}
+}

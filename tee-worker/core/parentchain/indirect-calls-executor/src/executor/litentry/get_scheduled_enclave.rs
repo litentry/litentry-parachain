@@ -14,14 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{error::Error, executor::Executor, IndirectCallsExecutor};
+use crate::{error::Result, executor::Executor, IndirectCallsExecutor};
 use itp_component_container::{ComponentContainer, ComponentGetter, ComponentSetter};
 use itp_enclave_scheduled::{ScheduledEnclaveHandle, ScheduledEnclaveInfo, ScheduledEnclaves};
 use itp_node_api::{
 	api_client::ParentchainUncheckedExtrinsic,
 	metadata::{
 		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, pallet_vcmp::VCMPCallIndexes,
-		provider::AccessNodeMetadata, Error as MetadataError,
+		provider::AccessNodeMetadata,
 	},
 };
 use itp_types::{CallRemoveScheduledEnclaveFn, CallUpdateScheduledEnclaveFn};
@@ -54,7 +54,7 @@ impl ScheduledEnclaveUpdate {
 				NodeMetadataProvider,
 			>>::Call,
 		>,
-	) -> Result<(), Error>
+	) -> Result<()>
 	where
 		NodeMetadataProvider: AccessNodeMetadata,
 		NodeMetadataProvider::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
@@ -90,8 +90,8 @@ where
 	fn call_index_from_metadata(
 		&self,
 		metadata_type: &NodeMetadataProvider::MetadataType,
-	) -> Result<[u8; 2], MetadataError> {
-		metadata_type.update_scheduled_encalve()
+	) -> Result<[u8; 2]> {
+		metadata_type.update_scheduled_encalve().map_err(|e| e.into())
 	}
 
 	fn execute(
@@ -103,7 +103,7 @@ where
 			NodeMetadataProvider,
 		>,
 		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
-	) -> Result<(), Error> {
+	) -> Result<()> {
 		self.execute_internal::<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>(extrinsic)
 	}
 }
@@ -124,7 +124,7 @@ impl ScheduledEnclaveRemove {
 				NodeMetadataProvider,
 			>>::Call,
 		>,
-	) -> Result<(), Error>
+	) -> Result<()>
 	where
 		NodeMetadataProvider: AccessNodeMetadata,
 		NodeMetadataProvider::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
@@ -155,8 +155,8 @@ where
 	fn call_index_from_metadata(
 		&self,
 		metadata_type: &NodeMetadataProvider::MetadataType,
-	) -> Result<[u8; 2], MetadataError> {
-		metadata_type.remove_scheduled_enclave()
+	) -> Result<[u8; 2]> {
+		metadata_type.remove_scheduled_enclave().map_err(|e| e.into())
 	}
 
 	fn execute(
@@ -168,7 +168,7 @@ where
 			NodeMetadataProvider,
 		>,
 		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
-	) -> Result<(), Error> {
+	) -> Result<()> {
 		self.execute_internal::<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>(extrinsic)
 	}
 }

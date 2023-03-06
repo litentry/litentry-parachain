@@ -1,6 +1,6 @@
 import { describeLitentry, generateVerificationMessage } from './utils';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
-import { createIdentity, setUserShieldingKey, removeIdentity, verifyIdentity } from './indirect_calls';
+import { createIdentity, setUserShieldingKey, removeIdentity, verifyIdentity, assertIdentityCreated, assertIdentityVerified, assertIdentityRemoved } from './indirect_calls';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import {
@@ -311,45 +311,3 @@ describeLitentry('Test Identity', (context) => {
         assert.equal(result, 'CreateIdentityHandlingFailed', 'result is not equal to CreateIdentityHandlingFailed');
     });
 });
-
-function assertIdentityCreated(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
-    let idGraphExist = false;
-    if (identityEvent) {
-        for (let i = 0; i < identityEvent.idGraph.length; i++) {
-            if (JSON.stringify(identityEvent.idGraph[i][0]) == JSON.stringify(identityEvent.identity)) {
-                idGraphExist = true;
-                assert.isFalse(identityEvent.idGraph[i][1].is_verified, 'identity should not be verified');
-            }
-        }
-    }
-    assert.isTrue(idGraphExist, 'id_graph should exist');
-    assert.equal(identityEvent?.who, u8aToHex(signer.addressRaw), 'check caller error');
-}
-
-function assertIdentityVerified(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
-    let idGraphExist = false;
-
-    if (identityEvent) {
-        for (let i = 0; i < identityEvent.idGraph.length; i++) {
-            if (JSON.stringify(identityEvent.idGraph[i][0]) == JSON.stringify(identityEvent.identity)) {
-                idGraphExist = true;
-                assert.isTrue(identityEvent.idGraph[i][1].is_verified, 'identity should be verified');
-            }
-        }
-    }
-    assert.isTrue(idGraphExist, 'id_graph should exist');
-    assert.equal(identityEvent?.who, u8aToHex(signer.addressRaw), 'check caller error');
-}
-
-function assertIdentityRemoved(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
-    let idGraphExist = false;
-    if (identityEvent) {
-        for (let i = 0; i < identityEvent.idGraph.length; i++) {
-            if (JSON.stringify(identityEvent.idGraph[i][0]) == JSON.stringify(identityEvent.identity)) {
-                idGraphExist = true;
-            }
-        }
-    }
-    assert.isFalse(idGraphExist, 'id_graph should be empty');
-    assert.equal(identityEvent?.who, u8aToHex(signer.addressRaw), 'check caller error');
-}

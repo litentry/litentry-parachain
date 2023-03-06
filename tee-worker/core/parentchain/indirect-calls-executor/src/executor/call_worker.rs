@@ -15,12 +15,13 @@
 
 */
 
-use crate::{error::Error, executor::Executor, IndirectCallsExecutor};
+use crate::{error::Result, executor::Executor, IndirectCallsExecutor};
 use itp_node_api::{
 	api_client::ParentchainUncheckedExtrinsic,
 	metadata::{
-		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, pallet_vcmp::VCMPCallIndexes,
-		provider::AccessNodeMetadata, Error as MetadataError,
+		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes,
+		pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes,
+		provider::AccessNodeMetadata,
 	},
 };
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
@@ -40,7 +41,8 @@ where
 	StfEnclaveSigner: StfEnclaveSigning,
 	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
-	NodeMetadataProvider::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
+	NodeMetadataProvider::MetadataType:
+		IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UtilityCallIndexes,
 {
 	type Call = CallWorkerFn;
 
@@ -51,8 +53,8 @@ where
 	fn call_index_from_metadata(
 		&self,
 		metadata_type: &NodeMetadataProvider::MetadataType,
-	) -> Result<[u8; 2], MetadataError> {
-		metadata_type.call_worker_call_indexes()
+	) -> Result<[u8; 2]> {
+		metadata_type.call_worker_call_indexes().map_err(|e| e.into())
 	}
 
 	fn execute(
@@ -64,7 +66,7 @@ where
 			NodeMetadataProvider,
 		>,
 		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
-	) -> Result<(), Error> {
+	) -> Result<()> {
 		let (_, request) = extrinsic.function;
 		let (shard, cypher_text) = (request.shard, request.cyphertext);
 		log::debug!("Found trusted call extrinsic, submitting it to the top pool");
