@@ -23,12 +23,12 @@ extern crate sgx_tstd as std;
 use crate::{from_data_provider_error, Error, Result};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
-use lc_credentials::{Credential, CredentialFactory};
+use lc_credentials::Credential;
 use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
 use litentry_primitives::{
-	Assertion, Identity, ParentchainBalance, ParentchainBlockNumber, ASSERTION_FROM_DATE,
+	Identity, ParentchainBalance, ParentchainBlockNumber, ASSERTION_FROM_DATE,
 };
 use log::*;
 use std::{
@@ -40,6 +40,8 @@ use std::{
 
 // ERC20 LIT token address
 const LIT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
+const VC_SUBJECT_DESCRIPTION: &'static str = "Check whether any of the linked accounts hold a minimum amount of LIT NOW";
+const VC_SUBJECT_TYPE: &'static str = "LIT Holder";
 
 pub fn build(
 	identities: Vec<Identity>,
@@ -118,10 +120,11 @@ pub fn build(
 		}
 	}
 
-	let a4 = Assertion::A4(min_balance);
-	match CredentialFactory::build_unsigned_credential(&a4, who, &shard.clone(), bn) {
+	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
+			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
 			credential_unsigned.update_holder(from_date_index, min_balance);
+
 			return Ok(credential_unsigned)
 		},
 		Err(e) => {

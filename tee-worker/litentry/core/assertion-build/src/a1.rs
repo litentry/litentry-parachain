@@ -23,9 +23,9 @@ extern crate sgx_tstd as std;
 use crate::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
-use lc_credentials::{Credential, CredentialFactory};
+use lc_credentials::{Credential};
 use lc_stf_task_sender::MaxIdentityLength;
-use litentry_primitives::{Assertion, Identity, ParentchainBlockNumber, VCMPError};
+use litentry_primitives::{Identity, ParentchainBlockNumber, VCMPError};
 use log::*;
 use sp_runtime::BoundedVec;
 
@@ -51,9 +51,8 @@ pub fn build(
 
 	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
-			// update subject info
-			credential_unsigned.credential_subject.description = VC_SUBJECT_DESCRIPTION.into();
-			credential_unsigned.credential_subject.types = VC_SUBJECT_TYPE.into();
+			// add subject info
+			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
 
 			// add assertion
 			let flag = web2_cnt != 0 && web3_cnt != 0;

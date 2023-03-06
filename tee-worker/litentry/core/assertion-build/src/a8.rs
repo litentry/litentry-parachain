@@ -24,16 +24,19 @@ use crate::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use lazy_static::lazy_static;
-use lc_credentials::{Credential, CredentialFactory};
+use lc_credentials::Credential;
 use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsNetwork, VerifiedCredentialsTotalTxs,
 };
 use litentry_primitives::{
-	Assertion, AssertionNetworks, EvmNetwork, Identity, ParentchainBlockNumber, SubstrateNetwork,
+	AssertionNetworks, EvmNetwork, Identity, ParentchainBlockNumber, SubstrateNetwork,
 	VCMPError, ASSERTION_NETWORKS,
 };
 use log::*;
 use std::{collections::HashSet, str::from_utf8, string::ToString, vec, vec::Vec};
+
+const VC_SUBJECT_DESCRIPTION: &'static str = "User has over X number of transactions";
+const VC_SUBJECT_TYPE: &'static str = "Total EVM and Substrate Transactions";
 
 lazy_static! {
 	pub static ref NETWORK_HASHSET: HashSet<VerifiedCredentialsNetwork> = {
@@ -234,11 +237,11 @@ pub fn build(
 		},
 	}
 
-	let a8 = Assertion::A8(networks);
-	match CredentialFactory::build_unsigned_credential(&a8, who, &shard.clone(), bn) {
+	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
+			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
 			credential_unsigned.add_assertion_a8(vc_network_to_vec(target_networks), min, max);
-			credential_unsigned.credential_subject.values.push(true);
+
 			return Ok(credential_unsigned)
 		},
 		Err(e) => {

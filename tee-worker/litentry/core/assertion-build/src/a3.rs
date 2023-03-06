@@ -23,13 +23,16 @@ extern crate sgx_tstd as std;
 use crate::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
-use lc_credentials::{Credential, CredentialFactory};
+use lc_credentials::{Credential};
 use lc_data_providers::{discord_litentry::DiscordLitentryClient, vec_to_string};
 use litentry_primitives::{
-	Assertion, Identity, ParameterString, ParentchainBlockNumber, VCMPError, Web2Network,
+	Identity, ParameterString, ParentchainBlockNumber, VCMPError, Web2Network,
 };
 use log::*;
 use std::vec::Vec;
+
+const VC_SUBJECT_DESCRIPTION: &'static str = "User has commented on Discord channel with ID-Hubber role";
+const VC_SUBJECT_TYPE: &'static str = "ID-Hubber";
 
 pub fn build(
 	identities: Vec<Identity>,
@@ -65,19 +68,21 @@ pub fn build(
 		}
 	}
 
-	match CredentialFactory::build_unsigned_credential(
-		&Assertion::A3(guild_id, channel_id, role_id),
+	match Credential::new_default(
 		who,
 		&shard.clone(),
 		bn,
 	) {
 		Ok(mut credential_unsigned) => {
-			if has_commented {
-				credential_unsigned.credential_subject.values.push(true);
+			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
+
+			let value = if has_commented {
+				true
 			} else {
-				credential_unsigned.credential_subject.values.push(false);
-			}
-			credential_unsigned.add_assertion_a3(guild_id_s, channel_id_s, role_id_s);
+				false
+			};
+
+			credential_unsigned.add_assertion_a3(value, guild_id_s, channel_id_s, role_id_s);
 			Ok(credential_unsigned)
 		},
 		Err(e) => {

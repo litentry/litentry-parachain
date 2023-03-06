@@ -23,12 +23,12 @@ extern crate sgx_tstd as std;
 use crate::{from_data_provider_error, Error, Result};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
-use lc_credentials::{Credential, CredentialFactory};
+use lc_credentials::Credential;
 use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
 use litentry_primitives::{
-	Assertion, Identity, ParentchainBalance, ParentchainBlockNumber, SubstrateNetwork,
+	Identity, ParentchainBalance, ParentchainBlockNumber, SubstrateNetwork,
 	ASSERTION_FROM_DATE,
 };
 use log::*;
@@ -38,6 +38,9 @@ use std::{
 	vec,
 	vec::Vec,
 };
+
+const VC_SUBJECT_DESCRIPTION: &'static str = "The user held DOT every day from a specific date";
+const VC_SUBJECT_TYPE: &'static str = "DOT Hodler";
 
 pub fn build(
 	identities: Vec<Identity>,
@@ -87,9 +90,9 @@ pub fn build(
 		}
 	}
 
-	let a7 = Assertion::A7(min_balance);
-	match CredentialFactory::build_unsigned_credential(&a7, who, &shard.clone(), bn) {
+	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
+			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
 			credential_unsigned.update_holder(from_date_index, min_balance);
 			return Ok(credential_unsigned)
 		},
