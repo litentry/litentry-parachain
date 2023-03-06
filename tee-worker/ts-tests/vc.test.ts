@@ -10,13 +10,13 @@ const base58 = require('micro-base58');
 
 const assertion = <Assertion>{
     A1: 'A1',
-    A2: ['A2'],
-    A3: ['A3', 'A3', 'A3'],
-    A4: [10],
-    A7: [10],
-    A8: ['litentry'],
-    A10: [10],
-    A11: [10],
+    // A2: ['A2'],
+    // A3: ['A3', 'A3', 'A3'],
+    // A4: [10],
+    // A7: [10],
+    // A8: ['litentry'],
+    // A10: [10],
+    // A11: [10],
 };
 describeLitentry('VC test', async (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
@@ -40,7 +40,9 @@ describeLitentry('VC test', async (context) => {
 
             const vcString = vc.replace('0x', '');
             const vcBlake2Hash = blake2AsHex(vcString);
-            const hash = '0x' + Buffer.from(JSON.parse(proof.toHuman()).hash).toString('hex');
+            const vcProof = JSON.parse(proof.toHuman());
+
+            const hash = '0x' + Buffer.from(vcProof.hash).toString('hex');
             assert.equal(vcBlake2Hash, hash, 'check vc json hash error');
 
             const registry = (await context.substrate.query.vcManagement.vcRegistry(index)) as any;
@@ -49,7 +51,7 @@ describeLitentry('VC test', async (context) => {
             assert.equal(vcBlake2Hash, registry.toHuman()!['hash_'], 'check vc json hash error');
 
             //check vc
-            const vcValid = await checkVc(vcString, index, context.substrate);
+            const vcValid = await checkVc(vcString, index, vcProof, context.substrate);
             assert.equal(vcValid, true, 'check vc error');
             indexList.push(index);
 

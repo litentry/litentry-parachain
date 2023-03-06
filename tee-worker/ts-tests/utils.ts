@@ -311,52 +311,50 @@ export async function getEnclave(api: ApiPromise): Promise<{
     };
 }
 
-export async function verifySignature(data: string, index: HexString, signature: string, api: ApiPromise) {
+export async function verifySignature(data: string, index: HexString, signature: HexString, api: ApiPromise) {
     const count = await api.query.teerex.enclaveCount();
     const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as EnclaveResult;
 
-    //JSON data types cannot be verify signature
-    // @TODO rust needs to modify the vc format
-    const message = JSON.parse(data);
-
     //check vc index
-    expect(index).to.be.eq(message.id);
-    message.proof = null;
+    expect(index).to.be.eq(JSON.parse(data).id);
+
     const isValid = await ed.verify(
         Buffer.from(hexToU8a(`0x${signature}`)),
-        Buffer.from(stringToU8a(JSON.stringify(message))),
+        Buffer.from(stringToU8a(data)),
         Buffer.from(hexToU8a(`${res.vcPubkey}`))
     );
+    console.log('----------vc signature----------', !isValid);
 
     //just for CI pass
     expect(!isValid).to.be.true;
     return true;
 }
 
-export async function checkVc(vc: string, index: HexString, api: ApiPromise): Promise<boolean> {
+export async function checkVc(vc: string, index: HexString, proof: any, api: ApiPromise): Promise<boolean> {
     const vcObj = JSON.parse(vc);
 
     console.log('----------vc json----------', vcObj);
 
-    const signatureValid = await verifySignature(vc, index, vcObj.proof.proofValue, api);
+    const signatureValid = await verifySignature(vc, index, proof.proofValue, api);
     expect(signatureValid).to.be.true;
-    const jsonValid = await checkJSON(vc);
+    const jsonValid = await checkJSON(vc, proof);
     expect(jsonValid).to.be.true;
     return true;
 }
 
 //Check VC json fields
-export async function checkJSON(data: string): Promise<boolean> {
+export async function checkJSON(data: string, proof: any): Promise<boolean> {
     const vc = JSON.parse(data);
-    const vcStatus = ['@context', 'type', 'credentialSubject', 'proof', 'issuer'].every(
+
+    const vcStatus = ['@context', 'type', 'credentialSubject', 'issuer'].every(
         (key) =>
             vc.hasOwnProperty(key) && (vc[key] != '{}' || vc[key] !== '[]' || vc[key] !== null || vc[key] !== undefined)
     );
     expect(vcStatus).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-            vc.proof.type === 'Ed25519Signature2020' &&
-            vc.issuer.id === vc.proof.verificationMethod
+            vc.issuer.id === proof.verificationMethod &&
+            proof.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
 }
