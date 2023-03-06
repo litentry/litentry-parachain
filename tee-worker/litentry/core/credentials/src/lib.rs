@@ -273,25 +273,6 @@ impl Credential {
 		self.id.push_str(&(format!("{}", HexDisplay::from(&vc_id.to_vec()))));
 	}
 
-	pub fn add_proof(
-		&mut self,
-		sig: &Vec<u8>,
-		bn: ParentchainBlockNumber,
-		issuer: &AccountId,
-		hash: H256,
-	) {
-		self.proof = Some(Proof::new(bn, sig, issuer, hash));
-	}
-
-	pub fn proof(
-		sig: &Vec<u8>,
-		bn: ParentchainBlockNumber,
-		issuer: &AccountId,
-		hash: H256,
-	) -> Proof {
-		Proof::new(bn, sig, issuer, hash)
-	}
-
 	pub fn to_json(&self) -> Result<String, Error> {
 		let json_str =
 			serde_json::to_string(&self).map_err(|err| Error::ParseError(format!("{}", err)))?;

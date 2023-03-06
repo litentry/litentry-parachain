@@ -29,7 +29,7 @@ use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{AccountId, OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
-use lc_credentials::Credential;
+use lc_credentials::{Credential, Proof};
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{aes_encrypt_default, Assertion, UserShieldingKeyType, VCMPError};
 use log::*;
@@ -173,10 +173,9 @@ where
 			debug!("	[Assertion] Payload hash signature: {:?}", sig);
 
 			credential.issuer.id = account_id_to_string(&enclave_account);
-			// credential.add_proof(&sig, credential.issuance_block_number, &enclave_account, H256::from(payload_hash));
-			let vc_proof = Credential::proof(
-				&sig,
+			let vc_proof = Proof::new(
 				credential.issuance_block_number,
+				&sig,
 				&enclave_account,
 				H256::from(payload_hash),
 			)
