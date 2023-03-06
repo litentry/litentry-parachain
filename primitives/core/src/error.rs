@@ -27,10 +27,10 @@ pub enum IMPError {
 	// UTF8Error,
 	DecodeHexFailed(ErrorString),
 	HttpRequestFailed(ErrorString),
-
 	// tee stf error
 	StfError(ErrorString),
-
+	// schedued encalve import error
+	ImportScheduledEnclaveFailed,
 	// Indirect call handling errors when importing parachain blocks
 	CreateIdentityHandlingFailed,
 	RemoveIdentityHandlingFailed,

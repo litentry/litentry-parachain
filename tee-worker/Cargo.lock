@@ -2912,6 +2912,7 @@ version = "0.9.0"
 dependencies = [
  "beefy-merkle-tree",
  "bs58",
+ "core-primitives",
  "env_logger 0.10.0",
  "futures 0.3.26",
  "futures 0.3.8",
@@ -2919,6 +2920,8 @@ dependencies = [
  "ita-sgx-runtime",
  "ita-stf",
  "itc-parentchain-test",
+ "itp-component-container",
+ "itp-enclave-scheduled",
  "itp-node-api",
  "itp-ocall-api",
  "itp-sgx-crypto",
@@ -3227,6 +3230,20 @@ dependencies = [
  "parity-scale-codec",
  "sgx_tstd",
  "substrate-fixed",
+]
+
+[[package]]
+name = "itp-enclave-scheduled"
+version = "0.8.0"
+dependencies = [
+ "itp-settings",
+ "itp-sgx-io",
+ "itp-types",
+ "litentry-primitives",
+ "log 0.4.17",
+ "serde 1.0.118 (git+https://github.com/mesalock-linux/serde-sgx)",
+ "serde_json 1.0.60 (git+https://github.com/mesalock-linux/serde-json-sgx?tag=sgx_1.1.3)",
+ "sgx_tstd",
 ]
 
 [[package]]

@@ -24,9 +24,6 @@ use itp_node_api::{
 		provider::AccessNodeMetadata,
 	},
 };
-use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
-use itp_stf_executor::traits::StfEnclaveSigning;
-use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{extrinsics::ParentchainUncheckedExtrinsicWithStatus, H256};
 
 pub mod call_worker;
@@ -39,13 +36,7 @@ pub(crate) trait Executor<
 	TopPoolAuthor,
 	NodeMetadataProvider,
 > where
-	ShieldingKeyRepository: AccessKey,
-	ShieldingKeyRepository::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
-		+ ShieldingCryptoEncrypt<Error = itp_sgx_crypto::Error>,
-	StfEnclaveSigner: StfEnclaveSigning,
-	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
-	NodeMetadataProvider::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
 {
 	type Call: Decode + Encode + Clone;
 
@@ -115,11 +106,6 @@ impl<E, ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataPro
 	for E
 where
 	E: Executor<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>,
-	ShieldingKeyRepository: AccessKey,
-	ShieldingKeyRepository::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
-		+ ShieldingCryptoEncrypt<Error = itp_sgx_crypto::Error>,
-	StfEnclaveSigner: StfEnclaveSigning,
-	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
 	NodeMetadataProvider::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
 {

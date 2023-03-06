@@ -43,8 +43,12 @@ use crate::{
 	executor::{
 		call_worker::CallWorker,
 		litentry::{
-			batch_all::BatchAll, create_identity::CreateIdentity, remove_identity::RemoveIdentity,
-			request_vc::RequestVC, set_user_shielding_key::SetUserShieldingKey,
+			batch_all::BatchAll,
+			create_identity::CreateIdentity,
+			get_scheduled_enclave::{ScheduledEnclaveRemove, ScheduledEnclaveUpdate},
+			remove_identity::RemoveIdentity,
+			request_vc::RequestVC,
+			set_user_shielding_key::SetUserShieldingKey,
 			verify_identity::VerifyIdentity,
 		},
 		shield_funds::ShieldFunds,
@@ -242,6 +246,10 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 			let verify_identity = VerifyIdentity { block_number: parentchain_block_number };
 			// Found RequestVC extrinsic
 			let request_vc = RequestVC { block_number: parentchain_block_number };
+			// Found Update Scheduled Enclave extrinisc
+			let scheduled_enclave_update =
+				ScheduledEnclaveUpdate { block_number: parentchain_block_number };
+			let scheduled_enclave_remove = ScheduledEnclaveRemove;
 
 			let executors: Vec<
 				&dyn DecorateExecutor<
@@ -259,6 +267,8 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 				&remove_identity,
 				&verify_identity,
 				&request_vc,
+				&scheduled_enclave_update,
+				&scheduled_enclave_remove,
 			];
 			for executor in executors {
 				match executor.decode_and_execute(self, &mut encoded_xt_opaque.as_slice()) {
