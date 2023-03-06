@@ -16,6 +16,7 @@ jobs:
         if: "${{ github.event.inputs.action == 'stop' }}"
         run: |
           sudo systemctl stop integritee.service
+          
       - name: restarting the service
         if: "${{ github.event.inputs.action == 'restart' }}"
         run: |
