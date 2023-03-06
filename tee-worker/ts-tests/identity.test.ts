@@ -1,8 +1,8 @@
-import { describeLitentry, generateVerificationMessage } from './utils';
+import { decryptWithAES, describeLitentry, encryptWithTeeShieldingKey, generateVerificationMessage, listenEvent, sendTxUntilInBlock } from './utils';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
-import { createIdentity, setUserShieldingKey, removeIdentity, verifyIdentity, assertIdentityCreated, assertIdentityVerified, assertIdentityRemoved } from './indirect_calls';
+import { createIdentity, decodeIdentityEvent, setUserShieldingKey, removeIdentity, verifyIdentity, assertIdentityCreated, assertIdentityVerified, assertIdentityRemoved } from './indirect_calls';
 import { step } from 'mocha-steps';
-import { assert } from 'chai';
+import { assert, expect } from 'chai';
 import {
     EvmIdentity,
     IdentityGenericEvent,
@@ -293,6 +293,55 @@ describeLitentry('Test Identity', (context) => {
             substrateExtensionIdentity
         );
         assertIdentityRemoved(context.defaultSigner[1], substrate_extension_identity_removed);
+    });
+
+    step('remove prime identity NOT allowed', async function () {
+        // create substrate identity
+        const resp_substrate = await createIdentity(context, context.defaultSigner[0], aesKey, true, substrateIdentity);
+        assertIdentityCreated(context.defaultSigner[0], resp_substrate);
+
+        if (resp_substrate) {
+            console.log('substrateIdentity challengeCode: ', resp_substrate.challengeCode);
+            const msg = generateVerificationMessage(
+                context,
+                hexToU8a(resp_substrate.challengeCode),
+                context.defaultSigner[0].addressRaw,
+                substrateIdentity
+            );
+
+            console.log('post verification msg to substrate: ', msg);
+            substrateValidationData!.Web3Validation!.Substrate!.message = msg;
+            signature_substrate = context.defaultSigner[0].sign(msg);
+            substrateValidationData!.Web3Validation!.Substrate!.signature!.Sr25519 = u8aToHex(signature_substrate);
+            assert.isNotEmpty(resp_substrate.challengeCode, 'challengeCode empty');
+        }
+
+        // remove substrate identity
+        const substrate_identity_removed = await removeIdentity(
+            context,
+            context.defaultSigner[0],
+            aesKey,
+            true,
+            substrateIdentity
+        );
+        assertIdentityRemoved(context.defaultSigner[0], substrate_identity_removed);
+
+        // remove prime identity
+        const substratePrimeIdentity = <LitentryIdentity>{
+            Substrate: <SubstrateIdentity>{
+                address: `0x${Buffer.from(context.defaultSigner[0].publicKey).toString('hex')}`,
+                network: 'Litentry',
+            },
+        };
+
+        const encode = context.substrate.createType('LitentryIdentity', substratePrimeIdentity).toHex();
+        const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
+        const tx = context.substrate.tx.identityManagement.removeIdentity(context.mrEnclave, `0x${ciphertext}`);
+        await sendTxUntilInBlock(context.substrate, tx, context.defaultSigner[0]);
+
+        const events = await listenEvent(context.substrate, 'identityManagement', ['StfError']);
+        expect(events.length).to.be.equal(1);
+        const result = events[0].method as string;
     });
 
     step('set error user shielding key', async function () {
