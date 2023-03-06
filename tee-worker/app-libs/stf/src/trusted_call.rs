@@ -447,15 +447,10 @@ where
 				Ok(())
 			},
 			// litentry
-			// TODO: how to deal with the potential errors when retrieving call_indexes?
 			TrustedCall::set_user_shielding_key_preflight(root, who, key) => {
-				if let Err(err) = Self::set_user_shielding_key_preflight(root, shard, who, key) {
-					debug!("set_user_shielding_key_preflight error: {}", err);
-					calls.push(OpaqueCall::from_tuple(&(
-						node_metadata_repo
-							.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
-						err.to_imp_error(),
-					)));
+				if let Err(e) = Self::set_user_shielding_key_preflight(root, shard, who, key) {
+					debug!("set_user_shielding_key_preflight error: {}", e);
+					add_call_from_imp_error(calls, node_metadata_repo, e.to_imp_error());
 				}
 				Ok(())
 			},
@@ -470,14 +465,9 @@ where
 							SgxParentchainTypeConverter::convert(who),
 						)));
 					},
-					Err(err) => {
-						debug!("set_user_shielding_key error: {}", err);
-
-						calls.push(OpaqueCall::from_tuple(&(
-							node_metadata_repo
-								.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
-							err.to_imp_error(),
-						)));
+					Err(e) => {
+						debug!("set_user_shielding_key error: {}", e);
+						add_call_from_imp_error(calls, node_metadata_repo, e.to_imp_error());
 					},
 				}
 				Ok(())
@@ -513,20 +503,16 @@ where
 								aes_encrypt_default(&key, &id_graph.encode()),
 							)));
 						} else {
-							calls.push(OpaqueCall::from_tuple(&(
-								node_metadata_repo
-									.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
+							add_call_from_imp_error(
+								calls,
+								node_metadata_repo,
 								IMPError::InvalidUserShieldingKey,
-							)));
+							);
 						}
 					},
-					Err(err) => {
-						debug!("create_identity {} error: {}", account_id_to_string(&who), err);
-						calls.push(OpaqueCall::from_tuple(&(
-							node_metadata_repo
-								.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
-							err.to_imp_error(),
-						)));
+					Err(e) => {
+						debug!("create_identity {} error: {}", account_id_to_string(&who), e);
+						add_call_from_imp_error(calls, node_metadata_repo, e.to_imp_error());
 					},
 				}
 				Ok(())
@@ -552,20 +538,16 @@ where
 								aes_encrypt_default(&key, &id_graph.encode()),
 							)));
 						} else {
-							calls.push(OpaqueCall::from_tuple(&(
-								node_metadata_repo
-									.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
+							add_call_from_imp_error(
+								calls,
+								node_metadata_repo,
 								IMPError::InvalidUserShieldingKey,
-							)));
+							);
 						}
 					},
-					Err(err) => {
-						debug!("remove_identity {} error: {}", account_id_to_string(&who), err);
-						calls.push(OpaqueCall::from_tuple(&(
-							node_metadata_repo
-								.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
-							err.to_imp_error(),
-						)));
+					Err(e) => {
+						debug!("remove_identity {} error: {}", account_id_to_string(&who), e);
+						add_call_from_imp_error(calls, node_metadata_repo, e.to_imp_error());
 					},
 				}
 				Ok(())
@@ -577,7 +559,7 @@ where
 				validation_data,
 				bn,
 			) => {
-				if let Err(err) = Self::verify_identity_preflight(
+				if let Err(e) = Self::verify_identity_preflight(
 					enclave_account,
 					shard,
 					who,
@@ -585,12 +567,8 @@ where
 					validation_data,
 					bn,
 				) {
-					debug!("verify_identity_preflight error: {}", err);
-					calls.push(OpaqueCall::from_tuple(&(
-						node_metadata_repo
-							.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
-						err.to_imp_error(),
-					)));
+					debug!("verify_identity_preflight error: {}", e);
+					add_call_from_imp_error(calls, node_metadata_repo, e.to_imp_error());
 				}
 				Ok(())
 			},
@@ -620,65 +598,46 @@ where
 								aes_encrypt_default(&key, &id_graph.encode()),
 							)));
 						} else {
-							calls.push(OpaqueCall::from_tuple(&(
-								node_metadata_repo
-									.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
+							add_call_from_imp_error(
+								calls,
+								node_metadata_repo,
 								IMPError::InvalidUserShieldingKey,
-							)));
+							);
 						}
 					},
-					Err(err) => {
+					Err(e) => {
 						debug!(
 							"verify_identity_runtime {} error: {}",
 							account_id_to_string(&who),
-							err
+							e
 						);
-						calls.push(OpaqueCall::from_tuple(&(
-							node_metadata_repo
-								.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
-							err.to_imp_error(),
-						)));
+						add_call_from_imp_error(calls, node_metadata_repo, e.to_imp_error());
 					},
 				}
 				Ok(())
 			},
 			TrustedCall::build_assertion(enclave_account, who, assertion, shard, bn) => {
-				if let Err(err) = Self::build_assertion(enclave_account, &shard, who, assertion, bn)
-				{
-					calls.push(OpaqueCall::from_tuple(&(
-						node_metadata_repo
-							.get_from_metadata(|m| m.vcmp_some_error_call_indexes())??,
-						err.to_vcmp_error(),
-					)));
+				if let Err(e) = Self::build_assertion(enclave_account, &shard, who, assertion, bn) {
+					add_call_from_vcmp_error(calls, node_metadata_repo, e.to_vcmp_error());
 				}
 				Ok(())
 			},
 			TrustedCall::set_challenge_code_runtime(enclave_account, who, did, code) => {
-				if let Err(err) = Self::set_challenge_code_runtime(enclave_account, who, did, code)
-				{
-					calls.push(OpaqueCall::from_tuple(&(
-						node_metadata_repo
-							.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
-						err.to_imp_error(),
-					)));
+				if let Err(e) = Self::set_challenge_code_runtime(enclave_account, who, did, code) {
+					add_call_from_imp_error(calls, node_metadata_repo, e.to_imp_error());
 				}
 				Ok(())
 			},
-			TrustedCall::handle_imp_error(enclave_account, e) => {
-				ensure_enclave_signer_account(&enclave_account)?;
-				calls.push(OpaqueCall::from_tuple(&(
-					node_metadata_repo.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
-					e,
-				)));
+			TrustedCall::handle_imp_error(_enclave_account, e) => {
+				// checking of `_enclave_account` is not strictly needed, as this trusted call can
+				// only be constructed internally
+				add_call_from_imp_error(calls, node_metadata_repo, e);
 				Ok(())
 			},
-			TrustedCall::handle_vcmp_error(enclave_account, e) => {
-				ensure_enclave_signer_account(&enclave_account)?;
-				calls.push(OpaqueCall::from_tuple(&(
-					node_metadata_repo
-						.get_from_metadata(|m| m.vcmp_some_error_call_indexes())??,
-					e,
-				)));
+			TrustedCall::handle_vcmp_error(_enclave_account, e) => {
+				// checking of `_enclave_account` is not strictly needed, as this trusted call can
+				// only be constructed internally
+				add_call_from_vcmp_error(calls, node_metadata_repo, e);
 				Ok(())
 			},
 		}?;
@@ -747,6 +706,41 @@ where
 	AccountId: PartialEq,
 {
 	pallet_sudo::Pallet::<Runtime>::key().map_or(false, |k| account == &k)
+}
+
+// helper method to create and push an `OpaqueCall` from a IMPError, this function always succeeds
+fn add_call_from_imp_error<NodeMetadataRepository>(
+	calls: &mut Vec<OpaqueCall>,
+	node_metadata_repo: Arc<NodeMetadataRepository>,
+	e: IMPError,
+) where
+	NodeMetadataRepository: AccessNodeMetadata,
+	NodeMetadataRepository::MetadataType:
+		TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix,
+{
+	// TODO: anyway to simplify this? `and_then` won't be applicable here
+	match node_metadata_repo.get_from_metadata(|m| m.imp_some_error_call_indexes()) {
+		Ok(Ok(c)) => calls.push(OpaqueCall::from_tuple(&(c, e))),
+		Ok(e) => warn!("error getting IMP call indexes: {:?}", e),
+		Err(e) => warn!("error getting IMP call indexes: {:?}", e),
+	}
+}
+
+// helper method to create and push an `OpaqueCall` from a VCMPError, this function always succeeds
+fn add_call_from_vcmp_error<NodeMetadataRepository>(
+	calls: &mut Vec<OpaqueCall>,
+	node_metadata_repo: Arc<NodeMetadataRepository>,
+	e: VCMPError,
+) where
+	NodeMetadataRepository: AccessNodeMetadata,
+	NodeMetadataRepository::MetadataType:
+		TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix,
+{
+	match node_metadata_repo.get_from_metadata(|m| m.vcmp_some_error_call_indexes()) {
+		Ok(Ok(c)) => calls.push(OpaqueCall::from_tuple(&(c, e))),
+		Ok(e) => warn!("error getting VCMP call indexes: {:?}", e),
+		Err(e) => warn!("error getting VCMP call indexes: {:?}", e),
+	}
 }
 
 #[cfg(test)]
