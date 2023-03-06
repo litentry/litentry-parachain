@@ -204,6 +204,12 @@ impl Proof {
 
 		Ok(true)
 	}
+
+	pub fn to_json(&self) -> Result<String, Error> {
+		let json_str =
+			serde_json::to_string(&self).map_err(|err| Error::ParseError(format!("{}", err)))?;
+		Ok(json_str)
+	}
 }
 
 #[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
