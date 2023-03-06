@@ -31,9 +31,9 @@ use litentry_primitives::{
 use log::*;
 use std::vec::Vec;
 
-const VC_SUBJECT_DESCRIPTION: &'static str =
+const VC_SUBJECT_DESCRIPTION: &str =
 	"User has commented on Discord channel with ID-Hubber role";
-const VC_SUBJECT_TYPE: &'static str = "ID-Hubber";
+const VC_SUBJECT_TYPE: &str = "ID-Hubber";
 
 pub fn build(
 	identities: Vec<Identity>,
@@ -72,10 +72,8 @@ pub fn build(
 	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
-
-			let value = if has_commented { true } else { false };
-
-			credential_unsigned.add_assertion_a3(value, guild_id_s, channel_id_s, role_id_s);
+			credential_unsigned.add_assertion_a3(has_commented, guild_id_s, channel_id_s, role_id_s);
+			
 			Ok(credential_unsigned)
 		},
 		Err(e) => {

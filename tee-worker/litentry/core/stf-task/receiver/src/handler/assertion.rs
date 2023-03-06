@@ -165,7 +165,7 @@ where
 		let signer = self.context.enclave_signer.as_ref();
 
 		let payload = credential.to_json().unwrap();
-		let payload_hash = blake2_256(&payload.as_bytes());
+		let payload_hash = blake2_256(payload.as_bytes());
 		debug!("	[Assertion] payload: {}", payload);
 		debug!("	[Assertion] payload_hash: {:?}", payload_hash);
 

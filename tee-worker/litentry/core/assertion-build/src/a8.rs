@@ -35,8 +35,8 @@ use litentry_primitives::{
 use log::*;
 use std::{collections::HashSet, str::from_utf8, string::ToString, vec, vec::Vec};
 
-const VC_SUBJECT_DESCRIPTION: &'static str = "User has over X number of transactions";
-const VC_SUBJECT_TYPE: &'static str = "Total EVM and Substrate Transactions";
+const VC_SUBJECT_DESCRIPTION: &str = "User has over X number of transactions";
+const VC_SUBJECT_TYPE: &str = "Total EVM and Substrate Transactions";
 
 lazy_static! {
 	pub static ref NETWORK_HASHSET: HashSet<VerifiedCredentialsNetwork> = {

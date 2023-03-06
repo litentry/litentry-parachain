@@ -35,9 +35,9 @@ use log::*;
 use std::{str::from_utf8, string::ToString, vec, vec::Vec};
 
 const WBTC_TOKEN_ADDRESS: &str = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
-const VC_SUBJECT_DESCRIPTION: &'static str =
+const VC_SUBJECT_DESCRIPTION: &str =
 	"The user held Wrapped BTC every day from a specific date";
-const VC_SUBJECT_TYPE: &'static str = "BTC Hodler";
+const VC_SUBJECT_TYPE: &str = "BTC Hodler";
 
 // WBTC holder
 pub fn build(

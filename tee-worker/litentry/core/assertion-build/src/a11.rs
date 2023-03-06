@@ -38,8 +38,8 @@ use std::{
 	vec::Vec,
 };
 
-const VC_SUBJECT_DESCRIPTION: &'static str = "The user held ETH before a specific date/year";
-const VC_SUBJECT_TYPE: &'static str = "ETH Hodler";
+const VC_SUBJECT_DESCRIPTION: &str = "The user held ETH before a specific date/year";
+const VC_SUBJECT_TYPE: &str = "ETH Hodler";
 
 pub fn build(
 	identities: Vec<Identity>,

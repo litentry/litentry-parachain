@@ -29,8 +29,8 @@ use litentry_primitives::{Identity, ParentchainBlockNumber, VCMPError};
 use log::*;
 use sp_runtime::BoundedVec;
 
-const VC_SUBJECT_DESCRIPTION: &'static str = "Identity Linked And Verified";
-const VC_SUBJECT_TYPE: &'static str = "IdentityLinkedVerified";
+const VC_SUBJECT_DESCRIPTION: &str = "Identity Linked And Verified";
+const VC_SUBJECT_TYPE: &str = "IdentityLinkedVerified";
 
 pub fn build(
 	identities: BoundedVec<Identity, MaxIdentityLength>,

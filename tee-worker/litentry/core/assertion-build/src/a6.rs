@@ -29,8 +29,8 @@ use litentry_primitives::{Identity, ParentchainBlockNumber, VCMPError, Web2Netwo
 use log::*;
 use std::vec::Vec;
 
-const VC_SUBJECT_DESCRIPTION: &'static str = "User has at least X amount of followers";
-const VC_SUBJECT_TYPE: &'static str = "Total Twitter Followers";
+const VC_SUBJECT_DESCRIPTION: &str = "User has at least X amount of followers";
+const VC_SUBJECT_TYPE: &str = "Total Twitter Followers";
 
 /// Following ranges:
 ///
