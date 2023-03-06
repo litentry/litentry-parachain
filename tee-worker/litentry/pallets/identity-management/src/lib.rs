@@ -281,6 +281,13 @@ pub mod pallet {
 			IDGraphs::<T>::try_mutate(&who, &identity, |context| -> DispatchResult {
 				let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
 
+				if c.metadata.is_none()
+					&& c.creation_request_block == Some(0)
+					&& c.verification_request_block == Some(0)
+				{
+					ensure!(!c.is_verified, Error::<T>::IdentityAlreadyVerified);
+				}
+
 				if let Some(b) = c.creation_request_block {
 					ensure!(
 						b <= verification_request_block,
