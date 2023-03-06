@@ -59,30 +59,31 @@ pub fn build(
 
 		if let Identity::Substrate { network, address } = id {
 			if matches!(network, SubstrateNetwork::Polkadot) {
-				let address = from_utf8(address.as_ref()).unwrap().to_string();
-				let addresses = vec![address];
+				if let Ok(addr) = from_utf8(address.as_ref()) {
+					let addresses = vec![addr.to_string()];
 
-				for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
-					// if found is true, no need to check it continually
-					if found {
-						from_date_index = index + 1;
-						break
-					}
+					for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
+						// if found is true, no need to check it continually
+						if found {
+							from_date_index = index + 1;
+							break
+						}
 
-					let credentials = VerifiedCredentialsIsHodlerIn::new(
-						addresses.clone(),
-						from_date.to_string(),
-						VerifiedCredentialsNetwork::Polkadot,
-						String::from(""),
-						q_min_balance,
-					);
-					let is_hodler_out = client
-						.check_verified_credentials_is_hodler(credentials)
-						.map_err(from_data_provider_error)?;
-					for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
-						found = found || hodler.is_hodler;
+						let credentials = VerifiedCredentialsIsHodlerIn::new(
+							addresses.clone(),
+							from_date.to_string(),
+							VerifiedCredentialsNetwork::Polkadot,
+							String::from(""),
+							q_min_balance,
+						);
+						let is_hodler_out = client
+							.check_verified_credentials_is_hodler(credentials)
+							.map_err(from_data_provider_error)?;
+						for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
+							found = found || hodler.is_hodler;
+						}
 					}
-				}
+				};
 			}
 		}
 	}

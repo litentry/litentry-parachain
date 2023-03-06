@@ -82,11 +82,17 @@ pub fn build(
 			let mut addresses: Vec<String> = vec![];
 			match &identity {
 				Identity::Evm { address, .. } =>
-					addresses.push(from_utf8(address.as_ref()).unwrap().to_string()),
+					if let Ok(addr) = from_utf8(address.as_ref()) {
+						addresses.push(addr.to_string());
+					},
 				Identity::Substrate { address, .. } =>
-					addresses.push(from_utf8(address.as_ref()).unwrap().to_string()),
+					if let Ok(addr) = from_utf8(address.as_ref()) {
+						addresses.push(addr.to_string());
+					},
 				Identity::Web2 { address, .. } =>
-					addresses.push(from_utf8(address).unwrap().to_string()),
+					if let Ok(addr) = from_utf8(address.as_ref()) {
+						addresses.push(addr.to_string());
+					},
 			}
 			let mut tmp_token_addr = String::from("");
 			if verified_network == VerifiedCredentialsNetwork::Ethereum {
