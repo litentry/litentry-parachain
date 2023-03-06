@@ -311,31 +311,41 @@ export async function getEnclave(api: ApiPromise): Promise<{
     };
 }
 
-export async function verifySignature(data: string, index: HexString, signature: HexString, api: ApiPromise) {
+export async function verifySignature(
+    data: string,
+    index: HexString,
+    proof: string,
+    vcBlake2Hash: HexString,
+    api: ApiPromise
+) {
     const count = await api.query.teerex.enclaveCount();
     const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as EnclaveResult;
-
+    const proofJson = JSON.parse(proof);
     //check vc index
     expect(index).to.be.eq(JSON.parse(data).id);
 
     const isValid = await ed.verify(
-        Buffer.from(hexToU8a(`0x${signature}`)),
-        Buffer.from(stringToU8a(data)),
+        Buffer.from(hexToU8a(`0x${proofJson.proofValue}`)),
+        Buffer.from(hexToU8a(vcBlake2Hash)),
         Buffer.from(hexToU8a(`${res.vcPubkey}`))
     );
-    console.log('----------vc signature----------', !isValid);
 
-    //just for CI pass
-    expect(!isValid).to.be.true;
+    expect(isValid).to.be.true;
     return true;
 }
 
-export async function checkVc(vc: string, index: HexString, proof: any, api: ApiPromise): Promise<boolean> {
+export async function checkVc(
+    vc: string,
+    index: HexString,
+    proof: string,
+    vcBlake2Hash: HexString,
+    api: ApiPromise
+): Promise<boolean> {
     const vcObj = JSON.parse(vc);
 
     console.log('----------vc json----------', vcObj);
 
-    const signatureValid = await verifySignature(vc, index, proof.proofValue, api);
+    const signatureValid = await verifySignature(vc, index, proof, vcBlake2Hash, api);
     expect(signatureValid).to.be.true;
     const jsonValid = await checkJSON(vc, proof);
     expect(jsonValid).to.be.true;
@@ -343,9 +353,9 @@ export async function checkVc(vc: string, index: HexString, proof: any, api: Api
 }
 
 //Check VC json fields
-export async function checkJSON(data: string, proof: any): Promise<boolean> {
+export async function checkJSON(data: string, proof: string): Promise<boolean> {
     const vc = JSON.parse(data);
-
+    const proofJson = JSON.parse(proof);
     const vcStatus = ['@context', 'type', 'credentialSubject', 'issuer'].every(
         (key) =>
             vc.hasOwnProperty(key) && (vc[key] != '{}' || vc[key] !== '[]' || vc[key] !== null || vc[key] !== undefined)
@@ -353,8 +363,8 @@ export async function checkJSON(data: string, proof: any): Promise<boolean> {
     expect(vcStatus).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-            vc.issuer.id === proof.verificationMethod &&
-            proof.type === 'Ed25519Signature2020'
+            vc.issuer.id === proofJson.verificationMethod &&
+            proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
 }

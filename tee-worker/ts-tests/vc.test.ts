@@ -3,20 +3,19 @@ import { step } from 'mocha-steps';
 import { requestVC, setUserShieldingKey, disableVC, revokeVC } from './indirect_calls';
 import { Assertion } from './type-definitions';
 import { assert } from 'chai';
-import { u8aToHex, stringToU8a, stringToHex } from '@polkadot/util';
+import { u8aToHex } from '@polkadot/util';
 import { HexString } from '@polkadot/util/types';
 import { blake2AsHex } from '@polkadot/util-crypto';
-const base58 = require('micro-base58');
 
 const assertion = <Assertion>{
     A1: 'A1',
-    // A2: ['A2'],
-    // A3: ['A3', 'A3', 'A3'],
-    // A4: [10],
-    // A7: [10],
-    // A8: ['litentry'],
-    // A10: [10],
-    // A11: [10],
+    A2: ['A2'],
+    A3: ['A3', 'A3', 'A3'],
+    A4: [10],
+    A7: [10],
+    A8: ['litentry'],
+    A10: [10],
+    A11: [10],
 };
 describeLitentry('VC test', async (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
@@ -40,9 +39,9 @@ describeLitentry('VC test', async (context) => {
 
             const vcString = vc.replace('0x', '');
             const vcBlake2Hash = blake2AsHex(vcString);
-            const vcProof = JSON.parse(proof.toHuman());
+            const vcProof = proof.toHuman();
 
-            const hash = '0x' + Buffer.from(vcProof.hash).toString('hex');
+            const hash = '0x' + Buffer.from(JSON.parse(vcProof).hash).toString('hex');
             assert.equal(vcBlake2Hash, hash, 'check vc json hash error');
 
             const registry = (await context.substrate.query.vcManagement.vcRegistry(index)) as any;
@@ -51,7 +50,7 @@ describeLitentry('VC test', async (context) => {
             assert.equal(vcBlake2Hash, registry.toHuman()!['hash_'], 'check vc json hash error');
 
             //check vc
-            const vcValid = await checkVc(vcString, index, vcProof, context.substrate);
+            const vcValid = await checkVc(vcString, index, vcProof, vcBlake2Hash, context.substrate);
             assert.equal(vcValid, true, 'check vc error');
             indexList.push(index);
 
