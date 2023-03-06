@@ -37,7 +37,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 use codec::{Decode, Encode};
 use itp_stf_primitives::types::ShardIdentifier;
-use itp_types::{AccountId, H256};
+use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{ParentchainBalance, ParentchainBlockNumber, ASSERTION_FROM_DATE};
 use scale_info::TypeInfo;
@@ -178,11 +178,16 @@ pub struct Proof {
 	/// The public key from Issuer
 	pub verification_method: String,
 	/// The hash of Credential payload(without Proof field)
-	pub hash: H256,
+	pub hash: [u8; 32],
 }
 
 impl Proof {
-	pub fn new(bn: ParentchainBlockNumber, sig: &Vec<u8>, issuer: &AccountId, hash: H256) -> Self {
+	pub fn new(
+		bn: ParentchainBlockNumber,
+		sig: &Vec<u8>,
+		issuer: &AccountId,
+		hash: [u8; 32],
+	) -> Self {
 		Proof {
 			created_block_number: bn,
 			proof_type: ProofType::Ed25519Signature2020,

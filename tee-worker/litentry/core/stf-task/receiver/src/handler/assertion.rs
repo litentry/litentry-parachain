@@ -26,7 +26,7 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{AccountId, OpaqueCall, H256};
+use itp_types::{AccountId, OpaqueCall};
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::{Credential, Proof};
 use lc_stf_task_sender::AssertionBuildRequest;
@@ -172,14 +172,10 @@ where
 			debug!("	[Assertion] Payload hash signature: {:?}", sig);
 
 			credential.issuer.id = account_id_to_string(&enclave_account);
-			let vc_proof_str = Proof::new(
-				credential.issuance_block_number,
-				&sig,
-				&enclave_account,
-				H256::from(payload_hash),
-			)
-			.to_json()
-			.unwrap();
+			let vc_proof_str =
+				Proof::new(credential.issuance_block_number, &sig, &enclave_account, payload_hash)
+					.to_json()
+					.unwrap();
 			if credential.validate().is_err() {
 				error!("failed to validate credential");
 				return
