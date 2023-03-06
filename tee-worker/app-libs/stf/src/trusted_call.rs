@@ -466,7 +466,7 @@ where
 						)));
 					},
 					Err(e) => {
-						debug!("set_user_shielding_key error: {}", e);
+						debug!("set_user_shielding_key_runtime error: {}", e);
 						add_call_from_imp_error(calls, node_metadata_repo, e.to_imp_error());
 					},
 				}
@@ -474,7 +474,7 @@ where
 			},
 			TrustedCall::create_identity_runtime(enclave_account, who, identity, metadata, bn) => {
 				debug!(
-					"create_identity, who: {}, identity: {:?}, metadata: {:?}",
+					"create_identity_runtime, who: {}, identity: {:?}, metadata: {:?}",
 					account_id_to_string(&who),
 					identity,
 					metadata
@@ -490,7 +490,7 @@ where
 					parent_ss58_prefix,
 				) {
 					Ok(code) => {
-						debug!("create_identity {} OK", account_id_to_string(&who));
+						debug!("create_identity_runtime {} OK", account_id_to_string(&who));
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
 							let id_graph =
 								ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
@@ -511,7 +511,11 @@ where
 						}
 					},
 					Err(e) => {
-						debug!("create_identity {} error: {}", account_id_to_string(&who), e);
+						debug!(
+							"create_identity_runtime {} error: {}",
+							account_id_to_string(&who),
+							e
+						);
 						add_call_from_imp_error(calls, node_metadata_repo, e.to_imp_error());
 					},
 				}
@@ -519,14 +523,14 @@ where
 			},
 			TrustedCall::remove_identity_runtime(enclave_account, who, identity) => {
 				debug!(
-					"remove_identity, who: {}, identity: {:?}",
+					"remove_identity_runtime, who: {}, identity: {:?}",
 					account_id_to_string(&who),
 					identity,
 				);
 				match Self::remove_identity_runtime(enclave_account, who.clone(), identity.clone())
 				{
 					Ok(()) => {
-						debug!("remove_identity {} OK", account_id_to_string(&who));
+						debug!("remove_identity_runtime {} OK", account_id_to_string(&who));
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
 							let id_graph =
 								ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
@@ -546,7 +550,11 @@ where
 						}
 					},
 					Err(e) => {
-						debug!("remove_identity {} error: {}", account_id_to_string(&who), e);
+						debug!(
+							"remove_identity_runtime {} error: {}",
+							account_id_to_string(&who),
+							e
+						);
 						add_call_from_imp_error(calls, node_metadata_repo, e.to_imp_error());
 					},
 				}
