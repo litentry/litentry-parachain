@@ -1,4 +1,4 @@
-name: Dev Integritee restart
+name: Staging Integritee restart
 on:
   workflow_dispatch:
     inputs:
@@ -10,7 +10,7 @@ on:
         - restart
 jobs:
   action:
-    runs-on: tee-dev #tee-dev
+    runs-on: tee-staging
     steps:
       - name: stoping the service
         if: "${{ github.event.inputs.action == 'stop' }}"
