@@ -27,7 +27,7 @@ describeLitentry('VC test', async (context) => {
     });
     step('Request VC', async () => {
         for (const key in assertion) {
-            const [account, index, vc] = (await requestVC(
+            const [account, index, vc, proof] = (await requestVC(
                 context,
                 context.defaultSigner[0],
                 aesKey,
@@ -37,6 +37,8 @@ describeLitentry('VC test', async (context) => {
                     [key]: assertion[key as keyof Assertion],
                 }
             )) as HexString[];
+
+            console.log('proof: ', proof);
 
             const vcString = vc.replace('0x', '');
             const vcBlake2Hash = blake2AsHex(vcString);
