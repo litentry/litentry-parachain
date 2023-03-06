@@ -105,6 +105,8 @@ pub mod pallet {
 		VerificationRequestTooEarly,
 		/// a verification reqeust comes too late
 		VerificationRequestTooLate,
+		/// remove prime identiy should be disallowed
+		RemovePrimeIdentityDisallowed,
 	}
 
 	/// user shielding key is per Litentry account
@@ -222,7 +224,7 @@ pub mod pallet {
 					metadata: None,
 					creation_request_block: Some(0),
 					verification_request_block: Some(0),
-					is_verified: false,
+					is_verified: true,
 				};
 				IDGraphs::<T>::insert(&who, &prime_id, context);
 			}
@@ -246,6 +248,22 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 			ensure!(IDGraphs::<T>::contains_key(&who, &identity), Error::<T>::IdentityNotExist);
+			if let Some(IdentityContext::<T> {
+				metadata,
+				creation_request_block,
+				verification_request_block,
+				is_verified,
+			}) = IDGraphs::<T>::get(&who, &identity)
+			{
+				if metadata.is_none()
+					&& creation_request_block == Some(0)
+					&& verification_request_block == Some(0)
+					&& is_verified
+				{
+					ensure!(false, Error::<T>::RemovePrimeIdentityDisallowed);
+				}
+			}
+
 			IDGraphs::<T>::remove(&who, &identity);
 			Self::deposit_event(Event::IdentityRemoved { who, identity });
 			Ok(())

@@ -32,7 +32,7 @@ const ethereumIdentity = <LitentryIdentity>{
 
 const substrateIdentity = <LitentryIdentity>{
     Substrate: <SubstrateIdentity>{
-        address: '0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d', //Alice
+        address: '0x7ec83e0972f3f3beb91bf391f4571a1ad5070671244c3657f113afeaa627151b', //Alice
         network: 'Litentry',
     },
 };
