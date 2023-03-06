@@ -1,3 +1,5 @@
+
+
 name: Dev SGX parachain
 
 on:
@@ -8,7 +10,6 @@ on:
         description: Select the action
         options: 
         - stop
-        - start
         - restart
 
 jobs:
@@ -20,15 +21,10 @@ jobs:
         if: "${{ github.event.inputs.action == 'stop' }}"
         run: |
           sudo systemctl stop integritee.service
-
-      - name: starting the service
-        if: "${{ github.event.inputs.action == 'start' }}"
-        run: |
-          sudo systemctl start integritee.service
-
+          
       - name: restarting the service
         if: "${{ github.event.inputs.action == 'restart' }}"
         run: |
-          sudo systemctl stop integritee.service
+          sudo systemctl stop integritee.service || true
           sleep 5
           sudo systemctl start integritee.service
