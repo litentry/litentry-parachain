@@ -82,16 +82,19 @@ pub fn build(
 			let mut addresses: Vec<String> = vec![];
 			match &identity {
 				Identity::Evm { address, .. } =>
-					if let Ok(addr) = from_utf8(address.as_ref()) {
-						addresses.push(addr.to_string());
+					match from_utf8(address.as_ref()) {
+						Ok(addr) => addresses.push(addr.to_string()),
+						Err(e) => error!("	[AssertionBuild] A4 parse error Evm address {:?}, {:?}", address, e),
 					},
 				Identity::Substrate { address, .. } =>
-					if let Ok(addr) = from_utf8(address.as_ref()) {
-						addresses.push(addr.to_string());
+					match from_utf8(address.as_ref()) {
+						Ok(addr) => addresses.push(addr.to_string()),
+						Err(e) => error!("	[AssertionBuild] A4 parse error Substrate address {:?}, {:?}", address, e),
 					},
 				Identity::Web2 { address, .. } =>
-					if let Ok(addr) = from_utf8(address.as_ref()) {
-						addresses.push(addr.to_string());
+					match from_utf8(address.as_ref()) {
+						Ok(addr) => addresses.push(addr.to_string()),
+						Err(e) => error!("	[AssertionBuild] A4 parse error Web2 address {:?}, {:?}", address, e),
 					},
 			}
 			let mut tmp_token_addr = String::from("");

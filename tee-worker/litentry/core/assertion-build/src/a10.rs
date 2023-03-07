@@ -58,30 +58,33 @@ pub fn build(
 
 		if let Identity::Evm { network, address } = id {
 			if matches!(network, EvmNetwork::Ethereum) {
-				if let Ok(addr) = from_utf8(address.as_ref()) {
-					let addresses = vec![addr.to_string()];
+				match from_utf8(address.as_ref()) {
+					Ok(addr) => {
+						let addresses = vec![addr.to_string()];
 
-					for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
-						// if found is true, no need to check it continually
-						if found {
-							from_date_index = index + 1;
-							break
-						}
-						let credentials = VerifiedCredentialsIsHodlerIn::new(
-							addresses.clone(),
-							from_date.to_string(),
-							VerifiedCredentialsNetwork::Ethereum,
-							WBTC_TOKEN_ADDRESS.to_string(),
-							q_min_balance,
-						);
+						for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
+							// if found is true, no need to check it continually
+							if found {
+								from_date_index = index + 1;
+								break
+							}
+							let credentials = VerifiedCredentialsIsHodlerIn::new(
+								addresses.clone(),
+								from_date.to_string(),
+								VerifiedCredentialsNetwork::Ethereum,
+								WBTC_TOKEN_ADDRESS.to_string(),
+								q_min_balance,
+							);
 
-						let is_hodler_out = client
-							.check_verified_credentials_is_hodler(credentials)
-							.map_err(from_data_provider_error)?;
-						for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
-							found = found || hodler.is_hodler;
+							let is_hodler_out = client
+								.check_verified_credentials_is_hodler(credentials)
+								.map_err(from_data_provider_error)?;
+							for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
+								found = found || hodler.is_hodler;
+							}
 						}
-					}
+					},
+					Err(e) => error!("	[AssertionBuild] A10 parse error Evm address {:?}, {:?}", address, e),
 				};
 			}
 		}
