@@ -86,7 +86,10 @@ pub fn build(
 							}
 						}
 					},
-					Err(e) => error!("	[AssertionBuild] A11 parse error Evm address {:?}, {:?}", address, e),
+					Err(e) => error!(
+						"	[AssertionBuild] A11 parse error Evm address {:?}, {:?}",
+						address, e
+					),
 				};
 			}
 		}

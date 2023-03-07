@@ -85,7 +85,10 @@ pub fn build(
 							}
 						}
 					},
-					Err(e) => error!("	[AssertionBuild] A7 parse error Substrate address {:?}, {:?}", address, e),
+					Err(e) => error!(
+						"	[AssertionBuild] A7 parse error Substrate address {:?}, {:?}",
+						address, e
+					),
 				};
 			}
 		}
