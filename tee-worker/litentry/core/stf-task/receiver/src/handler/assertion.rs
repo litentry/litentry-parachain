@@ -28,7 +28,7 @@ use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{AccountId, OpaqueCall};
 use itp_utils::stringify::account_id_to_string;
-use lc_credentials::{Credential, Proof};
+use lc_credentials::Credential;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{aes_encrypt_default, Assertion, UserShieldingKeyType, VCMPError};
 use log::*;
@@ -189,7 +189,7 @@ where
 
 				let vc_hash = blake2_256(credential_str.as_bytes());
 				debug!("	[Assertion] VC hash: {:?}", vc_hash);
-				
+
 				let output = aes_encrypt_default(&key, credential_str.as_bytes());
 
 				match self
@@ -198,13 +198,8 @@ where
 					.get_from_metadata(|m| VCMPCallIndexes::vc_issued_call_indexes(m))
 				{
 					Ok(Ok(call_index)) => {
-						let call = OpaqueCall::from_tuple(&(
-							call_index,
-							who,
-							vc_index,
-							vc_hash,
-							output,
-						));
+						let call =
+							OpaqueCall::from_tuple(&(call_index, who, vc_index, vc_hash, output));
 						self.context.submit_to_parentchain(call)
 					},
 					Ok(Err(e)) => {

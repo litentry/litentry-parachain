@@ -180,11 +180,7 @@ pub struct Proof {
 }
 
 impl Proof {
-	pub fn new(
-		bn: ParentchainBlockNumber,
-		sig: &Vec<u8>,
-		issuer: &AccountId,
-	) -> Self {
+	pub fn new(bn: ParentchainBlockNumber, sig: &Vec<u8>, issuer: &AccountId) -> Self {
 		Proof {
 			created_block_number: bn,
 			proof_type: ProofType::Ed25519Signature2020,
