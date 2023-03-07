@@ -30,6 +30,7 @@ use crate::{
 };
 use codec::{Decode, Encode};
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
+use itp_utils::stringify::account_id_to_string;
 use lc_data_providers::{
 	discord_official::{DiscordMessage, DiscordOfficialClient},
 	twitter_official::{Tweet, TwitterOfficialClient},
@@ -39,6 +40,7 @@ use lc_stf_task_sender::Web2IdentityVerificationRequest;
 use litentry_primitives::{
 	DiscordValidationData, Identity, TwitterValidationData, Web2ValidationData,
 };
+use log::*;
 use std::{fmt::Debug, string::ToString, vec::Vec};
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
@@ -61,6 +63,12 @@ fn payload_from_discord(discord: &DiscordMessage) -> Result<Vec<u8>, Error> {
 }
 
 pub fn verify(request: &Web2IdentityVerificationRequest) -> Result<(), Error> {
+	debug!(
+		"web2 identity verify, who: {}, bn: {}",
+		account_id_to_string(&(request.who)),
+		request.bn
+	);
+
 	let (user_id, payload) = match request.validation_data {
 		Web2ValidationData::Twitter(TwitterValidationData { ref tweet_id }) => {
 			let mut client = TwitterOfficialClient::new();

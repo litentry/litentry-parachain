@@ -232,6 +232,12 @@ impl Credential {
 		shard: &ShardIdentifier,
 		bn: ParentchainBlockNumber,
 	) -> Result<Self, Error> {
+		debug!(
+			"generate credential from template, who: {:?}, bn: {}",
+			account_id_to_string(&who),
+			bn
+		);
+
 		let mut vc: Self =
 			serde_json::from_str(s).map_err(|err| Error::ParseError(format!("{}", err)))?;
 		vc.issuer.mrenclave = shard.encode().to_base58();
@@ -335,7 +341,12 @@ impl Credential {
 		shard: &ShardIdentifier,
 		bn: ParentchainBlockNumber,
 	) -> Result<Credential, Error> {
-		debug!("generate unsigned credential {:?}", assertion);
+		debug!(
+			"generate unsigned credential, who: {:?}, assertion: {:?}, bn: {}",
+			account_id_to_string(&who),
+			assertion,
+			bn
+		);
 		match assertion {
 			Assertion::A1 => {
 				let raw = include_str!("templates/a1.json");

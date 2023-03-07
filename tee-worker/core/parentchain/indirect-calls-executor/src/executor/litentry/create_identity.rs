@@ -33,7 +33,9 @@ use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, Shieldin
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{CreateIdentityFn, H256};
+use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{Identity, ParentchainBlockNumber};
+use log::*;
 
 pub(crate) struct CreateIdentity {
 	pub(crate) block_number: ParentchainBlockNumber,
@@ -73,9 +75,14 @@ impl CreateIdentity {
 	{
 		let (_, shard, account, encrypted_identity, encrypted_metadata) = extrinsic.function;
 		let shielding_key = context.shielding_key_repo.retrieve_key()?;
-
 		let identity: Identity =
 			Identity::decode(&mut shielding_key.decrypt(&encrypted_identity)?.as_slice())?;
+		debug!(
+			"execute indirect call: CreateIdentity, who: {:?}, identity: {:?}",
+			account_id_to_string(&account),
+			identity
+		);
+
 		let metadata = match encrypted_metadata {
 			None => None,
 			Some(m) => {
@@ -145,7 +152,7 @@ where
 			// try to handle the error internally, if we get another error, log it and return the
 			// original error
 			if let Err(internal_e) = context.submit_trusted_call_from_error(shard, &e) {
-				log::warn!("fail to handle internal errors in create_identity: {:?}", internal_e);
+				warn!("fail to handle internal errors in create_identity: {:?}", internal_e);
 			}
 			return Err(e)
 		}

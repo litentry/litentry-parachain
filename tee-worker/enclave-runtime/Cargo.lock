@@ -1709,6 +1709,7 @@ dependencies = [
  "itp-stf-primitives",
  "itp-top-pool-author",
  "itp-types",
+ "itp-utils",
  "litentry-primitives",
  "log",
  "pallet-identity-management",

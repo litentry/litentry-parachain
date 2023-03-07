@@ -42,7 +42,7 @@ where
 	F: CreateNodeApi,
 {
 	fn worker_request(&self, request: Vec<u8>) -> OCallBridgeResult<Vec<u8>> {
-		debug!("    Entering ocall_worker_request");
+		debug!("Entering ocall_worker_request");
 
 		let requests: Vec<WorkerRequest> = Decode::decode(&mut request.as_slice()).unwrap();
 		if requests.is_empty() {
@@ -89,6 +89,7 @@ where
 			debug!("Enclave wants to send {} extrinsics", extrinsics.len());
 			let api = self.node_api_factory.create_api()?;
 			for call in extrinsics.into_iter() {
+				debug!("Send extrinsic, call length: {}", call.to_hex().len());
 				if let Err(e) = api.send_extrinsic(call.to_hex(), XtStatus::Ready) {
 					error!("Could not send extrsinic to node: {:?}", e);
 					status = Err(OCallBridgeError::SendExtrinsicsToParentchain(e.to_string()));
