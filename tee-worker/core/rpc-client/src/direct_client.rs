@@ -87,8 +87,7 @@ impl DirectApi for DirectClient {
 		let web_socket_control = self.web_socket_control.clone();
 		// Unwrap is fine here, because JoinHandle can be used to handle a Thread panic.
 		thread::spawn(move || {
-			WsClient::connect_watch_with_control(&url, &request, &sender, web_socket_control)
-				.expect("Connection failed")
+			WsClient::connect_watch_with_control(&url, &request, sender, web_socket_control);
 		})
 	}
 

@@ -24,6 +24,8 @@ use log::*;
 use openssl::ssl::{SslConnector, SslMethod, SslStream, SslVerifyMode};
 use parking_lot::Mutex;
 use std::sync::{mpsc::Sender as MpscSender, Arc};
+use std::thread::sleep;
+use std::time::Duration;
 use url::{self};
 use ws::{connect, util::TcpStream, CloseCode, Handler, Handshake, Message, Result, Sender};
 
@@ -66,14 +68,14 @@ impl WsClientControl {
 }
 
 #[derive(Clone)]
-pub struct WsClient {
+pub struct WsClient<'a> {
 	web_socket: Sender,
 	request: String,
-	result: MpscSender<String>,
+	result: &'a MpscSender<String>,
 	do_watch: bool,
 }
 
-impl WsClient {
+impl<'a> WsClient<'a> {
 	/// Connect a web-socket client for multiple request/responses.
 	///
 	/// Control over the connection is done using the provided client control.
@@ -82,37 +84,48 @@ impl WsClient {
 	pub fn connect_watch_with_control(
 		url: &str,
 		request: &str,
-		result: &MpscSender<String>,
+		result: MpscSender<String>,
 		control: Arc<WsClientControl>,
-	) -> Result<()> {
-		debug!("Connecting web-socket connection with watch");
-		connect(url.to_string(), |out| {
-			control.subscribe_sender(out.clone()).expect("Failed sender subscription");
-			WsClient::new(out, request.to_string(), result.clone(), true)
-		})
+	) {
+		debug!("Connecting web-socket connection with watch to server {url}");
+		loop {
+			let control = control.clone();
+			if let Err(e) = connect(url.to_string(), |out| {
+				control.subscribe_sender(out.clone()).expect("Failed sender subscription");
+				WsClient::new(out, request.to_string(), &result, true)
+			}) {
+				error!("websocket disconnected from {url}, {e:?}");
+				sleep(Duration::from_secs(1));
+			}
+		}
 	}
 
 	/// Connects a web-socket client for a one-shot request.
 	#[allow(clippy::result_large_err)]
-	pub fn connect_one_shot(url: &str, request: &str, result: MpscSender<String>) -> Result<()> {
-		debug!("Connecting one-shot web-socket connection");
-		connect(url.to_string(), |out| {
-			debug!("Create new web-socket client");
-			WsClient::new(out, request.to_string(), result.clone(), false)
-		})
+	pub fn connect_one_shot(url: &str, request: &str, result: MpscSender<String>) {
+		debug!("Connecting one-shot web-socket connection to server {url}");
+		loop {
+			if let Err(e) = connect(url.to_string(), |out| {
+				debug!("Create new web-socket client");
+				WsClient::new(out, request.to_string(), &result, false)
+			}) {
+				error!("websocket disconnected from {url}, {e:?}");
+				sleep(Duration::from_secs(1));
+			}
+		}
 	}
 
 	fn new(
 		web_socket: Sender,
 		request: String,
-		result: MpscSender<String>,
+		result: &MpscSender<String>,
 		do_watch: bool,
 	) -> WsClient {
 		WsClient { web_socket, request, result, do_watch }
 	}
 }
 
-impl Handler for WsClient {
+impl Handler for WsClient<'_> {
 	fn on_open(&mut self, _: Handshake) -> Result<()> {
 		debug!("sending request: {:?}", self.request.clone());
 		match self.web_socket.send(self.request.clone()) {
