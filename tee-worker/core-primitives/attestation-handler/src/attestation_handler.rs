@@ -58,7 +58,7 @@ use std::{
 	io::{Read, Write},
 	net::TcpStream,
 	prelude::v1::*,
-	println, str,
+	str,
 	string::{String, ToString},
 	sync::Arc,
 	vec::Vec,
@@ -198,16 +198,14 @@ where
 		let chain_signer = Ed25519Seal::unseal_from_static_file()?;
 		info!("[Enclave Attestation] Ed25519 pub raw : {:?}", chain_signer.public().0);
 
-		info!("[Enclave] Generate keypair");
 		let ecc_handle = SgxEccHandle::new();
 		let _result = ecc_handle.open();
 		let (prv_k, pub_k) = ecc_handle.create_key_pair()?;
 		info!("[Enclave] Generate ephemeral ECDSA keypair successful");
-		debug!("     pubkey X is {:02x}", pub_k.gx.iter().format(""));
-		debug!("     pubkey Y is {:02x}", pub_k.gy.iter().format(""));
+		debug!("pubkey X is {:02x}", pub_k.gx.iter().format(""));
+		debug!("pubkey Y is {:02x}", pub_k.gy.iter().format(""));
 
 		let payload = if !skip_ra {
-			info!("[Enclave] Create attestation report");
 			let (attn_report, sig, cert) =
 				match self.create_attestation_report(&chain_signer.public().0, sign_type) {
 					Ok(r) => r,
@@ -216,10 +214,10 @@ where
 						return Err(e.into())
 					},
 				};
-			println!("[Enclave] Create attestation report successful");
-			debug!("              attn_report 		= {:?}", attn_report);
-			debug!("              sig         		= {:?}", sig);
-			debug!("              cert        		= {:?}", cert);
+			info!("[Enclave] Create attestation report successful");
+			debug!("attn_report 		= {:?}", attn_report);
+			debug!("sig         		= {:?}", sig);
+			debug!("cert        		= {:?}", cert);
 
 			// concat the information
 			attn_report + "|" + &sig + "|" + &cert
@@ -228,7 +226,6 @@ where
 		};
 
 		// generate an ECC certificate
-		info!("[Enclave] Generate ECC Certificate");
 		let (key_der, cert_der) =
 			match cert::gen_ecc_cert(&payload.into_bytes(), &prv_k, &pub_k, &ecc_handle) {
 				Ok(r) => r,
@@ -239,8 +236,7 @@ where
 			};
 
 		let _ = ecc_handle.close();
-		info!("[Enclave] Generate ECC Certificate successful");
-		info!("[Enclave] cert_der: {}", cert_der.len());
+		info!("[Enclave] Generate ECC Certificate successful, cert_der.len: {}", cert_der.len());
 
 		Ok((key_der, cert_der))
 	}
@@ -318,7 +314,6 @@ where
 
 		for i in 0..respp.headers.len() {
 			let h = respp.headers[i];
-			//println!("{} : {}", h.name, str::from_utf8(h.value).unwrap());
 			match h.name {
 				"Content-Length" => {
 					let len_str = String::from_utf8(h.value.to_vec())
@@ -440,18 +435,16 @@ where
 		let mut tls = rustls::Stream::new(&mut sess, &mut sock);
 
 		let _result = tls.write(req.as_bytes());
-		let mut plaintext = Vec::new();
-
 		debug!("[Enclave] tls.write complete");
 
+		let mut plaintext = Vec::new();
 		tls.read_to_end(&mut plaintext)?;
-
 		debug!("[Enclave] tls.read_to_end complete");
+
 		let resp_string =
 			String::from_utf8(plaintext.clone()).map_err(|e| EnclaveError::Other(e.into()))?;
 
 		debug!("[Enclave] resp_string = {}", resp_string);
-
 		self.parse_response_sigrl(&plaintext)
 	}
 
@@ -484,10 +477,9 @@ where
 		let mut tls = rustls::Stream::new(&mut sess, &mut sock);
 
 		let _result = tls.write(req.as_bytes());
-		let mut plaintext = Vec::new();
-
 		debug!("[Enclave] tls.write complete");
 
+		let mut plaintext = Vec::new();
 		tls.read_to_end(&mut plaintext)?;
 		debug!("[Enclave] tls.read_to_end complete");
 		let resp_string = String::from_utf8(plaintext.clone()).map_err(|e| {

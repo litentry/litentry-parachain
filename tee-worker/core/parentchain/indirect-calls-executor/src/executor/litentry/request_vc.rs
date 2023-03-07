@@ -34,7 +34,7 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{RequestVCFn, H256};
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::ParentchainBlockNumber;
-use log::debug;
+use log::*;
 use sp_runtime::traits::{AccountIdLookup, StaticLookup};
 
 pub(crate) struct RequestVC {
@@ -145,7 +145,7 @@ where
 			// try to handle the error internally, if we get another error, log it and return the
 			// original error
 			if let Err(internal_e) = context.submit_trusted_call_from_error(shard, &e) {
-				log::warn!("fail to handle internal errors in request_vc: {:?}", internal_e);
+				warn!("fail to handle internal errors in request_vc: {:?}", internal_e);
 			}
 			return Err(e)
 		}

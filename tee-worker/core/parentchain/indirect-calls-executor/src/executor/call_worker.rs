@@ -27,6 +27,7 @@ use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, Shieldin
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{CallWorkerFn, H256};
+use log::*;
 
 pub struct CallWorker {}
 
@@ -67,7 +68,7 @@ where
 	) -> Result<(), Error> {
 		let (_, request) = extrinsic.function;
 		let (shard, cypher_text) = (request.shard, request.cyphertext);
-		log::debug!("Found trusted call extrinsic, submitting it to the top pool");
+		debug!("Found trusted call extrinsic, submitting it to the top pool");
 		context.submit_trusted_call(shard, cypher_text);
 		Ok(())
 	}

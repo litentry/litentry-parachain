@@ -139,7 +139,7 @@ where
 			// try to handle the error internally, if we get another error, log it and return the
 			// original error
 			if let Err(internal_e) = context.submit_trusted_call_from_error(shard, &e) {
-				log::warn!("fail to handle internal errors in remove_identity: {:?}", internal_e);
+				warn!("fail to handle internal errors in remove_identity: {:?}", internal_e);
 			}
 			return Err(e)
 		}
