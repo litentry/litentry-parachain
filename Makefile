@@ -192,9 +192,9 @@ taplocheck:
 
 .PHONY: fmt ## cargo fmt all && taplo fmt all
 fmt:
-	cargo fmt --all
-	taplo fmt
-	cd tee-worker && make fmt && taplo fmt
+	cargo fmt --all && taplo fmt
+	cd tee-worker && cargo fmt --all && taplo fmt
+	cd tee-worker/enclave-runtime && cargo fmt --all
 
 .PHONY: githooks ## install the githooks
 githooks:
