@@ -1,5 +1,4 @@
-name: Dev SGX parachain
-
+name: Dev Integritee restart
 on:
   workflow_dispatch:
     inputs:
@@ -9,20 +8,17 @@ on:
         options: 
         - stop
         - restart
-
 jobs:
   action:
-    runs-on: self-hosted #tee-dev
-
+    runs-on: tee-staging
     steps:
       - name: stoping the service
         if: "${{ github.event.inputs.action == 'stop' }}"
         run: |
           sudo systemctl stop integritee.service
-
       - name: restarting the service
         if: "${{ github.event.inputs.action == 'restart' }}"
         run: |
-          sudo systemctl stop integritee.service
+          sudo systemctl stop integritee.service || true
           sleep 5
           sudo systemctl start integritee.service

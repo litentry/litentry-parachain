@@ -4,6 +4,7 @@ import subprocess
 import shutil
 import sys
 from typing import Union, IO
+from datetime import datetime
 
 
 def run_subprocess(args, stdout: Union[None, int, IO], stderr: Union[None, int, IO], cwd: str = './'):
@@ -76,8 +77,9 @@ class GracefulKiller:
             print(f'Removed tmp/w{i}')
             i += 1
         if os.path.isdir(f'log'):
-            shutil.rmtree(f'log')
-            print(f'Removed log')
+            new_folder_name = datetime.now().strftime("log-%Y%m%d-%H%M%S")
+            os.rename(f'log', new_folder_name)
+            print(f'Moved log into ' + new_folder_name)
         print("Cleaning up litentry-parachain...")
         subprocess.run(['./scripts/litentry/stop_parachain.sh', '||', 'true'])
         sys.exit(0)
