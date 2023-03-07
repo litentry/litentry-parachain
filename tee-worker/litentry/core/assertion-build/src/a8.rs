@@ -20,7 +20,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::Result;
+use crate::{Error, Result};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
@@ -31,7 +31,7 @@ use lc_data_providers::graphql::{
 };
 use litentry_primitives::{
 	Assertion, AssertionNetworks, EvmNetwork, Identity, ParentchainBlockNumber, SubstrateNetwork,
-	VCMPError, ASSERTION_NETWORKS,
+	ASSERTION_NETWORKS,
 };
 use log::*;
 use std::{collections::HashSet, str::from_utf8, string::ToString, vec, vec::Vec};
@@ -60,15 +60,14 @@ lazy_static! {
 
 fn assertion_networks_to_vc_networks(
 	networks: &AssertionNetworks,
-) -> HashSet<VerifiedCredentialsNetwork> {
+) -> Result<HashSet<VerifiedCredentialsNetwork>> {
 	let mut set: HashSet<VerifiedCredentialsNetwork> = HashSet::new();
 
 	if networks.is_empty() {
-		NETWORK_HASHSET.clone()
+		Ok(NETWORK_HASHSET.clone())
 	} else {
 		for network in networks {
-			let ret = from_utf8(network.as_ref());
-			match ret {
+			match from_utf8(network.as_ref()) {
 				Ok(network) => {
 					let mut network = network.to_string();
 					network.make_ascii_lowercase();
@@ -108,21 +107,28 @@ fn assertion_networks_to_vc_networks(
 								set.insert(ethereum);
 							},
 							_ => {
-								info!("		[AssertionBuild-A8] Wrong Network!");
+								info!("		[AssertionBuild-A8] Unsupported network {}!", network);
 							},
 						}
 					} else {
 						continue
 					}
 				},
-				Err(_) => continue,
+				Err(e) => {
+					error!(
+						"	[AssertionBuild] A8 parse error Assertion network {:?}, {:?}",
+						network, e
+					);
+
+					return Err(Error::ParseError)
+				},
 			}
 		}
 
 		if set.is_empty() {
-			NETWORK_HASHSET.clone()
+			Ok(NETWORK_HASHSET.clone())
 		} else {
-			set
+			Ok(set)
 		}
 	}
 }
@@ -173,41 +179,60 @@ pub fn build(
 	let mut client = GraphQLClient::new();
 	let mut total_txs: u64 = 0;
 	let target_networks = assertion_networks_to_vc_networks(&networks);
+	match target_networks.clone() {
+		Ok(target_networks) =>
+			for identity in identities {
+				let query = match identity {
+					Identity::Substrate { network, address } =>
+						if target_networks.contains(&network.into()) {
+							match from_utf8(address.as_ref()) {
+								Ok(addr) => Some(VerifiedCredentialsTotalTxs::new(
+									vec![addr.to_string()],
+									vec![network.into()],
+								)),
+								Err(e) => {
+									error!(
+										"	[AssertionBuild] A8 parse error Substrate address {:?}, {:?}",
+										address, e
+									);
 
-	for identity in identities {
-		let query = match identity {
-			Identity::Substrate { network, address } =>
-				if target_networks.contains(&network.into()) {
-					from_utf8(address.as_ref()).map_or(None, |addr| {
-						Some(VerifiedCredentialsTotalTxs::new(
-							vec![addr.to_string()],
-							vec![network.into()],
-						))
-					})
-				} else {
-					None
-				},
-			Identity::Evm { network, address } =>
-				if target_networks.contains(&network.into()) {
-					from_utf8(address.as_ref()).map_or(None, |addr| {
-						Some(VerifiedCredentialsTotalTxs::new(
-							vec![addr.to_string()],
-							vec![network.into()],
-						))
-					})
-				} else {
-					None
-				},
-			_ => {
-				debug!("ignore identity: {:?}", identity);
-				None
+									None
+								},
+							}
+						} else {
+							None
+						},
+					Identity::Evm { network, address } =>
+						if target_networks.contains(&network.into()) {
+							match from_utf8(address.as_ref()) {
+								Ok(addr) => Some(VerifiedCredentialsTotalTxs::new(
+									vec![addr.to_string()],
+									vec![network.into()],
+								)),
+								Err(e) => {
+									error!(
+										"	[AssertionBuild] A8 parse error Evm address {:?}, {:?}",
+										address, e
+									);
+
+									None
+								},
+							}
+						} else {
+							None
+						},
+					_ => {
+						debug!("ignore identity: {:?}", identity);
+						None
+					},
+				};
+				if let Some(query) = query {
+					if let Ok(result) = client.query_total_transactions(query) {
+						total_txs += result.iter().map(|v| v.total_transactions).sum::<u64>();
+					}
+				}
 			},
-		};
-		if let Some(query) = query {
-			if let Ok(result) = client.query_total_transactions(query) {
-				total_txs += result.iter().map(|v| v.total_transactions).sum::<u64>();
-			}
-		}
+		Err(e) => return Err(e),
 	}
 	debug!("total_transactions: {}", total_txs);
 
@@ -244,7 +269,7 @@ pub fn build(
 	let a8 = Assertion::A8(networks);
 	match Credential::generate_unsigned_credential(&a8, who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_assertion_a8(vc_network_to_vec(target_networks), min, max);
+			credential_unsigned.add_assertion_a8(vc_network_to_vec(target_networks?), min, max);
 			credential_unsigned.credential_subject.values.push(true);
 			return Ok(credential_unsigned)
 		},
@@ -253,7 +278,7 @@ pub fn build(
 		},
 	}
 
-	Err(VCMPError::Assertion8Failed)
+	Err(Error::Assertion8Failed)
 }
 
 #[cfg(test)]
@@ -267,7 +292,7 @@ mod tests {
 		let mut networks = AssertionNetworks::with_bounded_capacity(1);
 		networks.try_push(litentry).unwrap();
 
-		let left = assertion_networks_to_vc_networks(&networks);
+		let left = assertion_networks_to_vc_networks(&networks).unwrap();
 		let mut right = HashSet::<VerifiedCredentialsNetwork>::new();
 		right.insert(VerifiedCredentialsNetwork::Litentry);
 
@@ -277,7 +302,7 @@ mod tests {
 	#[test]
 	fn assertion_networks_to_vc_networks_non_works() {
 		let networks = AssertionNetworks::with_bounded_capacity(1);
-		let left = assertion_networks_to_vc_networks(&networks);
+		let left = assertion_networks_to_vc_networks(&networks).unwrap();
 		let mut right = HashSet::<VerifiedCredentialsNetwork>::new();
 		right.insert(VerifiedCredentialsNetwork::Litentry);
 		right.insert(VerifiedCredentialsNetwork::Litmus);
@@ -295,7 +320,7 @@ mod tests {
 		let mut networks = AssertionNetworks::with_bounded_capacity(1);
 		networks.try_push(litentry).unwrap();
 
-		let left = assertion_networks_to_vc_networks(&networks);
+		let left = assertion_networks_to_vc_networks(&networks).unwrap();
 		let mut right = HashSet::<VerifiedCredentialsNetwork>::new();
 		right.insert(VerifiedCredentialsNetwork::Litentry);
 		right.insert(VerifiedCredentialsNetwork::Litmus);
@@ -303,6 +328,18 @@ mod tests {
 		right.insert(VerifiedCredentialsNetwork::Kusama);
 		right.insert(VerifiedCredentialsNetwork::Khala);
 		right.insert(VerifiedCredentialsNetwork::Ethereum);
+
+		assert_eq!(left, right);
+	}
+
+	#[test]
+	fn assertion_networks_to_vc_networks_with_non_utf8_err() {
+		let litentry = Network::try_from(vec![0, 159, 146, 150]).unwrap();
+		let mut networks = AssertionNetworks::with_bounded_capacity(1);
+		networks.try_push(litentry).unwrap();
+
+		let left = assertion_networks_to_vc_networks(&networks);
+		let right = Err(Error::ParseError);
 
 		assert_eq!(left, right);
 	}

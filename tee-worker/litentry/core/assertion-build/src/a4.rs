@@ -89,12 +89,25 @@ pub fn build(
 
 			let mut addresses: Vec<String> = vec![];
 			match &identity {
-				Identity::Evm { address, .. } =>
-					addresses.push(from_utf8(address.as_ref()).unwrap().to_string()),
-				Identity::Substrate { address, .. } =>
-					addresses.push(from_utf8(address.as_ref()).unwrap().to_string()),
-				Identity::Web2 { address, .. } =>
-					addresses.push(from_utf8(address).unwrap().to_string()),
+				Identity::Evm { address, .. } => match from_utf8(address.as_ref()) {
+					Ok(addr) => addresses.push(addr.to_string()),
+					Err(e) =>
+						error!("	[AssertionBuild] A4 parse error Evm address {:?}, {:?}", address, e),
+				},
+				Identity::Substrate { address, .. } => match from_utf8(address.as_ref()) {
+					Ok(addr) => addresses.push(addr.to_string()),
+					Err(e) => error!(
+						"	[AssertionBuild] A4 parse error Substrate address {:?}, {:?}",
+						address, e
+					),
+				},
+				Identity::Web2 { address, .. } => match from_utf8(address.as_ref()) {
+					Ok(addr) => addresses.push(addr.to_string()),
+					Err(e) => error!(
+						"	[AssertionBuild] A4 parse error Web2 address {:?}, {:?}",
+						address, e
+					),
+				},
 			}
 			let mut tmp_token_addr = String::from("");
 			if verified_network == VerifiedCredentialsNetwork::Ethereum {
