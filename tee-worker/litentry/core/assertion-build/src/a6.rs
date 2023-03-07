@@ -23,6 +23,7 @@ extern crate sgx_tstd as std;
 use crate::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
+use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::twitter_official::TwitterOfficialClient;
 use litentry_primitives::{Identity, ParentchainBlockNumber, VCMPError, Web2Network};
@@ -45,6 +46,13 @@ pub fn build(
 	who: &AccountId,
 	bn: ParentchainBlockNumber,
 ) -> Result<Credential> {
+	debug!(
+		"Assertion A6 build, who: {:?}, bn: {}, identities: {:?}",
+		account_id_to_string(&who),
+		bn,
+		identities
+	);
+
 	let mut client = TwitterOfficialClient::new();
 	let mut sum: u32 = 0;
 

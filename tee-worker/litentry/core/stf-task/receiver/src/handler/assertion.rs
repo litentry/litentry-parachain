@@ -185,7 +185,7 @@ where
 			let key: UserShieldingKeyType = self.req.key;
 			if let Ok(vc_index) = credential.get_index() {
 				let credential_str = credential.to_json().unwrap();
-				debug!("on_success {}, length {}", credential_str, credential_str.len());
+				debug!("Credential: {}, length: {}", credential_str, credential_str.len());
 
 				let vc_hash = blake2_256(credential_str.as_bytes());
 				debug!("	[Assertion] VC hash: {:?}", vc_hash);

@@ -20,6 +20,7 @@ use crate::ocall_bridge::bridge_api::{
 	OCallBridgeError, OCallBridgeResult, RemoteAttestationBridge,
 };
 use itp_enclave_api::remote_attestation::{QveReport, RemoteAttestationCallBacks};
+use log::debug;
 use sgx_types::*;
 use std::{
 	net::{SocketAddr, TcpStream},
@@ -42,6 +43,7 @@ where
 	E: RemoteAttestationCallBacks,
 {
 	fn init_quote(&self) -> OCallBridgeResult<(sgx_target_info_t, sgx_epid_group_id_t)> {
+		debug!("RemoteAttestationBridge: init quote");
 		self.enclave_api.init_quote().map_err(|e| match e {
 			itp_enclave_api::error::Error::Sgx(s) => OCallBridgeError::InitQuote(s),
 			_ => OCallBridgeError::InitQuote(sgx_status_t::SGX_ERROR_UNEXPECTED),
@@ -69,12 +71,14 @@ where
 		spid: sgx_spid_t,
 		quote_nonce: sgx_quote_nonce_t,
 	) -> OCallBridgeResult<(sgx_report_t, Vec<u8>)> {
+		debug!("RemoteAttestationBridge: get quote type: {:?}", quote_type);
 		let real_quote_len =
 			self.enclave_api.calc_quote_size(revocation_list.clone()).map_err(|e| match e {
 				itp_enclave_api::error::Error::Sgx(s) => OCallBridgeError::GetQuote(s),
 				_ => OCallBridgeError::GetQuote(sgx_status_t::SGX_ERROR_UNEXPECTED),
 			})?;
 
+		debug!("RemoteAttestationBridge: real quote length: {}", real_quote_len);
 		self.enclave_api
 			.get_quote(revocation_list, report, quote_type, spid, quote_nonce, real_quote_len)
 			.map_err(|e| match e {
@@ -84,6 +88,8 @@ where
 	}
 
 	fn get_dcap_quote(&self, report: sgx_report_t, quote_size: u32) -> OCallBridgeResult<Vec<u8>> {
+		debug!("RemoteAttestationBridge: get dcap quote, size: {}", quote_size);
+
 		self.enclave_api.get_dcap_quote(report, quote_size).map_err(|e| match e {
 			itp_enclave_api::error::Error::Sgx(s) => OCallBridgeError::GetQuote(s),
 			_ => OCallBridgeError::GetQuote(sgx_status_t::SGX_ERROR_UNEXPECTED),
@@ -98,6 +104,8 @@ where
 		qve_report_info: sgx_ql_qe_report_info_t,
 		supplemental_data_size: u32,
 	) -> OCallBridgeResult<QveReport> {
+		debug!("RemoteAttestationBridge: get qve report on quote, length: {}", quote.len());
+
 		self.enclave_api
 			.get_qve_report_on_quote(
 				quote,
@@ -117,6 +125,8 @@ where
 		platform_blob: sgx_platform_info_t,
 		enclave_trusted: i32,
 	) -> OCallBridgeResult<sgx_update_info_bit_t> {
+		debug!("RemoteAttestationBridge: get update into");
+
 		self.enclave_api
 			.get_update_info(platform_blob, enclave_trusted)
 			.map_err(|e| match e {

@@ -40,6 +40,7 @@ use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{ParentchainBalance, ParentchainBlockNumber, ASSERTION_FROM_DATE};
+use log::*;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
 use sp_core::{hashing::blake2_256, hexdisplay::HexDisplay};
@@ -247,6 +248,12 @@ impl Credential {
 		shard: &ShardIdentifier,
 		bn: ParentchainBlockNumber,
 	) -> Result<Self, Error> {
+		debug!(
+			"generate credential from template, who: {:?}, bn: {}",
+			account_id_to_string(&who),
+			bn
+		);
+
 		let mut vc: Self =
 			serde_json::from_str(s).map_err(|err| Error::ParseError(format!("{}", err)))?;
 		vc.issuer.mrenclave = shard.encode().to_base58();

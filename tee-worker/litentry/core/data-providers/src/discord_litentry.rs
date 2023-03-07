@@ -20,12 +20,12 @@ use crate::sgx_reexport_prelude::*;
 use crate::{build_client, vec_to_string, Error, HttpError, G_DATA_PROVIDERS};
 use http::header::CONNECTION;
 use http_req::response::Headers;
-
 use itc_rest_client::{
 	http_client::{DefaultSend, HttpClient},
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
+use log::*;
 use serde::{Deserialize, Serialize};
 use std::{
 	default::Default,
@@ -80,6 +80,7 @@ impl DiscordLitentryClient {
 	) -> Result<DiscordResponse, Error> {
 		let guild_id_s = vec_to_string(guild_id)?;
 		let handler_s = vec_to_string(handler)?;
+		debug!("discord check join, guild_id: {}, handler: {}", guild_id_s, handler_s);
 
 		let path = "/discord/joined".to_string();
 		let query = vec![("guildid", guild_id_s.as_str()), ("handler", handler_s.as_str())];
@@ -100,6 +101,11 @@ impl DiscordLitentryClient {
 		let channel_id_s = vec_to_string(channel_id)?;
 		let role_id_s = vec_to_string(role_id)?;
 		let handler_s = vec_to_string(handler)?;
+		debug!(
+			"discord check id_hubber, guild_id: {}, channel_id: {}, role_id: {}, handler: {}",
+			guild_id_s, channel_id_s, role_id_s, handler_s
+		);
+
 		let path = "/discord/commented/idhubber".to_string();
 		let query = vec![
 			("guildid", guild_id_s.as_str()),
@@ -124,6 +130,8 @@ impl DiscordLitentryClient {
 	) -> Result<DiscordResponse, Error> {
 		let guild_id_s = vec_to_string(guild_id)?;
 		let handler_s = vec_to_string(handler)?;
+		debug!("discord assign id_hubber, guild_id: {}, handler: {}", guild_id_s, handler_s);
+
 		let path = "/discord/assgin/idhubber".to_string();
 		let query = vec![("guildid", guild_id_s.as_str()), ("handler", handler_s.as_str())];
 		let res = self
