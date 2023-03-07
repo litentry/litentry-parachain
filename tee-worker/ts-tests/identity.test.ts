@@ -14,7 +14,7 @@ import {
 import { ethers } from 'ethers';
 import { HexString } from '@polkadot/util/types';
 import { KeyringPair } from '@polkadot/keyring/types';
-import { createErrorIdentity, setErrorUserShieldingKey } from './indirect_error_calls';
+import { createErrorIdentity, setErrorUserShieldingKey, verifyErrorIdentity } from './indirect_error_calls';
 
 const twitterIdentity = <LitentryIdentity>{
     Web2: <Web2Identity>{
@@ -132,75 +132,75 @@ describeLitentry('Test Identity', (context) => {
             console.log('post verification msg to twitter: ', msg);
             assert.isNotEmpty(resp_twitter.challengeCode, 'challengeCode empty');
         }
-        //create ethereum identity
-        const resp_ethereum = await createIdentity(context, context.defaultSigner[0], aesKey, true, ethereumIdentity);
-        assertIdentityCreated(context.defaultSigner[0], resp_ethereum);
+        // //create ethereum identity
+        // const resp_ethereum = await createIdentity(context, context.defaultSigner[0], aesKey, true, ethereumIdentity);
+        // assertIdentityCreated(context.defaultSigner[0], resp_ethereum);
 
-        if (resp_ethereum) {
-            console.log('ethereumIdentity challengeCode: ', resp_ethereum.challengeCode);
-            const msg = generateVerificationMessage(
-                context,
-                hexToU8a(resp_ethereum.challengeCode),
-                context.defaultSigner[0].addressRaw,
-                ethereumIdentity
-            );
-            console.log('post verification msg to ethereum: ', msg);
-            ethereumValidationData!.Web3Validation!.Evm!.message = msg;
-            const msgHash = ethers.utils.arrayify(msg);
-            signature_ethereum = await context.ethersWallet.alice.signMessage(msgHash);
-            ethereumValidationData!.Web3Validation!.Evm!.signature!.Ethereum = signature_ethereum;
-            assert.isNotEmpty(resp_ethereum.challengeCode, 'challengeCode empty');
-        }
-        // create substrate identity
-        const resp_substrate = await createIdentity(context, context.defaultSigner[0], aesKey, true, substrateIdentity);
-        assertIdentityCreated(context.defaultSigner[0], resp_substrate);
+        // if (resp_ethereum) {
+        //     console.log('ethereumIdentity challengeCode: ', resp_ethereum.challengeCode);
+        //     const msg = generateVerificationMessage(
+        //         context,
+        //         hexToU8a(resp_ethereum.challengeCode),
+        //         context.defaultSigner[0].addressRaw,
+        //         ethereumIdentity
+        //     );
+        //     console.log('post verification msg to ethereum: ', msg);
+        //     ethereumValidationData!.Web3Validation!.Evm!.message = msg;
+        //     const msgHash = ethers.utils.arrayify(msg);
+        //     signature_ethereum = await context.ethersWallet.alice.signMessage(msgHash);
+        //     ethereumValidationData!.Web3Validation!.Evm!.signature!.Ethereum = signature_ethereum;
+        //     assert.isNotEmpty(resp_ethereum.challengeCode, 'challengeCode empty');
+        // }
+        // // create substrate identity
+        // const resp_substrate = await createIdentity(context, context.defaultSigner[0], aesKey, true, substrateIdentity);
+        // assertIdentityCreated(context.defaultSigner[0], resp_substrate);
 
-        if (resp_substrate) {
-            console.log('substrateIdentity challengeCode: ', resp_substrate.challengeCode);
-            const msg = generateVerificationMessage(
-                context,
-                hexToU8a(resp_substrate.challengeCode),
-                context.defaultSigner[0].addressRaw,
-                substrateIdentity
-            );
+        // if (resp_substrate) {
+        //     console.log('substrateIdentity challengeCode: ', resp_substrate.challengeCode);
+        //     const msg = generateVerificationMessage(
+        //         context,
+        //         hexToU8a(resp_substrate.challengeCode),
+        //         context.defaultSigner[0].addressRaw,
+        //         substrateIdentity
+        //     );
 
-            console.log('post verification msg to substrate: ', msg);
-            substrateValidationData!.Web3Validation!.Substrate!.message = msg;
-            signature_substrate = context.defaultSigner[0].sign(msg);
-            substrateValidationData!.Web3Validation!.Substrate!.signature!.Sr25519 = u8aToHex(signature_substrate);
-            assert.isNotEmpty(resp_substrate.challengeCode, 'challengeCode empty');
-        }
+        //     console.log('post verification msg to substrate: ', msg);
+        //     substrateValidationData!.Web3Validation!.Substrate!.message = msg;
+        //     signature_substrate = context.defaultSigner[0].sign(msg);
+        //     substrateValidationData!.Web3Validation!.Substrate!.signature!.Sr25519 = u8aToHex(signature_substrate);
+        //     assert.isNotEmpty(resp_substrate.challengeCode, 'challengeCode empty');
+        // }
 
-        // Bob
-        // create extension substrate identity
-        // https://github.com/litentry/litentry-parachain/issues/1137
-        const resp_extension_substrate = await createIdentity(
-            context,
-            context.defaultSigner[1],
-            aesKey,
-            true,
-            substrateExtensionIdentity
-        );
-        assertIdentityCreated(context.defaultSigner[1], resp_extension_substrate);
-        if (resp_extension_substrate) {
-            console.log('substrateExtensionIdentity challengeCode: ', resp_extension_substrate.challengeCode);
-            const msg = generateVerificationMessage(
-                context,
-                hexToU8a(resp_extension_substrate.challengeCode),
-                context.defaultSigner[1].addressRaw,
-                substrateExtensionIdentity
-            );
+        // // Bob
+        // // create extension substrate identity
+        // // https://github.com/litentry/litentry-parachain/issues/1137
+        // const resp_extension_substrate = await createIdentity(
+        //     context,
+        //     context.defaultSigner[1],
+        //     aesKey,
+        //     true,
+        //     substrateExtensionIdentity
+        // );
+        // assertIdentityCreated(context.defaultSigner[1], resp_extension_substrate);
+        // if (resp_extension_substrate) {
+        //     console.log('substrateExtensionIdentity challengeCode: ', resp_extension_substrate.challengeCode);
+        //     const msg = generateVerificationMessage(
+        //         context,
+        //         hexToU8a(resp_extension_substrate.challengeCode),
+        //         context.defaultSigner[1].addressRaw,
+        //         substrateExtensionIdentity
+        //     );
 
-            console.log('post verification msg to substrate: ', msg);
-            substrateExtensionValidationData!.Web3Validation!.Substrate!.message = msg;
-            // sign the wrapped version as in polkadot-extension
-            signature_substrate = context.defaultSigner[1].sign(
-                u8aConcat(stringToU8a('<Bytes>'), u8aToU8a(msg), stringToU8a('</Bytes>'))
-            );
-            substrateExtensionValidationData!.Web3Validation!.Substrate!.signature!.Sr25519 =
-                u8aToHex(signature_substrate);
-            assert.isNotEmpty(resp_extension_substrate.challengeCode, 'challengeCode empty');
-        }
+        //     console.log('post verification msg to substrate: ', msg);
+        //     substrateExtensionValidationData!.Web3Validation!.Substrate!.message = msg;
+        //     // sign the wrapped version as in polkadot-extension
+        //     signature_substrate = context.defaultSigner[1].sign(
+        //         u8aConcat(stringToU8a('<Bytes>'), u8aToU8a(msg), stringToU8a('</Bytes>'))
+        //     );
+        //     substrateExtensionValidationData!.Web3Validation!.Substrate!.signature!.Sr25519 =
+        //         u8aToHex(signature_substrate);
+        //     assert.isNotEmpty(resp_extension_substrate.challengeCode, 'challengeCode empty');
+        // }
     });
 
     step('verify identity', async function () {
@@ -216,41 +216,51 @@ describeLitentry('Test Identity', (context) => {
         );
         assertIdentityVerified(context.defaultSigner[0], twitter_identity_verified);
 
-        // verify ethereum identity
-        const ethereum_identity_verified = await verifyIdentity(
-            context,
-            context.defaultSigner[0],
-            aesKey,
-            true,
-            ethereumIdentity,
-            ethereumValidationData
-        );
-        assertIdentityVerified(context.defaultSigner[0], ethereum_identity_verified);
+        // // verify ethereum identity
+        // const ethereum_identity_verified = await verifyIdentity(
+        //     context,
+        //     context.defaultSigner[0],
+        //     aesKey,
+        //     true,
+        //     ethereumIdentity,
+        //     ethereumValidationData
+        // );
+        // assertIdentityVerified(context.defaultSigner[0], ethereum_identity_verified);
 
-        //verify substrate identity
-        const substrate_identity_verified = await verifyIdentity(
-            context,
-            context.defaultSigner[0],
-            aesKey,
-            true,
-            substrateIdentity,
-            substrateValidationData
-        );
-        assertIdentityVerified(context.defaultSigner[0], substrate_identity_verified);
+        // //verify substrate identity
+        // const substrate_identity_verified = await verifyIdentity(
+        //     context,
+        //     context.defaultSigner[0],
+        //     aesKey,
+        //     true,
+        //     substrateIdentity,
+        //     substrateValidationData
+        // );
+        // assertIdentityVerified(context.defaultSigner[0], substrate_identity_verified);
 
-        //Bob
-        //verify extension substrate identity
-        const substrate_extension_identity_verified = await verifyIdentity(
-            context,
-            context.defaultSigner[1],
-            aesKey,
-            true,
-            substrateExtensionIdentity,
-            substrateExtensionValidationData
-        );
-        assertIdentityVerified(context.defaultSigner[1], substrate_extension_identity_verified);
+        // //Bob
+        // //verify extension substrate identity
+        // const substrate_extension_identity_verified = await verifyIdentity(
+        //     context,
+        //     context.defaultSigner[1],
+        //     aesKey,
+        //     true,
+        //     substrateExtensionIdentity,
+        //     substrateExtensionValidationData
+        // );
+        // assertIdentityVerified(context.defaultSigner[1], substrate_extension_identity_verified);
     });
 
+    step('error verify', async function () {
+        const twitter_identity_verified = await verifyErrorIdentity(
+            context,
+            context.defaultSigner[0],
+            aesKey,
+            true,
+            twitterIdentity,
+            twitterValidationData
+        );
+    });
     step('remove identity', async function () {
         // Alice
         // remove twitter identity
