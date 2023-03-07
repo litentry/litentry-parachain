@@ -91,6 +91,7 @@ where
 			for call in extrinsics.into_iter() {
 				if let Err(e) = api.send_extrinsic(call.to_hex(), XtStatus::Ready) {
 					error!("Could not send extrsinic to node: {:?}", e);
+					status = Err(OCallBridgeError::SendExtrinsicsToParentchain(e.to_string()));
 				}
 			}
 		}
