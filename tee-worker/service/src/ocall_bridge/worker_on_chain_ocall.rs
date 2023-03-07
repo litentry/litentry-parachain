@@ -16,9 +16,13 @@
 
 */
 
-use crate::ocall_bridge::bridge_api::{OCallBridgeError, OCallBridgeResult, WorkerOnChainBridge};
+use crate::{
+	enclave_account,
+	ocall_bridge::bridge_api::{OCallBridgeError, OCallBridgeResult, WorkerOnChainBridge},
+};
 use codec::{Decode, Encode};
-use itp_node_api::node_api_factory::CreateNodeApi;
+use itp_enclave_api::enclave_base::EnclaveBase;
+use itp_node_api::{api_client::AccountApi, node_api_factory::CreateNodeApi};
 use itp_types::{WorkerRequest, WorkerResponse};
 use itp_utils::ToHexPrefixed;
 use log::*;
@@ -27,18 +31,20 @@ use sp_runtime::OpaqueExtrinsic;
 use std::{sync::Arc, vec::Vec};
 use substrate_api_client::XtStatus;
 
-pub struct WorkerOnChainOCall<F> {
+pub struct WorkerOnChainOCall<E, F> {
+	enclave_api: Arc<E>,
 	node_api_factory: Arc<F>,
 }
 
-impl<F> WorkerOnChainOCall<F> {
-	pub fn new(node_api_factory: Arc<F>) -> Self {
-		WorkerOnChainOCall { node_api_factory }
+impl<E, F> WorkerOnChainOCall<E, F> {
+	pub fn new(enclave_api: Arc<E>, node_api_factory: Arc<F>) -> Self {
+		WorkerOnChainOCall { enclave_api, node_api_factory }
 	}
 }
 
-impl<F> WorkerOnChainBridge for WorkerOnChainOCall<F>
+impl<E, F> WorkerOnChainBridge for WorkerOnChainOCall<E, F>
 where
+	E: EnclaveBase,
 	F: CreateNodeApi,
 {
 	fn worker_request(&self, request: Vec<u8>) -> OCallBridgeResult<Vec<u8>> {
@@ -86,13 +92,25 @@ where
 			};
 
 		if !extrinsics.is_empty() {
+			let mut send_extrinsic_failed = false;
 			debug!("Enclave wants to send {} extrinsics", extrinsics.len());
 			let api = self.node_api_factory.create_api()?;
 			for call in extrinsics.into_iter() {
 				debug!("Send extrinsic, call length: {}", call.to_hex().len());
 				if let Err(e) = api.send_extrinsic(call.to_hex(), XtStatus::Ready) {
 					error!("Could not send extrsinic to node: {:?}", e);
-					status = Err(OCallBridgeError::SendExtrinsicsToParentchain(e.to_string()));
+					send_extrinsic_failed = true;
+				}
+			}
+
+			// try to reset nonce
+			if send_extrinsic_failed {
+				let enclave_account = enclave_account(self.enclave_api.as_ref());
+				if let Ok(nonce) = api.get_nonce_of(&enclave_account) {
+					warn!("send_extrinsic failed, reset nonce to: {}", nonce);
+					if let Err(e) = self.enclave_api.set_nonce(nonce) {
+						warn!("failed to reset nonce due to: {:?}", e);
+					}
 				}
 			}
 		}
