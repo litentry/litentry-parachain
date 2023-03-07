@@ -177,8 +177,6 @@ pub struct Proof {
 	pub proof_value: String,
 	/// The public key from Issuer
 	pub verification_method: String,
-	/// The hash of Credential payload(without Proof field)
-	pub hash: [u8; 32],
 }
 
 impl Proof {
@@ -186,7 +184,6 @@ impl Proof {
 		bn: ParentchainBlockNumber,
 		sig: &Vec<u8>,
 		issuer: &AccountId,
-		hash: [u8; 32],
 	) -> Self {
 		Proof {
 			created_block_number: bn,
@@ -194,7 +191,6 @@ impl Proof {
 			proof_purpose: PROOF_PURPOSE.to_string(),
 			proof_value: format!("{}", HexDisplay::from(sig)),
 			verification_method: account_id_to_string(issuer),
-			hash,
 		}
 	}
 
@@ -208,12 +204,6 @@ impl Proof {
 		}
 
 		Ok(true)
-	}
-
-	pub fn to_json(&self) -> Result<String, Error> {
-		let json_str =
-			serde_json::to_string(&self).map_err(|err| Error::ParseError(format!("{}", err)))?;
-		Ok(json_str)
 	}
 }
 
@@ -237,7 +227,6 @@ pub struct Credential {
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub expiration_block_number: Option<ParentchainBlockNumber>,
 	/// Digital proof with the signature of Issuer
-	#[serde(skip_deserializing)]
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub proof: Option<Proof>,
 	#[serde(skip_deserializing)]
@@ -270,9 +259,14 @@ impl Credential {
 		vc.issuance_block_number = bn;
 		vc.expiration_block_number = None;
 		vc.credential_schema = None;
+		vc.proof = None;
 		vc.generate_id();
 		vc.validate_unsigned()?;
 		Ok(vc)
+	}
+
+	pub fn add_proof(&mut self, sig: &Vec<u8>, bn: ParentchainBlockNumber, issuer: &AccountId) {
+		self.proof = Some(Proof::new(bn, sig, issuer));
 	}
 
 	fn generate_id(&mut self) {
@@ -298,9 +292,9 @@ impl Credential {
 	}
 
 	pub fn validate_unsigned(&self) -> Result<(), Error> {
-		// if !self.types.contains(&CredentialType::VerifiableCredential) {
-		// 	return Err(Error::EmptyCredentialType)
-		// }
+		if !self.types.contains(&CredentialType::VerifiableCredential) {
+			return Err(Error::EmptyCredentialType)
+		}
 
 		if self.credential_subject.id.is_empty() {
 			return Err(Error::EmptyCredentialSubject)
@@ -334,6 +328,17 @@ impl Credential {
 		let exported = vc.to_json()?;
 		if exported.len() > MAX_CREDENTIAL_SIZE {
 			return Err(Error::CredentialIsTooLong)
+		}
+
+		if vc.proof.is_none() {
+			return Err(Error::InvalidProof)
+		} else {
+			let proof = vc.proof.unwrap();
+			if proof.created_block_number == 0 {
+				return Err(Error::EmptyProofBlockNumber)
+			}
+
+			//ToDo: validate proof signature
 		}
 
 		Ok(())

@@ -312,22 +312,25 @@ export async function getEnclave(api: ApiPromise): Promise<{
 }
 
 export async function verifySignature(
-    data: string,
+    data: any,
     index: HexString,
-    proof: string,
-    vcBlake2Hash: HexString,
+    proofJson: any,
+    vcPayloadHash: HexString,
     api: ApiPromise
 ) {
     const count = await api.query.teerex.enclaveCount();
     const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as EnclaveResult;
-    const proofJson = JSON.parse(proof);
     //check vc index
-    expect(index).to.be.eq(JSON.parse(data).id);
+    expect(index).to.be.eq(data.id);
 
+    const signature = Buffer.from(hexToU8a(`0x${proofJson.proofValue}`));
+    const message = Buffer.from(hexToU8a(vcPayloadHash));
+    const vcPubkey = Buffer.from(hexToU8a(`${res.vcPubkey}`));
+    
     const isValid = await ed.verify(
-        Buffer.from(hexToU8a(`0x${proofJson.proofValue}`)),
-        Buffer.from(hexToU8a(vcBlake2Hash)),
-        Buffer.from(hexToU8a(`${res.vcPubkey}`))
+        signature,
+        message,
+        vcPubkey
     );
 
     expect(isValid).to.be.true;
@@ -335,27 +338,22 @@ export async function verifySignature(
 }
 
 export async function checkVc(
-    vc: string,
+    vcObj: any,
     index: HexString,
-    proof: string,
-    vcBlake2Hash: HexString,
+    proof: any,
+    vcPayloadHash: HexString,
     api: ApiPromise
 ): Promise<boolean> {
-    const vcObj = JSON.parse(vc);
-
-    console.log('----------vc json----------', vcObj);
-
-    const signatureValid = await verifySignature(vc, index, proof, vcBlake2Hash, api);
+    const signatureValid = await verifySignature(vcObj, index, proof, vcPayloadHash, api);
     expect(signatureValid).to.be.true;
-    const jsonValid = await checkJSON(vc, proof);
+
+    const jsonValid = await checkJSON(vcObj, proof);
     expect(jsonValid).to.be.true;
     return true;
 }
 
 //Check VC json fields
-export async function checkJSON(data: string, proof: string): Promise<boolean> {
-    const vc = JSON.parse(data);
-    const proofJson = JSON.parse(proof);
+export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
     const vcStatus = ['@context', 'type', 'credentialSubject', 'issuer'].every(
         (key) =>
             vc.hasOwnProperty(key) && (vc[key] != '{}' || vc[key] !== '[]' || vc[key] !== null || vc[key] !== undefined)
@@ -369,15 +367,14 @@ export async function checkJSON(data: string, proof: string): Promise<boolean> {
     return true;
 }
 
-export async function checkIssuerAttestation(data: string, api: ApiPromise): Promise<any> {
-    const vc = JSON.parse(data);
+export async function checkIssuerAttestation(vc: any, api: ApiPromise): Promise<any> {
+    // const vc = JSON.parse(data);
     const mrEnclaveFromVC = Buffer.from(base58.decode(vc.issuer.mrenclave)).toString('hex');
     const count = await api.query.teerex.enclaveCount();
     const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as EnclaveResult;
     const mrEnclaveFromParachain = res.mrEnclave;
     expect(`0x${mrEnclaveFromVC}`).to.be.equal(mrEnclaveFromParachain);
 
-    //https://github.com/litentry/litentry-parachain/pull/1369 need to be merged
     const metadata = res.sgxMetadata as any;
     console.log('   [IssuerAttestation] metadata: ', metadata);
     if (metadata != null) {

@@ -167,18 +167,15 @@ where
 		credential.issuer.id = account_id_to_string(&enclave_account);
 
 		let payload = credential.to_json().unwrap();
-		let payload_hash = blake2_256(payload.as_bytes());
-		debug!("	[Assertion] payload: {}", payload);
-		debug!("	[Assertion] payload_hash: {:?}", payload_hash);
+		debug!("	[Assertion] VC payload: {}", payload);
 
-		if let Ok((_, sig)) = signer.sign_vc_with_self(&payload_hash) {
+		let payload_hash = blake2_256(payload.as_bytes());
+		debug!("	[Assertion] VC payload_hash: {:?}", payload_hash);
+
+		if let Ok((enclave_account, sig)) = signer.sign_vc_with_self(&payload_hash) {
 			debug!("	[Assertion] Payload hash signature: {:?}", sig);
 
-			let vc_proof_str =
-				Proof::new(credential.issuance_block_number, &sig, &enclave_account, payload_hash)
-					.to_json()
-					.unwrap();
-			debug!("	[Assertion] Proof: {:?}", vc_proof_str);
+			credential.add_proof(&sig, credential.issuance_block_number, &enclave_account);
 
 			if credential.validate().is_err() {
 				error!("failed to validate credential");
@@ -191,6 +188,8 @@ where
 				debug!("on_success {}, length {}", credential_str, credential_str.len());
 
 				let vc_hash = blake2_256(credential_str.as_bytes());
+				debug!("	[Assertion] VC hash: {:?}", vc_hash);
+				
 				let output = aes_encrypt_default(&key, credential_str.as_bytes());
 
 				match self
@@ -205,7 +204,6 @@ where
 							vc_index,
 							vc_hash,
 							output,
-							vc_proof_str.as_bytes(),
 						));
 						self.context.submit_to_parentchain(call)
 					},

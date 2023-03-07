@@ -145,8 +145,8 @@ export async function requestVC(
     if (listening) {
         const events = await listenEvent(context.substrate, 'vcManagement', ['VCIssued']);
         expect(events.length).to.be.equal(1);
-        const [account, index, vc, proof] = events[0].data as any;
-        return [account.toHex(), index.toHex(), decryptWithAES(aesKey, vc, 'utf-8'), proof as Uint8Array];
+        const [account, index, vc] = events[0].data as any;
+        return [account.toHex(), index.toHex(), decryptWithAES(aesKey, vc, 'utf-8')];
     }
     return undefined;
 }

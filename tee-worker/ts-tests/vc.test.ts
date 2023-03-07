@@ -26,7 +26,7 @@ describeLitentry('VC test', async (context) => {
     });
     step('Request VC', async () => {
         for (const key in assertion) {
-            const [account, index, vc, proof] = (await requestVC(
+            const [account, index, vc] = (await requestVC(
                 context,
                 context.defaultSigner[0],
                 aesKey,
@@ -38,24 +38,23 @@ describeLitentry('VC test', async (context) => {
             )) as any;
 
             const vcString = vc.replace('0x', '');
-            const vcBlake2Hash = blake2AsHex(vcString);
-            const vcProof = proof.toHuman();
-
-            const hash = '0x' + Buffer.from(JSON.parse(vcProof).hash).toString('hex');
-            assert.equal(vcBlake2Hash, hash, 'check vc json hash error');
+            const vcObj = JSON.parse(vcString);
+            const vcProof = vcObj.proof;
+            delete vcObj.proof;
 
             const registry = (await context.substrate.query.vcManagement.vcRegistry(index)) as any;
+            const vcHash = blake2AsHex(Buffer.from(vcString));
             assert.equal(registry.toHuman()!['status'], 'Active', 'check registry error');
-
-            assert.equal(vcBlake2Hash, registry.toHuman()!['hash_'], 'check vc json hash error');
+            assert.equal(vcHash, registry.toHuman()!['hash_'], 'check vc json hash error');
 
             //check vc
-            const vcValid = await checkVc(vcString, index, vcProof, vcBlake2Hash, context.substrate);
+            const vcPayloadHash = blake2AsHex(Buffer.from(JSON.stringify(vcObj)));
+            const vcValid = await checkVc(vcObj, index, vcProof, vcPayloadHash, context.substrate);
             assert.equal(vcValid, true, 'check vc error');
             indexList.push(index);
 
             //check issuer attestation
-            await checkIssuerAttestation(vcString, context.substrate);
+            await checkIssuerAttestation(vcObj, context.substrate);
             console.log(`--------Assertion ${key} is pass-----------`);
         }
     });
