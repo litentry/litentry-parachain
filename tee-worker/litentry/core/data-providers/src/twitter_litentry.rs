@@ -25,6 +25,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
+use log::*;
 use serde::{Deserialize, Serialize};
 use std::{
 	default::Default,
@@ -71,6 +72,8 @@ impl TwitterLitentryClient {
 	pub fn check_follow(&mut self, source: Vec<u8>, target: Vec<u8>) -> Result<bool, Error> {
 		let source = vec_to_string(source)?;
 		let target = vec_to_string(target)?;
+		debug!("twitter check follow, source: {}, target: {}", source, target);
+
 		let query = vec![("handler1", target.as_str()), ("handler2", source.as_str())];
 		let response = self
 			.client
