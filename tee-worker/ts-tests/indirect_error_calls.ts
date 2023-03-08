@@ -1,7 +1,12 @@
 import { encryptWithTeeShieldingKey, listenEvent, sendTxUntilInBlock, sendTxUntilInBlockList } from './utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { HexString } from '@polkadot/util/types';
-import { IntegrationTestContext, LitentryIdentity, LitentryValidationData } from './type-definitions';
+import {
+    IntegrationTestContext,
+    LitentryIdentity,
+    LitentryValidationData,
+    TransactionSubmit,
+} from './type-definitions';
 import { expect } from 'chai';
 
 export async function setErrorUserShieldingKey(
@@ -31,7 +36,7 @@ export async function createErrorIdentities(
     listening: boolean,
     errorCiphertexts: string[]
 ): Promise<string[] | undefined> {
-    let txs: any[] = [];
+    let txs: TransactionSubmit[] = [];
     for (let k = 0; k < errorCiphertexts.length; k++) {
         const errorCiphertext = errorCiphertexts[k];
         const tx = context.substrate.tx.identityManagement.createIdentity(
@@ -72,7 +77,7 @@ export async function verifyErrorIdentities(
     identities: LitentryIdentity[],
     datas: LitentryValidationData[]
 ): Promise<string[] | undefined> {
-    let txs: any = [];
+    let txs: TransactionSubmit[] = [];
     for (let k = 0; k < identities.length; k++) {
         let identity = identities[k];
         let data = datas[k];
@@ -117,11 +122,10 @@ export async function verifyErrorIdentities(
 export async function removeErrorIdentities(
     context: IntegrationTestContext,
     signer: KeyringPair,
-    aesKey: HexString,
     listening: boolean,
     identities: any[]
 ): Promise<any[] | undefined> {
-    let txs: any = [];
+    let txs: TransactionSubmit[] = [];
     for (let index = 0; index < identities.length; index++) {
         const identity = identities[index];
         const encode = context.substrate.createType('LitentryIdentity', identity).toHex();

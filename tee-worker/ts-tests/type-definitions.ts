@@ -3,6 +3,7 @@ import { KeyObject } from 'crypto';
 import { HexString } from '@polkadot/util/types';
 import WebSocketAsPromised = require('websocket-as-promised');
 import { KeyringPair } from '@polkadot/keyring/types';
+import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 
 export const teeTypes = {
     WorkerRpcReturnString: {
@@ -308,4 +309,9 @@ export type Assertion = {
     A9?: string;
     A10?: [number];
     A11?: [number];
+};
+
+export type TransactionSubmit = {
+    tx: SubmittableExtrinsic<ApiTypes>;
+    nonce: number;
 };

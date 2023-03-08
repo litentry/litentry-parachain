@@ -240,7 +240,7 @@ describeLitentry('Test Identity', (context) => {
         assertIdentityVerified(context.defaultSigner[1], substrate_extension_identity_verified);
     });
 
-    step('verify error identity', async function () {
+    step('verify error identities', async function () {
         // verify same identities to one account
         const resp_same_verify = (await verifyErrorIdentities(
             context,
@@ -306,13 +306,11 @@ describeLitentry('Test Identity', (context) => {
 
     step('remove error identities', async function () {
         //remove a nonexistent identity from an account
-        const resp_not_exist_identities = (await removeErrorIdentities(
-            context,
-            context.defaultSigner[0],
-            aesKey,
-            true,
-            [twitterIdentity, ethereumIdentity, substrateIdentity]
-        )) as string[];
+        const resp_not_exist_identities = (await removeErrorIdentities(context, context.defaultSigner[0], true, [
+            twitterIdentity,
+            ethereumIdentity,
+            substrateIdentity,
+        ])) as string[];
 
         resp_not_exist_identities.map((item: any) => {
             const result = item.toHuman().data.reason;
@@ -323,13 +321,11 @@ describeLitentry('Test Identity', (context) => {
         });
 
         //remove a challenge code before the code is set
-        const resp_not_created_identities = (await removeErrorIdentities(
-            context,
-            context.defaultSigner[2],
-            aesKey,
-            true,
-            [twitterIdentity, ethereumIdentity, substrateIdentity]
-        )) as string[];
+        const resp_not_created_identities = (await removeErrorIdentities(context, context.defaultSigner[2], true, [
+            twitterIdentity,
+            ethereumIdentity,
+            substrateIdentity,
+        ])) as string[];
 
         resp_not_created_identities.map((item: any) => {
             const result = item.toHuman().data.reason;

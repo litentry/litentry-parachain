@@ -4,6 +4,7 @@ import {
     LitentryIdentity,
     LitentryValidationData,
     Assertion,
+    TransactionSubmit,
 } from './type-definitions';
 import {
     decryptWithAES,
@@ -44,7 +45,7 @@ export async function createIdentities(
     listening: boolean,
     identities: LitentryIdentity[]
 ): Promise<IdentityGenericEvent[] | undefined> {
-    let txs: any[] = [];
+    let txs: TransactionSubmit[] = [];
     for (let index = 0; index < identities.length; index++) {
         const identity = identities[index];
         const encode = context.substrate.createType('LitentryIdentity', identity).toHex();
@@ -90,7 +91,7 @@ export async function removeIdentities(
     listening: boolean,
     identity: LitentryIdentity[]
 ): Promise<IdentityGenericEvent[] | undefined> {
-    let txs: any[] = [];
+    let txs: TransactionSubmit[] = [];
     for (let index = 0; index < identity.length; index++) {
         const encode = context.substrate.createType('LitentryIdentity', identity[index]).toHex();
         const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
@@ -132,7 +133,7 @@ export async function verifyIdentities(
     identities: LitentryIdentity[],
     datas: LitentryValidationData[]
 ): Promise<IdentityGenericEvent[] | undefined> {
-    let txs: any[] = [];
+    let txs: TransactionSubmit[] = [];
     for (let index = 0; index < identities.length; index++) {
         let identity = identities[index];
 
@@ -201,7 +202,7 @@ export async function requestVCs(
       }[]
     | undefined
 > {
-    let txs: any[] = [];
+    let txs: TransactionSubmit[] = [];
     let len = 0;
 
     for (const key in assertion) {
@@ -244,7 +245,7 @@ export async function disableVCs(
     listening: boolean,
     indexList: HexString[]
 ): Promise<HexString[] | undefined> {
-    let txs: any[] = [];
+    let txs: TransactionSubmit[] = [];
 
     for (let k = 0; k < indexList.length; k++) {
         const tx = context.substrate.tx.vcManagement.disableVc(indexList[k]);
@@ -274,7 +275,7 @@ export async function revokeVCs(
     listening: boolean,
     indexList: HexString[]
 ): Promise<HexString[] | undefined> {
-    let txs: any[] = [];
+    let txs: TransactionSubmit[] = [];
     for (let k = 0; k < indexList.length; k++) {
         const tx = context.substrate.tx.vcManagement.revokeVc(indexList[k]);
         const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
