@@ -1,14 +1,6 @@
 import { describeLitentry, checkVc, checkIssuerAttestation } from './utils';
 import { step } from 'mocha-steps';
-import {
-    requestVC,
-    setUserShieldingKey,
-    disableVC,
-    revokeVC,
-    requestVCs,
-    disableVCs,
-    revokeVCs,
-} from './indirect_calls';
+import { setUserShieldingKey, requestVCs, disableVCs, revokeVCs } from './indirect_calls';
 import { Assertion } from './type-definitions';
 import { assert } from 'chai';
 import { u8aToHex, stringToU8a, stringToHex } from '@polkadot/util';
@@ -34,6 +26,7 @@ describeLitentry('VC test', async (context) => {
         assert.equal(who, u8aToHex(context.defaultSigner[0].addressRaw), 'check caller error');
     });
     step('Request VC', async () => {
+        // request all vc
         const res = (await requestVCs(
             context,
             context.defaultSigner[0],

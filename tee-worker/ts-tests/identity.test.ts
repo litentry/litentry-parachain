@@ -16,9 +16,8 @@ import { HexString } from '@polkadot/util/types';
 import { KeyringPair } from '@polkadot/keyring/types';
 import {
     createErrorIdentities,
-    removeErrorIdentity,
     setErrorUserShieldingKey,
-    removeErrorIdentityList,
+    removeErrorIdentities,
     verifyErrorIdentities,
 } from './indirect_error_calls';
 
@@ -307,7 +306,7 @@ describeLitentry('Test Identity', (context) => {
 
     step('remove error identities', async function () {
         //remove a nonexistent identity from an account
-        const resp_not_exist_identities = (await removeErrorIdentityList(
+        const resp_not_exist_identities = (await removeErrorIdentities(
             context,
             context.defaultSigner[0],
             aesKey,
@@ -324,7 +323,7 @@ describeLitentry('Test Identity', (context) => {
         });
 
         //remove a challenge code before the code is set
-        const resp_not_created_identities = (await removeErrorIdentityList(
+        const resp_not_created_identities = (await removeErrorIdentities(
             context,
             context.defaultSigner[2],
             aesKey,
