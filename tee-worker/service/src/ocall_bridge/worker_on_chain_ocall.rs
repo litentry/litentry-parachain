@@ -28,7 +28,7 @@ use itp_utils::ToHexPrefixed;
 use log::*;
 use sp_core::storage::StorageKey;
 use sp_runtime::OpaqueExtrinsic;
-use std::{sync::Arc, vec::Vec};
+use std::{sync::Arc, thread, vec::Vec};
 use substrate_api_client::XtStatus;
 
 pub struct WorkerOnChainOCall<E, F> {
@@ -103,15 +103,21 @@ where
 				}
 			}
 
-			// try to reset nonce
+			// try to reset nonce, put it in a separate thread as nested ECALL/OCALL is not allowed
 			if send_extrinsic_failed {
-				let enclave_account = enclave_account(self.enclave_api.as_ref());
-				if let Ok(nonce) = api.get_nonce_of(&enclave_account) {
-					warn!("send_extrinsic failed, reset nonce to: {}", nonce);
-					if let Err(e) = self.enclave_api.set_nonce(nonce) {
-						warn!("failed to reset nonce due to: {:?}", e);
+				// drop &self lifetime
+				let node_api_factory_cloned = self.node_api_factory.clone();
+				let enclave_cloned = self.enclave_api.clone();
+				thread::spawn(move || {
+					let api = node_api_factory_cloned.create_api().unwrap();
+					let enclave_account = enclave_account(enclave_cloned.as_ref());
+					if let Ok(nonce) = api.get_nonce_of(&enclave_account) {
+						warn!("send_extrinsic failed, reset nonce to: {}", nonce);
+						if let Err(e) = enclave_cloned.set_nonce(nonce) {
+							warn!("failed to reset nonce due to: {:?}", e);
+						}
 					}
-				}
+				});
 			}
 		}
 
