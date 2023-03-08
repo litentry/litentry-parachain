@@ -44,7 +44,7 @@ describeLitentry('Test Batch Utility', (context) => {
         const encode = context.substrate.createType('LitentryIdentity', twitterIdentity).toHex();
         const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
         const twi_tx = context.substrate.tx.identityManagement.createIdentity(
-            context.shard,
+            context.mrEnclave,
             context.defaultSigner[0].address,
             `0x${ciphertext}`,
             null
@@ -54,7 +54,7 @@ describeLitentry('Test Batch Utility', (context) => {
         const encode2 = context.substrate.createType('LitentryIdentity', twitterIdentity2).toHex();
         const ciphertext_2 = encryptWithTeeShieldingKey(context.teeShieldingKey, encode2).toString('hex');
         const twi_tx_2 = context.substrate.tx.identityManagement.createIdentity(
-            context.shard,
+            context.mrEnclave,
             context.defaultSigner[0].address,
             `0x${ciphertext_2}`,
             null
@@ -103,7 +103,7 @@ describeLitentry('Test Batch Utility', (context) => {
         const identity_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, identity_encode).toString('hex');
         const validation_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, validation_encode).toString('hex');
         const verify_tx = context.substrate.tx.identityManagement.verifyIdentity(
-            context.shard,
+            context.mrEnclave,
             `0x${identity_ciphertext}`,
             `0x${validation_ciphertext}`
         );
@@ -133,11 +133,11 @@ describeLitentry('Test Batch Utility', (context) => {
         // Remove Identity: twitter 1
         const rm_id_encode = context.substrate.createType('LitentryIdentity', twitterIdentity).toHex();
         const rm_id_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, rm_id_encode).toString('hex');
-        const rm_id_tx = context.substrate.tx.identityManagement.removeIdentity(context.shard, `0x${rm_id_ciphertext}`);
+        const rm_id_tx = context.substrate.tx.identityManagement.removeIdentity(context.mrEnclave, `0x${rm_id_ciphertext}`);
         // Remove Identity: twitter 2
         const rm_id_encode2 = context.substrate.createType('LitentryIdentity', twitterIdentity2).toHex();
         const rm_id_ciphertext2 = encryptWithTeeShieldingKey(context.teeShieldingKey, rm_id_encode2).toString('hex');
-        const rm_id_tx2 = context.substrate.tx.identityManagement.removeIdentity(context.shard, `0x${rm_id_ciphertext2}`);
+        const rm_id_tx2 = context.substrate.tx.identityManagement.removeIdentity(context.mrEnclave, `0x${rm_id_ciphertext2}`);
 
 
         // Construct the batch and send the transactions
