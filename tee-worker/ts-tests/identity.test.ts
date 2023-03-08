@@ -1,6 +1,6 @@
-import { decryptWithAES, describeLitentry, encryptWithTeeShieldingKey, generateVerificationMessage, listenEvent, sendTxUntilInBlock } from './utils';
+import { describeLitentry, encryptWithTeeShieldingKey, generateVerificationMessage, listenEvent, sendTxUntilInBlock } from './utils';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
-import { createIdentity, decodeIdentityEvent, setUserShieldingKey, removeIdentity, verifyIdentity, assertIdentityCreated, assertIdentityVerified, assertIdentityRemoved } from './indirect_calls';
+import { createIdentity, setUserShieldingKey, removeIdentity, verifyIdentity, assertIdentityCreated, assertIdentityVerified, assertIdentityRemoved } from './indirect_calls';
 import { step } from 'mocha-steps';
 import { assert, expect } from 'chai';
 import {
