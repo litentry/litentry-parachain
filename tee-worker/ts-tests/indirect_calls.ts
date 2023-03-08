@@ -70,7 +70,7 @@ export async function createIdentity(
     }
     return undefined;
 }
-export async function createIdentityList(
+export async function createIdentities(
     context: IntegrationTestContext,
     signer: KeyringPair,
     aesKey: HexString,
@@ -143,7 +143,7 @@ export async function removeIdentity(
     }
     return undefined;
 }
-export async function removeIdentityList(
+export async function removeIdentities(
     context: IntegrationTestContext,
     signer: KeyringPair,
     aesKey: HexString,
@@ -220,7 +220,7 @@ export async function verifyIdentity(
     return undefined;
 }
 
-export async function verifyIdentityList(
+export async function verifyIdentities(
     context: IntegrationTestContext,
     signer: KeyringPair,
     aesKey: HexString,
@@ -300,7 +300,58 @@ export async function requestVC(
     }
     return undefined;
 }
+export async function requestVCs(
+    context: IntegrationTestContext,
+    signer: KeyringPair,
+    aesKey: HexString,
+    listening: boolean,
+    mrEnclave: HexString,
+    assertion: Assertion
+): Promise<
+    | {
+          account: HexString;
+          index: HexString;
+          vc: HexString;
+      }[]
+    | undefined
+> {
+    let txs: any[] = [];
+    let len = 0;
 
+    for (const key in assertion) {
+        len++;
+        const tx = context.substrate.tx.vcManagement.requestVc(mrEnclave, {
+            [key]: assertion[key as keyof Assertion],
+        });
+        const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
+
+        let newNonce = nonce.toNumber() + (len - 1);
+        txs.push({ tx, nonce: newNonce });
+    }
+
+    await sendTxUntilInBlockList(context.substrate, txs, signer);
+    if (listening) {
+        const events = (await listenEvent(context.substrate, 'vcManagement', ['VCIssued'])) as any;
+        expect(events.length).to.be.equal(len);
+
+        let results: {
+            account: HexString;
+            index: HexString;
+            vc: HexString;
+        }[] = [];
+        for (let k = 0; k < events.length; k++) {
+            results.push({
+                account: events[k].data.account.toHex(),
+                index: events[k].data.index.toHex(),
+                vc: decryptWithAES(aesKey, events[k].data.vc, 'utf-8'),
+            });
+        }
+        return [...results];
+        // const [account, index, vc] = events[0].data as any;
+        // return [account.toHex(), index.toHex(), decryptWithAES(aesKey, vc, 'utf-8')];
+    }
+    return undefined;
+}
 export async function disableVC(
     context: IntegrationTestContext,
     signer: KeyringPair,
@@ -319,7 +370,35 @@ export async function disableVC(
     }
     return undefined;
 }
+export async function disableVCs(
+    context: IntegrationTestContext,
+    signer: KeyringPair,
+    aesKey: HexString,
+    listening: boolean,
+    indexList: HexString[]
+): Promise<HexString[] | undefined> {
+    let txs: any[] = [];
 
+    for (let k = 0; k < indexList.length; k++) {
+        const tx = context.substrate.tx.vcManagement.disableVc(indexList[k]);
+        const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
+        let newNonce = nonce.toNumber() + k;
+        txs.push({ tx, nonce: newNonce });
+    }
+
+    await sendTxUntilInBlockList(context.substrate, txs, signer);
+    if (listening) {
+        const events = (await listenEvent(context.substrate, 'vcManagement', ['VCDisabled'])) as any;
+        expect(events.length).to.be.equal(indexList.length);
+        let results: HexString[] = [];
+        for (let m = 0; m < events.length; m++) {
+            results.push(events[m].data.index.toHex());
+        }
+
+        return [...results];
+    }
+    return undefined;
+}
 export async function revokeVC(
     context: IntegrationTestContext,
     signer: KeyringPair,
@@ -338,7 +417,33 @@ export async function revokeVC(
     }
     return undefined;
 }
+export async function revokeVCs(
+    context: IntegrationTestContext,
+    signer: KeyringPair,
+    aesKey: HexString,
+    listening: boolean,
+    indexList: HexString[]
+): Promise<HexString[] | undefined> {
+    let txs: any[] = [];
+    for (let k = 0; k < indexList.length; k++) {
+        const tx = context.substrate.tx.vcManagement.revokeVc(indexList[k]);
+        const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
+        let newNonce = nonce.toNumber() + k;
+        txs.push({ tx, nonce: newNonce });
+    }
 
+    await sendTxUntilInBlockList(context.substrate, txs, signer);
+    if (listening) {
+        const events = (await listenEvent(context.substrate, 'vcManagement', ['VCRevoked'])) as any;
+        expect(events.length).to.be.equal(indexList.length);
+        let results: HexString[] = [];
+        for (let m = 0; m < events.length; m++) {
+            results.push(events[m].data.index.toHex());
+        }
+        return [...results];
+    }
+    return undefined;
+}
 function decodeIdentityEvent(
     api: ApiPromise,
     who: HexString,
