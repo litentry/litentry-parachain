@@ -35,7 +35,7 @@ use itp_node_api::{
 	api_client::{ParentchainExtrinsicParams, ParentchainExtrinsicParamsBuilder},
 	metadata::{provider::AccessNodeMetadata, NodeMetadata},
 };
-use itp_nonce_cache::{MutateNonce, Nonce, NonceValue};
+use itp_nonce_cache::{MutateNonce, Nonce};
 use itp_types::OpaqueCall;
 use sp_core::{Pair, H256};
 use sp_runtime::{generic::Era, MultiSignature, OpaqueExtrinsic};
@@ -88,13 +88,6 @@ where
 	) -> Self {
 		ExtrinsicsFactory { genesis_hash, signer, nonce_cache, node_metadata_repository }
 	}
-
-	// forcibly update the cached nonce, normally from the latest on-chain storage
-	pub fn set_nonce(&self, v: NonceValue) -> Result<()> {
-		let mut nonce_lock = self.nonce_cache.load_for_mutation()?;
-		*nonce_lock = Nonce(v);
-		Ok(())
-	}
 }
 
 impl<Signer, NonceCache, NodeMetadataRepository> CreateExtrinsics
@@ -127,6 +120,7 @@ where
 		let extrinsics_buffer: Vec<OpaqueExtrinsic> = calls
 			.iter()
 			.map(|call| {
+				log::info!("Creating extrinsics using nonce: {}", nonce_value);
 				let extrinsic_params = ParentchainExtrinsicParams::new(
 					runtime_spec_version,
 					runtime_transaction_version,

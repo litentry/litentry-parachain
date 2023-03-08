@@ -122,6 +122,9 @@ where
 			//
 			// To have a better synchronisation handling we probably need a sending queue in extrinsic factory that
 			// can be paused on demand (or wait for the nonce synchronisation).
+			//
+			// Another small thing that can be improved is to use rpc.system.accountNextIndex instead of system.account.nonce
+			// see https://polkadot.js.org/docs/api/cookbook/tx/#how-do-i-take-the-pending-tx-pool-into-account-in-my-nonce
 			if send_extrinsic_failed {
 				// drop &self lifetime
 				let node_api_factory_cloned = self.node_api_factory.clone();
@@ -132,7 +135,7 @@ where
 					warn!("send_extrinsic failed, try to reset nonce ...");
 					match api.get_nonce_of(&enclave_account) {
 						Ok(nonce) => {
-							warn!("query on-chaon nonce OK, reset nonce to: {}", nonce);
+							warn!("query on-chain nonce OK, reset nonce to: {}", nonce);
 							if let Err(e) = enclave_cloned.set_nonce(nonce) {
 								warn!("failed to reset nonce due to: {:?}", e);
 							}

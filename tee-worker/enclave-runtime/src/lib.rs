@@ -37,7 +37,6 @@ use crate::{
 	},
 	rpc::worker_api_direct::sidechain_io_handler,
 	utils::{
-		get_extrinsic_factory_from_solo_or_parachain,
 		get_node_metadata_repository_from_solo_or_parachain,
 		get_triggered_dispatcher_from_solo_or_parachain, utf8_str_from_raw, DecodeRaw,
 	},
@@ -175,14 +174,6 @@ pub unsafe extern "C" fn set_nonce(nonce: *const u32) -> sgx_status_t {
 	};
 
 	*nonce_lock = Nonce(*nonce);
-
-	// Litentry: also update the stored nonce in extrinsics_factory
-	if let Ok(f) = get_extrinsic_factory_from_solo_or_parachain() {
-		// only log the errors
-		let _ = f
-			.set_nonce(*nonce)
-			.map_err(|e| error!("Failed to set nonce in extrinsic_factory: {:?}", e));
-	}
 
 	sgx_status_t::SGX_SUCCESS
 }
