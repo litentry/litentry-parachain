@@ -37,39 +37,6 @@ export async function setUserShieldingKey(
     return undefined;
 }
 
-export async function createIdentity(
-    context: IntegrationTestContext,
-    signer: KeyringPair,
-    aesKey: HexString,
-    listening: boolean,
-    identity: LitentryIdentity
-): Promise<IdentityGenericEvent | undefined> {
-    const encode = context.substrate.createType('LitentryIdentity', identity).toHex();
-    const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
-
-    const tx = context.substrate.tx.identityManagement.createIdentity(
-        context.mrEnclave,
-        signer.address,
-        `0x${ciphertext}`,
-        null
-    );
-
-    await sendTxUntilInBlock(context.substrate, tx, signer);
-
-    if (listening) {
-        const events = await listenEvent(context.substrate, 'identityManagement', ['IdentityCreated']);
-        expect(events.length).to.be.equal(1);
-        const data = events[0].data as any;
-        return decodeIdentityEvent(
-            context.substrate,
-            data.account.toHex(),
-            decryptWithAES(aesKey, data.identity, 'hex'),
-            decryptWithAES(aesKey, data.idGraph, 'hex'),
-            decryptWithAES(aesKey, data.code, 'hex')
-        );
-    }
-    return undefined;
-}
 export async function createIdentities(
     context: IntegrationTestContext,
     signer: KeyringPair,
@@ -116,33 +83,6 @@ export async function createIdentities(
     }
     return undefined;
 }
-export async function removeIdentity(
-    context: IntegrationTestContext,
-    signer: KeyringPair,
-    aesKey: HexString,
-    listening: boolean,
-    identity: LitentryIdentity
-): Promise<IdentityGenericEvent | undefined> {
-    const encode = context.substrate.createType('LitentryIdentity', identity).toHex();
-    const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
-
-    const tx = context.substrate.tx.identityManagement.removeIdentity(context.mrEnclave, `0x${ciphertext}`);
-
-    await sendTxUntilInBlock(context.substrate, tx, signer);
-
-    if (listening) {
-        const events = await listenEvent(context.substrate, 'identityManagement', ['IdentityRemoved']);
-        expect(events.length).to.be.equal(1);
-        const data = events[0].data as any;
-        return decodeIdentityEvent(
-            context.substrate,
-            data.account.toHex(),
-            decryptWithAES(aesKey, data.identity, 'hex'),
-            decryptWithAES(aesKey, data.idGraph, 'hex')
-        );
-    }
-    return undefined;
-}
 export async function removeIdentities(
     context: IntegrationTestContext,
     signer: KeyringPair,
@@ -180,42 +120,6 @@ export async function removeIdentities(
             );
         }
         return [...results];
-    }
-    return undefined;
-}
-export async function verifyIdentity(
-    context: IntegrationTestContext,
-    signer: KeyringPair,
-    aesKey: HexString,
-    listening: boolean,
-    identity: LitentryIdentity,
-    data: LitentryValidationData
-): Promise<IdentityGenericEvent | undefined> {
-    const identity_encode = context.substrate.createType('LitentryIdentity', identity).toHex();
-    const validation_encode = context.substrate.createType('LitentryValidationData', data).toHex();
-    const identity_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, identity_encode).toString('hex');
-    const validation_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, validation_encode).toString(
-        'hex'
-    );
-
-    const tx = context.substrate.tx.identityManagement.verifyIdentity(
-        context.mrEnclave,
-        `0x${identity_ciphertext}`,
-        `0x${validation_ciphertext}`
-    );
-
-    await sendTxUntilInBlock(context.substrate, tx, signer);
-
-    if (listening) {
-        const events = await listenEvent(context.substrate, 'identityManagement', ['IdentityVerified']);
-        expect(events.length).to.be.equal(1);
-        const data = events[0].data as any;
-        return decodeIdentityEvent(
-            context.substrate,
-            data.account.toHex(),
-            decryptWithAES(aesKey, data.identity, 'hex'),
-            decryptWithAES(aesKey, data.idGraph, 'hex')
-        );
     }
     return undefined;
 }
@@ -329,8 +233,6 @@ export async function requestVCs(
             });
         }
         return [...results];
-        // const [account, index, vc] = events[0].data as any;
-        // return [account.toHex(), index.toHex(), decryptWithAES(aesKey, vc, 'utf-8')];
     }
     return undefined;
 }
