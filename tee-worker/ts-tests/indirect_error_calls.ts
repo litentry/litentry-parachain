@@ -28,7 +28,6 @@ export async function setErrorUserShieldingKey(
 export async function createErrorIdentities(
     context: IntegrationTestContext,
     signer: KeyringPair,
-    aesKey: HexString,
     listening: boolean,
     errorCiphertexts: string[]
 ): Promise<string[] | undefined> {
@@ -45,7 +44,7 @@ export async function createErrorIdentities(
         const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
         let newNonce = nonce.toNumber() + k;
         txs.push({
-            txs,
+            tx,
             nonce: newNonce,
         });
     }

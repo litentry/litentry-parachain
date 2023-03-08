@@ -351,7 +351,7 @@ describeLitentry('Test Identity', (context) => {
 
     step('create error identities', async function () {
         //The simulation generates the wrong Ciphertext
-        const resp_error_identities = (await createErrorIdentities(context, context.defaultSigner[0], aesKey, true, [
+        const resp_error_identities = (await createErrorIdentities(context, context.defaultSigner[0], true, [
             errorCiphertext,
         ])) as string[];
         for (let i = 0; i < resp_error_identities.length; i++) {
