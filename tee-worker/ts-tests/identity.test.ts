@@ -1,14 +1,6 @@
 import { describeLitentry, generateVerificationMessage } from './utils';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
-import {
-    createIdentity,
-    setUserShieldingKey,
-    removeIdentity,
-    verifyIdentity,
-    createIdentities,
-    verifyIdentities,
-    removeIdentities,
-} from './indirect_calls';
+import { setUserShieldingKey, createIdentities, verifyIdentities, removeIdentities } from './indirect_calls';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import {
@@ -26,8 +18,8 @@ import {
     createErrorIdentity,
     removeErrorIdentity,
     setErrorUserShieldingKey,
-    verifyErrorIdentity,
     removeErrorIdentityList,
+    verifyErrorIdentities,
 } from './indirect_error_calls';
 
 const twitterIdentity = <LitentryIdentity>{
@@ -243,41 +235,48 @@ describeLitentry('Test Identity', (context) => {
 
         //Alice
         assertIdentityVerified(context.defaultSigner[0], twitter_identity_verified);
+        assertIdentityVerified(context.defaultSigner[0], ethereum_identity_verified);
         assertIdentityVerified(context.defaultSigner[0], substrate_identity_verified);
         //Bob
         assertIdentityVerified(context.defaultSigner[1], substrate_extension_identity_verified);
     });
 
-    // step('verify error identity', async function () {
-    //     const twitter_identity_same_verified = await verifyErrorIdentity(
-    //         context,
-    //         context.defaultSigner[0],
-    //         aesKey,
-    //         true,
-    //         twitterIdentity,
-    //         twitterValidationData
-    //     );
-    //     // console.log(twitter_identity_error_verified.toHuman());
-    //     assert.equal(
-    //         twitter_identity_same_verified,
-    //         'code not found',
-    //         'verify twitter should fail with reason `code not found`'
-    //     );
+    step('verify error identity', async function () {
+        //https://github.com/litentry/litentry-parachain/issues/1374
+        const resp_same_verify = (await verifyErrorIdentities(
+            context,
+            context.defaultSigner[0],
+            true,
+            [twitterIdentity, ethereumIdentity, substrateIdentity],
+            [twitterValidationData, ethereumValidationData, substrateValidationData]
+        )) as string[];
 
-    //     const ethereum_identity_not_exist_verified = await verifyErrorIdentity(
-    //         context,
-    //         context.defaultSigner[2],
-    //         aesKey,
-    //         true,
-    //         ethereumIdentity,
-    //         ethereumValidationData
-    //     );
-    //     assert.equal(
-    //         ethereum_identity_not_exist_verified,
-    //         'code not found',
-    //         'verify ethereum should fail with reason `code not found`'
-    //     );
-    // });
+        for (let k = 0; k < resp_same_verify.length; k++) {
+            const data = resp_same_verify[k];
+            assert.equal(
+                data,
+                'code not found',
+                'verify same identities to one account should fail with reason `code not found`'
+            );
+        }
+
+        const resp_not_exist_verify = (await verifyErrorIdentities(
+            context,
+            context.defaultSigner[2],
+            true,
+            [twitterIdentity, ethereumIdentity, substrateIdentity],
+            [twitterValidationData, ethereumValidationData, substrateValidationData]
+        )) as string[];
+
+        for (let l = 0; l < resp_not_exist_verify.length; l++) {
+            const data = resp_not_exist_verify[l];
+            assert.equal(
+                data,
+                'code not found',
+                'verify nonexistent identity should fail with reason `code not found`'
+            );
+        }
+    });
     step('remove identities', async function () {
         // Alice remove all identities
         const [twitter_identity_removed, ethereum_identity_removed, substrate_identity_removed] =
