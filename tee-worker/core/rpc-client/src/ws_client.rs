@@ -23,9 +23,11 @@ use crate::error::{Error, Result as RpcClientResult};
 use log::*;
 use openssl::ssl::{SslConnector, SslMethod, SslStream, SslVerifyMode};
 use parking_lot::Mutex;
-use std::sync::{mpsc::Sender as MpscSender, Arc};
-use std::thread::sleep;
-use std::time::Duration;
+use std::{
+	sync::{mpsc::Sender as MpscSender, Arc},
+	thread::sleep,
+	time::Duration,
+};
 use url::{self};
 use ws::{connect, util::TcpStream, CloseCode, Handler, Handshake, Message, Result, Sender};
 
