@@ -281,25 +281,7 @@ export async function verifyIdentities(
 }
 
 //vcManagement
-export async function requestVC(
-    context: IntegrationTestContext,
-    signer: KeyringPair,
-    aesKey: HexString,
-    listening: boolean,
-    mrEnclave: HexString,
-    assertion: Assertion
-): Promise<HexString[] | undefined> {
-    const tx = context.substrate.tx.vcManagement.requestVc(mrEnclave, assertion);
 
-    await sendTxUntilInBlock(context.substrate, tx, signer);
-    if (listening) {
-        const events = await listenEvent(context.substrate, 'vcManagement', ['VCIssued']);
-        expect(events.length).to.be.equal(1);
-        const [account, index, vc] = events[0].data as any;
-        return [account.toHex(), index.toHex(), decryptWithAES(aesKey, vc, 'utf-8')];
-    }
-    return undefined;
-}
 export async function requestVCs(
     context: IntegrationTestContext,
     signer: KeyringPair,
@@ -352,24 +334,7 @@ export async function requestVCs(
     }
     return undefined;
 }
-export async function disableVC(
-    context: IntegrationTestContext,
-    signer: KeyringPair,
-    aesKey: HexString,
-    listening: boolean,
-    index: HexString
-): Promise<HexString | undefined> {
-    const tx = context.substrate.tx.vcManagement.disableVc(index);
 
-    await sendTxUntilInBlock(context.substrate, tx, signer);
-    if (listening) {
-        const events = await listenEvent(context.substrate, 'vcManagement', ['VCDisabled']);
-        expect(events.length).to.be.equal(1);
-        const data = events[0].data as any;
-        return data.index.toHex();
-    }
-    return undefined;
-}
 export async function disableVCs(
     context: IntegrationTestContext,
     signer: KeyringPair,
@@ -399,24 +364,7 @@ export async function disableVCs(
     }
     return undefined;
 }
-export async function revokeVC(
-    context: IntegrationTestContext,
-    signer: KeyringPair,
-    aesKey: HexString,
-    listening: boolean,
-    index: HexString
-): Promise<HexString | undefined> {
-    const tx = context.substrate.tx.vcManagement.revokeVc(index);
 
-    await sendTxUntilInBlock(context.substrate, tx, signer);
-    if (listening) {
-        const events = await listenEvent(context.substrate, 'vcManagement', ['VCRevoked']);
-        expect(events.length).to.be.equal(1);
-        const data = events[0].data as any;
-        return data.index.toHex();
-    }
-    return undefined;
-}
 export async function revokeVCs(
     context: IntegrationTestContext,
     signer: KeyringPair,
