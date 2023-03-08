@@ -26,6 +26,7 @@ use itc_rest_client::{
 	RestGet, RestPath,
 };
 use litentry_primitives::{EvmNetwork, SubstrateNetwork};
+use log::*;
 use serde::{Deserialize, Serialize};
 use std::{
 	collections::HashMap,
@@ -186,6 +187,8 @@ impl GraphQLClient {
 		&mut self,
 		credentials: VerifiedCredentialsIsHodlerIn,
 	) -> Result<IsHodlerOut, Error> {
+		debug!("check is_holder, credentials: {}", credentials.to_graphql());
+
 		// FIXME: for the moment, the `path` is partially hard-code here.
 		let path = "latest/graphql".to_string();
 		let query_value = credentials.to_graphql();
@@ -209,6 +212,8 @@ impl GraphQLClient {
 		&mut self,
 		credentials: VerifiedCredentialsTotalTxs,
 	) -> Result<Vec<TotalTxsStruct>, Error> {
+		debug!("check total_trx, credentials: {}", credentials.to_graphql());
+
 		let path = "latest/graphql".to_string();
 		let query_value = credentials.to_graphql();
 		let query = vec![("query", query_value.as_str())];

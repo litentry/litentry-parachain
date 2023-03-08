@@ -18,6 +18,7 @@ itp-stf-executor = { path = "../../../core-primitives/stf-executor", default-fea
 itp-stf-primitives = { path = "../../../core-primitives/stf-primitives", default-features = false }
 itp-top-pool-author = { path = "../../../core-primitives/top-pool-author", default-features = false }
 itp-types = { path = "../../../core-primitives/types", default-features = false }
+itp-utils = { default-features = false, path = "../../../core-primitives/utils" }
 
 # sgx enabled external libraries
 futures_sgx = { package = "futures", git = "https://github.com/mesalock-linux/futures-rs-sgx", optional = true }
@@ -74,6 +75,7 @@ sgx = [
     "litentry-primitives/sgx",
     "itp-enclave-scheduled/sgx",
     "itp-component-container/sgx",
+    "itp-utils/sgx",
 ]
 std = [
     "bs58/std",
@@ -99,4 +101,5 @@ std = [
     "litentry-primitives/std",
     "pallet-imp/std",
     "pallet-vcmp/std",
+    "itp-utils/std",
 ]

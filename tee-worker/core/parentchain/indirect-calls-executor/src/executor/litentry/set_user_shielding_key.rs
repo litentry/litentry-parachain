@@ -33,7 +33,9 @@ use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, Shieldin
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{SetUserShieldingKeyFn, H256};
+use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::UserShieldingKeyType;
+use log::*;
 use sp_runtime::traits::{AccountIdLookup, StaticLookup};
 
 pub(crate) struct SetUserShieldingKey {}
@@ -79,6 +81,8 @@ impl SetUserShieldingKey {
 
 		if let Some((multiaddress_account, _, _)) = extrinsic.signature {
 			let account = AccountIdLookup::lookup(multiaddress_account)?;
+			debug!("indirect call SetUserShieldingKey, who:{:?}", account_id_to_string(&account));
+
 			let enclave_account_id = context.stf_enclave_signer.get_enclave_account()?;
 			let trusted_call =
 				TrustedCall::set_user_shielding_key_runtime(enclave_account_id, account, key);
@@ -135,10 +139,7 @@ where
 			// try to handle the error internally, if we get another error, log it and return the
 			// original error
 			if let Err(internal_e) = context.submit_trusted_call_from_error(shard, &e) {
-				log::warn!(
-					"fail to handle internal errors in set_user_shielding_key: {:?}",
-					internal_e
-				);
+				warn!("fail to handle internal errors in set_user_shielding_key: {:?}", internal_e);
 			}
 			return Err(e)
 		}

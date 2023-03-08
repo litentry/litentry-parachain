@@ -76,7 +76,6 @@ where
         	call, account_encrypted, amount, bs58::encode(shard.encode()).into_string());
 
 		debug!("decrypt the account id");
-
 		let shielding_key = context.shielding_key_repo.retrieve_key()?;
 		let account_vec = shielding_key.decrypt(&account_encrypted)?;
 
