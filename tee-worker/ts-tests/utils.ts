@@ -120,6 +120,35 @@ export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrins
     });
 }
 
+export async function sendTxUntilInBlockList(
+    api: ApiPromise,
+    txs: {
+        tx: SubmittableExtrinsic<ApiTypes>;
+        nonce: string;
+    }[],
+    signer: KeyringPair
+) {
+    return new Promise<{
+        block: string;
+    }>(async (resolve, reject) => {
+        await Promise.all(
+            txs.map(async ({ tx, nonce }) => {
+                // await tx.paymentInfo(signer);
+                tx.signAndSend(signer, { nonce }, (result) => {
+                    if (result.status.isInBlock) {
+                        console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
+                        resolve({
+                            block: result.status.asInBlock.toString(),
+                        });
+                    } else if (result.status.isInvalid) {
+                        reject(`Transaction is ${result.status}`);
+                    }
+                });
+            })
+        );
+    });
+}
+
 // Subscribe to the chain until we get the first specified event with given `section` and `methods`.
 // We can listen to multiple `methods` as long as they are emitted in the same block.
 // The event consumer should do the decryption optionaly as it's event specific
