@@ -295,18 +295,17 @@ pub mod pallet {
 			trusted_calls_merkle_root: H256,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			Self::ensure_registered_enclave(&sender)?;
 			log::debug!(
-				"Processed parentchain block confirmed for mrenclave {:?}, block hash {:?}",
+				"Processed parentchain block confirmed for enclave {:?}, block_hash {:?}, block_number {:?}",
 				sender,
-				block_hash
+				block_hash,
+				block_number
 			);
+			Self::ensure_registered_enclave(&sender)?;
 
-			let sender_index = <EnclaveIndex<T>>::get(sender.clone());
-			let mut sender_enclave =
-				<EnclaveRegistry<T>>::get(sender_index).ok_or(Error::<T>::EmptyEnclaveRegistry)?;
-			sender_enclave.timestamp = <timestamp::Pallet<T>>::get().saturated_into();
-			<EnclaveRegistry<T>>::insert(sender_index, sender_enclave);
+			let mut enclave = Self::get_enclave(&sender)?;
+			enclave.timestamp = <timestamp::Pallet<T>>::get().saturated_into();
+			Self::add_enclave(&sender, &enclave)?;
 
 			Self::deposit_event(Event::ProcessedParentchainBlock(
 				sender,
