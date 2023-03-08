@@ -25,6 +25,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
+use log::*;
 use serde::{Deserialize, Serialize};
 use std::{
 	default::Default,
@@ -120,6 +121,8 @@ impl TwitterOfficialClient {
 	/// rate limit: 300/15min(per App) 900/15min(per User)
 	pub fn query_tweet(&mut self, tweet_id: Vec<u8>) -> Result<Tweet, Error> {
 		let tweet_id = vec_to_string(tweet_id)?;
+		debug!("twitter query tweet, id: {}", tweet_id);
+
 		let path = format!("/2/tweets/{}", tweet_id);
 		let query: Vec<(&str, &str)> = vec![("expansions", "author_id")];
 
@@ -155,6 +158,8 @@ impl TwitterOfficialClient {
 	) -> Result<Tweet, Error> {
 		let original_tweet_id = vec_to_string(original_tweet_id)?;
 		let user = vec_to_string(user)?;
+		debug!("twitter query retweet, user: {}, original_tweet_id: {}", user, original_tweet_id);
+
 		let query_value = format!("from: {} retweets_of_tweet_id: {}", user, original_tweet_id);
 		let query: Vec<(&str, &str)> =
 			vec![("query", query_value.as_str()), ("expansions", "author_id")];
@@ -187,6 +192,7 @@ impl TwitterOfficialClient {
 	/// rate limit: 300/15min(per App) 900/15min(per User)
 	pub fn query_user(&mut self, user: Vec<u8>) -> Result<TwitterUser, Error> {
 		let user = vec_to_string(user)?;
+		debug!("twitter query user, user: {}", user);
 
 		let query = vec![("user.fields", "public_metrics")];
 		let resp = self

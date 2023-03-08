@@ -23,6 +23,7 @@ extern crate sgx_tstd as std;
 use crate::{from_data_provider_error, Error, Result};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
+use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
@@ -48,6 +49,13 @@ pub fn build(
 	who: &AccountId,
 	bn: ParentchainBlockNumber,
 ) -> Result<Credential> {
+	debug!(
+		"Assertion A4 build, who: {:?}, bn: {}, identities: {:?}",
+		account_id_to_string(&who),
+		bn,
+		identities
+	);
+
 	let mut client = GraphQLClient::new();
 	let mut found = false;
 	let mut from_date_index = 0_usize;
@@ -81,12 +89,25 @@ pub fn build(
 
 			let mut addresses: Vec<String> = vec![];
 			match &identity {
-				Identity::Evm { address, .. } =>
-					addresses.push(from_utf8(address.as_ref()).unwrap().to_string()),
-				Identity::Substrate { address, .. } =>
-					addresses.push(from_utf8(address.as_ref()).unwrap().to_string()),
-				Identity::Web2 { address, .. } =>
-					addresses.push(from_utf8(address).unwrap().to_string()),
+				Identity::Evm { address, .. } => match from_utf8(address.as_ref()) {
+					Ok(addr) => addresses.push(addr.to_string()),
+					Err(e) =>
+						error!("	[AssertionBuild] A4 parse error Evm address {:?}, {:?}", address, e),
+				},
+				Identity::Substrate { address, .. } => match from_utf8(address.as_ref()) {
+					Ok(addr) => addresses.push(addr.to_string()),
+					Err(e) => error!(
+						"	[AssertionBuild] A4 parse error Substrate address {:?}, {:?}",
+						address, e
+					),
+				},
+				Identity::Web2 { address, .. } => match from_utf8(address.as_ref()) {
+					Ok(addr) => addresses.push(addr.to_string()),
+					Err(e) => error!(
+						"	[AssertionBuild] A4 parse error Web2 address {:?}, {:?}",
+						address, e
+					),
+				},
 			}
 			let mut tmp_token_addr = String::from("");
 			if verified_network == VerifiedCredentialsNetwork::Ethereum {

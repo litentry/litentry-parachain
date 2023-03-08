@@ -26,6 +26,7 @@ use itp_node_api::{
 };
 use itp_types::{CallRemoveScheduledEnclaveFn, CallUpdateScheduledEnclaveFn};
 use litentry_primitives::ParentchainBlockNumber;
+use log::*;
 use std::sync::Arc;
 
 pub(crate) struct ScheduledEnclaveUpdate {
@@ -60,6 +61,8 @@ impl ScheduledEnclaveUpdate {
 		NodeMetadataProvider::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
 	{
 		let (_, sidechain_block_number, mr_enclave) = extrinsic.function;
+		debug!("execute indirect call: ScheduledEnclaveUpdate, sidechain_block_number: {}, mr_enclave: {:?}", sidechain_block_number, mr_enclave);
+
 		let scheduled_enclave = ScheduledEnclaveInfo {
 			parachain_block_number: self.block_number,
 			sidechain_block_number,
@@ -130,6 +133,11 @@ impl ScheduledEnclaveRemove {
 		NodeMetadataProvider::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
 	{
 		let (_, sidechain_block_number) = extrinsic.function;
+		debug!(
+			"execute indirect call: ScheduledEnclaveRemove, sidechain_block_number: {}",
+			sidechain_block_number
+		);
+
 		let old_enclaves = GLOBAL_SIDECHAIN_SCHEDULED_ENCLABES.get()?;
 		// `unwrap()` is safe here, because GLOBAL_SIDECHAIN_SCHEDULED_ENCLABES is initialized in `init_enclave()`
 		let mut scheduled_enclaves = Arc::<ScheduledEnclaves>::try_unwrap(old_enclaves).unwrap();
