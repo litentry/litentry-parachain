@@ -194,14 +194,6 @@ impl Proof {
 	pub fn is_empty(&self) -> bool {
 		self.proof_value.is_empty()
 	}
-
-	pub fn is_valid(&self) -> Result<bool, Error> {
-		if self.created_block_number == 0 {
-			return Err(Error::EmptyProofBlockNumber)
-		}
-
-		Ok(true)
-	}
 }
 
 #[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
