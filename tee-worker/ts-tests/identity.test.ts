@@ -15,7 +15,7 @@ import { ethers } from 'ethers';
 import { HexString } from '@polkadot/util/types';
 import { KeyringPair } from '@polkadot/keyring/types';
 import {
-    createErrorIdentity,
+    createErrorIdentities,
     removeErrorIdentity,
     setErrorUserShieldingKey,
     removeErrorIdentityList,
@@ -242,7 +242,7 @@ describeLitentry('Test Identity', (context) => {
     });
 
     step('verify error identity', async function () {
-        //https://github.com/litentry/litentry-parachain/issues/1374
+        // verify same identities to one account
         const resp_same_verify = (await verifyErrorIdentities(
             context,
             context.defaultSigner[0],
@@ -260,6 +260,7 @@ describeLitentry('Test Identity', (context) => {
             );
         }
 
+        //verify an identity to an account but it isn't created before
         const resp_not_exist_verify = (await verifyErrorIdentities(
             context,
             context.defaultSigner[2],
@@ -305,12 +306,33 @@ describeLitentry('Test Identity', (context) => {
     });
 
     step('remove error identities', async function () {
-        const error_identities = (await removeErrorIdentityList(context, context.defaultSigner[0], aesKey, true, [
-            twitterIdentity,
-            ethereumIdentity,
-            substrateIdentity,
-        ])) as any;
-        error_identities.map((item: any) => {
+        //remove a nonexistent identity from an account
+        const resp_not_exist_identities = (await removeErrorIdentityList(
+            context,
+            context.defaultSigner[0],
+            aesKey,
+            true,
+            [twitterIdentity, ethereumIdentity, substrateIdentity]
+        )) as string[];
+
+        resp_not_exist_identities.map((item: any) => {
+            const result = item.toHuman().data.reason;
+            assert(
+                result.search('IdentityNotExist') !== -1,
+                'remove twitter should fail with reason `IdentityNotExist`'
+            );
+        });
+
+        //remove a challenge code before the code is set
+        const resp_not_created_identities = (await removeErrorIdentityList(
+            context,
+            context.defaultSigner[2],
+            aesKey,
+            true,
+            [twitterIdentity, ethereumIdentity, substrateIdentity]
+        )) as string[];
+
+        resp_not_created_identities.map((item: any) => {
             const result = item.toHuman().data.reason;
             assert(
                 result.search('IdentityNotExist') !== -1,
@@ -328,10 +350,15 @@ describeLitentry('Test Identity', (context) => {
         );
     });
 
-    step('create error identity', async function () {
+    step('create error identities', async function () {
         //The simulation generates the wrong Ciphertext
-        const result = await createErrorIdentity(context, context.defaultSigner[0], aesKey, true, errorCiphertext);
-        assert.equal(result, 'CreateIdentityHandlingFailed', 'result is not equal to CreateIdentityHandlingFailed');
+        const resp_error_identities = (await createErrorIdentities(context, context.defaultSigner[0], aesKey, true, [
+            errorCiphertext,
+        ])) as string[];
+        for (let i = 0; i < resp_error_identities.length; i++) {
+            const result = resp_error_identities[i];
+            assert.equal(result, 'CreateIdentityHandlingFailed', 'result is not equal to CreateIdentityHandlingFailed');
+        }
     });
 });
 
