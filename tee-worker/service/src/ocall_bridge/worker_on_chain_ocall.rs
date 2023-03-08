@@ -104,6 +104,24 @@ where
 			}
 
 			// try to reset nonce, put it in a separate thread as nested ECALL/OCALL is not allowed
+			// see https://github.com/litentry/litentry-parachain/issues/1036
+			//     https://github.com/integritee-network/worker/issues/970
+			//
+			// This workaround is likely to cause duplicate nonce or "transaction outdated" in the parentchain
+			// tx pool, because we the on-chain nonce doesn't count the pending tx, meanwhile the extrinsic factory
+			// keeps composing new extrinsics. So the nonce used for the new extrinsics can collide with the already
+			// submitted tx. As a result, a few txs can be dropped during parentchain tx pool processing. Not to mention
+			// the thread dispatch delays and network delays (query on-chain nonce).
+			//
+			// However, we still consider it better than the current situation, where the nonce never gets a chance of
+			// correction and all following extrinsics will be blocked. Moreover, the txs sent to the parentchain are
+			// "notification extrinsics" in most cases and don't cause chain state change, therefore we deem it less harmful
+			// to drop them - the worst case is some action is wrongly intepreted as "failed" (because F/E doesn't get the
+			// event in time) while it actually succeeds. In that case the user needs to re-do the extrinsic, which is not
+			// optimal, but still better than the chain stalling.
+			//
+			// To have a better synchronisation handling we probably need a sending queue in extrinsic factory that
+			// can be paused on demand (or wait for the nonce synchronisation).
 			if send_extrinsic_failed {
 				// drop &self lifetime
 				let node_api_factory_cloned = self.node_api_factory.clone();
@@ -111,11 +129,15 @@ where
 				thread::spawn(move || {
 					let api = node_api_factory_cloned.create_api().unwrap();
 					let enclave_account = enclave_account(enclave_cloned.as_ref());
-					if let Ok(nonce) = api.get_nonce_of(&enclave_account) {
-						warn!("send_extrinsic failed, reset nonce to: {}", nonce);
-						if let Err(e) = enclave_cloned.set_nonce(nonce) {
-							warn!("failed to reset nonce due to: {:?}", e);
-						}
+					warn!("send_extrinsic failed, try to reset nonce ...");
+					match api.get_nonce_of(&enclave_account) {
+						Ok(nonce) => {
+							warn!("query on-chaon nonce OK, reset nonce to: {}", nonce);
+							if let Err(e) = enclave_cloned.set_nonce(nonce) {
+								warn!("failed to reset nonce due to: {:?}", e);
+							}
+						},
+						Err(e) => warn!("query on-chain nonce failed: {:?}", e),
 					}
 				});
 			}
