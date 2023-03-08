@@ -35,7 +35,9 @@ pub mod pallet_sidechain;
 pub mod pallet_system;
 pub mod pallet_teeracle;
 pub mod pallet_teerex;
+pub mod pallet_utility;
 pub mod pallet_vcmp;
+pub mod runtime_call;
 
 #[cfg(feature = "std")]
 pub mod event;

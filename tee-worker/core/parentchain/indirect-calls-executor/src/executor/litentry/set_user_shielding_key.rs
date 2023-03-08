@@ -15,7 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	error::{Error, IMPError},
+	error::{Error, IMPError, Result},
 	executor::Executor,
 	IndirectCallsExecutor,
 };
@@ -24,8 +24,9 @@ use ita_stf::{TrustedCall, TrustedOperation};
 use itp_node_api::{
 	api_client::ParentchainUncheckedExtrinsic,
 	metadata::{
-		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, pallet_vcmp::VCMPCallIndexes,
-		provider::AccessNodeMetadata, Error as MetadataError,
+		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes,
+		pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes,
+		provider::AccessNodeMetadata,
 	},
 };
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
@@ -61,7 +62,7 @@ impl SetUserShieldingKey {
 				NodeMetadataProvider,
 			>>::Call,
 		>,
-	) -> Result<(), Error>
+	) -> Result<()>
 	where
 		ShieldingKeyRepository: AccessKey,
 		<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
@@ -69,9 +70,10 @@ impl SetUserShieldingKey {
 		StfEnclaveSigner: StfEnclaveSigning,
 		TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 		NodeMetadataProvider: AccessNodeMetadata,
-		NodeMetadataProvider::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
+		NodeMetadataProvider::MetadataType:
+			IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UtilityCallIndexes,
 	{
-		let (_, shard, encrypted_key) = extrinsic.function;
+		let (_, (shard, encrypted_key)) = extrinsic.function;
 		let shielding_key = context.shielding_key_repo.retrieve_key()?;
 
 		let key =
@@ -105,7 +107,8 @@ where
 	StfEnclaveSigner: StfEnclaveSigning,
 	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
-	NodeMetadataProvider::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
+	NodeMetadataProvider::MetadataType:
+		IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UtilityCallIndexes,
 {
 	type Call = SetUserShieldingKeyFn;
 
@@ -116,8 +119,8 @@ where
 	fn call_index_from_metadata(
 		&self,
 		metadata_type: &NodeMetadataProvider::MetadataType,
-	) -> Result<[u8; 2], MetadataError> {
-		metadata_type.set_user_shielding_key_call_indexes()
+	) -> Result<[u8; 2]> {
+		metadata_type.set_user_shielding_key_call_indexes().map_err(|e| e.into())
 	}
 
 	fn execute(
@@ -129,8 +132,8 @@ where
 			NodeMetadataProvider,
 		>,
 		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
-	) -> Result<(), Error> {
-		let (_, shard, _) = extrinsic.function;
+	) -> Result<()> {
+		let (_, (shard, _)) = extrinsic.function;
 		let e = Error::IMPHandlingError(IMPError::SetUserShieldingKeyHandlingFailed);
 		if self.execute_internal(context, extrinsic).is_err() {
 			// try to handle the error internally, if we get another error, log it and return the
