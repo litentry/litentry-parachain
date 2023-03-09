@@ -512,27 +512,6 @@ jobs:
         run: |
           cd tee-worker/docker
           docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} ${{ matrix.test_name }}
-          #
-          # check `ProcessedParentchainBlock` event for lit-parentchain-nonce test
-          # TODO: maybe we should put it inside the test - but I don't find a quick way (volume mount?)
-          #
-          if [ "${{ matrix.test_name }}" = "lit-parentchain-nonce" ]; then
-            old_cnt1=$(docker compose logs integritee-worker-1 2>&1 | grep ProcessedParentchainBlock | wc -l)
-            old_cnt2=$(docker compose logs integritee-worker-2 2>&1 | grep ProcessedParentchainBlock | wc -l)
-            sleep 240
-            new_cnt1=$(docker compose logs integritee-worker-1 2>&1 | grep ProcessedParentchainBlock | wc -l)
-            new_cnt2=$(docker compose logs integritee-worker-2 2>&1 | grep ProcessedParentchainBlock | wc -l)
-            echo "worker 1: old = $old_cnt1, new = $new_cnt1"
-            echo "worker 2: old = $old_cnt2, new = $new_cnt2"
-            # 240s should be 20 blocks, given the delays we expect there're at least 10 more events
-            if [ $new_cnt1 -ge $((old_cnt1 + 10)) ] && [ $new_cnt2 -ge $((old_cnt2 + 10)) ]; then
-              echo "All good."
-              exit 0
-            else
-              echo "Not enough ProcessedParentchainBlock events"
-              exit 1
-            fi
-          fi
 
       - name: Stop docker containers
         if: needs.set-condition.outputs.run_tee_test == 'true'

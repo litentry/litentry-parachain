@@ -67,3 +67,8 @@ echo "* Send wrong parentchain extrinsic"
 ${CLIENT} trusted --mrenclave $MRENCLAVE --direct send-erroneous-parentchain-call
 echo ""
 
+sleep 10
+# wait for 20 `ProcessedParentchainBlock` events, which should take around 2 min (2 workers)
+# if the incoming parentchain extrinsic is blocked (due to the wrong nonce), there won't be
+# such many events.
+timeout -v --foreground 150s $CLIENT listen -e 20
