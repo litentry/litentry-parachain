@@ -93,6 +93,7 @@ use std::{
 	str,
 	sync::{mpsc::channel, Arc},
 	thread,
+	thread::sleep,
 	time::Duration,
 };
 use substrate_api_client::{
@@ -676,12 +677,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		thread::Builder::new()
 			.name("parentchain_sync_loop".to_owned())
 			.spawn(move || {
-				if let Err(e) =
-					subscribe_to_parentchain_new_headers(parentchain_handler, last_synced_header)
-				{
-					error!("Parentchain block syncing terminated with a failure: {:?}", e);
-				}
-				println!("[!] Parentchain block syncing has terminated");
+				subscribe_to_parentchain_new_headers(parentchain_handler, last_synced_header);
 			})
 			.unwrap();
 	}
@@ -787,27 +783,39 @@ fn send_extrinsic(
 fn subscribe_to_parentchain_new_headers<E: EnclaveBase + Sidechain>(
 	parentchain_handler: Arc<ParentchainHandler<ParentchainApi, E>>,
 	mut last_synced_header: Header,
-) -> Result<(), Error> {
-	let (sender, receiver) = channel();
-	//TODO: this should be implemented by parentchain_handler directly, and not via
-	// exposed parentchain_api. Blocked by https://github.com/scs/substrate-api-client/issues/267.
-	parentchain_handler
-		.parentchain_api()
-		.subscribe_finalized_heads(sender)
-		.map_err(Error::ApiClient)?;
-
+) {
 	loop {
-		let new_header: Header = match receiver.recv() {
-			Ok(header_str) => serde_json::from_str(&header_str).map_err(Error::Serialization),
-			Err(e) => Err(Error::ApiSubscriptionDisconnected(e)),
-		}?;
-
-		println!(
-			"[+] Received finalized header update ({}), syncing parent chain...",
-			new_header.number
-		);
-
-		last_synced_header = parentchain_handler.sync_parentchain(last_synced_header)?;
+		let (sender, receiver) = channel();
+		//TODO: this should be implemented by parentchain_handler directly, and not via
+		// exposed parentchain_api. Blocked by https://github.com/scs/substrate-api-client/issues/267.
+		if let Err(e) = parentchain_handler.parentchain_api().subscribe_finalized_heads(sender) {
+			println!("[-] connect ws error: {e:?}");
+			sleep(Duration::from_secs(1));
+			break
+		}
+		loop {
+			match receiver.recv() {
+				Ok(header_str) => {
+					let new_header: Header = serde_json::from_str(&header_str).unwrap();
+					println!(
+						"[+] Received finalized header update ({}), syncing parent chain...",
+						new_header.number
+					);
+					match parentchain_handler.sync_parentchain(last_synced_header.clone()) {
+						Err(e) => {
+							println!("[-] sync parentchain error: {e:?}");
+							break
+						},
+						Ok(h) => last_synced_header = h,
+					}
+				},
+				Err(_) => {
+					println!("[-] ws disconnected");
+					sleep(Duration::from_secs(1));
+					break
+				},
+			};
+		}
 	}
 }
 
