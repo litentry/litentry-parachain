@@ -325,35 +325,35 @@ where
 	for _i in 0..vector.len() {
 		let call_index: CallIndex = Decode::decode(input)?;
 		supported_call.iter_mut().for_each(|call| match call {
-			SupportedCall::SetUserShieldingKey(expected_call_idnex, _params) =>
-				if expected_call_idnex == &call_index {
+			SupportedCall::SetUserShieldingKey(expected_call_index, _params) =>
+				if expected_call_index == &call_index {
 					let actual_params = SetUserShieldingKeyParameters::decode(input).unwrap();
 					actual_calls
 						.push(SupportedCall::SetUserShieldingKey(call_index, Some(actual_params)));
 				},
-			SupportedCall::CreateIdentity(expected_call_idnex, _params) => {
-				if expected_call_idnex == &call_index {
+			SupportedCall::CreateIdentity(expected_call_index, _params) => {
+				if expected_call_index == &call_index {
 					let actual_params = CreateIdentityParameters::decode(input).unwrap();
 					actual_calls
 						.push(SupportedCall::CreateIdentity(call_index, Some(actual_params)));
 				}
 			},
-			SupportedCall::RemoveIdentity(expected_call_idnex, _params) => {
-				if expected_call_idnex == &call_index {
+			SupportedCall::RemoveIdentity(expected_call_index, _params) => {
+				if expected_call_index == &call_index {
 					let actual_params = RemoveIdentityParameters::decode(input).unwrap();
 					actual_calls
 						.push(SupportedCall::RemoveIdentity(call_index, Some(actual_params)));
 				}
 			},
-			SupportedCall::VerifyIdentity(expected_call_idnex, _params) => {
-				if expected_call_idnex == &call_index {
+			SupportedCall::VerifyIdentity(expected_call_index, _params) => {
+				if expected_call_index == &call_index {
 					let actual_params = VerifyIdentityParameters::decode(input).unwrap();
 					actual_calls
 						.push(SupportedCall::VerifyIdentity(call_index, Some(actual_params)));
 				}
 			},
-			SupportedCall::RequestVC(expected_call_idnex, _params) => {
-				if expected_call_idnex == &call_index {
+			SupportedCall::RequestVC(expected_call_index, _params) => {
+				if expected_call_index == &call_index {
 					let actual_params = RequestVCParameters::decode(input).unwrap();
 					actual_calls.push(SupportedCall::RequestVC(call_index, Some(actual_params)));
 				}

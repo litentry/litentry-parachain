@@ -20,7 +20,8 @@ use codec::{Decode, Encode};
 use itp_node_api::{
 	api_client::ParentchainUncheckedExtrinsic,
 	metadata::{
-		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, pallet_vcmp::VCMPCallIndexes,
+		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes,
+		pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes,
 		provider::AccessNodeMetadata,
 	},
 };
@@ -108,7 +109,8 @@ impl<E, ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataPro
 where
 	E: Executor<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>,
 	NodeMetadataProvider: AccessNodeMetadata,
-	NodeMetadataProvider::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
+	NodeMetadataProvider::MetadataType:
+		IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UtilityCallIndexes,
 {
 	fn decode_and_execute(
 		&self,
