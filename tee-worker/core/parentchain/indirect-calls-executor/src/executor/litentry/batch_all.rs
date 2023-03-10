@@ -69,82 +69,53 @@ impl BatchAll {
 	{
 		let (_, calls) = extrinsic.function;
 
+		// we don't need to check is_target_call() again - this is guaranteed when filling Vec<BatchCall>
 		for call in calls {
 			match call.params {
 				SupportedBatchCallParams::SetUserShieldingKey(p) => {
 					let set_user_shielding_key = SetUserShieldingKey {};
 					let c = (call.index, p);
-					if Executor::<R, S, T, N>::is_target_call(
-						&set_user_shielding_key,
-						&c,
-						context.node_metadata_provider.as_ref(),
-					) {
-						let xt = ParentchainUncheckedExtrinsic {
-							function: c,
-							signature: extrinsic.signature.clone(),
-						};
-						set_user_shielding_key.execute(context, xt)?;
-					}
+					let xt = ParentchainUncheckedExtrinsic {
+						function: c,
+						signature: extrinsic.signature.clone(),
+					};
+					set_user_shielding_key.execute(context, xt)?;
 				},
 				SupportedBatchCallParams::CreateIdentity(p) => {
 					let create_identity = CreateIdentity { block_number: self.block_number };
 					let c = (call.index, p);
-					if Executor::<R, S, T, N>::is_target_call(
-						&create_identity,
-						&c,
-						context.node_metadata_provider.as_ref(),
-					) {
-						let xt = ParentchainUncheckedExtrinsic {
-							function: c,
-							signature: extrinsic.signature.clone(),
-						};
-						create_identity.execute(context, xt)?;
-					}
+					let xt = ParentchainUncheckedExtrinsic {
+						function: c,
+						signature: extrinsic.signature.clone(),
+					};
+					create_identity.execute(context, xt)?;
 				},
 				SupportedBatchCallParams::RemoveIdentity(p) => {
 					let remove_identity = RemoveIdentity {};
 					let c = (call.index, p);
-					if Executor::<R, S, T, N>::is_target_call(
-						&remove_identity,
-						&c,
-						context.node_metadata_provider.as_ref(),
-					) {
-						let xt = ParentchainUncheckedExtrinsic {
-							function: c,
-							signature: extrinsic.signature.clone(),
-						};
-						remove_identity.execute(context, xt)?;
-					}
+					let xt = ParentchainUncheckedExtrinsic {
+						function: c,
+						signature: extrinsic.signature.clone(),
+					};
+					remove_identity.execute(context, xt)?;
 				},
 				SupportedBatchCallParams::VerifyIdentity(p) => {
 					let verify_identity = VerifyIdentity { block_number: self.block_number };
 					let c = (call.index, p);
-					if Executor::<R, S, T, N>::is_target_call(
-						&verify_identity,
-						&c,
-						context.node_metadata_provider.as_ref(),
-					) {
-						let xt = ParentchainUncheckedExtrinsic {
-							function: c,
-							signature: extrinsic.signature.clone(),
-						};
-						verify_identity.execute(context, xt)?;
-					}
+					let xt = ParentchainUncheckedExtrinsic {
+						function: c,
+						signature: extrinsic.signature.clone(),
+					};
+					verify_identity.execute(context, xt)?;
 				},
 				SupportedBatchCallParams::RequestVC(p) => {
 					let request_vc = RequestVC { block_number: self.block_number };
 					let c = (call.index, p);
-					if Executor::<R, S, T, N>::is_target_call(
-						&request_vc,
-						&c,
-						context.node_metadata_provider.as_ref(),
-					) {
-						let xt = ParentchainUncheckedExtrinsic {
-							function: c,
-							signature: extrinsic.signature.clone(),
-						};
-						request_vc.execute(context, xt)?;
-					}
+					let xt = ParentchainUncheckedExtrinsic {
+						function: c,
+						signature: extrinsic.signature.clone(),
+					};
+					request_vc.execute(context, xt)?;
 				},
 			};
 		}
