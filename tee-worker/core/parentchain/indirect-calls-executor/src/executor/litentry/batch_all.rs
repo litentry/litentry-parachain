@@ -223,11 +223,30 @@ pub(crate) fn decode_batch_call(
 
 	for _i in 0..call_count.len() {
 		let index: CallIndex = Decode::decode(input)?;
-		let params = supported_batch_call_map
-			.get(&index)
-			.ok_or(Error::BatchAllHandlingError)?
-			.clone();
+		let p = supported_batch_call_map.get(&index).ok_or(Error::BatchAllHandlingError)?;
 
+		let params = match p {
+			SupportedBatchCallParams::SetUserShieldingKey(..) => {
+				let decoded_params = SetUserShieldingKeyParams::decode(input)?;
+				SupportedBatchCallParams::SetUserShieldingKey(decoded_params)
+			},
+			SupportedBatchCallParams::CreateIdentity(..) => {
+				let decoded_params = CreateIdentityParams::decode(input)?;
+				SupportedBatchCallParams::CreateIdentity(decoded_params)
+			},
+			SupportedBatchCallParams::RemoveIdentity(..) => {
+				let decoded_params = RemoveIdentityParams::decode(input)?;
+				SupportedBatchCallParams::RemoveIdentity(decoded_params)
+			},
+			SupportedBatchCallParams::VerifyIdentity(..) => {
+				let decoded_params = VerifyIdentityParams::decode(input)?;
+				SupportedBatchCallParams::VerifyIdentity(decoded_params)
+			},
+			SupportedBatchCallParams::RequestVC(..) => {
+				let decoded_params = RequestVCParams::decode(input)?;
+				SupportedBatchCallParams::RequestVC(decoded_params)
+			},
+		};
 		calls.push(BatchCall { index, params });
 	}
 	Ok((call_index, calls))

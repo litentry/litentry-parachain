@@ -190,6 +190,7 @@ where
 		let mut supported_batch_call_map = SupportedBatchCallMap::new();
 
 		// the intialised SupportedBatchCallParams are only placeholders
+		#[allow(clippy::type_complexity)]
 		let supported_call_indexes_fn: Vec<(
 			fn(&N::MetadataType) -> MetadataResult<CallIndex>,
 			SupportedBatchCallParams,
