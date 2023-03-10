@@ -205,6 +205,7 @@ where
 {
 	type Call = BatchAllFn;
 
+	// Override the default impl because we need customised decoding of batched calls
 	fn decode(
 		&self,
 		context: &IndirectCallsExecutor<
@@ -215,14 +216,14 @@ where
 		>,
 		input: &mut &[u8],
 	) -> Result<itp_types::extrinsics::ParentchainUncheckedExtrinsicWithStatus<Self::Call>> {
-		// This is a little more complicated than usual since the binary format must be compatible
-		// with substrate's generic `Vec<u8>` type. Basically this just means accepting that there
-		// will be a prefix of vector length (we don't need
-		// to use this).
-		// OpaqueExtrinsicWithStatus & OpaqueExtrinsic together have two layers encode with vec.
-		let _length_do_not_remove_me_see_above: Vec<()> = Decode::decode(input)?;
-		let _length_do_not_remove_me_see_above: Vec<()> = Decode::decode(input)?;
+		// We have two vector_prefixes:
+		// - when encoding `OpaqueExtrinsicWithStatus`
+		// - when encoding the innen `UncheckedExtrinsicV4`
+		let _: Vec<()> = Decode::decode(input)?;
+		let _: Vec<()> = Decode::decode(input)?;
 
+		// mostly copied from
+		// https://github.com/scs/substrate-api-client/blob/6516cd654435a68c883d56fcde09410e65f29a74/primitives/src/extrinsics.rs#L106-L125
 		let version = input.read_byte()?;
 
 		let is_signed = version & 0b1000_0000 != 0;
@@ -231,13 +232,13 @@ where
 			return Err(codec::Error::from("Invalid transaction version").into())
 		}
 
-		let actual_xt = ParentchainUncheckedExtrinsic {
+		let xt = ParentchainUncheckedExtrinsic {
 			signature: if is_signed { Some(Decode::decode(input)?) } else { None },
 			function: decode_batch_call(input, context.node_meta_data_provider.as_ref())?,
 		};
 
 		let status: bool = Decode::decode(input)?;
-		Ok(ParentchainUncheckedExtrinsicWithStatus { xt: actual_xt, status })
+		Ok(ParentchainUncheckedExtrinsicWithStatus { xt, status })
 	}
 
 	fn call_index(&self, call: &Self::Call) -> [u8; 2] {
@@ -276,10 +277,10 @@ where
 		TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + UtilityCallIndexes,
 {
 	let call_index: [u8; 2] = Decode::decode(input)?;
-	let vector: Vec<()> = Decode::decode(input)?;
-	let mut supported_call: Vec<SupportedCall> = vec![];
+	let calls_count: Vec<()> = Decode::decode(input)?;
+	let mut supported_calls: Vec<SupportedCall> = vec![];
 
-	supported_call.push(metadata_repo.get_from_metadata(
+	supported_calls.push(metadata_repo.get_from_metadata(
 		|m| -> core::result::Result<SupportedCall, metadataProviderError> {
 			Ok(SupportedCall::SetUserShieldingKey(
 				IMPCallIndexes::set_user_shielding_key_call_indexes(m)?,
@@ -288,7 +289,7 @@ where
 		},
 	)??);
 
-	supported_call.push(metadata_repo.get_from_metadata(
+	supported_calls.push(metadata_repo.get_from_metadata(
 		|m| -> core::result::Result<SupportedCall, metadataProviderError> {
 			Ok(SupportedCall::CreateIdentity(
 				IMPCallIndexes::create_identity_call_indexes(m)?,
@@ -297,7 +298,7 @@ where
 		},
 	)??);
 
-	supported_call.push(metadata_repo.get_from_metadata(
+	supported_calls.push(metadata_repo.get_from_metadata(
 		|m| -> core::result::Result<SupportedCall, metadataProviderError> {
 			Ok(SupportedCall::RemoveIdentity(
 				IMPCallIndexes::remove_identity_call_indexes(m)?,
@@ -306,7 +307,7 @@ where
 		},
 	)??);
 
-	supported_call.push(metadata_repo.get_from_metadata(
+	supported_calls.push(metadata_repo.get_from_metadata(
 		|m| -> core::result::Result<SupportedCall, metadataProviderError> {
 			Ok(SupportedCall::VerifyIdentity(
 				IMPCallIndexes::verify_identity_call_indexes(m)?,
@@ -315,16 +316,16 @@ where
 		},
 	)??);
 
-	supported_call.push(metadata_repo.get_from_metadata(
+	supported_calls.push(metadata_repo.get_from_metadata(
 		|m| -> core::result::Result<SupportedCall, metadataProviderError> {
 			Ok(SupportedCall::RequestVC(VCMPCallIndexes::request_vc_call_indexes(m)?, None))
 		},
 	)??);
 
 	let mut actual_calls: Vec<SupportedCall> = vec![];
-	for _i in 0..vector.len() {
+	for _i in 0..calls_count.len() {
 		let call_index: CallIndex = Decode::decode(input)?;
-		supported_call.iter_mut().for_each(|call| match call {
+		supported_calls.iter_mut().for_each(|call| match call {
 			SupportedCall::SetUserShieldingKey(expected_call_index, _params) =>
 				if expected_call_index == &call_index {
 					let actual_params = SetUserShieldingKeyParameters::decode(input).unwrap();

@@ -59,7 +59,7 @@ use beefy_merkle_tree::{merkle_root, Keccak256};
 use codec::Encode;
 use ita_stf::{TrustedCall, TrustedOperation};
 use itp_node_api::metadata::{
-	pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes,
+	error::Result as MetadataResult, pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes,
 	pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata,
 	runtime_call::RuntimeCall,
 };
@@ -103,6 +103,7 @@ pub struct IndirectCallsExecutor<
 	pub(crate) stf_enclave_signer: Arc<StfEnclaveSigner>,
 	pub(crate) top_pool_author: Arc<TopPoolAuthor>,
 	pub(crate) node_meta_data_provider: Arc<NodeMetadataProvider>,
+	pub(crate) supported_batched_call: Vec<[u8; 2]>,
 }
 
 impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
@@ -123,11 +124,13 @@ where
 		top_pool_author: Arc<TopPoolAuthor>,
 		node_meta_data_provider: Arc<NodeMetadataProvider>,
 	) -> Self {
+		let supported_batched_call = supported_batched_call(node_meta_data_provider.clone());
 		IndirectCallsExecutor {
 			shielding_key_repo,
 			stf_enclave_signer,
 			top_pool_author,
 			node_meta_data_provider,
+			supported_batched_call,
 		}
 	}
 
@@ -185,6 +188,32 @@ where
 		let root: H256 = merkle_root::<Keccak256, _>(extrinsics);
 		Ok(OpaqueCall::from_tuple(&(call, block_hash, block_number, root)))
 	}
+
+	fn get_supported_batched_call_indexes(
+		node_meta_data_provider: Arc<NodeMetadataProvider>,
+	) -> Vec<[u8; 2]> {
+		let mut indexes: Vec<[u8; 2]> = vec![];
+
+		let supported_call_indexes_fn: Vec<
+			fn(&NodeMetadataProvider::MetadataType) -> MetadataResult<[u8; 2]>,
+		> = vec![
+			IMPCallIndexes::set_user_shielding_key_call_indexes,
+			IMPCallIndexes::create_identity_call_indexes,
+			IMPCallIndexes::remove_identity_call_indexes,
+			IMPCallIndexes::verify_identity_call_indexes,
+			VCMPCallIndexes::request_vc_call_indexes,
+		];
+
+		for f in supported_call_indexes_fn {
+			let call = node_meta_data_provider.get_from_metadata(|m| f(m));
+			// ignore the errors
+			if let Ok(Ok(c)) = call {
+				indexes.push(c)
+			}
+		}
+		debug!("supported batched call indexes: {:?}", indexes);
+		indexes
+	}
 }
 
 impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
@@ -232,9 +261,6 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 			// No else-if here! Because the same opaque extrinsic can contain multiple Fns at once (this lead to intermittent M6 failures)
 			let call_worker = CallWorker {};
 
-			// Found BatchAll extrinsic in block.
-			let batch_all = BatchAll { block_number: parentchain_block_number };
-
 			// litentry
 			// Found SetUserShieldingKey extrinsic
 			let set_user_shielding_key = SetUserShieldingKey {};
@@ -246,6 +272,8 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 			let verify_identity = VerifyIdentity { block_number: parentchain_block_number };
 			// Found RequestVC extrinsic
 			let request_vc = RequestVC { block_number: parentchain_block_number };
+			// Found BatchAll extrinsic
+			let batch_all = BatchAll { block_number: parentchain_block_number };
 			// Found Update Scheduled Enclave extrinisc
 			let scheduled_enclave_update =
 				ScheduledEnclaveUpdate { block_number: parentchain_block_number };
