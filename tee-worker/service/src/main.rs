@@ -786,10 +786,8 @@ fn subscribe_to_parentchain_new_headers<E: EnclaveBase + Sidechain>(
 ) {
 	loop {
 		let (sender, receiver) = channel();
-		//TODO: this should be implemented by parentchain_handler directly, and not via
-		// exposed parentchain_api. Blocked by https://github.com/scs/substrate-api-client/issues/267.
 		if let Err(e) = parentchain_handler.parentchain_api().subscribe_finalized_heads(sender) {
-			println!("[-] connect ws error: {e:?}");
+			println!("[!] connect ws error: {e:?}");
 			sleep(Duration::from_secs(1));
 			break
 		}
@@ -803,14 +801,14 @@ fn subscribe_to_parentchain_new_headers<E: EnclaveBase + Sidechain>(
 					);
 					match parentchain_handler.sync_parentchain(last_synced_header.clone()) {
 						Err(e) => {
-							println!("[-] sync parentchain error: {e:?}");
+							println!("[!] sync parentchain error: {e:?}");
 							break
 						},
 						Ok(h) => last_synced_header = h,
 					}
 				},
 				Err(_) => {
-					println!("[-] ws disconnected");
+					println!("[!] ws disconnected");
 					sleep(Duration::from_secs(1));
 					break
 				},
