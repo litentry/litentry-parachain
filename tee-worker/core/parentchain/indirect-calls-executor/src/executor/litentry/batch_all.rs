@@ -53,6 +53,7 @@ pub(crate) struct BatchAll {
 
 const V4: u8 = 4;
 
+// TODO: maybe the logic in `decode_batch_call` and `execute_internal` can be further improved
 impl BatchAll {
 	fn execute_internal<R, S, T, N>(
 		&self,

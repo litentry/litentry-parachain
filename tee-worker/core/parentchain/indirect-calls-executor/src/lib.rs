@@ -135,6 +135,9 @@ where
 		}
 	}
 
+	// will be called after the node metadata for the enclave is set
+	// see ffi::set_node_metadata
+	// TODO: is there a better way to update it?
 	pub fn update_supported_batch_call_map(&self) -> Result<()> {
 		let mut m = self
 			.supported_batch_call_map
