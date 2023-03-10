@@ -32,25 +32,18 @@ pub mod call_worker;
 pub mod litentry;
 pub mod shield_funds;
 
-pub(crate) trait Executor<
-	ShieldingKeyRepository,
-	StfEnclaveSigner,
-	TopPoolAuthor,
-	NodeMetadataProvider,
-> where
-	NodeMetadataProvider: AccessNodeMetadata,
+pub(crate) trait Executor<R, S, T, N>
+where
+	N: AccessNodeMetadata,
 {
 	type Call: Decode + Encode + Clone;
 
 	fn call_index(&self, call: &Self::Call) -> [u8; 2];
 
-	fn call_index_from_metadata(
-		&self,
-		metadata_type: &NodeMetadataProvider::MetadataType,
-	) -> Result<[u8; 2]>;
+	fn call_index_from_metadata(&self, metadata_type: &N::MetadataType) -> Result<[u8; 2]>;
 
-	fn is_target_call(&self, call: &Self::Call, node_metadata: &NodeMetadataProvider) -> bool {
-		node_metadata
+	fn is_target_call(&self, call: &Self::Call, node_metadata_provider: &N) -> bool {
+		node_metadata_provider
 			.get_from_metadata(|m| match self.call_index_from_metadata(m) {
 				Ok(call_index) => self.call_index(call) == call_index,
 				Err(_e) => false,
@@ -60,12 +53,7 @@ pub(crate) trait Executor<
 
 	fn decode(
 		&self,
-		_context: &IndirectCallsExecutor<
-			ShieldingKeyRepository,
-			StfEnclaveSigner,
-			TopPoolAuthor,
-			NodeMetadataProvider,
-		>,
+		_context: &IndirectCallsExecutor<R, S, T, N>,
 		input: &mut &[u8],
 	) -> Result<ParentchainUncheckedExtrinsicWithStatus<Self::Call>> {
 		ParentchainUncheckedExtrinsicWithStatus::<Self::Call>::decode(input).map_err(|e| e.into())
@@ -74,58 +62,34 @@ pub(crate) trait Executor<
 	/// extrinisc in this function should execute successfully on parentchain
 	fn execute(
 		&self,
-		context: &IndirectCallsExecutor<
-			ShieldingKeyRepository,
-			StfEnclaveSigner,
-			TopPoolAuthor,
-			NodeMetadataProvider,
-		>,
+		context: &IndirectCallsExecutor<R, S, T, N>,
 		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
 	) -> Result<()>;
 }
 
-pub(crate) trait DecorateExecutor<
-	ShieldingKeyRepository,
-	StfEnclaveSigner,
-	TopPoolAuthor,
-	NodeMetadataProvider,
->
-{
+pub(crate) trait DecorateExecutor<R, S, T, N> {
 	fn decode_and_execute(
 		&self,
-		context: &IndirectCallsExecutor<
-			ShieldingKeyRepository,
-			StfEnclaveSigner,
-			TopPoolAuthor,
-			NodeMetadataProvider,
-		>,
+		context: &IndirectCallsExecutor<R, S, T, N>,
 		input: &mut &[u8],
 	) -> Result<ExecutionStatus<H256>>;
 }
 
-impl<E, ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
-	DecorateExecutor<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
-	for E
+impl<E, R, S, T, N> DecorateExecutor<R, S, T, N> for E
 where
-	E: Executor<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>,
-	NodeMetadataProvider: AccessNodeMetadata,
-	NodeMetadataProvider::MetadataType:
-		IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UtilityCallIndexes,
+	E: Executor<R, S, T, N>,
+	N: AccessNodeMetadata,
+	N::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UtilityCallIndexes,
 {
 	fn decode_and_execute(
 		&self,
-		context: &IndirectCallsExecutor<
-			ShieldingKeyRepository,
-			StfEnclaveSigner,
-			TopPoolAuthor,
-			NodeMetadataProvider,
-		>,
+		context: &IndirectCallsExecutor<R, S, T, N>,
 		input: &mut &[u8],
 	) -> Result<ExecutionStatus<H256>> {
 		if let Ok(ParentchainUncheckedExtrinsicWithStatus { xt, status }) =
 			self.decode(context, input)
 		{
-			if self.is_target_call(&xt.function, context.node_meta_data_provider.as_ref()) {
+			if self.is_target_call(&xt.function, context.node_metadata_provider.as_ref()) {
 				if status {
 					debug!(
 						"found extrinsic(call index: {:?}) with status {}",

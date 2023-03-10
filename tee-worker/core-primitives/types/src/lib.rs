@@ -20,9 +20,7 @@
 
 use crate::storage::StorageEntry;
 use codec::{Decode, Encode};
-#[cfg(feature = "sgx")]
-use sgx_tstd as std;
-use sp_std::vec::Vec;
+use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 
 pub mod extrinsics;
 pub mod storage;
@@ -38,7 +36,7 @@ pub type PalletString = String;
 
 pub use sp_core::{crypto::AccountId32 as AccountId, H256};
 
-use litentry_primitives::Assertion;
+pub use litentry_primitives::Assertion;
 
 pub use itp_sgx_runtime_primitives::types::*;
 
@@ -56,35 +54,45 @@ pub type CallUpdateScheduledEnclaveFn = (CallIndex, SidechainBlockNumber, MrEncl
 pub type CallRemoveScheduledEnclaveFn = (CallIndex, SidechainBlockNumber);
 
 // pallet IMP
-pub type SetUserShieldingKeyParameters = (ShardIdentifier, Vec<u8>);
-pub type SetUserShieldingKeyFn = (CallIndex, SetUserShieldingKeyParameters);
+pub type SetUserShieldingKeyParams = (ShardIdentifier, Vec<u8>);
+pub type SetUserShieldingKeyFn = (CallIndex, SetUserShieldingKeyParams);
 
-pub type CreateIdentityParameters = (ShardIdentifier, AccountId, Vec<u8>, Option<Vec<u8>>);
-pub type CreateIdentityFn = (CallIndex, CreateIdentityParameters);
+pub type CreateIdentityParams = (ShardIdentifier, AccountId, Vec<u8>, Option<Vec<u8>>);
+pub type CreateIdentityFn = (CallIndex, CreateIdentityParams);
 
-pub type RemoveIdentityParameters = (ShardIdentifier, Vec<u8>);
-pub type RemoveIdentityFn = (CallIndex, RemoveIdentityParameters);
+pub type RemoveIdentityParams = (ShardIdentifier, Vec<u8>);
+pub type RemoveIdentityFn = (CallIndex, RemoveIdentityParams);
 
-pub type VerifyIdentityParameters = (ShardIdentifier, Vec<u8>, Vec<u8>);
-pub type VerifyIdentityFn = (CallIndex, VerifyIdentityParameters);
+pub type VerifyIdentityParams = (ShardIdentifier, Vec<u8>, Vec<u8>);
+pub type VerifyIdentityFn = (CallIndex, VerifyIdentityParams);
 
 // pallet VCMP
-pub type RequestVCParameters = (ShardIdentifier, Assertion);
-pub type RequestVCFn = (CallIndex, RequestVCParameters);
+pub type RequestVCParams = (ShardIdentifier, Assertion);
+pub type RequestVCFn = (CallIndex, RequestVCParams);
 
-// pallet Utility
-pub type BatchAllFn = (CallIndex, Vec<SupportedCall>);
+// pallet utility
+#[derive(Clone, Encode, Decode, Debug)]
+pub enum SupportedBatchCallParams {
+	SetUserShieldingKey(SetUserShieldingKeyParams),
+	CreateIdentity(CreateIdentityParams),
+	RemoveIdentity(RemoveIdentityParams),
+	VerifyIdentity(VerifyIdentityParams),
+	RequestVC(RequestVCParams),
+}
 
-pub type Enclave = EnclaveGen<AccountId>;
+// I don't find a good way to preserve the type (as values) as rust doesn't have meta programmming
+// maybe we can use generics/traits to simplify this
+pub type SupportedBatchCallMap = BTreeMap<CallIndex, SupportedBatchCallParams>;
 
 #[derive(Clone, Encode, Decode, Debug)]
-pub enum SupportedCall {
-	SetUserShieldingKey(CallIndex, Option<SetUserShieldingKeyParameters>),
-	CreateIdentity(CallIndex, Option<CreateIdentityParameters>),
-	RemoveIdentity(CallIndex, Option<RemoveIdentityParameters>),
-	VerifyIdentity(CallIndex, Option<VerifyIdentityParameters>),
-	RequestVC(CallIndex, Option<RequestVCParameters>),
+pub struct BatchCall {
+	pub index: CallIndex,
+	pub params: SupportedBatchCallParams,
 }
+// we need a vector the keep the population order
+pub type BatchAllFn = (CallIndex, Vec<BatchCall>);
+
+pub type Enclave = EnclaveGen<AccountId>;
 
 /// Simple blob to hold an encoded call
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
