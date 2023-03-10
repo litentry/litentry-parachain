@@ -1,6 +1,14 @@
 import { describeLitentry, generateVerificationMessage } from './utils';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
-import { createIdentity, setUserShieldingKey, removeIdentity, verifyIdentity, assertIdentityCreated, assertIdentityVerified, assertIdentityRemoved } from './indirect_calls';
+import {
+    setUserShieldingKey,
+    createIdentities,
+    verifyIdentities,
+    removeIdentities,
+    assertIdentityCreated,
+    assertIdentityVerified,
+    assertIdentityRemoved,
+} from './indirect_calls';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import {
@@ -14,7 +22,12 @@ import {
 import { ethers } from 'ethers';
 import { HexString } from '@polkadot/util/types';
 import { KeyringPair } from '@polkadot/keyring/types';
-import { createErrorIdentity, setErrorUserShieldingKey } from './indirect_error_calls';
+import {
+    createErrorIdentities,
+    setErrorUserShieldingKey,
+    removeErrorIdentities,
+    verifyErrorIdentities,
+} from './indirect_error_calls';
 
 const twitterIdentity = <LitentryIdentity>{
     Web2: <Web2Identity>{
@@ -30,6 +43,12 @@ const ethereumIdentity = <LitentryIdentity>{
     },
 };
 
+const ethereumErrorIdentity = <LitentryIdentity>{
+    Evm: <EvmIdentity>{
+        address: '0xff93B45308FD417dF303D6515aB04D9e89a750Cb',
+        network: 'Ethereum',
+    },
+};
 const substrateIdentity = <LitentryIdentity>{
     Substrate: <SubstrateIdentity>{
         address: '0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d', //Alice
@@ -111,14 +130,26 @@ describeLitentry('Test Identity', (context) => {
     step('set user shielding key', async function () {
         const alice = await setUserShieldingKey(context, context.defaultSigner[0], aesKey, true);
         assert.equal(alice, u8aToHex(context.defaultSigner[0].addressRaw), 'check caller error');
-
         const bob = await setUserShieldingKey(context, context.defaultSigner[1], aesKey, true);
         assert.equal(bob, u8aToHex(context.defaultSigner[1].addressRaw), 'check caller error');
     });
 
-    step('create identity', async function () {
-        //create twitter identity
-        const resp_twitter = await createIdentity(context, context.defaultSigner[0], aesKey, true, twitterIdentity);
+    step('create identities', async function () {
+        //Alice create all identities
+        const [resp_twitter, resp_ethereum, resp_substrate] = (await createIdentities(
+            context,
+            context.defaultSigner[0],
+            aesKey,
+            true,
+            [twitterIdentity, ethereumIdentity, substrateIdentity]
+        )) as IdentityGenericEvent[];
+
+        //Bob create extension substrate identities
+        const [resp_extension_substrate] = (await createIdentities(context, context.defaultSigner[1], aesKey, true, [
+            substrateExtensionIdentity,
+        ])) as IdentityGenericEvent[];
+
+        //Alice check twitter identity
         assertIdentityCreated(context.defaultSigner[0], resp_twitter);
 
         if (resp_twitter) {
@@ -132,10 +163,8 @@ describeLitentry('Test Identity', (context) => {
             console.log('post verification msg to twitter: ', msg);
             assert.isNotEmpty(resp_twitter.challengeCode, 'challengeCode empty');
         }
-        //create ethereum identity
-        const resp_ethereum = await createIdentity(context, context.defaultSigner[0], aesKey, true, ethereumIdentity);
+        //Alice check ethereum identity
         assertIdentityCreated(context.defaultSigner[0], resp_ethereum);
-
         if (resp_ethereum) {
             console.log('ethereumIdentity challengeCode: ', resp_ethereum.challengeCode);
             const msg = generateVerificationMessage(
@@ -151,10 +180,8 @@ describeLitentry('Test Identity', (context) => {
             ethereumValidationData!.Web3Validation!.Evm!.signature!.Ethereum = signature_ethereum;
             assert.isNotEmpty(resp_ethereum.challengeCode, 'challengeCode empty');
         }
-        // create substrate identity
-        const resp_substrate = await createIdentity(context, context.defaultSigner[0], aesKey, true, substrateIdentity);
+        //Alice check substrate identity
         assertIdentityCreated(context.defaultSigner[0], resp_substrate);
-
         if (resp_substrate) {
             console.log('substrateIdentity challengeCode: ', resp_substrate.challengeCode);
             const msg = generateVerificationMessage(
@@ -163,7 +190,6 @@ describeLitentry('Test Identity', (context) => {
                 context.defaultSigner[0].addressRaw,
                 substrateIdentity
             );
-
             console.log('post verification msg to substrate: ', msg);
             substrateValidationData!.Web3Validation!.Substrate!.message = msg;
             signature_substrate = context.defaultSigner[0].sign(msg);
@@ -171,16 +197,8 @@ describeLitentry('Test Identity', (context) => {
             assert.isNotEmpty(resp_substrate.challengeCode, 'challengeCode empty');
         }
 
-        // Bob
-        // create extension substrate identity
-        // https://github.com/litentry/litentry-parachain/issues/1137
-        const resp_extension_substrate = await createIdentity(
-            context,
-            context.defaultSigner[1],
-            aesKey,
-            true,
-            substrateExtensionIdentity
-        );
+        //Bob check extension substrate identity
+        //https://github.com/litentry/litentry-parachain/issues/1137
         assertIdentityCreated(context.defaultSigner[1], resp_extension_substrate);
         if (resp_extension_substrate) {
             console.log('substrateExtensionIdentity challengeCode: ', resp_extension_substrate.challengeCode);
@@ -190,7 +208,6 @@ describeLitentry('Test Identity', (context) => {
                 context.defaultSigner[1].addressRaw,
                 substrateExtensionIdentity
             );
-
             console.log('post verification msg to substrate: ', msg);
             substrateExtensionValidationData!.Web3Validation!.Substrate!.message = msg;
             // sign the wrapped version as in polkadot-extension
@@ -202,102 +219,133 @@ describeLitentry('Test Identity', (context) => {
             assert.isNotEmpty(resp_extension_substrate.challengeCode, 'challengeCode empty');
         }
     });
-
-    step('verify identity', async function () {
-        //Alice
-        //verify twitter identity
-        const twitter_identity_verified = await verifyIdentity(
-            context,
-            context.defaultSigner[0],
-            aesKey,
-            true,
-            twitterIdentity,
-            twitterValidationData
-        );
-        assertIdentityVerified(context.defaultSigner[0], twitter_identity_verified);
-
-        // verify ethereum identity
-        const ethereum_identity_verified = await verifyIdentity(
-            context,
-            context.defaultSigner[0],
-            aesKey,
-            true,
-            ethereumIdentity,
-            ethereumValidationData
-        );
-        assertIdentityVerified(context.defaultSigner[0], ethereum_identity_verified);
-
-        //verify substrate identity
-        const substrate_identity_verified = await verifyIdentity(
-            context,
-            context.defaultSigner[0],
-            aesKey,
-            true,
-            substrateIdentity,
-            substrateValidationData
-        );
-        assertIdentityVerified(context.defaultSigner[0], substrate_identity_verified);
-
-        //Bob
-        //verify extension substrate identity
-        const substrate_extension_identity_verified = await verifyIdentity(
+    step('verify identities', async function () {
+        //Alice verify all identities
+        const [twitter_identity_verified, ethereum_identity_verified, substrate_identity_verified] =
+            (await verifyIdentities(
+                context,
+                context.defaultSigner[0],
+                aesKey,
+                true,
+                [twitterIdentity, ethereumIdentity, substrateIdentity],
+                [twitterValidationData, ethereumValidationData, substrateValidationData]
+            )) as IdentityGenericEvent[];
+        //Bob verify extension substrate identities
+        const [substrate_extension_identity_verified] = (await verifyIdentities(
             context,
             context.defaultSigner[1],
             aesKey,
             true,
-            substrateExtensionIdentity,
-            substrateExtensionValidationData
-        );
+            [substrateExtensionIdentity],
+            [substrateExtensionValidationData]
+        )) as IdentityGenericEvent[];
+
+        //Alice
+        assertIdentityVerified(context.defaultSigner[0], twitter_identity_verified);
+        assertIdentityVerified(context.defaultSigner[0], ethereum_identity_verified);
+        assertIdentityVerified(context.defaultSigner[0], substrate_identity_verified);
+        //Bob
         assertIdentityVerified(context.defaultSigner[1], substrate_extension_identity_verified);
     });
 
-    step('remove identity', async function () {
-        // Alice
-        // remove twitter identity
-        const twitter_identity_removed = await removeIdentity(
+    step('verify error identities', async function () {
+        // verify same identities to one account
+        const resp_same_verify = (await verifyErrorIdentities(
             context,
             context.defaultSigner[0],
-            aesKey,
             true,
-            twitterIdentity
-        );
-        assertIdentityRemoved(context.defaultSigner[0], twitter_identity_removed);
+            [twitterIdentity, ethereumIdentity, substrateIdentity],
+            [twitterValidationData, ethereumValidationData, substrateValidationData]
+        )) as string[];
 
-        // remove ethereum identity
-        const ethereum_identity_removed = await removeIdentity(
+        for (let k = 0; k < resp_same_verify.length; k++) {
+            const data = resp_same_verify[k];
+            assert.equal(
+                data,
+                'code not found',
+                'verify same identities to one account should fail with reason `code not found`'
+            );
+        }
+
+        //verify an identity to an account but it isn't created before
+        const resp_not_exist_verify = (await verifyErrorIdentities(
             context,
-            context.defaultSigner[0],
-            aesKey,
+            context.defaultSigner[2],
             true,
-            ethereumIdentity
-        );
-        assertIdentityRemoved(context.defaultSigner[0], ethereum_identity_removed);
+            [twitterIdentity, ethereumIdentity, substrateIdentity],
+            [twitterValidationData, ethereumValidationData, substrateValidationData]
+        )) as string[];
 
-        // remove substrate identity
-        const substrate_identity_removed = await removeIdentity(
-            context,
-            context.defaultSigner[0],
-            aesKey,
-            true,
-            substrateIdentity
-        );
-        assertIdentityRemoved(context.defaultSigner[0], substrate_identity_removed);
+        for (let l = 0; l < resp_not_exist_verify.length; l++) {
+            const data = resp_not_exist_verify[l];
+            assert.equal(
+                data,
+                'code not found',
+                'verify nonexistent identity should fail with reason `code not found`'
+            );
+        }
+    });
+    step('remove identities', async function () {
+        // Alice remove all identities
+        const [twitter_identity_removed, ethereum_identity_removed, substrate_identity_removed] =
+            (await removeIdentities(context, context.defaultSigner[0], aesKey, true, [
+                twitterIdentity,
+                ethereumIdentity,
+                substrateIdentity,
+            ])) as IdentityGenericEvent[];
 
-        // Bob
-        // remove substrate identity again
-        const substrate_extension_identity_removed = await removeIdentity(
+        // Bob remove substrate identities
+        const [substrate_extension_identity_removed] = (await removeIdentities(
             context,
             context.defaultSigner[1],
             aesKey,
             true,
-            substrateExtensionIdentity
-        );
+            [substrateExtensionIdentity]
+        )) as IdentityGenericEvent[];
+
+        //Alice
+        assertIdentityRemoved(context.defaultSigner[0], twitter_identity_removed);
+        assertIdentityRemoved(context.defaultSigner[0], ethereum_identity_removed);
+        assertIdentityRemoved(context.defaultSigner[0], substrate_identity_removed);
+
+        // Bob
         assertIdentityRemoved(context.defaultSigner[1], substrate_extension_identity_removed);
+    });
+
+    step('remove error identities', async function () {
+        //remove a nonexistent identity from an account
+        const resp_not_exist_identities = (await removeErrorIdentities(context, context.defaultSigner[0], true, [
+            twitterIdentity,
+            ethereumIdentity,
+            substrateIdentity,
+        ])) as string[];
+
+        resp_not_exist_identities.map((item: any) => {
+            const result = item.toHuman().data.reason;
+            assert(
+                result.search('IdentityNotExist') !== -1,
+                'remove twitter should fail with reason `IdentityNotExist`'
+            );
+        });
+
+        //remove a challenge code before the code is set
+        const resp_not_created_identities = (await removeErrorIdentities(context, context.defaultSigner[2], true, [
+            twitterIdentity,
+            ethereumIdentity,
+            substrateIdentity,
+        ])) as string[];
+
+        resp_not_created_identities.map((item: any) => {
+            const result = item.toHuman().data.reason;
+            assert(
+                result.search('IdentityNotExist') !== -1,
+                'remove twitter should fail with reason `IdentityNotExist`'
+            );
+        });
     });
 
     step('set error user shielding key', async function () {
         const result = await setErrorUserShieldingKey(context, context.defaultSigner[0], errorAseKey, true);
-
         assert.equal(
             result,
             'SetUserShieldingKeyHandlingFailed',
@@ -305,9 +353,14 @@ describeLitentry('Test Identity', (context) => {
         );
     });
 
-    step('create error identity', async function () {
+    step('create error identities', async function () {
         //The simulation generates the wrong Ciphertext
-        const result = await createErrorIdentity(context, context.defaultSigner[0], aesKey, true, errorCiphertext);
-        assert.equal(result, 'CreateIdentityHandlingFailed', 'result is not equal to CreateIdentityHandlingFailed');
+        const resp_error_identities = (await createErrorIdentities(context, context.defaultSigner[0], true, [
+            errorCiphertext,
+        ])) as string[];
+        for (let i = 0; i < resp_error_identities.length; i++) {
+            const result = resp_error_identities[i];
+            assert.equal(result, 'CreateIdentityHandlingFailed', 'result is not equal to CreateIdentityHandlingFailed');
+        }
     });
 });

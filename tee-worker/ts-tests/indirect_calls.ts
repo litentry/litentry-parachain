@@ -4,8 +4,15 @@ import {
     LitentryIdentity,
     LitentryValidationData,
     Assertion,
+    TransactionSubmit,
 } from './type-definitions';
-import { decryptWithAES, encryptWithTeeShieldingKey, listenEvent, sendTxUntilInBlock } from './utils';
+import {
+    decryptWithAES,
+    encryptWithTeeShieldingKey,
+    listenEvent,
+    sendTxUntilInBlock,
+    sendTxUntilInBlockList,
+} from './utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { HexString } from '@polkadot/util/types';
 import { u8aToHex } from '@polkadot/util';
@@ -32,160 +39,260 @@ export async function setUserShieldingKey(
     return undefined;
 }
 
-export async function createIdentity(
+export async function createIdentities(
     context: IntegrationTestContext,
     signer: KeyringPair,
     aesKey: HexString,
     listening: boolean,
-    identity: LitentryIdentity
-): Promise<IdentityGenericEvent | undefined> {
-    const encode = context.substrate.createType('LitentryIdentity', identity).toHex();
-    const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
+    identities: LitentryIdentity[]
+): Promise<IdentityGenericEvent[] | undefined> {
+    let txs: TransactionSubmit[] = [];
+    for (let index = 0; index < identities.length; index++) {
+        const identity = identities[index];
+        const encode = context.substrate.createType('LitentryIdentity', identity).toHex();
+        const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
+        const tx = context.substrate.tx.identityManagement.createIdentity(
+            context.mrEnclave,
+            signer.address,
+            `0x${ciphertext}`,
+            null
+        );
+        const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
+        let newNonce = nonce.toNumber() + index;
+        txs.push({ tx, nonce: newNonce });
+    }
 
-    const tx = context.substrate.tx.identityManagement.createIdentity(
-        context.mrEnclave,
-        signer.address,
-        `0x${ciphertext}`,
-        null
-    );
-
-    await sendTxUntilInBlock(context.substrate, tx, signer);
+    await sendTxUntilInBlockList(context.substrate, txs, signer);
 
     if (listening) {
-        const events = await listenEvent(context.substrate, 'identityManagement', ['IdentityCreated']);
-        expect(events.length).to.be.equal(1);
-        const data = events[0].data as any;
-        return decodeIdentityEvent(
-            context.substrate,
-            data.account.toHex(),
-            decryptWithAES(aesKey, data.identity, 'hex'),
-            decryptWithAES(aesKey, data.idGraph, 'hex'),
-            decryptWithAES(aesKey, data.code, 'hex')
-        );
+        const events = (await listenEvent(context.substrate, 'identityManagement', ['IdentityCreated'])) as any;
+        expect(events.length).to.be.equal(identities.length);
+
+        let results: IdentityGenericEvent[] = [];
+
+        for (let index = 0; index < events.length; index++) {
+            results.push(
+                decodeIdentityEvent(
+                    context.substrate,
+                    events[index].data.account.toHex(),
+                    decryptWithAES(aesKey, events[index].data.identity, 'hex'),
+                    decryptWithAES(aesKey, events[index].data.idGraph, 'hex'),
+                    decryptWithAES(aesKey, events[index].data.code, 'hex')
+                )
+            );
+        }
+        return [...results];
+    }
+    return undefined;
+}
+export async function removeIdentities(
+    context: IntegrationTestContext,
+    signer: KeyringPair,
+    aesKey: HexString,
+    listening: boolean,
+    identity: LitentryIdentity[]
+): Promise<IdentityGenericEvent[] | undefined> {
+    let txs: TransactionSubmit[] = [];
+    for (let index = 0; index < identity.length; index++) {
+        const encode = context.substrate.createType('LitentryIdentity', identity[index]).toHex();
+        const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
+
+        const tx = context.substrate.tx.identityManagement.removeIdentity(context.mrEnclave, `0x${ciphertext}`);
+        const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
+        let newNonce = nonce.toNumber() + index;
+        txs.push({ tx, nonce: newNonce });
+    }
+
+    await sendTxUntilInBlockList(context.substrate, txs, signer);
+
+    if (listening) {
+        const events = (await listenEvent(context.substrate, 'identityManagement', ['IdentityRemoved'])) as any;
+        expect(events.length).to.be.equal(identity.length);
+
+        let results: IdentityGenericEvent[] = [];
+
+        for (let index = 0; index < events.length; index++) {
+            results.push(
+                decodeIdentityEvent(
+                    context.substrate,
+                    events[index].data.account.toHex(),
+                    decryptWithAES(aesKey, events[index].data.identity, 'hex'),
+                    decryptWithAES(aesKey, events[index].data.idGraph, 'hex')
+                )
+            );
+        }
+        return [...results];
     }
     return undefined;
 }
 
-export async function removeIdentity(
+export async function verifyIdentities(
     context: IntegrationTestContext,
     signer: KeyringPair,
     aesKey: HexString,
     listening: boolean,
-    identity: LitentryIdentity
-): Promise<IdentityGenericEvent | undefined> {
-    const encode = context.substrate.createType('LitentryIdentity', identity).toHex();
-    const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
+    identities: LitentryIdentity[],
+    datas: LitentryValidationData[]
+): Promise<IdentityGenericEvent[] | undefined> {
+    let txs: TransactionSubmit[] = [];
+    for (let index = 0; index < identities.length; index++) {
+        let identity = identities[index];
 
-    const tx = context.substrate.tx.identityManagement.removeIdentity(context.mrEnclave, `0x${ciphertext}`);
+        let data = datas[index];
 
-    await sendTxUntilInBlock(context.substrate, tx, signer);
+        const identity_encode = context.substrate.createType('LitentryIdentity', identity).toHex();
 
-    if (listening) {
-        const events = await listenEvent(context.substrate, 'identityManagement', ['IdentityRemoved']);
-        expect(events.length).to.be.equal(1);
-        const data = events[0].data as any;
-        return decodeIdentityEvent(
-            context.substrate,
-            data.account.toHex(),
-            decryptWithAES(aesKey, data.identity, 'hex'),
-            decryptWithAES(aesKey, data.idGraph, 'hex')
+        const validation_encode = context.substrate.createType('LitentryValidationData', data).toHex();
+
+        const identity_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, identity_encode).toString(
+            'hex'
         );
+
+        const validation_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, validation_encode).toString(
+            'hex'
+        );
+
+        const tx = context.substrate.tx.identityManagement.verifyIdentity(
+            context.mrEnclave,
+            `0x${identity_ciphertext}`,
+            `0x${validation_ciphertext}`
+        );
+        const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
+        let newNonce = nonce.toNumber() + index;
+        txs.push({ tx, nonce: newNonce });
     }
-    return undefined;
-}
 
-export async function verifyIdentity(
-    context: IntegrationTestContext,
-    signer: KeyringPair,
-    aesKey: HexString,
-    listening: boolean,
-    identity: LitentryIdentity,
-    data: LitentryValidationData
-): Promise<IdentityGenericEvent | undefined> {
-    const identity_encode = context.substrate.createType('LitentryIdentity', identity).toHex();
-    const validation_encode = context.substrate.createType('LitentryValidationData', data).toHex();
-    const identity_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, identity_encode).toString('hex');
-    const validation_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, validation_encode).toString(
-        'hex'
-    );
-
-    const tx = context.substrate.tx.identityManagement.verifyIdentity(
-        context.mrEnclave,
-        `0x${identity_ciphertext}`,
-        `0x${validation_ciphertext}`
-    );
-
-    await sendTxUntilInBlock(context.substrate, tx, signer);
+    await sendTxUntilInBlockList(context.substrate, txs, signer);
 
     if (listening) {
-        const events = await listenEvent(context.substrate, 'identityManagement', ['IdentityVerified']);
-        expect(events.length).to.be.equal(1);
-        const data = events[0].data as any;
-        return decodeIdentityEvent(
-            context.substrate,
-            data.account.toHex(),
-            decryptWithAES(aesKey, data.identity, 'hex'),
-            decryptWithAES(aesKey, data.idGraph, 'hex')
-        );
+        const events = (await listenEvent(context.substrate, 'identityManagement', ['IdentityVerified'])) as any;
+
+        expect(events.length).to.be.equal(identities.length);
+
+        let results: IdentityGenericEvent[] = [];
+
+        for (let index = 0; index < events.length; index++) {
+            results.push(
+                decodeIdentityEvent(
+                    context.substrate,
+                    events[index].data.account.toHex(),
+                    decryptWithAES(aesKey, events[index].data.identity, 'hex'),
+                    decryptWithAES(aesKey, events[index].data.idGraph, 'hex')
+                )
+            );
+        }
+        return [...results];
     }
     return undefined;
 }
 
 //vcManagement
-export async function requestVC(
+
+export async function requestVCs(
     context: IntegrationTestContext,
     signer: KeyringPair,
     aesKey: HexString,
     listening: boolean,
     mrEnclave: HexString,
     assertion: Assertion
+): Promise<
+    | {
+          account: HexString;
+          index: HexString;
+          vc: HexString;
+      }[]
+    | undefined
+> {
+    let txs: TransactionSubmit[] = [];
+    let len = 0;
+
+    for (const key in assertion) {
+        len++;
+        const tx = context.substrate.tx.vcManagement.requestVc(mrEnclave, {
+            [key]: assertion[key as keyof Assertion],
+        });
+        const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
+
+        let newNonce = nonce.toNumber() + (len - 1);
+        txs.push({ tx, nonce: newNonce });
+    }
+
+    await sendTxUntilInBlockList(context.substrate, txs, signer);
+    if (listening) {
+        const events = (await listenEvent(context.substrate, 'vcManagement', ['VCIssued'])) as any;
+        expect(events.length).to.be.equal(len);
+
+        let results: {
+            account: HexString;
+            index: HexString;
+            vc: HexString;
+        }[] = [];
+        for (let k = 0; k < events.length; k++) {
+            results.push({
+                account: events[k].data.account.toHex(),
+                index: events[k].data.index.toHex(),
+                vc: decryptWithAES(aesKey, events[k].data.vc, 'utf-8'),
+            });
+        }
+        return [...results];
+    }
+    return undefined;
+}
+
+export async function disableVCs(
+    context: IntegrationTestContext,
+    signer: KeyringPair,
+    aesKey: HexString,
+    listening: boolean,
+    indexList: HexString[]
 ): Promise<HexString[] | undefined> {
-    const tx = context.substrate.tx.vcManagement.requestVc(mrEnclave, assertion);
+    let txs: TransactionSubmit[] = [];
 
-    await sendTxUntilInBlock(context.substrate, tx, signer);
+    for (let k = 0; k < indexList.length; k++) {
+        const tx = context.substrate.tx.vcManagement.disableVc(indexList[k]);
+        const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
+        let newNonce = nonce.toNumber() + k;
+        txs.push({ tx, nonce: newNonce });
+    }
+
+    await sendTxUntilInBlockList(context.substrate, txs, signer);
     if (listening) {
-        const events = await listenEvent(context.substrate, 'vcManagement', ['VCIssued']);
-        expect(events.length).to.be.equal(1);
-        const [account, index, vc] = events[0].data as any;
-        return [account.toHex(), index.toHex(), decryptWithAES(aesKey, vc, 'utf-8')];
+        const events = (await listenEvent(context.substrate, 'vcManagement', ['VCDisabled'])) as any;
+        expect(events.length).to.be.equal(indexList.length);
+        let results: HexString[] = [];
+        for (let m = 0; m < events.length; m++) {
+            results.push(events[m].data.index.toHex());
+        }
+
+        return [...results];
     }
     return undefined;
 }
 
-export async function disableVC(
+export async function revokeVCs(
     context: IntegrationTestContext,
     signer: KeyringPair,
     aesKey: HexString,
     listening: boolean,
-    index: HexString
-): Promise<HexString | undefined> {
-    const tx = context.substrate.tx.vcManagement.disableVc(index);
-
-    await sendTxUntilInBlock(context.substrate, tx, signer);
-    if (listening) {
-        const events = await listenEvent(context.substrate, 'vcManagement', ['VCDisabled']);
-        expect(events.length).to.be.equal(1);
-        const data = events[0].data as any;
-        return data.index.toHex();
+    indexList: HexString[]
+): Promise<HexString[] | undefined> {
+    let txs: TransactionSubmit[] = [];
+    for (let k = 0; k < indexList.length; k++) {
+        const tx = context.substrate.tx.vcManagement.revokeVc(indexList[k]);
+        const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
+        let newNonce = nonce.toNumber() + k;
+        txs.push({ tx, nonce: newNonce });
     }
-    return undefined;
-}
 
-export async function revokeVC(
-    context: IntegrationTestContext,
-    signer: KeyringPair,
-    aesKey: HexString,
-    listening: boolean,
-    index: HexString
-): Promise<HexString | undefined> {
-    const tx = context.substrate.tx.vcManagement.revokeVc(index);
-
-    await sendTxUntilInBlock(context.substrate, tx, signer);
+    await sendTxUntilInBlockList(context.substrate, txs, signer);
     if (listening) {
-        const events = await listenEvent(context.substrate, 'vcManagement', ['VCRevoked']);
-        expect(events.length).to.be.equal(1);
-        const data = events[0].data as any;
-        return data.index.toHex();
+        const events = (await listenEvent(context.substrate, 'vcManagement', ['VCRevoked'])) as any;
+        expect(events.length).to.be.equal(indexList.length);
+        let results: HexString[] = [];
+        for (let m = 0; m < events.length; m++) {
+            results.push(events[m].data.index.toHex());
+        }
+        return [...results];
     }
     return undefined;
 }
