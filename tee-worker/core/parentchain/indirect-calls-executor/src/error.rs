@@ -49,8 +49,6 @@ pub enum Error {
 	IMPHandlingError(IMPError),
 	#[error("VCMP handling error: {0:?}")]
 	VCMPHandlingError(VCMPError),
-	#[error("BatchAll handling error")]
-	BatchAllHandlingError,
 	#[error("Component container error: {0:?}")]
 	ComponentContainerError(#[from] ComponentError),
 	#[error("Io Error: {0:?}")]

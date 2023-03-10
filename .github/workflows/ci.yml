@@ -469,7 +469,6 @@ jobs:
           - test_name: lit-set-heartbeat-timeout
           - test_name: lit-vc-test
           - test_name: lit-identity-test
-          - test_name: lit-batch-test
 
     steps:
       - uses: actions/checkout@v3
