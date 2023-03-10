@@ -24,14 +24,15 @@ use crate::{
 			EnclaveOffchainWorkerExecutor, EnclaveParentchainBlockImportDispatcher,
 			EnclaveParentchainBlockImportQueue, EnclaveParentchainBlockImporter,
 			EnclaveStfExecutor, EnclaveTriggeredParentchainBlockImportDispatcher,
-			EnclaveValidatorAccessor, GLOBAL_OCALL_API_COMPONENT,
-			GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_HANDLER_COMPONENT,
-			GLOBAL_STATE_OBSERVER_COMPONENT, GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
+			EnclaveValidatorAccessor, GLOBAL_INDIRECT_CALLS_EXECUTOR_COMPONENT,
+			GLOBAL_OCALL_API_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
+			GLOBAL_STATE_HANDLER_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
+			GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 		},
 		EnclaveStfEnclaveSigner,
 	},
 };
-use itp_component_container::ComponentGetter;
+use itp_component_container::{ComponentGetter, ComponentInitializer};
 use itp_nonce_cache::GLOBAL_NONCE_CACHE;
 use itp_sgx_crypto::Ed25519Seal;
 use itp_sgx_io::StaticSealedIO;
@@ -62,6 +63,7 @@ pub(crate) fn create_parentchain_block_importer(
 		top_pool_author,
 		node_metadata_repository,
 	));
+	GLOBAL_INDIRECT_CALLS_EXECUTOR_COMPONENT.initialize(indirect_calls_executor.clone());
 	Ok(EnclaveParentchainBlockImporter::new(
 		validator_access,
 		stf_executor,

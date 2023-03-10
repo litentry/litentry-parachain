@@ -35,6 +35,12 @@ pub mod sgx_reexport_prelude {
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use std::sync::SgxRwLock as RwLock;
+
+#[cfg(all(feature = "std", not(feature = "sgx")))]
+use std::sync::RwLock;
+
 pub mod error;
 pub mod executor;
 
@@ -101,7 +107,7 @@ pub struct IndirectCallsExecutor<R, S, T, N> {
 	pub(crate) stf_enclave_signer: Arc<S>,
 	pub(crate) top_pool_author: Arc<T>,
 	pub(crate) node_metadata_provider: Arc<N>,
-	pub(crate) supported_batch_call_map: SupportedBatchCallMap,
+	pub(crate) supported_batch_call_map: Arc<RwLock<SupportedBatchCallMap>>,
 }
 
 impl<R, S, T, N> IndirectCallsExecutor<R, S, T, N>
@@ -120,15 +126,64 @@ where
 		top_pool_author: Arc<T>,
 		node_metadata_provider: Arc<N>,
 	) -> Self {
-		let supported_batch_call_map =
-			Self::get_supported_batch_call_map(node_metadata_provider.clone());
 		IndirectCallsExecutor {
 			shielding_key_repo,
 			stf_enclave_signer,
 			top_pool_author,
 			node_metadata_provider,
-			supported_batch_call_map,
+			supported_batch_call_map: Arc::new(RwLock::default()),
 		}
+	}
+
+	pub fn update_supported_batch_call_map(&self) -> Result<()> {
+		let mut m = self
+			.supported_batch_call_map
+			.write()
+			.map_err(|_| Error::Other("Lock poisoning".into()))?;
+		m.clear();
+
+		// the intialised SupportedBatchCallParams are only placeholders
+		#[allow(clippy::type_complexity)]
+		let supported_call_indexes_fn: Vec<(
+			fn(&N::MetadataType) -> MetadataResult<CallIndex>,
+			SupportedBatchCallParams,
+		)> = vec![
+			(
+				IMPCallIndexes::set_user_shielding_key_call_indexes,
+				SupportedBatchCallParams::SetUserShieldingKey(Default::default()),
+			),
+			(
+				IMPCallIndexes::create_identity_call_indexes,
+				SupportedBatchCallParams::CreateIdentity((
+					Default::default(),
+					AccountId::new([0u8; 32]),
+					Default::default(),
+					None,
+				)),
+			),
+			(
+				IMPCallIndexes::remove_identity_call_indexes,
+				SupportedBatchCallParams::RemoveIdentity(Default::default()),
+			),
+			(
+				IMPCallIndexes::verify_identity_call_indexes,
+				SupportedBatchCallParams::VerifyIdentity(Default::default()),
+			),
+			(
+				VCMPCallIndexes::request_vc_call_indexes,
+				SupportedBatchCallParams::RequestVC((Default::default(), Assertion::A1)),
+			),
+		];
+
+		for f in supported_call_indexes_fn {
+			let call = self.node_metadata_provider.get_from_metadata(|m| f.0(m));
+			// ignore the errors
+			if let Ok(Ok(c)) = call {
+				m.insert(c, f.1);
+			}
+		}
+		debug!("Supported batched call map: {:?}", *m);
+		Ok(())
 	}
 
 	pub(crate) fn submit_trusted_call(
@@ -185,53 +240,6 @@ where
 		let root: H256 = merkle_root::<Keccak256, _>(extrinsics);
 		Ok(OpaqueCall::from_tuple(&(call, block_hash, block_number, root)))
 	}
-
-	fn get_supported_batch_call_map(node_metadata_provider: Arc<N>) -> SupportedBatchCallMap {
-		let mut supported_batch_call_map = SupportedBatchCallMap::new();
-
-		// the intialised SupportedBatchCallParams are only placeholders
-		#[allow(clippy::type_complexity)]
-		let supported_call_indexes_fn: Vec<(
-			fn(&N::MetadataType) -> MetadataResult<CallIndex>,
-			SupportedBatchCallParams,
-		)> = vec![
-			(
-				IMPCallIndexes::set_user_shielding_key_call_indexes,
-				SupportedBatchCallParams::SetUserShieldingKey(Default::default()),
-			),
-			(
-				IMPCallIndexes::create_identity_call_indexes,
-				SupportedBatchCallParams::CreateIdentity((
-					Default::default(),
-					AccountId::new([0u8; 32]),
-					Default::default(),
-					None,
-				)),
-			),
-			(
-				IMPCallIndexes::remove_identity_call_indexes,
-				SupportedBatchCallParams::RemoveIdentity(Default::default()),
-			),
-			(
-				IMPCallIndexes::verify_identity_call_indexes,
-				SupportedBatchCallParams::VerifyIdentity(Default::default()),
-			),
-			(
-				VCMPCallIndexes::request_vc_call_indexes,
-				SupportedBatchCallParams::RequestVC((Default::default(), Assertion::A1)),
-			),
-		];
-
-		for f in supported_call_indexes_fn {
-			let call = node_metadata_provider.get_from_metadata(|m| f.0(m));
-			// ignore the errors
-			if let Ok(Ok(c)) = call {
-				supported_batch_call_map.insert(c, f.1);
-			}
-		}
-		debug!("Supported batched call map: {:?}", supported_batch_call_map);
-		supported_batch_call_map
-	}
 }
 
 impl<R, S, T, N> ExecuteIndirectCalls for IndirectCallsExecutor<R, S, T, N>
@@ -256,9 +264,8 @@ where
 		let block_hash = block.hash();
 		let mut calls = Vec::<OpaqueCall>::new();
 
-		let parentchain_block_number: ParentchainBlockNumber = block_number
-			.try_into()
-			.map_err(|_| crate::error::Error::ConvertParentchainBlockNumber)?;
+		let parentchain_block_number: ParentchainBlockNumber =
+			block_number.try_into().map_err(|_| Error::ConvertParentchainBlockNumber)?;
 
 		debug!("Scanning block {:?} for relevant xt", block_number);
 		let mut executed_calls = Vec::<H256>::new();

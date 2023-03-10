@@ -27,6 +27,7 @@ use crate::{
 	IndirectCallsExecutor,
 };
 use codec::{Decode, Input};
+use core::ops::Deref;
 use itp_node_api::{
 	api_client::ParentchainUncheckedExtrinsic,
 	metadata::{
@@ -157,9 +158,13 @@ where
 			return Err(codec::Error::from("Invalid transaction version").into())
 		}
 
+		let supported_batch_call_map = context
+			.supported_batch_call_map
+			.read()
+			.map_err(|_| Error::BatchAllHandlingError)?;
 		let xt = ParentchainUncheckedExtrinsic {
 			signature: if is_signed { Some(Decode::decode(input)?) } else { None },
-			function: decode_batch_call(input, &context.supported_batch_call_map)?,
+			function: decode_batch_call(input, supported_batch_call_map.deref())?,
 		};
 
 		let status: bool = Decode::decode(input)?;
