@@ -15,13 +15,13 @@
 
 */
 
-use crate::{error::Result, hash_of, ExecutionStatus, IndirectCallsExecutor};
-use codec::{Decode, Encode};
+use crate::{error::Error, hash_of, ExecutionStatus, IndirectCallsExecutor};
+use codec::{Decode, Encode, Error as CodecError};
 use itp_node_api::{
 	api_client::ParentchainUncheckedExtrinsic,
 	metadata::{
 		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, pallet_vcmp::VCMPCallIndexes,
-		provider::AccessNodeMetadata,
+		provider::AccessNodeMetadata, Error as MetadataError,
 	},
 };
 use itp_types::{extrinsics::ParentchainUncheckedExtrinsicWithStatus, H256};
@@ -46,7 +46,7 @@ pub(crate) trait Executor<
 	fn call_index_from_metadata(
 		&self,
 		metadata_type: &NodeMetadataProvider::MetadataType,
-	) -> Result<[u8; 2]>;
+	) -> Result<[u8; 2], MetadataError>;
 
 	fn is_target_call(&self, call: &Self::Call, node_metadata: &NodeMetadataProvider) -> bool {
 		node_metadata
@@ -59,15 +59,9 @@ pub(crate) trait Executor<
 
 	fn decode(
 		&self,
-		_context: &IndirectCallsExecutor<
-			ShieldingKeyRepository,
-			StfEnclaveSigner,
-			TopPoolAuthor,
-			NodeMetadataProvider,
-		>,
 		input: &mut &[u8],
-	) -> Result<ParentchainUncheckedExtrinsicWithStatus<Self::Call>> {
-		ParentchainUncheckedExtrinsicWithStatus::<Self::Call>::decode(input).map_err(|e| e.into())
+	) -> Result<ParentchainUncheckedExtrinsicWithStatus<Self::Call>, CodecError> {
+		ParentchainUncheckedExtrinsicWithStatus::<Self::Call>::decode(input)
 	}
 
 	/// extrinisc in this function should execute successfully on parentchain
@@ -80,7 +74,7 @@ pub(crate) trait Executor<
 			NodeMetadataProvider,
 		>,
 		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
-	) -> Result<()>;
+	) -> Result<(), Error>;
 }
 
 pub(crate) trait DecorateExecutor<
@@ -99,7 +93,7 @@ pub(crate) trait DecorateExecutor<
 			NodeMetadataProvider,
 		>,
 		input: &mut &[u8],
-	) -> Result<ExecutionStatus<H256>>;
+	) -> Result<ExecutionStatus<H256>, Error>;
 }
 
 impl<E, ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
@@ -119,10 +113,8 @@ where
 			NodeMetadataProvider,
 		>,
 		input: &mut &[u8],
-	) -> Result<ExecutionStatus<H256>> {
-		if let Ok(ParentchainUncheckedExtrinsicWithStatus { xt, status }) =
-			self.decode(context, input)
-		{
+	) -> Result<ExecutionStatus<H256>, Error> {
+		if let Ok(ParentchainUncheckedExtrinsicWithStatus { xt, status }) = self.decode(input) {
 			if self.is_target_call(&xt.function, context.node_meta_data_provider.as_ref()) {
 				if status {
 					debug!(
