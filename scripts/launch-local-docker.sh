@@ -20,6 +20,11 @@ function print_divider() {
 }
 
 ROOTDIR=$(git rev-parse --show-toplevel)
+
+cd "$ROOTDIR"
+PARACHAIN_ID=$(grep DEFAULT_PARA_ID node/src/chain_specs/$CHAIN.rs  | grep u32 | sed 's/.* = //;s/\;//')
+export PARACHAIN_ID
+
 cd "$ROOTDIR/docker/generated-$CHAIN/"
 
 docker compose up -d --build
