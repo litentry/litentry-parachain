@@ -238,7 +238,7 @@ async function startChainBridge(
     require('dotenv').config();
     const dataDir = './bridge/data';
     if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir, {recursive: true});
+        fs.mkdirSync(dataDir, { recursive: true });
     }
     emptyDir(dataDir);
     const ethBlock = await ethConfig.wallets.bob.provider.getBlockNumber();
@@ -259,7 +259,7 @@ async function startChainBridge(
         // `${process.env.GOPATH}/bin/chainbridge`,
         bridgePath,
         ['--verbosity', 'trace', '--blockstore', dataDir, '--config', config, '--keystore', './bridge/keys'],
-        {env: {STAGE: 'dev'}}
+        { env: { STAGE: 'dev' } }
     );
     lsProcess.stdout.pipe(logging);
     lsProcess.stderr.pipe(logging);
@@ -307,13 +307,7 @@ export function describeCrossChainTransfer(
                 dave: new ethers.Wallet(generateTestKeys().dave, provider),
                 eve: new ethers.Wallet(generateTestKeys().eve, provider),
             };
-            const {
-                bridge,
-                erc20Handler,
-                erc721Handler,
-                genericHandler,
-                erc20
-            } = await deployBridgeContracts(
+            const { bridge, erc20Handler, erc721Handler, genericHandler, erc20 } = await deployBridgeContracts(
                 wallets.alice
             );
 
@@ -348,8 +342,7 @@ export function describeCrossChainTransfer(
             await sleep(5);
         });
 
-        after(async function () {
-        });
+        after(async function () {});
 
         cb(context);
     });

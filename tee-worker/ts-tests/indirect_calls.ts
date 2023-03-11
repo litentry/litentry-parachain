@@ -15,8 +15,9 @@ import {
 } from './utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { HexString } from '@polkadot/util/types';
+import { u8aToHex } from '@polkadot/util';
 import { ApiPromise } from '@polkadot/api';
-import { expect } from 'chai';
+import { expect, assert } from 'chai';
 
 export async function setUserShieldingKey(
     context: IntegrationTestContext,
@@ -295,7 +296,8 @@ export async function revokeVCs(
     }
     return undefined;
 }
-function decodeIdentityEvent(
+
+export function decodeIdentityEvent(
     api: ApiPromise,
     who: HexString,
     identityString: HexString,
@@ -310,4 +312,46 @@ function decodeIdentityEvent(
         idGraph,
         challengeCode,
     };
+}
+
+export function assertIdentityCreated(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
+    let idGraphExist = false;
+    if (identityEvent) {
+        for (let i = 0; i < identityEvent.idGraph.length; i++) {
+            if (JSON.stringify(identityEvent.idGraph[i][0]) == JSON.stringify(identityEvent.identity)) {
+                idGraphExist = true;
+                assert.isFalse(identityEvent.idGraph[i][1].is_verified, 'identity should not be verified');
+            }
+        }
+    }
+    assert.isTrue(idGraphExist, 'id_graph should exist');
+    assert.equal(identityEvent?.who, u8aToHex(signer.addressRaw), 'check caller error');
+}
+
+export function assertIdentityVerified(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
+    let idGraphExist = false;
+
+    if (identityEvent) {
+        for (let i = 0; i < identityEvent.idGraph.length; i++) {
+            if (JSON.stringify(identityEvent.idGraph[i][0]) == JSON.stringify(identityEvent.identity)) {
+                idGraphExist = true;
+                assert.isTrue(identityEvent.idGraph[i][1].is_verified, 'identity should be verified');
+            }
+        }
+    }
+    assert.isTrue(idGraphExist, 'id_graph should exist');
+    assert.equal(identityEvent?.who, u8aToHex(signer.addressRaw), 'check caller error');
+}
+
+export function assertIdentityRemoved(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
+    let idGraphExist = false;
+    if (identityEvent) {
+        for (let i = 0; i < identityEvent.idGraph.length; i++) {
+            if (JSON.stringify(identityEvent.idGraph[i][0]) == JSON.stringify(identityEvent.identity)) {
+                idGraphExist = true;
+            }
+        }
+    }
+    assert.isFalse(idGraphExist, 'id_graph should be empty');
+    assert.equal(identityEvent?.who, u8aToHex(signer.addressRaw), 'check caller error');
 }

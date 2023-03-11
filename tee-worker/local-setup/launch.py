@@ -25,7 +25,6 @@ from py.helpers import GracefulKiller, mkdir_p
 
 log_dir = 'log'
 mkdir_p(log_dir)
-node_log = open(f'{log_dir}/node.log', 'w+')
 
 
 def setup_worker(work_dir: str, source_dir: str, std_err: Union[None, int, IO]):

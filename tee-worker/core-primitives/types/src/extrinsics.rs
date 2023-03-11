@@ -129,6 +129,7 @@ mod tests {
 		let mut input: &[u8] = &oq_xt_with_status.encode();
 		let xt_with_status: ParentchainUncheckedExtrinsicWithStatus<Vec<i32>> =
 			ParentchainUncheckedExtrinsicWithStatus::decode(&mut input).unwrap();
-		assert_eq!(true, xt_with_status.status);
+		assert_eq!(xt_with_status.status, true);
+		assert_eq!(xt_with_status.xt.function, vec![1, 1, 1]);
 	}
 }
