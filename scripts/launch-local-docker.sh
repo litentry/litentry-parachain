@@ -55,7 +55,15 @@ echo "waiting for parachain to finalize blocks ..."
 for i in $(seq 1 $WAIT_ROUNDS); do
   sleep $WAIT_INTERVAL_SECONDS
   if docker compose logs "$parachain_service" 2>&1 | grep -F '0 peers' 2>/dev/null | grep -Fq "finalized #1" 2>/dev/null; then
-    echo "parachain finalized #1, all good. Quit now"
+    echo "parachain finalized #1, all good."
+    print_divider
+    echo "extend leasing period now ..."
+    cd "$ROOTDIR/ts-tests"
+    echo "NODE_ENV=ci" > .env
+    yarn
+    yarn upgrade-parathread 2>&1
+    print_divider
+    echo "Done."
     exit 0
   fi
 done
