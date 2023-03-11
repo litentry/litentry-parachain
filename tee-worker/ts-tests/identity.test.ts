@@ -35,14 +35,12 @@ const twitterIdentity = <LitentryIdentity>{
         network: 'Twitter',
     },
 };
-
 const ethereumIdentity = <LitentryIdentity>{
     Evm: <EvmIdentity>{
         address: '0xff93B45308FD417dF303D6515aB04D9e89a750Ca',
         network: 'Ethereum',
     },
 };
-
 const ethereumErrorIdentity = <LitentryIdentity>{
     Evm: <EvmIdentity>{
         address: '0xff93B45308FD417dF303D6515aB04D9e89a750Cb',
@@ -51,18 +49,16 @@ const ethereumErrorIdentity = <LitentryIdentity>{
 };
 const substrateIdentity = <LitentryIdentity>{
     Substrate: <SubstrateIdentity>{
-        address: '0x7ec83e0972f3f3beb91bf391f4571a1ad5070671244c3657f113afeaa627151b', //Alice
-        network: 'Litentry',
+        address: '0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d', //Alice
+        network: 'Litmus',
     },
 };
-
 const substrateExtensionIdentity = <LitentryIdentity>{
     Substrate: <SubstrateIdentity>{
         address: '0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48', //Bob
         network: 'Litentry',
     },
 };
-
 const twitterValidationData = <LitentryValidationData>{
     Web2Validation: {
         Twitter: {
@@ -70,7 +66,6 @@ const twitterValidationData = <LitentryValidationData>{
         },
     },
 };
-
 const ethereumValidationData = <LitentryValidationData>{
     Web3Validation: {
         Evm: {
@@ -109,7 +104,6 @@ const discordIdentity = <LitentryIdentity>{
         Web2Identity: 'Discord',
     },
 };
-
 const discordValidationData = <LitentryValidationData>{
     Web2Validation: {
         Discord: {
@@ -219,6 +213,7 @@ describeLitentry('Test Identity', (context) => {
             assert.isNotEmpty(resp_extension_substrate.challengeCode, 'challengeCode empty');
         }
     });
+
     step('verify identities', async function () {
         //Alice verify all identities
         const [twitter_identity_verified, ethereum_identity_verified, substrate_identity_verified] =
@@ -285,6 +280,7 @@ describeLitentry('Test Identity', (context) => {
             );
         }
     });
+
     step('remove identities', async function () {
         // Alice remove all identities
         const [twitter_identity_removed, ethereum_identity_removed, substrate_identity_removed] =
