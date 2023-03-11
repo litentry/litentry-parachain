@@ -14,14 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{error::Error, executor::Executor, IndirectCallsExecutor};
+use crate::{error::Result, executor::Executor, IndirectCallsExecutor};
 use itp_component_container::{ComponentContainer, ComponentGetter, ComponentSetter};
 use itp_enclave_scheduled::{ScheduledEnclaveHandle, ScheduledEnclaveInfo, ScheduledEnclaves};
 use itp_node_api::{
 	api_client::ParentchainUncheckedExtrinsic,
 	metadata::{
 		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, pallet_vcmp::VCMPCallIndexes,
-		provider::AccessNodeMetadata, Error as MetadataError,
+		provider::AccessNodeMetadata,
 	},
 };
 use itp_types::{CallRemoveScheduledEnclaveFn, CallUpdateScheduledEnclaveFn};
@@ -40,25 +40,13 @@ pub static GLOBAL_SIDECHAIN_SCHEDULED_ENCLABES: ComponentContainer<ScheduledEncl
 	ComponentContainer::new("sidechain_sheduled_enclaves");
 
 impl ScheduledEnclaveUpdate {
-	fn execute_internal<
-		ShieldingKeyRepository,
-		StfEnclaveSigner,
-		TopPoolAuthor,
-		NodeMetadataProvider,
-	>(
+	fn execute_internal<R, S, T, N>(
 		&self,
-		extrinsic: ParentchainUncheckedExtrinsic<
-			<Self as Executor<
-				ShieldingKeyRepository,
-				StfEnclaveSigner,
-				TopPoolAuthor,
-				NodeMetadataProvider,
-			>>::Call,
-		>,
-	) -> Result<(), Error>
+		extrinsic: ParentchainUncheckedExtrinsic<<Self as Executor<R, S, T, N>>::Call>,
+	) -> Result<()>
 	where
-		NodeMetadataProvider: AccessNodeMetadata,
-		NodeMetadataProvider::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
+		N: AccessNodeMetadata,
+		N::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
 	{
 		let (_, sidechain_block_number, mr_enclave) = extrinsic.function;
 		debug!("execute indirect call: ScheduledEnclaveUpdate, sidechain_block_number: {}, mr_enclave: {:?}", sidechain_block_number, mr_enclave);
@@ -77,12 +65,10 @@ impl ScheduledEnclaveUpdate {
 	}
 }
 
-impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
-	Executor<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
-	for ScheduledEnclaveUpdate
+impl<R, S, T, N> Executor<R, S, T, N> for ScheduledEnclaveUpdate
 where
-	NodeMetadataProvider: AccessNodeMetadata,
-	NodeMetadataProvider::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
+	N: AccessNodeMetadata,
+	N::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
 {
 	type Call = CallUpdateScheduledEnclaveFn;
 
@@ -90,47 +76,27 @@ where
 		call.0
 	}
 
-	fn call_index_from_metadata(
-		&self,
-		metadata_type: &NodeMetadataProvider::MetadataType,
-	) -> Result<[u8; 2], MetadataError> {
-		metadata_type.update_scheduled_encalve()
+	fn call_index_from_metadata(&self, metadata_type: &N::MetadataType) -> Result<[u8; 2]> {
+		metadata_type.update_scheduled_encalve().map_err(|e| e.into())
 	}
 
 	fn execute(
 		&self,
-		_context: &IndirectCallsExecutor<
-			ShieldingKeyRepository,
-			StfEnclaveSigner,
-			TopPoolAuthor,
-			NodeMetadataProvider,
-		>,
+		_context: &IndirectCallsExecutor<R, S, T, N>,
 		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
-	) -> Result<(), Error> {
-		self.execute_internal::<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>(extrinsic)
+	) -> Result<()> {
+		self.execute_internal::<R, S, T, N>(extrinsic)
 	}
 }
 
 impl ScheduledEnclaveRemove {
-	fn execute_internal<
-		ShieldingKeyRepository,
-		StfEnclaveSigner,
-		TopPoolAuthor,
-		NodeMetadataProvider,
-	>(
+	fn execute_internal<R, S, T, N>(
 		&self,
-		extrinsic: ParentchainUncheckedExtrinsic<
-			<Self as Executor<
-				ShieldingKeyRepository,
-				StfEnclaveSigner,
-				TopPoolAuthor,
-				NodeMetadataProvider,
-			>>::Call,
-		>,
-	) -> Result<(), Error>
+		extrinsic: ParentchainUncheckedExtrinsic<<Self as Executor<R, S, T, N>>::Call>,
+	) -> Result<()>
 	where
-		NodeMetadataProvider: AccessNodeMetadata,
-		NodeMetadataProvider::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
+		N: AccessNodeMetadata,
+		N::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
 	{
 		let (_, sidechain_block_number) = extrinsic.function;
 		debug!(
@@ -147,12 +113,10 @@ impl ScheduledEnclaveRemove {
 	}
 }
 
-impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
-	Executor<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
-	for ScheduledEnclaveRemove
+impl<R, S, T, N> Executor<R, S, T, N> for ScheduledEnclaveRemove
 where
-	NodeMetadataProvider: AccessNodeMetadata,
-	NodeMetadataProvider::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
+	N: AccessNodeMetadata,
+	N::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
 {
 	type Call = CallRemoveScheduledEnclaveFn;
 
@@ -160,23 +124,15 @@ where
 		call.0
 	}
 
-	fn call_index_from_metadata(
-		&self,
-		metadata_type: &NodeMetadataProvider::MetadataType,
-	) -> Result<[u8; 2], MetadataError> {
-		metadata_type.remove_scheduled_enclave()
+	fn call_index_from_metadata(&self, metadata_type: &N::MetadataType) -> Result<[u8; 2]> {
+		metadata_type.remove_scheduled_enclave().map_err(|e| e.into())
 	}
 
 	fn execute(
 		&self,
-		_context: &IndirectCallsExecutor<
-			ShieldingKeyRepository,
-			StfEnclaveSigner,
-			TopPoolAuthor,
-			NodeMetadataProvider,
-		>,
+		_context: &IndirectCallsExecutor<R, S, T, N>,
 		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
-	) -> Result<(), Error> {
-		self.execute_internal::<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>(extrinsic)
+	) -> Result<()> {
+		self.execute_internal::<R, S, T, N>(extrinsic)
 	}
 }

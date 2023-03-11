@@ -462,13 +462,13 @@ jobs:
           - test_name: demo-indirect-invocation
           - test_name: demo-direct-call
           - test_name: demo-sidechain
-          - test_name: sidechain-benchmark
           # Litentry
           - test_name: lit-user-shielding-key
           - test_name: lit-resume-worker
           - test_name: lit-set-heartbeat-timeout
           - test_name: lit-vc-test
           - test_name: lit-identity-test
+          - test_name: lit-batch-test
 
     steps:
       - uses: actions/checkout@v3
