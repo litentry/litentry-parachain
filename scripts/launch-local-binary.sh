@@ -112,10 +112,8 @@ yarn
 yarn register-parathread 2>&1 | tee "$TMPDIR/register-parathread.log"
 print_divider
 
-echo "start upgrading parathread to parachain now, Please wait a moment"
-# Wait for the parathread to complete the registration
-# Wait for 90s because need to wait 1 minute to confirm after registering parathread,
-# so set the waiting time to 90s to ensure normal upgrades.
+echo "upgrade parathread to parachain now ..."
+# Wait for 90s to allow onboarding finish, after that we do the upgrade
 sleep 90
 cd "$ROOTDIR/ts-tests"
 echo "NODE_ENV=ci" > .env
