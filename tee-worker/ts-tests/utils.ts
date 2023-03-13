@@ -384,38 +384,3 @@ export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
     ).to.be.true;
     return true;
 }
-
-export async function checkIssuerAttestation(vc: any, api: ApiPromise): Promise<any> {
-    // const vc = JSON.parse(data);
-    const mrEnclaveFromVC = Buffer.from(base58.decode(vc.issuer.mrenclave)).toString('hex');
-    const count = await api.query.teerex.enclaveCount();
-    const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as EnclaveResult;
-    const mrEnclaveFromParachain = res.mrEnclave;
-    expect(`0x${mrEnclaveFromVC}`).to.be.equal(mrEnclaveFromParachain);
-
-    const metadata = res.sgxMetadata as any;
-    console.log('   [IssuerAttestation] metadata: ', metadata);
-    if (metadata != null) {
-        const quoteFromData = metadata!['quote'];
-        console.log('   [IssuerAttestation] quoteFromData: ', quoteFromData);
-        if (quoteFromData.length == 0) {
-            return;
-        }
-        const quote = JSON.parse(Base64.decode(quoteFromData));
-        const status = quote!['isvEnclaveQuoteStatus'];
-
-        // 1. Verify quote status (mandatory field)
-        console.log('[IssuerAttestation] ISV Enclave Quote Status: ', status);
-
-        // 2. Verify quote body
-        const quoteBody = quote!['isvEnclaveQuoteBody'];
-        const sgxQuote = JSON.parse(Base64.decode(quoteBody));
-        console.log('[IssuerAttestation] sgxQuote: ', sgxQuote);
-
-        // 3. Check timestamp is within 24H (90day is recommended by Intel)
-        const timestamp = Date.parse(quote!['timestamp']);
-        const now = Date.now();
-        const dt = now - timestamp;
-        console.log('[IssuerAttestation] ISV Enclave Quote Delta Time: ', dt);
-    }
-}

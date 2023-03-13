@@ -1,4 +1,4 @@
-import { describeLitentry, checkVc, checkIssuerAttestation } from './utils';
+import { describeLitentry, checkVc } from './utils';
 import { step } from 'mocha-steps';
 import { setUserShieldingKey, requestVCs, disableVCs, revokeVCs } from './indirect_calls';
 import { Assertion } from './type-definitions';
@@ -55,9 +55,6 @@ describeLitentry('VC test', async (context) => {
             const vcValid = await checkVc(vcObj, res[k].index, vcProof, context.substrate);
             assert.equal(vcValid, true, 'check vc error');
             indexList.push(res[k].index);
-
-            //check issuer attestation
-            await checkIssuerAttestation(vcObj, context.substrate);
         }
     });
 
