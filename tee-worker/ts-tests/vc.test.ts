@@ -52,13 +52,12 @@ describeLitentry('VC test', async (context) => {
             assert.equal(vcHash, registry.toHuman()!['hash_'], 'check vc json hash error');
 
             //check vc
-            const vcPayloadHash = blake2AsHex(Buffer.from(JSON.stringify(vcObj)));
-            const vcValid = await checkVc(vcObj, res[k].index, vcProof, vcPayloadHash, context.substrate);
+            const vcValid = await checkVc(vcObj, res[k].index, vcProof, context.substrate);
             assert.equal(vcValid, true, 'check vc error');
             indexList.push(res[k].index);
 
             //check issuer attestation
-            await checkIssuerAttestation(vcString, context.substrate);
+            await checkIssuerAttestation(vcObj, context.substrate);
         }
     });
 

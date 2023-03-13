@@ -169,10 +169,7 @@ where
 		let payload = credential.to_json().unwrap();
 		debug!("	[Assertion] VC payload: {}", payload);
 
-		let payload_hash = blake2_256(payload.as_bytes());
-		debug!("	[Assertion] VC payload_hash: {:?}", payload_hash);
-
-		if let Ok((enclave_account, sig)) = signer.sign_vc_with_self(&payload_hash) {
+		if let Ok((enclave_account, sig)) = signer.sign_vc_with_self(payload.as_bytes()) {
 			debug!("	[Assertion] Payload hash signature: {:?}", sig);
 
 			credential.add_proof(&sig, credential.issuance_block_number, &enclave_account);

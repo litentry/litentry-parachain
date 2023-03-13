@@ -335,7 +335,6 @@ export async function verifySignature(
     data: any,
     index: HexString,
     proofJson: any,
-    vcPayloadHash: HexString,
     api: ApiPromise
 ) {
     const count = await api.query.teerex.enclaveCount();
@@ -344,7 +343,7 @@ export async function verifySignature(
     expect(index).to.be.eq(data.id);
 
     const signature = Buffer.from(hexToU8a(`0x${proofJson.proofValue}`));
-    const message = Buffer.from(hexToU8a(vcPayloadHash));
+    const message = Buffer.from(JSON.stringify(data));
     const vcPubkey = Buffer.from(hexToU8a(`${res.vcPubkey}`));
     
     const isValid = await ed.verify(
@@ -361,10 +360,9 @@ export async function checkVc(
     vcObj: any,
     index: HexString,
     proof: any,
-    vcPayloadHash: HexString,
     api: ApiPromise
 ): Promise<boolean> {
-    const signatureValid = await verifySignature(vcObj, index, proof, vcPayloadHash, api);
+    const signatureValid = await verifySignature(vcObj, index, proof, api);
     expect(signatureValid).to.be.true;
 
     const jsonValid = await checkJSON(vcObj, proof);
