@@ -55,7 +55,7 @@ def main(processes, config_path, parachain_type):
     if parachain_type == "local" :
         # start parachain via shell script
         # TODO: use Popen and copy the stdout also to node.log
-        run(['./scripts/litentry/start_parachain.sh'])
+        run(['./scripts/litentry/start_parachain.sh'], check=True)
 
         print('Starting litentry-parachain done')
         print('----------------------------------------')
