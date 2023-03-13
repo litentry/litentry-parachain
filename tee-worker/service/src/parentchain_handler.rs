@@ -146,13 +146,16 @@ where
 				return Ok(until_synced_header)
 			}
 
-			// `indirect_calls_executor` should know the if tx was successful.
-			// if we change the block type `sp_runtime::generic::Block` or `sp_runtime::generic::SignedBlock`,
-			// this change will affect many structs or files, like block_importer, block_import_dispatcher, consensus and so on.
-			// `OpaqueExtrinsic` (Vec<u8>) encoded value contains tx status, and decode Vec<u8> in `indirect_calls_executor`,
-			// this solution is probably the least change.
-			// Also dropping failed extrinsics might not be a good solution.
-			// In certain cases, we may need to know which extrinsics failed or need to count which extrinsics failed
+			// `indirect_calls_executor` looks for extrinsics in parentchain blocks without checking their status.
+			// We believe it's wrong, see https://github.com/litentry/litentry-parachain/issues/1092
+			//
+			// One solution is to change the block type to `sp_runtime::generic::Block` or `sp_runtime::generic::SignedBlock`,
+			// this will however affect many structs or files, like block_importer, block_import_dispatcher, consensus and so on.
+			//
+			// We use a hacky workaround here for the least possible changes:
+			// append an extra `status` flag to `OpaqueExtrinsic` (Vec<u8>) and adjust the codec of it
+			//
+			// We intentionally don't drop failed extrinsics to allow any potential (post-)processing of failed extrinsics
 			let mut events: Vec<Events> = vec![];
 			for block in &block_chunk_to_sync {
 				let block_events = self.parentchain_api.events(Some(block.block.hash()))?;

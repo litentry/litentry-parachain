@@ -2,24 +2,22 @@ import './config';
 import WebSocketAsPromised from 'websocket-as-promised';
 import WebSocket from 'ws';
 import Options from 'websocket-as-promised/types/options';
-import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
-import { StorageKey, Vec } from '@polkadot/types';
+import { ApiPromise, WsProvider } from '@polkadot/api';
 import {
     AESOutput,
     EnclaveResult,
     IntegrationTestContext,
     LitentryIdentity,
-    PubicKeyJson,
     teeTypes,
-    WorkerRpcReturnString,
     WorkerRpcReturnValue,
+    TransactionSubmit,
 } from './type-definitions';
-import { blake2AsHex, cryptoWaitReady, signatureVerify } from '@polkadot/util-crypto';
+import { blake2AsHex, cryptoWaitReady } from '@polkadot/util-crypto';
+import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { Codec } from '@polkadot/types/types';
-import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { HexString } from '@polkadot/util/types';
-import { hexToU8a, u8aToHex, stringToU8a, stringToHex, u8aToU8a } from '@polkadot/util';
+import { hexToU8a, u8aToHex, stringToU8a } from '@polkadot/util';
 import { KeyObject } from 'crypto';
 import { Event, EventRecord } from '@polkadot/types/interfaces';
 import { after, before, describe } from 'mocha';
@@ -117,6 +115,28 @@ export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrins
                 reject(`Transaction is ${result.status}`);
             }
         });
+    });
+}
+
+export async function sendTxUntilInBlockList(api: ApiPromise, txs: TransactionSubmit[], signer: KeyringPair) {
+    return new Promise<{
+        block: string;
+    }>(async (resolve, reject) => {
+        await Promise.all(
+            txs.map(async ({ tx, nonce }) => {
+                // await tx.paymentInfo(signer);
+                tx.signAndSend(signer, { nonce }, (result) => {
+                    if (result.status.isInBlock) {
+                        console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
+                        resolve({
+                            block: result.status.asInBlock.toString(),
+                        });
+                    } else if (result.status.isInvalid) {
+                        reject(`Transaction is ${result.status}`);
+                    }
+                });
+            })
+        );
     });
 }
 

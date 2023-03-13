@@ -3,6 +3,7 @@ import signal
 import subprocess
 import shutil
 import sys
+import docker
 from typing import Union, IO
 from datetime import datetime
 
@@ -64,6 +65,16 @@ class GracefulKiller:
 
     def exit_gracefully(self, signum = signal.SIGTERM, frame = None):
         print("\nReceived {} signal".format(self.signals[signum]))
+
+        print("Save Parachain/Relaychain logs")
+        client = docker.from_env()
+        container_list = client.containers.list()
+        for container in container_list:
+            if "generated-rococo-" in container.name:
+                logs = container.logs()
+                with open(f'log/{container.name}.log', 'w') as f:
+                    f.write(logs.decode('utf-8'))
+
         print("Cleaning up processes.")
         for p in self.processes:
             try:
