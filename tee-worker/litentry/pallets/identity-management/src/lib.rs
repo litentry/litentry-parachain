@@ -201,7 +201,10 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 			if let Some(c) = IDGraphs::<T>::get(&who, &identity) {
-				ensure!(!c.is_verified, Error::<T>::IdentityAlreadyVerified);
+				ensure!(
+					!(c.is_verified && c.creation_request_block != Some(0)),
+					Error::<T>::IdentityAlreadyVerified
+				);
 			}
 			let prime_address_raw: [u8; 32] = who
 				.encode()
