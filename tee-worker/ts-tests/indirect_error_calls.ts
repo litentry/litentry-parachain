@@ -140,7 +140,7 @@ export async function removeErrorIdentities(
         });
     }
 
-    sendTxUntilInBlockList(context.substrate, txs, signer);
+    await sendTxUntilInBlockList(context.substrate, txs, signer);
 
     if (listening) {
         const events = await listenEvent(context.substrate, 'identityManagement', ['StfError']);

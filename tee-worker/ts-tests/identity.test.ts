@@ -1,4 +1,4 @@
-import { describeLitentry, generateVerificationMessage } from './utils';
+import { describeLitentry, encryptWithTeeShieldingKey, generateVerificationMessage, listenEvent, sendTxUntilInBlock } from './utils';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
 import {
     setUserShieldingKey,
@@ -10,7 +10,7 @@ import {
     assertIdentityRemoved,
 } from './indirect_calls';
 import { step } from 'mocha-steps';
-import { assert } from 'chai';
+import { assert, expect } from 'chai';
 import {
     EvmIdentity,
     IdentityGenericEvent,
@@ -35,14 +35,12 @@ const twitterIdentity = <LitentryIdentity>{
         network: 'Twitter',
     },
 };
-
 const ethereumIdentity = <LitentryIdentity>{
     Evm: <EvmIdentity>{
         address: '0xff93B45308FD417dF303D6515aB04D9e89a750Ca',
         network: 'Ethereum',
     },
 };
-
 const ethereumErrorIdentity = <LitentryIdentity>{
     Evm: <EvmIdentity>{
         address: '0xff93B45308FD417dF303D6515aB04D9e89a750Cb',
@@ -55,14 +53,12 @@ const substrateIdentity = <LitentryIdentity>{
         network: 'Litentry',
     },
 };
-
 const substrateExtensionIdentity = <LitentryIdentity>{
     Substrate: <SubstrateIdentity>{
         address: '0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48', //Bob
         network: 'Litentry',
     },
 };
-
 const twitterValidationData = <LitentryValidationData>{
     Web2Validation: {
         Twitter: {
@@ -70,7 +66,6 @@ const twitterValidationData = <LitentryValidationData>{
         },
     },
 };
-
 const ethereumValidationData = <LitentryValidationData>{
     Web3Validation: {
         Evm: {
@@ -109,7 +104,6 @@ const discordIdentity = <LitentryIdentity>{
         Web2Identity: 'Discord',
     },
 };
-
 const discordValidationData = <LitentryValidationData>{
     Web2Validation: {
         Discord: {
@@ -219,6 +213,7 @@ describeLitentry('Test Identity', (context) => {
             assert.isNotEmpty(resp_extension_substrate.challengeCode, 'challengeCode empty');
         }
     });
+
     step('verify identities', async function () {
         //Alice verify all identities
         const [twitter_identity_verified, ethereum_identity_verified, substrate_identity_verified] =
@@ -285,6 +280,7 @@ describeLitentry('Test Identity', (context) => {
             );
         }
     });
+
     step('remove identities', async function () {
         // Alice remove all identities
         const [twitter_identity_removed, ethereum_identity_removed, substrate_identity_removed] =
@@ -310,6 +306,55 @@ describeLitentry('Test Identity', (context) => {
 
         // Bob
         assertIdentityRemoved(context.defaultSigner[1], substrate_extension_identity_removed);
+    });
+
+    step('remove prime identity NOT allowed', async function () {
+        // create substrate identity
+        const [resp_substrate] = (await createIdentities(context, context.defaultSigner[0], aesKey, true, [substrateIdentity])) as IdentityGenericEvent[];
+        assertIdentityCreated(context.defaultSigner[0], resp_substrate);
+
+        if (resp_substrate) {
+            console.log('substrateIdentity challengeCode: ', resp_substrate.challengeCode);
+            const msg = generateVerificationMessage(
+                context,
+                hexToU8a(resp_substrate.challengeCode),
+                context.defaultSigner[0].addressRaw,
+                substrateIdentity
+            );
+
+            console.log('post verification msg to substrate: ', msg);
+            substrateValidationData!.Web3Validation!.Substrate!.message = msg;
+            signature_substrate = context.defaultSigner[0].sign(msg);
+            substrateValidationData!.Web3Validation!.Substrate!.signature!.Sr25519 = u8aToHex(signature_substrate);
+            assert.isNotEmpty(resp_substrate.challengeCode, 'challengeCode empty');
+        }
+
+        // remove substrate identity
+        const [substrate_identity_removed] = (await removeIdentities(
+            context,
+            context.defaultSigner[0],
+            aesKey,
+            true,
+            [substrateIdentity]
+        )) as IdentityGenericEvent[];
+        assertIdentityRemoved(context.defaultSigner[0], substrate_identity_removed);
+
+        // remove prime identity
+        const substratePrimeIdentity = <LitentryIdentity>{
+            Substrate: <SubstrateIdentity>{
+                address: `0x${Buffer.from(context.defaultSigner[0].publicKey).toString('hex')}`,
+                network: 'Litentry',
+            },
+        };
+
+        const encode = context.substrate.createType('LitentryIdentity', substratePrimeIdentity).toHex();
+        const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
+        const tx = context.substrate.tx.identityManagement.removeIdentity(context.mrEnclave, `0x${ciphertext}`);
+        await sendTxUntilInBlock(context.substrate, tx, context.defaultSigner[0]);
+
+        const events = await listenEvent(context.substrate, 'identityManagement', ['StfError']);
+        expect(events.length).to.be.equal(1);
+        const result = events[0].method as string;
     });
 
     step('remove error identities', async function () {

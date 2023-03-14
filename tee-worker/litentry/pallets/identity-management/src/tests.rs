@@ -18,17 +18,26 @@ use crate::{
 	identity_context::IdentityContext, mock::*, Error, MetadataOf, ParentchainBlockNumber,
 	UserShieldingKeyType,
 };
-use frame_support::{assert_noop, assert_ok};
+use frame_support::{assert_err, assert_noop, assert_ok};
 use litentry_primitives::{Identity, IdentityString, Web2Network, USER_SHIELDING_KEY_LEN};
+use sp_runtime::AccountId32;
+
+pub const ALICE: AccountId32 = AccountId32::new([1u8; 32]);
+pub const BOB: AccountId32 = AccountId32::new([2u8; 32]);
+
 #[test]
 fn set_user_shielding_key_works() {
 	new_test_ext().execute_with(|| {
 		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
-		assert_eq!(IMT::user_shielding_keys(2), None);
-		assert_ok!(IMT::set_user_shielding_key(RuntimeOrigin::signed(1), 2, shielding_key.clone()));
-		assert_eq!(IMT::user_shielding_keys(2), Some(shielding_key.clone()));
+		assert_eq!(IMT::user_shielding_keys(BOB), None);
+		assert_ok!(IMT::set_user_shielding_key(
+			RuntimeOrigin::signed(ALICE),
+			BOB,
+			shielding_key.clone()
+		));
+		assert_eq!(IMT::user_shielding_keys(BOB), Some(shielding_key.clone()));
 		System::assert_last_event(RuntimeEvent::IMT(crate::Event::UserShieldingKeySet {
-			who: 2,
+			who: BOB,
 			key: shielding_key,
 		}));
 	});
@@ -40,15 +49,15 @@ fn create_identity_works() {
 		let ss58_prefix = 131_u16;
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		assert_ok!(IMT::create_identity(
-			RuntimeOrigin::signed(1),
-			2,
+			RuntimeOrigin::signed(ALICE),
+			BOB,
 			alice_web3_identity(),
 			Some(metadata.clone()),
 			1,
 			ss58_prefix,
 		));
 		assert_eq!(
-			IMT::id_graphs(2, alice_web3_identity()).unwrap(),
+			IMT::id_graphs(BOB, alice_web3_identity()).unwrap(),
 			IdentityContext {
 				metadata: Some(metadata),
 				creation_request_block: Some(1),
@@ -65,19 +74,19 @@ fn remove_identity_works() {
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		let ss58_prefix = 131_u16;
 		assert_noop!(
-			IMT::remove_identity(RuntimeOrigin::signed(1), 2, alice_web3_identity()),
+			IMT::remove_identity(RuntimeOrigin::signed(ALICE), BOB, alice_web3_identity()),
 			Error::<Test>::IdentityNotExist
 		);
 		assert_ok!(IMT::create_identity(
-			RuntimeOrigin::signed(1),
-			2,
+			RuntimeOrigin::signed(ALICE),
+			BOB,
 			alice_web3_identity(),
 			Some(metadata.clone()),
 			1,
 			ss58_prefix,
 		));
 		assert_eq!(
-			IMT::id_graphs(2, alice_web3_identity()).unwrap(),
+			IMT::id_graphs(BOB, alice_web3_identity()).unwrap(),
 			IdentityContext {
 				metadata: Some(metadata),
 				creation_request_block: Some(1),
@@ -85,8 +94,21 @@ fn remove_identity_works() {
 				is_verified: false,
 			}
 		);
-		assert_ok!(IMT::remove_identity(RuntimeOrigin::signed(1), 2, alice_web3_identity()));
-		assert_eq!(IMT::id_graphs(2, alice_web3_identity()), None);
+
+		let id_graph = IMT::get_id_graph(&BOB);
+		assert_eq!(id_graph.len(), 2);
+
+		assert_ok!(IMT::remove_identity(RuntimeOrigin::signed(ALICE), BOB, alice_web3_identity()));
+		assert_eq!(IMT::id_graphs(BOB, alice_web3_identity()), None);
+
+		let id_graph = IMT::get_id_graph(&BOB);
+		// "1": because of the main id is added by default when first calling creat_identity.
+		assert_eq!(id_graph.len(), 1);
+
+		assert_noop!(
+			IMT::remove_identity(RuntimeOrigin::signed(ALICE), BOB, bob_web3_identity()),
+			Error::<Test>::RemovePrimeIdentityDisallowed
+		);
 	});
 }
 
@@ -96,16 +118,21 @@ fn verify_identity_works() {
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		let ss58_prefix = 131_u16;
 		assert_ok!(IMT::create_identity(
-			RuntimeOrigin::signed(1),
-			2,
+			RuntimeOrigin::signed(ALICE),
+			BOB,
 			alice_web3_identity(),
 			Some(metadata.clone()),
 			1,
 			ss58_prefix,
 		));
-		assert_ok!(IMT::verify_identity(RuntimeOrigin::signed(1), 2, alice_web3_identity(), 1));
+		assert_ok!(IMT::verify_identity(
+			RuntimeOrigin::signed(ALICE),
+			BOB,
+			alice_web3_identity(),
+			1
+		));
 		assert_eq!(
-			IMT::id_graphs(2, alice_web3_identity()).unwrap(),
+			IMT::id_graphs(BOB, alice_web3_identity()).unwrap(),
 			IdentityContext {
 				metadata: Some(metadata),
 				creation_request_block: Some(1),
@@ -122,14 +149,19 @@ fn get_id_graph_works() {
 		let metadata3: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		let ss58_prefix = 131_u16;
 		assert_ok!(IMT::create_identity(
-			RuntimeOrigin::signed(1),
-			2,
+			RuntimeOrigin::signed(ALICE),
+			BOB,
 			alice_web3_identity(),
 			Some(metadata3.clone()),
 			3,
 			ss58_prefix,
 		));
-		assert_ok!(IMT::verify_identity(RuntimeOrigin::signed(1), 2, alice_web3_identity(), 3));
+		assert_ok!(IMT::verify_identity(
+			RuntimeOrigin::signed(ALICE),
+			BOB,
+			alice_web3_identity(),
+			3
+		));
 
 		let alice_web2_identity = Identity::Web2 {
 			network: Web2Network::Twitter,
@@ -137,22 +169,23 @@ fn get_id_graph_works() {
 		};
 		let metadata2: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		assert_ok!(IMT::create_identity(
-			RuntimeOrigin::signed(1),
-			2,
+			RuntimeOrigin::signed(ALICE),
+			BOB,
 			alice_web2_identity.clone(),
 			Some(metadata2.clone()),
 			2,
 			ss58_prefix,
 		));
 		assert_ok!(IMT::verify_identity(
-			RuntimeOrigin::signed(1),
-			2,
+			RuntimeOrigin::signed(ALICE),
+			BOB,
 			alice_web2_identity.clone(),
 			2
 		));
 
-		let id_graph = IMT::get_id_graph(&2);
-		assert_eq!(id_graph.len(), 2);
+		let id_graph = IMT::get_id_graph(&BOB);
+		// "+1": because of the main id is added by default when first calling creat_identity.
+		assert_eq!(id_graph.len(), 2 + 1);
 	});
 }
 
@@ -165,8 +198,8 @@ fn verify_identity_fails_when_too_early() {
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		let ss58_prefix = 131_u16;
 		assert_ok!(IMT::create_identity(
-			RuntimeOrigin::signed(1),
-			2,
+			RuntimeOrigin::signed(ALICE),
+			BOB,
 			alice_web3_identity(),
 			Some(metadata.clone()),
 			CREATION_REQUEST_BLOCK,
@@ -174,15 +207,15 @@ fn verify_identity_fails_when_too_early() {
 		));
 		assert_noop!(
 			IMT::verify_identity(
-				RuntimeOrigin::signed(1),
-				2,
+				RuntimeOrigin::signed(ALICE),
+				BOB,
 				alice_web3_identity(),
 				VERIFICATION_REQUEST_BLOCK
 			),
 			Error::<Test>::VerificationRequestTooEarly
 		);
 		assert_eq!(
-			IMT::id_graphs(2, alice_web3_identity()).unwrap(),
+			IMT::id_graphs(BOB, alice_web3_identity()).unwrap(),
 			IdentityContext {
 				metadata: Some(metadata),
 				creation_request_block: Some(CREATION_REQUEST_BLOCK),
@@ -202,8 +235,8 @@ fn verify_identity_fails_when_too_late() {
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		let ss58_prefix = 131_u16;
 		assert_ok!(IMT::create_identity(
-			RuntimeOrigin::signed(1),
-			2,
+			RuntimeOrigin::signed(ALICE),
+			BOB,
 			alice_web3_identity(),
 			Some(metadata.clone()),
 			CREATION_REQUEST_BLOCK,
@@ -211,15 +244,15 @@ fn verify_identity_fails_when_too_late() {
 		));
 		assert_noop!(
 			IMT::verify_identity(
-				RuntimeOrigin::signed(1),
-				2,
+				RuntimeOrigin::signed(ALICE),
+				BOB,
 				alice_web3_identity(),
 				VERIFICATION_REQUEST_BLOCK
 			),
 			Error::<Test>::VerificationRequestTooLate
 		);
 		assert_eq!(
-			IMT::id_graphs(2, alice_web3_identity()).unwrap(),
+			IMT::id_graphs(BOB, alice_web3_identity()).unwrap(),
 			IdentityContext {
 				metadata: Some(metadata),
 				creation_request_block: Some(CREATION_REQUEST_BLOCK),
