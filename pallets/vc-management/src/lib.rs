@@ -166,6 +166,12 @@ pub mod pallet {
 		#[pallet::weight(195_000_000)]
 		pub fn disable_vc(origin: OriginFor<T>, index: VCIndex) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
+
+			if !VCRegistry::<T>::contains_key(index) {
+				Self::deposit_event(Event::VCNotExist { index });
+				return Ok(().into())
+			}
+
 			VCRegistry::<T>::try_mutate(index, |context| {
 				match context.take() {
 					Some(mut c) => {
@@ -188,6 +194,11 @@ pub mod pallet {
 		#[pallet::weight(195_000_000)]
 		pub fn revoke_vc(origin: OriginFor<T>, index: VCIndex) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
+
+			if !VCRegistry::<T>::contains_key(index) {
+				Self::deposit_event(Event::VCNotExist { index });
+				return Ok(().into())
+			}
 
 			let context = VCRegistry::<T>::get(index).ok_or(Error::<T>::VCNotExist)?;
 			ensure!(who == context.subject, Error::<T>::VCSubjectMismatch);
