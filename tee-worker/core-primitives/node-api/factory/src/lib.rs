@@ -20,7 +20,7 @@ use itp_api_client_types::{ParentchainApi, WsRpcClient};
 use sp_core::sr25519;
 
 /// Trait to create a node API, based on a node URL and signer.
-pub trait CreateNodeApi {
+pub trait CreateNodeApi: Send + Sync + 'static {
 	fn create_api(&self) -> Result<ParentchainApi>;
 }
 

@@ -33,7 +33,7 @@ use crate::{
 	worker_peers_updater::UpdateWorkerPeers,
 	GetTokioHandle,
 };
-use itp_enclave_api::remote_attestation::RemoteAttestationCallBacks;
+use itp_enclave_api::{enclave_base::EnclaveBase, remote_attestation::RemoteAttestationCallBacks};
 use itp_node_api::node_api_factory::CreateNodeApi;
 use its_peer_fetch::FetchBlocksFromPeer;
 use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
@@ -130,7 +130,7 @@ impl<
 	> where
 	NodeApi: CreateNodeApi + 'static,
 	Broadcaster: BroadcastBlocks + 'static,
-	EnclaveApi: RemoteAttestationCallBacks + 'static,
+	EnclaveApi: EnclaveBase + RemoteAttestationCallBacks + 'static,
 	Storage: BlockStorage<SignedSidechainBlock> + 'static,
 	PeerUpdater: UpdateWorkerPeers + 'static,
 	PeerBlockFetcher: FetchBlocksFromPeer<SignedBlockType = SignedSidechainBlock> + 'static,
@@ -152,7 +152,7 @@ impl<
 	}
 
 	fn get_oc_api(&self) -> Arc<dyn WorkerOnChainBridge> {
-		Arc::new(WorkerOnChainOCall::new(self.node_api_factory.clone()))
+		Arc::new(WorkerOnChainOCall::new(self.enclave_api.clone(), self.node_api_factory.clone()))
 	}
 
 	fn get_ipfs_api(&self) -> Arc<dyn IpfsBridge> {

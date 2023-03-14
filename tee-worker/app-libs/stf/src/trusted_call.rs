@@ -122,9 +122,11 @@ pub enum TrustedCall {
 	), // (EnclaveSigner, Account, identity, validation, blocknumber)
 	verify_identity_runtime(AccountId, AccountId, Identity, ParentchainBlockNumber), // (EnclaveSigner, Account, identity, blocknumber)
 	build_assertion(AccountId, AccountId, Assertion, ShardIdentifier, ParentchainBlockNumber), // (Account, Account, Assertion, shard, blocknumber)
-	set_challenge_code_runtime(AccountId, AccountId, Identity, ChallengeCode), // only for testing
 	handle_imp_error(AccountId, IMPError),
 	handle_vcmp_error(AccountId, VCMPError),
+	// the following TrustedCalls should only be used in testing
+	set_challenge_code_runtime(AccountId, AccountId, Identity, ChallengeCode),
+	send_erroneous_parentchain_call(AccountId),
 }
 
 impl TrustedCall {
@@ -153,6 +155,7 @@ impl TrustedCall {
 			TrustedCall::set_challenge_code_runtime(account, _, _, _) => account,
 			TrustedCall::handle_imp_error(account, _) => account,
 			TrustedCall::handle_vcmp_error(account, _) => account,
+			TrustedCall::send_erroneous_parentchain_call(account) => account,
 		}
 	}
 
@@ -649,6 +652,15 @@ where
 				add_call_from_vcmp_error(calls, node_metadata_repo, e);
 				Ok(())
 			},
+			TrustedCall::send_erroneous_parentchain_call(account) => {
+				// intentionally send wrong parameters
+				calls.push(OpaqueCall::from_tuple(&(
+					node_metadata_repo.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
+					"set_user_shielding_key".as_bytes(),
+					account.encode(),
+				)));
+				Ok(())
+			},
 		}?;
 		Ok(())
 	}
@@ -673,6 +685,8 @@ where
 			TrustedCall::set_challenge_code_runtime(..) => debug!("No storage updates needed..."),
 			TrustedCall::handle_imp_error(..) => debug!("No storage updates needed..."),
 			TrustedCall::handle_vcmp_error(..) => debug!("No storage updates needed..."),
+			TrustedCall::send_erroneous_parentchain_call(..) =>
+				debug!("No storage updates needed..."),
 			#[cfg(feature = "evm")]
 			_ => debug!("No storage updates needed..."),
 		};
