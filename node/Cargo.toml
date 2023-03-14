@@ -125,6 +125,5 @@ try-runtime = [
 # allow workers to register without remote attestation for dev purposes
 # currently only available on litmus and rococo
 tee-dev = [
-  "litmus-parachain-runtime/tee-dev",
   "rococo-parachain-runtime/tee-dev",
 ]
