@@ -88,7 +88,7 @@ impl<'a> WsClient<'a> {
 		debug!("Connecting web-socket connection with watch");
 		connect(url.to_string(), |out| {
 			control.subscribe_sender(out.clone()).expect("Failed sender subscription");
-			WsClient::new(out, request.to_string(), &result, true)
+			WsClient::new(out, request.to_string(), result, true)
 		})
 	}
 
