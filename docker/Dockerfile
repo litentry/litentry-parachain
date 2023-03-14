@@ -16,8 +16,7 @@ RUN apt-get update && apt-get install -yq clang libclang-dev cmake protobuf-comp
 ARG BUILD_ARGS
 ARG PROFILE
 
-# TODO: we'll need build two variants, with and without `tee-dev`, someday.
-RUN cargo build --locked --profile $PROFILE $BUILD_ARGS --features=tee-dev
+RUN cargo build --locked --profile $PROFILE $BUILD_ARGS
 
 # ==========================
 # stage 2: packaging
