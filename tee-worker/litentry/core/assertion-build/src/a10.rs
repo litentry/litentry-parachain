@@ -29,13 +29,15 @@ use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
 use litentry_primitives::{
-	Assertion, EvmNetwork, Identity, ParentchainBalance, ParentchainBlockNumber, VCMPError,
+	EvmNetwork, Identity, ParentchainBalance, ParentchainBlockNumber, VCMPError,
 	ASSERTION_FROM_DATE,
 };
 use log::*;
 use std::{str::from_utf8, string::ToString, vec, vec::Vec};
 
 const WBTC_TOKEN_ADDRESS: &str = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
+const VC_SUBJECT_DESCRIPTION: &str = "The user held Wrapped BTC every day from a specific date";
+const VC_SUBJECT_TYPE: &str = "BTC Hodler";
 
 // WBTC holder
 pub fn build(
@@ -101,10 +103,11 @@ pub fn build(
 		}
 	}
 
-	let a10 = Assertion::A10(min_balance);
-	match Credential::generate_unsigned_credential(&a10, who, &shard.clone(), bn) {
+	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
+			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
 			credential_unsigned.update_holder(from_date_index, min_balance);
+
 			return Ok(credential_unsigned)
 		},
 		Err(e) => {

@@ -29,8 +29,7 @@ use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
 use litentry_primitives::{
-	Assertion, EvmNetwork, Identity, ParentchainBalance, ParentchainBlockNumber,
-	ASSERTION_FROM_DATE,
+	EvmNetwork, Identity, ParentchainBalance, ParentchainBlockNumber, ASSERTION_FROM_DATE,
 };
 use log::*;
 use std::{
@@ -39,6 +38,9 @@ use std::{
 	vec,
 	vec::Vec,
 };
+
+const VC_SUBJECT_DESCRIPTION: &str = "The user held ETH before a specific date/year";
+const VC_SUBJECT_TYPE: &str = "ETH Hodler";
 
 pub fn build(
 	identities: Vec<Identity>,
@@ -103,10 +105,11 @@ pub fn build(
 		}
 	}
 
-	let a11 = Assertion::A11(min_balance);
-	match Credential::generate_unsigned_credential(&a11, who, &shard.clone(), bn) {
+	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
+			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
 			credential_unsigned.update_holder(from_date_index, min_balance);
+
 			return Ok(credential_unsigned)
 		},
 		Err(e) => {

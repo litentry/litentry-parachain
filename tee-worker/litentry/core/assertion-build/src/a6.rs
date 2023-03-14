@@ -26,9 +26,12 @@ use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::twitter_official::TwitterOfficialClient;
-use litentry_primitives::{Assertion, Identity, ParentchainBlockNumber, VCMPError, Web2Network};
+use litentry_primitives::{Identity, ParentchainBlockNumber, VCMPError, Web2Network};
 use log::*;
 use std::vec::Vec;
+
+const VC_SUBJECT_DESCRIPTION: &str = "User has at least X amount of followers";
+const VC_SUBJECT_TYPE: &str = "Total Twitter Followers";
 
 /// Following ranges:
 ///
@@ -102,10 +105,11 @@ pub fn build(
 		},
 	}
 
-	match Credential::generate_unsigned_credential(&Assertion::A6, who, &shard.clone(), bn) {
+	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
+			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
 			credential_unsigned.add_assertion_a6(min, max);
-			credential_unsigned.credential_subject.values.push(true);
+
 			return Ok(credential_unsigned)
 		},
 		Err(e) => {

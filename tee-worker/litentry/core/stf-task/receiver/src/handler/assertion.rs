@@ -163,13 +163,15 @@ where
 		let (mut credential, who) = result.unwrap();
 		let signer = self.context.enclave_signer.as_ref();
 
+		let enclave_account = signer.get_enclave_account().unwrap();
+		credential.issuer.id = account_id_to_string(&enclave_account);
+
 		let payload = credential.to_json().unwrap();
-		debug!("Assertion payload: {}", payload);
+		debug!("	[Assertion] VC payload: {}", payload);
 
 		if let Ok((enclave_account, sig)) = signer.sign_vc_with_self(payload.as_bytes()) {
-			debug!("Assertion signature: {:?}", sig);
+			debug!("	[Assertion] Payload hash signature: {:?}", sig);
 
-			credential.issuer.id = account_id_to_string(&enclave_account);
 			credential.add_proof(&sig, credential.issuance_block_number, &enclave_account);
 
 			if credential.validate().is_err() {
@@ -183,6 +185,8 @@ where
 				debug!("Credential: {}, length: {}", credential_str, credential_str.len());
 
 				let vc_hash = blake2_256(credential_str.as_bytes());
+				debug!("	[Assertion] VC hash: {:?}", vc_hash);
+
 				let output = aes_encrypt_default(&key, credential_str.as_bytes());
 
 				match self
