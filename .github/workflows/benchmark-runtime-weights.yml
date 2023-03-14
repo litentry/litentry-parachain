@@ -39,7 +39,7 @@ jobs:
   ## build docker image with runtime-benchmarks feature
   build-docker:
     if: ${{ github.event.inputs.rebuild-docker == 'true' }}
-    runs-on: self-hosted
+    runs-on: dev-builder
     steps:
       - name: Checkout codes on ${{ github.ref }}
         uses: actions/checkout@v3
@@ -60,7 +60,7 @@ jobs:
 
   ## run the benchmarking remotely
   benchmark:
-    runs-on: self-hosted
+    runs-on: dev-builder
     needs: build-docker
     # see https://github.com/actions/runner/issues/491
     if: |

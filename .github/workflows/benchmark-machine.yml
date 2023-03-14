@@ -16,7 +16,7 @@ env:
 jobs:
   ## run the benchmarking remotely
   benchmark-machine:
-    runs-on: self-hosted
+    runs-on: dev-builder
     steps:
       - name: Checkout codes on ${{ github.ref }}
         uses: actions/checkout@v3
