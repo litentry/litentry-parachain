@@ -23,11 +23,7 @@ use crate::error::{Error, Result as RpcClientResult};
 use log::*;
 use openssl::ssl::{SslConnector, SslMethod, SslStream, SslVerifyMode};
 use parking_lot::Mutex;
-use std::{
-	sync::{mpsc::Sender as MpscSender, Arc},
-	thread::sleep,
-	time::Duration,
-};
+use std::sync::{mpsc::Sender as MpscSender, Arc};
 use url::{self};
 use ws::{connect, util::TcpStream, CloseCode, Handler, Handshake, Message, Result, Sender};
 
@@ -86,20 +82,14 @@ impl<'a> WsClient<'a> {
 	pub fn connect_watch_with_control(
 		url: &str,
 		request: &str,
-		result: MpscSender<String>,
+		result: &MpscSender<String>,
 		control: Arc<WsClientControl>,
-	) {
-		debug!("Connecting web-socket connection with watch to server {url}");
-		loop {
-			let control = control.clone();
-			if let Err(e) = connect(url.to_string(), |out| {
-				control.subscribe_sender(out.clone()).expect("Failed sender subscription");
-				WsClient::new(out, request.to_string(), &result, true)
-			}) {
-				error!("websocket disconnected from {url}, {e:?}");
-				sleep(Duration::from_secs(1));
-			}
-		}
+	) -> Result<()> {
+		debug!("Connecting web-socket connection with watch");
+		connect(url.to_string(), |out| {
+			control.subscribe_sender(out.clone()).expect("Failed sender subscription");
+			WsClient::new(out, request.to_string(), &result, true)
+		})
 	}
 
 	/// Connects a web-socket client for a one-shot request.
