@@ -17,7 +17,7 @@ ARG BUILD_ARGS
 ARG PROFILE
 
 # TODO: we'll need build two variants, with and without `tee-dev`, someday.
-cargo build --locked --profile $PROFILE $BUILD_ARGS --features=tee-dev
+RUN cargo build --locked --profile $PROFILE $BUILD_ARGS --features=tee-dev
 
 # ==========================
 # stage 2: packaging
