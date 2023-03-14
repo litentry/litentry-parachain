@@ -11,6 +11,7 @@ import {
     teeTypes,
     WorkerRpcReturnValue,
     TransactionSubmit,
+    JsonSchema,
 } from './type-definitions';
 import { blake2AsHex, cryptoWaitReady } from '@polkadot/util-crypto';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
@@ -26,6 +27,7 @@ import { ethers } from 'ethers';
 import { generateTestKeys } from './web3/functions';
 import { expect } from 'chai';
 import { Base64 } from 'js-base64';
+import Ajv from 'ajv';
 import * as ed from '@noble/ed25519';
 const base58 = require('micro-base58');
 const crypto = require('crypto');
@@ -331,12 +333,7 @@ export async function getEnclave(api: ApiPromise): Promise<{
     };
 }
 
-export async function verifySignature(
-    data: any,
-    index: HexString,
-    proofJson: any,
-    api: ApiPromise
-) {
+export async function verifySignature(data: any, index: HexString, proofJson: any, api: ApiPromise) {
     const count = await api.query.teerex.enclaveCount();
     const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as EnclaveResult;
     //check vc index
@@ -345,24 +342,17 @@ export async function verifySignature(
     const signature = Buffer.from(hexToU8a(`0x${proofJson.proofValue}`));
     const message = Buffer.from(JSON.stringify(data));
     const vcPubkey = Buffer.from(hexToU8a(`${res.vcPubkey}`));
-    
-    const isValid = await ed.verify(
-        signature,
-        message,
-        vcPubkey
-    );
+
+    const isValid = await ed.verify(signature, message, vcPubkey);
 
     expect(isValid).to.be.true;
     return true;
 }
 
-export async function checkVc(
-    vcObj: any,
-    index: HexString,
-    proof: any,
-    api: ApiPromise
-): Promise<boolean> {
-    const signatureValid = await verifySignature(vcObj, index, proof, api);
+export async function checkVc(vcObj: any, index: HexString, proof: any, api: ApiPromise): Promise<boolean> {
+    const vc = JSON.parse(JSON.stringify(vcObj));
+    delete vc.proof;
+    const signatureValid = await verifySignature(vc, index, proof, api);
     expect(signatureValid).to.be.true;
 
     const jsonValid = await checkJSON(vcObj, proof);
@@ -372,11 +362,12 @@ export async function checkVc(
 
 //Check VC json fields
 export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
-    const vcStatus = ['@context', 'type', 'credentialSubject', 'issuer'].every(
-        (key) =>
-            vc.hasOwnProperty(key) && (vc[key] != '{}' || vc[key] !== '[]' || vc[key] !== null || vc[key] !== undefined)
-    );
-    expect(vcStatus).to.be.true;
+    //check JsonSchema
+    const ajv = new Ajv();
+    const validate = ajv.compile(JsonSchema);
+    const isValid = validate(vc);
+    expect(isValid).to.be.true;
+
     expect(
         vc.type[0] === 'VerifiableCredential' &&
             vc.issuer.id === proofJson.verificationMethod &&

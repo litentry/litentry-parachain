@@ -42,8 +42,8 @@ describeLitentry('VC test', async (context) => {
         for (let k = 0; k < res.length; k++) {
             const vcString = res[k].vc.replace('0x', '');
             const vcObj = JSON.parse(vcString);
+
             const vcProof = vcObj.proof;
-            delete vcObj.proof;
 
             const registry = (await context.substrate.query.vcManagement.vcRegistry(res[k].index)) as any;
             assert.equal(registry.toHuman()!['status'], 'Active', 'check registry error');
