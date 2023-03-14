@@ -39,9 +39,7 @@ use codec::{Decode, Encode};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{
-	Assertion, ParentchainBalance, ParentchainBlockNumber, ASSERTION_FROM_DATE,
-};
+use litentry_primitives::{ParentchainBalance, ParentchainBlockNumber, ASSERTION_FROM_DATE};
 use log::*;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
@@ -140,6 +138,7 @@ pub struct CredentialSubject {
 	pub data_source: Option<Vec<DataSource>>,
 	/// Several sets of assertions.
 	/// Each assertion contains multiple steps to describe how to fetch data and calculate the value
+	#[serde(skip_deserializing)]
 	pub assertions: Vec<AssertionLogic>,
 	/// Results of each set of assertions
 	pub values: Vec<bool>,
@@ -175,7 +174,7 @@ pub struct Proof {
 	pub proof_type: ProofType,
 	/// Purpose of this proof, generally it is expected as a fixed value, such as 'assertionMethod'
 	pub proof_purpose: String,
-	/// The digital signature value
+	/// The digital signature value(signature of hash)
 	pub proof_value: String,
 	/// The public key from Issuer
 	pub verification_method: String,
@@ -217,7 +216,6 @@ pub struct Credential {
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub expiration_block_number: Option<ParentchainBlockNumber>,
 	/// Digital proof with the signature of Issuer
-	#[serde(skip_deserializing)]
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub proof: Option<Proof>,
 	#[serde(skip_deserializing)]
@@ -226,6 +224,16 @@ pub struct Credential {
 }
 
 impl Credential {
+	pub fn new_default(
+		who: &AccountId,
+		shard: &ShardIdentifier,
+		bn: ParentchainBlockNumber,
+	) -> Result<Credential, Error> {
+		let raw = include_str!("templates/credential.json");
+		let credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+		Ok(credential)
+	}
+
 	pub fn from_template(
 		s: &str,
 		who: &AccountId,
@@ -246,9 +254,14 @@ impl Credential {
 		vc.issuance_block_number = bn;
 		vc.expiration_block_number = None;
 		vc.credential_schema = None;
+		vc.proof = None;
 		vc.generate_id();
 		vc.validate_unsigned()?;
 		Ok(vc)
+	}
+
+	pub fn add_proof(&mut self, sig: &Vec<u8>, bn: ParentchainBlockNumber, issuer: &AccountId) {
+		self.proof = Some(Proof::new(bn, sig, issuer));
 	}
 
 	fn generate_id(&mut self) {
@@ -258,10 +271,6 @@ impl Credential {
 		let vc_id = blake2_256(ext_hash.as_slice());
 		self.id = "0x".to_string();
 		self.id.push_str(&(format!("{}", HexDisplay::from(&vc_id.to_vec()))));
-	}
-
-	pub fn add_proof(&mut self, sig: &Vec<u8>, bn: ParentchainBlockNumber, issuer: &AccountId) {
-		self.proof = Some(Proof::new(bn, sig, issuer));
 	}
 
 	pub fn to_json(&self) -> Result<String, Error> {
@@ -335,86 +344,6 @@ impl Credential {
 		Ok(())
 	}
 
-	pub fn generate_unsigned_credential(
-		assertion: &Assertion,
-		who: &AccountId,
-		shard: &ShardIdentifier,
-		bn: ParentchainBlockNumber,
-	) -> Result<Credential, Error> {
-		debug!(
-			"generate unsigned credential, who: {:?}, assertion: {:?}, bn: {}",
-			account_id_to_string(&who),
-			assertion,
-			bn
-		);
-		match assertion {
-			Assertion::A1 => {
-				let raw = include_str!("templates/a1.json");
-				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
-				credential.credential_subject.values.clear();
-				Ok(credential)
-			},
-			Assertion::A2(_) => {
-				let raw = include_str!("templates/a2.json");
-				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
-				credential.credential_subject.assertions.clear();
-				credential.credential_subject.values.clear();
-				Ok(credential)
-			},
-			Assertion::A3(_, _, _) => {
-				let raw = include_str!("templates/a3.json");
-				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
-				credential.credential_subject.assertions.clear();
-				credential.credential_subject.values.clear();
-				Ok(credential)
-			},
-			Assertion::A4(_minimum_amount) => {
-				let raw = include_str!("templates/a4.json");
-				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
-				// remove default assertions from template
-				credential.credential_subject.assertions.clear();
-				credential.credential_subject.values.clear();
-				Ok(credential)
-			},
-			Assertion::A6 => {
-				let raw = include_str!("templates/a6.json");
-				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
-				credential.credential_subject.assertions.clear();
-				credential.credential_subject.values.clear();
-				Ok(credential)
-			},
-			Assertion::A7(_minimum_amount) => {
-				let raw = include_str!("templates/a7.json");
-				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
-				credential.credential_subject.assertions.clear();
-				credential.credential_subject.values.clear();
-				Ok(credential)
-			},
-			Assertion::A8(_) => {
-				let raw = include_str!("templates/a8.json");
-				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
-				credential.credential_subject.assertions.clear();
-				credential.credential_subject.values.clear();
-				Ok(credential)
-			},
-			Assertion::A10(_minimum_amount) => {
-				let raw = include_str!("templates/a10.json");
-				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
-				credential.credential_subject.assertions.clear();
-				credential.credential_subject.values.clear();
-				Ok(credential)
-			},
-			Assertion::A11(_minimum_amount) => {
-				let raw = include_str!("templates/a11.json");
-				let mut credential: Credential = Credential::from_template(raw, who, shard, bn)?;
-				credential.credential_subject.assertions.clear();
-				credential.credential_subject.values.clear();
-				Ok(credential)
-			},
-			_ => Err(Error::UnsupportedAssertion),
-		}
-	}
-
 	// Including assertion 4/7/10/11
 	pub fn update_holder(&mut self, index: usize, minimum_amount: ParentchainBalance) {
 		let minimum_amount = format!("{}", minimum_amount);
@@ -454,7 +383,23 @@ impl Credential {
 		}
 	}
 
-	pub fn add_assertion_a2(&mut self, guild_id: String) {
+	pub fn add_subject_info(&mut self, subject_description: &str, types: &str) {
+		self.credential_subject.description = subject_description.into();
+		self.credential_subject.types = types.into();
+	}
+
+	pub fn add_assertion_a1(&mut self, value: bool) {
+		let has_web2_account = AssertionLogic::new_item("$has_web2_account", Op::Equal, "true");
+		let has_web3_account = AssertionLogic::new_item("$has_web3_account", Op::Equal, "true");
+
+		let assertion =
+			AssertionLogic::new_and().add_item(has_web2_account).add_item(has_web3_account);
+
+		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.values.push(value);
+	}
+
+	pub fn add_assertion_a2(&mut self, value: bool, guild_id: String) {
 		let verified = AssertionLogic::new_item("$verified_discord_account", Op::GreaterThan, "0");
 		let has_joined = AssertionLogic::new_item("$has_joined", Op::Equal, "true");
 		let guild = AssertionLogic::new_item("$discord_guild_id", Op::Equal, guild_id.as_str());
@@ -464,9 +409,16 @@ impl Credential {
 			.add_item(has_joined)
 			.add_item(guild);
 		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.values.push(value);
 	}
 
-	pub fn add_assertion_a3(&mut self, guild_id: String, channel_id: String, role_id: String) {
+	pub fn add_assertion_a3(
+		&mut self,
+		value: bool,
+		guild_id: String,
+		channel_id: String,
+		role_id: String,
+	) {
 		let has_role = AssertionLogic::new_item("$has_role", Op::Equal, "true");
 		let has_commented = AssertionLogic::new_item("$has_commented", Op::Equal, "true");
 		let guild = AssertionLogic::new_item("$discord_guild_id", Op::Equal, guild_id.as_str());
@@ -481,6 +433,7 @@ impl Credential {
 			.add_item(channel)
 			.add_item(role);
 		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.values.push(value);
 	}
 
 	pub fn add_assertion_a6(&mut self, min: u64, max: u64) {
@@ -492,6 +445,7 @@ impl Credential {
 
 		let assertion = AssertionLogic::new_and().add_item(follower_min).add_item(follower_max);
 		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.values.push(true);
 	}
 
 	pub fn add_assertion_a8(&mut self, networks: Vec<&'static str>, min: u64, max: u64) {
@@ -512,6 +466,7 @@ impl Credential {
 			.add_item(max_item)
 			.add_item(or_logic);
 		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.values.push(true);
 	}
 }
 
@@ -543,7 +498,7 @@ mod tests {
 	#[test]
 	fn eval_simple_success() {
 		let who = AccountId::from([0; 32]);
-		let data = include_str!("templates/a1.json");
+		let data = include_str!("templates/credential.json");
 		let shard = ShardIdentifier::default();
 
 		let vc = Credential::from_template(data, &who, &shard, 1u32).unwrap();
@@ -564,9 +519,8 @@ mod tests {
 			let from_date_index = 0_usize;
 			let from_date = AssertionLogic::new_item("$from_date", Op::LessThan, "2017-01-01");
 
-			let a11 = Assertion::A11(min_balance);
 			let mut credential_unsigned =
-				Credential::generate_unsigned_credential(&a11, &who, &shard.clone(), 1u32).unwrap();
+				Credential::new_default(&who, &shard.clone(), 1u32).unwrap();
 			credential_unsigned.update_holder(from_date_index, min_balance);
 
 			let minimum_amount = format!("{}", min_balance);
@@ -587,9 +541,8 @@ mod tests {
 			// case 1: from_date_index = 1
 			let from_date_index = 1_usize;
 
-			let a11 = Assertion::A11(min_balance);
 			let mut credential_unsigned =
-				Credential::generate_unsigned_credential(&a11, &who, &shard.clone(), 1u32).unwrap();
+				Credential::new_default(&&who, &shard.clone(), 1u32).unwrap();
 			credential_unsigned.update_holder(from_date_index, min_balance);
 
 			let minimum_amount = format!("{}", min_balance);
@@ -610,9 +563,8 @@ mod tests {
 			// case 1: from_date_index = 7
 			let from_date_index = 7_usize;
 
-			let a11 = Assertion::A11(min_balance);
 			let mut credential_unsigned =
-				Credential::generate_unsigned_credential(&a11, &who, &shard.clone(), 1u32).unwrap();
+				Credential::new_default(&who, &shard.clone(), 1u32).unwrap();
 			credential_unsigned.update_holder(from_date_index, min_balance);
 
 			let minimum_amount = format!("{}", min_balance);

@@ -1,4 +1,4 @@
-import { describeLitentry, checkVc, checkIssuerAttestation } from './utils';
+import { describeLitentry, checkVc } from './utils';
 import { step } from 'mocha-steps';
 import { setUserShieldingKey, requestVCs, disableVCs, revokeVCs } from './indirect_calls';
 import { Assertion } from './type-definitions';
@@ -41,20 +41,20 @@ describeLitentry('VC test', async (context) => {
 
         for (let k = 0; k < res.length; k++) {
             const vcString = res[k].vc.replace('0x', '');
-            const vcBlake2Hash = blake2AsHex(vcString);
+            const vcObj = JSON.parse(vcString);
+            const vcProof = vcObj.proof;
+            delete vcObj.proof;
 
             const registry = (await context.substrate.query.vcManagement.vcRegistry(res[k].index)) as any;
             assert.equal(registry.toHuman()!['status'], 'Active', 'check registry error');
 
-            assert.equal(vcBlake2Hash, registry.toHuman()!['hash_'], 'check vc json hash error');
+            const vcHash = blake2AsHex(Buffer.from(vcString));
+            assert.equal(vcHash, registry.toHuman()!['hash_'], 'check vc json hash error');
 
             //check vc
-            const vcValid = await checkVc(vcString, res[k].index, context.substrate);
+            const vcValid = await checkVc(vcObj, res[k].index, vcProof, context.substrate);
             assert.equal(vcValid, true, 'check vc error');
             indexList.push(res[k].index);
-
-            //check issuer attestation
-            await checkIssuerAttestation(vcString, context.substrate);
         }
     });
 
