@@ -28,8 +28,8 @@ use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use frame_support::{
 	construct_runtime, ord_parameter_types, parameter_types,
 	traits::{
-		ConstU32, ConstU64, ConstU8, Contains, Everything, InstanceFilter, SortedMembers,
-		WithdrawReasons,
+		ConstU128, ConstU32, ConstU64, ConstU8, Contains, Everything, InstanceFilter,
+		SortedMembers, WithdrawReasons,
 	},
 	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
 	PalletId, RuntimeDebug,
@@ -587,6 +587,24 @@ impl pallet_bounties::Config for Runtime {
 	type ChildBountyManager = ();
 }
 
+impl pallet_identity::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	// Add one item in storage and take 258 bytes
+	type BasicDeposit = ConstU128<{ deposit(1, 258) }>;
+	// Not add any item to the storage but takes 66 bytes
+	type FieldDeposit = ConstU128<{ deposit(0, 66) }>;
+	// Add one item in storage and take 53 bytes
+	type SubAccountDeposit = ConstU128<{ deposit(1, 53) }>;
+	type MaxSubAccounts = ConstU32<100>;
+	type MaxAdditionalFields = ConstU32<100>;
+	type MaxRegistrars = ConstU32<20>;
+	type Slashed = Treasury;
+	type ForceOrigin = EnsureRootOrHalfCouncil;
+	type RegistrarOrigin = EnsureRootOrHalfCouncil;
+	type WeightInfo = weights::pallet_identity::WeightInfo<Runtime>;
+}
+
 parameter_types! {
 	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
 	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
@@ -847,6 +865,7 @@ construct_runtime! {
 		TechnicalCommittee: pallet_collective::<Instance2> = 24,
 		TechnicalCommitteeMembership: pallet_membership::<Instance2> = 25,
 		Bounties: pallet_bounties = 26,
+		ParachainIdentity: pallet_identity = 27,
 
 		// Parachain
 		ParachainSystem: cumulus_pallet_parachain_system = 30,
@@ -950,6 +969,8 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::Democracy(_) |
 			// Preimage
 			RuntimeCall::Preimage(_) |
+			// Identity
+			RuntimeCall::ParachainIdentity(_) |
 			// Utility
 			RuntimeCall::Utility(_) |
 			// Session
