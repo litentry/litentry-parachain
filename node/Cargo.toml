@@ -102,9 +102,7 @@ rococo-parachain-runtime = { path = "../runtime/rococo" }
 substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
 
 [features]
-default = [
-  "tee-dev",
-]
+default = []
 fast-runtime = [
   "litentry-parachain-runtime/fast-runtime",
   "litmus-parachain-runtime/fast-runtime",

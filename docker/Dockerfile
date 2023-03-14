@@ -34,7 +34,8 @@ ENV RUSTC_WRAPPER=$RUSTC_WRAPPER
 # see https://github.com/docker/build-push-action/issues/716
 #     https://github.com/moby/buildkit/issues/1512
 #     https://github.com/moby/buildkit/issues/1673
-RUN --mount=type=cache,target=/root/.cache/sccache cargo build --locked --profile $PROFILE $BUILD_ARGS && sccache --show-stats
+# TODO: we'll need build two variants, with and without `tee-dev`, someday.
+RUN --mount=type=cache,target=/root/.cache/sccache cargo build --locked --profile $PROFILE $BUILD_ARGS --features=tee-dev && sccache --show-stats
 
 # ==========================
 # stage 2: packaging
