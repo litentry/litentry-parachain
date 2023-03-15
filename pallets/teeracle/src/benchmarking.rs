@@ -49,6 +49,18 @@ benchmarks! {
 		let trading_pair: TradingPairString =  "DOT/USD".into();
 		let rate = U32F32::from_num(43.65);
 		let data_source: DataSource = "https://api.coingecko.com".into();
+
+		// we need different parameters, unfortunately - since the way to calculate
+		// MRENCLAVE differs depending on if `skip-ias-check` feature is present.
+		Teerex::<T>::update_scheduled_enclave(
+			RawOrigin::Root.into(),
+			0u32,
+			#[cfg(feature = "skip-ias-check")]
+			MrEnclave::decode(&mut TEST4_SETUP.cert).unwrap_or_default(),
+			#[cfg(not(feature = "skip-ias-check"))]
+			TEST4_MRENCLAVE,
+		).unwrap();
+
 		// simply register the enclave before to make sure it already
 		// exists when running the benchmark
 		Teerex::<T>::register_enclave(
@@ -74,6 +86,18 @@ benchmarks! {
 		let data_source = DataSource::from("Test_Source_Name");
 		let oracle_blob: crate::OracleDataBlob<T> =
 			vec![1].try_into().expect("Can Convert to OracleDataBlob<T>; QED");
+
+		// we need different parameters, unfortunately - since the way to calculate
+		// MRENCLAVE differs depending on if `skip-ias-check` feature is present.
+		Teerex::<T>::update_scheduled_enclave(
+			RawOrigin::Root.into(),
+			0u32,
+			#[cfg(feature = "skip-ias-check")]
+			MrEnclave::decode(&mut TEST4_SETUP.cert).unwrap_or_default(),
+			#[cfg(not(feature = "skip-ias-check"))]
+			TEST4_MRENCLAVE,
+		).unwrap();
+
 		// simply register the enclave before to make sure it already
 		// exists when running the benchmark
 		Teerex::<T>::register_enclave(
