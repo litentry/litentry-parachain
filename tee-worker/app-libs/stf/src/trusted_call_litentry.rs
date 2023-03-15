@@ -223,7 +223,13 @@ impl TrustedCallSigned {
 		let mut vec_identity: BoundedVec<Identity, MaxIdentityLength> = vec![].try_into().unwrap();
 		for id in &id_graph {
 			if id.1.is_verified {
-				vec_identity.try_push(id.0.clone()).map_err(|_| StfError::AssertionBuildFail)?;
+				vec_identity.try_push(id.0.clone()).map_err(|_| {
+					let error_msg =
+						"The length of the identity vector exceeds MaxIdentityLength".into();
+					error!("	[BuildAssertion] : {}", error_msg);
+
+					StfError::AssertionBuildFail(error_msg)
+				})?;
 			}
 		}
 
@@ -232,14 +238,19 @@ impl TrustedCallSigned {
 				AssertionBuildRequest { shard: *shard, who, assertion, vec_identity, bn, key }
 					.into();
 			let sender = StfRequestSender::new();
-			sender.send_stf_request(request).map_err(|_| StfError::AssertionBuildFail)
+			sender.send_stf_request(request).map_err(|e| {
+				let error_msg = format!("{:?}", e);
+				error!("	[BuildAssertion] : {}", error_msg);
+
+				StfError::AssertionBuildFail(error_msg)
+			})
 		} else {
 			error!(
 				"user shielding key is missing, {:?}, {:?}",
 				account_id_to_string(&who),
 				assertion
 			);
-			Err(StfError::AssertionBuildFail)
+			Err(StfError::AssertionBuildFail("User shielding key is missing".into()))
 		}
 	}
 
