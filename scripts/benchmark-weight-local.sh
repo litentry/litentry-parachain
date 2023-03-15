@@ -4,16 +4,13 @@ set -eo pipefail
 
 # This script benchmarks the runtime or pallet weight locally.
 #
-# When benchmarking pallet weight, only our own pallets are supported.
-# Therefore substrate (or other github) pallets are not supported:
-# they are benchmarked by the source anyway (e.g. SubstrateWeigt)
-# The `litentry-collator` binary must be compiled with `runtime-benchmarks` feature.
+# Benchmarking pallet weight only works for the local pallets. Substrate (or other github) pallets are not supported:
+# they are already benchmarked anyway (e.g. SubstrateWeigt)
 #
-# When benchmarking runtime weight, a third parameter is needed to
-# define the runtime: litentry or litmus.
+# The `litentry-collator` binary must be compiled with `runtime-benchmarks` feature.
 
 function usage() {
-    echo "Usage: $0 litentry|litmus pallet-name runtime|pallet"
+    echo "Usage: $0 litentry|litmus|rococo pallet-name runtime|pallet"
 }
 
 [ $# -ne 3 ] && (usage; exit 1)

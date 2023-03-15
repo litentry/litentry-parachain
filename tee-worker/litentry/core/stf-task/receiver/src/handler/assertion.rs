@@ -30,10 +30,12 @@ use itp_types::{AccountId, OpaqueCall};
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_stf_task_sender::AssertionBuildRequest;
-use litentry_primitives::{aes_encrypt_default, Assertion, UserShieldingKeyType, VCMPError};
+use litentry_primitives::{
+	aes_encrypt_default, Assertion, ErrorString, UserShieldingKeyType, VCMPError,
+};
 use log::*;
 use sp_core::hashing::blake2_256;
-use std::sync::Arc;
+use std::{format, sync::Arc};
 
 pub(crate) struct AssertionHandler<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
@@ -175,7 +177,11 @@ where
 			credential.add_proof(&sig, credential.issuance_block_number, &enclave_account);
 
 			if credential.validate().is_err() {
-				error!("failed to validate credential");
+				let error_msg = "failed to validate credential";
+				error!("	[BuildAssertion] : {}", error_msg);
+
+				self.on_failure(to_vcmp_error(error_msg));
+
 				return
 			}
 
@@ -200,22 +206,35 @@ where
 						self.context.submit_to_parentchain(call)
 					},
 					Ok(Err(e)) => {
-						error!("failed to get metadata. Due to: {:?}", e);
+						let error_msg = format!("failed to get metadata. Due to: {:?}", e);
+						error!("	[BuildAssertion] {}", error_msg);
+
+						self.on_failure(to_vcmp_error(&error_msg));
 					},
 					Err(e) => {
-						error!("failed to get metadata. Due to: {:?}", e);
+						let error_msg = format!("failed to get metadata. Due to: {:?}", e);
+						error!("	[BuildAssertion] {}", error_msg);
+
+						self.on_failure(to_vcmp_error(&error_msg));
 					},
 				};
 			} else {
-				error!("failed to decode credential id");
+				let error_msg = "failed to decode credential id";
+				error!("	[BuildAssertion] : {}", error_msg);
+
+				self.on_failure(to_vcmp_error(error_msg));
 			}
 		} else {
-			error!("failed to sign credential");
+			let error_msg = "failed to sign credential";
+			error!("	[BuildAssertion] : {}", error_msg);
+
+			self.on_failure(to_vcmp_error(error_msg));
 		}
 	}
 
 	fn on_failure(&self, error: Self::Error) {
-		log::error!("occur an error while building assertion, due to:{:?}", error);
+		error!("occur an error while building assertion, due to:{:?}", error);
+
 		match self
 			.context
 			.node_metadata
@@ -233,4 +252,8 @@ where
 			},
 		};
 	}
+}
+
+fn to_vcmp_error(reason: &str) -> VCMPError {
+	VCMPError::StfError(ErrorString::truncate_from(reason.as_bytes().to_vec()))
 }
