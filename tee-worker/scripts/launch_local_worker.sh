@@ -72,11 +72,14 @@ echo "Number of WORKER_NUM: ${WORKER_NUM}"
 
 ROOTDIR=$(git rev-parse --show-toplevel)
 ROOTDIR="${ROOTDIR}/tee-worker"
-RUST_LOG="info,integritee_service=info,ws=warn,sp_io=error,substrate_api_client=warn,\
+RUST_LOG="info,integritee_service=debug,ws=warn,sp_io=error,substrate_api_client=warn,\
 itc_parentchain_light_client=warn,\
-jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=warn,ita_stf=debug,\
+jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=debug,ita_stf=debug,\
 its_rpc_handler=warn,itc_rpc_client=warn,its_consensus_common=debug,its_state=warn,\
-its_consensus_aura=warn,aura*=warn,its_consensus_slots=warn"
+its_consensus_aura=warn,aura*=warn,its_consensus_slots=warn,\
+itp_attestation_handler=debug,http_req=debug,lc_mock_server=warn,itc_rest_client=debug,\
+lc_credentials=debug,lc_identity_verification=debug,lc_stf_task_receiver=debug,lc_stf_task_sender=debug,\
+lc_data_providers=debug,itp_top_pool=debug,itc_parentchain_indirect_calls_executor=debug"
 
 # Create the log directory, in case not existed.
 mkdir -p ${ROOTDIR}/log

@@ -25,7 +25,6 @@ from py.helpers import GracefulKiller, mkdir_p
 
 log_dir = 'log'
 mkdir_p(log_dir)
-node_log = open(f'{log_dir}/node.log', 'w+')
 
 
 def setup_worker(work_dir: str, source_dir: str, std_err: Union[None, int, IO]):
@@ -56,7 +55,7 @@ def main(processes, config_path, parachain_type):
     if parachain_type == "local" :
         # start parachain via shell script
         # TODO: use Popen and copy the stdout also to node.log
-        run(['./scripts/litentry/start_parachain.sh'])
+        run(['./scripts/litentry/start_parachain.sh'], check=True)
 
         print('Starting litentry-parachain done')
         print('----------------------------------------')

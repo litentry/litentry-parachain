@@ -120,6 +120,7 @@ where
 		let extrinsics_buffer: Vec<OpaqueExtrinsic> = calls
 			.iter()
 			.map(|call| {
+				log::info!("Creating extrinsics using nonce: {}", nonce_value);
 				let extrinsic_params = ParentchainExtrinsicParams::new(
 					runtime_spec_version,
 					runtime_transaction_version,

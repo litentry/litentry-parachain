@@ -23,18 +23,21 @@ extern crate sgx_tstd as std;
 use crate::{from_data_provider_error, Result};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
+use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
 use litentry_primitives::{
-	Assertion, EvmNetwork, Identity, ParentchainBalance, ParentchainBlockNumber, VCMPError,
+	EvmNetwork, Identity, ParentchainBalance, ParentchainBlockNumber, VCMPError,
 	ASSERTION_FROM_DATE,
 };
 use log::*;
 use std::{str::from_utf8, string::ToString, vec, vec::Vec};
 
 const WBTC_TOKEN_ADDRESS: &str = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
+const VC_SUBJECT_DESCRIPTION: &str = "The user held Wrapped BTC every day from a specific date";
+const VC_SUBJECT_TYPE: &str = "BTC Hodler";
 
 // WBTC holder
 pub fn build(
@@ -44,6 +47,13 @@ pub fn build(
 	who: &AccountId,
 	bn: ParentchainBlockNumber,
 ) -> Result<Credential> {
+	debug!(
+		"Assertion A10 build, who: {:?}, bn: {}, identities: {:?}",
+		account_id_to_string(&who),
+		bn,
+		identities,
+	);
+
 	// WBTC decimals is 8.
 	let q_min_balance: f64 = (min_balance / (10 ^ 8)) as f64;
 
@@ -58,39 +68,46 @@ pub fn build(
 
 		if let Identity::Evm { network, address } = id {
 			if matches!(network, EvmNetwork::Ethereum) {
-				if let Ok(addr) = from_utf8(address.as_ref()) {
-					let addresses = vec![addr.to_string()];
+				match from_utf8(address.as_ref()) {
+					Ok(addr) => {
+						let addresses = vec![addr.to_string()];
 
-					for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
-						// if found is true, no need to check it continually
-						if found {
-							from_date_index = index + 1;
-							break
-						}
-						let credentials = VerifiedCredentialsIsHodlerIn::new(
-							addresses.clone(),
-							from_date.to_string(),
-							VerifiedCredentialsNetwork::Ethereum,
-							WBTC_TOKEN_ADDRESS.to_string(),
-							q_min_balance,
-						);
+						for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
+							// if found is true, no need to check it continually
+							if found {
+								from_date_index = index + 1;
+								break
+							}
+							let credentials = VerifiedCredentialsIsHodlerIn::new(
+								addresses.clone(),
+								from_date.to_string(),
+								VerifiedCredentialsNetwork::Ethereum,
+								WBTC_TOKEN_ADDRESS.to_string(),
+								q_min_balance,
+							);
 
-						let is_hodler_out = client
-							.check_verified_credentials_is_hodler(credentials)
-							.map_err(from_data_provider_error)?;
-						for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
-							found = found || hodler.is_hodler;
+							let is_hodler_out = client
+								.check_verified_credentials_is_hodler(credentials)
+								.map_err(from_data_provider_error)?;
+							for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
+								found = found || hodler.is_hodler;
+							}
 						}
-					}
+					},
+					Err(e) => error!(
+						"	[AssertionBuild] A10 parse error Evm address {:?}, {:?}",
+						address, e
+					),
 				};
 			}
 		}
 	}
 
-	let a10 = Assertion::A10(min_balance);
-	match Credential::generate_unsigned_credential(&a10, who, &shard.clone(), bn) {
+	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
+			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
 			credential_unsigned.update_holder(from_date_index, min_balance);
+
 			return Ok(credential_unsigned)
 		},
 		Err(e) => {

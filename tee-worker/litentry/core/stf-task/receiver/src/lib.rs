@@ -151,6 +151,7 @@ where
 			.encrypt(&trusted_operation.encode())
 			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
 
+		debug!("submit encrypted trusted call, length: {}", encrypted_trusted_call.len());
 		executor::block_on(self.author_api.submit_top(encrypted_trusted_call, *shard)).map_err(
 			|e| {
 				Error::OtherError(format!(

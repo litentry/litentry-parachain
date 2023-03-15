@@ -17,11 +17,12 @@
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
-
 pub use litentry_primitives::{IMPError, VCMPError};
+
+use itp_component_container::error::Error as ComponentError;
 use sgx_types::sgx_status_t;
 use sp_runtime::traits::LookupError;
-use std::{boxed::Box, format};
+use std::{boxed::Box, format, io::Error as IoError};
 
 pub type Result<T> = core::result::Result<T, Error>;
 
@@ -48,6 +49,12 @@ pub enum Error {
 	IMPHandlingError(IMPError),
 	#[error("VCMP handling error: {0:?}")]
 	VCMPHandlingError(VCMPError),
+	#[error("BatchAll handling error")]
+	BatchAllHandlingError,
+	#[error("Component container error: {0:?}")]
+	ComponentContainerError(#[from] ComponentError),
+	#[error("Io Error: {0:?}")]
+	IoError(#[from] IoError),
 }
 
 impl From<sgx_status_t> for Error {

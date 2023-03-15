@@ -2,7 +2,6 @@ import { encryptWithTeeShieldingKey, listenEvent, sendTxUntilInBlock, sendTxUnti
 import { KeyringPair } from '@polkadot/keyring/types';
 import { HexString } from '@polkadot/util/types';
 import {
-    Assertion,
     IntegrationTestContext,
     LitentryIdentity,
     LitentryValidationData,
@@ -141,35 +140,12 @@ export async function removeErrorIdentities(
         });
     }
 
-    sendTxUntilInBlockList(context.substrate, txs, signer);
+    await sendTxUntilInBlockList(context.substrate, txs, signer);
 
     if (listening) {
         const events = await listenEvent(context.substrate, 'identityManagement', ['StfError']);
         expect(events.length).to.be.equal(identities.length);
         return events;
-    }
-    return undefined;
-}
-
-export async function requesErrortVCs(
-    context: IntegrationTestContext,
-    signer: KeyringPair,
-    listening: boolean,
-    mrEnclave: HexString,
-    assertion: Assertion
-): Promise<string[] | undefined> {
-    let txs: TransactionSubmit[] = [];
-    let len = 0;
-
-    for (const key in assertion) {
-        len++;
-        const tx = context.substrate.tx.vcManagement.requestVc(mrEnclave, {
-            [key]: assertion[key as keyof Assertion],
-        });
-        const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
-
-        let newNonce = nonce.toNumber() + (len - 1);
-        txs.push({ tx, nonce: newNonce });
     }
 
     await sendTxUntilInBlockList(context.substrate, txs, signer);

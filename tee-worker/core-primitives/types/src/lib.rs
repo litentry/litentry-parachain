@@ -20,9 +20,7 @@
 
 use crate::storage::StorageEntry;
 use codec::{Decode, Encode};
-#[cfg(feature = "sgx")]
-use sgx_tstd as std;
-use sp_std::vec::Vec;
+use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 
 pub mod extrinsics;
 pub mod storage;
@@ -38,26 +36,61 @@ pub type PalletString = String;
 
 pub use sp_core::{crypto::AccountId32 as AccountId, H256};
 
-use litentry_primitives::Assertion;
+pub use litentry_primitives::Assertion;
 
 pub use itp_sgx_runtime_primitives::types::*;
 
 pub type IpfsHash = [u8; 46];
 pub type MrEnclave = [u8; 32];
 
+pub type CallIndex = [u8; 2];
+
 // pallet teerex
-pub type ConfirmCallFn = ([u8; 2], ShardIdentifier, H256, Vec<u8>);
-pub type ShieldFundsFn = ([u8; 2], Vec<u8>, Balance, ShardIdentifier);
-pub type CallWorkerFn = ([u8; 2], Request);
+pub type ConfirmCallFn = (CallIndex, ShardIdentifier, H256, Vec<u8>);
+pub type ShieldFundsFn = (CallIndex, Vec<u8>, Balance, ShardIdentifier);
+pub type CallWorkerFn = (CallIndex, Request);
+
+pub type CallUpdateScheduledEnclaveFn = (CallIndex, SidechainBlockNumber, MrEnclave);
+pub type CallRemoveScheduledEnclaveFn = (CallIndex, SidechainBlockNumber);
 
 // pallet IMP
-pub type SetUserShieldingKeyFn = ([u8; 2], ShardIdentifier, Vec<u8>);
-pub type CreateIdentityFn = ([u8; 2], ShardIdentifier, AccountId, Vec<u8>, Option<Vec<u8>>);
-pub type RemoveIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>);
-pub type VerifyIdentityFn = ([u8; 2], ShardIdentifier, Vec<u8>, Vec<u8>);
+pub type SetUserShieldingKeyParams = (ShardIdentifier, Vec<u8>);
+pub type SetUserShieldingKeyFn = (CallIndex, SetUserShieldingKeyParams);
+
+pub type CreateIdentityParams = (ShardIdentifier, AccountId, Vec<u8>, Option<Vec<u8>>);
+pub type CreateIdentityFn = (CallIndex, CreateIdentityParams);
+
+pub type RemoveIdentityParams = (ShardIdentifier, Vec<u8>);
+pub type RemoveIdentityFn = (CallIndex, RemoveIdentityParams);
+
+pub type VerifyIdentityParams = (ShardIdentifier, Vec<u8>, Vec<u8>);
+pub type VerifyIdentityFn = (CallIndex, VerifyIdentityParams);
 
 // pallet VCMP
-pub type RequestVCFn = ([u8; 2], ShardIdentifier, Assertion);
+pub type RequestVCParams = (ShardIdentifier, Assertion);
+pub type RequestVCFn = (CallIndex, RequestVCParams);
+
+// pallet utility
+#[derive(Clone, Encode, Decode, Debug)]
+pub enum SupportedBatchCallParams {
+	SetUserShieldingKey(SetUserShieldingKeyParams),
+	CreateIdentity(CreateIdentityParams),
+	RemoveIdentity(RemoveIdentityParams),
+	VerifyIdentity(VerifyIdentityParams),
+	RequestVC(RequestVCParams),
+}
+
+// I don't find a good way to preserve the type (as values) as rust doesn't have meta programmming
+// maybe we can use generics/traits to simplify this
+pub type SupportedBatchCallMap = BTreeMap<CallIndex, SupportedBatchCallParams>;
+
+#[derive(Clone, Encode, Decode, Debug)]
+pub struct BatchCall {
+	pub index: CallIndex,
+	pub params: SupportedBatchCallParams,
+}
+// we need a vector the keep the population order
+pub type BatchAllFn = (CallIndex, Vec<BatchCall>);
 
 pub type Enclave = EnclaveGen<AccountId>;
 

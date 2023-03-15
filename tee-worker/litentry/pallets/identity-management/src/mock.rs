@@ -26,6 +26,7 @@ use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
+	AccountId32,
 };
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -60,7 +61,7 @@ impl system::Config for Test {
 	type BlockNumber = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
-	type AccountId = u64;
+	type AccountId = AccountId32;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type RuntimeEvent = RuntimeEvent;
@@ -89,12 +90,12 @@ impl pallet_balances::Config for Test {
 }
 
 ord_parameter_types! {
-	pub const One: u64 = 1;
+	pub const One: AccountId32 = AccountId32::new([1u8; 32]);
 }
 
 impl pallet_tee_identity_management::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type ManageOrigin = EnsureSignedBy<One, u64>;
+	type ManageOrigin = EnsureSignedBy<One, AccountId32>;
 	type MaxMetadataLength = ConstU32<128>;
 	type MaxVerificationDelay = ConstU32<2>;
 }
@@ -105,6 +106,11 @@ pub fn alice_web3_identity() -> Identity {
 	let alice_key_hex: [u8; 32] =
 		hex::decode(ALICE_KEY.strip_prefix("0x").unwrap()).unwrap().try_into().unwrap();
 	Identity::Substrate { network: SubstrateNetwork::Polkadot, address: alice_key_hex.into() }
+}
+
+pub fn bob_web3_identity() -> Identity {
+	let bob_key_hex = [2u8; 32];
+	Identity::Substrate { network: SubstrateNetwork::Litentry, address: bob_key_hex.into() }
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {

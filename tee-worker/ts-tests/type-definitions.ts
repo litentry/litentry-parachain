@@ -315,3 +315,86 @@ export type TransactionSubmit = {
     tx: SubmittableExtrinsic<ApiTypes>;
     nonce: number;
 };
+
+export const JsonSchema = {
+    type: 'object',
+    properties: {
+        id: {
+            type: 'string',
+        },
+        type: {
+            type: 'array',
+        },
+        issuer: {
+            type: 'object',
+            properties: {
+                id: {
+                    type: 'string',
+                },
+                name: {
+                    type: 'string',
+                },
+                shard: {
+                    type: 'string',
+                },
+            },
+        },
+        issuanceBlockNumber: {
+            type: 'integer',
+        },
+        credentialSubject: {
+            type: 'object',
+            properties: {
+                id: {
+                    type: 'string',
+                },
+                description: {
+                    type: 'string',
+                },
+                type: {
+                    type: 'string',
+                },
+                tag: {
+                    type: 'array',
+                },
+                assertions: {
+                    type: 'array',
+                    items: {
+                        type: 'object',
+                    },
+                },
+                values: {
+                    type: 'array',
+                    items: {
+                        type: 'boolean',
+                    },
+                },
+                endpoint: {
+                    type: 'string',
+                },
+            },
+            required: ['id', 'description', 'type', 'assertions', 'values', 'endpoint'],
+        },
+        proof: {
+            type: 'object',
+            properties: {
+                createdBlockNumber: {
+                    type: 'integer',
+                },
+                type: {
+                    enum: ['Ed25519Signature2020'],
+                },
+                proofPurpose: {
+                    enum: ['assertionMethod'],
+                },
+                proofValue: {
+                    type: 'string',
+                },
+                verificationMethod: {
+                    type: 'string',
+                },
+            },
+        },
+    },
+    required: ['id', 'type', 'credentialSubject', 'issuer', 'issuanceBlockNumber', 'proof'],
+};

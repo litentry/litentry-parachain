@@ -27,10 +27,10 @@ pub enum IMPError {
 	// UTF8Error,
 	DecodeHexFailed(ErrorString),
 	HttpRequestFailed(ErrorString),
-
 	// tee stf error
 	StfError(ErrorString),
-
+	// schedued encalve import error
+	ImportScheduledEnclaveFailed,
 	// Indirect call handling errors when importing parachain blocks
 	CreateIdentityHandlingFailed,
 	RemoveIdentityHandlingFailed,
@@ -61,6 +61,8 @@ pub enum VCMPError {
 	HttpRequestFailed(ErrorString),
 	// Indirect call handling errors when importing parachain blocks
 	RequestVCHandlingFailed,
+	// tee stf error
+	StfError(ErrorString),
 	// UTF8Error
 	ParseError,
 	// Assertion

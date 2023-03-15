@@ -40,7 +40,7 @@ use ita_sgx_runtime::{pallet_imt::MetadataOf, IdentityManagement, Runtime, Syste
 use itp_node_api_metadata::Error as MetadataError;
 use itp_node_api_metadata_provider::Error as MetadataProviderError;
 use itp_stf_primitives::types::AccountId;
-use litentry_primitives::{ErrorString, IMPError};
+use litentry_primitives::{ErrorString, IMPError, VCMPError};
 use std::{format, string::String};
 pub use stf_sgx_primitives::{types::*, Stf};
 pub use trusted_call::*;
@@ -104,6 +104,16 @@ impl StfError {
 			StfError::Dispatch(s) =>
 				IMPError::StfError(ErrorString::truncate_from(s.as_bytes().to_vec())),
 			_ => IMPError::StfError(ErrorString::truncate_from(
+				format!("{:?}", self).as_bytes().to_vec(),
+			)),
+		}
+	}
+	// Convert StfError to VCMPError that would be sent to parentchain
+	pub fn to_vcmp_error(&self) -> VCMPError {
+		match self {
+			StfError::Dispatch(s) =>
+				VCMPError::StfError(ErrorString::truncate_from(s.as_bytes().to_vec())),
+			_ => VCMPError::StfError(ErrorString::truncate_from(
 				format!("{:?}", self).as_bytes().to_vec(),
 			)),
 		}

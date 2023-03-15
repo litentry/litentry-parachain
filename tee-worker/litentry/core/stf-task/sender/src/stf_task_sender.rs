@@ -15,13 +15,13 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 use crate::error::{Error, Result};
 use lazy_static::lazy_static;
+use log::*;
+#[cfg(feature = "sgx")]
+use std::sync::SgxMutex as Mutex;
 use std::sync::{
 	mpsc::{channel, Receiver, Sender},
 	Arc,
 };
-
-#[cfg(feature = "sgx")]
-use std::sync::SgxMutex as Mutex;
 
 use crate::RequestType;
 #[cfg(feature = "std")]
@@ -56,6 +56,8 @@ impl Default for StfRequestSender {
 
 impl SendStfRequest for StfRequestSender {
 	fn send_stf_request(&self, request: RequestType) -> Result<()> {
+		debug!("send stf request: {:?}", request);
+
 		// Acquire lock on extrinsic sender
 		let mutex_guard = GLOBAL_STF_REQUEST_TASK.lock().map_err(|_| Error::MutexAccess)?;
 

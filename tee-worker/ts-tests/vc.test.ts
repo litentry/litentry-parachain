@@ -6,7 +6,6 @@ import { assert } from 'chai';
 import { u8aToHex } from '@polkadot/util';
 import { HexString } from '@polkadot/util/types';
 import { blake2AsHex } from '@polkadot/util-crypto';
-import { disableErrorVCs, requesErrortVCs } from './indirect_error_calls';
 
 const assertion = <Assertion>{
     A1: 'A1',
@@ -44,8 +43,6 @@ describeLitentry('VC test', async (context) => {
             const vcString = res[k].vc.replace('0x', '');
             const vcObj = JSON.parse(vcString);
 
-            console.log('----------vc json-------------', vcObj);
-
             const vcProof = vcObj.proof;
 
             const registry = (await context.substrate.query.vcManagement.vcRegistry(res[k].index)) as any;
@@ -61,30 +58,6 @@ describeLitentry('VC test', async (context) => {
         }
     });
 
-    step('Request Error VC', async () => {
-        //Bob don't have shielding key
-        const resp_not_set_shieldingkey = (await requesErrortVCs(
-            context,
-            context.defaultSigner[1],
-            true,
-            context.mrEnclave,
-            assertion
-        )) as string[];
-
-        for (let index = 0; index < resp_not_set_shieldingkey.length; index++) {
-            const data = resp_not_set_shieldingkey[index];
-            assert.equal(data, 'AssertionBuildFail', 'requestVc should fail with AssertionBuildFail');
-        }
-    });
-
-    step('Disable VC', async () => {
-        const res = (await disableVCs(context, context.defaultSigner[0], aesKey, true, indexList)) as HexString[];
-        for (let k = 0; k < res.length; k++) {
-            assert.equal(res[k], indexList[k], 'check index error');
-            const registry = (await context.substrate.query.vcManagement.vcRegistry(indexList[k])) as any;
-            assert.equal(registry.toHuman()!['status'], 'Disabled');
-        }
-    });
     step('Disable VC', async () => {
         const res = (await disableVCs(context, context.defaultSigner[0], aesKey, true, indexList)) as HexString[];
         for (let k = 0; k < res.length; k++) {

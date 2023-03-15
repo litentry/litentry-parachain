@@ -241,6 +241,11 @@ pub static GLOBAL_TOP_POOL_AUTHOR_COMPONENT: ComponentContainer<EnclaveTopPoolAu
 pub static GLOBAL_ATTESTATION_HANDLER_COMPONENT: ComponentContainer<EnclaveAttestationHandler> =
 	ComponentContainer::new("Attestation handler");
 
+/// Indirect calls executor
+pub static GLOBAL_INDIRECT_CALLS_EXECUTOR_COMPONENT: ComponentContainer<
+	EnclaveIndirectCallsExecutor,
+> = ComponentContainer::new("Indirect calls executor");
+
 /// Parentchain component instances
 ///-------------------------------------------------------------------------------------------------
 
