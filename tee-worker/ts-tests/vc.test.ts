@@ -6,7 +6,7 @@ import { assert } from 'chai';
 import { u8aToHex } from '@polkadot/util';
 import { HexString } from '@polkadot/util/types';
 import { blake2AsHex } from '@polkadot/util-crypto';
-import { disableErrorVCs, revokeErrorVCs } from './indirect_error_calls';
+import { requestErrorVCs, disableErrorVCs, revokeErrorVCs } from './indirect_error_calls';
 
 const assertion = <Assertion>{
     A1: 'A1',
@@ -59,7 +59,25 @@ describeLitentry('VC test', async (context) => {
             indexList.push(res[k].index);
         }
     });
+    step('Request Error VC', async () => {
+        const resp_request_error = (await requestErrorVCs(
+            context,
+            context.defaultSigner[1],
+            aesKey,
+            true,
+            context.mrEnclave,
+            assertion
+        )) as any;
 
+        resp_request_error.map((item: any) => {
+            const result = item.toHuman().data.reason;
+
+            assert(
+                result.search('User shielding key is missing') !== -1,
+                'remove twitter should fail with reason `User shielding key is missing`'
+            );
+        });
+    });
     step('Disable VC', async () => {
         const res = (await disableVCs(context, context.defaultSigner[0], aesKey, true, indexList)) as HexString[];
         for (let k = 0; k < res.length; k++) {
@@ -70,11 +88,14 @@ describeLitentry('VC test', async (context) => {
     });
     step('Disable error VC', async () => {
         //Bob dont't request VC before
-        const res = (await disableErrorVCs(context, context.defaultSigner[0], true, indexList)) as HexString[];
-        for (let k = 0; k < res.length; k++) {
-            assert.equal(res[k], indexList[k], 'check index error');
-            const registry = (await context.substrate.query.vcManagement.vcRegistry(indexList[k])) as any;
-            assert.equal(registry.toHuman()!['status'], 'Disabled');
+        const resp_disable_error = (await disableErrorVCs(
+            context,
+            context.defaultSigner[0],
+            true,
+            indexList
+        )) as HexString[];
+        for (let k = 0; k < resp_disable_error.length; k++) {
+            assert.equal(resp_disable_error[k], 'vcManagement.VCAlreadyDisabled', 'check disableVc  error');
         }
     });
 

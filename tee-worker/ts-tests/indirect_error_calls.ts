@@ -2,6 +2,7 @@ import { encryptWithTeeShieldingKey, listenEvent, sendTxUntilInBlock, sendTxUnti
 import { KeyringPair } from '@polkadot/keyring/types';
 import { HexString } from '@polkadot/util/types';
 import {
+    Assertion,
     IntegrationTestContext,
     LitentryIdentity,
     LitentryValidationData,
@@ -149,12 +150,50 @@ export async function removeErrorIdentities(
     }
     return undefined;
 }
+export async function requestErrorVCs(
+    context: IntegrationTestContext,
+    signer: KeyringPair,
+    aesKey: HexString,
+    listening: boolean,
+    mrEnclave: HexString,
+    assertion: Assertion
+): Promise<
+    | {
+          account: HexString;
+          index: HexString;
+          vc: HexString;
+      }[]
+    | undefined
+> {
+    let txs: TransactionSubmit[] = [];
+    let len = 0;
+
+    for (const key in assertion) {
+        len++;
+        const tx = context.substrate.tx.vcManagement.requestVc(mrEnclave, {
+            [key]: assertion[key as keyof Assertion],
+        });
+        const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
+
+        let newNonce = nonce.toNumber() + (len - 1);
+        txs.push({ tx, nonce: newNonce });
+    }
+
+    await sendTxUntilInBlockList(context.substrate, txs, signer);
+
+    if (listening) {
+        const events = (await listenEvent(context.substrate, 'vcManagement', ['StfError'])) as any;
+        expect(events.length).to.be.equal(len);
+        return events;
+    }
+    return undefined;
+}
 export async function disableErrorVCs(
     context: IntegrationTestContext,
     signer: KeyringPair,
     listening: boolean,
     indexList: HexString[]
-): Promise<HexString[] | undefined> {
+): Promise<string[] | undefined> {
     let txs: TransactionSubmit[] = [];
 
     for (let k = 0; k < indexList.length; k++) {
@@ -164,18 +203,9 @@ export async function disableErrorVCs(
         txs.push({ tx, nonce: newNonce });
     }
 
-    await sendTxUntilInBlockList(context.substrate, txs, signer);
-    if (listening) {
-        const events = (await listenEvent(context.substrate, 'vcManagement', ['VCDisabled'])) as any;
-        expect(events.length).to.be.equal(indexList.length);
-        let results: HexString[] = [];
-        for (let m = 0; m < events.length; m++) {
-            results.push(events[m].data.index.toHex());
-        }
+    const res = (await sendTxUntilInBlockList(context.substrate, txs, signer)) as string[];
 
-        return [...results];
-    }
-    return undefined;
+    return res.length ? res : undefined;
 }
 export async function revokeErrorVCs(
     context: IntegrationTestContext,
