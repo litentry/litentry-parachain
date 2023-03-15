@@ -82,7 +82,7 @@ pub enum StfError {
 	InvalidMetadata,
 	#[display(fmt = "Identity verification failed")]
 	VerifyIdentityFailed,
-	AssertionBuildFail,
+	AssertionBuildFail(String),
 }
 
 impl From<MetadataError> for StfError {
