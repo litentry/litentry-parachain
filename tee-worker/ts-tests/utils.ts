@@ -119,25 +119,37 @@ export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrins
 }
 
 export async function sendTxUntilInBlockList(api: ApiPromise, txs: TransactionSubmit[], signer: KeyringPair) {
-    return new Promise<{
-        block: string;
-    }>(async (resolve, reject) => {
-        await Promise.all(
-            txs.map(async ({ tx, nonce }) => {
-                // await tx.paymentInfo(signer);
+    return Promise.all(
+        txs.map(async ({ tx, nonce }) => {
+            const result = await new Promise((resolve, reject) => {
                 tx.signAndSend(signer, { nonce }, (result) => {
                     if (result.status.isInBlock) {
-                        console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
-                        resolve({
-                            block: result.status.asInBlock.toString(),
-                        });
+                        //catch error
+                        if (result.dispatchError) {
+                            if (result.dispatchError.isModule) {
+                                const decoded = api.registry.findMetaError(result.dispatchError.asModule);
+                                const { docs, name, section } = decoded;
+
+                                console.log(`${section}.${name}: ${docs.join(' ')}`);
+                                resolve(`${section}.${name}`);
+                            } else {
+                                console.log(result.dispatchError.toString());
+                                resolve(result.dispatchError.toString());
+                            }
+                        } else {
+                            console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
+                            resolve({
+                                block: result.status.asInBlock.toString(),
+                            });
+                        }
                     } else if (result.status.isInvalid) {
                         reject(`Transaction is ${result.status}`);
                     }
                 });
-            })
-        );
-    });
+            });
+            return result;
+        })
+    );
 }
 
 // Subscribe to the chain until we get the first specified event with given `section` and `methods`.
@@ -331,88 +343,42 @@ export async function getEnclave(api: ApiPromise): Promise<{
     };
 }
 
-export async function verifySignature(data: string, index: HexString, signature: string, api: ApiPromise) {
+export async function verifySignature(data: any, index: HexString, proofJson: any, api: ApiPromise) {
     const count = await api.query.teerex.enclaveCount();
     const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as EnclaveResult;
-
-    //JSON data types cannot be verify signature
-    // @TODO rust needs to modify the vc format
-    const message = JSON.parse(data);
-
     //check vc index
-    expect(index).to.be.eq(message.id);
-    message.proof = null;
-    const isValid = await ed.verify(
-        Buffer.from(hexToU8a(`0x${signature}`)),
-        Buffer.from(stringToU8a(JSON.stringify(message))),
-        Buffer.from(hexToU8a(`${res.vcPubkey}`))
-    );
+    expect(index).to.be.eq(data.id);
 
-    //just for CI pass
-    expect(!isValid).to.be.true;
+    const signature = Buffer.from(hexToU8a(`0x${proofJson.proofValue}`));
+    const message = Buffer.from(JSON.stringify(data));
+    const vcPubkey = Buffer.from(hexToU8a(`${res.vcPubkey}`));
+
+    const isValid = await ed.verify(signature, message, vcPubkey);
+
+    expect(isValid).to.be.true;
     return true;
 }
 
-export async function checkVc(vc: string, index: HexString, api: ApiPromise): Promise<boolean> {
-    const vcObj = JSON.parse(vc);
-
-    console.log('----------vc json----------', vcObj);
-
-    const signatureValid = await verifySignature(vc, index, vcObj.proof.proofValue, api);
+export async function checkVc(vcObj: any, index: HexString, proof: any, api: ApiPromise): Promise<boolean> {
+    const signatureValid = await verifySignature(vcObj, index, proof, api);
     expect(signatureValid).to.be.true;
-    const jsonValid = await checkJSON(vc);
+
+    const jsonValid = await checkJSON(vcObj, proof);
     expect(jsonValid).to.be.true;
     return true;
 }
 
 //Check VC json fields
-export async function checkJSON(data: string): Promise<boolean> {
-    const vc = JSON.parse(data);
-    const vcStatus = ['@context', 'type', 'credentialSubject', 'proof', 'issuer'].every(
+export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
+    const vcStatus = ['@context', 'type', 'credentialSubject', 'issuer'].every(
         (key) =>
             vc.hasOwnProperty(key) && (vc[key] != '{}' || vc[key] !== '[]' || vc[key] !== null || vc[key] !== undefined)
     );
     expect(vcStatus).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-            vc.proof.type === 'Ed25519Signature2020' &&
-            vc.issuer.id === vc.proof.verificationMethod
+            vc.issuer.id === proofJson.verificationMethod &&
+            proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
-}
-
-export async function checkIssuerAttestation(data: string, api: ApiPromise): Promise<any> {
-    const vc = JSON.parse(data);
-    const mrEnclaveFromVC = Buffer.from(base58.decode(vc.issuer.mrenclave)).toString('hex');
-    const count = await api.query.teerex.enclaveCount();
-    const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as EnclaveResult;
-    const mrEnclaveFromParachain = res.mrEnclave;
-    expect(`0x${mrEnclaveFromVC}`).to.be.equal(mrEnclaveFromParachain);
-
-    //https://github.com/litentry/litentry-parachain/pull/1369 need to be merged
-    const metadata = res.sgxMetadata as any;
-    console.log('   [IssuerAttestation] metadata: ', metadata);
-    if (metadata != null) {
-        const quoteFromData = metadata!['quote'];
-        console.log('   [IssuerAttestation] quoteFromData: ', quoteFromData);
-        if (quoteFromData.length == 0) {
-            return;
-        }
-        const quote = JSON.parse(Base64.decode(quoteFromData));
-        const status = quote!['isvEnclaveQuoteStatus'];
-
-        // 1. Verify quote status (mandatory field)
-        console.log('[IssuerAttestation] ISV Enclave Quote Status: ', status);
-
-        // 2. Verify quote body
-        const quoteBody = quote!['isvEnclaveQuoteBody'];
-        const sgxQuote = JSON.parse(Base64.decode(quoteBody));
-        console.log('[IssuerAttestation] sgxQuote: ', sgxQuote);
-
-        // 3. Check timestamp is within 24H (90day is recommended by Intel)
-        const timestamp = Date.parse(quote!['timestamp']);
-        const now = Date.now();
-        const dt = now - timestamp;
-        console.log('[IssuerAttestation] ISV Enclave Quote Delta Time: ', dt);
-    }
 }

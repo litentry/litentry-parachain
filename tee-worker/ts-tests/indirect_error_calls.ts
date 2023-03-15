@@ -206,12 +206,40 @@ export async function disableErrorVCs(
         expect(events.length).to.be.equal(indexList.length);
         let results: HexString[] = [];
         for (let m = 0; m < events.length; m++) {
-            console.log(999, events[m].data);
-
             results.push(events[m].data.index.toHex());
         }
 
         return [...results];
     }
+    return undefined;
+}
+export async function revokeErrorVCs(
+    context: IntegrationTestContext,
+    signer: KeyringPair,
+    listening: boolean,
+    indexList: HexString[]
+): Promise<HexString[] | undefined> {
+    let txs: TransactionSubmit[] = [];
+
+    for (let k = 0; k < indexList.length; k++) {
+        const tx = context.substrate.tx.vcManagement.revokeVc(indexList[k]);
+        const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
+        let newNonce = nonce.toNumber() + k;
+        txs.push({ tx, nonce: newNonce });
+    }
+
+    const res = await sendTxUntilInBlockList(context.substrate, txs, signer);
+    console.log(1111, res);
+
+    // if (listening) {
+    //     const events = (await listenEvent(context.substrate, 'vcManagement', ['VCDisabled'])) as any;
+    //     expect(events.length).to.be.equal(indexList.length);
+    //     let results: HexString[] = [];
+    //     for (let m = 0; m < events.length; m++) {
+    //         results.push(events[m].data.index.toHex());
+    //     }
+
+    //     return [...results];
+    // }
     return undefined;
 }
