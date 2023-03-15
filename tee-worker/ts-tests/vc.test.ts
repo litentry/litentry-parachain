@@ -6,6 +6,7 @@ import { assert } from 'chai';
 import { u8aToHex } from '@polkadot/util';
 import { HexString } from '@polkadot/util/types';
 import { blake2AsHex } from '@polkadot/util-crypto';
+import { disableErrorVCs, revokeErrorVCs } from './indirect_error_calls';
 
 const assertion = <Assertion>{
     A1: 'A1',
@@ -42,6 +43,7 @@ describeLitentry('VC test', async (context) => {
         for (let k = 0; k < res.length; k++) {
             const vcString = res[k].vc.replace('0x', '');
             const vcObj = JSON.parse(vcString);
+            console.log('---------VC json----------', vcObj);
 
             const vcProof = vcObj.proof;
 
@@ -66,15 +68,15 @@ describeLitentry('VC test', async (context) => {
             assert.equal(registry.toHuman()!['status'], 'Disabled');
         }
     });
-    // step('Disable error VC', async () => {
-    //     //Bob dont't request VC before
-    //     const res = (await disableErrorVCs(context, context.defaultSigner[0], true, indexList)) as HexString[];
-    //     for (let k = 0; k < res.length; k++) {
-    //         assert.equal(res[k], indexList[k], 'check index error');
-    //         const registry = (await context.substrate.query.vcManagement.vcRegistry(indexList[k])) as any;
-    //         assert.equal(registry.toHuman()!['status'], 'Disabled');
-    //     }
-    // });
+    step('Disable error VC', async () => {
+        //Bob dont't request VC before
+        const res = (await disableErrorVCs(context, context.defaultSigner[0], true, indexList)) as HexString[];
+        for (let k = 0; k < res.length; k++) {
+            assert.equal(res[k], indexList[k], 'check index error');
+            const registry = (await context.substrate.query.vcManagement.vcRegistry(indexList[k])) as any;
+            assert.equal(registry.toHuman()!['status'], 'Disabled');
+        }
+    });
 
     step('Revoke VC', async () => {
         const res = (await revokeVCs(context, context.defaultSigner[0], aesKey, true, indexList)) as HexString[];
@@ -82,6 +84,18 @@ describeLitentry('VC test', async (context) => {
             assert.equal(res[k], indexList[k], 'check index error');
             const registry = (await context.substrate.query.vcManagement.vcRegistry(indexList[k])) as any;
             assert.equal(registry.toHuman(), null);
+        }
+    });
+
+    step('Revoke Error VC', async () => {
+        const resp_revoke_error = (await revokeErrorVCs(
+            context,
+            context.defaultSigner[0],
+            true,
+            indexList
+        )) as string[];
+        for (let k = 0; k < resp_revoke_error.length; k++) {
+            assert.equal(resp_revoke_error[k], 'vcManagement.VCNotExist', 'check revokeVc  error');
         }
     });
 });

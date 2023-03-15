@@ -147,18 +147,6 @@ export async function removeErrorIdentities(
         expect(events.length).to.be.equal(identities.length);
         return events;
     }
-
-    await sendTxUntilInBlockList(context.substrate, txs, signer);
-    if (listening) {
-        const events = (await listenEvent(context.substrate, 'vcManagement', ['StfError'])) as any;
-        expect(events.length).to.be.equal(len);
-
-        let results: string[] = [];
-        for (let k = 0; k < events.length; k++) {
-            results.push(events[k].data.reason.toHuman());
-        }
-        return [...results];
-    }
     return undefined;
 }
 export async function disableErrorVCs(
@@ -194,7 +182,7 @@ export async function revokeErrorVCs(
     signer: KeyringPair,
     listening: boolean,
     indexList: HexString[]
-): Promise<HexString[] | undefined> {
+): Promise<string[] | undefined> {
     let txs: TransactionSubmit[] = [];
 
     for (let k = 0; k < indexList.length; k++) {
@@ -204,18 +192,7 @@ export async function revokeErrorVCs(
         txs.push({ tx, nonce: newNonce });
     }
 
-    const res = await sendTxUntilInBlockList(context.substrate, txs, signer);
-    console.log(1111, res);
+    const res = (await sendTxUntilInBlockList(context.substrate, txs, signer)) as string[];
 
-    // if (listening) {
-    //     const events = (await listenEvent(context.substrate, 'vcManagement', ['VCDisabled'])) as any;
-    //     expect(events.length).to.be.equal(indexList.length);
-    //     let results: HexString[] = [];
-    //     for (let m = 0; m < events.length; m++) {
-    //         results.push(events[m].data.index.toHex());
-    //     }
-
-    //     return [...results];
-    // }
-    return undefined;
+    return res.length ? res : undefined;
 }

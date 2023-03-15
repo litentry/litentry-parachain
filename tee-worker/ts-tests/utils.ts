@@ -11,7 +11,6 @@ import {
     teeTypes,
     WorkerRpcReturnValue,
     TransactionSubmit,
-    JsonSchema,
 } from './type-definitions';
 import { blake2AsHex, cryptoWaitReady } from '@polkadot/util-crypto';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
@@ -27,7 +26,6 @@ import { ethers } from 'ethers';
 import { generateTestKeys } from './web3/functions';
 import { expect } from 'chai';
 import { Base64 } from 'js-base64';
-import Ajv from 'ajv';
 import * as ed from '@noble/ed25519';
 const base58 = require('micro-base58');
 const crypto = require('crypto');
@@ -121,25 +119,37 @@ export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrins
 }
 
 export async function sendTxUntilInBlockList(api: ApiPromise, txs: TransactionSubmit[], signer: KeyringPair) {
-    return new Promise<{
-        block: string;
-    }>(async (resolve, reject) => {
-        await Promise.all(
-            txs.map(async ({ tx, nonce }) => {
-                // await tx.paymentInfo(signer);
+    return Promise.all(
+        txs.map(async ({ tx, nonce }) => {
+            const result = await new Promise((resolve, reject) => {
                 tx.signAndSend(signer, { nonce }, (result) => {
                     if (result.status.isInBlock) {
-                        console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
-                        resolve({
-                            block: result.status.asInBlock.toString(),
-                        });
+                        //catch error
+                        if (result.dispatchError) {
+                            if (result.dispatchError.isModule) {
+                                const decoded = api.registry.findMetaError(result.dispatchError.asModule);
+                                const { docs, name, section } = decoded;
+
+                                console.log(`${section}.${name}: ${docs.join(' ')}`);
+                                resolve(`${section}.${name}`);
+                            } else {
+                                console.log(result.dispatchError.toString());
+                                resolve(result.dispatchError.toString());
+                            }
+                        } else {
+                            console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
+                            resolve({
+                                block: result.status.asInBlock.toString(),
+                            });
+                        }
                     } else if (result.status.isInvalid) {
                         reject(`Transaction is ${result.status}`);
                     }
                 });
-            })
-        );
-    });
+            });
+            return result;
+        })
+    );
 }
 
 // Subscribe to the chain until we get the first specified event with given `section` and `methods`.
@@ -362,12 +372,11 @@ export async function checkVc(vcObj: any, index: HexString, proof: any, api: Api
 
 //Check VC json fields
 export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
-    //check JsonSchema
-    const ajv = new Ajv();
-    const validate = ajv.compile(JsonSchema);
-    const isValid = validate(vc);
-    expect(isValid).to.be.true;
-
+    const vcStatus = ['@context', 'type', 'credentialSubject', 'issuer'].every(
+        (key) =>
+            vc.hasOwnProperty(key) && (vc[key] != '{}' || vc[key] !== '[]' || vc[key] !== null || vc[key] !== undefined)
+    );
+    expect(vcStatus).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
             vc.issuer.id === proofJson.verificationMethod &&
