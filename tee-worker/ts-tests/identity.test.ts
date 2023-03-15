@@ -337,7 +337,7 @@ describeLitentry('Test Identity', (context) => {
         }
 
         // remove substrate identity
-        const [substrate_identity_removed] = (await removeIdentities(context, context.defaultSigner[1], aesKey, true, [
+        const [substrate_identity_removed] = (await removeIdentities(context, context.defaultSigner[0], aesKey, true, [
             substrateIdentity,
         ])) as IdentityGenericEvent[];
         assertIdentityRemoved(context.defaultSigner[0], substrate_identity_removed);
@@ -356,6 +356,7 @@ describeLitentry('Test Identity', (context) => {
         await sendTxUntilInBlock(context.substrate, tx, context.defaultSigner[0]);
 
         const events = await listenEvent(context.substrate, 'identityManagement', ['StfError']);
+
         expect(events.length).to.be.equal(1);
         const result = events[0].method as string;
     });
