@@ -93,7 +93,6 @@ pub mod pallet {
 		VCDisabled { index: VCIndex },
 		// a VC is revoked on chain
 		VCRevoked { index: VCIndex },
-		VCNotExist { index: VCIndex },
 		// event that should be triggered by TEECallOrigin
 		// a VC is just issued
 		VCIssued { account: T::AccountId, index: VCIndex, vc: AesOutput },
