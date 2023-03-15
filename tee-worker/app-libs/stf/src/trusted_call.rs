@@ -496,15 +496,12 @@ where
 					Ok(code) => {
 						debug!("create_identity_runtime {} OK", account_id_to_string(&who));
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
-							let id_graph =
-								ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.identity_created_call_indexes())??,
 								SgxParentchainTypeConverter::convert(who),
 								aes_encrypt_default(&key, &identity.encode()),
 								aes_encrypt_default(&key, &code.encode()),
-								aes_encrypt_default(&key, &id_graph.encode()),
 							)));
 						} else {
 							add_call_from_imp_error(
@@ -536,14 +533,11 @@ where
 					Ok(()) => {
 						debug!("remove_identity_runtime {} OK", account_id_to_string(&who));
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
-							let id_graph =
-								ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.identity_removed_call_indexes())??,
 								SgxParentchainTypeConverter::convert(who),
 								aes_encrypt_default(&key, &identity.encode()),
-								aes_encrypt_default(&key, &id_graph.encode()),
 							)));
 						} else {
 							add_call_from_imp_error(
