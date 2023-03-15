@@ -234,9 +234,9 @@ benchmarks! {
 
 	set_total_selected {
 		Pallet::<T>::set_blocks_per_round(RawOrigin::Root.into(), 100u32)?;
-	}: _(RawOrigin::Root, 100u32)
+	}: _(RawOrigin::Root, 99u32)
 	verify {
-		assert_eq!(Pallet::<T>::total_selected(), 100u32);
+		assert_eq!(Pallet::<T>::total_selected(), 99u32);
 	}
 
 	set_collator_commission {
@@ -800,7 +800,7 @@ benchmarks! {
 		// To set total selected to 40, must first increase round length to at least 40
 		// to avoid hitting RoundLengthMustBeAtLeastTotalSelectedCollators
 		Pallet::<T>::set_blocks_per_round(RawOrigin::Root.into(), 100u32)?;
-		Pallet::<T>::set_total_selected(RawOrigin::Root.into(), 100u32)?;
+		Pallet::<T>::set_total_selected(RawOrigin::Root.into(), 99u32)?;
 		// INITIALIZE COLLATOR STATE
 		let mut collators: Vec<T::AccountId> = Vec::new();
 		let mut collator_count = 1u32;
