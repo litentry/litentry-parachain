@@ -74,7 +74,7 @@ describeLitentry('VC test', async (context) => {
 
             assert(
                 result.search('User shielding key is missing') !== -1,
-                'remove twitter should fail with reason `User shielding key is missing`'
+                'requestVc should fail with reason `User shielding key is missing`'
             );
         });
     });
