@@ -374,6 +374,8 @@ describeLitentry('Test Identity', (context) => {
         });
 
         //remove a challenge code before the code is set
+        const bob = await setUserShieldingKey(context, context.defaultSigner[2], aesKey, true);
+        assert.equal(bob, u8aToHex(context.defaultSigner[2].addressRaw), 'check caller error');
         const resp_not_created_identities = (await removeErrorIdentities(context, context.defaultSigner[2], true, [
             twitterIdentity,
             ethereumIdentity,
