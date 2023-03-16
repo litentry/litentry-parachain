@@ -384,3 +384,10 @@ export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
     ).to.be.true;
     return true;
 }
+
+export async function checkFailReason(response: string[], expectedReason: string) {
+    response.map((item: any) => {
+        const result = item.toHuman().data.reason;
+        expect(result.search(expectedReason)).not.to.be.eq(-1);
+    });
+}
