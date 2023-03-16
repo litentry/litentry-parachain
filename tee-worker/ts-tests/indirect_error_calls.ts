@@ -161,27 +161,28 @@ export async function requestErrorVCs(
     aesKey: HexString,
     listening: boolean,
     mrEnclave: HexString,
-    assertion: Assertion
+    assertion: Assertion,
+    keys: string[]
 ): Promise<Event[] | undefined> {
     let txs: TransactionSubmit[] = [];
-    let len = 0;
     const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
 
-    for (const key in assertion) {
-        len++;
+    for (let index = 0; index < keys.length; index++) {
+        const key = keys[index];
         const tx = context.substrate.tx.vcManagement.requestVc(mrEnclave, {
             [key]: assertion[key as keyof Assertion],
         });
-
-        let newNonce = nonce.toNumber() + (len - 1);
+        let newNonce = nonce.toNumber() + index;
         txs.push({ tx, nonce: newNonce });
     }
+
+   
 
     await sendTxUntilInBlockList(context.substrate, txs, signer);
 
     if (listening) {
         const events = (await listenEvent(context.substrate, 'vcManagement', ['StfError'])) as Event[];
-        expect(events.length).to.be.equal(len);
+        expect(events.length).to.be.equal(keys.length);
         return events;
     }
     return undefined;
