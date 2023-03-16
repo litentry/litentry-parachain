@@ -223,7 +223,10 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 			if let Some(c) = IDGraphs::<T>::get(&who, &identity) {
-				ensure!(!c.is_verified, Error::<T>::IdentityAlreadyVerified);
+				ensure!(
+					!(c.is_verified && c.creation_request_block != Some(0)),
+					Error::<T>::IdentityAlreadyVerified
+				);
 			}
 			if let Identity::Substrate { network, address } = identity {
 				if network.ss58_prefix() == parent_ss58_prefix {
