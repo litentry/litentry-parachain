@@ -20,7 +20,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{from_data_provider_error, Error, Result};
+use crate::{Error, Result};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
@@ -80,18 +80,20 @@ pub fn build(
 						break
 					}
 
-					let credentials = VerifiedCredentialsIsHodlerIn::new(
+					let vch = VerifiedCredentialsIsHodlerIn::new(
 						addresses.clone(),
 						from_date.to_string(),
 						VerifiedCredentialsNetwork::Ethereum,
 						String::from(""),
 						q_min_balance,
 					);
-					let is_hodler_out = client
-						.check_verified_credentials_is_hodler(credentials)
-						.map_err(from_data_provider_error)?;
-					for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
-						found = found || hodler.is_hodler;
+					match client.check_verified_credentials_is_hodler(vch) {
+						Ok(is_hodler_out) => {
+							for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
+								found = found || hodler.is_hodler;
+							}
+						},
+						Err(e) => error!("	[BuildAssertion] A11, Request, {:?}", e),
 					}
 				}
 			}
