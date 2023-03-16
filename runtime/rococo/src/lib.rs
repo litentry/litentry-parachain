@@ -867,7 +867,10 @@ impl pallet_teerex::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type MomentsPerDay = MomentsPerDay;
-	type WeightInfo = weights::pallet_teerex::WeightInfo<Runtime>;
+	// TODO: the generated runtime weights file is incomplete
+	//       we are missing `register_dcap_enclave` and `register_quoting_enclave`
+	//       it should be re-benchmarked once the upstream fixes it
+	type WeightInfo = ();
 	type EnclaveAdminOrigin = EnsureRootOrAllCouncil;
 }
 
