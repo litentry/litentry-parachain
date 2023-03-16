@@ -103,22 +103,23 @@ where
 				}
 			}
 
-			// try to reset nonce, put it in a separate thread as nested ECALL/OCALL is not allowed
-			// see https://github.com/litentry/litentry-parachain/issues/1036
-			//     https://github.com/integritee-network/worker/issues/970
+			// Try to reset nonce, see
+			// - https://github.com/litentry/litentry-parachain/issues/1036
+			// - https://github.com/integritee-network/worker/issues/970
+			// It has to be done in a separate thread as nested ECALL/OCALL is disallowed
 			//
-			// This workaround is likely to cause duplicate nonce or "transaction outdated" in the parentchain
-			// tx pool, because we the on-chain nonce doesn't count the pending tx, meanwhile the extrinsic factory
-			// keeps composing new extrinsics. So the nonce used for the new extrinsics can collide with the already
-			// submitted tx. As a result, a few txs can be dropped during parentchain tx pool processing. Not to mention
-			// the thread dispatch delays and network delays (query on-chain nonce).
+			// This workaround is likely to cause duplicate nonce or "transaction outdated" error in the parentchain
+			// tx pool, because the retrieved on-chain nonce doesn't count the pending tx, meanwhile the extrinsic factory
+			// keeps composing new extrinsics. So the nonce used for composing the new extrinsics can collide with the nonce
+			// in the already submitted tx. As a result, a few txs could be dropped during the parentchain tx pool processing.
+			// Not to mention the thread dispatch delay and network delay (query on-chain nonce).
 			//
-			// However, we still consider it better than the current situation, where the nonce never gets a chance of
-			// correction and all following extrinsics will be blocked. Moreover, the txs sent to the parentchain are
-			// "notification extrinsics" in most cases and don't cause chain state change, therefore we deem it less harmful
-			// to drop them - the worst case is some action is wrongly intepreted as "failed" (because F/E doesn't get the
-			// event in time) while it actually succeeds. In that case the user needs to re-do the extrinsic, which is not
-			// optimal, but still better than the chain stalling.
+			// However, we still consider it better than the current situation, where the nonce never gets rectified and
+			// all following extrinsics will be blocked. Moreover, the txs sent to the parentchain are mostly
+			// "notification extrinsics" and don't cause chain state change, therefore we deem it less harmful to drop them.
+			// The worst case is some action is wrongly intepreted as "failed" (because F/E doesn't get the event in time)
+			// while it actually succeeds. In that case, the user needs to re-do the extrinsic, which is suboptimal,
+			// but still better than the chain stalling.
 			//
 			// To have a better synchronisation handling we probably need a sending queue in extrinsic factory that
 			// can be paused on demand (or wait for the nonce synchronisation).
