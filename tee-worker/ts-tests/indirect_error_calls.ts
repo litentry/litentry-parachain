@@ -40,6 +40,8 @@ export async function createErrorIdentities(
     errorCiphertexts: string[]
 ): Promise<string[] | undefined> {
     let txs: TransactionSubmit[] = [];
+    const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
+
     for (let k = 0; k < errorCiphertexts.length; k++) {
         const errorCiphertext = errorCiphertexts[k];
         const tx = context.substrate.tx.identityManagement.createIdentity(
@@ -49,7 +51,6 @@ export async function createErrorIdentities(
             null
         );
 
-        const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
         let newNonce = nonce.toNumber() + k;
         txs.push({
             tx,
@@ -81,6 +82,8 @@ export async function verifyErrorIdentities(
     datas: LitentryValidationData[]
 ): Promise<string[] | undefined> {
     let txs: TransactionSubmit[] = [];
+    const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
+
     for (let k = 0; k < identities.length; k++) {
         let identity = identities[k];
         let data = datas[k];
@@ -99,7 +102,6 @@ export async function verifyErrorIdentities(
             `0x${validation_ciphertext}`
         );
 
-        const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
         let newNonce = nonce.toNumber() + k;
         txs.push({
             tx,
@@ -129,12 +131,13 @@ export async function removeErrorIdentities(
     identities: any[]
 ): Promise<any[] | undefined> {
     let txs: TransactionSubmit[] = [];
+    const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
+
     for (let index = 0; index < identities.length; index++) {
         const identity = identities[index];
         const encode = context.substrate.createType('LitentryIdentity', identity).toHex();
         const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
         const tx = context.substrate.tx.identityManagement.removeIdentity(context.mrEnclave, `0x${ciphertext}`);
-        const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
         let newNonce = nonce.toNumber() + index;
 
         txs.push({
@@ -162,13 +165,13 @@ export async function requestErrorVCs(
 ): Promise<Event[] | undefined> {
     let txs: TransactionSubmit[] = [];
     let len = 0;
+    const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
 
     for (const key in assertion) {
         len++;
         const tx = context.substrate.tx.vcManagement.requestVc(mrEnclave, {
             [key]: assertion[key as keyof Assertion],
         });
-        const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
 
         let newNonce = nonce.toNumber() + (len - 1);
         txs.push({ tx, nonce: newNonce });
@@ -190,10 +193,10 @@ export async function disableErrorVCs(
     indexList: HexString[]
 ): Promise<string[] | undefined> {
     let txs: TransactionSubmit[] = [];
+    const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
 
     for (let k = 0; k < indexList.length; k++) {
         const tx = context.substrate.tx.vcManagement.disableVc(indexList[k]);
-        const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
         let newNonce = nonce.toNumber() + k;
         txs.push({ tx, nonce: newNonce });
     }
@@ -209,10 +212,10 @@ export async function revokeErrorVCs(
     indexList: HexString[]
 ): Promise<string[] | undefined> {
     let txs: TransactionSubmit[] = [];
+    const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
 
     for (let k = 0; k < indexList.length; k++) {
         const tx = context.substrate.tx.vcManagement.revokeVc(indexList[k]);
-        const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
         let newNonce = nonce.toNumber() + k;
         txs.push({ tx, nonce: newNonce });
     }
