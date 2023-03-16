@@ -1,11 +1,4 @@
-import {
-    describeLitentry,
-    encryptWithTeeShieldingKey,
-    generateVerificationMessage,
-    listenEvent,
-    sendTxUntilInBlock,
-    checkFailReason,
-} from './utils';
+import { describeLitentry, encryptWithTeeShieldingKey, generateVerificationMessage, listenEvent, sendTxUntilInBlock, checkFailReason } from './utils';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
 import {
     setUserShieldingKey,
@@ -298,11 +291,9 @@ describeLitentry('Test Identity', (context) => {
         assertIdentityRemoved(context.defaultSigner[1], substrate_extension_identity_removed);
     });
 
-    step('remove prime identity NOT allowed', async function () {
-        // create substrate identity
-        const [resp_substrate] = (await createIdentities(context, context.defaultSigner[0], aesKey, true, [
-            substrateIdentity,
-        ])) as IdentityGenericEvent[];
+     step('remove prime identity NOT allowed', async function () {
+           // create substrate identity
+        const [resp_substrate] = (await createIdentities(context, context.defaultSigner[0], aesKey, true, [substrateIdentity])) as IdentityGenericEvent[];
         assertIdentityCreated(context.defaultSigner[0], resp_substrate);
 
         if (resp_substrate) {
@@ -322,9 +313,13 @@ describeLitentry('Test Identity', (context) => {
         }
 
         // remove substrate identity
-        const [substrate_identity_removed] = (await removeIdentities(context, context.defaultSigner[0], aesKey, true, [
-            substrateIdentity,
-        ])) as IdentityGenericEvent[];
+        const [substrate_identity_removed] = (await removeIdentities(
+            context,
+            context.defaultSigner[0],
+            aesKey,
+            true,
+            [substrateIdentity]
+        )) as IdentityGenericEvent[];
         assertIdentityRemoved(context.defaultSigner[0], substrate_identity_removed);
 
         // remove prime identity
@@ -341,10 +336,9 @@ describeLitentry('Test Identity', (context) => {
         await sendTxUntilInBlock(context.substrate, tx, context.defaultSigner[0]);
 
         const events = await listenEvent(context.substrate, 'identityManagement', ['StfError']);
-
         expect(events.length).to.be.equal(1);
         const result = events[0].method as string;
-    });
+     });
 
     step('remove error identities', async function () {
         const identites = [twitterIdentity, ethereumIdentity, substrateIdentity];
