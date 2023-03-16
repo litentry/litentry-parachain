@@ -68,7 +68,8 @@ pub fn build(
 
 		if let Identity::Substrate { network, address } = id {
 			if matches!(network, SubstrateNetwork::Polkadot) {
-				let address = account_id_to_string(address.as_ref());
+				let mut address = account_id_to_string(address.as_ref());
+				address.insert_str(0, "0x");
 				debug!("	[AssertionBuild] A7 Polkadot address : {}", address);
 
 				let addresses = vec![address];

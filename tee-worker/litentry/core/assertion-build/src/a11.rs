@@ -69,7 +69,8 @@ pub fn build(
 
 		if let Identity::Evm { network, address } = id {
 			if matches!(network, EvmNetwork::Ethereum) {
-				let address = account_id_to_string(address.as_ref());
+				let mut address = account_id_to_string(address.as_ref());
+				address.insert_str(0, "0x");
 				debug!("	[AssertionBuild] A11 Ethereum address : {}", address);
 
 				let addresses = vec![address.to_string()];

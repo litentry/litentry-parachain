@@ -93,13 +93,15 @@ pub fn build(
 			let mut addresses: Vec<String> = vec![];
 			match &identity {
 				Identity::Evm { address, .. } => {
-					let address = account_id_to_string(address.as_ref());
+					let mut address = account_id_to_string(address.as_ref());
+					address.insert_str(0, "0x");
 					debug!("	[AssertionBuild] A4 EVM address : {}", address);
 
 					addresses.push(address);
 				},
 				Identity::Substrate { address, .. } => {
-					let address = account_id_to_string(address.as_ref());
+					let mut address = account_id_to_string(address.as_ref());
+					address.insert_str(0, "0x");
 					debug!("	[AssertionBuild] A4 Substrate address : {}", address);
 
 					addresses.push(address);
