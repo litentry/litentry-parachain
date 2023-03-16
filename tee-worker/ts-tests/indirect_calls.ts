@@ -27,12 +27,12 @@ export async function setUserShieldingKey(
 ): Promise<HexString | undefined> {
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, aesKey).toString('hex');
 
-    const tx = context.substrate.tx.identityManagement.setUserShieldingKey(context.mrEnclave, `0x${ciphertext}`);
+    const tx = context.api.tx.identityManagement.setUserShieldingKey(context.mrEnclave, `0x${ciphertext}`);
 
-    await sendTxUntilInBlock(context.substrate, tx, signer);
+    await sendTxUntilInBlock(context.api, tx, signer);
 
     if (listening) {
-        const events = await listenEvent(context.substrate, 'identityManagement', ['UserShieldingKeySet']);
+        const events = await listenEvent(context.api, 'identityManagement', ['UserShieldingKeySet']);
         expect(events.length).to.be.equal(1);
         return (events[0].data as any).account.toHex();
     }
@@ -49,23 +49,23 @@ export async function createIdentities(
     let txs: TransactionSubmit[] = [];
     for (let index = 0; index < identities.length; index++) {
         const identity = identities[index];
-        const encode = context.substrate.createType('LitentryIdentity', identity).toHex();
+        const encode = context.api.createType('LitentryIdentity', identity).toHex();
         const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
-        const tx = context.substrate.tx.identityManagement.createIdentity(
+        const tx = context.api.tx.identityManagement.createIdentity(
             context.mrEnclave,
             signer.address,
             `0x${ciphertext}`,
             null
         );
-        const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
+        const nonce = await context.api.rpc.system.accountNextIndex(signer.address);
         let newNonce = nonce.toNumber() + index;
         txs.push({ tx, nonce: newNonce });
     }
 
-    await sendTxUntilInBlockList(context.substrate, txs, signer);
+    await sendTxUntilInBlockList(context.api, txs, signer);
 
     if (listening) {
-        const events = (await listenEvent(context.substrate, 'identityManagement', ['IdentityCreated'])) as any;
+        const events = (await listenEvent(context.api, 'identityManagement', ['IdentityCreated'])) as any;
         expect(events.length).to.be.equal(identities.length);
 
         let results: IdentityGenericEvent[] = [];
@@ -73,7 +73,7 @@ export async function createIdentities(
         for (let index = 0; index < events.length; index++) {
             results.push(
                 createIdentityEvent(
-                    context.substrate,
+                    context.api,
                     events[index].data.account.toHex(),
                     decryptWithAES(aesKey, events[index].data.identity, 'hex'),
                     undefined,
@@ -94,19 +94,19 @@ export async function removeIdentities(
 ): Promise<IdentityGenericEvent[] | undefined> {
     let txs: TransactionSubmit[] = [];
     for (let index = 0; index < identity.length; index++) {
-        const encode = context.substrate.createType('LitentryIdentity', identity[index]).toHex();
+        const encode = context.api.createType('LitentryIdentity', identity[index]).toHex();
         const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
 
-        const tx = context.substrate.tx.identityManagement.removeIdentity(context.mrEnclave, `0x${ciphertext}`);
-        const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
+        const tx = context.api.tx.identityManagement.removeIdentity(context.mrEnclave, `0x${ciphertext}`);
+        const nonce = await context.api.rpc.system.accountNextIndex(signer.address);
         let newNonce = nonce.toNumber() + index;
         txs.push({ tx, nonce: newNonce });
     }
 
-    await sendTxUntilInBlockList(context.substrate, txs, signer);
+    await sendTxUntilInBlockList(context.api, txs, signer);
 
     if (listening) {
-        const events = (await listenEvent(context.substrate, 'identityManagement', ['IdentityRemoved'])) as any;
+        const events = (await listenEvent(context.api, 'identityManagement', ['IdentityRemoved'])) as any;
         expect(events.length).to.be.equal(identity.length);
 
         let results: IdentityGenericEvent[] = [];
@@ -114,7 +114,7 @@ export async function removeIdentities(
         for (let index = 0; index < events.length; index++) {
             results.push(
                 createIdentityEvent(
-                    context.substrate,
+                    context.api,
                     events[index].data.account.toHex(),
                     decryptWithAES(aesKey, events[index].data.identity, 'hex')
                 )
@@ -139,9 +139,9 @@ export async function verifyIdentities(
 
         let data = datas[index];
 
-        const identity_encode = context.substrate.createType('LitentryIdentity', identity).toHex();
+        const identity_encode = context.api.createType('LitentryIdentity', identity).toHex();
 
-        const validation_encode = context.substrate.createType('LitentryValidationData', data).toHex();
+        const validation_encode = context.api.createType('LitentryValidationData', data).toHex();
 
         const identity_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, identity_encode).toString(
             'hex'
@@ -151,20 +151,20 @@ export async function verifyIdentities(
             'hex'
         );
 
-        const tx = context.substrate.tx.identityManagement.verifyIdentity(
+        const tx = context.api.tx.identityManagement.verifyIdentity(
             context.mrEnclave,
             `0x${identity_ciphertext}`,
             `0x${validation_ciphertext}`
         );
-        const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
+        const nonce = await context.api.rpc.system.accountNextIndex(signer.address);
         let newNonce = nonce.toNumber() + index;
         txs.push({ tx, nonce: newNonce });
     }
 
-    await sendTxUntilInBlockList(context.substrate, txs, signer);
+    await sendTxUntilInBlockList(context.api, txs, signer);
 
     if (listening) {
-        const events = (await listenEvent(context.substrate, 'identityManagement', ['IdentityVerified'])) as any;
+        const events = (await listenEvent(context.api, 'identityManagement', ['IdentityVerified'])) as any;
 
         expect(events.length).to.be.equal(identities.length);
 
@@ -173,7 +173,7 @@ export async function verifyIdentities(
         for (let index = 0; index < events.length; index++) {
             results.push(
                 createIdentityEvent(
-                    context.substrate,
+                    context.api,
                     events[index].data.account.toHex(),
                     decryptWithAES(aesKey, events[index].data.identity, 'hex'),
                     decryptWithAES(aesKey, events[index].data.idGraph, 'hex')
@@ -207,18 +207,18 @@ export async function requestVCs(
 
     for (const key in assertion) {
         len++;
-        const tx = context.substrate.tx.vcManagement.requestVc(mrEnclave, {
+        const tx = context.api.tx.vcManagement.requestVc(mrEnclave, {
             [key]: assertion[key as keyof Assertion],
         });
-        const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
+        const nonce = await context.api.rpc.system.accountNextIndex(signer.address);
 
         let newNonce = nonce.toNumber() + (len - 1);
         txs.push({ tx, nonce: newNonce });
     }
 
-    await sendTxUntilInBlockList(context.substrate, txs, signer);
+    await sendTxUntilInBlockList(context.api, txs, signer);
     if (listening) {
-        const events = (await listenEvent(context.substrate, 'vcManagement', ['VCIssued'])) as any;
+        const events = (await listenEvent(context.api, 'vcManagement', ['VCIssued'])) as any;
         expect(events.length).to.be.equal(len);
 
         let results: {
@@ -248,15 +248,15 @@ export async function disableVCs(
     let txs: TransactionSubmit[] = [];
 
     for (let k = 0; k < indexList.length; k++) {
-        const tx = context.substrate.tx.vcManagement.disableVc(indexList[k]);
-        const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
+        const tx = context.api.tx.vcManagement.disableVc(indexList[k]);
+        const nonce = await context.api.rpc.system.accountNextIndex(signer.address);
         let newNonce = nonce.toNumber() + k;
         txs.push({ tx, nonce: newNonce });
     }
 
-    await sendTxUntilInBlockList(context.substrate, txs, signer);
+    await sendTxUntilInBlockList(context.api, txs, signer);
     if (listening) {
-        const events = (await listenEvent(context.substrate, 'vcManagement', ['VCDisabled'])) as any;
+        const events = (await listenEvent(context.api, 'vcManagement', ['VCDisabled'])) as any;
         expect(events.length).to.be.equal(indexList.length);
         let results: HexString[] = [];
         for (let m = 0; m < events.length; m++) {
@@ -277,15 +277,15 @@ export async function revokeVCs(
 ): Promise<HexString[] | undefined> {
     let txs: TransactionSubmit[] = [];
     for (let k = 0; k < indexList.length; k++) {
-        const tx = context.substrate.tx.vcManagement.revokeVc(indexList[k]);
-        const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
+        const tx = context.api.tx.vcManagement.revokeVc(indexList[k]);
+        const nonce = await context.api.rpc.system.accountNextIndex(signer.address);
         let newNonce = nonce.toNumber() + k;
         txs.push({ tx, nonce: newNonce });
     }
 
-    await sendTxUntilInBlockList(context.substrate, txs, signer);
+    await sendTxUntilInBlockList(context.api, txs, signer);
     if (listening) {
-        const events = (await listenEvent(context.substrate, 'vcManagement', ['VCRevoked'])) as any;
+        const events = (await listenEvent(context.api, 'vcManagement', ['VCRevoked'])) as any;
         expect(events.length).to.be.equal(indexList.length);
         let results: HexString[] = [];
         for (let m = 0; m < events.length; m++) {

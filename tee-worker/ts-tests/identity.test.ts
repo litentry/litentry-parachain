@@ -351,12 +351,12 @@ describeLitentry('Test Identity', (context) => {
             },
         };
 
-        const encode = context.substrate.createType('LitentryIdentity', substratePrimeIdentity).toHex();
+        const encode = context.api.createType('LitentryIdentity', substratePrimeIdentity).toHex();
         const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
-        const tx = context.substrate.tx.identityManagement.removeIdentity(context.mrEnclave, `0x${ciphertext}`);
-        await sendTxUntilInBlock(context.substrate, tx, context.defaultSigner[0]);
+        const tx = context.api.tx.identityManagement.removeIdentity(context.mrEnclave, `0x${ciphertext}`);
+        await sendTxUntilInBlock(context.api, tx, context.defaultSigner[0]);
 
-        const events = await listenEvent(context.substrate, 'identityManagement', ['StfError']);
+        const events = await listenEvent(context.api, 'identityManagement', ['StfError']);
         expect(events.length).to.be.equal(1);
         const result = events[0].method as string;
     });

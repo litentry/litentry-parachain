@@ -65,7 +65,7 @@ const vc = {
 
 // You can also get data from here. For details, please refer to the request vc step of vc.test.ts
 /** 
-    const registry = (await context.substrate.query.vcManagement.vcRegistry(res[k].index)) as any;
+    const registry = (await context.api.query.vcManagement.vcRegistry(res[k].index)) as any;
  * 
 */
 const enclaveRegistry = {
@@ -119,8 +119,7 @@ function checkIssuerAttestation() {
                 break;
             case 'GROUP_OUT_OF_DATE':
             case 'GROUP_REVOKED':
-            case 'CONFIGURATION_NEEDED': // Verify platformInfoBlob for further info if status not OK
-            {
+            case 'CONFIGURATION_NEEDED': { // Verify platformInfoBlob for further info if status not OK
                 if (quote!['platformInfoBlob'] !== undefined) {
                 } else {
                     console.log('   [IssuerAttestation] Failed to fetch platformInfoBlob from attestation report');

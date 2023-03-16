@@ -16,14 +16,12 @@ export async function setErrorUserShieldingKey(
     listening: boolean
 ): Promise<string | undefined> {
     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, aesKey).toString('hex');
-    const tx = context.substrate.tx.identityManagement.setUserShieldingKey(context.mrEnclave, `0x${ciphertext}`);
+    const tx = context.api.tx.identityManagement.setUserShieldingKey(context.mrEnclave, `0x${ciphertext}`);
 
-    await sendTxUntilInBlock(context.substrate, tx, signer);
+    await sendTxUntilInBlock(context.api, tx, signer);
 
     if (listening) {
-        const events = await listenEvent(context.substrate, 'identityManagement', [
-            'SetUserShieldingKeyHandlingFailed',
-        ]);
+        const events = await listenEvent(context.api, 'identityManagement', ['SetUserShieldingKeyHandlingFailed']);
         expect(events.length).to.be.equal(1);
         return events[0].method as string;
     }
@@ -39,14 +37,14 @@ export async function createErrorIdentities(
     let txs: TransactionSubmit[] = [];
     for (let k = 0; k < errorCiphertexts.length; k++) {
         const errorCiphertext = errorCiphertexts[k];
-        const tx = context.substrate.tx.identityManagement.createIdentity(
+        const tx = context.api.tx.identityManagement.createIdentity(
             context.mrEnclave,
             signer.address,
             errorCiphertext,
             null
         );
 
-        const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
+        const nonce = await context.api.rpc.system.accountNextIndex(signer.address);
         let newNonce = nonce.toNumber() + k;
         txs.push({
             tx,
@@ -54,12 +52,10 @@ export async function createErrorIdentities(
         });
     }
 
-    await sendTxUntilInBlockList(context.substrate, txs, signer);
+    await sendTxUntilInBlockList(context.api, txs, signer);
 
     if (listening) {
-        const events = (await listenEvent(context.substrate, 'identityManagement', [
-            'CreateIdentityHandlingFailed',
-        ])) as any;
+        const events = (await listenEvent(context.api, 'identityManagement', ['CreateIdentityHandlingFailed'])) as any;
         expect(events.length).to.be.equal(errorCiphertexts.length);
         let results: string[] = [];
         for (let i = 0; i < events.length; i++) {
@@ -81,8 +77,8 @@ export async function verifyErrorIdentities(
     for (let k = 0; k < identities.length; k++) {
         let identity = identities[k];
         let data = datas[k];
-        const identity_encode = context.substrate.createType('LitentryIdentity', identity).toHex();
-        const validation_encode = context.substrate.createType('LitentryValidationData', data).toHex();
+        const identity_encode = context.api.createType('LitentryIdentity', identity).toHex();
+        const validation_encode = context.api.createType('LitentryValidationData', data).toHex();
         const identity_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, identity_encode).toString(
             'hex'
         );
@@ -90,13 +86,13 @@ export async function verifyErrorIdentities(
             'hex'
         );
 
-        const tx = context.substrate.tx.identityManagement.verifyIdentity(
+        const tx = context.api.tx.identityManagement.verifyIdentity(
             context.mrEnclave,
             `0x${identity_ciphertext}`,
             `0x${validation_ciphertext}`
         );
 
-        const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
+        const nonce = await context.api.rpc.system.accountNextIndex(signer.address);
         let newNonce = nonce.toNumber() + k;
         txs.push({
             tx,
@@ -104,10 +100,10 @@ export async function verifyErrorIdentities(
         });
     }
 
-    await sendTxUntilInBlockList(context.substrate, txs, signer);
+    await sendTxUntilInBlockList(context.api, txs, signer);
 
     if (listening) {
-        const events = (await listenEvent(context.substrate, 'identityManagement', ['StfError'])) as any;
+        const events = (await listenEvent(context.api, 'identityManagement', ['StfError'])) as any;
         expect(events.length).to.be.equal(identities.length);
         let results: string[] = [];
         for (let i = 0; i < events.length; i++) {
@@ -128,10 +124,10 @@ export async function removeErrorIdentities(
     let txs: TransactionSubmit[] = [];
     for (let index = 0; index < identities.length; index++) {
         const identity = identities[index];
-        const encode = context.substrate.createType('LitentryIdentity', identity).toHex();
+        const encode = context.api.createType('LitentryIdentity', identity).toHex();
         const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
-        const tx = context.substrate.tx.identityManagement.removeIdentity(context.mrEnclave, `0x${ciphertext}`);
-        const nonce = await context.substrate.rpc.system.accountNextIndex(signer.address);
+        const tx = context.api.tx.identityManagement.removeIdentity(context.mrEnclave, `0x${ciphertext}`);
+        const nonce = await context.api.rpc.system.accountNextIndex(signer.address);
         let newNonce = nonce.toNumber() + index;
 
         txs.push({
@@ -140,10 +136,10 @@ export async function removeErrorIdentities(
         });
     }
 
-    await sendTxUntilInBlockList(context.substrate, txs, signer);
+    await sendTxUntilInBlockList(context.api, txs, signer);
 
     if (listening) {
-        const events = await listenEvent(context.substrate, 'identityManagement', ['StfError']);
+        const events = await listenEvent(context.api, 'identityManagement', ['StfError']);
         expect(events.length).to.be.equal(identities.length);
         return events;
     }

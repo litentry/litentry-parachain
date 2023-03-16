@@ -94,7 +94,7 @@ export async function initIntegrationTestContext(
     const { mrEnclave, teeShieldingKey } = await getEnclave(api);
     return <IntegrationTestContext>{
         tee: wsp,
-        substrate: api,
+        api,
         teeShieldingKey,
         mrEnclave,
         defaultSigner: getSigner(),
@@ -262,7 +262,7 @@ export function generateVerificationMessage(
     signerAddress: Uint8Array,
     identity: LitentryIdentity
 ): HexString {
-    const encode = context.substrate.createType('LitentryIdentity', identity).toU8a();
+    const encode = context.api.createType('LitentryIdentity', identity).toU8a();
     const msg = Buffer.concat([challengeCode, signerAddress, encode]);
     return blake2AsHex(msg, 256);
 }
@@ -274,7 +274,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
         let context: IntegrationTestContext = {
             defaultSigner: [] as KeyringPair[],
             mrEnclave: '0x11' as HexString,
-            substrate: {} as ApiPromise,
+            api: {} as ApiPromise,
             tee: {} as WebSocketAsPromised,
             teeShieldingKey: {} as KeyObject,
             ethersWallet: {},
@@ -289,7 +289,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
 
             context.defaultSigner = tmp.defaultSigner;
             context.mrEnclave = tmp.mrEnclave;
-            context.substrate = tmp.substrate;
+            context.api = tmp.api;
             context.tee = tmp.tee;
             context.teeShieldingKey = tmp.teeShieldingKey;
             context.ethersWallet = tmp.ethersWallet;
