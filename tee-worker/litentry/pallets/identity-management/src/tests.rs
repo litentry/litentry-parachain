@@ -71,6 +71,13 @@ fn create_identity_works() {
 #[test]
 fn remove_identity_works() {
 	new_test_ext().execute_with(|| {
+		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
+		assert_ok!(IMT::set_user_shielding_key(
+			RuntimeOrigin::signed(ALICE),
+			BOB,
+			shielding_key.clone()
+		));
+
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		let ss58_prefix = 131_u16;
 		assert_noop!(
@@ -102,7 +109,7 @@ fn remove_identity_works() {
 		assert_eq!(IMT::id_graphs(BOB, alice_web3_identity()), None);
 
 		let id_graph = IMT::get_id_graph(&BOB);
-		// "1": because of the main id is added by default when first calling creat_identity.
+		// "1": because of the main id is added by default when first calling set_user_shielding_key.
 		assert_eq!(id_graph.len(), 1);
 
 		assert_noop!(
@@ -146,6 +153,13 @@ fn verify_identity_works() {
 #[test]
 fn get_id_graph_works() {
 	new_test_ext().execute_with(|| {
+		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
+		assert_ok!(IMT::set_user_shielding_key(
+			RuntimeOrigin::signed(ALICE),
+			BOB,
+			shielding_key.clone()
+		));
+
 		let metadata3: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		let ss58_prefix = 131_u16;
 		assert_ok!(IMT::create_identity(
