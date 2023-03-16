@@ -119,7 +119,8 @@ function checkIssuerAttestation() {
                 break;
             case 'GROUP_OUT_OF_DATE':
             case 'GROUP_REVOKED':
-            case 'CONFIGURATION_NEEDED': { // Verify platformInfoBlob for further info if status not OK
+            case 'CONFIGURATION_NEEDED': {
+                // Verify platformInfoBlob for further info if status not OK
                 if (quote!['platformInfoBlob'] !== undefined) {
                 } else {
                     console.log('   [IssuerAttestation] Failed to fetch platformInfoBlob from attestation report');

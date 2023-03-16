@@ -136,21 +136,15 @@ export async function verifyIdentities(
     let txs: TransactionSubmit[] = [];
     for (let index = 0; index < identities.length; index++) {
         let identity = identities[index];
-
         let data = datas[index];
-
         const identity_encode = context.api.createType('LitentryIdentity', identity).toHex();
-
         const validation_encode = context.api.createType('LitentryValidationData', data).toHex();
-
         const identity_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, identity_encode).toString(
             'hex'
         );
-
         const validation_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, validation_encode).toString(
             'hex'
         );
-
         const tx = context.api.tx.identityManagement.verifyIdentity(
             context.mrEnclave,
             `0x${identity_ciphertext}`,
@@ -165,11 +159,8 @@ export async function verifyIdentities(
 
     if (listening) {
         const events = (await listenEvent(context.api, 'identityManagement', ['IdentityVerified'])) as any;
-
         expect(events.length).to.be.equal(identities.length);
-
         let results: IdentityGenericEvent[] = [];
-
         for (let index = 0; index < events.length; index++) {
             results.push(
                 createIdentityEvent(
@@ -186,7 +177,6 @@ export async function verifyIdentities(
 }
 
 //vcManagement
-
 export async function requestVCs(
     context: IntegrationTestContext,
     signer: KeyringPair,
