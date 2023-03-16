@@ -8,7 +8,7 @@ import {
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import {
     setUserShieldingKey,
-    decodeIdentityEvent,
+    createIdentityEvent,
     assertIdentityCreated,
     assertIdentityVerified,
     assertIdentityRemoved,
@@ -81,11 +81,11 @@ describeLitentry('Test Batch Utility', (context) => {
         expect(events.length).to.be.equal(2);
         for (let i = 0; i < 2; i++) {
             const data = events[i].data as any;
-            const response = decodeIdentityEvent(
+            const response = createIdentityEvent(
                 context.substrate,
                 data.account.toHex(),
                 decryptWithAES(aesKey, data.identity, 'hex'),
-                decryptWithAES(aesKey, data.idGraph, 'hex'),
+                undefined,
                 decryptWithAES(aesKey, data.code, 'hex')
             );
             assertIdentityCreated(context.defaultSigner[0], response);
@@ -130,7 +130,7 @@ describeLitentry('Test Batch Utility', (context) => {
         const events = await listenEvent(context.substrate, 'identityManagement', ['IdentityVerified']);
         expect(events.length).to.be.equal(1);
         const data = events[0].data as any;
-        const response = decodeIdentityEvent(
+        const response = createIdentityEvent(
             context.substrate,
             data.account.toHex(),
             decryptWithAES(aesKey, data.identity, 'hex'),
@@ -170,11 +170,10 @@ describeLitentry('Test Batch Utility', (context) => {
         expect(events.length).to.be.equal(2);
         for (let i = 0; i < 2; i++) {
             const data = events[i].data as any;
-            const response = decodeIdentityEvent(
+            const response = createIdentityEvent(
                 context.substrate,
                 data.account.toHex(),
-                decryptWithAES(aesKey, data.identity, 'hex'),
-                decryptWithAES(aesKey, data.idGraph, 'hex')
+                decryptWithAES(aesKey, data.identity, 'hex')
             );
             assertIdentityRemoved(context.defaultSigner[0], response);
         }

@@ -72,11 +72,11 @@ export async function createIdentities(
 
         for (let index = 0; index < events.length; index++) {
             results.push(
-                decodeIdentityEvent(
+                createIdentityEvent(
                     context.substrate,
                     events[index].data.account.toHex(),
                     decryptWithAES(aesKey, events[index].data.identity, 'hex'),
-                    decryptWithAES(aesKey, events[index].data.idGraph, 'hex'),
+                    undefined,
                     decryptWithAES(aesKey, events[index].data.code, 'hex')
                 )
             );
@@ -113,11 +113,10 @@ export async function removeIdentities(
 
         for (let index = 0; index < events.length; index++) {
             results.push(
-                decodeIdentityEvent(
+                createIdentityEvent(
                     context.substrate,
                     events[index].data.account.toHex(),
-                    decryptWithAES(aesKey, events[index].data.identity, 'hex'),
-                    decryptWithAES(aesKey, events[index].data.idGraph, 'hex')
+                    decryptWithAES(aesKey, events[index].data.identity, 'hex')
                 )
             );
         }
@@ -173,7 +172,7 @@ export async function verifyIdentities(
 
         for (let index = 0; index < events.length; index++) {
             results.push(
-                decodeIdentityEvent(
+                createIdentityEvent(
                     context.substrate,
                     events[index].data.account.toHex(),
                     decryptWithAES(aesKey, events[index].data.identity, 'hex'),
@@ -297,15 +296,17 @@ export async function revokeVCs(
     return undefined;
 }
 
-export function decodeIdentityEvent(
+export function createIdentityEvent(
     api: ApiPromise,
     who: HexString,
     identityString: HexString,
-    idGraphString: HexString,
+    idGraphString?: HexString,
     challengeCode?: HexString
 ): IdentityGenericEvent {
     let identity = api.createType('LitentryIdentity', identityString).toJSON();
-    let idGraph = api.createType('Vec<(LitentryIdentity, IdentityContext)>', idGraphString).toJSON();
+    let idGraph = idGraphString
+        ? api.createType('Vec<(LitentryIdentity, IdentityContext)>', idGraphString).toJSON()
+        : undefined;
     return <IdentityGenericEvent>{
         who,
         identity,
@@ -315,16 +316,6 @@ export function decodeIdentityEvent(
 }
 
 export function assertIdentityCreated(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
-    let idGraphExist = false;
-    if (identityEvent) {
-        for (let i = 0; i < identityEvent.idGraph.length; i++) {
-            if (JSON.stringify(identityEvent.idGraph[i][0]) == JSON.stringify(identityEvent.identity)) {
-                idGraphExist = true;
-                assert.isFalse(identityEvent.idGraph[i][1].is_verified, 'identity should not be verified');
-            }
-        }
-    }
-    assert.isTrue(idGraphExist, 'id_graph should exist');
     assert.equal(identityEvent?.who, u8aToHex(signer.addressRaw), 'check caller error');
 }
 
@@ -344,14 +335,5 @@ export function assertIdentityVerified(signer: KeyringPair, identityEvent: Ident
 }
 
 export function assertIdentityRemoved(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
-    let idGraphExist = false;
-    if (identityEvent) {
-        for (let i = 0; i < identityEvent.idGraph.length; i++) {
-            if (JSON.stringify(identityEvent.idGraph[i][0]) == JSON.stringify(identityEvent.identity)) {
-                idGraphExist = true;
-            }
-        }
-    }
-    assert.isFalse(idGraphExist, 'id_graph should be empty');
     assert.equal(identityEvent?.who, u8aToHex(signer.addressRaw), 'check caller error');
 }

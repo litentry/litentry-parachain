@@ -1,4 +1,10 @@
-import { describeLitentry, encryptWithTeeShieldingKey, generateVerificationMessage, listenEvent, sendTxUntilInBlock } from './utils';
+import {
+    describeLitentry,
+    encryptWithTeeShieldingKey,
+    generateVerificationMessage,
+    listenEvent,
+    sendTxUntilInBlock,
+} from './utils';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
 import {
     setUserShieldingKey,
@@ -310,7 +316,9 @@ describeLitentry('Test Identity', (context) => {
 
     step('remove prime identity NOT allowed', async function () {
         // create substrate identity
-        const [resp_substrate] = (await createIdentities(context, context.defaultSigner[0], aesKey, true, [substrateIdentity])) as IdentityGenericEvent[];
+        const [resp_substrate] = (await createIdentities(context, context.defaultSigner[0], aesKey, true, [
+            substrateIdentity,
+        ])) as IdentityGenericEvent[];
         assertIdentityCreated(context.defaultSigner[0], resp_substrate);
 
         if (resp_substrate) {
@@ -330,13 +338,9 @@ describeLitentry('Test Identity', (context) => {
         }
 
         // remove substrate identity
-        const [substrate_identity_removed] = (await removeIdentities(
-            context,
-            context.defaultSigner[0],
-            aesKey,
-            true,
-            [substrateIdentity]
-        )) as IdentityGenericEvent[];
+        const [substrate_identity_removed] = (await removeIdentities(context, context.defaultSigner[0], aesKey, true, [
+            substrateIdentity,
+        ])) as IdentityGenericEvent[];
         assertIdentityRemoved(context.defaultSigner[0], substrate_identity_removed);
 
         // remove prime identity
