@@ -18,7 +18,7 @@ use crate::{
 	identity_context::IdentityContext, mock::*, Error, MetadataOf, ParentchainBlockNumber,
 	UserShieldingKeyType,
 };
-use frame_support::{assert_err, assert_noop, assert_ok};
+use frame_support::{assert_noop, assert_ok};
 use litentry_primitives::{Identity, IdentityString, Web2Network, USER_SHIELDING_KEY_LEN};
 use sp_runtime::AccountId32;
 
@@ -46,6 +46,13 @@ fn set_user_shielding_key_works() {
 #[test]
 fn create_identity_works() {
 	new_test_ext().execute_with(|| {
+		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
+		assert_ok!(IMT::set_user_shielding_key(
+			RuntimeOrigin::signed(ALICE),
+			BOB,
+			shielding_key.clone()
+		));
+
 		let ss58_prefix = 131_u16;
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		assert_ok!(IMT::create_identity(
@@ -71,6 +78,13 @@ fn create_identity_works() {
 #[test]
 fn remove_identity_works() {
 	new_test_ext().execute_with(|| {
+		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
+		assert_ok!(IMT::set_user_shielding_key(
+			RuntimeOrigin::signed(ALICE),
+			BOB,
+			shielding_key.clone()
+		));
+
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		let ss58_prefix = 131_u16;
 		assert_noop!(
@@ -115,6 +129,13 @@ fn remove_identity_works() {
 #[test]
 fn verify_identity_works() {
 	new_test_ext().execute_with(|| {
+		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
+		assert_ok!(IMT::set_user_shielding_key(
+			RuntimeOrigin::signed(ALICE),
+			BOB,
+			shielding_key.clone()
+		));
+
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		let ss58_prefix = 131_u16;
 		assert_ok!(IMT::create_identity(
@@ -146,6 +167,13 @@ fn verify_identity_works() {
 #[test]
 fn get_id_graph_works() {
 	new_test_ext().execute_with(|| {
+		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
+		assert_ok!(IMT::set_user_shielding_key(
+			RuntimeOrigin::signed(ALICE),
+			BOB,
+			shielding_key.clone()
+		));
+
 		let metadata3: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		let ss58_prefix = 131_u16;
 		assert_ok!(IMT::create_identity(
@@ -195,6 +223,13 @@ fn verify_identity_fails_when_too_early() {
 		const CREATION_REQUEST_BLOCK: ParentchainBlockNumber = 2;
 		const VERIFICATION_REQUEST_BLOCK: ParentchainBlockNumber = 1;
 
+		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
+		assert_ok!(IMT::set_user_shielding_key(
+			RuntimeOrigin::signed(ALICE),
+			BOB,
+			shielding_key.clone()
+		));
+
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		let ss58_prefix = 131_u16;
 		assert_ok!(IMT::create_identity(
@@ -232,6 +267,12 @@ fn verify_identity_fails_when_too_late() {
 		const CREATION_REQUEST_BLOCK: ParentchainBlockNumber = 1;
 		const VERIFICATION_REQUEST_BLOCK: ParentchainBlockNumber = 5;
 
+		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
+		assert_ok!(IMT::set_user_shielding_key(
+			RuntimeOrigin::signed(ALICE),
+			BOB,
+			shielding_key.clone()
+		));
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		let ss58_prefix = 131_u16;
 		assert_ok!(IMT::create_identity(
