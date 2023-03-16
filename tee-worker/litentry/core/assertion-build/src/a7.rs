@@ -33,7 +33,6 @@ use litentry_primitives::{
 };
 use log::*;
 use std::{
-	str::from_utf8,
 	string::{String, ToString},
 	vec,
 	vec::Vec,
@@ -69,37 +68,31 @@ pub fn build(
 
 		if let Identity::Substrate { network, address } = id {
 			if matches!(network, SubstrateNetwork::Polkadot) {
-				match from_utf8(address.as_ref()) {
-					Ok(addr) => {
-						let addresses = vec![addr.to_string()];
+				let address = account_id_to_string(address.as_ref());
+				debug!("	[AssertionBuild] A7 Polkadot address : {}", address);
 
-						for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
-							// if found is true, no need to check it continually
-							if found {
-								from_date_index = index + 1;
-								break
-							}
+				let addresses = vec![address];
+				for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
+					// if found is true, no need to check it continually
+					if found {
+						from_date_index = index + 1;
+						break
+					}
 
-							let credentials = VerifiedCredentialsIsHodlerIn::new(
-								addresses.clone(),
-								from_date.to_string(),
-								VerifiedCredentialsNetwork::Polkadot,
-								String::from(""),
-								q_min_balance,
-							);
-							let is_hodler_out = client
-								.check_verified_credentials_is_hodler(credentials)
-								.map_err(from_data_provider_error)?;
-							for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
-								found = found || hodler.is_hodler;
-							}
-						}
-					},
-					Err(e) => error!(
-						"	[AssertionBuild] A7 parse error Substrate address {:?}, {:?}",
-						address, e
-					),
-				};
+					let credentials = VerifiedCredentialsIsHodlerIn::new(
+						addresses.clone(),
+						from_date.to_string(),
+						VerifiedCredentialsNetwork::Polkadot,
+						String::from(""),
+						q_min_balance,
+					);
+					let is_hodler_out = client
+						.check_verified_credentials_is_hodler(credentials)
+						.map_err(from_data_provider_error)?;
+					for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
+						found = found || hodler.is_hodler;
+					}
+				}
 			}
 		}
 	}

@@ -33,7 +33,7 @@ use litentry_primitives::{
 	ASSERTION_FROM_DATE,
 };
 use log::*;
-use std::{str::from_utf8, string::ToString, vec, vec::Vec};
+use std::{string::ToString, vec, vec::Vec};
 
 const WBTC_TOKEN_ADDRESS: &str = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
 const VC_SUBJECT_DESCRIPTION: &str = "The user held Wrapped BTC every day from a specific date";
@@ -68,37 +68,32 @@ pub fn build(
 
 		if let Identity::Evm { network, address } = id {
 			if matches!(network, EvmNetwork::Ethereum) {
-				match from_utf8(address.as_ref()) {
-					Ok(addr) => {
-						let addresses = vec![addr.to_string()];
+				let address = account_id_to_string(address.as_ref());
+				debug!("	[AssertionBuild] A10 Ethereum address : {}", address);
 
-						for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
-							// if found is true, no need to check it continually
-							if found {
-								from_date_index = index + 1;
-								break
-							}
-							let credentials = VerifiedCredentialsIsHodlerIn::new(
-								addresses.clone(),
-								from_date.to_string(),
-								VerifiedCredentialsNetwork::Ethereum,
-								WBTC_TOKEN_ADDRESS.to_string(),
-								q_min_balance,
-							);
+				let addresses = vec![address.to_string()];
+				for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
+					// if found is true, no need to check it continually
+					if found {
+						from_date_index = index + 1;
+						break
+					}
 
-							let is_hodler_out = client
-								.check_verified_credentials_is_hodler(credentials)
-								.map_err(from_data_provider_error)?;
-							for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
-								found = found || hodler.is_hodler;
-							}
-						}
-					},
-					Err(e) => error!(
-						"	[AssertionBuild] A10 parse error Evm address {:?}, {:?}",
-						address, e
-					),
-				};
+					let credentials = VerifiedCredentialsIsHodlerIn::new(
+						addresses.clone(),
+						from_date.to_string(),
+						VerifiedCredentialsNetwork::Ethereum,
+						WBTC_TOKEN_ADDRESS.to_string(),
+						q_min_balance,
+					);
+
+					let is_hodler_out = client
+						.check_verified_credentials_is_hodler(credentials)
+						.map_err(from_data_provider_error)?;
+					for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
+						found = found || hodler.is_hodler;
+					}
+				}
 			}
 		}
 	}
