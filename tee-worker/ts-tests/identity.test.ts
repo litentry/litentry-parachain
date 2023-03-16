@@ -257,8 +257,8 @@ describeLitentry('Test Identity', (context) => {
             const data = resp_same_verify[k];
             assert.equal(
                 data,
-                'code not found',
-                'verify same identities to one account should fail with reason `code not found`'
+                'ChallengeCode not found',
+                'verify same identities to one account should fail with reason `ChallengeCode not found`'
             );
         }
 
@@ -275,8 +275,8 @@ describeLitentry('Test Identity', (context) => {
             const data = resp_not_exist_verify[l];
             assert.equal(
                 data,
-                'code not found',
-                'verify nonexistent identity should fail with reason `code not found`'
+                'ChallengeCode not found',
+                'verify nonexistent identity should fail with reason `ChallengeCode not found`'
             );
         }
     });
