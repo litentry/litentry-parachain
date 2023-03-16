@@ -1,4 +1,4 @@
-import { describeLitentry, checkVc } from './utils';
+import { describeLitentry, checkVc, checkFailReason } from './utils';
 import { step } from 'mocha-steps';
 import { setUserShieldingKey, requestVCs, disableVCs, revokeVCs } from './indirect_calls';
 import { Assertion } from './type-definitions';
@@ -7,6 +7,7 @@ import { u8aToHex } from '@polkadot/util';
 import { HexString } from '@polkadot/util/types';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import { requestErrorVCs, disableErrorVCs, revokeErrorVCs } from './indirect_error_calls';
+import { Event } from '@polkadot/types/interfaces';
 
 const assertion = <Assertion>{
     A1: 'A1',
@@ -67,16 +68,9 @@ describeLitentry('VC test', async (context) => {
             true,
             context.mrEnclave,
             assertion
-        )) as any;
+        )) as Event[];
 
-        resp_request_error.map((item: any) => {
-            const result = item.toHuman().data.reason;
-
-            assert(
-                result.search('User shielding key is missing') !== -1,
-                'requestVc should fail with reason `User shielding key is missing`'
-            );
-        });
+        await checkFailReason(resp_request_error, 'User shielding key is missing', true);
     });
     step('Disable VC', async () => {
         const res = (await disableVCs(context, context.defaultSigner[0], aesKey, true, indexList)) as HexString[];
@@ -87,16 +81,14 @@ describeLitentry('VC test', async (context) => {
         }
     });
     step('Disable error VC', async () => {
-        //Bob dont't request VC before
+        //Alice has already disabled the VC
         const resp_disable_error = (await disableErrorVCs(
             context,
             context.defaultSigner[0],
             true,
             indexList
         )) as HexString[];
-        for (let k = 0; k < resp_disable_error.length; k++) {
-            assert.equal(resp_disable_error[k], 'vcManagement.VCAlreadyDisabled', 'check disableVc  error');
-        }
+        await checkFailReason(resp_disable_error, 'vcManagement.VCAlreadyDisabled', false);
     });
 
     step('Revoke VC', async () => {
@@ -109,14 +101,13 @@ describeLitentry('VC test', async (context) => {
     });
 
     step('Revoke Error VC', async () => {
+        //Alice has already revoked the VC
         const resp_revoke_error = (await revokeErrorVCs(
             context,
             context.defaultSigner[0],
             true,
             indexList
         )) as string[];
-        for (let k = 0; k < resp_revoke_error.length; k++) {
-            assert.equal(resp_revoke_error[k], 'vcManagement.VCNotExist', 'check revokeVc  error');
-        }
+        await checkFailReason(resp_revoke_error, 'vcManagement.VCNotExist', false);
     });
 });

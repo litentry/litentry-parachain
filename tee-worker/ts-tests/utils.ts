@@ -24,7 +24,7 @@ import { after, before, describe } from 'mocha';
 import { generateChallengeCode, getSigner } from './web3/setup';
 import { ethers } from 'ethers';
 import { generateTestKeys } from './web3/functions';
-import { expect } from 'chai';
+import { assert, expect } from 'chai';
 import { Base64 } from 'js-base64';
 import * as ed from '@noble/ed25519';
 const base58 = require('micro-base58');
@@ -385,9 +385,21 @@ export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
     return true;
 }
 
-export async function checkFailReason(response: string[], expectedReason: string) {
+export async function checkFailReason(
+    response: string[] | Event[],
+    expectedReason: string,
+    isModule: boolean
+): Promise<boolean> {
+    let failReason = '';
+
     response.map((item: any) => {
-        const result = item.toHuman().data.reason;
-        expect(result.search(expectedReason)).not.to.be.eq(-1);
+        isModule ? (failReason = item.toHuman().data.reason) : (failReason = item);
+
+        assert.notEqual(
+            failReason.search(expectedReason),
+            -1,
+            `check fail reason failed, expected reason is ${expectedReason}, but got ${failReason}`
+        );
     });
+    return true;
 }

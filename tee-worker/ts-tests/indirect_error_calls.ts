@@ -1,6 +1,8 @@
 import { encryptWithTeeShieldingKey, listenEvent, sendTxUntilInBlock, sendTxUntilInBlockList } from './utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { HexString } from '@polkadot/util/types';
+import { Event } from '@polkadot/types/interfaces';
+
 import {
     Assertion,
     IntegrationTestContext,
@@ -157,14 +159,7 @@ export async function requestErrorVCs(
     listening: boolean,
     mrEnclave: HexString,
     assertion: Assertion
-): Promise<
-    | {
-          account: HexString;
-          index: HexString;
-          vc: HexString;
-      }[]
-    | undefined
-> {
+): Promise<Event[] | undefined> {
     let txs: TransactionSubmit[] = [];
     let len = 0;
 
@@ -182,7 +177,7 @@ export async function requestErrorVCs(
     await sendTxUntilInBlockList(context.substrate, txs, signer);
 
     if (listening) {
-        const events = (await listenEvent(context.substrate, 'vcManagement', ['StfError'])) as any;
+        const events = (await listenEvent(context.substrate, 'vcManagement', ['StfError'])) as Event[];
         expect(events.length).to.be.equal(len);
         return events;
     }
