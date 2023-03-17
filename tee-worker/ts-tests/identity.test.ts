@@ -121,6 +121,16 @@ describeLitentry('Test Identity', (context) => {
     var signature_ethereum;
     var signature_substrate;
 
+    step('Invalid user shielding key', async function () {
+        const encode = context.substrate.createType('LitentryIdentity', substrateIdentity).toHex();
+        const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
+        const tx = context.substrate.tx.identityManagement.createIdentity(context.mrEnclave, context.defaultSigner[0].address, `0x${ciphertext}`, null);
+        await sendTxUntilInBlock(context.substrate, tx, context.defaultSigner[0]);
+
+        const events = await listenEvent(context.substrate, 'identityManagement', ['StfError']);
+        expect(events.length).to.be.equal(1);
+    })
+
     step('set user shielding key', async function () {
         const alice = await setUserShieldingKey(context, context.defaultSigner[0], aesKey, true);
         assert.equal(alice, u8aToHex(context.defaultSigner[0].addressRaw), 'check caller error');
