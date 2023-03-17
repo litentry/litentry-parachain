@@ -319,6 +319,12 @@ jobs:
 
       - run: docker images --all
 
+      - name: Pallet unittests
+        working-directory: ./tee-worker
+        run: |
+          rustup show
+          cargo test --locked --release -p pallet-* --lib
+
       - name: Test enclave
         # cargo test is not supported in the enclave
         # see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
