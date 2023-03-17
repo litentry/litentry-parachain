@@ -280,6 +280,13 @@ fn verify_identity_fails_when_too_late() {
 #[test]
 fn get_id_graph_with_max_len_works() {
 	new_test_ext().execute_with(|| {
+		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
+		assert_ok!(IMT::set_user_shielding_key(
+			RuntimeOrigin::signed(ALICE),
+			BOB,
+			shielding_key.clone()
+		));
+
 		// fill in 21 identities, starting from 1 to reserve place for prime_id
 		for i in 1..22 {
 			assert_ok!(IMT::create_identity(
