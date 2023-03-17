@@ -74,7 +74,7 @@ describeLitentry('Test Batch Utility', (context) => {
             }
         });
 
-        const events = await listenEvent(context.api, 'identityManagement', ['IdentityCreated', 'IdentityCreated']);
+        const events = await listenEvent(context.api, 'identityManagement', ['IdentityCreated']);
         expect(events.length).to.be.equal(2);
         for (let i = 0; i < 2; i++) {
             const data = events[i].data as any;
@@ -154,7 +154,7 @@ describeLitentry('Test Batch Utility', (context) => {
             }
         });
 
-        const events = await listenEvent(context.api, 'identityManagement', ['IdentityRemoved', 'IdentityRemoved']);
+        const events = await listenEvent(context.api, 'identityManagement', ['IdentityRemoved']);
         expect(events.length).to.be.equal(2);
         for (let i = 0; i < 2; i++) {
             const data = events[i].data as any;
