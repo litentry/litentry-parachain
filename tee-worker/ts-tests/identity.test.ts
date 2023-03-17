@@ -1,4 +1,4 @@
-import { describeLitentry, encryptWithTeeShieldingKey, generateVerificationMessage, listenEvent, sendTxUntilInBlock } from './utils';
+import { describeLitentry, encryptWithTeeShieldingKey, generateVerificationMessage, listenEvent, sendTxUntilInBlock, checkFailReason } from './utils';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
 import {
     setUserShieldingKey,
@@ -213,7 +213,6 @@ describeLitentry('Test Identity', (context) => {
             assert.isNotEmpty(resp_extension_substrate.challengeCode, 'challengeCode empty');
         }
     });
-
     step('verify identities', async function () {
         //Alice verify all identities
         const [twitter_identity_verified, ethereum_identity_verified, substrate_identity_verified] =
@@ -252,15 +251,7 @@ describeLitentry('Test Identity', (context) => {
             [twitterIdentity, ethereumIdentity, substrateIdentity],
             [twitterValidationData, ethereumValidationData, substrateValidationData]
         )) as string[];
-
-        for (let k = 0; k < resp_same_verify.length; k++) {
-            const data = resp_same_verify[k];
-            assert.equal(
-                data,
-                'code not found',
-                'verify same identities to one account should fail with reason `code not found`'
-            );
-        }
+        await checkFailReason(resp_same_verify, 'code not found', false);
 
         //verify an identity to an account but it isn't created before
         const resp_not_exist_verify = (await verifyErrorIdentities(
@@ -270,15 +261,7 @@ describeLitentry('Test Identity', (context) => {
             [twitterIdentity, ethereumIdentity, substrateIdentity],
             [twitterValidationData, ethereumValidationData, substrateValidationData]
         )) as string[];
-
-        for (let l = 0; l < resp_not_exist_verify.length; l++) {
-            const data = resp_not_exist_verify[l];
-            assert.equal(
-                data,
-                'code not found',
-                'verify nonexistent identity should fail with reason `code not found`'
-            );
-        }
+        await checkFailReason(resp_not_exist_verify, 'code not found', false);
     });
 
     step('remove identities', async function () {
@@ -358,44 +341,39 @@ describeLitentry('Test Identity', (context) => {
     });
 
     step('remove error identities', async function () {
-        //remove a nonexistent identity from an account
-        const resp_not_exist_identities = (await removeErrorIdentities(context, context.defaultSigner[0], true, [
-            twitterIdentity,
-            ethereumIdentity,
-            substrateIdentity,
-        ])) as string[];
+        const identities = [twitterIdentity, ethereumIdentity, substrateIdentity];
 
-        resp_not_exist_identities.map((item: any) => {
-            const result = item.toHuman().data.reason;
-            assert(
-                result.search('IdentityNotExist') !== -1,
-                'remove twitter should fail with reason `IdentityNotExist`'
-            );
-        });
+        //remove a nonexistent identity
+        //context.defaultSigner[0] has aleady removed all identities in step('remove identities')
+        const resp_not_exist_identities = (await removeErrorIdentities(
+            context,
+            context.defaultSigner[0],
+            true,
+            identities
+        )) as string[];
+
+        await checkFailReason(resp_not_exist_identities, 'IdentityNotExist', true);
 
         //remove a challenge code before the code is set
-        const resp_not_created_identities = (await removeErrorIdentities(context, context.defaultSigner[2], true, [
-            twitterIdentity,
-            ethereumIdentity,
-            substrateIdentity,
-        ])) as string[];
+        //context.defaultSigner[2] doesn't have a challenge code
+        const resp_not_created_identities = (await removeErrorIdentities(
+            context,
+            context.defaultSigner[2],
+            true,
+            identities
+        )) as string[];
 
-        resp_not_created_identities.map((item: any) => {
-            const result = item.toHuman().data.reason;
-            assert(
-                result.search('IdentityNotExist') !== -1,
-                'remove twitter should fail with reason `IdentityNotExist`'
-            );
-        });
+        await checkFailReason(resp_not_created_identities, 'IdentityNotExist', true);
     });
 
     step('set error user shielding key', async function () {
-        const result = await setErrorUserShieldingKey(context, context.defaultSigner[0], errorAseKey, true);
-        assert.equal(
-            result,
-            'SetUserShieldingKeyHandlingFailed',
-            'result is not equal to SetUserShieldingKeyHandlingFailed'
+        const resp_error_shielding_key = await setErrorUserShieldingKey(
+            context,
+            context.defaultSigner[0],
+            errorAseKey,
+            true
         );
+        await checkFailReason([resp_error_shielding_key] as string[], 'SetUserShieldingKeyHandlingFailed', false);
     });
 
     step('create error identities', async function () {
@@ -403,9 +381,6 @@ describeLitentry('Test Identity', (context) => {
         const resp_error_identities = (await createErrorIdentities(context, context.defaultSigner[0], true, [
             errorCiphertext,
         ])) as string[];
-        for (let i = 0; i < resp_error_identities.length; i++) {
-            const result = resp_error_identities[i];
-            assert.equal(result, 'CreateIdentityHandlingFailed', 'result is not equal to CreateIdentityHandlingFailed');
-        }
+        await checkFailReason(resp_error_identities, 'CreateIdentityHandlingFailed', false);
     });
 });
