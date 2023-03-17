@@ -495,19 +495,24 @@ where
 				) {
 					Ok(code) => {
 						debug!("create_identity_runtime {} OK", account_id_to_string(&who));
-						// For sure to get key here. It's already checked in pallet:
-						// ita_sgx_runtime::IdentityManagementCall::<Runtime>::create_identity
-						let key = IdentityManagement::user_shielding_keys(&who).unwrap();
-						let id_graph =
-							ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
-						calls.push(OpaqueCall::from_tuple(&(
-							node_metadata_repo
-								.get_from_metadata(|m| m.identity_created_call_indexes())??,
-							SgxParentchainTypeConverter::convert(who),
-							aes_encrypt_default(&key, &identity.encode()),
-							aes_encrypt_default(&key, &code.encode()),
-							aes_encrypt_default(&key, &id_graph.encode()),
-						)));
+						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
+							let id_graph =
+								ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
+							calls.push(OpaqueCall::from_tuple(&(
+								node_metadata_repo
+									.get_from_metadata(|m| m.identity_created_call_indexes())??,
+								SgxParentchainTypeConverter::convert(who),
+								aes_encrypt_default(&key, &identity.encode()),
+								aes_encrypt_default(&key, &code.encode()),
+								aes_encrypt_default(&key, &id_graph.encode()),
+							)));
+						} else {
+							add_call_from_imp_error(
+								calls,
+								node_metadata_repo,
+								IMPError::InvalidUserShieldingKey,
+							);
+						}
 					},
 					Err(e) => {
 						debug!(
@@ -530,18 +535,23 @@ where
 				{
 					Ok(()) => {
 						debug!("remove_identity_runtime {} OK", account_id_to_string(&who));
-						// For sure to get key here. It's already checked in pallet:
-						// ita_sgx_runtime::IdentityManagementCall::<Runtime>::remove_identity
-						let key = IdentityManagement::user_shielding_keys(&who).unwrap();
-						let id_graph =
-							ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
-						calls.push(OpaqueCall::from_tuple(&(
-							node_metadata_repo
-								.get_from_metadata(|m| m.identity_removed_call_indexes())??,
-							SgxParentchainTypeConverter::convert(who),
-							aes_encrypt_default(&key, &identity.encode()),
-							aes_encrypt_default(&key, &id_graph.encode()),
-						)));
+						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
+							let id_graph =
+								ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
+							calls.push(OpaqueCall::from_tuple(&(
+								node_metadata_repo
+									.get_from_metadata(|m| m.identity_removed_call_indexes())??,
+								SgxParentchainTypeConverter::convert(who),
+								aes_encrypt_default(&key, &identity.encode()),
+								aes_encrypt_default(&key, &id_graph.encode()),
+							)));
+						} else {
+							add_call_from_imp_error(
+								calls,
+								node_metadata_repo,
+								IMPError::InvalidUserShieldingKey,
+							);
+						}
 					},
 					Err(e) => {
 						debug!(
@@ -589,18 +599,23 @@ where
 				) {
 					Ok(()) => {
 						debug!("verify_identity_runtime {} OK", account_id_to_string(&who));
-						// For sure to get key here. It's already checked in pallet:
-						// ita_sgx_runtime::IdentityManagementCall::<Runtime>::verify_identity
-						let key = IdentityManagement::user_shielding_keys(&who).unwrap();
-						let id_graph =
-							ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
-						calls.push(OpaqueCall::from_tuple(&(
-							node_metadata_repo
-								.get_from_metadata(|m| m.identity_verified_call_indexes())??,
-							SgxParentchainTypeConverter::convert(who),
-							aes_encrypt_default(&key, &identity.encode()),
-							aes_encrypt_default(&key, &id_graph.encode()),
-						)));
+						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
+							let id_graph =
+								ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
+							calls.push(OpaqueCall::from_tuple(&(
+								node_metadata_repo
+									.get_from_metadata(|m| m.identity_verified_call_indexes())??,
+								SgxParentchainTypeConverter::convert(who),
+								aes_encrypt_default(&key, &identity.encode()),
+								aes_encrypt_default(&key, &id_graph.encode()),
+							)));
+						} else {
+							add_call_from_imp_error(
+								calls,
+								node_metadata_repo,
+								IMPError::InvalidUserShieldingKey,
+							);
+						}
 					},
 					Err(e) => {
 						debug!(
