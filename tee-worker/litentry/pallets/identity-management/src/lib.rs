@@ -259,17 +259,21 @@ pub mod pallet {
 			T::ManageOrigin::ensure_origin(origin)?;
 			ensure!(IDGraphs::<T>::contains_key(&who, &identity), Error::<T>::IdentityNotExist);
 
-			let prime_address_raw: [u8; 32] = who
-				.encode()
-				.try_into()
-				.map_err(|_| DispatchError::Other("invalid account id"))?;
-			let prime_user_address: Address32 = prime_address_raw.into();
-
-			let prime_id = Identity::Substrate {
-				network: SubstrateNetwork::Litentry,
-				address: prime_user_address,
-			};
-			ensure!(prime_id != identity, Error::<T>::RemovePrimeIdentityDisallowed);
+			if let Some(IdentityContext::<T> {
+				metadata,
+				creation_request_block,
+				verification_request_block,
+				is_verified,
+			}) = IDGraphs::<T>::get(&who, &identity)
+			{
+				if metadata.is_none()
+					&& creation_request_block == Some(0)
+					&& verification_request_block == Some(0)
+					&& is_verified
+				{
+					ensure!(false, Error::<T>::RemovePrimeIdentityDisallowed);
+				}
+			}
 
 			IDGraphs::<T>::remove(&who, &identity);
 			Self::deposit_event(Event::IdentityRemoved { who, identity });
