@@ -321,5 +321,21 @@ pub mod pallet {
 		pub fn get_id_graph(who: &T::AccountId) -> Vec<(Identity, IdentityContext<T>)> {
 			IDGraphs::iter_prefix(who).collect::<Vec<_>>()
 		}
+
+		// get the most recent `max_len` elements in IDGraph, sorted by `creation_request_block`
+		pub fn get_id_graph_with_max_len(
+			who: &T::AccountId,
+			max_len: usize,
+		) -> Vec<(Identity, IdentityContext<T>)> {
+			let mut id_graph = Self::get_id_graph(who);
+			id_graph.sort_by(|a, b| {
+				Ord::cmp(
+					&b.1.creation_request_block.unwrap_or_default(),
+					&a.1.creation_request_block.unwrap_or_default(),
+				)
+			});
+			id_graph.truncate(max_len);
+			id_graph
+		}
 	}
 }

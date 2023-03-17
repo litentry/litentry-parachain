@@ -303,3 +303,36 @@ fn verify_identity_fails_when_too_late() {
 		);
 	});
 }
+
+#[test]
+fn get_id_graph_with_max_len_works() {
+	new_test_ext().execute_with(|| {
+		// fill in 21 identities, starting from 1 to reserve place for prime_id
+		for i in 1..22 {
+			assert_ok!(IMT::create_identity(
+				RuntimeOrigin::signed(ALICE),
+				BOB,
+				alice_twitter_identity(i),
+				None,
+				i,
+				131_u16,
+			));
+		}
+		// the full id_graph should have 22 elements, including the prime_id
+		assert_eq!(IMT::get_id_graph(&BOB).len(), 22);
+
+		// only get the recent 15 identities
+		let id_graph = IMT::get_id_graph_with_max_len(&BOB, 15);
+		assert_eq!(id_graph.len(), 15);
+		// index 0 has the most recent identity
+		assert_eq!(String::from_utf8(id_graph.get(0).unwrap().0.flat()).unwrap(), "did:twitter:web2:_:alice21");
+		// index 14 has the least recent identity
+		assert_eq!(String::from_utf8(id_graph.get(14).unwrap().0.flat()).unwrap(), "did:twitter:web2:_:alice7");
+
+		// try to get more than id_graph length
+		let id_graph = IMT::get_id_graph_with_max_len(&BOB, 30);
+		assert_eq!(id_graph.len(), 22);
+		assert_eq!(String::from_utf8(id_graph.get(0).unwrap().0.flat()).unwrap(), "did:twitter:web2:_:alice21");
+		assert_eq!(String::from_utf8(id_graph.get(21).unwrap().0.flat()).unwrap(), "did:litentry:web3:substrate:0x0202020202020202020202020202020202020202020202020202020202020202");
+	});
+}
