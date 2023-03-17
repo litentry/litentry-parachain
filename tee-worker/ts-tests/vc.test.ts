@@ -21,7 +21,7 @@ const assertion = <Assertion>{
 };
 
 
-// it doesn't make much difference test A1 only vs test A1 - A11, one VC type is enough.
+//It doesn't make much difference test A1 only vs test A1 - A11, one VC type is enough.
 //So only use A1 to trigger the wrong event
 describeLitentry('VC test', async (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
@@ -31,7 +31,7 @@ describeLitentry('VC test', async (context) => {
         assert.equal(who, u8aToHex(context.defaultSigner[0].addressRaw), 'check caller error');
     });
     step('Request VC', async () => {
-        // request all vc
+        //request all vc
         const res = (await requestVCs(
             context,
             context.defaultSigner[0],

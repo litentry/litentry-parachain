@@ -176,8 +176,6 @@ export async function requestErrorVCs(
         txs.push({ tx, nonce: newNonce });
     }
 
-   
-
     await sendTxUntilInBlockList(context.substrate, txs, signer);
 
     if (listening) {

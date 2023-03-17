@@ -291,8 +291,8 @@ describeLitentry('Test Identity', (context) => {
         assertIdentityRemoved(context.defaultSigner[1], substrate_extension_identity_removed);
     });
 
-     step('remove prime identity NOT allowed', async function () {
-           // create substrate identity
+    step('remove prime identity NOT allowed', async function () {
+        // create substrate identity
         const [resp_substrate] = (await createIdentities(context, context.defaultSigner[0], aesKey, true, [substrateIdentity])) as IdentityGenericEvent[];
         assertIdentityCreated(context.defaultSigner[0], resp_substrate);
 
@@ -338,10 +338,10 @@ describeLitentry('Test Identity', (context) => {
         const events = await listenEvent(context.substrate, 'identityManagement', ['StfError']);
         expect(events.length).to.be.equal(1);
         const result = events[0].method as string;
-     });
+    });
 
     step('remove error identities', async function () {
-        const identites = [twitterIdentity, ethereumIdentity, substrateIdentity];
+        const identities = [twitterIdentity, ethereumIdentity, substrateIdentity];
 
         //remove a nonexistent identity
         //context.defaultSigner[0] has aleady removed all identities in step('remove identities')
@@ -349,7 +349,7 @@ describeLitentry('Test Identity', (context) => {
             context,
             context.defaultSigner[0],
             true,
-            identites
+            identities
         )) as string[];
 
         await checkFailReason(resp_not_exist_identities, 'IdentityNotExist', true);
@@ -360,7 +360,7 @@ describeLitentry('Test Identity', (context) => {
             context,
             context.defaultSigner[2],
             true,
-            identites
+            identities
         )) as string[];
 
         await checkFailReason(resp_not_created_identities, 'IdentityNotExist', true);

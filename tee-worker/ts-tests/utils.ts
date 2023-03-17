@@ -11,6 +11,7 @@ import {
     teeTypes,
     WorkerRpcReturnValue,
     TransactionSubmit,
+    JsonSchema
 } from './type-definitions';
 import { blake2AsHex, cryptoWaitReady } from '@polkadot/util-crypto';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
@@ -26,6 +27,7 @@ import { ethers } from 'ethers';
 import { generateTestKeys } from './web3/functions';
 import { assert, expect } from 'chai';
 import { Base64 } from 'js-base64';
+import Ajv from 'ajv';
 import * as ed from '@noble/ed25519';
 const base58 = require('micro-base58');
 const crypto = require('crypto');
@@ -372,11 +374,11 @@ export async function checkVc(vcObj: any, index: HexString, proof: any, api: Api
 
 //Check VC json fields
 export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
-    const vcStatus = ['@context', 'type', 'credentialSubject', 'issuer'].every(
-        (key) =>
-            vc.hasOwnProperty(key) && (vc[key] != '{}' || vc[key] !== '[]' || vc[key] !== null || vc[key] !== undefined)
-    );
-    expect(vcStatus).to.be.true;
+    //check JsonSchema
+    const ajv = new Ajv();
+    const validate = ajv.compile(JsonSchema);
+    const isValid = validate(vc);
+    expect(isValid).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
             vc.issuer.id === proofJson.verificationMethod &&
@@ -390,6 +392,7 @@ export async function checkFailReason(
     expectedReason: string,
     isModule: boolean
 ): Promise<boolean> {
+
     let failReason = '';
 
     response.map((item: any) => {
