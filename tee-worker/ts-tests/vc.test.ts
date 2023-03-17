@@ -20,7 +20,6 @@ const assertion = <Assertion>{
     A11: [10],
 };
 
-
 //It doesn't make much difference test A1 only vs test A1 - A11, one VC type is enough.
 //So only use A1 to trigger the wrong event
 describeLitentry('VC test', async (context) => {
@@ -52,14 +51,14 @@ describeLitentry('VC test', async (context) => {
 
             const vcProof = vcObj.proof;
 
-            const registry = (await context.substrate.query.vcManagement.vcRegistry(res[k].index)) as any;
+            const registry = (await context.api.query.vcManagement.vcRegistry(res[k].index)) as any;
             assert.equal(registry.toHuman()!['status'], 'Active', 'check registry error');
 
             const vcHash = blake2AsHex(Buffer.from(vcString));
             assert.equal(vcHash, registry.toHuman()!['hash_'], 'check vc json hash error');
 
             //check vc
-            const vcValid = await checkVc(vcObj, res[k].index, vcProof, context.substrate);
+            const vcValid = await checkVc(vcObj, res[k].index, vcProof, context.api);
             assert.equal(vcValid, true, 'check vc error');
             indexList.push(res[k].index);
         }
@@ -81,7 +80,7 @@ describeLitentry('VC test', async (context) => {
         const res = (await disableVCs(context, context.defaultSigner[0], aesKey, true, indexList)) as HexString[];
         for (let k = 0; k < res.length; k++) {
             assert.equal(res[k], indexList[k], 'check index error');
-            const registry = (await context.substrate.query.vcManagement.vcRegistry(indexList[k])) as any;
+            const registry = (await context.api.query.vcManagement.vcRegistry(indexList[k])) as any;
             assert.equal(registry.toHuman()!['status'], 'Disabled');
         }
     });
@@ -101,7 +100,7 @@ describeLitentry('VC test', async (context) => {
         const res = (await revokeVCs(context, context.defaultSigner[0], aesKey, true, indexList)) as HexString[];
         for (let k = 0; k < res.length; k++) {
             assert.equal(res[k], indexList[k], 'check index error');
-            const registry = (await context.substrate.query.vcManagement.vcRegistry(indexList[k])) as any;
+            const registry = (await context.api.query.vcManagement.vcRegistry(indexList[k])) as any;
             assert.equal(registry.toHuman(), null);
         }
     });

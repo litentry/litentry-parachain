@@ -11,7 +11,7 @@ import {
     teeTypes,
     WorkerRpcReturnValue,
     TransactionSubmit,
-    JsonSchema
+    JsonSchema,
 } from './type-definitions';
 import { blake2AsHex, cryptoWaitReady } from '@polkadot/util-crypto';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
@@ -94,7 +94,7 @@ export async function initIntegrationTestContext(
     const { mrEnclave, teeShieldingKey } = await getEnclave(api);
     return <IntegrationTestContext>{
         tee: wsp,
-        substrate: api,
+        api,
         teeShieldingKey,
         mrEnclave,
         defaultSigner: getSigner(),
@@ -157,14 +157,6 @@ export async function sendTxUntilInBlockList(api: ApiPromise, txs: TransactionSu
 // Subscribe to the chain until we get the first specified event with given `section` and `methods`.
 // We can listen to multiple `methods` as long as they are emitted in the same block.
 // The event consumer should do the decryption optionaly as it's event specific
-//
-// TODO: occassionally multiple events for an extrinsic are not included in the same block,
-//       e.g. `create_identity` => `IdentityCreated`, `ChallengeCodeGenerated`
-//       this is because the extrinsics are submitted asynchronously and in rare cases these two
-//       extrinsics are included in the different parentchain blocks
-// Solutions:
-//  1. (pallet change) use one single extrinsic to emit both events, if they should always be triggered on pair
-//  2. (ts-test change) only resolve this promise when both events are received, but not necessarily in the same block
 export async function listenEvent(api: ApiPromise, section: string, methods: string[]) {
     return new Promise<Event[]>(async (resolve, reject) => {
         let startBlock = 0;
@@ -274,7 +266,7 @@ export function generateVerificationMessage(
     signerAddress: Uint8Array,
     identity: LitentryIdentity
 ): HexString {
-    const encode = context.substrate.createType('LitentryIdentity', identity).toU8a();
+    const encode = context.api.createType('LitentryIdentity', identity).toU8a();
     const msg = Buffer.concat([challengeCode, signerAddress, encode]);
     return blake2AsHex(msg, 256);
 }
@@ -286,7 +278,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
         let context: IntegrationTestContext = {
             defaultSigner: [] as KeyringPair[],
             mrEnclave: '0x11' as HexString,
-            substrate: {} as ApiPromise,
+            api: {} as ApiPromise,
             tee: {} as WebSocketAsPromised,
             teeShieldingKey: {} as KeyObject,
             ethersWallet: {},
@@ -301,7 +293,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
 
             context.defaultSigner = tmp.defaultSigner;
             context.mrEnclave = tmp.mrEnclave;
-            context.substrate = tmp.substrate;
+            context.api = tmp.api;
             context.tee = tmp.tee;
             context.teeShieldingKey = tmp.teeShieldingKey;
             context.ethersWallet = tmp.ethersWallet;
@@ -392,7 +384,6 @@ export async function checkFailReason(
     expectedReason: string,
     isModule: boolean
 ): Promise<boolean> {
-
     let failReason = '';
 
     response.map((item: any) => {
