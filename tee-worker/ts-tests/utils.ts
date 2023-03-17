@@ -11,7 +11,7 @@ import {
     teeTypes,
     WorkerRpcReturnValue,
     TransactionSubmit,
-    JsonSchema,
+    JsonSchema
 } from './type-definitions';
 import { blake2AsHex, cryptoWaitReady } from '@polkadot/util-crypto';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
@@ -25,7 +25,7 @@ import { after, before, describe } from 'mocha';
 import { generateChallengeCode, getSigner } from './web3/setup';
 import { ethers } from 'ethers';
 import { generateTestKeys } from './web3/functions';
-import { expect } from 'chai';
+import { assert, expect } from 'chai';
 import { Base64 } from 'js-base64';
 import Ajv from 'ajv';
 import * as ed from '@noble/ed25519';
@@ -121,25 +121,37 @@ export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrins
 }
 
 export async function sendTxUntilInBlockList(api: ApiPromise, txs: TransactionSubmit[], signer: KeyringPair) {
-    return new Promise<{
-        block: string;
-    }>(async (resolve, reject) => {
-        await Promise.all(
-            txs.map(async ({ tx, nonce }) => {
-                // await tx.paymentInfo(signer);
+    return Promise.all(
+        txs.map(async ({ tx, nonce }) => {
+            const result = await new Promise((resolve, reject) => {
                 tx.signAndSend(signer, { nonce }, (result) => {
                     if (result.status.isInBlock) {
-                        console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
-                        resolve({
-                            block: result.status.asInBlock.toString(),
-                        });
+                        //catch error
+                        if (result.dispatchError) {
+                            if (result.dispatchError.isModule) {
+                                const decoded = api.registry.findMetaError(result.dispatchError.asModule);
+                                const { docs, name, section } = decoded;
+
+                                console.log(`${section}.${name}: ${docs.join(' ')}`);
+                                resolve(`${section}.${name}`);
+                            } else {
+                                console.log(result.dispatchError.toString());
+                                resolve(result.dispatchError.toString());
+                            }
+                        } else {
+                            console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
+                            resolve({
+                                block: result.status.asInBlock.toString(),
+                            });
+                        }
                     } else if (result.status.isInvalid) {
                         reject(`Transaction is ${result.status}`);
                     }
                 });
-            })
-        );
-    });
+            });
+            return result;
+        })
+    );
 }
 
 // Subscribe to the chain until we get the first specified event with given `section` and `methods`.
@@ -367,11 +379,30 @@ export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
     const validate = ajv.compile(JsonSchema);
     const isValid = validate(vc);
     expect(isValid).to.be.true;
-
     expect(
         vc.type[0] === 'VerifiableCredential' &&
             vc.issuer.id === proofJson.verificationMethod &&
             proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
+    return true;
+}
+
+export async function checkFailReason(
+    response: string[] | Event[],
+    expectedReason: string,
+    isModule: boolean
+): Promise<boolean> {
+
+    let failReason = '';
+
+    response.map((item: any) => {
+        isModule ? (failReason = item.toHuman().data.reason) : (failReason = item);
+
+        assert.notEqual(
+            failReason.search(expectedReason),
+            -1,
+            `check fail reason failed, expected reason is ${expectedReason}, but got ${failReason}`
+        );
+    });
     return true;
 }
