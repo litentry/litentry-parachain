@@ -65,6 +65,7 @@ impl From<SubstrateNetwork> for VerifiedCredentialsNetwork {
 			SubstrateNetwork::Polkadot => Self::Polkadot,
 			SubstrateNetwork::Kusama => Self::Kusama,
 			SubstrateNetwork::Khala => Self::Khala,
+			SubstrateNetwork::TestNet => todo!(),
 		}
 	}
 }

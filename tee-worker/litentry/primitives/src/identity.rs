@@ -73,6 +73,7 @@ pub enum SubstrateNetwork {
 	Litentry,
 	Litmus,
 	Khala,
+	TestNet,
 }
 
 impl SubstrateNetwork {
@@ -84,6 +85,18 @@ impl SubstrateNetwork {
 			Self::Litentry => 31,
 			Self::Litmus => 131,
 			Self::Khala => 30,
+			Self::TestNet => 13,
+		}
+	}
+
+	pub fn get_network(prefix: u16) -> Self {
+		match prefix {
+			0 => Self::Polkadot,
+			2 => Self::Kusama,
+			31 => Self::Litentry,
+			131 => Self::Litmus,
+			30 => Self::Khala,
+			_ => Self::TestNet,
 		}
 	}
 }

@@ -343,7 +343,8 @@ describeLitentry('Test Identity', (context) => {
         const substratePrimeIdentity = <LitentryIdentity>{
             Substrate: <SubstrateIdentity>{
                 address: `0x${Buffer.from(context.defaultSigner[0].publicKey).toString('hex')}`,
-                network: 'Litentry',
+                // When testing with integritee-node, change network to: TestNet
+                network: 'Litmus',
             },
         };
 
