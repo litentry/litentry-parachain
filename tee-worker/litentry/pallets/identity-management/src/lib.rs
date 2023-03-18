@@ -222,7 +222,7 @@ pub mod pallet {
 			}
 
 			let prime_id = Identity::Substrate {
-				network: SubstrateNetwork::get_network(parent_ss58_prefix),
+				network: SubstrateNetwork::from_ss58_prefix(parent_ss58_prefix),
 				address: prime_user_address,
 			};
 			if IDGraphs::<T>::get(&who, &prime_id).is_none() {

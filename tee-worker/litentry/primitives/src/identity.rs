@@ -89,7 +89,7 @@ impl SubstrateNetwork {
 		}
 	}
 
-	pub fn get_network(prefix: u16) -> Self {
+	pub fn from_ss58_prefix(prefix: u16) -> Self {
 		match prefix {
 			0 => Self::Polkadot,
 			2 => Self::Kusama,
