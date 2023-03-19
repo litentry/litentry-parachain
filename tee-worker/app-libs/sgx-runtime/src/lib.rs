@@ -276,6 +276,11 @@ impl pallet_imt::Config for Runtime {
 	type MaxVerificationDelay = ConstU32<{ 30 * MINUTES }>;
 }
 
+impl pallet_ethereum_sender_dummy::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type ManageOrigin = EnsureRoot<AccountId>;
+}
+
 // The plain sgx-runtime without the `evm-pallet`
 #[cfg(not(feature = "evm"))]
 construct_runtime!(
@@ -291,6 +296,7 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		Parentchain: pallet_parentchain::{Pallet, Call, Storage},
 		IdentityManagement: pallet_imt,
+		EthereumSenderDummy: pallet_ethereum_sender_dummy::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -312,6 +318,7 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Pallet, Call, Config<T>, Storage, Event<T>},
 		Parentchain: pallet_parentchain::{Pallet, Call, Storage},
 		IdentityManagement: pallet_imt,
+		EthereumSenderDummy: pallet_ethereum_sender_dummy::{Pallet, Call, Storage, Event<T>},
 
 		Evm: pallet_evm::{Pallet, Call, Storage, Config, Event<T>},
 	}

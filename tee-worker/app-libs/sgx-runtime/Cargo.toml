@@ -51,6 +51,7 @@ pallet-parentchain = { path = "../../../pallets/parentchain", default-features =
 # Litentry
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
 pallet-imt = { package = "pallet-identity-management-tee", path = "../../litentry/pallets/identity-management", default-features = false }
+pallet-ethereum-sender-dummy = { package = "pallet-ethereum-sender-tee", path = "../../litentry/pallets/ethereum-sender", default-features = false }
 
 [features]
 default = ["std"]
@@ -81,6 +82,7 @@ std = [
     "frame-support/std",
     "frame-system/std",
     "pallet-balances/std",
+    "pallet-ethereum-sender-dummy/std",
     "pallet-sudo/std",
     "pallet-timestamp/std",
     "pallet-transaction-payment/std",
