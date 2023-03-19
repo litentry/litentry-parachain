@@ -117,7 +117,7 @@ pub mod pallet {
 				input: vc_info,
 				access_list: vec![],
 			};
-			let ethereum_master_key = 
+			let ethereum_master_key =
 				<EthereumMasterKey<T>>::get().ok_or(Error::<T>::NoSigningKey)?;
 			let singed_raw_transaction = Vec::from(Bytes::from(
 				ethereum_master_key
