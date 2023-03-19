@@ -52,10 +52,6 @@ use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
 #[cfg(feature = "evm")]
 use crate::evm_helpers::{create_code_hash, evm_create2_address, evm_create_address};
 
-// max number of identities in an id_graph that will be returned as the extrinsic parameter
-// this has no effect on the stored id_graph, but only the returned id_graph
-const IDGRAPH_MAX_LEN: usize = 20;
-
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum TrustedCall {
@@ -500,12 +496,15 @@ where
 					Ok(code) => {
 						debug!("create_identity_runtime {} OK", account_id_to_string(&who));
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
+							let id_graph =
+								ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.identity_created_call_indexes())??,
 								SgxParentchainTypeConverter::convert(who),
 								aes_encrypt_default(&key, &identity.encode()),
 								aes_encrypt_default(&key, &code.encode()),
+								aes_encrypt_default(&key, &id_graph.encode()),
 							)));
 						} else {
 							add_call_from_imp_error(
@@ -537,11 +536,14 @@ where
 					Ok(()) => {
 						debug!("remove_identity_runtime {} OK", account_id_to_string(&who));
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
+							let id_graph =
+								ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.identity_removed_call_indexes())??,
 								SgxParentchainTypeConverter::convert(who),
 								aes_encrypt_default(&key, &identity.encode()),
+								aes_encrypt_default(&key, &id_graph.encode()),
 							)));
 						} else {
 							add_call_from_imp_error(
@@ -599,7 +601,7 @@ where
 						debug!("verify_identity_runtime {} OK", account_id_to_string(&who));
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
 							let id_graph =
-								ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph_with_max_len(&who, IDGRAPH_MAX_LEN);
+								ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.identity_verified_call_indexes())??,

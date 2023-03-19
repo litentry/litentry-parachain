@@ -714,7 +714,6 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 				},
 				Err(_) => {
 					println!("[!] event websocket disconnected, try to connect again");
-					sleep(Duration::from_secs(1));
 					break
 				},
 			}
@@ -745,7 +744,7 @@ fn spawn_worker_for_shard_polling<InitializationHandler>(
 				println!("[+] Found `WorkerForShard` on parentchain state");
 				break
 			}
-			sleep(Duration::from_secs(POLL_INTERVAL_SECS));
+			thread::sleep(Duration::from_secs(POLL_INTERVAL_SECS));
 		}
 	});
 }

@@ -21,7 +21,7 @@ use frame_support::{
 };
 use frame_system as system;
 use frame_system::EnsureSignedBy;
-use litentry_primitives::{Identity, IdentityString, SubstrateNetwork, Web2Network};
+use litentry_primitives::{Identity, SubstrateNetwork};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -101,12 +101,6 @@ impl pallet_tee_identity_management::Config for Test {
 }
 
 const ALICE_KEY: &str = "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d";
-
-pub fn alice_twitter_identity(suffix: u32) -> Identity {
-	let address = IdentityString::try_from(format!("alice{}", suffix).as_bytes().to_vec())
-		.expect("convert to BoundedVec failed");
-	Identity::Web2 { network: Web2Network::Twitter, address }
-}
 
 pub fn alice_web3_identity() -> Identity {
 	let alice_key_hex: [u8; 32] =
