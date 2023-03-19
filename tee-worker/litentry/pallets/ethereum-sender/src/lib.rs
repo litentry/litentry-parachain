@@ -22,7 +22,6 @@
 // TODO::
 // This pallet is not ready yet
 
-
 #![cfg_attr(not(feature = "std"), no_std)]
 
 // #[cfg(test)]
@@ -35,9 +34,9 @@ mod contracts;
 
 pub use pallet::*;
 
+use ethereum_tee::{AccountPrivateKey, TransactionMessageV2};
 use frame_support::{pallet_prelude::*, traits::StorageVersion};
 use frame_system::pallet_prelude::*;
-use ethereum_tee::{AccountPrivateKey, TransactionMessageV2};
 
 use sp_std::vec::Vec;
 
@@ -76,23 +75,18 @@ pub mod pallet {
 	}
 
     /// TODO:: This storage is not safe enough!!!
-	/// Ethereum contract's administor private key
+    /// Ethereum contract's administor private key
 	#[pallet::storage]
 	#[pallet::getter(fn ethereum_master_key)]
 	pub type EthereumMasterKey<T: Config> = StorageValue<_, AccountPrivateKey, ValueQuery>;
 
-	/// TODO:: This storage is not safe enough!!!
-	/// Ethereum contract's administor nonce
-	/// <chain_id, nonce>
+    /// TODO:: This storage is not safe enough!!!
+    /// Ethereum contract's administor nonce
+    /// <chain_id, nonce>
 	#[pallet::storage]
 	#[pallet::getter(fn ethereum_master_nonce)]
-	pub(crate) type EthereumMasterNonce<T: Config> = StorageMap<
-		_,
-		Twox64Concat,
-		u64,
-		U256,
-		OptionQuery,
-	>;
+	pub(crate) type EthereumMasterNonce<T: Config> = 
+		StorageMap<_, Twox64Concat, u64, U256, OptionQuery>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -109,25 +103,24 @@ pub mod pallet {
             /// TODO::Some vc generating code here
 			let nonce = <EthereumMasterNonceM<T>>::get(chain_id)?;
 			let txm = EIP1559TransactionMessage {
-				chain_id: chain_id,
-				nonce: nonce,
+				chain_id,
+				nonce,
 				max_priority_fee_per_gas: 1_500_000_000u64.into(),
 				max_fee_per_gas: 20_000_000_000u64.into(),
 				gas_limit: 31_524u64.into(),
-				action: TransactionAction::Call(
-					contracts::vc_ethereum_contract(),
-				),
+				action: TransactionAction::Call(contracts::vc_ethereum_contract()),
 				value: 100_000_000_000_000_000u64.into(),
 				input: vc_info,
 				access_list: vec![],
 			};
             let singed_raw_transaction = Vec::from(Bytes::from(
-				<EthereumMasterKey<T>>::get().sign_transaction(TransactionMessageV2::EIP1559(txm))
+				<EthereumMasterKey<T>>::get()
+				    .sign_transaction(TransactionMessageV2::EIP1559(txm))
 					.ok_or(Error::<T>::TransactionFailed)?,
 			));
 			Self::deposit_event(Event::TransactionSent {
 				signed_transaction: singed_raw_transaction,
-				nonce: nonce,
+				nonce,
 			});
 
 			<EthereumMasterNonceM<T>>::insert(chain_id, nonce + 1);
