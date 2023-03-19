@@ -125,26 +125,21 @@ pub fn bob_web3_identity() -> Identity {
 	Identity::Substrate { network: SubstrateNetwork::Litentry, address: bob_key_hex.into() }
 }
 
-pub fn new_test_ext_wo_shielding_key() -> sp_io::TestExternalities {
-	let t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
-
-	let mut ext = sp_io::TestExternalities::new(t);
-	ext.execute_with(|| {
-		System::set_block_number(1);
-	});
-	ext
-}
-
-pub fn new_test_ext() -> sp_io::TestExternalities {
+pub fn new_test_ext(set_shielding_key: bool) -> sp_io::TestExternalities {
 	let t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| {
 		System::set_block_number(1);
 
-		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
-		let _ =
-			IMT::set_user_shielding_key(RuntimeOrigin::signed(ALICE), BOB, shielding_key.clone());
+		if set_shielding_key {
+			let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
+			let _ = IMT::set_user_shielding_key(
+				RuntimeOrigin::signed(ALICE),
+				BOB,
+				shielding_key.clone(),
+			);
+		}
 	});
 	ext
 }
