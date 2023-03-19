@@ -18,7 +18,6 @@ NOCACHE_FLAG=
 
 case "$PROFILE" in
     release)
-        RUSTC_WRAPPER=sccache
         ;;
     production)
         NOCACHE_FLAG="--no-cache" ;;
@@ -49,10 +48,9 @@ GITREPO=litentry-parachain
 # Build the image
 echo "------------------------------------------------------------"
 echo "Building ${GITUSER}/${GITREPO}:${TAG} docker image ..."
-DOCKER_BUILDKIT=1 docker build ${NOCACHE_FLAG} --pull -f ./docker/Dockerfile \
+docker build ${NOCACHE_FLAG} --pull -f ./docker/Dockerfile \
     --build-arg PROFILE="$PROFILE" \
     --build-arg BUILD_ARGS="$ARGS" \
-    --build-arg RUSTC_WRAPPER="$RUSTC_WRAPPER" \
     -t ${GITUSER}/${GITREPO}:${TAG} .
 
 # Tag it with latest if no tag parameter was provided

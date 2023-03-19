@@ -104,7 +104,7 @@ jobs:
   ## build docker image of client binary ##
   build-docker:
     if: ${{ github.event.inputs.release_client == 'true' }}
-    runs-on: self-hosted
+    runs-on: dev-builder
     steps:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v3

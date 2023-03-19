@@ -181,7 +181,7 @@ export type PubicKeyJson = {
 
 export type IntegrationTestContext = {
     tee: WebSocketAsPromised;
-    substrate: ApiPromise;
+    api: ApiPromise;
     teeShieldingKey: KeyObject;
     mrEnclave: HexString;
     defaultSigner: KeyringPair[];
