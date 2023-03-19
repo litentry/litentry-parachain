@@ -304,6 +304,6 @@ fn get_id_graph_with_max_len_works() {
 		let id_graph = IMT::get_id_graph_with_max_len(&BOB, 30);
 		assert_eq!(id_graph.len(), 22);
 		assert_eq!(String::from_utf8(id_graph.get(0).unwrap().0.flat()).unwrap(), "did:twitter:web2:_:alice21");
-		assert_eq!(String::from_utf8(id_graph.get(21).unwrap().0.flat()).unwrap(), "did:litmus:web3:substrate:0x0202020202020202020202020202020202020202020202020202020202020202");
+		assert_eq!(String::from_utf8(id_graph.get(21).unwrap().0.flat()).unwrap(), "did:litentry:web3:substrate:0x0202020202020202020202020202020202020202020202020202020202020202");
 	});
 }
