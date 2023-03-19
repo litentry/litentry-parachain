@@ -35,7 +35,7 @@ mod contracts;
 pub use pallet::*;
 
 use bytes::Bytes;
-use ethereum::{TransactionAction, EIP1559TransactionMessage};
+use ethereum::{EIP1559TransactionMessage, TransactionAction};
 use ethereum_tee::{AccountPrivateKey, TransactionMessageV2};
 use ethereum_types::U256;
 use frame_support::{pallet_prelude::*, traits::StorageVersion};
