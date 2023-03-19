@@ -71,21 +71,21 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		/// Unrecognized transaction
-        TransactionFailed,
+		TransactionFailed,
 	}
 
-    /// TODO:: This storage is not safe enough!!!
-    /// Ethereum contract's administor private key
+	/// TODO:: This storage is not safe enough!!!
+	/// Ethereum contract's administor private key
 	#[pallet::storage]
 	#[pallet::getter(fn ethereum_master_key)]
 	pub type EthereumMasterKey<T: Config> = StorageValue<_, AccountPrivateKey, ValueQuery>;
 
-    /// TODO:: This storage is not safe enough!!!
-    /// Ethereum contract's administor nonce
-    /// <chain_id, nonce>
+	/// TODO:: This storage is not safe enough!!!
+	/// Ethereum contract's administor nonce
+	/// <chain_id, nonce>
 	#[pallet::storage]
 	#[pallet::getter(fn ethereum_master_nonce)]
-	pub(crate) type EthereumMasterNonce<T: Config> = 
+	pub(crate) type EthereumMasterNonce<T: Config> =
 		StorageMap<_, Twox64Concat, u64, U256, OptionQuery>;
 
 	#[pallet::call]
@@ -100,7 +100,7 @@ pub mod pallet {
 			chain_id: u64,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
-            /// TODO::Some vc generating code here
+			/// TODO::Some vc generating code here
 			let nonce = <EthereumMasterNonceM<T>>::get(chain_id)?;
 			let txm = EIP1559TransactionMessage {
 				chain_id,
@@ -113,9 +113,9 @@ pub mod pallet {
 				input: vc_info,
 				access_list: vec![],
 			};
-            let singed_raw_transaction = Vec::from(Bytes::from(
+			let singed_raw_transaction = Vec::from(Bytes::from(
 				<EthereumMasterKey<T>>::get()
-				    .sign_transaction(TransactionMessageV2::EIP1559(txm))
+					.sign_transaction(TransactionMessageV2::EIP1559(txm))
 					.ok_or(Error::<T>::TransactionFailed)?,
 			));
 			Self::deposit_event(Event::TransactionSent {
