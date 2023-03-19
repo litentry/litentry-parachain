@@ -223,7 +223,7 @@ pub mod pallet {
 		AlreadyDelegatedCandidate,
 		InvalidSchedule,
 		CannotSetBelowMin,
-		RoundLengthMustBeGreaterThanTotalSelectedCollators,
+		RoundLengthMustBeAtLeastTotalSelectedCollators,
 		NoWritingSameValue,
 		TooLowCandidateCountWeightHintCancelLeaveCandidates,
 		TooLowCandidateDelegationCountToLeaveCandidates,
@@ -835,8 +835,8 @@ pub mod pallet {
 			let old = <TotalSelected<T>>::get();
 			ensure!(old != new, Error::<T>::NoWritingSameValue);
 			ensure!(
-				new < <Round<T>>::get().length,
-				Error::<T>::RoundLengthMustBeGreaterThanTotalSelectedCollators,
+				new <= <Round<T>>::get().length,
+				Error::<T>::RoundLengthMustBeAtLeastTotalSelectedCollators,
 			);
 			<TotalSelected<T>>::put(new);
 			Self::deposit_event(Event::TotalSelectedSet { old, new });
@@ -869,8 +869,8 @@ pub mod pallet {
 			let (now, first, old) = (round.current, round.first, round.length);
 			ensure!(old != new, Error::<T>::NoWritingSameValue);
 			ensure!(
-				new > <TotalSelected<T>>::get(),
-				Error::<T>::RoundLengthMustBeGreaterThanTotalSelectedCollators,
+				new >= <TotalSelected<T>>::get(),
+				Error::<T>::RoundLengthMustBeAtLeastTotalSelectedCollators,
 			);
 			round.length = new;
 			// update per-round inflation given new rounds per year
@@ -1492,14 +1492,9 @@ pub mod pallet {
 			paid_for_round: RoundIndex,
 			payout_info: DelayedPayout<BalanceOf<T>>,
 		) -> (Option<(T::AccountId, BalanceOf<T>)>, Weight) {
-			// 'early_weight' tracks weight used for reads/writes done early in this fn before its
-			// early-exit codepaths.
-			let mut early_weight = Weight::zero();
-
 			// TODO: it would probably be optimal to roll Points into the DelayedPayouts storage
 			// item so that we do fewer reads each block
 			let total_points = <Points<T>>::get(paid_for_round);
-			early_weight = early_weight.saturating_add(T::DbWeight::get().reads_writes(1, 0));
 			if total_points.is_zero() {
 				// TODO: this case is obnoxious... it's a value query, so it could mean one of two
 				// different logic errors:
@@ -1507,7 +1502,7 @@ pub mod pallet {
 				// 2. we called pay_one_collator_reward when we were actually done with deferred
 				//    payouts
 				log::warn!("pay_one_collator_reward called with no <Points<T>> for the round!");
-				return (None, early_weight)
+				return (None, Weight::zero())
 			}
 
 			let collator_fee = payout_info.collator_commission;
