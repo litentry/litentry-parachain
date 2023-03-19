@@ -7,6 +7,7 @@ repository = 'https://github.com/litentry/litentry-parachain'
 version = '0.1.0'
 
 [dependencies]
+bytes = { version = "1.0", default-features = false }
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len"] }
 log = { version = "0.4", default-features = false }
 scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
@@ -27,6 +28,7 @@ ethereum-types = { version = "0.14", default-features = false, features = ["rlp"
 default = ["std"]
 
 std = [
+    "bytes/std",
     "codec/std",
     "ethereum-tee/std",
     "ethereum-types/std",
