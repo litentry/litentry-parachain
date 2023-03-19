@@ -128,6 +128,18 @@ describeLitentry('Test Identity', (context) => {
     var signature_ethereum;
     var signature_substrate;
 
+    step('Invalid user shielding key', async function () {
+        const encode = context.api.createType('LitentryIdentity', substrateIdentity).toHex();
+        const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
+        const tx = context.api.tx.identityManagement.createIdentity(context.mrEnclave, context.defaultSigner[0].address, `0x${ciphertext}`, null);
+        await sendTxUntilInBlock(context.api, tx, context.defaultSigner[0]);
+
+        const events = await listenEvent(context.api, 'identityManagement', ['StfError']);
+        expect(events.length).to.be.equal(1);
+
+        await checkFailReason(events, 'InvalidUserShieldingKey', true);
+    })
+
     step('set user shielding key', async function () {
         const alice = await setUserShieldingKey(context, context.defaultSigner[0], aesKey, true);
         assert.equal(alice, u8aToHex(context.defaultSigner[0].addressRaw), 'check caller error');
@@ -331,7 +343,8 @@ describeLitentry('Test Identity', (context) => {
         const substratePrimeIdentity = <LitentryIdentity>{
             Substrate: <SubstrateIdentity>{
                 address: `0x${Buffer.from(context.defaultSigner[0].publicKey).toString('hex')}`,
-                network: 'Litentry',
+                // When testing with integritee-node, change network to: TestNet
+                network: 'Litmus',
             },
         };
 
@@ -342,7 +355,8 @@ describeLitentry('Test Identity', (context) => {
 
         const events = await listenEvent(context.api, 'identityManagement', ['StfError']);
         expect(events.length).to.be.equal(1);
-        const result = events[0].method as string;
+
+        await checkFailReason(events, 'RemovePrimeIdentityDisallowed', true);
     });
 
     step('remove error identities', async function () {
@@ -359,8 +373,9 @@ describeLitentry('Test Identity', (context) => {
 
         await checkFailReason(resp_not_exist_identities, 'IdentityNotExist', true);
 
-        //remove a challenge code before the code is set
         //context.defaultSigner[2] doesn't have a challenge code
+        const bob = await setUserShieldingKey(context, context.defaultSigner[2], aesKey, true);
+        assert.equal(bob, u8aToHex(context.defaultSigner[2].addressRaw), 'check caller error');
         const resp_not_created_identities = (await removeErrorIdentities(
             context,
             context.defaultSigner[2],
