@@ -117,10 +117,12 @@ pub mod pallet {
 				input: vc_info,
 				access_list: vec![],
 			};
-			let ethereum_master_key = <EthereumMasterKey<T>>::get().ok_or(Error::<T>::NoSigningKey)?;
+			let ethereum_master_key = 
+				<EthereumMasterKey<T>>::get().ok_or(Error::<T>::NoSigningKey)?;
 			let singed_raw_transaction = Vec::from(Bytes::from(
-				ethereum_master_key.sign_transaction(TransactionMessageV2::EIP1559(txm))
-					.ok_or(Error::<T>::TransactionFailed)?
+				ethereum_master_key
+					.sign_transaction(TransactionMessageV2::EIP1559(txm))
+					.ok_or(Error::<T>::TransactionFailed)?,
 			));
 			Self::deposit_event(Event::TransactionSent {
 				signed_transaction: singed_raw_transaction,
