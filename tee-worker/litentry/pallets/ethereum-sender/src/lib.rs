@@ -115,7 +115,7 @@ pub mod pallet {
 				max_fee_per_gas: 20_000_000_000u64.into(),
 				gas_limit: 31_524u64.into(),
 				action: TransactionAction::Call(
-					contracts::vc_ethereum_contract,
+					contracts::vc_ethereum_contract(),
 				),
 				value: 100_000_000_000_000_000u64.into(),
 				input: vc_info,
