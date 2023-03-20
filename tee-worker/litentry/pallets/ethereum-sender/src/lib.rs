@@ -36,7 +36,7 @@ pub use pallet::*;
 
 use bytes::Bytes;
 use ethereum::{EIP1559TransactionMessage, TransactionAction};
-use ethereum_tee::{AccountPrivateKey, TransactionMessageV2};
+use ethereum_tee::{AccountPrivateKey, SignTransactionMessage, TransactionMessageV2};
 use ethereum_types::U256;
 use frame_support::{pallet_prelude::*, traits::StorageVersion};
 use frame_system::pallet_prelude::*;
@@ -48,6 +48,7 @@ pub mod pallet {
 	use super::*;
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
+	const DEFAULT_ETHEREUM_NONCE: U256 = 0;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -67,7 +68,7 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// Transaction sent
 		/// Should we leave records here?
-		TransactionSent { signed_transaction: Vec<u8>, nonce: u64 },
+		TransactionSent { signed_transaction: Vec<u8>, nonce: U256 },
 	}
 
 	#[pallet::error]
@@ -76,6 +77,8 @@ pub mod pallet {
 		TransactionFailed,
 		/// No signing key
 		NoSigningKey,
+		/// Nonce overflow
+		NonceOverflow,
 	}
 
 	/// TODO:: This storage is not safe enough!!!
@@ -84,13 +87,18 @@ pub mod pallet {
 	#[pallet::getter(fn ethereum_master_key)]
 	pub type EthereumMasterKey<T: Config> = StorageValue<_, AccountPrivateKey, OptionQuery>;
 
+	#[pallet::type_value]
+	pub fn DefaultEthereumMasterNonce() -> u32 {
+		DEFAULT_ETHEREUM_NONCE
+	}
+
 	/// TODO:: This storage is not safe enough!!!
 	/// Ethereum contract's administor nonce
 	/// <chain_id, nonce>
 	#[pallet::storage]
 	#[pallet::getter(fn ethereum_master_nonce)]
 	pub(crate) type EthereumMasterNonce<T: Config> =
-		StorageMap<_, Twox64Concat, u64, U256, OptionQuery>;
+		StorageMap<_, Twox64Concat, u64, U256, ValueQuery, DEFAULT_ETHEREUM_NONCE>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -100,12 +108,12 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			// TODO:: In the end, vc will be parsed into this form of transaction call someway,
 			// So we temporary make it this type.
-			vc_info: Bytes,
+			vc_info: Vec<u8>,
 			chain_id: u64,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 			// TODO::Some vc generating code here
-			let nonce = <EthereumMasterNonce<T>>::get(chain_id)?;
+			let nonce = <EthereumMasterNonce<T>>::get(chain_id);
 			let txm = EIP1559TransactionMessage {
 				chain_id,
 				nonce,
@@ -114,7 +122,7 @@ pub mod pallet {
 				gas_limit: 31_524u64.into(),
 				action: TransactionAction::Call(contracts::vc_ethereum_contract()),
 				value: 100_000_000_000_000_000u64.into(),
-				input: vc_info,
+				input: Bytes::from(vc_info),
 				access_list: vec![],
 			};
 			let ethereum_master_key =
@@ -129,7 +137,7 @@ pub mod pallet {
 				nonce,
 			});
 
-			<EthereumMasterNonce<T>>::insert(chain_id, nonce + 1);
+			<EthereumMasterNonce<T>>::insert(chain_id, nonce.checked_add(1.into()).ok_or(Error::<T>::NonceOverflow)?);
 			Ok(())
 		}
 	}

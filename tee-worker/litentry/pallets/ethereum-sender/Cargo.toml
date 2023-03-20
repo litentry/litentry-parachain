@@ -21,6 +21,7 @@ frame-support = { git = "https://github.com/paritytech/substrate", branch = "pol
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false }
 hex-literal = "0.3"
 
+ethereum = { git = "https://github.com/litentry/ethereum", branch = "master", default-features = false }
 ethereum-tee = { git = "https://github.com/litentry/ethereum-tee", branch = "main", default-features = false }
 ethereum-types = { version = "0.14", default-features = false, features = ["rlp", "codec"] }
 
@@ -30,6 +31,7 @@ default = ["std"]
 std = [
     "bytes/std",
     "codec/std",
+    "ethereum/std",
     "ethereum-tee/std",
     "ethereum-types/std",
     "sp-std/std",
