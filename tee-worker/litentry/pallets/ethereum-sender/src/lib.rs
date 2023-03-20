@@ -98,7 +98,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn ethereum_master_nonce)]
 	pub(crate) type EthereumMasterNonce<T: Config> =
-		StorageMap<_, Twox64Concat, u64, U256, ValueQuery, DEFAULT_ETHEREUM_NONCE>;
+		StorageMap<_, Twox64Concat, u64, U256, ValueQuery, DefaultEthereumMasterNonce>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
