@@ -48,7 +48,7 @@ pub mod pallet {
 	use super::*;
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
-	const DEFAULT_ETHEREUM_NONCE: U256 = 0;
+	const DEFAULT_ETHEREUM_NONCE: U256 = U256::zero();
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -88,7 +88,7 @@ pub mod pallet {
 	pub type EthereumMasterKey<T: Config> = StorageValue<_, AccountPrivateKey, OptionQuery>;
 
 	#[pallet::type_value]
-	pub fn DefaultEthereumMasterNonce() -> u32 {
+	pub fn DefaultEthereumMasterNonce() -> U256 {
 		DEFAULT_ETHEREUM_NONCE
 	}
 
@@ -122,7 +122,7 @@ pub mod pallet {
 				gas_limit: 31_524u64.into(),
 				action: TransactionAction::Call(contracts::vc_ethereum_contract()),
 				value: 100_000_000_000_000_000u64.into(),
-				input: Bytes::from(vc_info),
+				input: vc_info.to_vec(),
 				access_list: vec![],
 			};
 			let ethereum_master_key =
@@ -130,7 +130,7 @@ pub mod pallet {
 			let singed_raw_transaction = Vec::from(Bytes::from(
 				ethereum_master_key
 					.sign_transaction(TransactionMessageV2::EIP1559(txm))
-					.ok_or(Error::<T>::TransactionFailed)?,
+					.map_err(|| { Error::<T>::TransactionFailed })?,
 			));
 			Self::deposit_event(Event::TransactionSent {
 				signed_transaction: singed_raw_transaction,
