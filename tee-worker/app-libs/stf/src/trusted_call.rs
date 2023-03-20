@@ -508,11 +508,7 @@ where
 								aes_encrypt_default(&key, &code.encode()),
 							)));
 						} else {
-							add_call_from_imp_error(
-								calls,
-								node_metadata_repo,
-								IMPError::InvalidUserShieldingKey,
-							);
+							error!("Can't create identity: InvalidUserShieldingKey");
 						}
 					},
 					Err(e) => {
@@ -544,11 +540,7 @@ where
 								aes_encrypt_default(&key, &identity.encode()),
 							)));
 						} else {
-							add_call_from_imp_error(
-								calls,
-								node_metadata_repo,
-								IMPError::InvalidUserShieldingKey,
-							);
+							error!("Can't remove identity: InvalidUserShieldingKey");
 						}
 					},
 					Err(e) => {
@@ -608,11 +600,7 @@ where
 								aes_encrypt_default(&key, &id_graph.encode()),
 							)));
 						} else {
-							add_call_from_imp_error(
-								calls,
-								node_metadata_repo,
-								IMPError::InvalidUserShieldingKey,
-							);
+							error!("Can't verify identity: InvalidUserShieldingKey");
 						}
 					},
 					Err(e) => {

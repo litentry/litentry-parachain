@@ -27,7 +27,7 @@ pub const BOB: AccountId32 = AccountId32::new([2u8; 32]);
 
 #[test]
 fn set_user_shielding_key_works() {
-	new_test_ext().execute_with(|| {
+	new_test_ext(false).execute_with(|| {
 		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
 		assert_eq!(IMT::user_shielding_keys(BOB), None);
 		assert_ok!(IMT::set_user_shielding_key(
@@ -45,7 +45,7 @@ fn set_user_shielding_key_works() {
 
 #[test]
 fn create_identity_works() {
-	new_test_ext().execute_with(|| {
+	new_test_ext(true).execute_with(|| {
 		let ss58_prefix = 131_u16;
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		assert_ok!(IMT::create_identity(
@@ -70,9 +70,21 @@ fn create_identity_works() {
 
 #[test]
 fn remove_identity_works() {
-	new_test_ext().execute_with(|| {
+	new_test_ext(false).execute_with(|| {
+		assert_noop!(
+			IMT::remove_identity(RuntimeOrigin::signed(ALICE), BOB, alice_web3_identity()),
+			Error::<Test>::InvalidUserShieldingKey
+		);
+
+		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
+		assert_ok!(IMT::set_user_shielding_key(
+			RuntimeOrigin::signed(ALICE),
+			BOB,
+			shielding_key.clone()
+		));
+
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
-		let ss58_prefix = 131_u16;
+		let ss58_prefix = 31_u16;
 		assert_noop!(
 			IMT::remove_identity(RuntimeOrigin::signed(ALICE), BOB, alice_web3_identity()),
 			Error::<Test>::IdentityNotExist
@@ -114,7 +126,7 @@ fn remove_identity_works() {
 
 #[test]
 fn verify_identity_works() {
-	new_test_ext().execute_with(|| {
+	new_test_ext(true).execute_with(|| {
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		let ss58_prefix = 131_u16;
 		assert_ok!(IMT::create_identity(
@@ -145,7 +157,7 @@ fn verify_identity_works() {
 
 #[test]
 fn get_id_graph_works() {
-	new_test_ext().execute_with(|| {
+	new_test_ext(true).execute_with(|| {
 		let metadata3: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		let ss58_prefix = 131_u16;
 		assert_ok!(IMT::create_identity(
@@ -191,7 +203,7 @@ fn get_id_graph_works() {
 
 #[test]
 fn verify_identity_fails_when_too_early() {
-	new_test_ext().execute_with(|| {
+	new_test_ext(true).execute_with(|| {
 		const CREATION_REQUEST_BLOCK: ParentchainBlockNumber = 2;
 		const VERIFICATION_REQUEST_BLOCK: ParentchainBlockNumber = 1;
 
@@ -228,7 +240,7 @@ fn verify_identity_fails_when_too_early() {
 
 #[test]
 fn verify_identity_fails_when_too_late() {
-	new_test_ext().execute_with(|| {
+	new_test_ext(true).execute_with(|| {
 		const CREATION_REQUEST_BLOCK: ParentchainBlockNumber = 1;
 		const VERIFICATION_REQUEST_BLOCK: ParentchainBlockNumber = 5;
 
@@ -265,7 +277,7 @@ fn verify_identity_fails_when_too_late() {
 
 #[test]
 fn get_id_graph_with_max_len_works() {
-	new_test_ext().execute_with(|| {
+	new_test_ext(true).execute_with(|| {
 		// fill in 21 identities, starting from 1 to reserve place for prime_id
 		for i in 1..22 {
 			assert_ok!(IMT::create_identity(
@@ -292,6 +304,6 @@ fn get_id_graph_with_max_len_works() {
 		let id_graph = IMT::get_id_graph_with_max_len(&BOB, 30);
 		assert_eq!(id_graph.len(), 22);
 		assert_eq!(String::from_utf8(id_graph.get(0).unwrap().0.flat()).unwrap(), "did:twitter:web2:_:alice21");
-		assert_eq!(String::from_utf8(id_graph.get(21).unwrap().0.flat()).unwrap(), "did:litentry:web3:substrate:0x0202020202020202020202020202020202020202020202020202020202020202");
+		assert_eq!(String::from_utf8(id_graph.get(21).unwrap().0.flat()).unwrap(), "did:litmus:web3:substrate:0x0202020202020202020202020202020202020202020202020202020202020202");
 	});
 }
