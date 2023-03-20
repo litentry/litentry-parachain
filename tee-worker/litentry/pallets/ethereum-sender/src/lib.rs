@@ -137,7 +137,10 @@ pub mod pallet {
 				nonce,
 			});
 
-			<EthereumMasterNonce<T>>::insert(chain_id, nonce.checked_add(1.into()).ok_or(Error::<T>::NonceOverflow)?);
+			<EthereumMasterNonce<T>>::insert(
+				chain_id, 
+				nonce.checked_add(1.into()).ok_or(Error::<T>::NonceOverflow)?,
+			);
 			Ok(())
 		}
 	}
