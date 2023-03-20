@@ -30,10 +30,13 @@ fn set_user_shielding_key_works() {
 	new_test_ext(false).execute_with(|| {
 		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
 		assert_eq!(IMT::user_shielding_keys(BOB), None);
+
+		let ss58_prefix = 131_u16;
 		assert_ok!(IMT::set_user_shielding_key(
 			RuntimeOrigin::signed(ALICE),
 			BOB,
-			shielding_key.clone()
+			shielding_key.clone(),
+			ss58_prefix
 		));
 		assert_eq!(IMT::user_shielding_keys(BOB), Some(shielding_key.clone()));
 		System::assert_last_event(RuntimeEvent::IMT(crate::Event::UserShieldingKeySet {
@@ -75,16 +78,16 @@ fn remove_identity_works() {
 			IMT::remove_identity(RuntimeOrigin::signed(ALICE), BOB, alice_web3_identity()),
 			Error::<Test>::InvalidUserShieldingKey
 		);
-
+		let ss58_prefix = 31_u16;
 		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
 		assert_ok!(IMT::set_user_shielding_key(
 			RuntimeOrigin::signed(ALICE),
 			BOB,
-			shielding_key.clone()
+			shielding_key.clone(),
+			ss58_prefix.clone()
 		));
 
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
-		let ss58_prefix = 31_u16;
 		assert_noop!(
 			IMT::remove_identity(RuntimeOrigin::signed(ALICE), BOB, alice_web3_identity()),
 			Error::<Test>::IdentityNotExist
@@ -304,6 +307,6 @@ fn get_id_graph_with_max_len_works() {
 		let id_graph = IMT::get_id_graph_with_max_len(&BOB, 30);
 		assert_eq!(id_graph.len(), 22);
 		assert_eq!(String::from_utf8(id_graph.get(0).unwrap().0.flat()).unwrap(), "did:twitter:web2:_:alice21");
-		assert_eq!(String::from_utf8(id_graph.get(21).unwrap().0.flat()).unwrap(), "did:litentry:web3:substrate:0x0202020202020202020202020202020202020202020202020202020202020202");
+		assert_eq!(String::from_utf8(id_graph.get(21).unwrap().0.flat()).unwrap(), "did:litmus:web3:substrate:0x0202020202020202020202020202020202020202020202020202020202020202");
 	});
 }

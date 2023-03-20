@@ -151,6 +151,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			who: T::AccountId,
 			key: UserShieldingKeyType,
+			parent_ss58_prefix: u16,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 			// we don't care about the current key
@@ -163,7 +164,7 @@ pub mod pallet {
 			let prime_user_address: Address32 = prime_address_raw.into();
 
 			let prime_id = Identity::Substrate {
-				network: SubstrateNetwork::Litentry,
+				network: SubstrateNetwork::from_ss58_prefix(parent_ss58_prefix),
 				address: prime_user_address,
 			};
 			if IDGraphs::<T>::get(&who, &prime_id).is_none() {
@@ -175,6 +176,7 @@ pub mod pallet {
 					is_verified: true,
 				};
 				IDGraphs::<T>::insert(&who, &prime_id, context);
+				log::error!("billy: who: {:?}, prime_id: {:?}", &who, &prime_id);
 			}
 
 			Self::deposit_event(Event::UserShieldingKeySet { who, key });

@@ -64,10 +64,11 @@ impl TrustedCallSigned {
 		enclave_account: AccountId,
 		who: AccountId,
 		key: UserShieldingKeyType,
+		parent_ss58_prefix: u16,
 	) -> StfResult<()> {
 		debug!("set user shielding key runtime, who = {:?}", account_id_to_string(&who));
 		ensure_enclave_signer_account(&enclave_account)?;
-		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_user_shielding_key { who, key }
+		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_user_shielding_key { who, key, parent_ss58_prefix }
 			.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 		Ok(())
