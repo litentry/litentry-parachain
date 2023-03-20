@@ -176,7 +176,6 @@ pub mod pallet {
 					is_verified: true,
 				};
 				IDGraphs::<T>::insert(&who, &prime_id, context);
-				log::error!("billy: who: {:?}, prime_id: {:?}", &who, &prime_id);
 			}
 
 			Self::deposit_event(Event::UserShieldingKeySet { who, key });
