@@ -436,7 +436,7 @@ impl Credential {
 		self.credential_subject.values.push(value);
 	}
 
-	pub fn add_assertion_a6(&mut self, min: u64, max: u64) {
+	pub fn add_assertion_a6(&mut self, min: u32, max: u32) {
 		let min = format!("{}", min);
 		let max = format!("{}", max);
 

@@ -29,8 +29,6 @@ pub mod sgx_reexport_prelude {
 	pub use url_sgx as url;
 }
 
-use std::format;
-
 pub mod a1;
 pub mod a10;
 pub mod a11;
@@ -44,9 +42,3 @@ pub mod a8;
 
 use litentry_primitives::VCMPError as Error;
 pub type Result<T> = core::result::Result<T, Error>;
-
-pub(crate) fn from_data_provider_error(e: lc_data_providers::Error) -> Error {
-	Error::HttpRequestFailed(litentry_primitives::ErrorString::truncate_from(
-		format!("{:?}", e).as_bytes().to_vec(),
-	))
-}

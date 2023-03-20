@@ -20,7 +20,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{from_data_provider_error, Error, Result};
+use crate::{Error, Result};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
@@ -92,17 +92,19 @@ pub fn build(
 
 			let mut addresses: Vec<String> = vec![];
 			match &identity {
-				Identity::Evm { address, .. } => match from_utf8(address.as_ref()) {
-					Ok(addr) => addresses.push(addr.to_string()),
-					Err(e) =>
-						error!("	[AssertionBuild] A4 parse error Evm address {:?}, {:?}", address, e),
+				Identity::Evm { address, .. } => {
+					let mut address = account_id_to_string(address.as_ref());
+					address.insert_str(0, "0x");
+					debug!("	[AssertionBuild] A4 EVM address : {}", address);
+
+					addresses.push(address);
 				},
-				Identity::Substrate { address, .. } => match from_utf8(address.as_ref()) {
-					Ok(addr) => addresses.push(addr.to_string()),
-					Err(e) => error!(
-						"	[AssertionBuild] A4 parse error Substrate address {:?}, {:?}",
-						address, e
-					),
+				Identity::Substrate { address, .. } => {
+					let mut address = account_id_to_string(address.as_ref());
+					address.insert_str(0, "0x");
+					debug!("	[AssertionBuild] A4 Substrate address : {}", address);
+
+					addresses.push(address);
 				},
 				Identity::Web2 { address, .. } => match from_utf8(address.as_ref()) {
 					Ok(addr) => addresses.push(addr.to_string()),
@@ -124,19 +126,20 @@ pub fn build(
 					break
 				}
 
-				let credentials = VerifiedCredentialsIsHodlerIn {
-					addresses: addresses.clone(),
-					from_date: from_date.to_string(),
-					network: verified_network.clone(),
-					token_address: tmp_token_addr.clone(),
-					min_balance: q_min_balance,
-				};
-				let is_hodler_out = client
-					.check_verified_credentials_is_hodler(credentials)
-					.map_err(from_data_provider_error)?;
-
-				for holder in is_hodler_out.verified_credentials_is_hodler.iter() {
-					found = found || holder.is_hodler;
+				let vch = VerifiedCredentialsIsHodlerIn::new(
+					addresses.clone(),
+					from_date.to_string(),
+					verified_network.clone(),
+					tmp_token_addr.clone(),
+					q_min_balance,
+				);
+				match client.check_verified_credentials_is_hodler(vch) {
+					Ok(is_hodler_out) => {
+						for holder in is_hodler_out.verified_credentials_is_hodler.iter() {
+							found = found || holder.is_hodler;
+						}
+					},
+					Err(e) => error!("	[BuildAssertion] A4, Request, {:?}", e),
 				}
 			}
 		}

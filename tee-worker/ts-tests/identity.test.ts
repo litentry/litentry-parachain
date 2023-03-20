@@ -270,7 +270,7 @@ describeLitentry('Test Identity', (context) => {
             [twitterIdentity, ethereumIdentity, substrateIdentity],
             [twitterValidationData, ethereumValidationData, substrateValidationData]
         )) as string[];
-        await checkFailReason(resp_same_verify, 'code not found', false);
+        await checkFailReason(resp_same_verify, 'ChallengeCode not found', false);
 
         //verify an identity to an account but it isn't created before
         const resp_not_exist_verify = (await verifyErrorIdentities(
@@ -280,7 +280,7 @@ describeLitentry('Test Identity', (context) => {
             [twitterIdentity, ethereumIdentity, substrateIdentity],
             [twitterValidationData, ethereumValidationData, substrateValidationData]
         )) as string[];
-        await checkFailReason(resp_not_exist_verify, 'code not found', false);
+        await checkFailReason(resp_not_exist_verify, 'ChallengeCode not found', false);
     });
 
     step('remove identities', async function () {

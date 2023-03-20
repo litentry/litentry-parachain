@@ -195,17 +195,19 @@ impl GraphQLClient {
 		let query_value = credentials.to_graphql();
 		let query = vec![("query", query_value.as_str())];
 
-		let response = self
-			.client
-			.get_with::<String, QLResponse>(path, query.as_slice())
-			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
+		match self.client.get_with::<String, QLResponse>(path, query.as_slice()) {
+			Ok(response) =>
+				if let Some(value) = response.data.get("data") {
+					debug!("	[Graphql] value: {:?}", value);
 
-		if let Some(value) = response.data.get("data") {
-			// Valid response will always match the IsHodlerOut structure.
-			let is_hodler_out: IsHodlerOut = serde_json::from_value(value.clone()).unwrap();
-			Ok(is_hodler_out)
-		} else {
-			Err(Error::GraphQLError("Invalid GraphQL response".to_string()))
+					serde_json::from_value(value.clone()).map_err(|e| {
+						let error_msg = format!("Deserialize GraphQL response error: {:?}", e);
+						Error::GraphQLError(error_msg)
+					})
+				} else {
+					Err(Error::GraphQLError("Invalid GraphQL response".to_string()))
+				},
+			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
 		}
 	}
 
