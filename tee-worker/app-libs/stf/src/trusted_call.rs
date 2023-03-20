@@ -466,8 +466,13 @@ where
 				// TODO: we only checked if the extrinsic dispatch is successful,
 				//       is that enough? (i.e. is the state changed already?)
 				let parent_ss58_prefix =
-				node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
-				match Self::set_user_shielding_key_runtime(enclave_account, who.clone(), key, parent_ss58_prefix) {
+					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
+				match Self::set_user_shielding_key_runtime(
+					enclave_account,
+					who.clone(),
+					key,
+					parent_ss58_prefix,
+				) {
 					Ok(()) => {
 						calls.push(OpaqueCall::from_tuple(&(
 							node_metadata_repo

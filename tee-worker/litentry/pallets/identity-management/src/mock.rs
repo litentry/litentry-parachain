@@ -139,7 +139,7 @@ pub fn new_test_ext(set_shielding_key: bool) -> sp_io::TestExternalities {
 				RuntimeOrigin::signed(ALICE),
 				BOB,
 				shielding_key.clone(),
-				ss58_prefix
+				ss58_prefix,
 			);
 		}
 	});
