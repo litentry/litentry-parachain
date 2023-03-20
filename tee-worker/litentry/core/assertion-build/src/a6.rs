@@ -75,8 +75,8 @@ pub fn build(
 	}
 
 	info!("sum followers: {}", sum);
-	let min: u64;
-	let max: u64;
+	let min: u32;
+	let max: u32;
 
 	match sum {
 		0 | 1 => {
@@ -101,7 +101,7 @@ pub fn build(
 		},
 		100001..=u32::MAX => {
 			min = 100000;
-			max = u64::MAX;
+			max = u32::MAX;
 		},
 	}
 

@@ -144,7 +144,7 @@ impl TrustedCallSigned {
 
 		ensure_enclave_signer_account(&enclave_account)?;
 		let code = IdentityManagement::challenge_codes(&who, &identity)
-			.ok_or_else(|| StfError::Dispatch("code not found".to_string()))?;
+			.ok_or_else(|| StfError::Dispatch("ChallengeCode not found".to_string()))?;
 
 		let encoded_callback = TrustedCall::verify_identity_runtime(
 			enclave_signer_account(),
