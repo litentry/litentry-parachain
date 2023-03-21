@@ -12,15 +12,20 @@ import {
     WorkerRpcReturnValue,
     TransactionSubmit,
     JsonSchema,
+    WorkerRpcReturnString,
 } from './type-definitions';
-import { blake2AsHex, cryptoWaitReady } from '@polkadot/util-crypto';
-import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
+import { blake2AsHex, cryptoWaitReady, xxhashAsU8a, blake2AsU8a } from '@polkadot/util-crypto';
+import { ApiTypes, SubmittableExtrinsic, } from '@polkadot/api/types';
+import { Metadata, StorageKey, TypeRegistry, } from '@polkadot/types';
+import { SiLookupTypeId } from "@polkadot/types/interfaces";
+
 import { KeyringPair } from '@polkadot/keyring/types';
 import { Codec } from '@polkadot/types/types';
 import { HexString } from '@polkadot/util/types';
-import { hexToU8a, u8aToHex, stringToU8a } from '@polkadot/util';
+const { HttpProvider } = require('@polkadot/rpc-provider')
+import { hexToU8a, u8aToHex, stringToU8a, u8aConcat, u8aToU8a } from '@polkadot/util';
 import { KeyObject } from 'crypto';
-import { Event, EventRecord } from '@polkadot/types/interfaces';
+import { Event, EventRecord, StorageEntryMetadataV14, StorageHasherV14 } from '@polkadot/types/interfaces';
 import { after, before, describe } from 'mocha';
 import { generateChallengeCode, getSigner } from './web3/setup';
 import { ethers } from 'ethers';
@@ -29,6 +34,7 @@ import { assert, expect } from 'chai';
 import { Base64 } from 'js-base64';
 import Ajv from 'ajv';
 import * as ed from '@noble/ed25519';
+import { BaseProvider } from '@ethersproject/providers';
 const base58 = require('micro-base58');
 const crypto = require('crypto');
 // in order to handle self-signed certificates we need to turn off the validation
@@ -54,8 +60,11 @@ export async function sendRequest(
     request: any,
     api: ApiPromise
 ): Promise<WorkerRpcReturnValue> {
+
     const resp = await wsClient.sendRequest(request, { requestId: 1, timeout: 6000 });
+
     const resp_json = api.createType('WorkerRpcReturnValue', resp.result).toJSON() as WorkerRpcReturnValue;
+
     return resp_json;
 }
 
@@ -70,6 +79,160 @@ export async function initWorkerConnection(endpoint: string): Promise<WebSocketA
     }));
     await wsp.open();
     return wsp;
+}
+
+export function getStorageEntry(metadata: Metadata, prefix: string, method: string): StorageEntryMetadataV14 | null {
+    for (const pallet of metadata.asV14.pallets) {
+        console.log("pallet", pallet);
+
+        if (pallet.name.toString() == prefix) {
+            const storage = pallet.storage.unwrap();
+
+            for (const item of storage.items) {
+
+                if (item.name.toString() == method) {
+                    console.log(3333, item);
+
+                    return item;
+                }
+            }
+        }
+    }
+    return null;
+}
+
+export type GetStorage = (prefix: string, method: string, ...input: Array<unknown>) => Promise<string | null>;
+export function buildStorageKey(metadata: Metadata, prefix: string, method: string, keyTypeId?: SiLookupTypeId, hashers?: Array<StorageHasherV14>, input?: Array<unknown>): Uint8Array {
+    let storageKey = u8aConcat(
+        xxhashAsU8a(prefix, 128), xxhashAsU8a(method, 128)
+    );
+    if (keyTypeId && hashers && input) {
+        let keyTypeIds = hashers.length === 1
+            ? [keyTypeId]
+            : metadata.registry.lookup.getSiType(keyTypeId).def.asTuple;
+
+        for (let i = 0; i < keyTypeIds.length; i++) {
+            const theKeyTypeId = keyTypeIds[i];
+            const theHasher = hashers[i].toString();
+            const theKeyItem = input[i];
+
+            // get the scale encoded input data by encoding the input
+            const theKeyType = metadata.registry.createLookupType(theKeyTypeId);
+            const theKeyItemEncoded = metadata.registry.createType(theKeyType, theKeyItem).toU8a();
+
+            // apply hasher
+            let theKeyItemAppliedHasher;
+            if (theHasher == "Blake2_128Concat") {
+                theKeyItemAppliedHasher = blake2128Concat(theKeyItemEncoded);
+            } else if (theHasher == "Twox64Concat") {
+                theKeyItemAppliedHasher = twox64Concat(theKeyItemEncoded);
+            } else if (theHasher == "Identity") {
+                theKeyItemAppliedHasher = identity(theKeyItemEncoded);
+            } else {
+                throw new Error(`The hasher ${theHasher} is not support. Contact Aki for help`);
+            }
+            storageKey = u8aConcat(storageKey, theKeyItemAppliedHasher);
+        }
+    }
+    return storageKey;
+}
+export function getStorage(metadata: Metadata) {
+    return async (prefix: string, method: string, ...input: Array<unknown>): Promise<string | null> => {
+        // 0. FIND STORAGE ENTRY FROM METADATA
+        const storageEntry = getStorageEntry(metadata, prefix, method);
+
+        if (!
+            storageEntry
+        ) {
+            throw new Error("Can not find the storage entry from metadata");
+        }
+
+        // 1. GET STORAGE KEY & THE RESULT TYPE
+        let storageKey, valueType;
+
+        if (storageEntry.type.isPlain) {
+
+            storageKey = buildStorageKey(metadata, prefix, method);
+            console.log("storageKey1", storageKey);
+
+            valueType = metadata.registry.createLookupType(storageEntry.type.asPlain);
+            console.log(
+                "valueType1", valueType
+            );
+        } else if (storageEntry.type.isMap) {
+            const { hashers, key, value } = storageEntry.type.asMap;
+
+            if (input.length != hashers.length) {
+                throw new Error("The `input` param is not correct");
+            }
+            storageKey = buildStorageKey(metadata, prefix, method, key, hashers, input);
+            valueType = metadata.registry.createLookupType(value);
+            console.log(
+                "valueType2", valueType
+            );
+
+        } else {
+            throw new Error("Only support plain and map type");
+        }
+
+        console.debug(`storage key: ${u8aToHex(storageKey)}`);
+
+        // // 2. GET RAW STORAGE DATA BY STORAGE KEY
+        // let raw = await getStorageRaw(provider, storageKey);
+        // console.debug(`storage raw: ${raw}`);
+        // if (raw.toString() == "0x" && storageEntry.modifier.isDefault) {
+        let raw = storageEntry.fallback
+
+        // }
+
+        // 3. DECODE THE RAW STORAGE DATA BY THE RESULT TYPE
+        // if (raw.toString() == "0x") {
+        //     return null;
+        // } else {
+
+        return metadata.registry.createType(valueType, raw).toString();
+        // }
+    }
+}
+
+export async function getMetadata(wsClient: WebSocketAsPromised, api: ApiPromise): Promise<any> {
+    let request = { jsonrpc: '2.0', method: 'state_getMetadata', params: [], id: 1 };
+    let respJSON = await sendRequest(wsClient, request, api) as any;
+    const metadataPrc = await api.rpc.state.getMetadata();
+    console.log(888, metadataPrc);
+
+    console.log("respJSON", respJSON);
+
+    // const provider = new HttpProvider('http://localhost:9944')
+    // const chain_metadata = await provider.send('state_getMetadata', [])
+    // console.debug("chain_metadata", chain_metadata);
+
+    const registry = new TypeRegistry()
+    // const pubKeyHex = api.createType('WorkerRpcReturnString', respJSON.value).toJSON() as any;
+
+    const metadata = new Metadata(registry, respJSON.value)
+    registry.setMetadata(metadataPrc)
+
+    // return
+    let prefix: any = 'System'
+    let method: any = 'Account'
+    let alice = '2P2pRoXYwZAWVPXXtR6is5o7L34Me72iuNdiMZxeNV2BkgsH'
+
+
+
+    const getPangolinStorage = getStorage(metadataPrc);
+    let result = await getPangolinStorage(
+        "Timestamp", // start with a upcase char
+        "Now", // start with a upcase char
+    );
+    console.log(111, result);
+
+    // const storageKey = new StorageKey()
+
+    // let chunk = Buffer.from(pubKeyHex.vec.slice(2), 'hex');
+    // let pubKeyJSON = JSON.parse(chunk.toString('utf-8')) as any
+    // console.log(33344, pubKeyJSON);
+
 }
 
 export async function initIntegrationTestContext(
@@ -88,9 +251,13 @@ export async function initIntegrationTestContext(
         provider,
         types: teeTypes,
     });
+
     await cryptoWaitReady();
 
     const wsp = await initWorkerConnection(workerEndpoint);
+
+
+    await getMetadata(wsp, api);
     const { mrEnclave, teeShieldingKey } = await getEnclave(api);
     return <IntegrationTestContext>{
         tee: wsp,
@@ -299,7 +466,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
             context.ethersWallet = tmp.ethersWallet;
         });
 
-        after(async function () {});
+        after(async function () { });
 
         cb(context);
     });
@@ -373,8 +540,8 @@ export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
     expect(isValid).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-            vc.issuer.id === proofJson.verificationMethod &&
-            proofJson.type === 'Ed25519Signature2020'
+        vc.issuer.id === proofJson.verificationMethod &&
+        proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
 }
@@ -396,4 +563,20 @@ export async function checkFailReason(
         );
     });
     return true;
+}
+
+
+
+export function blake2128Concat(data: HexString | Uint8Array): Uint8Array {
+    return u8aConcat(blake2AsU8a(data, 128), u8aToU8a(data));
+}
+
+export function twox64Concat(data: HexString | Uint8Array): Uint8Array {
+    return u8aConcat(
+        xxhashAsU8a(data, 64), u8aToU8a(data)
+    );
+}
+
+export function identity(data: HexString | Uint8Array): Uint8Array {
+    return u8aToU8a(data);
 }
