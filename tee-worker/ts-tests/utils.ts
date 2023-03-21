@@ -62,6 +62,7 @@ export async function sendRequest(
 ): Promise<WorkerRpcReturnValue> {
 
     const resp = await wsClient.sendRequest(request, { requestId: 1, timeout: 6000 });
+    console.log(999, resp);
 
     const resp_json = api.createType('WorkerRpcReturnValue', resp.result).toJSON() as WorkerRpcReturnValue;
 
@@ -89,9 +90,9 @@ export function getStorageEntry(metadata: Metadata, prefix: string, method: stri
             const storage = pallet.storage.unwrap();
 
             for (const item of storage.items) {
+                console.log("item", item);
 
                 if (item.name.toString() == method) {
-                    console.log(3333, item);
 
                     return item;
                 }
@@ -153,79 +154,74 @@ export function getStorage(metadata: Metadata) {
         if (storageEntry.type.isPlain) {
 
             storageKey = buildStorageKey(metadata, prefix, method);
-            console.log("storageKey1", storageKey);
 
             valueType = metadata.registry.createLookupType(storageEntry.type.asPlain);
-            console.log(
-                "valueType1", valueType
-            );
+
         } else if (storageEntry.type.isMap) {
             const { hashers, key, value } = storageEntry.type.asMap;
+            console.log(hashers.toHuman(), input.length);
 
             if (input.length != hashers.length) {
                 throw new Error("The `input` param is not correct");
             }
             storageKey = buildStorageKey(metadata, prefix, method, key, hashers, input);
             valueType = metadata.registry.createLookupType(value);
-            console.log(
-                "valueType2", valueType
-            );
+
 
         } else {
             throw new Error("Only support plain and map type");
         }
 
         console.debug(`storage key: ${u8aToHex(storageKey)}`);
+        return u8aToHex(storageKey)
+        // // // 2. GET RAW STORAGE DATA BY STORAGE KEY
+        // // let raw = await getStorageRaw(provider, storageKey);
+        // // console.debug(`storage raw: ${raw}`);
+        // // if (raw.toString() == "0x" && storageEntry.modifier.isDefault) {
+        // let raw = storageEntry.fallback
 
-        // // 2. GET RAW STORAGE DATA BY STORAGE KEY
-        // let raw = await getStorageRaw(provider, storageKey);
-        // console.debug(`storage raw: ${raw}`);
-        // if (raw.toString() == "0x" && storageEntry.modifier.isDefault) {
-        let raw = storageEntry.fallback
+        // // }
 
-        // }
+        // // 3. DECODE THE RAW STORAGE DATA BY THE RESULT TYPE
+        // // if (raw.toString() == "0x") {
+        // //     return null;
+        // // } else {
 
-        // 3. DECODE THE RAW STORAGE DATA BY THE RESULT TYPE
-        // if (raw.toString() == "0x") {
-        //     return null;
-        // } else {
-
-        return metadata.registry.createType(valueType, raw).toString();
-        // }
+        // return metadata.registry.createType(valueType, raw).toString();
+        // // }
     }
 }
 
 export async function getMetadata(wsClient: WebSocketAsPromised, api: ApiPromise): Promise<any> {
     let request = { jsonrpc: '2.0', method: 'state_getMetadata', params: [], id: 1 };
     let respJSON = await sendRequest(wsClient, request, api) as any;
-    const metadataPrc = await api.rpc.state.getMetadata();
-    console.log(888, metadataPrc);
 
-    console.log("respJSON", respJSON);
-
-    // const provider = new HttpProvider('http://localhost:9944')
-    // const chain_metadata = await provider.send('state_getMetadata', [])
-    // console.debug("chain_metadata", chain_metadata);
 
     const registry = new TypeRegistry()
     // const pubKeyHex = api.createType('WorkerRpcReturnString', respJSON.value).toJSON() as any;
 
     const metadata = new Metadata(registry, respJSON.value)
-    registry.setMetadata(metadataPrc)
+    registry.setMetadata(metadata)
 
     // return
     let prefix: any = 'System'
     let method: any = 'Account'
-    let alice = '2P2pRoXYwZAWVPXXtR6is5o7L34Me72iuNdiMZxeNV2BkgsH'
+    let alice = '0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d'
 
 
-
-    const getPangolinStorage = getStorage(metadataPrc);
-    let result = await getPangolinStorage(
-        "Timestamp", // start with a upcase char
-        "Now", // start with a upcase char
+    const getStorageKey = getStorage(metadata);
+    let StorageKey = await getStorageKey(
+        "IdentityManagement", // start with a upcase char
+        "UserShieldingKeys", // start with a upcase char
+        alice
     );
-    console.log(111, result);
+    console.log("StorageKey", StorageKey);
+
+    let payload = {
+        jsonrpc: '2.0', method: 'state_getStorage', params: [StorageKey], id: 1
+    }
+    let resp = await sendRequest(wsClient, payload, api) as any;
+    console.log(999, resp);
 
     // const storageKey = new StorageKey()
 
