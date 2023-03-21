@@ -55,6 +55,7 @@ pub enum VerifiedCredentialsNetwork {
 	Kusama,
 	Khala,
 	Ethereum,
+	TestNet,
 }
 
 impl From<SubstrateNetwork> for VerifiedCredentialsNetwork {
@@ -65,7 +66,7 @@ impl From<SubstrateNetwork> for VerifiedCredentialsNetwork {
 			SubstrateNetwork::Polkadot => Self::Polkadot,
 			SubstrateNetwork::Kusama => Self::Kusama,
 			SubstrateNetwork::Khala => Self::Khala,
-			SubstrateNetwork::TestNet => todo!(),
+			SubstrateNetwork::TestNet => Self::TestNet,
 		}
 	}
 }
