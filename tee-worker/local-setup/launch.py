@@ -114,6 +114,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     process_list = []
-    killer = GracefulKiller(process_list)
+    killer = GracefulKiller(process_list, args.parachain)
     if main(process_list, args.config, args.parachain) == 0:
         killer.exit_gracefully()
