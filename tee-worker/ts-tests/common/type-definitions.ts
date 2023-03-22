@@ -398,3 +398,4 @@ export const JsonSchema = {
     },
     required: ['id', 'type', 'credentialSubject', 'issuer', 'issuanceBlockNumber', 'proof'],
 };
+

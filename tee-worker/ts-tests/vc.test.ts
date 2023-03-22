@@ -1,7 +1,7 @@
-import { describeLitentry, checkVc, checkFailReason } from './utils';
+import { describeLitentry, checkVc, checkFailReason } from './common/utils';
 import { step } from 'mocha-steps';
 import { setUserShieldingKey, requestVCs, disableVCs, revokeVCs } from './indirect_calls';
-import { Assertion } from './type-definitions';
+import { Assertion } from './common/type-definitions';
 import { assert } from 'chai';
 import { u8aToHex } from '@polkadot/util';
 import { HexString } from '@polkadot/util/types';

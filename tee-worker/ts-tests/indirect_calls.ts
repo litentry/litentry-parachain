@@ -5,19 +5,18 @@ import {
     LitentryValidationData,
     Assertion,
     TransactionSubmit,
-} from './type-definitions';
+} from './common/type-definitions';
 import {
     decryptWithAES,
     encryptWithTeeShieldingKey,
-    listenEvent,
-    sendTxUntilInBlock,
-    sendTxUntilInBlockList,
-} from './utils';
+
+} from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { HexString } from '@polkadot/util/types';
 import { u8aToHex } from '@polkadot/util';
 import { ApiPromise } from '@polkadot/api';
 import { expect, assert } from 'chai';
+import { listenEvent, sendTxUntilInBlock, sendTxUntilInBlockList } from './common/transactions';
 
 export async function setUserShieldingKey(
     context: IntegrationTestContext,
@@ -186,10 +185,10 @@ export async function requestVCs(
     assertion: Assertion
 ): Promise<
     | {
-          account: HexString;
-          index: HexString;
-          vc: HexString;
-      }[]
+        account: HexString;
+        index: HexString;
+        vc: HexString;
+    }[]
     | undefined
 > {
     let txs: TransactionSubmit[] = [];
@@ -314,6 +313,8 @@ export function assertIdentityVerified(signer: KeyringPair, identityEvent: Ident
 
     if (identityEvent) {
         for (let i = 0; i < identityEvent.idGraph.length; i++) {
+            console.log("identityEvent.idGraph[i]", identityEvent.idGraph[i]);
+
             if (JSON.stringify(identityEvent.idGraph[i][0]) == JSON.stringify(identityEvent.identity)) {
                 idGraphExist = true;
                 assert.isTrue(identityEvent.idGraph[i][1].is_verified, 'identity should be verified');

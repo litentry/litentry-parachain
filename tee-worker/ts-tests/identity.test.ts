@@ -2,10 +2,8 @@ import {
     describeLitentry,
     encryptWithTeeShieldingKey,
     generateVerificationMessage,
-    listenEvent,
-    sendTxUntilInBlock,
     checkFailReason,
-} from './utils';
+} from './common/utils';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
 import {
     setUserShieldingKey,
@@ -25,16 +23,16 @@ import {
     LitentryValidationData,
     SubstrateIdentity,
     Web2Identity,
-} from './type-definitions';
+} from './common/type-definitions';
 import { ethers } from 'ethers';
 import { HexString } from '@polkadot/util/types';
-import { KeyringPair } from '@polkadot/keyring/types';
 import {
     createErrorIdentities,
     setErrorUserShieldingKey,
     removeErrorIdentities,
     verifyErrorIdentities,
 } from './indirect_error_calls';
+import { listenEvent, sendTxUntilInBlock } from './common/transactions';
 
 const twitterIdentity = <LitentryIdentity>{
     Web2: <Web2Identity>{

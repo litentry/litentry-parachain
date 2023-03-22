@@ -1,4 +1,4 @@
-import { encryptWithTeeShieldingKey, listenEvent, sendTxUntilInBlock, sendTxUntilInBlockList } from './utils';
+import { encryptWithTeeShieldingKey } from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { HexString } from '@polkadot/util/types';
 import { Event } from '@polkadot/types/interfaces';
@@ -9,8 +9,9 @@ import {
     LitentryIdentity,
     LitentryValidationData,
     TransactionSubmit,
-} from './type-definitions';
+} from './common/type-definitions';
 import { expect } from 'chai';
+import { listenEvent, sendTxUntilInBlock, sendTxUntilInBlockList } from './common/transactions';
 
 export async function setErrorUserShieldingKey(
     context: IntegrationTestContext,
