@@ -10,6 +10,7 @@ import {
     LitentryIdentity,
     teeTypes,
     JsonSchema,
+    IdentityContext,
 } from './type-definitions';
 import { blake2AsHex, cryptoWaitReady, xxhashAsU8a } from '@polkadot/util-crypto';
 import { Metadata } from '@polkadot/types';
@@ -102,6 +103,8 @@ export function decryptWithAES(key: HexString, aesOutput: AESOutput, type: strin
         const secretKey = crypto.createSecretKey(hexToU8a(key));
         const tagSize = 16;
         const ciphertext = aesOutput.ciphertext ? aesOutput.ciphertext : hexToU8a('0x');
+        console.log('ciphertext: ', u8aToHex(ciphertext));
+
         const initialization_vector = aesOutput.nonce ? aesOutput.nonce : hexToU8a('0x');
         const aad = aesOutput.aad ? aesOutput.aad : hexToU8a('0x');
 
@@ -302,6 +305,7 @@ export function buildStorageEntry(metadata: Metadata, prefix: string, method: st
     for (const pallet of metadata.asV14.pallets) {
         if (pallet.name.toString() == prefix) {
             const storage = pallet.storage.unwrap();
+
             for (const item of storage.items) {
                 if (item.name.toString() == method) {
                     return item;
@@ -375,9 +379,13 @@ export async function buildStorageData(
     return u8aToHex(storageKey);
 }
 
-export async function checkUserShieldingKeys(context: IntegrationTestContext, pallet: string, method: string, address: HexString): Promise<string> {
-
-    const storageKey = await buildStorageData(context.metaData, pallet, method, address)
+export async function checkUserShieldingKeys(
+    context: IntegrationTestContext,
+    pallet: string,
+    method: string,
+    address: HexString
+): Promise<string> {
+    const storageKey = await buildStorageData(context.metaData, pallet, method, address);
 
     let base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
 
@@ -390,4 +398,46 @@ export async function checkUserShieldingKeys(context: IntegrationTestContext, pa
     let resp = await sendRequest(context.tee, request, context.api);
 
     return resp.value;
+}
+export async function checkUserChallengeCode(
+    context: IntegrationTestContext,
+    pallet: string,
+    method: string,
+    address: HexString,
+    identity: HexString
+): Promise<string> {
+    const storageKey = await buildStorageData(context.metaData, pallet, method, address, identity);
+
+    let base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
+
+    let request = {
+        jsonrpc: '2.0',
+        method: 'state_getStorage',
+        params: [base58mrEnclave, storageKey],
+        id: 1,
+    };
+    let resp = await sendRequest(context.tee, request, context.api);
+    return resp.value;
+}
+
+export async function checkIDGraph(
+    context: IntegrationTestContext,
+    pallet: string,
+    method: string,
+    address: HexString,
+    identity: HexString
+): Promise<IdentityContext> {
+    const storageKey = await buildStorageData(context.metaData, pallet, method, address, identity);
+
+    let base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
+
+    let request = {
+        jsonrpc: '2.0',
+        method: 'state_getStorage',
+        params: [base58mrEnclave, storageKey],
+        id: 1,
+    };
+    let resp = await sendRequest(context.tee, request, context.api);
+    const IDGraph = context.api.createType('IdentityContext', resp.value).toJSON() as IdentityContext;
+    return IDGraph;
 }

@@ -1,4 +1,4 @@
-import { describeLitentry, checkVc, checkFailReason, buildStorageData, checkUserShieldingKeys } from './common/utils';
+import { describeLitentry, checkVc, checkFailReason, checkUserShieldingKeys } from './common/utils';
 import { step } from 'mocha-steps';
 import { setUserShieldingKey, requestVCs, disableVCs, revokeVCs } from './indirect_calls';
 import { Assertion } from './common/type-definitions';
@@ -27,20 +27,13 @@ describeLitentry('VC test', async (context) => {
     var indexList: HexString[] = [];
 
     step('check user sidechain storage before create', async function () {
-        let resp_shieldingKey: string = '';
-
-        //Note: The try-catch block is used here because if this code is tested for the second time, it may fail, and the catch block ensures that any errors resulting from the failure are caught and logged.
-        try {
-            resp_shieldingKey = await checkUserShieldingKeys(
-                context,
-                'IdentityManagement',
-                'UserShieldingKeys',
-                u8aToHex(context.defaultSigner[0].addressRaw)
-            );
-            assert.equal(resp_shieldingKey, '0x', 'check shielding key error, should be empty');
-        } catch (error) {
-            console.error(error);
-        }
+        const resp_shieldingKey = await checkUserShieldingKeys(
+            context,
+            'IdentityManagement',
+            'UserShieldingKeys',
+            u8aToHex(context.defaultSigner[0].addressRaw)
+        );
+        assert.equal(resp_shieldingKey, '0x', 'check shielding key error, should be empty');
     });
     step('set user shielding key', async function () {
         const who = await setUserShieldingKey(context, context.defaultSigner[0], aesKey, true);

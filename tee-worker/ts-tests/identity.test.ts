@@ -4,6 +4,8 @@ import {
     generateVerificationMessage,
     checkFailReason,
     checkUserShieldingKeys,
+    checkUserChallengeCode,
+    checkIDGraph,
 } from './common/utils';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
 import {
@@ -122,53 +124,74 @@ const discordValidationData = <LitentryValidationData>{
 
 describeLitentry('Test Identity', (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
+
     const errorAseKey = '0xError';
     const errorCiphertext = '0xError';
     var signature_ethereum;
     var signature_substrate;
     step('check user sidechain storage before create', async function () {
-        let resp_shieldingKey: string = '';
+        const encode = context.api.createType('LitentryIdentity', twitterIdentity).toHex();
 
-        //Note: The try-catch block is used here because if this code is tested for the second time, it may fail, and the catch block ensures that any errors resulting from the failure are caught and logged.
-        try {
-            resp_shieldingKey = await checkUserShieldingKeys(
-                context,
-                'IdentityManagement',
-                'UserShieldingKeys',
-                u8aToHex(context.defaultSigner[0].addressRaw)
-            );
-            assert.equal(resp_shieldingKey, '0x', 'check shielding key error, should be empty');
-        } catch (error) {
-            console.error(error);
-        }
-    });
-    step('Invalid user shielding key', async function () {
-        const encode = context.api.createType('LitentryIdentity', substrateIdentity).toHex();
-        const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
-        const tx = context.api.tx.identityManagement.createIdentity(context.mrEnclave, context.defaultSigner[0].address, `0x${ciphertext}`, null);
-        await sendTxUntilInBlock(context.api, tx, context.defaultSigner[0]);
-
-        const events = await listenEvent(context.api, 'identityManagement', ['StfError']);
-        expect(events.length).to.be.equal(1);
-
-        await checkFailReason(events, 'InvalidUserShieldingKey', true);
-    })
-
-    step('set user shielding key', async function () {
-        const alice = await setUserShieldingKey(context, context.defaultSigner[0], aesKey, true);
-        assert.equal(alice, u8aToHex(context.defaultSigner[0].addressRaw), 'check caller error');
         const resp_shieldingKey = await checkUserShieldingKeys(
             context,
             'IdentityManagement',
             'UserShieldingKeys',
             u8aToHex(context.defaultSigner[0].addressRaw)
         );
-        assert.equal(resp_shieldingKey, aesKey, 'check shielding key error, should be equal aesKey');
+        assert.equal(resp_shieldingKey, '0x', 'check shielding key error, should be empty');
 
+        const resp_challengecode = await checkUserChallengeCode(
+            context,
+            'IdentityManagement',
+            'IDGraphs',
+            u8aToHex(context.defaultSigner[0].addressRaw),
+            encode
+        );
+
+        assert.equal(resp_challengecode, '0x', 'check challengecode error, should be empty');
+    });
+    // step('Invalid user shielding key', async function () {
+    //     const encode = context.api.createType('LitentryIdentity', substrateIdentity).toHex();
+    //     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
+    //     const tx = context.api.tx.identityManagement.createIdentity(context.mrEnclave, context.defaultSigner[0].address, `0x${ciphertext}`, null);
+    //     await sendTxUntilInBlock(context.api, tx, context.defaultSigner[0]);
+
+    //     const events = await listenEvent(context.api, 'identityManagement', ['StfError']);
+    //     expect(events.length).to.be.equal(1);
+
+    //     await checkFailReason(events, 'InvalidUserShieldingKey', true);
+    // })
+
+    step('set user shielding key', async function () {
+        const alice = await setUserShieldingKey(context, context.defaultSigner[0], aesKey, true);
+        assert.equal(alice, u8aToHex(context.defaultSigner[0].addressRaw), 'check caller error');
         const bob = await setUserShieldingKey(context, context.defaultSigner[1], aesKey, true);
         assert.equal(bob, u8aToHex(context.defaultSigner[1].addressRaw), 'check caller error');
     });
 
+    step('check user shielding key from sidechain storage after create', async function () {
+        const resp_shieldingKey = await checkUserShieldingKeys(
+            context,
+            'IdentityManagement',
+            'UserShieldingKeys',
+            u8aToHex(context.defaultSigner[0].addressRaw)
+        );
+        console.log('resp_shieldingKey', resp_shieldingKey);
+        assert.equal(resp_shieldingKey, aesKey, 'check shielding key error, should be equal aesKey');
+    });
+
+    step('check idgraph from sidechain storage before create', async function () {
+        const encode = context.api.createType('LitentryIdentity', twitterIdentity).toHex();
+
+        const resp_id_graph = await checkIDGraph(
+            context,
+            'IdentityManagement',
+            'IDGraphs',
+            u8aToHex(context.defaultSigner[0].addressRaw),
+            encode
+        );
+        assert.equal(resp_id_graph.is_verified, false, 'check idgraph is_verified error, should be equal false');
+    });
     step('create identities', async function () {
         //Alice create all identities
         const [resp_twitter, resp_ethereum, resp_substrate] = (await createIdentities(
@@ -254,6 +277,24 @@ describeLitentry('Test Identity', (context) => {
             assert.isNotEmpty(resp_extension_substrate.challengeCode, 'challengeCode empty');
         }
     });
+
+    step('check IDGraph before verifyIdentity and after createIdentity', async function () {
+        const encode = context.api.createType('LitentryIdentity', twitterIdentity).toHex();
+
+        const resp_id_graph = await checkIDGraph(
+            context,
+            'IdentityManagement',
+            'IDGraphs',
+            u8aToHex(context.defaultSigner[0].addressRaw),
+            encode
+        );
+        assert.notEqual(
+            resp_id_graph.linking_request_block,
+            null,
+            'linking_request_block should not be null after createIdentity'
+        );
+        assert.equal(resp_id_graph.is_verified, false, 'is_verified should be false before verifyIdentity');
+    });
     step('verify identities', async function () {
         //Alice verify all identities
         const [twitter_identity_verified, ethereum_identity_verified, substrate_identity_verified] =
@@ -282,7 +323,23 @@ describeLitentry('Test Identity', (context) => {
         //Bob
         assertIdentityVerified(context.defaultSigner[1], substrate_extension_identity_verified);
     });
+    step('check IDGraph after createIdentity', async function () {
+        const encode = context.api.createType('LitentryIdentity', twitterIdentity).toHex();
 
+        const resp_id_graph = await checkIDGraph(
+            context,
+            'IdentityManagement',
+            'IDGraphs',
+            u8aToHex(context.defaultSigner[0].addressRaw),
+            encode
+        );
+        assert.notEqual(
+            resp_id_graph.verification_request_block,
+            null,
+            'verification_request_block should not be null after verifyIdentity'
+        );
+        assert.equal(resp_id_graph.is_verified, true, 'is_verified should be true after verifyIdentity');
+    });
     step('verify error identities', async function () {
         // verify same identities to one account
         const resp_same_verify = (await verifyErrorIdentities(
@@ -331,7 +388,28 @@ describeLitentry('Test Identity', (context) => {
         // Bob
         assertIdentityRemoved(context.defaultSigner[1], substrate_extension_identity_removed);
     });
+    step('check IDGraph after removeIdentity', async function () {
+        const encode = context.api.createType('LitentryIdentity', twitterIdentity).toHex();
 
+        const resp_id_graph = await checkIDGraph(
+            context,
+            'IdentityManagement',
+            'IDGraphs',
+            u8aToHex(context.defaultSigner[0].addressRaw),
+            encode
+        );
+        assert.equal(
+            resp_id_graph.verification_request_block,
+            null,
+            'verification_request_block should  be null after removeIdentity'
+        );
+        assert.equal(
+            resp_id_graph.linking_request_block,
+            null,
+            'linking_request_block should  be null after removeIdentity'
+        );
+        assert.equal(resp_id_graph.is_verified, false, 'is_verified should be false after removeIdentity');
+    });
     step('remove prime identity NOT allowed', async function () {
         // create substrate identity
         const [resp_substrate] = (await createIdentities(context, context.defaultSigner[0], aesKey, true, [

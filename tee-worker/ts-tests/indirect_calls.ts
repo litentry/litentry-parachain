@@ -70,6 +70,7 @@ export async function createIdentities(
         let results: IdentityGenericEvent[] = [];
 
         for (let index = 0; index < events.length; index++) {
+
             results.push(
                 createIdentityEvent(
                     context.api,

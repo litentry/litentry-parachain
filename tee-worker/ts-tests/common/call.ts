@@ -1,9 +1,8 @@
 import { ApiPromise } from '@polkadot/api';
 import { Metadata, TypeRegistry } from '@polkadot/types';
 import WebSocketAsPromised from 'websocket-as-promised';
-import { WorkerRpcReturnValue } from './type-definitions';
+import { WorkerRpcReturnValue, IdentityContext } from './type-definitions';
 import { HexString } from '@polkadot/util/types';
-
 
 //rpc call
 export async function sendRequest(
@@ -29,9 +28,14 @@ export async function getMetadata(wsClient: WebSocketAsPromised, api: ApiPromise
     return metadata;
 }
 
-export async function getSideChainStroage(wsClient: WebSocketAsPromised, rpcMethod: string, api: ApiPromise, mrenclave: HexString, storageKey: string): Promise<any> {
+export async function getSideChainStroage(
+    wsClient: WebSocketAsPromised,
+    rpcMethod: string,
+    api: ApiPromise,
+    mrenclave: HexString,
+    storageKey: string
+): Promise<any> {
     let request = { jsonrpc: '2.0', method: rpcMethod, params: [mrenclave, storageKey], id: 1 };
     let respJSON = await sendRequest(wsClient, request, api);
     return respJSON;
 }
-
