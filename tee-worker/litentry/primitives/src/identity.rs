@@ -74,7 +74,7 @@ pub enum SubstrateNetwork {
 	Litmus,
 	LitentryRococo,
 	Khala,
-	TestNet,
+	TestNet, // when we launch it with standalone (integritee-)node
 }
 
 impl SubstrateNetwork {
