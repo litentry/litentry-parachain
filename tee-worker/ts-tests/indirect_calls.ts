@@ -314,7 +314,6 @@ export function assertIdentityVerified(signer: KeyringPair, identityEvent: Ident
 
     if (identityEvent) {
         for (let i = 0; i < identityEvent.idGraph.length; i++) {
-            console.log("identityEvent.idGraph[i]", identityEvent.idGraph[i]);
 
             if (JSON.stringify(identityEvent.idGraph[i][0]) == JSON.stringify(identityEvent.identity)) {
                 idGraphExist = true;
