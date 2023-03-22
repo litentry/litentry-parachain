@@ -169,6 +169,9 @@ fn vc_network_to_vec(networks: HashSet<VerifiedCredentialsNetwork>) -> Vec<&'sta
 			VerifiedCredentialsNetwork::Ethereum => {
 				rets.push("ethereum");
 			},
+			VerifiedCredentialsNetwork::TestNet => {
+				rets.push("testnet");
+			},
 		}
 	}
 
