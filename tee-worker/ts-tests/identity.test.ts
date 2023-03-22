@@ -3,6 +3,7 @@ import {
     encryptWithTeeShieldingKey,
     generateVerificationMessage,
     checkFailReason,
+    checkUserShieldingKeys,
 } from './common/utils';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
 import {
@@ -125,7 +126,22 @@ describeLitentry('Test Identity', (context) => {
     const errorCiphertext = '0xError';
     var signature_ethereum;
     var signature_substrate;
+    step('check user sidechain storage before create', async function () {
+        let resp_shieldingKey: string = '';
 
+        //Note: The try-catch block is used here because if this code is tested for the second time, it may fail, and the catch block ensures that any errors resulting from the failure are caught and logged.
+        try {
+            resp_shieldingKey = await checkUserShieldingKeys(
+                context,
+                'IdentityManagement',
+                'UserShieldingKeys',
+                u8aToHex(context.defaultSigner[0].addressRaw)
+            );
+            assert.equal(resp_shieldingKey, '0x', 'check shielding key error, should be empty');
+        } catch (error) {
+            console.error(error);
+        }
+    });
     step('Invalid user shielding key', async function () {
         const encode = context.api.createType('LitentryIdentity', substrateIdentity).toHex();
         const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
@@ -141,6 +157,14 @@ describeLitentry('Test Identity', (context) => {
     step('set user shielding key', async function () {
         const alice = await setUserShieldingKey(context, context.defaultSigner[0], aesKey, true);
         assert.equal(alice, u8aToHex(context.defaultSigner[0].addressRaw), 'check caller error');
+        const resp_shieldingKey = await checkUserShieldingKeys(
+            context,
+            'IdentityManagement',
+            'UserShieldingKeys',
+            u8aToHex(context.defaultSigner[0].addressRaw)
+        );
+        assert.equal(resp_shieldingKey, aesKey, 'check shielding key error, should be equal aesKey');
+
         const bob = await setUserShieldingKey(context, context.defaultSigner[1], aesKey, true);
         assert.equal(bob, u8aToHex(context.defaultSigner[1].addressRaw), 'check caller error');
     });

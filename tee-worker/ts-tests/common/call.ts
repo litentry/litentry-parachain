@@ -13,6 +13,10 @@ export async function sendRequest(
 ): Promise<WorkerRpcReturnValue> {
     const resp = await wsClient.sendRequest(request, { requestId: 1, timeout: 6000 });
     const resp_json = api.createType('WorkerRpcReturnValue', resp.result).toJSON() as WorkerRpcReturnValue;
+
+    if (resp_json.status === 'Error') {
+        throw new Error('RPC call error');
+    }
     return resp_json;
 }
 

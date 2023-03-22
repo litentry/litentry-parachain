@@ -4,6 +4,7 @@ import { HexString } from '@polkadot/util/types';
 import WebSocketAsPromised = require('websocket-as-promised');
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
+import { Metadata } from '@polkadot/types';
 
 export const teeTypes = {
     WorkerRpcReturnString: {
@@ -187,6 +188,7 @@ export type IntegrationTestContext = {
     defaultSigner: KeyringPair[];
     //@todo add type
     ethersWallet: any;
+    metaData: Metadata
 };
 
 export class AESOutput {

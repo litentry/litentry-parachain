@@ -26,7 +26,7 @@ import { assert, expect } from 'chai';
 import Ajv from 'ajv';
 import * as ed from '@noble/ed25519';
 import { blake2128Concat, getSigner, identity, twox64Concat } from './helpers';
-import { getMetadata } from './call';
+import { getMetadata, sendRequest } from './call';
 const base58 = require('micro-base58');
 const crypto = require('crypto');
 import { getEthereumSigner } from '../common/helpers';
@@ -83,7 +83,8 @@ export async function initIntegrationTestContext(
 
     const wsp = await initWorkerConnection(workerEndpoint);
 
-    await getMetadata(wsp, api);
+    const metaData = await getMetadata(wsp, api);
+
     const { mrEnclave, teeShieldingKey } = await getEnclave(api);
     return <IntegrationTestContext>{
         tee: wsp,
@@ -92,6 +93,7 @@ export async function initIntegrationTestContext(
         mrEnclave,
         defaultSigner: getSigner(),
         ethersWallet,
+        metaData,
     };
 }
 
@@ -185,6 +187,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
             tee: {} as WebSocketAsPromised,
             teeShieldingKey: {} as KeyObject,
             ethersWallet: {},
+            metaData: {} as Metadata,
         };
 
         before('Starting Litentry(parachain&tee)', async function () {
@@ -200,6 +203,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
             context.tee = tmp.tee;
             context.teeShieldingKey = tmp.teeShieldingKey;
             context.ethersWallet = tmp.ethersWallet;
+            context.metaData = tmp.metaData;
         });
 
         after(async function () { });
@@ -369,4 +373,21 @@ export async function buildStorageData(
     }
     console.debug(`storage key: ${u8aToHex(storageKey)}`);
     return u8aToHex(storageKey);
+}
+
+export async function checkUserShieldingKeys(context: IntegrationTestContext, pallet: string, method: string, address: HexString): Promise<string> {
+
+    const storageKey = await buildStorageData(context.metaData, pallet, method, address)
+
+    let base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
+
+    let request = {
+        jsonrpc: '2.0',
+        method: 'state_getStorage',
+        params: [base58mrEnclave, storageKey],
+        id: 1,
+    };
+    let resp = await sendRequest(context.tee, request, context.api);
+
+    return resp.value;
 }
