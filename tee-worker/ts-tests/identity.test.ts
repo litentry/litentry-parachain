@@ -232,6 +232,7 @@ describeLitentry('Test Identity', (context) => {
             assert.isNotEmpty(resp_extension_substrate.challengeCode, 'challengeCode empty');
         }
     });
+
     step('verify identities', async function () {
         //Alice verify all identities
         const [twitter_identity_verified, ethereum_identity_verified, substrate_identity_verified] =
