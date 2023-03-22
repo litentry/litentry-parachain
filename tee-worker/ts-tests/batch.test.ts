@@ -2,9 +2,8 @@ import {
     describeLitentry,
     generateVerificationMessage,
     encryptWithTeeShieldingKey,
-    listenEvent,
     decryptWithAES,
-} from './utils';
+} from './common/utils';
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import {
     setUserShieldingKey,
@@ -15,7 +14,8 @@ import {
 } from './indirect_calls';
 import { step } from 'mocha-steps';
 import { assert, expect } from 'chai';
-import { LitentryIdentity, LitentryValidationData, Web2Identity } from './type-definitions';
+import { LitentryIdentity, LitentryValidationData, Web2Identity } from './common/type-definitions';
+import { listenEvent } from './common/transactions';
 
 const twitterIdentity = <LitentryIdentity>{
     Web2: <Web2Identity>{
@@ -41,8 +41,8 @@ describeLitentry('Test Batch Utility', (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
 
     step('set user shielding key', async function () {
-        const alice = await setUserShieldingKey(context, context.defaultSigner[0], aesKey, true);
-        assert.equal(alice, u8aToHex(context.defaultSigner[0].addressRaw), 'check caller error');
+        const alice = await setUserShieldingKey(context, context.substrateWallet.alice, aesKey, true);
+        assert.equal(alice, u8aToHex(context.substrateWallet.alice.addressRaw), 'check caller error');
     });
 
     step('batch test: create identities', async function () {
@@ -51,7 +51,7 @@ describeLitentry('Test Batch Utility', (context) => {
         const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
         const twi_tx = context.api.tx.identityManagement.createIdentity(
             context.mrEnclave,
-            context.defaultSigner[0].address,
+            context.substrateWallet.alice.address,
             `0x${ciphertext}`,
             null
         );
@@ -61,14 +61,14 @@ describeLitentry('Test Batch Utility', (context) => {
         const ciphertext_2 = encryptWithTeeShieldingKey(context.teeShieldingKey, encode2).toString('hex');
         const twi_tx_2 = context.api.tx.identityManagement.createIdentity(
             context.mrEnclave,
-            context.defaultSigner[0].address,
+            context.substrateWallet.alice.address,
             `0x${ciphertext_2}`,
             null
         );
 
         // Construct the batch and send the transactions
         const txs = [twi_tx, twi_tx_2];
-        await context.api.tx.utility.batchAll(txs).signAndSend(context.defaultSigner[0], ({ status }) => {
+        await context.api.tx.utility.batchAll(txs).signAndSend(context.substrateWallet.alice, ({ status }) => {
             if (status.isInBlock) {
                 console.log(`included in ${status.asInBlock}`);
             }
@@ -85,13 +85,13 @@ describeLitentry('Test Batch Utility', (context) => {
                 undefined,
                 decryptWithAES(aesKey, data.code, 'hex')
             );
-            assertIdentityCreated(context.defaultSigner[0], response);
+            assertIdentityCreated(context.substrateWallet.alice, response);
             if (response) {
                 console.log('twitterIdentity challengeCode: ', response.challengeCode);
                 const msg = generateVerificationMessage(
                     context,
                     hexToU8a(response.challengeCode),
-                    context.defaultSigner[0].addressRaw,
+                    context.substrateWallet.alice.addressRaw,
                     twitterIdentity
                 );
                 console.log('post verification msg to twitter: ', msg);
@@ -118,7 +118,7 @@ describeLitentry('Test Batch Utility', (context) => {
 
         // Construct the batch and send the transactions
         const txs = [verify_tx];
-        await context.api.tx.utility.batchAll(txs).signAndSend(context.defaultSigner[0], ({ status }) => {
+        await context.api.tx.utility.batchAll(txs).signAndSend(context.substrateWallet.alice, ({ status }) => {
             if (status.isInBlock) {
                 console.log(`included in ${status.asInBlock}`);
             }
@@ -133,7 +133,7 @@ describeLitentry('Test Batch Utility', (context) => {
             decryptWithAES(aesKey, data.identity, 'hex'),
             decryptWithAES(aesKey, data.idGraph, 'hex')
         );
-        assertIdentityVerified(context.defaultSigner[0], response);
+        assertIdentityVerified(context.substrateWallet.alice, response);
     });
 
     step('batch test: remove identities', async function () {
@@ -148,7 +148,7 @@ describeLitentry('Test Batch Utility', (context) => {
 
         // Construct the batch and send the transactions
         const txs = [rm_id_tx, rm_id_tx2];
-        await context.api.tx.utility.batchAll(txs).signAndSend(context.defaultSigner[0], ({ status }) => {
+        await context.api.tx.utility.batchAll(txs).signAndSend(context.substrateWallet.alice, ({ status }) => {
             if (status.isInBlock) {
                 console.log(`included in ${status.asInBlock}`);
             }
@@ -163,7 +163,7 @@ describeLitentry('Test Batch Utility', (context) => {
                 data.account.toHex(),
                 decryptWithAES(aesKey, data.identity, 'hex')
             );
-            assertIdentityRemoved(context.defaultSigner[0], response);
+            assertIdentityRemoved(context.substrateWallet.alice, response);
         }
     });
 });
