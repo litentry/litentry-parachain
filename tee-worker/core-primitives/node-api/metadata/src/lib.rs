@@ -29,6 +29,7 @@ use substrate_api_client::{Metadata, MetadataError};
 pub use crate::error::Error;
 
 pub mod error;
+pub mod pallet_ethereum_sender_dummy;
 pub mod pallet_imp;
 pub mod pallet_imp_mock;
 pub mod pallet_sidechain;

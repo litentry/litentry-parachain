@@ -36,7 +36,7 @@ use litentry_primitives::{
 };
 use log::*;
 use sp_runtime::BoundedVec;
-use std::{format, string::ToString, vec};
+use std::{format, string::ToString, vec, vec::Vec};
 
 impl TrustedCallSigned {
 	pub fn set_user_shielding_key_preflight(
@@ -206,6 +206,27 @@ impl TrustedCallSigned {
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::remove_challenge_code { who, identity }
 			.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+
+		Ok(())
+	}
+
+	pub fn send_blockchain_vc_runtime(
+		enclave_account: AccountId,
+		vc_info: Vec<u8>,
+		chain_id: u64,
+	) -> StfResult<()> {
+		debug!(
+			"send blockchain vc runtime, vc_info = {:?}, chain_id = {:?}",
+			vc_info,
+			chain_id
+		);
+		ensure_enclave_signer_account(&enclave_account)?;
+		ita_sgx_runtime::EthereumSenderDummyCall::<Runtime>::send_blockchain_vc {
+			vc_info,
+			chain_id,
+		}
+		.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
+		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 
 		Ok(())
 	}

@@ -84,6 +84,7 @@ pub use sp_runtime::{Perbill, Permill};
 // litentry
 use litentry_primitives::MINUTES;
 pub use pallet_imt::{self, Call as IdentityManagementCall};
+pub use pallet_ethereum_sender_dummy::{self, Call as EthereumSenderDummyCall};
 
 /// Block type as expected by this sgx-runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;

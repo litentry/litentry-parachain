@@ -38,7 +38,7 @@ use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier, Signature};
 use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
-	aes_encrypt_default, Assertion, ChallengeCode, IMPError, Identity, ParentchainBlockNumber,
+	aes_encrypt_default, Assertion, ChallengeCode, ETHSenderError, IMPError, Identity, ParentchainBlockNumber,
 	UserShieldingKeyType, VCMPError, ValidationData,
 };
 use log::*;
@@ -127,6 +127,7 @@ pub enum TrustedCall {
 	// the following TrustedCalls should only be used in testing
 	set_challenge_code_runtime(AccountId, AccountId, Identity, ChallengeCode),
 	send_erroneous_parentchain_call(AccountId),
+	send_blockchain_vc_runtime(AccountId, Vec<u8>, u64),
 }
 
 impl TrustedCall {
@@ -156,6 +157,7 @@ impl TrustedCall {
 			TrustedCall::handle_imp_error(account, _) => account,
 			TrustedCall::handle_vcmp_error(account, _) => account,
 			TrustedCall::send_erroneous_parentchain_call(account) => account,
+			TrustedCall::send_blockchain_vc_runtime(account, _, _) => account,
 		}
 	}
 
@@ -661,6 +663,12 @@ where
 				)));
 				Ok(())
 			},
+			TrustedCall::send_blockchain_vc_runtime(enclave_account, vc_info, chain_id) => {
+				if let Err(e) = Self::send_blockchain_vc_runtime(enclave_account, vc_info, chain_id) {
+					add_call_from_ethereum_sender_error(calls, node_metadata_repo, e.to_ethsender_error());
+				}
+				Ok(())
+			},
 		}?;
 		Ok(())
 	}
@@ -687,6 +695,7 @@ where
 			TrustedCall::handle_vcmp_error(..) => debug!("No storage updates needed..."),
 			TrustedCall::send_erroneous_parentchain_call(..) =>
 				debug!("No storage updates needed..."),
+			TrustedCall::send_blockchain_vc_runtime(..) => debug!("No storage updates needed..."),
 			#[cfg(feature = "evm")]
 			_ => debug!("No storage updates needed..."),
 		};
@@ -763,6 +772,23 @@ fn add_call_from_vcmp_error<NodeMetadataRepository>(
 		Ok(Ok(c)) => calls.push(OpaqueCall::from_tuple(&(c, e))),
 		Ok(e) => warn!("error getting VCMP call indexes: {:?}", e),
 		Err(e) => warn!("error getting VCMP call indexes: {:?}", e),
+	}
+}
+
+// helper method to create and push an `OpaqueCall` from a Error, this function always succeeds
+fn add_call_from_ethereum_sender_error<NodeMetadataRepository>(
+	calls: &mut Vec<OpaqueCall>,
+	node_metadata_repo: Arc<NodeMetadataRepository>,
+	e: ETHSenderError,
+) where
+	NodeMetadataRepository: AccessNodeMetadata,
+	NodeMetadataRepository::MetadataType:
+		EthereumSenderCallIndexes + SystemSs58Prefix,
+{
+	match node_metadata_repo.get_from_metadata(|m| m.ethereum_sender_some_error_call_indexes()) {
+		Ok(Ok(c)) => warn!("No call back yet"),
+		Ok(e) => warn!("error getting Eth sender call indexes: {:?}", e),
+		Err(e) => warn!("error getting Eth sender indexes: {:?}", e),
 	}
 }
 

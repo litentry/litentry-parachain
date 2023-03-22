@@ -77,3 +77,8 @@ pub enum VCMPError {
 	Assertion10Failed,
 	Assertion11Failed,
 }
+
+pub enum ETHSenderError {
+	// tee stf error
+	StfError(ErrorString),
+}

@@ -40,7 +40,7 @@ use ita_sgx_runtime::{pallet_imt::MetadataOf, IdentityManagement, Runtime, Syste
 use itp_node_api_metadata::Error as MetadataError;
 use itp_node_api_metadata_provider::Error as MetadataProviderError;
 use itp_stf_primitives::types::AccountId;
-use litentry_primitives::{ErrorString, IMPError, VCMPError};
+use litentry_primitives::{ErrorString, ETHSenderError, IMPError, VCMPError};
 use std::{format, string::String};
 pub use stf_sgx_primitives::{types::*, Stf};
 pub use trusted_call::*;
@@ -114,6 +114,17 @@ impl StfError {
 			StfError::Dispatch(s) =>
 				VCMPError::StfError(ErrorString::truncate_from(s.as_bytes().to_vec())),
 			_ => VCMPError::StfError(ErrorString::truncate_from(
+				format!("{:?}", self).as_bytes().to_vec(),
+			)),
+		}
+	}
+	// Convert StfError to EthereumError that would be sent to parentchain
+	// No callback implementation yet
+	pub fn to_ethsender_error(&self) -> ETHSenderError {
+		match self {
+			StfError::Dispatch(s) =>
+				ETHSenderError::StfError(ErrorString::truncate_from(s.as_bytes().to_vec())),
+			_ => ETHSenderError::StfError(ErrorString::truncate_from(
 				format!("{:?}", self).as_bytes().to_vec(),
 			)),
 		}
