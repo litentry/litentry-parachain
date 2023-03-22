@@ -31,12 +31,12 @@ use lc_stf_task_sender::{
 	Web2IdentityVerificationRequest, Web3IdentityVerificationRequest,
 };
 use litentry_primitives::{
-	Assertion, ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType,
-	ValidationData,
+	Assertion, ChallengeCode, ErrorDetail, ErrorString, Identity, ParentchainBlockNumber,
+	UserShieldingKeyType, ValidationData,
 };
 use log::*;
 use sp_runtime::BoundedVec;
-use std::{format, string::ToString, vec};
+use std::{format, vec};
 
 impl TrustedCallSigned {
 	pub fn set_user_shielding_key_preflight(
@@ -57,7 +57,9 @@ impl TrustedCallSigned {
 		let encoded_shard = shard.encode();
 		let request = SetUserShieldingKeyRequest { encoded_shard, who, encoded_callback }.into();
 		let sender = StfRequestSender::new();
-		sender.send_stf_request(request).map_err(|_| StfError::VerifyIdentityFailed)
+		sender
+			.send_stf_request(request)
+			.map_err(|_| StfError::SetUserShieldingKeyFailed(ErrorDetail::SendStfRequestFailed))
 	}
 
 	pub fn set_user_shielding_key_runtime(
@@ -74,7 +76,11 @@ impl TrustedCallSigned {
 			parent_ss58_prefix,
 		}
 		.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
-		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		.map_err(|e| {
+			StfError::SetUserShieldingKeyFailed(ErrorDetail::StfError(ErrorString::truncate_from(
+				format!("{:?}", e.error).into(),
+			)))
+		})?;
 		Ok(())
 	}
 
@@ -103,7 +109,11 @@ impl TrustedCallSigned {
 			parent_ss58_prefix,
 		}
 		.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
-		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		.map_err(|e| {
+			StfError::CreateIdentityFailed(ErrorDetail::StfError(ErrorString::truncate_from(
+				format!("{:?}", e.error).into(),
+			)))
+		})?;
 
 		// generate challenge code
 		let code = generate_challenge_code();
@@ -115,7 +125,11 @@ impl TrustedCallSigned {
 			code,
 		}
 		.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
-		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		.map_err(|e| {
+			StfError::CreateIdentityFailed(ErrorDetail::StfError(ErrorString::truncate_from(
+				format!("{:?}", e.error).into(),
+			)))
+		})?;
 
 		Ok(code)
 	}
@@ -133,7 +147,11 @@ impl TrustedCallSigned {
 		ensure_enclave_signer_account(&enclave_account)?;
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::remove_identity { who, identity }
 			.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
-			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+			.map_err(|e| {
+				StfError::RemoveIdentityFailed(ErrorDetail::StfError(ErrorString::truncate_from(
+					format!("{:?}", e.error).into(),
+				)))
+			})?;
 		Ok(())
 	}
 
@@ -146,10 +164,9 @@ impl TrustedCallSigned {
 		bn: ParentchainBlockNumber,
 	) -> StfResult<()> {
 		debug!("verify identity preflight, who:{:?}, identity:{:?}", who, identity);
-
 		ensure_enclave_signer_account(&enclave_account)?;
 		let code = IdentityManagement::challenge_codes(&who, &identity)
-			.ok_or_else(|| StfError::Dispatch("ChallengeCode not found".to_string()))?;
+			.ok_or_else(|| StfError::VerifyIdentityFailed(ErrorDetail::ChallengeCodeNotFound))?;
 
 		let encoded_callback = TrustedCall::verify_identity_runtime(
 			enclave_signer_account(),
@@ -183,7 +200,9 @@ impl TrustedCallSigned {
 		};
 
 		let sender = StfRequestSender::new();
-		sender.send_stf_request(request).map_err(|_| StfError::VerifyIdentityFailed)
+		sender
+			.send_stf_request(request)
+			.map_err(|_| StfError::VerifyIdentityFailed(ErrorDetail::SendStfRequestFailed))
 	}
 
 	pub fn verify_identity_runtime(
@@ -205,12 +224,20 @@ impl TrustedCallSigned {
 			verification_request_block: bn,
 		}
 		.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
-		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		.map_err(|e| {
+			StfError::VerifyIdentityFailed(ErrorDetail::StfError(ErrorString::truncate_from(
+				format!("{:?}", e.error).into(),
+			)))
+		})?;
 
 		// remove challenge code
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::remove_challenge_code { who, identity }
 			.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
-			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+			.map_err(|e| {
+				StfError::VerifyIdentityFailed(ErrorDetail::StfError(ErrorString::truncate_from(
+					format!("{:?}", e.error).into(),
+				)))
+			})?;
 
 		Ok(())
 	}
@@ -267,6 +294,7 @@ impl TrustedCallSigned {
 	) -> StfResult<()> {
 		debug!("set challenge code runtime, who: {:?}", account_id_to_string(&who));
 		ensure_enclave_signer_account(&enclave_account)?;
+		// only used in tests, we don't care about the error
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_challenge_code {
 			who,
 			identity,

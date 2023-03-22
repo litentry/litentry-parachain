@@ -21,33 +21,41 @@ use sp_runtime::{traits::ConstU32, BoundedVec};
 pub type MaxStringLength = ConstU32<100>;
 pub type ErrorString = BoundedVec<u8, MaxStringLength>;
 
-// Identity Management Pallet Error
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
-pub enum IMPError {
-	// UTF8Error,
-	DecodeHexFailed(ErrorString),
-	HttpRequestFailed(ErrorString),
-	// tee stf error
+pub enum ErrorDetail {
+	// error when importing the parentchain blocks and executing indirect calls
+	ImportError,
+	// generic error when executing STF, the `ErrorString` should indicate the actual reasons
 	StfError(ErrorString),
-	// schedued encalve import error
-	ImportScheduledEnclaveFailed,
-	// Indirect call handling errors when importing parachain blocks
-	CreateIdentityHandlingFailed,
-	RemoveIdentityHandlingFailed,
-	VerifyIdentityHandlingFailed,
-	SetUserShieldingKeyHandlingFailed,
-
-	// identity verification errors
-	InvalidUserShieldingKey,
+	// error when sending stf request to the receiver
+	SendStfRequestFailed,
+	ChallengeCodeNotFound,
+	// errors when verifying identities
+	DecodeHexPayloadFailed(ErrorString),
+	HttpRequestFailed(ErrorString),
 	InvalidIdentity,
 	WrongWeb2Handle,
 	UnexpectedMessage,
-	WrongIdentityHandleType,
 	WrongSignatureType,
 	VerifySubstrateSignatureFailed,
-	RecoverSubstratePubkeyFailed,
 	VerifyEvmSignatureFailed,
 	RecoverEvmAddressFailed,
+}
+
+// Identity Management Pallet Error
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+pub enum IMPError {
+	// errors when executing individual error
+	SetUserShieldingKeyFailed(ErrorDetail),
+	CreateIdentityFailed(ErrorDetail),
+	RemoveIdentityFailed(ErrorDetail),
+	VerifyIdentityFailed(ErrorDetail),
+	// scheduled encalve import error
+	ImportScheduledEnclaveFailed,
+
+	// should be unreached, but just to be on the safe side
+	// we should classify the error if we ever get this
+	UnclassifiedError(ErrorDetail),
 }
 
 impl frame_support::traits::PalletError for IMPError {
@@ -76,4 +84,7 @@ pub enum VCMPError {
 	Assertion8Failed,
 	Assertion10Failed,
 	Assertion11Failed,
+	// should be unreached, but just to be on the safe side
+	// we should classify the error if we ever get this
+	// UnclassifiedError(ErrorDetail),
 }

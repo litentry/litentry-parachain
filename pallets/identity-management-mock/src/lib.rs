@@ -182,7 +182,7 @@ pub mod pallet {
 		/// identity not exist when removing an identity
 		IdentityNotExist,
 		/// identity should be disallowed
-		IdentityShouldBeDisallowed,
+		CreatePrimeIdentityNotAllowed,
 		/// no shielding key for a given AccountId
 		ShieldingKeyNotExist,
 		/// a verification reqeust comes too early

@@ -38,7 +38,7 @@ use lc_data_providers::{
 };
 use lc_stf_task_sender::Web2IdentityVerificationRequest;
 use litentry_primitives::{
-	DiscordValidationData, Identity, TwitterValidationData, Web2ValidationData,
+	DiscordValidationData, ErrorDetail, Identity, TwitterValidationData, Web2ValidationData,
 };
 use log::*;
 use std::{fmt::Debug, string::ToString, vec::Vec};
@@ -75,7 +75,9 @@ pub fn verify(request: &Web2IdentityVerificationRequest) -> Result<(), Error> {
 			let tweet: Tweet =
 				client.query_tweet(tweet_id.to_vec()).map_err(from_data_provider_error)?;
 
-			let user_id = tweet.get_user_id().ok_or(Error::WrongWeb2Handle)?;
+			let user_id = tweet
+				.get_user_id()
+				.ok_or(Error::VerifyIdentityFailed(ErrorDetail::WrongWeb2Handle))?;
 
 			let payload = payload_from_tweet(&tweet)?;
 
@@ -106,18 +108,19 @@ pub fn verify(request: &Web2IdentityVerificationRequest) -> Result<(), Error> {
 
 	// the user_id must match, is it case sensitive?
 	let handle = if let Identity::Web2 { ref address, .. } = request.identity {
-		std::str::from_utf8(address.as_slice()).map_err(|_| Error::WrongWeb2Handle)
+		std::str::from_utf8(address.as_slice())
+			.map_err(|_| Error::VerifyIdentityFailed(ErrorDetail::WrongWeb2Handle))
 	} else {
-		Err(Error::InvalidIdentity)
+		Err(Error::VerifyIdentityFailed(ErrorDetail::InvalidIdentity))
 	}?;
 
-	ensure!(user_id.eq(handle), Error::WrongWeb2Handle);
+	ensure!(user_id.eq(handle), Error::VerifyIdentityFailed(ErrorDetail::WrongWeb2Handle));
 	// the payload must match
 	// TODO: maybe move it to common place
 	ensure!(
 		payload
 			== get_expected_raw_message(&request.who, &request.identity, &request.challenge_code),
-		Error::UnexpectedMessage
+		Error::VerifyIdentityFailed(ErrorDetail::UnexpectedMessage)
 	);
 	Ok(())
 }
