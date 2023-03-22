@@ -30,10 +30,13 @@ fn set_user_shielding_key_works() {
 	new_test_ext(false).execute_with(|| {
 		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
 		assert_eq!(IMT::user_shielding_keys(BOB), None);
+
+		let ss58_prefix = 131_u16;
 		assert_ok!(IMT::set_user_shielding_key(
 			RuntimeOrigin::signed(ALICE),
 			BOB,
-			shielding_key.clone()
+			shielding_key.clone(),
+			ss58_prefix
 		));
 		assert_eq!(IMT::user_shielding_keys(BOB), Some(shielding_key.clone()));
 		System::assert_last_event(RuntimeEvent::IMT(crate::Event::UserShieldingKeySet {
@@ -75,16 +78,16 @@ fn remove_identity_works() {
 			IMT::remove_identity(RuntimeOrigin::signed(ALICE), BOB, alice_web3_identity()),
 			Error::<Test>::InvalidUserShieldingKey
 		);
-
+		let ss58_prefix = 31_u16;
 		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
 		assert_ok!(IMT::set_user_shielding_key(
 			RuntimeOrigin::signed(ALICE),
 			BOB,
-			shielding_key.clone()
+			shielding_key.clone(),
+			ss58_prefix.clone()
 		));
 
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
-		let ss58_prefix = 31_u16;
 		assert_noop!(
 			IMT::remove_identity(RuntimeOrigin::signed(ALICE), BOB, alice_web3_identity()),
 			Error::<Test>::IdentityNotExist
@@ -114,7 +117,7 @@ fn remove_identity_works() {
 		assert_eq!(IMT::id_graphs(BOB, alice_web3_identity()), None);
 
 		let id_graph = IMT::get_id_graph(&BOB);
-		// "1": because of the main id is added by default when first calling creat_identity.
+		// "1": because of the main id is added by default when first calling set_user_shielding_key.
 		assert_eq!(id_graph.len(), 1);
 
 		assert_noop!(

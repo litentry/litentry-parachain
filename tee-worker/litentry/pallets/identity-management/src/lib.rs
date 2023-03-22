@@ -151,10 +151,33 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			who: T::AccountId,
 			key: UserShieldingKeyType,
+			parent_ss58_prefix: u16,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 			// we don't care about the current key
 			UserShieldingKeys::<T>::insert(&who, key);
+
+			let prime_address_raw: [u8; 32] = who
+				.encode()
+				.try_into()
+				.map_err(|_| DispatchError::Other("invalid account id"))?;
+			let prime_user_address: Address32 = prime_address_raw.into();
+
+			let prime_id = Identity::Substrate {
+				network: SubstrateNetwork::from_ss58_prefix(parent_ss58_prefix),
+				address: prime_user_address,
+			};
+			if IDGraphs::<T>::get(&who, &prime_id).is_none() {
+				// Not existed, so create the prime entry.
+				let context = IdentityContext::<T> {
+					metadata: None,
+					creation_request_block: Some(0),
+					verification_request_block: Some(0),
+					is_verified: true,
+				};
+				IDGraphs::<T>::insert(&who, &prime_id, context);
+			}
+
 			Self::deposit_event(Event::UserShieldingKeySet { who, key });
 			Ok(())
 		}
@@ -210,30 +233,15 @@ pub mod pallet {
 					Error::<T>::IdentityAlreadyVerified
 				);
 			}
-			let prime_address_raw: [u8; 32] = who
-				.encode()
-				.try_into()
-				.map_err(|_| DispatchError::Other("invalid account id"))?;
-			let prime_user_address: Address32 = prime_address_raw.into();
 			if let Identity::Substrate { network, address } = identity {
 				if network.ss58_prefix() == parent_ss58_prefix {
-					ensure!(prime_user_address != address, Error::<T>::IdentityShouldBeDisallowed);
+					let address_raw: [u8; 32] = who
+						.encode()
+						.try_into()
+						.map_err(|_| DispatchError::Other("invalid account id"))?;
+					let user_address: Address32 = address_raw.into();
+					ensure!(user_address != address, Error::<T>::IdentityShouldBeDisallowed);
 				}
-			}
-
-			let prime_id = Identity::Substrate {
-				network: SubstrateNetwork::from_ss58_prefix(parent_ss58_prefix),
-				address: prime_user_address,
-			};
-			if IDGraphs::<T>::get(&who, &prime_id).is_none() {
-				// Not existed, so create the prime entry.
-				let context = IdentityContext::<T> {
-					metadata: None,
-					creation_request_block: Some(0),
-					verification_request_block: Some(0),
-					is_verified: true,
-				};
-				IDGraphs::<T>::insert(&who, &prime_id, context);
 			}
 
 			let context = IdentityContext {
@@ -256,6 +264,7 @@ pub mod pallet {
 			T::ManageOrigin::ensure_origin(origin)?;
 			ensure!(Self::user_shielding_keys(&who).is_some(), Error::<T>::InvalidUserShieldingKey);
 			ensure!(IDGraphs::<T>::contains_key(&who, &identity), Error::<T>::IdentityNotExist);
+
 			if let Some(IdentityContext::<T> {
 				metadata,
 				creation_request_block,
@@ -289,13 +298,7 @@ pub mod pallet {
 			ensure!(Self::user_shielding_keys(&who).is_some(), Error::<T>::InvalidUserShieldingKey);
 			IDGraphs::<T>::try_mutate(&who, &identity, |context| -> DispatchResult {
 				let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
-
-				if c.metadata.is_none()
-					&& c.creation_request_block == Some(0)
-					&& c.verification_request_block == Some(0)
-				{
-					ensure!(!c.is_verified, Error::<T>::IdentityAlreadyVerified);
-				}
+				ensure!(!c.is_verified, Error::<T>::IdentityAlreadyVerified);
 
 				if let Some(b) = c.creation_request_block {
 					ensure!(
