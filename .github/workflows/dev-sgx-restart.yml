@@ -8,6 +8,7 @@ on:
         options: 
         - stop
         - restart
+        - restart-worker-only
 jobs:
   action:
     runs-on: tee-staging
@@ -16,8 +17,20 @@ jobs:
         if: "${{ github.event.inputs.action == 'stop' }}"
         run: |
           sudo systemctl stop integritee.service
-      - name: restarting the service
+          sudo /home/ubuntu/repo/litentry-parachain/tee-worker/scripts/litentry/stop_parachain.sh
+          sleep 5
+
+      - name: stoping the service
         if: "${{ github.event.inputs.action == 'restart' }}"
+        run: |
+          sudo systemctl stop integritee.service
+          sudo /home/ubuntu/repo/litentry-parachain/tee-worker/scripts/litentry/stop_parachain.sh
+          sleep 30  #after stoping the docker, it takes some time to release port 9944 by docker-proxy. 
+          sudo /home/ubuntu/repo/litentry-parachain/tee-worker/scripts/litentry/start_parachain.sh
+          sudo systemctl start integritee.service
+
+      - name: restarting the service
+        if: "${{ github.event.inputs.action == 'restart-worker-only' }}"
         run: |
           sudo systemctl stop integritee.service || true
           sleep 5
