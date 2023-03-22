@@ -68,7 +68,7 @@ describeLitentry('Test Batch Utility', (context) => {
 
         // Construct the batch and send the transactions
         const txs = [twi_tx, twi_tx_2];
-        await context.api.tx.utility.batchAll(txs).signAndSend(context.substrateWallet.alice, ({ status }) => {
+        await context.api.tx.utility.batchAll(txs).signAndSend(context.substrateWallet.alice, ({ status }: any) => {
             if (status.isInBlock) {
                 console.log(`included in ${status.asInBlock}`);
             }
@@ -118,7 +118,7 @@ describeLitentry('Test Batch Utility', (context) => {
 
         // Construct the batch and send the transactions
         const txs = [verify_tx];
-        await context.api.tx.utility.batchAll(txs).signAndSend(context.substrateWallet.alice, ({ status }) => {
+        await context.api.tx.utility.batchAll(txs).signAndSend(context.substrateWallet.alice, ({ status }: any) => {
             if (status.isInBlock) {
                 console.log(`included in ${status.asInBlock}`);
             }
@@ -148,7 +148,7 @@ describeLitentry('Test Batch Utility', (context) => {
 
         // Construct the batch and send the transactions
         const txs = [rm_id_tx, rm_id_tx2];
-        await context.api.tx.utility.batchAll(txs).signAndSend(context.substrateWallet.alice, ({ status }) => {
+        await context.api.tx.utility.batchAll(txs).signAndSend(context.substrateWallet.alice, ({ status }: any) => {
             if (status.isInBlock) {
                 console.log(`included in ${status.asInBlock}`);
             }
