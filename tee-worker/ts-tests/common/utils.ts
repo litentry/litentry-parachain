@@ -26,7 +26,7 @@ import { ethers } from 'ethers';
 import { assert, expect } from 'chai';
 import Ajv from 'ajv';
 import * as ed from '@noble/ed25519';
-import { blake2128Concat, getSigner, identity, twox64Concat } from './helpers';
+import { blake2128Concat, getSubstrateSigner, identity, twox64Concat } from './helpers';
 import { getMetadata, sendRequest } from './call';
 const base58 = require('micro-base58');
 const crypto = require('crypto');
@@ -75,6 +75,12 @@ export async function initIntegrationTestContext(
         dave: new ethers.Wallet(getEthereumSigner().dave),
         eve: new ethers.Wallet(getEthereumSigner().eve),
     };
+    const substrateWallet = {
+        alice: getSubstrateSigner().alice,
+        bob: getSubstrateSigner().bob,
+        charlie: getSubstrateSigner().charlie,
+        eve: getSubstrateSigner().eve,
+    };
     const api = await ApiPromise.create({
         provider,
         types: teeTypes,
@@ -92,8 +98,8 @@ export async function initIntegrationTestContext(
         api,
         teeShieldingKey,
         mrEnclave,
-        defaultSigner: getSigner(),
         ethersWallet,
+        substrateWallet,
         metaData,
     };
 }
@@ -184,12 +190,12 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
         // Set timeout to 6000 seconds
         this.timeout(6000000);
         let context: IntegrationTestContext = {
-            defaultSigner: [] as KeyringPair[],
             mrEnclave: '0x11' as HexString,
             api: {} as ApiPromise,
             tee: {} as WebSocketAsPromised,
             teeShieldingKey: {} as KeyObject,
             ethersWallet: {},
+            substrateWallet: {},
             metaData: {} as Metadata,
         };
 
@@ -199,13 +205,12 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
                 process.env.WORKER_END_POINT!,
                 process.env.SUBSTRATE_END_POINT!
             );
-
-            context.defaultSigner = tmp.defaultSigner;
             context.mrEnclave = tmp.mrEnclave;
             context.api = tmp.api;
             context.tee = tmp.tee;
             context.teeShieldingKey = tmp.teeShieldingKey;
             context.ethersWallet = tmp.ethersWallet;
+            context.substrateWallet = tmp.substrateWallet;
             context.metaData = tmp.metaData;
         });
 
