@@ -143,12 +143,12 @@ describeLitentry('Test Identity', (context) => {
         const resp_challengecode = await checkUserChallengeCode(
             context,
             'IdentityManagement',
-            'IDGraphs',
+            'ChallengeCodes',
             u8aToHex(context.defaultSigner[0].addressRaw),
             encode
         );
 
-        assert.equal(resp_challengecode, '0x', 'check challengecode error, should be empty');
+        assert.equal(resp_challengecode, '0x', 'challengecode should be empty before create');
     });
     step('Invalid user shielding key', async function () {
         const encode = context.api.createType('LitentryIdentity', substrateIdentity).toHex();
