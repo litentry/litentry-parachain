@@ -275,7 +275,7 @@ export type Web3Network = {
 };
 
 export type Web2Network = 'Twitter' | 'Discord' | 'Github';
-export type SubstrateNetwork = 'Polkadot' | 'Kusama' | 'Litentry' | 'Litmus' | 'Khala' | 'TestNet';
+export type SubstrateNetwork = 'Polkadot' | 'Kusama' | 'Litentry' | 'Litmus' | 'LitentryRococo' | 'Khala' | 'TestNet';
 export type EvmNetwork = 'Ethereum' | 'BSC';
 
 export type IdentityGenericEvent = {
