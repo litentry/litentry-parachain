@@ -64,6 +64,7 @@ pub enum SubstrateNetwork {
 	Kusama,
 	Litentry,
 	Litmus,
+	LitentryRococo,
 }
 
 impl SubstrateNetwork {
@@ -74,6 +75,7 @@ impl SubstrateNetwork {
 			Self::Kusama => 2,
 			Self::Litentry => 31,
 			Self::Litmus => 131,
+			Self::LitentryRococo => 42,
 		}
 	}
 }

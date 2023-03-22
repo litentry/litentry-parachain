@@ -80,10 +80,12 @@ pub fn build(
 			verified_network,
 			VerifiedCredentialsNetwork::Litentry
 				| VerifiedCredentialsNetwork::Litmus
+				| VerifiedCredentialsNetwork::LitentryRococo
 				| VerifiedCredentialsNetwork::Ethereum
 		) {
 			let q_min_balance: f64 = if verified_network == VerifiedCredentialsNetwork::Litentry
 				|| verified_network == VerifiedCredentialsNetwork::Litmus
+				|| verified_network == VerifiedCredentialsNetwork::LitentryRococo
 			{
 				(min_balance / (10 ^ 12)) as f64
 			} else {

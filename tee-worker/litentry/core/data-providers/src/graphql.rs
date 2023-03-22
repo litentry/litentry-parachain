@@ -51,6 +51,7 @@ impl Default for GraphQLClient {
 pub enum VerifiedCredentialsNetwork {
 	Litentry,
 	Litmus,
+	LitentryRococo,
 	Polkadot,
 	Kusama,
 	Khala,
@@ -62,6 +63,7 @@ impl From<SubstrateNetwork> for VerifiedCredentialsNetwork {
 		match network {
 			SubstrateNetwork::Litmus => Self::Litmus,
 			SubstrateNetwork::Litentry => Self::Litentry,
+			SubstrateNetwork::LitentryRococo => Self::LitentryRococo,
 			SubstrateNetwork::Polkadot => Self::Polkadot,
 			SubstrateNetwork::Kusama => Self::Kusama,
 			SubstrateNetwork::Khala => Self::Khala,
