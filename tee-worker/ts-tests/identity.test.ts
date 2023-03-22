@@ -150,17 +150,17 @@ describeLitentry('Test Identity', (context) => {
 
         assert.equal(resp_challengecode, '0x', 'check challengecode error, should be empty');
     });
-    // step('Invalid user shielding key', async function () {
-    //     const encode = context.api.createType('LitentryIdentity', substrateIdentity).toHex();
-    //     const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
-    //     const tx = context.api.tx.identityManagement.createIdentity(context.mrEnclave, context.defaultSigner[0].address, `0x${ciphertext}`, null);
-    //     await sendTxUntilInBlock(context.api, tx, context.defaultSigner[0]);
+    step('Invalid user shielding key', async function () {
+        const encode = context.api.createType('LitentryIdentity', substrateIdentity).toHex();
+        const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
+        const tx = context.api.tx.identityManagement.createIdentity(context.mrEnclave, context.defaultSigner[0].address, `0x${ciphertext}`, null);
+        await sendTxUntilInBlock(context.api, tx, context.defaultSigner[0]);
 
-    //     const events = await listenEvent(context.api, 'identityManagement', ['StfError']);
-    //     expect(events.length).to.be.equal(1);
+        const events = await listenEvent(context.api, 'identityManagement', ['StfError']);
+        expect(events.length).to.be.equal(1);
 
-    //     await checkFailReason(events, 'InvalidUserShieldingKey', true);
-    // })
+        await checkFailReason(events, 'InvalidUserShieldingKey', true);
+    })
 
     step('set user shielding key', async function () {
         const alice = await setUserShieldingKey(context, context.defaultSigner[0], aesKey, true);
