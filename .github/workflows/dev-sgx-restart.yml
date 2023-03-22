@@ -20,7 +20,7 @@ jobs:
           sudo /home/ubuntu/repo/litentry-parachain/tee-worker/scripts/litentry/stop_parachain.sh
           sleep 5
 
-      - name: stoping the service
+      - name: restarting the service
         if: "${{ github.event.inputs.action == 'restart' }}"
         run: |
           sudo systemctl stop integritee.service
@@ -29,7 +29,7 @@ jobs:
           sudo /home/ubuntu/repo/litentry-parachain/tee-worker/scripts/litentry/start_parachain.sh
           sudo systemctl start integritee.service
 
-      - name: restarting the service
+      - name: restarting the worker only
         if: "${{ github.event.inputs.action == 'restart-worker-only' }}"
         run: |
           sudo systemctl stop integritee.service || true
