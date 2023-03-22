@@ -38,8 +38,8 @@ use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier, Signature};
 use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
-	aes_encrypt_default, Assertion, ChallengeCode, ETHSenderError, IMPError, Identity, ParentchainBlockNumber,
-	UserShieldingKeyType, VCMPError, ValidationData,
+	aes_encrypt_default, Assertion, ChallengeCode, ETHSenderError, IMPError, Identity,
+	ParentchainBlockNumber, UserShieldingKeyType, VCMPError, ValidationData,
 };
 use log::*;
 use sp_io::hashing::blake2_256;
@@ -664,8 +664,13 @@ where
 				Ok(())
 			},
 			TrustedCall::send_blockchain_vc_runtime(enclave_account, vc_info, chain_id) => {
-				if let Err(e) = Self::send_blockchain_vc_runtime(enclave_account, vc_info, chain_id) {
-					add_call_from_ethereum_sender_error(calls, node_metadata_repo, e.to_ethsender_error());
+				if let Err(e) = Self::send_blockchain_vc_runtime(enclave_account, vc_info, chain_id)
+				{
+					add_call_from_ethereum_sender_error(
+						calls,
+						node_metadata_repo,
+						e.to_ethsender_error(),
+					);
 				}
 				Ok(())
 			},
@@ -782,8 +787,7 @@ fn add_call_from_ethereum_sender_error<NodeMetadataRepository>(
 	e: ETHSenderError,
 ) where
 	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType:
-		EthereumSenderCallIndexes + SystemSs58Prefix,
+	NodeMetadataRepository::MetadataType: EthereumSenderCallIndexes + SystemSs58Prefix,
 {
 	match node_metadata_repo.get_from_metadata(|m| m.ethereum_sender_some_error_call_indexes()) {
 		Ok(Ok(c)) => warn!("No call back yet"),

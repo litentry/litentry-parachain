@@ -215,11 +215,7 @@ impl TrustedCallSigned {
 		vc_info: Vec<u8>,
 		chain_id: u64,
 	) -> StfResult<()> {
-		debug!(
-			"send blockchain vc runtime, vc_info = {:?}, chain_id = {:?}",
-			vc_info,
-			chain_id
-		);
+		debug!("send blockchain vc runtime, vc_info = {:?}, chain_id = {:?}", vc_info, chain_id);
 		ensure_enclave_signer_account(&enclave_account)?;
 		ita_sgx_runtime::EthereumSenderDummyCall::<Runtime>::send_blockchain_vc {
 			vc_info,
