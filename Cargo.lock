@@ -4091,7 +4091,7 @@ dependencies = [
  "pallet-treasury",
  "pallet-utility",
  "pallet-vesting",
- "pallet-whitelist",
+ "pallet-whitelist 4.0.0-dev",
  "pallet-xcm",
  "pallet-xcm-benchmarks",
  "parity-scale-codec 3.4.0",
@@ -7117,6 +7117,22 @@ dependencies = [
  "log",
  "parity-scale-codec 3.4.0",
  "scale-info",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-whitelist"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec 3.4.0",
+ "scale-info",
+ "sp-core",
+ "sp-io",
  "sp-runtime",
  "sp-std",
 ]
