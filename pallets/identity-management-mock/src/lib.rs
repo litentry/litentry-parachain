@@ -321,7 +321,7 @@ pub mod pallet {
 						.try_into()
 						.map_err(|_| DispatchError::Other("invalid account id"))?;
 					let user_address: Address32 = address_raw.into();
-					ensure!(user_address != address, Error::<T>::IdentityShouldBeDisallowed);
+					ensure!(user_address != address, Error::<T>::CreatePrimeIdentityNotAllowed);
 				}
 			}
 			let metadata = match encrypted_metadata {
