@@ -26,7 +26,9 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	pub use frame_support::{pallet_prelude::*, traits::StorageVersion, transactional, PalletId, Parameter};
+	pub use frame_support::{
+		pallet_prelude::*, traits::StorageVersion, transactional, PalletId, Parameter,
+	};
 	use frame_system::{
 		pallet_prelude::*,
 		{self as system},
@@ -80,10 +82,10 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		pub fn add_whitelist(origin: OriginFor<T>, v: T::AccountId) -> DispatchResult {
 			T::WhitelistManagerOrigin::ensure_origin(origin)?;
-            ensure!(!Self::is_whitelist(&v), Error::<T>::WhitelistAlreadyExists);
+			ensure!(!Self::is_whitelist(&v), Error::<T>::WhitelistAlreadyExists);
 			Whitelists::<T>::insert(&v, true);
-            Self::deposit_event(Event::WhitelistAdded(v));
-            Ok(())
+			Self::deposit_event(Event::WhitelistAdded(v));
+			Ok(())
 		}
 
 		/// Batch adding of new whitelists
@@ -97,7 +99,7 @@ pub mod pallet {
 				Whitelists::<T>::insert(&v, true);
 				Self::deposit_event(Event::WhitelistAdded(v));
 			}
-            Ok(())
+			Ok(())
 		}
 
 		/// Removes an existing whitelist
@@ -105,17 +107,20 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		pub fn remove_whitelist(origin: OriginFor<T>, v: T::AccountId) -> DispatchResult {
 			T::WhitelistManagerOrigin::ensure_origin(origin)?;
-            ensure!(Self::is_whitelist(&v), Error::<T>::WhitelistInvalid);
+			ensure!(Self::is_whitelist(&v), Error::<T>::WhitelistInvalid);
 			Whitelists::<T>::remove(&v);
-            Self::deposit_event(Event::WhitelistRemoved(v));
-            Ok(())
+			Self::deposit_event(Event::WhitelistRemoved(v));
+			Ok(())
 		}
 
 		/// Batch Removing existing whitelists
 		#[pallet::call_index(3)]
 		#[pallet::weight(100_000)]
 		#[transactional]
-		pub fn batch_remove_whitelists(origin: OriginFor<T>, vs: Vec<T::AccountId>) -> DispatchResult {
+		pub fn batch_remove_whitelists(
+			origin: OriginFor<T>,
+			vs: Vec<T::AccountId>,
+		) -> DispatchResult {
 			T::WhitelistManagerOrigin::ensure_origin(origin)?;
 			for v in vs {
 				ensure!(Self::is_whitelist(&v), Error::<T>::WhitelistInvalid);
@@ -158,7 +163,7 @@ pub mod pallet {
 	impl<T: Config> EnsureOrigin<T::RuntimeOrigin> for EnsureWhitelist<T> {
 		type Success = T::AccountId;
 		fn try_origin(o: T::RuntimeOrigin) -> Result<Self::Success, T::RuntimeOrigin> {
-			// If function off, then pass everything as long as signed 
+			// If function off, then pass everything as long as signed
 			if !Pallet::<T>::whitelist_on() {
 				o.into().and_then(|o| match o {
 					system::RawOrigin::Signed(who) => Ok(who),
@@ -166,8 +171,8 @@ pub mod pallet {
 				})
 			} else {
 				o.into().and_then(|o| match o {
-					system::RawOrigin::Signed(ref who) 
-                    	if Pallet::<T>::is_whitelist(who) => Ok(who.clone()),
+					system::RawOrigin::Signed(ref who) if Pallet::<T>::is_whitelist(who) =>
+						Ok(who.clone()),
 					r => Err(T::RuntimeOrigin::from(r)),
 				})
 			}

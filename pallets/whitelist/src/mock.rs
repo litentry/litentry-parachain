@@ -106,10 +106,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	let treasury_account: u64 = 0x8;
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	pallet_balances::GenesisConfig::<Test> {
-		balances: vec![
-			(ACCOUNT_A, ENDOWED_BALANCE),
-			(treasury_account, ENDOWED_BALANCE),
-		],
+		balances: vec![(ACCOUNT_A, ENDOWED_BALANCE), (treasury_account, ENDOWED_BALANCE)],
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();

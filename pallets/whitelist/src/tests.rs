@@ -18,8 +18,8 @@
 
 use super::{
 	mock::{
-		assert_events, new_test_ext, Whitelist, RuntimeEvent, 
-		RuntimeOrigin, Test, ACCOUNT_A, ACCOUNT_B, ACCOUNT_C,
+		assert_events, new_test_ext, RuntimeEvent, RuntimeOrigin, Test, Whitelist, ACCOUNT_A,
+		ACCOUNT_B, ACCOUNT_C,
 	},
 	pallet::Event as PalletEvent,
 	*,
@@ -52,7 +52,10 @@ fn add_remove_whitelist() {
 		);
 
 		// Batch Add: successful
-		assert_ok!(Whitelist::batch_add_whitelists(RuntimeOrigin::root(), vec![ACCOUNT_B, ACCOUNT_C]));
+		assert_ok!(Whitelist::batch_add_whitelists(
+			RuntimeOrigin::root(),
+			vec![ACCOUNT_B, ACCOUNT_C]
+		));
 		assert!(Whitelist::is_whitelist(&ACCOUNT_B));
 		assert!(Whitelist::is_whitelist(&ACCOUNT_C));
 
@@ -73,7 +76,10 @@ fn add_remove_whitelist() {
 		);
 
 		// Batch remove: successful
-		assert_ok!(Whitelist::batch_remove_whitelists(RuntimeOrigin::root(), vec![ACCOUNT_B, ACCOUNT_C]));
+		assert_ok!(Whitelist::batch_remove_whitelists(
+			RuntimeOrigin::root(),
+			vec![ACCOUNT_B, ACCOUNT_C]
+		));
 		assert!(!Whitelist::is_whitelist(&ACCOUNT_B));
 		assert!(!Whitelist::is_whitelist(&ACCOUNT_C));
 
