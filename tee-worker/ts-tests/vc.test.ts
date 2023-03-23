@@ -1,7 +1,7 @@
-import { describeLitentry, checkVc, checkFailReason } from './utils';
+import { describeLitentry, checkVc, checkFailReason, checkUserShieldingKeys } from './common/utils';
 import { step } from 'mocha-steps';
 import { setUserShieldingKey, requestVCs, disableVCs, revokeVCs } from './indirect_calls';
-import { Assertion } from './type-definitions';
+import { Assertion } from './common/type-definitions';
 import { assert } from 'chai';
 import { u8aToHex } from '@polkadot/util';
 import { HexString } from '@polkadot/util/types';
@@ -25,15 +25,37 @@ const assertion = <Assertion>{
 describeLitentry('VC test', async (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     var indexList: HexString[] = [];
+
+    step('check user sidechain storage before create', async function () {
+        const resp_shieldingKey = await checkUserShieldingKeys(
+            context,
+            'IdentityManagement',
+            'UserShieldingKeys',
+            u8aToHex(context.substrateWallet.alice.addressRaw)
+        );
+        assert.equal(resp_shieldingKey, '0x', 'resp_shieldingKey should be empty before set');
+    });
     step('set user shielding key', async function () {
-        const who = await setUserShieldingKey(context, context.defaultSigner[0], aesKey, true);
-        assert.equal(who, u8aToHex(context.defaultSigner[0].addressRaw), 'check caller error');
+        const who = await setUserShieldingKey(context, context.substrateWallet.alice, aesKey, true);
+        assert.equal(who, u8aToHex(context.substrateWallet.alice.addressRaw), 'check caller error');
+
+    });
+
+    step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
+        const resp_shieldingKey = await checkUserShieldingKeys(
+            context,
+            'IdentityManagement',
+            'UserShieldingKeys',
+            u8aToHex(context.substrateWallet.alice.addressRaw)
+        );
+        assert.equal(resp_shieldingKey, aesKey, 'resp_shieldingKey should be equal aesKey after set');
+
     });
     step('Request VC', async () => {
         //request all vc
         const res = (await requestVCs(
             context,
-            context.defaultSigner[0],
+            context.substrateWallet.alice,
             aesKey,
             true,
             context.mrEnclave,
@@ -66,7 +88,7 @@ describeLitentry('VC test', async (context) => {
     step('Request Error VC(A1)', async () => {
         const resp_request_error = (await requestErrorVCs(
             context,
-            context.defaultSigner[1],
+            context.substrateWallet.bob,
             aesKey,
             true,
             context.mrEnclave,
@@ -77,7 +99,7 @@ describeLitentry('VC test', async (context) => {
         await checkFailReason(resp_request_error, 'User shielding key is missing', true);
     });
     step('Disable VC', async () => {
-        const res = (await disableVCs(context, context.defaultSigner[0], aesKey, true, indexList)) as HexString[];
+        const res = (await disableVCs(context, context.substrateWallet.alice, aesKey, true, indexList)) as HexString[];
         for (let k = 0; k < res.length; k++) {
             assert.equal(res[k], indexList[k], 'check index error');
             const registry = (await context.api.query.vcManagement.vcRegistry(indexList[k])) as any;
@@ -88,7 +110,7 @@ describeLitentry('VC test', async (context) => {
         //Alice has already disabled the A1 VC
         const resp_disable_error = (await disableErrorVCs(
             context,
-            context.defaultSigner[0],
+            context.substrateWallet.alice,
             true,
 
             [indexList[0]]
@@ -97,7 +119,7 @@ describeLitentry('VC test', async (context) => {
     });
 
     step('Revoke VC', async () => {
-        const res = (await revokeVCs(context, context.defaultSigner[0], aesKey, true, indexList)) as HexString[];
+        const res = (await revokeVCs(context, context.substrateWallet.alice, aesKey, true, indexList)) as HexString[];
         for (let k = 0; k < res.length; k++) {
             assert.equal(res[k], indexList[k], 'check index error');
             const registry = (await context.api.query.vcManagement.vcRegistry(indexList[k])) as any;
@@ -107,7 +129,7 @@ describeLitentry('VC test', async (context) => {
 
     step('Revoke Error VC(A1)', async () => {
         //Alice has already revoked the A1 VC
-        const resp_revoke_error = (await revokeErrorVCs(context, context.defaultSigner[0], true, [
+        const resp_revoke_error = (await revokeErrorVCs(context, context.substrateWallet.alice, true, [
             indexList[0],
         ])) as string[];
         await checkFailReason(resp_revoke_error, 'vcManagement.VCNotExist', false);
