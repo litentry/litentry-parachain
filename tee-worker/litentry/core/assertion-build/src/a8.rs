@@ -30,8 +30,8 @@ use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsNetwork, VerifiedCredentialsTotalTxs,
 };
 use litentry_primitives::{
-	AssertionNetworks, EvmNetwork, Identity, ParentchainBlockNumber, SubstrateNetwork,
-	ASSERTION_NETWORKS,
+	Assertion, AssertionNetworks, ErrorDetail, EvmNetwork, Identity, ParentchainBlockNumber,
+	SubstrateNetwork, ASSERTION_NETWORKS,
 };
 use log::*;
 use std::{collections::HashSet, str::from_utf8, string::ToString, vec, vec::Vec};
@@ -123,7 +123,10 @@ fn assertion_networks_to_vc_networks(
 						network, e
 					);
 
-					return Err(Error::ParseError)
+					return Err(Error::RequestVcFailed(
+						Assertion::A8(networks.clone()),
+						ErrorDetail::ParseError,
+					))
 				},
 			}
 		}
@@ -277,14 +280,13 @@ pub fn build(
 			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
 			credential_unsigned.add_assertion_a8(vc_network_to_vec(target_networks?), min, max);
 
-			return Ok(credential_unsigned)
+			Ok(credential_unsigned)
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
+			Err(Error::RequestVcFailed(Assertion::A8(networks), e.to_error_detail()))
 		},
 	}
-
-	Err(Error::Assertion8Failed)
 }
 
 #[cfg(test)]

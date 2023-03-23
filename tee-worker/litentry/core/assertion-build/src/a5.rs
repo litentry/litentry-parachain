@@ -24,7 +24,9 @@ use crate::Error;
 use lc_data_providers::{
 	twitter_litentry::TwitterLitentryClient, twitter_official::TwitterOfficialClient,
 };
-use litentry_primitives::{Identity, ParameterString, Web2Network};
+use litentry_primitives::{
+	Assertion, ErrorDetail, ErrorString, Identity, ParameterString, Web2Network,
+};
 use std::{string::String, vec::Vec};
 
 pub fn build(
@@ -69,5 +71,8 @@ pub fn build(
 		}
 	}
 	// not match any identities
-	Err(Error::Assertion5Failed)
+	Err(Error::RequestVcFailed(
+		Assertion::A5(twitter_account, original_tweet_id),
+		ErrorDetail::StfError(ErrorString::truncate_from("todo".into())),
+	))
 }

@@ -27,7 +27,8 @@ use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::{discord_litentry::DiscordLitentryClient, vec_to_string};
 use litentry_primitives::{
-	Identity, ParameterString, ParentchainBlockNumber, VCMPError, Web2Network,
+	Assertion, ErrorDetail, Identity, ParameterString, ParentchainBlockNumber, VCMPError,
+	Web2Network,
 };
 use log::*;
 use std::vec::Vec;
@@ -53,9 +54,24 @@ pub fn build(
 
 	let mut has_commented: bool = false;
 
-	let guild_id_s = vec_to_string(guild_id.to_vec()).map_err(|_| VCMPError::ParseError)?;
-	let channel_id_s = vec_to_string(channel_id.to_vec()).map_err(|_| VCMPError::ParseError)?;
-	let role_id_s = vec_to_string(role_id.to_vec()).map_err(|_| VCMPError::ParseError)?;
+	let guild_id_s = vec_to_string(guild_id.to_vec()).map_err(|_| {
+		VCMPError::RequestVcFailed(
+			Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),
+			ErrorDetail::ParseError,
+		)
+	})?;
+	let channel_id_s = vec_to_string(channel_id.to_vec()).map_err(|_| {
+		VCMPError::RequestVcFailed(
+			Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),
+			ErrorDetail::ParseError,
+		)
+	})?;
+	let role_id_s = vec_to_string(role_id.to_vec()).map_err(|_| {
+		VCMPError::RequestVcFailed(
+			Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),
+			ErrorDetail::ParseError,
+		)
+	})?;
 
 	let mut client = DiscordLitentryClient::new();
 	for identity in identities {
@@ -90,7 +106,10 @@ pub fn build(
 		},
 		Err(e) => {
 			error!("Generate unsigned credential A3 failed {:?}", e);
-			Err(VCMPError::Assertion3Failed)
+			Err(VCMPError::RequestVcFailed(
+				Assertion::A3(guild_id, channel_id, role_id),
+				e.to_error_detail(),
+			))
 		},
 	}
 }

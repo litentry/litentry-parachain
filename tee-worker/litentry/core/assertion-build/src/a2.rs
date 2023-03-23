@@ -27,7 +27,8 @@ use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::{discord_litentry::DiscordLitentryClient, vec_to_string};
 use litentry_primitives::{
-	Identity, ParameterString, ParentchainBlockNumber, VCMPError, Web2Network,
+	Assertion, ErrorDetail, Identity, ParameterString, ParentchainBlockNumber, VCMPError,
+	Web2Network,
 };
 use log::*;
 use std::vec::Vec;
@@ -53,7 +54,9 @@ pub fn build(
 	let mut discord_cnt: i32 = 0;
 	let mut has_joined: bool = false;
 
-	let guild_id_s = vec_to_string(guild_id.to_vec()).map_err(|_| VCMPError::ParseError)?;
+	let guild_id_s = vec_to_string(guild_id.to_vec()).map_err(|_| {
+		VCMPError::RequestVcFailed(Assertion::A2(guild_id.clone()), ErrorDetail::ParseError)
+	})?;
 
 	let mut client = DiscordLitentryClient::new();
 	for identity in identities {
@@ -87,13 +90,13 @@ pub fn build(
 
 			let value = discord_cnt > 0 && has_joined;
 			credential_unsigned.add_assertion_a2(value, guild_id_s);
-			return Ok(credential_unsigned)
+			Ok(credential_unsigned)
 		},
 		Err(e) => {
 			error!("Generate unsigned credential A2 failed {:?}", e);
+			Err(VCMPError::RequestVcFailed(Assertion::A2(guild_id), e.to_error_detail()))
 		},
 	}
-	Err(VCMPError::Assertion2Failed)
 }
 
 #[cfg(test)]

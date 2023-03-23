@@ -242,7 +242,7 @@ impl TrustedCallSigned {
 		Ok(())
 	}
 
-	pub fn build_assertion(
+	pub fn request_vc(
 		enclave_account: AccountId,
 		shard: &ShardIdentifier,
 		who: AccountId,
@@ -256,34 +256,33 @@ impl TrustedCallSigned {
 		for id in &id_graph {
 			if id.1.is_verified {
 				vec_identity.try_push(id.0.clone()).map_err(|_| {
-					let error_msg =
-						"The length of the identity vector exceeds MaxIdentityLength".into();
-					error!("	[BuildAssertion] : {}", error_msg);
-
-					StfError::AssertionBuildFail(error_msg)
+					let error_msg = "vec_identity exceeds max length".into();
+					error!("[RequestVc] : {:?}", error_msg);
+					StfError::RequestVcFailed(
+						assertion.clone(),
+						ErrorDetail::StfError(ErrorString::truncate_from(error_msg)),
+					)
 				})?;
 			}
 		}
 
-		if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
-			let request: RequestType =
-				AssertionBuildRequest { shard: *shard, who, assertion, vec_identity, bn, key }
-					.into();
-			let sender = StfRequestSender::new();
-			sender.send_stf_request(request).map_err(|e| {
-				let error_msg = format!("{:?}", e);
-				error!("	[BuildAssertion] : {}", error_msg);
-
-				StfError::AssertionBuildFail(error_msg)
-			})
-		} else {
-			error!(
-				"user shielding key is missing, {:?}, {:?}",
-				account_id_to_string(&who),
-				assertion
-			);
-			Err(StfError::AssertionBuildFail("User shielding key is missing".into()))
+		let key = IdentityManagement::user_shielding_keys(&who).ok_or(
+			StfError::RequestVcFailed(assertion.clone(), ErrorDetail::UserShieldingKeyNotFound),
+		)?;
+		let request: RequestType = AssertionBuildRequest {
+			shard: *shard,
+			who,
+			assertion: assertion.clone(),
+			vec_identity,
+			bn,
+			key,
 		}
+		.into();
+		let sender = StfRequestSender::new();
+		sender.send_stf_request(request).map_err(|e| {
+			error!("[RequestVc] : {:?}", e);
+			StfError::RequestVcFailed(assertion, ErrorDetail::SendStfRequestFailed)
+		})
 	}
 
 	pub fn set_challenge_code_runtime(

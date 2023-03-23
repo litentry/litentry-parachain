@@ -26,7 +26,7 @@ use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_stf_task_sender::MaxIdentityLength;
-use litentry_primitives::{Identity, ParentchainBlockNumber, VCMPError};
+use litentry_primitives::{Assertion, Identity, ParentchainBlockNumber, VCMPError};
 use log::*;
 use sp_runtime::BoundedVec;
 
@@ -65,7 +65,7 @@ pub fn build(
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
-			Err(VCMPError::Assertion1Failed)
+			Err(VCMPError::RequestVcFailed(Assertion::A1, e.to_error_detail()))
 		},
 	}
 }

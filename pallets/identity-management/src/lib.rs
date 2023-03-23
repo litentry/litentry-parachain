@@ -252,18 +252,18 @@ pub mod pallet {
 		pub fn some_error(origin: OriginFor<T>, error: IMPError) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			match error {
-				IMPError::SetUserShieldingKeyFailed(d) =>
-					Self::deposit_event(Event::SetUserShieldingKeyFailed { detail: d }),
-				IMPError::CreateIdentityFailed(d) =>
-					Self::deposit_event(Event::CreateIdentityFailed { detail: d }),
-				IMPError::RemoveIdentityFailed(d) =>
-					Self::deposit_event(Event::RemoveIdentityFailed { detail: d }),
-				IMPError::VerifyIdentityFailed(d) =>
-					Self::deposit_event(Event::VerifyIdentityFailed { detail: d }),
+				IMPError::SetUserShieldingKeyFailed(detail) =>
+					Self::deposit_event(Event::SetUserShieldingKeyFailed { detail }),
+				IMPError::CreateIdentityFailed(detail) =>
+					Self::deposit_event(Event::CreateIdentityFailed { detail }),
+				IMPError::RemoveIdentityFailed(detail) =>
+					Self::deposit_event(Event::RemoveIdentityFailed { detail }),
+				IMPError::VerifyIdentityFailed(detail) =>
+					Self::deposit_event(Event::VerifyIdentityFailed { detail }),
 				IMPError::ImportScheduledEnclaveFailed =>
 					Self::deposit_event(Event::ImportScheduledEnclaveFailed),
-				IMPError::UnclassifiedError(d) =>
-					Self::deposit_event(Event::UnclassifiedError { detail: d }),
+				IMPError::UnclassifiedError(detail) =>
+					Self::deposit_event(Event::UnclassifiedError { detail }),
 			}
 			Ok(Pays::No.into())
 		}

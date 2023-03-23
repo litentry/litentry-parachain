@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::Assertion;
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
@@ -30,6 +31,9 @@ pub enum ErrorDetail {
 	// error when sending stf request to the receiver
 	SendStfRequestFailed,
 	ChallengeCodeNotFound,
+	UserShieldingKeyNotFound,
+	// generic parse error, can be caused by UTF8/JSON serde..
+	ParseError,
 	// errors when verifying identities
 	DecodeHexPayloadFailed(ErrorString),
 	HttpRequestFailed(ErrorString),
@@ -66,25 +70,8 @@ impl frame_support::traits::PalletError for IMPError {
 // Verified Credential(VC) Management Pallet Error
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 pub enum VCMPError {
-	HttpRequestFailed(ErrorString),
-	// Indirect call handling errors when importing parachain blocks
-	RequestVCHandlingFailed,
-	// tee stf error
-	StfError(ErrorString),
-	// UTF8Error
-	ParseError,
-	// Assertion
-	Assertion1Failed,
-	Assertion2Failed,
-	Assertion3Failed,
-	Assertion4Failed,
-	Assertion5Failed,
-	Assertion6Failed,
-	Assertion7Failed,
-	Assertion8Failed,
-	Assertion10Failed,
-	Assertion11Failed,
+	RequestVcFailed(Assertion, ErrorDetail),
 	// should be unreached, but just to be on the safe side
 	// we should classify the error if we ever get this
-	// UnclassifiedError(ErrorDetail),
+	UnclassifiedError(ErrorDetail),
 }
