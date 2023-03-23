@@ -1,4 +1,4 @@
-import { encryptWithTeeShieldingKey, listenEvent, sendTxUntilInBlock, sendTxUntilInBlockList } from './utils';
+import { encryptWithTeeShieldingKey } from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { HexString } from '@polkadot/util/types';
 import { Event } from '@polkadot/types/interfaces';
@@ -9,8 +9,9 @@ import {
     LitentryIdentity,
     LitentryValidationData,
     TransactionSubmit,
-} from './type-definitions';
+} from './common/type-definitions';
 import { expect } from 'chai';
+import { listenEvent, sendTxUntilInBlock, sendTxUntilInBlockList } from './common/transactions';
 
 export async function setErrorUserShieldingKey(
     context: IntegrationTestContext,
@@ -145,9 +146,15 @@ export async function removeErrorIdentities(
     await sendTxUntilInBlockList(context.api, txs, signer);
 
     if (listening) {
-        const events = await listenEvent(context.api, 'identityManagement', ['StfError']);
+        const events = await listenEvent(context.api, 'identityManagement', ['StfError']) as any;
+        let results: string[] = [];
         expect(events.length).to.be.equal(identities.length);
-        return events;
+        for (let i = 0; i < events.length; i++) {
+            const data = events[i].data as any;
+            results.push(data.reason.toHuman());
+        }
+        return [...results];
+
     }
     return undefined;
 }

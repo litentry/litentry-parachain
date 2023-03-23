@@ -9,28 +9,29 @@ import {
     IntegrationTestContext,
     LitentryIdentity,
     teeTypes,
-    WorkerRpcReturnValue,
-    TransactionSubmit,
     JsonSchema,
+    IdentityContext,
 } from './type-definitions';
-import { blake2AsHex, cryptoWaitReady } from '@polkadot/util-crypto';
-import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
+import { blake2AsHex, cryptoWaitReady, xxhashAsU8a } from '@polkadot/util-crypto';
+import { Metadata } from '@polkadot/types';
+import { SiLookupTypeId } from '@polkadot/types/interfaces';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { Codec } from '@polkadot/types/types';
 import { HexString } from '@polkadot/util/types';
-import { hexToU8a, u8aToHex, stringToU8a } from '@polkadot/util';
+import { hexToU8a, u8aToHex, u8aConcat } from '@polkadot/util';
 import { KeyObject } from 'crypto';
-import { Event, EventRecord } from '@polkadot/types/interfaces';
+import { Event, StorageEntryMetadataV14, StorageHasherV14 } from '@polkadot/types/interfaces';
 import { after, before, describe } from 'mocha';
-import { generateChallengeCode, getSigner } from './web3/setup';
 import { ethers } from 'ethers';
-import { generateTestKeys } from './web3/functions';
 import { assert, expect } from 'chai';
-import { Base64 } from 'js-base64';
 import Ajv from 'ajv';
 import * as ed from '@noble/ed25519';
+import { blake2128Concat, getSubstrateSigner, identity, twox64Concat } from './helpers';
+import { getMetadata, sendRequest } from './call';
 const base58 = require('micro-base58');
 const crypto = require('crypto');
+import { getEthereumSigner } from '../common/helpers';
+
 // in order to handle self-signed certificates we need to turn off the validation
 // TODO add self signed certificate ??
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
@@ -47,16 +48,6 @@ export function sleep(secs: number) {
 export async function getListenTimeoutInBlocks(api: ApiPromise) {
     const slotDuration = await api.call.auraApi.slotDuration();
     return listenTimeoutInMilliSeconds / parseInt(slotDuration.toString());
-}
-
-export async function sendRequest(
-    wsClient: WebSocketAsPromised,
-    request: any,
-    api: ApiPromise
-): Promise<WorkerRpcReturnValue> {
-    const resp = await wsClient.sendRequest(request, { requestId: 1, timeout: 6000 });
-    const resp_json = api.createType('WorkerRpcReturnValue', resp.result).toJSON() as WorkerRpcReturnValue;
-    return resp_json;
 }
 
 export async function initWorkerConnection(endpoint: string): Promise<WebSocketAsPromised> {
@@ -78,118 +69,39 @@ export async function initIntegrationTestContext(
 ): Promise<IntegrationTestContext> {
     const provider = new WsProvider(substrateEndpoint);
     const ethersWallet = {
-        alice: new ethers.Wallet(generateTestKeys().alice),
-        bob: new ethers.Wallet(generateTestKeys().bob),
-        charlie: new ethers.Wallet(generateTestKeys().charlie),
-        dave: new ethers.Wallet(generateTestKeys().dave),
-        eve: new ethers.Wallet(generateTestKeys().eve),
+        alice: new ethers.Wallet(getEthereumSigner().alice),
+        bob: new ethers.Wallet(getEthereumSigner().bob),
+        charlie: new ethers.Wallet(getEthereumSigner().charlie),
+        dave: new ethers.Wallet(getEthereumSigner().dave),
+        eve: new ethers.Wallet(getEthereumSigner().eve),
+    };
+    const substrateWallet = {
+        alice: getSubstrateSigner().alice,
+        bob: getSubstrateSigner().bob,
+        charlie: getSubstrateSigner().charlie,
+        eve: getSubstrateSigner().eve,
     };
     const api = await ApiPromise.create({
         provider,
         types: teeTypes,
     });
+
     await cryptoWaitReady();
 
     const wsp = await initWorkerConnection(workerEndpoint);
+
+    const metaData = await getMetadata(wsp, api);
+
     const { mrEnclave, teeShieldingKey } = await getEnclave(api);
     return <IntegrationTestContext>{
         tee: wsp,
         api,
         teeShieldingKey,
         mrEnclave,
-        defaultSigner: getSigner(),
         ethersWallet,
+        substrateWallet,
+        metaData,
     };
-}
-
-export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrinsic<ApiTypes>, signer: KeyringPair) {
-    return new Promise<{ block: string }>(async (resolve, reject) => {
-        // The purpose of paymentInfo is to check whether the version of polkadot/api is suitable for the current test and to determine whether the transaction is successful.
-        await tx.paymentInfo(signer);
-        const nonce = await api.rpc.system.accountNextIndex(signer.address);
-        await tx.signAndSend(signer, { nonce }, (result) => {
-            if (result.status.isInBlock) {
-                console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
-                resolve({
-                    block: result.status.asInBlock.toString(),
-                });
-            } else if (result.status.isInvalid) {
-                reject(`Transaction is ${result.status}`);
-            }
-        });
-    });
-}
-
-export async function sendTxUntilInBlockList(api: ApiPromise, txs: TransactionSubmit[], signer: KeyringPair) {
-    return Promise.all(
-        txs.map(async ({ tx, nonce }) => {
-            const result = await new Promise((resolve, reject) => {
-                tx.signAndSend(signer, { nonce }, (result) => {
-                    if (result.status.isInBlock) {
-                        //catch error
-                        if (result.dispatchError) {
-                            if (result.dispatchError.isModule) {
-                                const decoded = api.registry.findMetaError(result.dispatchError.asModule);
-                                const { docs, name, section } = decoded;
-
-                                console.log(`${section}.${name}: ${docs.join(' ')}`);
-                                resolve(`${section}.${name}`);
-                            } else {
-                                console.log(result.dispatchError.toString());
-                                resolve(result.dispatchError.toString());
-                            }
-                        } else {
-                            console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
-                            resolve({
-                                block: result.status.asInBlock.toString(),
-                            });
-                        }
-                    } else if (result.status.isInvalid) {
-                        reject(`Transaction is ${result.status}`);
-                    }
-                });
-            });
-            return result;
-        })
-    );
-}
-
-// Subscribe to the chain until we get the first specified event with given `section` and `methods`.
-// We can listen to multiple `methods` as long as they are emitted in the same block.
-// The event consumer should do the decryption optionaly as it's event specific
-export async function listenEvent(api: ApiPromise, section: string, methods: string[]) {
-    return new Promise<Event[]>(async (resolve, reject) => {
-        let startBlock = 0;
-        const unsubscribe = await api.rpc.chain.subscribeNewHeads(async (header) => {
-            const currentBlockNumber = header.number.toNumber();
-            if (startBlock == 0) startBlock = currentBlockNumber;
-            const timeout = await getListenTimeoutInBlocks(api);
-            if (currentBlockNumber > startBlock + timeout) {
-                reject('timeout');
-                return;
-            }
-            console.log(`\n--------- block #${header.number}, hash ${header.hash} ---------\n`);
-            const apiAt = await api.at(header.hash);
-
-            const records: EventRecord[] = (await apiAt.query.system.events()) as any;
-            records.forEach((e, i) => {
-                const s = e.event.section;
-                const m = e.event.method;
-                const d = e.event.data;
-                console.log(`Event[${i}]: ${s}.${m} ${d}`);
-            });
-            const events = records.filter(
-                ({ phase, event }) =>
-                    phase.isApplyExtrinsic && section === event.section && methods.includes(event.method)
-            );
-
-            if (events.length) {
-                resolve(events.map((e) => e.event));
-                unsubscribe();
-                return;
-            }
-        });
-    });
 }
 
 export function decryptWithAES(key: HexString, aesOutput: AESOutput, type: string): HexString {
@@ -197,6 +109,8 @@ export function decryptWithAES(key: HexString, aesOutput: AESOutput, type: strin
         const secretKey = crypto.createSecretKey(hexToU8a(key));
         const tagSize = 16;
         const ciphertext = aesOutput.ciphertext ? aesOutput.ciphertext : hexToU8a('0x');
+        console.log('ciphertext: ', u8aToHex(ciphertext));
+
         const initialization_vector = aesOutput.nonce ? aesOutput.nonce : hexToU8a('0x');
         const aad = aesOutput.aad ? aesOutput.aad : hexToU8a('0x');
 
@@ -276,12 +190,13 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
         // Set timeout to 6000 seconds
         this.timeout(6000000);
         let context: IntegrationTestContext = {
-            defaultSigner: [] as KeyringPair[],
             mrEnclave: '0x11' as HexString,
             api: {} as ApiPromise,
             tee: {} as WebSocketAsPromised,
             teeShieldingKey: {} as KeyObject,
             ethersWallet: {},
+            substrateWallet: {},
+            metaData: {} as Metadata,
         };
 
         before('Starting Litentry(parachain&tee)', async function () {
@@ -290,25 +205,19 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
                 process.env.WORKER_END_POINT!,
                 process.env.SUBSTRATE_END_POINT!
             );
-
-            context.defaultSigner = tmp.defaultSigner;
             context.mrEnclave = tmp.mrEnclave;
             context.api = tmp.api;
             context.tee = tmp.tee;
             context.teeShieldingKey = tmp.teeShieldingKey;
             context.ethersWallet = tmp.ethersWallet;
+            context.substrateWallet = tmp.substrateWallet;
+            context.metaData = tmp.metaData;
         });
 
-        after(async function () {});
+        after(async function () { });
 
         cb(context);
     });
-}
-
-export function getMessage(address: string, wallet: string): string {
-    const challengeCode = generateChallengeCode();
-    const messgae = `Signing in ${process.env.ID_HUB_URL} with ${address} using ${wallet} and challenge code is: ${challengeCode}`;
-    return messgae;
 }
 
 export async function getEnclave(api: ApiPromise): Promise<{
@@ -373,8 +282,8 @@ export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
     expect(isValid).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-            vc.issuer.id === proofJson.verificationMethod &&
-            proofJson.type === 'Ed25519Signature2020'
+        vc.issuer.id === proofJson.verificationMethod &&
+        proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
 }
@@ -385,10 +294,8 @@ export async function checkFailReason(
     isModule: boolean
 ): Promise<boolean> {
     let failReason = '';
-
     response.map((item: any) => {
         isModule ? (failReason = item.toHuman().data.reason) : (failReason = item);
-
         assert.notEqual(
             failReason.search(expectedReason),
             -1,
@@ -396,4 +303,146 @@ export async function checkFailReason(
         );
     });
     return true;
+}
+
+//sidechain storage utils
+export function buildStorageEntry(metadata: Metadata, prefix: string, method: string): StorageEntryMetadataV14 | null {
+    for (const pallet of metadata.asV14.pallets) {
+        if (pallet.name.toString() == prefix) {
+            const storage = pallet.storage.unwrap();
+
+            for (const item of storage.items) {
+                if (item.name.toString() == method) {
+                    return item;
+                }
+            }
+        }
+    }
+    return null;
+}
+
+export function buildStorageKey(
+    metadata: Metadata,
+    prefix: string,
+    method: string,
+    keyTypeId?: SiLookupTypeId,
+    hashers?: Array<StorageHasherV14>,
+    input?: Array<unknown>
+): Uint8Array {
+    let storageKey = u8aConcat(xxhashAsU8a(prefix, 128), xxhashAsU8a(method, 128));
+    if (keyTypeId && hashers && input) {
+        let keyTypeIds = hashers.length === 1 ? [keyTypeId] : metadata.registry.lookup.getSiType(keyTypeId).def.asTuple;
+        for (let i = 0; i < keyTypeIds.length; i++) {
+            const theKeyTypeId = keyTypeIds[i];
+            const theHasher = hashers[i].toString();
+            const theKeyItem = input[i];
+            // get the scale encoded input data by encoding the input
+            const theKeyType = metadata.registry.createLookupType(theKeyTypeId);
+            const theKeyItemEncoded = metadata.registry.createType(theKeyType, theKeyItem).toU8a();
+            // apply hasher
+            let theKeyItemAppliedHasher;
+            if (theHasher == 'Blake2_128Concat') {
+                theKeyItemAppliedHasher = blake2128Concat(theKeyItemEncoded);
+            } else if (theHasher == 'Twox64Concat') {
+                theKeyItemAppliedHasher = twox64Concat(theKeyItemEncoded);
+            } else if (theHasher == 'Identity') {
+                theKeyItemAppliedHasher = identity(theKeyItemEncoded);
+            } else {
+                throw new Error(`The hasher ${theHasher} is not support.`);
+            }
+            storageKey = u8aConcat(storageKey, theKeyItemAppliedHasher);
+        }
+    }
+    return storageKey;
+}
+export async function buildStorageData(
+    metadata: Metadata,
+    prefix: string,
+    method: string,
+    ...input: Array<unknown>
+): Promise<string | null> {
+    const storageEntry = buildStorageEntry(metadata, prefix, method);
+    if (!storageEntry) {
+        throw new Error('Can not find the storage entry from metadata');
+    }
+    let storageKey, valueType;
+
+    if (storageEntry.type.isPlain) {
+        storageKey = buildStorageKey(metadata, prefix, method);
+        valueType = metadata.registry.createLookupType(storageEntry.type.asPlain);
+    } else if (storageEntry.type.isMap) {
+        const { hashers, key, value } = storageEntry.type.asMap;
+        if (input.length != hashers.length) {
+            throw new Error('The `input` param is not correct');
+        }
+        storageKey = buildStorageKey(metadata, prefix, method, key, hashers, input);
+        valueType = metadata.registry.createLookupType(value);
+    } else {
+        throw new Error('Only support plain and map type');
+    }
+    console.debug(`storage key: ${u8aToHex(storageKey)}`);
+    return u8aToHex(storageKey);
+}
+
+export async function checkUserShieldingKeys(
+    context: IntegrationTestContext,
+    pallet: string,
+    method: string,
+    address: HexString
+): Promise<string> {
+    const storageKey = await buildStorageData(context.metaData, pallet, method, address);
+
+    let base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
+
+    let request = {
+        jsonrpc: '2.0',
+        method: 'state_getStorage',
+        params: [base58mrEnclave, storageKey],
+        id: 1,
+    };
+    let resp = await sendRequest(context.tee, request, context.api);
+
+    return resp.value;
+}
+export async function checkUserChallengeCode(
+    context: IntegrationTestContext,
+    pallet: string,
+    method: string,
+    address: HexString,
+    identity: HexString
+): Promise<string> {
+    const storageKey = await buildStorageData(context.metaData, pallet, method, address, identity);
+
+    let base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
+
+    let request = {
+        jsonrpc: '2.0',
+        method: 'state_getStorage',
+        params: [base58mrEnclave, storageKey],
+        id: 1,
+    };
+    let resp = await sendRequest(context.tee, request, context.api);
+    return resp.value;
+}
+
+export async function checkIDGraph(
+    context: IntegrationTestContext,
+    pallet: string,
+    method: string,
+    address: HexString,
+    identity: HexString
+): Promise<IdentityContext> {
+    const storageKey = await buildStorageData(context.metaData, pallet, method, address, identity);
+
+    let base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
+
+    let request = {
+        jsonrpc: '2.0',
+        method: 'state_getStorage',
+        params: [base58mrEnclave, storageKey],
+        id: 1,
+    };
+    let resp = await sendRequest(context.tee, request, context.api);
+    const IDGraph = context.api.createType('IdentityContext', resp.value).toJSON() as IdentityContext;
+    return IDGraph;
 }

@@ -4,7 +4,7 @@ import { HexString } from '@polkadot/util/types';
 import WebSocketAsPromised = require('websocket-as-promised');
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
-
+import { Metadata } from '@polkadot/types';
 export const teeTypes = {
     WorkerRpcReturnString: {
         vec: 'Bytes',
@@ -184,9 +184,9 @@ export type IntegrationTestContext = {
     api: ApiPromise;
     teeShieldingKey: KeyObject;
     mrEnclave: HexString;
-    defaultSigner: KeyringPair[];
-    //@todo add type
     ethersWallet: any;
+    substrateWallet: any,
+    metaData: Metadata
 };
 
 export class AESOutput {
@@ -398,3 +398,4 @@ export const JsonSchema = {
     },
     required: ['id', 'type', 'credentialSubject', 'issuer', 'issuanceBlockNumber', 'proof'],
 };
+
