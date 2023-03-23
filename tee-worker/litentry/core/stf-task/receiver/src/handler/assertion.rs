@@ -28,6 +28,7 @@ use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
+use lc_data_providers::G_DATA_PROVIDERS;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{
 	aes_encrypt_default, AesOutput, Assertion, ErrorDetail, ErrorString, VCMPError,
@@ -161,6 +162,10 @@ where
 				ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
 			)
 		})?;
+		
+		let endpoint_ip = G_DATA_PROVIDERS.read().unwrap().credential_endpoint.clone();
+		credential.credential_subject.set_endpoint(&endpoint_ip);
+
 		credential.issuer.id = account_id_to_string(&enclave_account);
 		let payload = credential.to_json().map_err(|_| {
 			VCMPError::RequestVCFailed(self.req.assertion.clone(), ErrorDetail::ParseError)
