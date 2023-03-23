@@ -195,7 +195,14 @@ describeLitentry('Test Identity', (context) => {
             u8aToHex(context.substrateWallet.alice.addressRaw),
             encode
         );
-        assert.equal(resp_id_graph.is_verified, false, 'check idgraph is_verified error, should be equal false');
+        assert.equal(
+            resp_id_graph.verification_request_block,
+            null,
+            'verification_request_block should  be null before create'
+        );
+        assert.equal(resp_id_graph.linking_request_block, null, 'linking_request_block should  be null before create');
+
+        assert.equal(resp_id_graph.is_verified, false, 'IDGraph is_verified should be equal false before create');
     });
     step('create identities', async function () {
         //Alice create all identities
