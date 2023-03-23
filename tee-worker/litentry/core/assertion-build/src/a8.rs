@@ -45,6 +45,7 @@ lazy_static! {
 
 		let litentry = VerifiedCredentialsNetwork::from(SubstrateNetwork::Litentry);
 		let litmus = VerifiedCredentialsNetwork::from(SubstrateNetwork::Litmus);
+		let litentry_rococo = VerifiedCredentialsNetwork::from(SubstrateNetwork::LitentryRococo);
 		let polkadot = VerifiedCredentialsNetwork::from(SubstrateNetwork::Polkadot);
 		let kusama = VerifiedCredentialsNetwork::from(SubstrateNetwork::Kusama);
 		let khala = VerifiedCredentialsNetwork::from(SubstrateNetwork::Khala);
@@ -52,6 +53,7 @@ lazy_static! {
 
 		m.insert(litentry);
 		m.insert(litmus);
+		m.insert(litentry_rococo);
 		m.insert(polkadot);
 		m.insert(kusama);
 		m.insert(khala);
@@ -88,6 +90,12 @@ fn assertion_networks_to_vc_networks(
 								let litmus =
 									VerifiedCredentialsNetwork::from(SubstrateNetwork::Litmus);
 								set.insert(litmus);
+							},
+							"litentry_rococo" => {
+								let litentry_rococo = VerifiedCredentialsNetwork::from(
+									SubstrateNetwork::LitentryRococo,
+								);
+								set.insert(litentry_rococo);
 							},
 							"polkadot" => {
 								let polkadot =
@@ -145,6 +153,9 @@ fn vc_network_to_vec(networks: HashSet<VerifiedCredentialsNetwork>) -> Vec<&'sta
 			},
 			VerifiedCredentialsNetwork::Litmus => {
 				rets.push("litmus");
+			},
+			VerifiedCredentialsNetwork::LitentryRococo => {
+				rets.push("litentry_rococo");
 			},
 			VerifiedCredentialsNetwork::Polkadot => {
 				rets.push("polkadot");
@@ -312,6 +323,7 @@ mod tests {
 		let mut right = HashSet::<VerifiedCredentialsNetwork>::new();
 		right.insert(VerifiedCredentialsNetwork::Litentry);
 		right.insert(VerifiedCredentialsNetwork::Litmus);
+		right.insert(VerifiedCredentialsNetwork::LitentryRococo);
 		right.insert(VerifiedCredentialsNetwork::Polkadot);
 		right.insert(VerifiedCredentialsNetwork::Kusama);
 		right.insert(VerifiedCredentialsNetwork::Khala);
@@ -330,6 +342,7 @@ mod tests {
 		let mut right = HashSet::<VerifiedCredentialsNetwork>::new();
 		right.insert(VerifiedCredentialsNetwork::Litentry);
 		right.insert(VerifiedCredentialsNetwork::Litmus);
+		right.insert(VerifiedCredentialsNetwork::LitentryRococo);
 		right.insert(VerifiedCredentialsNetwork::Polkadot);
 		right.insert(VerifiedCredentialsNetwork::Kusama);
 		right.insert(VerifiedCredentialsNetwork::Khala);

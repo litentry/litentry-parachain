@@ -460,7 +460,7 @@ describeLitentry('Test Identity', (context) => {
             Substrate: <SubstrateIdentity>{
                 address: `0x${Buffer.from(context.substrateWallet.alice.publicKey).toString('hex')}`,
                 // When testing with integritee-node, change network to: TestNet
-                network: 'Litmus',
+                network: 'LitentryRococo',
             },
         };
 
