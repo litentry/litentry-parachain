@@ -109,7 +109,7 @@ pub mod pallet {
 		// event errors caused by processing in TEE
 		// copied from core_primitives::VCMPError, we use events instead of pallet::errors,
 		// see https://github.com/litentry/litentry-parachain/issues/1275
-		RequestVcFailed { assertion: Assertion, detail: ErrorDetail },
+		RequestVCFailed { assertion: Assertion, detail: ErrorDetail },
 		UnclassifiedError { detail: ErrorDetail },
 	}
 
@@ -201,8 +201,8 @@ pub mod pallet {
 		pub fn some_error(origin: OriginFor<T>, error: VCMPError) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			match error {
-				VCMPError::RequestVcFailed(assertion, detail) =>
-					Self::deposit_event(Event::RequestVcFailed { assertion, detail }),
+				VCMPError::RequestVCFailed(assertion, detail) =>
+					Self::deposit_event(Event::RequestVCFailed { assertion, detail }),
 				VCMPError::UnclassifiedError(detail) =>
 					Self::deposit_event(Event::UnclassifiedError { detail }),
 			}

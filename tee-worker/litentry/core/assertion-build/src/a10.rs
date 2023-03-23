@@ -109,7 +109,7 @@ pub fn build(
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
-			Err(VCMPError::RequestVcFailed(Assertion::A10(min_balance), e.to_error_detail()))
+			Err(VCMPError::RequestVCFailed(Assertion::A10(min_balance), e.to_error_detail()))
 		},
 	}
 }

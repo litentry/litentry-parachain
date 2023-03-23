@@ -114,7 +114,7 @@ where
 		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
 	) -> Result<()> {
 		let (_, (shard, assertion)) = extrinsic.function.clone();
-		let e = Error::VCMPHandlingError(VCMPError::RequestVcFailed(
+		let e = Error::VCMPHandlingError(VCMPError::RequestVCFailed(
 			assertion,
 			ErrorDetail::ImportError,
 		));

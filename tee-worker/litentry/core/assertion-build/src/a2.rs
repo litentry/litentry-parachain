@@ -55,7 +55,7 @@ pub fn build(
 	let mut has_joined: bool = false;
 
 	let guild_id_s = vec_to_string(guild_id.to_vec()).map_err(|_| {
-		VCMPError::RequestVcFailed(Assertion::A2(guild_id.clone()), ErrorDetail::ParseError)
+		VCMPError::RequestVCFailed(Assertion::A2(guild_id.clone()), ErrorDetail::ParseError)
 	})?;
 
 	let mut client = DiscordLitentryClient::new();
@@ -94,7 +94,7 @@ pub fn build(
 		},
 		Err(e) => {
 			error!("Generate unsigned credential A2 failed {:?}", e);
-			Err(VCMPError::RequestVcFailed(Assertion::A2(guild_id), e.to_error_detail()))
+			Err(VCMPError::RequestVCFailed(Assertion::A2(guild_id), e.to_error_detail()))
 		},
 	}
 }

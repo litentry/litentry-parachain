@@ -258,7 +258,7 @@ impl TrustedCallSigned {
 				vec_identity.try_push(id.0.clone()).map_err(|_| {
 					let error_msg = "vec_identity exceeds max length".into();
 					error!("[RequestVc] : {:?}", error_msg);
-					StfError::RequestVcFailed(
+					StfError::RequestVCFailed(
 						assertion.clone(),
 						ErrorDetail::StfError(ErrorString::truncate_from(error_msg)),
 					)
@@ -267,7 +267,7 @@ impl TrustedCallSigned {
 		}
 
 		let key = IdentityManagement::user_shielding_keys(&who).ok_or(
-			StfError::RequestVcFailed(assertion.clone(), ErrorDetail::UserShieldingKeyNotFound),
+			StfError::RequestVCFailed(assertion.clone(), ErrorDetail::UserShieldingKeyNotFound),
 		)?;
 		let request: RequestType = AssertionBuildRequest {
 			shard: *shard,
@@ -281,7 +281,7 @@ impl TrustedCallSigned {
 		let sender = StfRequestSender::new();
 		sender.send_stf_request(request).map_err(|e| {
 			error!("[RequestVc] : {:?}", e);
-			StfError::RequestVcFailed(assertion, ErrorDetail::SendStfRequestFailed)
+			StfError::RequestVCFailed(assertion, ErrorDetail::SendStfRequestFailed)
 		})
 	}
 

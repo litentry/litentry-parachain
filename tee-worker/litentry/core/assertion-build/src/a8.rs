@@ -123,7 +123,7 @@ fn assertion_networks_to_vc_networks(
 						network, e
 					);
 
-					return Err(Error::RequestVcFailed(
+					return Err(Error::RequestVCFailed(
 						Assertion::A8(networks.clone()),
 						ErrorDetail::ParseError,
 					))
@@ -284,7 +284,7 @@ pub fn build(
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVcFailed(Assertion::A8(networks), e.to_error_detail()))
+			Err(Error::RequestVCFailed(Assertion::A8(networks), e.to_error_detail()))
 		},
 	}
 }

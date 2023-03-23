@@ -55,19 +55,19 @@ pub fn build(
 	let mut has_commented: bool = false;
 
 	let guild_id_s = vec_to_string(guild_id.to_vec()).map_err(|_| {
-		VCMPError::RequestVcFailed(
+		VCMPError::RequestVCFailed(
 			Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),
 			ErrorDetail::ParseError,
 		)
 	})?;
 	let channel_id_s = vec_to_string(channel_id.to_vec()).map_err(|_| {
-		VCMPError::RequestVcFailed(
+		VCMPError::RequestVCFailed(
 			Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),
 			ErrorDetail::ParseError,
 		)
 	})?;
 	let role_id_s = vec_to_string(role_id.to_vec()).map_err(|_| {
-		VCMPError::RequestVcFailed(
+		VCMPError::RequestVCFailed(
 			Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),
 			ErrorDetail::ParseError,
 		)
@@ -106,7 +106,7 @@ pub fn build(
 		},
 		Err(e) => {
 			error!("Generate unsigned credential A3 failed {:?}", e);
-			Err(VCMPError::RequestVcFailed(
+			Err(VCMPError::RequestVCFailed(
 				Assertion::A3(guild_id, channel_id, role_id),
 				e.to_error_detail(),
 			))

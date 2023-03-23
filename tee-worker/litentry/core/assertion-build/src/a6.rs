@@ -69,7 +69,7 @@ pub fn build(
 						},
 					Err(e) => {
 						log::warn!("Assertion6 request error:{:?}", e);
-						return Err(Error::RequestVcFailed(
+						return Err(Error::RequestVCFailed(
 							Assertion::A6,
 							ErrorDetail::StfError(ErrorString::truncate_from(
 								format!("{:?}", e).into(),
@@ -121,7 +121,7 @@ pub fn build(
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVcFailed(Assertion::A6, e.to_error_detail()))
+			Err(Error::RequestVCFailed(Assertion::A6, e.to_error_detail()))
 		},
 	}
 }

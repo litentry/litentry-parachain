@@ -87,8 +87,8 @@ pub enum StfError {
 	RemoveIdentityFailed(ErrorDetail),
 	#[display(fmt = "VerifyIdentityFailed: {:?}", _0)]
 	VerifyIdentityFailed(ErrorDetail),
-	#[display(fmt = "RequestVcFailed: {:?} {:?}", _0, _1)]
-	RequestVcFailed(Assertion, ErrorDetail),
+	#[display(fmt = "RequestVCFailed: {:?} {:?}", _0, _1)]
+	RequestVCFailed(Assertion, ErrorDetail),
 }
 
 impl From<MetadataError> for StfError {
@@ -120,7 +120,7 @@ impl StfError {
 	// Convert StfError to VCMPError that would be sent to parentchain
 	pub fn to_vcmp_error(&self) -> VCMPError {
 		match self {
-			StfError::RequestVcFailed(a, d) => VCMPError::RequestVcFailed(a.clone(), d.clone()),
+			StfError::RequestVCFailed(a, d) => VCMPError::RequestVCFailed(a.clone(), d.clone()),
 			_ => VCMPError::UnclassifiedError(ErrorDetail::StfError(ErrorString::truncate_from(
 				format!("{:?}", self).as_bytes().to_vec(),
 			))),

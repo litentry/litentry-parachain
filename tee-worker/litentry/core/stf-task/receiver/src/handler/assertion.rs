@@ -101,7 +101,7 @@ where
 			),
 
 			// TODO: A5 not supported yet
-			Assertion::A5(..) => Err(VCMPError::RequestVcFailed(
+			Assertion::A5(..) => Err(VCMPError::RequestVCFailed(
 				self.req.assertion.clone(),
 				ErrorDetail::StfError(ErrorString::truncate_from("Not supported".into())),
 			)),
@@ -156,18 +156,18 @@ where
 		// TODO: maybe we can tidy up the original errors - some are chaotic and confusing
 		let signer = self.context.enclave_signer.as_ref();
 		let enclave_account = signer.get_enclave_account().map_err(|e| {
-			VCMPError::RequestVcFailed(
+			VCMPError::RequestVCFailed(
 				self.req.assertion.clone(),
 				ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
 			)
 		})?;
 		credential.issuer.id = account_id_to_string(&enclave_account);
 		let payload = credential.to_json().map_err(|_| {
-			VCMPError::RequestVcFailed(self.req.assertion.clone(), ErrorDetail::ParseError)
+			VCMPError::RequestVCFailed(self.req.assertion.clone(), ErrorDetail::ParseError)
 		})?;
 		debug!("[BuildAssertion] VC payload: {}", payload);
 		let (enclave_account, sig) = signer.sign_vc_with_self(payload.as_bytes()).map_err(|e| {
-			VCMPError::RequestVcFailed(
+			VCMPError::RequestVCFailed(
 				self.req.assertion.clone(),
 				ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
 			)
@@ -176,20 +176,20 @@ where
 
 		credential.add_proof(&sig, credential.issuance_block_number, &enclave_account);
 		credential.validate().map_err(|e| {
-			VCMPError::RequestVcFailed(
+			VCMPError::RequestVCFailed(
 				self.req.assertion.clone(),
 				ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
 			)
 		})?;
 
 		let vc_index = credential.get_index().map_err(|e| {
-			VCMPError::RequestVcFailed(
+			VCMPError::RequestVCFailed(
 				self.req.assertion.clone(),
 				ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
 			)
 		})?;
 		let credential_str = credential.to_json().map_err(|_| {
-			VCMPError::RequestVcFailed(self.req.assertion.clone(), ErrorDetail::ParseError)
+			VCMPError::RequestVCFailed(self.req.assertion.clone(), ErrorDetail::ParseError)
 		})?;
 		debug!("[BuildAssertion] Credential: {}, length: {}", credential_str, credential_str.len());
 		let vc_hash = blake2_256(credential_str.as_bytes());

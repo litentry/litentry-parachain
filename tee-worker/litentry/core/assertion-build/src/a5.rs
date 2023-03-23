@@ -71,7 +71,7 @@ pub fn build(
 		}
 	}
 	// not match any identities
-	Err(Error::RequestVcFailed(
+	Err(Error::RequestVCFailed(
 		Assertion::A5(twitter_account, original_tweet_id),
 		ErrorDetail::StfError(ErrorString::truncate_from("todo".into())),
 	))

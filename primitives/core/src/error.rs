@@ -70,7 +70,7 @@ impl frame_support::traits::PalletError for IMPError {
 // Verified Credential(VC) Management Pallet Error
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 pub enum VCMPError {
-	RequestVcFailed(Assertion, ErrorDetail),
+	RequestVCFailed(Assertion, ErrorDetail),
 	// should be unreached, but just to be on the safe side
 	// we should classify the error if we ever get this
 	UnclassifiedError(ErrorDetail),
