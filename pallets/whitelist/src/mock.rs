@@ -28,7 +28,6 @@ use sp_runtime::{
 };
 
 use crate::{self as whitelist, Config};
-pub use pallet_balances as balances;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
