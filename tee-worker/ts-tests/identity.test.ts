@@ -460,7 +460,7 @@ describeLitentry('Test Identity', (context) => {
             Substrate: <SubstrateIdentity>{
                 address: `0x${Buffer.from(context.substrateWallet.alice.publicKey).toString('hex')}`,
                 // When testing with integritee-node, change network to: TestNet
-                network: 'LitentryRococo',
+                network: 'TestNet',
             },
         };
 
@@ -487,19 +487,19 @@ describeLitentry('Test Identity', (context) => {
             identities
         )) as string[];
 
-        await checkFailReason(resp_not_exist_identities, 'IdentityNotExist', true);
+        await checkFailReason(resp_not_exist_identities, 'IdentityNotExist', false);
 
-        //context.substrateWallet.ch doesn't have a challenge code
-        const bob = await setUserShieldingKey(context, context.substrateWallet.ch, aesKey, true);
-        assert.equal(bob, u8aToHex(context.substrateWallet.ch.addressRaw), 'check caller error');
+        //charile doesn't have a challenge code
+        const charlie = await setUserShieldingKey(context, context.substrateWallet.charlie, aesKey, true);
+        assert.equal(charlie, u8aToHex(context.substrateWallet.charlie.addressRaw), 'check caller error');
         const resp_not_created_identities = (await removeErrorIdentities(
             context,
-            context.substrateWallet.ch,
+            context.substrateWallet.charlie,
             true,
             identities
         )) as string[];
 
-        await checkFailReason(resp_not_created_identities, 'IdentityNotExist', true);
+        await checkFailReason(resp_not_created_identities, 'IdentityNotExist', false);
     });
 
     step('set error user shielding key', async function () {
