@@ -17,8 +17,9 @@
 
 use crate::{test::mocks::environment_mock::EnvironmentMock, Aura};
 use itc_parentchain_block_import_dispatcher::trigger_parentchain_block_import_mock::TriggerParentchainBlockImportMock;
-use itp_test::mock::onchain_mock::OnchainMock;
+use itp_test::mock::{handle_state_mock::HandleStateMock, onchain_mock::OnchainMock};
 use itp_types::Block as ParentchainBlock;
+use its_consensus_common::UpdaterTrait;
 use its_primitives::{
 	traits::{
 		Block as SidechainBlockTrait, Header as SidechainHeaderTrait,
@@ -27,8 +28,6 @@ use its_primitives::{
 	types::block::SignedBlock as SignedSidechainBlock,
 };
 use sp_runtime::{app_crypto::ed25519, generic::SignedBlock};
-use itp_test::mock::handle_state_mock::HandleStateMock;
-use its_consensus_common::UpdaterTrait;
 
 type AuthorityPair = ed25519::Pair;
 
@@ -37,7 +36,7 @@ pub type ShardIdentifierFor<SidechainBlock> =
 
 #[derive(Default)]
 pub struct UpdaterMock;
-impl UpdaterTrait for UpdaterMock{}
+impl UpdaterTrait for UpdaterMock {}
 
 pub type TestAura = Aura<
 	AuthorityPair,

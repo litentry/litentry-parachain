@@ -312,7 +312,10 @@ where
 mod tests {
 	use super::*;
 	use crate::test::{
-		fixtures::{types::TestAura, validateer, SLOT_DURATION},
+		fixtures::{
+			types::{TestAura, UpdaterMock},
+			validateer, SLOT_DURATION,
+		},
 		mocks::environment_mock::EnvironmentMock,
 	};
 	use itc_parentchain_block_import_dispatcher::trigger_parentchain_block_import_mock::TriggerParentchainBlockImportMock;
@@ -320,7 +323,7 @@ mod tests {
 		parentchain_block_builder::ParentchainBlockBuilder,
 		parentchain_header_builder::ParentchainHeaderBuilder,
 	};
-	use itp_test::mock::onchain_mock::OnchainMock;
+	use itp_test::mock::{handle_state_mock::HandleStateMock, onchain_mock::OnchainMock};
 	use itp_types::{
 		Block as ParentchainBlock, Enclave, Header as ParentchainHeader,
 		SignedBlock as SignedParentchainBlock,
@@ -328,14 +331,19 @@ mod tests {
 	use its_consensus_slots::PerShardSlotWorkerScheduler;
 	use sp_core::ed25519::Public;
 	use sp_keyring::ed25519::Keyring;
-	use itp_test::mock::handle_state_mock::HandleStateMock;
-	use crate::test::fixtures::types::UpdaterMock;
 
 	fn get_aura(
 		onchain_mock: OnchainMock,
 		trigger_parentchain_import: Arc<TriggerParentchainBlockImportMock<SignedParentchainBlock>>,
 	) -> TestAura {
-		Aura::new(Keyring::Alice.pair(), onchain_mock, trigger_parentchain_import, EnvironmentMock, Arc::new(UpdaterMock), Arc::new(HandleStateMock::default()))
+		Aura::new(
+			Keyring::Alice.pair(),
+			onchain_mock,
+			trigger_parentchain_import,
+			EnvironmentMock,
+			Arc::new(UpdaterMock),
+			Arc::new(HandleStateMock::default()),
+		)
 	}
 
 	fn get_default_aura() -> TestAura {

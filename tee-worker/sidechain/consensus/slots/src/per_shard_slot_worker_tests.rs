@@ -15,13 +15,16 @@
 
 */
 
-use crate::{mocks::{SimpleSlotWorkerMock, UpdaterMock}, PerShardSlotWorkerScheduler, SlotInfo};
+use crate::{
+	mocks::{SimpleSlotWorkerMock, UpdaterMock},
+	PerShardSlotWorkerScheduler, SlotInfo,
+};
 use itc_parentchain_test::parentchain_header_builder::ParentchainHeaderBuilder;
 use itp_settings::sidechain::SLOT_DURATION;
+use itp_test::mock::handle_state_mock::HandleStateMock;
 use itp_time_utils::duration_now;
 use itp_types::{Block as ParentchainBlock, ShardIdentifier};
 use its_block_verification::slot::slot_from_timestamp_and_duration;
-use itp_test::mock::handle_state_mock::HandleStateMock;
 use std::sync::Arc;
 
 type TestSlotWorker = SimpleSlotWorkerMock<ParentchainBlock>;
@@ -29,13 +32,12 @@ type TestSlotWorker = SimpleSlotWorkerMock<ParentchainBlock>;
 #[test]
 fn slot_timings_are_correct_with_multiple_shards() {
 	let slot_info = slot_info_from_now();
-	let mut slot_worker =
-		TestSlotWorker {
-			slot_infos: Vec::new(),
-			slot_time_spent: Some(SLOT_DURATION / 10) ,
-			state_handler: Arc::new(HandleStateMock::default()),
-			updater: Arc::new(UpdaterMock::default()),
-		};
+	let mut slot_worker = TestSlotWorker {
+		slot_infos: Vec::new(),
+		slot_time_spent: Some(SLOT_DURATION / 10),
+		state_handler: Arc::new(HandleStateMock::default()),
+		updater: Arc::new(UpdaterMock::default()),
+	};
 
 	let shards =
 		vec![ShardIdentifier::default(), ShardIdentifier::default(), ShardIdentifier::default()];
@@ -71,13 +73,12 @@ fn slot_timings_are_correct_with_multiple_shards() {
 #[test]
 fn if_shard_takes_up_all_slot_time_subsequent_shards_are_not_served() {
 	let slot_info = slot_info_from_now();
-	let mut slot_worker =
-		TestSlotWorker {
-			slot_infos: Vec::new(),
-			slot_time_spent: Some(SLOT_DURATION),
-			updater: Arc::new(UpdaterMock),
-			state_handler: Arc::new(HandleStateMock::default()),
-		};
+	let mut slot_worker = TestSlotWorker {
+		slot_infos: Vec::new(),
+		slot_time_spent: Some(SLOT_DURATION),
+		updater: Arc::new(UpdaterMock),
+		state_handler: Arc::new(HandleStateMock::default()),
+	};
 
 	let shards =
 		vec![ShardIdentifier::default(), ShardIdentifier::default(), ShardIdentifier::default()];

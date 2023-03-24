@@ -47,7 +47,7 @@ pub use block_import_confirmation_handler::*;
 pub use block_import_queue_worker::*;
 pub use error::*;
 pub use peer_block_sync::*;
-pub use updater::{UpdaterTrait, Updater};
+pub use updater::{Updater, UpdaterTrait};
 
 pub trait Verifier<ParentchainBlock, SignedSidechainBlock>: Send + Sync
 where

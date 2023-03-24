@@ -45,7 +45,7 @@ use its_primitives::traits::{
 use log::*;
 pub use slots::*;
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header as ParentchainHeaderTrait};
-use std::{fmt::Debug, time::Duration, vec::Vec, sync::Arc};
+use std::{fmt::Debug, sync::Arc, time::Duration, vec::Vec};
 
 #[cfg(feature = "std")]
 mod slot_stream;
