@@ -69,7 +69,7 @@ impl UpdaterTrait for Updater {
 		} else {
 			// by default, if the all the scheduled mr_enclaves is empty
 			// we assume that current mr_enclave is ok
-			Ok(true)
+			Ok(false)
 		}
 	}
 

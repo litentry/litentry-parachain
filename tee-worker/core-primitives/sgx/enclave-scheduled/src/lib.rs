@@ -84,14 +84,6 @@ pub trait ScheduledEnclaveHandle {
 		current_side_chain_number: SidechainBlockNumber,
 	) -> Option<ScheduledEnclaveInfo>;
 
-	/// given current side chain number, returns  mrenclave info that currently should be used
-	/// for example, if the scheduled mr enclaves like:
-	///  block_1 -> mr_enclave_1
-	///  block_10 -> mr_enclave_10
-	///  block_20 -> mr_enclave_20
-	/// given current sidechain number 5, returns mr_enclave_1
-	/// given current sidechain number 11, return mr_enclave_10
-	/// given current sidechain number 22, return mr_enclave_20
 	fn get_current_scheduled_enclave(
 		&self,
 		current_side_chain_number: SidechainBlockNumber,
@@ -155,6 +147,17 @@ impl ScheduledEnclaveHandle for ScheduledEnclaves {
 			.min_by_key(|v| v.sidechain_block_number)
 	}
 
+	/// given current side chain number, returns  mrenclave info that currently should be used
+	/// for example, if the scheduled mr enclaves like:
+	/// | block_number | mr_enclave |
+	/// | ---          | ---         |
+	/// | 1            | mr_enclave_A |
+	/// | 10           | mr_enclave_B |
+	/// | 20           | mr_enclave_C |
+	/// given current sidechain number 5, returns mr_enclave_A
+	/// given current sidechain number 10, returns mr_enclave_B
+	/// given current sidechain number 11, return mr_enclave_B
+	/// given current sidechain number 22, return mr_enclave_C
 	fn get_current_scheduled_enclave(
 		&self,
 		current_side_chain_number: SidechainBlockNumber,
@@ -163,7 +166,7 @@ impl ScheduledEnclaveHandle for ScheduledEnclaves {
 			.iter()
 			.filter_map(
 				|(k, v)| {
-					if k < &current_side_chain_number {
+					if k <= &current_side_chain_number {
 						Some(v.clone())
 					} else {
 						None

@@ -229,7 +229,7 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 			format!("{:?}", latest_parentchain_header.number()).parse().unwrap();
 		let updater = self.updater();
 		let state_handler = self.state_handler();
-		// migration
+		// migration and return
 		match updater.get_merge_mr_enclave(block_number) {
 			Ok(Some(next_mr_enclave)) => {
 				let current_mr_enclave = updater.current_mr_enclave();
@@ -237,8 +237,8 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 				let new_id = ShardIdentifier::from_slice(&next_mr_enclave[..]);
 				if let Err(e) = state_handler.migrate_shard(old_id, new_id) {
 					error!("migrate shard failed: {e:?}");
-					return None
 				}
+				return None
 			},
 			Err(e) => {
 				error!("get merge mr enclave failed: {e:?}");
