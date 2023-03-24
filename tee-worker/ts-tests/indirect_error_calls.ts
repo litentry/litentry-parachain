@@ -125,7 +125,7 @@ export async function removeErrorIdentities(
     signer: KeyringPair,
     listening: boolean,
     identities: any[]
-): Promise<any[] | undefined> {
+): Promise<string[] | undefined> {
     let txs: TransactionSubmit[] = [];
     const nonce = await context.api.rpc.system.accountNextIndex(signer.address);
 
