@@ -166,7 +166,7 @@ impl TrustedCallSigned {
 		debug!("verify identity preflight, who:{:?}, identity:{:?}", who, identity);
 		ensure_enclave_signer_account(&enclave_account)?;
 		let code = IdentityManagement::challenge_codes(&who, &identity)
-			.ok_or_else(|| StfError::VerifyIdentityFailed(ErrorDetail::ChallengeCodeNotFound))?;
+			.ok_or(StfError::VerifyIdentityFailed(ErrorDetail::ChallengeCodeNotFound))?;
 
 		let encoded_callback = TrustedCall::verify_identity_runtime(
 			enclave_signer_account(),
@@ -266,9 +266,9 @@ impl TrustedCallSigned {
 			}
 		}
 
-		let key = IdentityManagement::user_shielding_keys(&who).ok_or(
-			StfError::RequestVCFailed(assertion.clone(), ErrorDetail::UserShieldingKeyNotFound),
-		)?;
+		let key = IdentityManagement::user_shielding_keys(&who).ok_or_else(|| {
+			StfError::RequestVCFailed(assertion.clone(), ErrorDetail::UserShieldingKeyNotFound)
+		})?;
 		let request: RequestType = AssertionBuildRequest {
 			shard: *shard,
 			who,

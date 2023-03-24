@@ -6,11 +6,7 @@ import {
     Assertion,
     TransactionSubmit,
 } from './common/type-definitions';
-import {
-    decryptWithAES,
-    encryptWithTeeShieldingKey,
-
-} from './common/utils';
+import { decryptWithAES, encryptWithTeeShieldingKey } from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { HexString } from '@polkadot/util/types';
 import { u8aToHex } from '@polkadot/util';
@@ -70,7 +66,6 @@ export async function createIdentities(
         let results: IdentityGenericEvent[] = [];
 
         for (let index = 0; index < events.length; index++) {
-
             results.push(
                 createIdentityEvent(
                     context.api,
@@ -186,10 +181,10 @@ export async function requestVCs(
     assertion: Assertion
 ): Promise<
     | {
-        account: HexString;
-        index: HexString;
-        vc: HexString;
-    }[]
+          account: HexString;
+          index: HexString;
+          vc: HexString;
+      }[]
     | undefined
 > {
     let txs: TransactionSubmit[] = [];
@@ -314,7 +309,6 @@ export function assertIdentityVerified(signer: KeyringPair, identityEvent: Ident
 
     if (identityEvent) {
         for (let i = 0; i < identityEvent.idGraph.length; i++) {
-
             if (JSON.stringify(identityEvent.idGraph[i][0]) == JSON.stringify(identityEvent.identity)) {
                 idGraphExist = true;
                 assert.isTrue(identityEvent.idGraph[i][1].is_verified, 'identity should be verified');
