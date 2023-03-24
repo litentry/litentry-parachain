@@ -78,8 +78,7 @@ use log::*;
 use std::{
 	str::from_utf8,
 	string::{String, ToString},
-	vec,
-	vec::Vec,
+	vec::Vec, collections::{HashMap, HashSet},
 };
 
 // ERC20 LIT token address
@@ -105,12 +104,9 @@ pub fn build(
 	let mut client = GraphQLClient::new();
 	let mut found = false;
 	let mut from_date_index = 0_usize;
-
+	let mut networks: HashMap<VerifiedCredentialsNetwork, HashSet<String>> = HashMap::new();
+	
 	for identity in identities.iter() {
-		if found {
-			break
-		}
-
 		let mut verified_network = VerifiedCredentialsNetwork::Polkadot;
 		if identity.is_web3() {
 			match identity {
@@ -119,6 +115,7 @@ pub fn build(
 				_ => {},
 			}
 		}
+
 		if matches!(
 			verified_network,
 			VerifiedCredentialsNetwork::Litentry
@@ -126,66 +123,81 @@ pub fn build(
 				| VerifiedCredentialsNetwork::LitentryRococo
 				| VerifiedCredentialsNetwork::Ethereum
 		) {
-			let q_min_balance: f64 = if verified_network == VerifiedCredentialsNetwork::Litentry
-				|| verified_network == VerifiedCredentialsNetwork::Litmus
-				|| verified_network == VerifiedCredentialsNetwork::LitentryRococo
-			{
-				(min_balance / (10 ^ 12)) as f64
-			} else {
-				(min_balance / (10 ^ 18)) as f64
-			};
-
-			let mut addresses: Vec<String> = vec![];
-			match &identity {
+			let address = match &identity {
 				Identity::Evm { address, .. } => {
 					let mut address = account_id_to_string(address.as_ref());
 					address.insert_str(0, "0x");
-					debug!("	[AssertionBuild] A4 EVM address : {}", address);
-
-					addresses.push(address);
+					Ok(address)
 				},
 				Identity::Substrate { address, .. } => {
 					let mut address = account_id_to_string(address.as_ref());
 					address.insert_str(0, "0x");
-					debug!("	[AssertionBuild] A4 Substrate address : {}", address);
-
-					addresses.push(address);
+					Ok(address)
 				},
 				Identity::Web2 { address, .. } => match from_utf8(address.as_ref()) {
-					Ok(addr) => addresses.push(addr.to_string()),
-					Err(e) => error!(
-						"	[AssertionBuild] A4 parse error Web2 address {:?}, {:?}",
-						address, e
-					),
-				},
-			}
-			let mut tmp_token_addr = String::from("");
-			if verified_network == VerifiedCredentialsNetwork::Ethereum {
-				tmp_token_addr = LIT_TOKEN_ADDRESS.to_string();
-			}
-
-			for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
-				// if found is true, no need to check it continually
-				if found {
-					from_date_index = index + 1;
-					break
-				}
-
-				let vch = VerifiedCredentialsIsHodlerIn::new(
-					addresses.clone(),
-					from_date.to_string(),
-					verified_network.clone(),
-					tmp_token_addr.clone(),
-					q_min_balance,
-				);
-				match client.check_verified_credentials_is_hodler(vch) {
-					Ok(is_hodler_out) => {
-						for holder in is_hodler_out.verified_credentials_is_hodler.iter() {
-							found = found || holder.is_hodler;
-						}
+					Ok(addr) => {
+						Ok(addr.to_string())
 					},
-					Err(e) => error!("	[BuildAssertion] A4, Request, {:?}", e),
+					Err(e) => {
+						error!(
+							"Assertion A4 parse Web2 address {:?} error info: {:?}",
+							address, e
+						);
+
+						Err(())
+					}
 				}
+			};
+
+			if let Ok(address) = address {
+				if let Some(set) = networks.get_mut(&verified_network) {
+					set.insert(address);
+				}	
+			}
+		}
+	}
+
+	for (verified_network, addresses) in networks {
+		if found {
+			break
+		}
+
+		let addresses: Vec<String> = addresses.into_iter().collect();
+		let q_min_balance = if verified_network == VerifiedCredentialsNetwork::Litentry
+			|| verified_network == VerifiedCredentialsNetwork::Litmus
+			|| verified_network == VerifiedCredentialsNetwork::LitentryRococo
+		{
+			(min_balance / (10 ^ 12)) as f64
+		} else {
+			// Ethereum network
+			(min_balance / (10 ^ 18)) as f64
+		};
+
+		let mut lit_token_addr = String::from("");
+		if verified_network == VerifiedCredentialsNetwork::Ethereum {
+			lit_token_addr = LIT_TOKEN_ADDRESS.to_string();
+		}
+
+		for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
+			if found {
+				from_date_index = index + 1;
+				break
+			}
+
+			let vch = VerifiedCredentialsIsHodlerIn::new(
+				addresses.clone(),
+				from_date.to_string(),
+				verified_network.clone(),
+				lit_token_addr.clone(),
+				q_min_balance,
+			);
+			match client.check_verified_credentials_is_hodler(vch) {
+				Ok(is_hodler_out) => {
+					for holder in is_hodler_out.verified_credentials_is_hodler.iter() {
+						found = found || holder.is_hodler;
+					}
+				},
+				Err(e) => error!("Assertion A4 request check_verified_credentials_is_hodler error: {:?}", e),
 			}
 		}
 	}
