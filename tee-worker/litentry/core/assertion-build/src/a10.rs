@@ -60,42 +60,41 @@ pub fn build(
 	let mut client = GraphQLClient::new();
 	let mut found = false;
 	let mut from_date_index = 0_usize;
+	let mut addresses = vec![];
 
 	for id in identities {
-		if found {
-			break
-		}
-
 		if let Identity::Evm { network, address } = id {
 			if matches!(network, EvmNetwork::Ethereum) {
 				let mut address = account_id_to_string(address.as_ref());
 				address.insert_str(0, "0x");
-				debug!("	[AssertionBuild] A10 Ethereum address : {}", address);
+				debug!("Assertion A10 Ethereum address : {}", address);
 
-				let addresses = vec![address.to_string()];
-				for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
-					// if found is true, no need to check it continually
-					if found {
-						from_date_index = index + 1;
-						break
-					}
+				addresses.push(address);
+			}
+		}
+	}
 
-					let vch = VerifiedCredentialsIsHodlerIn::new(
-						addresses.clone(),
-						from_date.to_string(),
-						VerifiedCredentialsNetwork::Ethereum,
-						WBTC_TOKEN_ADDRESS.to_string(),
-						q_min_balance,
-					);
-					match client.check_verified_credentials_is_hodler(vch) {
-						Ok(is_hodler_out) => {
-							for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
-								found = found || hodler.is_hodler;
-							}
-						},
-						Err(e) => error!("	[BuildAssertion] A10, Request, {:?}", e),
+	if addresses.len() != 0 {
+		for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
+			if found {
+				from_date_index = index + 1;
+				break
+			}
+	
+			let vch = VerifiedCredentialsIsHodlerIn::new(
+				addresses.clone(),
+				from_date.to_string(),
+				VerifiedCredentialsNetwork::Ethereum,
+				WBTC_TOKEN_ADDRESS.to_string(),
+				q_min_balance,
+			);
+			match client.check_verified_credentials_is_hodler(vch) {
+				Ok(is_hodler_out) => {
+					for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
+						found = found || hodler.is_hodler;
 					}
-				}
+				},
+				Err(e) => error!("Assertion A10 request check_verified_credentials_is_hodler error: {:?}", e),
 			}
 		}
 	}
