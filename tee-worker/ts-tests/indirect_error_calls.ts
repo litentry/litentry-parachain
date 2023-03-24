@@ -64,7 +64,7 @@ export async function createErrorIdentities(
         expect(events.length).to.be.equal(errorCiphertexts.length);
         let results: string[] = [];
         for (let i = 0; i < events.length; i++) {
-            results.push((events[i] as any).data.detail.toHuman());
+            results.push(events[i].data.detail.toHuman());
         }
         return [...results];
     }
@@ -113,7 +113,7 @@ export async function verifyErrorIdentities(
         expect(events.length).to.be.equal(identities.length);
         let results: string[] = [];
         for (let i = 0; i < events.length; i++) {
-            results.push((events[i] as any).data.detail.toHuman());
+            results.push(events[i].data.detail.toHuman());
         }
         return [...results];
     }
@@ -149,7 +149,7 @@ export async function removeErrorIdentities(
         let results: string[] = [];
         expect(events.length).to.be.equal(identities.length);
         for (let i = 0; i < events.length; i++) {
-            results.push((events[i] as any).data.detail.toHuman());
+            results.push(events[i].data.detail.toHuman());
         }
         return [...results];
     }
