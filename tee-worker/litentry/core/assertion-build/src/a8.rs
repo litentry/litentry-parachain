@@ -360,7 +360,8 @@ mod tests {
 		networks.try_push(litentry).unwrap();
 
 		let left = assertion_networks_to_vc_networks(&networks);
-		let right = Err(Error::ParseError);
+		let right =
+			Err(Error::RequestVCFailed(Assertion::A8(networks.clone()), ErrorDetail::ParseError));
 
 		assert_eq!(left, right);
 	}
