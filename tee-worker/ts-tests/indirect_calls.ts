@@ -6,11 +6,7 @@ import {
     Assertion,
     TransactionSubmit,
 } from './common/type-definitions';
-import {
-    decryptWithAES,
-    encryptWithTeeShieldingKey,
-
-} from './common/utils';
+import { decryptWithAES, encryptWithTeeShieldingKey } from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { HexString } from '@polkadot/util/types';
 import { u8aToHex } from '@polkadot/util';
@@ -70,7 +66,6 @@ export async function createIdentities(
         let results: IdentityGenericEvent[] = [];
 
         for (let index = 0; index < events.length; index++) {
-
             results.push(
                 createIdentityEvent(
                     context.api,
@@ -186,10 +181,10 @@ export async function requestVCs(
     assertion: Assertion
 ): Promise<
     | {
-        account: HexString;
-        index: HexString;
-        vc: HexString;
-    }[]
+          account: HexString;
+          index: HexString;
+          vc: HexString;
+      }[]
     | undefined
 > {
     let txs: TransactionSubmit[] = [];
@@ -305,6 +300,28 @@ export function createIdentityEvent(
     };
 }
 
+//batchCallVcRequest
+
+export async function batchCall(
+    context: IntegrationTestContext,
+    signer: KeyringPair,
+    txs: any,
+    pallet: string,
+    event: string[]
+): Promise<any> {
+    await context.api.tx.utility.batch(txs).signAndSend(signer, async ({ status, events }) => {
+        if (status.isFinalized) {
+            console.log(1111);
+            // for (const { event } of events) {
+            //     console.log(event.method);
+            // }
+        }
+    });
+
+    const events = (await listenEvent(context.api, pallet, event)) as any;
+    return events;
+}
+
 export function assertIdentityCreated(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
     assert.equal(identityEvent?.who, u8aToHex(signer.addressRaw), 'check caller error');
 }
@@ -314,7 +331,6 @@ export function assertIdentityVerified(signer: KeyringPair, identityEvent: Ident
 
     if (identityEvent) {
         for (let i = 0; i < identityEvent.idGraph.length; i++) {
-
             if (JSON.stringify(identityEvent.idGraph[i][0]) == JSON.stringify(identityEvent.identity)) {
                 idGraphExist = true;
                 assert.isTrue(identityEvent.idGraph[i][1].is_verified, 'identity should be verified');

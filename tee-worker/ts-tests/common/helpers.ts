@@ -22,7 +22,7 @@ export function getSubstrateSigner(): {
         bob: Bob,
         charlie: Charlie,
         eve: Eve,
-    }
+    };
     return signers;
 }
 export function getEthereumSigner(): {

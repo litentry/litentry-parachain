@@ -146,7 +146,7 @@ export async function removeErrorIdentities(
     await sendTxUntilInBlockList(context.api, txs, signer);
 
     if (listening) {
-        const events = await listenEvent(context.api, 'identityManagement', ['StfError']) as any;
+        const events = (await listenEvent(context.api, 'identityManagement', ['StfError'])) as any;
         let results: string[] = [];
         expect(events.length).to.be.equal(identities.length);
         for (let i = 0; i < events.length; i++) {
@@ -154,7 +154,6 @@ export async function removeErrorIdentities(
             results.push(data.reason.toHuman());
         }
         return [...results];
-
     }
     return undefined;
 }

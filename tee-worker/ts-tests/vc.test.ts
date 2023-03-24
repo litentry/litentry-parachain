@@ -38,7 +38,6 @@ describeLitentry('VC test', async (context) => {
     step('set user shielding key', async function () {
         const who = await setUserShieldingKey(context, context.substrateWallet.alice, aesKey, true);
         assert.equal(who, u8aToHex(context.substrateWallet.alice.addressRaw), 'check caller error');
-
     });
 
     step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
@@ -49,7 +48,6 @@ describeLitentry('VC test', async (context) => {
             u8aToHex(context.substrateWallet.alice.addressRaw)
         );
         assert.equal(resp_shieldingKey, aesKey, 'resp_shieldingKey should be equal aesKey after set');
-
     });
     step('Request VC', async () => {
         //request all vc

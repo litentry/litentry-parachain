@@ -1,9 +1,9 @@
-import { ApiPromise } from "@polkadot/api";
-import { ApiTypes, SubmittableExtrinsic } from "@polkadot/api/types";
-import { TransactionSubmit } from "./type-definitions";
+import { ApiPromise } from '@polkadot/api';
+import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
+import { TransactionSubmit } from './type-definitions';
 import { KeyringPair } from '@polkadot/keyring/types';
-import { getListenTimeoutInBlocks } from "./utils";
-import { EventRecord, Event } from "@polkadot/types/interfaces";
+import { getListenTimeoutInBlocks } from './utils';
+import { EventRecord, Event } from '@polkadot/types/interfaces';
 
 //transactions utils
 export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrinsic<ApiTypes>, signer: KeyringPair) {

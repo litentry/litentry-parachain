@@ -214,7 +214,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
             context.metaData = tmp.metaData;
         });
 
-        after(async function () { });
+        after(async function () {});
 
         cb(context);
     });
@@ -282,8 +282,8 @@ export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
     expect(isValid).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-        vc.issuer.id === proofJson.verificationMethod &&
-        proofJson.type === 'Ed25519Signature2020'
+            vc.issuer.id === proofJson.verificationMethod &&
+            proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
 }
@@ -446,3 +446,6 @@ export async function checkIDGraph(
     const IDGraph = context.api.createType('IdentityContext', resp.value).toJSON() as IdentityContext;
     return IDGraph;
 }
+
+//batch call utils
+export async function batchCall(txs: any, context: any) {}
