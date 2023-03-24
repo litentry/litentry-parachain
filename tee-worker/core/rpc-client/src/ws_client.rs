@@ -66,14 +66,14 @@ impl WsClientControl {
 }
 
 #[derive(Clone)]
-pub struct WsClient {
+pub struct WsClient<'a> {
 	web_socket: Sender,
 	request: String,
-	result: MpscSender<String>,
+	result: &'a MpscSender<String>,
 	do_watch: bool,
 }
 
-impl WsClient {
+impl<'a> WsClient<'a> {
 	/// Connect a web-socket client for multiple request/responses.
 	///
 	/// Control over the connection is done using the provided client control.
@@ -88,31 +88,31 @@ impl WsClient {
 		debug!("Connecting web-socket connection with watch");
 		connect(url.to_string(), |out| {
 			control.subscribe_sender(out.clone()).expect("Failed sender subscription");
-			WsClient::new(out, request.to_string(), result.clone(), true)
+			WsClient::new(out, request.to_string(), result, true)
 		})
 	}
 
 	/// Connects a web-socket client for a one-shot request.
 	#[allow(clippy::result_large_err)]
 	pub fn connect_one_shot(url: &str, request: &str, result: MpscSender<String>) -> Result<()> {
-		debug!("Connecting one-shot web-socket connection");
+		debug!("Connecting one-shot web-socket connection to server {url}");
 		connect(url.to_string(), |out| {
 			debug!("Create new web-socket client");
-			WsClient::new(out, request.to_string(), result.clone(), false)
+			WsClient::new(out, request.to_string(), &result, false)
 		})
 	}
 
 	fn new(
 		web_socket: Sender,
 		request: String,
-		result: MpscSender<String>,
+		result: &MpscSender<String>,
 		do_watch: bool,
 	) -> WsClient {
 		WsClient { web_socket, request, result, do_watch }
 	}
 }
 
-impl Handler for WsClient {
+impl Handler for WsClient<'_> {
 	fn on_open(&mut self, _: Handshake) -> Result<()> {
 		debug!("sending request: {:?}", self.request.clone());
 		match self.web_socket.send(self.request.clone()) {

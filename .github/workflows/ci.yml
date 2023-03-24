@@ -319,6 +319,12 @@ jobs:
 
       - run: docker images --all
 
+      - name: Pallet unittests
+        working-directory: ./tee-worker
+        run: |
+          rustup show
+          cargo test --locked --release -p pallet-* --lib
+
       - name: Test enclave
         # cargo test is not supported in the enclave
         # see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
@@ -394,8 +400,14 @@ jobs:
       - name: Run unittests
         run: |
           rustup show
-          cargo test --features=skip-ias-check --locked --release -p pallet-* --lib
-          cargo test --features=skip-ias-check --locked --release -p pallet-* --lib --features runtime-benchmarks
+          # no `skip-ias-check` feature
+          cargo test --locked --release -p pallet-* --lib
+          # with `skip-ias-check` feature only
+          cargo test --locked --release -p pallet-* --lib --features=skip-ias-check
+          # with `runtime-benchmarks` feature only
+          cargo test --locked --release -p pallet-* --lib --features=runtime-benchmarks
+          # with both `skip-ias-check` and `runtime-benchmarks` features
+          cargo test --locked --release -p pallet-* --lib --features=skip-ias-check,runtime-benchmarks
 
       - name: Fail early
         if: failure()
@@ -456,13 +468,14 @@ jobs:
           - test_name: demo-indirect-invocation
           - test_name: demo-direct-call
           - test_name: demo-sidechain
-          - test_name: sidechain-benchmark
           # Litentry
           - test_name: lit-user-shielding-key
           - test_name: lit-resume-worker
           - test_name: lit-set-heartbeat-timeout
           - test_name: lit-vc-test
           - test_name: lit-identity-test
+          - test_name: lit-parentchain-nonce
+          - test_name: lit-batch-test
 
     steps:
       - uses: actions/checkout@v3
@@ -501,15 +514,10 @@ jobs:
 
       - name: Integration Test ${{ matrix.test_name }}
         if: needs.set-condition.outputs.run_tee_test == 'true'
-        timeout-minutes: 30
+        timeout-minutes: 40
         run: |
           cd tee-worker/docker
-          if [ "${{ matrix.test_name }}" = "lit-resume-worker" ]; then
-            docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} \
-            --attach ${{ matrix.test_name }} relaychain-alice relaychain-bob integritee-node ${{ matrix.test_name }}
-          else
-            docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} -- ${{ matrix.test_name }}
-          fi
+          docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} ${{ matrix.test_name }}
 
       - name: Stop docker containers
         if: needs.set-condition.outputs.run_tee_test == 'true'

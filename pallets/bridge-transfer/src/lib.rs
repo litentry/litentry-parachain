@@ -90,6 +90,8 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// MaximumIssuance was changed
 		MaximumIssuanceChanged { old_value: BalanceOf<T> },
+		/// A certain amount of native tokens was minted
+		NativeTokenMinted { to: T::AccountId, amount: BalanceOf<T> },
 	}
 
 	#[pallet::error]
@@ -176,6 +178,9 @@ pub mod pallet {
 					.ok_or(Error::<T>::OverFlow)?;
 				// ERC20 LIT mint
 				<T as bridge::Config>::Currency::mint_into(&to, amount)?;
+				// There is a Balances.Deposit event but many other extrinsics can
+				// trigger that event, use `NativeTokenMinted` for easier tracking
+				Self::deposit_event(Event::NativeTokenMinted { to, amount });
 				<ExternalBalances<T>>::put(external_balances);
 			} else {
 				return Err(Error::<T>::InvalidResourceId.into())

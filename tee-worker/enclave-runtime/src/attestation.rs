@@ -44,9 +44,8 @@ use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{
 	pallet_teerex::TeerexCallIndexes,
 	provider::{AccessNodeMetadata, Error as MetadataProviderError},
-	Error as MetadataError,
+	Error as MetadataError, NodeMetadata,
 };
-use itp_node_api_metadata::NodeMetadata;
 use itp_settings::worker::MR_ENCLAVE_SIZE;
 use itp_sgx_crypto::{
 	ed25519_derivation::DeriveEd25519, key_repository::AccessKey, Error as SgxCryptoError,
@@ -190,7 +189,7 @@ fn generate_dcap_ra_extrinsic_internal(
 	let call_ids = node_metadata_repo
 		.get_from_metadata(|m| m.register_dcap_enclave_call_indexes())?
 		.map_err(MetadataProviderError::MetadataError)?;
-	info!("    [Enclave] Compose register enclave call DCAP IDs: {:?}", call_ids);
+	info!("[Enclave] Compose register enclave call DCAP IDs: {:?}", call_ids);
 	let call = OpaqueCall::from_tuple(&(call_ids, dcap_quote, url));
 
 	let extrinsic = extrinsics_factory.create_extrinsics(&[call], None)?;
@@ -207,7 +206,7 @@ fn generate_ias_ra_extrinsic_internal(
 
 	let cert_der = attestation_handler.generate_ias_ra_cert(skip_ra)?;
 
-	info!("    [Enclave] Compose register enclave call");
+	info!("[Enclave] Compose register enclave call");
 	let call_ids = node_metadata_repo
 		.get_from_metadata(|m| m.register_ias_enclave_call_indexes())?
 		.map_err(MetadataProviderError::MetadataError)?;
@@ -224,15 +223,17 @@ fn generate_ias_ra_extrinsic_internal(
 				.map_err(|e| SgxCryptoError::Other(Box::new(e)))
 		})
 		.ok();
+	debug!("[Enclave] shielding_pubkey size: {:?}", shielding_pubkey.clone().map(|key| key.len()));
 
 	let vc_pubkey = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT
 		.get()?
 		.retrieve_key()
 		.and_then(|keypair| {
 			// vc signing pubkey
-			keypair.derive_ed25519().map(|keypair| hex::encode(keypair.public()))
+			keypair.derive_ed25519().map(|keypair| keypair.public().to_vec())
 		})
 		.ok();
+	debug!("[Enclave] VC pubkey: {:?}", vc_pubkey);
 
 	let call = OpaqueCall::from_tuple(&(call_ids, cert_der, url, shielding_pubkey, vc_pubkey));
 
@@ -319,7 +320,7 @@ where
 	let call_ids = node_metadata_repo
 		.get_from_metadata(getter)?
 		.map_err(MetadataProviderError::MetadataError)?;
-	info!("    [Enclave] Compose register collateral call: {:?}", call_ids);
+	info!("[Enclave] Compose register collateral call: {:?}", call_ids);
 	let call = OpaqueCall::from_tuple(&(call_ids, collateral_data, data_signature, issuer_chain));
 
 	let extrinsic = extrinsics_factory.create_extrinsics(&[call], None)?[0].clone();

@@ -30,11 +30,12 @@ use itp_types::{AccountId, OpaqueCall};
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_stf_task_sender::AssertionBuildRequest;
-use litentry_primitives::{aes_encrypt_default, Assertion, UserShieldingKeyType};
+use litentry_primitives::{
+	aes_encrypt_default, Assertion, ErrorString, UserShieldingKeyType, VCMPError,
+};
 use log::*;
-use parachain_core_primitives::VCMPError;
 use sp_core::hashing::blake2_256;
-use std::sync::Arc;
+use std::{format, sync::Arc};
 
 pub(crate) struct AssertionHandler<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
@@ -127,8 +128,9 @@ where
 			)
 			.map(|credential| Some((credential, self.req.who.clone()))),
 
-			Assertion::A8 => lc_assertion_build::a8::build(
+			Assertion::A8(networks) => lc_assertion_build::a8::build(
 				self.req.vec_identity.to_vec(),
+				networks,
 				&self.req.shard,
 				&self.req.who,
 				self.req.bn,
@@ -162,23 +164,35 @@ where
 	fn on_success(&self, result: Self::Result) {
 		let (mut credential, who) = result.unwrap();
 		let signer = self.context.enclave_signer.as_ref();
-		if let Ok((enclave_account, sig)) =
-			signer.sign_vc_with_self(credential.to_json().unwrap().as_bytes())
-		{
-			credential.issuer.id = account_id_to_string(&enclave_account);
+
+		let enclave_account = signer.get_enclave_account().unwrap();
+		credential.issuer.id = account_id_to_string(&enclave_account);
+
+		let payload = credential.to_json().unwrap();
+		debug!("	[Assertion] VC payload: {}", payload);
+
+		if let Ok((enclave_account, sig)) = signer.sign_vc_with_self(payload.as_bytes()) {
+			debug!("	[Assertion] Payload hash signature: {:?}", sig);
+
 			credential.add_proof(&sig, credential.issuance_block_number, &enclave_account);
 
 			if credential.validate().is_err() {
-				error!("failed to validate credential");
+				let error_msg = "failed to validate credential";
+				error!("	[BuildAssertion] : {}", error_msg);
+
+				self.on_failure(to_vcmp_error(error_msg));
+
 				return
 			}
 
 			let key: UserShieldingKeyType = self.req.key;
 			if let Ok(vc_index) = credential.get_index() {
 				let credential_str = credential.to_json().unwrap();
-				debug!("on_success {}, length {}", credential_str, credential_str.len());
+				debug!("Credential: {}, length: {}", credential_str, credential_str.len());
 
 				let vc_hash = blake2_256(credential_str.as_bytes());
+				debug!("	[Assertion] VC hash: {:?}", vc_hash);
+
 				let output = aes_encrypt_default(&key, credential_str.as_bytes());
 
 				match self
@@ -192,22 +206,35 @@ where
 						self.context.submit_to_parentchain(call)
 					},
 					Ok(Err(e)) => {
-						error!("failed to get metadata. Due to: {:?}", e);
+						let error_msg = format!("failed to get metadata. Due to: {:?}", e);
+						error!("	[BuildAssertion] {}", error_msg);
+
+						self.on_failure(to_vcmp_error(&error_msg));
 					},
 					Err(e) => {
-						error!("failed to get metadata. Due to: {:?}", e);
+						let error_msg = format!("failed to get metadata. Due to: {:?}", e);
+						error!("	[BuildAssertion] {}", error_msg);
+
+						self.on_failure(to_vcmp_error(&error_msg));
 					},
 				};
 			} else {
-				error!("failed to decode credential id");
+				let error_msg = "failed to decode credential id";
+				error!("	[BuildAssertion] : {}", error_msg);
+
+				self.on_failure(to_vcmp_error(error_msg));
 			}
 		} else {
-			error!("failed to sign credential");
+			let error_msg = "failed to sign credential";
+			error!("	[BuildAssertion] : {}", error_msg);
+
+			self.on_failure(to_vcmp_error(error_msg));
 		}
 	}
 
 	fn on_failure(&self, error: Self::Error) {
-		log::error!("occur an error while building assertion, due to:{:?}", error);
+		error!("occur an error while building assertion, due to:{:?}", error);
+
 		match self
 			.context
 			.node_metadata
@@ -225,4 +252,8 @@ where
 			},
 		};
 	}
+}
+
+fn to_vcmp_error(reason: &str) -> VCMPError {
+	VCMPError::StfError(ErrorString::truncate_from(reason.as_bytes().to_vec()))
 }

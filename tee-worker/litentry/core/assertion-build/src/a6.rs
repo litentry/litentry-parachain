@@ -23,12 +23,15 @@ extern crate sgx_tstd as std;
 use crate::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
+use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::twitter_official::TwitterOfficialClient;
-use litentry_primitives::{Assertion, Identity, ParentchainBlockNumber, Web2Network};
+use litentry_primitives::{Identity, ParentchainBlockNumber, VCMPError, Web2Network};
 use log::*;
-use parachain_core_primitives::VCMPError;
 use std::vec::Vec;
+
+const VC_SUBJECT_DESCRIPTION: &str = "User has at least X amount of followers";
+const VC_SUBJECT_TYPE: &str = "Total Twitter Followers";
 
 /// Following ranges:
 ///
@@ -43,6 +46,13 @@ pub fn build(
 	who: &AccountId,
 	bn: ParentchainBlockNumber,
 ) -> Result<Credential> {
+	debug!(
+		"Assertion A6 build, who: {:?}, bn: {}, identities: {:?}",
+		account_id_to_string(&who),
+		bn,
+		identities
+	);
+
 	let mut client = TwitterOfficialClient::new();
 	let mut sum: u32 = 0;
 
@@ -65,8 +75,8 @@ pub fn build(
 	}
 
 	info!("sum followers: {}", sum);
-	let min: u64;
-	let max: u64;
+	let min: u32;
+	let max: u32;
 
 	match sum {
 		0 | 1 => {
@@ -91,14 +101,15 @@ pub fn build(
 		},
 		100001..=u32::MAX => {
 			min = 100000;
-			max = u64::MAX;
+			max = u32::MAX;
 		},
 	}
 
-	match Credential::generate_unsigned_credential(&Assertion::A6, who, &shard.clone(), bn) {
+	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
+			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
 			credential_unsigned.add_assertion_a6(min, max);
-			credential_unsigned.credential_subject.values.push(true);
+
 			return Ok(credential_unsigned)
 		},
 		Err(e) => {

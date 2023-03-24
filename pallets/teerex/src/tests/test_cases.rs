@@ -195,6 +195,7 @@ fn list_enclaves_works() {
 			shielding_key: None,
 			vc_pubkey: None,
 			sgx_mode: SgxBuildMode::Debug,
+			sgx_metadata: Default::default(),
 		};
 		assert_ok!(Teerex::register_enclave(
 			RuntimeOrigin::signed(signer.clone()),
@@ -229,6 +230,7 @@ fn remove_middle_enclave_works() {
 			shielding_key: None,
 			vc_pubkey: None,
 			sgx_mode: SgxBuildMode::Debug,
+			sgx_metadata: Default::default(),
 		};
 
 		let e_2: Enclave<AccountId, Vec<u8>> = Enclave {
@@ -239,6 +241,7 @@ fn remove_middle_enclave_works() {
 			shielding_key: None,
 			vc_pubkey: None,
 			sgx_mode: SgxBuildMode::Debug,
+			sgx_metadata: Default::default(),
 		};
 
 		let e_3: Enclave<AccountId, Vec<u8>> = Enclave {
@@ -249,6 +252,7 @@ fn remove_middle_enclave_works() {
 			shielding_key: None,
 			vc_pubkey: None,
 			sgx_mode: SgxBuildMode::Debug,
+			sgx_metadata: Default::default(),
 		};
 
 		assert_ok!(Teerex::register_enclave(
@@ -362,6 +366,7 @@ fn update_enclave_url_works() {
 			shielding_key: None,
 			vc_pubkey: None,
 			sgx_mode: SgxBuildMode::Debug,
+			sgx_metadata: Default::default(),
 		};
 
 		assert_ok!(Teerex::register_enclave(
@@ -510,6 +515,7 @@ fn timestamp_callback_works() {
 			shielding_key: None,
 			vc_pubkey: None,
 			sgx_mode: SgxBuildMode::Debug,
+			sgx_metadata: Default::default(),
 		};
 
 		let e_3: Enclave<AccountId, Vec<u8>> = Enclave {
@@ -520,6 +526,7 @@ fn timestamp_callback_works() {
 			shielding_key: None,
 			vc_pubkey: None,
 			sgx_mode: SgxBuildMode::Debug,
+			sgx_metadata: Default::default(),
 		};
 
 		//Register 3 enclaves: 5, 6 ,7
@@ -591,6 +598,7 @@ fn debug_mode_enclave_attest_works_when_sgx_debug_mode_is_allowed() {
 			shielding_key: None,
 			vc_pubkey: None,
 			sgx_mode: SgxBuildMode::Debug,
+			sgx_metadata: Default::default(),
 		};
 
 		//Register an enclave compiled in debug mode
@@ -621,6 +629,7 @@ fn production_mode_enclave_attest_works_when_sgx_debug_mode_is_allowed() {
 				shielding_key: None,
 				vc_pubkey: None,
 				sgx_mode: SgxBuildMode::Production,
+				sgx_metadata: Default::default(),
 			};
 
 			//Register an enclave compiled in production mode
@@ -670,6 +679,7 @@ fn production_mode_enclave_attest_works_when_sgx_debug_mode_not_allowed() {
 			shielding_key: None,
 			vc_pubkey: None,
 			sgx_mode: SgxBuildMode::Production,
+			sgx_metadata: Default::default(),
 		};
 
 		//Register an enclave compiled in production mode
@@ -813,9 +823,15 @@ fn unshield_funds_from_enclave_neq_bonding_account_errs() {
 fn confirm_processed_parentchain_block_works() {
 	new_test_ext().execute_with(|| {
 		Timestamp::set_timestamp(TEST7_TIMESTAMP);
+
+		// start from block 2, otherwise we get `TimeStamp not set` error,
+		// because `run_to_block` calls `Timestamp::on_finalize`
+		run_to_block(2);
+		Timestamp::set_timestamp(TEST7_TIMESTAMP + 12 * 1000);
+
 		let block_hash = H256::default();
 		let merkle_root = H256::default();
-		let block_number = 3;
+		let block_number = 2;
 		let signer7 = get_signer(TEST7_SIGNER_PUB);
 
 		//Ensure that enclave is registered
@@ -829,7 +845,11 @@ fn confirm_processed_parentchain_block_works() {
 		assert_eq!(Teerex::enclave_count(), 1);
 
 		let enclaves = list_enclaves();
-		let old_timestamp = enclaves[0].1.timestamp;
+		// the timestamp is bound to the timestamp in ra-report
+		assert_eq!(enclaves[0].1.timestamp, TEST7_TIMESTAMP);
+
+		run_to_block(3);
+		Timestamp::set_timestamp(TEST7_TIMESTAMP + 24 * 1000);
 
 		assert_ok!(Teerex::confirm_processed_parentchain_block(
 			RuntimeOrigin::signed(signer7.clone()),
@@ -839,8 +859,8 @@ fn confirm_processed_parentchain_block_works() {
 		));
 
 		let enclaves = list_enclaves();
-		let new_timestamp = enclaves[0].1.timestamp;
-		assert_ne!(old_timestamp, new_timestamp);
+		// timestamp should be updated to the latest set one
+		assert_eq!(enclaves[0].1.timestamp, TEST7_TIMESTAMP + 24 * 1000);
 
 		let expected_event = RuntimeEvent::Teerex(TeerexEvent::ProcessedParentchainBlock(
 			signer7,

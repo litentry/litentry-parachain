@@ -3,7 +3,8 @@ import { KeyObject } from 'crypto';
 import { HexString } from '@polkadot/util/types';
 import WebSocketAsPromised = require('websocket-as-promised');
 import { KeyringPair } from '@polkadot/keyring/types';
-
+import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
+import { Metadata } from '@polkadot/types';
 export const teeTypes = {
     WorkerRpcReturnString: {
         vec: 'Bytes',
@@ -50,7 +51,7 @@ export const teeTypes = {
         _enum: {
             balance_set_balance: '(AccountId, AccountId, Balance, Balance)',
             balance_transfer: '(AccountId, AccountId, Balance)',
-            balance_unshield: '(AccountId, AccountId, Balance, ShardIdentifier)',
+            balance_unshield: '(AccountId, AccountId, Balance, mrEnclaveIdentifier)',
         },
     },
     DirectRequestStatus: {
@@ -89,7 +90,7 @@ export const teeTypes = {
         _enum: ['Twitter', 'Discord', 'Github'],
     },
     SubstrateNetwork: {
-        _enum: ['Polkadot', 'Kusama', 'Litentry', 'Litmus'],
+        _enum: ['Polkadot', 'Kusama', 'Litentry', 'Litmus', 'LitentryRococo', 'Khala', 'TestNet'],
     },
     EvmNetwork: {
         _enum: ['Ethereum', 'BSC'],
@@ -151,7 +152,7 @@ export const teeTypes = {
 
     // vc management
     VCRequested: {
-        shard: 'ShardIdentifier',
+        mrEnclave: 'mrEnclaveIdentifier',
         assertion: 'Assertion',
     },
 };
@@ -166,6 +167,13 @@ export type WorkerRpcReturnString = {
     vec: string;
 };
 
+export type EnclaveResult = {
+    mrEnclave: `0x${string}`;
+    shieldingKey: `0x${string}`;
+    vcPubkey: `0x${string}`;
+    sgxMetadata: {};
+};
+
 export type PubicKeyJson = {
     n: Uint8Array;
     e: Uint8Array;
@@ -173,12 +181,12 @@ export type PubicKeyJson = {
 
 export type IntegrationTestContext = {
     tee: WebSocketAsPromised;
-    substrate: ApiPromise;
+    api: ApiPromise;
     teeShieldingKey: KeyObject;
-    shard: HexString;
-    defaultSigner: KeyringPair[];
-    //@todo add type
+    mrEnclave: HexString;
     ethersWallet: any;
+    substrateWallet: any,
+    metaData: Metadata
 };
 
 export class AESOutput {
@@ -267,7 +275,7 @@ export type Web3Network = {
 };
 
 export type Web2Network = 'Twitter' | 'Discord' | 'Github';
-export type SubstrateNetwork = 'Polkadot' | 'Kusama' | 'Litentry' | 'Litmus';
+export type SubstrateNetwork = 'Polkadot' | 'Kusama' | 'Litentry' | 'Litmus' | 'LitentryRococo' | 'Khala' | 'TestNet';
 export type EvmNetwork = 'Ethereum' | 'BSC';
 
 export type IdentityGenericEvent = {
@@ -286,7 +294,7 @@ export type IdentityContext = {
 
 //vc types
 export type VCRequested = {
-    shard: HexString;
+    mrEnclave: HexString;
     assertion: Assertion;
 };
 export type Assertion = {
@@ -297,8 +305,97 @@ export type Assertion = {
     A5?: [string, string];
     A6?: string;
     A7?: [number];
-    A8?: string;
+    A8?: [string];
     A9?: string;
     A10?: [number];
     A11?: [number];
 };
+
+export type TransactionSubmit = {
+    tx: SubmittableExtrinsic<ApiTypes>;
+    nonce: number;
+};
+
+export const JsonSchema = {
+    type: 'object',
+    properties: {
+        id: {
+            type: 'string',
+        },
+        type: {
+            type: 'array',
+        },
+        issuer: {
+            type: 'object',
+            properties: {
+                id: {
+                    type: 'string',
+                },
+                name: {
+                    type: 'string',
+                },
+                shard: {
+                    type: 'string',
+                },
+            },
+        },
+        issuanceBlockNumber: {
+            type: 'integer',
+        },
+        credentialSubject: {
+            type: 'object',
+            properties: {
+                id: {
+                    type: 'string',
+                },
+                description: {
+                    type: 'string',
+                },
+                type: {
+                    type: 'string',
+                },
+                tag: {
+                    type: 'array',
+                },
+                assertions: {
+                    type: 'array',
+                    items: {
+                        type: 'object',
+                    },
+                },
+                values: {
+                    type: 'array',
+                    items: {
+                        type: 'boolean',
+                    },
+                },
+                endpoint: {
+                    type: 'string',
+                },
+            },
+            required: ['id', 'description', 'type', 'assertions', 'values', 'endpoint'],
+        },
+        proof: {
+            type: 'object',
+            properties: {
+                createdBlockNumber: {
+                    type: 'integer',
+                },
+                type: {
+                    enum: ['Ed25519Signature2020'],
+                },
+                proofPurpose: {
+                    enum: ['assertionMethod'],
+                },
+                proofValue: {
+                    type: 'string',
+                },
+                verificationMethod: {
+                    type: 'string',
+                },
+            },
+        },
+    },
+    required: ['id', 'type', 'credentialSubject', 'issuer', 'issuanceBlockNumber', 'proof'],
+};
+

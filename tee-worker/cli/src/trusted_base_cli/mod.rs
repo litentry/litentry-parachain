@@ -20,6 +20,7 @@ use crate::{
 		balance::BalanceCommand,
 		get_storage::GetStorageCommand,
 		litentry::{
+			send_erroneous_parentchain_call::SendErroneousParentchainCallCommand,
 			set_challenge_code::SetChallengeCodeCommand,
 			set_user_shielding_preflight::SetUserShieldingKeyPreflightCommand,
 			user_shielding_key::UserShiledingKeyCommand,
@@ -77,6 +78,8 @@ pub enum TrustedBaseCommand {
 	SetUserShieldingKeyPreflight(SetUserShieldingKeyPreflightCommand),
 
 	GetStorage(GetStorageCommand),
+
+	SendErroneousParentchainCall(SendErroneousParentchainCallCommand),
 }
 
 impl TrustedBaseCommand {
@@ -95,6 +98,7 @@ impl TrustedBaseCommand {
 			TrustedBaseCommand::VerifyIdentityPreflight(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::SetUserShieldingKeyPreflight(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::GetStorage(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::SendErroneousParentchainCall(cmd) => cmd.run(cli, trusted_cli),
 		}
 	}
 }

@@ -23,12 +23,15 @@ extern crate sgx_tstd as std;
 use crate::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
+use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_stf_task_sender::MaxIdentityLength;
-use litentry_primitives::{Assertion, Identity, ParentchainBlockNumber};
+use litentry_primitives::{Identity, ParentchainBlockNumber, VCMPError};
 use log::*;
-use parachain_core_primitives::VCMPError;
 use sp_runtime::BoundedVec;
+
+const VC_SUBJECT_DESCRIPTION: &str = "Identity Linked And Verified";
+const VC_SUBJECT_TYPE: &str = "IdentityLinkedVerified";
 
 pub fn build(
 	identities: BoundedVec<Identity, MaxIdentityLength>,
@@ -36,6 +39,8 @@ pub fn build(
 	who: &AccountId,
 	bn: ParentchainBlockNumber,
 ) -> Result<Credential> {
+	debug!("Assertion A1 build, who: {:?}, bn: {}", account_id_to_string(&who), bn);
+
 	let mut web2_cnt = 0;
 	let mut web3_cnt = 0;
 
@@ -47,10 +52,15 @@ pub fn build(
 		}
 	}
 
-	match Credential::generate_unsigned_credential(&Assertion::A1, who, &shard.clone(), bn) {
+	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
+			// add subject info
+			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
+
+			// add assertion
 			let flag = web2_cnt != 0 && web3_cnt != 0;
-			credential_unsigned.credential_subject.values.push(flag);
+			credential_unsigned.add_assertion_a1(flag);
+
 			Ok(credential_unsigned)
 		},
 		Err(e) => {

@@ -41,7 +41,7 @@ use frame_support::{pallet_prelude::*, traits::StorageVersion};
 use frame_system::pallet_prelude::*;
 pub use identity_context::IdentityContext;
 pub use litentry_primitives::{
-	ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType,
+	ChallengeCode, Identity, ParentchainBlockNumber, SubstrateNetwork, UserShieldingKeyType,
 };
 pub type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
 pub type MetadataOf<T> = BoundedVec<u8, <T as Config>::MaxMetadataLength>;
@@ -93,6 +93,8 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// challenge code doesn't exist
 		ChallengeCodeNotExist,
+		/// Invalid user shielding Key
+		InvalidUserShieldingKey,
 		/// the pair (litentry-account, identity) already verified when creating an identity
 		IdentityAlreadyVerified,
 		/// the pair (litentry-account, identity) doesn't exist
@@ -105,6 +107,8 @@ pub mod pallet {
 		VerificationRequestTooEarly,
 		/// a verification reqeust comes too late
 		VerificationRequestTooLate,
+		/// remove prime identiy should be disallowed
+		RemovePrimeIdentityDisallowed,
 	}
 
 	/// user shielding key is per Litentry account
@@ -147,10 +151,33 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			who: T::AccountId,
 			key: UserShieldingKeyType,
+			parent_ss58_prefix: u16,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 			// we don't care about the current key
 			UserShieldingKeys::<T>::insert(&who, key);
+
+			let prime_address_raw: [u8; 32] = who
+				.encode()
+				.try_into()
+				.map_err(|_| DispatchError::Other("invalid account id"))?;
+			let prime_user_address: Address32 = prime_address_raw.into();
+
+			let prime_id = Identity::Substrate {
+				network: SubstrateNetwork::from_ss58_prefix(parent_ss58_prefix),
+				address: prime_user_address,
+			};
+			if IDGraphs::<T>::get(&who, &prime_id).is_none() {
+				// Not existed, so create the prime entry.
+				let context = IdentityContext::<T> {
+					metadata: None,
+					creation_request_block: Some(0),
+					verification_request_block: Some(0),
+					is_verified: true,
+				};
+				IDGraphs::<T>::insert(&who, &prime_id, context);
+			}
+
 			Self::deposit_event(Event::UserShieldingKeySet { who, key });
 			Ok(())
 		}
@@ -198,8 +225,13 @@ pub mod pallet {
 			parent_ss58_prefix: u16,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
+			ensure!(Self::user_shielding_keys(&who).is_some(), Error::<T>::InvalidUserShieldingKey);
+
 			if let Some(c) = IDGraphs::<T>::get(&who, &identity) {
-				ensure!(!c.is_verified, Error::<T>::IdentityAlreadyVerified);
+				ensure!(
+					!(c.is_verified && c.creation_request_block != Some(0)),
+					Error::<T>::IdentityAlreadyVerified
+				);
 			}
 			if let Identity::Substrate { network, address } = identity {
 				if network.ss58_prefix() == parent_ss58_prefix {
@@ -211,6 +243,7 @@ pub mod pallet {
 					ensure!(user_address != address, Error::<T>::IdentityShouldBeDisallowed);
 				}
 			}
+
 			let context = IdentityContext {
 				metadata,
 				creation_request_block: Some(creation_request_block),
@@ -229,7 +262,25 @@ pub mod pallet {
 			identity: Identity,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
+			ensure!(Self::user_shielding_keys(&who).is_some(), Error::<T>::InvalidUserShieldingKey);
 			ensure!(IDGraphs::<T>::contains_key(&who, &identity), Error::<T>::IdentityNotExist);
+
+			if let Some(IdentityContext::<T> {
+				metadata,
+				creation_request_block,
+				verification_request_block,
+				is_verified,
+			}) = IDGraphs::<T>::get(&who, &identity)
+			{
+				if metadata.is_none()
+					&& creation_request_block == Some(0)
+					&& verification_request_block == Some(0)
+					&& is_verified
+				{
+					ensure!(false, Error::<T>::RemovePrimeIdentityDisallowed);
+				}
+			}
+
 			IDGraphs::<T>::remove(&who, &identity);
 			Self::deposit_event(Event::IdentityRemoved { who, identity });
 			Ok(())
@@ -244,8 +295,10 @@ pub mod pallet {
 			verification_request_block: ParentchainBlockNumber,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
+			ensure!(Self::user_shielding_keys(&who).is_some(), Error::<T>::InvalidUserShieldingKey);
 			IDGraphs::<T>::try_mutate(&who, &identity, |context| -> DispatchResult {
 				let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
+				ensure!(!c.is_verified, Error::<T>::IdentityAlreadyVerified);
 
 				if let Some(b) = c.creation_request_block {
 					ensure!(
@@ -270,6 +323,22 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		pub fn get_id_graph(who: &T::AccountId) -> Vec<(Identity, IdentityContext<T>)> {
 			IDGraphs::iter_prefix(who).collect::<Vec<_>>()
+		}
+
+		// get the most recent `max_len` elements in IDGraph, sorted by `creation_request_block`
+		pub fn get_id_graph_with_max_len(
+			who: &T::AccountId,
+			max_len: usize,
+		) -> Vec<(Identity, IdentityContext<T>)> {
+			let mut id_graph = Self::get_id_graph(who);
+			id_graph.sort_by(|a, b| {
+				Ord::cmp(
+					&b.1.creation_request_block.unwrap_or_default(),
+					&a.1.creation_request_block.unwrap_or_default(),
+				)
+			});
+			id_graph.truncate(max_len);
+			id_graph
 		}
 	}
 }

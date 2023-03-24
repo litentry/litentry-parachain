@@ -30,16 +30,15 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-use core_primitives::{AesOutput, SchemaIndex, ShardIdentifier, SCHEMA_CONTENT_LEN, SCHEMA_ID_LEN};
+use core_primitives::{
+	AesOutput, Assertion, SchemaIndex, ShardIdentifier, SCHEMA_CONTENT_LEN, SCHEMA_ID_LEN,
+};
 pub use pallet::*;
 use sp_core::H256;
 use sp_std::vec::Vec;
 
 mod vc_context;
 pub use vc_context::*;
-
-mod assertion;
-pub use assertion::*;
 
 mod schema;
 pub use schema::*;
@@ -69,7 +68,7 @@ pub mod pallet {
 	// a map VCIndex -> VC context
 	#[pallet::storage]
 	#[pallet::getter(fn vc_registry)]
-	pub type VCRegistry<T: Config> = StorageMap<_, Blake2_256, VCIndex, VCContext<T>>;
+	pub type VCRegistry<T: Config> = StorageMap<_, Blake2_128Concat, VCIndex, VCContext<T>>;
 
 	// the Schema admin account
 	#[pallet::storage]
@@ -83,7 +82,7 @@ pub mod pallet {
 	// the VC Schema storage
 	#[pallet::storage]
 	#[pallet::getter(fn schema_registry)]
-	pub type SchemaRegistry<T: Config> = StorageMap<_, Blake2_256, SchemaIndex, VCSchema<T>>;
+	pub type SchemaRegistry<T: Config> = StorageMap<_, Blake2_128Concat, SchemaIndex, VCSchema<T>>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -94,7 +93,6 @@ pub mod pallet {
 		VCDisabled { index: VCIndex },
 		// a VC is revoked on chain
 		VCRevoked { index: VCIndex },
-		VCNotExist { index: VCIndex },
 		// event that should be triggered by TEECallOrigin
 		// a VC is just issued
 		VCIssued { account: T::AccountId, index: VCIndex, vc: AesOutput },
@@ -113,6 +111,7 @@ pub mod pallet {
 		// see https://github.com/litentry/litentry-parachain/issues/1275
 		HttpRequestFailed { reason: ErrorString },
 		RequestVCHandlingFailed,
+		StfError { reason: ErrorString },
 		ParseError,
 		Assertion1Failed,
 		Assertion2Failed,
@@ -166,20 +165,14 @@ pub mod pallet {
 		#[pallet::weight(195_000_000)]
 		pub fn disable_vc(origin: OriginFor<T>, index: VCIndex) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			VCRegistry::<T>::try_mutate(index, |context| {
-				match context.take() {
-					Some(mut c) => {
-						ensure!(who == c.subject, Error::<T>::VCSubjectMismatch);
-						ensure!(c.status == Status::Active, Error::<T>::VCAlreadyDisabled);
-						c.status = Status::Disabled;
-						*context = Some(c);
-						Self::deposit_event(Event::VCDisabled { index });
-					},
-					None => {
-						Self::deposit_event(Event::VCNotExist { index });
-					},
-				}
 
+			VCRegistry::<T>::try_mutate(index, |context| {
+				let mut c = context.take().ok_or(Error::<T>::VCNotExist)?;
+				ensure!(who == c.subject, Error::<T>::VCSubjectMismatch);
+				ensure!(c.status == Status::Active, Error::<T>::VCAlreadyDisabled);
+				c.status = Status::Disabled;
+				*context = Some(c);
+				Self::deposit_event(Event::VCDisabled { index });
 				Ok(().into())
 			})
 		}
@@ -224,6 +217,7 @@ pub mod pallet {
 					Self::deposit_event(Event::HttpRequestFailed { reason: s }),
 				VCMPError::RequestVCHandlingFailed =>
 					Self::deposit_event(Event::RequestVCHandlingFailed),
+				VCMPError::StfError(s) => Self::deposit_event(Event::StfError { reason: s }),
 				VCMPError::ParseError => Self::deposit_event(Event::ParseError),
 				VCMPError::Assertion1Failed => Self::deposit_event(Event::Assertion1Failed),
 				VCMPError::Assertion2Failed => Self::deposit_event(Event::Assertion2Failed),

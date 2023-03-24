@@ -29,17 +29,19 @@ extern crate sgx_tstd as std;
 #[cfg(feature = "sgx")]
 pub use ita_sgx_runtime::{Balance, BlockNumber, Index};
 #[cfg(feature = "std")]
-pub use parentchain_primitives::{Balance, BlockNumber, Index};
+pub use litentry_primitives::{
+	ParentchainBalance as Balance, ParentchainBlockNumber as BlockNumber, ParentchainIndex as Index,
+};
 
 use codec::{Decode, Encode};
 use derive_more::Display;
+pub use getter::*;
 use ita_sgx_runtime::{pallet_imt::MetadataOf, IdentityManagement, Runtime, System};
 use itp_node_api_metadata::Error as MetadataError;
 use itp_node_api_metadata_provider::Error as MetadataProviderError;
 use itp_stf_primitives::types::AccountId;
-use std::string::String;
-
-pub use getter::*;
+use litentry_primitives::{ErrorString, IMPError, VCMPError};
+use std::{format, string::String};
 pub use stf_sgx_primitives::{types::*, Stf};
 pub use trusted_call::*;
 
@@ -80,7 +82,7 @@ pub enum StfError {
 	InvalidMetadata,
 	#[display(fmt = "Identity verification failed")]
 	VerifyIdentityFailed,
-	AssertionBuildFail,
+	AssertionBuildFail(String),
 }
 
 impl From<MetadataError> for StfError {
@@ -92,6 +94,29 @@ impl From<MetadataError> for StfError {
 impl From<MetadataProviderError> for StfError {
 	fn from(_e: MetadataProviderError) -> Self {
 		StfError::InvalidMetadata
+	}
+}
+
+impl StfError {
+	// Convert StfError to IMPError that would be sent to parentchain
+	pub fn to_imp_error(&self) -> IMPError {
+		match self {
+			StfError::Dispatch(s) =>
+				IMPError::StfError(ErrorString::truncate_from(s.as_bytes().to_vec())),
+			_ => IMPError::StfError(ErrorString::truncate_from(
+				format!("{:?}", self).as_bytes().to_vec(),
+			)),
+		}
+	}
+	// Convert StfError to VCMPError that would be sent to parentchain
+	pub fn to_vcmp_error(&self) -> VCMPError {
+		match self {
+			StfError::Dispatch(s) =>
+				VCMPError::StfError(ErrorString::truncate_from(s.as_bytes().to_vec())),
+			_ => VCMPError::StfError(ErrorString::truncate_from(
+				format!("{:?}", self).as_bytes().to_vec(),
+			)),
+		}
 	}
 }
 

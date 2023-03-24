@@ -35,16 +35,26 @@ pub mod sgx_reexport_prelude {
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use std::sync::SgxRwLock as RwLock;
+
+#[cfg(all(feature = "std", not(feature = "sgx")))]
+use std::sync::RwLock;
+
 pub mod error;
 pub mod executor;
 
 use crate::{
-	error::Result,
+	error::{Error, Result},
 	executor::{
 		call_worker::CallWorker,
 		litentry::{
-			create_identity::CreateIdentity, remove_identity::RemoveIdentity,
-			request_vc::RequestVC, set_user_shielding_key::SetUserShieldingKey,
+			batch_all::BatchAll,
+			create_identity::CreateIdentity,
+			get_scheduled_enclave::{ScheduledEnclaveRemove, ScheduledEnclaveUpdate},
+			remove_identity::RemoveIdentity,
+			request_vc::RequestVC,
+			set_user_shielding_key::SetUserShieldingKey,
 			verify_identity::VerifyIdentity,
 		},
 		shield_funds::ShieldFunds,
@@ -53,14 +63,19 @@ use crate::{
 };
 use beefy_merkle_tree::{merkle_root, Keccak256};
 use codec::Encode;
+use ita_stf::{TrustedCall, TrustedOperation};
 use itp_node_api::metadata::{
-	pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, pallet_vcmp::VCMPCallIndexes,
-	provider::AccessNodeMetadata,
+	error::Result as MetadataResult, pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes,
+	pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata,
+	runtime_call::RuntimeCall,
 };
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{OpaqueCall, ShardIdentifier, H256};
+use itp_types::{
+	AccountId, Assertion, CallIndex, OpaqueCall, ShardIdentifier, SupportedBatchCallMap,
+	SupportedBatchCallParams, H256,
+};
 use litentry_primitives::ParentchainBlockNumber;
 use log::*;
 use sp_core::blake2_256;
@@ -87,41 +102,91 @@ pub trait ExecuteIndirectCalls {
 		ParentchainBlock: ParentchainBlockTrait<Hash = H256>;
 }
 
-pub struct IndirectCallsExecutor<
-	ShieldingKeyRepository,
-	StfEnclaveSigner,
-	TopPoolAuthor,
-	NodeMetadataProvider,
-> {
-	pub(crate) shielding_key_repo: Arc<ShieldingKeyRepository>,
-	pub(crate) stf_enclave_signer: Arc<StfEnclaveSigner>,
-	pub(crate) top_pool_author: Arc<TopPoolAuthor>,
-	pub(crate) node_meta_data_provider: Arc<NodeMetadataProvider>,
+pub struct IndirectCallsExecutor<R, S, T, N> {
+	pub(crate) shielding_key_repo: Arc<R>,
+	pub(crate) stf_enclave_signer: Arc<S>,
+	pub(crate) top_pool_author: Arc<T>,
+	pub(crate) node_metadata_provider: Arc<N>,
+	pub(crate) supported_batch_call_map: Arc<RwLock<SupportedBatchCallMap>>,
 }
 
-impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
-	IndirectCallsExecutor<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
+impl<R, S, T, N> IndirectCallsExecutor<R, S, T, N>
 where
-	ShieldingKeyRepository: AccessKey,
-	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
+	R: AccessKey,
+	R::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
 		+ ShieldingCryptoEncrypt<Error = itp_sgx_crypto::Error>,
-	StfEnclaveSigner: StfEnclaveSigning,
-	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
-	NodeMetadataProvider: AccessNodeMetadata,
-	NodeMetadataProvider::MetadataType: TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes,
+	S: StfEnclaveSigning,
+	T: AuthorApi<H256, H256> + Send + Sync + 'static,
+	N: AccessNodeMetadata,
+	N::MetadataType: TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + UtilityCallIndexes,
 {
 	pub fn new(
-		shielding_key_repo: Arc<ShieldingKeyRepository>,
-		stf_enclave_signer: Arc<StfEnclaveSigner>,
-		top_pool_author: Arc<TopPoolAuthor>,
-		node_meta_data_provider: Arc<NodeMetadataProvider>,
+		shielding_key_repo: Arc<R>,
+		stf_enclave_signer: Arc<S>,
+		top_pool_author: Arc<T>,
+		node_metadata_provider: Arc<N>,
 	) -> Self {
 		IndirectCallsExecutor {
 			shielding_key_repo,
 			stf_enclave_signer,
 			top_pool_author,
-			node_meta_data_provider,
+			node_metadata_provider,
+			supported_batch_call_map: Arc::new(RwLock::default()),
 		}
+	}
+
+	// will be called after the node metadata for the enclave is set
+	// see ffi::set_node_metadata
+	// TODO: is there a better way to update it?
+	pub fn update_supported_batch_call_map(&self) -> Result<()> {
+		let mut m = self
+			.supported_batch_call_map
+			.write()
+			.map_err(|_| Error::Other("Lock poisoning".into()))?;
+		m.clear();
+
+		// the intialised SupportedBatchCallParams are only placeholders
+		#[allow(clippy::type_complexity)]
+		let supported_call_indexes_fn: Vec<(
+			fn(&N::MetadataType) -> MetadataResult<CallIndex>,
+			SupportedBatchCallParams,
+		)> = vec![
+			(
+				IMPCallIndexes::set_user_shielding_key_call_indexes,
+				SupportedBatchCallParams::SetUserShieldingKey(Default::default()),
+			),
+			(
+				IMPCallIndexes::create_identity_call_indexes,
+				SupportedBatchCallParams::CreateIdentity((
+					Default::default(),
+					AccountId::new([0u8; 32]),
+					Default::default(),
+					None,
+				)),
+			),
+			(
+				IMPCallIndexes::remove_identity_call_indexes,
+				SupportedBatchCallParams::RemoveIdentity(Default::default()),
+			),
+			(
+				IMPCallIndexes::verify_identity_call_indexes,
+				SupportedBatchCallParams::VerifyIdentity(Default::default()),
+			),
+			(
+				VCMPCallIndexes::request_vc_call_indexes,
+				SupportedBatchCallParams::RequestVC((Default::default(), Assertion::A1)),
+			),
+		];
+
+		for f in supported_call_indexes_fn {
+			let call = self.node_metadata_provider.get_from_metadata(|m| f.0(m));
+			// ignore the errors
+			if let Ok(Ok(c)) = call {
+				m.insert(c, f.1);
+			}
+		}
+		debug!("Supported batched call map: {:?}", *m);
+		Ok(())
 	}
 
 	pub(crate) fn submit_trusted_call(
@@ -136,6 +201,29 @@ where
 		}
 	}
 
+	pub(crate) fn submit_trusted_call_from_error(
+		&self,
+		shard: ShardIdentifier,
+		err: &Error,
+	) -> Result<()> {
+		let enclave_account = self.stf_enclave_signer.get_enclave_account()?;
+		let shielding_key = self.shielding_key_repo.retrieve_key()?;
+		let trusted_call = match err {
+			error::Error::IMPHandlingError(e) =>
+				TrustedCall::handle_imp_error(enclave_account, e.clone()),
+			error::Error::VCMPHandlingError(e) =>
+				TrustedCall::handle_vcmp_error(enclave_account, e.clone()),
+			_ => return Err(Error::Other(("unsupported error").into())),
+		};
+		let signed_trusted_call =
+			self.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
+		let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
+
+		let encrypted_trusted_call = shielding_key.encrypt(&trusted_operation.encode())?;
+		self.submit_trusted_call(shard, encrypted_trusted_call);
+		Ok(())
+	}
+
 	/// Creates a processed_parentchain_block extrinsic for a given parentchain block hash and the merkle executed extrinsics.
 	///
 	/// Calculates the merkle root of the extrinsics. In case no extrinsics are supplied, the root will be a hash filled with zeros.
@@ -148,7 +236,7 @@ where
 	where
 		ParentchainBlock: ParentchainBlockTrait<Hash = H256>,
 	{
-		let call = self.node_meta_data_provider.get_from_metadata(|meta_data| {
+		let call = self.node_metadata_provider.get_from_metadata(|meta_data| {
 			meta_data.confirm_processed_parentchain_block_call_indexes()
 		})??;
 
@@ -157,21 +245,16 @@ where
 	}
 }
 
-impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvider>
-	ExecuteIndirectCalls
-	for IndirectCallsExecutor<
-		ShieldingKeyRepository,
-		StfEnclaveSigner,
-		TopPoolAuthor,
-		NodeMetadataProvider,
-	> where
-	ShieldingKeyRepository: AccessKey,
-	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
+impl<R, S, T, N> ExecuteIndirectCalls for IndirectCallsExecutor<R, S, T, N>
+where
+	R: AccessKey,
+	R::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
 		+ ShieldingCryptoEncrypt<Error = itp_sgx_crypto::Error>,
-	StfEnclaveSigner: StfEnclaveSigning,
-	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
-	NodeMetadataProvider: AccessNodeMetadata,
-	NodeMetadataProvider::MetadataType: TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes,
+	S: StfEnclaveSigning,
+	T: AuthorApi<H256, H256> + Send + Sync + 'static,
+	N: AccessNodeMetadata,
+	N::MetadataType:
+		TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + UtilityCallIndexes + RuntimeCall,
 {
 	fn execute_indirect_calls_in_extrinsics<ParentchainBlock>(
 		&self,
@@ -184,9 +267,8 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 		let block_hash = block.hash();
 		let mut calls = Vec::<OpaqueCall>::new();
 
-		let parentchain_block_number: ParentchainBlockNumber = block_number
-			.try_into()
-			.map_err(|_| crate::error::Error::ConvertParentchainBlockNumber)?;
+		let parentchain_block_number: ParentchainBlockNumber =
+			block_number.try_into().map_err(|_| Error::ConvertParentchainBlockNumber)?;
 
 		debug!("Scanning block {:?} for relevant xt", block_number);
 		let mut executed_calls = Vec::<H256>::new();
@@ -212,22 +294,24 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 			let verify_identity = VerifyIdentity { block_number: parentchain_block_number };
 			// Found RequestVC extrinsic
 			let request_vc = RequestVC { block_number: parentchain_block_number };
+			// Found BatchAll extrinsic
+			let batch_all = BatchAll { block_number: parentchain_block_number };
+			// Found Update Scheduled Enclave extrinisc
+			let scheduled_enclave_update =
+				ScheduledEnclaveUpdate { block_number: parentchain_block_number };
+			let scheduled_enclave_remove = ScheduledEnclaveRemove;
 
-			let executors: Vec<
-				&dyn DecorateExecutor<
-					ShieldingKeyRepository,
-					StfEnclaveSigner,
-					TopPoolAuthor,
-					NodeMetadataProvider,
-				>,
-			> = vec![
+			let executors: Vec<&dyn DecorateExecutor<R, S, T, N>> = vec![
 				&shield_funds,
 				&call_worker,
+				&batch_all,
 				&set_user_shielding_key,
 				&create_identity,
 				&remove_identity,
 				&verify_identity,
 				&request_vc,
+				&scheduled_enclave_update,
+				&scheduled_enclave_remove,
 			];
 			for executor in executors {
 				match executor.decode_and_execute(self, &mut encoded_xt_opaque.as_slice()) {
@@ -238,26 +322,10 @@ impl<ShieldingKeyRepository, StfEnclaveSigner, TopPoolAuthor, NodeMetadataProvid
 					Ok(ExecutionStatus::NextExecutor) => continue,
 					Ok(ExecutionStatus::Skip) => break,
 					Err(e) => {
-						log::warn!("fail to execute indirect_call. due to {:?} ", e);
-						match e {
-							// error handling: call the counter part on parachain to pass it back
-							error::Error::IMPHandlingError(e) => {
-								let call = self
-									.node_meta_data_provider
-									.get_from_metadata(|m| m.imp_some_error_call_indexes())??;
-
-								calls.push(OpaqueCall::from_tuple(&(call, e)))
-							},
-							error::Error::VCMPHandlingError(e) => {
-								let call = self
-									.node_meta_data_provider
-									.get_from_metadata(|m| m.vcmp_some_error_call_indexes())??;
-
-								calls.push(OpaqueCall::from_tuple(&(call, e)))
-							},
-							// nothing to do
-							_ => (),
-						}
+						// the error should already be handled (reported) in the executor
+						// we only log the error (again)
+						// note it can be an error during error-handling (e.g. fail to create the trusted call)
+						log::warn!("fail to execute indirect_call due to {:?} ", e);
 						// We should keep the same error handling as the original function `handle_shield_funds_xt`.
 						// `create_processed_parentchain_block_call` needs to be called in any case.
 						break

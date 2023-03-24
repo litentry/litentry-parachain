@@ -1,10 +1,13 @@
-import { describeLitentry } from './utils';
+import { describeLitentry, checkVc, checkFailReason, checkUserShieldingKeys } from './common/utils';
 import { step } from 'mocha-steps';
-import { requestVC, setUserShieldingKey, disableVC, revokeVC } from './indirect_calls';
-import { Assertion } from './type-definitions';
+import { setUserShieldingKey, requestVCs, disableVCs, revokeVCs } from './indirect_calls';
+import { Assertion } from './common/type-definitions';
 import { assert } from 'chai';
 import { u8aToHex } from '@polkadot/util';
 import { HexString } from '@polkadot/util/types';
+import { blake2AsHex } from '@polkadot/util-crypto';
+import { requestErrorVCs, disableErrorVCs, revokeErrorVCs } from './indirect_error_calls';
+import { Event } from '@polkadot/types/interfaces';
 
 const assertion = <Assertion>{
     A1: 'A1',
@@ -12,44 +15,123 @@ const assertion = <Assertion>{
     A3: ['A3', 'A3', 'A3'],
     A4: [10],
     A7: [10],
-    A8: 'A8',
+    A8: ['litentry'],
     A10: [10],
     A11: [10],
 };
+
+//It doesn't make much difference test A1 only vs test A1 - A11, one VC type is enough.
+//So only use A1 to trigger the wrong event
 describeLitentry('VC test', async (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     var indexList: HexString[] = [];
-    step('set user shielding key', async function () {
-        const who = await setUserShieldingKey(context, context.defaultSigner[0], aesKey, true);
-        assert.equal(who, u8aToHex(context.defaultSigner[0].addressRaw), 'check caller error');
+
+    step('check user sidechain storage before create', async function () {
+        const resp_shieldingKey = await checkUserShieldingKeys(
+            context,
+            'IdentityManagement',
+            'UserShieldingKeys',
+            u8aToHex(context.substrateWallet.alice.addressRaw)
+        );
+        assert.equal(resp_shieldingKey, '0x', 'resp_shieldingKey should be empty before set');
     });
-    step('Request VC', async () => {
-        for (const key in assertion) {
-            const eventData = await requestVC(context, context.defaultSigner[0], aesKey, true, context.shard, {
-                [key]: assertion[key as keyof Assertion],
-            });
-            assert(eventData![0] == u8aToHex(context.defaultSigner[0].addressRaw) && eventData![1] && eventData![2]);
-            indexList.push(eventData![1]);
-            const registry = (await context.substrate.query.vcManagement.vcRegistry(eventData![1])) as any;
-            assert.equal(registry.toHuman()!['status'], 'Active');
-        }
+    step('set user shielding key', async function () {
+        const who = await setUserShieldingKey(context, context.substrateWallet.alice, aesKey, true);
+        assert.equal(who, u8aToHex(context.substrateWallet.alice.addressRaw), 'check caller error');
+
     });
 
+    step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
+        const resp_shieldingKey = await checkUserShieldingKeys(
+            context,
+            'IdentityManagement',
+            'UserShieldingKeys',
+            u8aToHex(context.substrateWallet.alice.addressRaw)
+        );
+        assert.equal(resp_shieldingKey, aesKey, 'resp_shieldingKey should be equal aesKey after set');
+
+    });
+    step('Request VC', async () => {
+        //request all vc
+        const res = (await requestVCs(
+            context,
+            context.substrateWallet.alice,
+            aesKey,
+            true,
+            context.mrEnclave,
+            assertion
+        )) as {
+            account: HexString;
+            index: HexString;
+            vc: HexString;
+        }[];
+
+        for (let k = 0; k < res.length; k++) {
+            const vcString = res[k].vc.replace('0x', '');
+            const vcObj = JSON.parse(vcString);
+            console.log('---------VC json----------', vcObj);
+
+            const vcProof = vcObj.proof;
+
+            const registry = (await context.api.query.vcManagement.vcRegistry(res[k].index)) as any;
+            assert.equal(registry.toHuman()!['status'], 'Active', 'check registry error');
+
+            const vcHash = blake2AsHex(Buffer.from(vcString));
+            assert.equal(vcHash, registry.toHuman()!['hash_'], 'check vc json hash error');
+
+            //check vc
+            const vcValid = await checkVc(vcObj, res[k].index, vcProof, context.api);
+            assert.equal(vcValid, true, 'check vc error');
+            indexList.push(res[k].index);
+        }
+    });
+    step('Request Error VC(A1)', async () => {
+        const resp_request_error = (await requestErrorVCs(
+            context,
+            context.substrateWallet.bob,
+            aesKey,
+            true,
+            context.mrEnclave,
+            assertion,
+            ['A1']
+        )) as Event[];
+
+        await checkFailReason(resp_request_error, 'User shielding key is missing', true);
+    });
     step('Disable VC', async () => {
-        for (const index of indexList) {
-            const eventIndex = await disableVC(context, context.defaultSigner[0], aesKey, true, index);
-            assert.equal(eventIndex, index, 'check index error');
-            const registry = (await context.substrate.query.vcManagement.vcRegistry(index)) as any;
+        const res = (await disableVCs(context, context.substrateWallet.alice, aesKey, true, indexList)) as HexString[];
+        for (let k = 0; k < res.length; k++) {
+            assert.equal(res[k], indexList[k], 'check index error');
+            const registry = (await context.api.query.vcManagement.vcRegistry(indexList[k])) as any;
             assert.equal(registry.toHuman()!['status'], 'Disabled');
         }
     });
+    step('Disable error VC(A1)', async () => {
+        //Alice has already disabled the A1 VC
+        const resp_disable_error = (await disableErrorVCs(
+            context,
+            context.substrateWallet.alice,
+            true,
+
+            [indexList[0]]
+        )) as HexString[];
+        await checkFailReason(resp_disable_error, 'vcManagement.VCAlreadyDisabled', false);
+    });
 
     step('Revoke VC', async () => {
-        for (const index of indexList) {
-            const eventIndex = await revokeVC(context, context.defaultSigner[0], aesKey, true, index);
-            assert.equal(eventIndex, index, 'check index error');
-            const registry = (await context.substrate.query.vcManagement.vcRegistry(index)) as any;
+        const res = (await revokeVCs(context, context.substrateWallet.alice, aesKey, true, indexList)) as HexString[];
+        for (let k = 0; k < res.length; k++) {
+            assert.equal(res[k], indexList[k], 'check index error');
+            const registry = (await context.api.query.vcManagement.vcRegistry(indexList[k])) as any;
             assert.equal(registry.toHuman(), null);
         }
+    });
+
+    step('Revoke Error VC(A1)', async () => {
+        //Alice has already revoked the A1 VC
+        const resp_revoke_error = (await revokeErrorVCs(context, context.substrateWallet.alice, true, [
+            indexList[0],
+        ])) as string[];
+        await checkFailReason(resp_revoke_error, 'vcManagement.VCNotExist', false);
     });
 });

@@ -28,8 +28,8 @@ use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use frame_support::{
 	construct_runtime, ord_parameter_types, parameter_types,
 	traits::{
-		ConstU32, ConstU64, ConstU8, Contains, ContainsLengthBound, Everything, InstanceFilter,
-		SortedMembers, WithdrawReasons,
+		ConstU128, ConstU32, ConstU64, ConstU8, Contains, ContainsLengthBound, Everything,
+		InstanceFilter, SortedMembers, WithdrawReasons,
 	},
 	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
 	PalletId, RuntimeDebug,
@@ -148,7 +148,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9151,
+	spec_version: 9152,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -167,7 +167,8 @@ pub fn native_version() -> NativeVersion {
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 
-	pub const SS58Prefix: u16 = 131;
+	// using generic substrate prefix
+	pub const SS58Prefix: u16 = 42;
 }
 
 impl frame_system::Config for Runtime {
@@ -625,6 +626,24 @@ impl pallet_tips::Config for Runtime {
 	type WeightInfo = ();
 }
 
+impl pallet_identity::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	// Add one item in storage and take 258 bytes
+	type BasicDeposit = ConstU128<{ deposit(1, 258) }>;
+	// Not add any item to the storage but takes 66 bytes
+	type FieldDeposit = ConstU128<{ deposit(0, 66) }>;
+	// Add one item in storage and take 53 bytes
+	type SubAccountDeposit = ConstU128<{ deposit(1, 53) }>;
+	type MaxSubAccounts = ConstU32<100>;
+	type MaxAdditionalFields = ConstU32<100>;
+	type MaxRegistrars = ConstU32<20>;
+	type Slashed = Treasury;
+	type ForceOrigin = EnsureRootOrHalfCouncil;
+	type RegistrarOrigin = EnsureRootOrHalfCouncil;
+	type WeightInfo = weights::pallet_identity::WeightInfo<Runtime>;
+}
+
 impl pallet_sudo::Config for Runtime {
 	type RuntimeCall = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
@@ -849,7 +868,10 @@ impl pallet_teerex::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type MomentsPerDay = MomentsPerDay;
-	type WeightInfo = weights::pallet_teerex::WeightInfo<Runtime>;
+	// TODO: the generated runtime weights file is incomplete
+	//       we are missing `register_dcap_enclave` and `register_quoting_enclave`
+	//       it should be re-benchmarked once the upstream fixes it
+	type WeightInfo = ();
 	type EnclaveAdminOrigin = EnsureRootOrAllCouncil;
 }
 
@@ -923,6 +945,7 @@ construct_runtime! {
 		TechnicalCommitteeMembership: pallet_membership::<Instance2> = 25,
 		Bounties: pallet_bounties = 26,
 		Tips: pallet_tips = 27,
+		ParachainIdentity: pallet_identity = 28,
 
 		// Parachain
 		ParachainSystem: cumulus_pallet_parachain_system = 30,
@@ -1026,6 +1049,8 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::Democracy(_) |
 			// Preimage
 			RuntimeCall::Preimage(_) |
+			// Identity
+			RuntimeCall::ParachainIdentity(_) |
 			// Utility
 			RuntimeCall::Utility(_) |
 			// Seesion

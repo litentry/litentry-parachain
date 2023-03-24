@@ -15,17 +15,21 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate as pallet_tee_identity_management;
+use crate::UserShieldingKeyType;
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{ConstU128, ConstU16, ConstU32},
 };
 use frame_system as system;
 use frame_system::EnsureSignedBy;
-use litentry_primitives::{Identity, SubstrateNetwork};
+use litentry_primitives::{
+	Identity, IdentityString, SubstrateNetwork, Web2Network, USER_SHIELDING_KEY_LEN,
+};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
+	AccountId32,
 };
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -60,7 +64,7 @@ impl system::Config for Test {
 	type BlockNumber = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
-	type AccountId = u64;
+	type AccountId = AccountId32;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type RuntimeEvent = RuntimeEvent;
@@ -89,17 +93,26 @@ impl pallet_balances::Config for Test {
 }
 
 ord_parameter_types! {
-	pub const One: u64 = 1;
+	pub const One: AccountId32 = AccountId32::new([1u8; 32]);
 }
 
 impl pallet_tee_identity_management::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type ManageOrigin = EnsureSignedBy<One, u64>;
+	type ManageOrigin = EnsureSignedBy<One, AccountId32>;
 	type MaxMetadataLength = ConstU32<128>;
 	type MaxVerificationDelay = ConstU32<2>;
 }
 
 const ALICE_KEY: &str = "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d";
+
+pub const ALICE: AccountId32 = AccountId32::new([1u8; 32]);
+pub const BOB: AccountId32 = AccountId32::new([2u8; 32]);
+
+pub fn alice_twitter_identity(suffix: u32) -> Identity {
+	let address = IdentityString::try_from(format!("alice{}", suffix).as_bytes().to_vec())
+		.expect("convert to BoundedVec failed");
+	Identity::Web2 { network: Web2Network::Twitter, address }
+}
 
 pub fn alice_web3_identity() -> Identity {
 	let alice_key_hex: [u8; 32] =
@@ -107,12 +120,28 @@ pub fn alice_web3_identity() -> Identity {
 	Identity::Substrate { network: SubstrateNetwork::Polkadot, address: alice_key_hex.into() }
 }
 
-pub fn new_test_ext() -> sp_io::TestExternalities {
+pub fn bob_web3_identity() -> Identity {
+	let bob_key_hex = [2u8; 32];
+	Identity::Substrate { network: SubstrateNetwork::Litentry, address: bob_key_hex.into() }
+}
+
+pub fn new_test_ext(set_shielding_key: bool) -> sp_io::TestExternalities {
 	let t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| {
 		System::set_block_number(1);
+
+		if set_shielding_key {
+			let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
+			let ss58_prefix = 131_u16;
+			let _ = IMT::set_user_shielding_key(
+				RuntimeOrigin::signed(ALICE),
+				BOB,
+				shielding_key.clone(),
+				ss58_prefix,
+			);
+		}
 	});
 	ext
 }

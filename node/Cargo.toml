@@ -16,10 +16,10 @@ name = 'litentry-collator'
 targets = ['x86_64-unknown-linux-gnu']
 
 [dependencies]
-async-trait = "0.1.63"
-clap = { version = "4.1.6", features = ["derive"] }
+async-trait = "0.1.67"
+clap = { version = "4.1.11", features = ["derive"] }
 codec = { package = "parity-scale-codec", version = "3.0.0" }
-futures = { version = "0.3.26", features = ["compat"] }
+futures = { version = "0.3.27", features = ["compat"] }
 hex-literal = "0.3.4"
 log = "0.4"
 serde = { version = "1.0", features = ["derive"] }
@@ -102,9 +102,7 @@ rococo-parachain-runtime = { path = "../runtime/rococo" }
 substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
 
 [features]
-default = [
-  "tee-dev",
-]
+default = []
 fast-runtime = [
   "litentry-parachain-runtime/fast-runtime",
   "litmus-parachain-runtime/fast-runtime",
@@ -127,6 +125,5 @@ try-runtime = [
 # allow workers to register without remote attestation for dev purposes
 # currently only available on litmus and rococo
 tee-dev = [
-  "litmus-parachain-runtime/tee-dev",
   "rococo-parachain-runtime/tee-dev",
 ]

@@ -23,14 +23,18 @@ extern crate sgx_tstd as std;
 use crate::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
+use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::{discord_litentry::DiscordLitentryClient, vec_to_string};
 use litentry_primitives::{
-	Assertion, Identity, ParameterString, ParentchainBlockNumber, Web2Network,
+	Identity, ParameterString, ParentchainBlockNumber, VCMPError, Web2Network,
 };
 use log::*;
-use parachain_core_primitives::VCMPError;
 use std::vec::Vec;
+
+const VC_SUBJECT_DESCRIPTION: &str =
+	"Becoming an ID-Hubber: if user has a Discord account verified and joined Litentry guild";
+const VC_SUBJECT_TYPE: &str = "ID-Hubber";
 
 pub fn build(
 	identities: Vec<Identity>,
@@ -39,6 +43,13 @@ pub fn build(
 	who: &AccountId,
 	bn: ParentchainBlockNumber,
 ) -> Result<Credential> {
+	debug!(
+		"Assertion A2 build, who: {:?}, bn: {}, identities: {:?}",
+		account_id_to_string(&who),
+		bn,
+		identities
+	);
+
 	let mut discord_cnt: i32 = 0;
 	let mut has_joined: bool = false;
 
@@ -70,19 +81,12 @@ pub fn build(
 		}
 	}
 
-	match Credential::generate_unsigned_credential(
-		&Assertion::A2(guild_id),
-		who,
-		&shard.clone(),
-		bn,
-	) {
+	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
-			if discord_cnt > 0 && has_joined {
-				credential_unsigned.credential_subject.values.push(true);
-			} else {
-				credential_unsigned.credential_subject.values.push(false);
-			}
-			credential_unsigned.add_assertion_a2(guild_id_s);
+			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
+
+			let value = discord_cnt > 0 && has_joined;
+			credential_unsigned.add_assertion_a2(value, guild_id_s);
 			return Ok(credential_unsigned)
 		},
 		Err(e) => {

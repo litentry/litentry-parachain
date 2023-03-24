@@ -18,6 +18,7 @@ itp-stf-executor = { path = "../../../core-primitives/stf-executor", default-fea
 itp-stf-primitives = { path = "../../../core-primitives/stf-primitives", default-features = false }
 itp-top-pool-author = { path = "../../../core-primitives/top-pool-author", default-features = false }
 itp-types = { path = "../../../core-primitives/types", default-features = false }
+itp-utils = { default-features = false, path = "../../../core-primitives/utils" }
 
 # sgx enabled external libraries
 futures_sgx = { package = "futures", git = "https://github.com/mesalock-linux/futures-rs-sgx", optional = true }
@@ -36,12 +37,15 @@ log = { version = "0.4", default-features = false }
 beefy-merkle-tree = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 
 # scs/integritee
 substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.37-tag-v0.7.0", default-features = false }
 
 # litentry
 ita-sgx-runtime = { path = "../../../app-libs/sgx-runtime", default-features = false }
+itp-component-container = { path = "../../../core-primitives/component-container", default-features = false, optional = true }
+itp-enclave-scheduled = { path = "../../../core-primitives/sgx/enclave-scheduled", default-features = false, optional = true }
 litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
 pallet-imp = { package = "pallet-identity-management", path = "../../../../pallets/identity-management", default-features = false }
 pallet-vcmp = { package = "pallet-vc-management", path = "../../../../pallets/vc-management", default-features = false }
@@ -49,6 +53,8 @@ parachain-core-primitives = { package = "core-primitives", path = "../../../../p
 
 [dev-dependencies]
 env_logger = "0.10.0"
+hex = "0.4.2"
+itp-node-api = { path = "../../../core-primitives/node-api", features = ["mocks"] }
 itc-parentchain-test = { path = "../../../core/parentchain/test" }
 itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", features = ["mocks"] }
 itp-stf-executor = { path = "../../../core-primitives/stf-executor", features = ["mocks"] }
@@ -67,6 +73,9 @@ sgx = [
     "itp-top-pool-author/sgx",
     "thiserror_sgx",
     "litentry-primitives/sgx",
+    "itp-enclave-scheduled/sgx",
+    "itp-component-container/sgx",
+    "itp-utils/sgx",
 ]
 std = [
     "bs58/std",
@@ -80,6 +89,8 @@ std = [
     "itp-top-pool-author/std",
     "itp-types/std",
     "log/std",
+    "itp-enclave-scheduled/std",
+    "itp-component-container/std",
     #substrate
     "beefy-merkle-tree/std",
     "sp-core/std",
@@ -88,7 +99,7 @@ std = [
     "thiserror",
     "ita-sgx-runtime/std",
     "litentry-primitives/std",
-    "parachain-core-primitives/std",
     "pallet-imp/std",
     "pallet-vcmp/std",
+    "itp-utils/std",
 ]
