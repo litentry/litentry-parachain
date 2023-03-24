@@ -76,9 +76,10 @@ use litentry_primitives::{
 };
 use log::*;
 use std::{
+	collections::{HashMap, HashSet},
 	str::from_utf8,
 	string::{String, ToString},
-	vec::Vec, collections::{HashMap, HashSet},
+	vec::Vec,
 };
 
 // ERC20 LIT token address
@@ -105,7 +106,7 @@ pub fn build(
 	let mut found = false;
 	let mut from_date_index = 0_usize;
 	let mut networks: HashMap<VerifiedCredentialsNetwork, HashSet<String>> = HashMap::new();
-	
+
 	for identity in identities.iter() {
 		let mut verified_network = VerifiedCredentialsNetwork::Polkadot;
 		if identity.is_web3() {
@@ -135,24 +136,19 @@ pub fn build(
 					Ok(address)
 				},
 				Identity::Web2 { address, .. } => match from_utf8(address.as_ref()) {
-					Ok(addr) => {
-						Ok(addr.to_string())
-					},
+					Ok(addr) => Ok(addr.to_string()),
 					Err(e) => {
-						error!(
-							"Assertion A4 parse Web2 address {:?} error info: {:?}",
-							address, e
-						);
+						error!("Assertion A4 parse Web2 address {:?} error info: {:?}", address, e);
 
 						Err(())
-					}
-				}
+					},
+				},
 			};
 
 			if let Ok(address) = address {
 				if let Some(set) = networks.get_mut(&verified_network) {
 					set.insert(address);
-				}	
+				}
 			}
 		}
 	}
@@ -197,7 +193,10 @@ pub fn build(
 						found = found || holder.is_hodler;
 					}
 				},
-				Err(e) => error!("Assertion A4 request check_verified_credentials_is_hodler error: {:?}", e),
+				Err(e) => error!(
+					"Assertion A4 request check_verified_credentials_is_hodler error: {:?}",
+					e
+				),
 			}
 		}
 	}

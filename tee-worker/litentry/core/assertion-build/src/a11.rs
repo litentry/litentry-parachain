@@ -76,7 +76,7 @@ pub fn build(
 		}
 	}
 
-	if addresses.len() != 0 {
+	if !addresses.is_empty() {
 		for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
 			if found {
 				from_date_index = index + 1;
@@ -96,7 +96,10 @@ pub fn build(
 						found = found || hodler.is_hodler;
 					}
 				},
-				Err(e) => error!("Assertion A11 request check_verified_credentials_is_hodler error: {:?}", e),
+				Err(e) => error!(
+					"Assertion A11 request check_verified_credentials_is_hodler error: {:?}",
+					e
+				),
 			}
 		}
 	}

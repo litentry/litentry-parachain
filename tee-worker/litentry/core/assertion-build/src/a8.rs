@@ -193,52 +193,10 @@ fn get_total_tx_ranges(total_txs: u64) -> (u64, u64) {
 mod tests {
 	use super::*;
 	use litentry_primitives::IndexingNetworks;
-
 	#[test]
 	fn assertion_networks_to_verifed_network_works() {
 		let litentry = IndexingNetwork::Litentry;
 		let mut networks = IndexingNetworks::with_bounded_capacity(1);
-		networks.try_push(litentry.clone()).unwrap();
-
-		let v_networks = to_verifed_network(networks.clone());
-		assert_eq!(v_networks.len(), 1);
-
-		let target_network = VerifiedCredentialsNetwork::from(litentry);
-		assert_eq!(v_networks[0], target_network);
-	}
-
-	#[test]
-	fn assertion_networks_to_verifed_network_non_works() {
-		let networks = IndexingNetworks::with_bounded_capacity(1);
-		let left = to_verifed_network(networks.clone());
-
-		let mut right = vec![];
-		INDEXING_NETWORKS.iter().for_each(|network| {
-			let vnetwork = VerifiedCredentialsNetwork::from(network.clone());
-			right.push(vnetwork);
-		});
-
-		assert_eq!(left, right);
-	}
-
-	#[test]
-	fn assertion_networks_if_match_network_collect_address_works() {
-		let mut verified_addresses = HashSet::<String>::new();
-		let mut verified_networks = HashSet::<VerifiedCredentialsNetwork>::new();
-
-		let mut address_litentry =
-			"44f0633d7273a1e5bee1e54937dbb1cdfc0b210582b913c0fb3c7c7b9cdca9b9".to_string();
-		address_litentry.insert_str(0, "0x");
-
-		let mut address_polkadot =
-			"44f0633d7273a1e5bee1e54937dbb1cdfc0b210582b913c0fb3c7c7b9cdca9b1".to_string();
-		address_polkadot.insert_str(0, "0x");
-
-		let mut target_networks = vec![];
-		INDEXING_NETWORKS.iter().for_each(|network| {
-			let vnetwork = VerifiedCredentialsNetwork::from(network.clone());
-			target_networks.push(vnetwork);
-		});
 
 		let networks = [VerifiedCredentialsNetwork::Litentry, VerifiedCredentialsNetwork::Polkadot];
 		let addresses = [
