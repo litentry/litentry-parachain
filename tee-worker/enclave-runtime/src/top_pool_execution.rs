@@ -19,8 +19,8 @@ use crate::{
 	error::Result,
 	initialization::global_components::{
 		GLOBAL_OCALL_API_COMPONENT, GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT,
-		GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT, GLOBAL_STATE_HANDLER_COMPONENT,
-		GLOBAL_TOP_POOL_AUTHOR_COMPONENT, GLOBAL_SIDECHAIN_UPDATER,
+		GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT, GLOBAL_SIDECHAIN_UPDATER,
+		GLOBAL_STATE_HANDLER_COMPONENT, GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 	},
 	sync::{EnclaveLock, EnclaveStateRWLock},
 	utils::{
@@ -38,16 +38,15 @@ use itc_parentchain::{
 	},
 };
 use itp_component_container::ComponentGetter;
-use its_consensus_common::UpdaterTrait;
 use itp_sgx_externalities::SgxExternalities;
+use its_consensus_common::UpdaterTrait;
 // use itp_stf_state_handler::StateHandler;
-use itp_stf_state_handler::handle_state::HandleState;
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_ocall_api::{EnclaveOnChainOCallApi, EnclaveSidechainOCallApi};
 use itp_settings::sidechain::SLOT_DURATION;
 use itp_sgx_crypto::Ed25519Seal;
 use itp_sgx_io::StaticSealedIO;
-use itp_stf_state_handler::query_shard_state::QueryShardState;
+use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
 use itp_time_utils::duration_now;
 use itp_types::{Block, OpaqueCall, H256};
 use its_primitives::{
@@ -159,16 +158,17 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 				block_composer,
 			);
 
-			let (blocks, opaque_calls) = exec_aura_on_slot::<_, _, SignedSidechainBlock, _, _, _, _, _>(
-				slot.clone(),
-				authority,
-				ocall_api.clone(),
-				parentchain_import_dispatcher,
-				env,
-				shards,
-				updater,
-				state_handler,
-			)?;
+			let (blocks, opaque_calls) =
+				exec_aura_on_slot::<_, _, SignedSidechainBlock, _, _, _, _, _>(
+					slot.clone(),
+					authority,
+					ocall_api.clone(),
+					parentchain_import_dispatcher,
+					env,
+					shards,
+					updater,
+					state_handler,
+				)?;
 
 			debug!("Aura executed successfully");
 
@@ -238,15 +238,16 @@ where
 {
 	debug!("[Aura] Executing aura for slot: {:?}", slot);
 
-	let mut aura = Aura::<_, ParentchainBlock, SignedSidechainBlock, PEnvironment, _, _, _, _>::new(
-		authority,
-		ocall_api.as_ref().clone(),
-		block_import_trigger,
-		proposer_environment,
-		updater,
-		state_handler,
-	)
-	.with_claim_strategy(SlotClaimStrategy::RoundRobin);
+	let mut aura =
+		Aura::<_, ParentchainBlock, SignedSidechainBlock, PEnvironment, _, _, _, _>::new(
+			authority,
+			ocall_api.as_ref().clone(),
+			block_import_trigger,
+			proposer_environment,
+			updater,
+			state_handler,
+		)
+		.with_claim_strategy(SlotClaimStrategy::RoundRobin);
 
 	let (blocks, xts): (Vec<_>, Vec<_>) =
 		PerShardSlotWorkerScheduler::on_slot(&mut aura, slot, shards)

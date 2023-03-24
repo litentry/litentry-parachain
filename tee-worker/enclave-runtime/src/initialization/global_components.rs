@@ -34,7 +34,6 @@ use itc_direct_rpc_server::{
 	rpc_connection_registry::ConnectionRegistry, rpc_responder::RpcResponder,
 	rpc_watch_extractor::RpcWatchExtractor, rpc_ws_handler::RpcWsHandler,
 };
-use its_consensus_common::Updater;
 use itc_parentchain::{
 	block_import_dispatcher::{
 		immediate_dispatcher::ImmediateDispatcher, triggered_dispatcher::TriggeredDispatcher,
@@ -73,6 +72,7 @@ use itp_top_pool_author::{
 	author::{Author, AuthorTopFilter},
 };
 use itp_types::{Block as ParentchainBlock, SignedBlock as SignedParentchainBlock};
+use its_consensus_common::Updater;
 use its_primitives::{
 	traits::{Block as SidechainBlockTrait, SignedBlock as SignedSidechainBlockTrait},
 	types::block::SignedBlock as SignedSidechainBlock,
@@ -285,4 +285,5 @@ pub static GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT: ComponentContainer<
 > = ComponentContainer::new("sidechain_block_syncer");
 
 /// Sidechain mr_enclave
-pub static GLOBAL_SIDECHAIN_UPDATER: ComponentContainer<Updater> = ComponentContainer::new("sidechain_updater");
+pub static GLOBAL_SIDECHAIN_UPDATER: ComponentContainer<Updater> =
+	ComponentContainer::new("sidechain_updater");

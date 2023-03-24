@@ -25,7 +25,10 @@ use crate::{
 			initialize_test_state::init_state,
 			test_setup::{enclave_call_signer, TestStf},
 		},
-		mocks::{propose_to_import_call_mock::ProposeToImportOCallApi, updater_mock::UpdaterMock, types::*},
+		mocks::{
+			propose_to_import_call_mock::ProposeToImportOCallApi, types::*,
+			updater_mock::UpdaterMock,
+		},
 	},
 	top_pool_execution::{exec_aura_on_slot, send_blocks_and_extrinsics},
 };
