@@ -181,7 +181,7 @@ pub mod pallet {
 		IdentityAlreadyVerified,
 		/// identity not exist when removing an identity
 		IdentityNotExist,
-		/// identity should be disallowed
+		/// creating the prime identity manually is disallowed
 		CreatePrimeIdentityNotAllowed,
 		/// no shielding key for a given AccountId
 		ShieldingKeyNotExist,
