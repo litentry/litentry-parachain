@@ -33,6 +33,7 @@ use itp_test::mock::{
 use itp_top_pool::basic_pool::BasicPool;
 use itp_top_pool_author::{api::SidechainApi, author::Author, top_filter::AllowAllTopsFilter};
 use itp_types::{Block as ParentchainBlock, SignedBlock as SignedParentchainBlock};
+use its_consensus_common::UpdaterTrait;
 use its_primitives::types::SignedBlock as SignedSidechainBlock;
 use its_sidechain::{aura::block_importer::BlockImporter, block_composer::BlockComposer};
 use primitive_types::H256;
@@ -89,3 +90,7 @@ pub type TestBlockImporter = BlockImporter<
 	TestTopPoolAuthor,
 	TestParentchainBlockImportTrigger,
 >;
+
+#[derive(Default)]
+pub struct UpdaterMock;
+impl UpdaterTrait for UpdaterMock {}
