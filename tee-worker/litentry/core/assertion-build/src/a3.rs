@@ -101,7 +101,6 @@ pub fn build(
 				channel_id_s,
 				role_id_s,
 			);
-
 			Ok(credential_unsigned)
 		},
 		Err(e) => {
