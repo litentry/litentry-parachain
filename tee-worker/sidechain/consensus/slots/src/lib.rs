@@ -33,9 +33,11 @@ extern crate sgx_tstd as std;
 
 use codec::Encode;
 use derive_more::From;
+use itp_sgx_externalities::SgxExternalities;
+use itp_stf_state_handler::handle_state::HandleState;
 use itp_time_utils::{duration_difference, duration_now};
-use itp_types::OpaqueCall;
-use its_consensus_common::{Error as ConsensusError, Proposer};
+use itp_types::{OpaqueCall, ShardIdentifier};
+use its_consensus_common::{Error as ConsensusError, Proposer, UpdaterTrait};
 use its_primitives::traits::{
 	Block as SidechainBlockTrait, Header as HeaderTrait, ShardIdentifierFor,
 	SignedBlock as SignedSidechainBlockTrait,
@@ -43,14 +45,14 @@ use its_primitives::traits::{
 use log::*;
 pub use slots::*;
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header as ParentchainHeaderTrait};
-use std::{fmt::Debug, time::Duration, vec::Vec};
+use std::{fmt::Debug, time::Duration, vec::Vec, sync::Arc};
 
 #[cfg(feature = "std")]
 mod slot_stream;
 mod slots;
 
 #[cfg(test)]
-mod mocks;
+pub mod mocks;
 
 #[cfg(test)]
 mod per_shard_slot_worker_tests;
@@ -129,6 +131,12 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 	/// Output generated after a slot
 	type Output: SignedSidechainBlockTrait + Send + 'static;
 
+	/// updater trait
+	type Updater: UpdaterTrait;
+
+	/// state handler
+	type StateHandler: HandleState<StateT = SgxExternalities>;
+
 	/// The logging target to use when logging messages.
 	fn logging_target(&self) -> &'static str;
 
@@ -158,6 +166,10 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 		header: ParentchainBlock::Header,
 		shard: ShardIdentifierFor<Self::Output>,
 	) -> Result<Self::Proposer, ConsensusError>;
+
+	fn updater(&mut self) -> Arc<Self::Updater>;
+
+	fn state_handler(&mut self) -> Arc<Self::StateHandler>;
 
 	/// Remaining duration for proposing.
 	fn proposing_remaining_duration(&self, slot_info: &SlotInfo<ParentchainBlock>) -> Duration;
@@ -201,7 +213,6 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 
 			return None
 		}
-		// TODO: check schedule enclave matches
 
 		let latest_parentchain_header = match self.peek_latest_parentchain_header() {
 			Ok(Some(peeked_header)) => peeked_header,
@@ -214,6 +225,44 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 				return None
 			},
 		};
+		let block_number: u64 =
+			format!("{:?}", latest_parentchain_header.number()).parse().unwrap();
+		let updater = self.updater();
+		let state_handler = self.state_handler();
+		// migration
+		match updater.get_merge_mr_enclave(block_number) {
+			Ok(Some(next_mr_enclave)) => {
+				let current_mr_enclave = updater.current_mr_enclave();
+				let old_id = ShardIdentifier::from_slice(&current_mr_enclave[..]);
+				let new_id = ShardIdentifier::from_slice(&next_mr_enclave[..]);
+				if let Err(e) = state_handler.migrate_shard(old_id, new_id) {
+					error!("migrate shard failed: {e:?}");
+					return None
+				}
+			},
+			Err(e) => {
+				error!("get merge mr enclave failed: {e:?}");
+				return None
+			},
+			Ok(None) => {},
+		}
+		match updater.is_block_suspended(block_number) {
+			Ok(suspended) =>
+				if suspended {
+					warn!(
+						target: logging_target,
+						"block produce is suspended, maybe you need to update to latest version and check the enclave"
+					);
+					return None
+				},
+			Err(e) => {
+				error!(
+					target: logging_target,
+					"inner error when check block is suspended or not: {e:?}"
+				);
+				return None
+			},
+		}
 
 		let epoch_data = match self.epoch_data(&latest_parentchain_header, slot) {
 			Ok(epoch_data) => epoch_data,

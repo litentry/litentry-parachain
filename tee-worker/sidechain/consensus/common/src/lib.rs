@@ -37,6 +37,7 @@ mod block_import_confirmation_handler;
 mod block_import_queue_worker;
 mod error;
 mod peer_block_sync;
+mod updater;
 
 #[cfg(test)]
 mod test;
@@ -46,6 +47,7 @@ pub use block_import_confirmation_handler::*;
 pub use block_import_queue_worker::*;
 pub use error::*;
 pub use peer_block_sync::*;
+pub use updater::{UpdaterTrait, Updater};
 
 pub trait Verifier<ParentchainBlock, SignedSidechainBlock>: Send + Sync
 where

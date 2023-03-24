@@ -32,9 +32,11 @@ extern crate sgx_tstd as std;
 use core::marker::PhantomData;
 use itc_parentchain_block_import_dispatcher::triggered_dispatcher::TriggerParentchainBlockImport;
 use itp_ocall_api::EnclaveOnChainOCallApi;
+use itp_sgx_externalities::SgxExternalities;
+use itp_stf_state_handler::handle_state::HandleState;
 use itp_time_utils::duration_now;
 use its_block_verification::slot::slot_author;
-use its_consensus_common::{Environment, Error as ConsensusError, Proposer};
+use its_consensus_common::{Environment, Error as ConsensusError, Proposer, UpdaterTrait};
 use its_consensus_slots::{SimpleSlotWorker, Slot, SlotInfo};
 use its_primitives::{
 	traits::{Block as SidechainBlockTrait, Header as HeaderTrait, SignedBlock},
@@ -67,23 +69,47 @@ pub struct Aura<
 	Environment,
 	OcallApi,
 	ImportTrigger,
+	Updater,
+	StateHandler,
 > {
 	authority_pair: AuthorityPair,
 	ocall_api: OcallApi,
 	parentchain_import_trigger: Arc<ImportTrigger>,
 	environment: Environment,
 	claim_strategy: SlotClaimStrategy,
+	updater: Arc<Updater>,
+	state_handler: Arc<StateHandler>,
 	_phantom: PhantomData<(AuthorityPair, ParentchainBlock, SidechainBlock)>,
 }
 
-impl<AuthorityPair, ParentchainBlock, SidechainBlock, Environment, OcallApi, ImportTrigger>
-	Aura<AuthorityPair, ParentchainBlock, SidechainBlock, Environment, OcallApi, ImportTrigger>
+impl<
+		AuthorityPair,
+		ParentchainBlock,
+		SidechainBlock,
+		Environment,
+		OcallApi,
+		ImportTrigger,
+		Updater,
+		StateHandler,
+	>
+	Aura<
+		AuthorityPair,
+		ParentchainBlock,
+		SidechainBlock,
+		Environment,
+		OcallApi,
+		ImportTrigger,
+		Updater,
+		StateHandler,
+	>
 {
 	pub fn new(
 		authority_pair: AuthorityPair,
 		ocall_api: OcallApi,
 		parentchain_import_trigger: Arc<ImportTrigger>,
 		environment: Environment,
+		updater: Arc<Updater>,
+		state_handler: Arc<StateHandler>,
 	) -> Self {
 		Self {
 			authority_pair,
@@ -91,6 +117,8 @@ impl<AuthorityPair, ParentchainBlock, SidechainBlock, Environment, OcallApi, Imp
 			parentchain_import_trigger,
 			environment,
 			claim_strategy: SlotClaimStrategy::RoundRobin,
+			updater,
+			state_handler,
 			_phantom: Default::default(),
 		}
 	}
@@ -119,10 +147,26 @@ type AuthorityId<P> = <P as Pair>::Public;
 type ShardIdentifierFor<SignedSidechainBlock> =
 	<<<SignedSidechainBlock as SignedBlock>::Block as SidechainBlockTrait>::HeaderType as HeaderTrait>::ShardIdentifier;
 
-impl<AuthorityPair, ParentchainBlock, SignedSidechainBlock, E, OcallApi, ImportTrigger>
-	SimpleSlotWorker<ParentchainBlock>
-	for Aura<AuthorityPair, ParentchainBlock, SignedSidechainBlock, E, OcallApi, ImportTrigger>
-where
+impl<
+		AuthorityPair,
+		ParentchainBlock,
+		SignedSidechainBlock,
+		E,
+		OcallApi,
+		ImportTrigger,
+		Updater,
+		StateHandler,
+	> SimpleSlotWorker<ParentchainBlock>
+	for Aura<
+		AuthorityPair,
+		ParentchainBlock,
+		SignedSidechainBlock,
+		E,
+		OcallApi,
+		ImportTrigger,
+		Updater,
+		StateHandler,
+	> where
 	AuthorityPair: Pair,
 	// todo: Relax hash trait bound, but this needs a change to some other parts in the code.
 	ParentchainBlock: ParentchainBlockTrait<Hash = BlockHash>,
@@ -132,11 +176,15 @@ where
 	OcallApi: ValidateerFetch + EnclaveOnChainOCallApi + Send + 'static,
 	ImportTrigger:
 		TriggerParentchainBlockImport<SignedBlockType = SignedParentchainBlock<ParentchainBlock>>,
+	Updater: UpdaterTrait,
+	StateHandler: HandleState<StateT = SgxExternalities>,
 {
 	type Proposer = E::Proposer;
 	type Claim = AuthorityPair::Public;
 	type EpochData = Vec<AuthorityId<AuthorityPair>>;
 	type Output = SignedSidechainBlock;
+	type Updater = Updater;
+	type StateHandler = StateHandler;
 
 	fn logging_target(&self) -> &'static str {
 		"aura"
@@ -185,6 +233,14 @@ where
 		shard: ShardIdentifierFor<Self::Output>,
 	) -> Result<Self::Proposer, ConsensusError> {
 		self.environment.init(header, shard)
+	}
+
+	fn updater(&mut self) -> Arc<Self::Updater> {
+		self.updater.clone()
+	}
+
+	fn state_handler(&mut self) -> Arc<Self::StateHandler> {
+		self.state_handler.clone()
 	}
 
 	fn proposing_remaining_duration(&self, slot_info: &SlotInfo<ParentchainBlock>) -> Duration {
@@ -272,12 +328,14 @@ mod tests {
 	use its_consensus_slots::PerShardSlotWorkerScheduler;
 	use sp_core::ed25519::Public;
 	use sp_keyring::ed25519::Keyring;
+	use itp_test::mock::handle_state_mock::HandleStateMock;
+	use crate::test::fixtures::types::UpdaterMock;
 
 	fn get_aura(
 		onchain_mock: OnchainMock,
 		trigger_parentchain_import: Arc<TriggerParentchainBlockImportMock<SignedParentchainBlock>>,
 	) -> TestAura {
-		Aura::new(Keyring::Alice.pair(), onchain_mock, trigger_parentchain_import, EnvironmentMock)
+		Aura::new(Keyring::Alice.pair(), onchain_mock, trigger_parentchain_import, EnvironmentMock, Arc::new(UpdaterMock), Arc::new(HandleStateMock::default()))
 	}
 
 	fn get_default_aura() -> TestAura {

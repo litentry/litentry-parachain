@@ -10,8 +10,11 @@ log = { version = "0.4", default-features = false }
 thiserror = { version = "1.0.26", optional = true }
 
 # local deps
+itc-parentchain-indirect-calls-executor = { path = "../../../core/parentchain/indirect-calls-executor", default-features = false }
 itc-parentchain-light-client = { path = "../../../core/parentchain/light-client", default-features = false }
 itp-block-import-queue = { path = "../../../core-primitives/block-import-queue", default-features = false }
+itp-component-container = { path = "../../../core-primitives/component-container", default-features = false }
+itp-enclave-scheduled = { path = "../../../core-primitives/sgx/enclave-scheduled", default-features = false }
 itp-extrinsics-factory = { path = "../../../core-primitives/extrinsics-factory", default-features = false }
 itp-node-api-metadata = { path = "../../../core-primitives/node-api/metadata", default-features = false }
 itp-node-api-metadata-provider = { path = "../../../core-primitives/node-api/metadata-provider", default-features = false }
@@ -50,10 +53,13 @@ sgx = [
     "itc-parentchain-light-client/sgx",
     "itp-block-import-queue/sgx",
     "itp-extrinsics-factory/sgx",
+    #"itp-component-container/sgx",
+    "itp-enclave-scheduled/sgx",
     "itp-node-api-metadata-provider/sgx",
     "itp-sgx-crypto/sgx",
     "itp-sgx-externalities/sgx",
     "its-state/sgx",
+    "itc-parentchain-indirect-calls-executor/sgx",
     # scs
     "its-block-verification/sgx",
 ]
@@ -63,10 +69,13 @@ std = [
     "thiserror",
     # local
     "itc-parentchain-light-client/std",
+    "itp-component-container/std",
     "itp-block-import-queue/std",
     "itp-extrinsics-factory/std",
     "itp-node-api-metadata/std",
     "itp-node-api-metadata-provider/std",
+    "itp-enclave-scheduled/std",
+    "itc-parentchain-indirect-calls-executor/std",
     "itp-ocall-api/std",
     "itp-sgx-crypto/std",
     "itp-sgx-externalities/std",

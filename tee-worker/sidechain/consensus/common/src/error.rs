@@ -66,6 +66,14 @@ pub enum Error {
 	FailedToPopBlockImportQueue(#[from] itp_block_import_queue::error::Error),
 	#[error("Verification Error: {0}")]
 	VerificationError(its_block_verification::error::Error),
+	#[error("Can't get scheduled enclaves")]
+	GetScheduledEnclavesFailed,
+	#[error("Enclave migration failed")]
+	MigrationFailed,
+	#[error("Can't get state handler")]
+	GetStateHandlerFailed,
+	#[error("Can't updater")]
+	GetUpdaterFailed,
 }
 
 impl core::convert::From<std::io::Error> for Error {

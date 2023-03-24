@@ -25,7 +25,7 @@ use crate::{
 			initialize_test_state::init_state,
 			test_setup::{enclave_call_signer, TestStf},
 		},
-		mocks::{propose_to_import_call_mock::ProposeToImportOCallApi, types::*},
+		mocks::{propose_to_import_call_mock::ProposeToImportOCallApi, updater_mock::UpdaterMock, types::*},
 	},
 	top_pool_execution::{exec_aura_on_slot, send_blocks_and_extrinsics},
 };
@@ -162,14 +162,17 @@ pub fn produce_sidechain_block_and_import_it() {
 	let state_hash_before_block_production = get_state_hash(state_handler.as_ref(), &shard_id);
 
 	info!("Executing AURA on slot..");
+	let updater = Arc::new(UpdaterMock);
 	let (blocks, opaque_calls) =
-		exec_aura_on_slot::<_, ParentchainBlock, SignedSidechainBlock, _, _, _>(
+		exec_aura_on_slot::<_, ParentchainBlock, SignedSidechainBlock, _, _, _, _, _>(
 			slot_info,
 			signer,
 			ocall_api.clone(),
 			parentchain_block_import_trigger.clone(),
 			proposer_environment,
 			shards,
+			updater,
+			state_handler.clone(),
 		)
 		.unwrap();
 

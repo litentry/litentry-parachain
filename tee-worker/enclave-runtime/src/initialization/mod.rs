@@ -34,7 +34,7 @@ use crate::{
 		GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT, GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT,
 		GLOBAL_STATE_HANDLER_COMPONENT, GLOBAL_STATE_KEY_REPOSITORY_COMPONENT,
 		GLOBAL_STATE_OBSERVER_COMPONENT, GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
-		GLOBAL_WEB_SOCKET_SERVER_COMPONENT,
+		GLOBAL_WEB_SOCKET_SERVER_COMPONENT, GLOBAL_SIDECHAIN_UPDATER,
 	},
 	ocall::OcallApi,
 	rpc::{rpc_response_channel::RpcResponseChannel, worker_api_direct::public_api_rpc_handler},
@@ -60,6 +60,7 @@ use itc_tls_websocket_server::{
 use itp_attestation_handler::IntelAttestationHandler;
 use itp_component_container::{ComponentGetter, ComponentInitializer};
 use itp_enclave_scheduled::{ScheduledEnclaveHandle, ScheduledEnclaves};
+use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_primitives_cache::GLOBAL_PRIMITIVES_CACHE;
 use itp_settings::files::STATE_SNAPSHOTS_CACHE_SIZE;
 use itp_sgx_crypto::{aes, ed25519, rsa3072, AesSeal, Ed25519Seal, Rsa3072Seal};
@@ -72,6 +73,7 @@ use itp_stf_state_handler::{
 use itp_top_pool::pool::Options as PoolOptions;
 use itp_top_pool_author::author::AuthorTopFilter;
 use itp_types::ShardIdentifier;
+use its_consensus_common::Updater;
 use its_sidechain::block_composer::BlockComposer;
 use log::*;
 use sp_core::crypto::Pair;
@@ -225,7 +227,7 @@ pub(crate) fn init_enclave_sidechain_components() -> EnclaveResult<()> {
 
 	let sidechain_block_syncer = Arc::new(EnclaveSidechainBlockSyncer::new(
 		sidechain_block_importer,
-		ocall_api,
+		ocall_api.clone(),
 		sidechain_block_import_confirmation_handler,
 	));
 	GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT.initialize(sidechain_block_syncer.clone());
@@ -239,6 +241,10 @@ pub(crate) fn init_enclave_sidechain_components() -> EnclaveResult<()> {
 
 	let block_composer = Arc::new(BlockComposer::new(signer, state_key_repository));
 	GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT.initialize(block_composer);
+
+	let enclave = ocall_api.get_mrenclave_of_self()?;
+	let updater = Updater::new(enclave.m);
+	GLOBAL_SIDECHAIN_UPDATER.initialize(Arc::new(updater));
 
 	Ok(())
 }

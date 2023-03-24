@@ -71,11 +71,28 @@ pub trait ScheduledEnclaveHandle {
 		&mut self,
 		scheduled_enclave: ScheduledEnclaveInfo,
 	) -> IOResult<Option<ScheduledEnclaveInfo>>;
+
 	fn remove_scheduled_enclave(
 		&mut self,
 		sidechain_block_number: SidechainBlockNumber,
 	) -> IOResult<Option<ScheduledEnclaveInfo>>;
+
+	/// give the current sidechain block number
+	/// return the next scheduled mr_enclave info that will be used
 	fn get_next_scheduled_enclave(
+		&self,
+		current_side_chain_number: SidechainBlockNumber,
+	) -> Option<ScheduledEnclaveInfo>;
+
+	/// given current side chain number, returns  mrenclave info that currently should be used
+	/// for example, if the scheduled mr enclaves like:
+	///  block_1 -> mr_enclave_1
+	///  block_10 -> mr_enclave_10
+	///  block_20 -> mr_enclave_20
+	/// given current sidechain number 5, returns mr_enclave_1
+	/// given current sidechain number 11, return mr_enclave_10
+	/// given current sidechain number 22, return mr_enclave_20
+	fn get_current_scheduled_enclave(
 		&self,
 		current_side_chain_number: SidechainBlockNumber,
 	) -> Option<ScheduledEnclaveInfo>;
@@ -120,7 +137,6 @@ impl ScheduledEnclaveHandle for ScheduledEnclaves {
 		Ok(enclave_info)
 	}
 
-	/// get the next scheduled enclave
 	fn get_next_scheduled_enclave(
 		&self,
 		current_side_chain_number: SidechainBlockNumber,
@@ -137,5 +153,23 @@ impl ScheduledEnclaveHandle for ScheduledEnclaves {
 				},
 			)
 			.min_by_key(|v| v.sidechain_block_number)
+	}
+
+	fn get_current_scheduled_enclave(
+		&self,
+		current_side_chain_number: SidechainBlockNumber,
+	) -> Option<ScheduledEnclaveInfo> {
+		self.scheduled_enclaves
+			.iter()
+			.filter_map(
+				|(k, v)| {
+					if k < &current_side_chain_number {
+						Some(v.clone())
+					} else {
+						None
+					}
+				},
+			)
+			.max_by_key(|v| v.sidechain_block_number)
 	}
 }

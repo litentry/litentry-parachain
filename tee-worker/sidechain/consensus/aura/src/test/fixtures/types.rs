@@ -27,11 +27,17 @@ use its_primitives::{
 	types::block::SignedBlock as SignedSidechainBlock,
 };
 use sp_runtime::{app_crypto::ed25519, generic::SignedBlock};
+use itp_test::mock::handle_state_mock::HandleStateMock;
+use its_consensus_common::UpdaterTrait;
 
 type AuthorityPair = ed25519::Pair;
 
 pub type ShardIdentifierFor<SidechainBlock> =
 	<<<SidechainBlock as SignedBlockTrait>::Block as SidechainBlockTrait>::HeaderType as SidechainHeaderTrait>::ShardIdentifier;
+
+#[derive(Default)]
+pub struct UpdaterMock;
+impl UpdaterTrait for UpdaterMock{}
 
 pub type TestAura = Aura<
 	AuthorityPair,
@@ -40,4 +46,6 @@ pub type TestAura = Aura<
 	EnvironmentMock,
 	OnchainMock,
 	TriggerParentchainBlockImportMock<SignedBlock<ParentchainBlock>>,
+	UpdaterMock,
+	HandleStateMock,
 >;

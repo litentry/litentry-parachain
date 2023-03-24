@@ -16,10 +16,11 @@
 */
 
 use crate::{slots::Slot, SimpleSlotWorker, SlotInfo, SlotResult};
-use its_consensus_common::{Proposal, Proposer, Result};
+use its_consensus_common::{Proposal, Proposer, Result, UpdaterTrait};
 use its_primitives::{traits::ShardIdentifierFor, types::SignedBlock as SignedSidechainBlock};
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header as ParentchainHeaderTrait};
-use std::{marker::PhantomData, thread, time::Duration};
+use std::{marker::PhantomData, thread, time::Duration, sync::Arc};
+pub use itp_test::mock::handle_state_mock::HandleStateMock;
 
 #[derive(Default)]
 pub(crate) struct ProposerMock<ParentchainBlock> {
@@ -36,12 +37,19 @@ where
 }
 
 #[derive(Default)]
+pub struct UpdaterMock;
+
+impl UpdaterTrait for UpdaterMock{}
+
+#[derive(Default)]
 pub(crate) struct SimpleSlotWorkerMock<B>
 where
 	B: ParentchainBlockTrait,
 {
 	pub slot_infos: Vec<SlotInfo<B>>,
 	pub slot_time_spent: Option<Duration>,
+	pub state_handler: Arc<HandleStateMock>,
+	pub updater: Arc<UpdaterMock>,
 }
 
 impl<B> SimpleSlotWorker<B> for SimpleSlotWorkerMock<B>
@@ -49,6 +57,10 @@ where
 	B: ParentchainBlockTrait,
 {
 	type Proposer = ProposerMock<B>;
+
+	type Updater = UpdaterMock;
+
+	type StateHandler = HandleStateMock;
 
 	type Claim = u64;
 
@@ -84,6 +96,15 @@ where
 	) -> Result<Self::Proposer> {
 		todo!()
 	}
+
+	fn updater(&mut self) -> Arc<Self::Updater> {
+		self.updater.clone()
+	}
+
+	fn state_handler(&mut self) -> Arc<Self::StateHandler> {
+		self.state_handler.clone()
+	}
+
 
 	fn proposing_remaining_duration(&self, _slot_info: &SlotInfo<B>) -> Duration {
 		todo!()

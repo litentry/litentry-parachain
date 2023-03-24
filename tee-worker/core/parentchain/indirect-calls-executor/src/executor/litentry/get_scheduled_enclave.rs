@@ -56,7 +56,7 @@ impl ScheduledEnclaveUpdate {
 			sidechain_block_number,
 			mr_enclave,
 		};
-		let old_enclaves = GLOBAL_SIDECHAIN_SCHEDULED_ENCLABES.get()?;
+		let old_enclaves = GLOBAL_SIDECHAIN_SCHEDULED_ENCLABES.get().unwrap_or_default();
 		// unwrap is safe here, because GLOBAL_SIDECHAIN_SCHEDULED_ENCLABES is initialized in `init_enclave()`
 		let mut scheduled_enclaves = Arc::<ScheduledEnclaves>::try_unwrap(old_enclaves).unwrap();
 		scheduled_enclaves.add_scheduled_enclave(scheduled_enclave)?;

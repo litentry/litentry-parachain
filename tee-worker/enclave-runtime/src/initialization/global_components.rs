@@ -34,6 +34,7 @@ use itc_direct_rpc_server::{
 	rpc_connection_registry::ConnectionRegistry, rpc_responder::RpcResponder,
 	rpc_watch_extractor::RpcWatchExtractor, rpc_ws_handler::RpcWsHandler,
 };
+use its_consensus_common::Updater;
 use itc_parentchain::{
 	block_import_dispatcher::{
 		immediate_dispatcher::ImmediateDispatcher, triggered_dispatcher::TriggeredDispatcher,
@@ -282,3 +283,6 @@ pub static GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT: ComponentContainer<
 pub static GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT: ComponentContainer<
 	EnclaveSidechainBlockSyncer,
 > = ComponentContainer::new("sidechain_block_syncer");
+
+/// Sidechain mr_enclave
+pub static GLOBAL_SIDECHAIN_UPDATER: ComponentContainer<Updater> = ComponentContainer::new("sidechain_updater");

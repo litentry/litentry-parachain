@@ -32,10 +32,13 @@ itp-settings = { path = "../../../core-primitives/settings" }
 itp-sgx-io = { path = "../../../core-primitives/sgx/io", default-features = false }
 itp-time-utils = { path = "../../../core-primitives/time-utils", default-features = false }
 its-consensus-common = { path = "../common", default-features = false }
+itp-stf-state-handler = { path = "../../../core-primitives/stf-state-handler", default-features = false }
+itp-sgx-externalities = { path = "../../../core-primitives/substrate-sgx/externalities", default-features = false }
 
 [dev-dependencies]
 itc-parentchain-test = { path = "../../../core/parentchain/test" }
 its-test = { path = "../../test" }
+itp-test = { path = "../../../core-primitives/test" }
 sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 tokio = { version = "1.6.1", features = ["full"] }
 
@@ -46,6 +49,8 @@ sgx = [
     "itp-sgx-io/sgx",
     "itp-time-utils/sgx",
     "its-consensus-common/sgx",
+    "itp-stf-state-handler/sgx",
+    "itp-sgx-externalities/sgx",
     "sgx_tstd",
 ]
 std = [
@@ -55,6 +60,8 @@ std = [
     "futures",
     "futures-timer",
     # substrate
+    "itp-stf-state-handler/std",
+    "itp-sgx-externalities/std",
     "sp-consensus-slots/std",
     "sp-runtime/std",
     # local

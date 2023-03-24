@@ -126,6 +126,7 @@ itp-top-pool-author = { path = "../core-primitives/top-pool-author", default-fea
 itp-types = { path = "../core-primitives/types", default-features = false }
 itp-utils = { path = "../core-primitives/utils", default-features = false, features = ["sgx"] }
 its-block-verification = { path = "../sidechain/block-verification", default-features = false }
+its-consensus-common = { path = "../sidechain/consensus/common", default-features = false, features = ["sgx"] }
 its-primitives = { path = "../sidechain/primitives", default-features = false }
 its-sidechain = { path = "../sidechain/sidechain-crate", default-features = false, features = ["sgx"] }
 
