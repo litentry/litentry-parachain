@@ -294,6 +294,8 @@ export async function checkErrorDetail(
     isModule: boolean
 ): Promise<boolean> {
     let detail: string = '';
+    // TODO: `item.data.detail.toHuman()` is treated as object (why?)
+    //       I have to JSON.stringify it to assign it to a string
     response.map((item: any) => {
         isModule ? (detail = JSON.stringify(item.data.detail.toHuman())) : (detail = item);
         assert.isTrue(
