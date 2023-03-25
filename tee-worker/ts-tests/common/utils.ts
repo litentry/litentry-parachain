@@ -14,7 +14,7 @@ import {
 } from './type-definitions';
 import { blake2AsHex, cryptoWaitReady, xxhashAsU8a } from '@polkadot/util-crypto';
 import { Metadata } from '@polkadot/types';
-import { SiLookupTypeId } from '@polkadot/types/interfaces';
+import { SiLookupTypeId, EventRecord } from '@polkadot/types/interfaces';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { Codec } from '@polkadot/types/types';
 import { HexString } from '@polkadot/util/types';
@@ -214,7 +214,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
             context.metaData = tmp.metaData;
         });
 
-        after(async function () {});
+        after(async function () { });
 
         cb(context);
     });
@@ -282,8 +282,8 @@ export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
     expect(isValid).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-            vc.issuer.id === proofJson.verificationMethod &&
-            proofJson.type === 'Ed25519Signature2020'
+        vc.issuer.id === proofJson.verificationMethod &&
+        proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
 }
@@ -448,4 +448,7 @@ export async function checkIDGraph(
 }
 
 //batch call utils
-export async function batchCall(txs: any, context: any) {}
+export async function handleEvent(events: EventRecord[]): Promise<any> {
+    console.log(events);
+
+}

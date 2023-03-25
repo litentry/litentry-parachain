@@ -181,10 +181,10 @@ export async function requestVCs(
     assertion: Assertion
 ): Promise<
     | {
-          account: HexString;
-          index: HexString;
-          vc: HexString;
-      }[]
+        account: HexString;
+        index: HexString;
+        vc: HexString;
+    }[]
     | undefined
 > {
     let txs: TransactionSubmit[] = [];
@@ -309,16 +309,16 @@ export async function batchCall(
     pallet: string,
     event: string[]
 ): Promise<any> {
-    await context.api.tx.utility.batch(txs).signAndSend(signer, async ({ status, events }) => {
-        if (status.isFinalized) {
-            console.log(1111);
-            // for (const { event } of events) {
-            //     console.log(event.method);
-            // }
+    await context.api.tx.utility.batch(txs).signAndSend(signer, async (result) => {
+        if (result.status.isInBlock) {
+            console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
+        } else if (result.status.isInvalid) {
+            console.log(`Transaction is ${result.status}`);
         }
     });
 
     const events = (await listenEvent(context.api, pallet, event)) as any;
+    expect(events.length).to.be.equal(txs.length);
     return events;
 }
 

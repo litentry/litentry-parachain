@@ -6,6 +6,7 @@ const { Keyring } = require('@polkadot/keyring');
 import { u8aToHex } from '@polkadot/util';
 import { Assertion } from './common/type-definitions';
 import { batchCall } from './indirect_calls';
+import { handleEvent } from './common/utils'
 const assertion = <Assertion>{
     A1: 'A1',
     A2: ['A2'],
@@ -38,7 +39,6 @@ describeLitentry('multiple accounts test', async (context) => {
         const fs = require('fs');
         const fileName = `wallets.json`;
         fs.writeFileSync(fileName, JSON.stringify(addresses));
-        console.log(u8aToHex(addresses[0].substrateWallet.addressRaw));
     });
     step('send a test token to each account.', async () => {
         const transfer_token_txs: any = [];
@@ -49,6 +49,10 @@ describeLitentry('multiple accounts test', async (context) => {
         const events = await batchCall(context, context.substrateWallet.alice, transfer_token_txs, 'balances', [
             'Transfer',
         ]);
+        await handleEvent(events)
+
     });
-    step('request VCs', async () => {});
+    step('request VC(A1)', async () => {
+
+    });
 });

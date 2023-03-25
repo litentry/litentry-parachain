@@ -24,11 +24,13 @@ export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrins
     });
 }
 
-export async function sendTxUntilInBlockList(api: ApiPromise, txs: TransactionSubmit[], signer: KeyringPair) {
+export async function sendTxUntilInBlockList(api: ApiPromise, txs: TransactionSubmit[], signer: KeyringPair | KeyringPair[]) {
+    const signers = Array.isArray(signer) ? signer : [signer];
     return Promise.all(
-        txs.map(async ({ tx, nonce }) => {
+        txs.map(async ({ tx, nonce }, index) => {
             const result = await new Promise((resolve, reject) => {
-                tx.signAndSend(signer, { nonce }, (result) => {
+                const s = signers[index % signers.length];
+                tx.signAndSend(s, { nonce }, (result) => {
                     if (result.status.isInBlock) {
                         //catch error
                         if (result.dispatchError) {
