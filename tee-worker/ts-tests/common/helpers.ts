@@ -3,6 +3,7 @@ import { u8aConcat, u8aToU8a } from '@polkadot/util';
 import { HexString } from '@polkadot/util/types';
 import { Keyring } from '@polkadot/api';
 import type { KeyringPair } from '@polkadot/keyring/types';
+import { EvmIdentity, LitentryIdentity, LitentryValidationData } from './type-definitions';
 
 //format and setup
 const keyring = new Keyring({ type: 'sr25519' });
@@ -54,3 +55,17 @@ export function twox64Concat(data: HexString | Uint8Array): Uint8Array {
 export function identity(data: HexString | Uint8Array): Uint8Array {
     return u8aToU8a(data);
 }
+
+
+
+
+export const ethereumValidationData = <LitentryValidationData>{
+    Web3Validation: {
+        Evm: {
+            message: `0x${Buffer.from('mock_message', 'utf8').toString('hex')}`,
+            signature: {
+                Ethereum: '' as HexString,
+            },
+        },
+    },
+};

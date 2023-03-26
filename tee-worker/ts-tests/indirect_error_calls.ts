@@ -25,7 +25,7 @@ export async function setErrorUserShieldingKey(
     await sendTxUntilInBlock(context.api, tx, signer);
 
     if (listening) {
-        const events = await listenEvent(context.api, 'identityManagement', ['SetUserShieldingKeyHandlingFailed']);
+        const events = await listenEvent(context.api, 'identityManagement', ['SetUserShieldingKeyHandlingFailed'], 1);
         expect(events.length).to.be.equal(1);
         return events[0].method as string;
     }
@@ -60,7 +60,7 @@ export async function createErrorIdentities(
     await sendTxUntilInBlockList(context.api, txs, signer);
 
     if (listening) {
-        const events = (await listenEvent(context.api, 'identityManagement', ['CreateIdentityHandlingFailed'])) as any;
+        const events = (await listenEvent(context.api, 'identityManagement', ['CreateIdentityHandlingFailed'], txs.length)) as any;
         expect(events.length).to.be.equal(errorCiphertexts.length);
         let results: string[] = [];
         for (let i = 0; i < events.length; i++) {
@@ -109,7 +109,7 @@ export async function verifyErrorIdentities(
     await sendTxUntilInBlockList(context.api, txs, signer);
 
     if (listening) {
-        const events = (await listenEvent(context.api, 'identityManagement', ['StfError'])) as any;
+        const events = (await listenEvent(context.api, 'identityManagement', ['StfError'], txs.length)) as any;
         expect(events.length).to.be.equal(identities.length);
         let results: string[] = [];
         for (let i = 0; i < events.length; i++) {
@@ -146,7 +146,7 @@ export async function removeErrorIdentities(
     await sendTxUntilInBlockList(context.api, txs, signer);
 
     if (listening) {
-        const events = (await listenEvent(context.api, 'identityManagement', ['StfError'])) as any;
+        const events = (await listenEvent(context.api, 'identityManagement', ['StfError'], txs.length)) as any;
         let results: string[] = [];
         expect(events.length).to.be.equal(identities.length);
         for (let i = 0; i < events.length; i++) {
@@ -181,7 +181,7 @@ export async function requestErrorVCs(
     await sendTxUntilInBlockList(context.api, txs, signer);
 
     if (listening) {
-        const events = (await listenEvent(context.api, 'vcManagement', ['StfError'])) as Event[];
+        const events = (await listenEvent(context.api, 'vcManagement', ['StfError'], txs.length)) as Event[];
         expect(events.length).to.be.equal(keys.length);
         return events;
     }

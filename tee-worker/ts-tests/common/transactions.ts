@@ -48,6 +48,7 @@ export async function sendTxUntilInBlockList(api: ApiPromise, txs: TransactionSu
                             console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
                             resolve({
                                 block: result.status.asInBlock.toString(),
+                                txHash: result.status.hash.toString()
                             });
                         }
                     } else if (result.status.isInvalid) {
@@ -63,9 +64,10 @@ export async function sendTxUntilInBlockList(api: ApiPromise, txs: TransactionSu
 // Subscribe to the chain until we get the first specified event with given `section` and `methods`.
 // We can listen to multiple `methods` as long as they are emitted in the same block.
 // The event consumer should do the decryption optionaly as it's event specific
-export async function listenEvent(api: ApiPromise, section: string, methods: string[]) {
+export async function listenEvent(api: ApiPromise, section: string, methods: string[], txsLength: number) {
     return new Promise<Event[]>(async (resolve, reject) => {
         let startBlock = 0;
+        let events: EventRecord[] = []
         const unsubscribe = await api.rpc.chain.subscribeNewHeads(async (header) => {
             const currentBlockNumber = header.number.toNumber();
             if (startBlock == 0) startBlock = currentBlockNumber;
@@ -84,12 +86,13 @@ export async function listenEvent(api: ApiPromise, section: string, methods: str
                 const d = e.event.data;
                 console.log(`Event[${i}]: ${s}.${m} ${d}`);
             });
-            const events = records.filter(
-                ({ phase, event }) =>
-                    phase.isApplyExtrinsic && section === event.section && methods.includes(event.method)
+            const filtered_events = records.filter(
+                ({ phase, event }) => {
+                    return phase.isApplyExtrinsic && section === event.section && methods.includes(event.method)
+                }
             );
-
-            if (events.length) {
+            events.push(...filtered_events)
+            if (events.length === txsLength) {
                 resolve(events.map((e) => e.event));
                 unsubscribe();
                 return;

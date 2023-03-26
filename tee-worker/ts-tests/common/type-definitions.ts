@@ -5,6 +5,7 @@ import WebSocketAsPromised = require('websocket-as-promised');
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { Metadata } from '@polkadot/types';
+import { ethers } from 'ethers';
 export const teeTypes = {
     WorkerRpcReturnString: {
         vec: 'Bytes',
@@ -187,6 +188,7 @@ export type IntegrationTestContext = {
     ethersWallet: any;
     substrateWallet: any;
     metaData: Metadata;
+    web3Signers: Web3Wallets[]
 };
 
 export class AESOutput {
@@ -266,6 +268,11 @@ export type DiscordValidationData = {
     message_id: HexString;
     guild_id: HexString;
 };
+
+export type Web3Wallets = {
+    substrateWallet: KeyringPair;
+    ethereumWallet: ethers.Wallet;
+}
 
 // export type DiscordValidationData = {}
 

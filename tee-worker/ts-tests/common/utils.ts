@@ -2,7 +2,8 @@ import './config';
 import WebSocketAsPromised from 'websocket-as-promised';
 import WebSocket from 'ws';
 import Options from 'websocket-as-promised/types/options';
-import { ApiPromise, WsProvider } from '@polkadot/api';
+import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
+import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import {
     AESOutput,
     EnclaveResult,
@@ -11,6 +12,8 @@ import {
     teeTypes,
     JsonSchema,
     IdentityContext,
+    Web3Wallets,
+    IdentityGenericEvent,
 } from './type-definitions';
 import { blake2AsHex, cryptoWaitReady, xxhashAsU8a } from '@polkadot/util-crypto';
 import { Metadata } from '@polkadot/types';
@@ -30,7 +33,8 @@ import { blake2128Concat, getSubstrateSigner, identity, twox64Concat } from './h
 import { getMetadata, sendRequest } from './call';
 const base58 = require('micro-base58');
 const crypto = require('crypto');
-import { getEthereumSigner } from '../common/helpers';
+import { getEthereumSigner, ethereumValidationData } from '../common/helpers';
+import { listenEvent } from './transactions';
 
 // in order to handle self-signed certificates we need to turn off the validation
 // TODO add self signed certificate ??
@@ -92,6 +96,7 @@ export async function initIntegrationTestContext(
 
     const metaData = await getMetadata(wsp, api);
 
+    const web3Signers = await generateWeb3Wallets(500);
     const { mrEnclave, teeShieldingKey } = await getEnclave(api);
     return <IntegrationTestContext>{
         tee: wsp,
@@ -101,6 +106,7 @@ export async function initIntegrationTestContext(
         ethersWallet,
         substrateWallet,
         metaData,
+        web3Signers
     };
 }
 
@@ -189,6 +195,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
     describe(title, function () {
         // Set timeout to 6000 seconds
         this.timeout(6000000);
+
         let context: IntegrationTestContext = {
             mrEnclave: '0x11' as HexString,
             api: {} as ApiPromise,
@@ -197,6 +204,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
             ethersWallet: {},
             substrateWallet: {},
             metaData: {} as Metadata,
+            web3Signers: [] as Web3Wallets[]
         };
 
         before('Starting Litentry(parachain&tee)', async function () {
@@ -212,6 +220,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
             context.ethersWallet = tmp.ethersWallet;
             context.substrateWallet = tmp.substrateWallet;
             context.metaData = tmp.metaData;
+            context.web3Signers = tmp.web3Signers;
         });
 
         after(async function () { });
@@ -447,8 +456,117 @@ export async function checkIDGraph(
     return IDGraph;
 }
 
-//batch call utils
-export async function handleEvent(events: EventRecord[]): Promise<any> {
-    console.log(events);
+export async function generateWeb3Wallets(count: number): Promise<Web3Wallets[]> {
+    const seed = 'litentry seed';
+    const addresses: Web3Wallets[] = [];
+    const keyring = new Keyring({ type: 'sr25519' });
 
+    for (let i = 0; i < count; i++) {
+        const substratePair = keyring.addFromUri(`${seed}//${i}`);
+        const ethereumWallet = ethers.Wallet.createRandom();
+        addresses.push({
+            substrateWallet: substratePair,
+            ethereumWallet: ethereumWallet,
+        });
+    }
+    return addresses
+}
+export function createIdentityEvent(
+    api: ApiPromise,
+    who: HexString,
+    identityString: HexString,
+    idGraphString?: HexString,
+    challengeCode?: HexString
+): IdentityGenericEvent {
+    let identity = api.createType('LitentryIdentity', identityString).toJSON();
+    let idGraph = idGraphString
+        ? api.createType('Vec<(LitentryIdentity, IdentityContext)>', idGraphString).toJSON()
+        : undefined;
+    return <IdentityGenericEvent>{
+        who,
+        identity,
+        idGraph,
+        challengeCode,
+    };
+}
+
+//batch call utils
+export async function batchCall(
+    context: IntegrationTestContext,
+    signer: KeyringPair,
+    txs: SubmittableExtrinsic<ApiTypes>,
+    pallet: string,
+    event: string[]
+): Promise<any> {
+    await context.api.tx.utility.batchAll(txs).signAndSend(signer, async (result) => {
+        if (result.status.isInBlock) {
+            console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
+        } else if (result.status.isInvalid) {
+            console.log(`Transaction is ${result.status}`);
+        }
+    });
+    const events = (await listenEvent(context.api, pallet, event, txs.length)) as any;
+    expect(events.length).to.be.equal(txs.length);
+    return events;
+}
+
+export async function handleVcEvents(aesKey: HexString, events: any[], type: string): Promise<any> {
+    let results: any[] = [];
+    for (let k = 0; k < events.length; k++) {
+        if (type == 'requestVc') {
+            results.push({
+                account: events[k].data.account.toHex(),
+                index: events[k].data.index.toHex(),
+                vc: decryptWithAES(aesKey, events[k].data.vc, 'utf-8'),
+            });
+        } else if (type == 'disableVc') {
+            results.push(events[k].data.index.toHex());
+        }
+    }
+
+    return [...results];
+
+}
+export async function handleIdentitiesEvents(context: IntegrationTestContext, aesKey: HexString, events: any[], type: string): Promise<any> {
+
+    let results: IdentityGenericEvent[] = [];
+
+    for (let index = 0; index < events.length; index++) {
+        if (type = 'IdentityCreated') {
+            results.push(
+                createIdentityEvent(
+                    context.api,
+                    events[index].data.account.toHex(),
+                    decryptWithAES(aesKey, events[index].data.identity, 'hex'),
+                    undefined,
+                    decryptWithAES(aesKey, events[index].data.code, 'hex')
+                )
+            );
+        }
+
+    }
+    return [...results];
+
+}
+
+export async function buildIdentities(context: IntegrationTestContext, events: any[], identities: any[], substraetSigners: KeyringPair[], ethereumSigners: ethers.Wallet[], type: string): Promise<any> {
+    let signature_ethereum: any;
+    let verifyDatas: any[] = [];
+    for (let index = 0; index < events.length; index++) {
+        const data = events[index];
+        const msg = generateVerificationMessage(
+            context,
+            hexToU8a(data.challengeCode),
+            substraetSigners.length === 1 ? substraetSigners[0].addressRaw : substraetSigners[index].addressRaw,
+            identities[index]
+        );
+        console.log('post verification msg to ethereum: ', msg);
+        ethereumValidationData!.Web3Validation!.Evm!.message = msg;
+        const msgHash = ethers.utils.arrayify(msg);
+        signature_ethereum = await (ethereumSigners.length === 1 ? ethereumSigners[0].signMessage(msgHash) : ethereumSigners[index].signMessage(msgHash));
+        ethereumValidationData!.Web3Validation!.Evm!.signature!.Ethereum = signature_ethereum;
+        assert.isNotEmpty(data.challengeCode, 'challengeCode empty');
+        verifyDatas.push(ethereumValidationData)
+    }
+    return verifyDatas;
 }

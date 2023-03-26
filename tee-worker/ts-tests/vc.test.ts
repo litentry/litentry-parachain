@@ -57,7 +57,8 @@ describeLitentry('VC test', async (context) => {
             aesKey,
             true,
             context.mrEnclave,
-            assertion
+            assertion,
+            ['A1', 'A2', 'A3', 'A4', 'A7', 'A8', 'A10', 'A11']
         )) as {
             account: HexString;
             index: HexString;

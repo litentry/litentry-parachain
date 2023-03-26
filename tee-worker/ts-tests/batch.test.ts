@@ -3,11 +3,11 @@ import {
     generateVerificationMessage,
     encryptWithTeeShieldingKey,
     decryptWithAES,
+    createIdentityEvent,
 } from './common/utils';
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import {
     setUserShieldingKey,
-    createIdentityEvent,
     assertIdentityCreated,
     assertIdentityVerified,
     assertIdentityRemoved,
@@ -74,7 +74,7 @@ describeLitentry('Test Batch Utility', (context) => {
             }
         });
 
-        const events = await listenEvent(context.api, 'identityManagement', ['IdentityCreated']);
+        const events = await listenEvent(context.api, 'identityManagement', ['IdentityCreated'], txs.length);
         expect(events.length).to.be.equal(2);
         for (let i = 0; i < 2; i++) {
             const data = events[i].data as any;
@@ -124,7 +124,7 @@ describeLitentry('Test Batch Utility', (context) => {
             }
         });
 
-        const events = await listenEvent(context.api, 'identityManagement', ['IdentityVerified']);
+        const events = await listenEvent(context.api, 'identityManagement', ['IdentityVerified'], txs.length);
         expect(events.length).to.be.equal(1);
         const data = events[0].data as any;
         const response = createIdentityEvent(
@@ -154,7 +154,7 @@ describeLitentry('Test Batch Utility', (context) => {
             }
         });
 
-        const events = await listenEvent(context.api, 'identityManagement', ['IdentityRemoved']);
+        const events = await listenEvent(context.api, 'identityManagement', ['IdentityRemoved'], txs.length);
         expect(events.length).to.be.equal(2);
         for (let i = 0; i < 2; i++) {
             const data = events[i].data as any;

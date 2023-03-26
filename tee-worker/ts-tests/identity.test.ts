@@ -161,7 +161,7 @@ describeLitentry('Test Identity', (context) => {
         );
         await sendTxUntilInBlock(context.api, tx, context.substrateWallet.alice);
 
-        const events = await listenEvent(context.api, 'identityManagement', ['StfError']);
+        const events = await listenEvent(context.api, 'identityManagement', ['StfError'], 1);
         expect(events.length).to.be.equal(1);
 
         await checkFailReason(events, 'InvalidUserShieldingKey', true);
@@ -469,7 +469,7 @@ describeLitentry('Test Identity', (context) => {
         const tx = context.api.tx.identityManagement.removeIdentity(context.mrEnclave, `0x${ciphertext}`);
         await sendTxUntilInBlock(context.api, tx, context.substrateWallet.alice);
 
-        const events = await listenEvent(context.api, 'identityManagement', ['StfError']);
+        const events = await listenEvent(context.api, 'identityManagement', ['StfError'], 1);
         expect(events.length).to.be.equal(1);
 
         await checkFailReason(events, 'RemovePrimeIdentityDisallowed', true);
