@@ -24,7 +24,11 @@ export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrins
     });
 }
 
-export async function sendTxUntilInBlockList(api: ApiPromise, txs: TransactionSubmit[], signer: KeyringPair | KeyringPair[]) {
+export async function sendTxUntilInBlockList(
+    api: ApiPromise,
+    txs: TransactionSubmit[],
+    signer: KeyringPair | KeyringPair[]
+) {
     const signers = Array.isArray(signer) ? signer : [signer];
     return Promise.all(
         txs.map(async ({ tx, nonce }, index) => {
@@ -48,7 +52,7 @@ export async function sendTxUntilInBlockList(api: ApiPromise, txs: TransactionSu
                             console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
                             resolve({
                                 block: result.status.asInBlock.toString(),
-                                txHash: result.status.hash.toString()
+                                txHash: result.status.hash.toString(),
                             });
                         }
                     } else if (result.status.isInvalid) {
@@ -67,7 +71,7 @@ export async function sendTxUntilInBlockList(api: ApiPromise, txs: TransactionSu
 export async function listenEvent(api: ApiPromise, section: string, methods: string[], txsLength: number) {
     return new Promise<Event[]>(async (resolve, reject) => {
         let startBlock = 0;
-        let events: EventRecord[] = []
+        let events: EventRecord[] = [];
         const unsubscribe = await api.rpc.chain.subscribeNewHeads(async (header) => {
             const currentBlockNumber = header.number.toNumber();
             if (startBlock == 0) startBlock = currentBlockNumber;
@@ -86,12 +90,10 @@ export async function listenEvent(api: ApiPromise, section: string, methods: str
                 const d = e.event.data;
                 console.log(`Event[${i}]: ${s}.${m} ${d}`);
             });
-            const filtered_events = records.filter(
-                ({ phase, event }) => {
-                    return phase.isApplyExtrinsic && section === event.section && methods.includes(event.method)
-                }
-            );
-            events.push(...filtered_events)
+            const filtered_events = records.filter(({ phase, event }) => {
+                return phase.isApplyExtrinsic && section === event.section && methods.includes(event.method);
+            });
+            events.push(...filtered_events);
             if (events.length === txsLength) {
                 resolve(events.map((e) => e.event));
                 unsubscribe();

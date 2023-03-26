@@ -188,7 +188,7 @@ export type IntegrationTestContext = {
     ethersWallet: any;
     substrateWallet: any;
     metaData: Metadata;
-    web3Signers: Web3Wallets[]
+    web3Signers: Web3Wallets[];
 };
 
 export class AESOutput {
@@ -272,7 +272,7 @@ export type DiscordValidationData = {
 export type Web3Wallets = {
     substrateWallet: KeyringPair;
     ethereumWallet: ethers.Wallet;
-}
+};
 
 // export type DiscordValidationData = {}
 

@@ -106,7 +106,7 @@ export async function initIntegrationTestContext(
         ethersWallet,
         substrateWallet,
         metaData,
-        web3Signers
+        web3Signers,
     };
 }
 
@@ -204,7 +204,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
             ethersWallet: {},
             substrateWallet: {},
             metaData: {} as Metadata,
-            web3Signers: [] as Web3Wallets[]
+            web3Signers: [] as Web3Wallets[],
         };
 
         before('Starting Litentry(parachain&tee)', async function () {
@@ -223,7 +223,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
             context.web3Signers = tmp.web3Signers;
         });
 
-        after(async function () { });
+        after(async function () {});
 
         cb(context);
     });
@@ -291,8 +291,8 @@ export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
     expect(isValid).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-        vc.issuer.id === proofJson.verificationMethod &&
-        proofJson.type === 'Ed25519Signature2020'
+            vc.issuer.id === proofJson.verificationMethod &&
+            proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
 }
@@ -469,7 +469,7 @@ export async function generateWeb3Wallets(count: number): Promise<Web3Wallets[]>
             ethereumWallet: ethereumWallet,
         });
     }
-    return addresses
+    return addresses;
 }
 export function createIdentityEvent(
     api: ApiPromise,
@@ -525,14 +525,17 @@ export async function handleVcEvents(aesKey: HexString, events: any[], type: str
     }
 
     return [...results];
-
 }
-export async function handleIdentitiesEvents(context: IntegrationTestContext, aesKey: HexString, events: any[], type: string): Promise<any> {
-
+export async function handleIdentitiesEvents(
+    context: IntegrationTestContext,
+    aesKey: HexString,
+    events: any[],
+    type: string
+): Promise<any> {
     let results: IdentityGenericEvent[] = [];
 
     for (let index = 0; index < events.length; index++) {
-        if (type = 'IdentityCreated') {
+        if ((type = 'IdentityCreated')) {
             results.push(
                 createIdentityEvent(
                     context.api,
@@ -543,13 +546,18 @@ export async function handleIdentitiesEvents(context: IntegrationTestContext, ae
                 )
             );
         }
-
     }
     return [...results];
-
 }
 
-export async function buildIdentities(context: IntegrationTestContext, events: any[], identities: any[], substraetSigners: KeyringPair[], ethereumSigners: ethers.Wallet[], type: string): Promise<any> {
+export async function buildIdentities(
+    context: IntegrationTestContext,
+    events: any[],
+    identities: any[],
+    substraetSigners: KeyringPair[],
+    ethereumSigners: ethers.Wallet[],
+    type: string
+): Promise<any> {
     let signature_ethereum: any;
     let verifyDatas: any[] = [];
     for (let index = 0; index < events.length; index++) {
@@ -563,10 +571,12 @@ export async function buildIdentities(context: IntegrationTestContext, events: a
         console.log('post verification msg to ethereum: ', msg);
         ethereumValidationData!.Web3Validation!.Evm!.message = msg;
         const msgHash = ethers.utils.arrayify(msg);
-        signature_ethereum = await (ethereumSigners.length === 1 ? ethereumSigners[0].signMessage(msgHash) : ethereumSigners[index].signMessage(msgHash));
+        signature_ethereum = await (ethereumSigners.length === 1
+            ? ethereumSigners[0].signMessage(msgHash)
+            : ethereumSigners[index].signMessage(msgHash));
         ethereumValidationData!.Web3Validation!.Evm!.signature!.Ethereum = signature_ethereum;
         assert.isNotEmpty(data.challengeCode, 'challengeCode empty');
-        verifyDatas.push(ethereumValidationData)
+        verifyDatas.push(ethereumValidationData);
     }
     return verifyDatas;
 }

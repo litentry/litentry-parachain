@@ -1,13 +1,27 @@
 import { step } from 'mocha-steps';
-import { buildIdentities, checkVc, describeLitentry, encryptWithTeeShieldingKey, generateVerificationMessage } from './common/utils';
+import {
+    buildIdentities,
+    checkVc,
+    describeLitentry,
+    encryptWithTeeShieldingKey,
+    generateVerificationMessage,
+} from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
 const { Keyring } = require('@polkadot/keyring');
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
 
-import { Assertion, EvmIdentity, LitentryIdentity, LitentryValidationData, SubstrateIdentity, TransactionSubmit, Web2Identity } from './common/type-definitions';
+import {
+    Assertion,
+    EvmIdentity,
+    LitentryIdentity,
+    LitentryValidationData,
+    SubstrateIdentity,
+    TransactionSubmit,
+    Web2Identity,
+} from './common/type-definitions';
 import { batchCall } from './common/utils';
-import { handleVcEvents, handleIdentitiesEvents } from './common/utils'
+import { handleVcEvents, handleIdentitiesEvents } from './common/utils';
 import { multiAccountTxSender } from './indirect_calls';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import { assert } from 'chai';
@@ -97,46 +111,44 @@ describeLitentry('multiple accounts test', async (context) => {
         ethereumSigners = context.web3Signers.map((web3Signer) => {
             return web3Signer.ethereumWallet;
         });
-
-    })
+    });
     step('send a test token to each account', async () => {
         const txs: any = [];
         for (let i = 0; i < substraetSigners.length; i++) {
-            console.log("substraetSigners[i].address", substraetSigners[i].address);
+            console.log('substraetSigners[i].address', substraetSigners[i].address);
 
             const tx = context.api.tx.balances.transfer(substraetSigners[i].address, '100000000000');
             txs.push(tx);
         }
-        const events = await batchCall(context, context.substrateWallet.alice, txs, 'balances', [
-            'Transfer',
-        ]);
+        const events = await batchCall(context, context.substrateWallet.alice, txs, 'balances', ['Transfer']);
         assert.equal(events.length, substraetSigners.length, 'transfer token check fail');
     });
 
     step('set usershieldingkey test', async () => {
         const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, aesKey).toString('hex');
-        let txs: TransactionSubmit[] = []
+        let txs: TransactionSubmit[] = [];
         for (let i = 0; i < substraetSigners.length; i++) {
             const tx = context.api.tx.identityManagement.setUserShieldingKey(context.mrEnclave, `0x${ciphertext}`);
             const nonce = (await context.api.rpc.system.accountNextIndex(substraetSigners[i].address)).toNumber();
 
-            txs.push({ tx, nonce })
+            txs.push({ tx, nonce });
         }
-        const resp_events = await multiAccountTxSender(context, txs, substraetSigners, 'identityManagement', ['UserShieldingKeySet'])
+        const resp_events = await multiAccountTxSender(context, txs, substraetSigners, 'identityManagement', [
+            'UserShieldingKeySet',
+        ]);
         assert.equal(resp_events.length, substraetSigners.length, 'set usershieldingkey check fail');
-
     });
 
     // test vc with multiple accounts
     step('requestVc(A1) test', async () => {
-        let txs: TransactionSubmit[] = []
+        let txs: TransactionSubmit[] = [];
         for (let i = 0; i < substraetSigners.length; i++) {
             const tx = context.api.tx.vcManagement.requestVc(context.mrEnclave, assertion.A1);
             const nonce = (await context.api.rpc.system.accountNextIndex(substraetSigners[i].address)).toNumber();
-            txs.push({ tx, nonce })
+            txs.push({ tx, nonce });
         }
-        const resp_events = await multiAccountTxSender(context, txs, substraetSigners, 'vcManagement', ['VCIssued'])
-        const event_data = await handleVcEvents(aesKey, resp_events, 'VCIssued')
+        const resp_events = await multiAccountTxSender(context, txs, substraetSigners, 'vcManagement', ['VCIssued']);
+        const event_data = await handleVcEvents(aesKey, resp_events, 'VCIssued');
 
         for (let k = 0; k < event_data.length; k++) {
             const vcString = event_data[k].vc.replace('0x', '');
@@ -155,102 +167,104 @@ describeLitentry('multiple accounts test', async (context) => {
             assert.equal(vcValid, true, 'check vc error');
             indexList.push(event_data[k].index);
         }
-    })
+    });
 
     step('disableVc(A1) test', async () => {
-        let txs: TransactionSubmit[] = []
+        let txs: TransactionSubmit[] = [];
         for (let i = 0; i < substraetSigners.length; i++) {
             const tx = context.api.tx.vcManagement.disableVc(indexList[i]);
             const nonce = (await context.api.rpc.system.accountNextIndex(substraetSigners[i].address)).toNumber();
-            txs.push({ tx, nonce })
+            txs.push({ tx, nonce });
         }
-        const resp_events = await multiAccountTxSender(context, txs, substraetSigners, 'vcManagement', ['VCIssued'])
+        const resp_events = await multiAccountTxSender(context, txs, substraetSigners, 'vcManagement', ['VCIssued']);
         assert.equal(resp_events.length, indexList.length, 'disable vc check fail');
-    })
+    });
 
     step('revokeVc(A1) test', async () => {
-        let txs: TransactionSubmit[] = []
+        let txs: TransactionSubmit[] = [];
         for (let i = 0; i < substraetSigners.length; i++) {
             const tx = context.api.tx.vcManagement.revokeVc(indexList[i]);
             const nonce = (await context.api.rpc.system.accountNextIndex(substraetSigners[i].address)).toNumber();
-            txs.push({ tx, nonce })
+            txs.push({ tx, nonce });
         }
-        const resp_events = await multiAccountTxSender(context, txs, substraetSigners, 'vcManagement', ['VCIssued'])
+        const resp_events = await multiAccountTxSender(context, txs, substraetSigners, 'vcManagement', ['VCIssued']);
         assert.equal(resp_events.length, indexList.length, 'revoke vc check fail');
-    })
+    });
 
     //one accounts test multiple vc
     step('test multiple requestVc with one accounts', async () => {
-        let txs: any = []
-        let vc_params: any[] = []
-        let test_times = 10
+        let txs: any = [];
+        let vc_params: any[] = [];
+        let test_times = 10;
         for (let i = 0; i < test_times; i++) {
-            vc_params.push(assertion.A1)
+            vc_params.push(assertion.A1);
         }
         for (let i = 0; i < vc_params.length; i++) {
             const tx = context.api.tx.vcManagement.requestVc(context.mrEnclave, vc_params[i]);
-            txs.push(tx)
+            txs.push(tx);
         }
 
-        const resp_events = await batchCall(context, substraetSigners[0], txs, 'vcManagement', ['VCIssued'])
+        const resp_events = await batchCall(context, substraetSigners[0], txs, 'vcManagement', ['VCIssued']);
         assert.equal(resp_events.length, test_times, 'request multiple vc check fail');
-        const event_data = await handleVcEvents(aesKey, resp_events, 'requestVc')
+        const event_data = await handleVcEvents(aesKey, resp_events, 'requestVc');
         for (let m = 0; m < event_data.length; m++) {
-            indexList.push(event_data[m].index)
-
+            indexList.push(event_data[m].index);
         }
-
     });
     step('test multiple disableVc(A1) with one accounts', async () => {
-        let txs: any = []
-        let vc_params: any[] = []
-        let test_times = 10
+        let txs: any = [];
+        let vc_params: any[] = [];
+        let test_times = 10;
         for (let i = 0; i < test_times; i++) {
-            vc_params.push(assertion.A1)
+            vc_params.push(assertion.A1);
         }
         for (let i = 0; i < vc_params.length; i++) {
             const tx = context.api.tx.vcManagement.disableVc(indexList[i]);
-            txs.push(tx)
+            txs.push(tx);
         }
 
-        const resp_events = await batchCall(context, substraetSigners[0], txs, 'vcManagement', ['VCDisabled'])
+        const resp_events = await batchCall(context, substraetSigners[0], txs, 'vcManagement', ['VCDisabled']);
         assert.equal(resp_events.length, test_times, 'disabled multiple vc check fail');
-        const events_data = await handleVcEvents(aesKey, resp_events, 'disableVc')
-        await Promise.all(events_data.map(async (event: any, k: any) => {
-            assert.equal(event, indexList[k], 'check index error');
-            const registry = (await context.api.query.vcManagement.vcRegistry(indexList[k])) as any;
-            assert.equal(registry.toHuman()!['status'], 'Disabled');
-        }));
+        const events_data = await handleVcEvents(aesKey, resp_events, 'disableVc');
+        await Promise.all(
+            events_data.map(async (event: any, k: any) => {
+                assert.equal(event, indexList[k], 'check index error');
+                const registry = (await context.api.query.vcManagement.vcRegistry(indexList[k])) as any;
+                assert.equal(registry.toHuman()!['status'], 'Disabled');
+            })
+        );
     });
     step('test multiple revokeVc(A1) with one accounts', async () => {
-        let txs: any = []
-        let vc_params: any[] = []
-        let test_times = 10
+        let txs: any = [];
+        let vc_params: any[] = [];
+        let test_times = 10;
         for (let i = 0; i < test_times; i++) {
-            vc_params.push(assertion.A1)
+            vc_params.push(assertion.A1);
         }
         for (let i = 0; i < vc_params.length; i++) {
             const tx = context.api.tx.vcManagement.revokeVc(indexList[i]);
-            txs.push(tx)
+            txs.push(tx);
         }
-        const resp_events = await batchCall(context, substraetSigners[0], txs, 'vcManagement', ['VCRevoked'])
+        const resp_events = await batchCall(context, substraetSigners[0], txs, 'vcManagement', ['VCRevoked']);
         assert.equal(resp_events.length, test_times, 'revoked multiple vc check fail');
-        const events_data = await handleVcEvents(aesKey, resp_events, 'disableVc')
-        await Promise.all(events_data.map(async (event: any, k: any) => {
-            assert.equal(event, indexList[k], 'check index error');
-            const registry = (await context.api.query.vcManagement.vcRegistry(indexList[k])) as any;
-            assert.equal(registry.toHuman()!['status'], null);
-        }));
+        const events_data = await handleVcEvents(aesKey, resp_events, 'disableVc');
+        await Promise.all(
+            events_data.map(async (event: any, k: any) => {
+                assert.equal(event, indexList[k], 'check index error');
+                const registry = (await context.api.query.vcManagement.vcRegistry(indexList[k])) as any;
+                assert.equal(registry.toHuman()!['status'], null);
+            })
+        );
     });
     //test identity with multiple accounts
     step('test createIdentities(ethereumIdentity) with multiple accounts', async () => {
-        let txs: TransactionSubmit[] = []
-        let identities: any[] = []
+        let txs: TransactionSubmit[] = [];
+        let identities: any[] = [];
         for (let i = 0; i < ethereumSigners.length; i++) {
             ethereumIdentity.Evm!.address = ethereumSigners[i].address as HexString;
-            identities.push(ethereumIdentity)
+            identities.push(ethereumIdentity);
         }
-        identitiesData = [...identities]
+        identitiesData = [...identities];
         for (let k = 0; k < identities.length; k++) {
             const identity = identities[k];
             const encode = context.api.createType('LitentryIdentity', identity).toHex();
@@ -262,17 +276,25 @@ describeLitentry('multiple accounts test', async (context) => {
                 null
             );
             const nonce = (await context.api.rpc.system.accountNextIndex(substraetSigners[k].address)).toNumber();
-            txs.push({ tx, nonce })
+            txs.push({ tx, nonce });
         }
-        const resp_events = await multiAccountTxSender(context, txs, substraetSigners, 'identityManagement', ['IdentityCreated'])
+        const resp_events = await multiAccountTxSender(context, txs, substraetSigners, 'identityManagement', [
+            'IdentityCreated',
+        ]);
         assert.equal(resp_events.length, identities.length, 'create identities check fail');
 
-        const event_data = await handleIdentitiesEvents(context, aesKey, resp_events, 'IdentityCreated')
-        const validations = await buildIdentities(context, event_data, identities, substraetSigners, ethereumSigners, 'ethereumIdentity');
-        web3Validations = [...validations]
-    })
+        const event_data = await handleIdentitiesEvents(context, aesKey, resp_events, 'IdentityCreated');
+        const validations = await buildIdentities(
+            context,
+            event_data,
+            identities,
+            substraetSigners,
+            ethereumSigners,
+            'ethereumIdentity'
+        );
+        web3Validations = [...validations];
+    });
     step('test verifyIdentities(ethereumIdentity) with multiple accounts', async () => {
-
         let txs: TransactionSubmit[] = [];
         for (let index = 0; index < identitiesData.length; index++) {
             let identity = identitiesData[index];
@@ -283,9 +305,10 @@ describeLitentry('multiple accounts test', async (context) => {
             const identity_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, identity_encode).toString(
                 'hex'
             );
-            const validation_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, validation_encode).toString(
-                'hex'
-            );
+            const validation_ciphertext = encryptWithTeeShieldingKey(
+                context.teeShieldingKey,
+                validation_encode
+            ).toString('hex');
             const tx = context.api.tx.identityManagement.verifyIdentity(
                 context.mrEnclave,
                 `0x${identity_ciphertext}`,
@@ -297,19 +320,21 @@ describeLitentry('multiple accounts test', async (context) => {
         }
 
         //The testing here is very strange, it only succeeds when there is one account, if multiple accounts are being verified at the same time, only the last signature verification will succeed.It's necessary to check this.
-        const resp_events = await multiAccountTxSender(context, txs, substraetSigners, 'identityManagement', ['IdentityVerified'])
-    })
+        const resp_events = await multiAccountTxSender(context, txs, substraetSigners, 'identityManagement', [
+            'IdentityVerified',
+        ]);
+    });
 
     //one account test with multiple identities
     step('test multiple createIdentities(ethereumIdentity) with one account', async () => {
-        let txs: any = []
-        let identities: any[] = []
-        let create_times = 10
+        let txs: any = [];
+        let identities: any[] = [];
+        let create_times = 10;
         ethereumIdentity.Evm!.address = ethereumSigners[0].address as HexString;
         for (let i = 0; i < create_times; i++) {
-            identities.push(ethereumIdentity)
+            identities.push(ethereumIdentity);
         }
-        identitiesData = [...identities]
+        identitiesData = [...identities];
 
         for (let k = 0; k < identities.length; k++) {
             const identity = identities[k];
@@ -321,14 +346,22 @@ describeLitentry('multiple accounts test', async (context) => {
                 `0x${ciphertext}`,
                 null
             );
-            txs.push(tx)
+            txs.push(tx);
         }
-        const resp_events = await batchCall(context, substraetSigners[0], txs, 'identityManagement', ['IdentityCreated'])
-        const event_data = await handleIdentitiesEvents(context, aesKey, resp_events, 'IdentityCreated')
-        const validations = await buildIdentities(context, event_data, identities, [substraetSigners[0]], [ethereumSigners[0]], 'ethereumIdentity');
-        web3Validations = [...validations]
-    })
-
+        const resp_events = await batchCall(context, substraetSigners[0], txs, 'identityManagement', [
+            'IdentityCreated',
+        ]);
+        const event_data = await handleIdentitiesEvents(context, aesKey, resp_events, 'IdentityCreated');
+        const validations = await buildIdentities(
+            context,
+            event_data,
+            identities,
+            [substraetSigners[0]],
+            [ethereumSigners[0]],
+            'ethereumIdentity'
+        );
+        web3Validations = [...validations];
+    });
 
     step('test multiple verifyIdentities(ethereumIdentity) with one account', async () => {
         let txs: any = [];
@@ -342,9 +375,10 @@ describeLitentry('multiple accounts test', async (context) => {
             const identity_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, identity_encode).toString(
                 'hex'
             );
-            const validation_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, validation_encode).toString(
-                'hex'
-            );
+            const validation_ciphertext = encryptWithTeeShieldingKey(
+                context.teeShieldingKey,
+                validation_encode
+            ).toString('hex');
             const tx = context.api.tx.identityManagement.verifyIdentity(
                 context.mrEnclave,
                 `0x${identity_ciphertext}`,
@@ -353,6 +387,8 @@ describeLitentry('multiple accounts test', async (context) => {
             txs.push(tx);
         }
 
-        const resp_events = await batchCall(context, substraetSigners[0], txs, 'identityManagement', ['IdentityVerified'])
-    })
+        const resp_events = await batchCall(context, substraetSigners[0], txs, 'identityManagement', [
+            'IdentityVerified',
+        ]);
+    });
 });

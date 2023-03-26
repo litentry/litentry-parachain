@@ -60,7 +60,12 @@ export async function createErrorIdentities(
     await sendTxUntilInBlockList(context.api, txs, signer);
 
     if (listening) {
-        const events = (await listenEvent(context.api, 'identityManagement', ['CreateIdentityHandlingFailed'], txs.length)) as any;
+        const events = (await listenEvent(
+            context.api,
+            'identityManagement',
+            ['CreateIdentityHandlingFailed'],
+            txs.length
+        )) as any;
         expect(events.length).to.be.equal(errorCiphertexts.length);
         let results: string[] = [];
         for (let i = 0; i < events.length; i++) {

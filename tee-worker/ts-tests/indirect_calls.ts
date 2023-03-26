@@ -42,7 +42,7 @@ export async function multiAccountTxSender(
     events: string[]
 ): Promise<any> {
     await sendTxUntilInBlockList(context.api, txs, signers);
-    const resp_events = await listenEvent(context.api, pallet, events, txs.length)
+    const resp_events = await listenEvent(context.api, pallet, events, txs.length);
     expect(resp_events.length).to.be.equal(txs.length);
     return resp_events.length ? resp_events : undefined;
 }
@@ -195,10 +195,10 @@ export async function requestVCs(
     keys: string[]
 ): Promise<
     | {
-        account: HexString;
-        index: HexString;
-        vc: HexString;
-    }[]
+          account: HexString;
+          index: HexString;
+          vc: HexString;
+      }[]
     | undefined
 > {
     let txs: TransactionSubmit[] = [];
@@ -292,8 +292,6 @@ export async function revokeVCs(
     }
     return undefined;
 }
-
-
 
 export function assertIdentityCreated(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
     assert.equal(identityEvent?.who, u8aToHex(signer.addressRaw), 'check caller error');

@@ -56,9 +56,6 @@ export function identity(data: HexString | Uint8Array): Uint8Array {
     return u8aToU8a(data);
 }
 
-
-
-
 export const ethereumValidationData = <LitentryValidationData>{
     Web3Validation: {
         Evm: {
