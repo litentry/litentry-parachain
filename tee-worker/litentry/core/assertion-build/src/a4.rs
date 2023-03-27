@@ -77,7 +77,6 @@ use litentry_primitives::{
 use log::*;
 use std::{
 	collections::{HashMap, HashSet},
-	str::from_utf8,
 	string::{String, ToString},
 	vec::Vec,
 };
@@ -128,26 +127,27 @@ pub fn build(
 				Identity::Evm { address, .. } => {
 					let mut address = account_id_to_string(address.as_ref());
 					address.insert_str(0, "0x");
-					Ok(address)
+					address
 				},
 				Identity::Substrate { address, .. } => {
 					let mut address = account_id_to_string(address.as_ref());
 					address.insert_str(0, "0x");
-					Ok(address)
+					address
 				},
-				Identity::Web2 { address, .. } => match from_utf8(address.as_ref()) {
-					Ok(addr) => Ok(addr.to_string()),
-					Err(e) => {
-						error!("Assertion A4 parse Web2 address {:?} error info: {:?}", address, e);
-
-						Err(())
-					},
-				},
+				_ => "".into(),
 			};
 
-			if let Ok(address) = address {
-				if let Some(set) = networks.get_mut(&verified_network) {
-					set.insert(address);
+			if !address.is_empty() {
+				match networks.get_mut(&verified_network) {
+					Some(set) => {
+						set.insert(address);
+					},
+					None => {
+						let mut set = HashSet::new();
+						set.insert(address);
+
+						networks.insert(verified_network, set);
+					},
 				}
 			}
 		}
