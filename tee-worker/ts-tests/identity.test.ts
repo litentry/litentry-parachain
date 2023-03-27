@@ -130,7 +130,7 @@ describeLitentry('Test Identity', 0, (context) => {
     var signature_ethereum;
     var signature_substrate;
     step('check user sidechain storage before create', async function () {
-        const encode = context.api.createType('LitentryIdentity', twitterIdentity).toHex();
+        const identity_hex = context.api.createType('LitentryIdentity', twitterIdentity).toHex();
 
         const resp_shieldingKey = await checkUserShieldingKeys(
             context,
@@ -145,14 +145,14 @@ describeLitentry('Test Identity', 0, (context) => {
             'IdentityManagement',
             'ChallengeCodes',
             u8aToHex(context.substrateWallet.alice.addressRaw),
-            encode
+            identity_hex
         );
 
         assert.equal(resp_challengecode, '0x', 'challengecode should be empty before create');
     });
     step('Invalid user shielding key', async function () {
-        const encode = context.api.createType('LitentryIdentity', substrateIdentity).toHex();
-        const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
+        const identity_hex = context.api.createType('LitentryIdentity', substrateIdentity).toHex();
+        const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, identity_hex).toString('hex');
         const tx = context.api.tx.identityManagement.createIdentity(
             context.mrEnclave,
             context.substrateWallet.alice.address,
@@ -186,14 +186,14 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('check idgraph from sidechain storage before create', async function () {
-        const encode = context.api.createType('LitentryIdentity', twitterIdentity).toHex();
+        const identity_hex = context.api.createType('LitentryIdentity', twitterIdentity).toHex();
 
         const resp_id_graph = await checkIDGraph(
             context,
             'IdentityManagement',
             'IDGraphs',
             u8aToHex(context.substrateWallet.alice.addressRaw),
-            encode
+            identity_hex
         );
         assert.equal(
             resp_id_graph.verification_request_block,
@@ -291,14 +291,14 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('check IDGraph before verifyIdentity and after createIdentity', async function () {
-        const encode = context.api.createType('LitentryIdentity', twitterIdentity).toHex();
+        const identity_hex = context.api.createType('LitentryIdentity', twitterIdentity).toHex();
 
         const resp_id_graph = await checkIDGraph(
             context,
             'IdentityManagement',
             'IDGraphs',
             u8aToHex(context.substrateWallet.alice.addressRaw),
-            encode
+            identity_hex
         );
         assert.notEqual(
             resp_id_graph.linking_request_block,
@@ -336,14 +336,14 @@ describeLitentry('Test Identity', 0, (context) => {
         assertIdentityVerified(context.substrateWallet.bob, substrate_extension_identity_verified);
     });
     step('check IDGraph after createIdentity', async function () {
-        const encode = context.api.createType('LitentryIdentity', twitterIdentity).toHex();
+        const identity_hex = context.api.createType('LitentryIdentity', twitterIdentity).toHex();
 
         const resp_id_graph = await checkIDGraph(
             context,
             'IdentityManagement',
             'IDGraphs',
             u8aToHex(context.substrateWallet.alice.addressRaw),
-            encode
+            identity_hex
         );
         assert.notEqual(
             resp_id_graph.verification_request_block,
@@ -401,14 +401,14 @@ describeLitentry('Test Identity', 0, (context) => {
         assertIdentityRemoved(context.substrateWallet.bob, substrate_extension_identity_removed);
     });
     step('check IDGraph after removeIdentity', async function () {
-        const encode = context.api.createType('LitentryIdentity', twitterIdentity).toHex();
+        const identity_hex = context.api.createType('LitentryIdentity', twitterIdentity).toHex();
 
         const resp_id_graph = await checkIDGraph(
             context,
             'IdentityManagement',
             'IDGraphs',
             u8aToHex(context.substrateWallet.alice.addressRaw),
-            encode
+            identity_hex
         );
         assert.equal(
             resp_id_graph.verification_request_block,

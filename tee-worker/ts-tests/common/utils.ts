@@ -368,7 +368,7 @@ export function buildStorageKey(
     }
     return storageKey;
 }
-export async function buildStorageData(
+export async function buildStorageHelper(
     metadata: Metadata,
     prefix: string,
     method: string,
@@ -403,7 +403,7 @@ export async function checkUserShieldingKeys(
     method: string,
     address: HexString
 ): Promise<string> {
-    const storageKey = await buildStorageData(context.metaData, pallet, method, address);
+    const storageKey = await buildStorageHelper(context.metaData, pallet, method, address);
 
     let base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
 
@@ -424,7 +424,7 @@ export async function checkUserChallengeCode(
     address: HexString,
     identity: HexString
 ): Promise<string> {
-    const storageKey = await buildStorageData(context.metaData, pallet, method, address, identity);
+    const storageKey = await buildStorageHelper(context.metaData, pallet, method, address, identity);
 
     let base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
 
@@ -445,7 +445,7 @@ export async function checkIDGraph(
     address: HexString,
     identity: HexString
 ): Promise<IdentityContext> {
-    const storageKey = await buildStorageData(context.metaData, pallet, method, address, identity);
+    const storageKey = await buildStorageHelper(context.metaData, pallet, method, address, identity);
 
     let base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
 
@@ -716,7 +716,3 @@ export async function buildIdentityTxs(context: IntegrationTestContext, identiti
 
     return txs;
 }
-
-// export async function buildIdentityBatchTxs(context: IntegrationTestContext, identities: LitentryIdentity[], method: string, buildTimes: number, validations?: LitentryValidationData[],): Promise<TransactionSubmit[]> {
-
-// }
