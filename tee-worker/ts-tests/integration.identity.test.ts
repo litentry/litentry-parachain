@@ -2,43 +2,44 @@ import { step } from 'mocha-steps';
 import {
     buildValidations,
     buildIdentities,
-    checkVc,
     describeLitentry,
     encryptWithTeeShieldingKey,
-    generateVerificationMessage,
     buildIdentityTxs,
 } from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
-const { Keyring } = require('@polkadot/keyring');
-import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
-
 import {
-    EvmIdentity,
     LitentryIdentity,
     LitentryValidationData,
-    SubstrateIdentity,
     TransactionSubmit,
-    Web2Identity,
 } from './common/type-definitions';
 import { batchCall } from './common/utils';
-import { handleVcEvents, handleIdentityEvents } from './common/utils';
+import { handleIdentityEvents } from './common/utils';
 import { multiAccountTxSender } from './indirect_calls';
-import { blake2AsHex } from '@polkadot/util-crypto';
 import { assert } from 'chai';
-import { HexString } from '@polkadot/util/types';
-import { identity, IdentityNetwork } from './common/helpers';
+import { IdentityNetwork } from './common/helpers';
 import { listenEvent } from './common/transactions';
 
 
-describeLitentry('multiple accounts test', 2, async (context) => {
+//Explain how to use this test, which has two important parameters:
+
+//1.buildIdentityTimes: the number of create identities for aaccount.If you want to test bulk operations on a single account, you can modify this parameter.
+
+//2.The "number" parameter in describeLitentry represents the number of accounts generated, including Substrate wallets and Ethereum wallets.If you want to use a large number of accounts for testing, you can modify this parameter.
+
+//3.Each time the test code is executed, new wallet account will be used.
+
+describeLitentry('multiple accounts test', 5, async (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     var substraetSigners: KeyringPair[] = [];
     var ethereumSigners: ethers.Wallet[] = [];
     var web3Validations: LitentryValidationData[] = [];
     var identityDatas: LitentryIdentity[] = [];
     let identityNetwork = IdentityNetwork.ethereum
-    step('init', async () => {
+    let buildIdentityTimes = 5
+    let ethereumWalletsForSign: any = []
+
+    step('setup signers', async () => {
         substraetSigners = context.web3Signers.map((web3Signer) => {
             return web3Signer.substrateWallet;
         });
@@ -76,7 +77,7 @@ describeLitentry('multiple accounts test', 2, async (context) => {
     //test identity with multiple accounts
     step('test createIdentity with multiple accounts', async () => {
         //substrate ethereum twitter
-        let identities = await buildIdentities(identityNetwork, context);
+        let identities = await buildIdentities(identityNetwork, 'batch', context);
 
         identityDatas = [...identities];
         let txs = await buildIdentityTxs(context, identities, 'createIdentity');
@@ -89,7 +90,8 @@ describeLitentry('multiple accounts test', 2, async (context) => {
             context,
             event_data,
             identities,
-            identityNetwork
+            identityNetwork,
+            'multiple'
         );
         console.log("validations", validations);
 
@@ -113,69 +115,68 @@ describeLitentry('multiple accounts test', 2, async (context) => {
     })
 
     //one account test with multiple identities
-    // step('test multiple createIdentities(ethereumIdentity) with one account', async () => {
-    //     let txs: any = [];
-    //     let identities: any[] = [];
-    //     let create_times = 10;
-    //     ethereumIdentity.Evm!.address = ethereumSigners[0].address as HexString;
-    //     for (let i = 0; i < create_times; i++) {
-    //         identities.push(ethereumIdentity);
-    //     }
-    //     identityDatas = [...identities];
+    step('test multiple createIdentities with one account', async () => {
+        let txs: any = [];
+        for (let index = 0; index < buildIdentityTimes; index++) {
+            ethereumWalletsForSign.push(ethers.Wallet.createRandom())
 
-    //     for (let k = 0; k < identities.length; k++) {
-    //         const identity = identities[k];
-    //         const encode = context.api.createType('LitentryIdentity', identity).toHex();
-    //         const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
-    //         const tx = context.api.tx.identityManagement.createIdentity(
-    //             context.mrEnclave,
-    //             substraetSigners[0].address,
-    //             `0x${ciphertext}`,
-    //             null
-    //         );
-    //         txs.push(tx);
-    //     }
-    //     const resp_events = await batchCall(context, substraetSigners[0], txs, 'identityManagement', [
-    //         'IdentityCreated',
-    //     ]);
-    //     const event_data = await handleIdentityEvents(context, aesKey, resp_events, 'IdentityCreated');
-    //     const validations = await buildIdentities(
-    //         context,
-    //         event_data,
-    //         identities,
-    //         [substraetSigners[0]],
-    //         [ethereumSigners[0]],
-    //         'ethereumIdentity'
-    //     );
-    //     web3Validations = [...validations];
-    // });
+        }
+        let identities = await buildIdentities(identityNetwork, 'utility', context, buildIdentityTimes, ethereumWalletsForSign);
+        console.log("identities", identities);
+        identityDatas = [...identities]
 
-    // step('test multiple verifyIdentities(ethereumIdentity) with one account', async () => {
-    //     let txs: any = [];
+        for (let k = 0; k < identities.length; k++) {
+            const identity = identities[k];
+            const encode = context.api.createType('LitentryIdentity', identity).toHex();
+            const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, encode).toString('hex');
+            const tx = context.api.tx.identityManagement.createIdentity(
+                context.mrEnclave,
+                substraetSigners[0].address,
+                `0x${ciphertext}`,
+                null
+            );
+            txs.push(tx);
+        }
+        const resp_events = await batchCall(context, substraetSigners[0], txs, 'identityManagement', [
+            'IdentityCreated',
+        ]);
+        const event_data = await handleIdentityEvents(context, aesKey, resp_events, 'IdentityCreated');
+        const validations = await buildValidations(
+            context,
+            event_data,
+            identities,
+            identityNetwork,
+            'single',
+            ethereumWalletsForSign
+        );
+        web3Validations = [...validations];
+    });
 
-    //     for (let index = 0; index < identityDatas.length; index++) {
-    //         let identity = identityDatas[index];
+    step('test multiple verifyIdentities(ethereumIdentity) with one account', async () => {
+        let txs: any = [];
+        for (let index = 0; index < identityDatas.length; index++) {
+            let identity = identityDatas[index];
+            let data = web3Validations[index];
+            const identity_encode = context.api.createType('LitentryIdentity', identity).toHex();
+            const validation_encode = context.api.createType('LitentryValidationData', data).toHex();
+            const identity_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, identity_encode).toString(
+                'hex'
+            );
+            const validation_ciphertext = encryptWithTeeShieldingKey(
+                context.teeShieldingKey,
+                validation_encode
+            ).toString('hex');
+            const tx = context.api.tx.identityManagement.verifyIdentity(
+                context.mrEnclave,
+                `0x${identity_ciphertext}`,
+                `0x${validation_ciphertext}`
+            );
+            txs.push(tx);
+        }
 
-    //         let data = web3Validations[index];
-    //         const identity_encode = context.api.createType('LitentryIdentity', identity).toHex();
-    //         const validation_encode = context.api.createType('LitentryValidationData', data).toHex();
-    //         const identity_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, identity_encode).toString(
-    //             'hex'
-    //         );
-    //         const validation_ciphertext = encryptWithTeeShieldingKey(
-    //             context.teeShieldingKey,
-    //             validation_encode
-    //         ).toString('hex');
-    //         const tx = context.api.tx.identityManagement.verifyIdentity(
-    //             context.mrEnclave,
-    //             `0x${identity_ciphertext}`,
-    //             `0x${validation_ciphertext}`
-    //         );
-    //         txs.push(tx);
-    //     }
-
-    //     const resp_events = await batchCall(context, substraetSigners[0], txs, 'identityManagement', [
-    //         'IdentityVerified',
-    //     ]);
-    // });
+        const resp_events = await batchCall(context, substraetSigners[0], txs, 'identityManagement', [
+            'IdentityVerified',
+        ]);
+        assert.equal(resp_events.length, txs.length, 'verify identities with one account check fail');
+    });
 });

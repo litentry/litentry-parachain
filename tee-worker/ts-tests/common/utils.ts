@@ -494,7 +494,7 @@ export function createIdentityEvent(
     };
 }
 
-//batch call utils
+//utility batch call
 export async function batchCall(
     context: IntegrationTestContext,
     signer: KeyringPair,
@@ -558,14 +558,16 @@ export async function buildValidations(
     context: IntegrationTestContext,
     events: any[],
     identities: any[],
-    network: string
+    network: string,
+    type: string,
+    ethereumWalletsForSign?: ethers.Wallet[]
 ): Promise<any> {
     let signature_ethereum: HexString;
     let signature_substrate: Uint8Array;
     let verifyDatas: any[] = [];
     for (let index = 0; index < events.length; index++) {
-        const substrateSigner = context.web3Signers.length === 1 ? context.web3Signers[0].substrateWallet : context.web3Signers[index].substrateWallet;
-        const ethereumSigner = context.web3Signers.length === 1 ? context.web3Signers[0].ethereumWallet : context.web3Signers[index].ethereumWallet;
+        const substrateSigner = (type === 'multiple' ? context.web3Signers[index].substrateWallet : context.web3Signers[0].substrateWallet);
+        const ethereumSigner = (type === 'multiple' ? context.web3Signers[index].ethereumWallet : ethereumWalletsForSign![index])
         const data = events[index];
         const msg = generateVerificationMessage(
             context,
@@ -577,7 +579,7 @@ export async function buildValidations(
             const ethereumValidationData: LitentryValidationData = {
                 Web3Validation: {
                     Evm: {
-                        message: `0x${Buffer.from('mock_message', 'utf8').toString('hex')}`,
+                        message: "" as HexString,
                         signature: {
                             Ethereum: '' as HexString,
                         },
@@ -597,7 +599,7 @@ export async function buildValidations(
             const substrateValidationData: LitentryValidationData = {
                 Web3Validation: {
                     Substrate: {
-                        message: `0x${Buffer.from('mock_message', 'utf8').toString('hex')}`,
+                        message: "" as HexString,
                         signature: {
                             Sr25519: '' as HexString,
                         },
@@ -631,26 +633,47 @@ async function buildIdentityHelper(address: HexString | string, network: string,
     return identity;
 }
 
-export async function buildIdentities(network: string, context?: IntegrationTestContext): Promise<LitentryIdentity[]> {
+export async function buildIdentities(network: string, type: string, context?: IntegrationTestContext, buildTimes?: number, ethereumWalletsForSign?: ethers.Wallet[]): Promise<LitentryIdentity[]> {
     let identities: LitentryIdentity[] = [];
-    if (network === 'ethereum') {
-        for (let i = 0; i < context!.web3Signers.length; i++) {
-            const signer = context!.web3Signers[i].ethereumWallet;
-            const identity = await buildIdentityHelper(signer.address, 'Ethereum', 'Evm');
+    if (type === 'batch') {
+        if (network === 'ethereum') {
+            for (let i = 0; i < context!.web3Signers.length; i++) {
+                const signer = context!.web3Signers[i].ethereumWallet;
+                const identity = await buildIdentityHelper(signer.address, 'Ethereum', 'Evm');
+                identities.push(identity);
+            }
+        } else if (network === 'substrate') {
+            for (let i = 0; i < context!.web3Signers.length; i++) {
+                const signer = context!.web3Signers[i].substrateWallet;
+                const identity = await buildIdentityHelper(u8aToHex(signer.addressRaw), 'TestNet', 'Substrate');
+                identities.push(identity);
+            }
+
+        } else if (network === 'twitter') {
+            const identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
+            identities.push(identity);
+
+        }
+    } else if (type === 'utility') {
+        if (network === 'ethereum') {
+            for (let i = 0; i < buildTimes!; i++) {
+                const signer = ethereumWalletsForSign![i];
+                const identity = await buildIdentityHelper(signer.address, 'Ethereum', 'Evm');
+                identities.push(identity);
+            }
+        } else if (network === 'substrate') {
+            for (let i = 0; i < buildTimes!; i++) {
+                const signer = context!.web3Signers[0].substrateWallet;
+                const identity = await buildIdentityHelper(u8aToHex(signer.addressRaw), 'TestNet', 'Substrate');
+                identities.push(identity);
+            }
+
+        } else if (network === 'twitter') {
+            const identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
             identities.push(identity);
         }
-    } else if (network === 'substrate') {
-        for (let i = 0; i < context!.web3Signers.length; i++) {
-            const signer = context!.web3Signers[i].substrateWallet;
-            const identity = await buildIdentityHelper(u8aToHex(signer.addressRaw), 'TestNet', 'Substrate');
-            identities.push(identity);
-        }
-
-    } else if (network === 'twitter') {
-        const identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
-        identities.push(identity);
-
     }
+
     return identities
 }
 
@@ -693,3 +716,7 @@ export async function buildIdentityTxs(context: IntegrationTestContext, identiti
 
     return txs;
 }
+
+// export async function buildIdentityBatchTxs(context: IntegrationTestContext, identities: LitentryIdentity[], method: string, buildTimes: number, validations?: LitentryValidationData[],): Promise<TransactionSubmit[]> {
+
+// }

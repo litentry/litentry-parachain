@@ -90,6 +90,8 @@ export async function listenEvent(api: ApiPromise, section: string, methods: str
                 const d = e.event.data;
                 console.log(`Event[${i}]: ${s}.${m} ${d}`);
             });
+
+            //@TODO should filter the event with signers
             const filtered_events = records.filter(({ phase, event }) => {
                 return phase.isApplyExtrinsic && section === event.section && methods.includes(event.method);
             });

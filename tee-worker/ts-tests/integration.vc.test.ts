@@ -1,6 +1,5 @@
 import { step } from 'mocha-steps';
 import {
-    buildIdentities,
     checkVc,
     describeLitentry,
     encryptWithTeeShieldingKey,
@@ -30,16 +29,26 @@ const assertion = <Assertion>{
     A10: [10],
     A11: [10],
 };
+
+
+//Explain how to use this test, which has two important parameters:
+
+//1.request_times: the number of requestVc for a single account.If you want to test bulk operations on a single account, you can modify this parameter.
+
+//2.The "number" parameter in describeLitentry represents the number of accounts generated, including Substrate wallets and Ethereum wallets.If you want to use a large number of accounts for testing, you can modify this parameter.
+//3.Each time the test code is executed, new wallet account will be used.
+
+
 describeLitentry('multiple accounts test', 1, async (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     var substraetSigners: KeyringPair[] = [];
     var ethereumSigners: ethers.Wallet[] = [];
     var vcIndexList: HexString[] = [];
 
-    //the number of times for requestVC for an account.
-    let test_times = 10;
+    //requestVC times for one account.
+    let request_times = 10;
 
-    // If want to test other assertions,just need to make changes here.
+    // If want to test other assertions with multiple accounts,just need to make changes here.
     let assertion_type = assertion.A1
     step('init', async () => {
         substraetSigners = context.web3Signers.map((web3Signer) => {
@@ -131,8 +140,9 @@ describeLitentry('multiple accounts test', 1, async (context) => {
     // test multiple vc with one account
     step('test multiple requestVc with one account', async () => {
         let txs: any = [];
+
         let vc_params: any[] = [];
-        for (let i = 0; i < test_times; i++) {
+        for (let i = 0; i < request_times; i++) {
             vc_params.push(assertion_type);
 
         }
@@ -142,7 +152,7 @@ describeLitentry('multiple accounts test', 1, async (context) => {
         }
 
         const resp_events = await batchCall(context, substraetSigners[0], txs, 'vcManagement', ['VCIssued']);
-        assert.equal(resp_events.length, test_times, 'request multiple vc check fail');
+        assert.equal(resp_events.length, request_times, 'request multiple vc check fail');
         const event_data = await handleVcEvents(aesKey, resp_events, 'requestVc');
         for (let m = 0; m < event_data.length; m++) {
             vcIndexList.push(event_data[m].index);
