@@ -162,9 +162,9 @@ where
 				ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
 			)
 		})?;
-		
-		let endpoint_ip = G_DATA_PROVIDERS.read().unwrap().credential_endpoint.clone();
-		credential.credential_subject.set_endpoint(&endpoint_ip);
+
+		let credential_endpoint = G_DATA_PROVIDERS.read().unwrap().credential_endpoint.clone();
+		credential.credential_subject.set_endpoint(credential_endpoint);
 
 		credential.issuer.id = account_id_to_string(&enclave_account);
 		let payload = credential.to_json().map_err(|_| {
