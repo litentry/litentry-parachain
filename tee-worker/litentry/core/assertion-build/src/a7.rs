@@ -29,7 +29,8 @@ use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
 use litentry_primitives::{
-	Identity, ParentchainBalance, ParentchainBlockNumber, SubstrateNetwork, ASSERTION_FROM_DATE,
+	Assertion, Identity, ParentchainBalance, ParentchainBlockNumber, SubstrateNetwork,
+	ASSERTION_FROM_DATE,
 };
 use log::*;
 use std::{
@@ -104,12 +105,11 @@ pub fn build(
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
 			credential_unsigned.update_holder(from_date_index, min_balance);
-			return Ok(credential_unsigned)
+			Ok(credential_unsigned)
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
+			Err(Error::RequestVCFailed(Assertion::A7(min_balance), e.to_error_detail()))
 		},
 	}
-
-	Err(Error::Assertion7Failed)
 }

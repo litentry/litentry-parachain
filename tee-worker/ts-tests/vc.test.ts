@@ -1,4 +1,4 @@
-import { describeLitentry, checkVc, checkFailReason, checkUserShieldingKeys } from './common/utils';
+import { describeLitentry, checkVc, checkErrorDetail, checkUserShieldingKeys } from './common/utils';
 import { step } from 'mocha-steps';
 import { setUserShieldingKey, requestVCs, disableVCs, revokeVCs } from './indirect_calls';
 import { Assertion } from './common/type-definitions';
@@ -38,7 +38,6 @@ describeLitentry('VC test', async (context) => {
     step('set user shielding key', async function () {
         const who = await setUserShieldingKey(context, context.substrateWallet.alice, aesKey, true);
         assert.equal(who, u8aToHex(context.substrateWallet.alice.addressRaw), 'check caller error');
-
     });
 
     step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
@@ -49,7 +48,6 @@ describeLitentry('VC test', async (context) => {
             u8aToHex(context.substrateWallet.alice.addressRaw)
         );
         assert.equal(resp_shieldingKey, aesKey, 'resp_shieldingKey should be equal aesKey after set');
-
     });
     step('Request VC', async () => {
         //request all vc
@@ -96,7 +94,7 @@ describeLitentry('VC test', async (context) => {
             ['A1']
         )) as Event[];
 
-        await checkFailReason(resp_request_error, 'User shielding key is missing', true);
+        await checkErrorDetail(resp_request_error, 'UserShieldingKeyNotFound', true);
     });
     step('Disable VC', async () => {
         const res = (await disableVCs(context, context.substrateWallet.alice, aesKey, true, indexList)) as HexString[];
@@ -115,7 +113,7 @@ describeLitentry('VC test', async (context) => {
 
             [indexList[0]]
         )) as HexString[];
-        await checkFailReason(resp_disable_error, 'vcManagement.VCAlreadyDisabled', false);
+        await checkErrorDetail(resp_disable_error, 'vcManagement.VCAlreadyDisabled', false);
     });
 
     step('Revoke VC', async () => {
@@ -132,6 +130,6 @@ describeLitentry('VC test', async (context) => {
         const resp_revoke_error = (await revokeErrorVCs(context, context.substrateWallet.alice, true, [
             indexList[0],
         ])) as string[];
-        await checkFailReason(resp_revoke_error, 'vcManagement.VCNotExist', false);
+        await checkErrorDetail(resp_revoke_error, 'vcManagement.VCNotExist', false);
     });
 });

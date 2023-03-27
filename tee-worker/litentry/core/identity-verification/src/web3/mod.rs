@@ -21,7 +21,8 @@ use crate::{
 };
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
-	ChallengeCode, Identity, IdentityMultiSignature, Web3CommonValidationData, Web3ValidationData,
+	ChallengeCode, ErrorDetail, Identity, IdentityMultiSignature, Web3CommonValidationData,
+	Web3ValidationData,
 };
 use log::*;
 use sp_core::{ed25519, sr25519};
@@ -59,11 +60,14 @@ fn verify_substrate_signature(
 	let raw_msg = get_expected_raw_message(who, identity, code);
 	let wrapped_msg = get_expected_wrapped_message(raw_msg.clone());
 
-	ensure!(raw_msg.as_slice() == validation_data.message.as_slice(), Error::UnexpectedMessage);
+	ensure!(
+		raw_msg.as_slice() == validation_data.message.as_slice(),
+		Error::VerifyIdentityFailed(ErrorDetail::UnexpectedMessage)
+	);
 	let substrate_address = if let Identity::Substrate { address, .. } = identity {
 		address.as_ref()
 	} else {
-		return Err(Error::InvalidIdentity)
+		return Err(Error::VerifyIdentityFailed(ErrorDetail::InvalidIdentity))
 	};
 
 	// we accept both the raw_msg's signature and the wrapped_msg's signature
@@ -77,7 +81,7 @@ fn verify_substrate_signature(
 			&validation_data.signature,
 			substrate_address
 		),
-		Error::VerifySubstrateSignatureFailed
+		Error::VerifyIdentityFailed(ErrorDetail::VerifySubstrateSignatureFailed)
 	);
 	Ok(())
 }
@@ -122,14 +126,17 @@ fn verify_evm_signature(
 	let evm_address = if let Identity::Evm { address, .. } = identity {
 		address
 	} else {
-		return Err(Error::InvalidIdentity)
+		return Err(Error::VerifyIdentityFailed(ErrorDetail::InvalidIdentity))
 	};
 	if let IdentityMultiSignature::Ethereum(sig) = &validation_data.signature {
 		let recovered_evm_address = recover_evm_address(&digest, sig.as_ref())
-			.map_err(|_| Error::RecoverEvmAddressFailed)?;
-		ensure!(&recovered_evm_address == evm_address.as_ref(), Error::VerifyEvmSignatureFailed);
+			.map_err(|_| Error::VerifyIdentityFailed(ErrorDetail::RecoverEvmAddressFailed))?;
+		ensure!(
+			&recovered_evm_address == evm_address.as_ref(),
+			Error::VerifyIdentityFailed(ErrorDetail::VerifyEvmSignatureFailed)
+		);
 	} else {
-		return Err(Error::WrongSignatureType)
+		return Err(Error::VerifyIdentityFailed(ErrorDetail::WrongSignatureType))
 	}
 	Ok(())
 }

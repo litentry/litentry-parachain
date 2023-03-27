@@ -48,7 +48,7 @@ pub type VCIndex = H256;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use core_primitives::{ErrorString, VCMPError};
+	use core_primitives::{ErrorDetail, VCMPError};
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
@@ -107,22 +107,10 @@ pub mod pallet {
 		// a Schema is revoked
 		SchemaRevoked { account: T::AccountId, shard: ShardIdentifier, index: SchemaIndex },
 		// event errors caused by processing in TEE
-		// copied from core_primitives::IMPError, we use events instead of pallet::errors,
+		// copied from core_primitives::VCMPError, we use events instead of pallet::errors,
 		// see https://github.com/litentry/litentry-parachain/issues/1275
-		HttpRequestFailed { reason: ErrorString },
-		RequestVCHandlingFailed,
-		StfError { reason: ErrorString },
-		ParseError,
-		Assertion1Failed,
-		Assertion2Failed,
-		Assertion3Failed,
-		Assertion4Failed,
-		Assertion5Failed,
-		Assertion6Failed,
-		Assertion7Failed,
-		Assertion8Failed,
-		Assertion10Failed,
-		Assertion11Failed,
+		RequestVCFailed { assertion: Assertion, detail: ErrorDetail },
+		UnclassifiedError { detail: ErrorDetail },
 	}
 
 	#[pallet::error]
@@ -213,22 +201,10 @@ pub mod pallet {
 		pub fn some_error(origin: OriginFor<T>, error: VCMPError) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			match error {
-				VCMPError::HttpRequestFailed(s) =>
-					Self::deposit_event(Event::HttpRequestFailed { reason: s }),
-				VCMPError::RequestVCHandlingFailed =>
-					Self::deposit_event(Event::RequestVCHandlingFailed),
-				VCMPError::StfError(s) => Self::deposit_event(Event::StfError { reason: s }),
-				VCMPError::ParseError => Self::deposit_event(Event::ParseError),
-				VCMPError::Assertion1Failed => Self::deposit_event(Event::Assertion1Failed),
-				VCMPError::Assertion2Failed => Self::deposit_event(Event::Assertion2Failed),
-				VCMPError::Assertion3Failed => Self::deposit_event(Event::Assertion3Failed),
-				VCMPError::Assertion4Failed => Self::deposit_event(Event::Assertion4Failed),
-				VCMPError::Assertion5Failed => Self::deposit_event(Event::Assertion5Failed),
-				VCMPError::Assertion6Failed => Self::deposit_event(Event::Assertion6Failed),
-				VCMPError::Assertion7Failed => Self::deposit_event(Event::Assertion7Failed),
-				VCMPError::Assertion8Failed => Self::deposit_event(Event::Assertion8Failed),
-				VCMPError::Assertion10Failed => Self::deposit_event(Event::Assertion10Failed),
-				VCMPError::Assertion11Failed => Self::deposit_event(Event::Assertion11Failed),
+				VCMPError::RequestVCFailed(assertion, detail) =>
+					Self::deposit_event(Event::RequestVCFailed { assertion, detail }),
+				VCMPError::UnclassifiedError(detail) =>
+					Self::deposit_event(Event::UnclassifiedError { detail }),
 			}
 			Ok(Pays::No.into())
 		}

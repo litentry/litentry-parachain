@@ -185,8 +185,8 @@ export type IntegrationTestContext = {
     teeShieldingKey: KeyObject;
     mrEnclave: HexString;
     ethersWallet: any;
-    substrateWallet: any,
-    metaData: Metadata
+    substrateWallet: any;
+    metaData: Metadata;
 };
 
 export class AESOutput {
@@ -398,4 +398,3 @@ export const JsonSchema = {
     },
     required: ['id', 'type', 'credentialSubject', 'issuer', 'issuanceBlockNumber', 'proof'],
 };
-
