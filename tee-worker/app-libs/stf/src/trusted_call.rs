@@ -125,7 +125,7 @@ pub enum TrustedCall {
 		ParentchainBlockNumber,
 	), // (EnclaveSigner, Account, identity, validation, blocknumber)
 	verify_identity_runtime(AccountId, AccountId, Identity, ParentchainBlockNumber), // (EnclaveSigner, Account, identity, blocknumber)
-	build_assertion(AccountId, AccountId, Assertion, ShardIdentifier, ParentchainBlockNumber), // (Account, Account, Assertion, shard, blocknumber)
+	request_vc(AccountId, AccountId, Assertion, ShardIdentifier, ParentchainBlockNumber), // (Account, Account, Assertion, shard, blocknumber)
 	handle_imp_error(AccountId, IMPError),
 	handle_vcmp_error(AccountId, VCMPError),
 	// the following TrustedCalls should only be used in testing
@@ -155,7 +155,7 @@ impl TrustedCall {
 			TrustedCall::remove_identity_runtime(account, _, _) => account,
 			TrustedCall::verify_identity_preflight(account, _, _, _, _) => account,
 			TrustedCall::verify_identity_runtime(account, _, _, _) => account,
-			TrustedCall::build_assertion(account, _, _, _, _) => account,
+			TrustedCall::request_vc(account, _, _, _, _) => account,
 			TrustedCall::set_challenge_code_runtime(account, _, _, _) => account,
 			TrustedCall::handle_imp_error(account, _) => account,
 			TrustedCall::handle_vcmp_error(account, _) => account,
@@ -621,8 +621,8 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::build_assertion(enclave_account, who, assertion, shard, bn) => {
-				if let Err(e) = Self::build_assertion(enclave_account, &shard, who, assertion, bn) {
+			TrustedCall::request_vc(enclave_account, who, assertion, shard, bn) => {
+				if let Err(e) = Self::request_vc(enclave_account, &shard, who, assertion, bn) {
 					add_call_from_vcmp_error(calls, node_metadata_repo, e.to_vcmp_error());
 				}
 				Ok(())
@@ -674,7 +674,7 @@ where
 			TrustedCall::remove_identity_runtime(..) => debug!("No storage updates needed..."),
 			TrustedCall::verify_identity_preflight(..) => debug!("No storage updates needed..."),
 			TrustedCall::verify_identity_runtime(..) => debug!("No storage updates needed..."),
-			TrustedCall::build_assertion(..) => debug!("No storage updates needed..."),
+			TrustedCall::request_vc(..) => debug!("No storage updates needed..."),
 			TrustedCall::set_challenge_code_runtime(..) => debug!("No storage updates needed..."),
 			TrustedCall::handle_imp_error(..) => debug!("No storage updates needed..."),
 			TrustedCall::handle_vcmp_error(..) => debug!("No storage updates needed..."),

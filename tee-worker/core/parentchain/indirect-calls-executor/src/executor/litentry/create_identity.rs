@@ -15,7 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	error::{Error, IMPError, Result},
+	error::{Error, ErrorDetail, IMPError, Result},
 	executor::Executor,
 	IndirectCallsExecutor,
 };
@@ -121,7 +121,7 @@ where
 		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
 	) -> Result<()> {
 		let (_, (shard, _, _, _)) = extrinsic.function;
-		let e = Error::IMPHandlingError(IMPError::CreateIdentityHandlingFailed);
+		let e = Error::IMPHandlingError(IMPError::CreateIdentityFailed(ErrorDetail::ImportError));
 		if self.execute_internal(context, extrinsic).is_err() {
 			// try to handle the error internally, if we get another error, log it and return the
 			// original error

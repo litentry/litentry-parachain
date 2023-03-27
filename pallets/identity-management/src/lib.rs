@@ -35,8 +35,7 @@
 mod benchmarking;
 #[cfg(test)]
 mod mock;
-
-#[cfg(all(test, feature = "skip-ias-check"))]
+#[cfg(test)]
 mod tests;
 
 pub mod weights;
@@ -50,7 +49,7 @@ use sp_std::vec::Vec;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::{AesOutput, ShardIdentifier, Vec, WeightInfo};
-	use core_primitives::{ErrorString, IMPError};
+	use core_primitives::{ErrorDetail, IMPError};
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
@@ -88,24 +87,12 @@ pub mod pallet {
 		// event errors caused by processing in TEE
 		// copied from core_primitives::IMPError, we use events instead of pallet::errors,
 		// see https://github.com/litentry/litentry-parachain/issues/1275
-		DecodeHexFailed { reason: ErrorString },
-		HttpRequestFailed { reason: ErrorString },
-		StfError { reason: ErrorString },
-		CreateIdentityHandlingFailed,
-		RemoveIdentityHandlingFailed,
-		VerifyIdentityHandlingFailed,
-		SetUserShieldingKeyHandlingFailed,
-		InvalidUserShieldingKey,
-		InvalidIdentity,
-		WrongWeb2Handle,
-		UnexpectedMessage,
-		WrongIdentityHandleType,
-		WrongSignatureType,
-		VerifySubstrateSignatureFailed,
-		RecoverSubstratePubkeyFailed,
-		VerifyEvmSignatureFailed,
-		RecoverEvmAddressFailed,
+		SetUserShieldingKeyFailed { detail: ErrorDetail },
+		CreateIdentityFailed { detail: ErrorDetail },
+		RemoveIdentityFailed { detail: ErrorDetail },
+		VerifyIdentityFailed { detail: ErrorDetail },
 		ImportScheduledEnclaveFailed,
+		UnclassifiedError { detail: ErrorDetail },
 	}
 
 	/// delegatees who are authorised to send extrinsics(currently only `create_identity`)
@@ -265,37 +252,18 @@ pub mod pallet {
 		pub fn some_error(origin: OriginFor<T>, error: IMPError) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			match error {
-				IMPError::DecodeHexFailed(s) =>
-					Self::deposit_event(Event::DecodeHexFailed { reason: s }),
-				IMPError::HttpRequestFailed(s) =>
-					Self::deposit_event(Event::HttpRequestFailed { reason: s }),
-				IMPError::StfError(s) => Self::deposit_event(Event::StfError { reason: s }),
-				IMPError::InvalidUserShieldingKey =>
-					Self::deposit_event(Event::InvalidUserShieldingKey),
-				IMPError::InvalidIdentity => Self::deposit_event(Event::InvalidIdentity),
-				IMPError::CreateIdentityHandlingFailed =>
-					Self::deposit_event(Event::CreateIdentityHandlingFailed),
-				IMPError::RemoveIdentityHandlingFailed =>
-					Self::deposit_event(Event::RemoveIdentityHandlingFailed),
-				IMPError::VerifyIdentityHandlingFailed =>
-					Self::deposit_event(Event::VerifyIdentityHandlingFailed),
-				IMPError::SetUserShieldingKeyHandlingFailed =>
-					Self::deposit_event(Event::SetUserShieldingKeyHandlingFailed),
-				IMPError::WrongWeb2Handle => Self::deposit_event(Event::WrongWeb2Handle),
-				IMPError::UnexpectedMessage => Self::deposit_event(Event::UnexpectedMessage),
-				IMPError::WrongIdentityHandleType =>
-					Self::deposit_event(Event::WrongIdentityHandleType),
-				IMPError::WrongSignatureType => Self::deposit_event(Event::WrongSignatureType),
-				IMPError::VerifySubstrateSignatureFailed =>
-					Self::deposit_event(Event::VerifySubstrateSignatureFailed),
-				IMPError::RecoverSubstratePubkeyFailed =>
-					Self::deposit_event(Event::RecoverSubstratePubkeyFailed),
-				IMPError::VerifyEvmSignatureFailed =>
-					Self::deposit_event(Event::VerifyEvmSignatureFailed),
-				IMPError::RecoverEvmAddressFailed =>
-					Self::deposit_event(Event::RecoverEvmAddressFailed),
+				IMPError::SetUserShieldingKeyFailed(detail) =>
+					Self::deposit_event(Event::SetUserShieldingKeyFailed { detail }),
+				IMPError::CreateIdentityFailed(detail) =>
+					Self::deposit_event(Event::CreateIdentityFailed { detail }),
+				IMPError::RemoveIdentityFailed(detail) =>
+					Self::deposit_event(Event::RemoveIdentityFailed { detail }),
+				IMPError::VerifyIdentityFailed(detail) =>
+					Self::deposit_event(Event::VerifyIdentityFailed { detail }),
 				IMPError::ImportScheduledEnclaveFailed =>
 					Self::deposit_event(Event::ImportScheduledEnclaveFailed),
+				IMPError::UnclassifiedError(detail) =>
+					Self::deposit_event(Event::UnclassifiedError { detail }),
 			}
 			Ok(Pays::No.into())
 		}

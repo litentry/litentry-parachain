@@ -17,7 +17,7 @@
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
-pub use litentry_primitives::{IMPError, VCMPError};
+pub use litentry_primitives::{ErrorDetail, IMPError, VCMPError};
 
 use itp_component_container::error::Error as ComponentError;
 use sgx_types::sgx_status_t;
