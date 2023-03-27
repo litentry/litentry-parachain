@@ -60,7 +60,12 @@ export async function createErrorIdentities(
     await sendTxUntilInBlockList(context.api, txs, signer);
 
     if (listening) {
-        const events = (await listenEvent(context.api, 'identityManagement', ['CreateIdentityFailed'], txs.length)) as any;
+        const events = (await listenEvent(
+            context.api,
+            'identityManagement',
+            ['CreateIdentityFailed'],
+            txs.length
+        )) as any;
         expect(events.length).to.be.equal(errorCiphertexts.length);
         let results: string[] = [];
         for (let i = 0; i < events.length; i++) {
@@ -109,7 +114,12 @@ export async function verifyErrorIdentities(
     await sendTxUntilInBlockList(context.api, txs, signer);
 
     if (listening) {
-        const events = (await listenEvent(context.api, 'identityManagement', ['VerifyIdentityFailed'], txs.length)) as any;
+        const events = (await listenEvent(
+            context.api,
+            'identityManagement',
+            ['VerifyIdentityFailed'],
+            txs.length
+        )) as any;
         expect(events.length).to.be.equal(identities.length);
         let results: string[] = [];
         for (let i = 0; i < events.length; i++) {
@@ -145,7 +155,12 @@ export async function removeErrorIdentities(
     await sendTxUntilInBlockList(context.api, txs, signer);
 
     if (listening) {
-        const events = (await listenEvent(context.api, 'identityManagement', ['RemoveIdentityFailed'], txs.length)) as any;
+        const events = (await listenEvent(
+            context.api,
+            'identityManagement',
+            ['RemoveIdentityFailed'],
+            txs.length
+        )) as any;
         let results: string[] = [];
         expect(events.length).to.be.equal(identities.length);
         for (let i = 0; i < events.length; i++) {
