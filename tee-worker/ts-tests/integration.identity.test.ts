@@ -24,14 +24,14 @@ import { listenEvent } from './common/transactions';
 
 //3.Each time the test code is executed, new wallet account will be used.
 
-describeLitentry('multiple accounts test', 5, async (context) => {
+describeLitentry('multiple accounts test', 10, async (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     var substraetSigners: KeyringPair[] = [];
     var ethereumSigners: ethers.Wallet[] = [];
     var web3Validations: LitentryValidationData[] = [];
     var identityDatas: LitentryIdentity[] = [];
     let identityNetwork = IdentityNetwork.ethereum;
-    let buildIdentityTimes = 5;
+    let buildIdentityTimes = 10;
     let ethereumWalletsForSign: any = [];
 
     step('setup signers', async () => {
