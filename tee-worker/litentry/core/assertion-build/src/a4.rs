@@ -189,8 +189,8 @@ pub fn build(
 			);
 			match client.check_verified_credentials_is_hodler(vch) {
 				Ok(is_hodler_out) => {
-					for holder in is_hodler_out.verified_credentials_is_hodler.iter() {
-						found = found || holder.is_hodler;
+					for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
+						found = found || hodler.is_hodler;
 					}
 				},
 				Err(e) => error!(

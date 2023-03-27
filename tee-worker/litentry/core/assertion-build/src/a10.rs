@@ -39,7 +39,7 @@ const WBTC_TOKEN_ADDRESS: &str = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
 const VC_SUBJECT_DESCRIPTION: &str = "The user held Wrapped BTC every day from a specific date";
 const VC_SUBJECT_TYPE: &str = "BTC Hodler";
 
-// WBTC holder
+// WBTC hodler
 pub fn build(
 	identities: Vec<Identity>,
 	min_balance: ParentchainBalance,
