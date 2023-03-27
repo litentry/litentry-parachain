@@ -1,17 +1,9 @@
 import { step } from 'mocha-steps';
-import {
-    checkVc,
-    describeLitentry,
-    encryptWithTeeShieldingKey,
-} from './common/utils';
+import { checkVc, describeLitentry, encryptWithTeeShieldingKey } from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
 
-import {
-    Assertion,
-
-    TransactionSubmit,
-} from './common/type-definitions';
+import { Assertion, TransactionSubmit } from './common/type-definitions';
 import { batchCall } from './common/utils';
 import { handleVcEvents } from './common/utils';
 import { multiAccountTxSender } from './indirect_calls';
@@ -30,14 +22,13 @@ const assertion = <Assertion>{
     A11: [10],
 };
 
-
 //Explain how to use this test, which has two important parameters:
 
 //1.request_times: the number of requestVc for a single account.If you want to test bulk operations on a single account, you can modify this parameter.
 
 //2.The "number" parameter in describeLitentry represents the number of accounts generated, including Substrate wallets and Ethereum wallets.If you want to use a large number of accounts for testing, you can modify this parameter.
-//3.Each time the test code is executed, new wallet account will be used.
 
+//3.Each time the test code is executed, new wallet account will be used.
 
 describeLitentry('multiple accounts test', 1, async (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
@@ -49,7 +40,7 @@ describeLitentry('multiple accounts test', 1, async (context) => {
     let request_times = 10;
 
     // If want to test other assertions with multiple accounts,just need to make changes here.
-    let assertion_type = assertion.A1
+    let assertion_type = assertion.A1;
     step('init', async () => {
         substraetSigners = context.web3Signers.map((web3Signer) => {
             return web3Signer.substrateWallet;
@@ -61,15 +52,13 @@ describeLitentry('multiple accounts test', 1, async (context) => {
     step('send test token to each account', async () => {
         const txs: any = [];
         for (let i = 0; i < substraetSigners.length; i++) {
-
             //0.1 token
             const tx = context.api.tx.balances.transfer(substraetSigners[i].address, '100000000000');
 
             txs.push(tx);
         }
-        await context.api.tx.utility.batch(txs).signAndSend(context.substrateWallet.alice)
+        await context.api.tx.utility.batch(txs).signAndSend(context.substrateWallet.alice);
         await listenEvent(context.api, 'balances', ['Transfer'], txs.length);
-
     });
     //test with multiple accounts
     step('test set usershieldingkey with multiple accounts', async () => {
@@ -144,7 +133,6 @@ describeLitentry('multiple accounts test', 1, async (context) => {
         let vc_params: any[] = [];
         for (let i = 0; i < request_times; i++) {
             vc_params.push(assertion_type);
-
         }
         for (let i = 0; i < vc_params.length; i++) {
             const tx = context.api.tx.vcManagement.requestVc(context.mrEnclave, vc_params[i]);

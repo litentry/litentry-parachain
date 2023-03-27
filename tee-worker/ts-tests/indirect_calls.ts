@@ -195,10 +195,10 @@ export async function requestVCs(
     keys: string[]
 ): Promise<
     | {
-        account: HexString;
-        index: HexString;
-        vc: HexString;
-    }[]
+          account: HexString;
+          index: HexString;
+          vc: HexString;
+      }[]
     | undefined
 > {
     let txs: TransactionSubmit[] = [];

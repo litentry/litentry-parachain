@@ -37,7 +37,7 @@ const twitterValidationData = <LitentryValidationData>{
     },
 };
 
-describeLitentry('Test Batch Utility', (context) => {
+describeLitentry('Test Batch Utility', 0, (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
 
     step('set user shielding key', async function () {

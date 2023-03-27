@@ -91,7 +91,7 @@ export async function listenEvent(api: ApiPromise, section: string, methods: str
                 console.log(`Event[${i}]: ${s}.${m} ${d}`);
             });
 
-            //@TODO should filter the event with signers
+            //@TODO should filter the event with signers.address
             const filtered_events = records.filter(({ phase, event }) => {
                 return phase.isApplyExtrinsic && section === event.section && methods.includes(event.method);
             });

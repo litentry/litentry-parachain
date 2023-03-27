@@ -194,7 +194,7 @@ export function generateVerificationMessage(
     return blake2AsHex(msg, 256);
 }
 
-export function describeLitentry(title: string, walletsNumber: number, cb: (context: IntegrationTestContext) => void,) {
+export function describeLitentry(title: string, walletsNumber: number, cb: (context: IntegrationTestContext) => void) {
     describe(title, function () {
         // Set timeout to 6000 seconds
         this.timeout(6000000);
@@ -227,7 +227,7 @@ export function describeLitentry(title: string, walletsNumber: number, cb: (cont
             context.web3Signers = tmp.web3Signers;
         });
 
-        after(async function () { });
+        after(async function () {});
 
         cb(context);
     });
@@ -295,8 +295,8 @@ export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
     expect(isValid).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-        vc.issuer.id === proofJson.verificationMethod &&
-        proofJson.type === 'Ed25519Signature2020'
+            vc.issuer.id === proofJson.verificationMethod &&
+            proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
 }
@@ -566,8 +566,10 @@ export async function buildValidations(
     let signature_substrate: Uint8Array;
     let verifyDatas: any[] = [];
     for (let index = 0; index < events.length; index++) {
-        const substrateSigner = (type === 'multiple' ? context.web3Signers[index].substrateWallet : context.web3Signers[0].substrateWallet);
-        const ethereumSigner = (type === 'multiple' ? context.web3Signers[index].ethereumWallet : ethereumWalletsForSign![index])
+        const substrateSigner =
+            type === 'multiple' ? context.web3Signers[index].substrateWallet : context.web3Signers[0].substrateWallet;
+        const ethereumSigner =
+            type === 'multiple' ? context.web3Signers[index].ethereumWallet : ethereumWalletsForSign![index];
         const data = events[index];
         const msg = generateVerificationMessage(
             context,
@@ -579,7 +581,7 @@ export async function buildValidations(
             const ethereumValidationData: LitentryValidationData = {
                 Web3Validation: {
                     Evm: {
-                        message: "" as HexString,
+                        message: '' as HexString,
                         signature: {
                             Ethereum: '' as HexString,
                         },
@@ -589,17 +591,17 @@ export async function buildValidations(
             console.log('post verification msg to ethereum: ', msg);
             ethereumValidationData!.Web3Validation!.Evm!.message = msg;
             const msgHash = ethers.utils.arrayify(msg);
-            signature_ethereum = await ethereumSigner.signMessage(msgHash) as HexString;
+            signature_ethereum = (await ethereumSigner.signMessage(msgHash)) as HexString;
             ethereumValidationData!.Web3Validation!.Evm!.signature!.Ethereum = signature_ethereum;
             assert.isNotEmpty(data.challengeCode, 'challengeCode empty');
-            console.log("ethereumValidationData", ethereumValidationData);
+            console.log('ethereumValidationData', ethereumValidationData);
 
             verifyDatas.push(ethereumValidationData);
         } else if (network === 'substrate') {
             const substrateValidationData: LitentryValidationData = {
                 Web3Validation: {
                     Substrate: {
-                        message: "" as HexString,
+                        message: '' as HexString,
                         signature: {
                             Sr25519: '' as HexString,
                         },
@@ -611,19 +613,19 @@ export async function buildValidations(
             signature_substrate = context.substrateWallet.alice.sign(msg) as Uint8Array;
             substrateValidationData!.Web3Validation!.Substrate!.signature!.Sr25519 = u8aToHex(signature_substrate);
             assert.isNotEmpty(data.challengeCode, 'challengeCode empty');
-
-
         } else if (network === 'twitter') {
             // do nothing
-            console.log("post verification msg to twitter");
-
+            console.log('post verification msg to twitter');
         }
     }
     return verifyDatas;
-
 }
 
-async function buildIdentityHelper(address: HexString | string, network: string, type: string): Promise<LitentryIdentity> {
+async function buildIdentityHelper(
+    address: HexString | string,
+    network: string,
+    type: string
+): Promise<LitentryIdentity> {
     const identity: LitentryIdentity = {
         [type]: {
             address,
@@ -633,7 +635,13 @@ async function buildIdentityHelper(address: HexString | string, network: string,
     return identity;
 }
 
-export async function buildIdentities(network: string, type: string, context?: IntegrationTestContext, buildTimes?: number, ethereumWalletsForSign?: ethers.Wallet[]): Promise<LitentryIdentity[]> {
+export async function buildIdentities(
+    network: string,
+    type: string,
+    context?: IntegrationTestContext,
+    buildTimes?: number,
+    ethereumWalletsForSign?: ethers.Wallet[]
+): Promise<LitentryIdentity[]> {
     let identities: LitentryIdentity[] = [];
     if (type === 'batch') {
         if (network === 'ethereum') {
@@ -648,11 +656,9 @@ export async function buildIdentities(network: string, type: string, context?: I
                 const identity = await buildIdentityHelper(u8aToHex(signer.addressRaw), 'TestNet', 'Substrate');
                 identities.push(identity);
             }
-
         } else if (network === 'twitter') {
             const identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
             identities.push(identity);
-
         }
     } else if (type === 'utility') {
         if (network === 'ethereum') {
@@ -667,17 +673,21 @@ export async function buildIdentities(network: string, type: string, context?: I
                 const identity = await buildIdentityHelper(u8aToHex(signer.addressRaw), 'TestNet', 'Substrate');
                 identities.push(identity);
             }
-
         } else if (network === 'twitter') {
             const identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
             identities.push(identity);
         }
     }
 
-    return identities
+    return identities;
 }
 
-export async function buildIdentityTxs(context: IntegrationTestContext, identities: LitentryIdentity[], method: string, validations?: LitentryValidationData[]): Promise<TransactionSubmit[]> {
+export async function buildIdentityTxs(
+    context: IntegrationTestContext,
+    identities: LitentryIdentity[],
+    method: string,
+    validations?: LitentryValidationData[]
+): Promise<TransactionSubmit[]> {
     const txs: TransactionSubmit[] = [];
     const api = context.api;
     const web3Signers = context.web3Signers;
@@ -692,14 +702,26 @@ export async function buildIdentityTxs(context: IntegrationTestContext, identiti
         const ciphertext_identity = encryptWithTeeShieldingKey(teeShieldingKey, encod_identity).toString('hex');
         switch (method) {
             case 'createIdentity':
-                tx = api.tx.identityManagement.createIdentity(mrEnclave, signer.address, `0x${ciphertext_identity}`, null);
+                tx = api.tx.identityManagement.createIdentity(
+                    mrEnclave,
+                    signer.address,
+                    `0x${ciphertext_identity}`,
+                    null
+                );
                 nonce = (await api.rpc.system.accountNextIndex(signer.address)).toNumber();
                 break;
             case 'verifyIdentity':
                 const data = validations![k];
                 const encode_verifyIdentity_validation = api.createType('LitentryValidationData', data).toHex();
-                const ciphertext_verifyIdentity_validation = encryptWithTeeShieldingKey(teeShieldingKey, encode_verifyIdentity_validation).toString('hex');
-                tx = api.tx.identityManagement.verifyIdentity(mrEnclave, `0x${ciphertext_identity}`, `0x${ciphertext_verifyIdentity_validation}`);
+                const ciphertext_verifyIdentity_validation = encryptWithTeeShieldingKey(
+                    teeShieldingKey,
+                    encode_verifyIdentity_validation
+                ).toString('hex');
+                tx = api.tx.identityManagement.verifyIdentity(
+                    mrEnclave,
+                    `0x${ciphertext_identity}`,
+                    `0x${ciphertext_verifyIdentity_validation}`
+                );
                 nonce = (await api.rpc.system.accountNextIndex(signer.address)).toNumber();
                 break;
             case 'removeIdentity':

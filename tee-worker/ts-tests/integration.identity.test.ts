@@ -8,18 +8,13 @@ import {
 } from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
-import {
-    LitentryIdentity,
-    LitentryValidationData,
-    TransactionSubmit,
-} from './common/type-definitions';
+import { LitentryIdentity, LitentryValidationData, TransactionSubmit } from './common/type-definitions';
 import { batchCall } from './common/utils';
 import { handleIdentityEvents } from './common/utils';
 import { multiAccountTxSender } from './indirect_calls';
 import { assert } from 'chai';
 import { IdentityNetwork } from './common/helpers';
 import { listenEvent } from './common/transactions';
-
 
 //Explain how to use this test, which has two important parameters:
 
@@ -35,9 +30,9 @@ describeLitentry('multiple accounts test', 5, async (context) => {
     var ethereumSigners: ethers.Wallet[] = [];
     var web3Validations: LitentryValidationData[] = [];
     var identityDatas: LitentryIdentity[] = [];
-    let identityNetwork = IdentityNetwork.ethereum
-    let buildIdentityTimes = 5
-    let ethereumWalletsForSign: any = []
+    let identityNetwork = IdentityNetwork.ethereum;
+    let buildIdentityTimes = 5;
+    let ethereumWalletsForSign: any = [];
 
     step('setup signers', async () => {
         substraetSigners = context.web3Signers.map((web3Signer) => {
@@ -55,7 +50,7 @@ describeLitentry('multiple accounts test', 5, async (context) => {
 
             txs.push(tx);
         }
-        await context.api.tx.utility.batch(txs).signAndSend(context.substrateWallet.alice)
+        await context.api.tx.utility.batch(txs).signAndSend(context.substrateWallet.alice);
         await listenEvent(context.api, 'balances', ['Transfer'], txs.length);
     });
 
@@ -71,7 +66,11 @@ describeLitentry('multiple accounts test', 5, async (context) => {
         const resp_events = await multiAccountTxSender(context, txs, substraetSigners, 'identityManagement', [
             'UserShieldingKeySet',
         ]);
-        assert.equal(resp_events.length, substraetSigners.length, 'set usershieldingkey with multiple accounts check fail');
+        assert.equal(
+            resp_events.length,
+            substraetSigners.length,
+            'set usershieldingkey with multiple accounts check fail'
+        );
     });
 
     //test identity with multiple accounts
@@ -86,14 +85,8 @@ describeLitentry('multiple accounts test', 5, async (context) => {
         ]);
         assert.equal(resp_events.length, identities.length, 'create identities with multiple accounts check fail');
         const event_data = await handleIdentityEvents(context, aesKey, resp_events, 'IdentityCreated');
-        const validations = await buildValidations(
-            context,
-            event_data,
-            identities,
-            identityNetwork,
-            'multiple'
-        );
-        console.log("validations", validations);
+        const validations = await buildValidations(context, event_data, identities, identityNetwork, 'multiple');
+        console.log('validations', validations);
 
         web3Validations = [...validations];
     });
@@ -112,18 +105,23 @@ describeLitentry('multiple accounts test', 5, async (context) => {
             'IdentityRemoved',
         ]);
         assert.equal(resp_events.length, txs.length, 'remove identities with multiple accounts check fail');
-    })
+    });
 
     //one account test with multiple identities
     step('test multiple createIdentities with one account', async () => {
         let txs: any = [];
         for (let index = 0; index < buildIdentityTimes; index++) {
-            ethereumWalletsForSign.push(ethers.Wallet.createRandom())
-
+            ethereumWalletsForSign.push(ethers.Wallet.createRandom());
         }
-        let identities = await buildIdentities(identityNetwork, 'utility', context, buildIdentityTimes, ethereumWalletsForSign);
-        console.log("identities", identities);
-        identityDatas = [...identities]
+        let identities = await buildIdentities(
+            identityNetwork,
+            'utility',
+            context,
+            buildIdentityTimes,
+            ethereumWalletsForSign
+        );
+        console.log('identities', identities);
+        identityDatas = [...identities];
 
         for (let k = 0; k < identities.length; k++) {
             const identity = identities[k];
