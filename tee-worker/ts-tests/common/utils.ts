@@ -69,7 +69,8 @@ export async function initWorkerConnection(endpoint: string): Promise<WebSocketA
 
 export async function initIntegrationTestContext(
     workerEndpoint: string,
-    substrateEndpoint: string
+    substrateEndpoint: string,
+    walletsNumber: number
 ): Promise<IntegrationTestContext> {
     const provider = new WsProvider(substrateEndpoint);
     const ethersWallet = {
@@ -96,7 +97,7 @@ export async function initIntegrationTestContext(
 
     const metaData = await getMetadata(wsp, api);
 
-    const web3Signers = await generateWeb3Wallets(500);
+    const web3Signers = await generateWeb3Wallets(walletsNumber);
     const { mrEnclave, teeShieldingKey } = await getEnclave(api);
     return <IntegrationTestContext>{
         tee: wsp,
@@ -191,7 +192,7 @@ export function generateVerificationMessage(
     return blake2AsHex(msg, 256);
 }
 
-export function describeLitentry(title: string, cb: (context: IntegrationTestContext) => void) {
+export function describeLitentry(title: string, walletsNumber: number, cb: (context: IntegrationTestContext) => void,) {
     describe(title, function () {
         // Set timeout to 6000 seconds
         this.timeout(6000000);
@@ -211,7 +212,8 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
             //env url
             const tmp = await initIntegrationTestContext(
                 process.env.WORKER_END_POINT!,
-                process.env.SUBSTRATE_END_POINT!
+                process.env.SUBSTRATE_END_POINT!,
+                walletsNumber
             );
             context.mrEnclave = tmp.mrEnclave;
             context.api = tmp.api;
@@ -223,7 +225,7 @@ export function describeLitentry(title: string, cb: (context: IntegrationTestCon
             context.web3Signers = tmp.web3Signers;
         });
 
-        after(async function () {});
+        after(async function () { });
 
         cb(context);
     });
@@ -291,8 +293,8 @@ export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
     expect(isValid).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-            vc.issuer.id === proofJson.verificationMethod &&
-            proofJson.type === 'Ed25519Signature2020'
+        vc.issuer.id === proofJson.verificationMethod &&
+        proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
 }
@@ -513,7 +515,7 @@ export async function batchCall(
 export async function handleVcEvents(aesKey: HexString, events: any[], type: string): Promise<any> {
     let results: any[] = [];
     for (let k = 0; k < events.length; k++) {
-        if (type == 'requestVc') {
+        if (type == 'VCIssued') {
             results.push({
                 account: events[k].data.account.toHex(),
                 index: events[k].data.index.toHex(),

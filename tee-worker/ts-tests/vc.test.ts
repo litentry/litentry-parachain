@@ -22,7 +22,7 @@ const assertion = <Assertion>{
 
 //It doesn't make much difference test A1 only vs test A1 - A11, one VC type is enough.
 //So only use A1 to trigger the wrong event
-describeLitentry('VC test', async (context) => {
+describeLitentry('VC test', 0, async (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     var indexList: HexString[] = [];
 

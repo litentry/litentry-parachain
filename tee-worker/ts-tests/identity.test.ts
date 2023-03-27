@@ -122,7 +122,7 @@ const discordValidationData = <LitentryValidationData>{
     },
 };
 
-describeLitentry('Test Identity', (context) => {
+describeLitentry('Test Identity', 0, (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
 
     const errorAseKey = '0xError';

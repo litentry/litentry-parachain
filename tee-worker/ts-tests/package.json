@@ -9,7 +9,8 @@
 		"test-vc:staging": "cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register 'vc.test.ts'",
 		"test-batch:local": "cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register 'batch.test.ts'",
 		"test-batch:staging": "cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register 'batch.test.ts'",
-		"test-multiple:local": "cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register 'multiple.accounts.transactions.test.ts'"
+		"test-integration-vc:local": "cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register 'integretion.vc.test.ts'",
+		"test-integration-vc:staging": "cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register 'integretion.vc.test.ts'"
 	},
 	"dependencies": {
 		"@noble/ed25519": "^1.7.3",
