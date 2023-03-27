@@ -95,7 +95,7 @@ pub mod pallet {
 		VCRevoked { index: VCIndex },
 		// event that should be triggered by TEECallOrigin
 		// a VC is just issued
-		VCIssued { account: T::AccountId, index: VCIndex, vc: AesOutput },
+		VCIssued { account: T::AccountId, assertion: Assertion, index: VCIndex, vc: AesOutput },
 		// Admin account was changed
 		SchemaAdminChanged { old_admin: Option<T::AccountId>, new_admin: Option<T::AccountId> },
 		// a Schema is issued
@@ -185,14 +185,18 @@ pub mod pallet {
 		pub fn vc_issued(
 			origin: OriginFor<T>,
 			account: T::AccountId,
+			assertion: Assertion,
 			index: H256,
 			hash: H256,
 			vc: AesOutput,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			ensure!(!VCRegistry::<T>::contains_key(index), Error::<T>::VCAlreadyExists);
-			VCRegistry::<T>::insert(index, VCContext::<T>::new(account.clone(), hash));
-			Self::deposit_event(Event::VCIssued { account, index, vc });
+			VCRegistry::<T>::insert(
+				index,
+				VCContext::<T>::new(account.clone(), assertion.clone(), hash),
+			);
+			Self::deposit_event(Event::VCIssued { account, assertion, index, vc });
 			Ok(Pays::No.into())
 		}
 
