@@ -14,6 +14,8 @@ import {
     IdentityContext,
     Web3Wallets,
     IdentityGenericEvent,
+    TransactionSubmit,
+    LitentryValidationData,
 } from './type-definitions';
 import { blake2AsHex, cryptoWaitReady, xxhashAsU8a } from '@polkadot/util-crypto';
 import { Metadata } from '@polkadot/types';
@@ -33,7 +35,7 @@ import { blake2128Concat, getSubstrateSigner, identity, twox64Concat } from './h
 import { getMetadata, sendRequest } from './call';
 const base58 = require('micro-base58');
 const crypto = require('crypto');
-import { getEthereumSigner, ethereumValidationData } from '../common/helpers';
+import { getEthereumSigner } from '../common/helpers';
 import { listenEvent } from './transactions';
 
 // in order to handle self-signed certificates we need to turn off the validation
@@ -528,7 +530,7 @@ export async function handleVcEvents(aesKey: HexString, events: any[], type: str
 
     return [...results];
 }
-export async function handleIdentitiesEvents(
+export async function handleIdentityEvents(
     context: IntegrationTestContext,
     aesKey: HexString,
     events: any[],
@@ -552,33 +554,142 @@ export async function handleIdentitiesEvents(
     return [...results];
 }
 
-export async function buildIdentities(
+export async function buildValidations(
     context: IntegrationTestContext,
     events: any[],
     identities: any[],
-    substraetSigners: KeyringPair[],
-    ethereumSigners: ethers.Wallet[],
-    type: string
+    network: string
 ): Promise<any> {
-    let signature_ethereum: any;
+    let signature_ethereum: HexString;
+    let signature_substrate: Uint8Array;
     let verifyDatas: any[] = [];
     for (let index = 0; index < events.length; index++) {
+        const substrateSigner = context.web3Signers.length === 1 ? context.web3Signers[0].substrateWallet : context.web3Signers[index].substrateWallet;
+        const ethereumSigner = context.web3Signers.length === 1 ? context.web3Signers[0].ethereumWallet : context.web3Signers[index].ethereumWallet;
         const data = events[index];
         const msg = generateVerificationMessage(
             context,
             hexToU8a(data.challengeCode),
-            substraetSigners.length === 1 ? substraetSigners[0].addressRaw : substraetSigners[index].addressRaw,
+            substrateSigner.addressRaw,
             identities[index]
         );
-        console.log('post verification msg to ethereum: ', msg);
-        ethereumValidationData!.Web3Validation!.Evm!.message = msg;
-        const msgHash = ethers.utils.arrayify(msg);
-        signature_ethereum = await (ethereumSigners.length === 1
-            ? ethereumSigners[0].signMessage(msgHash)
-            : ethereumSigners[index].signMessage(msgHash));
-        ethereumValidationData!.Web3Validation!.Evm!.signature!.Ethereum = signature_ethereum;
-        assert.isNotEmpty(data.challengeCode, 'challengeCode empty');
-        verifyDatas.push(ethereumValidationData);
+        if (network === 'ethereum') {
+            const ethereumValidationData: LitentryValidationData = {
+                Web3Validation: {
+                    Evm: {
+                        message: `0x${Buffer.from('mock_message', 'utf8').toString('hex')}`,
+                        signature: {
+                            Ethereum: '' as HexString,
+                        },
+                    },
+                },
+            };
+            console.log('post verification msg to ethereum: ', msg);
+            ethereumValidationData!.Web3Validation!.Evm!.message = msg;
+            const msgHash = ethers.utils.arrayify(msg);
+            signature_ethereum = await ethereumSigner.signMessage(msgHash) as HexString;
+            ethereumValidationData!.Web3Validation!.Evm!.signature!.Ethereum = signature_ethereum;
+            assert.isNotEmpty(data.challengeCode, 'challengeCode empty');
+            console.log("ethereumValidationData", ethereumValidationData);
+
+            verifyDatas.push(ethereumValidationData);
+        } else if (network === 'substrate') {
+            const substrateValidationData: LitentryValidationData = {
+                Web3Validation: {
+                    Substrate: {
+                        message: `0x${Buffer.from('mock_message', 'utf8').toString('hex')}`,
+                        signature: {
+                            Sr25519: '' as HexString,
+                        },
+                    },
+                },
+            };
+            console.log('post verification msg to substrate: ', msg);
+            substrateValidationData!.Web3Validation!.Substrate!.message = msg;
+            signature_substrate = context.substrateWallet.alice.sign(msg) as Uint8Array;
+            substrateValidationData!.Web3Validation!.Substrate!.signature!.Sr25519 = u8aToHex(signature_substrate);
+            assert.isNotEmpty(data.challengeCode, 'challengeCode empty');
+
+
+        } else if (network === 'twitter') {
+            // do nothing
+            console.log("post verification msg to twitter");
+
+        }
     }
     return verifyDatas;
+
+}
+
+async function buildIdentityHelper(address: HexString | string, network: string, type: string): Promise<LitentryIdentity> {
+    const identity: LitentryIdentity = {
+        [type]: {
+            address,
+            network,
+        },
+    };
+    return identity;
+}
+
+export async function buildIdentities(network: string, context?: IntegrationTestContext): Promise<LitentryIdentity[]> {
+    let identities: LitentryIdentity[] = [];
+    if (network === 'ethereum') {
+        for (let i = 0; i < context!.web3Signers.length; i++) {
+            const signer = context!.web3Signers[i].ethereumWallet;
+            const identity = await buildIdentityHelper(signer.address, 'Ethereum', 'Evm');
+            identities.push(identity);
+        }
+    } else if (network === 'substrate') {
+        for (let i = 0; i < context!.web3Signers.length; i++) {
+            const signer = context!.web3Signers[i].substrateWallet;
+            const identity = await buildIdentityHelper(u8aToHex(signer.addressRaw), 'TestNet', 'Substrate');
+            identities.push(identity);
+        }
+
+    } else if (network === 'twitter') {
+        const identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
+        identities.push(identity);
+
+    }
+    return identities
+}
+
+export async function buildIdentityTxs(context: IntegrationTestContext, identities: LitentryIdentity[], method: string, validations?: LitentryValidationData[]): Promise<TransactionSubmit[]> {
+    const txs: TransactionSubmit[] = [];
+    const api = context.api;
+    const web3Signers = context.web3Signers;
+    const mrEnclave = context.mrEnclave;
+    const teeShieldingKey = context.teeShieldingKey;
+    for (let k = 0; k < identities.length; k++) {
+        const signer = web3Signers[k].substrateWallet;
+        const identity = identities[k];
+        let tx: SubmittableExtrinsic<ApiTypes>;
+        let nonce: number;
+        const encod_identity = api.createType('LitentryIdentity', identity).toHex();
+        const ciphertext_identity = encryptWithTeeShieldingKey(teeShieldingKey, encod_identity).toString('hex');
+        switch (method) {
+            case 'createIdentity':
+                tx = api.tx.identityManagement.createIdentity(mrEnclave, signer.address, `0x${ciphertext_identity}`, null);
+                nonce = (await api.rpc.system.accountNextIndex(signer.address)).toNumber();
+                break;
+            case 'verifyIdentity':
+                const data = validations![k];
+                const encode_verifyIdentity_validation = api.createType('LitentryValidationData', data).toHex();
+                const ciphertext_verifyIdentity_validation = encryptWithTeeShieldingKey(teeShieldingKey, encode_verifyIdentity_validation).toString('hex');
+                tx = api.tx.identityManagement.verifyIdentity(mrEnclave, `0x${ciphertext_identity}`, `0x${ciphertext_verifyIdentity_validation}`);
+                nonce = (await api.rpc.system.accountNextIndex(signer.address)).toNumber();
+                break;
+            case 'removeIdentity':
+                tx = api.tx.identityManagement.removeIdentity(mrEnclave, `0x${ciphertext_identity}`);
+                nonce = (await api.rpc.system.accountNextIndex(signer.address)).toNumber();
+                break;
+
+            default:
+                throw new Error(`Invalid method: ${method}`);
+        }
+
+        txs.push({ tx, nonce });
+    }
+
+    return txs;
 }

@@ -246,8 +246,8 @@ export type Web3CommonValidationData = {
 
 export type IdentityMultiSignature = {
     Ethereum?: HexString;
-    Ed25519: HexString;
-    Sr25519: HexString;
+    Ed25519?: HexString;
+    Sr25519?: HexString;
 };
 
 export type Ed25519Signature = {

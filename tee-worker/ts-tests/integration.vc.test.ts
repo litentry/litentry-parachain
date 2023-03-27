@@ -62,7 +62,7 @@ describeLitentry('multiple accounts test', 1, async (context) => {
         await listenEvent(context.api, 'balances', ['Transfer'], txs.length);
 
     });
-    // //test with multiple accounts
+    //test with multiple accounts
     step('test set usershieldingkey with multiple accounts', async () => {
         const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, aesKey).toString('hex');
         let txs: TransactionSubmit[] = [];

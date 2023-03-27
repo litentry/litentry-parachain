@@ -56,13 +56,8 @@ export function identity(data: HexString | Uint8Array): Uint8Array {
     return u8aToU8a(data);
 }
 
-export const ethereumValidationData = <LitentryValidationData>{
-    Web3Validation: {
-        Evm: {
-            message: `0x${Buffer.from('mock_message', 'utf8').toString('hex')}`,
-            signature: {
-                Ethereum: '' as HexString,
-            },
-        },
-    },
-};
+export enum IdentityNetwork {
+    substrate = 'substrate',
+    ethereum = 'ethereum',
+    twitter = 'twitter',
+}
