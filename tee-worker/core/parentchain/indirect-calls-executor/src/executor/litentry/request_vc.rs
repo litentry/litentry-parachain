@@ -15,7 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	error::{Error, Result, VCMPError},
+	error::{Error, ErrorDetail, Result, VCMPError},
 	executor::Executor,
 	IndirectCallsExecutor,
 };
@@ -70,7 +70,7 @@ impl RequestVC {
 
 			let enclave_account_id = context.stf_enclave_signer.get_enclave_account()?;
 
-			let trusted_call = TrustedCall::build_assertion(
+			let trusted_call = TrustedCall::request_vc(
 				enclave_account_id,
 				account,
 				assertion,
@@ -113,8 +113,11 @@ where
 		context: &IndirectCallsExecutor<R, S, T, N>,
 		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
 	) -> Result<()> {
-		let (_, (shard, _)) = extrinsic.function;
-		let e = Error::VCMPHandlingError(VCMPError::RequestVCHandlingFailed);
+		let (_, (shard, assertion)) = extrinsic.function.clone();
+		let e = Error::VCMPHandlingError(VCMPError::RequestVCFailed(
+			assertion,
+			ErrorDetail::ImportError,
+		));
 		if self.execute_internal(context, extrinsic).is_err() {
 			// try to handle the error internally, if we get another error, log it and return the
 			// original error

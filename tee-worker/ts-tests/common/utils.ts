@@ -301,18 +301,19 @@ export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
     return true;
 }
 
-export async function checkFailReason(
+export async function checkErrorDetail(
     response: string[] | Event[],
-    expectedReason: string,
+    expectedDetail: string,
     isModule: boolean
 ): Promise<boolean> {
-    let failReason = '';
+    let detail: string = '';
+    // TODO: sometimes `item.data.detail.toHuman()` or `item` is treated as object (why?)
+    //       I have to JSON.stringify it to assign it to a string
     response.map((item: any) => {
-        isModule ? (failReason = item.toHuman().data.reason) : (failReason = item);
-        assert.notEqual(
-            failReason.search(expectedReason),
-            -1,
-            `check fail reason failed, expected reason is ${expectedReason}, but got ${failReason}`
+        isModule ? (detail = JSON.stringify(item.data.detail.toHuman())) : (detail = JSON.stringify(item));
+        assert.isTrue(
+            detail.includes(expectedDetail),
+            `check error detail failed, expected detail is ${expectedDetail}, but got ${detail}`
         );
     });
     return true;

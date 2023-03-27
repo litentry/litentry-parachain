@@ -2,7 +2,7 @@ import {
     describeLitentry,
     encryptWithTeeShieldingKey,
     generateVerificationMessage,
-    checkFailReason,
+    checkErrorDetail,
     checkUserShieldingKeys,
     checkUserChallengeCode,
     checkIDGraph,
@@ -161,10 +161,10 @@ describeLitentry('Test Identity', 0, (context) => {
         );
         await sendTxUntilInBlock(context.api, tx, context.substrateWallet.alice);
 
-        const events = await listenEvent(context.api, 'identityManagement', ['StfError'], 1);
+        const events = await listenEvent(context.api, 'identityManagement', ['CreateIdentityFailed'], 1);
         expect(events.length).to.be.equal(1);
 
-        await checkFailReason(events, 'InvalidUserShieldingKey', true);
+        await checkErrorDetail(events, 'InvalidUserShieldingKey', true);
     });
 
     step('set user shielding key', async function () {
@@ -361,7 +361,7 @@ describeLitentry('Test Identity', 0, (context) => {
             [twitterIdentity, ethereumIdentity, substrateIdentity],
             [twitterValidationData, ethereumValidationData, substrateValidationData]
         )) as string[];
-        await checkFailReason(resp_same_verify, 'ChallengeCode not found', false);
+        await checkErrorDetail(resp_same_verify, 'ChallengeCodeNotFound', false);
 
         //verify an identity to an account but it isn't created before
         const resp_not_exist_verify = (await verifyErrorIdentities(
@@ -371,7 +371,7 @@ describeLitentry('Test Identity', 0, (context) => {
             [twitterIdentity, ethereumIdentity, substrateIdentity],
             [twitterValidationData, ethereumValidationData, substrateValidationData]
         )) as string[];
-        await checkFailReason(resp_not_exist_verify, 'ChallengeCode not found', false);
+        await checkErrorDetail(resp_not_exist_verify, 'ChallengeCodeNotFound', false);
     });
 
     step('remove identities', async function () {
@@ -469,10 +469,10 @@ describeLitentry('Test Identity', 0, (context) => {
         const tx = context.api.tx.identityManagement.removeIdentity(context.mrEnclave, `0x${ciphertext}`);
         await sendTxUntilInBlock(context.api, tx, context.substrateWallet.alice);
 
-        const events = await listenEvent(context.api, 'identityManagement', ['StfError'], 1);
+        const events = await listenEvent(context.api, 'identityManagement', ['RemoveIdentityFailed'], 1);
         expect(events.length).to.be.equal(1);
 
-        await checkFailReason(events, 'RemovePrimeIdentityDisallowed', true);
+        await checkErrorDetail(events, 'RemovePrimeIdentityDisallowed', true);
     });
 
     step('remove error identities', async function () {
@@ -487,7 +487,7 @@ describeLitentry('Test Identity', 0, (context) => {
             identities
         )) as string[];
 
-        await checkFailReason(resp_not_exist_identities, 'IdentityNotExist', false);
+        await checkErrorDetail(resp_not_exist_identities, 'IdentityNotExist', false);
 
         //charile doesn't have a challenge code
         const charlie = await setUserShieldingKey(context, context.substrateWallet.charlie, aesKey, true);
@@ -499,7 +499,7 @@ describeLitentry('Test Identity', 0, (context) => {
             identities
         )) as string[];
 
-        await checkFailReason(resp_not_created_identities, 'IdentityNotExist', false);
+        await checkErrorDetail(resp_not_created_identities, 'IdentityNotExist', false);
     });
 
     step('set error user shielding key', async function () {
@@ -509,7 +509,7 @@ describeLitentry('Test Identity', 0, (context) => {
             errorAseKey,
             true
         );
-        await checkFailReason([resp_error_shielding_key] as string[], 'SetUserShieldingKeyHandlingFailed', false);
+        await checkErrorDetail([resp_error_shielding_key] as string[], 'ImportError', false);
     });
 
     step('create error identities', async function () {
@@ -517,6 +517,6 @@ describeLitentry('Test Identity', 0, (context) => {
         const resp_error_identities = (await createErrorIdentities(context, context.substrateWallet.alice, true, [
             errorCiphertext,
         ])) as string[];
-        await checkFailReason(resp_error_identities, 'CreateIdentityHandlingFailed', false);
+        await checkErrorDetail(resp_error_identities, 'ImportError', false);
     });
 });

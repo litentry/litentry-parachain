@@ -1,4 +1,4 @@
-import { describeLitentry, checkVc, checkFailReason, checkUserShieldingKeys } from './common/utils';
+import { describeLitentry, checkVc, checkErrorDetail, checkUserShieldingKeys } from './common/utils';
 import { step } from 'mocha-steps';
 import { setUserShieldingKey, requestVCs, disableVCs, revokeVCs } from './indirect_calls';
 import { Assertion } from './common/type-definitions';
@@ -95,7 +95,7 @@ describeLitentry('VC test', 0, async (context) => {
             ['A1']
         )) as Event[];
 
-        await checkFailReason(resp_request_error, 'User shielding key is missing', true);
+        await checkErrorDetail(resp_request_error, 'UserShieldingKeyNotFound', true);
     });
     step('Disable VC', async () => {
         const res = (await disableVCs(context, context.substrateWallet.alice, aesKey, true, indexList)) as HexString[];
@@ -114,7 +114,7 @@ describeLitentry('VC test', 0, async (context) => {
 
             [indexList[0]]
         )) as HexString[];
-        await checkFailReason(resp_disable_error, 'vcManagement.VCAlreadyDisabled', false);
+        await checkErrorDetail(resp_disable_error, 'vcManagement.VCAlreadyDisabled', false);
     });
 
     step('Revoke VC', async () => {
@@ -131,6 +131,6 @@ describeLitentry('VC test', 0, async (context) => {
         const resp_revoke_error = (await revokeErrorVCs(context, context.substrateWallet.alice, true, [
             indexList[0],
         ])) as string[];
-        await checkFailReason(resp_revoke_error, 'vcManagement.VCNotExist', false);
+        await checkErrorDetail(resp_revoke_error, 'vcManagement.VCNotExist', false);
     });
 });

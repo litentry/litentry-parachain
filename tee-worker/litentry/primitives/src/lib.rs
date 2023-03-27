@@ -26,7 +26,7 @@ pub use ethereum_signature::*;
 pub use identity::*;
 pub use parentchain_primitives::{
 	AccountId as ParentchainAccountId, AesOutput, Assertion, AssertionNetworks,
-	Balance as ParentchainBalance, BlockNumber as ParentchainBlockNumber, ErrorString,
+	Balance as ParentchainBalance, BlockNumber as ParentchainBlockNumber, ErrorDetail, ErrorString,
 	Hash as ParentchainHash, Header as ParentchainHeader, IMPError, Index as ParentchainIndex,
 	Network, ParameterString, SchemaContentString, SchemaIdString,
 	Signature as ParentchainSignature, UserShieldingKeyType, VCMPError, ASSERTION_FROM_DATE,

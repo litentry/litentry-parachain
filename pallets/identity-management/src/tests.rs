@@ -15,13 +15,11 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{mock::*, Error, ShardIdentifier};
-use core_primitives::IMPError;
+use core_primitives::{ErrorDetail, IMPError};
 use frame_support::{assert_noop, assert_ok};
 use sp_core::H256;
 
 const TEST_MRENCLAVE: [u8; 32] = [2u8; 32];
-// copied from https://github.com/integritee-network/pallets/blob/5b0706e8b9f726d81d8aff74efbae8e023e783b7/test-utils/src/ias.rs#L147
-const URL: &[u8] = &[119, 115, 58, 47, 47, 49, 50, 55, 46, 48, 46, 48, 46, 49, 58, 57, 57, 57, 49];
 
 #[test]
 fn set_user_shielding_key_works() {
@@ -121,7 +119,11 @@ fn verify_identity_works() {
 }
 
 #[test]
+#[cfg(feature = "skip-ias-check")]
 fn tee_callback_with_registered_enclave_works() {
+	// copied from https://github.com/integritee-network/pallets/blob/5b0706e8b9f726d81d8aff74efbae8e023e783b7/test-utils/src/ias.rs#L147
+	const URL: &[u8] =
+		&[119, 115, 58, 47, 47, 49, 50, 55, 46, 48, 46, 48, 46, 49, 58, 57, 57, 57, 49];
 	new_test_ext().execute_with(|| {
 		assert_ok!(Teerex::register_enclave(
 			RuntimeOrigin::signed(1),
@@ -133,9 +135,11 @@ fn tee_callback_with_registered_enclave_works() {
 
 		assert_ok!(IdentityManagement::some_error(
 			RuntimeOrigin::signed(1),
-			IMPError::WrongWeb2Handle
+			IMPError::VerifyIdentityFailed(ErrorDetail::WrongWeb2Handle)
 		));
-		System::assert_last_event(RuntimeEvent::IdentityManagement(crate::Event::WrongWeb2Handle));
+		System::assert_last_event(RuntimeEvent::IdentityManagement(
+			crate::Event::VerifyIdentityFailed { detail: ErrorDetail::WrongWeb2Handle },
+		));
 	});
 }
 
@@ -143,7 +147,10 @@ fn tee_callback_with_registered_enclave_works() {
 fn tee_callback_with_unregistered_enclave_fails() {
 	new_test_ext().execute_with(|| {
 		assert_noop!(
-			IdentityManagement::some_error(RuntimeOrigin::signed(1), IMPError::WrongWeb2Handle),
+			IdentityManagement::some_error(
+				RuntimeOrigin::signed(1),
+				IMPError::VerifyIdentityFailed(ErrorDetail::WrongWeb2Handle)
+			),
 			sp_runtime::DispatchError::BadOrigin,
 		);
 	});

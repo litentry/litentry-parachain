@@ -25,9 +25,9 @@ export async function setErrorUserShieldingKey(
     await sendTxUntilInBlock(context.api, tx, signer);
 
     if (listening) {
-        const events = await listenEvent(context.api, 'identityManagement', ['SetUserShieldingKeyHandlingFailed'], 1);
+        const events = await listenEvent(context.api, 'identityManagement', ['SetUserShieldingKeyFailed'], 1);
         expect(events.length).to.be.equal(1);
-        return events[0].method as string;
+        return (events[0] as any).data.detail.toHuman();
     }
     return undefined;
 }
@@ -60,16 +60,11 @@ export async function createErrorIdentities(
     await sendTxUntilInBlockList(context.api, txs, signer);
 
     if (listening) {
-        const events = (await listenEvent(
-            context.api,
-            'identityManagement',
-            ['CreateIdentityHandlingFailed'],
-            txs.length
-        )) as any;
+        const events = (await listenEvent(context.api, 'identityManagement', ['CreateIdentityFailed'], txs.length)) as any;
         expect(events.length).to.be.equal(errorCiphertexts.length);
         let results: string[] = [];
         for (let i = 0; i < events.length; i++) {
-            results.push(events[i].method as string);
+            results.push(events[i].data.detail.toHuman());
         }
         return [...results];
     }
@@ -114,12 +109,11 @@ export async function verifyErrorIdentities(
     await sendTxUntilInBlockList(context.api, txs, signer);
 
     if (listening) {
-        const events = (await listenEvent(context.api, 'identityManagement', ['StfError'], txs.length)) as any;
+        const events = (await listenEvent(context.api, 'identityManagement', ['VerifyIdentityFailed'], txs.length)) as any;
         expect(events.length).to.be.equal(identities.length);
         let results: string[] = [];
         for (let i = 0; i < events.length; i++) {
-            const data = events[i].data as any;
-            results.push(data.reason.toHuman());
+            results.push(events[i].data.detail.toHuman());
         }
         return [...results];
     }
@@ -131,7 +125,7 @@ export async function removeErrorIdentities(
     signer: KeyringPair,
     listening: boolean,
     identities: any[]
-): Promise<any[] | undefined> {
+): Promise<string[] | undefined> {
     let txs: TransactionSubmit[] = [];
     const nonce = await context.api.rpc.system.accountNextIndex(signer.address);
 
@@ -151,12 +145,11 @@ export async function removeErrorIdentities(
     await sendTxUntilInBlockList(context.api, txs, signer);
 
     if (listening) {
-        const events = (await listenEvent(context.api, 'identityManagement', ['StfError'], txs.length)) as any;
+        const events = (await listenEvent(context.api, 'identityManagement', ['RemoveIdentityFailed'], txs.length)) as any;
         let results: string[] = [];
         expect(events.length).to.be.equal(identities.length);
         for (let i = 0; i < events.length; i++) {
-            const data = events[i].data as any;
-            results.push(data.reason.toHuman());
+            results.push(events[i].data.detail.toHuman());
         }
         return [...results];
     }
@@ -186,7 +179,7 @@ export async function requestErrorVCs(
     await sendTxUntilInBlockList(context.api, txs, signer);
 
     if (listening) {
-        const events = (await listenEvent(context.api, 'vcManagement', ['StfError'], txs.length)) as Event[];
+        const events = (await listenEvent(context.api, 'vcManagement', ['RequestVCFailed'], txs.length)) as Event[];
         expect(events.length).to.be.equal(keys.length);
         return events;
     }

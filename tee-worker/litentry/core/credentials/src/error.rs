@@ -17,6 +17,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
+use litentry_primitives::{ErrorDetail, ErrorString};
 use std::{boxed::Box, string::String};
 use thiserror::Error;
 
@@ -38,7 +39,7 @@ pub enum Error {
 	InvalidProof,
 	#[error("Credential Is Too Long")]
 	CredentialIsTooLong,
-	#[error("Pass Error: {0}")]
+	#[error("Parse Error: {0}")]
 	ParseError(String),
 	#[error("Unsupported Assertion")]
 	UnsupportedAssertion,
@@ -46,4 +47,10 @@ pub enum Error {
 	RuntimeError(String),
 	#[error(transparent)]
 	Other(#[from] Box<dyn std::error::Error + Sync + Send + 'static>),
+}
+
+impl Error {
+	pub fn to_error_detail(&self) -> ErrorDetail {
+		ErrorDetail::StfError(ErrorString::truncate_from(format!("{}", self).into()))
+	}
 }
