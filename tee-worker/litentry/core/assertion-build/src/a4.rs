@@ -85,7 +85,7 @@ use std::{
 const LIT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
 const VC_SUBJECT_DESCRIPTION: &str =
 	"Check whether any of the linked accounts hold a minimum amount of LIT NOW";
-const VC_SUBJECT_TYPE: &str = "LIT Holder";
+const VC_SUBJECT_TYPE: &str = "LIT Hodler";
 
 pub fn build(
 	identities: Vec<Identity>,
@@ -101,57 +101,31 @@ pub fn build(
 		identities
 	);
 
+	let evm_min_balance = (min_balance / (10 ^ 18)) as f64;
+	let substrate_min_balance = (min_balance / (10 ^ 12)) as f64;
+
 	let mut client = GraphQLClient::new();
 	let mut found = false;
 	let mut from_date_index = 0_usize;
 	let mut networks: HashMap<VerifiedCredentialsNetwork, HashSet<String>> = HashMap::new();
 
-	for identity in identities.iter() {
-		let mut verified_network = VerifiedCredentialsNetwork::Polkadot;
-		if identity.is_web3() {
-			match identity {
-				Identity::Substrate { network, .. } => verified_network = (*network).into(),
-				Identity::Evm { network, .. } => verified_network = (*network).into(),
-				_ => {},
-			}
-		}
+	identities.iter().for_each(|identity| {
+		match identity {
+			Identity::Substrate { network, address } => {
+				let mut address = account_id_to_string(address.as_ref());
+				address.insert_str(0, "0x");
 
-		if matches!(
-			verified_network,
-			VerifiedCredentialsNetwork::Litentry
-				| VerifiedCredentialsNetwork::Litmus
-				| VerifiedCredentialsNetwork::LitentryRococo
-				| VerifiedCredentialsNetwork::Ethereum
-		) {
-			let address = match &identity {
-				Identity::Evm { address, .. } => {
-					let mut address = account_id_to_string(address.as_ref());
-					address.insert_str(0, "0x");
-					address
-				},
-				Identity::Substrate { address, .. } => {
-					let mut address = account_id_to_string(address.as_ref());
-					address.insert_str(0, "0x");
-					address
-				},
-				_ => "".into(),
-			};
+				if_match_networks_collect_address(&mut networks, (*network).into(), address);
+			},
+			Identity::Evm { network, address } => {
+				let mut address = account_id_to_string(address.as_ref());
+				address.insert_str(0, "0x");
 
-			if !address.is_empty() {
-				match networks.get_mut(&verified_network) {
-					Some(set) => {
-						set.insert(address);
-					},
-					None => {
-						let mut set = HashSet::new();
-						set.insert(address);
-
-						networks.insert(verified_network, set);
-					},
-				}
-			}
-		}
-	}
+				if_match_networks_collect_address(&mut networks, (*network).into(), address);
+			},
+			_ => {},
+		};
+	});
 
 	for (verified_network, addresses) in networks {
 		if found {
@@ -159,20 +133,20 @@ pub fn build(
 		}
 
 		let addresses: Vec<String> = addresses.into_iter().collect();
+		let token_address = if verified_network == VerifiedCredentialsNetwork::Ethereum {
+			LIT_TOKEN_ADDRESS
+		} else {
+			""
+		};
 		let q_min_balance = if verified_network == VerifiedCredentialsNetwork::Litentry
 			|| verified_network == VerifiedCredentialsNetwork::Litmus
 			|| verified_network == VerifiedCredentialsNetwork::LitentryRococo
 		{
-			(min_balance / (10 ^ 12)) as f64
+			substrate_min_balance
 		} else {
 			// Ethereum network
-			(min_balance / (10 ^ 18)) as f64
+			evm_min_balance
 		};
-
-		let mut lit_token_addr = String::from("");
-		if verified_network == VerifiedCredentialsNetwork::Ethereum {
-			lit_token_addr = LIT_TOKEN_ADDRESS.to_string();
-		}
 
 		for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
 			if found {
@@ -184,7 +158,7 @@ pub fn build(
 				addresses.clone(),
 				from_date.to_string(),
 				verified_network.clone(),
-				lit_token_addr.clone(),
+				token_address.to_string(),
 				q_min_balance,
 			);
 			match client.check_verified_credentials_is_hodler(vch) {
@@ -212,5 +186,31 @@ pub fn build(
 			error!("Generate unsigned credential failed {:?}", e);
 			Err(Error::RequestVCFailed(Assertion::A4(min_balance), e.to_error_detail()))
 		},
+	}
+}
+
+fn if_match_networks_collect_address(
+	networks: &mut HashMap<VerifiedCredentialsNetwork, HashSet<String>>,
+	verified_network: VerifiedCredentialsNetwork,
+	address: String,
+) {
+	if matches!(
+		verified_network,
+		VerifiedCredentialsNetwork::Litentry
+			| VerifiedCredentialsNetwork::Litmus
+			| VerifiedCredentialsNetwork::LitentryRococo
+			| VerifiedCredentialsNetwork::Ethereum
+	) {
+		match networks.get_mut(&verified_network) {
+			Some(set) => {
+				set.insert(address);
+			},
+			None => {
+				let mut set = HashSet::new();
+				set.insert(address);
+
+				networks.insert(verified_network.clone(), set);
+			},
+		}
 	}
 }
