@@ -151,11 +151,7 @@ impl CredentialSubject {
 		self.id.is_empty()
 	}
 
-	// Endpoint Format:
-	// http://localhost:8080/pallets/VCManagement/storage/VCRegistry?keys[]={0xae5940361e60ac780a0f9260bb7dcd938f4599e1626c967bb6cc686f2f9924bd}
-	pub fn set_endpoint(&mut self, sidecar_endpoint: &String) {
-		let endpoint =
-			sidecar_endpoint.to_string() + "/pallets/VCManagement/storage/VCRegistry?keys[]=";
+	pub fn set_endpoint(&mut self, endpoint: String) {
 		self.endpoint = endpoint;
 	}
 }
