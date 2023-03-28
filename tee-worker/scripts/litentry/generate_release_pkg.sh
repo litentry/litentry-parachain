@@ -28,7 +28,7 @@ SGX_PRODUCTION=1 SGX_COMMERCIAL_KEY=${COMMERCIAL_KEY_PATH} make
 for Item in 'enclave.signed.so' 'integritee-service'; do
     cp "${WORKER_DIR}/bin/${Item}" "${RELEASE_DIR}"
 done
-for Item in 'worker-config.json' 'start_worker.py'; do
+for Item in 'worker-config.json.example' 'start_worker.py'; do
     cp "${WORKER_DIR}/scripts/litentry/${Item}" "${RELEASE_DIR}"
 done
 
