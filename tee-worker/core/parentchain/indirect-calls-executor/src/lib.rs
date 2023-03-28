@@ -204,15 +204,17 @@ where
 	pub(crate) fn submit_trusted_call_from_error(
 		&self,
 		shard: ShardIdentifier,
+		account: Option<AccountId>,
 		err: &Error,
+		hash: H256,
 	) -> Result<()> {
 		let enclave_account = self.stf_enclave_signer.get_enclave_account()?;
 		let shielding_key = self.shielding_key_repo.retrieve_key()?;
 		let trusted_call = match err {
 			error::Error::IMPHandlingError(e) =>
-				TrustedCall::handle_imp_error(enclave_account, e.clone()),
+				TrustedCall::handle_imp_error(enclave_account, account, e.clone(), hash),
 			error::Error::VCMPHandlingError(e) =>
-				TrustedCall::handle_vcmp_error(enclave_account, e.clone()),
+				TrustedCall::handle_vcmp_error(enclave_account, account, e.clone(), hash),
 			_ => return Err(Error::Other(("unsupported error").into())),
 		};
 		let signed_trusted_call =

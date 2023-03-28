@@ -15,6 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
+	blake2_256,
 	error::{Error, ErrorDetail, IMPError, Result},
 	executor::Executor,
 	IndirectCallsExecutor,
@@ -83,6 +84,7 @@ impl CreateIdentity {
 				identity,
 				metadata,
 				self.block_number,
+				blake2_256(&extrinsic.encode()),
 			);
 			let signed_trusted_call =
 				context.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
@@ -120,12 +122,19 @@ where
 		context: &IndirectCallsExecutor<R, S, T, N>,
 		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
 	) -> Result<()> {
-		let (_, (shard, _, _, _)) = extrinsic.function;
+		// the account is user that requested to create the identity, not necessarily the extrinsic sender
+		// there's case where a delegatee could send this extrinsic on behalf of the user
+		let (_, (shard, ref account, _, _)) = extrinsic.function;
 		let e = Error::IMPHandlingError(IMPError::CreateIdentityFailed(ErrorDetail::ImportError));
 		if self.execute_internal(context, extrinsic).is_err() {
 			// try to handle the error internally, if we get another error, log it and return the
 			// original error
-			if let Err(internal_e) = context.submit_trusted_call_from_error(shard, &e) {
+			if let Err(internal_e) = context.submit_trusted_call_from_error(
+				shard,
+				Some(account.clone()),
+				&e,
+				blake2_256(&extrinsic.encode()),
+			) {
 				warn!("fail to handle internal errors in create_identity: {:?}", internal_e);
 			}
 			return Err(e)

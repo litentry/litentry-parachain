@@ -15,6 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
+	blake2_256,
 	error::{Error, ErrorDetail, IMPError, Result},
 	executor::Executor,
 	IndirectCallsExecutor,
@@ -66,8 +67,12 @@ impl SetUserShieldingKey {
 			debug!("indirect call SetUserShieldingKey, who:{:?}", account_id_to_string(&account));
 
 			let enclave_account_id = context.stf_enclave_signer.get_enclave_account()?;
-			let trusted_call =
-				TrustedCall::set_user_shielding_key_runtime(enclave_account_id, account, key);
+			let trusted_call = TrustedCall::set_user_shielding_key_runtime(
+				enclave_account_id,
+				account,
+				key,
+				blake2_256(&extrinsic.encode()),
+			);
 			let signed_trusted_call =
 				context.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
 			let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
@@ -110,7 +115,12 @@ where
 		if self.execute_internal(context, extrinsic).is_err() {
 			// try to handle the error internally, if we get another error, log it and return the
 			// original error
-			if let Err(internal_e) = context.submit_trusted_call_from_error(shard, &e) {
+			if let Err(internal_e) = context.submit_trusted_call_from_error(
+				shard,
+				None,
+				&e,
+				blake2_256(&extrinsic.encode()),
+			) {
 				warn!("fail to handle internal errors in set_user_shielding_key: {:?}", internal_e);
 			}
 			return Err(e)

@@ -88,29 +88,68 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		// TODO: do we need account as event parameter? This needs to be decided by F/E
-		VCRequested { shard: ShardIdentifier, assertion: Assertion },
+		VCRequested {
+			shard: ShardIdentifier,
+			assertion: Assertion,
+		},
 		// a VC is disabled on chain
-		VCDisabled { index: VCIndex },
+		VCDisabled {
+			index: VCIndex,
+		},
 		// a VC is revoked on chain
-		VCRevoked { index: VCIndex },
+		VCRevoked {
+			index: VCIndex,
+		},
 		// event that should be triggered by TEECallOrigin
 		// a VC is just issued
-		VCIssued { account: T::AccountId, index: VCIndex, vc: AesOutput },
+		VCIssued {
+			account: T::AccountId,
+			index: VCIndex,
+			vc: AesOutput,
+		},
 		// Admin account was changed
-		SchemaAdminChanged { old_admin: Option<T::AccountId>, new_admin: Option<T::AccountId> },
+		SchemaAdminChanged {
+			old_admin: Option<T::AccountId>,
+			new_admin: Option<T::AccountId>,
+		},
 		// a Schema is issued
-		SchemaIssued { account: T::AccountId, shard: ShardIdentifier, index: SchemaIndex },
+		SchemaIssued {
+			account: T::AccountId,
+			shard: ShardIdentifier,
+			index: SchemaIndex,
+		},
 		// a Schema is disabled
-		SchemaDisabled { account: T::AccountId, shard: ShardIdentifier, index: SchemaIndex },
+		SchemaDisabled {
+			account: T::AccountId,
+			shard: ShardIdentifier,
+			index: SchemaIndex,
+		},
 		// a Schema is activated
-		SchemaActivated { account: T::AccountId, shard: ShardIdentifier, index: SchemaIndex },
+		SchemaActivated {
+			account: T::AccountId,
+			shard: ShardIdentifier,
+			index: SchemaIndex,
+		},
 		// a Schema is revoked
-		SchemaRevoked { account: T::AccountId, shard: ShardIdentifier, index: SchemaIndex },
+		SchemaRevoked {
+			account: T::AccountId,
+			shard: ShardIdentifier,
+			index: SchemaIndex,
+		},
 		// event errors caused by processing in TEE
 		// copied from core_primitives::VCMPError, we use events instead of pallet::errors,
 		// see https://github.com/litentry/litentry-parachain/issues/1275
-		RequestVCFailed { assertion: Assertion, detail: ErrorDetail },
-		UnclassifiedError { detail: ErrorDetail },
+		RequestVCFailed {
+			account: T::AccountId,
+			assertion: Assertion,
+			detail: ErrorDetail,
+			req_ext_hash: H256,
+		},
+		UnclassifiedError {
+			account: T::AccountId,
+			detail: ErrorDetail,
+			req_ext_hash: H256,
+		},
 	}
 
 	#[pallet::error]
@@ -198,13 +237,23 @@ pub mod pallet {
 
 		#[pallet::call_index(4)]
 		#[pallet::weight(195_000_000)]
-		pub fn some_error(origin: OriginFor<T>, error: VCMPError) -> DispatchResultWithPostInfo {
+		pub fn some_error(
+			origin: OriginFor<T>,
+			account: T::AccountId,
+			error: VCMPError,
+			req_ext_hash: H256,
+		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			match error {
 				VCMPError::RequestVCFailed(assertion, detail) =>
-					Self::deposit_event(Event::RequestVCFailed { assertion, detail }),
+					Self::deposit_event(Event::RequestVCFailed {
+						account,
+						assertion,
+						detail,
+						req_ext_hash,
+					}),
 				VCMPError::UnclassifiedError(detail) =>
-					Self::deposit_event(Event::UnclassifiedError { detail }),
+					Self::deposit_event(Event::UnclassifiedError { account, detail, req_ext_hash }),
 			}
 			Ok(Pays::No.into())
 		}
