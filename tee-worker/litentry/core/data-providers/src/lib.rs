@@ -78,6 +78,7 @@ pub struct DataProvidersStatic {
 	pub discord_auth_token: String,
 	pub graphql_url: String,
 	pub graphql_auth_key: String,
+	pub credential_endpoint: String,
 }
 impl Default for DataProvidersStatic {
 	fn default() -> Self {
@@ -95,6 +96,7 @@ impl DataProvidersStatic {
 			discord_auth_token: "".to_string(),
 			graphql_url: "https://graph.tdf-labs.io/".to_string(),
 			graphql_auth_key: "".to_string(),
+			credential_endpoint: "".to_string(),
 		}
 	}
 	pub fn set_twitter_official_url(&mut self, v: String) {
@@ -128,6 +130,10 @@ impl DataProvidersStatic {
 	pub fn set_graphql_auth_key(&mut self, v: String) {
 		debug!("set_graphql_auth_key: {:?}", v);
 		self.graphql_auth_key = v;
+	}
+	pub fn set_credential_endpoint(&mut self, v: String) {
+		debug!("set_credential_endpoint: {:?}", v);
+		self.credential_endpoint = v;
 	}
 }
 
