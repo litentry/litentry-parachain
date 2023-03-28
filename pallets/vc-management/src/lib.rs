@@ -107,6 +107,7 @@ pub mod pallet {
 			assertion: Assertion,
 			index: VCIndex,
 			vc: AesOutput,
+			req_ext_hash: H256,
 		},
 		// Admin account was changed
 		SchemaAdminChanged {
@@ -229,6 +230,7 @@ pub mod pallet {
 			index: H256,
 			hash: H256,
 			vc: AesOutput,
+			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			ensure!(!VCRegistry::<T>::contains_key(index), Error::<T>::VCAlreadyExists);
@@ -236,7 +238,7 @@ pub mod pallet {
 				index,
 				VCContext::<T>::new(account.clone(), assertion.clone(), hash),
 			);
-			Self::deposit_event(Event::VCIssued { account, assertion, index, vc });
+			Self::deposit_event(Event::VCIssued { account, assertion, index, vc, req_ext_hash });
 			Ok(Pays::No.into())
 		}
 
