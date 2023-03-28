@@ -885,5 +885,9 @@ fn data_provider(config: &Config) -> DataProvidersStatic {
 	if let Ok(v) = env::var("GRAPHQL_AUTH_KEY") {
 		data_provider_config.set_graphql_auth_key(v);
 	}
+	if let Ok(v) = env::var("CREDENTIAL_ENDPOINT") {
+		data_provider_config.set_credential_endpoint(v);
+	}
+
 	data_provider_config
 }
