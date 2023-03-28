@@ -201,10 +201,11 @@ export async function requestVCs(
         txs.push({ tx, nonce: newNonce });
     }
 
-    await sendTxUntilInBlockList(context.api, txs, signer);
+    const res = (await sendTxUntilInBlockList(context.api, txs, signer)) as any;
     if (listening) {
         const events = (await listenEvent(context.api, 'vcManagement', ['VCIssued'])) as any;
         expect(events.length).to.be.equal(len);
+        expect(events.length).to.be.equal(res.length);
 
         let results: {
             account: HexString;
@@ -212,6 +213,7 @@ export async function requestVCs(
             vc: HexString;
         }[] = [];
         for (let k = 0; k < events.length; k++) {
+            assert.equal(events[k].data.reqExtHash.toHex(), res[k].txHash);
             results.push({
                 account: events[k].data.account.toHex(),
                 index: events[k].data.index.toHex(),

@@ -142,13 +142,13 @@ pub mod pallet {
 		// copied from core_primitives::VCMPError, we use events instead of pallet::errors,
 		// see https://github.com/litentry/litentry-parachain/issues/1275
 		RequestVCFailed {
-			account: T::AccountId,
+			account: Option<T::AccountId>,
 			assertion: Assertion,
 			detail: ErrorDetail,
 			req_ext_hash: H256,
 		},
 		UnclassifiedError {
-			account: T::AccountId,
+			account: Option<T::AccountId>,
 			detail: ErrorDetail,
 			req_ext_hash: H256,
 		},
@@ -246,7 +246,7 @@ pub mod pallet {
 		#[pallet::weight(195_000_000)]
 		pub fn some_error(
 			origin: OriginFor<T>,
-			account: T::AccountId,
+			account: Option<T::AccountId>,
 			error: VCMPError,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {

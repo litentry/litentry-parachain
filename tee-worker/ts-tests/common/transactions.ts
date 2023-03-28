@@ -46,6 +46,7 @@ export async function sendTxUntilInBlockList(api: ApiPromise, txs: TransactionSu
                             console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
                             resolve({
                                 block: result.status.asInBlock.toString(),
+                                txHash: result.txHash.toHex(),
                             });
                         }
                     } else if (result.status.isInvalid) {
