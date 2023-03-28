@@ -150,6 +150,10 @@ impl CredentialSubject {
 	pub fn is_empty(&self) -> bool {
 		self.id.is_empty()
 	}
+
+	pub fn set_endpoint(&mut self, endpoint: String) {
+		self.endpoint = endpoint;
+	}
 }
 
 /// Verifiable Credentials JSON Schema 2022, W3C, 8 November 2022
