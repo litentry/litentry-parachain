@@ -4,6 +4,7 @@ import { TransactionSubmit } from './type-definitions';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { getListenTimeoutInBlocks } from './utils';
 import { EventRecord, Event } from '@polkadot/types/interfaces';
+import { HexString } from '@polkadot/util/types';
 
 //transactions utils
 export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrinsic<ApiTypes>, signer: KeyringPair) {
@@ -68,7 +69,7 @@ export async function sendTxUntilInBlockList(
 // Subscribe to the chain until we get the first specified event with given `section` and `methods`.
 // We can listen to multiple `methods` as long as they are emitted in the same block.
 // The event consumer should do the decryption optionaly as it's event specific
-export async function listenEvent(api: ApiPromise, section: string, methods: string[], txsLength: number) {
+export async function listenEvent(api: ApiPromise, section: string, methods: string[], txsLength: number, signers: HexString[]) {
     return new Promise<Event[]>(async (resolve, reject) => {
         let startBlock = 0;
         let events: EventRecord[] = [];
@@ -92,15 +93,31 @@ export async function listenEvent(api: ApiPromise, section: string, methods: str
             });
 
             //@TODO should filter the event with signers.address
+
+
+
             const filtered_events = records.filter(({ phase, event }) => {
+
                 return phase.isApplyExtrinsic && section === event.section && methods.includes(event.method);
+            }).filter(event => {
+                const signerData = event.event.data.find(d => {
+                    if (Array.isArray(d)) {
+                        return d.find(v => signers.includes(v.toHex()));
+                    } else {
+                        return signers!.includes(d.toHex());
+                    }
+                });
+
+
+                return signers.length ? !!signerData : event;
             });
             events.push(...filtered_events);
             if (events.length === txsLength) {
-                resolve(events.map((e) => e.event));
+                resolve(events.map(e => e.event));
                 unsubscribe();
                 return;
             }
+
         });
     });
 }

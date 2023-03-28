@@ -74,7 +74,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             }
         });
 
-        const events = await listenEvent(context.api, 'identityManagement', ['IdentityCreated'], txs.length);
+        const events = await listenEvent(context.api, 'identityManagement', ['IdentityCreated'], txs.length, [u8aToHex(context.substrateWallet.alice.addressRaw)]);
         expect(events.length).to.be.equal(2);
         for (let i = 0; i < 2; i++) {
             const data = events[i].data as any;
@@ -102,6 +102,9 @@ describeLitentry('Test Batch Utility', 0, (context) => {
 
     step('batch test: verify identity', async function () {
         // Verify Identity: twitter 1
+        console.log("twitterIdentity", twitterIdentity);
+        console.log("twitterValidationData", twitterValidationData);
+
         const identity_encode = context.api.createType('LitentryIdentity', twitterIdentity).toHex();
         const validation_encode = context.api.createType('LitentryValidationData', twitterValidationData).toHex();
         const identity_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, identity_encode).toString(
@@ -124,7 +127,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             }
         });
 
-        const events = await listenEvent(context.api, 'identityManagement', ['IdentityVerified'], txs.length);
+        const events = await listenEvent(context.api, 'identityManagement', ['IdentityVerified'], txs.length, [u8aToHex(context.substrateWallet.alice.addressRaw)]);
         expect(events.length).to.be.equal(1);
         const data = events[0].data as any;
         const response = createIdentityEvent(
@@ -154,7 +157,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             }
         });
 
-        const events = await listenEvent(context.api, 'identityManagement', ['IdentityRemoved'], txs.length);
+        const events = await listenEvent(context.api, 'identityManagement', ['IdentityRemoved'], txs.length, [u8aToHex(context.substrateWallet.alice.addressRaw)]);
         expect(events.length).to.be.equal(2);
         for (let i = 0; i < 2; i++) {
             const data = events[i].data as any;

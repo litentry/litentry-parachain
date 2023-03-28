@@ -12,7 +12,7 @@ import {
 } from './common/type-definitions';
 import { expect } from 'chai';
 import { listenEvent, sendTxUntilInBlock, sendTxUntilInBlockList } from './common/transactions';
-
+import { u8aToHex } from '@polkadot/util';
 export async function setErrorUserShieldingKey(
     context: IntegrationTestContext,
     signer: KeyringPair,
@@ -25,7 +25,7 @@ export async function setErrorUserShieldingKey(
     await sendTxUntilInBlock(context.api, tx, signer);
 
     if (listening) {
-        const events = await listenEvent(context.api, 'identityManagement', ['SetUserShieldingKeyFailed'], 1);
+        const events = await listenEvent(context.api, 'identityManagement', ['SetUserShieldingKeyFailed'], 1, [u8aToHex(signer.addressRaw)]);
         expect(events.length).to.be.equal(1);
         return (events[0] as any).data.detail.toHuman();
     }
@@ -64,7 +64,7 @@ export async function createErrorIdentities(
             context.api,
             'identityManagement',
             ['CreateIdentityFailed'],
-            txs.length
+            txs.length, [u8aToHex(signer.addressRaw)]
         )) as any;
         expect(events.length).to.be.equal(errorCiphertexts.length);
         let results: string[] = [];
@@ -118,7 +118,7 @@ export async function verifyErrorIdentities(
             context.api,
             'identityManagement',
             ['VerifyIdentityFailed'],
-            txs.length
+            txs.length, [u8aToHex(signer.addressRaw)]
         )) as any;
         expect(events.length).to.be.equal(identities.length);
         let results: string[] = [];
@@ -159,7 +159,7 @@ export async function removeErrorIdentities(
             context.api,
             'identityManagement',
             ['RemoveIdentityFailed'],
-            txs.length
+            txs.length, [u8aToHex(signer.addressRaw)]
         )) as any;
         let results: string[] = [];
         expect(events.length).to.be.equal(identities.length);
@@ -194,7 +194,7 @@ export async function requestErrorVCs(
     await sendTxUntilInBlockList(context.api, txs, signer);
 
     if (listening) {
-        const events = (await listenEvent(context.api, 'vcManagement', ['RequestVCFailed'], txs.length)) as Event[];
+        const events = (await listenEvent(context.api, 'vcManagement', ['RequestVCFailed'], txs.length, [u8aToHex(signer.addressRaw)])) as Event[];
         expect(events.length).to.be.equal(keys.length);
         return events;
     }
