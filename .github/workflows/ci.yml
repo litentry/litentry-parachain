@@ -320,6 +320,7 @@ jobs:
       - run: docker images --all
 
       - name: Pallet unittests
+        if: needs.set-condition.outputs.rebuild_tee == 'true'
         working-directory: ./tee-worker
         run: |
           rustup show

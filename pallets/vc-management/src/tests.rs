@@ -40,6 +40,7 @@ fn vc_issued_works() {
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(1),
 			1,
+			Assertion::A1,
 			VC_INDEX,
 			VC_HASH,
 			AesOutput::default(),
@@ -47,6 +48,7 @@ fn vc_issued_works() {
 		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
 		let context = VCManagement::vc_registry(VC_INDEX).unwrap();
 		assert_eq!(context.subject, 1);
+		assert_eq!(context.assertion, Assertion::A1);
 		assert_eq!(context.status, Status::Active);
 	});
 }
@@ -58,6 +60,7 @@ fn vc_issued_with_unpriviledged_origin_fails() {
 			VCManagement::vc_issued(
 				RuntimeOrigin::signed(2),
 				1,
+				Assertion::A1,
 				H256::default(),
 				H256::default(),
 				AesOutput::default(),
@@ -73,6 +76,7 @@ fn vc_issued_with_duplicated_index_fails() {
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(1),
 			1,
+			Assertion::A1,
 			VC_INDEX,
 			VC_HASH,
 			AesOutput::default(),
@@ -81,6 +85,7 @@ fn vc_issued_with_duplicated_index_fails() {
 			VCManagement::vc_issued(
 				RuntimeOrigin::signed(1),
 				1,
+				Assertion::A1,
 				VC_INDEX,
 				VC_HASH,
 				AesOutput::default(),
@@ -96,6 +101,7 @@ fn disable_vc_works() {
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(1),
 			2,
+			Assertion::A1,
 			VC_INDEX,
 			VC_HASH,
 			AesOutput::default(),
@@ -125,6 +131,7 @@ fn disable_vc_with_other_subject_fails() {
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(1),
 			2,
+			Assertion::A1,
 			VC_INDEX,
 			VC_HASH,
 			AesOutput::default(),
@@ -144,6 +151,7 @@ fn revoke_vc_works() {
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(1),
 			2,
+			Assertion::A1,
 			VC_INDEX,
 			VC_HASH,
 			AesOutput::default(),
@@ -171,6 +179,7 @@ fn revoke_vc_with_other_subject_fails() {
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(1),
 			2,
+			Assertion::A1,
 			VC_INDEX,
 			VC_HASH,
 			AesOutput::default(),
