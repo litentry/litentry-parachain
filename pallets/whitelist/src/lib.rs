@@ -33,6 +33,7 @@ pub mod pallet {
 		pallet_prelude::*,
 		{self as system},
 	};
+	use sp_runtime::traits::BadOrigin;
 	use sp_std::prelude::*;
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
@@ -176,6 +177,18 @@ pub mod pallet {
 					r => Err(T::RuntimeOrigin::from(r)),
 				})
 			}
+		}
+	}
+	pub trait WhitelistEnsureOriginWrapper<OuterOrigin, Success> {
+		/// Perform the origin check.
+		fn ensure_origin(o: OuterOrigin) -> Result<Success, BadOrigin>;
+	}
+	
+	impl<T: Config> WhitelistEnsureOriginWrapper<T::RuntimeOrigin, T::AccountId>
+		for EnsureWhitelist<T>
+	{
+		fn ensure_origin(o: T::RuntimeOrigin) -> Result<T::AccountId, BadOrigin> {
+			<EnsureWhitelist<T> as EnsureOrigin<T::RuntimeOrigin>>::ensure_origin(o)
 		}
 	}
 }

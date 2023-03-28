@@ -17,7 +17,7 @@
 use crate::{mock::*, Error};
 
 use codec::Encode;
-use frame_support::assert_noop;
+use frame_support::{assert_noop, assert_ok};
 use sp_core::{blake2_256, Pair, H256};
 
 #[test]
@@ -189,5 +189,36 @@ fn wrong_polkadot_verification_message_fails() {
 			),
 			Error::<Test>::UnexpectedMessage
 		);
+	});
+}
+
+// This code should be safe to add
+// Temporary test for whitelist function
+#[test]
+fn whitlelist_enabled_extrinsic_fails() {
+	new_test_ext().execute_with(|| {
+		let who = 2;
+		assert_ok!(Whitelist::swtich_whitelist_on(RuntimeOrigin::root()));
+		let identity = create_mock_twitter_identity(b"alice");
+		let encrypted_identity = tee_encrypt(identity.encode().as_slice());
+		assert_noop!(
+			IdentityManagementMock::create_identity(
+				RuntimeOrigin::signed(who),
+				H256::random(),
+				who,
+				encrypted_identity.to_vec(),
+				None
+			),
+			sp_runtime::DispatchError::BadOrigin
+		);
+
+		assert_ok!(Whitelist::add_whitelist(RuntimeOrigin::root(), who));
+		assert_ok!(IdentityManagementMock::create_identity(
+			RuntimeOrigin::signed(who),
+			H256::random(),
+			who,
+			encrypted_identity.to_vec(),
+			None
+		));
 	});
 }

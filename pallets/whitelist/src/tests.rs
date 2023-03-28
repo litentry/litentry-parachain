@@ -24,7 +24,7 @@ use super::{
 	pallet::Event as PalletEvent,
 	*,
 };
-use crate::EnsureWhitelist;
+use crate::{EnsureWhitelist, WhitelistEnsureOriginWrapper};
 use frame_support::{assert_noop, assert_ok};
 use sp_std::vec;
 
@@ -103,13 +103,13 @@ fn whitelist_on_off_function() {
 		// Default whitelist Off
 		assert!(!Whitelist::whitelist_on());
 		// Not on whitelist but passed
-		assert_ok!(EnsureWhitelist::<Test>::ensure_origin(RuntimeOrigin::signed(ACCOUNT_B)));
+		assert_ok!(<EnsureWhitelist<Test> as WhitelistEnsureOriginWrapper<<Test as frame_system::Config>::RuntimeOrigin, <Test as frame_system::Config>::AccountId>>::ensure_origin(RuntimeOrigin::signed(ACCOUNT_B)));
 
 		// Switch whitelist function on
 		assert_ok!(Whitelist::swtich_whitelist_on(RuntimeOrigin::root()));
 		assert!(Whitelist::whitelist_on());
 
 		// Can not pass now
-		assert!(EnsureWhitelist::<Test>::ensure_origin(RuntimeOrigin::signed(ACCOUNT_B)).is_err());
+		assert!(<EnsureWhitelist<Test> as WhitelistEnsureOriginWrapper<<Test as frame_system::Config>::RuntimeOrigin, <Test as frame_system::Config>::AccountId>>::ensure_origin(RuntimeOrigin::signed(ACCOUNT_B)).is_err());
 	})
 }

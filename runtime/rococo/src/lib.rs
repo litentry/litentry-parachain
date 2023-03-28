@@ -903,6 +903,16 @@ impl pallet_identity_management_mock::Config for Runtime {
 	// intentionally use ALICE for the IMP mock
 	type TEECallOrigin = EnsureSignedBy<ALICE, AccountId>;
 	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
+	// This code should be safe to add
+	/// Temporary adjust for whitelist function
+	type WhitelistOrigin = pallet_whitelist::EnsureWhitelist<Self>;
+}
+
+// This code should be safe to add
+/// Temporary adjust for whitelist function
+impl pallet_whitelist::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WhitelistManagerOrigin = EnsureRootOrAllCouncil;
 }
 
 impl pallet_vc_management::Config for Runtime {
@@ -993,6 +1003,7 @@ construct_runtime! {
 
 		// Mock
 		IdentityManagementMock: pallet_identity_management_mock = 100,
+		Whitelist: pallet_whitelist = 101,
 
 		// TMP
 		Sudo: pallet_sudo = 255,
