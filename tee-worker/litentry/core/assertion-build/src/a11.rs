@@ -40,7 +40,7 @@ use std::{
 };
 
 const VC_SUBJECT_DESCRIPTION: &str = "The user held ETH before a specific date/year";
-const VC_SUBJECT_TYPE: &str = "ETH Hodler";
+const VC_SUBJECT_TYPE: &str = "ETH Holder";
 
 pub fn build(
 	identities: Vec<Identity>,

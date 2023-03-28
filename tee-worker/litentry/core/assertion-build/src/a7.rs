@@ -40,7 +40,7 @@ use std::{
 };
 
 const VC_SUBJECT_DESCRIPTION: &str = "The user held DOT every day from a specific date";
-const VC_SUBJECT_TYPE: &str = "DOT Hodler";
+const VC_SUBJECT_TYPE: &str = "DOT Holder";
 
 pub fn build(
 	identities: Vec<Identity>,
