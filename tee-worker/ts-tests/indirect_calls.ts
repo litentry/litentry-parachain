@@ -195,14 +195,13 @@ export async function requestVCs(
     keys: string[]
 ): Promise<
     | {
-          account: HexString;
-          index: HexString;
-          vc: HexString;
-      }[]
+        account: HexString;
+        index: HexString;
+        vc: HexString;
+    }[]
     | undefined
 > {
     let txs: TransactionSubmit[] = [];
-    let len = 0;
     const nonce = await context.api.rpc.system.accountNextIndex(signer.address);
 
     for (let index = 0; index < keys.length; index++) {
@@ -217,7 +216,7 @@ export async function requestVCs(
     await sendTxUntilInBlockList(context.api, txs, signer);
     if (listening) {
         const events = (await listenEvent(context.api, 'vcManagement', ['VCIssued'], txs.length)) as any;
-        expect(events.length).to.be.equal(len);
+        expect(events.length).to.be.equal(keys.length);
 
         let results: {
             account: HexString;
