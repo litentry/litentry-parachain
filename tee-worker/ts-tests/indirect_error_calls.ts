@@ -57,13 +57,15 @@ export async function createErrorIdentities(
         });
     }
 
-    await sendTxUntilInBlockList(context.api, txs, signer);
+    const res = (await sendTxUntilInBlockList(context.api, txs, signer)) as any;
 
     if (listening) {
         const events = (await listenEvent(context.api, 'identityManagement', ['CreateIdentityFailed'])) as any;
         expect(events.length).to.be.equal(errorCiphertexts.length);
+        expect(events.length).to.be.equal(res.length);
         let results: string[] = [];
         for (let i = 0; i < events.length; i++) {
+            assert.equal(events[i].data.reqExtHash.toHex(), res[i].txHash);
             results.push(events[i].data.detail.toHuman());
         }
         return [...results];
@@ -106,13 +108,15 @@ export async function verifyErrorIdentities(
         });
     }
 
-    await sendTxUntilInBlockList(context.api, txs, signer);
+    const res = (await sendTxUntilInBlockList(context.api, txs, signer)) as any;
 
     if (listening) {
         const events = (await listenEvent(context.api, 'identityManagement', ['VerifyIdentityFailed'])) as any;
         expect(events.length).to.be.equal(identities.length);
+        expect(events.length).to.be.equal(res.length);
         let results: string[] = [];
         for (let i = 0; i < events.length; i++) {
+            assert.equal(events[i].data.reqExtHash.toHex(), res[i].txHash);
             results.push(events[i].data.detail.toHuman());
         }
         return [...results];
@@ -142,13 +146,15 @@ export async function removeErrorIdentities(
         });
     }
 
-    await sendTxUntilInBlockList(context.api, txs, signer);
+    const res = (await sendTxUntilInBlockList(context.api, txs, signer)) as any;
 
     if (listening) {
         const events = (await listenEvent(context.api, 'identityManagement', ['RemoveIdentityFailed'])) as any;
         let results: string[] = [];
         expect(events.length).to.be.equal(identities.length);
+        expect(events.length).to.be.equal(res.length);
         for (let i = 0; i < events.length; i++) {
+            assert.equal(events[i].data.reqExtHash.toHex(), res[i].txHash);
             results.push(events[i].data.detail.toHuman());
         }
         return [...results];

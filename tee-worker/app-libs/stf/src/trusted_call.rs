@@ -487,7 +487,7 @@ where
 						calls.push(OpaqueCall::from_tuple(&(
 							node_metadata_repo
 								.get_from_metadata(|m| m.user_shielding_key_set_call_indexes())??,
-							SgxParentchainTypeConverter::convert(who.clone()),
+							SgxParentchainTypeConverter::convert(who),
 							hash,
 						)));
 					},
@@ -534,7 +534,7 @@ where
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.identity_created_call_indexes())??,
-								SgxParentchainTypeConverter::convert(who.clone()),
+								SgxParentchainTypeConverter::convert(who),
 								aes_encrypt_default(&key, &identity.encode()),
 								aes_encrypt_default(&key, &code.encode()),
 								hash,
@@ -574,7 +574,7 @@ where
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.identity_removed_call_indexes())??,
-								SgxParentchainTypeConverter::convert(who.clone()),
+								SgxParentchainTypeConverter::convert(who),
 								aes_encrypt_default(&key, &identity.encode()),
 								hash,
 							)));
@@ -648,7 +648,7 @@ where
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.identity_verified_call_indexes())??,
-								SgxParentchainTypeConverter::convert(who.clone()),
+								SgxParentchainTypeConverter::convert(who),
 								aes_encrypt_default(&key, &identity.encode()),
 								aes_encrypt_default(&key, &id_graph.encode()),
 								hash,
