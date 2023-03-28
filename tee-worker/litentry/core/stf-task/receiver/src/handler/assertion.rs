@@ -215,6 +215,7 @@ where
 				let call = OpaqueCall::from_tuple(&(
 					call_index,
 					self.req.who.clone(),
+					self.req.assertion.clone(),
 					vc_index,
 					vc_hash,
 					output,

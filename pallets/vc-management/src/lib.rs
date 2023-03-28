@@ -104,6 +104,7 @@ pub mod pallet {
 		// a VC is just issued
 		VCIssued {
 			account: T::AccountId,
+			assertion: Assertion,
 			index: VCIndex,
 			vc: AesOutput,
 		},
@@ -224,14 +225,18 @@ pub mod pallet {
 		pub fn vc_issued(
 			origin: OriginFor<T>,
 			account: T::AccountId,
+			assertion: Assertion,
 			index: H256,
 			hash: H256,
 			vc: AesOutput,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			ensure!(!VCRegistry::<T>::contains_key(index), Error::<T>::VCAlreadyExists);
-			VCRegistry::<T>::insert(index, VCContext::<T>::new(account.clone(), hash));
-			Self::deposit_event(Event::VCIssued { account, index, vc });
+			VCRegistry::<T>::insert(
+				index,
+				VCContext::<T>::new(account.clone(), assertion.clone(), hash),
+			);
+			Self::deposit_event(Event::VCIssued { account, assertion, index, vc });
 			Ok(Pays::No.into())
 		}
 
