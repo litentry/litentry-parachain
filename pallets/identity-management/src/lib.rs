@@ -44,11 +44,12 @@ pub use crate::weights::WeightInfo;
 pub use pallet::*;
 
 pub use core_primitives::{AesOutput, ShardIdentifier};
+use sp_core::H256;
 use sp_std::vec::Vec;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::{AesOutput, ShardIdentifier, Vec, WeightInfo};
+	use super::{AesOutput, ShardIdentifier, Vec, WeightInfo, H256};
 	use core_primitives::{ErrorDetail, IMPError};
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;

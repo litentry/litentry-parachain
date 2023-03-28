@@ -149,7 +149,9 @@ fn tee_callback_with_unregistered_enclave_fails() {
 		assert_noop!(
 			IdentityManagement::some_error(
 				RuntimeOrigin::signed(1),
-				IMPError::VerifyIdentityFailed(ErrorDetail::WrongWeb2Handle)
+				None,
+				IMPError::VerifyIdentityFailed(ErrorDetail::WrongWeb2Handle),
+				H256::default(),
 			),
 			sp_runtime::DispatchError::BadOrigin,
 		);

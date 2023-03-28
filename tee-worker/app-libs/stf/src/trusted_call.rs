@@ -130,8 +130,8 @@ pub enum TrustedCall {
 	handle_imp_error(AccountId, Option<AccountId>, IMPError, H256),
 	handle_vcmp_error(AccountId, Option<AccountId>, VCMPError, H256),
 	// the following TrustedCalls should only be used in testing
-	set_user_shielding_key_preflight(AccountId, AccountId, UserShieldingKeyType), // root as signer
-	set_challenge_code_runtime(AccountId, AccountId, Identity, ChallengeCode),
+	set_user_shielding_key_preflight(AccountId, AccountId, UserShieldingKeyType, H256), // root as signer
+	set_challenge_code_runtime(AccountId, AccountId, Identity, ChallengeCode, H256),
 	send_erroneous_parentchain_call(AccountId),
 }
 
@@ -151,14 +151,14 @@ impl TrustedCall {
 			#[cfg(feature = "evm")]
 			TrustedCall::evm_create2(sender_account, ..) => sender_account,
 			// litentry
-			TrustedCall::set_user_shielding_key_preflight(account, _, _) => account,
+			TrustedCall::set_user_shielding_key_preflight(account, _, _, _) => account,
 			TrustedCall::set_user_shielding_key_runtime(account, _, _, _) => account,
 			TrustedCall::create_identity_runtime(account, _, _, _, _, _) => account,
 			TrustedCall::remove_identity_runtime(account, _, _, _) => account,
 			TrustedCall::verify_identity_preflight(account, _, _, _, _, _) => account,
 			TrustedCall::verify_identity_runtime(account, _, _, _, _) => account,
 			TrustedCall::request_vc(account, _, _, _, _, _) => account,
-			TrustedCall::set_challenge_code_runtime(account, _, _, _) => account,
+			TrustedCall::set_challenge_code_runtime(account, _, _, _, _) => account,
 			TrustedCall::handle_imp_error(account, _, _, _) => account,
 			TrustedCall::handle_vcmp_error(account, _, _, _) => account,
 			TrustedCall::send_erroneous_parentchain_call(account) => account,
@@ -457,7 +457,8 @@ where
 			},
 			// litentry
 			TrustedCall::set_user_shielding_key_preflight(root, who, key, hash) => {
-				if let Err(e) = Self::set_user_shielding_key_preflight(root, shard, who, key, hash)
+				if let Err(e) =
+					Self::set_user_shielding_key_preflight(root, shard, who.clone(), key, hash)
 				{
 					debug!("set_user_shielding_key_preflight error: {}", e);
 					add_call_from_imp_error(
@@ -609,7 +610,7 @@ where
 				if let Err(e) = Self::verify_identity_preflight(
 					enclave_account,
 					shard,
-					who,
+					who.clone(),
 					identity,
 					validation_data,
 					bn,
@@ -674,7 +675,8 @@ where
 				Ok(())
 			},
 			TrustedCall::request_vc(enclave_account, who, assertion, shard, bn, hash) => {
-				if let Err(e) = Self::request_vc(enclave_account, &shard, who, assertion, bn, hash)
+				if let Err(e) =
+					Self::request_vc(enclave_account, &shard, who.clone(), assertion, bn, hash)
 				{
 					add_call_from_vcmp_error(
 						calls,
@@ -687,7 +689,9 @@ where
 				Ok(())
 			},
 			TrustedCall::set_challenge_code_runtime(enclave_account, who, did, code, hash) => {
-				if let Err(e) = Self::set_challenge_code_runtime(enclave_account, who, did, code) {
+				if let Err(e) =
+					Self::set_challenge_code_runtime(enclave_account, who.clone(), did, code)
+				{
 					add_call_from_imp_error(
 						calls,
 						node_metadata_repo,
@@ -701,13 +705,13 @@ where
 			TrustedCall::handle_imp_error(_enclave_account, account, e, hash) => {
 				// checking of `_enclave_account` is not strictly needed, as this trusted call can
 				// only be constructed internally
-				add_call_from_imp_error(calls, node_metadata_repo, acccount, e, hash);
+				add_call_from_imp_error(calls, node_metadata_repo, account, e, hash);
 				Ok(())
 			},
 			TrustedCall::handle_vcmp_error(_enclave_account, account, e, hash) => {
 				// checking of `_enclave_account` is not strictly needed, as this trusted call can
 				// only be constructed internally
-				add_call_from_vcmp_error(calls, node_metadata_repo, acccount, e, hash);
+				add_call_from_vcmp_error(calls, node_metadata_repo, account, e, hash);
 				Ok(())
 			},
 			TrustedCall::send_erroneous_parentchain_call(account) => {
@@ -813,7 +817,7 @@ fn add_call_from_imp_error<NodeMetadataRepository>(
 fn add_call_from_vcmp_error<NodeMetadataRepository>(
 	calls: &mut Vec<OpaqueCall>,
 	node_metadata_repo: Arc<NodeMetadataRepository>,
-	account: ParentchainAccountId,
+	account: Option<ParentchainAccountId>,
 	e: VCMPError,
 	hash: H256,
 ) where
