@@ -24,8 +24,18 @@ use sp_runtime::{traits::ConstU32, BoundedVec};
 
 type MaxStringLength = ConstU32<64>;
 pub type ParameterString = BoundedVec<u8, MaxStringLength>;
-pub type Network = BoundedVec<u8, MaxStringLength>;
-pub type AssertionNetworks = BoundedVec<Network, MaxStringLength>;
+pub type AssertionNetworks = BoundedVec<AssertionNetwork, MaxStringLength>;
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+pub enum AssertionNetwork {
+	Litentry,
+	Litmus,
+	Polkadot,
+	Kusama,
+	Khala,
+	Ethereum,
+	LitentryRococo,
+}
 
 #[rustfmt::skip]
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
@@ -43,9 +53,6 @@ pub enum Assertion {
 	A11(Balance),                                           // (minimum_amount)
 	A13(u32),                                               // (Karma_amount) - TODO: unsupported
 }
-
-pub const ASSERTION_NETWORKS: [&str; 6] =
-	["litentry", "litmus", "polkadot", "kusama", "khala", "ethereum"];
 
 pub const ASSERTION_FROM_DATE: [&str; 7] = [
 	"2017-01-01",

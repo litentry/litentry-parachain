@@ -25,7 +25,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
-use litentry_primitives::{EvmNetwork, SubstrateNetwork};
+use litentry_primitives::{AssertionNetwork, EvmNetwork, SubstrateNetwork};
 use log::*;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -79,6 +79,35 @@ impl From<EvmNetwork> for VerifiedCredentialsNetwork {
 			EvmNetwork::Ethereum => Self::Ethereum,
 			// TODO: how about BSC?
 			EvmNetwork::BSC => unreachable!("support BSC?"),
+		}
+	}
+}
+
+impl From<AssertionNetwork> for VerifiedCredentialsNetwork {
+	fn from(network: AssertionNetwork) -> Self {
+		match network {
+			AssertionNetwork::Litmus => Self::Litmus,
+			AssertionNetwork::Litentry => Self::Litentry,
+			AssertionNetwork::Polkadot => Self::Polkadot,
+			AssertionNetwork::Kusama => Self::Kusama,
+			AssertionNetwork::Khala => Self::Khala,
+			AssertionNetwork::Ethereum => Self::Ethereum,
+			AssertionNetwork::LitentryRococo => Self::LitentryRococo,
+		}
+	}
+}
+
+impl std::fmt::Display for VerifiedCredentialsNetwork {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		match *self {
+			VerifiedCredentialsNetwork::Litentry => write!(f, "Litentry"),
+			VerifiedCredentialsNetwork::Litmus => write!(f, "Litmus"),
+			VerifiedCredentialsNetwork::LitentryRococo => write!(f, "LitentryRococo"),
+			VerifiedCredentialsNetwork::Polkadot => write!(f, "Polkadot"),
+			VerifiedCredentialsNetwork::Kusama => write!(f, "Kusama"),
+			VerifiedCredentialsNetwork::Khala => write!(f, "Khala"),
+			VerifiedCredentialsNetwork::Ethereum => write!(f, "Ethereum"),
+			VerifiedCredentialsNetwork::TestNet => write!(f, "TestNet"),
 		}
 	}
 }

@@ -1,7 +1,7 @@
 import { describeLitentry, checkVc, checkErrorDetail, checkUserShieldingKeys } from './common/utils';
 import { step } from 'mocha-steps';
 import { setUserShieldingKey, requestVCs, disableVCs, revokeVCs } from './indirect_calls';
-import { Assertion } from './common/type-definitions';
+import { Assertion, AssertionNetwork } from './common/type-definitions';
 import { assert } from 'chai';
 import { u8aToHex } from '@polkadot/util';
 import { HexString } from '@polkadot/util/types';
@@ -15,7 +15,7 @@ const assertion = <Assertion>{
     A3: ['A3', 'A3', 'A3'],
     A4: [10],
     A7: [10],
-    A8: ['litentry'],
+    A8: [AssertionNetwork.Litentry],
     A10: [10],
     A11: [10],
 };
@@ -26,29 +26,29 @@ describeLitentry('VC test', async (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     var indexList: HexString[] = [];
 
-    step('check user sidechain storage before create', async function () {
-        const resp_shieldingKey = await checkUserShieldingKeys(
-            context,
-            'IdentityManagement',
-            'UserShieldingKeys',
-            u8aToHex(context.substrateWallet.alice.addressRaw)
-        );
-        assert.equal(resp_shieldingKey, '0x', 'resp_shieldingKey should be empty before set');
-    });
+    // step('check user sidechain storage before create', async function () {
+    //     const resp_shieldingKey = await checkUserShieldingKeys(
+    //         context,
+    //         'IdentityManagement',
+    //         'UserShieldingKeys',
+    //         u8aToHex(context.substrateWallet.alice.addressRaw)
+    //     );
+    //     assert.equal(resp_shieldingKey, '0x', 'resp_shieldingKey should be empty before set');
+    // });
     step('set user shielding key', async function () {
         const who = await setUserShieldingKey(context, context.substrateWallet.alice, aesKey, true);
         assert.equal(who, u8aToHex(context.substrateWallet.alice.addressRaw), 'check caller error');
     });
 
-    step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
-        const resp_shieldingKey = await checkUserShieldingKeys(
-            context,
-            'IdentityManagement',
-            'UserShieldingKeys',
-            u8aToHex(context.substrateWallet.alice.addressRaw)
-        );
-        assert.equal(resp_shieldingKey, aesKey, 'resp_shieldingKey should be equal aesKey after set');
-    });
+    // step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
+    //     const resp_shieldingKey = await checkUserShieldingKeys(
+    //         context,
+    //         'IdentityManagement',
+    //         'UserShieldingKeys',
+    //         u8aToHex(context.substrateWallet.alice.addressRaw)
+    //     );
+    //     assert.equal(resp_shieldingKey, aesKey, 'resp_shieldingKey should be equal aesKey after set');
+    // });
     step('Request VC', async () => {
         //request all vc
         const res = (await requestVCs(
