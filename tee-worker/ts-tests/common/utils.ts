@@ -591,7 +591,7 @@ export async function handleIdentityEvents(
         }
 
     }
-    console.log("event data:", results);
+    console.log(`${type} event data:`, results);
 
     return [...results];
 }

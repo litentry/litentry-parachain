@@ -51,6 +51,7 @@ export async function multiAccountTxSender(
     } else {
         signers_hex.push(u8aToHex(signers.addressRaw));
     }
+    console.log(888, txs);
 
     await sendTxUntilInBlockList(context.api, txs, signers);
     const resp_events = await listenEvent(context.api, pallet, events, txs.length, signers_hex);
