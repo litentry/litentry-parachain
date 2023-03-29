@@ -111,7 +111,6 @@ describeLitentry('VC test', 0, async (context) => {
             context,
             context.substrateWallet.alice,
             true,
-
             [indexList[0]]
         )) as HexString[];
         await checkErrorDetail(resp_disable_error, 'vcManagement.VCAlreadyDisabled', false);

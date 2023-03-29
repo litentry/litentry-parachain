@@ -98,6 +98,8 @@ export async function listenEvent(api: ApiPromise, section: string, methods: str
                 return phase.isApplyExtrinsic && section === event.section && methods.includes(event.method);
             });
 
+
+            //We're going to have to filter by signer, because multiple txs is going to mix
             const filtered_events_with_signer = filtered_events.filter(event => {
                 const signerDatas = event.event.data.find(d => {
                     if (Array.isArray(d)) {
@@ -111,6 +113,8 @@ export async function listenEvent(api: ApiPromise, section: string, methods: str
                 });
                 return !!signerDatas
             });
+
+            // There is no good compatibility method here.Only successful and failed events can be filtered normally, but it cannot filter error + successful events, which may need further optimization
             const eventsToUse = filtered_events_with_signer.length > 0 ? filtered_events_with_signer : filtered_events;
 
             events = [...eventsToUse]
