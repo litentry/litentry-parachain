@@ -13,7 +13,7 @@ import { assert } from 'chai';
 import { u8aToHex } from '@polkadot/util';
 import { HexString } from '@polkadot/util/types';
 import { blake2AsHex } from '@polkadot/util-crypto';
-import { multiAccountTxSender, sendTxsWidthUtility, sendTxUntilInBlockList } from './common/transactions';
+import { multiAccountTxSender, sendTxsWithUtility, sendTxUntilInBlockList } from './common/transactions';
 
 const assertion = <Assertion>{
     A1: 'A1',
@@ -80,7 +80,7 @@ describeLitentry('VC test', 0, async (context) => {
             txs.push(tx);
         }
 
-        const resp_events = await sendTxsWidthUtility(context, context.substrateWallet.alice, txs, 'vcManagement', [
+        const resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'vcManagement', [
             'VCIssued',
         ]);
         const res = await handleVcEvents(aesKey, resp_events, 'VCIssued');
@@ -106,13 +106,9 @@ describeLitentry('VC test', 0, async (context) => {
     });
     step('Request Error VC(A1)', async () => {
         const tx = context.api.tx.vcManagement.requestVc(context.mrEnclave, assertion.A1);
-        const resp_error_events = await sendTxsWidthUtility(
-            context,
-            context.substrateWallet.bob,
-            [tx],
-            'vcManagement',
-            ['RequestVCFailed']
-        );
+        const resp_error_events = await sendTxsWithUtility(context, context.substrateWallet.bob, [tx], 'vcManagement', [
+            'RequestVCFailed',
+        ]);
         const error_event_datas = await handleVcEvents(aesKey, resp_error_events, 'Failed');
 
         await checkErrorDetail(error_event_datas, 'UserShieldingKeyNotFound', false);
@@ -123,7 +119,7 @@ describeLitentry('VC test', 0, async (context) => {
             const tx = context.api.tx.vcManagement.disableVc(indexList[i]);
             txs.push(tx);
         }
-        const resp_events = await sendTxsWidthUtility(context, context.substrateWallet.alice, txs, 'vcManagement', [
+        const resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'vcManagement', [
             'VCDisabled',
         ]);
         const res = await handleVcEvents(aesKey, resp_events, 'VCDisabled');
@@ -154,7 +150,7 @@ describeLitentry('VC test', 0, async (context) => {
             const tx = context.api.tx.vcManagement.revokeVc(indexList[i]);
             txs.push(tx);
         }
-        const resp_events = await sendTxsWidthUtility(context, context.substrateWallet.alice, txs, 'vcManagement', [
+        const resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'vcManagement', [
             'VCRevoked',
         ]);
 

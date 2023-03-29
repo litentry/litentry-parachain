@@ -131,7 +131,7 @@ export async function listenEvent(
     });
 }
 
-export async function sendTxsWidthUtility(
+export async function sendTxsWithUtility(
     context: IntegrationTestContext,
     signer: KeyringPair,
     txs: any[],

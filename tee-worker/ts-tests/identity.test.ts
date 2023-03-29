@@ -22,7 +22,7 @@ import {
     TransactionSubmit,
 } from './common/type-definitions';
 import { HexString } from '@polkadot/util/types';
-import { multiAccountTxSender, sendTxsWidthUtility } from './common/transactions';
+import { multiAccountTxSender, sendTxsWithUtility } from './common/transactions';
 
 const substrateExtensionIdentity = <LitentryIdentity>{
     Substrate: <SubstrateIdentity>{
@@ -70,7 +70,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'createIdentity',
             'utility'
         );
-        let resp_events = await sendTxsWidthUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
+        let resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
             'CreateIdentityFailed',
         ]);
         await checkErrorDetail(resp_events, 'InvalidUserShieldingKey', true);
@@ -160,7 +160,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'utility'
         );
 
-        let alice_resp_events = await sendTxsWidthUtility(
+        let alice_resp_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
             alice_txs,
@@ -226,7 +226,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'utility'
         );
 
-        let bob_resp_events = await sendTxsWidthUtility(
+        let bob_resp_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.bob,
             bob_txs,
@@ -297,7 +297,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'utility',
             alice_validations
         );
-        let alice_resp_events = await sendTxsWidthUtility(
+        let alice_resp_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
             alice_txs,
@@ -313,7 +313,7 @@ describeLitentry('Test Identity', 0, (context) => {
             bob_validations
         );
 
-        let bob_resp_events = await sendTxsWidthUtility(
+        let bob_resp_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.bob,
             bob_txs,
@@ -363,7 +363,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'utility',
             alice_validations
         );
-        let alice_resp_same_verify_events = await sendTxsWidthUtility(
+        let alice_resp_same_verify_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
             alice_txs,
@@ -387,7 +387,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'utility',
             alice_validations
         );
-        let charlie_resp_same_verify_events = await sendTxsWidthUtility(
+        let charlie_resp_same_verify_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.charlie,
             charlie_txs,
@@ -412,7 +412,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'removeIdentity',
             'utility'
         );
-        let alice_resp_remove_events = await sendTxsWidthUtility(
+        let alice_resp_remove_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
             alice_txs,
@@ -430,7 +430,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'removeIdentity',
             'utility'
         );
-        let bob_resp_remove_events = await sendTxsWidthUtility(
+        let bob_resp_remove_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.bob,
             bob_txs,
@@ -488,7 +488,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'createIdentity',
             'utility'
         );
-        let alice_resp_create__events = await sendTxsWidthUtility(
+        let alice_resp_create__events = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
             alice_create_txs,
@@ -511,7 +511,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'removeIdentity',
             'utility'
         );
-        await sendTxsWidthUtility(context, context.substrateWallet.alice, alice_remove_txs, 'identityManagement', [
+        await sendTxsWithUtility(context, context.substrateWallet.alice, alice_remove_txs, 'identityManagement', [
             'IdentityRemoved',
         ]);
 
@@ -529,7 +529,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'removeIdentity',
             'utility'
         );
-        let prime_resp_events = await sendTxsWidthUtility(
+        let prime_resp_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
             prime_txs,
@@ -551,7 +551,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'removeIdentity',
             'utility'
         );
-        let alice_resp_remove_events = await sendTxsWidthUtility(
+        let alice_resp_remove_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
             alice_remove_txs,
@@ -575,7 +575,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'removeIdentity',
             'utility'
         );
-        let charile_resp_remove_events = await sendTxsWidthUtility(
+        let charile_resp_remove_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.charlie,
             charlie_remove_txs,
@@ -600,7 +600,7 @@ describeLitentry('Test Identity', 0, (context) => {
             `0x${error_ciphertext}`
         );
 
-        let resp_error_events = await sendTxsWidthUtility(
+        let resp_error_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
             [error_tx],
@@ -620,7 +620,7 @@ describeLitentry('Test Identity', 0, (context) => {
             errorCiphertext,
             null
         );
-        let resp_error_events = await sendTxsWidthUtility(
+        let resp_error_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
             [error_tx],

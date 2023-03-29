@@ -10,7 +10,7 @@ import { assertIdentityCreated, assertIdentityVerified, assertIdentityRemoved } 
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import { LitentryIdentity, LitentryValidationData, TransactionSubmit } from './common/type-definitions';
-import { multiAccountTxSender, sendTxsWidthUtility } from './common/transactions';
+import { multiAccountTxSender, sendTxsWithUtility } from './common/transactions';
 
 describeLitentry('Test Batch Utility', 0, (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
@@ -55,7 +55,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             'utility'
         );
 
-        let resp_events = await sendTxsWidthUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
+        let resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
             'IdentityCreated',
         ]);
         const [twitter_event_data, ethereum1_event_data, ethereum2_event_data, substrate_event_data] =
@@ -121,7 +121,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             validations
         );
 
-        let resp_events = await sendTxsWidthUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
+        let resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
             'IdentityVerified',
         ]);
 
@@ -148,7 +148,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             'removeIdentity',
             'utility'
         );
-        let resp_remove_events = await sendTxsWidthUtility(
+        let resp_remove_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
             txs,
