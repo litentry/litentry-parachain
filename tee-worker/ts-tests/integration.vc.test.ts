@@ -2,14 +2,13 @@ import { step } from 'mocha-steps';
 import { checkVc, describeLitentry, encryptWithTeeShieldingKey } from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
-import { u8aToHex } from '@polkadot/util'
+import { u8aToHex } from '@polkadot/util';
 import { Assertion, TransactionSubmit } from './common/type-definitions';
 import { handleVcEvents } from './common/utils';
-import { multiAccountTxSender } from './indirect_calls';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import { assert } from 'chai';
 import { HexString } from '@polkadot/util/types';
-import { listenEvent } from './common/transactions';
+import { listenEvent, multiAccountTxSender } from './common/transactions';
 const assertion = <Assertion>{
     A1: 'A1',
     A2: ['A2'],
@@ -51,8 +50,9 @@ describeLitentry('multiple accounts test', 10, async (context) => {
             txs.push(tx);
         }
         await context.api.tx.utility.batch(txs).signAndSend(context.substrateWallet.alice);
-        await listenEvent(context.api, 'balances', ['Transfer'], txs.length, [u8aToHex(context.substrateWallet.alice.addressRaw)]);
-
+        await listenEvent(context.api, 'balances', ['Transfer'], txs.length, [
+            u8aToHex(context.substrateWallet.alice.addressRaw),
+        ]);
     });
     //test with multiple accounts
     step('test set usershieldingkey with multiple accounts', async () => {
@@ -127,17 +127,13 @@ describeLitentry('multiple accounts test', 10, async (context) => {
         const resp_events = await multiAccountTxSender(context, txs, substraetSigners, 'vcManagement', ['VCRevoked']);
         assert.equal(resp_events.length, vcIndexList.length, 'revoke vc check fail');
         const event_datas = await handleVcEvents(aesKey, resp_events, 'VCRevoked');
-        console.log("event_datas", event_datas);
+        console.log('event_datas', event_datas);
 
         for (let k = 0; k < vcIndexList.length; k++) {
             console.log('revokeVc index:', k);
             assert.equal(event_datas[k], vcIndexList[k], 'check index error');
             const registry = (await context.api.query.vcManagement.vcRegistry(vcIndexList[k])) as any;
             assert.equal(registry.toHuman(), null);
-
         }
     });
-
 });
-
-

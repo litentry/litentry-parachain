@@ -14,7 +14,6 @@ import {
     IdentityContext,
     Web3Wallets,
     IdentityGenericEvent,
-    TransactionSubmit,
     LitentryValidationData,
     SubstrateNetwork,
     EvmNetwork,
@@ -22,7 +21,7 @@ import {
 } from './type-definitions';
 import { blake2AsHex, cryptoWaitReady, xxhashAsU8a } from '@polkadot/util-crypto';
 import { Metadata } from '@polkadot/types';
-import { SiLookupTypeId, EventRecord } from '@polkadot/types/interfaces';
+import { SiLookupTypeId } from '@polkadot/types/interfaces';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { Codec } from '@polkadot/types/types';
 import { HexString } from '@polkadot/util/types';
@@ -39,8 +38,6 @@ import { getMetadata, sendRequest } from './call';
 const base58 = require('micro-base58');
 const crypto = require('crypto');
 import { getEthereumSigner } from '../common/helpers';
-import { listenEvent } from './transactions';
-import { Assertion } from './type-definitions';
 
 // in order to handle self-signed certificates we need to turn off the validation
 // TODO add self signed certificate ??
@@ -231,7 +228,7 @@ export function describeLitentry(title: string, walletsNumber: number, cb: (cont
             context.web3Signers = tmp.web3Signers;
         });
 
-        after(async function () { });
+        after(async function () {});
 
         cb(context);
     });
@@ -299,8 +296,8 @@ export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
     expect(isValid).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-        vc.issuer.id === proofJson.verificationMethod &&
-        proofJson.type === 'Ed25519Signature2020'
+            vc.issuer.id === proofJson.verificationMethod &&
+            proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
 }
@@ -499,46 +496,20 @@ export function createIdentityEvent(
     };
 }
 
-export async function sendTxsWidthUtility(
-    context: IntegrationTestContext,
-    signer: KeyringPair,
-    txs: any[],
-    pallet: string,
-    events: string[],
-): Promise<any> {
-    await context.api.tx.utility.batchAll(txs).signAndSend(signer, async (result) => {
-        if (result.status.isInBlock) {
-            console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
-        } else if (result.status.isInvalid) {
-            console.log(`Transaction is ${result.status}`);
-        }
-    })
-
-    const resp_events = (await listenEvent(context.api, pallet, events, txs.length, ([u8aToHex(signer.addressRaw)]))) as any;
-
-    expect(resp_events.length).to.be.equal(txs.length);
-    return resp_events;
-}
-
 export async function handleIdentityEvents(
     context: IntegrationTestContext,
     aesKey: HexString,
     events: any[],
-    type: "UserShieldingKeySet" | "IdentityCreated" | "IdentityVerified" | 'IdentityRemoved' | 'Failed'
+    type: 'UserShieldingKeySet' | 'IdentityCreated' | 'IdentityVerified' | 'IdentityRemoved' | 'Failed'
 ): Promise<any> {
     let results: IdentityGenericEvent[] = [];
 
     for (let index = 0; index < events.length; index++) {
-
         switch (type) {
             case 'UserShieldingKeySet':
-
-
-                results.push(
-                    (events[index].data as any).account.toHex()
-                )
+                results.push((events[index].data as any).account.toHex());
                 break;
-            case "IdentityCreated":
+            case 'IdentityCreated':
                 results.push(
                     createIdentityEvent(
                         context.api,
@@ -548,8 +519,8 @@ export async function handleIdentityEvents(
                         decryptWithAES(aesKey, events[index].data.code, 'hex')
                     )
                 );
-                break
-            case "IdentityVerified":
+                break;
+            case 'IdentityVerified':
                 results.push(
                     createIdentityEvent(
                         context.api,
@@ -558,7 +529,7 @@ export async function handleIdentityEvents(
                         decryptWithAES(aesKey, events[index].data.idGraph, 'hex')
                     )
                 );
-                break
+                break;
 
             case 'IdentityRemoved':
                 results.push(
@@ -568,22 +539,23 @@ export async function handleIdentityEvents(
                         decryptWithAES(aesKey, events[index].data.identity, 'hex')
                     )
                 );
-                break
+                break;
             case 'Failed':
                 results.push(events[index].data.detail.toHuman());
-                break
-
-
+                break;
         }
-
     }
     console.log(`${type} event data:`, results);
 
     return [...results];
 }
 
-export async function handleVcEvents(aesKey: HexString, events: any[], method: 'VCIssued' | 'VCDisabled' | 'VCRevoked' | 'Failed'): Promise<any> {
-    let results: any = []
+export async function handleVcEvents(
+    aesKey: HexString,
+    events: any[],
+    method: 'VCIssued' | 'VCDisabled' | 'VCRevoked' | 'Failed'
+): Promise<any> {
+    let results: any = [];
     for (let k = 0; k < events.length; k++) {
         switch (method) {
             case 'VCIssued':
@@ -593,41 +565,38 @@ export async function handleVcEvents(aesKey: HexString, events: any[], method: '
                     vc: decryptWithAES(aesKey, events[k].data.vc, 'utf-8'),
                 });
                 break;
-            case "VCDisabled":
+            case 'VCDisabled':
                 results.push(events[k].data.index.toHex());
                 break;
-            case "VCRevoked":
+            case 'VCRevoked':
                 results.push(events[k].data.index.toHex());
                 break;
             case 'Failed':
                 results.push(events[k].data.detail.toHuman());
-                break
+                break;
             default:
                 break;
         }
-
     }
-    return [...results]
+    return [...results];
 }
 
 export async function buildValidations(
     context: IntegrationTestContext,
     eventDatas: any[],
     identities: any[],
-    network: "ethereum" | 'substrate' | 'twitter',
-    type: "multiple" | 'single',
+    network: 'ethereum' | 'substrate' | 'twitter',
+    type: 'multiple' | 'single',
     substrateSigners: KeyringPair[],
-    ethereumSigners?: ethers.Wallet[],
+    ethereumSigners?: ethers.Wallet[]
 ): Promise<LitentryValidationData[]> {
     let signature_ethereum: HexString;
     let signature_substrate: Uint8Array;
     let verifyDatas: LitentryValidationData[] = [];
     for (let index = 0; index < eventDatas.length; index++) {
-        const substrateSigner =
-            type === 'multiple' ? substrateSigners[index] : substrateSigners[0]
+        const substrateSigner = type === 'multiple' ? substrateSigners[index] : substrateSigners[0];
 
-        const ethereumSigner =
-            network === 'ethereum' ? ethereumSigners![index] : undefined;
+        const ethereumSigner = network === 'ethereum' ? ethereumSigners![index] : undefined;
         const data = eventDatas[index];
         const msg = generateVerificationMessage(
             context,
@@ -671,7 +640,7 @@ export async function buildValidations(
             signature_substrate = substrateSigner.sign(msg) as Uint8Array;
             substrateValidationData!.Web3Validation!.Substrate!.signature!.Sr25519 = u8aToHex(signature_substrate);
             assert.isNotEmpty(data.challengeCode, 'substrate challengeCode empty');
-            verifyDatas.push(substrateValidationData)
+            verifyDatas.push(substrateValidationData);
         } else if (network === 'twitter') {
             console.log('post verification msg to twitter', msg);
             const twitterValidationData: LitentryValidationData = {
@@ -681,7 +650,7 @@ export async function buildValidations(
                     },
                 },
             };
-            verifyDatas.push(twitterValidationData)
+            verifyDatas.push(twitterValidationData);
             assert.isNotEmpty(data.challengeCode, 'twitter challengeCode empty');
         }
     }
@@ -702,12 +671,11 @@ export async function buildIdentityHelper(
     return identity;
 }
 
-
 export async function buildIdentityTxs(
     context: IntegrationTestContext,
     signers: KeyringPair[],
     identities: LitentryIdentity[],
-    method: "setUserShieldingKey" | 'createIdentity' | 'verifyIdentity' | 'removeIdentity',
+    method: 'setUserShieldingKey' | 'createIdentity' | 'verifyIdentity' | 'removeIdentity',
     mode: 'batch' | 'utility',
     validations?: LitentryValidationData[]
 ): Promise<any[]> {
@@ -715,9 +683,9 @@ export async function buildIdentityTxs(
     const api = context.api;
     const mrEnclave = context.mrEnclave;
     const teeShieldingKey = context.teeShieldingKey;
-    const len = method === "setUserShieldingKey" ? signers.length : identities.length
+    const len = method === 'setUserShieldingKey' ? signers.length : identities.length;
     for (let k = 0; k < len; k++) {
-        const signer = method === "setUserShieldingKey" ? signers[k] : signers[0];
+        const signer = method === 'setUserShieldingKey' ? signers[k] : signers[0];
         const identity = identities[k];
         let tx: SubmittableExtrinsic<ApiTypes>;
         let nonce: number;
@@ -725,7 +693,10 @@ export async function buildIdentityTxs(
         const ciphertext_identity = encryptWithTeeShieldingKey(teeShieldingKey, encod_identity).toString('hex');
         switch (method) {
             case 'setUserShieldingKey':
-                const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12').toString('hex');
+                const ciphertext = encryptWithTeeShieldingKey(
+                    context.teeShieldingKey,
+                    '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12'
+                ).toString('hex');
                 tx = context.api.tx.identityManagement.setUserShieldingKey(context.mrEnclave, `0x${ciphertext}`);
                 nonce = (await api.rpc.system.accountNextIndex(signer.address)).toNumber();
                 break;
@@ -761,10 +732,8 @@ export async function buildIdentityTxs(
         }
         if (mode === 'batch') {
             txs.push({ tx, nonce });
-
         } else {
-
-            txs.push(tx)
+            txs.push(tx);
         }
     }
 

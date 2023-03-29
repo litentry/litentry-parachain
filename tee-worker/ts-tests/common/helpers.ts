@@ -55,9 +55,3 @@ export function twox64Concat(data: HexString | Uint8Array): Uint8Array {
 export function identity(data: HexString | Uint8Array): Uint8Array {
     return u8aToU8a(data);
 }
-
-export enum IdentityNetwork {
-    substrate = 'substrate',
-    ethereum = 'ethereum',
-    twitter = 'twitter',
-}

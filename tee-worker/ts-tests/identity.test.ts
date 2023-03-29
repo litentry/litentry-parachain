@@ -8,19 +8,11 @@ import {
     checkIDGraph,
     buildIdentityHelper,
     buildIdentityTxs,
-    sendTxsWidthUtility,
     handleIdentityEvents,
     buildValidations,
-
 } from './common/utils';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
-import {
-
-    assertIdentityCreated,
-    assertIdentityVerified,
-    assertIdentityRemoved,
-    multiAccountTxSender,
-} from './indirect_calls';
+import { assertIdentityCreated, assertIdentityVerified, assertIdentityRemoved } from './indirect_calls';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import {
@@ -30,6 +22,7 @@ import {
     TransactionSubmit,
 } from './common/type-definitions';
 import { HexString } from '@polkadot/util/types';
+import { multiAccountTxSender, sendTxsWidthUtility } from './common/transactions';
 
 const substrateExtensionIdentity = <LitentryIdentity>{
     Substrate: <SubstrateIdentity>{
@@ -70,7 +63,13 @@ describeLitentry('Test Identity', 0, (context) => {
     });
     step('Invalid user shielding key', async function () {
         let identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Ethereum', 'Evm');
-        let txs = await buildIdentityTxs(context, [context.substrateWallet.alice], [identity], 'createIdentity', 'utility');
+        let txs = await buildIdentityTxs(
+            context,
+            [context.substrateWallet.alice],
+            [identity],
+            'createIdentity',
+            'utility'
+        );
         let resp_events = await sendTxsWidthUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
             'CreateIdentityFailed',
         ]);
@@ -78,11 +77,27 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('set user shielding key', async function () {
-        let [alice_txs] = await buildIdentityTxs(context, [context.substrateWallet.alice], [], 'setUserShieldingKey', 'batch') as TransactionSubmit[];
-        let [bob_txs] = await buildIdentityTxs(context, [context.substrateWallet.bob], [], 'setUserShieldingKey', 'batch') as TransactionSubmit[];
-        const resp_events = await multiAccountTxSender(context, [alice_txs, bob_txs], [context.substrateWallet.alice, context.substrateWallet.bob], 'identityManagement', [
-            'UserShieldingKeySet',
-        ]);
+        let [alice_txs] = (await buildIdentityTxs(
+            context,
+            [context.substrateWallet.alice],
+            [],
+            'setUserShieldingKey',
+            'batch'
+        )) as TransactionSubmit[];
+        let [bob_txs] = (await buildIdentityTxs(
+            context,
+            [context.substrateWallet.bob],
+            [],
+            'setUserShieldingKey',
+            'batch'
+        )) as TransactionSubmit[];
+        const resp_events = await multiAccountTxSender(
+            context,
+            [alice_txs, bob_txs],
+            [context.substrateWallet.alice, context.substrateWallet.bob],
+            'identityManagement',
+            ['UserShieldingKeySet']
+        );
         const [alice, bob] = await handleIdentityEvents(context, aesKey, resp_events, 'UserShieldingKeySet');
         assert.equal(alice, u8aToHex(context.substrateWallet.alice.addressRaw), 'alice shielding key should be set');
         assert.equal(bob, u8aToHex(context.substrateWallet.bob.addressRaw), 'bob shielding key should be set');
@@ -121,45 +136,103 @@ describeLitentry('Test Identity', 0, (context) => {
         //Alice
         const twiiter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
         const ethereum_identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Ethereum', 'Evm');
-        const alice_substrate_identity = await buildIdentityHelper(u8aToHex(context.substrateWallet.alice.addressRaw), 'Litentry', 'Substrate');
+        const alice_substrate_identity = await buildIdentityHelper(
+            u8aToHex(context.substrateWallet.alice.addressRaw),
+            'Litentry',
+            'Substrate'
+        );
 
         //Bob
-        const bob_substrate_identity = await buildIdentityHelper(u8aToHex(context.substrateWallet.bob.addressRaw)
-            , 'Litentry', 'Substrate');
+        const bob_substrate_identity = await buildIdentityHelper(
+            u8aToHex(context.substrateWallet.bob.addressRaw),
+            'Litentry',
+            'Substrate'
+        );
 
         alice_identities = [twiiter_identity, ethereum_identity, alice_substrate_identity];
         bob_identities = [bob_substrate_identity];
 
-        let alice_txs = await buildIdentityTxs(context, [context.substrateWallet.alice], alice_identities, 'createIdentity', 'utility')
+        let alice_txs = await buildIdentityTxs(
+            context,
+            [context.substrateWallet.alice],
+            alice_identities,
+            'createIdentity',
+            'utility'
+        );
 
-        let alice_resp_events = await sendTxsWidthUtility(context, context.substrateWallet.alice, alice_txs, 'identityManagement', [
-            'IdentityCreated',
-        ]);
+        let alice_resp_events = await sendTxsWidthUtility(
+            context,
+            context.substrateWallet.alice,
+            alice_txs,
+            'identityManagement',
+            ['IdentityCreated']
+        );
 
-        const [twitter_event_data, ethereum_event_data, substrate_event_data] = await handleIdentityEvents(context, aesKey, alice_resp_events, 'IdentityCreated');
+        const [twitter_event_data, ethereum_event_data, substrate_event_data] = await handleIdentityEvents(
+            context,
+            aesKey,
+            alice_resp_events,
+            'IdentityCreated'
+        );
 
         //Alice check twitter identity
         assertIdentityCreated(context.substrateWallet.alice, twitter_event_data);
 
-        const alice_twitter_validations = await buildValidations(context, [twitter_event_data], [twiiter_identity], 'twitter', 'single', [context.substrateWallet.alice])
+        const alice_twitter_validations = await buildValidations(
+            context,
+            [twitter_event_data],
+            [twiiter_identity],
+            'twitter',
+            'single',
+            [context.substrateWallet.alice]
+        );
 
         //Alice check ethereum identity
         assertIdentityCreated(context.substrateWallet.alice, ethereum_event_data);
-        const alice_ethereum_validations = await buildValidations(context, [ethereum_event_data], [ethereum_identity], 'ethereum', 'single', [context.substrateWallet.alice], [context.ethersWallet.alice])
+        const alice_ethereum_validations = await buildValidations(
+            context,
+            [ethereum_event_data],
+            [ethereum_identity],
+            'ethereum',
+            'single',
+            [context.substrateWallet.alice],
+            [context.ethersWallet.alice]
+        );
 
         //Alice check substrate identity
         assertIdentityCreated(context.substrateWallet.alice, substrate_event_data);
-        const alice_substrate_validations = await buildValidations(context, [substrate_event_data], [alice_substrate_identity], 'substrate', 'single', [context.substrateWallet.alice])
+        const alice_substrate_validations = await buildValidations(
+            context,
+            [substrate_event_data],
+            [alice_substrate_identity],
+            'substrate',
+            'single',
+            [context.substrateWallet.alice]
+        );
 
-        alice_validations = [...alice_twitter_validations, ...alice_ethereum_validations, ...alice_substrate_validations]
+        alice_validations = [
+            ...alice_twitter_validations,
+            ...alice_ethereum_validations,
+            ...alice_substrate_validations,
+        ];
 
         //Bob check extension substrate identity
         //https://github.com/litentry/litentry-parachain/issues/1137
-        let bob_txs = await buildIdentityTxs(context, [context.substrateWallet.bob], bob_identities, 'createIdentity', 'utility')
+        let bob_txs = await buildIdentityTxs(
+            context,
+            [context.substrateWallet.bob],
+            bob_identities,
+            'createIdentity',
+            'utility'
+        );
 
-        let bob_resp_events = await sendTxsWidthUtility(context, context.substrateWallet.bob, bob_txs, 'identityManagement', [
-            'IdentityCreated',
-        ]);
+        let bob_resp_events = await sendTxsWidthUtility(
+            context,
+            context.substrateWallet.bob,
+            bob_txs,
+            'identityManagement',
+            ['IdentityCreated']
+        );
 
         const [resp_extension_data] = await handleIdentityEvents(context, aesKey, bob_resp_events, 'IdentityCreated');
 
@@ -191,13 +264,11 @@ describeLitentry('Test Identity', 0, (context) => {
             substrateExtensionValidationData!.Web3Validation!.Substrate!.signature!.Sr25519 =
                 u8aToHex(signature_substrate);
             assert.isNotEmpty(resp_extension_data.challengeCode, 'challengeCode empty');
-            bob_validations = [substrateExtensionValidationData]
-
+            bob_validations = [substrateExtensionValidationData];
         }
     });
 
     step('check IDGraph before verifyIdentity and after createIdentity', async function () {
-
         const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
         const identity_hex = context.api.createType('LitentryIdentity', twitter_identity).toHex();
 
@@ -218,17 +289,45 @@ describeLitentry('Test Identity', 0, (context) => {
     step('verify identities', async function () {
         //Alice verify all identities
 
-        let alice_txs = await buildIdentityTxs(context, [context.substrateWallet.alice], alice_identities, 'verifyIdentity', 'utility', alice_validations);
-        let alice_resp_events = await sendTxsWidthUtility(context, context.substrateWallet.alice, alice_txs, 'identityManagement', [
-            'IdentityVerified',
-        ]);
-        let bob_txs = await buildIdentityTxs(context, [context.substrateWallet.bob], bob_identities, 'verifyIdentity', 'utility', bob_validations);
+        let alice_txs = await buildIdentityTxs(
+            context,
+            [context.substrateWallet.alice],
+            alice_identities,
+            'verifyIdentity',
+            'utility',
+            alice_validations
+        );
+        let alice_resp_events = await sendTxsWidthUtility(
+            context,
+            context.substrateWallet.alice,
+            alice_txs,
+            'identityManagement',
+            ['IdentityVerified']
+        );
+        let bob_txs = await buildIdentityTxs(
+            context,
+            [context.substrateWallet.bob],
+            bob_identities,
+            'verifyIdentity',
+            'utility',
+            bob_validations
+        );
 
-        let bob_resp_events = await sendTxsWidthUtility(context, context.substrateWallet.bob, bob_txs, 'identityManagement', [
-            'IdentityVerified',
-        ]);
-        const [twitter_identity_verified, ethereum_identity_verified, substrate_identity_verified] = await handleIdentityEvents(context, aesKey, alice_resp_events, 'IdentityVerified');
-        const [substrate_extension_identity_verified] = await handleIdentityEvents(context, aesKey, bob_resp_events, 'IdentityVerified')
+        let bob_resp_events = await sendTxsWidthUtility(
+            context,
+            context.substrateWallet.bob,
+            bob_txs,
+            'identityManagement',
+            ['IdentityVerified']
+        );
+        const [twitter_identity_verified, ethereum_identity_verified, substrate_identity_verified] =
+            await handleIdentityEvents(context, aesKey, alice_resp_events, 'IdentityVerified');
+        const [substrate_extension_identity_verified] = await handleIdentityEvents(
+            context,
+            aesKey,
+            bob_resp_events,
+            'IdentityVerified'
+        );
         //Alice
         assertIdentityVerified(context.substrateWallet.alice, twitter_identity_verified);
         assertIdentityVerified(context.substrateWallet.alice, ethereum_identity_verified);
@@ -256,37 +355,94 @@ describeLitentry('Test Identity', 0, (context) => {
     });
     step('verify error identities', async function () {
         // verify same identities(alice) to one account
-        let alice_txs = await buildIdentityTxs(context, [context.substrateWallet.alice], alice_identities, 'verifyIdentity', 'utility', alice_validations);
-        let alice_resp_same_verify_events = await sendTxsWidthUtility(context, context.substrateWallet.alice, alice_txs, 'identityManagement', [
-            'VerifyIdentityFailed',
-        ]);
-        const alice_resp_same_verify_events_datas = await handleIdentityEvents(context, aesKey, alice_resp_same_verify_events, 'Failed');
+        let alice_txs = await buildIdentityTxs(
+            context,
+            [context.substrateWallet.alice],
+            alice_identities,
+            'verifyIdentity',
+            'utility',
+            alice_validations
+        );
+        let alice_resp_same_verify_events = await sendTxsWidthUtility(
+            context,
+            context.substrateWallet.alice,
+            alice_txs,
+            'identityManagement',
+            ['VerifyIdentityFailed']
+        );
+        const alice_resp_same_verify_events_datas = await handleIdentityEvents(
+            context,
+            aesKey,
+            alice_resp_same_verify_events,
+            'Failed'
+        );
         await checkErrorDetail(alice_resp_same_verify_events_datas, 'ChallengeCodeNotFound', false);
 
         //verify an identity(charlie) to an account but it isn't created before
-        let charlie_txs = await buildIdentityTxs(context, [context.substrateWallet.charlie], alice_identities, 'verifyIdentity', 'utility', alice_validations);
-        let charlie_resp_same_verify_events = await sendTxsWidthUtility(context, context.substrateWallet.charlie, charlie_txs, 'identityManagement', [
-            'VerifyIdentityFailed',
-        ]);
-        const charlie_resp_same_verify_events_datas = await handleIdentityEvents(context, aesKey, charlie_resp_same_verify_events, 'Failed');
+        let charlie_txs = await buildIdentityTxs(
+            context,
+            [context.substrateWallet.charlie],
+            alice_identities,
+            'verifyIdentity',
+            'utility',
+            alice_validations
+        );
+        let charlie_resp_same_verify_events = await sendTxsWidthUtility(
+            context,
+            context.substrateWallet.charlie,
+            charlie_txs,
+            'identityManagement',
+            ['VerifyIdentityFailed']
+        );
+        const charlie_resp_same_verify_events_datas = await handleIdentityEvents(
+            context,
+            aesKey,
+            charlie_resp_same_verify_events,
+            'Failed'
+        );
         await checkErrorDetail(charlie_resp_same_verify_events_datas, 'ChallengeCodeNotFound', false);
-
     });
 
     step('remove identities', async function () {
         // Alice remove all identities
-        let alice_txs = await buildIdentityTxs(context, [context.substrateWallet.alice], alice_identities, 'removeIdentity', 'utility');
-        let alice_resp_remove_events = await sendTxsWidthUtility(context, context.substrateWallet.alice, alice_txs, 'identityManagement', [
-            'IdentityRemoved',
-        ]);
-        const [twitter_identity_removed, ethereum_identity_removed, substrate_identity_removed] = await handleIdentityEvents(context, aesKey, alice_resp_remove_events, 'IdentityRemoved');
+        let alice_txs = await buildIdentityTxs(
+            context,
+            [context.substrateWallet.alice],
+            alice_identities,
+            'removeIdentity',
+            'utility'
+        );
+        let alice_resp_remove_events = await sendTxsWidthUtility(
+            context,
+            context.substrateWallet.alice,
+            alice_txs,
+            'identityManagement',
+            ['IdentityRemoved']
+        );
+        const [twitter_identity_removed, ethereum_identity_removed, substrate_identity_removed] =
+            await handleIdentityEvents(context, aesKey, alice_resp_remove_events, 'IdentityRemoved');
 
         // Bob remove substrate identities
-        let bob_txs = await buildIdentityTxs(context, [context.substrateWallet.bob], bob_identities, 'removeIdentity', 'utility');
-        let bob_resp_remove_events = await sendTxsWidthUtility(context, context.substrateWallet.bob, bob_txs, 'identityManagement', [
-            'IdentityRemoved',
-        ]);
-        const [substrate_extension_identity_removed] = await handleIdentityEvents(context, aesKey, bob_resp_remove_events, 'IdentityRemoved');
+        let bob_txs = await buildIdentityTxs(
+            context,
+            [context.substrateWallet.bob],
+            bob_identities,
+            'removeIdentity',
+            'utility'
+        );
+        let bob_resp_remove_events = await sendTxsWidthUtility(
+            context,
+            context.substrateWallet.bob,
+            bob_txs,
+            'identityManagement',
+            ['IdentityRemoved']
+        );
+        const [substrate_extension_identity_removed] = await handleIdentityEvents(
+            context,
+            aesKey,
+            bob_resp_remove_events,
+            'IdentityRemoved'
+        );
         //Alice
         assertIdentityRemoved(context.substrateWallet.alice, twitter_identity_removed);
         assertIdentityRemoved(context.substrateWallet.alice, ethereum_identity_removed);
@@ -320,67 +476,139 @@ describeLitentry('Test Identity', 0, (context) => {
     });
     step('remove prime identity NOT allowed', async function () {
         // create substrate identity
-        const alice_substrate_identity = await buildIdentityHelper(u8aToHex(context.substrateWallet.alice.addressRaw), 'Litentry', 'Substrate');
-        let alice_create_txs = await buildIdentityTxs(context, [context.substrateWallet.alice], [alice_substrate_identity], 'createIdentity', 'utility')
-        let alice_resp_create__events = await sendTxsWidthUtility(context, context.substrateWallet.alice, alice_create_txs, 'identityManagement', [
-            'IdentityCreated',
-        ]);
-        const [substrate_create_event_data] = await handleIdentityEvents(context, aesKey, alice_resp_create__events, 'IdentityCreated');
+        const alice_substrate_identity = await buildIdentityHelper(
+            u8aToHex(context.substrateWallet.alice.addressRaw),
+            'Litentry',
+            'Substrate'
+        );
+        let alice_create_txs = await buildIdentityTxs(
+            context,
+            [context.substrateWallet.alice],
+            [alice_substrate_identity],
+            'createIdentity',
+            'utility'
+        );
+        let alice_resp_create__events = await sendTxsWidthUtility(
+            context,
+            context.substrateWallet.alice,
+            alice_create_txs,
+            'identityManagement',
+            ['IdentityCreated']
+        );
+        const [substrate_create_event_data] = await handleIdentityEvents(
+            context,
+            aesKey,
+            alice_resp_create__events,
+            'IdentityCreated'
+        );
         assertIdentityCreated(context.substrateWallet.alice, substrate_create_event_data);
 
         // remove substrate identity
-        let alice_remove_txs = await buildIdentityTxs(context, [context.substrateWallet.alice], [alice_substrate_identity], 'removeIdentity', 'utility')
+        let alice_remove_txs = await buildIdentityTxs(
+            context,
+            [context.substrateWallet.alice],
+            [alice_substrate_identity],
+            'removeIdentity',
+            'utility'
+        );
         await sendTxsWidthUtility(context, context.substrateWallet.alice, alice_remove_txs, 'identityManagement', [
             'IdentityRemoved',
         ]);
 
-
         // remove prime identity
-        const substratePrimeIdentity = await buildIdentityHelper(u8aToHex(context.substrateWallet.alice.addressRaw), 'TestNet', 'Substrate');
+        const substratePrimeIdentity = await buildIdentityHelper(
+            u8aToHex(context.substrateWallet.alice.addressRaw),
+            'TestNet',
+            'Substrate'
+        );
 
-        let prime_txs = await buildIdentityTxs(context, [context.substrateWallet.alice], [substratePrimeIdentity], 'removeIdentity', 'utility')
-        let prime_resp_events = await sendTxsWidthUtility(context, context.substrateWallet.alice, prime_txs, 'identityManagement', [
-            'RemoveIdentityFailed',
-        ]);
+        let prime_txs = await buildIdentityTxs(
+            context,
+            [context.substrateWallet.alice],
+            [substratePrimeIdentity],
+            'removeIdentity',
+            'utility'
+        );
+        let prime_resp_events = await sendTxsWidthUtility(
+            context,
+            context.substrateWallet.alice,
+            prime_txs,
+            'identityManagement',
+            ['RemoveIdentityFailed']
+        );
         const prime_resp_events_data = await handleIdentityEvents(context, aesKey, prime_resp_events, 'Failed');
 
         await checkErrorDetail(prime_resp_events_data, 'RemovePrimeIdentityDisallowed', false);
     });
 
     step('remove error identities', async function () {
-
         //remove a nonexistent identity
         //context.substrateWallet.alice has aleady removed all identities in step('remove identities')
-        let alice_remove_txs = await buildIdentityTxs(context, [context.substrateWallet.alice], alice_identities, 'removeIdentity', 'utility');
-        let alice_resp_remove_events = await sendTxsWidthUtility(context, context.substrateWallet.alice, alice_remove_txs, 'identityManagement', [
-            'RemoveIdentityFailed',
-        ]);
-        const alice_resp_remove_events_data = await handleIdentityEvents(context, aesKey, alice_resp_remove_events, 'Failed');
-
+        let alice_remove_txs = await buildIdentityTxs(
+            context,
+            [context.substrateWallet.alice],
+            alice_identities,
+            'removeIdentity',
+            'utility'
+        );
+        let alice_resp_remove_events = await sendTxsWidthUtility(
+            context,
+            context.substrateWallet.alice,
+            alice_remove_txs,
+            'identityManagement',
+            ['RemoveIdentityFailed']
+        );
+        const alice_resp_remove_events_data = await handleIdentityEvents(
+            context,
+            aesKey,
+            alice_resp_remove_events,
+            'Failed'
+        );
 
         await checkErrorDetail(alice_resp_remove_events_data, 'IdentityNotExist', false);
 
         //charlie doesn't have a challenge code,use alice identity
-        let charlie_remove_txs = await buildIdentityTxs(context, [context.substrateWallet.charlie], alice_identities, 'removeIdentity', 'utility');
-        let charile_resp_remove_events = await sendTxsWidthUtility(context, context.substrateWallet.charlie, charlie_remove_txs, 'identityManagement', [
-            'RemoveIdentityFailed',
-        ]);
+        let charlie_remove_txs = await buildIdentityTxs(
+            context,
+            [context.substrateWallet.charlie],
+            alice_identities,
+            'removeIdentity',
+            'utility'
+        );
+        let charile_resp_remove_events = await sendTxsWidthUtility(
+            context,
+            context.substrateWallet.charlie,
+            charlie_remove_txs,
+            'identityManagement',
+            ['RemoveIdentityFailed']
+        );
 
-        const charile_resp_remove_events_data = await handleIdentityEvents(context, aesKey, charile_resp_remove_events, 'Failed');
+        const charile_resp_remove_events_data = await handleIdentityEvents(
+            context,
+            aesKey,
+            charile_resp_remove_events,
+            'Failed'
+        );
 
         await checkErrorDetail(charile_resp_remove_events_data, 'IdentityNotExist', false);
     });
 
     step('set error user shielding key', async function () {
         const error_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, errorAseKey).toString('hex');
-        const error_tx = context.api.tx.identityManagement.setUserShieldingKey(context.mrEnclave, `0x${error_ciphertext}`);
+        const error_tx = context.api.tx.identityManagement.setUserShieldingKey(
+            context.mrEnclave,
+            `0x${error_ciphertext}`
+        );
 
-        let resp_error_events = await sendTxsWidthUtility(context, context.substrateWallet.alice, [error_tx], 'identityManagement', [
-            'SetUserShieldingKeyFailed',
-        ]);
+        let resp_error_events = await sendTxsWidthUtility(
+            context,
+            context.substrateWallet.alice,
+            [error_tx],
+            'identityManagement',
+            ['SetUserShieldingKeyFailed']
+        );
 
         let error_events_datas = await handleIdentityEvents(context, aesKey, resp_error_events, 'Failed');
-
 
         await checkErrorDetail(error_events_datas, 'ImportError', false);
     });
@@ -392,12 +620,14 @@ describeLitentry('Test Identity', 0, (context) => {
             errorCiphertext,
             null
         );
-        let resp_error_events = await sendTxsWidthUtility(context, context.substrateWallet.alice, [error_tx], 'identityManagement', [
-            'CreateIdentityFailed',
-        ]);
+        let resp_error_events = await sendTxsWidthUtility(
+            context,
+            context.substrateWallet.alice,
+            [error_tx],
+            'identityManagement',
+            ['CreateIdentityFailed']
+        );
         let error_events_datas = await handleIdentityEvents(context, aesKey, resp_error_events, 'Failed');
         await checkErrorDetail(error_events_datas, 'ImportError', false);
-
-
     });
 });

@@ -10,7 +10,6 @@ import { createIdentityEvent, decryptWithAES, encryptWithTeeShieldingKey } from 
 import { KeyringPair } from '@polkadot/keyring/types';
 import { HexString } from '@polkadot/util/types';
 import { u8aToHex } from '@polkadot/util';
-import { ApiPromise } from '@polkadot/api';
 import { expect, assert } from 'chai';
 import { listenEvent, sendTxUntilInBlock, sendTxUntilInBlockList } from './common/transactions';
 
@@ -27,34 +26,13 @@ export async function setUserShieldingKey(
     await sendTxUntilInBlock(context.api, tx, signer);
 
     if (listening) {
-        const events = await listenEvent(context.api, 'identityManagement', ['UserShieldingKeySet'], 1, [u8aToHex(signer.addressRaw)]);
+        const events = await listenEvent(context.api, 'identityManagement', ['UserShieldingKeySet'], 1, [
+            u8aToHex(signer.addressRaw),
+        ]);
         expect(events.length).to.be.equal(1);
         return (events[0].data as any).account.toHex();
     }
     return undefined;
-}
-
-export async function multiAccountTxSender(
-    context: IntegrationTestContext,
-    txs: TransactionSubmit[],
-    signers: KeyringPair | KeyringPair[],
-    pallet: string,
-    events: string[]
-): Promise<any> {
-    let signers_hex: HexString[] = [];
-    if (Array.isArray(signers)) {
-        for (let index = 0; index < signers.length; index++) {
-            signers_hex.push(
-                u8aToHex(signers[index].addressRaw)
-            )
-        }
-    } else {
-        signers_hex.push(u8aToHex(signers.addressRaw));
-    }
-    await sendTxUntilInBlockList(context.api, txs, signers);
-    const resp_events = await listenEvent(context.api, pallet, events, txs.length, signers_hex);
-    expect(resp_events.length).to.be.equal(txs.length);
-    return resp_events.length ? resp_events : undefined;
 }
 
 export async function createIdentities(
@@ -83,7 +61,9 @@ export async function createIdentities(
     await sendTxUntilInBlockList(context.api, txs, signer);
 
     if (listening) {
-        const events = (await listenEvent(context.api, 'identityManagement', ['IdentityCreated'], txs.length, [u8aToHex(signer.addressRaw)])) as any;
+        const events = (await listenEvent(context.api, 'identityManagement', ['IdentityCreated'], txs.length, [
+            u8aToHex(signer.addressRaw),
+        ])) as any;
         expect(events.length).to.be.equal(identities.length);
 
         let results: IdentityGenericEvent[] = [];
@@ -124,7 +104,9 @@ export async function removeIdentities(
     await sendTxUntilInBlockList(context.api, txs, signer);
 
     if (listening) {
-        const events = (await listenEvent(context.api, 'identityManagement', ['IdentityRemoved'], txs.length, [u8aToHex(signer.addressRaw)])) as any;
+        const events = (await listenEvent(context.api, 'identityManagement', ['IdentityRemoved'], txs.length, [
+            u8aToHex(signer.addressRaw),
+        ])) as any;
         expect(events.length).to.be.equal(identity.length);
 
         let results: IdentityGenericEvent[] = [];
@@ -176,7 +158,9 @@ export async function verifyIdentities(
     await sendTxUntilInBlockList(context.api, txs, signer);
 
     if (listening) {
-        const events = (await listenEvent(context.api, 'identityManagement', ['IdentityVerified'], txs.length, [u8aToHex(signer.addressRaw)])) as any;
+        const events = (await listenEvent(context.api, 'identityManagement', ['IdentityVerified'], txs.length, [
+            u8aToHex(signer.addressRaw),
+        ])) as any;
         expect(events.length).to.be.equal(identities.length);
         let results: IdentityGenericEvent[] = [];
         for (let index = 0; index < events.length; index++) {
@@ -205,10 +189,10 @@ export async function requestVCs(
     keys: string[]
 ): Promise<
     | {
-        account: HexString;
-        index: HexString;
-        vc: HexString;
-    }[]
+          account: HexString;
+          index: HexString;
+          vc: HexString;
+      }[]
     | undefined
 > {
     let txs: TransactionSubmit[] = [];
@@ -225,7 +209,9 @@ export async function requestVCs(
 
     await sendTxUntilInBlockList(context.api, txs, signer);
     if (listening) {
-        const events = (await listenEvent(context.api, 'vcManagement', ['VCIssued'], txs.length, [u8aToHex(signer.addressRaw)])) as any;
+        const events = (await listenEvent(context.api, 'vcManagement', ['VCIssued'], txs.length, [
+            u8aToHex(signer.addressRaw),
+        ])) as any;
         expect(events.length).to.be.equal(keys.length);
 
         let results: {
@@ -262,7 +248,9 @@ export async function disableVCs(
 
     await sendTxUntilInBlockList(context.api, txs, signer);
     if (listening) {
-        const events = (await listenEvent(context.api, 'vcManagement', ['VCDisabled'], txs.length, [u8aToHex(signer.addressRaw)])) as any;
+        const events = (await listenEvent(context.api, 'vcManagement', ['VCDisabled'], txs.length, [
+            u8aToHex(signer.addressRaw),
+        ])) as any;
         expect(events.length).to.be.equal(indexList.length);
         let results: HexString[] = [];
         for (let m = 0; m < events.length; m++) {
@@ -291,7 +279,9 @@ export async function revokeVCs(
 
     await sendTxUntilInBlockList(context.api, txs, signer);
     if (listening) {
-        const events = (await listenEvent(context.api, 'vcManagement', ['VCRevoked'], txs.length, [u8aToHex(signer.addressRaw)])) as any;
+        const events = (await listenEvent(context.api, 'vcManagement', ['VCRevoked'], txs.length, [
+            u8aToHex(signer.addressRaw),
+        ])) as any;
         expect(events.length).to.be.equal(indexList.length);
         let results: HexString[] = [];
         for (let m = 0; m < events.length; m++) {

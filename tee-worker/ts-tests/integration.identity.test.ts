@@ -1,19 +1,12 @@
 import { step } from 'mocha-steps';
-import {
-    buildValidations,
-    describeLitentry,
-    encryptWithTeeShieldingKey,
-    buildIdentityTxs,
-    buildIdentityHelper,
-} from './common/utils';
+import { buildValidations, describeLitentry, buildIdentityTxs, buildIdentityHelper } from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
-import { LitentryIdentity, LitentryValidationData, TransactionSubmit } from './common/type-definitions';
+import { LitentryIdentity, LitentryValidationData } from './common/type-definitions';
 import { handleIdentityEvents } from './common/utils';
-import { assertIdentityCreated, assertIdentityRemoved, assertIdentityVerified, multiAccountTxSender } from './indirect_calls';
+import { assertIdentityCreated, assertIdentityRemoved, assertIdentityVerified } from './indirect_calls';
 import { assert } from 'chai';
-import { IdentityNetwork, identity } from './common/helpers';
-import { listenEvent } from './common/transactions';
+import { listenEvent, multiAccountTxSender } from './common/transactions';
 import { u8aToHex } from '@polkadot/util';
 
 //Explain how to use this test, which has two important parameters:
@@ -45,7 +38,9 @@ describeLitentry('multiple accounts test', 1, async (context) => {
             txs.push(tx);
         }
         await context.api.tx.utility.batch(txs).signAndSend(context.substrateWallet.alice);
-        await listenEvent(context.api, 'balances', ['Transfer'], txs.length, [u8aToHex(context.substrateWallet.alice.addressRaw)]);
+        await listenEvent(context.api, 'balances', ['Transfer'], txs.length, [
+            u8aToHex(context.substrateWallet.alice.addressRaw),
+        ]);
     });
 
     //test with multiple accounts
@@ -62,17 +57,19 @@ describeLitentry('multiple accounts test', 1, async (context) => {
             'set usershieldingkey with multiple accounts check fail'
         );
         event_datas.forEach((data: string, index: number) => {
-            assert.equal(data, u8aToHex(substraetSigners[index].addressRaw), `shielding key should be set,account ${index + 1} is not set`);
-
+            assert.equal(
+                data,
+                u8aToHex(substraetSigners[index].addressRaw),
+                `shielding key should be set,account ${index + 1} is not set`
+            );
         });
-
     });
 
     //test identity with multiple accounts
     step('test createIdentity with multiple accounts', async () => {
         for (let index = 0; index < ethereumSigners.length; index++) {
             let identity = await buildIdentityHelper(ethereumSigners[index].address, 'Ethereum', 'Evm');
-            identities.push(identity)
+            identities.push(identity);
         }
 
         let txs = await buildIdentityTxs(context, substraetSigners, identities, 'createIdentity', 'batch');
@@ -87,28 +84,40 @@ describeLitentry('multiple accounts test', 1, async (context) => {
         for (let index = 0; index < resp_events_datas.length; index++) {
             console.log('createIdentity', index);
             assertIdentityCreated(substraetSigners[index], resp_events_datas[index]);
-
         }
 
-        const validations = await buildValidations(context, [resp_events_datas], identities, 'ethereum', 'multiple', substraetSigners, ethereumSigners);
+        const validations = await buildValidations(
+            context,
+            [resp_events_datas],
+            identities,
+            'ethereum',
+            'multiple',
+            substraetSigners,
+            ethereumSigners
+        );
 
         web3Validations = [...validations];
     });
 
     step('test verifyIdentity with multiple accounts', async () => {
-        let txs = await buildIdentityTxs(context, substraetSigners, identities, 'verifyIdentity', 'batch', web3Validations);
+        let txs = await buildIdentityTxs(
+            context,
+            substraetSigners,
+            identities,
+            'verifyIdentity',
+            'batch',
+            web3Validations
+        );
         const resp_events = await multiAccountTxSender(context, txs, substraetSigners, 'identityManagement', [
             'IdentityVerified',
         ]);
         assert.equal(resp_events.length, txs.length, 'verify identities with multiple accounts check fail');
 
-        const [resp_events_datas] = await handleIdentityEvents(context, aesKey, resp_events, 'IdentityVerified')
+        const [resp_events_datas] = await handleIdentityEvents(context, aesKey, resp_events, 'IdentityVerified');
         for (let index = 0; index < resp_events_datas.length; index++) {
             console.log('verifyIdentity', index);
             assertIdentityVerified(substraetSigners[index], resp_events_datas);
         }
-
-
     });
 
     step('test removeIdentity with multiple accounts', async () => {
@@ -118,11 +127,10 @@ describeLitentry('multiple accounts test', 1, async (context) => {
             'IdentityRemoved',
         ]);
         assert.equal(resp_events.length, txs.length, 'remove identities with multiple accounts check fail');
-        const [resp_events_datas] = await handleIdentityEvents(context, aesKey, resp_events, 'IdentityRemoved')
+        const [resp_events_datas] = await handleIdentityEvents(context, aesKey, resp_events, 'IdentityRemoved');
         for (let index = 0; index < resp_events_datas.length; index++) {
             console.log('verifyIdentity', index);
             assertIdentityRemoved(substraetSigners[index], resp_events_datas);
         }
-
     });
 });
