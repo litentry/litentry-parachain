@@ -501,9 +501,9 @@ export function createIdentityEvent(
 export async function sendTxsWidthUtility(
     context: IntegrationTestContext,
     signer: KeyringPair,
-    txs: TransactionSubmit[],
+    txs: any[],
     pallet: string,
-    event: string[],
+    events: string[],
 ): Promise<any> {
     await context.api.tx.utility.batchAll(txs).signAndSend(signer, async (result) => {
         if (result.status.isInBlock) {
@@ -511,13 +511,13 @@ export async function sendTxsWidthUtility(
         } else if (result.status.isInvalid) {
             console.log(`Transaction is ${result.status}`);
         }
-    });
-    const events = (await listenEvent(context.api, pallet, event, txs.length, [u8aToHex(signer.addressRaw)])) as any;
+    })
 
-    expect(events.length).to.be.equal(txs.length);
-    return events;
+    const resp_events = (await listenEvent(context.api, pallet, events, txs.length, ([u8aToHex(signer.addressRaw)]))) as any;
+
+    expect(resp_events.length).to.be.equal(txs.length);
+    return resp_events;
 }
-
 export async function handleVcEvents(aesKey: HexString, events: any[], type: string): Promise<any> {
     let results: any[] = [];
     for (let k = 0; k < events.length; k++) {
@@ -538,16 +538,18 @@ export async function handleIdentityEvents(
     context: IntegrationTestContext,
     aesKey: HexString,
     events: any[],
-    type: "UserShieldingKeySet" | "IdentityCreated" | "IdentityVerified" | 'IdentityRemoved'
+    type: "UserShieldingKeySet" | "IdentityCreated" | "IdentityVerified" | 'IdentityRemoved' | 'Failed'
 ): Promise<any> {
     let results: IdentityGenericEvent[] = [];
 
     for (let index = 0; index < events.length; index++) {
+
         switch (type) {
             case 'UserShieldingKeySet':
 
+
                 results.push(
-                    (events[index][0].data as any).account.toHex()
+                    (events[index].data as any).account.toHex()
                 )
                 break;
             case "IdentityCreated":
@@ -572,9 +574,25 @@ export async function handleIdentityEvents(
                 );
                 break
 
+            case 'IdentityRemoved':
+                results.push(
+                    createIdentityEvent(
+                        context.api,
+                        events[index].data.account.toHex(),
+                        decryptWithAES(aesKey, events[index].data.identity, 'hex')
+                    )
+                );
+                break
+            case 'Failed':
+                results.push(events[index].data.detail.toHuman());
+                break
+
+
         }
 
     }
+    console.log("event data:", results);
+
     return [...results];
 }
 
@@ -708,8 +726,6 @@ export async function buildIdentityTxs(
                 break;
             case 'verifyIdentity':
                 const data = validations![k];
-                console.log(123, data);
-
                 const encode_verifyIdentity_validation = api.createType('LitentryValidationData', data).toHex();
                 const ciphertext_verifyIdentity_validation = encryptWithTeeShieldingKey(
                     teeShieldingKey,
@@ -726,7 +742,6 @@ export async function buildIdentityTxs(
                 tx = api.tx.identityManagement.removeIdentity(mrEnclave, `0x${ciphertext_identity}`);
                 nonce = (await api.rpc.system.accountNextIndex(signer.address)).toNumber();
                 break;
-
             default:
                 throw new Error(`Invalid method: ${method}`);
         }

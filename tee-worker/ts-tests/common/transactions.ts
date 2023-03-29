@@ -74,6 +74,7 @@ export async function listenEvent(api: ApiPromise, section: string, methods: str
         let startBlock = 0;
         let events: EventRecord[] = [];
         const unsubscribe = await api.rpc.chain.subscribeNewHeads(async (header) => {
+
             const currentBlockNumber = header.number.toNumber();
             if (startBlock == 0) startBlock = currentBlockNumber;
             const timeout = await getListenTimeoutInBlocks(api);
@@ -92,29 +93,34 @@ export async function listenEvent(api: ApiPromise, section: string, methods: str
                 console.log(`Event[${i}]: ${s}.${m} ${d}`);
             });
 
-            //@TODO should filter the event with signers.address
-
-
-
             const filtered_events = records.filter(({ phase, event }) => {
 
                 return phase.isApplyExtrinsic && section === event.section && methods.includes(event.method);
-            }).filter(event => {
-                const signerData = event.event.data.find(d => {
+            });
+
+            const filtered_events_with_signer = filtered_events.filter(event => {
+                const signerDatas = event.event.data.find(d => {
                     if (Array.isArray(d)) {
+
                         return d.find(v => signers.includes(v.toHex()));
                     } else {
-                        return signers!.includes(d.toHex());
+
+
+                        return signers.includes(d.toHex());
                     }
                 });
-
-
-                return signers.length ? !!signerData : event;
+                return !!signerDatas
             });
-            events.push(...filtered_events);
+            const eventsToUse = filtered_events_with_signer.length > 0 ? filtered_events_with_signer : filtered_events;
+
+            events = [...eventsToUse]
+
+
             if (events.length === txsLength) {
                 resolve(events.map(e => e.event));
+
                 unsubscribe();
+
                 return;
             }
 
