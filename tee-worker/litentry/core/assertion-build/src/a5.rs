@@ -35,7 +35,7 @@ pub fn build(
 	original_tweet_id: ParameterString,
 ) -> Result<(), Error> {
 	let mut twitter_litentry_client = TwitterLitentryClient::new();
-	let mut twitter_official_client = TwitterOfficialClient::new();
+	let mut twitter_official_client = TwitterOfficialClient::v2();
 	for identity in identities {
 		if let Identity::Web2 { network, address } = identity {
 			if matches!(network, Web2Network::Twitter) {

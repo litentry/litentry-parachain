@@ -28,7 +28,6 @@ use itc_rest_client::{
 use log::*;
 use serde::{Deserialize, Serialize};
 use std::{
-	default::Default,
 	format,
 	string::{String, ToString},
 	vec,
@@ -55,6 +54,11 @@ pub struct Tweet {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Retweeted {
+	pub data: Vec<TwitterUser>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TwitterUser {
 	pub id: String,
 	pub name: String,
@@ -63,14 +67,36 @@ pub struct TwitterUser {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct TwitterUserPublicMetrics {
+	pub followers_count: u32,
+	pub following_count: u32,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TwitterUsers {
 	pub users: Vec<TwitterUser>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TwitterUserPublicMetrics {
-	pub followers_count: u32,
-	pub following_count: u32,
+pub struct Relationship {
+	pub source: SourceTwitterUser,
+	pub target: TargetTwitterUser,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct SourceTwitterUser {
+	pub id_str: String,
+	pub screen_name: String,
+	pub following: bool,
+	pub followed_by: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct TargetTwitterUser {
+	pub id_str: String,
+	pub screen_name: String,
+	pub following: bool,
+	pub followed_by: bool,
 }
 
 impl RestPath<String> for Tweet {
@@ -80,6 +106,18 @@ impl RestPath<String> for Tweet {
 }
 
 impl<T> RestPath<String> for TwitterAPIV2Response<T> {
+	fn get_path(path: String) -> core::result::Result<String, HttpError> {
+		Ok(path)
+	}
+}
+
+impl RestPath<String> for Relationship {
+	fn get_path(path: String) -> core::result::Result<String, HttpError> {
+		Ok(path)
+	}
+}
+
+impl RestPath<String> for Retweeted {
 	fn get_path(path: String) -> core::result::Result<String, HttpError> {
 		Ok(path)
 	}
@@ -95,30 +133,39 @@ pub struct TwitterOfficialClient {
 	client: RestClient<HttpClient<DefaultSend>>,
 }
 
-impl Default for TwitterOfficialClient {
-	fn default() -> Self {
-		Self::new()
-	}
-}
-
 /// rate limit: https://developer.twitter.com/en/docs/twitter-api/rate-limits
 impl TwitterOfficialClient {
-	pub fn new() -> Self {
+	pub fn v1_1() -> Self {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert(
 			AUTHORIZATION.as_str(),
-			G_DATA_PROVIDERS.read().unwrap().twitter_auth_token.clone().as_str(),
+			G_DATA_PROVIDERS.read().unwrap().twitter_auth_token_v1_1.clone().as_str(),
 		);
 		let client = build_client(
 			G_DATA_PROVIDERS.read().unwrap().twitter_official_url.clone().as_str(),
-			headers,
+			headers.clone(),
 		);
 
 		TwitterOfficialClient { client }
 	}
 
-	/// rate limit: 300/15min(per App) 900/15min(per User)
+	pub fn v2() -> Self {
+		let mut headers = Headers::new();
+		headers.insert(CONNECTION.as_str(), "close");
+		headers.insert(
+			AUTHORIZATION.as_str(),
+			G_DATA_PROVIDERS.read().unwrap().twitter_auth_token_v2.clone().as_str(),
+		);
+		let client = build_client(
+			G_DATA_PROVIDERS.read().unwrap().twitter_official_url.clone().as_str(),
+			headers.clone(),
+		);
+
+		TwitterOfficialClient { client }
+	}
+
+	/// V2, rate limit: 300/15min(per App) 900/15min(per User)
 	pub fn query_tweet(&mut self, tweet_id: Vec<u8>) -> Result<Tweet, Error> {
 		let tweet_id = vec_to_string(tweet_id)?;
 		debug!("twitter query tweet, id: {}", tweet_id);
@@ -148,48 +195,26 @@ impl TwitterOfficialClient {
 		Ok(tweet)
 	}
 
-	/// rate limit: 450/15min(per App) 180/15min(per User)
-	///
-	/// Building queries for Search Tweets: https://developer.twitter.com/en/docs/twitter-api/tweets/search/integrate/build-a-query
-	pub fn query_retweet(
-		&mut self,
-		user: Vec<u8>,
-		original_tweet_id: Vec<u8>,
-	) -> Result<Tweet, Error> {
+	/// V2, https://developer.twitter.com/en/docs/twitter-api/tweets/retweets/api-reference/get-tweets-id-retweeted_by
+	/// rate limit: 75/15min(per App) 75/15min(per User)
+	/// Note: The maximum result is 100, so if a user requests too late (after 100 retweets by others),
+	/// the verification will fail.
+	pub fn query_retweeted_by(&mut self, original_tweet_id: Vec<u8>) -> Result<Retweeted, Error> {
 		let original_tweet_id = vec_to_string(original_tweet_id)?;
-		let user = vec_to_string(user)?;
-		debug!("twitter query retweet, user: {}, original_tweet_id: {}", user, original_tweet_id);
+		debug!("original tweet id: {}", original_tweet_id);
 
-		let query_value = format!("from: {} retweets_of_tweet_id: {}", user, original_tweet_id);
-		let query: Vec<(&str, &str)> =
-			vec![("query", query_value.as_str()), ("expansions", "author_id")];
+		let path = format!("/2/tweets/{}/retweeted_by", original_tweet_id);
+		let query: Vec<(&str, &str)> = vec![("max_results", "100")];
+
 		let resp = self
 			.client
-			.get_with::<String, TwitterAPIV2Response<Vec<Tweet>>>(
-				"/2/tweets/search/recent".to_string(),
-				query.as_slice(),
-			)
+			.get_with::<String, Retweeted>(path, query.as_slice())
 			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
 
-		let tweets = resp.data.ok_or_else(|| Error::RequestError("tweet not found".to_string()))?;
-		if !tweets.is_empty() {
-			let mut tweet = tweets[0].clone();
-
-			// have to replace user_id with includes -> users -> username, otherwise the handler verificaiton would fail
-			if let Some(tweet_users) = resp.includes {
-				if tweet_users.users.is_empty() {
-					return Err(Error::RequestError("user not found from tweet".to_string()))
-				}
-				tweet.author_id = tweet_users.users[0].username.clone();
-			}
-
-			Ok(tweet)
-		} else {
-			Err(Error::RequestError("tweet not found".to_string()))
-		}
+		Ok(resp)
 	}
 
-	/// rate limit: 300/15min(per App) 900/15min(per User)
+	/// V2, rate limit: 300/15min(per App) 900/15min(per User)
 	pub fn query_user(&mut self, user: Vec<u8>) -> Result<TwitterUser, Error> {
 		let user = vec_to_string(user)?;
 		debug!("twitter query user, user: {}", user);
@@ -202,8 +227,32 @@ impl TwitterOfficialClient {
 				query.as_slice(),
 			)
 			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
+
 		let user = resp.data.ok_or_else(|| Error::RequestError("user not found".to_string()))?;
 		Ok(user)
+	}
+
+	/// V1.1, https://developer.twitter.com/en/docs/twitter-api/v1/accounts-and-users/follow-search-get-users/api-reference/get-friendships-show
+	/// rate limit: 15/15min(per App) 180/15min(per User)
+	pub fn query_friendship(
+		&mut self,
+		source_user: Vec<u8>,
+		target_user: Vec<u8>,
+	) -> Result<Relationship, Error> {
+		let source = vec_to_string(source_user)?;
+		let target = vec_to_string(target_user)?;
+		debug!("source user: {}, target user: {}", source, target);
+
+		let path = format!("/1.1/friendships/show.json");
+		let query: Vec<(&str, &str)> =
+			vec![("source_screen_name", source.as_str()), ("target_screen_name", target.as_str())];
+
+		let resp = self
+			.client
+			.get_with::<String, Relationship>(path, query.as_slice())
+			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
+
+		Ok(resp)
 	}
 }
 
@@ -225,31 +274,42 @@ mod tests {
 	fn query_tweet_work() {
 		init();
 
-		let mut client = TwitterOfficialClient::new();
+		let mut client = TwitterOfficialClient::v2();
 		let result = client.query_tweet("100".as_bytes().to_vec());
 		assert!(result.is_ok(), "error: {:?}", result);
 	}
 
 	#[test]
-	fn query_retweet_work() {
+	fn query_retweeted_work() {
 		init();
 
-		let mut client = TwitterOfficialClient::new();
-		let user = "ericzhangeth".clone().as_bytes().to_vec();
-		let original_tweet_id = "100".as_bytes().to_vec();
-		let response = client.query_retweet(user, original_tweet_id);
+		let mut client = TwitterOfficialClient::v2();
+		let original_tweet_id = "1623577441305260036".as_bytes().to_vec();
+		let response = client.query_retweeted_by(original_tweet_id);
 
 		assert!(response.is_ok(), "error: {:?}", response);
 	}
 
 	#[test]
-	fn query_user_work() {
+	fn query_user_by_name_work() {
 		init();
 
-		let user = "1256908613857226756";
-		let mut client = TwitterOfficialClient::new();
+		let user = "twitterdev";
+		let mut client = TwitterOfficialClient::v2();
 		let result = client.query_user(user.as_bytes().to_vec());
 		assert!(result.is_ok(), "error: {:?}", result);
 		// task.abort();
+	}
+
+	#[test]
+	fn query_friendship_work() {
+		init();
+
+		let source = "twitterdev";
+		let target = "twitter";
+		let mut client = TwitterOfficialClient::v1_1();
+		let result =
+			client.query_friendship(source.as_bytes().to_vec(), target.as_bytes().to_vec());
+		assert!(result.is_ok(), "error: {:?}", result);
 	}
 }
