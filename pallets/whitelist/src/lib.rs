@@ -183,7 +183,7 @@ pub mod pallet {
 		/// Perform the origin check.
 		fn ensure_origin(o: OuterOrigin) -> Result<Success, BadOrigin>;
 	}
-	
+
 	impl<T: Config> WhitelistEnsureOriginWrapper<T::RuntimeOrigin, T::AccountId>
 		for EnsureWhitelist<T>
 	{

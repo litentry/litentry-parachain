@@ -3,7 +3,7 @@ authors = ['Litentry Dev']
 edition = '2021'
 homepage = 'https://litentry.com'
 name = 'pallet-whitelist'
-repository = 'https://github.com/litentry/litentry-pallets'
+repository = 'https://github.com/litentry/litentry-parachain'
 version = '0.1.0'
 
 [dependencies]
