@@ -135,10 +135,16 @@ fn tee_callback_with_registered_enclave_works() {
 
 		assert_ok!(IdentityManagement::some_error(
 			RuntimeOrigin::signed(1),
-			IMPError::VerifyIdentityFailed(ErrorDetail::WrongWeb2Handle)
+			None,
+			IMPError::VerifyIdentityFailed(ErrorDetail::WrongWeb2Handle),
+			H256::default(),
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
-			crate::Event::VerifyIdentityFailed { detail: ErrorDetail::WrongWeb2Handle },
+			crate::Event::VerifyIdentityFailed {
+				account: None,
+				detail: ErrorDetail::WrongWeb2Handle,
+				req_ext_hash: H256::default(),
+			},
 		));
 	});
 }
@@ -149,7 +155,9 @@ fn tee_callback_with_unregistered_enclave_fails() {
 		assert_noop!(
 			IdentityManagement::some_error(
 				RuntimeOrigin::signed(1),
-				IMPError::VerifyIdentityFailed(ErrorDetail::WrongWeb2Handle)
+				None,
+				IMPError::VerifyIdentityFailed(ErrorDetail::WrongWeb2Handle),
+				H256::default(),
 			),
 			sp_runtime::DispatchError::BadOrigin,
 		);

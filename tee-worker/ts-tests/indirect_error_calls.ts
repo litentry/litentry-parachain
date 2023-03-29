@@ -10,7 +10,7 @@ import {
     LitentryValidationData,
     TransactionSubmit,
 } from './common/type-definitions';
-import { expect } from 'chai';
+import { expect, assert } from 'chai';
 import { listenEvent, sendTxUntilInBlock, sendTxUntilInBlockList } from './common/transactions';
 
 export async function setErrorUserShieldingKey(
@@ -57,13 +57,15 @@ export async function createErrorIdentities(
         });
     }
 
-    await sendTxUntilInBlockList(context.api, txs, signer);
+    const res = (await sendTxUntilInBlockList(context.api, txs, signer)) as any;
 
     if (listening) {
         const events = (await listenEvent(context.api, 'identityManagement', ['CreateIdentityFailed'])) as any;
         expect(events.length).to.be.equal(errorCiphertexts.length);
+        expect(events.length).to.be.equal(res.length);
         let results: string[] = [];
         for (let i = 0; i < events.length; i++) {
+            assert.equal(events[i].data.reqExtHash.toHex(), res[i].txHash);
             results.push(events[i].data.detail.toHuman());
         }
         return [...results];
@@ -106,13 +108,15 @@ export async function verifyErrorIdentities(
         });
     }
 
-    await sendTxUntilInBlockList(context.api, txs, signer);
+    const res = (await sendTxUntilInBlockList(context.api, txs, signer)) as any;
 
     if (listening) {
         const events = (await listenEvent(context.api, 'identityManagement', ['VerifyIdentityFailed'])) as any;
         expect(events.length).to.be.equal(identities.length);
+        expect(events.length).to.be.equal(res.length);
         let results: string[] = [];
         for (let i = 0; i < events.length; i++) {
+            assert.equal(events[i].data.reqExtHash.toHex(), res[i].txHash);
             results.push(events[i].data.detail.toHuman());
         }
         return [...results];
@@ -142,13 +146,15 @@ export async function removeErrorIdentities(
         });
     }
 
-    await sendTxUntilInBlockList(context.api, txs, signer);
+    const res = (await sendTxUntilInBlockList(context.api, txs, signer)) as any;
 
     if (listening) {
         const events = (await listenEvent(context.api, 'identityManagement', ['RemoveIdentityFailed'])) as any;
         let results: string[] = [];
         expect(events.length).to.be.equal(identities.length);
+        expect(events.length).to.be.equal(res.length);
         for (let i = 0; i < events.length; i++) {
+            assert.equal(events[i].data.reqExtHash.toHex(), res[i].txHash);
             results.push(events[i].data.detail.toHuman());
         }
         return [...results];
@@ -176,11 +182,16 @@ export async function requestErrorVCs(
         txs.push({ tx, nonce: newNonce });
     }
 
-    await sendTxUntilInBlockList(context.api, txs, signer);
+    const res = (await sendTxUntilInBlockList(context.api, txs, signer)) as any;
 
     if (listening) {
         const events = (await listenEvent(context.api, 'vcManagement', ['RequestVCFailed'])) as Event[];
         expect(events.length).to.be.equal(keys.length);
+        expect(events.length).to.be.equal(res.length);
+
+        for (let k = 0; k < events.length; k++) {
+            assert.equal((events[k].data as any).reqExtHash.toHex(), res[k].txHash);
+        }
         return events;
     }
     return undefined;
