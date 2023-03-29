@@ -47,6 +47,11 @@ impl Default for GraphQLClient {
 	}
 }
 
+/// TODO: https://github.com/litentry/litentry-parachain/pull/1534
+/// There are two issues here that need to be refactored later
+/// 1. The name of VerifiedCredentialsNetwork is a bit unclear
+/// 2. VerifiedCredentialsNetwork and IndexingNetwork are repeated, they should be one-to-one relationship, just keep one.
+/// What's even better is that we have a trait for each data provider, something like get_supported_network.
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
 pub enum VerifiedCredentialsNetwork {
 	Litentry,
