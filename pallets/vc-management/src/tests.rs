@@ -28,6 +28,7 @@ fn request_vc_works() {
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
 		assert_ok!(VCManagement::request_vc(RuntimeOrigin::signed(1), shard, Assertion::A1));
 		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::VCRequested {
+			account: 1,
 			shard,
 			assertion: Assertion::A1,
 		}));

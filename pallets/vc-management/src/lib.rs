@@ -87,17 +87,20 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		// TODO: do we need account as event parameter? This needs to be decided by F/E
+		// a VC is requested
 		VCRequested {
+			account: T::AccountId,
 			shard: ShardIdentifier,
 			assertion: Assertion,
 		},
 		// a VC is disabled on chain
 		VCDisabled {
+			account: T::AccountId,
 			index: VCIndex,
 		},
 		// a VC is revoked on chain
 		VCRevoked {
+			account: T::AccountId,
 			index: VCIndex,
 		},
 		// event that should be triggered by TEECallOrigin
@@ -185,8 +188,8 @@ pub mod pallet {
 			shard: ShardIdentifier,
 			assertion: Assertion,
 		) -> DispatchResultWithPostInfo {
-			let _ = ensure_signed(origin)?;
-			Self::deposit_event(Event::VCRequested { shard, assertion });
+			let who = ensure_signed(origin)?;
+			Self::deposit_event(Event::VCRequested { account: who, shard, assertion });
 			Ok(().into())
 		}
 
@@ -201,7 +204,7 @@ pub mod pallet {
 				ensure!(c.status == Status::Active, Error::<T>::VCAlreadyDisabled);
 				c.status = Status::Disabled;
 				*context = Some(c);
-				Self::deposit_event(Event::VCDisabled { index });
+				Self::deposit_event(Event::VCDisabled { account: who, index });
 				Ok(().into())
 			})
 		}
@@ -214,7 +217,7 @@ pub mod pallet {
 			let context = VCRegistry::<T>::get(index).ok_or(Error::<T>::VCNotExist)?;
 			ensure!(who == context.subject, Error::<T>::VCSubjectMismatch);
 			VCRegistry::<T>::remove(index);
-			Self::deposit_event(Event::VCRevoked { index });
+			Self::deposit_event(Event::VCRevoked { account: who, index });
 			Ok(().into())
 		}
 
