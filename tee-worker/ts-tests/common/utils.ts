@@ -40,6 +40,7 @@ const base58 = require('micro-base58');
 const crypto = require('crypto');
 import { getEthereumSigner } from '../common/helpers';
 import { listenEvent } from './transactions';
+import { Assertion } from './type-definitions';
 
 // in order to handle self-signed certificates we need to turn off the validation
 // TODO add self signed certificate ??
@@ -518,22 +519,7 @@ export async function sendTxsWidthUtility(
     expect(resp_events.length).to.be.equal(txs.length);
     return resp_events;
 }
-export async function handleVcEvents(aesKey: HexString, events: any[], type: string): Promise<any> {
-    let results: any[] = [];
-    for (let k = 0; k < events.length; k++) {
-        if (type == 'VCIssued') {
-            results.push({
-                account: events[k].data.account.toHex(),
-                index: events[k].data.index.toHex(),
-                vc: decryptWithAES(aesKey, events[k].data.vc, 'utf-8'),
-            });
-        } else if (type == 'disableVc') {
-            results.push(events[k].data.index.toHex());
-        }
-    }
 
-    return [...results];
-}
 export async function handleIdentityEvents(
     context: IntegrationTestContext,
     aesKey: HexString,
@@ -594,6 +580,30 @@ export async function handleIdentityEvents(
     console.log(`${type} event data:`, results);
 
     return [...results];
+}
+
+export async function handleVcEvents(aesKey: HexString, events: any[], method: 'VCIssued' | 'VCDisabled' | 'VCRevoked'): Promise<any> {
+    let results: any = []
+    for (let k = 0; k < events.length; k++) {
+        switch (method) {
+            case 'VCIssued':
+                results.push({
+                    account: events[k].data.account.toHex(),
+                    index: events[k].data.index.toHex(),
+                    vc: decryptWithAES(aesKey, events[k].data.vc, 'utf-8'),
+                });
+                break;
+            case "VCDisabled":
+                results.push(events[k].data.index.toHex());
+                break;
+            case "VCRevoked":
+                results.push(events[k].data.index.toHex());
+            default:
+                break;
+        }
+
+    }
+    return [...results]
 }
 
 export async function buildValidations(

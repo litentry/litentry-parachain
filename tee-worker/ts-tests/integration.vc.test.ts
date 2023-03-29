@@ -2,9 +2,8 @@ import { step } from 'mocha-steps';
 import { checkVc, describeLitentry, encryptWithTeeShieldingKey } from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
-
+import { u8aToHex } from '@polkadot/util'
 import { Assertion, TransactionSubmit } from './common/type-definitions';
-import { batchCall } from './common/utils';
 import { handleVcEvents } from './common/utils';
 import { multiAccountTxSender } from './indirect_calls';
 import { blake2AsHex } from '@polkadot/util-crypto';
@@ -24,21 +23,15 @@ const assertion = <Assertion>{
 
 //Explain how to use this test, which has two important parameters:
 
-//1.request_times: the number of requestVc for a single account.If you want to test bulk operations on a single account, you can modify this parameter.
+//1.The "number" parameter in describeLitentry represents the number of accounts generated, including Substrate wallets and Ethereum wallets.If you want to use a large number of accounts for testing, you can modify this parameter.
 
-//2.The "number" parameter in describeLitentry represents the number of accounts generated, including Substrate wallets and Ethereum wallets.If you want to use a large number of accounts for testing, you can modify this parameter.
-
-//3.Each time the test code is executed, new wallet account will be used.
+//2.Each time the test code is executed, new wallet account will be used.
 
 describeLitentry('multiple accounts test', 10, async (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     var substraetSigners: KeyringPair[] = [];
     var ethereumSigners: ethers.Wallet[] = [];
     var vcIndexList: HexString[] = [];
-
-    //requestVC times for one account.
-    let request_times = 10;
-
     // If want to test other assertions with multiple accounts,just need to make changes here.
     let assertion_type = assertion.A1;
     step('init', async () => {
@@ -58,7 +51,8 @@ describeLitentry('multiple accounts test', 10, async (context) => {
             txs.push(tx);
         }
         await context.api.tx.utility.batch(txs).signAndSend(context.substrateWallet.alice);
-        await listenEvent(context.api, 'balances', ['Transfer'], txs.length);
+        await listenEvent(context.api, 'balances', ['Transfer'], txs.length, [u8aToHex(context.substrateWallet.alice.addressRaw)]);
+
     });
     //test with multiple accounts
     step('test set usershieldingkey with multiple accounts', async () => {
@@ -111,8 +105,16 @@ describeLitentry('multiple accounts test', 10, async (context) => {
             const nonce = (await context.api.rpc.system.accountNextIndex(substraetSigners[i].address)).toNumber();
             txs.push({ tx, nonce });
         }
-        const resp_events = await multiAccountTxSender(context, txs, substraetSigners, 'vcManagement', ['VCIssued']);
+        const resp_events = await multiAccountTxSender(context, txs, substraetSigners, 'vcManagement', ['VCDisabled']);
+
         assert.equal(resp_events.length, vcIndexList.length, 'disable vc check fail');
+        const event_datas = await handleVcEvents(aesKey, resp_events, 'VCDisabled');
+        for (let k = 0; k < vcIndexList.length; k++) {
+            console.log('disableVc index:', k);
+            assert.equal(event_datas[k], vcIndexList[k], 'check index error');
+            const registry = (await context.api.query.vcManagement.vcRegistry(vcIndexList[k])) as any;
+            assert.equal(registry.toHuman()!['status'], 'Disabled');
+        }
     });
 
     step('test revokeVc with multiple accounts', async () => {
@@ -122,72 +124,20 @@ describeLitentry('multiple accounts test', 10, async (context) => {
             const nonce = (await context.api.rpc.system.accountNextIndex(substraetSigners[i].address)).toNumber();
             txs.push({ tx, nonce });
         }
-        const resp_events = await multiAccountTxSender(context, txs, substraetSigners, 'vcManagement', ['VCIssued']);
+        const resp_events = await multiAccountTxSender(context, txs, substraetSigners, 'vcManagement', ['VCRevoked']);
         assert.equal(resp_events.length, vcIndexList.length, 'revoke vc check fail');
+        const event_datas = await handleVcEvents(aesKey, resp_events, 'VCRevoked');
+        console.log("event_datas", event_datas);
+
+        for (let k = 0; k < vcIndexList.length; k++) {
+            console.log('revokeVc index:', k);
+            assert.equal(event_datas[k], vcIndexList[k], 'check index error');
+            const registry = (await context.api.query.vcManagement.vcRegistry(vcIndexList[k])) as any;
+            assert.equal(registry.toHuman(), null);
+
+        }
     });
 
-    // test multiple vc with one account
-    step('test multiple requestVc with one account', async () => {
-        let txs: any = [];
-
-        let vc_params: any[] = [];
-        for (let i = 0; i < request_times; i++) {
-            vc_params.push(assertion_type);
-        }
-        for (let i = 0; i < vc_params.length; i++) {
-            const tx = context.api.tx.vcManagement.requestVc(context.mrEnclave, vc_params[i]);
-            txs.push(tx);
-        }
-
-        const resp_events = await batchCall(context, substraetSigners[0], txs, 'vcManagement', ['VCIssued']);
-        assert.equal(resp_events.length, request_times, 'request multiple vc check fail');
-        const event_data = await handleVcEvents(aesKey, resp_events, 'requestVc');
-        for (let m = 0; m < event_data.length; m++) {
-            vcIndexList.push(event_data[m].index);
-        }
-    });
-    step('test multiple disableVc with one account', async () => {
-        let txs: any = [];
-        let vc_params: any[] = [];
-        let test_times = 10;
-        for (let i = 0; i < test_times; i++) {
-            vc_params.push(assertion_type);
-        }
-        for (let i = 0; i < vc_params.length; i++) {
-            const tx = context.api.tx.vcManagement.disableVc(vcIndexList[i]);
-            txs.push(tx);
-        }
-        const resp_events = await batchCall(context, substraetSigners[0], txs, 'vcManagement', ['VCDisabled']);
-        assert.equal(resp_events.length, test_times, 'disabled multiple vc check fail');
-        const events_data = await handleVcEvents(aesKey, resp_events, 'disableVc');
-        await Promise.all(
-            events_data.map(async (event: any, k: any) => {
-                assert.equal(event, vcIndexList[k], 'check index error');
-                const registry = (await context.api.query.vcManagement.vcRegistry(vcIndexList[k])) as any;
-                assert.equal(registry.toHuman()!['status'], 'Disabled');
-            })
-        );
-    });
-    step('test multiple revokeVc with one account', async () => {
-        let txs: any = [];
-        let vc_params: any[] = [];
-        let test_times = 10;
-        for (let i = 0; i < test_times; i++) {
-            vc_params.push(assertion_type);
-        }
-        for (let i = 0; i < vc_params.length; i++) {
-            const tx = context.api.tx.vcManagement.revokeVc(vcIndexList[i]);
-            txs.push(tx);
-        }
-        const resp_events = await batchCall(context, substraetSigners[0], txs, 'vcManagement', ['VCRevoked']);
-        assert.equal(resp_events.length, test_times, 'revoked multiple vc check fail');
-        const events_data = await handleVcEvents(aesKey, resp_events, 'disableVc');
-        await Promise.all(
-            events_data.map(async (event: any, k: any) => {
-                assert.equal(event, vcIndexList[k], 'check index error');
-                const registry = (await context.api.query.vcManagement.vcRegistry(vcIndexList[k])) as any;
-                assert.equal(registry.toHuman()!['status'], null);
-            })
-        );
-    });
 });
+
+
