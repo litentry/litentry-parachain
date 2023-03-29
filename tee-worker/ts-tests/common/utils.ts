@@ -582,7 +582,7 @@ export async function handleIdentityEvents(
     return [...results];
 }
 
-export async function handleVcEvents(aesKey: HexString, events: any[], method: 'VCIssued' | 'VCDisabled' | 'VCRevoked'): Promise<any> {
+export async function handleVcEvents(aesKey: HexString, events: any[], method: 'VCIssued' | 'VCDisabled' | 'VCRevoked' | 'Failed'): Promise<any> {
     let results: any = []
     for (let k = 0; k < events.length; k++) {
         switch (method) {
@@ -598,6 +598,10 @@ export async function handleVcEvents(aesKey: HexString, events: any[], method: '
                 break;
             case "VCRevoked":
                 results.push(events[k].data.index.toHex());
+                break;
+            case 'Failed':
+                results.push(events[k].data.detail.toHuman());
+                break
             default:
                 break;
         }

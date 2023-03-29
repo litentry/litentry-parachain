@@ -15,7 +15,7 @@ import {
 } from './indirect_calls';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import { LitentryIdentity, LitentryValidationData, TransactionSubmit, Web2Identity } from './common/type-definitions';
+import { LitentryIdentity, LitentryValidationData, TransactionSubmit } from './common/type-definitions';
 
 
 describeLitentry('Test Batch Utility', 0, (context) => {
