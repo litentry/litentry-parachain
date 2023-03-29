@@ -24,17 +24,16 @@ use sp_runtime::{traits::ConstU32, BoundedVec};
 
 type MaxStringLength = ConstU32<64>;
 pub type ParameterString = BoundedVec<u8, MaxStringLength>;
-pub type AssertionNetworks = BoundedVec<AssertionNetwork, MaxStringLength>;
+pub type IndexingNetworks = BoundedVec<IndexingNetwork, MaxStringLength>;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
-pub enum AssertionNetwork {
+pub enum IndexingNetwork {
 	Litentry,
 	Litmus,
 	Polkadot,
 	Kusama,
 	Khala,
 	Ethereum,
-	LitentryRococo,
 }
 
 #[rustfmt::skip]
@@ -47,7 +46,7 @@ pub enum Assertion {
 	A5(ParameterString, ParameterString),                   // (twitter_account, tweet_id)
 	A6,
 	A7(Balance),                                            // (minimum_amount)
-	A8(AssertionNetworks),                                  // litentry, litmus, polkadot, kusama, khala, ethereum
+	A8(IndexingNetworks),                                  // litentry, litmus, polkadot, kusama, khala, ethereum
 	A9,
 	A10(Balance),                                           // (minimum_amount)
 	A11(Balance),                                           // (minimum_amount)

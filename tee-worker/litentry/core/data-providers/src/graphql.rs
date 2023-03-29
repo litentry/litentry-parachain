@@ -25,7 +25,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
-use litentry_primitives::{AssertionNetwork, EvmNetwork, SubstrateNetwork};
+use litentry_primitives::{EvmNetwork, IndexingNetwork, SubstrateNetwork};
 use log::*;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -83,16 +83,15 @@ impl From<EvmNetwork> for VerifiedCredentialsNetwork {
 	}
 }
 
-impl From<AssertionNetwork> for VerifiedCredentialsNetwork {
-	fn from(network: AssertionNetwork) -> Self {
+impl From<IndexingNetwork> for VerifiedCredentialsNetwork {
+	fn from(network: IndexingNetwork) -> Self {
 		match network {
-			AssertionNetwork::Litmus => Self::Litmus,
-			AssertionNetwork::Litentry => Self::Litentry,
-			AssertionNetwork::Polkadot => Self::Polkadot,
-			AssertionNetwork::Kusama => Self::Kusama,
-			AssertionNetwork::Khala => Self::Khala,
-			AssertionNetwork::Ethereum => Self::Ethereum,
-			AssertionNetwork::LitentryRococo => Self::LitentryRococo,
+			IndexingNetwork::Litmus => Self::Litmus,
+			IndexingNetwork::Litentry => Self::Litentry,
+			IndexingNetwork::Polkadot => Self::Polkadot,
+			IndexingNetwork::Kusama => Self::Kusama,
+			IndexingNetwork::Khala => Self::Khala,
+			IndexingNetwork::Ethereum => Self::Ethereum,
 		}
 	}
 }

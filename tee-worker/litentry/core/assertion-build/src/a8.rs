@@ -29,7 +29,7 @@ use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsNetwork, VerifiedCredentialsTotalTxs,
 };
 use litentry_primitives::{
-	Assertion, AssertionNetwork, AssertionNetworks, Identity, ParentchainBlockNumber,
+	Assertion, Identity, IndexingNetwork, IndexingNetworks, ParentchainBlockNumber,
 };
 use log::*;
 use std::{collections::HashSet, string::String, vec, vec::Vec};
@@ -37,19 +37,18 @@ use std::{collections::HashSet, string::String, vec, vec::Vec};
 const VC_SUBJECT_DESCRIPTION: &str = "User has over X number of transactions";
 const VC_SUBJECT_TYPE: &str = "Total EVM and Substrate Transactions";
 
-pub const ASSERTION_NETWORKS: [AssertionNetwork; 7] = [
-	AssertionNetwork::Litentry,
-	AssertionNetwork::Litmus,
-	AssertionNetwork::LitentryRococo,
-	AssertionNetwork::Polkadot,
-	AssertionNetwork::Khala,
-	AssertionNetwork::Ethereum,
-	AssertionNetwork::Kusama,
+pub const INDEXING_NETWORKS: [IndexingNetwork; 6] = [
+	IndexingNetwork::Litentry,
+	IndexingNetwork::Litmus,
+	IndexingNetwork::Polkadot,
+	IndexingNetwork::Khala,
+	IndexingNetwork::Ethereum,
+	IndexingNetwork::Kusama,
 ];
 
 pub fn build(
 	identities: Vec<Identity>,
-	networks: AssertionNetworks,
+	networks: IndexingNetworks,
 	shard: &ShardIdentifier,
 	who: &AccountId,
 	bn: ParentchainBlockNumber,
@@ -123,12 +122,12 @@ pub fn build(
 	}
 }
 
-fn to_verifed_network(networks: AssertionNetworks) -> Vec<VerifiedCredentialsNetwork> {
+fn to_verifed_network(networks: IndexingNetworks) -> Vec<VerifiedCredentialsNetwork> {
 	let mut target_networks = vec![];
 
 	if networks.is_empty() {
 		// return all networks
-		ASSERTION_NETWORKS.iter().for_each(|network| {
+		INDEXING_NETWORKS.iter().for_each(|network| {
 			let vnetwork = VerifiedCredentialsNetwork::from(network.clone());
 			target_networks.push(vnetwork);
 		})
@@ -192,12 +191,12 @@ fn get_total_tx_ranges(total_txs: u64) -> (u64, u64) {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use litentry_primitives::AssertionNetworks;
+	use litentry_primitives::IndexingNetworks;
 
 	#[test]
 	fn assertion_networks_to_verifed_network_works() {
-		let litentry = AssertionNetwork::Litentry;
-		let mut networks = AssertionNetworks::with_bounded_capacity(1);
+		let litentry = IndexingNetwork::Litentry;
+		let mut networks = IndexingNetworks::with_bounded_capacity(1);
 		networks.try_push(litentry.clone()).unwrap();
 
 		let v_networks = to_verifed_network(networks.clone());
@@ -209,11 +208,11 @@ mod tests {
 
 	#[test]
 	fn assertion_networks_to_verifed_network_non_works() {
-		let networks = AssertionNetworks::with_bounded_capacity(1);
+		let networks = IndexingNetworks::with_bounded_capacity(1);
 		let left = to_verifed_network(networks.clone());
 
 		let mut right = vec![];
-		ASSERTION_NETWORKS.iter().for_each(|network| {
+		INDEXING_NETWORKS.iter().for_each(|network| {
 			let vnetwork = VerifiedCredentialsNetwork::from(network.clone());
 			right.push(vnetwork);
 		});
@@ -235,7 +234,7 @@ mod tests {
 		address_polkadot.insert_str(0, "0x");
 
 		let mut target_networks = vec![];
-		ASSERTION_NETWORKS.iter().for_each(|network| {
+		INDEXING_NETWORKS.iter().for_each(|network| {
 			let vnetwork = VerifiedCredentialsNetwork::from(network.clone());
 			target_networks.push(vnetwork);
 		});

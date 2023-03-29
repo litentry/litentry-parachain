@@ -298,14 +298,13 @@ export type VCRequested = {
     assertion: Assertion;
 };
 
-export enum AssertionNetwork {
+export enum IndexingNetwork {
     Litentry='Litentry',
     Litmus='Litmus',
 	Polkadot='Polkadot',
 	Kusama='Kusama',
 	Khala='Khala',
 	Ethereum='Ethereum',
-	LitentryRococo='LitentryRococo',
 };
 
 export type Assertion = {
@@ -316,7 +315,7 @@ export type Assertion = {
     A5?: [string, string];
     A6?: string;
     A7?: [number];
-    A8?: [AssertionNetwork];
+    A8?: [IndexingNetwork];
     A9?: string;
     A10?: [number];
     A11?: [number];
