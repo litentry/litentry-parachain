@@ -28,8 +28,8 @@ use core_primitives::AccountId;
 
 parameter_types! {
 	pub const KsmLocation: MultiLocation = Here.into();
-	pub const KusamaNetwork: NetworkId = NetworkId::Kusama;
-	pub Ancestry: MultiLocation = Here.into();
+	pub const KusamaNetwork: Option<NetworkId> = Some(NetworkId::Kusama);
+	pub UniversalLocation: InteriorMultiLocation = Here.into();
 }
 
 match_types! {

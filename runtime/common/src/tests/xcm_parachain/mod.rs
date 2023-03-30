@@ -30,10 +30,13 @@ use sp_runtime::{
 	traits::{Convert, Dispatchable},
 	AccountId32,
 };
-use xcm::prelude::{
-	All, Any, AssetId as XCMAssetId, Fungibility, Here, Instruction, Junction, MultiAsset,
-	MultiLocation, OriginKind, Outcome, PalletInstance, Parachain, Parent, WeightLimit, Xcm,
-	XcmError,
+use xcm::{
+	opaque::v2::NetworkId::Any,
+	prelude::{
+		All, AssetId as XCMAssetId, Fungibility, Here, Instruction, Junction, MultiAsset,
+		MultiLocation, OriginKind, Outcome, PalletInstance, Parachain, Parent, WeightLimit, Xcm,
+		XcmError,
+	},
 };
 use xcm_executor::traits::Convert as xcmConvert;
 use xcm_simulator::TestExt;
@@ -126,7 +129,7 @@ pub fn test_xtokens_recognize_multilocation<R: TestXCMRequirements>() {
 				CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData::default()),
 				UNIT,
 				Box::new((Parent, Parachain(2)).into()),
-				xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
+				xcm_simulator::Limited((R::UnitWeightCost::get() * 4).into())
 			),
 			orml_xtokens::Error::<R::ParaRuntime>::NotSupportedMultiLocation
 		);
@@ -138,7 +141,7 @@ pub fn test_xtokens_recognize_multilocation<R: TestXCMRequirements>() {
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
-			xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
+			xcm_simulator::Limited((R::UnitWeightCost::get() * 4).into())
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
@@ -175,7 +178,7 @@ pub fn test_xtokens_recognize_multilocation<R: TestXCMRequirements>() {
 			Box::new(
 				(Parent, Parachain(1), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
-			xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
+			xcm_simulator::Limited((R::UnitWeightCost::get() * 4).into())
 		));
 	});
 
@@ -206,7 +209,7 @@ pub fn test_xtokens_weight_parameter<R: TestXCMRequirements>() {
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
-			xcm_simulator::Limited(R::UnitWeightCost::get())
+			xcm_simulator::Limited((R::UnitWeightCost::get()).into())
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
@@ -240,7 +243,7 @@ pub fn test_xtokens_weight_parameter<R: TestXCMRequirements>() {
 				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
 			),
 			// R::UnitWeightCost::get() * 5
-			xcm_simulator::Limited(R::UnitWeightCost::get() * 5)
+			xcm_simulator::Limited((R::UnitWeightCost::get() * 5).into())
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
@@ -310,7 +313,7 @@ where
 		// This is the error of mimic XcmRouter: decl_test_network
 		System::<R::ParaRuntime>::assert_last_event(
 			pallet_xcm::Event::<R::ParaRuntime>::Attempted(Outcome::Incomplete(
-				R::UnitWeightCost::get(),
+				R::UnitWeightCost::get().into(),
 				XcmError::Unroutable,
 			))
 			.into(),

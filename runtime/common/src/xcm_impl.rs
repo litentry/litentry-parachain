@@ -15,7 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use codec::{Decode, Encode};
-use frame_support::traits::{tokens::fungibles::Mutate, Get, PalletInfoAccess};
+use frame_support::traits::{tokens::fungibles::Mutate, ContainsPair, Get, PalletInfoAccess};
 use pallet_balances::pallet::Pallet as RuntimeBalances;
 use parachain_info::pallet::Pallet as ParachainInfo;
 use scale_info::TypeInfo;
@@ -26,14 +26,12 @@ use xcm::{
 		prelude::{
 			Fungibility, Junction, Junctions, MultiAsset, MultiLocation, NetworkId, XcmError,
 		},
-		AssetId as xcmAssetId,
+		AssetId as xcmAssetId, Weight,
 	},
 	prelude::{Parachain, X1},
 };
 use xcm_builder::TakeRevenue;
-use xcm_executor::traits::{
-	Convert as xcmConvert, FilterAssetLocation, MatchesFungibles, WeightTrader,
-};
+use xcm_executor::traits::{Convert as xcmConvert, MatchesFungibles, WeightTrader};
 
 use crate::{BaseRuntimeRequirements, ParaRuntimeRequirements};
 use core_primitives::{AccountId, AssetId};
@@ -60,7 +58,7 @@ impl<
 	}
 	fn buy_weight(
 		&mut self,
-		weight: u64,
+		weight: Weight,
 		payment: xcm_executor::Assets,
 	) -> Result<xcm_executor::Assets, XcmError> {
 		let first_asset = payment.fungible_assets_iter().next().ok_or(XcmError::TooExpensive)?;
@@ -78,7 +76,7 @@ impl<
 				}
 				if let Some(units_per_second) = AssetIdInfoGetter::get_units_per_second(asset_type)
 				{
-					let amount = units_per_second.saturating_mul(weight as u128) /
+					let amount = units_per_second.saturating_mul(weight.ref_time() as u128) /
 						(WEIGHT_REF_TIME_PER_SECOND as u128);
 
 					// We dont need to proceed if the amount is 0
@@ -94,7 +92,7 @@ impl<
 					};
 					let unused =
 						payment.checked_sub(required).map_err(|_| XcmError::TooExpensive)?;
-					self.0 = self.0.saturating_add(weight);
+					self.0 = self.0.saturating_add(weight.ref_time() as u64);
 
 					// In case the asset matches the one the trader already stored before, add
 					// to later refund
@@ -116,7 +114,7 @@ impl<
 
 					// Due to the trait bound, we can only refund one asset.
 					if let Some(new_asset) = new_asset {
-						self.0 = self.0.saturating_add(weight);
+						self.0 = self.0.saturating_add(weight.ref_time() as u64);
 						self.1 = Some(new_asset);
 					};
 					Ok(unused)
@@ -128,7 +126,7 @@ impl<
 		}
 	}
 
-	fn refund_weight(&mut self, weight: u64) -> Option<MultiAsset> {
+	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
 		if let Some((id, prev_amount, units_per_second)) = self.1.clone() {
 			let weight = weight.min(self.0);
 			self.0 -= weight;
@@ -214,8 +212,8 @@ impl Reserve for MultiAsset {
 /// reserve is same with `origin`.
 pub struct MultiNativeAsset;
 
-impl FilterAssetLocation for MultiNativeAsset {
-	fn filter_asset_location(asset: &MultiAsset, origin: &MultiLocation) -> bool {
+impl ContainsPair<MultiAsset, MultiLocation> for MultiNativeAsset {
+	fn contains(asset: &MultiAsset, origin: &MultiLocation) -> bool {
 		if let Some(ref reserve) = asset.reserve() {
 			if reserve == origin {
 				return true
