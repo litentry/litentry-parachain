@@ -8,7 +8,7 @@ import {
     handleVcEvents,
 } from './common/utils';
 import { step } from 'mocha-steps';
-import { Assertion, TransactionSubmit } from './common/type-definitions';
+import { Assertion, IndexingNetwork, TransactionSubmit } from './common/type-definitions';
 import { assert } from 'chai';
 import { u8aToHex } from '@polkadot/util';
 import { HexString } from '@polkadot/util/types';
@@ -21,7 +21,7 @@ const assertion = <Assertion>{
     A3: ['A3', 'A3', 'A3'],
     A4: [10],
     A7: [10],
-    A8: ['litentry'],
+    A8: [IndexingNetwork.Litentry],
     A10: [10],
     A11: [10],
 };
