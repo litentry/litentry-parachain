@@ -14,7 +14,8 @@
 	limitations under the License.
 
 */
-use crate as pallet_parentchain;
+use crate as pallet_xcm_transactor;
+use core::default::Default;
 use frame_support::parameter_types;
 use frame_system as system;
 use pallet_parentchain::Config;
@@ -24,6 +25,9 @@ use sp_runtime::{
 	generic,
 	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
 };
+
+use xcm::latest::prelude::*;
+use xcm_transactor_primitives::*;
 
 pub type Signature = sp_runtime::MultiSignature;
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
@@ -107,6 +111,37 @@ impl pallet_balances::Config for Test {
 	type WeightInfo = ();
 	type MaxReserves = ();
 	type ReserveIdentifier = ();
+}
+
+parameter_types! {
+	pub const ShellRuntimeParaId: u32 = 2223u32;
+	pub const IntegriteeKsmParaId: u32 = 2015u32;
+}
+
+pub struct DummySendXcm;
+impl SendXcm for DummySendXcm {
+	type Ticket = ();
+
+	fn validate(
+		_destination: &mut Option<MultiLocation>,
+		_message: &mut Option<Xcm<()>>,
+	) -> SendResult<Self::Ticket> {
+		Ok(((), MultiAssets::new()))
+	}
+
+	fn deliver(_ticket: Self::Ticket) -> Result<XcmHash, SendError> {
+		Ok([0; 32])
+	}
+}
+
+impl pallet_xcm_transactor::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type RelayCallBuilder = RelayCallBuilder<IntegriteeKsmParaId>;
+	type XcmSender = DummySendXcm;
+	type SwapOrigin = EnsureRoot<AccountId>;
+	type ShellRuntimeParaId = ShellRuntimeParaId;
+	type IntegriteeKsmParaId = IntegriteeKsmParaId;
+	type WeightInfo = ();
 }
 
 // This function basically just builds a genesis storage key/value store according to

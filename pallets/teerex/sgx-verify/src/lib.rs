@@ -277,16 +277,35 @@ impl SgxReportBody {
 		}
 	}
 
-	pub fn verify(&self, o: &QuotingEnclave) -> bool {
-		if self.isv_prod_id != o.isvprodid || self.mr_signer != o.mrsigner {
-			return false
-		}
+	fn verify_misc_select_field(&self, o: &QuotingEnclave) -> bool {
 		for i in 0..self.misc_select.len() {
 			if (self.misc_select[i] & o.miscselect_mask[i]) !=
 				(o.miscselect[i] & o.miscselect_mask[i])
 			{
 				return false
 			}
+		}
+		true
+	}
+
+	fn verify_attributes_field(&self, o: &QuotingEnclave) -> bool {
+		let attributes_flags = self.attributes.flags;
+
+		let quoting_enclave_attributes_mask = o.attributes_flags_mask_as_u64();
+		let quoting_enclave_attributes_flags = o.attributes_flags_as_u64();
+
+		(attributes_flags & quoting_enclave_attributes_mask) == quoting_enclave_attributes_flags
+	}
+
+	pub fn verify(&self, o: &QuotingEnclave) -> bool {
+		if self.isv_prod_id != o.isvprodid || self.mr_signer != o.mrsigner {
+			return false
+		}
+		if !self.verify_misc_select_field(o) {
+			return false
+		}
+		if !self.verify_attributes_field(o) {
+			return false
 		}
 		for tcb in &o.tcb {
 			// If the enclave isvsvn is bigger than one of the
@@ -493,6 +512,27 @@ pub fn verify_certificate_chain<'a>(
 		.verify_is_valid_tls_server_cert(sig_algs, &DCAP_SERVER_ROOTS, intermediate_certs, time)
 		.map_err(|_| "Invalid certificate chain")?;
 	Ok(leaf_cert)
+}
+
+pub fn extract_tcb_info_from_raw_dcap_quote(
+	dcap_quote_raw: &[u8],
+) -> Result<(Fmspc, TcbVersionStatus), &'static str> {
+	let mut dcap_quote_clone = dcap_quote_raw;
+	let quote: DcapQuote =
+		Decode::decode(&mut dcap_quote_clone).map_err(|_| "Failed to decode attestation report")?;
+
+	ensure!(quote.header.version == 3, "Only support for version 3");
+	ensure!(quote.header.attestation_key_type == 2, "Only support for ECDSA-256");
+	ensure!(
+		quote.quote_signature_data.qe_certification_data.certification_data_type == 5,
+		"Only support for PEM formatted PCK Cert Chain"
+	);
+
+	let certs = extract_certs(&quote.quote_signature_data.qe_certification_data.certification_data);
+
+	let (fmspc, tcb_info) = extract_tcb_info(&certs[0])?;
+
+	Ok((fmspc, tcb_info))
 }
 
 pub fn verify_dcap_quote(
