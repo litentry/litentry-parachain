@@ -1004,7 +1004,7 @@ pub mod pallet {
 				// remove delegation from delegator state
 				let mut delegator = DelegatorState::<T>::get(&bond.owner).expect(
 					"Collator state and delegator state are consistent.
-						Collator state has a record of this delegation. Therefore, 
+						Collator state has a record of this delegation. Therefore,
 						Delegator state also has a record. qed.",
 				);
 
@@ -1789,10 +1789,6 @@ pub mod pallet {
 			let score_plus_20 = <AwardedPts<T>>::get(now, &author).saturating_add(20);
 			<AwardedPts<T>>::insert(now, author, score_plus_20);
 			<Points<T>>::mutate(now, |x| *x = x.saturating_add(20));
-		}
-
-		fn note_uncle(_author: T::AccountId, _age: T::BlockNumber) {
-			// we too are not caring.
 		}
 	}
 
