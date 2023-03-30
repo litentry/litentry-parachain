@@ -25,7 +25,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
-use litentry_primitives::{EvmNetwork, SubstrateNetwork};
+use litentry_primitives::{EvmNetwork, IndexingNetwork, SubstrateNetwork};
 use log::*;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -47,6 +47,11 @@ impl Default for GraphQLClient {
 	}
 }
 
+/// TODO: https://github.com/litentry/litentry-parachain/pull/1534
+/// There are two issues here that need to be refactored later
+/// 1. The name of VerifiedCredentialsNetwork is a bit unclear
+/// 2. VerifiedCredentialsNetwork and IndexingNetwork are repeated, they should be one-to-one relationship, just keep one.
+/// What's even better is that we have a trait for each data provider, something like get_supported_network.
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
 pub enum VerifiedCredentialsNetwork {
 	Litentry,
@@ -79,6 +84,34 @@ impl From<EvmNetwork> for VerifiedCredentialsNetwork {
 			EvmNetwork::Ethereum => Self::Ethereum,
 			// TODO: how about BSC?
 			EvmNetwork::BSC => unreachable!("support BSC?"),
+		}
+	}
+}
+
+impl From<IndexingNetwork> for VerifiedCredentialsNetwork {
+	fn from(network: IndexingNetwork) -> Self {
+		match network {
+			IndexingNetwork::Litmus => Self::Litmus,
+			IndexingNetwork::Litentry => Self::Litentry,
+			IndexingNetwork::Polkadot => Self::Polkadot,
+			IndexingNetwork::Kusama => Self::Kusama,
+			IndexingNetwork::Khala => Self::Khala,
+			IndexingNetwork::Ethereum => Self::Ethereum,
+		}
+	}
+}
+
+impl std::fmt::Display for VerifiedCredentialsNetwork {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		match *self {
+			VerifiedCredentialsNetwork::Litentry => write!(f, "Litentry"),
+			VerifiedCredentialsNetwork::Litmus => write!(f, "Litmus"),
+			VerifiedCredentialsNetwork::LitentryRococo => write!(f, "LitentryRococo"),
+			VerifiedCredentialsNetwork::Polkadot => write!(f, "Polkadot"),
+			VerifiedCredentialsNetwork::Kusama => write!(f, "Kusama"),
+			VerifiedCredentialsNetwork::Khala => write!(f, "Khala"),
+			VerifiedCredentialsNetwork::Ethereum => write!(f, "Ethereum"),
+			VerifiedCredentialsNetwork::TestNet => write!(f, "TestNet"),
 		}
 	}
 }

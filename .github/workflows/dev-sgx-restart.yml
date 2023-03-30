@@ -27,7 +27,7 @@ jobs:
           sudo systemctl stop integritee.service
           cd /home/ubuntu/repo/litentry-parachain/tee-worker
           ./scripts/litentry/stop_parachain.sh
-          sleep 30  #after stoping the docker, it takes some time to release port 9944 by docker-proxy.
+          sleep 60  #after stoping the docker, it takes some time to release port 9944 by docker-proxy.
           ./scripts/litentry/start_parachain.sh
           sudo systemctl start integritee.service
 

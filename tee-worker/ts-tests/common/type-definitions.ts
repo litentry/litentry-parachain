@@ -299,6 +299,16 @@ export type VCRequested = {
     mrEnclave: HexString;
     assertion: Assertion;
 };
+
+export enum IndexingNetwork {
+    Litentry='Litentry',
+    Litmus='Litmus',
+	Polkadot='Polkadot',
+	Kusama='Kusama',
+	Khala='Khala',
+	Ethereum='Ethereum',
+};
+
 export type Assertion = {
     A1?: string;
     A2?: [string];
@@ -307,7 +317,7 @@ export type Assertion = {
     A5?: [string, string];
     A6?: string;
     A7?: [number];
-    A8?: [string];
+    A8?: [IndexingNetwork];
     A9?: string;
     A10?: [number];
     A11?: [number];
