@@ -32,23 +32,23 @@ extern crate sgx_tstd as std;
 /// If they all request A4, these are the received assertions:
 /// ALICE:
 /// [
-/// 	from_date: < 2019-01-01
-/// 	to_date: >= 2023-03-30 (now)
-/// 	value: true
+///    from_date: < 2019-01-01
+///    to_date: >= 2023-03-30 (now)
+///    value: true
 /// ]
 ///
 /// BOB:
 /// [
-/// 	from_date: < 2017-01-01
-/// 	to_date: >= 2023-03-30 (now)
-/// 	value: false
+///    from_date: < 2017-01-01
+///    to_date: >= 2023-03-30 (now)
+///    value: false
 /// ]
 ///
 /// CAROL:
 /// [
-/// 	from_date: < 2017-01-01
-/// 	to_date: >= 2023-03-30 (now)
-/// 	value: false
+///    from_date: < 2017-01-01
+///    to_date: >= 2023-03-30 (now)
+///    value: false
 /// ]
 ///
 /// So just from the assertion results you can't distinguish between:
