@@ -63,7 +63,7 @@ frame_support::construct_runtime!(
 		IdentityManagementMock: pallet_identity_management_mock::{Pallet, Call, Storage, Event<T>},
 		// This code should be safe to add
 		// Temporary adjust for whitelist function
-		Whitelist: pallet_whitelist::{Pallet, Call, Storage, Event<T>}
+		Whitelist: pallet_group::{Pallet, Call, Storage, Event<T>}
 	}
 );
 
@@ -128,14 +128,14 @@ impl pallet_identity_management_mock::Config for Test {
 	type DelegateeAdminOrigin = EnsureRoot<Self::AccountId>;
 	// This code should be safe to add
 	/// Temporary adjust for whitelist function
-	type WhitelistOrigin = pallet_whitelist::EnsureWhitelist<Self>;
+	type WhitelistOrigin = Whitelist;
 }
 
 // This code should be safe to add
 /// Temporary adjust for whitelist function
-impl pallet_whitelist::Config for Test {
+impl pallet_group::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type WhitelistManagerOrigin = frame_system::EnsureRoot<Self::AccountId>;
+	type GroupManagerOrigin = frame_system::EnsureRoot<Self::AccountId>;
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {

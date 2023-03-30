@@ -27,7 +27,7 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 };
 
-use crate::{self as whitelist, Config};
+use crate::{self as pallet_group, Config};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -41,7 +41,7 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Whitelist: whitelist::{Pallet, Call, Storage, Event<T>},
+		Whitelist: pallet_group::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -94,7 +94,7 @@ impl pallet_balances::Config for Test {
 
 impl Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type WhitelistManagerOrigin = frame_system::EnsureRoot<Self::AccountId>;
+	type GroupManagerOrigin = frame_system::EnsureRoot<Self::AccountId>;
 }
 
 pub const ACCOUNT_A: u64 = 0x2;

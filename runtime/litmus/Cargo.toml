@@ -97,10 +97,10 @@ pallet-vc-management = { path = "../../pallets/vc-management", default-features 
 runtime-common = { path = '../common', default-features = false }
 
 # TEE pallets
+pallet-group = { path = "../../pallets/group", default-features = false }
 pallet-sidechain = { path = "../../pallets/sidechain", default-features = false }
 pallet-teeracle = { path = "../../pallets/teeracle", default-features = false }
 pallet-teerex = { path = "../../pallets/teerex", default-features = false }
-pallet-whitelist = { path = "../../pallets/whitelist", default-features = false }
 
 [dev-dependencies]
 cumulus-primitives-parachain-inherent = { git = 'https://github.com/paritytech/cumulus', branch = "polkadot-v0.9.37" }
@@ -221,13 +221,13 @@ std = [
   "pallet-bridge-transfer/std",
   "pallet-drop3/std",
   "pallet-extrinsic-filter/std",
+  "pallet-group/std",
   "pallet-identity-management/std",
   "pallet-identity-management-mock/std",
   "pallet-teerex/std",
   "pallet-sidechain/std",
   "pallet-teeracle/std",
   "pallet-vc-management/std",
-  "pallet-whitelist/std",
 ]
 try-runtime = [
   "cumulus-pallet-aura-ext/try-runtime",

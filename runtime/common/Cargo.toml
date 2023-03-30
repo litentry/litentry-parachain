@@ -46,6 +46,7 @@ xcm-executor = { git = "https://github.com/paritytech/polkadot", default-feature
 core-primitives = { path = "../../primitives/core", default-features = false }
 pallet-asset-manager = { path = "../../pallets/xcm-asset-manager", default-features = false }
 pallet-extrinsic-filter = { path = "../../pallets/extrinsic-filter", default-features = false }
+pallet-group = { path = "../../pallets/group", default-features = false }
 pallet-teerex = { path = "../../pallets/teerex", default-features = false }
 
 # Dev dependencies

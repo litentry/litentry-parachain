@@ -71,7 +71,7 @@ use runtime_common::{
 	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrHalfTechnicalCommittee,
 	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, NegativeImbalance,
 	RuntimeBlockWeights, SlowAdjustingFeeUpdate, TechnicalCommitteeInstance,
-	TechnicalCommitteeMembershipInstance, MAXIMUM_BLOCK_WEIGHT,
+	TechnicalCommitteeMembershipInstance, WhitelistGroup, MAXIMUM_BLOCK_WEIGHT,
 };
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
@@ -827,14 +827,14 @@ impl pallet_identity_management_mock::Config for Runtime {
 	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
 	// This code should be safe to add
 	/// Temporary adjust for whitelist function
-	type WhitelistOrigin = pallet_whitelist::EnsureWhitelist<Self>;
+	type WhitelistOrigin = Whitelist;
 }
 
 // This code should be safe to add
 /// Temporary adjust for whitelist function
-impl pallet_whitelist::Config for Runtime {
+impl pallet_group::Config<WhitelistGroup> for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WhitelistManagerOrigin = frame_system::EnsureRoot<Self::AccountId>;
+	type GroupManagerOrigin = EnsureRootOrAllCouncil;
 }
 
 impl pallet_vc_management::Config for Runtime {
@@ -923,7 +923,7 @@ construct_runtime! {
 
 		// Mock
 		IdentityManagementMock: pallet_identity_management_mock = 100,
-		Whitelist: pallet_whitelist = 101,
+		Whitelist: pallet_group::<Instance1> = 101,
 	}
 }
 

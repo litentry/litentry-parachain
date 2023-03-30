@@ -198,9 +198,21 @@ fn wrong_polkadot_verification_message_fails() {
 fn whitlelist_enabled_extrinsic_fails() {
 	new_test_ext().execute_with(|| {
 		let who = 2;
-		assert_ok!(Whitelist::swtich_whitelist_on(RuntimeOrigin::root()));
+		assert_ok!(Whitelist::swtich_group_control_on(RuntimeOrigin::root()));
 		let identity = create_mock_twitter_identity(b"alice");
+		let _encrypted_identity = tee_encrypt(identity.encode().as_slice());
+
+		let _key = setup_user_shieding_key(who);
 		let encrypted_identity = tee_encrypt(identity.encode().as_slice());
+		let _code = IdentityManagementMock::get_mock_challenge_code(
+			3,
+			IdentityManagementMock::challenge_codes(&who, &identity),
+		);
+
+		System::assert_has_event(RuntimeEvent::IdentityManagementMock(
+			crate::Event::UserShieldingKeySet { account: who },
+		));
+		// fail with BadOrigin of whitelist
 		assert_noop!(
 			IdentityManagementMock::create_identity(
 				RuntimeOrigin::signed(who),
@@ -211,8 +223,8 @@ fn whitlelist_enabled_extrinsic_fails() {
 			),
 			sp_runtime::DispatchError::BadOrigin
 		);
-
-		assert_ok!(Whitelist::add_whitelist(RuntimeOrigin::root(), who));
+		// success after whitelist added
+		assert_ok!(Whitelist::add_group_member(RuntimeOrigin::root(), who));
 		assert_ok!(IdentityManagementMock::create_identity(
 			RuntimeOrigin::signed(who),
 			H256::random(),
