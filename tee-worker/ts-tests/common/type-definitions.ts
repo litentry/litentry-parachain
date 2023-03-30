@@ -308,13 +308,13 @@ export type VCRequested = {
 };
 
 export enum IndexingNetwork {
-    Litentry='Litentry',
-    Litmus='Litmus',
-	Polkadot='Polkadot',
-	Kusama='Kusama',
-	Khala='Khala',
-	Ethereum='Ethereum',
-};
+    Litentry = 'Litentry',
+    Litmus = 'Litmus',
+    Polkadot = 'Polkadot',
+    Kusama = 'Kusama',
+    Khala = 'Khala',
+    Ethereum = 'Ethereum',
+}
 
 export type Assertion = {
     A1?: string;
