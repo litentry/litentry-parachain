@@ -487,7 +487,6 @@ pub mod pallet {
 				ScheduledEnclave::<T>::contains_key(sidechain_block_number),
 				Error::<T>::ScheduledEnclaveNotExist
 			);
-			// remove
 			ScheduledEnclave::<T>::remove(sidechain_block_number);
 			Self::deposit_event(Event::RemovedScheduledEnclave(sidechain_block_number));
 			Ok(().into())
