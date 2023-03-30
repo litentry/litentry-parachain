@@ -867,11 +867,13 @@ fn data_provider(config: &Config) -> DataProvidersStatic {
 	if let Ok(v) = env::var("TWITTER_LITENTRY_URL") {
 		data_provider_config.set_twitter_litentry_url(v);
 	}
-	if let Ok(v) = env::var("TWITTER_AUTH_TOKEN_V2") {
-		data_provider_config.set_twitter_auth_token_v2(v);
-	}
+	// Bearer Token is as same as App only Access Token on Twitter (https://developer.twitter.com/en/docs/authentication/oauth-2-0/application-only),
+	// that is for developers that just need read-only access to public information.
 	if let Ok(v) = env::var("TWITTER_AUTH_TOKEN_V1_1") {
 		data_provider_config.set_twitter_auth_token_v1_1(v);
+	}
+	if let Ok(v) = env::var("TWITTER_AUTH_TOKEN_V2") {
+		data_provider_config.set_twitter_auth_token_v2(v);
 	}
 	if let Ok(v) = env::var("DISCORD_OFFICIAL_URL") {
 		data_provider_config.set_discord_official_url(v);

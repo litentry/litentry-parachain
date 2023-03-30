@@ -75,16 +75,16 @@ where
 		})
 }
 
-pub(crate) fn query_retweet<F>(
+pub(crate) fn query_retweeted_by<F>(
 	func: Arc<F>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone
 where
 	F: Fn(&AccountId, &Identity) -> ChallengeCode + Send + Sync + 'static,
 {
 	warp::get()
-		.and(warp::path!("2" / "tweets" / "search" / "recent"))
+		.and(warp::path!("2" / "tweets" / String / "retweeted_by"))
 		.and(warp::query::<HashMap<String, String>>())
-		.map(move |p: HashMap<String, String>| {
+		.map(move |original_tweet_id, p: HashMap<String, String>| {
 			let default = String::default();
 			let query = p.get("query").unwrap_or(&default);
 			let expansions = p.get("expansions").unwrap_or(&default);

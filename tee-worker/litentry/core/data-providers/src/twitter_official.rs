@@ -197,7 +197,7 @@ impl TwitterOfficialClient {
 
 	/// V2, https://developer.twitter.com/en/docs/twitter-api/tweets/retweets/api-reference/get-tweets-id-retweeted_by
 	/// rate limit: 75/15min(per App) 75/15min(per User)
-	/// Note: The maximum result is 100, so if a user requests too late (after 100 retweets by others),
+	/// Note: The maximum result is 100 latest, when a user requests too late (after 100 retweets by others),
 	/// the verification will fail.
 	pub fn query_retweeted_by(&mut self, original_tweet_id: Vec<u8>) -> Result<Retweeted, Error> {
 		let original_tweet_id = vec_to_string(original_tweet_id)?;
@@ -215,8 +215,8 @@ impl TwitterOfficialClient {
 	}
 
 	/// V2, rate limit: 300/15min(per App) 900/15min(per User)
-	pub fn query_user(&mut self, user: Vec<u8>) -> Result<TwitterUser, Error> {
-		let user = vec_to_string(user)?;
+	pub fn query_user(&mut self, user_name: Vec<u8>) -> Result<TwitterUser, Error> {
+		let user = vec_to_string(user_name)?;
 		debug!("twitter query user, user: {}", user);
 
 		let query = vec![("user.fields", "public_metrics")];
@@ -236,16 +236,16 @@ impl TwitterOfficialClient {
 	/// rate limit: 15/15min(per App) 180/15min(per User)
 	pub fn query_friendship(
 		&mut self,
-		source_user: Vec<u8>,
-		target_user: Vec<u8>,
+		source_user_name: Vec<u8>,
+		target_user_id: Vec<u8>,
 	) -> Result<Relationship, Error> {
-		let source = vec_to_string(source_user)?;
-		let target = vec_to_string(target_user)?;
-		debug!("source user: {}, target user: {}", source, target);
+		let source = vec_to_string(source_user_name)?;
+		let target_id = vec_to_string(target_user_id)?;
+		debug!("source user: {}, target user: {}", source, target_id);
 
 		let path = format!("/1.1/friendships/show.json");
 		let query: Vec<(&str, &str)> =
-			vec![("source_screen_name", source.as_str()), ("target_screen_name", target.as_str())];
+			vec![("source_screen_name", source.as_str()), ("target_id", target_id.as_str())];
 
 		let resp = self
 			.client

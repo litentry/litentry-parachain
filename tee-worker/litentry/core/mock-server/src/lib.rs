@@ -65,7 +65,7 @@ where
 		LocalSet::new().block_on(&runtime, async {
 			let (addr, srv) = warp::serve(
 				twitter_official::query_tweet(getter.clone())
-					.or(twitter_official::query_retweet(getter))
+					.or(twitter_official::query_retweeted_by(getter))
 					.or(twitter_official::query_user())
 					.or(twitter_litentry::check_follow())
 					.or(discord_official::query_message())
