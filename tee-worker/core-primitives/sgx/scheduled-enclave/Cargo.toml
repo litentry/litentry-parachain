@@ -1,5 +1,5 @@
 [package]
-name = "itp-enclave-scheduled"
+name = "itp-scheduled-enclave"
 version = "0.8.0"
 edition = "2021"
 

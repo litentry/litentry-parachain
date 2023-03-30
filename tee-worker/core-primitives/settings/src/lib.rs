@@ -34,7 +34,6 @@ pub mod files {
 	// used by worker
 	pub static ENCLAVE_TOKEN: &str = "enclave.token";
 	pub static ENCLAVE_FILE: &str = "enclave.signed.so";
-	pub static SCHEDULED_ENCLAVE_FILE: &str = "scheduled_enclaves.json";
 	pub static SHIELDING_KEY_FILE: &str = "enclave-shielding-pubkey.json";
 	pub static SIGNING_KEY_FILE: &str = "enclave-signing-pubkey.bin";
 	/// sidechain database path
@@ -54,6 +53,7 @@ pub mod files {
 	pub const SHARDS_PATH: &str = "shards";
 	pub const ENCRYPTED_STATE_FILE: &str = "state.bin";
 	pub const LAST_SLOT_BIN: &str = "last_slot.bin";
+	pub const SCHEDULED_ENCLAVE_FILE: &str = "scheduled-enclave.json";
 
 	#[cfg(feature = "production")]
 	pub static RA_SPID_FILE: &str = "spid_production.txt";

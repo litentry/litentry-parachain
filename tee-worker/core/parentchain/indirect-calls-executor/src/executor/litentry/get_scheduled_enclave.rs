@@ -16,7 +16,6 @@
 
 use crate::{error::Result, executor::Executor, IndirectCallsExecutor};
 use itp_component_container::{ComponentContainer, ComponentGetter, ComponentSetter};
-use itp_enclave_scheduled::{ScheduledEnclaveHandle, ScheduledEnclaveInfo, ScheduledEnclaves};
 use itp_node_api::{
 	api_client::ParentchainUncheckedExtrinsic,
 	metadata::{
@@ -24,6 +23,7 @@ use itp_node_api::{
 		provider::AccessNodeMetadata,
 	},
 };
+use itp_scheduled_enclave::{ScheduledEnclaveHandle, ScheduledEnclaveInfo, ScheduledEnclaves};
 use itp_types::{CallRemoveScheduledEnclaveFn, CallUpdateScheduledEnclaveFn};
 use litentry_primitives::ParentchainBlockNumber;
 use log::*;
@@ -77,7 +77,7 @@ where
 	}
 
 	fn call_index_from_metadata(&self, metadata_type: &N::MetadataType) -> Result<[u8; 2]> {
-		metadata_type.update_scheduled_encalve().map_err(|e| e.into())
+		metadata_type.update_scheduled_enclave().map_err(|e| e.into())
 	}
 
 	fn execute(

@@ -7,10 +7,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
-#[cfg(all(not(feature = "sgx"), feature = "std"))]
-use std::fs::File;
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use std::sgxfs::SgxFile as File;
+
 use std::{
 	convert::AsRef,
 	fs,
@@ -19,6 +16,9 @@ use std::{
 	string::String,
 	vec::Vec,
 };
+
+#[cfg(feature = "sgx")]
+pub use sgx::*;
 
 /// Abstraction around IO that is supposed to use the `std::io::File`
 pub trait IO: Sized {
@@ -72,12 +72,23 @@ pub fn read_to_string<P: AsRef<Path>>(filepath: P) -> IOResult<String> {
 	Ok(contents)
 }
 
-pub fn unseal<P: AsRef<Path>>(path: P) -> IOResult<Vec<u8>> {
-	let mut buf = Vec::new();
-	File::open(path).map(|mut f| f.read_to_end(&mut buf))??;
-	Ok(buf)
-}
+#[cfg(feature = "sgx")]
+mod sgx {
+	use std::{
+		convert::AsRef,
+		io::{Read, Result, Write},
+		path::Path,
+		sgxfs::SgxFile,
+		vec::Vec,
+	};
 
-pub fn seal<P: AsRef<Path>>(bytes: &[u8], path: P) -> IOResult<()> {
-	File::create(path).map(|mut f| f.write_all(bytes))?
+	pub fn unseal<P: AsRef<Path>>(path: P) -> Result<Vec<u8>> {
+		let mut buf = Vec::new();
+		SgxFile::open(path).map(|mut f| f.read_to_end(&mut buf))??;
+		Ok(buf)
+	}
+
+	pub fn seal<P: AsRef<Path>>(bytes: &[u8], path: P) -> Result<()> {
+		SgxFile::create(path).map(|mut f| f.write_all(bytes))?
+	}
 }
