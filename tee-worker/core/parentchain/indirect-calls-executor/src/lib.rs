@@ -66,7 +66,7 @@ use crate::{
 		DecorateExecutor,
 	},
 };
-use beefy_merkle_tree::{merkle_root, Keccak256};
+use binary_merkle_tree::merkle_root;
 use codec::Encode;
 use ita_stf::{TrustedCall, TrustedOperation};
 use itp_node_api::metadata::{
@@ -84,7 +84,7 @@ use itp_types::{
 use litentry_primitives::ParentchainBlockNumber;
 use log::*;
 use sp_core::blake2_256;
-use sp_runtime::traits::{Block as ParentchainBlockTrait, Header};
+use sp_runtime::traits::{Block as ParentchainBlockTrait, Header, Keccak256};
 use std::{sync::Arc, vec, vec::Vec};
 
 #[derive(Clone)]
