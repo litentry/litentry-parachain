@@ -48,10 +48,14 @@ impl SetUserShieldingKeyPreflightCommand {
 
 		hex::decode_to_slice(&self.key_hex, &mut key).expect("decoding shielding_key failed");
 
-		let top: TrustedOperation =
-			TrustedCall::set_user_shielding_key_preflight(root.public().into(), who, key)
-				.sign(&KeyPair::Sr25519(Box::new(root)), nonce, &mrenclave, &shard)
-				.into_trusted_operation(trusted_cli.direct);
+		let top: TrustedOperation = TrustedCall::set_user_shielding_key_preflight(
+			root.public().into(),
+			who,
+			key,
+			Default::default(),
+		)
+		.sign(&KeyPair::Sr25519(Box::new(root)), nonce, &mrenclave, &shard)
+		.into_trusted_operation(trusted_cli.direct);
 		perform_trusted_operation(cli, trusted_cli, &top);
 	}
 }

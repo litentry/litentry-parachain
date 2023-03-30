@@ -7,7 +7,7 @@ import { EventRecord, Event } from '@polkadot/types/interfaces';
 
 //transactions utils
 export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrinsic<ApiTypes>, signer: KeyringPair) {
-    return new Promise<{ block: string }>(async (resolve, reject) => {
+    return new Promise<{ block: string; txHash: string }>(async (resolve, reject) => {
         // The purpose of paymentInfo is to check whether the version of polkadot/api is suitable for the current test and to determine whether the transaction is successful.
         await tx.paymentInfo(signer);
         const nonce = await api.rpc.system.accountNextIndex(signer.address);
@@ -16,6 +16,7 @@ export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrins
                 console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
                 resolve({
                     block: result.status.asInBlock.toString(),
+                    txHash: result.txHash.toHex(),
                 });
             } else if (result.status.isInvalid) {
                 reject(`Transaction is ${result.status}`);
@@ -46,6 +47,7 @@ export async function sendTxUntilInBlockList(api: ApiPromise, txs: TransactionSu
                             console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
                             resolve({
                                 block: result.status.asInBlock.toString(),
+                                txHash: result.txHash.toHex(),
                             });
                         }
                     } else if (result.status.isInvalid) {

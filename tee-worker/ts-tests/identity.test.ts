@@ -159,10 +159,11 @@ describeLitentry('Test Identity', (context) => {
             `0x${ciphertext}`,
             null
         );
-        await sendTxUntilInBlock(context.api, tx, context.substrateWallet.alice);
+        const res = await sendTxUntilInBlock(context.api, tx, context.substrateWallet.alice);
 
-        const events = await listenEvent(context.api, 'identityManagement', ['CreateIdentityFailed']);
+        const events = (await listenEvent(context.api, 'identityManagement', ['CreateIdentityFailed'])) as any;
         expect(events.length).to.be.equal(1);
+        assert.equal(events[0].data.reqExtHash.toHex(), res.txHash);
 
         await checkErrorDetail(events, 'InvalidUserShieldingKey', true);
     });

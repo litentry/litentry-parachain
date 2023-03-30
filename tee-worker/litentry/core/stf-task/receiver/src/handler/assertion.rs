@@ -221,6 +221,7 @@ where
 					vc_index,
 					vc_hash,
 					output,
+					self.req.hash,
 				));
 				self.context.submit_to_parentchain(call)
 			},
@@ -238,7 +239,12 @@ where
 			.get_from_metadata(|m| VCMPCallIndexes::vcmp_some_error_call_indexes(m))
 		{
 			Ok(Ok(call_index)) => {
-				let call = OpaqueCall::from_tuple(&(call_index, error));
+				let call = OpaqueCall::from_tuple(&(
+					call_index,
+					self.req.who.clone(),
+					error,
+					self.req.hash,
+				));
 				self.context.submit_to_parentchain(call)
 			},
 			Ok(Err(e)) => error!("failed to get metadata. Due to: {:?}", e),

@@ -24,6 +24,7 @@ use crate::{
 };
 use frame_support::{dispatch::UnfilteredDispatchable, ensure};
 use itp_stf_primitives::types::ShardIdentifier;
+use itp_types::H256;
 use itp_utils::stringify::account_id_to_string;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
@@ -44,6 +45,7 @@ impl TrustedCallSigned {
 		shard: &ShardIdentifier,
 		who: AccountId,
 		key: UserShieldingKeyType,
+		hash: H256,
 	) -> StfResult<()> {
 		debug!(
 			"set user shielding key preflight, who = {:?}, key = {:?}",
@@ -51,9 +53,13 @@ impl TrustedCallSigned {
 			key.clone()
 		);
 		ensure!(is_root::<Runtime, AccountId>(&root), StfError::MissingPrivileges(root));
-		let encoded_callback =
-			TrustedCall::set_user_shielding_key_runtime(enclave_signer_account(), who.clone(), key)
-				.encode();
+		let encoded_callback = TrustedCall::set_user_shielding_key_runtime(
+			enclave_signer_account(),
+			who.clone(),
+			key,
+			hash,
+		)
+		.encode();
 		let encoded_shard = shard.encode();
 		let request = SetUserShieldingKeyRequest { encoded_shard, who, encoded_callback }.into();
 		let sender = StfRequestSender::new();
@@ -162,6 +168,7 @@ impl TrustedCallSigned {
 		identity: Identity,
 		validation_data: ValidationData,
 		bn: ParentchainBlockNumber,
+		hash: H256,
 	) -> StfResult<()> {
 		debug!("verify identity preflight, who:{:?}, identity:{:?}", who, identity);
 		ensure_enclave_signer_account(&enclave_account)?;
@@ -173,6 +180,7 @@ impl TrustedCallSigned {
 			who.clone(),
 			identity.clone(),
 			bn,
+			hash,
 		)
 		.encode();
 		let encoded_shard = shard.encode();
@@ -248,6 +256,7 @@ impl TrustedCallSigned {
 		who: AccountId,
 		assertion: Assertion,
 		bn: ParentchainBlockNumber,
+		hash: H256,
 	) -> StfResult<()> {
 		debug!("build assertion, who {:?}, assertion {:?}", account_id_to_string(&who), assertion);
 		ensure_enclave_signer_account(&enclave_account)?;
@@ -276,6 +285,7 @@ impl TrustedCallSigned {
 			vec_identity,
 			bn,
 			key,
+			hash,
 		}
 		.into();
 		let sender = StfRequestSender::new();

@@ -57,15 +57,17 @@ export async function createIdentities(
         txs.push({ tx, nonce: newNonce });
     }
 
-    await sendTxUntilInBlockList(context.api, txs, signer);
+    const res = (await sendTxUntilInBlockList(context.api, txs, signer)) as any;
 
     if (listening) {
         const events = (await listenEvent(context.api, 'identityManagement', ['IdentityCreated'])) as any;
         expect(events.length).to.be.equal(identities.length);
+        expect(events.length).to.be.equal(res.length);
 
         let results: IdentityGenericEvent[] = [];
 
         for (let index = 0; index < events.length; index++) {
+            assert.equal(events[index].data.reqExtHash.toHex(), res[index].txHash);
             results.push(
                 createIdentityEvent(
                     context.api,
@@ -98,15 +100,17 @@ export async function removeIdentities(
         txs.push({ tx, nonce: newNonce });
     }
 
-    await sendTxUntilInBlockList(context.api, txs, signer);
+    const res = (await sendTxUntilInBlockList(context.api, txs, signer)) as any;
 
     if (listening) {
         const events = (await listenEvent(context.api, 'identityManagement', ['IdentityRemoved'])) as any;
         expect(events.length).to.be.equal(identity.length);
+        expect(events.length).to.be.equal(res.length);
 
         let results: IdentityGenericEvent[] = [];
 
         for (let index = 0; index < events.length; index++) {
+            assert.equal(events[index].data.reqExtHash.toHex(), res[index].txHash);
             results.push(
                 createIdentityEvent(
                     context.api,
@@ -150,13 +154,15 @@ export async function verifyIdentities(
         txs.push({ tx, nonce: newNonce });
     }
 
-    await sendTxUntilInBlockList(context.api, txs, signer);
+    const res = (await sendTxUntilInBlockList(context.api, txs, signer)) as any;
 
     if (listening) {
         const events = (await listenEvent(context.api, 'identityManagement', ['IdentityVerified'])) as any;
         expect(events.length).to.be.equal(identities.length);
+        expect(events.length).to.be.equal(res.length);
         let results: IdentityGenericEvent[] = [];
         for (let index = 0; index < events.length; index++) {
+            assert.equal(events[index].data.reqExtHash.toHex(), res[index].txHash);
             results.push(
                 createIdentityEvent(
                     context.api,
@@ -201,10 +207,11 @@ export async function requestVCs(
         txs.push({ tx, nonce: newNonce });
     }
 
-    await sendTxUntilInBlockList(context.api, txs, signer);
+    const res = (await sendTxUntilInBlockList(context.api, txs, signer)) as any;
     if (listening) {
         const events = (await listenEvent(context.api, 'vcManagement', ['VCIssued'])) as any;
         expect(events.length).to.be.equal(len);
+        expect(events.length).to.be.equal(res.length);
 
         let results: {
             account: HexString;
@@ -212,6 +219,7 @@ export async function requestVCs(
             vc: HexString;
         }[] = [];
         for (let k = 0; k < events.length; k++) {
+            assert.equal(events[k].data.reqExtHash.toHex(), res[k].txHash);
             results.push({
                 account: events[k].data.account.toHex(),
                 index: events[k].data.index.toHex(),
