@@ -153,6 +153,7 @@ export const teeTypes = {
 
     // vc management
     VCRequested: {
+        account: 'AccountId',
         mrEnclave: 'mrEnclaveIdentifier',
         assertion: 'Assertion',
     },
@@ -301,6 +302,7 @@ export type IdentityContext = {
 
 //vc types
 export type VCRequested = {
+    account: HexString;
     mrEnclave: HexString;
     assertion: Assertion;
 };

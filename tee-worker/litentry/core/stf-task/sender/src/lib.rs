@@ -30,7 +30,7 @@ pub mod sgx_reexport_prelude {
 	pub use url_sgx as url;
 }
 
-use itp_types::AccountId;
+use itp_types::{AccountId, H256};
 pub mod error;
 pub mod stf_task_sender;
 use codec::{Decode, Encode};
@@ -100,6 +100,7 @@ pub struct AssertionBuildRequest {
 	pub vec_identity: BoundedVec<Identity, MaxIdentityLength>,
 	pub bn: litentry_primitives::ParentchainBlockNumber,
 	pub key: UserShieldingKeyType,
+	pub hash: H256,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]

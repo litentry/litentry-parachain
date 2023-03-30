@@ -28,6 +28,7 @@ use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
+use lc_data_providers::G_DATA_PROVIDERS;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{
 	aes_encrypt_default, AesOutput, Assertion, ErrorDetail, ErrorString, VCMPError,
@@ -161,6 +162,10 @@ where
 				ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
 			)
 		})?;
+
+		let credential_endpoint = G_DATA_PROVIDERS.read().unwrap().credential_endpoint.clone();
+		credential.credential_subject.set_endpoint(credential_endpoint);
+
 		credential.issuer.id = account_id_to_string(&enclave_account);
 		let payload = credential.to_json().map_err(|_| {
 			VCMPError::RequestVCFailed(self.req.assertion.clone(), ErrorDetail::ParseError)
@@ -210,9 +215,11 @@ where
 				let call = OpaqueCall::from_tuple(&(
 					call_index,
 					self.req.who.clone(),
+					self.req.assertion.clone(),
 					vc_index,
 					vc_hash,
 					output,
+					self.req.hash,
 				));
 				self.context.submit_to_parentchain(call)
 			},
@@ -230,7 +237,12 @@ where
 			.get_from_metadata(|m| VCMPCallIndexes::vcmp_some_error_call_indexes(m))
 		{
 			Ok(Ok(call_index)) => {
-				let call = OpaqueCall::from_tuple(&(call_index, error));
+				let call = OpaqueCall::from_tuple(&(
+					call_index,
+					self.req.who.clone(),
+					error,
+					self.req.hash,
+				));
 				self.context.submit_to_parentchain(call)
 			},
 			Ok(Err(e)) => error!("failed to get metadata. Due to: {:?}", e),
