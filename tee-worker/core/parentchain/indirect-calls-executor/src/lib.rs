@@ -14,7 +14,12 @@
 	limitations under the License.
 
 */
-//! Execute indirect calls, i.e. extrinsics extracted from parentchain blocks
+//! Execute indirect calls, i.e. extrinsics extracted from parentchain blocks.
+//!
+//! The core struct of this crate is the [IndirectCallsExecutor] executor. It scans parentchain
+//! blocks for relevant extrinsics, derives an indirect call for those and dispatches the
+//! indirect call.
+
 #![feature(trait_alias)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(test, feature(assert_matches))]

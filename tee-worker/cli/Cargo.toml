@@ -40,7 +40,6 @@ sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polka
 sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 
-
 # local dependencies
 ita-sgx-runtime = { path = "../app-libs/sgx-runtime" }
 ita-stf = { path = "../app-libs/stf" }
@@ -59,11 +58,8 @@ litentry-primitives = { path = "../litentry/primitives" }
 
 [features]
 default = []
-evm = [
-    "ita-stf/evm_std",
-    "pallet-evm",
-]
+evm = ["ita-stf/evm_std", "pallet-evm"]
+teeracle = []
+sidechain = []
 offchain-worker = []
 production = []
-sidechain = []
-teeracle = []

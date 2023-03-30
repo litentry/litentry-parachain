@@ -20,6 +20,9 @@
 #[cfg(feature = "teeracle")]
 use crate::teeracle::start_interval_market_update;
 
+#[cfg(not(feature = "dcap"))]
+use crate::utils::check_files;
+
 use crate::{
 	account_funding::{setup_account_funding, EnclaveAccountInfoProvider},
 	config::Config,
@@ -35,7 +38,7 @@ use crate::{
 	prometheus_metrics::{start_metrics_server, EnclaveMetricsReceiver, MetricsHandler},
 	sidechain_setup::{sidechain_init_block_production, sidechain_start_untrusted_rpc_server},
 	sync_block_broadcaster::SyncBlockBroadcaster,
-	utils::{check_files, extract_shard},
+	utils::extract_shard,
 	worker::Worker,
 	worker_peers_updater::WorkerPeersUpdater,
 };
@@ -83,6 +86,10 @@ use litentry_primitives::{ChallengeCode, Identity, ParentchainHeader as Header};
 use log::*;
 use serde_json::Value;
 use sgx_types::*;
+
+#[cfg(feature = "dcap")]
+use sgx_verify::extract_tcb_info_from_raw_dcap_quote;
+
 use sp_core::crypto::{AccountId32, Ss58Codec};
 use sp_keyring::AccountKeyring;
 use std::{
@@ -311,10 +318,9 @@ fn main() {
 		enclave.dump_ias_ra_cert_to_disk().unwrap();
 		#[cfg(feature = "dcap")]
 		{
-			// Hard coded 6-byte FMSPC that represents the state of devsgx03
-			// TODO: either fetch this value from a list of pre-configured FMSPC values or
-			// extract the information out of the RA certificate
-			let fmspc = [00u8, 0x90, 0x6E, 0xA1, 00, 00];
+			let skip_ra = false;
+			let dcap_quote = enclave.generate_dcap_ra_quote(skip_ra).unwrap();
+			let (fmspc, _tcb_info) = extract_tcb_info_from_raw_dcap_quote(&dcap_quote).unwrap();
 			enclave.dump_dcap_collateral_to_disk(fmspc).unwrap();
 			enclave.dump_dcap_ra_cert_to_disk().unwrap();
 		}
@@ -418,6 +424,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	// ------------------------------------------------------------------------
 	// check for required files
 	if !skip_ra {
+		#[cfg(not(feature = "dcap"))]
 		check_files();
 	}
 	// ------------------------------------------------------------------------
@@ -540,11 +547,26 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		.expect("Could not set the node metadata in the enclave");
 
 	#[cfg(feature = "dcap")]
-	register_collateral(&node_api, &*enclave, &tee_accountid, is_development_mode);
+	register_collateral(&node_api, &*enclave, &tee_accountid, is_development_mode, skip_ra);
+
+	let trusted_url = config.trusted_worker_url_external();
+	#[cfg(feature = "dcap")]
+	let marblerun_base_url =
+		run_config.marblerun_base_url.unwrap_or("http://localhost:9944".to_owned());
+
+	#[cfg(feature = "dcap")]
+	fetch_marblerun_events_every_hour(
+		node_api.clone(),
+		enclave.clone(),
+		tee_accountid.clone(),
+		is_development_mode,
+		trusted_url.clone(),
+		marblerun_base_url.clone(),
+	);
 
 	// ------------------------------------------------------------------------
 	// Perform a remote attestation and get an unchecked extrinsic back.
-	let trusted_url = config.trusted_worker_url_external();
+
 	if skip_ra {
 		println!(
 			"[!] skipping remote attestation. Registering enclave without attestation report."
@@ -751,13 +773,76 @@ fn spawn_worker_for_shard_polling<InitializationHandler>(
 }
 
 #[cfg(feature = "dcap")]
+fn fetch_marblerun_events_every_hour<E>(
+	api: ParentchainApi,
+	enclave: Arc<E>,
+	accountid: AccountId32,
+	is_development_mode: bool,
+	url: String,
+	marblerun_base_url: String,
+) where
+	E: RemoteAttestation + Clone + Sync + Send + 'static,
+{
+	let enclave = enclave.clone();
+	let handle = thread::spawn(move || {
+		const POLL_INTERVAL_5_MINUTES_IN_SECS: u64 = 5 * 60;
+		loop {
+			info!("Polling marblerun events for quotes to register");
+			register_quotes_from_marblerun(
+				&api,
+				enclave.clone(),
+				&accountid,
+				is_development_mode,
+				url.clone(),
+				marblerun_base_url.clone(),
+			);
+
+			thread::sleep(Duration::from_secs(POLL_INTERVAL_5_MINUTES_IN_SECS));
+		}
+	});
+
+	handle.join().unwrap()
+}
+#[cfg(feature = "dcap")]
+fn register_quotes_from_marblerun(
+	api: &ParentchainApi,
+	enclave: Arc<dyn RemoteAttestation>,
+	accountid: &AccountId32,
+	is_development_mode: bool,
+	url: String,
+	marblerun_base_url: String,
+) {
+	let enclave = enclave.as_ref();
+	let events = prometheus_metrics::fetch_marblerun_events(&marblerun_base_url)
+		.map_err(|e| {
+			info!("Fetching events from Marblerun failed with: {:?}, continuing with 0 events.", e);
+		})
+		.unwrap_or_default();
+	let quotes: Vec<&[u8]> =
+		events.iter().map(|event| event.get_quote_without_prepended_bytes()).collect();
+
+	for quote in quotes {
+		match enclave.generate_dcap_ra_extrinsic_from_quote(url.clone(), &quote) {
+			Ok(xts) => {
+				send_extrinsic(&xts, api, accountid, is_development_mode);
+			},
+			Err(e) => {
+				error!("Extracting information from quote failed: {}", e)
+			},
+		}
+	}
+}
+#[cfg(feature = "dcap")]
 fn register_collateral(
 	api: &ParentchainApi,
 	enclave: &dyn RemoteAttestation,
 	accountid: &AccountId32,
 	is_development_mode: bool,
+	skip_ra: bool,
 ) {
-	let fmspc = [00u8, 0x90, 0x6E, 0xA1, 00, 00];
+	let dcap_quote = enclave.generate_dcap_ra_quote(skip_ra).unwrap();
+	let (fmspc, _tcb_info) = extract_tcb_info_from_raw_dcap_quote(&dcap_quote).unwrap();
+
 	let uxt = enclave.generate_register_quoting_enclave_extrinsic(fmspc).unwrap();
 	send_extrinsic(&uxt, api, accountid, is_development_mode);
 

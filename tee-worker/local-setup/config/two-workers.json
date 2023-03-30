@@ -1,4 +1,20 @@
 {
+  "node": {
+    "bin": "../integritee-node/target/release/integritee-node",
+    "flags": [
+      "--tmp",
+      "--dev",
+      "-lruntime=info",
+      "--ws-port",
+      "9944",
+      "--port",
+      "30390",
+      "--rpc-port",
+      "9933",
+      "--ws-external",
+      "--rpc-external"
+    ]
+  },
   "workers": [
     {
       "source": "bin",
@@ -6,15 +22,15 @@
         "--clean-reset",
         "-P",
         "2000",
+        "-p",
+        "9944",
+        "-r",
+        "3490",
         "-w",
         "2001",
-        "-r",
-        "3443",
         "-h",
         "4545",
-        "--running-mode",
-        "mock",
-        "--enable-mock-server"
+        "--ws-external"
       ],
       "subcommand_flags": [
         "--skip-ra",
@@ -27,14 +43,15 @@
         "--clean-reset",
         "-P",
         "3000",
+        "-p",
+        "9944",
+        "-r",
+        "4490",
         "-w",
         "3001",
-        "-r",
-        "3444",
         "-h",
         "4546",
-        "--running-mode",
-        "mock"
+        "--ws-external"
       ],
       "subcommand_flags": [
         "--skip-ra",

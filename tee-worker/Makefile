@@ -60,11 +60,9 @@ endif
 endif
 
 ifeq ($(SGX_DEBUG), 1)
-	# we build with cargo --release, even in SGX DEBUG mode
 	SGX_COMMON_CFLAGS += -O0 -g -ggdb
-	# cargo sets this automatically, cannot use 'debug'
-	OUTPUT_PATH := release
-	CARGO_TARGET := --release
+	OUTPUT_PATH := debug
+	CARGO_TARGET :=
 else
 	SGX_COMMON_CFLAGS += -O2
 	OUTPUT_PATH := release
@@ -77,12 +75,12 @@ ifeq ($(SGX_PRODUCTION), 1)
 	SGX_ENCLAVE_MODE = "Production Mode"
 	SGX_ENCLAVE_CONFIG = "enclave-runtime/Enclave.config.production.xml"
 	SGX_SIGN_KEY = $(SGX_COMMERCIAL_KEY)
-	WORKER_FEATURES = --features=production,$(WORKER_MODE),$(ADDITIONAL_FEATURES)
+	WORKER_FEATURES := --features=production,$(WORKER_MODE),$(WORKER_FEATURES),$(ADDITIONAL_FEATURES)
 else
 	SGX_ENCLAVE_MODE = "Development Mode"
 	SGX_ENCLAVE_CONFIG = "enclave-runtime/Enclave.config.xml"
 	SGX_SIGN_KEY = "enclave-runtime/Enclave_private.pem"
-	WORKER_FEATURES = --features=default,$(WORKER_MODE),$(ADDITIONAL_FEATURES)
+	WORKER_FEATURES := --features=default,$(WORKER_MODE),$(WORKER_FEATURES),$(ADDITIONAL_FEATURES)
 endif
 
 CLIENT_FEATURES = --features=$(WORKER_MODE),$(ADDITIONAL_FEATURES)
