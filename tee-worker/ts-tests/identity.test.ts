@@ -478,7 +478,7 @@ describeLitentry('Test Identity', 0, (context) => {
         // create substrate identity
         const alice_substrate_identity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.alice.addressRaw),
-            'Litentry',
+            'LitentryRococo',
             'Substrate'
         );
         let alice_create_txs = await buildIdentityTxs(
