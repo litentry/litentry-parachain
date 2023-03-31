@@ -381,7 +381,7 @@ impl Credential {
 
 		let minimum_amount = format!("{}", minimum_amount);
 		let minimum_amount =
-			AssertionLogic::new_item("$minimum_amount", Op::GreaterEq, &minimum_amount);
+			AssertionLogic::new_item("$minimum_amount", Op::Equal, &minimum_amount);
 		let to_date_logic = AssertionLogic::new_item("$to_date", Op::GreaterEq, to_date);
 
 		let assertion = AssertionLogic::new_and()
@@ -554,7 +554,7 @@ mod tests {
 
 			let minimum_amount = format!("{}", min_balance);
 			let minimum_amount =
-				AssertionLogic::new_item("$minimum_amount", Op::GreaterEq, &minimum_amount);
+				AssertionLogic::new_item("$minimum_amount", Op::Equal, &minimum_amount);
 			let to_date = AssertionLogic::new_item("$to_date", Op::GreaterEq, &to_date);
 
 			let assertion = AssertionLogic::new_and()
@@ -574,7 +574,7 @@ mod tests {
 
 			let minimum_amount = format!("{}", min_balance);
 			let minimum_amount =
-				AssertionLogic::new_item("$minimum_amount", Op::GreaterEq, &minimum_amount);
+				AssertionLogic::new_item("$minimum_amount", Op::Equal, &minimum_amount);
 			let from_date_logic = AssertionLogic::new_item("$from_date", Op::LessThan, &from_date);
 			let to_date = AssertionLogic::new_item("$to_date", Op::GreaterEq, &to_date);
 			let assertion = AssertionLogic::new_and()
@@ -594,7 +594,7 @@ mod tests {
 
 			let minimum_amount = format!("{}", min_balance);
 			let minimum_amount =
-				AssertionLogic::new_item("$minimum_amount", Op::GreaterEq, &minimum_amount);
+				AssertionLogic::new_item("$minimum_amount", Op::Equal, &minimum_amount);
 			let from_date_logic = AssertionLogic::new_item("$from_date", Op::GreaterEq, &from_date);
 			let to_date = AssertionLogic::new_item("$to_date", Op::GreaterEq, &to_date);
 			let assertion = AssertionLogic::new_and()
