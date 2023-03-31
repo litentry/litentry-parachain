@@ -27,13 +27,13 @@ impl RuntimeCall for NodeMetadata {
 		}
 		let node_metadata = self.node_metadata.as_ref().unwrap();
 
-		let runtime_call = node_metadata.types().types().iter().find(|ty| {
-			let path = ty.ty().path().segments();
+		let runtime_call = node_metadata.types().types.iter().find(|ty| {
+			let path = &ty.ty.path.segments;
 			path.len() == 2 && path[1].as_str() == "RuntimeCall"
 		});
 
 		match runtime_call {
-			Some(runtime_call) => Ok(runtime_call.id()),
+			Some(runtime_call) => Ok(runtime_call.id),
 			None => Err(Error::NodeMetadata(substrate_api_client::MetadataError::CallNotFound(
 				"RuntimeCall not found",
 			))),
