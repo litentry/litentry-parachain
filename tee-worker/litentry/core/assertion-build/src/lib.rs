@@ -40,5 +40,14 @@ pub mod a6;
 pub mod a7;
 pub mod a8;
 
-use litentry_primitives::VCMPError as Error;
+use litentry_primitives::{VCMPError as Error, ASSERTION_FROM_DATE};
+use std::{vec, vec::Vec};
 pub type Result<T> = core::result::Result<T, Error>;
+
+pub fn add_now_to_from_dates(now: &str) -> Vec<&str> {
+	let mut dates = vec![];
+	dates[0] = now;
+	dates.copy_from_slice(&ASSERTION_FROM_DATE);
+
+	dates
+}

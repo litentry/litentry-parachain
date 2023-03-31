@@ -350,42 +350,47 @@ impl Credential {
 	}
 
 	// Including assertion 4/7/10/11
-	pub fn update_holder(&mut self, index: usize, minimum_amount: ParentchainBalance) {
-		let minimum_amount = format!("{}", minimum_amount);
-		let to_date = format_assertion_to_date();
+	pub fn update_holder(
+		&mut self,
+		is_hold: bool,
+		minimum_amount: ParentchainBalance,
+		from_date: &String,
+		to_date: &String,
+	) {
+		let from_date_logic;
+		let value;
+		// is_hold: Indicates continuous holding, value = true
+		if is_hold {
+			if from_date == to_date {
+				// If holding && from_date == to_date indicates -> from_date >= 2023-01-01
+				from_date_logic = AssertionLogic::new_item("$from_date", Op::GreaterEq, from_date);
+			} else {
+				from_date_logic = AssertionLogic::new_item("$from_date", Op::LessThan, from_date);
+			}
 
+			value = true;
+		} else {
+			// No holding : from_date < 2017--01-01, value = false
+			from_date_logic = AssertionLogic::new_item(
+				"$from_date",
+				Op::LessThan,
+				ASSERTION_FROM_DATE.last().unwrap(),
+			);
+			value = false;
+		}
+
+		let minimum_amount = format!("{}", minimum_amount);
 		let minimum_amount =
 			AssertionLogic::new_item("$minimum_amount", Op::GreaterEq, &minimum_amount);
-		let to_date = AssertionLogic::new_item("$to_date", Op::GreaterEq, &to_date);
+		let to_date_logic = AssertionLogic::new_item("$to_date", Op::GreaterEq, to_date);
 
-		if index == 0 {
-			let from_date = ASSERTION_FROM_DATE[0];
-			let from_date = AssertionLogic::new_item("$from_date", Op::LessThan, from_date);
-			let assertion = AssertionLogic::new_and()
-				.add_item(minimum_amount)
-				.add_item(from_date)
-				.add_item(to_date);
-			self.credential_subject.assertions.push(assertion);
-			self.credential_subject.values.push(false);
-		} else if (1..7).contains(&index) {
-			let from_date = ASSERTION_FROM_DATE[index];
-			let from_date = AssertionLogic::new_item("$from_date", Op::LessThan, from_date);
-			let assertion = AssertionLogic::new_and()
-				.add_item(minimum_amount)
-				.add_item(from_date)
-				.add_item(to_date);
-			self.credential_subject.assertions.push(assertion);
-			self.credential_subject.values.push(true);
-		} else {
-			let from_date = ASSERTION_FROM_DATE[index - 1];
-			let from_date = AssertionLogic::new_item("$from_date", Op::GreaterEq, from_date);
-			let assertion = AssertionLogic::new_and()
-				.add_item(minimum_amount)
-				.add_item(from_date)
-				.add_item(to_date);
-			self.credential_subject.assertions.push(assertion);
-			self.credential_subject.values.push(true);
-		}
+		let assertion = AssertionLogic::new_and()
+			.add_item(minimum_amount)
+			.add_item(from_date_logic)
+			.add_item(to_date_logic);
+
+		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.values.push(value);
 	}
 
 	pub fn add_subject_info(&mut self, subject_description: &str, types: &str) {
@@ -540,13 +545,12 @@ mod tests {
 		let to_date = format_assertion_to_date();
 
 		{
-			// case 1: from_date_index = 0
-			let from_date_index = 0_usize;
-			let from_date = AssertionLogic::new_item("$from_date", Op::LessThan, "2017-01-01");
+			let from_date = "2017-01-01".to_string();
+			let from_date_logic = AssertionLogic::new_item("$from_date", Op::LessThan, &from_date);
 
 			let mut credential_unsigned =
 				Credential::new_default(&who, &shard.clone(), 1u32).unwrap();
-			credential_unsigned.update_holder(from_date_index, min_balance);
+			credential_unsigned.update_holder(false, min_balance, &from_date, &to_date);
 
 			let minimum_amount = format!("{}", min_balance);
 			let minimum_amount =
@@ -555,7 +559,7 @@ mod tests {
 
 			let assertion = AssertionLogic::new_and()
 				.add_item(minimum_amount)
-				.add_item(from_date)
+				.add_item(from_date_logic)
 				.add_item(to_date);
 
 			assert_eq!(credential_unsigned.credential_subject.values[0], false);
@@ -563,21 +567,19 @@ mod tests {
 		}
 
 		{
-			// case 1: from_date_index = 1
-			let from_date_index = 1_usize;
-
+			let from_date = "2018-01-01".to_string();
 			let mut credential_unsigned =
 				Credential::new_default(&&who, &shard.clone(), 1u32).unwrap();
-			credential_unsigned.update_holder(from_date_index, min_balance);
+			credential_unsigned.update_holder(true, min_balance, &from_date, &to_date);
 
 			let minimum_amount = format!("{}", min_balance);
 			let minimum_amount =
 				AssertionLogic::new_item("$minimum_amount", Op::GreaterEq, &minimum_amount);
-			let from_date = AssertionLogic::new_item("$from_date", Op::LessThan, "2018-01-01");
+			let from_date_logic = AssertionLogic::new_item("$from_date", Op::LessThan, &from_date);
 			let to_date = AssertionLogic::new_item("$to_date", Op::GreaterEq, &to_date);
 			let assertion = AssertionLogic::new_and()
 				.add_item(minimum_amount)
-				.add_item(from_date)
+				.add_item(from_date_logic)
 				.add_item(to_date);
 
 			assert_eq!(credential_unsigned.credential_subject.values[0], true);
@@ -585,21 +587,19 @@ mod tests {
 		}
 
 		{
-			// case 1: from_date_index = 7
-			let from_date_index = 7_usize;
-
+			let from_date = to_date.clone();
 			let mut credential_unsigned =
 				Credential::new_default(&who, &shard.clone(), 1u32).unwrap();
-			credential_unsigned.update_holder(from_date_index, min_balance);
+			credential_unsigned.update_holder(true, min_balance, &from_date, &to_date);
 
 			let minimum_amount = format!("{}", min_balance);
 			let minimum_amount =
 				AssertionLogic::new_item("$minimum_amount", Op::GreaterEq, &minimum_amount);
-			let from_date = AssertionLogic::new_item("$from_date", Op::GreaterEq, "2023-01-01");
+			let from_date_logic = AssertionLogic::new_item("$from_date", Op::GreaterEq, &from_date);
 			let to_date = AssertionLogic::new_item("$to_date", Op::GreaterEq, &to_date);
 			let assertion = AssertionLogic::new_and()
 				.add_item(minimum_amount)
-				.add_item(from_date)
+				.add_item(from_date_logic)
 				.add_item(to_date);
 
 			assert_eq!(credential_unsigned.credential_subject.values[0], true);

@@ -63,17 +63,15 @@ extern crate sgx_tstd as std;
 /// - `from_date` with >= op, nor
 /// - `value` is false but the `from_date` is something other than 2017-01-01.
 ///  
-use crate::{Error, Result};
+use crate::{add_now_to_from_dates, Error, Result};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
-use lc_credentials::Credential;
+use lc_credentials::{format_assertion_to_date, Credential};
 use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
-use litentry_primitives::{
-	Assertion, Identity, ParentchainBalance, ParentchainBlockNumber, ASSERTION_FROM_DATE,
-};
+use litentry_primitives::{Assertion, Identity, ParentchainBalance, ParentchainBlockNumber};
 use log::*;
 use std::{
 	collections::{HashMap, HashSet},
@@ -105,8 +103,6 @@ pub fn build(
 	let substrate_min_balance = (min_balance / (10 ^ 12)) as f64;
 
 	let mut client = GraphQLClient::new();
-	let mut found = false;
-	let mut from_date_index = 0_usize;
 	let mut networks: HashMap<VerifiedCredentialsNetwork, HashSet<String>> = HashMap::new();
 
 	identities.iter().for_each(|identity| {
@@ -127,8 +123,21 @@ pub fn build(
 		};
 	});
 
+	// Including 8 items from NOW -> 2017-01-01
+	// Because it is necessary to determine the continuous holding, the reverse order query is started from NOW.
+	// As long as there are terminals, this interval is taken as the result.
+	// query from NOW -> 2023 -> ... -> 2017
+	let now = format_assertion_to_date();
+	let mut hold_from_date = now.clone();
+
+	let dates = add_now_to_from_dates(&now);
+	debug!("Assertion A4 dates: {:?}", dates);
+
+	// is_hold default value is true
+	let mut is_hold = networks.is_empty();
 	for (verified_network, addresses) in networks {
-		if found {
+		// If find a satisfying interval from a network, do not need to query the remaining networks.
+		if hold_from_date != now {
 			break
 		}
 
@@ -148,12 +157,7 @@ pub fn build(
 			evm_min_balance
 		};
 
-		for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
-			if found {
-				from_date_index = index + 1;
-				break
-			}
-
+		for from_date in dates.iter() {
 			let vch = VerifiedCredentialsIsHodlerIn::new(
 				addresses.clone(),
 				from_date.to_string(),
@@ -164,7 +168,7 @@ pub fn build(
 			match client.check_verified_credentials_is_hodler(vch) {
 				Ok(is_hodler_out) => {
 					for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
-						found = found || hodler.is_hodler;
+						is_hold = is_hold && hodler.is_hodler;
 					}
 				},
 				Err(e) => error!(
@@ -172,13 +176,20 @@ pub fn build(
 					e
 				),
 			}
+
+			// If Continuous holding， update hold_from_date, or just break
+			if is_hold {
+				hold_from_date = from_date.to_string();
+			} else {
+				break
+			}
 		}
 	}
 
 	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
-			credential_unsigned.update_holder(from_date_index, min_balance);
+			credential_unsigned.update_holder(is_hold, min_balance, &hold_from_date, &now);
 
 			Ok(credential_unsigned)
 		},
