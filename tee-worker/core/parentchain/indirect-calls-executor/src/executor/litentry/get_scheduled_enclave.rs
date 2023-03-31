@@ -23,8 +23,8 @@ use itp_node_api::{
 		provider::AccessNodeMetadata,
 	},
 };
-use itp_scheduled_enclave::{ScheduledEnclaveHandle, ScheduledEnclaveInfo, ScheduledEnclaves};
 use itp_types::{CallRemoveScheduledEnclaveFn, CallUpdateScheduledEnclaveFn};
+use lc_scheduled_enclave::{ScheduledEnclaveHandle, ScheduledEnclaveInfo, ScheduledEnclaves};
 use litentry_primitives::ParentchainBlockNumber;
 use log::*;
 use std::sync::Arc;

@@ -46,6 +46,7 @@ pub mod files {
 	pub const SEALED_SIGNER_SEED_FILE: &str = "ed25519_key_sealed.bin";
 	pub const AES_KEY_FILE_AND_INIT_V: &str = "aes_key_sealed.bin";
 	pub const LIGHT_CLIENT_DB: &str = "light_client_db.bin";
+	pub const SCHEDULED_ENCLAVE_FILE: &str = "scheduled_enclave_sealed.bin";
 
 	pub const RA_DUMP_CERT_DER_FILE: &str = "ra_dump_cert.der";
 
@@ -53,7 +54,6 @@ pub mod files {
 	pub const SHARDS_PATH: &str = "shards";
 	pub const ENCRYPTED_STATE_FILE: &str = "state.bin";
 	pub const LAST_SLOT_BIN: &str = "last_slot.bin";
-	pub const SCHEDULED_ENCLAVE_FILE: &str = "scheduled-enclave.json";
 
 	#[cfg(feature = "production")]
 	pub static RA_SPID_FILE: &str = "spid_production.txt";

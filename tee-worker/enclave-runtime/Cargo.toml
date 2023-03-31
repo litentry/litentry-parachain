@@ -107,7 +107,6 @@ itp-nonce-cache = { path = "../core-primitives/nonce-cache", default-features = 
 itp-ocall-api = { path = "../core-primitives/ocall-api", default-features = false }
 itp-primitives-cache = { path = "../core-primitives/primitives-cache", default-features = false, features = ["sgx"] }
 itp-rpc = { path = "../core-primitives/rpc", default-features = false, features = ["sgx"] }
-itp-scheduled-enclave = { path = "../core-primitives/sgx/scheduled-enclave", default-features = false, features = ["sgx"] }
 itp-settings = { path = "../core-primitives/settings" }
 itp-sgx-crypto = { path = "../core-primitives/sgx/crypto", default-features = false, features = ["sgx"] }
 itp-sgx-externalities = { path = "../core-primitives/substrate-sgx/externalities", default-features = false, features = ["sgx"] }
@@ -131,6 +130,7 @@ its-sidechain = { path = "../sidechain/sidechain-crate", default-features = fals
 
 # litentry
 lc-data-providers = { path = "../litentry/core/data-providers", default-features = false, features = ["sgx"] }
+lc-scheduled-enclave = { path = "../litentry/core/scheduled-enclave", default-features = false, features = ["sgx"] }
 lc-stf-task-receiver = { path = "../litentry/core/stf-task/receiver", default-features = false, features = ["sgx"] }
 lc-stf-task-sender = { path = "../litentry/core/stf-task/sender", default-features = false, features = ["sgx"] }
 litentry-primitives = { path = "../litentry/primitives", default-features = false, features = ["sgx"] }
