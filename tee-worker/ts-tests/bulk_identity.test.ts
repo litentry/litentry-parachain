@@ -45,7 +45,7 @@ describeLitentry('multiple accounts test', 1, async (context) => {
 
     //test with multiple accounts
     step('test set usershieldingkey with multiple accounts', async () => {
-        let txs = await buildIdentityTxs(context, substraetSigners, [], 'setUserShieldingKey', 'batch');
+        let txs = await buildIdentityTxs(context, substraetSigners, [], 'setUserShieldingKey');
         const resp_events = await multiAccountTxSender(context, txs, substraetSigners, 'identityManagement', [
             'UserShieldingKeySet',
         ]);
@@ -72,7 +72,7 @@ describeLitentry('multiple accounts test', 1, async (context) => {
             identities.push(identity);
         }
 
-        let txs = await buildIdentityTxs(context, substraetSigners, identities, 'createIdentity', 'batch');
+        let txs = await buildIdentityTxs(context, substraetSigners, identities, 'createIdentity');
 
         const resp_events = await multiAccountTxSender(context, txs, substraetSigners, 'identityManagement', [
             'IdentityCreated',
@@ -100,14 +100,7 @@ describeLitentry('multiple accounts test', 1, async (context) => {
     });
 
     step('test verifyIdentity with multiple accounts', async () => {
-        let txs = await buildIdentityTxs(
-            context,
-            substraetSigners,
-            identities,
-            'verifyIdentity',
-            'batch',
-            web3Validations
-        );
+        let txs = await buildIdentityTxs(context, substraetSigners, identities, 'verifyIdentity', web3Validations);
         const resp_events = await multiAccountTxSender(context, txs, substraetSigners, 'identityManagement', [
             'IdentityVerified',
         ]);
@@ -121,7 +114,7 @@ describeLitentry('multiple accounts test', 1, async (context) => {
     });
 
     step('test removeIdentity with multiple accounts', async () => {
-        let txs = await buildIdentityTxs(context, substraetSigners, identities, 'removeIdentity', 'batch');
+        let txs = await buildIdentityTxs(context, substraetSigners, identities, 'removeIdentity');
 
         const resp_events = await multiAccountTxSender(context, txs, substraetSigners, 'identityManagement', [
             'IdentityRemoved',

@@ -11,19 +11,13 @@ import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import { LitentryIdentity, LitentryValidationData, TransactionSubmit } from './common/type-definitions';
 import { multiAccountTxSender, sendTxsWithUtility } from './common/transactions';
-
 describeLitentry('Test Batch Utility', 0, (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     let identities: LitentryIdentity[] = [];
     let validations: LitentryValidationData[] = [];
     step('set user shielding key', async function () {
-        let [alice_txs] = (await buildIdentityTxs(
-            context,
-            [context.substrateWallet.alice],
-            [],
-            'setUserShieldingKey',
-            'batch'
-        )) as TransactionSubmit[];
+        let [alice_txs] = await buildIdentityTxs(context, [context.substrateWallet.alice], [], 'setUserShieldingKey');
+
         const resp_events = await multiAccountTxSender(
             context,
             [alice_txs],
@@ -31,6 +25,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             'identityManagement',
             ['UserShieldingKeySet']
         );
+
         const [alice] = await handleIdentityEvents(context, aesKey, resp_events, 'UserShieldingKeySet');
         assert.equal(alice, u8aToHex(context.substrateWallet.alice.addressRaw), 'alice shielding key should be set');
     });
@@ -47,13 +42,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
         );
 
         identities = [twiiter_identity, ethereum1_identity, ethereum2_identity, substrate_identity];
-        let txs = await buildIdentityTxs(
-            context,
-            [context.substrateWallet.alice],
-            identities,
-            'createIdentity',
-            'utility'
-        );
+        let txs = await buildIdentityTxs(context, [context.substrateWallet.alice], identities, 'createIdentity');
 
         let resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
             'IdentityCreated',
@@ -117,7 +106,6 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             [context.substrateWallet.alice],
             identities,
             'verifyIdentity',
-            'utility',
             validations
         );
 
@@ -141,13 +129,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
     });
 
     step('batch test: remove identities', async function () {
-        let txs = await buildIdentityTxs(
-            context,
-            [context.substrateWallet.alice],
-            identities,
-            'removeIdentity',
-            'utility'
-        );
+        let txs = await buildIdentityTxs(context, [context.substrateWallet.alice], identities, 'removeIdentity');
         let resp_remove_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,

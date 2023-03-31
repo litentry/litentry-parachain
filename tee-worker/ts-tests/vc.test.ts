@@ -46,8 +46,7 @@ describeLitentry('VC test', 0, async (context) => {
             context,
             [context.substrateWallet.alice],
             [],
-            'setUserShieldingKey',
-            'batch'
+            'setUserShieldingKey'
         )) as TransactionSubmit[];
         const resp_events = await multiAccountTxSender(
             context,
@@ -56,7 +55,7 @@ describeLitentry('VC test', 0, async (context) => {
             'identityManagement',
             ['UserShieldingKeySet']
         );
-        const [alice, bob] = await handleIdentityEvents(context, aesKey, resp_events, 'UserShieldingKeySet');
+        const [alice] = await handleIdentityEvents(context, aesKey, resp_events, 'UserShieldingKeySet');
         assert.equal(alice, u8aToHex(context.substrateWallet.alice.addressRaw), 'alice shielding key should be set');
     });
 
@@ -77,7 +76,7 @@ describeLitentry('VC test', 0, async (context) => {
             const tx = context.api.tx.vcManagement.requestVc(context.mrEnclave, {
                 [key]: assertion[key as keyof Assertion],
             });
-            txs.push(tx);
+            txs.push({ tx });
         }
 
         const resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'vcManagement', [
@@ -106,9 +105,13 @@ describeLitentry('VC test', 0, async (context) => {
     });
     step('Request Error VC(A1)', async () => {
         const tx = context.api.tx.vcManagement.requestVc(context.mrEnclave, assertion.A1);
-        const resp_error_events = await sendTxsWithUtility(context, context.substrateWallet.bob, [tx], 'vcManagement', [
-            'RequestVCFailed',
-        ]);
+        const resp_error_events = await sendTxsWithUtility(
+            context,
+            context.substrateWallet.bob,
+            [{ tx }] as any,
+            'vcManagement',
+            ['RequestVCFailed']
+        );
         const error_event_datas = await handleVcEvents(aesKey, resp_error_events, 'Failed');
 
         await checkErrorDetail(error_event_datas, 'UserShieldingKeyNotFound', false);
@@ -117,7 +120,7 @@ describeLitentry('VC test', 0, async (context) => {
         let txs: any = [];
         for (let i = 0; i < indexList.length; i++) {
             const tx = context.api.tx.vcManagement.disableVc(indexList[i]);
-            txs.push(tx);
+            txs.push({ tx });
         }
         const resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'vcManagement', [
             'VCDisabled',
@@ -148,7 +151,7 @@ describeLitentry('VC test', 0, async (context) => {
         let txs: any = [];
         for (let i = 0; i < indexList.length; i++) {
             const tx = context.api.tx.vcManagement.revokeVc(indexList[i]);
-            txs.push(tx);
+            txs.push({ tx });
         }
         const resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'vcManagement', [
             'VCRevoked',

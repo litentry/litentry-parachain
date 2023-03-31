@@ -10,8 +10,6 @@ import { expect } from 'chai';
 //transactions utils
 export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrinsic<ApiTypes>, signer: KeyringPair) {
     return new Promise<{ block: string; txHash: string }>(async (resolve, reject) => {
-        // The purpose of paymentInfo is to check whether the version of polkadot/api is suitable for the current test and to determine whether the transaction is successful.
-        await tx.paymentInfo(signer);
         const nonce = await api.rpc.system.accountNextIndex(signer.address);
         await tx.signAndSend(signer, { nonce }, (result) => {
             if (result.status.isInBlock) {
@@ -35,8 +33,10 @@ export async function sendTxUntilInBlockList(
     const signers = Array.isArray(signer) ? signer : [signer];
     return Promise.all(
         txs.map(async ({ tx, nonce }, index) => {
+            const s = signers[index % signers.length];
+            // The purpose of paymentInfo is to check whether the version of polkadot/api is suitable for the current test and to determine whether the transaction is successful.
+            await tx.paymentInfo(s);
             const result = await new Promise((resolve, reject) => {
-                const s = signers[index % signers.length];
                 tx.signAndSend(s, { nonce }, (result) => {
                     if (result.status.isInBlock) {
                         //catch error
@@ -135,11 +135,11 @@ export async function listenEvent(
 export async function sendTxsWithUtility(
     context: IntegrationTestContext,
     signer: KeyringPair,
-    txs: any[],
+    txs: TransactionSubmit[],
     pallet: string,
     events: string[]
-): Promise<any> {
-    await context.api.tx.utility.batchAll(txs).signAndSend(signer, async (result) => {
+): Promise<string[] | Event[]> {
+    await context.api.tx.utility.batchAll(txs.map(({ tx }) => tx)).signAndSend(signer, async (result) => {
         if (result.status.isInBlock) {
             console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
         } else if (result.status.isInvalid) {
@@ -161,7 +161,7 @@ export async function multiAccountTxSender(
     signers: KeyringPair | KeyringPair[],
     pallet: string,
     events: string[]
-): Promise<any> {
+): Promise<Event[]> {
     let signers_hex: HexString[] = [];
     if (Array.isArray(signers)) {
         for (let index = 0; index < signers.length; index++) {
@@ -170,8 +170,9 @@ export async function multiAccountTxSender(
     } else {
         signers_hex.push(u8aToHex(signers.addressRaw));
     }
+
     await sendTxUntilInBlockList(context.api, txs, signers);
     const resp_events = await listenEvent(context.api, pallet, events, txs.length, signers_hex);
     expect(resp_events.length).to.be.equal(txs.length);
-    return resp_events.length ? resp_events : undefined;
+    return resp_events;
 }

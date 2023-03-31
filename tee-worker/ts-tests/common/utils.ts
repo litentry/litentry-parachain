@@ -676,7 +676,6 @@ export async function buildIdentityTxs(
     signers: KeyringPair[],
     identities: LitentryIdentity[],
     method: 'setUserShieldingKey' | 'createIdentity' | 'verifyIdentity' | 'removeIdentity',
-    mode: 'batch' | 'utility',
     validations?: LitentryValidationData[]
 ): Promise<any[]> {
     const txs: any[] = [];
@@ -691,6 +690,8 @@ export async function buildIdentityTxs(
         let nonce: number;
         const encod_identity = api.createType('LitentryIdentity', identity).toHex();
         const ciphertext_identity = encryptWithTeeShieldingKey(teeShieldingKey, encod_identity).toString('hex');
+        nonce = (await api.rpc.system.accountNextIndex(signer.address)).toNumber();
+
         switch (method) {
             case 'setUserShieldingKey':
                 const ciphertext = encryptWithTeeShieldingKey(
@@ -698,7 +699,6 @@ export async function buildIdentityTxs(
                     '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12'
                 ).toString('hex');
                 tx = context.api.tx.identityManagement.setUserShieldingKey(context.mrEnclave, `0x${ciphertext}`);
-                nonce = (await api.rpc.system.accountNextIndex(signer.address)).toNumber();
                 break;
             case 'createIdentity':
                 tx = api.tx.identityManagement.createIdentity(
@@ -707,7 +707,6 @@ export async function buildIdentityTxs(
                     `0x${ciphertext_identity}`,
                     null
                 );
-                nonce = (await api.rpc.system.accountNextIndex(signer.address)).toNumber();
                 break;
             case 'verifyIdentity':
                 const data = validations![k];
@@ -721,20 +720,14 @@ export async function buildIdentityTxs(
                     `0x${ciphertext_identity}`,
                     `0x${ciphertext_verifyIdentity_validation}`
                 );
-                nonce = (await api.rpc.system.accountNextIndex(signer.address)).toNumber();
                 break;
             case 'removeIdentity':
                 tx = api.tx.identityManagement.removeIdentity(mrEnclave, `0x${ciphertext_identity}`);
-                nonce = (await api.rpc.system.accountNextIndex(signer.address)).toNumber();
                 break;
             default:
                 throw new Error(`Invalid method: ${method}`);
         }
-        if (mode === 'batch') {
-            txs.push({ tx, nonce });
-        } else {
-            txs.push(tx);
-        }
+        txs.push({ tx, nonce });
     }
 
     return txs;

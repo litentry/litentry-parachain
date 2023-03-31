@@ -3,7 +3,7 @@ import { checkVc, describeLitentry, encryptWithTeeShieldingKey } from './common/
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
 import { u8aToHex } from '@polkadot/util';
-import { Assertion, TransactionSubmit } from './common/type-definitions';
+import { Assertion, IndexingNetwork, TransactionSubmit } from './common/type-definitions';
 import { handleVcEvents } from './common/utils';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import { assert } from 'chai';
@@ -15,7 +15,7 @@ const assertion = <Assertion>{
     A3: ['A3', 'A3', 'A3'],
     A4: [10],
     A7: [10],
-    A8: ['litentry'],
+    A8: [IndexingNetwork.Litentry],
     A10: [10],
     A11: [10],
 };
