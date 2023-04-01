@@ -15,15 +15,17 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use std::boxed::Box;
-
-use sgx_types::sgx_status_t;
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
+#[cfg(feature = "sgx")]
 use thiserror_sgx as thiserror;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+	#[error("poison lock")]
+	PoisonLock,
+	#[error("empty ScheduledEnclave registry")]
+	EmptyRegistry,
 	#[error(transparent)]
 	Other(#[from] Box<dyn std::error::Error + Sync + Send + 'static>),
 }
@@ -40,16 +42,8 @@ impl From<codec::Error> for Error {
 		Self::Other(e.into())
 	}
 
-	#[cfg(not(feature = "std"))]
+	#[cfg(feature = "sgx")]
 	fn from(e: codec::Error) -> Self {
-		Self::Other(format!("{:?}", e).into())
-	}
-}
-
-impl From<Error> for sgx_status_t {
-	/// return sgx_status for top level enclave functions
-	fn from(error: Error) -> sgx_status_t {
-		log::warn!("LightClientError into sgx_status_t: {:?}", error);
-		sgx_status_t::SGX_ERROR_UNEXPECTED
+		Self::Other(std::format!("{:?}", e).into())
 	}
 }

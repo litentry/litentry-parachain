@@ -22,77 +22,53 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(feature = "sgx")]
 extern crate sgx_tstd as std;
 
-use codec::{Decode, Encode};
+// TODO: maybe use parachain primitives for single source of truth
 use itp_types::{MrEnclave, SidechainBlockNumber};
 use sp_std::collections::btree_map::BTreeMap;
 
 pub mod error;
 use error::Result;
-
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod io;
 
-#[derive(Clone, Debug, Default, Encode, Decode)]
+#[cfg(feature = "std")]
+use std::sync::RwLock;
+#[cfg(feature = "sgx")]
+use std::sync::SgxRwLock as RwLock;
+
+use lazy_static::lazy_static;
+use std::sync::Arc;
+
+lazy_static! {
+	/// Global instance of a ScheduledEnclave
+	pub static ref GLOBAL_SCHEDULED_ENCLAVE: Arc<ScheduledEnclave> = Default::default();
+}
+
+pub type ScheduledEnclaveMap = BTreeMap<SidechainBlockNumber, MrEnclave>;
+
+#[derive(Default)]
 pub struct ScheduledEnclave {
-	pub scheduled_enclave: BTreeMap<SidechainBlockNumber, MrEnclave>,
-}
-pub trait ScheduledEnclaveUpd {
-	fn update_scheduled_enclave(
-		&mut self,
-		sbn: SidechainBlockNumber,
-		mrenclave: MrEnclave,
-	) -> Result<()>;
-
-	fn remove_scheduled_enclave(
-		&mut self,
-		sidechain_block_number: SidechainBlockNumber,
-	) -> Result<()>;
-
-	fn get_next_scheduled_enclave(
-		&self,
-		current_side_chain_number: SidechainBlockNumber,
-	) -> Option<ScheduledEnclaveInfo>;
+	pub registry: RwLock<ScheduledEnclaveMap>,
 }
 
-impl ScheduledEnclaveHandle for ScheduledEnclaves {
-	fn add_scheduled_enclave(
-		&mut self,
-		scheduled_enclave: ScheduledEnclaveInfo,
-	) -> IOResult<Option<ScheduledEnclaveInfo>> {
-		let old_enclave = self
-			.scheduled_enclaves
-			.insert(scheduled_enclave.sidechain_block_number, scheduled_enclave);
-		self.sync_to_static_file()?;
-		Ok(old_enclave)
-	}
+// all fn with &self as we mutate the state internally
+pub trait ScheduledEnclaveUpdater {
+	fn init(&self, mrenclave: MrEnclave) -> Result<()>;
 
-	fn remove_scheduled_enclave(
-		&mut self,
-		sidechain_block_number: SidechainBlockNumber,
-	) -> IOResult<Option<ScheduledEnclaveInfo>> {
-		let enclave_info = self.scheduled_enclaves.remove(&sidechain_block_number);
-		if enclave_info.is_some() {
-			self.sync_to_static_file()?;
-		}
-		Ok(enclave_info)
-	}
+	fn update(&self, sbn: SidechainBlockNumber, mrenclave: MrEnclave) -> Result<()>;
 
-	/// get the next scheduled enclave
-	fn get_next_scheduled_enclave(
-		&self,
-		current_side_chain_number: SidechainBlockNumber,
-	) -> Option<ScheduledEnclaveInfo> {
-		self.scheduled_enclaves
-			.iter()
-			.filter_map(
-				|(k, v)| {
-					if k > &current_side_chain_number {
-						Some(v.clone())
-					} else {
-						None
-					}
-				},
-			)
-			.min_by_key(|v| v.sidechain_block_number)
-	}
+	fn remove(&self, sbn: SidechainBlockNumber) -> Result<()>;
+
+	// given a SidechainBlockNumber, return the expected MRENCLAVE
+	// For example, the registry is:
+	// 0  -> 0xAA
+	// 19 -> 0xBB
+	// 21 -> 0xCC
+	//
+	// get_expected_mrenclave(0) -> 0xAA
+	// get_expected_mrenclave(18) -> 0xAA
+	// get_expected_mrenclave(19) -> 0xBB
+	// get_expected_mrenclave(20) -> 0xBB
+	// get_expected_mrenclave(21) -> 0xCC
+	// get_expected_mrenclave(30) -> 0xCC
+	fn get_expected_mrenclave(&self, sbn: SidechainBlockNumber) -> Result<MrEnclave>;
 }

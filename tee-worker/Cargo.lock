@@ -4372,9 +4372,11 @@ dependencies = [
 name = "lc-scheduled-enclave"
 version = "0.8.0"
 dependencies = [
+ "itp-component-container",
  "itp-settings",
  "itp-sgx-io",
  "itp-types",
+ "lazy_static",
  "litentry-primitives",
  "log 0.4.17",
  "parity-scale-codec",

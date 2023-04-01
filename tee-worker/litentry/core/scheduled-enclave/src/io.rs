@@ -14,29 +14,114 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+#[cfg(all(feature = "std", feature = "sgx"))]
+compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
+
 use crate::{
 	error::{Error, Result},
-	ScheduledEnclave,
+	MrEnclave, ScheduledEnclave, ScheduledEnclaveUpdater, SidechainBlockNumber,
+	GLOBAL_SCHEDULED_ENCLAVE,
 };
-use codec::{Decode, Encode};
-use itp_settings::files::SCHEDULED_ENCLAVE_FILE;
-use itp_sgx_io::{seal, unseal, StaticSealedIO};
-use log::*;
-use std::{boxed::Box, fs, sgxfs::SgxFile, sync::Arc};
 
-#[derive(Copy, Clone, Debug)]
-pub struct ScheduledEnclaveSeal;
+#[cfg(feature = "sgx")]
+mod sgx {
+	use crate::{
+		error::{Error, Result},
+		ScheduledEnclaveMap,
+	};
+	pub use codec::{Decode, Encode};
+	pub use itp_settings::files::SCHEDULED_ENCLAVE_FILE;
+	pub use itp_sgx_io::{seal, unseal, StaticSealedIO};
+	pub use log::*;
+	pub use std::{boxed::Box, fs, sgxfs::SgxFile, sync::Arc};
 
-impl StaticSealedIO for ScheduledEnclaveSeal {
-	type Error = Error;
-	type Unsealed = ScheduledEnclave;
+	#[derive(Copy, Clone, Debug)]
+	pub struct ScheduledEnclaveSeal;
 
-	fn unseal_from_static_file() -> Result<Self::Unsealed> {
-		Ok(unseal(SCHEDULED_ENCLAVE_FILE).map(|b| Decode::decode(&mut b.as_slice()))??)
+	impl StaticSealedIO for ScheduledEnclaveSeal {
+		type Error = Error;
+		type Unsealed = ScheduledEnclaveMap;
+
+		fn unseal_from_static_file() -> Result<Self::Unsealed> {
+			Ok(unseal(SCHEDULED_ENCLAVE_FILE).map(|b| Decode::decode(&mut b.as_slice()))??)
+		}
+
+		fn seal_to_static_file(unsealed: &Self::Unsealed) -> Result<()> {
+			debug!("Seal scheduled enclave. Current state: {:?}", unsealed);
+			Ok(unsealed.using_encoded(|bytes| seal(bytes, SCHEDULED_ENCLAVE_FILE))?)
+		}
+	}
+}
+
+#[cfg(feature = "sgx")]
+use sgx::*;
+
+impl ScheduledEnclaveUpdater for ScheduledEnclave {
+	#[cfg(feature = "std")]
+	fn init(&self, _mrenclave: MrEnclave) -> Result<()> {
+		Ok(())
 	}
 
-	fn seal_to_static_file(unsealed: &Self::Unsealed) -> Result<()> {
-		debug!("Seal scheduled enclave. Current state: {:?}", unsealed);
-		Ok(unsealed.using_encoded(|bytes| seal(bytes, SCHEDULED_ENCLAVE_FILE))?)
+	#[cfg(feature = "std")]
+	fn update(&self, _sbn: SidechainBlockNumber, _mrenclave: MrEnclave) -> Result<()> {
+		Ok(())
+	}
+
+	#[cfg(feature = "std")]
+	fn remove(&self, _sbn: SidechainBlockNumber) -> Result<()> {
+		Ok(())
+	}
+
+	// if `SCHEDULED_ENCLAVE_FILE` exists, unseal and init from it
+	// otherwise create a new instance and seal to static file
+	#[cfg(feature = "sgx")]
+	fn init(&self, mrenclave: MrEnclave) -> Result<()> {
+		if SgxFile::open(SCHEDULED_ENCLAVE_FILE).is_err() {
+			info!(
+				"[Enclave] ScheduledEnclave file not found, creating new! {}",
+				SCHEDULED_ENCLAVE_FILE
+			);
+			let mut registry =
+				GLOBAL_SCHEDULED_ENCLAVE.registry.write().map_err(|_| Error::PoisonLock)?;
+			registry.clear();
+			registry.insert(0, mrenclave);
+			ScheduledEnclaveSeal::seal_to_static_file(&*registry)
+		} else {
+			let m = ScheduledEnclaveSeal::unseal_from_static_file()?;
+			info!("[Enclave] ScheduledEnclave unsealed from file: {:?}", m);
+			let mut registry =
+				GLOBAL_SCHEDULED_ENCLAVE.registry.write().map_err(|_| Error::PoisonLock)?;
+			*registry = m;
+			Ok(())
+		}
+	}
+
+	#[cfg(feature = "sgx")]
+	fn update(&self, sbn: SidechainBlockNumber, mrenclave: MrEnclave) -> Result<()> {
+		let mut registry =
+			GLOBAL_SCHEDULED_ENCLAVE.registry.write().map_err(|_| Error::PoisonLock)?;
+		registry.insert(sbn, mrenclave);
+		ScheduledEnclaveSeal::seal_to_static_file(&*registry)
+	}
+
+	#[cfg(feature = "sgx")]
+	fn remove(&self, sbn: SidechainBlockNumber) -> Result<()> {
+		let mut registry =
+			GLOBAL_SCHEDULED_ENCLAVE.registry.write().map_err(|_| Error::PoisonLock)?;
+		let old_value = registry.remove(&sbn);
+		if old_value.is_some() {
+			return ScheduledEnclaveSeal::seal_to_static_file(&*registry)
+		}
+		Ok(())
+	}
+
+	fn get_expected_mrenclave(&self, sbn: SidechainBlockNumber) -> Result<MrEnclave> {
+		let registry = GLOBAL_SCHEDULED_ENCLAVE.registry.read().map_err(|_| Error::PoisonLock)?;
+		let r = registry
+			.iter()
+			.filter(|(k, _)| **k <= sbn)
+			.max_by_key(|(k, _)| **k)
+			.ok_or(Error::EmptyRegistry)?;
+		Ok(*r.1)
 	}
 }

@@ -15,7 +15,6 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{error::Result, executor::Executor, IndirectCallsExecutor};
-use itp_component_container::{ComponentContainer, ComponentGetter, ComponentSetter};
 use itp_node_api::{
 	api_client::ParentchainUncheckedExtrinsic,
 	metadata::{
@@ -23,23 +22,14 @@ use itp_node_api::{
 		provider::AccessNodeMetadata,
 	},
 };
-use itp_types::{CallRemoveScheduledEnclaveFn, CallUpdateScheduledEnclaveFn};
-use lc_scheduled_enclave::{ScheduledEnclaveHandle, ScheduledEnclaveInfo, ScheduledEnclaves};
-use litentry_primitives::ParentchainBlockNumber;
+use itp_types::{RemoveScheduledEnclaveFn, UpdateScheduledEnclaveFn};
+use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use log::*;
-use std::sync::Arc;
 
-pub(crate) struct ScheduledEnclaveUpdate {
-	pub(crate) block_number: ParentchainBlockNumber,
-}
+pub(crate) struct UpdateScheduledEnclave;
+pub(crate) struct RemoveScheduledEnclave;
 
-pub(crate) struct ScheduledEnclaveRemove;
-
-/// sidechain enclave info
-pub static GLOBAL_SIDECHAIN_SCHEDULED_ENCLABES: ComponentContainer<ScheduledEnclaves> =
-	ComponentContainer::new("sidechain_sheduled_enclaves");
-
-impl ScheduledEnclaveUpdate {
+impl UpdateScheduledEnclave {
 	fn execute_internal<R, S, T, N>(
 		&self,
 		extrinsic: ParentchainUncheckedExtrinsic<<Self as Executor<R, S, T, N>>::Call>,
@@ -48,29 +38,19 @@ impl ScheduledEnclaveUpdate {
 		N: AccessNodeMetadata,
 		N::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
 	{
-		let (_, sidechain_block_number, mr_enclave) = extrinsic.function;
-		debug!("execute indirect call: ScheduledEnclaveUpdate, sidechain_block_number: {}, mr_enclave: {:?}", sidechain_block_number, mr_enclave);
-
-		let scheduled_enclave = ScheduledEnclaveInfo {
-			parachain_block_number: self.block_number,
-			sidechain_block_number,
-			mr_enclave,
-		};
-		let old_enclaves = GLOBAL_SIDECHAIN_SCHEDULED_ENCLABES.get()?;
-		// unwrap is safe here, because GLOBAL_SIDECHAIN_SCHEDULED_ENCLABES is initialized in `init_enclave()`
-		let mut scheduled_enclaves = Arc::<ScheduledEnclaves>::try_unwrap(old_enclaves).unwrap();
-		scheduled_enclaves.add_scheduled_enclave(scheduled_enclave)?;
-		GLOBAL_SIDECHAIN_SCHEDULED_ENCLABES.set(Arc::new(scheduled_enclaves));
+		let (_, sbn, mrenclave) = extrinsic.function;
+		debug!("execute indirect call: UpdateScheduledEnclave, sidechain_block_number: {}, mrenclave: {:?}", sbn, mrenclave);
+		let _ = GLOBAL_SCHEDULED_ENCLAVE.update(sbn, mrenclave)?;
 		Ok(())
 	}
 }
 
-impl<R, S, T, N> Executor<R, S, T, N> for ScheduledEnclaveUpdate
+impl<R, S, T, N> Executor<R, S, T, N> for UpdateScheduledEnclave
 where
 	N: AccessNodeMetadata,
 	N::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
 {
-	type Call = CallUpdateScheduledEnclaveFn;
+	type Call = UpdateScheduledEnclaveFn;
 
 	fn call_index(&self, call: &Self::Call) -> [u8; 2] {
 		call.0
@@ -89,7 +69,7 @@ where
 	}
 }
 
-impl ScheduledEnclaveRemove {
+impl RemoveScheduledEnclave {
 	fn execute_internal<R, S, T, N>(
 		&self,
 		extrinsic: ParentchainUncheckedExtrinsic<<Self as Executor<R, S, T, N>>::Call>,
@@ -98,27 +78,19 @@ impl ScheduledEnclaveRemove {
 		N: AccessNodeMetadata,
 		N::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
 	{
-		let (_, sidechain_block_number) = extrinsic.function;
-		debug!(
-			"execute indirect call: ScheduledEnclaveRemove, sidechain_block_number: {}",
-			sidechain_block_number
-		);
-
-		let old_enclaves = GLOBAL_SIDECHAIN_SCHEDULED_ENCLABES.get()?;
-		// `unwrap()` is safe here, because GLOBAL_SIDECHAIN_SCHEDULED_ENCLABES is initialized in `init_enclave()`
-		let mut scheduled_enclaves = Arc::<ScheduledEnclaves>::try_unwrap(old_enclaves).unwrap();
-		scheduled_enclaves.remove_scheduled_enclave(sidechain_block_number)?;
-		GLOBAL_SIDECHAIN_SCHEDULED_ENCLABES.set(Arc::new(scheduled_enclaves));
+		let (_, sbn) = extrinsic.function;
+		debug!("execute indirect call: RemoveScheduledEnclave, sidechain_block_number: {}", sbn);
+		let _ = GLOBAL_SCHEDULED_ENCLAVE.remove(sbn)?;
 		Ok(())
 	}
 }
 
-impl<R, S, T, N> Executor<R, S, T, N> for ScheduledEnclaveRemove
+impl<R, S, T, N> Executor<R, S, T, N> for RemoveScheduledEnclave
 where
 	N: AccessNodeMetadata,
 	N::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
 {
-	type Call = CallRemoveScheduledEnclaveFn;
+	type Call = RemoveScheduledEnclaveFn;
 
 	fn call_index(&self, call: &Self::Call) -> [u8; 2] {
 		call.0
