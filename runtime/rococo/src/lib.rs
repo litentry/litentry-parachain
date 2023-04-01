@@ -864,6 +864,10 @@ parameter_types! {
 	pub const MomentsPerDay: Moment = 86_400_000; // [ms/d]
 }
 
+ord_parameter_types! {
+	pub const ALICE: AccountId = sp_runtime::AccountId32::new(hex!["d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"]);
+}
+
 impl pallet_teerex::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
@@ -872,7 +876,7 @@ impl pallet_teerex::Config for Runtime {
 	//       we are missing `register_dcap_enclave` and `register_quoting_enclave`
 	//       it should be re-benchmarked once the upstream fixes it
 	type WeightInfo = ();
-	type EnclaveAdminOrigin = EnsureRootOrAllCouncil;
+	type EnclaveAdminOrigin = EnsureSignedBy<ALICE, AccountId>;
 }
 
 impl pallet_sidechain::Config for Runtime {
@@ -892,10 +896,6 @@ impl pallet_identity_management::Config for Runtime {
 	type WeightInfo = ();
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
-}
-
-ord_parameter_types! {
-	pub const ALICE: AccountId = sp_runtime::AccountId32::new(hex!["d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"]);
 }
 
 impl pallet_identity_management_mock::Config for Runtime {

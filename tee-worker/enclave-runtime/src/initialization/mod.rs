@@ -167,12 +167,7 @@ pub(crate) fn init_enclave(mu_ra_url: String, untrusted_worker_url: String) -> E
 	GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT.initialize(sidechain_block_import_queue);
 
 	let attestation_handler = Arc::new(IntelAttestationHandler::new(ocall_api));
-	let mrenclave = attestation_handler.get_mrenclave()?;
 	GLOBAL_ATTESTATION_HANDLER_COMPONENT.initialize(attestation_handler);
-
-	// intialise the scheduled enlcave, must be after the attestation_handler initialisation
-	// get the scheduled mr enclaves and initialize the scheduled enclaves
-	GLOBAL_SCHEDULED_ENCLAVE.init(mrenclave).map_err(|e| Error::Other(e.into()))?;
 
 	Ok(())
 }
@@ -196,6 +191,12 @@ pub(crate) fn init_enclave_sidechain_components() -> EnclaveResult<()> {
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 	let top_pool_author = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
+
+	// intialise the scheduled enlcave, must be after the attestation_handler and enclave initialisation
+	// get the scheduled mr enclaves and initialize the scheduled enclaves
+	let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
+	let mrenclave = attestation_handler.get_mrenclave()?;
+	GLOBAL_SCHEDULED_ENCLAVE.init(mrenclave).map_err(|e| Error::Other(e.into()))?;
 
 	let parentchain_block_import_dispatcher = get_triggered_dispatcher_from_solo_or_parachain()?;
 

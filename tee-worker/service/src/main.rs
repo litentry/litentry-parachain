@@ -690,33 +690,25 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	// ------------------------------------------------------------------------
 	// subscribe to events and react on firing
 	println!("*** Subscribing to events");
-	loop {
-		let (sender, receiver) = channel();
-		let metadata = node_api.metadata.clone();
-		let node_api2 = node_api.clone();
-		let _ = thread::Builder::new()
-			.name("event_subscriber".to_owned())
-			.spawn(move || {
-				node_api2.subscribe_events(sender).unwrap();
-			})
-			.unwrap();
+	let (sender, receiver) = channel();
+	let metadata = node_api.metadata.clone();
+	let _ = thread::Builder::new()
+		.name("event_subscriber".to_owned())
+		.spawn(move || {
+			node_api.subscribe_events(sender).unwrap();
+		})
+		.unwrap();
 
-		println!("[+] Subscribed to events. waiting...");
-		loop {
-			match receiver.recv() {
-				Ok(events_str) => {
-					let event_bytes = Vec::from_hex(events_str).unwrap();
-					let events = Events::new(metadata.clone(), Default::default(), event_bytes);
-					for maybe_event_details in events.iter() {
-						let event_details = maybe_event_details.unwrap();
-						let _ = print_event(&event_details);
-					}
-				},
-				Err(_) => {
-					println!("[!] event websocket disconnected, try to connect again");
-					sleep(Duration::from_secs(1));
-					break
-				},
+	println!("[+] Subscribed to events. waiting...");
+	let timeout = Duration::from_secs(600);
+	loop {
+		if let Ok(events_str) = receiver.recv_timeout(timeout) {
+			let event_bytes = Vec::from_hex(events_str).unwrap();
+			let events = Events::new(metadata.clone(), Default::default(), event_bytes);
+
+			for maybe_event_details in events.iter() {
+				let event_details = maybe_event_details.unwrap();
+				let _ = print_event(&event_details);
 			}
 		}
 	}
