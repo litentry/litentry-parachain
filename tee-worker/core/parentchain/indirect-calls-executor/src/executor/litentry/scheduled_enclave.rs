@@ -40,7 +40,7 @@ impl UpdateScheduledEnclave {
 	{
 		let (_, sbn, mrenclave) = extrinsic.function;
 		debug!("execute indirect call: UpdateScheduledEnclave, sidechain_block_number: {}, mrenclave: {:?}", sbn, mrenclave);
-		let _ = GLOBAL_SCHEDULED_ENCLAVE.update(sbn, mrenclave)?;
+		GLOBAL_SCHEDULED_ENCLAVE.update(sbn, mrenclave)?;
 		Ok(())
 	}
 }
@@ -80,7 +80,7 @@ impl RemoveScheduledEnclave {
 	{
 		let (_, sbn) = extrinsic.function;
 		debug!("execute indirect call: RemoveScheduledEnclave, sidechain_block_number: {}", sbn);
-		let _ = GLOBAL_SCHEDULED_ENCLAVE.remove(sbn)?;
+		GLOBAL_SCHEDULED_ENCLAVE.remove(sbn)?;
 		Ok(())
 	}
 }
