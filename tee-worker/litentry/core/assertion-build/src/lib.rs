@@ -46,8 +46,8 @@ pub type Result<T> = core::result::Result<T, Error>;
 
 pub fn add_now_to_from_dates(now: &str) -> Vec<&str> {
 	let mut dates = vec![];
-	dates[0] = now;
-	dates.copy_from_slice(&ASSERTION_FROM_DATE);
+	dates.push(now);
+	dates.extend_from_slice(&ASSERTION_FROM_DATE);
 
 	dates
 }
