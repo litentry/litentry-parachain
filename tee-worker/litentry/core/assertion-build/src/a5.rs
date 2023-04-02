@@ -51,7 +51,7 @@ pub fn build(
 	);
 
 	//ToDo: Check this string is a pure number or not, to avoid wasting API calls.
-	let original_tweet_id_s = vec_to_string(original_tweet_id.clone().to_vec()).map_err(|_| {
+	let original_tweet_id_s = vec_to_string(original_tweet_id.to_vec()).map_err(|_| {
 		VCMPError::RequestVCFailed(
 			Assertion::A5(original_tweet_id.clone()),
 			ErrorDetail::ParseError,
@@ -65,8 +65,6 @@ pub fn build(
 	for identity in identities {
 		if let Identity::Web2 { network, address } = identity {
 			if matches!(network, Web2Network::Twitter) {
-				let mut is_following: bool = false;
-				let mut has_retweeted: bool = false;
 				let twitter_handler = address.to_vec();
 
 				let tweet = twitter_official_v2
@@ -95,8 +93,9 @@ pub fn build(
 						)
 					})?;
 
-				is_following = relationship.source.following;
+				let is_following = relationship.source.following;
 
+				let mut has_retweeted: bool = false;
 				let retweets = twitter_official_v2
 					.query_retweeted_by(original_tweet_id.clone().to_vec())
 					.map_err(|e| {
@@ -135,10 +134,7 @@ pub fn build(
 		},
 		Err(e) => {
 			error!("Generate unsigned credential A5 failed {:?}", e);
-			Err(VCMPError::RequestVCFailed(
-				Assertion::A5(original_tweet_id.clone()),
-				e.to_error_detail(),
-			))
+			Err(VCMPError::RequestVCFailed(Assertion::A5(original_tweet_id), e.to_error_detail()))
 		},
 	}
 }

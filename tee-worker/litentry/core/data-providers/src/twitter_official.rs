@@ -168,7 +168,7 @@ impl TwitterOfficialClient {
 	/// V2, rate limit: 300/15min(per App) 900/15min(per User)
 	pub fn query_tweet(&mut self, tweet_id: Vec<u8>) -> Result<Tweet, Error> {
 		let tweet_id = vec_to_string(tweet_id)?;
-		debug!("twitter query tweet, id: {}", tweet_id);
+		debug!("Twitter query tweet, id: {}", tweet_id);
 
 		let path = format!("/2/tweets/{}", tweet_id);
 		let query: Vec<(&str, &str)> = vec![("expansions", "author_id")];
@@ -201,7 +201,7 @@ impl TwitterOfficialClient {
 	/// the verification will fail.
 	pub fn query_retweeted_by(&mut self, original_tweet_id: Vec<u8>) -> Result<Retweeted, Error> {
 		let original_tweet_id = vec_to_string(original_tweet_id)?;
-		debug!("original tweet id: {}", original_tweet_id);
+		debug!("Twitter original tweet id: {}", original_tweet_id);
 
 		let path = format!("/2/tweets/{}/retweeted_by", original_tweet_id);
 		let query: Vec<(&str, &str)> = vec![("max_results", "100")];
@@ -217,7 +217,7 @@ impl TwitterOfficialClient {
 	/// V2, rate limit: 300/15min(per App) 900/15min(per User)
 	pub fn query_user(&mut self, user_name: Vec<u8>) -> Result<TwitterUser, Error> {
 		let user = vec_to_string(user_name)?;
-		debug!("twitter query user, user: {}", user);
+		debug!("Twitter query user, user: {}", user);
 
 		let query = vec![("user.fields", "public_metrics")];
 		let resp = self
@@ -241,15 +241,17 @@ impl TwitterOfficialClient {
 	) -> Result<Relationship, Error> {
 		let source = vec_to_string(source_user_name)?;
 		let target_id = vec_to_string(target_user_id)?;
-		debug!("source user: {}, target user: {}", source, target_id);
+		debug!("Twitter query_friendship, source user: {}, target user: {}", source, target_id);
 
-		let path = format!("/1.1/friendships/show.json");
 		let query: Vec<(&str, &str)> =
 			vec![("source_screen_name", source.as_str()), ("target_id", target_id.as_str())];
 
 		let resp = self
 			.client
-			.get_with::<String, Relationship>(path, query.as_slice())
+			.get_with::<String, Relationship>(
+				"/1.1/friendships/show.json".to_string(),
+				query.as_slice(),
+			)
 			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
 
 		Ok(resp)
@@ -284,7 +286,7 @@ mod tests {
 		init();
 
 		let mut client = TwitterOfficialClient::v2();
-		let original_tweet_id = "1623577441305260036".as_bytes().to_vec();
+		let original_tweet_id = "100".as_bytes().to_vec();
 		let response = client.query_retweeted_by(original_tweet_id);
 
 		assert!(response.is_ok(), "error: {:?}", response);
@@ -306,10 +308,10 @@ mod tests {
 		init();
 
 		let source = "twitterdev";
-		let target = "twitter";
+		let target_id = "783214"; //user: twitter
 		let mut client = TwitterOfficialClient::v1_1();
 		let result =
-			client.query_friendship(source.as_bytes().to_vec(), target.as_bytes().to_vec());
+			client.query_friendship(source.as_bytes().to_vec(), target_id.as_bytes().to_vec());
 		assert!(result.is_ok(), "error: {:?}", result);
 	}
 }
