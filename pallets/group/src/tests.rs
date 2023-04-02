@@ -112,6 +112,6 @@ fn group_control_on_off_function() {
 		assert!(Whitelist::group_control_on());
 
 		// Can not pass now
-		assert!(<Whitelist::ensure_origin(RuntimeOrigin::signed(ACCOUNT_B)).is_err());
+		assert!(Whitelist::ensure_origin(RuntimeOrigin::signed(ACCOUNT_B)).is_err());
 	})
 }
