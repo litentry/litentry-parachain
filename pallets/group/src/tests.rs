@@ -24,7 +24,6 @@ use super::{
 	pallet::Event as PalletEvent,
 	*,
 };
-use crate::GroupMemberEnsureOriginWrapper;
 use frame_support::{assert_noop, assert_ok};
 use sp_std::vec;
 
@@ -106,20 +105,13 @@ fn group_control_on_off_function() {
 		// Default whitelist Off
 		assert!(!Whitelist::group_control_on());
 		// Not on whitelist but passed
-		assert_ok!(<Whitelist as GroupMemberEnsureOriginWrapper<
-			<Test as frame_system::Config>::RuntimeOrigin,
-			<Test as frame_system::Config>::AccountId,
-		>>::ensure_origin(RuntimeOrigin::signed(ACCOUNT_B)));
+		assert_ok!(Whitelist::ensure_origin(RuntimeOrigin::signed(ACCOUNT_B)));
 
 		// Switch whitelist function on
 		assert_ok!(Whitelist::swtich_group_control_on(RuntimeOrigin::root()));
 		assert!(Whitelist::group_control_on());
 
 		// Can not pass now
-		assert!(<Whitelist as GroupMemberEnsureOriginWrapper<
-			<Test as frame_system::Config>::RuntimeOrigin,
-			<Test as frame_system::Config>::AccountId,
-		>>::ensure_origin(RuntimeOrigin::signed(ACCOUNT_B))
-		.is_err());
+		assert!(<Whitelist::ensure_origin(RuntimeOrigin::signed(ACCOUNT_B)).is_err());
 	})
 }

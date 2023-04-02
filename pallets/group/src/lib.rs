@@ -183,16 +183,4 @@ pub mod pallet {
 			}
 		}
 	}
-	pub trait GroupMemberEnsureOriginWrapper<OuterOrigin, Success> {
-		/// Perform the origin check.
-		fn ensure_origin(o: OuterOrigin) -> Result<Success, BadOrigin>;
-	}
-
-	impl<T: Config<I>, I: 'static> GroupMemberEnsureOriginWrapper<T::RuntimeOrigin, T::AccountId>
-		for Pallet<T, I>
-	{
-		fn ensure_origin(o: T::RuntimeOrigin) -> Result<T::AccountId, BadOrigin> {
-			<Pallet<T, I> as EnsureOrigin<T::RuntimeOrigin>>::ensure_origin(o)
-		}
-	}
 }

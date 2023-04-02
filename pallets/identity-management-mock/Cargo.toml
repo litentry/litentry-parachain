@@ -23,7 +23,6 @@ frame-system = { git = "https://github.com/paritytech/substrate", branch = "polk
 
 core-primitives = { path = "../../primitives/core", default-features = false }
 mock-tee-primitives = { path = "../../mock-tee-primitives", default-features = false }
-pallet-group = { path = "../../pallets/group", default-features = false }
 pallet-identity-management = { path = "../../pallets/identity-management", default-features = false }
 
 aes-gcm = { git = "https://github.com/RustCrypto/AEADs", default-features = false, features = ["aes", "alloc"] }
@@ -35,6 +34,7 @@ sha2 = { version = "0.10.2", default-features = false }
 [dev-dependencies]
 aes-gcm = { git = "https://github.com/RustCrypto/AEADs" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
+pallet-group = { path = "../../pallets/group" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
 parity-crypto = { version = "0.9.0", features = ["publickey"] }
 rand = { version = "0.8" }

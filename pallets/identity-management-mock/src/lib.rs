@@ -70,9 +70,6 @@ pub mod pallet {
 	use super::*;
 	use frame_system::pallet_prelude::*;
 	use mock_tee_primitives::Address32;
-	// This type should be safe to remove
-	// Temporary import for group function
-	use pallet_group::GroupMemberEnsureOriginWrapper;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -91,7 +88,7 @@ pub mod pallet {
 		type DelegateeAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		// This type should be safe to remove
 		/// Temporary type for whitelist function
-		type WhitelistOrigin: GroupMemberEnsureOriginWrapper<Self::RuntimeOrigin, Self::AccountId>;
+		type WhitelistOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
 	}
 
 	#[pallet::event]

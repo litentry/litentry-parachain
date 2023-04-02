@@ -71,7 +71,7 @@ use runtime_common::{
 	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrHalfTechnicalCommittee,
 	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, NegativeImbalance,
 	RuntimeBlockWeights, SlowAdjustingFeeUpdate, TechnicalCommitteeInstance,
-	TechnicalCommitteeMembershipInstance, WhitelistGroup, MAXIMUM_BLOCK_WEIGHT,
+	TechnicalCommitteeMembershipInstance, WhitelistInstance, MAXIMUM_BLOCK_WEIGHT,
 };
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
@@ -832,7 +832,7 @@ impl pallet_identity_management_mock::Config for Runtime {
 
 // This code should be safe to add
 /// Temporary adjust for whitelist function
-impl pallet_group::Config<WhitelistGroup> for Runtime {
+impl pallet_group::Config<WhitelistInstance> for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type GroupManagerOrigin = EnsureRootOrAllCouncil;
 }
