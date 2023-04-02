@@ -677,7 +677,12 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		thread::Builder::new()
 			.name("parentchain_sync_loop".to_owned())
 			.spawn(move || {
-				subscribe_to_parentchain_new_headers(parentchain_handler, last_synced_header);
+				if let Err(e) =
+					subscribe_to_parentchain_new_headers(parentchain_handler, last_synced_header)
+				{
+					error!("Parentchain block syncing terminated with a failure: {:?}", e);
+				}
+				println!("[!] Parentchain block syncing has terminated");
 			})
 			.unwrap();
 	}
@@ -783,39 +788,36 @@ fn send_extrinsic(
 fn subscribe_to_parentchain_new_headers<E: EnclaveBase + Sidechain>(
 	parentchain_handler: Arc<ParentchainHandler<ParentchainApi, E>>,
 	mut last_synced_header: Header,
-) {
+) -> Result<(), Error> {
+	let (sender, receiver) = channel();
+	//TODO: this should be implemented by parentchain_handler directly, and not via
+	// exposed parentchain_api. Blocked by https://github.com/scs/substrate-api-client/issues/267.
+	parentchain_handler
+		.parentchain_api()
+		.subscribe_finalized_heads(sender)
+		.map_err(Error::ApiClient)?;
+
+	// TODO(Kai@Litentry):
+	// originally we had an outer loop to try to handle the disconnection,
+	// see https://github.com/litentry/litentry-parachain/commit/b8059d0fad928e4bba99178451cd0d473791c437
+	// but I reverted it because:
+	// - no graceful shutdown, we could have many mpsc channel when it doesn't go right
+	// - we might have multiple `sync_parentchain` running concurrently, which causes chaos in enclave side
+	// - I still feel it's only a workaround, not a perfect solution
+	//
+	// TODO: now the sync will panic if disconnected - it heavily relys on the worker-restart to work (even manually)
 	loop {
-		let (sender, receiver) = channel();
-		if let Err(e) = parentchain_handler.parentchain_api().subscribe_finalized_heads(sender) {
-			println!("[!] connect ws error: {e:?}");
-			sleep(Duration::from_secs(1));
-			break
-		}
-		loop {
-			match receiver.recv() {
-				Ok(header_str) => {
-					let new_header: Header = serde_json::from_str(&header_str).unwrap();
-					println!(
-						"[+] Received finalized header update ({}), syncing parent chain...",
-						new_header.number
-					);
-					match parentchain_handler.sync_parentchain(last_synced_header.clone()) {
-						Err(e) => {
-							println!(
-								"[!] sync parentchain error: {e:?}, websocket try to reconnect"
-							);
-							break
-						},
-						Ok(h) => last_synced_header = h,
-					}
-				},
-				Err(_) => {
-					println!("[!] sync parachain websocket disconnected, try to reconnect.");
-					sleep(Duration::from_secs(1));
-					break
-				},
-			};
-		}
+		let new_header: Header = match receiver.recv() {
+			Ok(header_str) => serde_json::from_str(&header_str).map_err(Error::Serialization),
+			Err(e) => Err(Error::ApiSubscriptionDisconnected(e)),
+		}?;
+
+		println!(
+			"[+] Received finalized header update ({}), syncing parent chain...",
+			new_header.number
+		);
+
+		last_synced_header = parentchain_handler.sync_parentchain(last_synced_header)?;
 	}
 }
 
