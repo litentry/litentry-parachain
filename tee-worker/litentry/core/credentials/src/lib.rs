@@ -441,6 +441,20 @@ impl Credential {
 		self.credential_subject.values.push(value);
 	}
 
+	pub fn add_assertion_a5(&mut self, original_tweet_id: String, value: bool) {
+		let is_following = AssertionLogic::new_item("$is_following", Op::Equal, "true");
+		let has_retweeted = AssertionLogic::new_item("$has_retweeted", Op::Equal, "true");
+		let original_tweet_id =
+			AssertionLogic::new_item("$original_tweet_id", Op::Equal, original_tweet_id.as_str());
+
+		let assertion = AssertionLogic::new_and()
+			.add_item(is_following)
+			.add_item(has_retweeted)
+			.add_item(original_tweet_id);
+		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.values.push(value);
+	}
+
 	pub fn add_assertion_a6(&mut self, min: u32, max: u32) {
 		let min = format!("{}", min);
 		let max = format!("{}", max);

@@ -29,7 +29,7 @@ pub(crate) fn check_follow(
 			let handler2 = p.get("handler2").unwrap_or(&default);
 
 			let body = r#"{ "data": false }"#;
-			if handler1.as_str() == "litentry" && handler2 == "ericzhangeth" {
+			if handler1.as_str() == "litentry" && handler2 == "paritytech" {
 				Response::builder().body(body.to_string())
 			} else {
 				Response::builder().status(400).body(String::from("Error query"))
