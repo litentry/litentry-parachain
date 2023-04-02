@@ -47,7 +47,7 @@ mod sgx {
 		}
 
 		fn seal_to_static_file(unsealed: &Self::Unsealed) -> Result<()> {
-			debug!("Seal scheduled enclave. Current state: {:?}", unsealed);
+			info!("Seal scheduled enclave to file: {:?}", unsealed);
 			Ok(unsealed.using_encoded(|bytes| seal(bytes, SCHEDULED_ENCLAVE_FILE))?)
 		}
 	}
