@@ -20,16 +20,17 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{add_now_to_from_dates, Result};
+use crate::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
-use lc_credentials::{format_assertion_to_date, Credential};
+use lc_credentials::Credential;
 use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
 use litentry_primitives::{
 	Assertion, EvmNetwork, Identity, ParentchainBalance, ParentchainBlockNumber, VCMPError,
+	ASSERTION_FROM_DATE,
 };
 use log::*;
 use std::{string::ToString, vec, vec::Vec};
@@ -71,24 +72,11 @@ pub fn build(
 		}
 	}
 
-	// is_hold default value is true
-	// If there is no link, it will definitely not be "hold"
-	let is_empty = addresses.is_empty();
-	let mut is_hold = is_empty;
+	let mut is_hold = false;
+	let mut optimal_hold_index = 0_usize;
 
-	let now = format_assertion_to_date();
-	let mut hold_from_date = now.clone();
-
-	if !is_empty {
-		// Including 8 items from NOW -> 2017-01-01
-		// Because it is necessary to determine the continuous holding, the reverse order query is started from NOW.
-		// As long as there are terminals, this interval is taken as the result.
-		// query from NOW -> 2023 -> ... -> 2017
-
-		let dates = add_now_to_from_dates(&now);
-		debug!("Assertion A10 dates: {:?}", dates);
-
-		for from_date in dates.iter() {
+	if !addresses.is_empty() {
+		for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
 			let vch = VerifiedCredentialsIsHodlerIn::new(
 				addresses.clone(),
 				from_date.to_string(),
@@ -100,7 +88,7 @@ pub fn build(
 			match client.check_verified_credentials_is_hodler(vch) {
 				Ok(is_hodler_out) => {
 					for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
-						is_hold = is_hold && hodler.is_hodler;
+						is_hold = is_hold || hodler.is_hodler;
 					}
 				},
 				Err(e) => error!(
@@ -109,10 +97,8 @@ pub fn build(
 				),
 			}
 
-			// If Continuous holding， update hold_from_date, or just break
 			if is_hold {
-				hold_from_date = from_date.to_string();
-			} else {
+				optimal_hold_index = index;
 				break
 			}
 		}
@@ -121,7 +107,11 @@ pub fn build(
 	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
-			credential_unsigned.update_holder(is_hold, min_balance, &hold_from_date, &now);
+			credential_unsigned.update_holder(
+				is_hold,
+				min_balance,
+				&ASSERTION_FROM_DATE[optimal_hold_index].into(),
+			);
 
 			Ok(credential_unsigned)
 		},

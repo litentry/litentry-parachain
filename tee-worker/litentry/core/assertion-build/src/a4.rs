@@ -63,15 +63,17 @@ extern crate sgx_tstd as std;
 /// - `from_date` with >= op, nor
 /// - `value` is false but the `from_date` is something other than 2017-01-01.
 ///  
-use crate::{add_now_to_from_dates, Error, Result};
+use crate::{Error, Result};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
-use lc_credentials::{format_assertion_to_date, Credential};
+use lc_credentials::Credential;
 use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
-use litentry_primitives::{Assertion, Identity, ParentchainBalance, ParentchainBlockNumber};
+use litentry_primitives::{
+	Assertion, Identity, ParentchainBalance, ParentchainBlockNumber, ASSERTION_FROM_DATE,
+};
 use log::*;
 use std::{
 	collections::{HashMap, HashSet},
@@ -123,24 +125,25 @@ pub fn build(
 		};
 	});
 
-	// Including 8 items from NOW -> 2017-01-01
-	// Because it is necessary to determine the continuous holding, the reverse order query is started from NOW.
-	// As long as there are terminals, this interval is taken as the result.
-	// query from NOW -> 2023 -> ... -> 2017
-	let now = format_assertion_to_date();
-	let mut hold_from_date = now.clone();
+	let mut is_hold = false;
+	let mut optimal_hold_index = ASSERTION_FROM_DATE.len() - 1;
 
-	let dates = add_now_to_from_dates(&now);
-	debug!("Assertion A4 dates: {:?}", dates);
-
-	// is_hold default value is true
-	let mut is_hold = networks.is_empty();
+	// If both Substrate and Evm networks meet the conditions, take the interval with the longest holding time.
+	// Here's an example:
+	//
+	// ALICE holds 100 LITs since 2018-03-02 on substrate network
+	// ALICE holds 100 LITs since 2020-03-02 on evm network
+	//
+	// min_amount is 1 LIT
+	//
+	// the result should be
+	// Alice:
+	// [
+	//    from_date: < 2019-01-01
+	//    to_date: >= 2023-03-30 (now)
+	//    value: true
+	// ]
 	for (verified_network, addresses) in networks {
-		// If find a satisfying interval from a network, do not need to query the remaining networks.
-		if hold_from_date != now {
-			break
-		}
-
 		let addresses: Vec<String> = addresses.into_iter().collect();
 		let token_address = if verified_network == VerifiedCredentialsNetwork::Ethereum {
 			LIT_TOKEN_ADDRESS
@@ -157,7 +160,12 @@ pub fn build(
 			evm_min_balance
 		};
 
-		for from_date in dates.iter() {
+		// TODO:
+		// There is a problem here, because TDF does not support mixed network types,
+		// It is need to request TDF 2 (substrate+evm networks) * 7 (ASSERTION_FROM_DATE) = 14 http requests.
+		// If TDF can handle mixed network type, and even supports from_date array,
+		// so that ideally, up to one http request can yield results.
+		for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
 			let vch = VerifiedCredentialsIsHodlerIn::new(
 				addresses.clone(),
 				from_date.to_string(),
@@ -168,7 +176,7 @@ pub fn build(
 			match client.check_verified_credentials_is_hodler(vch) {
 				Ok(is_hodler_out) => {
 					for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
-						is_hold = is_hold && hodler.is_hodler;
+						is_hold = is_hold || hodler.is_hodler;
 					}
 				},
 				Err(e) => error!(
@@ -177,19 +185,27 @@ pub fn build(
 				),
 			}
 
-			// If Continuous holding， update hold_from_date, or just break
 			if is_hold {
-				hold_from_date = from_date.to_string();
-			} else {
+				if index < optimal_hold_index {
+					optimal_hold_index = index;
+				}
+
 				break
 			}
 		}
+	}
+	if !is_hold {
+		optimal_hold_index = 0;
 	}
 
 	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
-			credential_unsigned.update_holder(is_hold, min_balance, &hold_from_date, &now);
+			credential_unsigned.update_holder(
+				is_hold,
+				min_balance,
+				&ASSERTION_FROM_DATE[optimal_hold_index].into(),
+			);
 
 			Ok(credential_unsigned)
 		},
