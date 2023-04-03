@@ -25,11 +25,12 @@ use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
-use lc_data_providers::graphql::{
-	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
+use lc_data_providers::{
+	graphql::{GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork},
+	vec_to_string,
 };
 use litentry_primitives::{
-	Assertion, Identity, ParentchainBalance, ParentchainBlockNumber, SubstrateNetwork,
+	Assertion, ErrorDetail, Identity, ParameterString, ParentchainBlockNumber, SubstrateNetwork,
 	ASSERTION_FROM_DATE,
 };
 use log::*;
@@ -40,7 +41,7 @@ const VC_SUBJECT_TYPE: &str = "DOT Holder";
 
 pub fn build(
 	identities: Vec<Identity>,
-	min_balance: ParentchainBalance,
+	min_balance: ParameterString,
 	shard: &ShardIdentifier,
 	who: &AccountId,
 	bn: ParentchainBlockNumber,
@@ -52,7 +53,9 @@ pub fn build(
 		identities
 	);
 
-	let q_min_balance: f64 = (min_balance / (10 ^ 12)) as f64;
+	let q_min_balance = vec_to_string(min_balance.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(Assertion::A7(min_balance.clone()), ErrorDetail::ParseError)
+	})?;
 
 	let mut client = GraphQLClient::new();
 	let mut addresses = vec![];
@@ -79,7 +82,7 @@ pub fn build(
 				from_date.to_string(),
 				VerifiedCredentialsNetwork::Polkadot,
 				"".into(),
-				q_min_balance,
+				q_min_balance.to_string(),
 			);
 			match client.check_verified_credentials_is_hodler(vch) {
 				Ok(is_hodler_out) => {
@@ -105,7 +108,7 @@ pub fn build(
 			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
 			credential_unsigned.update_holder(
 				is_hold,
-				min_balance,
+				&q_min_balance,
 				&ASSERTION_FROM_DATE[optimal_hold_index].into(),
 			);
 			Ok(credential_unsigned)

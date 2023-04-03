@@ -320,14 +320,14 @@ export type Assertion = {
     A1?: string;
     A2?: [string];
     A3?: [string, string, string];
-    A4?: [number];
+    A4?: [string];
     A5?: [string, string];
     A6?: string;
-    A7?: [number];
+    A7?: [string];
     A8?: [IndexingNetwork];
     A9?: string;
-    A10?: [number];
-    A11?: [number];
+    A10?: [string];
+    A11?: [string];
 };
 
 export type TransactionSubmit = {

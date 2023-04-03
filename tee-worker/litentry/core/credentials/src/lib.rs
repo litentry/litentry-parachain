@@ -40,7 +40,7 @@ use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_data_providers::graphql::VerifiedCredentialsNetwork;
-use litentry_primitives::{ParentchainBalance, ParentchainBlockNumber};
+use litentry_primitives::ParentchainBlockNumber;
 use log::*;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
@@ -350,26 +350,20 @@ impl Credential {
 	}
 
 	// Including assertion 4/7/10/11
-	pub fn update_holder(
-		&mut self,
-		is_hold: bool,
-		minimum_amount: ParentchainBalance,
-		from_date: &String,
-	) {
+	pub fn update_holder(&mut self, is_hold: bool, minimum_amount: &String, from_date: &String) {
 		// from_date's Op is ALWAYS Op::LessThan
 		let from_date_logic = AssertionLogic::new_item("$from_date", Op::LessThan, from_date);
 
 		// minimum_amount' Op is ALWAYS Op::Equal
-		let minimum_amount = format!("{}", minimum_amount);
-		let minimum_amount =
-			AssertionLogic::new_item("$minimum_amount", Op::Equal, &minimum_amount);
+		let minimum_amount_logic =
+			AssertionLogic::new_item("$minimum_amount", Op::Equal, minimum_amount);
 
 		// to_date's Op is ALWAYS Op::GreaterEq
 		let to_date = format_assertion_to_date();
 		let to_date_logic = AssertionLogic::new_item("$to_date", Op::GreaterEq, &to_date);
 
 		let assertion = AssertionLogic::new_and()
-			.add_item(minimum_amount)
+			.add_item(minimum_amount_logic)
 			.add_item(from_date_logic)
 			.add_item(to_date_logic);
 
@@ -525,7 +519,7 @@ mod tests {
 	fn update_holder_works() {
 		let who = AccountId::from([0; 32]);
 		let shard = ShardIdentifier::default();
-		let min_balance = 1;
+		let minimum_amount = "1".to_string();
 		let to_date = format_assertion_to_date();
 
 		{
@@ -534,15 +528,14 @@ mod tests {
 
 			let mut credential_unsigned =
 				Credential::new_default(&who, &shard.clone(), 1u32).unwrap();
-			credential_unsigned.update_holder(false, min_balance, &from_date);
+			credential_unsigned.update_holder(false, &minimum_amount, &from_date);
 
-			let minimum_amount = format!("{}", min_balance);
-			let minimum_amount =
+			let minimum_amount_logic =
 				AssertionLogic::new_item("$minimum_amount", Op::Equal, &minimum_amount);
 			let to_date = AssertionLogic::new_item("$to_date", Op::GreaterEq, &to_date);
 
 			let assertion = AssertionLogic::new_and()
-				.add_item(minimum_amount)
+				.add_item(minimum_amount_logic)
 				.add_item(from_date_logic)
 				.add_item(to_date);
 
@@ -554,15 +547,14 @@ mod tests {
 			let from_date = "2018-01-01".to_string();
 			let mut credential_unsigned =
 				Credential::new_default(&&who, &shard.clone(), 1u32).unwrap();
-			credential_unsigned.update_holder(true, min_balance, &from_date);
+			credential_unsigned.update_holder(true, &minimum_amount, &from_date);
 
-			let minimum_amount = format!("{}", min_balance);
-			let minimum_amount =
+			let minimum_amount_logic =
 				AssertionLogic::new_item("$minimum_amount", Op::Equal, &minimum_amount);
 			let from_date_logic = AssertionLogic::new_item("$from_date", Op::LessThan, &from_date);
 			let to_date = AssertionLogic::new_item("$to_date", Op::GreaterEq, &to_date);
 			let assertion = AssertionLogic::new_and()
-				.add_item(minimum_amount)
+				.add_item(minimum_amount_logic)
 				.add_item(from_date_logic)
 				.add_item(to_date);
 
@@ -574,15 +566,14 @@ mod tests {
 			let from_date = "2017-01-01".to_string();
 			let mut credential_unsigned =
 				Credential::new_default(&who, &shard.clone(), 1u32).unwrap();
-			credential_unsigned.update_holder(true, min_balance, &from_date);
+			credential_unsigned.update_holder(true, &minimum_amount, &from_date);
 
-			let minimum_amount = format!("{}", min_balance);
-			let minimum_amount =
+			let minimum_amount_logic =
 				AssertionLogic::new_item("$minimum_amount", Op::Equal, &minimum_amount);
 			let from_date_logic = AssertionLogic::new_item("$from_date", Op::LessThan, &from_date);
 			let to_date = AssertionLogic::new_item("$to_date", Op::GreaterEq, &to_date);
 			let assertion = AssertionLogic::new_and()
-				.add_item(minimum_amount)
+				.add_item(minimum_amount_logic)
 				.add_item(from_date_logic)
 				.add_item(to_date);
 
