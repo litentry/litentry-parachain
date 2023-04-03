@@ -43,7 +43,7 @@ pub enum Assertion {
 	A2(ParameterString),                                    // (guild_id)
 	A3(ParameterString, ParameterString, ParameterString),  // (guild_id, channel_id, role_id)
 	A4(Balance),                                            // (minimum_amount)
-	A5(ParameterString, ParameterString),                   // (twitter_account, tweet_id)
+	A5(ParameterString),                   					// (original_tweet_id)
 	A6,
 	A7(Balance),                                            // (minimum_amount)
 	A8(IndexingNetworks),                                  // litentry, litmus, polkadot, kusama, khala, ethereum

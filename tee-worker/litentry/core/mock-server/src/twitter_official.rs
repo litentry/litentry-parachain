@@ -75,47 +75,60 @@ where
 		})
 }
 
-pub(crate) fn query_retweet<F>(
-	func: Arc<F>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone
-where
-	F: Fn(&AccountId, &Identity) -> ChallengeCode + Send + Sync + 'static,
-{
+pub(crate) fn query_retweeted_by(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
 	warp::get()
-		.and(warp::path!("2" / "tweets" / "search" / "recent"))
+		.and(warp::path!("2" / "tweets" / String / "retweeted_by"))
 		.and(warp::query::<HashMap<String, String>>())
-		.map(move |p: HashMap<String, String>| {
-			let default = String::default();
-			let query = p.get("query").unwrap_or(&default);
-			let expansions = p.get("expansions").unwrap_or(&default);
-
-			let user = "ericzhangeth";
-			let original_tweet_id = "100";
-			let expected_query =
-				format!("from: {} retweets_of_tweet_id: {}", user, original_tweet_id);
-			if expansions.as_str() != "author_id" || query != &expected_query {
+		.map(move |original_tweet_id, _p: HashMap<String, String>| {
+			log::info!("query_retweeted_by");
+			if original_tweet_id != "100" {
 				Response::builder().status(400).body(String::from("Error query"))
 			} else {
-				let author_id = "ericzhangeth";
-				let id = "100";
+				let author = "litentry";
+				let user_id = "100";
 
-				let account_id = AccountId::new([
-					212, 53, 147, 199, 21, 253, 211, 28, 97, 20, 26, 189, 4, 169, 159, 214, 130,
-					44, 133, 88, 133, 76, 205, 227, 154, 86, 132, 231, 165, 109, 162, 125,
-				]); // Alice
-				let twitter_identity = Identity::Web2 {
-					network: Web2Network::Twitter,
-					address: IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
-				};
-				let chanllenge_code = func(&account_id, &twitter_identity);
-				let payload = mock_tweet_payload(&account_id, &twitter_identity, &chanllenge_code);
-
-				let tweets = vec![Tweet {
-					author_id: author_id.into(),
-					id: id.into(),
-					text: serde_json::to_string(&payload).unwrap(),
+				let tweets = vec![TwitterUser {
+					id: user_id.into(),
+					name: author.into(),
+					username: author.into(),
+					public_metrics: None,
 				}];
-				let body = TwitterAPIV2Response { data: Some(tweets), meta: None, includes: None };
+				let body = Retweeted { data: tweets };
+				Response::builder().body(serde_json::to_string(&body).unwrap())
+			}
+		})
+}
+
+pub(crate) fn query_friendship(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::get()
+		.and(warp::path!("1.1" / "friendships" / "show.json"))
+		.and(warp::query::<HashMap<String, String>>())
+		.map(move |p: HashMap<String, String>| {
+			log::info!("query_friendship");
+			let default = String::default();
+			let source = p.get("source_screen_name").unwrap_or(&default);
+			let target_id = p.get("target_id").unwrap_or(&default);
+
+			if source != "twitterdev" || target_id != "783214" {
+				Response::builder().status(400).body(String::from("Error query"))
+			} else {
+				let source_user = SourceTwitterUser {
+					id_str: "2244994945".into(),
+					screen_name: "TwitterDev".into(),
+					following: true,
+					followed_by: false,
+				};
+
+				let target_user = TargetTwitterUser {
+					id_str: "783214".into(),
+					screen_name: "Twitter".into(),
+					following: false,
+					followed_by: true,
+				};
+
+				let body = Relationship { source: source_user, target: target_user };
 				Response::builder().body(serde_json::to_string(&body).unwrap())
 			}
 		})
@@ -126,19 +139,19 @@ pub(crate) fn query_user(
 	warp::get()
 		.and(warp::path!("2" / "users" / "by" / "username" / String))
 		.and(warp::query::<HashMap<String, String>>())
-		.map(move |user_id, p: HashMap<String, String>| {
-			let expected_user_id = "1256908613857226756".to_string();
+		.map(move |user_name, p: HashMap<String, String>| {
+			let expected_user_name = "twitterdev".to_string();
 
 			let default = String::default();
 			let user_fields = p.get("user.fields").unwrap_or(&default);
 
-			if user_fields.as_str() != "public_metrics" || user_id != expected_user_id {
+			if user_fields.as_str() != "public_metrics" || user_name != expected_user_name {
 				Response::builder().status(400).body(String::from("Error query"))
 			} else {
 				let twitter_user_data = TwitterUser {
-					id: expected_user_id,
-					name: "ericzhang".to_string(),
-					username: "elon".to_string(),
+					id: "2244994945".into(),
+					name: "TwitterDev".to_string(),
+					username: "TwitterDev".to_string(),
 					public_metrics: Some(TwitterUserPublicMetrics {
 						followers_count: 100_u32,
 						following_count: 99_u32,

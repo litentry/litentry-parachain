@@ -12,7 +12,7 @@ import {
 } from './common/type-definitions';
 import { expect, assert } from 'chai';
 import { listenEvent, sendTxUntilInBlock, sendTxUntilInBlockList } from './common/transactions';
-
+import { u8aToHex } from '@polkadot/util';
 export async function setErrorUserShieldingKey(
     context: IntegrationTestContext,
     signer: KeyringPair,
@@ -25,7 +25,9 @@ export async function setErrorUserShieldingKey(
     await sendTxUntilInBlock(context.api, tx, signer);
 
     if (listening) {
-        const events = await listenEvent(context.api, 'identityManagement', ['SetUserShieldingKeyFailed']);
+        const events = await listenEvent(context.api, 'identityManagement', ['SetUserShieldingKeyFailed'], 1, [
+            u8aToHex(signer.addressRaw),
+        ]);
         expect(events.length).to.be.equal(1);
         return (events[0] as any).data.detail.toHuman();
     }
@@ -60,7 +62,9 @@ export async function createErrorIdentities(
     const res = (await sendTxUntilInBlockList(context.api, txs, signer)) as any;
 
     if (listening) {
-        const events = (await listenEvent(context.api, 'identityManagement', ['CreateIdentityFailed'])) as any;
+        const events = (await listenEvent(context.api, 'identityManagement', ['CreateIdentityFailed'], txs.length, [
+            u8aToHex(signer.addressRaw),
+        ])) as any;
         expect(events.length).to.be.equal(errorCiphertexts.length);
         expect(events.length).to.be.equal(res.length);
         let results: string[] = [];
@@ -111,7 +115,9 @@ export async function verifyErrorIdentities(
     const res = (await sendTxUntilInBlockList(context.api, txs, signer)) as any;
 
     if (listening) {
-        const events = (await listenEvent(context.api, 'identityManagement', ['VerifyIdentityFailed'])) as any;
+        const events = (await listenEvent(context.api, 'identityManagement', ['VerifyIdentityFailed'], txs.length, [
+            u8aToHex(signer.addressRaw),
+        ])) as any;
         expect(events.length).to.be.equal(identities.length);
         expect(events.length).to.be.equal(res.length);
         let results: string[] = [];
@@ -149,7 +155,9 @@ export async function removeErrorIdentities(
     const res = (await sendTxUntilInBlockList(context.api, txs, signer)) as any;
 
     if (listening) {
-        const events = (await listenEvent(context.api, 'identityManagement', ['RemoveIdentityFailed'])) as any;
+        const events = (await listenEvent(context.api, 'identityManagement', ['RemoveIdentityFailed'], txs.length, [
+            u8aToHex(signer.addressRaw),
+        ])) as any;
         let results: string[] = [];
         expect(events.length).to.be.equal(identities.length);
         expect(events.length).to.be.equal(res.length);
@@ -185,7 +193,9 @@ export async function requestErrorVCs(
     const res = (await sendTxUntilInBlockList(context.api, txs, signer)) as any;
 
     if (listening) {
-        const events = (await listenEvent(context.api, 'vcManagement', ['RequestVCFailed'])) as Event[];
+        const events = (await listenEvent(context.api, 'vcManagement', ['RequestVCFailed'], txs.length, [
+            u8aToHex(signer.addressRaw),
+        ])) as Event[];
         expect(events.length).to.be.equal(keys.length);
         expect(events.length).to.be.equal(res.length);
 

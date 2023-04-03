@@ -5,6 +5,7 @@ import WebSocketAsPromised = require('websocket-as-promised');
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { Metadata } from '@polkadot/types';
+import { ethers } from 'ethers';
 export const teeTypes = {
     WorkerRpcReturnString: {
         vec: 'Bytes',
@@ -188,6 +189,7 @@ export type IntegrationTestContext = {
     ethersWallet: any;
     substrateWallet: any;
     metaData: Metadata;
+    web3Signers: Web3Wallets[];
 };
 
 export class AESOutput {
@@ -245,8 +247,8 @@ export type Web3CommonValidationData = {
 
 export type IdentityMultiSignature = {
     Ethereum?: HexString;
-    Ed25519: HexString;
-    Sr25519: HexString;
+    Ed25519?: HexString;
+    Sr25519?: HexString;
 };
 
 export type Ed25519Signature = {
@@ -266,6 +268,11 @@ export type DiscordValidationData = {
     channel_id: HexString;
     message_id: HexString;
     guild_id: HexString;
+};
+
+export type Web3Wallets = {
+    substrateWallet: KeyringPair;
+    ethereumWallet: ethers.Wallet;
 };
 
 // export type DiscordValidationData = {}
@@ -301,13 +308,13 @@ export type VCRequested = {
 };
 
 export enum IndexingNetwork {
-    Litentry='Litentry',
-    Litmus='Litmus',
-	Polkadot='Polkadot',
-	Kusama='Kusama',
-	Khala='Khala',
-	Ethereum='Ethereum',
-};
+    Litentry = 'Litentry',
+    Litmus = 'Litmus',
+    Polkadot = 'Polkadot',
+    Kusama = 'Kusama',
+    Khala = 'Khala',
+    Ethereum = 'Ethereum',
+}
 
 export type Assertion = {
     A1?: string;

@@ -55,7 +55,7 @@ pub fn build(
 		identities
 	);
 
-	let mut client = TwitterOfficialClient::new();
+	let mut client = TwitterOfficialClient::v2();
 	let mut sum: u32 = 0;
 
 	for identity in identities {
