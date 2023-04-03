@@ -33,7 +33,6 @@ pub mod pallet {
 		pallet_prelude::*,
 		{self as system},
 	};
-	use sp_runtime::traits::BadOrigin;
 	use sp_std::prelude::*;
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
