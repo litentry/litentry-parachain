@@ -601,6 +601,7 @@ jobs:
     needs:
       - set-condition
       - parachain-ts-test
+      - parachain-build-tee-prod
       - tee-test
     if: ${{ !failure() && needs.set-condition.outputs.push_docker == 'true' }}
     steps:
