@@ -10,9 +10,7 @@ import { listenEvent, multiAccountTxSender } from './common/transactions';
 import { u8aToHex } from '@polkadot/util';
 
 //Explain how to use this test, which has two important parameters:
-
 //1.The "number" parameter in describeLitentry represents the number of accounts generated, including Substrate wallets and Ethereum wallets.If you want to use a large number of accounts for testing, you can modify this parameter.
-
 //2.Each time the test code is executed, new wallet account will be used.
 
 describeLitentry('multiple accounts test', 1, async (context) => {

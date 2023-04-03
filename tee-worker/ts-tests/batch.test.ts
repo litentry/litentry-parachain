@@ -31,7 +31,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
     });
 
     step('batch test: create identities', async function () {
-        const twiiter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
+        const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
         const ethereum1_identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Ethereum', 'Evm');
         const ethereum2_identity = await buildIdentityHelper(context.ethersWallet.bob.address, 'Ethereum', 'Evm');
 
@@ -41,7 +41,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             'Substrate'
         );
 
-        identities = [twiiter_identity, ethereum1_identity, ethereum2_identity, substrate_identity];
+        identities = [twitter_identity, ethereum1_identity, ethereum2_identity, substrate_identity];
         let txs = await buildIdentityTxs(context, [context.substrateWallet.alice], identities, 'createIdentity');
 
         let resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
@@ -56,7 +56,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
         const [twitter_validations] = await buildValidations(
             context,
             [twitter_event_data],
-            [twiiter_identity],
+            [twitter_identity],
             'twitter',
             'single',
             [context.substrateWallet.alice]
