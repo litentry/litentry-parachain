@@ -141,6 +141,10 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 	/// The logging target to use when logging messages.
 	fn logging_target(&self) -> &'static str;
 
+	fn get_scheduled_enclave(&mut self) -> Arc<Self::ScheduledEnclave>;
+
+	fn get_state_handler(&mut self) -> Arc<Self::StateHandler>;
+
 	/// Returns the epoch data necessary for authoring. For time-dependent epochs,
 	/// use the provided slot number as a canonical source of time.
 	fn epoch_data(
@@ -210,7 +214,6 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 
 			return None
 		}
-		// TODO: check schedule enclave matches
 
 		let latest_parentchain_header = match self.peek_latest_parentchain_header() {
 			Ok(Some(peeked_header)) => peeked_header,
@@ -246,6 +249,10 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 				"Skipping proposal slot. Authorities len {:?}", authorities_len
 			);
 		}
+
+		// Return early if MRENCLAVE doesn't match - it implies that the enclave should be updated
+		let updater = self.get_scheduled_enclave();
+		let state_handler = self.state_handler();
 
 		let _claim = self.claim_slot(&latest_parentchain_header, slot, &epoch_data)?;
 

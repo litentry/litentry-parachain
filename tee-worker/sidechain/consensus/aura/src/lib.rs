@@ -191,6 +191,14 @@ impl<
 		"aura"
 	}
 
+	fn get_scheduled_enclave(&mut self) -> Arc<Self::ScheduledEnclave> {
+		self.scheduled_enclave.clone()
+	}
+
+	fn get_state_handler(&mut self) -> Arc<Self::StateHandler> {
+		self.state_handler.clone()
+	}
+
 	fn epoch_data(
 		&self,
 		header: &ParentchainBlock::Header,

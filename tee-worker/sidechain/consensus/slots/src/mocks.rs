@@ -16,10 +16,12 @@
 */
 
 use crate::{slots::Slot, SimpleSlotWorker, SlotInfo, SlotResult};
+pub use itp_test::mock::handle_state_mock::HandleStateMock;
 use its_consensus_common::{Proposal, Proposer, Result};
 use its_primitives::{traits::ShardIdentifierFor, types::SignedBlock as SignedSidechainBlock};
+use lc_scheduled_enclave::ScheduledEnclaveMock;
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header as ParentchainHeaderTrait};
-use std::{marker::PhantomData, thread, time::Duration};
+use std::{marker::PhantomData, sync::Arc, thread, time::Duration};
 
 #[derive(Default)]
 pub(crate) struct ProposerMock<ParentchainBlock> {
@@ -42,6 +44,8 @@ where
 {
 	pub slot_infos: Vec<SlotInfo<B>>,
 	pub slot_time_spent: Option<Duration>,
+	pub scheduled_enclave: Arc<ScheduledEnclaveMock>,
+	pub state_handler: Arc<HandleStateMock>,
 }
 
 impl<B> SimpleSlotWorker<B> for SimpleSlotWorkerMock<B>
@@ -56,8 +60,20 @@ where
 
 	type Output = SignedSidechainBlock;
 
+	type ScheduledEnclave = ScheduledEnclaveMock;
+
+	type StateHandler = HandleStateMock;
+
 	fn logging_target(&self) -> &'static str {
 		"test"
+	}
+
+	fn get_scheduled_enclave(&mut self) -> Arc<Self::ScheduledEnclave> {
+		self.scheduled_enclave.clone()
+	}
+
+	fn get_state_handler(&mut self) -> Arc<Self::StateHandler> {
+		self.state_handler.clone()
 	}
 
 	fn epoch_data(&self, _header: &B::Header, _slot: Slot) -> Result<Self::EpochData> {
