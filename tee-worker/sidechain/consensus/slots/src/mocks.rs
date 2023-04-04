@@ -44,8 +44,6 @@ where
 {
 	pub slot_infos: Vec<SlotInfo<B>>,
 	pub slot_time_spent: Option<Duration>,
-	pub scheduled_enclave: Arc<ScheduledEnclaveMock>,
-	pub state_handler: Arc<HandleStateMock>,
 }
 
 impl<B> SimpleSlotWorker<B> for SimpleSlotWorkerMock<B>
@@ -69,11 +67,11 @@ where
 	}
 
 	fn get_scheduled_enclave(&mut self) -> Arc<Self::ScheduledEnclave> {
-		self.scheduled_enclave.clone()
+		todo!()
 	}
 
 	fn get_state_handler(&mut self) -> Arc<Self::StateHandler> {
-		self.state_handler.clone()
+		todo!()
 	}
 
 	fn epoch_data(&self, _header: &B::Header, _slot: Slot) -> Result<Self::EpochData> {

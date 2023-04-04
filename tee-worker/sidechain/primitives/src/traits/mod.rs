@@ -27,7 +27,7 @@ use sp_std::{fmt::Debug, prelude::*};
 
 pub trait Header: Encode + Decode + Clone {
 	/// Identifier for the shards.
-	type ShardIdentifier: Encode + Decode + sp_std::hash::Hash + Copy + Member;
+	type ShardIdentifier: Encode + Decode + sp_std::hash::Hash + Copy + Member + Into<H256>;
 
 	/// Get block number.
 	fn block_number(&self) -> u64;

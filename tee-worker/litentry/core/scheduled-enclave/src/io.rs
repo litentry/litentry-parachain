@@ -76,6 +76,8 @@ impl ScheduledEnclaveUpdater for ScheduledEnclave {
 	// otherwise create a new instance and seal to static file
 	#[cfg(feature = "sgx")]
 	fn init(&self, mrenclave: MrEnclave) -> Result<()> {
+		let mut m = self.current_mrenclave.write().map_err(|_| Error::PoisonLock)?;
+		*m = mrenclave;
 		if SgxFile::open(SCHEDULED_ENCLAVE_FILE).is_err() {
 			info!(
 				"[Enclave] ScheduledEnclave file not found, creating new! {}",
@@ -113,6 +115,10 @@ impl ScheduledEnclaveUpdater for ScheduledEnclave {
 			return ScheduledEnclaveSeal::seal_to_static_file(&*registry)
 		}
 		Ok(())
+	}
+
+	fn get_current_mrenclave(&self) -> Result<MrEnclave> {
+		self.current_mrenclave.read().map_err(|_| Error::PoisonLock).map(|l| l.clone())
 	}
 
 	fn get_expected_mrenclave(&self, sbn: SidechainBlockNumber) -> Result<MrEnclave> {

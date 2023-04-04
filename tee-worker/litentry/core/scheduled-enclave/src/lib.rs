@@ -47,16 +47,18 @@ pub type ScheduledEnclaveMap = BTreeMap<SidechainBlockNumber, MrEnclave>;
 
 #[derive(Default)]
 pub struct ScheduledEnclave {
+	pub current_mrenclave: RwLock<MrEnclave>,
 	pub registry: RwLock<ScheduledEnclaveMap>,
 }
 
-// all fn with &self as we mutate the state internally
 pub trait ScheduledEnclaveUpdater {
 	fn init(&self, mrenclave: MrEnclave) -> Result<()>;
 
 	fn update(&self, sbn: SidechainBlockNumber, mrenclave: MrEnclave) -> Result<()>;
 
 	fn remove(&self, sbn: SidechainBlockNumber) -> Result<()>;
+
+	fn get_current_mrenclave(&self) -> Result<MrEnclave>;
 
 	// given a SidechainBlockNumber, return the expected MRENCLAVE
 	// For example, the registry is:
@@ -71,6 +73,17 @@ pub trait ScheduledEnclaveUpdater {
 	// get_expected_mrenclave(21) -> 0xCC
 	// get_expected_mrenclave(30) -> 0xCC
 	fn get_expected_mrenclave(&self, sbn: SidechainBlockNumber) -> Result<MrEnclave>;
+
+	fn is_mrenclave_matching(&self, sbn: SidechainBlockNumber) -> bool {
+		let current = self.get_current_mrenclave();
+		let expected = self.get_expected_mrenclave(sbn);
+
+		if current.is_err() || expected.is_err() {
+			return false
+		}
+
+		current.unwrap() == expected.unwrap()
+	}
 }
 
 #[derive(Default)]
@@ -88,6 +101,10 @@ impl ScheduledEnclaveUpdater for ScheduledEnclaveMock {
 
 	fn remove(&self, _sbn: SidechainBlockNumber) -> Result<()> {
 		Ok(())
+	}
+
+	fn get_current_mrenclave(&self) -> Result<MrEnclave> {
+		Ok(Default::default())
 	}
 
 	fn get_expected_mrenclave(&self, _sbn: SidechainBlockNumber) -> Result<MrEnclave> {

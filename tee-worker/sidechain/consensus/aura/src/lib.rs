@@ -43,7 +43,7 @@ use its_primitives::{
 	types::block::BlockHash,
 };
 use its_validateer_fetch::ValidateerFetch;
-use lc_scheduled_enclave::{ScheduledEnclaveMock, ScheduledEnclaveUpdater};
+use lc_scheduled_enclave::ScheduledEnclaveUpdater;
 use sp_core::ByteArray;
 use sp_runtime::{
 	app_crypto::{sp_core::H256, Pair},

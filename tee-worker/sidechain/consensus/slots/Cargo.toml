@@ -34,6 +34,7 @@ itp-sgx-io = { path = "../../../core-primitives/sgx/io", default-features = fals
 itp-stf-state-handler = { path = "../../../core-primitives/stf-state-handler", default-features = false }
 itp-time-utils = { path = "../../../core-primitives/time-utils", default-features = false }
 its-consensus-common = { path = "../common", default-features = false }
+its-state = { path = "../../state", default-features = false }
 lc-scheduled-enclave = { path = "../../../litentry/core/scheduled-enclave", default-features = false }
 
 [dev-dependencies]
@@ -51,6 +52,7 @@ sgx = [
     "its-consensus-common/sgx",
     "itp-stf-state-handler/sgx",
     "itp-sgx-externalities/sgx",
+    "its-state/sgx",
     "lc-scheduled-enclave/sgx",
     "sgx_tstd",
 ]
@@ -72,5 +74,6 @@ std = [
     "its-consensus-common/std",
     "itp-stf-state-handler/std",
     "itp-sgx-externalities/std",
+    "its-state/std",
     "lc-scheduled-enclave/std",
 ]

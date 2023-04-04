@@ -42,11 +42,12 @@ use its_primitives::traits::{
 	Block as SidechainBlockTrait, Header as HeaderTrait, ShardIdentifierFor,
 	SignedBlock as SignedSidechainBlockTrait,
 };
+use its_state::SidechainSystemExt;
 use lc_scheduled_enclave::ScheduledEnclaveUpdater;
 use log::*;
 pub use slots::*;
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header as ParentchainHeaderTrait};
-use std::{fmt::Debug, time::Duration, vec::Vec};
+use std::{fmt::Debug, sync::Arc, time::Duration, vec::Vec};
 
 #[cfg(feature = "std")]
 mod slot_stream;
@@ -141,8 +142,10 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 	/// The logging target to use when logging messages.
 	fn logging_target(&self) -> &'static str;
 
+	/// Get scheduled enclave
 	fn get_scheduled_enclave(&mut self) -> Arc<Self::ScheduledEnclave>;
 
+	/// Get state handler for query and mutation
 	fn get_state_handler(&mut self) -> Arc<Self::StateHandler>;
 
 	/// Returns the epoch data necessary for authoring. For time-dependent epochs,
@@ -251,8 +254,21 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 		}
 
 		// Return early if MRENCLAVE doesn't match - it implies that the enclave should be updated
-		let updater = self.get_scheduled_enclave();
-		let state_handler = self.state_handler();
+		let scheduled_enclave = self.get_scheduled_enclave();
+		let state_handler = self.get_state_handler();
+		// TODO: is this always consistent? Reference: `propose_state_update` in slot_proposer.rs
+		let (state, _) = state_handler.load_cloned(&shard.into()).ok()?;
+		let next_sidechain_number = state.get_block_number().map_or(1, |n| n + 1);
+
+		if !scheduled_enclave.is_mrenclave_matching(next_sidechain_number) {
+			warn!(
+				target: logging_target,
+				"Skipping slot due to mistmatch MRENCLAVE, current: {:?}, expect: {:?}",
+				scheduled_enclave.get_current_mrenclave(),
+				scheduled_enclave.get_expected_mrenclave(next_sidechain_number),
+			);
+			return None
+		}
 
 		let _claim = self.claim_slot(&latest_parentchain_header, slot, &epoch_data)?;
 

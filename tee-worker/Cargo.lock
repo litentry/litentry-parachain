@@ -3802,6 +3802,7 @@ dependencies = [
  "its-block-verification",
  "its-consensus-common",
  "its-primitives",
+ "its-state",
  "its-test",
  "lazy_static",
  "lc-scheduled-enclave",
