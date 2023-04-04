@@ -5058,6 +5058,7 @@ dependencies = [
  "pallet-democracy",
  "pallet-drop3",
  "pallet-extrinsic-filter",
+ "pallet-group",
  "pallet-identity",
  "pallet-identity-management",
  "pallet-identity-management-mock",
@@ -6432,6 +6433,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-group"
+version = "0.1.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec 3.4.0",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-identity"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.37#f38bd6671d460293c93062cc1e4fe9e9e490cb29"
@@ -6458,6 +6475,7 @@ dependencies = [
  "hex",
  "log",
  "pallet-balances",
+ "pallet-group",
  "pallet-teerex",
  "pallet-timestamp",
  "parity-scale-codec 3.4.0",
@@ -6483,6 +6501,7 @@ dependencies = [
  "log",
  "mock-tee-primitives",
  "pallet-balances",
+ "pallet-group",
  "pallet-identity-management",
  "pallet-timestamp",
  "parity-crypto",
@@ -7162,6 +7181,7 @@ dependencies = [
  "hex",
  "log",
  "pallet-balances",
+ "pallet-group",
  "pallet-timestamp",
  "parity-scale-codec 3.4.0",
  "scale-info",
@@ -9644,6 +9664,7 @@ dependencies = [
  "pallet-democracy",
  "pallet-drop3",
  "pallet-extrinsic-filter",
+ "pallet-group",
  "pallet-identity",
  "pallet-identity-management",
  "pallet-identity-management-mock",
@@ -9897,6 +9918,7 @@ dependencies = [
  "pallet-balances",
  "pallet-collective",
  "pallet-extrinsic-filter",
+ "pallet-group",
  "pallet-membership",
  "pallet-multisig",
  "pallet-teerex",

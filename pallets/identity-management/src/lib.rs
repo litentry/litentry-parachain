@@ -66,6 +66,12 @@ pub mod pallet {
 		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		/// origin to manage authorised delegatee list
 		type DelegateeAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		// This type should be safe to remove
+		/// Temporary type for whitelist function
+		type IMPExtrinsicWhitelistOrigin: EnsureOrigin<
+			Self::RuntimeOrigin,
+			Success = Self::AccountId,
+		>;
 	}
 
 	#[pallet::event]
@@ -197,7 +203,7 @@ pub mod pallet {
 			shard: ShardIdentifier,
 			encrypted_key: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
-			let _ = ensure_signed(origin)?;
+			let _ = T::IMPExtrinsicWhitelistOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::SetUserShieldingKeyRequested { shard });
 			Ok(().into())
 		}
@@ -215,7 +221,7 @@ pub mod pallet {
 			encrypted_identity: Vec<u8>,
 			encrypted_metadata: Option<Vec<u8>>,
 		) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin)?;
+			let who = T::IMPExtrinsicWhitelistOrigin::ensure_origin(origin)?;
 			ensure!(
 				who == user || Delegatee::<T>::contains_key(&who),
 				Error::<T>::UnauthorisedUser
@@ -232,7 +238,7 @@ pub mod pallet {
 			shard: ShardIdentifier,
 			encrypted_identity: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
-			let _ = ensure_signed(origin)?;
+			let _ = T::IMPExtrinsicWhitelistOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::RemoveIdentityRequested { shard });
 			Ok(().into())
 		}
@@ -246,7 +252,7 @@ pub mod pallet {
 			encrypted_identity: Vec<u8>,
 			encrypted_validation_data: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
-			let _ = ensure_signed(origin)?;
+			let _ = T::IMPExtrinsicWhitelistOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::VerifyIdentityRequested { shard });
 			Ok(().into())
 		}

@@ -86,6 +86,9 @@ pub mod pallet {
 		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		/// origin to manage authorised delegatee list
 		type DelegateeAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		// This type should be safe to remove
+		/// Temporary type for whitelist function
+		type WhitelistOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
 	}
 
 	#[pallet::event]
@@ -301,7 +304,10 @@ pub mod pallet {
 			encrypted_identity: Vec<u8>,
 			encrypted_metadata: Option<Vec<u8>>,
 		) -> DispatchResult {
-			let who = ensure_signed(origin)?;
+			// This code should be safe to replace
+			// Temporary change for whitelist function
+			let who = T::WhitelistOrigin::ensure_origin(origin)?;
+			// let who = ensure_signed(origin)?;
 			ensure!(
 				who == user || Delegatee::<T>::contains_key(&who),
 				Error::<T>::UnauthorisedUser
