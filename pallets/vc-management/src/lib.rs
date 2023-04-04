@@ -161,6 +161,15 @@ pub mod pallet {
 			detail: ErrorDetail,
 			req_ext_hash: H256,
 		},
+		VCRegistryItemAdded {
+			account: T::AccountId,
+			assertion: Assertion,
+			index: VCIndex,
+		},
+		VCRegistryItemRemoved {
+			index: VCIndex,
+		},
+		VCRegistryClear,
 	}
 
 	#[pallet::error]
@@ -372,6 +381,52 @@ pub mod pallet {
 			let _ = SchemaRegistry::<T>::get(index).ok_or(Error::<T>::SchemaNotExists)?;
 			SchemaRegistry::<T>::remove(index);
 			Self::deposit_event(Event::SchemaRevoked { account: sender, shard, index });
+			Ok(().into())
+		}
+
+		/// ---------------------------------------------------
+		/// The following extrinsics are supposed to be called by Sudo/Council only
+		/// This is the temporary function for manual operation of VCRegistry storage
+		/// ---------------------------------------------------
+		#[pallet::call_index(10)]
+		#[pallet::weight(195_000_000)]
+		pub fn add_vcregsitry_item(
+			origin: OriginFor<T>,
+			index: VCIndex,
+			subject: T::AccountId,
+			assertion: Assertion,
+			hash: H256,
+		) -> DispatchResultWithPostInfo {
+			T::SetAdminOrigin::ensure_origin(origin)?;
+			ensure!(!VCRegistry::<T>::contains_key(index), Error::<T>::VCAlreadyExists);
+			VCRegistry::<T>::insert(
+				index,
+				VCContext::<T>::new(subject.clone(), assertion.clone(), hash),
+			);
+			Self::deposit_event(Event::VCRegistryItemAdded { account: subject, assertion, index });
+			Ok(().into())
+		}
+
+		#[pallet::call_index(11)]
+		#[pallet::weight(195_000_000)]
+		pub fn remove_vcregsitry_item(
+			origin: OriginFor<T>,
+			index: VCIndex,
+		) -> DispatchResultWithPostInfo {
+			T::SetAdminOrigin::ensure_origin(origin)?;
+			let _ = VCRegistry::<T>::get(index).ok_or(Error::<T>::VCNotExist)?;
+			VCRegistry::<T>::remove(index);
+			Self::deposit_event(Event::VCRegistryItemRemoved { index });
+			Ok(().into())
+		}
+
+		#[pallet::call_index(12)]
+		#[pallet::weight(195_000_000)]
+		pub fn clear_vcregsitry(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+			T::SetAdminOrigin::ensure_origin(origin)?;
+			// If more than u32 max, the map itself is overflow, so no worry
+			let _ = VCRegistry::<T>::clear(u32::max_value(), None);
+			Self::deposit_event(Event::VCRegistryClear);
 			Ok(().into())
 		}
 	}

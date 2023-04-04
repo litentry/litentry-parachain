@@ -389,3 +389,94 @@ fn revoke_schema_with_unprivileged_origin_fails() {
 		);
 	});
 }
+
+#[test]
+fn manual_add_remove_vcregsitry_item_works() {
+	new_test_ext().execute_with(|| {
+		// Can not remove non-existing vc
+		assert_noop!(
+			VCManagement::remove_vcregsitry_item(RuntimeOrigin::signed(1), VC_INDEX),
+			Error::<Test>::VCNotExist
+		);
+		// Unauthorized party can not add vc
+		assert_noop!(
+			VCManagement::add_vcregsitry_item(
+				RuntimeOrigin::signed(2),
+				VC_INDEX,
+				2,
+				Assertion::A1,
+				VC_HASH
+			),
+			sp_runtime::DispatchError::BadOrigin
+		);
+		// Successfully add vc
+		assert_ok!(VCManagement::add_vcregsitry_item(
+			RuntimeOrigin::signed(1),
+			VC_INDEX,
+			1,
+			Assertion::A1,
+			VC_HASH
+		));
+		// Check result
+		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
+		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::VCRegistryItemAdded {
+			account: 1,
+			assertion: Assertion::A1,
+			index: VC_INDEX,
+		}));
+		// Unauthorized party can not remove vc
+		assert_noop!(
+			VCManagement::remove_vcregsitry_item(RuntimeOrigin::signed(2), VC_INDEX),
+			sp_runtime::DispatchError::BadOrigin
+		);
+		// Successfully remove vc
+		assert_ok!(VCManagement::remove_vcregsitry_item(RuntimeOrigin::signed(1), VC_INDEX));
+		// Check result and events
+		assert!(VCManagement::vc_registry(VC_INDEX).is_none());
+		System::assert_last_event(RuntimeEvent::VCManagement(
+			crate::Event::VCRegistryItemRemoved { index: VC_INDEX },
+		));
+	});
+}
+
+#[test]
+fn manual_add_clear_vcregsitry_item_works() {
+	new_test_ext().execute_with(|| {
+		// Unauthorized party can not add vc
+		assert_noop!(
+			VCManagement::add_vcregsitry_item(
+				RuntimeOrigin::signed(2),
+				VC_INDEX,
+				2,
+				Assertion::A1,
+				VC_HASH
+			),
+			sp_runtime::DispatchError::BadOrigin
+		);
+		// Successfully add vc
+		assert_ok!(VCManagement::add_vcregsitry_item(
+			RuntimeOrigin::signed(1),
+			VC_INDEX,
+			1,
+			Assertion::A1,
+			VC_HASH
+		));
+		// Check result
+		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
+		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::VCRegistryItemAdded {
+			account: 1,
+			assertion: Assertion::A1,
+			index: VC_INDEX,
+		}));
+		// Unauthorized party can not clear vc
+		assert_noop!(
+			VCManagement::clear_vcregsitry(RuntimeOrigin::signed(2)),
+			sp_runtime::DispatchError::BadOrigin
+		);
+		// Successfully clear vc
+		assert_ok!(VCManagement::clear_vcregsitry(RuntimeOrigin::signed(1)));
+		// Check result and events
+		assert!(VCManagement::vc_registry(VC_INDEX).is_none());
+		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::VCRegistryClear));
+	});
+}
