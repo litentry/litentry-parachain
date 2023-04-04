@@ -33,6 +33,8 @@ extern crate sgx_tstd as std;
 
 use codec::Encode;
 use derive_more::From;
+use itp_sgx_externalities::SgxExternalities;
+use itp_stf_state_handler::handle_state::HandleState;
 use itp_time_utils::{duration_difference, duration_now};
 use itp_types::OpaqueCall;
 use its_consensus_common::{Error as ConsensusError, Proposer};
@@ -40,6 +42,7 @@ use its_primitives::traits::{
 	Block as SidechainBlockTrait, Header as HeaderTrait, ShardIdentifierFor,
 	SignedBlock as SignedSidechainBlockTrait,
 };
+use lc_scheduled_enclave::ScheduledEnclaveUpdater;
 use log::*;
 pub use slots::*;
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header as ParentchainHeaderTrait};
@@ -128,6 +131,12 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 
 	/// Output generated after a slot
 	type Output: SignedSidechainBlockTrait + Send + 'static;
+
+	/// Scheduled enclave context for authoring
+	type ScheduledEnclave: ScheduledEnclaveUpdater;
+
+	/// State handler context for authoring
+	type StateHandler: HandleState<StateT = SgxExternalities>;
 
 	/// The logging target to use when logging messages.
 	fn logging_target(&self) -> &'static str;

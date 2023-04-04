@@ -72,3 +72,25 @@ pub trait ScheduledEnclaveUpdater {
 	// get_expected_mrenclave(30) -> 0xCC
 	fn get_expected_mrenclave(&self, sbn: SidechainBlockNumber) -> Result<MrEnclave>;
 }
+
+#[derive(Default)]
+pub struct ScheduledEnclaveMock;
+
+// todo!
+impl ScheduledEnclaveUpdater for ScheduledEnclaveMock {
+	fn init(&self, _mrenclave: MrEnclave) -> Result<()> {
+		Ok(())
+	}
+
+	fn update(&self, _sbn: SidechainBlockNumber, _mrenclave: MrEnclave) -> Result<()> {
+		Ok(())
+	}
+
+	fn remove(&self, _sbn: SidechainBlockNumber) -> Result<()> {
+		Ok(())
+	}
+
+	fn get_expected_mrenclave(&self, _sbn: SidechainBlockNumber) -> Result<MrEnclave> {
+		Ok(MrEnclave::default())
+	}
+}
