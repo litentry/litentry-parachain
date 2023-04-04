@@ -121,7 +121,7 @@ pub struct VerifiedCredentialsIsHodlerIn {
 	pub from_date: String,
 	pub network: VerifiedCredentialsNetwork,
 	pub token_address: String,
-	pub min_balance: f64,
+	pub min_balance: String,
 }
 
 impl VerifiedCredentialsIsHodlerIn {
@@ -130,7 +130,7 @@ impl VerifiedCredentialsIsHodlerIn {
 		from_date: String,
 		network: VerifiedCredentialsNetwork,
 		token_address: String,
-		min_balance: f64,
+		min_balance: String,
 	) -> Self {
 		VerifiedCredentialsIsHodlerIn { addresses, from_date, network, token_address, min_balance }
 	}
@@ -139,7 +139,7 @@ impl VerifiedCredentialsIsHodlerIn {
 		let addresses_str = format!("{:?}", self.addresses);
 		let network = format!("{:?}", self.network).to_lowercase();
 		if self.token_address.is_empty() {
-			format!("{{VerifiedCredentialsIsHodler(addresses:{}, fromDate:\"{}\", network:{}, minimumBalance:{:?}){{isHodler,address}}}}", addresses_str, self.from_date, network, self.min_balance)
+			format!("{{VerifiedCredentialsIsHodler(addresses:{}, fromDate:\"{}\", network:{}, minimumBalance:{}){{isHodler,address}}}}", addresses_str, self.from_date, network, self.min_balance)
 		} else {
 			format!("{{VerifiedCredentialsIsHodler(addresses:{}, fromDate:\"{}\", network:{}, tokenAddress:\"{}\",minimumBalance:{:?}){{isHodler,address}}}}", addresses_str, self.from_date, network, self.token_address, self.min_balance)
 		}
@@ -321,7 +321,7 @@ mod tests {
 			from_date: "2022-10-16T00:00:00Z".to_string(),
 			network: VerifiedCredentialsNetwork::Ethereum,
 			token_address: LIT_TOKEN_ADDRESS.to_string(),
-			min_balance: 0.00000056,
+			min_balance: "0.00000056".into(),
 		};
 		let response = client.check_verified_credentials_is_hodler(credentials);
 		assert!(response.is_ok(), "due to error:{:?}", response.unwrap_err());
