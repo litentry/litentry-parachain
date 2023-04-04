@@ -419,7 +419,7 @@ pub mod pallet {
 		pub fn clear_vcregsitry(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			T::SetAdminOrigin::ensure_origin(origin)?;
 			// If more than u32 max, the map itself is overflow, so no worry
-			VCRegistry::<T>::clear(u32::max_value(), None);
+			let _ = VCRegistry::<T>::clear(u32::max_value(), None);
 			Self::deposit_event(Event::VCRegistryClear);
 			Ok(().into())
 		}
