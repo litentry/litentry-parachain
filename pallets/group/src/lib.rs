@@ -139,7 +139,7 @@ pub mod pallet {
 		#[pallet::call_index(4)]
 		#[pallet::weight(10_000)]
 		#[transactional]
-		pub fn swtich_group_control_on(origin: OriginFor<T>) -> DispatchResult {
+		pub fn switch_group_control_on(origin: OriginFor<T>) -> DispatchResult {
 			T::GroupManagerOrigin::ensure_origin(origin)?;
 			<GroupControlOn<T, I>>::put(true);
 			Ok(())
@@ -149,7 +149,7 @@ pub mod pallet {
 		#[pallet::call_index(5)]
 		#[pallet::weight(10_000)]
 		#[transactional]
-		pub fn swtich_group_control_off(origin: OriginFor<T>) -> DispatchResult {
+		pub fn switch_group_control_off(origin: OriginFor<T>) -> DispatchResult {
 			T::GroupManagerOrigin::ensure_origin(origin)?;
 			<GroupControlOn<T, I>>::put(false);
 			Ok(())

@@ -65,10 +65,7 @@ pub mod pallet {
 		type SetAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		// This type should be safe to remove
 		/// Temporary type for whitelist function
-		type VCMPExtrinsicWhitelistOrigin: EnsureOrigin<
-			Self::RuntimeOrigin,
-			Success = Self::AccountId,
-		>;
+		type ExtrinsicWhitelistOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
 	}
 
 	// a map VCIndex -> VC context
@@ -194,7 +191,7 @@ pub mod pallet {
 			shard: ShardIdentifier,
 			assertion: Assertion,
 		) -> DispatchResultWithPostInfo {
-			let who = T::VCMPExtrinsicWhitelistOrigin::ensure_origin(origin)?;
+			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::VCRequested { account: who, shard, assertion });
 			Ok(().into())
 		}
@@ -202,7 +199,7 @@ pub mod pallet {
 		#[pallet::call_index(1)]
 		#[pallet::weight(195_000_000)]
 		pub fn disable_vc(origin: OriginFor<T>, index: VCIndex) -> DispatchResultWithPostInfo {
-			let who = T::VCMPExtrinsicWhitelistOrigin::ensure_origin(origin)?;
+			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
 
 			VCRegistry::<T>::try_mutate(index, |context| {
 				let mut c = context.take().ok_or(Error::<T>::VCNotExist)?;
@@ -218,7 +215,7 @@ pub mod pallet {
 		#[pallet::call_index(2)]
 		#[pallet::weight(195_000_000)]
 		pub fn revoke_vc(origin: OriginFor<T>, index: VCIndex) -> DispatchResultWithPostInfo {
-			let who = T::VCMPExtrinsicWhitelistOrigin::ensure_origin(origin)?;
+			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
 
 			let context = VCRegistry::<T>::get(index).ok_or(Error::<T>::VCNotExist)?;
 			ensure!(who == context.subject, Error::<T>::VCSubjectMismatch);

@@ -163,3 +163,31 @@ fn tee_callback_with_unregistered_enclave_fails() {
 		);
 	});
 }
+
+#[test]
+fn extrinsic_whitelist_origin_works() {
+	new_test_ext().execute_with(|| {
+		// activate the whitelist which is empty at the beginning
+		assert_ok!(IMPExtrinsicWhitelist::switch_group_control_on(RuntimeOrigin::root()));
+		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
+		assert_noop!(
+			IdentityManagement::set_user_shielding_key(
+				RuntimeOrigin::signed(1),
+				shard,
+				vec![1u8; 2048]
+			),
+			sp_runtime::DispatchError::BadOrigin
+		);
+
+		// add `1` to whitelist group
+		assert_ok!(IMPExtrinsicWhitelist::add_group_member(RuntimeOrigin::root(), 1u64));
+		assert_ok!(IdentityManagement::set_user_shielding_key(
+			RuntimeOrigin::signed(1),
+			shard,
+			vec![1u8; 2048]
+		));
+		System::assert_last_event(RuntimeEvent::IdentityManagement(
+			crate::Event::SetUserShieldingKeyRequested { shard },
+		));
+	});
+}
