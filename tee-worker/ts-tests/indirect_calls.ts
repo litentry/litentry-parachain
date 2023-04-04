@@ -305,17 +305,10 @@ export function assertIdentityCreated(signer: KeyringPair, identityEvent: Identi
 
 export function assertIdentityVerified(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
     let idGraphExist = false;
-    console.log("identityEvent", identityEvent);
 
     if (identityEvent) {
         for (let i = 0; i < identityEvent.idGraph.length; i++) {
-            console.log('identityEvent.idGraph', identityEvent.idGraph.length, identityEvent.idGraph);
-            console.log('identityEvent.idGraph[i]', identityEvent.idGraph[i]);
-
-            console.log(JSON.stringify(identityEvent.idGraph[i][0]), JSON.stringify(identityEvent.identity));
-
             if (JSON.stringify(identityEvent.idGraph[i][0]) == JSON.stringify(identityEvent.identity)) {
-                console.log('true');
 
                 idGraphExist = true;
                 assert.isTrue(identityEvent.idGraph[i][1].is_verified, 'identity should be verified');

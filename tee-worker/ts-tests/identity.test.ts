@@ -61,14 +61,14 @@ describeLitentry('Test Identity', 0, (context) => {
 
     //     assert.equal(resp_challengecode, '0x', 'challengecode should be empty before create');
     // });
-    // step('Invalid user shielding key', async function () {
-    //     let identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Ethereum', 'Evm');
-    //     let txs = await buildIdentityTxs(context, [context.substrateWallet.alice], [identity], 'createIdentity');
-    //     let resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
-    //         'CreateIdentityFailed',
-    //     ]);
-    //     await checkErrorDetail(resp_events, 'InvalidUserShieldingKey', true);
-    // });
+    step('Invalid user shielding key', async function () {
+        let identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Ethereum', 'Evm');
+        let txs = await buildIdentityTxs(context, [context.substrateWallet.alice], [identity], 'createIdentity');
+        let resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
+            'CreateIdentityFailed',
+        ]);
+        await checkErrorDetail(resp_events, 'InvalidUserShieldingKey', true);
+    });
 
     step('set user shielding key', async function () {
         let [alice_txs] = (await buildIdentityTxs(

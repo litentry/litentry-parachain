@@ -69,7 +69,6 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             );
             validations.push(ethereum_validations)
         }
-
     });
 
     step('batch test: verify identity', async function () {
