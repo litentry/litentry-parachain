@@ -62,6 +62,7 @@ impl VerifyIdentityPreflightCommand {
 			identity.unwrap(),
 			validation_data.unwrap(),
 			self.parent_block_number,
+			Default::default(),
 		)
 		.sign(&KeyPair::Sr25519(Box::new(root)), nonce, &mrenclave, &shard)
 		.into_trusted_operation(trusted_cli.direct);

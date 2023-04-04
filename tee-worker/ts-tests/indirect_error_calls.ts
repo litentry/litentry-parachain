@@ -10,9 +10,9 @@ import {
     LitentryValidationData,
     TransactionSubmit,
 } from './common/type-definitions';
-import { expect } from 'chai';
+import { expect, assert } from 'chai';
 import { listenEvent, sendTxUntilInBlock, sendTxUntilInBlockList } from './common/transactions';
-
+import { u8aToHex } from '@polkadot/util';
 export async function setErrorUserShieldingKey(
     context: IntegrationTestContext,
     signer: KeyringPair,
@@ -25,7 +25,9 @@ export async function setErrorUserShieldingKey(
     await sendTxUntilInBlock(context.api, tx, signer);
 
     if (listening) {
-        const events = await listenEvent(context.api, 'identityManagement', ['SetUserShieldingKeyFailed']);
+        const events = await listenEvent(context.api, 'identityManagement', ['SetUserShieldingKeyFailed'], 1, [
+            u8aToHex(signer.addressRaw),
+        ]);
         expect(events.length).to.be.equal(1);
         return (events[0] as any).data.detail.toHuman();
     }
@@ -57,13 +59,17 @@ export async function createErrorIdentities(
         });
     }
 
-    await sendTxUntilInBlockList(context.api, txs, signer);
+    const res = (await sendTxUntilInBlockList(context.api, txs, signer)) as any;
 
     if (listening) {
-        const events = (await listenEvent(context.api, 'identityManagement', ['CreateIdentityFailed'])) as any;
+        const events = (await listenEvent(context.api, 'identityManagement', ['CreateIdentityFailed'], txs.length, [
+            u8aToHex(signer.addressRaw),
+        ])) as any;
         expect(events.length).to.be.equal(errorCiphertexts.length);
+        expect(events.length).to.be.equal(res.length);
         let results: string[] = [];
         for (let i = 0; i < events.length; i++) {
+            assert.equal(events[i].data.reqExtHash.toHex(), res[i].txHash);
             results.push(events[i].data.detail.toHuman());
         }
         return [...results];
@@ -106,13 +112,17 @@ export async function verifyErrorIdentities(
         });
     }
 
-    await sendTxUntilInBlockList(context.api, txs, signer);
+    const res = (await sendTxUntilInBlockList(context.api, txs, signer)) as any;
 
     if (listening) {
-        const events = (await listenEvent(context.api, 'identityManagement', ['VerifyIdentityFailed'])) as any;
+        const events = (await listenEvent(context.api, 'identityManagement', ['VerifyIdentityFailed'], txs.length, [
+            u8aToHex(signer.addressRaw),
+        ])) as any;
         expect(events.length).to.be.equal(identities.length);
+        expect(events.length).to.be.equal(res.length);
         let results: string[] = [];
         for (let i = 0; i < events.length; i++) {
+            assert.equal(events[i].data.reqExtHash.toHex(), res[i].txHash);
             results.push(events[i].data.detail.toHuman());
         }
         return [...results];
@@ -142,13 +152,17 @@ export async function removeErrorIdentities(
         });
     }
 
-    await sendTxUntilInBlockList(context.api, txs, signer);
+    const res = (await sendTxUntilInBlockList(context.api, txs, signer)) as any;
 
     if (listening) {
-        const events = (await listenEvent(context.api, 'identityManagement', ['RemoveIdentityFailed'])) as any;
+        const events = (await listenEvent(context.api, 'identityManagement', ['RemoveIdentityFailed'], txs.length, [
+            u8aToHex(signer.addressRaw),
+        ])) as any;
         let results: string[] = [];
         expect(events.length).to.be.equal(identities.length);
+        expect(events.length).to.be.equal(res.length);
         for (let i = 0; i < events.length; i++) {
+            assert.equal(events[i].data.reqExtHash.toHex(), res[i].txHash);
             results.push(events[i].data.detail.toHuman());
         }
         return [...results];
@@ -176,11 +190,18 @@ export async function requestErrorVCs(
         txs.push({ tx, nonce: newNonce });
     }
 
-    await sendTxUntilInBlockList(context.api, txs, signer);
+    const res = (await sendTxUntilInBlockList(context.api, txs, signer)) as any;
 
     if (listening) {
-        const events = (await listenEvent(context.api, 'vcManagement', ['RequestVCFailed'])) as Event[];
+        const events = (await listenEvent(context.api, 'vcManagement', ['RequestVCFailed'], txs.length, [
+            u8aToHex(signer.addressRaw),
+        ])) as Event[];
         expect(events.length).to.be.equal(keys.length);
+        expect(events.length).to.be.equal(res.length);
+
+        for (let k = 0; k < events.length; k++) {
+            assert.equal((events[k].data as any).reqExtHash.toHex(), res[k].txHash);
+        }
         return events;
     }
     return undefined;

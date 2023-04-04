@@ -18,7 +18,7 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_core::H256;
 
-use crate::Config;
+use crate::{Assertion, Config};
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 pub enum Status {
@@ -37,6 +37,8 @@ pub struct VCContext<T: Config> {
 	// cons: this information is then public, everyone knows e.g. ALICE owns VC ID 1234 + 4321
 	// It's not bad though as it helps to verify the ownership of VC
 	pub subject: T::AccountId,
+	// requested assertion type
+	pub assertion: Assertion,
 	// hash of the VC, computed via blake2_256
 	pub hash: H256,
 	// status of the VC
@@ -44,7 +46,7 @@ pub struct VCContext<T: Config> {
 }
 
 impl<T: Config> VCContext<T> {
-	pub fn new(subject: T::AccountId, hash: H256) -> Self {
-		Self { subject, hash, status: Status::Active }
+	pub fn new(subject: T::AccountId, assertion: Assertion, hash: H256) -> Self {
+		Self { subject, assertion, hash, status: Status::Active }
 	}
 }

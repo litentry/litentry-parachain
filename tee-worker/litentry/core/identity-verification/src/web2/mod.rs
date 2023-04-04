@@ -71,7 +71,7 @@ pub fn verify(request: &Web2IdentityVerificationRequest) -> Result<(), Error> {
 
 	let (user_id, payload) = match request.validation_data {
 		Web2ValidationData::Twitter(TwitterValidationData { ref tweet_id }) => {
-			let mut client = TwitterOfficialClient::new();
+			let mut client = TwitterOfficialClient::v2();
 			let tweet: Tweet =
 				client.query_tweet(tweet_id.to_vec()).map_err(from_data_provider_error)?;
 

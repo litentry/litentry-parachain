@@ -44,11 +44,12 @@ pub use crate::weights::WeightInfo;
 pub use pallet::*;
 
 pub use core_primitives::{AesOutput, ShardIdentifier};
+use sp_core::H256;
 use sp_std::vec::Vec;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::{AesOutput, ShardIdentifier, Vec, WeightInfo};
+	use super::{AesOutput, ShardIdentifier, Vec, WeightInfo, H256};
 	use core_primitives::{ErrorDetail, IMPError};
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
@@ -65,34 +66,95 @@ pub mod pallet {
 		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		/// origin to manage authorised delegatee list
 		type DelegateeAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		// This type should be safe to remove
+		/// Temporary type for whitelist function
+		type IMPExtrinsicWhitelistOrigin: EnsureOrigin<
+			Self::RuntimeOrigin,
+			Success = Self::AccountId,
+		>;
 	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		DelegateeAdded { account: T::AccountId },
-		DelegateeRemoved { account: T::AccountId },
+		DelegateeAdded {
+			account: T::AccountId,
+		},
+		DelegateeRemoved {
+			account: T::AccountId,
+		},
 		// TODO: do we need account as event parameter? This needs to be decided by F/E
-		CreateIdentityRequested { shard: ShardIdentifier },
-		RemoveIdentityRequested { shard: ShardIdentifier },
-		VerifyIdentityRequested { shard: ShardIdentifier },
-		SetUserShieldingKeyRequested { shard: ShardIdentifier },
+		CreateIdentityRequested {
+			shard: ShardIdentifier,
+		},
+		RemoveIdentityRequested {
+			shard: ShardIdentifier,
+		},
+		VerifyIdentityRequested {
+			shard: ShardIdentifier,
+		},
+		SetUserShieldingKeyRequested {
+			shard: ShardIdentifier,
+		},
 		// event that should be triggered by TEECallOrigin
 		// these events keep the `account` as public to be consistent with VCMP and better
 		// indexing see https://github.com/litentry/litentry-parachain/issues/1313
-		UserShieldingKeySet { account: T::AccountId },
-		IdentityCreated { account: T::AccountId, identity: AesOutput, code: AesOutput },
-		IdentityRemoved { account: T::AccountId, identity: AesOutput },
-		IdentityVerified { account: T::AccountId, identity: AesOutput, id_graph: AesOutput },
+		UserShieldingKeySet {
+			account: T::AccountId,
+			req_ext_hash: H256,
+		},
+		// we return the request-extrinsic-hash for better tracking
+		// TODO: what if the event is triggered by an extrinsic that is included in a batch call?
+		//       Can we retrieve that extrinsic hash in F/E?
+		IdentityCreated {
+			account: T::AccountId,
+			identity: AesOutput,
+			code: AesOutput,
+			req_ext_hash: H256,
+		},
+		IdentityRemoved {
+			account: T::AccountId,
+			identity: AesOutput,
+			req_ext_hash: H256,
+		},
+		IdentityVerified {
+			account: T::AccountId,
+			identity: AesOutput,
+			id_graph: AesOutput,
+			req_ext_hash: H256,
+		},
 		// event errors caused by processing in TEE
 		// copied from core_primitives::IMPError, we use events instead of pallet::errors,
 		// see https://github.com/litentry/litentry-parachain/issues/1275
-		SetUserShieldingKeyFailed { detail: ErrorDetail },
-		CreateIdentityFailed { detail: ErrorDetail },
-		RemoveIdentityFailed { detail: ErrorDetail },
-		VerifyIdentityFailed { detail: ErrorDetail },
+		//
+		// why is the `account` in the error event an Option?
+		// because in some erroneous cases we can't get the extrinsic sender (e.g. decode error)
+		SetUserShieldingKeyFailed {
+			account: Option<T::AccountId>,
+			detail: ErrorDetail,
+			req_ext_hash: H256,
+		},
+		CreateIdentityFailed {
+			account: Option<T::AccountId>,
+			detail: ErrorDetail,
+			req_ext_hash: H256,
+		},
+		RemoveIdentityFailed {
+			account: Option<T::AccountId>,
+			detail: ErrorDetail,
+			req_ext_hash: H256,
+		},
+		VerifyIdentityFailed {
+			account: Option<T::AccountId>,
+			detail: ErrorDetail,
+			req_ext_hash: H256,
+		},
 		ImportScheduledEnclaveFailed,
-		UnclassifiedError { detail: ErrorDetail },
+		UnclassifiedError {
+			account: Option<T::AccountId>,
+			detail: ErrorDetail,
+			req_ext_hash: H256,
+		},
 	}
 
 	/// delegatees who are authorised to send extrinsics(currently only `create_identity`)
@@ -141,7 +203,7 @@ pub mod pallet {
 			shard: ShardIdentifier,
 			encrypted_key: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
-			let _ = ensure_signed(origin)?;
+			let _ = T::IMPExtrinsicWhitelistOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::SetUserShieldingKeyRequested { shard });
 			Ok(().into())
 		}
@@ -159,7 +221,7 @@ pub mod pallet {
 			encrypted_identity: Vec<u8>,
 			encrypted_metadata: Option<Vec<u8>>,
 		) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin)?;
+			let who = T::IMPExtrinsicWhitelistOrigin::ensure_origin(origin)?;
 			ensure!(
 				who == user || Delegatee::<T>::contains_key(&who),
 				Error::<T>::UnauthorisedUser
@@ -176,7 +238,7 @@ pub mod pallet {
 			shard: ShardIdentifier,
 			encrypted_identity: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
-			let _ = ensure_signed(origin)?;
+			let _ = T::IMPExtrinsicWhitelistOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::RemoveIdentityRequested { shard });
 			Ok(().into())
 		}
@@ -190,7 +252,7 @@ pub mod pallet {
 			encrypted_identity: Vec<u8>,
 			encrypted_validation_data: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
-			let _ = ensure_signed(origin)?;
+			let _ = T::IMPExtrinsicWhitelistOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::VerifyIdentityRequested { shard });
 			Ok(().into())
 		}
@@ -203,9 +265,10 @@ pub mod pallet {
 		pub fn user_shielding_key_set(
 			origin: OriginFor<T>,
 			account: T::AccountId,
+			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::UserShieldingKeySet { account });
+			Self::deposit_event(Event::UserShieldingKeySet { account, req_ext_hash });
 			Ok(Pays::No.into())
 		}
 
@@ -216,9 +279,10 @@ pub mod pallet {
 			account: T::AccountId,
 			identity: AesOutput,
 			code: AesOutput,
+			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityCreated { account, identity, code });
+			Self::deposit_event(Event::IdentityCreated { account, identity, code, req_ext_hash });
 			Ok(Pays::No.into())
 		}
 
@@ -228,9 +292,10 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			account: T::AccountId,
 			identity: AesOutput,
+			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityRemoved { account, identity });
+			Self::deposit_event(Event::IdentityRemoved { account, identity, req_ext_hash });
 			Ok(Pays::No.into())
 		}
 
@@ -241,29 +306,56 @@ pub mod pallet {
 			account: T::AccountId,
 			identity: AesOutput,
 			id_graph: AesOutput,
+			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityVerified { account, identity, id_graph });
+			Self::deposit_event(Event::IdentityVerified {
+				account,
+				identity,
+				id_graph,
+				req_ext_hash,
+			});
 			Ok(Pays::No.into())
 		}
 
 		#[pallet::call_index(10)]
 		#[pallet::weight(195_000_000)]
-		pub fn some_error(origin: OriginFor<T>, error: IMPError) -> DispatchResultWithPostInfo {
+		pub fn some_error(
+			origin: OriginFor<T>,
+			account: Option<T::AccountId>,
+			error: IMPError,
+			req_ext_hash: H256,
+		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			match error {
 				IMPError::SetUserShieldingKeyFailed(detail) =>
-					Self::deposit_event(Event::SetUserShieldingKeyFailed { detail }),
+					Self::deposit_event(Event::SetUserShieldingKeyFailed {
+						account,
+						detail,
+						req_ext_hash,
+					}),
 				IMPError::CreateIdentityFailed(detail) =>
-					Self::deposit_event(Event::CreateIdentityFailed { detail }),
+					Self::deposit_event(Event::CreateIdentityFailed {
+						account,
+						detail,
+						req_ext_hash,
+					}),
 				IMPError::RemoveIdentityFailed(detail) =>
-					Self::deposit_event(Event::RemoveIdentityFailed { detail }),
+					Self::deposit_event(Event::RemoveIdentityFailed {
+						account,
+						detail,
+						req_ext_hash,
+					}),
 				IMPError::VerifyIdentityFailed(detail) =>
-					Self::deposit_event(Event::VerifyIdentityFailed { detail }),
+					Self::deposit_event(Event::VerifyIdentityFailed {
+						account,
+						detail,
+						req_ext_hash,
+					}),
 				IMPError::ImportScheduledEnclaveFailed =>
 					Self::deposit_event(Event::ImportScheduledEnclaveFailed),
 				IMPError::UnclassifiedError(detail) =>
-					Self::deposit_event(Event::UnclassifiedError { detail }),
+					Self::deposit_event(Event::UnclassifiedError { account, detail, req_ext_hash }),
 			}
 			Ok(Pays::No.into())
 		}

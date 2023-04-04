@@ -63,6 +63,12 @@ pub mod pallet {
 		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		/// The origin who can set the admin account
 		type SetAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		// This type should be safe to remove
+		/// Temporary type for whitelist function
+		type VCMPExtrinsicWhitelistOrigin: EnsureOrigin<
+			Self::RuntimeOrigin,
+			Success = Self::AccountId,
+		>;
 	}
 
 	// a map VCIndex -> VC context
@@ -87,30 +93,74 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		// TODO: do we need account as event parameter? This needs to be decided by F/E
-		VCRequested { shard: ShardIdentifier, assertion: Assertion },
+		// a VC is requested
+		VCRequested {
+			account: T::AccountId,
+			shard: ShardIdentifier,
+			assertion: Assertion,
+		},
 		// a VC is disabled on chain
-		VCDisabled { index: VCIndex },
+		VCDisabled {
+			account: T::AccountId,
+			index: VCIndex,
+		},
 		// a VC is revoked on chain
-		VCRevoked { index: VCIndex },
+		VCRevoked {
+			account: T::AccountId,
+			index: VCIndex,
+		},
 		// event that should be triggered by TEECallOrigin
 		// a VC is just issued
-		VCIssued { account: T::AccountId, index: VCIndex, vc: AesOutput },
+		VCIssued {
+			account: T::AccountId,
+			assertion: Assertion,
+			index: VCIndex,
+			vc: AesOutput,
+			req_ext_hash: H256,
+		},
 		// Admin account was changed
-		SchemaAdminChanged { old_admin: Option<T::AccountId>, new_admin: Option<T::AccountId> },
+		SchemaAdminChanged {
+			old_admin: Option<T::AccountId>,
+			new_admin: Option<T::AccountId>,
+		},
 		// a Schema is issued
-		SchemaIssued { account: T::AccountId, shard: ShardIdentifier, index: SchemaIndex },
+		SchemaIssued {
+			account: T::AccountId,
+			shard: ShardIdentifier,
+			index: SchemaIndex,
+		},
 		// a Schema is disabled
-		SchemaDisabled { account: T::AccountId, shard: ShardIdentifier, index: SchemaIndex },
+		SchemaDisabled {
+			account: T::AccountId,
+			shard: ShardIdentifier,
+			index: SchemaIndex,
+		},
 		// a Schema is activated
-		SchemaActivated { account: T::AccountId, shard: ShardIdentifier, index: SchemaIndex },
+		SchemaActivated {
+			account: T::AccountId,
+			shard: ShardIdentifier,
+			index: SchemaIndex,
+		},
 		// a Schema is revoked
-		SchemaRevoked { account: T::AccountId, shard: ShardIdentifier, index: SchemaIndex },
+		SchemaRevoked {
+			account: T::AccountId,
+			shard: ShardIdentifier,
+			index: SchemaIndex,
+		},
 		// event errors caused by processing in TEE
 		// copied from core_primitives::VCMPError, we use events instead of pallet::errors,
 		// see https://github.com/litentry/litentry-parachain/issues/1275
-		RequestVCFailed { assertion: Assertion, detail: ErrorDetail },
-		UnclassifiedError { detail: ErrorDetail },
+		RequestVCFailed {
+			account: Option<T::AccountId>,
+			assertion: Assertion,
+			detail: ErrorDetail,
+			req_ext_hash: H256,
+		},
+		UnclassifiedError {
+			account: Option<T::AccountId>,
+			detail: ErrorDetail,
+			req_ext_hash: H256,
+		},
 	}
 
 	#[pallet::error]
@@ -144,15 +194,15 @@ pub mod pallet {
 			shard: ShardIdentifier,
 			assertion: Assertion,
 		) -> DispatchResultWithPostInfo {
-			let _ = ensure_signed(origin)?;
-			Self::deposit_event(Event::VCRequested { shard, assertion });
+			let who = T::VCMPExtrinsicWhitelistOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::VCRequested { account: who, shard, assertion });
 			Ok(().into())
 		}
 
 		#[pallet::call_index(1)]
 		#[pallet::weight(195_000_000)]
 		pub fn disable_vc(origin: OriginFor<T>, index: VCIndex) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin)?;
+			let who = T::VCMPExtrinsicWhitelistOrigin::ensure_origin(origin)?;
 
 			VCRegistry::<T>::try_mutate(index, |context| {
 				let mut c = context.take().ok_or(Error::<T>::VCNotExist)?;
@@ -160,7 +210,7 @@ pub mod pallet {
 				ensure!(c.status == Status::Active, Error::<T>::VCAlreadyDisabled);
 				c.status = Status::Disabled;
 				*context = Some(c);
-				Self::deposit_event(Event::VCDisabled { index });
+				Self::deposit_event(Event::VCDisabled { account: who, index });
 				Ok(().into())
 			})
 		}
@@ -168,12 +218,12 @@ pub mod pallet {
 		#[pallet::call_index(2)]
 		#[pallet::weight(195_000_000)]
 		pub fn revoke_vc(origin: OriginFor<T>, index: VCIndex) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin)?;
+			let who = T::VCMPExtrinsicWhitelistOrigin::ensure_origin(origin)?;
 
 			let context = VCRegistry::<T>::get(index).ok_or(Error::<T>::VCNotExist)?;
 			ensure!(who == context.subject, Error::<T>::VCSubjectMismatch);
 			VCRegistry::<T>::remove(index);
-			Self::deposit_event(Event::VCRevoked { index });
+			Self::deposit_event(Event::VCRevoked { account: who, index });
 			Ok(().into())
 		}
 
@@ -185,26 +235,41 @@ pub mod pallet {
 		pub fn vc_issued(
 			origin: OriginFor<T>,
 			account: T::AccountId,
+			assertion: Assertion,
 			index: H256,
 			hash: H256,
 			vc: AesOutput,
+			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			ensure!(!VCRegistry::<T>::contains_key(index), Error::<T>::VCAlreadyExists);
-			VCRegistry::<T>::insert(index, VCContext::<T>::new(account.clone(), hash));
-			Self::deposit_event(Event::VCIssued { account, index, vc });
+			VCRegistry::<T>::insert(
+				index,
+				VCContext::<T>::new(account.clone(), assertion.clone(), hash),
+			);
+			Self::deposit_event(Event::VCIssued { account, assertion, index, vc, req_ext_hash });
 			Ok(Pays::No.into())
 		}
 
 		#[pallet::call_index(4)]
 		#[pallet::weight(195_000_000)]
-		pub fn some_error(origin: OriginFor<T>, error: VCMPError) -> DispatchResultWithPostInfo {
+		pub fn some_error(
+			origin: OriginFor<T>,
+			account: Option<T::AccountId>,
+			error: VCMPError,
+			req_ext_hash: H256,
+		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			match error {
 				VCMPError::RequestVCFailed(assertion, detail) =>
-					Self::deposit_event(Event::RequestVCFailed { assertion, detail }),
+					Self::deposit_event(Event::RequestVCFailed {
+						account,
+						assertion,
+						detail,
+						req_ext_hash,
+					}),
 				VCMPError::UnclassifiedError(detail) =>
-					Self::deposit_event(Event::UnclassifiedError { detail }),
+					Self::deposit_event(Event::UnclassifiedError { account, detail, req_ext_hash }),
 			}
 			Ok(Pays::No.into())
 		}

@@ -28,7 +28,7 @@ export async function getMetadata(wsClient: WebSocketAsPromised, api: ApiPromise
     return metadata;
 }
 
-export async function getSideChainStroage(
+export async function getSideChainStorage(
     wsClient: WebSocketAsPromised,
     rpcMethod: string,
     api: ApiPromise,

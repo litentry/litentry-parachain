@@ -101,11 +101,13 @@ where
 				self.req.bn,
 			),
 
-			// TODO: A5 not supported yet
-			Assertion::A5(..) => Err(VCMPError::RequestVCFailed(
-				self.req.assertion.clone(),
-				ErrorDetail::StfError(ErrorString::truncate_from("Not supported".into())),
-			)),
+			Assertion::A5(original_tweet_id) => lc_assertion_build::a5::build(
+				self.req.vec_identity.to_vec(),
+				original_tweet_id,
+				&self.req.shard,
+				&self.req.who,
+				self.req.bn,
+			),
 
 			Assertion::A6 => lc_assertion_build::a6::build(
 				self.req.vec_identity.to_vec(),
@@ -215,9 +217,11 @@ where
 				let call = OpaqueCall::from_tuple(&(
 					call_index,
 					self.req.who.clone(),
+					self.req.assertion.clone(),
 					vc_index,
 					vc_hash,
 					output,
+					self.req.hash,
 				));
 				self.context.submit_to_parentchain(call)
 			},
@@ -235,7 +239,12 @@ where
 			.get_from_metadata(|m| VCMPCallIndexes::vcmp_some_error_call_indexes(m))
 		{
 			Ok(Ok(call_index)) => {
-				let call = OpaqueCall::from_tuple(&(call_index, error));
+				let call = OpaqueCall::from_tuple(&(
+					call_index,
+					self.req.who.clone(),
+					error,
+					self.req.hash,
+				));
 				self.context.submit_to_parentchain(call)
 			},
 			Ok(Err(e)) => error!("failed to get metadata. Due to: {:?}", e),

@@ -5,6 +5,7 @@ import WebSocketAsPromised = require('websocket-as-promised');
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { Metadata } from '@polkadot/types';
+import { ethers } from 'ethers';
 export const teeTypes = {
     WorkerRpcReturnString: {
         vec: 'Bytes',
@@ -152,6 +153,7 @@ export const teeTypes = {
 
     // vc management
     VCRequested: {
+        account: 'AccountId',
         mrEnclave: 'mrEnclaveIdentifier',
         assertion: 'Assertion',
     },
@@ -187,6 +189,7 @@ export type IntegrationTestContext = {
     ethersWallet: any;
     substrateWallet: any;
     metaData: Metadata;
+    web3Signers: Web3Wallets[];
 };
 
 export class AESOutput {
@@ -244,8 +247,8 @@ export type Web3CommonValidationData = {
 
 export type IdentityMultiSignature = {
     Ethereum?: HexString;
-    Ed25519: HexString;
-    Sr25519: HexString;
+    Ed25519?: HexString;
+    Sr25519?: HexString;
 };
 
 export type Ed25519Signature = {
@@ -265,6 +268,11 @@ export type DiscordValidationData = {
     channel_id: HexString;
     message_id: HexString;
     guild_id: HexString;
+};
+
+export type Web3Wallets = {
+    substrateWallet: KeyringPair;
+    ethereumWallet: ethers.Wallet;
 };
 
 // export type DiscordValidationData = {}
@@ -294,9 +302,20 @@ export type IdentityContext = {
 
 //vc types
 export type VCRequested = {
+    account: HexString;
     mrEnclave: HexString;
     assertion: Assertion;
 };
+
+export enum IndexingNetwork {
+    Litentry = 'Litentry',
+    Litmus = 'Litmus',
+    Polkadot = 'Polkadot',
+    Kusama = 'Kusama',
+    Khala = 'Khala',
+    Ethereum = 'Ethereum',
+}
+
 export type Assertion = {
     A1?: string;
     A2?: [string];
@@ -305,7 +324,7 @@ export type Assertion = {
     A5?: [string, string];
     A6?: string;
     A7?: [number];
-    A8?: [string];
+    A8?: [IndexingNetwork];
     A9?: string;
     A10?: [number];
     A11?: [number];
