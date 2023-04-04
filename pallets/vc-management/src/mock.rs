@@ -45,6 +45,7 @@ frame_support::construct_runtime!(
 		Balances: pallet_balances,
 		Timestamp: pallet_timestamp,
 		VCManagement: pallet_vc_management,
+		VCMPExtrinsicWhitelist: pallet_group,
 	}
 );
 
@@ -106,6 +107,14 @@ impl pallet_vc_management::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type TEECallOrigin = EnsureSignedBy<One, u64>;
 	type SetAdminOrigin = EnsureSignedBy<One, u64>;
+	type VCMPExtrinsicWhitelistOrigin = VCMPExtrinsicWhitelist;
+}
+
+// This code should be safe to add
+/// Temporary adjust for whitelist function
+impl pallet_group::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type GroupManagerOrigin = frame_system::EnsureRoot<Self::AccountId>;
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {

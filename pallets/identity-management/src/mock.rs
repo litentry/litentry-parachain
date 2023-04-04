@@ -66,6 +66,7 @@ frame_support::construct_runtime!(
 		Timestamp: pallet_timestamp,
 		Teerex: pallet_teerex,
 		IdentityManagement: pallet_identity_management,
+		IMPExtrinsicWhitelist: pallet_group,
 	}
 );
 
@@ -136,6 +137,14 @@ impl pallet_identity_management::Config for Test {
 	type WeightInfo = ();
 	type TEECallOrigin = EnsureEnclaveSigner;
 	type DelegateeAdminOrigin = EnsureRoot<Self::AccountId>;
+	type IMPExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
+}
+
+// This code should be safe to add
+/// Temporary adjust for whitelist function
+impl pallet_group::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type GroupManagerOrigin = frame_system::EnsureRoot<Self::AccountId>;
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
