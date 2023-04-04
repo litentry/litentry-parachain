@@ -944,7 +944,9 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			// Preimage
 			RuntimeCall::Preimage(_) |
 			// Identity
-			RuntimeCall::ParachainIdentity(_)
+			RuntimeCall::ParachainIdentity(_) |
+			// Balance
+			RuntimeCall::Balances(_)
 		)
 	}
 }
