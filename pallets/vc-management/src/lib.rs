@@ -166,7 +166,7 @@ pub mod pallet {
 		VCRegistryItemRemoved {
 			index: VCIndex,
 		},
-		VCRegistryClear,
+		VCRegistryCleared,
 	}
 
 	#[pallet::error]
@@ -387,7 +387,7 @@ pub mod pallet {
 		/// ---------------------------------------------------
 		#[pallet::call_index(10)]
 		#[pallet::weight(195_000_000)]
-		pub fn add_vcregsitry_item(
+		pub fn add_vc_registry_item(
 			origin: OriginFor<T>,
 			index: VCIndex,
 			subject: T::AccountId,
@@ -406,7 +406,7 @@ pub mod pallet {
 
 		#[pallet::call_index(11)]
 		#[pallet::weight(195_000_000)]
-		pub fn remove_vcregsitry_item(
+		pub fn remove_vc_registry_item(
 			origin: OriginFor<T>,
 			index: VCIndex,
 		) -> DispatchResultWithPostInfo {
@@ -419,11 +419,11 @@ pub mod pallet {
 
 		#[pallet::call_index(12)]
 		#[pallet::weight(195_000_000)]
-		pub fn clear_vcregsitry(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+		pub fn clear_vc_registry(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			T::SetAdminOrigin::ensure_origin(origin)?;
 			// If more than u32 max, the map itself is overflow, so no worry
 			let _ = VCRegistry::<T>::clear(u32::max_value(), None);
-			Self::deposit_event(Event::VCRegistryClear);
+			Self::deposit_event(Event::VCRegistryCleared);
 			Ok(().into())
 		}
 	}
