@@ -32,6 +32,8 @@ for Item in 'worker-config.json.example' 'start_worker.py'; do
     cp "${WORKER_DIR}/scripts/litentry/${Item}" "${RELEASE_DIR}"
 done
 
+make mrenclave | grep -oP '^MRENCLAVE: \K.*$$' > "${RELEASE_DIR}/mrenclave.txt"
+
 cd ${WORKER_DIR}/target/
 tar -czf ${RELEASE_DIR_NAME}.tar.gz ${RELEASE_DIR_NAME}
 
