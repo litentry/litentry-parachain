@@ -63,15 +63,9 @@ pub mod pallet {
 		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		/// The origin who can set the admin account
 		type SetAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-		// This type should be safe to remove
-		/// Temporary type for whitelist function
-		type VCMPExtrinsicWhitelistOrigin: EnsureOrigin<
-			Self::RuntimeOrigin,
-			Success = Self::AccountId,
-		>;
 	}
 
-	// a map VCIndex -> VC context
+	// a map VCIndex -> VC contextca
 	#[pallet::storage]
 	#[pallet::getter(fn vc_registry)]
 	pub type VCRegistry<T: Config> = StorageMap<_, Blake2_128Concat, VCIndex, VCContext<T>>;
@@ -166,7 +160,9 @@ pub mod pallet {
 			assertion: Assertion,
 			index: VCIndex,
 		},
-		VCRegistryManualRemoved { index: VCIndex },
+		VCRegistryManualRemoved {
+			index: VCIndex,
+		},
 	}
 
 	#[pallet::error]
@@ -396,17 +392,21 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			T::SetAdminOrigin::ensure_origin(origin)?;
 			ensure!(!VCRegistry::<T>::contains_key(index), Error::<T>::VCAlreadyExists);
-			VCRegistry::<T>::insert(index, VCContext::<T>::new(subject, assertion, hash));
-			Self::deposit_event(Event::VCRegistryManualAdded { account: subject, assertion, index });
+			VCRegistry::<T>::insert(
+				index,
+				VCContext::<T>::new(subject.clone(), assertion.clone(), hash),
+			);
+			Self::deposit_event(Event::VCRegistryManualAdded {
+				account: subject,
+				assertion,
+				index,
+			});
 			Ok(().into())
 		}
 
 		#[pallet::call_index(11)]
 		#[pallet::weight(195_000_000)]
-		pub fn remove_vc(
-			origin: OriginFor<T>,
-			index: VCIndex,
-		) -> DispatchResultWithPostInfo {
+		pub fn remove_vc(origin: OriginFor<T>, index: VCIndex) -> DispatchResultWithPostInfo {
 			T::SetAdminOrigin::ensure_origin(origin)?;
 			let _ = VCRegistry::<T>::get(index).ok_or(Error::<T>::VCNotExist)?;
 			VCRegistry::<T>::remove(index);
