@@ -3512,6 +3512,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ebdb29d2ea9ed0083cd8cece49bbd968021bd99b0849edb4a9a7ee0fdf6a4e0"
 
 [[package]]
+name = "hex-literal"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4bcb5b3e439c92a7191df2f9bbe733de8de55c3f86368cdb1c63f8be7e9e328e"
+
+[[package]]
 name = "hkdf"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4110,7 +4116,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "hex-literal",
+ "hex-literal 0.3.4",
  "kusama-runtime-constants",
  "log",
  "pallet-authority-discovery",
@@ -4879,7 +4885,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "futures 0.3.27",
- "hex-literal",
+ "hex-literal 0.4.0",
  "jsonrpsee",
  "litentry-parachain-runtime",
  "litmus-parachain-runtime",
@@ -4952,7 +4958,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "hex-literal",
+ "hex-literal 0.4.0",
  "log",
  "orml-tokens",
  "orml-traits",
@@ -5035,7 +5041,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "hex-literal",
+ "hex-literal 0.4.0",
  "log",
  "orml-tokens",
  "orml-traits",
@@ -5990,7 +5996,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hex-literal",
+ "hex-literal 0.3.4",
  "log",
  "orml-traits",
  "pallet-balances",
@@ -6193,7 +6199,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex",
- "hex-literal",
+ "hex-literal 0.4.0",
  "pallet-balances",
  "pallet-bridge",
  "pallet-parachain-staking",
@@ -6473,7 +6479,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex",
- "hex-literal",
+ "hex-literal 0.4.0",
  "log",
  "mock-tee-primitives",
  "pallet-balances",
@@ -6873,7 +6879,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hex-literal",
+ "hex-literal 0.4.0",
  "log",
  "pallet-balances",
  "pallet-teerex",
@@ -6987,7 +6993,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hex-literal",
+ "hex-literal 0.4.0",
  "log",
  "pallet-balances",
  "pallet-teerex",
@@ -7013,7 +7019,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hex-literal",
+ "hex-literal 0.4.0",
  "log",
  "pallet-balances",
  "pallet-timestamp",
@@ -8360,7 +8366,7 @@ version = "0.9.37"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.37#645723987cf9662244be8faf4e9b63e8b9a1b3a3"
 dependencies = [
  "bitvec 1.0.1",
- "hex-literal",
+ "hex-literal 0.3.4",
  "parity-scale-codec 3.4.0",
  "polkadot-core-primitives",
  "polkadot-parachain",
@@ -8426,7 +8432,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "hex-literal",
+ "hex-literal 0.3.4",
  "log",
  "pallet-authority-discovery",
  "pallet-authorship",
@@ -8628,7 +8634,7 @@ dependencies = [
  "frame-support",
  "frame-system-rpc-runtime-api",
  "futures 0.3.27",
- "hex-literal",
+ "hex-literal 0.3.4",
  "kusama-runtime",
  "kvdb",
  "kvdb-rocksdb",
@@ -9622,7 +9628,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "hex-literal",
+ "hex-literal 0.4.0",
  "log",
  "orml-tokens",
  "orml-traits",
@@ -9703,7 +9709,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "hex-literal",
+ "hex-literal 0.3.4",
  "log",
  "pallet-authority-discovery",
  "pallet-authorship",
@@ -11374,7 +11380,7 @@ dependencies = [
  "der",
  "frame-support",
  "hex",
- "hex-literal",
+ "hex-literal 0.3.4",
  "parity-scale-codec 3.4.0",
  "ring 0.16.20 (git+https://github.com/Niederb/ring-xous.git?branch=0.16.20-cleanup)",
  "scale-info",
@@ -12722,7 +12728,7 @@ name = "teerex-primitives"
 version = "0.1.0"
 dependencies = [
  "common-primitives",
- "hex-literal",
+ "hex-literal 0.4.0",
  "parity-scale-codec 3.4.0",
  "scale-info",
  "serde",
@@ -12763,7 +12769,7 @@ checksum = "3369f5ac52d5eb6ab48c6b4ffdc8efbcad6b89c765749064ba298f2c68a16a76"
 name = "test-utils"
 version = "0.1.0"
 dependencies = [
- "hex-literal",
+ "hex-literal 0.4.0",
  "log",
  "teerex-primitives",
 ]
@@ -14157,7 +14163,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "hex-literal",
+ "hex-literal 0.3.4",
  "log",
  "pallet-authority-discovery",
  "pallet-authorship",
