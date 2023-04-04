@@ -128,7 +128,7 @@ pub fn build(
 	});
 
 	let mut is_hold = false;
-	let mut optimal_hold_index = ASSERTION_FROM_DATE.len() - 1;
+	let mut optimal_hold_index = usize::MAX;
 
 	// If both Substrate and Evm networks meet the conditions, take the interval with the longest holding time.
 	// Here's an example:
@@ -146,6 +146,15 @@ pub fn build(
 	//    value: true
 	// ]
 	for (verified_network, addresses) in networks {
+		// If found query result is the optimal solution, i.e optimal_hold_index = 0, (2017-01-01)
+		// there is no need to query other networks.
+		if optimal_hold_index == 0 {
+			break
+		}
+
+		// Each query loop needs to reset is_hold to false
+		is_hold = false;
+
 		let addresses: Vec<String> = addresses.into_iter().collect();
 		let token_address = if verified_network == VerifiedCredentialsNetwork::Ethereum {
 			LIT_TOKEN_ADDRESS
@@ -187,7 +196,12 @@ pub fn build(
 			}
 		}
 	}
-	if !is_hold {
+
+	// Found the optimal hold index, set the is_hold to true, otherwise
+	// the optimal_hold_index is always 0 (2017-01-01)
+	if optimal_hold_index != usize::MAX {
+		is_hold = true;
+	} else {
 		optimal_hold_index = 0;
 	}
 
