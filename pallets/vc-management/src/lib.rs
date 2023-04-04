@@ -63,6 +63,12 @@ pub mod pallet {
 		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		/// The origin who can set the admin account
 		type SetAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		// This type should be safe to remove
+		/// Temporary type for whitelist function
+		type VCMPExtrinsicWhitelistOrigin: EnsureOrigin<
+			Self::RuntimeOrigin,
+			Success = Self::AccountId,
+		>;
 	}
 
 	// a map VCIndex -> VC context
@@ -155,6 +161,12 @@ pub mod pallet {
 			detail: ErrorDetail,
 			req_ext_hash: H256,
 		},
+		VCRegistryManualAdded {
+			account: T::AccountId,
+			assertion: Assertion,
+			index: VCIndex,
+		},
+		VCRegistryManualRemoved { index: VCIndex },
 	}
 
 	#[pallet::error]
@@ -366,6 +378,39 @@ pub mod pallet {
 			let _ = SchemaRegistry::<T>::get(index).ok_or(Error::<T>::SchemaNotExists)?;
 			SchemaRegistry::<T>::remove(index);
 			Self::deposit_event(Event::SchemaRevoked { account: sender, shard, index });
+			Ok(().into())
+		}
+
+		/// ---------------------------------------------------
+		/// The following extrinsics are supposed to be called by Sudo/Concuil only
+		/// This is the temporary function for manual operation of VCRegistry storage
+		/// ---------------------------------------------------
+		#[pallet::call_index(10)]
+		#[pallet::weight(195_000_000)]
+		pub fn add_vc(
+			origin: OriginFor<T>,
+			index: VCIndex,
+			subject: T::AccountId,
+			assertion: Assertion,
+			hash: H256,
+		) -> DispatchResultWithPostInfo {
+			T::SetAdminOrigin::ensure_origin(origin)?;
+			ensure!(!VCRegistry::<T>::contains_key(index), Error::<T>::VCAlreadyExists);
+			VCRegistry::<T>::insert(index, VCContext::<T>::new(subject, assertion, hash));
+			Self::deposit_event(Event::VCRegistryManualAdded { account: subject, assertion, index });
+			Ok(().into())
+		}
+
+		#[pallet::call_index(11)]
+		#[pallet::weight(195_000_000)]
+		pub fn remove_vc(
+			origin: OriginFor<T>,
+			index: VCIndex,
+		) -> DispatchResultWithPostInfo {
+			T::SetAdminOrigin::ensure_origin(origin)?;
+			let _ = VCRegistry::<T>::get(index).ok_or(Error::<T>::VCNotExist)?;
+			VCRegistry::<T>::remove(index);
+			Self::deposit_event(Event::VCRegistryManualRemoved { index });
 			Ok(().into())
 		}
 	}
