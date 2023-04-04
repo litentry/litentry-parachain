@@ -25,13 +25,12 @@ mod validation_data;
 pub use ethereum_signature::*;
 pub use identity::*;
 pub use parentchain_primitives::{
-	AccountId as ParentchainAccountId, AesOutput, Assertion, AssertionNetworks,
-	Balance as ParentchainBalance, BlockNumber as ParentchainBlockNumber, ErrorString,
-	Hash as ParentchainHash, Header as ParentchainHeader, IMPError, Index as ParentchainIndex,
-	Network, ParameterString, SchemaContentString, SchemaIdString,
+	AccountId as ParentchainAccountId, AesOutput, Assertion, Balance as ParentchainBalance,
+	BlockNumber as ParentchainBlockNumber, ErrorDetail, ErrorString, Hash as ParentchainHash,
+	Header as ParentchainHeader, IMPError, Index as ParentchainIndex, IndexingNetwork,
+	IndexingNetworks, ParameterString, SchemaContentString, SchemaIdString,
 	Signature as ParentchainSignature, UserShieldingKeyType, VCMPError, ASSERTION_FROM_DATE,
-	ASSERTION_NETWORKS, MINUTES, USER_SHIELDING_KEY_LEN, USER_SHIELDING_KEY_NONCE_LEN,
-	USER_SHIELDING_KEY_TAG_LEN,
+	MINUTES, USER_SHIELDING_KEY_LEN, USER_SHIELDING_KEY_NONCE_LEN, USER_SHIELDING_KEY_TAG_LEN,
 };
 
 use ring::{

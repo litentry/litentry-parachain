@@ -91,26 +91,26 @@ fn get_storage_value(
 			if !storage_entry_keys.is_empty() {
 				panic!("Wrong Number Of Keys, expected: 0");
 			} else {
-				ty.id()
+				ty.id
 			},
 		StorageEntryType::Map { hashers, key, value } => {
 			if hashers.len() != storage_entry_keys.len() {
 				panic!("Wrong Number Of Keys, expected: {}", hashers.len());
 			}
 
-			let ty = metadata.types.resolve(key.id()).unwrap();
+			let ty = metadata.types.resolve(key.id).unwrap();
 			// If the key is a tuple, we encode each value to the corresponding tuple type.
 			// If the key is not a tuple, encode a single value to the key type.
-			let type_ids = match ty.type_def() {
-				TypeDef::Tuple(tuple) => tuple.fields().iter().map(|f| f.id()).collect(),
+			let type_ids = match &ty.type_def {
+				TypeDef::Tuple(tuple) => tuple.fields.iter().map(|f| f.id).collect(),
 				_other => {
-					vec![key.id()]
+					vec![key.id]
 				},
 			};
 			for ((key, _type_id), hasher) in storage_entry_keys.iter().zip(type_ids).zip(hashers) {
 				hash_bytes(key.as_slice(), &hasher, &mut entry_bytes);
 			}
-			value.id()
+			value.id
 		},
 	};
 

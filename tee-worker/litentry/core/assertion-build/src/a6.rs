@@ -20,15 +20,17 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::Result;
+use crate::{Error, Result};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::twitter_official::TwitterOfficialClient;
-use litentry_primitives::{Identity, ParentchainBlockNumber, VCMPError, Web2Network};
+use litentry_primitives::{
+	Assertion, ErrorDetail, ErrorString, Identity, ParentchainBlockNumber, Web2Network,
+};
 use log::*;
-use std::vec::Vec;
+use std::{format, vec::Vec};
 
 const VC_SUBJECT_DESCRIPTION: &str = "User has at least X amount of followers";
 const VC_SUBJECT_TYPE: &str = "Total Twitter Followers";
@@ -53,7 +55,7 @@ pub fn build(
 		identities
 	);
 
-	let mut client = TwitterOfficialClient::new();
+	let mut client = TwitterOfficialClient::v2();
 	let mut sum: u32 = 0;
 
 	for identity in identities {
@@ -67,7 +69,12 @@ pub fn build(
 						},
 					Err(e) => {
 						log::warn!("Assertion6 request error:{:?}", e);
-						return Err(VCMPError::Assertion6Failed)
+						return Err(Error::RequestVCFailed(
+							Assertion::A6,
+							ErrorDetail::StfError(ErrorString::truncate_from(
+								format!("{:?}", e).into(),
+							)),
+						))
 					},
 				}
 			}
@@ -110,11 +117,11 @@ pub fn build(
 			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
 			credential_unsigned.add_assertion_a6(min, max);
 
-			return Ok(credential_unsigned)
+			Ok(credential_unsigned)
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
+			Err(Error::RequestVCFailed(Assertion::A6, e.to_error_detail()))
 		},
 	}
-	Err(VCMPError::Assertion6Failed)
 }

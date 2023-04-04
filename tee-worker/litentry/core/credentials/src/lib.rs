@@ -39,6 +39,7 @@ use codec::{Decode, Encode};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
+use lc_data_providers::graphql::VerifiedCredentialsNetwork;
 use litentry_primitives::{ParentchainBalance, ParentchainBlockNumber, ASSERTION_FROM_DATE};
 use log::*;
 use scale_info::TypeInfo;
@@ -149,6 +150,10 @@ pub struct CredentialSubject {
 impl CredentialSubject {
 	pub fn is_empty(&self) -> bool {
 		self.id.is_empty()
+	}
+
+	pub fn set_endpoint(&mut self, endpoint: String) {
+		self.endpoint = endpoint;
 	}
 }
 
@@ -436,6 +441,20 @@ impl Credential {
 		self.credential_subject.values.push(value);
 	}
 
+	pub fn add_assertion_a5(&mut self, original_tweet_id: String, value: bool) {
+		let is_following = AssertionLogic::new_item("$is_following", Op::Equal, "true");
+		let has_retweeted = AssertionLogic::new_item("$has_retweeted", Op::Equal, "true");
+		let original_tweet_id =
+			AssertionLogic::new_item("$original_tweet_id", Op::Equal, original_tweet_id.as_str());
+
+		let assertion = AssertionLogic::new_and()
+			.add_item(is_following)
+			.add_item(has_retweeted)
+			.add_item(original_tweet_id);
+		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.values.push(value);
+	}
+
 	pub fn add_assertion_a6(&mut self, min: u32, max: u32) {
 		let min = format!("{}", min);
 		let max = format!("{}", max);
@@ -448,13 +467,19 @@ impl Credential {
 		self.credential_subject.values.push(true);
 	}
 
-	pub fn add_assertion_a8(&mut self, networks: Vec<&'static str>, min: u64, max: u64) {
+	pub fn add_assertion_a8(
+		&mut self,
+		networks: Vec<VerifiedCredentialsNetwork>,
+		min: u64,
+		max: u64,
+	) {
 		let min = format!("{}", min);
 		let max = format!("{}", max);
 
 		let mut or_logic = AssertionLogic::new_or();
 		for network in networks {
-			let network_logic = AssertionLogic::new_item("$network", Op::Equal, network);
+			let network = network.to_string();
+			let network_logic = AssertionLogic::new_item("$network", Op::Equal, &network);
 			or_logic = or_logic.add_item(network_logic);
 		}
 

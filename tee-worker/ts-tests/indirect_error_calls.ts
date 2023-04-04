@@ -1,4 +1,4 @@
-import { encryptWithTeeShieldingKey, listenEvent, sendTxUntilInBlock, sendTxUntilInBlockList } from './utils';
+import { encryptWithTeeShieldingKey } from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { HexString } from '@polkadot/util/types';
 import { Event } from '@polkadot/types/interfaces';
@@ -9,9 +9,10 @@ import {
     LitentryIdentity,
     LitentryValidationData,
     TransactionSubmit,
-} from './type-definitions';
-import { expect } from 'chai';
-
+} from './common/type-definitions';
+import { expect, assert } from 'chai';
+import { listenEvent, sendTxUntilInBlock, sendTxUntilInBlockList } from './common/transactions';
+import { u8aToHex } from '@polkadot/util';
 export async function setErrorUserShieldingKey(
     context: IntegrationTestContext,
     signer: KeyringPair,
@@ -24,9 +25,11 @@ export async function setErrorUserShieldingKey(
     await sendTxUntilInBlock(context.api, tx, signer);
 
     if (listening) {
-        const events = await listenEvent(context.api, 'identityManagement', ['SetUserShieldingKeyHandlingFailed']);
+        const events = await listenEvent(context.api, 'identityManagement', ['SetUserShieldingKeyFailed'], 1, [
+            u8aToHex(signer.addressRaw),
+        ]);
         expect(events.length).to.be.equal(1);
-        return events[0].method as string;
+        return (events[0] as any).data.detail.toHuman();
     }
     return undefined;
 }
@@ -56,14 +59,18 @@ export async function createErrorIdentities(
         });
     }
 
-    await sendTxUntilInBlockList(context.api, txs, signer);
+    const res = (await sendTxUntilInBlockList(context.api, txs, signer)) as any;
 
     if (listening) {
-        const events = (await listenEvent(context.api, 'identityManagement', ['CreateIdentityHandlingFailed'])) as any;
+        const events = (await listenEvent(context.api, 'identityManagement', ['CreateIdentityFailed'], txs.length, [
+            u8aToHex(signer.addressRaw),
+        ])) as any;
         expect(events.length).to.be.equal(errorCiphertexts.length);
+        expect(events.length).to.be.equal(res.length);
         let results: string[] = [];
         for (let i = 0; i < events.length; i++) {
-            results.push(events[i].method as string);
+            assert.equal(events[i].data.reqExtHash.toHex(), res[i].txHash);
+            results.push(events[i].data.detail.toHuman());
         }
         return [...results];
     }
@@ -105,15 +112,18 @@ export async function verifyErrorIdentities(
         });
     }
 
-    await sendTxUntilInBlockList(context.api, txs, signer);
+    const res = (await sendTxUntilInBlockList(context.api, txs, signer)) as any;
 
     if (listening) {
-        const events = (await listenEvent(context.api, 'identityManagement', ['StfError'])) as any;
+        const events = (await listenEvent(context.api, 'identityManagement', ['VerifyIdentityFailed'], txs.length, [
+            u8aToHex(signer.addressRaw),
+        ])) as any;
         expect(events.length).to.be.equal(identities.length);
+        expect(events.length).to.be.equal(res.length);
         let results: string[] = [];
         for (let i = 0; i < events.length; i++) {
-            const data = events[i].data as any;
-            results.push(data.reason.toHuman());
+            assert.equal(events[i].data.reqExtHash.toHex(), res[i].txHash);
+            results.push(events[i].data.detail.toHuman());
         }
         return [...results];
     }
@@ -125,7 +135,7 @@ export async function removeErrorIdentities(
     signer: KeyringPair,
     listening: boolean,
     identities: any[]
-): Promise<any[] | undefined> {
+): Promise<string[] | undefined> {
     let txs: TransactionSubmit[] = [];
     const nonce = await context.api.rpc.system.accountNextIndex(signer.address);
 
@@ -142,12 +152,20 @@ export async function removeErrorIdentities(
         });
     }
 
-    await sendTxUntilInBlockList(context.api, txs, signer);
+    const res = (await sendTxUntilInBlockList(context.api, txs, signer)) as any;
 
     if (listening) {
-        const events = await listenEvent(context.api, 'identityManagement', ['StfError']);
+        const events = (await listenEvent(context.api, 'identityManagement', ['RemoveIdentityFailed'], txs.length, [
+            u8aToHex(signer.addressRaw),
+        ])) as any;
+        let results: string[] = [];
         expect(events.length).to.be.equal(identities.length);
-        return events;
+        expect(events.length).to.be.equal(res.length);
+        for (let i = 0; i < events.length; i++) {
+            assert.equal(events[i].data.reqExtHash.toHex(), res[i].txHash);
+            results.push(events[i].data.detail.toHuman());
+        }
+        return [...results];
     }
     return undefined;
 }
@@ -172,11 +190,18 @@ export async function requestErrorVCs(
         txs.push({ tx, nonce: newNonce });
     }
 
-    await sendTxUntilInBlockList(context.api, txs, signer);
+    const res = (await sendTxUntilInBlockList(context.api, txs, signer)) as any;
 
     if (listening) {
-        const events = (await listenEvent(context.api, 'vcManagement', ['StfError'])) as Event[];
+        const events = (await listenEvent(context.api, 'vcManagement', ['RequestVCFailed'], txs.length, [
+            u8aToHex(signer.addressRaw),
+        ])) as Event[];
         expect(events.length).to.be.equal(keys.length);
+        expect(events.length).to.be.equal(res.length);
+
+        for (let k = 0; k < events.length; k++) {
+            assert.equal((events[k].data as any).reqExtHash.toHex(), res[k].txHash);
+        }
         return events;
     }
     return undefined;

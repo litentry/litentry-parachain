@@ -1,6 +1,6 @@
 import { ChildProcess, spawn } from 'child_process';
 import fs from 'fs';
-import { initWorkerConnection, sleep } from './utils';
+import { initWorkerConnection, sleep } from './common/utils';
 import * as path from 'path';
 import * as process from 'process';
 import { describe } from 'mocha';

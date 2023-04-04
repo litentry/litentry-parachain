@@ -20,6 +20,49 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
+/// Here's an example of different assertions in this VC:
+///
+/// Imagine:
+/// ALICE holds 100 LITs since 2018-03-02
+/// BOB   holds 100 LITs since 2023-03-07
+/// CAROL holds 0.1 LITs since 2020-02-22
+///
+/// min_amount is 1 LIT
+///
+/// If they all request A4, these are the received assertions:
+/// ALICE:
+/// [
+///    from_date: < 2019-01-01
+///    to_date: >= 2023-03-30 (now)
+///    value: true
+/// ]
+///
+/// BOB:
+/// [
+///    from_date: < 2017-01-01
+///    to_date: >= 2023-03-30 (now)
+///    value: false
+/// ]
+///
+/// CAROL:
+/// [
+///    from_date: < 2017-01-01
+///    to_date: >= 2023-03-30 (now)
+///    value: false
+/// ]
+///
+/// So just from the assertion results you can't distinguish between:
+/// BOB, who just started to hold recently,
+/// and CAROL, who has been holding for 3 years, but with too little amount
+///
+/// This is because the data provider doesn't provide more information, it only
+/// takes the query with from_date and min_ammount, and returns true or false.
+///
+/// Please note:
+/// the operators are mainly for IDHub's parsing, we will **NEVER** have:
+/// - `from_date` with >= op, nor
+/// - `value` is false but the `from_date` is something other than 2017-01-01.
+///  
 use crate::{Error, Result};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
@@ -29,7 +72,7 @@ use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
 };
 use litentry_primitives::{
-	Identity, ParentchainBalance, ParentchainBlockNumber, ASSERTION_FROM_DATE,
+	Assertion, Identity, ParentchainBalance, ParentchainBlockNumber, ASSERTION_FROM_DATE,
 };
 use log::*;
 use std::{
@@ -80,10 +123,12 @@ pub fn build(
 			verified_network,
 			VerifiedCredentialsNetwork::Litentry
 				| VerifiedCredentialsNetwork::Litmus
+				| VerifiedCredentialsNetwork::LitentryRococo
 				| VerifiedCredentialsNetwork::Ethereum
 		) {
 			let q_min_balance: f64 = if verified_network == VerifiedCredentialsNetwork::Litentry
 				|| verified_network == VerifiedCredentialsNetwork::Litmus
+				|| verified_network == VerifiedCredentialsNetwork::LitentryRococo
 			{
 				(min_balance / (10 ^ 12)) as f64
 			} else {
@@ -150,12 +195,11 @@ pub fn build(
 			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
 			credential_unsigned.update_holder(from_date_index, min_balance);
 
-			return Ok(credential_unsigned)
+			Ok(credential_unsigned)
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
+			Err(Error::RequestVCFailed(Assertion::A4(min_balance), e.to_error_detail()))
 		},
 	}
-
-	Err(Error::Assertion4Failed)
 }

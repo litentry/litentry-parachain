@@ -149,7 +149,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot:
 	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9151,
+	spec_version: 9152,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -168,7 +168,8 @@ pub fn native_version() -> NativeVersion {
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 
-	pub const SS58Prefix: u16 = 131;
+	// using generic substrate prefix
+	pub const SS58Prefix: u16 = 42;
 }
 
 impl frame_system::Config for Runtime {
