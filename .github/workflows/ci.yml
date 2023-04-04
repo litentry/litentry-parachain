@@ -629,19 +629,19 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      # only push the docker image if we rebuilt it
+      # only push `litentry/litentry-parachain` if we rebuilt it
       - name: Push parachain image
         if: needs.set-condition.outputs.rebuild_parachain == 'true'
         run: |
           docker push litentry/litentry-parachain
 
-      # only push the docker image if we rebuilt it
+      # only push `litentry/litentry-parachain:tee-prod` if we rebuilt it
       - name: Push parachain image
         if: needs.set-condition.outputs.rebuild_parachain == 'true'
         run: |
           docker push litentry/litentry-parachain:tee-prod
 
-      # only push the docker image if we rebuilt it
+      # only push TEE images if we rebuilt them
       - name: Push tee-worker image
         if: needs.set-condition.outputs.rebuild_tee == 'true'
         run: |
