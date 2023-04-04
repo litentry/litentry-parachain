@@ -92,6 +92,8 @@ class Worker:
             if "I am initialized." == buffer.getvalue().decode('iso-8859-1'):
                 break
 
+        c.close()
+
         print(f'{self.name} initialized successfully.')
         return True
 
@@ -216,8 +218,6 @@ class WorkerManager:
                 now = datetime.now().strftime("%Y%m%d-%H%M%S")
                 log_path = f'{worker_dir}/{now}.log'
                 log = open(log_path, 'w+')
-                # link_log_path = f'{log_dir}/{now}-worker{worker_idx}.log'
-                # os.symlink(log_path, link_log_path)
                 self.workers.append(Worker(f'worker{worker_idx}',
                                            self.cmd,
                                            w_conf["flags"],
@@ -235,19 +235,20 @@ class WorkerManager:
         for worker in self.workers:
             if worker.run():
                 self.processes.append(worker.process)
+            else:
+                print(f'{worker.name} failed.')
 
-        print("run workers done!")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Run worker(s) in production env')
     parser.add_argument('config_path', type=str,
                         help='Config file for worker(s)')
-    parser.add_argument('fresh_start', nargs='?', default='True', type=str,
+    parser.add_argument('fresh_start', nargs='?', default='False', type=str,
                         help='Whether this is a fresh start, or continue with last start history')
     args = parser.parse_args()
 
-    fresh_start = True if args.fresh_start.lower() == 'true' else False
+    fresh_start = False if args.fresh_start.lower() == 'false' else True
 
     worker_mgr = WorkerManager(
         config_path=args.config_path, fresh_start=fresh_start)
@@ -257,4 +258,5 @@ if __name__ == '__main__':
         exit()
 
     worker_mgr.run_workers()
+    print(worker_mgr.processes)
     pass
