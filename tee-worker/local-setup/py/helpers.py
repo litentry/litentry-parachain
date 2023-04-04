@@ -89,9 +89,9 @@ class GracefulKiller:
             print(f'Removed tmp/w{i}')
             i += 1
         if os.path.isdir(f'log'):
-            new_folder_name = datetime.now().strftime("log-%Y%m%d-%H%M%S")
-            os.rename(f'log', new_folder_name)
-            print(f'Moved log into ' + new_folder_name)
+            new_folder_name = datetime.now().strftime("log-backup/log-%Y%m%d-%H%M%S")
+            shutil.copytree(f'log', new_folder_name)
+            print(f'Copy log into ' + new_folder_name)
         if self.parachain_type == "local":
             print("Cleaning up litentry-parachain...")
             subprocess.run(['./scripts/litentry/stop_parachain.sh', '||', 'true'])
