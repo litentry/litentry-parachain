@@ -13,6 +13,7 @@ members = [
   'pallets/teerex',
   'pallets/parentchain',
   'pallets/test-utils',
+  'pallets/group',
   'primitives/common',
   'primitives/core',
   'primitives/sidechain',

@@ -100,6 +100,7 @@ pallet-vc-management = { path = "../../pallets/vc-management", default-features 
 runtime-common = { path = '../common', default-features = false }
 
 # TEE pallets
+pallet-group = { path = "../../pallets/group", default-features = false }
 pallet-sidechain = { path = "../../pallets/sidechain", default-features = false }
 pallet-teeracle = { path = "../../pallets/teeracle", default-features = false }
 pallet-teerex = { path = "../../pallets/teerex", default-features = false }
@@ -225,6 +226,7 @@ std = [
   "pallet-bridge-transfer/std",
   "pallet-drop3/std",
   "pallet-extrinsic-filter/std",
+  "pallet-group/std",
   "pallet-identity-management/std",
   "pallet-identity-management-mock/std",
   "pallet-teerex/std",

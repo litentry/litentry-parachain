@@ -43,7 +43,7 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 				"2022-10-16T00:00:00Z".to_string(),
 				VerifiedCredentialsNetwork::Ethereum,
 				"0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723".to_string(),
-				0.00000056,
+				"0.00000056".into(),
 			)
 			.to_graphql();
 

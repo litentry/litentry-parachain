@@ -61,6 +61,9 @@ frame_support::construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		IdentityManagementMock: pallet_identity_management_mock::{Pallet, Call, Storage, Event<T>},
+		// This code should be safe to add
+		// Temporary adjust for whitelist function
+		Whitelist: pallet_group::{Pallet, Call, Storage, Event<T>}
 	}
 );
 
@@ -123,6 +126,16 @@ impl pallet_identity_management_mock::Config for Test {
 	type MaxVerificationDelay = ConstU64<10>;
 	type TEECallOrigin = EnsureSignedBy<One, u64>;
 	type DelegateeAdminOrigin = EnsureRoot<Self::AccountId>;
+	// This code should be safe to add
+	/// Temporary adjust for whitelist function
+	type WhitelistOrigin = Whitelist;
+}
+
+// This code should be safe to add
+/// Temporary adjust for whitelist function
+impl pallet_group::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type GroupManagerOrigin = frame_system::EnsureRoot<Self::AccountId>;
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
