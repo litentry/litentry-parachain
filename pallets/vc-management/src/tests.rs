@@ -28,6 +28,7 @@ fn request_vc_works() {
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
 		assert_ok!(VCManagement::request_vc(RuntimeOrigin::signed(1), shard, Assertion::A1));
 		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::VCRequested {
+			account: 1,
 			shard,
 			assertion: Assertion::A1,
 		}));
@@ -40,13 +41,16 @@ fn vc_issued_works() {
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(1),
 			1,
+			Assertion::A1,
 			VC_INDEX,
 			VC_HASH,
 			AesOutput::default(),
+			H256::default(),
 		));
 		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
 		let context = VCManagement::vc_registry(VC_INDEX).unwrap();
 		assert_eq!(context.subject, 1);
+		assert_eq!(context.assertion, Assertion::A1);
 		assert_eq!(context.status, Status::Active);
 	});
 }
@@ -58,9 +62,11 @@ fn vc_issued_with_unpriviledged_origin_fails() {
 			VCManagement::vc_issued(
 				RuntimeOrigin::signed(2),
 				1,
+				Assertion::A1,
 				H256::default(),
 				H256::default(),
 				AesOutput::default(),
+				H256::default(),
 			),
 			sp_runtime::DispatchError::BadOrigin
 		);
@@ -73,17 +79,21 @@ fn vc_issued_with_duplicated_index_fails() {
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(1),
 			1,
+			Assertion::A1,
 			VC_INDEX,
 			VC_HASH,
 			AesOutput::default(),
+			H256::default(),
 		));
 		assert_noop!(
 			VCManagement::vc_issued(
 				RuntimeOrigin::signed(1),
 				1,
+				Assertion::A1,
 				VC_INDEX,
 				VC_HASH,
 				AesOutput::default(),
+				H256::default(),
 			),
 			Error::<Test>::VCAlreadyExists
 		);
@@ -96,9 +106,11 @@ fn disable_vc_works() {
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(1),
 			2,
+			Assertion::A1,
 			VC_INDEX,
 			VC_HASH,
 			AesOutput::default(),
+			H256::default(),
 		));
 		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
 		assert_ok!(VCManagement::disable_vc(RuntimeOrigin::signed(2), VC_INDEX));
@@ -125,9 +137,11 @@ fn disable_vc_with_other_subject_fails() {
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(1),
 			2,
+			Assertion::A1,
 			VC_INDEX,
 			VC_HASH,
 			AesOutput::default(),
+			H256::default(),
 		));
 		assert_noop!(
 			VCManagement::disable_vc(RuntimeOrigin::signed(1), VC_HASH),
@@ -144,9 +158,11 @@ fn revoke_vc_works() {
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(1),
 			2,
+			Assertion::A1,
 			VC_INDEX,
 			VC_HASH,
 			AesOutput::default(),
+			H256::default(),
 		));
 		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
 		assert_ok!(VCManagement::revoke_vc(RuntimeOrigin::signed(2), VC_INDEX));
@@ -171,9 +187,11 @@ fn revoke_vc_with_other_subject_fails() {
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(1),
 			2,
+			Assertion::A1,
 			VC_INDEX,
 			VC_HASH,
 			AesOutput::default(),
+			H256::default(),
 		));
 		assert_noop!(
 			VCManagement::revoke_vc(RuntimeOrigin::signed(1), VC_HASH),
@@ -369,5 +387,96 @@ fn revoke_schema_with_unprivileged_origin_fails() {
 			VCManagement::revoke_schema(RuntimeOrigin::signed(2), shard, 0),
 			Error::<Test>::RequireSchemaAdmin
 		);
+	});
+}
+
+#[test]
+fn manual_add_remove_vc_registry_item_works() {
+	new_test_ext().execute_with(|| {
+		// Can not remove non-existing vc
+		assert_noop!(
+			VCManagement::remove_vc_registry_item(RuntimeOrigin::signed(1), VC_INDEX),
+			Error::<Test>::VCNotExist
+		);
+		// Unauthorized party can not add vc
+		assert_noop!(
+			VCManagement::add_vc_registry_item(
+				RuntimeOrigin::signed(2),
+				VC_INDEX,
+				2,
+				Assertion::A1,
+				VC_HASH
+			),
+			sp_runtime::DispatchError::BadOrigin
+		);
+		// Successfully add vc
+		assert_ok!(VCManagement::add_vc_registry_item(
+			RuntimeOrigin::signed(1),
+			VC_INDEX,
+			1,
+			Assertion::A1,
+			VC_HASH
+		));
+		// Check result
+		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
+		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::VCRegistryItemAdded {
+			account: 1,
+			assertion: Assertion::A1,
+			index: VC_INDEX,
+		}));
+		// Unauthorized party can not remove vc
+		assert_noop!(
+			VCManagement::remove_vc_registry_item(RuntimeOrigin::signed(2), VC_INDEX),
+			sp_runtime::DispatchError::BadOrigin
+		);
+		// Successfully remove vc
+		assert_ok!(VCManagement::remove_vc_registry_item(RuntimeOrigin::signed(1), VC_INDEX));
+		// Check result and events
+		assert!(VCManagement::vc_registry(VC_INDEX).is_none());
+		System::assert_last_event(RuntimeEvent::VCManagement(
+			crate::Event::VCRegistryItemRemoved { index: VC_INDEX },
+		));
+	});
+}
+
+#[test]
+fn manual_add_clear_vc_registry_item_works() {
+	new_test_ext().execute_with(|| {
+		// Unauthorized party can not add vc
+		assert_noop!(
+			VCManagement::add_vc_registry_item(
+				RuntimeOrigin::signed(2),
+				VC_INDEX,
+				2,
+				Assertion::A1,
+				VC_HASH
+			),
+			sp_runtime::DispatchError::BadOrigin
+		);
+		// Successfully add vc
+		assert_ok!(VCManagement::add_vc_registry_item(
+			RuntimeOrigin::signed(1),
+			VC_INDEX,
+			1,
+			Assertion::A1,
+			VC_HASH
+		));
+		// Check result
+		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
+		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::VCRegistryItemAdded {
+			account: 1,
+			assertion: Assertion::A1,
+			index: VC_INDEX,
+		}));
+		// Unauthorized party can not clear vc
+		assert_noop!(
+			VCManagement::clear_vc_registry(RuntimeOrigin::signed(2)),
+			sp_runtime::DispatchError::BadOrigin
+		);
+		// Successfully clear vc
+		assert_ok!(VCManagement::clear_vc_registry(RuntimeOrigin::signed(1)));
+		// Check result and events
+		assert!(VCManagement::vc_registry(VC_INDEX).is_none());
+		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::VCRegistryCleared));
 	});
 }

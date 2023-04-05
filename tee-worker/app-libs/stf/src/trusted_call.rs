@@ -16,7 +16,7 @@
 */
 
 #[cfg(feature = "evm")]
-use sp_core::{H160, H256, U256};
+use sp_core::{H160, U256};
 
 #[cfg(feature = "evm")]
 use std::vec::Vec;
@@ -35,11 +35,11 @@ use itp_node_api::metadata::{
 };
 use itp_stf_interface::ExecuteCall;
 use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier, Signature};
-use itp_types::OpaqueCall;
+use itp_types::{OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
-	aes_encrypt_default, Assertion, ChallengeCode, IMPError, Identity, ParentchainBlockNumber,
-	UserShieldingKeyType, VCMPError, ValidationData,
+	aes_encrypt_default, Assertion, ChallengeCode, IMPError, Identity, ParentchainAccountId,
+	ParentchainBlockNumber, UserShieldingKeyType, VCMPError, ValidationData,
 };
 use log::*;
 use sp_io::hashing::blake2_256;
@@ -107,29 +107,31 @@ pub enum TrustedCall {
 		Vec<(H160, Vec<H256>)>,
 	),
 	// litentry
-	set_user_shielding_key_preflight(AccountId, AccountId, UserShieldingKeyType), // (Root, AccountIncognito, Key) -- root as signer, only for testing
-	set_user_shielding_key_runtime(AccountId, AccountId, UserShieldingKeyType), // (EnclaveSigner, AccountIncognito, Key)
+	set_user_shielding_key_runtime(AccountId, AccountId, UserShieldingKeyType, H256),
 	create_identity_runtime(
 		AccountId,
 		AccountId,
 		Identity,
 		Option<MetadataOf<Runtime>>,
 		ParentchainBlockNumber,
-	), // (EnclaveSigner, Account, identity, metadata, blocknumber)
-	remove_identity_runtime(AccountId, AccountId, Identity), // (EnclaveSigner, Account, identity)
+		H256,
+	),
+	remove_identity_runtime(AccountId, AccountId, Identity, H256),
 	verify_identity_preflight(
 		AccountId,
 		AccountId,
 		Identity,
 		ValidationData,
 		ParentchainBlockNumber,
-	), // (EnclaveSigner, Account, identity, validation, blocknumber)
-	verify_identity_runtime(AccountId, AccountId, Identity, ParentchainBlockNumber), // (EnclaveSigner, Account, identity, blocknumber)
-	build_assertion(AccountId, AccountId, Assertion, ShardIdentifier, ParentchainBlockNumber), // (Account, Account, Assertion, shard, blocknumber)
-	handle_imp_error(AccountId, IMPError),
-	handle_vcmp_error(AccountId, VCMPError),
+		H256,
+	),
+	verify_identity_runtime(AccountId, AccountId, Identity, ParentchainBlockNumber, H256),
+	request_vc(AccountId, AccountId, Assertion, ShardIdentifier, ParentchainBlockNumber, H256),
+	handle_imp_error(AccountId, Option<AccountId>, IMPError, H256),
+	handle_vcmp_error(AccountId, Option<AccountId>, VCMPError, H256),
 	// the following TrustedCalls should only be used in testing
-	set_challenge_code_runtime(AccountId, AccountId, Identity, ChallengeCode),
+	set_user_shielding_key_preflight(AccountId, AccountId, UserShieldingKeyType, H256), // root as signer
+	set_challenge_code_runtime(AccountId, AccountId, Identity, ChallengeCode, H256),
 	send_erroneous_parentchain_call(AccountId),
 }
 
@@ -149,16 +151,16 @@ impl TrustedCall {
 			#[cfg(feature = "evm")]
 			TrustedCall::evm_create2(sender_account, ..) => sender_account,
 			// litentry
-			TrustedCall::set_user_shielding_key_preflight(account, _, _) => account,
-			TrustedCall::set_user_shielding_key_runtime(account, _, _) => account,
-			TrustedCall::create_identity_runtime(account, _, _, _, _) => account,
-			TrustedCall::remove_identity_runtime(account, _, _) => account,
-			TrustedCall::verify_identity_preflight(account, _, _, _, _) => account,
-			TrustedCall::verify_identity_runtime(account, _, _, _) => account,
-			TrustedCall::build_assertion(account, _, _, _, _) => account,
-			TrustedCall::set_challenge_code_runtime(account, _, _, _) => account,
-			TrustedCall::handle_imp_error(account, _) => account,
-			TrustedCall::handle_vcmp_error(account, _) => account,
+			TrustedCall::set_user_shielding_key_preflight(account, _, _, _) => account,
+			TrustedCall::set_user_shielding_key_runtime(account, _, _, _) => account,
+			TrustedCall::create_identity_runtime(account, _, _, _, _, _) => account,
+			TrustedCall::remove_identity_runtime(account, _, _, _) => account,
+			TrustedCall::verify_identity_preflight(account, _, _, _, _, _) => account,
+			TrustedCall::verify_identity_runtime(account, _, _, _, _) => account,
+			TrustedCall::request_vc(account, _, _, _, _, _) => account,
+			TrustedCall::set_challenge_code_runtime(account, _, _, _, _) => account,
+			TrustedCall::handle_imp_error(account, _, _, _) => account,
+			TrustedCall::handle_vcmp_error(account, _, _, _) => account,
 			TrustedCall::send_erroneous_parentchain_call(account) => account,
 		}
 	}
@@ -454,14 +456,22 @@ where
 				Ok(())
 			},
 			// litentry
-			TrustedCall::set_user_shielding_key_preflight(root, who, key) => {
-				if let Err(e) = Self::set_user_shielding_key_preflight(root, shard, who, key) {
+			TrustedCall::set_user_shielding_key_preflight(root, who, key, hash) => {
+				if let Err(e) =
+					Self::set_user_shielding_key_preflight(root, shard, who.clone(), key, hash)
+				{
 					debug!("set_user_shielding_key_preflight error: {}", e);
-					add_call_from_imp_error(calls, node_metadata_repo, e.to_imp_error());
+					add_call_from_imp_error(
+						calls,
+						node_metadata_repo,
+						Some(SgxParentchainTypeConverter::convert(who)),
+						e.to_imp_error(),
+						hash,
+					);
 				}
 				Ok(())
 			},
-			TrustedCall::set_user_shielding_key_runtime(enclave_account, who, key) => {
+			TrustedCall::set_user_shielding_key_runtime(enclave_account, who, key, hash) => {
 				debug!("set user shielding key runtime, who: {}", account_id_to_string(&who));
 				// TODO: we only checked if the extrinsic dispatch is successful,
 				//       is that enough? (i.e. is the state changed already?)
@@ -478,16 +488,30 @@ where
 							node_metadata_repo
 								.get_from_metadata(|m| m.user_shielding_key_set_call_indexes())??,
 							SgxParentchainTypeConverter::convert(who),
+							hash,
 						)));
 					},
 					Err(e) => {
 						debug!("set_user_shielding_key_runtime error: {}", e);
-						add_call_from_imp_error(calls, node_metadata_repo, e.to_imp_error());
+						add_call_from_imp_error(
+							calls,
+							node_metadata_repo,
+							Some(SgxParentchainTypeConverter::convert(who)),
+							e.to_imp_error(),
+							hash,
+						);
 					},
 				}
 				Ok(())
 			},
-			TrustedCall::create_identity_runtime(enclave_account, who, identity, metadata, bn) => {
+			TrustedCall::create_identity_runtime(
+				enclave_account,
+				who,
+				identity,
+				metadata,
+				bn,
+				hash,
+			) => {
 				debug!(
 					"create_identity_runtime, who: {}, identity: {:?}, metadata: {:?}",
 					account_id_to_string(&who),
@@ -513,6 +537,7 @@ where
 								SgxParentchainTypeConverter::convert(who),
 								aes_encrypt_default(&key, &identity.encode()),
 								aes_encrypt_default(&key, &code.encode()),
+								hash,
 							)));
 						} else {
 							error!("Can't create identity: InvalidUserShieldingKey");
@@ -524,12 +549,18 @@ where
 							account_id_to_string(&who),
 							e
 						);
-						add_call_from_imp_error(calls, node_metadata_repo, e.to_imp_error());
+						add_call_from_imp_error(
+							calls,
+							node_metadata_repo,
+							Some(SgxParentchainTypeConverter::convert(who)),
+							e.to_imp_error(),
+							hash,
+						);
 					},
 				}
 				Ok(())
 			},
-			TrustedCall::remove_identity_runtime(enclave_account, who, identity) => {
+			TrustedCall::remove_identity_runtime(enclave_account, who, identity, hash) => {
 				debug!(
 					"remove_identity_runtime, who: {}, identity: {:?}",
 					account_id_to_string(&who),
@@ -545,6 +576,7 @@ where
 									.get_from_metadata(|m| m.identity_removed_call_indexes())??,
 								SgxParentchainTypeConverter::convert(who),
 								aes_encrypt_default(&key, &identity.encode()),
+								hash,
 							)));
 						} else {
 							error!("Can't remove identity: InvalidUserShieldingKey");
@@ -556,7 +588,13 @@ where
 							account_id_to_string(&who),
 							e
 						);
-						add_call_from_imp_error(calls, node_metadata_repo, e.to_imp_error());
+						add_call_from_imp_error(
+							calls,
+							node_metadata_repo,
+							Some(SgxParentchainTypeConverter::convert(who)),
+							e.to_imp_error(),
+							hash,
+						);
 					},
 				}
 				Ok(())
@@ -567,21 +605,29 @@ where
 				identity,
 				validation_data,
 				bn,
+				hash,
 			) => {
 				if let Err(e) = Self::verify_identity_preflight(
 					enclave_account,
 					shard,
-					who,
+					who.clone(),
 					identity,
 					validation_data,
 					bn,
+					hash,
 				) {
 					debug!("verify_identity_preflight error: {}", e);
-					add_call_from_imp_error(calls, node_metadata_repo, e.to_imp_error());
+					add_call_from_imp_error(
+						calls,
+						node_metadata_repo,
+						Some(SgxParentchainTypeConverter::convert(who)),
+						e.to_imp_error(),
+						hash,
+					);
 				}
 				Ok(())
 			},
-			TrustedCall::verify_identity_runtime(enclave_account, who, identity, bn) => {
+			TrustedCall::verify_identity_runtime(enclave_account, who, identity, bn, hash) => {
 				debug!(
 					"verify_identity_runtime, who: {}, identity: {:?}, bn: {:?}",
 					account_id_to_string(&who),
@@ -605,6 +651,7 @@ where
 								SgxParentchainTypeConverter::convert(who),
 								aes_encrypt_default(&key, &identity.encode()),
 								aes_encrypt_default(&key, &id_graph.encode()),
+								hash,
 							)));
 						} else {
 							error!("Can't verify identity: InvalidUserShieldingKey");
@@ -616,33 +663,55 @@ where
 							account_id_to_string(&who),
 							e
 						);
-						add_call_from_imp_error(calls, node_metadata_repo, e.to_imp_error());
+						add_call_from_imp_error(
+							calls,
+							node_metadata_repo,
+							Some(SgxParentchainTypeConverter::convert(who)),
+							e.to_imp_error(),
+							hash,
+						);
 					},
 				}
 				Ok(())
 			},
-			TrustedCall::build_assertion(enclave_account, who, assertion, shard, bn) => {
-				if let Err(e) = Self::build_assertion(enclave_account, &shard, who, assertion, bn) {
-					add_call_from_vcmp_error(calls, node_metadata_repo, e.to_vcmp_error());
+			TrustedCall::request_vc(enclave_account, who, assertion, shard, bn, hash) => {
+				if let Err(e) =
+					Self::request_vc(enclave_account, &shard, who.clone(), assertion, bn, hash)
+				{
+					add_call_from_vcmp_error(
+						calls,
+						node_metadata_repo,
+						Some(SgxParentchainTypeConverter::convert(who)),
+						e.to_vcmp_error(),
+						hash,
+					);
 				}
 				Ok(())
 			},
-			TrustedCall::set_challenge_code_runtime(enclave_account, who, did, code) => {
-				if let Err(e) = Self::set_challenge_code_runtime(enclave_account, who, did, code) {
-					add_call_from_imp_error(calls, node_metadata_repo, e.to_imp_error());
+			TrustedCall::set_challenge_code_runtime(enclave_account, who, did, code, hash) => {
+				if let Err(e) =
+					Self::set_challenge_code_runtime(enclave_account, who.clone(), did, code)
+				{
+					add_call_from_imp_error(
+						calls,
+						node_metadata_repo,
+						Some(SgxParentchainTypeConverter::convert(who)),
+						e.to_imp_error(),
+						hash,
+					);
 				}
 				Ok(())
 			},
-			TrustedCall::handle_imp_error(_enclave_account, e) => {
+			TrustedCall::handle_imp_error(_enclave_account, account, e, hash) => {
 				// checking of `_enclave_account` is not strictly needed, as this trusted call can
 				// only be constructed internally
-				add_call_from_imp_error(calls, node_metadata_repo, e);
+				add_call_from_imp_error(calls, node_metadata_repo, account, e, hash);
 				Ok(())
 			},
-			TrustedCall::handle_vcmp_error(_enclave_account, e) => {
+			TrustedCall::handle_vcmp_error(_enclave_account, account, e, hash) => {
 				// checking of `_enclave_account` is not strictly needed, as this trusted call can
 				// only be constructed internally
-				add_call_from_vcmp_error(calls, node_metadata_repo, e);
+				add_call_from_vcmp_error(calls, node_metadata_repo, account, e, hash);
 				Ok(())
 			},
 			TrustedCall::send_erroneous_parentchain_call(account) => {
@@ -674,7 +743,7 @@ where
 			TrustedCall::remove_identity_runtime(..) => debug!("No storage updates needed..."),
 			TrustedCall::verify_identity_preflight(..) => debug!("No storage updates needed..."),
 			TrustedCall::verify_identity_runtime(..) => debug!("No storage updates needed..."),
-			TrustedCall::build_assertion(..) => debug!("No storage updates needed..."),
+			TrustedCall::request_vc(..) => debug!("No storage updates needed..."),
 			TrustedCall::set_challenge_code_runtime(..) => debug!("No storage updates needed..."),
 			TrustedCall::handle_imp_error(..) => debug!("No storage updates needed..."),
 			TrustedCall::handle_vcmp_error(..) => debug!("No storage updates needed..."),
@@ -728,7 +797,9 @@ where
 fn add_call_from_imp_error<NodeMetadataRepository>(
 	calls: &mut Vec<OpaqueCall>,
 	node_metadata_repo: Arc<NodeMetadataRepository>,
+	account: Option<ParentchainAccountId>,
 	e: IMPError,
+	hash: H256,
 ) where
 	NodeMetadataRepository: AccessNodeMetadata,
 	NodeMetadataRepository::MetadataType:
@@ -736,7 +807,7 @@ fn add_call_from_imp_error<NodeMetadataRepository>(
 {
 	// TODO: anyway to simplify this? `and_then` won't be applicable here
 	match node_metadata_repo.get_from_metadata(|m| m.imp_some_error_call_indexes()) {
-		Ok(Ok(c)) => calls.push(OpaqueCall::from_tuple(&(c, e))),
+		Ok(Ok(c)) => calls.push(OpaqueCall::from_tuple(&(c, account, e, hash))),
 		Ok(e) => warn!("error getting IMP call indexes: {:?}", e),
 		Err(e) => warn!("error getting IMP call indexes: {:?}", e),
 	}
@@ -746,14 +817,16 @@ fn add_call_from_imp_error<NodeMetadataRepository>(
 fn add_call_from_vcmp_error<NodeMetadataRepository>(
 	calls: &mut Vec<OpaqueCall>,
 	node_metadata_repo: Arc<NodeMetadataRepository>,
+	account: Option<ParentchainAccountId>,
 	e: VCMPError,
+	hash: H256,
 ) where
 	NodeMetadataRepository: AccessNodeMetadata,
 	NodeMetadataRepository::MetadataType:
 		TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix,
 {
 	match node_metadata_repo.get_from_metadata(|m| m.vcmp_some_error_call_indexes()) {
-		Ok(Ok(c)) => calls.push(OpaqueCall::from_tuple(&(c, e))),
+		Ok(Ok(c)) => calls.push(OpaqueCall::from_tuple(&(c, account, e, hash))),
 		Ok(e) => warn!("error getting VCMP call indexes: {:?}", e),
 		Err(e) => warn!("error getting VCMP call indexes: {:?}", e),
 	}

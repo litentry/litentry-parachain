@@ -6,9 +6,9 @@ version = '0.9.15'
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len"] }
-hex-literal = { version = '0.3.4' }
+hex-literal = { version = '0.4.0' }
 log = { version = "0.4", default-features = false }
-scale-info = { version = "2.3.1", default-features = false, features = ["derive"] }
+scale-info = { version = "2.5.0", default-features = false, features = ["derive"] }
 serde = { version = "1.0", optional = true, features = ["derive"] }
 smallvec = "1.9.0"
 
@@ -97,13 +97,14 @@ pallet-vc-management = { path = "../../pallets/vc-management", default-features 
 runtime-common = { path = '../common', default-features = false }
 
 # TEE pallets
+pallet-group = { path = "../../pallets/group", default-features = false }
 pallet-sidechain = { path = "../../pallets/sidechain", default-features = false }
 pallet-teeracle = { path = "../../pallets/teeracle", default-features = false }
 pallet-teerex = { path = "../../pallets/teerex", default-features = false }
 
 [dev-dependencies]
 cumulus-primitives-parachain-inherent = { git = 'https://github.com/paritytech/cumulus', branch = "polkadot-v0.9.37" }
-hex-literal = "0.3.4"
+hex-literal = "0.4.0"
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.37" }
 polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.37" }
 runtime-common = { path = '../common', default-features = false, features = ["tests"] }
@@ -220,6 +221,7 @@ std = [
   "pallet-bridge-transfer/std",
   "pallet-drop3/std",
   "pallet-extrinsic-filter/std",
+  "pallet-group/std",
   "pallet-identity-management/std",
   "pallet-identity-management-mock/std",
   "pallet-teerex/std",

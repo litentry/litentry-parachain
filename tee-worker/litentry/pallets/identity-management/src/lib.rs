@@ -101,8 +101,8 @@ pub mod pallet {
 		IdentityNotExist,
 		/// the identity was not created before verification
 		IdentityNotCreated,
-		/// the identity should be disallowed
-		IdentityShouldBeDisallowed,
+		/// creating the prime identity manually is disallowed
+		CreatePrimeIdentityNotAllowed,
 		/// a verification reqeust comes too early
 		VerificationRequestTooEarly,
 		/// a verification reqeust comes too late
@@ -240,7 +240,7 @@ pub mod pallet {
 						.try_into()
 						.map_err(|_| DispatchError::Other("invalid account id"))?;
 					let user_address: Address32 = address_raw.into();
-					ensure!(user_address != address, Error::<T>::IdentityShouldBeDisallowed);
+					ensure!(user_address != address, Error::<T>::CreatePrimeIdentityNotAllowed);
 				}
 			}
 

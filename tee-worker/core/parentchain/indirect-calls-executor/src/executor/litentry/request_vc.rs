@@ -15,9 +15,9 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	error::{Error, Result, VCMPError},
+	error::{Error, ErrorDetail, Result, VCMPError},
 	executor::Executor,
-	IndirectCallsExecutor,
+	hash_of, IndirectCallsExecutor,
 };
 use codec::Encode;
 use ita_stf::{TrustedCall, TrustedOperation};
@@ -46,7 +46,7 @@ impl RequestVC {
 	fn execute_internal<R, S, T, N>(
 		&self,
 		context: &IndirectCallsExecutor<R, S, T, N>,
-		extrinsic: ParentchainUncheckedExtrinsic<<Self as Executor<R, S, T, N>>::Call>,
+		extrinsic: &ParentchainUncheckedExtrinsic<<Self as Executor<R, S, T, N>>::Call>,
 	) -> Result<()>
 	where
 		R: AccessKey,
@@ -57,11 +57,11 @@ impl RequestVC {
 		N: AccessNodeMetadata,
 		N::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UtilityCallIndexes,
 	{
-		let (_, (shard, assertion)) = extrinsic.function;
+		let (_, (shard, assertion)) = &extrinsic.function;
 		let shielding_key = context.shielding_key_repo.retrieve_key()?;
 
-		if let Some((multiaddress_account, _, _)) = extrinsic.signature {
-			let account = AccountIdLookup::lookup(multiaddress_account)?;
+		if let Some((multiaddress_account, _, _)) = &extrinsic.signature {
+			let account = AccountIdLookup::lookup(multiaddress_account.clone())?;
 			debug!(
 				"indirect call Requested VC, who:{:?}, assertion: {:?}",
 				account_id_to_string(&account),
@@ -70,19 +70,20 @@ impl RequestVC {
 
 			let enclave_account_id = context.stf_enclave_signer.get_enclave_account()?;
 
-			let trusted_call = TrustedCall::build_assertion(
+			let trusted_call = TrustedCall::request_vc(
 				enclave_account_id,
 				account,
-				assertion,
-				shard,
+				assertion.clone(),
+				*shard,
 				self.block_number,
+				hash_of(extrinsic),
 			);
 			let signed_trusted_call =
-				context.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
+				context.stf_enclave_signer.sign_call_with_self(&trusted_call, shard)?;
 			let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
 
 			let encrypted_trusted_call = shielding_key.encrypt(&trusted_operation.encode())?;
-			context.submit_trusted_call(shard, encrypted_trusted_call);
+			context.submit_trusted_call(*shard, encrypted_trusted_call);
 		}
 		Ok(())
 	}
@@ -113,12 +114,17 @@ where
 		context: &IndirectCallsExecutor<R, S, T, N>,
 		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
 	) -> Result<()> {
-		let (_, (shard, _)) = extrinsic.function;
-		let e = Error::VCMPHandlingError(VCMPError::RequestVCHandlingFailed);
-		if self.execute_internal(context, extrinsic).is_err() {
+		let (_, (shard, assertion)) = &extrinsic.function;
+		let e = Error::VCMPHandlingError(VCMPError::RequestVCFailed(
+			assertion.clone(),
+			ErrorDetail::ImportError,
+		));
+		if self.execute_internal(context, &extrinsic).is_err() {
 			// try to handle the error internally, if we get another error, log it and return the
 			// original error
-			if let Err(internal_e) = context.submit_trusted_call_from_error(shard, &e) {
+			if let Err(internal_e) =
+				context.submit_trusted_call_from_error(*shard, None, &e, hash_of(&extrinsic))
+			{
 				warn!("fail to handle internal errors in request_vc: {:?}", internal_e);
 			}
 			return Err(e)

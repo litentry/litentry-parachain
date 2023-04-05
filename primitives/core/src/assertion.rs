@@ -17,35 +17,40 @@
 // This file includes the predefined rulesets and the corresponding parameters
 // when requesting VCs.
 
-use crate::Balance;
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
 
-// pub type Balance = u128;
 type MaxStringLength = ConstU32<64>;
 pub type ParameterString = BoundedVec<u8, MaxStringLength>;
-pub type Network = BoundedVec<u8, MaxStringLength>;
-pub type AssertionNetworks = BoundedVec<Network, MaxStringLength>;
+pub type IndexingNetworks = BoundedVec<IndexingNetwork, MaxStringLength>;
 
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+pub enum IndexingNetwork {
+	Litentry,
+	Litmus,
+	Polkadot,
+	Kusama,
+	Khala,
+	Ethereum,
+}
+
+#[rustfmt::skip]
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 pub enum Assertion {
 	A1,
-	A2(ParameterString),                                   // (guild_id)
-	A3(ParameterString, ParameterString, ParameterString), // (guild_id, channel_id, role_id)
-	A4(Balance),                                           // (minimum_amount)
-	A5(ParameterString, ParameterString),                  // (twitter_account, tweet_id)
+	A2(ParameterString),                                    // (guild_id)
+	A3(ParameterString, ParameterString, ParameterString),  // (guild_id, channel_id, role_id)
+	A4(ParameterString),                                    // (minimum_amount)
+	A5(ParameterString),                   					// (original_tweet_id)
 	A6,
-	A7(Balance),           // (minimum_amount)
-	A8(AssertionNetworks), // litentry, litmus, polkadot, kusama, khala, ethereum
+	A7(ParameterString),                                    // (minimum_amount)
+	A8(IndexingNetworks),                                   // litentry, litmus, polkadot, kusama, khala, ethereum
 	A9,
-	A10(Balance), // (minimum_amount)
-	A11(Balance), // (minimum_amount)
-	A13(u32),     // (Karma_amount) - TODO: unsupported
+	A10(ParameterString),                                   // (minimum_amount)
+	A11(ParameterString),                                   // (minimum_amount)
+	A13(u32),                                               // (Karma_amount) - TODO: unsupported
 }
-
-pub const ASSERTION_NETWORKS: [&str; 6] =
-	["litentry", "litmus", "polkadot", "kusama", "khala", "ethereum"];
 
 pub const ASSERTION_FROM_DATE: [&str; 7] = [
 	"2017-01-01",

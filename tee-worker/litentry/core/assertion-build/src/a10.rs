@@ -25,24 +25,25 @@ use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
-use lc_data_providers::graphql::{
-	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
+use lc_data_providers::{
+	graphql::{GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork},
+	vec_to_string,
 };
 use litentry_primitives::{
-	EvmNetwork, Identity, ParentchainBalance, ParentchainBlockNumber, VCMPError,
-	ASSERTION_FROM_DATE,
+	Assertion, ErrorDetail, EvmNetwork, Identity, ParameterString, ParentchainBlockNumber,
+	VCMPError, ASSERTION_FROM_DATE,
 };
 use log::*;
 use std::{string::ToString, vec, vec::Vec};
 
 const WBTC_TOKEN_ADDRESS: &str = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
 const VC_SUBJECT_DESCRIPTION: &str = "The user held Wrapped BTC every day from a specific date";
-const VC_SUBJECT_TYPE: &str = "BTC Hodler";
+const VC_SUBJECT_TYPE: &str = "BTC Holder";
 
-// WBTC holder
+// WBTC Holder
 pub fn build(
 	identities: Vec<Identity>,
-	min_balance: ParentchainBalance,
+	min_balance: ParameterString,
 	shard: &ShardIdentifier,
 	who: &AccountId,
 	bn: ParentchainBlockNumber,
@@ -54,48 +55,53 @@ pub fn build(
 		identities,
 	);
 
-	// WBTC decimals is 8.
-	let q_min_balance: f64 = (min_balance / (10 ^ 8)) as f64;
+	let q_min_balance = vec_to_string(min_balance.to_vec()).map_err(|_| {
+		VCMPError::RequestVCFailed(Assertion::A10(min_balance.clone()), ErrorDetail::ParseError)
+	})?;
 
 	let mut client = GraphQLClient::new();
-	let mut found = false;
-	let mut from_date_index = 0_usize;
+	let mut addresses = vec![];
 
 	for id in identities {
-		if found {
-			break
-		}
-
 		if let Identity::Evm { network, address } = id {
 			if matches!(network, EvmNetwork::Ethereum) {
 				let mut address = account_id_to_string(address.as_ref());
 				address.insert_str(0, "0x");
-				debug!("	[AssertionBuild] A10 Ethereum address : {}", address);
+				debug!("Assertion A10 Ethereum address : {}", address);
 
-				let addresses = vec![address.to_string()];
-				for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
-					// if found is true, no need to check it continually
-					if found {
-						from_date_index = index + 1;
-						break
-					}
+				addresses.push(address);
+			}
+		}
+	}
 
-					let vch = VerifiedCredentialsIsHodlerIn::new(
-						addresses.clone(),
-						from_date.to_string(),
-						VerifiedCredentialsNetwork::Ethereum,
-						WBTC_TOKEN_ADDRESS.to_string(),
-						q_min_balance,
-					);
-					match client.check_verified_credentials_is_hodler(vch) {
-						Ok(is_hodler_out) => {
-							for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
-								found = found || hodler.is_hodler;
-							}
-						},
-						Err(e) => error!("	[BuildAssertion] A10, Request, {:?}", e),
+	let mut is_hold = false;
+	let mut optimal_hold_index = 0_usize;
+
+	if !addresses.is_empty() {
+		for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
+			let vch = VerifiedCredentialsIsHodlerIn::new(
+				addresses.clone(),
+				from_date.to_string(),
+				VerifiedCredentialsNetwork::Ethereum,
+				WBTC_TOKEN_ADDRESS.to_string(),
+				q_min_balance.to_string(),
+			);
+
+			match client.check_verified_credentials_is_hodler(vch) {
+				Ok(is_hodler_out) => {
+					for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
+						is_hold = is_hold || hodler.is_hodler;
 					}
-				}
+				},
+				Err(e) => error!(
+					"Assertion A10 request check_verified_credentials_is_hodler error: {:?}",
+					e
+				),
+			}
+
+			if is_hold {
+				optimal_hold_index = index;
+				break
 			}
 		}
 	}
@@ -103,14 +109,17 @@ pub fn build(
 	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
-			credential_unsigned.update_holder(from_date_index, min_balance);
+			credential_unsigned.update_holder(
+				is_hold,
+				&q_min_balance,
+				&ASSERTION_FROM_DATE[optimal_hold_index].into(),
+			);
 
-			return Ok(credential_unsigned)
+			Ok(credential_unsigned)
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
+			Err(VCMPError::RequestVCFailed(Assertion::A10(min_balance), e.to_error_detail()))
 		},
 	}
-
-	Err(VCMPError::Assertion10Failed)
 }

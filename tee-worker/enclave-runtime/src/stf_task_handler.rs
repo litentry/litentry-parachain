@@ -52,12 +52,14 @@ pub unsafe extern "C" fn run_stf_task_handler(
 	let mut mut_handle = G_DATA_PROVIDERS.write().unwrap();
 	mut_handle.set_twitter_official_url(data_providers_static.twitter_official_url);
 	mut_handle.set_twitter_litentry_url(data_providers_static.twitter_litentry_url);
-	mut_handle.set_twitter_auth_token(data_providers_static.twitter_auth_token);
+	mut_handle.set_twitter_auth_token_v1_1(data_providers_static.twitter_auth_token_v1_1);
+	mut_handle.set_twitter_auth_token_v2(data_providers_static.twitter_auth_token_v2);
 	mut_handle.set_discord_official_url(data_providers_static.discord_official_url);
 	mut_handle.set_discord_litentry_url(data_providers_static.discord_litentry_url);
 	mut_handle.set_discord_auth_token(data_providers_static.discord_auth_token);
 	mut_handle.set_graphql_url(data_providers_static.graphql_url);
 	mut_handle.set_graphql_auth_key(data_providers_static.graphql_auth_key);
+	mut_handle.set_credential_endpoint(data_providers_static.credential_endpoint);
 
 	if let Err(e) = run_stf_task_handler_internal() {
 		error!("Error while running stf task handler thread: {:?}", e);

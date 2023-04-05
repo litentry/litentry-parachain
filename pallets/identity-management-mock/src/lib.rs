@@ -181,8 +181,8 @@ pub mod pallet {
 		IdentityAlreadyVerified,
 		/// identity not exist when removing an identity
 		IdentityNotExist,
-		/// identity should be disallowed
-		IdentityShouldBeDisallowed,
+		/// creating the prime identity manually is disallowed
+		CreatePrimeIdentityNotAllowed,
 		/// no shielding key for a given AccountId
 		ShieldingKeyNotExist,
 		/// a verification reqeust comes too early
@@ -321,7 +321,7 @@ pub mod pallet {
 						.try_into()
 						.map_err(|_| DispatchError::Other("invalid account id"))?;
 					let user_address: Address32 = address_raw.into();
-					ensure!(user_address != address, Error::<T>::IdentityShouldBeDisallowed);
+					ensure!(user_address != address, Error::<T>::CreatePrimeIdentityNotAllowed);
 				}
 			}
 			let metadata = match encrypted_metadata {
