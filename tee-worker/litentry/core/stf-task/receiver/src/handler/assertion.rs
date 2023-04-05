@@ -241,7 +241,7 @@ where
 			Ok(Ok(call_index)) => {
 				let call = OpaqueCall::from_tuple(&(
 					call_index,
-					self.req.who.clone(),
+					Some(self.req.who.clone()),
 					error,
 					self.req.hash,
 				));

@@ -72,7 +72,7 @@ use runtime_common::{
 	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee,
 	IMPExtrinsicWhitelistInstance, NegativeImbalance, RuntimeBlockWeights, SlowAdjustingFeeUpdate,
 	TechnicalCommitteeInstance, TechnicalCommitteeMembershipInstance,
-	VCMPExtrinsicWhitelistInstance, WhitelistInstance, MAXIMUM_BLOCK_WEIGHT,
+	VCMPExtrinsicWhitelistInstance, MAXIMUM_BLOCK_WEIGHT,
 };
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
@@ -149,7 +149,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("litmus-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9151,
+	spec_version: 9155,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -814,7 +814,7 @@ impl pallet_identity_management::Config for Runtime {
 	type WeightInfo = ();
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
-	type IMPExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
+	type ExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
 }
 
 impl pallet_group::Config<IMPExtrinsicWhitelistInstance> for Runtime {
@@ -832,27 +832,15 @@ impl pallet_identity_management_mock::Config for Runtime {
 	// intentionally use ALICE for the IMP mock
 	type TEECallOrigin = EnsureSignedBy<ALICE, AccountId>;
 	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
-	// This code should be safe to add
-	/// Temporary adjust for whitelist function
-	type WhitelistOrigin = Whitelist;
-}
-
-// This code should be safe to add
-/// Temporary adjust for whitelist function
-impl pallet_group::Config<WhitelistInstance> for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type GroupManagerOrigin = EnsureRootOrAllCouncil;
 }
 
 impl pallet_vc_management::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	type SetAdminOrigin = EnsureRootOrHalfCouncil;
-	type VCMPExtrinsicWhitelistOrigin = VCMPExtrinsicWhitelist;
+	type ExtrinsicWhitelistOrigin = VCMPExtrinsicWhitelist;
 }
 
-// This code should be safe to add
-/// Temporary adjust for whitelist function
 impl pallet_group::Config<VCMPExtrinsicWhitelistInstance> for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type GroupManagerOrigin = EnsureRootOrAllCouncil;
@@ -930,6 +918,8 @@ construct_runtime! {
 		IdentityManagement: pallet_identity_management = 64,
 		AssetManager: pallet_asset_manager = 65,
 		VCManagement: pallet_vc_management = 66,
+		IMPExtrinsicWhitelist: pallet_group::<Instance1> = 67,
+		VCMPExtrinsicWhitelist: pallet_group::<Instance2> = 68,
 
 		// TEE
 		Teerex: pallet_teerex = 90,
@@ -938,9 +928,6 @@ construct_runtime! {
 
 		// Mock
 		IdentityManagementMock: pallet_identity_management_mock = 100,
-		Whitelist: pallet_group::<Instance1> = 101,
-		IMPExtrinsicWhitelist: pallet_group::<Instance2> = 102,
-		VCMPExtrinsicWhitelist: pallet_group::<Instance3> = 103,
 	}
 }
 
@@ -1004,7 +991,10 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			// Session
 			RuntimeCall::Session(_) |
 			// Balance
-			RuntimeCall::Balances(_)
+			RuntimeCall::Balances(_) |
+			// Group
+			RuntimeCall::IMPExtrinsicWhitelist(_) |
+			RuntimeCall::VCMPExtrinsicWhitelist(_)
 		)
 	}
 }
