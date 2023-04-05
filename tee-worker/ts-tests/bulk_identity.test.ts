@@ -1,10 +1,9 @@
 import { step } from 'mocha-steps';
-import { buildValidations, describeLitentry, buildIdentityTxs, buildIdentityHelper } from './common/utils';
+import { buildValidations, describeLitentry, buildIdentityTxs, buildIdentityHelper, assertIdentityCreated, assertIdentityRemoved, assertIdentityVerified } from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
 import { LitentryIdentity, LitentryValidationData } from './common/type-definitions';
 import { handleIdentityEvents } from './common/utils';
-import { assertIdentityCreated, assertIdentityRemoved, assertIdentityVerified } from './indirect_calls';
 import { assert } from 'chai';
 import { listenEvent, multiAccountTxSender } from './common/transactions';
 import { u8aToHex } from '@polkadot/util';

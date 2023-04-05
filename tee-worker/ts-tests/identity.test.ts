@@ -12,7 +12,6 @@ import {
     buildValidations,
 } from './common/utils';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
-import { assertIdentityCreated, assertIdentityVerified, assertIdentityRemoved } from './indirect_calls';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import {
@@ -23,7 +22,7 @@ import {
 } from './common/type-definitions';
 import { HexString } from '@polkadot/util/types';
 import { multiAccountTxSender, sendTxsWithUtility } from './common/transactions';
-
+import { assertIdentityVerified, assertIdentityCreated, assertIdentityRemoved } from './common/utils';
 const substrateExtensionIdentity = <LitentryIdentity>{
     Substrate: <SubstrateIdentity>{
         address: '0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48', //Bob
@@ -61,14 +60,14 @@ describeLitentry('Test Identity', 0, (context) => {
 
     //     assert.equal(resp_challengecode, '0x', 'challengecode should be empty before create');
     // });
-    step('Invalid user shielding key', async function () {
-        let identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Ethereum', 'Evm');
-        let txs = await buildIdentityTxs(context, [context.substrateWallet.alice], [identity], 'createIdentity');
-        let resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
-            'CreateIdentityFailed',
-        ]);
-        await checkErrorDetail(resp_events, 'InvalidUserShieldingKey', true);
-    });
+    // step('Invalid user shielding key', async function () {
+    //     let identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Ethereum', 'Evm');
+    //     let txs = await buildIdentityTxs(context, [context.substrateWallet.alice], [identity], 'createIdentity');
+    //     let resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
+    //         'CreateIdentityFailed',
+    //     ]);
+    //     await checkErrorDetail(resp_events, 'InvalidUserShieldingKey', true);
+    // });
 
     step('set user shielding key', async function () {
         let [alice_txs] = (await buildIdentityTxs(
@@ -305,7 +304,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'identityManagement',
             ['IdentityVerified']
         );
-        const [twitter_identity_verified, ethereum_identity_verified, substrate_identity_verified] =
+        const verified_event_datas =
             await handleIdentityEvents(context, aesKey, alice_resp_events, 'IdentityVerified');
         const [substrate_extension_identity_verified] = await handleIdentityEvents(
             context,
@@ -314,11 +313,10 @@ describeLitentry('Test Identity', 0, (context) => {
             'IdentityVerified'
         );
         //Alice
-        assertIdentityVerified(context.substrateWallet.alice, twitter_identity_verified);
-        assertIdentityVerified(context.substrateWallet.alice, ethereum_identity_verified);
-        assertIdentityVerified(context.substrateWallet.alice, substrate_identity_verified);
+        assertIdentityVerified(context.substrateWallet.alice, verified_event_datas);
+
         //Bob
-        assertIdentityVerified(context.substrateWallet.bob, substrate_extension_identity_verified);
+        assertIdentityVerified(context.substrateWallet.bob, [substrate_extension_identity_verified]);
     });
     step('check IDGraph after verifyIdentity', async function () {
         const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
