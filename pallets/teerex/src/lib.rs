@@ -76,13 +76,16 @@ pub mod pallet {
 		type Currency: Currency<<Self as frame_system::Config>::AccountId>;
 		type MomentsPerDay: Get<Self::Moment>;
 		type WeightInfo: WeightInfo;
-		/// origin to manage enclave and parameters
-		type EnclaveAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		/// The origin who can set the admin account
+		type SetEnclaveAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
+		EnclaveAdminChanged {
+			old_admin: Option<T::AccountId>,
+		},
 		AddedEnclave(T::AccountId, Vec<u8>),
 		RemovedEnclave(T::AccountId),
 		Forwarded(ShardIdentifier),
@@ -99,6 +102,10 @@ pub mod pallet {
 			data: Vec<u8>,
 		},
 	}
+
+	#[pallet::storage]
+	#[pallet::getter(fn enclave_admin)]
+	pub type EnclaveAdmin<T: Config> = StorageValue<_, T::AccountId, OptionQuery>;
 
 	// Watch out: we start indexing with 1 instead of zero in order to
 	// avoid ambiguity between Null and 0.
@@ -383,7 +390,8 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			timeout: u64,
 		) -> DispatchResultWithPostInfo {
-			T::EnclaveAdminOrigin::ensure_origin(origin)?;
+			let sender = ensure_signed(origin)?;
+			ensure!(Some(sender) == Self::enclave_admin(), Error::<T>::RequireAdmin);
 			<HeartbeatTimeout<T>>::put(T::Moment::saturated_from(timeout));
 			Self::deposit_event(Event::SetHeartbeatTimeout(timeout));
 			Ok(().into())
@@ -453,7 +461,8 @@ pub mod pallet {
 			sidechain_block_number: SidechainBlockNumber,
 			mr_enclave: MrEnclave,
 		) -> DispatchResultWithPostInfo {
-			T::EnclaveAdminOrigin::ensure_origin(origin)?;
+			let sender = ensure_signed(origin)?;
+			ensure!(Some(sender) == Self::enclave_admin(), Error::<T>::RequireAdmin);
 			ScheduledEnclave::<T>::insert(sidechain_block_number, mr_enclave);
 			Self::deposit_event(Event::UpdatedScheduledEnclave(sidechain_block_number, mr_enclave));
 			Ok(().into())
@@ -482,7 +491,8 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			sidechain_block_number: SidechainBlockNumber,
 		) -> DispatchResultWithPostInfo {
-			T::EnclaveAdminOrigin::ensure_origin(origin)?;
+			let sender = ensure_signed(origin)?;
+			ensure!(Some(sender) == Self::enclave_admin(), Error::<T>::RequireAdmin);
 			ensure!(
 				ScheduledEnclave::<T>::contains_key(sidechain_block_number),
 				Error::<T>::ScheduledEnclaveNotExist
@@ -541,10 +551,27 @@ pub mod pallet {
 
 			Ok(().into())
 		}
+
+		/// Change the admin account
+		/// similar to sudo.set_key, the old account will be supplied in event
+		#[pallet::call_index(13)]
+		#[pallet::weight((1000, DispatchClass::Normal, Pays::No))]
+		pub fn set_enclave_admin(
+			origin: OriginFor<T>,
+			new: T::AccountId,
+		) -> DispatchResultWithPostInfo {
+			T::SetEnclaveAdminOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::EnclaveAdminChanged { old_admin: Self::enclave_admin() });
+			<EnclaveAdmin<T>>::put(new);
+			// Do not pay a fee
+			Ok(Pays::No.into())
+		}
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
+		/// This operation needs the admin permission
+		RequireAdmin,
 		/// Failed to decode enclave signer.
 		EnclaveSignerDecodeError,
 		/// Sender does not match attested enclave in report.
