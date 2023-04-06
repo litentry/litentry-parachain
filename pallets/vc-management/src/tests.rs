@@ -391,16 +391,16 @@ fn revoke_schema_with_unprivileged_origin_fails() {
 }
 
 #[test]
-fn manual_add_remove_vcregsitry_item_works() {
+fn manual_add_remove_vc_registry_item_works() {
 	new_test_ext().execute_with(|| {
 		// Can not remove non-existing vc
 		assert_noop!(
-			VCManagement::remove_vcregsitry_item(RuntimeOrigin::signed(1), VC_INDEX),
+			VCManagement::remove_vc_registry_item(RuntimeOrigin::signed(1), VC_INDEX),
 			Error::<Test>::VCNotExist
 		);
 		// Unauthorized party can not add vc
 		assert_noop!(
-			VCManagement::add_vcregsitry_item(
+			VCManagement::add_vc_registry_item(
 				RuntimeOrigin::signed(2),
 				VC_INDEX,
 				2,
@@ -410,7 +410,7 @@ fn manual_add_remove_vcregsitry_item_works() {
 			sp_runtime::DispatchError::BadOrigin
 		);
 		// Successfully add vc
-		assert_ok!(VCManagement::add_vcregsitry_item(
+		assert_ok!(VCManagement::add_vc_registry_item(
 			RuntimeOrigin::signed(1),
 			VC_INDEX,
 			1,
@@ -426,11 +426,11 @@ fn manual_add_remove_vcregsitry_item_works() {
 		}));
 		// Unauthorized party can not remove vc
 		assert_noop!(
-			VCManagement::remove_vcregsitry_item(RuntimeOrigin::signed(2), VC_INDEX),
+			VCManagement::remove_vc_registry_item(RuntimeOrigin::signed(2), VC_INDEX),
 			sp_runtime::DispatchError::BadOrigin
 		);
 		// Successfully remove vc
-		assert_ok!(VCManagement::remove_vcregsitry_item(RuntimeOrigin::signed(1), VC_INDEX));
+		assert_ok!(VCManagement::remove_vc_registry_item(RuntimeOrigin::signed(1), VC_INDEX));
 		// Check result and events
 		assert!(VCManagement::vc_registry(VC_INDEX).is_none());
 		System::assert_last_event(RuntimeEvent::VCManagement(
@@ -440,11 +440,11 @@ fn manual_add_remove_vcregsitry_item_works() {
 }
 
 #[test]
-fn manual_add_clear_vcregsitry_item_works() {
+fn manual_add_clear_vc_registry_item_works() {
 	new_test_ext().execute_with(|| {
 		// Unauthorized party can not add vc
 		assert_noop!(
-			VCManagement::add_vcregsitry_item(
+			VCManagement::add_vc_registry_item(
 				RuntimeOrigin::signed(2),
 				VC_INDEX,
 				2,
@@ -454,7 +454,7 @@ fn manual_add_clear_vcregsitry_item_works() {
 			sp_runtime::DispatchError::BadOrigin
 		);
 		// Successfully add vc
-		assert_ok!(VCManagement::add_vcregsitry_item(
+		assert_ok!(VCManagement::add_vc_registry_item(
 			RuntimeOrigin::signed(1),
 			VC_INDEX,
 			1,
@@ -470,13 +470,13 @@ fn manual_add_clear_vcregsitry_item_works() {
 		}));
 		// Unauthorized party can not clear vc
 		assert_noop!(
-			VCManagement::clear_vcregsitry(RuntimeOrigin::signed(2)),
+			VCManagement::clear_vc_registry(RuntimeOrigin::signed(2)),
 			sp_runtime::DispatchError::BadOrigin
 		);
 		// Successfully clear vc
-		assert_ok!(VCManagement::clear_vcregsitry(RuntimeOrigin::signed(1)));
+		assert_ok!(VCManagement::clear_vc_registry(RuntimeOrigin::signed(1)));
 		// Check result and events
 		assert!(VCManagement::vc_registry(VC_INDEX).is_none());
-		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::VCRegistryClear));
+		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::VCRegistryCleared));
 	});
 }

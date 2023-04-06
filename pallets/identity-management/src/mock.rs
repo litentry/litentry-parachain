@@ -129,7 +129,7 @@ impl pallet_teerex::Config for Test {
 	type Currency = Balances;
 	type MomentsPerDay = MomentsPerDay;
 	type WeightInfo = ();
-	type EnclaveAdminOrigin = EnsureRoot<Self::AccountId>;
+	type SetEnclaveAdminOrigin = EnsureRoot<Self::AccountId>;
 }
 
 impl pallet_identity_management::Config for Test {
@@ -137,11 +137,9 @@ impl pallet_identity_management::Config for Test {
 	type WeightInfo = ();
 	type TEECallOrigin = EnsureEnclaveSigner;
 	type DelegateeAdminOrigin = EnsureRoot<Self::AccountId>;
-	type IMPExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
+	type ExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
 }
 
-// This code should be safe to add
-/// Temporary adjust for whitelist function
 impl pallet_group::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type GroupManagerOrigin = frame_system::EnsureRoot<Self::AccountId>;

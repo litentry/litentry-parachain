@@ -224,9 +224,8 @@ pub type TechnicalCommitteeMembershipInstance = pallet_membership::Instance2;
 
 /// Instance definition for whitelist or any other kind
 /// Instance here is supposed to control privilege of unlimited group size
-pub type WhitelistInstance = pallet_group::Instance1;
-pub type IMPExtrinsicWhitelistInstance = pallet_group::Instance2;
-pub type VCMPExtrinsicWhitelistInstance = pallet_group::Instance3;
+pub type IMPExtrinsicWhitelistInstance = pallet_group::Instance1;
+pub type VCMPExtrinsicWhitelistInstance = pallet_group::Instance2;
 
 /// Type definition for various proportions of council and technical committee
 /// Council

@@ -6501,7 +6501,6 @@ dependencies = [
  "log",
  "mock-tee-primitives",
  "pallet-balances",
- "pallet-group",
  "pallet-identity-management",
  "pallet-timestamp",
  "parity-crypto",
