@@ -3798,6 +3798,7 @@ dependencies = [
  "itp-sgx-externalities",
  "itp-sgx-io",
  "itp-stf-state-handler",
+ "itp-test",
  "itp-time-utils",
  "itp-types",
  "its-block-verification",

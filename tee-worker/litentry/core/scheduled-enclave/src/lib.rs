@@ -126,7 +126,7 @@ impl ScheduledEnclaveUpdater for ScheduledEnclaveMock {
 	}
 
 	fn get_current_mrenclave(&self) -> Result<MrEnclave> {
-		Ok(Default::default())
+		Ok(MrEnclave::default())
 	}
 
 	fn set_current_mrenclave(&self, _mrenclave: MrEnclave) -> Result<()> {

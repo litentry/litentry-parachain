@@ -41,6 +41,7 @@ lc-scheduled-enclave = { path = "../../../litentry/core/scheduled-enclave", defa
 [dev-dependencies]
 itc-parentchain-test = { path = "../../../core/parentchain/test" }
 its-test = { path = "../../test" }
+itp-test = { path = "../../../core-primitives/test" }
 sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 tokio = { version = "1.6.1", features = ["full"] }
 
