@@ -135,7 +135,7 @@ impl Config for Test {
 	type Currency = Balances;
 	type MomentsPerDay = MomentsPerDay;
 	type WeightInfo = ();
-	type EnclaveAdminOrigin = EnsureRoot<Self::AccountId>;
+	type SetEnclaveAdminOrigin = EnsureRoot<Self::AccountId>;
 }
 
 // This function basically just builds a genesis storage key/value store according to
