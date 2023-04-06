@@ -310,7 +310,7 @@ where
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	fn successful_origin() -> Origin {
+	fn try_successful_origin() -> Origin {
 		Origin::root()
 	}
 }
