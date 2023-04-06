@@ -31,7 +31,7 @@ use sp_runtime::{
 	AccountId32,
 };
 use xcm::{
-	opaque::v2::NetworkId::Any,
+	opaque::v3::NetworkId::Any,
 	prelude::{
 		All, AssetId as XCMAssetId, Fungibility, Here, Instruction, Junction, MultiAsset,
 		MultiLocation, OriginKind, Outcome, PalletInstance, Parachain, Parent, WeightLimit, Xcm,
@@ -41,7 +41,7 @@ use xcm::{
 use xcm_executor::traits::Convert as xcmConvert;
 use xcm_simulator::TestExt;
 
-use core_primitives::{AccountId, AssetId, Balance, XcmV2Weight};
+use core_primitives::{AccountId, AssetId, Balance, Weight};
 
 use crate::{
 	currency::{CENTS, MILLICENTS, UNIT},
@@ -112,7 +112,7 @@ pub trait TestXCMRequirements {
 	type RelayRuntime: frame_system::Config<AccountId = AccountId, RuntimeOrigin = Self::RelayOrigin>
 		+ pallet_xcm::Config
 		+ pallet_balances::Config<Balance = Balance>;
-	type UnitWeightCost: frame_support::traits::Get<XcmV2Weight>;
+	type UnitWeightCost: frame_support::traits::Get<Weight>;
 	type LocationToAccountId: xcmConvert<MultiLocation, AccountId32>;
 
 	fn reset();
@@ -674,7 +674,6 @@ pub fn test_methods_pallet_xcm_expected_fail<R: TestXCMRequirements>() {
 			},
 			Instruction::DepositAsset {
 				assets: All.into(),
-				max_assets: 1,
 				beneficiary: Junction::AccountId32 { network: Any, id: BOB }.into(),
 			},
 		]);
@@ -760,7 +759,6 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 			},
 			Instruction::DepositAsset {
 				assets: All.into(),
-				max_assets: 1,
 				beneficiary: Junction::AccountId32 { network: Any, id: BOB }.into(),
 			},
 		]);
@@ -802,7 +800,6 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 			},
 			Instruction::DepositAsset {
 				assets: All.into(),
-				max_assets: 1,
 				beneficiary: Junction::AccountId32 { network: Any, id: BOB }.into(),
 			},
 		]);
@@ -855,7 +852,6 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 			},
 			Instruction::DepositAsset {
 				assets: All.into(),
-				max_assets: 1,
 				beneficiary: Junction::AccountId32 { network: Any, id: BOB }.into(),
 			},
 		]);
@@ -895,7 +891,6 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 			},
 			Instruction::DepositAsset {
 				assets: All.into(),
-				max_assets: 1,
 				beneficiary: Junction::AccountId32 { network: Any, id: BOB }.into(),
 			},
 		]);
@@ -954,7 +949,6 @@ pub fn test_pallet_xcm_send_capacity_without_transact<R: TestXCMRequirements>() 
 			},
 			Instruction::DepositAsset {
 				assets: All.into(),
-				max_assets: 1,
 				beneficiary: Junction::AccountId32 { network: Any, id: BOB }.into(),
 			},
 		]);
@@ -992,7 +986,6 @@ pub fn test_pallet_xcm_send_capacity_without_transact<R: TestXCMRequirements>() 
 			},
 			Instruction::DepositAsset {
 				assets: All.into(),
-				max_assets: 1,
 				beneficiary: Junction::AccountId32 { network: Any, id: BOB }.into(),
 			},
 		]); // Root sending the raw Xcm works successfully
@@ -1021,7 +1014,6 @@ pub fn test_pallet_xcm_send_capacity_without_transact<R: TestXCMRequirements>() 
 			Instruction::ReserveAssetDeposited(assets),
 			Instruction::DepositAsset {
 				assets: All.into(),
-				max_assets: 1,
 				beneficiary: Junction::AccountId32 { network: Any, id: BOB }.into(),
 			},
 		]);
@@ -1051,7 +1043,6 @@ pub fn test_pallet_xcm_send_capacity_without_transact<R: TestXCMRequirements>() 
 			Instruction::ReserveAssetDeposited(assets),
 			Instruction::DepositAsset {
 				assets: All.into(),
-				max_assets: 1,
 				beneficiary: Junction::AccountId32 { network: Any, id: BOB }.into(),
 			},
 		]);
@@ -1116,14 +1107,13 @@ where
 				weight_limit: WeightLimit::Limited(R::UnitWeightCost::get() * 5 + 1_000_000_000),
 			},
 			Instruction::Transact {
-				origin_type: OriginKind::SovereignAccount,
+				origin_kind: OriginKind::SovereignAccount,
 				require_weight_at_most: 1_000_000_000,
 				call: call_message.encode().into(),
 			},
 			Instruction::RefundSurplus,
 			Instruction::DepositAsset {
 				assets: All.into(),
-				max_assets: 1,
 				beneficiary: Junction::AccountId32 {
 					network: Any,
 					id: relay_account::<R::LocationToAccountId>().into(),
@@ -1190,14 +1180,13 @@ where
 				weight_limit: WeightLimit::Limited(2_000_000_000),
 			},
 			Instruction::Transact {
-				origin_type: OriginKind::SovereignAccount,
+				origin_kind: OriginKind::SovereignAccount,
 				require_weight_at_most: 1_000_000_000,
 				call: call_message.encode().into(),
 			},
 			Instruction::RefundSurplus,
 			Instruction::DepositAsset {
 				assets: All.into(),
-				max_assets: 1,
 				beneficiary: Junction::AccountId32 { network: Any, id: para_account(1).into() }
 					.into(),
 			},
