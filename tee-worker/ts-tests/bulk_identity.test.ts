@@ -12,7 +12,7 @@ import { u8aToHex } from '@polkadot/util';
 //1.The "number" parameter in describeLitentry represents the number of accounts generated, including Substrate wallets and Ethereum wallets.If you want to use a large number of accounts for testing, you can modify this parameter.
 //2.Each time the test code is executed, new wallet account will be used.
 
-describeLitentry('multiple accounts test', 5, async (context) => {
+describeLitentry('multiple accounts test', 10, async (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     var substraetSigners: KeyringPair[] = [];
     var ethereumSigners: ethers.Wallet[] = [];
@@ -31,7 +31,6 @@ describeLitentry('multiple accounts test', 5, async (context) => {
         for (let i = 0; i < substraetSigners.length; i++) {
             //1 token
             const tx = context.api.tx.balances.transfer(substraetSigners[i].address, '1000000000000');
-
             txs.push(tx);
         }
         await context.api.tx.utility.batch(txs).signAndSend(context.substrateWallet.alice);
@@ -74,7 +73,7 @@ describeLitentry('multiple accounts test', 5, async (context) => {
         const resp_events = await multiAccountTxSender(context, txs, substraetSigners, 'identityManagement', [
             'IdentityCreated',
         ]);
-        const [resp_events_datas] = await handleIdentityEvents(context, aesKey, resp_events, 'IdentityCreated');
+        const resp_events_datas = await handleIdentityEvents(context, aesKey, resp_events, 'IdentityCreated');
 
         assert.equal(resp_events.length, identities.length, 'create identities with multiple accounts check fail');
 
@@ -82,13 +81,12 @@ describeLitentry('multiple accounts test', 5, async (context) => {
             console.log('createIdentity', index);
             assertIdentityCreated(substraetSigners[index], resp_events_datas[index]);
         }
-
+        console.log("resp_events_datas", resp_events_datas)
         const validations = await buildValidations(
             context,
-            [resp_events_datas],
+            resp_events_datas,
             identities,
             'ethereum',
-            'multiple',
             substraetSigners,
             ethereumSigners
         );
@@ -102,7 +100,6 @@ describeLitentry('multiple accounts test', 5, async (context) => {
             'IdentityVerified',
         ]);
         assert.equal(resp_events.length, txs.length, 'verify identities with multiple accounts check fail');
-
         const [resp_events_datas] = await handleIdentityEvents(context, aesKey, resp_events, 'IdentityVerified');
         for (let index = 0; index < resp_events_datas.length; index++) {
             console.log('verifyIdentity', index);

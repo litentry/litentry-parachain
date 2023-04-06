@@ -586,15 +586,15 @@ export async function buildValidations(
     eventDatas: any[],
     identities: any[],
     network: 'ethereum' | 'substrate' | 'twitter',
-    type: 'multiple' | 'single',
-    substrateSigners: KeyringPair[],
+    substrateSigners: KeyringPair[] | KeyringPair,
     ethereumSigners?: ethers.Wallet[]
 ): Promise<LitentryValidationData[]> {
     let signature_ethereum: HexString;
     let signature_substrate: Uint8Array;
     let verifyDatas: LitentryValidationData[] = [];
+
     for (let index = 0; index < eventDatas.length; index++) {
-        const substrateSigner = type === 'multiple' ? substrateSigners[index] : substrateSigners[0];
+        const substrateSigner = Array.isArray(substrateSigners) ? substrateSigners[index] : substrateSigners;
 
         const ethereumSigner = network === 'ethereum' ? ethereumSigners![index] : undefined;
 
@@ -674,9 +674,11 @@ export async function buildIdentityHelper(
     return identity;
 }
 
+
+//If multiple transactions are built from multiple accounts, pass the signers as an array. If multiple transactions are built from a single account, signers cannot be an array.
 export async function buildIdentityTxs(
     context: IntegrationTestContext,
-    signers: KeyringPair[],
+    signers: KeyringPair[] | KeyringPair,
     identities: LitentryIdentity[],
     method: 'setUserShieldingKey' | 'createIdentity' | 'verifyIdentity' | 'removeIdentity',
     validations?: LitentryValidationData[]
@@ -685,9 +687,9 @@ export async function buildIdentityTxs(
     const api = context.api;
     const mrEnclave = context.mrEnclave;
     const teeShieldingKey = context.teeShieldingKey;
-    const len = method === 'setUserShieldingKey' ? signers.length : identities.length;
+    const len = Array.isArray(signers) ? signers.length : identities.length;
     for (let k = 0; k < len; k++) {
-        const signer = method === 'setUserShieldingKey' ? signers[k] : signers[0];
+        const signer = Array.isArray(signers) ? signers[k] : signers;
         const identity = identities[k];
         let tx: SubmittableExtrinsic<ApiTypes>;
         let nonce: number;
@@ -704,6 +706,7 @@ export async function buildIdentityTxs(
                 tx = context.api.tx.identityManagement.setUserShieldingKey(context.mrEnclave, `0x${ciphertext}`);
                 break;
             case 'createIdentity':
+
                 tx = api.tx.identityManagement.createIdentity(
                     mrEnclave,
                     signer.address,

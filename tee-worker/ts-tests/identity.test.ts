@@ -62,7 +62,8 @@ describeLitentry('Test Identity', 0, (context) => {
     });
     step('Invalid user shielding key', async function () {
         let identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Ethereum', 'Evm');
-        let txs = await buildIdentityTxs(context, [context.substrateWallet.alice], [identity], 'createIdentity');
+        let txs = await buildIdentityTxs(context, context.substrateWallet.alice, [identity], 'createIdentity');
+
         let resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
             'CreateIdentityFailed',
         ]);
@@ -146,10 +147,11 @@ describeLitentry('Test Identity', 0, (context) => {
 
         let alice_txs = await buildIdentityTxs(
             context,
-            [context.substrateWallet.alice],
+            context.substrateWallet.alice,
             alice_identities,
             'createIdentity'
         );
+        console.log(999, alice_txs);
 
         let alice_resp_events = await sendTxsWithUtility(
             context,
@@ -174,8 +176,7 @@ describeLitentry('Test Identity', 0, (context) => {
             [twitter_event_data],
             [twiiter_identity],
             'twitter',
-            'single',
-            [context.substrateWallet.alice]
+            context.substrateWallet.alice
         );
 
         //Alice check ethereum identity
@@ -185,8 +186,7 @@ describeLitentry('Test Identity', 0, (context) => {
             [ethereum_event_data],
             [ethereum_identity],
             'ethereum',
-            'single',
-            [context.substrateWallet.alice],
+            context.substrateWallet.alice,
             [context.ethersWallet.alice]
         );
 
@@ -197,8 +197,7 @@ describeLitentry('Test Identity', 0, (context) => {
             [substrate_event_data],
             [alice_substrate_identity],
             'substrate',
-            'single',
-            [context.substrateWallet.alice]
+            context.substrateWallet.alice
         );
 
         alice_validations = [
@@ -209,7 +208,7 @@ describeLitentry('Test Identity', 0, (context) => {
 
         //Bob check extension substrate identity
         //https://github.com/litentry/litentry-parachain/issues/1137
-        let bob_txs = await buildIdentityTxs(context, [context.substrateWallet.bob], bob_identities, 'createIdentity');
+        let bob_txs = await buildIdentityTxs(context, context.substrateWallet.bob, bob_identities, 'createIdentity');
 
         let bob_resp_events = await sendTxsWithUtility(
             context,
@@ -276,7 +275,7 @@ describeLitentry('Test Identity', 0, (context) => {
         //Alice verify all identities
         let alice_txs = await buildIdentityTxs(
             context,
-            [context.substrateWallet.alice],
+            context.substrateWallet.alice,
             alice_identities,
             'verifyIdentity',
             alice_validations
@@ -290,7 +289,7 @@ describeLitentry('Test Identity', 0, (context) => {
         );
         let bob_txs = await buildIdentityTxs(
             context,
-            [context.substrateWallet.bob],
+            context.substrateWallet.bob,
             bob_identities,
             'verifyIdentity',
             bob_validations
@@ -339,7 +338,7 @@ describeLitentry('Test Identity', 0, (context) => {
         // verify same identities(alice) to one account
         let alice_txs = await buildIdentityTxs(
             context,
-            [context.substrateWallet.alice],
+            context.substrateWallet.alice,
             alice_identities,
             'verifyIdentity',
             alice_validations
@@ -362,7 +361,7 @@ describeLitentry('Test Identity', 0, (context) => {
         //verify an identity(charlie) to an account but it isn't created before
         let charlie_txs = await buildIdentityTxs(
             context,
-            [context.substrateWallet.charlie],
+            context.substrateWallet.charlie,
             alice_identities,
             'verifyIdentity',
             alice_validations
@@ -387,7 +386,7 @@ describeLitentry('Test Identity', 0, (context) => {
         // Alice remove all identities
         let alice_txs = await buildIdentityTxs(
             context,
-            [context.substrateWallet.alice],
+            context.substrateWallet.alice,
             alice_identities,
             'removeIdentity'
         );
@@ -402,7 +401,7 @@ describeLitentry('Test Identity', 0, (context) => {
             await handleIdentityEvents(context, aesKey, alice_resp_remove_events, 'IdentityRemoved');
 
         // Bob remove substrate identities
-        let bob_txs = await buildIdentityTxs(context, [context.substrateWallet.bob], bob_identities, 'removeIdentity');
+        let bob_txs = await buildIdentityTxs(context, context.substrateWallet.bob, bob_identities, 'removeIdentity');
         let bob_resp_remove_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.bob,
@@ -470,7 +469,7 @@ describeLitentry('Test Identity', 0, (context) => {
         );
         let alice_create_txs = await buildIdentityTxs(
             context,
-            [context.substrateWallet.alice],
+            context.substrateWallet.alice,
             [alice_substrate_identity],
             'createIdentity'
         );
@@ -492,7 +491,7 @@ describeLitentry('Test Identity', 0, (context) => {
         // remove substrate identity
         let alice_remove_txs = await buildIdentityTxs(
             context,
-            [context.substrateWallet.alice],
+            context.substrateWallet.alice,
             [alice_substrate_identity],
             'removeIdentity'
         );
@@ -509,7 +508,7 @@ describeLitentry('Test Identity', 0, (context) => {
 
         let prime_txs = await buildIdentityTxs(
             context,
-            [context.substrateWallet.alice],
+            context.substrateWallet.alice,
             [substratePrimeIdentity],
             'removeIdentity'
         );
@@ -530,7 +529,7 @@ describeLitentry('Test Identity', 0, (context) => {
         //context.substrateWallet.alice has aleady removed all identities in step('remove identities')
         let alice_remove_txs = await buildIdentityTxs(
             context,
-            [context.substrateWallet.alice],
+            context.substrateWallet.alice,
             alice_identities,
             'removeIdentity'
         );
@@ -553,7 +552,7 @@ describeLitentry('Test Identity', 0, (context) => {
         //charlie doesn't have a challenge code,use alice identity
         let charlie_remove_txs = await buildIdentityTxs(
             context,
-            [context.substrateWallet.charlie],
+            context.substrateWallet.charlie,
             alice_identities,
             'removeIdentity'
         );

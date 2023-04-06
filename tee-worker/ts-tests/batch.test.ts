@@ -4,7 +4,6 @@ import {
     handleIdentityEvents,
     buildIdentityHelper,
     buildValidations,
-    isArrayEqual,
     checkErrorDetail,
     checkIDGraph,
 } from './common/utils';
@@ -67,7 +66,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
 
             assert.equal(resp_id_graph.is_verified, false, 'IDGraph is_verified should be equal false before create');
         }
-        const txs = await buildIdentityTxs(context, [context.substrateWallet.alice], identities, 'createIdentity');
+        const txs = await buildIdentityTxs(context, context.substrateWallet.alice, identities, 'createIdentity');
 
         const resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
             'IdentityCreated',
@@ -81,8 +80,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             event_datas,
             identities,
             'ethereum',
-            'single',
-            [context.substrateWallet.alice],
+            context.substrateWallet.alice,
             ethereumSigners
         );
         validations = [...ethereum_validations]
@@ -91,7 +89,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
     step('batch test: verify identity', async function () {
         let txs = await buildIdentityTxs(
             context,
-            [context.substrateWallet.alice],
+            context.substrateWallet.alice,
             identities,
             'verifyIdentity',
             validations
@@ -110,7 +108,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
     step('batch test: verify error identity', async function () {
         let txs = await buildIdentityTxs(
             context,
-            [context.substrateWallet.alice],
+            context.substrateWallet.alice,
             identities,
             'verifyIdentity',
             validations
@@ -146,7 +144,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
         }
     });
     step('batch test: remove identities', async function () {
-        let txs = await buildIdentityTxs(context, [context.substrateWallet.alice], identities, 'removeIdentity');
+        let txs = await buildIdentityTxs(context, context.substrateWallet.alice, identities, 'removeIdentity');
         let resp_remove_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
@@ -160,7 +158,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
         }
     });
     step('batch test: remove error identities', async function () {
-        let txs = await buildIdentityTxs(context, [context.substrateWallet.alice], identities, 'removeIdentity');
+        let txs = await buildIdentityTxs(context, context.substrateWallet.alice, identities, 'removeIdentity');
         let resp_remove_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
