@@ -52,14 +52,12 @@ use itc_direct_rpc_server::{
 	create_determine_watch, rpc_connection_registry::ConnectionRegistry,
 	rpc_ws_handler::RpcWsHandler,
 };
-use itc_parentchain_indirect_calls_executor::executor::litentry::get_scheduled_enclave::GLOBAL_SIDECHAIN_SCHEDULED_ENCLABES;
 use itc_tls_websocket_server::{
 	certificate_generation::ed25519_self_signed_certificate, create_ws_server, ConnectionToken,
 	WebSocketServer,
 };
-use itp_attestation_handler::IntelAttestationHandler;
+use itp_attestation_handler::{AttestationHandler, IntelAttestationHandler};
 use itp_component_container::{ComponentGetter, ComponentInitializer};
-use itp_enclave_scheduled::{ScheduledEnclaveHandle, ScheduledEnclaves};
 use itp_primitives_cache::GLOBAL_PRIMITIVES_CACHE;
 use itp_settings::files::STATE_SNAPSHOTS_CACHE_SIZE;
 use itp_sgx_crypto::{aes, ed25519, rsa3072, AesSeal, Ed25519Seal, Rsa3072Seal};
@@ -73,6 +71,7 @@ use itp_top_pool::pool::Options as PoolOptions;
 use itp_top_pool_author::author::AuthorTopFilter;
 use itp_types::ShardIdentifier;
 use its_sidechain::block_composer::BlockComposer;
+use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use log::*;
 use sp_core::crypto::Pair;
 use std::{collections::HashMap, string::String, sync::Arc};
@@ -80,10 +79,6 @@ use std::{collections::HashMap, string::String, sync::Arc};
 pub(crate) fn init_enclave(mu_ra_url: String, untrusted_worker_url: String) -> EnclaveResult<()> {
 	// Initialize the logging environment in the enclave.
 	env_logger::init();
-
-	// get the scheduled mr enclaves and initialize the scheduled enclaves
-	let scheduled_enclaves = ScheduledEnclaves::from_static_file()?;
-	GLOBAL_SIDECHAIN_SCHEDULED_ENCLABES.initialize(Arc::new(scheduled_enclaves));
 
 	ed25519::create_sealed_if_absent().map_err(Error::Crypto)?;
 	let signer = Ed25519Seal::unseal_from_static_file().map_err(Error::Crypto)?;
@@ -196,6 +191,12 @@ pub(crate) fn init_enclave_sidechain_components() -> EnclaveResult<()> {
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 	let top_pool_author = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
+
+	// intialise the scheduled enlcave, must be after the attestation_handler and enclave initialisation
+	// get the scheduled mr enclaves and initialize the scheduled enclaves
+	let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
+	let mrenclave = attestation_handler.get_mrenclave()?;
+	GLOBAL_SCHEDULED_ENCLAVE.init(mrenclave).map_err(|e| Error::Other(e.into()))?;
 
 	let parentchain_block_import_dispatcher = get_triggered_dispatcher_from_solo_or_parachain()?;
 

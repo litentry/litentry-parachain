@@ -195,6 +195,7 @@ pub type Fmspc = [u8; 6];
 pub type Cpusvn = [u8; 16];
 pub type Pcesvn = u16;
 pub type ShardIdentifier = H256;
+pub type SidechainBlockNumber = u64;
 
 #[derive(Encode, Decode, Default, Clone, PartialEq, Eq, sp_core::RuntimeDebug, TypeInfo)]
 pub struct Request {

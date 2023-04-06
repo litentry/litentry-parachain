@@ -41,7 +41,6 @@ use sgx_verify::{
 use sgx_verify::{verify_dcap_quote, verify_ias_report, SgxReport};
 
 pub use crate::weights::WeightInfo;
-use teerex_primitives::SgxBuildMode;
 
 // Disambiguate associated types
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
@@ -94,8 +93,8 @@ pub mod pallet {
 		UnshieldedFunds(T::AccountId),
 		ProcessedParentchainBlock(T::AccountId, H256, H256, T::BlockNumber),
 		SetHeartbeatTimeout(u64),
-		UpdatedScheduledEnclave(u32, MrEnclave),
-		RemovedScheduledEnclave(u32),
+		UpdatedScheduledEnclave(SidechainBlockNumber, MrEnclave),
+		RemovedScheduledEnclave(SidechainBlockNumber),
 		/// An enclave with [mr_enclave] has published some [hash] with some metadata [data].
 		PublishedHash {
 			mr_enclave: MrEnclave,
@@ -160,7 +159,8 @@ pub mod pallet {
 	// so we need an "enclave whitelist" anyway
 	#[pallet::storage]
 	#[pallet::getter(fn scheduled_enclave)]
-	pub type ScheduledEnclave<T: Config> = StorageMap<_, Blake2_128Concat, u32, MrEnclave>;
+	pub type ScheduledEnclave<T: Config> =
+		StorageMap<_, Blake2_128Concat, SidechainBlockNumber, MrEnclave>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn heartbeat_timeout)]
@@ -458,7 +458,7 @@ pub mod pallet {
 		#[pallet::weight((1000, DispatchClass::Normal, Pays::No))]
 		pub fn update_scheduled_enclave(
 			origin: OriginFor<T>,
-			sidechain_block_number: u32,
+			sidechain_block_number: SidechainBlockNumber,
 			mr_enclave: MrEnclave,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
@@ -489,7 +489,7 @@ pub mod pallet {
 		#[pallet::weight((1000, DispatchClass::Normal, Pays::No))]
 		pub fn remove_scheduled_enclave(
 			origin: OriginFor<T>,
-			sidechain_block_number: u32,
+			sidechain_block_number: SidechainBlockNumber,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			ensure!(Some(sender) == Self::enclave_admin(), Error::<T>::RequireAdmin);
@@ -497,7 +497,6 @@ pub mod pallet {
 				ScheduledEnclave::<T>::contains_key(sidechain_block_number),
 				Error::<T>::ScheduledEnclaveNotExist
 			);
-			// remove
 			ScheduledEnclave::<T>::remove(sidechain_block_number);
 			Self::deposit_event(Event::RemovedScheduledEnclave(sidechain_block_number));
 			Ok(().into())
