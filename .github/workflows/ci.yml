@@ -292,7 +292,7 @@ jobs:
       - name: Build docker image
         if: |
           needs.set-condition.outputs.rebuild_parachain == 'true' &&
-          github.event_name == 'push' && github.ref == 'refs/heads/dev'
+          needs.set-condition.outputs.push_docker == 'true'
         run: |
           ./scripts/build-docker.sh production tee-prod
           echo "============================="
@@ -301,7 +301,7 @@ jobs:
       - name: Pull docker image optionally
         if: |
           needs.set-condition.outputs.rebuild_parachain == 'false' ||
-          !(github.event_name != 'push' && github.ref == 'refs/heads/dev')
+          needs.set-condition.outputs.push_docker == 'false'
         run: |
           docker pull litentry/litentry-parachain:tee-prod
 
