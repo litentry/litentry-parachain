@@ -52,6 +52,9 @@ impl EnsureOrigin<SystemOrigin> for EnsureEnclaveSigner {
 			},
 		)
 	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin() -> Result<SystemOrigin, ()> { todo!() }
 }
 
 // Configure a mock runtime to test the pallet.
