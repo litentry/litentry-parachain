@@ -228,7 +228,7 @@ export function describeLitentry(title: string, walletsNumber: number, cb: (cont
             context.web3Signers = tmp.web3Signers;
         });
 
-        after(async function () { });
+        after(async function () {});
 
         cb(context);
     });
@@ -296,8 +296,8 @@ export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
     expect(isValid).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-        vc.issuer.id === proofJson.verificationMethod &&
-        proofJson.type === 'Ed25519Signature2020'
+            vc.issuer.id === proofJson.verificationMethod &&
+            proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
 }
@@ -424,7 +424,7 @@ export async function checkUserChallengeCode(
     pallet: string,
     method: string,
     address: HexString,
-    identity: HexString,
+    identity: HexString
 ): Promise<string> {
     const storageKey = await buildStorageHelper(context.metaData, pallet, method, address, identity);
 
@@ -620,7 +620,7 @@ export async function buildValidations(
             ethereumValidationData!.Web3Validation!.Evm!.message = msg;
             const msgHash = ethers.utils.arrayify(msg);
             signature_ethereum = (await ethereumSigner!.signMessage(msgHash)) as HexString;
-            console.log("signature_ethereum", ethereumSigners![index].address, signature_ethereum);
+            console.log('signature_ethereum', ethereumSigners![index].address, signature_ethereum);
 
             ethereumValidationData!.Web3Validation!.Evm!.signature!.Ethereum = signature_ethereum;
             assert.isNotEmpty(data.challengeCode, 'ethereum challengeCode empty');
@@ -673,7 +673,6 @@ export async function buildIdentityHelper(
     };
     return identity;
 }
-
 
 //If multiple transactions are built from multiple accounts, pass the signers as an array. If multiple transactions are built from a single account, signers cannot be an array.
 export async function buildIdentityTxs(
@@ -738,7 +737,6 @@ export async function buildIdentityTxs(
     return txs;
 }
 
-
 //campare two array of event_identities idgraph_identities whether equal
 export function isArrayEqual(arr1: LitentryIdentity[], arr2: LitentryIdentity[]) {
     if (arr1.length !== arr2.length) {
@@ -768,29 +766,26 @@ function isEqual(obj1: LitentryIdentity, obj2: LitentryIdentity) {
 }
 
 export function assertIdentityVerified(signer: KeyringPair, eventDatas: IdentityGenericEvent[]) {
-    let event_identities: LitentryIdentity[] = []
-    let idgraph_identities: LitentryIdentity[] = []
+    let event_identities: LitentryIdentity[] = [];
+    let idgraph_identities: LitentryIdentity[] = [];
     for (let index = 0; index < eventDatas.length; index++) {
-        event_identities.push(eventDatas[index].identity)
+        event_identities.push(eventDatas[index].identity);
     }
     for (let i = 0; i < eventDatas[eventDatas.length - 1].idGraph.length; i++) {
-
-        idgraph_identities.push(eventDatas[eventDatas.length - 1].idGraph[i][0])
+        idgraph_identities.push(eventDatas[eventDatas.length - 1].idGraph[i][0]);
     }
     //idgraph_identities[idgraph_identities.length - 1] is prime identity,don't need to compare
-    const isEqual = isArrayEqual(event_identities, idgraph_identities.slice(0, idgraph_identities.length - 1))
+    const isEqual = isArrayEqual(event_identities, idgraph_identities.slice(0, idgraph_identities.length - 1));
 
-    assert.isTrue(isEqual, 'event identities should be equal to idgraph identities')
+    assert.isTrue(isEqual, 'event identities should be equal to idgraph identities');
 
-    const data = eventDatas[eventDatas.length - 1]
+    const data = eventDatas[eventDatas.length - 1];
     for (let i = 0; i < eventDatas[eventDatas.length - 1].idGraph.length; i++) {
         if (JSON.stringify(data.idGraph[i][0]) == JSON.stringify(data.identity)) {
-
             assert.isTrue(data.idGraph[i][1].is_verified, 'identity should be verified');
         }
     }
     assert.equal(data?.who, u8aToHex(signer.addressRaw), 'check caller error');
-
 }
 
 export function assertIdentityCreated(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {

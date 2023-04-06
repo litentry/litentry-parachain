@@ -1,5 +1,13 @@
 import { step } from 'mocha-steps';
-import { buildValidations, describeLitentry, buildIdentityTxs, buildIdentityHelper, assertIdentityCreated, assertIdentityRemoved, assertIdentityVerified } from './common/utils';
+import {
+    buildValidations,
+    describeLitentry,
+    buildIdentityTxs,
+    buildIdentityHelper,
+    assertIdentityCreated,
+    assertIdentityRemoved,
+    assertIdentityVerified,
+} from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
 import { LitentryIdentity, LitentryValidationData } from './common/type-definitions';

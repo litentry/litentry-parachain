@@ -55,7 +55,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'IdentityManagement',
             'ChallengeCodes',
             u8aToHex(context.substrateWallet.alice.addressRaw),
-            identity_hex,
+            identity_hex
         );
 
         assert.equal(resp_challengecode, '0x', 'challengecode should be empty before create');
@@ -299,8 +299,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'identityManagement',
             ['IdentityVerified']
         );
-        const verified_event_datas =
-            await handleIdentityEvents(context, aesKey, alice_resp_events, 'IdentityVerified');
+        const verified_event_datas = await handleIdentityEvents(context, aesKey, alice_resp_events, 'IdentityVerified');
         const [substrate_extension_identity_verified] = await handleIdentityEvents(
             context,
             aesKey,
@@ -429,10 +428,10 @@ describeLitentry('Test Identity', 0, (context) => {
             'IdentityManagement',
             'ChallengeCodes',
             u8aToHex(context.substrateWallet.alice.addressRaw),
-            identity_hex,
+            identity_hex
         );
         assert.equal(resp_challengecode, '0x', 'challengecode should be empty after removeIdentity');
-    })
+    });
 
     step('check IDGraph after removeIdentity', async function () {
         const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
