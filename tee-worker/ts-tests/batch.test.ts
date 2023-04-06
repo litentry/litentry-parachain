@@ -42,6 +42,8 @@ describeLitentry('Test Batch Utility', 0, (context) => {
         assert.equal(alice, u8aToHex(context.substrateWallet.alice.addressRaw), 'alice shielding key should be set');
 
     });
+
+
     step('batch test: create identities', async function () {
         for (let index = 0; index < ethereumSigners.length; index++) {
             const signer = ethereumSigners[index];
@@ -86,6 +88,16 @@ describeLitentry('Test Batch Utility', 0, (context) => {
         validations = [...ethereum_validations]
     });
 
+    step('batch test: create error identities', async function () {
+
+        const txs = await buildIdentityTxs(context, context.substrateWallet.bob, identities, 'createIdentity');
+
+        const resp_events = await sendTxsWithUtility(context, context.substrateWallet.bob, txs, 'identityManagement', [
+            'CreateIdentityFailed',
+        ]);
+        await checkErrorDetail(resp_events, 'InvalidUserShieldingKey', true);
+
+    });
     step('batch test: verify identity', async function () {
         let txs = await buildIdentityTxs(
             context,

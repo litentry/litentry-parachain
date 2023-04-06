@@ -150,7 +150,6 @@ describeLitentry('Test Identity', 0, (context) => {
             alice_identities,
             'createIdentity'
         );
-        console.log(999, alice_txs);
 
         let alice_resp_events = await sendTxsWithUtility(
             context,
