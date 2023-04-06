@@ -61,8 +61,6 @@ impl Bridge {
 	}
 
 	pub fn get_oc_api() -> Arc<dyn WorkerOnChainBridge> {
-		debug!("Requesting WorkerOnChain OCall API instance");
-
 		COMPONENT_FACTORY
 			.read()
 			.as_ref()
