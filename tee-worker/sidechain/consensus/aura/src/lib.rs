@@ -323,7 +323,7 @@ mod tests {
 	};
 	use itp_test::mock::{handle_state_mock::HandleStateMock, onchain_mock::OnchainMock};
 	use itp_types::{
-		Block as ParentchainBlock, Enclave, Header as ParentchainHeader,
+		Block as ParentchainBlock, Enclave, Header as ParentchainHeader, ShardIdentifier,
 		SignedBlock as SignedParentchainBlock,
 	};
 	use its_consensus_slots::PerShardSlotWorkerScheduler;
@@ -341,7 +341,7 @@ mod tests {
 			trigger_parentchain_import,
 			EnvironmentMock,
 			Arc::new(ScheduledEnclaveMock::default()),
-			Arc::new(HandleStateMock::default()),
+			Arc::new(HandleStateMock::from_shard(ShardIdentifier::default()).unwrap()),
 		)
 	}
 
@@ -427,8 +427,8 @@ mod tests {
 		assert!(aura.claim_slot(&header, 3.into(), &authorities).is_some());
 	}
 
-	// #[test] -- TODO: enable this
-	fn _on_slot_returns_block() {
+	#[test]
+	fn on_slot_returns_block() {
 		let _ = env_logger::builder().is_test(true).try_init();
 
 		let onchain_mock = onchain_mock_with_default_authorities_and_header();
@@ -439,8 +439,8 @@ mod tests {
 		assert!(SimpleSlotWorker::on_slot(&mut aura, slot_info, Default::default()).is_some());
 	}
 
-	// #[test] -- TODO: enable this
-	fn _on_slot_for_multiple_shards_returns_blocks() {
+	#[test]
+	fn on_slot_for_multiple_shards_returns_blocks() {
 		let _ = env_logger::builder().is_test(true).try_init();
 
 		let onchain_mock = onchain_mock_with_default_authorities_and_header();
@@ -483,8 +483,8 @@ mod tests {
 		assert_eq!(result.len(), 0);
 	}
 
-	// #[test] -- TODO: enable this
-	fn _on_slot_triggers_parentchain_block_import_if_slot_is_claimed() {
+	#[test]
+	fn on_slot_triggers_parentchain_block_import_if_slot_is_claimed() {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let latest_parentchain_header = ParentchainHeaderBuilder::default().with_number(84).build();
 		let parentchain_block_import_trigger =
@@ -528,8 +528,8 @@ mod tests {
 		assert!(!parentchain_block_import_trigger.has_import_been_called());
 	}
 
-	// #[test] -- TODO: enable this
-	fn _on_slot_claims_slot_if_latest_parentchain_header_in_queue_contains_correspondent_validateer_set(
+	#[test]
+	fn on_slot_claims_slot_if_latest_parentchain_header_in_queue_contains_correspondent_validateer_set(
 	) {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let already_imported_parentchain_header =
