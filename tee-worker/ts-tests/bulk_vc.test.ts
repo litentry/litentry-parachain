@@ -13,11 +13,11 @@ const assertion = <Assertion>{
     A1: 'A1',
     A2: ['A2'],
     A3: ['A3', 'A3', 'A3'],
-    A4: [10],
-    A7: [10],
+    A4: '10.001',
+    A7: '10.002',
     A8: [IndexingNetwork.Litentry],
-    A10: [10],
-    A11: [10],
+    A10: '10.003',
+    A11: '10.004',
 };
 
 //Explain how to use this test, which has two important parameters:
