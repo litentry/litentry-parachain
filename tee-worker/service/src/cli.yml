@@ -95,7 +95,7 @@ args:
         long: mock-server-port
         help: Set the port for the mock-server HTTP server
         required: false
-        default_value: "9527"
+        default_value: "19527"
 
 subcommands:
     - run:

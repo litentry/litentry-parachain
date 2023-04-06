@@ -12,14 +12,14 @@
         "credential_endpoint": "http://localhost:9933"
     },
     "mock": {
-        "twitter_official_url": "http://localhost:9527",
-        "twitter_litentry_url": "http://localhost:9527",
+        "twitter_official_url": "http://localhost:19527",
+        "twitter_litentry_url": "http://localhost:19527",
         "twitter_auth_token_v1_1": "",
         "twitter_auth_token_v2": "",
-        "discord_official_url": "http://localhost:9527",
-        "discord_litentry_url": "http://localhost:9527",
+        "discord_official_url": "http://localhost:19527",
+        "discord_litentry_url": "http://localhost:19527",
         "discord_auth_token": "",
-        "graphql_url": "http://localhost:9527",
+        "graphql_url": "http://localhost:19527",
         "graphql_auth_key": "",
         "credential_endpoint": "http://localhost:9933"
     },
