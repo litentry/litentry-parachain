@@ -39,35 +39,35 @@ describeLitentry('Test Identity', 0, (context) => {
     let bob_identities: LitentryIdentity[] = [];
     let alice_validations: LitentryValidationData[] = [];
     let bob_validations: LitentryValidationData[] = [];
-    // step('check user sidechain storage before create', async function () {
-    //     const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
-    //     const identity_hex = context.api.createType('LitentryIdentity', twitter_identity).toHex();
-    //     const resp_shieldingKey = await checkUserShieldingKeys(
-    //         context,
-    //         'IdentityManagement',
-    //         'UserShieldingKeys',
-    //         u8aToHex(context.substrateWallet.alice.addressRaw)
-    //     );
-    //     assert.equal(resp_shieldingKey, '0x', 'shielding key should be empty before set');
+    step('check user sidechain storage before create', async function () {
+        const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
+        const identity_hex = context.api.createType('LitentryIdentity', twitter_identity).toHex();
+        const resp_shieldingKey = await checkUserShieldingKeys(
+            context,
+            'IdentityManagement',
+            'UserShieldingKeys',
+            u8aToHex(context.substrateWallet.alice.addressRaw)
+        );
+        assert.equal(resp_shieldingKey, '0x', 'shielding key should be empty before set');
 
-    //     const resp_challengecode = await checkUserChallengeCode(
-    //         context,
-    //         'IdentityManagement',
-    //         'ChallengeCodes',
-    //         u8aToHex(context.substrateWallet.alice.addressRaw),
-    //         identity_hex,
-    //     );
+        const resp_challengecode = await checkUserChallengeCode(
+            context,
+            'IdentityManagement',
+            'ChallengeCodes',
+            u8aToHex(context.substrateWallet.alice.addressRaw),
+            identity_hex,
+        );
 
-    //     assert.equal(resp_challengecode, '0x', 'challengecode should be empty before create');
-    // });
-    // step('Invalid user shielding key', async function () {
-    //     let identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Ethereum', 'Evm');
-    //     let txs = await buildIdentityTxs(context, [context.substrateWallet.alice], [identity], 'createIdentity');
-    //     let resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
-    //         'CreateIdentityFailed',
-    //     ]);
-    //     await checkErrorDetail(resp_events, 'InvalidUserShieldingKey', true);
-    // });
+        assert.equal(resp_challengecode, '0x', 'challengecode should be empty before create');
+    });
+    step('Invalid user shielding key', async function () {
+        let identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Ethereum', 'Evm');
+        let txs = await buildIdentityTxs(context, [context.substrateWallet.alice], [identity], 'createIdentity');
+        let resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
+            'CreateIdentityFailed',
+        ]);
+        await checkErrorDetail(resp_events, 'InvalidUserShieldingKey', true);
+    });
 
     step('set user shielding key', async function () {
         let [alice_txs] = (await buildIdentityTxs(
@@ -95,35 +95,35 @@ describeLitentry('Test Identity', 0, (context) => {
         assert.equal(bob, u8aToHex(context.substrateWallet.bob.addressRaw), 'bob shielding key should be set');
     });
 
-    // step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
-    //     const resp_shieldingKey = await checkUserShieldingKeys(
-    //         context,
-    //         'IdentityManagement',
-    //         'UserShieldingKeys',
-    //         u8aToHex(context.substrateWallet.alice.addressRaw)
-    //     );
-    //     assert.equal(resp_shieldingKey, aesKey, 'resp_shieldingKey should be equal aesKey after set');
-    // });
+    step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
+        const resp_shieldingKey = await checkUserShieldingKeys(
+            context,
+            'IdentityManagement',
+            'UserShieldingKeys',
+            u8aToHex(context.substrateWallet.alice.addressRaw)
+        );
+        assert.equal(resp_shieldingKey, aesKey, 'resp_shieldingKey should be equal aesKey after set');
+    });
 
-    // step('check idgraph from sidechain storage before create', async function () {
-    //     const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
-    //     const identity_hex = context.api.createType('LitentryIdentity', twitter_identity).toHex();
-    //     const resp_id_graph = await checkIDGraph(
-    //         context,
-    //         'IdentityManagement',
-    //         'IDGraphs',
-    //         u8aToHex(context.substrateWallet.alice.addressRaw),
-    //         identity_hex
-    //     );
-    //     assert.equal(
-    //         resp_id_graph.verification_request_block,
-    //         null,
-    //         'verification_request_block should  be null before create'
-    //     );
-    //     assert.equal(resp_id_graph.linking_request_block, null, 'linking_request_block should  be null before create');
+    step('check idgraph from sidechain storage before create', async function () {
+        const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
+        const identity_hex = context.api.createType('LitentryIdentity', twitter_identity).toHex();
+        const resp_id_graph = await checkIDGraph(
+            context,
+            'IdentityManagement',
+            'IDGraphs',
+            u8aToHex(context.substrateWallet.alice.addressRaw),
+            identity_hex
+        );
+        assert.equal(
+            resp_id_graph.verification_request_block,
+            null,
+            'verification_request_block should  be null before create'
+        );
+        assert.equal(resp_id_graph.linking_request_block, null, 'linking_request_block should  be null before create');
 
-    //     assert.equal(resp_id_graph.is_verified, false, 'IDGraph is_verified should be equal false before create');
-    // });
+        assert.equal(resp_id_graph.is_verified, false, 'IDGraph is_verified should be equal false before create');
+    });
     step('create identities', async function () {
         //Alice
         const twiiter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
@@ -274,7 +274,6 @@ describeLitentry('Test Identity', 0, (context) => {
     });
     step('verify identities', async function () {
         //Alice verify all identities
-
         let alice_txs = await buildIdentityTxs(
             context,
             [context.substrateWallet.alice],
@@ -336,53 +335,53 @@ describeLitentry('Test Identity', 0, (context) => {
         );
         assert.equal(resp_id_graph.is_verified, true, 'is_verified should be true after verifyIdentity');
     });
-    // step('verify error identities', async function () {
-    //     // verify same identities(alice) to one account
-    //     let alice_txs = await buildIdentityTxs(
-    //         context,
-    //         [context.substrateWallet.alice],
-    //         alice_identities,
-    //         'verifyIdentity',
-    //         alice_validations
-    //     );
-    //     let alice_resp_same_verify_events = await sendTxsWithUtility(
-    //         context,
-    //         context.substrateWallet.alice,
-    //         alice_txs,
-    //         'identityManagement',
-    //         ['VerifyIdentityFailed']
-    //     );
-    //     const alice_resp_same_verify_events_datas = await handleIdentityEvents(
-    //         context,
-    //         aesKey,
-    //         alice_resp_same_verify_events,
-    //         'Failed'
-    //     );
-    //     await checkErrorDetail(alice_resp_same_verify_events_datas, 'ChallengeCodeNotFound', false);
+    step('verify error identities', async function () {
+        // verify same identities(alice) to one account
+        let alice_txs = await buildIdentityTxs(
+            context,
+            [context.substrateWallet.alice],
+            alice_identities,
+            'verifyIdentity',
+            alice_validations
+        );
+        let alice_resp_same_verify_events = await sendTxsWithUtility(
+            context,
+            context.substrateWallet.alice,
+            alice_txs,
+            'identityManagement',
+            ['VerifyIdentityFailed']
+        );
+        const alice_resp_same_verify_event_datas = await handleIdentityEvents(
+            context,
+            aesKey,
+            alice_resp_same_verify_events,
+            'Failed'
+        );
+        await checkErrorDetail(alice_resp_same_verify_event_datas, 'ChallengeCodeNotFound', false);
 
-    //     //verify an identity(charlie) to an account but it isn't created before
-    //     let charlie_txs = await buildIdentityTxs(
-    //         context,
-    //         [context.substrateWallet.charlie],
-    //         alice_identities,
-    //         'verifyIdentity',
-    //         alice_validations
-    //     );
-    //     let charlie_resp_same_verify_events = await sendTxsWithUtility(
-    //         context,
-    //         context.substrateWallet.charlie,
-    //         charlie_txs,
-    //         'identityManagement',
-    //         ['VerifyIdentityFailed']
-    //     );
-    //     const charlie_resp_same_verify_events_datas = await handleIdentityEvents(
-    //         context,
-    //         aesKey,
-    //         charlie_resp_same_verify_events,
-    //         'Failed'
-    //     );
-    //     await checkErrorDetail(charlie_resp_same_verify_events_datas, 'ChallengeCodeNotFound', false);
-    // });
+        //verify an identity(charlie) to an account but it isn't created before
+        let charlie_txs = await buildIdentityTxs(
+            context,
+            [context.substrateWallet.charlie],
+            alice_identities,
+            'verifyIdentity',
+            alice_validations
+        );
+        let charlie_resp_same_verify_events = await sendTxsWithUtility(
+            context,
+            context.substrateWallet.charlie,
+            charlie_txs,
+            'identityManagement',
+            ['VerifyIdentityFailed']
+        );
+        const charlie_resp_same_verify_event_datas = await handleIdentityEvents(
+            context,
+            aesKey,
+            charlie_resp_same_verify_events,
+            'Failed'
+        );
+        await checkErrorDetail(charlie_resp_same_verify_event_datas, 'ChallengeCodeNotFound', false);
+    });
 
     step('remove identities', async function () {
         // Alice remove all identities
@@ -521,9 +520,9 @@ describeLitentry('Test Identity', 0, (context) => {
             'identityManagement',
             ['RemoveIdentityFailed']
         );
-        const prime_resp_events_data = await handleIdentityEvents(context, aesKey, prime_resp_events, 'Failed');
+        const prime_resp_event_datas = await handleIdentityEvents(context, aesKey, prime_resp_events, 'Failed');
 
-        await checkErrorDetail(prime_resp_events_data, 'RemovePrimeIdentityDisallowed', false);
+        await checkErrorDetail(prime_resp_event_datas, 'RemovePrimeIdentityDisallowed', false);
     });
 
     step('remove error identities', async function () {
@@ -542,14 +541,14 @@ describeLitentry('Test Identity', 0, (context) => {
             'identityManagement',
             ['RemoveIdentityFailed']
         );
-        const alice_resp_remove_events_data = await handleIdentityEvents(
+        const alice_resp_remove_event_datas = await handleIdentityEvents(
             context,
             aesKey,
             alice_resp_remove_events,
             'Failed'
         );
 
-        await checkErrorDetail(alice_resp_remove_events_data, 'IdentityNotExist', false);
+        await checkErrorDetail(alice_resp_remove_event_datas, 'IdentityNotExist', false);
 
         //charlie doesn't have a challenge code,use alice identity
         let charlie_remove_txs = await buildIdentityTxs(
@@ -591,9 +590,9 @@ describeLitentry('Test Identity', 0, (context) => {
             ['SetUserShieldingKeyFailed']
         );
 
-        let error_events_datas = await handleIdentityEvents(context, aesKey, resp_error_events, 'Failed');
+        let error_event_datas = await handleIdentityEvents(context, aesKey, resp_error_events, 'Failed');
 
-        await checkErrorDetail(error_events_datas, 'ImportError', false);
+        await checkErrorDetail(error_event_datas, 'ImportError', false);
     });
 
     step('create error identities', async function () {
@@ -610,7 +609,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'identityManagement',
             ['CreateIdentityFailed']
         );
-        let error_events_datas = await handleIdentityEvents(context, aesKey, resp_error_events, 'Failed');
-        await checkErrorDetail(error_events_datas, 'ImportError', false);
+        let error_event_datas = await handleIdentityEvents(context, aesKey, resp_error_events, 'Failed');
+        await checkErrorDetail(error_event_datas, 'ImportError', false);
     });
 });

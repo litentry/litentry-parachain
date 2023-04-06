@@ -796,5 +796,6 @@ export function assertIdentityCreated(signer: KeyringPair, identityEvent: Identi
 }
 
 export function assertIdentityRemoved(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
+    assert.equal(identityEvent?.idGraph, null, 'check idGraph error,should be null after removed');
     assert.equal(identityEvent?.who, u8aToHex(signer.addressRaw), 'check caller error');
 }

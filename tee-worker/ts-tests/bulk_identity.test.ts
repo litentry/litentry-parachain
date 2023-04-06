@@ -29,8 +29,8 @@ describeLitentry('multiple accounts test', 5, async (context) => {
     step('send test token to each account', async () => {
         const txs: any = [];
         for (let i = 0; i < substraetSigners.length; i++) {
-            //0.1 token
-            const tx = context.api.tx.balances.transfer(substraetSigners[i].address, '100000000000');
+            //1 token
+            const tx = context.api.tx.balances.transfer(substraetSigners[i].address, '1000000000000');
 
             txs.push(tx);
         }
