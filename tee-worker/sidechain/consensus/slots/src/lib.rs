@@ -263,11 +263,30 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 		if !scheduled_enclave.is_mrenclave_matching(next_sidechain_number) {
 			warn!(
 				target: logging_target,
-				"Skipping slot due to mistmatch MRENCLAVE, current: {:?}, expect: {:?}",
-				scheduled_enclave.get_current_mrenclave(),
-				scheduled_enclave.get_expected_mrenclave(next_sidechain_number),
+				"Skipping sidechain block {} due to mismatch MRENCLAVE, current: {:?}, expect: {:?}",
+				next_sidechain_number,
+				scheduled_enclave.get_current_mrenclave().map(hex::encode),
+				scheduled_enclave.get_expected_mrenclave(next_sidechain_number).map(hex::encode),
 			);
+			if let Ok(false) = scheduled_enclave.is_block_production_paused() {
+				let _ = scheduled_enclave.set_block_production_paused(true);
+				info!("Pause sidechain block production");
+			}
 			return None
+		} else {
+			// TODO: currently, the shard migration(copy-over) is done manually by the subcommand "migrate-shard"
+
+			// TODO: we should add a field to describe the reason for pausing/unpausing
+			//       it's possible that we manually/focibly pause the sidechain
+			if let Ok(true) = scheduled_enclave.is_block_production_paused() {
+				// TODO: this could have a problem when we have multiple workers, as the state
+				//       could have been done by another worker and the imported sidechain includes
+				//       the state change already.
+				//       Imagine the scheduledEnclave map is 30 => 0xABC and block #30 was produced by
+				//       another worker (so did state migration) and we claim this slot to author #31
+				info!("Resume sidechain block production");
+				let _ = scheduled_enclave.set_block_production_paused(false);
+			}
 		}
 
 		let _claim = self.claim_slot(&latest_parentchain_header, slot, &epoch_data)?;

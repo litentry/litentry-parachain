@@ -47,6 +47,7 @@ pub type ScheduledEnclaveMap = BTreeMap<SidechainBlockNumber, MrEnclave>;
 
 #[derive(Default)]
 pub struct ScheduledEnclave {
+	pub block_production_paused: RwLock<bool>,
 	pub current_mrenclave: RwLock<MrEnclave>,
 	pub registry: RwLock<ScheduledEnclaveMap>,
 }
@@ -60,19 +61,40 @@ pub trait ScheduledEnclaveUpdater {
 
 	fn get_current_mrenclave(&self) -> Result<MrEnclave>;
 
+	fn set_current_mrenclave(&self, mrenclave: MrEnclave) -> Result<()>;
+
 	// given a SidechainBlockNumber, return the expected MRENCLAVE
 	// For example, the registry is:
 	// 0  -> 0xAA
 	// 19 -> 0xBB
 	// 21 -> 0xCC
 	//
-	// get_expected_mrenclave(0) -> 0xAA
+	// get_expected_mrenclave(0)  -> 0xAA
 	// get_expected_mrenclave(18) -> 0xAA
 	// get_expected_mrenclave(19) -> 0xBB
 	// get_expected_mrenclave(20) -> 0xBB
 	// get_expected_mrenclave(21) -> 0xCC
 	// get_expected_mrenclave(30) -> 0xCC
 	fn get_expected_mrenclave(&self, sbn: SidechainBlockNumber) -> Result<MrEnclave>;
+
+	// given a SidechainBlockNumber, return the previous MRENCLAVE
+	// we can't simply use `get_previous_mrenclave(sbn - 1)` due to possible gap
+	// For example, the registry is:
+	// 0  -> 0xAA
+	// 19 -> 0xBB
+	// 21 -> 0xCC
+	//
+	// get_previous_mrenclave(0)  -> NoPreviousMRENCLAVE error
+	// get_previous_mrenclave(1)  -> NoPreviousMRENCLAVE error
+	// get_previous_mrenclave(19) -> 0xAA
+	// get_previous_mrenclave(20) -> 0xAA
+	// get_previous_mrenclave(21) -> 0xBB
+	// get_previous_mrenclave(30) -> 0xBB
+	fn get_previous_mrenclave(&self, sbn: SidechainBlockNumber) -> Result<MrEnclave>;
+
+	fn is_block_production_paused(&self) -> Result<bool>;
+
+	fn set_block_production_paused(&self, should_pause: bool) -> Result<()>;
 
 	fn is_mrenclave_matching(&self, sbn: SidechainBlockNumber) -> bool {
 		let current = self.get_current_mrenclave();
@@ -107,7 +129,23 @@ impl ScheduledEnclaveUpdater for ScheduledEnclaveMock {
 		Ok(Default::default())
 	}
 
+	fn set_current_mrenclave(&self, _mrenclave: MrEnclave) -> Result<()> {
+		Ok(())
+	}
+
 	fn get_expected_mrenclave(&self, _sbn: SidechainBlockNumber) -> Result<MrEnclave> {
 		Ok(MrEnclave::default())
+	}
+
+	fn get_previous_mrenclave(&self, _sbn: SidechainBlockNumber) -> Result<MrEnclave> {
+		Ok(MrEnclave::default())
+	}
+
+	fn is_block_production_paused(&self) -> Result<bool> {
+		Ok(false)
+	}
+
+	fn set_block_production_paused(&self, _should_pause: bool) -> Result<()> {
+		Ok(())
 	}
 }

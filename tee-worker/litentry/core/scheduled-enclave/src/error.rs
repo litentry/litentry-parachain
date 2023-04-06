@@ -26,6 +26,8 @@ pub enum Error {
 	PoisonLock,
 	#[error("empty ScheduledEnclave registry")]
 	EmptyRegistry,
+	#[error("no previous MRENCLAVE")]
+	NoPreviousMRENCLAVE,
 	#[error(transparent)]
 	Other(#[from] Box<dyn std::error::Error + Sync + Send + 'static>),
 }

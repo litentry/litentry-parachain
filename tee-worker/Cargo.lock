@@ -3792,6 +3792,7 @@ dependencies = [
  "derive_more",
  "futures 0.3.27",
  "futures-timer",
+ "hex 0.4.3",
  "itc-parentchain-test",
  "itp-settings",
  "itp-sgx-externalities",

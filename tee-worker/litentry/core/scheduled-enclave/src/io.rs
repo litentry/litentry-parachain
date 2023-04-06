@@ -56,6 +56,7 @@ mod sgx {
 #[cfg(feature = "sgx")]
 use sgx::*;
 
+// TODO: unit-test
 impl ScheduledEnclaveUpdater for ScheduledEnclave {
 	#[cfg(feature = "std")]
 	fn init(&self, _mrenclave: MrEnclave) -> Result<()> {
@@ -76,8 +77,8 @@ impl ScheduledEnclaveUpdater for ScheduledEnclave {
 	// otherwise create a new instance and seal to static file
 	#[cfg(feature = "sgx")]
 	fn init(&self, mrenclave: MrEnclave) -> Result<()> {
-		let mut m = self.current_mrenclave.write().map_err(|_| Error::PoisonLock)?;
-		*m = mrenclave;
+		let _ = self.set_current_mrenclave(mrenclave)?;
+		let _ = self.set_block_production_paused(false)?;
 		if SgxFile::open(SCHEDULED_ENCLAVE_FILE).is_err() {
 			info!(
 				"[Enclave] ScheduledEnclave file not found, creating new! {}",
@@ -118,7 +119,13 @@ impl ScheduledEnclaveUpdater for ScheduledEnclave {
 	}
 
 	fn get_current_mrenclave(&self) -> Result<MrEnclave> {
-		self.current_mrenclave.read().map_err(|_| Error::PoisonLock).map(|l| l.clone())
+		self.current_mrenclave.read().map_err(|_| Error::PoisonLock).map(|l| *l)
+	}
+
+	fn set_current_mrenclave(&self, mrenclave: MrEnclave) -> Result<()> {
+		let mut m = self.current_mrenclave.write().map_err(|_| Error::PoisonLock)?;
+		*m = mrenclave;
+		Ok(())
 	}
 
 	fn get_expected_mrenclave(&self, sbn: SidechainBlockNumber) -> Result<MrEnclave> {
@@ -129,5 +136,31 @@ impl ScheduledEnclaveUpdater for ScheduledEnclave {
 			.max_by_key(|(k, _)| **k)
 			.ok_or(Error::EmptyRegistry)?;
 		Ok(*r.1)
+	}
+
+	fn get_previous_mrenclave(&self, sbn: SidechainBlockNumber) -> Result<MrEnclave> {
+		// TODO: optimise it
+		let registry = GLOBAL_SCHEDULED_ENCLAVE.registry.read().map_err(|_| Error::PoisonLock)?;
+		let r = registry
+			.iter()
+			.filter(|(k, _)| **k <= sbn)
+			.max_by_key(|(k, _)| **k)
+			.ok_or(Error::NoPreviousMRENCLAVE)?;
+		let v = registry
+			.iter()
+			.filter(|(k, _)| **k < *r.0)
+			.max_by_key(|(k, _)| **k)
+			.ok_or(Error::NoPreviousMRENCLAVE)?;
+		Ok(*v.1)
+	}
+
+	fn is_block_production_paused(&self) -> Result<bool> {
+		self.block_production_paused.read().map_err(|_| Error::PoisonLock).map(|l| *l)
+	}
+
+	fn set_block_production_paused(&self, should_pause: bool) -> Result<()> {
+		let mut p = self.block_production_paused.write().map_err(|_| Error::PoisonLock)?;
+		*p = should_pause;
+		Ok(())
 	}
 }

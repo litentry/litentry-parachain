@@ -195,6 +195,7 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 }
 
 /// Executes aura for the given `slot`.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn exec_aura_on_slot<
 	Authority,
 	ParentchainBlock,
