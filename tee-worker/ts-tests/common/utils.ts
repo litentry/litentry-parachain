@@ -706,7 +706,6 @@ export async function buildIdentityTxs(
                 tx = context.api.tx.identityManagement.setUserShieldingKey(context.mrEnclave, `0x${ciphertext}`);
                 break;
             case 'createIdentity':
-
                 tx = api.tx.identityManagement.createIdentity(
                     mrEnclave,
                     signer.address,

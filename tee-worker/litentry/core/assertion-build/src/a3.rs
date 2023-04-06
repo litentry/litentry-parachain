@@ -101,7 +101,6 @@ pub fn build(
 				channel_id_s,
 				role_id_s,
 			);
-
 			Ok(credential_unsigned)
 		},
 		Err(e) => {
@@ -130,7 +129,7 @@ mod tests {
 		G_DATA_PROVIDERS
 			.write()
 			.unwrap()
-			.set_discord_litentry_url("http://localhost:9527".to_string());
+			.set_discord_litentry_url("http://localhost:19527".to_string());
 		let guild_id_u: u64 = 919848390156767232;
 		let channel_id_u: u64 = 919848392035794945;
 		let role_id_u: u64 = 1034083718425493544;

@@ -29,7 +29,7 @@ pallet-parachain-staking = { path = "../parachain-staking", default-features = f
 hex = { version = "0.4", default-features = false }
 
 [dev-dependencies]
-hex-literal = "0.3"
+hex-literal = "0.4"
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false }
 

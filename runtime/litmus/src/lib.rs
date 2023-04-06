@@ -69,9 +69,10 @@ use runtime_common::{
 	impl_runtime_transaction_payment_fees, prod_or_fast, BlockHashCount, BlockLength,
 	CouncilInstance, CouncilMembershipInstance, EnsureEnclaveSigner, EnsureRootOrAllCouncil,
 	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrHalfTechnicalCommittee,
-	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, NegativeImbalance,
-	RuntimeBlockWeights, SlowAdjustingFeeUpdate, TechnicalCommitteeInstance,
-	TechnicalCommitteeMembershipInstance, MAXIMUM_BLOCK_WEIGHT,
+	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee,
+	IMPExtrinsicWhitelistInstance, NegativeImbalance, RuntimeBlockWeights, SlowAdjustingFeeUpdate,
+	TechnicalCommitteeInstance, TechnicalCommitteeMembershipInstance,
+	VCMPExtrinsicWhitelistInstance, MAXIMUM_BLOCK_WEIGHT,
 };
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
@@ -148,7 +149,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("litmus-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9151,
+	spec_version: 9155,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -813,6 +814,12 @@ impl pallet_identity_management::Config for Runtime {
 	type WeightInfo = ();
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
+	type ExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
+}
+
+impl pallet_group::Config<IMPExtrinsicWhitelistInstance> for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type GroupManagerOrigin = EnsureRootOrAllCouncil;
 }
 
 ord_parameter_types! {
@@ -831,6 +838,12 @@ impl pallet_vc_management::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	type SetAdminOrigin = EnsureRootOrHalfCouncil;
+	type ExtrinsicWhitelistOrigin = VCMPExtrinsicWhitelist;
+}
+
+impl pallet_group::Config<VCMPExtrinsicWhitelistInstance> for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type GroupManagerOrigin = EnsureRootOrAllCouncil;
 }
 
 impl runtime_common::BaseRuntimeRequirements for Runtime {}
@@ -905,6 +918,8 @@ construct_runtime! {
 		IdentityManagement: pallet_identity_management = 64,
 		AssetManager: pallet_asset_manager = 65,
 		VCManagement: pallet_vc_management = 66,
+		IMPExtrinsicWhitelist: pallet_group::<Instance1> = 67,
+		VCMPExtrinsicWhitelist: pallet_group::<Instance2> = 68,
 
 		// TEE
 		Teerex: pallet_teerex = 90,
@@ -976,7 +991,10 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			// Session
 			RuntimeCall::Session(_) |
 			// Balance
-			RuntimeCall::Balances(_)
+			RuntimeCall::Balances(_) |
+			// Group
+			RuntimeCall::IMPExtrinsicWhitelist(_) |
+			RuntimeCall::VCMPExtrinsicWhitelist(_)
 		)
 	}
 }

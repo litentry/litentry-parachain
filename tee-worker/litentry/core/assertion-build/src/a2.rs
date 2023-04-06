@@ -115,7 +115,7 @@ mod tests {
 		G_DATA_PROVIDERS
 			.write()
 			.unwrap()
-			.set_discord_litentry_url("http://localhost:9527".to_string());
+			.set_discord_litentry_url("http://localhost:19527".to_string());
 		let guild_id_u: u64 = 919848390156767232;
 		let guild_id_vec: Vec<u8> = format!("{}", guild_id_u).as_bytes().to_vec();
 

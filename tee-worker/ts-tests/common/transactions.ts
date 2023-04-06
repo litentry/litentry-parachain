@@ -81,6 +81,10 @@ export async function listenEvent(
     return new Promise<Event[]>(async (resolve, reject) => {
         let startBlock = 0;
         let events: EventRecord[] = [];
+        const signerToIndexMap: Record<string, number> = {};
+        for (let i = 0; i < signers.length; i++) {
+            signerToIndexMap[signers[i]] = i;
+        }
         const unsubscribe = await api.rpc.chain.subscribeNewHeads(async (header) => {
             const currentBlockNumber = header.number.toNumber();
             if (startBlock == 0) startBlock = currentBlockNumber;
@@ -114,9 +118,29 @@ export async function listenEvent(
                     }
                 });
                 return !!signerDatas;
-            });
+            }).sort((a, b) => {
+                //We need sort by signers order
+                //First convert the signers array into an object signerToIndexMap, where the keys are each element in the signers array and the values are the index of that element in the array.
+                //Then, for each of the filtered events that match the given section and methods, the function uses the find function to locate the index of a specific parameter in the signers array. 
+                //Then, it sorts the events based on this index so that the resulting event array is sorted according to the order of the signers array.
+                const signerIndexA = signerToIndexMap[a.event.data.find((d) => {
+                    if (Array.isArray(d)) {
+                        return d.find((v) => signers.includes(v.toHex()));
+                    } else {
+                        return signers.includes(d.toHex());
+                    }
+                })!.toHex()];
+                const signerIndexB = signerToIndexMap[b.event.data.find((d) => {
+                    if (Array.isArray(d)) {
+                        return d.find((v) => signers.includes(v.toHex()));
+                    } else {
+                        return signers.includes(d.toHex());
+                    }
+                })!.toHex()];
+                return signerIndexA - signerIndexB;
+            });;
 
-            // There is no good compatibility method here.Only successful and failed events can be filtered normally, but it cannot filter error + successful events, which may need further optimization
+            //There is no good compatibility method here.Only successful and failed events can be filtered normally, but it cannot filter error + successful events, which may need further optimization
             const eventsToUse = filtered_events_with_signer.length > 0 ? filtered_events_with_signer : filtered_events;
 
             events = [...eventsToUse];

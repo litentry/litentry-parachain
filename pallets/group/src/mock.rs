@@ -16,36 +16,32 @@
 
 #![cfg(test)]
 
-use crate as pallet_vc_management;
 use frame_support::{
 	ord_parameter_types, parameter_types,
-	traits::{ConstU128, ConstU16, ConstU32, ConstU64, Everything},
+	traits::{ConstU32, ConstU64},
 };
-use frame_system as system;
+use frame_system::{self as system};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
-use system::EnsureSignedBy;
+
+use crate::{self as pallet_group, Config};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
-
-pub type Balance = u128;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
 	pub enum Test where
 		Block = Block,
 		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
+		UncheckedExtrinsic = UncheckedExtrinsic
 	{
-		System: frame_system,
-		Balances: pallet_balances,
-		Timestamp: pallet_timestamp,
-		VCManagement: pallet_vc_management,
-		VCMPExtrinsicWhitelist: pallet_group,
+		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Whitelist: pallet_group::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -53,11 +49,8 @@ parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 }
 
-impl system::Config for Test {
-	type BaseCallFilter = Everything;
-	type BlockWeights = ();
-	type BlockLength = ();
-	type DbWeight = ();
+impl frame_system::Config for Test {
+	type BaseCallFilter = frame_support::traits::Everything;
 	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeCall = RuntimeCall;
 	type Index = u64;
@@ -69,59 +62,69 @@ impl system::Config for Test {
 	type Header = Header;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
+	type DbWeight = ();
 	type Version = ();
-	type PalletInfo = PalletInfo;
-	type AccountData = pallet_balances::AccountData<Balance>;
+	type AccountData = pallet_balances::AccountData<u64>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
-	type SS58Prefix = ConstU16<31>;
+	type PalletInfo = PalletInfo;
+	type BlockWeights = ();
+	type BlockLength = ();
+	type SS58Prefix = ();
 	type OnSetCode = ();
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
-}
-
-impl pallet_timestamp::Config for Test {
-	type Moment = u64;
-	type OnTimestampSet = ();
-	type MinimumPeriod = ConstU64<10000>;
-	type WeightInfo = ();
-}
-
-impl pallet_balances::Config for Test {
-	type MaxLocks = ConstU32<50>;
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	type Balance = Balance; // the type that is relevant to us
-	type RuntimeEvent = RuntimeEvent;
-	type DustRemoval = ();
-	type ExistentialDeposit = ConstU128<1>;
-	type AccountStore = System;
-	type WeightInfo = ();
+	type MaxConsumers = ConstU32<16>;
 }
 
 ord_parameter_types! {
 	pub const One: u64 = 1;
 }
 
-impl pallet_vc_management::Config for Test {
+impl pallet_balances::Config for Test {
+	type Balance = u64;
+	type DustRemoval = ();
 	type RuntimeEvent = RuntimeEvent;
-	type TEECallOrigin = EnsureSignedBy<One, u64>;
-	type SetAdminOrigin = EnsureSignedBy<One, u64>;
-	type ExtrinsicWhitelistOrigin = VCMPExtrinsicWhitelist;
+	type ExistentialDeposit = ConstU64<1>;
+	type AccountStore = System;
+	type WeightInfo = ();
+	type MaxLocks = ConstU32<100>;
+	type MaxReserves = ();
+	type ReserveIdentifier = [u8; 8];
 }
 
-impl pallet_group::Config for Test {
+impl Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type GroupManagerOrigin = frame_system::EnsureRoot<Self::AccountId>;
 }
 
-pub fn new_test_ext() -> sp_io::TestExternalities {
-	let t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
+pub const ACCOUNT_A: u64 = 0x2;
+pub const ACCOUNT_B: u64 = 0x3;
+pub const ACCOUNT_C: u64 = 0x4;
+pub const ENDOWED_BALANCE: u64 = 1_000_000_000;
 
+pub fn new_test_ext() -> sp_io::TestExternalities {
+	let treasury_account: u64 = 0x8;
+	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	pallet_balances::GenesisConfig::<Test> {
+		balances: vec![(ACCOUNT_A, ENDOWED_BALANCE), (treasury_account, ENDOWED_BALANCE)],
+	}
+	.assimilate_storage(&mut t)
+	.unwrap();
 	let mut ext = sp_io::TestExternalities::new(t);
-	ext.execute_with(|| {
-		System::set_block_number(1);
-		let _ = VCManagement::set_schema_admin(RuntimeOrigin::signed(1), 1);
-	});
+	ext.execute_with(|| System::set_block_number(1));
 	ext
+}
+
+// Checks events against the latest. A contiguous set of events must be provided. They must
+// include the most recent event, but do not have to include every past event.
+pub fn assert_events(mut expected: Vec<RuntimeEvent>) {
+	let mut actual: Vec<RuntimeEvent> =
+		system::Pallet::<Test>::events().iter().map(|e| e.event.clone()).collect();
+
+	expected.reverse();
+
+	for evt in expected {
+		let next = actual.pop().expect("event expected");
+		assert_eq!(next, evt, "Events don't match (actual,expected)");
+	}
 }

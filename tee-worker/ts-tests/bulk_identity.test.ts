@@ -81,7 +81,6 @@ describeLitentry('multiple accounts test', 10, async (context) => {
             console.log('createIdentity', index);
             assertIdentityCreated(substraetSigners[index], resp_events_datas[index]);
         }
-        console.log("resp_events_datas", resp_events_datas)
         const validations = await buildValidations(
             context,
             resp_events_datas,

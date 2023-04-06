@@ -69,9 +69,10 @@ use runtime_common::{
 	impl_runtime_transaction_payment_fees, prod_or_fast, BlockHashCount, BlockLength,
 	CouncilInstance, CouncilMembershipInstance, EnsureEnclaveSigner, EnsureRootOrAllCouncil,
 	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrHalfTechnicalCommittee,
-	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, NegativeImbalance,
-	RuntimeBlockWeights, SlowAdjustingFeeUpdate, TechnicalCommitteeInstance,
-	TechnicalCommitteeMembershipInstance, MAXIMUM_BLOCK_WEIGHT,
+	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee,
+	IMPExtrinsicWhitelistInstance, NegativeImbalance, RuntimeBlockWeights, SlowAdjustingFeeUpdate,
+	TechnicalCommitteeInstance, TechnicalCommitteeMembershipInstance,
+	VCMPExtrinsicWhitelistInstance, MAXIMUM_BLOCK_WEIGHT,
 };
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
@@ -146,9 +147,8 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("rococo-parachain"),
 	impl_name: create_runtime_str!("rococo-parachain"),
 	authoring_version: 1,
-	// same versioning-mechanism as polkadot:
-	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9152,
+	// same versioning-mechanism as polkadot: use last digit for minor updates
+	spec_version: 9155,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -892,6 +892,12 @@ impl pallet_identity_management::Config for Runtime {
 	type WeightInfo = ();
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
+	type ExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
+}
+
+impl pallet_group::Config<IMPExtrinsicWhitelistInstance> for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type GroupManagerOrigin = EnsureRootOrAllCouncil;
 }
 
 ord_parameter_types! {
@@ -910,6 +916,12 @@ impl pallet_vc_management::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	type SetAdminOrigin = EnsureRootOrHalfCouncil;
+	type ExtrinsicWhitelistOrigin = VCMPExtrinsicWhitelist;
+}
+
+impl pallet_group::Config<VCMPExtrinsicWhitelistInstance> for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type GroupManagerOrigin = EnsureRootOrAllCouncil;
 }
 
 impl runtime_common::BaseRuntimeRequirements for Runtime {}
@@ -986,6 +998,8 @@ construct_runtime! {
 		IdentityManagement: pallet_identity_management = 64,
 		AssetManager: pallet_asset_manager = 65,
 		VCManagement: pallet_vc_management = 66,
+		IMPExtrinsicWhitelist: pallet_group::<Instance1> = 67,
+		VCMPExtrinsicWhitelist: pallet_group::<Instance2> = 68,
 
 		// TEE
 		Teerex: pallet_teerex = 90,
@@ -1075,7 +1089,10 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::candidate_bond_more { .. }) |
 			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::schedule_candidate_bond_less { .. }) |
 			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::execute_candidate_bond_less { .. }) |
-			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::cancel_candidate_bond_less { .. })
+			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::cancel_candidate_bond_less { .. }) |
+			// Group
+			RuntimeCall::IMPExtrinsicWhitelist(_) |
+			RuntimeCall::VCMPExtrinsicWhitelist(_)
 		)
 	}
 }

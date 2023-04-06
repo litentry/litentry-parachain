@@ -90,7 +90,6 @@ describeLitentry('Test Identity', 0, (context) => {
             'identityManagement',
             ['UserShieldingKeySet']
         );
-
         const [alice, bob] = await handleIdentityEvents(context, aesKey, resp_events, 'UserShieldingKeySet');
         assert.equal(alice, u8aToHex(context.substrateWallet.alice.addressRaw), 'alice shielding key should be set');
         assert.equal(bob, u8aToHex(context.substrateWallet.bob.addressRaw), 'bob shielding key should be set');
@@ -255,7 +254,6 @@ describeLitentry('Test Identity', 0, (context) => {
     step('check IDGraph before verifyIdentity and after createIdentity', async function () {
         const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
         const identity_hex = context.api.createType('LitentryIdentity', twitter_identity).toHex();
-
 
         const resp_id_graph = await checkIDGraph(
             context,

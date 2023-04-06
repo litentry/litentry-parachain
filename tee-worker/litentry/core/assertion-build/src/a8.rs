@@ -105,7 +105,8 @@ pub fn build(
 			total_txs += result.iter().map(|v| v.total_transactions).sum::<u64>();
 		}
 	}
-	debug!("total_transactions: {}", total_txs);
+
+	debug!("Assertion A8 total_transactions: {}", total_txs);
 
 	let (min, max) = get_total_tx_ranges(total_txs);
 	match Credential::new_default(who, &shard.clone(), bn) {
