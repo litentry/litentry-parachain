@@ -274,20 +274,21 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 			}
 			return None
 		} else {
-			// TODO: currently, the shard migration(copy-over) is done manually by the subcommand "migrate-shard"
-
-			// TODO: we should add a field to describe the reason for pausing/unpausing
-			//       it's possible that we manually/focibly pause the sidechain
+			// TODO: this block production pause/unpause is not strictly needed but I add it here as placeholder.
+			//       Maybe we should add a field to describe the reason for pausing/unpausing, as
+			//       it's possible that we want to manually/focibly pause the sidechain
 			if let Ok(true) = scheduled_enclave.is_block_production_paused() {
-				// TODO: this could have a problem when we have multiple workers, as the state
-				//       could have been done by another worker and the imported sidechain includes
-				//       the state change already.
-				//       Imagine the scheduledEnclave map is 30 => 0xABC and block #30 was produced by
-				//       another worker (so did state migration) and we claim this slot to author #31
 				info!("Resume sidechain block production");
 				let _ = scheduled_enclave.set_block_production_paused(false);
 			}
 		}
+
+		// TODO: about the shard migration and state migration
+		//       - the shard migration(copy-over) is done manually by the subcommand "migrate-shard".
+		//       - the state migration is done via conditionally calling on_runtime_upgrade() by comparing
+		//         the current runtime version and LastRuntimeUpgrade, see `stf_sgx.rs`.
+		//         It means we need to bump the runtime version for the new enclave if we want the state
+		//         migration to be executed.
 
 		let _claim = self.claim_slot(&latest_parentchain_header, slot, &epoch_data)?;
 
