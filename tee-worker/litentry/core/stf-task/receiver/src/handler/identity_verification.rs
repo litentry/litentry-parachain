@@ -29,7 +29,7 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::OpaqueCall;
 use lc_stf_task_sender::RequestType;
 use litentry_primitives::IMPError;
-use log::error;
+use log::*;
 use std::{sync::Arc, vec::Vec};
 
 pub(crate) struct IdentityVerificationHandler<
@@ -85,27 +85,28 @@ where
 		match self.context.decode_and_submit_trusted_call(shard, callback) {
 			Ok(_) => {},
 			Err(e) => {
-				error!("decode_and_submit_trusted_call failed. Due to: {:?}", e);
+				error!("decode_and_submit_trusted_call failed: {:?}", e);
 			},
 		}
 	}
 
 	fn on_failure(&self, error: Self::Error) {
-		log::error!("occur an error while verifying identity, due to:{:?}", error);
+		error!("verify identity failed:{:?}", error);
 		match self
 			.context
 			.node_metadata
 			.get_from_metadata(|m| IMPCallIndexes::imp_some_error_call_indexes(m))
 		{
 			Ok(Ok(call_index)) => {
+				debug!("Sending imp_some_error event to parachain ...");
 				let call = OpaqueCall::from_tuple(&(call_index, error));
 				self.context.submit_to_parentchain(call)
 			},
 			Ok(Err(e)) => {
-				error!("failed to get metadata. Due to: {:?}", e);
+				error!("get metadata failed: {:?}", e);
 			},
 			Err(e) => {
-				error!("failed to get metadata. Due to: {:?}", e);
+				error!("get metadata failed: {:?}", e);
 			},
 		}
 	}

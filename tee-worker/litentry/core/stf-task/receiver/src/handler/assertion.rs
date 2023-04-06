@@ -214,6 +214,7 @@ where
 			.get_from_metadata(|m| VCMPCallIndexes::vc_issued_call_indexes(m))
 		{
 			Ok(Ok(call_index)) => {
+				debug!("Sending vc_issued event to parachain ... ");
 				let call = OpaqueCall::from_tuple(&(
 					call_index,
 					self.req.who.clone(),
@@ -225,8 +226,8 @@ where
 				));
 				self.context.submit_to_parentchain(call)
 			},
-			Ok(Err(e)) => error!("Assertion failed to get metadata: {:?}", e),
-			Err(e) => error!("Assertion failed to get metadata: {:?}", e),
+			Ok(Err(e)) => error!("get metadata failed: {:?}", e),
+			Err(e) => error!("get metadata failed: {:?}", e),
 		};
 	}
 
@@ -239,6 +240,7 @@ where
 			.get_from_metadata(|m| VCMPCallIndexes::vcmp_some_error_call_indexes(m))
 		{
 			Ok(Ok(call_index)) => {
+				debug!("Sending vcmp_some_error event to parachain ... ");
 				let call = OpaqueCall::from_tuple(&(
 					call_index,
 					Some(self.req.who.clone()),
@@ -247,8 +249,8 @@ where
 				));
 				self.context.submit_to_parentchain(call)
 			},
-			Ok(Err(e)) => error!("failed to get metadata. Due to: {:?}", e),
-			Err(e) => error!("failed to get metadata. Due to: {:?}", e),
+			Ok(Err(e)) => error!("get metadata failed: {:?}", e),
+			Err(e) => error!("get metadata failed: {:?}", e),
 		};
 	}
 }
