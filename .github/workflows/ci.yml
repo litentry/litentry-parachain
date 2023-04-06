@@ -290,14 +290,18 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Build docker image
-        if: needs.set-condition.outputs.rebuild_parachain == 'true'
+        if: |
+          needs.set-condition.outputs.rebuild_parachain == 'true' &&
+          github.event_name == 'push' && github.ref == 'refs/heads/dev'
         run: |
           ./scripts/build-docker.sh production tee-prod
           echo "============================="
           docker images
 
-      - name: Pull docker image optinally
-        if: needs.set-condition.outputs.rebuild_parachain == 'false'
+      - name: Pull docker image optionally
+        if: |
+          needs.set-condition.outputs.rebuild_parachain == 'false' ||
+          !(github.event_name != 'push' && github.ref == 'refs/heads/dev')
         run: |
           docker pull litentry/litentry-parachain:tee-prod
 
