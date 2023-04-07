@@ -168,15 +168,25 @@ pub mod pallet {
 		StorageValue<_, T::Moment, ValueQuery, HeartbeatTimeoutDefault<T>>;
 
 	#[pallet::genesis_config]
-	#[cfg_attr(feature = "std", derive(Default))]
-	pub struct GenesisConfig {
+	pub struct GenesisConfig<T: Config> {
 		pub allow_sgx_debug_mode: bool,
+		pub admin: Option<T::AccountId>,
+	}
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self { allow_sgx_debug_mode: false, admin: None }
+		}
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig {
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
 			AllowSGXDebugMode::<T>::put(self.allow_sgx_debug_mode);
+			if let Some(ref admin) = self.admin {
+				Admin::<T>::put(admin);
+			}
 		}
 	}
 

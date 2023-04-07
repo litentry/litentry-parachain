@@ -33,18 +33,10 @@ impl SetHeartbeatTimeoutCommand {
 	pub(crate) fn run(&self, cli: &Cli) {
 		let chain_api = get_chain_api(cli);
 
+		// has to be //Alice as this is the genesis admin for teerex pallet,
+		// otherwise `set_heartbeat_timeout` call won't work
 		let alice = get_pair_from_str("//Alice");
 		let chain_api = chain_api.set_signer(alice.into());
-
-		// set //Alice as enclave admin
-		let call = compose_call!(
-			chain_api.metadata,
-			TEEREX,
-			"set_admin",
-			get_accountid_from_str("//Alice")
-		);
-		let xt: UncheckedExtrinsicV4<_, _> = compose_extrinsic!(chain_api, "Sudo", "sudo", call);
-		let _ = chain_api.send_extrinsic(xt.hex_encode(), XtStatus::Finalized).unwrap();
 
 		// call set_heartbeat_timeout
 		let xt: UncheckedExtrinsicV4<_, _> =
