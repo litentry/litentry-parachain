@@ -395,7 +395,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(6)]
-		#[pallet::weight((1000, DispatchClass::Normal, Pays::No))]
+		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
 		pub fn set_heartbeat_timeout(
 			origin: OriginFor<T>,
 			timeout: u64,
@@ -465,7 +465,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(8)]
-		#[pallet::weight((1000, DispatchClass::Normal, Pays::No))]
+		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
 		pub fn update_scheduled_enclave(
 			origin: OriginFor<T>,
 			sidechain_block_number: SidechainBlockNumber,
@@ -496,7 +496,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(10)]
-		#[pallet::weight((1000, DispatchClass::Normal, Pays::No))]
+		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
 		pub fn remove_scheduled_enclave(
 			origin: OriginFor<T>,
 			sidechain_block_number: SidechainBlockNumber,
@@ -565,7 +565,7 @@ pub mod pallet {
 		/// Change the admin account
 		/// similar to sudo.set_key, the old account will be supplied in event
 		#[pallet::call_index(13)]
-		#[pallet::weight((1000, DispatchClass::Normal, Pays::No))]
+		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
 		pub fn set_admin(origin: OriginFor<T>, new: T::AccountId) -> DispatchResultWithPostInfo {
 			T::SetAdminOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::AdminChanged { old_admin: Self::admin() });
