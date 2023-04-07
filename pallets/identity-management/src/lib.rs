@@ -256,7 +256,7 @@ pub mod pallet {
 		/// ---------------------------------------------------
 		/// The following extrinsics are supposed to be called by TEE only
 		/// ---------------------------------------------------
-		#[pallet::call_index(6)]
+		#[pallet::call_index(30)]
 		#[pallet::weight(195_000_000)]
 		pub fn user_shielding_key_set(
 			origin: OriginFor<T>,
@@ -268,7 +268,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
-		#[pallet::call_index(7)]
+		#[pallet::call_index(31)]
 		#[pallet::weight(195_000_000)]
 		pub fn identity_created(
 			origin: OriginFor<T>,
@@ -282,7 +282,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
-		#[pallet::call_index(8)]
+		#[pallet::call_index(32)]
 		#[pallet::weight(195_000_000)]
 		pub fn identity_removed(
 			origin: OriginFor<T>,
@@ -295,7 +295,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
-		#[pallet::call_index(9)]
+		#[pallet::call_index(33)]
 		#[pallet::weight(195_000_000)]
 		pub fn identity_verified(
 			origin: OriginFor<T>,
@@ -314,7 +314,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
-		#[pallet::call_index(10)]
+		#[pallet::call_index(34)]
 		#[pallet::weight(195_000_000)]
 		pub fn some_error(
 			origin: OriginFor<T>,
