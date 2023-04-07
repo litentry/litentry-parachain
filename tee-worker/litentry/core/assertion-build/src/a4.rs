@@ -84,9 +84,11 @@ use std::{
 
 // ERC20 LIT token address
 const LIT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
-const VC_SUBJECT_DESCRIPTION: &str =
-	"Check whether any of the linked accounts hold a minimum amount of LIT NOW";
-const VC_SUBJECT_TYPE: &str = "LIT Holder";
+
+const VC_A4_SUBJECT_DESCRIPTION: &str =
+	"Since when has the user been consistently holding a min amount {x} of LIT token";
+const VC_A4_SUBJECT_TYPE: &str = "LIT Holding Assertion";
+const VC_A4_SUBJECT_TAG: [&str; 3] = ["Ethereum", "Litmus", "Litentry"];
 
 pub fn build(
 	identities: Vec<Identity>,
@@ -207,7 +209,11 @@ pub fn build(
 
 	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
+			credential_unsigned.add_subject_info(
+				VC_A4_SUBJECT_DESCRIPTION,
+				VC_A4_SUBJECT_TYPE,
+				VC_A4_SUBJECT_TAG.to_vec(),
+			);
 			credential_unsigned.update_holder(
 				is_hold,
 				&q_min_balance,

@@ -33,8 +33,10 @@ use litentry_primitives::{
 use log::*;
 use std::{format, vec::Vec};
 
-const VC_SUBJECT_DESCRIPTION: &str = "User has retweeted a given tweet and is following the author";
-const VC_SUBJECT_TYPE: &str = "Twitter";
+const VC_A5_SUBJECT_DESCRIPTION: &str =
+	"The user has followed a specific and retweet a specific tweet";
+const VC_A5_SUBJECT_TYPE: &str = "Following a Twitter account and Retweet";
+const VC_A5_SUBJECT_TAG: [&str; 1] = ["Twitter"];
 
 pub fn build(
 	identities: Vec<Identity>,
@@ -127,7 +129,11 @@ pub fn build(
 
 	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
+			credential_unsigned.add_subject_info(
+				VC_A5_SUBJECT_DESCRIPTION,
+				VC_A5_SUBJECT_TYPE,
+				VC_A5_SUBJECT_TAG.to_vec(),
+			);
 			credential_unsigned.add_assertion_a5(original_tweet_id_s, value);
 
 			Ok(credential_unsigned)

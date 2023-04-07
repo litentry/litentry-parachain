@@ -32,8 +32,9 @@ use litentry_primitives::{
 use log::*;
 use std::{format, vec::Vec};
 
-const VC_SUBJECT_DESCRIPTION: &str = "User has at least X amount of followers";
-const VC_SUBJECT_TYPE: &str = "Total Twitter Followers";
+const VC_A6_SUBJECT_DESCRIPTION: &str = "The total Twitter follower amount of the user";
+const VC_A6_SUBJECT_TYPE: &str = "Twitter Follower Amount";
+const VC_A6_SUBJECT_TAG: [&str; 1] = ["Twitter"];
 
 /// Following ranges:
 ///
@@ -114,7 +115,11 @@ pub fn build(
 
 	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
+			credential_unsigned.add_subject_info(
+				VC_A6_SUBJECT_DESCRIPTION,
+				VC_A6_SUBJECT_TYPE,
+				VC_A6_SUBJECT_TAG.to_vec(),
+			);
 			credential_unsigned.add_assertion_a6(min, max);
 
 			Ok(credential_unsigned)

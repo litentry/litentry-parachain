@@ -37,8 +37,11 @@ use log::*;
 use std::{string::ToString, vec, vec::Vec};
 
 const WBTC_TOKEN_ADDRESS: &str = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
-const VC_SUBJECT_DESCRIPTION: &str = "The user held Wrapped BTC every day from a specific date";
-const VC_SUBJECT_TYPE: &str = "BTC Holder";
+
+const VC_A10_SUBJECT_DESCRIPTION: &str =
+	"Since when has the user been consistently holding a min amount {x} of WBTC token";
+const VC_A10_SUBJECT_TYPE: &str = "WBTC Holding Assertion";
+const VC_A10_SUBJECT_TAG: [&str; 1] = ["Ethereum"];
 
 // WBTC Holder
 pub fn build(
@@ -108,7 +111,11 @@ pub fn build(
 
 	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
+			credential_unsigned.add_subject_info(
+				VC_A10_SUBJECT_DESCRIPTION,
+				VC_A10_SUBJECT_TYPE,
+				VC_A10_SUBJECT_TAG.to_vec(),
+			);
 			credential_unsigned.update_holder(
 				is_hold,
 				&q_min_balance,

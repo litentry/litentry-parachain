@@ -34,8 +34,9 @@ use litentry_primitives::{
 use log::*;
 use std::{collections::HashSet, string::String, vec, vec::Vec};
 
-const VC_SUBJECT_DESCRIPTION: &str = "User has over X number of transactions";
-const VC_SUBJECT_TYPE: &str = "Total EVM and Substrate Transactions";
+const VC_A8_SUBJECT_DESCRIPTION: &str = "The total amount of transaction the user has ever made in all the available EVM/Substrate networks (including invalid transactions)";
+const VC_A8_SUBJECT_TYPE: &str = "EVM/Substrate Transaction Amount";
+const VC_A8_SUBJECT_TAG: [&str; 5] = ["Ethereum", "Litmus", "Litentry", "Polkadot", "Kusama"];
 
 pub const INDEXING_NETWORKS: [IndexingNetwork; 6] = [
 	IndexingNetwork::Litentry,
@@ -111,7 +112,11 @@ pub fn build(
 	let (min, max) = get_total_tx_ranges(total_txs);
 	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
+			credential_unsigned.add_subject_info(
+				VC_A8_SUBJECT_DESCRIPTION,
+				VC_A8_SUBJECT_TYPE,
+				VC_A8_SUBJECT_TAG.to_vec(),
+			);
 			credential_unsigned.add_assertion_a8(target_networks, min, max);
 
 			Ok(credential_unsigned)
