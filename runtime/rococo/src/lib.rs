@@ -876,7 +876,7 @@ impl pallet_teerex::Config for Runtime {
 	//       we are missing `register_dcap_enclave` and `register_quoting_enclave`
 	//       it should be re-benchmarked once the upstream fixes it
 	type WeightInfo = ();
-	type SetEnclaveAdminOrigin = EnsureRootOrAllCouncil;
+	type SetAdminOrigin = EnsureRootOrAllCouncil;
 }
 
 impl pallet_sidechain::Config for Runtime {

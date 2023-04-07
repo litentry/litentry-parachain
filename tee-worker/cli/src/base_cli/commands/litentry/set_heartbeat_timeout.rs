@@ -40,7 +40,7 @@ impl SetHeartbeatTimeoutCommand {
 		let call = compose_call!(
 			chain_api.metadata,
 			TEEREX,
-			"set_enclave_admin",
+			"set_admin",
 			get_accountid_from_str("//Alice")
 		);
 		let xt: UncheckedExtrinsicV4<_, _> = compose_extrinsic!(chain_api, "Sudo", "sudo", call);
