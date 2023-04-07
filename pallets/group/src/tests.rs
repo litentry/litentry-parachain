@@ -108,7 +108,7 @@ fn group_control_on_off_function() {
 		assert_ok!(Whitelist::ensure_origin(RuntimeOrigin::signed(ACCOUNT_B)));
 
 		// Switch whitelist function on
-		assert_ok!(Whitelist::swtich_group_control_on(RuntimeOrigin::root()));
+		assert_ok!(Whitelist::switch_group_control_on(RuntimeOrigin::root()));
 		assert!(Whitelist::group_control_on());
 
 		// Can not pass now

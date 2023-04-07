@@ -128,9 +128,9 @@ where
 		encoded_callback: Vec<u8>,
 	) -> Result<(), Error> {
 		let shard = ShardIdentifier::decode(&mut encoded_shard.as_slice())
-			.map_err(|e| Error::OtherError(format!("error decoding ShardIdentifier {:?}", e)))?;
+			.map_err(|e| Error::OtherError(format!("error decoding ShardIdentifier: {:?}", e)))?;
 		let callback = TrustedCall::decode(&mut encoded_callback.as_slice())
-			.map_err(|e| Error::OtherError(format!("error decoding TrustedCall {:?}", e)))?;
+			.map_err(|e| Error::OtherError(format!("error decoding TrustedCall: {:?}", e)))?;
 		self.submit_trusted_call(&shard, &callback)
 	}
 
@@ -153,12 +153,7 @@ where
 
 		debug!("submit encrypted trusted call, length: {}", encrypted_trusted_call.len());
 		executor::block_on(self.author_api.submit_top(encrypted_trusted_call, *shard)).map_err(
-			|e| {
-				Error::OtherError(format!(
-					"Error adding indirect trusted call to TOP pool: {:?}",
-					e
-				))
-			},
+			|e| Error::OtherError(format!("error submitting trusted call to top pool: {:?}", e)),
 		)?;
 
 		Ok(())
@@ -167,7 +162,7 @@ where
 	fn submit_to_parentchain(&self, call: OpaqueCall) {
 		match self.create_extrinsics.create_extrinsics(vec![call].as_slice(), None) {
 			Err(e) => {
-				error!("failed to create extrinsics. Due to: {:?}", e);
+				error!("create extrinsic failed: {:?}", e);
 			},
 			Ok(xt) => {
 				let _ = self.ocall_api.send_to_parentchain(xt);
@@ -229,7 +224,7 @@ where
 				let key =
 					state.execute_with(|| IdentityManagement::user_shielding_keys(&request.who));
 
-				debug!("in RequestType::SetUserShieldingKey read key is: {:?}", key);
+				debug!("RequestType::SetUserShieldingKey, key: {:?}", key);
 
 				context.decode_and_submit_trusted_call(
 					request.encoded_shard,

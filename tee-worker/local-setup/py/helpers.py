@@ -83,15 +83,15 @@ class GracefulKiller:
             except:
                 pass
         print('Cleaning tmp files, cwd = {}'.format(os.getcwd()))
-        i = 0
-        while os.path.isdir(f'tmp/w{i}'):
-            shutil.rmtree(f'tmp/w{i}')
-            print(f'Removed tmp/w{i}')
-            i += 1
+        # i = 0
+        # while os.path.isdir(f'tmp/w{i}'):
+        #     shutil.rmtree(f'tmp/w{i}')
+        #     print(f'Removed tmp/w{i}')
+        #     i += 1
         if os.path.isdir(f'log'):
             new_folder_name = datetime.now().strftime("log-backup/log-%Y%m%d-%H%M%S")
             shutil.copytree(f'log', new_folder_name)
-            print(f'Copy log into ' + new_folder_name)
+            print(f'Backup log into ' + new_folder_name)
         if self.parachain_type == "local":
             print("Cleaning up litentry-parachain...")
             subprocess.run(['./scripts/litentry/stop_parachain.sh', '||', 'true'])

@@ -68,17 +68,17 @@ use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
-use lc_data_providers::graphql::{
-	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
+use lc_data_providers::{
+	graphql::{GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork},
+	vec_to_string,
 };
 use litentry_primitives::{
-	Assertion, Identity, ParentchainBalance, ParentchainBlockNumber, ASSERTION_FROM_DATE,
+	Assertion, ErrorDetail, Identity, ParameterString, ParentchainBlockNumber, ASSERTION_FROM_DATE,
 };
 use log::*;
 use std::{
-	str::from_utf8,
+	collections::{HashMap, HashSet},
 	string::{String, ToString},
-	vec,
 	vec::Vec,
 };
 
@@ -90,7 +90,7 @@ const VC_SUBJECT_TYPE: &str = "LIT Holder";
 
 pub fn build(
 	identities: Vec<Identity>,
-	min_balance: ParentchainBalance,
+	min_balance: ParameterString,
 	shard: &ShardIdentifier,
 	who: &AccountId,
 	bn: ParentchainBlockNumber,
@@ -102,98 +102,117 @@ pub fn build(
 		identities
 	);
 
-	let mut client = GraphQLClient::new();
-	let mut found = false;
-	let mut from_date_index = 0_usize;
+	let q_min_balance = vec_to_string(min_balance.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(Assertion::A4(min_balance.clone()), ErrorDetail::ParseError)
+	})?;
 
-	for identity in identities.iter() {
-		if found {
+	let mut client = GraphQLClient::new();
+	let mut networks: HashMap<VerifiedCredentialsNetwork, HashSet<String>> = HashMap::new();
+
+	identities.iter().for_each(|identity| {
+		match identity {
+			Identity::Substrate { network, address } => {
+				let mut address = account_id_to_string(address.as_ref());
+				address.insert_str(0, "0x");
+
+				if_match_networks_collect_address(&mut networks, (*network).into(), address);
+			},
+			Identity::Evm { network, address } => {
+				let mut address = account_id_to_string(address.as_ref());
+				address.insert_str(0, "0x");
+
+				if_match_networks_collect_address(&mut networks, (*network).into(), address);
+			},
+			_ => {},
+		};
+	});
+
+	let mut is_hold = false;
+	let mut optimal_hold_index = usize::MAX;
+
+	// If both Substrate and Evm networks meet the conditions, take the interval with the longest holding time.
+	// Here's an example:
+	//
+	// ALICE holds 100 LITs since 2018-03-02 on substrate network
+	// ALICE holds 100 LITs since 2020-03-02 on evm network
+	//
+	// min_amount is 1 LIT
+	//
+	// the result should be
+	// Alice:
+	// [
+	//    from_date: < 2019-01-01
+	//    to_date: >= 2023-03-30 (now)
+	//    value: true
+	// ]
+	for (verified_network, addresses) in networks {
+		// If found query result is the optimal solution, i.e optimal_hold_index = 0, (2017-01-01)
+		// there is no need to query other networks.
+		if optimal_hold_index == 0 {
 			break
 		}
 
-		let mut verified_network = VerifiedCredentialsNetwork::Polkadot;
-		if identity.is_web3() {
-			match identity {
-				Identity::Substrate { network, .. } => verified_network = (*network).into(),
-				Identity::Evm { network, .. } => verified_network = (*network).into(),
-				_ => {},
-			}
-		}
-		if matches!(
-			verified_network,
-			VerifiedCredentialsNetwork::Litentry
-				| VerifiedCredentialsNetwork::Litmus
-				| VerifiedCredentialsNetwork::LitentryRococo
-				| VerifiedCredentialsNetwork::Ethereum
-		) {
-			let q_min_balance: f64 = if verified_network == VerifiedCredentialsNetwork::Litentry
-				|| verified_network == VerifiedCredentialsNetwork::Litmus
-				|| verified_network == VerifiedCredentialsNetwork::LitentryRococo
-			{
-				(min_balance / (10 ^ 12)) as f64
-			} else {
-				(min_balance / (10 ^ 18)) as f64
-			};
+		// Each query loop needs to reset is_hold to false
+		is_hold = false;
 
-			let mut addresses: Vec<String> = vec![];
-			match &identity {
-				Identity::Evm { address, .. } => {
-					let mut address = account_id_to_string(address.as_ref());
-					address.insert_str(0, "0x");
-					debug!("	[AssertionBuild] A4 EVM address : {}", address);
+		let addresses: Vec<String> = addresses.into_iter().collect();
+		let token_address = if verified_network == VerifiedCredentialsNetwork::Ethereum {
+			LIT_TOKEN_ADDRESS
+		} else {
+			""
+		};
 
-					addresses.push(address);
+		// TODO:
+		// There is a problem here, because TDF does not support mixed network types,
+		// It is need to request TDF 2 (substrate+evm networks) * 7 (ASSERTION_FROM_DATE) = 14 http requests.
+		// If TDF can handle mixed network type, and even supports from_date array,
+		// so that ideally, up to one http request can yield results.
+		for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
+			let vch = VerifiedCredentialsIsHodlerIn::new(
+				addresses.clone(),
+				from_date.to_string(),
+				verified_network.clone(),
+				token_address.to_string(),
+				q_min_balance.to_string(),
+			);
+			match client.check_verified_credentials_is_hodler(vch) {
+				Ok(is_hodler_out) => {
+					for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
+						is_hold = is_hold || hodler.is_hodler;
+					}
 				},
-				Identity::Substrate { address, .. } => {
-					let mut address = account_id_to_string(address.as_ref());
-					address.insert_str(0, "0x");
-					debug!("	[AssertionBuild] A4 Substrate address : {}", address);
-
-					addresses.push(address);
-				},
-				Identity::Web2 { address, .. } => match from_utf8(address.as_ref()) {
-					Ok(addr) => addresses.push(addr.to_string()),
-					Err(e) => error!(
-						"	[AssertionBuild] A4 parse error Web2 address {:?}, {:?}",
-						address, e
-					),
-				},
-			}
-			let mut tmp_token_addr = String::from("");
-			if verified_network == VerifiedCredentialsNetwork::Ethereum {
-				tmp_token_addr = LIT_TOKEN_ADDRESS.to_string();
+				Err(e) => error!(
+					"Assertion A4 request check_verified_credentials_is_hodler error: {:?}",
+					e
+				),
 			}
 
-			for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
-				// if found is true, no need to check it continually
-				if found {
-					from_date_index = index + 1;
-					break
+			if is_hold {
+				if index < optimal_hold_index {
+					optimal_hold_index = index;
 				}
 
-				let vch = VerifiedCredentialsIsHodlerIn::new(
-					addresses.clone(),
-					from_date.to_string(),
-					verified_network.clone(),
-					tmp_token_addr.clone(),
-					q_min_balance,
-				);
-				match client.check_verified_credentials_is_hodler(vch) {
-					Ok(is_hodler_out) => {
-						for holder in is_hodler_out.verified_credentials_is_hodler.iter() {
-							found = found || holder.is_hodler;
-						}
-					},
-					Err(e) => error!("	[BuildAssertion] A4, Request, {:?}", e),
-				}
+				break
 			}
 		}
+	}
+
+	// Found the optimal hold index, set the is_hold to true, otherwise
+	// the optimal_hold_index is always 0 (2017-01-01)
+	if optimal_hold_index != usize::MAX {
+		is_hold = true;
+	} else {
+		optimal_hold_index = 0;
 	}
 
 	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
-			credential_unsigned.update_holder(from_date_index, min_balance);
+			credential_unsigned.update_holder(
+				is_hold,
+				&q_min_balance,
+				&ASSERTION_FROM_DATE[optimal_hold_index].into(),
+			);
 
 			Ok(credential_unsigned)
 		},
@@ -201,5 +220,31 @@ pub fn build(
 			error!("Generate unsigned credential failed {:?}", e);
 			Err(Error::RequestVCFailed(Assertion::A4(min_balance), e.to_error_detail()))
 		},
+	}
+}
+
+fn if_match_networks_collect_address(
+	networks: &mut HashMap<VerifiedCredentialsNetwork, HashSet<String>>,
+	verified_network: VerifiedCredentialsNetwork,
+	address: String,
+) {
+	if matches!(
+		verified_network,
+		VerifiedCredentialsNetwork::Litentry
+			| VerifiedCredentialsNetwork::Litmus
+			| VerifiedCredentialsNetwork::LitentryRococo
+			| VerifiedCredentialsNetwork::Ethereum
+	) {
+		match networks.get_mut(&verified_network) {
+			Some(set) => {
+				set.insert(address);
+			},
+			None => {
+				let mut set = HashSet::new();
+				set.insert(address);
+
+				networks.insert(verified_network.clone(), set);
+			},
+		}
 	}
 }

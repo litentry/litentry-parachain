@@ -107,11 +107,9 @@ impl pallet_vc_management::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type TEECallOrigin = EnsureSignedBy<One, u64>;
 	type SetAdminOrigin = EnsureSignedBy<One, u64>;
-	type VCMPExtrinsicWhitelistOrigin = VCMPExtrinsicWhitelist;
+	type ExtrinsicWhitelistOrigin = VCMPExtrinsicWhitelist;
 }
 
-// This code should be safe to add
-/// Temporary adjust for whitelist function
 impl pallet_group::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type GroupManagerOrigin = frame_system::EnsureRoot<Self::AccountId>;

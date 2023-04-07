@@ -65,10 +65,7 @@ pub mod pallet {
 		type SetAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		// This type should be safe to remove
 		/// Temporary type for whitelist function
-		type VCMPExtrinsicWhitelistOrigin: EnsureOrigin<
-			Self::RuntimeOrigin,
-			Success = Self::AccountId,
-		>;
+		type ExtrinsicWhitelistOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
 	}
 
 	// a map VCIndex -> VC context
@@ -161,6 +158,15 @@ pub mod pallet {
 			detail: ErrorDetail,
 			req_ext_hash: H256,
 		},
+		VCRegistryItemAdded {
+			account: T::AccountId,
+			assertion: Assertion,
+			index: VCIndex,
+		},
+		VCRegistryItemRemoved {
+			index: VCIndex,
+		},
+		VCRegistryCleared,
 	}
 
 	#[pallet::error]
@@ -194,7 +200,7 @@ pub mod pallet {
 			shard: ShardIdentifier,
 			assertion: Assertion,
 		) -> DispatchResultWithPostInfo {
-			let who = T::VCMPExtrinsicWhitelistOrigin::ensure_origin(origin)?;
+			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::VCRequested { account: who, shard, assertion });
 			Ok(().into())
 		}
@@ -202,7 +208,7 @@ pub mod pallet {
 		#[pallet::call_index(1)]
 		#[pallet::weight(195_000_000)]
 		pub fn disable_vc(origin: OriginFor<T>, index: VCIndex) -> DispatchResultWithPostInfo {
-			let who = T::VCMPExtrinsicWhitelistOrigin::ensure_origin(origin)?;
+			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
 
 			VCRegistry::<T>::try_mutate(index, |context| {
 				let mut c = context.take().ok_or(Error::<T>::VCNotExist)?;
@@ -218,7 +224,7 @@ pub mod pallet {
 		#[pallet::call_index(2)]
 		#[pallet::weight(195_000_000)]
 		pub fn revoke_vc(origin: OriginFor<T>, index: VCIndex) -> DispatchResultWithPostInfo {
-			let who = T::VCMPExtrinsicWhitelistOrigin::ensure_origin(origin)?;
+			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
 
 			let context = VCRegistry::<T>::get(index).ok_or(Error::<T>::VCNotExist)?;
 			ensure!(who == context.subject, Error::<T>::VCSubjectMismatch);
@@ -372,6 +378,52 @@ pub mod pallet {
 			let _ = SchemaRegistry::<T>::get(index).ok_or(Error::<T>::SchemaNotExists)?;
 			SchemaRegistry::<T>::remove(index);
 			Self::deposit_event(Event::SchemaRevoked { account: sender, shard, index });
+			Ok(().into())
+		}
+
+		/// ---------------------------------------------------
+		/// The following extrinsics are supposed to be called by Sudo/Council only
+		/// This is the temporary function for manual operation of VCRegistry storage
+		/// ---------------------------------------------------
+		#[pallet::call_index(10)]
+		#[pallet::weight(195_000_000)]
+		pub fn add_vc_registry_item(
+			origin: OriginFor<T>,
+			index: VCIndex,
+			subject: T::AccountId,
+			assertion: Assertion,
+			hash: H256,
+		) -> DispatchResultWithPostInfo {
+			T::SetAdminOrigin::ensure_origin(origin)?;
+			ensure!(!VCRegistry::<T>::contains_key(index), Error::<T>::VCAlreadyExists);
+			VCRegistry::<T>::insert(
+				index,
+				VCContext::<T>::new(subject.clone(), assertion.clone(), hash),
+			);
+			Self::deposit_event(Event::VCRegistryItemAdded { account: subject, assertion, index });
+			Ok(().into())
+		}
+
+		#[pallet::call_index(11)]
+		#[pallet::weight(195_000_000)]
+		pub fn remove_vc_registry_item(
+			origin: OriginFor<T>,
+			index: VCIndex,
+		) -> DispatchResultWithPostInfo {
+			T::SetAdminOrigin::ensure_origin(origin)?;
+			let _ = VCRegistry::<T>::get(index).ok_or(Error::<T>::VCNotExist)?;
+			VCRegistry::<T>::remove(index);
+			Self::deposit_event(Event::VCRegistryItemRemoved { index });
+			Ok(().into())
+		}
+
+		#[pallet::call_index(12)]
+		#[pallet::weight(195_000_000)]
+		pub fn clear_vc_registry(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+			T::SetAdminOrigin::ensure_origin(origin)?;
+			// If more than u32 max, the map itself is overflow, so no worry
+			let _ = VCRegistry::<T>::clear(u32::max_value(), None);
+			Self::deposit_event(Event::VCRegistryCleared);
 			Ok(().into())
 		}
 	}

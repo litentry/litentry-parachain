@@ -32,6 +32,8 @@ extern crate sgx_tstd as std;
 use core::marker::PhantomData;
 use itc_parentchain_block_import_dispatcher::triggered_dispatcher::TriggerParentchainBlockImport;
 use itp_ocall_api::EnclaveOnChainOCallApi;
+use itp_sgx_externalities::SgxExternalities;
+use itp_stf_state_handler::handle_state::HandleState;
 use itp_time_utils::duration_now;
 use its_block_verification::slot::slot_author;
 use its_consensus_common::{Environment, Error as ConsensusError, Proposer};
@@ -41,6 +43,7 @@ use its_primitives::{
 	types::block::BlockHash,
 };
 use its_validateer_fetch::ValidateerFetch;
+use lc_scheduled_enclave::ScheduledEnclaveUpdater;
 use sp_core::ByteArray;
 use sp_runtime::{
 	app_crypto::{sp_core::H256, Pair},
@@ -67,23 +70,47 @@ pub struct Aura<
 	Environment,
 	OcallApi,
 	ImportTrigger,
+	ScheduledEnclave,
+	StateHandler,
 > {
 	authority_pair: AuthorityPair,
 	ocall_api: OcallApi,
 	parentchain_import_trigger: Arc<ImportTrigger>,
 	environment: Environment,
 	claim_strategy: SlotClaimStrategy,
+	scheduled_enclave: Arc<ScheduledEnclave>,
+	state_handler: Arc<StateHandler>,
 	_phantom: PhantomData<(AuthorityPair, ParentchainBlock, SidechainBlock)>,
 }
 
-impl<AuthorityPair, ParentchainBlock, SidechainBlock, Environment, OcallApi, ImportTrigger>
-	Aura<AuthorityPair, ParentchainBlock, SidechainBlock, Environment, OcallApi, ImportTrigger>
+impl<
+		AuthorityPair,
+		ParentchainBlock,
+		SidechainBlock,
+		Environment,
+		OcallApi,
+		ImportTrigger,
+		ScheduledEnclave,
+		StateHandler,
+	>
+	Aura<
+		AuthorityPair,
+		ParentchainBlock,
+		SidechainBlock,
+		Environment,
+		OcallApi,
+		ImportTrigger,
+		ScheduledEnclave,
+		StateHandler,
+	>
 {
 	pub fn new(
 		authority_pair: AuthorityPair,
 		ocall_api: OcallApi,
 		parentchain_import_trigger: Arc<ImportTrigger>,
 		environment: Environment,
+		scheduled_enclave: Arc<ScheduledEnclave>,
+		state_handler: Arc<StateHandler>,
 	) -> Self {
 		Self {
 			authority_pair,
@@ -91,6 +118,8 @@ impl<AuthorityPair, ParentchainBlock, SidechainBlock, Environment, OcallApi, Imp
 			parentchain_import_trigger,
 			environment,
 			claim_strategy: SlotClaimStrategy::RoundRobin,
+			scheduled_enclave,
+			state_handler,
 			_phantom: Default::default(),
 		}
 	}
@@ -119,10 +148,26 @@ type AuthorityId<P> = <P as Pair>::Public;
 type ShardIdentifierFor<SignedSidechainBlock> =
 	<<<SignedSidechainBlock as SignedBlock>::Block as SidechainBlockTrait>::HeaderType as HeaderTrait>::ShardIdentifier;
 
-impl<AuthorityPair, ParentchainBlock, SignedSidechainBlock, E, OcallApi, ImportTrigger>
-	SimpleSlotWorker<ParentchainBlock>
-	for Aura<AuthorityPair, ParentchainBlock, SignedSidechainBlock, E, OcallApi, ImportTrigger>
-where
+impl<
+		AuthorityPair,
+		ParentchainBlock,
+		SignedSidechainBlock,
+		E,
+		OcallApi,
+		ImportTrigger,
+		ScheduledEnclave,
+		StateHandler,
+	> SimpleSlotWorker<ParentchainBlock>
+	for Aura<
+		AuthorityPair,
+		ParentchainBlock,
+		SignedSidechainBlock,
+		E,
+		OcallApi,
+		ImportTrigger,
+		ScheduledEnclave,
+		StateHandler,
+	> where
 	AuthorityPair: Pair,
 	// todo: Relax hash trait bound, but this needs a change to some other parts in the code.
 	ParentchainBlock: ParentchainBlockTrait<Hash = BlockHash>,
@@ -132,14 +177,26 @@ where
 	OcallApi: ValidateerFetch + EnclaveOnChainOCallApi + Send + 'static,
 	ImportTrigger:
 		TriggerParentchainBlockImport<SignedBlockType = SignedParentchainBlock<ParentchainBlock>>,
+	ScheduledEnclave: ScheduledEnclaveUpdater,
+	StateHandler: HandleState<StateT = SgxExternalities>,
 {
 	type Proposer = E::Proposer;
 	type Claim = AuthorityPair::Public;
 	type EpochData = Vec<AuthorityId<AuthorityPair>>;
 	type Output = SignedSidechainBlock;
+	type ScheduledEnclave = ScheduledEnclave;
+	type StateHandler = StateHandler;
 
 	fn logging_target(&self) -> &'static str {
 		"aura"
+	}
+
+	fn get_scheduled_enclave(&mut self) -> Arc<Self::ScheduledEnclave> {
+		self.scheduled_enclave.clone()
+	}
+
+	fn get_state_handler(&mut self) -> Arc<Self::StateHandler> {
+		self.state_handler.clone()
 	}
 
 	fn epoch_data(
@@ -264,12 +321,13 @@ mod tests {
 		parentchain_block_builder::ParentchainBlockBuilder,
 		parentchain_header_builder::ParentchainHeaderBuilder,
 	};
-	use itp_test::mock::onchain_mock::OnchainMock;
+	use itp_test::mock::{handle_state_mock::HandleStateMock, onchain_mock::OnchainMock};
 	use itp_types::{
-		Block as ParentchainBlock, Enclave, Header as ParentchainHeader,
+		Block as ParentchainBlock, Enclave, Header as ParentchainHeader, ShardIdentifier,
 		SignedBlock as SignedParentchainBlock,
 	};
 	use its_consensus_slots::PerShardSlotWorkerScheduler;
+	use lc_scheduled_enclave::ScheduledEnclaveMock;
 	use sp_core::ed25519::Public;
 	use sp_keyring::ed25519::Keyring;
 
@@ -277,7 +335,14 @@ mod tests {
 		onchain_mock: OnchainMock,
 		trigger_parentchain_import: Arc<TriggerParentchainBlockImportMock<SignedParentchainBlock>>,
 	) -> TestAura {
-		Aura::new(Keyring::Alice.pair(), onchain_mock, trigger_parentchain_import, EnvironmentMock)
+		Aura::new(
+			Keyring::Alice.pair(),
+			onchain_mock,
+			trigger_parentchain_import,
+			EnvironmentMock,
+			Arc::new(ScheduledEnclaveMock::default()),
+			Arc::new(HandleStateMock::from_shard(ShardIdentifier::default()).unwrap()),
+		)
 	}
 
 	fn get_default_aura() -> TestAura {
