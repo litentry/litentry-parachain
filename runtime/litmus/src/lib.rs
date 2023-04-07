@@ -794,7 +794,7 @@ impl pallet_teerex::Config for Runtime {
 	type Currency = Balances;
 	type MomentsPerDay = MomentsPerDay;
 	type WeightInfo = ();
-	type SetAdminOrigin = EnsureRootOrAllCouncil;
+	type SetAdminOrigin = EnsureRootOrHalfCouncil;
 }
 
 impl pallet_sidechain::Config for Runtime {
