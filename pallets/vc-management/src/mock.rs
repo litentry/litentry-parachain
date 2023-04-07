@@ -21,13 +21,12 @@ use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{ConstU128, ConstU16, ConstU32, ConstU64, Everything},
 };
-use frame_system as system;
+use frame_system::{EnsureRoot, EnsureSignedBy};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
-use system::EnsureSignedBy;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -53,7 +52,7 @@ parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 }
 
-impl system::Config for Test {
+impl frame_system::Config for Test {
 	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
@@ -106,7 +105,7 @@ ord_parameter_types! {
 impl pallet_vc_management::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type TEECallOrigin = EnsureSignedBy<One, u64>;
-	type SetAdminOrigin = EnsureSignedBy<One, u64>;
+	type SetAdminOrigin = EnsureRoot<Self::AccountId>;
 	type ExtrinsicWhitelistOrigin = VCMPExtrinsicWhitelist;
 }
 
@@ -116,12 +115,12 @@ impl pallet_group::Config for Test {
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| {
 		System::set_block_number(1);
-		let _ = VCManagement::set_schema_admin(RuntimeOrigin::signed(1), 1);
+		let _ = VCManagement::set_admin(RuntimeOrigin::root(), 1);
 	});
 	ext
 }
