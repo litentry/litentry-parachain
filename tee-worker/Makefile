@@ -247,7 +247,7 @@ identity: mrenclave mrsigner
 
 .PHONY: release-pkg
 release-pkg:
-	@./scripts/litentry/generate_release_pkg.sh
+	@./scripts/litentry/release/generate_release_pkg.sh
 
 .PHONY: help
 help:

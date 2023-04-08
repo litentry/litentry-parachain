@@ -4,10 +4,8 @@ set -euo pipefail
 ROOT_DIR=$(git rev-parse --show-toplevel)
 WORKER_DIR="${ROOT_DIR}/tee-worker"
 
-
-# Edit the following configs:
+# Edit the following variable(s):
 COMMERCIAL_KEY_PATH=${WORKER_DIR}/enclave-runtime/Enclave_private.pem
-
 
 ##############################################################################
 # Don't edit anything from here
@@ -28,8 +26,8 @@ SGX_PRODUCTION=1 SGX_COMMERCIAL_KEY=${COMMERCIAL_KEY_PATH} make
 for Item in 'enclave.signed.so' 'integritee-service'; do
     cp "${WORKER_DIR}/bin/${Item}" "${RELEASE_DIR}"
 done
-for Item in 'worker-config.json.example' 'start_worker.py'; do
-    cp "${WORKER_DIR}/scripts/litentry/${Item}" "${RELEASE_DIR}"
+for Item in 'prepare.sh' 'config.json.eg' 'ReadMe.md' 'ts-setup'; do
+    cp -r "${WORKER_DIR}/scripts/litentry/release/${Item}" "${RELEASE_DIR}"
 done
 
 make mrenclave | grep -oP '^MRENCLAVE: \K.*$$' > "${RELEASE_DIR}/mrenclave.txt"
