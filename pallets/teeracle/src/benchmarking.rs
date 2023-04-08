@@ -59,7 +59,7 @@ benchmarks! {
 		// MRENCLAVE differs depending on if `skip-ias-check` feature is present.
 		Teerex::<T>::update_scheduled_enclave(
 			RawOrigin::Signed(signer.clone()).into(),
-			0u32,
+			0u64,
 			#[cfg(feature = "skip-ias-check")]
 			MrEnclave::decode(&mut TEST4_SETUP.cert).unwrap_or_default(),
 			#[cfg(not(feature = "skip-ias-check"))]
@@ -101,7 +101,7 @@ benchmarks! {
 		// MRENCLAVE differs depending on if `skip-ias-check` feature is present.
 		Teerex::<T>::update_scheduled_enclave(
 			RawOrigin::Signed(signer.clone()).into(),
-			0u32,
+			0u64,
 			#[cfg(feature = "skip-ias-check")]
 			MrEnclave::decode(&mut TEST4_SETUP.cert).unwrap_or_default(),
 			#[cfg(not(feature = "skip-ias-check"))]

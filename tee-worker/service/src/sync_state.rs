@@ -86,17 +86,10 @@ async fn get_enclave_url_of_first_registered<NodeApi: PalletTeerexApi, EnclaveAp
 	enclave_api: &EnclaveApi,
 ) -> Result<String> {
 	let self_mr_enclave = enclave_api.get_mrenclave()?;
-	let all_scheduled_mr_enclaves = node_api.all_schedule_mr_enclaves(None)?;
-	if all_scheduled_mr_enclaves.is_empty() {
-		return Err(Error::NoParachainScheduledMrEnclaves)
-	}
-	if !all_scheduled_mr_enclaves.contains(&self_mr_enclave) {
-		return Err(Error::InvalidMrEnclave)
-	}
 	let first_enclave = node_api
 		.all_enclaves(None)?
 		.into_iter()
-		.find(|e| all_scheduled_mr_enclaves.contains(&e.mr_enclave))
+		.find(|e| e.mr_enclave == self_mr_enclave)
 		.ok_or(Error::NoPeerWorkerFound)?;
 	let worker_api_direct = DirectWorkerApi::new(first_enclave.url);
 	Ok(worker_api_direct.get_mu_ra_url()?)

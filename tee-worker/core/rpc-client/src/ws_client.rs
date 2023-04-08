@@ -1,18 +1,14 @@
 /*
 	Copyright 2021 Integritee AG and Supercomputing Systems AG
-
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
 	You may obtain a copy of the License at
-
 		http://www.apache.org/licenses/LICENSE-2.0
-
 	Unless required by applicable law or agreed to in writing, software
 	distributed under the License is distributed on an "AS IS" BASIS,
 	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 	See the License for the specific language governing permissions and
 	limitations under the License.
-
 */
 
 use crate::error::{Error, Result as RpcClientResult};
@@ -66,14 +62,14 @@ impl WsClientControl {
 }
 
 #[derive(Clone)]
-pub struct WsClient<'a> {
+pub struct WsClient {
 	web_socket: Sender,
 	request: String,
-	result: &'a MpscSender<String>,
+	result: MpscSender<String>,
 	do_watch: bool,
 }
 
-impl<'a> WsClient<'a> {
+impl WsClient {
 	/// Connect a web-socket client for multiple request/responses.
 	///
 	/// Control over the connection is done using the provided client control.
@@ -88,31 +84,31 @@ impl<'a> WsClient<'a> {
 		debug!("Connecting web-socket connection with watch");
 		connect(url.to_string(), |out| {
 			control.subscribe_sender(out.clone()).expect("Failed sender subscription");
-			WsClient::new(out, request.to_string(), result, true)
+			WsClient::new(out, request.to_string(), result.clone(), true)
 		})
 	}
 
 	/// Connects a web-socket client for a one-shot request.
 	#[allow(clippy::result_large_err)]
 	pub fn connect_one_shot(url: &str, request: &str, result: MpscSender<String>) -> Result<()> {
-		debug!("Connecting one-shot web-socket connection to server {url}");
+		debug!("Connecting one-shot web-socket connection");
 		connect(url.to_string(), |out| {
 			debug!("Create new web-socket client");
-			WsClient::new(out, request.to_string(), &result, false)
+			WsClient::new(out, request.to_string(), result.clone(), false)
 		})
 	}
 
 	fn new(
 		web_socket: Sender,
 		request: String,
-		result: &MpscSender<String>,
+		result: MpscSender<String>,
 		do_watch: bool,
 	) -> WsClient {
 		WsClient { web_socket, request, result, do_watch }
 	}
 }
 
-impl Handler for WsClient<'_> {
+impl Handler for WsClient {
 	fn on_open(&mut self, _: Handshake) -> Result<()> {
 		debug!("sending request: {:?}", self.request.clone());
 		match self.web_socket.send(self.request.clone()) {
