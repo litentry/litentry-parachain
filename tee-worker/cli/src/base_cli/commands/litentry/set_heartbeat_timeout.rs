@@ -15,13 +15,13 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	command_utils::{get_accountid_from_str, get_chain_api, get_pair_from_str},
+	command_utils::{get_chain_api, get_pair_from_str},
 	Cli,
 };
 
 use itp_node_api::api_client::TEEREX;
 use log::*;
-use substrate_api_client::{compose_call, compose_extrinsic, UncheckedExtrinsicV4, XtStatus};
+use substrate_api_client::{compose_extrinsic, UncheckedExtrinsicV4, XtStatus};
 
 #[derive(Parser)]
 pub struct SetHeartbeatTimeoutCommand {
