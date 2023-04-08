@@ -147,7 +147,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
-	let teerex_config = crate::GenesisConfig { allow_sgx_debug_mode: true };
+	let teerex_config = crate::GenesisConfig { allow_sgx_debug_mode: true, admin: None };
 	GenesisBuild::<Test>::assimilate_storage(&teerex_config, &mut t).unwrap();
 
 	let mut ext: sp_io::TestExternalities = t.into();
@@ -164,7 +164,7 @@ pub fn new_test_production_ext() -> sp_io::TestExternalities {
 	.assimilate_storage(&mut t)
 	.unwrap();
 
-	let teerex_config = crate::GenesisConfig { allow_sgx_debug_mode: false };
+	let teerex_config = crate::GenesisConfig { allow_sgx_debug_mode: false, admin: None };
 	GenesisBuild::<Test>::assimilate_storage(&teerex_config, &mut t).unwrap();
 
 	let mut ext: sp_io::TestExternalities = t.into();
