@@ -76,7 +76,7 @@ benchmarks! {
 		timestamp::Pallet::<T>::set_timestamp(TEST4_SETUP.timestamp.checked_into().unwrap());
 		let signer: T::AccountId = get_signer(TEST4_SETUP.signer_pub);
 
-		Teerex::<T>::set_enclave_admin(
+		Teerex::<T>::set_admin(
 			RawOrigin::Root.into(),
 			signer.clone(),
 		).unwrap();

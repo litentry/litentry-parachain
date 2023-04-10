@@ -129,7 +129,7 @@ impl pallet_teerex::Config for Test {
 	type Currency = Balances;
 	type MomentsPerDay = MomentsPerDay;
 	type WeightInfo = ();
-	type SetEnclaveAdminOrigin = EnsureRoot<Self::AccountId>;
+	type SetAdminOrigin = EnsureRoot<Self::AccountId>;
 }
 
 impl pallet_identity_management::Config for Test {
