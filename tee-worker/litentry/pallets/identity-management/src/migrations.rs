@@ -24,7 +24,7 @@ pub fn migrate_to_v2<T: crate::Config, P: GetStorageVersion + PalletInfoAccess>(
 
 		// '//Charlie' -> 0x90b5ab205c6974c9ea841be688864633dc9ca8a357843eeacf2314649965fe22
 		let mut charlie = [0; 32];
-		let _ = hex::decode_to_slice(
+		hex::decode_to_slice(
 			"90b5ab205c6974c9ea841be688864633dc9ca8a357843eeacf2314649965fe22",
 			&mut charlie,
 		)
