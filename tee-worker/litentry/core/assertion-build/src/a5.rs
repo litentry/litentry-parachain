@@ -35,7 +35,7 @@ use std::{format, vec::Vec};
 
 const VC_A5_SUBJECT_DESCRIPTION: &str =
 	"The user has followed a specific and retweet a specific tweet";
-const VC_A5_SUBJECT_TYPE: &str = "Following a Twitter account and Retweet";
+const VC_A5_SUBJECT_TYPE: &str = "Retweet a tweet as a follower of the tweet author";
 const VC_A5_SUBJECT_TAG: [&str; 1] = ["Twitter"];
 
 pub fn build(

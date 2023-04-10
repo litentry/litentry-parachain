@@ -32,7 +32,7 @@ use litentry_primitives::{
 use log::*;
 use std::{format, vec::Vec};
 
-const VC_A6_SUBJECT_DESCRIPTION: &str = "The total Twitter follower amount of the user";
+const VC_A6_SUBJECT_DESCRIPTION: &str = "The range of the user's Twitter follower count";
 const VC_A6_SUBJECT_TYPE: &str = "Twitter Follower Amount";
 const VC_A6_SUBJECT_TAG: [&str; 1] = ["Twitter"];
 

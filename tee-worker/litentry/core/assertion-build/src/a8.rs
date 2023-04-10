@@ -34,9 +34,10 @@ use litentry_primitives::{
 use log::*;
 use std::{collections::HashSet, string::String, vec, vec::Vec};
 
-const VC_A8_SUBJECT_DESCRIPTION: &str = "The total amount of transaction the user has ever made in all the available EVM/Substrate networks (including invalid transactions)";
-const VC_A8_SUBJECT_TYPE: &str = "EVM/Substrate Transaction Amount";
-const VC_A8_SUBJECT_TAG: [&str; 5] = ["Ethereum", "Litmus", "Litentry", "Polkadot", "Kusama"];
+const VC_A8_SUBJECT_DESCRIPTION: &str = "The total amount of transaction the user has ever made in each of the available  networks (including invalid transactions)";
+const VC_A8_SUBJECT_TYPE: &str = "EVM/Substrate Transaction Count on Networks";
+const VC_A8_SUBJECT_TAG: [&str; 6] =
+	["Litentry", "Litmus", "Polkadot", "Kusama", "Ethereum", "Khala"];
 
 pub const INDEXING_NETWORKS: [IndexingNetwork; 6] = [
 	IndexingNetwork::Litentry,

@@ -34,8 +34,8 @@ use log::*;
 use std::vec::Vec;
 
 const VC_A2_SUBJECT_DESCRIPTION: &str =
-	"The user has obtained a specific role in a specific Discord channel";
-const VC_A2_SUBJECT_TYPE: &str = "Discord Role Verification";
+	"The user has obtained an ID-Hubber role in a Litentry Discord channel";
+const VC_A2_SUBJECT_TYPE: &str = "Discord ID-Hubber Role Verification";
 const VC_A2_SUBJECT_TAG: [&str; 1] = ["Discord"];
 
 pub fn build(

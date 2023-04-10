@@ -33,7 +33,8 @@ use litentry_primitives::{
 use log::*;
 use std::vec::Vec;
 
-const VC_A3_SUBJECT_DESCRIPTION: &str = "The user is a member of a specific Discord guild";
+const VC_A3_SUBJECT_DESCRIPTION: &str =
+	"The user has commented in a specific Discord channel with a specific role";
 const VC_A3_SUBJECT_TYPE: &str = "Discord Member Verification";
 const VC_A3_SUBJECT_TAG: [&str; 1] = ["Discord"];
 
