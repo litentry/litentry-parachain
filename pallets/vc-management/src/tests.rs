@@ -202,12 +202,12 @@ fn revoke_vc_with_other_subject_fails() {
 }
 
 #[test]
-fn set_schema_admin_works() {
+fn set_admin_works() {
 	new_test_ext().execute_with(|| {
-		assert_eq!(VCManagement::schema_admin().unwrap(), 1);
-		assert_ok!(VCManagement::set_schema_admin(RuntimeOrigin::signed(1), 2));
-		assert_eq!(VCManagement::schema_admin().unwrap(), 2);
-		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::SchemaAdminChanged {
+		assert_eq!(VCManagement::admin().unwrap(), 1);
+		assert_ok!(VCManagement::set_admin(RuntimeOrigin::root(), 2));
+		assert_eq!(VCManagement::admin().unwrap(), 2);
+		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::AdminChanged {
 			old_admin: Some(1),
 			new_admin: Some(2),
 		}));
@@ -215,14 +215,14 @@ fn set_schema_admin_works() {
 }
 
 #[test]
-fn set_schema_admin_fails_with_unprivileged_origin() {
+fn set_admin_fails_with_unprivileged_origin() {
 	new_test_ext().execute_with(|| {
-		assert_eq!(VCManagement::schema_admin().unwrap(), 1);
+		assert_eq!(VCManagement::admin().unwrap(), 1);
 		assert_noop!(
-			VCManagement::set_schema_admin(RuntimeOrigin::signed(2), 2),
+			VCManagement::set_admin(RuntimeOrigin::signed(2), 2),
 			sp_runtime::DispatchError::BadOrigin
 		);
-		assert_eq!(VCManagement::schema_admin().unwrap(), 1);
+		assert_eq!(VCManagement::admin().unwrap(), 1);
 	});
 }
 
@@ -251,7 +251,7 @@ fn add_schema_with_unpriviledged_origin_fails() {
 		let shard: ShardIdentifier = H256::from_slice(&TEST_MRENCLAVE);
 		assert_noop!(
 			VCManagement::add_schema(RuntimeOrigin::signed(2), shard, id, content),
-			Error::<Test>::RequireSchemaAdmin
+			Error::<Test>::RequireAdmin
 		);
 	});
 }
@@ -314,7 +314,7 @@ fn disable_schema_with_unpriviledged_origin_fails() {
 		assert_ok!(VCManagement::add_schema(RuntimeOrigin::signed(1), shard, id, content));
 		assert_noop!(
 			VCManagement::disable_schema(RuntimeOrigin::signed(2), shard, 0),
-			Error::<Test>::RequireSchemaAdmin
+			Error::<Test>::RequireAdmin
 		);
 	});
 }
@@ -385,7 +385,7 @@ fn revoke_schema_with_unprivileged_origin_fails() {
 		assert_ok!(VCManagement::add_schema(RuntimeOrigin::signed(1), shard, id, content));
 		assert_noop!(
 			VCManagement::revoke_schema(RuntimeOrigin::signed(2), shard, 0),
-			Error::<Test>::RequireSchemaAdmin
+			Error::<Test>::RequireAdmin
 		);
 	});
 }
@@ -407,7 +407,7 @@ fn manual_add_remove_vc_registry_item_works() {
 				Assertion::A1,
 				VC_HASH
 			),
-			sp_runtime::DispatchError::BadOrigin
+			Error::<Test>::RequireAdmin
 		);
 		// Successfully add vc
 		assert_ok!(VCManagement::add_vc_registry_item(
@@ -427,7 +427,7 @@ fn manual_add_remove_vc_registry_item_works() {
 		// Unauthorized party can not remove vc
 		assert_noop!(
 			VCManagement::remove_vc_registry_item(RuntimeOrigin::signed(2), VC_INDEX),
-			sp_runtime::DispatchError::BadOrigin
+			Error::<Test>::RequireAdmin
 		);
 		// Successfully remove vc
 		assert_ok!(VCManagement::remove_vc_registry_item(RuntimeOrigin::signed(1), VC_INDEX));
@@ -451,7 +451,7 @@ fn manual_add_clear_vc_registry_item_works() {
 				Assertion::A1,
 				VC_HASH
 			),
-			sp_runtime::DispatchError::BadOrigin
+			Error::<Test>::RequireAdmin
 		);
 		// Successfully add vc
 		assert_ok!(VCManagement::add_vc_registry_item(
@@ -471,7 +471,7 @@ fn manual_add_clear_vc_registry_item_works() {
 		// Unauthorized party can not clear vc
 		assert_noop!(
 			VCManagement::clear_vc_registry(RuntimeOrigin::signed(2)),
-			sp_runtime::DispatchError::BadOrigin
+			Error::<Test>::RequireAdmin
 		);
 		// Successfully clear vc
 		assert_ok!(VCManagement::clear_vc_registry(RuntimeOrigin::signed(1)));
