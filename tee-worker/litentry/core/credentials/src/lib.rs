@@ -371,9 +371,12 @@ impl Credential {
 		self.credential_subject.values.push(is_hold);
 	}
 
-	pub fn add_subject_info(&mut self, subject_description: &str, types: &str) {
+	pub fn add_subject_info(&mut self, subject_description: &str, types: &str, tag: Vec<&str>) {
 		self.credential_subject.description = subject_description.into();
 		self.credential_subject.types = types.into();
+
+		let tag = tag.iter().map(|s| s.to_string()).collect();
+		self.credential_subject.tag = tag;
 	}
 
 	pub fn add_assertion_a1(&mut self, value: bool) {

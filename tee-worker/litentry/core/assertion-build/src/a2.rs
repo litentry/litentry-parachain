@@ -33,9 +33,10 @@ use litentry_primitives::{
 use log::*;
 use std::vec::Vec;
 
-const VC_SUBJECT_DESCRIPTION: &str =
-	"Becoming an ID-Hubber: if user has a Discord account verified and joined Litentry guild";
-const VC_SUBJECT_TYPE: &str = "ID-Hubber";
+const VC_A2_SUBJECT_DESCRIPTION: &str =
+	"The user has obtained an ID-Hubber role in a Litentry Discord channel";
+const VC_A2_SUBJECT_TYPE: &str = "Discord ID-Hubber Role Verification";
+const VC_A2_SUBJECT_TAG: [&str; 1] = ["Discord"];
 
 pub fn build(
 	identities: Vec<Identity>,
@@ -86,7 +87,11 @@ pub fn build(
 
 	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
+			credential_unsigned.add_subject_info(
+				VC_A2_SUBJECT_DESCRIPTION,
+				VC_A2_SUBJECT_TYPE,
+				VC_A2_SUBJECT_TAG.to_vec(),
+			);
 
 			let value = discord_cnt > 0 && has_joined;
 			credential_unsigned.add_assertion_a2(value, guild_id_s);
