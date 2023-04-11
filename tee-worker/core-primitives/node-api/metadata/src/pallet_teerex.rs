@@ -41,7 +41,7 @@ pub trait TeerexCallIndexes {
 
 	fn publish_hash_call_indexes(&self) -> Result<[u8; 2]>;
 
-	fn update_scheduled_encalve(&self) -> Result<[u8; 2]>;
+	fn update_scheduled_enclave(&self) -> Result<[u8; 2]>;
 
 	fn remove_scheduled_enclave(&self) -> Result<[u8; 2]>;
 }
@@ -93,7 +93,7 @@ impl TeerexCallIndexes for NodeMetadata {
 		self.call_indexes(TEEREX, "publish_hash")
 	}
 
-	fn update_scheduled_encalve(&self) -> Result<[u8; 2]> {
+	fn update_scheduled_enclave(&self) -> Result<[u8; 2]> {
 		self.call_indexes(TEEREX, "update_scheduled_enclave")
 	}
 

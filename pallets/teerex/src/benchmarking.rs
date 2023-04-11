@@ -76,11 +76,16 @@ benchmarks! {
 		timestamp::Pallet::<T>::set_timestamp(TEST4_SETUP.timestamp.checked_into().unwrap());
 		let signer: T::AccountId = get_signer(TEST4_SETUP.signer_pub);
 
+		Teerex::<T>::set_admin(
+			RawOrigin::Root.into(),
+			signer.clone(),
+		).unwrap();
+
 		// we need different parameters, unfortunately - since the way to calculate
 		// MRENCLAVE differs depending on if `skip-ias-check` feature is present.
 		Teerex::<T>::update_scheduled_enclave(
-			RawOrigin::Root.into(),
-			0u32,
+			RawOrigin::Signed(signer.clone()).into(),
+			0u64,
 			#[cfg(feature = "skip-ias-check")]
 			MrEnclave::decode(&mut TEST4_SETUP.cert).unwrap_or_default(),
 			#[cfg(not(feature = "skip-ias-check"))]

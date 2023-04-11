@@ -47,6 +47,7 @@ use itp_types::Block as ParentchainBlock;
 use its_block_verification::slot::slot_from_timestamp_and_duration;
 use its_primitives::types::SignedBlock as SignedSidechainBlock;
 use its_sidechain::{aura::proposer_factory::ProposerFactory, slots::SlotInfo};
+use lc_scheduled_enclave::ScheduledEnclaveMock;
 use log::*;
 use primitive_types::H256;
 use sgx_crypto_helper::RsaKeyPair;
@@ -136,15 +137,18 @@ pub fn ensure_events_get_reset_upon_block_proposal() {
 	let slot_info =
 		SlotInfo::new(slot, timestamp, SLOT_DURATION, ends_at, parentchain_header.clone());
 
+	let scheduled_enclave = Arc::new(ScheduledEnclaveMock::default());
 	info!("Executing AURA on slot..");
 	let (blocks, opaque_calls) =
-		exec_aura_on_slot::<_, ParentchainBlock, SignedSidechainBlock, _, _, _>(
+		exec_aura_on_slot::<_, ParentchainBlock, SignedSidechainBlock, _, _, _, _, _>(
 			slot_info,
 			signer,
 			ocall_api.clone(),
 			parentchain_block_import_trigger.clone(),
 			proposer_environment,
 			shards,
+			scheduled_enclave,
+			state_handler.clone(),
 		)
 		.unwrap();
 

@@ -35,7 +35,7 @@ NODEURL=${NODEURL:-"ws://127.0.0.1"}
 WORKER1PORT=${WORKER1PORT:-2000}
 WORKER1URL=${WORKER1URL:-"wss://127.0.0.1"}
 
-CLIENT_BIN=${CLIENT_BIN:-"./../bin/integritee-cli"}
+CLIENT_BIN=${CLIENT_BIN:-"./bin/integritee-cli"}
 
 LOG_FOLDER="./../log"
 
@@ -44,7 +44,6 @@ echo "Using node uri $NODEURL:$NPORT"
 echo "Using trusted-worker uri $WORKER1URL:$WORKER1PORT"
 echo ""
 
-ACC=//Alice
 TIMEOUT=5000 # 5 seconds, smaller than 12s (the block duration)
 
 CLIENT="$CLIENT_BIN -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
@@ -69,11 +68,11 @@ fi
 
 # indirect call that will be sent to the parachain, it will be synchronously handled
 sleep 10
-echo "* Set $ACC 's heartbeat timeout to $TIMEOUT"
-${CLIENT} set-heartbeat-timeout "$ACC" "$TIMEOUT"
+echo "* Set heartbeat timeout to $TIMEOUT"
+${CLIENT} set-heartbeat-timeout "$TIMEOUT"
 echo ""
 
-sleep 60
+sleep 120
 
 read MRENCLAVE <<< $($CLIENT list-workers | awk '/  MRENCLAVE: / { print $2; exit }')
 if [[ -z $MRENCLAVE ]]

@@ -29,7 +29,7 @@ pub trait PalletTeerexApi {
 	fn enclave(&self, index: u64, at_block: Option<Hash>) -> ApiResult<Option<Enclave>>;
 	fn enclave_count(&self, at_block: Option<Hash>) -> ApiResult<u64>;
 	fn all_enclaves(&self, at_block: Option<Hash>) -> ApiResult<Vec<Enclave>>;
-	fn all_schedule_mr_enclaves(&self, at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>>;
+	fn all_scheduled_mrenclaves(&self, at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>>;
 	fn worker_for_shard(
 		&self,
 		shard: &ShardIdentifier,
@@ -63,7 +63,7 @@ where
 		Ok(enclaves)
 	}
 
-	fn all_schedule_mr_enclaves(&self, at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>> {
+	fn all_scheduled_mrenclaves(&self, at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>> {
 		let keys: Vec<_> = self
 			.get_keys(storage_key(TEEREX, "ScheduledEnclave"), at_block)?
 			.unwrap_or_default()

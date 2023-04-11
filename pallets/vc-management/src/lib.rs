@@ -17,8 +17,6 @@
 //! A pallet to serve as the interface for F/E for verifiable credentials (VC)
 //! management. Similar to IMP pallet, the actual processing will be done within TEE.
 
-// Note:
-// the admin account can only be set by SetAdminOrigin, which will be bound at runtime.
 // TODO: benchmark and weights: we need worst-case scenarios
 
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -63,10 +61,9 @@ pub mod pallet {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		// some extrinsics should only be called by origins from TEE
 		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-		/// The origin who can set the admin account
+		// origin who can set the admin account
 		type SetAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-		// This type should be safe to remove
-		/// Temporary type for whitelist function
+		// origin that is allowed to call extrinsics
 		type ExtrinsicWhitelistOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
 	}
 
@@ -75,10 +72,10 @@ pub mod pallet {
 	#[pallet::getter(fn vc_registry)]
 	pub type VCRegistry<T: Config> = StorageMap<_, Blake2_128Concat, VCIndex, VCContext<T>>;
 
-	// the Schema admin account
+	// the admin account
 	#[pallet::storage]
-	#[pallet::getter(fn schema_admin)]
-	pub type SchemaAdmin<T: Config> = StorageValue<_, T::AccountId, OptionQuery>;
+	#[pallet::getter(fn admin)]
+	pub type Admin<T: Config> = StorageValue<_, T::AccountId, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn schema_index)]
@@ -118,7 +115,7 @@ pub mod pallet {
 			req_ext_hash: H256,
 		},
 		// Admin account was changed
-		SchemaAdminChanged {
+		AdminChanged {
 			old_admin: Option<T::AccountId>,
 			new_admin: Option<T::AccountId>,
 		},
@@ -182,7 +179,7 @@ pub mod pallet {
 		/// The VC is already disabled
 		VCAlreadyDisabled,
 		/// Error when the caller account is not the admin
-		RequireSchemaAdmin,
+		RequireAdmin,
 		/// Schema not exists
 		SchemaNotExists,
 		/// Schema is already disabled
@@ -191,6 +188,27 @@ pub mod pallet {
 		SchemaAlreadyActivated,
 		SchemaIndexOverFlow,
 		LengthMismatch,
+	}
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		pub admin: Option<T::AccountId>,
+	}
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self { admin: None }
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			if let Some(ref admin) = self.admin {
+				Admin::<T>::put(admin);
+			}
+		}
 	}
 
 	#[pallet::call]
@@ -211,7 +229,6 @@ pub mod pallet {
 		#[pallet::weight(195_000_000)]
 		pub fn disable_vc(origin: OriginFor<T>, index: VCIndex) -> DispatchResultWithPostInfo {
 			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
-
 			VCRegistry::<T>::try_mutate(index, |context| {
 				let mut c = context.take().ok_or(Error::<T>::VCNotExist)?;
 				ensure!(who == c.subject, Error::<T>::VCSubjectMismatch);
@@ -227,7 +244,6 @@ pub mod pallet {
 		#[pallet::weight(195_000_000)]
 		pub fn revoke_vc(origin: OriginFor<T>, index: VCIndex) -> DispatchResultWithPostInfo {
 			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
-
 			let context = VCRegistry::<T>::get(index).ok_or(Error::<T>::VCNotExist)?;
 			ensure!(who == context.subject, Error::<T>::VCSubjectMismatch);
 			VCRegistry::<T>::remove(index);
@@ -235,10 +251,146 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		#[pallet::call_index(3)]
+		#[pallet::weight(195_000_000)]
+		pub fn set_admin(origin: OriginFor<T>, new: T::AccountId) -> DispatchResultWithPostInfo {
+			T::SetAdminOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::AdminChanged {
+				old_admin: Self::admin(),
+				new_admin: Some(new.clone()),
+			});
+			<Admin<T>>::put(new);
+			Ok(Pays::No.into())
+		}
+
+		#[pallet::call_index(4)]
+		#[pallet::weight(195_000_000)]
+		pub fn add_schema(
+			origin: OriginFor<T>,
+			shard: ShardIdentifier,
+			id: Vec<u8>,
+			content: Vec<u8>,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+			ensure!(Some(sender.clone()) == Self::admin(), Error::<T>::RequireAdmin);
+			ensure!((id.len() as u32) <= SCHEMA_ID_LEN, Error::<T>::LengthMismatch);
+			ensure!((content.len() as u32) <= SCHEMA_CONTENT_LEN, Error::<T>::LengthMismatch);
+
+			let index = Self::schema_index();
+			<SchemaRegistryIndex<T>>::put(
+				index.checked_add(1u64).ok_or(Error::<T>::SchemaIndexOverFlow)?,
+			);
+
+			SchemaRegistry::<T>::insert(
+				index,
+				VCSchema::<T>::new(id.clone(), sender.clone(), content.clone()),
+			);
+			Self::deposit_event(Event::SchemaIssued { account: sender, shard, index });
+			Ok(().into())
+		}
+
+		#[pallet::call_index(5)]
+		#[pallet::weight(195_000_000)]
+		pub fn disable_schema(
+			origin: OriginFor<T>,
+			shard: ShardIdentifier,
+			index: SchemaIndex,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+			ensure!(Some(sender.clone()) == Self::admin(), Error::<T>::RequireAdmin);
+			SchemaRegistry::<T>::try_mutate(index, |context| {
+				let mut c = context.take().ok_or(Error::<T>::SchemaNotExists)?;
+				ensure!(c.status == Status::Active, Error::<T>::SchemaAlreadyDisabled);
+				c.status = Status::Disabled;
+				*context = Some(c);
+				Self::deposit_event(Event::SchemaDisabled { account: sender, shard, index });
+				Ok(().into())
+			})
+		}
+
+		#[pallet::call_index(6)]
+		#[pallet::weight(195_000_000)]
+		pub fn activate_schema(
+			origin: OriginFor<T>,
+			shard: ShardIdentifier,
+			index: SchemaIndex,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+			ensure!(Some(sender.clone()) == Self::admin(), Error::<T>::RequireAdmin);
+			SchemaRegistry::<T>::try_mutate(index, |context| {
+				let mut c = context.take().ok_or(Error::<T>::SchemaNotExists)?;
+				ensure!(c.status == Status::Disabled, Error::<T>::SchemaAlreadyActivated);
+				c.status = Status::Active;
+				*context = Some(c);
+				Self::deposit_event(Event::SchemaActivated { account: sender, shard, index });
+				Ok(().into())
+			})
+		}
+
+		#[pallet::call_index(7)]
+		#[pallet::weight(195_000_000)]
+		pub fn revoke_schema(
+			origin: OriginFor<T>,
+			shard: ShardIdentifier,
+			index: SchemaIndex,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+			ensure!(Some(sender.clone()) == Self::admin(), Error::<T>::RequireAdmin);
+			let _ = SchemaRegistry::<T>::get(index).ok_or(Error::<T>::SchemaNotExists)?;
+			SchemaRegistry::<T>::remove(index);
+			Self::deposit_event(Event::SchemaRevoked { account: sender, shard, index });
+			Ok(().into())
+		}
+
+		#[pallet::call_index(8)]
+		#[pallet::weight(195_000_000)]
+		pub fn add_vc_registry_item(
+			origin: OriginFor<T>,
+			index: VCIndex,
+			subject: T::AccountId,
+			assertion: Assertion,
+			hash: H256,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
+			ensure!(!VCRegistry::<T>::contains_key(index), Error::<T>::VCAlreadyExists);
+			VCRegistry::<T>::insert(
+				index,
+				VCContext::<T>::new(subject.clone(), assertion.clone(), hash),
+			);
+			Self::deposit_event(Event::VCRegistryItemAdded { account: subject, assertion, index });
+			Ok(().into())
+		}
+
+		#[pallet::call_index(9)]
+		#[pallet::weight(195_000_000)]
+		pub fn remove_vc_registry_item(
+			origin: OriginFor<T>,
+			index: VCIndex,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
+			let _ = VCRegistry::<T>::get(index).ok_or(Error::<T>::VCNotExist)?;
+			VCRegistry::<T>::remove(index);
+			Self::deposit_event(Event::VCRegistryItemRemoved { index });
+			Ok(().into())
+		}
+
+		#[pallet::call_index(10)]
+		#[pallet::weight(195_000_000)]
+		pub fn clear_vc_registry(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
+			// If more than u32 max, the map itself is overflow, so no worry
+			let _ = VCRegistry::<T>::clear(u32::max_value(), None);
+			Self::deposit_event(Event::VCRegistryCleared);
+			Ok(().into())
+		}
+
 		/// ---------------------------------------------------
 		/// The following extrinsics are supposed to be called by TEE only
 		/// ---------------------------------------------------
-		#[pallet::call_index(3)]
+		#[pallet::call_index(30)]
 		#[pallet::weight(195_000_000)]
 		pub fn vc_issued(
 			origin: OriginFor<T>,
@@ -259,7 +411,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
-		#[pallet::call_index(4)]
+		#[pallet::call_index(31)]
 		#[pallet::weight(195_000_000)]
 		pub fn some_error(
 			origin: OriginFor<T>,
@@ -280,153 +432,6 @@ pub mod pallet {
 					Self::deposit_event(Event::UnclassifiedError { account, detail, req_ext_hash }),
 			}
 			Ok(Pays::No.into())
-		}
-
-		// Change the schema Admin account
-		#[pallet::call_index(5)]
-		#[pallet::weight(195_000_000)]
-		pub fn set_schema_admin(
-			origin: OriginFor<T>,
-			new: T::AccountId,
-		) -> DispatchResultWithPostInfo {
-			T::SetAdminOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::SchemaAdminChanged {
-				old_admin: Self::schema_admin(),
-				new_admin: Some(new.clone()),
-			});
-			<SchemaAdmin<T>>::put(new);
-			Ok(Pays::No.into())
-		}
-
-		// It requires the schema Admin account
-		#[pallet::call_index(6)]
-		#[pallet::weight(195_000_000)]
-		pub fn add_schema(
-			origin: OriginFor<T>,
-			shard: ShardIdentifier,
-			id: Vec<u8>,
-			content: Vec<u8>,
-		) -> DispatchResultWithPostInfo {
-			let sender = ensure_signed(origin)?;
-			ensure!(Some(sender.clone()) == Self::schema_admin(), Error::<T>::RequireSchemaAdmin);
-			ensure!((id.len() as u32) <= SCHEMA_ID_LEN, Error::<T>::LengthMismatch);
-			ensure!((content.len() as u32) <= SCHEMA_CONTENT_LEN, Error::<T>::LengthMismatch);
-
-			let index = Self::schema_index();
-			<SchemaRegistryIndex<T>>::put(
-				index.checked_add(1u64).ok_or(Error::<T>::SchemaIndexOverFlow)?,
-			);
-
-			SchemaRegistry::<T>::insert(
-				index,
-				VCSchema::<T>::new(id.clone(), sender.clone(), content.clone()),
-			);
-			Self::deposit_event(Event::SchemaIssued { account: sender, shard, index });
-			Ok(().into())
-		}
-
-		// It requires the schema Admin account
-		#[pallet::call_index(7)]
-		#[pallet::weight(195_000_000)]
-		pub fn disable_schema(
-			origin: OriginFor<T>,
-			shard: ShardIdentifier,
-			index: SchemaIndex,
-		) -> DispatchResultWithPostInfo {
-			let sender = ensure_signed(origin)?;
-			ensure!(Some(sender.clone()) == Self::schema_admin(), Error::<T>::RequireSchemaAdmin);
-
-			SchemaRegistry::<T>::try_mutate(index, |context| {
-				let mut c = context.take().ok_or(Error::<T>::SchemaNotExists)?;
-				ensure!(c.status == Status::Active, Error::<T>::SchemaAlreadyDisabled);
-				c.status = Status::Disabled;
-				*context = Some(c);
-				Self::deposit_event(Event::SchemaDisabled { account: sender, shard, index });
-				Ok(().into())
-			})
-		}
-
-		// It requires the schema Admin account
-		#[pallet::call_index(8)]
-		#[pallet::weight(195_000_000)]
-		pub fn activate_schema(
-			origin: OriginFor<T>,
-			shard: ShardIdentifier,
-			index: SchemaIndex,
-		) -> DispatchResultWithPostInfo {
-			let sender = ensure_signed(origin)?;
-			ensure!(Some(sender.clone()) == Self::schema_admin(), Error::<T>::RequireSchemaAdmin);
-			SchemaRegistry::<T>::try_mutate(index, |context| {
-				let mut c = context.take().ok_or(Error::<T>::SchemaNotExists)?;
-				ensure!(c.status == Status::Disabled, Error::<T>::SchemaAlreadyActivated);
-				c.status = Status::Active;
-				*context = Some(c);
-				Self::deposit_event(Event::SchemaActivated { account: sender, shard, index });
-				Ok(().into())
-			})
-		}
-
-		// It requires the schema Admin account
-		#[pallet::call_index(9)]
-		#[pallet::weight(195_000_000)]
-		pub fn revoke_schema(
-			origin: OriginFor<T>,
-			shard: ShardIdentifier,
-			index: SchemaIndex,
-		) -> DispatchResultWithPostInfo {
-			let sender = ensure_signed(origin)?;
-			ensure!(Some(sender.clone()) == Self::schema_admin(), Error::<T>::RequireSchemaAdmin);
-
-			let _ = SchemaRegistry::<T>::get(index).ok_or(Error::<T>::SchemaNotExists)?;
-			SchemaRegistry::<T>::remove(index);
-			Self::deposit_event(Event::SchemaRevoked { account: sender, shard, index });
-			Ok(().into())
-		}
-
-		/// ---------------------------------------------------
-		/// The following extrinsics are supposed to be called by Sudo/Council only
-		/// This is the temporary function for manual operation of VCRegistry storage
-		/// ---------------------------------------------------
-		#[pallet::call_index(10)]
-		#[pallet::weight(195_000_000)]
-		pub fn add_vc_registry_item(
-			origin: OriginFor<T>,
-			index: VCIndex,
-			subject: T::AccountId,
-			assertion: Assertion,
-			hash: H256,
-		) -> DispatchResultWithPostInfo {
-			T::SetAdminOrigin::ensure_origin(origin)?;
-			ensure!(!VCRegistry::<T>::contains_key(index), Error::<T>::VCAlreadyExists);
-			VCRegistry::<T>::insert(
-				index,
-				VCContext::<T>::new(subject.clone(), assertion.clone(), hash),
-			);
-			Self::deposit_event(Event::VCRegistryItemAdded { account: subject, assertion, index });
-			Ok(().into())
-		}
-
-		#[pallet::call_index(11)]
-		#[pallet::weight(195_000_000)]
-		pub fn remove_vc_registry_item(
-			origin: OriginFor<T>,
-			index: VCIndex,
-		) -> DispatchResultWithPostInfo {
-			T::SetAdminOrigin::ensure_origin(origin)?;
-			let _ = VCRegistry::<T>::get(index).ok_or(Error::<T>::VCNotExist)?;
-			VCRegistry::<T>::remove(index);
-			Self::deposit_event(Event::VCRegistryItemRemoved { index });
-			Ok(().into())
-		}
-
-		#[pallet::call_index(12)]
-		#[pallet::weight(195_000_000)]
-		pub fn clear_vc_registry(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
-			T::SetAdminOrigin::ensure_origin(origin)?;
-			// If more than u32 max, the map itself is overflow, so no worry
-			let _ = VCRegistry::<T>::clear(u32::max_value(), None);
-			Self::deposit_event(Event::VCRegistryCleared);
-			Ok(().into())
 		}
 	}
 }

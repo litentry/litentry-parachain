@@ -44,7 +44,7 @@ impl PalletTeerexApi for TestNodeApi {
 		Ok(enclaves())
 	}
 
-	fn all_schedule_mr_enclaves(&self, _at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>> {
+	fn all_scheduled_mrenclaves(&self, _at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>> {
 		let enclaves = enclaves();
 		let mr_enclaves: HashSet<_> = enclaves.into_iter().map(|e| e.mr_enclave).collect();
 		Ok(mr_enclaves.into_iter().collect())
