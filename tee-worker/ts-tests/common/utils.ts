@@ -501,7 +501,7 @@ export async function handleIdentityEvents(
     aesKey: HexString,
     events: any[],
     type: 'UserShieldingKeySet' | 'IdentityCreated' | 'IdentityVerified' | 'IdentityRemoved' | 'Failed'
-): Promise<any> {
+): Promise<any[]> {
     let results: IdentityGenericEvent[] = [];
 
     for (let index = 0; index < events.length; index++) {
@@ -586,17 +586,18 @@ export async function buildValidations(
     eventDatas: any[],
     identities: any[],
     network: 'ethereum' | 'substrate' | 'twitter',
-    type: 'multiple' | 'single',
-    substrateSigners: KeyringPair[],
+    substrateSigners: KeyringPair[] | KeyringPair,
     ethereumSigners?: ethers.Wallet[]
 ): Promise<LitentryValidationData[]> {
     let signature_ethereum: HexString;
     let signature_substrate: Uint8Array;
     let verifyDatas: LitentryValidationData[] = [];
+
     for (let index = 0; index < eventDatas.length; index++) {
-        const substrateSigner = type === 'multiple' ? substrateSigners[index] : substrateSigners[0];
+        const substrateSigner = Array.isArray(substrateSigners) ? substrateSigners[index] : substrateSigners;
 
         const ethereumSigner = network === 'ethereum' ? ethereumSigners![index] : undefined;
+
         const data = eventDatas[index];
         const msg = generateVerificationMessage(
             context,
@@ -619,6 +620,8 @@ export async function buildValidations(
             ethereumValidationData!.Web3Validation!.Evm!.message = msg;
             const msgHash = ethers.utils.arrayify(msg);
             signature_ethereum = (await ethereumSigner!.signMessage(msgHash)) as HexString;
+            console.log('signature_ethereum', ethereumSigners![index].address, signature_ethereum);
+
             ethereumValidationData!.Web3Validation!.Evm!.signature!.Ethereum = signature_ethereum;
             assert.isNotEmpty(data.challengeCode, 'ethereum challengeCode empty');
             console.log('ethereumValidationData', ethereumValidationData);
@@ -671,9 +674,10 @@ export async function buildIdentityHelper(
     return identity;
 }
 
+//If multiple transactions are built from multiple accounts, pass the signers as an array. If multiple transactions are built from a single account, signers cannot be an array.
 export async function buildIdentityTxs(
     context: IntegrationTestContext,
-    signers: KeyringPair[],
+    signers: KeyringPair[] | KeyringPair,
     identities: LitentryIdentity[],
     method: 'setUserShieldingKey' | 'createIdentity' | 'verifyIdentity' | 'removeIdentity',
     validations?: LitentryValidationData[]
@@ -682,9 +686,9 @@ export async function buildIdentityTxs(
     const api = context.api;
     const mrEnclave = context.mrEnclave;
     const teeShieldingKey = context.teeShieldingKey;
-    const len = method === 'setUserShieldingKey' ? signers.length : identities.length;
+    const len = Array.isArray(signers) ? signers.length : identities.length;
     for (let k = 0; k < len; k++) {
-        const signer = method === 'setUserShieldingKey' ? signers[k] : signers[0];
+        const signer = Array.isArray(signers) ? signers[k] : signers;
         const identity = identities[k];
         let tx: SubmittableExtrinsic<ApiTypes>;
         let nonce: number;
@@ -731,4 +735,64 @@ export async function buildIdentityTxs(
     }
 
     return txs;
+}
+
+//campare two array of event_identities idgraph_identities whether equal
+export function isArrayEqual(arr1: LitentryIdentity[], arr2: LitentryIdentity[]) {
+    if (arr1.length !== arr2.length) {
+        return false;
+    }
+    for (let i = 0; i < arr1.length; i++) {
+        const obj1 = arr1[i];
+        let found = false;
+
+        for (let j = 0; j < arr2.length; j++) {
+            const obj2 = arr2[j];
+
+            if (isEqual(obj1, obj2)) {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            return false;
+        }
+    }
+    return true;
+}
+function isEqual(obj1: LitentryIdentity, obj2: LitentryIdentity) {
+    return JSON.stringify(obj1) === JSON.stringify(obj2);
+}
+
+export function assertIdentityVerified(signer: KeyringPair, eventDatas: IdentityGenericEvent[]) {
+    let event_identities: LitentryIdentity[] = [];
+    let idgraph_identities: LitentryIdentity[] = [];
+    for (let index = 0; index < eventDatas.length; index++) {
+        event_identities.push(eventDatas[index].identity);
+    }
+    for (let i = 0; i < eventDatas[eventDatas.length - 1].idGraph.length; i++) {
+        idgraph_identities.push(eventDatas[eventDatas.length - 1].idGraph[i][0]);
+    }
+    //idgraph_identities[idgraph_identities.length - 1] is prime identity,don't need to compare
+    const isEqual = isArrayEqual(event_identities, idgraph_identities.slice(0, idgraph_identities.length - 1));
+
+    assert.isTrue(isEqual, 'event identities should be equal to idgraph identities');
+
+    const data = eventDatas[eventDatas.length - 1];
+    for (let i = 0; i < eventDatas[eventDatas.length - 1].idGraph.length; i++) {
+        if (JSON.stringify(data.idGraph[i][0]) == JSON.stringify(data.identity)) {
+            assert.isTrue(data.idGraph[i][1].is_verified, 'identity should be verified');
+        }
+    }
+    assert.equal(data?.who, u8aToHex(signer.addressRaw), 'check caller error');
+}
+
+export function assertIdentityCreated(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
+    assert.equal(identityEvent?.who, u8aToHex(signer.addressRaw), 'check caller error');
+}
+
+export function assertIdentityRemoved(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
+    assert.equal(identityEvent?.idGraph, null, 'check idGraph error,should be null after removed');
+    assert.equal(identityEvent?.who, u8aToHex(signer.addressRaw), 'check caller error');
 }
