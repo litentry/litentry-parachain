@@ -105,7 +105,7 @@ benchmarks! {
 		let new_schema_admin: T::AccountId = frame_benchmarking::account("TEST", 0u32, USER_SEED + 1);
 	}: _(RawOrigin::Root, new_schema_admin.clone())
 	verify {
-		assert_last_event::<T>(Event::AdminChanged { old_admin: Some(account), new_admin: Some(new_schema_admin) }.into())
+		assert_last_event::<T>(Event::AdminChanged { old_admin: None, new_admin: Some(new_schema_admin) }.into())
 	}
 
 	// Benchmark `add_schema`. There are no worst conditions. The benchmark showed that
@@ -168,6 +168,7 @@ benchmarks! {
 	// execution time is constant irrespective of encrypted_data size.
 	add_vc_registry_item {
 		let account: T::AccountId = frame_benchmarking::account("TEST", 0u32, USER_SEED);
+		VCManagement::<T>::set_admin(RawOrigin::Root.into(), account.clone())?;
 		let assertion = Assertion::A1;
 	}: _(RawOrigin::Signed(account.clone()), VC_INDEX, account.clone(), assertion.clone(), VC_HASH)
 	verify {
@@ -178,6 +179,7 @@ benchmarks! {
 	// execution time is constant irrespective of encrypted_data size.
 	remove_vc_registry_item {
 		let account: T::AccountId = frame_benchmarking::account("TEST", 0u32, USER_SEED);
+		VCManagement::<T>::set_admin(RawOrigin::Root.into(), account.clone())?;
 		let assertion = Assertion::A1;
 		VCManagement::<T>::add_vc_registry_item(RawOrigin::Signed(account.clone()).into(), VC_INDEX, account.clone(), assertion, VC_HASH)?;
 	}: _(RawOrigin::Signed(account), VC_INDEX)
@@ -189,6 +191,7 @@ benchmarks! {
 	clear_vc_registry {
 		let x in 0..100u32;
 		let account: T::AccountId = frame_benchmarking::account("TEST", 0u32, USER_SEED);
+		VCManagement::<T>::set_admin(RawOrigin::Root.into(), account.clone())?;
 		let assertion = Assertion::A1;
 		for i in 0..x {
 			let seed = USER_SEED - i;

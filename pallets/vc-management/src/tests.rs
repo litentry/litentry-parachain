@@ -395,7 +395,7 @@ fn manual_add_remove_vc_registry_item_works() {
 	new_test_ext().execute_with(|| {
 		// Can not remove non-existing vc
 		assert_noop!(
-			VCManagement::remove_vc_registry_item(RuntimeOrigin::root(), VC_INDEX),
+			VCManagement::remove_vc_registry_item(RuntimeOrigin::signed(1), VC_INDEX),
 			Error::<Test>::VCNotExist
 		);
 		// Unauthorized party can not add vc
@@ -411,7 +411,7 @@ fn manual_add_remove_vc_registry_item_works() {
 		);
 		// Successfully add vc
 		assert_ok!(VCManagement::add_vc_registry_item(
-			RuntimeOrigin::root(),
+			RuntimeOrigin::signed(1),
 			VC_INDEX,
 			1,
 			Assertion::A1,
@@ -430,7 +430,7 @@ fn manual_add_remove_vc_registry_item_works() {
 			Error::<Test>::RequireAdmin
 		);
 		// Successfully remove vc
-		assert_ok!(VCManagement::remove_vc_registry_item(RuntimeOrigin::root(), VC_INDEX));
+		assert_ok!(VCManagement::remove_vc_registry_item(RuntimeOrigin::signed(1), VC_INDEX));
 		// Check result and events
 		assert!(VCManagement::vc_registry(VC_INDEX).is_none());
 		System::assert_last_event(RuntimeEvent::VCManagement(
@@ -455,7 +455,7 @@ fn manual_add_clear_vc_registry_item_works() {
 		);
 		// Successfully add vc
 		assert_ok!(VCManagement::add_vc_registry_item(
-			RuntimeOrigin::root(),
+			RuntimeOrigin::signed(1),
 			VC_INDEX,
 			1,
 			Assertion::A1,
@@ -474,7 +474,7 @@ fn manual_add_clear_vc_registry_item_works() {
 			Error::<Test>::RequireAdmin
 		);
 		// Successfully clear vc
-		assert_ok!(VCManagement::clear_vc_registry(RuntimeOrigin::root()));
+		assert_ok!(VCManagement::clear_vc_registry(RuntimeOrigin::signed(1)));
 		// Check result and events
 		assert!(VCManagement::vc_registry(VC_INDEX).is_none());
 		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::VCRegistryCleared));
