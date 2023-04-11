@@ -50,7 +50,7 @@ benchmarks! {
 		let rate = U32F32::from_num(43.65);
 		let data_source: DataSource = "https://api.coingecko.com".into();
 
-		Teerex::<T>::set_enclave_admin(
+		Teerex::<T>::set_admin(
 			RawOrigin::Root.into(),
 			signer.clone(),
 		).unwrap();
@@ -92,7 +92,7 @@ benchmarks! {
 		let oracle_blob: crate::OracleDataBlob<T> =
 			vec![1].try_into().expect("Can Convert to OracleDataBlob<T>; QED");
 
-		Teerex::<T>::set_enclave_admin(
+		Teerex::<T>::set_admin(
 			RawOrigin::Root.into(),
 			signer.clone(),
 		).unwrap();
