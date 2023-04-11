@@ -98,21 +98,21 @@ benchmarks! {
 		assert_last_event::<T>(Event::RequestVCFailed { account: Some(account), assertion, detail, req_ext_hash }.into())
 	}
 
-	// Benchmark `set_schema_admin`. There are no worst conditions. The benchmark showed that
+	// Benchmark `set_admin`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
-	set_schema_admin {
+	set_admin {
 		let account: T::AccountId = frame_benchmarking::account("TEST", 0u32, USER_SEED);
 		let new_schema_admin: T::AccountId = frame_benchmarking::account("TEST", 0u32, USER_SEED + 1);
 	}: _(RawOrigin::Root, new_schema_admin.clone())
 	verify {
-		assert_last_event::<T>(Event::SchemaAdminChanged { old_admin: Some(account), new_admin: Some(new_schema_admin) }.into())
+		assert_last_event::<T>(Event::AdminChanged { old_admin: Some(account), new_admin: Some(new_schema_admin) }.into())
 	}
 
 	// Benchmark `add_schema`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
 	add_schema {
 		let account: T::AccountId = frame_benchmarking::account("TEST", 0u32, USER_SEED);
-		VCManagement::<T>::set_schema_admin(RawOrigin::Root.into(), account.clone())?;
+		VCManagement::<T>::set_admin(RawOrigin::Root.into(), account.clone())?;
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
 		let shard = H256::from_slice(&TEST_MRENCLAVE);
@@ -125,7 +125,7 @@ benchmarks! {
 	// execution time is constant irrespective of encrypted_data size.
 	disable_schema {
 		let account: T::AccountId = frame_benchmarking::account("TEST", 0u32, USER_SEED);
-		VCManagement::<T>::set_schema_admin(RawOrigin::Root.into(), account.clone())?;
+		VCManagement::<T>::set_admin(RawOrigin::Root.into(), account.clone())?;
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
 		let shard = H256::from_slice(&TEST_MRENCLAVE);
@@ -139,7 +139,7 @@ benchmarks! {
 	// execution time is constant irrespective of encrypted_data size.
 	activate_schema {
 		let account: T::AccountId = frame_benchmarking::account("TEST", 0u32, USER_SEED);
-		VCManagement::<T>::set_schema_admin(RawOrigin::Root.into(), account.clone())?;
+		VCManagement::<T>::set_admin(RawOrigin::Root.into(), account.clone())?;
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
 		let shard = H256::from_slice(&TEST_MRENCLAVE);
@@ -154,7 +154,7 @@ benchmarks! {
 	// execution time is constant irrespective of encrypted_data size.
 	revoke_schema {
 		let account: T::AccountId = frame_benchmarking::account("TEST", 0u32, USER_SEED);
-		VCManagement::<T>::set_schema_admin(RawOrigin::Root.into(), account.clone())?;
+		VCManagement::<T>::set_admin(RawOrigin::Root.into(), account.clone())?;
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
 		let shard = H256::from_slice(&TEST_MRENCLAVE);
