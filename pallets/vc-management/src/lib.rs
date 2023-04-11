@@ -24,6 +24,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(unused_variables)]
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
 #[cfg(test)]
 mod mock;
 

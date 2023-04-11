@@ -27,7 +27,7 @@ use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
-use system::EnsureSignedBy;
+use system::EnsureRoot;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -105,8 +105,8 @@ ord_parameter_types! {
 
 impl pallet_vc_management::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type TEECallOrigin = EnsureSignedBy<One, u64>;
-	type SetAdminOrigin = EnsureSignedBy<One, u64>;
+	type TEECallOrigin = EnsureRoot<Self::AccountId>;
+	type SetAdminOrigin = EnsureRoot<Self::AccountId>;
 	type ExtrinsicWhitelistOrigin = VCMPExtrinsicWhitelist;
 }
 
@@ -121,7 +121,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| {
 		System::set_block_number(1);
-		let _ = VCManagement::set_schema_admin(RuntimeOrigin::signed(1), 1);
+		let _ = VCManagement::set_schema_admin(RuntimeOrigin::root(), 1);
 	});
 	ext
 }

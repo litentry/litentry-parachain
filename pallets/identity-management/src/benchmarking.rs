@@ -18,24 +18,43 @@
 
 use super::*;
 
-#[allow(unused)]
 use crate::Pallet as IdentityManagement;
-use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
+#[allow(unused)]
+use core_primitives::{AesOutput, ErrorDetail, IMPError};
+use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_system::RawOrigin;
 use sp_core::H256;
 use sp_std::vec;
 
 const TEST_MRENCLAVE: [u8; 32] = [2u8; 32];
+const USER_SEED: u32 = 9966;
 
 fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	frame_system::Pallet::<T>::assert_last_event(generic_event.into());
 }
 
 benchmarks! {
+	// Benchmark `add_delegatee`. There are no worst conditions. The benchmark showed that
+	// execution time is constant irrespective of encrypted_data size.
+	add_delegatee {
+		let account: T::AccountId = account("TEST_A", 0u32, USER_SEED);
+	}: _(RawOrigin::Root, account.clone())
+	verify{
+		assert!(Delegatee::<T>::contains_key(account));
+	}
+	// Benchmark `remove_delegatee`. There are no worst conditions. The benchmark showed that
+	// execution time is constant irrespective of encrypted_data size.
+	remove_delegatee {
+		let account: T::AccountId = account("TEST_A", 0u32, USER_SEED);
+		IdentityManagement::<T>::add_delegatee(RawOrigin::Root.into(), account.clone())?;
+	}: _(RawOrigin::Root, account.clone())
+	verify{
+		assert!(!Delegatee::<T>::contains_key(account));
+	}
 	// Benchmark `create_identity`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
 	create_identity {
-		let caller = whitelisted_caller::<T::AccountId>();
+		let caller: T::AccountId = account("TEST_A", 0u32, USER_SEED);
 		let shard = H256::from_slice(&TEST_MRENCLAVE);
 		let encrypted_did = vec![1u8; 2048];
 		let encrypted_metadata = Some(vec![1u8; 2048]);
@@ -47,10 +66,12 @@ benchmarks! {
 	// Benchmark `remove_identity`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
 	remove_identity {
-		let caller = whitelisted_caller();
+		let caller: T::AccountId = account("TEST_A", 0u32, USER_SEED);
 		let shard = H256::from_slice(&TEST_MRENCLAVE);
 		let encrypted_did = vec![1u8; 2048];
-	}: _(RawOrigin::Signed(caller), shard, encrypted_did )
+		let encrypted_metadata = Some(vec![1u8; 2048]);
+		IdentityManagement::<T>::create_identity(RawOrigin::Signed(caller.clone()).into(), shard, caller.clone(), encrypted_did.clone(), encrypted_metadata)?;
+	}: _(RawOrigin::Signed(caller), shard, encrypted_did)
 	verify {
 		assert_last_event::<T>(Event::RemoveIdentityRequested{ shard }.into());
 	}
@@ -58,11 +79,11 @@ benchmarks! {
 	// Benchmark `verify_identity`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
 	verify_identity {
-		let caller = whitelisted_caller();
+		let caller: T::AccountId = account("TEST_A", 0u32, USER_SEED);
 		let shard = H256::from_slice(&TEST_MRENCLAVE);
 		let encrypted_did = vec![1u8; 2048];
 		let encrypted_validation_data = vec![1u8; 2048];
-	}: _(RawOrigin::Signed(caller), shard, encrypted_did, encrypted_validation_data )
+	}: _(RawOrigin::Signed(caller), shard, encrypted_did, encrypted_validation_data)
 	verify {
 		assert_last_event::<T>(Event::VerifyIdentityRequested{ shard }.into());
 	}
@@ -70,12 +91,69 @@ benchmarks! {
 	// Benchmark `set_user_shielding_key`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
 	set_user_shielding_key {
-		let caller = whitelisted_caller();
+		let caller: T::AccountId = account("TEST_A", 0u32, USER_SEED);
 		let shard = H256::from_slice(&TEST_MRENCLAVE);
 		let encrypted_key = vec![1u8; 2048];
-	}: _(RawOrigin::Signed(caller), shard, encrypted_key )
+	}: _(RawOrigin::Signed(caller), shard, encrypted_key)
 	verify {
 		assert_last_event::<T>(Event::SetUserShieldingKeyRequested{ shard }.into());
+	}
+
+	// Benchmark `user_shielding_key_set`. There are no worst conditions. The benchmark showed that
+	// execution time is constant irrespective of encrypted_data size.
+	user_shielding_key_set {
+		let req_ext_hash = H256::default();
+		let account: T::AccountId = account("TEST_A", 0u32, USER_SEED);
+	}: _(RawOrigin::Root, account.clone(), req_ext_hash)
+	verify {
+		assert_last_event::<T>(Event::UserShieldingKeySet { account, req_ext_hash }.into());
+	}
+
+	// Benchmark `identity_created`. There are no worst conditions. The benchmark showed that
+	// execution time is constant irrespective of encrypted_data size.
+	identity_created {
+		let req_ext_hash = H256::default();
+		let identity = AesOutput::default();
+		let code = AesOutput::default();
+		let account: T::AccountId = account("TEST_A", 0u32, USER_SEED);
+	}: _(RawOrigin::Root, account.clone(), identity.clone(), code.clone(), req_ext_hash)
+	verify {
+		assert_last_event::<T>(Event::IdentityCreated { account, identity, code, req_ext_hash }.into());
+	}
+
+	// Benchmark `identity_removed`. There are no worst conditions. The benchmark showed that
+	// execution time is constant irrespective of encrypted_data size.
+	identity_removed {
+		let req_ext_hash = H256::default();
+		let identity = AesOutput::default();
+		let account: T::AccountId = account("TEST_A", 0u32, USER_SEED);
+	}: _(RawOrigin::Root, account.clone(), identity.clone(), req_ext_hash)
+	verify {
+		assert_last_event::<T>(Event::IdentityRemoved { account, identity, req_ext_hash }.into());
+	}
+
+	// Benchmark `identity_verified`. There are no worst conditions. The benchmark showed that
+	// execution time is constant irrespective of encrypted_data size.
+	identity_verified {
+		let req_ext_hash = H256::default();
+		let identity = AesOutput::default();
+		let id_graph = AesOutput::default();
+		let account: T::AccountId = account("TEST_A", 0u32, USER_SEED);
+	}: _(RawOrigin::Root, account.clone(), identity.clone(), id_graph.clone(), req_ext_hash)
+	verify {
+		assert_last_event::<T>(Event::IdentityVerified { account, identity, id_graph, req_ext_hash }.into());
+	}
+
+	// Benchmark `some_error`. There are no worst conditions. The benchmark showed that
+	// execution time is constant irrespective of encrypted_data size.
+	some_error {
+		let account: T::AccountId = account("TEST_A", 0u32, USER_SEED);
+		let detail = ErrorDetail::WrongWeb2Handle;
+		let error = IMPError::VerifyIdentityFailed(detail.clone());
+		let req_ext_hash = H256::default();
+	}: _(RawOrigin::Root, Some(account.clone()), error, req_ext_hash)
+	verify {
+		assert_last_event::<T>(Event::VerifyIdentityFailed { account: Some(account), detail, req_ext_hash }.into())
 	}
 }
 

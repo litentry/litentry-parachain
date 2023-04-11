@@ -39,7 +39,7 @@ fn request_vc_works() {
 fn vc_issued_works() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(VCManagement::vc_issued(
-			RuntimeOrigin::signed(1),
+			RuntimeOrigin::root(),
 			1,
 			Assertion::A1,
 			VC_INDEX,
@@ -77,7 +77,7 @@ fn vc_issued_with_unpriviledged_origin_fails() {
 fn vc_issued_with_duplicated_index_fails() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(VCManagement::vc_issued(
-			RuntimeOrigin::signed(1),
+			RuntimeOrigin::root(),
 			1,
 			Assertion::A1,
 			VC_INDEX,
@@ -87,7 +87,7 @@ fn vc_issued_with_duplicated_index_fails() {
 		));
 		assert_noop!(
 			VCManagement::vc_issued(
-				RuntimeOrigin::signed(1),
+				RuntimeOrigin::root(),
 				1,
 				Assertion::A1,
 				VC_INDEX,
@@ -104,7 +104,7 @@ fn vc_issued_with_duplicated_index_fails() {
 fn disable_vc_works() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(VCManagement::vc_issued(
-			RuntimeOrigin::signed(1),
+			RuntimeOrigin::root(),
 			2,
 			Assertion::A1,
 			VC_INDEX,
@@ -135,7 +135,7 @@ fn disable_vc_with_non_existent_vc_event() {
 fn disable_vc_with_other_subject_fails() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(VCManagement::vc_issued(
-			RuntimeOrigin::signed(1),
+			RuntimeOrigin::root(),
 			2,
 			Assertion::A1,
 			VC_INDEX,
@@ -156,7 +156,7 @@ fn disable_vc_with_other_subject_fails() {
 fn revoke_vc_works() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(VCManagement::vc_issued(
-			RuntimeOrigin::signed(1),
+			RuntimeOrigin::root(),
 			2,
 			Assertion::A1,
 			VC_INDEX,
@@ -185,7 +185,7 @@ fn revokevc_with_non_existent_vc_fails() {
 fn revoke_vc_with_other_subject_fails() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(VCManagement::vc_issued(
-			RuntimeOrigin::signed(1),
+			RuntimeOrigin::root(),
 			2,
 			Assertion::A1,
 			VC_INDEX,
@@ -205,7 +205,7 @@ fn revoke_vc_with_other_subject_fails() {
 fn set_schema_admin_works() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(VCManagement::schema_admin().unwrap(), 1);
-		assert_ok!(VCManagement::set_schema_admin(RuntimeOrigin::signed(1), 2));
+		assert_ok!(VCManagement::set_schema_admin(RuntimeOrigin::root(), 2));
 		assert_eq!(VCManagement::schema_admin().unwrap(), 2);
 		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::SchemaAdminChanged {
 			old_admin: Some(1),
@@ -219,7 +219,7 @@ fn set_schema_admin_fails_with_unprivileged_origin() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(VCManagement::schema_admin().unwrap(), 1);
 		assert_noop!(
-			VCManagement::set_schema_admin(RuntimeOrigin::signed(2), 2),
+			VCManagement::set_schema_admin(RuntimeOrigin::root(), 2),
 			sp_runtime::DispatchError::BadOrigin
 		);
 		assert_eq!(VCManagement::schema_admin().unwrap(), 1);
@@ -395,7 +395,7 @@ fn manual_add_remove_vc_registry_item_works() {
 	new_test_ext().execute_with(|| {
 		// Can not remove non-existing vc
 		assert_noop!(
-			VCManagement::remove_vc_registry_item(RuntimeOrigin::signed(1), VC_INDEX),
+			VCManagement::remove_vc_registry_item(RuntimeOrigin::root(), VC_INDEX),
 			Error::<Test>::VCNotExist
 		);
 		// Unauthorized party can not add vc
@@ -411,7 +411,7 @@ fn manual_add_remove_vc_registry_item_works() {
 		);
 		// Successfully add vc
 		assert_ok!(VCManagement::add_vc_registry_item(
-			RuntimeOrigin::signed(1),
+			RuntimeOrigin::root(),
 			VC_INDEX,
 			1,
 			Assertion::A1,
@@ -430,7 +430,7 @@ fn manual_add_remove_vc_registry_item_works() {
 			sp_runtime::DispatchError::BadOrigin
 		);
 		// Successfully remove vc
-		assert_ok!(VCManagement::remove_vc_registry_item(RuntimeOrigin::signed(1), VC_INDEX));
+		assert_ok!(VCManagement::remove_vc_registry_item(RuntimeOrigin::root(), VC_INDEX));
 		// Check result and events
 		assert!(VCManagement::vc_registry(VC_INDEX).is_none());
 		System::assert_last_event(RuntimeEvent::VCManagement(
@@ -455,7 +455,7 @@ fn manual_add_clear_vc_registry_item_works() {
 		);
 		// Successfully add vc
 		assert_ok!(VCManagement::add_vc_registry_item(
-			RuntimeOrigin::signed(1),
+			RuntimeOrigin::root(),
 			VC_INDEX,
 			1,
 			Assertion::A1,
@@ -474,7 +474,7 @@ fn manual_add_clear_vc_registry_item_works() {
 			sp_runtime::DispatchError::BadOrigin
 		);
 		// Successfully clear vc
-		assert_ok!(VCManagement::clear_vc_registry(RuntimeOrigin::signed(1)));
+		assert_ok!(VCManagement::clear_vc_registry(RuntimeOrigin::root()));
 		// Check result and events
 		assert!(VCManagement::vc_registry(VC_INDEX).is_none());
 		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::VCRegistryCleared));
