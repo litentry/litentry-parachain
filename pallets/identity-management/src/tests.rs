@@ -15,6 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{mock::*, Error, ShardIdentifier};
+#[cfg(not(feature = "runtime-benchmarks"))]
 use core_primitives::{ErrorDetail, IMPError};
 use frame_support::{assert_noop, assert_ok};
 use sp_core::H256;
@@ -150,6 +151,7 @@ fn tee_callback_with_registered_enclave_works() {
 }
 
 #[test]
+#[cfg(not(feature = "runtime-benchmarks"))]
 fn tee_callback_with_unregistered_enclave_fails() {
 	new_test_ext().execute_with(|| {
 		assert_noop!(

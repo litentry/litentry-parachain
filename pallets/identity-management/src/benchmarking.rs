@@ -104,7 +104,7 @@ benchmarks! {
 	user_shielding_key_set {
 		let req_ext_hash = H256::default();
 		let account: T::AccountId = account("TEST_A", 0u32, USER_SEED);
-	}: _(RawOrigin::Root, account.clone(), req_ext_hash)
+	}: _(RawOrigin::Signed(account.clone()), account.clone(), req_ext_hash)
 	verify {
 		assert_last_event::<T>(Event::UserShieldingKeySet { account, req_ext_hash }.into());
 	}
@@ -116,7 +116,7 @@ benchmarks! {
 		let identity = AesOutput::default();
 		let code = AesOutput::default();
 		let account: T::AccountId = account("TEST_A", 0u32, USER_SEED);
-	}: _(RawOrigin::Root, account.clone(), identity.clone(), code.clone(), req_ext_hash)
+	}: _(RawOrigin::Signed(account.clone()), account.clone(), identity.clone(), code.clone(), req_ext_hash)
 	verify {
 		assert_last_event::<T>(Event::IdentityCreated { account, identity, code, req_ext_hash }.into());
 	}
@@ -127,7 +127,7 @@ benchmarks! {
 		let req_ext_hash = H256::default();
 		let identity = AesOutput::default();
 		let account: T::AccountId = account("TEST_A", 0u32, USER_SEED);
-	}: _(RawOrigin::Root, account.clone(), identity.clone(), req_ext_hash)
+	}: _(RawOrigin::Signed(account.clone()), account.clone(), identity.clone(), req_ext_hash)
 	verify {
 		assert_last_event::<T>(Event::IdentityRemoved { account, identity, req_ext_hash }.into());
 	}
@@ -139,7 +139,7 @@ benchmarks! {
 		let identity = AesOutput::default();
 		let id_graph = AesOutput::default();
 		let account: T::AccountId = account("TEST_A", 0u32, USER_SEED);
-	}: _(RawOrigin::Root, account.clone(), identity.clone(), id_graph.clone(), req_ext_hash)
+	}: _(RawOrigin::Signed(account.clone()), account.clone(), identity.clone(), id_graph.clone(), req_ext_hash)
 	verify {
 		assert_last_event::<T>(Event::IdentityVerified { account, identity, id_graph, req_ext_hash }.into());
 	}
@@ -151,7 +151,7 @@ benchmarks! {
 		let detail = ErrorDetail::WrongWeb2Handle;
 		let error = IMPError::VerifyIdentityFailed(detail.clone());
 		let req_ext_hash = H256::default();
-	}: _(RawOrigin::Root, Some(account.clone()), error, req_ext_hash)
+	}: _(RawOrigin::Signed(account.clone()), Some(account.clone()), error, req_ext_hash)
 	verify {
 		assert_last_event::<T>(Event::VerifyIdentityFailed { account: Some(account), detail, req_ext_hash }.into())
 	}
