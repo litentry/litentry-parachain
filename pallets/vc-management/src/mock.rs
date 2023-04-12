@@ -21,7 +21,7 @@ use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{ConstU128, ConstU16, ConstU32, ConstU64, Everything},
 };
-use frame_system::EnsureRoot;
+use frame_system::{EnsureRoot, EnsureSignedBy};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -99,12 +99,12 @@ impl pallet_balances::Config for Test {
 }
 
 ord_parameter_types! {
-	pub const One: u64 = 1;
+	pub const MockTeerexSigner: u64 = frame_benchmarking::account::<<Test as frame_system::Config>::AccountId>("TEST_A", 0u32, 9966u32);
 }
 
 impl pallet_vc_management::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type TEECallOrigin = EnsureRoot<Self::AccountId>;
+	type TEECallOrigin = EnsureSignedBy<MockTeerexSigner, u64>;
 	type SetAdminOrigin = EnsureRoot<Self::AccountId>;
 	type ExtrinsicWhitelistOrigin = VCMPExtrinsicWhitelist;
 }

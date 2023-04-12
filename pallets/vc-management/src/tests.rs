@@ -38,8 +38,11 @@ fn request_vc_works() {
 #[test]
 fn vc_issued_works() {
 	new_test_ext().execute_with(|| {
+		let teerex_signer: u64 = frame_benchmarking::account::<
+			<Test as frame_system::Config>::AccountId,
+		>("TEST_A", 0u32, 9966u32);
 		assert_ok!(VCManagement::vc_issued(
-			RuntimeOrigin::root(),
+			RuntimeOrigin::signed(teerex_signer),
 			1,
 			Assertion::A1,
 			VC_INDEX,
@@ -76,8 +79,11 @@ fn vc_issued_with_unpriviledged_origin_fails() {
 #[test]
 fn vc_issued_with_duplicated_index_fails() {
 	new_test_ext().execute_with(|| {
+		let teerex_signer: u64 = frame_benchmarking::account::<
+			<Test as frame_system::Config>::AccountId,
+		>("TEST_A", 0u32, 9966u32);
 		assert_ok!(VCManagement::vc_issued(
-			RuntimeOrigin::root(),
+			RuntimeOrigin::signed(teerex_signer),
 			1,
 			Assertion::A1,
 			VC_INDEX,
@@ -87,7 +93,7 @@ fn vc_issued_with_duplicated_index_fails() {
 		));
 		assert_noop!(
 			VCManagement::vc_issued(
-				RuntimeOrigin::root(),
+				RuntimeOrigin::signed(teerex_signer),
 				1,
 				Assertion::A1,
 				VC_INDEX,
@@ -103,8 +109,11 @@ fn vc_issued_with_duplicated_index_fails() {
 #[test]
 fn disable_vc_works() {
 	new_test_ext().execute_with(|| {
+		let teerex_signer: u64 = frame_benchmarking::account::<
+			<Test as frame_system::Config>::AccountId,
+		>("TEST_A", 0u32, 9966u32);
 		assert_ok!(VCManagement::vc_issued(
-			RuntimeOrigin::root(),
+			RuntimeOrigin::signed(teerex_signer),
 			2,
 			Assertion::A1,
 			VC_INDEX,
@@ -134,8 +143,11 @@ fn disable_vc_with_non_existent_vc_event() {
 #[test]
 fn disable_vc_with_other_subject_fails() {
 	new_test_ext().execute_with(|| {
+		let teerex_signer: u64 = frame_benchmarking::account::<
+			<Test as frame_system::Config>::AccountId,
+		>("TEST_A", 0u32, 9966u32);
 		assert_ok!(VCManagement::vc_issued(
-			RuntimeOrigin::root(),
+			RuntimeOrigin::signed(teerex_signer),
 			2,
 			Assertion::A1,
 			VC_INDEX,
@@ -155,8 +167,11 @@ fn disable_vc_with_other_subject_fails() {
 #[test]
 fn revoke_vc_works() {
 	new_test_ext().execute_with(|| {
+		let teerex_signer: u64 = frame_benchmarking::account::<
+			<Test as frame_system::Config>::AccountId,
+		>("TEST_A", 0u32, 9966u32);
 		assert_ok!(VCManagement::vc_issued(
-			RuntimeOrigin::root(),
+			RuntimeOrigin::signed(teerex_signer),
 			2,
 			Assertion::A1,
 			VC_INDEX,
@@ -184,8 +199,11 @@ fn revokevc_with_non_existent_vc_fails() {
 #[test]
 fn revoke_vc_with_other_subject_fails() {
 	new_test_ext().execute_with(|| {
+		let teerex_signer: u64 = frame_benchmarking::account::<
+			<Test as frame_system::Config>::AccountId,
+		>("TEST_A", 0u32, 9966u32);
 		assert_ok!(VCManagement::vc_issued(
-			RuntimeOrigin::root(),
+			RuntimeOrigin::signed(teerex_signer),
 			2,
 			Assertion::A1,
 			VC_INDEX,
