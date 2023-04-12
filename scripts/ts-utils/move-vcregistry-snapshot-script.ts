@@ -1,12 +1,18 @@
 
 //run: npx ts-node move-vcregistry-snapshot-script.ts
 
-import { initApi } from "./index";
+import { initApi } from "./initApi";
 const fs = require("fs");
 const path = require("path");
 const prettier = require("prettier");
+import colors from 'colors';
+
+//set the maximal calls are 500 per batch
+const BATCH_SIZE = 500;
 async function encodeExtrinsic() {
     const { fetchApi, syncApi } = await initApi();
+    console.log(colors.green('get vcRegistry entries...'))
+
     const entries = await fetchApi.query.vcManagement.vcRegistry.entries();
     const data = entries.map((res: any) => {
         return { index: res[0].toHuman(), vc: res[1].toHuman() };
@@ -21,28 +27,34 @@ async function encodeExtrinsic() {
         singleQuote: true,
         trailingComma: "es5",
     });
-    fs.writeFile(filepath, formattedData, (err: any) => {
-        if (err) {
-            console.error(err);
-            return;
-        }
-        console.log(`Data saved to ${filename} successfully.`);
-    });
-    let txs: any = [];
-    for (let index = 0; index < data.length; index++) {
-        let tx = syncApi.tx.vcManagement.addVcRegistryItem(
-            data[index].index[0],
-            data[index].vc.subject,
-            data[index].vc.assertion,
-            data[index].vc.hash_
-        );
-        txs.push(tx);
-    }
+    fs.writeFileSync(filepath, formattedData);
+    console.log(colors.green(`Data saved to ${filename} successfully.`));
 
-    const extrinsic = syncApi.tx.sudo.sudo(syncApi.tx.utility.batch(txs));
-    console.log("extrinsic encode", extrinsic.toHex());
+    let txs: any[] = [];
+    console.log(colors.green('vcRegistry data length'), data.length);
+    let i = 0
+    while (data.length > 0) {
+        const batch = data.splice(0, BATCH_SIZE);
+        const batchTxs = batch.map((entry: any) =>
+            syncApi.tx.vcManagement.addVcRegistryItem(
+                entry.index[0],
+                entry.vc.subject,
+                entry.vc.assertion,
+                entry.vc.hash_
+            )
+        );
+        txs = txs.concat(batchTxs);
+
+        if (data.length === 0 || txs.length >= BATCH_SIZE) {
+            i++
+            const extrinsics = syncApi.tx.utility.batch(batchTxs);
+            const sudoExtrinsic = syncApi.tx.sudo.sudo(extrinsics);
+            console.log(colors.green("extrinsic encode"), sudoExtrinsic.toHex());
+            txs = [];
+        }
+    }
     console.log("done");
-    process.exit()
+    process.exit();
 }
 
 encodeExtrinsic();
