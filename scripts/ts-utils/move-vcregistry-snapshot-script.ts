@@ -53,7 +53,7 @@ async function encodeExtrinsic() {
             txs = [];
         }
     }
-    console.log("done");
+    console.log(colors.green('done'));
     process.exit();
 }
 

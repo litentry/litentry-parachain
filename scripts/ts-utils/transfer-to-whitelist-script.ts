@@ -46,7 +46,7 @@ async function main() {
 
     const transfer_hex = transfer(defaultAPI);
     console.log(colors.green('transfer_hex'), transfer_hex);
-    console.log("done");
+    console.log(colors.green('done'));
     process.exit()
 
 }
