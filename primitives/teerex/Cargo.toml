@@ -19,7 +19,7 @@ sp-io = { default-features = false, git = "https://github.com/paritytech/substra
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 
 [dev-dependencies]
-hex-literal = "0.4.0"
+hex-literal = "0.4.1"
 
 [features]
 default = ["std"]

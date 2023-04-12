@@ -3513,9 +3513,9 @@ checksum = "7ebdb29d2ea9ed0083cd8cece49bbd968021bd99b0849edb4a9a7ee0fdf6a4e0"
 
 [[package]]
 name = "hex-literal"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4bcb5b3e439c92a7191df2f9bbe733de8de55c3f86368cdb1c63f8be7e9e328e"
+checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
 
 [[package]]
 name = "hkdf"
@@ -4885,7 +4885,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "futures 0.3.28",
- "hex-literal 0.4.0",
+ "hex-literal 0.4.1",
  "jsonrpsee",
  "litentry-parachain-runtime",
  "litmus-parachain-runtime",
@@ -4958,7 +4958,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "hex-literal 0.4.0",
+ "hex-literal 0.4.1",
  "log",
  "orml-tokens",
  "orml-traits",
@@ -5041,7 +5041,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "hex-literal 0.4.0",
+ "hex-literal 0.4.1",
  "log",
  "orml-tokens",
  "orml-traits",
@@ -6200,7 +6200,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex",
- "hex-literal 0.4.0",
+ "hex-literal 0.4.1",
  "pallet-balances",
  "pallet-bridge",
  "pallet-parachain-staking",
@@ -6497,7 +6497,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex",
- "hex-literal 0.4.0",
+ "hex-literal 0.4.1",
  "log",
  "mock-tee-primitives",
  "pallet-balances",
@@ -6897,7 +6897,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hex-literal 0.4.0",
+ "hex-literal 0.4.1",
  "log",
  "pallet-balances",
  "pallet-teerex",
@@ -7011,7 +7011,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hex-literal 0.4.0",
+ "hex-literal 0.4.1",
  "log",
  "pallet-balances",
  "pallet-teerex",
@@ -7037,7 +7037,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hex-literal 0.4.0",
+ "hex-literal 0.4.1",
  "log",
  "pallet-balances",
  "pallet-timestamp",
@@ -9647,7 +9647,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "hex-literal 0.4.0",
+ "hex-literal 0.4.1",
  "log",
  "orml-tokens",
  "orml-traits",
@@ -12749,7 +12749,7 @@ name = "teerex-primitives"
 version = "0.1.0"
 dependencies = [
  "common-primitives",
- "hex-literal 0.4.0",
+ "hex-literal 0.4.1",
  "parity-scale-codec 3.4.0",
  "scale-info",
  "serde",
@@ -12790,7 +12790,7 @@ checksum = "3369f5ac52d5eb6ab48c6b4ffdc8efbcad6b89c765749064ba298f2c68a16a76"
 name = "test-utils"
 version = "0.1.0"
 dependencies = [
- "hex-literal 0.4.0",
+ "hex-literal 0.4.1",
  "log",
  "teerex-primitives",
 ]
