@@ -22,9 +22,9 @@ function transfer(api: any) {
             index--;
         }
     }
-    const transfer_hex = api.tx.sudo.sudo(
+    const transfer_hex =
         api.tx.utility.batchAll(txs)
-    ).toHex()
+            .toHex()
 
     return transfer_hex
 }
