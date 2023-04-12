@@ -49,7 +49,6 @@ runtime-benchmarks = [
   "frame-benchmarking",
   "hex-literal",
   "pallet-balances",
-  "pallet-teerex/skip-scheduled-enclave-check",
   "pallet-timestamp/runtime-benchmarks",
   "test-utils",
 ]
