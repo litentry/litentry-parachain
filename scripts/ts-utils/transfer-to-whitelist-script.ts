@@ -1,7 +1,7 @@
 
 //run:npx ts-node transfer-to-whitelist-script.ts
 import * as XLSX from 'xlsx';
-import { initApi } from "./initApi";
+import { initApi } from "./initApis";
 import colors from 'colors';
 let whiteList: any;
 
@@ -42,9 +42,9 @@ async function main() {
     whiteList = XLSX.utils.sheet_to_json(sheet, { header: 1 })
         .map((row: any) => row[1]).slice(1);
 
-    const { syncApi } = await initApi();
+    const { defaultAPI } = await initApi();
 
-    const transfer_hex = transfer(syncApi);
+    const transfer_hex = transfer(defaultAPI);
     console.log(colors.green('transfer_hex'), transfer_hex);
     console.log("done");
     process.exit()

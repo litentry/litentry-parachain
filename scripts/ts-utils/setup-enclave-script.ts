@@ -1,7 +1,7 @@
 //run:npx ts-node setup-enclave-script.ts $enclaveAccount $mrenclave $accountPassword
 //example:npx ts-node setup-enclave-script.ts 2KWd4sEmYj2VW42L2WUDDRKA4JwnKg76uoQ2keUBUwFHU9Dx a552654d1733c4054a3c7e5e86adf26b5d65c072b57b2550fe763821ebac54c6 123456
 const { Keyring } = require("@polkadot/api");
-import { initApi } from "./initApi";
+import { initApi } from "./initApis";
 const { hexToU8a } = require("@polkadot/util");
 import colors from "colors";
 
@@ -74,12 +74,12 @@ async function main() {
     //unlock account
     signAccount.toJson(accountPassword);
 
-    const { syncApi } = await initApi();
+    const { defaultAPI } = await initApi();
     const Alice = keyring.addFromUri("//Alice", { name: "Alice default" });
 
-    await transfer(syncApi, Alice);
+    await transfer(defaultAPI, Alice);
 
-    await updateScheduledEnclave(syncApi, signAccount);
+    await updateScheduledEnclave(defaultAPI, signAccount);
 
     console.log(colors.green("done"));
     process.exit();

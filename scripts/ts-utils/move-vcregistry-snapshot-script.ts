@@ -1,7 +1,7 @@
 
 //run: npx ts-node move-vcregistry-snapshot-script.ts
 
-import { initApi } from "./initApi";
+import { initApi } from "./initApis";
 const fs = require("fs");
 const path = require("path");
 const prettier = require("prettier");
@@ -10,7 +10,7 @@ import colors from 'colors';
 //set the maximal calls are 500 per batch
 const BATCH_SIZE = 500;
 async function encodeExtrinsic() {
-    const { fetchApi, syncApi } = await initApi();
+    const { fetchApi, defaultAPI } = await initApi();
     console.log(colors.green('get vcRegistry entries...'))
 
     const entries = await fetchApi.query.vcManagement.vcRegistry.entries();
@@ -36,7 +36,7 @@ async function encodeExtrinsic() {
     while (data.length > 0) {
         const batch = data.splice(0, BATCH_SIZE);
         const batchTxs = batch.map((entry: any) =>
-            syncApi.tx.vcManagement.addVcRegistryItem(
+            defaultAPI.tx.vcManagement.addVcRegistryItem(
                 entry.index[0],
                 entry.vc.subject,
                 entry.vc.assertion,
@@ -47,8 +47,8 @@ async function encodeExtrinsic() {
 
         if (data.length === 0 || txs.length >= BATCH_SIZE) {
             i++
-            const extrinsics = syncApi.tx.utility.batch(batchTxs);
-            const sudoExtrinsic = syncApi.tx.sudo.sudo(extrinsics);
+            const extrinsics = defaultAPI.tx.utility.batch(batchTxs);
+            const sudoExtrinsic = defaultAPI.tx.sudo.sudo(extrinsics);
             console.log(colors.green("extrinsic encode"), sudoExtrinsic.toHex());
             txs = [];
         }
