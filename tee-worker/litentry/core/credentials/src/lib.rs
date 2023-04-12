@@ -469,8 +469,8 @@ impl Credential {
 			or_logic = or_logic.add_item(network_logic);
 		}
 
-		let min_item = AssertionLogic::new_item("$total_txs", Op::GreaterThan, &min);
-		let max_item = AssertionLogic::new_item("$total_txs", Op::LessEq, &max);
+		let min_item = AssertionLogic::new_item("$total_txs", Op::GreaterEq, &min);
+		let max_item = AssertionLogic::new_item("$total_txs", Op::LessThan, &max);
 
 		let assertion = AssertionLogic::new_and()
 			.add_item(min_item)
