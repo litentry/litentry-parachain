@@ -61,7 +61,8 @@ impl TrustedCallSigned {
 		)
 		.encode();
 		let encoded_shard = shard.encode();
-		let request = SetUserShieldingKeyRequest { encoded_shard, who, encoded_callback, hash }.into();
+		let request =
+			SetUserShieldingKeyRequest { encoded_shard, who, encoded_callback, hash }.into();
 		let sender = StfRequestSender::new();
 		sender
 			.send_stf_request(request)
