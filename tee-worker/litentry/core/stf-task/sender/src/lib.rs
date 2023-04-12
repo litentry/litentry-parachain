@@ -76,6 +76,7 @@ pub struct Web2IdentityVerificationRequest {
 	pub validation_data: Web2ValidationData,
 	pub bn: litentry_primitives::ParentchainBlockNumber, //Parentchain BlockNumber
 	pub encoded_callback: Vec<u8>,
+	pub hash: H256,
 }
 
 /// TODO: adapt Web3 struct fields later
@@ -88,6 +89,7 @@ pub struct Web3IdentityVerificationRequest {
 	pub validation_data: Web3ValidationData,
 	pub bn: litentry_primitives::ParentchainBlockNumber, //Parentchain BlockNumber
 	pub encoded_callback: Vec<u8>,
+	pub hash: H256,
 }
 
 pub type MaxIdentityLength = ConstU32<64>;
@@ -108,6 +110,7 @@ pub struct SetUserShieldingKeyRequest {
 	pub encoded_shard: Vec<u8>,
 	pub who: AccountId,
 	pub encoded_callback: Vec<u8>,
+	pub hash: H256,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
@@ -119,6 +122,26 @@ pub enum RequestType {
 	// async process the request in stf-task-receiver
 	// In real scenario it should be done synchronously
 	SetUserShieldingKey(SetUserShieldingKeyRequest),
+}
+
+impl RequestType {
+	pub fn get_who(&self) -> &AccountId {
+		match self {
+			RequestType::Web2IdentityVerification(r) => &r.who,
+			RequestType::Web3IdentityVerification(r) => &r.who,
+			RequestType::AssertionVerification(r) => &r.who,
+			RequestType::SetUserShieldingKey(r) => &r.who,
+		}
+	}
+
+	pub fn get_hash(&self) -> H256 {
+		match self {
+			RequestType::Web2IdentityVerification(r) => r.hash,
+			RequestType::Web3IdentityVerification(r) => r.hash,
+			RequestType::AssertionVerification(r) => r.hash,
+			RequestType::SetUserShieldingKey(r) => r.hash,
+		}
+	}
 }
 
 impl From<Web2IdentityVerificationRequest> for RequestType {
