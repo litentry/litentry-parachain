@@ -161,11 +161,11 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
 		// // TODO: If you use "type TEECallOrigin = EnsureEnclaveSigner;"
 		// // The following code does not play the role it suppose to do.
-		// // This mock part setup will pass and executed successfully without error (require feature skip-ias-check)
-		// // but inside the runtime benchmark, IMP extrinsic related to TEECallOrigin extrinsic
-		// // will fail with Bad Orgin Error.
-		// // However, it has been checked that both benchmark and mock calculate the right AccountId:
-		// // account = 1509858657092253371
+		// // This mock part setup will pass and executed successfully without error (require
+		// feature skip-ias-check) // but inside the runtime benchmark, IMP extrinsic related to
+		// TEECallOrigin extrinsic // will fail with Bad Orgin Error.
+		// // However, it has been checked that both benchmark and mock calculate the right
+		// AccountId: // account = 1509858657092253371
 		// #[cfg(feature = "runtime-benchmarks")]
 		// {
 		// 	use frame_benchmarking::account;
