@@ -112,7 +112,7 @@ benchmarks! {
 	// execution time is constant irrespective of encrypted_data size.
 	add_schema {
 		let account: T::AccountId = frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
-		VCManagement::<T>::set_admin(RawOrigin::Signed(account.clone()).into(), account.clone())?;
+		VCManagement::<T>::set_admin(RawOrigin::Root.into(), account.clone())?;
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
 		let shard = H256::from_slice(&TEST_MRENCLAVE);
@@ -125,7 +125,7 @@ benchmarks! {
 	// execution time is constant irrespective of encrypted_data size.
 	disable_schema {
 		let account: T::AccountId = frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
-		VCManagement::<T>::set_admin(RawOrigin::Signed(account.clone()).into(), account.clone())?;
+		VCManagement::<T>::set_admin(RawOrigin::Root.into(), account.clone())?;
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
 		let shard = H256::from_slice(&TEST_MRENCLAVE);
@@ -139,7 +139,7 @@ benchmarks! {
 	// execution time is constant irrespective of encrypted_data size.
 	activate_schema {
 		let account: T::AccountId = frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
-		VCManagement::<T>::set_admin(RawOrigin::Signed(account.clone()).into(), account.clone())?;
+		VCManagement::<T>::set_admin(RawOrigin::Root.into(), account.clone())?;
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
 		let shard = H256::from_slice(&TEST_MRENCLAVE);
@@ -154,7 +154,7 @@ benchmarks! {
 	// execution time is constant irrespective of encrypted_data size.
 	revoke_schema {
 		let account: T::AccountId = frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
-		VCManagement::<T>::set_admin(RawOrigin::Signed(account.clone()).into(), account.clone())?;
+		VCManagement::<T>::set_admin(RawOrigin::Root.into(), account.clone())?;
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
 		let shard = H256::from_slice(&TEST_MRENCLAVE);
@@ -168,7 +168,7 @@ benchmarks! {
 	// execution time is constant irrespective of encrypted_data size.
 	add_vc_registry_item {
 		let account: T::AccountId = frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
-		VCManagement::<T>::set_admin(RawOrigin::Signed(account.clone()).into(), account.clone())?;
+		VCManagement::<T>::set_admin(RawOrigin::Root.into(), account.clone())?;
 		let assertion = Assertion::A1;
 	}: _(RawOrigin::Signed(account.clone()), VC_INDEX, account.clone(), assertion.clone(), VC_HASH)
 	verify {
@@ -179,7 +179,7 @@ benchmarks! {
 	// execution time is constant irrespective of encrypted_data size.
 	remove_vc_registry_item {
 		let account: T::AccountId = frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
-		VCManagement::<T>::set_admin(RawOrigin::Signed(account.clone()).into(), account.clone())?;
+		VCManagement::<T>::set_admin(RawOrigin::Root.into(), account.clone())?;
 		let assertion = Assertion::A1;
 		VCManagement::<T>::add_vc_registry_item(RawOrigin::Signed(account.clone()).into(), VC_INDEX, account.clone(), assertion, VC_HASH)?;
 	}: _(RawOrigin::Signed(account), VC_INDEX)
@@ -191,7 +191,7 @@ benchmarks! {
 	clear_vc_registry {
 		let x in 0..100u32;
 		let account: T::AccountId = frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
-		VCManagement::<T>::set_admin(RawOrigin::Signed(account.clone()).into(), account.clone())?;
+		VCManagement::<T>::set_admin(RawOrigin::Root.into(), account.clone())?;
 		let assertion = Assertion::A1;
 		for i in 0..x {
 			let seed = USER_SEED - i;
