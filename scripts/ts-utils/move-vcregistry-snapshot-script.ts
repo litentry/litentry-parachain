@@ -49,7 +49,7 @@ async function encodeExtrinsic() {
             i++
             const extrinsics = defaultAPI.tx.utility.batch(batchTxs);
             const sudoExtrinsic = defaultAPI.tx.sudo.sudo(extrinsics);
-            console.log(colors.green("extrinsic encode"), sudoExtrinsic.toHex());
+            console.log(colors.green(`extrinsic ${i} encode`), sudoExtrinsic.toHex());
             txs = [];
         }
     }
