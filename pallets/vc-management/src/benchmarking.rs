@@ -35,6 +35,19 @@ fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	frame_system::Pallet::<T>::assert_last_event(generic_event.into());
 }
 
+fn convert_u32_array_to_u8_array(u32_array: [u32; 8]) -> [u8; 32] {
+    let mut u8_array = [0u8; 32];
+    let mut index = 0;
+
+    for u32_element in &u32_array {
+        let u8_slice = u32_element.to_le_bytes();
+        u8_array[index..index+4].copy_from_slice(&u8_slice);
+        index += 4;
+    }
+
+    u8_array
+}
+
 benchmarks! {
 	// Benchmark `request_vc`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
@@ -195,7 +208,9 @@ benchmarks! {
 		for i in 0..x {
 			let seed = USER_SEED - i;
 			let candidate:T::AccountId = frame_benchmarking::account("TEST_A", 0u32, seed);
-			VCManagement::<T>::add_vc_registry_item(RawOrigin::Signed(account.clone()).into(), H256::from_low_u64_be(seed.into()), candidate.clone(), assertion.clone(), VC_HASH)?;
+			let seed_hash_u8_32 = convert_u32_array_to_u8_array([seed; 8]);
+			let hash: H256 = seed_hash_u8_32.into();
+			VCManagement::<T>::add_vc_registry_item(RawOrigin::Signed(account.clone()).into(), hash, candidate.clone(), assertion.clone(), VC_HASH)?;
 		}
 	}: _(RawOrigin::Signed(account))
 	verify {
