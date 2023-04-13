@@ -50,9 +50,9 @@ for Item in 'enclave.signed.so' 'integritee-service' 'aes_key_sealed.bin' 'ed255
     cp -r "${Item}" "${WORKER_DIR}"
 done
 
-cp $RUNNING_MODE_CONFIG_PATH "${WORKER_DIR}/config.json"
-cp $INTEL_KEY_PATH "${WORKER_DIR}/key_production.txt"
-cp $INTEL_SPID_PATH "${WORKER_DIR}/spid_production.txt"
+cp $RUNNING_MODE_CONFIG "${WORKER_DIR}/config.json"
+cp $INTEL_KEY "${WORKER_DIR}/key_production.txt"
+cp $INTEL_SPID "${WORKER_DIR}/spid_production.txt"
 
 # Comment out for the moment. Need to adapt together with PR-1587 ts-utils.
 # cp $PRIVATE_ACCOUNT_JSON "${WORKER_DIR}/ts-setup/private_account.json"
