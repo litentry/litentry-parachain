@@ -36,10 +36,10 @@ fi
 SRC_DIR=$(dirname "$0")
 cd $SRC_DIR
 
-./integritee_service signing-key | grep -oP '^Enclave account: \K.*$$' > enclave_account.txt
+./integritee-service signing-key | grep -oP '^Enclave account: \K.*$$' > enclave_account.txt
 echo "Enclave account is prepared inside enclave_account.txt"
 
-./integritee_service shielding-key
+./integritee-service shielding-key
 
 
 for Item in 'enclave.sign.so' 'integritee-service' 'aes_key_sealed.bin' 'ed25519_key_sealed.bin' 'enclave-shielding-pubkey.json' 'enclave-signing-pubkey.bin' 'rsa3072_key_sealed.bin' 'sidechain_db'; do
