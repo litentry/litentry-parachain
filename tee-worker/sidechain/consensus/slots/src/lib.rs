@@ -409,10 +409,19 @@ impl<ParentchainBlock: ParentchainBlockTrait, T: SimpleSlotWorker<ParentchainBlo
 			);
 
 			match SimpleSlotWorker::on_slot(self, shard_slot, shard) {
-				Some(res) => slot_results.push(res),
+				Some(res) => {
+					info!(
+						target: logging_target,
+						"Proposed block {} for slot {} in shard {:?}",
+						res.block.block().header().block_number(),
+						*slot_info.slot,
+						shard
+					);
+					slot_results.push(res);
+				},
 				None => info!(
 					target: logging_target,
-					"Did not produce a block for slot {} in shard {:?}", *slot_info.slot, shard
+					"Did not propose a block for slot {} in shard {:?}", *slot_info.slot, shard
 				),
 			}
 
