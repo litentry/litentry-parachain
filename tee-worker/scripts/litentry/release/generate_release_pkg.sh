@@ -26,7 +26,7 @@ SGX_PRODUCTION=1 SGX_COMMERCIAL_KEY=${COMMERCIAL_KEY_PATH} make
 for Item in 'enclave.signed.so' 'integritee-service'; do
     cp "${WORKER_DIR}/bin/${Item}" "${RELEASE_DIR}"
 done
-for Item in 'prepare.sh' 'config.json.eg' 'ReadMe.md' 'ts-setup'; do
+for Item in 'prepare.sh' 'config.json.eg' 'ReadMe.md'; do
     cp -r "${WORKER_DIR}/scripts/litentry/release/${Item}" "${RELEASE_DIR}"
 done
 
