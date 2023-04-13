@@ -32,6 +32,10 @@ if [[ ! -e "$INTEL_SPID" ]]; then
   exit 1
 fi
 
+if [[ ! -e "$WORKER_DIR" ]]; then
+  mkdir -p $WORKER_DIR
+fi
+
 # Generate keys and copy around.
 SRC_DIR=$(dirname "$0")
 cd $SRC_DIR
