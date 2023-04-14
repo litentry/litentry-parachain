@@ -326,8 +326,8 @@ pub struct EnsureEnclaveSigner<T>(PhantomData<T>);
 impl<T> EnsureOrigin<T::RuntimeOrigin> for EnsureEnclaveSigner<T>
 where
 	T: frame_system::Config + pallet_teerex::Config + pallet_timestamp::Config<Moment = u64>,
-	<T as frame_system::Config>::AccountId: std::convert::From<[u8; 32]>,
-	<T as frame_system::Config>::Hash: std::convert::From<[u8; 32]>,
+	<T as frame_system::Config>::AccountId: From<[u8; 32]>,
+	<T as frame_system::Config>::Hash: From<[u8; 32]>,
 {
 	type Success = T::AccountId;
 	fn try_origin(o: T::RuntimeOrigin) -> Result<Self::Success, T::RuntimeOrigin> {
