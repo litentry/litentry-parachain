@@ -68,7 +68,8 @@ benchmarks! {
 		let assertion = Assertion::A1;
 		let vc = AesOutput::default();
 		let req_ext_hash = H256::default();
-		VCManagement::<T>::vc_issued(RawOrigin::Signed(account.clone()).into(), account.clone(), assertion, VC_INDEX, VC_HASH, vc, req_ext_hash)?;
+		let tee_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
+		VCManagement::<T>::vc_issued(tee_origin.into(), account.clone(), assertion, VC_INDEX, VC_HASH, vc, req_ext_hash)?;
 	}: _(RawOrigin::Signed(account.clone()), VC_INDEX)
 	verify{
 		assert_last_event::<T>(Event::VCDisabled{ account, index: VC_HASH }.into());
@@ -81,7 +82,8 @@ benchmarks! {
 		let assertion = Assertion::A1;
 		let vc = AesOutput::default();
 		let req_ext_hash = H256::default();
-		VCManagement::<T>::vc_issued(RawOrigin::Signed(account.clone()).into(), account.clone(), assertion, VC_INDEX, VC_HASH, vc, req_ext_hash)?;
+		let tee_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
+		VCManagement::<T>::vc_issued(tee_origin.into(), account.clone(), assertion, VC_INDEX, VC_HASH, vc, req_ext_hash)?;
 	}: _(RawOrigin::Signed(account.clone()), VC_INDEX)
 	verify{
 		assert_last_event::<T>(Event::VCRevoked{ account, index: VC_HASH }.into());
