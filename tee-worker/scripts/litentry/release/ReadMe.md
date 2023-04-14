@@ -2,8 +2,8 @@
 # Release package
 
 
-## Step 1: Preparation
-
+## Step 0: Preparation
+This package is generated from [litentry-parachain](https://github.com/litentry/litentry-parachain)
 From the root folder ~/litentry-parachain/tee-worker/:
 ```
 make release-pkg
@@ -12,17 +12,19 @@ A release package will be generated, within which there are:
 
 - enclave.sign.so
 - integritee-service
-- running-mode-eg.json
+- config.json.eg
+- prepare.sh
 
 
+## Step 1: Deploy on production
 
-## Step 2: Deploy on production
+Before deploy the workers, please make sure the target parachain is already up and accessable.
 
 1. Extract the release package to one target location. Worker will be executed from there. Then execute `prepare.sh`:
     ```
-    ./prepare.sh
+    ./prepare.sh <path-to-secret-config>
     ```
-    This script will generate out `MRENCLAVE` hex value (mrenclave.txt) and `Enclave Account` info (account.txt). They will used later by ts scripts to setup enclave account.
+    This script will generate out `MRENCLAVE` hex value (mrenclave.txt) and `Enclave Account` info (account.txt). They will be used later by ts scripts to setup enclave account.
     <br>
 
 2. Startup options.
