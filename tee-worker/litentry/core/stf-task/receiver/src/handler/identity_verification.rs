@@ -99,7 +99,13 @@ where
 		{
 			Ok(Ok(call_index)) => {
 				debug!("Sending imp_some_error event to parachain ...");
-				let call = OpaqueCall::from_tuple(&(call_index, error));
+				let call = OpaqueCall::from_tuple(&(
+					call_index,
+					Some(self.req.get_who()),
+					error,
+					self.req.get_hash(),
+				));
+
 				self.context.submit_to_parentchain(call)
 			},
 			Ok(Err(e)) => {
