@@ -6485,6 +6485,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "test-utils",
 ]
 
 [[package]]
@@ -7190,6 +7191,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "test-utils",
 ]
 
 [[package]]
@@ -9938,6 +9940,7 @@ dependencies = [
  "sp-runtime",
  "sp-state-machine",
  "sp-std",
+ "test-utils",
  "xcm",
  "xcm-builder",
  "xcm-executor",
