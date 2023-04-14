@@ -27,7 +27,7 @@ use frame_system::RawOrigin;
 use sp_core::H256;
 use sp_std::vec;
 
-use test_utils::ias::consts::TEST4_MRENCLAVE;
+use test_utils::ias::consts::TEST8_MRENCLAVE;
 const USER_SEED: u32 = 9966;
 const VC_HASH: H256 = H256::zero();
 const VC_INDEX: H256 = H256::zero();
@@ -54,7 +54,7 @@ benchmarks! {
 	// execution time is constant irrespective of encrypted_data size.
 	request_vc {
 		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
-		let shard = H256::from_slice(&TEST4_MRENCLAVE);
+		let shard = H256::from_slice(&TEST8_MRENCLAVE);
 		let assertion = Assertion::A1;
 	}: _(RawOrigin::Signed(account.clone()), shard, assertion.clone())
 	verify{
@@ -130,7 +130,7 @@ benchmarks! {
 		VCManagement::<T>::set_admin(RawOrigin::Root.into(), account.clone())?;
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
-		let shard = H256::from_slice(&TEST4_MRENCLAVE);
+		let shard = H256::from_slice(&TEST8_MRENCLAVE);
 	}: _(RawOrigin::Signed(account.clone()), shard, id, content)
 	verify {
 		assert_last_event::<T>(Event::SchemaIssued { account, shard, index: 0 }.into())
@@ -143,7 +143,7 @@ benchmarks! {
 		VCManagement::<T>::set_admin(RawOrigin::Root.into(), account.clone())?;
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
-		let shard = H256::from_slice(&TEST4_MRENCLAVE);
+		let shard = H256::from_slice(&TEST8_MRENCLAVE);
 		VCManagement::<T>::add_schema(RawOrigin::Signed(account.clone()).into(), shard, id, content)?;
 	}: _(RawOrigin::Signed(account.clone()), shard, 0)
 	verify {
@@ -157,7 +157,7 @@ benchmarks! {
 		VCManagement::<T>::set_admin(RawOrigin::Root.into(), account.clone())?;
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
-		let shard = H256::from_slice(&TEST4_MRENCLAVE);
+		let shard = H256::from_slice(&TEST8_MRENCLAVE);
 		VCManagement::<T>::add_schema(RawOrigin::Signed(account.clone()).into(), shard, id, content)?;
 		VCManagement::<T>::disable_schema(RawOrigin::Signed(account.clone()).into(), shard, 0)?;
 	}: _(RawOrigin::Signed(account.clone()), shard, 0)
@@ -172,7 +172,7 @@ benchmarks! {
 		VCManagement::<T>::set_admin(RawOrigin::Root.into(), account.clone())?;
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
-		let shard = H256::from_slice(&TEST4_MRENCLAVE);
+		let shard = H256::from_slice(&TEST8_MRENCLAVE);
 		VCManagement::<T>::add_schema(RawOrigin::Signed(account.clone()).into(), shard, id, content)?;
 	}: _(RawOrigin::Signed(account.clone()), shard, 0)
 	verify {

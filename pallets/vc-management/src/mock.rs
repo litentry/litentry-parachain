@@ -57,12 +57,12 @@ impl EnsureOrigin<SystemOrigin> for EnsureEnclaveSigner {
 
 	#[cfg(feature = "runtime-benchmarks")]
 	fn try_successful_origin() -> Result<SystemOrigin, ()> {
-		use test_utils::ias::consts::{TEST4_CERT, TEST4_SIGNER_PUB, TEST4_TIMESTAMP, URL};
-		pallet_timestamp::Pallet::<Test>::set_timestamp(TEST4_TIMESTAMP);
-		let signer: SystemAccountId = test_utils::get_signer(TEST4_SIGNER_PUB);
+		use test_utils::ias::consts::{TEST8_CERT, TEST8_SIGNER_PUB, TEST8_TIMESTAMP, URL};
+		pallet_timestamp::Pallet::<Test>::set_timestamp(TEST8_TIMESTAMP);
+		let signer: SystemAccountId = test_utils::get_signer(TEST8_SIGNER_PUB);
 		assert_ok!(pallet_teerex::Pallet::<Test>::register_enclave(
 			RuntimeOrigin::signed(signer.clone()),
-			TEST4_CERT.to_vec(),
+			TEST8_CERT.to_vec(),
 			URL.to_vec(),
 			None,
 			None,
@@ -170,12 +170,12 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		System::set_block_number(1);
 		let _ = VCManagement::set_admin(RuntimeOrigin::root(), alice);
 
-		use test_utils::ias::consts::{TEST4_CERT, TEST4_SIGNER_PUB, TEST4_TIMESTAMP, URL};
-		Timestamp::set_timestamp(TEST4_TIMESTAMP);
-		let teerex_signer: SystemAccountId = test_utils::get_signer(TEST4_SIGNER_PUB);
+		use test_utils::ias::consts::{TEST8_CERT, TEST8_SIGNER_PUB, TEST8_TIMESTAMP, URL};
+		Timestamp::set_timestamp(TEST8_TIMESTAMP);
+		let teerex_signer: SystemAccountId = test_utils::get_signer(TEST8_SIGNER_PUB);
 		assert_ok!(Teerex::register_enclave(
 			RuntimeOrigin::signed(teerex_signer),
-			TEST4_CERT.to_vec(),
+			TEST8_CERT.to_vec(),
 			URL.to_vec(),
 			None,
 			None,

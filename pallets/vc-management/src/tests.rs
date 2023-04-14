@@ -18,7 +18,7 @@ use crate::{mock::*, AesOutput, Assertion, Error, ShardIdentifier, Status};
 use frame_support::{assert_noop, assert_ok};
 use sp_core::H256;
 
-use test_utils::ias::consts::{TEST4_MRENCLAVE, TEST4_SIGNER_PUB};
+use test_utils::ias::consts::{TEST8_MRENCLAVE, TEST8_SIGNER_PUB};
 const VC_HASH: H256 = H256::zero();
 const VC_INDEX: H256 = H256::zero();
 
@@ -29,7 +29,7 @@ const BOB_PUBKEY: &[u8; 32] = &[2u8; 32];
 #[test]
 fn request_vc_works() {
 	new_test_ext().execute_with(|| {
-		let shard: ShardIdentifier = H256::from_slice(&TEST4_MRENCLAVE);
+		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
 		assert_ok!(VCManagement::request_vc(
 			RuntimeOrigin::signed(alice.clone()),
@@ -47,7 +47,7 @@ fn request_vc_works() {
 #[test]
 fn vc_issued_works() {
 	new_test_ext().execute_with(|| {
-		let teerex_signer: SystemAccountId = test_utils::get_signer(TEST4_SIGNER_PUB);
+		let teerex_signer: SystemAccountId = test_utils::get_signer(TEST8_SIGNER_PUB);
 		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(teerex_signer),
@@ -89,7 +89,7 @@ fn vc_issued_with_unpriviledged_origin_fails() {
 #[test]
 fn vc_issued_with_duplicated_index_fails() {
 	new_test_ext().execute_with(|| {
-		let teerex_signer: SystemAccountId = test_utils::get_signer(TEST4_SIGNER_PUB);
+		let teerex_signer: SystemAccountId = test_utils::get_signer(TEST8_SIGNER_PUB);
 		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(teerex_signer.clone()),
@@ -118,7 +118,7 @@ fn vc_issued_with_duplicated_index_fails() {
 #[test]
 fn disable_vc_works() {
 	new_test_ext().execute_with(|| {
-		let teerex_signer: SystemAccountId = test_utils::get_signer(TEST4_SIGNER_PUB);
+		let teerex_signer: SystemAccountId = test_utils::get_signer(TEST8_SIGNER_PUB);
 		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(teerex_signer),
@@ -152,7 +152,7 @@ fn disable_vc_with_non_existent_vc_event() {
 #[test]
 fn disable_vc_with_other_subject_fails() {
 	new_test_ext().execute_with(|| {
-		let teerex_signer: SystemAccountId = test_utils::get_signer(TEST4_SIGNER_PUB);
+		let teerex_signer: SystemAccountId = test_utils::get_signer(TEST8_SIGNER_PUB);
 		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
 		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
 		assert_ok!(VCManagement::vc_issued(
@@ -176,7 +176,7 @@ fn disable_vc_with_other_subject_fails() {
 #[test]
 fn revoke_vc_works() {
 	new_test_ext().execute_with(|| {
-		let teerex_signer: SystemAccountId = test_utils::get_signer(TEST4_SIGNER_PUB);
+		let teerex_signer: SystemAccountId = test_utils::get_signer(TEST8_SIGNER_PUB);
 		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(teerex_signer),
@@ -208,7 +208,7 @@ fn revokevc_with_non_existent_vc_fails() {
 #[test]
 fn revoke_vc_with_other_subject_fails() {
 	new_test_ext().execute_with(|| {
-		let teerex_signer: SystemAccountId = test_utils::get_signer(TEST4_SIGNER_PUB);
+		let teerex_signer: SystemAccountId = test_utils::get_signer(TEST8_SIGNER_PUB);
 		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
 		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
 		assert_ok!(VCManagement::vc_issued(
@@ -264,7 +264,7 @@ fn add_schema_works() {
 		assert_eq!(VCManagement::schema_index(), 0);
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
-		let shard: ShardIdentifier = H256::from_slice(&TEST4_MRENCLAVE);
+		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		assert_ok!(VCManagement::add_schema(
 			RuntimeOrigin::signed(alice.clone()),
 			shard,
@@ -286,7 +286,7 @@ fn add_schema_with_unpriviledged_origin_fails() {
 		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
-		let shard: ShardIdentifier = H256::from_slice(&TEST4_MRENCLAVE);
+		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		assert_noop!(
 			VCManagement::add_schema(RuntimeOrigin::signed(bob), shard, id, content),
 			Error::<Test>::RequireAdmin
@@ -301,7 +301,7 @@ fn add_two_schemas_works() {
 		assert_eq!(VCManagement::schema_index(), 0);
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
-		let shard: ShardIdentifier = H256::from_slice(&TEST4_MRENCLAVE);
+		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		assert_ok!(VCManagement::add_schema(
 			RuntimeOrigin::signed(alice.clone()),
 			shard,
@@ -329,7 +329,7 @@ fn disable_schema_works() {
 		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
-		let shard: ShardIdentifier = H256::from_slice(&TEST4_MRENCLAVE);
+		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		assert_ok!(VCManagement::add_schema(
 			RuntimeOrigin::signed(alice.clone()),
 			shard,
@@ -348,7 +348,7 @@ fn disable_schema_works() {
 fn disable_schema_with_non_existent_fails() {
 	new_test_ext().execute_with(|| {
 		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
-		let shard: ShardIdentifier = H256::from_slice(&TEST4_MRENCLAVE);
+		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		assert_noop!(
 			VCManagement::disable_schema(RuntimeOrigin::signed(alice), shard, 2),
 			Error::<Test>::SchemaNotExists
@@ -363,7 +363,7 @@ fn disable_schema_with_unpriviledged_origin_fails() {
 		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
-		let shard: ShardIdentifier = H256::from_slice(&TEST4_MRENCLAVE);
+		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		assert_ok!(VCManagement::add_schema(RuntimeOrigin::signed(alice), shard, id, content));
 		assert_noop!(
 			VCManagement::disable_schema(RuntimeOrigin::signed(bob), shard, 0),
@@ -378,7 +378,7 @@ fn activate_schema_works() {
 		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
-		let shard: ShardIdentifier = H256::from_slice(&TEST4_MRENCLAVE);
+		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		assert_ok!(VCManagement::add_schema(
 			RuntimeOrigin::signed(alice.clone()),
 			shard,
@@ -401,7 +401,7 @@ fn activate_already_activated_schema_fails() {
 		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
-		let shard: ShardIdentifier = H256::from_slice(&TEST4_MRENCLAVE);
+		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		assert_ok!(VCManagement::add_schema(
 			RuntimeOrigin::signed(alice.clone()),
 			shard,
@@ -422,7 +422,7 @@ fn revoke_schema_works() {
 		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
-		let shard: ShardIdentifier = H256::from_slice(&TEST4_MRENCLAVE);
+		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		assert_ok!(VCManagement::add_schema(
 			RuntimeOrigin::signed(alice.clone()),
 			shard,
@@ -440,7 +440,7 @@ fn revoke_schema_works() {
 fn revoke_schema_with_non_existent_fails() {
 	new_test_ext().execute_with(|| {
 		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
-		let shard: ShardIdentifier = H256::from_slice(&TEST4_MRENCLAVE);
+		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		assert_noop!(
 			VCManagement::revoke_schema(RuntimeOrigin::signed(alice), shard, 2),
 			Error::<Test>::SchemaNotExists
@@ -455,7 +455,7 @@ fn revoke_schema_with_unprivileged_origin_fails() {
 		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
-		let shard: ShardIdentifier = H256::from_slice(&TEST4_MRENCLAVE);
+		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		assert_ok!(VCManagement::add_schema(RuntimeOrigin::signed(alice), shard, id, content));
 		assert_noop!(
 			VCManagement::revoke_schema(RuntimeOrigin::signed(bob), shard, 0),

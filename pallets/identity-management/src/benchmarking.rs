@@ -27,7 +27,7 @@ use frame_system::RawOrigin;
 use sp_core::H256;
 use sp_std::vec;
 
-use test_utils::ias::consts::TEST4_MRENCLAVE;
+use test_utils::ias::consts::TEST8_MRENCLAVE;
 const USER_SEED: u32 = 9966;
 
 fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
@@ -56,7 +56,7 @@ benchmarks! {
 	// execution time is constant irrespective of encrypted_data size.
 	create_identity {
 		let caller: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
-		let shard = H256::from_slice(&TEST4_MRENCLAVE);
+		let shard = H256::from_slice(&TEST8_MRENCLAVE);
 		let encrypted_did = vec![1u8; 2048];
 		let encrypted_metadata = Some(vec![1u8; 2048]);
 	}: _(RawOrigin::Signed(caller.clone()), shard, caller.clone(), encrypted_did, encrypted_metadata)
@@ -68,7 +68,7 @@ benchmarks! {
 	// execution time is constant irrespective of encrypted_data size.
 	remove_identity {
 		let caller: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
-		let shard = H256::from_slice(&TEST4_MRENCLAVE);
+		let shard = H256::from_slice(&TEST8_MRENCLAVE);
 		let encrypted_did = vec![1u8; 2048];
 		let encrypted_metadata = Some(vec![1u8; 2048]);
 		IdentityManagement::<T>::create_identity(RawOrigin::Signed(caller.clone()).into(), shard, caller.clone(), encrypted_did.clone(), encrypted_metadata)?;
@@ -81,7 +81,7 @@ benchmarks! {
 	// execution time is constant irrespective of encrypted_data size.
 	verify_identity {
 		let caller: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
-		let shard = H256::from_slice(&TEST4_MRENCLAVE);
+		let shard = H256::from_slice(&TEST8_MRENCLAVE);
 		let encrypted_did = vec![1u8; 2048];
 		let encrypted_validation_data = vec![1u8; 2048];
 	}: _(RawOrigin::Signed(caller), shard, encrypted_did, encrypted_validation_data)
@@ -93,7 +93,7 @@ benchmarks! {
 	// execution time is constant irrespective of encrypted_data size.
 	set_user_shielding_key {
 		let caller: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
-		let shard = H256::from_slice(&TEST4_MRENCLAVE);
+		let shard = H256::from_slice(&TEST8_MRENCLAVE);
 		let encrypted_key = vec![1u8; 2048];
 	}: _(RawOrigin::Signed(caller), shard, encrypted_key)
 	verify {
