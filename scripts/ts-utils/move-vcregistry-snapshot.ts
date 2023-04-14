@@ -1,5 +1,5 @@
 
-//run: npx ts-node move-vcregistry-snapshot-script.ts
+//run: npx ts-node move-vcregistry-snapshot.ts
 
 import { initApi } from "./initApis";
 const fs = require("fs");

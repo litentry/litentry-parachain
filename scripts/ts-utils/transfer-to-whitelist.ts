@@ -1,5 +1,5 @@
 
-//run:npx ts-node transfer-to-whitelist-script.ts
+//run:npx ts-node transfer-to-whitelist.ts
 import * as XLSX from 'xlsx';
 import { initApi } from "./initApis";
 import colors from 'colors';

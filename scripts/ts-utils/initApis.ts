@@ -5,7 +5,7 @@ import colors from "colors";
 const wsFetchProvider = new WsProvider("wss://tee-staging.litentry.io:443");
 
 //defaultAPI is used to send transactions to the chain
-const wsDefaultProvider = new WsProvider("ws://localhost:9944");
+const wsDefaultProvider = new WsProvider("wss://tee-staging.litentry.io/");
 
 export const initApi = async () => {
     console.log(colors.green("init api..."))
