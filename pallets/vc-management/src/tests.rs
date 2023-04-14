@@ -36,11 +36,22 @@ fn request_vc_works() {
 }
 
 #[test]
+#[cfg(feature = "skip-ias-check")]
 fn vc_issued_works() {
 	new_test_ext().execute_with(|| {
+		// copied from https://github.com/integritee-network/pallets/blob/5b0706e8b9f726d81d8aff74efbae8e023e783b7/test-utils/src/ias.rs#L147
+		const URL: &[u8] =
+			&[119, 115, 58, 47, 47, 49, 50, 55, 46, 48, 46, 48, 46, 49, 58, 57, 57, 57, 49];
 		let teerex_signer: u64 = frame_benchmarking::account::<
 			<Test as frame_system::Config>::AccountId,
 		>("TEST_A", 0u32, 9966u32);
+		assert_ok!(Teerex::register_enclave(
+			RuntimeOrigin::signed(teerex_signer),
+			TEST_MRENCLAVE.to_vec(),
+			URL.to_vec(),
+			None,
+			None,
+		));
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(teerex_signer),
 			1,
@@ -77,11 +88,22 @@ fn vc_issued_with_unpriviledged_origin_fails() {
 }
 
 #[test]
+#[cfg(feature = "skip-ias-check")]
 fn vc_issued_with_duplicated_index_fails() {
 	new_test_ext().execute_with(|| {
+		// copied from https://github.com/integritee-network/pallets/blob/5b0706e8b9f726d81d8aff74efbae8e023e783b7/test-utils/src/ias.rs#L147
+		const URL: &[u8] =
+			&[119, 115, 58, 47, 47, 49, 50, 55, 46, 48, 46, 48, 46, 49, 58, 57, 57, 57, 49];
 		let teerex_signer: u64 = frame_benchmarking::account::<
 			<Test as frame_system::Config>::AccountId,
 		>("TEST_A", 0u32, 9966u32);
+		assert_ok!(Teerex::register_enclave(
+			RuntimeOrigin::signed(teerex_signer),
+			TEST_MRENCLAVE.to_vec(),
+			URL.to_vec(),
+			None,
+			None,
+		));
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(teerex_signer),
 			1,
@@ -107,11 +129,22 @@ fn vc_issued_with_duplicated_index_fails() {
 }
 
 #[test]
+#[cfg(feature = "skip-ias-check")]
 fn disable_vc_works() {
 	new_test_ext().execute_with(|| {
+		// copied from https://github.com/integritee-network/pallets/blob/5b0706e8b9f726d81d8aff74efbae8e023e783b7/test-utils/src/ias.rs#L147
+		const URL: &[u8] =
+			&[119, 115, 58, 47, 47, 49, 50, 55, 46, 48, 46, 48, 46, 49, 58, 57, 57, 57, 49];
 		let teerex_signer: u64 = frame_benchmarking::account::<
 			<Test as frame_system::Config>::AccountId,
 		>("TEST_A", 0u32, 9966u32);
+		assert_ok!(Teerex::register_enclave(
+			RuntimeOrigin::signed(teerex_signer),
+			TEST_MRENCLAVE.to_vec(),
+			URL.to_vec(),
+			None,
+			None,
+		));
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(teerex_signer),
 			2,
@@ -141,11 +174,22 @@ fn disable_vc_with_non_existent_vc_event() {
 }
 
 #[test]
+#[cfg(feature = "skip-ias-check")]
 fn disable_vc_with_other_subject_fails() {
 	new_test_ext().execute_with(|| {
+		// copied from https://github.com/integritee-network/pallets/blob/5b0706e8b9f726d81d8aff74efbae8e023e783b7/test-utils/src/ias.rs#L147
+		const URL: &[u8] =
+			&[119, 115, 58, 47, 47, 49, 50, 55, 46, 48, 46, 48, 46, 49, 58, 57, 57, 57, 49];
 		let teerex_signer: u64 = frame_benchmarking::account::<
 			<Test as frame_system::Config>::AccountId,
 		>("TEST_A", 0u32, 9966u32);
+		assert_ok!(Teerex::register_enclave(
+			RuntimeOrigin::signed(teerex_signer),
+			TEST_MRENCLAVE.to_vec(),
+			URL.to_vec(),
+			None,
+			None,
+		));
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(teerex_signer),
 			2,
@@ -165,11 +209,22 @@ fn disable_vc_with_other_subject_fails() {
 }
 
 #[test]
+#[cfg(feature = "skip-ias-check")]
 fn revoke_vc_works() {
 	new_test_ext().execute_with(|| {
+		// copied from https://github.com/integritee-network/pallets/blob/5b0706e8b9f726d81d8aff74efbae8e023e783b7/test-utils/src/ias.rs#L147
+		const URL: &[u8] =
+			&[119, 115, 58, 47, 47, 49, 50, 55, 46, 48, 46, 48, 46, 49, 58, 57, 57, 57, 49];
 		let teerex_signer: u64 = frame_benchmarking::account::<
 			<Test as frame_system::Config>::AccountId,
 		>("TEST_A", 0u32, 9966u32);
+		assert_ok!(Teerex::register_enclave(
+			RuntimeOrigin::signed(teerex_signer),
+			TEST_MRENCLAVE.to_vec(),
+			URL.to_vec(),
+			None,
+			None,
+		));
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(teerex_signer),
 			2,
@@ -197,11 +252,22 @@ fn revokevc_with_non_existent_vc_fails() {
 }
 
 #[test]
+#[cfg(feature = "skip-ias-check")]
 fn revoke_vc_with_other_subject_fails() {
 	new_test_ext().execute_with(|| {
+		// copied from https://github.com/integritee-network/pallets/blob/5b0706e8b9f726d81d8aff74efbae8e023e783b7/test-utils/src/ias.rs#L147
+		const URL: &[u8] =
+			&[119, 115, 58, 47, 47, 49, 50, 55, 46, 48, 46, 48, 46, 49, 58, 57, 57, 57, 49];
 		let teerex_signer: u64 = frame_benchmarking::account::<
 			<Test as frame_system::Config>::AccountId,
 		>("TEST_A", 0u32, 9966u32);
+		assert_ok!(Teerex::register_enclave(
+			RuntimeOrigin::signed(teerex_signer),
+			TEST_MRENCLAVE.to_vec(),
+			URL.to_vec(),
+			None,
+			None,
+		));
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(teerex_signer),
 			2,

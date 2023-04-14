@@ -156,20 +156,6 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	ext.execute_with(|| {
 		System::set_block_number(1);
 		let _ = VCManagement::set_admin(RuntimeOrigin::root(), 1);
-
-		use frame_support::assert_ok;
-		pub const TEST_MRENCLAVE: [u8; 32] = [2u8; 32];
-		// copied from https://github.com/integritee-network/pallets/blob/5b0706e8b9f726d81d8aff74efbae8e023e783b7/test-utils/src/ias.rs#L147
-		const URL: &[u8] =
-			&[119, 115, 58, 47, 47, 49, 50, 55, 46, 48, 46, 48, 46, 49, 58, 57, 57, 57, 49];
-		let teerex_signer: SystemAccountId = frame_benchmarking::account("TEST_A", 0u32, 9966u32);
-		assert_ok!(Teerex::register_enclave(
-			RuntimeOrigin::signed(teerex_signer),
-			TEST_MRENCLAVE.to_vec(),
-			URL.to_vec(),
-			None,
-			None,
-		));
 	});
 	ext
 }
