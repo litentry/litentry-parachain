@@ -9925,6 +9925,7 @@ dependencies = [
  "pallet-membership",
  "pallet-multisig",
  "pallet-teerex",
+ "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-treasury",
  "pallet-vesting",

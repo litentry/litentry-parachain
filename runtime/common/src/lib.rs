@@ -325,7 +325,7 @@ where
 pub struct EnsureEnclaveSigner<T>(PhantomData<T>);
 impl<T> EnsureOrigin<T::RuntimeOrigin> for EnsureEnclaveSigner<T>
 where
-	T: frame_system::Config + pallet_teerex::Config,
+	T: frame_system::Config + pallet_teerex::Config + pallet_timestamp::Config<Moment = u64>,
 	<T as frame_system::Config>::AccountId: std::convert::From<[u8; 32]>,
 	<T as frame_system::Config>::Hash: std::convert::From<[u8; 32]>,
 {
@@ -342,7 +342,8 @@ where
 	#[cfg(feature = "runtime-benchmarks")]
 	fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
 		use frame_support::assert_ok;
-		use test_utils::ias::consts::{TEST4_CERT, TEST4_SIGNER_PUB, URL};
+		use test_utils::ias::consts::{TEST4_CERT, TEST4_SIGNER_PUB, TEST4_TIMESTAMP, URL};
+		pallet_timestamp::Pallet::<T>::set_timestamp(TEST4_TIMESTAMP);
 		let signer: <T as frame_system::Config>::AccountId =
 			test_utils::get_signer(TEST4_SIGNER_PUB);
 		assert_ok!(pallet_teerex::Pallet::<T>::register_enclave(
