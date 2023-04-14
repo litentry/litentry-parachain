@@ -7,7 +7,7 @@
 
 **/node_modules/
 
-docker/yarn.lock
+yarn.lock
 docker/generated-*/
 tee-worker/docker/litentry/
 
