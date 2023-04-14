@@ -56,7 +56,8 @@ impl EnsureOrigin<SystemOrigin> for EnsureEnclaveSigner {
 	fn try_successful_origin() -> Result<SystemOrigin, ()> {
 		use frame_support::assert_ok;
 		use test_utils::ias::consts::{TEST4_CERT, TEST4_SIGNER_PUB, URL};
-		let signer: SystemAccountId = frame_benchmarking::account::<SystemAccountId>("successful_origin", 0, 0);
+		let signer: SystemAccountId =
+			frame_benchmarking::account::<SystemAccountId>("successful_origin", 0, 0);
 		assert_ok!(pallet_teerex::Pallet::<Test>::register_enclave(
 			RuntimeOrigin::signed(signer.clone()),
 			TEST4_CERT.to_vec(),
