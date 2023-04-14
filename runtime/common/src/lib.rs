@@ -339,9 +339,9 @@ where
 
 	#[cfg(feature = "runtime-benchmarks")]
 	fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
-		use test_utils::ias::consts::{TEST4_CERT, TEST4_SIGNER_PUB, URL};
 		use frame_support::assert_ok;
-		let signer = test_utils::get_signer(TEST4_SIGNER_PUB);
+		use test_utils::ias::consts::{TEST4_CERT, TEST4_SIGNER_PUB, URL};
+		let signer: SystemAccountId = test_utils::get_signer(TEST4_SIGNER_PUB);
 		assert_ok!(pallet_teerex::Pallet::<Test>::register_enclave(
 			RuntimeOrigin::signed(signer.clone()),
 			TEST4_CERT.to_vec(),
