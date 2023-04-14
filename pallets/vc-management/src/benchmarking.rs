@@ -27,7 +27,7 @@ use frame_system::RawOrigin;
 use sp_core::H256;
 use sp_std::vec;
 
-const TEST_MRENCLAVE: [u8; 32] = [2u8; 32];
+use test_utils::ias::consts::TEST4_MRENCLAVE;
 const USER_SEED: u32 = 9966;
 const VC_HASH: H256 = H256::zero();
 const VC_INDEX: H256 = H256::zero();
@@ -53,8 +53,8 @@ benchmarks! {
 	// Benchmark `request_vc`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
 	request_vc {
-		let account: T::AccountId = frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
-		let shard = H256::from_slice(&TEST_MRENCLAVE);
+		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
+		let shard = H256::from_slice(&TEST4_MRENCLAVE);
 		let assertion = Assertion::A1;
 	}: _(RawOrigin::Signed(account.clone()), shard, assertion.clone())
 	verify{
@@ -64,7 +64,7 @@ benchmarks! {
 	// Benchmark `disable_vc`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
 	disable_vc {
-		let account: T::AccountId = frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
+		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
 		let assertion = Assertion::A1;
 		let vc = AesOutput::default();
 		let req_ext_hash = H256::default();
@@ -77,7 +77,7 @@ benchmarks! {
 	// Benchmark `revoke_vc`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
 	revoke_vc {
-		let account: T::AccountId = frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
+		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
 		let assertion = Assertion::A1;
 		let vc = AesOutput::default();
 		let req_ext_hash = H256::default();
@@ -91,7 +91,7 @@ benchmarks! {
 	// execution time is constant irrespective of encrypted_data size.
 	vc_issued {
 		let call_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
-		let account: T::AccountId = frame_benchmarking::account::<T::AccountId>("TEST", 0, 0);
+		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
 		let assertion = Assertion::A1;
 		let vc = AesOutput::default();
 		let req_ext_hash = H256::default();
@@ -104,7 +104,7 @@ benchmarks! {
 	// execution time is constant irrespective of encrypted_data size.
 	some_error {
 		let call_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
-		let account: T::AccountId = frame_benchmarking::account::<T::AccountId>("TEST", 0, 0);
+		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
 		let detail = ErrorDetail::WrongWeb2Handle;
 		let assertion = Assertion::A1;
 		let error = VCMPError::RequestVCFailed(assertion.clone(), detail.clone());
@@ -117,7 +117,7 @@ benchmarks! {
 	// Benchmark `set_admin`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
 	set_admin {
-		let new_schema_admin: T::AccountId = frame_benchmarking::account("TEST_A", 0u32, USER_SEED + 1);
+		let new_schema_admin: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED + 1);
 	}: _(RawOrigin::Root, new_schema_admin.clone())
 	verify {
 		assert_last_event::<T>(Event::AdminChanged { old_admin: None, new_admin: Some(new_schema_admin) }.into())
@@ -126,11 +126,11 @@ benchmarks! {
 	// Benchmark `add_schema`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
 	add_schema {
-		let account: T::AccountId = frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
+		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
 		VCManagement::<T>::set_admin(RawOrigin::Root.into(), account.clone())?;
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
-		let shard = H256::from_slice(&TEST_MRENCLAVE);
+		let shard = H256::from_slice(&TEST4_MRENCLAVE);
 	}: _(RawOrigin::Signed(account.clone()), shard, id, content)
 	verify {
 		assert_last_event::<T>(Event::SchemaIssued { account, shard, index: 0 }.into())
@@ -139,11 +139,11 @@ benchmarks! {
 	// Benchmark `disable_schema`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
 	disable_schema {
-		let account: T::AccountId = frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
+		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
 		VCManagement::<T>::set_admin(RawOrigin::Root.into(), account.clone())?;
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
-		let shard = H256::from_slice(&TEST_MRENCLAVE);
+		let shard = H256::from_slice(&TEST4_MRENCLAVE);
 		VCManagement::<T>::add_schema(RawOrigin::Signed(account.clone()).into(), shard, id, content)?;
 	}: _(RawOrigin::Signed(account.clone()), shard, 0)
 	verify {
@@ -153,11 +153,11 @@ benchmarks! {
 	// Benchmark `activate_schema`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
 	activate_schema {
-		let account: T::AccountId = frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
+		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
 		VCManagement::<T>::set_admin(RawOrigin::Root.into(), account.clone())?;
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
-		let shard = H256::from_slice(&TEST_MRENCLAVE);
+		let shard = H256::from_slice(&TEST4_MRENCLAVE);
 		VCManagement::<T>::add_schema(RawOrigin::Signed(account.clone()).into(), shard, id, content)?;
 		VCManagement::<T>::disable_schema(RawOrigin::Signed(account.clone()).into(), shard, 0)?;
 	}: _(RawOrigin::Signed(account.clone()), shard, 0)
@@ -168,11 +168,11 @@ benchmarks! {
 	// Benchmark `revoke_schema`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
 	revoke_schema {
-		let account: T::AccountId = frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
+		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
 		VCManagement::<T>::set_admin(RawOrigin::Root.into(), account.clone())?;
 		let id: Vec<u8> = vec![1, 2, 3, 4];
 		let content: Vec<u8> = vec![5, 6, 7, 8];
-		let shard = H256::from_slice(&TEST_MRENCLAVE);
+		let shard = H256::from_slice(&TEST4_MRENCLAVE);
 		VCManagement::<T>::add_schema(RawOrigin::Signed(account.clone()).into(), shard, id, content)?;
 	}: _(RawOrigin::Signed(account.clone()), shard, 0)
 	verify {
@@ -182,7 +182,7 @@ benchmarks! {
 	// Benchmark `add_vc_registry_item`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
 	add_vc_registry_item {
-		let account: T::AccountId = frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
+		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
 		VCManagement::<T>::set_admin(RawOrigin::Root.into(), account.clone())?;
 		let assertion = Assertion::A1;
 	}: _(RawOrigin::Signed(account.clone()), VC_INDEX, account.clone(), assertion.clone(), VC_HASH)
@@ -193,7 +193,7 @@ benchmarks! {
 	// Benchmark `remove_vc_registry_item`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
 	remove_vc_registry_item {
-		let account: T::AccountId = frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
+		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
 		VCManagement::<T>::set_admin(RawOrigin::Root.into(), account.clone())?;
 		let assertion = Assertion::A1;
 		VCManagement::<T>::add_vc_registry_item(RawOrigin::Signed(account.clone()).into(), VC_INDEX, account.clone(), assertion, VC_HASH)?;
@@ -205,12 +205,12 @@ benchmarks! {
 	// Benchmark `clear_vc_registry`.
 	clear_vc_registry {
 		let x in 0..100u32;
-		let account: T::AccountId = frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
+		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
 		VCManagement::<T>::set_admin(RawOrigin::Root.into(), account.clone())?;
 		let assertion = Assertion::A1;
 		for i in 0..x {
 			let seed = USER_SEED - i;
-			let candidate:T::AccountId = frame_benchmarking::account("TEST_A", 0u32, seed);
+			let candidate:T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, seed);
 			let seed_hash_u8_32 = convert_u32_array_to_u8_array([seed; 8]);
 			let hash: H256 = seed_hash_u8_32.into();
 			VCManagement::<T>::add_vc_registry_item(RawOrigin::Signed(account.clone()).into(), hash, candidate.clone(), assertion.clone(), VC_HASH)?;

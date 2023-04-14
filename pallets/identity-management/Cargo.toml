@@ -37,6 +37,7 @@ pallet-group = { path = "../../pallets/group" }
 pallet-teerex = { path = "../teerex", features = ["skip-scheduled-enclave-check"] }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
+test-utils = { path = "../test-utils" }
 
 [features]
 default = ["std"]
@@ -44,7 +45,6 @@ runtime-benchmarks = [
   "frame-benchmarking/runtime-benchmarks",
   "frame-support/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
-  "pallet-teerex/skip-ias-check",
   "pallet-timestamp/runtime-benchmarks",
   "test-utils",
 ]

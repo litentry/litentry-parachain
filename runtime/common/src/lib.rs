@@ -326,13 +326,15 @@ pub struct EnsureEnclaveSigner<T>(PhantomData<T>);
 impl<T> EnsureOrigin<T::RuntimeOrigin> for EnsureEnclaveSigner<T>
 where
 	T: frame_system::Config + pallet_teerex::Config,
+	<T as frame_system::Config>::AccountId: std::convert::From<[u8; 32]>,
+	<T as frame_system::Config>::Hash: std::convert::From<[u8; 32]>,
 {
 	type Success = T::AccountId;
 	fn try_origin(o: T::RuntimeOrigin) -> Result<Self::Success, T::RuntimeOrigin> {
 		o.into().and_then(|o| match o {
-			frame_system::RawOrigin::Signed(ref who)
-				if pallet_teerex::Pallet::<T>::ensure_registered_enclave(who) == Ok(()) =>
-				Ok(who.clone()),
+			frame_system::RawOrigin::Signed(who)
+				if pallet_teerex::Pallet::<T>::ensure_registered_enclave(&who) == Ok(()) =>
+				Ok(who),
 			r => Err(T::RuntimeOrigin::from(r)),
 		})
 	}
@@ -341,10 +343,10 @@ where
 	fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
 		use frame_support::assert_ok;
 		use test_utils::ias::consts::{TEST4_CERT, TEST4_SIGNER_PUB, URL};
-		let signer: SystemAccountId =
-			frame_benchmarking::account::<SystemAccountId>("successful_origin", 0, 0);
-		assert_ok!(pallet_teerex::Pallet::<Test>::register_enclave(
-			RuntimeOrigin::signed(signer.clone()),
+		let signer: <T as frame_system::Config>::AccountId =
+			test_utils::get_signer(TEST4_SIGNER_PUB);
+		assert_ok!(pallet_teerex::Pallet::<T>::register_enclave(
+			frame_system::RawOrigin::Signed(signer.clone()).into(),
 			TEST4_CERT.to_vec(),
 			URL.to_vec(),
 			None,
