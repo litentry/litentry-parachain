@@ -18,10 +18,11 @@
 
 use crate as pallet_vc_management;
 use frame_support::{
-	ord_parameter_types, parameter_types,
+	pallet_prelude::EnsureOrigin,
+	parameter_types,
 	traits::{ConstU128, ConstU16, ConstU32, ConstU64, Everything},
 };
-use frame_system::{EnsureRoot, EnsureSignedBy};
+use frame_system::EnsureRoot;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -33,6 +34,31 @@ type Block = frame_system::mocking::MockBlock<Test>;
 
 pub type Balance = u128;
 
+type SystemOrigin = <Test as frame_system::Config>::RuntimeOrigin;
+type SystemAccountId = <Test as frame_system::Config>::AccountId;
+
+// Similar to `runtime_common`, just don't want to pull in the whole dependency
+pub struct EnsureEnclaveSigner;
+impl EnsureOrigin<SystemOrigin> for EnsureEnclaveSigner {
+	type Success = SystemAccountId;
+	fn try_origin(o: SystemOrigin) -> Result<Self::Success, SystemOrigin> {
+		Into::<Result<frame_system::RawOrigin<SystemAccountId>, SystemOrigin>>::into(o).and_then(
+			|o| match o {
+				frame_system::RawOrigin::Signed(ref who)
+					if pallet_teerex::Pallet::<Test>::ensure_registered_enclave(who) == Ok(()) =>
+					Ok(*who),
+				r => Err(SystemOrigin::from(r)),
+			},
+		)
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin() -> Result<SystemOrigin, ()> {
+		let who = frame_benchmarking::account::<SystemAccountId>("successful_origin", 0, 0);
+		Ok(frame_system::RawOrigin::Signed(who).into())
+	}
+}
+
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
 	pub enum Test where
@@ -42,6 +68,7 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system,
 		Balances: pallet_balances,
+		Teerex: pallet_teerex,
 		Timestamp: pallet_timestamp,
 		VCManagement: pallet_vc_management,
 		VCMPExtrinsicWhitelist: pallet_group,
@@ -98,15 +125,23 @@ impl pallet_balances::Config for Test {
 	type WeightInfo = ();
 }
 
-ord_parameter_types! {
-	pub const MockTeerexSigner: u64 = frame_benchmarking::account::<<Test as frame_system::Config>::AccountId>("TEST_A", 0u32, 9966u32);
-}
-
 impl pallet_vc_management::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type TEECallOrigin = EnsureSignedBy<MockTeerexSigner, u64>;
+	type TEECallOrigin = EnsureEnclaveSigner;
 	type SetAdminOrigin = EnsureRoot<Self::AccountId>;
 	type ExtrinsicWhitelistOrigin = VCMPExtrinsicWhitelist;
+}
+
+parameter_types! {
+	pub const MomentsPerDay: u64 = 86_400_000; // [ms/d]
+}
+
+impl pallet_teerex::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type MomentsPerDay = MomentsPerDay;
+	type WeightInfo = ();
+	type SetAdminOrigin = EnsureRoot<Self::AccountId>;
 }
 
 impl pallet_group::Config for Test {
@@ -121,6 +156,20 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	ext.execute_with(|| {
 		System::set_block_number(1);
 		let _ = VCManagement::set_admin(RuntimeOrigin::root(), 1);
+
+		use frame_support::assert_ok;
+		pub const TEST_MRENCLAVE: [u8; 32] = [2u8; 32];
+		// copied from https://github.com/integritee-network/pallets/blob/5b0706e8b9f726d81d8aff74efbae8e023e783b7/test-utils/src/ias.rs#L147
+		const URL: &[u8] =
+			&[119, 115, 58, 47, 47, 49, 50, 55, 46, 48, 46, 48, 46, 49, 58, 57, 57, 57, 49];
+		let teerex_signer: SystemAccountId = frame_benchmarking::account("TEST_A", 0u32, 9966u32);
+		assert_ok!(Teerex::register_enclave(
+			RuntimeOrigin::signed(teerex_signer),
+			TEST_MRENCLAVE.to_vec(),
+			URL.to_vec(),
+			None,
+			None,
+		));
 	});
 	ext
 }

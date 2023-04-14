@@ -21,7 +21,8 @@ use super::*;
 use crate::Pallet as VCManagement;
 #[allow(unused)]
 use core_primitives::{AesOutput, ErrorDetail, VCMPError};
-use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
+use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, BenchmarkError};
+use frame_support::traits::EnsureOrigin;
 use frame_system::RawOrigin;
 use sp_core::H256;
 use sp_std::vec;
@@ -36,16 +37,16 @@ fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 }
 
 fn convert_u32_array_to_u8_array(u32_array: [u32; 8]) -> [u8; 32] {
-    let mut u8_array = [0u8; 32];
-    let mut index = 0;
+	let mut u8_array = [0u8; 32];
+	let mut index = 0;
 
-    for u32_element in &u32_array {
-        let u8_slice = u32_element.to_le_bytes();
-        u8_array[index..index+4].copy_from_slice(&u8_slice);
-        index += 4;
-    }
+	for u32_element in &u32_array {
+		let u8_slice = u32_element.to_le_bytes();
+		u8_array[index..index + 4].copy_from_slice(&u8_slice);
+		index += 4;
+	}
 
-    u8_array
+	u8_array
 }
 
 benchmarks! {
@@ -89,11 +90,12 @@ benchmarks! {
 	// Benchmark `vc_issued`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
 	vc_issued {
-		let account: T::AccountId = frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
+		let call_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
+		let account: T::AccountId = frame_benchmarking::account::<T::AccountId>("TEST", 0, 0);
 		let assertion = Assertion::A1;
 		let vc = AesOutput::default();
 		let req_ext_hash = H256::default();
-	}: _(RawOrigin::Signed(account.clone()), account.clone(), assertion.clone(), VC_INDEX, VC_HASH, vc.clone(), req_ext_hash)
+	}: _<T::RuntimeOrigin>(call_origin, account.clone(), assertion.clone(), VC_INDEX, VC_HASH, vc.clone(), req_ext_hash)
 	verify{
 		assert_last_event::<T>(Event::VCIssued{ account, assertion, index: VC_INDEX, vc, req_ext_hash}.into());
 	}
@@ -101,12 +103,13 @@ benchmarks! {
 	// Benchmark `some_error`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
 	some_error {
-		let account: T::AccountId = frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
+		let call_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
+		let account: T::AccountId = frame_benchmarking::account::<T::AccountId>("TEST", 0, 0);
 		let detail = ErrorDetail::WrongWeb2Handle;
 		let assertion = Assertion::A1;
 		let error = VCMPError::RequestVCFailed(assertion.clone(), detail.clone());
 		let req_ext_hash = H256::default();
-	}: _(RawOrigin::Signed(account.clone()), Some(account.clone()), error, req_ext_hash)
+	}: _<T::RuntimeOrigin>(call_origin, Some(account.clone()), error, req_ext_hash)
 	verify {
 		assert_last_event::<T>(Event::RequestVCFailed { account: Some(account), assertion, detail, req_ext_hash }.into())
 	}

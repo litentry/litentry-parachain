@@ -29,9 +29,6 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 };
 use system::EnsureRoot;
-#[cfg(feature = "runtime-benchmarks")]
-use system::EnsureSigned;
-
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
@@ -53,6 +50,12 @@ impl EnsureOrigin<SystemOrigin> for EnsureEnclaveSigner {
 				r => Err(SystemOrigin::from(r)),
 			},
 		)
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin() -> Result<SystemOrigin, ()> {
+		let who = frame_benchmarking::account::<SystemAccountId>("successful_origin", 0, 0);
+		Ok(frame_system::RawOrigin::Signed(who).into())
 	}
 }
 
@@ -137,9 +140,6 @@ impl pallet_teerex::Config for Test {
 impl pallet_identity_management::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = ();
-	#[cfg(feature = "runtime-benchmarks")]
-	type TEECallOrigin = EnsureSigned<Self::AccountId>;
-	#[cfg(not(feature = "runtime-benchmarks"))]
 	type TEECallOrigin = EnsureEnclaveSigner;
 	type DelegateeAdminOrigin = EnsureRoot<Self::AccountId>;
 	type ExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
@@ -158,31 +158,6 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		// add `5` to delegatee
 		let _ = IdentityManagement::add_delegatee(RuntimeOrigin::root(), 5u64);
 		System::set_block_number(1);
-
-		// // TODO: If you use "type TEECallOrigin = EnsureEnclaveSigner;"
-		// // The following code does not play the role it suppose to do.
-		// // This mock part setup will pass and executed successfully without error (require
-		// feature skip-ias-check) // but inside the runtime benchmark, IMP extrinsic related to
-		// TEECallOrigin extrinsic // will fail with Bad Orgin Error.
-		// // However, it has been checked that both benchmark and mock calculate the right
-		// AccountId: // account = 1509858657092253371
-		// #[cfg(feature = "runtime-benchmarks")]
-		// {
-		// 	use frame_benchmarking::account;
-		// 	use frame_support::assert_ok;
-		// 	pub const TEST_MRENCLAVE: [u8; 32] = [2u8; 32];
-		// 	// copied from https://github.com/integritee-network/pallets/blob/5b0706e8b9f726d81d8aff74efbae8e023e783b7/test-utils/src/ias.rs#L147
-		// 	const URL: &[u8] =
-		// 		&[119, 115, 58, 47, 47, 49, 50, 55, 46, 48, 46, 48, 46, 49, 58, 57, 57, 57, 49];
-		// 	let account: SystemAccountId = account("TEST_A", 0u32, 9966u32);
-		// 	assert_ok!(Teerex::register_enclave(
-		// 		RuntimeOrigin::signed(account),
-		// 		TEST_MRENCLAVE.to_vec(),
-		// 		URL.to_vec(),
-		// 		None,
-		// 		None,
-		// 	));
-		// }
 	});
 	ext
 }

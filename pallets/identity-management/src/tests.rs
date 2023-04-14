@@ -150,7 +150,6 @@ fn tee_callback_with_registered_enclave_works() {
 }
 
 #[test]
-#[cfg(not(feature = "runtime-benchmarks"))]
 fn tee_callback_with_unregistered_enclave_fails() {
 	new_test_ext().execute_with(|| {
 		assert_noop!(

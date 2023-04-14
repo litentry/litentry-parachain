@@ -336,4 +336,10 @@ where
 			r => Err(T::RuntimeOrigin::from(r)),
 		})
 	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
+		let who = frame_benchmarking::account::<T::AccountId>("successful_origin", 0, 0);
+		Ok(frame_system::RawOrigin::Signed(who).into())
+	}
 }

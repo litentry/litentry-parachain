@@ -21,7 +21,8 @@ use super::*;
 use crate::Pallet as IdentityManagement;
 #[allow(unused)]
 use core_primitives::{AesOutput, ErrorDetail, IMPError};
-use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
+use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, BenchmarkError};
+use frame_support::traits::EnsureOrigin;
 use frame_system::RawOrigin;
 use sp_core::H256;
 use sp_std::vec;
@@ -103,8 +104,9 @@ benchmarks! {
 	// execution time is constant irrespective of encrypted_data size.
 	user_shielding_key_set {
 		let req_ext_hash = H256::default();
-		let account: T::AccountId = account("TEST_A", 0u32, USER_SEED);
-	}: _(RawOrigin::Signed(account.clone()), account.clone(), req_ext_hash)
+		let call_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
+		let account: T::AccountId = frame_benchmarking::account::<T::AccountId>("TEST", 0, 0);
+	}: _<T::RuntimeOrigin>(call_origin, account.clone(), req_ext_hash)
 	verify {
 		assert_last_event::<T>(Event::UserShieldingKeySet { account, req_ext_hash }.into());
 	}
@@ -115,8 +117,9 @@ benchmarks! {
 		let req_ext_hash = H256::default();
 		let identity = AesOutput::default();
 		let code = AesOutput::default();
-		let account: T::AccountId = account("TEST_A", 0u32, USER_SEED);
-	}: _(RawOrigin::Signed(account.clone()), account.clone(), identity.clone(), code.clone(), req_ext_hash)
+		let call_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
+		let account: T::AccountId = frame_benchmarking::account::<T::AccountId>("TEST", 0, 0);
+	}: _<T::RuntimeOrigin>(call_origin, account.clone(), identity.clone(), code.clone(), req_ext_hash)
 	verify {
 		assert_last_event::<T>(Event::IdentityCreated { account, identity, code, req_ext_hash }.into());
 	}
@@ -126,8 +129,9 @@ benchmarks! {
 	identity_removed {
 		let req_ext_hash = H256::default();
 		let identity = AesOutput::default();
-		let account: T::AccountId = account("TEST_A", 0u32, USER_SEED);
-	}: _(RawOrigin::Signed(account.clone()), account.clone(), identity.clone(), req_ext_hash)
+		let call_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
+		let account: T::AccountId = frame_benchmarking::account::<T::AccountId>("TEST", 0, 0);
+	}: _<T::RuntimeOrigin>(call_origin, account.clone(), identity.clone(), req_ext_hash)
 	verify {
 		assert_last_event::<T>(Event::IdentityRemoved { account, identity, req_ext_hash }.into());
 	}
@@ -138,8 +142,9 @@ benchmarks! {
 		let req_ext_hash = H256::default();
 		let identity = AesOutput::default();
 		let id_graph = AesOutput::default();
-		let account: T::AccountId = account("TEST_A", 0u32, USER_SEED);
-	}: _(RawOrigin::Signed(account.clone()), account.clone(), identity.clone(), id_graph.clone(), req_ext_hash)
+		let call_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
+		let account: T::AccountId = frame_benchmarking::account::<T::AccountId>("TEST", 0, 0);
+	}: _<T::RuntimeOrigin>(call_origin, account.clone(), identity.clone(), id_graph.clone(), req_ext_hash)
 	verify {
 		assert_last_event::<T>(Event::IdentityVerified { account, identity, id_graph, req_ext_hash }.into());
 	}
@@ -147,11 +152,12 @@ benchmarks! {
 	// Benchmark `some_error`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
 	some_error {
-		let account: T::AccountId = account("TEST_A", 0u32, USER_SEED);
+		let call_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
+		let account: T::AccountId = frame_benchmarking::account::<T::AccountId>("TEST", 0, 0);
 		let detail = ErrorDetail::WrongWeb2Handle;
 		let error = IMPError::VerifyIdentityFailed(detail.clone());
 		let req_ext_hash = H256::default();
-	}: _(RawOrigin::Signed(account.clone()), Some(account.clone()), error, req_ext_hash)
+	}: _<T::RuntimeOrigin>(call_origin, Some(account.clone()), error, req_ext_hash)
 	verify {
 		assert_last_event::<T>(Event::VerifyIdentityFailed { account: Some(account), detail, req_ext_hash }.into())
 	}

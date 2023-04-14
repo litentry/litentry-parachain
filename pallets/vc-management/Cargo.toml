@@ -33,6 +33,7 @@ hex = { version = "0.4", default-features = false }
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
 pallet-group = { path = "../../pallets/group" }
+pallet-teerex = { path = "../../pallets/teerex", features = ["skip-scheduled-enclave-check"] }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
 
