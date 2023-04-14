@@ -99,6 +99,7 @@ std = [
 ]
 
 runtime-benchmarks = [
+  "pallet-teerex/skip-ias-check",
   "sp-runtime/runtime-benchmarks",
   "test-utils",
   "frame-benchmarking/runtime-benchmarks",
