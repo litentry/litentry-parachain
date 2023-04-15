@@ -45,12 +45,12 @@ xcm-executor = { git = "https://github.com/paritytech/polkadot", default-feature
 
 # local
 core-primitives = { path = "../../primitives/core", default-features = false }
-teerex-primitives = { path = "../../primitives/teerex", default-features = false }
 pallet-asset-manager = { path = "../../pallets/xcm-asset-manager", default-features = false }
 pallet-extrinsic-filter = { path = "../../pallets/extrinsic-filter", default-features = false }
 pallet-group = { path = "../../pallets/group", default-features = false }
 pallet-teerex = { path = "../../pallets/teerex", default-features = false }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false }
+teerex-primitives = { path = "../../primitives/teerex", default-features = false }
 
 # Dev dependencies
 cumulus-primitives-parachain-inherent = { git = 'https://github.com/paritytech/cumulus', branch = "polkadot-v0.9.37", default-features = false }
@@ -98,8 +98,8 @@ std = [
   "parachain-info/std",
   # local
   "core-primitives/std",
-  "teerex-primitives/std",
   "pallet-teerex/std",
+  "teerex-primitives/std",
 ]
 
 runtime-benchmarks = [
