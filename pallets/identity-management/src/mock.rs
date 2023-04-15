@@ -29,6 +29,7 @@ use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
 };
+use sp_std::marker::PhantomData;
 use system::EnsureRoot;
 
 pub type Signature = sp_runtime::MultiSignature;
@@ -38,33 +39,37 @@ type Block = frame_system::mocking::MockBlock<Test>;
 
 pub type Balance = u128;
 
-type SystemOrigin = <Test as frame_system::Config>::RuntimeOrigin;
 type SystemAccountId = <Test as frame_system::Config>::AccountId;
 
-// Similar to `runtime_common`, just don't want to pull in the whole dependency
-pub struct EnsureEnclaveSigner;
-impl EnsureOrigin<SystemOrigin> for EnsureEnclaveSigner {
-	type Success = SystemAccountId;
-	fn try_origin(o: SystemOrigin) -> Result<Self::Success, SystemOrigin> {
-		Into::<Result<frame_system::RawOrigin<SystemAccountId>, SystemOrigin>>::into(o).and_then(
-			|o| match o {
-				frame_system::RawOrigin::Signed(who)
-					if pallet_teerex::Pallet::<Test>::ensure_registered_enclave(&who) == Ok(()) =>
-					Ok(who),
-				r => Err(SystemOrigin::from(r)),
-			},
-		)
+// Similar to `runtime_common`, just don't want to pull in the whole dependencypub struct
+// EnsureEnclaveSigner<T>(PhantomData<T>);
+pub struct EnsureEnclaveSigner<T>(PhantomData<T>);
+impl<T> EnsureOrigin<T::RuntimeOrigin> for EnsureEnclaveSigner<T>
+where
+	T: frame_system::Config + pallet_teerex::Config + pallet_timestamp::Config<Moment = u64>,
+	<T as frame_system::Config>::AccountId: From<[u8; 32]>,
+	<T as frame_system::Config>::Hash: From<[u8; 32]>,
+{
+	type Success = T::AccountId;
+	fn try_origin(o: T::RuntimeOrigin) -> Result<Self::Success, T::RuntimeOrigin> {
+		o.into().and_then(|o| match o {
+			frame_system::RawOrigin::Signed(who)
+				if pallet_teerex::Pallet::<T>::ensure_registered_enclave(&who) == Ok(()) =>
+				Ok(who),
+			r => Err(T::RuntimeOrigin::from(r)),
+		})
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	fn try_successful_origin() -> Result<SystemOrigin, ()> {
+	fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
 		use test_utils::ias::{
 			consts::{TEST8_MRENCLAVE, TEST8_SIGNER_PUB},
 			TestEnclave,
 		};
-		let signer: SystemAccountId = test_utils::get_signer(TEST8_SIGNER_PUB);
-		if !pallet_teerex::EnclaveIndex::<Test>::contains_key(signer.clone()) {
-			assert_ok!(pallet_teerex::Pallet::<Test>::add_enclave(
+		let signer: <T as frame_system::Config>::AccountId =
+			test_utils::get_signer(TEST8_SIGNER_PUB);
+		if !pallet_teerex::EnclaveIndex::<T>::contains_key(signer.clone()) {
+			assert_ok!(pallet_teerex::Pallet::<T>::add_enclave(
 				&signer,
 				&teerex_primitives::Enclave::test_enclave(signer.clone())
 					.with_mr_enclave(TEST8_MRENCLAVE),
@@ -155,7 +160,7 @@ impl pallet_teerex::Config for Test {
 impl pallet_identity_management::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = ();
-	type TEECallOrigin = EnsureEnclaveSigner;
+	type TEECallOrigin = EnsureEnclaveSigner<Self>;
 	type DelegateeAdminOrigin = EnsureRoot<Self::AccountId>;
 	type ExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
 }

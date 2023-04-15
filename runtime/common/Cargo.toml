@@ -50,7 +50,7 @@ pallet-extrinsic-filter = { path = "../../pallets/extrinsic-filter", default-fea
 pallet-group = { path = "../../pallets/group", default-features = false }
 pallet-teerex = { path = "../../pallets/teerex", default-features = false }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false }
-teerex-primitives = { path = "../../primitives/teerex", default-features = false }
+teerex-primitives = { path = "../../primitives/teerex", default-features = false, optional = true }
 
 # Dev dependencies
 cumulus-primitives-parachain-inherent = { git = 'https://github.com/paritytech/cumulus', branch = "polkadot-v0.9.37", default-features = false }
@@ -99,12 +99,13 @@ std = [
   # local
   "core-primitives/std",
   "pallet-teerex/std",
-  "teerex-primitives/std",
+  "teerex-primitives?/std",
 ]
 
 runtime-benchmarks = [
   "pallet-teerex/skip-ias-check",
   "sp-runtime/runtime-benchmarks",
+  "teerex-primitives",
   "test-utils",
   "frame-benchmarking/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
