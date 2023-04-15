@@ -69,15 +69,8 @@ impl RingAeadNonceSequence {
 impl NonceSequence for RingAeadNonceSequence {
 	fn advance(&mut self) -> Result<Nonce, Unspecified> {
 		let nonce = Nonce::assume_unique_for_key(self.nonce);
-
-		// FIXME: in function `ring::rand::sysrand::fill': undefined reference to `syscall'
-		// let mut nonce_vec = vec![0; USER_SHIELDING_KEY_NONCE_LEN];
-		// let rand = SystemRandom::new();
-		// rand.fill(&mut nonce_vec).unwrap();
 		let nonce_vec = rand::thread_rng().gen::<[u8; USER_SHIELDING_KEY_NONCE_LEN]>();
-
 		self.nonce.copy_from_slice(&nonce_vec[0..USER_SHIELDING_KEY_NONCE_LEN]);
-
 		Ok(nonce)
 	}
 }
