@@ -20,8 +20,8 @@ use crate::error::{Error, ServiceResult};
 use codec::Encode;
 use itp_enclave_api::{enclave_base::EnclaveBase, Enclave};
 use itp_settings::files::{
-	LAST_SLOT_BIN, LIGHT_CLIENT_DB, SHARDS_PATH, SHIELDING_KEY_FILE, SIDECHAIN_STORAGE_PATH,
-	SIGNING_KEY_FILE,
+	LAST_SLOT_BIN, LIGHT_CLIENT_DB, SCHEDULED_ENCLAVE_FILE, SHARDS_PATH, SHIELDING_KEY_FILE,
+	SIDECHAIN_STORAGE_PATH, SIGNING_KEY_FILE,
 };
 use itp_types::ShardIdentifier;
 use log::*;
@@ -119,6 +119,7 @@ fn purge_files(root_directory: &Path) -> ServiceResult<()> {
 	remove_file_if_it_exists(root_directory, LIGHT_CLIENT_DB)?;
 	remove_file_if_it_exists(root_directory, light_client_backup_file().as_str())?;
 
+	remove_file_if_it_exists(root_directory, SCHEDULED_ENCLAVE_FILE)?;
 	Ok(())
 }
 
