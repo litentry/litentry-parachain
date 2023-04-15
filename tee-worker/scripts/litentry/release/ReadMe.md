@@ -3,6 +3,7 @@
 
 
 ## Step 0: Preparation
+
 This package is generated from [litentry-parachain](https://github.com/litentry/litentry-parachain)
 From the root folder ~/litentry-parachain/tee-worker/:
 ```
@@ -15,14 +16,27 @@ A release package will be generated, within which there are:
 - config.json.eg
 - prepare.sh
 
+<br>
 
 ## Step 1: Deploy on production
 
-Before deploy the workers, please make sure the target parachain is already up and accessable.
+Before starting the workers, please make sure the target parachain is already up and accessable. As well as the following directory/files:
+
+| Name | Value | Comment |
+|-----|------|---|
+| WORKER_DIR | /opt/worker | Working directory of workers |
+| CONFIG_DIR | /opt/configs | Config directory which contains the following 4 secret files |
+|
+| CONFIG | config.json | Configs for twitter/discord/data provider/etc. url/keys. Take reference from config.json.eg |
+| ACCOUNT | account.json | Substrate account exported json file |
+| INTEL_KEY | key_production.txt | Intel SGX production key. Need to apply from Intel |
+| INTEL_SPI | spid_production.txt | Intel SGX production spid. Need to apply from Intel |
+
+<br>
 
 1. Extract the release package to one target location. Worker will be executed from there. Then execute `prepare.sh`:
     ```
-    ./prepare.sh <path-to-secret-config>
+    ./prepare.sh
     ```
     This script will generate out `MRENCLAVE` hex value (mrenclave.txt) and `Enclave Account` info (account.txt). They will be used later by ts scripts to setup enclave account.
     <br>

@@ -30,6 +30,8 @@ for Item in 'prepare.sh' 'config.json.eg' 'ReadMe.md'; do
     cp -r "${WORKER_DIR}/scripts/litentry/release/${Item}" "${RELEASE_DIR}"
 done
 
+cp -r "${ROOT_DIR}/ts-utils" "${RELEASE_DIR}"
+
 make mrenclave | grep -oP '^MRENCLAVE: \K.*$$' > "${RELEASE_DIR}/mrenclave.txt"
 
 cd ${WORKER_DIR}/target/
