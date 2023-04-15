@@ -30,6 +30,7 @@ test-utils = { path = "../test-utils", default-features = false, optional = true
 
 # local
 core-primitives = { path = "../../primitives/core", default-features = false }
+teerex-primitives = { path = "../../primitives/teerex", default-features = false }
 
 [dev-dependencies]
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
@@ -62,6 +63,7 @@ std = [
   "frame-system/std",
   "frame-benchmarking?/std",
   "core-primitives/std",
+  "teerex-primitives/std",
   "pallet-teerex/std",
 ]
 try-runtime = ["frame-support/try-runtime"]

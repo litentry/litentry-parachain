@@ -342,13 +342,17 @@ where
 	#[cfg(feature = "runtime-benchmarks")]
 	fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
 		use frame_support::assert_ok;
-		use test_utils::ias::consts::{TEST8_MRENCLAVE, TEST8_SIGNER_PUB};
+		use test_utils::ias::{
+			consts::{TEST8_MRENCLAVE, TEST8_SIGNER_PUB},
+			TestEnclave,
+		};
 		let signer: <T as frame_system::Config>::AccountId =
 			test_utils::get_signer(TEST8_SIGNER_PUB);
 		if !pallet_teerex::EnclaveIndex::<T>::contains_key(signer.clone()) {
 			assert_ok!(pallet_teerex::Pallet::<T>::add_enclave(
 				&signer,
-				&Enclave::test_enclave(signer.clone()).with_mr_enclave(TEST8_MRENCLAVE),
+				&teerex_primitives::Enclave::test_enclave(signer.clone())
+					.with_mr_enclave(TEST8_MRENCLAVE),
 			));
 		}
 		Ok(frame_system::RawOrigin::Signed(signer).into())

@@ -6485,6 +6485,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "teerex-primitives",
  "test-utils",
 ]
 
@@ -7191,6 +7192,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "teerex-primitives",
  "test-utils",
 ]
 
@@ -9941,6 +9943,7 @@ dependencies = [
  "sp-runtime",
  "sp-state-machine",
  "sp-std",
+ "teerex-primitives",
  "test-utils",
  "xcm",
  "xcm-builder",

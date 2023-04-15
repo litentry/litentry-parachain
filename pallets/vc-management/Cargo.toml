@@ -24,6 +24,7 @@ frame-system = { git = "https://github.com/paritytech/substrate", branch = "polk
 
 # local
 core-primitives = { path = "../../primitives/core", default-features = false }
+teerex-primitives = { path = "../../primitives/teerex", default-features = false }
 
 # benchmarking
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37", default-features = false, optional = true }
@@ -58,5 +59,6 @@ std = [
   "frame-system/std",
   "frame-benchmarking?/std",
   "core-primitives/std",
+  "teerex-primitives/std",
 ]
 try-runtime = ["frame-support/try-runtime"]

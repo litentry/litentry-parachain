@@ -58,12 +58,16 @@ impl EnsureOrigin<SystemOrigin> for EnsureEnclaveSigner {
 
 	#[cfg(feature = "runtime-benchmarks")]
 	fn try_successful_origin() -> Result<SystemOrigin, ()> {
-		use test_utils::ias::consts::{TEST8_MRENCLAVE, TEST8_SIGNER_PUB};
+		use test_utils::ias::{
+			consts::{TEST8_MRENCLAVE, TEST8_SIGNER_PUB},
+			TestEnclave,
+		};
 		let signer: SystemAccountId = test_utils::get_signer(TEST8_SIGNER_PUB);
 		if !pallet_teerex::EnclaveIndex::<Test>::contains_key(signer.clone()) {
 			assert_ok!(pallet_teerex::Pallet::<Test>::add_enclave(
-				signer.clone(),
-				&Enclave::test_enclave(signer.clone()).with_mr_enclave(TEST8_MRENCLAVE),
+				&signer,
+				&teerex_primitives::Enclave::test_enclave(signer.clone())
+					.with_mr_enclave(TEST8_MRENCLAVE),
 			));
 		}
 		Ok(frame_system::RawOrigin::Signed(signer).into())
