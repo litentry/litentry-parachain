@@ -60,13 +60,15 @@ impl EnsureOrigin<SystemOrigin> for EnsureEnclaveSigner {
 		use test_utils::ias::consts::{TEST8_CERT, TEST8_SIGNER_PUB, TEST8_TIMESTAMP, URL};
 		pallet_timestamp::Pallet::<Test>::set_timestamp(TEST8_TIMESTAMP);
 		let signer: SystemAccountId = test_utils::get_signer(TEST8_SIGNER_PUB);
-		assert_ok!(pallet_teerex::Pallet::<Test>::register_enclave(
-			RuntimeOrigin::signed(signer.clone()),
-			TEST8_CERT.to_vec(),
-			URL.to_vec(),
-			None,
-			None,
-		));
+		if !pallet_teerex::<EnclaveIndex<Test>>::contains_key(signer) {
+			assert_ok!(Teerex::register_enclave(
+				RuntimeOrigin::signed(signer),
+				TEST8_CERT.to_vec(),
+				URL.to_vec(),
+				None,
+				None,
+			));
+		}
 		Ok(frame_system::RawOrigin::Signed(signer).into())
 	}
 }
@@ -173,13 +175,15 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		use test_utils::ias::consts::{TEST8_CERT, TEST8_SIGNER_PUB, TEST8_TIMESTAMP, URL};
 		Timestamp::set_timestamp(TEST8_TIMESTAMP);
 		let teerex_signer: SystemAccountId = test_utils::get_signer(TEST8_SIGNER_PUB);
-		assert_ok!(Teerex::register_enclave(
-			RuntimeOrigin::signed(teerex_signer),
-			TEST8_CERT.to_vec(),
-			URL.to_vec(),
-			None,
-			None,
-		));
+		if !pallet_teerex::<EnclaveIndex<Test>>::contains_key(teerex_signer) {
+			assert_ok!(Teerex::register_enclave(
+				RuntimeOrigin::signed(teerex_signer),
+				TEST8_CERT.to_vec(),
+				URL.to_vec(),
+				None,
+				None,
+			));
+		}
 	});
 	ext
 }

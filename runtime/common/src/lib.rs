@@ -346,13 +346,15 @@ where
 		pallet_timestamp::Pallet::<T>::set_timestamp(TEST8_TIMESTAMP);
 		let signer: <T as frame_system::Config>::AccountId =
 			test_utils::get_signer(TEST8_SIGNER_PUB);
-		assert_ok!(pallet_teerex::Pallet::<T>::register_enclave(
-			frame_system::RawOrigin::Signed(signer.clone()).into(),
-			TEST8_CERT.to_vec(),
-			URL.to_vec(),
-			None,
-			None,
-		));
+		if !pallet_teerex::<EnclaveIndex<T>>::contains_key(signer) {
+			assert_ok!(pallet_teerex::Pallet::<T>::register_enclave(
+				frame_system::RawOrigin::Signed(signer.clone()).into(),
+				TEST8_CERT.to_vec(),
+				URL.to_vec(),
+				None,
+				None,
+			));
+		}
 		Ok(frame_system::RawOrigin::Signed(signer).into())
 	}
 }

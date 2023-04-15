@@ -119,10 +119,12 @@ benchmarks! {
 	// Benchmark `set_admin`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
 	set_admin {
+		let old_admin: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
+		VCManagement::<T>::set_admin(RawOrigin::Root.into(), old_admin.clone())?;
 		let new_schema_admin: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED + 1);
 	}: _(RawOrigin::Root, new_schema_admin.clone())
 	verify {
-		assert_last_event::<T>(Event::AdminChanged { old_admin: None, new_admin: Some(new_schema_admin) }.into())
+		assert_last_event::<T>(Event::AdminChanged { old_admin: Some(old_admin), new_admin: Some(new_schema_admin) }.into())
 	}
 
 	// Benchmark `add_schema`. There are no worst conditions. The benchmark showed that
