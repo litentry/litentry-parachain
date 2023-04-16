@@ -17,7 +17,9 @@
 #![allow(clippy::useless_conversion)]
 
 use frame_support::{
-	match_types, parameter_types,
+	match_types,
+	pallet_prelude::ConstU32,
+	parameter_types,
 	traits::{Everything, Nothing},
 	weights::IdentityFee,
 	PalletId,
@@ -25,17 +27,18 @@ use frame_support::{
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
+use xcm_builder::ConvertedConcreteId;
 
 // Litentry: The CheckAccount implementation is forced by the bug of FungiblesAdapter.
 // We should replace () regarding fake_pallet_id account after our PR passed.
 use sp_runtime::traits::AccountIdConversion;
 use xcm::latest::prelude::*;
 use xcm_builder::{
-	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom,
-	ConvertedConcreteAssetId, CurrencyAdapter, EnsureXcmOrigin, FixedWeightBounds,
-	FungiblesAdapter, IsConcrete, LocationInverter, ParentIsPreset, RelayChainAsNative,
-	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
-	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
+	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter,
+	EnsureXcmOrigin, FixedWeightBounds, FungiblesAdapter, IsConcrete, ParentIsPreset,
+	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
+	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
+	UsingComponents,
 };
 use xcm_executor::{traits::JustTry, XcmExecutor};
 
@@ -53,8 +56,8 @@ use runtime_common::{
 use crate::tests::setup::ParachainXcmRouter;
 
 use super::{
-	AssetId, AssetManager, Balance, Balances, DealWithFees, ParachainInfo, PolkadotXcm, Runtime,
-	RuntimeCall, RuntimeEvent, RuntimeOrigin, Tokens, Treasury,
+	AllPalletsWithSystem, AssetId, AssetManager, Balance, Balances, DealWithFees, ParachainInfo,
+	PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, Tokens, Treasury,
 };
 #[cfg(not(test))]
 use super::{ParachainSystem, XcmpQueue};
@@ -102,7 +105,7 @@ pub type ForeignFungiblesTransactor = FungiblesAdapter<
 	// Use this fungibles implementation
 	Tokens,
 	// Use this currency when it is a fungible asset matching the given location or name:
-	ConvertedConcreteAssetId<AssetId, Balance, AssetIdMuliLocationConvert<Runtime>, JustTry>,
+	ConvertedConcreteId<AssetId, Balance, AssetIdMuliLocationConvert<Runtime>, JustTry>,
 	// Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
@@ -169,6 +172,7 @@ pub type Barriers = (
 parameter_types! {
 	/// Xcm fees will go to the treasury account
 	pub XcmFeesAccount: AccountId = Treasury::account_id();
+	pub const MaxAssetsIntoHolding: u32 = 64;
 }
 
 pub type Traders = (
@@ -192,12 +196,7 @@ pub type Traders = (
 		AssetManager,
 		XcmFeesToAccount<
 			Tokens,
-			ConvertedConcreteAssetId<
-				AssetId,
-				Balance,
-				AssetIdMuliLocationConvert<Runtime>,
-				JustTry,
-			>,
+			ConvertedConcreteId<AssetId, Balance, AssetIdMuliLocationConvert<Runtime>, JustTry>,
 			AccountId,
 			XcmFeesAccount,
 		>,
@@ -212,13 +211,13 @@ impl xcm_executor::Config for XcmConfig {
 	type RuntimeCall = RuntimeCall;
 	type XcmSender = XcmRouter;
 	// How to withdraw and deposit an asset.
-	type AssetTransactor = AssetTransactors;
+	type AssetTransactor = LocalAssetTransactor;
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
 	// Only Allow chains to handle their own reserve assets crossed on local chain whatever way they
 	// want.
 	type IsReserve = MultiNativeAsset;
 	type IsTeleporter = (); // Teleporting is disabled.
-	type LocationInverter = LocationInverter<Ancestry>;
+	type UniversalLocation = UniversalLocation;
 	type Barrier = Barriers;
 	type Weigher = XcmWeigher;
 	// Litentry: This is the tool used for calculating that inside XcmExecutor vm, how to transfer
@@ -231,6 +230,15 @@ impl xcm_executor::Config for XcmConfig {
 	type AssetTrap = PolkadotXcm;
 	type AssetClaims = PolkadotXcm;
 	type SubscriptionService = PolkadotXcm;
+	type PalletInstancesInfo = AllPalletsWithSystem;
+	type MaxAssetsIntoHolding = MaxAssetsIntoHolding;
+	type AssetLocker = ();
+	type AssetExchanger = ();
+	type FeeManager = ();
+	type MessageExporter = ();
+	type UniversalAliases = Nothing;
+	type CallDispatcher = RuntimeCall;
+	type SafeCallFilter = Everything;
 }
 
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
@@ -246,7 +254,7 @@ pub type XcmRouter = ParachainXcmRouter<ParachainInfo>;
 pub type XcmRouter = (
 	// Two routers - use UMP to communicate with the relay chain:
 	// We use PolkadotXcm to confirm the XCM Version; Use () instead if pass anyway
-	cumulus_primitives_utility::ParentAsUmp<ParachainSystem, PolkadotXcm>,
+	cumulus_primitives_utility::ParentAsUmp<ParachainSystem, PolkadotXcm, ()>,
 	// ..and XCMP to communicate with the sibling chains.
 	XcmpQueue,
 );
@@ -302,12 +310,18 @@ impl pallet_xcm::Config for Runtime {
 	// Rule.
 	type XcmReserveTransferFilter = Everything;
 	type Weigher = XcmWeigher;
-	type LocationInverter = LocationInverter<Ancestry>;
+	type UniversalLocation = UniversalLocation;
 	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeCall = RuntimeCall;
 	const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
 	// ^ Override for AdvertisedXcmVersion default
 	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
+	type Currency = Balances;
+	type CurrencyMatcher = ();
+	type TrustedLockers = ();
+	type SovereignAccountOf = LocationToAccountId;
+	type MaxLockers = ConstU32<8>;
+	type WeightInfo = pallet_xcm::TestWeightInfo;
 }
 
 impl cumulus_pallet_xcm::Config for Runtime {
@@ -327,7 +341,7 @@ impl orml_xtokens::Config for Runtime {
 	type MinXcmFee = ParachainMinFee;
 	type Weigher = XcmWeigher;
 	type BaseXcmWeight = BaseXcmWeight;
-	type LocationInverter = LocationInverter<Ancestry>;
+	type UniversalLocation = UniversalLocation;
 	type MaxAssetsForTransfer = MaxAssetsForTransfer;
 	type ReserveProvider = AbsoluteReserveProvider;
 }

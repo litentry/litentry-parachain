@@ -145,7 +145,7 @@ macro_rules! decl_test_chain {
 		use frame_support::{construct_runtime, match_types, parameter_types};
 		use runtime_common::tests::setup::{
 			alice, bob,
-			relay::{Ancestry, LocalOriginConverter, OnlyParachains},
+			relay::{LocalOriginConverter, OnlyParachains, UniversalLocation},
 			ExtBuilder, PARA_A_USER_INITIAL_BALANCE, PARA_B_USER_INITIAL_BALANCE,
 		};
 		use xcm_simulator::{decl_test_network, decl_test_parachain, decl_test_relay_chain};

@@ -153,7 +153,7 @@ macro_rules! decl_test_relay_chain_runtime {
 			type OriginConverter = LocalOriginConverter<RuntimeOrigin>;
 			type IsReserve = ();
 			type IsTeleporter = ();
-			type LocationInverter = LocationInverter<Ancestry>;
+			type UniversalLocation = UniversalLocation;
 			type Barrier = Barrier; // This is the setting should be same from Kusama
 			type Weigher = FixedWeightBounds<ConstU64<10>, RuntimeCall, ConstU32<100>>;
 			type Trader =
@@ -177,7 +177,7 @@ macro_rules! decl_test_relay_chain_runtime {
 			type XcmTeleportFilter = Everything;
 			type XcmReserveTransferFilter = Everything;
 			type Weigher = FixedWeightBounds<ConstU64<10>, RuntimeCall, ConstU32<100>>;
-			type LocationInverter = LocationInverter<Ancestry>;
+			type UniversalLocation = UniversalLocation;
 			type RuntimeOrigin = RuntimeOrigin;
 			type RuntimeCall = RuntimeCall;
 			const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;

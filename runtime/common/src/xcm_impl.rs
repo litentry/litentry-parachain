@@ -23,9 +23,7 @@ use sp_runtime::traits::{Convert as spConvert, Zero};
 use sp_std::{borrow::Borrow, boxed::Box, cmp::Ordering, marker::PhantomData, prelude::*};
 use xcm::{
 	latest::{
-		prelude::{
-			Fungibility, Junction, Junctions, MultiAsset, MultiLocation, NetworkId, XcmError,
-		},
+		prelude::{Fungibility, Junction, Junctions, MultiAsset, MultiLocation, XcmError},
 		AssetId as xcmAssetId, Weight,
 	},
 	prelude::{Parachain, X1},
@@ -128,9 +126,10 @@ impl<
 
 	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
 		if let Some((id, prev_amount, units_per_second)) = self.1.clone() {
-			let weight = weight.min(self.0);
-			self.0 -= weight;
-			let amount = units_per_second * (weight as u128) / (WEIGHT_REF_TIME_PER_SECOND as u128);
+			let ref_time = weight.ref_time().min(self.0);
+			self.0 -= ref_time;
+			let amount =
+				units_per_second * (ref_time as u128) / (WEIGHT_REF_TIME_PER_SECOND as u128);
 			self.1 = Some((id.clone(), prev_amount.saturating_sub(amount), units_per_second));
 			Some(MultiAsset { fun: Fungibility::Fungible(amount), id: xcmAssetId::Concrete(id) })
 		} else {
@@ -271,7 +270,7 @@ impl spConvert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 	fn convert(account: AccountId) -> MultiLocation {
 		MultiLocation {
 			parents: 0,
-			interior: X1(Junction::AccountId32 { network: NetworkId::Any, id: account.into() }),
+			interior: X1(Junction::AccountId32 { network: None, id: account.into() }),
 		}
 	}
 }
