@@ -30,13 +30,10 @@ use sp_runtime::{
 	traits::{Convert, Dispatchable},
 	AccountId32,
 };
-use xcm::{
-	opaque::v3::NetworkId::Any,
-	prelude::{
-		All, AssetId as XCMAssetId, Fungibility, Here, Instruction, Junction, MultiAsset,
-		MultiLocation, OriginKind, Outcome, PalletInstance, Parachain, Parent, WeightLimit, Xcm,
-		XcmError,
-	},
+use xcm::prelude::{
+	All, AssetId as XCMAssetId, Fungibility, Here, Instruction, Junction, MultiAsset,
+	MultiLocation, OriginKind, Outcome, PalletInstance, Parachain, Parent, WeightLimit, Xcm,
+	XcmError,
 };
 use xcm_executor::traits::Convert as xcmConvert;
 use xcm_simulator::TestExt;
@@ -139,7 +136,7 @@ pub fn test_xtokens_recognize_multilocation<R: TestXCMRequirements>() {
 			CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData::default()),
 			UNIT,
 			Box::new(
-				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
+				(Parent, Parachain(2), Junction::AccountId32 { network: None, id: BOB }).into()
 			),
 			xcm_simulator::Limited((R::UnitWeightCost::get() * 4).into())
 		));
@@ -176,7 +173,7 @@ pub fn test_xtokens_recognize_multilocation<R: TestXCMRequirements>() {
 			)),
 			40 * CENTS,
 			Box::new(
-				(Parent, Parachain(1), Junction::AccountId32 { network: Any, id: BOB }).into()
+				(Parent, Parachain(1), Junction::AccountId32 { network: None, id: BOB }).into()
 			),
 			xcm_simulator::Limited((R::UnitWeightCost::get() * 4).into())
 		));
@@ -207,7 +204,7 @@ pub fn test_xtokens_weight_parameter<R: TestXCMRequirements>() {
 			CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData::default()),
 			UNIT,
 			Box::new(
-				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
+				(Parent, Parachain(2), Junction::AccountId32 { network: None, id: BOB }).into()
 			),
 			xcm_simulator::Limited((R::UnitWeightCost::get()).into())
 		));
@@ -240,7 +237,7 @@ pub fn test_xtokens_weight_parameter<R: TestXCMRequirements>() {
 			CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData::default()),
 			UNIT,
 			Box::new(
-				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
+				(Parent, Parachain(2), Junction::AccountId32 { network: None, id: BOB }).into()
 			),
 			// R::UnitWeightCost::get() * 5
 			xcm_simulator::Limited((R::UnitWeightCost::get() * 5).into())
@@ -284,7 +281,7 @@ where
 		assert_ok!(PolkadotXcm::<R::ParaRuntime>::reserve_transfer_assets(
 			R::ParaOrigin::signed(alice()),
 			Box::new((Parent, Parachain(4)).into()),
-			Box::new((Junction::AccountId32 { network: Any, id: BOB }).into().into()),
+			Box::new((Junction::AccountId32 { network: None, id: BOB }).into().into()),
 			Box::new(
 				vec![MultiAsset {
 					id: XCMAssetId::Concrete(
@@ -322,7 +319,7 @@ where
 		assert_ok!(PolkadotXcm::<R::ParaRuntime>::reserve_transfer_assets(
 			R::ParaOrigin::signed(alice()),
 			Box::new((Parent, Parachain(2)).into()),
-			Box::new((Junction::AccountId32 { network: Any, id: BOB }).into().into()),
+			Box::new((Junction::AccountId32 { network: None, id: BOB }).into().into()),
 			Box::new(
 				vec![MultiAsset {
 					id: XCMAssetId::Concrete(
@@ -387,7 +384,7 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 				.into()
 			),
 			Box::new(
-				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
+				(Parent, Parachain(2), Junction::AccountId32 { network: None, id: BOB }).into()
 			),
 			xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
 		));
@@ -407,7 +404,7 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 			10 * CENTS,
 			(R::UnitWeightCost::get() * 4).into(),
 			Box::new(
-				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
+				(Parent, Parachain(2), Junction::AccountId32 { network: None, id: BOB }).into()
 			),
 			xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
 		));
@@ -438,7 +435,7 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 				.into()
 			),
 			Box::new(
-				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
+				(Parent, Parachain(2), Junction::AccountId32 { network: None, id: BOB }).into()
 			),
 			xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
 		));
@@ -460,7 +457,7 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 			)],
 			0,
 			Box::new(
-				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
+				(Parent, Parachain(2), Junction::AccountId32 { network: None, id: BOB }).into()
 			),
 			xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
 		));
@@ -487,7 +484,7 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 			),
 			0,
 			Box::new(
-				(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
+				(Parent, Parachain(2), Junction::AccountId32 { network: None, id: BOB }).into()
 			),
 			xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
 		));
@@ -523,7 +520,7 @@ pub fn test_methods_xtokens_expected_fail<R: TestXCMRequirements>() {
 				CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData::default()),
 				u128::from(R::UnitWeightCost::get() * 4) + 100 * MILLICENTS,
 				Box::new(
-					(Parent, Parachain(2), Junction::AccountId32 { network: Any, id: BOB }).into()
+					(Parent, Parachain(2), Junction::AccountId32 { network: None, id: BOB }).into()
 				),
 				// R::UnitWeightCost::get() * 4
 				xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
@@ -554,7 +551,7 @@ where
 		assert_ok!(PolkadotXcm::<R::ParaRuntime>::reserve_transfer_assets(
 			R::ParaOrigin::signed(alice()),
 			Box::new((Parent, Parachain(2)).into()),
-			Box::new((Junction::AccountId32 { network: Any, id: BOB }).into().into()),
+			Box::new((Junction::AccountId32 { network: None, id: BOB }).into().into()),
 			Box::new(
 				vec![MultiAsset {
 					id: XCMAssetId::Concrete(
@@ -591,7 +588,7 @@ where
 		assert_ok!(PolkadotXcm::<R::ParaRuntime>::reserve_transfer_assets(
 			R::ParaOrigin::signed(alice()),
 			Box::new((Parent, Parachain(2)).into()),
-			Box::new((Junction::AccountId32 { network: Any, id: BOB }).into().into()),
+			Box::new((Junction::AccountId32 { network: None, id: BOB }).into().into()),
 			Box::new(
 				vec![MultiAsset {
 					id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
@@ -617,7 +614,7 @@ where
 		assert_ok!(PolkadotXcm::<R::ParaRuntime>::limited_reserve_transfer_assets(
 			R::ParaOrigin::signed(alice()),
 			Box::new((Parent, Parachain(2)).into()),
-			Box::new((Junction::AccountId32 { network: Any, id: BOB }).into().into()),
+			Box::new((Junction::AccountId32 { network: None, id: BOB }).into().into()),
 			Box::new(
 				vec![MultiAsset {
 					id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
@@ -674,7 +671,7 @@ pub fn test_methods_pallet_xcm_expected_fail<R: TestXCMRequirements>() {
 			},
 			Instruction::DepositAsset {
 				assets: All.into(),
-				beneficiary: Junction::AccountId32 { network: Any, id: BOB }.into(),
+				beneficiary: Junction::AccountId32 { network: None, id: BOB }.into(),
 			},
 		]);
 		let message = Xcm(vec![Instruction::TransferReserveAsset { assets, dest, xcm }]);
@@ -684,7 +681,7 @@ pub fn test_methods_pallet_xcm_expected_fail<R: TestXCMRequirements>() {
 		assert_noop!(
 			PolkadotXcm::<R::ParaRuntime>::execute(
 				R::ParaOrigin::signed(alice()),
-				Box::new(xcm::VersionedXcm::V2(message)),
+				Box::new(xcm::VersionedXcm::V3(message)),
 				R::UnitWeightCost::get() * 4
 			),
 			pallet_xcm::Error::<R::ParaRuntime>::Filtered
@@ -695,7 +692,7 @@ pub fn test_methods_pallet_xcm_expected_fail<R: TestXCMRequirements>() {
 			PolkadotXcm::<R::ParaRuntime>::teleport_assets(
 				R::ParaOrigin::signed(alice()),
 				Box::new((Parent, Parachain(2)).into()),
-				Box::new((Junction::AccountId32 { network: Any, id: BOB }).into().into()),
+				Box::new((Junction::AccountId32 { network: None, id: BOB }).into().into()),
 				Box::new(
 					vec![MultiAsset {
 						id: XCMAssetId::Concrete(
@@ -716,7 +713,7 @@ pub fn test_methods_pallet_xcm_expected_fail<R: TestXCMRequirements>() {
 			PolkadotXcm::<R::ParaRuntime>::limited_teleport_assets(
 				R::ParaOrigin::signed(alice()),
 				Box::new((Parent, Parachain(2)).into()),
-				Box::new((Junction::AccountId32 { network: Any, id: BOB }).into().into()),
+				Box::new((Junction::AccountId32 { network: None, id: BOB }).into().into()),
 				Box::new(
 					vec![MultiAsset {
 						id: XCMAssetId::Concrete(
@@ -759,14 +756,14 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 			},
 			Instruction::DepositAsset {
 				assets: All.into(),
-				beneficiary: Junction::AccountId32 { network: Any, id: BOB }.into(),
+				beneficiary: Junction::AccountId32 { network: None, id: BOB }.into(),
 			},
 		]);
 		// User sending the raw Xcm works successfully
 		assert_ok!(PolkadotXcm::<R::ParaRuntime>::send(
 			R::ParaOrigin::signed(alice()),
 			Box::new((Parent, Parachain(2)).into()),
-			Box::new(xcm::VersionedXcm::V2(xcm)),
+			Box::new(xcm::VersionedXcm::V3(xcm)),
 		));
 	});
 	R::ParaB::execute_with(|| {
@@ -800,14 +797,14 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 			},
 			Instruction::DepositAsset {
 				assets: All.into(),
-				beneficiary: Junction::AccountId32 { network: Any, id: BOB }.into(),
+				beneficiary: Junction::AccountId32 { network: None, id: BOB }.into(),
 			},
 		]);
 		// Root sending the raw Xcm works successfully
 		assert_ok!(PolkadotXcm::<R::ParaRuntime>::send(
 			RawOrigin::Root.into(),
 			Box::new((Parent, Parachain(2)).into()),
-			Box::new(xcm::VersionedXcm::V2(xcm)),
+			Box::new(xcm::VersionedXcm::V3(xcm)),
 		));
 	});
 	R::ParaB::execute_with(|| {
@@ -852,14 +849,14 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 			},
 			Instruction::DepositAsset {
 				assets: All.into(),
-				beneficiary: Junction::AccountId32 { network: Any, id: BOB }.into(),
+				beneficiary: Junction::AccountId32 { network: None, id: BOB }.into(),
 			},
 		]);
 		// User sending the raw Xcm works successfully
 		assert_ok!(PolkadotXcm::<R::ParaRuntime>::send(
 			R::ParaOrigin::signed(alice()),
 			Box::new((Parent, Parachain(1)).into()),
-			Box::new(xcm::VersionedXcm::V2(xcm)),
+			Box::new(xcm::VersionedXcm::V3(xcm)),
 		));
 	});
 	R::ParaA::execute_with(|| {
@@ -891,14 +888,14 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 			},
 			Instruction::DepositAsset {
 				assets: All.into(),
-				beneficiary: Junction::AccountId32 { network: Any, id: BOB }.into(),
+				beneficiary: Junction::AccountId32 { network: None, id: BOB }.into(),
 			},
 		]);
 		// Root sending the raw Xcm works successfully
 		assert_ok!(PolkadotXcm::<R::ParaRuntime>::send(
 			RawOrigin::Root.into(),
 			Box::new((Parent, Parachain(1)).into()),
-			Box::new(xcm::VersionedXcm::V2(xcm)),
+			Box::new(xcm::VersionedXcm::V3(xcm)),
 		));
 	});
 	R::ParaA::execute_with(|| {
@@ -949,14 +946,14 @@ pub fn test_pallet_xcm_send_capacity_without_transact<R: TestXCMRequirements>() 
 			},
 			Instruction::DepositAsset {
 				assets: All.into(),
-				beneficiary: Junction::AccountId32 { network: Any, id: BOB }.into(),
+				beneficiary: Junction::AccountId32 { network: None, id: BOB }.into(),
 			},
 		]);
 		// User sending the raw Xcm works successfully
 		assert_ok!(pallet_xcm::Pallet::<R::RelayRuntime>::send(
 			R::RelayOrigin::signed(alice()),
 			Box::new(Parachain(1).into().into()),
-			Box::new(xcm::VersionedXcm::V2(xcm)),
+			Box::new(xcm::VersionedXcm::V3(xcm)),
 		));
 	});
 	R::ParaA::execute_with(|| {
@@ -986,13 +983,13 @@ pub fn test_pallet_xcm_send_capacity_without_transact<R: TestXCMRequirements>() 
 			},
 			Instruction::DepositAsset {
 				assets: All.into(),
-				beneficiary: Junction::AccountId32 { network: Any, id: BOB }.into(),
+				beneficiary: Junction::AccountId32 { network: None, id: BOB }.into(),
 			},
 		]); // Root sending the raw Xcm works successfully
 		assert_ok!(pallet_xcm::Pallet::<R::RelayRuntime>::send(
 			RawOrigin::Root.into(),
 			Box::new(Parachain(1).into().into()),
-			Box::new(xcm::VersionedXcm::V2(xcm)),
+			Box::new(xcm::VersionedXcm::V3(xcm)),
 		));
 	});
 	R::ParaA::execute_with(|| {
@@ -1014,14 +1011,14 @@ pub fn test_pallet_xcm_send_capacity_without_transact<R: TestXCMRequirements>() 
 			Instruction::ReserveAssetDeposited(assets),
 			Instruction::DepositAsset {
 				assets: All.into(),
-				beneficiary: Junction::AccountId32 { network: Any, id: BOB }.into(),
+				beneficiary: Junction::AccountId32 { network: None, id: BOB }.into(),
 			},
 		]);
 		// Root sending the raw Xcm works successfully
 		assert_ok!(pallet_xcm::Pallet::<R::RelayRuntime>::send(
 			RawOrigin::Root.into(),
 			Box::new(Parachain(1).into().into()),
-			Box::new(xcm::VersionedXcm::V2(xcm)),
+			Box::new(xcm::VersionedXcm::V3(xcm)),
 		));
 	});
 	R::ParaA::execute_with(|| {
@@ -1043,14 +1040,14 @@ pub fn test_pallet_xcm_send_capacity_without_transact<R: TestXCMRequirements>() 
 			Instruction::ReserveAssetDeposited(assets),
 			Instruction::DepositAsset {
 				assets: All.into(),
-				beneficiary: Junction::AccountId32 { network: Any, id: BOB }.into(),
+				beneficiary: Junction::AccountId32 { network: None, id: BOB }.into(),
 			},
 		]);
 		// Root sending the raw Xcm works successfully
 		assert_ok!(pallet_xcm::Pallet::<R::RelayRuntime>::send(
 			RawOrigin::Root.into(),
 			Box::new(Parachain(1).into().into()),
-			Box::new(xcm::VersionedXcm::V2(xcm)),
+			Box::new(xcm::VersionedXcm::V3(xcm)),
 		));
 	});
 	R::ParaA::execute_with(|| {
@@ -1104,18 +1101,20 @@ where
 						u128::from(R::UnitWeightCost::get() * 5) + 100 * MILLICENTS,
 					),
 				},
-				weight_limit: WeightLimit::Limited(R::UnitWeightCost::get() * 5 + 1_000_000_000),
+				weight_limit: WeightLimit::Limited(
+					R::UnitWeightCost::get() * 5 + 1_000_000_000.into(),
+				),
 			},
 			Instruction::Transact {
 				origin_kind: OriginKind::SovereignAccount,
-				require_weight_at_most: 1_000_000_000,
+				require_weight_at_most: 1_000_000_000.into(),
 				call: call_message.encode().into(),
 			},
 			Instruction::RefundSurplus,
 			Instruction::DepositAsset {
 				assets: All.into(),
 				beneficiary: Junction::AccountId32 {
-					network: Any,
+					network: None,
 					id: relay_account::<R::LocationToAccountId>().into(),
 				}
 				.into(),
@@ -1125,7 +1124,7 @@ where
 		assert_ok!(pallet_xcm::Pallet::<R::RelayRuntime>::send(
 			RawOrigin::Root.into(),
 			Box::new(Parachain(1).into().into()),
-			Box::new(xcm::VersionedXcm::V2(xcm.clone())),
+			Box::new(xcm::VersionedXcm::V3(xcm.clone())),
 		));
 		System::<R::RelayRuntime>::assert_last_event(
 			pallet_xcm::Event::Sent(Here.into(), Parachain(1).into(), xcm).into(),
@@ -1177,17 +1176,17 @@ where
 					id: XCMAssetId::Concrete(Here.into()),
 					fun: Fungibility::Fungible(2_000_000_000 * RELAY_UNIT),
 				},
-				weight_limit: WeightLimit::Limited(2_000_000_000),
+				weight_limit: WeightLimit::Limited(2_000_000_000.into()),
 			},
 			Instruction::Transact {
 				origin_kind: OriginKind::SovereignAccount,
-				require_weight_at_most: 1_000_000_000,
+				require_weight_at_most: 1_000_000_000.into(),
 				call: call_message.encode().into(),
 			},
 			Instruction::RefundSurplus,
 			Instruction::DepositAsset {
 				assets: All.into(),
-				beneficiary: Junction::AccountId32 { network: Any, id: para_account(1).into() }
+				beneficiary: Junction::AccountId32 { network: None, id: para_account(1).into() }
 					.into(),
 			},
 		]);
@@ -1195,7 +1194,7 @@ where
 		assert_ok!(PolkadotXcm::<R::ParaRuntime>::send(
 			RawOrigin::Root.into(),
 			Box::new(Parent.into()),
-			Box::new(xcm::VersionedXcm::V2(xcm.clone())),
+			Box::new(xcm::VersionedXcm::V3(xcm.clone())),
 		));
 		System::<R::ParaRuntime>::assert_last_event(
 			pallet_xcm::Event::Sent(Here.into(), Parent.into(), xcm).into(),

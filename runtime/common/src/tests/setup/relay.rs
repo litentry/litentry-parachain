@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use cumulus_primitives_core::ParaId;
+use cumulus_primitives_core::{InteriorMultiLocation, ParaId};
 use frame_support::{match_types, parameter_types};
 use polkadot_runtime_parachains::origin;
 use xcm::latest::prelude::{Here, MultiLocation, NetworkId, Parachain, X1};

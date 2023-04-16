@@ -122,7 +122,6 @@ impl timestamp::Config for Test {
 
 parameter_types! {
 	pub const MomentsPerDay: u64 = 86_400_000; // [ms/d]
-	pub const MaxSilenceTime: u64 = 172_800_000; // 48h
 	pub const MaxWhitelistedReleases: u32 = 10;
 	pub const MaxOracleBlobLen: u32 = 4096;
 }
@@ -132,7 +131,6 @@ impl pallet_teerex::Config for Test {
 	type Currency = Balances;
 	type MomentsPerDay = MomentsPerDay;
 	type WeightInfo = ();
-	type MaxSilenceTime = MaxSilenceTime;
 	type EnclaveAdminOrigin = EnsureRoot<Self::AccountId>;
 }
 
