@@ -385,9 +385,7 @@ pub mod pallet {
 			// If more than u32 max, the map itself is overflow, so no worry
 			let _ = VCRegistry::<T>::clear(u32::max_value(), None);
 			Self::deposit_event(Event::VCRegistryCleared);
-			let actual_weight =
-				Some(T::WeightInfo::execute_leave_candidates(state.delegation_count as u32));
-				Ok(Pays::No.into())
+			Ok(Pays::No.into())
 		}
 
 		/// ---------------------------------------------------
