@@ -26,7 +26,6 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 env_logger = "0.10.0"
 pallet-balances = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.39" }
 
 [features]
 default = ["std"]
