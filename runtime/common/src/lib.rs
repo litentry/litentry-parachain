@@ -326,7 +326,7 @@ where
 pub struct EnsureEnclaveSigner<T>(PhantomData<T>);
 impl<T> EnsureOrigin<T::RuntimeOrigin> for EnsureEnclaveSigner<T>
 where
-	T: frame_system::Config + pallet_teerex::Config + pallet_timestamp::Config<Moment = u64>,
+	T: frame_system::Config + pallet_teerex::Config,
 	<T as frame_system::Config>::AccountId: From<[u8; 32]>,
 	<T as frame_system::Config>::Hash: From<[u8; 32]>,
 {
@@ -346,6 +346,11 @@ where
 			consts::{TEST8_MRENCLAVE, TEST8_SIGNER_PUB},
 			TestEnclave,
 		};
+		// The below is the hardcode TEST8_SIGNER_PUB. We should save it for convenience.
+		// let TEST8_SIGNER_PUB_DIRECT: [u8; 32] = [
+		// 	54, 176, 127, 194, 139, 9, 249, 13, 217, 106, 6, 124, 75, 0, 109, 18, 202, 202, 240,
+		// 	124, 214, 235, 255, 249, 47, 135, 174, 246, 167, 5, 6, 224,
+		// ];
 		let signer: <T as frame_system::Config>::AccountId =
 			test_utils::get_signer(TEST8_SIGNER_PUB);
 		if !pallet_teerex::EnclaveIndex::<T>::contains_key(signer.clone()) {

@@ -41,8 +41,7 @@ pub type Balance = u128;
 
 type SystemAccountId = <Test as frame_system::Config>::AccountId;
 
-// Similar to `runtime_common`, just don't want to pull in the whole dependencypub struct
-// EnsureEnclaveSigner<T>(PhantomData<T>);
+// Similar to `runtime_common`, just don't want to pull in the whole dependency
 pub struct EnsureEnclaveSigner<T>(PhantomData<T>);
 impl<T> EnsureOrigin<T::RuntimeOrigin> for EnsureEnclaveSigner<T>
 where

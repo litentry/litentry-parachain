@@ -37,6 +37,10 @@ use frame_support::{
 use frame_system::EnsureSignedBy;
 use hex_literal::hex;
 
+#[cfg(feature = "runtime-benchmarks")]
+use frame_system::EnsureSigned;
+#[cfg(not(feature = "runtime-benchmarks"))]
+use runtime_common::EnsureEnclaveSigner;
 // for TEE
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_sidechain;
@@ -67,7 +71,7 @@ pub use core_primitives::{opaque, Index, *};
 pub use runtime_common::currency::*;
 use runtime_common::{
 	impl_runtime_transaction_payment_fees, prod_or_fast, BlockHashCount, BlockLength,
-	CouncilInstance, CouncilMembershipInstance, EnsureEnclaveSigner, EnsureRootOrAllCouncil,
+	CouncilInstance, CouncilMembershipInstance, EnsureRootOrAllCouncil,
 	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrHalfTechnicalCommittee,
 	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee,
 	IMPExtrinsicWhitelistInstance, NegativeImbalance, RuntimeBlockWeights, SlowAdjustingFeeUpdate,
@@ -894,7 +898,10 @@ impl pallet_teeracle::Config for Runtime {
 impl pallet_identity_management::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = ();
+	#[cfg(not(feature = "runtime-benchmarks"))]
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
+	#[cfg(feature = "runtime-benchmarks")]
+	type TEECallOrigin = EnsureSigned<AccountId>;
 	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
 	type ExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
 }
@@ -914,7 +921,10 @@ impl pallet_identity_management_mock::Config for Runtime {
 
 impl pallet_vc_management::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	#[cfg(not(feature = "runtime-benchmarks"))]
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
+	#[cfg(feature = "runtime-benchmarks")]
+	type TEECallOrigin = EnsureSigned<AccountId>;
 	type SetAdminOrigin = EnsureRootOrHalfCouncil;
 	type ExtrinsicWhitelistOrigin = VCMPExtrinsicWhitelist;
 }

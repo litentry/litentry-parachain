@@ -163,4 +163,18 @@ benchmarks! {
 	}
 }
 
-impl_benchmark_test_suite!(IdentityManagement, crate::mock::new_test_ext(), crate::mock::Test,);
+#[cfg(test)]
+mod tests {
+	pub fn new_test_ext() -> sp_io::TestExternalities {
+		let t = frame_system::GenesisConfig::default()
+			.build_storage::<crate::mock::Test>()
+			.unwrap();
+		sp_io::TestExternalities::new(t)
+	}
+}
+
+impl_benchmark_test_suite!(
+	IdentityManagement,
+	crate::benchmarking::tests::new_test_ext(),
+	crate::mock::Test,
+);
