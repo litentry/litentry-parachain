@@ -815,7 +815,7 @@ impl pallet_teeracle::Config for Runtime {
 
 impl pallet_identity_management::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_identity_management::WeightInfo<Runtime>;
 	#[cfg(not(feature = "runtime-benchmarks"))]
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	#[cfg(feature = "runtime-benchmarks")]
@@ -843,6 +843,7 @@ impl pallet_identity_management_mock::Config for Runtime {
 
 impl pallet_vc_management::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = weights::pallet_vc_management::WeightInfo<Runtime>;
 	#[cfg(not(feature = "runtime-benchmarks"))]
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	#[cfg(feature = "runtime-benchmarks")]

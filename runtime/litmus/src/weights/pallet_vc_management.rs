@@ -19,13 +19,13 @@
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2023-04-16, STEPS: `20`, REPEAT: 50, LOW RANGE: `[]`, HIGH RANGE: `[]`
 //! HOSTNAME: `LAPTOP-2LGRO8PK`, CPU: `AMD Ryzen 7 5800H with Radeon Graphics`
-//! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("rococo-dev"), DB CACHE: 1024
+//! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("litmus-dev"), DB CACHE: 1024
 
 // Executed Command:
 // ./target/release/litentry-collator
 // benchmark
 // pallet
-// --chain=rococo-dev
+// --chain=litmus-dev
 // --execution=wasm
 // --wasm-execution=compiled
 // --pallet=pallet_vc_management
@@ -33,7 +33,7 @@
 // --steps=20
 // --repeat=50
 // --header=./LICENSE_HEADER
-// --output=./runtime/rococo/src/weights/pallet_vc_management.rs
+// --output=./runtime/litmus/src/weights/pallet_vc_management.rs
 
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
@@ -47,41 +47,41 @@ pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_vc_management::WeightInfo for WeightInfo<T> {
 	// Storage: VCMPExtrinsicWhitelist GroupControlOn (r:1 w:0)
 	fn request_vc() -> Weight {
-		// Minimum execution time: 19_300 nanoseconds.
+		// Minimum execution time: 19_200 nanoseconds.
 		Weight::from_ref_time(19_800_000)
 			.saturating_add(T::DbWeight::get().reads(1))
 	}
 	// Storage: VCMPExtrinsicWhitelist GroupControlOn (r:1 w:0)
 	// Storage: VCManagement VCRegistry (r:1 w:1)
 	fn disable_vc() -> Weight {
-		// Minimum execution time: 26_000 nanoseconds.
-		Weight::from_ref_time(26_600_000)
+		// Minimum execution time: 24_700 nanoseconds.
+		Weight::from_ref_time(25_500_000)
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: VCMPExtrinsicWhitelist GroupControlOn (r:1 w:0)
 	// Storage: VCManagement VCRegistry (r:1 w:1)
 	fn revoke_vc() -> Weight {
-		// Minimum execution time: 25_500 nanoseconds.
-		Weight::from_ref_time(26_300_000)
+		// Minimum execution time: 25_300 nanoseconds.
+		Weight::from_ref_time(25_900_000)
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: VCManagement VCRegistry (r:1 w:1)
 	fn vc_issued() -> Weight {
-		// Minimum execution time: 24_200 nanoseconds.
-		Weight::from_ref_time(25_300_000)
+		// Minimum execution time: 23_100 nanoseconds.
+		Weight::from_ref_time(23_500_000)
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	fn some_error() -> Weight {
-		// Minimum execution time: 17_600 nanoseconds.
-		Weight::from_ref_time(18_200_000)
+		// Minimum execution time: 16_600 nanoseconds.
+		Weight::from_ref_time(17_000_000)
 	}
 	// Storage: VCManagement Admin (r:1 w:1)
 	fn set_admin() -> Weight {
-		// Minimum execution time: 21_800 nanoseconds.
-		Weight::from_ref_time(22_400_000)
+		// Minimum execution time: 20_600 nanoseconds.
+		Weight::from_ref_time(21_200_000)
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
@@ -89,48 +89,48 @@ impl<T: frame_system::Config> pallet_vc_management::WeightInfo for WeightInfo<T>
 	// Storage: VCManagement SchemaRegistryIndex (r:1 w:1)
 	// Storage: VCManagement SchemaRegistry (r:0 w:1)
 	fn add_schema() -> Weight {
-		// Minimum execution time: 25_500 nanoseconds.
-		Weight::from_ref_time(26_000_000)
+		// Minimum execution time: 24_500 nanoseconds.
+		Weight::from_ref_time(25_200_000)
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(2))
 	}
 	// Storage: VCManagement Admin (r:1 w:0)
 	// Storage: VCManagement SchemaRegistry (r:1 w:1)
 	fn disable_schema() -> Weight {
-		// Minimum execution time: 25_600 nanoseconds.
-		Weight::from_ref_time(26_800_000)
+		// Minimum execution time: 25_400 nanoseconds.
+		Weight::from_ref_time(26_300_000)
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: VCManagement Admin (r:1 w:0)
 	// Storage: VCManagement SchemaRegistry (r:1 w:1)
 	fn activate_schema() -> Weight {
-		// Minimum execution time: 26_700 nanoseconds.
-		Weight::from_ref_time(27_900_000)
+		// Minimum execution time: 24_600 nanoseconds.
+		Weight::from_ref_time(26_200_000)
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: VCManagement Admin (r:1 w:0)
 	// Storage: VCManagement SchemaRegistry (r:1 w:1)
 	fn revoke_schema() -> Weight {
-		// Minimum execution time: 26_700 nanoseconds.
-		Weight::from_ref_time(27_400_000)
+		// Minimum execution time: 25_400 nanoseconds.
+		Weight::from_ref_time(26_300_000)
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: VCManagement Admin (r:1 w:0)
 	// Storage: VCManagement VCRegistry (r:1 w:1)
 	fn add_vc_registry_item() -> Weight {
-		// Minimum execution time: 26_000 nanoseconds.
-		Weight::from_ref_time(27_000_000)
+		// Minimum execution time: 24_400 nanoseconds.
+		Weight::from_ref_time(25_500_000)
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	// Storage: VCManagement Admin (r:1 w:0)
 	// Storage: VCManagement VCRegistry (r:1 w:1)
 	fn remove_vc_registry_item() -> Weight {
-		// Minimum execution time: 25_500 nanoseconds.
-		Weight::from_ref_time(26_600_000)
+		// Minimum execution time: 25_200 nanoseconds.
+		Weight::from_ref_time(26_400_000)
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
@@ -138,10 +138,10 @@ impl<T: frame_system::Config> pallet_vc_management::WeightInfo for WeightInfo<T>
 	// Storage: VCManagement VCRegistry (r:0 w:5)
 	/// The range of component `x` is `[0, 100]`.
 	fn clear_vc_registry(x: u32, ) -> Weight {
-		// Minimum execution time: 23_400 nanoseconds.
-		Weight::from_ref_time(24_170_400)
-			// Standard Error: 4_147
-			.saturating_add(Weight::from_ref_time(1_051_955).saturating_mul(x.into()))
+		// Minimum execution time: 22_800 nanoseconds.
+		Weight::from_ref_time(24_798_888)
+			// Standard Error: 3_450
+			.saturating_add(Weight::from_ref_time(1_010_369).saturating_mul(x.into()))
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes((1_u64).saturating_mul(x.into())))
 	}
