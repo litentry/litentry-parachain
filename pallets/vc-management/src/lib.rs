@@ -30,6 +30,10 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+pub mod weights;
+
+pub use crate::weights::WeightInfo;
+
 use core_primitives::{
 	AesOutput, Assertion, SchemaIndex, ShardIdentifier, SCHEMA_CONTENT_LEN, SCHEMA_ID_LEN,
 };
