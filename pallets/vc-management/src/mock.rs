@@ -144,6 +144,7 @@ impl pallet_balances::Config for Test {
 
 impl pallet_vc_management::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = ();
 	type TEECallOrigin = EnsureEnclaveSigner<Self>;
 	type SetAdminOrigin = EnsureRoot<Self::AccountId>;
 	type ExtrinsicWhitelistOrigin = VCMPExtrinsicWhitelist;
