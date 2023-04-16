@@ -19,7 +19,8 @@ use cumulus_primitives_core::ParaId;
 use rococo_parachain_runtime::{
 	AccountId, AuraId, Balance, BalancesConfig, CouncilMembershipConfig, GenesisConfig,
 	ParachainInfoConfig, ParachainStakingConfig, PolkadotXcmConfig, SessionConfig, SudoConfig,
-	SystemConfig, TechnicalCommitteeMembershipConfig, TeerexConfig, UNIT, WASM_BINARY,
+	SystemConfig, TechnicalCommitteeMembershipConfig, TeerexConfig, VCManagementConfig, UNIT,
+	WASM_BINARY,
 };
 use sc_service::ChainType;
 use sc_telemetry::TelemetryEndpoints;
@@ -199,7 +200,7 @@ fn generate_genesis(
 			code: WASM_BINARY.expect("WASM binary was not build, please build it!").to_vec(),
 		},
 		balances: BalancesConfig { balances: endowed_accounts },
-		sudo: SudoConfig { key: Some(root_key) },
+		sudo: SudoConfig { key: Some(root_key.clone()) },
 		parachain_info: ParachainInfoConfig { parachain_id: id },
 		parachain_staking: ParachainStakingConfig {
 			candidates: invulnerables.iter().cloned().map(|(acc, _)| (acc, 50 * UNIT)).collect(),
@@ -235,7 +236,9 @@ fn generate_genesis(
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
 		polkadot_xcm: PolkadotXcmConfig { safe_xcm_version: Some(SAFE_XCM_VERSION) },
-		teerex: TeerexConfig { allow_sgx_debug_mode: true },
+		// use sudo key as genesis admin for teerex and VCMP
+		teerex: TeerexConfig { allow_sgx_debug_mode: true, admin: Some(root_key.clone()) },
+		vc_management: VCManagementConfig { admin: Some(root_key) },
 		transaction_payment: Default::default(),
 		tokens: Default::default(),
 	}

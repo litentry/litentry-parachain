@@ -28,7 +28,7 @@ impl RuntimeCall for NodeMetadata {
 		let node_metadata = self.node_metadata.as_ref().unwrap();
 
 		let runtime_call = node_metadata.types().types.iter().find(|ty| {
-			let path = ty.ty.path.segments.clone();
+			let path = &ty.ty.path.segments;
 			path.len() == 2 && path[1].as_str() == "RuntimeCall"
 		});
 

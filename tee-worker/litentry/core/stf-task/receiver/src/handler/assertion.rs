@@ -101,11 +101,13 @@ where
 				self.req.bn,
 			),
 
-			// TODO: A5 not supported yet
-			Assertion::A5(..) => Err(VCMPError::RequestVCFailed(
-				self.req.assertion.clone(),
-				ErrorDetail::StfError(ErrorString::truncate_from("Not supported".into())),
-			)),
+			Assertion::A5(original_tweet_id) => lc_assertion_build::a5::build(
+				self.req.vec_identity.to_vec(),
+				original_tweet_id,
+				&self.req.shard,
+				&self.req.who,
+				self.req.bn,
+			),
 
 			Assertion::A6 => lc_assertion_build::a6::build(
 				self.req.vec_identity.to_vec(),
@@ -170,14 +172,14 @@ where
 		let payload = credential.to_json().map_err(|_| {
 			VCMPError::RequestVCFailed(self.req.assertion.clone(), ErrorDetail::ParseError)
 		})?;
-		debug!("[BuildAssertion] VC payload: {}", payload);
+		debug!("Credential payload: {}", payload);
 		let (enclave_account, sig) = signer.sign_vc_with_self(payload.as_bytes()).map_err(|e| {
 			VCMPError::RequestVCFailed(
 				self.req.assertion.clone(),
 				ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
 			)
 		})?;
-		debug!("[BuildAssertion] Payload hash signature: {:?}", sig);
+		debug!("Credential Payload signature: {:?}", sig);
 
 		credential.add_proof(&sig, credential.issuance_block_number, &enclave_account);
 		credential.validate().map_err(|e| {
@@ -196,9 +198,9 @@ where
 		let credential_str = credential.to_json().map_err(|_| {
 			VCMPError::RequestVCFailed(self.req.assertion.clone(), ErrorDetail::ParseError)
 		})?;
-		debug!("[BuildAssertion] Credential: {}, length: {}", credential_str, credential_str.len());
+		debug!("Credential: {}, length: {}", credential_str, credential_str.len());
 		let vc_hash = blake2_256(credential_str.as_bytes());
-		debug!("[BuildAssertion] VC hash: {:?}", vc_hash);
+		debug!("VC hash: {:?}", vc_hash);
 
 		let output = aes_encrypt_default(&self.req.key, credential_str.as_bytes());
 		Ok((vc_index, vc_hash, output))
@@ -212,6 +214,7 @@ where
 			.get_from_metadata(|m| VCMPCallIndexes::vc_issued_call_indexes(m))
 		{
 			Ok(Ok(call_index)) => {
+				debug!("Sending vc_issued event to parachain ... ");
 				let call = OpaqueCall::from_tuple(&(
 					call_index,
 					self.req.who.clone(),
@@ -223,13 +226,13 @@ where
 				));
 				self.context.submit_to_parentchain(call)
 			},
-			Ok(Err(e)) => error!("[BuildAssertion] failed to get metadata: {:?}", e),
-			Err(e) => error!("[BuildAssertion] failed to get metadata: {:?}", e),
+			Ok(Err(e)) => error!("get metadata failed: {:?}", e),
+			Err(e) => error!("get metadata failed: {:?}", e),
 		};
 	}
 
 	fn on_failure(&self, error: Self::Error) {
-		error!("[BuildAssertion] on_failure: {error:?}");
+		error!("Assertion on_failure: {error:?}");
 
 		match self
 			.context
@@ -237,16 +240,17 @@ where
 			.get_from_metadata(|m| VCMPCallIndexes::vcmp_some_error_call_indexes(m))
 		{
 			Ok(Ok(call_index)) => {
+				debug!("Sending vcmp_some_error event to parachain ... ");
 				let call = OpaqueCall::from_tuple(&(
 					call_index,
-					self.req.who.clone(),
+					Some(self.req.who.clone()),
 					error,
 					self.req.hash,
 				));
 				self.context.submit_to_parentchain(call)
 			},
-			Ok(Err(e)) => error!("failed to get metadata. Due to: {:?}", e),
-			Err(e) => error!("failed to get metadata. Due to: {:?}", e),
+			Ok(Err(e)) => error!("get metadata failed: {:?}", e),
+			Err(e) => error!("get metadata failed: {:?}", e),
 		};
 	}
 }

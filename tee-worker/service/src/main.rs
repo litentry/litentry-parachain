@@ -42,7 +42,7 @@ use crate::{
 	worker::Worker,
 	worker_peers_updater::WorkerPeersUpdater,
 };
-use base58::{FromBase58, ToBase58};
+use base58::ToBase58;
 use clap::{load_yaml, App};
 use codec::{Decode, Encode};
 use enclave::{
@@ -312,6 +312,8 @@ fn main() {
 		setup::generate_shielding_key_file(enclave.as_ref());
 	} else if matches.is_present("signing-key") {
 		setup::generate_signing_key_file(enclave.as_ref());
+		let tee_accountid = enclave_account(enclave.as_ref());
+		println!("Enclave account: {:}", &tee_accountid.to_ss58check());
 	} else if matches.is_present("dump-ra") {
 		info!("*** Perform RA and dump cert to disk");
 		#[cfg(not(feature = "dcap"))]
@@ -364,9 +366,9 @@ fn main() {
 		let old_shard = sub_matches
 			.value_of("old-shard")
 			.map(|value| {
-				let shard_vec = value.from_base58().expect("shard must be hex encoded");
 				let mut shard = [0u8; 32];
-				shard.copy_from_slice(&shard_vec[..]);
+				hex::decode_to_slice(value, &mut shard)
+					.expect("shard must be hex encoded without 0x");
 				ShardIdentifier::from_slice(&shard)
 			})
 			.unwrap();
@@ -374,9 +376,9 @@ fn main() {
 		let new_shard: ShardIdentifier = sub_matches
 			.value_of("new-shard")
 			.map(|value| {
-				let shard_vec = value.from_base58().expect("shard must be hex encoded");
 				let mut shard = [0u8; 32];
-				shard.copy_from_slice(&shard_vec[..]);
+				hex::decode_to_slice(value, &mut shard)
+					.expect("shard must be hex encoded without 0x");
 				ShardIdentifier::from_slice(&shard)
 			})
 			.unwrap();
@@ -531,6 +533,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		.unwrap(),
 	);
 	let last_synced_header = parentchain_handler.init_parentchain_components().unwrap();
+	info!("Last synced parachain block = {:?}", &last_synced_header.number);
 	let nonce = node_api.get_nonce_of(&tee_accountid).unwrap();
 	info!("Enclave nonce = {:?}", nonce);
 	enclave
@@ -699,7 +702,12 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		thread::Builder::new()
 			.name("parentchain_sync_loop".to_owned())
 			.spawn(move || {
-				subscribe_to_parentchain_new_headers(parentchain_handler, last_synced_header);
+				if let Err(e) =
+					subscribe_to_parentchain_new_headers(parentchain_handler, last_synced_header)
+				{
+					error!("Parentchain block syncing terminated with a failure: {:?}", e);
+				}
+				println!("[!] Parentchain block syncing has terminated");
 			})
 			.unwrap();
 	}
@@ -712,33 +720,25 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	// ------------------------------------------------------------------------
 	// subscribe to events and react on firing
 	println!("*** Subscribing to events");
-	loop {
-		let (sender, receiver) = channel();
-		let metadata = node_api.metadata.clone();
-		let node_api2 = node_api.clone();
-		let _ = thread::Builder::new()
-			.name("event_subscriber".to_owned())
-			.spawn(move || {
-				node_api2.subscribe_events(sender).unwrap();
-			})
-			.unwrap();
+	let (sender, receiver) = channel();
+	let metadata = node_api.metadata.clone();
+	let _ = thread::Builder::new()
+		.name("event_subscriber".to_owned())
+		.spawn(move || {
+			node_api.subscribe_events(sender).unwrap();
+		})
+		.unwrap();
 
-		println!("[+] Subscribed to events. waiting...");
-		loop {
-			match receiver.recv() {
-				Ok(events_str) => {
-					let event_bytes = Vec::from_hex(events_str).unwrap();
-					let events = Events::new(metadata.clone(), Default::default(), event_bytes);
-					for maybe_event_details in events.iter() {
-						let event_details = maybe_event_details.unwrap();
-						let _ = print_event(&event_details);
-					}
-				},
-				Err(_) => {
-					println!("[!] event websocket disconnected, try to connect again");
-					sleep(Duration::from_secs(1));
-					break
-				},
+	println!("[+] Subscribed to events. waiting...");
+	let timeout = Duration::from_secs(600);
+	loop {
+		if let Ok(events_str) = receiver.recv_timeout(timeout) {
+			let event_bytes = Vec::from_hex(events_str).unwrap();
+			let events = Events::new(metadata.clone(), Default::default(), event_bytes);
+
+			for maybe_event_details in events.iter() {
+				let event_details = maybe_event_details.unwrap();
+				let _ = print_event(&event_details);
 			}
 		}
 	}
@@ -876,39 +876,36 @@ fn send_extrinsic(
 fn subscribe_to_parentchain_new_headers<E: EnclaveBase + Sidechain>(
 	parentchain_handler: Arc<ParentchainHandler<ParentchainApi, E>>,
 	mut last_synced_header: Header,
-) {
+) -> Result<(), Error> {
+	let (sender, receiver) = channel();
+	//TODO: this should be implemented by parentchain_handler directly, and not via
+	// exposed parentchain_api. Blocked by https://github.com/scs/substrate-api-client/issues/267.
+	parentchain_handler
+		.parentchain_api()
+		.subscribe_finalized_heads(sender)
+		.map_err(Error::ApiClient)?;
+
+	// TODO(Kai@Litentry):
+	// originally we had an outer loop to try to handle the disconnection,
+	// see https://github.com/litentry/litentry-parachain/commit/b8059d0fad928e4bba99178451cd0d473791c437
+	// but I reverted it because:
+	// - no graceful shutdown, we could have many mpsc channel when it doesn't go right
+	// - we might have multiple `sync_parentchain` running concurrently, which causes chaos in enclave side
+	// - I still feel it's only a workaround, not a perfect solution
+	//
+	// TODO: now the sync will panic if disconnected - it heavily relys on the worker-restart to work (even manually)
 	loop {
-		let (sender, receiver) = channel();
-		if let Err(e) = parentchain_handler.parentchain_api().subscribe_finalized_heads(sender) {
-			println!("[!] connect ws error: {e:?}");
-			sleep(Duration::from_secs(1));
-			break
-		}
-		loop {
-			match receiver.recv() {
-				Ok(header_str) => {
-					let new_header: Header = serde_json::from_str(&header_str).unwrap();
-					println!(
-						"[+] Received finalized header update ({}), syncing parent chain...",
-						new_header.number
-					);
-					match parentchain_handler.sync_parentchain(last_synced_header.clone()) {
-						Err(e) => {
-							println!(
-								"[!] sync parentchain error: {e:?}, websocket try to reconnect"
-							);
-							break
-						},
-						Ok(h) => last_synced_header = h,
-					}
-				},
-				Err(_) => {
-					println!("[!] sync parachain websocket disconnected, try to reconnect.");
-					sleep(Duration::from_secs(1));
-					break
-				},
-			};
-		}
+		let new_header: Header = match receiver.recv() {
+			Ok(header_str) => serde_json::from_str(&header_str).map_err(Error::Serialization),
+			Err(e) => Err(Error::ApiSubscriptionDisconnected(e)),
+		}?;
+
+		println!(
+			"[+] Received finalized header update ({}), syncing parent chain...",
+			new_header.number
+		);
+
+		last_synced_header = parentchain_handler.sync_parentchain(last_synced_header)?;
 	}
 }
 
@@ -952,8 +949,13 @@ fn data_provider(config: &Config) -> DataProvidersStatic {
 	if let Ok(v) = env::var("TWITTER_LITENTRY_URL") {
 		data_provider_config.set_twitter_litentry_url(v);
 	}
-	if let Ok(v) = env::var("TWITTER_AUTH_TOKEN") {
-		data_provider_config.set_twitter_auth_token(v);
+	// Bearer Token is as same as App only Access Token on Twitter (https://developer.twitter.com/en/docs/authentication/oauth-2-0/application-only),
+	// that is for developers that just need read-only access to public information.
+	if let Ok(v) = env::var("TWITTER_AUTH_TOKEN_V1_1") {
+		data_provider_config.set_twitter_auth_token_v1_1(v);
+	}
+	if let Ok(v) = env::var("TWITTER_AUTH_TOKEN_V2") {
+		data_provider_config.set_twitter_auth_token_v2(v);
 	}
 	if let Ok(v) = env::var("DISCORD_OFFICIAL_URL") {
 		data_provider_config.set_discord_official_url(v);

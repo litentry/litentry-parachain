@@ -1,0 +1,4 @@
+{
+  "fetchEndpoint": "wss://tee-staging.litentry.io:443",
+  "defaultEndpoint": "wss://tee-staging.litentry.io/"
+}

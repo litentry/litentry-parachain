@@ -99,7 +99,6 @@ itc-tls-websocket-server = { path = "../core/tls-websocket-server", default-feat
 itp-attestation-handler = { path = "../core-primitives/attestation-handler", default-features = false, features = ["sgx"] }
 itp-block-import-queue = { path = "../core-primitives/block-import-queue", default-features = false, features = ["sgx"] }
 itp-component-container = { path = "../core-primitives/component-container", default-features = false, features = ["sgx"] }
-itp-enclave-scheduled = { path = "../core-primitives/sgx/enclave-scheduled", default-features = false, features = ["sgx"] }
 itp-extrinsics-factory = { path = "../core-primitives/extrinsics-factory", default-features = false, features = ["sgx"] }
 itp-hashing = { path = "../core-primitives/hashing", default-features = false }
 itp-node-api = { path = "../core-primitives/node-api", default-features = false, features = ["sgx"] }
@@ -131,6 +130,7 @@ its-sidechain = { path = "../sidechain/sidechain-crate", default-features = fals
 
 # litentry
 lc-data-providers = { path = "../litentry/core/data-providers", default-features = false, features = ["sgx"] }
+lc-scheduled-enclave = { path = "../litentry/core/scheduled-enclave", default-features = false, features = ["sgx"] }
 lc-stf-task-receiver = { path = "../litentry/core/stf-task/receiver", default-features = false, features = ["sgx"] }
 lc-stf-task-sender = { path = "../litentry/core/stf-task/sender", default-features = false, features = ["sgx"] }
 litentry-primitives = { path = "../litentry/primitives", default-features = false, features = ["sgx"] }

@@ -50,8 +50,8 @@ pub type ConfirmCallFn = (CallIndex, ShardIdentifier, H256, Vec<u8>);
 pub type ShieldFundsFn = (CallIndex, Vec<u8>, Balance, ShardIdentifier);
 pub type CallWorkerFn = (CallIndex, Request);
 
-pub type CallUpdateScheduledEnclaveFn = (CallIndex, SidechainBlockNumber, MrEnclave);
-pub type CallRemoveScheduledEnclaveFn = (CallIndex, SidechainBlockNumber);
+pub type UpdateScheduledEnclaveFn = (CallIndex, SidechainBlockNumber, MrEnclave);
+pub type RemoveScheduledEnclaveFn = (CallIndex, SidechainBlockNumber);
 
 // pallet IMP
 pub type SetUserShieldingKeyParams = (ShardIdentifier, Vec<u8>);

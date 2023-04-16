@@ -42,8 +42,9 @@ use itp_extrinsics_factory::CreateExtrinsics;
 use itp_ocall_api::{EnclaveOnChainOCallApi, EnclaveSidechainOCallApi};
 use itp_settings::sidechain::SLOT_DURATION;
 use itp_sgx_crypto::Ed25519Seal;
+use itp_sgx_externalities::SgxExternalities;
 use itp_sgx_io::StaticSealedIO;
-use itp_stf_state_handler::query_shard_state::QueryShardState;
+use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
 use itp_time_utils::duration_now;
 use itp_types::{Block, OpaqueCall, H256};
 use its_primitives::{
@@ -58,6 +59,7 @@ use its_sidechain::{
 	slots::{sgx::LastSlotSeal, yield_next_slot, PerShardSlotWorkerScheduler, SlotInfo},
 	validateer_fetch::ValidateerFetch,
 };
+use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use log::*;
 use sgx_types::sgx_status_t;
 use sp_core::Pair;
@@ -86,6 +88,9 @@ pub unsafe extern "C" fn execute_trusted_calls() -> sgx_status_t {
 /// *   Broadcast produced sidechain blocks to peer validateers.
 fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 	let start_time = Instant::now();
+
+	debug!("----------------------------------------");
+	debug!("Start sidechain block production cycle");
 
 	// We acquire lock explicitly (variable binding), since '_' will drop the lock after the statement.
 	// See https://medium.com/codechain/rust-underscore-does-not-bind-fec6a18115a8
@@ -153,14 +158,17 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 				block_composer,
 			);
 
-			let (blocks, opaque_calls) = exec_aura_on_slot::<_, _, SignedSidechainBlock, _, _, _>(
-				slot.clone(),
-				authority,
-				ocall_api.clone(),
-				parentchain_import_dispatcher,
-				env,
-				shards,
-			)?;
+			let (blocks, opaque_calls) =
+				exec_aura_on_slot::<_, _, SignedSidechainBlock, _, _, _, _, _>(
+					slot.clone(),
+					authority,
+					ocall_api.clone(),
+					parentchain_import_dispatcher,
+					env,
+					shards,
+					GLOBAL_SCHEDULED_ENCLAVE.clone(),
+					state_handler,
+				)?;
 
 			debug!("Aura executed successfully");
 
@@ -190,6 +198,7 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 }
 
 /// Executes aura for the given `slot`.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn exec_aura_on_slot<
 	Authority,
 	ParentchainBlock,
@@ -197,6 +206,8 @@ pub(crate) fn exec_aura_on_slot<
 	OCallApi,
 	PEnvironment,
 	BlockImportTrigger,
+	ScheduledEnclave,
+	StateHandler,
 >(
 	slot: SlotInfo<ParentchainBlock>,
 	authority: Authority,
@@ -204,6 +215,8 @@ pub(crate) fn exec_aura_on_slot<
 	block_import_trigger: Arc<BlockImportTrigger>,
 	proposer_environment: PEnvironment,
 	shards: Vec<ShardIdentifierFor<SignedSidechainBlock>>,
+	scheduled_enclave: Arc<ScheduledEnclave>,
+	state_handler: Arc<StateHandler>,
 ) -> Result<(Vec<SignedSidechainBlock>, Vec<OpaqueCall>)>
 where
 	ParentchainBlock: BlockTrait<Hash = H256>,
@@ -221,16 +234,21 @@ where
 		Environment<ParentchainBlock, SignedSidechainBlock, Error = ConsensusError> + Send + Sync,
 	BlockImportTrigger:
 		TriggerParentchainBlockImport<SignedBlockType = SignedParentchainBlock<ParentchainBlock>>,
+	ScheduledEnclave: ScheduledEnclaveUpdater,
+	StateHandler: HandleState<StateT = SgxExternalities>,
 {
 	debug!("[Aura] Executing aura for slot: {:?}", slot);
 
-	let mut aura = Aura::<_, ParentchainBlock, SignedSidechainBlock, PEnvironment, _, _>::new(
-		authority,
-		ocall_api.as_ref().clone(),
-		block_import_trigger,
-		proposer_environment,
-	)
-	.with_claim_strategy(SlotClaimStrategy::RoundRobin);
+	let mut aura =
+		Aura::<_, ParentchainBlock, SignedSidechainBlock, PEnvironment, _, _, _, _>::new(
+			authority,
+			ocall_api.as_ref().clone(),
+			block_import_trigger,
+			proposer_environment,
+			scheduled_enclave,
+			state_handler,
+		)
+		.with_claim_strategy(SlotClaimStrategy::RoundRobin);
 
 	let (blocks, xts): (Vec<_>, Vec<_>) =
 		PerShardSlotWorkerScheduler::on_slot(&mut aura, slot, shards)

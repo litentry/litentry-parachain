@@ -61,7 +61,8 @@ impl TrustedCallSigned {
 		)
 		.encode();
 		let encoded_shard = shard.encode();
-		let request = SetUserShieldingKeyRequest { encoded_shard, who, encoded_callback }.into();
+		let request =
+			SetUserShieldingKeyRequest { encoded_shard, who, encoded_callback, hash }.into();
 		let sender = StfRequestSender::new();
 		sender
 			.send_stf_request(request)
@@ -193,6 +194,7 @@ impl TrustedCallSigned {
 				validation_data: web2,
 				bn,
 				encoded_callback,
+				hash,
 			}
 			.into(),
 			ValidationData::Web3(web3) => Web3IdentityVerificationRequest {
@@ -203,6 +205,7 @@ impl TrustedCallSigned {
 				validation_data: web3,
 				bn,
 				encoded_callback,
+				hash,
 			}
 			.into(),
 		};

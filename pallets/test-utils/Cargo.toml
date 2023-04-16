@@ -9,7 +9,7 @@ repository = "https://github.com/integritee-network/pallets/"
 version = "0.1.0"
 
 [dependencies]
-hex-literal = { version = "0.3.2" }
+hex-literal = { version = "0.4.1" }
 log = { version = "0.4.14", default-features = false }
 
 [dependencies.teerex-primitives]

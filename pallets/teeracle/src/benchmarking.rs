@@ -50,11 +50,16 @@ benchmarks! {
 		let rate = U32F32::from_num(43.65);
 		let data_source: DataSource = "https://api.coingecko.com".into();
 
+		Teerex::<T>::set_admin(
+			RawOrigin::Root.into(),
+			signer.clone(),
+		).unwrap();
+
 		// we need different parameters, unfortunately - since the way to calculate
 		// MRENCLAVE differs depending on if `skip-ias-check` feature is present.
 		Teerex::<T>::update_scheduled_enclave(
-			RawOrigin::Root.into(),
-			0u32,
+			RawOrigin::Signed(signer.clone()).into(),
+			0u64,
 			#[cfg(feature = "skip-ias-check")]
 			MrEnclave::decode(&mut TEST4_SETUP.cert).unwrap_or_default(),
 			#[cfg(not(feature = "skip-ias-check"))]
@@ -87,11 +92,16 @@ benchmarks! {
 		let oracle_blob: crate::OracleDataBlob<T> =
 			vec![1].try_into().expect("Can Convert to OracleDataBlob<T>; QED");
 
+		Teerex::<T>::set_admin(
+			RawOrigin::Root.into(),
+			signer.clone(),
+		).unwrap();
+
 		// we need different parameters, unfortunately - since the way to calculate
 		// MRENCLAVE differs depending on if `skip-ias-check` feature is present.
 		Teerex::<T>::update_scheduled_enclave(
-			RawOrigin::Root.into(),
-			0u32,
+			RawOrigin::Signed(signer.clone()).into(),
+			0u64,
 			#[cfg(feature = "skip-ias-check")]
 			MrEnclave::decode(&mut TEST4_SETUP.cert).unwrap_or_default(),
 			#[cfg(not(feature = "skip-ias-check"))]

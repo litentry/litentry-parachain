@@ -95,7 +95,7 @@ args:
         long: mock-server-port
         help: Set the port for the mock-server HTTP server
         required: false
-        default_value: "9527"
+        default_value: "19527"
 
 subcommands:
     - run:
@@ -153,11 +153,11 @@ subcommands:
         args:
             - old-shard:
                 long: old-shard    
-                help: shard identifier base58 encoded      
+                help: shard identifier hex encoded
                 takes_value: true
             - new-shard:
                 long: new-shard
-                help: shard identifier base58 encoded
+                help: shard identifier hex encoded
                 takes_value: true
     - test:
           about: Run tests involving the enclave

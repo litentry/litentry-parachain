@@ -19,6 +19,6 @@ use crate::{Runtime, RuntimeCall, RuntimeOrigin};
 runtime_common::run_call_filter_tests!();
 
 #[test]
-fn balance_transfer_disabled() {
-	base_call_filter::balance_transfer_disabled::<Runtime, RuntimeOrigin, RuntimeCall>();
+fn balance_transfer_works() {
+	base_call_filter::balance_transfer_works::<Runtime, RuntimeOrigin, RuntimeCall>();
 }

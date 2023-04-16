@@ -101,7 +101,7 @@ fn get_storage_value(
 			let ty = metadata.types.resolve(key.id).unwrap();
 			// If the key is a tuple, we encode each value to the corresponding tuple type.
 			// If the key is not a tuple, encode a single value to the key type.
-			let type_ids = match ty.type_def.clone() {
+			let type_ids = match &ty.type_def {
 				TypeDef::Tuple(tuple) => tuple.fields.iter().map(|f| f.id).collect(),
 				_other => {
 					vec![key.id]

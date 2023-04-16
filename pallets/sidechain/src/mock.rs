@@ -131,7 +131,7 @@ impl pallet_teerex::Config for Test {
 	type Currency = Balances;
 	type MomentsPerDay = MomentsPerDay;
 	type WeightInfo = ();
-	type EnclaveAdminOrigin = EnsureRoot<Self::AccountId>;
+	type SetAdminOrigin = EnsureRoot<Self::AccountId>;
 }
 
 parameter_types! {
@@ -152,7 +152,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
-	let teerex_config = pallet_teerex::GenesisConfig { allow_sgx_debug_mode: true };
+	let teerex_config = pallet_teerex::GenesisConfig { allow_sgx_debug_mode: true, admin: None };
 	GenesisBuild::<Test>::assimilate_storage(&teerex_config, &mut t).unwrap();
 
 	let mut ext: sp_io::TestExternalities = t.into();

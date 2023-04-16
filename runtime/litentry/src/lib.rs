@@ -138,9 +138,8 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("litentry-parachain"),
 	impl_name: create_runtime_str!("litentry-parachain"),
 	authoring_version: 1,
-	// same versioning-mechanism as polkadot:
-	// last digit is used for minor updates, like 9110 -> 9111 in polkadot
-	spec_version: 9151,
+	// same versioning-mechanism as polkadot: use last digit for minor updates
+	spec_version: 9155,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -947,7 +946,9 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			// Preimage
 			RuntimeCall::Preimage(_) |
 			// Identity
-			RuntimeCall::ParachainIdentity(_)
+			RuntimeCall::ParachainIdentity(_) |
+			// Balance
+			RuntimeCall::Balances(_)
 		)
 	}
 }

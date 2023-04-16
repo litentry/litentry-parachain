@@ -33,6 +33,8 @@ extern crate sgx_tstd as std;
 
 use codec::Encode;
 use derive_more::From;
+use itp_sgx_externalities::SgxExternalities;
+use itp_stf_state_handler::handle_state::HandleState;
 use itp_time_utils::{duration_difference, duration_now};
 use itp_types::OpaqueCall;
 use its_consensus_common::{Error as ConsensusError, Proposer};
@@ -40,10 +42,12 @@ use its_primitives::traits::{
 	Block as SidechainBlockTrait, Header as HeaderTrait, ShardIdentifierFor,
 	SignedBlock as SignedSidechainBlockTrait,
 };
+use its_state::SidechainSystemExt;
+use lc_scheduled_enclave::ScheduledEnclaveUpdater;
 use log::*;
 pub use slots::*;
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header as ParentchainHeaderTrait};
-use std::{fmt::Debug, time::Duration, vec::Vec};
+use std::{fmt::Debug, sync::Arc, time::Duration, vec::Vec};
 
 #[cfg(feature = "std")]
 mod slot_stream;
@@ -129,8 +133,20 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 	/// Output generated after a slot
 	type Output: SignedSidechainBlockTrait + Send + 'static;
 
+	/// Scheduled enclave context for authoring
+	type ScheduledEnclave: ScheduledEnclaveUpdater;
+
+	/// State handler context for authoring
+	type StateHandler: HandleState<StateT = SgxExternalities>;
+
 	/// The logging target to use when logging messages.
 	fn logging_target(&self) -> &'static str;
+
+	/// Get scheduled enclave
+	fn get_scheduled_enclave(&mut self) -> Arc<Self::ScheduledEnclave>;
+
+	/// Get state handler for query and mutation
+	fn get_state_handler(&mut self) -> Arc<Self::StateHandler>;
 
 	/// Returns the epoch data necessary for authoring. For time-dependent epochs,
 	/// use the provided slot number as a canonical source of time.
@@ -201,7 +217,6 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 
 			return None
 		}
-		// TODO: check schedule enclave matches
 
 		let latest_parentchain_header = match self.peek_latest_parentchain_header() {
 			Ok(Some(peeked_header)) => peeked_header,
@@ -237,6 +252,43 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 				"Skipping proposal slot. Authorities len {:?}", authorities_len
 			);
 		}
+
+		// Return early if MRENCLAVE doesn't match - it implies that the enclave should be updated
+		let scheduled_enclave = self.get_scheduled_enclave();
+		let state_handler = self.get_state_handler();
+		// TODO: is this always consistent? Reference: `propose_state_update` in slot_proposer.rs
+		let (state, _) = state_handler.load_cloned(&shard.into()).ok()?;
+		let next_sidechain_number = state.get_block_number().map_or(1, |n| n + 1);
+
+		if !scheduled_enclave.is_mrenclave_matching(next_sidechain_number) {
+			warn!(
+				target: logging_target,
+				"Skipping sidechain block {} due to mismatch MRENCLAVE, current: {:?}, expect: {:?}",
+				next_sidechain_number,
+				scheduled_enclave.get_current_mrenclave().map(hex::encode),
+				scheduled_enclave.get_expected_mrenclave(next_sidechain_number).map(hex::encode),
+			);
+			if let Ok(false) = scheduled_enclave.is_block_production_paused() {
+				let _ = scheduled_enclave.set_block_production_paused(true);
+				info!("Pause sidechain block production");
+			}
+			return None
+		} else {
+			// TODO: this block production pause/unpause is not strictly needed but I add it here as placeholder.
+			//       Maybe we should add a field to describe the reason for pausing/unpausing, as
+			//       it's possible that we want to manually/focibly pause the sidechain
+			if let Ok(true) = scheduled_enclave.is_block_production_paused() {
+				info!("Resume sidechain block production");
+				let _ = scheduled_enclave.set_block_production_paused(false);
+			}
+		}
+
+		// TODO: about the shard migration and state migration
+		//       - the shard migration(copy-over) is done manually by the subcommand "migrate-shard".
+		//       - the state migration is done via conditionally calling on_runtime_upgrade() by comparing
+		//         the current runtime version and LastRuntimeUpgrade, see `stf_sgx.rs`.
+		//         It means we need to bump the runtime version for the new enclave if we want the state
+		//         migration to be executed.
 
 		let _claim = self.claim_slot(&latest_parentchain_header, slot, &epoch_data)?;
 
@@ -357,10 +409,19 @@ impl<ParentchainBlock: ParentchainBlockTrait, T: SimpleSlotWorker<ParentchainBlo
 			);
 
 			match SimpleSlotWorker::on_slot(self, shard_slot, shard) {
-				Some(res) => slot_results.push(res),
+				Some(res) => {
+					info!(
+						target: logging_target,
+						"Proposed block {} for slot {} in shard {:?}",
+						res.block.block().header().block_number(),
+						*slot_info.slot,
+						shard
+					);
+					slot_results.push(res);
+				},
 				None => info!(
 					target: logging_target,
-					"Did not produce a block for slot {} in shard {:?}", *slot_info.slot, shard
+					"Did not propose a block for slot {} in shard {:?}", *slot_info.slot, shard
 				),
 			}
 

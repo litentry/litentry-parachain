@@ -25,26 +25,25 @@ use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
-use lc_data_providers::graphql::{
-	GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
+use lc_data_providers::{
+	graphql::{GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork},
+	vec_to_string,
 };
 use litentry_primitives::{
-	Assertion, EvmNetwork, Identity, ParentchainBalance, ParentchainBlockNumber,
+	Assertion, ErrorDetail, EvmNetwork, Identity, ParameterString, ParentchainBlockNumber,
 	ASSERTION_FROM_DATE,
 };
 use log::*;
-use std::{
-	string::{String, ToString},
-	vec,
-	vec::Vec,
-};
+use std::{string::ToString, vec, vec::Vec};
 
-const VC_SUBJECT_DESCRIPTION: &str = "The user held ETH before a specific date/year";
-const VC_SUBJECT_TYPE: &str = "ETH Hodler";
+const VC_A11_SUBJECT_DESCRIPTION: &str =
+	"Since when has the user been consistently holding a min amount {x} of ETH token";
+const VC_A11_SUBJECT_TYPE: &str = "ETH Holding Assertion";
+const VC_A11_SUBJECT_TAG: [&str; 1] = ["Ethereum"];
 
 pub fn build(
 	identities: Vec<Identity>,
-	min_balance: ParentchainBalance,
+	min_balance: ParameterString,
 	shard: &ShardIdentifier,
 	who: &AccountId,
 	bn: ParentchainBlockNumber,
@@ -56,56 +55,68 @@ pub fn build(
 		identities,
 	);
 
-	// ETH decimals is 18.
-	let q_min_balance: f64 = (min_balance / (10 ^ 18)) as f64;
+	let q_min_balance = vec_to_string(min_balance.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(Assertion::A11(min_balance.clone()), ErrorDetail::ParseError)
+	})?;
 
 	let mut client = GraphQLClient::new();
-	let mut found = false;
-	let mut from_date_index = 0_usize;
+	let mut addresses = vec![];
 
 	for id in identities {
-		if found {
-			break
-		}
-
 		if let Identity::Evm { network, address } = id {
 			if matches!(network, EvmNetwork::Ethereum) {
 				let mut address = account_id_to_string(address.as_ref());
 				address.insert_str(0, "0x");
-				debug!("	[AssertionBuild] A11 Ethereum address : {}", address);
+				debug!("Assertion A11 Ethereum address : {}", address);
 
-				let addresses = vec![address.to_string()];
-				for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
-					// if found is true, no need to check it continually
-					if found {
-						from_date_index = index + 1;
-						break
-					}
+				addresses.push(address);
+			}
+		}
+	}
 
-					let vch = VerifiedCredentialsIsHodlerIn::new(
-						addresses.clone(),
-						from_date.to_string(),
-						VerifiedCredentialsNetwork::Ethereum,
-						String::from(""),
-						q_min_balance,
-					);
-					match client.check_verified_credentials_is_hodler(vch) {
-						Ok(is_hodler_out) => {
-							for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
-								found = found || hodler.is_hodler;
-							}
-						},
-						Err(e) => error!("	[BuildAssertion] A11, Request, {:?}", e),
+	let mut is_hold = false;
+	let mut optimal_hold_index = 0_usize;
+
+	if !addresses.is_empty() {
+		for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
+			let vch = VerifiedCredentialsIsHodlerIn::new(
+				addresses.clone(),
+				from_date.to_string(),
+				VerifiedCredentialsNetwork::Ethereum,
+				"".into(),
+				q_min_balance.to_string(),
+			);
+			match client.check_verified_credentials_is_hodler(vch) {
+				Ok(is_hodler_out) => {
+					for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
+						is_hold = is_hold || hodler.is_hodler;
 					}
-				}
+				},
+				Err(e) => error!(
+					"Assertion A11 request check_verified_credentials_is_hodler error: {:?}",
+					e
+				),
+			}
+
+			if is_hold {
+				optimal_hold_index = index;
+				break
 			}
 		}
 	}
 
 	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
-			credential_unsigned.update_holder(from_date_index, min_balance);
+			credential_unsigned.add_subject_info(
+				VC_A11_SUBJECT_DESCRIPTION,
+				VC_A11_SUBJECT_TYPE,
+				VC_A11_SUBJECT_TAG.to_vec(),
+			);
+			credential_unsigned.update_holder(
+				is_hold,
+				&q_min_balance,
+				&ASSERTION_FROM_DATE[optimal_hold_index].into(),
+			);
 
 			Ok(credential_unsigned)
 		},

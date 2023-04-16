@@ -66,6 +66,8 @@ def main(processes, config_path, parachain_type):
     for w_conf in config["workers"]:
         processes.append(run_worker(w_conf, worker_i))
         print()
+        # Wait a bit for worker to start up.
+        sleep(5)
 
         idx = 0
         if ( "-h" in w_conf["flags"] ):
@@ -87,14 +89,14 @@ def main(processes, config_path, parachain_type):
                 c.setopt(c.WRITEDATA, buffer)
                 try:
                     c.perform()
-                except:
-                    print("Connect to worker: error")
+                except Exception as e:
+                    print("Try to connect to worker error: " + str(e))
                     return 0
 
                 if "I am initialized." == buffer.getvalue().decode('iso-8859-1'):
                     break
-                if counter >= 60:
-                    print("Worker initialization error. Exit")
+                if counter >= 600:
+                    print("Worker initialization timeout (3000s). Exit")
                     return 0
                 counter = counter + 1
 

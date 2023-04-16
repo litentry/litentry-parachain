@@ -34,7 +34,6 @@ pub mod files {
 	// used by worker
 	pub static ENCLAVE_TOKEN: &str = "enclave.token";
 	pub static ENCLAVE_FILE: &str = "enclave.signed.so";
-	pub static SCHEDULED_ENCLAVE_FILE: &str = "scheduled_enclaves.json";
 	pub static SHIELDING_KEY_FILE: &str = "enclave-shielding-pubkey.json";
 	pub static SIGNING_KEY_FILE: &str = "enclave-signing-pubkey.bin";
 	/// sidechain database path
@@ -47,6 +46,7 @@ pub mod files {
 	pub const SEALED_SIGNER_SEED_FILE: &str = "ed25519_key_sealed.bin";
 	pub const AES_KEY_FILE_AND_INIT_V: &str = "aes_key_sealed.bin";
 	pub const LIGHT_CLIENT_DB: &str = "light_client_db.bin";
+	pub const SCHEDULED_ENCLAVE_FILE: &str = "scheduled_enclave_sealed.bin";
 
 	pub const RA_DUMP_CERT_DER_FILE: &str = "ra_dump_cert.der";
 

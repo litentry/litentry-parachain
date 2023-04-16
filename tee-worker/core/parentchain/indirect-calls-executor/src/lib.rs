@@ -56,9 +56,9 @@ use crate::{
 		litentry::{
 			batch_all::BatchAll,
 			create_identity::CreateIdentity,
-			get_scheduled_enclave::{ScheduledEnclaveRemove, ScheduledEnclaveUpdate},
 			remove_identity::RemoveIdentity,
 			request_vc::RequestVC,
+			scheduled_enclave::{RemoveScheduledEnclave, UpdateScheduledEnclave},
 			set_user_shielding_key::SetUserShieldingKey,
 			verify_identity::VerifyIdentity,
 		},
@@ -303,10 +303,10 @@ where
 			let request_vc = RequestVC { block_number: parentchain_block_number };
 			// Found BatchAll extrinsic
 			let batch_all = BatchAll { block_number: parentchain_block_number };
-			// Found Update Scheduled Enclave extrinisc
-			let scheduled_enclave_update =
-				ScheduledEnclaveUpdate { block_number: parentchain_block_number };
-			let scheduled_enclave_remove = ScheduledEnclaveRemove;
+			// Found UpdateScheduledEnclave extrinisc
+			let update_scheduled_enclave = UpdateScheduledEnclave {};
+			// Found RemoveScheduledEnclave extrinisc
+			let remove_scheduled_enclave = RemoveScheduledEnclave {};
 
 			let executors: Vec<&dyn DecorateExecutor<R, S, T, N>> = vec![
 				&shield_funds,
@@ -317,8 +317,8 @@ where
 				&remove_identity,
 				&verify_identity,
 				&request_vc,
-				&scheduled_enclave_update,
-				&scheduled_enclave_remove,
+				&update_scheduled_enclave,
+				&remove_scheduled_enclave,
 			];
 			for executor in executors {
 				match executor.decode_and_execute(self, &mut encoded_xt_opaque.as_slice()) {

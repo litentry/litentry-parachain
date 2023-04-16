@@ -484,6 +484,7 @@ where
 					parent_ss58_prefix,
 				) {
 					Ok(()) => {
+						debug!("pushing user_shielding_key_set event to parachain calls ...");
 						calls.push(OpaqueCall::from_tuple(&(
 							node_metadata_repo
 								.get_from_metadata(|m| m.user_shielding_key_set_call_indexes())??,
@@ -531,6 +532,7 @@ where
 					Ok(code) => {
 						debug!("create_identity_runtime {} OK", account_id_to_string(&who));
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
+							debug!("pushing identity_created event to parachain calls ...");
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.identity_created_call_indexes())??,
@@ -571,6 +573,7 @@ where
 					Ok(()) => {
 						debug!("remove_identity_runtime {} OK", account_id_to_string(&who));
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
+							debug!("pushing identity_removed event to parachain calls ...");
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.identity_removed_call_indexes())??,
@@ -645,6 +648,7 @@ where
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
 							let id_graph =
 								ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph_with_max_len(&who, IDGRAPH_MAX_LEN);
+							debug!("pushing identity_verified event to parachain calls ...");
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.identity_verified_call_indexes())??,
@@ -715,7 +719,7 @@ where
 				Ok(())
 			},
 			TrustedCall::send_erroneous_parentchain_call(account) => {
-				// intentionally send wrong parameters
+				// intentionally send wrong parameters, only used in testing
 				calls.push(OpaqueCall::from_tuple(&(
 					node_metadata_repo.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
 					"set_user_shielding_key".as_bytes(),
@@ -805,6 +809,7 @@ fn add_call_from_imp_error<NodeMetadataRepository>(
 	NodeMetadataRepository::MetadataType:
 		TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix,
 {
+	debug!("pushing imp_some_error event to parachain calls ...");
 	// TODO: anyway to simplify this? `and_then` won't be applicable here
 	match node_metadata_repo.get_from_metadata(|m| m.imp_some_error_call_indexes()) {
 		Ok(Ok(c)) => calls.push(OpaqueCall::from_tuple(&(c, account, e, hash))),
@@ -825,6 +830,7 @@ fn add_call_from_vcmp_error<NodeMetadataRepository>(
 	NodeMetadataRepository::MetadataType:
 		TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix,
 {
+	debug!("pushing vcmp_some_error event to parachain calls ...");
 	match node_metadata_repo.get_from_metadata(|m| m.vcmp_some_error_call_indexes()) {
 		Ok(Ok(c)) => calls.push(OpaqueCall::from_tuple(&(c, account, e, hash))),
 		Ok(e) => warn!("error getting VCMP call indexes: {:?}", e),

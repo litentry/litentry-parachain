@@ -11,7 +11,7 @@ version = '0.1.0'
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len"] }
 log = { version = "0.4", default-features = false }
 pallet-teerex = { path = "../teerex", default-features = false }
-scale-info = { version = "2.4.0", default-features = false, features = ["derive"] }
+scale-info = { version = "2.5.0", default-features = false, features = ["derive"] }
 
 # primitives
 sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39", default-features = false }
@@ -32,6 +32,7 @@ core-primitives = { path = "../../primitives/core", default-features = false }
 
 [dev-dependencies]
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+pallet-group = { path = "../../pallets/group" }
 pallet-teerex = { path = "../teerex", features = ["skip-scheduled-enclave-check"] }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }

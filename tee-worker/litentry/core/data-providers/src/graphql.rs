@@ -25,7 +25,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
-use litentry_primitives::{EvmNetwork, SubstrateNetwork};
+use litentry_primitives::{EvmNetwork, IndexingNetwork, SubstrateNetwork};
 use log::*;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -47,6 +47,11 @@ impl Default for GraphQLClient {
 	}
 }
 
+/// TODO: https://github.com/litentry/litentry-parachain/pull/1534
+/// There are two issues here that need to be refactored later
+/// 1. The name of VerifiedCredentialsNetwork is a bit unclear
+/// 2. VerifiedCredentialsNetwork and IndexingNetwork are repeated, they should be one-to-one relationship, just keep one.
+/// What's even better is that we have a trait for each data provider, something like get_supported_network.
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
 pub enum VerifiedCredentialsNetwork {
 	Litentry,
@@ -83,12 +88,40 @@ impl From<EvmNetwork> for VerifiedCredentialsNetwork {
 	}
 }
 
+impl From<IndexingNetwork> for VerifiedCredentialsNetwork {
+	fn from(network: IndexingNetwork) -> Self {
+		match network {
+			IndexingNetwork::Litmus => Self::Litmus,
+			IndexingNetwork::Litentry => Self::Litentry,
+			IndexingNetwork::Polkadot => Self::Polkadot,
+			IndexingNetwork::Kusama => Self::Kusama,
+			IndexingNetwork::Khala => Self::Khala,
+			IndexingNetwork::Ethereum => Self::Ethereum,
+		}
+	}
+}
+
+impl std::fmt::Display for VerifiedCredentialsNetwork {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		match *self {
+			VerifiedCredentialsNetwork::Litentry => write!(f, "Litentry"),
+			VerifiedCredentialsNetwork::Litmus => write!(f, "Litmus"),
+			VerifiedCredentialsNetwork::LitentryRococo => write!(f, "LitentryRococo"),
+			VerifiedCredentialsNetwork::Polkadot => write!(f, "Polkadot"),
+			VerifiedCredentialsNetwork::Kusama => write!(f, "Kusama"),
+			VerifiedCredentialsNetwork::Khala => write!(f, "Khala"),
+			VerifiedCredentialsNetwork::Ethereum => write!(f, "Ethereum"),
+			VerifiedCredentialsNetwork::TestNet => write!(f, "TestNet"),
+		}
+	}
+}
+
 pub struct VerifiedCredentialsIsHodlerIn {
 	pub addresses: Vec<String>,
 	pub from_date: String,
 	pub network: VerifiedCredentialsNetwork,
 	pub token_address: String,
-	pub min_balance: f64,
+	pub min_balance: String,
 }
 
 impl VerifiedCredentialsIsHodlerIn {
@@ -97,7 +130,7 @@ impl VerifiedCredentialsIsHodlerIn {
 		from_date: String,
 		network: VerifiedCredentialsNetwork,
 		token_address: String,
-		min_balance: f64,
+		min_balance: String,
 	) -> Self {
 		VerifiedCredentialsIsHodlerIn { addresses, from_date, network, token_address, min_balance }
 	}
@@ -106,9 +139,9 @@ impl VerifiedCredentialsIsHodlerIn {
 		let addresses_str = format!("{:?}", self.addresses);
 		let network = format!("{:?}", self.network).to_lowercase();
 		if self.token_address.is_empty() {
-			format!("{{VerifiedCredentialsIsHodler(addresses:{}, fromDate:\"{}\", network:{}, minimumBalance:{:?}){{isHodler,address}}}}", addresses_str, self.from_date, network, self.min_balance)
+			format!("{{VerifiedCredentialsIsHodler(addresses:{}, fromDate:\"{}\", network:{}, minimumBalance:{}){{isHodler,address}}}}", addresses_str, self.from_date, network, self.min_balance)
 		} else {
-			format!("{{VerifiedCredentialsIsHodler(addresses:{}, fromDate:\"{}\", network:{}, tokenAddress:\"{}\",minimumBalance:{:?}){{isHodler,address}}}}", addresses_str, self.from_date, network, self.token_address, self.min_balance)
+			format!("{{VerifiedCredentialsIsHodler(addresses:{}, fromDate:\"{}\", network:{}, tokenAddress:\"{}\",minimumBalance:{}){{isHodler,address}}}}", addresses_str, self.from_date, network, self.token_address, self.min_balance)
 		}
 	}
 }
@@ -288,7 +321,7 @@ mod tests {
 			from_date: "2022-10-16T00:00:00Z".to_string(),
 			network: VerifiedCredentialsNetwork::Ethereum,
 			token_address: LIT_TOKEN_ADDRESS.to_string(),
-			min_balance: 0.00000056,
+			min_balance: "0.00000056".into(),
 		};
 		let response = client.check_verified_credentials_is_hodler(credentials);
 		assert!(response.is_ok(), "due to error:{:?}", response.unwrap_err());
