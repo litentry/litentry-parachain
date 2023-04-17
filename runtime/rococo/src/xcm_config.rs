@@ -29,7 +29,7 @@ use frame_support::{
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use xcm_builder::ConvertedConcreteId;
+use xcm_builder::{ConvertedConcreteId, NoChecking};
 // Litentry: The CheckAccount implementation is forced by the bug of FungiblesAdapter.
 // We should replace () regarding fake_pallet_id account after our PR passed.
 use core_primitives::{AccountId, Weight};
@@ -110,7 +110,7 @@ pub type ForeignFungiblesTransactor = FungiblesAdapter<
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
 	AccountId,
 	// We dont allow teleports.
-	Nothing,
+	NoChecking,
 	// We dont track any teleports
 	TempAccount,
 >;
@@ -210,7 +210,7 @@ impl xcm_executor::Config for XcmConfig {
 	type RuntimeCall = RuntimeCall;
 	type XcmSender = XcmRouter;
 	// How to withdraw and deposit an asset.
-	type AssetTransactor = LocalAssetTransactor;
+	type AssetTransactor = AssetTransactors;
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
 	// Only Allow chains to handle their own reserve assets crossed on local chain whatever way they
 	// want.
