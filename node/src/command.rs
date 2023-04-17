@@ -438,21 +438,27 @@ pub fn run() -> Result<()> {
 			if runner.config().chain_spec.is_litmus() {
 				runner.async_run(|_| {
 					Ok((
-						cmd.run::<Block, HostFunctionsOf<LitmusParachainRuntimeExecutor>, _>(Some(info_provider)),
+						cmd.run::<Block, HostFunctionsOf<LitmusParachainRuntimeExecutor>, _>(Some(
+							info_provider,
+						)),
 						task_manager,
 					))
 				})
 			} else if runner.config().chain_spec.is_litentry() {
 				runner.async_run(|_| {
 					Ok((
-						cmd.run::<Block, HostFunctionsOf<LitentryParachainRuntimeExecutor>, _>(Some(info_provider)),
+						cmd.run::<Block, HostFunctionsOf<LitentryParachainRuntimeExecutor>, _>(
+							Some(info_provider),
+						),
 						task_manager,
 					))
 				})
 			} else if runner.config().chain_spec.is_rococo() {
 				runner.async_run(|_| {
 					Ok((
-						cmd.run::<Block, HostFunctionsOf<RococoParachainRuntimeExecutor>, _>(Some(info_provider)),
+						cmd.run::<Block, HostFunctionsOf<RococoParachainRuntimeExecutor>, _>(Some(
+							info_provider,
+						)),
 						task_manager,
 					))
 				})
