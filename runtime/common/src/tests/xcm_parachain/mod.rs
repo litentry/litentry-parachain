@@ -312,7 +312,7 @@ where
 		// This is the error of mimic XcmRouter: decl_test_network
 		System::<R::ParaRuntime>::assert_last_event(
 			pallet_xcm::Event::<R::ParaRuntime>::Attempted(Outcome::Incomplete(
-				R::UnitWeightCost::get().into(),
+				R::UnitWeightCost::get(),
 				XcmError::Unroutable,
 			))
 			.into(),
