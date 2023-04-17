@@ -30,6 +30,7 @@ use sp_runtime::{
 	traits::{Convert, Dispatchable},
 	AccountId32,
 };
+use sp_std::convert::TryInto;
 use xcm::prelude::{
 	All, AssetId as XCMAssetId, Fungibility, Here, Instruction, Junction, MultiAsset,
 	MultiLocation, OriginKind, Outcome, PalletInstance, Parachain, Parent, WeightLimit, Xcm,
@@ -126,7 +127,7 @@ pub fn test_xtokens_recognize_multilocation<R: TestXCMRequirements>() {
 				CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData::default()),
 				UNIT,
 				Box::new((Parent, Parachain(2)).into()),
-				xcm_simulator::Limited((R::UnitWeightCost::get() * 4).into())
+				xcm_simulator::Limited((R::UnitWeightCost::get().ref_time() * 4).into())
 			),
 			orml_xtokens::Error::<R::ParaRuntime>::NotSupportedMultiLocation
 		);
@@ -138,7 +139,7 @@ pub fn test_xtokens_recognize_multilocation<R: TestXCMRequirements>() {
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: None, id: BOB }).into()
 			),
-			xcm_simulator::Limited((R::UnitWeightCost::get() * 4).into())
+			xcm_simulator::Limited((R::UnitWeightCost::get().ref_time() * 4).into())
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
@@ -157,12 +158,12 @@ pub fn test_xtokens_recognize_multilocation<R: TestXCMRequirements>() {
 				0, // Asset_id=0. The first registered Token in Para B
 				&bob()
 			),
-			UNIT - u128::from(R::UnitWeightCost::get() * 4)
+			UNIT - u128::from(R::UnitWeightCost::get().ref_time() * 4)
 		);
 		// Check the treasury of remote chain's asset XCM
 		assert_eq!(
 			Tokens::<R::ParaRuntime>::free_balance(0, &xcm_fees_account),
-			u128::from(R::UnitWeightCost::get() * 4)
+			u128::from(R::UnitWeightCost::get().ref_time() * 4)
 		);
 
 		// Send ParaA token back to ParachainA's BOB
@@ -175,14 +176,14 @@ pub fn test_xtokens_recognize_multilocation<R: TestXCMRequirements>() {
 			Box::new(
 				(Parent, Parachain(1), Junction::AccountId32 { network: None, id: BOB }).into()
 			),
-			xcm_simulator::Limited((R::UnitWeightCost::get() * 4).into())
+			xcm_simulator::Limited((R::UnitWeightCost::get().ref_time() * 4).into())
 		));
 	});
 
 	R::ParaA::execute_with(|| {
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&bob()),
-			40 * CENTS - u128::from(R::UnitWeightCost::get() * 4)
+			40 * CENTS - u128::from(R::UnitWeightCost::get().ref_time() * 4)
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
@@ -206,7 +207,7 @@ pub fn test_xtokens_weight_parameter<R: TestXCMRequirements>() {
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: None, id: BOB }).into()
 			),
-			xcm_simulator::Limited((R::UnitWeightCost::get()).into())
+			xcm_simulator::Limited((R::UnitWeightCost::get().ref_time()).into())
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
@@ -239,8 +240,8 @@ pub fn test_xtokens_weight_parameter<R: TestXCMRequirements>() {
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: None, id: BOB }).into()
 			),
-			// R::UnitWeightCost::get() * 5
-			xcm_simulator::Limited((R::UnitWeightCost::get() * 5).into())
+			// R::UnitWeightCost::get().ref_time() * 5
+			xcm_simulator::Limited((R::UnitWeightCost::get().ref_time() * 5).into())
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
@@ -259,12 +260,12 @@ pub fn test_xtokens_weight_parameter<R: TestXCMRequirements>() {
 				0, // Asset_id=0. The first registered Token in Para B
 				&bob()
 			),
-			UNIT - u128::from(R::UnitWeightCost::get() * 4)
+			UNIT - u128::from(R::UnitWeightCost::get().ref_time() * 4)
 		);
 		// Check the treasury of remote chain's asset XCM
 		assert_eq!(
 			Tokens::<R::ParaRuntime>::free_balance(0, &xcm_fees_account),
-			u128::from(R::UnitWeightCost::get() * 4)
+			u128::from(R::UnitWeightCost::get().ref_time() * 4)
 		);
 	});
 }
@@ -278,10 +279,11 @@ where
 		assert_eq!(Balances::<R::ParaRuntime>::free_balance(&alice()), PARA_A_USER_INITIAL_BALANCE);
 		// It is sent but with XCM execution failed as Parachain is not exist.
 		// Unregistereed Parachain Multilocation does not pass
+		let dest: MultiLocation = Junction::AccountId32 { network: None, id: BOB }.into();
 		assert_ok!(PolkadotXcm::<R::ParaRuntime>::reserve_transfer_assets(
 			R::ParaOrigin::signed(alice()),
 			Box::new((Parent, Parachain(4)).into()),
-			Box::new((Junction::AccountId32 { network: None, id: BOB }).into().into()),
+			Box::new(dest.into()),
 			Box::new(
 				vec![MultiAsset {
 					id: XCMAssetId::Concrete(
@@ -310,16 +312,17 @@ where
 		// This is the error of mimic XcmRouter: decl_test_network
 		System::<R::ParaRuntime>::assert_last_event(
 			pallet_xcm::Event::<R::ParaRuntime>::Attempted(Outcome::Incomplete(
-				R::UnitWeightCost::get().into(),
+				R::UnitWeightCost::get().ref_time().into(),
 				XcmError::Unroutable,
 			))
 			.into(),
 		);
 
+		let dest: MultiLocation = Junction::AccountId32 { network: None, id: BOB }.into();
 		assert_ok!(PolkadotXcm::<R::ParaRuntime>::reserve_transfer_assets(
 			R::ParaOrigin::signed(alice()),
 			Box::new((Parent, Parachain(2)).into()),
-			Box::new((Junction::AccountId32 { network: None, id: BOB }).into().into()),
+			Box::new(dest.into()),
 			Box::new(
 				vec![MultiAsset {
 					id: XCMAssetId::Concrete(
@@ -358,7 +361,7 @@ where
 				0, // Asset_id=0. The first registered Token in Para B
 				&bob()
 			),
-			2 * UNIT - u128::from(R::UnitWeightCost::get() * 4)
+			2 * UNIT - u128::from(R::UnitWeightCost::get().ref_time() * 4)
 		);
 	});
 	// Notice so far pallet_xcm does not handle the asset transfer back - 0.9.23
@@ -379,22 +382,26 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 			Box::new(
 				MultiAsset {
 					id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
-					fun: Fungibility::Fungible(u128::from(R::UnitWeightCost::get() * 4) + CENTS)
+					fun: Fungibility::Fungible(
+						u128::from(R::UnitWeightCost::get().ref_time() * 4) + CENTS
+					)
 				}
 				.into()
 			),
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: None, id: BOB }).into()
 			),
-			xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
+			xcm_simulator::Limited(R::UnitWeightCost::get().saturating_mul(4))
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
-			PARA_A_USER_INITIAL_BALANCE - u128::from(R::UnitWeightCost::get() * 4) - CENTS
+			PARA_A_USER_INITIAL_BALANCE -
+				u128::from(R::UnitWeightCost::get().ref_time() * 4) -
+				CENTS
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
-			UNIT + u128::from(R::UnitWeightCost::get() * 4) + CENTS
+			UNIT + u128::from(R::UnitWeightCost::get().ref_time() * 4) + CENTS
 		);
 
 		// Sending 100 ParaA token after xcm fee to BOB by XTokens::transfer_with_fee
@@ -402,19 +409,21 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 			R::ParaOrigin::signed(alice()),
 			CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData::default()),
 			10 * CENTS,
-			(R::UnitWeightCost::get() * 4).into(),
+			(R::UnitWeightCost::get().ref_time() * 4).into(),
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: None, id: BOB }).into()
 			),
-			xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
+			xcm_simulator::Limited(R::UnitWeightCost::get().saturating_mul(4))
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
-			PARA_A_USER_INITIAL_BALANCE - u128::from(R::UnitWeightCost::get() * 8) - 11 * CENTS
+			PARA_A_USER_INITIAL_BALANCE -
+				u128::from(R::UnitWeightCost::get().ref_time() * 8) -
+				11 * CENTS
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
-			UNIT + u128::from(R::UnitWeightCost::get() * 8) + 11 * CENTS
+			UNIT + u128::from(R::UnitWeightCost::get().ref_time() * 8) + 11 * CENTS
 		);
 
 		// Sending 1 UNIT ParaA token after xcm fee to BOB by XTokens::transfer_multiasset_with_fee
@@ -430,22 +439,24 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 			Box::new(
 				MultiAsset {
 					id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
-					fun: Fungibility::Fungible((R::UnitWeightCost::get() * 4).into())
+					fun: Fungibility::Fungible((R::UnitWeightCost::get().ref_time() * 4).into())
 				}
 				.into()
 			),
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: None, id: BOB }).into()
 			),
-			xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
+			xcm_simulator::Limited(R::UnitWeightCost::get().saturating_mul(4))
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
-			PARA_A_USER_INITIAL_BALANCE - u128::from(R::UnitWeightCost::get() * 12) - 111 * CENTS
+			PARA_A_USER_INITIAL_BALANCE -
+				u128::from(R::UnitWeightCost::get().ref_time() * 12) -
+				111 * CENTS
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
-			UNIT + u128::from(R::UnitWeightCost::get() * 12) + 111 * CENTS
+			UNIT + u128::from(R::UnitWeightCost::get().ref_time() * 12) + 111 * CENTS
 		);
 
 		// Sending 10 UNIT ParaA token after xcm fee to BOB by XTokens::transfer_multicurrencies
@@ -453,21 +464,23 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 			R::ParaOrigin::signed(alice()),
 			vec![(
 				CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData::default()),
-				u128::from(R::UnitWeightCost::get() * 4) + 10 * UNIT
+				u128::from(R::UnitWeightCost::get().ref_time() * 4) + 10 * UNIT
 			)],
 			0,
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: None, id: BOB }).into()
 			),
-			xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
+			xcm_simulator::Limited(R::UnitWeightCost::get().saturating_mul(4))
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
-			PARA_A_USER_INITIAL_BALANCE - u128::from(R::UnitWeightCost::get() * 16) - 1111 * CENTS
+			PARA_A_USER_INITIAL_BALANCE -
+				u128::from(R::UnitWeightCost::get().ref_time() * 16) -
+				1111 * CENTS
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
-			UNIT + u128::from(R::UnitWeightCost::get() * 16) + 1111 * CENTS
+			UNIT + u128::from(R::UnitWeightCost::get().ref_time() * 16) + 1111 * CENTS
 		);
 
 		// Sending 100 UNIT ParaA token after xcm fee to BOB by XTokens::transfer_multiassets
@@ -477,7 +490,7 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 				vec![MultiAsset {
 					id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
 					fun: Fungibility::Fungible(
-						u128::from(R::UnitWeightCost::get() * 4) + 100 * UNIT
+						u128::from(R::UnitWeightCost::get().ref_time() * 4) + 100 * UNIT
 					)
 				}]
 				.into()
@@ -486,15 +499,17 @@ pub fn test_methods_xtokens_expected_succeed<R: TestXCMRequirements>() {
 			Box::new(
 				(Parent, Parachain(2), Junction::AccountId32 { network: None, id: BOB }).into()
 			),
-			xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
+			xcm_simulator::Limited(R::UnitWeightCost::get().saturating_mul(4))
 		));
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
-			PARA_A_USER_INITIAL_BALANCE - u128::from(R::UnitWeightCost::get() * 20) - 11111 * CENTS
+			PARA_A_USER_INITIAL_BALANCE -
+				u128::from(R::UnitWeightCost::get().ref_time() * 20) -
+				11111 * CENTS
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
-			UNIT + u128::from(R::UnitWeightCost::get() * 20) + 11111 * CENTS
+			UNIT + u128::from(R::UnitWeightCost::get().ref_time() * 20) + 11111 * CENTS
 		);
 	});
 
@@ -518,12 +533,12 @@ pub fn test_methods_xtokens_expected_fail<R: TestXCMRequirements>() {
 			XTokens::<R::ParaRuntime>::transfer(
 				R::ParaOrigin::signed(alice()),
 				CurrencyId::<R::ParaRuntime>::SelfReserve(PhantomData::default()),
-				u128::from(R::UnitWeightCost::get() * 4) + 100 * MILLICENTS,
+				u128::from(R::UnitWeightCost::get().ref_time() * 4) + 100 * MILLICENTS,
 				Box::new(
 					(Parent, Parachain(2), Junction::AccountId32 { network: None, id: BOB }).into()
 				),
 				// R::UnitWeightCost::get() * 4
-				xcm_simulator::Limited(R::UnitWeightCost::get() * 4)
+				xcm_simulator::Limited(R::UnitWeightCost::get().saturating_mul(4))
 			),
 			orml_xtokens::Error::<R::ParaRuntime>::XcmExecutionFailed
 		);
@@ -548,10 +563,11 @@ where
 
 	R::ParaA::execute_with(|| {
 		assert_eq!(Balances::<R::ParaRuntime>::free_balance(&alice()), PARA_A_USER_INITIAL_BALANCE);
+		let dest: MultiLocation = Junction::AccountId32 { network: None, id: BOB }.into();
 		assert_ok!(PolkadotXcm::<R::ParaRuntime>::reserve_transfer_assets(
 			R::ParaOrigin::signed(alice()),
 			Box::new((Parent, Parachain(2)).into()),
-			Box::new((Junction::AccountId32 { network: None, id: BOB }).into().into()),
+			Box::new(dest.into()),
 			Box::new(
 				vec![MultiAsset {
 					id: XCMAssetId::Concrete(
@@ -563,7 +579,7 @@ where
 						.unwrap(),
 					),
 					fun: Fungibility::Fungible(
-						u128::from(R::UnitWeightCost::get() * 4) + 100 * MILLICENTS
+						u128::from(R::UnitWeightCost::get().ref_time() * 4) + 100 * MILLICENTS
 					),
 				}]
 				.into()
@@ -584,15 +600,17 @@ where
 			&sibling_account::<R::LocationToAccountId>(2),
 			UNIT,
 		);
-
+		let dest: MultiLocation = Junction::AccountId32 { network: None, id: BOB }.into();
 		assert_ok!(PolkadotXcm::<R::ParaRuntime>::reserve_transfer_assets(
 			R::ParaOrigin::signed(alice()),
 			Box::new((Parent, Parachain(2)).into()),
-			Box::new((Junction::AccountId32 { network: None, id: BOB }).into().into()),
+			Box::new(dest.into()),
 			Box::new(
 				vec![MultiAsset {
 					id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
-					fun: Fungibility::Fungible(u128::from(R::UnitWeightCost::get() * 4) + CENTS)
+					fun: Fungibility::Fungible(
+						u128::from(R::UnitWeightCost::get().ref_time() * 4) + CENTS
+					)
 				}]
 				.into()
 			),
@@ -604,39 +622,43 @@ where
 
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
-			PARA_A_USER_INITIAL_BALANCE - u128::from(R::UnitWeightCost::get() * 4) - CENTS
+			PARA_A_USER_INITIAL_BALANCE -
+				u128::from(R::UnitWeightCost::get().ref_time() * 4) -
+				CENTS
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
-			UNIT + u128::from(R::UnitWeightCost::get() * 4) + CENTS
+			UNIT + u128::from(R::UnitWeightCost::get().ref_time() * 4) + CENTS
 		);
-
+		let dest: MultiLocation = Junction::AccountId32 { network: None, id: BOB }.into();
 		assert_ok!(PolkadotXcm::<R::ParaRuntime>::limited_reserve_transfer_assets(
 			R::ParaOrigin::signed(alice()),
 			Box::new((Parent, Parachain(2)).into()),
-			Box::new((Junction::AccountId32 { network: None, id: BOB }).into().into()),
+			Box::new(dest.into()),
 			Box::new(
 				vec![MultiAsset {
 					id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
 					fun: Fungibility::Fungible(
-						u128::from(R::UnitWeightCost::get() * 4) + 10 * CENTS
+						u128::from(R::UnitWeightCost::get().ref_time() * 4) + 10 * CENTS
 					)
 				}]
 				.into()
 			),
 			0,
-			WeightLimit::Limited(R::UnitWeightCost::get() * 4)
+			WeightLimit::Limited(R::UnitWeightCost::get().saturating_mul(4))
 		));
 		System::<R::ParaRuntime>::assert_last_event(
 			pallet_xcm::Event::Attempted(Outcome::Complete(R::UnitWeightCost::get())).into(),
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
-			PARA_A_USER_INITIAL_BALANCE - u128::from(R::UnitWeightCost::get() * 8) - 11 * CENTS
+			PARA_A_USER_INITIAL_BALANCE -
+				u128::from(R::UnitWeightCost::get().ref_time() * 8) -
+				11 * CENTS
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
-			UNIT + u128::from(R::UnitWeightCost::get() * 8) + 11 * CENTS
+			UNIT + u128::from(R::UnitWeightCost::get().ref_time() * 8) + 11 * CENTS
 		);
 	});
 
@@ -657,7 +679,9 @@ pub fn test_methods_pallet_xcm_expected_fail<R: TestXCMRequirements>() {
 		// Mimic the Xcm message sending
 		let assets = vec![MultiAsset {
 			id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
-			fun: Fungibility::Fungible(u128::from(R::UnitWeightCost::get() * 4) + 10 * CENTS),
+			fun: Fungibility::Fungible(
+				u128::from(R::UnitWeightCost::get().ref_time() * 4) + 10 * CENTS,
+			),
 		}]
 		.into();
 		let dest = (Parent, Parachain(2)).into();
@@ -665,9 +689,9 @@ pub fn test_methods_pallet_xcm_expected_fail<R: TestXCMRequirements>() {
 			Instruction::BuyExecution {
 				fees: MultiAsset {
 					id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
-					fun: Fungibility::Fungible((R::UnitWeightCost::get() * 4).into()),
+					fun: Fungibility::Fungible((R::UnitWeightCost::get().ref_time() * 4).into()),
 				},
-				weight_limit: WeightLimit::Limited(R::UnitWeightCost::get() * 4),
+				weight_limit: WeightLimit::Limited(R::UnitWeightCost::get().saturating_mul(4)),
 			},
 			Instruction::DepositAsset {
 				assets: All.into(),
@@ -682,24 +706,24 @@ pub fn test_methods_pallet_xcm_expected_fail<R: TestXCMRequirements>() {
 			PolkadotXcm::<R::ParaRuntime>::execute(
 				R::ParaOrigin::signed(alice()),
 				Box::new(xcm::VersionedXcm::V3(message)),
-				R::UnitWeightCost::get() * 4
+				R::UnitWeightCost::get().saturating_mul(4)
 			),
 			pallet_xcm::Error::<R::ParaRuntime>::Filtered
 		);
-
+		let dest: MultiLocation = Junction::AccountId32 { network: None, id: BOB }.into();
 		// Stopped by filter， nothing passed by execute, pallet_xcm::XcmTeleportFilter
 		assert_noop!(
 			PolkadotXcm::<R::ParaRuntime>::teleport_assets(
 				R::ParaOrigin::signed(alice()),
 				Box::new((Parent, Parachain(2)).into()),
-				Box::new((Junction::AccountId32 { network: None, id: BOB }).into().into()),
+				Box::new(dest.into()),
 				Box::new(
 					vec![MultiAsset {
 						id: XCMAssetId::Concrete(
 							para_native_token_multilocation::<R::ParaRuntime>(1)
 						),
 						fun: Fungibility::Fungible(
-							u128::from(R::UnitWeightCost::get() * 4) + CENTS
+							u128::from(R::UnitWeightCost::get().ref_time() * 4) + CENTS
 						)
 					}]
 					.into()
@@ -708,25 +732,25 @@ pub fn test_methods_pallet_xcm_expected_fail<R: TestXCMRequirements>() {
 			),
 			pallet_xcm::Error::<R::ParaRuntime>::Filtered
 		);
-
+		let dest: MultiLocation = Junction::AccountId32 { network: None, id: BOB }.into();
 		assert_noop!(
 			PolkadotXcm::<R::ParaRuntime>::limited_teleport_assets(
 				R::ParaOrigin::signed(alice()),
 				Box::new((Parent, Parachain(2)).into()),
-				Box::new((Junction::AccountId32 { network: None, id: BOB }).into().into()),
+				Box::new(dest.into()),
 				Box::new(
 					vec![MultiAsset {
 						id: XCMAssetId::Concrete(
 							para_native_token_multilocation::<R::ParaRuntime>(1)
 						),
 						fun: Fungibility::Fungible(
-							u128::from(R::UnitWeightCost::get() * 4) + 10 * CENTS
+							u128::from(R::UnitWeightCost::get().ref_time() * 4) + 10 * CENTS
 						)
 					}]
 					.into()
 				),
 				0,
-				WeightLimit::Limited(R::UnitWeightCost::get() * 4)
+				WeightLimit::Limited(R::UnitWeightCost::get().saturating_mul(4))
 			),
 			pallet_xcm::Error::<R::ParaRuntime>::Filtered
 		);
@@ -741,7 +765,9 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 		// Mimic the Xcm message sending
 		let assets = vec![MultiAsset {
 			id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
-			fun: Fungibility::Fungible(u128::from(R::UnitWeightCost::get() * 4) + 10 * UNIT),
+			fun: Fungibility::Fungible(
+				u128::from(R::UnitWeightCost::get().ref_time() * 4) + 10 * UNIT,
+			),
 		}]
 		.into();
 		let xcm = Xcm(vec![
@@ -750,9 +776,9 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 			Instruction::BuyExecution {
 				fees: MultiAsset {
 					id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
-					fun: Fungibility::Fungible((R::UnitWeightCost::get() * 4).into()),
+					fun: Fungibility::Fungible((R::UnitWeightCost::get().ref_time() * 4).into()),
 				},
-				weight_limit: WeightLimit::Limited(R::UnitWeightCost::get() * 4),
+				weight_limit: WeightLimit::Limited(R::UnitWeightCost::get().saturating_mul(4)),
 			},
 			Instruction::DepositAsset {
 				assets: All.into(),
@@ -782,7 +808,9 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 		// Mimic the Xcm message sending
 		let assets = vec![MultiAsset {
 			id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
-			fun: Fungibility::Fungible(u128::from(R::UnitWeightCost::get() * 4) + 10 * UNIT),
+			fun: Fungibility::Fungible(
+				u128::from(R::UnitWeightCost::get().ref_time() * 4) + 10 * UNIT,
+			),
 		}]
 		.into();
 		let xcm = Xcm(vec![
@@ -791,9 +819,9 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 			Instruction::BuyExecution {
 				fees: MultiAsset {
 					id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
-					fun: Fungibility::Fungible((R::UnitWeightCost::get() * 4).into()),
+					fun: Fungibility::Fungible((R::UnitWeightCost::get().ref_time() * 4).into()),
 				},
-				weight_limit: WeightLimit::Limited(R::UnitWeightCost::get() * 4),
+				weight_limit: WeightLimit::Limited(R::UnitWeightCost::get().saturating_mul(4)),
 			},
 			Instruction::DepositAsset {
 				assets: All.into(),
@@ -821,11 +849,11 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 		// Fill up the missing assets
 		let _ = pallet_balances::Pallet::<R::ParaRuntime>::deposit_creating(
 			&sibling_account::<R::LocationToAccountId>(2),
-			u128::from(R::UnitWeightCost::get() * 4) + 10 * UNIT,
+			u128::from(R::UnitWeightCost::get().ref_time() * 4) + 10 * UNIT,
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
-			u128::from(R::UnitWeightCost::get() * 4) + 10 * UNIT
+			u128::from(R::UnitWeightCost::get().ref_time() * 4) + 10 * UNIT
 		);
 	});
 
@@ -834,7 +862,9 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 		// Mimic the Xcm message sending
 		let assets = vec![MultiAsset {
 			id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
-			fun: Fungibility::Fungible(u128::from(R::UnitWeightCost::get() * 4) + 7 * UNIT),
+			fun: Fungibility::Fungible(
+				u128::from(R::UnitWeightCost::get().ref_time() * 4) + 7 * UNIT,
+			),
 		}]
 		.into();
 		let xcm = Xcm(vec![
@@ -843,9 +873,9 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 			Instruction::BuyExecution {
 				fees: MultiAsset {
 					id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
-					fun: Fungibility::Fungible((R::UnitWeightCost::get() * 4).into()),
+					fun: Fungibility::Fungible((R::UnitWeightCost::get().ref_time() * 4).into()),
 				},
-				weight_limit: WeightLimit::Limited(R::UnitWeightCost::get() * 4),
+				weight_limit: WeightLimit::Limited(R::UnitWeightCost::get().saturating_mul(4)),
 			},
 			Instruction::DepositAsset {
 				assets: All.into(),
@@ -863,7 +893,7 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 		// The remote received and ignored
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&sibling_account::<R::LocationToAccountId>(2)),
-			u128::from(R::UnitWeightCost::get() * 4) + 10 * UNIT
+			u128::from(R::UnitWeightCost::get().ref_time() * 4) + 10 * UNIT
 		);
 		assert_eq!(Balances::<R::ParaRuntime>::free_balance(&bob()), 0);
 	});
@@ -873,7 +903,9 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 		// Mimic the Xcm message sending
 		let assets = vec![MultiAsset {
 			id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
-			fun: Fungibility::Fungible(u128::from(R::UnitWeightCost::get() * 4) + 7 * UNIT),
+			fun: Fungibility::Fungible(
+				u128::from(R::UnitWeightCost::get().ref_time() * 4) + 7 * UNIT,
+			),
 		}]
 		.into();
 		let xcm = Xcm(vec![
@@ -882,9 +914,9 @@ pub fn test_pallet_xcm_send_capacity_between_sibling<R: TestXCMRequirements>() {
 			Instruction::BuyExecution {
 				fees: MultiAsset {
 					id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
-					fun: Fungibility::Fungible((R::UnitWeightCost::get() * 4).into()),
+					fun: Fungibility::Fungible((R::UnitWeightCost::get().ref_time() * 4).into()),
 				},
-				weight_limit: WeightLimit::Limited(R::UnitWeightCost::get() * 4),
+				weight_limit: WeightLimit::Limited(R::UnitWeightCost::get().saturating_mul(4)),
 			},
 			Instruction::DepositAsset {
 				assets: All.into(),
@@ -942,17 +974,18 @@ pub fn test_pallet_xcm_send_capacity_without_transact<R: TestXCMRequirements>() 
 					id: XCMAssetId::Concrete((Parent, Here).into()),
 					fun: Fungibility::Fungible(10 * 4),
 				},
-				weight_limit: WeightLimit::Limited(R::UnitWeightCost::get() * 4),
+				weight_limit: WeightLimit::Limited(R::UnitWeightCost::get().saturating_mul(4)),
 			},
 			Instruction::DepositAsset {
 				assets: All.into(),
 				beneficiary: Junction::AccountId32 { network: None, id: BOB }.into(),
 			},
 		]);
+		let dest: MultiLocation = Junction::Parachain(1).into();
 		// User sending the raw Xcm works successfully
 		assert_ok!(pallet_xcm::Pallet::<R::RelayRuntime>::send(
 			R::RelayOrigin::signed(alice()),
-			Box::new(Parachain(1).into().into()),
+			Box::new(dest.into()),
 			Box::new(xcm::VersionedXcm::V3(xcm)),
 		));
 	});
@@ -977,18 +1010,19 @@ pub fn test_pallet_xcm_send_capacity_without_transact<R: TestXCMRequirements>() 
 					id: XCMAssetId::Concrete((Parent, Here).into()),
 					fun: Fungibility::Fungible(10 * 4),
 				},
-				weight_limit: WeightLimit::Limited(
-					(200_000_000 * 4 * RELAY_UNIT).try_into().unwrap(),
-				),
+				weight_limit: WeightLimit::Limited(Weight::from_ref_time(
+					200_000_000u64 * 4u64 * <u128 as TryInto<u64>>::try_into(RELAY_UNIT).unwrap(),
+				)),
 			},
 			Instruction::DepositAsset {
 				assets: All.into(),
 				beneficiary: Junction::AccountId32 { network: None, id: BOB }.into(),
 			},
 		]); // Root sending the raw Xcm works successfully
+		let dest: MultiLocation = Parachain(1).into();
 		assert_ok!(pallet_xcm::Pallet::<R::RelayRuntime>::send(
 			RawOrigin::Root.into(),
-			Box::new(Parachain(1).into().into()),
+			Box::new(dest.into()),
 			Box::new(xcm::VersionedXcm::V3(xcm)),
 		));
 	});
@@ -1014,10 +1048,11 @@ pub fn test_pallet_xcm_send_capacity_without_transact<R: TestXCMRequirements>() 
 				beneficiary: Junction::AccountId32 { network: None, id: BOB }.into(),
 			},
 		]);
+		let dest: MultiLocation = Parachain(1).into();
 		// Root sending the raw Xcm works successfully
 		assert_ok!(pallet_xcm::Pallet::<R::RelayRuntime>::send(
 			RawOrigin::Root.into(),
-			Box::new(Parachain(1).into().into()),
+			Box::new(dest.into()),
 			Box::new(xcm::VersionedXcm::V3(xcm)),
 		));
 	});
@@ -1044,9 +1079,10 @@ pub fn test_pallet_xcm_send_capacity_without_transact<R: TestXCMRequirements>() 
 			},
 		]);
 		// Root sending the raw Xcm works successfully
+		let dest: MultiLocation = Parachain(1).into();
 		assert_ok!(pallet_xcm::Pallet::<R::RelayRuntime>::send(
 			RawOrigin::Root.into(),
-			Box::new(Parachain(1).into().into()),
+			Box::new(dest.into()),
 			Box::new(xcm::VersionedXcm::V3(xcm)),
 		));
 	});
@@ -1089,7 +1125,9 @@ where
 		let assets = vec![MultiAsset {
 			id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
 			/* Assets used for fee */
-			fun: Fungibility::Fungible(u128::from(R::UnitWeightCost::get() * 5) + 100 * MILLICENTS),
+			fun: Fungibility::Fungible(
+				u128::from(R::UnitWeightCost::get().ref_time() * 5) + 100 * MILLICENTS,
+			),
 		}]
 		.into();
 		let xcm = Xcm(vec![
@@ -1098,11 +1136,13 @@ where
 				fees: MultiAsset {
 					id: XCMAssetId::Concrete(para_native_token_multilocation::<R::ParaRuntime>(1)),
 					fun: Fungibility::Fungible(
-						u128::from(R::UnitWeightCost::get() * 5) + 100 * MILLICENTS,
+						u128::from(R::UnitWeightCost::get().ref_time() * 5) + 100 * MILLICENTS,
 					),
 				},
 				weight_limit: WeightLimit::Limited(
-					R::UnitWeightCost::get() * 5 + 1_000_000_000.into(),
+					R::UnitWeightCost::get()
+						.saturating_mul(5)
+						.saturating_add(Weight::from_ref_time(1_000_000_000u64)),
 				),
 			},
 			Instruction::Transact {
@@ -1120,10 +1160,11 @@ where
 				.into(),
 			},
 		]);
+		let dest: MultiLocation = Junction::Parachain(1).into();
 		// Root sending the raw Xcm works successfully
 		assert_ok!(pallet_xcm::Pallet::<R::RelayRuntime>::send(
 			RawOrigin::Root.into(),
-			Box::new(Parachain(1).into().into()),
+			Box::new(dest.into()),
 			Box::new(xcm::VersionedXcm::V3(xcm.clone())),
 		));
 		System::<R::RelayRuntime>::assert_last_event(
@@ -1140,7 +1181,7 @@ where
 		// We leave it here for now. As neither do we have to consider Relay root attack Parachain
 		assert_eq!(Balances::<R::ParaRuntime>::free_balance(&bob()), 2 * UNIT);
 		assert_eq!(pallet_balances::Pallet::<R::RelayRuntime>::free_balance(&bob()), 0);
-		let xcm_fee = u128::from(R::UnitWeightCost::get() * 5) + 100 * MILLICENTS;
+		let xcm_fee = u128::from(R::UnitWeightCost::get().ref_time() * 5) + 100 * MILLICENTS;
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&relay_account::<R::LocationToAccountId>()),
 			10 * UNIT - xcm_fee - 2 * UNIT

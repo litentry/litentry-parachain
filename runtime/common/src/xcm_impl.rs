@@ -65,7 +65,7 @@ impl<
 		// token transfers. We will see later if we change this.
 		match (first_asset.id, first_asset.fun) {
 			(xcmAssetId::Concrete(id), Fungibility::Fungible(_)) => {
-				let asset_type: AssetType = id.clone().into();
+				let asset_type: AssetType = id.into();
 				// Shortcut if we know the asset is not supported
 				// This involves the same db read per block, mitigating any attack based on
 				// non-supported assets
@@ -86,7 +86,7 @@ impl<
 
 					let required = MultiAsset {
 						fun: Fungibility::Fungible(amount),
-						id: xcmAssetId::Concrete(id.clone()),
+						id: xcmAssetId::Concrete(id),
 					};
 					let unused =
 						payment.checked_sub(required).map_err(|_| XcmError::TooExpensive)?;
@@ -100,7 +100,7 @@ impl<
 
 					// In short, we only refund on the asset the trader first succesfully was able
 					// to pay for an execution
-					let new_asset = match self.1.clone() {
+					let new_asset = match self.1 {
 						Some((prev_id, prev_amount, units_per_second)) =>
 							if prev_id == id {
 								Some((id, prev_amount.saturating_add(amount), units_per_second))
@@ -125,12 +125,12 @@ impl<
 	}
 
 	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
-		if let Some((id, prev_amount, units_per_second)) = self.1.clone() {
+		if let Some((id, prev_amount, units_per_second)) = self.1 {
 			let ref_time = weight.ref_time().min(self.0);
 			self.0 -= ref_time;
 			let amount =
 				units_per_second * (ref_time as u128) / (WEIGHT_REF_TIME_PER_SECOND as u128);
-			self.1 = Some((id.clone(), prev_amount.saturating_sub(amount), units_per_second));
+			self.1 = Some((id, prev_amount.saturating_sub(amount), units_per_second));
 			Some(MultiAsset { fun: Fungibility::Fungible(amount), id: xcmAssetId::Concrete(id) })
 		} else {
 			None
@@ -146,7 +146,7 @@ impl<
 	> Drop for FirstAssetTrader<AssetType, AssetIdInfoGetter, R>
 {
 	fn drop(&mut self) {
-		if let Some((id, amount, _)) = self.1.clone() {
+		if let Some((id, amount, _)) = self.1 {
 			R::take_revenue((id, amount).into());
 		}
 	}
@@ -188,7 +188,7 @@ pub trait Reserve {
 // Takes the chain part of a MultiAsset
 impl Reserve for MultiAsset {
 	fn reserve(&self) -> Option<MultiLocation> {
-		if let xcmAssetId::Concrete(location) = self.id.clone() {
+		if let xcmAssetId::Concrete(location) = self.id {
 			let first_interior = location.first_interior();
 			let parents = location.parent_count();
 			match (parents, first_interior) {
@@ -390,7 +390,7 @@ where
 		if let Some(currency_id) = <CurrencyIdMultiLocationConvert<R> as spConvert<
 			MultiLocation,
 			Option<CurrencyId<R>>,
-		>>::convert(multi.borrow().clone())
+		>>::convert(*multi.borrow())
 		{
 			if let Some(asset_id) =
 				<AssetManager<R> as AssetTypeGetter<AssetId, CurrencyId<R>>>::get_asset_id(

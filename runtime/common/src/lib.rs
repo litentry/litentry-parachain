@@ -336,4 +336,9 @@ where
 			r => Err(T::RuntimeOrigin::from(r)),
 		})
 	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
+		Err(())
+	}
 }

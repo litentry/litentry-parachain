@@ -181,5 +181,12 @@ pub mod pallet {
 				})
 			}
 		}
+
+		#[cfg(feature = "runtime-benchmarks")]
+		fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
+			let who = frame_benchmarking::account::<T::AccountId>("successful_origin", 0, 0);
+			GroupMembers::<T, I>::insert(&who, true);
+			Ok(frame_system::RawOrigin::Signed(who).into())
+		}
 	}
 }

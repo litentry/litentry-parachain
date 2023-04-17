@@ -23,7 +23,7 @@ use frame_support::{
 	pallet_prelude::ConstU32,
 	parameter_types,
 	traits::{Everything, Nothing},
-	weights::{IdentityFee, Weight},
+	weights::IdentityFee,
 	PalletId,
 };
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
@@ -32,7 +32,7 @@ use polkadot_parachain::primitives::Sibling;
 use xcm_builder::ConvertedConcreteId;
 // Litentry: The CheckAccount implementation is forced by the bug of FungiblesAdapter.
 // We should replace () regarding fake_pallet_id account after our PR passed.
-use core_primitives::AccountId;
+use core_primitives::{AccountId, Weight};
 use runtime_common::xcm_impl::{
 	AccountIdToMultiLocation, AssetIdMuliLocationConvert, CurrencyId,
 	CurrencyIdMultiLocationConvert, FirstAssetTrader, MultiNativeAsset, NewAnchoringSelfReserve,
@@ -289,6 +289,11 @@ parameter_types! {
 	pub const MaxAssetsForTransfer: usize = 3;
 }
 
+#[cfg(feature = "runtime-benchmarks")]
+parameter_types! {
+	pub ReachableDest: Option<MultiLocation> = Some(Parent.into());
+}
+
 impl pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	// We allow anyone to send any XCM to anywhere
@@ -321,6 +326,8 @@ impl pallet_xcm::Config for Runtime {
 	type SovereignAccountOf = LocationToAccountId;
 	type MaxLockers = ConstU32<8>;
 	type WeightInfo = pallet_xcm::TestWeightInfo;
+	#[cfg(feature = "runtime-benchmarks")]
+	type ReachableDest = ReachableDest;
 }
 
 impl cumulus_pallet_xcm::Config for Runtime {
