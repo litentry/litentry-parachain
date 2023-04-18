@@ -178,13 +178,18 @@ export async function sendTxsWithUtility(
     pallet: string,
     events: string[]
 ): Promise<string[] | Event[]> {
-    await context.api.tx.utility.batchAll(txs.map(({ tx }) => tx)).signAndSend(signer, async (result) => {
-        if (result.status.isInBlock) {
-            console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
-        } else if (result.status.isInvalid) {
-            console.log(`Transaction is ${result.status}`);
-        }
+    const isInBlockPromise = new Promise((resolve) => {
+        context.api.tx.utility.batchAll(txs.map(({ tx }) => tx)).signAndSend(signer, async (result) => {
+            if (result.status.isInBlock) {
+                console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
+                resolve(result.status);
+            } else if (result.status.isInvalid) {
+                console.log(`Transaction is ${result.status}`);
+            }
+        });
     });
+
+    await isInBlockPromise;
 
     const resp_events = (await listenEvent(context.api, pallet, events, txs.length, [
         u8aToHex(signer.addressRaw),
