@@ -147,6 +147,7 @@ runtime-benchmarks = [
   "pallet-drop3/runtime-benchmarks",
   "pallet-extrinsic-filter/runtime-benchmarks",
   "cumulus-pallet-xcmp-queue/runtime-benchmarks",
+  "pallet-group/runtime-benchmarks",
   "pallet-identity-management/runtime-benchmarks",
   "pallet-teerex/runtime-benchmarks",
   "pallet-sidechain/runtime-benchmarks",
