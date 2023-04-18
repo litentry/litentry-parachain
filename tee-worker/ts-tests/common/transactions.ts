@@ -7,6 +7,7 @@ import { EventRecord, Event } from '@polkadot/types/interfaces';
 import { HexString } from '@polkadot/util/types';
 import { u8aToHex } from '@polkadot/util';
 import { expect } from 'chai';
+import colors from 'colors';
 //transactions utils
 export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrinsic<ApiTypes>, signer: KeyringPair) {
     return new Promise<{ block: string; txHash: string }>(async (resolve, reject) => {
@@ -101,7 +102,9 @@ export async function listenEvent(
                 const s = e.event.section;
                 const m = e.event.method;
                 const d = e.event.data;
-                console.log(`Event[${i}]: ${s}.${m} ${d}`);
+                section === s
+                    ? console.log(colors.green(`Event[${i}]: ${s}.${m} ${d}`))
+                    : console.log(`Event[${i}]: ${s}.${m} ${d}`);
             });
 
             const filtered_events = records.filter(({ phase, event }) => {
