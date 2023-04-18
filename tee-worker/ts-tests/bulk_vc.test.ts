@@ -13,11 +13,11 @@ const assertion = <Assertion>{
     A1: 'A1',
     A2: ['A2'],
     A3: ['A3', 'A3', 'A3'],
-    A4: [10],
-    A7: [10],
+    A4: '10.001',
+    A7: '10.002',
     A8: [IndexingNetwork.Litentry],
-    A10: [10],
-    A11: [10],
+    A10: '10.003',
+    A11: '10.004',
 };
 
 //Explain how to use this test, which has two important parameters:
@@ -42,8 +42,8 @@ describeLitentry('multiple accounts test', 10, async (context) => {
     step('send test token to each account', async () => {
         const txs: any = [];
         for (let i = 0; i < substrateSigners.length; i++) {
-            //0.1 token
-            const tx = context.api.tx.balances.transfer(substrateSigners[i].address, '100000000000');
+            //1 token
+            const tx = context.api.tx.balances.transfer(substrateSigners[i].address, '1000000000000');
 
             txs.push(tx);
         }

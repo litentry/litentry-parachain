@@ -41,7 +41,6 @@ use sgx_verify::{
 use sgx_verify::{verify_dcap_quote, verify_ias_report, SgxReport};
 
 pub use crate::weights::WeightInfo;
-use teerex_primitives::SgxBuildMode;
 
 // Disambiguate associated types
 pub type AccountId<T> = <T as frame_system::Config>::AccountId;
@@ -77,13 +76,16 @@ pub mod pallet {
 		type Currency: Currency<<Self as frame_system::Config>::AccountId>;
 		type MomentsPerDay: Get<Self::Moment>;
 		type WeightInfo: WeightInfo;
-		/// origin to manage enclave and parameters
-		type EnclaveAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		/// The origin who can set the admin account
+		type SetAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
+		AdminChanged {
+			old_admin: Option<T::AccountId>,
+		},
 		AddedEnclave(T::AccountId, Vec<u8>),
 		RemovedEnclave(T::AccountId),
 		Forwarded(ShardIdentifier),
@@ -91,8 +93,8 @@ pub mod pallet {
 		UnshieldedFunds(T::AccountId),
 		ProcessedParentchainBlock(T::AccountId, H256, H256, T::BlockNumber),
 		SetHeartbeatTimeout(u64),
-		UpdatedScheduledEnclave(u32, MrEnclave),
-		RemovedScheduledEnclave(u32),
+		UpdatedScheduledEnclave(SidechainBlockNumber, MrEnclave),
+		RemovedScheduledEnclave(SidechainBlockNumber),
 		/// An enclave with [mr_enclave] has published some [hash] with some metadata [data].
 		PublishedHash {
 			mr_enclave: MrEnclave,
@@ -100,6 +102,10 @@ pub mod pallet {
 			data: Vec<u8>,
 		},
 	}
+
+	#[pallet::storage]
+	#[pallet::getter(fn admin)]
+	pub type Admin<T: Config> = StorageValue<_, T::AccountId, OptionQuery>;
 
 	// Watch out: we start indexing with 1 instead of zero in order to
 	// avoid ambiguity between Null and 0.
@@ -140,7 +146,7 @@ pub mod pallet {
 	}
 
 	// keep track of a list of scheduled/allowed enchalves, mainly used for enclave updates,
-	// can only be modified by EnclaveAdminOrigin
+	// can only be modified by AdminOrigin
 	// sidechain_block_number -> expected MrEnclave
 	//
 	// about the first time enclave registration:
@@ -153,7 +159,8 @@ pub mod pallet {
 	// so we need an "enclave whitelist" anyway
 	#[pallet::storage]
 	#[pallet::getter(fn scheduled_enclave)]
-	pub type ScheduledEnclave<T: Config> = StorageMap<_, Blake2_128Concat, u32, MrEnclave>;
+	pub type ScheduledEnclave<T: Config> =
+		StorageMap<_, Blake2_128Concat, SidechainBlockNumber, MrEnclave>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn heartbeat_timeout)]
@@ -161,15 +168,25 @@ pub mod pallet {
 		StorageValue<_, T::Moment, ValueQuery, HeartbeatTimeoutDefault<T>>;
 
 	#[pallet::genesis_config]
-	#[cfg_attr(feature = "std", derive(Default))]
-	pub struct GenesisConfig {
+	pub struct GenesisConfig<T: Config> {
 		pub allow_sgx_debug_mode: bool,
+		pub admin: Option<T::AccountId>,
+	}
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self { allow_sgx_debug_mode: false, admin: None }
+		}
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig {
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
 			AllowSGXDebugMode::<T>::put(self.allow_sgx_debug_mode);
+			if let Some(ref admin) = self.admin {
+				Admin::<T>::put(admin);
+			}
 		}
 	}
 
@@ -378,12 +395,13 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(6)]
-		#[pallet::weight((1000, DispatchClass::Normal, Pays::No))]
+		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
 		pub fn set_heartbeat_timeout(
 			origin: OriginFor<T>,
 			timeout: u64,
 		) -> DispatchResultWithPostInfo {
-			T::EnclaveAdminOrigin::ensure_origin(origin)?;
+			let sender = ensure_signed(origin)?;
+			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
 			<HeartbeatTimeout<T>>::put(T::Moment::saturated_from(timeout));
 			Self::deposit_event(Event::SetHeartbeatTimeout(timeout));
 			Ok(().into())
@@ -447,13 +465,14 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(8)]
-		#[pallet::weight((1000, DispatchClass::Normal, Pays::No))]
+		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
 		pub fn update_scheduled_enclave(
 			origin: OriginFor<T>,
-			sidechain_block_number: u32,
+			sidechain_block_number: SidechainBlockNumber,
 			mr_enclave: MrEnclave,
 		) -> DispatchResultWithPostInfo {
-			T::EnclaveAdminOrigin::ensure_origin(origin)?;
+			let sender = ensure_signed(origin)?;
+			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
 			ScheduledEnclave::<T>::insert(sidechain_block_number, mr_enclave);
 			Self::deposit_event(Event::UpdatedScheduledEnclave(sidechain_block_number, mr_enclave));
 			Ok(().into())
@@ -477,17 +496,17 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(10)]
-		#[pallet::weight((1000, DispatchClass::Normal, Pays::No))]
+		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
 		pub fn remove_scheduled_enclave(
 			origin: OriginFor<T>,
-			sidechain_block_number: u32,
+			sidechain_block_number: SidechainBlockNumber,
 		) -> DispatchResultWithPostInfo {
-			T::EnclaveAdminOrigin::ensure_origin(origin)?;
+			let sender = ensure_signed(origin)?;
+			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
 			ensure!(
 				ScheduledEnclave::<T>::contains_key(sidechain_block_number),
 				Error::<T>::ScheduledEnclaveNotExist
 			);
-			// remove
 			ScheduledEnclave::<T>::remove(sidechain_block_number);
 			Self::deposit_event(Event::RemovedScheduledEnclave(sidechain_block_number));
 			Ok(().into())
@@ -542,10 +561,24 @@ pub mod pallet {
 
 			Ok(().into())
 		}
+
+		/// Change the admin account
+		/// similar to sudo.set_key, the old account will be supplied in event
+		#[pallet::call_index(13)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
+		pub fn set_admin(origin: OriginFor<T>, new: T::AccountId) -> DispatchResultWithPostInfo {
+			T::SetAdminOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::AdminChanged { old_admin: Self::admin() });
+			<Admin<T>>::put(new);
+			// Do not pay a fee
+			Ok(Pays::No.into())
+		}
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
+		/// This operation needs the admin permission
+		RequireAdmin,
 		/// Failed to decode enclave signer.
 		EnclaveSignerDecodeError,
 		/// Sender does not match attested enclave in report.

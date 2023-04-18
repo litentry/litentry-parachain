@@ -141,7 +141,7 @@ impl VerifiedCredentialsIsHodlerIn {
 		if self.token_address.is_empty() {
 			format!("{{VerifiedCredentialsIsHodler(addresses:{}, fromDate:\"{}\", network:{}, minimumBalance:{}){{isHodler,address}}}}", addresses_str, self.from_date, network, self.min_balance)
 		} else {
-			format!("{{VerifiedCredentialsIsHodler(addresses:{}, fromDate:\"{}\", network:{}, tokenAddress:\"{}\",minimumBalance:{:?}){{isHodler,address}}}}", addresses_str, self.from_date, network, self.token_address, self.min_balance)
+			format!("{{VerifiedCredentialsIsHodler(addresses:{}, fromDate:\"{}\", network:{}, tokenAddress:\"{}\",minimumBalance:{}){{isHodler,address}}}}", addresses_str, self.from_date, network, self.token_address, self.min_balance)
 		}
 	}
 }

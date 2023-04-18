@@ -95,8 +95,8 @@ def main(processes, config_path, parachain_type):
 
                 if "I am initialized." == buffer.getvalue().decode('iso-8859-1'):
                     break
-                if counter >= 60:
-                    print("Worker initialization timeout (300s). Exit")
+                if counter >= 600:
+                    print("Worker initialization timeout (3000s). Exit")
                     return 0
                 counter = counter + 1
 

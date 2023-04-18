@@ -1,6 +1,6 @@
 use super::*;
 
-use crate::{pallet_imt::migrations, Runtime};
+use crate::Runtime;
 use frame_support::{traits::OnRuntimeUpgrade, weights::Weight};
 
 // This is just an example of how to write a custom migration
@@ -9,6 +9,6 @@ use frame_support::{traits::OnRuntimeUpgrade, weights::Weight};
 pub struct Upgrade;
 impl OnRuntimeUpgrade for Upgrade {
 	fn on_runtime_upgrade() -> Weight {
-		migrations::migrate_to_v1::<Runtime, IdentityManagement>()
+		pallet_imt::migrations::migrate_to_v1::<Runtime, IdentityManagement>()
 	}
 }

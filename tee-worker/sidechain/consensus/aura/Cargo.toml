@@ -38,6 +38,7 @@ its-consensus-slots = { path = "../slots", default-features = false }
 its-primitives = { path = "../../primitives", default-features = false }
 its-state = { path = "../../state", default-features = false }
 its-validateer-fetch = { path = "../../validateer-fetch", default-features = false }
+lc-scheduled-enclave = { path = "../../../litentry/core/scheduled-enclave", default-features = false }
 
 [dev-dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
@@ -67,6 +68,7 @@ sgx = [
     "its-consensus-slots/sgx",
     "its-state/sgx",
     "its-block-verification/sgx",
+    "lc-scheduled-enclave/sgx",
 ]
 std = [
     #crates.io
@@ -96,4 +98,5 @@ std = [
     "its-state/std",
     "its-validateer-fetch/std",
     "its-primitives/std",
+    "lc-scheduled-enclave/std",
 ]

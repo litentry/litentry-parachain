@@ -61,7 +61,8 @@ impl TrustedCallSigned {
 		)
 		.encode();
 		let encoded_shard = shard.encode();
-		let request = SetUserShieldingKeyRequest { encoded_shard, who, encoded_callback }.into();
+		let request =
+			SetUserShieldingKeyRequest { encoded_shard, who, encoded_callback, hash }.into();
 		let sender = StfRequestSender::new();
 		sender
 			.send_stf_request(request)
@@ -193,6 +194,7 @@ impl TrustedCallSigned {
 				validation_data: web2,
 				bn,
 				encoded_callback,
+				hash,
 			}
 			.into(),
 			ValidationData::Web3(web3) => Web3IdentityVerificationRequest {
@@ -203,6 +205,7 @@ impl TrustedCallSigned {
 				validation_data: web3,
 				bn,
 				encoded_callback,
+				hash,
 			}
 			.into(),
 		};
@@ -258,7 +261,7 @@ impl TrustedCallSigned {
 		bn: ParentchainBlockNumber,
 		hash: H256,
 	) -> StfResult<()> {
-		debug!("build assertion, who {:?}, assertion {:?}", account_id_to_string(&who), assertion);
+		debug!("request vc, who {:?}, assertion {:?}", account_id_to_string(&who), assertion);
 		ensure_enclave_signer_account(&enclave_account)?;
 		let id_graph = ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
 		let mut vec_identity: BoundedVec<Identity, MaxIdentityLength> = vec![].try_into().unwrap();

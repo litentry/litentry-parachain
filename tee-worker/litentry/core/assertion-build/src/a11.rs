@@ -36,8 +36,10 @@ use litentry_primitives::{
 use log::*;
 use std::{string::ToString, vec, vec::Vec};
 
-const VC_SUBJECT_DESCRIPTION: &str = "The user held ETH before a specific date/year";
-const VC_SUBJECT_TYPE: &str = "ETH Holder";
+const VC_A11_SUBJECT_DESCRIPTION: &str =
+	"Since when has the user been consistently holding a min amount {x} of ETH token";
+const VC_A11_SUBJECT_TYPE: &str = "ETH Holding Assertion";
+const VC_A11_SUBJECT_TAG: [&str; 1] = ["Ethereum"];
 
 pub fn build(
 	identities: Vec<Identity>,
@@ -105,7 +107,11 @@ pub fn build(
 
 	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
+			credential_unsigned.add_subject_info(
+				VC_A11_SUBJECT_DESCRIPTION,
+				VC_A11_SUBJECT_TYPE,
+				VC_A11_SUBJECT_TAG.to_vec(),
+			);
 			credential_unsigned.update_holder(
 				is_hold,
 				&q_min_balance,

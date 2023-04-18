@@ -34,8 +34,10 @@ use litentry_primitives::{
 use log::*;
 use std::{collections::HashSet, string::String, vec, vec::Vec};
 
-const VC_SUBJECT_DESCRIPTION: &str = "User has over X number of transactions";
-const VC_SUBJECT_TYPE: &str = "Total EVM and Substrate Transactions";
+const VC_A8_SUBJECT_DESCRIPTION: &str = "The total amount of transaction the user has ever made in each of the available  networks (including invalid transactions)";
+const VC_A8_SUBJECT_TYPE: &str = "EVM/Substrate Transaction Count on Networks";
+const VC_A8_SUBJECT_TAG: [&str; 6] =
+	["Litentry", "Litmus", "Polkadot", "Kusama", "Ethereum", "Khala"];
 
 pub const INDEXING_NETWORKS: [IndexingNetwork; 6] = [
 	IndexingNetwork::Litentry,
@@ -111,7 +113,11 @@ pub fn build(
 	let (min, max) = get_total_tx_ranges(total_txs);
 	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
+			credential_unsigned.add_subject_info(
+				VC_A8_SUBJECT_DESCRIPTION,
+				VC_A8_SUBJECT_TYPE,
+				VC_A8_SUBJECT_TAG.to_vec(),
+			);
 			credential_unsigned.add_assertion_a8(target_networks, min, max);
 
 			Ok(credential_unsigned)
@@ -155,32 +161,49 @@ fn if_match_network_collect_address(
 	}
 }
 
+/*
+total transactions count range:
+
+≥ 10000
+≥ 1000
+≥ 100
+≥ 10
+≥ 1
+
+0 		<= X < 1
+1 		<= X < 10
+10 		<= X < 100
+100 	<= X < 1000
+1000 	<= X < 10000
+10000 	<= X < u64::Max
+
+*/
 fn get_total_tx_ranges(total_txs: u64) -> (u64, u64) {
 	let min: u64;
 	let max: u64;
 
 	match total_txs {
-		0 | 1 => {
+		0 => {
 			min = 0;
 			max = 1;
 		},
-		2..=10 => {
+		1..=9 => {
 			min = 1;
 			max = 10;
 		},
-		11..=100 => {
+		10..=99 => {
 			min = 10;
 			max = 100;
 		},
-		101..=1000 => {
+		100..=999 => {
 			min = 100;
 			max = 1000
 		},
-		1001..=10000 => {
+		1000..=9999 => {
 			min = 1000;
 			max = 10000;
 		},
-		10001..=u64::MAX => {
+		10000..=u64::MAX => {
 			min = 10000;
 			max = u64::MAX;
 		},
@@ -268,5 +291,20 @@ mod tests {
 		verified_addresses
 			.iter()
 			.for_each(|address| assert!(addresses.contains(&address)));
+	}
+
+	#[test]
+	fn get_total_tx_ranges_works() {
+		let (min, max) = get_total_tx_ranges(0);
+		assert_eq!(min, 0);
+		assert_eq!(max, 1);
+
+		let (min, max) = get_total_tx_ranges(5);
+		assert_eq!(min, 1);
+		assert_eq!(max, 10);
+
+		let (min, max) = get_total_tx_ranges(10);
+		assert_eq!(min, 10);
+		assert_eq!(max, 100);
 	}
 }

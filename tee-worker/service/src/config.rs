@@ -29,7 +29,7 @@ static DEFAULT_METRICS_PORT: &str = "8787";
 static DEFAULT_UNTRUSTED_HTTP_PORT: &str = "4545";
 // running mode for litentry: dev | staging | prod | mock
 static DEFAULT_RUNNING_MODE: &str = "dev";
-static DEFAULT_MOCK_SERVER_PORT: &str = "9527";
+static DEFAULT_MOCK_SERVER_PORT: &str = "19527";
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Config {

@@ -33,8 +33,10 @@ use litentry_primitives::{
 use log::*;
 use std::vec::Vec;
 
-const VC_SUBJECT_DESCRIPTION: &str = "User has commented on Discord channel with ID-Hubber role";
-const VC_SUBJECT_TYPE: &str = "ID-Hubber";
+const VC_A3_SUBJECT_DESCRIPTION: &str =
+	"The user has commented in a specific Discord channel with a specific role";
+const VC_A3_SUBJECT_TYPE: &str = "Discord Member Verification";
+const VC_A3_SUBJECT_TAG: [&str; 1] = ["Discord"];
 
 pub fn build(
 	identities: Vec<Identity>,
@@ -94,7 +96,11 @@ pub fn build(
 
 	match Credential::new_default(who, &shard.clone(), bn) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
+			credential_unsigned.add_subject_info(
+				VC_A3_SUBJECT_DESCRIPTION,
+				VC_A3_SUBJECT_TYPE,
+				VC_A3_SUBJECT_TAG.to_vec(),
+			);
 			credential_unsigned.add_assertion_a3(
 				has_commented,
 				guild_id_s,
@@ -129,7 +135,7 @@ mod tests {
 		G_DATA_PROVIDERS
 			.write()
 			.unwrap()
-			.set_discord_litentry_url("http://localhost:9527".to_string());
+			.set_discord_litentry_url("http://localhost:19527".to_string());
 		let guild_id_u: u64 = 919848390156767232;
 		let channel_id_u: u64 = 919848392035794945;
 		let role_id_u: u64 = 1034083718425493544;
