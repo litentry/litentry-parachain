@@ -98,7 +98,7 @@ fn setup<T: Config>(should_start: bool) -> (T::AccountId, T::PoolId, Vec<u8>) {
 	let caller = create_default_caller::<T>();
 	let admin: T::AccountId = whitelisted_caller();
 	let origin = T::SetAdminOrigin::try_successful_origin()
-		.expect("InitiateOrigin has no successful origin required for the benchmark");
+		.expect("SetAdminOrigin has no successful origin required for the benchmark");
 	assert!(Drop3::<T>::set_admin(origin, admin.clone()).is_ok());
 	let (id, name) = create_default_proposal::<T>(caller.clone());
 	assert!(Drop3::<T>::approve_reward_pool(RawOrigin::Signed(admin.clone()).into(), id).is_ok());
