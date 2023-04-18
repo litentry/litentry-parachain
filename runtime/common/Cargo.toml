@@ -75,6 +75,7 @@ std = [
   "pallet-authorship/std",
   "pallet-balances/std",
   "pallet-collective/std",
+  "pallet-group/std",
   "pallet-multisig/std",
   "pallet-membership/std",
   "pallet-transaction-payment/std",
@@ -94,6 +95,7 @@ std = [
 ]
 
 runtime-benchmarks = [
+  "pallet-group/runtime-benchmarks",
   "sp-runtime/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
   "frame-support/runtime-benchmarks",
