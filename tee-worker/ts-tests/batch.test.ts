@@ -44,7 +44,11 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             ['UserShieldingKeySet']
         );
         const [alice] = await handleIdentityEvents(context, aesKey, resp_events, 'UserShieldingKeySet');
-        assert.equal(alice, u8aToHex(context.substrateWallet.alice.addressRaw), 'alice shielding key should be set');
+        assert.equal(
+            alice.who,
+            u8aToHex(context.substrateWallet.alice.addressRaw),
+            'alice shielding key should be set'
+        );
     });
 
     step('batch test: create identities', async function () {

@@ -56,7 +56,11 @@ describeLitentry('VC test', 0, async (context) => {
             ['UserShieldingKeySet']
         );
         const [alice] = await handleIdentityEvents(context, aesKey, resp_events, 'UserShieldingKeySet');
-        assert.equal(alice, u8aToHex(context.substrateWallet.alice.addressRaw), 'alice shielding key should be set');
+        assert.equal(
+            alice.who,
+            u8aToHex(context.substrateWallet.alice.addressRaw),
+            'alice shielding key should be set'
+        );
     });
 
     step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
