@@ -631,7 +631,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'Failed'
         );
 
-        await checkErrorDetail(charile_resp_remove_events_data, 'IdentityNotExist', false);
+        await checkErrorDetail(charile_resp_remove_events_data, 'InvalidUserShieldingKey', false);
     });
 
     step('set error user shielding key', async function () {
