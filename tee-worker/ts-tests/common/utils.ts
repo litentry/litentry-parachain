@@ -31,7 +31,7 @@ import { Event, StorageEntryMetadataV14, StorageHasherV14 } from '@polkadot/type
 import { after, before, describe } from 'mocha';
 import { ethers } from 'ethers';
 import { assert, expect } from 'chai';
-import Ajv from 'ajv';
+import Ajv, { stringify } from 'ajv';
 import * as ed from '@noble/ed25519';
 import { blake2128Concat, getSubstrateSigner, identity, twox64Concat } from './helpers';
 import { getMetadata, sendRequest } from './call';
@@ -480,11 +480,11 @@ export async function generateWeb3Wallets(count: number): Promise<Web3Wallets[]>
 export function createIdentityEvent(
     api: ApiPromise,
     who: HexString,
-    identityString: HexString,
+    identityString?: HexString,
     idGraphString?: HexString,
     challengeCode?: HexString
 ): IdentityGenericEvent {
-    let identity = api.createType('LitentryIdentity', identityString).toJSON();
+    let identity = identityString ? api.createType('LitentryIdentity', identityString).toJSON() : undefined;
     let idGraph = idGraphString
         ? api.createType('Vec<(LitentryIdentity, IdentityContext)>', idGraphString).toJSON()
         : undefined;
@@ -507,7 +507,14 @@ export async function handleIdentityEvents(
     for (let index = 0; index < events.length; index++) {
         switch (type) {
             case 'UserShieldingKeySet':
-                results.push((events[index].data as any).account.toHex());
+                results.push(
+                    createIdentityEvent(
+                        context.api,
+                        events[index].data.account.toHex(),
+                        undefined,
+                        decryptWithAES(aesKey, events[index].data.idGraph, 'hex')
+                    )
+                );
                 break;
             case 'IdentityCreated':
                 results.push(
@@ -765,6 +772,20 @@ function isEqual(obj1: LitentryIdentity, obj2: LitentryIdentity) {
     return JSON.stringify(obj1) === JSON.stringify(obj2);
 }
 
+export async function assertInitialIDGraphCreated(api: ApiPromise, signer: KeyringPair, event: IdentityGenericEvent) {
+    assert.equal(event.who, u8aToHex(signer.addressRaw));
+
+    assert.equal(event.idGraph.length, 1);
+    const expected_identity = api.createType('LitentryIdentity', await buildIdentityHelper(u8aToHex(signer.addressRaw), 'LitentryRococo', 'Substrate')) as LitentryIdentity;
+    assert.isTrue(isEqual(event.idGraph[0][0], expected_identity));
+
+    // const idgraph = JSON.stringify(event.idGraph[0][0]);
+
+    assert.equal(event.idGraph[0][1].linking_request_block, 0);
+    assert.equal(event.idGraph[0][1].verification_request_block, 0);
+    assert.isTrue(event.idGraph[0][1].is_verified);
+}
+
 export function assertIdentityVerified(signer: KeyringPair, eventDatas: IdentityGenericEvent[]) {
     let event_identities: LitentryIdentity[] = [];
     let idgraph_identities: LitentryIdentity[] = [];
@@ -775,13 +796,11 @@ export function assertIdentityVerified(signer: KeyringPair, eventDatas: Identity
         idgraph_identities.push(eventDatas[eventDatas.length - 1].idGraph[i][0]);
     }
     //idgraph_identities[idgraph_identities.length - 1] is prime identity,don't need to compare
-    const isEqual = isArrayEqual(event_identities, idgraph_identities.slice(0, idgraph_identities.length - 1));
-
-    assert.isTrue(isEqual, 'event identities should be equal to idgraph identities');
+    assert.isTrue(isArrayEqual(event_identities, idgraph_identities.slice(0, idgraph_identities.length - 1)), 'event identities should be equal to idgraph identities');
 
     const data = eventDatas[eventDatas.length - 1];
     for (let i = 0; i < eventDatas[eventDatas.length - 1].idGraph.length; i++) {
-        if (JSON.stringify(data.idGraph[i][0]) == JSON.stringify(data.identity)) {
+        if (isEqual(data.idGraph[i][0], data.identity)) {
             assert.isTrue(data.idGraph[i][1].is_verified, 'identity should be verified');
         }
     }
