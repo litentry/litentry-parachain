@@ -23,6 +23,7 @@ import {
 import { HexString } from '@polkadot/util/types';
 import { multiAccountTxSender, sendTxsWithUtility } from './common/transactions';
 import { assertIdentityVerified, assertIdentityCreated, assertIdentityRemoved } from './common/utils';
+import { ethers } from 'ethers';
 const substrateExtensionIdentity = <LitentryIdentity>{
     Substrate: <SubstrateIdentity>{
         address: '0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48', //Bob
@@ -34,6 +35,8 @@ describeLitentry('Test Identity', 0, (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     const errorAseKey = '0xError';
     const errorCiphertext = '0xError';
+    //random wrong msg
+    const wrong_msg = '0x693d9131808e7a8574c7ea5eb7813bdf356223263e61fa8fe2ee8e434508bc75';
     var signature_substrate;
     let alice_identities: LitentryIdentity[] = [];
     let bob_identities: LitentryIdentity[] = [];
@@ -268,6 +271,65 @@ describeLitentry('Test Identity', 0, (context) => {
         );
         assert.equal(resp_id_graph.is_verified, false, 'is_verified should be false before verifyIdentity');
     });
+
+    step('verify invalid identities', async function () {
+        const twitter_identity = alice_identities[0];
+        const ethereum_validation = alice_validations[1];
+
+        //verify twitter identity with ethereum validation
+        let alice_txs = await buildIdentityTxs(
+            context,
+            context.substrateWallet.alice,
+            [twitter_identity],
+            'verifyIdentity',
+            [ethereum_validation]
+        );
+        let alice_resp_events = await sendTxsWithUtility(
+            context,
+            context.substrateWallet.alice,
+            alice_txs,
+            'identityManagement',
+            ['VerifyIdentityFailed']
+        );
+        const verified_event_datas = await handleIdentityEvents(context, aesKey, alice_resp_events, 'Failed');
+        await checkErrorDetail(verified_event_datas, 'InvalidIdentity', false);
+    });
+    step('verify wrong signature', async function () {
+        const ethereum_identity = alice_identities[1];
+
+        //use wrong signature
+        const signature_ethereum = (await context.ethersWallet.alice!.signMessage(
+            ethers.utils.arrayify(wrong_msg)
+        )) as HexString;
+
+        const ethereumValidationData: LitentryValidationData = {
+            Web3Validation: {
+                Evm: {
+                    message: wrong_msg as HexString,
+                    signature: {
+                        Ethereum: signature_ethereum as HexString,
+                    },
+                },
+            },
+        };
+        let alice_txs = await buildIdentityTxs(
+            context,
+            context.substrateWallet.alice,
+            [ethereum_identity],
+            'verifyIdentity',
+            [ethereumValidationData]
+        );
+        let alice_resp_events = await sendTxsWithUtility(
+            context,
+            context.substrateWallet.alice,
+            alice_txs,
+            'identityManagement',
+            ['VerifyIdentityFailed']
+        );
+        const verified_event_datas = await handleIdentityEvents(context, aesKey, alice_resp_events, 'Failed');
+
+        await checkErrorDetail(verified_event_datas, 'VerifyEvmSignatureFailed', false);
+    });
     step('verify identities', async function () {
         //Alice verify all identities
         let alice_txs = await buildIdentityTxs(
@@ -312,6 +374,7 @@ describeLitentry('Test Identity', 0, (context) => {
         //Bob
         assertIdentityVerified(context.substrateWallet.bob, [substrate_extension_identity_verified]);
     });
+
     step('check IDGraph after verifyIdentity', async function () {
         const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
         const identity_hex = context.api.createType('LitentryIdentity', twitter_identity).toHex();
@@ -330,6 +393,7 @@ describeLitentry('Test Identity', 0, (context) => {
         );
         assert.equal(resp_id_graph.is_verified, true, 'is_verified should be true after verifyIdentity');
     });
+
     step('verify error identities', async function () {
         // verify same identities(alice) to one account
         let alice_txs = await buildIdentityTxs(
@@ -567,7 +631,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'Failed'
         );
 
-        await checkErrorDetail(charile_resp_remove_events_data, 'IdentityNotExist', false);
+        await checkErrorDetail(charile_resp_remove_events_data, 'InvalidUserShieldingKey', false);
     });
 
     step('set error user shielding key', async function () {
