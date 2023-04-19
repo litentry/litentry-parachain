@@ -121,15 +121,14 @@ export function decryptWithAES(key: HexString, aesOutput: AESOutput, type: strin
         const ciphertext = aesOutput.ciphertext ? aesOutput.ciphertext : hexToU8a('0x');
         console.log('ciphertext: ', u8aToHex(ciphertext));
 
-        const initialization_vector = aesOutput.nonce ? aesOutput.nonce : hexToU8a('0x');
+        const nonce = aesOutput.nonce ? aesOutput.nonce : hexToU8a('0x');
         const aad = aesOutput.aad ? aesOutput.aad : hexToU8a('0x');
 
         // notice!!! extract author_tag from ciphertext
         // maybe this code only works with rust aes encryption
-
         const authorTag = ciphertext.subarray(ciphertext.length - tagSize);
 
-        const decipher = crypto.createDecipheriv('aes-256-gcm', secretKey, initialization_vector);
+        const decipher = crypto.createDecipheriv('aes-256-gcm', secretKey, nonce);
         decipher.setAAD(aad);
         decipher.setAuthTag(authorTag);
 
