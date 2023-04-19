@@ -37,9 +37,6 @@ use frame_support::{
 use frame_system::EnsureSignedBy;
 use hex_literal::hex;
 
-#[cfg(feature = "runtime-benchmarks")]
-use frame_system::EnsureSigned;
-#[cfg(not(feature = "runtime-benchmarks"))]
 use runtime_common::EnsureEnclaveSigner;
 // for TEE
 pub use pallet_balances::Call as BalancesCall;
@@ -898,10 +895,7 @@ impl pallet_teeracle::Config for Runtime {
 impl pallet_identity_management::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = weights::pallet_identity_management::WeightInfo<Runtime>;
-	#[cfg(not(feature = "runtime-benchmarks"))]
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
-	#[cfg(feature = "runtime-benchmarks")]
-	type TEECallOrigin = EnsureSigned<AccountId>;
 	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
 	type ExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
 }
@@ -922,10 +916,7 @@ impl pallet_identity_management_mock::Config for Runtime {
 impl pallet_vc_management::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = weights::pallet_vc_management::WeightInfo<Runtime>;
-	#[cfg(not(feature = "runtime-benchmarks"))]
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
-	#[cfg(feature = "runtime-benchmarks")]
-	type TEECallOrigin = EnsureSigned<AccountId>;
 	type SetAdminOrigin = EnsureRootOrHalfCouncil;
 	type ExtrinsicWhitelistOrigin = VCMPExtrinsicWhitelist;
 }

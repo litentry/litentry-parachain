@@ -82,6 +82,7 @@ std = [
   "pallet-authorship/std",
   "pallet-balances/std",
   "pallet-collective/std",
+  "pallet-group/std",
   "pallet-multisig/std",
   "pallet-membership/std",
   "pallet-timestamp/std",
@@ -103,7 +104,8 @@ std = [
 ]
 
 runtime-benchmarks = [
-  "pallet-teerex/skip-ias-check",
+  "pallet-group/runtime-benchmarks",
+  "pallet-teerex/runtime-benchmarks",
   "sp-runtime/runtime-benchmarks",
   "teerex-primitives",
   "test-utils",
