@@ -776,7 +776,10 @@ export async function assertInitialIDGraphCreated(api: ApiPromise, signer: Keyri
     assert.equal(event.who, u8aToHex(signer.addressRaw));
 
     assert.equal(event.idGraph.length, 1);
-    const expected_identity = api.createType('LitentryIdentity', await buildIdentityHelper(u8aToHex(signer.addressRaw), 'LitentryRococo', 'Substrate')) as LitentryIdentity;
+    const expected_identity = api.createType(
+        'LitentryIdentity',
+        await buildIdentityHelper(u8aToHex(signer.addressRaw), 'LitentryRococo', 'Substrate')
+    ) as LitentryIdentity;
     assert.isTrue(isEqual(event.idGraph[0][0], expected_identity));
 
     // const idgraph = JSON.stringify(event.idGraph[0][0]);
@@ -796,7 +799,10 @@ export function assertIdentityVerified(signer: KeyringPair, eventDatas: Identity
         idgraph_identities.push(eventDatas[eventDatas.length - 1].idGraph[i][0]);
     }
     //idgraph_identities[idgraph_identities.length - 1] is prime identity,don't need to compare
-    assert.isTrue(isArrayEqual(event_identities, idgraph_identities.slice(0, idgraph_identities.length - 1)), 'event identities should be equal to idgraph identities');
+    assert.isTrue(
+        isArrayEqual(event_identities, idgraph_identities.slice(0, idgraph_identities.length - 1)),
+        'event identities should be equal to idgraph identities'
+    );
 
     const data = eventDatas[eventDatas.length - 1];
     for (let i = 0; i < eventDatas[eventDatas.length - 1].idGraph.length; i++) {

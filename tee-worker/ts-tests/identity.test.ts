@@ -62,7 +62,7 @@ describeLitentry('Test Identity', 0, (context) => {
 
         assert.equal(resp_challengecode, '0x', 'challengecode should be empty before create');
     });
-    
+
     step('Invalid user shielding key', async function () {
         let identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Ethereum', 'Evm');
         let txs = await buildIdentityTxs(context, context.substrateWallet.alice, [identity], 'createIdentity');
@@ -110,7 +110,7 @@ describeLitentry('Test Identity', 0, (context) => {
 
     step('check idgraph from sidechain storage before create', async function () {
         // the main address should be already inside the IDGraph
-        const main_identity =  await buildIdentityHelper(
+        const main_identity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.alice.addressRaw),
             'LitentryRococo',
             'Substrate'
