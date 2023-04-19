@@ -245,6 +245,10 @@ mrsigner:
 .PHONY: identity
 identity: mrenclave mrsigner
 
+.PHONY: release-pkg
+release-pkg:
+	@./scripts/litentry/release/generate_release_pkg.sh
+
 .PHONY: help
 help:
 	@echo "Available targets"
