@@ -1,0 +1,12 @@
+{
+    "twitter_official_url": "https://api.twitter.com",
+    "twitter_litentry_url": "",
+    "twitter_auth_token_v1_1": "abcdefghijklmnopqrstuvwxyz",
+    "twitter_auth_token_v2": "abcdefghijklmnopqrstuvwxyz",
+    "discord_official_url": "https://discordapp.com",
+    "discord_litentry_url": "",
+    "discord_auth_token": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    "graphql_url": "https://graph.tdf-labs.io/",
+    "graphql_auth_key": "88888888-4444-4444-4444-1234567890ab",
+    "credential_endpoint": ""
+}

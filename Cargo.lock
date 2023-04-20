@@ -6571,6 +6571,8 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "teerex-primitives",
+ "test-utils",
 ]
 
 [[package]]
@@ -7278,6 +7280,7 @@ dependencies = [
  "log",
  "pallet-balances",
  "pallet-group",
+ "pallet-teerex",
  "pallet-timestamp",
  "parity-scale-codec 3.4.0",
  "scale-info",
@@ -7286,6 +7289,8 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "teerex-primitives",
+ "test-utils",
 ]
 
 [[package]]
@@ -10024,6 +10029,7 @@ dependencies = [
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-core",
  "cumulus-primitives-parachain-inherent",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
@@ -10039,6 +10045,7 @@ dependencies = [
  "pallet-membership",
  "pallet-multisig",
  "pallet-teerex",
+ "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-treasury",
  "pallet-vesting",
@@ -10054,6 +10061,8 @@ dependencies = [
  "sp-runtime",
  "sp-state-machine",
  "sp-std",
+ "teerex-primitives",
+ "test-utils",
  "xcm",
  "xcm-builder",
  "xcm-executor",
