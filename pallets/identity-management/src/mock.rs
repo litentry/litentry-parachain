@@ -76,11 +76,6 @@ where
 		}
 		Ok(frame_system::RawOrigin::Signed(signer).into())
 	}
-
-	#[cfg(feature = "runtime-benchmarks")]
-	fn try_successful_origin() -> Result<SystemOrigin, ()> {
-		todo!()
-	}
 }
 
 // Configure a mock runtime to test the pallet.

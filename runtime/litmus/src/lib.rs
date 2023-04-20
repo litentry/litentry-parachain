@@ -347,8 +347,6 @@ impl pallet_timestamp::Config for Runtime {
 
 impl pallet_authorship::Config for Runtime {
 	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Aura>;
-	// type UncleGenerations = ConstU32<0>;
-	// type FilterUncle = ();
 	type EventHandler = (CollatorSelection,);
 }
 
