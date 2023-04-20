@@ -27,7 +27,6 @@ pub mod tests;
 pub mod xcm_impl;
 
 use frame_support::{
-	assert_ok,
 	pallet_prelude::DispatchClass,
 	parameter_types, sp_runtime,
 	traits::{Currency, EitherOfDiverse, EnsureOrigin, OnUnbalanced, OriginTrait},

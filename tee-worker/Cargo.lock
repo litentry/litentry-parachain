@@ -2781,7 +2781,7 @@ checksum = "adcf93614601c8129ddf72e2d5633df827ba6551541c6d8c59520a371475be1f"
 dependencies = [
  "hermit-abi 0.3.1",
  "io-lifetimes",
- "rustix 0.37.11",
+ "rustix 0.37.13",
  "windows-sys 0.48.0",
 ]
 
@@ -4667,9 +4667,9 @@ checksum = "f051f77a7c8e6957c0696eac88f26b0117e54f52d3fc682ab19397a8812846a4"
 
 [[package]]
 name = "linux-raw-sys"
-version = "0.3.1"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d59d8c75012853d2e872fb56bc8a2e53718e2cafe1a4c823143141c6d90c322f"
+checksum = "9b085a4f2cde5781fc4b1717f2e86c62f5cda49de7ba99a7c2eae02b61c9064c"
 
 [[package]]
 name = "litentry-primitives"
@@ -4785,7 +4785,7 @@ version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ffc89ccdc6e10d6907450f753537ebc5c5d3460d2e4e62ea74bd571db62c0f9e"
 dependencies = [
- "rustix 0.37.11",
+ "rustix 0.37.13",
 ]
 
 [[package]]
@@ -5563,7 +5563,7 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std 5.0.0",
- "teerex-primitives",
+ "teerex-primitives 0.1.0",
 ]
 
 [[package]]
@@ -5734,7 +5734,7 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std 5.0.0",
- "teerex-primitives",
+ "teerex-primitives 0.1.0",
 ]
 
 [[package]]
@@ -6699,15 +6699,15 @@ dependencies = [
 
 [[package]]
 name = "rustix"
-version = "0.37.11"
+version = "0.37.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "85597d61f83914ddeba6a47b3b8ffe7365107221c2e557ed94426489fefb5f77"
+checksum = "f79bef90eb6d984c72722595b5b1348ab39275a5e5123faca6863bf07d75a4e0"
 dependencies = [
  "bitflags",
  "errno",
  "io-lifetimes",
  "libc",
- "linux-raw-sys 0.3.1",
+ "linux-raw-sys 0.3.3",
  "windows-sys 0.48.0",
 ]
 
@@ -8411,7 +8411,7 @@ dependencies = [
  "cfg-if 1.0.0",
  "fastrand",
  "redox_syscall 0.3.5",
- "rustix 0.37.11",
+ "rustix 0.37.13",
  "windows-sys 0.45.0",
 ]
 

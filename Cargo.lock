@@ -306,9 +306,9 @@ checksum = "f52f63c5c1316a16a4b35eaac8b76a98248961a533f061684cb2a7cb0eafb6c6"
 
 [[package]]
 name = "array-bytes"
-version = "6.0.0"
+version = "6.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22f72e9d6fac4bc80778ea470b20197b88d28c292bb7d60c3fb099280003cd19"
+checksum = "d9b1c5a481ec30a5abd8dfbd94ab5cf1bb4e9a66be7f1b3b322f2f1170c200fd"
 
 [[package]]
 name = "arrayref"
@@ -430,7 +430,7 @@ dependencies = [
  "log",
  "parking",
  "polling",
- "rustix 0.37.11",
+ "rustix 0.37.13",
  "slab",
  "socket2",
  "waker-fn",
@@ -1082,9 +1082,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.2.2"
+version = "4.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b802d85aaf3a1cdb02b224ba472ebdea62014fccfcb269b95a4d76443b5ee5a"
+checksum = "956ac1f6381d8d82ab4684768f89c0ea3afe66925ceadb4eeb3fc452ffc55d62"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -1093,9 +1093,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.2.2"
+version = "4.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14a1a858f532119338887a4b8e1af9c60de8249cd7bafd68036a489e261e37b6"
+checksum = "84080e799e54cff944f4b4a4b0e71630b0e0443b25b985175c7dddc1a859b749"
 dependencies = [
  "anstream",
  "anstyle",
@@ -1999,7 +1999,7 @@ name = "cumulus-relay-chain-minimal-node"
 version = "0.1.0"
 source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.39#d6eef144421ef5c3f339f681484d06bb729dfa82"
 dependencies = [
- "array-bytes 6.0.0",
+ "array-bytes 6.1.0",
  "async-trait",
  "cumulus-primitives-core",
  "cumulus-relay-chain-interface",
@@ -4107,7 +4107,7 @@ checksum = "adcf93614601c8129ddf72e2d5633df827ba6551541c6d8c59520a371475be1f"
 dependencies = [
  "hermit-abi 0.3.1",
  "io-lifetimes 1.0.10",
- "rustix 0.37.11",
+ "rustix 0.37.13",
  "windows-sys 0.48.0",
 ]
 
@@ -5061,9 +5061,9 @@ checksum = "f051f77a7c8e6957c0696eac88f26b0117e54f52d3fc682ab19397a8812846a4"
 
 [[package]]
 name = "linux-raw-sys"
-version = "0.3.1"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d59d8c75012853d2e872fb56bc8a2e53718e2cafe1a4c823143141c6d90c322f"
+checksum = "9b085a4f2cde5781fc4b1717f2e86c62f5cda49de7ba99a7c2eae02b61c9064c"
 
 [[package]]
 name = "litentry-collator"
@@ -5437,7 +5437,7 @@ version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ffc89ccdc6e10d6907450f753537ebc5c5d3460d2e4e62ea74bd571db62c0f9e"
 dependencies = [
- "rustix 0.37.11",
+ "rustix 0.37.13",
 ]
 
 [[package]]
@@ -10343,15 +10343,15 @@ dependencies = [
 
 [[package]]
 name = "rustix"
-version = "0.37.11"
+version = "0.37.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "85597d61f83914ddeba6a47b3b8ffe7365107221c2e557ed94426489fefb5f77"
+checksum = "f79bef90eb6d984c72722595b5b1348ab39275a5e5123faca6863bf07d75a4e0"
 dependencies = [
  "bitflags",
  "errno 0.3.1",
  "io-lifetimes 1.0.10",
  "libc",
- "linux-raw-sys 0.3.1",
+ "linux-raw-sys 0.3.3",
  "windows-sys 0.48.0",
 ]
 
@@ -13583,7 +13583,7 @@ dependencies = [
  "cfg-if",
  "fastrand",
  "redox_syscall 0.3.5",
- "rustix 0.37.11",
+ "rustix 0.37.13",
  "windows-sys 0.45.0",
 ]
 

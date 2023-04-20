@@ -19,7 +19,7 @@ use core_primitives::{ErrorDetail, IMPError};
 use frame_support::{assert_noop, assert_ok};
 use sp_core::H256;
 
-use test_utils::ias::consts::{TEST8_CERT, TEST8_MRENCLAVE};
+use test_utils::ias::consts::TEST8_MRENCLAVE;
 type SystemAccountId = <Test as frame_system::Config>::AccountId;
 const ALICE_PUBKEY: &[u8; 32] = &[1u8; 32];
 const BOB_PUBKEY: &[u8; 32] = &[2u8; 32];
