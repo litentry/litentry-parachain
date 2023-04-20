@@ -171,7 +171,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// add an account to the delegatees
 		#[pallet::call_index(0)]
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::add_delegatee())]
 		pub fn add_delegatee(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
 			let _ = T::DelegateeAdminOrigin::ensure_origin(origin)?;
 			// we don't care if `account` already exists
@@ -182,7 +182,7 @@ pub mod pallet {
 
 		/// remove an account from the delegatees
 		#[pallet::call_index(1)]
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::remove_delegatee())]
 		pub fn remove_delegatee(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
 			let _ = T::DelegateeAdminOrigin::ensure_origin(origin)?;
 			ensure!(Delegatee::<T>::contains_key(&account), Error::<T>::DelegateeNotExist);
@@ -257,7 +257,7 @@ pub mod pallet {
 		/// The following extrinsics are supposed to be called by TEE only
 		/// ---------------------------------------------------
 		#[pallet::call_index(30)]
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::user_shielding_key_set())]
 		pub fn user_shielding_key_set(
 			origin: OriginFor<T>,
 			account: T::AccountId,
@@ -269,7 +269,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(31)]
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::identity_created())]
 		pub fn identity_created(
 			origin: OriginFor<T>,
 			account: T::AccountId,
@@ -283,7 +283,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(32)]
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::identity_removed())]
 		pub fn identity_removed(
 			origin: OriginFor<T>,
 			account: T::AccountId,
@@ -296,7 +296,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(33)]
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::identity_verified())]
 		pub fn identity_verified(
 			origin: OriginFor<T>,
 			account: T::AccountId,
@@ -315,7 +315,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(34)]
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::some_error())]
 		pub fn some_error(
 			origin: OriginFor<T>,
 			account: Option<T::AccountId>,

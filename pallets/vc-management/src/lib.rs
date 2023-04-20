@@ -22,11 +22,17 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(unused_variables)]
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
 #[cfg(test)]
 mod mock;
 
 #[cfg(test)]
 mod tests;
+
+pub mod weights;
+
+pub use crate::weights::WeightInfo;
 
 use core_primitives::{
 	AesOutput, Assertion, SchemaIndex, ShardIdentifier, SCHEMA_CONTENT_LEN, SCHEMA_ID_LEN,
@@ -57,6 +63,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+		type WeightInfo: WeightInfo;
 		// some extrinsics should only be called by origins from TEE
 		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		// origin who can set the admin account
@@ -212,7 +219,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::request_vc())]
 		pub fn request_vc(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
@@ -224,7 +231,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(1)]
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::disable_vc())]
 		pub fn disable_vc(origin: OriginFor<T>, index: VCIndex) -> DispatchResultWithPostInfo {
 			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
 			VCRegistry::<T>::try_mutate(index, |context| {
@@ -239,7 +246,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(2)]
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::revoke_vc())]
 		pub fn revoke_vc(origin: OriginFor<T>, index: VCIndex) -> DispatchResultWithPostInfo {
 			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
 			let context = VCRegistry::<T>::get(index).ok_or(Error::<T>::VCNotExist)?;
@@ -250,7 +257,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(3)]
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_admin())]
 		pub fn set_admin(origin: OriginFor<T>, new: T::AccountId) -> DispatchResultWithPostInfo {
 			T::SetAdminOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::AdminChanged {
@@ -262,7 +269,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(4)]
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::add_schema())]
 		pub fn add_schema(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
@@ -288,7 +295,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(5)]
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::disable_schema())]
 		pub fn disable_schema(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
@@ -307,7 +314,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(6)]
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::activate_schema())]
 		pub fn activate_schema(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
@@ -326,7 +333,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(7)]
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::revoke_schema())]
 		pub fn revoke_schema(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
@@ -341,7 +348,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(8)]
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::add_vc_registry_item())]
 		pub fn add_vc_registry_item(
 			origin: OriginFor<T>,
 			index: VCIndex,
@@ -361,7 +368,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(9)]
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::remove_vc_registry_item())]
 		pub fn remove_vc_registry_item(
 			origin: OriginFor<T>,
 			index: VCIndex,
@@ -375,21 +382,21 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(10)]
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::clear_vc_registry(u32::max_value()))]
 		pub fn clear_vc_registry(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
 			// If more than u32 max, the map itself is overflow, so no worry
 			let _ = VCRegistry::<T>::clear(u32::max_value(), None);
 			Self::deposit_event(Event::VCRegistryCleared);
-			Ok(().into())
+			Ok(Pays::No.into())
 		}
 
 		/// ---------------------------------------------------
 		/// The following extrinsics are supposed to be called by TEE only
 		/// ---------------------------------------------------
 		#[pallet::call_index(30)]
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::vc_issued())]
 		pub fn vc_issued(
 			origin: OriginFor<T>,
 			account: T::AccountId,
@@ -410,7 +417,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(31)]
-		#[pallet::weight(195_000_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::some_error())]
 		pub fn some_error(
 			origin: OriginFor<T>,
 			account: Option<T::AccountId>,

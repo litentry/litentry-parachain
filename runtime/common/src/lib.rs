@@ -27,6 +27,7 @@ pub mod tests;
 pub mod xcm_impl;
 
 use frame_support::{
+	assert_ok,
 	pallet_prelude::DispatchClass,
 	parameter_types, sp_runtime,
 	traits::{Currency, EitherOfDiverse, EnsureOrigin, OnUnbalanced, OriginTrait},
@@ -326,14 +327,39 @@ pub struct EnsureEnclaveSigner<T>(PhantomData<T>);
 impl<T> EnsureOrigin<T::RuntimeOrigin> for EnsureEnclaveSigner<T>
 where
 	T: frame_system::Config + pallet_teerex::Config,
+	<T as frame_system::Config>::AccountId: From<[u8; 32]>,
+	<T as frame_system::Config>::Hash: From<[u8; 32]>,
 {
 	type Success = T::AccountId;
 	fn try_origin(o: T::RuntimeOrigin) -> Result<Self::Success, T::RuntimeOrigin> {
 		o.into().and_then(|o| match o {
-			frame_system::RawOrigin::Signed(ref who)
-				if pallet_teerex::Pallet::<T>::ensure_registered_enclave(who) == Ok(()) =>
-				Ok(who.clone()),
+			frame_system::RawOrigin::Signed(who)
+				if pallet_teerex::Pallet::<T>::ensure_registered_enclave(&who) == Ok(()) =>
+				Ok(who),
 			r => Err(T::RuntimeOrigin::from(r)),
 		})
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
+		use test_utils::ias::{
+			consts::{TEST8_MRENCLAVE, TEST8_SIGNER_PUB},
+			TestEnclave,
+		};
+		// The below is the hardcode TEST8_SIGNER_PUB. We should save it for convenience.
+		// let TEST8_SIGNER_PUB_DIRECT: [u8; 32] = [
+		// 	54, 176, 127, 194, 139, 9, 249, 13, 217, 106, 6, 124, 75, 0, 109, 18, 202, 202, 240,
+		// 	124, 214, 235, 255, 249, 47, 135, 174, 246, 167, 5, 6, 224,
+		// ];
+		let signer: <T as frame_system::Config>::AccountId =
+			test_utils::get_signer(TEST8_SIGNER_PUB);
+		if !pallet_teerex::EnclaveIndex::<T>::contains_key(signer.clone()) {
+			assert_ok!(pallet_teerex::Pallet::<T>::add_enclave(
+				&signer,
+				&teerex_primitives::Enclave::test_enclave(signer.clone())
+					.with_mr_enclave(TEST8_MRENCLAVE),
+			));
+		}
+		Ok(frame_system::RawOrigin::Signed(signer).into())
 	}
 }
