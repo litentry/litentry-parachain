@@ -3192,6 +3192,7 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std",
+ "teerex-primitives",
 ]
 
 [[package]]
@@ -3353,6 +3354,7 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std",
+ "teerex-primitives",
 ]
 
 [[package]]
