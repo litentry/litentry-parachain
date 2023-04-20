@@ -26,6 +26,9 @@ pub mod tests;
 
 pub mod xcm_impl;
 
+#[cfg(feature = "runtime-benchmarks")]
+use frame_support::assert_ok;
+
 use frame_support::{
 	pallet_prelude::DispatchClass,
 	parameter_types, sp_runtime,
