@@ -483,15 +483,22 @@ where
 					key,
 					parent_ss58_prefix,
 				) {
-					Ok(()) => {
-						debug!("pushing user_shielding_key_set event to parachain calls ...");
-						calls.push(OpaqueCall::from_tuple(&(
-							node_metadata_repo
-								.get_from_metadata(|m| m.user_shielding_key_set_call_indexes())??,
-							SgxParentchainTypeConverter::convert(who),
-							hash,
-						)));
-					},
+					Ok(()) =>
+						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
+							debug!("pushing user_shielding_key_set event to parachain calls ...");
+							let id_graph =
+								ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph_with_max_len(&who, IDGRAPH_MAX_LEN);
+							calls.push(OpaqueCall::from_tuple(&(
+								node_metadata_repo.get_from_metadata(|m| {
+									m.user_shielding_key_set_call_indexes()
+								})??,
+								SgxParentchainTypeConverter::convert(who),
+								aes_encrypt_default(&key, &id_graph.encode()),
+								hash,
+							)));
+						} else {
+							error!("Can't set user shielding key: InvalidUserShieldingKey");
+						},
 					Err(e) => {
 						debug!("set_user_shielding_key_runtime error: {}", e);
 						add_call_from_imp_error(

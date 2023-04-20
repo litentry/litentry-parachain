@@ -97,6 +97,7 @@ pub mod pallet {
 		// indexing see https://github.com/litentry/litentry-parachain/issues/1313
 		UserShieldingKeySet {
 			account: T::AccountId,
+			id_graph: AesOutput,
 			req_ext_hash: H256,
 		},
 		// we return the request-extrinsic-hash for better tracking
@@ -261,10 +262,11 @@ pub mod pallet {
 		pub fn user_shielding_key_set(
 			origin: OriginFor<T>,
 			account: T::AccountId,
+			id_graph: AesOutput,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::UserShieldingKeySet { account, req_ext_hash });
+			Self::deposit_event(Event::UserShieldingKeySet { account, id_graph, req_ext_hash });
 			Ok(Pays::No.into())
 		}
 
