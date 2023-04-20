@@ -97,7 +97,8 @@ fn create_default_proposal<T: Config>(caller: T::AccountId) -> (T::PoolId, Vec<u
 fn setup<T: Config>(should_start: bool) -> (T::AccountId, T::PoolId, Vec<u8>) {
 	let caller = create_default_caller::<T>();
 	let admin: T::AccountId = whitelisted_caller();
-	let origin = T::SetAdminOrigin::successful_origin();
+	let origin = T::SetAdminOrigin::try_successful_origin()
+		.expect("SetAdminOrigin has no successful origin required for the benchmark");
 	assert!(Drop3::<T>::set_admin(origin, admin.clone()).is_ok());
 	let (id, name) = create_default_proposal::<T>(caller.clone());
 	assert!(Drop3::<T>::approve_reward_pool(RawOrigin::Signed(admin.clone()).into(), id).is_ok());
@@ -110,7 +111,7 @@ fn setup<T: Config>(should_start: bool) -> (T::AccountId, T::PoolId, Vec<u8>) {
 
 benchmarks! {
 	set_admin {
-		let origin = T::SetAdminOrigin::successful_origin();
+		let origin = T::SetAdminOrigin::try_successful_origin().expect("SetAdminOrigin has no successful origin required for the benchmark");
 		/*
 		If the setup function is used here then old_admin uses the configuration in setup func, i.e whitelisted_caller()
 		But here we are not using setup, so when using the `cargo test -p pallet-drop3 --features runtime-benchmarks`  command,
@@ -127,7 +128,7 @@ benchmarks! {
 	approve_reward_pool {
 		let caller = create_default_caller::<T>();
 		let admin: T::AccountId = whitelisted_caller();
-		let origin = T::SetAdminOrigin::successful_origin();
+		let origin = T::SetAdminOrigin::try_successful_origin().expect("SetAdminOrigin has no successful origin required for the benchmark");
 		assert!(Drop3::<T>::set_admin(origin, admin.clone()).is_ok());
 		let (id, _) = create_default_proposal::<T>(caller);
 	}: _(RawOrigin::Signed(admin), id)
@@ -138,7 +139,7 @@ benchmarks! {
 	reject_reward_pool {
 		let caller = create_default_caller::<T>();
 		let admin: T::AccountId = whitelisted_caller();
-		let origin = T::SetAdminOrigin::successful_origin();
+		let origin = T::SetAdminOrigin::try_successful_origin().expect("SetAdminOrigin has no successful origin required for the benchmark");
 		assert!(Drop3::<T>::set_admin(origin, admin.clone()).is_ok());
 		let (id, name) = create_default_proposal::<T>(caller.clone());
 	}: _(RawOrigin::Signed(admin), id)

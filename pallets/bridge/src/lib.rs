@@ -743,9 +743,9 @@ pub mod pallet {
 		}
 
 		#[cfg(feature = "runtime-benchmarks")]
-		fn successful_origin() -> T::RuntimeOrigin {
+		fn try_successful_origin() -> Result<T::RuntimeOrigin, ()> {
 			let bridge_id = MODULE_ID.into_account_truncating();
-			T::RuntimeOrigin::from(system::RawOrigin::Signed(bridge_id))
+			Ok(T::RuntimeOrigin::from(system::RawOrigin::Signed(bridge_id)))
 		}
 	}
 }

@@ -131,7 +131,7 @@ pub fn submit_shielding_call_to_top_pool() {
 	));
 	let node_meta_data_repository = Arc::new(NodeMetadataRepository::default());
 	node_meta_data_repository.set_metadata(NodeMetadataMock::new());
-	let indirect_calls_executor = IndirectCallsExecutor::new(
+	let indirect_calls_executor = IndirectCallsExecutor::<_, _, _, _>::new(
 		shielding_key_repo,
 		enclave_signer,
 		top_pool_author.clone(),

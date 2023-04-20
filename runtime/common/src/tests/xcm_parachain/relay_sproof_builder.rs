@@ -47,8 +47,8 @@ pub struct RelayStateSproofBuilder {
 	pub relay_dispatch_queue_size: Option<(u32, u32)>,
 	pub hrmp_ingress_channel_index: Option<Vec<ParaId>>,
 	pub hrmp_egress_channel_index: Option<Vec<ParaId>>,
-	pub hrmp_channels: BTreeMap<relay_chain::v2::HrmpChannelId, AbridgedHrmpChannel>,
-	pub current_slot: relay_chain::v2::Slot,
+	pub hrmp_channels: BTreeMap<relay_chain::HrmpChannelId, AbridgedHrmpChannel>,
+	pub current_slot: relay_chain::Slot,
 }
 
 impl Default for RelayStateSproofBuilder {
@@ -91,7 +91,7 @@ impl RelayStateSproofBuilder {
 		}
 
 		self.hrmp_channels
-			.entry(relay_chain::v2::HrmpChannelId { sender, recipient: self.para_id })
+			.entry(relay_chain::HrmpChannelId { sender, recipient: self.para_id })
 			.or_insert_with(|| AbridgedHrmpChannel {
 				max_capacity: u32::MAX,
 				max_total_size: u32::MAX,
@@ -109,7 +109,7 @@ impl RelayStateSproofBuilder {
 		}
 
 		self.hrmp_channels
-			.entry(relay_chain::v2::HrmpChannelId { sender: self.para_id, recipient })
+			.entry(relay_chain::HrmpChannelId { sender: self.para_id, recipient })
 			.or_insert_with(|| AbridgedHrmpChannel {
 				max_capacity: u32::MAX,
 				max_total_size: u32::MAX,
