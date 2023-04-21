@@ -138,27 +138,27 @@ export async function listenEvent(
                     //Then, it sorts the events based on this index so that the resulting event array is sorted according to the order of the signers array.
                     const signerIndexA =
                         signerToIndexMap[
-                        a.event.data
-                            .find((d) => {
-                                if (Array.isArray(d)) {
-                                    return d.find((v) => signers.includes(v.toHex()));
-                                } else {
-                                    return signers.includes(d.toHex());
-                                }
-                            })!
-                            .toHex()
+                            a.event.data
+                                .find((d) => {
+                                    if (Array.isArray(d)) {
+                                        return d.find((v) => signers.includes(v.toHex()));
+                                    } else {
+                                        return signers.includes(d.toHex());
+                                    }
+                                })!
+                                .toHex()
                         ];
                     const signerIndexB =
                         signerToIndexMap[
-                        b.event.data
-                            .find((d) => {
-                                if (Array.isArray(d)) {
-                                    return d.find((v) => signers.includes(v.toHex()));
-                                } else {
-                                    return signers.includes(d.toHex());
-                                }
-                            })!
-                            .toHex()
+                            b.event.data
+                                .find((d) => {
+                                    if (Array.isArray(d)) {
+                                        return d.find((v) => signers.includes(v.toHex()));
+                                    } else {
+                                        return signers.includes(d.toHex());
+                                    }
+                                })!
+                                .toHex()
                         ];
                     return signerIndexA - signerIndexB;
                 });
@@ -184,7 +184,7 @@ export async function sendTxsWithUtility(
     signer: KeyringPair,
     txs: TransactionSubmit[],
     pallet: string,
-    events: string[],
+    events: string[]
 ): Promise<string[] | Event[]> {
     //ensure the tx is in block
     const isInBlockPromise = new Promise((resolve) => {
