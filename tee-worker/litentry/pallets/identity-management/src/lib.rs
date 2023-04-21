@@ -93,8 +93,6 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// challenge code doesn't exist
 		ChallengeCodeNotExist,
-		/// Invalid user shielding Key
-		UserShieldingKeyNotFound,
 		/// the pair (litentry-account, identity) already verified when creating an identity
 		IdentityAlreadyVerified,
 		/// the pair (litentry-account, identity) doesn't exist
@@ -225,10 +223,6 @@ pub mod pallet {
 			parent_ss58_prefix: u16,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
-			ensure!(
-				Self::user_shielding_keys(&who).is_some(),
-				Error::<T>::UserShieldingKeyNotFound
-			);
 
 			if let Some(c) = IDGraphs::<T>::get(&who, &identity) {
 				ensure!(
@@ -265,10 +259,6 @@ pub mod pallet {
 			identity: Identity,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
-			ensure!(
-				Self::user_shielding_keys(&who).is_some(),
-				Error::<T>::UserShieldingKeyNotFound
-			);
 			ensure!(IDGraphs::<T>::contains_key(&who, &identity), Error::<T>::IdentityNotExist);
 
 			if let Some(IdentityContext::<T> {
@@ -301,10 +291,6 @@ pub mod pallet {
 			verification_request_block: ParentchainBlockNumber,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
-			ensure!(
-				Self::user_shielding_keys(&who).is_some(),
-				Error::<T>::UserShieldingKeyNotFound
-			);
 			IDGraphs::<T>::try_mutate(&who, &identity, |context| -> DispatchResult {
 				let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
 				ensure!(!c.is_verified, Error::<T>::IdentityAlreadyVerified);

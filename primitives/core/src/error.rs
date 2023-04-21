@@ -34,12 +34,12 @@ pub enum ErrorDetail {
 	StfError(ErrorString),
 	// error when sending stf request to the receiver
 	SendStfRequestFailed,
+	// error when challenge code not found
 	ChallengeCodeNotFound,
+	// error when user shielding key not found
 	UserShieldingKeyNotFound,
 	// generic parse error, can be caused by UTF8/JSON serde..
 	ParseError,
-	// errors when verifying identities
-	DecodeHexPayloadFailed(ErrorString),
 	// errors when communicating with data provider, e.g. HTTP error
 	DataProviderError(ErrorString),
 	InvalidIdentity,

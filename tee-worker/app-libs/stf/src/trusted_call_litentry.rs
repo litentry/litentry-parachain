@@ -48,11 +48,6 @@ impl TrustedCallSigned {
 		key: UserShieldingKeyType,
 		hash: H256,
 	) -> StfResult<()> {
-		debug!(
-			"set user shielding key preflight, who = {:?}, key = {:?}",
-			account_id_to_string(&who),
-			key.clone()
-		);
 		ensure!(is_root::<Runtime, AccountId>(&root), StfError::MissingPrivileges(root));
 		let encoded_callback = TrustedCall::set_user_shielding_key_runtime(
 			enclave_signer_account(),
@@ -96,14 +91,6 @@ impl TrustedCallSigned {
 		bn: ParentchainBlockNumber,
 		parent_ss58_prefix: u16,
 	) -> StfResult<ChallengeCode> {
-		debug!(
-			"create identity runtime, who = {:?}, identity = {:?}, metadata = {:?}, bn = {:?}, parent_ss58_prefix = {}",
-			account_id_to_string(&who),
-			identity,
-			metadata,
-			bn,
-			parent_ss58_prefix,
-		);
 		ensure_enclave_signer_account(&enclave_account)?;
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::create_identity {
 			who: who.clone(),
@@ -117,7 +104,6 @@ impl TrustedCallSigned {
 
 		// generate challenge code
 		let code = generate_challenge_code();
-		debug!("challenge code generated, who = {:?}", account_id_to_string(&who));
 
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_challenge_code {
 			who,
@@ -135,11 +121,6 @@ impl TrustedCallSigned {
 		who: AccountId,
 		identity: Identity,
 	) -> StfResult<()> {
-		debug!(
-			"remove identity runtime, who = {:?}, identity = {:?}",
-			account_id_to_string(&who),
-			identity,
-		);
 		ensure_enclave_signer_account(&enclave_account)?;
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::remove_identity { who, identity }
 			.dispatch_bypass_filter(RuntimeOrigin::root())
@@ -156,7 +137,6 @@ impl TrustedCallSigned {
 		bn: ParentchainBlockNumber,
 		hash: H256,
 	) -> StfResult<()> {
-		debug!("verify identity preflight, who:{:?}, identity:{:?}", who, identity);
 		ensure_enclave_signer_account(&enclave_account)?;
 		let code = IdentityManagement::challenge_codes(&who, &identity)
 			.ok_or(StfError::VerifyIdentityFailed(ErrorDetail::ChallengeCodeNotFound))?;
@@ -207,12 +187,6 @@ impl TrustedCallSigned {
 		identity: Identity,
 		bn: ParentchainBlockNumber,
 	) -> StfResult<()> {
-		debug!(
-			"verify identity runtime, who = {:?}, identity = {:?}, bn = {:?}",
-			account_id_to_string(&who),
-			identity,
-			bn
-		);
 		ensure_enclave_signer_account(&enclave_account)?;
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::verify_identity {
 			who: who.clone(),
@@ -238,7 +212,6 @@ impl TrustedCallSigned {
 		bn: ParentchainBlockNumber,
 		hash: H256,
 	) -> StfResult<()> {
-		debug!("request vc, who {:?}, assertion {:?}", account_id_to_string(&who), assertion);
 		ensure_enclave_signer_account(&enclave_account)?;
 		let id_graph = ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
 		let mut vec_identity: BoundedVec<Identity, MaxIdentityLength> = vec![].try_into().unwrap();
@@ -281,7 +254,6 @@ impl TrustedCallSigned {
 		identity: Identity,
 		code: ChallengeCode,
 	) -> StfResult<()> {
-		debug!("set challenge code runtime, who: {:?}", account_id_to_string(&who));
 		ensure_enclave_signer_account(&enclave_account)?;
 		// only used in tests, we don't care about the error
 		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_challenge_code {

@@ -38,8 +38,8 @@ use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier, Signature};
 use itp_types::{OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
-	aes_encrypt_default, Assertion, ChallengeCode, IMPError, Identity, ParentchainAccountId,
-	ParentchainBlockNumber, UserShieldingKeyType, VCMPError, ValidationData,
+	aes_encrypt_default, Assertion, ChallengeCode, ErrorDetail, IMPError, Identity,
+	ParentchainAccountId, ParentchainBlockNumber, UserShieldingKeyType, VCMPError, ValidationData,
 };
 use log::*;
 use sp_io::hashing::blake2_256;
@@ -472,9 +472,11 @@ where
 				Ok(())
 			},
 			TrustedCall::set_user_shielding_key_runtime(enclave_account, who, key, hash) => {
-				debug!("set user shielding key runtime, who: {}", account_id_to_string(&who));
+				debug!("set_user_shielding_key_runtime, who: {}", account_id_to_string(&who));
+				let account = SgxParentchainTypeConverter::convert(who.clone());
 				let parent_ss58_prefix =
 					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
+				// we need to execute the runtime call first
 				match Self::set_user_shielding_key_runtime(
 					enclave_account,
 					who.clone(),
@@ -490,19 +492,28 @@ where
 								node_metadata_repo.get_from_metadata(|m| {
 									m.user_shielding_key_set_call_indexes()
 								})??,
-								SgxParentchainTypeConverter::convert(who),
+								account,
 								aes_encrypt_default(&key, &id_graph.encode()),
 								hash,
 							)));
 						} else {
-							error!("Can't set user shielding key: UserShieldingKeyNotFound");
+							debug!("pushing error event to parachain calls ... error: UserShieldingKeyNotFound");
+							add_call_from_imp_error(
+								calls,
+								node_metadata_repo,
+								Some(account),
+								IMPError::SetUserShieldingKeyFailed(
+									ErrorDetail::UserShieldingKeyNotFound,
+								),
+								hash,
+							);
 						},
 					Err(e) => {
-						debug!("set_user_shielding_key_runtime error: {}", e);
+						debug!("pushing error event to parachain calls ... error: {}", e);
 						add_call_from_imp_error(
 							calls,
 							node_metadata_repo,
-							Some(SgxParentchainTypeConverter::convert(who)),
+							Some(account),
 							e.to_imp_error(),
 							hash,
 						);
@@ -519,51 +530,54 @@ where
 				hash,
 			) => {
 				debug!(
-					"create_identity_runtime, who: {}, identity: {:?}, metadata: {:?}",
+					"create_identity_runtime, who: {}, identity: {:?}, bn: {}",
 					account_id_to_string(&who),
 					identity,
-					metadata
-				);
-				let parent_ss58_prefix =
-					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
-				match Self::create_identity_runtime(
-					enclave_account,
-					who.clone(),
-					identity.clone(),
-					metadata,
 					bn,
-					parent_ss58_prefix,
-				) {
-					Ok(code) => {
-						debug!("create_identity_runtime {} OK", account_id_to_string(&who));
-						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
+				);
+				let account = SgxParentchainTypeConverter::convert(who.clone());
+				if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
+					let parent_ss58_prefix =
+						node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
+					match Self::create_identity_runtime(
+						enclave_account,
+						who,
+						identity.clone(),
+						metadata,
+						bn,
+						parent_ss58_prefix,
+					) {
+						Ok(code) => {
 							debug!("pushing identity_created event to parachain calls ...");
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.identity_created_call_indexes())??,
-								SgxParentchainTypeConverter::convert(who),
+								account,
 								aes_encrypt_default(&key, &identity.encode()),
 								aes_encrypt_default(&key, &code.encode()),
 								hash,
 							)));
-						} else {
-							error!("Can't create identity: UserShieldingKeyNotFound");
-						}
-					},
-					Err(e) => {
-						debug!(
-							"create_identity_runtime {} error: {}",
-							account_id_to_string(&who),
-							e
-						);
-						add_call_from_imp_error(
-							calls,
-							node_metadata_repo,
-							Some(SgxParentchainTypeConverter::convert(who)),
-							e.to_imp_error(),
-							hash,
-						);
-					},
+						},
+						Err(e) => {
+							debug!("pushing error event to parachain calls ... error: {}", e);
+							add_call_from_imp_error(
+								calls,
+								node_metadata_repo,
+								Some(account),
+								e.to_imp_error(),
+								hash,
+							);
+						},
+					}
+				} else {
+					debug!("pushing error event to parachain calls ... error: UserShieldingKeyNotFound");
+					add_call_from_imp_error(
+						calls,
+						node_metadata_repo,
+						Some(account),
+						IMPError::SetUserShieldingKeyFailed(ErrorDetail::UserShieldingKeyNotFound),
+						hash,
+					);
 				}
 				Ok(())
 			},
@@ -573,37 +587,39 @@ where
 					account_id_to_string(&who),
 					identity,
 				);
-				match Self::remove_identity_runtime(enclave_account, who.clone(), identity.clone())
-				{
-					Ok(()) => {
-						debug!("remove_identity_runtime {} OK", account_id_to_string(&who));
-						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
+				let account = SgxParentchainTypeConverter::convert(who.clone());
+				if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
+					match Self::remove_identity_runtime(enclave_account, who, identity.clone()) {
+						Ok(()) => {
 							debug!("pushing identity_removed event to parachain calls ...");
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.identity_removed_call_indexes())??,
-								SgxParentchainTypeConverter::convert(who),
+								account,
 								aes_encrypt_default(&key, &identity.encode()),
 								hash,
 							)));
-						} else {
-							error!("Can't remove identity: UserShieldingKeyNotFound");
-						}
-					},
-					Err(e) => {
-						debug!(
-							"remove_identity_runtime {} error: {}",
-							account_id_to_string(&who),
-							e
-						);
-						add_call_from_imp_error(
-							calls,
-							node_metadata_repo,
-							Some(SgxParentchainTypeConverter::convert(who)),
-							e.to_imp_error(),
-							hash,
-						);
-					},
+						},
+						Err(e) => {
+							debug!("pushing error event to parachain calls ... error: {}", e);
+							add_call_from_imp_error(
+								calls,
+								node_metadata_repo,
+								Some(account),
+								e.to_imp_error(),
+								hash,
+							);
+						},
+					}
+				} else {
+					debug!("pushing error event to parachain calls ... error: UserShieldingKeyNotFound");
+					add_call_from_imp_error(
+						calls,
+						node_metadata_repo,
+						Some(account),
+						IMPError::SetUserShieldingKeyFailed(ErrorDetail::UserShieldingKeyNotFound),
+						hash,
+					);
 				}
 				Ok(())
 			},
@@ -615,6 +631,12 @@ where
 				bn,
 				hash,
 			) => {
+				debug!(
+					"verify_identity_preflight, who: {}, identity: {:?}, bn: {}",
+					account_id_to_string(&who),
+					identity,
+					bn,
+				);
 				if let Err(e) = Self::verify_identity_preflight(
 					enclave_account,
 					shard,
@@ -624,7 +646,7 @@ where
 					bn,
 					hash,
 				) {
-					debug!("verify_identity_preflight error: {}", e);
+					debug!("pushing error event to parachain calls ... error: {}", e);
 					add_call_from_imp_error(
 						calls,
 						node_metadata_repo,
@@ -637,53 +659,57 @@ where
 			},
 			TrustedCall::verify_identity_runtime(enclave_account, who, identity, bn, hash) => {
 				debug!(
-					"verify_identity_runtime, who: {}, identity: {:?}, bn: {:?}",
+					"verify_identity_runtime, who: {}, identity: {:?}, bn: {}",
 					account_id_to_string(&who),
 					identity,
 					bn
 				);
-				match Self::verify_identity_runtime(
-					enclave_account,
-					who.clone(),
-					identity.clone(),
-					bn,
-				) {
-					Ok(()) => {
-						debug!("verify_identity_runtime {} OK", account_id_to_string(&who));
-						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
+				let account = SgxParentchainTypeConverter::convert(who.clone());
+				if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
+					match Self::verify_identity_runtime(
+						enclave_account,
+						who.clone(),
+						identity.clone(),
+						bn,
+					) {
+						Ok(()) => {
 							let id_graph =
-								ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph_with_max_len(&who, RETURNED_IDGRAPH_MAX_LEN);
+									ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph_with_max_len(&who, RETURNED_IDGRAPH_MAX_LEN);
 							debug!("pushing identity_verified event to parachain calls ...");
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.identity_verified_call_indexes())??,
-								SgxParentchainTypeConverter::convert(who),
+								account,
 								aes_encrypt_default(&key, &identity.encode()),
 								aes_encrypt_default(&key, &id_graph.encode()),
 								hash,
 							)));
-						} else {
-							error!("Can't verify identity: UserShieldingKeyNotFound");
-						}
-					},
-					Err(e) => {
-						debug!(
-							"verify_identity_runtime {} error: {}",
-							account_id_to_string(&who),
-							e
-						);
-						add_call_from_imp_error(
-							calls,
-							node_metadata_repo,
-							Some(SgxParentchainTypeConverter::convert(who)),
-							e.to_imp_error(),
-							hash,
-						);
-					},
+						},
+						Err(e) => {
+							debug!("pushing error event to parachain calls ... error: {}", e);
+							add_call_from_imp_error(
+								calls,
+								node_metadata_repo,
+								Some(account),
+								e.to_imp_error(),
+								hash,
+							);
+						},
+					}
+				} else {
+					debug!("pushing error event to parachain calls ... error: UserShieldingKeyNotFound");
+					add_call_from_imp_error(
+						calls,
+						node_metadata_repo,
+						Some(account),
+						IMPError::SetUserShieldingKeyFailed(ErrorDetail::UserShieldingKeyNotFound),
+						hash,
+					);
 				}
 				Ok(())
 			},
 			TrustedCall::request_vc(enclave_account, who, assertion, shard, bn, hash) => {
+				// the user shileding key check is inside `Self::request_vc`
 				if let Err(e) =
 					Self::request_vc(enclave_account, &shard, who.clone(), assertion, bn, hash)
 				{
