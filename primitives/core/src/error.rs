@@ -17,16 +17,20 @@
 use crate::Assertion;
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
-use sp_runtime::{traits::ConstU32, BoundedVec};
+use sp_runtime::{
+	traits::{ConstU32, Printable},
+	BoundedVec, DispatchError, DispatchErrorWithPostInfo,
+};
 
 pub type MaxStringLength = ConstU32<100>;
 pub type ErrorString = BoundedVec<u8, MaxStringLength>;
 
+// enum to reflect the error detail from TEE-worker processing
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 pub enum ErrorDetail {
 	// error when importing the parentchain blocks and executing indirect calls
 	ImportError,
-	// generic error when executing STF, the `ErrorString` should indicate the actual reasons
+	// generic error when executing STF, the `ErrorString` should indicate the actual reason
 	StfError(ErrorString),
 	// error when sending stf request to the receiver
 	SendStfRequestFailed,
@@ -36,7 +40,8 @@ pub enum ErrorDetail {
 	ParseError,
 	// errors when verifying identities
 	DecodeHexPayloadFailed(ErrorString),
-	HttpRequestFailed(ErrorString),
+	// errors when communicating with data provider, e.g. HTTP error
+	DataProviderError(ErrorString),
 	InvalidIdentity,
 	WrongWeb2Handle,
 	UnexpectedMessage,
@@ -44,6 +49,32 @@ pub enum ErrorDetail {
 	VerifySubstrateSignatureFailed,
 	VerifyEvmSignatureFailed,
 	RecoverEvmAddressFailed,
+}
+
+// We could have used Into<ErrorDetail>, but we want it to be more explicit, similar to `into_iter`
+pub trait IntoErrorDetail {
+	fn into_error_detail(self) -> ErrorDetail;
+}
+
+// `From` is implemented for `DispatchError` and `DispatchErrorWithPostInfo` on the top level,
+// because we know it can only happen during stf execution in enclave
+impl From<DispatchError> for ErrorDetail {
+	fn from(e: DispatchError) -> Self {
+		ErrorDetail::StfError(ErrorString::truncate_from(
+			<DispatchError as Into<&'static str>>::into(e).into(),
+		))
+	}
+}
+
+impl<T> From<DispatchErrorWithPostInfo<T>> for ErrorDetail
+where
+	T: Eq + PartialEq + Clone + Copy + Encode + Decode + Printable,
+{
+	fn from(e: DispatchErrorWithPostInfo<T>) -> Self {
+		ErrorDetail::StfError(ErrorString::truncate_from(
+			<DispatchErrorWithPostInfo<T> as Into<&'static str>>::into(e).into(),
+		))
+	}
 }
 
 // Identity Management Pallet Error

@@ -17,7 +17,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use litentry_primitives::{ErrorDetail, ErrorString};
+use litentry_primitives::{ErrorDetail, ErrorString, IntoErrorDetail};
 use std::{boxed::Box, string::String};
 use thiserror::Error;
 
@@ -49,8 +49,8 @@ pub enum Error {
 	Other(#[from] Box<dyn std::error::Error + Sync + Send + 'static>),
 }
 
-impl Error {
-	pub fn to_error_detail(&self) -> ErrorDetail {
+impl IntoErrorDetail for Error {
+	fn into_error_detail(self) -> ErrorDetail {
 		ErrorDetail::StfError(ErrorString::truncate_from(format!("{}", self).into()))
 	}
 }

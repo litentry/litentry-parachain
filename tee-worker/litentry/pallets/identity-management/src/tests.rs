@@ -76,7 +76,7 @@ fn remove_identity_works() {
 	new_test_ext(false).execute_with(|| {
 		assert_noop!(
 			IMT::remove_identity(RuntimeOrigin::signed(ALICE), BOB, alice_web3_identity()),
-			Error::<Test>::InvalidUserShieldingKey
+			Error::<Test>::UserShieldingKeyNotFound
 		);
 		let ss58_prefix = 31_u16;
 		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];

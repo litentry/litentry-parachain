@@ -40,5 +40,9 @@ pub mod a6;
 pub mod a7;
 pub mod a8;
 
-use litentry_primitives::VCMPError as Error;
-pub type Result<T> = core::result::Result<T, Error>;
+use litentry_primitives::{
+	Assertion, ErrorDetail, ErrorString, EvmNetwork, Identity, IndexingNetwork, IndexingNetworks,
+	IntoErrorDetail, ParameterString, ParentchainBlockNumber, SubstrateNetwork, VCMPError,
+	Web2Network, ASSERTION_FROM_DATE,
+};
+pub type Result<T> = core::result::Result<T, VCMPError>;

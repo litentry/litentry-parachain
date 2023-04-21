@@ -154,9 +154,6 @@ where
 		}?;
 
 		// post-process the credential
-		// it might seem a bit verbose with many `map_err`, but it's due to the fact that
-		// the original error can of different type
-		// TODO: maybe we can tidy up the original errors - some are chaotic and confusing
 		let signer = self.context.enclave_signer.as_ref();
 		let enclave_account = signer.get_enclave_account().map_err(|e| {
 			VCMPError::RequestVCFailed(

@@ -20,16 +20,13 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{Error, Result};
+use crate::*;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::graphql::{
 	GraphQLClient, VerifiedCredentialsNetwork, VerifiedCredentialsTotalTxs,
-};
-use litentry_primitives::{
-	Assertion, Identity, IndexingNetwork, IndexingNetworks, ParentchainBlockNumber,
 };
 use log::*;
 use std::{collections::HashSet, string::String, vec, vec::Vec};
@@ -124,7 +121,7 @@ pub fn build(
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVCFailed(Assertion::A8(networks), e.to_error_detail()))
+			Err(VCMPError::RequestVCFailed(Assertion::A8(networks), e.into_error_detail()))
 		},
 	}
 }
@@ -215,7 +212,6 @@ fn get_total_tx_ranges(total_txs: u64) -> (u64, u64) {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use litentry_primitives::IndexingNetworks;
 
 	#[test]
 	fn assertion_networks_to_verifed_network_works() {

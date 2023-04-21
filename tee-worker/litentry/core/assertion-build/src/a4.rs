@@ -63,7 +63,7 @@ extern crate sgx_tstd as std;
 /// - `from_date` with >= op, nor
 /// - `value` is false but the `from_date` is something other than 2017-01-01.
 ///  
-use crate::{Error, Result};
+use crate::*;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
@@ -71,9 +71,6 @@ use lc_credentials::Credential;
 use lc_data_providers::{
 	graphql::{GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork},
 	vec_to_string,
-};
-use litentry_primitives::{
-	Assertion, ErrorDetail, Identity, ParameterString, ParentchainBlockNumber, ASSERTION_FROM_DATE,
 };
 use log::*;
 use std::{
@@ -105,7 +102,7 @@ pub fn build(
 	);
 
 	let q_min_balance = vec_to_string(min_balance.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(Assertion::A4(min_balance.clone()), ErrorDetail::ParseError)
+		VCMPError::RequestVCFailed(Assertion::A4(min_balance.clone()), ErrorDetail::ParseError)
 	})?;
 
 	let mut client = GraphQLClient::new();
@@ -224,7 +221,7 @@ pub fn build(
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVCFailed(Assertion::A4(min_balance), e.to_error_detail()))
+			Err(VCMPError::RequestVCFailed(Assertion::A4(min_balance), e.into_error_detail()))
 		},
 	}
 }

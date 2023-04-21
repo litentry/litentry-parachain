@@ -20,16 +20,12 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::Result;
+use crate::*;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::{discord_litentry::DiscordLitentryClient, vec_to_string};
-use litentry_primitives::{
-	Assertion, ErrorDetail, Identity, ParameterString, ParentchainBlockNumber, VCMPError,
-	Web2Network,
-};
 use log::*;
 use std::vec::Vec;
 
@@ -99,7 +95,7 @@ pub fn build(
 		},
 		Err(e) => {
 			error!("Generate unsigned credential A2 failed {:?}", e);
-			Err(VCMPError::RequestVCFailed(Assertion::A2(guild_id), e.to_error_detail()))
+			Err(VCMPError::RequestVCFailed(Assertion::A2(guild_id), e.into_error_detail()))
 		},
 	}
 }

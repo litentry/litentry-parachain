@@ -20,15 +20,12 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{Error, Result};
+use crate::*;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::twitter_official::TwitterOfficialClient;
-use litentry_primitives::{
-	Assertion, ErrorDetail, ErrorString, Identity, ParentchainBlockNumber, Web2Network,
-};
 use log::*;
 use std::{format, vec::Vec};
 
@@ -70,7 +67,7 @@ pub fn build(
 						},
 					Err(e) => {
 						log::warn!("Assertion6 request error:{:?}", e);
-						return Err(Error::RequestVCFailed(
+						return Err(VCMPError::RequestVCFailed(
 							Assertion::A6,
 							ErrorDetail::StfError(ErrorString::truncate_from(
 								format!("{:?}", e).into(),
@@ -126,7 +123,7 @@ pub fn build(
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVCFailed(Assertion::A6, e.to_error_detail()))
+			Err(VCMPError::RequestVCFailed(Assertion::A6, e.into_error_detail()))
 		},
 	}
 }
