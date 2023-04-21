@@ -52,7 +52,7 @@ pub fn build(
 	);
 
 	let q_min_balance = vec_to_string(min_balance.to_vec()).map_err(|_| {
-		VCMPError::RequestVCFailed(Assertion::A11(min_balance.clone()), ErrorDetail::ParseError)
+		Error::RequestVCFailed(Assertion::A11(min_balance.clone()), ErrorDetail::ParseError)
 	})?;
 
 	let mut client = GraphQLClient::new();
@@ -118,7 +118,7 @@ pub fn build(
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
-			Err(VCMPError::RequestVCFailed(Assertion::A11(min_balance), e.into_error_detail()))
+			Err(Error::RequestVCFailed(Assertion::A11(min_balance), e.into_error_detail()))
 		},
 	}
 }

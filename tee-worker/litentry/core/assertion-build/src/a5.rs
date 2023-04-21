@@ -50,10 +50,7 @@ pub fn build(
 
 	//ToDo: Check this string is a pure number or not, to avoid wasting API calls.
 	let original_tweet_id_s = vec_to_string(original_tweet_id.to_vec()).map_err(|_| {
-		VCMPError::RequestVCFailed(
-			Assertion::A5(original_tweet_id.clone()),
-			ErrorDetail::ParseError,
-		)
+		Error::RequestVCFailed(Assertion::A5(original_tweet_id.clone()), ErrorDetail::ParseError)
 	})?;
 
 	let mut value = false;
@@ -70,7 +67,7 @@ pub fn build(
 					.map_err(|e| {
 						// invalid permissions, bad original_tweet_id, rate limitation, etc
 						log::warn!("Assertion5 query_tweet error:{:?}", e);
-						VCMPError::RequestVCFailed(
+						Error::RequestVCFailed(
 							Assertion::A5(original_tweet_id.clone()),
 							ErrorDetail::StfError(ErrorString::truncate_from(
 								format!("{:?}", e).into(),
@@ -83,7 +80,7 @@ pub fn build(
 					.map_err(|e| {
 						// invalid permissions, rate limitation, etc
 						log::warn!("Assertion5 query_friendship error:{:?}", e);
-						VCMPError::RequestVCFailed(
+						Error::RequestVCFailed(
 							Assertion::A5(original_tweet_id.clone()),
 							ErrorDetail::StfError(ErrorString::truncate_from(
 								format!("{:?}", e).into(),
@@ -99,7 +96,7 @@ pub fn build(
 					.map_err(|e| {
 						// invalid permissions, rate limitation, bad original_tweet_id, etc
 						log::warn!("Assertion5 query_retweeted_by error:{:?}", e);
-						VCMPError::RequestVCFailed(
+						Error::RequestVCFailed(
 							Assertion::A5(original_tweet_id.clone()),
 							ErrorDetail::StfError(ErrorString::truncate_from(
 								format!("{:?}", e).into(),
@@ -136,7 +133,7 @@ pub fn build(
 		},
 		Err(e) => {
 			error!("Generate unsigned credential A5 failed {:?}", e);
-			Err(VCMPError::RequestVCFailed(Assertion::A5(original_tweet_id), e.into_error_detail()))
+			Err(Error::RequestVCFailed(Assertion::A5(original_tweet_id), e.into_error_detail()))
 		},
 	}
 }
