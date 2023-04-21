@@ -485,7 +485,7 @@ where
 				) {
 					Ok(()) =>
 						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
-							debug!("pushing user_shielding_key_set event to parachain calls ...");
+							debug!("pushing user_shielding_key_set event ...");
 							let id_graph =
 								ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph_with_max_len(&who, RETURNED_IDGRAPH_MAX_LEN);
 							calls.push(OpaqueCall::from_tuple(&(
@@ -497,7 +497,7 @@ where
 								hash,
 							)));
 						} else {
-							debug!("pushing error event to parachain calls ... error: UserShieldingKeyNotFound");
+							debug!("pushing error event ... error: UserShieldingKeyNotFound");
 							add_call_from_imp_error(
 								calls,
 								node_metadata_repo,
@@ -509,7 +509,7 @@ where
 							);
 						},
 					Err(e) => {
-						debug!("pushing error event to parachain calls ... error: {}", e);
+						debug!("pushing error event ... error: {}", e);
 						add_call_from_imp_error(
 							calls,
 							node_metadata_repo,
@@ -548,7 +548,7 @@ where
 						parent_ss58_prefix,
 					) {
 						Ok(code) => {
-							debug!("pushing identity_created event to parachain calls ...");
+							debug!("pushing identity_created event ...");
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.identity_created_call_indexes())??,
@@ -559,7 +559,7 @@ where
 							)));
 						},
 						Err(e) => {
-							debug!("pushing error event to parachain calls ... error: {}", e);
+							debug!("pushing error event ... error: {}", e);
 							add_call_from_imp_error(
 								calls,
 								node_metadata_repo,
@@ -570,7 +570,7 @@ where
 						},
 					}
 				} else {
-					debug!("pushing error event to parachain calls ... error: UserShieldingKeyNotFound");
+					debug!("pushing error event ... error: UserShieldingKeyNotFound");
 					add_call_from_imp_error(
 						calls,
 						node_metadata_repo,
@@ -591,7 +591,7 @@ where
 				if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
 					match Self::remove_identity_runtime(enclave_account, who, identity.clone()) {
 						Ok(()) => {
-							debug!("pushing identity_removed event to parachain calls ...");
+							debug!("pushing identity_removed event ...");
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.identity_removed_call_indexes())??,
@@ -601,7 +601,7 @@ where
 							)));
 						},
 						Err(e) => {
-							debug!("pushing error event to parachain calls ... error: {}", e);
+							debug!("pushing error event ... error: {}", e);
 							add_call_from_imp_error(
 								calls,
 								node_metadata_repo,
@@ -612,7 +612,7 @@ where
 						},
 					}
 				} else {
-					debug!("pushing error event to parachain calls ... error: UserShieldingKeyNotFound");
+					debug!("pushing error event ... error: UserShieldingKeyNotFound");
 					add_call_from_imp_error(
 						calls,
 						node_metadata_repo,
@@ -646,7 +646,7 @@ where
 					bn,
 					hash,
 				) {
-					debug!("pushing error event to parachain calls ... error: {}", e);
+					debug!("pushing error event ... error: {}", e);
 					add_call_from_imp_error(
 						calls,
 						node_metadata_repo,
@@ -675,7 +675,7 @@ where
 						Ok(()) => {
 							let id_graph =
 									ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph_with_max_len(&who, RETURNED_IDGRAPH_MAX_LEN);
-							debug!("pushing identity_verified event to parachain calls ...");
+							debug!("pushing identity_verified event ...");
 							calls.push(OpaqueCall::from_tuple(&(
 								node_metadata_repo
 									.get_from_metadata(|m| m.identity_verified_call_indexes())??,
@@ -686,7 +686,7 @@ where
 							)));
 						},
 						Err(e) => {
-							debug!("pushing error event to parachain calls ... error: {}", e);
+							debug!("pushing error event ... error: {}", e);
 							add_call_from_imp_error(
 								calls,
 								node_metadata_repo,
@@ -697,7 +697,7 @@ where
 						},
 					}
 				} else {
-					debug!("pushing error event to parachain calls ... error: UserShieldingKeyNotFound");
+					debug!("pushing error event ... error: UserShieldingKeyNotFound");
 					add_call_from_imp_error(
 						calls,
 						node_metadata_repo,
@@ -709,7 +709,7 @@ where
 				Ok(())
 			},
 			TrustedCall::request_vc(enclave_account, who, assertion, shard, bn, hash) => {
-				// the user shileding key check is inside `Self::request_vc`
+				// the user shielding key check is inside `Self::request_vc`
 				if let Err(e) =
 					Self::request_vc(enclave_account, &shard, who.clone(), assertion, bn, hash)
 				{
@@ -840,7 +840,7 @@ fn add_call_from_imp_error<NodeMetadataRepository>(
 	NodeMetadataRepository::MetadataType:
 		TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix,
 {
-	debug!("pushing imp_some_error event to parachain calls ...");
+	debug!("pushing imp_some_error event ...");
 	// TODO: anyway to simplify this? `and_then` won't be applicable here
 	match node_metadata_repo.get_from_metadata(|m| m.imp_some_error_call_indexes()) {
 		Ok(Ok(c)) => calls.push(OpaqueCall::from_tuple(&(c, account, e, hash))),
@@ -861,7 +861,7 @@ fn add_call_from_vcmp_error<NodeMetadataRepository>(
 	NodeMetadataRepository::MetadataType:
 		TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix,
 {
-	debug!("pushing vcmp_some_error event to parachain calls ...");
+	debug!("pushing vcmp_some_error event ...");
 	match node_metadata_repo.get_from_metadata(|m| m.vcmp_some_error_call_indexes()) {
 		Ok(Ok(c)) => calls.push(OpaqueCall::from_tuple(&(c, account, e, hash))),
 		Ok(e) => warn!("error getting VCMP call indexes: {:?}", e),
