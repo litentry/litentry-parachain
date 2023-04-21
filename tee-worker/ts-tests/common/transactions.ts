@@ -1,6 +1,6 @@
 import { ApiPromise } from '@polkadot/api';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
-import { IntegrationTestContext, TransactionSubmit } from './type-definitions';
+import { IntegrationTestContext, TransactionSubmit, RequestEvent } from './type-definitions';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { getListenTimeoutInBlocks } from './utils';
 import { EventRecord, Event } from '@polkadot/types/interfaces';
@@ -91,7 +91,7 @@ export async function listenEvent(
             if (startBlock == 0) startBlock = currentBlockNumber;
             const timeout = await getListenTimeoutInBlocks(api);
             if (currentBlockNumber > startBlock + timeout) {
-                reject('timeout');
+                reject('Timeout: No event received, please check the worker logs for more details');
                 return;
             }
             console.log(`\n--------- block #${header.number}, hash ${header.hash} ---------\n`);
@@ -106,9 +106,17 @@ export async function listenEvent(
                     ? console.log(colors.green(`Event[${i}]: ${s}.${m} ${d}`))
                     : console.log(`Event[${i}]: ${s}.${m} ${d}`);
             });
-
             const filtered_events = records.filter(({ phase, event }) => {
-                return phase.isApplyExtrinsic && section === event.section && methods.includes(event.method);
+                if (
+                    phase.isApplyExtrinsic &&
+                    section === event.section &&
+                    !methods.includes(event.method) &&
+                    !(event.method in RequestEvent)
+                ) {
+                    reject(`Expect event ${methods} but received unexpected event ${event.method}`);
+                } else {
+                    return phase.isApplyExtrinsic && section === event.section && methods.includes(event.method);
+                }
             });
 
             //We're going to have to filter by signer, because multiple txs is going to mix
@@ -176,7 +184,8 @@ export async function sendTxsWithUtility(
     signer: KeyringPair,
     txs: TransactionSubmit[],
     pallet: string,
-    events: string[]
+    events: string[],
+    requestEvent?: string
 ): Promise<string[] | Event[]> {
     //ensure the tx is in block
     const isInBlockPromise = new Promise((resolve) => {
