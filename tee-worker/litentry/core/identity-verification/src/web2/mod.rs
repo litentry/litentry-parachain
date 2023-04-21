@@ -23,11 +23,7 @@ use crate::sgx_reexport_prelude::*;
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
-use crate::{
-	ensure,
-	error::{from_data_provider_error, from_hex_error, Error},
-	get_expected_raw_message,
-};
+use crate::{ensure, error::Error, get_expected_raw_message};
 use codec::{Decode, Encode};
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
 use itp_utils::stringify::account_id_to_string;
@@ -38,7 +34,8 @@ use lc_data_providers::{
 };
 use lc_stf_task_sender::Web2IdentityVerificationRequest;
 use litentry_primitives::{
-	DiscordValidationData, ErrorDetail, Identity, TwitterValidationData, Web2ValidationData,
+	DiscordValidationData, ErrorDetail, Identity, IntoErrorDetail, TwitterValidationData,
+	Web2ValidationData,
 };
 use log::*;
 use std::{fmt::Debug, string::ToString, vec::Vec};
@@ -54,12 +51,13 @@ pub trait DecryptionVerificationPayload<K: ShieldingCryptoDecrypt> {
 
 fn payload_from_tweet(tweet: &Tweet) -> Result<Vec<u8>, Error> {
 	hex::decode(tweet.text.strip_prefix("0x").unwrap_or(tweet.text.as_str()))
-		.map_err(from_hex_error)
+		.map_err(|_| Error::VerifyIdentityFailed(ErrorDetail::ParseError))
 }
 
 fn payload_from_discord(discord: &DiscordMessage) -> Result<Vec<u8>, Error> {
 	let data = &discord.content;
-	hex::decode(data.strip_prefix("0x").unwrap_or(data.as_str())).map_err(from_hex_error)
+	hex::decode(data.strip_prefix("0x").unwrap_or(data.as_str()))
+		.map_err(|_| Error::VerifyIdentityFailed(ErrorDetail::ParseError))
 }
 
 pub fn verify(request: &Web2IdentityVerificationRequest) -> Result<(), Error> {
@@ -72,8 +70,9 @@ pub fn verify(request: &Web2IdentityVerificationRequest) -> Result<(), Error> {
 	let (user_id, payload) = match request.validation_data {
 		Web2ValidationData::Twitter(TwitterValidationData { ref tweet_id }) => {
 			let mut client = TwitterOfficialClient::v2();
-			let tweet: Tweet =
-				client.query_tweet(tweet_id.to_vec()).map_err(from_data_provider_error)?;
+			let tweet: Tweet = client
+				.query_tweet(tweet_id.to_vec())
+				.map_err(|e| Error::VerifyIdentityFailed(e.into_error_detail()))?;
 
 			let user_id = tweet
 				.get_user_id()
@@ -91,11 +90,11 @@ pub fn verify(request: &Web2IdentityVerificationRequest) -> Result<(), Error> {
 			let mut client = DiscordOfficialClient::new();
 			let message: DiscordMessage = client
 				.query_message(channel_id.to_vec(), message_id.to_vec())
-				.map_err(from_data_provider_error)?;
+				.map_err(|e| Error::VerifyIdentityFailed(e.into_error_detail()))?;
 
 			let user = client
 				.get_user_info(message.author.id.clone())
-				.map_err(from_data_provider_error)?;
+				.map_err(|e| Error::VerifyIdentityFailed(e.into_error_detail()))?;
 
 			let mut user_id = message.author.username.clone();
 			user_id.push_str(&'#'.to_string());
