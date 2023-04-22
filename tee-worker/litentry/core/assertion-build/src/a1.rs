@@ -20,13 +20,12 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::Result;
+use crate::*;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_stf_task_sender::MaxIdentityLength;
-use litentry_primitives::{Assertion, Identity, ParentchainBlockNumber, VCMPError};
 use log::*;
 use sp_runtime::BoundedVec;
 
@@ -71,7 +70,7 @@ pub fn build(
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
-			Err(VCMPError::RequestVCFailed(Assertion::A1, e.to_error_detail()))
+			Err(Error::RequestVCFailed(Assertion::A1, e.into_error_detail()))
 		},
 	}
 }
