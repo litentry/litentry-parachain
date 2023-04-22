@@ -73,7 +73,7 @@ describeLitentry('Test Identity', 0, (context) => {
         let resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
             'CreateIdentityFailed',
         ]);
-        await checkErrorDetail(resp_events, 'InvalidUserShieldingKey', true);
+        await checkErrorDetail(resp_events, 'UserShieldingKeyNotFound', true);
     });
 
     step('set user shielding key', async function () {
@@ -639,7 +639,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'Failed'
         );
 
-        await checkErrorDetail(charile_resp_remove_events_data, 'InvalidUserShieldingKey', false);
+        await checkErrorDetail(charile_resp_remove_events_data, 'UserShieldingKeyNotFound', false);
     });
 
     step('set error user shielding key', async function () {

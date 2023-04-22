@@ -575,7 +575,7 @@ where
 						calls,
 						node_metadata_repo,
 						Some(account),
-						IMPError::SetUserShieldingKeyFailed(ErrorDetail::UserShieldingKeyNotFound),
+						IMPError::CreateIdentityFailed(ErrorDetail::UserShieldingKeyNotFound),
 						hash,
 					);
 				}
@@ -617,7 +617,7 @@ where
 						calls,
 						node_metadata_repo,
 						Some(account),
-						IMPError::SetUserShieldingKeyFailed(ErrorDetail::UserShieldingKeyNotFound),
+						IMPError::RemoveIdentityFailed(ErrorDetail::UserShieldingKeyNotFound),
 						hash,
 					);
 				}
@@ -702,7 +702,7 @@ where
 						calls,
 						node_metadata_repo,
 						Some(account),
-						IMPError::SetUserShieldingKeyFailed(ErrorDetail::UserShieldingKeyNotFound),
+						IMPError::VerifyIdentityFailed(ErrorDetail::UserShieldingKeyNotFound),
 						hash,
 					);
 				}

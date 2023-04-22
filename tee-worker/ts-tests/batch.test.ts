@@ -109,7 +109,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
         const resp_events = await sendTxsWithUtility(context, context.substrateWallet.bob, txs, 'identityManagement', [
             'CreateIdentityFailed',
         ]);
-        await checkErrorDetail(resp_events, 'InvalidUserShieldingKey', true);
+        await checkErrorDetail(resp_events, 'UserShieldingKeyNotFound', true);
     });
     step('batch test: verify identity', async function () {
         let txs = await buildIdentityTxs(
