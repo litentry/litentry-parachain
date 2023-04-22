@@ -326,12 +326,16 @@ pub(crate) fn wait_until(
 	}
 }
 
+// TODO(Kai@Litentry):
+// only close the connection(return to the caller) when the top status is at least
+// `ready` so that the nonce for pending trusted calls can be correctly retrieved.
+// Let's check how it works.
+// Also see https://github.com/litentry/litentry-parachain/issues/1549
 fn connection_can_be_closed(top_status: TrustedOperationStatus) -> bool {
 	!matches!(
 		top_status,
-		TrustedOperationStatus::Submitted
+		TrustedOperationStatus::Ready
 			| TrustedOperationStatus::Future
-			| TrustedOperationStatus::Ready
 			| TrustedOperationStatus::Broadcast
 	)
 }
