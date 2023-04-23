@@ -48,9 +48,6 @@ describeLitentry('multiple accounts test', 10, async (context) => {
             txs.push(tx);
         }
         await context.api.tx.utility.batch(txs).signAndSend(context.substrateWallet.alice);
-        await listenEvent(context.api, 'balances', ['Transfer'], txs.length, [
-            u8aToHex(context.substrateWallet.alice.addressRaw),
-        ]);
     });
     //test with multiple accounts
     step('test set usershieldingkey with multiple accounts', async () => {

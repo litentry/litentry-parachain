@@ -321,6 +321,8 @@ export enum RequestEvent {
     VerifyIdentityRequested = 'VerifyIdentityRequested',
     RemoveIdentityRequested = 'RemoveIdentityRequested',
     VCRequested = 'VCRequested',
+    ItemCompleted = 'ItemCompleted',
+    BatchCompleted = 'BatchCompleted',
 }
 
 export type Assertion = {
