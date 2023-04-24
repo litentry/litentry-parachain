@@ -16,7 +16,7 @@ services:
       integritee-worker-2:
         condition: service_healthy
     environment:
-      - RUST_LOG=warn,ws=warn,itc_rpc_client=warn
+      - RUST_LOG=warn,ws=warn,itc_rpc_client=debug,integritee_cli=debug
       - FLAVOR_ID=offchain-worker
     networks:
       - integritee-test-network
