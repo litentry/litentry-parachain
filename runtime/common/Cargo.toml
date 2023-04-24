@@ -2,7 +2,7 @@
 authors = ["Litentry Dev"]
 edition = '2021'
 name = 'runtime-common'
-version = '0.9.15'
+version = '0.9.16'
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len"] }
