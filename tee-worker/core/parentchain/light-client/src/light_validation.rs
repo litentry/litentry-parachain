@@ -158,9 +158,12 @@ impl<Block: ParentchainBlockTrait, OcallApi: EnclaveOnChainOCallApi>
 
 	fn submit_xt_to_be_included(
 		&mut self,
-		relay_id: RelayId,
-		extrinsic: OpaqueExtrinsic,
+		_relay_id: RelayId,
+		_extrinsic: OpaqueExtrinsic,
 	) -> Result<(), Error> {
+		/*
+		// commented out, see https://github.com/litentry/litentry-parachain/issues/1617
+
 		let relay = self.light_validation_state.get_tracked_relay_mut(relay_id)?;
 		relay.verify_tx_inclusion.push(extrinsic);
 
@@ -168,6 +171,8 @@ impl<Block: ParentchainBlockTrait, OcallApi: EnclaveOnChainOCallApi>
 			"{} extrinsics in cache, waiting for inclusion verification",
 			relay.verify_tx_inclusion.len()
 		);
+
+		*/
 
 		Ok(())
 	}
