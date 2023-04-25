@@ -1,4 +1,4 @@
-import { ApiPromise } from '@polkadot/api';
+import { ApiPromise, SubmittableResult } from '@polkadot/api';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { IntegrationTestContext, TransactionSubmit, RequestEvent } from './type-definitions';
 import { KeyringPair } from '@polkadot/keyring/types';
@@ -10,15 +10,12 @@ import { expect } from 'chai';
 import colors from 'colors';
 //transactions utils
 export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrinsic<ApiTypes>, signer: KeyringPair) {
-    return new Promise<{ block: string; txHash: string }>(async (resolve, reject) => {
+    return new Promise<SubmittableResult>(async (resolve, reject) => {
         const nonce = await api.rpc.system.accountNextIndex(signer.address);
         await tx.signAndSend(signer, { nonce }, (result) => {
             if (result.status.isInBlock) {
                 console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
-                resolve({
-                    block: result.status.asInBlock.toString(),
-                    txHash: result.txHash.toHex(),
-                });
+                resolve(result);
             } else if (result.status.isInvalid) {
                 reject(`Transaction is ${result.status}`);
             }
@@ -54,129 +51,17 @@ export async function sendTxUntilInBlockList(
                             }
                         } else {
                             console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
-                            resolve({
-                                block: result.status.asInBlock.toString(),
-                                txHash: result.status.hash.toString(),
-                            });
+                            resolve(result);
                         }
                     } else if (result.status.isInvalid) {
                         reject(`Transaction is ${result.status}`);
                     }
                 });
             });
+
             return result;
         })
     );
-}
-
-// Subscribe to the chain until we get the first specified event with given `section` and `methods`.
-// We can listen to multiple `methods` as long as they are emitted in the same block.
-// The event consumer should do the decryption optionaly as it's event specific
-export async function listenEvent(
-    api: ApiPromise,
-    section: string,
-    methods: string[],
-    txsLength: number,
-    signers: HexString[]
-) {
-    return new Promise<Event[]>(async (resolve, reject) => {
-        let startBlock = 0;
-        let events: EventRecord[] = [];
-        const signerToIndexMap: Record<string, number> = {};
-        for (let i = 0; i < signers.length; i++) {
-            signerToIndexMap[signers[i]] = i;
-        }
-        const unsubscribe = await api.rpc.chain.subscribeNewHeads(async (header) => {
-            const currentBlockNumber = header.number.toNumber();
-            if (startBlock == 0) startBlock = currentBlockNumber;
-            const timeout = await getListenTimeoutInBlocks(api);
-            if (currentBlockNumber > startBlock + timeout) {
-                reject('Timeout: No event received, please check the worker logs for more details');
-                return;
-            }
-            console.log(`\n--------- block #${header.number}, hash ${header.hash} ---------\n`);
-            const apiAt = await api.at(header.hash);
-
-            const records: EventRecord[] = (await apiAt.query.system.events()) as any;
-            records.forEach((e, i) => {
-                const s = e.event.section;
-                const m = e.event.method;
-                const d = e.event.data;
-                section === s
-                    ? console.log(colors.green(`Event[${i}]: ${s}.${m} ${d}`))
-                    : console.log(`Event[${i}]: ${s}.${m} ${d}`);
-            });
-            const filtered_events = records.filter(({ phase, event }) => {
-                if (
-                    phase.isApplyExtrinsic &&
-                    section === event.section &&
-                    !methods.includes(event.method) &&
-                    !(event.method in RequestEvent)
-                ) {
-                    reject(`Expect event ${methods} but received unexpected event ${event.method}`);
-                } else {
-                    return phase.isApplyExtrinsic && section === event.section && methods.includes(event.method);
-                }
-            });
-
-            //We're going to have to filter by signer, because multiple txs is going to mix
-            const filtered_events_with_signer = filtered_events
-                .filter((event) => {
-                    const signerDatas = event.event.data.find((d) => {
-                        if (Array.isArray(d)) {
-                            return d.find((v) => signers.includes(v.toHex()));
-                        } else {
-                            return signers.includes(d.toHex());
-                        }
-                    });
-                    return !!signerDatas;
-                })
-                .sort((a, b) => {
-                    //We need sort by signers order
-                    //First convert the signers array into an object signerToIndexMap, where the keys are each element in the signers array and the values are the index of that element in the array.
-                    //Then, for each of the filtered events that match the given section and methods, the function uses the find function to locate the index of a specific parameter in the signers array.
-                    //Then, it sorts the events based on this index so that the resulting event array is sorted according to the order of the signers array.
-                    const signerIndexA =
-                        signerToIndexMap[
-                            a.event.data
-                                .find((d) => {
-                                    if (Array.isArray(d)) {
-                                        return d.find((v) => signers.includes(v.toHex()));
-                                    } else {
-                                        return signers.includes(d.toHex());
-                                    }
-                                })!
-                                .toHex()
-                        ];
-                    const signerIndexB =
-                        signerToIndexMap[
-                            b.event.data
-                                .find((d) => {
-                                    if (Array.isArray(d)) {
-                                        return d.find((v) => signers.includes(v.toHex()));
-                                    } else {
-                                        return signers.includes(d.toHex());
-                                    }
-                                })!
-                                .toHex()
-                        ];
-                    return signerIndexA - signerIndexB;
-                });
-
-            //There is no good compatibility method here.Only successful and failed events can be filtered normally, but it cannot filter error + successful events, which may need further optimization
-            const eventsToUse = filtered_events_with_signer.length > 0 ? filtered_events_with_signer : filtered_events;
-
-            events = [...events, ...eventsToUse];
-
-            if (events.length === txsLength) {
-                resolve(events.map((e) => e.event));
-
-                unsubscribe();
-
-                return;
-            }
-        });
-    });
 }
 
 export async function sendTxsWithUtility(
@@ -199,11 +84,7 @@ export async function sendTxsWithUtility(
     });
 
     await isInBlockPromise;
-
-    const resp_events = (await listenEvent(context.api, pallet, events, txs.length, [
-        u8aToHex(signer.addressRaw),
-    ])) as any;
-
+    const resp_events = await listenEvent(context.api, pallet, events, txs.length);
     expect(resp_events.length).to.be.equal(txs.length);
     return resp_events;
 }
@@ -215,17 +96,62 @@ export async function multiAccountTxSender(
     pallet: string,
     events: string[]
 ): Promise<Event[]> {
-    let signers_hex: HexString[] = [];
-    if (Array.isArray(signers)) {
-        for (let index = 0; index < signers.length; index++) {
-            signers_hex.push(u8aToHex(signers[index].addressRaw));
-        }
-    } else {
-        signers_hex.push(u8aToHex(signers.addressRaw));
-    }
-
-    await sendTxUntilInBlockList(context.api, txs, signers);
-    const resp_events = await listenEvent(context.api, pallet, events, txs.length, signers_hex);
+    (await sendTxUntilInBlockList(context.api, txs, signers)) as any;
+    const resp_events = await listenEvent(context.api, pallet, events, txs.length);
     expect(resp_events.length).to.be.equal(txs.length);
     return resp_events;
+}
+
+// Subscribe to the chain until we get the first specified event with given `section` and `methods`.
+// We can listen to multiple `methods` as long as they are emitted in the same block.
+// The event consumer should do the decryption optionaly as it's event specific
+export async function listenEvent(api: ApiPromise, section: string, methods: string[], txsLength: number) {
+    return new Promise<Event[]>(async (resolve, reject) => {
+        let startBlock = 0;
+        const unsubscribe = await api.rpc.chain.subscribeNewHeads(async (header) => {
+            const currentBlockNumber = header.number.toNumber();
+            if (startBlock == 0) startBlock = currentBlockNumber;
+            const timeout = await getListenTimeoutInBlocks(api);
+            if (currentBlockNumber > startBlock + timeout) {
+                reject('Timeout: No event received, please check the worker logs for more details');
+                return;
+            }
+            console.log(`\n--------- block #${header.number}, hash ${header.hash} ---------\n`);
+            const [signedBlock, apiAt] = await Promise.all([api.rpc.chain.getBlock(header.hash), api.at(header.hash)]);
+
+            const records: EventRecord[] = (await apiAt.query.system.events()) as any;
+
+            signedBlock.block.extrinsics.forEach((extrinsic, index) => {
+                const events = records.filter(({ phase }) => {
+                    return phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(index);
+                });
+                events.forEach((e, i) => {
+                    const s = e.event.section;
+                    const m = e.event.method;
+                    const d = e.event.data;
+
+                    section === s
+                        ? console.log(colors.green(`Event[${i}]: ${s}.${m} ${d}`))
+                        : console.log(`Event[${i}]: ${s}.${m} ${d}`);
+                });
+                const filtered_events = records.filter(({ phase, event }) => {
+                    if (
+                        phase.isApplyExtrinsic &&
+                        section === event.section &&
+                        !methods.includes(event.method) &&
+                        !(event.method in RequestEvent)
+                    ) {
+                        reject(`Expect event ${methods} but received unexpected event ${event.method}`);
+                    } else {
+                        return phase.isApplyExtrinsic && section === event.section && methods.includes(event.method);
+                    }
+                });
+                if (filtered_events.length === txsLength) {
+                    resolve(filtered_events.map((e) => e.event));
+                    unsubscribe();
+                    return;
+                }
+            });
+        });
+    });
 }
