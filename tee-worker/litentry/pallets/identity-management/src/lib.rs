@@ -39,6 +39,8 @@ pub mod identity_context;
 
 use frame_support::{pallet_prelude::*, traits::StorageVersion};
 use frame_system::pallet_prelude::*;
+use log::debug;
+
 pub use identity_context::IdentityContext;
 pub use litentry_primitives::{
 	ChallengeCode, Identity, ParentchainBlockNumber, SubstrateNetwork, UserShieldingKeyType,
@@ -338,10 +340,10 @@ pub mod pallet {
 		// get count of all keys account + identity in the IDGraphs
 		pub fn id_graph_stats() -> Option<Vec<(T::AccountId, u32)>> {
 			let mut stats: BTreeMap<T::AccountId, u32> = BTreeMap::new();
-			let mut default_value = 0_u32;
 			IDGraphs::<T>::iter().for_each(|item| {
 				let account = item.0;
 				let value = {
+					let mut default_value = 0_u32;
 					let value = stats.get_mut(&account).unwrap_or(&mut default_value);
 					*value += 1;
 
@@ -352,6 +354,7 @@ pub mod pallet {
 			});
 
 			let stats = stats.into_iter().map(|item| (item.0, item.1)).collect::<Vec<_>>();
+			debug!("IDGraph stats: {:?}", stats);
 			Some(stats)
 		}
 	}
