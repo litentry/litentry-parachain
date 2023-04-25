@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+pub mod id_graph_stats;
 pub mod send_erroneous_parentchain_call;
 pub mod set_challenge_code;
 pub mod set_user_shielding_preflight;
