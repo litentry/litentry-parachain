@@ -6,6 +6,7 @@ import { getListenTimeoutInBlocks } from './utils';
 import { EventRecord, Event } from '@polkadot/types/interfaces';
 import { expect } from 'chai';
 import colors from 'colors';
+
 //transactions utils
 export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrinsic<ApiTypes>, signer: KeyringPair) {
     return new Promise<SubmittableResult>(async (resolve, reject) => {
@@ -90,11 +91,11 @@ export async function sendTxsWithUtility(
 export async function multiAccountTxSender(
     context: IntegrationTestContext,
     txs: TransactionSubmit[],
-    signers: KeyringPair | KeyringPair[],
+    signers: KeyringPair[],
     pallet: string,
     events: string[]
 ): Promise<Event[]> {
-    (await sendTxUntilInBlockList(context.api, txs, signers)) as any;
+    await sendTxUntilInBlockList(context.api, txs, signers);
     const resp_events = await listenEvent(context.api, pallet, events, txs.length);
     expect(resp_events.length).to.be.equal(txs.length);
     return resp_events;
@@ -126,7 +127,7 @@ export async function listenEvent(api: ApiPromise, section: string, methods: str
                     const m = e.event.method;
                     const d = e.event.data;
 
-                    section === s
+                    section === s && e.phase.asApplyExtrinsic.eq(index)
                         ? console.log(colors.green(`Event[${i}]: ${s}.${m} ${d}`))
                         : console.log(`Event[${i}]: ${s}.${m} ${d}`);
                 });
