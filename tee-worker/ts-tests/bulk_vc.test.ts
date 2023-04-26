@@ -2,13 +2,13 @@ import { step } from 'mocha-steps';
 import { checkVc, describeLitentry, encryptWithTeeShieldingKey } from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
-import { u8aToHex } from '@polkadot/util';
 import { Assertion, IndexingNetwork, TransactionSubmit } from './common/type-definitions';
 import { handleVcEvents } from './common/utils';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import { assert } from 'chai';
 import { HexString } from '@polkadot/util/types';
-import { listenEvent, multiAccountTxSender } from './common/transactions';
+import { SubmittableResult } from '@polkadot/api';
+import { multiAccountTxSender } from './common/transactions';
 const assertion = <Assertion>{
     A1: 'A1',
     A2: ['A2'],
@@ -44,10 +44,21 @@ describeLitentry('multiple accounts test', 10, async (context) => {
         for (let i = 0; i < substrateSigners.length; i++) {
             //1 token
             const tx = context.api.tx.balances.transfer(substrateSigners[i].address, '1000000000000');
-
             txs.push(tx);
         }
-        await context.api.tx.utility.batch(txs).signAndSend(context.substrateWallet.alice);
+
+        await new Promise((resolve) => {
+            context.api.tx.utility
+                .batch(txs)
+                .signAndSend(context.substrateWallet.alice, async (result: SubmittableResult) => {
+                    if (result.status.isInBlock) {
+                        console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
+                        resolve(result.status);
+                    } else if (result.status.isInvalid) {
+                        console.log(`Transaction is ${result.status}`);
+                    }
+                });
+        });
     });
     //test with multiple accounts
     step('test set usershieldingkey with multiple accounts', async () => {

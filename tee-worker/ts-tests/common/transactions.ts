@@ -4,8 +4,6 @@ import { IntegrationTestContext, TransactionSubmit, RequestEvent } from './type-
 import { KeyringPair } from '@polkadot/keyring/types';
 import { getListenTimeoutInBlocks } from './utils';
 import { EventRecord, Event } from '@polkadot/types/interfaces';
-import { HexString } from '@polkadot/util/types';
-import { u8aToHex } from '@polkadot/util';
 import { expect } from 'chai';
 import colors from 'colors';
 //transactions utils
