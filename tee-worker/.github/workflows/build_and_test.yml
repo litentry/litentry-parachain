@@ -21,14 +21,14 @@ env:
 jobs:
   cancel_previous_runs:
     name: Cancel Previous Runs
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: styfle/cancel-workflow-action@0.11.0
         with:
           access_token: ${{ secrets.GITHUB_TOKEN }}
 
   build-test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
@@ -74,7 +74,6 @@ jobs:
 
       - name: Test Enclave # cargo test is not supported in the enclave, see: https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
         run: docker run --name ${{ env.BUILD_CONTAINER_NAME }} integritee-worker-${{ matrix.flavor_id }}-${{ github.sha }} test --all
-        continue-on-error: true
 
       - name: Export worker image(s)
         run: |
@@ -94,8 +93,8 @@ jobs:
           path: integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }}.tar.gz
 
   clippy:
-    runs-on: ubuntu-latest
-    container: "integritee/integritee-dev:0.1.12"
+    runs-on: ubuntu-22.04
+    container: "integritee/integritee-dev:0.1.13"
     steps:
       - uses: actions/checkout@v3
       - name: init rust
@@ -129,10 +128,10 @@ jobs:
 
       - name: Fail-fast; cancel other jobs
         if: failure()
-        uses: andymckay/cancel-action@0.2
+        uses: andymckay/cancel-action@0.3
 
   fmt:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
       - name: init rust
@@ -150,17 +149,17 @@ jobs:
 
       - name: Fail-fast; cancel other jobs
         if: failure()
-        uses: andymckay/cancel-action@0.2
+        uses: andymckay/cancel-action@0.3
 
   integration-tests:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     if: ${{ always() }}
     needs: build-test
     env:
       WORKER_IMAGE_TAG: integritee-worker:dev
       CLIENT_IMAGE_TAG: integritee-cli:dev
       COINMARKETCAP_KEY: ${{ secrets.COINMARKETCAP_KEY }}
-      TEERACLE_INTERVAL_SECONDS: 4
+      TEERACLE_INTERVAL_SECONDS: 10
 
     strategy:
       fail-fast: false
@@ -253,7 +252,7 @@ jobs:
   release:
     name: Draft Release
     if: startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: [build-test, integration-tests]
     outputs:
       release_url: ${{ steps.create-release.outputs.html_url }}

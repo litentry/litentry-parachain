@@ -44,7 +44,11 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             ['UserShieldingKeySet']
         );
         const [alice] = await handleIdentityEvents(context, aesKey, resp_events, 'UserShieldingKeySet');
-        assert.equal(alice, u8aToHex(context.substrateWallet.alice.addressRaw), 'alice shielding key should be set');
+        assert.equal(
+            alice.who,
+            u8aToHex(context.substrateWallet.alice.addressRaw),
+            'alice shielding key should be set'
+        );
     });
 
     step('batch test: create identities', async function () {
@@ -105,7 +109,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
         const resp_events = await sendTxsWithUtility(context, context.substrateWallet.bob, txs, 'identityManagement', [
             'CreateIdentityFailed',
         ]);
-        await checkErrorDetail(resp_events, 'InvalidUserShieldingKey', true);
+        await checkErrorDetail(resp_events, 'UserShieldingKeyNotFound', true);
     });
     step('batch test: verify identity', async function () {
         let txs = await buildIdentityTxs(

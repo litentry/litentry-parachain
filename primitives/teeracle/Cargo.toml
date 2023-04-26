@@ -15,7 +15,7 @@ common-primitives = { path = "../common", default-features = false }
 substrate-fixed = { tag = "v0.5.9", default-features = false, git = "https://github.com/encointer/substrate-fixed.git" }
 
 # substrate
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 
 
 [features]

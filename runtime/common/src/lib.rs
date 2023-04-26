@@ -26,8 +26,10 @@ pub mod tests;
 
 pub mod xcm_impl;
 
+#[cfg(feature = "runtime-benchmarks")]
+use frame_support::assert_ok;
+
 use frame_support::{
-	assert_ok,
 	pallet_prelude::DispatchClass,
 	parameter_types, sp_runtime,
 	traits::{Currency, EitherOfDiverse, EnsureOrigin, OnUnbalanced, OriginTrait},
@@ -59,7 +61,7 @@ pub const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
 pub const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
 	WEIGHT_REF_TIME_PER_SECOND.saturating_div(2),
-	cumulus_primitives_core::relay_chain::v2::MAX_POV_SIZE as u64,
+	cumulus_primitives_core::relay_chain::MAX_POV_SIZE as u64,
 );
 
 pub mod currency {
@@ -316,8 +318,8 @@ where
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	fn successful_origin() -> Origin {
-		Origin::root()
+	fn try_successful_origin() -> Result<Origin, ()> {
+		Ok(Origin::root())
 	}
 }
 

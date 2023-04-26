@@ -17,7 +17,9 @@
 #![allow(clippy::useless_conversion)]
 
 use frame_support::{
-	match_types, parameter_types,
+	match_types,
+	pallet_prelude::ConstU32,
+	parameter_types,
 	traits::{Everything, Nothing},
 	weights::IdentityFee,
 	PalletId,
@@ -25,20 +27,21 @@ use frame_support::{
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
+use xcm_builder::{ConvertedConcreteId, NoChecking};
 // Litentry: The CheckAccount implementation is forced by the bug of FungiblesAdapter.
 // We should replace () regarding fake_pallet_id account after our PR passed.
 use sp_runtime::traits::AccountIdConversion;
 use xcm::latest::prelude::*;
 use xcm_builder::{
-	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom,
-	ConvertedConcreteAssetId, CurrencyAdapter, EnsureXcmOrigin, FixedWeightBounds,
-	FungiblesAdapter, IsConcrete, LocationInverter, ParentIsPreset, RelayChainAsNative,
-	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
-	SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
+	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, CurrencyAdapter,
+	EnsureXcmOrigin, FixedWeightBounds, FungiblesAdapter, IsConcrete, ParentIsPreset,
+	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
+	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
+	UsingComponents,
 };
 use xcm_executor::{traits::JustTry, XcmExecutor};
 
-use core_primitives::{AccountId, XcmV2Weight};
+use core_primitives::{AccountId, Weight};
 use runtime_common::{
 	xcm_impl::{
 		AccountIdToMultiLocation, AssetIdMuliLocationConvert, CurrencyId,
@@ -52,17 +55,17 @@ use runtime_common::{
 use crate::tests::setup::ParachainXcmRouter;
 
 use super::{
-	AssetId, AssetManager, Balance, Balances, DealWithFees, ParachainInfo, PolkadotXcm, Runtime,
-	RuntimeCall, RuntimeEvent, RuntimeOrigin, Tokens, Treasury,
+	AllPalletsWithSystem, AssetId, AssetManager, Balance, Balances, DealWithFees, ParachainInfo,
+	PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, Tokens, Treasury,
 };
 #[cfg(not(test))]
 use super::{ParachainSystem, XcmpQueue};
 
 parameter_types! {
 	pub const RelayLocation: MultiLocation = MultiLocation::parent();
-	pub const RelayNetwork: NetworkId = NetworkId::Any;
+	pub const RelayNetwork: Option<NetworkId> = None;
 	pub RelayChainOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
-	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
+	pub UniversalLocation: InteriorMultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
 }
 
 /// Type for specifying how a `MultiLocation` can be converted into an `AccountId`. This is used
@@ -101,13 +104,13 @@ pub type ForeignFungiblesTransactor = FungiblesAdapter<
 	// Use this fungibles implementation
 	Tokens,
 	// Use this currency when it is a fungible asset matching the given location or name:
-	ConvertedConcreteAssetId<AssetId, Balance, AssetIdMuliLocationConvert<Runtime>, JustTry>,
+	ConvertedConcreteId<AssetId, Balance, AssetIdMuliLocationConvert<Runtime>, JustTry>,
 	// Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
 	AccountId,
 	// We dont allow teleports.
-	Nothing,
+	NoChecking,
 	// We dont track any teleports
 	TempAccount,
 >;
@@ -147,7 +150,7 @@ pub type XcmOriginToTransactDispatchOrigin = (
 parameter_types! {
 	// One XCM operation is 1_000_000_000 weight - almost certainly a conservative estimate.
 	// How much we charge for XCM from remote chain per XCM command.
-	pub UnitWeightCost: XcmV2Weight = 200_000_000u64;
+	pub UnitWeightCost: Weight = Weight::from_ref_time(200_000_000u64);
 	pub const MaxInstructions: u32 = 100;
 }
 
@@ -168,6 +171,7 @@ pub type Barriers = (
 parameter_types! {
 	/// Xcm fees will go to the treasury account
 	pub XcmFeesAccount: AccountId = Treasury::account_id();
+	pub const MaxAssetsIntoHolding: u32 = 64;
 }
 
 pub type Traders = (
@@ -191,12 +195,7 @@ pub type Traders = (
 		AssetManager,
 		XcmFeesToAccount<
 			Tokens,
-			ConvertedConcreteAssetId<
-				AssetId,
-				Balance,
-				AssetIdMuliLocationConvert<Runtime>,
-				JustTry,
-			>,
+			ConvertedConcreteId<AssetId, Balance, AssetIdMuliLocationConvert<Runtime>, JustTry>,
 			AccountId,
 			XcmFeesAccount,
 		>,
@@ -217,7 +216,7 @@ impl xcm_executor::Config for XcmConfig {
 	// want.
 	type IsReserve = MultiNativeAsset;
 	type IsTeleporter = (); // Teleporting is disabled.
-	type LocationInverter = LocationInverter<Ancestry>;
+	type UniversalLocation = UniversalLocation;
 	type Barrier = Barriers;
 	type Weigher = XcmWeigher;
 	// Litentry: This is the tool used for calculating that inside XcmExecutor vm, how to transfer
@@ -230,6 +229,15 @@ impl xcm_executor::Config for XcmConfig {
 	type AssetTrap = PolkadotXcm;
 	type AssetClaims = PolkadotXcm;
 	type SubscriptionService = PolkadotXcm;
+	type PalletInstancesInfo = AllPalletsWithSystem;
+	type MaxAssetsIntoHolding = MaxAssetsIntoHolding;
+	type AssetLocker = ();
+	type AssetExchanger = ();
+	type FeeManager = ();
+	type MessageExporter = ();
+	type UniversalAliases = Nothing;
+	type CallDispatcher = RuntimeCall;
+	type SafeCallFilter = Everything;
 }
 
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
@@ -245,7 +253,7 @@ pub type XcmRouter = ParachainXcmRouter<ParachainInfo>;
 pub type XcmRouter = (
 	// Two routers - use UMP to communicate with the relay chain:
 	// We use PolkadotXcm to confirm the XCM Version; Use () instead if pass anyway
-	cumulus_primitives_utility::ParentAsUmp<ParachainSystem, PolkadotXcm>,
+	cumulus_primitives_utility::ParentAsUmp<ParachainSystem, PolkadotXcm, ()>,
 	// ..and XCMP to communicate with the sibling chains.
 	XcmpQueue,
 );
@@ -277,8 +285,13 @@ parameter_types! {
 			Parachain(ParachainInfo::parachain_id().into())
 		)
 	};
-	pub const BaseXcmWeight: XcmV2Weight = 100_000_000u64;
+	pub const BaseXcmWeight: Weight = Weight::from_ref_time(100_000_000u64);
 	pub const MaxAssetsForTransfer: usize = 3;
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+parameter_types! {
+	pub ReachableDest: Option<MultiLocation> = Some(Parent.into());
 }
 
 impl pallet_xcm::Config for Runtime {
@@ -301,12 +314,20 @@ impl pallet_xcm::Config for Runtime {
 	// Rule.
 	type XcmReserveTransferFilter = Everything;
 	type Weigher = XcmWeigher;
-	type LocationInverter = LocationInverter<Ancestry>;
+	type UniversalLocation = UniversalLocation;
 	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeCall = RuntimeCall;
 	const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
 	// ^ Override for AdvertisedXcmVersion default
 	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
+	type Currency = Balances;
+	type CurrencyMatcher = ();
+	type TrustedLockers = ();
+	type SovereignAccountOf = LocationToAccountId;
+	type MaxLockers = ConstU32<8>;
+	type WeightInfo = pallet_xcm::TestWeightInfo;
+	#[cfg(feature = "runtime-benchmarks")]
+	type ReachableDest = ReachableDest;
 }
 
 impl cumulus_pallet_xcm::Config for Runtime {
@@ -326,7 +347,7 @@ impl orml_xtokens::Config for Runtime {
 	type MinXcmFee = ParachainMinFee;
 	type Weigher = XcmWeigher;
 	type BaseXcmWeight = BaseXcmWeight;
-	type LocationInverter = LocationInverter<Ancestry>;
+	type UniversalLocation = UniversalLocation;
 	type MaxAssetsForTransfer = MaxAssetsForTransfer;
 	type ReserveProvider = AbsoluteReserveProvider;
 }

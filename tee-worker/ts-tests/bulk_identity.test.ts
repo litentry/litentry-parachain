@@ -70,7 +70,7 @@ describeLitentry('multiple accounts test', 2, async (context) => {
             substrateSigners.length,
             'set usershieldingkey with multiple accounts check fail'
         );
-        event_datas.forEach((data: string, index: number) => {
+        event_datas.forEach((data: any, index: number) => {
             assert.equal(
                 data,
                 u8aToHex(substrateSigners[index].addressRaw),

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use cumulus_primitives_core::ParaId;
+use cumulus_primitives_core::{InteriorMultiLocation, ParaId};
 use frame_support::{match_types, parameter_types};
 use polkadot_runtime_parachains::origin;
 use xcm::latest::prelude::{Here, MultiLocation, NetworkId, Parachain, X1};
@@ -27,9 +27,9 @@ use xcm_builder::{
 use core_primitives::AccountId;
 
 parameter_types! {
-	pub const KsmLocation: MultiLocation = Here.into();
-	pub const KusamaNetwork: NetworkId = NetworkId::Kusama;
-	pub Ancestry: MultiLocation = Here.into();
+	pub KsmLocation: MultiLocation = Here.into();
+	pub const KusamaNetwork: Option<NetworkId> = Some(NetworkId::Kusama);
+	pub UniversalLocation: InteriorMultiLocation = Here;
 }
 
 match_types! {
@@ -59,7 +59,7 @@ pub type LocalOriginConverter<O> = (
 macro_rules! decl_test_relay_chain_runtime {
 	($runtime:ident) => {
         use frame_support::{
-            traits::{ConstU128, ConstU32, ConstU64, Everything},
+            traits::{ConstU128, ConstU32, ConstU64, Everything, Nothing},
             weights::IdentityFee,
         };
         use cumulus_primitives_core::ParaId;
@@ -76,7 +76,7 @@ macro_rules! decl_test_relay_chain_runtime {
             AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
             AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, ChildParachainAsNative,
             ChildParachainConvertsVia, CurrencyAdapter as XcmCurrencyAdapter, FixedWeightBounds,
-            IsChildSystemParachain, IsConcrete, LocationInverter, SignedAccountId32AsNative,
+            IsChildSystemParachain, IsConcrete, SignedAccountId32AsNative,
             SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
         };
         use runtime_common::tests::setup::relay::{SovereignAccountOf,LocalAssetTransactor,KsmLocation,KusamaNetwork};
@@ -145,6 +145,15 @@ macro_rules! decl_test_relay_chain_runtime {
 			AllowSubscriptionsFrom<OnlyParachains>,
 		);
 
+		parameter_types! {
+			pub const MaxAssetsIntoHolding: u32 = 64;
+			/// The amount of weight an XCM operation takes. This is a safe overestimate.
+			pub const BaseXcmWeight: Weight = Weight::from_ref_time(10);
+			/// Maximum number of instructions in a single XCM fragment. A sanity check against weight
+			/// calculations getting too crazy.
+			pub const MaxInstructions: u32 = 100;
+		}
+
 		pub struct XcmConfig;
 		impl xcm_executor::Config for XcmConfig {
 			type RuntimeCall = RuntimeCall;
@@ -153,18 +162,32 @@ macro_rules! decl_test_relay_chain_runtime {
 			type OriginConverter = LocalOriginConverter<RuntimeOrigin>;
 			type IsReserve = ();
 			type IsTeleporter = ();
-			type LocationInverter = LocationInverter<Ancestry>;
+			type UniversalLocation = UniversalLocation;
 			type Barrier = Barrier; // This is the setting should be same from Kusama
-			type Weigher = FixedWeightBounds<ConstU64<10>, RuntimeCall, ConstU32<100>>;
+			type Weigher = FixedWeightBounds<BaseXcmWeight, RuntimeCall, MaxInstructions>;
 			type Trader =
 				UsingComponents<IdentityFee<Balance>, KsmLocation, AccountId, Balances, ()>;
 			type ResponseHandler = ();
 			type AssetTrap = ();
+			type AssetLocker = ();
+			type AssetExchanger = ();
 			type AssetClaims = ();
 			type SubscriptionService = XcmPallet;
+			type PalletInstancesInfo = AllPalletsWithSystem;
+			type MaxAssetsIntoHolding = MaxAssetsIntoHolding;
+			type FeeManager = ();
+			type MessageExporter = ();
+			type UniversalAliases = Nothing;
+			type CallDispatcher = RuntimeCall;
+			type SafeCallFilter = Everything;
 		}
 
 		pub type LocalOriginToLocation = SignedToAccountId32<RuntimeOrigin, AccountId, KusamaNetwork>;
+
+		#[cfg(feature = "runtime-benchmarks")]
+		parameter_types! {
+			pub ReachableDest: Option<MultiLocation> = Some(Parent.into());
+		}
 
 		impl pallet_xcm::Config for RelayChainRuntime {
 			type RuntimeEvent = RuntimeEvent;
@@ -176,12 +199,20 @@ macro_rules! decl_test_relay_chain_runtime {
 			type XcmExecutor = XcmExecutor<XcmConfig>;
 			type XcmTeleportFilter = Everything;
 			type XcmReserveTransferFilter = Everything;
-			type Weigher = FixedWeightBounds<ConstU64<10>, RuntimeCall, ConstU32<100>>;
-			type LocationInverter = LocationInverter<Ancestry>;
+			type Weigher = FixedWeightBounds<BaseXcmWeight, RuntimeCall, MaxInstructions>;
+			type UniversalLocation = UniversalLocation;
 			type RuntimeOrigin = RuntimeOrigin;
 			type RuntimeCall = RuntimeCall;
 			const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
 			type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
+			type Currency = Balances;
+			type CurrencyMatcher = IsConcrete<KsmLocation>;
+			type TrustedLockers = ();
+			type SovereignAccountOf = SovereignAccountOf;
+			type MaxLockers = ConstU32<8>;
+			type WeightInfo = pallet_xcm::TestWeightInfo;
+			#[cfg(feature = "runtime-benchmarks")]
+			type ReachableDest = ReachableDest;
 		}
 
 		impl ump::Config for RelayChainRuntime {

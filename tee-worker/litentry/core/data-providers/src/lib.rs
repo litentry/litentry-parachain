@@ -50,7 +50,9 @@ use std::sync::RwLock;
 #[cfg(feature = "sgx")]
 use std::sync::SgxRwLock as RwLock;
 
+use litentry_primitives::{ErrorDetail, ErrorString, IntoErrorDetail};
 use std::{
+	format,
 	string::{String, ToString},
 	vec::Vec,
 };
@@ -158,6 +160,14 @@ pub enum Error {
 
 	#[error("GraphQL error: {0}")]
 	GraphQLError(String),
+}
+
+impl IntoErrorDetail for Error {
+	fn into_error_detail(self) -> ErrorDetail {
+		ErrorDetail::DataProviderError(ErrorString::truncate_from(
+			format!("{self:?}").as_bytes().to_vec(),
+		))
+	}
 }
 
 pub trait UserInfo {

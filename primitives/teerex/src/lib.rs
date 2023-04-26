@@ -140,6 +140,16 @@ impl QuotingEnclave {
 			tcb,
 		}
 	}
+
+	pub fn attributes_flags_mask_as_u64(&self) -> u64 {
+		let slice_as_array: [u8; 8] = self.attributes_mask[0..8].try_into().unwrap();
+		u64::from_le_bytes(slice_as_array)
+	}
+
+	pub fn attributes_flags_as_u64(&self) -> u64 {
+		let slice_as_array: [u8; 8] = self.attributes[0..8].try_into().unwrap();
+		u64::from_le_bytes(slice_as_array)
+	}
 }
 
 #[derive(Encode, Decode, Default, Clone, PartialEq, Eq, sp_core::RuntimeDebug, TypeInfo)]

@@ -20,16 +20,12 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::Result;
+use crate::*;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::{twitter_official::TwitterOfficialClient, vec_to_string};
-use litentry_primitives::{
-	Assertion, ErrorDetail, ErrorString, Identity, ParameterString, ParentchainBlockNumber,
-	VCMPError, Web2Network,
-};
 use log::*;
 use std::{format, vec::Vec};
 
@@ -54,10 +50,7 @@ pub fn build(
 
 	//ToDo: Check this string is a pure number or not, to avoid wasting API calls.
 	let original_tweet_id_s = vec_to_string(original_tweet_id.to_vec()).map_err(|_| {
-		VCMPError::RequestVCFailed(
-			Assertion::A5(original_tweet_id.clone()),
-			ErrorDetail::ParseError,
-		)
+		Error::RequestVCFailed(Assertion::A5(original_tweet_id.clone()), ErrorDetail::ParseError)
 	})?;
 
 	let mut value = false;
@@ -74,7 +67,7 @@ pub fn build(
 					.map_err(|e| {
 						// invalid permissions, bad original_tweet_id, rate limitation, etc
 						log::warn!("Assertion5 query_tweet error:{:?}", e);
-						VCMPError::RequestVCFailed(
+						Error::RequestVCFailed(
 							Assertion::A5(original_tweet_id.clone()),
 							ErrorDetail::StfError(ErrorString::truncate_from(
 								format!("{:?}", e).into(),
@@ -87,7 +80,7 @@ pub fn build(
 					.map_err(|e| {
 						// invalid permissions, rate limitation, etc
 						log::warn!("Assertion5 query_friendship error:{:?}", e);
-						VCMPError::RequestVCFailed(
+						Error::RequestVCFailed(
 							Assertion::A5(original_tweet_id.clone()),
 							ErrorDetail::StfError(ErrorString::truncate_from(
 								format!("{:?}", e).into(),
@@ -103,7 +96,7 @@ pub fn build(
 					.map_err(|e| {
 						// invalid permissions, rate limitation, bad original_tweet_id, etc
 						log::warn!("Assertion5 query_retweeted_by error:{:?}", e);
-						VCMPError::RequestVCFailed(
+						Error::RequestVCFailed(
 							Assertion::A5(original_tweet_id.clone()),
 							ErrorDetail::StfError(ErrorString::truncate_from(
 								format!("{:?}", e).into(),
@@ -140,7 +133,7 @@ pub fn build(
 		},
 		Err(e) => {
 			error!("Generate unsigned credential A5 failed {:?}", e);
-			Err(VCMPError::RequestVCFailed(Assertion::A5(original_tweet_id), e.to_error_detail()))
+			Err(Error::RequestVCFailed(Assertion::A5(original_tweet_id), e.into_error_detail()))
 		},
 	}
 }

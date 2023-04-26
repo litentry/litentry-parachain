@@ -418,6 +418,8 @@ pub fn run() -> Result<()> {
 		},
 		#[cfg(feature = "try-runtime")]
 		Some(Subcommand::TryRuntime(cmd)) => {
+			use core_primitives::MILLISECS_PER_BLOCK;
+			use try_runtime_cli::block_building_info::timestamp_with_aura_info;
 			let runner = cli.create_runner(cmd)?;
 
 			// grab the task manager.
@@ -431,24 +433,32 @@ pub fn run() -> Result<()> {
 				<E as NativeExecutionDispatch>::ExtendHostFunctions,
 			>;
 
+			let info_provider = timestamp_with_aura_info(MILLISECS_PER_BLOCK);
+
 			if runner.config().chain_spec.is_litmus() {
 				runner.async_run(|_| {
 					Ok((
-						cmd.run::<Block, HostFunctionsOf<LitmusParachainRuntimeExecutor>>(),
+						cmd.run::<Block, HostFunctionsOf<LitmusParachainRuntimeExecutor>, _>(Some(
+							info_provider,
+						)),
 						task_manager,
 					))
 				})
 			} else if runner.config().chain_spec.is_litentry() {
 				runner.async_run(|_| {
 					Ok((
-						cmd.run::<Block, HostFunctionsOf<LitentryParachainRuntimeExecutor>>(),
+						cmd.run::<Block, HostFunctionsOf<LitentryParachainRuntimeExecutor>, _>(
+							Some(info_provider),
+						),
 						task_manager,
 					))
 				})
 			} else if runner.config().chain_spec.is_rococo() {
 				runner.async_run(|_| {
 					Ok((
-						cmd.run::<Block, HostFunctionsOf<RococoParachainRuntimeExecutor>>(),
+						cmd.run::<Block, HostFunctionsOf<RococoParachainRuntimeExecutor>, _>(Some(
+							info_provider,
+						)),
 						task_manager,
 					))
 				})

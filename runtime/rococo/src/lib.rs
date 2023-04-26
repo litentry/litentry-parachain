@@ -34,7 +34,7 @@ use frame_support::{
 	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
 	PalletId, RuntimeDebug,
 };
-use frame_system::EnsureSignedBy;
+use frame_system::{EnsureRoot, EnsureSignedBy};
 use hex_literal::hex;
 
 use runtime_common::EnsureEnclaveSigner;
@@ -149,7 +149,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("rococo-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9156,
+	spec_version: 9160,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -347,8 +347,6 @@ impl pallet_timestamp::Config for Runtime {
 
 impl pallet_authorship::Config for Runtime {
 	type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Aura>;
-	type UncleGenerations = ConstU32<0>;
-	type FilterUncle = ();
 	type EventHandler = (ParachainStaking,);
 }
 
@@ -475,6 +473,7 @@ impl pallet_democracy::Config for Runtime {
 	type MaxProposals = ConstU32<100>;
 	type MaxDeposits = ConstU32<100>;
 	type MaxBlacklisted = ConstU32<100>;
+	type SubmitOrigin = frame_system::EnsureSigned<AccountId>;
 }
 
 parameter_types! {
@@ -491,6 +490,7 @@ impl pallet_collective::Config<CouncilInstance> for Runtime {
 	type MaxMembers = CouncilDefaultMaxMembers;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
 	type WeightInfo = weights::pallet_collective::WeightInfo<Runtime>;
+	type SetMembersOrigin = EnsureRoot<AccountId>;
 }
 
 impl pallet_membership::Config<CouncilMembershipInstance> for Runtime {
@@ -519,6 +519,7 @@ impl pallet_collective::Config<TechnicalCommitteeInstance> for Runtime {
 	type MaxMembers = CouncilDefaultMaxMembers;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
 	type WeightInfo = weights::pallet_collective::WeightInfo<Runtime>;
+	type SetMembersOrigin = EnsureRoot<AccountId>;
 }
 
 impl pallet_membership::Config<TechnicalCommitteeMembershipInstance> for Runtime {
@@ -681,6 +682,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type ControllerOrigin = EnsureRootOrAllCouncil;
 	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
 	type WeightInfo = weights::cumulus_pallet_xcmp_queue::WeightInfo<Runtime>;
+	type PriceForSiblingDelivery = ();
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {
@@ -1227,6 +1229,12 @@ impl_runtime_apis! {
 			len: u32,
 		) -> pallet_transaction_payment::FeeDetails<Balance> {
 			TransactionPayment::query_fee_details(uxt, len)
+		}
+		fn query_weight_to_fee(weight: Weight) -> Balance {
+			TransactionPayment::weight_to_fee(weight)
+		}
+		fn query_length_to_fee(length: u32) -> Balance {
+			TransactionPayment::length_to_fee(length)
 		}
 	}
 

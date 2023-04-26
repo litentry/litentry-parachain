@@ -10,6 +10,7 @@ import {
     buildIdentityTxs,
     handleIdentityEvents,
     buildValidations,
+    assertInitialIDGraphCreated,
 } from './common/utils';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
 import { step } from 'mocha-steps';
@@ -42,6 +43,7 @@ describeLitentry('Test Identity', 0, (context) => {
     let bob_identities: LitentryIdentity[] = [];
     let alice_validations: LitentryValidationData[] = [];
     let bob_validations: LitentryValidationData[] = [];
+
     step('check user sidechain storage before create', async function () {
         const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
         const identity_hex = context.api.createType('LitentryIdentity', twitter_identity).toHex();
@@ -63,6 +65,7 @@ describeLitentry('Test Identity', 0, (context) => {
 
         assert.equal(resp_challengecode, '0x', 'challengecode should be empty before create');
     });
+
     step('Invalid user shielding key', async function () {
         let identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Ethereum', 'Evm');
         let txs = await buildIdentityTxs(context, context.substrateWallet.alice, [identity], 'createIdentity');
@@ -70,7 +73,7 @@ describeLitentry('Test Identity', 0, (context) => {
         let resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
             'CreateIdentityFailed',
         ]);
-        await checkErrorDetail(resp_events, 'InvalidUserShieldingKey', true);
+        await checkErrorDetail(resp_events, 'UserShieldingKeyNotFound', true);
     });
 
     step('set user shielding key', async function () {
@@ -94,8 +97,8 @@ describeLitentry('Test Identity', 0, (context) => {
             ['UserShieldingKeySet']
         );
         const [alice, bob] = await handleIdentityEvents(context, aesKey, resp_events, 'UserShieldingKeySet');
-        assert.equal(alice, u8aToHex(context.substrateWallet.alice.addressRaw), 'alice shielding key should be set');
-        assert.equal(bob, u8aToHex(context.substrateWallet.bob.addressRaw), 'bob shielding key should be set');
+        await assertInitialIDGraphCreated(context.api, context.substrateWallet.alice, alice);
+        await assertInitialIDGraphCreated(context.api, context.substrateWallet.bob, bob);
     });
 
     step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
@@ -109,8 +112,13 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('check idgraph from sidechain storage before create', async function () {
-        const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
-        const identity_hex = context.api.createType('LitentryIdentity', twitter_identity).toHex();
+        // the main address should be already inside the IDGraph
+        const main_identity = await buildIdentityHelper(
+            u8aToHex(context.substrateWallet.alice.addressRaw),
+            'LitentryRococo',
+            'Substrate'
+        );
+        const identity_hex = context.api.createType('LitentryIdentity', main_identity).toHex();
         const resp_id_graph = await checkIDGraph(
             context,
             'IdentityManagement',
@@ -120,12 +128,12 @@ describeLitentry('Test Identity', 0, (context) => {
         );
         assert.equal(
             resp_id_graph.verification_request_block,
-            null,
-            'verification_request_block should  be null before create'
+            0,
+            'verification_request_block should be 0 for main address'
         );
-        assert.equal(resp_id_graph.linking_request_block, null, 'linking_request_block should  be null before create');
-
-        assert.equal(resp_id_graph.is_verified, false, 'IDGraph is_verified should be equal false before create');
+        assert.equal(resp_id_graph.linking_request_block, 0, 'linking_request_block should be 0 for main address');
+        assert.equal(resp_id_graph.is_verified, true, 'IDGraph is_verified should be true for main address');
+        // TODO: check IDGraph.length == 1 in the sidechain storage
     });
     step('create identities', async function () {
         //Alice
@@ -631,7 +639,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'Failed'
         );
 
-        await checkErrorDetail(charile_resp_remove_events_data, 'InvalidUserShieldingKey', false);
+        await checkErrorDetail(charile_resp_remove_events_data, 'UserShieldingKeyNotFound', false);
     });
 
     step('set error user shielding key', async function () {

@@ -15,7 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use codec::{Decode, Encode};
-use frame_support::traits::{tokens::fungibles::Mutate, Get, PalletInfoAccess};
+use frame_support::traits::{tokens::fungibles::Mutate, ContainsPair, Get, PalletInfoAccess};
 use pallet_balances::pallet::Pallet as RuntimeBalances;
 use parachain_info::pallet::Pallet as ParachainInfo;
 use scale_info::TypeInfo;
@@ -23,17 +23,13 @@ use sp_runtime::traits::{Convert as spConvert, Zero};
 use sp_std::{borrow::Borrow, boxed::Box, cmp::Ordering, marker::PhantomData, prelude::*};
 use xcm::{
 	latest::{
-		prelude::{
-			Fungibility, Junction, Junctions, MultiAsset, MultiLocation, NetworkId, XcmError,
-		},
-		AssetId as xcmAssetId,
+		prelude::{Fungibility, Junction, Junctions, MultiAsset, MultiLocation, XcmError},
+		AssetId as xcmAssetId, Weight,
 	},
 	prelude::{Parachain, X1},
 };
 use xcm_builder::TakeRevenue;
-use xcm_executor::traits::{
-	Convert as xcmConvert, FilterAssetLocation, MatchesFungibles, WeightTrader,
-};
+use xcm_executor::traits::{Convert as xcmConvert, MatchesFungibles, WeightTrader};
 
 use crate::{BaseRuntimeRequirements, ParaRuntimeRequirements};
 use core_primitives::{AccountId, AssetId};
@@ -60,7 +56,7 @@ impl<
 	}
 	fn buy_weight(
 		&mut self,
-		weight: u64,
+		weight: Weight,
 		payment: xcm_executor::Assets,
 	) -> Result<xcm_executor::Assets, XcmError> {
 		let first_asset = payment.fungible_assets_iter().next().ok_or(XcmError::TooExpensive)?;
@@ -69,7 +65,7 @@ impl<
 		// token transfers. We will see later if we change this.
 		match (first_asset.id, first_asset.fun) {
 			(xcmAssetId::Concrete(id), Fungibility::Fungible(_)) => {
-				let asset_type: AssetType = id.clone().into();
+				let asset_type: AssetType = id.into();
 				// Shortcut if we know the asset is not supported
 				// This involves the same db read per block, mitigating any attack based on
 				// non-supported assets
@@ -78,7 +74,7 @@ impl<
 				}
 				if let Some(units_per_second) = AssetIdInfoGetter::get_units_per_second(asset_type)
 				{
-					let amount = units_per_second.saturating_mul(weight as u128) /
+					let amount = units_per_second.saturating_mul(weight.ref_time() as u128) /
 						(WEIGHT_REF_TIME_PER_SECOND as u128);
 
 					// We dont need to proceed if the amount is 0
@@ -90,11 +86,11 @@ impl<
 
 					let required = MultiAsset {
 						fun: Fungibility::Fungible(amount),
-						id: xcmAssetId::Concrete(id.clone()),
+						id: xcmAssetId::Concrete(id),
 					};
 					let unused =
 						payment.checked_sub(required).map_err(|_| XcmError::TooExpensive)?;
-					self.0 = self.0.saturating_add(weight);
+					self.0 = self.0.saturating_add(weight.ref_time() as u64);
 
 					// In case the asset matches the one the trader already stored before, add
 					// to later refund
@@ -104,7 +100,7 @@ impl<
 
 					// In short, we only refund on the asset the trader first succesfully was able
 					// to pay for an execution
-					let new_asset = match self.1.clone() {
+					let new_asset = match self.1 {
 						Some((prev_id, prev_amount, units_per_second)) =>
 							if prev_id == id {
 								Some((id, prev_amount.saturating_add(amount), units_per_second))
@@ -116,7 +112,7 @@ impl<
 
 					// Due to the trait bound, we can only refund one asset.
 					if let Some(new_asset) = new_asset {
-						self.0 = self.0.saturating_add(weight);
+						self.0 = self.0.saturating_add(weight.ref_time() as u64);
 						self.1 = Some(new_asset);
 					};
 					Ok(unused)
@@ -128,12 +124,13 @@ impl<
 		}
 	}
 
-	fn refund_weight(&mut self, weight: u64) -> Option<MultiAsset> {
-		if let Some((id, prev_amount, units_per_second)) = self.1.clone() {
-			let weight = weight.min(self.0);
-			self.0 -= weight;
-			let amount = units_per_second * (weight as u128) / (WEIGHT_REF_TIME_PER_SECOND as u128);
-			self.1 = Some((id.clone(), prev_amount.saturating_sub(amount), units_per_second));
+	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
+		if let Some((id, prev_amount, units_per_second)) = self.1 {
+			let ref_time = weight.ref_time().min(self.0);
+			self.0 -= ref_time;
+			let amount =
+				units_per_second * (ref_time as u128) / (WEIGHT_REF_TIME_PER_SECOND as u128);
+			self.1 = Some((id, prev_amount.saturating_sub(amount), units_per_second));
 			Some(MultiAsset { fun: Fungibility::Fungible(amount), id: xcmAssetId::Concrete(id) })
 		} else {
 			None
@@ -149,7 +146,7 @@ impl<
 	> Drop for FirstAssetTrader<AssetType, AssetIdInfoGetter, R>
 {
 	fn drop(&mut self) {
-		if let Some((id, amount, _)) = self.1.clone() {
+		if let Some((id, amount, _)) = self.1 {
 			R::take_revenue((id, amount).into());
 		}
 	}
@@ -191,7 +188,7 @@ pub trait Reserve {
 // Takes the chain part of a MultiAsset
 impl Reserve for MultiAsset {
 	fn reserve(&self) -> Option<MultiLocation> {
-		if let xcmAssetId::Concrete(location) = self.id.clone() {
+		if let xcmAssetId::Concrete(location) = self.id {
 			let first_interior = location.first_interior();
 			let parents = location.parent_count();
 			match (parents, first_interior) {
@@ -214,8 +211,8 @@ impl Reserve for MultiAsset {
 /// reserve is same with `origin`.
 pub struct MultiNativeAsset;
 
-impl FilterAssetLocation for MultiNativeAsset {
-	fn filter_asset_location(asset: &MultiAsset, origin: &MultiLocation) -> bool {
+impl ContainsPair<MultiAsset, MultiLocation> for MultiNativeAsset {
+	fn contains(asset: &MultiAsset, origin: &MultiLocation) -> bool {
 		if let Some(ref reserve) = asset.reserve() {
 			if reserve == origin {
 				return true
@@ -273,7 +270,7 @@ impl spConvert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 	fn convert(account: AccountId) -> MultiLocation {
 		MultiLocation {
 			parents: 0,
-			interior: X1(Junction::AccountId32 { network: NetworkId::Any, id: account.into() }),
+			interior: X1(Junction::AccountId32 { network: None, id: account.into() }),
 		}
 	}
 }
@@ -393,7 +390,7 @@ where
 		if let Some(currency_id) = <CurrencyIdMultiLocationConvert<R> as spConvert<
 			MultiLocation,
 			Option<CurrencyId<R>>,
-		>>::convert(multi.borrow().clone())
+		>>::convert(*multi.borrow())
 		{
 			if let Some(asset_id) =
 				<AssetManager<R> as AssetTypeGetter<AssetId, CurrencyId<R>>>::get_asset_id(

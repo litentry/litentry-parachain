@@ -14,7 +14,12 @@
 	limitations under the License.
 
 */
-//! Execute indirect calls, i.e. extrinsics extracted from parentchain blocks
+//! Execute indirect calls, i.e. extrinsics extracted from parentchain blocks.
+//!
+//! The core struct of this crate is the [IndirectCallsExecutor] executor. It scans parentchain
+//! blocks for relevant extrinsics, derives an indirect call for those and dispatches the
+//! indirect call.
+
 #![feature(trait_alias)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(test, feature(assert_matches))]
@@ -61,7 +66,7 @@ use crate::{
 		DecorateExecutor,
 	},
 };
-use beefy_merkle_tree::{merkle_root, Keccak256};
+use binary_merkle_tree::merkle_root;
 use codec::Encode;
 use ita_stf::{TrustedCall, TrustedOperation};
 use itp_node_api::metadata::{
@@ -79,7 +84,7 @@ use itp_types::{
 use litentry_primitives::ParentchainBlockNumber;
 use log::*;
 use sp_core::blake2_256;
-use sp_runtime::traits::{Block as ParentchainBlockTrait, Header};
+use sp_runtime::traits::{Block as ParentchainBlockTrait, Header, Keccak256};
 use std::{sync::Arc, vec, vec::Vec};
 
 #[derive(Clone)]

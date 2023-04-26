@@ -79,7 +79,7 @@ benchmarks! {
 	}:_(RawOrigin::Signed(sender),to_account,50u32.into(),resource_id)
 
 	set_maximum_issuance{
-		let origin = T::SetMaximumIssuanceOrigin::successful_origin();
+		let origin = T::SetMaximumIssuanceOrigin::try_successful_origin().expect("SetMaximumIssuanceOrigin has no successful origin required for the benchmark");
 		let maximum_issuance:balance<T> = 2u32.into();
 	}:_<T::RuntimeOrigin>(origin,maximum_issuance)
 	verify{
