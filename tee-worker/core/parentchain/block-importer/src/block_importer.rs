@@ -127,7 +127,11 @@ impl<
 			// Check if there are any extrinsics in the to-be-imported block that we sent and cached in the light-client before.
 			// If so, remove them now from the cache.
 			if let Err(e) = self.validator_accessor.execute_mut_on_validator(|v| {
-				v.check_xt_inclusion(v.num_relays(), &signed_block.block)?;
+				// TODO(Litentry):
+				// comment out the inclusion check
+				// see https://github.com/litentry/litentry-parachain/issues/1617
+				//
+				// v.check_xt_inclusion(v.num_relays(), &signed_block.block)?;
 
 				v.submit_block(v.num_relays(), &signed_block)
 			}) {
