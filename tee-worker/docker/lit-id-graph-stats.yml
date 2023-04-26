@@ -1,5 +1,5 @@
 services:
-  lit-user-shielding-key:
+  lit-id-graph-stats:
     image: integritee-cli:dev
     container_name: litentry-id-graph-stats
     volumes:
