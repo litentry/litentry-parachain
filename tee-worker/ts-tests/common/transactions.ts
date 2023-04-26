@@ -97,7 +97,7 @@ export async function multiAccountTxSender(
 ): Promise<Event[]> {
     await sendTxUntilInBlockList(context.api, txs, signers);
     const resp_events = await listenEvent(context.api, pallet, events, txs.length);
-
+    expect(resp_events.length).to.be.equal(txs.length);
     return resp_events;
 }
 

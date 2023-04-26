@@ -74,7 +74,6 @@ describeLitentry('Test Identity', 0, (context) => {
             'CreateIdentityFailed',
         ]);
         await checkErrorDetail(resp_events, 'UserShieldingKeyNotFound', true);
-        return;
     });
 
     step('set user shielding key', async function () {
