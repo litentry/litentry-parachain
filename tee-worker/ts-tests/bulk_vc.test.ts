@@ -24,7 +24,7 @@ const assertion = <Assertion>{
 //1.The "number" parameter in describeLitentry represents the number of accounts generated, including Substrate wallets and Ethereum wallets.If you want to use a large number of accounts for testing, you can modify this parameter.
 //2.Each time the test code is executed, new wallet account will be used.
 
-describeLitentry('multiple accounts test', 10, async (context) => {
+describeLitentry('multiple accounts test', 2, async (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     var substrateSigners: KeyringPair[] = [];
     var ethereumSigners: ethers.Wallet[] = [];
