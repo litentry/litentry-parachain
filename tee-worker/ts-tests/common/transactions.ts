@@ -119,11 +119,9 @@ export async function listenEvent(api: ApiPromise, section: string, methods: str
 
             const records: EventRecord[] = (await apiAt.query.system.events()) as any;
 
+            const filtered_events: EventRecord[] = [];
             signedBlock.block.extrinsics.forEach((extrinsic, index) => {
-                const events = records.filter(({ phase }) => {
-                    return phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(index);
-                });
-                events.forEach((e, i) => {
+                records.forEach((e, i) => {
                     const s = e.event.section;
                     const m = e.event.method;
                     const d = e.event.data;
@@ -132,7 +130,7 @@ export async function listenEvent(api: ApiPromise, section: string, methods: str
                         ? console.log(colors.green(`Event[${i}]: ${s}.${m} ${d}`))
                         : console.log(`Event[${i}]: ${s}.${m} ${d}`);
                 });
-                const filtered_events = records.filter(({ phase, event }) => {
+                const events_in_extrinsic = records.filter(({ event, phase }) => {
                     if (
                         phase.isApplyExtrinsic &&
                         section === event.section &&
@@ -140,16 +138,24 @@ export async function listenEvent(api: ApiPromise, section: string, methods: str
                         !(event.method in RequestEvent)
                     ) {
                         reject(`Expect event ${methods} but received unexpected event ${event.method}`);
-                    } else {
-                        return phase.isApplyExtrinsic && section === event.section && methods.includes(event.method);
                     }
+                    return (
+                        phase.isApplyExtrinsic &&
+                        phase.asApplyExtrinsic.eq(index) &&
+                        section === event.section &&
+                        methods.includes(event.method)
+                    );
                 });
-                if (filtered_events.length === txsLength) {
-                    resolve(filtered_events.map((e) => e.event));
-                    unsubscribe();
-                    return;
-                }
+                events_in_extrinsic.forEach((event) => {
+                    filtered_events.push(event);
+                });
             });
+
+            if (filtered_events.length === txsLength) {
+                resolve(filtered_events.map((e) => e.event));
+                unsubscribe();
+                return;
+            }
         });
     });
 }
