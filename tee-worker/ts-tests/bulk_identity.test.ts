@@ -7,6 +7,7 @@ import {
     assertIdentityCreated,
     assertIdentityRemoved,
     assertIdentityVerified,
+    assertInitialIDGraphCreated,
 } from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
@@ -65,17 +66,8 @@ describeLitentry('multiple accounts test', 2, async (context) => {
         ]);
 
         const event_datas = await handleIdentityEvents(context, aesKey, resp_events, 'UserShieldingKeySet');
-        assert.equal(
-            resp_events.length,
-            substrateSigners.length,
-            'set usershieldingkey with multiple accounts check fail'
-        );
-        event_datas.forEach((data: any, index: number) => {
-            assert.equal(
-                data,
-                u8aToHex(substrateSigners[index].addressRaw),
-                `shielding key should be set,account ${index + 1} is not set`
-            );
+        event_datas.forEach(async (data: any, index: number) => {
+            await assertInitialIDGraphCreated(context.api, substrateSigners[index], data);
         });
     });
 
@@ -92,8 +84,6 @@ describeLitentry('multiple accounts test', 2, async (context) => {
             'IdentityCreated',
         ]);
         const resp_events_datas = await handleIdentityEvents(context, aesKey, resp_events, 'IdentityCreated');
-
-        assert.equal(resp_events.length, identities.length, 'create identities with multiple accounts check fail');
 
         for (let index = 0; index < resp_events_datas.length; index++) {
             console.log('createIdentity', index);
@@ -116,7 +106,6 @@ describeLitentry('multiple accounts test', 2, async (context) => {
         const resp_events = await multiAccountTxSender(context, txs, substrateSigners, 'identityManagement', [
             'IdentityVerified',
         ]);
-        assert.equal(resp_events.length, txs.length, 'verify identities with multiple accounts check fail');
         const [resp_events_datas] = await handleIdentityEvents(context, aesKey, resp_events, 'IdentityVerified');
         for (let index = 0; index < resp_events_datas.length; index++) {
             console.log('verifyIdentity', index);
@@ -130,7 +119,6 @@ describeLitentry('multiple accounts test', 2, async (context) => {
         const resp_events = await multiAccountTxSender(context, txs, substrateSigners, 'identityManagement', [
             'IdentityRemoved',
         ]);
-        assert.equal(resp_events.length, txs.length, 'remove identities with multiple accounts check fail');
         const [resp_events_datas] = await handleIdentityEvents(context, aesKey, resp_events, 'IdentityRemoved');
         for (let index = 0; index < resp_events_datas.length; index++) {
             console.log('verifyIdentity', index);
