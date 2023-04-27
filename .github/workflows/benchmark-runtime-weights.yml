@@ -60,7 +60,7 @@ jobs:
 
   ## run the benchmarking remotely
   benchmark:
-    runs-on: dev-builder
+    runs-on: jumphost
     needs: build-docker
     # see https://github.com/actions/runner/issues/491
     if: |
