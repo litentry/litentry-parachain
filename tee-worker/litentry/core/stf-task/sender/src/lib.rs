@@ -109,7 +109,7 @@ pub struct AssertionBuildRequest {
 pub struct SetUserShieldingKeyRequest {
 	pub encoded_shard: Vec<u8>,
 	pub who: AccountId,
-	pub encoded_callback: Vec<u8>,
+	pub key: UserShieldingKeyType,
 	pub hash: H256,
 }
 
@@ -118,9 +118,8 @@ pub enum RequestType {
 	Web2IdentityVerification(Web2IdentityVerificationRequest),
 	Web3IdentityVerification(Web3IdentityVerificationRequest),
 	AssertionVerification(AssertionBuildRequest),
-	// set the user shielding key async - just to showcase how to
-	// async process the request in stf-task-receiver
-	// In real scenario it should be done synchronously
+	// set the user shielding key async for demo purpose
+	// in reality the user's shielding key is set synchronously
 	SetUserShieldingKey(SetUserShieldingKeyRequest),
 }
 

@@ -49,16 +49,8 @@ impl TrustedCallSigned {
 		hash: H256,
 	) -> StfResult<()> {
 		ensure!(is_root::<Runtime, AccountId>(&root), StfError::MissingPrivileges(root));
-		let encoded_callback = TrustedCall::set_user_shielding_key_runtime(
-			enclave_signer_account(),
-			who.clone(),
-			key,
-			hash,
-		)
-		.encode();
 		let encoded_shard = shard.encode();
-		let request =
-			SetUserShieldingKeyRequest { encoded_shard, who, encoded_callback, hash }.into();
+		let request = SetUserShieldingKeyRequest { encoded_shard, who, key, hash }.into();
 		let sender = StfRequestSender::new();
 		sender
 			.send_stf_request(request)

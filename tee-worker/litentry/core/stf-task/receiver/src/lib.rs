@@ -134,7 +134,7 @@ where
 		self.submit_trusted_call(&shard, &callback)
 	}
 
-	fn submit_trusted_call(
+	pub fn submit_trusted_call(
 		&self,
 		shard: &ShardIdentifier,
 		trusted_call: &TrustedCall,
@@ -207,9 +207,10 @@ where
 			RequestType::AssertionVerification(request) => {
 				AssertionHandler { req: request.clone(), context: context.clone() }.start();
 			},
-			// only used for testing
-			// demonstrate how to read the storage in the stf-task handling with the loaded state
-			// in real cases we prefer to read the state ahead and sent the related storage as parameters in `Request`
+			// only for demo purpose
+			// it shows how to read the storage in the stf-task handling with the loaded state. However,
+			// in real cases it's preferred to read the state ahead and sent it as parameter in `Request`
+			// please note you are not supposed to write any state back - it will cause state mistmatch
 			RequestType::SetUserShieldingKey(request) => {
 				let shard = ShardIdentifier::decode(&mut request.encoded_shard.as_slice())
 					.map_err(|e| {
@@ -221,15 +222,20 @@ where
 					.load_cloned(&shard)
 					.map_err(|e| Error::OtherError(format!("load state failed: {:?}", e)))?;
 
-				let key =
+				let current_key =
 					state.execute_with(|| IdentityManagement::user_shielding_keys(&request.who));
 
-				debug!("RequestType::SetUserShieldingKey, key: {:?}", key);
+				debug!("RequestType::SetUserShieldingKey, key: {:?}", current_key);
 
-				context.decode_and_submit_trusted_call(
-					request.encoded_shard,
-					request.encoded_callback,
-				)?;
+				let c = TrustedCall::set_user_shielding_key_runtime(
+					context.enclave_signer.get_enclave_account().map_err(|e| {
+						Error::OtherError(format!("error get enclave account {:?}", e))
+					})?,
+					request.who,
+					request.key,
+					request.hash,
+				);
+				context.submit_trusted_call(&shard, &c)?;
 			},
 		}
 	}
