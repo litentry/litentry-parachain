@@ -38,7 +38,7 @@ use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier, Signature};
 use itp_types::{OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
-	aes_encrypt_default, Assertion, ChallengeCode, ErrorDetail, IMPError, Identity,
+	aes_encrypt_default, AesOutput, Assertion, ChallengeCode, ErrorDetail, IMPError, Identity,
 	ParentchainAccountId, ParentchainBlockNumber, UserShieldingKeyType, VCMPError, ValidationData,
 };
 use log::*;
@@ -127,6 +127,7 @@ pub enum TrustedCall {
 	),
 	verify_identity_runtime(AccountId, AccountId, Identity, ParentchainBlockNumber, H256),
 	request_vc(AccountId, AccountId, Assertion, ShardIdentifier, ParentchainBlockNumber, H256),
+	handle_vc_issued(AccountId, AccountId, Assertion, [u8; 32], [u8; 32], AesOutput, H256),
 	handle_imp_error(AccountId, Option<AccountId>, IMPError, H256),
 	handle_vcmp_error(AccountId, Option<AccountId>, VCMPError, H256),
 	// the following TrustedCalls should only be used in testing
@@ -159,6 +160,7 @@ impl TrustedCall {
 			TrustedCall::verify_identity_runtime(account, _, _, _, _) => account,
 			TrustedCall::request_vc(account, _, _, _, _, _) => account,
 			TrustedCall::set_challenge_code_runtime(account, _, _, _, _) => account,
+			TrustedCall::handle_vc_issued(account, _, _, _, _, _, _) => account,
 			TrustedCall::handle_imp_error(account, _, _, _) => account,
 			TrustedCall::handle_vcmp_error(account, _, _, _) => account,
 			TrustedCall::send_erroneous_parentchain_call(account) => account,
@@ -723,6 +725,31 @@ where
 				}
 				Ok(())
 			},
+			TrustedCall::handle_vc_issued(
+				enclave_account,
+				who,
+				assertion,
+				vc_index,
+				vc_hash,
+				vc_payload,
+				hash,
+			) => {
+				ensure_enclave_signer_account(&enclave_account)?;
+				match node_metadata_repo.get_from_metadata(|m| m.vc_issued_call_indexes()) {
+					Ok(Ok(c)) => calls.push(OpaqueCall::from_tuple(&(
+						c,
+						SgxParentchainTypeConverter::convert(who.clone()),
+						assertion,
+						vc_index,
+						vc_hash,
+						vc_payload,
+						hash,
+					))),
+					Ok(e) => warn!("error getting vc_issued call indexes: {:?}", e),
+					Err(e) => warn!("error getting vc_issued call indexes: {:?}", e),
+				}
+				Ok(())
+			},
 			TrustedCall::set_challenge_code_runtime(enclave_account, who, did, code, hash) => {
 				if let Err(e) =
 					Self::set_challenge_code_runtime(enclave_account, who.clone(), did, code)
@@ -780,6 +807,7 @@ where
 			TrustedCall::verify_identity_runtime(..) => debug!("No storage updates needed..."),
 			TrustedCall::request_vc(..) => debug!("No storage updates needed..."),
 			TrustedCall::set_challenge_code_runtime(..) => debug!("No storage updates needed..."),
+			TrustedCall::handle_vc_issued(..) => debug!("No storage updates needed..."),
 			TrustedCall::handle_imp_error(..) => debug!("No storage updates needed..."),
 			TrustedCall::handle_vcmp_error(..) => debug!("No storage updates needed..."),
 			TrustedCall::send_erroneous_parentchain_call(..) =>

@@ -54,10 +54,10 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{OpaqueCall, ShardIdentifier};
+use itp_types::ShardIdentifier;
 use lc_stf_task_sender::{stf_task_sender, RequestType};
 use log::{debug, error};
-use std::{format, string::String, sync::Arc, vec, vec::Vec};
+use std::{format, string::String, sync::Arc, vec::Vec};
 
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum Error {
@@ -156,22 +156,12 @@ where
 			.encrypt(&top.encode())
 			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
 
+		debug!("submit encrypted trusted call: {} bytes", encrypted_trusted_call.len());
 		executor::block_on(self.author_api.submit_top(encrypted_trusted_call, *shard)).map_err(
 			|e| Error::OtherError(format!("error submitting trusted call to top pool: {:?}", e)),
 		)?;
 
 		Ok(())
-	}
-
-	fn submit_to_parentchain(&self, call: OpaqueCall) {
-		match self.create_extrinsics.create_extrinsics(vec![call].as_slice(), None) {
-			Err(e) => {
-				error!("create extrinsic failed: {:?}", e);
-			},
-			Ok(xt) => {
-				let _ = self.ocall_api.send_to_parentchain(xt);
-			},
-		}
 	}
 }
 

@@ -26,7 +26,6 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
 use lc_data_providers::G_DATA_PROVIDERS;
 use lc_stf_task_sender::AssertionBuildRequest;
@@ -206,27 +205,23 @@ where
 	fn on_success(&self, result: Self::Result) {
 		debug!("Assertion build OK");
 		let (vc_index, vc_hash, output) = result;
-		match self
-			.context
-			.node_metadata
-			.get_from_metadata(|m| VCMPCallIndexes::vc_issued_call_indexes(m))
-		{
-			Ok(Ok(call_index)) => {
-				debug!("Sending vc_issued event to parachain ... ");
-				let call = OpaqueCall::from_tuple(&(
-					call_index,
-					self.req.who.clone(),
-					self.req.assertion.clone(),
-					vc_index,
-					vc_hash,
-					output,
-					self.req.hash,
-				));
-				self.context.submit_to_parentchain(call)
-			},
-			Ok(Err(e)) => error!("get metadata failed: {:?}", e),
-			Err(e) => error!("get metadata failed: {:?}", e),
-		};
+		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
+			let c = TrustedCall::handle_vc_issued(
+				enclave_signer,
+				self.req.who.clone(),
+				self.req.assertion.clone(),
+				vc_index,
+				vc_hash,
+				output,
+				self.req.hash,
+			);
+			let _ = self
+				.context
+				.submit_trusted_call(&self.req.shard, &c)
+				.map_err(|e| error!("submit_trusted_call failed: {:?}", e));
+		} else {
+			error!("can't get enclave signer");
+		}
 	}
 
 	fn on_failure(&self, error: Self::Error) {
