@@ -191,9 +191,8 @@ where
 	let receiver = stf_task_sender::init_stf_task_sender_storage()
 		.map_err(|e| Error::OtherError(format!("read storage error:{:?}", e)))?;
 
-	// TODO: When an error occurs, send the extrinsic (error message) to the parachain
-	// TODO: error handling still incomplete, we only print logs but no error handling
 	// TODO: we can further simplify the handling logic
+	// TODO: we don't need to do clone in each match-arm maybe
 	loop {
 		let request_type = receiver
 			.recv()

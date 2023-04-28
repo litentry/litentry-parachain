@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{handler::TaskHandler, StfTaskContext};
+use crate::{handler::TaskHandler, StfTaskContext, TrustedCall};
 use ita_sgx_runtime::Hash;
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{
@@ -65,13 +65,22 @@ where
 	}
 
 	fn on_success(&self, _result: Self::Result) {
-		let _ = self
-			.context
-			.decode_and_submit_trusted_call(
-				self.req.encoded_shard.clone(),
-				self.req.encoded_callback.clone(),
-			)
-			.map_err(|e| error!("decode_and_submit_trusted_call failed: {:?}", e));
+		debug!("verify identity OK");
+		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
+			let c = TrustedCall::verify_identity_runtime(
+				enclave_signer,
+				self.req.who.clone(),
+				self.req.identity.clone(),
+				self.req.bn,
+				self.req.hash,
+			);
+			let _ = self
+				.context
+				.submit_trusted_call(&self.req.shard, &c)
+				.map_err(|e| error!("submit_trusted_call failed: {:?}", e));
+		} else {
+			error!("can't get enclave signer");
+		}
 	}
 
 	fn on_failure(&self, error: Self::Error) {

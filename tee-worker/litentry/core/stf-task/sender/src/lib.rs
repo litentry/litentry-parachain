@@ -37,7 +37,8 @@ use codec::{Decode, Encode};
 pub use error::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use litentry_primitives::{
-	Assertion, ChallengeCode, Identity, UserShieldingKeyType, ValidationData,
+	Assertion, ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType,
+	ValidationData,
 };
 use sp_runtime::{traits::ConstU32, BoundedVec};
 use sp_std::vec::Vec;
@@ -68,13 +69,12 @@ use sp_std::vec::Vec;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct IdentityVerificationRequest {
-	pub encoded_shard: Vec<u8>,
+	pub shard: ShardIdentifier,
 	pub who: AccountId,
 	pub identity: Identity,
 	pub challenge_code: ChallengeCode,
 	pub validation_data: ValidationData,
-	pub bn: litentry_primitives::ParentchainBlockNumber, //Parentchain BlockNumber
-	pub encoded_callback: Vec<u8>,
+	pub bn: ParentchainBlockNumber,
 	pub hash: H256,
 }
 
@@ -86,7 +86,7 @@ pub struct AssertionBuildRequest {
 	pub who: AccountId,
 	pub assertion: Assertion,
 	pub vec_identity: BoundedVec<Identity, MaxIdentityLength>,
-	pub bn: litentry_primitives::ParentchainBlockNumber,
+	pub bn: ParentchainBlockNumber,
 	pub key: UserShieldingKeyType,
 	pub hash: H256,
 }

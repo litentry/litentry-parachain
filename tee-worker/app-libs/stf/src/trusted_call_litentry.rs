@@ -18,9 +18,9 @@
 extern crate sgx_tstd as std;
 
 use crate::{
-	helpers::{enclave_signer_account, ensure_enclave_signer_account, generate_challenge_code},
+	helpers::{ensure_enclave_signer_account, generate_challenge_code},
 	is_root, AccountId, Encode, IdentityManagement, MetadataOf, Runtime, StfError, StfResult,
-	TrustedCall, TrustedCallSigned,
+	TrustedCallSigned,
 };
 use frame_support::{dispatch::UnfilteredDispatchable, ensure};
 use ita_sgx_runtime::RuntimeOrigin;
@@ -133,23 +133,13 @@ impl TrustedCallSigned {
 		let code = IdentityManagement::challenge_codes(&who, &identity)
 			.ok_or(StfError::VerifyIdentityFailed(ErrorDetail::ChallengeCodeNotFound))?;
 
-		let encoded_callback = TrustedCall::verify_identity_runtime(
-			enclave_signer_account(),
-			who.clone(),
-			identity.clone(),
-			bn,
-			hash,
-		)
-		.encode();
-		let encoded_shard = shard.encode();
 		let request: RequestType = IdentityVerificationRequest {
-			encoded_shard,
+			shard: *shard,
 			who,
 			identity,
 			challenge_code: code,
 			validation_data,
 			bn,
-			encoded_callback,
 			hash,
 		}
 		.into();
