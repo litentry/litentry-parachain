@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{handler::TaskHandler, StfTaskContext};
+use crate::{handler::TaskHandler, StfTaskContext, TrustedCall};
 use ita_sgx_runtime::Hash;
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{
@@ -204,6 +204,7 @@ where
 	}
 
 	fn on_success(&self, result: Self::Result) {
+		debug!("Assertion build OK");
 		let (vc_index, vc_hash, output) = result;
 		match self
 			.context
@@ -229,25 +230,20 @@ where
 	}
 
 	fn on_failure(&self, error: Self::Error) {
-		error!("Assertion on_failure: {error:?}");
-
-		match self
-			.context
-			.node_metadata
-			.get_from_metadata(|m| VCMPCallIndexes::vcmp_some_error_call_indexes(m))
-		{
-			Ok(Ok(call_index)) => {
-				debug!("Sending vcmp_some_error event to parachain ... ");
-				let call = OpaqueCall::from_tuple(&(
-					call_index,
-					Some(self.req.who.clone()),
-					error,
-					self.req.hash,
-				));
-				self.context.submit_to_parentchain(call)
-			},
-			Ok(Err(e)) => error!("get metadata failed: {:?}", e),
-			Err(e) => error!("get metadata failed: {:?}", e),
-		};
+		error!("Assertion build error: {error:?}");
+		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
+			let c = TrustedCall::handle_vcmp_error(
+				enclave_signer,
+				Some(self.req.who.clone()),
+				error,
+				self.req.hash,
+			);
+			let _ = self
+				.context
+				.submit_trusted_call(&self.req.shard, &c)
+				.map_err(|e| error!("submit_trusted_call failed: {:?}", e));
+		} else {
+			error!("can't get enclave signer");
+		}
 	}
 }

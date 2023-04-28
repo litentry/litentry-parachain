@@ -84,7 +84,6 @@ where
 
 	fn on_failure(&self, error: Self::Error) {
 		error!("verify identity failed:{:?}", error);
-
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::handle_imp_error(
 				enclave_signer,
