@@ -20,6 +20,7 @@ use crate::{
 		balance::BalanceCommand,
 		get_storage::GetStorageCommand,
 		litentry::{
+			id_graph_stats::IDGraphStats,
 			send_erroneous_parentchain_call::SendErroneousParentchainCallCommand,
 			set_challenge_code::SetChallengeCodeCommand,
 			set_user_shielding_preflight::SetUserShieldingKeyPreflightCommand,
@@ -80,6 +81,9 @@ pub enum TrustedBaseCommand {
 	GetStorage(GetStorageCommand),
 
 	SendErroneousParentchainCall(SendErroneousParentchainCallCommand),
+
+	/// get count of all keys account + identity in the IDGraphs
+	IDGraphStats(IDGraphStats),
 }
 
 impl TrustedBaseCommand {
@@ -99,6 +103,7 @@ impl TrustedBaseCommand {
 			TrustedBaseCommand::SetUserShieldingKeyPreflight(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::GetStorage(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::SendErroneousParentchainCall(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::IDGraphStats(cmd) => cmd.run(cli, trusted_cli),
 		}
 	}
 }

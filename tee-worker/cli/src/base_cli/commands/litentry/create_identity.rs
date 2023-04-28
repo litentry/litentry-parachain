@@ -23,11 +23,12 @@ use base58::FromBase58;
 use codec::{Decode, Encode};
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
-use litentry_primitives::Identity;
+use itp_types::H256;
+use litentry_primitives::{Address32, Identity};
 use log::*;
-
+use sp_application_crypto::Pair;
 use sp_core::sr25519 as sr25519_core;
-use substrate_api_client::{compose_extrinsic, UncheckedExtrinsicV4, XtStatus};
+use substrate_api_client::{compose_extrinsic, CallIndex, UncheckedExtrinsicV4, XtStatus};
 
 #[derive(Parser)]
 pub struct CreateIdentityCommand {
@@ -53,8 +54,8 @@ impl CreateIdentityCommand {
 			Err(e) => panic!("{}", e),
 		};
 
-		let who = get_pair_from_str(&self.account);
-		let chain_api = chain_api.set_signer(sr25519_core::Pair::from(who));
+		let who = sr25519_core::Pair::from_string(&self.account, None).unwrap();
+		let chain_api = chain_api.set_signer(who.clone());
 
 		let identity: Result<Identity, _> = serde_json::from_str(self.identity.as_str());
 		if let Err(e) = identity {
@@ -65,12 +66,16 @@ impl CreateIdentityCommand {
 		let tee_shielding_key = get_shielding_key(cli).unwrap();
 		let encrypted_identity = tee_shielding_key.encrypt(&identity.unwrap().encode()).unwrap();
 
-		let xt: UncheckedExtrinsicV4<_, _> = compose_extrinsic!(
+		let vdata: Option<Vec<u8>> = None;
+		pub type CreateIdentityFn = (CallIndex, H256, Address32, Vec<u8>, Option<Vec<u8>>);
+		let xt: UncheckedExtrinsicV4<CreateIdentityFn, _> = compose_extrinsic!(
 			chain_api,
 			IMP,
 			"create_identity",
 			shard,
-			encrypted_identity.to_vec()
+			who.public().0.into(),
+			encrypted_identity.to_vec(),
+			vdata
 		);
 
 		let tx_hash = chain_api.send_extrinsic(xt.hex_encode(), XtStatus::Finalized).unwrap();
