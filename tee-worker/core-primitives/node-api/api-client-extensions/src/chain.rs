@@ -21,7 +21,6 @@ use sp_core::{storage::StorageKey, Pair, H256};
 use sp_finality_grandpa::{AuthorityList, VersionedAuthorityList, GRANDPA_AUTHORITIES_KEY};
 use sp_runtime::MultiSignature;
 use substrate_api_client::{Api, Events, ExtrinsicParams, RpcClient};
-
 pub type StorageProof = Vec<Vec<u8>>;
 
 /// ApiClient extension that simplifies chain data access.
@@ -66,6 +65,7 @@ where
 
 	fn get_blocks(&self, from: u32, to: u32) -> ApiResult<Vec<SignedBlock>> {
 		let mut blocks = Vec::<SignedBlock>::new();
+		println!("-----get_blocks, from: {}, to: {}", from, to);
 
 		for n in from..=to {
 			if let Some(block) = self.get_signed_block_by_num(Some(n))? {

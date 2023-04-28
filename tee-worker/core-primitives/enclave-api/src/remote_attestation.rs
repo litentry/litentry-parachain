@@ -128,8 +128,9 @@ pub trait TlsRemoteAttestation {
 
 impl RemoteAttestation for Enclave {
 	fn generate_ias_ra_extrinsic(&self, w_url: &str, skip_ra: bool) -> EnclaveResult<Vec<u8>> {
-		let mut retval = sgx_status_t::SGX_SUCCESS;
+		log::info!("1 generate_ias_ra_extrinsic (), url: {}, skip_ra: {}", w_url, skip_ra);
 
+		let mut retval = sgx_status_t::SGX_SUCCESS;
 		let mut unchecked_extrinsic: Vec<u8> = vec![0u8; EXTRINSIC_MAX_SIZE];
 
 		let url = w_url.encode();
@@ -156,6 +157,8 @@ impl RemoteAttestation for Enclave {
 		url: String,
 		quote: &[u8],
 	) -> EnclaveResult<Vec<u8>> {
+		log::info!("-------------generate_dcap_ra_extrinsic_from_quote");
+
 		let mut retval = sgx_status_t::SGX_SUCCESS;
 		let mut unchecked_extrinsic: Vec<u8> = vec![0u8; EXTRINSIC_MAX_SIZE];
 		let url = url.encode();

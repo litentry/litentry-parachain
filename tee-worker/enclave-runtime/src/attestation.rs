@@ -114,6 +114,11 @@ pub unsafe extern "C" fn generate_ias_ra_extrinsic(
 	unchecked_extrinsic_size: u32,
 	skip_ra: c_int,
 ) -> sgx_status_t {
+	println!(
+		"1 ffi generate_ias_ra_extrinsic (), w_url_size: {}, unchecked_extrinsic_size: {}",
+		w_url_size, unchecked_extrinsic_size
+	);
+
 	if w_url.is_null() || unchecked_extrinsic.is_null() {
 		return sgx_status_t::SGX_ERROR_INVALID_PARAMETER
 	}

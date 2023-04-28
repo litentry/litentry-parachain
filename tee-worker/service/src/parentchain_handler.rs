@@ -82,29 +82,37 @@ where
 		parentchain_api: ParentchainApi,
 		enclave_api: Arc<EnclaveApi>,
 	) -> ServiceResult<Self> {
-		let genesis_hash = parentchain_api.get_genesis_hash()?;
-		let genesis_header: Header = parentchain_api
-			.get_header(Some(genesis_hash))?
-			.ok_or(Error::MissingGenesisHeader)?;
+		//let genesis_hash = parentchain_api.get_genesis_hash()?;
+		// info!("-----get genesis_hash: {:?}", genesis_hash);
+
+		// let genesis_header: Header = parentchain_api
+		// 	.get_header(Some(genesis_hash))?
+		// 	.ok_or(Error::MissingGenesisHeader)?;
+
+		let start_block_hash =
+			parentchain_api.get_header(None)?.ok_or(Error::MissingGenesisHeader)?;
+
+		println!("--------start_block_hash {:?}, {}", start_block_hash, start_block_hash.hash());
 
 		let parentchain_init_params: ParentchainInitParams = if parentchain_api
 			.is_grandpa_available()?
 		{
-			let grandpas = parentchain_api.grandpa_authorities(Some(genesis_hash))?;
-			let grandpa_proof = parentchain_api.grandpa_authorities_proof(Some(genesis_hash))?;
-
-			debug!("Grandpa Authority List: \n {:?} \n ", grandpas);
+			let grandpas = parentchain_api.grandpa_authorities(Some(start_block_hash.hash()))?;
+			let grandpa_proof =
+				parentchain_api.grandpa_authorities_proof(Some(start_block_hash.hash()))?;
 
 			let authority_list = VersionedAuthorityList::from(grandpas);
 
+			//block #1059, 0xa8fc76c2a2857129cefcd8f9e5d2dd0c27eec62241a2b3039d415eb47bab9281
+
 			GrandpaParams {
-				genesis_header,
+				genesis_header: start_block_hash,
 				authorities: authority_list.into(),
 				authority_proof: grandpa_proof,
 			}
 			.into()
 		} else {
-			SimpleParams { genesis_header }.into()
+			SimpleParams { genesis_header: start_block_hash }.into()
 		};
 
 		Ok(Self::new(parentchain_api, enclave_api, parentchain_init_params))
@@ -128,20 +136,21 @@ where
 	}
 
 	fn sync_parentchain(&self, last_synced_header: Header) -> ServiceResult<Header> {
-		trace!("Getting current head");
+		info!("-----Getting current head, last_synced_header: {:?}", last_synced_header);
 		let curr_block: SignedBlock = self
 			.parentchain_api
 			.last_finalized_block()?
 			.ok_or(Error::MissingLastFinalizedBlock)?;
 		let curr_block_number = curr_block.block.header.number;
 
+		info!("------curr_block_number: {}", curr_block_number);
 		let mut until_synced_header = last_synced_header;
 		loop {
 			let mut block_chunk_to_sync = self.parentchain_api.get_blocks(
 				until_synced_header.number + 1,
 				min(until_synced_header.number + BLOCK_SYNC_BATCH_SIZE, curr_block_number),
 			)?;
-			println!("[+] Found {} block(s) to sync", block_chunk_to_sync.len());
+			info!("------[+] Found {} block(s) to sync", block_chunk_to_sync.len());
 			if block_chunk_to_sync.is_empty() {
 				return Ok(until_synced_header)
 			}
@@ -200,8 +209,8 @@ where
 				.last()
 				.map(|b| b.block.header.clone())
 				.ok_or(Error::EmptyChunk)?;
-			println!(
-				"Synced {} out of {} finalized parentchain blocks",
+			info!(
+				"------Synced {} out of {} finalized parentchain blocks",
 				until_synced_header.number, curr_block_number,
 			)
 		}
@@ -217,6 +226,7 @@ where
 		until_header: &Header,
 	) -> ServiceResult<Header> {
 		let mut last_synced_header = last_synced_header.clone();
+		info!("-------sync_and_import_parentchain_until, last_synced_header: {:?}, until_header: {:?}", last_synced_header, until_header);
 
 		while last_synced_header.number() < until_header.number() {
 			last_synced_header = self.sync_parentchain(last_synced_header)?;

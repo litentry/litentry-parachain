@@ -25,10 +25,12 @@ use itp_enclave_api_ffi as ffi;
 use itp_settings::worker::{
 	HEADER_MAX_SIZE, MR_ENCLAVE_SIZE, SHIELDING_KEY_SIZE, SIGNING_KEY_SIZE,
 };
+use litentry_primitives::ParentchainHeader as Header;
 use log::*;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sgx_types::*;
 use sp_core::ed25519;
+use sp_runtime::traits::BlakeTwo256;
 
 /// Trait for base/common Enclave API functions
 pub trait EnclaveBase: Send + Sync + 'static {
@@ -128,10 +130,22 @@ impl EnclaveBase for Enclave {
 		&self,
 		params: ParentchainInitParams,
 	) -> EnclaveResult<Header> {
-		let latest_header_encoded = init_parentchain_components_ffi(self.eid, params.encode())?;
+		info!("------ enclave_base, init_parentchain_components, params: {:?}", params.encode());
 
+		let header;
+		match params.clone() {
+			ParentchainInitParams::Solochain { params } => {
+				header = params.genesis_header;
+			},
+			ParentchainInitParams::Parachain { params } => {
+				header = params.genesis_header;
+			},
+		}
+
+		let latest_header_encoded =
+			init_parentchain_components_ffi(self.eid, params.encode(), header)?;
 		let latest = Header::decode(&mut latest_header_encoded.as_slice())?;
-		info!("Latest Header {:?}", latest);
+		info!("--------enclave_base, Latest Header {:?}", latest);
 
 		Ok(latest)
 	}
@@ -265,14 +279,18 @@ impl EnclaveBase for Enclave {
 	}
 }
 
+//let start_block_hash: Header<u32, BlakeTwo256>
 fn init_parentchain_components_ffi(
 	enclave_id: sgx_enclave_id_t,
 	params: Vec<u8>,
+	latest_header: Header,
 ) -> EnclaveResult<Vec<u8>> {
 	let mut retval = sgx_status_t::SGX_SUCCESS;
 
-	let latest_header_size = HEADER_MAX_SIZE;
-	let mut latest_header = vec![0u8; latest_header_size];
+	//let latest_header_size = HEADER_MAX_SIZE;
+	//let mut latest_header = vec![0u8; latest_header_size];
+	//let start_block_hash: Header<u32, BlakeTwo256>;
+	//let mut latest_header = header.clone().;
 
 	let result = unsafe {
 		ffi::init_parentchain_components(
@@ -280,13 +298,15 @@ fn init_parentchain_components_ffi(
 			&mut retval,
 			params.as_ptr(),
 			params.len(),
-			latest_header.as_mut_ptr(),
-			latest_header.len(),
+			latest_header.encode().as_mut_ptr(),
+			latest_header.encode().len(),
 		)
 	};
+
+	println!("----- init_parentchain_components_ffi, result: {:?}", result);
 
 	ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
 	ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
 
-	Ok(latest_header)
+	Ok(latest_header.encode())
 }

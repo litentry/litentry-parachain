@@ -103,8 +103,15 @@ where
 		calls: &[OpaqueCall],
 		extrinsics_params_builder: Option<ParentchainExtrinsicParamsBuilder>,
 	) -> Result<Vec<OpaqueExtrinsic>> {
+		log::info!(
+			"-------start create_extrinsics, extrinsics_params_builder: {:?}",
+			extrinsics_params_builder
+		);
+
 		let mut nonce_lock = self.nonce_cache.load_for_mutation()?;
 		let mut nonce_value = nonce_lock.0;
+
+		log::info!("got old nonce_value: {}", nonce_value);
 
 		let params_builder = extrinsics_params_builder.unwrap_or_else(|| {
 			ParentchainExtrinsicParamsBuilder::new()
@@ -121,6 +128,10 @@ where
 			.iter()
 			.map(|call| {
 				log::info!("Creating extrinsics using nonce: {}", nonce_value);
+				log::info!(
+					"Creating extrinsics using nonce:, genesis_hash: {:?}",
+					self.genesis_hash
+				);
 				let extrinsic_params = ParentchainExtrinsicParams::new(
 					runtime_spec_version,
 					runtime_transaction_version,
@@ -139,6 +150,7 @@ where
 			})
 			.collect();
 
+		log::info!("got new nonce_value: {}", nonce_value);
 		*nonce_lock = Nonce(nonce_value);
 
 		Ok(extrinsics_buffer)
