@@ -211,14 +211,9 @@ where
 			// in real cases it's preferred to read the state ahead and sent it as parameter in `Request`
 			// please note you are not supposed to write any state back - it will cause state mistmatch
 			RequestType::SetUserShieldingKey(request) => {
-				let shard = ShardIdentifier::decode(&mut request.encoded_shard.as_slice())
-					.map_err(|e| {
-						Error::OtherError(format!("error decoding ShardIdentifier {:?}", e))
-					})?;
-
 				let (mut state, _) = context
 					.state_handler
-					.load_cloned(&shard)
+					.load_cloned(&request.shard)
 					.map_err(|e| Error::OtherError(format!("load state failed: {:?}", e)))?;
 
 				let current_key =
@@ -234,7 +229,7 @@ where
 					request.key,
 					request.hash,
 				);
-				context.submit_trusted_call(&shard, &c)?;
+				context.submit_trusted_call(&request.shard, &c)?;
 			},
 		}
 	}

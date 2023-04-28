@@ -41,7 +41,6 @@ use litentry_primitives::{
 	ValidationData,
 };
 use sp_runtime::{traits::ConstU32, BoundedVec};
-use sp_std::vec::Vec;
 
 /// Here a few Request structs are defined for asynchronously stf-tasks handling.
 /// A `callback` exists for some request types to submit a callback TrustedCall to top pool.
@@ -93,7 +92,7 @@ pub struct AssertionBuildRequest {
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct SetUserShieldingKeyRequest {
-	pub encoded_shard: Vec<u8>,
+	pub shard: ShardIdentifier,
 	pub who: AccountId,
 	pub key: UserShieldingKeyType,
 	pub hash: H256,

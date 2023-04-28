@@ -19,7 +19,7 @@ extern crate sgx_tstd as std;
 
 use crate::{
 	helpers::{ensure_enclave_signer_account, generate_challenge_code},
-	is_root, AccountId, Encode, IdentityManagement, MetadataOf, Runtime, StfError, StfResult,
+	is_root, AccountId, IdentityManagement, MetadataOf, Runtime, StfError, StfResult,
 	TrustedCallSigned,
 };
 use frame_support::{dispatch::UnfilteredDispatchable, ensure};
@@ -49,8 +49,7 @@ impl TrustedCallSigned {
 		hash: H256,
 	) -> StfResult<()> {
 		ensure!(is_root::<Runtime, AccountId>(&root), StfError::MissingPrivileges(root));
-		let encoded_shard = shard.encode();
-		let request = SetUserShieldingKeyRequest { encoded_shard, who, key, hash }.into();
+		let request = SetUserShieldingKeyRequest { shard: *shard, who, key, hash }.into();
 		let sender = StfRequestSender::new();
 		sender
 			.send_stf_request(request)
