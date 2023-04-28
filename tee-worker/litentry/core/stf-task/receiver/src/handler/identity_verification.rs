@@ -16,11 +16,6 @@
 
 use crate::{handler::TaskHandler, StfTaskContext, TrustedCall};
 use ita_sgx_runtime::Hash;
-use itp_extrinsics_factory::CreateExtrinsics;
-use itp_node_api::metadata::{
-	pallet_imp::IMPCallIndexes, pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata,
-};
-use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
@@ -33,24 +28,17 @@ use std::sync::Arc;
 
 pub(crate) struct IdentityVerificationHandler<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	O: EnclaveOnChainOCallApi,
-	C: CreateExtrinsics,
-	M: AccessNodeMetadata,
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
 	H: HandleState,
 > {
 	pub(crate) req: IdentityVerificationRequest,
-	pub(crate) context: Arc<StfTaskContext<K, O, C, M, A, S, H>>,
+	pub(crate) context: Arc<StfTaskContext<K, A, S, H>>,
 }
 
-impl<K, O, C, M, A, S, H> TaskHandler for IdentityVerificationHandler<K, O, C, M, A, S, H>
+impl<K, A, S, H> TaskHandler for IdentityVerificationHandler<K, A, S, H>
 where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	O: EnclaveOnChainOCallApi,
-	C: CreateExtrinsics,
-	M: AccessNodeMetadata,
-	M::MetadataType: IMPCallIndexes + VCMPCallIndexes,
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
 	H: HandleState,

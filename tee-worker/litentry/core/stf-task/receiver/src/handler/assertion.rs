@@ -16,11 +16,6 @@
 
 use crate::{handler::TaskHandler, StfTaskContext, TrustedCall};
 use ita_sgx_runtime::Hash;
-use itp_extrinsics_factory::CreateExtrinsics;
-use itp_node_api::metadata::{
-	pallet_imp::IMPCallIndexes, pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata,
-};
-use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
@@ -38,24 +33,17 @@ use std::{format, sync::Arc};
 
 pub(crate) struct AssertionHandler<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	O: EnclaveOnChainOCallApi,
-	C: CreateExtrinsics,
-	M: AccessNodeMetadata,
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
 	H: HandleState,
 > {
 	pub(crate) req: AssertionBuildRequest,
-	pub(crate) context: Arc<StfTaskContext<K, O, C, M, A, S, H>>,
+	pub(crate) context: Arc<StfTaskContext<K, A, S, H>>,
 }
 
-impl<K, O, C, M, A, S, H> TaskHandler for AssertionHandler<K, O, C, M, A, S, H>
+impl<K, A, S, H> TaskHandler for AssertionHandler<K, A, S, H>
 where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	O: EnclaveOnChainOCallApi,
-	C: CreateExtrinsics,
-	M: AccessNodeMetadata,
-	M::MetadataType: IMPCallIndexes + VCMPCallIndexes,
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
 	H: HandleState,
@@ -204,7 +192,9 @@ where
 
 	fn on_success(&self, result: Self::Result) {
 		debug!("Assertion build OK");
-		let (vc_index, vc_hash, output) = result;
+		// we shouldn't have the maximum text length limit in normal RSA3072 encryption, as the payload
+		// using enclave's shielding key is encrypted in chunks
+		let (vc_index, vc_hash, vc_payload) = result;
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::handle_vc_issued(
 				enclave_signer,
@@ -212,7 +202,7 @@ where
 				self.req.assertion.clone(),
 				vc_index,
 				vc_hash,
-				output,
+				vc_payload,
 				self.req.hash,
 			);
 			let _ = self

@@ -44,11 +44,6 @@ use handler::{
 };
 use ita_sgx_runtime::{Hash, IdentityManagement};
 use ita_stf::{hash::Hash as TopHash, TrustedCall, TrustedOperation};
-use itp_extrinsics_factory::CreateExtrinsics;
-use itp_node_api::metadata::{
-	pallet_imp::IMPCallIndexes, pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata,
-};
-use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
@@ -57,7 +52,7 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::ShardIdentifier;
 use lc_stf_task_sender::{stf_task_sender, RequestType};
 use log::{debug, error};
-use std::{format, string::String, sync::Arc, vec::Vec};
+use std::{format, string::String, sync::Arc};
 
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum Error {
@@ -74,17 +69,11 @@ pub enum Error {
 #[allow(dead_code)]
 pub struct StfTaskContext<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	O: EnclaveOnChainOCallApi,
-	C: CreateExtrinsics,
-	M: AccessNodeMetadata,
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
 	H: HandleState,
 > {
 	shielding_key: K,
-	ocall_api: Arc<O>,
-	create_extrinsics: Arc<C>,
-	node_metadata: Arc<M>,
 	author_api: Arc<A>,
 	enclave_signer: Arc<S>,
 	pub state_handler: Arc<H>,
@@ -92,35 +81,20 @@ pub struct StfTaskContext<
 
 impl<
 		K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-		O: EnclaveOnChainOCallApi,
-		C: CreateExtrinsics,
-		M: AccessNodeMetadata,
 		A: AuthorApi<Hash, Hash>,
 		S: StfEnclaveSigning,
 		H: HandleState,
-	> StfTaskContext<K, O, C, M, A, S, H>
+	> StfTaskContext<K, A, S, H>
 where
 	H::StateT: SgxExternalitiesTrait,
-	M::MetadataType: IMPCallIndexes + VCMPCallIndexes,
 {
 	pub fn new(
 		shielding_key: K,
-		ocall_api: Arc<O>,
-		create_extrinsics: Arc<C>,
-		node_metadata: Arc<M>,
 		author_api: Arc<A>,
 		enclave_signer: Arc<S>,
 		state_handler: Arc<H>,
 	) -> Self {
-		Self {
-			shielding_key,
-			ocall_api,
-			create_extrinsics,
-			node_metadata,
-			author_api,
-			enclave_signer,
-			state_handler,
-		}
+		Self { shielding_key, author_api, enclave_signer, state_handler }
 	}
 
 	fn submit_trusted_call(
@@ -138,15 +112,13 @@ where
 		// find out if we have any trusted operation which has the same hash in the pool already.
 		// The hash can be used to de-duplicate a trusted operation for a certain request, as the
 		// `trusted_call` in this fn always contains the req_ext_hash, which is unique for each request.
-		let filtered_top: Vec<TrustedOperation> = self
+		if self
 			.author_api
 			.get_pending_trusted_calls_for(*shard, trusted_call.sender_account())
 			.into_iter()
-			.filter(|t| t.hash() == top.hash())
-			.collect();
-
-		// skip the submission if filtered_top is non empty, return Ok(())
-		if !filtered_top.is_empty() {
+			.any(|t| t.hash() == top.hash())
+		{
+			// skip the submission if some top with the same hash already exists, return Ok(())
 			warn!("Skip submit_trusted_call because top with the same hash exists");
 			return Ok(())
 		}
@@ -156,7 +128,11 @@ where
 			.encrypt(&top.encode())
 			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
 
-		debug!("submit encrypted trusted call: {} bytes", encrypted_trusted_call.len());
+		debug!(
+			"submit encrypted trusted call: {} bytes, original encoded top: {} bytes",
+			encrypted_trusted_call.len(),
+			top.encode().len()
+		);
 		executor::block_on(self.author_api.submit_top(encrypted_trusted_call, *shard)).map_err(
 			|e| Error::OtherError(format!("error submitting trusted call to top pool: {:?}", e)),
 		)?;
@@ -166,15 +142,11 @@ where
 }
 
 // lifetime elision: StfTaskContext is guaranteed to outlive the fn
-pub fn run_stf_task_receiver<K, O, C, M, A, S, H>(
-	context: Arc<StfTaskContext<K, O, C, M, A, S, H>>,
+pub fn run_stf_task_receiver<K, A, S, H>(
+	context: Arc<StfTaskContext<K, A, S, H>>,
 ) -> Result<(), Error>
 where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	O: EnclaveOnChainOCallApi,
-	C: CreateExtrinsics,
-	M: AccessNodeMetadata,
-	M::MetadataType: IMPCallIndexes + VCMPCallIndexes,
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
 	H: HandleState,

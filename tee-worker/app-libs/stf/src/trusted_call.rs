@@ -738,7 +738,7 @@ where
 				match node_metadata_repo.get_from_metadata(|m| m.vc_issued_call_indexes()) {
 					Ok(Ok(c)) => calls.push(OpaqueCall::from_tuple(&(
 						c,
-						SgxParentchainTypeConverter::convert(who.clone()),
+						SgxParentchainTypeConverter::convert(who),
 						assertion,
 						vc_index,
 						vc_hash,
