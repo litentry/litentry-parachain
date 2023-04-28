@@ -36,7 +36,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 mod handler;
 
-use codec::{Decode, Encode};
+use codec::Encode;
 use futures::executor;
 use handler::{
 	assertion::AssertionHandler, identity_verification::IdentityVerificationHandler, TaskHandler,
@@ -56,7 +56,7 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{OpaqueCall, ShardIdentifier};
 use lc_stf_task_sender::{stf_task_sender, RequestType};
 use log::{debug, error};
-use std::{format, string::String, sync::Arc, vec, vec::Vec};
+use std::{format, string::String, sync::Arc, vec};
 
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum Error {
@@ -122,19 +122,7 @@ where
 		}
 	}
 
-	pub fn decode_and_submit_trusted_call(
-		&self,
-		encoded_shard: Vec<u8>,
-		encoded_callback: Vec<u8>,
-	) -> Result<(), Error> {
-		let shard = ShardIdentifier::decode(&mut encoded_shard.as_slice())
-			.map_err(|e| Error::OtherError(format!("error decoding ShardIdentifier: {:?}", e)))?;
-		let callback = TrustedCall::decode(&mut encoded_callback.as_slice())
-			.map_err(|e| Error::OtherError(format!("error decoding TrustedCall: {:?}", e)))?;
-		self.submit_trusted_call(&shard, &callback)
-	}
-
-	pub fn submit_trusted_call(
+	fn submit_trusted_call(
 		&self,
 		shard: &ShardIdentifier,
 		trusted_call: &TrustedCall,

@@ -26,7 +26,6 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::OpaqueCall;
 use lc_stf_task_sender::IdentityVerificationRequest;
 use litentry_primitives::IMPError;
 use log::*;
@@ -85,28 +84,20 @@ where
 
 	fn on_failure(&self, error: Self::Error) {
 		error!("verify identity failed:{:?}", error);
-		match self
-			.context
-			.node_metadata
-			.get_from_metadata(|m| IMPCallIndexes::imp_some_error_call_indexes(m))
-		{
-			Ok(Ok(call_index)) => {
-				debug!("Sending imp_some_error event to parachain ...");
-				let call = OpaqueCall::from_tuple(&(
-					call_index,
-					Some(self.req.who.clone()),
-					error,
-					self.req.hash,
-				));
 
-				self.context.submit_to_parentchain(call)
-			},
-			Ok(Err(e)) => {
-				error!("get metadata failed: {:?}", e);
-			},
-			Err(e) => {
-				error!("get metadata failed: {:?}", e);
-			},
+		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
+			let c = TrustedCall::handle_imp_error(
+				enclave_signer,
+				Some(self.req.who.clone()),
+				error,
+				self.req.hash,
+			);
+			let _ = self
+				.context
+				.submit_trusted_call(&self.req.shard, &c)
+				.map_err(|e| error!("submit_trusted_call failed: {:?}", e));
+		} else {
+			error!("can't get enclave signer");
 		}
 	}
 }
