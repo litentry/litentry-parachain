@@ -15,9 +15,8 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	ensure,
-	error::{Error, Result},
-	get_expected_raw_message, get_expected_wrapped_message, AccountId, ToString,
+	ensure, get_expected_raw_message, get_expected_wrapped_message, AccountId, Error, Result,
+	ToString,
 };
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
@@ -34,18 +33,17 @@ use sp_io::{
 };
 
 pub fn verify(
-	who: AccountId,
-	identity: Identity,
-	code: ChallengeCode,
-	web3: Web3ValidationData,
+	who: &AccountId,
+	identity: &Identity,
+	code: &ChallengeCode,
+	data: &Web3ValidationData,
 ) -> Result<()> {
-	debug!("web3 identity verify, who: {}", account_id_to_string(&who));
-
-	match web3 {
+	debug!("verify web3 identity, who: {}", account_id_to_string(&who));
+	match data {
 		Web3ValidationData::Substrate(substrate_validation_data) =>
-			verify_substrate_signature(&who, &identity, &code, &substrate_validation_data),
+			verify_substrate_signature(who, identity, code, substrate_validation_data),
 		Web3ValidationData::Evm(evm_validation_data) =>
-			verify_evm_signature(&who, &identity, &code, &evm_validation_data),
+			verify_evm_signature(who, identity, code, evm_validation_data),
 	}
 }
 
@@ -55,8 +53,6 @@ fn verify_substrate_signature(
 	code: &ChallengeCode,
 	validation_data: &Web3CommonValidationData,
 ) -> Result<()> {
-	debug!("verify substrate signature, who: {}", account_id_to_string(&who));
-
 	let raw_msg = get_expected_raw_message(who, identity, code);
 	let wrapped_msg = get_expected_wrapped_message(raw_msg.clone());
 
@@ -119,8 +115,6 @@ fn verify_evm_signature(
 	code: &ChallengeCode,
 	validation_data: &Web3CommonValidationData,
 ) -> Result<()> {
-	debug!("verify evm signature, who: {}", account_id_to_string(&who));
-
 	let msg = get_expected_raw_message(who, identity, code);
 	let digest = compute_evm_msg_digest(&msg);
 	let evm_address = if let Identity::Evm { address, .. } = identity {

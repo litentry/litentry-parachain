@@ -200,8 +200,8 @@ where
 			.map_err(|e| Error::OtherError(format!("receiver error:{:?}", e)))?;
 
 		match request_type.clone() {
-			RequestType::Web2IdentityVerification(_) | RequestType::Web3IdentityVerification(_) => {
-				IdentityVerificationHandler { req: request_type.clone(), context: context.clone() }
+			RequestType::IdentityVerification(request) => {
+				IdentityVerificationHandler { req: request.clone(), context: context.clone() }
 					.start();
 			},
 			RequestType::AssertionVerification(request) => {
