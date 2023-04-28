@@ -37,8 +37,7 @@ use codec::{Decode, Encode};
 pub use error::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use litentry_primitives::{
-	Assertion, ChallengeCode, Identity, UserShieldingKeyType, Web2ValidationData,
-	Web3ValidationData,
+	Assertion, ChallengeCode, Identity, UserShieldingKeyType, ValidationData,
 };
 use sp_runtime::{traits::ConstU32, BoundedVec};
 use sp_std::vec::Vec;
@@ -68,25 +67,12 @@ use sp_std::vec::Vec;
 /// https://www.notion.so/web3builders/Sidechain-block-importer-and-block-production-28292233b4c74f4ab8110a0014f8d9df
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub struct Web2IdentityVerificationRequest {
+pub struct IdentityVerificationRequest {
 	pub encoded_shard: Vec<u8>,
 	pub who: AccountId,
 	pub identity: Identity,
 	pub challenge_code: ChallengeCode,
-	pub validation_data: Web2ValidationData,
-	pub bn: litentry_primitives::ParentchainBlockNumber, //Parentchain BlockNumber
-	pub encoded_callback: Vec<u8>,
-	pub hash: H256,
-}
-
-/// TODO: adapt Web3 struct fields later
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub struct Web3IdentityVerificationRequest {
-	pub encoded_shard: Vec<u8>,
-	pub who: AccountId,
-	pub identity: Identity,
-	pub challenge_code: ChallengeCode,
-	pub validation_data: Web3ValidationData,
+	pub validation_data: ValidationData,
 	pub bn: litentry_primitives::ParentchainBlockNumber, //Parentchain BlockNumber
 	pub encoded_callback: Vec<u8>,
 	pub hash: H256,
@@ -115,8 +101,7 @@ pub struct SetUserShieldingKeyRequest {
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub enum RequestType {
-	Web2IdentityVerification(Web2IdentityVerificationRequest),
-	Web3IdentityVerification(Web3IdentityVerificationRequest),
+	IdentityVerification(IdentityVerificationRequest),
 	AssertionVerification(AssertionBuildRequest),
 	// set the user shielding key async - just to showcase how to
 	// async process the request in stf-task-receiver
@@ -127,8 +112,7 @@ pub enum RequestType {
 impl RequestType {
 	pub fn get_who(&self) -> &AccountId {
 		match self {
-			RequestType::Web2IdentityVerification(r) => &r.who,
-			RequestType::Web3IdentityVerification(r) => &r.who,
+			RequestType::IdentityVerification(r) => &r.who,
 			RequestType::AssertionVerification(r) => &r.who,
 			RequestType::SetUserShieldingKey(r) => &r.who,
 		}
@@ -136,23 +120,16 @@ impl RequestType {
 
 	pub fn get_hash(&self) -> H256 {
 		match self {
-			RequestType::Web2IdentityVerification(r) => r.hash,
-			RequestType::Web3IdentityVerification(r) => r.hash,
+			RequestType::IdentityVerification(r) => r.hash,
 			RequestType::AssertionVerification(r) => r.hash,
 			RequestType::SetUserShieldingKey(r) => r.hash,
 		}
 	}
 }
 
-impl From<Web2IdentityVerificationRequest> for RequestType {
-	fn from(r: Web2IdentityVerificationRequest) -> Self {
-		RequestType::Web2IdentityVerification(r)
-	}
-}
-
-impl From<Web3IdentityVerificationRequest> for RequestType {
-	fn from(r: Web3IdentityVerificationRequest) -> Self {
-		RequestType::Web3IdentityVerification(r)
+impl From<IdentityVerificationRequest> for RequestType {
+	fn from(r: IdentityVerificationRequest) -> Self {
+		RequestType::IdentityVerification(r)
 	}
 }
 

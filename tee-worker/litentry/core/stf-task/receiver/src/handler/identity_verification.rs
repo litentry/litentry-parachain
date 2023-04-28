@@ -27,10 +27,10 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::OpaqueCall;
-use lc_stf_task_sender::RequestType;
+use lc_stf_task_sender::IdentityVerificationRequest;
 use litentry_primitives::IMPError;
 use log::*;
-use std::{sync::Arc, vec::Vec};
+use std::sync::Arc;
 
 pub(crate) struct IdentityVerificationHandler<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
@@ -41,7 +41,7 @@ pub(crate) struct IdentityVerificationHandler<
 	S: StfEnclaveSigning,
 	H: HandleState,
 > {
-	pub(crate) req: RequestType,
+	pub(crate) req: IdentityVerificationRequest,
 	pub(crate) context: Arc<StfTaskContext<K, O, C, M, A, S, H>>,
 }
 
@@ -58,36 +58,20 @@ where
 	H::StateT: SgxExternalitiesTrait,
 {
 	type Error = IMPError;
-	type Result = (Vec<u8>, Vec<u8>);
+	type Result = ();
 
-	fn on_process(&self) -> Result<(Vec<u8>, Vec<u8>), Self::Error> {
-		match self.req.clone() {
-			RequestType::Web2IdentityVerification(ref req) =>
-				lc_identity_verification::web2::verify(req)
-					.map(|_| (req.encoded_shard.clone(), req.encoded_callback.clone())),
-
-			RequestType::Web3IdentityVerification(ref req) =>
-				lc_identity_verification::web3::verify(
-					req.who.clone(),
-					req.identity.clone(),
-					req.challenge_code,
-					req.validation_data.clone(),
-				)
-				.map(|_| (req.encoded_shard.clone(), req.encoded_callback.clone())),
-			_ => {
-				unimplemented!()
-			},
-		}
+	fn on_process(&self) -> Result<Self::Result, Self::Error> {
+		return lc_identity_verification::verify(&self.req)
 	}
 
-	fn on_success(&self, result: Self::Result) {
-		let (shard, callback) = result;
-		match self.context.decode_and_submit_trusted_call(shard, callback) {
-			Ok(_) => {},
-			Err(e) => {
-				error!("decode_and_submit_trusted_call failed: {:?}", e);
-			},
-		}
+	fn on_success(&self, _result: Self::Result) {
+		let _ = self
+			.context
+			.decode_and_submit_trusted_call(
+				self.req.encoded_shard.clone(),
+				self.req.encoded_callback.clone(),
+			)
+			.map_err(|e| error!("decode_and_submit_trusted_call failed: {:?}", e));
 	}
 
 	fn on_failure(&self, error: Self::Error) {
@@ -101,9 +85,9 @@ where
 				debug!("Sending imp_some_error event to parachain ...");
 				let call = OpaqueCall::from_tuple(&(
 					call_index,
-					Some(self.req.get_who()),
+					Some(self.req.who.clone()),
 					error,
-					self.req.get_hash(),
+					self.req.hash,
 				));
 
 				self.context.submit_to_parentchain(call)

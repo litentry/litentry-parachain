@@ -35,17 +35,26 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 use codec::Encode;
 use frame_support::pallet_prelude::*;
+use lc_stf_task_sender::IdentityVerificationRequest;
 use sp_core::blake2_256;
 // this should be ita_stf::AccountId, but we use itp_types to avoid cyclic dep
 use itp_types::AccountId;
-use litentry_primitives::{ChallengeCode, Identity};
+use litentry_primitives::{ChallengeCode, Identity, ValidationData};
 use sp_std::vec::Vec;
 use std::string::ToString;
 
-pub mod web2;
-pub mod web3;
+mod web2;
+mod web3;
 
-pub mod error;
+mod error;
+use error::{Error, Result};
+
+pub fn verify(r: &IdentityVerificationRequest) -> Result<()> {
+	match &r.validation_data {
+		ValidationData::Web2(data) => web2::verify(&r.who, &r.identity, &r.challenge_code, data),
+		ValidationData::Web3(data) => web3::verify(&r.who, &r.identity, &r.challenge_code, data),
+	}
+}
 
 // verification message format: <challeng-code> + <litentry-AccountId32> + <Identity>,
 // where <> means SCALE-encoded
