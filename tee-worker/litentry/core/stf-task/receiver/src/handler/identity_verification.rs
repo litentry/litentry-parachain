@@ -61,7 +61,7 @@ where
 	type Result = ();
 
 	fn on_process(&self) -> Result<Self::Result, Self::Error> {
-		return lc_identity_verification::verify(&self.req)
+		lc_identity_verification::verify(&self.req)
 	}
 
 	fn on_success(&self, _result: Self::Result) {

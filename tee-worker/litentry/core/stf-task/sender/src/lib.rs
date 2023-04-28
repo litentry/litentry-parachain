@@ -109,24 +109,6 @@ pub enum RequestType {
 	SetUserShieldingKey(SetUserShieldingKeyRequest),
 }
 
-impl RequestType {
-	pub fn get_who(&self) -> &AccountId {
-		match self {
-			RequestType::IdentityVerification(r) => &r.who,
-			RequestType::AssertionVerification(r) => &r.who,
-			RequestType::SetUserShieldingKey(r) => &r.who,
-		}
-	}
-
-	pub fn get_hash(&self) -> H256 {
-		match self {
-			RequestType::IdentityVerification(r) => r.hash,
-			RequestType::AssertionVerification(r) => r.hash,
-			RequestType::SetUserShieldingKey(r) => r.hash,
-		}
-	}
-}
-
 impl From<IdentityVerificationRequest> for RequestType {
 	fn from(r: IdentityVerificationRequest) -> Self {
 		RequestType::IdentityVerification(r)
