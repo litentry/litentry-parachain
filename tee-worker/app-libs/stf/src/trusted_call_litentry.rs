@@ -29,8 +29,8 @@ use itp_types::H256;
 use itp_utils::stringify::account_id_to_string;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
-	AssertionBuildRequest, MaxIdentityLength, RequestType, SetUserShieldingKeyRequest,
-	Web2IdentityVerificationRequest, Web3IdentityVerificationRequest,
+	AssertionBuildRequest, IdentityVerificationRequest, MaxIdentityLength, RequestType,
+	SetUserShieldingKeyRequest,
 };
 use litentry_primitives::{
 	Assertion, ChallengeCode, ErrorDetail, ErrorString, Identity, ParentchainBlockNumber,
@@ -142,31 +142,17 @@ impl TrustedCallSigned {
 		)
 		.encode();
 		let encoded_shard = shard.encode();
-		let request: RequestType = match validation_data {
-			ValidationData::Web2(web2) => Web2IdentityVerificationRequest {
-				encoded_shard,
-				who,
-				identity,
-				challenge_code: code,
-				validation_data: web2,
-				bn,
-				encoded_callback,
-				hash,
-			}
-			.into(),
-			ValidationData::Web3(web3) => Web3IdentityVerificationRequest {
-				encoded_shard,
-				who,
-				identity,
-				challenge_code: code,
-				validation_data: web3,
-				bn,
-				encoded_callback,
-				hash,
-			}
-			.into(),
-		};
-
+		let request: RequestType = IdentityVerificationRequest {
+			encoded_shard,
+			who,
+			identity,
+			challenge_code: code,
+			validation_data,
+			bn,
+			encoded_callback,
+			hash,
+		}
+		.into();
 		let sender = StfRequestSender::new();
 		sender
 			.send_stf_request(request)
