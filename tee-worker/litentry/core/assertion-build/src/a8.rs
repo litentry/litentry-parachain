@@ -26,7 +26,7 @@ use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::graphql::{
-	GraphQLClient, VerifiedCredentialsNetwork, VerifiedCredentialsTotalTxs,
+	GraphQLClient, TDFQuery, VerifiedCredentialsNetwork, VerifiedCredentialsTotalTxs,
 };
 use log::*;
 use std::{collections::HashSet, string::String, vec, vec::Vec};
@@ -100,7 +100,7 @@ pub fn build(
 		let networks = verified_networks.into_iter().collect();
 		let query = VerifiedCredentialsTotalTxs::new(addresses, networks);
 
-		if let Ok(result) = client.query_total_transactions(query) {
+		if let Ok(result) = client.verified_credentials_total_transactions(query) {
 			total_txs += result.iter().map(|v| v.total_transactions).sum::<u64>();
 		}
 	}

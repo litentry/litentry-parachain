@@ -26,7 +26,7 @@ use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::{
-	graphql::{GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork},
+	graphql::{GraphQLClient, TDFQuery, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork},
 	vec_to_string,
 };
 use log::*;
@@ -86,12 +86,11 @@ pub fn build(
 				q_min_balance.to_string(),
 			);
 
-			match client.check_verified_credentials_is_hodler(vch) {
-				Ok(is_hodler_out) => {
-					for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
+			match client.verified_credentials_is_hodler(vch) {
+				Ok(is_hodler_out) =>
+					for hodler in is_hodler_out.hodlers.iter() {
 						is_hold = is_hold || hodler.is_hodler;
-					}
-				},
+					},
 				Err(e) => error!(
 					"Assertion A10 request check_verified_credentials_is_hodler error: {:?}",
 					e

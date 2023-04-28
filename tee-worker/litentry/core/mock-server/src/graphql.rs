@@ -16,7 +16,8 @@
 #![allow(opaque_hidden_inferred_bound)]
 
 use lc_data_providers::graphql::{
-	VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork, VerifiedCredentialsTotalTxs,
+	ToGraphQL, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
+	VerifiedCredentialsTotalTxs,
 };
 use std::collections::HashMap;
 use warp::{http::Response, Filter};
