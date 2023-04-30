@@ -99,7 +99,7 @@ where
 
 	fn get_state(&self) -> &LightValidationState<Block>;
 
-	fn set_ignore_validation_until(&mut self, until: u32);
+	fn set_ignore_validation_until(&mut self, until: u32) -> Result<(), Error>;
 }
 
 pub trait ExtrinsicSender {

@@ -222,10 +222,10 @@ where
 
 		let relay = self.light_validation_state.get_tracked_relay_mut(relay_id)?;
 
-		if *header.number() > self.ignore_validation_until {
-			if relay.last_finalized_block_header.hash() != *header.parent_hash() {
-				return Err(Error::HeaderAncestryMismatch)
-			}
+		if *header.number() > self.ignore_validation_until
+			&& relay.last_finalized_block_header.hash() != *header.parent_hash()
+		{
+			return Err(Error::HeaderAncestryMismatch)
 		}
 
 		self.submit_finalized_headers(relay_id, header.clone(), vec![], justifications)
@@ -272,8 +272,9 @@ where
 		&self.light_validation_state
 	}
 
-	fn set_ignore_validation_until(&mut self, until: u32) {
+	fn set_ignore_validation_until(&mut self, until: u32) -> Result<(), Error> {
 		self.ignore_validation_until = until.into();
+		Ok(())
 	}
 }
 

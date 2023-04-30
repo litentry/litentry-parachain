@@ -71,8 +71,8 @@ impl Validator<Block> for ValidatorMock {
 		&self.light_validation_state
 	}
 
-	fn set_ignore_validation_until(&mut self, until: u32) {
-		todo!()
+	fn set_ignore_validation_until(&mut self, until: u32) -> Result<()> {
+		Ok(())
 	}
 }
 

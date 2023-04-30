@@ -393,16 +393,15 @@ pub unsafe extern "C" fn sync_parentchain(
 pub unsafe extern "C" fn ignore_parentchain_block_import_validation_until(
 	until: *const u32,
 ) -> sgx_status_t {
-	let validator_access = match get_validator_accessor_from_solo_or_parachain() {
+	let va = match get_validator_accessor_from_solo_or_parachain() {
 		Ok(r) => r,
 		Err(e) => {
-			error!("Component get failure: {:?}", e);
+			error!("Can't get validator accessor: {:?}", e);
 			return sgx_status_t::SGX_ERROR_UNEXPECTED
 		},
 	};
 
-	let _ =
-		validator_access.execute_mut_on_validator(|v| Ok(v.set_ignore_validation_until(*until)));
+	let _ = va.execute_mut_on_validator(|v| v.set_ignore_validation_until(*until));
 
 	sgx_status_t::SGX_SUCCESS
 }
