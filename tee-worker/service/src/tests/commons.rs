@@ -52,7 +52,7 @@ pub fn local_worker_config(
 		None,
 		Default::default(),
 		false,
-		19527,
-		0,
+		"19527".to_string(),
+		"0".to_string(),
 	)
 }

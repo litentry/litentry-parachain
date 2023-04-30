@@ -100,4 +100,8 @@ impl Sidechain for EnclaveMock {
 	fn execute_trusted_calls(&self) -> EnclaveResult<()> {
 		todo!()
 	}
+
+	fn ignore_parentchain_block_import_validation_until(&self, _until: u32) -> EnclaveResult<()> {
+		todo!()
+	}
 }
