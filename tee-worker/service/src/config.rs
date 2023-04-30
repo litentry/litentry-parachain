@@ -301,6 +301,7 @@ mod test {
 
 		// running mode for litentry: dev / staging / prod
 		let running_mode = "dev";
+		let parentchain_start_block = "0";
 
 		let mut args = ArgMatches::default();
 		args.args = HashMap::from([
@@ -315,6 +316,7 @@ mod test {
 			("trusted-worker-port", Default::default()),
 			("untrusted-http-port", Default::default()),
 			("running-mode", Default::default()),
+			("parentchain-start-block", Default::default()),
 		]);
 		// Workaround because MatchedArg is private.
 		args.args.get_mut("node-server").unwrap().vals = vec![node_ip.into()];
@@ -328,6 +330,8 @@ mod test {
 		args.args.get_mut("trusted-worker-port").unwrap().vals = vec![trusted_port.into()];
 		args.args.get_mut("untrusted-http-port").unwrap().vals = vec![untrusted_http_port.into()];
 		args.args.get_mut("running-mode").unwrap().vals = vec![running_mode.into()];
+		args.args.get_mut("parentchain-start-block").unwrap().vals =
+			vec![parentchain_start_block.into()];
 
 		let config = Config::from(&args);
 
@@ -341,6 +345,7 @@ mod test {
 		assert_eq!(config.mu_ra_external_address, Some(mu_ra_ext_addr.to_string()));
 		assert_eq!(config.untrusted_http_port, untrusted_http_port.to_string());
 		assert_eq!(config.running_mode, running_mode.to_string());
+		assert_eq!(config.parentchain_start_block, parentchain_start_block.to_string());
 	}
 
 	#[test]

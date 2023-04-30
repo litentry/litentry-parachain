@@ -96,6 +96,11 @@ args:
         help: Set the port for the mock-server HTTP server
         required: false
         default_value: "19527"
+    - parentchain-start-block:
+        long: parentchain-start-block
+        help: Set the parentchain block number to start syncing with
+        required: false
+        default_value: "0"
 
 subcommands:
     - run:

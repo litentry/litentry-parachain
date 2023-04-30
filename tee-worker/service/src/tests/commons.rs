@@ -53,5 +53,6 @@ pub fn local_worker_config(
 		Default::default(),
 		false,
 		19527,
+		0,
 	)
 }

@@ -273,6 +273,7 @@ where
 	}
 
 	fn set_ignore_validation_until(&mut self, until: u32) -> Result<(), Error> {
+		info!("set ignore parentchain block import validation until: {}", until);
 		self.ignore_validation_until = until.into();
 		Ok(())
 	}
