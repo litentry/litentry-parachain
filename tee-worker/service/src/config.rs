@@ -64,7 +64,7 @@ pub struct Config {
 	pub enable_mock_server: bool,
 	pub mock_server_port: u16,
 	/// the parentchain block number to start syncing with
-	pub parentchain_start_block: u64,
+	pub parentchain_start_block: u32,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -86,7 +86,7 @@ impl Config {
 		running_mode: String,
 		enable_mock_server: bool,
 		mock_server_port: u16,
-		parentchain_start_block: u64,
+		parentchain_start_block: u32,
 	) -> Self {
 		Self {
 			node_ip,
@@ -192,6 +192,7 @@ impl From<&ArgMatches<'_>> for Config {
 			m.value_of("running-mode").unwrap_or(DEFAULT_RUNNING_MODE).to_string(),
 			is_mock_server_enabled,
 			u16::from_str(mock_server_port).unwrap(),
+			u32::from_str(parentchain_start_block).unwrap(),
 		)
 	}
 }

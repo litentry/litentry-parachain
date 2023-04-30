@@ -78,6 +78,12 @@ extern "C" {
 		nonce: *const u32,
 	) -> sgx_status_t;
 
+	pub fn ignore_parentchain_block_import_validation_until(
+		eid: sgx_enclave_id_t,
+		retval: *mut sgx_status_t,
+		until: *const u32,
+	) -> sgx_status_t;
+
 	pub fn set_nonce(
 		eid: sgx_enclave_id_t,
 		retval: *mut sgx_status_t,

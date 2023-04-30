@@ -678,10 +678,15 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 	if WorkerModeProvider::worker_mode() != WorkerMode::Teeracle {
 		println!("*** [+] Finished syncing light client, syncing parentchain...");
+		println!(
+			"*** [+] last_synced_header: {}, config.parentchain_start_block: {}",
+			last_synced_header.number, config.parentchain_start_block
+		);
 
 		// Syncing all parentchain blocks, this might take a while..
-		let mut last_synced_header =
-			parentchain_handler.sync_parentchain(last_synced_header).unwrap();
+		let mut last_synced_header = parentchain_handler
+			.sync_parentchain(last_synced_header, config.parentchain_start_block)
+			.unwrap();
 
 		// ------------------------------------------------------------------------
 		// Initialize the sidechain
@@ -693,6 +698,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 				parentchain_handler.clone(),
 				sidechain_storage,
 				&last_synced_header,
+				config.parentchain_start_block,
 			)
 			.unwrap();
 		}
@@ -905,7 +911,8 @@ fn subscribe_to_parentchain_new_headers<E: EnclaveBase + Sidechain>(
 			new_header.number
 		);
 
-		last_synced_header = parentchain_handler.sync_parentchain(last_synced_header)?;
+		// the overriden_start_block shouldn't matter here
+		last_synced_header = parentchain_handler.sync_parentchain(last_synced_header, 0)?;
 	}
 }
 
