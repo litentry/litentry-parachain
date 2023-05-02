@@ -35,37 +35,37 @@ env:
   BENCHMARK_SSH_KEYPATH: ${{ secrets.BENCHMARK_SSH_KEYPATH }}
   DOCKER_BUILDKIT: 1
 
-jobs:
+#jobs:
   ## build docker image with runtime-benchmarks feature
-  build-docker:
-    if: ${{ github.event.inputs.rebuild-docker == 'true' }}
-    runs-on: dev-builder
-    steps:
-      - name: Checkout codes on ${{ github.ref }}
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+#  build-docker:
+#    if: ${{ github.event.inputs.rebuild-docker == 'true' }}
+#    runs-on: dev-builder
+#    steps:
+#      - name: Checkout codes on ${{ github.ref }}
+#        uses: actions/checkout@v3
+#        with:
+#          fetch-depth: 0
 
-      - name: Build docker image
-        run: |
-          ./scripts/build-docker.sh production runtime-benchmarks --features=runtime-benchmarks
+#      - name: Build docker image
+#        run: |
+#          ./scripts/build-docker.sh production runtime-benchmarks --features=runtime-benchmarks
 
-      - name: Push docker image
-        run: |
-          docker push litentry/litentry-parachain:runtime-benchmarks
+#      - name: Push docker image
+#        run: |
+#          docker push litentry/litentry-parachain:runtime-benchmarks
 
-      - name: Remove dangling images if any
-        run: |
-          [ -z "$(docker images --filter=dangling=true -q)" ] || docker rmi -f $(docker images --filter=dangling=true -q)
+#      - name: Remove dangling images if any
+#        run: |
+#          [ -z "$(docker images --filter=dangling=true -q)" ] || docker rmi -f $(docker images --filter=dangling=true -q)
 
   ## run the benchmarking remotely
   benchmark:
     runs-on: jumphost
-    needs: build-docker
+#    needs: build-docker
     # see https://github.com/actions/runner/issues/491
-    if: |
-      always() &&
-      (needs.build-docker.result == 'success' || needs.build-docker.result == 'skipped') 
+#    if: |
+#      always() &&
+#      (needs.build-docker.result == 'success' || needs.build-docker.result == 'skipped') 
     steps:
       - name: Set env
         run: |
