@@ -37,35 +37,35 @@ env:
 
 jobs:
   ## build docker image with runtime-benchmarks feature
-#  build-docker:
-#    if: ${{ github.event.inputs.rebuild-docker == 'true' }}
-#    runs-on: dev-builder
-#    steps:
-#      - name: Checkout codes on ${{ github.ref }}
-#        uses: actions/checkout@v3
-#        with:
-#          fetch-depth: 0
+  build-docker:
+    if: ${{ github.event.inputs.rebuild-docker == 'true' }}
+    runs-on: dev-builder
+    steps:
+      - name: Checkout codes on ${{ github.ref }}
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-#      - name: Build docker image
-#        run: |
-#          ./scripts/build-docker.sh production runtime-benchmarks --features=runtime-benchmarks
+      - name: Build docker image
+        run: |
+          ./scripts/build-docker.sh production runtime-benchmarks --features=runtime-benchmarks
 
-#      - name: Push docker image
-#        run: |
-#          docker push litentry/litentry-parachain:runtime-benchmarks
+      - name: Push docker image
+        run: |
+          docker push litentry/litentry-parachain:runtime-benchmarks
 
-#      - name: Remove dangling images if any
-#        run: |
-#          [ -z "$(docker images --filter=dangling=true -q)" ] || docker rmi -f $(docker images --filter=dangling=true -q)
+      - name: Remove dangling images if any
+        run: |
+          [ -z "$(docker images --filter=dangling=true -q)" ] || docker rmi -f $(docker images --filter=dangling=true -q)
 
   ## run the benchmarking remotely
   benchmark:
     runs-on: jumphost
-#    needs: build-docker
+    needs: build-docker
     # see https://github.com/actions/runner/issues/491
-#    if: |
-#      always() &&
-#      (needs.build-docker.result == 'success' || needs.build-docker.result == 'skipped') 
+    if: |
+      always() &&
+      (needs.build-docker.result == 'success' || needs.build-docker.result == 'skipped') 
     steps:
       - name: Set env
         run: |
@@ -130,7 +130,7 @@ jobs:
           for c in $chain; do
             ssh -x -o StrictHostKeychecking=no 172.31.14.5 -l ${{ env.BENCHMARK_SSH_USER }} 'bash -s' < scripts/benchmark-weight-remote.sh "$c" "${GITHUB_REF#refs/heads/}" "$arg"
             echo "copy generated weights files back ..."
-            scp -o StrictHostKeychecking=no -i ${{ env.BENCHMARK_SSH_KEYPATH }} "${{ env.BENCHMARK_SSH_USER }}@${{ steps.start_instance.outputs.remote_ip }}":/tmp/litentry-parachain/runtime/$c/src/weights/*.rs runtime/$c/src/weights/
+            scp -o StrictHostKeychecking=no "${{ env.BENCHMARK_SSH_USER }}"@172.31.14.5:/tmp/litentry-parachain/runtime/$c/src/weights/*.rs runtime/$c/src/weights/
           done
           echo "======================"
           git status
@@ -143,25 +143,25 @@ jobs:
           ret=`aws ec2 describe-instance-status --region ap-southeast-1 --instance-ids ${{ env.INSTANCE_ID }} | jq '.InstanceStatuses[0].InstanceState.Name'`
           echo "Remote instance running state: $ret"
 
-#      - name: Create auto PR
-#        uses: peter-evans/create-pull-request@v3
-#        with:
-#          commit-message: "[benchmarking bot] Auto commit generated weights files"
-#          committer: benchmarking bot <noreply@github.com>
-#          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
-#          signoff: false
-#          branch: benchmarking-bot-${{ github.run_id }}
-#          delete-branch: true
-#          title: "[benchmarking bot] Update generated weights files"
-#          body: |
-#            This is an automatically created PR.
-#            It updates the weights files under `runtime/*/src/weights/*.rs` after running benchmarks on the remote machine: ${{ env.INSTANCE_ID }}
+      - name: Create auto PR
+        uses: peter-evans/create-pull-request@v3
+        with:
+          commit-message: "[benchmarking bot] Auto commit generated weights files"
+          committer: benchmarking bot <noreply@github.com>
+          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+          signoff: false
+          branch: benchmarking-bot-${{ github.run_id }}
+          delete-branch: true
+          title: "[benchmarking bot] Update generated weights files"
+          body: |
+            This is an automatically created PR.
+            It updates the weights files under `runtime/*/src/weights/*.rs` after running benchmarks on the remote machine: ${{ env.INSTANCE_ID }}
 
-#            Pallets: "${{ github.event.inputs.pallets }}"
-#            Chain: "${{ env.CHAIN }}"
-#            Github action run: https://github.com/litentry/litentry-parachain/actions/runs/${{ github.run_id }}
-#          labels: |
-#            automated-pr
-#          assignees: ${{ github.actor }}
-#          reviewers: ${{ github.actor }}
-#          draft: false
+            Pallets: "${{ github.event.inputs.pallets }}"
+            Chain: "${{ env.CHAIN }}"
+            Github action run: https://github.com/litentry/litentry-parachain/actions/runs/${{ github.run_id }}
+          labels: |
+            automated-pr
+          assignees: ${{ github.actor }}
+          reviewers: ${{ github.actor }}
+          draft: false
