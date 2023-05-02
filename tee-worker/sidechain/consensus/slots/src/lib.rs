@@ -253,6 +253,28 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 			);
 		}
 
+		// TODO: about the shard migration and state migration
+		//       - the shard migration(copy-over) is done manually by the subcommand "migrate-shard".
+		//       - the state migration is done via conditionally calling on_runtime_upgrade() by comparing
+		//         the current runtime version and LastRuntimeUpgrade, see `stf_sgx.rs`.
+		//         It means we need to bump the runtime version for the new enclave if we want the state
+		//         migration to be executed.
+
+		let _claim = self.claim_slot(&latest_parentchain_header, slot, &epoch_data)?;
+
+		// Import the peeked parentchain header(s).
+		let last_imported_header =
+			match self.import_parentchain_blocks_until(&latest_parentchain_header.hash()) {
+				Ok(h) => h,
+				Err(e) => {
+					warn!(
+						target: logging_target,
+						"Failed to import and retrieve parentchain block header: {:?}", e
+					);
+					return None
+				},
+			};
+
 		// Return early if MRENCLAVE doesn't match - it implies that the enclave should be updated
 		let scheduled_enclave = self.get_scheduled_enclave();
 		let state_handler = self.get_state_handler();
@@ -282,28 +304,6 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 				let _ = scheduled_enclave.set_block_production_paused(false);
 			}
 		}
-
-		// TODO: about the shard migration and state migration
-		//       - the shard migration(copy-over) is done manually by the subcommand "migrate-shard".
-		//       - the state migration is done via conditionally calling on_runtime_upgrade() by comparing
-		//         the current runtime version and LastRuntimeUpgrade, see `stf_sgx.rs`.
-		//         It means we need to bump the runtime version for the new enclave if we want the state
-		//         migration to be executed.
-
-		let _claim = self.claim_slot(&latest_parentchain_header, slot, &epoch_data)?;
-
-		// Import the peeked parentchain header(s).
-		let last_imported_header =
-			match self.import_parentchain_blocks_until(&latest_parentchain_header.hash()) {
-				Ok(h) => h,
-				Err(e) => {
-					warn!(
-						target: logging_target,
-						"Failed to import and retrieve parentchain block header: {:?}", e
-					);
-					return None
-				},
-			};
 
 		let proposer = match self.proposer(latest_parentchain_header.clone(), shard) {
 			Ok(p) => p,
