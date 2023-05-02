@@ -33,6 +33,10 @@ pub trait Sidechain: Send + Sync + 'static {
 	) -> EnclaveResult<()>;
 
 	fn execute_trusted_calls(&self) -> EnclaveResult<()>;
+
+	/// Ignore the parentchain block import validation until the given block number
+	/// TODO: use the generic Header::Number trait
+	fn ignore_parentchain_block_import_validation_until(&self, until: u32) -> EnclaveResult<()>;
 }
 
 impl Sidechain for Enclave {
@@ -64,6 +68,19 @@ impl Sidechain for Enclave {
 		let mut retval = sgx_status_t::SGX_SUCCESS;
 
 		let result = unsafe { ffi::execute_trusted_calls(self.eid, &mut retval) };
+
+		ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
+		ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
+
+		Ok(())
+	}
+
+	fn ignore_parentchain_block_import_validation_until(&self, until: u32) -> EnclaveResult<()> {
+		let mut retval = sgx_status_t::SGX_SUCCESS;
+
+		let result = unsafe {
+			ffi::ignore_parentchain_block_import_validation_until(self.eid, &mut retval, &until)
+		};
 
 		ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
 		ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));

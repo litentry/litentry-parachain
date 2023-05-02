@@ -70,6 +70,10 @@ impl Validator<Block> for ValidatorMock {
 	fn get_state(&self) -> &LightValidationState<Block> {
 		&self.light_validation_state
 	}
+
+	fn set_ignore_validation_until(&mut self, until: u32) -> Result<()> {
+		Ok(())
+	}
 }
 
 impl ExtrinsicSender for ValidatorMock {

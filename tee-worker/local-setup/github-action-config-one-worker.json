@@ -14,7 +14,9 @@
         "4545",
         "--running-mode",
         "mock",
-        "--enable-mock-server"
+        "--enable-mock-server",
+        "--parentchain-start-block",
+        "0"
       ],
       "subcommand_flags": [
         "--skip-ra",

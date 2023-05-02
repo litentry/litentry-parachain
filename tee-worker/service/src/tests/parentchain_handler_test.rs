@@ -44,6 +44,8 @@ fn test_number_of_synced_blocks() {
 		parentchain_params,
 	);
 
-	let header = parentchain_handler.sync_parentchain(last_synced_block.block.header).unwrap();
+	let header = parentchain_handler
+		.sync_parentchain(last_synced_block.block.header, 0u32)
+		.unwrap();
 	assert_eq!(header.number, number_of_blocks);
 }

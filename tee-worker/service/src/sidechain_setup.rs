@@ -61,6 +61,7 @@ pub(crate) fn sidechain_init_block_production<Enclave, SidechainStorage, Parentc
 	parentchain_handler: Arc<ParentchainHandler>,
 	sidechain_storage: Arc<SidechainStorage>,
 	last_synced_header: &Header,
+	overriden_start_block: u32,
 ) -> ServiceResult<Header>
 where
 	Enclave: EnclaveBase + Sidechain,
@@ -77,6 +78,7 @@ where
 		updated_header = Some(parentchain_handler.sync_and_import_parentchain_until(
 			last_synced_header,
 			&register_enclave_xt_header.unwrap(),
+			overriden_start_block,
 		)?);
 	}
 
