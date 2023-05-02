@@ -36,27 +36,23 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 mod handler;
 
-use codec::{Decode, Encode};
+use codec::Encode;
+use frame_support::sp_tracing::warn;
 use futures::executor;
 use handler::{
 	assertion::AssertionHandler, identity_verification::IdentityVerificationHandler, TaskHandler,
 };
 use ita_sgx_runtime::{Hash, IdentityManagement};
-use ita_stf::{TrustedCall, TrustedOperation};
-use itp_extrinsics_factory::CreateExtrinsics;
-use itp_node_api::metadata::{
-	pallet_imp::IMPCallIndexes, pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata,
-};
-use itp_ocall_api::EnclaveOnChainOCallApi;
+use ita_stf::{hash::Hash as TopHash, TrustedCall, TrustedOperation};
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{OpaqueCall, ShardIdentifier};
+use itp_types::ShardIdentifier;
 use lc_stf_task_sender::{stf_task_sender, RequestType};
 use log::{debug, error};
-use std::{format, string::String, sync::Arc, vec, vec::Vec};
+use std::{format, string::String, sync::Arc};
 
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum Error {
@@ -73,17 +69,11 @@ pub enum Error {
 #[allow(dead_code)]
 pub struct StfTaskContext<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	O: EnclaveOnChainOCallApi,
-	C: CreateExtrinsics,
-	M: AccessNodeMetadata,
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
 	H: HandleState,
 > {
 	shielding_key: K,
-	ocall_api: Arc<O>,
-	create_extrinsics: Arc<C>,
-	node_metadata: Arc<M>,
 	author_api: Arc<A>,
 	enclave_signer: Arc<S>,
 	pub state_handler: Arc<H>,
@@ -91,47 +81,20 @@ pub struct StfTaskContext<
 
 impl<
 		K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-		O: EnclaveOnChainOCallApi,
-		C: CreateExtrinsics,
-		M: AccessNodeMetadata,
 		A: AuthorApi<Hash, Hash>,
 		S: StfEnclaveSigning,
 		H: HandleState,
-	> StfTaskContext<K, O, C, M, A, S, H>
+	> StfTaskContext<K, A, S, H>
 where
 	H::StateT: SgxExternalitiesTrait,
-	M::MetadataType: IMPCallIndexes + VCMPCallIndexes,
 {
 	pub fn new(
 		shielding_key: K,
-		ocall_api: Arc<O>,
-		create_extrinsics: Arc<C>,
-		node_metadata: Arc<M>,
 		author_api: Arc<A>,
 		enclave_signer: Arc<S>,
 		state_handler: Arc<H>,
 	) -> Self {
-		Self {
-			shielding_key,
-			ocall_api,
-			create_extrinsics,
-			node_metadata,
-			author_api,
-			enclave_signer,
-			state_handler,
-		}
-	}
-
-	pub fn decode_and_submit_trusted_call(
-		&self,
-		encoded_shard: Vec<u8>,
-		encoded_callback: Vec<u8>,
-	) -> Result<(), Error> {
-		let shard = ShardIdentifier::decode(&mut encoded_shard.as_slice())
-			.map_err(|e| Error::OtherError(format!("error decoding ShardIdentifier: {:?}", e)))?;
-		let callback = TrustedCall::decode(&mut encoded_callback.as_slice())
-			.map_err(|e| Error::OtherError(format!("error decoding TrustedCall: {:?}", e)))?;
-		self.submit_trusted_call(&shard, &callback)
+		Self { shielding_key, author_api, enclave_signer, state_handler }
 	}
 
 	fn submit_trusted_call(
@@ -144,45 +107,46 @@ where
 			.sign_call_with_self(trusted_call, shard)
 			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
 
-		let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
+		let top = TrustedOperation::direct_call(signed_trusted_call);
+
+		// find out if we have any trusted operation which has the same hash in the pool already.
+		// The hash can be used to de-duplicate a trusted operation for a certain request, as the
+		// `trusted_call` in this fn always contains the req_ext_hash, which is unique for each request.
+		if self
+			.author_api
+			.get_pending_trusted_calls_for(*shard, trusted_call.sender_account())
+			.into_iter()
+			.any(|t| t.hash() == top.hash())
+		{
+			// skip the submission if some top with the same hash already exists, return Ok(())
+			warn!("Skip submit_trusted_call because top with the same hash exists");
+			return Ok(())
+		}
 
 		let encrypted_trusted_call = self
 			.shielding_key
-			.encrypt(&trusted_operation.encode())
+			.encrypt(&top.encode())
 			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
 
-		debug!("submit encrypted trusted call, length: {}", encrypted_trusted_call.len());
+		debug!(
+			"submit encrypted trusted call: {} bytes, original encoded top: {} bytes",
+			encrypted_trusted_call.len(),
+			top.encode().len()
+		);
 		executor::block_on(self.author_api.submit_top(encrypted_trusted_call, *shard)).map_err(
 			|e| Error::OtherError(format!("error submitting trusted call to top pool: {:?}", e)),
 		)?;
 
 		Ok(())
 	}
-
-	fn submit_to_parentchain(&self, call: OpaqueCall) {
-		match self.create_extrinsics.create_extrinsics(vec![call].as_slice(), None) {
-			Err(e) => {
-				error!("create extrinsic failed: {:?}", e);
-			},
-			Ok(xt) => {
-				let _ = self.ocall_api.send_to_parentchain(xt);
-			},
-		}
-	}
-
-	// TODO: maybe add a wrapper to read the state and eliminate the public access to `state_handler`
 }
 
 // lifetime elision: StfTaskContext is guaranteed to outlive the fn
-pub fn run_stf_task_receiver<K, O, C, M, A, S, H>(
-	context: Arc<StfTaskContext<K, O, C, M, A, S, H>>,
+pub fn run_stf_task_receiver<K, A, S, H>(
+	context: Arc<StfTaskContext<K, A, S, H>>,
 ) -> Result<(), Error>
 where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	O: EnclaveOnChainOCallApi,
-	C: CreateExtrinsics,
-	M: AccessNodeMetadata,
-	M::MetadataType: IMPCallIndexes + VCMPCallIndexes,
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
 	H: HandleState,
@@ -191,45 +155,40 @@ where
 	let receiver = stf_task_sender::init_stf_task_sender_storage()
 		.map_err(|e| Error::OtherError(format!("read storage error:{:?}", e)))?;
 
-	// TODO: When an error occurs, send the extrinsic (error message) to the parachain
-	// TODO: error handling still incomplete, we only print logs but no error handling
-	// TODO: we can further simplify the handling logic
 	loop {
-		let request_type = receiver
+		let req = receiver
 			.recv()
 			.map_err(|e| Error::OtherError(format!("receiver error:{:?}", e)))?;
 
-		match request_type.clone() {
-			RequestType::IdentityVerification(request) => {
-				IdentityVerificationHandler { req: request.clone(), context: context.clone() }
-					.start();
-			},
-			RequestType::AssertionVerification(request) => {
-				AssertionHandler { req: request.clone(), context: context.clone() }.start();
-			},
-			// only used for testing
-			// demonstrate how to read the storage in the stf-task handling with the loaded state
-			// in real cases we prefer to read the state ahead and sent the related storage as parameters in `Request`
-			RequestType::SetUserShieldingKey(request) => {
-				let shard = ShardIdentifier::decode(&mut request.encoded_shard.as_slice())
-					.map_err(|e| {
-						Error::OtherError(format!("error decoding ShardIdentifier {:?}", e))
-					})?;
-
+		match &req {
+			RequestType::IdentityVerification(req) =>
+				IdentityVerificationHandler { req: req.clone(), context: context.clone() }.start(),
+			RequestType::AssertionVerification(req) =>
+				AssertionHandler { req: req.clone(), context: context.clone() }.start(),
+			// only for demo purpose
+			// it shows how to read the storage in the stf-task handling with the loaded state. However,
+			// in real cases it's preferred to read the state ahead and sent it as parameter in `Request`
+			// please note you are not supposed to write any state back - it will cause state mistmatch
+			RequestType::SetUserShieldingKey(req) => {
 				let (mut state, _) = context
 					.state_handler
-					.load_cloned(&shard)
+					.load_cloned(&req.shard)
 					.map_err(|e| Error::OtherError(format!("load state failed: {:?}", e)))?;
 
-				let key =
-					state.execute_with(|| IdentityManagement::user_shielding_keys(&request.who));
+				let current_key =
+					state.execute_with(|| IdentityManagement::user_shielding_keys(&req.who));
 
-				debug!("RequestType::SetUserShieldingKey, key: {:?}", key);
+				debug!("RequestType::SetUserShieldingKey, key: {:?}", current_key);
 
-				context.decode_and_submit_trusted_call(
-					request.encoded_shard,
-					request.encoded_callback,
-				)?;
+				let c = TrustedCall::set_user_shielding_key_runtime(
+					context.enclave_signer.get_enclave_account().map_err(|e| {
+						Error::OtherError(format!("error get enclave account {:?}", e))
+					})?,
+					req.who.clone(),
+					req.key,
+					req.hash,
+				);
+				context.submit_trusted_call(&req.shard, &c)?;
 			},
 		}
 	}
