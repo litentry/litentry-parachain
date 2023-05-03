@@ -128,9 +128,9 @@ jobs:
             arg="\\$arg";
           fi
           for c in $chain; do
-            ssh -x -o StrictHostKeychecking=no 172.31.14.5 -l ${{ env.BENCHMARK_SSH_USER }} 'bash -s' < scripts/benchmark-weight-remote.sh "$c" "${GITHUB_REF#refs/heads/}" "$arg"
+            ssh -x -o StrictHostKeychecking=no ${{ secrets.BENCHMARK_INSTANCE_IP }} -l ${{ env.BENCHMARK_SSH_USER }} 'bash -s' < scripts/benchmark-weight-remote.sh "$c" "${GITHUB_REF#refs/heads/}" "$arg"
             echo "copy generated weights files back ..."
-            scp -o StrictHostKeychecking=no "${{ env.BENCHMARK_SSH_USER }}"@172.31.14.5:/tmp/litentry-parachain/runtime/$c/src/weights/*.rs runtime/$c/src/weights/
+            scp -o StrictHostKeychecking=no "${{ env.BENCHMARK_SSH_USER }}"@"${{ secrets.BENCHMARK_INSTANCE_IP }}":/tmp/litentry-parachain/runtime/$c/src/weights/*.rs runtime/$c/src/weights/
           done
           echo "======================"
           git status
