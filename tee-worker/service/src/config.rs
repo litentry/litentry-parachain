@@ -19,7 +19,7 @@ use clap::ArgMatches;
 use itc_rest_client::rest_client::Url;
 use parse_duration::parse;
 use serde::{Deserialize, Serialize};
-use std::{str::FromStr, time::Duration};
+use std::time::Duration;
 
 static DEFAULT_NODE_SERVER: &str = "ws://127.0.0.1";
 static DEFAULT_NODE_PORT: &str = "9944";
@@ -28,9 +28,9 @@ static DEFAULT_UNTRUSTED_PORT: &str = "2001";
 static DEFAULT_MU_RA_PORT: &str = "3443";
 static DEFAULT_METRICS_PORT: &str = "8787";
 static DEFAULT_UNTRUSTED_HTTP_PORT: &str = "4545";
-// running mode for litentry: dev | staging | prod | mock
 static DEFAULT_RUNNING_MODE: &str = "dev";
 static DEFAULT_MOCK_SERVER_PORT: &str = "19527";
+static DEFAULT_PARENTCHAIN_START_BLOCK: &str = "0";
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Config {
@@ -58,11 +58,15 @@ pub struct Config {
 	/// Config of the 'run' subcommand
 	pub run_config: Option<RunConfig>,
 
-	// Litentry parameters
-	/// Litentry TEE service running mode: dev/staging/prod/mock
+	/// Litentry
+	/// running mode that determins the config: dev/staging/prod/mock
 	pub running_mode: String,
+	/// whether to enable the HTTP mock server for testing
 	pub enable_mock_server: bool,
-	pub mock_server_port: u16,
+	/// the mock server port
+	pub mock_server_port: String,
+	/// the parentchain block number to start syncing with
+	pub parentchain_start_block: String,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -83,7 +87,8 @@ impl Config {
 		run_config: Option<RunConfig>,
 		running_mode: String,
 		enable_mock_server: bool,
-		mock_server_port: u16,
+		mock_server_port: String,
+		parentchain_start_block: String,
 	) -> Self {
 		Self {
 			node_ip,
@@ -102,6 +107,7 @@ impl Config {
 			running_mode,
 			enable_mock_server,
 			mock_server_port,
+			parentchain_start_block,
 		}
 	}
 
@@ -153,6 +159,14 @@ impl Config {
 	pub fn try_parse_untrusted_http_server_port(&self) -> Option<u16> {
 		self.untrusted_http_port.parse::<u16>().ok()
 	}
+
+	pub fn try_parse_mock_server_port(&self) -> Option<u16> {
+		self.mock_server_port.parse::<u16>().ok()
+	}
+
+	pub fn try_parse_parentchain_start_block(&self) -> Option<u32> {
+		self.parentchain_start_block.parse::<u32>().ok()
+	}
 }
 
 impl From<&ArgMatches<'_>> for Config {
@@ -167,6 +181,8 @@ impl From<&ArgMatches<'_>> for Config {
 		let run_config = m.subcommand_matches("run").map(RunConfig::from);
 		let is_mock_server_enabled = m.is_present("enable-mock-server");
 		let mock_server_port = m.value_of("mock-server-port").unwrap_or(DEFAULT_MOCK_SERVER_PORT);
+		let parentchain_start_block =
+			m.value_of("parentchain-start-block").unwrap_or(DEFAULT_PARENTCHAIN_START_BLOCK);
 		Self::new(
 			m.value_of("node-server").unwrap_or(DEFAULT_NODE_SERVER).into(),
 			m.value_of("node-port").unwrap_or(DEFAULT_NODE_PORT).into(),
@@ -186,7 +202,8 @@ impl From<&ArgMatches<'_>> for Config {
 			run_config,
 			m.value_of("running-mode").unwrap_or(DEFAULT_RUNNING_MODE).to_string(),
 			is_mock_server_enabled,
-			u16::from_str(mock_server_port).unwrap(),
+			mock_server_port.to_string(),
+			parentchain_start_block.to_string(),
 		)
 	}
 }
@@ -268,6 +285,8 @@ mod test {
 		assert_eq!(config.untrusted_http_port, DEFAULT_UNTRUSTED_HTTP_PORT);
 		assert!(config.run_config.is_none());
 		assert_eq!(config.running_mode, DEFAULT_RUNNING_MODE);
+		assert_eq!(config.mock_server_port, DEFAULT_MOCK_SERVER_PORT);
+		assert_eq!(config.parentchain_start_block, DEFAULT_PARENTCHAIN_START_BLOCK);
 	}
 
 	#[test]
@@ -295,6 +314,8 @@ mod test {
 
 		// running mode for litentry: dev / staging / prod
 		let running_mode = "dev";
+		let mock_server_port = "19527";
+		let parentchain_start_block = "30";
 
 		let mut args = ArgMatches::default();
 		args.args = HashMap::from([
@@ -309,6 +330,8 @@ mod test {
 			("trusted-worker-port", Default::default()),
 			("untrusted-http-port", Default::default()),
 			("running-mode", Default::default()),
+			("mock-server-port", Default::default()),
+			("parentchain-start-block", Default::default()),
 		]);
 		// Workaround because MatchedArg is private.
 		args.args.get_mut("node-server").unwrap().vals = vec![node_ip.into()];
@@ -322,6 +345,9 @@ mod test {
 		args.args.get_mut("trusted-worker-port").unwrap().vals = vec![trusted_port.into()];
 		args.args.get_mut("untrusted-http-port").unwrap().vals = vec![untrusted_http_port.into()];
 		args.args.get_mut("running-mode").unwrap().vals = vec![running_mode.into()];
+		args.args.get_mut("mock-server-port").unwrap().vals = vec![mock_server_port.into()];
+		args.args.get_mut("parentchain-start-block").unwrap().vals =
+			vec![parentchain_start_block.into()];
 
 		let config = Config::from(&args);
 
@@ -335,6 +361,8 @@ mod test {
 		assert_eq!(config.mu_ra_external_address, Some(mu_ra_ext_addr.to_string()));
 		assert_eq!(config.untrusted_http_port, untrusted_http_port.to_string());
 		assert_eq!(config.running_mode, running_mode.to_string());
+		assert_eq!(config.mock_server_port, mock_server_port.to_string());
+		assert_eq!(config.parentchain_start_block, parentchain_start_block.to_string());
 	}
 
 	#[test]

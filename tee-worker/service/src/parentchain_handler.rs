@@ -43,17 +43,26 @@ pub trait HandleParentchain {
 
 	/// Fetches the parentchain blocks to sync from the parentchain and feeds them to the enclave.
 	/// Returns the latest synced block header.
-	fn sync_parentchain(&self, last_synced_header: Header) -> ServiceResult<Header>;
+	///
+	/// Litentry: `overriden_start_block` to forcibly start from the given parentchain block number
+	fn sync_parentchain(
+		&self,
+		last_synced_header: Header,
+		overriden_start_block: u32,
+	) -> ServiceResult<Header>;
 
 	/// Triggers the import of the synced parentchain blocks inside the enclave.
 	fn trigger_parentchain_block_import(&self) -> ServiceResult<()>;
 
 	/// Syncs and directly imports parentchain blocks from the latest synced header
 	/// until the specified until_header.
+	///
+	/// Litentry: `overriden_start_block` to forcibly start from the given parentchain block number
 	fn sync_and_import_parentchain_until(
 		&self,
 		last_synced_header: &Header,
 		until_header: &Header,
+		overriden_start_block: u32,
 	) -> ServiceResult<Header>;
 }
 
@@ -127,7 +136,11 @@ where
 			.init_parentchain_components(self.parentchain_init_params.clone())?)
 	}
 
-	fn sync_parentchain(&self, last_synced_header: Header) -> ServiceResult<Header> {
+	fn sync_parentchain(
+		&self,
+		last_synced_header: Header,
+		overriden_start_block: u32,
+	) -> ServiceResult<Header> {
 		trace!("Getting current head");
 		let curr_block: SignedBlock = self
 			.parentchain_api
@@ -136,10 +149,20 @@ where
 		let curr_block_number = curr_block.block.header.number;
 
 		let mut until_synced_header = last_synced_header;
+		let mut start_block = until_synced_header.number + 1;
+		if overriden_start_block > start_block {
+			start_block = overriden_start_block;
+			// ask the enclave to ignore the parentchain block import validation until `overriden_start_block`
+			// TODO: maybe ignoring the next block import is enough, since the given `overriden_start_block`
+			//       should be the very first parentchain block to be imported
+			self.enclave_api
+				.ignore_parentchain_block_import_validation_until(overriden_start_block)?;
+		}
+
 		loop {
 			let mut block_chunk_to_sync = self.parentchain_api.get_blocks(
-				until_synced_header.number + 1,
-				min(until_synced_header.number + BLOCK_SYNC_BATCH_SIZE, curr_block_number),
+				start_block,
+				min(start_block + BLOCK_SYNC_BATCH_SIZE, curr_block_number),
 			)?;
 			println!("[+] Found {} block(s) to sync", block_chunk_to_sync.len());
 			if block_chunk_to_sync.is_empty() {
@@ -200,6 +223,7 @@ where
 				.last()
 				.map(|b| b.block.header.clone())
 				.ok_or(Error::EmptyChunk)?;
+			start_block = until_synced_header.number + 1;
 			println!(
 				"Synced {} out of {} finalized parentchain blocks",
 				until_synced_header.number, curr_block_number,
@@ -215,11 +239,13 @@ where
 		&self,
 		last_synced_header: &Header,
 		until_header: &Header,
+		overriden_start_block: u32,
 	) -> ServiceResult<Header> {
 		let mut last_synced_header = last_synced_header.clone();
 
 		while last_synced_header.number() < until_header.number() {
-			last_synced_header = self.sync_parentchain(last_synced_header)?;
+			last_synced_header =
+				self.sync_parentchain(last_synced_header, overriden_start_block)?;
 		}
 		self.trigger_parentchain_block_import()?;
 

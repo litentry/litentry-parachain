@@ -91,7 +91,7 @@ describeLitentry('VC test', 0, async (context) => {
         for (let k = 0; k < res.length; k++) {
             const vcString = res[k].vc.replace('0x', '');
             const vcObj = JSON.parse(vcString);
-            console.log('---------VC json----------', vcObj);
+            console.log('---------VC json----------\n', vcObj);
 
             const vcProof = vcObj.proof;
 

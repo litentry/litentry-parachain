@@ -60,7 +60,7 @@ jobs:
 
   ## run the benchmarking remotely
   benchmark:
-    runs-on: dev-builder
+    runs-on: jumphost
     needs: build-docker
     # see https://github.com/actions/runner/issues/491
     if: |
@@ -99,10 +99,10 @@ jobs:
         timeout-minutes: 10
         id: start_instance
         run: |
-          aws ec2 start-instances --instance-ids ${{ env.INSTANCE_ID }}
+          aws ec2 start-instances --region ap-southeast-1 --instance-ids ${{ env.INSTANCE_ID }}
           sleep 5
-          instance_status="aws ec2 describe-instance-status --instance-ids ${{ env.INSTANCE_ID }} --query 'InstanceStatuses[0].InstanceStatus.Status' --output text"
-          system_status="aws ec2 describe-instance-status --instance-ids ${{ env.INSTANCE_ID }} --query 'InstanceStatuses[0].SystemStatus.Status' --output text"
+          instance_status="aws ec2 describe-instance-status --region ap-southeast-1 --instance-ids ${{ env.INSTANCE_ID }} --query 'InstanceStatuses[0].InstanceStatus.Status' --output text"
+          system_status="aws ec2 describe-instance-status --region ap-southeast-1 --instance-ids ${{ env.INSTANCE_ID }} --query 'InstanceStatuses[0].SystemStatus.Status' --output text"
           SECONDS=0
           while : ; do
             if [ "$(eval $instance_status)" = "ok" ] && [ "$(eval $system_status)" = "ok" ]; then
@@ -112,7 +112,7 @@ jobs:
             fi
           done
           echo "Remote instance reachable now after $SECONDS seconds"
-          remote_ip=`aws ec2 describe-instances --filters 'Name=instance-state-name,Values=running' 'Name=instance-id,Values=${{ env.INSTANCE_ID }}' --query 'Reservations[*].Instances[*].[PublicIpAddress]' --output text`
+          remote_ip=`aws ec2 describe-instances --region ap-southeast-1 --filters 'Name=instance-state-name,Values=running' 'Name=instance-id,Values=${{ env.INSTANCE_ID }}' --query 'Reservations[*].Instances[*].[PublicIpAddress]' --output text`
           echo "Running instances ip address: $remote_ip"
           echo "remote_ip=$remote_ip" >> $GITHUB_OUTPUT
 
@@ -128,9 +128,9 @@ jobs:
             arg="\\$arg";
           fi
           for c in $chain; do
-            ssh -x -o StrictHostKeychecking=no "${{ steps.start_instance.outputs.remote_ip }}" -l ${{ env.BENCHMARK_SSH_USER }} -i ${{ env.BENCHMARK_SSH_KEYPATH }} 'bash -s' < scripts/benchmark-weight-remote.sh "$c" "${GITHUB_REF#refs/heads/}" "$arg"
+            ssh -x -o StrictHostKeychecking=no ${{ secrets.BENCHMARK_INSTANCE_IP }} -l ${{ env.BENCHMARK_SSH_USER }} 'bash -s' < scripts/benchmark-weight-remote.sh "$c" "${GITHUB_REF#refs/heads/}" "$arg"
             echo "copy generated weights files back ..."
-            scp -o StrictHostKeychecking=no -i ${{ env.BENCHMARK_SSH_KEYPATH }} "${{ env.BENCHMARK_SSH_USER }}@${{ steps.start_instance.outputs.remote_ip }}":/tmp/litentry-parachain/runtime/$c/src/weights/*.rs runtime/$c/src/weights/
+            scp -o StrictHostKeychecking=no "${{ env.BENCHMARK_SSH_USER }}"@"${{ secrets.BENCHMARK_INSTANCE_IP }}":/tmp/litentry-parachain/runtime/$c/src/weights/*.rs runtime/$c/src/weights/
           done
           echo "======================"
           git status
@@ -138,9 +138,9 @@ jobs:
       - name: Stop remote instance
         if: always()
         run: |
-          aws ec2 stop-instances --instance-ids ${{ env.INSTANCE_ID }}
+          aws ec2 stop-instances --region ap-southeast-1 --instance-ids ${{ env.INSTANCE_ID }}
           sleep 5
-          ret=`aws ec2 describe-instance-status --instance-ids ${{ env.INSTANCE_ID }} | jq '.InstanceStatuses[0].InstanceState.Name'`
+          ret=`aws ec2 describe-instance-status --region ap-southeast-1 --instance-ids ${{ env.INSTANCE_ID }} | jq '.InstanceStatuses[0].InstanceState.Name'`
           echo "Remote instance running state: $ret"
 
       - name: Create auto PR

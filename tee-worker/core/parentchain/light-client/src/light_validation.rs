@@ -39,6 +39,7 @@ pub struct LightValidation<Block: ParentchainBlockTrait, OcallApi: EnclaveOnChai
 	light_validation_state: LightValidationState<Block>,
 	ocall_api: Arc<OcallApi>,
 	finality: Arc<Box<dyn Finality<Block> + Sync + Send + 'static>>,
+	ignore_validation_until: NumberFor<Block>,
 }
 
 impl<Block: ParentchainBlockTrait, OcallApi: EnclaveOnChainOCallApi>
@@ -48,7 +49,12 @@ impl<Block: ParentchainBlockTrait, OcallApi: EnclaveOnChainOCallApi>
 		ocall_api: Arc<OcallApi>,
 		finality: Arc<Box<dyn Finality<Block> + Sync + Send + 'static>>,
 	) -> Self {
-		Self { light_validation_state: LightValidationState::new(), ocall_api, finality }
+		Self {
+			light_validation_state: LightValidationState::new(),
+			ocall_api,
+			finality,
+			ignore_validation_until: 0u32.into(),
+		}
 	}
 
 	fn initialize_relay(
@@ -125,9 +131,11 @@ impl<Block: ParentchainBlockTrait, OcallApi: EnclaveOnChainOCallApi>
 		let validator_set = relay.current_validator_set.clone();
 		let validator_set_id = relay.current_validator_set_id;
 
-		// Check that the new header is a descendant of the old header
-		let last_header = &relay.last_finalized_block_header;
-		Self::verify_ancestry(ancestry_proof, last_header.hash(), &header)?;
+		if *header.number() > self.ignore_validation_until {
+			// Check that the new header is a descendant of the old header
+			let last_header = &relay.last_finalized_block_header;
+			Self::verify_ancestry(ancestry_proof, last_header.hash(), &header)?;
+		}
 
 		if let Err(e) = self.finality.validate(
 			header.clone(),
@@ -214,7 +222,9 @@ where
 
 		let relay = self.light_validation_state.get_tracked_relay_mut(relay_id)?;
 
-		if relay.last_finalized_block_header.hash() != *header.parent_hash() {
+		if *header.number() > self.ignore_validation_until
+			&& relay.last_finalized_block_header.hash() != *header.parent_hash()
+		{
 			return Err(Error::HeaderAncestryMismatch)
 		}
 
@@ -260,6 +270,12 @@ where
 
 	fn get_state(&self) -> &LightValidationState<Block> {
 		&self.light_validation_state
+	}
+
+	fn set_ignore_validation_until(&mut self, until: u32) -> Result<(), Error> {
+		info!("set ignore parentchain block import validation until: {}", until);
+		self.ignore_validation_until = until.into();
+		Ok(())
 	}
 }
 

@@ -14,19 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{handler::TaskHandler, StfTaskContext};
+use crate::{handler::TaskHandler, StfTaskContext, TrustedCall};
 use ita_sgx_runtime::Hash;
-use itp_extrinsics_factory::CreateExtrinsics;
-use itp_node_api::metadata::{
-	pallet_imp::IMPCallIndexes, pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata,
-};
-use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::OpaqueCall;
 use itp_utils::stringify::account_id_to_string;
 use lc_data_providers::G_DATA_PROVIDERS;
 use lc_stf_task_sender::AssertionBuildRequest;
@@ -39,24 +33,17 @@ use std::{format, sync::Arc};
 
 pub(crate) struct AssertionHandler<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	O: EnclaveOnChainOCallApi,
-	C: CreateExtrinsics,
-	M: AccessNodeMetadata,
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
 	H: HandleState,
 > {
 	pub(crate) req: AssertionBuildRequest,
-	pub(crate) context: Arc<StfTaskContext<K, O, C, M, A, S, H>>,
+	pub(crate) context: Arc<StfTaskContext<K, A, S, H>>,
 }
 
-impl<K, O, C, M, A, S, H> TaskHandler for AssertionHandler<K, O, C, M, A, S, H>
+impl<K, A, S, H> TaskHandler for AssertionHandler<K, A, S, H>
 where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	O: EnclaveOnChainOCallApi,
-	C: CreateExtrinsics,
-	M: AccessNodeMetadata,
-	M::MetadataType: IMPCallIndexes + VCMPCallIndexes,
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
 	H: HandleState,
@@ -204,50 +191,44 @@ where
 	}
 
 	fn on_success(&self, result: Self::Result) {
-		let (vc_index, vc_hash, output) = result;
-		match self
-			.context
-			.node_metadata
-			.get_from_metadata(|m| VCMPCallIndexes::vc_issued_call_indexes(m))
-		{
-			Ok(Ok(call_index)) => {
-				debug!("Sending vc_issued event to parachain ... ");
-				let call = OpaqueCall::from_tuple(&(
-					call_index,
-					self.req.who.clone(),
-					self.req.assertion.clone(),
-					vc_index,
-					vc_hash,
-					output,
-					self.req.hash,
-				));
-				self.context.submit_to_parentchain(call)
-			},
-			Ok(Err(e)) => error!("get metadata failed: {:?}", e),
-			Err(e) => error!("get metadata failed: {:?}", e),
-		};
+		debug!("Assertion build OK");
+		// we shouldn't have the maximum text length limit in normal RSA3072 encryption, as the payload
+		// using enclave's shielding key is encrypted in chunks
+		let (vc_index, vc_hash, vc_payload) = result;
+		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
+			let c = TrustedCall::handle_vc_issued(
+				enclave_signer,
+				self.req.who.clone(),
+				self.req.assertion.clone(),
+				vc_index,
+				vc_hash,
+				vc_payload,
+				self.req.hash,
+			);
+			let _ = self
+				.context
+				.submit_trusted_call(&self.req.shard, &c)
+				.map_err(|e| error!("submit_trusted_call failed: {:?}", e));
+		} else {
+			error!("can't get enclave signer");
+		}
 	}
 
 	fn on_failure(&self, error: Self::Error) {
-		error!("Assertion on_failure: {error:?}");
-
-		match self
-			.context
-			.node_metadata
-			.get_from_metadata(|m| VCMPCallIndexes::vcmp_some_error_call_indexes(m))
-		{
-			Ok(Ok(call_index)) => {
-				debug!("Sending vcmp_some_error event to parachain ... ");
-				let call = OpaqueCall::from_tuple(&(
-					call_index,
-					Some(self.req.who.clone()),
-					error,
-					self.req.hash,
-				));
-				self.context.submit_to_parentchain(call)
-			},
-			Ok(Err(e)) => error!("get metadata failed: {:?}", e),
-			Err(e) => error!("get metadata failed: {:?}", e),
-		};
+		error!("Assertion build error: {error:?}");
+		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
+			let c = TrustedCall::handle_vcmp_error(
+				enclave_signer,
+				Some(self.req.who.clone()),
+				error,
+				self.req.hash,
+			);
+			let _ = self
+				.context
+				.submit_trusted_call(&self.req.shard, &c)
+				.map_err(|e| error!("submit_trusted_call failed: {:?}", e));
+		} else {
+			error!("can't get enclave signer");
+		}
 	}
 }
