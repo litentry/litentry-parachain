@@ -75,11 +75,11 @@ export async function sendTxsWithUtility(
         context.api.tx.utility.batchAll(txs.map(({ tx }) => tx)).signAndSend(signer, async (result) => {
             if (result.status.isInBlock) {
                 console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
+                resolve({
+                    block: result.status.asInBlock.toString(),
+                });
             } else if (result.status.isFinalized) {
                 console.log(`Transaction finalized at blockHash ${result.status.asFinalized}`);
-                resolve({
-                    block: result.status.asFinalized.toString(),
-                });
             } else if (result.status.isInvalid) {
                 reject(`Transaction is ${result.status}`);
             }
