@@ -71,13 +71,17 @@ export async function sendTxsWithUtility(
     events: string[]
 ): Promise<string[] | Event[]> {
     //ensure the tx is in block
-    const isInBlockPromise = new Promise((resolve) => {
+    const isInBlockPromise = new Promise((resolve, reject) => {
         context.api.tx.utility.batchAll(txs.map(({ tx }) => tx)).signAndSend(signer, async (result) => {
             if (result.status.isInBlock) {
                 console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
-                resolve(result.status);
+            } else if (result.status.isFinalized) {
+                console.log(`Transaction finalized at blockHash ${result.status.asFinalized}`);
+                resolve({
+                    block: result.status.asFinalized.toString(),
+                });
             } else if (result.status.isInvalid) {
-                console.log(`Transaction is ${result.status}`);
+                reject(`Transaction is ${result.status}`);
             }
         });
     });
