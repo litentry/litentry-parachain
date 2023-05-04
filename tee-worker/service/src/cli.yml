@@ -90,12 +90,20 @@ args:
         default_value: "dev"
     - enable-mock-server:
         long: enable-mock-server
-        help: Set this flag to enable starting the mock server.
+        takes_value: false
+        help: Set this flag to enable the HTTP mock server for testing
     - mock-server-port:
         long: mock-server-port
-        help: Set the port for the mock-server HTTP server
+        help: Set the port for HTTP mock server
+        takes_value: true
         required: false
         default_value: "19527"
+    - parentchain-start-block:
+        long: parentchain-start-block
+        help: Set the parentchain block number to start syncing with
+        takes_value: true
+        required: false
+        default_value: "0"
 
 subcommands:
     - run:

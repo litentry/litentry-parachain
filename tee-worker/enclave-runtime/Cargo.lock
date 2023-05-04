@@ -3941,9 +3941,9 @@ dependencies = [
 
 [[package]]
 name = "scale-info"
-version = "2.5.0"
+version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0cfdffd972d76b22f3d7f81c8be34b2296afd3a25e0a547bd9abe340a4dbbe97"
+checksum = "dfdef77228a4c05dc94211441595746732131ad7f6530c6c18f045da7b7ab937"
 dependencies = [
  "bitvec",
  "cfg-if 1.0.0",
@@ -3955,9 +3955,9 @@ dependencies = [
 
 [[package]]
 name = "scale-info-derive"
-version = "2.5.0"
+version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61fa974aea2d63dd18a4ec3a49d59af9f34178c73a4f56d2f18205628d00681e"
+checksum = "53012eae69e5aa5c14671942a5dd47de59d4cdcff8532a6dd0e081faf1119482"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -4884,9 +4884,9 @@ dependencies = [
 
 [[package]]
 name = "ss58-registry"
-version = "1.39.0"
+version = "1.40.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ecf0bd63593ef78eca595a7fc25e9a443ca46fe69fd472f8f09f5245cdcd769d"
+checksum = "eb47a8ad42e5fc72d5b1eb104a5546937eaf39843499948bb666d6e93c62423b"
 dependencies = [
  "Inflector",
  "proc-macro2",
@@ -5082,11 +5082,10 @@ dependencies = [
 
 [[package]]
 name = "tracing"
-version = "0.1.37"
+version = "0.1.38"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ce8c33a8d48bd45d624a6e523445fd21ec13d3653cd51f681abf67418f54eb8"
+checksum = "cf9cf6a813d3f40c88b0b6b6f29a5c95c6cdbf97c1f9cc53fb820200f5ad814d"
 dependencies = [
- "cfg-if 1.0.0",
  "pin-project-lite",
  "tracing-core",
 ]
@@ -5457,18 +5456,18 @@ dependencies = [
 
 [[package]]
 name = "xous"
-version = "0.9.40"
+version = "0.9.41"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4d4e0f82f894d5960b10adc3b0a39fe96033c767174b80258481b278b972d67"
+checksum = "afc3fadf2420be3adc839586110962e9bf7fc552ac87a63a6850c56cc79d294e"
 dependencies = [
  "lazy_static",
 ]
 
 [[package]]
 name = "xous-api-log"
-version = "0.1.36"
+version = "0.1.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b82ebf0502939b72c0fb63403d6c12b4847ee1a720069bf73ce35980edeecdbb"
+checksum = "dd77c69ba908295110dae4e2ddc84740b8ab3675f6e661670f896bd117b6356d"
 dependencies = [
  "log",
  "num-derive",
@@ -5479,9 +5478,9 @@ dependencies = [
 
 [[package]]
 name = "xous-api-names"
-version = "0.9.38"
+version = "0.9.39"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "84bceedef22f50d5c809c60bbd16dfa4cfc8d4f463c001b3c50b1e613a820d47"
+checksum = "0fda682131261de19fd37c7cc72f56a496c071ee0ca44020be745cdc62811af5"
 dependencies = [
  "log",
  "num-derive",
@@ -5494,9 +5493,9 @@ dependencies = [
 
 [[package]]
 name = "xous-ipc"
-version = "0.9.40"
+version = "0.9.41"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "88f8b7bdc55e0bd76bf3044b131052f45c0ca58a429d13871bda8891b95cc120"
+checksum = "843158f7129cddea07006986c9704ce057c94cf4f3a94bcc173764b12e995ddb"
 dependencies = [
  "bitflags",
  "rkyv",

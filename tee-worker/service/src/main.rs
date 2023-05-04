@@ -201,6 +201,9 @@ fn main() {
 		let enclave = enclave.clone();
 		let trusted_server_url = format!("wss://localhost:{}", config.trusted_worker_port);
 		let base58_enclave = enclave.get_mrenclave().unwrap().encode().to_base58();
+		let mock_server_port = config
+			.try_parse_mock_server_port()
+			.expect("mock server port to be a valid port number");
 		thread::spawn(move || {
 			info!("*** Starting mock server");
 			let getter = Arc::new(move |account: &AccountId32, identity: &Identity| {
@@ -261,7 +264,7 @@ fn main() {
 					},
 				}
 			});
-			let _ = lc_mock_server::run(getter, config.mock_server_port);
+			let _ = lc_mock_server::run(getter, mock_server_port);
 		});
 	}
 
@@ -677,11 +680,19 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	}
 
 	if WorkerModeProvider::worker_mode() != WorkerMode::Teeracle {
+		let parentchain_start_block = config
+			.try_parse_parentchain_start_block()
+			.expect("parentchain start block to be a valid number");
 		println!("*** [+] Finished syncing light client, syncing parentchain...");
+		println!(
+			"*** [+] last_synced_header: {}, config.parentchain_start_block: {}",
+			last_synced_header.number, parentchain_start_block
+		);
 
 		// Syncing all parentchain blocks, this might take a while..
-		let mut last_synced_header =
-			parentchain_handler.sync_parentchain(last_synced_header).unwrap();
+		let mut last_synced_header = parentchain_handler
+			.sync_parentchain(last_synced_header, parentchain_start_block)
+			.unwrap();
 
 		// ------------------------------------------------------------------------
 		// Initialize the sidechain
@@ -693,6 +704,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 				parentchain_handler.clone(),
 				sidechain_storage,
 				&last_synced_header,
+				parentchain_start_block,
 			)
 			.unwrap();
 		}
@@ -905,7 +917,8 @@ fn subscribe_to_parentchain_new_headers<E: EnclaveBase + Sidechain>(
 			new_header.number
 		);
 
-		last_synced_header = parentchain_handler.sync_parentchain(last_synced_header)?;
+		// the overriden_start_block shouldn't matter here
+		last_synced_header = parentchain_handler.sync_parentchain(last_synced_header, 0)?;
 	}
 }
 

@@ -2,12 +2,23 @@
 # It is recommended to execute the script before commit
 # which will help us to reduce test/fmt/clippy failures in CI
 
+set -e
+
+function worker_clippy() {
+    taplo fmt
+    cargo clippy --release -- -D warnings
+    cargo clippy --release --features evm -- -D warnings
+    cargo clippy --release --features sidechain -- -D warnings
+    cargo clippy --release --features teeracle -- -D warnings
+    cargo clippy --release --features offchain-worker -- -D warnings
+}
+
+root_dir=$(git rev-parse --show-toplevel)
+cd "$root_dir"
+
 start=$(date +%s)
 
 make fmt
-taplo fmt
-
-# Parachain
 make clippy
 cargo test --locked --release -p pallet-* --lib
 cargo test --locked --release -p pallet-* --lib --features=skip-ias-check
@@ -17,32 +28,15 @@ cargo test --locked --release -p rococo-parachain-runtime --lib
 cargo test --locked --release -p litmus-parachain-runtime --lib
 cargo test --locked --release -p litentry-parachain-runtime --lib
 
-root_dir=$(git rev-parse --show-toplevel)
-CARGO_TARGET_DIR=${root_dir}/target
+cd "$root_dir/tee-worker" && worker_clippy
 
-cd "${root_dir}/tee-worker" || exit
-taplo fmt
-CARGO_TARGET_DIR=${CARGO_TARGET_DIR} cargo clippy --release -- -D warnings || exit
-CARGO_TARGET_DIR=${CARGO_TARGET_DIR} cargo clippy --release --features evm -- -D warnings || exit
-CARGO_TARGET_DIR=${CARGO_TARGET_DIR} cargo clippy --release --features sidechain -- -D warnings || exit
-CARGO_TARGET_DIR=${CARGO_TARGET_DIR} cargo clippy --release --features teeracle -- -D warnings || exit
-CARGO_TARGET_DIR=${CARGO_TARGET_DIR} cargo clippy --release --features offchain-worker -- -D warnings || exit
+cd "$root_dir/tee-worker/enclave-runtime" && worker_clippy
 
-
-cd "${root_dir}/tee-worker/enclave-runtime" || exit
-taplo fmt
-CARGO_TARGET_DIR=${CARGO_TARGET_DIR} cargo clippy --release -- -D warnings || exit
-CARGO_TARGET_DIR=${CARGO_TARGET_DIR} cargo clippy --release --features evm -- -D warnings || exit
-CARGO_TARGET_DIR=${CARGO_TARGET_DIR} cargo clippy --release --features sidechain -- -D warnings || exit
-CARGO_TARGET_DIR=${CARGO_TARGET_DIR} cargo clippy --release --features teeracle -- -D warnings || exit
-CARGO_TARGET_DIR=${CARGO_TARGET_DIR} cargo clippy --release --features offchain-worker -- -D warnings || exit
-
-cd "${root_dir}/tee-worker" || exit
-#RUST_LOG=info CARGO_TARGET_DIR=/root/work/tmp SKIP_WASM_BUILD=1 cargo test --release -- --show-output
-RUST_LOG=info CARGO_TARGET_DIR=${CARGO_TARGET_DIR} SKIP_WASM_BUILD=1 cargo test --release -- --show-output
+cd "$root_dir/tee-worker"
+RUST_LOG=info SKIP_WASM_BUILD=1 cargo test --release -- --show-output
 SGX_MODE=SW SKIP_WASM_BUILD=1 make
 
-cd "${root_dir}/tee-worker/bin" || exit
+cd "$root_dir/tee-worker/bin"
 ./integritee-service test --all
 
 end=$(date +%s)

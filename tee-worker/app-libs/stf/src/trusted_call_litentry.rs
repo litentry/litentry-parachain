@@ -18,9 +18,9 @@
 extern crate sgx_tstd as std;
 
 use crate::{
-	helpers::{enclave_signer_account, ensure_enclave_signer_account, generate_challenge_code},
-	is_root, AccountId, Encode, IdentityManagement, MetadataOf, Runtime, StfError, StfResult,
-	TrustedCall, TrustedCallSigned,
+	helpers::{ensure_enclave_signer_account, generate_challenge_code},
+	is_root, AccountId, IdentityManagement, MetadataOf, Runtime, StfError, StfResult,
+	TrustedCallSigned,
 };
 use frame_support::{dispatch::UnfilteredDispatchable, ensure};
 use ita_sgx_runtime::RuntimeOrigin;
@@ -29,8 +29,8 @@ use itp_types::H256;
 use itp_utils::stringify::account_id_to_string;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
-	AssertionBuildRequest, MaxIdentityLength, RequestType, SetUserShieldingKeyRequest,
-	Web2IdentityVerificationRequest, Web3IdentityVerificationRequest,
+	AssertionBuildRequest, IdentityVerificationRequest, MaxIdentityLength, RequestType,
+	SetUserShieldingKeyRequest,
 };
 use litentry_primitives::{
 	Assertion, ChallengeCode, ErrorDetail, ErrorString, Identity, ParentchainBlockNumber,
@@ -49,16 +49,7 @@ impl TrustedCallSigned {
 		hash: H256,
 	) -> StfResult<()> {
 		ensure!(is_root::<Runtime, AccountId>(&root), StfError::MissingPrivileges(root));
-		let encoded_callback = TrustedCall::set_user_shielding_key_runtime(
-			enclave_signer_account(),
-			who.clone(),
-			key,
-			hash,
-		)
-		.encode();
-		let encoded_shard = shard.encode();
-		let request =
-			SetUserShieldingKeyRequest { encoded_shard, who, encoded_callback, hash }.into();
+		let request = SetUserShieldingKeyRequest { shard: *shard, who, key, hash }.into();
 		let sender = StfRequestSender::new();
 		sender
 			.send_stf_request(request)
@@ -141,40 +132,16 @@ impl TrustedCallSigned {
 		let code = IdentityManagement::challenge_codes(&who, &identity)
 			.ok_or(StfError::VerifyIdentityFailed(ErrorDetail::ChallengeCodeNotFound))?;
 
-		let encoded_callback = TrustedCall::verify_identity_runtime(
-			enclave_signer_account(),
-			who.clone(),
-			identity.clone(),
+		let request: RequestType = IdentityVerificationRequest {
+			shard: *shard,
+			who,
+			identity,
+			challenge_code: code,
+			validation_data,
 			bn,
 			hash,
-		)
-		.encode();
-		let encoded_shard = shard.encode();
-		let request: RequestType = match validation_data {
-			ValidationData::Web2(web2) => Web2IdentityVerificationRequest {
-				encoded_shard,
-				who,
-				identity,
-				challenge_code: code,
-				validation_data: web2,
-				bn,
-				encoded_callback,
-				hash,
-			}
-			.into(),
-			ValidationData::Web3(web3) => Web3IdentityVerificationRequest {
-				encoded_shard,
-				who,
-				identity,
-				challenge_code: code,
-				validation_data: web3,
-				bn,
-				encoded_callback,
-				hash,
-			}
-			.into(),
-		};
-
+		}
+		.into();
 		let sender = StfRequestSender::new();
 		sender
 			.send_stf_request(request)
