@@ -83,7 +83,7 @@ use std::{
 const LIT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
 
 const VC_A4_SUBJECT_DESCRIPTION: &str =
-	"Since when has the user been consistently holding a min amount {x} of LIT token";
+	"The user has been consistently holding at least {x} amount of tokens before 2023 Jan 1st 00:00:00 UTC on the supporting networks";
 const VC_A4_SUBJECT_TYPE: &str = "LIT Holding Assertion";
 const VC_A4_SUBJECT_TAG: [&str; 3] = ["Ethereum", "Litmus", "Litentry"];
 
