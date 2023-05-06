@@ -3,6 +3,7 @@ import { KeyringPair } from '@polkadot/keyring/types';
 import { BN, u8aToHex, hexToU8a, u8aToBuffer, u8aToString, compactAddLength, bufferToU8a } from '@polkadot/util';
 import { Codec } from '@polkadot/types/types';
 import { WorkerRpcReturnValue, WorkerRpcReturnString, PubicKeyJson } from '../../common/type-definitions';
+import { encryptWithTeeShieldingKey } from '../../common/utils';
 import { createPublicKey, publicEncrypt, KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
 
@@ -84,6 +85,7 @@ export const sendRequestBalanceTransfer = async (
     await sendRequest(wsp, request, parachain_api);
 };
 
+// get TEE's shielding key directly via RPC
 export const getTEEShieldingKey = async (wsp: WebSocketAsPromised, parachain_api: ApiPromise) => {
     let request = { jsonrpc: '2.0', method: 'author_getShieldingKey', params: [], id: 1 };
     let resp = await sendRequest(wsp, request, parachain_api);
@@ -102,17 +104,6 @@ export const getTEEShieldingKey = async (wsp: WebSocketAsPromised, parachain_api
     });
 };
 
-// encrypt using TEE's shielding key, `RSA_PKCS1_OAEP_PADDING` should be the default padding
-export function encryptTEE(key: KeyObject, array: Uint8Array): Buffer {
-    return publicEncrypt(
-        {
-            key,
-            oaepHash: 'sha256',
-        },
-        array
-    );
-}
-
 // given an encoded trusted operation, construct a request bytes that are sent in RPC request parameters
 export const createRequest = async (
     wsp: WebSocketAsPromised,
@@ -121,6 +112,6 @@ export const createRequest = async (
     top: Uint8Array
 ) => {
     let pk = await getTEEShieldingKey(wsp, parachain_api);
-    let cyphertext = compactAddLength(bufferToU8a(encryptTEE(pk, top)));
+    let cyphertext = compactAddLength(bufferToU8a(encryptWithTeeShieldingKey(pk, top)));
     return parachain_api.createType('Request', { shard: hexToU8a(mrenclave), cyphertext }).toU8a();
 };
