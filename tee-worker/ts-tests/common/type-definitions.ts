@@ -1,7 +1,7 @@
 import { ApiPromise, Keyring } from '@polkadot/api';
 import { KeyObject } from 'crypto';
 import { HexString } from '@polkadot/util/types';
-import WebSocketAsPromised = require('websocket-as-promised');
+import WebSocketAsPromised from 'websocket-as-promised';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { Metadata } from '@polkadot/types';
@@ -156,6 +156,13 @@ export const teeTypes = {
         account: 'AccountId',
         mrEnclave: 'mrEnclaveIdentifier',
         assertion: 'Assertion',
+    },
+
+    ShardIdentifier: 'H256',
+    // teerex
+    Request: {
+        shard: 'ShardIdentifier',
+        cyphertext: 'Vec<u8>',
     },
 };
 
