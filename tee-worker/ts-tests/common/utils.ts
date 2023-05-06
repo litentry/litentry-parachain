@@ -19,6 +19,7 @@ import {
     EvmNetwork,
     Web2Network,
 } from './type-definitions';
+
 import { blake2AsHex, cryptoWaitReady, xxhashAsU8a } from '@polkadot/util-crypto';
 import { Metadata } from '@polkadot/types';
 import { SiLookupTypeId } from '@polkadot/types/interfaces';
@@ -31,7 +32,7 @@ import { Event, StorageEntryMetadataV14, StorageHasherV14 } from '@polkadot/type
 import { after, before, describe } from 'mocha';
 import { ethers } from 'ethers';
 import { assert, expect } from 'chai';
-import Ajv, { stringify } from 'ajv';
+import Ajv from 'ajv';
 import * as ed from '@noble/ed25519';
 import { blake2128Concat, getSubstrateSigner, identity, twox64Concat } from './helpers';
 import { getMetadata, sendRequest } from './call';
@@ -89,9 +90,11 @@ export async function initIntegrationTestContext(
         charlie: getSubstrateSigner().charlie,
         eve: getSubstrateSigner().eve,
     };
+
+    const { types } = teeTypes;
     const api = await ApiPromise.create({
         provider,
-        types: teeTypes,
+        types,
     });
 
     await cryptoWaitReady();
@@ -227,7 +230,7 @@ export function describeLitentry(title: string, walletsNumber: number, cb: (cont
             context.web3Signers = tmp.web3Signers;
         });
 
-        after(async function () {});
+        after(async function () { });
 
         cb(context);
     });
@@ -295,8 +298,8 @@ export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
     expect(isValid).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-            vc.issuer.id === proofJson.verificationMethod &&
-            proofJson.type === 'Ed25519Signature2020'
+        vc.issuer.id === proofJson.verificationMethod &&
+        proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
 }
@@ -416,7 +419,7 @@ export async function checkUserShieldingKeys(
     };
     let resp = await sendRequest(context.tee, request, context.api);
 
-    return resp.value;
+    return resp.value as unknown as string;
 }
 export async function checkUserChallengeCode(
     context: IntegrationTestContext,
@@ -436,7 +439,7 @@ export async function checkUserChallengeCode(
         id: 1,
     };
     let resp = await sendRequest(context.tee, request, context.api);
-    return resp.value;
+    return resp.value as unknown as string;
 }
 
 export async function checkIDGraph(
