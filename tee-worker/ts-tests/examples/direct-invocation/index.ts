@@ -4,12 +4,9 @@ import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
 import { TypeRegistry, Bytes } from '@polkadot/types';
 import { Metadata } from '@polkadot/types/metadata';
 import { BN, u8aToHex, hexToU8a, u8aToBuffer, u8aToString, compactAddLength, bufferToU8a } from '@polkadot/util';
-import type { KeyObject } from 'crypto';
-import { createPublicKey, publicEncrypt } from 'crypto';
-import * as jose from 'jose';
 import { teeTypes } from '../../common/type-definitions';
 import { Codec } from '@polkadot/types/types';
-import { getTeeShieldingKey, sendRequestBalanceTransfer, toBalance } from './util';
+import { sendRequestBalanceTransfer, toBalance } from './util';
 
 // in order to handle self-signed certificates we need to turn off the validation
 // TODO add self signed certificate
@@ -59,7 +56,7 @@ async function runDirectCall() {
 
     const alice: KeyringPair = keyring.addFromUri('//Alice', { name: 'Alice' });
     const bob = keyring.addFromUri('//Bob', { name: 'Bob' });
-    const mrenclave = '0x066069cfb9fb0c2fc5b7b6092b83b21d5e326c559862fa2224a15037762cf09c';
+    const mrenclave = '0x778a084fa0722b14b177e672bcee2a38c5b3690c11dd37d51adeb88ffaf75f72';
     await sendRequestBalanceTransfer(wsp, parachain_api, alice, bob.address, mrenclave, toBalance(1));
 }
 

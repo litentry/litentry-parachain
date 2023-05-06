@@ -2,24 +2,20 @@ import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { BN, u8aToHex, hexToU8a, u8aToBuffer, u8aToString, compactAddLength, bufferToU8a } from '@polkadot/util';
 import { Codec } from '@polkadot/types/types';
-import { assert } from 'chai';
 import { WorkerRpcReturnValue, WorkerRpcReturnString, PubicKeyJson } from '../../common/type-definitions';
-import { createPublicKey, publicEncrypt } from 'crypto';
-import * as jose from 'jose';
-
-const base58 = require('micro-base58');
-
-type DirectExtrinsic = {};
+import { createPublicKey, publicEncrypt, KeyObject } from 'crypto';
+import WebSocketAsPromised from 'websocket-as-promised';
 
 export function toBalance(amountInt: number) {
     return new BN(amountInt).mul(new BN(10).pow(new BN(12)));
 }
 
-async function sendRequest(wsClient: any, request: any, api: ApiPromise) {
+// TODO: parse the status in RPC response
+async function sendRequest(wsClient: WebSocketAsPromised, request: any, api: ApiPromise) {
     const resp = await wsClient.sendRequest(request, { requestId: 1, timeout: 6000 });
     const resp_json = api.createType('WorkerRpcReturnValue', resp.result).toJSON() as WorkerRpcReturnValue;
-    const resp_hex = api.createType('WorkerRpcReturnString', resp_json.value).toJSON() as WorkerRpcReturnString;
-    return Buffer.from(resp_hex.vec.slice(2), 'hex').toString('utf-8');
+    console.log('resp_json', resp_json);
+    return resp_json;
 }
 
 // TrustedCalls are defined in:
@@ -47,21 +43,23 @@ export const createSignedTrustedCall = (
     const signature = parachain_api.createType('MultiSignature', {
         Sr25519: u8aToHex(account.sign(payload)),
     });
-    return parachain_api.createType('TrustedCallSigned', {
+    let r = parachain_api.createType('TrustedCallSigned', {
         call: call,
         index: nonce,
         signature: signature,
     });
+    console.log(r.toJSON());
+    return r;
 };
 
-export async function sendRequestBalanceTransfer(
+export const sendRequestBalanceTransfer = async (
     wsp: any,
     parachain_api: ApiPromise,
     account: KeyringPair,
     to: string,
     mrenclave: string,
     amount: BN
-) {
+) => {
     // 1. create signed trusted call
     // TODO: get nonce from worker rpc
     const nonce = parachain_api.createType('Index', '0x01');
@@ -75,36 +73,54 @@ export async function sendRequestBalanceTransfer(
     );
     // 2. construct trusted operation
     const trustedOperation = parachain_api.createType('TrustedOperation', { direct_call: call });
-    // 3. encrypt it with TEE's shielding key
-    let pk = await getTeeShieldingKey(wsp, parachain_api);
-    const ciphertext = publicEncrypt(pk, trustedOperation.toU8a());
-    // 4. send the direct request
-    let balanceTransferRequest = u8aToHex(
-        parachain_api.createType('Request', { shard: hexToU8a(mrenclave), ciphertext }).toU8a()
-    );
-    let request = { jsonrpc: '2.0', method: 'author_submitAndWatchExtrinsic', params: [balanceTransferRequest], id: 1 };
-    let resp = await sendRequest(wsp, request, parachain_api);
-    console.log('response: ', resp);
-}
+    // 3. create the request parameter
+    let balanceTransferRequest = await createRequest(wsp, parachain_api, mrenclave, trustedOperation.toU8a());
+    let request = {
+        jsonrpc: '2.0',
+        method: 'author_submitAndWatchExtrinsic',
+        params: [u8aToHex(balanceTransferRequest)],
+        id: 1,
+    };
+    await sendRequest(wsp, request, parachain_api);
+};
 
-export const getTeeShieldingKey = async (wsp: any, parachain_api: ApiPromise) => {
+export const getTEEShieldingKey = async (wsp: WebSocketAsPromised, parachain_api: ApiPromise) => {
     let request = { jsonrpc: '2.0', method: 'author_getShieldingKey', params: [], id: 1 };
     let resp = await sendRequest(wsp, request, parachain_api);
-    const pubKeyJSON = JSON.parse(resp) as PubicKeyJson;
+    const resp_hex = parachain_api.createType('WorkerRpcReturnString', resp.value).toJSON() as WorkerRpcReturnString;
+    const k = JSON.parse(Buffer.from(resp_hex.vec.slice(2), 'hex').toString('utf-8')) as PubicKeyJson;
 
-    console.log('Tee shielding key: ', pubKeyJSON);
-
-    // `node-rsa` won't work, we also need to reverse the bytes
-    // see https://github.com/integritee-network/worker/issues/987
-    const pk = createPublicKey({
+    return createPublicKey({
         key: {
-            alg: 'RSA-OAEP',
+            alg: 'RSA-OAEP-256',
             kty: 'RSA',
             use: 'enc',
-            n: jose.base64url.encode(Buffer.from(pubKeyJSON.n).reverse()),
-            e: jose.base64url.encode(Buffer.from(pubKeyJSON.e).reverse()),
+            n: Buffer.from(k.n.reverse()).toString('base64url'),
+            e: Buffer.from(k.e.reverse()).toString('base64url'),
         },
         format: 'jwk',
     });
-    return pk;
+};
+
+// encrypt using TEE's shielding key, `RSA_PKCS1_OAEP_PADDING` should be the default padding
+export function encryptTEE(key: KeyObject, array: Uint8Array): Buffer {
+    return publicEncrypt(
+        {
+            key,
+            oaepHash: 'sha256',
+        },
+        array
+    );
+}
+
+// given an encoded trusted operation, construct a request bytes that are sent in RPC request parameters
+export const createRequest = async (
+    wsp: WebSocketAsPromised,
+    parachain_api: ApiPromise,
+    mrenclave: string,
+    top: Uint8Array
+) => {
+    let pk = await getTEEShieldingKey(wsp, parachain_api);
+    let cyphertext = compactAddLength(bufferToU8a(encryptTEE(pk, top)));
+    return parachain_api.createType('Request', { shard: hexToU8a(mrenclave), cyphertext }).toU8a();
 };

@@ -24,7 +24,7 @@ export const teeTypes = {
     },
     TrustedCallSigned: {
         call: 'TrustedCall',
-        index: 'u32',
+        index: 'Index',
         signature: 'MultiSignature',
     },
     Getter: {
