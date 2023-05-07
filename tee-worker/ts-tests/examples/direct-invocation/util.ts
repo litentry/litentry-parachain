@@ -44,42 +44,45 @@ export const createSignedTrustedCall = (
     const signature = parachain_api.createType('MultiSignature', {
         Sr25519: u8aToHex(account.sign(payload)),
     });
-    let r = parachain_api.createType('TrustedCallSigned', {
+    return parachain_api.createType('TrustedCallSigned', {
         call: call,
         index: nonce,
         signature: signature,
     });
-    console.log(r.toJSON());
-    return r;
 };
 
-export const sendRequestBalanceTransfer = async (
-    wsp: any,
+export function createSignedTrustedCallBalanceTransfer(
     parachain_api: ApiPromise,
-    account: KeyringPair,
+    nonce: Codec,
+    from: KeyringPair,
     to: string,
     mrenclave: string,
     amount: BN
-) => {
-    // 1. create signed trusted call
-    // TODO: get nonce from worker rpc
-    const nonce = parachain_api.createType('Index', '0x01');
-    const call = createSignedTrustedCall(
+) {
+    return createSignedTrustedCall(
         parachain_api,
         ['balance_transfer', '(AccountId, AccountId, Balance)'],
-        account,
+        from,
         mrenclave,
         nonce,
-        [account.address, to, amount]
+        [from.address, to, amount]
     );
-    // 2. construct trusted operation
+}
+
+export const sendRequestFromTrustedCall = async (
+    wsp: any,
+    parachain_api: ApiPromise,
+    mrenclave: string,
+    call: Codec
+) => {
+    // construct trusted operation
     const trustedOperation = parachain_api.createType('TrustedOperation', { direct_call: call });
-    // 3. create the request parameter
-    let balanceTransferRequest = await createRequest(wsp, parachain_api, mrenclave, trustedOperation.toU8a());
+    // create the request parameter
+    let requestParam = await createRequest(wsp, parachain_api, mrenclave, trustedOperation.toU8a());
     let request = {
         jsonrpc: '2.0',
         method: 'author_submitAndWatchExtrinsic',
-        params: [u8aToHex(balanceTransferRequest)],
+        params: [u8aToHex(requestParam)],
         id: 1,
     };
     await sendRequest(wsp, request, parachain_api);
