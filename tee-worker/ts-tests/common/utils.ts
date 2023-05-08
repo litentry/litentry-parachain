@@ -419,7 +419,7 @@ export async function checkUserShieldingKeys(
     };
     let resp = await sendRequest(context.tee, request, context.api);
 
-    return resp.value as unknown as string;
+    return resp.value;
 }
 export async function checkUserChallengeCode(
     context: IntegrationTestContext,
@@ -439,7 +439,7 @@ export async function checkUserChallengeCode(
         id: 1,
     };
     let resp = await sendRequest(context.tee, request, context.api);
-    return resp.value as unknown as string;
+    return resp.value;
 }
 
 export async function checkIDGraph(
