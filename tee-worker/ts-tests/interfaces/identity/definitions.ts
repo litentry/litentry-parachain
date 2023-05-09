@@ -52,11 +52,26 @@ export default {
         },
         UserShieldingKeyType: '[u8; 32]',
         DirectRequestStatus: {
+            _enum: {
+                Ok: 'Null',
+                TrustedOperationStatus: 'TrustedOperationStatus',
+                Error: 'Null',
+            },
+        },
+        TrustedOperationStatus: {
+            // TODO: we don't care the block hash parameter of `InSidechainBlock`
             _enum: [
-                //TODO support TrustedOperationStatus(TrustedOperationStatus)
-                'Ok',
-                'TrustedOperationStatus',
-                'Error',
+                'Submitted',
+                'Future',
+                'Ready',
+                'Broadcast',
+                'InSidechainBlock',
+                'Retracted',
+                'FinalityTimeout',
+                'Finalized',
+                'Usurped',
+                'Dropped',
+                'Invalid',
             ],
         },
 

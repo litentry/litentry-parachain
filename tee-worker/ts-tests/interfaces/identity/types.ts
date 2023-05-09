@@ -42,6 +42,7 @@ export interface Assertion extends Enum {
 export interface DirectRequestStatus extends Enum {
     readonly isOk: boolean;
     readonly isTrustedOperationStatus: boolean;
+    readonly asTrustedOperationStatus: TrustedOperationStatus;
     readonly isError: boolean;
     readonly type: 'Ok' | 'TrustedOperationStatus' | 'Error';
 }
@@ -216,6 +217,33 @@ export interface TrustedOperation extends Enum {
     readonly isGet: boolean;
     readonly asGet: Getter;
     readonly type: 'IndirectCall' | 'DirectCall' | 'Get';
+}
+
+/** @name TrustedOperationStatus */
+export interface TrustedOperationStatus extends Enum {
+    readonly isSubmitted: boolean;
+    readonly isFuture: boolean;
+    readonly isReady: boolean;
+    readonly isBroadcast: boolean;
+    readonly isInSidechainBlock: boolean;
+    readonly isRetracted: boolean;
+    readonly isFinalityTimeout: boolean;
+    readonly isFinalized: boolean;
+    readonly isUsurped: boolean;
+    readonly isDropped: boolean;
+    readonly isInvalid: boolean;
+    readonly type:
+        | 'Submitted'
+        | 'Future'
+        | 'Ready'
+        | 'Broadcast'
+        | 'InSidechainBlock'
+        | 'Retracted'
+        | 'FinalityTimeout'
+        | 'Finalized'
+        | 'Usurped'
+        | 'Dropped'
+        | 'Invalid';
 }
 
 /** @name TwitterValidationData */
