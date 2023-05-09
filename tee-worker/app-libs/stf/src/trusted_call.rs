@@ -106,8 +106,8 @@ pub enum TrustedCall {
 		Vec<(H160, Vec<H256>)>,
 	),
 	// litentry
+	set_user_shielding_key_direct(AccountId, UserShieldingKeyType, H256),
 	set_user_shielding_key_runtime(AccountId, AccountId, UserShieldingKeyType, H256),
-	set_user_shielding_key_direct(AccountId, AccountId),
 	create_identity_runtime(
 		AccountId,
 		AccountId,
@@ -131,7 +131,7 @@ pub enum TrustedCall {
 	handle_imp_error(AccountId, Option<AccountId>, IMPError, H256),
 	handle_vcmp_error(AccountId, Option<AccountId>, VCMPError, H256),
 	// the following TrustedCalls should only be used in testing
-	set_user_shielding_key_preflight(AccountId, AccountId, UserShieldingKeyType, H256), // root as signer
+	set_user_shielding_key_preflight(AccountId, AccountId, UserShieldingKeyType, H256),
 	set_challenge_code_runtime(AccountId, AccountId, Identity, ChallengeCode, H256),
 	send_erroneous_parentchain_call(AccountId),
 }
@@ -481,15 +481,10 @@ where
 					Self::set_user_shielding_key_runtime(calls, who, key, node_metadata_repo, hash);
 				Ok(())
 			},
-			TrustedCall::set_user_shielding_key_direct(who, _w) => {
+			TrustedCall::set_user_shielding_key_direct(who, key, hash) => {
 				debug!("set_user_shielding_key_direct, who: {}", account_id_to_string(&who));
-				let _ = Self::set_user_shielding_key_runtime(
-					calls,
-					who,
-					[0u8; 32],
-					node_metadata_repo,
-					H256::default(),
-				);
+				let _ =
+					Self::set_user_shielding_key_runtime(calls, who, key, node_metadata_repo, hash);
 				Ok(())
 			},
 			TrustedCall::create_identity_runtime(

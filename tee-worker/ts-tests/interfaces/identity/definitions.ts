@@ -45,10 +45,12 @@ export default {
             _enum: {
                 balance_set_balance: '(AccountId, AccountId, Balance, Balance)',
                 balance_transfer: '(AccountId, AccountId, Balance)',
-                balance_unshield: '(AccountId, AccountId, Balance, MrEnclaveIdentifier)',
-                set_user_shielding_key_direct: '(AccountId, AccountId)',
+                balance_unshield: '(AccountId, AccountId, Balance, ShardIdentifier)',
+                balance_shield: '(AccountId, AccountId, Balance)',
+                set_user_shielding_key_direct: '(AccountId, UserShieldingKeyType, H256)',
             },
         },
+        UserShieldingKeyType: '[u8; 32]',
         DirectRequestStatus: {
             _enum: [
                 //TODO support TrustedOperationStatus(TrustedOperationStatus)
@@ -153,11 +155,9 @@ export default {
         // vc management
         VCRequested: {
             account: 'AccountId',
-            mrEnclave: 'MrEnclaveIdentifier',
+            mrEnclave: 'ShardIdentifier',
             assertion: 'Assertion',
         },
-
-        MrEnclaveIdentifier: '[u8;32]',
         Assertion: {
             _enum: {
                 A1: 'Null',

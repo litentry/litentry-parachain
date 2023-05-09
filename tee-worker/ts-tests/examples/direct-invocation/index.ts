@@ -71,13 +71,21 @@ async function runDirectCall() {
     // try out set_user_shielding_key directly
     nonce = parachain_api.createType('Index', '0x00');
     // a hardcoded AES key which is used overall in tests - maybe we need to put it in a common place
-    // let key_alice = hexToU8a('0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12');
+    let key_alice = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     // the hash was used to track the request extrinsic hash
     // now that we don't send the request via extrinsic, it can be some random "ID" that uniquely
     // identifies a request
-    // let hash = `0x${require('crypto').randomBytes(32).toString('hex')}`;
+    let hash = `0x${require('crypto').randomBytes(32).toString('hex')}`;
+    console.log('sendRequestFromTrustedCall, hash: ', hash);
     // hash = parachain_api.createType('H256', hash).toHex();
-    let setUserShieldingKeyCall = createSignedTrustedCallSetUserShieldingKey(parachain_api, mrenclave, nonce, alice);
+    let setUserShieldingKeyCall = createSignedTrustedCallSetUserShieldingKey(
+        parachain_api,
+        mrenclave,
+        nonce,
+        alice,
+        key_alice,
+        hash
+    );
     await sendRequestFromTrustedCall(wsp, parachain_api, mrenclave, key, setUserShieldingKeyCall);
 }
 

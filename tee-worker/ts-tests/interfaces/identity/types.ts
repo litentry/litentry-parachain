@@ -134,9 +134,6 @@ export interface LitentryValidationData extends Enum {
     readonly type: 'Web2Validation' | 'Web3Validation';
 }
 
-/** @name MrEnclaveIdentifier */
-export interface MrEnclaveIdentifier extends U8aFixed {}
-
 /** @name PublicGetter */
 export interface PublicGetter extends Enum {
     readonly isSomeValue: boolean;
@@ -177,10 +174,17 @@ export interface TrustedCall extends Enum {
     readonly isBalanceTransfer: boolean;
     readonly asBalanceTransfer: ITuple<[AccountId, AccountId, Balance]>;
     readonly isBalanceUnshield: boolean;
-    readonly asBalanceUnshield: ITuple<[AccountId, AccountId, Balance, MrEnclaveIdentifier]>;
+    readonly asBalanceUnshield: ITuple<[AccountId, AccountId, Balance, ShardIdentifier]>;
+    readonly isBalanceShield: boolean;
+    readonly asBalanceShield: ITuple<[AccountId, AccountId, Balance]>;
     readonly isSetUserShieldingKeyDirect: boolean;
-    readonly asSetUserShieldingKeyDirect: ITuple<[AccountId, AccountId]>;
-    readonly type: 'BalanceSetBalance' | 'BalanceTransfer' | 'BalanceUnshield' | 'SetUserShieldingKeyDirect';
+    readonly asSetUserShieldingKeyDirect: ITuple<[AccountId, UserShieldingKeyType, H256]>;
+    readonly type:
+        | 'BalanceSetBalance'
+        | 'BalanceTransfer'
+        | 'BalanceUnshield'
+        | 'BalanceShield'
+        | 'SetUserShieldingKeyDirect';
 }
 
 /** @name TrustedCallSigned */
@@ -219,10 +223,13 @@ export interface TwitterValidationData extends Struct {
     readonly tweet_id: Bytes;
 }
 
+/** @name UserShieldingKeyType */
+export interface UserShieldingKeyType extends U8aFixed {}
+
 /** @name VCRequested */
 export interface VCRequested extends Struct {
     readonly account: AccountId;
-    readonly mrEnclave: MrEnclaveIdentifier;
+    readonly mrEnclave: ShardIdentifier;
     readonly assertion: Assertion;
 }
 

@@ -77,15 +77,17 @@ export function createSignedTrustedCallSetUserShieldingKey(
     parachain_api: ApiPromise,
     mrenclave: string,
     nonce: Codec,
-    who: KeyringPair
+    who: KeyringPair,
+    key: string,
+    hash: string
 ) {
     return createSignedTrustedCall(
         parachain_api,
-        ['set_user_shielding_key_direct', '(AccountId, AccountId)'],
+        ['set_user_shielding_key_direct', '(AccountId, UserShieldingKeyType, H256)'],
         who,
         mrenclave,
         nonce,
-        [who.address, who.address]
+        [who.address, key, hash]
     );
 }
 

@@ -21,7 +21,6 @@ import type {
     IdentityString,
     LitentryIdentity,
     LitentryValidationData,
-    MrEnclaveIdentifier,
     PublicGetter,
     Request,
     ShardIdentifier,
@@ -33,6 +32,7 @@ import type {
     TrustedGetterSigned,
     TrustedOperation,
     TwitterValidationData,
+    UserShieldingKeyType,
     VCRequested,
     Web2Identity,
     Web2Network,
@@ -1805,7 +1805,6 @@ declare module '@polkadot/types/types/registry' {
         MomentOf: MomentOf;
         MoreAttestations: MoreAttestations;
         MortalEra: MortalEra;
-        MrEnclaveIdentifier: MrEnclaveIdentifier;
         MultiAddress: MultiAddress;
         MultiAsset: MultiAsset;
         MultiAssetFilter: MultiAssetFilter;
@@ -2250,6 +2249,7 @@ declare module '@polkadot/types/types/registry' {
         UpgradeGoAhead: UpgradeGoAhead;
         UpgradeRestriction: UpgradeRestriction;
         UpwardMessage: UpwardMessage;
+        UserShieldingKeyType: UserShieldingKeyType;
         usize: usize;
         USize: USize;
         ValidationCode: ValidationCode;
