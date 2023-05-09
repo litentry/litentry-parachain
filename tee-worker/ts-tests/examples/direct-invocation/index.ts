@@ -1,10 +1,18 @@
 import { cryptoWaitReady } from '@polkadot/util-crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
-import { TypeRegistry, Bytes } from '@polkadot/types';
+import { TypeRegistry } from '@polkadot/types';
+import { hexToU8a, u8aToHex, u8aConcat } from '@polkadot/util';
 import { teeTypes } from '../../common/type-definitions';
-import { createSignedTrustedCallBalanceTransfer, sendRequestFromTrustedCall, toBalance } from './util';
-import { getEnclave } from '../../common/utils';
+import {
+    createSignedTrustedCallBalanceTransfer,
+    createSignedTrustedCallSetUserShieldingKey,
+    sendRequestFromTrustedCall,
+    toBalance,
+    getTEEShieldingKey,
+} from './util';
+import { getEnclave, sleep } from '../../common/utils';
+import { H256 } from '@polkadot/types/interfaces';
 
 // in order to handle self-signed certificates we need to turn off the validation
 // TODO add self signed certificate
@@ -52,19 +60,53 @@ async function runDirectCall() {
     });
     await wsp.open();
 
+    let key = await getTEEShieldingKey(wsp, parachain_api);
+
     const alice: KeyringPair = keyring.addFromUri('//Alice', { name: 'Alice' });
     const bob = keyring.addFromUri('//Bob', { name: 'Bob' });
     const mrenclave = (await getEnclave(parachain_api)).mrEnclave;
-    let nonce = parachain_api.createType('Index', '0x01');
-    let balanceTransferCall = createSignedTrustedCallBalanceTransfer(
+
+    // console.log('sending balanceTransferCall...');
+    // // // try out balance transfer call
+    // let nonce = parachain_api.createType('Index', '0x00');
+    // let balanceTransferCall = createSignedTrustedCallBalanceTransfer(
+    //     parachain_api,
+    //     mrenclave,
+    //     nonce,
+    //     alice,
+    //     bob.address,
+    //     toBalance(1)
+    // );
+    // await sendRequestFromTrustedCall(wsp, parachain_api, mrenclave, key, balanceTransferCall);
+
+    sleep(10);
+
+    console.log('sending setUserShieldingKeyCall...');
+    // try out set_user_shielding_key directly
+    let nonce = parachain_api.createType('Index', '0x00');
+    // a hardcoded AES key which is used overall in tests - maybe we need to put it in a common place
+    // let key_alice = parachain_api
+    //     .createType(
+    //         'UserShieldingKeyType',
+    //         '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12'
+    //     )
+    //     .toHex();
+    // console.log("key alice = ", key_alice);
+    let key_alice = hexToU8a('0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12');
+    // the hash was used to track the request extrinsic hash
+    // now that we don't send the request via extrinsic, it can be some random "ID" that uniquely
+    // identifies a request
+    let hash = `0x${require('crypto').randomBytes(32).toString('hex')}`;
+    hash = parachain_api.createType('H256', hash).toHex();
+    let setUserShieldingKeyCall = createSignedTrustedCallSetUserShieldingKey(
         parachain_api,
+        mrenclave,
         nonce,
         alice,
-        bob.address,
-        mrenclave,
-        toBalance(1)
+        key_alice,
+        hash
     );
-    await sendRequestFromTrustedCall(wsp, parachain_api, mrenclave, balanceTransferCall);
+    await sendRequestFromTrustedCall(wsp, parachain_api, mrenclave, key, setUserShieldingKeyCall);
 }
 
 (async () => {

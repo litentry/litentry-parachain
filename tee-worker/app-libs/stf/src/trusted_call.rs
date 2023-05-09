@@ -21,7 +21,6 @@ use sp_core::{H160, U256};
 #[cfg(feature = "evm")]
 use std::vec::Vec;
 
-//aes_encrypt_default
 use crate::{
 	helpers::ensure_enclave_signer_account, IdentityManagement, MetadataOf, Runtime, StfError,
 	System, TrustedOperation,
@@ -29,15 +28,15 @@ use crate::{
 use codec::{Decode, Encode};
 use frame_support::{ensure, traits::UnfilteredDispatchable};
 pub use ita_sgx_runtime::{Balance, ConvertAccountId, Index, SgxParentchainTypeConverter};
-use itp_node_api::metadata::{
+pub use itp_node_api::metadata::{
 	pallet_imp::IMPCallIndexes, pallet_system::SystemSs58Prefix, pallet_teerex::TeerexCallIndexes,
 	pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata,
 };
 use itp_stf_interface::ExecuteCall;
 use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier, Signature};
-use itp_types::{OpaqueCall, H256};
+pub use itp_types::{OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{
+pub use litentry_primitives::{
 	aes_encrypt_default, AesOutput, Assertion, ChallengeCode, ErrorDetail, IMPError, Identity,
 	ParentchainAccountId, ParentchainBlockNumber, UserShieldingKeyType, VCMPError, ValidationData,
 };
@@ -54,7 +53,7 @@ use crate::evm_helpers::{create_code_hash, evm_create2_address, evm_create_addre
 
 // max number of identities in an id_graph that will be returned as the extrinsic parameter
 // this has no effect on the stored id_graph, but only the returned id_graph
-const RETURNED_IDGRAPH_MAX_LEN: usize = 20;
+pub const RETURNED_IDGRAPH_MAX_LEN: usize = 20;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
@@ -108,6 +107,7 @@ pub enum TrustedCall {
 	),
 	// litentry
 	set_user_shielding_key_runtime(AccountId, AccountId, UserShieldingKeyType, H256),
+	set_user_shielding_key_direct(AccountId, AccountId),
 	create_identity_runtime(
 		AccountId,
 		AccountId,
@@ -152,17 +152,18 @@ impl TrustedCall {
 			#[cfg(feature = "evm")]
 			TrustedCall::evm_create2(sender_account, ..) => sender_account,
 			// litentry
-			TrustedCall::set_user_shielding_key_preflight(account, _, _, _) => account,
-			TrustedCall::set_user_shielding_key_runtime(account, _, _, _) => account,
-			TrustedCall::create_identity_runtime(account, _, _, _, _, _) => account,
-			TrustedCall::remove_identity_runtime(account, _, _, _) => account,
-			TrustedCall::verify_identity_preflight(account, _, _, _, _, _) => account,
-			TrustedCall::verify_identity_runtime(account, _, _, _, _) => account,
-			TrustedCall::request_vc(account, _, _, _, _, _) => account,
-			TrustedCall::set_challenge_code_runtime(account, _, _, _, _) => account,
-			TrustedCall::handle_vc_issued(account, _, _, _, _, _, _) => account,
-			TrustedCall::handle_imp_error(account, _, _, _) => account,
-			TrustedCall::handle_vcmp_error(account, _, _, _) => account,
+			TrustedCall::set_user_shielding_key_preflight(account, ..) => account,
+			TrustedCall::set_user_shielding_key_runtime(account, ..) => account,
+			TrustedCall::set_user_shielding_key_direct(account, ..) => account,
+			TrustedCall::create_identity_runtime(account, ..) => account,
+			TrustedCall::remove_identity_runtime(account, ..) => account,
+			TrustedCall::verify_identity_preflight(account, ..) => account,
+			TrustedCall::verify_identity_runtime(account, ..) => account,
+			TrustedCall::request_vc(account, ..) => account,
+			TrustedCall::set_challenge_code_runtime(account, ..) => account,
+			TrustedCall::handle_vc_issued(account, ..) => account,
+			TrustedCall::handle_imp_error(account, ..) => account,
+			TrustedCall::handle_vcmp_error(account, ..) => account,
 			TrustedCall::send_erroneous_parentchain_call(account) => account,
 		}
 	}
@@ -474,53 +475,21 @@ where
 				Ok(())
 			},
 			TrustedCall::set_user_shielding_key_runtime(enclave_account, who, key, hash) => {
+				ensure_enclave_signer_account(&enclave_account)?;
 				debug!("set_user_shielding_key_runtime, who: {}", account_id_to_string(&who));
-				let account = SgxParentchainTypeConverter::convert(who.clone());
-				let parent_ss58_prefix =
-					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
-				// we need to execute the runtime call first
-				match Self::set_user_shielding_key_runtime(
-					enclave_account,
-					who.clone(),
-					key,
-					parent_ss58_prefix,
-				) {
-					Ok(()) =>
-						if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
-							debug!("pushing user_shielding_key_set event ...");
-							let id_graph =
-								ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph_with_max_len(&who, RETURNED_IDGRAPH_MAX_LEN);
-							calls.push(OpaqueCall::from_tuple(&(
-								node_metadata_repo.get_from_metadata(|m| {
-									m.user_shielding_key_set_call_indexes()
-								})??,
-								account,
-								aes_encrypt_default(&key, &id_graph.encode()),
-								hash,
-							)));
-						} else {
-							debug!("pushing error event ... error: UserShieldingKeyNotFound");
-							add_call_from_imp_error(
-								calls,
-								node_metadata_repo,
-								Some(account),
-								IMPError::SetUserShieldingKeyFailed(
-									ErrorDetail::UserShieldingKeyNotFound,
-								),
-								hash,
-							);
-						},
-					Err(e) => {
-						debug!("pushing error event ... error: {}", e);
-						add_call_from_imp_error(
-							calls,
-							node_metadata_repo,
-							Some(account),
-							e.to_imp_error(),
-							hash,
-						);
-					},
-				}
+				let _ =
+					Self::set_user_shielding_key_runtime(calls, who, key, node_metadata_repo, hash);
+				Ok(())
+			},
+			TrustedCall::set_user_shielding_key_direct(who, _w) => {
+				debug!("set_user_shielding_key_direct, who: {}", account_id_to_string(&who));
+				let _ = Self::set_user_shielding_key_runtime(
+					calls,
+					who,
+					[0u8; 32],
+					node_metadata_repo,
+					H256::default(),
+				);
 				Ok(())
 			},
 			TrustedCall::create_identity_runtime(
@@ -801,6 +770,8 @@ where
 				debug!("No storage updates needed..."),
 			TrustedCall::set_user_shielding_key_runtime(..) =>
 				debug!("No storage updates needed..."),
+			TrustedCall::set_user_shielding_key_direct(..) =>
+				debug!("No storage updates needed..."),
 			TrustedCall::create_identity_runtime(..) => debug!("No storage updates needed..."),
 			TrustedCall::remove_identity_runtime(..) => debug!("No storage updates needed..."),
 			TrustedCall::verify_identity_preflight(..) => debug!("No storage updates needed..."),
@@ -857,7 +828,7 @@ where
 }
 
 // helper method to create and push an `OpaqueCall` from a IMPError, this function always succeeds
-fn add_call_from_imp_error<NodeMetadataRepository>(
+pub fn add_call_from_imp_error<NodeMetadataRepository>(
 	calls: &mut Vec<OpaqueCall>,
 	node_metadata_repo: Arc<NodeMetadataRepository>,
 	account: Option<ParentchainAccountId>,
@@ -878,7 +849,7 @@ fn add_call_from_imp_error<NodeMetadataRepository>(
 }
 
 // helper method to create and push an `OpaqueCall` from a VCMPError, this function always succeeds
-fn add_call_from_vcmp_error<NodeMetadataRepository>(
+pub fn add_call_from_vcmp_error<NodeMetadataRepository>(
 	calls: &mut Vec<OpaqueCall>,
 	node_metadata_repo: Arc<NodeMetadataRepository>,
 	account: Option<ParentchainAccountId>,
