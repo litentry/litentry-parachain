@@ -4,7 +4,7 @@
 import type { Bytes, Enum, Option, Struct, U8aFixed, Vec, bool, u128, u32 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
 import type { MultiSignature, Signature } from '@polkadot/types/interfaces/extrinsics';
-import type { AccountId, Balance, BlockNumber } from '@polkadot/types/interfaces/runtime';
+import type { AccountId, Balance, BlockNumber, H256 } from '@polkadot/types/interfaces/runtime';
 
 /** @name Address20 */
 export interface Address20 extends U8aFixed {}
@@ -142,6 +142,15 @@ export interface PublicGetter extends Enum {
     readonly isSomeValue: boolean;
     readonly type: 'SomeValue';
 }
+
+/** @name Request */
+export interface Request extends Struct {
+    readonly shard: ShardIdentifier;
+    readonly cyphertext: Bytes;
+}
+
+/** @name ShardIdentifier */
+export interface ShardIdentifier extends H256 {}
 
 /** @name SubstrateIdentity */
 export interface SubstrateIdentity extends Struct {

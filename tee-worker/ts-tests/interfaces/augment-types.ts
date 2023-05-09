@@ -23,6 +23,8 @@ import type {
     LitentryValidationData,
     MrEnclaveIdentifier,
     PublicGetter,
+    Request,
+    ShardIdentifier,
     SubstrateIdentity,
     SubstrateNetwork,
     TrustedCall,
@@ -1997,6 +1999,7 @@ declare module '@polkadot/types/types/registry' {
         ReportedRoundStates: ReportedRoundStates;
         Reporter: Reporter;
         ReportIdOf: ReportIdOf;
+        Request: Request;
         ReserveData: ReserveData;
         ReserveIdentifier: ReserveIdentifier;
         Response: Response;
@@ -2058,6 +2061,7 @@ declare module '@polkadot/types/types/registry' {
         SessionKeys9B: SessionKeys9B;
         SetId: SetId;
         SetIndex: SetIndex;
+        ShardIdentifier: ShardIdentifier;
         Si0Field: Si0Field;
         Si0LookupTypeId: Si0LookupTypeId;
         Si0Path: Si0Path;

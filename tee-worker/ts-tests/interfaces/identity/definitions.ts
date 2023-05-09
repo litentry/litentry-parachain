@@ -57,7 +57,7 @@ export default {
             ],
         },
 
-        //identity
+        // identity management
         LitentryIdentity: {
             _enum: {
                 Substrate: 'SubstrateIdentity',
@@ -89,8 +89,6 @@ export default {
         EvmNetwork: {
             _enum: ['Ethereum', 'BSC'],
         },
-
-        //Validation Data
         LitentryValidationData: {
             _enum: {
                 Web2Validation: 'Web2ValidationData',
@@ -144,7 +142,14 @@ export default {
             is_verified: 'bool',
         },
 
-        //vc management
+        // teerex
+        ShardIdentifier: 'H256',
+        Request: {
+            shard: 'ShardIdentifier',
+            cyphertext: 'Vec<u8>',
+        },
+
+        // vc management
         VCRequested: {
             account: 'AccountId',
             mrEnclave: 'MrEnclaveIdentifier',
