@@ -18,7 +18,7 @@ use crate::{
 	identity_context::IdentityContext, mock::*, Error, MetadataOf, ParentchainBlockNumber,
 	UserShieldingKeyType,
 };
-use frame_support::{assert_noop, assert_ok};
+use frame_support::{assert_err, assert_noop, assert_ok};
 use litentry_primitives::{Identity, IdentityString, Web2Network, USER_SHIELDING_KEY_LEN};
 use sp_runtime::AccountId32;
 
@@ -68,6 +68,33 @@ fn create_identity_works() {
 				is_verified: false,
 			}
 		);
+	});
+}
+
+#[test]
+fn cannot_create_more_identites_for_account_than_limit() {
+	new_test_ext(true).execute_with(|| {
+		for i in 1..65 {
+			assert_ok!(IMT::create_identity(
+				RuntimeOrigin::signed(ALICE),
+				BOB,
+				alice_twitter_identity(i),
+				None,
+				i,
+				131_u16,
+			));
+		}
+		assert_err!(
+			IMT::create_identity(
+				RuntimeOrigin::signed(ALICE),
+				BOB,
+				alice_twitter_identity(65),
+				None,
+				65,
+				131_u16,
+			),
+			Error::<Test>::IdentityLimitReached
+		)
 	});
 }
 

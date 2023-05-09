@@ -73,6 +73,9 @@ pub mod pallet {
 		/// maximum delay in block numbers between creating an identity and verifying an identity
 		#[pallet::constant]
 		type MaxVerificationDelay: Get<ParentchainBlockNumber>;
+		/// maximum number of identities an account can have, if you change this value to lower some accounts may exceed this limit
+		#[pallet::constant]
+		type AccountIdentitiesLimit: Get<u32>;
 	}
 
 	#[pallet::event]
@@ -108,6 +111,8 @@ pub mod pallet {
 		VerificationRequestTooLate,
 		/// remove prime identiy should be disallowed
 		RemovePrimeIdentityDisallowed,
+		/// identity limit reached
+		IdentityLimitReached,
 	}
 
 	/// user shielding key is per Litentry account
@@ -141,6 +146,10 @@ pub mod pallet {
 		IdentityContext<T>,
 		OptionQuery,
 	>;
+
+	#[pallet::storage]
+	pub type AccountIdentityContextCount<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AccountId, u32, ValueQuery>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -247,7 +256,8 @@ pub mod pallet {
 				creation_request_block: Some(creation_request_block),
 				..Default::default()
 			};
-			IDGraphs::<T>::insert(&who, &identity, context);
+			Self::insert_identity_with_limit(&who, &identity, context)
+				.map_err(|_| Error::<T>::IdentityLimitReached)?;
 			Self::deposit_event(Event::IdentityCreated { who, identity });
 			Ok(())
 		}
@@ -277,8 +287,7 @@ pub mod pallet {
 					ensure!(false, Error::<T>::RemovePrimeIdentityDisallowed);
 				}
 			}
-
-			IDGraphs::<T>::remove(&who, &identity);
+			Self::remove_identity_with_limit(&who, &identity);
 			Self::deposit_event(Event::IdentityRemoved { who, identity });
 			Ok(())
 		}
@@ -317,6 +326,28 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
+		fn insert_identity_with_limit(
+			owner: &T::AccountId,
+			identity: &Identity,
+			context: IdentityContext<T>,
+		) -> Result<(), ()> {
+			let count = AccountIdentityContextCount::<T>::get(owner);
+			if count >= T::AccountIdentitiesLimit::get() {
+				return Err(())
+			}
+			// return Err in case of overflow
+			let new_count = count.checked_add(1).ok_or(())?;
+			AccountIdentityContextCount::<T>::insert(&owner, new_count);
+			IDGraphs::<T>::insert(&owner, &identity, context);
+			Ok(())
+		}
+
+		fn remove_identity_with_limit(owner: &T::AccountId, identity: &Identity) {
+			let count = AccountIdentityContextCount::<T>::get(owner);
+			AccountIdentityContextCount::<T>::insert(&owner, count - 1);
+			IDGraphs::<T>::remove(&owner, &identity);
+		}
+
 		pub fn get_id_graph(who: &T::AccountId) -> Vec<(Identity, IdentityContext<T>)> {
 			IDGraphs::iter_prefix(who).collect::<Vec<_>>()
 		}
