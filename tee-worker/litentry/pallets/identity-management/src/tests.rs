@@ -333,3 +333,35 @@ fn get_id_graph_with_max_len_works() {
 		assert_eq!(String::from_utf8(id_graph.get(21).unwrap().0.flat()).unwrap(), "did:litmus:web3:substrate:0x0202020202020202020202020202020202020202020202020202020202020202");
 	});
 }
+
+#[test]
+fn id_graph_stats_works() {
+	new_test_ext(true).execute_with(|| {
+		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
+		let ss58_prefix = 131_u16;
+		IMT::create_identity(
+			RuntimeOrigin::signed(ALICE),
+			ALICE,
+			alice_web3_identity(),
+			Some(metadata.clone()),
+			1,
+			ss58_prefix,
+		)
+		.unwrap();
+		IMT::create_identity(
+			RuntimeOrigin::signed(ALICE),
+			ALICE,
+			alice_twitter_identity(1),
+			Some(metadata.clone()),
+			1,
+			ss58_prefix,
+		)
+		.unwrap();
+
+		let stats = IMT::id_graph_stats().unwrap();
+		assert_eq!(stats.len(), 2);
+		assert!(stats.contains(&(ALICE, 2)));
+		//bob identity is created by setting shielding key
+		assert!(stats.contains(&(BOB, 1)));
+	});
+}
