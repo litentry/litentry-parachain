@@ -49,12 +49,26 @@ export default {
             },
         },
         DirectRequestStatus: {
-            _enum: [
-                //TODO support TrustedOperationStatus(TrustedOperationStatus)
-                'Ok',
-                'TrustedOperationStatus',
-                'Error',
-            ],
+            _enum: {
+                Ok: 'Null',
+                TrustedOperationStatus: 'TrustedOperationStatus',
+                Error: 'Null',
+            },
+        },
+        TrustedOperationStatus: {
+            _enum: {
+                Submitted: 'Null',
+                Future: 'Null',
+                Ready: 'Null',
+                Broadcast: 'Null',
+                InSidechainBlock: 'H256',
+                Retracted: 'Null',
+                FinalityTimeout: 'Null',
+                Finalized: 'Null',
+                Usurped: 'Null',
+                Dropped: 'Null',
+                Invalid: 'Null',
+            },
         },
 
         //identity
