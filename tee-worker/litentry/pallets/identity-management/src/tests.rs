@@ -93,7 +93,7 @@ fn cannot_create_more_identites_for_account_than_limit() {
 				65,
 				131_u16,
 			),
-			Error::<Test>::IdentityLimitReached
+			Error::<Test>::AccountIdentityLimitReached
 		)
 	});
 }

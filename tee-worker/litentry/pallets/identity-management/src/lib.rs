@@ -111,8 +111,8 @@ pub mod pallet {
 		VerificationRequestTooLate,
 		/// remove prime identiy should be disallowed
 		RemovePrimeIdentityDisallowed,
-		/// identity limit reached
-		IdentityLimitReached,
+		/// account identity limit reached
+		AccountIdentityLimitReached,
 	}
 
 	/// user shielding key is per Litentry account
@@ -257,7 +257,7 @@ pub mod pallet {
 				..Default::default()
 			};
 			Self::insert_identity_with_limit(&who, &identity, context)
-				.map_err(|_| Error::<T>::IdentityLimitReached)?;
+				.map_err(|_| Error::<T>::AccountIdentityLimitReached)?;
 			Self::deposit_event(Event::IdentityCreated { who, identity });
 			Ok(())
 		}
