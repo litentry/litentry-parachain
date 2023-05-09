@@ -30,6 +30,7 @@ import type {
     TrustedGetter,
     TrustedGetterSigned,
     TrustedOperation,
+    TrustedOperationStatus,
     TwitterValidationData,
     VCRequested,
     Web2Identity,
@@ -2221,6 +2222,7 @@ declare module '@polkadot/types/types/registry' {
         TrustedGetter: TrustedGetter;
         TrustedGetterSigned: TrustedGetterSigned;
         TrustedOperation: TrustedOperation;
+        TrustedOperationStatus: TrustedOperationStatus;
         TwitterValidationData: TwitterValidationData;
         Type: Type;
         u128: u128;

@@ -4,7 +4,7 @@
 import type { Bytes, Enum, Option, Struct, U8aFixed, Vec, bool, u128, u32 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
 import type { MultiSignature, Signature } from '@polkadot/types/interfaces/extrinsics';
-import type { AccountId, Balance, BlockNumber } from '@polkadot/types/interfaces/runtime';
+import type { AccountId, Balance, BlockNumber, H256 } from '@polkadot/types/interfaces/runtime';
 
 /** @name Address20 */
 export interface Address20 extends U8aFixed {}
@@ -42,6 +42,7 @@ export interface Assertion extends Enum {
 export interface DirectRequestStatus extends Enum {
     readonly isOk: boolean;
     readonly isTrustedOperationStatus: boolean;
+    readonly asTrustedOperationStatus: TrustedOperationStatus;
     readonly isError: boolean;
     readonly type: 'Ok' | 'TrustedOperationStatus' | 'Error';
 }
@@ -201,6 +202,34 @@ export interface TrustedOperation extends Enum {
     readonly isGet: boolean;
     readonly asGet: Getter;
     readonly type: 'IndirectCall' | 'DirectCall' | 'Get';
+}
+
+/** @name TrustedOperationStatus */
+export interface TrustedOperationStatus extends Enum {
+    readonly isSubmitted: boolean;
+    readonly isFuture: boolean;
+    readonly isReady: boolean;
+    readonly isBroadcast: boolean;
+    readonly isInSidechainBlock: boolean;
+    readonly asInSidechainBlock: H256;
+    readonly isRetracted: boolean;
+    readonly isFinalityTimeout: boolean;
+    readonly isFinalized: boolean;
+    readonly isUsurped: boolean;
+    readonly isDropped: boolean;
+    readonly isInvalid: boolean;
+    readonly type:
+        | 'Submitted'
+        | 'Future'
+        | 'Ready'
+        | 'Broadcast'
+        | 'InSidechainBlock'
+        | 'Retracted'
+        | 'FinalityTimeout'
+        | 'Finalized'
+        | 'Usurped'
+        | 'Dropped'
+        | 'Invalid';
 }
 
 /** @name TwitterValidationData */
