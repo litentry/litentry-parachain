@@ -178,7 +178,9 @@ export interface TrustedCall extends Enum {
     readonly asBalanceTransfer: ITuple<[AccountId, AccountId, Balance]>;
     readonly isBalanceUnshield: boolean;
     readonly asBalanceUnshield: ITuple<[AccountId, AccountId, Balance, MrEnclaveIdentifier]>;
-    readonly type: 'BalanceSetBalance' | 'BalanceTransfer' | 'BalanceUnshield';
+    readonly isSetUserShieldingKeyDirect: boolean;
+    readonly asSetUserShieldingKeyDirect: ITuple<[AccountId, AccountId]>;
+    readonly type: 'BalanceSetBalance' | 'BalanceTransfer' | 'BalanceUnshield' | 'SetUserShieldingKeyDirect';
 }
 
 /** @name TrustedCallSigned */

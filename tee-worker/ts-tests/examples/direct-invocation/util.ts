@@ -77,9 +77,7 @@ export function createSignedTrustedCallSetUserShieldingKey(
     parachain_api: ApiPromise,
     mrenclave: string,
     nonce: Codec,
-    who: KeyringPair,
-    key: Uint8Array,
-    hash: string
+    who: KeyringPair
 ) {
     return createSignedTrustedCall(
         parachain_api,

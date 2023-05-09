@@ -46,6 +46,7 @@ export default {
                 balance_set_balance: '(AccountId, AccountId, Balance, Balance)',
                 balance_transfer: '(AccountId, AccountId, Balance)',
                 balance_unshield: '(AccountId, AccountId, Balance, MrEnclaveIdentifier)',
+                set_user_shielding_key_direct: '(AccountId, AccountId)',
             },
         },
         DirectRequestStatus: {

@@ -55,37 +55,30 @@ async function runDirectCall() {
 
     console.log('sending balanceTransferCall...');
     // try out balance transfer call
-    let balanceTransferCall = createSignedTrustedCallBalanceTransfer(
-        parachain_api,
-        mrenclave,
-        nonce,
-        alice,
-        bob.address,
-        toBalance(1)
-    );
-    await sendRequestFromTrustedCall(wsp, parachain_api, mrenclave, key, balanceTransferCall);
-
-    sleep(10);
-
-    // console.log('sending setUserShieldingKeyCall...');
-    // // try out set_user_shielding_key directly
-    // nonce = parachain_api.createType('Index', '0x00');
-    // // a hardcoded AES key which is used overall in tests - maybe we need to put it in a common place
-    // let key_alice = hexToU8a('0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12');
-    // // the hash was used to track the request extrinsic hash
-    // // now that we don't send the request via extrinsic, it can be some random "ID" that uniquely
-    // // identifies a request
-    // let hash = `0x${require('crypto').randomBytes(32).toString('hex')}`;
-    // hash = parachain_api.createType('H256', hash).toHex();
-    // let setUserShieldingKeyCall = createSignedTrustedCallSetUserShieldingKey(
+    // let balanceTransferCall = createSignedTrustedCallBalanceTransfer(
     //     parachain_api,
     //     mrenclave,
     //     nonce,
     //     alice,
-    //     key_alice,
-    //     hash
+    //     bob.address,
+    //     toBalance(1)
     // );
-    // await sendRequestFromTrustedCall(wsp, parachain_api, mrenclave, key, setUserShieldingKeyCall);
+    // await sendRequestFromTrustedCall(wsp, parachain_api, mrenclave, key, balanceTransferCall);
+
+    sleep(10);
+
+    console.log('sending setUserShieldingKeyCall...');
+    // try out set_user_shielding_key directly
+    nonce = parachain_api.createType('Index', '0x00');
+    // a hardcoded AES key which is used overall in tests - maybe we need to put it in a common place
+    // let key_alice = hexToU8a('0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12');
+    // the hash was used to track the request extrinsic hash
+    // now that we don't send the request via extrinsic, it can be some random "ID" that uniquely
+    // identifies a request
+    // let hash = `0x${require('crypto').randomBytes(32).toString('hex')}`;
+    // hash = parachain_api.createType('H256', hash).toHex();
+    let setUserShieldingKeyCall = createSignedTrustedCallSetUserShieldingKey(parachain_api, mrenclave, nonce, alice);
+    await sendRequestFromTrustedCall(wsp, parachain_api, mrenclave, key, setUserShieldingKeyCall);
 }
 
 (async () => {
