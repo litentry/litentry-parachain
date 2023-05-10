@@ -226,6 +226,7 @@ export interface TrustedOperationStatus extends Enum {
     readonly isReady: boolean;
     readonly isBroadcast: boolean;
     readonly isInSidechainBlock: boolean;
+    readonly asInSidechainBlock: H256;
     readonly isRetracted: boolean;
     readonly isFinalityTimeout: boolean;
     readonly isFinalized: boolean;
