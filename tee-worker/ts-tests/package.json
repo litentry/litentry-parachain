@@ -1,11 +1,11 @@
 {
 	"license": "ISC",
 	"scripts": {
-		"load-meta": "curl -s -H \"Content-Type: application/json\" -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' http://localhost:9944 > litentry-metadata.json",
 		"format": "yarn prettier --write .",
+		"load-meta": "../bin/integritee-cli print-sgx-metadata > litentry-sidechain-metadata.json",
 		"generate": "yarn generate:defs && yarn generate:meta && yarn format",
-		"generate:defs": "ts-node --skip-project node_modules/.bin/polkadot-types-from-defs  --package . --input ./interfaces --endpoint ./litentry-metadata.json",
-		"generate:meta": "ts-node --skip-project node_modules/.bin/polkadot-types-from-chain --package . --endpoint ./litentry-metadata.json --output ./interfaces",
+		"generate:defs": "ts-node --skip-project node_modules/.bin/polkadot-types-from-defs  --package . --input ./interfaces --endpoint ./litentry-sidechain-metadata.json",
+		"generate:meta": "ts-node --skip-project node_modules/.bin/polkadot-types-from-chain --package . --endpoint ./litentry-sidechain-metadata.json --output ./interfaces",
 		"test-identity:staging": "cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register 'identity.test.ts'",
 		"test-identity:local": "cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register 'identity.test.ts'",
 		"test-resuming-worker:staging": "cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register 'resuming_worker.test.ts'",
