@@ -1,23 +1,53 @@
-import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
+import { ApiPromise } from '@polkadot/api';
 import { KeyringPair } from '@polkadot/keyring/types';
-import { BN, u8aToHex, hexToU8a, u8aToBuffer, u8aToString, compactAddLength, bufferToU8a } from '@polkadot/util';
+import { BN, u8aToHex, hexToU8a, compactAddLength, bufferToU8a } from '@polkadot/util';
 import { Codec } from '@polkadot/types/types';
 import { WorkerRpcReturnValue, WorkerRpcReturnString, PubicKeyJson } from '../../common/type-definitions';
 import { encryptWithTeeShieldingKey } from '../../common/utils';
 import { createPublicKey, KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
-import { H256 } from '@polkadot/types/interfaces';
 
 export function toBalance(amountInt: number) {
     return new BN(amountInt).mul(new BN(10).pow(new BN(12)));
 }
 
-// TODO: parse the status in RPC response
-async function sendRequest(wsClient: WebSocketAsPromised, request: any, api: ApiPromise) {
-    const resp = await wsClient.sendRequest(request, { requestId: 1, timeout: 6000 });
-    const resp_json = api.createType('WorkerRpcReturnValue', resp.result).toJSON() as WorkerRpcReturnValue;
-    console.log('resp_json', resp_json);
-    return resp_json;
+// Send the request to worker ws
+// we should perform different actions based on the returned status:
+//
+// `Submitted`:
+// the request is submitted to the top pool, we should start to subscribe to parachain headers to wait for async parachain event
+//
+// `InSidechainBlock`
+// the request is included in a sidechain block: the state mutation of sidechain is done, the promise is resolved
+// the corresponding parachain event should be emitted **around** that, it's not guaranteed if it's before or after this status
+// due to block inclusion delays from the parachain
+//
+async function sendRequest(
+    wsClient: WebSocketAsPromised,
+    request: any,
+    api: ApiPromise
+): Promise<WorkerRpcReturnValue> {
+    const p = new Promise<WorkerRpcReturnValue>((resolve) =>
+        wsClient.onResponse.addListener((data) => {
+            let result = JSON.parse(data.toString()).result;
+            const res = api.createType('WorkerRpcReturnValue', result).toJSON() as WorkerRpcReturnValue;
+            if (res.status === 'Error') {
+                throw new Error('ws response error: ' + res.value);
+            }
+            // resolve it once `do_watch` is false, meaning it's the final response
+            if (!res.do_watch) {
+                // TODO: maybe only remove this listener
+                wsClient.onResponse.removeAllListeners();
+                resolve(res);
+            } else {
+                console.log('response status: ', res.status);
+                // TODO: subscribe to parachain headers oncd we get status `Submitted`
+            }
+        })
+    );
+
+    wsClient.sendRequest(request);
+    return p;
 }
 
 // TrustedCalls are defined in:

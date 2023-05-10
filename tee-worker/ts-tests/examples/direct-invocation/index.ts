@@ -5,7 +5,7 @@ import { TypeRegistry } from '@polkadot/types';
 import { hexToU8a, u8aToHex, u8aConcat } from '@polkadot/util';
 import { teeTypes } from '../../common/type-definitions';
 import { createSignedTrustedCallSetUserShieldingKey, sendRequestFromTrustedCall, getTEEShieldingKey } from './util';
-import { getEnclave, sleep, checkUserShieldingKeys } from '../../common/utils';
+import { getEnclave, sleep } from '../../common/utils';
 
 // in order to handle self-signed certificates we need to turn off the validation
 // TODO add self signed certificate
@@ -40,12 +40,10 @@ async function runDirectCall() {
     let key = await getTEEShieldingKey(wsp, parachain_api);
 
     const alice: KeyringPair = keyring.addFromUri('//Alice', { name: 'Alice' });
-    const bob = keyring.addFromUri('//Bob', { name: 'Bob' });
     const mrenclave = (await getEnclave(parachain_api)).mrEnclave;
     let nonce = parachain_api.createType('Index', '0x00');
 
     console.log('Send direct setUserShieldingKey call...');
-    nonce = parachain_api.createType('Index', '0x00');
     // a hardcoded AES key which is used overall in tests - maybe we need to put it in a common place
     let key_alice = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     // similar to `reqExtHash` in indirect calls, we need some "identifiers" to pair the response
@@ -53,7 +51,6 @@ async function runDirectCall() {
     // a trusted call, hence a random number is used here - better ideas are welcome
     let hash = `0x${require('crypto').randomBytes(32).toString('hex')}`;
     console.log('sendRequestFromTrustedCall, hash: ', hash);
-    // hash = parachain_api.createType('H256', hash).toHex();
     let setUserShieldingKeyCall = createSignedTrustedCallSetUserShieldingKey(
         parachain_api,
         mrenclave,
@@ -63,6 +60,7 @@ async function runDirectCall() {
         hash
     );
     await sendRequestFromTrustedCall(wsp, parachain_api, mrenclave, key, setUserShieldingKeyCall);
+    console.log('setUserShieldingKey call returned');
 
     sleep(10);
 }
