@@ -53,26 +53,25 @@ export default {
         UserShieldingKeyType: '[u8; 32]',
         DirectRequestStatus: {
             _enum: {
-                Ok: 'Null',
+                Ok: null,
                 TrustedOperationStatus: 'TrustedOperationStatus',
-                Error: 'Null',
+                Error: null,
             },
         },
         TrustedOperationStatus: {
-            // TODO: we don't care the block hash parameter of `InSidechainBlock`
-            _enum: [
-                'Submitted',
-                'Future',
-                'Ready',
-                'Broadcast',
-                'InSidechainBlock',
-                'Retracted',
-                'FinalityTimeout',
-                'Finalized',
-                'Usurped',
-                'Dropped',
-                'Invalid',
-            ],
+            _enum: {
+                Submitted: null,
+                Future: null,
+                Ready: null,
+                Broadcast: null,
+                InSidechainBlock: 'H256',
+                Retracted: null,
+                FinalityTimeout: null,
+                Finalized: null,
+                Usurped: null,
+                Dropped: null,
+                Invalid: null,
+            },
         },
 
         // identity management
