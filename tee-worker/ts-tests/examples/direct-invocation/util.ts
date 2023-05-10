@@ -28,20 +28,20 @@ async function sendRequest(
     api: ApiPromise
 ): Promise<WorkerRpcReturnValue> {
     const p = new Promise<WorkerRpcReturnValue>((resolve) =>
-        wsClient.onResponse.addListener((data) => {
+        wsClient.onMessage.addListener((data) => {
             let result = JSON.parse(data.toString()).result;
             const res = api.createType('WorkerRpcReturnValue', result).toJSON() as WorkerRpcReturnValue;
+            console.log('response status: ', res.status);
             if (res.status === 'Error') {
                 throw new Error('ws response error: ' + res.value);
             }
             // resolve it once `do_watch` is false, meaning it's the final response
             if (!res.do_watch) {
                 // TODO: maybe only remove this listener
-                wsClient.onResponse.removeAllListeners();
+                wsClient.onMessage.removeAllListeners();
                 resolve(res);
             } else {
-                console.log('response status: ', res.status);
-                // TODO: subscribe to parachain headers oncd we get status `Submitted`
+                // TODO: subscribe to parachain headers if the status is `Submitted`
             }
         })
     );
@@ -103,6 +103,7 @@ export function createSignedTrustedCallBalanceTransfer(
     );
 }
 
+// TODO: maybe use HexString?
 export function createSignedTrustedCallSetUserShieldingKey(
     parachain_api: ApiPromise,
     mrenclave: string,
@@ -118,6 +119,26 @@ export function createSignedTrustedCallSetUserShieldingKey(
         mrenclave,
         nonce,
         [who.address, key, hash]
+    );
+}
+
+export function createSignedTrustedCallCreateIdentity(
+    parachain_api: ApiPromise,
+    mrenclave: string,
+    nonce: Codec,
+    who: KeyringPair,
+    identity: string,
+    metadata: string,
+    bn: string,
+    hash: string
+) {
+    return createSignedTrustedCall(
+        parachain_api,
+        ['create_identity_direct', '(AccountId, LitentryIdentity, Option<Vec<u8>>, u32, H256)'],
+        who,
+        mrenclave,
+        nonce,
+        [who.address, identity, metadata, bn, hash]
     );
 }
 

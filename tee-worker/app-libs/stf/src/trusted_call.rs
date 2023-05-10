@@ -107,6 +107,13 @@ pub enum TrustedCall {
 	),
 	// litentry
 	set_user_shielding_key_direct(AccountId, UserShieldingKeyType, H256),
+	create_identity_direct(
+		AccountId,
+		Identity,
+		Option<MetadataOf<Runtime>>,
+		ParentchainBlockNumber,
+		H256,
+	),
 	set_user_shielding_key_runtime(AccountId, AccountId, UserShieldingKeyType, H256),
 	create_identity_runtime(
 		AccountId,
@@ -156,6 +163,7 @@ impl TrustedCall {
 			TrustedCall::set_user_shielding_key_runtime(account, ..) => account,
 			TrustedCall::set_user_shielding_key_direct(account, ..) => account,
 			TrustedCall::create_identity_runtime(account, ..) => account,
+			TrustedCall::create_identity_direct(account, ..) => account,
 			TrustedCall::remove_identity_runtime(account, ..) => account,
 			TrustedCall::verify_identity_preflight(account, ..) => account,
 			TrustedCall::verify_identity_runtime(account, ..) => account,
@@ -264,6 +272,7 @@ where
 		// so it should be considered as valid
 		System::inc_account_nonce(&sender);
 
+		// TODO: maybe we can further simplify this by effacing the duplicate code
 		match self.call {
 			TrustedCall::balance_set_balance(root, who, free_balance, reserved_balance) => {
 				ensure!(is_root::<Runtime, AccountId>(&root), Self::Error::MissingPrivileges(root));
@@ -478,13 +487,13 @@ where
 				ensure_enclave_signer_account(&enclave_account)?;
 				debug!("set_user_shielding_key_runtime, who: {}", account_id_to_string(&who));
 				let _ =
-					Self::set_user_shielding_key_runtime(calls, who, key, node_metadata_repo, hash);
+					Self::set_user_shielding_key_runtime(node_metadata_repo, calls, who, key, hash);
 				Ok(())
 			},
 			TrustedCall::set_user_shielding_key_direct(who, key, hash) => {
 				debug!("set_user_shielding_key_direct, who: {}", account_id_to_string(&who));
 				let _ =
-					Self::set_user_shielding_key_runtime(calls, who, key, node_metadata_repo, hash);
+					Self::set_user_shielding_key_runtime(node_metadata_repo, calls, who, key, hash);
 				Ok(())
 			},
 			TrustedCall::create_identity_runtime(
@@ -495,64 +504,34 @@ where
 				bn,
 				hash,
 			) => {
-				debug!(
-					"create_identity_runtime, who: {}, identity: {:?}, bn: {}",
-					account_id_to_string(&who),
+				ensure_enclave_signer_account(&enclave_account)?;
+				debug!("create_identity_runtime, who: {}", account_id_to_string(&who));
+				let _ = Self::create_identity_runtime(
+					node_metadata_repo,
+					calls,
+					who,
 					identity,
+					metadata,
 					bn,
+					hash,
 				);
-				let account = SgxParentchainTypeConverter::convert(who.clone());
-				if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
-					let parent_ss58_prefix =
-						node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
-					match Self::create_identity_runtime(
-						enclave_account,
-						who,
-						identity.clone(),
-						metadata,
-						bn,
-						parent_ss58_prefix,
-					) {
-						Ok(code) => {
-							debug!("pushing identity_created event ...");
-							calls.push(OpaqueCall::from_tuple(&(
-								node_metadata_repo
-									.get_from_metadata(|m| m.identity_created_call_indexes())??,
-								account,
-								aes_encrypt_default(&key, &identity.encode()),
-								aes_encrypt_default(&key, &code.encode()),
-								hash,
-							)));
-						},
-						Err(e) => {
-							debug!("pushing error event ... error: {}", e);
-							add_call_from_imp_error(
-								calls,
-								node_metadata_repo,
-								Some(account),
-								e.to_imp_error(),
-								hash,
-							);
-						},
-					}
-				} else {
-					debug!("pushing error event ... error: UserShieldingKeyNotFound");
-					add_call_from_imp_error(
-						calls,
-						node_metadata_repo,
-						Some(account),
-						IMPError::CreateIdentityFailed(ErrorDetail::UserShieldingKeyNotFound),
-						hash,
-					);
-				}
+				Ok(())
+			},
+			TrustedCall::create_identity_direct(who, identity, metadata, bn, hash) => {
+				debug!("create_identity_direct, who: {}", account_id_to_string(&who));
+				let _ = Self::create_identity_runtime(
+					node_metadata_repo,
+					calls,
+					who,
+					identity,
+					metadata,
+					bn,
+					hash,
+				);
 				Ok(())
 			},
 			TrustedCall::remove_identity_runtime(enclave_account, who, identity, hash) => {
-				debug!(
-					"remove_identity_runtime, who: {}, identity: {:?}",
-					account_id_to_string(&who),
-					identity,
-				);
+				debug!("remove_identity_runtime, who: {}", account_id_to_string(&who));
 				let account = SgxParentchainTypeConverter::convert(who.clone());
 				if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
 					match Self::remove_identity_runtime(enclave_account, who, identity.clone()) {
@@ -597,12 +576,7 @@ where
 				bn,
 				hash,
 			) => {
-				debug!(
-					"verify_identity_preflight, who: {}, identity: {:?}, bn: {}",
-					account_id_to_string(&who),
-					identity,
-					bn,
-				);
+				debug!("verify_identity_preflight, who: {}", account_id_to_string(&who));
 				if let Err(e) = Self::verify_identity_preflight(
 					enclave_account,
 					shard,
@@ -624,12 +598,7 @@ where
 				Ok(())
 			},
 			TrustedCall::verify_identity_runtime(enclave_account, who, identity, bn, hash) => {
-				debug!(
-					"verify_identity_runtime, who: {}, identity: {:?}, bn: {}",
-					account_id_to_string(&who),
-					identity,
-					bn
-				);
+				debug!("verify_identity_runtime, who: {}", account_id_to_string(&who));
 				let account = SgxParentchainTypeConverter::convert(who.clone());
 				if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
 					match Self::verify_identity_runtime(
@@ -756,10 +725,10 @@ where
 	fn get_storage_hashes_to_update(&self) -> Vec<Vec<u8>> {
 		let key_hashes = Vec::new();
 		match self.call {
-			TrustedCall::balance_set_balance(_, _, _, _) => debug!("No storage updates needed..."),
-			TrustedCall::balance_transfer(_, _, _) => debug!("No storage updates needed..."),
-			TrustedCall::balance_unshield(_, _, _, _) => debug!("No storage updates needed..."),
-			TrustedCall::balance_shield(_, _, _) => debug!("No storage updates needed..."),
+			TrustedCall::balance_set_balance(..) => debug!("No storage updates needed..."),
+			TrustedCall::balance_transfer(..) => debug!("No storage updates needed..."),
+			TrustedCall::balance_unshield(..) => debug!("No storage updates needed..."),
+			TrustedCall::balance_shield(..) => debug!("No storage updates needed..."),
 			// litentry
 			TrustedCall::set_user_shielding_key_preflight(..) =>
 				debug!("No storage updates needed..."),
@@ -768,6 +737,7 @@ where
 			TrustedCall::set_user_shielding_key_direct(..) =>
 				debug!("No storage updates needed..."),
 			TrustedCall::create_identity_runtime(..) => debug!("No storage updates needed..."),
+			TrustedCall::create_identity_direct(..) => debug!("No storage updates needed..."),
 			TrustedCall::remove_identity_runtime(..) => debug!("No storage updates needed..."),
 			TrustedCall::verify_identity_preflight(..) => debug!("No storage updates needed..."),
 			TrustedCall::verify_identity_runtime(..) => debug!("No storage updates needed..."),

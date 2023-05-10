@@ -39,6 +39,8 @@ use log::*;
 use sp_runtime::BoundedVec;
 use std::{format, sync::Arc, vec, vec::Vec};
 
+type IMTCall = ita_sgx_runtime::IdentityManagementCall<Runtime>;
+
 impl TrustedCallSigned {
 	pub fn set_user_shielding_key_preflight(
 		root: AccountId,
@@ -56,10 +58,10 @@ impl TrustedCallSigned {
 	}
 
 	pub fn set_user_shielding_key_runtime<NodeMetadataRepository>(
+		node_metadata_repo: Arc<NodeMetadataRepository>,
 		calls: &mut Vec<OpaqueCall>,
 		who: AccountId,
 		key: UserShieldingKeyType,
-		node_metadata_repo: Arc<NodeMetadataRepository>,
 		hash: H256,
 	) -> StfResult<()>
 	where
@@ -71,13 +73,9 @@ impl TrustedCallSigned {
 		let account = SgxParentchainTypeConverter::convert(who.clone());
 		let parent_ss58_prefix =
 			node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
-		match (ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_user_shielding_key {
-			who: who.clone(),
-			key,
-			parent_ss58_prefix,
-		}
-		.dispatch_bypass_filter(RuntimeOrigin::root())
-		.map_err(|e| StfError::SetUserShieldingKeyFailed(e.error.into())))
+		match (IMTCall::set_user_shielding_key { who: who.clone(), key, parent_ss58_prefix }
+			.dispatch_bypass_filter(RuntimeOrigin::root())
+			.map_err(|e| StfError::SetUserShieldingKeyFailed(e.error.into())))
 		{
 			Ok(_) =>
 				if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
@@ -118,37 +116,65 @@ impl TrustedCallSigned {
 		Ok(())
 	}
 
-	pub fn create_identity_runtime(
-		enclave_account: AccountId,
+	pub fn create_identity_runtime<NodeMetadataRepository>(
+		node_metadata_repo: Arc<NodeMetadataRepository>,
+		calls: &mut Vec<OpaqueCall>,
 		who: AccountId,
 		identity: Identity,
 		metadata: Option<MetadataOf<Runtime>>,
 		bn: ParentchainBlockNumber,
-		parent_ss58_prefix: u16,
-	) -> StfResult<ChallengeCode> {
-		ensure_enclave_signer_account(&enclave_account)?;
-		ita_sgx_runtime::IdentityManagementCall::<Runtime>::create_identity {
-			who: who.clone(),
-			identity: identity.clone(),
-			metadata,
-			creation_request_block: bn,
-			parent_ss58_prefix,
+		hash: H256,
+	) -> StfResult<()>
+	where
+		NodeMetadataRepository: AccessNodeMetadata,
+		NodeMetadataRepository::MetadataType:
+			TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix,
+	{
+		let account = SgxParentchainTypeConverter::convert(who.clone());
+		if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
+			let parent_ss58_prefix =
+				node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
+
+			match Self::create_identity_runtime_internal(
+				who,
+				identity.clone(),
+				metadata,
+				bn,
+				parent_ss58_prefix,
+			) {
+				Ok(code) => {
+					debug!("pushing identity_created event ...");
+					calls.push(OpaqueCall::from_tuple(&(
+						node_metadata_repo
+							.get_from_metadata(|m| m.identity_created_call_indexes())??,
+						account,
+						aes_encrypt_default(&key, &identity.encode()),
+						aes_encrypt_default(&key, &code.encode()),
+						hash,
+					)));
+				},
+				Err(e) => {
+					debug!("pushing error event ... error: {}", e);
+					add_call_from_imp_error(
+						calls,
+						node_metadata_repo,
+						Some(account),
+						e.to_imp_error(),
+						hash,
+					);
+				},
+			}
+		} else {
+			debug!("pushing error event ... error: UserShieldingKeyNotFound");
+			add_call_from_imp_error(
+				calls,
+				node_metadata_repo,
+				Some(account),
+				IMPError::CreateIdentityFailed(ErrorDetail::UserShieldingKeyNotFound),
+				hash,
+			);
 		}
-		.dispatch_bypass_filter(RuntimeOrigin::root())
-		.map_err(|e| StfError::CreateIdentityFailed(e.into()))?;
-
-		// generate challenge code
-		let code = generate_challenge_code();
-
-		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_challenge_code {
-			who,
-			identity,
-			code,
-		}
-		.dispatch_bypass_filter(RuntimeOrigin::root())
-		.map_err(|e| StfError::CreateIdentityFailed(e.into()))?;
-
-		Ok(code)
+		Ok(())
 	}
 
 	pub fn remove_identity_runtime(
@@ -157,7 +183,7 @@ impl TrustedCallSigned {
 		identity: Identity,
 	) -> StfResult<()> {
 		ensure_enclave_signer_account(&enclave_account)?;
-		ita_sgx_runtime::IdentityManagementCall::<Runtime>::remove_identity { who, identity }
+		IMTCall::remove_identity { who, identity }
 			.dispatch_bypass_filter(RuntimeOrigin::root())
 			.map_err(|e| StfError::RemoveIdentityFailed(e.into()))?;
 		Ok(())
@@ -199,7 +225,7 @@ impl TrustedCallSigned {
 		bn: ParentchainBlockNumber,
 	) -> StfResult<()> {
 		ensure_enclave_signer_account(&enclave_account)?;
-		ita_sgx_runtime::IdentityManagementCall::<Runtime>::verify_identity {
+		IMTCall::verify_identity {
 			who: who.clone(),
 			identity: identity.clone(),
 			verification_request_block: bn,
@@ -208,7 +234,7 @@ impl TrustedCallSigned {
 		.map_err(|e| StfError::VerifyIdentityFailed(e.into()))?;
 
 		// remove challenge code
-		ita_sgx_runtime::IdentityManagementCall::<Runtime>::remove_challenge_code { who, identity }
+		IMTCall::remove_challenge_code { who, identity }
 			.dispatch_bypass_filter(RuntimeOrigin::root())
 			.map_err(|e| StfError::VerifyIdentityFailed(e.into()))?;
 
@@ -267,13 +293,37 @@ impl TrustedCallSigned {
 	) -> StfResult<()> {
 		ensure_enclave_signer_account(&enclave_account)?;
 		// only used in tests, we don't care about the error
-		ita_sgx_runtime::IdentityManagementCall::<Runtime>::set_challenge_code {
-			who,
-			identity,
-			code,
+		IMTCall::set_challenge_code { who, identity, code }
+			.dispatch_bypass_filter(RuntimeOrigin::root())
+			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		Ok(())
+	}
+
+	// internal helper fn
+	fn create_identity_runtime_internal(
+		who: AccountId,
+		identity: Identity,
+		metadata: Option<MetadataOf<Runtime>>,
+		bn: ParentchainBlockNumber,
+		parent_ss58_prefix: u16,
+	) -> StfResult<ChallengeCode> {
+		IMTCall::create_identity {
+			who: who.clone(),
+			identity: identity.clone(),
+			metadata,
+			creation_request_block: bn,
+			parent_ss58_prefix,
 		}
 		.dispatch_bypass_filter(RuntimeOrigin::root())
-		.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
-		Ok(())
+		.map_err(|e| StfError::CreateIdentityFailed(e.into()))?;
+
+		// generate challenge code
+		let code = generate_challenge_code();
+
+		IMTCall::set_challenge_code { who, identity, code }
+			.dispatch_bypass_filter(RuntimeOrigin::root())
+			.map_err(|e| StfError::CreateIdentityFailed(e.into()))?;
+
+		Ok(code)
 	}
 }

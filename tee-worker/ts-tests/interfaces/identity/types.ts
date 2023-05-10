@@ -180,12 +180,15 @@ export interface TrustedCall extends Enum {
     readonly asBalanceShield: ITuple<[AccountId, AccountId, Balance]>;
     readonly isSetUserShieldingKeyDirect: boolean;
     readonly asSetUserShieldingKeyDirect: ITuple<[AccountId, UserShieldingKeyType, H256]>;
+    readonly isCreateIdentityDirect: boolean;
+    readonly asCreateIdentityDirect: ITuple<[AccountId, LitentryIdentity, Option<Bytes>, u32, H256]>;
     readonly type:
         | 'BalanceSetBalance'
         | 'BalanceTransfer'
         | 'BalanceUnshield'
         | 'BalanceShield'
-        | 'SetUserShieldingKeyDirect';
+        | 'SetUserShieldingKeyDirect'
+        | 'CreateIdentityDirect';
 }
 
 /** @name TrustedCallSigned */

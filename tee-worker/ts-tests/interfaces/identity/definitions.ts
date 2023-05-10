@@ -48,6 +48,7 @@ export default {
                 balance_unshield: '(AccountId, AccountId, Balance, ShardIdentifier)',
                 balance_shield: '(AccountId, AccountId, Balance)',
                 set_user_shielding_key_direct: '(AccountId, UserShieldingKeyType, H256)',
+                create_identity_direct: '(AccountId, LitentryIdentity, Option<Vec<u8>>, u32, H256)',
             },
         },
         UserShieldingKeyType: '[u8; 32]',
