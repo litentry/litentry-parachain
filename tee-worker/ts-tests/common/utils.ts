@@ -230,7 +230,7 @@ export function describeLitentry(title: string, walletsNumber: number, cb: (cont
             context.web3Signers = tmp.web3Signers;
         });
 
-        after(async function () { });
+        after(async function () {});
 
         cb(context);
     });
@@ -298,8 +298,8 @@ export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
     expect(isValid).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-        vc.issuer.id === proofJson.verificationMethod &&
-        proofJson.type === 'Ed25519Signature2020'
+            vc.issuer.id === proofJson.verificationMethod &&
+            proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
 }
