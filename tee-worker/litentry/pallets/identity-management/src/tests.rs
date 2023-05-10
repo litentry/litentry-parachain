@@ -74,7 +74,7 @@ fn create_identity_works() {
 #[test]
 fn cannot_create_more_identites_for_account_than_limit() {
 	new_test_ext(true).execute_with(|| {
-		for i in 1..65 {
+		for i in 1..64 {
 			assert_ok!(IMT::create_identity(
 				RuntimeOrigin::signed(ALICE),
 				BOB,
@@ -90,7 +90,7 @@ fn cannot_create_more_identites_for_account_than_limit() {
 				BOB,
 				alice_twitter_identity(65),
 				None,
-				65,
+				64,
 				131_u16,
 			),
 			Error::<Test>::AccountIdentityLimitReached

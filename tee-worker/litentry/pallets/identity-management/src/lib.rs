@@ -183,7 +183,8 @@ pub mod pallet {
 					verification_request_block: Some(0),
 					is_verified: true,
 				};
-				IDGraphs::<T>::insert(&who, &prime_id, context);
+				Self::insert_identity_with_limit(&who, &prime_id, context)
+					.map_err(|_| Error::<T>::AccountIdentityLimitReached)?;
 			}
 
 			Self::deposit_event(Event::UserShieldingKeySet { who, key });
