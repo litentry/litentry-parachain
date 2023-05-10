@@ -21,7 +21,7 @@ use crate::ws_client::{WsClient, WsClientControl};
 use codec::Decode;
 use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
 use itp_types::DirectRequestStatus;
-use itp_utils::FromHexPrefixed;
+use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use log::*;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use std::{
@@ -138,7 +138,9 @@ impl DirectApi for DirectClient {
 	}
 
 	fn get_state_metadata(&self) -> Result<RuntimeMetadataPrefixed> {
-		let response_str = self.get_state_metadata_raw().unwrap();
+		let jsonrpc_call: String =
+			RpcRequest::compose_jsonrpc_call("state_getMetadata".to_string(), Default::default())?;
+		let response_str = self.get(&jsonrpc_call)?;
 
 		// Decode rpc response.
 		let rpc_response: RpcResponse = serde_json::from_str(&response_str)?;
@@ -147,16 +149,13 @@ impl DirectApi for DirectClient {
 
 		// Decode Metadata.
 		let metadata = RuntimeMetadataPrefixed::decode(&mut rpc_return_value.value.as_slice())?;
-
-		println!("[+] Got metadata of enclave runtime");
 		Ok(metadata)
 	}
 
 	fn get_state_metadata_raw(&self) -> Result<String> {
-		let jsonrpc_call: String =
-			RpcRequest::compose_jsonrpc_call("state_getMetadata".to_string(), Default::default())?;
-		let response_str = self.get(&jsonrpc_call)?;
-		Ok(response_str)
+		let metadata = self.get_state_metadata().unwrap().to_hex();
+		let rpc_response = RpcResponse { jsonrpc: "2.0".to_owned(), result: metadata, id: 1 };
+		serde_json::to_string(&rpc_response).map_err(|e| Error::Custom(Box::new(e)))
 	}
 
 	fn send(&self, request: &str) -> Result<()> {

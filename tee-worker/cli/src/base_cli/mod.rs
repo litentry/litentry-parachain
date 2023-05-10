@@ -64,8 +64,7 @@ pub enum BaseCommand {
 	/// query sgx-runtime metadata and print it as json to stdout
 	PrintSgxMetadata,
 
-	/// query sgx-runtime metadata and print the raw rpc response to stdout
-	/// it's similar to `state_getMetadata` response for substarte-based chain
+	/// query sgx-runtime metadata and print the raw (hex-encoded) metadata to stdout
 	/// we could have added a parameter like `--raw` to `PrintSgxMetadata`, but
 	/// we want to keep our changes isolated
 	PrintSgxMetadataRaw,
