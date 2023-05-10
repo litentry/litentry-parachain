@@ -18,7 +18,7 @@ use crate::{
 	identity_context::IdentityContext, mock::*, Error, MetadataOf, ParentchainBlockNumber,
 	UserShieldingKeyType,
 };
-use frame_support::{assert_err, assert_noop, assert_ok};
+use frame_support::{assert_err, assert_noop, assert_ok, traits::Get};
 use litentry_primitives::{Identity, IdentityString, Web2Network, USER_SHIELDING_KEY_LEN};
 use sp_runtime::AccountId32;
 
@@ -43,6 +43,7 @@ fn set_user_shielding_key_works() {
 			who: BOB,
 			key: shielding_key,
 		}));
+		assert_eq!(crate::IDGraphLens::<Test>::get(&BOB), 1);
 	});
 }
 
@@ -68,13 +69,15 @@ fn create_identity_works() {
 				is_verified: false,
 			}
 		);
+		assert_eq!(crate::IDGraphLens::<Test>::get(&BOB), 2);
 	});
 }
 
 #[test]
-fn cannot_create_more_identites_for_account_than_limit() {
+fn cannot_create_more_identities_for_account_than_limit() {
 	new_test_ext(true).execute_with(|| {
-		for i in 1..64 {
+		let max_id_graph_len = <<Test as crate::Config>::MaxIDGraphLength as Get<u32>>::get();
+		for i in 1..max_id_graph_len {
 			assert_ok!(IMT::create_identity(
 				RuntimeOrigin::signed(ALICE),
 				BOB,
@@ -90,11 +93,11 @@ fn cannot_create_more_identites_for_account_than_limit() {
 				BOB,
 				alice_twitter_identity(65),
 				None,
-				64,
+				max_id_graph_len + 1,
 				131_u16,
 			),
-			Error::<Test>::AccountIdentityLimitReached
-		)
+			Error::<Test>::IDGraphLenLimitReached
+		);
 	});
 }
 
@@ -135,6 +138,7 @@ fn remove_identity_works() {
 
 		let id_graph = IMT::get_id_graph(&BOB);
 		assert_eq!(id_graph.len(), 2);
+		assert_eq!(crate::IDGraphLens::<Test>::get(&BOB), 2);
 
 		assert_ok!(IMT::remove_identity(RuntimeOrigin::signed(ALICE), BOB, alice_web3_identity()));
 		assert_eq!(IMT::id_graphs(BOB, alice_web3_identity()), None);
@@ -142,6 +146,7 @@ fn remove_identity_works() {
 		let id_graph = IMT::get_id_graph(&BOB);
 		// "1": because of the main id is added by default when first calling set_user_shielding_key.
 		assert_eq!(id_graph.len(), 1);
+		assert_eq!(crate::IDGraphLens::<Test>::get(&BOB), 1);
 
 		assert_noop!(
 			IMT::remove_identity(RuntimeOrigin::signed(ALICE), BOB, bob_web3_identity()),

@@ -53,6 +53,7 @@ pub type MetadataOf<T> = BoundedVec<u8, <T as Config>::MaxMetadataLength>;
 pub mod pallet {
 	use super::*;
 	use litentry_primitives::Address32;
+	use log::warn;
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
@@ -75,7 +76,7 @@ pub mod pallet {
 		type MaxVerificationDelay: Get<ParentchainBlockNumber>;
 		/// maximum number of identities an account can have, if you change this value to lower some accounts may exceed this limit
 		#[pallet::constant]
-		type AccountIdentitiesLimit: Get<u32>;
+		type MaxIDGraphLength: Get<u32>;
 	}
 
 	#[pallet::event]
@@ -111,8 +112,8 @@ pub mod pallet {
 		VerificationRequestTooLate,
 		/// remove prime identiy should be disallowed
 		RemovePrimeIdentityDisallowed,
-		/// account identity limit reached
-		AccountIdentityLimitReached,
+		/// IDGraph len limit reached
+		IDGraphLenLimitReached,
 	}
 
 	/// user shielding key is per Litentry account
@@ -148,7 +149,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	pub type AccountIdentityContextCount<T: Config> =
+	pub type IDGraphLens<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, u32, ValueQuery>;
 
 	#[pallet::call]
@@ -183,8 +184,7 @@ pub mod pallet {
 					verification_request_block: Some(0),
 					is_verified: true,
 				};
-				Self::insert_identity_with_limit(&who, &prime_id, context)
-					.map_err(|_| Error::<T>::AccountIdentityLimitReached)?;
+				Self::insert_identity_with_limit(&who, &prime_id, context)?;
 			}
 
 			Self::deposit_event(Event::UserShieldingKeySet { who, key });
@@ -257,8 +257,7 @@ pub mod pallet {
 				creation_request_block: Some(creation_request_block),
 				..Default::default()
 			};
-			Self::insert_identity_with_limit(&who, &identity, context)
-				.map_err(|_| Error::<T>::AccountIdentityLimitReached)?;
+			Self::insert_identity_with_limit(&who, &identity, context)?;
 			Self::deposit_event(Event::IdentityCreated { who, identity });
 			Ok(())
 		}
@@ -331,21 +330,38 @@ pub mod pallet {
 			owner: &T::AccountId,
 			identity: &Identity,
 			context: IdentityContext<T>,
-		) -> Result<(), ()> {
-			let count = AccountIdentityContextCount::<T>::get(owner);
-			if count >= T::AccountIdentitiesLimit::get() {
-				return Err(())
-			}
-			// return Err in case of overflow
-			let new_count = count.checked_add(1).ok_or(())?;
-			AccountIdentityContextCount::<T>::insert(&owner, new_count);
-			IDGraphs::<T>::insert(&owner, &identity, context);
+		) -> Result<(), DispatchError> {
+			IDGraphLens::<T>::try_mutate(&owner, |len| {
+				let new_len = len.checked_add(1).ok_or(Error::<T>::IDGraphLenLimitReached)?;
+				if new_len > T::MaxIDGraphLength::get() {
+					return Err(Error::<T>::IDGraphLenLimitReached.into())
+				}
+				*len = new_len;
+				Result::<(), DispatchError>::Ok(())
+			})?;
+			IDGraphs::<T>::insert(owner, &identity, context);
 			Ok(())
 		}
 
 		fn remove_identity_with_limit(owner: &T::AccountId, identity: &Identity) {
-			let count = AccountIdentityContextCount::<T>::get(owner);
-			AccountIdentityContextCount::<T>::insert(&owner, count - 1);
+			let graph_len_result = IDGraphLens::<T>::try_get(owner);
+			if let Ok(graph_len) = graph_len_result {
+				if graph_len == 0 {
+					warn!(
+						"Detected IDGraphLens inconsistency, found len 0 while removing identity"
+					);
+					IDGraphLens::<T>::remove(owner);
+				} else {
+					let new_graph_len = graph_len - 1;
+					if new_graph_len == 0 {
+						IDGraphLens::<T>::remove(owner);
+					} else {
+						IDGraphLens::<T>::insert(owner, new_graph_len);
+					}
+				}
+			} else {
+				warn!("Detected IDGraphLens inconsistency, missing IdGraphLen while removing identity");
+			}
 			IDGraphs::<T>::remove(&owner, &identity);
 		}
 
@@ -371,7 +387,7 @@ pub mod pallet {
 
 		// get count of all keys account + identity in the IDGraphs
 		pub fn id_graph_stats() -> Option<Vec<(T::AccountId, u32)>> {
-			let stats = AccountIdentityContextCount::<T>::iter().collect();
+			let stats = IDGraphLens::<T>::iter().collect();
 			debug!("IDGraph stats: {:?}", stats);
 			Some(stats)
 		}
