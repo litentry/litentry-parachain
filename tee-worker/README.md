@@ -42,6 +42,22 @@ make
 ### Integration Tests
 See [docker/README.md](docker/README.md)
 
+### Quickly launch parachain, tee worker and run ts-test against tee-worker
+
+```
+source "$HOME/.cargo/env"
+source /opt/intel/sgxsdk/environment
+# run clean if only SGX_MODE change
+make clean
+make SGX_MODE=SW
+./local-setup/launch.py local-setup/github-action-config-one-worker.json
+# run script below if container started
+cd  ./tee-worker/ts-tests
+yarn
+yarn run test-identity:local
+# other ts test
+```
+
 ## Direct calls scalability
 
 For direct calls, a worker runs a web-socket server inside the enclave. An important factor for scalability is the transaction throughput of a single worker instance, which is in part defined by the maximum number of concurrent socket connections possible. On Linux by default, a process can have a maximum of `1024` concurrent file descriptors (show by `ulimit -n`).
