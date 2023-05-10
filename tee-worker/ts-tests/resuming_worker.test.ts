@@ -6,7 +6,7 @@ import * as process from 'process';
 import { describe } from 'mocha';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import WebSocketAsPromised = require('websocket-as-promised');
+import WebSocketAsPromised from 'websocket-as-promised';
 
 export type WorkerConfig = {
     untrusted_ws_port: number;
