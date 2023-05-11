@@ -60,7 +60,7 @@ use crate::{
 			request_vc::RequestVC,
 			scheduled_enclave::{RemoveScheduledEnclave, UpdateScheduledEnclave},
 			set_user_shielding_key::SetUserShieldingKey,
-			verify_identity::VerifyIdentity,
+			verify_identity::VerifyIdentity, timestamp,
 		},
 		shield_funds::ShieldFunds,
 		DecorateExecutor,
@@ -280,27 +280,21 @@ where
 		debug!("Scanning block {:?} for relevant xt", block_number);
 		let mut executed_calls = Vec::<H256>::new();
 
+		let mut timestamp = 0_u64;
 		// TODO: this logic might have better alternatives, see https://github.com/integritee-network/worker/issues/1156
 		for (index, xt_opaque) in block.extrinsics().iter().enumerate() {
 			let encoded_xt_opaque = xt_opaque.encode();
 
-			{	
-				if index == 0 {
-					debug!(">>> Timestamp decode timestamp set ...");
+			if index == 0 {
+				match timestamp::decode(&mut encoded_xt_opaque.as_slice()) {
+					Ok(now) => timestamp = now,
+					Err(e) => {
+						log::warn!("fail to decode timestamp due to {:?} ", e);
 
-					use itp_types::extrinsics::ParentchainUncheckedExtrinsicWithStatus;
-					use itp_types::TimestampCallFn;
-					use codec::Decode;
-					use codec::Compact;
-
-					let call: Result<ParentchainUncheckedExtrinsicWithStatus<([u8; 2], Compact<u64>)>> = ParentchainUncheckedExtrinsicWithStatus::<TimestampCallFn>::decode(&mut encoded_xt_opaque.as_slice()).map_err(|e| e.into());
-					if let Ok(ParentchainUncheckedExtrinsicWithStatus { xt, status }) = call {
-						let (_, timestamp) = &xt.function;
-		
-						debug!(">>> Timestamp from parent block: {:?}", timestamp);
-					}	
-				}		
-			}
+						break
+					}
+				}
+			}		
 
 			// Found ShieldFunds extrinsic in block.
 			let shield_funds = ShieldFunds {};
