@@ -34,7 +34,7 @@ const substrateExtensionIdentity = <LitentryIdentity>{
 
 describeLitentry('Test Identity', 0, (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
-    const errorAseKey = '0xError';
+    const errorAesKey = '0xError';
     const errorCiphertext = '0xError';
     //random wrong msg
     const wrong_msg = '0x693d9131808e7a8574c7ea5eb7813bdf356223263e61fa8fe2ee8e434508bc75';
@@ -643,7 +643,7 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('set error user shielding key', async function () {
-        const error_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, errorAseKey).toString('hex');
+        const error_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, hexToU8a(errorAesKey)).toString('hex');
         const error_tx = context.api.tx.identityManagement.setUserShieldingKey(
             context.mrEnclave,
             `0x${error_ciphertext}`

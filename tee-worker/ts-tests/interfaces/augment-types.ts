@@ -21,8 +21,9 @@ import type {
     IdentityString,
     LitentryIdentity,
     LitentryValidationData,
-    MrEnclaveIdentifier,
     PublicGetter,
+    Request,
+    ShardIdentifier,
     SubstrateIdentity,
     SubstrateNetwork,
     TrustedCall,
@@ -30,7 +31,9 @@ import type {
     TrustedGetter,
     TrustedGetterSigned,
     TrustedOperation,
+    TrustedOperationStatus,
     TwitterValidationData,
+    UserShieldingKeyType,
     VCRequested,
     Web2Identity,
     Web2Network,
@@ -1803,7 +1806,6 @@ declare module '@polkadot/types/types/registry' {
         MomentOf: MomentOf;
         MoreAttestations: MoreAttestations;
         MortalEra: MortalEra;
-        MrEnclaveIdentifier: MrEnclaveIdentifier;
         MultiAddress: MultiAddress;
         MultiAsset: MultiAsset;
         MultiAssetFilter: MultiAssetFilter;
@@ -1997,6 +1999,7 @@ declare module '@polkadot/types/types/registry' {
         ReportedRoundStates: ReportedRoundStates;
         Reporter: Reporter;
         ReportIdOf: ReportIdOf;
+        Request: Request;
         ReserveData: ReserveData;
         ReserveIdentifier: ReserveIdentifier;
         Response: Response;
@@ -2058,6 +2061,7 @@ declare module '@polkadot/types/types/registry' {
         SessionKeys9B: SessionKeys9B;
         SetId: SetId;
         SetIndex: SetIndex;
+        ShardIdentifier: ShardIdentifier;
         Si0Field: Si0Field;
         Si0LookupTypeId: Si0LookupTypeId;
         Si0Path: Si0Path;
@@ -2221,6 +2225,7 @@ declare module '@polkadot/types/types/registry' {
         TrustedGetter: TrustedGetter;
         TrustedGetterSigned: TrustedGetterSigned;
         TrustedOperation: TrustedOperation;
+        TrustedOperationStatus: TrustedOperationStatus;
         TwitterValidationData: TwitterValidationData;
         Type: Type;
         u128: u128;
@@ -2246,6 +2251,7 @@ declare module '@polkadot/types/types/registry' {
         UpgradeGoAhead: UpgradeGoAhead;
         UpgradeRestriction: UpgradeRestriction;
         UpwardMessage: UpwardMessage;
+        UserShieldingKeyType: UserShieldingKeyType;
         usize: usize;
         USize: USize;
         ValidationCode: ValidationCode;
