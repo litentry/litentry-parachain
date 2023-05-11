@@ -25,9 +25,7 @@ use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
-use lc_stf_task_sender::MaxIdentityLength;
 use log::*;
-use sp_runtime::BoundedVec;
 
 const VC_A1_SUBJECT_DESCRIPTION: &str =
 	"The user has verified one identity in Web 2 and one identity in Web 3";
@@ -35,7 +33,7 @@ const VC_A1_SUBJECT_TYPE: &str = "Basic Identity Verification";
 const VC_A1_SUBJECT_TAG: [&str; 1] = ["Litentry Network"];
 
 pub fn build(
-	identities: BoundedVec<Identity, MaxIdentityLength>,
+	identities: Vec<Identity>,
 	shard: &ShardIdentifier,
 	who: &AccountId,
 	bn: ParentchainBlockNumber,

@@ -40,7 +40,7 @@ use litentry_primitives::{
 	Assertion, ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType,
 	ValidationData,
 };
-use sp_runtime::{traits::ConstU32, BoundedVec};
+use sp_runtime::traits::ConstU32;
 
 /// Here a few Request structs are defined for asynchronously stf-tasks handling.
 /// A `callback` exists for some request types to submit a callback TrustedCall to top pool.
@@ -84,7 +84,7 @@ pub struct AssertionBuildRequest {
 	pub shard: ShardIdentifier,
 	pub who: AccountId,
 	pub assertion: Assertion,
-	pub vec_identity: BoundedVec<Identity, MaxIdentityLength>,
+	pub vec_identity: Vec<Identity>,
 	pub bn: ParentchainBlockNumber,
 	pub key: UserShieldingKeyType,
 	pub hash: H256,

@@ -371,10 +371,7 @@ pub mod pallet {
 		}
 
 		// get the most recent `max_len` elements in IDGraph, sorted by `creation_request_block`
-		pub fn get_id_graph_with_max_len(
-			who: &T::AccountId,
-			max_len: usize,
-		) -> IDGraph<T> {
+		pub fn get_id_graph_with_max_len(who: &T::AccountId, max_len: usize) -> IDGraph<T> {
 			let mut id_graph = Self::get_id_graph(who);
 			id_graph.sort_by(|a, b| {
 				Ord::cmp(

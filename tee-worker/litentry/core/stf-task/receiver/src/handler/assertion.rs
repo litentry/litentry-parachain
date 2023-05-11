@@ -56,7 +56,7 @@ where
 		// create the initial credential
 		let mut credential = match self.req.assertion.clone() {
 			Assertion::A1 => lc_assertion_build::a1::build(
-				self.req.vec_identity.clone(),
+				self.req.vec_identity.to_vec(),
 				&self.req.shard,
 				&self.req.who,
 				self.req.bn,

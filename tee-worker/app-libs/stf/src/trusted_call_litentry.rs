@@ -29,16 +29,14 @@ use itp_types::H256;
 use itp_utils::stringify::account_id_to_string;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
-	AssertionBuildRequest, IdentityVerificationRequest, MaxIdentityLength, RequestType,
-	SetUserShieldingKeyRequest,
+	AssertionBuildRequest, IdentityVerificationRequest, RequestType, SetUserShieldingKeyRequest,
 };
 use litentry_primitives::{
-	Assertion, ChallengeCode, ErrorDetail, ErrorString, Identity, ParentchainBlockNumber,
-	UserShieldingKeyType, ValidationData,
+	Assertion, ChallengeCode, ErrorDetail, Identity, ParentchainBlockNumber, UserShieldingKeyType,
+	ValidationData,
 };
 use log::*;
-use sp_runtime::BoundedVec;
-use std::{format, vec};
+use std::format;
 
 impl TrustedCallSigned {
 	pub fn set_user_shielding_key_preflight(
@@ -180,24 +178,14 @@ impl TrustedCallSigned {
 		hash: H256,
 	) -> StfResult<()> {
 		ensure_enclave_signer_account(&enclave_account)?;
-		let id_graph = ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
-		let mut vec_identity: BoundedVec<Identity, MaxIdentityLength> = vec![].try_into().unwrap();
-		for id in &id_graph {
-			if id.1.is_verified {
-				vec_identity.try_push(id.0.clone()).map_err(|_| {
-					let error_msg = "vec_identity exceeds max length".into();
-					error!("[RequestVc] : {:?}", error_msg);
-					StfError::RequestVCFailed(
-						assertion.clone(),
-						ErrorDetail::StfError(ErrorString::truncate_from(error_msg)),
-					)
-				})?;
-			}
-		}
-
 		let key = IdentityManagement::user_shielding_keys(&who).ok_or_else(|| {
 			StfError::RequestVCFailed(assertion.clone(), ErrorDetail::UserShieldingKeyNotFound)
 		})?;
+		let id_graph = ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
+		let vec_identity: Vec<Identity> = id_graph.into_iter()
+			.filter(|item| item.1.is_verified )
+			.map(|item| item.0 )
+			.collect();
 		let request: RequestType = AssertionBuildRequest {
 			shard: *shard,
 			who,
