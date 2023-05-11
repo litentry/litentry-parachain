@@ -2,7 +2,7 @@
 # It is recommended to execute the script before commit
 # which will help us to reduce test/fmt/clippy failures in CI
 
-set -e
+set -eo pipefail
 
 function worker_clippy() {
     taplo fmt
