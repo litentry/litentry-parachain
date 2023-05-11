@@ -36,7 +36,7 @@ use litentry_primitives::{
 	ValidationData,
 };
 use log::*;
-use std::format;
+use std::{format, vec::Vec};
 
 impl TrustedCallSigned {
 	pub fn set_user_shielding_key_preflight(
@@ -182,9 +182,10 @@ impl TrustedCallSigned {
 			StfError::RequestVCFailed(assertion.clone(), ErrorDetail::UserShieldingKeyNotFound)
 		})?;
 		let id_graph = ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
-		let vec_identity: Vec<Identity> = id_graph.into_iter()
-			.filter(|item| item.1.is_verified )
-			.map(|item| item.0 )
+		let vec_identity: Vec<Identity> = id_graph
+			.into_iter()
+			.filter(|item| item.1.is_verified)
+			.map(|item| item.0)
 			.collect();
 		let request: RequestType = AssertionBuildRequest {
 			shard: *shard,

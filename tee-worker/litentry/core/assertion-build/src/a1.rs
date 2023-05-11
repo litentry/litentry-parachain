@@ -26,6 +26,7 @@ use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use log::*;
+use std::vec::Vec;
 
 const VC_A1_SUBJECT_DESCRIPTION: &str =
 	"The user has verified one identity in Web 2 and one identity in Web 3";

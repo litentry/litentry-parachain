@@ -332,7 +332,7 @@ pub mod pallet {
 			identity: &Identity,
 			context: IdentityContext<T>,
 		) -> Result<(), DispatchError> {
-			IDGraphLens::<T>::try_mutate(&owner, |len| {
+			IDGraphLens::<T>::try_mutate(owner, |len| {
 				let new_len = len.checked_add(1).ok_or(Error::<T>::IDGraphLenLimitReached)?;
 				if new_len > T::MaxIDGraphLength::get() {
 					return Err(Error::<T>::IDGraphLenLimitReached.into())
@@ -340,7 +340,7 @@ pub mod pallet {
 				*len = new_len;
 				Result::<(), DispatchError>::Ok(())
 			})?;
-			IDGraphs::<T>::insert(owner, &identity, context);
+			IDGraphs::<T>::insert(owner, identity, context);
 			Ok(())
 		}
 
@@ -363,7 +363,7 @@ pub mod pallet {
 			} else {
 				warn!("Detected IDGraphLens inconsistency, missing IdGraphLen while removing identity");
 			}
-			IDGraphs::<T>::remove(&owner, &identity);
+			IDGraphs::<T>::remove(owner, identity);
 		}
 
 		pub fn get_id_graph(who: &T::AccountId) -> IDGraph<T> {

@@ -41,6 +41,7 @@ use litentry_primitives::{
 	ValidationData,
 };
 use sp_runtime::traits::ConstU32;
+use sp_std::prelude::Vec;
 
 /// Here a few Request structs are defined for asynchronously stf-tasks handling.
 /// A `callback` exists for some request types to submit a callback TrustedCall to top pool.
