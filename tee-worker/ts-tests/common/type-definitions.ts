@@ -222,7 +222,7 @@ export const JsonSchema = {
                 },
             },
         },
-        issuanceBlockNumber: {
+        issuanceTimestamp: {
             type: 'integer',
         },
         credentialSubject: {
@@ -261,7 +261,7 @@ export const JsonSchema = {
         proof: {
             type: 'object',
             properties: {
-                createdBlockNumber: {
+                createdTimestamp: {
                     type: 'integer',
                 },
                 type: {
@@ -279,5 +279,5 @@ export const JsonSchema = {
             },
         },
     },
-    required: ['id', 'type', 'credentialSubject', 'issuer', 'issuanceBlockNumber', 'proof'],
+    required: ['id', 'type', 'credentialSubject', 'issuer', 'issuanceTimestamp', 'proof'],
 };
