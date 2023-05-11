@@ -137,7 +137,7 @@ describeLitentry('Test Identity', 0, (context) => {
     });
     step('create identities', async function () {
         //Alice
-        const twiiter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
+        const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
         const ethereum_identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Ethereum', 'Evm');
         const alice_substrate_identity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.alice.addressRaw),
@@ -152,7 +152,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'Substrate'
         );
 
-        alice_identities = [twiiter_identity, ethereum_identity, alice_substrate_identity];
+        alice_identities = [twitter_identity, ethereum_identity, alice_substrate_identity];
         bob_identities = [bob_substrate_identity];
 
         let alice_txs = await buildIdentityTxs(
@@ -183,7 +183,7 @@ describeLitentry('Test Identity', 0, (context) => {
         const alice_twitter_validations = await buildValidations(
             context,
             [twitter_event_data],
-            [twiiter_identity],
+            [twitter_identity],
             'twitter',
             context.substrateWallet.alice
         );
