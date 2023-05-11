@@ -233,11 +233,7 @@ impl Credential {
 		shard: &ShardIdentifier,
 		timestamp: u64,
 	) -> Result<Credential, Error> {
-		debug!("credential default");
-
 		let raw = include_str!("templates/credential.json");
-		debug!("raw: {}", raw);
-			
 		let credential: Credential = Credential::from_template(raw, who, shard, timestamp)?;
 		Ok(credential)
 	}
@@ -264,13 +260,8 @@ impl Credential {
 		vc.credential_schema = None;
 		vc.proof = None;
 
-		debug!(">>> vc: {:?}", vc);
-
 		vc.generate_id();
-		debug!(">>> vc 1");
 		vc.validate_unsigned()?;
-		debug!(">>> vc 1");
-
 
 		Ok(vc)
 	}

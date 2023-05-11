@@ -712,9 +712,14 @@ where
 			},
 			TrustedCall::request_vc(enclave_account, who, assertion, shard, timestamp, hash) => {
 				// the user shielding key check is inside `Self::request_vc`
-				if let Err(e) =
-					Self::request_vc(enclave_account, &shard, who.clone(), assertion, timestamp, hash)
-				{
+				if let Err(e) = Self::request_vc(
+					enclave_account,
+					&shard,
+					who.clone(),
+					assertion,
+					timestamp,
+					hash,
+				) {
 					add_call_from_vcmp_error(
 						calls,
 						node_metadata_repo,

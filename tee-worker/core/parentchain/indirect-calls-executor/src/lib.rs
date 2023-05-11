@@ -60,7 +60,8 @@ use crate::{
 			request_vc::RequestVC,
 			scheduled_enclave::{RemoveScheduledEnclave, UpdateScheduledEnclave},
 			set_user_shielding_key::SetUserShieldingKey,
-			verify_identity::VerifyIdentity, timestamp,
+			timestamp,
+			verify_identity::VerifyIdentity,
 		},
 		shield_funds::ShieldFunds,
 		DecorateExecutor,
@@ -292,9 +293,9 @@ where
 						log::warn!("fail to decode timestamp due to {:?} ", e);
 
 						break
-					}
+					},
 				}
-			}		
+			}
 
 			// Found ShieldFunds extrinsic in block.
 			let shield_funds = ShieldFunds {};

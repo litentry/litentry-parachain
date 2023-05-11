@@ -19,7 +19,7 @@
 #![cfg_attr(target_env = "sgx", feature(rustc_private))]
 
 use crate::storage::StorageEntry;
-use codec::{Decode, Encode, Compact};
+use codec::{Compact, Decode, Encode};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 
 pub mod extrinsics;
