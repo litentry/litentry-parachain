@@ -215,9 +215,9 @@ clippyfix:
 cargofix:
 	cargo fix --allow-dirty --allow-staged --workspace --all-targets --all-features
 
-# shellcheck, but only to WARNING level
+# shellcheck
 
-,PHONY: shellcheck ## check the shell scripts
+.PHONY: shellcheck ## check the shell scripts with WARNING level
 shellcheck:
 	@set -e
 	@echo "checking parachain scripts..."
