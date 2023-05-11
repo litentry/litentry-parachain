@@ -48,6 +48,7 @@ pub use litentry_primitives::{
 use sp_std::vec::Vec;
 pub type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
 pub type MetadataOf<T> = BoundedVec<u8, <T as Config>::MaxMetadataLength>;
+pub type IDGraph<T> = Vec<(Identity, IdentityContext<T>)>;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -365,7 +366,7 @@ pub mod pallet {
 			IDGraphs::<T>::remove(&owner, &identity);
 		}
 
-		pub fn get_id_graph(who: &T::AccountId) -> Vec<(Identity, IdentityContext<T>)> {
+		pub fn get_id_graph(who: &T::AccountId) -> IDGraph<T> {
 			IDGraphs::iter_prefix(who).collect::<Vec<_>>()
 		}
 
@@ -373,7 +374,7 @@ pub mod pallet {
 		pub fn get_id_graph_with_max_len(
 			who: &T::AccountId,
 			max_len: usize,
-		) -> Vec<(Identity, IdentityContext<T>)> {
+		) -> IDGraph<T> {
 			let mut id_graph = Self::get_id_graph(who);
 			id_graph.sort_by(|a, b| {
 				Ord::cmp(
