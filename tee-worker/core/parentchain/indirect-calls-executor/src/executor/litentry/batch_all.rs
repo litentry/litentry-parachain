@@ -49,6 +49,7 @@ use sp_std::{vec, vec::Vec};
 
 pub(crate) struct BatchAll {
 	pub(crate) block_number: ParentchainBlockNumber,
+	pub(crate) timestamp: u64,
 }
 
 const V4: u8 = 4;
@@ -111,7 +112,7 @@ impl BatchAll {
 					verify_identity.execute(context, xt)?;
 				},
 				SupportedBatchCallParams::RequestVC(p) => {
-					let request_vc = RequestVC { block_number: self.block_number };
+					let request_vc = RequestVC { timestamp: self.timestamp };
 					let c = (call.index, p);
 					let xt = ParentchainUncheckedExtrinsic {
 						function: c,

@@ -85,7 +85,7 @@ pub struct AssertionBuildRequest {
 	pub who: AccountId,
 	pub assertion: Assertion,
 	pub vec_identity: BoundedVec<Identity, MaxIdentityLength>,
-	pub bn: ParentchainBlockNumber,
+	pub timestamp: u64,
 	pub key: UserShieldingKeyType,
 	pub hash: H256,
 }

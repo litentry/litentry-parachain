@@ -50,12 +50,12 @@ pub fn build(
 	networks: IndexingNetworks,
 	shard: &ShardIdentifier,
 	who: &AccountId,
-	bn: ParentchainBlockNumber,
+	timestamp: u64,
 ) -> Result<Credential> {
 	debug!(
-		"Assertion A8 build, who: {:?}, bn: {}, identities: {:?}, networks:{:?}",
+		"Assertion A8 build, who: {:?}, timestamp: {}, identities: {:?}, networks:{:?}",
 		account_id_to_string(&who),
-		bn,
+		timestamp,
 		identities,
 		networks
 	);
@@ -108,7 +108,7 @@ pub fn build(
 	debug!("Assertion A8 total_transactions: {}", total_txs);
 
 	let (min, max) = get_total_tx_ranges(total_txs);
-	match Credential::new_default(who, &shard.clone(), bn) {
+	match Credential::new_default(who, &shard.clone(), timestamp) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_A8_SUBJECT_DESCRIPTION,

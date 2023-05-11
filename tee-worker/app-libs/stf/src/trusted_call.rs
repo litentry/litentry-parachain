@@ -126,7 +126,7 @@ pub enum TrustedCall {
 		H256,
 	),
 	verify_identity_runtime(AccountId, AccountId, Identity, ParentchainBlockNumber, H256),
-	request_vc(AccountId, AccountId, Assertion, ShardIdentifier, ParentchainBlockNumber, H256),
+	request_vc(AccountId, AccountId, Assertion, ShardIdentifier, u64, H256),
 	handle_vc_issued(AccountId, AccountId, Assertion, [u8; 32], [u8; 32], AesOutput, H256),
 	handle_imp_error(AccountId, Option<AccountId>, IMPError, H256),
 	handle_vcmp_error(AccountId, Option<AccountId>, VCMPError, H256),
@@ -710,10 +710,10 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::request_vc(enclave_account, who, assertion, shard, bn, hash) => {
+			TrustedCall::request_vc(enclave_account, who, assertion, shard, timestamp, hash) => {
 				// the user shielding key check is inside `Self::request_vc`
 				if let Err(e) =
-					Self::request_vc(enclave_account, &shard, who.clone(), assertion, bn, hash)
+					Self::request_vc(enclave_account, &shard, who.clone(), assertion, timestamp, hash)
 				{
 					add_call_from_vcmp_error(
 						calls,

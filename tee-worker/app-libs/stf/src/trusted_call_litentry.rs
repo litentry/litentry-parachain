@@ -176,7 +176,7 @@ impl TrustedCallSigned {
 		shard: &ShardIdentifier,
 		who: AccountId,
 		assertion: Assertion,
-		bn: ParentchainBlockNumber,
+		timestamp: u64,
 		hash: H256,
 	) -> StfResult<()> {
 		ensure_enclave_signer_account(&enclave_account)?;
@@ -203,7 +203,7 @@ impl TrustedCallSigned {
 			who,
 			assertion: assertion.clone(),
 			vec_identity,
-			bn,
+			timestamp,
 			key,
 			hash,
 		}

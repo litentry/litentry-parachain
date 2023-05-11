@@ -34,12 +34,11 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{RequestVCFn, H256};
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::ParentchainBlockNumber;
 use log::*;
 use sp_runtime::traits::{AccountIdLookup, StaticLookup};
 
 pub(crate) struct RequestVC {
-	pub(crate) block_number: ParentchainBlockNumber,
+	pub(crate) timestamp: u64,
 }
 
 impl RequestVC {
@@ -75,7 +74,7 @@ impl RequestVC {
 				account,
 				assertion.clone(),
 				*shard,
-				self.block_number,
+				self.timestamp,
 				hash_of(extrinsic),
 			);
 			let signed_trusted_call =

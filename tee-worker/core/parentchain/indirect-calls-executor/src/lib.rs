@@ -312,9 +312,9 @@ where
 			// Found VerifyIdentity extrinsic
 			let verify_identity = VerifyIdentity { block_number: parentchain_block_number };
 			// Found RequestVC extrinsic
-			let request_vc = RequestVC { block_number: parentchain_block_number };
+			let request_vc = RequestVC { timestamp };
 			// Found BatchAll extrinsic
-			let batch_all = BatchAll { block_number: parentchain_block_number };
+			let batch_all = BatchAll { block_number: parentchain_block_number, timestamp };
 			// Found UpdateScheduledEnclave extrinisc
 			let update_scheduled_enclave = UpdateScheduledEnclave {};
 			// Found RemoveScheduledEnclave extrinisc

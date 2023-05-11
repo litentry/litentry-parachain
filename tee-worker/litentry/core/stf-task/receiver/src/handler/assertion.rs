@@ -59,7 +59,7 @@ where
 				self.req.vec_identity.clone(),
 				&self.req.shard,
 				&self.req.who,
-				self.req.bn,
+				self.req.timestamp,
 			),
 
 			Assertion::A2(guild_id) => lc_assertion_build::a2::build(
@@ -67,7 +67,7 @@ where
 				guild_id,
 				&self.req.shard,
 				&self.req.who,
-				self.req.bn,
+				self.req.timestamp,
 			),
 
 			Assertion::A3(guild_id, channel_id, role_id) => lc_assertion_build::a3::build(
@@ -77,7 +77,7 @@ where
 				role_id,
 				&self.req.shard,
 				&self.req.who,
-				self.req.bn,
+				self.req.timestamp,
 			),
 
 			Assertion::A4(min_balance) => lc_assertion_build::a4::build(
@@ -85,7 +85,7 @@ where
 				min_balance,
 				&self.req.shard,
 				&self.req.who,
-				self.req.bn,
+				self.req.timestamp,
 			),
 
 			Assertion::A5(original_tweet_id) => lc_assertion_build::a5::build(
@@ -93,14 +93,14 @@ where
 				original_tweet_id,
 				&self.req.shard,
 				&self.req.who,
-				self.req.bn,
+				self.req.timestamp,
 			),
 
 			Assertion::A6 => lc_assertion_build::a6::build(
 				self.req.vec_identity.to_vec(),
 				&self.req.shard,
 				&self.req.who,
-				self.req.bn,
+				self.req.timestamp,
 			),
 
 			Assertion::A7(min_balance) => lc_assertion_build::a7::build(
@@ -108,7 +108,7 @@ where
 				min_balance,
 				&self.req.shard,
 				&self.req.who,
-				self.req.bn,
+				self.req.timestamp,
 			),
 
 			Assertion::A8(networks) => lc_assertion_build::a8::build(
@@ -116,7 +116,7 @@ where
 				networks,
 				&self.req.shard,
 				&self.req.who,
-				self.req.bn,
+				self.req.timestamp,
 			),
 
 			Assertion::A10(min_balance) => lc_assertion_build::a10::build(
@@ -124,7 +124,7 @@ where
 				min_balance,
 				&self.req.shard,
 				&self.req.who,
-				self.req.bn,
+				self.req.timestamp,
 			),
 
 			Assertion::A11(min_balance) => lc_assertion_build::a11::build(
@@ -132,7 +132,7 @@ where
 				min_balance,
 				&self.req.shard,
 				&self.req.who,
-				self.req.bn,
+				self.req.timestamp,
 			),
 
 			_ => {
@@ -165,7 +165,7 @@ where
 		})?;
 		debug!("Credential Payload signature: {:?}", sig);
 
-		credential.add_proof(&sig, credential.issuance_block_number, &enclave_account);
+		credential.add_proof(&sig, credential.issuance_timestamp, &enclave_account);
 		credential.validate().map_err(|e| {
 			VCMPError::RequestVCFailed(
 				self.req.assertion.clone(),
