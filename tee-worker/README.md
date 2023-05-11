@@ -1,3 +1,23 @@
+# litentry tee-worker
+
+## Quickly launch parachain, tee worker and run ts-test against tee-worker
+
+```bash
+# uncomment below line if you haven't add below to your bash profile
+# source "$HOME/.cargo/env"
+# replace below '/opt/intel/sgxsdk/environment' with the sgxsdk environment file path in your system
+source /opt/intel/sgxsdk/environment
+# run clean if only SGX_MODE change
+make clean
+make SGX_MODE=SW
+./local-setup/launch.py local-setup/github-action-config-one-worker.json
+# run the ts test script below if container started
+cd  ./tee-worker/ts-tests
+yarn
+yarn run test-identity:local
+# other ts test
+```
+
 # tee worker
 
 This tee-worker is based on [Integritee](https://integritee.network)'s [worker](https://github.com/integritee-network/worker)
