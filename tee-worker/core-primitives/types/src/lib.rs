@@ -19,7 +19,7 @@
 #![cfg_attr(target_env = "sgx", feature(rustc_private))]
 
 use crate::storage::StorageEntry;
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, Compact};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 
 pub mod extrinsics;
@@ -44,6 +44,9 @@ pub type IpfsHash = [u8; 46];
 pub type MrEnclave = [u8; 32];
 
 pub type CallIndex = [u8; 2];
+
+// pallet timestamp
+pub type TimestampCallFn = (CallIndex, Compact<u64>);
 
 // pallet teerex
 pub type ConfirmCallFn = (CallIndex, ShardIdentifier, H256, Vec<u8>);

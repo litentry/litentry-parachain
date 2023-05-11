@@ -281,8 +281,26 @@ where
 		let mut executed_calls = Vec::<H256>::new();
 
 		// TODO: this logic might have better alternatives, see https://github.com/integritee-network/worker/issues/1156
-		for xt_opaque in block.extrinsics().iter() {
+		for (index, xt_opaque) in block.extrinsics().iter().enumerate() {
 			let encoded_xt_opaque = xt_opaque.encode();
+
+			{	
+				if index == 0 {
+					debug!(">>> Timestamp decode timestamp set ...");
+
+					use itp_types::extrinsics::ParentchainUncheckedExtrinsicWithStatus;
+					use itp_types::TimestampCallFn;
+					use codec::Decode;
+					use codec::Compact;
+
+					let call: Result<ParentchainUncheckedExtrinsicWithStatus<([u8; 2], Compact<u64>)>> = ParentchainUncheckedExtrinsicWithStatus::<TimestampCallFn>::decode(&mut encoded_xt_opaque.as_slice()).map_err(|e| e.into());
+					if let Ok(ParentchainUncheckedExtrinsicWithStatus { xt, status }) = call {
+						let (_, timestamp) = &xt.function;
+		
+						debug!(">>> Timestamp from parent block: {:?}", timestamp);
+					}	
+				}		
+			}
 
 			// Found ShieldFunds extrinsic in block.
 			let shield_funds = ShieldFunds {};

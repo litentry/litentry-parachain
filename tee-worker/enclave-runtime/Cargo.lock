@@ -3409,6 +3409,7 @@ dependencies = [
  "frame-system",
  "hex 0.4.3",
  "log",
+ "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
  "sp-arithmetic",
