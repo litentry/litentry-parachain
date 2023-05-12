@@ -2,7 +2,6 @@
 
 set -eo pipefail
 
-
 cleanup() {
 	rm -rf "$1"
 	echo "cleaned up $1"
@@ -10,10 +9,12 @@ cleanup() {
 
 print_help() {
 	echo "Usage:"
-	echo "	$0 [-p <tag|branch|commit-hash>] [-w <tag|branch|commit-hash>]"
-	echo "	without any parameter, the script will generate upstream patch for both pallets and tee-worker"
-	echo "		-p specify the tag|branch|commit-hash for upstream pallets"
-	echo "		-w specify the tag|branch|commit-hash for upstream worker"
+	echo "$0 [-h] [-p <tag|branch|commit-hash>] [-w <tag|branch|commit-hash>]"
+	echo ""
+	echo "without any parameter, the script will generate upstream patch for both pallets and tee-worker"
+	echo "	-h print this message"
+	echo "	-p specify the tag|branch|commit-hash for upstream pallets"
+	echo "	-w specify the tag|branch|commit-hash for upstream worker"
 }
 
 check_upstream() {
@@ -52,7 +53,8 @@ generate_upstream_patch() {
 	echo "fetch upstream_$TARGET"
 	git fetch -q "upstream_$TARGET"
 
-	local tmp_dir=$(mktemp -d)
+	local tmp_dir
+	tmp_dir=$(mktemp -d)
 	cd "$tmp_dir"
 	echo "cloning $UPSTREAM_URL to $tmp_dir"
 	git clone -q $UPSTREAM_URL repo
@@ -65,14 +67,7 @@ generate_upstream_patch() {
 	echo
 }
 
-
-if [[ "-h" == "$1" ]]
-then
-	print_help
-	exit 1
-fi
-
-while getopts ":p:w:h:" opt; do
+while getopts ":p:w:h" opt; do
 	case $opt in
 		p)
 			has_pallets=true
@@ -81,6 +76,14 @@ while getopts ":p:w:h:" opt; do
 		w)
 			has_worker=true
 			worker_commit=$OPTARG
+			;;
+		h)
+			print_help
+			exit 0
+			;;
+		*)
+			echo "unknown args"
+			exit 1
 			;;
 	esac
 done
@@ -101,12 +104,12 @@ fi
 UPSTREAM_URL_PREFIX="https://github.com/integritee-network"
 ROOTDIR=$(git rev-parse --show-toplevel)
 
-if $HAS_PALLETS == "true"
+if [ "$HAS_PALLETS" == "true" ]
 then
 	check_upstream "pallets"
 fi
 
-if $HAS_WORKER == "true"
+if [ "$HAS_WORKER" == "true" ]
 then
 	check_upstream "worker"
 fi

@@ -7,6 +7,7 @@ set -eo pipefail
 
 # install rust
 curl -s https://sh.rustup.rs -sSf | sh -s -- -y
+# shellcheck source=${HOME}/.cargo/env
 source ${HOME}/.cargo/env
 rustup show
 

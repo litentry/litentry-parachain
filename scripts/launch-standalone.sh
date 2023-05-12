@@ -2,6 +2,8 @@
 
 # This scripts starts a standalone node without relaychain network locally, with the parachain runtime
 
+set -eo pipefail
+
 ROOTDIR=$(git rev-parse --show-toplevel)
 PARACHAIN_BIN="$ROOTDIR/target/release/litentry-collator"
 
