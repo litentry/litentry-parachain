@@ -230,7 +230,7 @@ export function describeLitentry(title: string, walletsNumber: number, cb: (cont
             context.web3Signers = tmp.web3Signers;
         });
 
-        after(async function () { });
+        after(async function () {});
 
         cb(context);
     });
@@ -298,8 +298,8 @@ export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
     expect(isValid).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-        vc.issuer.id === proofJson.verificationMethod &&
-        proofJson.type === 'Ed25519Signature2020'
+            vc.issuer.id === proofJson.verificationMethod &&
+            proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
 }
@@ -502,7 +502,13 @@ export async function handleIdentityEvents(
     context: IntegrationTestContext,
     aesKey: HexString,
     events: any[],
-    type: 'UserShieldingKeySet' | 'IdentityCreated' | 'IdentityVerified' | 'IdentityRemoved' | 'Failed'
+    type:
+        | 'UserShieldingKeySet'
+        | 'IdentityCreated'
+        | 'IdentityVerified'
+        | 'IdentityRemoved'
+        | 'Failed'
+        | 'CreateIdentityFailed'
 ): Promise<any[]> {
     let results: IdentityGenericEvent[] = [];
 
@@ -550,6 +556,9 @@ export async function handleIdentityEvents(
                 );
                 break;
             case 'Failed':
+                results.push(events[index].data.detail.toHuman());
+                break;
+            case 'CreateIdentityFailed':
                 results.push(events[index].data.detail.toHuman());
                 break;
         }
