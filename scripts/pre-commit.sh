@@ -2,7 +2,7 @@
 # It is recommended to execute the script before commit
 # which will help us to reduce test/fmt/clippy failures in CI
 
-set -e
+set -eo pipefail
 
 function worker_clippy() {
     taplo fmt
@@ -20,6 +20,7 @@ start=$(date +%s)
 
 make fmt
 make clippy
+make shellcheck # shellcheck is not enforced in CI though
 cargo test --locked --release -p pallet-* --lib
 cargo test --locked --release -p pallet-* --lib --features=skip-ias-check
 cargo test --locked --release -p pallet-* --lib --features=runtime-benchmarks

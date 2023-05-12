@@ -9,6 +9,8 @@
 #
 # To use this script locally, you might have to first compile the binaries that can run on your OS.
 
+set -eo pipefail
+
 function usage() {
   echo
   echo "Usage:   $0 litentry|litmus|rococo [path-to-polkadot-bin] [path-to-litentry-collator]"

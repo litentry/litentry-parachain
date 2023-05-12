@@ -145,43 +145,14 @@ export function decryptWithAES(key: HexString, aesOutput: AESOutput, type: strin
     }
 }
 
-export async function createTrustedCallSigned(
-    api: ApiPromise,
-    trustedCall: [string, string],
-    account: KeyringPair,
-    mrenclave: string,
-    mrEnclave: string,
-    nonce: Codec,
-    params: Array<any>
-) {
-    const [variant, argType] = trustedCall;
-    const call = api.createType('TrustedCall', {
-        [variant]: api.createType(argType, params),
-    });
-    const payload = Uint8Array.from([
-        ...call.toU8a(),
-        ...nonce.toU8a(),
-        ...base58.decode(mrenclave),
-        ...hexToU8a(mrEnclave),
-    ]);
-    const signature = api.createType('MultiSignature', {
-        Sr25519: u8aToHex(account.sign(payload)),
-    });
-    return api.createType('TrustedCallSigned', {
-        call: call,
-        index: nonce,
-        signature: signature,
-    });
-}
-
-export function encryptWithTeeShieldingKey(teeShieldingKey: KeyObject, plaintext: HexString): Buffer {
+export function encryptWithTeeShieldingKey(teeShieldingKey: KeyObject, plaintext: Uint8Array): Buffer {
     return crypto.publicEncrypt(
         {
             key: teeShieldingKey,
             padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
             oaepHash: 'sha256',
         },
-        hexToU8a(plaintext)
+        plaintext
     );
 }
 
@@ -710,7 +681,7 @@ export async function buildIdentityTxs(
         const identity = identities[k];
         let tx: SubmittableExtrinsic<ApiTypes>;
         let nonce: number;
-        const encod_identity = api.createType('LitentryIdentity', identity).toHex();
+        const encod_identity = api.createType('LitentryIdentity', identity).toU8a();
         const ciphertext_identity = encryptWithTeeShieldingKey(teeShieldingKey, encod_identity).toString('hex');
         nonce = (await api.rpc.system.accountNextIndex(signer.address)).toNumber();
 
@@ -718,7 +689,7 @@ export async function buildIdentityTxs(
             case 'setUserShieldingKey':
                 const ciphertext = encryptWithTeeShieldingKey(
                     context.teeShieldingKey,
-                    '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12'
+                    hexToU8a('0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12')
                 ).toString('hex');
                 tx = context.api.tx.identityManagement.setUserShieldingKey(context.mrEnclave, `0x${ciphertext}`);
                 break;
@@ -732,7 +703,7 @@ export async function buildIdentityTxs(
                 break;
             case 'verifyIdentity':
                 const data = validations![k];
-                const encode_verifyIdentity_validation = api.createType('LitentryValidationData', data).toHex();
+                const encode_verifyIdentity_validation = api.createType('LitentryValidationData', data).toU8a();
                 const ciphertext_verifyIdentity_validation = encryptWithTeeShieldingKey(
                     teeShieldingKey,
                     encode_verifyIdentity_validation

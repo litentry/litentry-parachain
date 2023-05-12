@@ -29,7 +29,7 @@ cd litentry-parachain
 git checkout "$2"
 
 # copy binary out
-docker cp $(docker create --rm litentry/litentry-parachain:runtime-benchmarks):/usr/local/bin/litentry-collator .
+docker cp "$(docker create --rm litentry/litentry-parachain:runtime-benchmarks):/usr/local/bin/litentry-collator" .
 chmod a+x litentry-collator
 
 # poopulate PALLETS

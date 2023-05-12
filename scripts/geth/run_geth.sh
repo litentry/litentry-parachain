@@ -27,7 +27,7 @@ fi
 
 DATADIR="${ROOTDIR}/gethdata"
 # Exit on failure
-set -e
+set -eo pipefail
 
 # Delete old chain data
 rm -rf ${DATADIR}
@@ -57,7 +57,7 @@ start="${GETH_BIN} --datadir ${DATADIR} \
     --miner.etherbase 0xff93B45308FD417dF303D6515aB04D9e89a750Ca
 "
 if [ ${DOCKER} = "local" ]; then
-    eval ${start} 2>&1 &>'geth.log' &
+    eval ${start} &>'geth.log' &
 else
     eval ${start}
 fi

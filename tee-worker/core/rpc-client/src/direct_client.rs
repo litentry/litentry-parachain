@@ -21,7 +21,7 @@ use crate::ws_client::{WsClient, WsClientControl};
 use codec::Decode;
 use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
 use itp_types::DirectRequestStatus;
-use itp_utils::FromHexPrefixed;
+use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use log::*;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use std::{
@@ -50,6 +50,7 @@ pub trait DirectApi {
 	fn get_mu_ra_url(&self) -> Result<String>;
 	fn get_untrusted_worker_url(&self) -> Result<String>;
 	fn get_state_metadata(&self) -> Result<RuntimeMetadataPrefixed>;
+	fn get_state_metadata_raw(&self) -> Result<String>;
 
 	fn send(&self, request: &str) -> Result<()>;
 	/// Close any open websocket connection.
@@ -139,8 +140,6 @@ impl DirectApi for DirectClient {
 	fn get_state_metadata(&self) -> Result<RuntimeMetadataPrefixed> {
 		let jsonrpc_call: String =
 			RpcRequest::compose_jsonrpc_call("state_getMetadata".to_string(), Default::default())?;
-
-		// Send json rpc call to ws server.
 		let response_str = self.get(&jsonrpc_call)?;
 
 		// Decode rpc response.
@@ -150,9 +149,13 @@ impl DirectApi for DirectClient {
 
 		// Decode Metadata.
 		let metadata = RuntimeMetadataPrefixed::decode(&mut rpc_return_value.value.as_slice())?;
-
-		println!("[+] Got metadata of enclave runtime");
 		Ok(metadata)
+	}
+
+	fn get_state_metadata_raw(&self) -> Result<String> {
+		let metadata = self.get_state_metadata().unwrap().to_hex();
+		let rpc_response = RpcResponse { jsonrpc: "2.0".to_owned(), result: metadata, id: 1 };
+		serde_json::to_string(&rpc_response).map_err(|e| Error::Custom(Box::new(e)))
 	}
 
 	fn send(&self, request: &str) -> Result<()> {
