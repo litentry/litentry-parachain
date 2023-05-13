@@ -114,6 +114,8 @@ pub enum TrustedCall {
 		ParentchainBlockNumber,
 		H256,
 	),
+	remove_identity_direct(AccountId, Identity, H256),
+	verify_identity_direct(AccountId, Identity, ValidationData, ParentchainBlockNumber, H256),
 	set_user_shielding_key_runtime(AccountId, AccountId, UserShieldingKeyType, H256),
 	create_identity_runtime(
 		AccountId,
@@ -134,6 +136,7 @@ pub enum TrustedCall {
 	),
 	verify_identity_runtime(AccountId, AccountId, Identity, ParentchainBlockNumber, H256),
 	request_vc(AccountId, AccountId, Assertion, ShardIdentifier, ParentchainBlockNumber, H256),
+	request_vc_direct(AccountId, Assertion, ShardIdentifier, ParentchainBlockNumber, H256),
 	handle_vc_issued(AccountId, AccountId, Assertion, [u8; 32], [u8; 32], AesOutput, H256),
 	handle_imp_error(AccountId, Option<AccountId>, IMPError, H256),
 	handle_vcmp_error(AccountId, Option<AccountId>, VCMPError, H256),
@@ -165,9 +168,12 @@ impl TrustedCall {
 			TrustedCall::create_identity_runtime(account, ..) => account,
 			TrustedCall::create_identity_direct(account, ..) => account,
 			TrustedCall::remove_identity_runtime(account, ..) => account,
+			TrustedCall::remove_identity_direct(account, ..) => account,
 			TrustedCall::verify_identity_preflight(account, ..) => account,
+			TrustedCall::verify_identity_direct(account, ..) => account,
 			TrustedCall::verify_identity_runtime(account, ..) => account,
 			TrustedCall::request_vc(account, ..) => account,
+			TrustedCall::request_vc_direct(account, ..) => account,
 			TrustedCall::set_challenge_code_runtime(account, ..) => account,
 			TrustedCall::handle_vc_issued(account, ..) => account,
 			TrustedCall::handle_imp_error(account, ..) => account,
@@ -531,41 +537,16 @@ where
 				Ok(())
 			},
 			TrustedCall::remove_identity_runtime(enclave_account, who, identity, hash) => {
+				ensure_enclave_signer_account(&enclave_account)?;
 				debug!("remove_identity_runtime, who: {}", account_id_to_string(&who));
-				let account = SgxParentchainTypeConverter::convert(who.clone());
-				if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
-					match Self::remove_identity_runtime(enclave_account, who, identity.clone()) {
-						Ok(()) => {
-							debug!("pushing identity_removed event ...");
-							calls.push(OpaqueCall::from_tuple(&(
-								node_metadata_repo
-									.get_from_metadata(|m| m.identity_removed_call_indexes())??,
-								account,
-								aes_encrypt_default(&key, &identity.encode()),
-								hash,
-							)));
-						},
-						Err(e) => {
-							debug!("pushing error event ... error: {}", e);
-							add_call_from_imp_error(
-								calls,
-								node_metadata_repo,
-								Some(account),
-								e.to_imp_error(),
-								hash,
-							);
-						},
-					}
-				} else {
-					debug!("pushing error event ... error: UserShieldingKeyNotFound");
-					add_call_from_imp_error(
-						calls,
-						node_metadata_repo,
-						Some(account),
-						IMPError::RemoveIdentityFailed(ErrorDetail::UserShieldingKeyNotFound),
-						hash,
-					);
-				}
+				let _ =
+					Self::remove_identity_runtime(node_metadata_repo, calls, who, identity, hash);
+				Ok(())
+			},
+			TrustedCall::remove_identity_direct(who, identity, hash) => {
+				debug!("remove_identity_direct, who: {}", account_id_to_string(&who));
+				let _ =
+					Self::remove_identity_runtime(node_metadata_repo, calls, who, identity, hash);
 				Ok(())
 			},
 			TrustedCall::verify_identity_preflight(
@@ -577,24 +558,31 @@ where
 				hash,
 			) => {
 				debug!("verify_identity_preflight, who: {}", account_id_to_string(&who));
-				if let Err(e) = Self::verify_identity_preflight(
-					enclave_account,
+				ensure_enclave_signer_account(&enclave_account)?;
+				let _ = Self::verify_identity_preflight(
+					node_metadata_repo,
+					calls,
 					shard,
-					who.clone(),
+					who,
 					identity,
 					validation_data,
 					bn,
 					hash,
-				) {
-					debug!("pushing error event ... error: {}", e);
-					add_call_from_imp_error(
-						calls,
-						node_metadata_repo,
-						Some(SgxParentchainTypeConverter::convert(who)),
-						e.to_imp_error(),
-						hash,
-					);
-				}
+				);
+				Ok(())
+			},
+			TrustedCall::verify_identity_direct(who, identity, validation_data, bn, hash) => {
+				debug!("verify_identity_direct, who: {}", account_id_to_string(&who));
+				let _ = Self::verify_identity_preflight(
+					node_metadata_repo,
+					calls,
+					shard,
+					who,
+					identity,
+					validation_data,
+					bn,
+					hash,
+				);
 				Ok(())
 			},
 			TrustedCall::verify_identity_runtime(enclave_account, who, identity, bn, hash) => {
@@ -644,18 +632,14 @@ where
 				Ok(())
 			},
 			TrustedCall::request_vc(enclave_account, who, assertion, shard, bn, hash) => {
-				// the user shielding key check is inside `Self::request_vc`
-				if let Err(e) =
-					Self::request_vc(enclave_account, &shard, who.clone(), assertion, bn, hash)
-				{
-					add_call_from_vcmp_error(
-						calls,
-						node_metadata_repo,
-						Some(SgxParentchainTypeConverter::convert(who)),
-						e.to_vcmp_error(),
-						hash,
-					);
-				}
+				ensure_enclave_signer_account(&enclave_account)?;
+				let _ =
+					Self::request_vc(node_metadata_repo, calls, &shard, who, assertion, bn, hash);
+				Ok(())
+			},
+			TrustedCall::request_vc_direct(who, assertion, shard, bn, hash) => {
+				let _ =
+					Self::request_vc(node_metadata_repo, calls, &shard, who, assertion, bn, hash);
 				Ok(())
 			},
 			TrustedCall::handle_vc_issued(
@@ -739,9 +723,12 @@ where
 			TrustedCall::create_identity_runtime(..) => debug!("No storage updates needed..."),
 			TrustedCall::create_identity_direct(..) => debug!("No storage updates needed..."),
 			TrustedCall::remove_identity_runtime(..) => debug!("No storage updates needed..."),
+			TrustedCall::remove_identity_direct(..) => debug!("No storage updates needed..."),
 			TrustedCall::verify_identity_preflight(..) => debug!("No storage updates needed..."),
+			TrustedCall::verify_identity_direct(..) => debug!("No storage updates needed..."),
 			TrustedCall::verify_identity_runtime(..) => debug!("No storage updates needed..."),
 			TrustedCall::request_vc(..) => debug!("No storage updates needed..."),
+			TrustedCall::request_vc_direct(..) => debug!("No storage updates needed..."),
 			TrustedCall::set_challenge_code_runtime(..) => debug!("No storage updates needed..."),
 			TrustedCall::handle_vc_issued(..) => debug!("No storage updates needed..."),
 			TrustedCall::handle_imp_error(..) => debug!("No storage updates needed..."),

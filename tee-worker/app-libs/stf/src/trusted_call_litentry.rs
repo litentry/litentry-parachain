@@ -177,45 +177,92 @@ impl TrustedCallSigned {
 		Ok(())
 	}
 
-	pub fn remove_identity_runtime(
-		enclave_account: AccountId,
+	pub fn remove_identity_runtime<NodeMetadataRepository>(
+		node_metadata_repo: Arc<NodeMetadataRepository>,
+		calls: &mut Vec<OpaqueCall>,
 		who: AccountId,
 		identity: Identity,
-	) -> StfResult<()> {
-		ensure_enclave_signer_account(&enclave_account)?;
-		IMTCall::remove_identity { who, identity }
-			.dispatch_bypass_filter(RuntimeOrigin::root())
-			.map_err(|e| StfError::RemoveIdentityFailed(e.into()))?;
+		hash: H256,
+	) -> StfResult<()>
+	where
+		NodeMetadataRepository: AccessNodeMetadata,
+		NodeMetadataRepository::MetadataType:
+			TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix,
+	{
+		let account = SgxParentchainTypeConverter::convert(who.clone());
+		if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
+			match (IMTCall::remove_identity { who, identity: identity.clone() }
+				.dispatch_bypass_filter(RuntimeOrigin::root())
+				.map_err(|e| StfError::RemoveIdentityFailed(e.into())))
+			{
+				Ok(_) => {
+					debug!("pushing identity_removed event ...");
+					calls.push(OpaqueCall::from_tuple(&(
+						node_metadata_repo
+							.get_from_metadata(|m| m.identity_removed_call_indexes())??,
+						account,
+						aes_encrypt_default(&key, &identity.encode()),
+						hash,
+					)));
+				},
+				Err(e) => {
+					debug!("pushing error event ... error: {}", e);
+					add_call_from_imp_error(
+						calls,
+						node_metadata_repo,
+						Some(account),
+						e.to_imp_error(),
+						hash,
+					);
+				},
+			}
+		} else {
+			debug!("pushing error event ... error: UserShieldingKeyNotFound");
+			add_call_from_imp_error(
+				calls,
+				node_metadata_repo,
+				Some(account),
+				IMPError::RemoveIdentityFailed(ErrorDetail::UserShieldingKeyNotFound),
+				hash,
+			);
+		}
 		Ok(())
 	}
 
-	pub fn verify_identity_preflight(
-		enclave_account: AccountId,
+	#[allow(clippy::too_many_arguments)]
+	pub fn verify_identity_preflight<NodeMetadataRepository>(
+		node_metadata_repo: Arc<NodeMetadataRepository>,
+		calls: &mut Vec<OpaqueCall>,
 		shard: &ShardIdentifier,
 		who: AccountId,
 		identity: Identity,
 		validation_data: ValidationData,
 		bn: ParentchainBlockNumber,
 		hash: H256,
-	) -> StfResult<()> {
-		ensure_enclave_signer_account(&enclave_account)?;
-		let code = IdentityManagement::challenge_codes(&who, &identity)
-			.ok_or(StfError::VerifyIdentityFailed(ErrorDetail::ChallengeCodeNotFound))?;
-
-		let request: RequestType = IdentityVerificationRequest {
-			shard: *shard,
-			who,
+	) -> StfResult<()>
+	where
+		NodeMetadataRepository: AccessNodeMetadata,
+		NodeMetadataRepository::MetadataType:
+			TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix,
+	{
+		if let Err(e) = Self::verify_identity_preflight_internal(
+			shard,
+			who.clone(),
 			identity,
-			challenge_code: code,
 			validation_data,
 			bn,
 			hash,
+		) {
+			debug!("pushing error event ... error: {}", e);
+			add_call_from_imp_error(
+				calls,
+				node_metadata_repo,
+				Some(SgxParentchainTypeConverter::convert(who)),
+				e.to_imp_error(),
+				hash,
+			);
 		}
-		.into();
-		let sender = StfRequestSender::new();
-		sender
-			.send_stf_request(request)
-			.map_err(|_| StfError::VerifyIdentityFailed(ErrorDetail::SendStfRequestFailed))
+		Ok(())
 	}
 
 	pub fn verify_identity_runtime(
@@ -241,48 +288,30 @@ impl TrustedCallSigned {
 		Ok(())
 	}
 
-	pub fn request_vc(
-		enclave_account: AccountId,
+	pub fn request_vc<NodeMetadataRepository>(
+		node_metadata_repo: Arc<NodeMetadataRepository>,
+		calls: &mut Vec<OpaqueCall>,
 		shard: &ShardIdentifier,
 		who: AccountId,
 		assertion: Assertion,
 		bn: ParentchainBlockNumber,
 		hash: H256,
-	) -> StfResult<()> {
-		ensure_enclave_signer_account(&enclave_account)?;
-		let id_graph = ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
-		let mut vec_identity: BoundedVec<Identity, MaxIdentityLength> = vec![].try_into().unwrap();
-		for id in &id_graph {
-			if id.1.is_verified {
-				vec_identity.try_push(id.0.clone()).map_err(|_| {
-					let error_msg = "vec_identity exceeds max length".into();
-					error!("[RequestVc] : {:?}", error_msg);
-					StfError::RequestVCFailed(
-						assertion.clone(),
-						ErrorDetail::StfError(ErrorString::truncate_from(error_msg)),
-					)
-				})?;
-			}
+	) -> StfResult<()>
+	where
+		NodeMetadataRepository: AccessNodeMetadata,
+		NodeMetadataRepository::MetadataType:
+			TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix,
+	{
+		if let Err(e) = Self::request_vc_internal(shard, who.clone(), assertion, bn, hash) {
+			add_call_from_vcmp_error(
+				calls,
+				node_metadata_repo,
+				Some(SgxParentchainTypeConverter::convert(who)),
+				e.to_vcmp_error(),
+				hash,
+			);
 		}
-
-		let key = IdentityManagement::user_shielding_keys(&who).ok_or_else(|| {
-			StfError::RequestVCFailed(assertion.clone(), ErrorDetail::UserShieldingKeyNotFound)
-		})?;
-		let request: RequestType = AssertionBuildRequest {
-			shard: *shard,
-			who,
-			assertion: assertion.clone(),
-			vec_identity,
-			bn,
-			key,
-			hash,
-		}
-		.into();
-		let sender = StfRequestSender::new();
-		sender.send_stf_request(request).map_err(|e| {
-			error!("[RequestVc] : {:?}", e);
-			StfError::RequestVCFailed(assertion, ErrorDetail::SendStfRequestFailed)
-		})
+		Ok(())
 	}
 
 	pub fn set_challenge_code_runtime(
@@ -325,5 +354,74 @@ impl TrustedCallSigned {
 			.map_err(|e| StfError::CreateIdentityFailed(e.into()))?;
 
 		Ok(code)
+	}
+
+	fn verify_identity_preflight_internal(
+		shard: &ShardIdentifier,
+		who: AccountId,
+		identity: Identity,
+		validation_data: ValidationData,
+		bn: ParentchainBlockNumber,
+		hash: H256,
+	) -> StfResult<()> {
+		let code = IdentityManagement::challenge_codes(&who, &identity)
+			.ok_or(StfError::VerifyIdentityFailed(ErrorDetail::ChallengeCodeNotFound))?;
+
+		let request: RequestType = IdentityVerificationRequest {
+			shard: *shard,
+			who,
+			identity,
+			challenge_code: code,
+			validation_data,
+			bn,
+			hash,
+		}
+		.into();
+		let sender = StfRequestSender::new();
+		sender
+			.send_stf_request(request)
+			.map_err(|_| StfError::VerifyIdentityFailed(ErrorDetail::SendStfRequestFailed))
+	}
+
+	fn request_vc_internal(
+		shard: &ShardIdentifier,
+		who: AccountId,
+		assertion: Assertion,
+		bn: ParentchainBlockNumber,
+		hash: H256,
+	) -> StfResult<()> {
+		let id_graph = ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
+		let mut vec_identity: BoundedVec<Identity, MaxIdentityLength> = vec![].try_into().unwrap();
+		for id in &id_graph {
+			if id.1.is_verified {
+				vec_identity.try_push(id.0.clone()).map_err(|_| {
+					let error_msg = "vec_identity exceeds max length".into();
+					error!("[RequestVc] : {:?}", error_msg);
+					StfError::RequestVCFailed(
+						assertion.clone(),
+						ErrorDetail::StfError(ErrorString::truncate_from(error_msg)),
+					)
+				})?;
+			}
+		}
+
+		let key = IdentityManagement::user_shielding_keys(&who).ok_or_else(|| {
+			StfError::RequestVCFailed(assertion.clone(), ErrorDetail::UserShieldingKeyNotFound)
+		})?;
+		let request: RequestType = AssertionBuildRequest {
+			shard: *shard,
+			who,
+			assertion: assertion.clone(),
+			vec_identity,
+			bn,
+			key,
+			hash,
+		}
+		.into();
+		let sender = StfRequestSender::new();
+		sender.send_stf_request(request).map_err(|e| {
+			error!("[RequestVc] : {:?}", e);
+			StfError::RequestVCFailed(assertion, ErrorDetail::SendStfRequestFailed)
+		})
 	}
 }
