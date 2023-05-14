@@ -345,24 +345,25 @@ pub mod pallet {
 		}
 
 		fn remove_identity_with_limit(owner: &T::AccountId, identity: &Identity) {
-			let graph_len_result = IDGraphLens::<T>::try_get(owner);
-			if let Ok(graph_len) = graph_len_result {
-				if graph_len == 0 {
-					warn!(
+			IDGraphLens::<T>::mutate_exists(owner, |maybe_value| {
+				if let Some(graph_len) = maybe_value {
+					if *graph_len == 0 {
+						warn!(
 						"Detected IDGraphLens inconsistency, found len 0 while removing identity"
 					);
-					IDGraphLens::<T>::remove(owner);
-				} else {
-					let new_graph_len = graph_len - 1;
-					if new_graph_len == 0 {
-						IDGraphLens::<T>::remove(owner);
+						*maybe_value = None
 					} else {
-						IDGraphLens::<T>::insert(owner, new_graph_len);
+						let new_graph_len = *graph_len - 1;
+						if new_graph_len == 0 {
+							*maybe_value = None
+						} else {
+							*maybe_value = Some(new_graph_len)
+						}
 					}
+				} else {
+					warn!("Detected IDGraphLens inconsistency, missing IdGraphLen while removing identity");
 				}
-			} else {
-				warn!("Detected IDGraphLens inconsistency, missing IdGraphLen while removing identity");
-			}
+			});
 			IDGraphs::<T>::remove(owner, identity);
 		}
 
