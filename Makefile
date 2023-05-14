@@ -185,7 +185,7 @@ update-ts-dep:
 
 .PHONY: fmtcheck ## cargo fmt check
 fmtcheck:
-	cargo fmt --all -- --check
+	cargo +nightly fmt --all -- --check
 
 .PHONY: taplocheck ## taplo fmt check
 taplocheck:
@@ -193,9 +193,9 @@ taplocheck:
 
 .PHONY: fmt ## cargo fmt all && taplo fmt all
 fmt:
-	cargo fmt --all && taplo fmt
-	cd tee-worker && cargo fmt --all && taplo fmt
-	cd tee-worker/enclave-runtime && cargo fmt --all
+	cargo +nightly fmt --all && taplo fmt
+	cd tee-worker && cargo +nightly fmt --all && taplo fmt
+	cd tee-worker/enclave-runtime && cargo +nightly fmt --all
 
 .PHONY: githooks ## install the githooks
 githooks:
