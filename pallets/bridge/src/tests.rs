@@ -473,13 +473,10 @@ fn transfer_fungible() {
 		));
 		assert_eq!(ChainNonces::<Test>::get(dest_id), Some(1u64));
 		assert_eq!(
-			pallet_balances::Pallet::<Test>::free_balance(&TreasuryAccount::get()),
+			pallet_balances::Pallet::<Test>::free_balance(TreasuryAccount::get()),
 			ENDOWED_BALANCE + 10
 		);
-		assert_eq!(
-			pallet_balances::Pallet::<Test>::free_balance(&RELAYER_A),
-			ENDOWED_BALANCE - 100
-		);
+		assert_eq!(pallet_balances::Pallet::<Test>::free_balance(RELAYER_A), ENDOWED_BALANCE - 100);
 		assert_events(vec![
 			mock::RuntimeEvent::Balances(pallet_balances::Event::Deposit {
 				who: TreasuryAccount::get(),

@@ -83,20 +83,15 @@ use sp_std::prelude::*;
 use scale_info::TypeInfo;
 pub use weights::WeightInfo;
 
-#[derive(PartialEq, Eq, Clone, Copy, Encode, Decode, Debug, TypeInfo)]
+#[derive(PartialEq, Eq, Clone, Copy, Default, Encode, Decode, Debug, TypeInfo)]
 pub enum OperationalMode {
 	/// when parachain runs normally
+	#[default]
 	Normal,
 	/// when parachain traps in contigency situation
 	Safe,
 	/// when parachain is used for testing purpose
 	Test,
-}
-
-impl Default for OperationalMode {
-	fn default() -> Self {
-		OperationalMode::Normal
-	}
 }
 
 #[frame_support::pallet]
