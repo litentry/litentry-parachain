@@ -50,6 +50,10 @@ def main(processes, config_path, parachain_type):
 
     with open(config_path) as config_file:
         config = json.load(config_file)
+        config['workers'][0]['flags'] = [flag.replace('$TrustedWorkerPort', os.environ.get('TrustedWorkerPort', '')) for flag in config['workers'][0]['flags']]
+        config['workers'][0]['flags'] = [flag.replace('$UntrustedWorkerPort', os.environ.get('UntrustedWorkerPort', '')) for flag in config['workers'][0]['flags']]
+        config['workers'][0]['flags'] = [flag.replace('$MuRaPort', os.environ.get('MuRaPort', '')) for flag in config['workers'][0]['flags']]
+        config['workers'][0]['flags'] = [flag.replace('$UntrustedHttpPort', os.environ.get('UntrustedHttpPort', '')) for flag in config['workers'][0]['flags']]
 
     # Litentry
     if parachain_type == "local" :
