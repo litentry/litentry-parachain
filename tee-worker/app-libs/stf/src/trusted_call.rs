@@ -22,8 +22,8 @@ use sp_core::{H160, U256};
 use std::vec::Vec;
 
 use crate::{
-	helpers::ensure_enclave_signer_account, IdentityManagement, MetadataOf, Runtime, StfError,
-	System, TrustedOperation,
+	helpers::{enclave_signer_account, ensure_enclave_signer_account},
+	IdentityManagement, MetadataOf, Runtime, StfError, System, TrustedOperation,
 };
 use codec::{Decode, Encode};
 use frame_support::{ensure, traits::UnfilteredDispatchable};
@@ -54,6 +54,9 @@ use crate::evm_helpers::{create_code_hash, evm_create2_address, evm_create_addre
 // max number of identities in an id_graph that will be returned as the extrinsic parameter
 // this has no effect on the stored id_graph, but only the returned id_graph
 pub const RETURNED_IDGRAPH_MAX_LEN: usize = 20;
+
+pub type IMTCall = ita_sgx_runtime::IdentityManagementCall<Runtime>;
+pub type IMT = ita_sgx_runtime::pallet_imt::Pallet<Runtime>;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
@@ -106,7 +109,7 @@ pub enum TrustedCall {
 		Vec<(H160, Vec<H256>)>,
 	),
 	// litentry
-	set_user_shielding_key_direct(AccountId, UserShieldingKeyType, H256),
+	set_user_shielding_key(AccountId, AccountId, UserShieldingKeyType, H256),
 	create_identity_direct(
 		AccountId,
 		Identity,
@@ -116,7 +119,6 @@ pub enum TrustedCall {
 	),
 	remove_identity_direct(AccountId, Identity, H256),
 	verify_identity_direct(AccountId, Identity, ValidationData, ParentchainBlockNumber, H256),
-	set_user_shielding_key_runtime(AccountId, AccountId, UserShieldingKeyType, H256),
 	create_identity_runtime(
 		AccountId,
 		AccountId,
@@ -141,7 +143,6 @@ pub enum TrustedCall {
 	handle_imp_error(AccountId, Option<AccountId>, IMPError, H256),
 	handle_vcmp_error(AccountId, Option<AccountId>, VCMPError, H256),
 	// the following TrustedCalls should only be used in testing
-	set_user_shielding_key_preflight(AccountId, AccountId, UserShieldingKeyType, H256),
 	set_challenge_code_runtime(AccountId, AccountId, Identity, ChallengeCode, H256),
 	send_erroneous_parentchain_call(AccountId),
 }
@@ -162,9 +163,7 @@ impl TrustedCall {
 			#[cfg(feature = "evm")]
 			TrustedCall::evm_create2(sender_account, ..) => sender_account,
 			// litentry
-			TrustedCall::set_user_shielding_key_preflight(account, ..) => account,
-			TrustedCall::set_user_shielding_key_runtime(account, ..) => account,
-			TrustedCall::set_user_shielding_key_direct(account, ..) => account,
+			TrustedCall::set_user_shielding_key(account, ..) => account,
 			TrustedCall::create_identity_runtime(account, ..) => account,
 			TrustedCall::create_identity_direct(account, ..) => account,
 			TrustedCall::remove_identity_runtime(account, ..) => account,
@@ -262,6 +261,13 @@ where
 	//
 	// for now we should always return Ok(()) for this function and propagate the exe, at least for
 	// litentry STFs. I believe this is the right way to go, but it still needs more discussions.
+	//
+	// Update:
+	// see discussion in https://github.com/integritee-network/worker/issues/1232
+	// my current thoughts are:
+	// - we should return Err() if the STF execution fails
+	// - the failed top should be removed from the tool
+	// - however, the failed top hash needs to be included in the sidechain block
 	fn execute(
 		self,
 		shard: &ShardIdentifier,
@@ -473,33 +479,45 @@ where
 				info!("Trying to create evm contract with address {:?}", contract_address);
 				Ok(())
 			},
-			// litentry
-			TrustedCall::set_user_shielding_key_preflight(root, who, key, hash) => {
-				if let Err(e) =
-					Self::set_user_shielding_key_preflight(root, shard, who.clone(), key, hash)
-				{
-					debug!("set_user_shielding_key_preflight error: {}", e);
-					add_call_from_imp_error(
-						calls,
-						node_metadata_repo,
-						Some(SgxParentchainTypeConverter::convert(who)),
-						e.to_imp_error(),
-						hash,
-					);
+			// litentry trusted calls
+			// the reason that most calls have an internal handling fn is that we want to capture the error and
+			// handle it here to be able to send error events to the parachain
+			TrustedCall::set_user_shielding_key(signer, who, key, hash) => {
+				debug!("set_user_shielding_key, who: {}", account_id_to_string(&who));
+				let parent_ss58_prefix =
+					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
+				let account = SgxParentchainTypeConverter::convert(who.clone());
+				let c = node_metadata_repo
+					.get_from_metadata(|m| m.user_shielding_key_set_call_indexes())??;
+
+				match Self::set_user_shielding_key_internal(
+					signer,
+					who.clone(),
+					key,
+					parent_ss58_prefix,
+				) {
+					Ok(key) => {
+						debug!("pushing user_shielding_key_set event ...");
+						let id_graph =
+							IMT::get_id_graph_with_max_len(&who, RETURNED_IDGRAPH_MAX_LEN);
+						calls.push(OpaqueCall::from_tuple(&(
+							c,
+							account,
+							aes_encrypt_default(&key, &id_graph.encode()),
+							hash,
+						)));
+					},
+					Err(e) => {
+						debug!("pushing error event ... error: {}", e);
+						add_call_from_imp_error(
+							calls,
+							node_metadata_repo,
+							Some(account),
+							e.to_imp_error(),
+							hash,
+						);
+					},
 				}
-				Ok(())
-			},
-			TrustedCall::set_user_shielding_key_runtime(enclave_account, who, key, hash) => {
-				ensure_enclave_signer_account(&enclave_account)?;
-				debug!("set_user_shielding_key_runtime, who: {}", account_id_to_string(&who));
-				let _ =
-					Self::set_user_shielding_key_runtime(node_metadata_repo, calls, who, key, hash);
-				Ok(())
-			},
-			TrustedCall::set_user_shielding_key_direct(who, key, hash) => {
-				debug!("set_user_shielding_key_direct, who: {}", account_id_to_string(&who));
-				let _ =
-					Self::set_user_shielding_key_runtime(node_metadata_repo, calls, who, key, hash);
 				Ok(())
 			},
 			TrustedCall::create_identity_runtime(
@@ -714,12 +732,7 @@ where
 			TrustedCall::balance_unshield(..) => debug!("No storage updates needed..."),
 			TrustedCall::balance_shield(..) => debug!("No storage updates needed..."),
 			// litentry
-			TrustedCall::set_user_shielding_key_preflight(..) =>
-				debug!("No storage updates needed..."),
-			TrustedCall::set_user_shielding_key_runtime(..) =>
-				debug!("No storage updates needed..."),
-			TrustedCall::set_user_shielding_key_direct(..) =>
-				debug!("No storage updates needed..."),
+			TrustedCall::set_user_shielding_key(..) => debug!("No storage updates needed..."),
 			TrustedCall::create_identity_runtime(..) => debug!("No storage updates needed..."),
 			TrustedCall::create_identity_direct(..) => debug!("No storage updates needed..."),
 			TrustedCall::remove_identity_runtime(..) => debug!("No storage updates needed..."),

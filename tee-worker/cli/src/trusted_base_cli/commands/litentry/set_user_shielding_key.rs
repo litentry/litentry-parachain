@@ -29,14 +29,14 @@ use log::*;
 use sp_core::Pair;
 
 #[derive(Parser)]
-pub struct SetUserShieldingKeyPreflightCommand {
+pub struct SetUserShieldingKeyCommand {
 	/// AccountId in ss58check format
 	account: String,
 	/// Shielding key in hex string
 	key_hex: String,
 }
 
-impl SetUserShieldingKeyPreflightCommand {
+impl SetUserShieldingKeyCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) {
 		let who = get_accountid_from_str(&self.account);
 		let root = get_pair_from_str(trusted_cli, "//Alice");
@@ -48,14 +48,10 @@ impl SetUserShieldingKeyPreflightCommand {
 
 		hex::decode_to_slice(&self.key_hex, &mut key).expect("decoding shielding_key failed");
 
-		let top: TrustedOperation = TrustedCall::set_user_shielding_key_preflight(
-			root.public().into(),
-			who,
-			key,
-			Default::default(),
-		)
-		.sign(&KeyPair::Sr25519(Box::new(root)), nonce, &mrenclave, &shard)
-		.into_trusted_operation(trusted_cli.direct);
+		let top: TrustedOperation =
+			TrustedCall::set_user_shielding_key(root.public().into(), who, key, Default::default())
+				.sign(&KeyPair::Sr25519(Box::new(root)), nonce, &mrenclave, &shard)
+				.into_trusted_operation(trusted_cli.direct);
 		perform_trusted_operation(cli, trusted_cli, &top);
 	}
 }

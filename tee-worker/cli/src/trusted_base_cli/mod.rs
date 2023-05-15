@@ -23,7 +23,7 @@ use crate::{
 			id_graph_stats::IDGraphStats,
 			send_erroneous_parentchain_call::SendErroneousParentchainCallCommand,
 			set_challenge_code::SetChallengeCodeCommand,
-			set_user_shielding_preflight::SetUserShieldingKeyPreflightCommand,
+			set_user_shielding_key::SetUserShieldingKeyCommand,
 			user_shielding_key::UserShiledingKeyCommand,
 			verify_identity_preflight::VerifyIdentityPreflightCommand,
 		},
@@ -76,7 +76,7 @@ pub enum TrustedBaseCommand {
 
 	VerifyIdentityPreflight(VerifyIdentityPreflightCommand),
 
-	SetUserShieldingKeyPreflight(SetUserShieldingKeyPreflightCommand),
+	SetUserShieldingKey(SetUserShieldingKeyCommand),
 
 	GetStorage(GetStorageCommand),
 
@@ -100,7 +100,7 @@ impl TrustedBaseCommand {
 			TrustedBaseCommand::UserShieldingKey(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::SetChallengeCode(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::VerifyIdentityPreflight(cmd) => cmd.run(cli, trusted_cli),
-			TrustedBaseCommand::SetUserShieldingKeyPreflight(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::SetUserShieldingKey(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::GetStorage(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::SendErroneousParentchainCall(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::IDGraphStats(cmd) => cmd.run(cli, trusted_cli),

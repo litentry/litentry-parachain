@@ -19,17 +19,15 @@ extern crate sgx_tstd as std;
 
 use super::*;
 use crate::{
-	helpers::{ensure_enclave_signer_account, generate_challenge_code},
-	is_root, AccountId, IdentityManagement, MetadataOf, Runtime, StfError, StfResult,
+	helpers::{ensure_enclave_signer_account, generate_challenge_code, is_authorised_signer},
+	AccountId, IdentityManagement, MetadataOf, Runtime, StfError, StfResult,
 };
 use frame_support::{dispatch::UnfilteredDispatchable, ensure};
 use ita_sgx_runtime::RuntimeOrigin;
 use itp_stf_primitives::types::ShardIdentifier;
-use itp_utils::stringify::account_id_to_string;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
 	AssertionBuildRequest, IdentityVerificationRequest, MaxIdentityLength, RequestType,
-	SetUserShieldingKeyRequest,
 };
 use litentry_primitives::{
 	Assertion, ChallengeCode, ErrorDetail, ErrorString, Identity, ParentchainBlockNumber,
@@ -39,81 +37,20 @@ use log::*;
 use sp_runtime::BoundedVec;
 use std::{format, sync::Arc, vec, vec::Vec};
 
-type IMTCall = ita_sgx_runtime::IdentityManagementCall<Runtime>;
-
 impl TrustedCallSigned {
-	pub fn set_user_shielding_key_preflight(
-		root: AccountId,
-		shard: &ShardIdentifier,
+	pub fn set_user_shielding_key_internal(
+		signer: AccountId,
 		who: AccountId,
 		key: UserShieldingKeyType,
-		hash: H256,
-	) -> StfResult<()> {
-		ensure!(is_root::<Runtime, AccountId>(&root), StfError::MissingPrivileges(root));
-		let request = SetUserShieldingKeyRequest { shard: *shard, who, key, hash }.into();
-		let sender = StfRequestSender::new();
-		sender
-			.send_stf_request(request)
-			.map_err(|_| StfError::SetUserShieldingKeyFailed(ErrorDetail::SendStfRequestFailed))
-	}
-
-	pub fn set_user_shielding_key_runtime<NodeMetadataRepository>(
-		node_metadata_repo: Arc<NodeMetadataRepository>,
-		calls: &mut Vec<OpaqueCall>,
-		who: AccountId,
-		key: UserShieldingKeyType,
-		hash: H256,
-	) -> StfResult<()>
-	where
-		NodeMetadataRepository: AccessNodeMetadata,
-		NodeMetadataRepository::MetadataType:
-			TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix,
-	{
-		debug!("set user shielding key runtime, who = {:?}", account_id_to_string(&who));
-		let account = SgxParentchainTypeConverter::convert(who.clone());
-		let parent_ss58_prefix =
-			node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
-		match (IMTCall::set_user_shielding_key { who: who.clone(), key, parent_ss58_prefix }
+		parent_ss58_prefix: u16,
+	) -> StfResult<UserShieldingKeyType> {
+		ensure!(
+			is_authorised_signer(&signer, &who),
+			StfError::SetUserShieldingKeyFailed(ErrorDetail::UnauthorisedSender)
+		);
+		IMTCall::set_user_shielding_key { who, key, parent_ss58_prefix }
 			.dispatch_bypass_filter(RuntimeOrigin::root())
-			.map_err(|e| StfError::SetUserShieldingKeyFailed(e.error.into())))
-		{
-			Ok(_) =>
-				if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
-					debug!("pushing user_shielding_key_set event ...");
-					let id_graph =
-						ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph_with_max_len(
-							&who,
-							RETURNED_IDGRAPH_MAX_LEN,
-						);
-					calls.push(OpaqueCall::from_tuple(&(
-						node_metadata_repo
-							.get_from_metadata(|m| m.user_shielding_key_set_call_indexes())??,
-						account,
-						aes_encrypt_default(&key, &id_graph.encode()),
-						hash,
-					)));
-				} else {
-					debug!("pushing error event ... error: UserShieldingKeyNotFound");
-					add_call_from_imp_error(
-						calls,
-						node_metadata_repo,
-						Some(account),
-						IMPError::SetUserShieldingKeyFailed(ErrorDetail::UserShieldingKeyNotFound),
-						hash,
-					);
-				},
-			Err(e) => {
-				debug!("pushing error event ... error: {}", e);
-				add_call_from_imp_error(
-					calls,
-					node_metadata_repo,
-					Some(account),
-					e.to_imp_error(),
-					hash,
-				);
-			},
-		}
-		Ok(())
+			.map_or_else(|e| Err(StfError::SetUserShieldingKeyFailed(e.error.into())), |_| Ok(key))
 	}
 
 	pub fn create_identity_runtime<NodeMetadataRepository>(

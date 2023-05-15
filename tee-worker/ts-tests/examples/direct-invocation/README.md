@@ -39,7 +39,8 @@ The field `result` contains the hex-encoded `WorkerRpcReturnValue` struct, after
 -   `do_watch` indicates if there're more (streamed) responses coming
 -   `status` has 3 options: `ok`, `trustedOperationStatus`, or `error`:
     -   `ok` is returned when the request is a "normal" request, e.g. getting TEE's shielding key
-    -   `trustedOperationStatus` is a dedicated status for a trusted operation submission/subscription request to indicate its status in the pool, similar to transaction pool status in the parachain
+    -   `trustedOperationStatus` is a dedicated status for a trusted operation submission/subscription request to indicate its status in the pool, similar to transaction pool status in the parachain. Due to the asynchronous nature of some request handling (e.g. identity verification, vc request), it''s possible that `inSidechainBlock` is returned but the final execution still fails - you need to listen to parachain events (see item 3 below)
+    -   `error` is returned when something already fails at pre-check of state mutation. For details you need to listen to parachain events for now (see item 3 below)
 
 2. there's no extrinsic hash as it's not extrinsic, instead a random H256 value needs to be generated and sent along with the request to pair the response. However, it might be not strictly needed depending on how the ws channel is used (if it's used exclusively for a single request).
 

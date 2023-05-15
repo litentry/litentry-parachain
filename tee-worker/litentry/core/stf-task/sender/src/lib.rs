@@ -91,20 +91,9 @@ pub struct AssertionBuildRequest {
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub struct SetUserShieldingKeyRequest {
-	pub shard: ShardIdentifier,
-	pub who: AccountId,
-	pub key: UserShieldingKeyType,
-	pub hash: H256,
-}
-
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub enum RequestType {
 	IdentityVerification(IdentityVerificationRequest),
 	AssertionVerification(AssertionBuildRequest),
-	// set the user shielding key async for demo purpose
-	// in reality the user's shielding key is set synchronously
-	SetUserShieldingKey(SetUserShieldingKeyRequest),
 }
 
 impl From<IdentityVerificationRequest> for RequestType {
@@ -116,11 +105,5 @@ impl From<IdentityVerificationRequest> for RequestType {
 impl From<AssertionBuildRequest> for RequestType {
 	fn from(r: AssertionBuildRequest) -> Self {
 		RequestType::AssertionVerification(r)
-	}
-}
-
-impl From<SetUserShieldingKeyRequest> for RequestType {
-	fn from(r: SetUserShieldingKeyRequest) -> Self {
-		RequestType::SetUserShieldingKey(r)
 	}
 }
