@@ -110,16 +110,9 @@ pub enum TrustedCall {
 	),
 	// litentry
 	set_user_shielding_key(AccountId, AccountId, UserShieldingKeyType, H256),
-	create_identity_direct(
-		AccountId,
-		Identity,
-		Option<MetadataOf<Runtime>>,
-		ParentchainBlockNumber,
-		H256,
-	),
 	remove_identity_direct(AccountId, Identity, H256),
 	verify_identity_direct(AccountId, Identity, ValidationData, ParentchainBlockNumber, H256),
-	create_identity_runtime(
+	create_identity(
 		AccountId,
 		AccountId,
 		Identity,
@@ -164,8 +157,7 @@ impl TrustedCall {
 			TrustedCall::evm_create2(sender_account, ..) => sender_account,
 			// litentry
 			TrustedCall::set_user_shielding_key(account, ..) => account,
-			TrustedCall::create_identity_runtime(account, ..) => account,
-			TrustedCall::create_identity_direct(account, ..) => account,
+			TrustedCall::create_identity(account, ..) => account,
 			TrustedCall::remove_identity_runtime(account, ..) => account,
 			TrustedCall::remove_identity_direct(account, ..) => account,
 			TrustedCall::verify_identity_preflight(account, ..) => account,
@@ -520,38 +512,43 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::create_identity_runtime(
-				enclave_account,
-				who,
-				identity,
-				metadata,
-				bn,
-				hash,
-			) => {
-				ensure_enclave_signer_account(&enclave_account)?;
-				debug!("create_identity_runtime, who: {}", account_id_to_string(&who));
-				let _ = Self::create_identity_runtime(
-					node_metadata_repo,
-					calls,
+			TrustedCall::create_identity(signer, who, identity, metadata, bn, hash) => {
+				debug!("create_identity, who: {}", account_id_to_string(&who));
+				let account = SgxParentchainTypeConverter::convert(who.clone());
+				let parent_ss58_prefix =
+					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
+				let c = node_metadata_repo
+					.get_from_metadata(|m| m.identity_created_call_indexes())??;
+
+				match Self::create_identity_internal(
+					signer,
 					who,
-					identity,
+					identity.clone(),
 					metadata,
 					bn,
-					hash,
-				);
-				Ok(())
-			},
-			TrustedCall::create_identity_direct(who, identity, metadata, bn, hash) => {
-				debug!("create_identity_direct, who: {}", account_id_to_string(&who));
-				let _ = Self::create_identity_runtime(
-					node_metadata_repo,
-					calls,
-					who,
-					identity,
-					metadata,
-					bn,
-					hash,
-				);
+					parent_ss58_prefix,
+				) {
+					Ok((key, code)) => {
+						debug!("pushing identity_created event ...");
+						calls.push(OpaqueCall::from_tuple(&(
+							c,
+							account,
+							aes_encrypt_default(&key, &identity.encode()),
+							aes_encrypt_default(&key, &code.encode()),
+							hash,
+						)));
+					},
+					Err(e) => {
+						debug!("pushing error event ... error: {}", e);
+						add_call_from_imp_error(
+							calls,
+							node_metadata_repo,
+							Some(account),
+							e.to_imp_error(),
+							hash,
+						);
+					},
+				}
 				Ok(())
 			},
 			TrustedCall::remove_identity_runtime(enclave_account, who, identity, hash) => {
@@ -733,8 +730,7 @@ where
 			TrustedCall::balance_shield(..) => debug!("No storage updates needed..."),
 			// litentry
 			TrustedCall::set_user_shielding_key(..) => debug!("No storage updates needed..."),
-			TrustedCall::create_identity_runtime(..) => debug!("No storage updates needed..."),
-			TrustedCall::create_identity_direct(..) => debug!("No storage updates needed..."),
+			TrustedCall::create_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::remove_identity_runtime(..) => debug!("No storage updates needed..."),
 			TrustedCall::remove_identity_direct(..) => debug!("No storage updates needed..."),
 			TrustedCall::verify_identity_preflight(..) => debug!("No storage updates needed..."),

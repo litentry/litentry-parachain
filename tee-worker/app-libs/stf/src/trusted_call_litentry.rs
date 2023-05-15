@@ -53,65 +53,39 @@ impl TrustedCallSigned {
 			.map_or_else(|e| Err(StfError::SetUserShieldingKeyFailed(e.error.into())), |_| Ok(key))
 	}
 
-	pub fn create_identity_runtime<NodeMetadataRepository>(
-		node_metadata_repo: Arc<NodeMetadataRepository>,
-		calls: &mut Vec<OpaqueCall>,
+	pub fn create_identity_internal(
+		signer: AccountId,
 		who: AccountId,
 		identity: Identity,
 		metadata: Option<MetadataOf<Runtime>>,
 		bn: ParentchainBlockNumber,
-		hash: H256,
-	) -> StfResult<()>
-	where
-		NodeMetadataRepository: AccessNodeMetadata,
-		NodeMetadataRepository::MetadataType:
-			TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix,
-	{
-		let account = SgxParentchainTypeConverter::convert(who.clone());
-		if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
-			let parent_ss58_prefix =
-				node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
+		parent_ss58_prefix: u16,
+	) -> StfResult<(UserShieldingKeyType, ChallengeCode)> {
+		ensure!(
+			is_authorised_signer(&signer, &who),
+			StfError::CreateIdentityFailed(ErrorDetail::UnauthorisedSender)
+		);
 
-			match Self::create_identity_runtime_internal(
-				who,
-				identity.clone(),
-				metadata,
-				bn,
-				parent_ss58_prefix,
-			) {
-				Ok(code) => {
-					debug!("pushing identity_created event ...");
-					calls.push(OpaqueCall::from_tuple(&(
-						node_metadata_repo
-							.get_from_metadata(|m| m.identity_created_call_indexes())??,
-						account,
-						aes_encrypt_default(&key, &identity.encode()),
-						aes_encrypt_default(&key, &code.encode()),
-						hash,
-					)));
-				},
-				Err(e) => {
-					debug!("pushing error event ... error: {}", e);
-					add_call_from_imp_error(
-						calls,
-						node_metadata_repo,
-						Some(account),
-						e.to_imp_error(),
-						hash,
-					);
-				},
-			}
-		} else {
-			debug!("pushing error event ... error: UserShieldingKeyNotFound");
-			add_call_from_imp_error(
-				calls,
-				node_metadata_repo,
-				Some(account),
-				IMPError::CreateIdentityFailed(ErrorDetail::UserShieldingKeyNotFound),
-				hash,
-			);
+		let key = IdentityManagement::user_shielding_keys(&who)
+			.ok_or(StfError::CreateIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
+		IMTCall::create_identity {
+			who: who.clone(),
+			identity: identity.clone(),
+			metadata,
+			creation_request_block: bn,
+			parent_ss58_prefix,
 		}
-		Ok(())
+		.dispatch_bypass_filter(RuntimeOrigin::root())
+		.map_err(|e| StfError::CreateIdentityFailed(e.into()))?;
+
+		// generate challenge code
+		let code = generate_challenge_code();
+
+		IMTCall::set_challenge_code { who, identity, code }
+			.dispatch_bypass_filter(RuntimeOrigin::root())
+			.map_err(|e| StfError::CreateIdentityFailed(e.into()))?;
+
+		Ok((key, code))
 	}
 
 	pub fn remove_identity_runtime<NodeMetadataRepository>(
@@ -266,32 +240,6 @@ impl TrustedCallSigned {
 	}
 
 	// internal helper fn
-	fn create_identity_runtime_internal(
-		who: AccountId,
-		identity: Identity,
-		metadata: Option<MetadataOf<Runtime>>,
-		bn: ParentchainBlockNumber,
-		parent_ss58_prefix: u16,
-	) -> StfResult<ChallengeCode> {
-		IMTCall::create_identity {
-			who: who.clone(),
-			identity: identity.clone(),
-			metadata,
-			creation_request_block: bn,
-			parent_ss58_prefix,
-		}
-		.dispatch_bypass_filter(RuntimeOrigin::root())
-		.map_err(|e| StfError::CreateIdentityFailed(e.into()))?;
-
-		// generate challenge code
-		let code = generate_challenge_code();
-
-		IMTCall::set_challenge_code { who, identity, code }
-			.dispatch_bypass_filter(RuntimeOrigin::root())
-			.map_err(|e| StfError::CreateIdentityFailed(e.into()))?;
-
-		Ok(code)
-	}
 
 	fn verify_identity_preflight_internal(
 		shard: &ShardIdentifier,
