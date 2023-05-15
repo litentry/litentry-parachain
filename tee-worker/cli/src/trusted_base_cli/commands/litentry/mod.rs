@@ -19,4 +19,4 @@ pub mod send_erroneous_parentchain_call;
 pub mod set_challenge_code;
 pub mod set_user_shielding_key;
 pub mod user_shielding_key;
-pub mod verify_identity_preflight;
+pub mod verify_identity;

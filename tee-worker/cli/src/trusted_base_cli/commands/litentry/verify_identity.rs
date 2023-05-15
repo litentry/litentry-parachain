@@ -28,7 +28,7 @@ use log::*;
 use sp_core::Pair;
 
 #[derive(Parser)]
-pub struct VerifyIdentityPreflightCommand {
+pub struct VerifyIdentityCommand {
 	/// AccountId in ss58check format
 	account: String,
 	did: String,
@@ -38,7 +38,7 @@ pub struct VerifyIdentityPreflightCommand {
 
 // TODO: we'd need an "integration-test" with parentchain "verify_identity"
 //       the origin of it needs to be re-considered if we want individual steps
-impl VerifyIdentityPreflightCommand {
+impl VerifyIdentityCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) {
 		let who = get_accountid_from_str(&self.account);
 		let root = get_pair_from_str(trusted_cli, "//Alice");
@@ -56,7 +56,7 @@ impl VerifyIdentityPreflightCommand {
 			warn!("Deserialize Identity error: {:?}", e.to_string());
 			return
 		}
-		let top: TrustedOperation = TrustedCall::verify_identity_preflight(
+		let top: TrustedOperation = TrustedCall::verify_identity(
 			root.public().into(),
 			who,
 			identity.unwrap(),

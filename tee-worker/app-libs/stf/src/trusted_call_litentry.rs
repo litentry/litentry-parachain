@@ -106,49 +106,52 @@ impl TrustedCallSigned {
 		Ok(key)
 	}
 
-	#[allow(clippy::too_many_arguments)]
-	pub fn verify_identity_preflight<NodeMetadataRepository>(
-		node_metadata_repo: Arc<NodeMetadataRepository>,
-		calls: &mut Vec<OpaqueCall>,
-		shard: &ShardIdentifier,
+	pub fn verify_identity_internal(
+		signer: AccountId,
 		who: AccountId,
 		identity: Identity,
 		validation_data: ValidationData,
 		bn: ParentchainBlockNumber,
 		hash: H256,
-	) -> StfResult<()>
-	where
-		NodeMetadataRepository: AccessNodeMetadata,
-		NodeMetadataRepository::MetadataType:
-			TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix,
-	{
-		if let Err(e) = Self::verify_identity_preflight_internal(
-			shard,
-			who.clone(),
+		shard: &ShardIdentifier,
+	) -> StfResult<()> {
+		ensure!(
+			is_authorised_signer(&signer, &who),
+			StfError::VerifyIdentityFailed(ErrorDetail::UnauthorisedSender)
+		);
+		let _ = IdentityManagement::user_shielding_keys(&who)
+			.ok_or(StfError::VerifyIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
+
+		let code = IdentityManagement::challenge_codes(&who, &identity)
+			.ok_or(StfError::VerifyIdentityFailed(ErrorDetail::ChallengeCodeNotFound))?;
+
+		let request: RequestType = IdentityVerificationRequest {
+			shard: *shard,
+			who,
 			identity,
+			challenge_code: code,
 			validation_data,
 			bn,
 			hash,
-		) {
-			debug!("pushing error event ... error: {}", e);
-			add_call_from_imp_error(
-				calls,
-				node_metadata_repo,
-				Some(SgxParentchainTypeConverter::convert(who)),
-				e.to_imp_error(),
-				hash,
-			);
 		}
-		Ok(())
+		.into();
+		StfRequestSender::new()
+			.send_stf_request(request)
+			.map_err(|_| StfError::VerifyIdentityFailed(ErrorDetail::SendStfRequestFailed))
 	}
 
-	pub fn verify_identity_runtime(
-		enclave_account: AccountId,
+	pub fn verify_identity_callback_internal(
+		signer: AccountId,
 		who: AccountId,
 		identity: Identity,
 		bn: ParentchainBlockNumber,
-	) -> StfResult<()> {
-		ensure_enclave_signer_account(&enclave_account)?;
+	) -> StfResult<UserShieldingKeyType> {
+		// important! The signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
+		ensure_enclave_signer_account(&signer)
+			.map_err(|_| StfError::VerifyIdentityFailed(ErrorDetail::UnauthorisedSender))?;
+		let key = IdentityManagement::user_shielding_keys(&who)
+			.ok_or(StfError::VerifyIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
+
 		IMTCall::verify_identity {
 			who: who.clone(),
 			identity: identity.clone(),
@@ -162,7 +165,7 @@ impl TrustedCallSigned {
 			.dispatch_bypass_filter(RuntimeOrigin::root())
 			.map_err(|e| StfError::VerifyIdentityFailed(e.into()))?;
 
-		Ok(())
+		Ok(key)
 	}
 
 	pub fn request_vc<NodeMetadataRepository>(
@@ -191,7 +194,7 @@ impl TrustedCallSigned {
 		Ok(())
 	}
 
-	pub fn set_challenge_code_runtime(
+	pub fn set_challenge_code_internal(
 		enclave_account: AccountId,
 		who: AccountId,
 		identity: Identity,
@@ -206,32 +209,6 @@ impl TrustedCallSigned {
 	}
 
 	// internal helper fn
-	fn verify_identity_preflight_internal(
-		shard: &ShardIdentifier,
-		who: AccountId,
-		identity: Identity,
-		validation_data: ValidationData,
-		bn: ParentchainBlockNumber,
-		hash: H256,
-	) -> StfResult<()> {
-		let code = IdentityManagement::challenge_codes(&who, &identity)
-			.ok_or(StfError::VerifyIdentityFailed(ErrorDetail::ChallengeCodeNotFound))?;
-
-		let request: RequestType = IdentityVerificationRequest {
-			shard: *shard,
-			who,
-			identity,
-			challenge_code: code,
-			validation_data,
-			bn,
-			hash,
-		}
-		.into();
-		let sender = StfRequestSender::new();
-		sender
-			.send_stf_request(request)
-			.map_err(|_| StfError::VerifyIdentityFailed(ErrorDetail::SendStfRequestFailed))
-	}
 
 	fn request_vc_internal(
 		shard: &ShardIdentifier,

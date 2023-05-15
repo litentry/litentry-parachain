@@ -196,7 +196,7 @@ where
 		// using enclave's shielding key is encrypted in chunks
 		let (vc_index, vc_hash, vc_payload) = result;
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
-			let c = TrustedCall::handle_vc_issued(
+			let c = TrustedCall::request_vc_callback(
 				enclave_signer,
 				self.req.who.clone(),
 				self.req.assertion.clone(),

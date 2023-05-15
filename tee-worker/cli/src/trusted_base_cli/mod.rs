@@ -24,8 +24,7 @@ use crate::{
 			send_erroneous_parentchain_call::SendErroneousParentchainCallCommand,
 			set_challenge_code::SetChallengeCodeCommand,
 			set_user_shielding_key::SetUserShieldingKeyCommand,
-			user_shielding_key::UserShiledingKeyCommand,
-			verify_identity_preflight::VerifyIdentityPreflightCommand,
+			user_shielding_key::UserShiledingKeyCommand, verify_identity::VerifyIdentityCommand,
 		},
 		nonce::NonceCommand,
 		set_balance::SetBalanceCommand,
@@ -74,7 +73,7 @@ pub enum TrustedBaseCommand {
 
 	SetChallengeCode(SetChallengeCodeCommand),
 
-	VerifyIdentityPreflight(VerifyIdentityPreflightCommand),
+	VerifyIdentity(VerifyIdentityCommand),
 
 	SetUserShieldingKey(SetUserShieldingKeyCommand),
 
@@ -99,7 +98,7 @@ impl TrustedBaseCommand {
 			// Litentry's commands below
 			TrustedBaseCommand::UserShieldingKey(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::SetChallengeCode(cmd) => cmd.run(cli, trusted_cli),
-			TrustedBaseCommand::VerifyIdentityPreflight(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::VerifyIdentity(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::SetUserShieldingKey(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::GetStorage(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::SendErroneousParentchainCall(cmd) => cmd.run(cli, trusted_cli),
