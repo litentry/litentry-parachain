@@ -34,7 +34,7 @@ use litentry_primitives::{
 	ValidationData,
 };
 use log::*;
-use std::{format, sync::Arc, vec::Vec};
+use std::{format, vec::Vec};
 
 impl TrustedCallSigned {
 	pub fn set_user_shielding_key_internal(
@@ -99,7 +99,7 @@ impl TrustedCallSigned {
 		let key = IdentityManagement::user_shielding_keys(&who)
 			.ok_or(StfError::RemoveIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
 
-		IMTCall::remove_identity { who, identity: identity.clone() }
+		IMTCall::remove_identity { who, identity }
 			.dispatch_bypass_filter(RuntimeOrigin::root())
 			.map_err(|e| StfError::RemoveIdentityFailed(e.into()))?;
 
@@ -140,6 +140,44 @@ impl TrustedCallSigned {
 			.map_err(|_| StfError::VerifyIdentityFailed(ErrorDetail::SendStfRequestFailed))
 	}
 
+	pub fn request_vc_internal(
+		signer: AccountId,
+		who: AccountId,
+		assertion: Assertion,
+		bn: ParentchainBlockNumber,
+		hash: H256,
+		shard: &ShardIdentifier,
+	) -> StfResult<()> {
+		ensure!(
+			is_authorised_signer(&signer, &who),
+			StfError::RequestVCFailed(assertion, ErrorDetail::UnauthorisedSender)
+		);
+		let key = IdentityManagement::user_shielding_keys(&who).ok_or_else(|| {
+			StfError::RequestVCFailed(assertion.clone(), ErrorDetail::UserShieldingKeyNotFound)
+		})?;
+		let id_graph = IMT::get_id_graph(&who);
+		let vec_identity: Vec<Identity> = id_graph
+			.into_iter()
+			.filter(|item| item.1.is_verified)
+			.map(|item| item.0)
+			.collect();
+		let request: RequestType = AssertionBuildRequest {
+			shard: *shard,
+			who,
+			assertion: assertion.clone(),
+			vec_identity,
+			bn,
+			key,
+			hash,
+		}
+		.into();
+		let sender = StfRequestSender::new();
+		sender.send_stf_request(request).map_err(|e| {
+			error!("[RequestVc] : {:?}", e);
+			StfError::RequestVCFailed(assertion, ErrorDetail::SendStfRequestFailed)
+		})
+	}
+
 	pub fn verify_identity_callback_internal(
 		signer: AccountId,
 		who: AccountId,
@@ -168,30 +206,18 @@ impl TrustedCallSigned {
 		Ok(key)
 	}
 
-	pub fn request_vc<NodeMetadataRepository>(
-		node_metadata_repo: Arc<NodeMetadataRepository>,
-		calls: &mut Vec<OpaqueCall>,
-		shard: &ShardIdentifier,
+	pub fn request_vc_callback_internal(
+		signer: AccountId,
 		who: AccountId,
 		assertion: Assertion,
-		bn: ParentchainBlockNumber,
-		hash: H256,
-	) -> StfResult<()>
-	where
-		NodeMetadataRepository: AccessNodeMetadata,
-		NodeMetadataRepository::MetadataType:
-			TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix,
-	{
-		if let Err(e) = Self::request_vc_internal(shard, who.clone(), assertion, bn, hash) {
-			add_call_from_vcmp_error(
-				calls,
-				node_metadata_repo,
-				Some(SgxParentchainTypeConverter::convert(who)),
-				e.to_vcmp_error(),
-				hash,
-			);
-		}
-		Ok(())
+	) -> StfResult<UserShieldingKeyType> {
+		// important! The signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
+		ensure_enclave_signer_account(&signer).map_err(|_| {
+			StfError::RequestVCFailed(assertion.clone(), ErrorDetail::UnauthorisedSender)
+		})?;
+		let key = IdentityManagement::user_shielding_keys(&who)
+			.ok_or(StfError::RequestVCFailed(assertion, ErrorDetail::UserShieldingKeyNotFound))?;
+		Ok(key)
 	}
 
 	pub fn set_challenge_code_internal(
@@ -206,40 +232,5 @@ impl TrustedCallSigned {
 			.dispatch_bypass_filter(RuntimeOrigin::root())
 			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
 		Ok(())
-	}
-
-	// internal helper fn
-
-	fn request_vc_internal(
-		shard: &ShardIdentifier,
-		who: AccountId,
-		assertion: Assertion,
-		bn: ParentchainBlockNumber,
-		hash: H256,
-	) -> StfResult<()> {
-		let key = IdentityManagement::user_shielding_keys(&who).ok_or_else(|| {
-			StfError::RequestVCFailed(assertion.clone(), ErrorDetail::UserShieldingKeyNotFound)
-		})?;
-		let id_graph = ita_sgx_runtime::pallet_imt::Pallet::<Runtime>::get_id_graph(&who);
-		let vec_identity: Vec<Identity> = id_graph
-			.into_iter()
-			.filter(|item| item.1.is_verified)
-			.map(|item| item.0)
-			.collect();
-		let request: RequestType = AssertionBuildRequest {
-			shard: *shard,
-			who,
-			assertion: assertion.clone(),
-			vec_identity,
-			bn,
-			key,
-			hash,
-		}
-		.into();
-		let sender = StfRequestSender::new();
-		sender.send_stf_request(request).map_err(|e| {
-			error!("[RequestVc] : {:?}", e);
-			StfError::RequestVCFailed(assertion, ErrorDetail::SendStfRequestFailed)
-		})
 	}
 }

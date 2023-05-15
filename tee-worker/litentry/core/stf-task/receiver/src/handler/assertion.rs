@@ -24,12 +24,10 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_utils::stringify::account_id_to_string;
 use lc_data_providers::G_DATA_PROVIDERS;
 use lc_stf_task_sender::AssertionBuildRequest;
-use litentry_primitives::{
-	aes_encrypt_default, AesOutput, Assertion, ErrorDetail, ErrorString, VCMPError,
-};
+use litentry_primitives::{Assertion, ErrorDetail, ErrorString, VCMPError};
 use log::*;
 use sp_core::hashing::blake2_256;
-use std::{format, sync::Arc};
+use std::{format, sync::Arc, vec::Vec};
 
 pub(crate) struct AssertionHandler<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
@@ -50,7 +48,7 @@ where
 	H::StateT: SgxExternalitiesTrait,
 {
 	type Error = VCMPError;
-	type Result = ([u8; 32], [u8; 32], AesOutput); // (vc_index, vc_hash, encrypted_vc_str)
+	type Result = ([u8; 32], [u8; 32], Vec<u8>); // (vc_index, vc_hash, vc_byte_array)
 
 	fn on_process(&self) -> Result<Self::Result, Self::Error> {
 		// create the initial credential
@@ -185,9 +183,7 @@ where
 		debug!("Credential: {}, length: {}", credential_str, credential_str.len());
 		let vc_hash = blake2_256(credential_str.as_bytes());
 		debug!("VC hash: {:?}", vc_hash);
-
-		let output = aes_encrypt_default(&self.req.key, credential_str.as_bytes());
-		Ok((vc_index, vc_hash, output))
+		Ok((vc_index, vc_hash, credential_str.as_bytes().to_vec()))
 	}
 
 	fn on_success(&self, result: Self::Result) {

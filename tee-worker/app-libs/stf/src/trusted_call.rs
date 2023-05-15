@@ -119,11 +119,11 @@ pub enum TrustedCall {
 	),
 	remove_identity(AccountId, AccountId, Identity, H256),
 	verify_identity(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber, H256),
-	request_vc(AccountId, AccountId, Assertion, ShardIdentifier, ParentchainBlockNumber, H256),
+	request_vc(AccountId, AccountId, Assertion, ParentchainBlockNumber, H256),
 	// the following trusted calls should not be requested directly from external
 	// they are guarded by the signature check (either root or enclave_signer_account)
 	verify_identity_callback(AccountId, AccountId, Identity, ParentchainBlockNumber, H256),
-	request_vc_callback(AccountId, AccountId, Assertion, [u8; 32], [u8; 32], AesOutput, H256),
+	request_vc_callback(AccountId, AccountId, Assertion, [u8; 32], [u8; 32], Vec<u8>, H256),
 	handle_imp_error(AccountId, Option<AccountId>, IMPError, H256),
 	handle_vcmp_error(AccountId, Option<AccountId>, VCMPError, H256),
 	set_challenge_code(AccountId, AccountId, Identity, ChallengeCode, H256),
@@ -627,14 +627,28 @@ where
 
 				Ok(())
 			},
-			TrustedCall::request_vc(enclave_account, who, assertion, shard, bn, hash) => {
-				ensure_enclave_signer_account(&enclave_account)?;
-				let _ =
-					Self::request_vc(node_metadata_repo, calls, &shard, who, assertion, bn, hash);
+			TrustedCall::request_vc(signer, who, assertion, bn, hash) => {
+				debug!(
+					"request_vc, who: {}, assertion: {:?}",
+					account_id_to_string(&who),
+					assertion
+				);
+				if let Err(e) =
+					Self::request_vc_internal(signer, who.clone(), assertion, bn, hash, shard)
+				{
+					debug!("pushing error event ... error: {}", e);
+					add_call_from_vcmp_error(
+						calls,
+						node_metadata_repo,
+						Some(SgxParentchainTypeConverter::convert(who)),
+						e.to_vcmp_error(),
+						hash,
+					);
+				}
 				Ok(())
 			},
 			TrustedCall::request_vc_callback(
-				enclave_account,
+				signer,
 				who,
 				assertion,
 				vc_index,
@@ -642,19 +656,36 @@ where
 				vc_payload,
 				hash,
 			) => {
-				ensure_enclave_signer_account(&enclave_account)?;
-				match node_metadata_repo.get_from_metadata(|m| m.vc_issued_call_indexes()) {
-					Ok(Ok(c)) => calls.push(OpaqueCall::from_tuple(&(
-						c,
-						SgxParentchainTypeConverter::convert(who),
-						assertion,
-						vc_index,
-						vc_hash,
-						vc_payload,
-						hash,
-					))),
-					Ok(e) => warn!("error getting vc_issued call indexes: {:?}", e),
-					Err(e) => warn!("error getting vc_issued call indexes: {:?}", e),
+				debug!(
+					"request_vc_callback, who: {}, assertion: {:?}",
+					account_id_to_string(&who),
+					assertion
+				);
+				let account = SgxParentchainTypeConverter::convert(who.clone());
+				let c = node_metadata_repo.get_from_metadata(|m| m.vc_issued_call_indexes())??;
+
+				match Self::request_vc_callback_internal(signer, who, assertion.clone()) {
+					Ok(key) => {
+						calls.push(OpaqueCall::from_tuple(&(
+							c,
+							account,
+							assertion,
+							vc_index,
+							vc_hash,
+							aes_encrypt_default(&key, &vc_payload),
+							hash,
+						)));
+					},
+					Err(e) => {
+						debug!("pushing error event ... error: {}", e);
+						add_call_from_vcmp_error(
+							calls,
+							node_metadata_repo,
+							Some(account),
+							e.to_vcmp_error(),
+							hash,
+						);
+					},
 				}
 				Ok(())
 			},
