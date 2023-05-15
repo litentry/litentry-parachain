@@ -6,16 +6,13 @@
 import '@polkadot/api-base/types/consts';
 
 import type { ApiTypes, AugmentedConst } from '@polkadot/api-base/types';
-import type { Bytes, Option, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
+import type { u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { Codec } from '@polkadot/types-codec/types';
-import type { Permill } from '@polkadot/types/interfaces/runtime';
 import type {
-    FrameSupportPalletId,
     FrameSystemLimitsBlockLength,
     FrameSystemLimitsBlockWeights,
     SpVersionRuntimeVersion,
     SpWeightsRuntimeDbWeight,
-    SpWeightsWeightV2Weight,
 } from '@polkadot/types/lookup';
 
 export type __AugmentedConst<ApiType extends ApiTypes> = AugmentedConst<ApiType>;
@@ -41,109 +38,15 @@ declare module '@polkadot/api-base/types/consts' {
              **/
             [key: string]: Codec;
         };
-        claims: {
-            prefix: Bytes & AugmentedConst<ApiType>;
+        identityManagement: {
             /**
-             * Generic const
+             * maximum metadata length
              **/
-            [key: string]: Codec;
-        };
-        grandpa: {
+            maxMetadataLength: u32 & AugmentedConst<ApiType>;
             /**
-             * Max Authorities in use
+             * maximum delay in block numbers between creating an identity and verifying an identity
              **/
-            maxAuthorities: u32 & AugmentedConst<ApiType>;
-            /**
-             * The maximum number of entries to keep in the set id to session index mapping.
-             *
-             * Since the `SetIdSession` map is only used for validating equivocations this
-             * value should relate to the bonding duration of whatever staking system is
-             * being used (if any). If equivocation handling is not enabled then this value
-             * can be zero.
-             **/
-            maxSetIdSessionEntries: u64 & AugmentedConst<ApiType>;
-            /**
-             * Generic const
-             **/
-            [key: string]: Codec;
-        };
-        multisig: {
-            /**
-             * The base amount of currency needed to reserve for creating a multisig execution or to
-             * store a dispatch call for later.
-             *
-             * This is held for an additional storage item whose value size is
-             * `4 + sizeof((BlockNumber, Balance, AccountId))` bytes and whose key size is
-             * `32 + sizeof(AccountId)` bytes.
-             **/
-            depositBase: u128 & AugmentedConst<ApiType>;
-            /**
-             * The amount of currency needed per unit threshold when creating a multisig execution.
-             *
-             * This is held for adding 32 bytes more into a pre-existing storage value.
-             **/
-            depositFactor: u128 & AugmentedConst<ApiType>;
-            /**
-             * The maximum amount of signatories allowed in the multisig.
-             **/
-            maxSignatories: u32 & AugmentedConst<ApiType>;
-            /**
-             * Generic const
-             **/
-            [key: string]: Codec;
-        };
-        proxy: {
-            /**
-             * The base amount of currency needed to reserve for creating an announcement.
-             *
-             * This is held when a new storage item holding a `Balance` is created (typically 16
-             * bytes).
-             **/
-            announcementDepositBase: u128 & AugmentedConst<ApiType>;
-            /**
-             * The amount of currency needed per announcement made.
-             *
-             * This is held for adding an `AccountId`, `Hash` and `BlockNumber` (typically 68 bytes)
-             * into a pre-existing storage value.
-             **/
-            announcementDepositFactor: u128 & AugmentedConst<ApiType>;
-            /**
-             * The maximum amount of time-delayed announcements that are allowed to be pending.
-             **/
-            maxPending: u32 & AugmentedConst<ApiType>;
-            /**
-             * The maximum amount of proxies allowed for a single account.
-             **/
-            maxProxies: u32 & AugmentedConst<ApiType>;
-            /**
-             * The base amount of currency needed to reserve for creating a proxy.
-             *
-             * This is held for an additional storage item whose value size is
-             * `sizeof(Balance)` bytes and whose key size is `sizeof(AccountId)` bytes.
-             **/
-            proxyDepositBase: u128 & AugmentedConst<ApiType>;
-            /**
-             * The amount of currency needed per proxy added.
-             *
-             * This is held for adding 32 bytes plus an instance of `ProxyType` more into a
-             * pre-existing storage value. Thus, when configuring `ProxyDepositFactor` one should take
-             * into account `32 + proxy_type.encode().len()` bytes of data.
-             **/
-            proxyDepositFactor: u128 & AugmentedConst<ApiType>;
-            /**
-             * Generic const
-             **/
-            [key: string]: Codec;
-        };
-        scheduler: {
-            /**
-             * The maximum weight that may be scheduled per block for any dispatchables.
-             **/
-            maximumWeight: SpWeightsWeightV2Weight & AugmentedConst<ApiType>;
-            /**
-             * The maximum number of scheduled calls in the queue for a single block.
-             **/
-            maxScheduledPerBlock: u32 & AugmentedConst<ApiType>;
+            maxVerificationDelay: u32 & AugmentedConst<ApiType>;
             /**
              * Generic const
              **/
@@ -178,17 +81,6 @@ declare module '@polkadot/api-base/types/consts' {
              * Get the chain's current version.
              **/
             version: SpVersionRuntimeVersion & AugmentedConst<ApiType>;
-            /**
-             * Generic const
-             **/
-            [key: string]: Codec;
-        };
-        teeracle: {
-            maxOracleBlobLen: u32 & AugmentedConst<ApiType>;
-            /**
-             * Max number of whitelisted oracle's releases allowed
-             **/
-            maxWhitelistedReleases: u32 & AugmentedConst<ApiType>;
             /**
              * Generic const
              **/
@@ -232,64 +124,6 @@ declare module '@polkadot/api-base/types/consts' {
              * transactions.
              **/
             operationalFeeMultiplier: u8 & AugmentedConst<ApiType>;
-            /**
-             * Generic const
-             **/
-            [key: string]: Codec;
-        };
-        treasury: {
-            /**
-             * Percentage of spare funds (if any) that are burnt per spend period.
-             **/
-            burn: Permill & AugmentedConst<ApiType>;
-            /**
-             * The maximum number of approvals that can wait in the spending queue.
-             *
-             * NOTE: This parameter is also used within the Bounties Pallet extension if enabled.
-             **/
-            maxApprovals: u32 & AugmentedConst<ApiType>;
-            /**
-             * The treasury's pallet id, used for deriving its sovereign account ID.
-             **/
-            palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
-            /**
-             * Fraction of a proposal's value that should be bonded in order to place the proposal.
-             * An accepted proposal gets these back. A rejected proposal does not.
-             **/
-            proposalBond: Permill & AugmentedConst<ApiType>;
-            /**
-             * Maximum amount of funds that should be placed in a deposit for making a proposal.
-             **/
-            proposalBondMaximum: Option<u128> & AugmentedConst<ApiType>;
-            /**
-             * Minimum amount of funds that should be placed in a deposit for making a proposal.
-             **/
-            proposalBondMinimum: u128 & AugmentedConst<ApiType>;
-            /**
-             * Period between successive spends.
-             **/
-            spendPeriod: u32 & AugmentedConst<ApiType>;
-            /**
-             * Generic const
-             **/
-            [key: string]: Codec;
-        };
-        utility: {
-            /**
-             * The limit on the number of batched calls.
-             **/
-            batchedCallsLimit: u32 & AugmentedConst<ApiType>;
-            /**
-             * Generic const
-             **/
-            [key: string]: Codec;
-        };
-        vesting: {
-            maxVestingSchedules: u32 & AugmentedConst<ApiType>;
-            /**
-             * The minimum amount transferred to call `vested_transfer`.
-             **/
-            minVestedTransfer: u128 & AugmentedConst<ApiType>;
             /**
              * Generic const
              **/

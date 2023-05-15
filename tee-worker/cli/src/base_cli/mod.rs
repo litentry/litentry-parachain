@@ -64,6 +64,11 @@ pub enum BaseCommand {
 	/// query sgx-runtime metadata and print it as json to stdout
 	PrintSgxMetadata,
 
+	/// query sgx-runtime metadata and print the raw (hex-encoded) metadata to stdout
+	/// we could have added a parameter like `--raw` to `PrintSgxMetadata`, but
+	/// we want to keep our changes isolated
+	PrintSgxMetadataRaw,
+
 	/// send some bootstrapping funds to supplied account(s)
 	Faucet(FaucetCommand),
 
@@ -98,6 +103,7 @@ impl BaseCommand {
 			BaseCommand::ListAccounts => list_accounts(),
 			BaseCommand::PrintMetadata => print_metadata(cli),
 			BaseCommand::PrintSgxMetadata => print_sgx_metadata(cli),
+			BaseCommand::PrintSgxMetadataRaw => print_sgx_metadata_raw(cli),
 			BaseCommand::Faucet(cmd) => cmd.run(cli),
 			BaseCommand::Transfer(cmd) => cmd.run(cli),
 			BaseCommand::ListWorkers => list_workers(cli),
@@ -140,6 +146,12 @@ fn print_sgx_metadata(cli: &Cli) {
 	let worker_api_direct = get_worker_api_direct(cli);
 	let metadata = worker_api_direct.get_state_metadata().unwrap();
 	println!("Metadata:\n {}", Metadata::pretty_format(&metadata).unwrap());
+}
+
+fn print_sgx_metadata_raw(cli: &Cli) {
+	let worker_api_direct = get_worker_api_direct(cli);
+	let metadata = worker_api_direct.get_state_metadata_raw().unwrap();
+	println!("{metadata}");
 }
 
 fn list_workers(cli: &Cli) {

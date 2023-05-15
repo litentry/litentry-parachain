@@ -12,7 +12,7 @@ TMPDIR=/tmp/parachain_dev
 CHAIN=$1
 
 ROOTDIR=$(git rev-parse --show-toplevel)
-cd "$ROOTDIR/docker/generated-$CHAIN"
+cd "$ROOTDIR/docker/generated-$CHAIN" || exit 1
 
 docker images
 
