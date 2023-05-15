@@ -722,10 +722,15 @@ where
 				)));
 				Ok(())
 			},
-			TrustedCall::set_scheduled_mrenclave(_, bn, mrenclave) => {
-				GLOBAL_SCHEDULED_ENCLAVE
-					.update(bn, mrenclave)
-					.map_err(|_| StfError::SetScheduledMrEnclaveFailed)?;
+			TrustedCall::set_scheduled_mrenclave(account_id, bn, mrenclave) => {
+				ensure!(
+					is_root::<Runtime, AccountId>(&account_id),
+					Self::Error::MissingPrivileges(account_id)
+				);
+				GLOBAL_SCHEDULED_ENCLAVE.update(bn, mrenclave).map_err(|e| {
+					error!("Failed to set scheduled mr_enclave {:?}", e);
+					StfError::SetScheduledMrEnclaveFailed
+				})?;
 				Ok(())
 			},
 		}?;
