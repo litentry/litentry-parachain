@@ -25,9 +25,13 @@ from io import BytesIO
 from py.worker import Worker
 from py.helpers import GracefulKiller, mkdir_p
 
+import socket
+
 log_dir = 'log'
 mkdir_p(log_dir)
 
+OFFSET=10
+PORTS = ['AliceWSPort', 'AliceRPCPort', 'AlicePort', 'BobWSPort', 'BobRPCPort', 'BobPort', 'CollatorWSPort', 'CollatorRPCPort', 'CollatorPort', 'TrustedWorkerPort', 'UntrustedWorkerPort', 'MuRaPort', 'UntrustedHttpPort']
 
 def setup_worker(work_dir: str, source_dir: str, std_err: Union[None, int, IO]):
     print(f'Setting up worker in {work_dir}')
@@ -46,10 +50,43 @@ def run_worker(config, i: int):
     print(f'Starting worker {i} in background')
     return w.run_in_background(log_file=log, flags=config["flags"], subcommand_flags=config["subcommand_flags"])
 
+# Function to check if a port is open
+def is_port_open(port):
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.bind(('127.0.0.1', int(port)))
+        sock.close()
+        return True
+    except OSError:
+        return False
+
+# Function to reallocate port if it is not available
+def reallocate_ports(env_name, port):
+    # Offset the original port by 10
+    # TODO: This should check if the offset port is available or not
+    new_port = int(port) + int(OFFSET)
+
+    # Set the new port value in the environment variable
+    os.environ[env_name] = str(new_port)
+    print("Port for {} changed to: {}".format(env_name, os.environ.get(env_name)))
+
+# Function to iterate over all ports and automatically reallocate
+def check_all_ports():
+    for x in PORTS:
+        if is_port_open(os.environ.get(x)):
+            continue
+        else:
+            reallocate_ports(x, os.environ.get(x))
+
+    print("All Preliminary Port Checks Completed")
+
+
 
 def main(processes, config_path, parachain_type):
     ## Load environment file
     load_dotenv('.env')
+    ## Check Ports and Automatically Reallocate
+    check_all_ports()
 
     print('Starting litentry-parachain in background')
 
