@@ -17,6 +17,7 @@ import sys
 import os
 from time import sleep
 from typing import Union, IO
+from dotenv import load_dotenv
 
 import pycurl
 from io import BytesIO
@@ -47,6 +48,9 @@ def run_worker(config, i: int):
 
 
 def main(processes, config_path, parachain_type):
+    ## Load environment file
+    load_dotenv('.env')
+
     print('Starting litentry-parachain in background')
 
     with open(config_path) as config_file:
