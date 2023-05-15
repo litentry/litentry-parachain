@@ -527,8 +527,6 @@ export async function handleIdentityEvents(
                 );
                 break;
             case 'Failed':
-                results.push(events[index].data.detail.toHuman());
-                break;
             case 'CreateIdentityFailed':
                 results.push(events[index].data.detail.toHuman());
                 break;
