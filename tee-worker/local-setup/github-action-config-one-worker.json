@@ -12,6 +12,8 @@
         "$MuRaPort",
         "-h",
         "$UntrustedHttpPort",
+        "-p",
+        "$CollatorWSPort",
         "--running-mode",
         "mock",
         "--enable-mock-server",
