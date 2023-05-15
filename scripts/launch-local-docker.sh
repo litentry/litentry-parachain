@@ -66,7 +66,7 @@ for _ in $(seq 1 $WAIT_ROUNDS); do
     print_divider
     echo "extend leasing period now ..."
     cd "$ROOTDIR/ts-tests"
-    echo "NODE_ENV=development" > .env
+    echo "NODE_ENV=ci" > .env
     yarn
     yarn upgrade-parathread 2>&1
     print_divider
