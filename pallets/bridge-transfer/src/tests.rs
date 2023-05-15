@@ -51,7 +51,7 @@ fn transfer() {
 		// Check inital state
 		let bridge_id: u64 = Bridge::account_id();
 		let resource_id = NativeTokenResourceId::get();
-		assert_eq!(Balances::free_balance(&bridge_id), ENDOWED_BALANCE);
+		assert_eq!(Balances::free_balance(bridge_id), ENDOWED_BALANCE);
 		// Transfer and check result
 		assert_ok!(BridgeTransfer::transfer(
 			RuntimeOrigin::signed(Bridge::account_id()),
@@ -93,13 +93,10 @@ fn transfer_native() {
 			dest_bridge_id
 		));
 		assert_eq!(
-			pallet_balances::Pallet::<Test>::free_balance(&TreasuryAccount::get()),
+			pallet_balances::Pallet::<Test>::free_balance(TreasuryAccount::get()),
 			ENDOWED_BALANCE + 10
 		);
-		assert_eq!(
-			pallet_balances::Pallet::<Test>::free_balance(&RELAYER_A),
-			ENDOWED_BALANCE - 100
-		);
+		assert_eq!(pallet_balances::Pallet::<Test>::free_balance(RELAYER_A), ENDOWED_BALANCE - 100);
 		assert_events(vec![
 			mock::RuntimeEvent::Balances(pallet_balances::Event::Deposit {
 				who: TreasuryAccount::get(),
@@ -121,7 +118,7 @@ fn mint_overflow() {
 	new_test_ext().execute_with(|| {
 		let bridge_id: u64 = Bridge::account_id();
 		let resource_id = NativeTokenResourceId::get();
-		assert_eq!(Balances::free_balance(&bridge_id), ENDOWED_BALANCE);
+		assert_eq!(Balances::free_balance(bridge_id), ENDOWED_BALANCE);
 
 		assert_noop!(
 			BridgeTransfer::transfer(
@@ -140,7 +137,7 @@ fn exceed_max_supply() {
 	new_test_ext().execute_with(|| {
 		let bridge_id: u64 = Bridge::account_id();
 		let resource_id = NativeTokenResourceId::get();
-		assert_eq!(Balances::free_balance(&bridge_id), ENDOWED_BALANCE);
+		assert_eq!(Balances::free_balance(bridge_id), ENDOWED_BALANCE);
 
 		assert_noop!(
 			BridgeTransfer::transfer(
@@ -159,7 +156,7 @@ fn exceed_max_supply_second() {
 	new_test_ext().execute_with(|| {
 		let bridge_id: u64 = Bridge::account_id();
 		let resource_id = NativeTokenResourceId::get();
-		assert_eq!(Balances::free_balance(&bridge_id), ENDOWED_BALANCE);
+		assert_eq!(Balances::free_balance(bridge_id), ENDOWED_BALANCE);
 
 		assert_ok!(BridgeTransfer::transfer(
 			RuntimeOrigin::signed(Bridge::account_id()),
@@ -303,7 +300,7 @@ fn test_external_balances_adjusted() {
 		// Check inital state
 		let bridge_id: u64 = Bridge::account_id();
 		let resource_id = NativeTokenResourceId::get();
-		assert_eq!(Balances::free_balance(&bridge_id), ENDOWED_BALANCE);
+		assert_eq!(Balances::free_balance(bridge_id), ENDOWED_BALANCE);
 		// Transfer and check result
 		// Check the external_balances
 		assert_eq!(ExternalBalances::<Test>::get(), MaximumIssuance::<Test>::get() / 2);
