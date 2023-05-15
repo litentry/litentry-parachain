@@ -473,7 +473,13 @@ export async function handleIdentityEvents(
     context: IntegrationTestContext,
     aesKey: HexString,
     events: any[],
-    type: 'UserShieldingKeySet' | 'IdentityCreated' | 'IdentityVerified' | 'IdentityRemoved' | 'Failed'
+    type:
+        | 'UserShieldingKeySet'
+        | 'IdentityCreated'
+        | 'IdentityVerified'
+        | 'IdentityRemoved'
+        | 'Failed'
+        | 'CreateIdentityFailed'
 ): Promise<any[]> {
     let results: IdentityGenericEvent[] = [];
 
@@ -521,6 +527,7 @@ export async function handleIdentityEvents(
                 );
                 break;
             case 'Failed':
+            case 'CreateIdentityFailed':
                 results.push(events[index].data.detail.toHuman());
                 break;
         }

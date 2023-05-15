@@ -45,14 +45,16 @@ pub use identity_context::IdentityContext;
 pub use litentry_primitives::{
 	ChallengeCode, Identity, ParentchainBlockNumber, SubstrateNetwork, UserShieldingKeyType,
 };
-use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
+use sp_std::vec::Vec;
 pub type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
 pub type MetadataOf<T> = BoundedVec<u8, <T as Config>::MaxMetadataLength>;
+pub type IDGraph<T> = Vec<(Identity, IdentityContext<T>)>;
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
 	use litentry_primitives::Address32;
+	use log::warn;
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
@@ -73,6 +75,9 @@ pub mod pallet {
 		/// maximum delay in block numbers between creating an identity and verifying an identity
 		#[pallet::constant]
 		type MaxVerificationDelay: Get<ParentchainBlockNumber>;
+		/// maximum number of identities an account can have, if you change this value to lower some accounts may exceed this limit
+		#[pallet::constant]
+		type MaxIDGraphLength: Get<u32>;
 	}
 
 	#[pallet::event]
@@ -108,6 +113,8 @@ pub mod pallet {
 		VerificationRequestTooLate,
 		/// remove prime identiy should be disallowed
 		RemovePrimeIdentityDisallowed,
+		/// IDGraph len limit reached
+		IDGraphLenLimitReached,
 	}
 
 	/// user shielding key is per Litentry account
@@ -142,6 +149,10 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
+	#[pallet::storage]
+	pub type IDGraphLens<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AccountId, u32, ValueQuery>;
+
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
@@ -174,7 +185,7 @@ pub mod pallet {
 					verification_request_block: Some(0),
 					is_verified: true,
 				};
-				IDGraphs::<T>::insert(&who, &prime_id, context);
+				Self::insert_identity_with_limit(&who, &prime_id, context)?;
 			}
 
 			Self::deposit_event(Event::UserShieldingKeySet { who, key });
@@ -247,7 +258,7 @@ pub mod pallet {
 				creation_request_block: Some(creation_request_block),
 				..Default::default()
 			};
-			IDGraphs::<T>::insert(&who, &identity, context);
+			Self::insert_identity_with_limit(&who, &identity, context)?;
 			Self::deposit_event(Event::IdentityCreated { who, identity });
 			Ok(())
 		}
@@ -277,8 +288,7 @@ pub mod pallet {
 					ensure!(false, Error::<T>::RemovePrimeIdentityDisallowed);
 				}
 			}
-
-			IDGraphs::<T>::remove(&who, &identity);
+			Self::remove_identity_with_limit(&who, &identity);
 			Self::deposit_event(Event::IdentityRemoved { who, identity });
 			Ok(())
 		}
@@ -317,15 +327,52 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub fn get_id_graph(who: &T::AccountId) -> Vec<(Identity, IdentityContext<T>)> {
+		fn insert_identity_with_limit(
+			owner: &T::AccountId,
+			identity: &Identity,
+			context: IdentityContext<T>,
+		) -> Result<(), DispatchError> {
+			IDGraphLens::<T>::try_mutate(owner, |len| {
+				let new_len = len.checked_add(1).ok_or(Error::<T>::IDGraphLenLimitReached)?;
+				if new_len > T::MaxIDGraphLength::get() {
+					return Err(Error::<T>::IDGraphLenLimitReached.into())
+				}
+				*len = new_len;
+				Result::<(), DispatchError>::Ok(())
+			})?;
+			IDGraphs::<T>::insert(owner, identity, context);
+			Ok(())
+		}
+
+		fn remove_identity_with_limit(owner: &T::AccountId, identity: &Identity) {
+			IDGraphLens::<T>::mutate_exists(owner, |maybe_value| {
+				if let Some(graph_len) = maybe_value {
+					if *graph_len == 0 {
+						warn!(
+						"Detected IDGraphLens inconsistency, found len 0 while removing identity"
+					);
+						*maybe_value = None
+					} else {
+						let new_graph_len = *graph_len - 1;
+						if new_graph_len == 0 {
+							*maybe_value = None
+						} else {
+							*maybe_value = Some(new_graph_len)
+						}
+					}
+				} else {
+					warn!("Detected IDGraphLens inconsistency, missing IdGraphLen while removing identity");
+				}
+			});
+			IDGraphs::<T>::remove(owner, identity);
+		}
+
+		pub fn get_id_graph(who: &T::AccountId) -> IDGraph<T> {
 			IDGraphs::iter_prefix(who).collect::<Vec<_>>()
 		}
 
 		// get the most recent `max_len` elements in IDGraph, sorted by `creation_request_block`
-		pub fn get_id_graph_with_max_len(
-			who: &T::AccountId,
-			max_len: usize,
-		) -> Vec<(Identity, IdentityContext<T>)> {
+		pub fn get_id_graph_with_max_len(who: &T::AccountId, max_len: usize) -> IDGraph<T> {
 			let mut id_graph = Self::get_id_graph(who);
 			id_graph.sort_by(|a, b| {
 				Ord::cmp(
@@ -339,21 +386,7 @@ pub mod pallet {
 
 		// get count of all keys account + identity in the IDGraphs
 		pub fn id_graph_stats() -> Option<Vec<(T::AccountId, u32)>> {
-			let mut stats: BTreeMap<T::AccountId, u32> = BTreeMap::new();
-			IDGraphs::<T>::iter().for_each(|item| {
-				let account = item.0;
-				let value = {
-					let mut default_value = 0_u32;
-					let value = stats.get_mut(&account).unwrap_or(&mut default_value);
-					*value += 1;
-
-					*value
-				};
-
-				stats.insert(account, value);
-			});
-
-			let stats = stats.into_iter().map(|item| (item.0, item.1)).collect::<Vec<_>>();
+			let stats = IDGraphLens::<T>::iter().collect();
 			debug!("IDGraph stats: {:?}", stats);
 			Some(stats)
 		}
