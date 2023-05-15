@@ -152,7 +152,7 @@ impl TrustedCallSigned {
 			is_authorised_signer(&signer, &who),
 			StfError::RequestVCFailed(assertion, ErrorDetail::UnauthorisedSender)
 		);
-		let key = IdentityManagement::user_shielding_keys(&who).ok_or_else(|| {
+		let _ = IdentityManagement::user_shielding_keys(&who).ok_or_else(|| {
 			StfError::RequestVCFailed(assertion.clone(), ErrorDetail::UserShieldingKeyNotFound)
 		})?;
 		let id_graph = IMT::get_id_graph(&who);
@@ -167,7 +167,6 @@ impl TrustedCallSigned {
 			assertion: assertion.clone(),
 			vec_identity,
 			bn,
-			key,
 			hash,
 		}
 		.into();

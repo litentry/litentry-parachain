@@ -37,8 +37,7 @@ use codec::{Decode, Encode};
 pub use error::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use litentry_primitives::{
-	Assertion, ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType,
-	ValidationData,
+	Assertion, ChallengeCode, Identity, ParentchainBlockNumber, ValidationData,
 };
 use sp_runtime::traits::ConstU32;
 use sp_std::prelude::Vec;
@@ -87,7 +86,6 @@ pub struct AssertionBuildRequest {
 	pub assertion: Assertion,
 	pub vec_identity: Vec<Identity>,
 	pub bn: ParentchainBlockNumber,
-	pub key: UserShieldingKeyType,
 	pub hash: H256,
 }
 
