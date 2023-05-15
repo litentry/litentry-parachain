@@ -63,8 +63,9 @@ def is_port_open(port):
 # Function to reallocate port if it is not available
 def reallocate_ports(env_name, port):
     # Offset the original port by 10
-    # TODO: This should check if the offset port is available or not
     new_port = int(port) + int(OFFSET)
+    while not is_port_open(str(new_port)):
+        new_port = int(port) + int(OFFSET)
 
     # Set the new port value in the environment variable
     os.environ[env_name] = str(new_port)
