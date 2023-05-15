@@ -38,9 +38,8 @@ pub fn build(
 	identities: BoundedVec<Identity, MaxIdentityLength>,
 	shard: &ShardIdentifier,
 	who: &AccountId,
-	timestamp: u64,
 ) -> Result<Credential> {
-	debug!("Assertion A1 build, who: {:?}, timestamp: {}", account_id_to_string(&who), timestamp);
+	debug!("Assertion A1 build, who: {:?}", account_id_to_string(&who));
 
 	let mut web2_cnt = 0;
 	let mut web3_cnt = 0;
@@ -53,7 +52,7 @@ pub fn build(
 		}
 	}
 
-	match Credential::new_default(who, &shard.clone(), timestamp) {
+	match Credential::new_default(who, &shard.clone()) {
 		Ok(mut credential_unsigned) => {
 			// add subject info
 			credential_unsigned.add_subject_info(

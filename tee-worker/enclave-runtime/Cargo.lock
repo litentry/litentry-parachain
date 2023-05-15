@@ -2651,6 +2651,7 @@ dependencies = [
  "itp-sgx-crypto",
  "itp-sgx-externalities",
  "itp-stf-primitives",
+ "itp-time-utils",
  "itp-types",
  "itp-utils",
  "lc-data-providers",

@@ -37,6 +37,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 use codec::{Decode, Encode};
 use itp_stf_primitives::types::ShardIdentifier;
+use itp_time_utils::now_as_millis;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_data_providers::graphql::VerifiedCredentialsNetwork;
@@ -185,9 +186,9 @@ pub struct Proof {
 }
 
 impl Proof {
-	pub fn new(timestamp: u64, sig: &Vec<u8>, issuer: &AccountId) -> Self {
+	pub fn new(sig: &Vec<u8>, issuer: &AccountId) -> Self {
 		Proof {
-			created_timestamp: timestamp,
+			created_timestamp: now_as_millis(),
 			proof_type: ProofType::Ed25519Signature2020,
 			proof_purpose: PROOF_PURPOSE.to_string(),
 			proof_value: format!("{}", HexDisplay::from(sig)),
@@ -228,34 +229,21 @@ pub struct Credential {
 }
 
 impl Credential {
-	pub fn new_default(
-		who: &AccountId,
-		shard: &ShardIdentifier,
-		timestamp: u64,
-	) -> Result<Credential, Error> {
+	pub fn new_default(who: &AccountId, shard: &ShardIdentifier) -> Result<Credential, Error> {
 		let raw = include_str!("templates/credential.json");
-		let credential: Credential = Credential::from_template(raw, who, shard, timestamp)?;
+		let credential: Credential = Credential::from_template(raw, who, shard)?;
 		Ok(credential)
 	}
 
-	pub fn from_template(
-		s: &str,
-		who: &AccountId,
-		shard: &ShardIdentifier,
-		timestamp: u64,
-	) -> Result<Self, Error> {
-		debug!(
-			"generate credential from template, who: {:?}, timestamp: {}",
-			account_id_to_string(&who),
-			timestamp
-		);
+	pub fn from_template(s: &str, who: &AccountId, shard: &ShardIdentifier) -> Result<Self, Error> {
+		debug!("generate credential from template, who: {:?}", account_id_to_string(&who),);
 
 		let mut vc: Self =
 			serde_json::from_str(s).map_err(|err| Error::ParseError(format!("{}", err)))?;
 		vc.issuer.mrenclave = shard.encode().to_base58();
 		vc.issuer.name = LITENTRY_ISSUER_NAME.to_string();
 		vc.credential_subject.id = account_id_to_string(who);
-		vc.issuance_timestamp = timestamp;
+		vc.issuance_timestamp = now_as_millis();
 		vc.expiration_timestamp = None;
 		vc.credential_schema = None;
 		vc.proof = None;
@@ -266,8 +254,8 @@ impl Credential {
 		Ok(vc)
 	}
 
-	pub fn add_proof(&mut self, sig: &Vec<u8>, timestamp: u64, issuer: &AccountId) {
-		self.proof = Some(Proof::new(timestamp, sig, issuer));
+	pub fn add_proof(&mut self, sig: &Vec<u8>, issuer: &AccountId) {
+		self.proof = Some(Proof::new(sig, issuer));
 	}
 
 	fn generate_id(&mut self) {
@@ -482,6 +470,7 @@ impl Credential {
 	}
 }
 
+/// Assertion To-Date
 pub fn format_assertion_to_date() -> String {
 	#[cfg(feature = "std")]
 	{
@@ -513,7 +502,7 @@ mod tests {
 		let data = include_str!("templates/credential.json");
 		let shard = ShardIdentifier::default();
 
-		let vc = Credential::from_template(data, &who, &shard, 1u64).unwrap();
+		let vc = Credential::from_template(data, &who, &shard).unwrap();
 		assert!(vc.validate_unsigned().is_ok());
 		let id: String = vc.credential_subject.id.clone();
 		assert_eq!(id, account_id_to_string(&who));
@@ -530,8 +519,7 @@ mod tests {
 			let from_date = "2017-01-01".to_string();
 			let from_date_logic = AssertionLogic::new_item("$from_date", Op::LessThan, &from_date);
 
-			let mut credential_unsigned =
-				Credential::new_default(&who, &shard.clone(), 1u64).unwrap();
+			let mut credential_unsigned = Credential::new_default(&who, &shard.clone()).unwrap();
 			credential_unsigned.update_holder(false, &minimum_amount, &from_date);
 
 			let minimum_amount_logic =
@@ -549,8 +537,7 @@ mod tests {
 
 		{
 			let from_date = "2018-01-01".to_string();
-			let mut credential_unsigned =
-				Credential::new_default(&&who, &shard.clone(), 1u64).unwrap();
+			let mut credential_unsigned = Credential::new_default(&&who, &shard.clone()).unwrap();
 			credential_unsigned.update_holder(true, &minimum_amount, &from_date);
 
 			let minimum_amount_logic =
@@ -568,8 +555,7 @@ mod tests {
 
 		{
 			let from_date = "2017-01-01".to_string();
-			let mut credential_unsigned =
-				Credential::new_default(&who, &shard.clone(), 1u64).unwrap();
+			let mut credential_unsigned = Credential::new_default(&who, &shard.clone()).unwrap();
 			credential_unsigned.update_holder(true, &minimum_amount, &from_date);
 
 			let minimum_amount_logic =

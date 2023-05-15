@@ -39,12 +39,10 @@ pub fn build(
 	guild_id: ParameterString,
 	shard: &ShardIdentifier,
 	who: &AccountId,
-	timestamp: u64,
 ) -> Result<Credential> {
 	debug!(
-		"Assertion A2 build, who: {:?}, timestamp: {}, identities: {:?}",
+		"Assertion A2 build, who: {:?}, identities: {:?}",
 		account_id_to_string(&who),
-		timestamp,
 		identities
 	);
 
@@ -81,7 +79,7 @@ pub fn build(
 		}
 	}
 
-	match Credential::new_default(who, &shard.clone(), timestamp) {
+	match Credential::new_default(who, &shard.clone()) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_A2_SUBJECT_DESCRIPTION,
@@ -130,7 +128,7 @@ mod tests {
 		let who = AccountId::from([0; 32]);
 		let shard = ShardIdentifier::default();
 
-		let _ = build(identities, guild_id, &shard, &who, 1);
+		let _ = build(identities, guild_id, &shard, &who);
 		log::info!("assertion2 test");
 	}
 }

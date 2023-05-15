@@ -60,7 +60,6 @@ use crate::{
 			request_vc::RequestVC,
 			scheduled_enclave::{RemoveScheduledEnclave, UpdateScheduledEnclave},
 			set_user_shielding_key::SetUserShieldingKey,
-			timestamp,
 			verify_identity::VerifyIdentity,
 		},
 		shield_funds::ShieldFunds,
@@ -281,21 +280,9 @@ where
 		debug!("Scanning block {:?} for relevant xt", block_number);
 		let mut executed_calls = Vec::<H256>::new();
 
-		let mut timestamp = 0_u64;
 		// TODO: this logic might have better alternatives, see https://github.com/integritee-network/worker/issues/1156
-		for (index, xt_opaque) in block.extrinsics().iter().enumerate() {
+		for xt_opaque in block.extrinsics().iter() {
 			let encoded_xt_opaque = xt_opaque.encode();
-
-			if index == 0 {
-				match timestamp::decode(&mut encoded_xt_opaque.as_slice()) {
-					Ok(now) => timestamp = now,
-					Err(e) => {
-						log::warn!("fail to decode timestamp due to {:?} ", e);
-
-						break
-					},
-				}
-			}
 
 			// Found ShieldFunds extrinsic in block.
 			let shield_funds = ShieldFunds {};
@@ -313,9 +300,9 @@ where
 			// Found VerifyIdentity extrinsic
 			let verify_identity = VerifyIdentity { block_number: parentchain_block_number };
 			// Found RequestVC extrinsic
-			let request_vc = RequestVC { timestamp };
+			let request_vc = RequestVC;
 			// Found BatchAll extrinsic
-			let batch_all = BatchAll { block_number: parentchain_block_number, timestamp };
+			let batch_all = BatchAll { block_number: parentchain_block_number };
 			// Found UpdateScheduledEnclave extrinisc
 			let update_scheduled_enclave = UpdateScheduledEnclave {};
 			// Found RemoveScheduledEnclave extrinisc

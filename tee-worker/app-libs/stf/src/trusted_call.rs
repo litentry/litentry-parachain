@@ -126,7 +126,7 @@ pub enum TrustedCall {
 		H256,
 	),
 	verify_identity_runtime(AccountId, AccountId, Identity, ParentchainBlockNumber, H256),
-	request_vc(AccountId, AccountId, Assertion, ShardIdentifier, u64, H256),
+	request_vc(AccountId, AccountId, Assertion, ShardIdentifier, H256),
 	handle_vc_issued(AccountId, AccountId, Assertion, [u8; 32], [u8; 32], AesOutput, H256),
 	handle_imp_error(AccountId, Option<AccountId>, IMPError, H256),
 	handle_vcmp_error(AccountId, Option<AccountId>, VCMPError, H256),
@@ -158,7 +158,7 @@ impl TrustedCall {
 			TrustedCall::remove_identity_runtime(account, _, _, _) => account,
 			TrustedCall::verify_identity_preflight(account, _, _, _, _, _) => account,
 			TrustedCall::verify_identity_runtime(account, _, _, _, _) => account,
-			TrustedCall::request_vc(account, _, _, _, _, _) => account,
+			TrustedCall::request_vc(account, _, _, _, _) => account,
 			TrustedCall::set_challenge_code_runtime(account, _, _, _, _) => account,
 			TrustedCall::handle_vc_issued(account, _, _, _, _, _, _) => account,
 			TrustedCall::handle_imp_error(account, _, _, _) => account,
@@ -710,16 +710,11 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::request_vc(enclave_account, who, assertion, shard, timestamp, hash) => {
+			TrustedCall::request_vc(enclave_account, who, assertion, shard, hash) => {
 				// the user shielding key check is inside `Self::request_vc`
-				if let Err(e) = Self::request_vc(
-					enclave_account,
-					&shard,
-					who.clone(),
-					assertion,
-					timestamp,
-					hash,
-				) {
+				if let Err(e) =
+					Self::request_vc(enclave_account, &shard, who.clone(), assertion, hash)
+				{
 					add_call_from_vcmp_error(
 						calls,
 						node_metadata_repo,

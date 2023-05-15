@@ -37,9 +37,7 @@ use itp_utils::stringify::account_id_to_string;
 use log::*;
 use sp_runtime::traits::{AccountIdLookup, StaticLookup};
 
-pub(crate) struct RequestVC {
-	pub(crate) timestamp: u64,
-}
+pub(crate) struct RequestVC;
 
 impl RequestVC {
 	fn execute_internal<R, S, T, N>(
@@ -74,7 +72,6 @@ impl RequestVC {
 				account,
 				assertion.clone(),
 				*shard,
-				self.timestamp,
 				hash_of(extrinsic),
 			);
 			let signed_trusted_call =
