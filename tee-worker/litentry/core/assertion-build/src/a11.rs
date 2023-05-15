@@ -33,7 +33,7 @@ use log::*;
 use std::{string::ToString, vec, vec::Vec};
 
 const VC_A11_SUBJECT_DESCRIPTION: &str =
-	"Since when has the user been consistently holding a min amount {x} of ETH token";
+	"The user has been consistently holding at least {x} amount of tokens before 2023 Jan 1st 00:00:00 UTC on the supporting networks";
 const VC_A11_SUBJECT_TYPE: &str = "ETH Holding Assertion";
 const VC_A11_SUBJECT_TAG: [&str; 1] = ["Ethereum"];
 

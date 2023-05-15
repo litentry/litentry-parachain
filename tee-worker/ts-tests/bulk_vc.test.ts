@@ -9,6 +9,7 @@ import { blake2AsHex } from '@polkadot/util-crypto';
 import { assert } from 'chai';
 import { HexString } from '@polkadot/util/types';
 import { listenEvent, multiAccountTxSender } from './common/transactions';
+import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 const assertion = <Assertion>{
     A1: 'A1',
     A2: ['A2'],
@@ -40,7 +41,8 @@ describeLitentry('multiple accounts test', 10, async (context) => {
         });
     });
     step('send test token to each account', async () => {
-        const txs: any = [];
+        const txs: SubmittableExtrinsic<ApiTypes>[] = [];
+
         for (let i = 0; i < substrateSigners.length; i++) {
             //1 token
             const tx = context.api.tx.balances.transfer(substrateSigners[i].address, '1000000000000');

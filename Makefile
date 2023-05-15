@@ -215,6 +215,17 @@ clippyfix:
 cargofix:
 	cargo fix --allow-dirty --allow-staged --workspace --all-targets --all-features
 
+# shellcheck
+
+.PHONY: shellcheck ## check the shell scripts with WARNING level
+shellcheck:
+	@set -e
+	@echo "checking parachain scripts..."
+	@find scripts -name "*.sh" | xargs shellcheck -S warning
+	@echo "checking tee-worker scripts..."
+	@find tee-worker/scripts/litentry/ -name "*.sh" | xargs shellcheck -S warning
+	@echo "Ok"
+
 define pkgid
 $(shell cargo pkgid $1)
 endef

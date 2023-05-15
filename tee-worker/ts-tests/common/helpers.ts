@@ -3,7 +3,6 @@ import { u8aConcat, u8aToU8a } from '@polkadot/util';
 import { HexString } from '@polkadot/util/types';
 import { Keyring } from '@polkadot/api';
 import type { KeyringPair } from '@polkadot/keyring/types';
-import { EvmIdentity, LitentryIdentity, LitentryValidationData } from './type-definitions';
 
 //format and setup
 const keyring = new Keyring({ type: 'sr25519' });

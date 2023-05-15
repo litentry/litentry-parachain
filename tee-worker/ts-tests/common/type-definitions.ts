@@ -1,174 +1,34 @@
 import { ApiPromise, Keyring } from '@polkadot/api';
 import { KeyObject } from 'crypto';
 import { HexString } from '@polkadot/util/types';
-import WebSocketAsPromised = require('websocket-as-promised');
-import { KeyringPair } from '@polkadot/keyring/types';
+import WebSocketAsPromised from 'websocket-as-promised';
+import type { KeyringPair } from '@polkadot/keyring/types';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { Metadata } from '@polkadot/types';
-import { ethers } from 'ethers';
-export const teeTypes = {
-    WorkerRpcReturnString: {
-        vec: 'Bytes',
-    },
-    WorkerRpcReturnValue: {
-        value: 'Bytes',
-        do_watch: 'bool',
-        status: 'DirectRequestStatus',
-    },
-    TrustedOperation: {
-        _enum: {
-            indirect_call: '(TrustedCallSigned)',
-            direct_call: '(TrustedCallSigned)',
-            get: '(Getter)',
-        },
-    },
-    TrustedCallSigned: {
-        call: 'TrustedCall',
-        index: 'u32',
-        signature: 'MultiSignature',
-    },
-    Getter: {
-        _enum: {
-            public: '(PublicGetter)',
-            trusted: '(TrustedGetterSigned)',
-        },
-    },
-    PublicGetter: {
-        _enum: ['some_value'],
-    },
-    TrustedGetterSigned: {
-        getter: 'TrustedGetter',
-        signature: 'MultiSignature',
-    },
+import { Wallet } from 'ethers';
+import type {
+    SubstrateNetwork as SubNet,
+    Web2Network as Web2Net,
+    EvmNetwork as EvmNet,
+    DirectRequestStatus,
+} from '../interfaces/identity/types';
+import { default as teeTypes } from '../interfaces/identity/definitions';
 
-    /// important
-    TrustedGetter: {
-        _enum: {
-            free_balance: '(AccountId)',
-        },
-    },
-    /// important
-    TrustedCall: {
-        _enum: {
-            balance_set_balance: '(AccountId, AccountId, Balance, Balance)',
-            balance_transfer: '(AccountId, AccountId, Balance)',
-            balance_unshield: '(AccountId, AccountId, Balance, mrEnclaveIdentifier)',
-        },
-    },
-    DirectRequestStatus: {
-        _enum: [
-            //TODO support TrustedOperationStatus(TrustedOperationStatus)
-            'Ok',
-            'TrustedOperationStatus',
-            'Error',
-        ],
-    },
+export { teeTypes };
 
-    /// identity
-    LitentryIdentity: {
-        _enum: {
-            Substrate: 'SubstrateIdentity',
-            Evm: 'EvmIdentity',
-            Web2: 'Web2Identity',
-        },
-    },
-    SubstrateIdentity: {
-        network: 'SubstrateNetwork',
-        address: 'Address32',
-    },
-    EvmIdentity: {
-        network: 'EvmNetwork',
-        address: 'Address20',
-    },
-    Web2Identity: {
-        network: 'Web2Network',
-        address: 'IdentityString',
-    },
-    Address32: '[u8;32]',
-    Address20: '[u8;20]',
-    IdentityString: 'Vec<u8>',
-    Web2Network: {
-        _enum: ['Twitter', 'Discord', 'Github'],
-    },
-    SubstrateNetwork: {
-        _enum: ['Polkadot', 'Kusama', 'Litentry', 'Litmus', 'LitentryRococo', 'Khala', 'TestNet'],
-    },
-    EvmNetwork: {
-        _enum: ['Ethereum', 'BSC'],
-    },
-
-    /// Validation Data
-    LitentryValidationData: {
-        _enum: {
-            Web2Validation: 'Web2ValidationData',
-            Web3Validation: 'Web3ValidationData',
-        },
-    },
-    Web2ValidationData: {
-        _enum: {
-            Twitter: 'TwitterValidationData',
-            Discord: 'DiscordValidationData',
-        },
-    },
-    TwitterValidationData: {
-        tweet_id: 'Vec<u8>',
-    },
-    DiscordValidationData: {
-        channel_id: 'Vec<u8>',
-        message_id: 'Vec<u8>',
-        guild_id: 'Vec<u8>',
-    },
-    Web3ValidationData: {
-        _enum: {
-            Substrate: 'Web3CommonValidationData',
-            Evm: 'Web3CommonValidationData',
-        },
-    },
-    Web3CommonValidationData: {
-        message: 'Vec<u8>',
-        signature: 'IdentityMultiSignature',
-    },
-
-    IdentityMultiSignature: {
-        _enum: {
-            Ed25519: 'ed25519::Signature',
-            Sr25519: 'sr25519::Signature',
-            Ecdsa: 'ecdsa::Signature',
-            Ethereum: 'EthereumSignature',
-        },
-    },
-    EthereumSignature: '([u8; 65])',
-
-    IdentityGenericEvent: {
-        who: 'AccountId',
-        identity: 'LitentryIdentity',
-        id_graph: 'Vec<(LitentryIdentity, IdentityContext)>',
-    },
-    IdentityContext: {
-        metadata: 'Option<Vec<u8>>',
-        linking_request_block: 'Option<BlockNumber>',
-        verification_request_block: 'Option<BlockNumber>',
-        is_verified: 'bool',
-    },
-
-    // vc management
-    VCRequested: {
-        account: 'AccountId',
-        mrEnclave: 'mrEnclaveIdentifier',
-        assertion: 'Assertion',
-    },
-};
-
-export type WorkerRpcReturnValue = {
-    value: HexString;
-    do_watch: boolean;
-    status: string;
-};
+export type Web2Network = Web2Net['type'];
+export type SubstrateNetwork = SubNet['type'];
+export type EvmNetwork = EvmNet['type'];
 
 export type WorkerRpcReturnString = {
     vec: string;
 };
 
+export type WorkerRpcReturnValue = {
+    value: `0x${string}`;
+    do_watch: boolean;
+    status: DirectRequestStatus['type'];
+};
 export type EnclaveResult = {
     mrEnclave: `0x${string}`;
     shieldingKey: `0x${string}`;
@@ -181,13 +41,19 @@ export type PubicKeyJson = {
     e: Uint8Array;
 };
 
+interface EthersWalletItem {
+    [key: string]: Wallet;
+}
+interface SubstrateWalletItem {
+    [key: string]: KeyringPair;
+}
 export type IntegrationTestContext = {
     tee: WebSocketAsPromised;
     api: ApiPromise;
     teeShieldingKey: KeyObject;
     mrEnclave: HexString;
-    ethersWallet: any;
-    substrateWallet: any;
+    ethersWallet: EthersWalletItem;
+    substrateWallet: SubstrateWalletItem;
     metaData: Metadata;
     web3Signers: Web3Wallets[];
 };
@@ -198,6 +64,7 @@ export class AESOutput {
     nonce?: Uint8Array;
 }
 
+//identity types
 export type LitentryIdentity = {
     Substrate?: SubstrateIdentity;
     Evm?: EvmIdentity;
@@ -217,12 +84,6 @@ export type EvmIdentity = {
 export type Web2Identity = {
     network: Web2Network;
     address: string;
-};
-
-export type IdentityHandle = {
-    Address32?: HexString;
-    Address20?: HexString;
-    PlainString?: `0x${string}`;
 };
 
 export type LitentryValidationData = {
@@ -272,7 +133,7 @@ export type DiscordValidationData = {
 
 export type Web3Wallets = {
     substrateWallet: KeyringPair;
-    ethereumWallet: ethers.Wallet;
+    ethereumWallet: Wallet;
 };
 
 // export type DiscordValidationData = {}
@@ -281,10 +142,6 @@ export type Web3Network = {
     Substrate?: SubstrateNetwork;
     Evm?: EvmNetwork;
 };
-
-export type Web2Network = 'Twitter' | 'Discord' | 'Github';
-export type SubstrateNetwork = 'Polkadot' | 'Kusama' | 'Litentry' | 'Litmus' | 'LitentryRococo' | 'Khala' | 'TestNet';
-export type EvmNetwork = 'Ethereum' | 'BSC';
 
 export type IdentityGenericEvent = {
     who: HexString;
@@ -333,6 +190,13 @@ export type Assertion = {
 export type TransactionSubmit = {
     tx: SubmittableExtrinsic<ApiTypes>;
     nonce: number;
+};
+
+//call types
+export type RequestBody = {
+    id: number;
+    jsonrpc: string;
+    method: string;
 };
 
 export const JsonSchema = {
