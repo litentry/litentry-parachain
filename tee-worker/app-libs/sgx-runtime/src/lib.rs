@@ -274,6 +274,7 @@ impl pallet_imt::Config for Runtime {
 	type ManageOrigin = EnsureRoot<AccountId>;
 	type MaxMetadataLength = ConstU32<128>;
 	type MaxVerificationDelay = ConstU32<{ 30 * MINUTES }>;
+	type MaxIDGraphLength = ConstU32<64>;
 }
 
 // The plain sgx-runtime without the `evm-pallet`
