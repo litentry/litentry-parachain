@@ -35,8 +35,6 @@ docker compose up -d --build
 # otherwise `docker compose logs` could print empty output
 sleep 10
 
-echo "BANANA"
-docker compose ps --services --filter 'status=running'
 parachain_service=$(docker compose ps --services --filter 'status=running' | grep -F 'parachain-')
 
 print_divider
@@ -61,12 +59,8 @@ print_divider
 
 echo "waiting for parachain to finalize blocks ..."
 
-for round in $(seq 1 $WAIT_ROUNDS); do
-  echo "MANGO round $round; but first sleepies"
+for _ in $(seq 1 $WAIT_ROUNDS); do
   sleep $WAIT_INTERVAL_SECONDS
-  echo "MANGO round $round; waking from sleepies, Here come the logs:"
-  docker compose logs "$parachain_service" 2>&1 | grep -F '0 peers' 2>/dev/null | grep -F "finalized #1" || true
-  echo "MANGO end logs"
   if docker compose logs "$parachain_service" 2>&1 | grep -F '0 peers' 2>/dev/null | grep -Fq "finalized #1" 2>/dev/null; then
     echo "parachain finalized #1, all good."
     print_divider
