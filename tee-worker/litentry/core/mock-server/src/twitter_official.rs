@@ -60,7 +60,9 @@ where
 					users: vec![TwitterUser {
 						id: ids,
 						name: "mock_user".to_string(),
-						username: "mock_user".to_string(),
+						// intentionally return username with a different case, which shouldn't fail the verification
+						// see https://github.com/litentry/litentry-parachain/issues/1680
+						username: "Mock_User".to_string(),
 						public_metrics: None,
 					}],
 				};

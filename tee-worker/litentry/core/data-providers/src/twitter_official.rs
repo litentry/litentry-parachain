@@ -178,13 +178,9 @@ impl TwitterOfficialClient {
 			.get_with::<String, TwitterAPIV2Response<Tweet>>(path, query.as_slice())
 			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
 
-		if resp.data.is_none() {
-			return Err(Error::RequestError("tweet not found".to_string()))
-		}
+		let mut tweet = resp.data.ok_or(Error::RequestError("tweet not found".into()))?;
 
-		let mut tweet = resp.data.unwrap();
-
-		// have to replace user_id with includes -> users -> username, otherwise the handler verificaiton would fail
+		// have to replace user_id with includes -> users -> username, otherwise the handle verification would fail
 		if let Some(tweet_users) = resp.includes {
 			if tweet_users.users.is_empty() {
 				return Err(Error::RequestError("user not found from tweet".to_string()))
