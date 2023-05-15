@@ -47,6 +47,8 @@ use std::{format, prelude::v1::*, sync::Arc};
 
 #[cfg(feature = "evm")]
 use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
+use itp_types::{MrEnclave, SidechainBlockNumber};
+use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 
 #[cfg(feature = "evm")]
 use crate::evm_helpers::{create_code_hash, evm_create2_address, evm_create_address};
@@ -141,6 +143,7 @@ pub enum TrustedCall {
 	set_user_shielding_key_preflight(AccountId, AccountId, UserShieldingKeyType, H256),
 	set_challenge_code_runtime(AccountId, AccountId, Identity, ChallengeCode, H256),
 	send_erroneous_parentchain_call(AccountId),
+	set_scheduled_mrenclave(AccountId, SidechainBlockNumber, MrEnclave),
 }
 
 impl TrustedCall {
@@ -173,6 +176,7 @@ impl TrustedCall {
 			TrustedCall::handle_imp_error(account, ..) => account,
 			TrustedCall::handle_vcmp_error(account, ..) => account,
 			TrustedCall::send_erroneous_parentchain_call(account) => account,
+			TrustedCall::set_scheduled_mrenclave(account, ..) => account,
 		}
 	}
 
@@ -718,6 +722,12 @@ where
 				)));
 				Ok(())
 			},
+			TrustedCall::set_scheduled_mrenclave(_, bn, mrenclave) => {
+				GLOBAL_SCHEDULED_ENCLAVE
+					.update(bn, mrenclave)
+					.map_err(|_| StfError::SetScheduledMrEnclaveFailed)?;
+				Ok(())
+			},
 		}?;
 		Ok(())
 	}
@@ -748,6 +758,7 @@ where
 			TrustedCall::handle_vcmp_error(..) => debug!("No storage updates needed..."),
 			TrustedCall::send_erroneous_parentchain_call(..) =>
 				debug!("No storage updates needed..."),
+			TrustedCall::set_scheduled_mrenclave(..) => debug!("No storage updates needed..."),
 			#[cfg(feature = "evm")]
 			_ => debug!("No storage updates needed..."),
 		};
