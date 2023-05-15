@@ -87,56 +87,23 @@ impl TrustedCallSigned {
 		Ok((key, code))
 	}
 
-	pub fn remove_identity_runtime<NodeMetadataRepository>(
-		node_metadata_repo: Arc<NodeMetadataRepository>,
-		calls: &mut Vec<OpaqueCall>,
+	pub fn remove_identity_internal(
+		signer: AccountId,
 		who: AccountId,
 		identity: Identity,
-		hash: H256,
-	) -> StfResult<()>
-	where
-		NodeMetadataRepository: AccessNodeMetadata,
-		NodeMetadataRepository::MetadataType:
-			TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix,
-	{
-		let account = SgxParentchainTypeConverter::convert(who.clone());
-		if let Some(key) = IdentityManagement::user_shielding_keys(&who) {
-			match (IMTCall::remove_identity { who, identity: identity.clone() }
-				.dispatch_bypass_filter(RuntimeOrigin::root())
-				.map_err(|e| StfError::RemoveIdentityFailed(e.into())))
-			{
-				Ok(_) => {
-					debug!("pushing identity_removed event ...");
-					calls.push(OpaqueCall::from_tuple(&(
-						node_metadata_repo
-							.get_from_metadata(|m| m.identity_removed_call_indexes())??,
-						account,
-						aes_encrypt_default(&key, &identity.encode()),
-						hash,
-					)));
-				},
-				Err(e) => {
-					debug!("pushing error event ... error: {}", e);
-					add_call_from_imp_error(
-						calls,
-						node_metadata_repo,
-						Some(account),
-						e.to_imp_error(),
-						hash,
-					);
-				},
-			}
-		} else {
-			debug!("pushing error event ... error: UserShieldingKeyNotFound");
-			add_call_from_imp_error(
-				calls,
-				node_metadata_repo,
-				Some(account),
-				IMPError::RemoveIdentityFailed(ErrorDetail::UserShieldingKeyNotFound),
-				hash,
-			);
-		}
-		Ok(())
+	) -> StfResult<UserShieldingKeyType> {
+		ensure!(
+			is_authorised_signer(&signer, &who),
+			StfError::RemoveIdentityFailed(ErrorDetail::UnauthorisedSender)
+		);
+		let key = IdentityManagement::user_shielding_keys(&who)
+			.ok_or(StfError::RemoveIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
+
+		IMTCall::remove_identity { who, identity: identity.clone() }
+			.dispatch_bypass_filter(RuntimeOrigin::root())
+			.map_err(|e| StfError::RemoveIdentityFailed(e.into()))?;
+
+		Ok(key)
 	}
 
 	#[allow(clippy::too_many_arguments)]
