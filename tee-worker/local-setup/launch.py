@@ -99,8 +99,8 @@ def generate_json_config_file():
 
 def generate_config_file():
     config = '''NODE_ENV = local
-WORKER_END_POINT = 'ws://localhost:{}'
-SUBSTRATE_END_POINT = 'ws://localhost:{}'
+WORKER_END_POINT = wss://localhost:{}
+SUBSTRATE_END_POINT = "ws://localhost:{}"
 ID_HUB_URL='http://localhost:3000' '''
 
     # Get the value of the environment variables or use default values
