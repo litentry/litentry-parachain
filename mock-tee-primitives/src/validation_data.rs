@@ -17,13 +17,12 @@
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-use crate::ethereum_signature::EthereumSignature;
+use crate::{EthereumSignature, MaxStringLength};
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_core::{ecdsa, ed25519, sr25519};
-use sp_runtime::{traits::ConstU32, BoundedVec};
+use sp_runtime::BoundedVec;
 
-pub type MaxStringLength = ConstU32<64>;
 pub type ValidationString = BoundedVec<u8, MaxStringLength>;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
