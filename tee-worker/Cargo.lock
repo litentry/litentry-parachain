@@ -2826,6 +2826,7 @@ dependencies = [
  "itp-storage",
  "itp-types",
  "itp-utils",
+ "lc-scheduled-enclave",
  "lc-stf-task-sender",
  "litentry-primitives",
  "log 0.4.17",

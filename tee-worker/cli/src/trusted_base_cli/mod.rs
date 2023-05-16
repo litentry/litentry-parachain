@@ -23,6 +23,7 @@ use crate::{
 			id_graph_stats::IDGraphStats,
 			send_erroneous_parentchain_call::SendErroneousParentchainCallCommand,
 			set_challenge_code::SetChallengeCodeCommand,
+			set_scheduled_mrenclave::SetScheduledMrenclaveCommand,
 			set_user_shielding_key::SetUserShieldingKeyCommand,
 			user_shielding_key::UserShiledingKeyCommand, verify_identity::VerifyIdentityCommand,
 		},
@@ -83,6 +84,8 @@ pub enum TrustedBaseCommand {
 
 	/// get count of all keys account + identity in the IDGraphs
 	IDGraphStats(IDGraphStats),
+
+	SetScheduledMrenclave(SetScheduledMrenclaveCommand),
 }
 
 impl TrustedBaseCommand {
@@ -103,6 +106,7 @@ impl TrustedBaseCommand {
 			TrustedBaseCommand::GetStorage(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::SendErroneousParentchainCall(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::IDGraphStats(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::SetScheduledMrenclave(cmd) => cmd.run(cli, trusted_cli),
 		}
 	}
 }
