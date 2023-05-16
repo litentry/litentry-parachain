@@ -143,10 +143,10 @@ def main(processes, config_path, parachain_type, offset):
     # development environment
     if parachain_type == "dev":
         load_dotenv('.env.dev')
+        offset_port(offset)
         check_all_ports_and_reallocate()
         generate_json_config_file()
         generate_config_file()
-        offset_port(offset)
         config['workers'][0]['flags'] = [flag.replace('$CollatorWSPort', os.environ.get('CollatorWSPort', '')) for flag in config['workers'][0]['flags']]
         config['workers'][0]['flags'] = [flag.replace('$TrustedWorkerPort', os.environ.get('TrustedWorkerPort', '')) for flag in config['workers'][0]['flags']]
         config['workers'][0]['flags'] = [flag.replace('$UntrustedWorkerPort', os.environ.get('UntrustedWorkerPort', '')) for flag in config['workers'][0]['flags']]
@@ -158,7 +158,7 @@ def main(processes, config_path, parachain_type, offset):
         print('----------------------------------------')
 
 
-c = pycurl.Curl()
+    c = pycurl.Curl()
     worker_i = 0
     worker_num = len(config["workers"])
     for w_conf in config["workers"]:
