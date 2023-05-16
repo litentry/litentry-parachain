@@ -16,6 +16,14 @@ function usage() {
 	echo "For worker : $0 w worker-new-commit"
 }
 
+function check_upstream() {
+	local TARGET=$1
+	local UPSTREAM_URL="$UPSTREAM_URL_PREFIX/$TARGET"
+	if [ "$(git remote get-url "upstream_$TARGET" 2>/dev/null)" != "$UPSTREAM_URL" ]; then
+		git remote add "upstream_$TARGET" "$UPSTREAM_URL"
+	fi
+}
+
 # This function generates 9 patches for the diffs between commit-A and commit-B
 # of the upstream repo, where
 # commit-A: the commit recorded in ./<TARGET_DIR>/upstream_commit
@@ -97,14 +105,14 @@ function generate_pallets_patch() {
 	local pallets=("parentchain" "sidechain" "teeracle" "teerex" "test-utils")
 	for p in "${pallets[@]}"; do
 		echo "generating $p.patch"
-		git diff "$OLD_COMMIT" HEAD -- "$p" > "$TARGET_DIR/pallets_$p.patch"
+		git diff --binary "$OLD_COMMIT" HEAD -- "$p" > "$TARGET_DIR/pallets_$p.patch"
 	done
 
 	# primitives
 	local primitives=("sidechain" "teeracle" "teerex" "common")
 	for p in "${primitives[@]}"; do
 		echo "generating primitives_$p.patch"
-		git diff "$OLD_COMMIT" HEAD -- primitives/"$p" > "$TARGET_DIR/primitives_$p.patch"
+		git diff --binary "$OLD_COMMIT" HEAD -- primitives/"$p" > "$TARGET_DIR/primitives_$p.patch"
 	done
 
 	echo ">>> generating patch done."
@@ -123,9 +131,9 @@ function apply_pallets_tips() {
 	echo "upstream.patch(s) are generated."
 	echo "To apply it, RUN FROM $ROOTDIR:"
 	echo " # Pallet patches:"
-	echo " git apply -p1 -3 --directory=pallets $ROOTDIR/pallets/pallets_xxx.patch"
+	echo " git apply --allow-empty -p1 -3 --directory=pallets $ROOTDIR/pallets/pallets_xxx.patch"
 	echo " # Primitive patches:"
-	echo " git apply -p1 -3 $ROOTDIR/pallets/primitives_xxx.patch"
+	echo " git apply --allow-empty -p1 -3 $ROOTDIR/pallets/primitives_xxx.patch"
 
 	echo ""
 	echo "after that, please:"
@@ -161,10 +169,12 @@ NEW_COMMIT=$2
 OPT="$1"
 case "$OPT" in
 	p)
+		check_upstream "pallets"
 		generate_pallets_patch "$@"
 		apply_pallets_tips
 		;;
 	w)
+		check_upstream "worker"
 		generate_worker_patch "$@"
 		apply_woker_tips
 		;;
