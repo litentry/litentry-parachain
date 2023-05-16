@@ -72,7 +72,7 @@ def reallocate_ports(env_name, port):
     print("Port for {} changed to: {}".format(env_name, os.environ.get(env_name)))
 
 # Function to iterate over all ports and automatically reallocate
-def check_all_ports():
+def check_all_ports_and_reallocate():
     for x in PORTS:
         if is_port_open(os.environ.get(x)):
             continue
@@ -82,12 +82,55 @@ def check_all_ports():
     print("All Preliminary Port Checks Completed")
 
 
+def generate_json_config_file():
+    data = {
+        "eth_address": "[0x4d88dc5d528a33e4b8be579e9476715f60060582]",
+        "private_key": "0xe82c0c4259710bb0d6cf9f9e8d0ad73419c1278a14d375e5ca691e7618103011",
+        "ocw_account": "5FEYX9NES9mAJt1Xg4WebmHWywxyeGQK8G3oEBXtyfZrRePX",
+        "parachain_ws": "ws://localhost:" + os.environ.get("CollatorWSPort", "9944"),
+        "relaychain_ws": "ws://localhost:" + os.environ.get("AliceWSPort", "9946")
+    }
+    file_path = "../ts-tests/config.local.json"
+
+    with open(file_path, "w") as json_file:
+        json.dump(data, json_file, indent=4)
+
+    print("Config data has been written to", file_path)
+
+import os
+
+def generate_config_file():
+    config = '''NODE_ENV = local
+WORKER_END_POINT = ws://localhost:{}
+SUBSTRATE_END_POINT = ws://localhost:{}
+ID_HUB_URL='http://localhost:3000'''
+
+    # Get the value of the environment variables or use default values
+    worker_end_point = os.environ.get("TrustedWorkerPort", "2000")
+    substrate_end_point = os.environ.get("CollatorWSPort", "9944")
+
+    # Replace the placeholders with the environment variable values
+    config = config.replace("{}", worker_end_point, 1)
+    config = config.replace("{}", substrate_end_point, 1)
+
+    file_path = "ts-tests/.env.local"
+
+    with open(file_path, "w") as config_file:
+        config_file.write(config)
+
+    print("Configuration has been written to", file_path)
+
+
+
 
 def main(processes, config_path, parachain_type):
     ## Load environment file
     load_dotenv('.env')
     ## Check Ports and Automatically Reallocate
     check_all_ports()
+    generate_json_config_file()
+    generate_config_file()
+
 
     print('Starting litentry-parachain in background')
 
