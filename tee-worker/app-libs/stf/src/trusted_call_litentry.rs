@@ -67,6 +67,7 @@ impl TrustedCallSigned {
 
 		let key = IdentityManagement::user_shielding_keys(&who)
 			.ok_or(StfError::CreateIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
+
 		IMTCall::create_identity {
 			who: who.clone(),
 			identity: identity.clone(),
@@ -119,11 +120,10 @@ impl TrustedCallSigned {
 			is_authorised_signer(&signer, &who),
 			StfError::VerifyIdentityFailed(ErrorDetail::UnauthorisedSender)
 		);
-		let _ = IdentityManagement::user_shielding_keys(&who)
-			.ok_or(StfError::VerifyIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
-
 		let code = IdentityManagement::challenge_codes(&who, &identity)
 			.ok_or(StfError::VerifyIdentityFailed(ErrorDetail::ChallengeCodeNotFound))?;
+		let _ = IdentityManagement::user_shielding_keys(&who)
+			.ok_or(StfError::VerifyIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
 
 		let request: RequestType = IdentityVerificationRequest {
 			shard: *shard,
@@ -152,9 +152,11 @@ impl TrustedCallSigned {
 			is_authorised_signer(&signer, &who),
 			StfError::RequestVCFailed(assertion, ErrorDetail::UnauthorisedSender)
 		);
+
 		let _ = IdentityManagement::user_shielding_keys(&who).ok_or_else(|| {
 			StfError::RequestVCFailed(assertion.clone(), ErrorDetail::UserShieldingKeyNotFound)
 		})?;
+
 		let id_graph = IMT::get_id_graph(&who);
 		let vec_identity: Vec<Identity> = id_graph
 			.into_iter()
@@ -186,6 +188,7 @@ impl TrustedCallSigned {
 		// important! The signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
 		ensure_enclave_signer_account(&signer)
 			.map_err(|_| StfError::VerifyIdentityFailed(ErrorDetail::UnauthorisedSender))?;
+
 		let key = IdentityManagement::user_shielding_keys(&who)
 			.ok_or(StfError::VerifyIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
 
@@ -214,8 +217,10 @@ impl TrustedCallSigned {
 		ensure_enclave_signer_account(&signer).map_err(|_| {
 			StfError::RequestVCFailed(assertion.clone(), ErrorDetail::UnauthorisedSender)
 		})?;
+
 		let key = IdentityManagement::user_shielding_keys(&who)
 			.ok_or(StfError::RequestVCFailed(assertion, ErrorDetail::UserShieldingKeyNotFound))?;
+
 		Ok(key)
 	}
 

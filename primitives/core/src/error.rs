@@ -34,11 +34,11 @@ pub enum ErrorDetail {
 	UnauthorisedSender,
 	// generic error when executing STF, the `ErrorString` should indicate the actual reason
 	StfError(ErrorString),
-	// error when sending stf request to the receiver
+	// error when sending stf request to the receiver fails
 	SendStfRequestFailed,
-	// error when challenge code not found
+	// error when challenge code can not found
 	ChallengeCodeNotFound,
-	// error when user shielding key not found
+	// error when user shielding key can not found
 	UserShieldingKeyNotFound,
 	// generic parse error, can be caused by UTF8/JSON serde..
 	ParseError,
