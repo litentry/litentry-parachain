@@ -127,7 +127,7 @@ def main(processes, config_path, parachain_type):
     ## Load environment file
     load_dotenv('.env')
     ## Check Ports and Automatically Reallocate
-    check_all_ports()
+    check_all_ports_and_reallocate()
     generate_json_config_file()
     generate_config_file()
 
