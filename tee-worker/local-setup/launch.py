@@ -30,7 +30,7 @@ import socket
 log_dir = 'log'
 mkdir_p(log_dir)
 
-OFFSET=10
+OFFSET=100
 PORTS = ['AliceWSPort', 'AliceRPCPort', 'AlicePort', 'BobWSPort', 'BobRPCPort', 'BobPort', 'CollatorWSPort', 'CollatorRPCPort', 'CollatorPort', 'TrustedWorkerPort', 'UntrustedWorkerPort', 'MuRaPort', 'UntrustedHttpPort']
 
 def setup_worker(work_dir: str, source_dir: str, std_err: Union[None, int, IO]):
@@ -97,13 +97,11 @@ def generate_json_config_file():
 
     print("Config data has been written to", file_path)
 
-import os
-
 def generate_config_file():
     config = '''NODE_ENV = local
-WORKER_END_POINT = ws://localhost:{}
-SUBSTRATE_END_POINT = ws://localhost:{}
-ID_HUB_URL='http://localhost:3000'''
+WORKER_END_POINT = 'ws://localhost:{}'
+SUBSTRATE_END_POINT = 'ws://localhost:{}'
+ID_HUB_URL='http://localhost:3000' '''
 
     # Get the value of the environment variables or use default values
     worker_end_point = os.environ.get("TrustedWorkerPort", "2000")
@@ -120,27 +118,18 @@ ID_HUB_URL='http://localhost:3000'''
 
     print("Configuration has been written to", file_path)
 
+def offset_port(offset):
+    for x in PORTS:
+        port = os.environ.get(x)
+        new_port = int(port) + int(offset)
+        os.environ[x] = str(new_port)
 
 
-
-def main(processes, config_path, parachain_type):
-    ## Load environment file
-    load_dotenv('.env')
-    ## Check Ports and Automatically Reallocate
-    check_all_ports_and_reallocate()
-    generate_json_config_file()
-    generate_config_file()
-
-
+def main(processes, config_path, parachain_type, offset):
     print('Starting litentry-parachain in background')
 
     with open(config_path) as config_file:
         config = json.load(config_file)
-        config['workers'][0]['flags'] = [flag.replace('$CollatorWSPort', os.environ.get('CollatorWSPort', '')) for flag in config['workers'][0]['flags']]
-        config['workers'][0]['flags'] = [flag.replace('$TrustedWorkerPort', os.environ.get('TrustedWorkerPort', '')) for flag in config['workers'][0]['flags']]
-        config['workers'][0]['flags'] = [flag.replace('$UntrustedWorkerPort', os.environ.get('UntrustedWorkerPort', '')) for flag in config['workers'][0]['flags']]
-        config['workers'][0]['flags'] = [flag.replace('$MuRaPort', os.environ.get('MuRaPort', '')) for flag in config['workers'][0]['flags']]
-        config['workers'][0]['flags'] = [flag.replace('$UntrustedHttpPort', os.environ.get('UntrustedHttpPort', '')) for flag in config['workers'][0]['flags']]
 
     # Litentry
     if parachain_type == "local" :
@@ -151,7 +140,25 @@ def main(processes, config_path, parachain_type):
         print('Starting litentry-parachain done')
         print('----------------------------------------')
 
-    c = pycurl.Curl()
+    # development environment
+    if parachain_type == "dev":
+        load_dotenv('.env.dev')
+        check_all_ports_and_reallocate()
+        generate_json_config_file()
+        generate_config_file()
+        offset_port(offset)
+        config['workers'][0]['flags'] = [flag.replace('$CollatorWSPort', os.environ.get('CollatorWSPort', '')) for flag in config['workers'][0]['flags']]
+        config['workers'][0]['flags'] = [flag.replace('$TrustedWorkerPort', os.environ.get('TrustedWorkerPort', '')) for flag in config['workers'][0]['flags']]
+        config['workers'][0]['flags'] = [flag.replace('$UntrustedWorkerPort', os.environ.get('UntrustedWorkerPort', '')) for flag in config['workers'][0]['flags']]
+        config['workers'][0]['flags'] = [flag.replace('$MuRaPort', os.environ.get('MuRaPort', '')) for flag in config['workers'][0]['flags']]
+        config['workers'][0]['flags'] = [flag.replace('$UntrustedHttpPort', os.environ.get('UntrustedHttpPort', '')) for flag in config['workers'][0]['flags']]
+        run(['./scripts/litentry/start_parachain.sh'], check=True)
+
+        print('Starting litentry-parachain done')
+        print('----------------------------------------')
+
+
+c = pycurl.Curl()
     worker_i = 0
     worker_num = len(config["workers"])
     for w_conf in config["workers"]:
@@ -203,10 +210,12 @@ def main(processes, config_path, parachain_type):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run a setup consisting of a node and some workers')
     parser.add_argument('config', type=str, help='Config for the node and workers')
-    parser.add_argument('parachain', nargs='?', default="local", type=str, help='Config for parachain selection: local / remote')
+    parser.add_argument('parachain', nargs='?', default="local", type=str, help='Config for parachain selection: local / remote / dev')
+    parser.add_argument('offset', nargs='?', default="0", type=int, help='offset for port')
     args = parser.parse_args()
+
 
     process_list = []
     killer = GracefulKiller(process_list, args.parachain)
-    if main(process_list, args.config, args.parachain) == 0:
+    if main(process_list, args.config, args.parachain, args.offset) == 0:
         killer.exit_gracefully()
