@@ -24,8 +24,9 @@
 	"dependencies": {
 		"@noble/ed25519": "^1.7.3",
 		"@polkadot/api": "^10.3.4",
-		"@polkadot/types": "^10.3.4",
 		"@polkadot/keyring": "^12.1.2",
+		"@polkadot/typegen": "^10.7.1",
+		"@polkadot/types": "^10.3.4",
 		"add": "^2.0.6",
 		"ajv": "^8.12.0",
 		"chai": "^4.3.6",
@@ -40,7 +41,6 @@
 	},
 	"devDependencies": {
 		"@ethersproject/providers": "^5.7.2",
-		"@polkadot/typegen": "^9.14.2",
 		"@types/chai": "^4.3.3",
 		"@types/mocha": "^10.0.0",
 		"@types/ws": "^8.5.3",

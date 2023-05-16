@@ -28,37 +28,6 @@ import type {
 } from '@polkadot/types-codec';
 import type { AnyNumber, IMethod, ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, Call, H256, MultiAddress, Perbill, Percent } from '@polkadot/types/interfaces/runtime';
-import type {
-    CorePrimitivesAssertion,
-    CorePrimitivesErrorImpError,
-    CorePrimitivesErrorVcmpError,
-    CorePrimitivesKeyAesOutput,
-    CumulusPrimitivesParachainInherentParachainInherentData,
-    FrameSupportPreimagesBounded,
-    PalletAssetManagerAssetMetadata,
-    PalletDemocracyConviction,
-    PalletDemocracyMetadataOwner,
-    PalletDemocracyVoteAccountVote,
-    PalletExtrinsicFilterOperationalMode,
-    PalletIdentityBitFlags,
-    PalletIdentityIdentityInfo,
-    PalletIdentityJudgement,
-    PalletMultisigTimepoint,
-    PalletVestingVestingInfo,
-    RococoParachainRuntimeOriginCaller,
-    RococoParachainRuntimeProxyType,
-    RococoParachainRuntimeSessionKeys,
-    RuntimeCommonXcmImplCurrencyId,
-    SpWeightsWeightV2Weight,
-    SubstrateFixedFixedU64,
-    TeerexPrimitivesRequest,
-    XcmV3MultiLocation,
-    XcmV3WeightLimit,
-    XcmVersionedMultiAsset,
-    XcmVersionedMultiAssets,
-    XcmVersionedMultiLocation,
-    XcmVersionedXcm,
-} from '@polkadot/types/lookup';
 
 export type __AugmentedSubmittable = AugmentedSubmittable<() => unknown>;
 export type __SubmittableExtrinsic<ApiType extends ApiTypes> = SubmittableExtrinsic<ApiType>;
