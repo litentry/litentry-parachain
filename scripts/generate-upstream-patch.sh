@@ -127,15 +127,17 @@ function apply_pallets_tips() {
 	echo "upstream_commit(s) are updated."
 	echo "upstream.patch(s) are generated."
 	echo "To apply it, RUN FROM $ROOTDIR:"
-    echo "  pallets   > git apply -p1 -3 --directory=pallets $ROOTDIR/pallets/pallets_xxx.patch"
-	echo "  primitives> git apply -p1 -3 $ROOTDIR/pallets/primitives_xxx.patch"
+	echo " # Pallet patches:"
+    echo " git apply -p1 -3 --directory=pallets $ROOTDIR/pallets/pallets_xxx.patch"
+	echo " # Primitive patches:"
+	echo " git apply -p1 -3 $ROOTDIR/pallets/primitives_xxx.patch"
 
-    echo ""
+	echo ""
 	echo "after that, please:"
 	echo "- pay special attention: "
-    echo "  * ALL changes/conflicts from pallets/upstream.patch should ONLY apply into:"
-    echo "    - pallets/(parentchain, sidechain, teeracle, teerex, test-utils)"
-    echo "    - primitives/(common, sidechain, teeracle, teerex)"
+	echo "  * ALL changes/conflicts from pallets_xxx.patch should ONLY apply into:"
+	echo "    - pallets/(parentchain, sidechain, teeracle, teerex, test-utils)"
+	echo "    - primitives/(common, sidechain, teeracle, teerex)"
 }
 
 function apply_woker_tips() {
@@ -156,43 +158,24 @@ function apply_woker_tips() {
     echo "- apply the changes to $ROOTDIR/.github/workflows/tee-worker-ci.yml"
 }
 
-OPT="$1"
-case "$OPT" in
-    p)
-        has_pallets=true ;;
-    w)
-        has_worker=true ;;
-    *)
-        usage; exit 1 ;;
-esac
-
 if [ -z "$2" ]; then
     usage; exit 1
 fi
 NEW_COMMIT=$2
 
-HAS_PALLETS=${has_pallets:-false}
-HAS_WORKER=${has_worker:-false}
+OPT="$1"
+case "$OPT" in
+    p)
+        generate_pallets_patch "$@"
+		apply_pallets_tips
+		;;
+    w)
+        generate_worker_patch "$@"
+		apply_woker_tips
+		;;
+    *)
+        usage; exit 1 ;;
+esac
 
-if [ $HAS_PALLETS == "true" ] && [ $HAS_WORKER == "true" ]
-then
-    echo "***********************************************************************"
-    echo "It is HIGHLY RECOMMENDED to apply patch and commit separately."
-    echo "If trapped in git am session, don't panic. Just resolve any conflicts and commit as usual."
-    echo "And abort the am session at the end: git am --abort"
-    echo "***********************************************************************"
 
-    exit 1
-fi
 
-if [[ $HAS_PALLETS == "true" ]]
-then
-	generate_pallets_patch "$@"
-    apply_pallets_tips
-fi
-
-if [[ $HAS_WORKER == "true" ]]
-then
-    generate_worker_patch "$@"
-    apply_woker_tips
-fi
