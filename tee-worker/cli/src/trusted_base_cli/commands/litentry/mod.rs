@@ -17,6 +17,7 @@
 pub mod id_graph_stats;
 pub mod send_erroneous_parentchain_call;
 pub mod set_challenge_code;
+pub mod set_scheduled_mrenclave;
 pub mod set_user_shielding_preflight;
 pub mod user_shielding_key;
 pub mod verify_identity_preflight;

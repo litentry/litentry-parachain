@@ -89,6 +89,7 @@ pub enum StfError {
 	VerifyIdentityFailed(ErrorDetail),
 	#[display(fmt = "RequestVCFailed: {:?} {:?}", _0, _1)]
 	RequestVCFailed(Assertion, ErrorDetail),
+	SetScheduledMrEnclaveFailed,
 }
 
 impl From<MetadataError> for StfError {
