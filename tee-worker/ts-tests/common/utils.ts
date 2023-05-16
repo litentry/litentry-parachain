@@ -24,7 +24,6 @@ import { blake2AsHex, cryptoWaitReady, xxhashAsU8a } from '@polkadot/util-crypto
 import { Metadata } from '@polkadot/types';
 import { SiLookupTypeId } from '@polkadot/types/interfaces';
 import { KeyringPair } from '@polkadot/keyring/types';
-import { Codec } from '@polkadot/types/types';
 import { HexString } from '@polkadot/util/types';
 import { hexToU8a, u8aToHex, u8aConcat } from '@polkadot/util';
 import { KeyObject } from 'crypto';
@@ -353,18 +352,16 @@ export async function buildStorageHelper(
     if (!storageEntry) {
         throw new Error('Can not find the storage entry from metadata');
     }
-    let storageKey, valueType;
+    let storageKey;
 
     if (storageEntry.type.isPlain) {
         storageKey = buildStorageKey(metadata, prefix, method);
-        valueType = metadata.registry.createLookupType(storageEntry.type.asPlain);
     } else if (storageEntry.type.isMap) {
-        const { hashers, key, value } = storageEntry.type.asMap;
+        const { hashers, key } = storageEntry.type.asMap;
         if (input.length != hashers.length) {
             throw new Error('The `input` param is not correct');
         }
         storageKey = buildStorageKey(metadata, prefix, method, key, hashers, input);
-        valueType = metadata.registry.createLookupType(value);
     } else {
         throw new Error('Only support plain and map type');
     }
@@ -751,7 +748,11 @@ export async function assertInitialIDGraphCreated(api: ApiPromise, signer: Keyri
     // check identity in idgraph
     const expected_identity = api.createType(
         'LitentryIdentity',
-        await buildIdentityHelper(u8aToHex(signer.addressRaw), 'LitentryRococo', 'Substrate')
+        await buildIdentityHelper(
+            u8aToHex(signer.addressRaw),
+            process.env.NODE_ENV === 'local' ? 'TestNet' : 'LitentryRococo',
+            'Substrate'
+        )
     ) as LitentryIdentity;
     assert.isTrue(isEqual(event.idGraph[0][0], expected_identity));
     // check identityContext in idgraph

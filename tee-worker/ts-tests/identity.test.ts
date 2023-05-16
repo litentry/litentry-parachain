@@ -115,7 +115,7 @@ describeLitentry('Test Identity', 0, (context) => {
         // the main address should be already inside the IDGraph
         const main_identity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.alice.addressRaw),
-            'LitentryRococo',
+            process.env.NODE_ENV === 'local' ? 'TestNet' : 'LitentryRococo',
             'Substrate'
         );
         const identity_hex = context.api.createType('LitentryIdentity', main_identity).toHex();
@@ -570,7 +570,7 @@ describeLitentry('Test Identity', 0, (context) => {
         // remove prime identity
         const substratePrimeIdentity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.alice.addressRaw),
-            'LitentryRococo',
+            process.env.NODE_ENV === 'local' ? 'TestNet' : 'LitentryRococo',
             'Substrate'
         );
 
