@@ -643,7 +643,9 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('set error user shielding key', async function () {
-        const error_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, hexToU8a(errorAesKey)).toString('hex');
+        const error_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, hexToU8a(errorAesKey)).toString(
+            'hex'
+        );
         const error_tx = context.api.tx.identityManagement.setUserShieldingKey(
             context.mrEnclave,
             `0x${error_ciphertext}`

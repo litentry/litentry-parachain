@@ -1,15 +1,16 @@
 import { step } from 'mocha-steps';
 import { checkVc, describeLitentry, encryptWithTeeShieldingKey } from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
-import { ethers } from 'ethers';
-import { u8aToHex } from '@polkadot/util';
-import { Assertion, IndexingNetwork, TransactionSubmit } from './common/type-definitions';
+import { u8aToHex, hexToU8a } from '@polkadot/util';
+import { Assertion, BatchCall, IndexingNetwork, TransactionSubmit } from './common/type-definitions';
 import { handleVcEvents } from './common/utils';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import { assert } from 'chai';
 import { HexString } from '@polkadot/util/types';
 import { listenEvent, multiAccountTxSender } from './common/transactions';
-import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
+// import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
+import { Call } from '@polkadot/types/interfaces/types';
+import { Vec } from '@polkadot/types';
 const assertion = <Assertion>{
     A1: 'A1',
     A2: ['A2'],
@@ -28,7 +29,6 @@ const assertion = <Assertion>{
 describeLitentry('multiple accounts test', 10, async (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     var substrateSigners: KeyringPair[] = [];
-    var ethereumSigners: ethers.Wallet[] = [];
     var vcIndexList: HexString[] = [];
     // If want to test other assertions with multiple accounts,just need to make changes here.
     let assertion_type = assertion.A1;
@@ -36,27 +36,24 @@ describeLitentry('multiple accounts test', 10, async (context) => {
         substrateSigners = context.web3Signers.map((web3Signer) => {
             return web3Signer.substrateWallet;
         });
-        ethereumSigners = context.web3Signers.map((web3Signer) => {
-            return web3Signer.ethereumWallet;
-        });
     });
     step('send test token to each account', async () => {
-        const txs: SubmittableExtrinsic<ApiTypes>[] = [];
-
+        //batch: (calls: Vec<Call> | (string | Uint8Array | IMethod<AnyTuple, any> | Call)[])
+        const txs: BatchCall = [];
         for (let i = 0; i < substrateSigners.length; i++) {
             //1 token
             const tx = context.api.tx.balances.transfer(substrateSigners[i].address, '1000000000000');
 
             txs.push(tx);
         }
-        await context.api.tx.utility.batch(txs).signAndSend(context.substrateWallet.alice);
+        await context.api.tx.utility.batch(txs as Vec<Call>).signAndSend(context.substrateWallet.alice);
         await listenEvent(context.api, 'balances', ['Transfer'], txs.length, [
             u8aToHex(context.substrateWallet.alice.addressRaw),
         ]);
     });
     //test with multiple accounts
     step('test set usershieldingkey with multiple accounts', async () => {
-        const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, aesKey).toString('hex');
+        const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, hexToU8a(aesKey)).toString('hex');
         let txs: TransactionSubmit[] = [];
         for (let i = 0; i < substrateSigners.length; i++) {
             const tx = context.api.tx.identityManagement.setUserShieldingKey(context.mrEnclave, `0x${ciphertext}`);
@@ -72,7 +69,7 @@ describeLitentry('multiple accounts test', 10, async (context) => {
     step('test requestVc with multiple accounts', async () => {
         let txs: TransactionSubmit[] = [];
         for (let i = 0; i < substrateSigners.length; i++) {
-            const tx = context.api.tx.vcManagement.requestVc(context.mrEnclave, assertion_type);
+            const tx = context.api.tx.vcManagement.requestVc(context.mrEnclave, assertion_type!);
             const nonce = (await context.api.rpc.system.accountNextIndex(substrateSigners[i].address)).toNumber();
             txs.push({ tx, nonce });
         }

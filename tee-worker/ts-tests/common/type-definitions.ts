@@ -1,29 +1,33 @@
-import { ApiPromise, Keyring } from '@polkadot/api';
+import { ApiPromise } from '@polkadot/api';
 import { KeyObject } from 'crypto';
 import { HexString } from '@polkadot/util/types';
 import WebSocketAsPromised from 'websocket-as-promised';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
-import { Metadata } from '@polkadot/types';
+import { Metadata, Vec } from '@polkadot/types';
 import { Wallet } from 'ethers';
 import type {
     SubstrateNetwork as SubNet,
     Web2Network as Web2Net,
     EvmNetwork as EvmNet,
+    Assertion as GenericAssertion,
     DirectRequestStatus,
 } from '../interfaces/identity/types';
 import { default as teeTypes } from '../interfaces/identity/definitions';
+import { AnyTuple, IMethod } from '@polkadot/types/types';
+import { Call } from '@polkadot/types/interfaces';
 
 export { teeTypes };
 
 export type Web2Network = Web2Net['type'];
 export type SubstrateNetwork = SubNet['type'];
 export type EvmNetwork = EvmNet['type'];
-
+export type ParachainAssertion = GenericAssertion['type'];
 export type WorkerRpcReturnString = {
     vec: string;
 };
 
+export type BatchCall = Vec<Call> | (string | Uint8Array | IMethod<AnyTuple, any> | Call)[];
 export type WorkerRpcReturnValue = {
     value: `0x${string}`;
     do_watch: boolean;
