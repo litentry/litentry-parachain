@@ -1,0 +1,19 @@
+{
+	"compilerOptions": {
+		// this is specific with augmented overrides
+		"paths": {
+			"@polkadot/api/augment": ["src/interfaces/augment-api.ts"],
+			// replace the augmented types with our own, as generated from definitions
+			"@polkadot/types/augment": ["src/interfaces/augment-types.ts"]
+		},
+		// some other options, whatever you want for your environment
+		"target": "es2017",
+		"module": "commonjs",
+		"strict": true,
+		"noUnusedLocals": true,
+		"moduleResolution": "node",
+		"esModuleInterop": true,
+		"baseUrl": "."
+	},
+	"exclude": ["node_modules"]
+}
