@@ -6,7 +6,6 @@
 			// replace the augmented types with our own, as generated from definitions
 			"@polkadot/types/augment": ["src/interfaces/augment-types.ts"]
 		},
-		// some other options, whatever you want for your environment
 		"target": "es2017",
 		"module": "commonjs",
 		"strict": true,

@@ -38,7 +38,6 @@ describeLitentry('multiple accounts test', 10, async (context) => {
         });
     });
     step('send test token to each account', async () => {
-        //batch: (calls: Vec<Call> | (string | Uint8Array | IMethod<AnyTuple, any> | Call)[])
         const txs: BatchCall = [];
         for (let i = 0; i < substrateSigners.length; i++) {
             //1 token
