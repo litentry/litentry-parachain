@@ -470,7 +470,7 @@ where
 				let parent_ss58_prefix =
 					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
 				let account = SgxParentchainTypeConverter::convert(who.clone());
-				let c = node_metadata_repo
+				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.user_shielding_key_set_call_indexes())??;
 
 				match Self::set_user_shielding_key_internal(
@@ -484,7 +484,7 @@ where
 						let id_graph =
 							IMT::get_id_graph_with_max_len(&who, RETURNED_IDGRAPH_MAX_LEN);
 						calls.push(OpaqueCall::from_tuple(&(
-							c,
+							call_index,
 							account,
 							aes_encrypt_default(&key, &id_graph.encode()),
 							hash,
@@ -508,7 +508,7 @@ where
 				let account = SgxParentchainTypeConverter::convert(who.clone());
 				let parent_ss58_prefix =
 					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
-				let c = node_metadata_repo
+				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.identity_created_call_indexes())??;
 
 				match Self::create_identity_internal(
@@ -522,7 +522,7 @@ where
 					Ok((key, code)) => {
 						debug!("pushing identity_created event ...");
 						calls.push(OpaqueCall::from_tuple(&(
-							c,
+							call_index,
 							account,
 							aes_encrypt_default(&key, &identity.encode()),
 							aes_encrypt_default(&key, &code.encode()),
@@ -545,14 +545,14 @@ where
 			TrustedCall::remove_identity(signer, who, identity, hash) => {
 				debug!("remove_identity, who: {}", account_id_to_string(&who));
 				let account = SgxParentchainTypeConverter::convert(who.clone());
-				let c = node_metadata_repo
+				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.identity_removed_call_indexes())??;
 
 				match Self::remove_identity_internal(signer, who, identity.clone()) {
 					Ok(key) => {
 						debug!("pushing identity_removed event ...");
 						calls.push(OpaqueCall::from_tuple(&(
-							c,
+							call_index,
 							account,
 							aes_encrypt_default(&key, &identity.encode()),
 							hash,
@@ -596,7 +596,7 @@ where
 			TrustedCall::verify_identity_callback(signer, who, identity, bn, hash) => {
 				debug!("verify_identity_callback, who: {}", account_id_to_string(&who));
 				let account = SgxParentchainTypeConverter::convert(who.clone());
-				let c = node_metadata_repo
+				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.identity_verified_call_indexes())??;
 
 				match Self::verify_identity_callback_internal(
@@ -610,7 +610,7 @@ where
 							IMT::get_id_graph_with_max_len(&who, RETURNED_IDGRAPH_MAX_LEN);
 						debug!("pushing identity_verified event ...");
 						calls.push(OpaqueCall::from_tuple(&(
-							c,
+							call_index,
 							account,
 							aes_encrypt_default(&key, &identity.encode()),
 							aes_encrypt_default(&key, &id_graph.encode()),
@@ -666,12 +666,13 @@ where
 					assertion
 				);
 				let account = SgxParentchainTypeConverter::convert(who.clone());
-				let c = node_metadata_repo.get_from_metadata(|m| m.vc_issued_call_indexes())??;
+				let call_index =
+					node_metadata_repo.get_from_metadata(|m| m.vc_issued_call_indexes())??;
 
 				match Self::request_vc_callback_internal(signer, who, assertion.clone()) {
 					Ok(key) => {
 						calls.push(OpaqueCall::from_tuple(&(
-							c,
+							call_index,
 							account,
 							assertion,
 							vc_index,
@@ -823,7 +824,7 @@ pub fn add_call_from_imp_error<NodeMetadataRepository>(
 	debug!("pushing imp_some_error event ...");
 	// TODO: anyway to simplify this? `and_then` won't be applicable here
 	match node_metadata_repo.get_from_metadata(|m| m.imp_some_error_call_indexes()) {
-		Ok(Ok(c)) => calls.push(OpaqueCall::from_tuple(&(c, account, e, hash))),
+		Ok(Ok(call_index)) => calls.push(OpaqueCall::from_tuple(&(call_index, account, e, hash))),
 		Ok(e) => warn!("error getting IMP call indexes: {:?}", e),
 		Err(e) => warn!("error getting IMP call indexes: {:?}", e),
 	}
@@ -843,7 +844,7 @@ pub fn add_call_from_vcmp_error<NodeMetadataRepository>(
 {
 	debug!("pushing vcmp_some_error event ...");
 	match node_metadata_repo.get_from_metadata(|m| m.vcmp_some_error_call_indexes()) {
-		Ok(Ok(c)) => calls.push(OpaqueCall::from_tuple(&(c, account, e, hash))),
+		Ok(Ok(call_index)) => calls.push(OpaqueCall::from_tuple(&(call_index, account, e, hash))),
 		Ok(e) => warn!("error getting VCMP call indexes: {:?}", e),
 		Err(e) => warn!("error getting VCMP call indexes: {:?}", e),
 	}

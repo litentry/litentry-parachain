@@ -20,7 +20,7 @@ extern crate sgx_tstd as std;
 use super::*;
 use crate::{
 	helpers::{ensure_enclave_signer_account, generate_challenge_code, is_authorised_signer},
-	AccountId, IdentityManagement, MetadataOf, Runtime, StfError, StfResult,
+	AccountId, IdentityManagement, MetadataOf, Runtime, StfError, StfResult, UserShieldingKeys,
 };
 use frame_support::{dispatch::UnfilteredDispatchable, ensure};
 use ita_sgx_runtime::RuntimeOrigin;
@@ -45,7 +45,7 @@ impl TrustedCallSigned {
 	) -> StfResult<UserShieldingKeyType> {
 		ensure!(
 			is_authorised_signer(&signer, &who),
-			StfError::SetUserShieldingKeyFailed(ErrorDetail::UnauthorisedSender)
+			StfError::SetUserShieldingKeyFailed(ErrorDetail::UnauthorisedSigner)
 		);
 		IMTCall::set_user_shielding_key { who, key, parent_ss58_prefix }
 			.dispatch_bypass_filter(RuntimeOrigin::root())
@@ -62,7 +62,7 @@ impl TrustedCallSigned {
 	) -> StfResult<(UserShieldingKeyType, ChallengeCode)> {
 		ensure!(
 			is_authorised_signer(&signer, &who),
-			StfError::CreateIdentityFailed(ErrorDetail::UnauthorisedSender)
+			StfError::CreateIdentityFailed(ErrorDetail::UnauthorisedSigner)
 		);
 
 		let key = IdentityManagement::user_shielding_keys(&who)
@@ -95,7 +95,7 @@ impl TrustedCallSigned {
 	) -> StfResult<UserShieldingKeyType> {
 		ensure!(
 			is_authorised_signer(&signer, &who),
-			StfError::RemoveIdentityFailed(ErrorDetail::UnauthorisedSender)
+			StfError::RemoveIdentityFailed(ErrorDetail::UnauthorisedSigner)
 		);
 		let key = IdentityManagement::user_shielding_keys(&who)
 			.ok_or(StfError::RemoveIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
@@ -118,12 +118,14 @@ impl TrustedCallSigned {
 	) -> StfResult<()> {
 		ensure!(
 			is_authorised_signer(&signer, &who),
-			StfError::VerifyIdentityFailed(ErrorDetail::UnauthorisedSender)
+			StfError::VerifyIdentityFailed(ErrorDetail::UnauthorisedSigner)
 		);
 		let code = IdentityManagement::challenge_codes(&who, &identity)
 			.ok_or(StfError::VerifyIdentityFailed(ErrorDetail::ChallengeCodeNotFound))?;
-		let _ = IdentityManagement::user_shielding_keys(&who)
-			.ok_or(StfError::VerifyIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
+		ensure!(
+			UserShieldingKeys::<Runtime>::contains_key(&who),
+			StfError::VerifyIdentityFailed(ErrorDetail::UserShieldingKeyNotFound)
+		);
 
 		let request: RequestType = IdentityVerificationRequest {
 			shard: *shard,
@@ -150,12 +152,12 @@ impl TrustedCallSigned {
 	) -> StfResult<()> {
 		ensure!(
 			is_authorised_signer(&signer, &who),
-			StfError::RequestVCFailed(assertion, ErrorDetail::UnauthorisedSender)
+			StfError::RequestVCFailed(assertion, ErrorDetail::UnauthorisedSigner)
 		);
-
-		let _ = IdentityManagement::user_shielding_keys(&who).ok_or_else(|| {
-			StfError::RequestVCFailed(assertion.clone(), ErrorDetail::UserShieldingKeyNotFound)
-		})?;
+		ensure!(
+			UserShieldingKeys::<Runtime>::contains_key(&who),
+			StfError::RequestVCFailed(assertion, ErrorDetail::UserShieldingKeyNotFound)
+		);
 
 		let id_graph = IMT::get_id_graph(&who);
 		let vec_identity: Vec<Identity> = id_graph
@@ -187,7 +189,7 @@ impl TrustedCallSigned {
 	) -> StfResult<UserShieldingKeyType> {
 		// important! The signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
 		ensure_enclave_signer_account(&signer)
-			.map_err(|_| StfError::VerifyIdentityFailed(ErrorDetail::UnauthorisedSender))?;
+			.map_err(|_| StfError::VerifyIdentityFailed(ErrorDetail::UnauthorisedSigner))?;
 
 		let key = IdentityManagement::user_shielding_keys(&who)
 			.ok_or(StfError::VerifyIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
@@ -215,7 +217,7 @@ impl TrustedCallSigned {
 	) -> StfResult<UserShieldingKeyType> {
 		// important! The signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
 		ensure_enclave_signer_account(&signer).map_err(|_| {
-			StfError::RequestVCFailed(assertion.clone(), ErrorDetail::UnauthorisedSender)
+			StfError::RequestVCFailed(assertion.clone(), ErrorDetail::UnauthorisedSigner)
 		})?;
 
 		let key = IdentityManagement::user_shielding_keys(&who)

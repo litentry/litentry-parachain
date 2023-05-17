@@ -30,8 +30,8 @@ pub type ErrorString = BoundedVec<u8, MaxStringLength>;
 pub enum ErrorDetail {
 	// error when importing the parentchain blocks and executing indirect calls
 	ImportError,
-	// the direct or indirect request comes from an unauthorised sender
-	UnauthorisedSender,
+	// the direct or indirect request comes from an unauthorised signer
+	UnauthorisedSigner,
 	// generic error when executing STF, the `ErrorString` should indicate the actual reason
 	StfError(ErrorString),
 	// error when sending stf request to the receiver fails
