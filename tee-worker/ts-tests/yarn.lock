@@ -770,7 +770,7 @@
     "@polkadot/util" "10.4.2"
     "@polkadot/util-crypto" "10.4.2"
 
-"@polkadot/keyring@^12.1.2", "@polkadot/keyring@^12.2.1":
+"@polkadot/keyring@^12.2.1":
   version "12.2.1"
   resolved "https://registry.yarnpkg.com/@polkadot/keyring/-/keyring-12.2.1.tgz#d131375c0436115d1f35139bd2bbbc069dd5b9fa"
   integrity sha512-YqgpU+97OZgnSUL56DEMib937Dpb1bTTDPYHhBiN1yNCKod7UboWXIe4xPh+1Kzugum+dEyPpdV+fHH10rtDzw==
