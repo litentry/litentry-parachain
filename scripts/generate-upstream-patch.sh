@@ -6,8 +6,8 @@ ROOTDIR=$(git rev-parse --show-toplevel)
 UPSTREAM_URL_PREFIX="https://github.com/integritee-network"
 
 function cleanup() {
-   rm -rf "$1"
-   echo "cleaned up $1"
+	rm -rf "$1"
+	echo "cleaned up $1"
 }
 
 function usage() {
