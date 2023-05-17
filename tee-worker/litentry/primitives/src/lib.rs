@@ -29,10 +29,11 @@ pub use validation_data::*;
 pub use parentchain_primitives::{
 	AccountId as ParentchainAccountId, AesOutput, Assertion, Balance as ParentchainBalance,
 	BlockNumber as ParentchainBlockNumber, ErrorDetail, ErrorString, Hash as ParentchainHash,
-	Header as ParentchainHeader, IMPError, Index as ParentchainIndex, IndexingNetwork,
-	IndexingNetworks, IntoErrorDetail, ParameterString, SchemaContentString, SchemaIdString,
-	Signature as ParentchainSignature, UserShieldingKeyType, VCMPError, ASSERTION_FROM_DATE,
-	MINUTES, USER_SHIELDING_KEY_LEN, USER_SHIELDING_KEY_NONCE_LEN, USER_SHIELDING_KEY_TAG_LEN,
+	Header as ParentchainHeader, IMPError, Index as ParentchainIndex, IndexingNetworks,
+	IntoErrorDetail, ParameterString, SchemaContentString, SchemaIdString,
+	Signature as ParentchainSignature, SupportedNetworks, UserShieldingKeyType, VCMPError,
+	ASSERTION_FROM_DATE, MINUTES, USER_SHIELDING_KEY_LEN, USER_SHIELDING_KEY_NONCE_LEN,
+	USER_SHIELDING_KEY_TAG_LEN,
 };
 
 pub const CHALLENGE_CODE_SIZE: usize = 16;

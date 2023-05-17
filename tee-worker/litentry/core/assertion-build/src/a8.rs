@@ -26,28 +26,37 @@ use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::graphql::{
-	GraphQLClient, TDFQuery, VerifiedCredentialsNetwork, VerifiedCredentialsTotalTxs,
+	GetSupportedNetworks, GraphQLClient, TDFQuery, VerifiedCredentialsTotalTxs,
 };
+use litentry_primitives::{IndexingNetworks, SupportedNetworks};
 use log::*;
-use std::{collections::HashSet, string::String, vec, vec::Vec};
+use std::{collections::HashSet, string::String, vec::Vec};
 
 const VC_A8_SUBJECT_DESCRIPTION: &str = "The total amount of transaction the user has ever made in each of the available networks (including invalid transactions)";
 const VC_A8_SUBJECT_TYPE: &str = "EVM/Substrate Transaction Count on Networks";
 const VC_A8_SUBJECT_TAG: [&str; 6] =
 	["Litentry", "Litmus", "Polkadot", "Kusama", "Ethereum", "Khala"];
 
-pub const INDEXING_NETWORKS: [IndexingNetwork; 6] = [
-	IndexingNetwork::Litentry,
-	IndexingNetwork::Litmus,
-	IndexingNetwork::Polkadot,
-	IndexingNetwork::Khala,
-	IndexingNetwork::Ethereum,
-	IndexingNetwork::Kusama,
+pub const INDEXING_NETWORKS: [SupportedNetworks; 6] = [
+	SupportedNetworks::Litentry,
+	SupportedNetworks::Litmus,
+	SupportedNetworks::Polkadot,
+	SupportedNetworks::Khala,
+	SupportedNetworks::Ethereum,
+	SupportedNetworks::Kusama,
 ];
+pub trait GetIndexNetworks {
+	fn get_indexing_networks() -> Vec<SupportedNetworks>;
+}
+impl GetIndexNetworks for SupportedNetworks {
+	fn get_indexing_networks() -> Vec<SupportedNetworks> {
+		INDEXING_NETWORKS.to_vec()
+	}
+}
 
 pub fn build(
 	identities: Vec<Identity>,
-	networks: IndexingNetworks,
+	index_networks: IndexingNetworks,
 	shard: &ShardIdentifier,
 	who: &AccountId,
 	bn: ParentchainBlockNumber,
@@ -57,15 +66,25 @@ pub fn build(
 		account_id_to_string(&who),
 		bn,
 		identities,
-		networks
+		index_networks
 	);
+
+	let supported_networks = SupportedNetworks::get_indexing_networks();
+	let networks = if index_networks.is_empty() {
+		supported_networks
+	} else {
+		index_networks
+			.iter()
+			.filter(|n| supported_networks.contains(n))
+			.cloned()
+			.collect()
+	};
 
 	let mut client = GraphQLClient::new();
 	let mut total_txs: u64 = 0;
-	let target_networks = to_verifed_network(networks.clone());
 
 	let mut verified_addresses = HashSet::<String>::new();
-	let mut verified_networks = HashSet::<VerifiedCredentialsNetwork>::new();
+	let mut verified_networks = HashSet::<SupportedNetworks>::new();
 
 	identities.iter().for_each(|identity| match identity {
 		Identity::Substrate { network, address } => {
@@ -73,8 +92,8 @@ pub fn build(
 			address.insert_str(0, "0x");
 
 			if_match_network_collect_address(
-				&target_networks,
-				(*network).into(),
+				&networks,
+				network.get(),
 				address,
 				&mut verified_networks,
 				&mut verified_addresses,
@@ -85,8 +104,8 @@ pub fn build(
 			address.insert_str(0, "0x");
 
 			if_match_network_collect_address(
-				&target_networks,
-				(*network).into(),
+				&networks,
+				network.get(),
 				address,
 				&mut verified_networks,
 				&mut verified_addresses,
@@ -115,41 +134,22 @@ pub fn build(
 				VC_A8_SUBJECT_TYPE,
 				VC_A8_SUBJECT_TAG.to_vec(),
 			);
-			credential_unsigned.add_assertion_a8(target_networks, min, max);
+			credential_unsigned.add_assertion_a8(networks, min, max);
 
 			Ok(credential_unsigned)
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVCFailed(Assertion::A8(networks), e.into_error_detail()))
+			Err(Error::RequestVCFailed(Assertion::A8(index_networks), e.into_error_detail()))
 		},
 	}
 }
 
-fn to_verifed_network(networks: IndexingNetworks) -> Vec<VerifiedCredentialsNetwork> {
-	let mut target_networks = vec![];
-
-	if networks.is_empty() {
-		// return all networks
-		INDEXING_NETWORKS.iter().for_each(|network| {
-			let vnetwork = VerifiedCredentialsNetwork::from(network.clone());
-			target_networks.push(vnetwork);
-		})
-	} else {
-		networks.iter().for_each(|network| {
-			let vnetwork = VerifiedCredentialsNetwork::from(network.clone());
-			target_networks.push(vnetwork);
-		});
-	}
-
-	target_networks
-}
-
 fn if_match_network_collect_address(
-	target_networks: &[VerifiedCredentialsNetwork],
-	network: VerifiedCredentialsNetwork,
+	target_networks: &[SupportedNetworks],
+	network: SupportedNetworks,
 	address: String,
-	verified_networks: &mut HashSet<VerifiedCredentialsNetwork>,
+	verified_networks: &mut HashSet<SupportedNetworks>,
 	verified_addresses: &mut HashSet<String>,
 ) {
 	if target_networks.contains(&network) {
@@ -214,36 +214,9 @@ mod tests {
 	use super::*;
 
 	#[test]
-	fn assertion_networks_to_verifed_network_works() {
-		let litentry = IndexingNetwork::Litentry;
-		let mut networks = IndexingNetworks::with_bounded_capacity(1);
-		networks.try_push(litentry.clone()).unwrap();
-
-		let v_networks = to_verifed_network(networks.clone());
-		assert_eq!(v_networks.len(), 1);
-
-		let target_network = VerifiedCredentialsNetwork::from(litentry);
-		assert_eq!(v_networks[0], target_network);
-	}
-
-	#[test]
-	fn assertion_networks_to_verifed_network_non_works() {
-		let networks = IndexingNetworks::with_bounded_capacity(1);
-		let left = to_verifed_network(networks.clone());
-
-		let mut right = vec![];
-		INDEXING_NETWORKS.iter().for_each(|network| {
-			let vnetwork = VerifiedCredentialsNetwork::from(network.clone());
-			right.push(vnetwork);
-		});
-
-		assert_eq!(left, right);
-	}
-
-	#[test]
 	fn assertion_networks_if_match_network_collect_address_works() {
 		let mut verified_addresses = HashSet::<String>::new();
-		let mut verified_networks = HashSet::<VerifiedCredentialsNetwork>::new();
+		let mut verified_networks = HashSet::<SupportedNetworks>::new();
 
 		let mut address_litentry =
 			"44f0633d7273a1e5bee1e54937dbb1cdfc0b210582b913c0fb3c7c7b9cdca9b9".to_string();
@@ -253,13 +226,16 @@ mod tests {
 			"44f0633d7273a1e5bee1e54937dbb1cdfc0b210582b913c0fb3c7c7b9cdca9b1".to_string();
 		address_polkadot.insert_str(0, "0x");
 
-		let mut target_networks = vec![];
-		INDEXING_NETWORKS.iter().for_each(|network| {
-			let vnetwork = VerifiedCredentialsNetwork::from(network.clone());
-			target_networks.push(vnetwork);
-		});
+		let mut target_networks = IndexingNetworks::with_bounded_capacity(6);
+		target_networks.try_push(SupportedNetworks::Litentry).unwrap();
+		target_networks.try_push(SupportedNetworks::Litmus).unwrap();
+		target_networks.try_push(SupportedNetworks::Polkadot).unwrap();
+		target_networks.try_push(SupportedNetworks::Khala).unwrap();
+		target_networks.try_push(SupportedNetworks::Ethereum).unwrap();
+		target_networks.try_push(SupportedNetworks::Kusama).unwrap();
 
-		let networks = [VerifiedCredentialsNetwork::Litentry, VerifiedCredentialsNetwork::Polkadot];
+		let networks: [SupportedNetworks; 2] =
+			[SupportedNetworks::Litentry, SupportedNetworks::Polkadot];
 		let addresses = [
 			"0x44f0633d7273a1e5bee1e54937dbb1cdfc0b210582b913c0fb3c7c7b9cdca9b9".to_string(),
 			"0x44f0633d7273a1e5bee1e54937dbb1cdfc0b210582b913c0fb3c7c7b9cdca9b1".to_string(),
@@ -267,14 +243,14 @@ mod tests {
 
 		if_match_network_collect_address(
 			&target_networks,
-			VerifiedCredentialsNetwork::Litentry,
+			SupportedNetworks::Litentry,
 			address_litentry,
 			&mut verified_networks,
 			&mut verified_addresses,
 		);
 		if_match_network_collect_address(
 			&target_networks,
-			VerifiedCredentialsNetwork::Polkadot,
+			SupportedNetworks::Polkadot,
 			address_polkadot,
 			&mut verified_networks,
 			&mut verified_addresses,

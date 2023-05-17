@@ -69,9 +69,10 @@ use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::{
-	graphql::{GraphQLClient, TDFQuery, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork},
+	graphql::{GetSupportedNetworks, GraphQLClient, TDFQuery, VerifiedCredentialsIsHodlerIn},
 	vec_to_string,
 };
+use litentry_primitives::SupportedNetworks;
 use log::*;
 use std::{
 	collections::{HashMap, HashSet},
@@ -106,7 +107,7 @@ pub fn build(
 	})?;
 
 	let mut client = GraphQLClient::new();
-	let mut networks: HashMap<VerifiedCredentialsNetwork, HashSet<String>> = HashMap::new();
+	let mut networks: HashMap<SupportedNetworks, HashSet<String>> = HashMap::new();
 
 	identities.iter().for_each(|identity| {
 		match identity {
@@ -114,13 +115,13 @@ pub fn build(
 				let mut address = account_id_to_string(address.as_ref());
 				address.insert_str(0, "0x");
 
-				if_match_networks_collect_address(&mut networks, (*network).into(), address);
+				if_match_networks_collect_address(&mut networks, (*network).get(), address);
 			},
 			Identity::Evm { network, address } => {
 				let mut address = account_id_to_string(address.as_ref());
 				address.insert_str(0, "0x");
 
-				if_match_networks_collect_address(&mut networks, (*network).into(), address);
+				if_match_networks_collect_address(&mut networks, (*network).get(), address);
 			},
 			_ => {},
 		};
@@ -155,11 +156,8 @@ pub fn build(
 		is_hold = false;
 
 		let addresses: Vec<String> = addresses.into_iter().collect();
-		let token_address = if verified_network == VerifiedCredentialsNetwork::Ethereum {
-			LIT_TOKEN_ADDRESS
-		} else {
-			""
-		};
+		let token_address =
+			if verified_network == SupportedNetworks::Ethereum { LIT_TOKEN_ADDRESS } else { "" };
 
 		// TODO:
 		// There is a problem here, because TDF does not support mixed network types,
@@ -226,16 +224,16 @@ pub fn build(
 }
 
 fn if_match_networks_collect_address(
-	networks: &mut HashMap<VerifiedCredentialsNetwork, HashSet<String>>,
-	verified_network: VerifiedCredentialsNetwork,
+	networks: &mut HashMap<SupportedNetworks, HashSet<String>>,
+	verified_network: SupportedNetworks,
 	address: String,
 ) {
 	if matches!(
 		verified_network,
-		VerifiedCredentialsNetwork::Litentry
-			| VerifiedCredentialsNetwork::Litmus
-			| VerifiedCredentialsNetwork::LitentryRococo
-			| VerifiedCredentialsNetwork::Ethereum
+		SupportedNetworks::Litentry
+			| SupportedNetworks::Litmus
+			| SupportedNetworks::LitentryRococo
+			| SupportedNetworks::Ethereum
 	) {
 		match networks.get_mut(&verified_network) {
 			Some(set) => {

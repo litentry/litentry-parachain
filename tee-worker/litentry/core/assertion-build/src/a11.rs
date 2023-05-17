@@ -26,9 +26,10 @@ use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::{
-	graphql::{GraphQLClient, TDFQuery, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork},
+	graphql::{GraphQLClient, TDFQuery, VerifiedCredentialsIsHodlerIn},
 	vec_to_string,
 };
+use litentry_primitives::SupportedNetworks;
 use log::*;
 use std::{string::ToString, vec, vec::Vec};
 
@@ -78,7 +79,7 @@ pub fn build(
 			let vch = VerifiedCredentialsIsHodlerIn::new(
 				addresses.clone(),
 				from_date.to_string(),
-				VerifiedCredentialsNetwork::Ethereum,
+				SupportedNetworks::Ethereum,
 				"".into(),
 				q_min_balance.to_string(),
 			);

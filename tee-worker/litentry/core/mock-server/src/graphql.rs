@@ -16,9 +16,9 @@
 #![allow(opaque_hidden_inferred_bound)]
 
 use lc_data_providers::graphql::{
-	ToGraphQL, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
-	VerifiedCredentialsTotalTxs,
+	ToGraphQL, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsTotalTxs,
 };
+use litentry_primitives::SupportedNetworks;
 use std::collections::HashMap;
 use warp::{http::Response, Filter};
 
@@ -32,7 +32,7 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 
 			let expected_query_total_txs = VerifiedCredentialsTotalTxs::new(
 				vec!["EGP7XztdTosm1EmaATZVMjSWujGEj9nNidhjqA2zZtttkFg".to_string()],
-				vec![VerifiedCredentialsNetwork::Kusama, VerifiedCredentialsNetwork::Polkadot],
+				vec![SupportedNetworks::Kusama, SupportedNetworks::Polkadot],
 			)
 			.to_graphql();
 
@@ -42,7 +42,7 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 					"0x3394caf8e5ccaffb936e6407599543af46525e0b".to_string(),
 				],
 				"2022-10-16T00:00:00Z".to_string(),
-				VerifiedCredentialsNetwork::Ethereum,
+				SupportedNetworks::Ethereum,
 				"0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723".to_string(),
 				"0.00000056".into(),
 			)

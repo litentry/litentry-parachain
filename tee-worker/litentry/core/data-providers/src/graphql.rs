@@ -25,7 +25,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
-use litentry_primitives::{EvmNetwork, IndexingNetwork, SubstrateNetwork};
+use litentry_primitives::{EvmNetwork, SubstrateNetwork, SupportedNetworks};
 use log::debug;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -132,71 +132,30 @@ impl<Query: ToGraphQL> TDFQuery<Query> for GraphQLClient {
 	}
 }
 
-/// TODO: https://github.com/litentry/litentry-parachain/pull/1534
-/// There are two issues here that need to be refactored later
-/// 1. The name of VerifiedCredentialsNetwork is a bit unclear
-/// 2. VerifiedCredentialsNetwork and IndexingNetwork are repeated, they should be one-to-one relationship, just keep one.
-/// What's even better is that we have a trait for each data provider, something like get_supported_network.
-#[derive(PartialEq, Eq, Hash, Debug, Clone)]
-pub enum VerifiedCredentialsNetwork {
-	Litentry,
-	Litmus,
-	LitentryRococo,
-	Polkadot,
-	Kusama,
-	Khala,
-	Ethereum,
-	TestNet,
+pub trait GetSupportedNetworks {
+	fn get(&self) -> SupportedNetworks;
 }
 
-impl From<SubstrateNetwork> for VerifiedCredentialsNetwork {
-	fn from(network: SubstrateNetwork) -> Self {
-		match network {
-			SubstrateNetwork::Litmus => Self::Litmus,
-			SubstrateNetwork::Litentry => Self::Litentry,
-			SubstrateNetwork::LitentryRococo => Self::LitentryRococo,
-			SubstrateNetwork::Polkadot => Self::Polkadot,
-			SubstrateNetwork::Kusama => Self::Kusama,
-			SubstrateNetwork::Khala => Self::Khala,
-			SubstrateNetwork::TestNet => Self::TestNet,
+impl GetSupportedNetworks for SubstrateNetwork {
+	fn get(&self) -> SupportedNetworks {
+		match self {
+			SubstrateNetwork::Litmus => SupportedNetworks::Litmus,
+			SubstrateNetwork::Litentry => SupportedNetworks::Litentry,
+			SubstrateNetwork::LitentryRococo => SupportedNetworks::LitentryRococo,
+			SubstrateNetwork::Polkadot => SupportedNetworks::Polkadot,
+			SubstrateNetwork::Kusama => SupportedNetworks::Kusama,
+			SubstrateNetwork::Khala => SupportedNetworks::Khala,
+			SubstrateNetwork::TestNet => SupportedNetworks::TestNet,
 		}
 	}
 }
 
-impl From<EvmNetwork> for VerifiedCredentialsNetwork {
-	fn from(network: EvmNetwork) -> Self {
-		match network {
-			EvmNetwork::Ethereum => Self::Ethereum,
+impl GetSupportedNetworks for EvmNetwork {
+	fn get(&self) -> SupportedNetworks {
+		match self {
+			EvmNetwork::Ethereum => SupportedNetworks::Ethereum,
 			// TODO: how about BSC?
 			EvmNetwork::BSC => unreachable!("support BSC?"),
-		}
-	}
-}
-
-impl From<IndexingNetwork> for VerifiedCredentialsNetwork {
-	fn from(network: IndexingNetwork) -> Self {
-		match network {
-			IndexingNetwork::Litmus => Self::Litmus,
-			IndexingNetwork::Litentry => Self::Litentry,
-			IndexingNetwork::Polkadot => Self::Polkadot,
-			IndexingNetwork::Kusama => Self::Kusama,
-			IndexingNetwork::Khala => Self::Khala,
-			IndexingNetwork::Ethereum => Self::Ethereum,
-		}
-	}
-}
-
-impl std::fmt::Display for VerifiedCredentialsNetwork {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		match *self {
-			VerifiedCredentialsNetwork::Litentry => write!(f, "Litentry"),
-			VerifiedCredentialsNetwork::Litmus => write!(f, "Litmus"),
-			VerifiedCredentialsNetwork::LitentryRococo => write!(f, "LitentryRococo"),
-			VerifiedCredentialsNetwork::Polkadot => write!(f, "Polkadot"),
-			VerifiedCredentialsNetwork::Kusama => write!(f, "Kusama"),
-			VerifiedCredentialsNetwork::Khala => write!(f, "Khala"),
-			VerifiedCredentialsNetwork::Ethereum => write!(f, "Ethereum"),
-			VerifiedCredentialsNetwork::TestNet => write!(f, "TestNet"),
 		}
 	}
 }
@@ -208,11 +167,10 @@ pub trait ToGraphQL {
 
 	fn to_graphql(&self) -> String;
 }
-
 pub struct VerifiedCredentialsIsHodlerIn {
 	pub addresses: Vec<String>,
 	pub from_date: String,
-	pub network: VerifiedCredentialsNetwork,
+	pub network: SupportedNetworks,
 	pub token_address: String,
 	pub min_balance: String,
 }
@@ -221,7 +179,7 @@ impl VerifiedCredentialsIsHodlerIn {
 	pub fn new(
 		addresses: Vec<String>,
 		from_date: String,
-		network: VerifiedCredentialsNetwork,
+		network: SupportedNetworks,
 		token_address: String,
 		min_balance: String,
 	) -> Self {
@@ -241,14 +199,13 @@ impl ToGraphQL for VerifiedCredentialsIsHodlerIn {
 	}
 }
 
-// TODO make the struct name more intuitive
 pub struct VerifiedCredentialsTotalTxs {
 	addresses: Vec<String>,
-	networks: Vec<VerifiedCredentialsNetwork>,
+	networks: Vec<SupportedNetworks>,
 }
 
 impl VerifiedCredentialsTotalTxs {
-	pub fn new(addresses: Vec<String>, networks: Vec<VerifiedCredentialsNetwork>) -> Self {
+	pub fn new(addresses: Vec<String>, networks: Vec<SupportedNetworks>) -> Self {
 		VerifiedCredentialsTotalTxs { addresses, networks }
 	}
 }
@@ -307,7 +264,7 @@ pub struct TotalTxsStruct {
 #[cfg(test)]
 mod tests {
 	use crate::graphql::{
-		GraphQLClient, TDFQuery, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
+		GraphQLClient, SupportedNetworks, TDFQuery, VerifiedCredentialsIsHodlerIn,
 		VerifiedCredentialsTotalTxs, G_DATA_PROVIDERS,
 	};
 	use itp_stf_primitives::types::AccountId;
@@ -334,7 +291,7 @@ mod tests {
 		let credentials = VerifiedCredentialsIsHodlerIn {
 			addresses: vec![ACCOUNT_ADDRESS1.to_string(), ACCOUNT_ADDRESS2.to_string()],
 			from_date: "2022-10-16T00:00:00Z".to_string(),
-			network: VerifiedCredentialsNetwork::Ethereum,
+			network: SupportedNetworks::Ethereum,
 			token_address: LIT_TOKEN_ADDRESS.to_string(),
 			min_balance: "0.00000056".into(),
 		};
@@ -351,10 +308,7 @@ mod tests {
 
 		let query = VerifiedCredentialsTotalTxs {
 			addresses: vec!["EGP7XztdTosm1EmaATZVMjSWujGEj9nNidhjqA2zZtttkFg".to_string()],
-			networks: vec![
-				VerifiedCredentialsNetwork::Kusama,
-				VerifiedCredentialsNetwork::Polkadot,
-			],
+			networks: vec![SupportedNetworks::Kusama, SupportedNetworks::Polkadot],
 		};
 		let mut client = GraphQLClient::new();
 		let r = client.verified_credentials_total_transactions(query);
