@@ -9,6 +9,37 @@ import type { ApiTypes, AugmentedEvent } from '@polkadot/api-base/types';
 import type { Bytes, Null, Option, Result, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, H256, Perbill, Percent } from '@polkadot/types/interfaces/runtime';
+import type {
+    CorePrimitivesAssertion,
+    CorePrimitivesErrorErrorDetail,
+    CorePrimitivesKeyAesOutput,
+    FrameSupportDispatchDispatchInfo,
+    FrameSupportTokensMiscBalanceStatus,
+    MockTeePrimitivesIdentity,
+    PalletAssetManagerAssetMetadata,
+    PalletDemocracyMetadataOwner,
+    PalletDemocracyVoteAccountVote,
+    PalletDemocracyVoteThreshold,
+    PalletExtrinsicFilterOperationalMode,
+    PalletIdentityManagementMockIdentityContext,
+    PalletMultisigTimepoint,
+    PalletParachainStakingDelegationRequestsCancelledScheduledRequest,
+    PalletParachainStakingDelegatorAdded,
+    RococoParachainRuntimeProxyType,
+    RuntimeCommonXcmImplCurrencyId,
+    SpRuntimeDispatchError,
+    SpWeightsWeightV2Weight,
+    SubstrateFixedFixedU64,
+    XcmV3MultiAsset,
+    XcmV3MultiLocation,
+    XcmV3MultiassetMultiAssets,
+    XcmV3Response,
+    XcmV3TraitsError,
+    XcmV3TraitsOutcome,
+    XcmV3Xcm,
+    XcmVersionedMultiAssets,
+    XcmVersionedMultiLocation,
+} from '@polkadot/types/lookup';
 
 export type __AugmentedEvent<ApiType extends ApiTypes> = AugmentedEvent<ApiType>;
 
