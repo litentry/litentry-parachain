@@ -24,38 +24,48 @@ use crate::{
 use codec::Decode;
 use ita_stf::{Index, TrustedCall, TrustedGetter, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
-use litentry_primitives::UserShieldingKeyType;
 use log::*;
 use sp_core::Pair;
 
 #[derive(Parser)]
-pub struct SetUserShieldingKeyPreflightCommand {
+pub struct VerifyIdentityCommand {
 	/// AccountId in ss58check format
 	account: String,
-	/// Shielding key in hex string
-	key_hex: String,
+	did: String,
+	validation_data: String,
+	parent_block_number: u32,
 }
 
-impl SetUserShieldingKeyPreflightCommand {
+// TODO: we'd need an "integration-test" with parentchain "verify_identity"
+//       the origin of it needs to be re-considered if we want individual steps
+impl VerifyIdentityCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) {
 		let who = get_accountid_from_str(&self.account);
 		let root = get_pair_from_str(trusted_cli, "//Alice");
 
 		let (mrenclave, shard) = get_identifiers(trusted_cli);
 		let nonce = get_layer_two_nonce!(root, cli, trusted_cli);
-
-		let mut key = UserShieldingKeyType::default();
-
-		hex::decode_to_slice(&self.key_hex, &mut key).expect("decoding shielding_key failed");
-
-		let top: TrustedOperation = TrustedCall::set_user_shielding_key_preflight(
+		// compose the extrinsic
+		let validation_data = serde_json::from_str(self.validation_data.as_str());
+		if let Err(e) = validation_data {
+			warn!("Deserialize ValidationData error: {:?}", e.to_string());
+			return
+		}
+		let identity = serde_json::from_str(self.did.as_str());
+		if let Err(e) = identity {
+			warn!("Deserialize Identity error: {:?}", e.to_string());
+			return
+		}
+		let top: TrustedOperation = TrustedCall::verify_identity(
 			root.public().into(),
 			who,
-			key,
+			identity.unwrap(),
+			validation_data.unwrap(),
+			self.parent_block_number,
 			Default::default(),
 		)
 		.sign(&KeyPair::Sr25519(Box::new(root)), nonce, &mrenclave, &shard)
 		.into_trusted_operation(trusted_cli.direct);
-		perform_trusted_operation(cli, trusted_cli, &top);
+		let _ = perform_trusted_operation(cli, trusted_cli, &top);
 	}
 }

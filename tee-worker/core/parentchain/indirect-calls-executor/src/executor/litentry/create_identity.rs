@@ -77,7 +77,7 @@ impl CreateIdentity {
 
 		if extrinsic.signature.is_some() {
 			let enclave_account_id = context.stf_enclave_signer.get_enclave_account()?;
-			let trusted_call = TrustedCall::create_identity_runtime(
+			let trusted_call = TrustedCall::create_identity(
 				enclave_account_id,
 				account.clone(),
 				identity,

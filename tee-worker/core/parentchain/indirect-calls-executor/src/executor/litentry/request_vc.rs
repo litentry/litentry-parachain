@@ -74,7 +74,6 @@ impl RequestVC {
 				enclave_account_id,
 				account,
 				assertion.clone(),
-				*shard,
 				self.block_number,
 				hash_of(extrinsic),
 			);

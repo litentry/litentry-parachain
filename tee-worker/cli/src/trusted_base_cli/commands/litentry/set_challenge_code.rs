@@ -49,7 +49,7 @@ impl SetChallengeCodeCommand {
 		let mut code = [0u8; 16];
 		hex::decode_to_slice(&self.code_hex, &mut code).expect("decoding code failed");
 
-		let top: TrustedOperation = TrustedCall::set_challenge_code_runtime(
+		let top: TrustedOperation = TrustedCall::set_challenge_code(
 			root.public().into(),
 			who,
 			identity,

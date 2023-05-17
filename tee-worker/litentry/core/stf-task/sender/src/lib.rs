@@ -37,8 +37,7 @@ use codec::{Decode, Encode};
 pub use error::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use litentry_primitives::{
-	Assertion, ChallengeCode, Identity, ParentchainBlockNumber, UserShieldingKeyType,
-	ValidationData,
+	Assertion, ChallengeCode, Identity, ParentchainBlockNumber, ValidationData,
 };
 use sp_runtime::traits::ConstU32;
 use sp_std::prelude::Vec;
@@ -87,15 +86,6 @@ pub struct AssertionBuildRequest {
 	pub assertion: Assertion,
 	pub vec_identity: Vec<Identity>,
 	pub bn: ParentchainBlockNumber,
-	pub key: UserShieldingKeyType,
-	pub hash: H256,
-}
-
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub struct SetUserShieldingKeyRequest {
-	pub shard: ShardIdentifier,
-	pub who: AccountId,
-	pub key: UserShieldingKeyType,
 	pub hash: H256,
 }
 
@@ -103,9 +93,6 @@ pub struct SetUserShieldingKeyRequest {
 pub enum RequestType {
 	IdentityVerification(IdentityVerificationRequest),
 	AssertionVerification(AssertionBuildRequest),
-	// set the user shielding key async for demo purpose
-	// in reality the user's shielding key is set synchronously
-	SetUserShieldingKey(SetUserShieldingKeyRequest),
 }
 
 impl From<IdentityVerificationRequest> for RequestType {
@@ -117,11 +104,5 @@ impl From<IdentityVerificationRequest> for RequestType {
 impl From<AssertionBuildRequest> for RequestType {
 	fn from(r: AssertionBuildRequest) -> Self {
 		RequestType::AssertionVerification(r)
-	}
-}
-
-impl From<SetUserShieldingKeyRequest> for RequestType {
-	fn from(r: SetUserShieldingKeyRequest) -> Self {
-		RequestType::SetUserShieldingKey(r)
 	}
 }

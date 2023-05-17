@@ -36,7 +36,10 @@ pub use litentry_primitives::{
 use codec::{Decode, Encode};
 use derive_more::Display;
 pub use getter::*;
-use ita_sgx_runtime::{pallet_imt::MetadataOf, IdentityManagement, Runtime, System};
+use ita_sgx_runtime::{
+	pallet_imt::{MetadataOf, UserShieldingKeys},
+	IdentityManagement, Runtime, System,
+};
 use itp_node_api_metadata::Error as MetadataError;
 use itp_node_api_metadata_provider::Error as MetadataProviderError;
 use itp_stf_primitives::types::AccountId;

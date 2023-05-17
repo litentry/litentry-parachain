@@ -69,7 +69,7 @@ impl RemoveIdentity {
 			);
 
 			let enclave_account_id = context.stf_enclave_signer.get_enclave_account()?;
-			let trusted_call = TrustedCall::remove_identity_runtime(
+			let trusted_call = TrustedCall::remove_identity(
 				enclave_account_id,
 				account,
 				identity,
