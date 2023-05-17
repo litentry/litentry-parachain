@@ -207,7 +207,7 @@ describe('Resume worker', function () {
         console.log('=========== worker stopped ==================');
 
         // resume worker
-        let { process: r_worker0 } = await launchWorker(
+        await launchWorker(
             'worker0',
             binary_dir,
             worker0_dir,
@@ -241,7 +241,7 @@ describe('Resume worker', function () {
         await sleep(20);
 
         // resume worker1
-        let { process: r_worker1 } = await launchWorker(
+        await launchWorker(
             'worker1',
             binary_dir,
             worker1_dir,
