@@ -1,13 +1,16 @@
 This folder contains a simple example of sending direct invocation to the tee worker
 
 ### How to run the demo
+
 1. launch the parachain and worker:
+
 ```
 cd <path-to-tee-worker>
 ./local-setup/launch.py local-setup/github-action-config-one-worker.json
 ```
 
 2. run the ts demo
+
 ```
 cd <path-to-tee-worker/ts-tests/examples/direct-invocation>
 ts-node index.ts
@@ -44,9 +47,10 @@ The field `result` contains the hex-encoded `WorkerRpcReturnValue` struct, after
 2. there's no extrinsic hash as it's not extrinsic, instead a random H256 value needs to be generated and sent along with the request to pair the response. However, it might be not strictly needed depending on how the ws channel is used (if it's used exclusively for a single request).
 
 3. The execution result of a sidechain state mutation (e.g. creating an identity) is returned via parachain event. There's room to improve it but it's kept like the old way because:
-   - the event in sidechain is not yet supported (i.e. will not be included in the block)
-   - some requests (e.g. VC request, identity verification) are async handled, the trusted call being included in a sidechain block doesn't mean the processing is complete, the request was routed to another thread for async processing.
-   - currently the `value` represents the trusted operation hash, to change it to the encoded event (e.g. IdentityCreated) with parameters, the code needs to be adjusted in depth: not an easy task
+
+    - the event in sidechain is not yet supported (i.e. will not be included in the block)
+    - some requests (e.g. VC request, identity verification) are async handled, the trusted call being included in a sidechain block doesn't mean the processing is complete, the request was routed to another thread for async processing.
+    - currently the `value` represents the trusted operation hash, to change it to the encoded event (e.g. IdentityCreated) with parameters, the code needs to be adjusted in depth: not an easy task
 
 4. the subscription of parachain is not implemented in this demo - it's verified via polkadot-js UI and worker-logs in my tests
 
@@ -67,6 +71,7 @@ response status:  {
   }
 }
 ```
+
 <img width="899" alt="image" src="https://github.com/litentry/litentry-parachain/assets/7630809/2f0f70cc-c25f-4069-b8c1-0376ab954a77">
 
 <img width="862" alt="image" src="https://github.com/litentry/litentry-parachain/assets/7630809/489b3ccc-a22b-4aa8-9b8a-ef82914ad181">

@@ -12,8 +12,8 @@ import type {
     EvmNetwork as EvmNet,
     Assertion as GenericAssertion,
     DirectRequestStatus,
-} from '../interfaces/identity/types';
-import { default as teeTypes } from '../interfaces/identity/definitions';
+} from '../parachain-interfaces/identity/types';
+import { default as teeTypes } from '../parachain-interfaces/identity/definitions';
 import { AnyTuple, IMethod } from '@polkadot/types/types';
 import { Call } from '@polkadot/types/interfaces';
 
