@@ -1,0 +1,206 @@
+import { ApiPromise } from '@polkadot/api';
+import { KeyringPair } from '@polkadot/keyring/types';
+import { HexString } from '@polkadot/util/types';
+import { Event } from '@polkadot/types/interfaces';
+import { hexToU8a, u8aToHex } from '@polkadot/util';
+import Ajv from 'ajv';
+import { assert, expect } from 'chai';
+import { ethers } from 'ethers';
+import * as ed from '@noble/ed25519';
+import {
+    EnclaveResult,
+    IdentityGenericEvent,
+    IntegrationTestContext,
+    JsonSchema,
+    LitentryIdentity,
+    LitentryValidationData,
+} from '../type-definitions';
+import { buildIdentityHelper, generateVerificationMessage } from './identity';
+import { isEqual, isArrayEqual } from './common';
+
+export async function assertInitialIDGraphCreated(api: ApiPromise, signer: KeyringPair, event: IdentityGenericEvent) {
+    assert.equal(event.who, u8aToHex(signer.addressRaw));
+    assert.equal(event.idGraph.length, 1);
+    // check identity in idgraph
+    const expected_identity = api.createType(
+        'LitentryIdentity',
+        await buildIdentityHelper(u8aToHex(signer.addressRaw), 'LitentryRococo', 'Substrate')
+    ) as LitentryIdentity;
+    assert.isTrue(isEqual(event.idGraph[0][0], expected_identity));
+    // check identityContext in idgraph
+    assert.equal(event.idGraph[0][1].linking_request_block, 0);
+    assert.equal(event.idGraph[0][1].verification_request_block, 0);
+    assert.isTrue(event.idGraph[0][1].is_verified);
+}
+
+export function assertIdentityVerified(signer: KeyringPair, eventDatas: IdentityGenericEvent[]) {
+    let event_identities: LitentryIdentity[] = [];
+    let idgraph_identities: LitentryIdentity[] = [];
+    for (let index = 0; index < eventDatas.length; index++) {
+        event_identities.push(eventDatas[index].identity);
+    }
+    for (let i = 0; i < eventDatas[eventDatas.length - 1].idGraph.length; i++) {
+        idgraph_identities.push(eventDatas[eventDatas.length - 1].idGraph[i][0]);
+    }
+    //idgraph_identities[idgraph_identities.length - 1] is prime identity,don't need to compare
+    assert.isTrue(
+        isArrayEqual(event_identities, idgraph_identities.slice(0, idgraph_identities.length - 1)),
+        'event identities should be equal to idgraph identities'
+    );
+
+    const data = eventDatas[eventDatas.length - 1];
+    for (let i = 0; i < eventDatas[eventDatas.length - 1].idGraph.length; i++) {
+        if (isEqual(data.idGraph[i][0], data.identity)) {
+            assert.isTrue(data.idGraph[i][1].is_verified, 'identity should be verified');
+        }
+    }
+    assert.equal(data?.who, u8aToHex(signer.addressRaw), 'check caller error');
+}
+
+export function assertIdentityCreated(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
+    assert.equal(identityEvent?.who, u8aToHex(signer.addressRaw), 'check caller error');
+}
+
+export function assertIdentityRemoved(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
+    assert.equal(identityEvent?.idGraph, null, 'check idGraph error,should be null after removed');
+    assert.equal(identityEvent?.who, u8aToHex(signer.addressRaw), 'check caller error');
+}
+
+export async function checkErrorDetail(
+    response: string[] | Event[],
+    expectedDetail: string,
+    isModule: boolean
+): Promise<boolean> {
+    let detail: string = '';
+    // TODO: sometimes `item.data.detail.toHuman()` or `item` is treated as object (why?)
+    //       I have to JSON.stringify it to assign it to a string
+    response.map((item: any) => {
+        isModule ? (detail = JSON.stringify(item.data.detail.toHuman())) : (detail = JSON.stringify(item));
+        assert.isTrue(
+            detail.includes(expectedDetail),
+            `check error detail failed, expected detail is ${expectedDetail}, but got ${detail}`
+        );
+    });
+    return true;
+}
+
+export async function buildValidations(
+    context: IntegrationTestContext,
+    eventDatas: any[],
+    identities: any[],
+    network: 'ethereum' | 'substrate' | 'twitter',
+    substrateSigners: KeyringPair[] | KeyringPair,
+    ethereumSigners?: ethers.Wallet[]
+): Promise<LitentryValidationData[]> {
+    let signature_ethereum: HexString;
+    let signature_substrate: Uint8Array;
+    let verifyDatas: LitentryValidationData[] = [];
+
+    for (let index = 0; index < eventDatas.length; index++) {
+        const substrateSigner = Array.isArray(substrateSigners) ? substrateSigners[index] : substrateSigners;
+
+        const ethereumSigner = network === 'ethereum' ? ethereumSigners![index] : undefined;
+
+        const data = eventDatas[index];
+        const msg = generateVerificationMessage(
+            context,
+            hexToU8a(data.challengeCode),
+            substrateSigner.addressRaw,
+            identities[index]
+        );
+        if (network === 'ethereum') {
+            const ethereumValidationData: LitentryValidationData = {
+                Web3Validation: {
+                    Evm: {
+                        message: '' as HexString,
+                        signature: {
+                            Ethereum: '' as HexString,
+                        },
+                    },
+                },
+            };
+            console.log('post verification msg to ethereum: ', msg);
+            ethereumValidationData!.Web3Validation!.Evm!.message = msg;
+            const msgHash = ethers.utils.arrayify(msg);
+            signature_ethereum = (await ethereumSigner!.signMessage(msgHash)) as HexString;
+            console.log('signature_ethereum', ethereumSigners![index].address, signature_ethereum);
+
+            ethereumValidationData!.Web3Validation!.Evm!.signature!.Ethereum = signature_ethereum;
+            assert.isNotEmpty(data.challengeCode, 'ethereum challengeCode empty');
+            console.log('ethereumValidationData', ethereumValidationData);
+
+            verifyDatas.push(ethereumValidationData);
+        } else if (network === 'substrate') {
+            const substrateValidationData: LitentryValidationData = {
+                Web3Validation: {
+                    Substrate: {
+                        message: '' as HexString,
+                        signature: {
+                            Sr25519: '' as HexString,
+                        },
+                    },
+                },
+            };
+            console.log('post verification msg to substrate: ', msg);
+            substrateValidationData!.Web3Validation!.Substrate!.message = msg;
+            signature_substrate = substrateSigner.sign(msg) as Uint8Array;
+            substrateValidationData!.Web3Validation!.Substrate!.signature!.Sr25519 = u8aToHex(signature_substrate);
+            assert.isNotEmpty(data.challengeCode, 'substrate challengeCode empty');
+            verifyDatas.push(substrateValidationData);
+        } else if (network === 'twitter') {
+            console.log('post verification msg to twitter', msg);
+            const twitterValidationData: LitentryValidationData = {
+                Web2Validation: {
+                    Twitter: {
+                        tweet_id: `0x${Buffer.from('100', 'utf8').toString('hex')}`,
+                    },
+                },
+            };
+            verifyDatas.push(twitterValidationData);
+            assert.isNotEmpty(data.challengeCode, 'twitter challengeCode empty');
+        }
+    }
+    return verifyDatas;
+}
+
+export async function verifySignature(data: any, index: HexString, proofJson: any, api: ApiPromise) {
+    const count = await api.query.teerex.enclaveCount();
+    const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as EnclaveResult;
+    //check vc index
+    expect(index).to.be.eq(data.id);
+
+    const signature = Buffer.from(hexToU8a(`0x${proofJson.proofValue}`));
+    const message = Buffer.from(JSON.stringify(data));
+    const vcPubkey = Buffer.from(hexToU8a(`${res.vcPubkey}`));
+
+    const isValid = await ed.verify(signature, message, vcPubkey);
+
+    expect(isValid).to.be.true;
+    return true;
+}
+
+export async function checkVc(vcObj: any, index: HexString, proof: any, api: ApiPromise): Promise<boolean> {
+    const vc = JSON.parse(JSON.stringify(vcObj));
+    delete vc.proof;
+    const signatureValid = await verifySignature(vc, index, proof, api);
+    expect(signatureValid).to.be.true;
+
+    const jsonValid = await checkJSON(vcObj, proof);
+    expect(jsonValid).to.be.true;
+    return true;
+}
+
+//Check VC json fields
+export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
+    //check JsonSchema
+    const ajv = new Ajv();
+    const validate = ajv.compile(JsonSchema);
+    const isValid = validate(vc);
+    expect(isValid).to.be.true;
+    expect(
+        vc.type[0] === 'VerifiableCredential' &&
+            vc.issuer.id === proofJson.verificationMethod &&
+            proofJson.type === 'Ed25519Signature2020'
+    ).to.be.true;
+    return true;
+}
