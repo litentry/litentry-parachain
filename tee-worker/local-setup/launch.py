@@ -88,7 +88,9 @@ def generate_json_config_file():
         "private_key": "0xe82c0c4259710bb0d6cf9f9e8d0ad73419c1278a14d375e5ca691e7618103011",
         "ocw_account": "5FEYX9NES9mAJt1Xg4WebmHWywxyeGQK8G3oEBXtyfZrRePX",
         "parachain_ws": "ws://localhost:" + os.environ.get("CollatorWSPort", "9944"),
-        "relaychain_ws": "ws://localhost:" + os.environ.get("AliceWSPort", "9946")
+        "relaychain_ws": "ws://localhost:" + os.environ.get("AliceWSPort", "9946"),
+        "genesis_state_path": "/tmp/parachain_dev/genesis-state",
+        "genesis_wasm_path": "/tmp/parachain_dev/genesis-wasm",
     }
     file_path = "../ts-tests/config.local.json"
 
@@ -124,6 +126,18 @@ def offset_port(offset):
         new_port = int(port) + int(offset)
         os.environ[x] = str(new_port)
 
+def setup_environment(offset, config):
+    load_dotenv('.env.dev')
+    offset_port(offset)
+    check_all_ports_and_reallocate()
+    generate_json_config_file()
+    generate_config_file()
+    config['workers'][0]['flags'] = [flag.replace('$CollatorWSPort', os.environ.get('CollatorWSPort', '')) for flag in config['workers'][0]['flags']]
+    config['workers'][0]['flags'] = [flag.replace('$TrustedWorkerPort', os.environ.get('TrustedWorkerPort', '')) for flag in config['workers'][0]['flags']]
+    config['workers'][0]['flags'] = [flag.replace('$UntrustedWorkerPort', os.environ.get('UntrustedWorkerPort', '')) for flag in config['workers'][0]['flags']]
+    config['workers'][0]['flags'] = [flag.replace('$MuRaPort', os.environ.get('MuRaPort', '')) for flag in config['workers'][0]['flags']]
+    config['workers'][0]['flags'] = [flag.replace('$UntrustedHttpPort', os.environ.get('UntrustedHttpPort', '')) for flag in config['workers'][0]['flags']]
+
 
 def main(processes, config_path, parachain_type, offset):
     print('Starting litentry-parachain in background')
@@ -132,7 +146,8 @@ def main(processes, config_path, parachain_type, offset):
         config = json.load(config_file)
 
     # Litentry
-    if parachain_type == "local" :
+    if parachain_type == "local-docker" :
+        setup_environment(offset, config)
         # start parachain via shell script
         # TODO: use Popen and copy the stdout also to node.log
         run(['./scripts/litentry/start_parachain.sh'], check=True)
@@ -141,22 +156,10 @@ def main(processes, config_path, parachain_type, offset):
         print('----------------------------------------')
 
     # development environment
-    if parachain_type == "dev":
-        load_dotenv('.env.dev')
-        offset_port(offset)
-        check_all_ports_and_reallocate()
-        generate_json_config_file()
-        generate_config_file()
-        config['workers'][0]['flags'] = [flag.replace('$CollatorWSPort', os.environ.get('CollatorWSPort', '')) for flag in config['workers'][0]['flags']]
-        config['workers'][0]['flags'] = [flag.replace('$TrustedWorkerPort', os.environ.get('TrustedWorkerPort', '')) for flag in config['workers'][0]['flags']]
-        config['workers'][0]['flags'] = [flag.replace('$UntrustedWorkerPort', os.environ.get('UntrustedWorkerPort', '')) for flag in config['workers'][0]['flags']]
-        config['workers'][0]['flags'] = [flag.replace('$MuRaPort', os.environ.get('MuRaPort', '')) for flag in config['workers'][0]['flags']]
-        config['workers'][0]['flags'] = [flag.replace('$UntrustedHttpPort', os.environ.get('UntrustedHttpPort', '')) for flag in config['workers'][0]['flags']]
-        run(['./scripts/litentry/start_parachain.sh'], check=True)
-
-        print('Starting litentry-parachain done')
-        print('----------------------------------------')
-
+    if parachain_type == "local-binary":
+        setup_environment(offset, config)
+        # start parachain via script
+        run(['../scripts/launch-local-binary.sh', 'rococo'], check=True)
 
     c = pycurl.Curl()
     worker_i = 0
@@ -210,7 +213,7 @@ def main(processes, config_path, parachain_type, offset):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run a setup consisting of a node and some workers')
     parser.add_argument('config', type=str, help='Config for the node and workers')
-    parser.add_argument('parachain', nargs='?', default="local", type=str, help='Config for parachain selection: local / remote / dev')
+    parser.add_argument('parachain', nargs='?', default="local-docker", type=str, help='Config for parachain selection: local-docker / local-binary / remote')
     parser.add_argument('offset', nargs='?', default="0", type=int, help='offset for port')
     args = parser.parse_args()
 
