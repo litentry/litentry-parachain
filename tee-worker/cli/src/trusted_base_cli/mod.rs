@@ -23,9 +23,9 @@ use crate::{
 			id_graph_stats::IDGraphStats,
 			send_erroneous_parentchain_call::SendErroneousParentchainCallCommand,
 			set_challenge_code::SetChallengeCodeCommand,
-			set_user_shielding_preflight::SetUserShieldingKeyPreflightCommand,
-			user_shielding_key::UserShiledingKeyCommand,
-			verify_identity_preflight::VerifyIdentityPreflightCommand,
+			set_scheduled_mrenclave::SetScheduledMrenclaveCommand,
+			set_user_shielding_key::SetUserShieldingKeyCommand,
+			user_shielding_key::UserShiledingKeyCommand, verify_identity::VerifyIdentityCommand,
 		},
 		nonce::NonceCommand,
 		set_balance::SetBalanceCommand,
@@ -74,9 +74,9 @@ pub enum TrustedBaseCommand {
 
 	SetChallengeCode(SetChallengeCodeCommand),
 
-	VerifyIdentityPreflight(VerifyIdentityPreflightCommand),
+	VerifyIdentity(VerifyIdentityCommand),
 
-	SetUserShieldingKeyPreflight(SetUserShieldingKeyPreflightCommand),
+	SetUserShieldingKey(SetUserShieldingKeyCommand),
 
 	GetStorage(GetStorageCommand),
 
@@ -84,6 +84,8 @@ pub enum TrustedBaseCommand {
 
 	/// get count of all keys account + identity in the IDGraphs
 	IDGraphStats(IDGraphStats),
+
+	SetScheduledMrenclave(SetScheduledMrenclaveCommand),
 }
 
 impl TrustedBaseCommand {
@@ -99,11 +101,12 @@ impl TrustedBaseCommand {
 			// Litentry's commands below
 			TrustedBaseCommand::UserShieldingKey(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::SetChallengeCode(cmd) => cmd.run(cli, trusted_cli),
-			TrustedBaseCommand::VerifyIdentityPreflight(cmd) => cmd.run(cli, trusted_cli),
-			TrustedBaseCommand::SetUserShieldingKeyPreflight(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::VerifyIdentity(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::SetUserShieldingKey(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::GetStorage(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::SendErroneousParentchainCall(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::IDGraphStats(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::SetScheduledMrenclave(cmd) => cmd.run(cli, trusted_cli),
 		}
 	}
 }

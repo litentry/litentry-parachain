@@ -131,7 +131,7 @@ fn test_mode_works() {
 		// TestModeFilter allows balance calls
 		let call: RuntimeCall = pallet_balances::Call::transfer { dest: 2, value: 10 }.into();
 		assert_ok!(call.dispatch(RuntimeOrigin::signed(1)));
-		assert_eq!(Balances::free_balance(&2), 10);
+		assert_eq!(Balances::free_balance(2), 10);
 	});
 }
 
@@ -166,7 +166,7 @@ fn block_single_extrinsic_works() {
 		let call: RuntimeCall =
 			pallet_balances::Call::transfer_keep_alive { dest: 2, value: 10 }.into();
 		assert_ok!(call.dispatch(RuntimeOrigin::signed(1)));
-		assert_eq!(Balances::free_balance(&2), 10);
+		assert_eq!(Balances::free_balance(2), 10);
 	});
 }
 
@@ -204,7 +204,7 @@ fn block_whole_pallet_works() {
 			call.dispatch(RuntimeOrigin::signed(1)),
 			frame_system::Error::<Test>::CallFiltered
 		);
-		assert_eq!(Balances::free_balance(&2), 0);
+		assert_eq!(Balances::free_balance(2), 0);
 	});
 }
 
@@ -254,7 +254,7 @@ fn unblock_single_extrinsic_works() {
 		);
 		let call: RuntimeCall = pallet_balances::Call::transfer { dest: 2, value: 10 }.into();
 		assert_ok!(call.dispatch(RuntimeOrigin::signed(1)));
-		assert_eq!(Balances::free_balance(&2), 10);
+		assert_eq!(Balances::free_balance(2), 10);
 	});
 }
 
@@ -292,7 +292,7 @@ fn unblock_whole_pallet_works() {
 			call.dispatch(RuntimeOrigin::signed(1)),
 			frame_system::Error::<Test>::CallFiltered
 		);
-		assert_eq!(Balances::free_balance(&2), 0);
+		assert_eq!(Balances::free_balance(2), 0);
 
 		// unblock the whole Balances pallet
 		assert_ok!(ExtrinsicFilter::unblock_extrinsics(
@@ -313,13 +313,13 @@ fn unblock_whole_pallet_works() {
 		// try to dispatch Balances.transfer should work
 		let call: RuntimeCall = pallet_balances::Call::transfer { dest: 2, value: 10 }.into();
 		assert_ok!(call.dispatch(RuntimeOrigin::signed(1)));
-		assert_eq!(Balances::free_balance(&2), 10);
+		assert_eq!(Balances::free_balance(2), 10);
 
 		// Balances.transfer_keep_alive should work too
 		let call: RuntimeCall =
 			pallet_balances::Call::transfer_keep_alive { dest: 2, value: 10 }.into();
 		assert_ok!(call.dispatch(RuntimeOrigin::signed(1)));
-		assert_eq!(Balances::free_balance(&2), 20);
+		assert_eq!(Balances::free_balance(2), 20);
 	});
 }
 

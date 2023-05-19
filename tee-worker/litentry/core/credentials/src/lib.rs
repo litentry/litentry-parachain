@@ -37,9 +37,10 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 use codec::{Decode, Encode};
 use itp_stf_primitives::types::ShardIdentifier;
+use itp_time_utils::now_as_millis;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{ParentchainBlockNumber, SupportedNetworks};
+use litentry_primitives::SupportedNetworks;
 use log::*;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
@@ -171,8 +172,8 @@ pub struct CredentialSchema {
 #[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
 #[serde(rename_all = "camelCase")]
 pub struct Proof {
-	/// The block number when the signature was created
-	pub created_block_number: ParentchainBlockNumber,
+	/// The timestamp when the signature was created
+	pub created_timestamp: u64,
 	/// The cryptographic signature suite that used to generate signature
 	#[serde(rename = "type")]
 	pub proof_type: ProofType,
@@ -185,9 +186,9 @@ pub struct Proof {
 }
 
 impl Proof {
-	pub fn new(bn: ParentchainBlockNumber, sig: &Vec<u8>, issuer: &AccountId) -> Self {
+	pub fn new(sig: &Vec<u8>, issuer: &AccountId) -> Self {
 		Proof {
-			created_block_number: bn,
+			created_timestamp: now_as_millis(),
 			proof_type: ProofType::Ed25519Signature2020,
 			proof_purpose: PROOF_PURPOSE.to_string(),
 			proof_value: format!("{}", HexDisplay::from(sig)),
@@ -215,10 +216,10 @@ pub struct Credential {
 	pub credential_subject: CredentialSubject,
 	/// The TEE enclave who issued the credential
 	pub issuer: Issuer,
-	pub issuance_block_number: ParentchainBlockNumber,
+	pub issuance_timestamp: u64,
 	/// (Optional)
 	#[serde(skip_serializing_if = "Option::is_none")]
-	pub expiration_block_number: Option<ParentchainBlockNumber>,
+	pub expiration_timestamp: Option<u64>,
 	/// Digital proof with the signature of Issuer
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub proof: Option<Proof>,
@@ -228,44 +229,33 @@ pub struct Credential {
 }
 
 impl Credential {
-	pub fn new_default(
-		who: &AccountId,
-		shard: &ShardIdentifier,
-		bn: ParentchainBlockNumber,
-	) -> Result<Credential, Error> {
+	pub fn new_default(who: &AccountId, shard: &ShardIdentifier) -> Result<Credential, Error> {
 		let raw = include_str!("templates/credential.json");
-		let credential: Credential = Credential::from_template(raw, who, shard, bn)?;
+		let credential: Credential = Credential::from_template(raw, who, shard)?;
 		Ok(credential)
 	}
 
-	pub fn from_template(
-		s: &str,
-		who: &AccountId,
-		shard: &ShardIdentifier,
-		bn: ParentchainBlockNumber,
-	) -> Result<Self, Error> {
-		debug!(
-			"generate credential from template, who: {:?}, bn: {}",
-			account_id_to_string(&who),
-			bn
-		);
+	pub fn from_template(s: &str, who: &AccountId, shard: &ShardIdentifier) -> Result<Self, Error> {
+		debug!("generate credential from template, who: {:?}", account_id_to_string(&who),);
 
 		let mut vc: Self =
 			serde_json::from_str(s).map_err(|err| Error::ParseError(format!("{}", err)))?;
 		vc.issuer.mrenclave = shard.encode().to_base58();
 		vc.issuer.name = LITENTRY_ISSUER_NAME.to_string();
 		vc.credential_subject.id = account_id_to_string(who);
-		vc.issuance_block_number = bn;
-		vc.expiration_block_number = None;
+		vc.issuance_timestamp = now_as_millis();
+		vc.expiration_timestamp = None;
 		vc.credential_schema = None;
 		vc.proof = None;
+
 		vc.generate_id();
 		vc.validate_unsigned()?;
+
 		Ok(vc)
 	}
 
-	pub fn add_proof(&mut self, sig: &Vec<u8>, bn: ParentchainBlockNumber, issuer: &AccountId) {
-		self.proof = Some(Proof::new(bn, sig, issuer));
+	pub fn add_proof(&mut self, sig: &Vec<u8>, issuer: &AccountId) {
+		self.proof = Some(Proof::new(sig, issuer));
 	}
 
 	fn generate_id(&mut self) {
@@ -299,8 +289,8 @@ impl Credential {
 			return Err(Error::EmptyCredentialSubject)
 		}
 
-		if self.issuance_block_number == 0 {
-			return Err(Error::EmptyIssuanceBlockNumber)
+		if self.issuance_timestamp == 0 {
+			return Err(Error::EmptyIssuanceTimestamp)
 		}
 
 		if self.id.is_empty() {
@@ -333,8 +323,8 @@ impl Credential {
 			return Err(Error::InvalidProof)
 		} else {
 			let proof = vc.proof.unwrap();
-			if proof.created_block_number == 0 {
-				return Err(Error::EmptyProofBlockNumber)
+			if proof.created_timestamp == 0 {
+				return Err(Error::EmptyProofTimestamp)
 			}
 
 			//ToDo: validate proof signature
@@ -475,6 +465,7 @@ impl Credential {
 	}
 }
 
+/// Assertion To-Date
 pub fn format_assertion_to_date() -> String {
 	#[cfg(feature = "std")]
 	{
@@ -524,7 +515,7 @@ mod tests {
 		let data = include_str!("templates/credential.json");
 		let shard = ShardIdentifier::default();
 
-		let vc = Credential::from_template(data, &who, &shard, 1u32).unwrap();
+		let vc = Credential::from_template(data, &who, &shard).unwrap();
 		assert!(vc.validate_unsigned().is_ok());
 		let id: String = vc.credential_subject.id.clone();
 		assert_eq!(id, account_id_to_string(&who));
@@ -541,8 +532,7 @@ mod tests {
 			let from_date = "2017-01-01".to_string();
 			let from_date_logic = AssertionLogic::new_item("$from_date", Op::LessThan, &from_date);
 
-			let mut credential_unsigned =
-				Credential::new_default(&who, &shard.clone(), 1u32).unwrap();
+			let mut credential_unsigned = Credential::new_default(&who, &shard.clone()).unwrap();
 			credential_unsigned.update_holder(false, &minimum_amount, &from_date);
 
 			let minimum_amount_logic =
@@ -560,8 +550,7 @@ mod tests {
 
 		{
 			let from_date = "2018-01-01".to_string();
-			let mut credential_unsigned =
-				Credential::new_default(&&who, &shard.clone(), 1u32).unwrap();
+			let mut credential_unsigned = Credential::new_default(&&who, &shard.clone()).unwrap();
 			credential_unsigned.update_holder(true, &minimum_amount, &from_date);
 
 			let minimum_amount_logic =
@@ -579,8 +568,7 @@ mod tests {
 
 		{
 			let from_date = "2017-01-01".to_string();
-			let mut credential_unsigned =
-				Credential::new_default(&who, &shard.clone(), 1u32).unwrap();
+			let mut credential_unsigned = Credential::new_default(&who, &shard.clone()).unwrap();
 			credential_unsigned.update_holder(true, &minimum_amount, &from_date);
 
 			let minimum_amount_logic =

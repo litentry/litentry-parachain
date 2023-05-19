@@ -30,13 +30,15 @@ pub type ErrorString = BoundedVec<u8, MaxStringLength>;
 pub enum ErrorDetail {
 	// error when importing the parentchain blocks and executing indirect calls
 	ImportError,
+	// the direct or indirect request comes from an unauthorised signer
+	UnauthorisedSigner,
 	// generic error when executing STF, the `ErrorString` should indicate the actual reason
 	StfError(ErrorString),
-	// error when sending stf request to the receiver
+	// error when sending stf request to the receiver fails
 	SendStfRequestFailed,
-	// error when challenge code not found
+	// error when the challenge code can not be found
 	ChallengeCodeNotFound,
-	// error when user shielding key not found
+	// error when the user shielding key can not be found
 	UserShieldingKeyNotFound,
 	// generic parse error, can be caused by UTF8/JSON serde..
 	ParseError,

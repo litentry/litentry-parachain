@@ -54,7 +54,7 @@ where
 	fn on_success(&self, _result: Self::Result) {
 		debug!("verify identity OK");
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
-			let c = TrustedCall::verify_identity_runtime(
+			let c = TrustedCall::verify_identity_callback(
 				enclave_signer,
 				self.req.who.clone(),
 				self.req.identity.clone(),

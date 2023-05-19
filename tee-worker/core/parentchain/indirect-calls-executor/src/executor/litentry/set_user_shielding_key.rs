@@ -66,7 +66,7 @@ impl SetUserShieldingKey {
 			debug!("indirect call SetUserShieldingKey, who:{:?}", account_id_to_string(&account));
 
 			let enclave_account_id = context.stf_enclave_signer.get_enclave_account()?;
-			let trusted_call = TrustedCall::set_user_shielding_key_runtime(
+			let trusted_call = TrustedCall::set_user_shielding_key(
 				enclave_account_id,
 				account,
 				key,
