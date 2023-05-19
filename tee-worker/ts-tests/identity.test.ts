@@ -101,13 +101,17 @@ describeLitentry('Test Identity', 0, (context) => {
         await assertInitialIDGraphCreated(context.api, context.substrateWallet.bob, bob);
     });
 
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
     step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
+        await sleep(6000);
         const resp_shieldingKey = await checkUserShieldingKeys(
             context,
             'IdentityManagement',
             'UserShieldingKeys',
             u8aToHex(context.substrateWallet.alice.addressRaw)
         );
+        await sleep(6000);
         assert.equal(resp_shieldingKey, aesKey, 'resp_shieldingKey should be equal aesKey after set');
     });
 
@@ -115,7 +119,7 @@ describeLitentry('Test Identity', 0, (context) => {
         // the main address should be already inside the IDGraph
         const main_identity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.alice.addressRaw),
-            'LitentryRococo',
+            'TestNet',
             'Substrate'
         );
         const identity_hex = context.api.createType('LitentryIdentity', main_identity).toHex();
@@ -284,7 +288,7 @@ describeLitentry('Test Identity', 0, (context) => {
         const twitter_identity = alice_identities[0];
         const ethereum_validation = alice_validations[1];
 
-        //verify twitter identity with ethereum validation
+        //verify twitter identity with ethereum validation----------
         let alice_txs = await buildIdentityTxs(
             context,
             context.substrateWallet.alice,
@@ -570,7 +574,7 @@ describeLitentry('Test Identity', 0, (context) => {
         // remove prime identity
         const substratePrimeIdentity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.alice.addressRaw),
-            'LitentryRococo',
+            'TestNet',
             'Substrate'
         );
 

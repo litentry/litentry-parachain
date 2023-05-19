@@ -13,9 +13,7 @@ import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
 import { LitentryIdentity, LitentryValidationData } from './common/type-definitions';
 import { handleIdentityEvents } from './common/utils';
-import { assert } from 'chai';
 import { multiAccountTxSender } from './common/transactions';
-import { u8aToHex } from '@polkadot/util';
 import { SubmittableResult } from '@polkadot/api';
 
 //Explain how to use this test, which has two important parameters:
@@ -44,15 +42,16 @@ describeLitentry('multiple accounts test', 2, async (context) => {
             txs.push(tx);
         }
 
-        await new Promise((resolve) => {
+        await new Promise((resolve, reject) => {
             context.api.tx.utility
                 .batch(txs)
                 .signAndSend(context.substrateWallet.alice, async (result: SubmittableResult) => {
-                    if (result.status.isInBlock) {
+                    if (result.status.isFinalized) {
                         console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
                         resolve(result.status);
                     } else if (result.status.isInvalid) {
                         console.log(`Transaction is ${result.status}`);
+                        reject(result.status);
                     }
                 });
         });
