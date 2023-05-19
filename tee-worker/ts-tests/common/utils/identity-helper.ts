@@ -15,37 +15,8 @@ import {
 } from '../type-definitions';
 import { decryptWithAES, encryptWithTeeShieldingKey } from './crypto';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
-
-const base58 = require('micro-base58');
-
-export async function createTrustedCallSigned(
-    api: ApiPromise,
-    trustedCall: [string, string],
-    account: KeyringPair,
-    mrenclave: string,
-    mrEnclave: string,
-    nonce: Codec,
-    params: Array<any>
-) {
-    const [variant, argType] = trustedCall;
-    const call = api.createType('TrustedCall', {
-        [variant]: api.createType(argType, params),
-    });
-    const payload = Uint8Array.from([
-        ...call.toU8a(),
-        ...nonce.toU8a(),
-        ...base58.decode(mrenclave),
-        ...hexToU8a(mrEnclave),
-    ]);
-    const signature = api.createType('MultiSignature', {
-        Sr25519: u8aToHex(account.sign(payload)),
-    });
-    return api.createType('TrustedCallSigned', {
-        call: call,
-        index: nonce,
-        signature: signature,
-    });
-}
+import { assert } from 'chai';
+import { ethers } from 'ethers';
 
 //<challeng-code> + <litentry-AccountId32> + <Identity>
 export function generateVerificationMessage(
@@ -221,4 +192,83 @@ export function createIdentityEvent(
         idGraph,
         challengeCode,
     };
+}
+
+export async function buildValidations(
+    context: IntegrationTestContext,
+    eventDatas: any[],
+    identities: any[],
+    network: 'ethereum' | 'substrate' | 'twitter',
+    substrateSigners: KeyringPair[] | KeyringPair,
+    ethereumSigners?: ethers.Wallet[]
+): Promise<LitentryValidationData[]> {
+    let signature_ethereum: HexString;
+    let signature_substrate: Uint8Array;
+    let verifyDatas: LitentryValidationData[] = [];
+
+    for (let index = 0; index < eventDatas.length; index++) {
+        const substrateSigner = Array.isArray(substrateSigners) ? substrateSigners[index] : substrateSigners;
+
+        const ethereumSigner = network === 'ethereum' ? ethereumSigners![index] : undefined;
+
+        const data = eventDatas[index];
+        const msg = generateVerificationMessage(
+            context,
+            hexToU8a(data.challengeCode),
+            substrateSigner.addressRaw,
+            identities[index]
+        );
+        if (network === 'ethereum') {
+            const ethereumValidationData: LitentryValidationData = {
+                Web3Validation: {
+                    Evm: {
+                        message: '' as HexString,
+                        signature: {
+                            Ethereum: '' as HexString,
+                        },
+                    },
+                },
+            };
+            console.log('post verification msg to ethereum: ', msg);
+            ethereumValidationData!.Web3Validation!.Evm!.message = msg;
+            const msgHash = ethers.utils.arrayify(msg);
+            signature_ethereum = (await ethereumSigner!.signMessage(msgHash)) as HexString;
+            console.log('signature_ethereum', ethereumSigners![index].address, signature_ethereum);
+
+            ethereumValidationData!.Web3Validation!.Evm!.signature!.Ethereum = signature_ethereum;
+            assert.isNotEmpty(data.challengeCode, 'ethereum challengeCode empty');
+            console.log('ethereumValidationData', ethereumValidationData);
+
+            verifyDatas.push(ethereumValidationData);
+        } else if (network === 'substrate') {
+            const substrateValidationData: LitentryValidationData = {
+                Web3Validation: {
+                    Substrate: {
+                        message: '' as HexString,
+                        signature: {
+                            Sr25519: '' as HexString,
+                        },
+                    },
+                },
+            };
+            console.log('post verification msg to substrate: ', msg);
+            substrateValidationData!.Web3Validation!.Substrate!.message = msg;
+            signature_substrate = substrateSigner.sign(msg) as Uint8Array;
+            substrateValidationData!.Web3Validation!.Substrate!.signature!.Sr25519 = u8aToHex(signature_substrate);
+            assert.isNotEmpty(data.challengeCode, 'substrate challengeCode empty');
+            verifyDatas.push(substrateValidationData);
+        } else if (network === 'twitter') {
+            console.log('post verification msg to twitter', msg);
+            const twitterValidationData: LitentryValidationData = {
+                Web2Validation: {
+                    Twitter: {
+                        tweet_id: `0x${Buffer.from('100', 'utf8').toString('hex')}`,
+                    },
+                },
+            };
+            verifyDatas.push(twitterValidationData);
+            assert.isNotEmpty(data.challengeCode, 'twitter challengeCode empty');
+        }
+    }
+    return verifyDatas;
 }

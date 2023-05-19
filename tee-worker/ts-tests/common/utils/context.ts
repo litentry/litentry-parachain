@@ -1,6 +1,5 @@
 import { WsProvider, ApiPromise, Keyring } from '@polkadot/api';
 import { cryptoWaitReady } from '@polkadot/util-crypto';
-import { HexString } from '@polkadot/util/types';
 import { ethers } from 'ethers';
 import WebSocketAsPromised from 'websocket-as-promised';
 import WebSocket from 'ws';
@@ -9,7 +8,6 @@ import { KeyObject } from 'crypto';
 import { getMetadata } from '../call';
 import { getEthereumSigner, getSubstrateSigner } from '../helpers';
 import { IntegrationTestContext, teeTypes, EnclaveResult, Web3Wallets } from '../type-definitions';
-import { decryptWithAES } from './crypto';
 
 const crypto = require('crypto');
 
@@ -78,37 +76,6 @@ export async function initIntegrationTestContext(
         metaData,
         web3Signers,
     };
-}
-
-export async function handleVcEvents(
-    aesKey: HexString,
-    events: any[],
-    method: 'VCIssued' | 'VCDisabled' | 'VCRevoked' | 'Failed'
-): Promise<any> {
-    let results: any = [];
-    for (let k = 0; k < events.length; k++) {
-        switch (method) {
-            case 'VCIssued':
-                results.push({
-                    account: events[k].data.account.toHex(),
-                    index: events[k].data.index.toHex(),
-                    vc: decryptWithAES(aesKey, events[k].data.vc, 'utf-8'),
-                });
-                break;
-            case 'VCDisabled':
-                results.push(events[k].data.index.toHex());
-                break;
-            case 'VCRevoked':
-                results.push(events[k].data.index.toHex());
-                break;
-            case 'Failed':
-                results.push(events[k].data.detail.toHuman());
-                break;
-            default:
-                break;
-        }
-    }
-    return [...results];
 }
 
 export async function getEnclave(api: ApiPromise): Promise<{
