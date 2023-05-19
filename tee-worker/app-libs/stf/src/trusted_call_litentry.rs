@@ -146,7 +146,6 @@ impl TrustedCallSigned {
 		signer: AccountId,
 		who: AccountId,
 		assertion: Assertion,
-		bn: ParentchainBlockNumber,
 		hash: H256,
 		shard: &ShardIdentifier,
 	) -> StfResult<()> {
@@ -170,7 +169,6 @@ impl TrustedCallSigned {
 			who,
 			assertion: assertion.clone(),
 			vec_identity,
-			bn,
 			hash,
 		}
 		.into();

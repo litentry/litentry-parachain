@@ -121,7 +121,7 @@ pub enum TrustedCall {
 	),
 	remove_identity(AccountId, AccountId, Identity, H256),
 	verify_identity(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber, H256),
-	request_vc(AccountId, AccountId, Assertion, ParentchainBlockNumber, H256),
+	request_vc(AccountId, AccountId, Assertion, H256),
 	// the following trusted calls should not be requested directly from external
 	// they are guarded by the signature check (either root or enclave_signer_account)
 	verify_identity_callback(AccountId, AccountId, Identity, ParentchainBlockNumber, H256),
@@ -631,14 +631,14 @@ where
 
 				Ok(())
 			},
-			TrustedCall::request_vc(signer, who, assertion, bn, hash) => {
+			TrustedCall::request_vc(signer, who, assertion, hash) => {
 				debug!(
 					"request_vc, who: {}, assertion: {:?}",
 					account_id_to_string(&who),
 					assertion
 				);
 				if let Err(e) =
-					Self::request_vc_internal(signer, who.clone(), assertion, bn, hash, shard)
+					Self::request_vc_internal(signer, who.clone(), assertion, hash, shard)
 				{
 					debug!("pushing error event ... error: {}", e);
 					add_call_from_vcmp_error(

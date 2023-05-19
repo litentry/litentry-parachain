@@ -45,12 +45,10 @@ pub fn build(
 	min_balance: ParameterString,
 	shard: &ShardIdentifier,
 	who: &AccountId,
-	bn: ParentchainBlockNumber,
 ) -> Result<Credential> {
 	debug!(
-		"Assertion A10 build, who: {:?}, bn: {}, identities: {:?}",
+		"Assertion A10 build, who: {:?}, identities: {:?}",
 		account_id_to_string(&who),
-		bn,
 		identities,
 	);
 
@@ -105,7 +103,7 @@ pub fn build(
 		}
 	}
 
-	match Credential::new_default(who, &shard.clone(), bn) {
+	match Credential::new_default(who, &shard.clone()) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_A10_SUBJECT_DESCRIPTION,

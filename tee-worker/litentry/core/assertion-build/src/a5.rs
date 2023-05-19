@@ -39,12 +39,10 @@ pub fn build(
 	original_tweet_id: ParameterString,
 	shard: &ShardIdentifier,
 	who: &AccountId,
-	bn: ParentchainBlockNumber,
 ) -> Result<Credential> {
 	debug!(
-		"Assertion A5 build, who: {:?}, bn: {}, identities: {:?}",
+		"Assertion A5 build, who: {:?}, identities: {:?}",
 		account_id_to_string(&who),
-		bn,
 		identities
 	);
 
@@ -120,7 +118,7 @@ pub fn build(
 		}
 	}
 
-	match Credential::new_default(who, &shard.clone(), bn) {
+	match Credential::new_default(who, &shard.clone()) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_A5_SUBJECT_DESCRIPTION,

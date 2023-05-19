@@ -37,9 +37,8 @@ pub fn build(
 	identities: Vec<Identity>,
 	shard: &ShardIdentifier,
 	who: &AccountId,
-	bn: ParentchainBlockNumber,
 ) -> Result<Credential> {
-	debug!("Assertion A1 build, who: {:?}, bn: {}", account_id_to_string(&who), bn);
+	debug!("Assertion A1 build, who: {:?}", account_id_to_string(&who));
 
 	let mut web2_cnt = 0;
 	let mut web3_cnt = 0;
@@ -52,7 +51,7 @@ pub fn build(
 		}
 	}
 
-	match Credential::new_default(who, &shard.clone(), bn) {
+	match Credential::new_default(who, &shard.clone()) {
 		Ok(mut credential_unsigned) => {
 			// add subject info
 			credential_unsigned.add_subject_info(

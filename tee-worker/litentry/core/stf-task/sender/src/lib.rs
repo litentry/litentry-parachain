@@ -85,7 +85,6 @@ pub struct AssertionBuildRequest {
 	pub who: AccountId,
 	pub assertion: Assertion,
 	pub vec_identity: Vec<Identity>,
-	pub bn: ParentchainBlockNumber,
 	pub hash: H256,
 }
 
