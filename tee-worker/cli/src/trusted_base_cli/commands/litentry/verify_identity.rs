@@ -28,15 +28,17 @@ use log::*;
 use sp_core::Pair;
 
 #[derive(Parser)]
-pub struct SetChallengeCodeCommand {
+pub struct VerifyIdentityCommand {
 	/// AccountId in ss58check format
 	account: String,
-	identity: String,
-	/// challenge code in hex string
-	code_hex: String,
+	did: String,
+	validation_data: String,
+	parent_block_number: u32,
 }
 
-impl SetChallengeCodeCommand {
+// TODO: we'd need an "integration-test" with parentchain "verify_identity"
+//       the origin of it needs to be re-considered if we want individual steps
+impl VerifyIdentityCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) {
 		let who = get_accountid_from_str(&self.account);
 		let root = get_pair_from_str(trusted_cli, "//Alice");
@@ -44,20 +46,26 @@ impl SetChallengeCodeCommand {
 		let (mrenclave, shard) = get_identifiers(trusted_cli);
 		let nonce = get_layer_two_nonce!(root, cli, trusted_cli);
 		// compose the extrinsic
-		let identity = serde_json::from_str(self.identity.as_str()).unwrap();
-
-		let mut code = [0u8; 16];
-		hex::decode_to_slice(&self.code_hex, &mut code).expect("decoding code failed");
-
-		let top: TrustedOperation = TrustedCall::set_challenge_code(
+		let validation_data = serde_json::from_str(self.validation_data.as_str());
+		if let Err(e) = validation_data {
+			warn!("Deserialize ValidationData error: {:?}", e.to_string());
+			return
+		}
+		let identity = serde_json::from_str(self.did.as_str());
+		if let Err(e) = identity {
+			warn!("Deserialize Identity error: {:?}", e.to_string());
+			return
+		}
+		let top: TrustedOperation = TrustedCall::verify_identity(
 			root.public().into(),
 			who,
-			identity,
-			code,
+			identity.unwrap(),
+			validation_data.unwrap(),
+			self.parent_block_number,
 			Default::default(),
 		)
 		.sign(&KeyPair::Sr25519(Box::new(root)), nonce, &mrenclave, &shard)
 		.into_trusted_operation(trusted_cli.direct);
-		perform_trusted_operation(cli, trusted_cli, &top);
+		let _ = perform_trusted_operation(cli, trusted_cli, &top);
 	}
 }

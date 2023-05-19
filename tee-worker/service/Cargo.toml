@@ -61,7 +61,7 @@ its-rpc-handler = { path = "../sidechain/rpc-handler" }
 its-storage = { path = "../sidechain/storage" }
 
 # scs / integritee
-sgx-verify = { git = "https://github.com/integritee-network/pallets.git", branch = "polkadot-v0.9.39" }
+sgx-verify = { path = "../../pallets/teerex/sgx-verify", default-features = false }
 substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.39-tag-v0.7.0" }
 teerex-primitives = { path = "../../primitives/teerex", default-features = false }
 

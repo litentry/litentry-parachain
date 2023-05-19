@@ -114,3 +114,10 @@ pub fn set_block_number(block_number: u32) {
 pub fn generate_challenge_code() -> ChallengeCode {
 	rand::thread_rng().gen::<ChallengeCode>()
 }
+
+pub fn is_authorised_signer<AccountId: Encode + Decode + PartialEq>(
+	signer: &AccountId,
+	who: &AccountId,
+) -> bool {
+	signer == &enclave_signer_account::<AccountId>() || signer == who
+}

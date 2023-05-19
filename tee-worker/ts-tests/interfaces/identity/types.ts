@@ -178,17 +178,26 @@ export interface TrustedCall extends Enum {
     readonly asBalanceUnshield: ITuple<[AccountId, AccountId, Balance, ShardIdentifier]>;
     readonly isBalanceShield: boolean;
     readonly asBalanceShield: ITuple<[AccountId, AccountId, Balance]>;
-    readonly isSetUserShieldingKeyDirect: boolean;
-    readonly asSetUserShieldingKeyDirect: ITuple<[AccountId, UserShieldingKeyType, H256]>;
-    readonly isCreateIdentityDirect: boolean;
-    readonly asCreateIdentityDirect: ITuple<[AccountId, LitentryIdentity, Option<Bytes>, u32, H256]>;
+    readonly isSetUserShieldingKey: boolean;
+    readonly asSetUserShieldingKey: ITuple<[AccountId, AccountId, UserShieldingKeyType, H256]>;
+    readonly isCreateIdentity: boolean;
+    readonly asCreateIdentity: ITuple<[AccountId, AccountId, LitentryIdentity, Option<Bytes>, u32, H256]>;
+    readonly isRemoveIdentity: boolean;
+    readonly asRemoveIdentity: ITuple<[AccountId, AccountId, LitentryIdentity, H256]>;
+    readonly isVerifyIdentity: boolean;
+    readonly asVerifyIdentity: ITuple<[AccountId, AccountId, LitentryIdentity, LitentryValidationData, u32, H256]>;
+    readonly isRequestVc: boolean;
+    readonly asRequestVc: ITuple<[AccountId, AccountId, Assertion, u32, H256]>;
     readonly type:
         | 'BalanceSetBalance'
         | 'BalanceTransfer'
         | 'BalanceUnshield'
         | 'BalanceShield'
-        | 'SetUserShieldingKeyDirect'
-        | 'CreateIdentityDirect';
+        | 'SetUserShieldingKey'
+        | 'CreateIdentity'
+        | 'RemoveIdentity'
+        | 'VerifyIdentity'
+        | 'RequestVc';
 }
 
 /** @name TrustedCallSigned */

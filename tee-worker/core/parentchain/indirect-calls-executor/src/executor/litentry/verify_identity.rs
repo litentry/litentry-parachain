@@ -76,7 +76,7 @@ impl VerifyIdentity {
 			);
 
 			let enclave_account_id = context.stf_enclave_signer.get_enclave_account()?;
-			let trusted_call = TrustedCall::verify_identity_preflight(
+			let trusted_call = TrustedCall::verify_identity(
 				enclave_account_id,
 				account,
 				identity,

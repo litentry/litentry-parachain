@@ -71,7 +71,6 @@ impl RequestVC {
 				enclave_account_id,
 				account,
 				assertion.clone(),
-				*shard,
 				hash_of(extrinsic),
 			);
 			let signed_trusted_call =
