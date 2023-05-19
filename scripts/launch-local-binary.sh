@@ -88,28 +88,32 @@ $PARACHAIN_BIN export-genesis-state --chain $CHAIN-dev > genesis-state
 $PARACHAIN_BIN export-genesis-wasm --chain $CHAIN-dev > genesis-wasm
 
 # run alice and bob as relay nodes
-$POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --alice --tmp --port 30336 --ws-port 9946 --rpc-port 9936 &> "relay.alice.log" &
+$POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --alice --tmp --port ${AlicePort:-30336} --ws-port ${AliceWSPort:-9946} --rpc-port ${AliceRPCPort:-9936} &> "relay.alice.log" &
 sleep 10
 
 RELAY_ALICE_IDENTITY=$(grep 'Local node identity' relay.alice.log | sed 's/^.*: //')
 
-$POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --bob --tmp --port 30337 --ws-port 9947  --rpc-port 9937 \
-  --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/$RELAY_ALICE_IDENTITY &> "relay.bob.log" &
+$POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --bob --tmp --port ${BobPort:-30337} --ws-port ${BobWSPort:-9947}  --rpc-port ${BobRPCPort:-9937} \
+  --bootnodes /ip4/127.0.0.1/tcp/${CollatorPort:-30333}/p2p/$RELAY_ALICE_IDENTITY &> "relay.bob.log" &
 sleep 10
 
 # run a litentry-collator instance
 $PARACHAIN_BIN --alice --collator --force-authoring --tmp --chain $CHAIN-dev \
   --unsafe-ws-external --unsafe-rpc-external --rpc-cors=all \
-  --port 30333 --ws-port 9944 --rpc-port 9933 --execution wasm \
+  --port ${CollatorPort:-30333} --ws-port ${CollatorWSPort:-9944} --rpc-port ${CollatorRPCPort:-9933} --execution wasm \
   --state-pruning archive --blocks-pruning archive \
   -- \
   --execution wasm --chain $ROCOCO_CHAINSPEC --port 30332 --ws-port 9943 --rpc-port 9932 \
-  --bootnodes /ip4/127.0.0.1/tcp/30336/p2p/$RELAY_ALICE_IDENTITY &> "para.alice.log" &
+  --bootnodes /ip4/127.0.0.1/tcp/$AlicePort/p2p/$RELAY_ALICE_IDENTITY &> "para.alice.log" &
 sleep 10
 
 echo "register parathread now ..."
 cd "$ROOTDIR/ts-tests"
-echo "NODE_ENV=ci" > .env
+if [[ -z "${NODE_ENV}" ]]; then
+    echo "NODE_ENV=ci" > .env
+else
+    echo "NODE_ENV=${NODE_ENV}" > .env
+fi
 yarn
 yarn register-parathread 2>&1 | tee "$TMPDIR/register-parathread.log"
 print_divider
@@ -118,7 +122,11 @@ echo "upgrade parathread to parachain now ..."
 # Wait for 90s to allow onboarding finish, after that we do the upgrade
 sleep 90
 cd "$ROOTDIR/ts-tests"
-echo "NODE_ENV=ci" > .env
+if [[ -z "${NODE_ENV}" ]]; then
+    echo "NODE_ENV=ci" > .env
+else
+    echo "NODE_ENV=${NODE_ENV}" > .env
+fi
 yarn
 yarn upgrade-parathread 2>&1 | tee "$TMPDIR/upgrade-parathread.log"
 print_divider

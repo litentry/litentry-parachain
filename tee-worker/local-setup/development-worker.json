@@ -1,0 +1,29 @@
+{
+  "workers": [
+    {
+      "source": "bin",
+      "flags": [
+        "--clean-reset",
+        "-P",
+        "$TrustedWorkerPort",
+        "-w",
+        "$UntrustedWorkerPort",
+        "-r",
+        "$MuRaPort",
+        "-h",
+        "$UntrustedHttpPort",
+        "-p",
+        "$CollatorWSPort",
+        "--running-mode",
+        "mock",
+        "--enable-mock-server",
+        "--parentchain-start-block",
+        "0"
+      ],
+      "subcommand_flags": [
+        "--skip-ra",
+        "--dev"
+      ]
+    }
+  ]
+}
