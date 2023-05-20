@@ -33,9 +33,16 @@ async function sendRequest(
         wsClient.onMessage.addListener((data) => {
             let result = JSON.parse(data.toString()).result;
             const res: WorkerRpcReturnValue = api.createType('WorkerRpcReturnValue', result) as any;
+
             if (res.status.isError) {
-                throw new Error('ws response error: ' + decodeRpcBytesAsString(res.value));
+                console.log('Rpc response error: ' + decodeRpcBytesAsString(res.value));
             }
+
+            // unfortunately, the res.value only contains the hash of top
+            if (res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus.isInvalid) {
+                console.log('Rpc trusted operation execution failed, hash: ', res.value.toHex());
+            }
+
             // resolve it once `do_watch` is false, meaning it's the final response
             if (res.do_watch.isFalse) {
                 // TODO: maybe only remove this listener
@@ -160,7 +167,7 @@ export const sendRequestFromTrustedCall = async (
         params: [u8aToHex(requestParam)],
         id: 1,
     };
-    await sendRequest(wsp, request, parachain_api);
+    return sendRequest(wsp, request, parachain_api);
 };
 
 // get TEE's shielding key directly via RPC

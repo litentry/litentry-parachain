@@ -17,8 +17,14 @@ export async function sendRequest(
     const res: WorkerRpcReturnValue = api.createType('WorkerRpcReturnValue', rawRes.result) as any;
 
     if (res.status.isError) {
-        throw new Error('RPC call error' + decodeRpcBytesAsString(res.value));
+        console.log('Rpc response error: ' + decodeRpcBytesAsString(res.value));
     }
+
+    // unfortunately, the res.value only contains the hash of top
+    if (res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus.isInvalid) {
+        console.log('Rpc trusted operation execution failed, hash: ', res.value.toHex());
+    }
+
     return res;
 }
 
