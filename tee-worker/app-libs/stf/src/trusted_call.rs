@@ -46,6 +46,7 @@ use std::{format, prelude::v1::*, sync::Arc};
 
 #[cfg(feature = "evm")]
 use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
+use itp_node_api::metadata::NodeMetadataTrait;
 use itp_types::{MrEnclave, SidechainBlockNumber};
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 
