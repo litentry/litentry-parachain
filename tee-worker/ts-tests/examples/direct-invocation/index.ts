@@ -2,7 +2,6 @@ import { cryptoWaitReady } from '@polkadot/util-crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
 import { TypeRegistry } from '@polkadot/types';
-import { hexToU8a, u8aToHex, u8aConcat } from '@polkadot/util';
 import { teeTypes } from '../../common/type-definitions';
 import {
     createSignedTrustedCallSetUserShieldingKey,
