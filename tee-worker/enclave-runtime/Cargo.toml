@@ -1,15 +1,15 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
 name = "enclave-runtime"
 version = "0.9.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+edition = "2021"
 
 [workspace]
 members = []
 
 [lib]
-crate-type = ["staticlib"]
 name = "enclave_runtime"
+crate-type = ["staticlib"]
 
 [features]
 default = []
@@ -17,12 +17,12 @@ evm = [
     "ita-sgx-runtime/evm",
     "ita-stf/evm",
 ]
+production = ["itp-settings/production"]
+sidechain = ["itp-settings/sidechain", "itp-top-pool-author/sidechain"]
 offchain-worker = [
     "itp-settings/offchain-worker",
     "itp-top-pool-author/offchain-worker",
 ]
-production = ["itp-settings/production"]
-sidechain = ["itp-settings/sidechain", "itp-top-pool-author/sidechain"]
 teeracle = [
     "ita-oracle",
     "itp-settings/teeracle",
@@ -93,7 +93,6 @@ ita-stf = { path = "../app-libs/stf", default-features = false, features = ["sgx
 itc-direct-rpc-server = { path = "../core/direct-rpc-server", default-features = false, features = ["sgx"] }
 itc-offchain-worker-executor = { path = "../core/offchain-worker-executor", default-features = false, features = ["sgx"] }
 itc-parentchain = { path = "../core/parentchain/parentchain-crate", default-features = false, features = ["sgx"] }
-itc-parentchain-indirect-calls-executor = { path = "../core/parentchain/indirect-calls-executor", default-features = false }
 itc-parentchain-test = { path = "../core/parentchain/test", default-features = false }
 itc-tls-websocket-server = { path = "../core/tls-websocket-server", default-features = false, features = ["sgx"] }
 itp-attestation-handler = { path = "../core-primitives/attestation-handler", default-features = false, features = ["sgx"] }
@@ -134,6 +133,7 @@ lc-scheduled-enclave = { path = "../litentry/core/scheduled-enclave", default-fe
 lc-stf-task-receiver = { path = "../litentry/core/stf-task/receiver", default-features = false, features = ["sgx"] }
 lc-stf-task-sender = { path = "../litentry/core/stf-task/sender", default-features = false, features = ["sgx"] }
 litentry-primitives = { path = "../litentry/primitives", default-features = false, features = ["sgx"] }
+itc-parentchain-indirect-calls-executor = { path = "../core/parentchain/indirect-calls-executor", default-features = false }
 
 # substrate deps
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }

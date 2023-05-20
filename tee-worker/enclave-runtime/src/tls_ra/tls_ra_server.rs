@@ -216,7 +216,7 @@ pub(crate) fn run_state_provisioning_server_internal<
 	let mut server =
 		TlsServer::new(StreamOwned::new(server_session, tcp_stream), seal_handler, provisioning);
 
-	println!("[Enclave] (MU-RA-Server) MU-RA successful sending keys");
+	println!("    [Enclave] (MU-RA-Server) MU-RA successful sending keys");
 	server.write_shard()
 }
 

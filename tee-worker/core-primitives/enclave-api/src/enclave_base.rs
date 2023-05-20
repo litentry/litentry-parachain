@@ -50,9 +50,6 @@ pub trait EnclaveBase: Send + Sync + 'static {
 	/// Initialize a new shard.
 	fn init_shard(&self, shard: Vec<u8>) -> EnclaveResult<()>;
 
-	/// Migrate old shard to new shard.
-	fn migrate_shard(&self, old_shard: Vec<u8>, new_shard: Vec<u8>) -> EnclaveResult<()>;
-
 	/// Trigger the import of parentchain block explicitly. Used when initializing a light-client
 	/// with a triggered import dispatcher.
 	fn trigger_parentchain_block_import(&self) -> EnclaveResult<()>;
@@ -66,6 +63,11 @@ pub trait EnclaveBase: Send + Sync + 'static {
 	fn get_ecc_signing_pubkey(&self) -> EnclaveResult<ed25519::Public>;
 
 	fn get_mrenclave(&self) -> EnclaveResult<[u8; MR_ENCLAVE_SIZE]>;
+	
+	// litentry
+	/// Migrate old shard to new shard.
+	fn migrate_shard(&self, old_shard: Vec<u8>, new_shard: Vec<u8>) -> EnclaveResult<()>;
+
 }
 
 /// EnclaveApi implementation for Enclave struct

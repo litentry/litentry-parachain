@@ -1,8 +1,8 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
 name = "itc-tls-websocket-server"
 version = "0.9.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+edition = "2021"
 
 [dependencies]
 bit-vec = { version = "0.6", default-features = false }
@@ -39,14 +39,13 @@ sp-core = { default-features = false, features = ["full_crypto"], git = "https:/
 log = { version = "0.4", default-features = false }
 
 [dev-dependencies]
-env_logger = "0.10.0"
+env_logger = "0.9.0"
 rustls = { version = "0.19", features = ["dangerous_configuration"] }
 url = { version = "2.0.0" }
 
 
 [features]
 default = ["std"]
-mocks = []
 sgx = [
     "mio-extras/sgx",
     "mio_sgx",
@@ -73,3 +72,4 @@ std = [
     "yasna",
     "log/std",
 ]
+mocks = []

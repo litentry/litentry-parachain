@@ -1,8 +1,8 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
 name = "integritee-cli"
 version = "0.9.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+edition = "2021"
 
 [dependencies]
 base58 = "0.2"
@@ -10,26 +10,22 @@ blake2-rfc = { version = "0.2.18" }
 chrono = "*"
 clap = { version = "3.1.6", features = ["derive"] }
 codec = { version = "3.0.0", package = "parity-scale-codec", features = ["derive"] }
-env_logger = "0.10.0"
-frame-metadata = "15.0.0"
+env_logger = "0.9"
 hdrhistogram = "7.5.0"
 hex = "0.4.2"
 log = "0.4"
 primitive-types = { version = "0.12.1", features = ["codec"] }
 rand = "0.8.5"
 rayon = "1.5.1"
-scale-value = "0.6.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sgx_crypto_helper = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
-sp-core-hashing = "6.0.0"
 ws = { version = "0.9.1", features = ["ssl"] }
 
 # scs / integritee
 pallet-evm = { optional = true, git = "https://github.com/integritee-network/frontier.git", branch = "polkadot-v0.9.39" }
 substrate-api-client = { features = ["ws-client"], git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.39-tag-v0.7.0" }
 substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.39-tag-v0.7.0" }
-teerex-primitives = { path = "../../primitives/teerex", default-features = false }
 
 # substrate dependencies
 frame-system = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
@@ -41,11 +37,9 @@ sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "po
 sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 
 # local dependencies
-ita-sgx-runtime = { path = "../app-libs/sgx-runtime" }
 ita-stf = { path = "../app-libs/stf" }
 itc-rpc-client = { path = "../core/rpc-client" }
 itp-node-api = { path = "../core-primitives/node-api" }
-itp-node-api-metadata = { path = "../core-primitives/node-api/metadata" }
 itp-rpc = { path = "../core-primitives/rpc" }
 itp-sgx-crypto = { path = "../core-primitives/sgx/crypto" }
 itp-stf-primitives = { path = "../core-primitives/stf-primitives" }
@@ -54,7 +48,13 @@ itp-types = { path = "../core-primitives/types" }
 itp-utils = { path = "../core-primitives/utils" }
 
 # litentry
+sp-core-hashing = "6.0.0"
+frame-metadata = "15.0.0"
+scale-value = "0.6.0"
 litentry-primitives = { path = "../litentry/primitives" }
+teerex-primitives = { path = "../../primitives/teerex", default-features = false }
+ita-sgx-runtime = { path = "../app-libs/sgx-runtime" }
+itp-node-api-metadata = { path = "../core-primitives/node-api/metadata" }
 
 [features]
 default = []

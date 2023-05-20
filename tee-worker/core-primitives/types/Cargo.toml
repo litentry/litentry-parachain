@@ -1,11 +1,11 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
-homepage = "https://integritee.network/"
-license = "Apache-2.0"
 name = "itp-types"
-repository = "https://github.com/integritee-network/pallets/"
 version = "0.9.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+homepage = "https://integritee.network/"
+repository = "https://github.com/integritee-network/pallets/"
+license = "Apache-2.0"
+edition = "2021"
 
 [dependencies]
 chrono = { version = "0.4.19", default-features = false, features = ["alloc"] }
@@ -17,9 +17,6 @@ serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 # local dependencies
 itp-sgx-runtime-primitives = { path = "../../core-primitives/sgx-runtime-primitives", default-features = false }
 
-# scs
-substrate-api-client = { default-features = false, git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.39-tag-v0.7.0" }
-
 # substrate-deps
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
@@ -29,6 +26,7 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 
 # litentry
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
+substrate-api-client = { default-features = false, git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.39-tag-v0.7.0" }
 
 [dev-dependencies]
 sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
@@ -44,14 +42,15 @@ std = [
     "serde/std",
     "serde_json/std",
     "primitive-types/std",
-    "litentry-primitives/std",
     "itp-sgx-runtime-primitives/std",
-    "substrate-api-client/std",
     # substrate
     "frame-system/std",
     "pallet-balances/std",
     "sp-std/std",
     "sp-core/std",
     "sp-runtime/std",
+    # litentry
+    "litentry-primitives/std",
+    "substrate-api-client/std",
 ]
 test = []

@@ -57,12 +57,6 @@ enclave {
 			[in, size=shard_size] uint8_t* shard, uint32_t shard_size
 		);
 
-		public sgx_status_t migrate_shard(
-			[in, size=shard_size] uint8_t* old_shard, 
-			[in, size=shard_size] uint8_t* new_shard, 
-			uint32_t shard_size
-		);
-
 		public sgx_status_t trigger_parentchain_block_import();
 
 		public sgx_status_t execute_trusted_calls();
@@ -70,10 +64,6 @@ enclave {
 		public sgx_status_t sync_parentchain(
 			[in, size=blocks_size] uint8_t* blocks, size_t blocks_size,
 			[in] uint32_t* nonce
-		);
-
-		public sgx_status_t ignore_parentchain_block_import_validation_until(
-			[in] uint32_t* until
 		);
 
 		public sgx_status_t set_nonce(
@@ -162,6 +152,16 @@ enclave {
 
 		public size_t test_main_entrance();
 
+		public sgx_status_t migrate_shard(
+			[in, size=shard_size] uint8_t* old_shard, 
+			[in, size=shard_size] uint8_t* new_shard, 
+			uint32_t shard_size
+		);
+		
+		public sgx_status_t ignore_parentchain_block_import_validation_until(
+			[in] uint32_t* until
+		);
+		
 		public size_t run_stf_task_handler(
 			[in, size=data_providers_static_len] uint8_t* data_providers_static, uint32_t data_providers_static_len
 		);

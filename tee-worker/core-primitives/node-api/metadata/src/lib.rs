@@ -45,7 +45,10 @@ pub mod event;
 #[cfg(feature = "mocks")]
 pub mod metadata_mocks;
 
-pub trait NodeMetadataTrait: TeerexCallIndexes + SidechainCallIndexes {}
+pub trait NodeMetadataTrait:
+	TeerexCallIndexes + SidechainCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix
+{
+}
 impl<T: TeerexCallIndexes + SidechainCallIndexes> NodeMetadataTrait for T {}
 
 #[derive(Default, Encode, Decode, Debug, Clone)]

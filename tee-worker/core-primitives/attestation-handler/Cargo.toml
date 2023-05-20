@@ -1,8 +1,8 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
 name = "itp-attestation-handler"
 version = "0.8.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+edition = "2021"
 
 [dependencies]
 # crates-io no_std deps

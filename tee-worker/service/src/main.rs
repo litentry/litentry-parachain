@@ -25,7 +25,6 @@ use crate::utils::check_files;
 
 use crate::{
 	account_funding::{setup_account_funding, EnclaveAccountInfoProvider},
-	config::Config,
 	error::Error,
 	globals::tokio_handle::{GetTokioHandle, GlobalTokioHandle},
 	initialized_service::{
@@ -45,6 +44,7 @@ use crate::{
 use base58::ToBase58;
 use clap::{load_yaml, App};
 use codec::{Decode, Encode};
+use config::Config;
 use enclave::{
 	api::enclave_init,
 	tls_ra::{enclave_request_state_provisioning, enclave_run_state_provisioning_server},
@@ -862,7 +862,6 @@ fn register_collateral(
 	send_extrinsic(&uxt, api, accountid, is_development_mode);
 }
 
-#[cfg(feature = "dcap")]
 fn send_extrinsic(
 	extrinsic: &[u8],
 	api: &ParentchainApi,

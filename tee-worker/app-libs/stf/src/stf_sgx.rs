@@ -130,7 +130,7 @@ where
 	Call: ExecuteCall<NodeMetadataRepository>,
 	State: SgxExternalitiesTrait + Debug,
 	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes,
+	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 {
 	type Error = Call::Error;
 

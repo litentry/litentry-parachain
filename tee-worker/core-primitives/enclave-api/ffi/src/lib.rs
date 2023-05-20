@@ -55,14 +55,6 @@ extern "C" {
 		shard_size: u32,
 	) -> sgx_status_t;
 
-	pub fn migrate_shard(
-		eid: sgx_enclave_id_t,
-		retval: *mut sgx_status_t,
-		old_shard: *const u8,
-		new_shard: *const u8,
-		shard_size: u32,
-	) -> sgx_status_t;
-
 	pub fn trigger_parentchain_block_import(
 		eid: sgx_enclave_id_t,
 		retval: *mut sgx_status_t,
@@ -76,12 +68,6 @@ extern "C" {
 		blocks: *const u8,
 		blocks_size: usize,
 		nonce: *const u32,
-	) -> sgx_status_t;
-
-	pub fn ignore_parentchain_block_import_validation_until(
-		eid: sgx_enclave_id_t,
-		retval: *mut sgx_status_t,
-		until: *const u32,
 	) -> sgx_status_t;
 
 	pub fn set_nonce(
@@ -233,6 +219,21 @@ extern "C" {
 		shard: *const u8,
 		shard_size: u32,
 		skip_ra: c_int,
+	) -> sgx_status_t;
+
+	// litentry
+	pub fn migrate_shard(
+		eid: sgx_enclave_id_t,
+		retval: *mut sgx_status_t,
+		old_shard: *const u8,
+		new_shard: *const u8,
+		shard_size: u32,
+	) -> sgx_status_t;
+	
+	pub fn ignore_parentchain_block_import_validation_until(
+		eid: sgx_enclave_id_t,
+		retval: *mut sgx_status_t,
+		until: *const u32,
 	) -> sgx_status_t;
 
 	pub fn run_stf_task_handler(
