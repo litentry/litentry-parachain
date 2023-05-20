@@ -57,7 +57,7 @@ impl PalletTeerexApi for TestNodeApi {
 	) -> ApiResult<Option<[u8; 46]>> {
 		unreachable!()
 	}
-	
+
 	fn all_scheduled_mrenclaves(&self, _at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>> {
 		let enclaves = enclaves();
 		let mr_enclaves: HashSet<_> = enclaves.into_iter().map(|e| e.mr_enclave).collect();

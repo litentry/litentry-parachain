@@ -221,7 +221,7 @@ where
 		let state_write_lock = self.states_map_lock.write().map_err(|_| Error::LockPoisoning)?;
 		self.write_after_mutation(state, state_write_lock, shard)
 	}
-	
+
 	fn migrate_shard(
 		&self,
 		old_shard: ShardIdentifier,
