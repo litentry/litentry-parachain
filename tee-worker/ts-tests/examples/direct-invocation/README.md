@@ -79,5 +79,4 @@ response status:  {
 
 ### TODOs:
 
--   the `WorkerRpcReturnValue` type is manually defined, we need to use the generated type - they differ a bit
--   more direct calls should be implemented in rust
+-   Consider synchronous reponses to RPC requests

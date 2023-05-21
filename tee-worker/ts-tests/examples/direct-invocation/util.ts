@@ -1,6 +1,6 @@
 import { ApiPromise } from '@polkadot/api';
 import { KeyringPair } from '@polkadot/keyring/types';
-import { BN, u8aToHex, hexToU8a, compactAddLength, compactStripLength, u8aToString, bufferToU8a } from '@polkadot/util';
+import { BN, u8aToHex, hexToU8a, compactAddLength, bufferToU8a } from '@polkadot/util';
 import { Codec } from '@polkadot/types/types';
 import { PubicKeyJson } from '../../common/type-definitions';
 import { WorkerRpcReturnValue } from '../../interfaces/identity';
