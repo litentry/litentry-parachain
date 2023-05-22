@@ -24,7 +24,7 @@ use crate::{
     filter_calls::FilterCalls,
     traits::{ExecuteIndirectCalls, IndirectDispatch, IndirectExecutor},
 };
-use beefy_merkle_tree::{merkle_root, Keccak256};
+use binary_merkle_tree::{merkle_root, Keccak256};
 use codec::Encode;
 use core::marker::PhantomData;
 use ita_stf::{TrustedCall, TrustedCallSigned};
