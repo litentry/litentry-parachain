@@ -38,36 +38,31 @@ use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{Identity, ParentchainBlockNumber};
 use log::*;
 
-pub(crate) struct CreateIdentity {
-	pub(crate) block_number: ParentchainBlockNumber,
+pub struct CreateIdentityArgs {
+	shard: ShardIdentifier,
+	account: AccountId,
+	encrypted_identity: Vec<u8>,
+	encrypted_metadata: Option<Vec<u8>>,
 }
 
-impl CreateIdentity {
-	fn execute_internal<R, S, T, N>(
-		&self,
-		context: &IndirectCallsExecutor<R, S, T, N>,
-		extrinsic: &ParentchainUncheckedExtrinsic<<Self as Executor<R, S, T, N>>::Call>,
-	) -> Result<()>
-	where
-		R: AccessKey,
-		R::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
-			+ ShieldingCryptoEncrypt<Error = itp_sgx_crypto::Error>,
-		S: StfEnclaveSigning,
-		T: AuthorApi<H256, H256> + Send + Sync + 'static,
-		N: AccessNodeMetadata,
-		N::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UtilityCallIndexes,
-	{
-		let (_, (shard, account, encrypted_identity, encrypted_metadata)) = &extrinsic.function;
-		let shielding_key = context.shielding_key_repo.retrieve_key()?;
+impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for CreateIdentityArgs {
+	fn dispatch(&self, executor: &Executor, xt_hash: H256) -> Result<()> {
+		info!(
+			"Found CreateIdentity extrinsic in block: Shard: {}\nAccount {:?}",
+			bs58::encode(self.shard.encode()).into_string(),
+			self.account
+		);
+
+		let shielding_key = executor.shielding_key_repo.retrieve_key()?;
 		let identity: Identity =
-			Identity::decode(&mut shielding_key.decrypt(encrypted_identity)?.as_slice())?;
+			Identity::decode(&mut shielding_key.decrypt(self.encrypted_identity)?.as_slice())?;
 		debug!(
 			"execute indirect call: CreateIdentity, who: {:?}, identity: {:?}",
-			account_id_to_string(account),
+			account_id_to_string(self.account),
 			identity
 		);
 
-		let metadata = match encrypted_metadata {
+		let metadata = match self.encrypted_metadata {
 			None => None,
 			Some(m) => {
 				let decrypted_metadata = shielding_key.decrypt(m)?;
@@ -76,8 +71,8 @@ impl CreateIdentity {
 		};
 
 		if extrinsic.signature.is_some() {
-			let enclave_account_id = context.stf_enclave_signer.get_enclave_account()?;
-			let trusted_call = TrustedCall::create_identity(
+			let enclave_account_id = executor.stf_enclave_signer.get_enclave_account()?;
+			let trusted_call = TrustedCall::create_identity_runtime(
 				enclave_account_id,
 				account.clone(),
 				identity,
@@ -86,57 +81,10 @@ impl CreateIdentity {
 				hash_of(extrinsic),
 			);
 			let signed_trusted_call =
-				context.stf_enclave_signer.sign_call_with_self(&trusted_call, shard)?;
+				executor.stf_enclave_signer.sign_call_with_self(&trusted_call, shard)?;
 			let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
-
 			let encrypted_trusted_call = shielding_key.encrypt(&trusted_operation.encode())?;
-			context.submit_trusted_call(*shard, encrypted_trusted_call);
-		}
-		Ok(())
-	}
-}
-
-impl<R, S, T, N> Executor<R, S, T, N> for CreateIdentity
-where
-	R: AccessKey,
-	R::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
-		+ ShieldingCryptoEncrypt<Error = itp_sgx_crypto::Error>,
-	S: StfEnclaveSigning,
-	T: AuthorApi<H256, H256> + Send + Sync + 'static,
-	N: AccessNodeMetadata,
-	N::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes + UtilityCallIndexes,
-{
-	type Call = CreateIdentityFn;
-
-	fn call_index(&self, call: &Self::Call) -> [u8; 2] {
-		call.0
-	}
-
-	fn call_index_from_metadata(&self, metadata_type: &N::MetadataType) -> Result<[u8; 2]> {
-		metadata_type.create_identity_call_indexes().map_err(|e| e.into())
-	}
-
-	fn execute(
-		&self,
-		context: &IndirectCallsExecutor<R, S, T, N>,
-		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
-	) -> Result<()> {
-		// the account is user that requested to create the identity, not necessarily the extrinsic sender
-		// there's case where a delegatee could send this extrinsic on behalf of the user
-		let (_, (shard, account, _, _)) = &extrinsic.function;
-		let e = Error::IMPHandlingError(IMPError::CreateIdentityFailed(ErrorDetail::ImportError));
-		if self.execute_internal(context, &extrinsic).is_err() {
-			// try to handle the error internally, if we get another error, log it and return the
-			// original error
-			if let Err(internal_e) = context.submit_trusted_call_from_error(
-				*shard,
-				Some(account.clone()),
-				&e,
-				hash_of(&extrinsic),
-			) {
-				warn!("fail to handle internal errors in create_identity: {:?}", internal_e);
-			}
-			return Err(e)
+			executor.submit_trusted_call(*shard, encrypted_trusted_call);
 		}
 		Ok(())
 	}

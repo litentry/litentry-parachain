@@ -17,7 +17,7 @@
 
 use crate::{
     error::Result,
-    indirect_calls::{CallWorkerArgs, ShiedFundsArgs},
+    indirect_calls::{CallWorkerArgs, ShiedFundsArgs, CreateIdentityArgs},
     parentchain_extrinsic_parser::ParseExtrinsic,
     IndirectDispatch, IndirectExecutor,
 };
@@ -85,7 +85,11 @@ for ShieldFundsAndCallWorkerFilter<ExtrinsicParser>
         } else if index == metadata.call_worker_call_indexes().ok()? {
             let args = decode_and_log_error::<CallWorkerArgs>(call_args)?;
             Some(IndirectCall::CallWorker(args))
-        } else {
+        } else if index == metadata.call_worker_call_indexes().ok()? {
+            let args = decode_and_log_error::<CreateIdentityArgs>(call_args)?;
+            Some(IndirectCall::CreateIdentity(args))
+        }
+        else {
             None
         }
     }
@@ -99,6 +103,7 @@ for ShieldFundsAndCallWorkerFilter<ExtrinsicParser>
 pub enum IndirectCall {
     ShieldFunds(ShiedFundsArgs),
     CallWorker(CallWorkerArgs),
+    CreateIdentity(CreateIdentityArgs)
 }
 
 impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for IndirectCall {
@@ -106,6 +111,7 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for IndirectCall {
         match self {
             IndirectCall::ShieldFunds(shieldfunds) => shieldfunds.dispatch(executor),
             IndirectCall::CallWorker(call_worker) => call_worker.dispatch(executor),
+            IndirectCall::CreateIdentity(create_identity) => create_identity.dispatch(executor),
         }
     }
 }

@@ -17,6 +17,7 @@
 
 mod call_worker;
 mod shield_funds;
+mod litentry;
 
 pub use call_worker::CallWorkerArgs;
 pub use shield_funds::ShiedFundsArgs;

@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-pub mod batch_all;
+// pub mod batch_all;
 pub mod create_identity;
-pub mod remove_identity;
-pub mod request_vc;
-pub mod scheduled_enclave;
-pub mod set_user_shielding_key;
-pub mod verify_identity;
+// pub mod remove_identity;
+// pub mod request_vc;
+// pub mod scheduled_enclave;
+// pub mod set_user_shielding_key;
+// pub mod verify_identity;
