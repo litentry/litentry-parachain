@@ -15,6 +15,7 @@
 
 */
 
+#![cfg_attr(not(feature = "std"), no_std)]
 pub extern crate alloc;
 
 use alloc::string::String;
@@ -197,8 +198,7 @@ pub struct TcbInfo {
 }
 
 impl TcbInfo {
-	/// This extracts the necessary information into a tuple (`(Key, Value)`) that we actually store
-	/// in the chain
+	/// This extracts the necessary information into a tuple (`(Key, Value)`) that we actually store in the chain
 	pub fn to_chain_tcb_info(&self) -> (Fmspc, TcbInfoOnChain) {
 		let valid_tcbs: Vec<TcbVersionStatus> = self
 			.tcb_levels

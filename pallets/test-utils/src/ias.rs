@@ -118,8 +118,7 @@ pub mod consts {
 	// reproduce with integritee-service signing-key
 	pub const TEST4_SIGNER_PUB: &MrSigner =
 		include_bytes!("./ias-data/enclave-signing-pubkey-TEST4.bin");
-	// equal to TEST4! because of MRSIGNER policy it was possible to change the MRENCLAVE but keep
-	// the secret
+	// equal to TEST4! because of MRSIGNER policy it was possible to change the MRENCLAVE but keep the secret
 	pub const TEST5_SIGNER_PUB: &MrSigner =
 		include_bytes!("./ias-data/enclave-signing-pubkey-TEST5.bin");
 	pub const TEST6_SIGNER_PUB: &MrSigner =

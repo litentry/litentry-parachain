@@ -1,17 +1,17 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-description = "A pallet to store cryptocurrency market data"
-edition = "2021"
-homepage = "https://integritee.network/"
-license = "Apache-2.0"
 name = "pallet-teeracle"
-repository = "https://github.com/integritee-network/pallets/"
+description = "A pallet to store cryptocurrency market data"
 version = "0.1.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+homepage = "https://integritee.network/"
+repository = "https://github.com/integritee-network/pallets/"
+license = "Apache-2.0"
+edition = "2021"
 
 [dependencies]
 codec = { version = "3.0.0", default-features = false, features = ["derive"], package = "parity-scale-codec" }
 log = { version = "0.4.14", default-features = false }
-scale-info = { version = "2.7.0", default-features = false, features = ["derive"] }
+scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
 
 # local
 pallet-teerex = { path = "../teerex", default-features = false }
@@ -30,44 +30,46 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 
 # benchmarking
 frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-hex-literal = { version = "0.4.1", optional = true }
+hex-literal = { version = "0.3.2", optional = true }
 test-utils = { path = "../test-utils", optional = true, default-features = false }
 timestamp = { package = "pallet-timestamp", default-features = false, optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 
 [dev-dependencies]
 externalities = { package = "sp-externalities", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 frame-benchmarking = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-hex-literal = "0.4.1"
-pallet-balances = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-pallet-teerex = { path = "../teerex", features = ["skip-scheduled-enclave-check"] }
+hex-literal = "0.3.2"
 sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
+pallet-balances = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 test-utils = { path = "../test-utils" }
 timestamp = { package = "pallet-timestamp", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 
+// litentry
+pallet-teerex = { path = "../teerex", features = ["skip-scheduled-enclave-check"] }
 
 [features]
 default = ["std"]
-runtime-benchmarks = [
-  "frame-benchmarking",
-  "hex-literal",
-  "test-utils",
-  "timestamp/runtime-benchmarks",
-]
 std = [
-  "codec/std",
-  "log/std",
-  "scale-info/std",
-  # local
-  "pallet-teerex/std",
-  "teeracle-primitives/std",
-  # encointer
-  "substrate-fixed/std",
-  # substrate
-  "frame-support/std",
-  "frame-system/std",
-  "sp-core/std",
-  "sp-io/std",
-  "sp-runtime/std",
-  "sp-std/std",
+    "codec/std",
+    "log/std",
+    "scale-info/std",
+    # local
+    "pallet-teerex/std",
+    "teeracle-primitives/std",
+    # encointer
+    "substrate-fixed/std",
+    # substrate
+    "frame-support/std",
+    "frame-system/std",
+    "sp-core/std",
+    "sp-io/std",
+    "sp-runtime/std",
+    "sp-std/std",
 ]
+runtime-benchmarks = [
+    "frame-benchmarking",
+    "hex-literal",
+    "test-utils",
+    "timestamp/runtime-benchmarks",
+]
+
 try-runtime = ["frame-support/try-runtime"]

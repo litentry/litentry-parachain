@@ -16,8 +16,7 @@
 */
 //! # Cryptocurrency teeracle pallet
 //!
-//! The teeracle pallet provides functionality for handling exchange rates of the coin (ex: TEER) to
-//! different currencies
+//! The teeracle pallet provides functionality for handling exchange rates of the coin (ex: TEER) to different currencies
 //!
 //! - [`Config`]
 //! - [`Call`]
@@ -28,6 +27,8 @@
 //! The teeracle pallet provides functions for:
 //!
 //! - Setting exchange rates.
+//!
+//!
 #![cfg_attr(not(feature = "std"), no_std)]
 pub use crate::weights::WeightInfo;
 pub use pallet::*;
@@ -107,8 +108,7 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// The exchange rate of trading pair was set/updated with value from source.
-		/// \[data_source], [trading_pair], [new value\]
+		/// The exchange rate of trading pair was set/updated with value from source. \[data_source], [trading_pair], [new value\]
 		ExchangeRateUpdated(DataSource, TradingPairString, Option<ExchangeRate>),
 		ExchangeRateDeleted(DataSource, TradingPairString),
 		OracleUpdated(OracleDataName, DataSource),
