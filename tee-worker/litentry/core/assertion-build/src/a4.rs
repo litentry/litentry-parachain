@@ -72,7 +72,7 @@ use lc_data_providers::{
 	graphql::{GetSupportedNetworks, GraphQLClient, TDFQuery, VerifiedCredentialsIsHodlerIn},
 	vec_to_string,
 };
-use litentry_primitives::SupportedNetworks;
+use litentry_primitives::SupportedNetwork;
 use log::*;
 use std::{
 	collections::{HashMap, HashSet},
@@ -105,7 +105,7 @@ pub fn build(
 	})?;
 
 	let mut client = GraphQLClient::new();
-	let mut networks: HashMap<SupportedNetworks, HashSet<String>> = HashMap::new();
+	let mut networks: HashMap<SupportedNetwork, HashSet<String>> = HashMap::new();
 
 	identities.iter().for_each(|identity| {
 		match identity {
@@ -155,7 +155,7 @@ pub fn build(
 
 		let addresses: Vec<String> = addresses.into_iter().collect();
 		let token_address =
-			if verified_network == SupportedNetworks::Ethereum { LIT_TOKEN_ADDRESS } else { "" };
+			if verified_network == SupportedNetwork::Ethereum { LIT_TOKEN_ADDRESS } else { "" };
 
 		// TODO:
 		// There is a problem here, because TDF does not support mixed network types,
@@ -222,16 +222,16 @@ pub fn build(
 }
 
 fn if_match_networks_collect_address(
-	networks: &mut HashMap<SupportedNetworks, HashSet<String>>,
-	verified_network: SupportedNetworks,
+	networks: &mut HashMap<SupportedNetwork, HashSet<String>>,
+	verified_network: SupportedNetwork,
 	address: String,
 ) {
 	if matches!(
 		verified_network,
-		SupportedNetworks::Litentry
-			| SupportedNetworks::Litmus
-			| SupportedNetworks::LitentryRococo
-			| SupportedNetworks::Ethereum
+		SupportedNetwork::Litentry
+			| SupportedNetwork::Litmus
+			| SupportedNetwork::LitentryRococo
+			| SupportedNetwork::Ethereum
 	) {
 		match networks.get_mut(&verified_network) {
 			Some(set) => {

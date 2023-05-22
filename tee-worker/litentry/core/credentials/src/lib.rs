@@ -40,7 +40,7 @@ use itp_stf_primitives::types::ShardIdentifier;
 use itp_time_utils::now_as_millis;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::SupportedNetworks;
+use litentry_primitives::SupportedNetwork;
 use log::*;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
@@ -442,7 +442,7 @@ impl Credential {
 		self.credential_subject.values.push(true);
 	}
 
-	pub fn add_assertion_a8(&mut self, networks: Vec<SupportedNetworks>, min: u64, max: u64) {
+	pub fn add_assertion_a8(&mut self, networks: Vec<SupportedNetwork>, min: u64, max: u64) {
 		let min = format!("{}", min);
 		let max = format!("{}", max);
 
@@ -490,17 +490,17 @@ pub fn format_assertion_to_date() -> String {
 trait DisplayNetwork {
 	fn display(&self) -> String;
 }
-impl DisplayNetwork for SupportedNetworks {
+impl DisplayNetwork for SupportedNetwork {
 	fn display(&self) -> String {
 		match self {
-			SupportedNetworks::Litentry => "Litentry".into(),
-			SupportedNetworks::Litmus => "Litmus".into(),
-			SupportedNetworks::LitentryRococo => "LitentryRococo".into(),
-			SupportedNetworks::Polkadot => "Polkadot".into(),
-			SupportedNetworks::Kusama => "Kusama".into(),
-			SupportedNetworks::Khala => "Khala".into(),
-			SupportedNetworks::Ethereum => "Ethereum".into(),
-			SupportedNetworks::TestNet => "TestNet".into(),
+			SupportedNetwork::Litentry => "Litentry".into(),
+			SupportedNetwork::Litmus => "Litmus".into(),
+			SupportedNetwork::LitentryRococo => "LitentryRococo".into(),
+			SupportedNetwork::Polkadot => "Polkadot".into(),
+			SupportedNetwork::Kusama => "Kusama".into(),
+			SupportedNetwork::Khala => "Khala".into(),
+			SupportedNetwork::Ethereum => "Ethereum".into(),
+			SupportedNetwork::TestNet => "TestNet".into(),
 		}
 	}
 }

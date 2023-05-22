@@ -29,7 +29,7 @@ use lc_data_providers::{
 	graphql::{GraphQLClient, TDFQuery, VerifiedCredentialsIsHodlerIn},
 	vec_to_string,
 };
-use litentry_primitives::SupportedNetworks;
+use litentry_primitives::SupportedNetwork;
 use log::*;
 use std::{string::ToString, vec, vec::Vec};
 
@@ -77,7 +77,7 @@ pub fn build(
 			let vch = VerifiedCredentialsIsHodlerIn::new(
 				addresses.clone(),
 				from_date.to_string(),
-				SupportedNetworks::Ethereum,
+				SupportedNetwork::Ethereum,
 				"".into(),
 				q_min_balance.to_string(),
 			);

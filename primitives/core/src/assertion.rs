@@ -23,11 +23,11 @@ use sp_runtime::{traits::ConstU32, BoundedVec};
 
 type MaxStringLength = ConstU32<64>;
 pub type ParameterString = BoundedVec<u8, MaxStringLength>;
-pub type IndexingNetworks = BoundedVec<SupportedNetworks, MaxStringLength>;
+pub type IndexingNetworks = BoundedVec<SupportedNetwork, MaxStringLength>;
 
 // TDFSupportedNetwork =》 AvailableNetworks
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen, Hash)]
-pub enum SupportedNetworks {
+pub enum SupportedNetwork {
 	Litentry,
 	Litmus,
 	LitentryRococo,

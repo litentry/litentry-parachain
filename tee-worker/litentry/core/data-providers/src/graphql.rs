@@ -25,7 +25,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
-use litentry_primitives::{EvmNetwork, SubstrateNetwork, SupportedNetworks};
+use litentry_primitives::{EvmNetwork, SubstrateNetwork, SupportedNetwork};
 use log::debug;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -133,27 +133,27 @@ impl<Query: ToGraphQL> TDFQuery<Query> for GraphQLClient {
 }
 
 pub trait GetSupportedNetworks {
-	fn get(&self) -> SupportedNetworks;
+	fn get(&self) -> SupportedNetwork;
 }
 
 impl GetSupportedNetworks for SubstrateNetwork {
-	fn get(&self) -> SupportedNetworks {
+	fn get(&self) -> SupportedNetwork {
 		match self {
-			SubstrateNetwork::Litmus => SupportedNetworks::Litmus,
-			SubstrateNetwork::Litentry => SupportedNetworks::Litentry,
-			SubstrateNetwork::LitentryRococo => SupportedNetworks::LitentryRococo,
-			SubstrateNetwork::Polkadot => SupportedNetworks::Polkadot,
-			SubstrateNetwork::Kusama => SupportedNetworks::Kusama,
-			SubstrateNetwork::Khala => SupportedNetworks::Khala,
-			SubstrateNetwork::TestNet => SupportedNetworks::TestNet,
+			SubstrateNetwork::Litmus => SupportedNetwork::Litmus,
+			SubstrateNetwork::Litentry => SupportedNetwork::Litentry,
+			SubstrateNetwork::LitentryRococo => SupportedNetwork::LitentryRococo,
+			SubstrateNetwork::Polkadot => SupportedNetwork::Polkadot,
+			SubstrateNetwork::Kusama => SupportedNetwork::Kusama,
+			SubstrateNetwork::Khala => SupportedNetwork::Khala,
+			SubstrateNetwork::TestNet => SupportedNetwork::TestNet,
 		}
 	}
 }
 
 impl GetSupportedNetworks for EvmNetwork {
-	fn get(&self) -> SupportedNetworks {
+	fn get(&self) -> SupportedNetwork {
 		match self {
-			EvmNetwork::Ethereum => SupportedNetworks::Ethereum,
+			EvmNetwork::Ethereum => SupportedNetwork::Ethereum,
 			// TODO: how about BSC?
 			EvmNetwork::BSC => unreachable!("support BSC?"),
 		}
@@ -170,7 +170,7 @@ pub trait ToGraphQL {
 pub struct VerifiedCredentialsIsHodlerIn {
 	pub addresses: Vec<String>,
 	pub from_date: String,
-	pub network: SupportedNetworks,
+	pub network: SupportedNetwork,
 	pub token_address: String,
 	pub min_balance: String,
 }
@@ -179,7 +179,7 @@ impl VerifiedCredentialsIsHodlerIn {
 	pub fn new(
 		addresses: Vec<String>,
 		from_date: String,
-		network: SupportedNetworks,
+		network: SupportedNetwork,
 		token_address: String,
 		min_balance: String,
 	) -> Self {
@@ -199,13 +199,14 @@ impl ToGraphQL for VerifiedCredentialsIsHodlerIn {
 	}
 }
 
+#[derive(Debug)]
 pub struct VerifiedCredentialsTotalTxs {
 	addresses: Vec<String>,
-	networks: Vec<SupportedNetworks>,
+	networks: Vec<SupportedNetwork>,
 }
 
 impl VerifiedCredentialsTotalTxs {
-	pub fn new(addresses: Vec<String>, networks: Vec<SupportedNetworks>) -> Self {
+	pub fn new(addresses: Vec<String>, networks: Vec<SupportedNetwork>) -> Self {
 		VerifiedCredentialsTotalTxs { addresses, networks }
 	}
 }
@@ -264,7 +265,7 @@ pub struct TotalTxsStruct {
 #[cfg(test)]
 mod tests {
 	use crate::graphql::{
-		GraphQLClient, SupportedNetworks, TDFQuery, VerifiedCredentialsIsHodlerIn,
+		GraphQLClient, SupportedNetwork, TDFQuery, VerifiedCredentialsIsHodlerIn,
 		VerifiedCredentialsTotalTxs, G_DATA_PROVIDERS,
 	};
 	use itp_stf_primitives::types::AccountId;
@@ -291,7 +292,7 @@ mod tests {
 		let credentials = VerifiedCredentialsIsHodlerIn {
 			addresses: vec![ACCOUNT_ADDRESS1.to_string(), ACCOUNT_ADDRESS2.to_string()],
 			from_date: "2022-10-16T00:00:00Z".to_string(),
-			network: SupportedNetworks::Ethereum,
+			network: SupportedNetwork::Ethereum,
 			token_address: LIT_TOKEN_ADDRESS.to_string(),
 			min_balance: "0.00000056".into(),
 		};
@@ -308,7 +309,7 @@ mod tests {
 
 		let query = VerifiedCredentialsTotalTxs {
 			addresses: vec!["EGP7XztdTosm1EmaATZVMjSWujGEj9nNidhjqA2zZtttkFg".to_string()],
-			networks: vec![SupportedNetworks::Kusama, SupportedNetworks::Polkadot],
+			networks: vec![SupportedNetwork::Kusama, SupportedNetwork::Polkadot],
 		};
 		let mut client = GraphQLClient::new();
 		let r = client.verified_credentials_total_transactions(query);
