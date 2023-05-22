@@ -167,6 +167,8 @@ pub trait ToGraphQL {
 
 	fn to_graphql(&self) -> String;
 }
+
+#[derive(Debug)]
 pub struct VerifiedCredentialsIsHodlerIn {
 	pub addresses: Vec<String>,
 	pub from_date: String,
@@ -243,8 +245,8 @@ impl RestPath<String> for QLResponse {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "PascalCase")]
 pub struct IsHodlerOut {
+	#[serde(rename = "VerifiedCredentialsIsHodler")]
 	pub hodlers: Vec<IsHodlerOutStruct>,
 }
 
