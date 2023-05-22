@@ -21,3 +21,4 @@ mod litentry;
 
 pub use call_worker::CallWorkerArgs;
 pub use shield_funds::ShiedFundsArgs;
+pub use litentry::create_identity::CreateIdentityArgs;
