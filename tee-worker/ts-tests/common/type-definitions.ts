@@ -6,22 +6,20 @@ import type { KeyringPair } from '@polkadot/keyring/types';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { Metadata, Vec } from '@polkadot/types';
 import { Wallet } from 'ethers';
-import type {
-    SubstrateNetwork as SubNet,
-    Web2Network as Web2Net,
-    EvmNetwork as EvmNet,
-    Assertion as GenericAssertion,
-    DirectRequestStatus,
-} from '../parachain-interfaces/identity/types';
+import type { Assertion as GenericAssertion, DirectRequestStatus } from '../parachain-interfaces/identity/types';
 import { default as teeTypes } from '../parachain-interfaces/identity/definitions';
 import { AnyTuple, IMethod } from '@polkadot/types/types';
 import { Call } from '@polkadot/types/interfaces';
-
+import type {
+    LitentryPrimitivesIdentitySubstrateNetwork,
+    LitentryPrimitivesIdentityEvmNetwork,
+    LitentryPrimitivesIdentityWeb2Network,
+} from '@polkadot/types/lookup';
 export { teeTypes };
 
-export type Web2Network = Web2Net['type'];
-export type SubstrateNetwork = SubNet['type'];
-export type EvmNetwork = EvmNet['type'];
+export type Web2Network = LitentryPrimitivesIdentityWeb2Network['type'];
+export type SubstrateNetwork = LitentryPrimitivesIdentitySubstrateNetwork['type'];
+export type EvmNetwork = LitentryPrimitivesIdentityEvmNetwork['type'];
 export type ParachainAssertion = GenericAssertion['type'];
 export type WorkerRpcReturnString = {
     vec: string;
@@ -39,7 +37,6 @@ export type EnclaveResult = {
     vcPubkey: `0x${string}`;
     sgxMetadata: {};
 };
-
 export type PubicKeyJson = {
     n: Uint8Array;
     e: Uint8Array;

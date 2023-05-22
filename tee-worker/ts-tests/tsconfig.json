@@ -2,17 +2,18 @@
 	"compilerOptions": {
 		// this is specific with augmented overrides
 		"paths": {
-			"@polkadot/api/augment": ["src/parachain-interfaces/augment-api.ts"],
-			// replace the augmented types with our own, as generated from definitions
-			"@polkadot/types/augment": ["src/parachain-interfaces/augment-types.ts"]
+			"@polkadot/api/augment": ["./parachain-interfaces/augment-api.ts"],
+			"@polkadot/types/augment": ["./parachain-interfaces/augment-types.ts"],
+			"@polkadot/types/lookup": ["./sidechain-interfaces/types-lookup.ts"]
 		},
 		"target": "es2017",
 		"module": "commonjs",
+		"declaration": true,
+		"outDir": "./lib",
 		"strict": true,
-		"noUnusedLocals": true,
-		"moduleResolution": "node",
+		"skipLibCheck": true,
 		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
 		"baseUrl": "."
-	},
-	"exclude": ["node_modules"]
+	}
 }
