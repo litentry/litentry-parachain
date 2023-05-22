@@ -51,7 +51,7 @@ pub struct CreateIdentityArgs {
 }
 
 impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for CreateIdentityArgs {
-	fn dispatch(&self, executor: &Executor, xt_hash: H256) -> Result<()> {
+	fn dispatch(&self, executor: &Executor) -> Result<()> {
 		info!(
 			"Found CreateIdentity extrinsic in block: Shard: {}\nAccount {:?}",
 			bs58::encode(self.shard.encode()).into_string(),
