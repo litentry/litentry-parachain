@@ -59,7 +59,6 @@ use itp_stf_state_observer::mock::ObserveStateMock;
 use itp_test::mock::metrics_ocall_mock::MetricsOCallMock;
 use itp_top_pool_author::{top_filter::AllowAllTopsFilter, traits::AuthorApi};
 use itp_types::{
-	parentchain::Address,
 	extrinsics::fill_opaque_extrinsic_with_status, AccountId, Block, ShardIdentifier,
 	ShieldFundsFn, H256,
 };
