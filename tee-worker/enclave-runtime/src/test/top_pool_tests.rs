@@ -59,6 +59,7 @@ use itp_stf_state_observer::mock::ObserveStateMock;
 use itp_test::mock::metrics_ocall_mock::MetricsOCallMock;
 use itp_top_pool_author::{top_filter::AllowAllTopsFilter, traits::AuthorApi};
 use itp_types::{
+	parentchain::Address,
 	extrinsics::fill_opaque_extrinsic_with_status, AccountId, Block, ShardIdentifier,
 	ShieldFundsFn, H256,
 };
@@ -199,7 +200,7 @@ fn create_shielding_call_extrinsic<ShieldingKey: ShieldingCryptoEncrypt>(
 	let opaque_extrinsic = OpaqueExtrinsic::from_bytes(
 		ParentchainUncheckedExtrinsic::<ShieldFundsFn>::new_signed(
 			(shield_funds_indexes, target_account, 1000u128, shard),
-			GenericAddress::Address32([1u8; 32]),
+			Address::Address32([1u8; 32]),
 			MultiSignature::Ed25519(signature),
 			default_extra_for_test.signed_extra(),
 		)
@@ -209,6 +210,6 @@ fn create_shielding_call_extrinsic<ShieldingKey: ShieldingCryptoEncrypt>(
 	.unwrap();
 
 	ParentchainBlockBuilder::default()
-		.with_extrinsics(vec![fill_opaque_extrinsic_with_status(opaque_extrinsic, true).unwrap()])
+		.with_extrinsics(vec![opaque_extrinsic])
 		.build()
 }
