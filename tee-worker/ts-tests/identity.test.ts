@@ -574,7 +574,7 @@ describeLitentry('Test Identity', 0, (context) => {
         // remove prime identity
         const substratePrimeIdentity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.alice.addressRaw),
-            'TestNet',
+            'LitentryRococo',
             'Substrate'
         );
 
