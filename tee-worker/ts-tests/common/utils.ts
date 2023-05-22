@@ -777,7 +777,7 @@ export async function assertInitialIDGraphCreated(api: ApiPromise, signer: Keyri
     // check identity in idgraph
     const expected_identity = api.createType(
         'LitentryIdentity',
-        await buildIdentityHelper(u8aToHex(signer.addressRaw), 'TestNet', 'Substrate')
+        await buildIdentityHelper(u8aToHex(signer.addressRaw), 'LitentryRococo', 'Substrate')
     ) as LitentryIdentity;
 
     assert.equal(JSON.stringify(event.idGraph[0][0]), JSON.stringify(expected_identity));
