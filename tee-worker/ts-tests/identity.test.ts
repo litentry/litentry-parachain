@@ -119,7 +119,7 @@ describeLitentry('Test Identity', 0, (context) => {
         // the main address should be already inside the IDGraph
         const main_identity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.alice.addressRaw),
-            'TestNet',
+            'LitentryRococo',
             'Substrate'
         );
         const identity_hex = context.api.createType('LitentryIdentity', main_identity).toHex();
