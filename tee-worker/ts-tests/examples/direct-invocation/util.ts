@@ -114,11 +114,11 @@ export function createSignedTrustedCallSetUserShieldingKey(
 ) {
     return createSignedTrustedCall(
         parachain_api,
-        ['set_user_shielding_key_direct', '(AccountId, UserShieldingKeyType, H256)'],
+        ['set_user_shielding_key', '(AccountId, AccountId, UserShieldingKeyType, H256)'],
         who,
         mrenclave,
         nonce,
-        [who.address, key, hash]
+        [who.address, who.address, key, hash]
     );
 }
 
@@ -134,11 +134,11 @@ export function createSignedTrustedCallCreateIdentity(
 ) {
     return createSignedTrustedCall(
         parachain_api,
-        ['create_identity_direct', '(AccountId, LitentryIdentity, Option<Vec<u8>>, u32, H256)'],
+        ['create_identity', '(AccountId, AccountId, LitentryIdentity, Option<Vec<u8>>, u32, H256)'],
         who,
         mrenclave,
         nonce,
-        [who.address, identity, metadata, bn, hash]
+        [who.address, who.address, identity, metadata, bn, hash]
     );
 }
 

@@ -20,3 +20,8 @@ recipe.json
 gethdata
 
 *.patch
+
+# Local dev environment config files
+tee-worker/.env
+tee-worker/ts-tests/.env.local
+ts-tests/config.local.json

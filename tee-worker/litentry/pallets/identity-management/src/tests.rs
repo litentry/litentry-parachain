@@ -18,7 +18,7 @@ use crate::{
 	identity_context::IdentityContext, mock::*, Error, MetadataOf, ParentchainBlockNumber,
 	UserShieldingKeyType,
 };
-use frame_support::{assert_noop, assert_ok};
+use frame_support::{assert_err, assert_noop, assert_ok, traits::Get};
 use litentry_primitives::{Identity, IdentityString, Web2Network, USER_SHIELDING_KEY_LEN};
 use sp_runtime::AccountId32;
 
@@ -43,6 +43,7 @@ fn set_user_shielding_key_works() {
 			who: BOB,
 			key: shielding_key,
 		}));
+		assert_eq!(crate::IDGraphLens::<Test>::get(&BOB), 1);
 	});
 }
 
@@ -67,6 +68,35 @@ fn create_identity_works() {
 				verification_request_block: None,
 				is_verified: false,
 			}
+		);
+		assert_eq!(crate::IDGraphLens::<Test>::get(&BOB), 2);
+	});
+}
+
+#[test]
+fn cannot_create_more_identities_for_account_than_limit() {
+	new_test_ext(true).execute_with(|| {
+		let max_id_graph_len = <<Test as crate::Config>::MaxIDGraphLength as Get<u32>>::get();
+		for i in 1..max_id_graph_len {
+			assert_ok!(IMT::create_identity(
+				RuntimeOrigin::signed(ALICE),
+				BOB,
+				alice_twitter_identity(i),
+				None,
+				i,
+				131_u16,
+			));
+		}
+		assert_err!(
+			IMT::create_identity(
+				RuntimeOrigin::signed(ALICE),
+				BOB,
+				alice_twitter_identity(65),
+				None,
+				max_id_graph_len + 1,
+				131_u16,
+			),
+			Error::<Test>::IDGraphLenLimitReached
 		);
 	});
 }
@@ -108,6 +138,7 @@ fn remove_identity_works() {
 
 		let id_graph = IMT::get_id_graph(&BOB);
 		assert_eq!(id_graph.len(), 2);
+		assert_eq!(crate::IDGraphLens::<Test>::get(&BOB), 2);
 
 		assert_ok!(IMT::remove_identity(RuntimeOrigin::signed(ALICE), BOB, alice_web3_identity()));
 		assert_eq!(IMT::id_graphs(BOB, alice_web3_identity()), None);
@@ -115,6 +146,7 @@ fn remove_identity_works() {
 		let id_graph = IMT::get_id_graph(&BOB);
 		// "1": because of the main id is added by default when first calling set_user_shielding_key.
 		assert_eq!(id_graph.len(), 1);
+		assert_eq!(crate::IDGraphLens::<Test>::get(&BOB), 1);
 
 		assert_noop!(
 			IMT::remove_identity(RuntimeOrigin::signed(ALICE), BOB, bob_web3_identity()),
@@ -304,5 +336,37 @@ fn get_id_graph_with_max_len_works() {
 		assert_eq!(id_graph.len(), 22);
 		assert_eq!(String::from_utf8(id_graph.get(0).unwrap().0.flat()).unwrap(), "did:twitter:web2:_:alice21");
 		assert_eq!(String::from_utf8(id_graph.get(21).unwrap().0.flat()).unwrap(), "did:litmus:web3:substrate:0x0202020202020202020202020202020202020202020202020202020202020202");
+	});
+}
+
+#[test]
+fn id_graph_stats_works() {
+	new_test_ext(true).execute_with(|| {
+		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
+		let ss58_prefix = 131_u16;
+		IMT::create_identity(
+			RuntimeOrigin::signed(ALICE),
+			ALICE,
+			alice_web3_identity(),
+			Some(metadata.clone()),
+			1,
+			ss58_prefix,
+		)
+		.unwrap();
+		IMT::create_identity(
+			RuntimeOrigin::signed(ALICE),
+			ALICE,
+			alice_twitter_identity(1),
+			Some(metadata.clone()),
+			1,
+			ss58_prefix,
+		)
+		.unwrap();
+
+		let stats = IMT::id_graph_stats().unwrap();
+		assert_eq!(stats.len(), 2);
+		assert!(stats.contains(&(ALICE, 2)));
+		//bob identity is created by setting shielding key
+		assert!(stats.contains(&(BOB, 1)));
 	});
 }

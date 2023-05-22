@@ -92,8 +92,11 @@ class GracefulKiller:
             new_folder_name = datetime.now().strftime("log-backup/log-%Y%m%d-%H%M%S")
             shutil.copytree(f'log', new_folder_name)
             print(f'Backup log into ' + new_folder_name)
-        if self.parachain_type == "local":
+        if self.parachain_type == "local-docker":
             print("Cleaning up litentry-parachain...")
             subprocess.run(['./scripts/litentry/stop_parachain.sh', '||', 'true'])
+        if self.parachain_type == "local-binary":
+            print("Cleaning up litentry-parachain...")
+            subprocess.run(['../scripts/clean-local-binary.sh', '||', 'true'])
 
         sys.exit(0)
