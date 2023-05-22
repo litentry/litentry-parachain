@@ -42,6 +42,7 @@ use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{Identity, ParentchainBlockNumber};
 use log::*;
 
+#[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct CreateIdentityArgs {
 	shard: ShardIdentifier,
 	account: AccountId,
