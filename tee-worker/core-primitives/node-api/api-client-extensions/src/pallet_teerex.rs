@@ -81,7 +81,7 @@ where
 	) -> ApiResult<Option<IpfsHash>> {
 		self.get_storage_map(TEEREX, "LatestIPFSHash", shard, at_block)
 	}
-	
+
 	fn all_scheduled_mrenclaves(&self, at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>> {
 		let keys: Vec<_> = self
 			.get_keys(storage_key(TEEREX, "ScheduledEnclave"), at_block)?

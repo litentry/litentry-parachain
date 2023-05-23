@@ -73,11 +73,11 @@ sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "po
 config = "0.13.3"
 itp-node-api-metadata = { path = "../core-primitives/node-api/metadata" }
 itp-rpc = { path = "../core-primitives/rpc" }
-sgx-verify = { path = "../../pallets/teerex/sgx-verify", default-features = false }
-teerex-primitives = { path = "../../primitives/teerex", default-features = false }
 lc-data-providers = { path = "../litentry/core/data-providers" }
 lc-mock-server = { path = "../litentry/core/mock-server" }
 litentry-primitives = { path = "../litentry/primitives" }
+sgx-verify = { path = "../../pallets/teerex/sgx-verify", default-features = false }
+teerex-primitives = { path = "../../primitives/teerex", default-features = false }
 
 [features]
 default = []

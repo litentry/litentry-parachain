@@ -82,11 +82,10 @@ impl EnclaveBase for EnclaveMock {
 	fn get_mrenclave(&self) -> EnclaveResult<[u8; MR_ENCLAVE_SIZE]> {
 		Ok([1u8; MR_ENCLAVE_SIZE])
 	}
-	
+
 	fn migrate_shard(&self, _old_shard: Vec<u8>, _new_shard: Vec<u8>) -> EnclaveResult<()> {
 		unimplemented!()
 	}
-
 }
 
 impl Sidechain for EnclaveMock {

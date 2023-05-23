@@ -128,12 +128,12 @@ its-primitives = { path = "../sidechain/primitives", default-features = false }
 its-sidechain = { path = "../sidechain/sidechain-crate", default-features = false, features = ["sgx"] }
 
 # litentry
+itc-parentchain-indirect-calls-executor = { path = "../core/parentchain/indirect-calls-executor", default-features = false }
 lc-data-providers = { path = "../litentry/core/data-providers", default-features = false, features = ["sgx"] }
 lc-scheduled-enclave = { path = "../litentry/core/scheduled-enclave", default-features = false, features = ["sgx"] }
 lc-stf-task-receiver = { path = "../litentry/core/stf-task/receiver", default-features = false, features = ["sgx"] }
 lc-stf-task-sender = { path = "../litentry/core/stf-task/sender", default-features = false, features = ["sgx"] }
 litentry-primitives = { path = "../litentry/primitives", default-features = false, features = ["sgx"] }
-itc-parentchain-indirect-calls-executor = { path = "../core/parentchain/indirect-calls-executor", default-features = false }
 
 # substrate deps
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
