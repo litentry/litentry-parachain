@@ -33,6 +33,7 @@ pub use itp_node_api::metadata::{
 };
 use itp_stf_interface::ExecuteCall;
 use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier, Signature};
+use itp_storage::storage_value_key;
 pub use itp_types::{OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
 pub use litentry_primitives::{
@@ -745,14 +746,16 @@ where
 	}
 
 	fn get_storage_hashes_to_update(&self) -> Vec<Vec<u8>> {
-		let key_hashes = Vec::new();
+		let mut key_hashes = Vec::new();
 		match self.call {
 			TrustedCall::balance_set_balance(..) => debug!("No storage updates needed..."),
 			TrustedCall::balance_transfer(..) => debug!("No storage updates needed..."),
 			TrustedCall::balance_unshield(..) => debug!("No storage updates needed..."),
 			TrustedCall::balance_shield(..) => debug!("No storage updates needed..."),
 			// litentry
-			TrustedCall::set_user_shielding_key(..) => debug!("No storage updates needed..."),
+			TrustedCall::set_user_shielding_key(..) => {
+				key_hashes.push(storage_value_key("IdentityManagement", "MaxIDGraphLength"));
+			},
 			TrustedCall::create_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::remove_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::verify_identity(..) => debug!("No storage updates needed..."),

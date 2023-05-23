@@ -153,6 +153,10 @@ pub mod pallet {
 	pub type IDGraphLens<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, u32, ValueQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn max_id_graph_length)]
+	pub type MaxIDGraphLength<T: Config> = StorageValue<_, u32, ValueQuery>;
+
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
@@ -166,6 +170,8 @@ pub mod pallet {
 			T::ManageOrigin::ensure_origin(origin)?;
 			// we don't care about the current key
 			UserShieldingKeys::<T>::insert(&who, key);
+
+			ensure!(Self::max_id_graph_length() < 64, Error::<T>::IDGraphLenLimitReached);
 
 			let prime_address_raw: [u8; 32] = who
 				.encode()

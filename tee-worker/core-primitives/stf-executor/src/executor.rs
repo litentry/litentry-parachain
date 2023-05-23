@@ -127,6 +127,8 @@ where
 			.get_multiple_storages_verified(storage_hashes, header)
 			.map(into_map)?;
 
+		debug!("update_map.length {}", update_map.len());
+
 		debug!("Apply state diff with {} entries from parentchain block", update_map.len());
 		Stf::apply_state_diff(state, update_map.into());
 

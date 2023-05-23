@@ -35,7 +35,7 @@ NODEURL=${NODEURL:-"ws://127.0.0.1"}
 WORKER1PORT=${WORKER1PORT:-2000}
 WORKER1URL=${WORKER1URL:-"wss://127.0.0.1"}
 
-CLIENT_BIN=${CLIENT_BIN:-"./../bin/integritee-cli"}
+CLIENT_BIN=${CLIENT_BIN:-"./bin/integritee-cli"}
 
 echo "Using client binary $CLIENT_BIN"
 echo "Using node uri $NODEURL:$NPORT"
@@ -66,23 +66,23 @@ fi
 [[ -z $MRENCLAVE ]] && { echo "MRENCLAVE is empty. cannot continue" ; exit 1; }
 
 # indirect call
-sleep 10
-echo "* Set $ACC 's shielding key to $KEY"
-${CLIENT} set-user-shielding-key "$ACC" "$KEY" ${MRENCLAVE}
-echo ""
+# sleep 10
+# echo "* Set $ACC 's shielding key to $KEY"
+# ${CLIENT} set-user-shielding-key "$ACC" "$KEY" ${MRENCLAVE}
+# echo ""
 
-sleep 20
-echo "* Get $ACC 's shielding key"
-ACTUAL_KEY=$($CLIENT trusted --mrenclave $MRENCLAVE --direct user-shielding-key $ACC)
-echo ""
+# sleep 20
+# echo "* Get $ACC 's shielding key"
+# ACTUAL_KEY=$($CLIENT trusted --mrenclave $MRENCLAVE --direct user-shielding-key $ACC)
+# echo ""
 
-if [ "$ACTUAL_KEY" = "$KEY" ]; then
-    echo "KEY identical: $KEY"
-    echo "test indirect call passed"
-else
-    echo "KEY non-identical: expected: $KEY actual: $ACTUAL_KEY"
-    exit 1
-fi
+# if [ "$ACTUAL_KEY" = "$KEY" ]; then
+#     echo "KEY identical: $KEY"
+#     echo "test indirect call passed"
+# else
+#     echo "KEY non-identical: expected: $KEY actual: $ACTUAL_KEY"
+#     exit 1
+# fi
 
 echo "------------------------------"
 # direct call

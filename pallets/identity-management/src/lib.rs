@@ -160,6 +160,10 @@ pub mod pallet {
 	#[pallet::getter(fn delegatee)]
 	pub type Delegatee<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, (), OptionQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn max_id_graph_length)]
+	pub type MaxIDGraphLength<T: Config> = StorageValue<_, u32, ValueQuery>;
+
 	#[pallet::error]
 	pub enum Error<T> {
 		/// a delegatee doesn't exist
@@ -251,6 +255,16 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let _ = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::VerifyIdentityRequested { shard });
+			Ok(().into())
+		}
+
+		#[pallet::call_index(6)]
+		#[pallet::weight(1000)]
+		pub fn set_max_id_graph_legnth(
+			origin: OriginFor<T>,
+			len: u32,
+		) -> DispatchResultWithPostInfo {
+			MaxIDGraphLength::<T>::put(len);
 			Ok(().into())
 		}
 
