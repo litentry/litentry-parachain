@@ -260,8 +260,8 @@ fn verify_tcb_info_signature() {
 	verify_signature(&cert, data, &signature, &webpki::ECDSA_P256_SHA256).unwrap();
 }
 
-/// This is demo code of how a CRL certificate can be parsed and how the revoked serials can be extracted
-/// The part that is missing/open is how to verify the certificate chain of the CRL
+/// This is demo code of how a CRL certificate can be parsed and how the revoked serials can be
+/// extracted The part that is missing/open is how to verify the certificate chain of the CRL
 /// TODO: Implement CRL handling
 #[test]
 fn parse_pck_crl() {

@@ -103,7 +103,8 @@ pub struct DcapQuoteHeader {
 	reserved: u32,
 	/// Security Version of the Quoting Enclave currently loaded on the platform.
 	qe_svn: u16,
-	/// Security Version of the Provisioning Certification Enclave currently loaded on the platform.
+	/// Security Version of the Provisioning Certification Enclave currently loaded on the
+	/// platform.
 	pce_svn: u16,
 	/// Unique identifier of the QE Vendor.
 	///
@@ -164,7 +165,8 @@ impl Decode for QeCertificationData {
 		let mut size_buf: [u8; 4] = [0; 4];
 		input.read(&mut size_buf)?;
 		let size = u32::from_le_bytes(size_buf);
-		// This is an arbitrary limit to prevent out of memory issues. Intel does not specify a max value
+		// This is an arbitrary limit to prevent out of memory issues. Intel does not specify a max
+		// value
 		if size > 65_000 {
 			return Result::Err(codec::Error::from(
 				"Certification data too long. Max 65000 bytes are allowed",
@@ -200,8 +202,8 @@ pub struct SgxReportBody {
 	///
 	/// Reflects the processors microcode update version.
 	cpu_svn: [u8; 16], /* (  0) Security Version of the CPU */
-	/// State Save Area (SSA) extended feature set. Flags used for specific exception handling settings.
-	/// Unless, you know what you are doing these should all be 0.
+	/// State Save Area (SSA) extended feature set. Flags used for specific exception handling
+	/// settings. Unless, you know what you are doing these should all be 0.
 	///
 	/// See: https://cdrdv2-public.intel.com/671544/exception-handling-in-intel-sgx.pdf.
 	misc_select: [u8; 4], /* ( 16) Which fields defined in SSA.MISC */
@@ -318,16 +320,14 @@ impl SgxReportBody {
 #[derive(Encode, Decode, Copy, Clone, TypeInfo)]
 #[repr(C)]
 pub struct SgxQuote {
-	version: u16,       /* 0   */
-	sign_type: u16,     /* 2   */
-	epid_group_id: u32, /* 4   */
-	qe_svn: u16,        /* 8   */
-	pce_svn: u16,       /* 10  */
-	xeid: u32,          /* 12  */
-	basename: [u8; 32], /* 16  */
-	report_body: SgxReportBody, /* 48  */
-	                    //signature_len: u32,    /* 432 */
-	                    //signature: [u8; 64]    /* 436 */  //must be hard-coded for SCALE codec
+	version: u16,               /* 0 */
+	sign_type: u16,             /* 2 */
+	epid_group_id: u32,         /* 4 */
+	qe_svn: u16,                /* 8 */
+	pce_svn: u16,               /* 10 */
+	xeid: u32,                  /* 12 */
+	basename: [u8; 32],         /* 16 */
+	report_body: SgxReportBody, /* 48 */
 }
 
 #[derive(Encode, Decode, Copy, Clone, PartialEq, Eq, sp_core::RuntimeDebug, TypeInfo)]
@@ -497,7 +497,8 @@ pub fn extract_certs(cert_chain: &[u8]) -> Vec<Vec<u8>> {
 }
 
 /// Verifies that the `leaf_cert` in combination with the `intermediate_certs` establishes
-/// a valid certificate chain that is rooted in one of the trust anchors that was compiled into to the pallet
+/// a valid certificate chain that is rooted in one of the trust anchors that was compiled into to
+/// the pallet
 pub fn verify_certificate_chain<'a>(
 	leaf_cert: &'a [u8],
 	intermediate_certs: &[&[u8]],
@@ -566,10 +567,11 @@ pub fn verify_dcap_quote(
 	let (fmspc, tcb_info) = extract_tcb_info(&certs[0])?;
 
 	// For this part some understanding of the document (Especially chapter A.4: Quote Format)
-	// Intel® Software Guard Extensions (Intel® SGX) Data Center Attestation Primitives: ECDSA Quote Library API
-	// https://download.01.org/intel-sgx/latest/dcap-latest/linux/docs/Intel_SGX_ECDSA_QuoteLibReference_DCAP_API.pdf
+	// Intel® Software Guard Extensions (Intel® SGX) Data Center Attestation Primitives: ECDSA Quote
+	// Library API https://download.01.org/intel-sgx/latest/dcap-latest/linux/docs/Intel_SGX_ECDSA_QuoteLibReference_DCAP_API.pdf
 
-	const AUTHENTICATION_DATA_SIZE: usize = 32; // This is actually variable but assume 32 for now. This is also hard-coded to 32 in the Intel DCAP repo
+	const AUTHENTICATION_DATA_SIZE: usize = 32; // This is actually variable but assume 32 for now. This is also hard-coded to 32 in the Intel
+											// DCAP repo
 	const DCAP_QUOTE_HEADER_SIZE: usize = core::mem::size_of::<DcapQuoteHeader>();
 	const REPORT_SIZE: usize = core::mem::size_of::<SgxReportBody>();
 	const QUOTE_SIGNATURE_DATA_LEN_SIZE: usize = core::mem::size_of::<u32>();
@@ -582,7 +584,8 @@ pub fn verify_dcap_quote(
 		ATTESTATION_KEY_SIZE +
 		REPORT_SIZE +
 		REPORT_SIGNATURE_SIZE +
-		core::mem::size_of::<u16>(); //Size of the QE authentication data. We ignore this for now and assume 32. See AUTHENTICATION_DATA_SIZE
+		core::mem::size_of::<u16>(); //Size of the QE authentication data. We ignore this for now and assume 32. See
+							 // AUTHENTICATION_DATA_SIZE
 	let mut hash_data = [0u8; ATTESTATION_KEY_SIZE + AUTHENTICATION_DATA_SIZE];
 	hash_data[0..ATTESTATION_KEY_SIZE].copy_from_slice(
 		&dcap_quote_raw[attestation_key_offset..(attestation_key_offset + ATTESTATION_KEY_SIZE)],
@@ -591,7 +594,8 @@ pub fn verify_dcap_quote(
 		&dcap_quote_raw
 			[authentication_data_offset..(authentication_data_offset + AUTHENTICATION_DATA_SIZE)],
 	);
-	// Ensure that the hash matches the intel signed hash in the QE report. This establishes trust into the attestation key.
+	// Ensure that the hash matches the intel signed hash in the QE report. This establishes trust
+	// into the attestation key.
 	let hash = ring::digest::digest(&ring::digest::SHA256, &hash_data);
 	ensure!(
 		hash.as_ref() == &quote.quote_signature_data.qe_report.report_data.d[0..32],
@@ -630,8 +634,8 @@ pub fn verify_dcap_quote(
 
 // make sure this function doesn't panic!
 pub fn verify_ias_report(cert_der: &[u8]) -> Result<SgxReport, &'static str> {
-	// Before we reach here, the runtime already verified the extrinsic is properly signed by the extrinsic sender
-	// Hence, we skip: EphemeralKey::try_from(cert)?;
+	// Before we reach here, the runtime already verified the extrinsic is properly signed by the
+	// extrinsic sender Hence, we skip: EphemeralKey::try_from(cert)?;
 
 	#[cfg(test)]
 	println!("verifyRA: start verifying RA cert");
@@ -783,8 +787,8 @@ pub fn verify_server_cert(
 	}
 }
 
-/// See document "Intel® Software Guard Extensions: PCK Certificate and Certificate Revocation List Profile Specification"
-/// https://download.01.org/intel-sgx/dcap-1.2/linux/docs/Intel_SGX_PCK_Certificate_CRL_Spec-1.1.pdf
+/// See document "Intel® Software Guard Extensions: PCK Certificate and Certificate Revocation List
+/// Profile Specification" https://download.01.org/intel-sgx/dcap-1.2/linux/docs/Intel_SGX_PCK_Certificate_CRL_Spec-1.1.pdf
 const INTEL_SGX_EXTENSION_OID: ObjectIdentifier =
 	ObjectIdentifier::new_unwrap("1.2.840.113741.1.13.1");
 const OID_FMSPC: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.2.840.113741.1.13.1.4");
