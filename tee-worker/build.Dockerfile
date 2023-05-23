@@ -102,7 +102,7 @@ ENV SCRIPT_DIR ${SCRIPT_DIR}
 ENV LOG_DIR ${LOG_DIR}
 
 COPY --from=builder /root/work/tee-worker/bin/integritee-cli /usr/local/bin
-COPY ./cli/*.sh /usr/local/worker-cli/
+COPY --from=builder /root/work/tee-worker/cli/*.sh /usr/local/worker-cli/
 
 RUN chmod +x /usr/local/bin/integritee-cli ${SCRIPT_DIR}/*.sh
 RUN mkdir ${LOG_DIR}
