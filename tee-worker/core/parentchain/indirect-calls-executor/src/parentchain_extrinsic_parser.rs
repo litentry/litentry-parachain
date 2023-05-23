@@ -58,6 +58,8 @@ impl<SignedExtra> ParseExtrinsic for ExtrinsicParser<SignedExtra>
     /// Extract a call index of an encoded call.
     fn parse(encoded_call: &[u8]) -> Result<SemiOpaqueExtrinsic<Self::SignedExtra>, codec::Error> {
         let call_mut = &mut &encoded_call[..];
+        // Decode for opaque extrinsic
+        let _: Vec<()> = Decode::decode(call_mut)?;
 
         // `()` is a trick to stop decoding after the call index. So the remaining bytes
         //  of `call` after decoding only contain the parentchain's dispatchable's arguments.
