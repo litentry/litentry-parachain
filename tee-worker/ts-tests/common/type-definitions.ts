@@ -10,7 +10,6 @@ import type {
     SubstrateNetwork as SubNet,
     Web2Network as Web2Net,
     EvmNetwork as EvmNet,
-    DirectRequestStatus,
 } from '../interfaces/identity/types';
 import { default as teeTypes } from '../interfaces/identity/definitions';
 
@@ -20,15 +19,6 @@ export type Web2Network = Web2Net['type'];
 export type SubstrateNetwork = SubNet['type'];
 export type EvmNetwork = EvmNet['type'];
 
-export type WorkerRpcReturnString = {
-    vec: string;
-};
-
-export type WorkerRpcReturnValue = {
-    value: `0x${string}`;
-    do_watch: boolean;
-    status: DirectRequestStatus['type'];
-};
 export type EnclaveResult = {
     mrEnclave: `0x${string}`;
     shieldingKey: `0x${string}`;
