@@ -14,97 +14,58 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{error::Result, executor::Executor, IndirectCallsExecutor};
+use crate::{error::Result, IndirectDispatch, IndirectExecutor, LitentryExecutor};
+use codec::{Decode, Encode};
+use ita_stf::{TrustedCall, TrustedOperation};
+use itp_stf_primitives::types::AccountId;
+use itp_types::{Balance, ShardIdentifier};
+use log::{debug, info};
+use std::vec::Vec;
+use ita_sgx_runtime::{pallet_imt::MetadataOf, Runtime};
 use itp_node_api::{
 	api_client::ParentchainUncheckedExtrinsic,
 	metadata::{
-		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, pallet_vcmp::VCMPCallIndexes,
+		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes,
+		pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes,
 		provider::AccessNodeMetadata,
 	},
 };
+use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
+use itp_stf_executor::traits::StfEnclaveSigning;
+use itp_top_pool_author::traits::AuthorApi;
+use itp_types::{CreateIdentityFn, H256};
+use itp_utils::stringify::account_id_to_string;
+use litentry_primitives::{Identity, ParentchainBlockNumber};
 use itp_types::{RemoveScheduledEnclaveFn, UpdateScheduledEnclaveFn};
+use itp_types::SidechainBlockNumber;
+use itp_types::MrEnclave;
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use log::*;
 
-pub(crate) struct UpdateScheduledEnclave;
-pub(crate) struct RemoveScheduledEnclave;
+pub struct UpdateScheduledEnclaveArgs {
+	sbn: SidechainBlockNumber,
+	mrenclave: MrEnclave,
+}
 
-impl UpdateScheduledEnclave {
-	fn execute_internal<R, S, T, N>(
-		&self,
-		extrinsic: ParentchainUncheckedExtrinsic<<Self as Executor<R, S, T, N>>::Call>,
-	) -> Result<()>
-	where
-		N: AccessNodeMetadata,
-		N::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
-	{
-		let (_, sbn, mrenclave) = extrinsic.function;
-		debug!("execute indirect call: UpdateScheduledEnclave, sidechain_block_number: {}, mrenclave: {:?}", sbn, mrenclave);
-		GLOBAL_SCHEDULED_ENCLAVE.update(sbn, mrenclave)?;
+impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for UpdateScheduledEnclaveArgs {
+	fn dispatch(&self, executor: &Executor) -> Result<()> {
+		debug!("execute indirect call: UpdateScheduledEnclave, sidechain_block_number: {}, mrenclave: {:?}", self.sbn, self.mrenclave);
+		GLOBAL_SCHEDULED_ENCLAVE.update(self.sbn, self.mrenclave)?;
 		Ok(())
 	}
 }
 
-impl<R, S, T, N> Executor<R, S, T, N> for UpdateScheduledEnclave
-where
-	N: AccessNodeMetadata,
-	N::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
-{
-	type Call = UpdateScheduledEnclaveFn;
-
-	fn call_index(&self, call: &Self::Call) -> [u8; 2] {
-		call.0
-	}
-
-	fn call_index_from_metadata(&self, metadata_type: &N::MetadataType) -> Result<[u8; 2]> {
-		metadata_type.update_scheduled_enclave().map_err(|e| e.into())
-	}
-
-	fn execute(
-		&self,
-		_context: &IndirectCallsExecutor<R, S, T, N>,
-		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
-	) -> Result<()> {
-		self.execute_internal::<R, S, T, N>(extrinsic)
-	}
+pub struct RemoveScheduledEnclaveArgs {
+	sbn: SidechainBlockNumber,
 }
 
-impl RemoveScheduledEnclave {
-	fn execute_internal<R, S, T, N>(
-		&self,
-		extrinsic: ParentchainUncheckedExtrinsic<<Self as Executor<R, S, T, N>>::Call>,
-	) -> Result<()>
-	where
-		N: AccessNodeMetadata,
-		N::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
-	{
-		let (_, sbn) = extrinsic.function;
-		debug!("execute indirect call: RemoveScheduledEnclave, sidechain_block_number: {}", sbn);
-		GLOBAL_SCHEDULED_ENCLAVE.remove(sbn)?;
+impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for RemoveScheduledEnclaveArgs {
+	fn dispatch(&self, executor: &Executor) -> Result<()> {
+		debug!(
+			"execute indirect call: RemoveScheduledEnclave, sidechain_block_number: {}",
+			self.sbn
+		);
+		GLOBAL_SCHEDULED_ENCLAVE.remove(self.sbn)?;
 		Ok(())
-	}
-}
-
-impl<R, S, T, N> Executor<R, S, T, N> for RemoveScheduledEnclave
-where
-	N: AccessNodeMetadata,
-	N::MetadataType: IMPCallIndexes + TeerexCallIndexes + VCMPCallIndexes,
-{
-	type Call = RemoveScheduledEnclaveFn;
-
-	fn call_index(&self, call: &Self::Call) -> [u8; 2] {
-		call.0
-	}
-
-	fn call_index_from_metadata(&self, metadata_type: &N::MetadataType) -> Result<[u8; 2]> {
-		metadata_type.remove_scheduled_enclave().map_err(|e| e.into())
-	}
-
-	fn execute(
-		&self,
-		_context: &IndirectCallsExecutor<R, S, T, N>,
-		extrinsic: ParentchainUncheckedExtrinsic<Self::Call>,
-	) -> Result<()> {
-		self.execute_internal::<R, S, T, N>(extrinsic)
 	}
 }

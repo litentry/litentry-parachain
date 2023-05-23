@@ -16,8 +16,8 @@
 
 // pub mod batch_all;
 pub mod create_identity;
-// pub mod remove_identity;
+pub mod remove_identity;
 // pub mod request_vc;
-// pub mod scheduled_enclave;
-// pub mod set_user_shielding_key;
-// pub mod verify_identity;
+pub mod scheduled_enclave;
+pub mod set_user_shielding_key;
+pub mod verify_identity;
