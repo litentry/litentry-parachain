@@ -7306,7 +7306,7 @@ dependencies = [
  "frame-benchmarking 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.39)",
  "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.39)",
  "frame-system 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.39)",
- "hex-literal 0.4.1",
+ "hex-literal 0.3.4",
  "log",
  "pallet-balances",
  "pallet-teerex",
@@ -7328,11 +7328,11 @@ dependencies = [
 name = "pallet-teerex"
 version = "0.9.0"
 dependencies = [
- "env_logger 0.10.0",
+ "env_logger 0.9.3",
  "frame-benchmarking 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.39)",
  "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.39)",
  "frame-system 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.39)",
- "hex-literal 0.4.1",
+ "hex-literal 0.3.4",
  "log",
  "pallet-balances",
  "pallet-timestamp 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.39)",
@@ -13628,7 +13628,7 @@ checksum = "3369f5ac52d5eb6ab48c6b4ffdc8efbcad6b89c765749064ba298f2c68a16a76"
 name = "test-utils"
 version = "0.1.0"
 dependencies = [
- "hex-literal 0.4.1",
+ "hex-literal 0.3.4",
  "log",
  "teerex-primitives",
 ]

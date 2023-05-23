@@ -269,7 +269,7 @@ pub struct SgxReportBody {
 impl SgxReportBody {
 	pub fn sgx_build_mode(&self) -> SgxBuildMode {
 		#[cfg(test)]
-		println!("attributes flag : {}", format!("{:x}", self.attributes.flags));
+		println!("attributes flag : {:x}", self.attributes.flags);
 		if self.attributes.flags & SGX_FLAGS_DEBUG == SGX_FLAGS_DEBUG {
 			SgxBuildMode::Debug
 		} else {
@@ -330,21 +330,17 @@ pub struct SgxQuote {
 	report_body: SgxReportBody, /* 48 */
 }
 
-#[derive(Encode, Decode, Copy, Clone, PartialEq, Eq, sp_core::RuntimeDebug, TypeInfo)]
+#[derive(Encode, Decode, Copy, Clone, PartialEq, Eq, sp_core::RuntimeDebug, TypeInfo, Default)]
 pub enum SgxStatus {
+	#[default]
 	Invalid,
 	Ok,
 	GroupOutOfDate,
 	GroupRevoked,
 	ConfigurationNeeded,
 }
-impl Default for SgxStatus {
-	fn default() -> Self {
-		SgxStatus::Invalid
-	}
-}
 
-#[derive(Encode, Decode, Default, Copy, Clone, PartialEq, Eq, sp_core::RuntimeDebug, TypeInfo)]
+#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, sp_core::RuntimeDebug, TypeInfo)]
 pub struct SgxReport {
 	pub mr_enclave: MrEnclave,
 	pub pubkey: [u8; 32],
@@ -656,10 +652,11 @@ pub fn verify_ias_report(cert_der: &[u8]) -> Result<SgxReport, &'static str> {
 	let valid_until = webpki::Time::from_seconds_since_unix_epoch(1573419050);
 	verify_server_cert(&sig_cert, valid_until)?;
 
-	parse_report(netscape.attestation_raw)
+	parse_report(&netscape)
 }
 
-fn parse_report(report_raw: &[u8]) -> Result<SgxReport, &'static str> {
+fn parse_report(netscape: &NetscapeComment) -> Result<SgxReport, &'static str> {
+	let report_raw: &[u8] = netscape.attestation_raw;
 	// parse attestation report
 	let attn_report: Value = match serde_json::from_slice(report_raw) {
 		Ok(report) => report,
