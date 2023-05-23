@@ -16,7 +16,7 @@ import { handleIdentityEvents } from './common/utils';
 import { assert } from 'chai';
 import { multiAccountTxSender } from './common/transactions';
 import { u8aToHex } from '@polkadot/util';
-import { SubmittableResult } from '@polkadot/api';
+import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 
 //Explain how to use this test, which has two important parameters:
 //1.The "number" parameter in describeLitentry represents the number of accounts generated, including Substrate wallets and Ethereum wallets.If you want to use a large number of accounts for testing, you can modify this parameter.
@@ -37,7 +37,7 @@ describeLitentry('multiple accounts test', 2, async (context) => {
         });
     });
     step('send test token to each account', async () => {
-        const txs: any = [];
+        const txs: SubmittableExtrinsic<ApiTypes>[] = [];
         for (let i = 0; i < substrateSigners.length; i++) {
             //1 token
             const tx = context.api.tx.balances.transfer(substrateSigners[i].address, '1000000000000');

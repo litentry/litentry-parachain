@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -eo pipefail
+
 function usage() {
   echo "Usage: $0 litentry|litmus|rococo"
 }
@@ -39,7 +41,7 @@ print_divider
 
 echo "waiting for parachain to produce blocks ..."
 
-for i in $(seq 1 $WAIT_ROUNDS); do
+for _ in $(seq 1 $WAIT_ROUNDS); do
   sleep $WAIT_INTERVAL_SECONDS
   if docker compose logs "$parachain_service" 2>&1 | grep -F '0 peers' 2>/dev/null | grep -Fq "best: #1" 2>/dev/null; then
     echo "parachain produced #1"
@@ -57,14 +59,18 @@ print_divider
 
 echo "waiting for parachain to finalize blocks ..."
 
-for i in $(seq 1 $WAIT_ROUNDS); do
+for _ in $(seq 1 $WAIT_ROUNDS); do
   sleep $WAIT_INTERVAL_SECONDS
   if docker compose logs "$parachain_service" 2>&1 | grep -F '0 peers' 2>/dev/null | grep -Fq "finalized #1" 2>/dev/null; then
     echo "parachain finalized #1, all good."
     print_divider
     echo "extend leasing period now ..."
     cd "$ROOTDIR/ts-tests"
-    echo "NODE_ENV=ci" > .env
+    if [[ -z "${NODE_ENV}" ]]; then
+        echo "NODE_ENV=ci" > .env
+    else
+        echo "NODE_ENV=${NODE_ENV}" > .env
+    fi
     yarn
     yarn upgrade-parathread 2>&1
     print_divider

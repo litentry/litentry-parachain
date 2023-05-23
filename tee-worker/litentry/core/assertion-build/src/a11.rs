@@ -33,7 +33,7 @@ use log::*;
 use std::{string::ToString, vec, vec::Vec};
 
 const VC_A11_SUBJECT_DESCRIPTION: &str =
-	"Since when has the user been consistently holding a min amount {x} of ETH token";
+	"The user has been consistently holding at least {x} amount of tokens before 2023 Jan 1st 00:00:00 UTC on the supporting networks";
 const VC_A11_SUBJECT_TYPE: &str = "ETH Holding Assertion";
 const VC_A11_SUBJECT_TAG: [&str; 1] = ["Ethereum"];
 
@@ -42,12 +42,10 @@ pub fn build(
 	min_balance: ParameterString,
 	shard: &ShardIdentifier,
 	who: &AccountId,
-	bn: ParentchainBlockNumber,
 ) -> Result<Credential> {
 	debug!(
-		"Assertion A11 build, who: {:?}, bn: {}, identities: {:?}",
+		"Assertion A11 build, who: {:?}, identities: {:?}",
 		account_id_to_string(&who),
-		bn,
 		identities,
 	);
 
@@ -101,7 +99,7 @@ pub fn build(
 		}
 	}
 
-	match Credential::new_default(who, &shard.clone(), bn) {
+	match Credential::new_default(who, &shard.clone()) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_A11_SUBJECT_DESCRIPTION,

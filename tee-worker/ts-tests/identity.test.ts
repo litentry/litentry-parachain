@@ -31,10 +31,11 @@ const substrateExtensionIdentity = <LitentryIdentity>{
         network: 'Litentry',
     },
 };
+import { Event } from '@polkadot/types/interfaces';
 
 describeLitentry('Test Identity', 0, (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
-    const errorAseKey = '0xError';
+    const errorAesKey = '0xError';
     const errorCiphertext = '0xError';
     //random wrong msg
     const wrong_msg = '0x693d9131808e7a8574c7ea5eb7813bdf356223263e61fa8fe2ee8e434508bc75';
@@ -137,7 +138,7 @@ describeLitentry('Test Identity', 0, (context) => {
     });
     step('create identities', async function () {
         //Alice
-        const twiiter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
+        const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
         const ethereum_identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Ethereum', 'Evm');
         const alice_substrate_identity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.alice.addressRaw),
@@ -152,7 +153,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'Substrate'
         );
 
-        alice_identities = [twiiter_identity, ethereum_identity, alice_substrate_identity];
+        alice_identities = [twitter_identity, ethereum_identity, alice_substrate_identity];
         bob_identities = [bob_substrate_identity];
 
         let alice_txs = await buildIdentityTxs(
@@ -183,7 +184,7 @@ describeLitentry('Test Identity', 0, (context) => {
         const alice_twitter_validations = await buildValidations(
             context,
             [twitter_event_data],
-            [twiiter_identity],
+            [twitter_identity],
             'twitter',
             context.substrateWallet.alice
         );
@@ -643,7 +644,9 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('set error user shielding key', async function () {
-        const error_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, errorAseKey).toString('hex');
+        const error_ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, hexToU8a(errorAesKey)).toString(
+            'hex'
+        );
         const error_tx = context.api.tx.identityManagement.setUserShieldingKey(
             context.mrEnclave,
             `0x${error_ciphertext}`
@@ -678,5 +681,60 @@ describeLitentry('Test Identity', 0, (context) => {
         );
         let error_event_datas = await handleIdentityEvents(context, aesKey, resp_error_events, 'Failed');
         await checkErrorDetail(error_event_datas, 'ImportError', false);
+    });
+
+    step('exceeding IDGraph limit not allowed', async function () {
+        let [setUserShieldingKeyTx] = await buildIdentityTxs(
+            context,
+            [context.substrateWallet.eve],
+            [],
+            'setUserShieldingKey'
+        );
+
+        let resp_events: Event[] = (await sendTxsWithUtility(
+            context,
+            context.substrateWallet.eve,
+            [setUserShieldingKeyTx],
+            'identityManagement',
+            ['UserShieldingKeySet']
+        )) as any as Event[];
+        const [event] = await handleIdentityEvents(context, aesKey, resp_events, 'UserShieldingKeySet');
+        await assertInitialIDGraphCreated(context.api, context.substrateWallet.eve, event);
+
+        let identities = [];
+        for (let i = 0; i < 64; i++) {
+            let identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
+            identities.push(identity);
+        }
+        let txs = await buildIdentityTxs(context, context.substrateWallet.eve, identities, 'createIdentity');
+        resp_events = (await sendTxsWithUtility(context, context.substrateWallet.eve, txs, 'identityManagement', [
+            'IdentityCreated',
+            'CreateIdentityFailed',
+        ])) as any as Event[];
+
+        let identity_created_events_raw = resp_events.filter((e) => e.method === 'IdentityCreated');
+        let create_identity_failed_events_raw = resp_events.filter((e) => e.method === 'CreateIdentityFailed');
+
+        //limit is 64, we allow for creation of additional 63 identities + 1 prime identity
+        assert.equal(identity_created_events_raw.length, 63);
+        assert.equal(create_identity_failed_events_raw.length, 1);
+
+        let identity_created_events = await handleIdentityEvents(
+            context,
+            aesKey,
+            identity_created_events_raw,
+            'IdentityCreated'
+        );
+        identity_created_events.forEach((e) => {
+            assertIdentityCreated(context.substrateWallet.eve, e);
+        });
+        let create_identity_failed_events = await handleIdentityEvents(
+            context,
+            aesKey,
+            create_identity_failed_events_raw,
+            'CreateIdentityFailed'
+        );
+        assert.equal(create_identity_failed_events.length, 1);
+        await checkErrorDetail(create_identity_failed_events, 'IDGraphLenLimitReached', false);
     });
 });

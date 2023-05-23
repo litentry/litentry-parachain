@@ -39,6 +39,7 @@ sp-core = { default-features = false, features = ["full_crypto"], git = "https:/
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 
 # litentry
+lc-scheduled-enclave = { path = "../../litentry/core/scheduled-enclave", default-features = false }
 lc-stf-task-sender = { path = "../../litentry/core/stf-task/sender", default-features = false }
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
 pallet-parentchain = { path = "../../../pallets/parentchain", default-features = false }
@@ -60,6 +61,7 @@ sgx = [
     "sp-io/sgx",
     "itp-node-api/sgx",
     "litentry-primitives/sgx",
+    "lc-scheduled-enclave/sgx",
     "lc-stf-task-sender/sgx",
     "rand-sgx",
     "itp-node-api-metadata-provider/sgx",
@@ -95,6 +97,7 @@ std = [
     "ita-sgx-runtime/std",
     "itp-node-api/std",
     "litentry-primitives/std",
+    "lc-scheduled-enclave/std",
     "lc-stf-task-sender/std",
     "rand",
 ]

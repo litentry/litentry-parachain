@@ -19,6 +19,7 @@ export function loadConfig() {
     require('dotenv').config();
     switch (process.env.NODE_ENV) {
         case 'development':
+            return require('../config.local.json')
         case 'test':
         case 'ci':
             return require('../config.ci.json');

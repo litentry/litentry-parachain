@@ -45,19 +45,40 @@ export default {
             _enum: {
                 balance_set_balance: '(AccountId, AccountId, Balance, Balance)',
                 balance_transfer: '(AccountId, AccountId, Balance)',
-                balance_unshield: '(AccountId, AccountId, Balance, MrEnclaveIdentifier)',
+                balance_unshield: '(AccountId, AccountId, Balance, ShardIdentifier)',
+                balance_shield: '(AccountId, AccountId, Balance)',
+                set_user_shielding_key: '(AccountId, AccountId, UserShieldingKeyType, H256)',
+                create_identity: '(AccountId, AccountId, LitentryIdentity, Option<Vec<u8>>, u32, H256)',
+                remove_identity: '(AccountId, AccountId, LitentryIdentity, H256)',
+                verify_identity: '(AccountId, AccountId, LitentryIdentity, LitentryValidationData, u32, H256)',
+                request_vc: '(AccountId, AccountId, Assertion, u32, H256)',
             },
         },
+        UserShieldingKeyType: '[u8; 32]',
         DirectRequestStatus: {
-            _enum: [
-                //TODO support TrustedOperationStatus(TrustedOperationStatus)
-                'Ok',
-                'TrustedOperationStatus',
-                'Error',
-            ],
+            _enum: {
+                Ok: null,
+                TrustedOperationStatus: 'TrustedOperationStatus',
+                Error: null,
+            },
+        },
+        TrustedOperationStatus: {
+            _enum: {
+                Submitted: null,
+                Future: null,
+                Ready: null,
+                Broadcast: null,
+                InSidechainBlock: 'H256',
+                Retracted: null,
+                FinalityTimeout: null,
+                Finalized: null,
+                Usurped: null,
+                Dropped: null,
+                Invalid: null,
+            },
         },
 
-        //identity
+        // identity management
         LitentryIdentity: {
             _enum: {
                 Substrate: 'SubstrateIdentity',
@@ -89,8 +110,6 @@ export default {
         EvmNetwork: {
             _enum: ['Ethereum', 'BSC'],
         },
-
-        //Validation Data
         LitentryValidationData: {
             _enum: {
                 Web2Validation: 'Web2ValidationData',
@@ -144,14 +163,19 @@ export default {
             is_verified: 'bool',
         },
 
-        //vc management
-        VCRequested: {
-            account: 'AccountId',
-            mrEnclave: 'MrEnclaveIdentifier',
-            assertion: 'Assertion',
+        // teerex
+        ShardIdentifier: 'H256',
+        Request: {
+            shard: 'ShardIdentifier',
+            cyphertext: 'Vec<u8>',
         },
 
-        MrEnclaveIdentifier: '[u8;32]',
+        // vc management
+        VCRequested: {
+            account: 'AccountId',
+            mrEnclave: 'ShardIdentifier',
+            assertion: 'Assertion',
+        },
         Assertion: {
             _enum: {
                 A1: 'Null',

@@ -24,12 +24,10 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_utils::stringify::account_id_to_string;
 use lc_data_providers::G_DATA_PROVIDERS;
 use lc_stf_task_sender::AssertionBuildRequest;
-use litentry_primitives::{
-	aes_encrypt_default, AesOutput, Assertion, ErrorDetail, ErrorString, VCMPError,
-};
+use litentry_primitives::{Assertion, ErrorDetail, ErrorString, VCMPError};
 use log::*;
 use sp_core::hashing::blake2_256;
-use std::{format, sync::Arc};
+use std::{format, sync::Arc, vec::Vec};
 
 pub(crate) struct AssertionHandler<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
@@ -50,16 +48,15 @@ where
 	H::StateT: SgxExternalitiesTrait,
 {
 	type Error = VCMPError;
-	type Result = ([u8; 32], [u8; 32], AesOutput); // (vc_index, vc_hash, encrypted_vc_str)
+	type Result = ([u8; 32], [u8; 32], Vec<u8>); // (vc_index, vc_hash, vc_byte_array)
 
 	fn on_process(&self) -> Result<Self::Result, Self::Error> {
 		// create the initial credential
 		let mut credential = match self.req.assertion.clone() {
 			Assertion::A1 => lc_assertion_build::a1::build(
-				self.req.vec_identity.clone(),
+				self.req.vec_identity.to_vec(),
 				&self.req.shard,
 				&self.req.who,
-				self.req.bn,
 			),
 
 			Assertion::A2(guild_id) => lc_assertion_build::a2::build(
@@ -67,7 +64,6 @@ where
 				guild_id,
 				&self.req.shard,
 				&self.req.who,
-				self.req.bn,
 			),
 
 			Assertion::A3(guild_id, channel_id, role_id) => lc_assertion_build::a3::build(
@@ -77,7 +73,6 @@ where
 				role_id,
 				&self.req.shard,
 				&self.req.who,
-				self.req.bn,
 			),
 
 			Assertion::A4(min_balance) => lc_assertion_build::a4::build(
@@ -85,7 +80,6 @@ where
 				min_balance,
 				&self.req.shard,
 				&self.req.who,
-				self.req.bn,
 			),
 
 			Assertion::A5(original_tweet_id) => lc_assertion_build::a5::build(
@@ -93,14 +87,12 @@ where
 				original_tweet_id,
 				&self.req.shard,
 				&self.req.who,
-				self.req.bn,
 			),
 
 			Assertion::A6 => lc_assertion_build::a6::build(
 				self.req.vec_identity.to_vec(),
 				&self.req.shard,
 				&self.req.who,
-				self.req.bn,
 			),
 
 			Assertion::A7(min_balance) => lc_assertion_build::a7::build(
@@ -108,7 +100,6 @@ where
 				min_balance,
 				&self.req.shard,
 				&self.req.who,
-				self.req.bn,
 			),
 
 			Assertion::A8(networks) => lc_assertion_build::a8::build(
@@ -116,7 +107,6 @@ where
 				networks,
 				&self.req.shard,
 				&self.req.who,
-				self.req.bn,
 			),
 
 			Assertion::A10(min_balance) => lc_assertion_build::a10::build(
@@ -124,7 +114,6 @@ where
 				min_balance,
 				&self.req.shard,
 				&self.req.who,
-				self.req.bn,
 			),
 
 			Assertion::A11(min_balance) => lc_assertion_build::a11::build(
@@ -132,7 +121,6 @@ where
 				min_balance,
 				&self.req.shard,
 				&self.req.who,
-				self.req.bn,
 			),
 
 			_ => {
@@ -165,7 +153,7 @@ where
 		})?;
 		debug!("Credential Payload signature: {:?}", sig);
 
-		credential.add_proof(&sig, credential.issuance_block_number, &enclave_account);
+		credential.add_proof(&sig, &enclave_account);
 		credential.validate().map_err(|e| {
 			VCMPError::RequestVCFailed(
 				self.req.assertion.clone(),
@@ -185,9 +173,7 @@ where
 		debug!("Credential: {}, length: {}", credential_str, credential_str.len());
 		let vc_hash = blake2_256(credential_str.as_bytes());
 		debug!("VC hash: {:?}", vc_hash);
-
-		let output = aes_encrypt_default(&self.req.key, credential_str.as_bytes());
-		Ok((vc_index, vc_hash, output))
+		Ok((vc_index, vc_hash, credential_str.as_bytes().to_vec()))
 	}
 
 	fn on_success(&self, result: Self::Result) {
@@ -196,7 +182,7 @@ where
 		// using enclave's shielding key is encrypted in chunks
 		let (vc_index, vc_hash, vc_payload) = result;
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
-			let c = TrustedCall::handle_vc_issued(
+			let c = TrustedCall::request_vc_callback(
 				enclave_signer,
 				self.req.who.clone(),
 				self.req.assertion.clone(),

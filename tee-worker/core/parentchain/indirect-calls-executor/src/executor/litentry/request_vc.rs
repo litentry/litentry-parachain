@@ -34,13 +34,10 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{RequestVCFn, H256};
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::ParentchainBlockNumber;
 use log::*;
 use sp_runtime::traits::{AccountIdLookup, StaticLookup};
 
-pub(crate) struct RequestVC {
-	pub(crate) block_number: ParentchainBlockNumber,
-}
+pub(crate) struct RequestVC;
 
 impl RequestVC {
 	fn execute_internal<R, S, T, N>(
@@ -74,8 +71,6 @@ impl RequestVC {
 				enclave_account_id,
 				account,
 				assertion.clone(),
-				*shard,
-				self.block_number,
 				hash_of(extrinsic),
 			);
 			let signed_trusted_call =

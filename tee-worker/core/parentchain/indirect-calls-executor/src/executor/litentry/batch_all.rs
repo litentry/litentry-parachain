@@ -111,7 +111,7 @@ impl BatchAll {
 					verify_identity.execute(context, xt)?;
 				},
 				SupportedBatchCallParams::RequestVC(p) => {
-					let request_vc = RequestVC { block_number: self.block_number };
+					let request_vc = RequestVC;
 					let c = (call.index, p);
 					let xt = ParentchainUncheckedExtrinsic {
 						function: c,

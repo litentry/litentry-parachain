@@ -31,7 +31,7 @@ use lc_data_providers::graphql::{
 use log::*;
 use std::{collections::HashSet, string::String, vec, vec::Vec};
 
-const VC_A8_SUBJECT_DESCRIPTION: &str = "The total amount of transaction the user has ever made in each of the available  networks (including invalid transactions)";
+const VC_A8_SUBJECT_DESCRIPTION: &str = "The total amount of transaction the user has ever made in each of the available networks (including invalid transactions)";
 const VC_A8_SUBJECT_TYPE: &str = "EVM/Substrate Transaction Count on Networks";
 const VC_A8_SUBJECT_TAG: [&str; 6] =
 	["Litentry", "Litmus", "Polkadot", "Kusama", "Ethereum", "Khala"];
@@ -50,12 +50,10 @@ pub fn build(
 	networks: IndexingNetworks,
 	shard: &ShardIdentifier,
 	who: &AccountId,
-	bn: ParentchainBlockNumber,
 ) -> Result<Credential> {
 	debug!(
-		"Assertion A8 build, who: {:?}, bn: {}, identities: {:?}, networks:{:?}",
+		"Assertion A8 build, who: {:?}, identities: {:?}, networks:{:?}",
 		account_id_to_string(&who),
-		bn,
 		identities,
 		networks
 	);
@@ -108,7 +106,7 @@ pub fn build(
 	debug!("Assertion A8 total_transactions: {}", total_txs);
 
 	let (min, max) = get_total_tx_ranges(total_txs);
-	match Credential::new_default(who, &shard.clone(), bn) {
+	match Credential::new_default(who, &shard.clone()) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_A8_SUBJECT_DESCRIPTION,
