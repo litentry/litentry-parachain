@@ -84,13 +84,11 @@ echo "Minimum expected number of events with two oracle sources: ${MIN_EXPECTED_
 CLIENT="${CLIENT_BIN} -p ${NPORT} -P ${WORKER1PORT} -u ${NODEURL} -U ${WORKER1URL}"
 
 echo "* Query on-chain enclave registry:"
-WORKERS=$($CLIENT list-workers)
-echo "WORKERS: "
-echo "${WORKERS}"
+${CLIENT} list-workers
 echo ""
 
 # this will always take the first MRENCLAVE found in the registry !!
-read MRENCLAVE <<< $(echo "$WORKERS" | awk '/  MRENCLAVE: / { print $2; exit }')
+read MRENCLAVE <<< $($CLIENT list-workers | awk '/  MRENCLAVE: / { print $2; exit }')
 echo "Reading MRENCLAVE from worker list: ${MRENCLAVE}"
 
 [[ -z $MRENCLAVE ]] && { echo "MRENCLAVE is empty. cannot continue" ; exit 1; }

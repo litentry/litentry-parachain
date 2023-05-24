@@ -42,7 +42,7 @@ const ED25519: &[u64] = &[1, 3, 101, 112];
 /// - serial_number : None,
 /// - subject_alt_names : common_name. Required parameter. See below, subject
 /// - DistinguishedName :
-///         - issuer : Integritee, (The issuer field identifies the entity that has signed and issued the certificate.
+///         - issuer : Integritee, (The issuer field identifies the entity that has signed and issued the certificate.  
 ///                 The issuer field MUST contain a non-empty distinguished name (DN) )
 ///         - subject: empty. (The subject field identifies the entity associated with the public key stored in the subject
 ///                 public key field. If subject naming information is present only in the subjectAltName extension

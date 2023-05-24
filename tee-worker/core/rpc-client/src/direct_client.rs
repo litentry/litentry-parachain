@@ -50,6 +50,7 @@ pub trait DirectApi {
 	fn get_mu_ra_url(&self) -> Result<String>;
 	fn get_untrusted_worker_url(&self) -> Result<String>;
 	fn get_state_metadata(&self) -> Result<RuntimeMetadataPrefixed>;
+	// litentry
 	fn get_state_metadata_raw(&self) -> Result<String>;
 
 	fn send(&self, request: &str) -> Result<()>;
@@ -140,6 +141,8 @@ impl DirectApi for DirectClient {
 	fn get_state_metadata(&self) -> Result<RuntimeMetadataPrefixed> {
 		let jsonrpc_call: String =
 			RpcRequest::compose_jsonrpc_call("state_getMetadata".to_string(), Default::default())?;
+
+		// Send json rpc call to ws server.
 		let response_str = self.get(&jsonrpc_call)?;
 
 		// Decode rpc response.

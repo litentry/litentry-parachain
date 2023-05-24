@@ -1,8 +1,8 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
 name = "itc-parentchain-block-import-dispatcher"
 version = "0.9.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+edition = "2021"
 
 [dependencies]
 # sgx dependencies
@@ -29,15 +29,6 @@ itp-types = { path = "../../../core-primitives/types" }
 
 [features]
 default = ["std"]
-sgx = [
-    # sgx
-    "sgx_tstd",
-    # local
-    "itc-parentchain-block-importer/sgx",
-    "itp-block-import-queue/sgx",
-    # sgx enabled external libraries
-    "thiserror_sgx",
-]
 std = [
     # local
     "itc-parentchain-block-importer/std",
@@ -47,6 +38,15 @@ std = [
     "sp-runtime/std",
     # std-only compatible libraries
     "thiserror",
+]
+sgx = [
+    # sgx
+    "sgx_tstd",
+    # local
+    "itc-parentchain-block-importer/sgx",
+    "itp-block-import-queue/sgx",
+    # sgx enabled external libraries
+    "thiserror_sgx",
 ]
 
 # feature to export mock implementations, only to be used for dev-dependencies!

@@ -1,11 +1,11 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
-homepage = "https://integritee.network/"
-license = "Apache-2.0"
 name = "itp-utils"
-repository = "https://github.com/integritee-network/pallets/"
 version = "0.9.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+homepage = "https://integritee.network/"
+repository = "https://github.com/integritee-network/pallets/"
+license = "Apache-2.0"
+edition = "2021"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
@@ -25,14 +25,14 @@ thiserror = { version = "1.0", optional = true }
 
 [features]
 default = ["std"]
-sgx = [
-    "sgx_tstd",
-    "thiserror_sgx",
-]
 std = [
     "codec/std",
     "frame-support/std",
     "hex/std",
     "sp-core/std",
     "thiserror",
+]
+sgx = [
+    "sgx_tstd",
+    "thiserror_sgx",
 ]

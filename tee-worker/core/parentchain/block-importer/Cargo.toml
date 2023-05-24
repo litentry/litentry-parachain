@@ -1,8 +1,8 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
 name = "itc-parentchain-block-importer"
 version = "0.9.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+edition = "2021"
 
 [dependencies]
 # sgx dependencies
@@ -31,18 +31,6 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 
 [features]
 default = ["std"]
-sgx = [
-    # sgx
-    "sgx_tstd",
-    # local
-    "ita-stf/sgx",
-    "itc-parentchain-indirect-calls-executor/sgx",
-    "itc-parentchain-light-client/sgx",
-    "itp-extrinsics-factory/sgx",
-    "itp-stf-executor/sgx",
-    # sgx enabled external libraries
-    "thiserror_sgx",
-]
 std = [
     # local
     "ita-stf/std",
@@ -57,6 +45,18 @@ std = [
     "sp-runtime/std",
     # std compatible external
     "thiserror",
+]
+sgx = [
+    # sgx
+    "sgx_tstd",
+    # local
+    "ita-stf/sgx",
+    "itc-parentchain-indirect-calls-executor/sgx",
+    "itc-parentchain-light-client/sgx",
+    "itp-extrinsics-factory/sgx",
+    "itp-stf-executor/sgx",
+    # sgx enabled external libraries
+    "thiserror_sgx",
 ]
 
 # feature to export mock implementations, only to be used for dev-dependencies!

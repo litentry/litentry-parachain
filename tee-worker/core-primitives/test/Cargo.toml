@@ -1,12 +1,11 @@
 [package]
-edition = "2021"
 name = "itp-test"
 version = "0.9.0"
+edition = "2021"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 derive_more = { version = "0.99.5" }
-hex = { version = "0.4.3", default-features = false }
 sgx-crypto-helper = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", package = "sgx_crypto_helper", default-features = false }
 
 # sgx deps
@@ -31,18 +30,11 @@ itp-teerex-storage = { path = "../teerex-storage", default-features = false }
 itp-time-utils = { path = "../time-utils", default-features = false }
 itp-types = { path = "../types", default-features = false, features = ["test"] }
 
+# litentry
+hex = { version = "0.4.3", default-features = false }
 
 [features]
 default = ["std"]
-sgx = [
-    "ita-stf/sgx",
-    "itp-sgx-crypto/sgx",
-    "itp-sgx-externalities/sgx",
-    "itp-stf-state-handler/sgx",
-    "itp-time-utils/sgx",
-    "jsonrpc-core_sgx",
-    "sgx_tstd",
-]
 std = [
     "codec/std",
     "itp-sgx-crypto/std",
@@ -57,4 +49,13 @@ std = [
     "sp-core/std",
     "sp-runtime/std",
     "sp-std/std",
+]
+sgx = [
+    "ita-stf/sgx",
+    "itp-sgx-crypto/sgx",
+    "itp-sgx-externalities/sgx",
+    "itp-stf-state-handler/sgx",
+    "itp-time-utils/sgx",
+    "jsonrpc-core_sgx",
+    "sgx_tstd",
 ]

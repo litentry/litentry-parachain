@@ -37,9 +37,9 @@ pub struct NodeMetadataMock {
 	unshield_funds: u8,
 	publish_hash: u8,
 	sidechain_module: u8,
+	// litentry
 	update_scheduled_enclave: u8,
 	remove_scheduled_enclave: u8,
-	// litentry
 	// IMP
 	imp_module: u8,
 	imp_set_user_shielding_key: u8,
@@ -94,11 +94,11 @@ impl NodeMetadataMock {
 			shield_funds: 4u8,
 			unshield_funds: 5u8,
 			publish_hash: 9u8,
-			update_scheduled_enclave: 10u8,
-			remove_scheduled_enclave: 11u8,
-			// sidechain
 			sidechain_module: 53u8,
 			// litentry
+			update_scheduled_enclave: 10u8,
+			remove_scheduled_enclave: 11u8,
+
 			imp_module: 64u8,
 			imp_set_user_shielding_key: 0u8,
 			imp_create_identity: 1u8,

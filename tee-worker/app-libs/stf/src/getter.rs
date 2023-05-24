@@ -125,7 +125,7 @@ impl ExecuteGetter for Getter {
 		}
 	}
 
-	fn get_storage_hashes_to_update(&self) -> Vec<Vec<u8>> {
+	fn get_storage_hashes_to_update(self) -> Vec<Vec<u8>> {
 		match self {
 			Getter::trusted(g) => g.get_storage_hashes_to_update(),
 			Getter::public(g) => g.get_storage_hashes_to_update(),
@@ -193,7 +193,7 @@ impl ExecuteGetter for TrustedGetterSigned {
 		}
 	}
 
-	fn get_storage_hashes_to_update(&self) -> Vec<Vec<u8>> {
+	fn get_storage_hashes_to_update(self) -> Vec<Vec<u8>> {
 		Vec::new()
 	}
 }
@@ -205,7 +205,7 @@ impl ExecuteGetter for PublicGetter {
 		}
 	}
 
-	fn get_storage_hashes_to_update(&self) -> Vec<Vec<u8>> {
+	fn get_storage_hashes_to_update(self) -> Vec<Vec<u8>> {
 		Vec::new()
 	}
 }
