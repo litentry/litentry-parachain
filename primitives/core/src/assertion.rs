@@ -25,7 +25,6 @@ type MaxStringLength = ConstU32<64>;
 pub type ParameterString = BoundedVec<u8, MaxStringLength>;
 pub type IndexingNetworks = BoundedVec<SupportedNetwork, MaxStringLength>;
 
-// TDFSupportedNetwork =》 AvailableNetworks
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen, Hash)]
 pub enum SupportedNetwork {
 	Litentry,
