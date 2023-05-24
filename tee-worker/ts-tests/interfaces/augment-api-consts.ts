@@ -40,6 +40,10 @@ declare module '@polkadot/api-base/types/consts' {
         };
         identityManagement: {
             /**
+             * maximum number of identities an account can have, if you change this value to lower some accounts may exceed this limit
+             **/
+            maxIDGraphLength: u32 & AugmentedConst<ApiType>;
+            /**
              * maximum metadata length
              **/
             maxMetadataLength: u32 & AugmentedConst<ApiType>;
