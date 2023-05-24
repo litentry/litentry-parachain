@@ -753,9 +753,7 @@ where
 			TrustedCall::balance_unshield(..) => debug!("No storage updates needed..."),
 			TrustedCall::balance_shield(..) => debug!("No storage updates needed..."),
 			// litentry
-			TrustedCall::set_user_shielding_key(..) => {
-				key_hashes.push(storage_value_key("IdentityManagement", "MaxIDGraphLength"));
-			},
+			TrustedCall::set_user_shielding_key(..) => debug!("No storage updates needed..."),
 			TrustedCall::create_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::remove_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::verify_identity(..) => debug!("No storage updates needed..."),
