@@ -520,7 +520,6 @@ jobs:
           - test_name: lit-identity-test
           - test_name: lit-parentchain-nonce
           - test_name: lit-batch-test
-          - test_name: lit-id-graph-stats
 
     steps:
       - uses: actions/checkout@v3

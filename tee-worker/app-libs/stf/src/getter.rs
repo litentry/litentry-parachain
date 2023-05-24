@@ -203,6 +203,7 @@ impl ExecuteGetter for TrustedGetterSigned {
 			//       In fact, in the production no one should have access to the concrete identities
 			//       but maybe it makes sense to get some statistic information
 			// Disabled until it's resolved
+			// Disabled the test `lit-id-graph-stats` too
 			TrustedGetter::id_graph_stats(_who) => None,
 		}
 	}

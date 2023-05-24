@@ -71,11 +71,11 @@ export const createSignedTrustedCall = (
     // TODO: do we have a RPC getter from the enclave?
     mrenclave: string,
     nonce: Codec,
-    params: Array<any>
+    params: any
 ) => {
     const [variant, argType] = trustedCall;
     const call = parachain_api.createType('TrustedCall', {
-        [variant]: parachain_api.createType(argType, params.length == 1 ? params[0] : params),
+        [variant]: parachain_api.createType(argType, params),
     });
     const payload = Uint8Array.from([
         ...call.toU8a(),
@@ -97,11 +97,11 @@ export const createSignedTrustedGetter = (
     parachain_api: ApiPromise,
     trustedGetter: [string, string],
     account: KeyringPair,
-    params: Array<any>
+    params: any
 ) => {
     const [variant, argType] = trustedGetter;
     const getter = parachain_api.createType('TrustedGetter', {
-        [variant]: parachain_api.createType(argType, params.length == 1 ? params[0] : params),
+        [variant]: parachain_api.createType(argType, params),
     });
     const payload = getter.toU8a();
     const signature = parachain_api.createType('MultiSignature', {
@@ -171,9 +171,12 @@ export function createSignedTrustedCallCreateIdentity(
 }
 
 export function createSignedTrustedGetterUserShieldingKey(parachain_api: ApiPromise, who: KeyringPair) {
-    let getterSigned = createSignedTrustedGetter(parachain_api, ['user_shielding_key', '(AccountId)'], who, [
-        who.address,
-    ]);
+    let getterSigned = createSignedTrustedGetter(
+        parachain_api,
+        ['user_shielding_key', '(AccountId)'],
+        who,
+        who.address
+    );
     return parachain_api.createType('Getter', { trusted: getterSigned });
 }
 
