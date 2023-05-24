@@ -96,6 +96,11 @@ async function runDirectCall() {
     res = await sendRequestFromTrustedGetter(wsp, parachain_api, mrenclave, key, UserShieldingKeyGetter);
     console.log('UserShieldingKey getter returned', res.toHuman());
     // the returned res.value of the trustedGetter is of Option<> type
+    // res.value should be `0x018022fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12`
+    // TODO: why `createType` must accept an Uint8Array here? The following still prints the unwrapped value
+    //       let k = parachain_api.createType('Option<Bytes>', res.value.toHex());
+    //       console.log("k.isSome", k.isSome); // true
+    //       console.log("k.unwrap", k.unwrap().toHex()); // still 0x018022fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12
     let k = parachain_api.createType('Option<Bytes>', hexToU8a(res.value.toHex()));
     assert.isTrue(k.isSome);
     assert.equal(k.unwrap().toHex(), key_alice);
