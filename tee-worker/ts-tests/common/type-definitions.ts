@@ -4,7 +4,7 @@ import { HexString } from '@polkadot/util/types';
 import WebSocketAsPromised from 'websocket-as-promised';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
-import { Metadata, Vec } from '@polkadot/types';
+import { Metadata, Vec, TypeRegistry } from '@polkadot/types';
 import { Wallet } from 'ethers';
 import type { Assertion as GenericAssertion, DirectRequestStatus } from '../parachain-interfaces/identity/types';
 import { default as teeTypes } from '../parachain-interfaces/identity/definitions';
@@ -56,6 +56,7 @@ export type IntegrationTestContext = {
     ethersWallet: EthersWalletItem;
     substrateWallet: SubstrateWalletItem;
     metaData: Metadata;
+    sidechainRegistry: TypeRegistry;
     web3Signers: Web3Wallets[];
 };
 

@@ -1,6 +1,5 @@
 import { ApiPromise } from '@polkadot/api';
 import { KeyringPair } from '@polkadot/keyring/types';
-import { Codec } from '@polkadot/types/types';
 import { HexString } from '@polkadot/util/types';
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { blake2AsHex } from '@polkadot/util-crypto';
@@ -17,7 +16,7 @@ import { decryptWithAES, encryptWithTeeShieldingKey } from './crypto';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { assert } from 'chai';
 import { ethers } from 'ethers';
-
+import { TypeRegistry } from '@polkadot/types';
 //<challeng-code> + <litentry-AccountId32> + <Identity>
 export function generateVerificationMessage(
     context: IntegrationTestContext,
@@ -25,7 +24,7 @@ export function generateVerificationMessage(
     signerAddress: Uint8Array,
     identity: LitentryIdentity
 ): HexString {
-    const encode = context.api.createType('LitentryIdentity', identity).toU8a();
+    const encode = context.sidechainRegistry.createType('LitentryPrimitivesIdentity', identity).toU8a();
     const msg = Buffer.concat([challengeCode, signerAddress, encode]);
     return blake2AsHex(msg, 256);
 }
@@ -48,7 +47,7 @@ export async function buildIdentityHelper(
 export async function buildIdentityTxs(
     context: IntegrationTestContext,
     signers: KeyringPair[] | KeyringPair,
-    identities: LitentryIdentity[],
+    identities: any[],
     method: 'setUserShieldingKey' | 'createIdentity' | 'verifyIdentity' | 'removeIdentity',
     validations?: LitentryValidationData[]
 ): Promise<any[]> {
@@ -62,8 +61,9 @@ export async function buildIdentityTxs(
         const identity = identities[k];
         let tx: SubmittableExtrinsic<ApiTypes>;
         let nonce: number;
-        const encod_identity = api.createType('LitentryIdentity', identity).toU8a();
-        const ciphertext_identity = encryptWithTeeShieldingKey(teeShieldingKey, encod_identity).toString('hex');
+        const encod_identity = context.sidechainRegistry.createType('LitentryPrimitivesIdentity', identity);
+
+        const ciphertext_identity = encryptWithTeeShieldingKey(teeShieldingKey, encod_identity.toU8a()).toString('hex');
         nonce = (await api.rpc.system.accountNextIndex(signer.address)).toNumber();
 
         switch (method) {
@@ -111,13 +111,7 @@ export async function handleIdentityEvents(
     context: IntegrationTestContext,
     aesKey: HexString,
     events: any[],
-    type:
-        | 'UserShieldingKeySet'
-        | 'IdentityCreated'
-        | 'IdentityVerified'
-        | 'IdentityRemoved'
-        | 'Failed'
-        | 'CreateIdentityFailed'
+    type: 'UserShieldingKeySet' | 'IdentityCreated' | 'IdentityVerified' | 'IdentityRemoved' | 'Failed'
 ): Promise<any[]> {
     let results: IdentityGenericEvent[] = [];
 
@@ -126,7 +120,7 @@ export async function handleIdentityEvents(
             case 'UserShieldingKeySet':
                 results.push(
                     createIdentityEvent(
-                        context.api,
+                        context.sidechainRegistry,
                         events[index].data.account.toHex(),
                         undefined,
                         decryptWithAES(aesKey, events[index].data.idGraph, 'hex')
@@ -136,7 +130,7 @@ export async function handleIdentityEvents(
             case 'IdentityCreated':
                 results.push(
                     createIdentityEvent(
-                        context.api,
+                        context.sidechainRegistry,
                         events[index].data.account.toHex(),
                         decryptWithAES(aesKey, events[index].data.identity, 'hex'),
                         undefined,
@@ -147,7 +141,7 @@ export async function handleIdentityEvents(
             case 'IdentityVerified':
                 results.push(
                     createIdentityEvent(
-                        context.api,
+                        context.sidechainRegistry,
                         events[index].data.account.toHex(),
                         decryptWithAES(aesKey, events[index].data.identity, 'hex'),
                         decryptWithAES(aesKey, events[index].data.idGraph, 'hex')
@@ -158,14 +152,13 @@ export async function handleIdentityEvents(
             case 'IdentityRemoved':
                 results.push(
                     createIdentityEvent(
-                        context.api,
+                        context.sidechainRegistry,
                         events[index].data.account.toHex(),
                         decryptWithAES(aesKey, events[index].data.identity, 'hex')
                     )
                 );
                 break;
             case 'Failed':
-            case 'CreateIdentityFailed':
                 results.push(events[index].data.detail.toHuman());
                 break;
         }
@@ -176,15 +169,22 @@ export async function handleIdentityEvents(
 }
 
 export function createIdentityEvent(
-    api: ApiPromise,
+    sidechainRegistry: TypeRegistry,
     who: HexString,
     identityString?: HexString,
     idGraphString?: HexString,
     challengeCode?: HexString
 ): IdentityGenericEvent {
-    let identity = identityString ? api.createType('LitentryIdentity', identityString).toJSON() : undefined;
+    let identity = identityString
+        ? sidechainRegistry.createType('LitentryPrimitivesIdentity', identityString).toJSON()
+        : undefined;
     let idGraph = idGraphString
-        ? api.createType('Vec<(LitentryIdentity, IdentityContext)>', idGraphString).toJSON()
+        ? sidechainRegistry
+            .createType(
+                'Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
+                idGraphString
+            )
+            .toJSON()
         : undefined;
     return <IdentityGenericEvent>{
         who,

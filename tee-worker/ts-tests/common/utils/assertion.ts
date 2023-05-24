@@ -11,18 +11,27 @@ import {
     IdentityGenericEvent,
     JsonSchema,
     LitentryIdentity,
+    IntegrationTestContext,
 } from '../type-definitions';
 import { buildIdentityHelper } from './identity-helper';
 import { isEqual, isArrayEqual } from './common';
-
-export async function assertInitialIDGraphCreated(api: ApiPromise, signer: KeyringPair, event: IdentityGenericEvent) {
+export async function assertInitialIDGraphCreated(
+    context: IntegrationTestContext,
+    signer: KeyringPair,
+    event: IdentityGenericEvent
+) {
     assert.equal(event.who, u8aToHex(signer.addressRaw));
     assert.equal(event.idGraph.length, 1);
     // check identity in idgraph
-    const expected_identity = api.createType(
-        'LitentryIdentity',
-        await buildIdentityHelper(u8aToHex(signer.addressRaw), 'LitentryRococo', 'Substrate')
+    const expected_identity = context.sidechainRegistry.createType(
+        'LitentryPrimitivesIdentity',
+        await buildIdentityHelper(
+            u8aToHex(signer.addressRaw),
+            process.env.NODE_ENV === 'local' ? 'TestNet' : 'LitentryRococo',
+            'Substrate'
+        )
     ) as LitentryIdentity;
+
     assert.isTrue(isEqual(event.idGraph[0][0], expected_identity));
     // check identityContext in idgraph
     assert.equal(event.idGraph[0][1].linking_request_block, 0);

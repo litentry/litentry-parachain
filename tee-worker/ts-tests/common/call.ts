@@ -3,6 +3,7 @@ import { Metadata, TypeRegistry } from '@polkadot/types';
 import WebSocketAsPromised from 'websocket-as-promised';
 import { HexString } from '@polkadot/util/types';
 import { RequestBody, WorkerRpcReturnValue } from '../common/type-definitions';
+import sidechainMetaData from '../litentry-sidechain-metadata.json'
 //rpc call
 export async function sendRequest(
     wsClient: WebSocketAsPromised,
@@ -19,13 +20,13 @@ export async function sendRequest(
     return resp_json;
 }
 
-export async function getMetadata(wsClient: WebSocketAsPromised, api: ApiPromise): Promise<Metadata> {
+export async function getSidechainMetadata(wsClient: WebSocketAsPromised, api: ApiPromise): Promise<{ metaData: Metadata, sidechainRegistry: TypeRegistry }> {
     let request = { jsonrpc: '2.0', method: 'state_getMetadata', params: [], id: 1 };
     let respJSON = await sendRequest(wsClient, request, api);
-    const registry = new TypeRegistry();
-    const metadata = new Metadata(registry, respJSON.value);
-    registry.setMetadata(metadata);
-    return metadata;
+    const sidechainRegistry = new TypeRegistry();
+    const metaData = new Metadata(sidechainRegistry, respJSON.value);
+    sidechainRegistry.setMetadata(metaData);
+    return { metaData, sidechainRegistry };
 }
 
 export async function getSideChainStorage(

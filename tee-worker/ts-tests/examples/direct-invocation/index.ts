@@ -1,7 +1,6 @@
 import { cryptoWaitReady } from '@polkadot/util-crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
-import { TypeRegistry } from '@polkadot/types';
 import { hexToU8a, u8aToHex, u8aConcat } from '@polkadot/util';
 import { teeTypes } from '../../common/type-definitions';
 import {
@@ -11,7 +10,8 @@ import {
     createSignedTrustedCallCreateIdentity,
 } from './util';
 import { getEnclave, sleep, buildIdentityHelper } from '../../common/utils';
-
+import { Metadata, TypeRegistry } from '@polkadot/types';
+import sidechainMetaData from '../../litentry-sidechain-metadata.json';
 // in order to handle self-signed certificates we need to turn off the validation
 // TODO add self signed certificate
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
@@ -25,7 +25,9 @@ const WORKER_TRUSTED_WS_ENDPOINT = 'wss://localhost:2000';
 
 async function runDirectCall() {
     const parachain_ws = new WsProvider(PARACHAIN_WS_ENDPINT);
-    const registry = new TypeRegistry();
+    const sidechainRegistry = new TypeRegistry();
+    const metaData = new Metadata(sidechainRegistry, sidechainMetaData.result as HexString);
+    sidechainRegistry.setMetadata(metaData);
     const { types } = teeTypes;
     const parachain_api = await ApiPromise.create({
         provider: parachain_ws,
@@ -77,7 +79,7 @@ async function runDirectCall() {
         mrenclave,
         nonce,
         alice,
-        parachain_api.createType('LitentryIdentity', twitter_identity).toHex(),
+        sidechainRegistry.createType('LitentryPrimitivesIdentity', twitter_identity).toHex(),
         '0x',
         parachain_api.createType('u32', 1).toHex(),
         hash
