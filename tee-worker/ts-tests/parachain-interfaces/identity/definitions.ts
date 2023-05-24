@@ -1,10 +1,7 @@
 export default {
     types: {
-        WorkerRpcReturnString: {
-            vec: 'Bytes',
-        },
         WorkerRpcReturnValue: {
-            value: 'Bytes',
+            value: 'Vec<u8>',
             do_watch: 'bool',
             status: 'DirectRequestStatus',
         },

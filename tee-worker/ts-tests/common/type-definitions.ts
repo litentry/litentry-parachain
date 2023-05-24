@@ -29,7 +29,7 @@ export type BatchCall = Vec<Call> | (string | Uint8Array | IMethod<AnyTuple, any
 export type WorkerRpcReturnValue = {
     value: `0x${string}`;
     do_watch: boolean;
-    status: DirectRequestStatus['type'];
+    status: DirectRequestStatus;
 };
 export type EnclaveResult = {
     mrEnclave: `0x${string}`;
