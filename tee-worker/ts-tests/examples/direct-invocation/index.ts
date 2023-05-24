@@ -12,7 +12,6 @@ import {
     sendRequestFromTrustedGetter,
 } from './util';
 import { getEnclave, sleep, buildIdentityHelper } from '../../common/utils';
-import { WorkerRpcReturnString } from '../../common/type-definitions';
 
 // in order to handle self-signed certificates we need to turn off the validation
 // TODO add self signed certificate
@@ -92,8 +91,7 @@ async function runDirectCall() {
     console.log('Send UserShieldingKey getter...');
     let UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachain_api, alice);
     let r = await sendRequestFromTrustedGetter(wsp, parachain_api, mrenclave, key, UserShieldingKeyGetter);
-    const r_hex = parachain_api.createType('WorkerRpcReturnString', r.value).toJSON() as WorkerRpcReturnString;
-    console.log('Get response, key = ' + r_hex);
+    console.log('Get response, key = ' + r.value.toHex());
 }
 
 (async () => {

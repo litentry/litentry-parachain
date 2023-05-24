@@ -209,7 +209,7 @@ export const sendRequestFromTrustedGetter = async (
     getter: Codec
 ): Promise<WorkerRpcReturnValue> => {
     // important: we don't create the `TrustedOperation` type here, but use `Getter` type directly
-    // create the request parameter
+    //            this is what `state_executeGetter` expects in rust
     let requestParam = await createRequest(wsp, parachain_api, mrenclave, teeShieldingKey, true, getter.toU8a());
     let request = {
         jsonrpc: '2.0',
@@ -247,8 +247,6 @@ export const createRequest = async (
     isGetter: boolean,
     top: Uint8Array
 ) => {
-    console.log("top len ", top.length);
-    console.log("top ", top);
     let cyphertext;
     if (isGetter) {
         cyphertext = compactAddLength(top);

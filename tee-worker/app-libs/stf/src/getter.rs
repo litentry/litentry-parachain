@@ -199,11 +199,11 @@ impl ExecuteGetter for TrustedGetterSigned {
 			TrustedGetter::challenge_code(who, identity) =>
 				IdentityManagement::challenge_codes(&who, &identity).map(|code| code.encode()),
 			// TODO: we need to re-think it
-			//       the current _who is ignored meaning it's actually not a "trusted" getter
-			//       we could have disabled this getter in the production but then there's no way for
-			//		 us to get any statistic information
-			TrustedGetter::id_graph_stats(_who) =>
-				IdentityManagement::id_graph_stats().map(|item| item.encode()),
+			//       currently, _who is ignored meaning it's actually not a "trusted" getter.
+			//       In fact, in the production no one should have access to the concrete identities
+			//       but maybe it makes sense to get some statistic information
+			// Disabled until it's resolved
+			TrustedGetter::id_graph_stats(_who) => None,
 		}
 	}
 
