@@ -40,7 +40,6 @@ import type {
     Web2ValidationData,
     Web3CommonValidationData,
     Web3ValidationData,
-    WorkerRpcReturnString,
     WorkerRpcReturnValue,
 } from './identity';
 import type { Data, StorageKey } from '@polkadot/types';
@@ -2329,7 +2328,6 @@ declare module '@polkadot/types/types/registry' {
         WinningData10: WinningData10;
         WinningDataEntry: WinningDataEntry;
         WithdrawReasons: WithdrawReasons;
-        WorkerRpcReturnString: WorkerRpcReturnString;
         WorkerRpcReturnValue: WorkerRpcReturnValue;
         Xcm: Xcm;
         XcmAssetId: XcmAssetId;

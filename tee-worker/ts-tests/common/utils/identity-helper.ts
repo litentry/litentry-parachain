@@ -1,6 +1,5 @@
 import { ApiPromise } from '@polkadot/api';
 import { KeyringPair } from '@polkadot/keyring/types';
-import { Codec } from '@polkadot/types/types';
 import { HexString } from '@polkadot/util/types';
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { blake2AsHex } from '@polkadot/util-crypto';
