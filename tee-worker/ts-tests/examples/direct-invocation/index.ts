@@ -12,6 +12,8 @@ import {
     sendRequestFromTrustedGetter,
 } from './util';
 import { getEnclave, sleep, buildIdentityHelper } from '../../common/utils';
+import { hexToU8a, compactStripLength, u8aToString } from '@polkadot/util';
+import { assert } from 'chai';
 
 // in order to handle self-signed certificates we need to turn off the validation
 // TODO add self signed certificate
@@ -46,6 +48,7 @@ async function runDirectCall() {
     let key = await getTEEShieldingKey(wsp, parachain_api);
 
     const alice: KeyringPair = keyring.addFromUri('//Alice', { name: 'Alice' });
+    const bob: KeyringPair = keyring.addFromUri('//Bob', { name: 'Bob' });
     const mrenclave = (await getEnclave(parachain_api)).mrEnclave;
     let nonce = parachain_api.createType('Index', '0x00');
 
@@ -88,10 +91,22 @@ async function runDirectCall() {
 
     sleep(10);
 
-    console.log('Send UserShieldingKey getter...');
+    console.log('Send UserShieldingKey getter for alice ...');
     let UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachain_api, alice);
-    let r = await sendRequestFromTrustedGetter(wsp, parachain_api, mrenclave, key, UserShieldingKeyGetter);
-    console.log('Get response, key = ' + r.value.toHex());
+    res = await sendRequestFromTrustedGetter(wsp, parachain_api, mrenclave, key, UserShieldingKeyGetter);
+    console.log('UserShieldingKey getter returned', res.toHuman());
+    // the returned res.value of the trustedGetter is of Option<> type
+    let k = parachain_api.createType('Option<Bytes>', hexToU8a(res.value.toHex()));
+    assert.isTrue(k.isSome);
+    assert.equal(k.unwrap().toHex(), key_alice);
+
+    // bob's shielding key should be none
+    console.log('Send UserShieldingKey getter for bob ...');
+    UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachain_api, bob);
+    res = await sendRequestFromTrustedGetter(wsp, parachain_api, mrenclave, key, UserShieldingKeyGetter);
+    console.log('UserShieldingKey getter returned', res.toHuman());
+    k = parachain_api.createType('Option<Bytes>', hexToU8a(res.value.toHex()));
+    assert.isTrue(k.isNone);
 }
 
 (async () => {

@@ -8,7 +8,6 @@ import { encryptWithTeeShieldingKey } from '../../common/utils';
 import { decodeRpcBytesAsString } from '../../common/call';
 import { createPublicKey, KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
-import { TrustedGetterSigned } from '../../interfaces/identity';
 
 export function toBalance(amountInt: number) {
     return new BN(amountInt).mul(new BN(10).pow(new BN(12)));
@@ -101,15 +100,13 @@ export const createSignedTrustedGetter = (
     params: Array<any>
 ) => {
     const [variant, argType] = trustedGetter;
-    const getter = parachain_api
-        .createType('TrustedGetter', {
-            [variant]: parachain_api.createType(argType, params.length == 1 ? params[0] : params),
-        });
+    const getter = parachain_api.createType('TrustedGetter', {
+        [variant]: parachain_api.createType(argType, params.length == 1 ? params[0] : params),
+    });
     const payload = getter.toU8a();
-    const signature = parachain_api
-        .createType('MultiSignature', {
-            Sr25519: account.sign(payload),
-        });
+    const signature = parachain_api.createType('MultiSignature', {
+        Sr25519: account.sign(payload),
+    });
     return parachain_api.createType('TrustedGetterSigned', {
         getter: getter,
         signature: signature,
@@ -191,7 +188,14 @@ export const sendRequestFromTrustedCall = async (
     const trustedOperation = parachain_api.createType('TrustedOperation', { direct_call: call });
     console.log('top: ', trustedOperation.toJSON());
     // create the request parameter
-    let requestParam = await createRequest(wsp, parachain_api, mrenclave, teeShieldingKey, false, trustedOperation.toU8a());
+    let requestParam = await createRequest(
+        wsp,
+        parachain_api,
+        mrenclave,
+        teeShieldingKey,
+        false,
+        trustedOperation.toU8a()
+    );
     let request = {
         jsonrpc: '2.0',
         method: 'author_submitAndWatchExtrinsic',
