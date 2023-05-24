@@ -34,6 +34,7 @@ pub trait Sidechain: Send + Sync + 'static {
 
 	fn execute_trusted_calls(&self) -> EnclaveResult<()>;
 
+	// litentry
 	/// Ignore the parentchain block import validation until the given block number
 	/// TODO: use the generic Header::Number trait
 	fn ignore_parentchain_block_import_validation_until(&self, until: u32) -> EnclaveResult<()>;

@@ -1,8 +1,8 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
 name = "itc-direct-rpc-server"
 version = "0.9.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+edition = "2021"
 
 [dependencies]
 # sgx dependencies
@@ -31,16 +31,6 @@ thiserror = { version = "1.0", optional = true }
 
 [features]
 default = ["std"]
-mocks = []
-sgx = [
-    "itc-tls-websocket-server/sgx",
-    "itp-rpc/sgx",
-    "itp-utils/sgx",
-    "jsonrpc-core_sgx",
-    "sgx_tstd",
-    "sgx_types",
-    "thiserror_sgx",
-]
 std = [
     # no-std dependencies
     "codec/std",
@@ -57,3 +47,13 @@ std = [
     "jsonrpc-core",
     "thiserror",
 ]
+sgx = [
+    "itc-tls-websocket-server/sgx",
+    "itp-rpc/sgx",
+    "itp-utils/sgx",
+    "jsonrpc-core_sgx",
+    "sgx_tstd",
+    "sgx_types",
+    "thiserror_sgx",
+]
+mocks = []

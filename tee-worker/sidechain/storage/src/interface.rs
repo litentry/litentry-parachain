@@ -81,6 +81,7 @@ pub trait FetchBlocks<SignedBlock: SignedBlockT> {
 		shard_identifier: &ShardIdentifierFor<SignedBlock>,
 	) -> Result<Vec<SignedBlock>>;
 
+	// litentry
 	fn latest_block(
 		&self,
 		shard_identifier: &ShardIdentifierFor<SignedBlock>,

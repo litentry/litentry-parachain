@@ -1,16 +1,16 @@
 [package]
+name = "integritee-service"
+version = "0.9.0"
 authors = ["Integritee AG <hello@integritee.network>"]
 build = "build.rs"
 edition = "2021"
-name = "integritee-service"
-version = "0.9.0"
 
 [dependencies]
 async-trait = "0.1.50"
 base58 = "0.2"
 clap = { version = "2.33", features = ["yaml"] }
 dirs = "3.0.2"
-env_logger = "0.10.0"
+env_logger = "0.9"
 futures = "0.3"
 hex = "0.4.3"
 jsonrpsee = { version = "0.2.0", features = ["client", "ws-server", "macros"] }
@@ -18,10 +18,8 @@ lazy_static = "1.4.0"
 log = "0.4"
 parking_lot = "0.12.1"
 parse_duration = "2.1.1"
-# for litentry-parachain: otherwise we have a conflict in substrate-prometheus-endpoint
-config = "0.13.3"
-prometheus = { version = "0.13.0", features = ["process"], default-features = false }
-scale-info = { version = "2.0.1", features = ["derive"], default-features = false }
+prometheus = { version = "0.13.0", features = ["process"] }
+scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
@@ -49,8 +47,6 @@ itc-rpc-server = { path = "../core/rpc-server" }
 itp-enclave-api = { path = "../core-primitives/enclave-api" }
 itp-enclave-metrics = { path = "../core-primitives/enclave-metrics" }
 itp-node-api = { path = "../core-primitives/node-api" }
-itp-node-api-metadata = { path = "../core-primitives/node-api/metadata" }
-itp-rpc = { path = "../core-primitives/rpc" }
 itp-settings = { path = "../core-primitives/settings" }
 itp-types = { path = "../core-primitives/types" }
 itp-utils = { path = "../core-primitives/utils" }
@@ -61,9 +57,8 @@ its-rpc-handler = { path = "../sidechain/rpc-handler" }
 its-storage = { path = "../sidechain/storage" }
 
 # scs / integritee
-sgx-verify = { path = "../../pallets/teerex/sgx-verify", default-features = false }
+
 substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.39-tag-v0.7.0" }
-teerex-primitives = { path = "../../primitives/teerex", default-features = false }
 
 # Substrate dependencies
 frame-support = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
@@ -75,16 +70,21 @@ sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "po
 sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 
 # local litentry dependencies
+config = "0.13.3"
+itp-node-api-metadata = { path = "../core-primitives/node-api/metadata" }
+itp-rpc = { path = "../core-primitives/rpc" }
 lc-data-providers = { path = "../litentry/core/data-providers" }
 lc-mock-server = { path = "../litentry/core/mock-server" }
 litentry-primitives = { path = "../litentry/primitives" }
+sgx-verify = { path = "../../pallets/teerex/sgx-verify", default-features = false }
+teerex-primitives = { path = "../../primitives/teerex", default-features = false }
 
 [features]
 default = []
 evm = []
+sidechain = ["itp-settings/sidechain"]
 offchain-worker = ["itp-settings/offchain-worker"]
 production = ["itp-settings/production"]
-sidechain = ["itp-settings/sidechain"]
 teeracle = ["itp-settings/teeracle"]
 dcap = []
 
@@ -92,10 +92,10 @@ dcap = []
 # crates.io
 anyhow = "1.0.40"
 mockall = "0.11"
-scale-info = { version = "2.4.0" }
-
-frame-metadata = { version = "15.0.0", default-features = false, git = "https://github.com/integritee-network/frame-metadata", features = ["v14", "full_derive"] }
 # local
 itc-parentchain-test = { path = "../core/parentchain/test" }
 its-peer-fetch = { path = "../sidechain/peer-fetch", features = ["mocks"] }
 its-test = { path = "../sidechain/test" }
+# litentry
+scale-info = { version = "2.4.0" }
+frame-metadata = { version = "15.0.0", default-features = false, git = "https://github.com/integritee-network/frame-metadata", features = ["v14", "full_derive"] }

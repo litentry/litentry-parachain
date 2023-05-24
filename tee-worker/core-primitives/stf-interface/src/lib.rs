@@ -23,7 +23,7 @@
 extern crate alloc;
 
 use alloc::{sync::Arc, vec::Vec};
-use itp_node_api_metadata::{pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes};
+use itp_node_api_metadata::NodeMetadataTrait;
 use itp_node_api_metadata_provider::AccessNodeMetadata;
 use itp_types::{OpaqueCall, ShardIdentifier};
 
@@ -52,7 +52,7 @@ pub trait UpdateState<State, StateDiff> {
 pub trait StateCallInterface<Call, State, NodeMetadataRepository>
 where
 	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes,
+	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 {
 	type Error;
 
@@ -76,7 +76,7 @@ pub trait StateGetterInterface<Getter, State> {
 pub trait ExecuteCall<NodeMetadataRepository>
 where
 	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes,
+	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 {
 	type Error;
 
@@ -89,7 +89,7 @@ where
 	) -> Result<(), Self::Error>;
 
 	/// Get storages hashes that should be updated for a specific call.
-	fn get_storage_hashes_to_update(&self) -> Vec<Vec<u8>>;
+	fn get_storage_hashes_to_update(self) -> Vec<Vec<u8>>;
 }
 
 /// Trait used to abstract the getter execution.
@@ -97,5 +97,5 @@ pub trait ExecuteGetter {
 	/// Execute a getter.
 	fn execute(self) -> Option<Vec<u8>>;
 	/// Get storages hashes that should be updated for a specific getter.
-	fn get_storage_hashes_to_update(&self) -> Vec<Vec<u8>>;
+	fn get_storage_hashes_to_update(self) -> Vec<Vec<u8>>;
 }

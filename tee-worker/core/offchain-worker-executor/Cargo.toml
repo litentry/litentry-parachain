@@ -1,8 +1,8 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
 name = "itc-offchain-worker-executor"
 version = "0.9.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -40,25 +40,15 @@ codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive
 ita-stf = { path = "../../app-libs/stf" }
 itc-parentchain-light-client = { path = "../../core/parentchain/light-client", features = ["mocks"] }
 itp-extrinsics-factory = { path = "../../core-primitives/extrinsics-factory", features = ["mocks"] }
-itp-sgx-externalities = { path = "../../core-primitives/substrate-sgx/externalities" }
 itp-stf-executor = { path = "../../core-primitives/stf-executor", features = ["mocks"] }
-itp-stf-interface = { path = "../../core-primitives/stf-interface", features = ["mocks"] }
 itp-test = { path = "../../core-primitives/test" }
 itp-top-pool-author = { path = "../../core-primitives/top-pool-author", features = ["mocks"] }
+itp-stf-interface = { path = "../../core-primitives/stf-interface", features = ["mocks"] }
+itp-sgx-externalities = { path = "../../core-primitives/substrate-sgx/externalities" }
 sp-io = { path = "../../core-primitives/substrate-sgx/sp-io" }
 
 [features]
 default = ["std"]
-sgx = [
-    "ita-stf/sgx",
-    "itc-parentchain-light-client/sgx",
-    "itp-extrinsics-factory/sgx",
-    "itp-stf-executor/sgx",
-    "itp-stf-state-handler/sgx",
-    "itp-top-pool-author/sgx",
-    "sgx_tstd",
-    "thiserror_sgx",
-]
 std = [
     "ita-stf/std",
     "itc-parentchain-light-client/std",
@@ -70,4 +60,14 @@ std = [
     "sp-core/std",
     "sp-runtime/std",
     "thiserror",
+]
+sgx = [
+    "ita-stf/sgx",
+    "itc-parentchain-light-client/sgx",
+    "itp-extrinsics-factory/sgx",
+    "itp-stf-executor/sgx",
+    "itp-stf-state-handler/sgx",
+    "itp-top-pool-author/sgx",
+    "sgx_tstd",
+    "thiserror_sgx",
 ]

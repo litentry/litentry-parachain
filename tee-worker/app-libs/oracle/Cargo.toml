@@ -1,8 +1,8 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
 name = "ita-oracle"
 version = "0.9.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+edition = "2021"
 
 [dependencies]
 
@@ -30,13 +30,6 @@ itp-ocall-api = { path = "../../core-primitives/ocall-api", default-features = f
 
 [features]
 default = ["std"]
-sgx = [
-    "itc-rest-client/sgx",
-    "itp-enclave-metrics/sgx",
-    "sgx_tstd",
-    "thiserror_sgx",
-    "url_sgx",
-]
 std = [
     "itc-rest-client/std",
     "itp-enclave-metrics/std",
@@ -47,4 +40,11 @@ std = [
     "substrate-fixed/std",
     "thiserror",
     "url",
+]
+sgx = [
+    "itc-rest-client/sgx",
+    "itp-enclave-metrics/sgx",
+    "sgx_tstd",
+    "thiserror_sgx",
+    "url_sgx",
 ]

@@ -76,6 +76,7 @@ pub mod pallet {
 		type Currency: Currency<<Self as frame_system::Config>::AccountId>;
 		type MomentsPerDay: Get<Self::Moment>;
 		type WeightInfo: WeightInfo;
+		type MaxSilenceTime: Get<Self::Moment>;
 		/// The origin who can set the admin account
 		type SetAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}

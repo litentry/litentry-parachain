@@ -46,6 +46,7 @@ use std::{format, prelude::v1::*, sync::Arc};
 
 #[cfg(feature = "evm")]
 use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
+use itp_node_api::metadata::NodeMetadataTrait;
 use itp_types::{MrEnclave, SidechainBlockNumber};
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 
@@ -221,8 +222,7 @@ impl TrustedReturnValue
 impl<NodeMetadataRepository> ExecuteCall<NodeMetadataRepository> for TrustedCallSigned
 where
 	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType:
-		TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix,
+	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 {
 	type Error = StfError;
 
@@ -744,7 +744,7 @@ where
 		Ok(())
 	}
 
-	fn get_storage_hashes_to_update(&self) -> Vec<Vec<u8>> {
+	fn get_storage_hashes_to_update(self) -> Vec<Vec<u8>> {
 		let key_hashes = Vec::new();
 		match self.call {
 			TrustedCall::balance_set_balance(..) => debug!("No storage updates needed..."),
@@ -818,8 +818,7 @@ pub fn add_call_from_imp_error<NodeMetadataRepository>(
 	hash: H256,
 ) where
 	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType:
-		TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix,
+	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 {
 	debug!("pushing imp_some_error event ...");
 	// TODO: anyway to simplify this? `and_then` won't be applicable here
@@ -839,8 +838,7 @@ pub fn add_call_from_vcmp_error<NodeMetadataRepository>(
 	hash: H256,
 ) where
 	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType:
-		TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix,
+	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 {
 	debug!("pushing vcmp_some_error event ...");
 	match node_metadata_repo.get_from_metadata(|m| m.vcmp_some_error_call_indexes()) {

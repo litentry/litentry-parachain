@@ -1,8 +1,8 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network> and Parity Technologies <admin@parity.io>"]
-edition = "2021"
 name = "itp-sgx-externalities"
 version = "0.9.0"
+authors = ["Integritee AG <hello@integritee.network> and Parity Technologies <admin@parity.io>"]
+edition = "2021"
 
 [dependencies]
 # no_std
@@ -24,10 +24,6 @@ itp-hashing = { default-features = false, path = "../../hashing" }
 
 [features]
 default = ["std"]
-sgx = [
-    "sgx_tstd",
-    "environmental/sgx",
-]
 std = [
     "codec/std",
     "environmental/std",
@@ -37,4 +33,8 @@ std = [
     "serde/std",
     # substrate
     "sp-core/std",
+]
+sgx = [
+    "sgx_tstd",
+    "environmental/sgx",
 ]

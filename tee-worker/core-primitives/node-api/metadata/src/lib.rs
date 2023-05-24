@@ -20,7 +20,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use crate::{
-	error::Result, pallet_sidechain::SidechainCallIndexes, pallet_teerex::TeerexCallIndexes,
+	error::Result, pallet_imp::IMPCallIndexes, pallet_sidechain::SidechainCallIndexes,
+	pallet_system::SystemSs58Prefix, pallet_teerex::TeerexCallIndexes,
+	pallet_vcmp::VCMPCallIndexes,
 };
 use codec::{Decode, Encode};
 use sp_core::storage::StorageKey;
@@ -45,8 +47,19 @@ pub mod event;
 #[cfg(feature = "mocks")]
 pub mod metadata_mocks;
 
-pub trait NodeMetadataTrait: TeerexCallIndexes + SidechainCallIndexes {}
-impl<T: TeerexCallIndexes + SidechainCallIndexes> NodeMetadataTrait for T {}
+pub trait NodeMetadataTrait:
+	TeerexCallIndexes + SidechainCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix
+{
+}
+impl<
+		T: TeerexCallIndexes
+			+ SidechainCallIndexes
+			+ IMPCallIndexes
+			+ VCMPCallIndexes
+			+ SystemSs58Prefix,
+	> NodeMetadataTrait for T
+{
+}
 
 #[derive(Default, Encode, Decode, Debug, Clone)]
 pub struct NodeMetadata {

@@ -1,8 +1,8 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
 name = "itp-stf-state-observer"
 version = "0.9.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+edition = "2021"
 
 [dependencies]
 sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
@@ -22,14 +22,14 @@ log = { version = "0.4", default-features = false }
 
 [features]
 default = ["std"]
-mocks = []
-sgx = [
-    "sgx_tstd",
-    "thiserror_sgx",
-]
 std = [
     "codec/std",
     "itp-types/std",
     "log/std",
     "thiserror",
 ]
+sgx = [
+    "sgx_tstd",
+    "thiserror_sgx",
+]
+mocks = []

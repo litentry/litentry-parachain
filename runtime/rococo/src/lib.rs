@@ -869,12 +869,14 @@ parameter_types! {
 
 ord_parameter_types! {
 	pub const ALICE: AccountId = sp_runtime::AccountId32::new(hex!["d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"]);
+	pub const MaxSilenceTime: u64 = 172_800_000; // 48h
 }
 
 impl pallet_teerex::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type MomentsPerDay = MomentsPerDay;
+	type MaxSilenceTime = MaxSilenceTime;
 	// TODO: the generated runtime weights file is incomplete
 	//       we are missing `register_dcap_enclave` and `register_quoting_enclave`
 	//       it should be re-benchmarked once the upstream fixes it

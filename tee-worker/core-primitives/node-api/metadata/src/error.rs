@@ -20,10 +20,11 @@ use derive_more::From;
 pub enum Error {
 	/// Metadata has not been set
 	MetadataNotSet,
-	/// Invalid Metadata
-	InvalidMetadata,
 	/// Api-client metadata error
 	NodeMetadata(substrate_api_client::MetadataError),
+	// litentry
+	/// Invalid Metadata
+	InvalidMetadata,
 }
 
 pub type Result<T> = core::result::Result<T, Error>;

@@ -2,8 +2,6 @@ services:
   sidechain-benchmark:
     image: integritee-cli:dev
     container_name: integritee-benchmark
-    volumes:
-      - ../cli:/usr/local/worker-cli
     build:
       context: ..
       dockerfile: build.Dockerfile

@@ -19,11 +19,11 @@ parentchain-primitives = { package = "core-primitives", path = "../primitives/co
 [features]
 default = ["std"]
 std = [
-  "hex/std",
-  "serde/std",
-  "serde_json/std",
-  "sp-core/std",
-  "sp-std/std",
-  "sp-runtime/std",
-  "parentchain-primitives/std",
+    "hex/std",
+    "serde/std",
+    "serde_json/std",
+    "sp-core/std",
+    "sp-std/std",
+    "sp-runtime/std",
+    "parentchain-primitives/std",
 ]
