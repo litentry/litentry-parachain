@@ -306,7 +306,7 @@ describeLitentry('Test Identity', 0, (context) => {
             ['VerifyIdentityFailed']
         );
         const verified_event_datas = await handleIdentityEvents(context, aesKey, alice_resp_events, 'Failed');
-        await checkErrorDetail(verified_event_datas, 'WrongWeb2Handle', false);
+        await checkErrorDetail(verified_event_datas, 'InvalidIdentity', false);
     });
     step('verify wrong signature', async function () {
         const ethereum_identity = alice_identities[1];

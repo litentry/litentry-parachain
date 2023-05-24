@@ -14,6 +14,7 @@ import type {
     LitentryPrimitivesIdentitySubstrateNetwork,
     LitentryPrimitivesIdentityEvmNetwork,
     LitentryPrimitivesIdentityWeb2Network,
+    PalletIdentityManagementTeeIdentityContext,
 } from '@polkadot/types/lookup';
 export { teeTypes };
 
@@ -148,7 +149,7 @@ export type Web3Network = {
 export type IdentityGenericEvent = {
     who: HexString;
     identity: LitentryIdentity;
-    idGraph: [LitentryIdentity, IdentityContext][];
+    idGraph: [LitentryIdentity, PalletIdentityManagementTeeIdentityContext][];
     challengeCode?: HexString;
 };
 

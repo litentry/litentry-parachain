@@ -34,9 +34,18 @@ export async function assertInitialIDGraphCreated(
 
     assert.isTrue(isEqual(event.idGraph[0][0], expected_identity));
     // check identityContext in idgraph
-    assert.equal(event.idGraph[0][1].linking_request_block, 0);
-    assert.equal(event.idGraph[0][1].verification_request_block, 0);
-    assert.isTrue(event.idGraph[0][1].is_verified);
+    console.log(event.idGraph[0][1]);
+
+    const creationRequestBlock = event.idGraph[0][1].creationRequestBlock.isSome
+        ? event.idGraph[0][1].creationRequestBlock.unwrap().toNumber()
+        : event.idGraph[0][1].creationRequestBlock;
+    const verificationRequestBlock = event.idGraph[0][1].verificationRequestBlock.isSome
+        ? event.idGraph[0][1].verificationRequestBlock.unwrap().toNumber()
+        : event.idGraph[0][1].verificationRequestBlock;
+
+    assert.equal(creationRequestBlock, 0);
+    assert.equal(verificationRequestBlock, 0);
+    assert.isTrue(event.idGraph[0][1].isVerified);
 }
 
 export function assertIdentityVerified(signer: KeyringPair, eventDatas: IdentityGenericEvent[]) {
@@ -57,7 +66,7 @@ export function assertIdentityVerified(signer: KeyringPair, eventDatas: Identity
     const data = eventDatas[eventDatas.length - 1];
     for (let i = 0; i < eventDatas[eventDatas.length - 1].idGraph.length; i++) {
         if (isEqual(data.idGraph[i][0], data.identity)) {
-            assert.isTrue(data.idGraph[i][1].is_verified, 'identity should be verified');
+            assert.isTrue(data.idGraph[i][1].isVerified, 'identity should be verified');
         }
     }
     assert.equal(data?.who, u8aToHex(signer.addressRaw), 'check caller error');

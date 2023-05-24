@@ -1,4 +1,3 @@
-import { ApiPromise } from '@polkadot/api';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { HexString } from '@polkadot/util/types';
 import { hexToU8a, u8aToHex } from '@polkadot/util';
@@ -180,11 +179,11 @@ export function createIdentityEvent(
         : undefined;
     let idGraph = idGraphString
         ? sidechainRegistry
-            .createType(
-                'Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
-                idGraphString
-            )
-            .toJSON()
+              .createType(
+                  'Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
+                  idGraphString
+              )
+              .toJSON()
         : undefined;
     return <IdentityGenericEvent>{
         who,

@@ -146,7 +146,9 @@ describeLitentry('Test Batch Utility', 0, (context) => {
     //query here in the hope that the status remains unchanged after verify error identity
     step('batch test:check IDGraph after verifyIdentity', async function () {
         for (let index = 0; index < identities.length; index++) {
-            const identity_hex = context.api.createType('LitentryIdentity', identities[index]).toHex();
+            const identity_hex = context.sidechainRegistry
+                .createType('LitentryPrimitivesIdentity', identities[index])
+                .toHex();
             const resp_id_graph = await checkIDGraph(
                 context,
                 'IdentityManagement',
@@ -192,7 +194,9 @@ describeLitentry('Test Batch Utility', 0, (context) => {
     //query here in the hope that the status remains unchanged after removes error identity
     step('check IDGraph after removeIdentity', async function () {
         for (let index = 0; index < identities.length; index++) {
-            const identity_hex = context.api.createType('LitentryIdentity', identities[index]).toHex();
+            const identity_hex = context.sidechainRegistry
+                .createType('LitentryPrimitivesIdentity', identities[index])
+                .toHex();
 
             const resp_id_graph = await checkIDGraph(
                 context,
