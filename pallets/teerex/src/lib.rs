@@ -118,6 +118,15 @@ pub mod pallet {
 	#[pallet::getter(fn enclave_count)]
 	pub type EnclaveCount<T: Config> = StorageValue<_, u64, ValueQuery>;
 
+	#[pallet::type_value]
+	pub fn DefaultSomething() -> u64 {
+		93
+	}
+
+	#[pallet::storage]
+	#[pallet::getter(fn something)]
+	pub type Something<T: Config> = StorageValue<_, u64, ValueQuery, DefaultSomething>;
+
 	#[pallet::storage]
 	#[pallet::getter(fn quoting_enclave)]
 	pub type QuotingEnclaveRegistry<T: Config> = StorageValue<_, QuotingEnclave, ValueQuery>;

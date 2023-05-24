@@ -38,6 +38,7 @@ use itp_stf_interface::{
 };
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
+use itp_storage::storage_value_key;
 use itp_time_utils::duration_now;
 use itp_types::{storage::StorageEntryVerified, OpaqueCall, H256};
 use log::*;
@@ -118,6 +119,18 @@ where
 		// see issue #208
 		debug!("Update STF storage!");
 
+		let enclave_count = self.ocall_api.get_storage_verified::<_, u64>(storage_value_key("Teerex", "EnclaveCount"), header)?
+			.into_tuple()
+			.1
+			.ok_or_else(|| Error::Other("Could not get enclave count from chain".into()))?;
+		debug!("enclave_count = {}", enclave_count);
+
+		let something = self.ocall_api.get_storage_verified::<_, u64>(storage_value_key("Teerex", "Something"), header)?
+		.into_tuple()
+		.1
+		.ok_or_else(|| Error::Other("Could not get something from chain".into()))?;
+		debug!("something = {}", something);
+
 		// TODO: otherwise I got compile error:
 		//       cannot infer type for type parameter `NodeMetadataRepository` declared on the trait `ExecuteCall`
 		let trusted_call_executor: Box<dyn ExecuteCall<NodeMetadataRepository, Error = StfError>> = Box::new(trusted_call.clone());
@@ -126,8 +139,6 @@ where
 			.ocall_api
 			.get_multiple_storages_verified(storage_hashes, header)
 			.map(into_map)?;
-
-		debug!("update_map.length {}", update_map.len());
 
 		debug!("Apply state diff with {} entries from parentchain block", update_map.len());
 		Stf::apply_state_diff(state, update_map.into());
