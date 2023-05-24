@@ -44,8 +44,8 @@ impl<E, F> WorkerOnChainOCall<E, F> {
 
 impl<E, F> WorkerOnChainBridge for WorkerOnChainOCall<E, F>
 where
-	E: EnclaveBase + std::marker::Send + std::marker::Sync,
-	F: CreateNodeApi + std::marker::Send + std::marker::Sync + 'static,
+	E: EnclaveBase,
+	F: CreateNodeApi,
 {
 	fn worker_request(&self, request: Vec<u8>) -> OCallBridgeResult<Vec<u8>> {
 		debug!("    Entering ocall_worker_request");
