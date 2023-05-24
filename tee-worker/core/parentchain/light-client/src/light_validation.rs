@@ -18,9 +18,8 @@
 //! Light-client validation crate that verifies parentchain blocks.
 
 use crate::{
-	error::Error, finality::Finality, light_validation_state::LightValidationState,
-	state::RelayState, AuthorityList, AuthorityListRef, ExtrinsicSender, HashFor, HashingFor,
-	LightClientState, NumberFor, RelayId, Validator,
+	error::Error, finality::Finality, light_validation_state::LightValidationState, AuthorityList,
+	AuthorityListRef, ExtrinsicSender, HashFor, HashingFor, LightClientState, NumberFor, Validator,
 };
 use codec::Encode;
 use core::iter::Iterator;
@@ -48,6 +47,7 @@ impl<Block: ParentchainBlockTrait, OcallApi: EnclaveOnChainOCallApi>
 	pub fn new(
 		ocall_api: Arc<OcallApi>,
 		finality: Arc<Box<dyn Finality<Block> + Sync + Send + 'static>>,
+		light_validation_state: LightValidationState<Block>,
 	) -> Self {
 		Self {
 			light_validation_state: LightValidationState::new(),
@@ -121,12 +121,11 @@ impl<Block: ParentchainBlockTrait, OcallApi: EnclaveOnChainOCallApi>
 
 	fn submit_finalized_headers(
 		&mut self,
-		relay_id: RelayId,
 		header: Block::Header,
 		ancestry_proof: Vec<Block::Header>,
 		justifications: Option<Justifications>,
 	) -> Result<(), Error> {
-		let relay = self.light_validation_state.get_tracked_relay_mut(relay_id)?;
+		let relay = self.light_validation_state.get_relay_mut();
 
 		let validator_set = relay.current_validator_set.clone();
 		let validator_set_id = relay.current_validator_set_id;
@@ -192,35 +191,11 @@ where
 	Block: ParentchainBlockTrait,
 	OCallApi: EnclaveOnChainOCallApi,
 {
-	fn initialize_grandpa_relay(
-		&mut self,
-		block_header: Block::Header,
-		validator_set: AuthorityList,
-		validator_set_proof: StorageProof,
-	) -> Result<RelayId, Error> {
-		let state_root = block_header.state_root();
-		Self::check_validator_set_proof(state_root, validator_set_proof, &validator_set)?;
-
-		self.initialize_relay(block_header, validator_set)
-	}
-
-	fn initialize_parachain_relay(
-		&mut self,
-		block_header: Block::Header,
-		validator_set: AuthorityList,
-	) -> Result<RelayId, Error> {
-		self.initialize_relay(block_header, validator_set)
-	}
-
-	fn submit_block(
-		&mut self,
-		relay_id: RelayId,
-		signed_block: &SignedBlock<Block>,
-	) -> Result<(), Error> {
+	fn submit_block(&mut self, signed_block: &SignedBlock<Block>) -> Result<(), Error> {
 		let header = signed_block.block.header();
 		let justifications = signed_block.justifications.clone();
 
-		let relay = self.light_validation_state.get_tracked_relay_mut(relay_id)?;
+		let relay = self.light_validation_state.get_relay_mut();
 
 		if *header.number() > self.ignore_validation_until
 			&& relay.last_finalized_block_header.hash() != *header.parent_hash()
@@ -228,11 +203,11 @@ where
 			return Err(Error::HeaderAncestryMismatch)
 		}
 
-		self.submit_finalized_headers(relay_id, header.clone(), vec![], justifications)
+		self.submit_finalized_headers(header.clone(), vec![], justifications)
 	}
 
-	fn check_xt_inclusion(&mut self, relay_id: RelayId, block: &Block) -> Result<(), Error> {
-		let relay = self.light_validation_state.get_tracked_relay_mut(relay_id)?;
+	fn check_xt_inclusion(&mut self, block: &Block) -> Result<(), Error> {
+		let relay = self.light_validation_state.get_relay_mut();
 
 		if relay.verify_tx_inclusion.is_empty() {
 			return Ok(())
@@ -264,10 +239,6 @@ where
 		Ok(())
 	}
 
-	fn set_state(&mut self, state: LightValidationState<Block>) {
-		self.light_validation_state = state;
-	}
-
 	fn get_state(&self) -> &LightValidationState<Block> {
 		&self.light_validation_state
 	}
@@ -287,7 +258,7 @@ where
 {
 	fn send_extrinsics(&mut self, extrinsics: Vec<OpaqueExtrinsic>) -> Result<(), Error> {
 		for xt in extrinsics.iter() {
-			self.submit_xt_to_be_included(self.num_relays(), xt.clone()).expect("No Relays");
+			self.submit_xt_to_be_included(xt.clone());
 		}
 
 		self.ocall_api
@@ -302,31 +273,20 @@ where
 	Block: ParentchainBlockTrait,
 	OCallApi: EnclaveOnChainOCallApi,
 {
-	fn num_xt_to_be_included(&self, relay_id: RelayId) -> Result<usize, Error> {
-		let relay = self.light_validation_state.get_tracked_relay(relay_id)?;
-		Ok(relay.verify_tx_inclusion.len())
+	fn num_xt_to_be_included(&self) -> Result<usize, Error> {
+		self.light_validation_state.num_xt_to_be_included()
 	}
 
-	fn genesis_hash(&self, relay_id: RelayId) -> Result<HashFor<Block>, Error> {
-		let relay = self.light_validation_state.get_tracked_relay(relay_id)?;
-		Ok(relay.header_hashes[0])
+	fn genesis_hash(&self) -> Result<HashFor<Block>, Error> {
+		self.light_validation_state.genesis_hash()
 	}
 
-	fn latest_finalized_header(&self, relay_id: RelayId) -> Result<Block::Header, Error> {
-		let relay = self.light_validation_state.get_tracked_relay(relay_id)?;
-		Ok(relay.last_finalized_block_header.clone())
+	fn latest_finalized_header(&self) -> Result<Block::Header, Error> {
+		self.light_validation_state.latest_finalized_header()
 	}
 
-	fn penultimate_finalized_block_header(
-		&self,
-		relay_id: RelayId,
-	) -> Result<Block::Header, Error> {
-		let relay = self.light_validation_state.get_tracked_relay(relay_id)?;
-		Ok(relay.penultimate_finalized_block_header.clone())
-	}
-
-	fn num_relays(&self) -> RelayId {
-		self.light_validation_state.num_relays
+	fn penultimate_finalized_block_header(&self) -> Result<Block::Header, Error> {
+		self.light_validation_state.penultimate_finalized_block_header()
 	}
 }
 
@@ -339,8 +299,30 @@ where
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		write!(
 			f,
-			"LightValidation {{ num_relays: {}, tracked_relays: {:?} }}",
-			self.light_validation_state.num_relays, self.light_validation_state.tracked_relays
+			"LightValidation {{ relay_state: {:?} }}",
+			self.light_validation_state.relay_state
 		)
+	}
+}
+
+pub fn check_validator_set_proof<Block: ParentchainBlockTrait>(
+	state_root: &HashFor<Block>,
+	proof: StorageProof,
+	validator_set: AuthorityListRef,
+) -> Result<(), Error> {
+	let checker = StorageProofChecker::<HashingFor<Block>>::new(*state_root, proof)?;
+
+	// By encoding the given set we should have an easy way to compare
+	// with the stuff we get out of storage via `read_value`
+	let mut encoded_validator_set = validator_set.encode();
+	encoded_validator_set.insert(0, 1); // Add AUTHORITIES_VERISON == 1
+	let actual_validator_set = checker
+		.read_value(b":grandpa_authorities")?
+		.ok_or(StorageError::StorageValueUnavailable)?;
+
+	if encoded_validator_set == actual_validator_set {
+		Ok(())
+	} else {
+		Err(Error::ValidatorSetMismatch)
 	}
 }

@@ -16,10 +16,13 @@
 */
 
 use crate::ApiResult;
-use itp_types::{Enclave, IpfsHash, MrEnclave, ShardIdentifier};
+use itp_types::{parentchain::Hash, Enclave, IpfsHash, MrEnclave, ShardIdentifier};
 use sp_core::{storage::StorageKey, Pair, H256 as Hash};
 use sp_runtime::MultiSignature;
-use substrate_api_client::{utils::storage_key, Api, ExtrinsicParams, RpcClient};
+use substrate_api_client::{
+	rpc::Request, utils::storage_key, Api, ExtrinsicParams, FrameSystemConfig, GetStorage,
+	RpcClient,
+};
 
 pub const TEEREX: &str = "Teerex";
 pub const SIDECHAIN: &str = "Sidechain";
@@ -44,9 +47,11 @@ pub trait PalletTeerexApi {
 	fn all_scheduled_mrenclaves(&self, at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>>;
 }
 
-impl<P: Pair, Client: RpcClient, Params: ExtrinsicParams> PalletTeerexApi for Api<P, Client, Params>
+impl<Signer, Client, Params, Runtime> PalletTeerexApi for Api<Signer, Client, Params, Runtime>
 where
-	MultiSignature: From<P::Signature>,
+	Client: Request,
+	Runtime: FrameSystemConfig<Hash = Hash>,
+	Params: ExtrinsicParams<Runtime::Index, Runtime::Hash>,
 {
 	fn enclave(&self, index: u64, at_block: Option<Hash>) -> ApiResult<Option<Enclave>> {
 		self.get_storage_map(TEEREX, "EnclaveRegistry", index, at_block)

@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:experimental
 # Copyright 2021 Integritee AG
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,35 +50,50 @@ RUN cargo test --release
 # A builder stage that uses sccache to speed up local builds with docker
 # Installation and setup of sccache should be moved to the integritee-dev image, so we don't
 # always need to compile and install sccache on CI (where we have no caching so far).
-FROM integritee/integritee-dev:0.1.13 AS cached-builder
+FROM integritee/integritee-dev:0.2.1 AS builder
 LABEL maintainer="zoltan@integritee.network"
 
 # set environment variables
 ENV SGX_SDK /opt/sgxsdk
-ENV PATH "$PATH:${SGX_SDK}/bin:${SGX_SDK}/bin/x64:/root/.cargo/bin"
+ENV PATH "$PATH:${SGX_SDK}/bin:${SGX_SDK}/bin/x64:/opt/rust/bin"
 ENV PKG_CONFIG_PATH "${PKG_CONFIG_PATH}:${SGX_SDK}/pkgconfig"
 ENV LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${SGX_SDK}/sdk_libs"
 ENV CARGO_NET_GIT_FETCH_WITH_CLI true
-ENV SGX_MODE SW
 
-ENV HOME=/root/work
+# Default SGX MODE is software mode
+ARG SGX_MODE=SW
+ENV SGX_MODE=$SGX_MODE
 
-RUN rustup default stable && cargo install sccache --root /usr/local/cargo
-ENV PATH "$PATH:/usr/local/cargo/bin"
-ENV SCCACHE_CACHE_SIZE="3G"
+ARG WORKER_FEATURES_ARG
+ENV WORKER_FEATURES=$WORKER_FEATURES_ARG
+
+ENV WORKHOME=/home/ubuntu/work
+ENV HOME=/home/ubuntu
+
+RUN rustup default stable
+RUN cargo install sccache
+
+ENV SCCACHE_CACHE_SIZE="20G"
 ENV SCCACHE_DIR=$HOME/.cache/sccache
-ENV RUSTC_WRAPPER="/usr/local/cargo/bin/sccache"
+ENV RUSTC_WRAPPER="/opt/rust/bin/sccache"
 
 ARG WORKER_MODE_ARG
+ARG ADDITIONAL_FEATURES_ARG
 ENV WORKER_MODE=$WORKER_MODE_ARG
+ENV ADDITIONAL_FEATURES=$ADDITIONAL_FEATURES_ARG
 
 WORKDIR $HOME/tee-worker
 COPY . $HOME
+ARG FINGERPRINT=none
 
-RUN --mount=type=cache,id=cargo,target=/root/work/.cache/sccache make && sccache --show-stats
+WORKDIR $WORKHOME/worker
 
-RUN --mount=type=cache,id=cargo,target=/root/work/.cache/sccache cargo test --release && sccache --show-stats
+COPY . .
 
+RUN --mount=type=cache,id=cargo-registry,target=/opt/rust/registry \
+	--mount=type=cache,id=cargo-git,target=/opt/rust/git/db \
+	--mount=type=cache,id=cargo-sccache-${WORKER_MODE}${ADDITIONAL_FEATURES},target=/home/ubuntu/.cache/sccache \
+	echo ${FINGERPRINT} && make && cargo test --release && sccache --show-stats
 
 ### Base Runner Stage
 ##################################################
@@ -118,12 +134,9 @@ ENTRYPOINT ["/usr/local/bin/integritee-cli"]
 FROM runner AS deployed-worker
 LABEL maintainer="zoltan@integritee.network"
 
-ENV SGX_SDK /opt/sgxsdk
-ENV LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${SGX_SDK}/lib64"
-
 WORKDIR /usr/local/bin
 
-COPY --from=builder /opt/sgxsdk/lib64 /opt/sgxsdk/lib64
+COPY --from=builder /opt/sgxsdk /opt/sgxsdk
 COPY --from=builder /root/work/tee-worker/bin/* ./
 COPY --from=builder /root/work/tee-worker/cli/*.sh /usr/local/worker-cli/
 COPY --from=builder /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
@@ -134,6 +147,8 @@ RUN chmod +x /usr/local/bin/integritee-service
 RUN ls -al /usr/local/bin
 
 # checks
+ENV SGX_SDK /opt/sgxsdk
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:$SGX_SDK/sdk_libs
 RUN ldd /usr/local/bin/integritee-service && \
 	/usr/local/bin/integritee-service --version
 

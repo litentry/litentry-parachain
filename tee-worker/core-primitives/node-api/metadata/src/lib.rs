@@ -26,15 +26,14 @@ use crate::{
 };
 use codec::{Decode, Encode};
 use sp_core::storage::StorageKey;
-use substrate_api_client::{Metadata, MetadataError};
 
 pub use crate::error::Error;
+pub use itp_api_client_types::{Metadata, MetadataError};
 
 pub mod error;
 pub mod pallet_imp;
 pub mod pallet_imp_mock;
 pub mod pallet_sidechain;
-pub mod pallet_system;
 pub mod pallet_teeracle;
 pub mod pallet_teerex;
 pub mod pallet_utility;
@@ -59,6 +58,14 @@ impl<
 			+ SystemSs58Prefix,
 	> NodeMetadataTrait for T
 {
+}
+
+impl TryFrom<NodeMetadata> for Metadata {
+	type Error = crate::error::Error;
+
+	fn try_from(value: NodeMetadata) -> core::result::Result<Self, Self::Error> {
+		value.node_metadata.ok_or(Error::MetadataNotSet)
+	}
 }
 
 #[derive(Default, Encode, Decode, Debug, Clone)]
@@ -119,6 +126,7 @@ impl NodeMetadata {
 			None => Err(Error::MetadataNotSet),
 			Some(m) => m
 				.storage_value_key(storage_prefix, storage_key_name)
+				.map(|key| key.into())
 				.map_err(Error::NodeMetadata),
 		}
 	}
@@ -133,6 +141,7 @@ impl NodeMetadata {
 			None => Err(Error::MetadataNotSet),
 			Some(m) => m
 				.storage_map_key::<K>(storage_prefix, storage_key_name, map_key)
+				.map(|key| key.into())
 				.map_err(Error::NodeMetadata),
 		}
 	}
@@ -148,6 +157,7 @@ impl NodeMetadata {
 			None => Err(Error::MetadataNotSet),
 			Some(m) => m
 				.storage_double_map_key(storage_prefix, storage_key_name, first, second)
+				.map(|key| key.into())
 				.map_err(Error::NodeMetadata),
 		}
 	}

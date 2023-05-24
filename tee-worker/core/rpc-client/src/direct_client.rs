@@ -19,6 +19,8 @@
 
 use crate::ws_client::{WsClient, WsClientControl};
 use codec::Decode;
+use frame_metadata::RuntimeMetadataPrefixed;
+use itp_api_client_types::Metadata;
 use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
 use itp_types::DirectRequestStatus;
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
@@ -32,7 +34,6 @@ use std::{
 	thread,
 	thread::JoinHandle,
 };
-use substrate_api_client::RuntimeMetadataPrefixed;
 
 pub use crate::error::{Error, Result};
 
@@ -49,7 +50,7 @@ pub trait DirectApi {
 	fn get_rsa_pubkey(&self) -> Result<Rsa3072PubKey>;
 	fn get_mu_ra_url(&self) -> Result<String>;
 	fn get_untrusted_worker_url(&self) -> Result<String>;
-	fn get_state_metadata(&self) -> Result<RuntimeMetadataPrefixed>;
+	fn get_state_metadata(&self) -> Result<Metadata>;
 	// litentry
 	fn get_state_metadata_raw(&self) -> Result<String>;
 
@@ -138,7 +139,7 @@ impl DirectApi for DirectClient {
 		Ok(untrusted_url)
 	}
 
-	fn get_state_metadata(&self) -> Result<RuntimeMetadataPrefixed> {
+	fn get_state_metadata(&self) -> Result<Metadata> {
 		let jsonrpc_call: String =
 			RpcRequest::compose_jsonrpc_call("state_getMetadata".to_string(), Default::default())?;
 
@@ -152,7 +153,8 @@ impl DirectApi for DirectClient {
 
 		// Decode Metadata.
 		let metadata = RuntimeMetadataPrefixed::decode(&mut rpc_return_value.value.as_slice())?;
-		Ok(metadata)
+		println!("[+] Got metadata of enclave runtime");
+		Metadata::try_from(metadata).map_err(|e| e.into())
 	}
 
 	fn get_state_metadata_raw(&self) -> Result<String> {

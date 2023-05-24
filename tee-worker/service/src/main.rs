@@ -86,6 +86,9 @@ use litentry_primitives::{ChallengeCode, Identity, ParentchainHeader as Header};
 use log::*;
 use serde_json::Value;
 use sgx_types::*;
+use substrate_api_client::{
+	rpc::HandleSubscription, GetHeader, SubmitAndWatch, SubscribeChain, SubscribeEvents, XtStatus,
+};
 
 #[cfg(feature = "dcap")]
 use sgx_verify::extract_tcb_info_from_raw_dcap_quote;
@@ -105,10 +108,11 @@ use std::{
 };
 use substrate_api_client::{
 	utils::{storage_key, FromHexString},
-	Events, Header as HeaderTrait, StorageKey, XtStatus,
+	Events, /*Header as HeaderTrait,*/ StorageKey, XtStatus,
 };
 use teerex_primitives::{Enclave as TeerexEnclave, ShardIdentifier};
 extern crate config as rs_config;
+use sp_runtime::traits::Header as HeaderTrait;
 
 mod account_funding;
 mod config;
@@ -134,6 +138,7 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub type EnclaveWorker =
 	Worker<Config, NodeApiFactory, Enclave, InitializationHandler<WorkerModeProvider>>;
+pub type Event = substrate_api_client::EventRecord<RuntimeEvent, Hash>;
 
 fn main() {
 	// Setup logging
@@ -543,9 +548,9 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		.set_nonce(nonce)
 		.expect("Could not set nonce of enclave. Returning here...");
 
-	let metadata = node_api.metadata.clone();
-	let runtime_spec_version = node_api.runtime_version.spec_version;
-	let runtime_transaction_version = node_api.runtime_version.transaction_version;
+	let metadata = node_api.metadata().clone();
+	let runtime_spec_version = node_api.runtime_version().spec_version;
+	let runtime_transaction_version = node_api.runtime_version().transaction_version;
 	enclave
 		.set_node_metadata(
 			NodeMetadata::new(metadata, runtime_spec_version, runtime_transaction_version).encode(),
@@ -581,7 +586,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		println!("[!] creating remote attestation report and create enclave register extrinsic.");
 	};
 	#[cfg(not(feature = "dcap"))]
-	let uxt = enclave.generate_ias_ra_extrinsic(&trusted_url, skip_ra).unwrap();
+	let xt = enclave.generate_ias_ra_extrinsic(&trusted_url, skip_ra).unwrap();
 	#[cfg(feature = "dcap")]
 	let uxt = enclave.generate_dcap_ra_extrinsic(&trusted_url, skip_ra).unwrap();
 
@@ -730,7 +735,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	}
 
 	// ------------------------------------------------------------------------
-	// subscribe to events and react on firing
+	// Subscribe to events and print them.
 	println!("*** Subscribing to events");
 	let (sender, receiver) = channel();
 	let metadata = node_api.metadata.clone();
@@ -835,8 +840,8 @@ fn register_quotes_from_marblerun(
 
 	for quote in quotes {
 		match enclave.generate_dcap_ra_extrinsic_from_quote(url.clone(), &quote) {
-			Ok(xts) => {
-				send_extrinsic(&xts, api, accountid, is_development_mode);
+			Ok(xt) => {
+				send_extrinsic(xt, api, accountid, is_development_mode);
 			},
 			Err(e) => {
 				error!("Extracting information from quote failed: {}", e)
@@ -852,35 +857,40 @@ fn register_collateral(
 	is_development_mode: bool,
 	skip_ra: bool,
 ) {
+	//TODO generate_dcap_ra_quote() does not really need skip_ra, rethink how many layers skip_ra should be passed along
 	let dcap_quote = enclave.generate_dcap_ra_quote(skip_ra).unwrap();
-	let (fmspc, _tcb_info) = extract_tcb_info_from_raw_dcap_quote(&dcap_quote).unwrap();
+	if !skip_ra {
+		let (fmspc, _tcb_info) = extract_tcb_info_from_raw_dcap_quote(&dcap_quote).unwrap();
 
-	let uxt = enclave.generate_register_quoting_enclave_extrinsic(fmspc).unwrap();
-	send_extrinsic(&uxt, api, accountid, is_development_mode);
+		let uxt = enclave.generate_register_quoting_enclave_extrinsic(fmspc).unwrap();
+		send_extrinsic(uxt, api, accountid, is_development_mode);
 
-	let uxt = enclave.generate_register_tcb_info_extrinsic(fmspc).unwrap();
-	send_extrinsic(&uxt, api, accountid, is_development_mode);
+		let uxt = enclave.generate_register_tcb_info_extrinsic(fmspc).unwrap();
+		send_extrinsic(uxt, api, accountid, is_development_mode);
+	}
 }
 
 #[cfg(feature = "dcap")]
 fn send_extrinsic(
-	extrinsic: &[u8],
+	extrinsic: Vec<u8>,
 	api: &ParentchainApi,
 	accountid: &AccountId32,
 	is_development_mode: bool,
 ) -> Option<Hash> {
-	let xthex = hex_encode(extrinsic);
 	// Account funds
-	if let Err(x) = setup_account_funding(api, accountid, &xthex, is_development_mode) {
+	if let Err(x) = setup_account_funding(api, accountid, extrinsic.clone(), is_development_mode) {
 		error!("Starting worker failed: {:?}", x);
 		// Return without registering the enclave. This will fail and the transaction will be banned for 30min.
 		return None
 	}
 
 	println!("[>] Register the TCB info (send the extrinsic)");
-	let register_qe_xt_hash = api.send_extrinsic(xthex, XtStatus::Finalized).unwrap();
-	println!("[<] Extrinsic got finalized. Hash: {:?}\n", register_qe_xt_hash);
-	register_qe_xt_hash
+	let register_qe_block_hash = api
+		.submit_and_watch_opaque_extrinsic_until(extrinsic.into(), XtStatus::Finalized)
+		.unwrap()
+		.block_hash;
+	println!("[<] Extrinsic got finalized. Block hash: {:?}\n", register_qe_block_hash);
+	register_qe_block_hash
 }
 
 /// Subscribe to the node API finalized heads stream and trigger a parent chain sync
@@ -889,12 +899,11 @@ fn subscribe_to_parentchain_new_headers<E: EnclaveBase + Sidechain>(
 	parentchain_handler: Arc<ParentchainHandler<ParentchainApi, E>>,
 	mut last_synced_header: Header,
 ) -> Result<(), Error> {
-	let (sender, receiver) = channel();
-	//TODO: this should be implemented by parentchain_handler directly, and not via
-	// exposed parentchain_api. Blocked by https://github.com/scs/substrate-api-client/issues/267.
-	parentchain_handler
+	// TODO: this should be implemented by parentchain_handler directly, and not via
+	// exposed parentchain_api
+	let mut subscription = parentchain_handler
 		.parentchain_api()
-		.subscribe_finalized_heads(sender)
+		.subscribe_finalized_heads()
 		.map_err(Error::ApiClient)?;
 
 	// TODO(Kai@Litentry):
@@ -907,10 +916,10 @@ fn subscribe_to_parentchain_new_headers<E: EnclaveBase + Sidechain>(
 	//
 	// TODO: now the sync will panic if disconnected - it heavily relys on the worker-restart to work (even manually)
 	loop {
-		let new_header: Header = match receiver.recv() {
-			Ok(header_str) => serde_json::from_str(&header_str).map_err(Error::Serialization),
-			Err(e) => Err(Error::ApiSubscriptionDisconnected(e)),
-		}?;
+		let new_header = subscription
+			.next()
+			.ok_or(Error::ApiSubscriptionDisconnected)?
+			.map_err(|e| Error::ApiClient(e.into()))?;
 
 		println!(
 			"[+] Received finalized header update ({}), syncing parent chain...",

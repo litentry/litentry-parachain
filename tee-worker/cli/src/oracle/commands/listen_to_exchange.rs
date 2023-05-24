@@ -22,9 +22,10 @@ use itp_node_api::{
 	metadata::{event::PalletTeeracleExchangeRateUpdated, pallet_teeracle::TEERACLE},
 };
 use itp_time_utils::{duration_now, remaining_time};
-use log::{debug, info, warn};
+use log::{debug, info, trace, warn};
+use my_node_runtime::{Hash, RuntimeEvent};
 use std::{sync::mpsc::channel, time::Duration};
-use substrate_api_client::{Events, FromHexString};
+use substrate_api_client::{Events, FromHexString, SubscribeEvents};
 
 /// Listen to exchange rate events.
 #[derive(Debug, Clone, Parser)]
@@ -49,43 +50,62 @@ pub fn count_exchange_rate_update_events(api: &ParentchainApi, duration: Duratio
 	let stop = duration_now() + duration;
 
 	//subscribe to events
-	let (events_in, events_out) = channel();
-	api.subscribe_events(events_in).unwrap();
+	let mut subscription = api.subscribe_events().unwrap();
 	let mut count = 0;
 
 	while remaining_time(stop).unwrap_or_default() > Duration::ZERO {
-		let events_str = events_out.recv().unwrap();
-		let event_bytes = Vec::from_hex(events_str).unwrap();
-		let metadata = api.metadata.clone();
-		let events = Events::new(metadata, Default::default(), event_bytes);
-		for maybe_event_details in events.iter() {
-			let event_details = maybe_event_details.unwrap();
-			let pallet_name = event_details.pallet_name();
-			let event_name = event_details.event_metadata().event();
-			debug!(
-				"Decoded: phase = {:?}, pallet = {:?} event = {:?}",
-				event_details.phase(),
-				pallet_name,
-				event_name
-			);
-			if let (TEERACLE, "ExchangeRateUpdated") = (pallet_name, event_name) {
-				let mut bytes = event_details.field_bytes();
-				if let Ok(PalletTeeracleExchangeRateUpdated {
-					data_source,
-					currency,
-					exchange_rate,
-				}) = PalletTeeracleExchangeRateUpdated::decode(&mut bytes)
-				{
-					count += 1;
-					info!("[+] Received ExchangeRateUpdated event");
-					println!(
-						"ExchangeRateUpdated: TRADING_PAIR : {:?}, SRC : {:?}, VALUE :{:?}",
-						currency, data_source, exchange_rate
-					);
-				} else {
-					warn!("Ignoring unsupported ExchangeRateUpdated event");
+		// let events_str = events_out.recv().unwrap();
+		// let event_bytes = Vec::from_hex(events_str).unwrap();
+		// let metadata = api.metadata.clone();
+		// let events = Events::new(metadata, Default::default(), event_bytes);
+		// for maybe_event_details in events.iter() {
+		// 	let event_details = maybe_event_details.unwrap();
+		// 	let pallet_name = event_details.pallet_name();
+		// 	let event_name = event_details.event_metadata().event();
+		// 	debug!(
+		// 		"Decoded: phase = {:?}, pallet = {:?} event = {:?}",
+		// 		event_details.phase(),
+		// 		pallet_name,
+		// 		event_name
+		// 	);
+		// 	if let (TEERACLE, "ExchangeRateUpdated") = (pallet_name, event_name) {
+		// 		let mut bytes = event_details.field_bytes();
+		// 		if let Ok(PalletTeeracleExchangeRateUpdated {
+		// 			data_source,
+		// 			currency,
+		// 			exchange_rate,
+		// 		}) = PalletTeeracleExchangeRateUpdated::decode(&mut bytes)
+		// 		{
+		// 			count += 1;
+		// 			info!("[+] Received ExchangeRateUpdated event");
+		// 			println!(
+		// 				"ExchangeRateUpdated: TRADING_PAIR : {:?}, SRC : {:?}, VALUE :{:?}",
+		// 				currency, data_source, exchange_rate
+		// 			);
+		// 		} else {
+		// 			warn!("Ignoring unsupported ExchangeRateUpdated event");
+		let events_result = subscription.next_event::<RuntimeEvent, Hash>().unwrap();
+		if let Ok(events) = events_result {
+			for event_record in &events {
+				info!("received event {:?}", event_record.event);
+				if let RuntimeEvent::Teeracle(event) = &event_record.event {
+					match &event {
+						my_node_runtime::pallet_teeracle::Event::ExchangeRateUpdated(
+							src,
+							trading_pair,
+							exchange_rate,
+						) => {
+							count += 1;
+							debug!("Received ExchangeRateUpdated event");
+							println!(
+								"ExchangeRateUpdated: TRADING_PAIR : {}, SRC : {}, VALUE :{:?}",
+								trading_pair, src, exchange_rate
+							);
+						},
+						_ => trace!("ignoring teeracle event: {:?}", event),
+					}
 				}
-			};
+			}
 		}
 	}
 	debug!("Received {} ExchangeRateUpdated event(s) in total", count);

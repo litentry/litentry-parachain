@@ -17,7 +17,12 @@
 use codec::{Decode, Encode, Error, Input};
 use sp_runtime::OpaqueExtrinsic;
 use sp_std::vec::Vec;
-use substrate_api_client::{PlainTip, SubstrateDefaultSignedExtra, UncheckedExtrinsicV4};
+use substrate_api_client::{GenericSignedExtra, PlainTip, UncheckedExtrinsicV4};
+
+use crate::parentchain::{AccountId, Address, Balance, Hash, Index, Signature as PairSignature};
+
+pub type ParentchainPlainTip = PlainTip<Balance>;
+pub type ParentchainSignedExtra = GenericSignedExtra<ParentchainPlainTip, Index>;
 
 /// Same function as in primitives::generic. Needed to be copied as it is private there.
 fn encode_with_vec_prefix<T: Encode, F: Fn(&mut Vec<u8>)>(encoder: F) -> Vec<u8> {
@@ -59,13 +64,13 @@ impl Encode for OpaqueExtrinsicWithStatus {
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct ParentchainUncheckedExtrinsicWithStatus<Call> {
-	pub xt: UncheckedExtrinsicV4<Call, SubstrateDefaultSignedExtra<PlainTip>>,
+	pub xt: UncheckedExtrinsicV4<Address, Call, PairSignature, ParentchainSignedExtra>,
 	pub status: bool,
 }
 
 impl<Call> Decode for ParentchainUncheckedExtrinsicWithStatus<Call>
 where
-	UncheckedExtrinsicV4<Call, SubstrateDefaultSignedExtra<PlainTip>>: Decode,
+	UncheckedExtrinsicV4<Address, Call, PairSignature, ParentchainSignedExtra>: Decode,
 {
 	fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
 		// This is a little more complicated than usual since the binary format must be compatible

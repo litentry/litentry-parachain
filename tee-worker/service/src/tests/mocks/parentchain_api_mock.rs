@@ -20,15 +20,13 @@ use frame_metadata::{
 	v14::{ExtrinsicMetadata, PalletEventMetadata, PalletMetadata, RuntimeMetadataV14},
 	RuntimeMetadataPrefixed,
 };
-use itc_parentchain_test::{
-	parentchain_block_builder::ParentchainBlockBuilder,
-	parentchain_header_builder::ParentchainHeaderBuilder,
+use itc_parentchain_test::{ParentchainBlockBuilder, ParentchainHeaderBuilder};
+use itp_types::{
+	parentchain::{Hash, Header, StorageProof},
+	H256,
 };
-use itp_node_api::api_client::{ApiResult, ChainApi, StorageProof};
-use itp_types::{Header, SignedBlock, H256};
 use scale_info::{meta_type, TypeInfo};
 use sp_finality_grandpa::AuthorityList;
-use std::convert::TryFrom;
 use substrate_api_client::{Events, Metadata};
 
 pub struct ParentchainApiMock {
@@ -85,15 +83,15 @@ impl ChainApi for ParentchainApiMock {
 		Ok(self.parentchain.last().cloned())
 	}
 
-	fn signed_block(&self, _hash: Option<H256>) -> ApiResult<Option<SignedBlock>> {
+	fn signed_block(&self, _hash: Option<Hash>) -> ApiResult<Option<SignedBlock>> {
 		todo!()
 	}
 
-	fn get_genesis_hash(&self) -> ApiResult<H256> {
+	fn get_genesis_hash(&self) -> ApiResult<Hash> {
 		todo!()
 	}
 
-	fn get_header(&self, _header_hash: Option<H256>) -> ApiResult<Option<Header>> {
+	fn header(&self, _header_hash: Option<Hash>) -> ApiResult<Option<Header>> {
 		todo!()
 	}
 
@@ -113,12 +111,20 @@ impl ChainApi for ParentchainApiMock {
 		todo!()
 	}
 
-	fn grandpa_authorities(&self, _hash: Option<H256>) -> ApiResult<AuthorityList> {
+	fn grandpa_authorities(&self, _hash: Option<Hash>) -> ApiResult<AuthorityList> {
 		todo!()
 	}
 
-	fn grandpa_authorities_proof(&self, _hash: Option<H256>) -> ApiResult<StorageProof> {
+	fn grandpa_authorities_proof(&self, _hash: Option<Hash>) -> ApiResult<StorageProof> {
 		todo!()
+	}
+
+	fn get_events_value_proof(&self, _block_hash: Option<H256>) -> ApiResult<StorageProof> {
+		Ok(Default::default())
+	}
+
+	fn get_events_for_block(&self, _block_hash: Option<H256>) -> ApiResult<Vec<u8>> {
+		Ok(Default::default())
 	}
 
 	fn events(&self, _hash: Option<H256>) -> ApiResult<Events> {

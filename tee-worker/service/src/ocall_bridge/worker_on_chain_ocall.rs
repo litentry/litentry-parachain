@@ -24,12 +24,10 @@ use codec::{Decode, Encode};
 use itp_enclave_api::enclave_base::EnclaveBase;
 use itp_node_api::{api_client::AccountApi, node_api_factory::CreateNodeApi};
 use itp_types::{WorkerRequest, WorkerResponse};
-use itp_utils::ToHexPrefixed;
 use log::*;
-use sp_core::storage::StorageKey;
 use sp_runtime::OpaqueExtrinsic;
 use std::{sync::Arc, thread, vec::Vec};
-use substrate_api_client::XtStatus;
+use substrate_api_client::{serde_impls::StorageKey, GetStorage, SubmitExtrinsic, XtStatus};
 
 pub struct WorkerOnChainOCall<E, F> {
 	enclave_api: Arc<E>,
@@ -96,8 +94,7 @@ where
 			debug!("Enclave wants to send {} extrinsics", extrinsics.len());
 			let api = self.node_api_factory.create_api()?;
 			for call in extrinsics.into_iter() {
-				debug!("Send extrinsic, call length: {}", call.to_hex().len());
-				if let Err(e) = api.send_extrinsic(call.to_hex(), XtStatus::Ready) {
+				if let Err(e) = api.submit_opaque_extrinsic(call.encode().into()) {
 					error!("Could not send extrsinic to node: {:?}", e);
 					send_extrinsic_failed = true;
 				}
