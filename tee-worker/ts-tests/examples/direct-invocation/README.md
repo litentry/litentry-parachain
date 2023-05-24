@@ -12,8 +12,8 @@ cd <path-to-tee-worker>
 2. run the ts demo
 
 ```
-cd <path-to-tee-worker/ts-tests/examples/direct-invocation>
-ts-node index.ts
+cd <path-to-tee-worker/ts-tests
+npm run di-examples
 ```
 
 ### Notes
