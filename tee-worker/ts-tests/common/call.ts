@@ -1,7 +1,7 @@
 import { ApiPromise } from '@polkadot/api';
 import { Metadata, TypeRegistry } from '@polkadot/types';
 import type { Bytes } from '@polkadot/types-codec';
-import { u8aToHex, hexToU8a, compactAddLength, compactStripLength, u8aToString, bufferToU8a } from '@polkadot/util';
+import { hexToU8a, compactStripLength, u8aToString } from '@polkadot/util';
 import WebSocketAsPromised from 'websocket-as-promised';
 import { HexString } from '@polkadot/util/types';
 import { RequestBody } from './type-definitions';
@@ -29,6 +29,7 @@ export async function sendRequest(
 }
 
 // decode the returned bytes as string
+// TODO: is it same as `String::decode` in rust?
 // please note we shouldn't use toU8a(), which encodes the Bytes instead of converting
 export function decodeRpcBytesAsString(value: Bytes): string {
     return u8aToString(compactStripLength(hexToU8a(value.toHex()))[1]);

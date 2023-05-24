@@ -71,7 +71,7 @@ export const createSignedTrustedCall = (
     // TODO: do we have a RPC getter from the enclave?
     mrenclave: string,
     nonce: Codec,
-    params: Array<any>
+    params: any
 ) => {
     const [variant, argType] = trustedCall;
     const call = parachain_api.createType('TrustedCall', {
@@ -89,6 +89,26 @@ export const createSignedTrustedCall = (
     return parachain_api.createType('TrustedCallSigned', {
         call: call,
         index: nonce,
+        signature: signature,
+    });
+};
+
+export const createSignedTrustedGetter = (
+    parachain_api: ApiPromise,
+    trustedGetter: [string, string],
+    account: KeyringPair,
+    params: any
+) => {
+    const [variant, argType] = trustedGetter;
+    const getter = parachain_api.createType('TrustedGetter', {
+        [variant]: parachain_api.createType(argType, params),
+    });
+    const payload = getter.toU8a();
+    const signature = parachain_api.createType('MultiSignature', {
+        Sr25519: account.sign(payload),
+    });
+    return parachain_api.createType('TrustedGetterSigned', {
+        getter: getter,
         signature: signature,
     });
 };
@@ -150,6 +170,16 @@ export function createSignedTrustedCallCreateIdentity(
     );
 }
 
+export function createSignedTrustedGetterUserShieldingKey(parachain_api: ApiPromise, who: KeyringPair) {
+    let getterSigned = createSignedTrustedGetter(
+        parachain_api,
+        ['user_shielding_key', '(AccountId)'],
+        who,
+        who.address
+    );
+    return parachain_api.createType('Getter', { trusted: getterSigned });
+}
+
 export const sendRequestFromTrustedCall = async (
     wsp: any,
     parachain_api: ApiPromise,
@@ -159,11 +189,38 @@ export const sendRequestFromTrustedCall = async (
 ) => {
     // construct trusted operation
     const trustedOperation = parachain_api.createType('TrustedOperation', { direct_call: call });
+    console.log('top: ', trustedOperation.toJSON());
     // create the request parameter
-    let requestParam = await createRequest(wsp, parachain_api, mrenclave, teeShieldingKey, trustedOperation.toU8a());
+    let requestParam = await createRequest(
+        wsp,
+        parachain_api,
+        mrenclave,
+        teeShieldingKey,
+        false,
+        trustedOperation.toU8a()
+    );
     let request = {
         jsonrpc: '2.0',
         method: 'author_submitAndWatchExtrinsic',
+        params: [u8aToHex(requestParam)],
+        id: 1,
+    };
+    return sendRequest(wsp, request, parachain_api);
+};
+
+export const sendRequestFromTrustedGetter = async (
+    wsp: any,
+    parachain_api: ApiPromise,
+    mrenclave: string,
+    teeShieldingKey: KeyObject,
+    getter: Codec
+): Promise<WorkerRpcReturnValue> => {
+    // important: we don't create the `TrustedOperation` type here, but use `Getter` type directly
+    //            this is what `state_executeGetter` expects in rust
+    let requestParam = await createRequest(wsp, parachain_api, mrenclave, teeShieldingKey, true, getter.toU8a());
+    let request = {
+        jsonrpc: '2.0',
+        method: 'state_executeGetter',
         params: [u8aToHex(requestParam)],
         id: 1,
     };
@@ -194,8 +251,14 @@ export const createRequest = async (
     parachain_api: ApiPromise,
     mrenclave: string,
     teeShieldingKey: KeyObject,
+    isGetter: boolean,
     top: Uint8Array
 ) => {
-    let cyphertext = compactAddLength(bufferToU8a(encryptWithTeeShieldingKey(teeShieldingKey, top)));
+    let cyphertext;
+    if (isGetter) {
+        cyphertext = compactAddLength(top);
+    } else {
+        cyphertext = compactAddLength(bufferToU8a(encryptWithTeeShieldingKey(teeShieldingKey, top)));
+    }
     return parachain_api.createType('Request', { shard: hexToU8a(mrenclave), cyphertext }).toU8a();
 };
