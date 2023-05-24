@@ -37,6 +37,7 @@ pub trait ChainApi {
 	fn is_grandpa_available(&self) -> ApiResult<bool>;
 	fn grandpa_authorities(&self, hash: Option<H256>) -> ApiResult<AuthorityList>;
 	fn grandpa_authorities_proof(&self, hash: Option<H256>) -> ApiResult<StorageProof>;
+	// litentry
 	fn events(&self, hash: Option<H256>) -> ApiResult<Events>;
 }
 

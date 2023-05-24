@@ -2,7 +2,6 @@ import { cryptoWaitReady } from '@polkadot/util-crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
 import { TypeRegistry } from '@polkadot/types';
-import { hexToU8a, u8aToHex, u8aConcat } from '@polkadot/util';
 import { teeTypes } from '../../common/type-definitions';
 import {
     createSignedTrustedCallSetUserShieldingKey,
@@ -66,8 +65,9 @@ async function runDirectCall() {
         key_alice,
         hash
     );
-    await sendRequestFromTrustedCall(wsp, parachain_api, mrenclave, key, setUserShieldingKeyCall);
-    console.log('setUserShieldingKey call returned');
+    let res = await sendRequestFromTrustedCall(wsp, parachain_api, mrenclave, key, setUserShieldingKeyCall);
+    console.log('setUserShieldingKey call returned', res.toHuman());
+
     sleep(10);
 
     hash = `0x${require('crypto').randomBytes(32).toString('hex')}`;
@@ -84,8 +84,8 @@ async function runDirectCall() {
         parachain_api.createType('u32', 1).toHex(),
         hash
     );
-    await sendRequestFromTrustedCall(wsp, parachain_api, mrenclave, key, createIdentityCall);
-    console.log('createIdentity call returned');
+    res = await sendRequestFromTrustedCall(wsp, parachain_api, mrenclave, key, createIdentityCall);
+    console.log('createIdentity call returned', res.toHuman());
 
     sleep(10);
 

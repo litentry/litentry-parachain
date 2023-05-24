@@ -38,18 +38,18 @@ sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0
 default = ["std"]
 runtime-benchmarks = ["frame-benchmarking"]
 std = [
-  "frame-benchmarking?/std",
-  "frame-support/std",
-  "frame-system/std",
-  "pallet-authorship/std",
-  "pallet-balances/std",
-  "pallet-session/std",
-  "codec/std",
-  "core-primitives/std",
-  "scale-info/std",
-  "serde",
-  "sp-runtime/std",
-  "sp-std/std",
-  "sp-staking/std",
+    "frame-benchmarking?/std",
+    "frame-support/std",
+    "frame-system/std",
+    "pallet-authorship/std",
+    "pallet-balances/std",
+    "pallet-session/std",
+    "codec/std",
+    "core-primitives/std",
+    "scale-info/std",
+    "serde",
+    "sp-runtime/std",
+    "sp-std/std",
+    "sp-staking/std",
 ]
 try-runtime = ["frame-support/try-runtime"]

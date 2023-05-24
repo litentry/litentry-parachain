@@ -1,8 +1,8 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
 name = "itp-top-pool-author"
 version = "0.9.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+edition = "2021"
 
 [dependencies]
 # sgx dependencies
@@ -46,20 +46,6 @@ sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "po
 
 [features]
 default = ["std"]
-mocks = []
-offchain-worker = []
-sgx = [
-    "sgx_tstd",
-    "jsonrpc-core_sgx",
-    "ita-stf/sgx",
-    "itp-enclave-metrics/sgx",
-    "itp-sgx-crypto/sgx",
-    "itp-stf-state-handler/sgx",
-    "itp-top-pool/sgx",
-    "itp-utils/sgx",
-    "thiserror_sgx",
-]
-sidechain = []
 std = [
     "ita-stf/std",
     "itp-sgx-crypto/std",
@@ -73,5 +59,19 @@ std = [
     "log/std",
     "thiserror",
 ]
-teeracle = []
+sgx = [
+    "sgx_tstd",
+    "jsonrpc-core_sgx",
+    "ita-stf/sgx",
+    "itp-enclave-metrics/sgx",
+    "itp-sgx-crypto/sgx",
+    "itp-stf-state-handler/sgx",
+    "itp-top-pool/sgx",
+    "itp-utils/sgx",
+    "thiserror_sgx",
+]
 test = ["itp-test/sgx", "itp-top-pool/mocks"]
+mocks = []
+sidechain = []
+offchain-worker = []
+teeracle = []

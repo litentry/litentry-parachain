@@ -1,8 +1,8 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
 name = "itc-parentchain-light-client"
 version = "0.9.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+edition = "2021"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "chain-error"] }
@@ -42,15 +42,6 @@ itp-test = { path = "../../../core-primitives/test" }
 
 [features]
 default = ["std"]
-mocks = [
-    "itc-parentchain-test",
-]
-sgx = [
-    "sgx_tstd",
-    "thiserror-sgx",
-    "itp-sgx-io/sgx",
-    "itp-storage/sgx",
-]
 std = [
     "codec/std",
     "hash-db/std",
@@ -72,4 +63,13 @@ std = [
     "itp-storage/std",
     "itp-sgx-io/std",
     "itp-types/std",
+]
+sgx = [
+    "sgx_tstd",
+    "thiserror-sgx",
+    "itp-sgx-io/sgx",
+    "itp-storage/sgx",
+]
+mocks = [
+    "itc-parentchain-test",
 ]

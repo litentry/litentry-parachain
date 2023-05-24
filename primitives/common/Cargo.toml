@@ -15,5 +15,5 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 [features]
 default = ["std"]
 std = [
-  "sp-std/std",
+    "sp-std/std",
 ]

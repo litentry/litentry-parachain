@@ -67,6 +67,7 @@ pub type SignedBlock = SignedBlockG<Block>;
 pub type BlockHash = sp_core::H256;
 pub type ShardIdentifier = sp_core::H256;
 
+// litentry
 pub trait ConvertAccountId {
 	type Input;
 	type Output;

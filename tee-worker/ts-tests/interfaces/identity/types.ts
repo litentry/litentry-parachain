@@ -331,11 +331,6 @@ export interface Web3ValidationData extends Enum {
     readonly type: 'Substrate' | 'Evm';
 }
 
-/** @name WorkerRpcReturnString */
-export interface WorkerRpcReturnString extends Struct {
-    readonly vec: Bytes;
-}
-
 /** @name WorkerRpcReturnValue */
 export interface WorkerRpcReturnValue extends Struct {
     readonly value: Bytes;
