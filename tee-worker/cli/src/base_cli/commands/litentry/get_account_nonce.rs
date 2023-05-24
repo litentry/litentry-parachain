@@ -14,10 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-pub mod create_identity;
-pub mod get_account_nonce;
-pub mod set_heartbeat_timeout;
-pub mod set_user_shielding_key;
+use crate::{
+	command_utils::{get_accountid_from_str, get_chain_api},
+	Cli,
+};
 
-// TODO: maybe move it to use itp_node_api::api_client
-pub const IMP: &str = "IdentityManagement";
+#[derive(Parser)]
+pub struct GetAccountNonceCommand {
+	/// AccountId in ss58check format
+	account: String,
+}
+
+impl GetAccountNonceCommand {
+	pub(crate) fn run(&self, cli: &Cli) {
+		let api = get_chain_api(cli);
+		let accountid = get_accountid_from_str(&self.account);
+		let nonce = api.get_account_info(&accountid).unwrap().map_or_else(|| 0, |info| info.nonce);
+
+		println!("Account {:?} nonce : {nonce}", accountid);
+	}
+}

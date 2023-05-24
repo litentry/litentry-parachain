@@ -45,6 +45,8 @@ use std::{
 use substrate_api_client::Metadata;
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
+use self::commands::litentry::get_account_nonce::GetAccountNonceCommand;
+
 mod commands;
 
 #[derive(Subcommand)]
@@ -93,6 +95,9 @@ pub enum BaseCommand {
 
 	/// Set heartbeat timeout storage
 	SetHeartbeatTimeout(SetHeartbeatTimeoutCommand),
+
+	/// Get account nonce
+	GetAccountNonce(GetAccountNonceCommand),
 }
 
 impl BaseCommand {
@@ -113,6 +118,7 @@ impl BaseCommand {
 			BaseCommand::SetUserShieldingKey(cmd) => cmd.run(cli),
 			BaseCommand::CreateIdentity(cmd) => cmd.run(cli),
 			BaseCommand::SetHeartbeatTimeout(cmd) => cmd.run(cli),
+			BaseCommand::GetAccountNonce(cmd) => cmd.run(cli),
 		}
 	}
 }
