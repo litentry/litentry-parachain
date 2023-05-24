@@ -70,7 +70,7 @@ use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::{
 	graphql::{
-		DataProviderQuery, GetSupportedNetworks, GraphQLClient, VerifiedCredentialsIsHodlerIn,
+		AchainableQuery, GetSupportedNetworks, GraphQLClient, VerifiedCredentialsIsHodlerIn,
 	},
 	vec_to_string,
 };

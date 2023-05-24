@@ -36,7 +36,7 @@ use std::{
 	vec::Vec,
 };
 
-pub trait DataProviderQuery<Query: ToGraphQL> {
+pub trait AchainableQuery<Query: ToGraphQL> {
 	fn verified_credentials_is_hodler(&mut self, params: Query) -> Result<IsHodlerOut, Error>;
 	fn verified_credentials_total_transactions(
 		&mut self,
@@ -68,7 +68,7 @@ impl GraphQLClient {
 	}
 }
 
-impl<Query: ToGraphQL> DataProviderQuery<Query> for GraphQLClient {
+impl<Query: ToGraphQL> AchainableQuery<Query> for GraphQLClient {
 	fn verified_credentials_is_hodler(&mut self, query: Query) -> Result<IsHodlerOut, Error> {
 		let path = query.path();
 		let query_value = query.to_graphql();
@@ -267,7 +267,7 @@ pub struct TotalTxsStruct {
 #[cfg(test)]
 mod tests {
 	use crate::graphql::{
-		DataProviderQuery, GraphQLClient, SupportedNetwork, VerifiedCredentialsIsHodlerIn,
+		AchainableQuery, GraphQLClient, SupportedNetwork, VerifiedCredentialsIsHodlerIn,
 		VerifiedCredentialsTotalTxs, G_DATA_PROVIDERS,
 	};
 	use itp_stf_primitives::types::AccountId;
