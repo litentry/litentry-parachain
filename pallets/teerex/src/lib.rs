@@ -583,6 +583,14 @@ pub mod pallet {
 			// Do not pay a fee
 			Ok(Pays::No.into())
 		}
+
+		#[pallet::call_index(14)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
+		pub fn set_something(_origin: OriginFor<T>, new: u64) -> DispatchResultWithPostInfo {
+			<Something<T>>::put(new);
+			// Do not pay a fee
+			Ok(Pays::No.into())
+		}
 	}
 
 	#[pallet::error]
