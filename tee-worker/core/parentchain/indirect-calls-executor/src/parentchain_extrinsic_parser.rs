@@ -20,6 +20,8 @@ use core::marker::PhantomData;
 use itp_node_api::api_client::{
     CallIndex, ParentchainSignedExtra, Signature, UncheckedExtrinsicV4,
 };
+use crate::executor::hash_of;
+use itp_types::H256;
 
 pub struct ExtrinsicParser<SignedExtra> {
     _phantom: PhantomData<SignedExtra>,
@@ -39,6 +41,8 @@ pub struct SemiOpaqueExtrinsic<'a, SignedExtra> {
     pub call_index: CallIndex,
     /// Encoded arguments of the dispatchable corresponding to the `call_index`.
     pub call_args: &'a [u8],
+    /// Hashed Extrinsic
+    pub hashed_extrinsic: H256
 }
 
 /// Trait to extract signature and call indexes of an encoded [UncheckedExtrinsicV4].
@@ -58,17 +62,17 @@ impl<SignedExtra> ParseExtrinsic for ExtrinsicParser<SignedExtra>
     /// Extract a call index of an encoded call.
     fn parse(encoded_call: &[u8]) -> Result<SemiOpaqueExtrinsic<Self::SignedExtra>, codec::Error> {
         let call_mut = &mut &encoded_call[..];
-        // Decode for opaque extrinsic
-        let _: Vec<()> = Decode::decode(call_mut)?;
 
         // `()` is a trick to stop decoding after the call index. So the remaining bytes
         //  of `call` after decoding only contain the parentchain's dispatchable's arguments.
         let xt = UncheckedExtrinsicV4::<(CallIndex, ()), Self::SignedExtra>::decode(call_mut)?;
+        let hashed_xt: H256 = hash_of(&xt);
 
         Ok(SemiOpaqueExtrinsic {
             signature: xt.signature,
             call_index: xt.function.0,
             call_args: call_mut,
+            hashed_extrinsic: hashed_xt
         })
     }
 }

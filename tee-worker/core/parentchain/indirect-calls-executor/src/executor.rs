@@ -40,6 +40,7 @@ use log::*;
 use sp_core::blake2_256;
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header, Keccak256};
 use std::{sync::Arc, vec::Vec};
+use sp_runtime::traits::AtLeast32BitUnsigned;
 
 pub struct IndirectCallsExecutor<
     ShieldingKeyRepository,
@@ -107,17 +108,24 @@ for IndirectCallsExecutor<
     NodeMetadataProvider: AccessNodeMetadata,
     NodeMetadataProvider::MetadataType: NodeMetadataTrait,
     FilterIndirectCalls: FilterCalls<NodeMetadataProvider::MetadataType>,
-    FilterIndirectCalls::Call: IndirectDispatch<Self> + Encode,
+    FilterIndirectCalls::Call: IndirectDispatch<Self, Args = u32> + Encode,
 {
     fn execute_indirect_calls_in_extrinsics<ParentchainBlock>(
         &self,
         block: &ParentchainBlock,
     ) -> Result<OpaqueCall>
         where
-            ParentchainBlock: ParentchainBlockTrait<Hash = H256>,
+            ParentchainBlock: ParentchainBlockTrait<Hash = H256>
     {
         let block_number = *block.header().number();
         let block_hash = block.hash();
+
+        // let block_number_convert: u32 = block_number.try_into();
+        let mut block_num: u32 = 0;
+        if let Ok(number) = block_number.try_into() {
+            block_num = number;
+        }
+
 
         debug!("Scanning block {:?} for relevant xt", block_number);
         let mut executed_calls = Vec::<H256>::new();
@@ -134,7 +142,7 @@ for IndirectCallsExecutor<
                 None => continue,
             };
 
-            if let Err(e) = call.dispatch(self) {
+            if let Err(e) = call.dispatch(self, block_num) {
                 log::warn!("Error executing the indirect call: {:?}", e);
                 continue
             };
@@ -146,7 +154,7 @@ for IndirectCallsExecutor<
         self.create_processed_parentchain_block_call::<ParentchainBlock>(
             block_hash,
             executed_calls,
-            block_number,
+            block_number.into(),
         )
     }
 

@@ -17,7 +17,7 @@
 use crate::{
 	error::{Error, ErrorDetail, IMPError},
 };
-use crate::{error::Result, IndirectDispatch, IndirectExecutor, LitentryExecutor};
+use crate::{error::Result, IndirectDispatch, IndirectExecutor};
 use codec::{Decode, Encode};
 use ita_stf::{TrustedCall, TrustedOperation};
 use itp_stf_primitives::types::AccountId;
@@ -49,15 +49,16 @@ pub struct CreateIdentityArgs {
 	encrypted_metadata: Option<Vec<u8>>,
 }
 
-impl<Executor: IndirectExecutor+LitentryExecutor> IndirectDispatch<Executor> for CreateIdentityArgs {
-	fn dispatch(&self, executor: &Executor) -> Result<()> {
+impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for CreateIdentityArgs {
+	type Args = (u32, H256);
+	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
+		let (block_number, xt_hash) = args;
 		info!(
 			"Found CreateIdentity extrinsic in block: Shard: {}\nAccount {:?}",
 			bs58::encode(self.shard.encode()).into_string(),
 			self.account
 		);
-		let shielding_key = executor.retrieve_key();
-		// NOTE: Indirect Executor trait provides methods for encrypting and decrypting (part of refactor)
+		// let shielding_key = executor.shielding_key_repo.retrieve_key()?;
 		let identity: Identity =
 			Identity::decode(&mut executor.decrypt(&self.encrypted_identity)?.as_slice())?;
 		debug!(
@@ -73,17 +74,16 @@ impl<Executor: IndirectExecutor+LitentryExecutor> IndirectDispatch<Executor> for
 				Some(MetadataOf::<Runtime>::decode(&mut decrypted_metadata.as_slice())?)
 			},
 		};
-		// TODO: Till I find a way to pass information related to extrinsic, this will be commented
+
 		// if extrinsic.signature.is_some() {
 		let enclave_account_id = executor.get_enclave_account()?;
-		// TODO: Need to get information about the block here
 		let trusted_call = TrustedCall::create_identity(
 			enclave_account_id,
 			self.account.clone(),
 			identity,
 			metadata,
-			0,
-			H256::zero(),
+			block_number,
+			xt_hash,
 		);
 		let signed_trusted_call =
 			executor.sign_call_with_self(&trusted_call, &self.shard)?;
