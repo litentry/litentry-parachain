@@ -137,7 +137,6 @@ export async function listenEvent(api: ApiPromise, section: string, methods: str
                     return signers.includes(d.toHex());
                 }
             };
-            const filtered_events: EventRecord[] = [];
             signedBlock.block.extrinsics.forEach((extrinsic, index) => {
                 records.forEach((e, i) => {
                     const s = e.event.section;
@@ -155,7 +154,7 @@ export async function listenEvent(api: ApiPromise, section: string, methods: str
                         !methods.includes(event.method) &&
                         !(event.method in RequestEvent)
                     ) {
-                        reject(`Expect event ${methods} but received unexpected event ${event.method}`);
+                        reject(`listenEvent error----Expect event:${methods} but received unexpected event :${event.method}`);
                     }
                     return (
                         phase.isApplyExtrinsic &&
@@ -181,16 +180,14 @@ export async function listenEvent(api: ApiPromise, section: string, methods: str
                     });
 
                 //There is no good compatibility method here.Only successful and failed events can be filtered normally, but it cannot filter error + successful events, which may need further optimization
-                const eventsToUse = filtered_events_with_signer.length > 0 ? filtered_events_with_signer : filtered_events;
+                const eventsToUse = filtered_events_with_signer.length > 0 ? filtered_events_with_signer : events_in_extrinsic;
 
-                events = [...eventsToUse];
-                events_in_extrinsic.forEach((event) => {
-                    filtered_events.push(event);
-                });
+                events = [...events, ...eventsToUse];
+
             });
 
-            if (filtered_events.length === txsLength) {
-                resolve(filtered_events.map((e) => e.event));
+            if (events.length === txsLength) {
+                resolve(events.map((e) => e.event));
                 unsubscribe();
                 return;
             }
