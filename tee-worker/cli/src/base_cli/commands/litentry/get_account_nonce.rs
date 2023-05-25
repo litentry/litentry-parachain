@@ -14,8 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use base58::FromBase58;
+use codec::Decode;
+use ita_stf::{Getter, PublicGetter};
+use itp_stf_primitives::types::ShardIdentifier;
+
 use crate::{
-	command_utils::{get_accountid_from_str, get_chain_api},
+	command_utils::{decode_nonce, get_accountid_from_str, get_worker_api_direct},
+	trusted_operation::get_state,
 	Cli,
 };
 
@@ -23,14 +29,31 @@ use crate::{
 pub struct GetAccountNonceCommand {
 	/// AccountId in ss58check format
 	account: String,
+
+	/// Shard identifier
+	shard: String,
 }
 
 impl GetAccountNonceCommand {
 	pub(crate) fn run(&self, cli: &Cli) {
-		let api = get_chain_api(cli);
-		let accountid = get_accountid_from_str(&self.account);
-		let nonce = api.get_account_info(&accountid).unwrap().map_or_else(|| 0, |info| info.nonce);
+		let shard_opt = match self.shard.from_base58() {
+			Ok(s) => ShardIdentifier::decode(&mut &s[..]),
+			_ => panic!("shard argument must be base58 encoded"),
+		};
 
-		println!("Account {:?} nonce : {nonce}", accountid);
+		let shard = match shard_opt {
+			Ok(shard) => shard,
+			Err(e) => panic!("{}", e),
+		};
+
+		let account = get_accountid_from_str(&self.account);
+
+		let getter = Getter::public(PublicGetter::nonce(account));
+
+		let direct_client = get_worker_api_direct(cli);
+
+		let maybe_encoded_nonce = get_state(&direct_client, shard, &getter);
+		let nonce = decode_nonce(maybe_encoded_nonce).map_or_else(|| 0, |nonce| nonce);
+		print!("Get nonce: {nonce}");
 	}
 }

@@ -61,7 +61,32 @@ fi
 ALICE=//Alice
 
 echo "Get nonce of Alice: "
-RESULT=$(${CLIENT} get-account-nonce ${ALICE})
-read -r ALICE_NONCE <<< "$(echo "$RESULT" | awk '/ nonce : / { print $6; exit }')"
-echo "$ALICE_NONCE"
+RESULT=$(${CLIENT} get-account-nonce ${ALICE} "${MRENCLAVE}")
+read -r ALICE_NONCE_1 <<< "$(echo "$RESULT" | awk '/ nonce: / { print $3; exit }')"
+
 echo ""
+echo "* Create a new incognito account for Alice"
+ICGACCOUNTALICE=//AliceIncognito
+echo "  Alice's incognito account = ${ICGACCOUNTALICE}"
+AMOUNTSHIELD=10000000000
+echo ""
+
+echo "* Issue ${AMOUNTSHIELD} tokens to Alice's incognito account"
+${CLIENT} trusted --mrenclave "${MRENCLAVE}" --direct set-balance ${ICGACCOUNTALICE} ${AMOUNTSHIELD}
+echo ""
+
+echo "Get nonce of Alice after set-balance: "
+RESULT=$(${CLIENT} get-account-nonce ${ALICE} "${MRENCLAVE}")
+read -r ALICE_NONCE_2 <<< "$(echo "$RESULT" | awk '/ nonce: / { print $3; exit }')"
+echo ""
+
+EXPECTED_NONCE=$((ALICE_NONCE_1 + 1))
+ACTUAL_NONCE=$ALICE_NONCE_2
+
+if [  $EXPECTED_NONCE -eq "$ACTUAL_NONCE" ]; then
+    echo "test passed"
+    exit 0
+else
+    echo "KEY non-identical: expected: $EXPECTED_NONCE actual: $ACTUAL_NONCE"
+    exit 1
+fi
