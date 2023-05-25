@@ -2,7 +2,7 @@ import { step } from 'mocha-steps';
 import { checkVc, describeLitentry, encryptWithTeeShieldingKey } from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
-import { u8aToHex } from '@polkadot/util';
+import { u8aToHex, stringToU8a } from '@polkadot/util';
 import { Assertion, IndexingNetwork, TransactionSubmit } from './common/type-definitions';
 import { handleVcEvents } from './common/utils';
 import { blake2AsHex } from '@polkadot/util-crypto';
@@ -56,7 +56,7 @@ describeLitentry('multiple accounts test', 10, async (context) => {
     });
     //test with multiple accounts
     step('test set usershieldingkey with multiple accounts', async () => {
-        const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, aesKey).toString('hex');
+        const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, stringToU8a(aesKey)).toString('hex');
         let txs: TransactionSubmit[] = [];
         for (let i = 0; i < substrateSigners.length; i++) {
             const tx = context.api.tx.identityManagement.setUserShieldingKey(context.mrEnclave, `0x${ciphertext}`);

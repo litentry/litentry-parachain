@@ -12,7 +12,8 @@ import { IntegrationTestContext, teeTypes, EnclaveResult, Web3Wallets } from '..
 const crypto = require('crypto');
 
 // maximum milliseconds that we wait in listening events before we timeout
-const listenTimeoutInMilliSeconds = 3 * 60 * 1000;
+// set to 5 minutes as identity-hub to ensure all tests have enough time to get events
+const listenTimeoutInMilliSeconds = 5 * 60 * 1000;
 
 export async function getListenTimeoutInBlocks(api: ApiPromise) {
     const slotDuration = await api.call.auraApi.slotDuration();

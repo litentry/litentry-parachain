@@ -353,7 +353,7 @@ describeLitentry('Test Identity', 0, (context) => {
             context.substrateWallet.alice,
             alice_txs,
             'identityManagement',
-            ['IdentityVerified', 'VerifyIdentityFailed'] // allow possible failed events to be collected
+            ['IdentityVerified']
         );
         let bob_txs = await buildIdentityTxs(
             context,
@@ -368,7 +368,7 @@ describeLitentry('Test Identity', 0, (context) => {
             context.substrateWallet.bob,
             bob_txs,
             'identityManagement',
-            ['IdentityVerified', 'VerifyIdentityFailed'] // allow possible failed events to be collected
+            ['IdentityVerified']
         );
         const verified_event_datas = await handleIdentityEvents(context, aesKey, alice_resp_events, 'IdentityVerified');
         const [substrate_extension_identity_verified] = await handleIdentityEvents(
