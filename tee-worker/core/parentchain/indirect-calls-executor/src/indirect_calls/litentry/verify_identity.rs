@@ -71,10 +71,11 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for VerifyIdentityAr
 			);
 
 			let enclave_account_id = executor.get_enclave_account()?;
-			let trusted_call = TrustedCall::verify_identity_callback(
+			let trusted_call = TrustedCall::verify_identity(
 				enclave_account_id,
 				account,
 				identity,
+				validation_data,
 				block,
 				hash,
 			);

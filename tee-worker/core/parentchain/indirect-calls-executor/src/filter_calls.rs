@@ -26,7 +26,10 @@ use codec::{Decode, Encode};
 use core::marker::PhantomData;
 use itp_node_api::metadata::{NodeMetadata, NodeMetadataTrait};
 use substrate_api_client::GenericAddress;
-use itp_types::H256;
+use itp_types::{H256, CallIndex};
+use sp_std::vec::Vec;
+use sp_std::vec;
+
 
 /// Trait to filter an indirect call and decode into it, where the decoding
 /// is based on the metadata provided.
@@ -119,6 +122,47 @@ for ShieldFundsAndCallWorkerFilter<ExtrinsicParser>
             let args = decode_and_log_error::<VerifyIdentityArgs>(call_args)?;
             let hashed_extrinsic = xt.hashed_extrinsic;
             Some(IndirectCall::VerifyIdentity(args, address, hashed_extrinsic))
+        } else if index == metadata.batch_all_call_indexes().ok()? {
+            let call_count: sp_std::vec::Vec<()> = Decode::decode(call_args).ok()?;
+            let mut calls: Vec<IndirectCall> = vec![];
+            log::debug!("Received Batch All Call for This Many call: {}", call_count.len());
+            for _i in 0..call_count.len() {
+                let index: CallIndex = Decode::decode(call_args).ok()?;
+                if index == metadata.shield_funds_call_indexes().ok()? {
+                    let args = decode_and_log_error::<ShiedFundsArgs>(call_args)?;
+                    calls.push(IndirectCall::ShieldFunds(args))
+                } else if index == metadata.call_worker_call_indexes().ok()? {
+                    let args = decode_and_log_error::<CallWorkerArgs>(call_args)?;
+                    calls.push(IndirectCall::CallWorker(args))
+                } else if index == metadata.create_identity_call_indexes().ok()? {
+                    let args = decode_and_log_error::<CreateIdentityArgs>(call_args)?;
+                    let hashed_extrinsic = xt.hashed_extrinsic;
+                    calls.push(IndirectCall::CreateIdentity(args, address.clone(), hashed_extrinsic));
+                } else if index == metadata.remove_identity_call_indexes().ok()? {
+                    let args = decode_and_log_error::<RemoveIdentityArgs>(call_args)?;
+                    let hashed_extrinsic = xt.hashed_extrinsic;
+                    calls.push(IndirectCall::RemoveIdentity(args, address.clone(), hashed_extrinsic))
+                } else if index == metadata.request_vc_call_indexes().ok()? {
+                    let args = decode_and_log_error::<RequestVCArgs>(call_args)?;
+                    let hashed_extrinsic = xt.hashed_extrinsic;
+                    calls.push(IndirectCall::RequestVC(args, address.clone(), hashed_extrinsic))
+                } else if index == metadata.update_scheduled_enclave().ok()? {
+                    let args = decode_and_log_error::<UpdateScheduledEnclaveArgs>(call_args)?;
+                    calls.push(IndirectCall::UpdateScheduledEnclave(args))
+                } else if index == metadata.remove_scheduled_enclave().ok()? {
+                    let args = decode_and_log_error::<RemoveScheduledEnclaveArgs>(call_args)?;
+                    calls.push(IndirectCall::RemoveScheduledEnclave(args))
+                } else if index == metadata.set_user_shielding_key_call_indexes().ok()? {
+                    let args = decode_and_log_error::<SetUserShieldingKeyArgs>(call_args)?;
+                    let hashed_extrinsic = xt.hashed_extrinsic;
+                    calls.push(IndirectCall::SetUserShieldingKey(args, address.clone(), hashed_extrinsic))
+                } else if index == metadata.verify_identity_call_indexes().ok()? {
+                    let args = decode_and_log_error::<VerifyIdentityArgs>(call_args)?;
+                    let hashed_extrinsic = xt.hashed_extrinsic;
+                    calls.push(IndirectCall::VerifyIdentity(args, address.clone(), hashed_extrinsic))
+                }
+            }
+            Some(IndirectCall::BatchAll(calls))
         }
         else {
             None
@@ -140,7 +184,8 @@ pub enum IndirectCall {
     UpdateScheduledEnclave(UpdateScheduledEnclaveArgs),
     RemoveScheduledEnclave(RemoveScheduledEnclaveArgs),
     SetUserShieldingKey(SetUserShieldingKeyArgs, Option<GenericAddress>, H256),
-    VerifyIdentity(VerifyIdentityArgs, Option<GenericAddress>, H256)
+    VerifyIdentity(VerifyIdentityArgs, Option<GenericAddress>, H256),
+    BatchAll(Vec<IndirectCall>)
 }
 
 impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for IndirectCall {
@@ -150,13 +195,19 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for IndirectCall {
         match self {
             IndirectCall::ShieldFunds(shieldfunds) => shieldfunds.dispatch(executor, ()),
             IndirectCall::CallWorker(call_worker) => call_worker.dispatch(executor, ()),
-            IndirectCall::CreateIdentity(create_identity, _, hash) => create_identity.dispatch(executor, (block, hash.clone())),
+            IndirectCall::CreateIdentity(create_identity, address, hash) => create_identity.dispatch(executor, (address.clone(), block, hash.clone())),
             IndirectCall::RemoveIdentity(remove_ideentity, address, hash) => remove_ideentity.dispatch(executor, (address.clone(), hash.clone())),
             IndirectCall::RequestVC(requestvc, address, hash ) => requestvc.dispatch(executor, (address.clone(), hash.clone(), block)),
             IndirectCall::UpdateScheduledEnclave(update_enclave_args) => update_enclave_args.dispatch(executor, ()),
             IndirectCall::RemoveScheduledEnclave(remove_enclave_args) => remove_enclave_args.dispatch(executor, ()),
             IndirectCall::SetUserShieldingKey(set_shied, address, hash) => set_shied.dispatch(executor, (address.clone(), hash.clone())),
-            IndirectCall::VerifyIdentity(verify_id, address, hash) => verify_id.dispatch(executor, (address.clone(), hash.clone(), block))
+            IndirectCall::VerifyIdentity(verify_id, address, hash) => verify_id.dispatch(executor, (address.clone(), hash.clone(), block)),
+            IndirectCall::BatchAll(calls) => {
+                for x in calls.clone() {
+                    x.dispatch(executor, block)?;
+                }
+                Ok(())
+            }
         }
     }
 }
