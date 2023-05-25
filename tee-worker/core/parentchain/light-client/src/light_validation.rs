@@ -18,8 +18,9 @@
 //! Light-client validation crate that verifies parentchain blocks.
 
 use crate::{
-	error::Error, finality::Finality, light_validation_state::LightValidationState, AuthorityList,
-	AuthorityListRef, ExtrinsicSender, HashFor, HashingFor, LightClientState, NumberFor, Validator,
+	error::Error, finality::Finality, light_validation_state::LightValidationState,
+	state::RelayState, AuthorityList, AuthorityListRef, ExtrinsicSender, HashFor, HashingFor,
+	LightClientState, NumberFor, RelayId, Validator,
 };
 use codec::Encode;
 use core::iter::Iterator;
@@ -49,28 +50,23 @@ impl<Block: ParentchainBlockTrait, OcallApi: EnclaveOnChainOCallApi>
 		finality: Arc<Box<dyn Finality<Block> + Sync + Send + 'static>>,
 		light_validation_state: LightValidationState<Block>,
 	) -> Self {
-		Self {
-			light_validation_state: LightValidationState::new(),
-			ocall_api,
-			finality,
-			ignore_validation_until: 0u32.into(),
-		}
+		Self { light_validation_state, ocall_api, finality, ignore_validation_until: 0u32.into() }
 	}
 
-	fn initialize_relay(
-		&mut self,
-		block_header: Block::Header,
-		validator_set: AuthorityList,
-	) -> Result<RelayId, Error> {
-		let relay_info = RelayState::new(block_header, validator_set);
+	// fn initialize_relay(
+	// 	&mut self,
+	// 	block_header: Block::Header,
+	// 	validator_set: AuthorityList,
+	// ) -> Result<RelayId, Error> {
+	// 	let relay_info = RelayState::new(block_header, validator_set);
 
-		let new_relay_id = self.light_validation_state.num_relays + 1;
-		self.light_validation_state.tracked_relays.insert(new_relay_id, relay_info);
+	// 	let new_relay_id = self.light_validation_state.num_relays + 1;
+	// 	self.light_validation_state.tracked_relays.insert(new_relay_id, relay_info);
 
-		self.light_validation_state.num_relays = new_relay_id;
+	// 	self.light_validation_state.num_relays = new_relay_id;
 
-		Ok(new_relay_id)
-	}
+	// 	Ok(new_relay_id)
+	// }
 
 	fn check_validator_set_proof(
 		state_root: &HashFor<Block>,
@@ -258,7 +254,7 @@ where
 {
 	fn send_extrinsics(&mut self, extrinsics: Vec<OpaqueExtrinsic>) -> Result<(), Error> {
 		for xt in extrinsics.iter() {
-			self.submit_xt_to_be_included(xt.clone());
+			self.submit_xt_to_be_included(0u64, xt.clone());
 		}
 
 		self.ocall_api

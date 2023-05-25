@@ -22,10 +22,10 @@ use itp_types::{
 	H256,
 };
 use sp_finality_grandpa::{AuthorityList, VersionedAuthorityList, GRANDPA_AUTHORITIES_KEY};
-use sp_runtime::{traits::GetRuntimeBlockType, MultiSignature};
+use sp_runtime::traits::GetRuntimeBlockType;
 use substrate_api_client::{
 	rpc::Request, serde_impls::StorageKey, storage_key, Api, Events, ExtrinsicParams,
-	FrameSystemConfig, GetBlock, GetHeader, GetStorage, RpcClient,
+	FrameSystemConfig, GetBlock, GetHeader, GetStorage,
 };
 
 type RawEvents = Vec<u8>;
@@ -46,7 +46,7 @@ pub trait ChainApi {
 	fn get_events_value_proof(&self, block_hash: Option<H256>) -> ApiResult<StorageProof>;
 	fn get_events_for_block(&self, block_hash: Option<H256>) -> ApiResult<RawEvents>;
 	// litentry
-	fn events(&self, hash: Option<H256>) -> ApiResult<Events>;
+	fn events(&self, hash: Option<H256>) -> ApiResult<Events<H256>>;
 }
 
 impl<Signer, Client, Params, Runtime> ChainApi for Api<Signer, Client, Params, Runtime>
@@ -123,9 +123,9 @@ where
 		Ok(self.get_opaque_storage_by_key_hash(key, block_hash)?.unwrap_or_default())
 	}
 
-	fn events(&self, at_block: Option<H256>) -> ApiResult<Events> {
-		let storagekey = self.metadata.storage_value_key("System", "Events")?;
+	fn events(&self, at_block: Option<H256>) -> ApiResult<Events<H256>> {
+		let storagekey = self.metadata().storage_value_key("System", "Events")?;
 		let events_bytes = self.get_opaque_storage_by_key_hash(storagekey, at_block)?;
-		Ok(Events::new(self.metadata.clone(), at_block.unwrap(), events_bytes.unwrap()))
+		Ok(Events::new(self.metadata().clone(), at_block.unwrap(), events_bytes.unwrap()))
 	}
 }

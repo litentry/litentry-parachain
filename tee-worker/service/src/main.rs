@@ -87,13 +87,16 @@ use log::*;
 use serde_json::Value;
 use sgx_types::*;
 use substrate_api_client::{
-	rpc::HandleSubscription, GetHeader, SubmitAndWatch, SubscribeChain, SubscribeEvents, XtStatus,
+	rpc::HandleSubscription, GetHeader, SubscribeChain, SubscribeEvents, XtStatus,
 };
 
 #[cfg(feature = "dcap")]
 use sgx_verify::extract_tcb_info_from_raw_dcap_quote;
 
-use sp_core::crypto::{AccountId32, Ss58Codec};
+use sp_core::{
+	crypto::{AccountId32, Ss58Codec},
+	storage::StorageKey,
+};
 use sp_keyring::AccountKeyring;
 use std::{
 	env,
@@ -106,10 +109,7 @@ use std::{
 	thread::sleep,
 	time::Duration,
 };
-use substrate_api_client::{
-	utils::{storage_key, FromHexString},
-	Events, /*Header as HeaderTrait,*/ StorageKey, XtStatus,
-};
+use substrate_api_client::{storage_key, Events};
 use teerex_primitives::{Enclave as TeerexEnclave, ShardIdentifier};
 extern crate config as rs_config;
 use sp_runtime::traits::Header as HeaderTrait;
@@ -138,7 +138,6 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub type EnclaveWorker =
 	Worker<Config, NodeApiFactory, Enclave, InitializationHandler<WorkerModeProvider>>;
-pub type Event = substrate_api_client::EventRecord<RuntimeEvent, Hash>;
 
 fn main() {
 	// Setup logging
@@ -588,9 +587,9 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	#[cfg(not(feature = "dcap"))]
 	let xt = enclave.generate_ias_ra_extrinsic(&trusted_url, skip_ra).unwrap();
 	#[cfg(feature = "dcap")]
-	let uxt = enclave.generate_dcap_ra_extrinsic(&trusted_url, skip_ra).unwrap();
+	let xt = enclave.generate_dcap_ra_extrinsic(&trusted_url, skip_ra).unwrap();
 
-	let mut xthex = hex::encode(uxt);
+	let mut xthex = hex::encode(xt);
 	xthex.insert_str(0, "0x");
 
 	// Account funds

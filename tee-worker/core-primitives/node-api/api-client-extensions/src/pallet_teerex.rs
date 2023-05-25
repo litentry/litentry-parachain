@@ -17,11 +17,9 @@
 
 use crate::ApiResult;
 use itp_types::{parentchain::Hash, Enclave, IpfsHash, MrEnclave, ShardIdentifier};
-use sp_core::{storage::StorageKey, Pair, H256 as Hash};
-use sp_runtime::MultiSignature;
+use sp_core::storage::StorageKey;
 use substrate_api_client::{
-	rpc::Request, utils::storage_key, Api, ExtrinsicParams, FrameSystemConfig, GetStorage,
-	RpcClient,
+	rpc::Request, storage_key, Api, ExtrinsicParams, FrameSystemConfig, GetStorage,
 };
 
 pub const TEEREX: &str = "Teerex";
@@ -95,7 +93,7 @@ where
 			.map(|key| {
 				let key = key.strip_prefix("0x").unwrap_or(key);
 				let raw_key = hex::decode(key).unwrap();
-				self.get_storage_by_key_hash::<MrEnclave>(StorageKey(raw_key), at_block)
+				self.get_storage_by_key_hash::<MrEnclave>(StorageKey(raw_key).into(), at_block)
 			})
 			.filter(|enclave| matches!(enclave, Ok(Some(_))))
 			.map(|enclave| enclave.unwrap().unwrap())

@@ -19,7 +19,7 @@ use sp_runtime::OpaqueExtrinsic;
 use sp_std::vec::Vec;
 use substrate_api_client::{GenericSignedExtra, PlainTip, UncheckedExtrinsicV4};
 
-use crate::parentchain::{AccountId, Address, Balance, Hash, Index, Signature as PairSignature};
+use crate::parentchain::{Address, Balance, Index, Signature as PairSignature};
 
 pub type ParentchainPlainTip = PlainTip<Balance>;
 pub type ParentchainSignedExtra = GenericSignedExtra<ParentchainPlainTip, Index>;

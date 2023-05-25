@@ -34,6 +34,7 @@ pub mod error;
 pub mod pallet_imp;
 pub mod pallet_imp_mock;
 pub mod pallet_sidechain;
+pub mod pallet_system;
 pub mod pallet_teeracle;
 pub mod pallet_teerex;
 pub mod pallet_utility;

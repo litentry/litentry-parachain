@@ -27,7 +27,7 @@ use itp_types::{WorkerRequest, WorkerResponse};
 use log::*;
 use sp_runtime::OpaqueExtrinsic;
 use std::{sync::Arc, thread, vec::Vec};
-use substrate_api_client::{serde_impls::StorageKey, GetStorage, SubmitExtrinsic, XtStatus};
+use substrate_api_client::{serde_impls::StorageKey, GetStorage, SubmitExtrinsic};
 
 pub struct WorkerOnChainOCall<E, F> {
 	enclave_api: Arc<E>,

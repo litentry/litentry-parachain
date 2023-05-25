@@ -123,7 +123,7 @@ impl<
 		let mut calls = Vec::<OpaqueCall>::new();
 
 		debug!("Import blocks to light-client!");
-		for (signed_block, raw_events) in
+		for (signed_block, _raw_events) in
 			blocks_to_import.into_iter().zip(events_to_import.into_iter())
 		{
 			// Check if there are any extrinsics in the to-be-imported block that we sent and cached in the light-client before.

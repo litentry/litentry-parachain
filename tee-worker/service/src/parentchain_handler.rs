@@ -24,7 +24,7 @@ use itc_parentchain::{
 use itp_enclave_api::{enclave_base::EnclaveBase, sidechain::Sidechain};
 use itp_node_api::api_client::ChainApi;
 use itp_storage::StorageProof;
-use itp_types::{extrinsics::fill_opaque_extrinsic_with_status, SignedBlock};
+use itp_types::extrinsics::fill_opaque_extrinsic_with_status;
 use litentry_primitives::ParentchainHeader as Header;
 use log::*;
 use sp_finality_grandpa::VersionedAuthorityList;
