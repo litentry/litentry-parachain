@@ -17,7 +17,7 @@
 use crate::{
 	error::{Error, ErrorDetail, IMPError},
 };
-use crate::{error::Result, IndirectDispatch, IndirectExecutor, LitentryExecutor};
+use crate::{error::Result, IndirectDispatch, IndirectExecutor};
 use codec::{Decode, Encode};
 use ita_stf::{TrustedCall, TrustedOperation};
 use itp_stf_primitives::types::AccountId;
@@ -40,44 +40,44 @@ use itp_types::{CreateIdentityFn, H256};
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{Identity, ParentchainBlockNumber};
 use log::*;
+use parachain_core_primitives::Assertion;
+use substrate_api_client::GenericAddress;
+use sp_runtime::traits::{AccountIdLookup, StaticLookup};
 
-// TODO: Find out where Assertion is to be got from
+#[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct RequestVCArgs {
 	shard: ShardIdentifier,
-	assertiong: Assertion,
+	assertion: Assertion,
 }
 
-impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for CreateIdentityArgs {
-	fn dispatch(&self, executor: &Executor, xt_hash: H256) -> Result<()> {
-		// let (_, (shard, assertion)) = &extrinsic.function;
-		// let shielding_key = executor.shielding_key_repo.retrieve_key()?;
-
+impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for RequestVCArgs {
+	type Args = (Option<GenericAddress>, H256, u32);
+	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
+		let (address, hash, block) = args;
 		// TODO: Provide Extrinsic Signature
-		// if let Some((multiaddress_account, _, _)) = &extrinsic.signature {
-		// 	let account = AccountIdLookup::lookup(multiaddress_account.clone())?;
-		// 	debug!(
-		// 		"indirect call Requested VC, who:{:?}, assertion: {:?}",
-		// 		account_id_to_string(&account),
-		// 		self.assertion
-		// 	);
-		//
-		// 	let enclave_account_id = executor.stf_enclave_signer.get_enclave_account()?;
-		//
-		// 	let trusted_call = TrustedCall::request_vc(
-		// 		enclave_account_id,
-		// 		account,
-		// 		self.assertion.clone(),
-		// 		*self.shard,
-		// 		self.block_number,
-		// 		hash_of(extrinsic),
-		// 	);
-		// 	let signed_trusted_call =
-		// 		executor.stf_enclave_signer.sign_call_with_self(&trusted_call, self.shard)?;
-		// 	let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
-		//
-		// 	let encrypted_trusted_call = shielding_key.encrypt(&trusted_operation.encode())?;
-		// 	executor.submit_trusted_call(*self.shard, encrypted_trusted_call);
-		// }
+		if let Some(address) = address {
+			let account = AccountIdLookup::lookup(address.clone())?;
+			debug!(
+				"indirect call Requested VC, who:{:?}, assertion: {:?}",
+				account_id_to_string(&account),
+				self.assertion
+			);
+
+			let enclave_account_id = executor.get_enclave_account()?;
+
+			let trusted_call = TrustedCall::request_vc(
+				enclave_account_id,
+				account,
+				self.assertion.clone(),
+				hash,
+			);
+			let signed_trusted_call =
+				executor.sign_call_with_self(&trusted_call, &self.shard)?;
+			let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
+
+			let encrypted_trusted_call = executor.encrypt(&trusted_operation.encode())?;
+			executor.submit_trusted_call(self.shard, encrypted_trusted_call);
+		}
 		Ok(())
 	}
 }

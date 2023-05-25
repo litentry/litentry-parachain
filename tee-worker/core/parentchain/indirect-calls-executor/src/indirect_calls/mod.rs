@@ -22,3 +22,8 @@ mod litentry;
 pub use call_worker::CallWorkerArgs;
 pub use shield_funds::ShiedFundsArgs;
 pub use litentry::create_identity::CreateIdentityArgs;
+pub use litentry::remove_identity::RemoveIdentityArgs;
+pub use litentry::request_vc::RequestVCArgs;
+pub use litentry::scheduled_enclave::{UpdateScheduledEnclaveArgs, RemoveScheduledEnclaveArgs};
+pub use litentry::set_user_shielding_key::SetUserShieldingKeyArgs;
+pub use litentry::verify_identity::VerifyIdentityArgs;

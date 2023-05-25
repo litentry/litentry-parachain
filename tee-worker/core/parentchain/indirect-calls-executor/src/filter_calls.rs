@@ -17,13 +17,16 @@
 
 use crate::{
     error::Result,
-    indirect_calls::{CallWorkerArgs, ShiedFundsArgs, CreateIdentityArgs},
+    indirect_calls::{CallWorkerArgs, ShiedFundsArgs, CreateIdentityArgs, RemoveIdentityArgs, RequestVCArgs, UpdateScheduledEnclaveArgs, RemoveScheduledEnclaveArgs, SetUserShieldingKeyArgs, VerifyIdentityArgs},
     parentchain_extrinsic_parser::ParseExtrinsic,
     IndirectDispatch, IndirectExecutor,
 };
+use crate::executor::hash_of;
 use codec::{Decode, Encode};
 use core::marker::PhantomData;
 use itp_node_api::metadata::{NodeMetadata, NodeMetadataTrait};
+use substrate_api_client::GenericAddress;
+use itp_types::H256;
 
 /// Trait to filter an indirect call and decode into it, where the decoding
 /// is based on the metadata provided.
@@ -75,6 +78,11 @@ for ShieldFundsAndCallWorkerFilter<ExtrinsicParser>
                 return None
             },
         };
+        let address: Option<GenericAddress> = if let Some(signature) = xt.signature {
+            Some(signature.0)
+        } else {
+            None
+        };
 
         let index = xt.call_index;
         let call_args = &mut &xt.call_args[..];
@@ -85,9 +93,32 @@ for ShieldFundsAndCallWorkerFilter<ExtrinsicParser>
         } else if index == metadata.call_worker_call_indexes().ok()? {
             let args = decode_and_log_error::<CallWorkerArgs>(call_args)?;
             Some(IndirectCall::CallWorker(args))
-        } else if index == metadata.call_worker_call_indexes().ok()? {
+        } else if index == metadata.create_identity_call_indexes().ok()? {
             let args = decode_and_log_error::<CreateIdentityArgs>(call_args)?;
-            Some(IndirectCall::CreateIdentity(args))
+            let hashed_extrinsic = xt.hashed_extrinsic;
+            Some(IndirectCall::CreateIdentity(args, address, hashed_extrinsic))
+        } else if index == metadata.remove_identity_call_indexes().ok()? {
+            let args = decode_and_log_error::<RemoveIdentityArgs>(call_args)?;
+            let hashed_extrinsic = xt.hashed_extrinsic;
+            Some(IndirectCall::RemoveIdentity(args, address, hashed_extrinsic))
+        } else if index == metadata.request_vc_call_indexes().ok()? {
+            let args = decode_and_log_error::<RequestVCArgs>(call_args)?;
+            let hashed_extrinsic = xt.hashed_extrinsic;
+            Some(IndirectCall::RequestVC(args, address, hashed_extrinsic))
+        } else if index == metadata.update_scheduled_enclave().ok()? {
+            let args = decode_and_log_error::<UpdateScheduledEnclaveArgs>(call_args)?;
+            Some(IndirectCall::UpdateScheduledEnclave(args))
+        } else if index == metadata.remove_scheduled_enclave().ok()? {
+            let args = decode_and_log_error::<RemoveScheduledEnclaveArgs>(call_args)?;
+            Some(IndirectCall::RemoveScheduledEnclave(args))
+        } else if index == metadata.set_user_shielding_key_call_indexes().ok()? {
+            let args = decode_and_log_error::<SetUserShieldingKeyArgs>(call_args)?;
+            let hashed_extrinsic = xt.hashed_extrinsic;
+            Some(IndirectCall::SetUserShieldingKey(args, address, hashed_extrinsic))
+        } else if index == metadata.verify_identity_call_indexes().ok()? {
+            let args = decode_and_log_error::<VerifyIdentityArgs>(call_args)?;
+            let hashed_extrinsic = xt.hashed_extrinsic;
+            Some(IndirectCall::VerifyIdentity(args, address, hashed_extrinsic))
         }
         else {
             None
@@ -103,15 +134,29 @@ for ShieldFundsAndCallWorkerFilter<ExtrinsicParser>
 pub enum IndirectCall {
     ShieldFunds(ShiedFundsArgs),
     CallWorker(CallWorkerArgs),
-    CreateIdentity(CreateIdentityArgs)
+    CreateIdentity(CreateIdentityArgs, Option<GenericAddress>, H256),
+    RemoveIdentity(RemoveIdentityArgs, Option<GenericAddress>, H256),
+    RequestVC(RequestVCArgs, Option<GenericAddress>, H256),
+    UpdateScheduledEnclave(UpdateScheduledEnclaveArgs),
+    RemoveScheduledEnclave(RemoveScheduledEnclaveArgs),
+    SetUserShieldingKey(SetUserShieldingKeyArgs, Option<GenericAddress>, H256),
+    VerifyIdentity(VerifyIdentityArgs, Option<GenericAddress>, H256)
 }
 
 impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for IndirectCall {
-    fn dispatch(&self, executor: &Executor) -> Result<()> {
+    type Args = u32;
+    fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
+        let block = args;
         match self {
-            IndirectCall::ShieldFunds(shieldfunds) => shieldfunds.dispatch(executor),
-            IndirectCall::CallWorker(call_worker) => call_worker.dispatch(executor),
-            IndirectCall::CreateIdentity(create_identity) => create_identity.dispatch(executor),
+            IndirectCall::ShieldFunds(shieldfunds) => shieldfunds.dispatch(executor, ()),
+            IndirectCall::CallWorker(call_worker) => call_worker.dispatch(executor, ()),
+            IndirectCall::CreateIdentity(create_identity, _, hash) => create_identity.dispatch(executor, (block, hash.clone())),
+            IndirectCall::RemoveIdentity(remove_ideentity, address, hash) => remove_ideentity.dispatch(executor, (address.clone(), hash.clone())),
+            IndirectCall::RequestVC(requestvc, address, hash ) => requestvc.dispatch(executor, (address.clone(), hash.clone(), block)),
+            IndirectCall::UpdateScheduledEnclave(update_enclave_args) => update_enclave_args.dispatch(executor, ()),
+            IndirectCall::RemoveScheduledEnclave(remove_enclave_args) => remove_enclave_args.dispatch(executor, ()),
+            IndirectCall::SetUserShieldingKey(set_shied, address, hash) => set_shied.dispatch(executor, (address.clone(), hash.clone())),
+            IndirectCall::VerifyIdentity(verify_id, address, hash) => verify_id.dispatch(executor, (address.clone(), hash.clone(), block))
         }
     }
 }
