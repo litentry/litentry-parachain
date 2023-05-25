@@ -1,8 +1,8 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
 name = "itp-stf-executor"
 version = "0.9.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+edition = "2021"
 
 [dependencies]
 # sgx dependencies
@@ -47,12 +47,11 @@ itc-parentchain-test = { path = "../../core/parentchain/test", optional = true, 
 itp-test = { path = "../test", default-features = false, optional = true }
 
 [dev-dependencies]
-itp-stf-interface = { path = "../stf-interface", features = ["mocks"] }
 itp-stf-state-observer = { path = "../stf-state-observer", features = ["mocks"] }
+itp-stf-interface = { path = "../stf-interface", features = ["mocks"] }
 
 [features]
 default = ["std"]
-mocks = []
 std = [
     # local
     "ita-stf/std",
@@ -96,3 +95,4 @@ test = [
     "itp-test",
     "sgx-crypto-helper",
 ]
+mocks = []

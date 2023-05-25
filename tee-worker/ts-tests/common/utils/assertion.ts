@@ -6,12 +6,7 @@ import { hexToU8a, u8aToHex } from '@polkadot/util';
 import Ajv from 'ajv';
 import { assert, expect } from 'chai';
 import * as ed from '@noble/ed25519';
-import {
-    EnclaveResult,
-    IdentityGenericEvent,
-    JsonSchema,
-    LitentryIdentity,
-} from '../type-definitions';
+import { EnclaveResult, IdentityGenericEvent, JsonSchema, LitentryIdentity } from '../type-definitions';
 import { buildIdentityHelper } from './identity-helper';
 import { isEqual, isArrayEqual } from './common';
 

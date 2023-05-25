@@ -37,6 +37,7 @@ impl SystemStorageIndexes for NodeMetadata {
 	}
 }
 
+// litentry
 pub trait SystemSs58Prefix {
 	fn system_ss58_prefix(&self) -> Result<u16>;
 }

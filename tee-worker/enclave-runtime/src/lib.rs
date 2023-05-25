@@ -168,7 +168,7 @@ pub unsafe extern "C" fn get_ecc_signing_pubkey(pubkey: *mut u8, pubkey_size: u3
 
 #[no_mangle]
 pub unsafe extern "C" fn set_nonce(nonce: *const u32) -> sgx_status_t {
-	info!("[Ecall Set Nonce] Setting the nonce of the enclave to: {}", *nonce);
+	log::info!("[Ecall Set Nonce] Setting the nonce of the enclave to: {}", *nonce);
 
 	let mut nonce_lock = match GLOBAL_NONCE_CACHE.load_for_mutation() {
 		Ok(l) => l,

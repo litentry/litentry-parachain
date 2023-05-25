@@ -1,8 +1,8 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
 name = "itc-parentchain-indirect-calls-executor"
 version = "0.9.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+edition = "2021"
 
 [dependencies]
 # sgx dependencies
@@ -18,7 +18,6 @@ itp-stf-executor = { path = "../../../core-primitives/stf-executor", default-fea
 itp-stf-primitives = { path = "../../../core-primitives/stf-primitives", default-features = false }
 itp-top-pool-author = { path = "../../../core-primitives/top-pool-author", default-features = false }
 itp-types = { path = "../../../core-primitives/types", default-features = false }
-itp-utils = { default-features = false, path = "../../../core-primitives/utils" }
 
 # sgx enabled external libraries
 futures_sgx = { package = "futures", git = "https://github.com/mesalock-linux/futures-rs-sgx", optional = true }
@@ -37,7 +36,6 @@ log = { version = "0.4", default-features = false }
 binary-merkle-tree = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 
 # scs/integritee
 substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.39-tag-v0.7.0", default-features = false }
@@ -45,38 +43,28 @@ substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git"
 # litentry
 ita-sgx-runtime = { path = "../../../app-libs/sgx-runtime", default-features = false }
 itp-component-container = { path = "../../../core-primitives/component-container", default-features = false, optional = true }
+itp-utils = { path = "../../../core-primitives/utils", default-features = false }
 lc-scheduled-enclave = { path = "../../../litentry/core/scheduled-enclave", default-features = false, optional = true }
 litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
 pallet-imp = { package = "pallet-identity-management", path = "../../../../pallets/identity-management", default-features = false }
 pallet-vcmp = { package = "pallet-vc-management", path = "../../../../pallets/vc-management", default-features = false }
 parachain-core-primitives = { package = "core-primitives", path = "../../../../primitives/core", default-features = false }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 
 [dev-dependencies]
-env_logger = "0.10.0"
-hex = "0.4.2"
+env_logger = "0.9.0"
 itp-node-api = { path = "../../../core-primitives/node-api", features = ["mocks"] }
-itc-parentchain-test = { path = "../../../core/parentchain/test" }
 itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", features = ["mocks"] }
 itp-stf-executor = { path = "../../../core-primitives/stf-executor", features = ["mocks"] }
 itp-test = { path = "../../../core-primitives/test" }
 itp-top-pool-author = { path = "../../../core-primitives/top-pool-author", features = ["mocks"] }
+itc-parentchain-test = { path = "../../../core/parentchain/test" }
+
+# litentry
+hex = "0.4.2"
 
 [features]
 default = ["std"]
-sgx = [
-    "sgx_tstd",
-    "futures_sgx",
-    "ita-stf/sgx",
-    "itp-node-api/sgx",
-    "itp-sgx-crypto/sgx",
-    "itp-stf-executor/sgx",
-    "itp-top-pool-author/sgx",
-    "thiserror_sgx",
-    "litentry-primitives/sgx",
-    "lc-scheduled-enclave/sgx",
-    "itp-component-container/sgx",
-    "itp-utils/sgx",
-]
 std = [
     "bs58/std",
     "codec/std",
@@ -89,17 +77,33 @@ std = [
     "itp-top-pool-author/std",
     "itp-types/std",
     "log/std",
-    "lc-scheduled-enclave/std",
-    "itp-component-container/std",
     #substrate
     "binary-merkle-tree/std",
     "sp-core/std",
     "sp-runtime/std",
     "substrate-api-client/std",
     "thiserror",
+    # litentry
     "ita-sgx-runtime/std",
     "litentry-primitives/std",
     "pallet-imp/std",
     "pallet-vcmp/std",
     "itp-utils/std",
+    "lc-scheduled-enclave/std",
+    "itp-component-container/std",
+]
+sgx = [
+    "sgx_tstd",
+    "futures_sgx",
+    "ita-stf/sgx",
+    "itp-node-api/sgx",
+    "itp-sgx-crypto/sgx",
+    "itp-stf-executor/sgx",
+    "itp-top-pool-author/sgx",
+    "thiserror_sgx",
+    # litentry
+    "litentry-primitives/sgx",
+    "lc-scheduled-enclave/sgx",
+    "itp-component-container/sgx",
+    "itp-utils/sgx",
 ]

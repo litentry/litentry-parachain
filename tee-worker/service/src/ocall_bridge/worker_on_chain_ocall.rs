@@ -48,6 +48,8 @@ where
 	F: CreateNodeApi,
 {
 	fn worker_request(&self, request: Vec<u8>) -> OCallBridgeResult<Vec<u8>> {
+		debug!("    Entering ocall_worker_request");
+
 		let requests: Vec<WorkerRequest> = Decode::decode(&mut request.as_slice()).unwrap();
 		if requests.is_empty() {
 			debug!("requests is empty, returning empty vector");

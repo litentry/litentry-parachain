@@ -104,7 +104,7 @@ $PARACHAIN_BIN --alice --collator --force-authoring --tmp --chain $CHAIN-dev \
   --state-pruning archive --blocks-pruning archive \
   -- \
   --execution wasm --chain $ROCOCO_CHAINSPEC --port 30332 --ws-port 9943 --rpc-port 9932 \
-  --bootnodes /ip4/127.0.0.1/tcp/$AlicePort/p2p/$RELAY_ALICE_IDENTITY &> "para.alice.log" &
+  --bootnodes /ip4/127.0.0.1/tcp/${AlicePort:-30336}/p2p/$RELAY_ALICE_IDENTITY &> "para.alice.log" &
 sleep 10
 
 echo "register parathread now ..."

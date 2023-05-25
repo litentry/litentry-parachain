@@ -2,46 +2,46 @@
 
 set -eo pipefail
 
-cleanup() {
+ROOTDIR=$(git rev-parse --show-toplevel)
+UPSTREAM_URL_PREFIX="https://github.com/integritee-network"
+
+function cleanup() {
 	rm -rf "$1"
 	echo "cleaned up $1"
 }
 
-print_help() {
+function usage() {
 	echo "Usage:"
-	echo "$0 [-h] [-p <tag|branch|commit-hash>] [-w <tag|branch|commit-hash>]"
-	echo ""
-	echo "without any parameter, the script will generate upstream patch for both pallets and tee-worker"
-	echo "	-h print this message"
-	echo "	-p specify the tag|branch|commit-hash for upstream pallets"
-	echo "	-w specify the tag|branch|commit-hash for upstream worker"
+	echo "For pallets: $0 p pallets-new-commit"
+	echo "For worker : $0 w worker-new-commit"
 }
 
-check_upstream() {
+function check_upstream() {
 	local TARGET=$1
 	local UPSTREAM_URL="$UPSTREAM_URL_PREFIX/$TARGET"
-	if [ "$(git remote get-url upstream_$TARGET 2>/dev/null)" != "$UPSTREAM_URL" ]; then
-		git remote add upstream_$TARGET $UPSTREAM_URL
+	if [ "$(git remote get-url "upstream_$TARGET" 2>/dev/null)" != "$UPSTREAM_URL" ]; then
+		git remote add "upstream_$TARGET" "$UPSTREAM_URL"
 	fi
 }
 
-# This function generates a patch for the diffs between commit-A and commit-B
+# This function generates 9 patches for the diffs between commit-A and commit-B
 # of the upstream repo, where
 # commit-A: the commit recorded in ./<TARGET_DIR>/upstream_commit
 # commit-B: the HEAD commit of upstream master or a given commit
 #
-# A patch will be generated under ./<TARGET_DIR>/upstream.patch
-generate_upstream_patch() {
-	local TARGET=$1
+# Patches will be generated under ./<TARGET_DIR>/
+function generate_worker_patch() {
+	local TARGET="worker"
 	local TARGET_DIR="$ROOTDIR/$TARGET"
+
 	if [[ $TARGET == "worker" ]]
 	then
 		TARGET_DIR="$ROOTDIR/tee-worker"
 	fi
-	local UPSTREAM_URL="$UPSTREAM_URL_PREFIX/$TARGET"
-	# If $2 exists, it would be the target commit
 
-	cd $TARGET_DIR
+	local UPSTREAM_URL="$UPSTREAM_URL_PREFIX/$TARGET"
+
+	cd "$TARGET_DIR"
 
 	if [ -f upstream_commit ]; then
 		OLD_COMMIT=$(head -1 upstream_commit)
@@ -56,116 +56,131 @@ generate_upstream_patch() {
 	local tmp_dir
 	tmp_dir=$(mktemp -d)
 	cd "$tmp_dir"
-	echo "cloning $UPSTREAM_URL to $tmp_dir"
-	git clone -q $UPSTREAM_URL repo
+	echo "cloning ""$UPSTREAM_URL"" to $tmp_dir"
+	git clone -q "$UPSTREAM_URL" repo
 	cd repo
-	[ "" != "$2" ] && git checkout "$2"
+	[ "" != "$NEW_COMMIT" ] && git checkout "$NEW_COMMIT"
 	echo "generating patch ..."
-	git diff $OLD_COMMIT HEAD > "$TARGET_DIR/upstream.patch"
+	git diff "$OLD_COMMIT" HEAD > "$TARGET_DIR/upstream.patch"
 	git rev-parse --short HEAD > "$TARGET_DIR/upstream_commit"
-	cleanup $tmp_dir
+	 
+	# Clean up TMP DIR
+	cleanup "$tmp_dir"
+
 	echo
 }
 
-while getopts ":p:w:h" opt; do
-	case $opt in
-		p)
-			has_pallets=true
-			pallets_commit=$OPTARG
-			;;
-		w)
-			has_worker=true
-			worker_commit=$OPTARG
-			;;
-		h)
-			print_help
-			exit 0
-			;;
-		*)
-			echo "unknown args"
-			exit 1
-			;;
-	esac
-done
+# This function generates a patch for the diffs between commit-A and commit-B
+# of pallets repo
+# -> ./<TARGET_DIR>/pallets_xxx.patch
+# -> ./<TARGET_DIR>/primitives_xxx.patch
+function generate_pallets_patch() {
+	local TARGET='pallets'
+	local TARGET_DIR="$ROOTDIR/$TARGET"
 
-HAS_PALLETS=${has_pallets:-false}
-PALLETS_COMMIT=${pallets_commit:-""}
-HAS_WORKER=${has_worker:-false}
-WORKER_COMMIT=${worker_commit:-""}
+	local UPSTREAM_URL="$UPSTREAM_URL_PREFIX/$TARGET"
 
-if [ $HAS_PALLETS == "false" ] && [ $HAS_WORKER == "false" ]
-then
-	HAS_PALLETS=true
-	HAS_WORKER=true
-	echo "will update both pallets and worker upstream"
+	cd "$TARGET_DIR"
+
+	if [ -f upstream_commit ]; then
+		OLD_COMMIT=$(head -1 upstream_commit)
+	else
+		echo "Can't find upstream_commit file in $TARGET_DIR, quit"
+		exit 1
+	fi
+
+	echo "fetch upstream_$TARGET"
+	git fetch -q "upstream_$TARGET"
+
+	local tmp_dir
+	tmp_dir=$(mktemp -d)
+	cd "$tmp_dir"
+	echo "cloning ""$UPSTREAM_URL"" to $tmp_dir"
+	git clone -q "$UPSTREAM_URL" repo
+	cd repo
+	[ "" != "$NEW_COMMIT" ] && git checkout "$NEW_COMMIT"
+	echo ">>> generating patch ..."
+
+	# pallets
+	local pallets=("parentchain" "sidechain" "teeracle" "teerex" "test-utils")
+	for p in "${pallets[@]}"; do
+		echo "generating $p.patch"
+		git diff --binary "$OLD_COMMIT" HEAD -- "$p" > "$TARGET_DIR/pallets_$p.patch"
+	done
+
+	# primitives
+	local primitives=("sidechain" "teeracle" "teerex" "common")
+	for p in "${primitives[@]}"; do
+		echo "generating primitives_$p.patch"
+		git diff --binary "$OLD_COMMIT" HEAD -- primitives/"$p" > "$TARGET_DIR/primitives_$p.patch"
+	done
+
+	echo ">>> generating patch done."
+
+	git rev-parse --short HEAD > "$TARGET_DIR/upstream_commit"
+	 
+	# Clean up TMP DIR
+	cleanup "$tmp_dir"
+
 	echo
-fi
+}
 
-UPSTREAM_URL_PREFIX="https://github.com/integritee-network"
-ROOTDIR=$(git rev-parse --show-toplevel)
-
-if [ "$HAS_PALLETS" == "true" ]
-then
-	check_upstream "pallets"
-fi
-
-if [ "$HAS_WORKER" == "true" ]
-then
-	check_upstream "worker"
-fi
-
-
-if [ "$HAS_PALLETS" == "true" ] || [ "$HAS_WORKER" == "true" ]
-then
-	# From upstream pallets (https://github.com/integritee-network/pallets),
-	# only 'teerex', 'teeracle', 'sidechain' and 'primitives' are taken in.
-	if [ "$HAS_PALLETS" == "true" ]
-	then
-		generate_upstream_patch "pallets" $PALLETS_COMMIT
-	fi
-	if [ "$HAS_WORKER" == "true" ]
-	then
-		generate_upstream_patch "worker" $WORKER_COMMIT
-	fi
+function apply_pallets_tips() {
 	echo "======================================================================="
 	echo "upstream_commit(s) are updated."
 	echo "upstream.patch(s) are generated."
 	echo "To apply it, RUN FROM $ROOTDIR:"
-	if [ "$HAS_PALLETS" == "true" ]
-	then
-		echo "  git am -3 --directory=pallets < pallets/upstream.patch"
-	fi
-	if [ "$HAS_WORKER" == "true" ]
-	then
-		echo "  git am -3 --exclude=tee-worker/Cargo.lock --exclude=tee-worker/enclave-runtime/Cargo.lock --directory=tee-worker < tee-worker/upstream.patch"
-	fi
+	echo " # Pallet patches:"
+	echo " git apply --allow-empty -p1 -3 --directory=pallets $ROOTDIR/pallets/pallets_xxx.patch"
+	echo " # Primitive patches:"
+	echo " git apply --allow-empty -p1 -3 $ROOTDIR/pallets/primitives_xxx.patch"
+
 	echo ""
 	echo "after that, please:"
 	echo "- pay special attention: "
-	if [ "$HAS_PALLETS" == "true" ]
-	then
-		echo "  * ALL changes/conflicts from pallets/upstream.patch should ONLY apply into:"
-		echo "    - pallets/(parentchain, sidechain, teeracle, teerex, test-utils)"
-		echo "    - primitives/(common, sidechain, teeracle, teerex)"
-	fi
-	if [ "$HAS_WORKER" == "true" ]
-	then
-		echo "  * ALL changes/conflicts from tee-worker/upstream.patch patch should ONLY apply into:"
-		echo "    - tee-worker"
-	fi
+	echo "  * ALL changes/conflicts from pallets_xxx.patch should ONLY apply into:"
+	echo "    - pallets/(parentchain, sidechain, teeracle, teerex, test-utils)"
+	echo "    - primitives/(common, sidechain, teeracle, teerex)"
+}
+
+function apply_woker_tips() {
+	echo "======================================================================="
+	echo "upstream_commit(s) are updated."
+	echo "upstream.patch(s) are generated."
+	echo "To apply it, RUN FROM $ROOTDIR:"
+	echo "  git am -3 --exclude=tee-worker/Cargo.lock --exclude=tee-worker/enclave-runtime/Cargo.lock --directory=tee-worker < tee-worker/upstream.patch"
+
+	echo ""
+	echo "after that, please:"
+	echo "- pay special attention: "
+	echo "  * ALL changes/conflicts from tee-worker/upstream.patch patch should ONLY apply into:"
+	echo "    - tee-worker"
+
 	echo "- resolve any conflicts"
 	echo "- optionally update Cargo.lock file"
-	if [ "$HAS_WORKER" == "true" ]
-	then
-		echo "- apply the changes to $ROOTDIR/.github/workflows/tee-worker-ci.yml"
-	fi
-	echo "======================================================================="
-	if [ "$HAS_PALLETS" == "true" ] && [ "$HAS_WORKER" == "true" ]
-	then
-		echo "***********************************************************************"
-		echo "It is HIGHLY RECOMMENDED to apply patch and commit separately."
-		echo "If trapped in git am session, don't panic. Just resolve any conflicts and commit as usual."
-		echo "And abort the am session at the end: git am --abort"
-		echo "***********************************************************************"
-	fi
+	echo "- apply the changes to $ROOTDIR/.github/workflows/tee-worker-ci.yml"
+}
+
+if [ -z "$2" ]; then
+	usage; exit 1
 fi
+NEW_COMMIT=$2
+
+OPT="$1"
+case "$OPT" in
+	p)
+		check_upstream "pallets"
+		generate_pallets_patch "$@"
+		apply_pallets_tips
+		;;
+	w)
+		check_upstream "worker"
+		generate_worker_patch "$@"
+		apply_woker_tips
+		;;
+	*)
+		usage; exit 1 ;;
+esac
+
+
+

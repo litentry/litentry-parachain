@@ -30,8 +30,6 @@ services:
   demo-teeracle-generic:
     image: integritee-cli:dev
     container_name: integritee-teeracle-demo
-    volumes:
-      - ../cli:/usr/local/worker-cli
     build:
       context: ..
       dockerfile: build.Dockerfile

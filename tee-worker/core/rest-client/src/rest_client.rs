@@ -151,8 +151,8 @@ where
 
 		let body = String::from_utf8_lossy(&encoded_body).to_string();
 
-		debug!("response headers: {:?}", self.response_headers);
-		debug!("response body: {}", body);
+		trace!("response headers: {:?}", self.response_headers);
+		trace!("response body: {}", body);
 		Ok((self.body_wash_fn)(body))
 	}
 }

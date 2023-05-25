@@ -30,9 +30,6 @@
         "2001",
         "-h",
         "4545",
-        "--running-mode",
-        "mock",
-        "--enable-mock-server",
         "--ws-external"
       ],
       "subcommand_flags": [

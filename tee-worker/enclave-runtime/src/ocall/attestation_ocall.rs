@@ -218,13 +218,13 @@ impl<T: EnclaveAttestationOCallApi> GetSgxReport for T {
 		let rep = match rsgx_create_report(&target_info, &report_data) {
 			Ok(r) => {
 				debug!(
-					"[Enclave] Report creation successful. mr_signer.m = {:?}",
+					"    [Enclave] Report creation successful. mr_signer.m = {:?}",
 					r.body.mr_signer.m
 				);
 				r
 			},
 			Err(e) => {
-				error!("[Enclave] Report creation failed. {:?}", e);
+				error!("    [Enclave] Report creation failed. {:?}", e);
 				return Err(e)
 			},
 		};
