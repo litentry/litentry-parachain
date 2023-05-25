@@ -25,17 +25,24 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
-use litentry_primitives::{EvmNetwork, IndexingNetwork, SubstrateNetwork};
-use log::*;
+use litentry_primitives::{EvmNetwork, SubstrateNetwork, SupportedNetwork};
+use log::debug;
 use serde::{Deserialize, Serialize};
 use std::{
 	collections::HashMap,
-	default::Default,
 	format, str,
 	string::{String, ToString},
 	vec,
 	vec::Vec,
 };
+
+pub trait AchainableQuery<Query: ToGraphQL> {
+	fn verified_credentials_is_hodler(&mut self, params: Query) -> Result<IsHodlerOut, Error>;
+	fn verified_credentials_total_transactions(
+		&mut self,
+		params: Query,
+	) -> Result<Vec<TotalTxsStruct>, Error>;
+}
 
 pub struct GraphQLClient {
 	client: RestClient<HttpClient<DefaultSend>>,
@@ -47,79 +54,125 @@ impl Default for GraphQLClient {
 	}
 }
 
-/// TODO: https://github.com/litentry/litentry-parachain/pull/1534
-/// There are two issues here that need to be refactored later
-/// 1. The name of VerifiedCredentialsNetwork is a bit unclear
-/// 2. VerifiedCredentialsNetwork and IndexingNetwork are repeated, they should be one-to-one relationship, just keep one.
-/// What's even better is that we have a trait for each data provider, something like get_supported_network.
-#[derive(PartialEq, Eq, Hash, Debug, Clone)]
-pub enum VerifiedCredentialsNetwork {
-	Litentry,
-	Litmus,
-	LitentryRococo,
-	Polkadot,
-	Kusama,
-	Khala,
-	Ethereum,
-	TestNet,
+impl GraphQLClient {
+	pub fn new() -> Self {
+		let mut headers = Headers::new();
+		headers.insert(CONNECTION.as_str(), "close");
+		headers.insert(
+			AUTHORIZATION.as_str(),
+			G_DATA_PROVIDERS.read().unwrap().graphql_auth_key.clone().as_str(),
+		);
+		let client =
+			build_client(G_DATA_PROVIDERS.read().unwrap().graphql_url.clone().as_str(), headers);
+		GraphQLClient { client }
+	}
 }
 
-impl From<SubstrateNetwork> for VerifiedCredentialsNetwork {
-	fn from(network: SubstrateNetwork) -> Self {
-		match network {
-			SubstrateNetwork::Litmus => Self::Litmus,
-			SubstrateNetwork::Litentry => Self::Litentry,
-			SubstrateNetwork::LitentryRococo => Self::LitentryRococo,
-			SubstrateNetwork::Polkadot => Self::Polkadot,
-			SubstrateNetwork::Kusama => Self::Kusama,
-			SubstrateNetwork::Khala => Self::Khala,
-			SubstrateNetwork::TestNet => Self::TestNet,
+impl<Query: ToGraphQL> AchainableQuery<Query> for GraphQLClient {
+	fn verified_credentials_is_hodler(&mut self, query: Query) -> Result<IsHodlerOut, Error> {
+		let path = query.path();
+		let query_value = query.to_graphql();
+		debug!("verified_credentials_is_hodler query: {}", query_value);
+
+		let query = vec![("query", query_value.as_str())];
+		match self.client.get_with::<String, QLResponse>(path, query.as_slice()) {
+			Ok(response) =>
+				if let Some(value) = response.data.get("data") {
+					debug!("	[Graphql] value: {:?}", value);
+
+					serde_json::from_value(value.clone()).map_err(|e| {
+						let error_msg = format!("Deserialize GraphQL response error: {:?}", e);
+						Error::GraphQLError(error_msg)
+					})
+				} else {
+					Err(Error::GraphQLError("Invalid GraphQL response".to_string()))
+				},
+			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
+		}
+	}
+
+	fn verified_credentials_total_transactions(
+		&mut self,
+		query: Query,
+	) -> Result<Vec<TotalTxsStruct>, Error> {
+		let path = query.path();
+		let query_value = query.to_graphql();
+		debug!("verified_credentials_total_transactions query: {}", query_value);
+
+		let query = vec![("query", query_value.as_str())];
+		let response = self
+			.client
+			.get_with::<String, QLResponse>(path, query.as_slice())
+			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
+
+		let mut result: HashMap<String, TotalTxsStruct> = HashMap::new();
+		response.data.get("data").and_then(|v| v.as_object()).and_then(|map| {
+			for (_network, list) in map {
+				list.as_array().and_then(|element| {
+					for x in element {
+						// aggregate total_transactions from different networks, like group_by.
+						if let Ok(obj) = serde_json::from_value::<TotalTxsStruct>(x.clone()) {
+							if let Some(origin) = result.get_mut(&obj.address) {
+								origin.total_transactions += obj.total_transactions;
+							} else {
+								result.insert(obj.address.clone(), obj.clone());
+							}
+						}
+					}
+					None::<u8>
+				});
+			}
+			None::<u8>
+		});
+		if !result.is_empty() {
+			Ok(result.values().cloned().collect::<Vec<TotalTxsStruct>>())
+		} else {
+			Err(Error::GraphQLError("Invalid GraphQL response".to_string()))
 		}
 	}
 }
 
-impl From<EvmNetwork> for VerifiedCredentialsNetwork {
-	fn from(network: EvmNetwork) -> Self {
-		match network {
-			EvmNetwork::Ethereum => Self::Ethereum,
+pub trait GetSupportedNetworks {
+	fn get(&self) -> SupportedNetwork;
+}
+
+impl GetSupportedNetworks for SubstrateNetwork {
+	fn get(&self) -> SupportedNetwork {
+		match self {
+			SubstrateNetwork::Litmus => SupportedNetwork::Litmus,
+			SubstrateNetwork::Litentry => SupportedNetwork::Litentry,
+			SubstrateNetwork::LitentryRococo => SupportedNetwork::LitentryRococo,
+			SubstrateNetwork::Polkadot => SupportedNetwork::Polkadot,
+			SubstrateNetwork::Kusama => SupportedNetwork::Kusama,
+			SubstrateNetwork::Khala => SupportedNetwork::Khala,
+			SubstrateNetwork::TestNet => SupportedNetwork::TestNet,
+		}
+	}
+}
+
+impl GetSupportedNetworks for EvmNetwork {
+	fn get(&self) -> SupportedNetwork {
+		match self {
+			EvmNetwork::Ethereum => SupportedNetwork::Ethereum,
 			// TODO: how about BSC?
 			EvmNetwork::BSC => unreachable!("support BSC?"),
 		}
 	}
 }
 
-impl From<IndexingNetwork> for VerifiedCredentialsNetwork {
-	fn from(network: IndexingNetwork) -> Self {
-		match network {
-			IndexingNetwork::Litmus => Self::Litmus,
-			IndexingNetwork::Litentry => Self::Litentry,
-			IndexingNetwork::Polkadot => Self::Polkadot,
-			IndexingNetwork::Kusama => Self::Kusama,
-			IndexingNetwork::Khala => Self::Khala,
-			IndexingNetwork::Ethereum => Self::Ethereum,
-		}
+pub trait ToGraphQL {
+	fn path(&self) -> String {
+		"latest/graphql".to_string()
 	}
+
+	fn to_graphql(&self) -> String;
 }
 
-impl std::fmt::Display for VerifiedCredentialsNetwork {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		match *self {
-			VerifiedCredentialsNetwork::Litentry => write!(f, "Litentry"),
-			VerifiedCredentialsNetwork::Litmus => write!(f, "Litmus"),
-			VerifiedCredentialsNetwork::LitentryRococo => write!(f, "LitentryRococo"),
-			VerifiedCredentialsNetwork::Polkadot => write!(f, "Polkadot"),
-			VerifiedCredentialsNetwork::Kusama => write!(f, "Kusama"),
-			VerifiedCredentialsNetwork::Khala => write!(f, "Khala"),
-			VerifiedCredentialsNetwork::Ethereum => write!(f, "Ethereum"),
-			VerifiedCredentialsNetwork::TestNet => write!(f, "TestNet"),
-		}
-	}
-}
-
+#[derive(Debug)]
 pub struct VerifiedCredentialsIsHodlerIn {
 	pub addresses: Vec<String>,
 	pub from_date: String,
-	pub network: VerifiedCredentialsNetwork,
+	pub network: SupportedNetwork,
 	pub token_address: String,
 	pub min_balance: String,
 }
@@ -128,14 +181,16 @@ impl VerifiedCredentialsIsHodlerIn {
 	pub fn new(
 		addresses: Vec<String>,
 		from_date: String,
-		network: VerifiedCredentialsNetwork,
+		network: SupportedNetwork,
 		token_address: String,
 		min_balance: String,
 	) -> Self {
 		VerifiedCredentialsIsHodlerIn { addresses, from_date, network, token_address, min_balance }
 	}
+}
 
-	pub fn to_graphql(&self) -> String {
+impl ToGraphQL for VerifiedCredentialsIsHodlerIn {
+	fn to_graphql(&self) -> String {
 		let addresses_str = format!("{:?}", self.addresses);
 		let network = format!("{:?}", self.network).to_lowercase();
 		if self.token_address.is_empty() {
@@ -146,18 +201,20 @@ impl VerifiedCredentialsIsHodlerIn {
 	}
 }
 
-// TODO make the struct name more intuitive
+#[derive(Debug)]
 pub struct VerifiedCredentialsTotalTxs {
 	addresses: Vec<String>,
-	networks: Vec<VerifiedCredentialsNetwork>,
+	networks: Vec<SupportedNetwork>,
 }
 
 impl VerifiedCredentialsTotalTxs {
-	pub fn new(addresses: Vec<String>, networks: Vec<VerifiedCredentialsNetwork>) -> Self {
+	pub fn new(addresses: Vec<String>, networks: Vec<SupportedNetwork>) -> Self {
 		VerifiedCredentialsTotalTxs { addresses, networks }
 	}
+}
 
-	pub fn to_graphql(&self) -> String {
+impl ToGraphQL for VerifiedCredentialsTotalTxs {
+	fn to_graphql(&self) -> String {
 		let addresses_str = format!("{:?}", self.addresses);
 		let q = self
 			.networks
@@ -188,9 +245,9 @@ impl RestPath<String> for QLResponse {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "PascalCase")]
 pub struct IsHodlerOut {
-	pub verified_credentials_is_hodler: Vec<IsHodlerOutStruct>,
+	#[serde(rename = "VerifiedCredentialsIsHodler")]
+	pub hodlers: Vec<IsHodlerOutStruct>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -207,92 +264,10 @@ pub struct TotalTxsStruct {
 	pub total_transactions: u64,
 }
 
-impl GraphQLClient {
-	pub fn new() -> Self {
-		let mut headers = Headers::new();
-		headers.insert(CONNECTION.as_str(), "close");
-		headers.insert(
-			AUTHORIZATION.as_str(),
-			G_DATA_PROVIDERS.read().unwrap().graphql_auth_key.clone().as_str(),
-		);
-		let client =
-			build_client(G_DATA_PROVIDERS.read().unwrap().graphql_url.clone().as_str(), headers);
-		GraphQLClient { client }
-	}
-
-	pub fn check_verified_credentials_is_hodler(
-		&mut self,
-		credentials: VerifiedCredentialsIsHodlerIn,
-	) -> Result<IsHodlerOut, Error> {
-		debug!("check is_holder, credentials: {}", credentials.to_graphql());
-
-		// FIXME: for the moment, the `path` is partially hard-code here.
-		let path = "latest/graphql".to_string();
-		let query_value = credentials.to_graphql();
-		let query = vec![("query", query_value.as_str())];
-
-		match self.client.get_with::<String, QLResponse>(path, query.as_slice()) {
-			Ok(response) =>
-				if let Some(value) = response.data.get("data") {
-					debug!("	[Graphql] value: {:?}", value);
-
-					serde_json::from_value(value.clone()).map_err(|e| {
-						let error_msg = format!("Deserialize GraphQL response error: {:?}", e);
-						Error::GraphQLError(error_msg)
-					})
-				} else {
-					Err(Error::GraphQLError("Invalid GraphQL response".to_string()))
-				},
-			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
-		}
-	}
-
-	pub fn query_total_transactions(
-		&mut self,
-		credentials: VerifiedCredentialsTotalTxs,
-	) -> Result<Vec<TotalTxsStruct>, Error> {
-		debug!("check total_trx, credentials: {}", credentials.to_graphql());
-
-		let path = "latest/graphql".to_string();
-		let query_value = credentials.to_graphql();
-		let query = vec![("query", query_value.as_str())];
-		let response = self
-			.client
-			.get_with::<String, QLResponse>(path, query.as_slice())
-			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
-
-		let mut result: HashMap<String, TotalTxsStruct> = HashMap::new();
-
-		response.data.get("data").and_then(|v| v.as_object()).and_then(|map| {
-			for (_network, list) in map {
-				list.as_array().and_then(|element| {
-					for x in element {
-						// aggregate total_transactions from different networks, like group_by.
-						if let Ok(obj) = serde_json::from_value::<TotalTxsStruct>(x.clone()) {
-							if let Some(origin) = result.get_mut(&obj.address) {
-								origin.total_transactions += obj.total_transactions;
-							} else {
-								result.insert(obj.address.clone(), obj.clone());
-							}
-						}
-					}
-					None::<u8>
-				});
-			}
-			None::<u8>
-		});
-		if !result.is_empty() {
-			Ok(result.values().cloned().collect::<Vec<TotalTxsStruct>>())
-		} else {
-			Err(Error::GraphQLError("Invalid GraphQL response".to_string()))
-		}
-	}
-}
-
 #[cfg(test)]
 mod tests {
 	use crate::graphql::{
-		GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork,
+		AchainableQuery, GraphQLClient, SupportedNetwork, VerifiedCredentialsIsHodlerIn,
 		VerifiedCredentialsTotalTxs, G_DATA_PROVIDERS,
 	};
 	use itp_stf_primitives::types::AccountId;
@@ -319,15 +294,15 @@ mod tests {
 		let credentials = VerifiedCredentialsIsHodlerIn {
 			addresses: vec![ACCOUNT_ADDRESS1.to_string(), ACCOUNT_ADDRESS2.to_string()],
 			from_date: "2022-10-16T00:00:00Z".to_string(),
-			network: VerifiedCredentialsNetwork::Ethereum,
+			network: SupportedNetwork::Ethereum,
 			token_address: LIT_TOKEN_ADDRESS.to_string(),
 			min_balance: "0.00000056".into(),
 		};
-		let response = client.check_verified_credentials_is_hodler(credentials);
+		let response = client.verified_credentials_is_hodler(credentials);
 		assert!(response.is_ok(), "due to error:{:?}", response.unwrap_err());
 		let is_hodler_out = response.unwrap();
-		assert_eq!(is_hodler_out.verified_credentials_is_hodler[0].is_hodler, false);
-		assert_eq!(is_hodler_out.verified_credentials_is_hodler[1].is_hodler, false);
+		assert_eq!(is_hodler_out.hodlers[0].is_hodler, false);
+		assert_eq!(is_hodler_out.hodlers[1].is_hodler, false);
 	}
 
 	#[test]
@@ -336,13 +311,10 @@ mod tests {
 
 		let query = VerifiedCredentialsTotalTxs {
 			addresses: vec!["EGP7XztdTosm1EmaATZVMjSWujGEj9nNidhjqA2zZtttkFg".to_string()],
-			networks: vec![
-				VerifiedCredentialsNetwork::Kusama,
-				VerifiedCredentialsNetwork::Polkadot,
-			],
+			networks: vec![SupportedNetwork::Kusama, SupportedNetwork::Polkadot],
 		};
 		let mut client = GraphQLClient::new();
-		let r = client.query_total_transactions(query);
+		let r = client.verified_credentials_total_transactions(query);
 		assert!(r.is_ok());
 		let r = r.unwrap();
 		assert!(!r.is_empty());
