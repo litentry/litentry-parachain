@@ -13,10 +13,8 @@ import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
 import { LitentryIdentity, LitentryValidationData } from './common/type-definitions';
 import { handleIdentityEvents } from './common/utils';
-import { assert } from 'chai';
 import { multiAccountTxSender } from './common/transactions';
-import { u8aToHex } from '@polkadot/util';
-import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
+import { SubmittableResult } from '@polkadot/api';
 
 //Explain how to use this test, which has two important parameters:
 //1.The "number" parameter in describeLitentry represents the number of accounts generated, including Substrate wallets and Ethereum wallets.If you want to use a large number of accounts for testing, you can modify this parameter.
@@ -37,22 +35,23 @@ describeLitentry('multiple accounts test', 2, async (context) => {
         });
     });
     step('send test token to each account', async () => {
-        const txs: SubmittableExtrinsic<ApiTypes>[] = [];
+        const txs: any = [];
         for (let i = 0; i < substrateSigners.length; i++) {
             //1 token
             const tx = context.api.tx.balances.transfer(substrateSigners[i].address, '1000000000000');
             txs.push(tx);
         }
 
-        await new Promise((resolve) => {
+        await new Promise((resolve, reject) => {
             context.api.tx.utility
                 .batch(txs)
                 .signAndSend(context.substrateWallet.alice, async (result: SubmittableResult) => {
-                    if (result.status.isInBlock) {
+                    if (result.status.isFinalized) {
                         console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
                         resolve(result.status);
                     } else if (result.status.isInvalid) {
                         console.log(`Transaction is ${result.status}`);
+                        reject(result.status);
                     }
                 });
         });

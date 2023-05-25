@@ -102,6 +102,8 @@ describeLitentry('Test Identity', 0, (context) => {
         await assertInitialIDGraphCreated(context.api, context.substrateWallet.bob, bob);
     });
 
+
+
     step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
         const resp_shieldingKey = await checkUserShieldingKeys(
             context,
