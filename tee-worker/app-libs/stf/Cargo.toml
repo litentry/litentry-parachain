@@ -1,8 +1,8 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
 name = "ita-stf"
 version = "0.9.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+edition = "2021"
 
 [dependencies]
 # crates.io
@@ -60,11 +60,12 @@ sgx = [
     "itp-utils/sgx",
     "sp-io/sgx",
     "itp-node-api/sgx",
+    "itp-node-api-metadata-provider/sgx",
+    # litentry
     "litentry-primitives/sgx",
     "lc-scheduled-enclave/sgx",
     "lc-stf-task-sender/sgx",
     "rand-sgx",
-    "itp-node-api-metadata-provider/sgx",
 ]
 std = [
     # crates.io
@@ -72,8 +73,6 @@ std = [
     "log/std",
     "rlp/std",
     # local
-    "itp-node-api-metadata/std",
-    "itp-node-api-metadata-provider/std",
     "ita-sgx-runtime/std",
     "itp-hashing/std",
     "itp-sgx-externalities/std",
@@ -94,6 +93,9 @@ std = [
     "sp-runtime/std",
     "pallet-parentchain/std",
     "sp-io/std",
+    # litentry
+    "itp-node-api-metadata/std",
+    "itp-node-api-metadata-provider/std",
     "ita-sgx-runtime/std",
     "itp-node-api/std",
     "litentry-primitives/std",

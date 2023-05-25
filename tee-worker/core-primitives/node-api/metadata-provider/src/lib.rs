@@ -69,7 +69,7 @@ impl<NodeMetadata> NodeMetadataRepository<NodeMetadata> {
 
 impl<NodeMetadata> AccessNodeMetadata for NodeMetadataRepository<NodeMetadata>
 where
-	NodeMetadata: Default,
+	NodeMetadata:,
 {
 	type MetadataType = NodeMetadata;
 

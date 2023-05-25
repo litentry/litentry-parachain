@@ -17,7 +17,7 @@ targets = ['x86_64-unknown-linux-gnu']
 
 [dependencies]
 async-trait = "0.1.68"
-clap = { version = "4.2.1", features = ["derive"] }
+clap = { version = "4.3.0", features = ["derive"] }
 codec = { package = "parity-scale-codec", version = "3.0.0" }
 futures = { version = "0.3.28", features = ["compat"] }
 hex-literal = "0.4.1"
@@ -104,26 +104,26 @@ substrate-build-script-utils = { git = "https://github.com/paritytech/substrate"
 [features]
 default = []
 fast-runtime = [
-  "litentry-parachain-runtime/fast-runtime",
-  "litmus-parachain-runtime/fast-runtime",
-  "rococo-parachain-runtime/fast-runtime",
+    "litentry-parachain-runtime/fast-runtime",
+    "litmus-parachain-runtime/fast-runtime",
+    "rococo-parachain-runtime/fast-runtime",
 ]
 runtime-benchmarks = [
-  "litentry-parachain-runtime/runtime-benchmarks",
-  "litmus-parachain-runtime/runtime-benchmarks",
-  "rococo-parachain-runtime/runtime-benchmarks",
-  "polkadot-service/runtime-benchmarks",
-  "polkadot-cli/runtime-benchmarks",
+    "litentry-parachain-runtime/runtime-benchmarks",
+    "litmus-parachain-runtime/runtime-benchmarks",
+    "rococo-parachain-runtime/runtime-benchmarks",
+    "polkadot-service/runtime-benchmarks",
+    "polkadot-cli/runtime-benchmarks",
 ]
 try-runtime = [
-  "litentry-parachain-runtime/try-runtime",
-  "litmus-parachain-runtime/try-runtime",
-  "rococo-parachain-runtime/try-runtime",
-  "polkadot-service/try-runtime",
-  "polkadot-cli/try-runtime",
+    "litentry-parachain-runtime/try-runtime",
+    "litmus-parachain-runtime/try-runtime",
+    "rococo-parachain-runtime/try-runtime",
+    "polkadot-service/try-runtime",
+    "polkadot-cli/try-runtime",
 ]
 # allow workers to register without remote attestation for dev purposes
 # currently only available on litmus and rococo
 tee-dev = [
-  "rococo-parachain-runtime/tee-dev",
+    "rococo-parachain-runtime/tee-dev",
 ]

@@ -47,10 +47,10 @@ use sp_std::marker::PhantomData;
 
 /// Weight functions needed for pallet_teeracle.
 pub trait WeightInfo {
-	fn update_exchange_rate() -> Weight;
-	fn update_oracle() -> Weight;
 	fn add_to_whitelist() -> Weight;
 	fn remove_from_whitelist() -> Weight;
+	fn update_exchange_rate() -> Weight;
+	fn update_oracle() -> Weight;
 }
 
 /// Weights for pallet_teeracle using the Litentry node and recommended hardware.

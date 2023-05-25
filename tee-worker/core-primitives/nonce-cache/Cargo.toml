@@ -1,8 +1,8 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
 name = "itp-nonce-cache"
 version = "0.8.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+edition = "2021"
 
 [dependencies]
 # sgx dependencies
@@ -21,10 +21,10 @@ lazy_static = { version = "1.1.0", features = ["spin_no_std"] }
 
 [features]
 default = ["std"]
+std = [
+    "thiserror",
+]
 sgx = [
     "sgx_tstd",
     "thiserror_sgx",
-]
-std = [
-    "thiserror",
 ]

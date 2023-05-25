@@ -1,8 +1,8 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
 name = "itp-top-pool"
 version = "0.9.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+edition = "2021"
 
 [dependencies]
 # sgx dependencies
@@ -42,7 +42,6 @@ parity-util-mem = { version = "0.12.0", default-features = false, features = ["p
 
 [features]
 default = ["std"]
-mocks = []
 sgx = [
     "sgx_tstd",
     "sgx_types",
@@ -66,3 +65,4 @@ std = [
     "sp-application-crypto/std",
     "thiserror",
 ]
+mocks = []

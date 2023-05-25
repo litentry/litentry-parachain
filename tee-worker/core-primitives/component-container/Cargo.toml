@@ -1,8 +1,8 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
 name = "itp-component-container"
 version = "0.8.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+edition = "2021"
 
 [dependencies]
 # sgx dependencies
@@ -16,11 +16,11 @@ thiserror = { version = "1.0", optional = true }
 
 [features]
 default = ["std"]
+std = [
+    "thiserror",
+]
 sgx = [
     # sgx
     "sgx_tstd",
     "thiserror_sgx",
-]
-std = [
-    "thiserror",
 ]

@@ -1,8 +1,8 @@
 [package]
-edition = "2021"
 name = "sgx-verify-fuzz"
-publish = false
 version = "0.0.0"
+publish = false
+edition = "2021"
 
 [package.metadata]
 cargo-fuzz = true
@@ -26,31 +26,31 @@ members = ["."]
 debug = 1
 
 [[bin]]
-doc = false
 name = "decode_quote"
 path = "fuzz_targets/decode_quote.rs"
 test = false
+doc = false
 
 [[bin]]
-doc = false
 name = "deserialize_json"
 path = "fuzz_targets/deserialize_json.rs"
 test = false
+doc = false
 
 [[bin]]
-doc = false
 name = "signature_check"
 path = "fuzz_targets/signature_check.rs"
 test = false
+doc = false
 
 [[bin]]
-doc = false
 name = "extract_tcb_info"
 path = "fuzz_targets/extract_tcb_info.rs"
 test = false
+doc = false
 
 [[bin]]
-doc = false
 name = "verify_ias_report"
 path = "fuzz_targets/verify_ias_report.rs"
 test = false
+doc = false

@@ -16,7 +16,7 @@ services:
       integritee-node:
         condition: service_healthy
     environment:
-      - RUST_LOG=warn,ws=warn,sp_io=warn,substrate_api_client=warn,jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=warn,integritee_service=info,integritee_service::teeracle=debug,ita_stf=warn,ita_oracle=debug
+      - RUST_LOG=warn,ws=warn,sp_io=warn,substrate_api_client=warn,jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=warn,integritee_service=info,integritee_service::teeracle=debug,ita_stf=warn,ita_exchange_oracle=debug
       - COINMARKETCAP_KEY
     networks:
       - integritee-test-network
@@ -33,8 +33,6 @@ services:
   demo-teeracle:
     image: integritee-cli:dev
     container_name: integritee-teeracle-demo
-    volumes:
-      - ../cli:/usr/local/worker-cli
     build:
       context: ..
       dockerfile: build.Dockerfile

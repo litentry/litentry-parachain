@@ -22,9 +22,7 @@ use crate::{helpers::enclave_signer_account, Stf, StfError, ENCLAVE_ACCOUNT_KEY}
 use codec::Encode;
 use frame_support::traits::{OriginTrait, UnfilteredDispatchable};
 use ita_sgx_runtime::Executive;
-use itp_node_api::metadata::{
-	pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata,
-};
+use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_interface::{
 	parentchain_pallet::ParentchainPalletInterface,
@@ -130,7 +128,7 @@ where
 	Call: ExecuteCall<NodeMetadataRepository>,
 	State: SgxExternalitiesTrait + Debug,
 	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes,
+	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 {
 	type Error = Call::Error;
 

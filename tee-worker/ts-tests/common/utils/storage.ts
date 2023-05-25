@@ -105,8 +105,7 @@ export async function checkUserShieldingKeys(
         id: 1,
     };
     let resp = await sendRequest(context.tee, request, context.api);
-
-    return resp.value;
+    return resp.value.toHex();
 }
 
 export async function checkUserChallengeCode(
@@ -127,7 +126,7 @@ export async function checkUserChallengeCode(
         id: 1,
     };
     let resp = await sendRequest(context.tee, request, context.api);
-    return resp.value;
+    return resp.value.toHex();
 }
 
 export async function checkIDGraph(

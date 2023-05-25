@@ -2,8 +2,6 @@ services:
   demo-sidechain:
     image: integritee-cli:dev
     container_name: integritee-sidechain-demo
-    volumes:
-      - ../cli:/usr/local/worker-cli
     build:
       context: ..
       dockerfile: build.Dockerfile

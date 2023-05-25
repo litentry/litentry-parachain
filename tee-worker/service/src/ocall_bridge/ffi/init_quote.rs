@@ -34,7 +34,7 @@ fn sgx_init_quote(
 	ret_gid: *mut sgx_epid_group_id_t,
 	ra_api: Arc<dyn RemoteAttestationBridge>,
 ) -> sgx_status_t {
-	debug!("Entering ocall_sgx_init_quote");
+	debug!("    Entering ocall_sgx_init_quote");
 	let init_result = match ra_api.init_quote() {
 		Ok(r) => r,
 		Err(e) => {

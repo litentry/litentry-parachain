@@ -71,6 +71,10 @@ declare module '@polkadot/api-base/types/errors' {
              **/
             IdentityNotExist: AugmentedError<ApiType>;
             /**
+             * IDGraph len limit reached
+             **/
+            IDGraphLenLimitReached: AugmentedError<ApiType>;
+            /**
              * remove prime identiy should be disallowed
              **/
             RemovePrimeIdentityDisallowed: AugmentedError<ApiType>;

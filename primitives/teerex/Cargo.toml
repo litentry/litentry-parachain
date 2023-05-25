@@ -24,12 +24,12 @@ hex-literal = "0.4.1"
 [features]
 default = ["std"]
 std = [
-  "codec/std",
-  "common-primitives/std",
-  "scale-info/std",
-  "serde/std",
-  # substrate
-  "sp-core/std",
-  "sp-io/std",
-  "sp-std/std",
+    "codec/std",
+    "common-primitives/std",
+    "scale-info/std",
+    "serde/std",
+    # substrate
+    "sp-core/std",
+    "sp-io/std",
+    "sp-std/std",
 ]
