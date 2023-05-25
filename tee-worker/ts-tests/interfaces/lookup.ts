@@ -641,6 +641,7 @@ export default {
             'VerificationRequestTooEarly',
             'VerificationRequestTooLate',
             'RemovePrimeIdentityDisallowed',
+            'IDGraphLenLimitReached',
         ],
     },
     /**

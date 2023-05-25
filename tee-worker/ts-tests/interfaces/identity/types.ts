@@ -211,7 +211,26 @@ export interface TrustedCallSigned extends Struct {
 export interface TrustedGetter extends Enum {
     readonly isFreeBalance: boolean;
     readonly asFreeBalance: AccountId;
-    readonly type: 'FreeBalance';
+    readonly isReservedBalance: boolean;
+    readonly asReservedBalance: AccountId;
+    readonly isNonce: boolean;
+    readonly asNonce: AccountId;
+    readonly isUserShieldingKey: boolean;
+    readonly asUserShieldingKey: AccountId;
+    readonly isIdGraph: boolean;
+    readonly asIdGraph: AccountId;
+    readonly isChallengeCode: boolean;
+    readonly asChallengeCode: ITuple<[AccountId, LitentryIdentity]>;
+    readonly isIdGraphStats: boolean;
+    readonly asIdGraphStats: AccountId;
+    readonly type:
+        | 'FreeBalance'
+        | 'ReservedBalance'
+        | 'Nonce'
+        | 'UserShieldingKey'
+        | 'IdGraph'
+        | 'ChallengeCode'
+        | 'IdGraphStats';
 }
 
 /** @name TrustedGetterSigned */
@@ -310,11 +329,6 @@ export interface Web3ValidationData extends Enum {
     readonly isEvm: boolean;
     readonly asEvm: Web3CommonValidationData;
     readonly type: 'Substrate' | 'Evm';
-}
-
-/** @name WorkerRpcReturnString */
-export interface WorkerRpcReturnString extends Struct {
-    readonly vec: Bytes;
 }
 
 /** @name WorkerRpcReturnValue */

@@ -42,6 +42,7 @@ pub trait StfEnclaveSigning {
 		shard: &ShardIdentifier,
 	) -> Result<TrustedCallSigned>;
 
+	// litentry
 	fn sign_vc_with_self(&self, payload: &[u8]) -> Result<(AccountId, Vec<u8>)>;
 }
 

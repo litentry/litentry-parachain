@@ -2,7 +2,7 @@
 	"license": "ISC",
 	"scripts": {
 		"format": "yarn prettier --write .",
-		"gen-meta": "yarn gen-meta:sidechain && gen-meta:parachain",
+		"gen-meta": "yarn gen-meta:sidechain && yarn gen-meta:parachain",
 		"gen-meta:sidechain": "../bin/integritee-cli print-sgx-metadata-raw > litentry-sidechain-metadata.json",
 		"gen-meta:parachain": "curl -s -H \"Content-Type: application/json\" -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' http://localhost:9933 > litentry-parachain-metadata.json",
 		"gen-type": "yarn gen-type:defs && yarn gen-type:meta && yarn format",

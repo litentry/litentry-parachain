@@ -58,7 +58,7 @@ use std::{
 	io::{Read, Write},
 	net::TcpStream,
 	prelude::v1::*,
-	str,
+	println, str,
 	string::{String, ToString},
 	sync::Arc,
 	vec::Vec,
@@ -159,12 +159,12 @@ where
 
 		if let Err(err) = io::write(&cert_der, RA_DUMP_CERT_DER_FILE) {
 			error!(
-				"[Enclave] failed to write RA file ({}), status: {:?}",
+				"    [Enclave] failed to write RA file ({}), status: {:?}",
 				RA_DUMP_CERT_DER_FILE, err
 			);
 			return Err(Error::IoError(err))
 		}
-		info!("[Enclave] dumped ra cert to {}", RA_DUMP_CERT_DER_FILE);
+		info!("    [Enclave] dumped ra cert to {}", RA_DUMP_CERT_DER_FILE);
 		Ok(())
 	}
 
@@ -181,12 +181,12 @@ where
 
 		if let Err(err) = io::write(&dcap_quote, RA_DUMP_CERT_DER_FILE) {
 			error!(
-				"[Enclave] failed to write RA file ({}), status: {:?}",
+				"    [Enclave] failed to write RA file ({}), status: {:?}",
 				RA_DUMP_CERT_DER_FILE, err
 			);
 			return Err(Error::IoError(err))
 		}
-		info!("[Enclave] dumped ra cert to {}", RA_DUMP_CERT_DER_FILE);
+		info!("    [Enclave] dumped ra cert to {}", RA_DUMP_CERT_DER_FILE);
 		Ok(())
 	}
 
@@ -198,26 +198,28 @@ where
 		let chain_signer = Ed25519Seal::unseal_from_static_file()?;
 		info!("[Enclave Attestation] Ed25519 pub raw : {:?}", chain_signer.public().0);
 
+		info!("    [Enclave] Generate keypair");
 		let ecc_handle = SgxEccHandle::new();
 		let _result = ecc_handle.open();
 		let (prv_k, pub_k) = ecc_handle.create_key_pair()?;
-		info!("[Enclave] Generate ephemeral ECDSA keypair successful");
-		debug!("pubkey X is {:02x}", pub_k.gx.iter().format(""));
-		debug!("pubkey Y is {:02x}", pub_k.gy.iter().format(""));
+		info!("    [Enclave] Generate ephemeral ECDSA keypair successful");
+		debug!("     pubkey X is {:02x}", pub_k.gx.iter().format(""));
+		debug!("     pubkey Y is {:02x}", pub_k.gy.iter().format(""));
 
 		let payload = if !skip_ra {
+			info!("    [Enclave] Create attestation report");
 			let (attn_report, sig, cert) =
 				match self.create_attestation_report(&chain_signer.public().0, sign_type) {
 					Ok(r) => r,
 					Err(e) => {
-						error!("[Enclave] Error in create_attestation_report: {:?}", e);
+						error!("    [Enclave] Error in create_attestation_report: {:?}", e);
 						return Err(e.into())
 					},
 				};
-			info!("[Enclave] Create attestation report successful");
-			debug!("attn_report 		= {:?}", attn_report);
-			debug!("sig         		= {:?}", sig);
-			debug!("cert        		= {:?}", cert);
+			println!("    [Enclave] Create attestation report successful");
+			debug!("              attn_report = {:?}", attn_report);
+			debug!("              sig         = {:?}", sig);
+			debug!("              cert        = {:?}", cert);
 
 			// concat the information
 			attn_report + "|" + &sig + "|" + &cert
@@ -226,18 +228,18 @@ where
 		};
 
 		// generate an ECC certificate
+		info!("    [Enclave] Generate ECC Certificate");
 		let (key_der, cert_der) =
 			match cert::gen_ecc_cert(&payload.into_bytes(), &prv_k, &pub_k, &ecc_handle) {
 				Ok(r) => r,
 				Err(e) => {
-					error!("[Enclave] gen_ecc_cert failed: {:?}", e);
+					error!("    [Enclave] gen_ecc_cert failed: {:?}", e);
 					return Err(e.into())
 				},
 			};
 
 		let _ = ecc_handle.close();
-		info!("[Enclave] Generate ECC Certificate successful, cert_der.len: {}", cert_der.len());
-
+		info!("    [Enclave] Generate ECC Certificate successful");
 		Ok((key_der, cert_der))
 	}
 
@@ -298,11 +300,11 @@ where
 	}
 
 	fn parse_response_attn_report(&self, resp: &[u8]) -> EnclaveResult<(String, String, String)> {
-		debug!("[Enclave] Entering parse_response_attn_report");
+		debug!("    [Enclave] Entering parse_response_attn_report");
 		let mut headers = [httparse::EMPTY_HEADER; 16];
 		let mut respp = httparse::Response::new(&mut headers);
 		let result = respp.parse(resp);
-		debug!("[Enclave] respp.parse result {:?}", result);
+		debug!("    [Enclave] respp.parse result {:?}", result);
 
 		self.log_resp_code(&mut respp.code);
 
@@ -314,12 +316,13 @@ where
 
 		for i in 0..respp.headers.len() {
 			let h = respp.headers[i];
+			//println!("{} : {}", h.name, str::from_utf8(h.value).unwrap());
 			match h.name {
 				"Content-Length" => {
 					let len_str = String::from_utf8(h.value.to_vec())
 						.map_err(|e| EnclaveError::Other(e.into()))?;
 					len_num = len_str.parse::<u32>().map_err(|e| EnclaveError::Other(e.into()))?;
-					debug!("[Enclave] Content length = {}", len_num);
+					debug!("    [Enclave] Content length = {}", len_num);
 				},
 				"X-IASReport-Signature" =>
 					sig = String::from_utf8(h.value.to_vec())
@@ -344,7 +347,7 @@ where
 			let resp_body = &resp[header_len..];
 			attn_report =
 				String::from_utf8(resp_body.to_vec()).map_err(|e| EnclaveError::Other(e.into()))?;
-			debug!("[Enclave] Attestation report = {}", attn_report);
+			debug!("    [Enclave] Attestation report = {}", attn_report);
 		}
 
 		// len_num == 0
@@ -367,16 +370,16 @@ where
 				"Unknown error occured"
 			},
 		};
-		debug!("[Enclave] msg = {}", msg);
+		debug!("    [Enclave] msg = {}", msg);
 	}
 
 	fn parse_response_sigrl(&self, resp: &[u8]) -> EnclaveResult<Vec<u8>> {
-		debug!("[Enclave] Entering parse_response_sigrl");
+		debug!("    [Enclave] Entering parse_response_sigrl");
 		let mut headers = [httparse::EMPTY_HEADER; 16];
 		let mut respp = httparse::Response::new(&mut headers);
 		let result = respp.parse(resp);
-		debug!("[Enclave] Parse result   {:?}", result);
-		debug!("[Enclave] Parse response {:?}", respp);
+		debug!("    [Enclave] Parse result   {:?}", result);
+		debug!("    [Enclave] Parse response {:?}", respp);
 
 		self.log_resp_code(&mut respp.code);
 
@@ -388,7 +391,7 @@ where
 				let len_str = String::from_utf8(h.value.to_vec())
 					.map_err(|e| EnclaveError::Other(e.into()))?;
 				len_num = len_str.parse::<u32>().map_err(|e| EnclaveError::Other(e.into()))?;
-				debug!("[Enclave] Content length = {}", len_num);
+				debug!("    [Enclave] Content length = {}", len_num);
 			}
 		}
 
@@ -397,7 +400,7 @@ where
 			// if the the response is not complete, which cannot happen if the result is Ok().
 			let header_len = result.map_err(|e| EnclaveError::Other(e.into()))?.unwrap();
 			let resp_body = &resp[header_len..];
-			debug!("[Enclave] Base64-encoded SigRL: {:?}", resp_body);
+			debug!("    [Enclave] Base64-encoded SigRL: {:?}", resp_body);
 
 			let resp_str = str::from_utf8(resp_body).map_err(|e| EnclaveError::Other(e.into()))?;
 			return base64::decode(resp_str).map_err(|e| EnclaveError::Other(e.into()))
@@ -415,7 +418,7 @@ where
 	}
 
 	fn get_sigrl_from_intel(&self, fd: c_int, gid: u32) -> EnclaveResult<Vec<u8>> {
-		debug!("[Enclave] Entering get_sigrl_from_intel. fd = {:?}", fd);
+		debug!("    [Enclave] Entering get_sigrl_from_intel. fd = {:?}", fd);
 		let config = Self::make_ias_client_config();
 		//let sigrl_arg = SigRLArg { group_id : gid };
 		//let sigrl_req = sigrl_arg.to_httpreq();
@@ -426,7 +429,7 @@ where
 						  gid,
 						  DEV_HOSTNAME,
 						  ias_key);
-		debug!("[Enclave] request = {}", req);
+		debug!("    [Enclave]  request = {}", req);
 
 		let dns_name = webpki::DNSNameRef::try_from_ascii_str(DEV_HOSTNAME)
 			.map_err(|e| EnclaveError::Other(e.into()))?;
@@ -435,16 +438,18 @@ where
 		let mut tls = rustls::Stream::new(&mut sess, &mut sock);
 
 		let _result = tls.write(req.as_bytes());
-		debug!("[Enclave] tls.write complete");
-
 		let mut plaintext = Vec::new();
-		tls.read_to_end(&mut plaintext)?;
-		debug!("[Enclave] tls.read_to_end complete");
 
+		debug!("    [Enclave] tls.write complete");
+
+		tls.read_to_end(&mut plaintext)?;
+
+		debug!("    [Enclave] tls.read_to_end complete");
 		let resp_string =
 			String::from_utf8(plaintext.clone()).map_err(|e| EnclaveError::Other(e.into()))?;
 
-		debug!("[Enclave] resp_string = {}", resp_string);
+		debug!("    [Enclave] resp_string = {}", resp_string);
+
 		self.parse_response_sigrl(&plaintext)
 	}
 
@@ -454,7 +459,7 @@ where
 		fd: c_int,
 		quote: Vec<u8>,
 	) -> EnclaveResult<(String, String, String)> {
-		debug!("[Enclave] Entering get_report_from_intel. fd = {:?}", fd);
+		debug!("    [Enclave] Entering get_report_from_intel. fd = {:?}", fd);
 		let config = Self::make_ias_client_config();
 		let encoded_quote = base64::encode(&quote[..]);
 		let encoded_json = format!("{{\"isvEnclaveQuote\":\"{}\"}}\r\n", encoded_quote);
@@ -467,7 +472,7 @@ where
 						  ias_key,
 						  encoded_json.len(),
 						  encoded_json);
-		debug!("[Enclave] Req = {}", req);
+		debug!("    [Enclave] Req = {}", req);
 		let dns_name = webpki::DNSNameRef::try_from_ascii_str(DEV_HOSTNAME).map_err(|e| {
 			error!("Invalid DEV_HOSTNAME");
 			EnclaveError::Other(e.into())
@@ -477,17 +482,18 @@ where
 		let mut tls = rustls::Stream::new(&mut sess, &mut sock);
 
 		let _result = tls.write(req.as_bytes());
-		debug!("[Enclave] tls.write complete");
-
 		let mut plaintext = Vec::new();
+
+		debug!("    [Enclave] tls.write complete");
+
 		tls.read_to_end(&mut plaintext)?;
-		debug!("[Enclave] tls.read_to_end complete");
+		debug!("    [Enclave] tls.read_to_end complete");
 		let resp_string = String::from_utf8(plaintext.clone()).map_err(|e| {
-			error!("[Enclave] error decoding tls answer to string");
+			error!("    [Enclave] error decoding tls answer to string");
 			EnclaveError::Other(e.into())
 		})?;
 
-		debug!("[Enclave] resp_string = {}", resp_string);
+		debug!("    [Enclave] resp_string = {}", resp_string);
 
 		self.parse_response_attn_report(&plaintext)
 	}
@@ -516,14 +522,14 @@ where
 		let epid_group_id: sgx_epid_group_id_t = init_quote.1;
 		let target_info: sgx_target_info_t = init_quote.0;
 
-		debug!("[Enclave] EPID group id = {:?}", epid_group_id);
+		debug!("    [Enclave] EPID group id = {:?}", epid_group_id);
 
 		let eg_num = self.as_u32_le(epid_group_id);
 
 		// (1.5) get sigrl
 		let ias_socket = self.ocall_api.get_ias_socket()?;
 
-		info!("[Enclave] ias_sock = {}", ias_socket);
+		info!("    [Enclave] ias_sock = {}", ias_socket);
 
 		// Now sigrl_vec is the revocation list, a vec<u8>
 		let sigrl_vec: Vec<u8> = self.get_sigrl_from_intel(ias_socket, eg_num)?;
@@ -535,13 +541,13 @@ where
 		let report = match rsgx_create_report(&target_info, &report_data) {
 			Ok(r) => {
 				debug!(
-					"[Enclave] Report creation successful. mr_signer.m = {:x?}",
+					"    [Enclave] Report creation successful. mr_signer.m = {:x?}",
 					r.body.mr_signer.m
 				);
 				r
 			},
 			Err(e) => {
-				error!("[Enclave] Report creation failed. {:?}", e);
+				error!("    [Enclave] Report creation failed. {:?}", e);
 				return Err(e)
 			},
 		};
@@ -565,8 +571,7 @@ where
 		let spid: sgx_spid_t = Self::load_spid(RA_SPID_FILE)?;
 
 		let quote_result =
-			self.ocall_api
-				.get_quote(sigrl_vec.clone(), report, sign_type, spid, quote_nonce)?;
+			self.ocall_api.get_quote(sigrl_vec, report, sign_type, spid, quote_nonce)?;
 
 		let qe_report = quote_result.0;
 		let quote_content = quote_result.1;
@@ -574,9 +579,9 @@ where
 		// Added 09-28-2018
 		// Perform a check on qe_report to verify if the qe_report is valid
 		match rsgx_verify_report(&qe_report) {
-			Ok(()) => debug!("[Enclave] rsgx_verify_report success!"),
+			Ok(()) => debug!("    [Enclave] rsgx_verify_report success!"),
 			Err(x) => {
-				error!("[Enclave] rsgx_verify_report failed. {:?}", x);
+				error!("    [Enclave] rsgx_verify_report failed. {:?}", x);
 				return Err(x)
 			},
 		}
@@ -586,11 +591,11 @@ where
 			|| target_info.attributes.flags != qe_report.body.attributes.flags
 			|| target_info.attributes.xfrm != qe_report.body.attributes.xfrm
 		{
-			error!("[Enclave] qe_report does not match current target_info!");
+			error!("    [Enclave] qe_report does not match current target_info!");
 			return Err(sgx_status_t::SGX_ERROR_UNEXPECTED)
 		}
 
-		debug!("[Enclave] qe_report check success");
+		debug!("    [Enclave] qe_report check success");
 
 		// Check qe_report to defend against replay attack
 		// The purpose of p_qe_report is for the ISV enclave to confirm the QUOTE
@@ -610,17 +615,15 @@ where
 		let rhs_hash = rsgx_sha256_slice(&rhs_vec[..])?;
 		let lhs_hash = &qe_report.body.report_data.d[..32];
 
-		debug!("[Enclave] rhs hash = {:02X}", rhs_hash.iter().format(""));
-		debug!("[Enclave] lhs hash = {:02X}", lhs_hash.iter().format(""));
+		debug!("    [Enclave] rhs hash = {:02X}", rhs_hash.iter().format(""));
+		debug!("    [Enclave] lhs hash = {:02X}", lhs_hash.iter().format(""));
 
 		if rhs_hash != lhs_hash {
-			error!("[Enclave] Quote is tampered!");
+			error!("    [Enclave] Quote is tampered!");
 			return Err(sgx_status_t::SGX_ERROR_UNEXPECTED)
 		}
 
-		let (attn_report, sig, cert) =
-			self.get_report_from_intel(ias_socket, quote_content.clone())?;
-
+		let (attn_report, sig, cert) = self.get_report_from_intel(ias_socket, quote_content)?;
 		Ok((attn_report, sig, cert))
 	}
 

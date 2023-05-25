@@ -41,6 +41,7 @@ pub trait TeerexCallIndexes {
 
 	fn publish_hash_call_indexes(&self) -> Result<[u8; 2]>;
 
+	// litentry
 	fn update_scheduled_enclave(&self) -> Result<[u8; 2]>;
 
 	fn remove_scheduled_enclave(&self) -> Result<[u8; 2]>;

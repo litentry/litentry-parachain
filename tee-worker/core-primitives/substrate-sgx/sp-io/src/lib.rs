@@ -169,7 +169,7 @@ pub mod storage {
 	pub fn clear(key: &[u8]) {
 		with_externalities(|ext| {
 			if ext.remove(key).is_none() {
-				debug!("Tried to clear storage that was not existing");
+				info!("Tried to clear storage that was not existing");
 			}
 		});
 	}
@@ -233,7 +233,7 @@ pub mod storage {
 	///
 	/// Returns a `Vec<u8>` that holds the SCALE encoded hash.
 	pub fn root_version_1() -> [u8; 32] {
-		debug!("storage::root() unimplemented");
+		warn!("storage::root() unimplemented");
 		[0u8; 32]
 	}
 
@@ -243,12 +243,12 @@ pub mod storage {
 	///
 	/// Returns a `Vec<u8>` that holds the SCALE encoded hash.
 	pub fn root(version: StateVersion) -> [u8; 32] {
-		debug!("storage::root() unimplemented");
+		warn!("storage::root() unimplemented");
 		[0u8; 32]
 	}
 
 	pub fn changes_root(parent_hash: &[u8]) -> Option<[u8; 32]> {
-		debug!("storage::changes_root() unimplemented");
+		warn!("storage::changes_root() unimplemented");
 		Some([0u8; 32])
 	}
 
@@ -272,7 +272,7 @@ pub mod storage {
 	/// in unbalanced transactions. For example, FRAME users should use high level storage
 	/// abstractions.
 	pub fn start_transaction() {
-		debug!("storage::start_transaction unimplemented");
+		warn!("storage::start_transaction unimplemented");
 	}
 
 	/// Rollback the last transaction started by `start_transaction`.
@@ -283,7 +283,7 @@ pub mod storage {
 	///
 	/// Will panic if there is no open transaction.
 	pub fn rollback_transaction() {
-		debug!("storage::rollback_transaction unimplemented");
+		warn!("storage::rollback_transaction unimplemented");
 	}
 
 	/// Commit the last transaction started by `start_transaction`.
@@ -294,7 +294,7 @@ pub mod storage {
 	///
 	/// Will panic if there is no open transaction.
 	pub fn commit_transaction() {
-		debug!("storage::commit_transaction unimplemented");
+		warn!("storage::commit_transaction unimplemented");
 	}
 }
 
@@ -308,30 +308,30 @@ pub mod default_child_storage {
 		value_offset: u32,
 	) -> Option<u32> {
 		// TODO unimplemented
-		debug!("default_child_storage::read() unimplemented");
+		warn!("default_child_storage::read() unimplemented");
 		Some(0)
 	}
 
 	pub fn get(storage_key: &[u8], key: &[u8]) -> Option<Vec<u8>> {
 		// TODO: unimplemented
-		debug!("default_child_storage::get() unimplemented");
+		warn!("default_child_storage::get() unimplemented");
 		Some(vec![0, 1, 2, 3])
 	}
 
 	pub fn set(storage_key: &[u8], key: &[u8], value: &[u8]) {
-		debug!("default_child_storage::set() unimplemented");
+		warn!("default_child_storage::set() unimplemented");
 	}
 
 	pub fn clear(storage_key: &[u8], key: &[u8]) {
-		debug!("child storage::clear() unimplemented");
+		warn!("child storage::clear() unimplemented");
 	}
 
 	pub fn storage_kill_version_1(storage_key: &[u8]) {
-		debug!("child storage::storage_kill() unimplemented");
+		warn!("child storage::storage_kill() unimplemented");
 	}
 
 	pub fn storage_kill_version_2(storage_key: &[u8], limit: Option<u32>) -> bool {
-		debug!("child storage::storage_kill() unimplemented");
+		warn!("child storage::storage_kill() unimplemented");
 		false
 	}
 
@@ -339,12 +339,12 @@ pub mod default_child_storage {
 	///
 	/// See `Storage` module `clear_prefix` documentation for `limit` usage.
 	pub fn storage_kill(storage_key: &[u8], limit: Option<u32>) -> KillStorageResult {
-		debug!("child storage::storage_kill() unimplemented");
+		warn!("child storage::storage_kill() unimplemented");
 		KillStorageResult::AllRemoved(0)
 	}
 
 	pub fn exists(storage_key: &[u8], key: &[u8]) -> bool {
-		debug!("child storage::exists() unimplemented");
+		warn!("child storage::exists() unimplemented");
 		false
 	}
 
@@ -352,7 +352,7 @@ pub mod default_child_storage {
 	///
 	/// Clear the child storage of each key-value pair where the key starts with the given `prefix`.
 	pub fn clear_prefix_version_1(storage_key: &[u8], prefix: &[u8]) {
-		debug!("child storage::clear_prefix() unimplemented");
+		warn!("child storage::clear_prefix() unimplemented");
 	}
 
 	/// Clear the child storage of each key-value pair where the key starts with the given `prefix`.
@@ -363,22 +363,22 @@ pub mod default_child_storage {
 		prefix: &[u8],
 		limit: Option<u32>,
 	) -> KillStorageResult {
-		debug!("child storage::clear_prefix() unimplemented");
+		warn!("child storage::clear_prefix() unimplemented");
 		KillStorageResult::AllRemoved(0)
 	}
 
 	pub fn root_version_1(storage_key: &[u8]) -> Vec<u8> {
-		debug!("child storage::root() unimplemented");
+		warn!("child storage::root() unimplemented");
 		vec![0, 1, 2, 3]
 	}
 
 	pub fn root(storage_key: &[u8], version: StateVersion) -> Vec<u8> {
-		debug!("child storage::root() unimplemented");
+		warn!("child storage::root() unimplemented");
 		vec![0, 1, 2, 3]
 	}
 
 	pub fn next_key(storage_key: &[u8], key: &[u8]) -> Option<Vec<u8>> {
-		debug!("child storage::next_key() unimplemented");
+		warn!("child storage::next_key() unimplemented");
 		Some(Vec::new())
 	}
 }
@@ -388,47 +388,47 @@ pub mod trie {
 
 	/// A trie root formed from the iterated items.
 	pub fn blake2_256_root_version_1(input: Vec<(Vec<u8>, Vec<u8>)>) -> H256 {
-		debug!("trie::blake2_256_root() unimplemented");
+		warn!("trie::blake2_256_root() unimplemented");
 		H256::default()
 	}
 
 	/// A trie root formed from the iterated items.
 	pub fn blake2_256_root(input: Vec<(Vec<u8>, Vec<u8>)>, version: StateVersion) -> H256 {
-		debug!("trie::blake2_256_root() unimplemented");
+		warn!("trie::blake2_256_root() unimplemented");
 		H256::default()
 	}
 
 	/// A trie root formed from the enumerated items.
 	pub fn blake2_256_ordered_root_version_1(input: Vec<Vec<u8>>) -> H256 {
-		debug!("trie::blake2_256_ordered_root() unimplemented");
+		warn!("trie::blake2_256_ordered_root() unimplemented");
 		H256::default()
 	}
 
 	/// A trie root formed from the enumerated items.
 	pub fn blake2_256_ordered_root(input: Vec<Vec<u8>>, version: StateVersion) -> H256 {
-		debug!("trie::blake2_256_ordered_root() unimplemented");
+		warn!("trie::blake2_256_ordered_root() unimplemented");
 		H256::default()
 	}
 
 	pub fn keccak_256_root_version_1(input: Vec<(Vec<u8>, Vec<u8>)>) -> H256 {
-		debug!("trie::keccak_256_root_version_1() unimplemented");
+		warn!("trie::keccak_256_root_version_1() unimplemented");
 		H256::default()
 	}
 
 	pub fn keccak_256_root(input: Vec<(Vec<u8>, Vec<u8>)>, version: StateVersion) -> H256 {
-		debug!("trie::keccak_256_root() unimplemented");
+		warn!("trie::keccak_256_root() unimplemented");
 		H256::default()
 	}
 
 	/// A trie root formed from the enumerated items.
 	pub fn keccak_256_ordered_root_version_1(input: Vec<Vec<u8>>) -> H256 {
-		debug!("trie::keccak_256_ordered_root() unimplemented");
+		warn!("trie::keccak_256_ordered_root() unimplemented");
 		H256::default()
 	}
 
 	/// A trie root formed from the enumerated items.
 	pub fn keccak_256_ordered_root(input: Vec<Vec<u8>>, version: StateVersion) -> H256 {
-		debug!("trie::keccak_256_ordered_root() unimplemented");
+		warn!("trie::keccak_256_ordered_root() unimplemented");
 		H256::default()
 	}
 
@@ -440,7 +440,7 @@ pub mod trie {
 		key: &[u8],
 		value: &[u8],
 	) -> bool {
-		debug!("trie::blake2_256_verify_proof() unimplemented");
+		warn!("trie::blake2_256_verify_proof() unimplemented");
 		false
 	}
 
@@ -453,7 +453,7 @@ pub mod trie {
 		value: &[u8],
 		version: StateVersion,
 	) -> bool {
-		debug!("trie::blake2_256_verify_proof() unimplemented");
+		warn!("trie::blake2_256_verify_proof() unimplemented");
 		false
 	}
 
@@ -465,7 +465,7 @@ pub mod trie {
 		key: &[u8],
 		value: &[u8],
 	) -> bool {
-		debug!("trie::keccak_256_verify_proof() unimplemented");
+		warn!("trie::keccak_256_verify_proof() unimplemented");
 		false
 	}
 
@@ -478,7 +478,7 @@ pub mod trie {
 		value: &[u8],
 		version: StateVersion,
 	) -> bool {
-		debug!("trie::keccak_256_verify_proof() unimplemented");
+		warn!("trie::keccak_256_verify_proof() unimplemented");
 		false
 	}
 }
@@ -503,7 +503,7 @@ pub mod misc {
 	}
 
 	pub fn runtime_version(wasm: &[u8]) -> Option<Vec<u8>> {
-		debug!("misc::runtime_version unimplemented!");
+		warn!("misc::runtime_version unimplemented!");
 		Some([2u8; 32].to_vec())
 	}
 }
@@ -513,12 +513,12 @@ pub mod crypto {
 	use super::*;
 	use sp_core::H512;
 	pub fn ed25519_public_keys(id: KeyTypeId) -> Vec<ed25519::Public> {
-		debug!("crypto::ed25519_public_keys unimplemented");
+		warn!("crypto::ed25519_public_keys unimplemented");
 		vec![ed25519::Public::from_h256(H256::default())]
 	}
 
 	pub fn ed25519_generate(id: KeyTypeId, seed: Option<Vec<u8>>) -> ed25519::Public {
-		debug!("crypto::ed25519_generate unimplemented");
+		warn!("crypto::ed25519_generate unimplemented");
 		ed25519::Public::from_h256(H256::default())
 	}
 
@@ -527,7 +527,7 @@ pub mod crypto {
 		pub_key: &ed25519::Public,
 		msg: &[u8],
 	) -> Option<ed25519::Signature> {
-		debug!("crypto::ed25519_sign unimplemented");
+		warn!("crypto::ed25519_sign unimplemented");
 
 		Some(ed25519::Signature::from_raw(H512::default().into()))
 	}
@@ -541,7 +541,7 @@ pub mod crypto {
 		msg: &[u8],
 		pub_key: &ed25519::Public,
 	) -> bool {
-		debug!("crypto::ed25519_batch_verify unimplemented");
+		warn!("crypto::ed25519_batch_verify unimplemented");
 		false
 	}
 
@@ -558,26 +558,26 @@ pub mod crypto {
 		msg: &[u8],
 		pub_key: &sr25519::Public,
 	) -> bool {
-		debug!("crypto::sr25519_batch_verify unimplemented");
+		warn!("crypto::sr25519_batch_verify unimplemented");
 		false
 	}
 	/// Start verification extension.
 	pub fn start_batch_verify() {
-		debug!("crypto::start_batch_verify unimplemented");
+		warn!("crypto::start_batch_verify unimplemented");
 	}
 
 	pub fn finish_batch_verify() -> bool {
-		debug!("crypto::finish_batch_verify unimplemented");
+		warn!("crypto::finish_batch_verify unimplemented");
 		true
 	}
 
 	pub fn sr25519_public_keys(id: KeyTypeId) -> Vec<sr25519::Public> {
-		debug!("crypto::sr25519_public_key unimplemented");
+		warn!("crypto::sr25519_public_key unimplemented");
 		vec![sr25519::Public::from_h256(H256::default())]
 	}
 
 	pub fn sr25519_generate(id: KeyTypeId, seed: Option<Vec<u8>>) -> sr25519::Public {
-		debug!("crypto::sr25519_generate unimplemented");
+		warn!("crypto::sr25519_generate unimplemented");
 		sr25519::Public::from_h256(H256::default())
 	}
 
@@ -586,7 +586,7 @@ pub mod crypto {
 		pubkey: &sr25519::Public,
 		msg: &[u8],
 	) -> Option<sr25519::Signature> {
-		debug!("crypto::sr25519_sign unimplemented");
+		warn!("crypto::sr25519_sign unimplemented");
 		Some(sr25519::Signature::from_raw(H512::default().into()))
 	}
 
@@ -599,7 +599,7 @@ pub mod crypto {
 
 	/// Returns all `ecdsa` public keys for the given key id from the keystore.
 	pub fn ecdsa_public_keys(id: KeyTypeId) -> Vec<ecdsa::Public> {
-		debug!("crypto::ecdsa_public_keys unimplemented");
+		warn!("crypto::ecdsa_public_keys unimplemented");
 		Vec::new()
 	}
 
@@ -610,7 +610,7 @@ pub mod crypto {
 	///
 	/// Returns the public key.
 	pub fn ecdsa_generate(id: KeyTypeId, seed: Option<Vec<u8>>) -> ecdsa::Public {
-		debug!("crypto::ecdsa_generate unimplemented");
+		warn!("crypto::ecdsa_generate unimplemented");
 		let raw: [u8; 33] = [0; 33];
 		ecdsa::Public::from_raw(raw)
 	}
@@ -624,7 +624,7 @@ pub mod crypto {
 		pub_key: &ecdsa::Public,
 		msg: &[u8],
 	) -> Option<ecdsa::Signature> {
-		debug!("crypto::ecdsa_sign unimplemented");
+		warn!("crypto::ecdsa_sign unimplemented");
 		None
 	}
 
@@ -644,7 +644,7 @@ pub mod crypto {
 	///
 	/// Returns `true` when the verification is either successful or batched.
 	pub fn ecdsa_batch_verify(sig: &ecdsa::Signature, msg: &[u8], pub_key: &ecdsa::Public) -> bool {
-		debug!("crypto::ecdsa_batch_verify unimplemented");
+		warn!("crypto::ecdsa_batch_verify unimplemented");
 		false
 	}
 
@@ -668,7 +668,7 @@ pub mod crypto {
 		sig: &[u8; 65],
 		msg: &[u8; 32],
 	) -> Result<[u8; 33], EcdsaVerifyError> {
-		debug!("crypto::secp256k1_ecdsa_recover unimplemented");
+		warn!("crypto::secp256k1_ecdsa_recover unimplemented");
 		Ok([0; 33])
 	}
 }
@@ -747,13 +747,13 @@ pub mod transaction_index {
 	/// Add transaction index. Returns indexed content hash.
 	#[allow(unused)]
 	fn index(extrinsic: u32, size: u32, context_hash: [u8; 32]) {
-		debug!("transaction_index::index unimplemented");
+		warn!("transaction_index::index unimplemented");
 	}
 
 	/// Conduct a 512-bit Keccak hash.
 	#[allow(unused)]
 	fn renew(extrinsic: u32, context_hash: [u8; 32]) {
-		debug!("transaction_index::renew unimplemented");
+		warn!("transaction_index::renew unimplemented");
 	}
 }
 
@@ -761,12 +761,12 @@ pub mod offchain_index {
 	use super::*;
 	/// Write a key value pair to the Offchain DB database in a buffered fashion.
 	pub fn set(key: &[u8], value: &[u8]) {
-		debug!("offchain_index::set unimplemented");
+		warn!("offchain_index::set unimplemented");
 	}
 
 	/// Remove a key and its associated value from the Offchain DB.
 	pub fn clear(key: &[u8]) {
-		debug!("offchain_index::clear unimplemented");
+		warn!("offchain_index::clear unimplemented");
 	}
 }
 
@@ -777,41 +777,41 @@ pub mod offchain {
 	use super::*;
 
 	pub fn is_validator() -> bool {
-		debug!("offchain::is_validator unimplemented");
+		warn!("offchain::is_validator unimplemented");
 		false
 	}
 
 	#[allow(clippy::result_unit_err)]
 	pub fn submit_transaction(data: Vec<u8>) -> Result<(), ()> {
-		debug!("offchain::submit_transaction unimplemented");
+		warn!("offchain::submit_transaction unimplemented");
 		Err(())
 	}
 
 	#[allow(clippy::result_unit_err)]
 	pub fn network_state() -> Result<OpaqueNetworkState, ()> {
-		debug!("offchain::network_state unimplemented");
+		warn!("offchain::network_state unimplemented");
 		Err(())
 	}
 
 	pub fn timestamp() -> offchain::Timestamp {
-		debug!("offchain::timestamp unimplemented");
+		warn!("offchain::timestamp unimplemented");
 		offchain::Timestamp::default()
 	}
 
 	pub fn sleep_until(deadline: offchain::Timestamp) {
-		debug!("offchain::sleep_until unimplemented");
+		warn!("offchain::sleep_until unimplemented");
 	}
 
 	pub fn random_seed() -> [u8; 32] {
-		debug!("offchain::random_seed unimplemented");
+		warn!("offchain::random_seed unimplemented");
 		[0; 32]
 	}
 
 	pub fn local_storage_set(kind: offchain::StorageKind, key: &[u8], value: &[u8]) {
-		debug!("offchain::local_storage_set unimplemented");
+		warn!("offchain::local_storage_set unimplemented");
 	}
 	pub fn local_storage_clear(kind: StorageKind, key: &[u8]) {
-		debug!("offchain::local_storage_clear unimplemented");
+		warn!("offchain::local_storage_clear unimplemented");
 	}
 
 	pub fn local_storage_compare_and_set(
@@ -820,12 +820,12 @@ pub mod offchain {
 		old_value: Option<Vec<u8>>,
 		new_value: &[u8],
 	) -> bool {
-		debug!("offchain::local_storage_compare_and_set unimplemented");
+		warn!("offchain::local_storage_compare_and_set unimplemented");
 		false
 	}
 
 	pub fn local_storage_get(kind: offchain::StorageKind, key: &[u8]) -> Option<Vec<u8>> {
-		debug!("offchain::local_storage_get unimplemented");
+		warn!("offchain::local_storage_get unimplemented");
 		None
 	}
 
@@ -835,7 +835,7 @@ pub mod offchain {
 		uri: &str,
 		meta: &[u8],
 	) -> Result<offchain::HttpRequestId, ()> {
-		debug!("offchain::http_request_start unimplemented");
+		warn!("offchain::http_request_start unimplemented");
 		Err(())
 	}
 
@@ -845,7 +845,7 @@ pub mod offchain {
 		name: &str,
 		value: &str,
 	) -> Result<(), ()> {
-		debug!("offchain::http_request_add_header unimplemented");
+		warn!("offchain::http_request_add_header unimplemented");
 		Err(())
 	}
 
@@ -854,7 +854,7 @@ pub mod offchain {
 		chunk: &[u8],
 		deadline: Option<offchain::Timestamp>,
 	) -> Result<(), offchain::HttpError> {
-		debug!("offchain::http_request_write_body unimplemented");
+		warn!("offchain::http_request_write_body unimplemented");
 		Err(offchain::HttpError::IoError)
 	}
 
@@ -862,12 +862,12 @@ pub mod offchain {
 		ids: &[offchain::HttpRequestId],
 		deadline: Option<offchain::Timestamp>,
 	) -> Vec<offchain::HttpRequestStatus> {
-		debug!("offchain::http_response_wait unimplemented");
+		warn!("offchain::http_response_wait unimplemented");
 		Vec::new()
 	}
 
 	pub fn http_response_headers(request_id: offchain::HttpRequestId) -> Vec<(Vec<u8>, Vec<u8>)> {
-		debug!("offchain::http_response_wait unimplemented");
+		warn!("offchain::http_response_wait unimplemented");
 		Vec::new()
 	}
 
@@ -876,7 +876,7 @@ pub mod offchain {
 		buffer: &mut [u8],
 		deadline: Option<offchain::Timestamp>,
 	) -> Result<u32, offchain::HttpError> {
-		debug!("offchain::http_response_read_body unimplemented");
+		warn!("offchain::http_response_read_body unimplemented");
 		Err(offchain::HttpError::IoError)
 	}
 }

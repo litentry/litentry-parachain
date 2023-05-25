@@ -41,7 +41,6 @@ pub fn get_state_request_works() {
 	let connection_registry = Arc::new(ConnectionRegistry::<Hash, ConnectionToken>::new());
 	let watch_extractor = Arc::new(create_determine_watch::<Hash>());
 
-	// HandleStateMock::default();
 	let state: TestState = 78234u64;
 	let state_observer = Arc::new(ObserveStateMock::<TestState>::new(state));
 	let getter_executor =

@@ -18,9 +18,6 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use base64_sgx as base64;
-
 use crate::{error::Error, Query, RestPath};
 use http::{
 	header::{HeaderName, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE, USER_AGENT},
@@ -31,7 +28,6 @@ use http_req::{
 	response::{Headers, Response},
 	uri::Uri,
 };
-
 use log::*;
 use std::{
 	collections::HashMap,
@@ -191,7 +187,7 @@ where
 		let url = join_url(base_url, T::get_path(params)?.as_str(), query)?;
 		let uri = Uri::try_from(url.as_str()).map_err(Error::HttpReqError)?;
 
-		debug!("uri: {:?}", uri);
+		trace!("uri: {:?}", uri);
 
 		let mut request = Request::new(&uri);
 		request.method(method);
@@ -211,7 +207,7 @@ where
 						.expect("Request Header: invalid characters"),
 				);
 
-				debug!("set request body: {}", body);
+				trace!("set request body: {}", body);
 				request.body(body.as_bytes()); // takes body non-owned (!)
 			}
 		} else {

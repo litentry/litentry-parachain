@@ -2,8 +2,6 @@ services:
   lit-id-graph-stats:
     image: integritee-cli:dev
     container_name: litentry-id-graph-stats
-    volumes:
-      - ../cli:/usr/local/worker-cli
     build:
       context: ..
       dockerfile: build.Dockerfile

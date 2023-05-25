@@ -1,10 +1,7 @@
 export default {
     types: {
-        WorkerRpcReturnString: {
-            vec: 'Bytes',
-        },
         WorkerRpcReturnValue: {
-            value: 'Bytes',
+            value: 'Vec<u8>',
             do_watch: 'bool',
             status: 'DirectRequestStatus',
         },
@@ -38,6 +35,12 @@ export default {
         TrustedGetter: {
             _enum: {
                 free_balance: '(AccountId)',
+                reserved_balance: '(AccountId)',
+                nonce: '(AccountId)',
+                user_shielding_key: '(AccountId)',
+                id_graph: '(AccountId)',
+                challenge_code: '(AccountId, LitentryIdentity)',
+                id_graph_stats: '(AccountId)',
             },
         },
         //important

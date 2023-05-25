@@ -4,7 +4,6 @@ services:
     container_name: litentry-vc-test
     volumes:
       - ../ts-tests:/ts-tests
-      - ../cli:/usr/local/worker-cli
     build:
       context: ..
       dockerfile: build.Dockerfile

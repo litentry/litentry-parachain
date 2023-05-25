@@ -104,7 +104,7 @@ impl ExecuteCall<NodeMetadataRepository<NodeMetadataMock>> for CallExecutorMock 
 		unimplemented!()
 	}
 
-	fn get_storage_hashes_to_update(&self) -> Vec<Vec<u8>> {
+	fn get_storage_hashes_to_update(self) -> Vec<Vec<u8>> {
 		unimplemented!()
 	}
 }
@@ -116,7 +116,7 @@ impl ExecuteGetter for GetterExecutorMock {
 		unimplemented!()
 	}
 
-	fn get_storage_hashes_to_update(&self) -> Vec<Vec<u8>> {
+	fn get_storage_hashes_to_update(self) -> Vec<Vec<u8>> {
 		unimplemented!()
 	}
 }

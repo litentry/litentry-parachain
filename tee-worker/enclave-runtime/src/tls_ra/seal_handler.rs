@@ -85,7 +85,7 @@ where
 {
 	fn seal_shielding_key(&self, bytes: &[u8]) -> EnclaveResult<()> {
 		let key: Rsa3072KeyPair = serde_json::from_slice(bytes).map_err(|e| {
-			error!("[Enclave] Received Invalid RSA key");
+			error!("    [Enclave] Received Invalid RSA key");
 			EnclaveError::Other(e.into())
 		})?;
 		self.shielding_key_repository.update_key(key)?;

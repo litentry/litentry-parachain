@@ -754,6 +754,7 @@ declare module '@polkadot/types/lookup' {
         readonly isVerificationRequestTooEarly: boolean;
         readonly isVerificationRequestTooLate: boolean;
         readonly isRemovePrimeIdentityDisallowed: boolean;
+        readonly isIdGraphLenLimitReached: boolean;
         readonly type:
             | 'ChallengeCodeNotExist'
             | 'IdentityAlreadyVerified'
@@ -762,7 +763,8 @@ declare module '@polkadot/types/lookup' {
             | 'CreatePrimeIdentityNotAllowed'
             | 'VerificationRequestTooEarly'
             | 'VerificationRequestTooLate'
-            | 'RemovePrimeIdentityDisallowed';
+            | 'RemovePrimeIdentityDisallowed'
+            | 'IdGraphLenLimitReached';
     }
 
     /** @name SpRuntimeMultiSignature (101) */

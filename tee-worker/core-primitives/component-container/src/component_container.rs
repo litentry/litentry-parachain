@@ -16,11 +16,9 @@
 */
 
 //! Generic component containers.
-#[cfg(all(feature = "std", feature = "sgx"))]
-compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 #[cfg(feature = "sgx")]
-use sgx_tstd::sync::SgxMutex as Mutex;
+use std::sync::SgxMutex as Mutex;
 
 #[cfg(feature = "std")]
 use std::sync::Mutex;
@@ -51,14 +49,6 @@ pub trait ComponentGetter {
 	fn get(&self) -> Result<Arc<Self::ComponentType>>;
 }
 
-/// Trait to retrieve a generic component.
-pub trait ComponentSetter {
-	type ComponentType;
-
-	/// Try to get a specific component, returns `None` if component has not been initialized.
-	fn set(&self, t: Arc<Self::ComponentType>);
-}
-
 /// Workaround to make `new()` a `const fn`.
 /// Is required in order to have the `ComponentContainer` in a static variable.
 struct Invariant<T>(T);
@@ -87,7 +77,7 @@ impl<Component> ComponentInitializer for ComponentContainer<Component> {
 	type ComponentType = Component;
 
 	fn initialize(&self, component: Arc<Self::ComponentType>) {
-		self.set(component)
+		self.container.store(component)
 	}
 }
 
@@ -106,13 +96,5 @@ impl<Component> ComponentGetter for ComponentContainer<Component> {
 			.load()
 			.ok_or_else(|| Error::ComponentNotInitialized(self.to_string()))?;
 		Ok(component_mutex.lock().expect("Lock poisoning").clone())
-	}
-}
-
-impl<Component> ComponentSetter for ComponentContainer<Component> {
-	type ComponentType = Component;
-
-	fn set(&self, component: Arc<Self::ComponentType>) {
-		self.container.store(component);
 	}
 }
