@@ -15,6 +15,9 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 # local
 itp-types = { default-features = false, path = "../../types" }
 
+# litentry
+my-node-runtime = { package = "rococo-parachain-runtime", path = "../../runtime/rococo" }
+
 
 [features]
 default = ["std"]
@@ -24,4 +27,5 @@ std = [
     "substrate-api-client/ws-client",
     "sp-core/std",
     "sp-runtime/std",
+    "my-node-runtime",
 ]

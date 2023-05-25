@@ -16,11 +16,11 @@
 */
 
 use crate::{command_utils::get_chain_api, Cli, CliResult, CliResultOk};
-use itp_node_api::metadata::event::print_event;
+use base58::ToBase58;
+use codec::Encode;
 use log::*;
 use my_node_runtime::{Hash, RuntimeEvent};
-use std::{sync::mpsc::channel, vec::Vec};
-use substrate_api_client::{utils::FromHexString, Events};
+use substrate_api_client::SubscribeEvents;
 
 #[derive(Parser)]
 pub struct ListenCommand {
@@ -38,8 +38,6 @@ impl ListenCommand {
 		println!("{:?} {:?}", self.events, self.blocks);
 		let api = get_chain_api(cli);
 		info!("Subscribing to events");
-		// let (events_in, events_out) = channel();
-		// #[allow(unused)]
 		let mut count = 0u32;
 		let mut blocks = 0u32;
 		let mut subscription = api.subscribe_events().unwrap();
@@ -55,14 +53,6 @@ impl ListenCommand {
 				}
 			};
 
-			// let events_str = events_out.recv().unwrap();
-			// let event_bytes = Vec::from_hex(events_str).unwrap();
-			// let metadata = api.metadata.clone();
-			// blocks += 1;
-			// let events = Events::new(metadata, Default::default(), event_bytes);
-			// for maybe_event_details in events.iter() {
-			// 	let event_details = maybe_event_details.unwrap();
-			// 	count += print_event(&event_details);
 			let event_results = subscription.next_event::<RuntimeEvent, Hash>().unwrap();
 			blocks += 1;
 			match event_results {

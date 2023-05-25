@@ -89,10 +89,6 @@ impl DirectApi for DirectClientMock {
 		Metadata::try_from(metadata).map_err(|e| e.into())
 	}
 
-	fn get_state_metadata_raw(&self) -> Result<String> {
-		unimplemented!()
-	}
-
 	fn send(&self, _request: &str) -> Result<()> {
 		unimplemented!()
 	}
@@ -100,4 +96,9 @@ impl DirectApi for DirectClientMock {
 	fn close(&self) -> Result<()> {
 		unimplemented!()
 	}
+
+	fn get_state_metadata_raw(&self) -> Result<String> {
+		unimplemented!()
+	}
+
 }

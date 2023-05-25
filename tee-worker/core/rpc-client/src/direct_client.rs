@@ -157,12 +157,6 @@ impl DirectApi for DirectClient {
 		Metadata::try_from(metadata).map_err(|e| e.into())
 	}
 
-	fn get_state_metadata_raw(&self) -> Result<String> {
-		let metadata = self.get_state_metadata().unwrap().to_hex();
-		let rpc_response = RpcResponse { jsonrpc: "2.0".to_owned(), result: metadata, id: 1 };
-		serde_json::to_string(&rpc_response).map_err(|e| Error::Custom(Box::new(e)))
-	}
-
 	fn send(&self, request: &str) -> Result<()> {
 		self.web_socket_control.send(request)
 	}
@@ -170,6 +164,13 @@ impl DirectApi for DirectClient {
 	fn close(&self) -> Result<()> {
 		self.web_socket_control.close_connection()
 	}
+
+	fn get_state_metadata_raw(&self) -> Result<String> {
+		let metadata = self.get_state_metadata().unwrap().to_hex();
+		let rpc_response = RpcResponse { jsonrpc: "2.0".to_owned(), result: metadata, id: 1 };
+		serde_json::to_string(&rpc_response).map_err(|e| Error::Custom(Box::new(e)))
+	}
+
 }
 
 fn decode_from_rpc_response(json_rpc_response: &str) -> Result<String> {
