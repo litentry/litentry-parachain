@@ -1,8 +1,8 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
 name = "itp-stf-interface"
 version = "0.8.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+edition = "2021"
 
 [dependencies]
 itp-node-api-metadata = { path = "../node-api/metadata", default-features = false }
@@ -11,9 +11,9 @@ itp-types = { default-features = false, path = "../types" }
 
 [features]
 default = ["std"]
-mocks = []
 std = [
     "itp-node-api-metadata/std",
     "itp-node-api-metadata-provider/std",
     "itp-types/std",
 ]
+mocks = []

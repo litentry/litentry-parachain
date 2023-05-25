@@ -114,6 +114,12 @@ declare module '@polkadot/api-base/types/storage' {
                 [AccountId32, LitentryPrimitivesIdentity]
             > &
                 QueryableStorageEntry<ApiType, [AccountId32, LitentryPrimitivesIdentity]>;
+            idGraphLens: AugmentedQuery<
+                ApiType,
+                (arg: AccountId32 | string | Uint8Array) => Observable<u32>,
+                [AccountId32]
+            > &
+                QueryableStorageEntry<ApiType, [AccountId32]>;
             /**
              * ID graph is per Litentry account + identity
              **/

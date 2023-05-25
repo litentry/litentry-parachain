@@ -29,7 +29,6 @@ pub trait PalletTeerexApi {
 	fn enclave(&self, index: u64, at_block: Option<Hash>) -> ApiResult<Option<Enclave>>;
 	fn enclave_count(&self, at_block: Option<Hash>) -> ApiResult<u64>;
 	fn all_enclaves(&self, at_block: Option<Hash>) -> ApiResult<Vec<Enclave>>;
-	fn all_scheduled_mrenclaves(&self, at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>>;
 	fn worker_for_shard(
 		&self,
 		shard: &ShardIdentifier,
@@ -40,6 +39,9 @@ pub trait PalletTeerexApi {
 		shard: &ShardIdentifier,
 		at_block: Option<Hash>,
 	) -> ApiResult<Option<IpfsHash>>;
+
+	// litentry
+	fn all_scheduled_mrenclaves(&self, at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>>;
 }
 
 impl<P: Pair, Client: RpcClient, Params: ExtrinsicParams> PalletTeerexApi for Api<P, Client, Params>
@@ -51,7 +53,7 @@ where
 	}
 
 	fn enclave_count(&self, at_block: Option<Hash>) -> ApiResult<u64> {
-		Ok(self.get_storage_value(TEEREX, "EnclaveCount", at_block)?.unwrap_or_default())
+		Ok(self.get_storage_value(TEEREX, "EnclaveCount", at_block)?.unwrap_or(0u64))
 	}
 
 	fn all_enclaves(&self, at_block: Option<Hash>) -> ApiResult<Vec<Enclave>> {
@@ -61,22 +63,6 @@ where
 			enclaves.push(self.enclave(n, at_block)?.expect("None enclave"))
 		}
 		Ok(enclaves)
-	}
-
-	fn all_scheduled_mrenclaves(&self, at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>> {
-		let keys: Vec<_> = self
-			.get_keys(storage_key(TEEREX, "ScheduledEnclave"), at_block)?
-			.unwrap_or_default()
-			.iter()
-			.map(|key| {
-				let key = key.strip_prefix("0x").unwrap_or(key);
-				let raw_key = hex::decode(key).unwrap();
-				self.get_storage_by_key_hash::<MrEnclave>(StorageKey(raw_key), at_block)
-			})
-			.filter(|enclave| matches!(enclave, Ok(Some(_))))
-			.map(|enclave| enclave.unwrap().unwrap())
-			.collect();
-		Ok(keys)
 	}
 
 	fn worker_for_shard(
@@ -94,5 +80,21 @@ where
 		at_block: Option<Hash>,
 	) -> ApiResult<Option<IpfsHash>> {
 		self.get_storage_map(TEEREX, "LatestIPFSHash", shard, at_block)
+	}
+
+	fn all_scheduled_mrenclaves(&self, at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>> {
+		let keys: Vec<_> = self
+			.get_keys(storage_key(TEEREX, "ScheduledEnclave"), at_block)?
+			.unwrap_or_default()
+			.iter()
+			.map(|key| {
+				let key = key.strip_prefix("0x").unwrap_or(key);
+				let raw_key = hex::decode(key).unwrap();
+				self.get_storage_by_key_hash::<MrEnclave>(StorageKey(raw_key), at_block)
+			})
+			.filter(|enclave| matches!(enclave, Ok(Some(_))))
+			.map(|enclave| enclave.unwrap().unwrap())
+			.collect();
+		Ok(keys)
 	}
 }

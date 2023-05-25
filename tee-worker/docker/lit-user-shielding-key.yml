@@ -2,8 +2,6 @@ services:
   lit-user-shielding-key:
     image: integritee-cli:dev
     container_name: litentry-user-shielding-key
-    volumes:
-      - ../cli:/usr/local/worker-cli
     build:
       context: ..
       dockerfile: build.Dockerfile

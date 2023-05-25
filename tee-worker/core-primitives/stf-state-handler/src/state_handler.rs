@@ -160,15 +160,6 @@ where
 		self.reset(initialized_state, &shard)
 	}
 
-	fn migrate_shard(
-		&self,
-		old_shard: ShardIdentifier,
-		new_shard: ShardIdentifier,
-	) -> Result<Self::HashType> {
-		let (state, _) = self.load_cloned(&old_shard)?;
-		self.reset(state, &new_shard)
-	}
-
 	fn execute_on_current<E, R>(&self, shard: &ShardIdentifier, executing_function: E) -> Result<R>
 	where
 		E: FnOnce(&Self::StateT, Self::HashType) -> R,
@@ -229,6 +220,15 @@ where
 	fn reset(&self, state: Self::StateT, shard: &ShardIdentifier) -> Result<Self::HashType> {
 		let state_write_lock = self.states_map_lock.write().map_err(|_| Error::LockPoisoning)?;
 		self.write_after_mutation(state, state_write_lock, shard)
+	}
+
+	fn migrate_shard(
+		&self,
+		old_shard: ShardIdentifier,
+		new_shard: ShardIdentifier,
+	) -> Result<Self::HashType> {
+		let (state, _) = self.load_cloned(&old_shard)?;
+		self.reset(state, &new_shard)
 	}
 }
 

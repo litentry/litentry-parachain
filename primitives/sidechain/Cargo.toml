@@ -23,15 +23,15 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 [features]
 default = ["std", "full_crypto"]
 full_crypto = [
-  "sp-core/full_crypto",
+    "sp-core/full_crypto",
 ]
 std = [
-  "codec/std",
-  "scale-info/std",
-  "serde/std",
-  # substrate
-  "sp-core/std",
-  "sp-io/std",
-  "sp-runtime/std",
-  "sp-std/std",
+    "codec/std",
+    "scale-info/std",
+    "serde/std",
+    # substrate
+    "sp-core/std",
+    "sp-io/std",
+    "sp-runtime/std",
+    "sp-std/std",
 ]

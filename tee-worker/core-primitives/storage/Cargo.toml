@@ -1,8 +1,8 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
 name = "itp-storage"
 version = "0.9.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+edition = "2021"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["chain-error"] }
@@ -30,10 +30,6 @@ sp-state-machine = { git = "https://github.com/paritytech/substrate.git", branch
 
 [features]
 default = ["std"]
-sgx = [
-    "sgx_tstd",
-    "thiserror-sgx",
-]
 std = [
     "codec/std",
     "frame-metadata/std",
@@ -45,5 +41,9 @@ std = [
     "sp-std/std",
     "sp-trie/std",
     "thiserror",
+]
+sgx = [
+    "sgx_tstd",
+    "thiserror-sgx",
 ]
 test = []

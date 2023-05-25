@@ -2,8 +2,6 @@ services:
   lit-set-heartbeat-timeout:
     image: integritee-cli:dev
     container_name: litentry-set-heartbeat-timeout
-    volumes:
-      - ../cli:/usr/local/worker-cli
     build:
       context: ..
       dockerfile: build.Dockerfile

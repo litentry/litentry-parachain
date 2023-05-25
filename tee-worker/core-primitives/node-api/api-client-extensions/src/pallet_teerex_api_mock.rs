@@ -43,10 +43,6 @@ impl PalletTeerexApi for PalletTeerexApiMock {
 		Ok(self.registered_enclaves.clone())
 	}
 
-	fn all_scheduled_mrenclaves(&self, _at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>> {
-		Ok(self.registered_enclaves.iter().map(|k| k.mr_enclave).collect())
-	}
-
 	fn worker_for_shard(
 		&self,
 		_shard: &ShardIdentifier,
@@ -61,5 +57,9 @@ impl PalletTeerexApi for PalletTeerexApiMock {
 		_at_block: Option<Hash>,
 	) -> ApiResult<Option<IpfsHash>> {
 		todo!()
+	}
+
+	fn all_scheduled_mrenclaves(&self, _at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>> {
+		Ok(self.registered_enclaves.iter().map(|k| k.mr_enclave).collect())
 	}
 }

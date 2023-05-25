@@ -24,12 +24,9 @@ use codec::{Decode, Encode};
 use ita_stf::{
 	hash::{Hash, TrustedOperationOrHash},
 	stf_sgx::{shards_key_hash, storage_hashes_to_update_per_shard},
-	ParentchainHeader, StfError, TrustedCallSigned, TrustedOperation,
+	ParentchainHeader, TrustedCallSigned, TrustedOperation,
 };
-use itp_node_api::metadata::{
-	pallet_imp::IMPCallIndexes, pallet_system::SystemSs58Prefix, pallet_teerex::TeerexCallIndexes,
-	pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata,
-};
+use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
 use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_externalities::{SgxExternalitiesTrait, StateHash};
 use itp_stf_interface::{
@@ -43,8 +40,7 @@ use itp_types::{storage::StorageEntryVerified, OpaqueCall, H256};
 use log::*;
 use sp_runtime::traits::Header as HeaderTrait;
 use std::{
-	boxed::Box, collections::BTreeMap, fmt::Debug, marker::PhantomData, sync::Arc, time::Duration,
-	vec::Vec,
+	collections::BTreeMap, fmt::Debug, marker::PhantomData, sync::Arc, time::Duration, vec::Vec,
 };
 
 pub struct StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf> {
@@ -61,8 +57,7 @@ where
 	StateHandler: HandleState<HashType = H256>,
 	StateHandler::StateT: SgxExternalitiesTrait + Encode,
 	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes,
-	<NodeMetadataRepository as AccessNodeMetadata>::MetadataType: SystemSs58Prefix,
+	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 	Stf: UpdateState<
 			StateHandler::StateT,
 			<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType,
@@ -118,10 +113,7 @@ where
 		// see issue #208
 		debug!("Update STF storage!");
 
-		// TODO: otherwise I got compile error:
-		//       cannot infer type for type parameter `NodeMetadataRepository` declared on the trait `ExecuteCall`
-		let trusted_call_executor: Box<dyn ExecuteCall<NodeMetadataRepository, Error = StfError>> = Box::new(trusted_call.clone());
-		let storage_hashes = trusted_call_executor.get_storage_hashes_to_update();
+		let storage_hashes = <TrustedCallSigned as ExecuteCall<NodeMetadataRepository>>::get_storage_hashes_to_update(trusted_call.clone());
 		let update_map = self
 			.ocall_api
 			.get_multiple_storages_verified(storage_hashes, header)
@@ -241,7 +233,7 @@ where
 	StateHandler::StateT: SgxExternalitiesTrait + Encode + StateHash,
 	<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesType: Encode,
 	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType: TeerexCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix,
+	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 	Stf: UpdateState<
 			StateHandler::StateT,
 			<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesDiffType,
@@ -265,7 +257,7 @@ where
 	) -> Result<BatchExecutionResult<Self::Externalities>>
 	where
 		PH: HeaderTrait<Hash = H256>,
-		F: FnOnce(Self::Externalities) -> Self::Externalities
+		F: FnOnce(Self::Externalities) -> Self::Externalities,
 	{
 		let ends_at = duration_now() + max_exec_duration;
 

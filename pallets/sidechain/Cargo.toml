@@ -1,18 +1,18 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-description = "Pallet for integritee sidechains"
-edition = "2021"
-homepage = "https://integritee.network/"
-license = "Apache-2.0"
 name = "pallet-sidechain"
-repository = "https://github.com/integritee-network/pallets/"
+description = "Pallet for integritee sidechains"
 version = "0.9.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+homepage = "https://integritee.network/"
+repository = "https://github.com/integritee-network/pallets/"
+license = "Apache-2.0"
+edition = "2021"
 
 [dependencies]
 codec = { version = "3.0.0", default-features = false, features = ["derive"], package = "parity-scale-codec" }
 log = { version = "0.4.14", default-features = false }
-scale-info = { version = "2.7.0", default-features = false, features = ["derive"] }
-serde = { version = "1.0.159", features = ["derive"], optional = true }
+scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
+serde = { version = "1.0.13", features = ["derive"], optional = true }
 
 # local
 pallet-teerex = { path = "../teerex", default-features = false }
@@ -35,7 +35,7 @@ pallet-balances = { default-features = false, optional = true, git = "https://gi
 test-utils = { path = "../test-utils", default-features = false, optional = true }
 
 [dev-dependencies]
-env_logger = "0.10.0"
+env_logger = "0.9.0"
 externalities = { package = "sp-externalities", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 frame-benchmarking = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 hex-literal = "0.4.1"
@@ -45,30 +45,30 @@ test-utils = { path = "../test-utils" }
 
 [features]
 default = ["std"]
-runtime-benchmarks = [
-  "frame-benchmarking",
-  "hex-literal",
-  "pallet-balances",
-  "pallet-timestamp/runtime-benchmarks",
-  "test-utils",
-]
 std = [
-  "codec/std",
-  "log/std",
-  "scale-info/std",
-  "serde",
-  # local
-  "pallet-teerex/std",
-  "sidechain-primitives/std",
-  "teerex-primitives/std",
-  # substrate
-  "frame-support/std",
-  "frame-system/std",
-  "pallet-timestamp/std",
-  "sp-core/std",
-  "sp-io/std",
-  "sp-runtime/std",
-  "sp-std/std",
+    "codec/std",
+    "log/std",
+    "scale-info/std",
+    "serde",
+    # local
+    "pallet-teerex/std",
+    "sidechain-primitives/std",
+    "teerex-primitives/std",
+    # substrate
+    "frame-support/std",
+    "frame-system/std",
+    "pallet-timestamp/std",
+    "sp-core/std",
+    "sp-io/std",
+    "sp-runtime/std",
+    "sp-std/std",
+]
+runtime-benchmarks = [
+    "frame-benchmarking",
+    "hex-literal",
+    "pallet-balances",
+    "pallet-timestamp/runtime-benchmarks",
+    "test-utils",
 ]
 # Allow workers to register without remote attestation for dev purposes.
 # This pallet needs the flag only to run the tests, otherwise skip-ias-check should only be set in the pallet-teerex.

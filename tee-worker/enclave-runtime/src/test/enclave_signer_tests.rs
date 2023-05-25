@@ -14,6 +14,7 @@
 	limitations under the License.
 
 */
+
 use codec::Encode;
 use ita_sgx_runtime::Runtime;
 use ita_stf::{Stf, TrustedCall, TrustedCallSigned, TrustedOperation};
