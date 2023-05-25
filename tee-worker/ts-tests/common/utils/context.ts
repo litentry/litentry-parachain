@@ -45,12 +45,7 @@ export async function initIntegrationTestContext(
         dave: new ethers.Wallet(getEthereumSigner().dave),
         eve: new ethers.Wallet(getEthereumSigner().eve),
     };
-    const substrateWallet = {
-        alice: getSubstrateSigner().alice,
-        bob: getSubstrateSigner().bob,
-        charlie: getSubstrateSigner().charlie,
-        eve: getSubstrateSigner().eve,
-    };
+    const substrateWallet = getSubstrateSigner();
 
     const { types } = teeTypes;
     const api = await ApiPromise.create({
@@ -66,7 +61,7 @@ export async function initIntegrationTestContext(
 
     const web3Signers = await generateWeb3Wallets(walletsNumber);
     const { mrEnclave, teeShieldingKey } = await getEnclave(api);
-    return <IntegrationTestContext>{
+    return {
         tee: wsp,
         api,
         teeShieldingKey,
@@ -79,7 +74,7 @@ export async function initIntegrationTestContext(
 }
 
 export async function getEnclave(api: ApiPromise): Promise<{
-    mrEnclave: string;
+    mrEnclave: `0x${string}`;
     teeShieldingKey: KeyObject;
 }> {
     const count = await api.query.teerex.enclaveCount();
