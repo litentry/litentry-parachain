@@ -2,7 +2,7 @@
 
 # Copyright 2020-2023 Litentry Technologies GmbH.
 
-while getopts ":p:A:u:V:C:" opt; do
+while getopts ":p:A:B:u:W:V:C:" opt; do
     case $opt in
         p)
             NPORT=$OPTARG
@@ -10,11 +10,17 @@ while getopts ":p:A:u:V:C:" opt; do
         A)
             WORKER1PORT=$OPTARG
             ;;
+        B)
+            WORKER2PORT=$OPTARG
+            ;;
         u)
             NODEURL=$OPTARG
             ;;
         V)
             WORKER1URL=$OPTARG
+            ;;
+        W)
+            WORKER2URL=$OPTARG
             ;;
         C)
             CLIENT_BIN=$OPTARG
