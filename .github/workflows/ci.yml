@@ -521,6 +521,7 @@ jobs:
           - test_name: lit-parentchain-nonce
           - test_name: lit-batch-test
           - test_name: lit-id-graph-stats
+          - test_name: lit-get-account-nonce
 
     steps:
       - uses: actions/checkout@v3
