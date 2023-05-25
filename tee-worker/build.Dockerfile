@@ -90,19 +90,23 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash
 RUN apt-get install -y nodejs jq
 RUN npm install -g yarn
 
-
 ### Deployed CLI client
 ##################################################
 FROM runner AS deployed-client
 LABEL maintainer="zoltan@integritee.network"
 
+ARG SCRIPT_DIR=/usr/local/worker-cli
 ARG LOG_DIR=/usr/local/log
+
+ENV SCRIPT_DIR ${SCRIPT_DIR}
 ENV LOG_DIR ${LOG_DIR}
 
 COPY --from=builder /root/work/tee-worker/bin/integritee-cli /usr/local/bin
+COPY --from=builder /root/work/tee-worker/cli/*.sh /usr/local/worker-cli/
 
-RUN chmod +x /usr/local/bin/integritee-cli
+RUN chmod +x /usr/local/bin/integritee-cli ${SCRIPT_DIR}/*.sh
 RUN mkdir ${LOG_DIR}
+
 RUN ldd /usr/local/bin/integritee-cli && \
 	/usr/local/bin/integritee-cli --version
 
@@ -121,6 +125,7 @@ WORKDIR /usr/local/bin
 
 COPY --from=builder /opt/sgxsdk/lib64 /opt/sgxsdk/lib64
 COPY --from=builder /root/work/tee-worker/bin/* ./
+COPY --from=builder /root/work/tee-worker/cli/*.sh /usr/local/worker-cli/
 COPY --from=builder /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
 COPY --from=builder /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
 

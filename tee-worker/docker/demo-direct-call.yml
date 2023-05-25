@@ -2,8 +2,6 @@ services:
   demo-direct-call:
     image: integritee-cli:dev
     container_name: integritee-direct-call-demo
-    volumes:
-      - ../cli:/usr/local/worker-cli
     build:
       context: ..
       dockerfile: build.Dockerfile

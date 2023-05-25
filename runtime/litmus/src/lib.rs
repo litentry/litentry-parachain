@@ -790,12 +790,14 @@ impl pallet_extrinsic_filter::Config for Runtime {
 
 parameter_types! {
 	pub const MomentsPerDay: Moment = 86_400_000; // [ms/d]
+	pub const MaxSilenceTime: u64 = 172_800_000; // 48h
 }
 
 impl pallet_teerex::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type MomentsPerDay = MomentsPerDay;
+	type MaxSilenceTime = MaxSilenceTime;
 	type WeightInfo = ();
 	type SetAdminOrigin = EnsureRootOrHalfCouncil;
 }
