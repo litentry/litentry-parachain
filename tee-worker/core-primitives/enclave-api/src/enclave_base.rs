@@ -245,7 +245,7 @@ impl EnclaveBase for Enclave {
 
 		Ok(mr_enclave)
 	}
-	
+
 	fn migrate_shard(&self, old_shard: Vec<u8>, new_shard: Vec<u8>) -> EnclaveResult<()> {
 		let mut retval = sgx_status_t::SGX_SUCCESS;
 
@@ -264,7 +264,6 @@ impl EnclaveBase for Enclave {
 
 		Ok(())
 	}
-
 }
 
 fn init_parentchain_components_ffi(

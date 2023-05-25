@@ -56,10 +56,10 @@ frame-metadata = "15.0.0"
 ita-sgx-runtime = { path = "../app-libs/sgx-runtime" }
 itp-node-api-metadata = { path = "../core-primitives/node-api/metadata" }
 litentry-primitives = { path = "../litentry/primitives" }
+my-node-runtime = { package = "rococo-parachain-runtime", path = "../../runtime/rococo" }
 scale-value = "0.6.0"
 sp-core-hashing = "6.0.0"
 teerex-primitives = { path = "../../primitives/teerex", default-features = false }
-my-node-runtime = { package = "rococo-parachain-runtime", path = "../../runtime/rococo" }
 
 [features]
 default = []

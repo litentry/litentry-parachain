@@ -101,4 +101,3 @@ its-test = { path = "../sidechain/test" }
 scale-info = { version = "2.4.0" }
 frame-metadata = { version = "15.0.0", default-features = false, git = "https://github.com/integritee-network/frame-metadata", features = ["v14", "full_derive"] }
 my-node-runtime = { package = "rococo-parachain-runtime", path = "../../runtime/rococo" }
-

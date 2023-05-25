@@ -100,5 +100,4 @@ impl DirectApi for DirectClientMock {
 	fn get_state_metadata_raw(&self) -> Result<String> {
 		unimplemented!()
 	}
-
 }

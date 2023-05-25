@@ -170,7 +170,6 @@ impl DirectApi for DirectClient {
 		let rpc_response = RpcResponse { jsonrpc: "2.0".to_owned(), result: metadata, id: 1 };
 		serde_json::to_string(&rpc_response).map_err(|e| Error::Custom(Box::new(e)))
 	}
-
 }
 
 fn decode_from_rpc_response(json_rpc_response: &str) -> Result<String> {
