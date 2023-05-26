@@ -158,7 +158,6 @@ export async function listenEvent(api: ApiPromise, section: string, methods: str
                     }
                     return (
                         phase.isApplyExtrinsic &&
-                        phase.asApplyExtrinsic.eq(index) &&
                         section === event.section &&
                         methods.includes(event.method)
                     );
@@ -182,7 +181,7 @@ export async function listenEvent(api: ApiPromise, section: string, methods: str
                 //There is no good compatibility method here.Only successful and failed events can be filtered normally, but it cannot filter error + successful events, which may need further optimization
                 const eventsToUse = filtered_events_with_signer.length > 0 ? filtered_events_with_signer : events_in_extrinsic;
 
-                events = [...events, ...eventsToUse];
+                events = [...eventsToUse];
 
             });
 

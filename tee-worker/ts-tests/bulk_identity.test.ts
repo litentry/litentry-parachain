@@ -45,7 +45,7 @@ describeLitentry('multiple accounts test', 2, async (context) => {
             context.api.tx.utility
                 .batch(txs)
                 .signAndSend(context.substrateWallet.alice, (result: SubmittableResult) => {
-                    console.log(`Current status is ${result.status.isFinalized}`);
+                    console.log(`Current status is ${result.status}`);
                     if (result.status.isFinalized) {
                         resolve(result.status);
                     } else if (result.status.isInvalid) {

@@ -42,7 +42,7 @@ describeLitentry('multiple accounts test', 2, async (context) => {
         });
     });
     step('send test token to each account', async () => {
-        const txs: SubmittableExtrinsic<ApiTypes>[] = [];
+        const txs: any[] = [];
 
         for (let i = 0; i < substrateSigners.length; i++) {
             //1 token
@@ -54,7 +54,7 @@ describeLitentry('multiple accounts test', 2, async (context) => {
             context.api.tx.utility
                 .batch(txs)
                 .signAndSend(context.substrateWallet.alice, (result: SubmittableResult) => {
-                    console.log(`Current status is ${result.status.isFinalized}`);
+                    console.log(`Current status is ${result.status}`);
                     if (result.status.isFinalized) {
                         resolve(result.status);
                     } else if (result.status.isInvalid) {
