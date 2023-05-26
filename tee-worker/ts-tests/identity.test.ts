@@ -701,7 +701,7 @@ describeLitentry('Test Identity', 0, (context) => {
         const [event] = await handleIdentityEvents(context, aesKey, resp_events, 'UserShieldingKeySet');
         await assertInitialIDGraphCreated(context.api, context.substrateWallet.eve, event);
 
-        let identities = [];
+        let identities: LitentryIdentity[] = [];
         for (let i = 0; i < 64; i++) {
             let identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
             identities.push(identity);
