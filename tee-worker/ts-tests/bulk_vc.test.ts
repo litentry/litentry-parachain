@@ -7,9 +7,10 @@ import { handleVcEvents } from './common/utils';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import { assert } from 'chai';
 import { HexString } from '@polkadot/util/types';
-import { listenEvent, multiAccountTxSender } from './common/transactions';
+import { multiAccountTxSender } from './common/transactions';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { SubmittableResult } from '@polkadot/api';
+import { stringToU8a } from '@polkadot/util';
 const assertion = <Assertion>{
     A1: 'A1',
     A2: ['A2'],
@@ -49,22 +50,23 @@ describeLitentry('multiple accounts test', 2, async (context) => {
             txs.push(tx);
         }
 
-        await new Promise((resolve) => {
+        await new Promise((resolve, reject) => {
             context.api.tx.utility
                 .batch(txs)
-                .signAndSend(context.substrateWallet.alice, async (result: SubmittableResult) => {
-                    if (result.status.isInBlock) {
-                        console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
+                .signAndSend(context.substrateWallet.alice, (result: SubmittableResult) => {
+                    console.log(`Current status is ${result.status.isFinalized}`);
+                    if (result.status.isFinalized) {
                         resolve(result.status);
                     } else if (result.status.isInvalid) {
                         console.log(`Transaction is ${result.status}`);
+                        reject(result.status);
                     }
                 });
-        });
+        })
     });
     //test with multiple accounts
     step('test set usershieldingkey with multiple accounts', async () => {
-        const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, aesKey).toString('hex');
+        const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, stringToU8a(aesKey)).toString('hex');
         let txs: TransactionSubmit[] = [];
         for (let i = 0; i < substrateSigners.length; i++) {
             const tx = context.api.tx.identityManagement.setUserShieldingKey(context.mrEnclave, `0x${ciphertext}`);

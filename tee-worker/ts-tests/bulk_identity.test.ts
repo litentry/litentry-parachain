@@ -41,20 +41,19 @@ describeLitentry('multiple accounts test', 2, async (context) => {
             const tx = context.api.tx.balances.transfer(substrateSigners[i].address, '1000000000000');
             txs.push(tx);
         }
-
         await new Promise((resolve, reject) => {
             context.api.tx.utility
                 .batch(txs)
-                .signAndSend(context.substrateWallet.alice, async (result: SubmittableResult) => {
+                .signAndSend(context.substrateWallet.alice, (result: SubmittableResult) => {
+                    console.log(`Current status is ${result.status.isFinalized}`);
                     if (result.status.isFinalized) {
-                        console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
                         resolve(result.status);
                     } else if (result.status.isInvalid) {
                         console.log(`Transaction is ${result.status}`);
                         reject(result.status);
                     }
                 });
-        });
+        })
     });
 
     //test with multiple accounts
