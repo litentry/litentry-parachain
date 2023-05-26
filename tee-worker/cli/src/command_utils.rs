@@ -17,8 +17,6 @@
 
 use crate::Cli;
 use base58::FromBase58;
-use codec::Decode;
-use ita_sgx_runtime::Index as Nonce;
 use itc_rpc_client::direct_client::{DirectApi, DirectClient as DirectWorkerApi};
 use itp_node_api::api_client::{ParentchainApi, WsRpcClient};
 use litentry_primitives::{ParentchainAccountId as AccountId, ParentchainSignature as Signature};
@@ -86,15 +84,4 @@ pub(crate) fn mrenclave_from_base58(src: &str) -> [u8; 32] {
 	let mut mrenclave = [0u8; 32];
 	mrenclave.copy_from_slice(&src.from_base58().expect("mrenclave has to be base58 encoded"));
 	mrenclave
-}
-
-pub(crate) fn decode_nonce(maybe_encoded_nonce: Option<Vec<u8>>) -> Option<Nonce> {
-	maybe_encoded_nonce.and_then(|encoded_nonce| {
-		if let Ok(nonce) = Nonce::decode(&mut encoded_nonce.as_slice()) {
-			Some(nonce)
-		} else {
-			warn!("Could not decode nonce. maybe hasn't been set? {:x?}", encoded_nonce);
-			None
-		}
-	})
 }

@@ -15,7 +15,6 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 pub mod create_identity;
-pub mod get_account_nonce;
 pub mod set_heartbeat_timeout;
 pub mod set_user_shielding_key;
 
