@@ -2,7 +2,7 @@ import { ApiPromise } from '@polkadot/api';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { IntegrationTestContext, TransactionSubmit } from './type-definitions';
 import { KeyringPair } from '@polkadot/keyring/types';
-import { getListenTimeoutInBlocks } from './utils';
+import { defaultListenTimeoutInBlockNumber } from './utils';
 import { EventRecord, Event } from '@polkadot/types/interfaces';
 import { HexString } from '@polkadot/util/types';
 import { u8aToHex } from '@polkadot/util';
@@ -77,7 +77,8 @@ export async function listenEvent(
     section: string,
     methods: string[],
     txsLength: number,
-    signers: HexString[]
+    signers: HexString[],
+    listenTimeoutInBlockNumber: number = defaultListenTimeoutInBlockNumber
 ) {
     return new Promise<Event[]>(async (resolve, reject) => {
         let startBlock = 0;
@@ -89,8 +90,7 @@ export async function listenEvent(
         const unsubscribe = await api.rpc.chain.subscribeNewHeads(async (header) => {
             const currentBlockNumber = header.number.toNumber();
             if (startBlock == 0) startBlock = currentBlockNumber;
-            const timeout = await getListenTimeoutInBlocks(api);
-            if (currentBlockNumber > startBlock + timeout) {
+            if (currentBlockNumber > startBlock + listenTimeoutInBlockNumber) {
                 reject('timeout');
                 return;
             }
@@ -176,7 +176,8 @@ export async function sendTxsWithUtility(
     signer: KeyringPair,
     txs: TransactionSubmit[],
     pallet: string,
-    events: string[]
+    events: string[],
+    listenTimeoutInBlockNumber?: number
 ): Promise<string[] | Event[]> {
     //ensure the tx is in block
     const isInBlockPromise = new Promise((resolve) => {
@@ -194,7 +195,7 @@ export async function sendTxsWithUtility(
 
     const resp_events = (await listenEvent(context.api, pallet, events, txs.length, [
         u8aToHex(signer.addressRaw),
-    ])) as any;
+    ], listenTimeoutInBlockNumber)) as any;
 
     expect(resp_events.length).to.be.equal(txs.length);
     return resp_events;
@@ -205,7 +206,8 @@ export async function multiAccountTxSender(
     txs: TransactionSubmit[],
     signers: KeyringPair | KeyringPair[],
     pallet: string,
-    events: string[]
+    events: string[],
+    listenTimeoutInBlockNumber?: number
 ): Promise<Event[]> {
     let signers_hex: HexString[] = [];
     if (Array.isArray(signers)) {
@@ -217,7 +219,14 @@ export async function multiAccountTxSender(
     }
 
     await sendTxUntilInBlockList(context.api, txs, signers);
-    const resp_events = await listenEvent(context.api, pallet, events, txs.length, signers_hex);
+    const resp_events = await listenEvent(
+        context.api,
+        pallet,
+        events,
+        txs.length,
+        signers_hex,
+        listenTimeoutInBlockNumber
+    );
     expect(resp_events.length).to.be.equal(txs.length);
     return resp_events;
 }
