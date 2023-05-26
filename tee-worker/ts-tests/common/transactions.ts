@@ -122,7 +122,7 @@ export async function listenEvent(
                             `listenEvent error----Expect event:${methods} but received unexpected event :${event.method}`
                         );
                     }
-                    return phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(index) && section === event.section && methods.includes(event.method);
+                    return phase.isApplyExtrinsic && section === event.section && methods.includes(event.method);
                 });
                 //We're going to have to filter by signer, because multiple txs is going to mix
                 const filtered_events_with_signer = events_in_extrinsic
@@ -144,7 +144,7 @@ export async function listenEvent(
                 const eventsToUse =
                     filtered_events_with_signer.length > 0 ? filtered_events_with_signer : events_in_extrinsic;
 
-                events = [...events, ...eventsToUse];
+                events = [...eventsToUse];
             });
 
             if (events.length === txsLength) {
