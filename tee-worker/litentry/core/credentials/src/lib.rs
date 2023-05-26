@@ -40,7 +40,7 @@ use itp_stf_primitives::types::ShardIdentifier;
 use itp_time_utils::now_as_millis;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
-use lc_data_providers::graphql::VerifiedCredentialsNetwork;
+use litentry_primitives::SupportedNetwork;
 use log::*;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
@@ -442,18 +442,13 @@ impl Credential {
 		self.credential_subject.values.push(true);
 	}
 
-	pub fn add_assertion_a8(
-		&mut self,
-		networks: Vec<VerifiedCredentialsNetwork>,
-		min: u64,
-		max: u64,
-	) {
+	pub fn add_assertion_a8(&mut self, networks: Vec<SupportedNetwork>, min: u64, max: u64) {
 		let min = format!("{}", min);
 		let max = format!("{}", max);
 
 		let mut or_logic = AssertionLogic::new_or();
 		for network in networks {
-			let network = network.to_string();
+			let network = network.display();
 			let network_logic = AssertionLogic::new_item("$network", Op::Equal, &network);
 			or_logic = or_logic.add_item(network_logic);
 		}
@@ -489,6 +484,24 @@ pub fn format_assertion_to_date() -> String {
 		let datetime: DateTime<TzUtc> = DateTime::from_utc(naive, TzUtc);
 
 		format!("{}", datetime.format("%Y-%m-%d"))
+	}
+}
+
+trait DisplayNetwork {
+	fn display(&self) -> String;
+}
+impl DisplayNetwork for SupportedNetwork {
+	fn display(&self) -> String {
+		match self {
+			SupportedNetwork::Litentry => "Litentry".into(),
+			SupportedNetwork::Litmus => "Litmus".into(),
+			SupportedNetwork::LitentryRococo => "LitentryRococo".into(),
+			SupportedNetwork::Polkadot => "Polkadot".into(),
+			SupportedNetwork::Kusama => "Kusama".into(),
+			SupportedNetwork::Khala => "Khala".into(),
+			SupportedNetwork::Ethereum => "Ethereum".into(),
+			SupportedNetwork::TestNet => "TestNet".into(),
+		}
 	}
 }
 

@@ -2,7 +2,7 @@
 	"license": "ISC",
 	"scripts": {
 		"format": "yarn prettier --write .",
-		"gen-meta": "yarn gen-meta:sidechain && gen-meta:parachain",
+		"gen-meta": "yarn gen-meta:sidechain && yarn gen-meta:parachain",
 		"gen-meta:sidechain": "../bin/integritee-cli print-sgx-metadata-raw > litentry-sidechain-metadata.json",
 		"gen-meta:parachain": "curl -s -H \"Content-Type: application/json\" -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' http://localhost:9933 > litentry-parachain-metadata.json",
 		"gen-type": "yarn gen-type:defs && yarn gen-type:meta && yarn format",
@@ -19,7 +19,8 @@
 		"test-bulk-vc:local": "cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register 'bulk_vc.test.ts'",
 		"test-bulk-vc:staging": "cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register 'bulk_vc.test.ts'",
 		"test-bulk-identity:local": "cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register 'bulk_identity.test.ts'",
-		"test-bulk-identity:staging": "cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register 'bulk_identity.test.ts'"
+		"test-bulk-identity:staging": "cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register 'bulk_identity.test.ts'",
+		"di-examples": "ts-node examples/direct-invocation/index.ts"
 	},
 	"dependencies": {
 		"@noble/ed25519": "^1.7.3",

@@ -12,8 +12,8 @@ cd <path-to-tee-worker>
 2. run the ts demo
 
 ```
-cd <path-to-tee-worker/ts-tests/examples/direct-invocation>
-ts-node index.ts
+cd <path-to-tee-worker/ts-tests>
+npm run di-examples
 ```
 
 ### Notes
@@ -38,7 +38,10 @@ The field `result` contains the hex-encoded `WorkerRpcReturnValue` struct, after
 }
 ```
 
--   `value` field contains the real response content in an opaque hex-encoded way. The consumer must know to which type it should be decoded.
+-   `value` field contains the real response content in an opaque hex-encoded way. The consumer must know to which type it should be decoded. To check how it's encoded you need to go to rust code, mainly `tee-worker/enclave-runtime/src/rpc/worker_api_direct.rs`, e.g.
+    -   `state_getStorage` returns the raw result without any encoding
+    -   `state_executeGetter` return the encoded Option<> value
+    -   `author_getShieldingKey` return the string encoded JSON strings
 -   `do_watch` indicates if there're more (streamed) responses coming
 -   `status` has 3 options: `ok`, `trustedOperationStatus`, or `error`:
     -   `ok` is returned when the request is a "normal" request, e.g. getting TEE's shielding key

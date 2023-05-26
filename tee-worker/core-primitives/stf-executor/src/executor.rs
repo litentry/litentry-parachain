@@ -24,7 +24,7 @@ use codec::{Decode, Encode};
 use ita_stf::{
 	hash::{Hash, TrustedOperationOrHash},
 	stf_sgx::{shards_key_hash, storage_hashes_to_update_per_shard},
-	ParentchainHeader, StfError, TrustedCallSigned, TrustedOperation,
+	ParentchainHeader, TrustedCallSigned, TrustedOperation,
 };
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
 use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveOnChainOCallApi};
@@ -40,8 +40,7 @@ use itp_types::{storage::StorageEntryVerified, OpaqueCall, H256};
 use log::*;
 use sp_runtime::traits::Header as HeaderTrait;
 use std::{
-	boxed::Box, collections::BTreeMap, fmt::Debug, marker::PhantomData, sync::Arc, time::Duration,
-	vec::Vec,
+	collections::BTreeMap, fmt::Debug, marker::PhantomData, sync::Arc, time::Duration, vec::Vec,
 };
 
 pub struct StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf> {

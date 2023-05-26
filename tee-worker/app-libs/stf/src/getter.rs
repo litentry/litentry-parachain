@@ -21,6 +21,7 @@ use ita_sgx_runtime::System;
 use itp_stf_interface::ExecuteGetter;
 use itp_stf_primitives::types::{AccountId, KeyPair, Signature};
 use itp_utils::stringify::account_id_to_string;
+use litentry_primitives::Identity;
 use log::*;
 use sp_runtime::traits::Verify;
 use std::prelude::v1::*;
@@ -73,6 +74,8 @@ pub enum TrustedGetter {
 	evm_account_storages(AccountId, H160, H256),
 	// litentry
 	user_shielding_key(AccountId),
+	id_graph(AccountId),
+	challenge_code(AccountId, Identity),
 	id_graph_stats(AccountId),
 }
 
@@ -81,6 +84,8 @@ impl TrustedGetter {
 		match self {
 			TrustedGetter::free_balance(sender_account) => sender_account,
 			TrustedGetter::reserved_balance(sender_account) => sender_account,
+			// TODO: maybe nonce should be a public getter
+			//       see https://github.com/litentry/litentry-parachain/issues/1710
 			TrustedGetter::nonce(sender_account) => sender_account,
 			#[cfg(feature = "evm")]
 			TrustedGetter::evm_nonce(sender_account) => sender_account,
@@ -90,6 +95,8 @@ impl TrustedGetter {
 			TrustedGetter::evm_account_storages(sender_account, ..) => sender_account,
 			// litentry
 			TrustedGetter::user_shielding_key(account) => account,
+			TrustedGetter::id_graph(account) => account,
+			TrustedGetter::challenge_code(account, _) => account,
 			TrustedGetter::id_graph_stats(account) => account,
 		}
 	}
@@ -188,8 +195,16 @@ impl ExecuteGetter for TrustedGetterSigned {
 			// litentry
 			TrustedGetter::user_shielding_key(who) =>
 				IdentityManagement::user_shielding_keys(&who).map(|key| key.encode()),
-			TrustedGetter::id_graph_stats(_who) =>
-				IdentityManagement::id_graph_stats().map(|item| item.encode()),
+			TrustedGetter::id_graph(who) => Some(IdentityManagement::get_id_graph(&who).encode()),
+			TrustedGetter::challenge_code(who, identity) =>
+				IdentityManagement::challenge_codes(&who, &identity).map(|code| code.encode()),
+			// TODO: we need to re-think it
+			//       currently, _who is ignored meaning it's actually not a "trusted" getter.
+			//       In fact, in the production no one should have access to the concrete identities
+			//       but maybe it makes sense to get some statistic information
+			// Disabled until it's resolved
+			// Disabled the test `lit-id-graph-stats` too
+			TrustedGetter::id_graph_stats(_who) => None,
 		}
 	}
 
