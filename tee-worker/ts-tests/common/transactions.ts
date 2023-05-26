@@ -2,7 +2,7 @@ import { ApiPromise, SubmittableResult } from '@polkadot/api';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { IntegrationTestContext, TransactionSubmit, RequestEvent } from './type-definitions';
 import { KeyringPair } from '@polkadot/keyring/types';
-import { getListenTimeoutInBlocks } from './utils';
+import { defaultListenTimeoutInBlockNumber } from './utils';
 import { EventRecord, Event } from '@polkadot/types/interfaces';
 import { expect } from 'chai';
 import colors from 'colors';
@@ -65,54 +65,6 @@ export async function sendTxUntilInBlockList(
     );
 }
 
-export async function sendTxsWithUtility(
-    context: IntegrationTestContext,
-    signer: KeyringPair,
-    txs: TransactionSubmit[],
-    pallet: string,
-    events: string[]
-): Promise<string[] | Event[]> {
-    //ensure the tx is in block
-    const isInBlockPromise = new Promise((resolve, reject) => {
-        context.api.tx.utility.batchAll(txs.map(({ tx }) => tx)).signAndSend(signer, async (result) => {
-            if (result.status.isInBlock) {
-                console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
-                resolve({
-                    block: result.status.asInBlock.toString(),
-                });
-            } else if (result.status.isFinalized) {
-                console.log(`Transaction finalized at blockHash ${result.status.asFinalized}`);
-            } else if (result.status.isInvalid) {
-                reject(`Transaction is ${result.status}`);
-            }
-        });
-    });
-
-    await isInBlockPromise;
-    const resp_events = await listenEvent(context.api, pallet, events, txs.length, [u8aToHex(signer.addressRaw)]);
-    expect(resp_events.length).to.be.equal(txs.length);
-    return resp_events;
-}
-
-export async function multiAccountTxSender(
-    context: IntegrationTestContext,
-    txs: TransactionSubmit[],
-    signers: KeyringPair[],
-    pallet: string,
-    events: string[]
-): Promise<Event[]> {
-    await sendTxUntilInBlockList(context.api, txs, signers);
-    const resp_events = await listenEvent(
-        context.api,
-        pallet,
-        events,
-        txs.length,
-        signers.map((signer) => u8aToHex(signer.addressRaw))
-    );
-    expect(resp_events.length).to.be.equal(txs.length);
-    return resp_events;
-}
-
 // Subscribe to the chain until we get the first specified event with given `section` and `methods`.
 // We can listen to multiple `methods` as long as they are emitted in the same block.
 // The event consumer should do the decryption optionaly as it's event specific
@@ -121,7 +73,8 @@ export async function listenEvent(
     section: string,
     methods: string[],
     txsLength: number,
-    signers: HexString[]
+    signers: HexString[],
+    listenTimeoutInBlockNumber: number = defaultListenTimeoutInBlockNumber
 ) {
     return new Promise<Event[]>(async (resolve, reject) => {
         let startBlock = 0;
@@ -129,8 +82,7 @@ export async function listenEvent(
         const unsubscribe = await api.rpc.chain.subscribeNewHeads(async (header) => {
             const currentBlockNumber = header.number.toNumber();
             if (startBlock == 0) startBlock = currentBlockNumber;
-            const timeout = await getListenTimeoutInBlocks(api);
-            if (currentBlockNumber > startBlock + timeout) {
+            if (currentBlockNumber > startBlock + listenTimeoutInBlockNumber) {
                 reject('Timeout: No event received, please check the worker logs for more details');
                 return;
             }
@@ -202,4 +154,64 @@ export async function listenEvent(
             }
         });
     });
+}
+
+export async function sendTxsWithUtility(
+    context: IntegrationTestContext,
+    signer: KeyringPair,
+    txs: TransactionSubmit[],
+    pallet: string,
+    events: string[],
+    listenTimeoutInBlockNumber?: number
+): Promise<string[] | Event[]> {
+    //ensure the tx is in block
+    const isInBlockPromise = new Promise((resolve) => {
+        context.api.tx.utility.batchAll(txs.map(({ tx }) => tx)).signAndSend(signer, async (result) => {
+            if (result.status.isInBlock) {
+                console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
+                resolve(result.status);
+            } else if (result.status.isInvalid) {
+                console.log(`Transaction is ${result.status}`);
+            }
+        });
+    });
+
+    await isInBlockPromise;
+
+    const resp_events = (await listenEvent(context.api, pallet, events, txs.length, [
+        u8aToHex(signer.addressRaw),
+    ], listenTimeoutInBlockNumber)) as any;
+
+    expect(resp_events.length).to.be.equal(txs.length);
+    return resp_events;
+}
+
+export async function multiAccountTxSender(
+    context: IntegrationTestContext,
+    txs: TransactionSubmit[],
+    signers: KeyringPair | KeyringPair[],
+    pallet: string,
+    events: string[],
+    listenTimeoutInBlockNumber?: number
+): Promise<Event[]> {
+    let signers_hex: HexString[] = [];
+    if (Array.isArray(signers)) {
+        for (let index = 0; index < signers.length; index++) {
+            signers_hex.push(u8aToHex(signers[index].addressRaw));
+        }
+    } else {
+        signers_hex.push(u8aToHex(signers.addressRaw));
+    }
+
+    await sendTxUntilInBlockList(context.api, txs, signers);
+    const resp_events = await listenEvent(
+        context.api,
+        pallet,
+        events,
+        txs.length,
+        signers_hex,
+        listenTimeoutInBlockNumber
+    );
+    expect(resp_events.length).to.be.equal(txs.length);
+    return resp_events;
 }

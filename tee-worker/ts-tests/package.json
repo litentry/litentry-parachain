@@ -10,6 +10,8 @@
 		"gen-type:meta": "ts-node --skip-project node_modules/.bin/polkadot-types-from-chain --package . --output ./interfaces --endpoint ./litentry-sidechain-metadata.json",
 		"test-identity:staging": "cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register 'identity.test.ts'",
 		"test-identity:local": "cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register 'identity.test.ts'",
+		"test-identity-direct-invocation:local": "cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register 'identity-direct-invocation.test.ts'",
+		"test-identity-direct-invocation:staging": "cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register 'identity-direct-invocation.test.ts'",
 		"test-resuming-worker:staging": "cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register 'resuming_worker.test.ts'",
 		"test-resuming-worker:local": "cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register 'resuming_worker.test.ts'",
 		"test-vc:local": "cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register 'vc.test.ts'",
@@ -19,7 +21,8 @@
 		"test-bulk-vc:local": "cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register 'bulk_vc.test.ts'",
 		"test-bulk-vc:staging": "cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register 'bulk_vc.test.ts'",
 		"test-bulk-identity:local": "cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register 'bulk_identity.test.ts'",
-		"test-bulk-identity:staging": "cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register 'bulk_identity.test.ts'"
+		"test-bulk-identity:staging": "cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register 'bulk_identity.test.ts'",
+		"di-examples": "ts-node examples/direct-invocation/index.ts"
 	},
 	"dependencies": {
 		"@noble/ed25519": "^1.7.3",
