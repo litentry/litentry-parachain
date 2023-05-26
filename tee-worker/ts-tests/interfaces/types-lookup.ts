@@ -709,6 +709,7 @@ declare module '@polkadot/types/lookup' {
             readonly metadata: Option<Bytes>;
             readonly creationRequestBlock: u32;
             readonly parentSs58Prefix: u16;
+            readonly code: U8aFixed;
         } & Struct;
         readonly isRemoveIdentity: boolean;
         readonly asRemoveIdentity: {
