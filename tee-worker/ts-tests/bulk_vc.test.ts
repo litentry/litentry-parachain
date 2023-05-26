@@ -10,7 +10,7 @@ import { HexString } from '@polkadot/util/types';
 import { multiAccountTxSender } from './common/transactions';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { SubmittableResult } from '@polkadot/api';
-import { stringToU8a } from '@polkadot/util';
+import { hexToU8a } from '@polkadot/util';
 const assertion = <Assertion>{
     A1: 'A1',
     A2: ['A2'],
@@ -62,11 +62,11 @@ describeLitentry('multiple accounts test', 2, async (context) => {
                         reject(result.status);
                     }
                 });
-        })
+        });
     });
     //test with multiple accounts
     step('test set usershieldingkey with multiple accounts', async () => {
-        const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, stringToU8a(aesKey)).toString('hex');
+        const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, hexToU8a(aesKey)).toString('hex');
         let txs: TransactionSubmit[] = [];
         for (let i = 0; i < substrateSigners.length; i++) {
             const tx = context.api.tx.identityManagement.setUserShieldingKey(context.mrEnclave, `0x${ciphertext}`);
@@ -82,11 +82,14 @@ describeLitentry('multiple accounts test', 2, async (context) => {
     step('test requestVc with multiple accounts', async () => {
         let txs: TransactionSubmit[] = [];
         for (let i = 0; i < substrateSigners.length; i++) {
+            console.log(assertion_type);
+
             const tx = context.api.tx.vcManagement.requestVc(context.mrEnclave, assertion_type);
             const nonce = (await context.api.rpc.system.accountNextIndex(substrateSigners[i].address)).toNumber();
             txs.push({ tx, nonce });
         }
         const resp_events = await multiAccountTxSender(context, txs, substrateSigners, 'vcManagement', ['VCIssued']);
+
         const event_data = await handleVcEvents(aesKey, resp_events, 'VCIssued');
 
         for (let k = 0; k < event_data.length; k++) {

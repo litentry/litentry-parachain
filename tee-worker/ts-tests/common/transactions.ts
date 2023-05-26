@@ -102,7 +102,13 @@ export async function multiAccountTxSender(
     events: string[]
 ): Promise<Event[]> {
     await sendTxUntilInBlockList(context.api, txs, signers);
-    const resp_events = await listenEvent(context.api, pallet, events, txs.length, signers.map((signer) => u8aToHex(signer.addressRaw)));
+    const resp_events = await listenEvent(
+        context.api,
+        pallet,
+        events,
+        txs.length,
+        signers.map((signer) => u8aToHex(signer.addressRaw))
+    );
     expect(resp_events.length).to.be.equal(txs.length);
     return resp_events;
 }
@@ -110,7 +116,13 @@ export async function multiAccountTxSender(
 // Subscribe to the chain until we get the first specified event with given `section` and `methods`.
 // We can listen to multiple `methods` as long as they are emitted in the same block.
 // The event consumer should do the decryption optionaly as it's event specific
-export async function listenEvent(api: ApiPromise, section: string, methods: string[], txsLength: number, signers: HexString[]) {
+export async function listenEvent(
+    api: ApiPromise,
+    section: string,
+    methods: string[],
+    txsLength: number,
+    signers: HexString[]
+) {
     return new Promise<Event[]>(async (resolve, reject) => {
         let startBlock = 0;
         let events: EventRecord[] = [];
@@ -154,13 +166,11 @@ export async function listenEvent(api: ApiPromise, section: string, methods: str
                         !methods.includes(event.method) &&
                         !(event.method in RequestEvent)
                     ) {
-                        reject(`listenEvent error----Expect event:${methods} but received unexpected event :${event.method}`);
+                        reject(
+                            `listenEvent error----Expect event:${methods} but received unexpected event :${event.method}`
+                        );
                     }
-                    return (
-                        phase.isApplyExtrinsic &&
-                        section === event.section &&
-                        methods.includes(event.method)
-                    );
+                    return phase.isApplyExtrinsic && section === event.section && methods.includes(event.method);
                 });
                 //We're going to have to filter by signer, because multiple txs is going to mix
                 const filtered_events_with_signer = events_in_extrinsic
@@ -179,10 +189,10 @@ export async function listenEvent(api: ApiPromise, section: string, methods: str
                     });
 
                 //There is no good compatibility method here.Only successful and failed events can be filtered normally, but it cannot filter error + successful events, which may need further optimization
-                const eventsToUse = filtered_events_with_signer.length > 0 ? filtered_events_with_signer : events_in_extrinsic;
+                const eventsToUse =
+                    filtered_events_with_signer.length > 0 ? filtered_events_with_signer : events_in_extrinsic;
 
                 events = [...eventsToUse];
-
             });
 
             if (events.length === txsLength) {

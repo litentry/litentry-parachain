@@ -62,14 +62,16 @@ describeLitentry('VC test', 0, async (context) => {
             'alice shielding key should be set'
         );
     });
-
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
     step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
+        await sleep(6000);
         const resp_shieldingKey = await checkUserShieldingKeys(
             context,
             'IdentityManagement',
             'UserShieldingKeys',
             u8aToHex(context.substrateWallet.alice.addressRaw)
         );
+        await sleep(6000);
         assert.equal(resp_shieldingKey, aesKey, 'resp_shieldingKey should be equal aesKey after set');
     });
     step('Request VC', async () => {

@@ -53,7 +53,7 @@ describeLitentry('multiple accounts test', 2, async (context) => {
                         reject(result.status);
                     }
                 });
-        })
+        });
     });
 
     //test with multiple accounts
