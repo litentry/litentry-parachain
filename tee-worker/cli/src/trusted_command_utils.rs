@@ -40,14 +40,27 @@ use substrate_client_keystore::LocalKeystore;
 #[macro_export]
 macro_rules! get_layer_two_nonce {
 	($signer_pair:ident, $cli: ident, $trusted_args:ident ) => {{
-		use $crate::trusted_command_utils::get_pending_trusted_calls_for;
-		let top: TrustedOperation = TrustedGetter::nonce($signer_pair.public().into())
-			.sign(&KeyPair::Sr25519(Box::new($signer_pair.clone())))
-			.into();
-		// final nonce = current system nonce + pending tx count, panic early
-		let nonce = perform_trusted_operation($cli, $trusted_args, &top)
-			.and_then(|n| Index::decode(&mut n.as_slice()).ok())
-			.unwrap();
+		use ita_stf::{Getter, PublicGetter};
+		use $crate::{
+			trusted_command_utils::get_pending_trusted_calls_for,
+			trusted_operation::execute_getter_from_cli_args,
+		};
+
+		// let top: TrustedOperation = TrustedGetter::nonce($signer_pair.public().into())
+		// 	.sign(&KeyPair::Sr25519(Box::new($signer_pair.clone())))
+		// 	.into();
+		// // final nonce = current system nonce + pending tx count, panic early
+		// let nonce = perform_trusted_operation($cli, $trusted_args, &top)
+		// 	.and_then(|n| Index::decode(&mut n.as_slice()).ok())
+		// 	.unwrap();
+
+		let getter = Getter::public(PublicGetter::nonce($signer_pair.public().into()));
+		let getter_result = execute_getter_from_cli_args($cli, $trusted_args, &getter);
+		let nonce = match getter_result {
+			Some(encoded_nonce) => Index::decode(&mut encoded_nonce.as_slice()).unwrap(),
+			None => Default::default(),
+		};
+
 		debug!("got system nonce: {:?}", nonce);
 		let pending_tx_count =
 			get_pending_trusted_calls_for($cli, $trusted_args, &$signer_pair.public().into()).len();
