@@ -19,13 +19,15 @@ use crate::{
 	UserShieldingKeyType,
 };
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Get};
-use litentry_primitives::{Identity, IdentityString, Web2Network, USER_SHIELDING_KEY_LEN, CHALLENGE_CODE_SIZE};
+use litentry_primitives::{
+	Identity, IdentityString, Web2Network, CHALLENGE_CODE_SIZE, USER_SHIELDING_KEY_LEN,
+};
 use sp_runtime::AccountId32;
 
 pub const ALICE: AccountId32 = AccountId32::new([1u8; 32]);
 pub const BOB: AccountId32 = AccountId32::new([2u8; 32]);
 
-pub const SAMPLE_CHALLENGE_CODE:[u8; CHALLENGE_CODE_SIZE] = [0u8; CHALLENGE_CODE_SIZE];
+pub const SAMPLE_CHALLENGE_CODE: [u8; CHALLENGE_CODE_SIZE] = [0u8; CHALLENGE_CODE_SIZE];
 
 #[test]
 fn set_user_shielding_key_works() {
@@ -178,7 +180,7 @@ fn verify_identity_works() {
 			SAMPLE_CHALLENGE_CODE
 		));
 		assert_ok!(IMT::set_challenge_code(
-						RuntimeOrigin::signed(ALICE),
+			RuntimeOrigin::signed(ALICE),
 			BOB,
 			alice_web3_identity(),
 			SAMPLE_CHALLENGE_CODE
@@ -377,7 +379,7 @@ fn id_graph_stats_works() {
 			Some(metadata.clone()),
 			1,
 			ss58_prefix,
-			SAMPLE_CHALLENGE_CODE
+			SAMPLE_CHALLENGE_CODE,
 		)
 		.unwrap();
 		IMT::create_identity(
@@ -387,7 +389,7 @@ fn id_graph_stats_works() {
 			Some(metadata.clone()),
 			1,
 			ss58_prefix,
-			SAMPLE_CHALLENGE_CODE
+			SAMPLE_CHALLENGE_CODE,
 		)
 		.unwrap();
 

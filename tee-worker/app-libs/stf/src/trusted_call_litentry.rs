@@ -72,12 +72,12 @@ impl TrustedCallSigned {
 		let code = generate_challenge_code();
 
 		IMTCall::create_identity {
-			who: who.clone(),
-			identity: identity.clone(),
+			who,
+			identity,
 			metadata,
 			creation_request_block: bn,
 			parent_ss58_prefix,
-			code
+			code,
 		}
 		.dispatch_bypass_filter(RuntimeOrigin::root())
 		.map_err(|e| StfError::CreateIdentityFailed(e.into()))?;
@@ -189,13 +189,9 @@ impl TrustedCallSigned {
 		let key = IdentityManagement::user_shielding_keys(&who)
 			.ok_or(StfError::VerifyIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
 
-		IMTCall::verify_identity {
-			who: who.clone(),
-			identity: identity.clone(),
-			verification_request_block: bn,
-		}
-		.dispatch_bypass_filter(RuntimeOrigin::root())
-		.map_err(|e| StfError::VerifyIdentityFailed(e.into()))?;
+		IMTCall::verify_identity { who, identity, verification_request_block: bn }
+			.dispatch_bypass_filter(RuntimeOrigin::root())
+			.map_err(|e| StfError::VerifyIdentityFailed(e.into()))?;
 
 		Ok(key)
 	}

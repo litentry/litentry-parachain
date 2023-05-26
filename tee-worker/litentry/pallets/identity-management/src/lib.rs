@@ -232,7 +232,7 @@ pub mod pallet {
 			metadata: Option<MetadataOf<T>>,
 			creation_request_block: ParentchainBlockNumber,
 			parent_ss58_prefix: u16,
-			code: ChallengeCode
+			code: ChallengeCode,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 
@@ -259,7 +259,10 @@ pub mod pallet {
 				..Default::default()
 			};
 			Self::insert_identity_with_limit(&who, &identity, context)?;
-			Self::deposit_event(Event::IdentityCreated { who: who.clone(), identity: identity.clone() });
+			Self::deposit_event(Event::IdentityCreated {
+				who: who.clone(),
+				identity: identity.clone(),
+			});
 			ChallengeCodes::<T>::insert(&who, &identity, code);
 			Self::deposit_event(Event::ChallengeCodeSet { who, identity, code });
 			Ok(())
@@ -304,27 +307,28 @@ pub mod pallet {
 			verification_request_block: ParentchainBlockNumber,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
-			let verify_result = IDGraphs::<T>::try_mutate(&who, &identity, |context| -> DispatchResult {
-				let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
-				ensure!(!c.is_verified, Error::<T>::IdentityAlreadyVerified);
+			let verify_result =
+				IDGraphs::<T>::try_mutate(&who, &identity, |context| -> DispatchResult {
+					let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
+					ensure!(!c.is_verified, Error::<T>::IdentityAlreadyVerified);
 
-				if let Some(b) = c.creation_request_block {
-					ensure!(
-						b <= verification_request_block,
-						Error::<T>::VerificationRequestTooEarly
-					);
-					ensure!(
-						verification_request_block - b <= T::MaxVerificationDelay::get(),
-						Error::<T>::VerificationRequestTooLate
-					);
-					c.is_verified = true;
-					c.verification_request_block = Some(verification_request_block);
-					*context = Some(c);
-					Ok(())
-				} else {
-					Err(Error::<T>::IdentityNotCreated.into())
-				}
-			});
+					if let Some(b) = c.creation_request_block {
+						ensure!(
+							b <= verification_request_block,
+							Error::<T>::VerificationRequestTooEarly
+						);
+						ensure!(
+							verification_request_block - b <= T::MaxVerificationDelay::get(),
+							Error::<T>::VerificationRequestTooLate
+						);
+						c.is_verified = true;
+						c.verification_request_block = Some(verification_request_block);
+						*context = Some(c);
+						Ok(())
+					} else {
+						Err(Error::<T>::IdentityNotCreated.into())
+					}
+				});
 			// remove challenge code associated with this identity
 			if ChallengeCodes::<T>::contains_key(&who, &identity) {
 				Self::do_remove_challenge_code(who, identity);
@@ -378,7 +382,6 @@ pub mod pallet {
 			ChallengeCodes::<T>::remove(&who, &identity);
 			Self::deposit_event(Event::ChallengeCodeRemoved { who, identity });
 		}
-
 
 		pub fn get_id_graph(who: &T::AccountId) -> IDGraph<T> {
 			IDGraphs::iter_prefix(who).collect::<Vec<_>>()
