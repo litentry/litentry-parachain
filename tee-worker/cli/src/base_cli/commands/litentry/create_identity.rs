@@ -17,10 +17,11 @@
 use super::IMP;
 use crate::{
 	command_utils::{get_chain_api, *},
-	Cli,
+	Cli, CliError, CliResult, CliResultOk,
 };
 use base58::FromBase58;
 use codec::{Decode, Encode};
+use itp_node_api::api_client::ParentchainExtrinsicSigner;
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::H256;
@@ -28,7 +29,7 @@ use litentry_primitives::{Address32, Identity};
 use log::*;
 use sp_application_crypto::Pair;
 use sp_core::sr25519 as sr25519_core;
-use substrate_api_client::{compose_extrinsic, CallIndex, UncheckedExtrinsicV4, XtStatus};
+use substrate_api_client::{compose_extrinsic, CallIndex, SubmitAndWatch, XtStatus};
 
 #[derive(Parser)]
 pub struct CreateIdentityCommand {
@@ -41,8 +42,8 @@ pub struct CreateIdentityCommand {
 }
 
 impl CreateIdentityCommand {
-	pub(crate) fn run(&self, cli: &Cli) {
-		let chain_api = get_chain_api(cli);
+	pub(crate) fn run(&self, cli: &Cli) -> CliResult {
+		let mut chain_api = get_chain_api(cli);
 
 		let shard_opt = match self.shard.from_base58() {
 			Ok(s) => ShardIdentifier::decode(&mut &s[..]),
@@ -55,12 +56,14 @@ impl CreateIdentityCommand {
 		};
 
 		let who = sr25519_core::Pair::from_string(&self.account, None).unwrap();
-		let chain_api = chain_api.set_signer(who.clone());
+		chain_api.set_signer(ParentchainExtrinsicSigner::new(who.clone()));
 
 		let identity: Result<Identity, _> = serde_json::from_str(self.identity.as_str());
 		if let Err(e) = identity {
 			warn!("Deserialize Identity error: {:?}", e.to_string());
-			return
+			return Err(CliError::BaseOp {
+				msg: format!("Deserialize Identity error: {:?}", e.to_string()),
+			})
 		}
 
 		let tee_shielding_key = get_shielding_key(cli).unwrap();
@@ -68,17 +71,19 @@ impl CreateIdentityCommand {
 
 		let vdata: Option<Vec<u8>> = None;
 		pub type CreateIdentityFn = (CallIndex, H256, Address32, Vec<u8>, Option<Vec<u8>>);
-		let xt: UncheckedExtrinsicV4<CreateIdentityFn, _> = compose_extrinsic!(
+		let xt = compose_extrinsic!(
 			chain_api,
 			IMP,
 			"create_identity",
 			shard,
-			who.public().0.into(),
+			who.public().0,
 			encrypted_identity.to_vec(),
 			vdata
 		);
 
-		let tx_hash = chain_api.send_extrinsic(xt.hex_encode(), XtStatus::Finalized).unwrap();
+		let tx_hash = chain_api.submit_and_watch_extrinsic_until(xt, XtStatus::Finalized).unwrap();
 		println!("[+] TrustedOperation got finalized. Hash: {:?}\n", tx_hash);
+
+		Ok(CliResultOk::None)
 	}
 }

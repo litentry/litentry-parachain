@@ -16,7 +16,7 @@
 
 use crate::{
 	trusted_cli::TrustedCli, trusted_command_utils::get_pair_from_str,
-	trusted_operation::perform_trusted_operation, Cli,
+	trusted_operation::perform_trusted_operation, Cli, CliError, CliResult, CliResultOk,
 };
 use codec::Decode;
 use ita_stf::{TrustedGetter, TrustedOperation};
@@ -33,30 +33,35 @@ pub struct IDGraphStats {
 }
 
 impl IDGraphStats {
-	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) {
+	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
 		let who = get_pair_from_str(trusted_cli, &self.account);
 		let top: TrustedOperation = TrustedGetter::id_graph_stats(who.public().into())
 			.sign(&KeyPair::Sr25519(Box::new(who)))
 			.into();
 		let id_graph_stats = perform_trusted_operation(cli, trusted_cli, &top)
-			.and_then(|v| IDGraphStatsVec::decode(&mut v.as_slice()).ok());
+			.and_then(|v| Ok(IDGraphStatsVec::decode(&mut v.unwrap().as_slice()).ok()));
 
 		println!("IDGraph stats:");
+		match id_graph_stats {
+			Ok(id_graph_stats) => {
+				let total_number = id_graph_stats
+					.map(|stats| {
+						let mut total_number = 0_u32;
 
-		let total_number = id_graph_stats
-			.map(|stats| {
-				let mut total_number = 0_u32;
+						stats.iter().for_each(|item| {
+							total_number += item.1;
 
-				stats.iter().for_each(|item| {
-					total_number += item.1;
+							println!("{:?} -> {}", item.0, item.1);
+						});
 
-					println!("{:?} -> {}", item.0, item.1);
-				});
+						total_number
+					})
+					.unwrap();
 
-				total_number
-			})
-			.unwrap();
-
-		println!("Total number: {}", total_number);
+				println!("Total number: {}", total_number);
+				Ok(CliResultOk::None)
+			},
+			_ => Err(CliError::BaseOp { msg: format!("invalid id graph stats") }),
+		}
 	}
 }

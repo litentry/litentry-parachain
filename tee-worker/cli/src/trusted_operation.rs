@@ -31,7 +31,7 @@ use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::{BlockNumber, DirectRequestStatus, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
-use litentry_primitives::{ParentchainAccountId as AccountId, ParentchainHash as Hash};
+use litentry_primitives::ParentchainHash as Hash;
 use log::*;
 use my_node_runtime::RuntimeEvent;
 use pallet_teerex::Event as TeerexEvent;
@@ -258,7 +258,7 @@ fn send_direct_request(
 							}
 							if connection_can_be_closed(status) {
 								direct_api.close().unwrap();
-								return None
+								return Ok(None)
 							}
 						},
 						DirectRequestStatus::Ok => {

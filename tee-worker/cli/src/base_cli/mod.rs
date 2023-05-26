@@ -167,10 +167,11 @@ fn print_sgx_metadata(cli: &Cli) -> CliResult {
 	Ok(CliResultOk::Metadata { metadata })
 }
 
-fn print_sgx_metadata_raw(cli: &Cli) {
+fn print_sgx_metadata_raw(cli: &Cli) -> CliResult {
 	let worker_api_direct = get_worker_api_direct(cli);
 	let metadata = worker_api_direct.get_state_metadata_raw().unwrap();
 	println!("{metadata}");
+	Ok(CliResultOk::None)
 }
 
 fn list_workers(cli: &Cli) -> CliResult {

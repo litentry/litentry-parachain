@@ -17,16 +17,17 @@
 use super::IMP;
 use crate::{
 	command_utils::{get_chain_api, *},
-	Cli,
+	Cli, CliResult, CliResultOk,
 };
 use base58::FromBase58;
 use codec::{Decode, Encode};
+use itp_node_api::api_client::ParentchainExtrinsicSigner;
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
 use log::*;
-
+use sp_application_crypto::Pair;
 use sp_core::sr25519 as sr25519_core;
-use substrate_api_client::{compose_extrinsic, UncheckedExtrinsicV4, XtStatus};
+use substrate_api_client::{compose_extrinsic, SubmitAndWatch, XtStatus};
 
 #[derive(Parser)]
 pub struct SetUserShieldingKeyCommand {
@@ -41,8 +42,8 @@ pub struct SetUserShieldingKeyCommand {
 }
 
 impl SetUserShieldingKeyCommand {
-	pub(crate) fn run(&self, cli: &Cli) {
-		let chain_api = get_chain_api(cli);
+	pub(crate) fn run(&self, cli: &Cli) -> CliResult {
+		let mut chain_api = get_chain_api(cli);
 
 		let shard_opt = match self.shard.from_base58() {
 			Ok(s) => ShardIdentifier::decode(&mut &s[..]),
@@ -54,8 +55,8 @@ impl SetUserShieldingKeyCommand {
 			Err(e) => panic!("{}", e),
 		};
 
-		let who = get_pair_from_str(&self.account);
-		let chain_api = chain_api.set_signer(sr25519_core::Pair::from(who));
+		let who = sr25519_core::Pair::from_string(&self.account, None).unwrap();
+		chain_api.set_signer(ParentchainExtrinsicSigner::new(who.clone()));
 
 		let mut key = [0u8; 32];
 		hex::decode_to_slice(&self.key_hex, &mut key).expect("decoding key failed");
@@ -63,10 +64,11 @@ impl SetUserShieldingKeyCommand {
 		let tee_shielding_key = get_shielding_key(cli).unwrap();
 		let encrypted_key = tee_shielding_key.encrypt(&key.encode()).unwrap();
 
-		let xt: UncheckedExtrinsicV4<_, _> =
-			compose_extrinsic!(chain_api, IMP, "set_user_shielding_key", shard, encrypted_key);
+		let xt = compose_extrinsic!(chain_api, IMP, "set_user_shielding_key", shard, encrypted_key);
 
-		let tx_hash = chain_api.send_extrinsic(xt.hex_encode(), XtStatus::Finalized).unwrap();
+		let tx_hash = chain_api.submit_and_watch_extrinsic_until(xt, XtStatus::Finalized).unwrap();
 		println!("[+] TrustedOperation got finalized. Hash: {:?}\n", tx_hash);
+
+		Ok(CliResultOk::None)
 	}
 }

@@ -106,6 +106,8 @@ pub enum CliResultOk {
 
 #[derive(Debug, Error)]
 pub enum CliError {
+	#[error("base operation error: {:?}", msg)]
+	BaseOp { msg: String },
 	#[error("trusted operation error: {:?}", msg)]
 	TrustedOp { msg: String },
 	#[error("EvmReadCommands error: {:?}", msg)]

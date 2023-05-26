@@ -16,7 +16,7 @@
 
 use crate::{
 	trusted_cli::TrustedCli, trusted_command_utils::get_pair_from_str,
-	trusted_operation::perform_trusted_operation, Cli,
+	trusted_operation::perform_trusted_operation, Cli, CliResult, CliResultOk,
 };
 use codec::Decode;
 use ita_stf::{TrustedGetter, TrustedOperation};
@@ -31,13 +31,16 @@ pub struct UserShiledingKeyCommand {
 }
 
 impl UserShiledingKeyCommand {
-	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) {
+	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
 		let who = get_pair_from_str(trusted_cli, &self.account);
 		let top: TrustedOperation = TrustedGetter::user_shielding_key(who.public().into())
 			.sign(&KeyPair::Sr25519(Box::new(who)))
 			.into();
 		let key = perform_trusted_operation(cli, trusted_cli, &top)
-			.and_then(|v| UserShieldingKeyType::decode(&mut v.as_slice()).ok());
-		println!("{}", hex::encode(key.unwrap()));
+			.and_then(|v| Ok(UserShieldingKeyType::decode(&mut v.unwrap().as_slice()).ok()));
+		println!("{}", hex::encode(key.unwrap().unwrap()));
+
+		// Ok(perform_trusted_operation(cli, trusted_cli, &top).map(|_| CliResultOk::None)?)
+		Ok(CliResultOk::None)
 	}
 }

@@ -26,7 +26,6 @@ ws = { version = "0.9.1", features = ["ssl"] }
 
 # scs / integritee
 pallet-evm = { optional = true, git = "https://github.com/integritee-network/frontier.git", branch = "polkadot-v0.9.39" }
-pallet-teerex = { git = "https://github.com/integritee-network/pallets.git", branch = "polkadot-v0.9.39" }
 # `default-features = false` to remove the jsonrpsee dependency.
 substrate-api-client = { default-features = false, features = ["std", "ws-client"], git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.39" }
 substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.39" }
@@ -57,6 +56,7 @@ ita-sgx-runtime = { path = "../app-libs/sgx-runtime" }
 itp-node-api-metadata = { path = "../core-primitives/node-api/metadata" }
 litentry-primitives = { path = "../litentry/primitives" }
 my-node-runtime = { package = "rococo-parachain-runtime", path = "../../runtime/rococo" }
+pallet-teerex = { path = "../../pallets/teerex", default-features = false }
 scale-value = "0.6.0"
 sp-core-hashing = "6.0.0"
 teerex-primitives = { path = "../../primitives/teerex", default-features = false }

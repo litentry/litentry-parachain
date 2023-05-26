@@ -19,7 +19,7 @@ use crate::{
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_accountid_from_str, get_identifiers, get_pair_from_str},
 	trusted_operation::perform_trusted_operation,
-	Cli,
+	Cli, CliError, CliResult, CliResultOk,
 };
 use codec::Decode;
 use ita_stf::{Index, TrustedCall, TrustedGetter, TrustedOperation};
@@ -39,7 +39,7 @@ pub struct VerifyIdentityCommand {
 // TODO: we'd need an "integration-test" with parentchain "verify_identity"
 //       the origin of it needs to be re-considered if we want individual steps
 impl VerifyIdentityCommand {
-	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) {
+	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
 		let who = get_accountid_from_str(&self.account);
 		let root = get_pair_from_str(trusted_cli, "//Alice");
 
@@ -49,12 +49,16 @@ impl VerifyIdentityCommand {
 		let validation_data = serde_json::from_str(self.validation_data.as_str());
 		if let Err(e) = validation_data {
 			warn!("Deserialize ValidationData error: {:?}", e.to_string());
-			return
+			return Err(CliError::TrustedOp {
+				msg: format!("Deserialize ValidationData error: {:?}", e.to_string()),
+			})
 		}
 		let identity = serde_json::from_str(self.did.as_str());
 		if let Err(e) = identity {
 			warn!("Deserialize Identity error: {:?}", e.to_string());
-			return
+			return Err(CliError::TrustedOp {
+				msg: format!("Deserialize Identity error: {:?}", e.to_string()),
+			})
 		}
 		let top: TrustedOperation = TrustedCall::verify_identity(
 			root.public().into(),
@@ -66,6 +70,6 @@ impl VerifyIdentityCommand {
 		)
 		.sign(&KeyPair::Sr25519(Box::new(root)), nonce, &mrenclave, &shard)
 		.into_trusted_operation(trusted_cli.direct);
-		let _ = perform_trusted_operation(cli, trusted_cli, &top);
+		Ok(perform_trusted_operation(cli, trusted_cli, &top).map(|_| CliResultOk::None)?)
 	}
 }
