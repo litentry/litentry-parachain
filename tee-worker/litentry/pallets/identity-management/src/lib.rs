@@ -219,8 +219,7 @@ pub mod pallet {
 				ChallengeCodes::<T>::contains_key(&who, &identity),
 				Error::<T>::ChallengeCodeNotExist
 			);
-			ChallengeCodes::<T>::remove(&who, &identity);
-			Self::deposit_event(Event::ChallengeCodeRemoved { who, identity });
+			Self::do_remove_challenge_code(who, identity);
 			Ok(())
 		}
 
@@ -233,6 +232,7 @@ pub mod pallet {
 			metadata: Option<MetadataOf<T>>,
 			creation_request_block: ParentchainBlockNumber,
 			parent_ss58_prefix: u16,
+			code: ChallengeCode
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 
@@ -259,7 +259,9 @@ pub mod pallet {
 				..Default::default()
 			};
 			Self::insert_identity_with_limit(&who, &identity, context)?;
-			Self::deposit_event(Event::IdentityCreated { who, identity });
+			Self::deposit_event(Event::IdentityCreated { who: who.clone(), identity: identity.clone() });
+			ChallengeCodes::<T>::insert(&who, &identity, code);
+			Self::deposit_event(Event::ChallengeCodeSet { who, identity, code });
 			Ok(())
 		}
 
@@ -302,7 +304,7 @@ pub mod pallet {
 			verification_request_block: ParentchainBlockNumber,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
-			IDGraphs::<T>::try_mutate(&who, &identity, |context| -> DispatchResult {
+			let verify_result = IDGraphs::<T>::try_mutate(&who, &identity, |context| -> DispatchResult {
 				let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
 				ensure!(!c.is_verified, Error::<T>::IdentityAlreadyVerified);
 
@@ -322,7 +324,12 @@ pub mod pallet {
 				} else {
 					Err(Error::<T>::IdentityNotCreated.into())
 				}
-			})
+			});
+			// remove challenge code associated with this identity
+			if ChallengeCodes::<T>::contains_key(&who, &identity) {
+				Self::do_remove_challenge_code(who, identity);
+			}
+			verify_result
 		}
 	}
 
@@ -366,6 +373,12 @@ pub mod pallet {
 			});
 			IDGraphs::<T>::remove(owner, identity);
 		}
+
+		fn do_remove_challenge_code(who: T::AccountId, identity: Identity) {
+			ChallengeCodes::<T>::remove(&who, &identity);
+			Self::deposit_event(Event::ChallengeCodeRemoved { who, identity });
+		}
+
 
 		pub fn get_id_graph(who: &T::AccountId) -> IDGraph<T> {
 			IDGraphs::iter_prefix(who).collect::<Vec<_>>()

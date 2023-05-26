@@ -68,22 +68,19 @@ impl TrustedCallSigned {
 		let key = IdentityManagement::user_shielding_keys(&who)
 			.ok_or(StfError::CreateIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
 
+		// generate challenge code
+		let code = generate_challenge_code();
+
 		IMTCall::create_identity {
 			who: who.clone(),
 			identity: identity.clone(),
 			metadata,
 			creation_request_block: bn,
 			parent_ss58_prefix,
+			code
 		}
 		.dispatch_bypass_filter(RuntimeOrigin::root())
 		.map_err(|e| StfError::CreateIdentityFailed(e.into()))?;
-
-		// generate challenge code
-		let code = generate_challenge_code();
-
-		IMTCall::set_challenge_code { who, identity, code }
-			.dispatch_bypass_filter(RuntimeOrigin::root())
-			.map_err(|e| StfError::CreateIdentityFailed(e.into()))?;
 
 		Ok((key, code))
 	}
@@ -199,11 +196,6 @@ impl TrustedCallSigned {
 		}
 		.dispatch_bypass_filter(RuntimeOrigin::root())
 		.map_err(|e| StfError::VerifyIdentityFailed(e.into()))?;
-
-		// remove challenge code
-		IMTCall::remove_challenge_code { who, identity }
-			.dispatch_bypass_filter(RuntimeOrigin::root())
-			.map_err(|e| StfError::VerifyIdentityFailed(e.into()))?;
 
 		Ok(key)
 	}
