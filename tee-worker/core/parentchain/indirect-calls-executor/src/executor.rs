@@ -55,19 +55,19 @@ pub struct IndirectCallsExecutor<
 	_phantom: PhantomData<IndirectCallsFilter>,
 }
 impl<
-		ShieldingKeyRepository,
-		StfEnclaveSigner,
-		TopPoolAuthor,
-		NodeMetadataProvider,
-		IndirectCallsFilter,
-	>
-	IndirectCallsExecutor<
-		ShieldingKeyRepository,
-		StfEnclaveSigner,
-		TopPoolAuthor,
-		NodeMetadataProvider,
-		IndirectCallsFilter,
-	>
+	ShieldingKeyRepository,
+	StfEnclaveSigner,
+	TopPoolAuthor,
+	NodeMetadataProvider,
+	IndirectCallsFilter,
+>
+IndirectCallsExecutor<
+	ShieldingKeyRepository,
+	StfEnclaveSigner,
+	TopPoolAuthor,
+	NodeMetadataProvider,
+	IndirectCallsFilter,
+>
 {
 	pub fn new(
 		shielding_key_repo: Arc<ShieldingKeyRepository>,
@@ -86,22 +86,22 @@ impl<
 }
 
 impl<
-		ShieldingKeyRepository,
-		StfEnclaveSigner,
-		TopPoolAuthor,
-		NodeMetadataProvider,
-		FilterIndirectCalls,
-	> ExecuteIndirectCalls
-	for IndirectCallsExecutor<
-		ShieldingKeyRepository,
-		StfEnclaveSigner,
-		TopPoolAuthor,
-		NodeMetadataProvider,
-		FilterIndirectCalls,
-	> where
+	ShieldingKeyRepository,
+	StfEnclaveSigner,
+	TopPoolAuthor,
+	NodeMetadataProvider,
+	FilterIndirectCalls,
+> ExecuteIndirectCalls
+for IndirectCallsExecutor<
+	ShieldingKeyRepository,
+	StfEnclaveSigner,
+	TopPoolAuthor,
+	NodeMetadataProvider,
+	FilterIndirectCalls,
+> where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
-		+ ShieldingCryptoEncrypt<Error = itp_sgx_crypto::Error>,
+	+ ShieldingCryptoEncrypt<Error = itp_sgx_crypto::Error>,
 	StfEnclaveSigner: StfEnclaveSigning,
 	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
@@ -113,8 +113,8 @@ impl<
 		&self,
 		block: &ParentchainBlock,
 	) -> Result<OpaqueCall>
-	where
-		ParentchainBlock: ParentchainBlockTrait<Hash = H256>,
+		where
+			ParentchainBlock: ParentchainBlockTrait<Hash = H256>,
 	{
 		let block_number = *block.header().number();
 		let block_hash = block.hash();
@@ -162,8 +162,8 @@ impl<
 		extrinsics: Vec<H256>,
 		block_number: <<ParentchainBlock as ParentchainBlockTrait>::Header as Header>::Number,
 	) -> Result<OpaqueCall>
-	where
-		ParentchainBlock: ParentchainBlockTrait<Hash = H256>,
+		where
+			ParentchainBlock: ParentchainBlockTrait<Hash = H256>,
 	{
 		let call = self.node_meta_data_provider.get_from_metadata(|meta_data| {
 			meta_data.confirm_processed_parentchain_block_call_indexes()
@@ -175,22 +175,22 @@ impl<
 }
 
 impl<
-		ShieldingKeyRepository,
-		StfEnclaveSigner,
-		TopPoolAuthor,
-		NodeMetadataProvider,
-		FilterIndirectCalls,
-	> IndirectExecutor
-	for IndirectCallsExecutor<
-		ShieldingKeyRepository,
-		StfEnclaveSigner,
-		TopPoolAuthor,
-		NodeMetadataProvider,
-		FilterIndirectCalls,
-	> where
+	ShieldingKeyRepository,
+	StfEnclaveSigner,
+	TopPoolAuthor,
+	NodeMetadataProvider,
+	FilterIndirectCalls,
+> IndirectExecutor
+for IndirectCallsExecutor<
+	ShieldingKeyRepository,
+	StfEnclaveSigner,
+	TopPoolAuthor,
+	NodeMetadataProvider,
+	FilterIndirectCalls,
+> where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
-		+ ShieldingCryptoEncrypt<Error = itp_sgx_crypto::Error>,
+	+ ShieldingCryptoEncrypt<Error = itp_sgx_crypto::Error>,
 	StfEnclaveSigner: StfEnclaveSigning,
 	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 {
@@ -251,7 +251,10 @@ mod test {
 	use itp_stf_primitives::types::AccountId;
 	use itp_test::mock::shielding_crypto_mock::ShieldingCryptoMock;
 	use itp_top_pool_author::mocks::AuthorApiMock;
-	use itp_types::{Block, CallWorkerFn, Request, ShardIdentifier, ShieldFundsFn};
+	use itp_types::{
+		extrinsics::fill_opaque_extrinsic_with_status, Block, CallWorkerFn, Request,
+		ShardIdentifier, ShieldFundsFn,
+	};
 	use sp_core::{ed25519, Pair};
 	use sp_runtime::{MultiSignature, OpaqueExtrinsic};
 	use std::assert_matches::assert_matches;
@@ -284,7 +287,9 @@ mod test {
 				.unwrap();
 
 		let parentchain_block = ParentchainBlockBuilder::default()
-			.with_extrinsics(vec![opaque_extrinsic])
+			.with_extrinsics(vec![
+				fill_opaque_extrinsic_with_status(opaque_extrinsic, true).unwrap()
+			])
 			.build();
 
 		indirect_calls_executor
@@ -306,10 +311,12 @@ mod test {
 		let opaque_extrinsic = OpaqueExtrinsic::from_bytes(
 			shield_funds_unchecked_extrinsic(&shielding_key).encode().as_slice(),
 		)
-		.unwrap();
+			.unwrap();
 
 		let parentchain_block = ParentchainBlockBuilder::default()
-			.with_extrinsics(vec![opaque_extrinsic])
+			.with_extrinsics(vec![
+				fill_opaque_extrinsic_with_status(opaque_extrinsic, true).unwrap()
+			])
 			.build();
 
 		indirect_calls_executor

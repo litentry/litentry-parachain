@@ -149,7 +149,7 @@ impl<
 			// Execute indirect calls that were found in the extrinsics of the block,
 			// incl. shielding and unshielding.
 			match self.indirect_calls_executor.execute_indirect_calls_in_extrinsics(&block) {
-				Ok(mut parentchain_calls) => {
+				Ok(parentchain_calls) => {
 					calls.push(parentchain_calls);
 				},
 				Err(_) => error!("Error executing relevant extrinsics"),

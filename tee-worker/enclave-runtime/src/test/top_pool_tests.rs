@@ -203,12 +203,12 @@ fn create_shielding_call_extrinsic<ShieldingKey: ShieldingCryptoEncrypt>(
 			MultiSignature::Ed25519(signature),
 			default_extra_for_test.signed_extra(),
 		)
-		.encode()
-		.as_slice(),
+			.encode()
+			.as_slice(),
 	)
-	.unwrap();
+		.unwrap();
 
 	ParentchainBlockBuilder::default()
-		.with_extrinsics(vec![opaque_extrinsic])
+		.with_extrinsics(vec![fill_opaque_extrinsic_with_status(opaque_extrinsic, true).unwrap()])
 		.build()
 }
