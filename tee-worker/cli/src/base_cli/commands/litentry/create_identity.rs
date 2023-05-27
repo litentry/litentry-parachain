@@ -24,12 +24,11 @@ use codec::{Decode, Encode};
 use itp_node_api::api_client::ParentchainExtrinsicSigner;
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
-use itp_types::H256;
-use litentry_primitives::{Address32, Identity};
+use litentry_primitives::Identity;
 use log::*;
 use sp_application_crypto::Pair;
 use sp_core::sr25519 as sr25519_core;
-use substrate_api_client::{compose_extrinsic, CallIndex, SubmitAndWatch, XtStatus};
+use substrate_api_client::{compose_extrinsic, SubmitAndWatch, XtStatus};
 
 #[derive(Parser)]
 pub struct CreateIdentityCommand {
@@ -70,7 +69,6 @@ impl CreateIdentityCommand {
 		let encrypted_identity = tee_shielding_key.encrypt(&identity.unwrap().encode()).unwrap();
 
 		let vdata: Option<Vec<u8>> = None;
-		pub type CreateIdentityFn = (CallIndex, H256, Address32, Vec<u8>, Option<Vec<u8>>);
 		let xt = compose_extrinsic!(
 			chain_api,
 			IMP,

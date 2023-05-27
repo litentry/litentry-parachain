@@ -17,7 +17,7 @@ itp-types = { default-features = false, path = "../../types" }
 
 # litentry
 ita-sgx-runtime = { path = "../../../app-libs/sgx-runtime" }
-# my-node-runtime = { default-features = false, package = "rococo-parachain-runtime", path = "../../../../runtime/rococo" }
+my-node-runtime = { default-features = false, package = "rococo-parachain-runtime", path = "../../../../runtime/rococo" }
 
 
 [features]
@@ -28,5 +28,5 @@ std = [
     "substrate-api-client/ws-client",
     "sp-core/std",
     "sp-runtime/std",
-    # "my-node-runtime/std",
+    "my-node-runtime/std",
 ]
