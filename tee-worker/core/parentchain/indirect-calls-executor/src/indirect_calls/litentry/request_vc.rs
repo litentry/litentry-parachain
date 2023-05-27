@@ -14,32 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{
-	error::{Error, ErrorDetail, IMPError, Result},
-	IndirectDispatch, IndirectExecutor,
-};
+use crate::{error::Result, IndirectDispatch, IndirectExecutor};
 use codec::{Decode, Encode};
-use ita_sgx_runtime::{pallet_imt::MetadataOf, Runtime};
+
 use ita_stf::{TrustedCall, TrustedOperation};
-use itp_node_api::{
-	api_client::ParentchainUncheckedExtrinsic,
-	metadata::{
-		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes,
-		pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes,
-		provider::AccessNodeMetadata,
-	},
-};
-use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
-use itp_stf_executor::traits::StfEnclaveSigning;
-use itp_stf_primitives::types::AccountId;
-use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{Balance, CreateIdentityFn, ShardIdentifier, H256};
+
+use itp_types::{ShardIdentifier, H256};
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{Identity, ParentchainBlockNumber};
-use log::{debug, info, *};
+
+use log::debug;
 use parachain_core_primitives::Assertion;
 use sp_runtime::traits::{AccountIdLookup, StaticLookup};
-use std::vec::Vec;
+
 use substrate_api_client::GenericAddress;
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
@@ -51,10 +37,10 @@ pub struct RequestVCArgs {
 impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for RequestVCArgs {
 	type Args = (Option<GenericAddress>, H256, u32);
 	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
-		let (address, hash, block) = args;
+		let (address, hash, _block) = args;
 		// TODO: Provide Extrinsic Signature
 		if let Some(address) = address {
-			let account = AccountIdLookup::lookup(address.clone())?;
+			let account = AccountIdLookup::lookup(address)?;
 			debug!(
 				"indirect call Requested VC, who:{:?}, assertion: {:?}",
 				account_id_to_string(&account),

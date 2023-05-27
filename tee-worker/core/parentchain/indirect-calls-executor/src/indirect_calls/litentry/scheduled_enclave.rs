@@ -16,29 +16,12 @@
 
 use crate::{error::Result, IndirectDispatch, IndirectExecutor};
 use codec::{Decode, Encode};
-use ita_sgx_runtime::{pallet_imt::MetadataOf, Runtime};
-use ita_stf::{TrustedCall, TrustedOperation};
-use itp_node_api::{
-	api_client::ParentchainUncheckedExtrinsic,
-	metadata::{
-		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes,
-		pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes,
-		provider::AccessNodeMetadata,
-	},
-};
-use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
-use itp_stf_executor::traits::StfEnclaveSigning;
-use itp_stf_primitives::types::AccountId;
-use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{
-	Balance, CreateIdentityFn, MrEnclave, RemoveScheduledEnclaveFn, ShardIdentifier,
-	SidechainBlockNumber, UpdateScheduledEnclaveFn, H256,
-};
-use itp_utils::stringify::account_id_to_string;
+
+use itp_types::{MrEnclave, SidechainBlockNumber};
+
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
-use litentry_primitives::{Identity, ParentchainBlockNumber};
-use log::{debug, info, *};
-use std::vec::Vec;
+
+use log::debug;
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct UpdateScheduledEnclaveArgs {
@@ -48,7 +31,7 @@ pub struct UpdateScheduledEnclaveArgs {
 
 impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for UpdateScheduledEnclaveArgs {
 	type Args = ();
-	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
+	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {
 		debug!("execute indirect call: UpdateScheduledEnclave, sidechain_block_number: {}, mrenclave: {:?}", self.sbn, self.mrenclave);
 		GLOBAL_SCHEDULED_ENCLAVE.update(self.sbn, self.mrenclave)?;
 		Ok(())
@@ -62,7 +45,7 @@ pub struct RemoveScheduledEnclaveArgs {
 
 impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for RemoveScheduledEnclaveArgs {
 	type Args = ();
-	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
+	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {
 		debug!(
 			"execute indirect call: RemoveScheduledEnclave, sidechain_block_number: {}",
 			self.sbn

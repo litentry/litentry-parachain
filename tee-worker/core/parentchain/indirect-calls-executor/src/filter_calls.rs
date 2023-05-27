@@ -17,7 +17,6 @@
 
 use crate::{
 	error::Result,
-	executor::hash_of,
 	indirect_calls::{
 		CallWorkerArgs, CreateIdentityArgs, RemoveIdentityArgs, RemoveScheduledEnclaveArgs,
 		RequestVCArgs, SetUserShieldingKeyArgs, ShiedFundsArgs, UpdateScheduledEnclaveArgs,
@@ -210,19 +209,19 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for IndirectCall {
 			IndirectCall::ShieldFunds(shieldfunds) => shieldfunds.dispatch(executor, ()),
 			IndirectCall::CallWorker(call_worker) => call_worker.dispatch(executor, ()),
 			IndirectCall::CreateIdentity(create_identity, address, hash) =>
-				create_identity.dispatch(executor, (address.clone(), block, hash.clone())),
+				create_identity.dispatch(executor, (address.clone(), block, *hash)),
 			IndirectCall::RemoveIdentity(remove_ideentity, address, hash) =>
-				remove_ideentity.dispatch(executor, (address.clone(), hash.clone())),
+				remove_ideentity.dispatch(executor, (address.clone(), *hash)),
 			IndirectCall::RequestVC(requestvc, address, hash) =>
-				requestvc.dispatch(executor, (address.clone(), hash.clone(), block)),
+				requestvc.dispatch(executor, (address.clone(), *hash, block)),
 			IndirectCall::UpdateScheduledEnclave(update_enclave_args) =>
 				update_enclave_args.dispatch(executor, ()),
 			IndirectCall::RemoveScheduledEnclave(remove_enclave_args) =>
 				remove_enclave_args.dispatch(executor, ()),
 			IndirectCall::SetUserShieldingKey(set_shied, address, hash) =>
-				set_shied.dispatch(executor, (address.clone(), hash.clone())),
+				set_shied.dispatch(executor, (address.clone(), *hash)),
 			IndirectCall::VerifyIdentity(verify_id, address, hash) =>
-				verify_id.dispatch(executor, (address.clone(), hash.clone(), block)),
+				verify_id.dispatch(executor, (address.clone(), *hash, block)),
 			IndirectCall::BatchAll(calls) => {
 				for x in calls.clone() {
 					x.dispatch(executor, block)?;

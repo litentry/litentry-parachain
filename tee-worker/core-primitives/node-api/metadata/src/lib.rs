@@ -48,7 +48,12 @@ pub mod event;
 pub mod metadata_mocks;
 
 pub trait NodeMetadataTrait:
-	TeerexCallIndexes + SidechainCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix
+	TeerexCallIndexes
+	+ SidechainCallIndexes
+	+ IMPCallIndexes
+	+ VCMPCallIndexes
+	+ SystemSs58Prefix
+	+ UtilityCallIndexes
 {
 }
 impl<
@@ -56,7 +61,8 @@ impl<
 			+ SidechainCallIndexes
 			+ IMPCallIndexes
 			+ VCMPCallIndexes
-			+ SystemSs58Prefix,
+			+ SystemSs58Prefix
+			+ UtilityCallIndexes,
 	> NodeMetadataTrait for T
 {
 }

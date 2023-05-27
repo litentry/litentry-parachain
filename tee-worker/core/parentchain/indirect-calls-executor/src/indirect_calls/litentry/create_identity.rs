@@ -14,30 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{
-	error::{Error, ErrorDetail, IMPError, Result},
-	IndirectDispatch, IndirectExecutor,
-};
+use crate::{error::Result, IndirectDispatch, IndirectExecutor};
 use codec::{Decode, Encode};
 use ita_sgx_runtime::{pallet_imt::MetadataOf, Runtime};
 use ita_stf::{TrustedCall, TrustedOperation};
-use itp_node_api::{
-	api_client::ParentchainUncheckedExtrinsic,
-	metadata::{
-		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes,
-		pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes,
-		provider::AccessNodeMetadata,
-	},
-};
-use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
-use itp_stf_executor::traits::StfEnclaveSigning;
+
 use itp_stf_primitives::types::AccountId;
-use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{Balance, CreateIdentityFn, ShardIdentifier, H256};
+
+use itp_types::{ShardIdentifier, H256};
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{Identity, ParentchainBlockNumber};
-use log::{debug, info, *};
-use std::vec::Vec;
+use litentry_primitives::Identity;
+use log::{debug, info};
+use sp_std::vec::Vec;
+use substrate_api_client::GenericAddress;
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct CreateIdentityArgs {
@@ -48,9 +37,9 @@ pub struct CreateIdentityArgs {
 }
 
 impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for CreateIdentityArgs {
-	type Args = (u32, H256);
+	type Args = (Option<GenericAddress>, u32, H256);
 	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
-		let (block_number, xt_hash) = args;
+		let (address, block_number, xt_hash) = args;
 		info!(
 			"Found CreateIdentity extrinsic in block: Shard: {}\nAccount {:?}",
 			bs58::encode(self.shard.encode()).into_string(),
@@ -68,26 +57,26 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for CreateIdentityAr
 		let metadata = match &self.encrypted_metadata {
 			None => None,
 			Some(m) => {
-				let decrypted_metadata = executor.decrypt(&m)?;
+				let decrypted_metadata = executor.decrypt(m)?;
 				Some(MetadataOf::<Runtime>::decode(&mut decrypted_metadata.as_slice())?)
 			},
 		};
 
-		// if extrinsic.signature.is_some() {
-		let enclave_account_id = executor.get_enclave_account()?;
-		let trusted_call = TrustedCall::create_identity(
-			enclave_account_id,
-			self.account.clone(),
-			identity,
-			metadata,
-			block_number,
-			xt_hash,
-		);
-		let signed_trusted_call = executor.sign_call_with_self(&trusted_call, &self.shard)?;
-		let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
-		let encrypted_trusted_call = executor.encrypt(&trusted_operation.encode())?;
-		executor.submit_trusted_call(self.shard, encrypted_trusted_call);
-		// }
+		if address.is_some() {
+			let enclave_account_id = executor.get_enclave_account()?;
+			let trusted_call = TrustedCall::create_identity(
+				enclave_account_id,
+				self.account.clone(),
+				identity,
+				metadata,
+				block_number,
+				xt_hash,
+			);
+			let signed_trusted_call = executor.sign_call_with_self(&trusted_call, &self.shard)?;
+			let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
+			let encrypted_trusted_call = executor.encrypt(&trusted_operation.encode())?;
+			executor.submit_trusted_call(self.shard, encrypted_trusted_call);
+		}
 		Ok(())
 	}
 }

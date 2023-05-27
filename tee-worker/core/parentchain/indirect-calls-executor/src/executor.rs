@@ -38,7 +38,7 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{OpaqueCall, ShardIdentifier, H256};
 use log::*;
 use sp_core::blake2_256;
-use sp_runtime::traits::{AtLeast32BitUnsigned, Block as ParentchainBlockTrait, Header, Keccak256};
+use sp_runtime::traits::{Block as ParentchainBlockTrait, Header, Keccak256};
 use std::{sync::Arc, vec::Vec};
 
 pub struct IndirectCallsExecutor<
@@ -152,7 +152,7 @@ impl<
 		self.create_processed_parentchain_block_call::<ParentchainBlock>(
 			block_hash,
 			executed_calls,
-			block_number.into(),
+			block_number,
 		)
 	}
 
@@ -300,7 +300,7 @@ mod test {
 
 		let mr_enclave = [33u8; 32];
 		let (indirect_calls_executor, top_pool_author, shielding_key_repo) =
-			test_fixtures(mr_enclave.clone(), NodeMetadataMock::new());
+			test_fixtures(mr_enclave, NodeMetadataMock::new());
 		let shielding_key = shielding_key_repo.retrieve_key().unwrap();
 
 		let opaque_extrinsic = OpaqueExtrinsic::from_bytes(

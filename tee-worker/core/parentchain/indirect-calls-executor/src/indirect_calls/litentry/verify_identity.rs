@@ -14,29 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{
-	error::{Error, ErrorDetail, IMPError, Result},
-	IndirectDispatch, IndirectExecutor,
-};
+use crate::{error::Result, IndirectDispatch, IndirectExecutor};
 use codec::{Decode, Encode};
-use ita_sgx_runtime::{pallet_imt::MetadataOf, Runtime};
+
 use ita_stf::{TrustedCall, TrustedOperation};
-use itp_node_api::{
-	api_client::ParentchainUncheckedExtrinsic,
-	metadata::{
-		pallet_imp::IMPCallIndexes, pallet_teerex::TeerexCallIndexes,
-		pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes,
-		provider::AccessNodeMetadata,
-	},
-};
-use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
-use itp_stf_executor::traits::StfEnclaveSigning;
-use itp_stf_primitives::types::AccountId;
-use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{Balance, CreateIdentityFn, ShardIdentifier, H256};
+
+use itp_types::{ShardIdentifier, H256};
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{Identity, ParentchainBlockNumber, ValidationData};
-use log::{debug, info, *};
+use litentry_primitives::{Identity, ValidationData};
+use log::debug;
 use sp_runtime::traits::{AccountIdLookup, StaticLookup};
 use std::vec::Vec;
 use substrate_api_client::GenericAddress;
@@ -60,7 +46,7 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for VerifyIdentityAr
 		)?;
 
 		if let Some(address) = address {
-			let account = AccountIdLookup::lookup(address.clone())?;
+			let account = AccountIdLookup::lookup(address)?;
 			debug!(
 				"indirect call VerifyIdentity, who:{:?}, identity: {:?}, validation_data: {:?}",
 				account_id_to_string(&account),
