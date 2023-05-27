@@ -19,11 +19,15 @@ use crate::{
 	UserShieldingKeyType,
 };
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Get};
-use litentry_primitives::{Identity, IdentityString, Web2Network, USER_SHIELDING_KEY_LEN};
+use litentry_primitives::{
+	Identity, IdentityString, Web2Network, CHALLENGE_CODE_SIZE, USER_SHIELDING_KEY_LEN,
+};
 use sp_runtime::AccountId32;
 
 pub const ALICE: AccountId32 = AccountId32::new([1u8; 32]);
 pub const BOB: AccountId32 = AccountId32::new([2u8; 32]);
+
+pub const SAMPLE_CHALLENGE_CODE: [u8; CHALLENGE_CODE_SIZE] = [0u8; CHALLENGE_CODE_SIZE];
 
 #[test]
 fn set_user_shielding_key_works() {
@@ -59,6 +63,7 @@ fn create_identity_works() {
 			Some(metadata.clone()),
 			1,
 			ss58_prefix,
+			SAMPLE_CHALLENGE_CODE
 		));
 		assert_eq!(
 			IMT::id_graphs(BOB, alice_web3_identity()).unwrap(),
@@ -70,6 +75,7 @@ fn create_identity_works() {
 			}
 		);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&BOB), 2);
+		assert!(crate::ChallengeCodes::<Test>::get(&BOB, alice_web3_identity()).is_some())
 	});
 }
 
@@ -85,6 +91,7 @@ fn cannot_create_more_identities_for_account_than_limit() {
 				None,
 				i,
 				131_u16,
+				SAMPLE_CHALLENGE_CODE
 			));
 		}
 		assert_err!(
@@ -95,6 +102,7 @@ fn cannot_create_more_identities_for_account_than_limit() {
 				None,
 				max_id_graph_len + 1,
 				131_u16,
+				SAMPLE_CHALLENGE_CODE
 			),
 			Error::<Test>::IDGraphLenLimitReached
 		);
@@ -106,6 +114,7 @@ fn remove_identity_works() {
 	new_test_ext(false).execute_with(|| {
 		let ss58_prefix = 31_u16;
 		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
+
 		assert_ok!(IMT::set_user_shielding_key(
 			RuntimeOrigin::signed(ALICE),
 			BOB,
@@ -125,6 +134,7 @@ fn remove_identity_works() {
 			Some(metadata.clone()),
 			1,
 			ss58_prefix,
+			SAMPLE_CHALLENGE_CODE
 		));
 		assert_eq!(
 			IMT::id_graphs(BOB, alice_web3_identity()).unwrap(),
@@ -167,7 +177,16 @@ fn verify_identity_works() {
 			Some(metadata.clone()),
 			1,
 			ss58_prefix,
+			SAMPLE_CHALLENGE_CODE
 		));
+		assert_ok!(IMT::set_challenge_code(
+			RuntimeOrigin::signed(ALICE),
+			BOB,
+			alice_web3_identity(),
+			SAMPLE_CHALLENGE_CODE
+		));
+		assert!(IMT::challenge_codes(BOB, alice_web3_identity()).is_some());
+
 		assert_ok!(IMT::verify_identity(
 			RuntimeOrigin::signed(ALICE),
 			BOB,
@@ -183,6 +202,7 @@ fn verify_identity_works() {
 				is_verified: true,
 			}
 		);
+		assert!(IMT::challenge_codes(BOB, alice_web3_identity()).is_none());
 	});
 }
 
@@ -198,6 +218,7 @@ fn get_id_graph_works() {
 			Some(metadata3.clone()),
 			3,
 			ss58_prefix,
+			SAMPLE_CHALLENGE_CODE
 		));
 		assert_ok!(IMT::verify_identity(
 			RuntimeOrigin::signed(ALICE),
@@ -218,6 +239,7 @@ fn get_id_graph_works() {
 			Some(metadata2.clone()),
 			2,
 			ss58_prefix,
+			SAMPLE_CHALLENGE_CODE
 		));
 		assert_ok!(IMT::verify_identity(
 			RuntimeOrigin::signed(ALICE),
@@ -240,6 +262,7 @@ fn verify_identity_fails_when_too_early() {
 
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		let ss58_prefix = 131_u16;
+
 		assert_ok!(IMT::create_identity(
 			RuntimeOrigin::signed(ALICE),
 			BOB,
@@ -247,6 +270,7 @@ fn verify_identity_fails_when_too_early() {
 			Some(metadata.clone()),
 			CREATION_REQUEST_BLOCK,
 			ss58_prefix,
+			SAMPLE_CHALLENGE_CODE
 		));
 		assert_noop!(
 			IMT::verify_identity(
@@ -277,6 +301,7 @@ fn verify_identity_fails_when_too_late() {
 
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		let ss58_prefix = 131_u16;
+
 		assert_ok!(IMT::create_identity(
 			RuntimeOrigin::signed(ALICE),
 			BOB,
@@ -284,6 +309,7 @@ fn verify_identity_fails_when_too_late() {
 			Some(metadata.clone()),
 			CREATION_REQUEST_BLOCK,
 			ss58_prefix,
+			SAMPLE_CHALLENGE_CODE
 		));
 		assert_noop!(
 			IMT::verify_identity(
@@ -318,6 +344,7 @@ fn get_id_graph_with_max_len_works() {
 				None,
 				i,
 				131_u16,
+				SAMPLE_CHALLENGE_CODE
 			));
 		}
 		// the full id_graph should have 22 elements, including the prime_id
@@ -344,6 +371,7 @@ fn id_graph_stats_works() {
 	new_test_ext(true).execute_with(|| {
 		let metadata: MetadataOf<Test> = vec![0u8; 16].try_into().unwrap();
 		let ss58_prefix = 131_u16;
+
 		IMT::create_identity(
 			RuntimeOrigin::signed(ALICE),
 			ALICE,
@@ -351,6 +379,7 @@ fn id_graph_stats_works() {
 			Some(metadata.clone()),
 			1,
 			ss58_prefix,
+			SAMPLE_CHALLENGE_CODE,
 		)
 		.unwrap();
 		IMT::create_identity(
@@ -360,6 +389,7 @@ fn id_graph_stats_works() {
 			Some(metadata.clone()),
 			1,
 			ss58_prefix,
+			SAMPLE_CHALLENGE_CODE,
 		)
 		.unwrap();
 
