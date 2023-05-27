@@ -106,7 +106,7 @@ pub unsafe extern "C" fn init(
 		untrusted_worker_addr,
 		untrusted_worker_addr_size as usize,
 	))
-		.map_err(Error::Codec)
+	.map_err(Error::Codec)
 	{
 		Ok(addr) => addr,
 		Err(e) => return e.into(),
@@ -139,7 +139,7 @@ pub unsafe extern "C" fn get_rsa_encryption_pubkey(
 	let pubkey_slice = slice::from_raw_parts_mut(pubkey, pubkey_size as usize);
 
 	if let Err(e) =
-	write_slice_and_whitespace_pad(pubkey_slice, rsa_pubkey_json.as_bytes().to_vec())
+		write_slice_and_whitespace_pad(pubkey_slice, rsa_pubkey_json.as_bytes().to_vec())
 	{
 		return Error::Other(Box::new(e)).into()
 	};
