@@ -21,9 +21,8 @@
 
 use crate::{
 	error::Result, pallet_imp::IMPCallIndexes, pallet_sidechain::SidechainCallIndexes,
-	pallet_teerex::TeerexCallIndexes, pallet_utility::UtilityCallIndexes,
 	pallet_system::SystemSs58Prefix, pallet_teerex::TeerexCallIndexes,
-	pallet_vcmp::VCMPCallIndexes,
+	pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes,
 };
 use codec::{Decode, Encode};
 use sp_core::storage::StorageKey;

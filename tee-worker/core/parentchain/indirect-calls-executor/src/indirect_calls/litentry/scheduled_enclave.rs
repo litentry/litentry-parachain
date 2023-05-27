@@ -16,12 +16,8 @@
 
 use crate::{error::Result, IndirectDispatch, IndirectExecutor};
 use codec::{Decode, Encode};
-use ita_stf::{TrustedCall, TrustedOperation};
-use itp_stf_primitives::types::AccountId;
-use itp_types::{Balance, ShardIdentifier};
-use log::{debug, info};
-use std::vec::Vec;
 use ita_sgx_runtime::{pallet_imt::MetadataOf, Runtime};
+use ita_stf::{TrustedCall, TrustedOperation};
 use itp_node_api::{
 	api_client::ParentchainUncheckedExtrinsic,
 	metadata::{
@@ -32,15 +28,17 @@ use itp_node_api::{
 };
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::StfEnclaveSigning;
+use itp_stf_primitives::types::AccountId;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{CreateIdentityFn, H256};
+use itp_types::{
+	Balance, CreateIdentityFn, MrEnclave, RemoveScheduledEnclaveFn, ShardIdentifier,
+	SidechainBlockNumber, UpdateScheduledEnclaveFn, H256,
+};
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{Identity, ParentchainBlockNumber};
-use itp_types::{RemoveScheduledEnclaveFn, UpdateScheduledEnclaveFn};
-use itp_types::SidechainBlockNumber;
-use itp_types::MrEnclave;
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
-use log::*;
+use litentry_primitives::{Identity, ParentchainBlockNumber};
+use log::{debug, info, *};
+use std::vec::Vec;
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct UpdateScheduledEnclaveArgs {
