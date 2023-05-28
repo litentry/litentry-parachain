@@ -14,7 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{error::Result, IndirectDispatch, IndirectExecutor};
+use crate::{
+	error::{Error, ErrorDetail, IMPError, Result},
+	IndirectDispatch, IndirectExecutor,
+};
 use codec::{Decode, Encode};
 
 use ita_stf::{TrustedCall, TrustedOperation};
@@ -33,10 +36,13 @@ pub struct RemoveIdentityArgs {
 	encrypted_identity: Vec<u8>,
 }
 
-impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for RemoveIdentityArgs {
-	type Args = (Option<GenericAddress>, H256);
-	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
-		let (address, hash) = args;
+impl RemoveIdentityArgs {
+	fn internal_dispatch<Executor: IndirectExecutor>(
+		&self,
+		executor: &Executor,
+		address: Option<GenericAddress>,
+		hash: H256,
+	) -> Result<()> {
 		let identity: Identity =
 			Identity::decode(&mut executor.decrypt(&self.encrypted_identity)?.as_slice())?;
 
@@ -56,6 +62,23 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for RemoveIdentityAr
 
 			let encrypted_trusted_call = executor.encrypt(&trusted_operation.encode())?;
 			executor.submit_trusted_call(self.shard, encrypted_trusted_call);
+		}
+		Ok(())
+	}
+}
+
+impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for RemoveIdentityArgs {
+	type Args = (Option<GenericAddress>, H256);
+	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
+		let (address, hash) = args;
+		let e = Error::IMPHandlingError(IMPError::CreateIdentityFailed(ErrorDetail::ImportError));
+		if self.internal_dispatch(executor, address, hash).is_err() {
+			if let Err(internal_e) =
+				executor.submit_trusted_call_from_error(self.shard, None, &e, hash)
+			{
+				log::warn!("fail to handle internal errors in create_identity: {:?}", internal_e);
+			}
+			return Err(e)
 		}
 		Ok(())
 	}

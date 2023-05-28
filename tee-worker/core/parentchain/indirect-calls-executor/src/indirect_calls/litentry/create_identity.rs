@@ -28,7 +28,6 @@ use itp_types::{ShardIdentifier, H256};
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::Identity;
 use log::{debug, info};
-use sp_runtime::traits::{AccountIdLookup, StaticLookup};
 use sp_std::vec::Vec;
 use substrate_api_client::GenericAddress;
 
@@ -94,11 +93,12 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for CreateIdentityAr
 			.internal_dispatch(executor, address.clone(), block_number, xt_hash)
 			.is_err()
 		{
-			// TODO: Remove this unwrap
-			let account_id = AccountIdLookup::lookup(address.unwrap())?;
-			if let Err(internal_e) =
-				executor.submit_trusted_call_from_error(self.shard, Some(account_id), &e, xt_hash)
-			{
+			if let Err(internal_e) = executor.submit_trusted_call_from_error(
+				self.shard,
+				Some(self.account.clone()),
+				&e,
+				xt_hash,
+			) {
 				log::warn!("fail to handle internal errors in create_identity: {:?}", internal_e);
 			}
 			return Err(e)
