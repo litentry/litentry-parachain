@@ -20,14 +20,14 @@
 use crate::sgx_reexport_prelude::*;
 
 use crate::{
-	error::Result,
+	error::{Error, Result},
 	filter_calls::FilterCalls,
 	traits::{ExecuteIndirectCalls, IndirectDispatch, IndirectExecutor},
 };
 use binary_merkle_tree::merkle_root;
 use codec::Encode;
 use core::marker::PhantomData;
-use ita_stf::{TrustedCall, TrustedCallSigned};
+use ita_stf::{TrustedCall, TrustedCallSigned, TrustedOperation};
 use itp_node_api::metadata::{
 	pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata, NodeMetadataTrait,
 };
@@ -200,6 +200,30 @@ impl<
 		) {
 			error!("Error adding indirect trusted call to TOP pool: {:?}", e);
 		}
+	}
+
+	fn submit_trusted_call_from_error(
+		&self,
+		shard: ShardIdentifier,
+		account: Option<AccountId>,
+		err: &Error,
+		hash: H256,
+	) -> Result<()> {
+		let enclave_account = self.get_enclave_account()?;
+		// let shielding_key = self.shielding_key_repo.retrieve_key()?;
+		let trusted_call = match err {
+			Error::IMPHandlingError(e) =>
+				TrustedCall::handle_imp_error(enclave_account, account, e.clone(), hash),
+			Error::VCMPHandlingError(e) =>
+				TrustedCall::handle_vcmp_error(enclave_account, account, e.clone(), hash),
+			_ => return Err(Error::Other(("unsupported error").into())),
+		};
+		let signed_trusted_call = self.sign_call_with_self(&trusted_call, &shard)?;
+		let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
+
+		let encrypted_trusted_call = self.encrypt(&trusted_operation.encode())?;
+		self.submit_trusted_call(shard, encrypted_trusted_call);
+		Ok(())
 	}
 
 	fn decrypt(&self, encrypted: &[u8]) -> Result<Vec<u8>> {

@@ -15,7 +15,7 @@
 
 */
 
-use crate::error::Result;
+use crate::error::{Error, Result};
 use ita_stf::{TrustedCall, TrustedCallSigned};
 use itp_stf_primitives::types::AccountId;
 use itp_types::{OpaqueCall, ShardIdentifier, H256};
@@ -58,6 +58,14 @@ pub trait IndirectDispatch<E: IndirectExecutor> {
 /// to the `IndirectDispatch` implementation.
 pub trait IndirectExecutor {
 	fn submit_trusted_call(&self, shard: ShardIdentifier, encrypted_trusted_call: Vec<u8>);
+
+	fn submit_trusted_call_from_error(
+		&self,
+		shard: ShardIdentifier,
+		account: Option<AccountId>,
+		err: &Error,
+		hash: H256,
+	) -> Result<()>;
 
 	fn decrypt(&self, encrypted: &[u8]) -> Result<Vec<u8>>;
 

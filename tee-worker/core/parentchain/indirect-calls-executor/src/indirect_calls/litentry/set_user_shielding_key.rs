@@ -29,7 +29,7 @@ use substrate_api_client::GenericAddress;
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct SetUserShieldingKeyArgs {
-	shard: ShardIdentifier,
+	pub(crate) shard: ShardIdentifier,
 	encrypted_key: Vec<u8>,
 }
 
@@ -38,7 +38,7 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for SetUserShielding
 
 	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
 		let (address, hash) = args;
-		// TODO: Find the import for this
+		// TODO: Find the import for thi
 		let key =
 			UserShieldingKeyType::decode(&mut executor.decrypt(&self.encrypted_key)?.as_slice())?;
 
