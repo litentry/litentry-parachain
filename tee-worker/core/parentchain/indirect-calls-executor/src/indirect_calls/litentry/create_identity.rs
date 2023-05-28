@@ -14,7 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{error::Result, IndirectDispatch, IndirectExecutor};
+use crate::{
+	error::{Error, ErrorDetail, IMPError, Result},
+	IndirectDispatch, IndirectExecutor,
+};
 use codec::{Decode, Encode};
 use ita_sgx_runtime::{pallet_imt::MetadataOf, Runtime};
 use ita_stf::{TrustedCall, TrustedOperation};
@@ -25,6 +28,7 @@ use itp_types::{ShardIdentifier, H256};
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::Identity;
 use log::{debug, info};
+use sp_runtime::traits::{AccountIdLookup, StaticLookup};
 use sp_std::vec::Vec;
 use substrate_api_client::GenericAddress;
 
@@ -35,17 +39,19 @@ pub struct CreateIdentityArgs {
 	encrypted_identity: Vec<u8>,
 	encrypted_metadata: Option<Vec<u8>>,
 }
-
-impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for CreateIdentityArgs {
-	type Args = (Option<GenericAddress>, u32, H256);
-	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
-		let (address, block_number, xt_hash) = args;
+impl CreateIdentityArgs {
+	fn internal_dispatch<Executor: IndirectExecutor>(
+		&self,
+		executor: &Executor,
+		address: Option<GenericAddress>,
+		block_number: u32,
+		xt_hash: H256,
+	) -> Result<()> {
 		info!(
 			"Found CreateIdentity extrinsic in block: Shard: {}\nAccount {:?}",
 			bs58::encode(self.shard.encode()).into_string(),
 			self.account
 		);
-		// let shielding_key = executor.shielding_key_repo.retrieve_key()?;
 		let identity: Identity =
 			Identity::decode(&mut executor.decrypt(&self.encrypted_identity)?.as_slice())?;
 		debug!(
@@ -53,7 +59,6 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for CreateIdentityAr
 			account_id_to_string(&self.account),
 			identity
 		);
-
 		let metadata = match &self.encrypted_metadata {
 			None => None,
 			Some(m) => {
@@ -61,7 +66,6 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for CreateIdentityAr
 				Some(MetadataOf::<Runtime>::decode(&mut decrypted_metadata.as_slice())?)
 			},
 		};
-
 		if address.is_some() {
 			let enclave_account_id = executor.get_enclave_account()?;
 			let trusted_call = TrustedCall::create_identity(
@@ -76,6 +80,28 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for CreateIdentityAr
 			let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
 			let encrypted_trusted_call = executor.encrypt(&trusted_operation.encode())?;
 			executor.submit_trusted_call(self.shard, encrypted_trusted_call);
+		}
+		Ok(())
+	}
+}
+
+impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for CreateIdentityArgs {
+	type Args = (Option<GenericAddress>, u32, H256);
+	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
+		let (address, block_number, xt_hash) = args;
+		let e = Error::IMPHandlingError(IMPError::CreateIdentityFailed(ErrorDetail::ImportError));
+		if self
+			.internal_dispatch(executor, address.clone(), block_number, xt_hash)
+			.is_err()
+		{
+			// TODO: Remove this unwrap
+			let account_id = AccountIdLookup::lookup(address.unwrap())?;
+			if let Err(internal_e) =
+				executor.submit_trusted_call_from_error(self.shard, Some(account_id), &e, xt_hash)
+			{
+				log::warn!("fail to handle internal errors in create_identity: {:?}", internal_e);
+			}
+			return Err(e)
 		}
 		Ok(())
 	}
