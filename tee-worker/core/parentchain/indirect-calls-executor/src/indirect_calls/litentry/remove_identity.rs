@@ -71,12 +71,12 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for RemoveIdentityAr
 	type Args = (Option<GenericAddress>, H256);
 	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
 		let (address, hash) = args;
-		let e = Error::IMPHandlingError(IMPError::CreateIdentityFailed(ErrorDetail::ImportError));
+		let e = Error::IMPHandlingError(IMPError::RemoveIdentityFailed(ErrorDetail::ImportError));
 		if self.internal_dispatch(executor, address, hash).is_err() {
 			if let Err(internal_e) =
 				executor.submit_trusted_call_from_error(self.shard, None, &e, hash)
 			{
-				log::warn!("fail to handle internal errors in create_identity: {:?}", internal_e);
+				log::warn!("fail to handle internal errors in remove_identity: {:?}", internal_e);
 			}
 			return Err(e)
 		}

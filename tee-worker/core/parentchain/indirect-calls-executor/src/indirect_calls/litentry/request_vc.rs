@@ -14,7 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{error::Result, IndirectDispatch, IndirectExecutor};
+use crate::{
+	error::{Error, ErrorDetail, Result, VCMPError},
+	IndirectDispatch, IndirectExecutor,
+};
 use codec::{Decode, Encode};
 
 use ita_stf::{TrustedCall, TrustedOperation};
@@ -34,11 +37,13 @@ pub struct RequestVCArgs {
 	assertion: Assertion,
 }
 
-impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for RequestVCArgs {
-	type Args = (Option<GenericAddress>, H256, u32);
-	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
-		let (address, hash, _block) = args;
-		// TODO: Provide Extrinsic Signature
+impl RequestVCArgs {
+	fn internal_dispatch<Executor: IndirectExecutor>(
+		&self,
+		executor: &Executor,
+		address: Option<GenericAddress>,
+		hash: H256,
+	) -> Result<()> {
 		if let Some(address) = address {
 			let account = AccountIdLookup::lookup(address)?;
 			debug!(
@@ -56,6 +61,25 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for RequestVCArgs {
 
 			let encrypted_trusted_call = executor.encrypt(&trusted_operation.encode())?;
 			executor.submit_trusted_call(self.shard, encrypted_trusted_call);
+		}
+		Ok(())
+	}
+}
+impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for RequestVCArgs {
+	type Args = (Option<GenericAddress>, H256, u32);
+	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
+		let (address, hash, _block) = args;
+		let e = Error::VCMPHandlingError(VCMPError::RequestVCFailed(
+			self.assertion.clone(),
+			ErrorDetail::ImportError,
+		));
+		if self.internal_dispatch(executor, address, hash).is_err() {
+			if let Err(internal_e) =
+				executor.submit_trusted_call_from_error(self.shard, None, &e, hash)
+			{
+				log::warn!("fail to handle internal errors in request_vc: {:?}", internal_e);
+			}
+			return Err(e)
 		}
 		Ok(())
 	}
