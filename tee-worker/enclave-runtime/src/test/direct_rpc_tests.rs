@@ -18,7 +18,7 @@
 
 use crate::{rpc::worker_api_direct::public_api_rpc_handler, Hash};
 use codec::{Decode, Encode};
-use ita_stf::{Getter, TrustedGetter, TrustedGetterSigned};
+use ita_stf::{Getter, PublicGetter};
 use itc_direct_rpc_server::{
 	create_determine_watch, rpc_connection_registry::ConnectionRegistry,
 	rpc_ws_handler::RpcWsHandler,
@@ -31,8 +31,6 @@ use itp_test::mock::handle_state_mock::HandleStateMock;
 use itp_top_pool_author::mocks::AuthorApiMock;
 use itp_types::{AccountId, DirectRequestStatus, Request, ShardIdentifier};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
-use sp_core::ed25519::Signature;
-use sp_runtime::MultiSignature;
 use std::{string::ToString, sync::Arc, vec::Vec};
 
 pub fn get_state_request_works() {
@@ -50,10 +48,7 @@ pub fn get_state_request_works() {
 		public_api_rpc_handler(top_pool_author, getter_executor, None::<Arc<HandleStateMock>>);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 
-	let getter = Getter::trusted(TrustedGetterSigned::new(
-		TrustedGetter::nonce(AccountId::new([0u8; 32])),
-		MultiSignature::Ed25519(Signature::from_raw([0u8; 64])),
-	));
+	let getter = Getter::public(PublicGetter::nonce(AccountId::new([0u8; 32])));
 
 	let request = Request { shard: ShardIdentifier::default(), cyphertext: getter.encode() };
 
