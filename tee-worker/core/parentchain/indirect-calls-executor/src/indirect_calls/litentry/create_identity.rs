@@ -89,10 +89,7 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for CreateIdentityAr
 	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
 		let (address, block_number, xt_hash) = args;
 		let e = Error::IMPHandlingError(IMPError::CreateIdentityFailed(ErrorDetail::ImportError));
-		if self
-			.internal_dispatch(executor, address.clone(), block_number, xt_hash)
-			.is_err()
-		{
+		if self.internal_dispatch(executor, address, block_number, xt_hash).is_err() {
 			if let Err(internal_e) = executor.submit_trusted_call_from_error(
 				self.shard,
 				Some(self.account.clone()),
