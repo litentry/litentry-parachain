@@ -121,62 +121,7 @@ where
 			let hashed_extrinsic = xt.hashed_extrinsic;
 			Some(IndirectCall::VerifyIdentity(args, address, hashed_extrinsic))
 		} else if index == metadata.batch_all_call_indexes().ok()? {
-			let call_count: sp_std::vec::Vec<()> = Decode::decode(call_args).ok()?;
-			let mut calls: Vec<IndirectCall> = vec![];
-			log::debug!("Received Batch All Call for This Many call: {}", call_count.len());
-			for _i in 0..call_count.len() {
-				let index: CallIndex = Decode::decode(call_args).ok()?;
-				if index == metadata.shield_funds_call_indexes().ok()? {
-					let args = decode_and_log_error::<ShiedFundsArgs>(call_args)?;
-					calls.push(IndirectCall::ShieldFunds(args))
-				} else if index == metadata.call_worker_call_indexes().ok()? {
-					let args = decode_and_log_error::<CallWorkerArgs>(call_args)?;
-					calls.push(IndirectCall::CallWorker(args))
-				} else if index == metadata.create_identity_call_indexes().ok()? {
-					let args = decode_and_log_error::<CreateIdentityArgs>(call_args)?;
-					let hashed_extrinsic = xt.hashed_extrinsic;
-					calls.push(IndirectCall::CreateIdentity(
-						args,
-						address.clone(),
-						hashed_extrinsic,
-					));
-				} else if index == metadata.remove_identity_call_indexes().ok()? {
-					let args = decode_and_log_error::<RemoveIdentityArgs>(call_args)?;
-					let hashed_extrinsic = xt.hashed_extrinsic;
-					calls.push(IndirectCall::RemoveIdentity(
-						args,
-						address.clone(),
-						hashed_extrinsic,
-					))
-				} else if index == metadata.request_vc_call_indexes().ok()? {
-					let args = decode_and_log_error::<RequestVCArgs>(call_args)?;
-					let hashed_extrinsic = xt.hashed_extrinsic;
-					calls.push(IndirectCall::RequestVC(args, address.clone(), hashed_extrinsic))
-				} else if index == metadata.update_scheduled_enclave().ok()? {
-					let args = decode_and_log_error::<UpdateScheduledEnclaveArgs>(call_args)?;
-					calls.push(IndirectCall::UpdateScheduledEnclave(args))
-				} else if index == metadata.remove_scheduled_enclave().ok()? {
-					let args = decode_and_log_error::<RemoveScheduledEnclaveArgs>(call_args)?;
-					calls.push(IndirectCall::RemoveScheduledEnclave(args))
-				} else if index == metadata.set_user_shielding_key_call_indexes().ok()? {
-					let args = decode_and_log_error::<SetUserShieldingKeyArgs>(call_args)?;
-					let hashed_extrinsic = xt.hashed_extrinsic;
-					calls.push(IndirectCall::SetUserShieldingKey(
-						args,
-						address.clone(),
-						hashed_extrinsic,
-					))
-				} else if index == metadata.verify_identity_call_indexes().ok()? {
-					let args = decode_and_log_error::<VerifyIdentityArgs>(call_args)?;
-					let hashed_extrinsic = xt.hashed_extrinsic;
-					calls.push(IndirectCall::VerifyIdentity(
-						args,
-						address.clone(),
-						hashed_extrinsic,
-					))
-				}
-			}
-			Some(IndirectCall::BatchAll(calls))
+			parse_batch_all(call_args, metadata, address, xt.hashed_extrinsic)
 		} else {
 			None
 		}
@@ -224,7 +169,10 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for IndirectCall {
 				verify_id.dispatch(executor, (address.clone(), *hash, block)),
 			IndirectCall::BatchAll(calls) => {
 				for x in calls.clone() {
-					x.dispatch(executor, block)?;
+					if let Err(e) = x.dispatch(executor, block) {
+						log::warn!("Failed to execute indirect call in batch all due to: {:?}", e);
+						continue
+					}
 				}
 				Ok(())
 			},
@@ -240,4 +188,52 @@ fn decode_and_log_error<V: Decode>(encoded: &mut &[u8]) -> Option<V> {
 			None
 		},
 	}
+}
+
+fn parse_batch_all<NodeMetadata: NodeMetadataTrait>(
+	call_args: &mut &[u8],
+	metadata: &NodeMetadata,
+	address: Option<GenericAddress>,
+	hash: H256,
+) -> Option<IndirectCall> {
+	let call_count: sp_std::vec::Vec<()> = Decode::decode(call_args).ok()?;
+	let mut calls: Vec<IndirectCall> = vec![];
+	log::debug!("Received Batch All Call for This Many call: {}", call_count.len());
+	for _i in 0..call_count.len() {
+		let index: CallIndex = Decode::decode(call_args).ok()?;
+		if index == metadata.shield_funds_call_indexes().ok()? {
+			let args = decode_and_log_error::<ShiedFundsArgs>(call_args)?;
+			calls.push(IndirectCall::ShieldFunds(args))
+		} else if index == metadata.call_worker_call_indexes().ok()? {
+			let args = decode_and_log_error::<CallWorkerArgs>(call_args)?;
+			calls.push(IndirectCall::CallWorker(args))
+		} else if index == metadata.create_identity_call_indexes().ok()? {
+			let args = decode_and_log_error::<CreateIdentityArgs>(call_args)?;
+			let hashed_extrinsic = hash;
+			calls.push(IndirectCall::CreateIdentity(args, address.clone(), hashed_extrinsic));
+		} else if index == metadata.remove_identity_call_indexes().ok()? {
+			let args = decode_and_log_error::<RemoveIdentityArgs>(call_args)?;
+			let hashed_extrinsic = hash;
+			calls.push(IndirectCall::RemoveIdentity(args, address.clone(), hashed_extrinsic))
+		} else if index == metadata.request_vc_call_indexes().ok()? {
+			let args = decode_and_log_error::<RequestVCArgs>(call_args)?;
+			let hashed_extrinsic = hash;
+			calls.push(IndirectCall::RequestVC(args, address.clone(), hashed_extrinsic))
+		} else if index == metadata.update_scheduled_enclave().ok()? {
+			let args = decode_and_log_error::<UpdateScheduledEnclaveArgs>(call_args)?;
+			calls.push(IndirectCall::UpdateScheduledEnclave(args))
+		} else if index == metadata.remove_scheduled_enclave().ok()? {
+			let args = decode_and_log_error::<RemoveScheduledEnclaveArgs>(call_args)?;
+			calls.push(IndirectCall::RemoveScheduledEnclave(args))
+		} else if index == metadata.set_user_shielding_key_call_indexes().ok()? {
+			let args = decode_and_log_error::<SetUserShieldingKeyArgs>(call_args)?;
+			let hashed_extrinsic = hash;
+			calls.push(IndirectCall::SetUserShieldingKey(args, address.clone(), hashed_extrinsic))
+		} else if index == metadata.verify_identity_call_indexes().ok()? {
+			let args = decode_and_log_error::<VerifyIdentityArgs>(call_args)?;
+			let hashed_extrinsic = hash;
+			calls.push(IndirectCall::VerifyIdentity(args, address.clone(), hashed_extrinsic))
+		}
+	}
+	Some(IndirectCall::BatchAll(calls))
 }
