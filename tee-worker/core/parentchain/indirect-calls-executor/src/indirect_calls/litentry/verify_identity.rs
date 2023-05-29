@@ -14,7 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{error::Result, IndirectDispatch, IndirectExecutor};
+use crate::{
+	error::{Error, ErrorDetail, IMPError, Result},
+	IndirectDispatch, IndirectExecutor,
+};
 use codec::{Decode, Encode};
 
 use ita_stf::{TrustedCall, TrustedOperation};
@@ -34,11 +37,14 @@ pub struct VerifyIdentityArgs {
 	encrypted_validation_data: Vec<u8>,
 }
 
-impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for VerifyIdentityArgs {
-	type Args = (Option<GenericAddress>, H256, u32);
-	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
-		let (address, hash, block) = args;
-
+impl VerifyIdentityArgs {
+	fn internal_dispatch<Executor: IndirectExecutor>(
+		&self,
+		executor: &Executor,
+		address: Option<GenericAddress>,
+		hash: H256,
+		block: u32,
+	) -> Result<()> {
 		let identity: Identity =
 			Identity::decode(&mut executor.decrypt(&self.encrypted_identity)?.as_slice())?;
 		let validation_data = ValidationData::decode(
@@ -68,6 +74,23 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for VerifyIdentityAr
 
 			let encrypted_trusted_call = executor.encrypt(&trusted_operation.encode())?;
 			executor.submit_trusted_call(self.shard, encrypted_trusted_call);
+		}
+		Ok(())
+	}
+}
+
+impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for VerifyIdentityArgs {
+	type Args = (Option<GenericAddress>, H256, u32);
+	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
+		let (address, hash, block) = args;
+		let e = Error::IMPHandlingError(IMPError::VerifyIdentityFailed(ErrorDetail::ImportError));
+		if self.internal_dispatch(executor, address, hash, block).is_err() {
+			if let Err(internal_e) =
+				executor.submit_trusted_call_from_error(self.shard, None, &e, hash)
+			{
+				log::warn!("fail to handle internal errors in verify_identity: {:?}", internal_e);
+			}
+			return Err(e)
 		}
 		Ok(())
 	}
