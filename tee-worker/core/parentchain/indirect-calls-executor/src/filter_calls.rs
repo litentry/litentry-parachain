@@ -16,7 +16,7 @@
 */
 
 use crate::{
-	error::{Error, ErrorDetail, IMPError, Result},
+	error::Result,
 	indirect_calls::{
 		CallWorkerArgs, CreateIdentityArgs, RemoveIdentityArgs, RemoveScheduledEnclaveArgs,
 		RequestVCArgs, SetUserShieldingKeyArgs, ShiedFundsArgs, UpdateScheduledEnclaveArgs,
@@ -218,24 +218,8 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for IndirectCall {
 				update_enclave_args.dispatch(executor, ()),
 			IndirectCall::RemoveScheduledEnclave(remove_enclave_args) =>
 				remove_enclave_args.dispatch(executor, ()),
-			IndirectCall::SetUserShieldingKey(set_shied, address, hash) => {
-				// TODO: Need to refactor this handling
-				let e = Error::IMPHandlingError(IMPError::SetUserShieldingKeyFailed(
-					ErrorDetail::ImportError,
-				));
-				if set_shied.dispatch(executor, (address.clone(), *hash)).is_err() {
-					if let Err(internal_e) =
-						executor.submit_trusted_call_from_error(set_shied.shard, None, &e, *hash)
-					{
-						log::warn!(
-							"fail to handle internal errors in set_user_shielding_key: {:?}",
-							internal_e
-						);
-					}
-					return Err(e)
-				}
-				Ok(())
-			},
+			IndirectCall::SetUserShieldingKey(set_shied, address, hash) =>
+				set_shied.dispatch(executor, (address.clone(), *hash)),
 			IndirectCall::VerifyIdentity(verify_id, address, hash) =>
 				verify_id.dispatch(executor, (address.clone(), *hash, block)),
 			IndirectCall::BatchAll(calls) => {

@@ -14,7 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{error::Result, IndirectDispatch, IndirectExecutor};
+use crate::{
+	error::{Error, ErrorDetail, IMPError, Result},
+	IndirectDispatch, IndirectExecutor,
+};
 use codec::{Decode, Encode};
 
 use ita_stf::{TrustedCall, TrustedOperation};
@@ -33,12 +36,13 @@ pub struct SetUserShieldingKeyArgs {
 	encrypted_key: Vec<u8>,
 }
 
-impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for SetUserShieldingKeyArgs {
-	type Args = (Option<GenericAddress>, H256);
-
-	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
-		let (address, hash) = args;
-		// TODO: Find the import for thi
+impl SetUserShieldingKeyArgs {
+	fn internal_dispatch<Executor: IndirectExecutor>(
+		&self,
+		executor: &Executor,
+		address: Option<GenericAddress>,
+		hash: H256,
+	) -> Result<()> {
 		let key =
 			UserShieldingKeyType::decode(&mut executor.decrypt(&self.encrypted_key)?.as_slice())?;
 
@@ -54,6 +58,28 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for SetUserShielding
 
 			let encrypted_trusted_call = executor.encrypt(&trusted_operation.encode())?;
 			executor.submit_trusted_call(self.shard, encrypted_trusted_call);
+		}
+		Ok(())
+	}
+}
+
+impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for SetUserShieldingKeyArgs {
+	type Args = (Option<GenericAddress>, H256);
+
+	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
+		let (address, hash) = args;
+		let e =
+			Error::IMPHandlingError(IMPError::SetUserShieldingKeyFailed(ErrorDetail::ImportError));
+		if self.internal_dispatch(executor, address, hash).is_err() {
+			if let Err(internal_e) =
+				executor.submit_trusted_call_from_error(self.shard, None, &e, hash)
+			{
+				log::warn!(
+					"fail to handle internal errors in set_user_shielding_key: {:?}",
+					internal_e
+				);
+			}
+			return Err(e)
 		}
 		Ok(())
 	}
