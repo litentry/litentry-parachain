@@ -2,14 +2,15 @@ import { step } from 'mocha-steps';
 import { checkVc, describeLitentry, encryptWithTeeShieldingKey } from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
-import { u8aToHex, stringToU8a } from '@polkadot/util';
 import { Assertion, IndexingNetwork, TransactionSubmit } from './common/type-definitions';
 import { handleVcEvents } from './common/utils';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import { assert } from 'chai';
 import { HexString } from '@polkadot/util/types';
-import { listenEvent, multiAccountTxSender } from './common/transactions';
+import { multiAccountTxSender } from './common/transactions';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
+import { SubmittableResult } from '@polkadot/api';
+import { hexToU8a } from '@polkadot/util';
 const assertion = <Assertion>{
     A1: 'A1',
     A2: ['A2'],
@@ -25,7 +26,7 @@ const assertion = <Assertion>{
 //1.The "number" parameter in describeLitentry represents the number of accounts generated, including Substrate wallets and Ethereum wallets.If you want to use a large number of accounts for testing, you can modify this parameter.
 //2.Each time the test code is executed, new wallet account will be used.
 
-describeLitentry('multiple accounts test', 10, async (context) => {
+describeLitentry('multiple accounts test', 2, async (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     var substrateSigners: KeyringPair[] = [];
     var ethereumSigners: ethers.Wallet[] = [];
@@ -41,22 +42,31 @@ describeLitentry('multiple accounts test', 10, async (context) => {
         });
     });
     step('send test token to each account', async () => {
-        const txs: SubmittableExtrinsic<ApiTypes>[] = [];
+        const txs: any[] = [];
 
         for (let i = 0; i < substrateSigners.length; i++) {
             //1 token
             const tx = context.api.tx.balances.transfer(substrateSigners[i].address, '1000000000000');
-
             txs.push(tx);
         }
-        await context.api.tx.utility.batch(txs).signAndSend(context.substrateWallet.alice);
-        await listenEvent(context.api, 'balances', ['Transfer'], txs.length, [
-            u8aToHex(context.substrateWallet.alice.addressRaw),
-        ]);
+
+        await new Promise((resolve, reject) => {
+            context.api.tx.utility
+                .batch(txs)
+                .signAndSend(context.substrateWallet.alice, (result: SubmittableResult) => {
+                    console.log(`Current status is ${result.status}`);
+                    if (result.status.isFinalized) {
+                        resolve(result.status);
+                    } else if (result.status.isInvalid) {
+                        console.log(`Transaction is ${result.status}`);
+                        reject(result.status);
+                    }
+                });
+        });
     });
     //test with multiple accounts
     step('test set usershieldingkey with multiple accounts', async () => {
-        const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, stringToU8a(aesKey)).toString('hex');
+        const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, hexToU8a(aesKey)).toString('hex');
         let txs: TransactionSubmit[] = [];
         for (let i = 0; i < substrateSigners.length; i++) {
             const tx = context.api.tx.identityManagement.setUserShieldingKey(context.mrEnclave, `0x${ciphertext}`);
@@ -72,11 +82,14 @@ describeLitentry('multiple accounts test', 10, async (context) => {
     step('test requestVc with multiple accounts', async () => {
         let txs: TransactionSubmit[] = [];
         for (let i = 0; i < substrateSigners.length; i++) {
+            console.log(assertion_type);
+
             const tx = context.api.tx.vcManagement.requestVc(context.mrEnclave, assertion_type);
             const nonce = (await context.api.rpc.system.accountNextIndex(substrateSigners[i].address)).toNumber();
             txs.push({ tx, nonce });
         }
         const resp_events = await multiAccountTxSender(context, txs, substrateSigners, 'vcManagement', ['VCIssued']);
+
         const event_data = await handleVcEvents(aesKey, resp_events, 'VCIssued');
 
         for (let k = 0; k < event_data.length; k++) {

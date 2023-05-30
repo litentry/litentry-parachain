@@ -48,8 +48,7 @@ async function encodeExtrinsic() {
         if (data.length === 0 || txs.length >= BATCH_SIZE) {
             i++
             const extrinsics = defaultAPI.tx.utility.batch(batchTxs);
-            const sudoExtrinsic = defaultAPI.tx.sudo.sudo(extrinsics);
-            console.log(colors.green(`extrinsic ${i} encode`), sudoExtrinsic.toHex());
+            console.log(colors.green(`extrinsic ${i} encode`), extrinsics.toHex());
             txs = [];
         }
     }
