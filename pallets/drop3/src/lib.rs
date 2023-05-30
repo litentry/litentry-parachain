@@ -323,7 +323,7 @@ pub mod pallet {
 		/// Stop a reward pool, can be called by admin or reward pool owner
 		#[pallet::call_index(4)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::stop_reward_pool())]
-		pub fn stop_reward_pool(origin: OriginFor<T>, id: T::PoolId) -> DispatchResultWithPostInfo {
+		pub fn stop_reward_pool(origin: OriginFor<T>, #[pallet::compact] id: T::PoolId) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
 			RewardPools::<T>::try_mutate(id, |pool| {
