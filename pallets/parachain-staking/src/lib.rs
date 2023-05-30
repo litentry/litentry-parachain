@@ -829,7 +829,10 @@ pub mod pallet {
 		#[pallet::weight(< T as Config >::WeightInfo::set_total_selected())]
 		/// Set the total number of collator candidates selected per round
 		/// - changes are not applied until the start of the next round
-		pub fn set_total_selected(origin: OriginFor<T>, #[pallet::compact] new: u32) -> DispatchResultWithPostInfo {
+		pub fn set_total_selected(
+			origin: OriginFor<T>,
+			#[pallet::compact] new: u32,
+		) -> DispatchResultWithPostInfo {
 			frame_system::ensure_root(origin)?;
 			ensure!(new >= T::MinSelectedCandidates::get(), Error::<T>::CannotSetBelowMin);
 			let old = <TotalSelected<T>>::get();
@@ -862,7 +865,10 @@ pub mod pallet {
 		/// - if called with `new` less than length of current round, will transition immediately
 		/// in the next block
 		/// - also updates per-round inflation config
-		pub fn set_blocks_per_round(origin: OriginFor<T>, #[pallet::compact] new: u32) -> DispatchResultWithPostInfo {
+		pub fn set_blocks_per_round(
+			origin: OriginFor<T>,
+			#[pallet::compact] new: u32,
+		) -> DispatchResultWithPostInfo {
 			frame_system::ensure_root(origin)?;
 			ensure!(new >= T::MinBlocksPerRound::get(), Error::<T>::CannotSetBelowMin);
 			let mut round = <Round<T>>::get();
