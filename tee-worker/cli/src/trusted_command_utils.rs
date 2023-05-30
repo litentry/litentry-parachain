@@ -49,8 +49,9 @@ macro_rules! get_layer_two_nonce {
 		let getter = Getter::public(PublicGetter::nonce($signer_pair.public().into()));
 		let getter_result = execute_getter_from_cli_args($cli, $trusted_args, &getter);
 		let nonce = match getter_result {
-			Some(encoded_nonce) => Index::decode(&mut encoded_nonce.as_slice()).unwrap(),
-			None => Default::default(),
+			Ok(Some(encoded_nonce)) => Index::decode(&mut encoded_nonce.as_slice()).unwrap(),
+			Ok(None) => Default::default(),
+			Err(_) => todo!(),
 		};
 
 		debug!("got system nonce: {:?}", nonce);

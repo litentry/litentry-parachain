@@ -16,8 +16,8 @@
 */
 
 use crate::{
-	get_layer_two_nonce, trusted_cli::TrustedCli, trusted_command_utils::get_pair_from_str,
-	trusted_operation::perform_trusted_operation, Cli, CliResult, CliResultOk,
+	get_layer_two_nonce, trusted_cli::TrustedCli, trusted_command_utils::get_pair_from_str, Cli,
+	CliResult, CliResultOk,
 };
 use codec::Decode;
 use ita_stf::Index;

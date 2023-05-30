@@ -179,7 +179,7 @@ where
 			// append an extra `status` flag to `OpaqueExtrinsic` (Vec<u8>) and adjust the codec of it
 			//
 			// We intentionally don't drop failed extrinsics to allow any potential (post-)processing of failed extrinsics
-			let mut events: Vec<Events> = vec![];
+			let mut events = vec![];
 			for block in &block_chunk_to_sync {
 				let block_events = self.parentchain_api.events(Some(block.block.hash()))?;
 				events.push(block_events);
@@ -188,7 +188,7 @@ where
 				.iter_mut()
 				.enumerate()
 				.for_each(|(block_index, signed_block)| {
-					let mut extrinsics: Vec<OpaqueExtrinsic> = vec![];
+					let mut extrinsics = vec![];
 					let block_events = events.get(block_index).unwrap();
 					for (i, xt) in signed_block.block.extrinsics.iter().enumerate() {
 						// Check if the tx was successful
