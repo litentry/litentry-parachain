@@ -27,7 +27,7 @@ use crate::{
 };
 use codec::Decode;
 use hdrhistogram::Histogram;
-use ita_stf::{Getter, Index, TrustedCall, TrustedGetter, TrustedOperation};
+use ita_stf::{Getter, Index, PublicGetter, TrustedCall, TrustedGetter, TrustedOperation};
 use itc_rpc_client::direct_client::{DirectApi, DirectClient};
 use itp_stf_primitives::types::KeyPair;
 use itp_types::{
@@ -278,10 +278,7 @@ fn get_nonce(
 	shard: ShardIdentifier,
 	direct_client: &DirectClient,
 ) -> Index {
-	let getter = Getter::trusted(
-		TrustedGetter::nonce(account.public().into())
-			.sign(&KeyPair::Sr25519(Box::new(account.clone()))),
-	);
+	let getter = Getter::public(PublicGetter::nonce(account.public().into()));
 
 	let getter_start_timer = Instant::now();
 	let getter_result = get_state(direct_client, shard, &getter).unwrap_or_default();

@@ -58,6 +58,7 @@ impl From<TrustedGetterSigned> for Getter {
 #[allow(non_camel_case_types)]
 pub enum PublicGetter {
 	some_value,
+	nonce(AccountId),
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
@@ -65,7 +66,6 @@ pub enum PublicGetter {
 pub enum TrustedGetter {
 	free_balance(AccountId),
 	reserved_balance(AccountId),
-	nonce(AccountId),
 	#[cfg(feature = "evm")]
 	evm_nonce(AccountId),
 	#[cfg(feature = "evm")]
@@ -84,9 +84,6 @@ impl TrustedGetter {
 		match self {
 			TrustedGetter::free_balance(sender_account) => sender_account,
 			TrustedGetter::reserved_balance(sender_account) => sender_account,
-			// TODO: maybe nonce should be a public getter
-			//       see https://github.com/litentry/litentry-parachain/issues/1710
-			TrustedGetter::nonce(sender_account) => sender_account,
 			#[cfg(feature = "evm")]
 			TrustedGetter::evm_nonce(sender_account) => sender_account,
 			#[cfg(feature = "evm")]
@@ -157,12 +154,6 @@ impl ExecuteGetter for TrustedGetterSigned {
 				debug!("Account reserved balance is {}", info.data.reserved);
 				Some(info.data.reserved.encode())
 			},
-			TrustedGetter::nonce(who) => {
-				let nonce = System::account_nonce(&who);
-				debug!("TrustedGetter nonce");
-				debug!("Account nonce is {}", nonce);
-				Some(nonce.encode())
-			},
 			#[cfg(feature = "evm")]
 			TrustedGetter::evm_nonce(who) => {
 				let evm_account = get_evm_account(&who);
@@ -217,6 +208,12 @@ impl ExecuteGetter for PublicGetter {
 	fn execute(self) -> Option<Vec<u8>> {
 		match self {
 			PublicGetter::some_value => Some(42u32.encode()),
+			PublicGetter::nonce(who) => {
+				let nonce = System::account_nonce(&who);
+				debug!("PublicGetter nonce");
+				debug!("Account nonce is {}", nonce);
+				Some(nonce.encode())
+			},
 		}
 	}
 

@@ -213,9 +213,10 @@ declare module '@polkadot/api-base/types/submittable' {
                         | Uint8Array,
                     metadata: Option<Bytes> | null | Uint8Array | Bytes | string,
                     creationRequestBlock: u32 | AnyNumber | Uint8Array,
-                    parentSs58Prefix: u16 | AnyNumber | Uint8Array
+                    parentSs58Prefix: u16 | AnyNumber | Uint8Array,
+                    code: U8aFixed | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
-                [AccountId32, LitentryPrimitivesIdentity, Option<Bytes>, u32, u16]
+                [AccountId32, LitentryPrimitivesIdentity, Option<Bytes>, u32, u16, U8aFixed]
             >;
             removeChallengeCode: AugmentedSubmittable<
                 (

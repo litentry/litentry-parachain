@@ -22,7 +22,7 @@ use crate::{
 	Cli, CliResult, CliResultOk,
 };
 use codec::Decode;
-use ita_stf::{Index, TrustedCall, TrustedGetter, TrustedOperation};
+use ita_stf::{Index, TrustedCall, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
 use litentry_primitives::UserShieldingKeyType;
 use log::*;
