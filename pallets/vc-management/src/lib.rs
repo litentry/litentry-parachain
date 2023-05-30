@@ -299,7 +299,7 @@ pub mod pallet {
 		pub fn disable_schema(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
-			index: SchemaIndex,
+			#[pallet::compact] index: SchemaIndex,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			ensure!(Some(sender.clone()) == Self::admin(), Error::<T>::RequireAdmin);
@@ -318,7 +318,7 @@ pub mod pallet {
 		pub fn activate_schema(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
-			index: SchemaIndex,
+			#[pallet::compact] index: SchemaIndex,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			ensure!(Some(sender.clone()) == Self::admin(), Error::<T>::RequireAdmin);
@@ -337,7 +337,7 @@ pub mod pallet {
 		pub fn revoke_schema(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
-			index: SchemaIndex,
+			#[pallet::compact] index: SchemaIndex,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			ensure!(Some(sender.clone()) == Self::admin(), Error::<T>::RequireAdmin);

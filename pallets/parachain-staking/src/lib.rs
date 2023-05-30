@@ -829,7 +829,7 @@ pub mod pallet {
 		#[pallet::weight(< T as Config >::WeightInfo::set_total_selected())]
 		/// Set the total number of collator candidates selected per round
 		/// - changes are not applied until the start of the next round
-		pub fn set_total_selected(origin: OriginFor<T>, new: u32) -> DispatchResultWithPostInfo {
+		pub fn set_total_selected(origin: OriginFor<T>, #[pallet::compact] new: u32) -> DispatchResultWithPostInfo {
 			frame_system::ensure_root(origin)?;
 			ensure!(new >= T::MinSelectedCandidates::get(), Error::<T>::CannotSetBelowMin);
 			let old = <TotalSelected<T>>::get();
@@ -862,7 +862,7 @@ pub mod pallet {
 		/// - if called with `new` less than length of current round, will transition immediately
 		/// in the next block
 		/// - also updates per-round inflation config
-		pub fn set_blocks_per_round(origin: OriginFor<T>, new: u32) -> DispatchResultWithPostInfo {
+		pub fn set_blocks_per_round(origin: OriginFor<T>, #[pallet::compact] new: u32) -> DispatchResultWithPostInfo {
 			frame_system::ensure_root(origin)?;
 			ensure!(new >= T::MinBlocksPerRound::get(), Error::<T>::CannotSetBelowMin);
 			let mut round = <Round<T>>::get();
@@ -1121,7 +1121,7 @@ pub mod pallet {
 		/// Increase collator candidate self bond by `more`
 		pub fn candidate_bond_more(
 			origin: OriginFor<T>,
-			more: BalanceOf<T>,
+			#[pallet::compact] more: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let collator = ensure_signed(origin)?;
 			let mut state = <CandidateInfo<T>>::get(&collator).ok_or(Error::<T>::CandidateDNE)?;
@@ -1138,7 +1138,7 @@ pub mod pallet {
 		/// Request by collator candidate to decrease self bond by `less`
 		pub fn schedule_candidate_bond_less(
 			origin: OriginFor<T>,
-			less: BalanceOf<T>,
+			#[pallet::compact] less: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let collator = ensure_signed(origin)?;
 			let mut state = <CandidateInfo<T>>::get(&collator).ok_or(Error::<T>::CandidateDNE)?;
@@ -1188,7 +1188,7 @@ pub mod pallet {
 		pub fn delegate(
 			origin: OriginFor<T>,
 			candidate: T::AccountId,
-			amount: BalanceOf<T>,
+			#[pallet::compact] amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let delegator = ensure_signed(origin)?;
 			<AutoCompoundDelegations<T>>::delegate_with_auto_compound(
@@ -1214,7 +1214,7 @@ pub mod pallet {
 		pub fn delegate_with_auto_compound(
 			origin: OriginFor<T>,
 			candidate: T::AccountId,
-			amount: BalanceOf<T>,
+			#[pallet::compact] amount: BalanceOf<T>,
 			auto_compound: Percent,
 		) -> DispatchResultWithPostInfo {
 			let delegator = ensure_signed(origin)?;
@@ -1274,7 +1274,7 @@ pub mod pallet {
 		pub fn delegator_bond_more(
 			origin: OriginFor<T>,
 			candidate: T::AccountId,
-			more: BalanceOf<T>,
+			#[pallet::compact] more: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let delegator = ensure_signed(origin)?;
 			let in_top = Self::delegation_bond_more_without_event(
@@ -1298,7 +1298,7 @@ pub mod pallet {
 		pub fn schedule_delegator_bond_less(
 			origin: OriginFor<T>,
 			candidate: T::AccountId,
-			less: BalanceOf<T>,
+			#[pallet::compact] less: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let delegator = ensure_signed(origin)?;
 			Self::delegation_schedule_bond_decrease(candidate, delegator, less)

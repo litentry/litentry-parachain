@@ -85,8 +85,8 @@ pub mod pallet {
 		pub fn confirm_imported_sidechain_block(
 			origin: OriginFor<T>,
 			shard_id: ShardIdentifier,
-			block_number: u64,
-			next_finalization_candidate_block_number: u64,
+			#[pallet::compact] block_number: u64,
+			#[pallet::compact] next_finalization_candidate_block_number: u64,
 			block_header_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let confirmation = SidechainBlockConfirmation { block_number, block_header_hash };

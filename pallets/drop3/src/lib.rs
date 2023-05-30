@@ -252,7 +252,7 @@ pub mod pallet {
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::approve_reward_pool())]
 		pub fn approve_reward_pool(
 			origin: OriginFor<T>,
-			id: T::PoolId,
+			#[pallet::compact] id: T::PoolId,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
@@ -271,7 +271,7 @@ pub mod pallet {
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::reject_reward_pool())]
 		pub fn reject_reward_pool(
 			origin: OriginFor<T>,
-			id: T::PoolId,
+			#[pallet::compact] id: T::PoolId,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
@@ -302,7 +302,7 @@ pub mod pallet {
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::start_reward_pool())]
 		pub fn start_reward_pool(
 			origin: OriginFor<T>,
-			id: T::PoolId,
+			#[pallet::compact] id: T::PoolId,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
@@ -348,7 +348,7 @@ pub mod pallet {
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::close_reward_pool())]
 		pub fn close_reward_pool(
 			origin: OriginFor<T>,
-			id: T::PoolId,
+			#[pallet::compact] id: T::PoolId,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			let pool = RewardPools::<T>::get(id).ok_or(Error::<T>::NoSuchRewardPool)?;
@@ -366,9 +366,9 @@ pub mod pallet {
 		pub fn propose_reward_pool(
 			origin: OriginFor<T>,
 			name: Vec<u8>,
-			total: BalanceOf<T>,
-			start_at: T::BlockNumber,
-			end_at: T::BlockNumber,
+			#[pallet::compact] total: BalanceOf<T>,
+			#[pallet::compact] start_at: T::BlockNumber,
+			#[pallet::compact] end_at: T::BlockNumber,
 		) -> DispatchResultWithPostInfo {
 			// a few sanity checks
 			let sender = ensure_signed(origin)?;
@@ -410,9 +410,9 @@ pub mod pallet {
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::send_reward())]
 		pub fn send_reward(
 			origin: OriginFor<T>,
-			id: T::PoolId,
+			#[pallet::compact] id: T::PoolId,
 			to: T::AccountId,
-			amount: BalanceOf<T>,
+			#[pallet::compact] amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 

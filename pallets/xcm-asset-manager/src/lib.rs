@@ -269,8 +269,8 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::set_asset_units_per_second())]
 		pub fn set_asset_units_per_second(
 			origin: OriginFor<T>,
-			asset_id: T::AssetId,
-			units_per_second: u128,
+			#[pallet::compact] asset_id: T::AssetId,
+			#[pallet::compact] units_per_second: u128,
 		) -> DispatchResult {
 			T::ForeignAssetModifierOrigin::ensure_origin(origin)?;
 
@@ -288,7 +288,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::add_asset_type())]
 		pub fn add_asset_type(
 			origin: OriginFor<T>,
-			asset_id: T::AssetId,
+			#[pallet::compact] asset_id: T::AssetId,
 			new_asset_type: T::ForeignAssetType,
 		) -> DispatchResult {
 			T::ForeignAssetModifierOrigin::ensure_origin(origin)?;
