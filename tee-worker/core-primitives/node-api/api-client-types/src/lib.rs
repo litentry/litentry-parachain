@@ -60,11 +60,11 @@ pub use api::*;
 #[cfg(feature = "std")]
 mod api {
 	use super::{PairSignature, ParentchainExtrinsicParams, StaticExtrinsicSigner};
-	use my_node_runtime::Runtime;
 	use sp_runtime::generic::SignedBlock as GenericSignedBlock;
 	use substrate_api_client::Api;
 
-	pub use itp_types::Block;
+	pub use my_node_runtime::{Block, Runtime, UncheckedExtrinsic};
+
 	pub use substrate_api_client::{
 		api::Error as ApiClientError,
 		rpc::{Error as RpcClientError, WsRpcClient},
