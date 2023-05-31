@@ -193,9 +193,14 @@ export async function sendTxsWithUtility(
 
     await isInBlockPromise;
 
-    const resp_events = (await listenEvent(context.api, pallet, events, txs.length, [
-        u8aToHex(signer.addressRaw),
-    ], listenTimeoutInBlockNumber)) as any;
+    const resp_events = (await listenEvent(
+        context.api,
+        pallet,
+        events,
+        txs.length,
+        [u8aToHex(signer.addressRaw)],
+        listenTimeoutInBlockNumber
+    )) as any;
 
     expect(resp_events.length).to.be.equal(txs.length);
     return resp_events;
