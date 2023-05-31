@@ -10,7 +10,9 @@ import {
 } from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
-import { LitentryIdentity, LitentryValidationData, BatchCall } from './common/type-definitions';
+import { BatchCall, IdentityGenericEvent } from './common/type-definitions';
+import type { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
+import type { LitentryValidationData } from './parachain-interfaces/identity/types';
 import { handleIdentityEvents } from './common/utils';
 import { assert } from 'chai';
 import { listenEvent, multiAccountTxSender } from './common/transactions';
@@ -21,12 +23,12 @@ import { Vec } from '@polkadot/types';
 //1.The "number" parameter in describeLitentry represents the number of accounts generated, including Substrate wallets and Ethereum wallets.If you want to use a large number of accounts for testing, you can modify this parameter.
 //2.Each time the test code is executed, new wallet account will be used.
 
-describeLitentry('multiple accounts test', 10, async (context) => {
+describeLitentry('multiple accounts test', 2, async (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     var substraetSigners: KeyringPair[] = [];
     var ethereumSigners: ethers.Wallet[] = [];
     var web3Validations: LitentryValidationData[] = [];
-    var identities: LitentryIdentity[] = [];
+    var identities: LitentryPrimitivesIdentity[] = [];
     step('setup signers', async () => {
         substraetSigners = context.web3Signers.map((web3Signer) => {
             return web3Signer.substrateWallet;
@@ -73,7 +75,7 @@ describeLitentry('multiple accounts test', 10, async (context) => {
     //test identity with multiple accounts
     step('test createIdentity with multiple accounts', async () => {
         for (let index = 0; index < ethereumSigners.length; index++) {
-            let identity = await buildIdentityHelper(ethereumSigners[index].address, 'Ethereum', 'Evm');
+            let identity = await buildIdentityHelper(ethereumSigners[index].address, 'Ethereum', 'Evm', context);
             identities.push(identity);
         }
 
@@ -82,7 +84,12 @@ describeLitentry('multiple accounts test', 10, async (context) => {
         const resp_events = await multiAccountTxSender(context, txs, substraetSigners, 'identityManagement', [
             'IdentityCreated',
         ]);
-        const resp_events_datas = await handleIdentityEvents(context, aesKey, resp_events, 'IdentityCreated');
+        const resp_events_datas = (await handleIdentityEvents(
+            context,
+            aesKey,
+            resp_events,
+            'IdentityCreated'
+        )) as IdentityGenericEvent[];
 
         assert.equal(resp_events.length, identities.length, 'create identities with multiple accounts check fail');
 
@@ -108,10 +115,15 @@ describeLitentry('multiple accounts test', 10, async (context) => {
             'IdentityVerified',
         ]);
         assert.equal(resp_events.length, txs.length, 'verify identities with multiple accounts check fail');
-        const [resp_events_datas] = await handleIdentityEvents(context, aesKey, resp_events, 'IdentityVerified');
-        for (let index = 0; index < resp_events_datas.length; index++) {
+        const [resp_events_datas] = (await handleIdentityEvents(
+            context,
+            aesKey,
+            resp_events,
+            'IdentityVerified'
+        )) as IdentityGenericEvent[];
+        for (let index = 0; index < [resp_events_datas].length; index++) {
             console.log('verifyIdentity', index);
-            assertIdentityVerified(substraetSigners[index], resp_events_datas);
+            assertIdentityVerified(substraetSigners[index], [resp_events_datas]);
         }
     });
 
@@ -122,8 +134,13 @@ describeLitentry('multiple accounts test', 10, async (context) => {
             'IdentityRemoved',
         ]);
         assert.equal(resp_events.length, txs.length, 'remove identities with multiple accounts check fail');
-        const [resp_events_datas] = await handleIdentityEvents(context, aesKey, resp_events, 'IdentityRemoved');
-        for (let index = 0; index < resp_events_datas.length; index++) {
+        const [resp_events_datas] = (await handleIdentityEvents(
+            context,
+            aesKey,
+            resp_events,
+            'IdentityRemoved'
+        )) as IdentityGenericEvent[];
+        for (let index = 0; index < [resp_events_datas].length; index++) {
             console.log('verifyIdentity', index);
             assertIdentityRemoved(substraetSigners[index], resp_events_datas);
         }

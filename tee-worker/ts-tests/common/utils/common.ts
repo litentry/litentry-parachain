@@ -1,17 +1,17 @@
 import { LitentryIdentity } from '../type-definitions';
-
+import { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
 export function sleep(secs: number) {
     return new Promise((resolve) => {
         setTimeout(resolve, secs * 1000);
     });
 }
 
-export function isEqual(obj1: LitentryIdentity, obj2: LitentryIdentity) {
+export function isEqual(obj1: LitentryPrimitivesIdentity, obj2: LitentryPrimitivesIdentity) {
     return JSON.stringify(obj1) === JSON.stringify(obj2);
 }
 
 // campare two array of event_identities idgraph_identities whether equal
-export function isArrayEqual(arr1: LitentryIdentity[], arr2: LitentryIdentity[]) {
+export function isArrayEqual(arr1: LitentryPrimitivesIdentity[], arr2: LitentryPrimitivesIdentity[]) {
     if (arr1.length !== arr2.length) {
         return false;
     }

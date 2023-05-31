@@ -15,6 +15,7 @@ import type {
     LitentryPrimitivesIdentityEvmNetwork,
     LitentryPrimitivesIdentityWeb2Network,
     PalletIdentityManagementTeeIdentityContext,
+    LitentryPrimitivesIdentity,
 } from '@polkadot/types/lookup';
 export { teeTypes };
 
@@ -67,79 +68,10 @@ export class AESOutput {
     nonce?: Uint8Array;
 }
 
-//identity types
-export type LitentryIdentity = {
-    Substrate?: SubstrateIdentity;
-    Evm?: EvmIdentity;
-    Web2?: Web2Identity;
-};
-
-export type SubstrateIdentity = {
-    network: SubstrateNetwork;
-    address: HexString;
-};
-
-export type EvmIdentity = {
-    network: EvmNetwork;
-    address: HexString;
-};
-
-export type Web2Identity = {
-    network: Web2Network;
-    address: string;
-};
-
-export type LitentryValidationData = {
-    Web2Validation?: Web2ValidationData;
-    Web3Validation?: Web3ValidationData;
-};
-
-export type Web2ValidationData = {
-    Twitter?: TwitterValidationData;
-    Discord?: DiscordValidationData;
-};
-
-export type Web3ValidationData = {
-    Substrate?: Web3CommonValidationData;
-    Evm?: Web3CommonValidationData;
-};
-
-export type Web3CommonValidationData = {
-    message: HexString;
-    signature: IdentityMultiSignature;
-};
-
-export type IdentityMultiSignature = {
-    Ethereum?: HexString;
-    Ed25519?: HexString;
-    Sr25519?: HexString;
-};
-
-export type Ed25519Signature = {
-    Ed25519: HexString;
-    Sr25519: HexString;
-    Ecdsa: HexString;
-    Ethereum: EthereumSignature;
-};
-
-export type EthereumSignature = HexString;
-
-export type TwitterValidationData = {
-    tweet_id: HexString;
-};
-
-export type DiscordValidationData = {
-    channel_id: HexString;
-    message_id: HexString;
-    guild_id: HexString;
-};
-
 export type Web3Wallets = {
     substrateWallet: KeyringPair;
     ethereumWallet: Wallet;
 };
-
-// export type DiscordValidationData = {}
 
 export type Web3Network = {
     Substrate?: SubstrateNetwork;
@@ -148,16 +80,9 @@ export type Web3Network = {
 
 export type IdentityGenericEvent = {
     who: HexString;
-    identity: LitentryIdentity;
-    idGraph: [LitentryIdentity, PalletIdentityManagementTeeIdentityContext][];
+    identity: LitentryPrimitivesIdentity;
+    idGraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][];
     challengeCode?: HexString;
-};
-
-export type IdentityContext = {
-    metadata?: HexString;
-    linking_request_block?: number;
-    verification_request_block?: number;
-    is_verified: boolean;
 };
 
 //vc types

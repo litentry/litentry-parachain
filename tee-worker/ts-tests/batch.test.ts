@@ -11,7 +11,6 @@ import {
 import { u8aToHex } from '@polkadot/util';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import { LitentryIdentity, LitentryValidationData } from './common/type-definitions';
 import { multiAccountTxSender, sendTxsWithUtility } from './common/transactions';
 import {
     generateWeb3Wallets,
@@ -20,10 +19,12 @@ import {
     assertIdentityRemoved,
 } from './common/utils';
 import { ethers } from 'ethers';
-
+import { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
+import type { LitentryValidationData } from './parachain-interfaces/identity/types';
+import type { IdentityGenericEvent } from './common/type-definitions';
 describeLitentry('Test Batch Utility', 0, (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
-    let identities: LitentryIdentity[] = [];
+    let identities: LitentryPrimitivesIdentity[] = [];
     let validations: LitentryValidationData[] = [];
     var ethereumSigners: ethers.Wallet[] = [];
 
@@ -43,7 +44,12 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             'identityManagement',
             ['UserShieldingKeySet']
         );
-        const [alice] = await handleIdentityEvents(context, aesKey, resp_events, 'UserShieldingKeySet');
+        const [alice] = (await handleIdentityEvents(
+            context,
+            aesKey,
+            resp_events,
+            'UserShieldingKeySet'
+        )) as IdentityGenericEvent[];
         assert.equal(
             alice.who,
             u8aToHex(context.substrateWallet.alice.addressRaw),
@@ -54,7 +60,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
     step('batch test: create identities', async function () {
         for (let index = 0; index < ethereumSigners.length; index++) {
             const signer = ethereumSigners[index];
-            const ethereum_identity = await buildIdentityHelper(signer.address, 'Ethereum', 'Evm');
+            const ethereum_identity = await buildIdentityHelper(signer.address, 'Ethereum', 'Evm', context);
             identities.push(ethereum_identity);
 
             //check idgraph from sidechain storage before create
@@ -88,8 +94,13 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             'identityManagement',
             ['IdentityCreated']
         );
-        const event_datas = await handleIdentityEvents(context, aesKey, resp_events, 'IdentityCreated');
-        for (let i = 0; i < event_datas.length; i++) {
+        const event_datas = (await handleIdentityEvents(
+            context,
+            aesKey,
+            resp_events,
+            'IdentityCreated'
+        )) as IdentityGenericEvent[];
+        for (let i = 0; i < [event_datas].length; i++) {
             assertIdentityCreated(context.substrateWallet.alice, event_datas[i]);
         }
         const ethereum_validations = await buildValidations(
@@ -124,7 +135,12 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             'IdentityVerified',
         ]);
 
-        let event_datas = await handleIdentityEvents(context, aesKey, resp_events, 'IdentityVerified');
+        let event_datas = (await handleIdentityEvents(
+            context,
+            aesKey,
+            resp_events,
+            'IdentityVerified'
+        )) as IdentityGenericEvent[];
 
         assertIdentityVerified(context.substrateWallet.alice, event_datas);
     });
@@ -140,7 +156,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
         let resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
             'VerifyIdentityFailed',
         ]);
-        const resp_event_datas = await handleIdentityEvents(context, aesKey, resp_events, 'Failed');
+        const resp_event_datas = (await handleIdentityEvents(context, aesKey, resp_events, 'Failed')) as string[];
         await checkErrorDetail(resp_event_datas, 'ChallengeCodeNotFound', false);
     });
     //query here in the hope that the status remains unchanged after verify error identity
@@ -173,7 +189,12 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             'identityManagement',
             ['IdentityRemoved']
         );
-        const resp_event_datas = await handleIdentityEvents(context, aesKey, resp_remove_events, 'IdentityRemoved');
+        const resp_event_datas = (await handleIdentityEvents(
+            context,
+            aesKey,
+            resp_remove_events,
+            'IdentityRemoved'
+        )) as IdentityGenericEvent[];
         for (let i = 0; i < resp_event_datas.length; i++) {
             assertIdentityRemoved(context.substrateWallet.alice, resp_event_datas[i]);
         }
@@ -187,7 +208,12 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             'identityManagement',
             ['RemoveIdentityFailed']
         );
-        const resp_event_datas = await handleIdentityEvents(context, aesKey, resp_remove_events, 'Failed');
+        const resp_event_datas = (await handleIdentityEvents(
+            context,
+            aesKey,
+            resp_remove_events,
+            'Failed'
+        )) as string[];
         await checkErrorDetail(resp_event_datas, 'IdentityNotExist', false);
     });
 

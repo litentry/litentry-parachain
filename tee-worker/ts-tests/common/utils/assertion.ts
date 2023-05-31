@@ -6,14 +6,9 @@ import { hexToU8a, u8aToHex } from '@polkadot/util';
 import Ajv from 'ajv';
 import { assert, expect } from 'chai';
 import * as ed from '@noble/ed25519';
-import {
-    EnclaveResult,
-    IdentityGenericEvent,
-    JsonSchema,
-    LitentryIdentity,
-    IntegrationTestContext,
-} from '../type-definitions';
+import { EnclaveResult, IdentityGenericEvent, JsonSchema, IntegrationTestContext } from '../type-definitions';
 import { buildIdentityHelper } from './identity-helper';
+import { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
 import { isEqual, isArrayEqual } from './common';
 export async function assertInitialIDGraphCreated(
     context: IntegrationTestContext,
@@ -23,34 +18,36 @@ export async function assertInitialIDGraphCreated(
     assert.equal(event.who, u8aToHex(signer.addressRaw));
     assert.equal(event.idGraph.length, 1);
     // check identity in idgraph
-    const expected_identity = context.sidechainRegistry.createType(
+    const expected_identity: LitentryPrimitivesIdentity = context.sidechainRegistry.createType(
         'LitentryPrimitivesIdentity',
         await buildIdentityHelper(
             u8aToHex(signer.addressRaw),
             process.env.NODE_ENV === 'local' ? 'TestNet' : 'LitentryRococo',
-            'Substrate'
+            'Substrate',
+            context
         )
-    ) as LitentryIdentity;
+    ) as any;
 
-    assert.isTrue(isEqual(event.idGraph[0][0], expected_identity));
+    const expected_target = expected_identity[`as${expected_identity.type}`];
+    const idGraph_target = event.idGraph[0][0][`as${event.idGraph[0][0].type}`];
+
+    assert.equal(expected_target.toString(), idGraph_target.toString());
+
     // check identityContext in idgraph
-    console.log(event.idGraph[0][1]);
+    const idGraph_context = event.idGraph[0][1].toHuman();
 
-    const creationRequestBlock = event.idGraph[0][1].creationRequestBlock.isSome
-        ? event.idGraph[0][1].creationRequestBlock.unwrap().toNumber()
-        : event.idGraph[0][1].creationRequestBlock;
-    const verificationRequestBlock = event.idGraph[0][1].verificationRequestBlock.isSome
-        ? event.idGraph[0][1].verificationRequestBlock.unwrap().toNumber()
-        : event.idGraph[0][1].verificationRequestBlock;
+    const creation_request_block = idGraph_context.creationRequestBlock;
+    const verification_request_block = idGraph_context.verificationRequestBlock;
 
-    assert.equal(creationRequestBlock, 0);
-    assert.equal(verificationRequestBlock, 0);
-    assert.isTrue(event.idGraph[0][1].isVerified);
+    assert.equal(creation_request_block, 0);
+    assert.equal(verification_request_block, 0);
+
+    assert.isTrue(idGraph_context.isVerified);
 }
 
 export function assertIdentityVerified(signer: KeyringPair, eventDatas: IdentityGenericEvent[]) {
-    let event_identities: LitentryIdentity[] = [];
-    let idgraph_identities: LitentryIdentity[] = [];
+    let event_identities: LitentryPrimitivesIdentity[] = [];
+    let idgraph_identities: LitentryPrimitivesIdentity[] = [];
     for (let index = 0; index < eventDatas.length; index++) {
         event_identities.push(eventDatas[index].identity);
     }
@@ -72,11 +69,11 @@ export function assertIdentityVerified(signer: KeyringPair, eventDatas: Identity
     assert.equal(data?.who, u8aToHex(signer.addressRaw), 'check caller error');
 }
 
-export function assertIdentityCreated(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
+export function assertIdentityCreated(signer: KeyringPair, identityEvent: IdentityGenericEvent) {
     assert.equal(identityEvent?.who, u8aToHex(signer.addressRaw), 'check caller error');
 }
 
-export function assertIdentityRemoved(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
+export function assertIdentityRemoved(signer: KeyringPair, identityEvent: IdentityGenericEvent) {
     assert.equal(identityEvent?.idGraph, null, 'check idGraph error,should be null after removed');
     assert.equal(identityEvent?.who, u8aToHex(signer.addressRaw), 'check caller error');
 }
