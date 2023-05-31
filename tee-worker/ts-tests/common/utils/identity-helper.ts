@@ -6,8 +6,6 @@ import {
     EvmNetwork,
     IdentityGenericEvent,
     IntegrationTestContext,
-    LitentryIdentity,
-    // LitentryValidationData,
     SubstrateNetwork,
     Web2Network,
 } from '../type-definitions';
@@ -23,7 +21,7 @@ export function generateVerificationMessage(
     context: IntegrationTestContext,
     challengeCode: Uint8Array,
     signerAddress: Uint8Array,
-    identity: LitentryIdentity
+    identity: LitentryPrimitivesIdentity
 ): HexString {
     const encode = context.sidechainRegistry.createType('LitentryPrimitivesIdentity', identity).toU8a();
     const msg = Buffer.concat([challengeCode, signerAddress, encode]);

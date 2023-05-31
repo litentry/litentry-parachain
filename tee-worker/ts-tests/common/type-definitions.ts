@@ -73,11 +73,6 @@ export type Web3Wallets = {
     ethereumWallet: Wallet;
 };
 
-export type Web3Network = {
-    Substrate?: SubstrateNetwork;
-    Evm?: EvmNetwork;
-};
-
 export type IdentityGenericEvent = {
     who: HexString;
     identity: LitentryPrimitivesIdentity;

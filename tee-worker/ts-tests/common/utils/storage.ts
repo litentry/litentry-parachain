@@ -5,8 +5,8 @@ import { xxhashAsU8a } from '@polkadot/util-crypto';
 import { StorageEntryMetadataV14, SiLookupTypeId, StorageHasherV14 } from '@polkadot/types/interfaces';
 import { sendRequest } from '../call';
 import { blake2128Concat, twox64Concat, identity } from '../helpers';
-import { IntegrationTestContext, IdentityContext } from '../type-definitions';
-
+import { IntegrationTestContext } from '../type-definitions';
+import { PalletIdentityManagementTeeIdentityContext } from '@polkadot/types/lookup';
 const base58 = require('micro-base58');
 
 //sidechain storage utils
@@ -135,7 +135,7 @@ export async function checkIDGraph(
     method: string,
     address: HexString,
     identity: HexString
-): Promise<IdentityContext> {
+): Promise<PalletIdentityManagementTeeIdentityContext> {
     const storageKey = await buildStorageHelper(context.metaData, pallet, method, address, identity);
 
     let base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
@@ -147,6 +147,9 @@ export async function checkIDGraph(
         id: 1,
     };
     let resp = await sendRequest(context.tee, request, context.api);
-    const IDGraph = context.api.createType('IdentityContext', resp.value).toJSON() as IdentityContext;
+    const IDGraph: PalletIdentityManagementTeeIdentityContext = context.sidechainRegistry.createType(
+        'PalletIdentityManagementTeeIdentityContext',
+        resp.value
+    ) as any;
     return IDGraph;
 }

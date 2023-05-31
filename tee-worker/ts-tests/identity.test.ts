@@ -137,12 +137,16 @@ describeLitentry('Test Identity', 0, (context) => {
             identity_hex
         );
         assert.equal(
-            resp_id_graph.verification_request_block,
+            resp_id_graph.verificationRequestBlock.toHuman(),
             0,
             'verification_request_block should be 0 for main address'
         );
-        assert.equal(resp_id_graph.linking_request_block, 0, 'linking_request_block should be 0 for main address');
-        assert.equal(resp_id_graph.is_verified, true, 'IDGraph is_verified should be true for main address');
+        assert.equal(
+            resp_id_graph.creationRequestBlock.toHuman(),
+            0,
+            'linking_request_block should be 0 for main address'
+        );
+        assert.equal(resp_id_graph.isVerified.toHuman(), true, 'IDGraph is_verified should be true for main address');
         // TODO: check IDGraph.length == 1 in the sidechain storage
     });
     step('create identities', async function () {
@@ -300,11 +304,11 @@ describeLitentry('Test Identity', 0, (context) => {
             identity_hex
         );
         assert.notEqual(
-            resp_id_graph.linking_request_block,
+            resp_id_graph.creationRequestBlock,
             null,
             'linking_request_block should not be null after createIdentity'
         );
-        assert.equal(resp_id_graph.is_verified, false, 'is_verified should be false before verifyIdentity');
+        assert.equal(resp_id_graph.isVerified.toHuman(), false, 'is_verified should be false before verifyIdentity');
     });
 
     step('verify invalid identities', async function () {
@@ -437,11 +441,11 @@ describeLitentry('Test Identity', 0, (context) => {
             identity_hex
         );
         assert.notEqual(
-            resp_id_graph.verification_request_block,
+            resp_id_graph.verificationRequestBlock,
             null,
             'verification_request_block should not be null after verifyIdentity'
         );
-        assert.equal(resp_id_graph.is_verified, true, 'is_verified should be true after verifyIdentity');
+        assert.equal(resp_id_graph.isVerified.toHuman(), true, 'is_verified should be true after verifyIdentity');
     });
 
     step('verify error identities', async function () {
@@ -564,16 +568,16 @@ describeLitentry('Test Identity', 0, (context) => {
             identity_hex
         );
         assert.equal(
-            resp_id_graph.verification_request_block,
+            resp_id_graph.verificationRequestBlock,
             null,
             'verification_request_block should  be null after removeIdentity'
         );
         assert.equal(
-            resp_id_graph.linking_request_block,
+            resp_id_graph.creationRequestBlock,
             null,
             'linking_request_block should  be null after removeIdentity'
         );
-        assert.equal(resp_id_graph.is_verified, false, 'is_verified should be false after removeIdentity');
+        assert.equal(resp_id_graph.isVerified.toHuman(), false, 'is_verified should be false after removeIdentity');
     });
     step('remove prime identity NOT allowed', async function () {
         // create substrate identity
@@ -759,7 +763,7 @@ describeLitentry('Test Identity', 0, (context) => {
         )) as IdentityGenericEvent[];
         await assertInitialIDGraphCreated(context, context.substrateWallet.eve, event);
 
-        let identities: LitentryIdentity[] = [];
+        let identities: LitentryPrimitivesIdentity[] = [];
         for (let i = 0; i < 64; i++) {
             let identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2', context);
             identities.push(identity);

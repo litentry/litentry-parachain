@@ -1,4 +1,3 @@
-import { LitentryIdentity } from '../type-definitions';
 import { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
 export function sleep(secs: number) {
     return new Promise((resolve) => {
