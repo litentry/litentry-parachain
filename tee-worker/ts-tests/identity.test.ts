@@ -75,8 +75,10 @@ describeLitentry('Test Identity', 0, (context) => {
         ]);
         await checkErrorDetail(resp_events, 'UserShieldingKeyNotFound', true);
     });
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
     step('set user shielding key', async function () {
+        await sleep(6000);
         let [alice_txs] = (await buildIdentityTxs(
             context,
             [context.substrateWallet.alice],
@@ -102,6 +104,8 @@ describeLitentry('Test Identity', 0, (context) => {
             resp_events,
             'UserShieldingKeySet'
         )) as IdentityGenericEvent[];
+        await sleep(6000);
+
         await assertInitialIDGraphCreated(context, context.substrateWallet.alice, alice);
         await assertInitialIDGraphCreated(context, context.substrateWallet.bob, bob);
     });
@@ -755,7 +759,7 @@ describeLitentry('Test Identity', 0, (context) => {
         )) as IdentityGenericEvent[];
         await assertInitialIDGraphCreated(context, context.substrateWallet.eve, event);
 
-        let identities = [];
+        let identities: LitentryIdentity[] = [];
         for (let i = 0; i < 64; i++) {
             let identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2', context);
             identities.push(identity);

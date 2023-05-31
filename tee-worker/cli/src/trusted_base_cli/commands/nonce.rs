@@ -16,12 +16,10 @@
 */
 
 use crate::{
-	get_layer_two_nonce, trusted_cli::TrustedCli, trusted_command_utils::get_pair_from_str,
-	trusted_operation::perform_trusted_operation, Cli,
+	get_layer_two_nonce, trusted_cli::TrustedCli, trusted_command_utils::get_pair_from_str, Cli,
 };
 use codec::Decode;
-use ita_stf::{Index, TrustedGetter, TrustedOperation};
-use itp_stf_primitives::types::KeyPair;
+use ita_stf::Index;
 use log::*;
 use sp_core::Pair;
 

@@ -100,6 +100,15 @@ export enum IndexingNetwork {
     Khala = 'Khala',
     Ethereum = 'Ethereum',
 }
+export enum RequestEvent {
+    CreateIdentityRequested = 'CreateIdentityRequested',
+    SetUserShieldingKeyRequested = 'SetUserShieldingKeyRequested',
+    VerifyIdentityRequested = 'VerifyIdentityRequested',
+    RemoveIdentityRequested = 'RemoveIdentityRequested',
+    VCRequested = 'VCRequested',
+    ItemCompleted = 'ItemCompleted',
+    BatchCompleted = 'BatchCompleted',
+}
 
 export type Assertion = {
     A1?: string;

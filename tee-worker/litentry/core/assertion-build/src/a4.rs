@@ -69,9 +69,12 @@ use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::{
-	graphql::{GraphQLClient, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsNetwork},
+	graphql::{
+		AchainableQuery, GetSupportedNetworks, GraphQLClient, VerifiedCredentialsIsHodlerIn,
+	},
 	vec_to_string,
 };
+use litentry_primitives::SupportedNetwork;
 use log::*;
 use std::{
 	collections::{HashMap, HashSet},
@@ -104,7 +107,7 @@ pub fn build(
 	})?;
 
 	let mut client = GraphQLClient::new();
-	let mut networks: HashMap<VerifiedCredentialsNetwork, HashSet<String>> = HashMap::new();
+	let mut networks: HashMap<SupportedNetwork, HashSet<String>> = HashMap::new();
 
 	identities.iter().for_each(|identity| {
 		match identity {
@@ -112,13 +115,13 @@ pub fn build(
 				let mut address = account_id_to_string(address.as_ref());
 				address.insert_str(0, "0x");
 
-				if_match_networks_collect_address(&mut networks, (*network).into(), address);
+				if_match_networks_collect_address(&mut networks, (*network).get(), address);
 			},
 			Identity::Evm { network, address } => {
 				let mut address = account_id_to_string(address.as_ref());
 				address.insert_str(0, "0x");
 
-				if_match_networks_collect_address(&mut networks, (*network).into(), address);
+				if_match_networks_collect_address(&mut networks, (*network).get(), address);
 			},
 			_ => {},
 		};
@@ -153,11 +156,8 @@ pub fn build(
 		is_hold = false;
 
 		let addresses: Vec<String> = addresses.into_iter().collect();
-		let token_address = if verified_network == VerifiedCredentialsNetwork::Ethereum {
-			LIT_TOKEN_ADDRESS
-		} else {
-			""
-		};
+		let token_address =
+			if verified_network == SupportedNetwork::Ethereum { LIT_TOKEN_ADDRESS } else { "" };
 
 		// TODO:
 		// There is a problem here, because TDF does not support mixed network types,
@@ -172,12 +172,11 @@ pub fn build(
 				token_address.to_string(),
 				q_min_balance.to_string(),
 			);
-			match client.check_verified_credentials_is_hodler(vch) {
-				Ok(is_hodler_out) => {
-					for hodler in is_hodler_out.verified_credentials_is_hodler.iter() {
+			match client.verified_credentials_is_hodler(vch) {
+				Ok(is_hodler_out) =>
+					for hodler in is_hodler_out.hodlers.iter() {
 						is_hold = is_hold || hodler.is_hodler;
-					}
-				},
+					},
 				Err(e) => error!(
 					"Assertion A4 request check_verified_credentials_is_hodler error: {:?}",
 					e
@@ -225,16 +224,16 @@ pub fn build(
 }
 
 fn if_match_networks_collect_address(
-	networks: &mut HashMap<VerifiedCredentialsNetwork, HashSet<String>>,
-	verified_network: VerifiedCredentialsNetwork,
+	networks: &mut HashMap<SupportedNetwork, HashSet<String>>,
+	verified_network: SupportedNetwork,
 	address: String,
 ) {
 	if matches!(
 		verified_network,
-		VerifiedCredentialsNetwork::Litentry
-			| VerifiedCredentialsNetwork::Litmus
-			| VerifiedCredentialsNetwork::LitentryRococo
-			| VerifiedCredentialsNetwork::Ethereum
+		SupportedNetwork::Litentry
+			| SupportedNetwork::Litmus
+			| SupportedNetwork::LitentryRococo
+			| SupportedNetwork::Ethereum
 	) {
 		match networks.get_mut(&verified_network) {
 			Some(set) => {
