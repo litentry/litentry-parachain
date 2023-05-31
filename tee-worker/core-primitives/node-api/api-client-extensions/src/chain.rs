@@ -16,9 +16,10 @@
 */
 
 use crate::{ApiClientError, ApiResult};
+use itp_api_client_types::{Block, SignedBlock};
 use itp_types::{
 	parentchain::{BlockNumber, Hash, Header, StorageProof},
-	Block, SignedBlock, H256,
+	H256,
 };
 use sp_finality_grandpa::{AuthorityList, VersionedAuthorityList, GRANDPA_AUTHORITIES_KEY};
 use sp_runtime::traits::GetRuntimeBlockType;

@@ -172,13 +172,14 @@ where
 			// `indirect_calls_executor` looks for extrinsics in parentchain blocks without checking their status.
 			// We believe it's wrong, see https://github.com/litentry/litentry-parachain/issues/1092
 			//
-			// One solution is to change the block type to `sp_runtime::generic::Block` or `sp_runtime::generic::SignedBlock`,
-			// this will however affect many structs or files, like block_importer, block_import_dispatcher, consensus and so on.
+			// We try to pre-process the signed block to only keep extrinsics that are successfully executed.
 			//
-			// We use a hacky workaround here for the least possible changes:
-			// append an extra `status` flag to `OpaqueExtrinsic` (Vec<u8>) and adjust the codec of it
-			//
-			// We intentionally don't drop failed extrinsics to allow any potential (post-)processing of failed extrinsics
+			// TODO:
+			// 	1. further simplify the logic below, e.g. with `filter`
+			//  2. remove `fill_opaque_extrinsic_with_status` completely, we used it as a hacky around to
+			//     append an extra `status` flag to `OpaqueExtrinsic` (Vec<u8>) and adjust the codec of it.
+			//     However, it doesn't work anymore due to type change, now `Block` expects UncheckedExtrinsic
+			//  3. add a test to verify the failed parachain extrinsic won't cause any sidechain state mutation
 			let mut events = vec![];
 			for block in &block_chunk_to_sync {
 				let block_events = self.parentchain_api.events(Some(block.block.hash()))?;
@@ -209,10 +210,9 @@ where
 								"block:{:?}, extrinsic index: {:?}, success: {:?}",
 								&signed_block.block.header.number, i, success,
 							);
+						} else {
+							extrinsics.push(xt.clone());
 						}
-
-						extrinsics
-							.push(fill_opaque_extrinsic_with_status(xt.clone(), success).unwrap());
 					}
 					signed_block.block.extrinsics = extrinsics;
 				});
