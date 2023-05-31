@@ -1,15 +1,17 @@
 import { ApiPromise } from '@polkadot/api';
-import { KeyringPair } from '@polkadot/keyring/types';
-import { HexString } from '@polkadot/util/types';
 import { Event } from '@polkadot/types/interfaces';
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import Ajv from 'ajv';
 import { assert, expect } from 'chai';
 import * as ed from '@noble/ed25519';
-import { EnclaveResult, IdentityGenericEvent, JsonSchema, IntegrationTestContext } from '../type-definitions';
 import { buildIdentityHelper } from './identity-helper';
-import { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
+import type { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
+import type { EnclaveResult, IdentityGenericEvent, IntegrationTestContext } from '../type-definitions';
+import type { KeyringPair } from '@polkadot/keyring/types';
+import type { HexString } from '@polkadot/util/types';
+import { JsonSchema } from '../type-definitions';
 import { isEqual, isArrayEqual } from './common';
+import { env_network } from '../../common/helpers';
 export async function assertInitialIDGraphCreated(
     context: IntegrationTestContext,
     signer: KeyringPair,
@@ -20,12 +22,7 @@ export async function assertInitialIDGraphCreated(
     // check identity in idgraph
     const expected_identity: LitentryPrimitivesIdentity = context.sidechainRegistry.createType(
         'LitentryPrimitivesIdentity',
-        await buildIdentityHelper(
-            u8aToHex(signer.addressRaw),
-            process.env.NODE_ENV === 'local' ? 'TestNet' : 'LitentryRococo',
-            'Substrate',
-            context
-        )
+        await buildIdentityHelper(u8aToHex(signer.addressRaw), env_network, 'Substrate', context)
     ) as any;
 
     const expected_target = expected_identity[`as${expected_identity.type}`];
@@ -55,6 +52,7 @@ export function assertIdentityVerified(signer: KeyringPair, eventDatas: Identity
         idgraph_identities.push(eventDatas[eventDatas.length - 1].idGraph[i][0]);
     }
     //idgraph_identities[idgraph_identities.length - 1] is prime identity,don't need to compare
+
     assert.isTrue(
         isArrayEqual(event_identities, idgraph_identities.slice(0, idgraph_identities.length - 1)),
         'event identities should be equal to idgraph identities'
@@ -63,7 +61,7 @@ export function assertIdentityVerified(signer: KeyringPair, eventDatas: Identity
     const data = eventDatas[eventDatas.length - 1];
     for (let i = 0; i < eventDatas[eventDatas.length - 1].idGraph.length; i++) {
         if (isEqual(data.idGraph[i][0], data.identity)) {
-            assert.isTrue(data.idGraph[i][1].isVerified, 'identity should be verified');
+            assert.isTrue(data.idGraph[i][1].isVerified.toHuman(), 'identity should be verified');
         }
     }
     assert.equal(data?.who, u8aToHex(signer.addressRaw), 'check caller error');

@@ -7,8 +7,8 @@ import Options from 'websocket-as-promised/types/options';
 import { KeyObject } from 'crypto';
 import { getSidechainMetadata } from '../call';
 import { getEthereumSigner, getSubstrateSigner } from '../helpers';
-import { IntegrationTestContext, teeTypes, EnclaveResult, Web3Wallets } from '../type-definitions';
-
+import type { IntegrationTestContext, EnclaveResult, Web3Wallets } from '../type-definitions';
+import { default as teeTypes } from '../../parachain-interfaces/identity/definitions';
 const crypto = require('crypto');
 
 // maximum block number that we wait in listening events before we timeout

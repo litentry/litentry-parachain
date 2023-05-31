@@ -1,12 +1,13 @@
 import { step } from 'mocha-steps';
 import { checkVc, describeLitentry, encryptWithTeeShieldingKey } from './common/utils';
-import { KeyringPair } from '@polkadot/keyring/types';
-import { u8aToHex, hexToU8a } from '@polkadot/util';
-import { Assertion, BatchCall, IndexingNetwork, TransactionSubmit } from './common/type-definitions';
+import { hexToU8a } from '@polkadot/util';
+import { IndexingNetwork } from './common/type-definitions';
 import { handleVcEvents } from './common/utils';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import { assert } from 'chai';
-import { HexString } from '@polkadot/util/types';
+import type { HexString } from '@polkadot/util/types';
+import type { Assertion, TransactionSubmit } from './common/type-definitions';
+import type { KeyringPair } from '@polkadot/keyring/types';
 import { multiAccountTxSender } from './common/transactions';
 import { SubmittableResult } from '@polkadot/api';
 const assertion = <Assertion>{

@@ -1,14 +1,8 @@
 import { ApiPromise } from '@polkadot/api';
 import { KeyObject } from 'crypto';
-import { HexString } from '@polkadot/util/types';
 import WebSocketAsPromised from 'websocket-as-promised';
-import type { KeyringPair } from '@polkadot/keyring/types';
-import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { Metadata, Vec, TypeRegistry } from '@polkadot/types';
 import { Wallet } from 'ethers';
-import type { Assertion as GenericAssertion } from '../parachain-interfaces/identity/types';
-import { default as teeTypes } from '../parachain-interfaces/identity/definitions';
-import { AnyTuple, IMethod } from '@polkadot/types/types';
 import { Call } from '@polkadot/types/interfaces';
 import type {
     LitentryPrimitivesIdentitySubstrateNetwork,
@@ -17,7 +11,11 @@ import type {
     PalletIdentityManagementTeeIdentityContext,
     LitentryPrimitivesIdentity,
 } from '@polkadot/types/lookup';
-export { teeTypes };
+import type { KeyringPair } from '@polkadot/keyring/types';
+import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
+import type { HexString } from '@polkadot/util/types';
+import type { Assertion as GenericAssertion } from '../parachain-interfaces/identity/types';
+import type { AnyTuple, IMethod } from '@polkadot/types/types';
 
 export type Web2Network = LitentryPrimitivesIdentityWeb2Network['type'];
 export type SubstrateNetwork = LitentryPrimitivesIdentitySubstrateNetwork['type'];

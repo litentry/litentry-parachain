@@ -1,11 +1,11 @@
 import { ApiPromise } from '@polkadot/api';
-import { Metadata, TypeRegistry } from '@polkadot/types';
-import type { Bytes } from '@polkadot/types-codec';
 import { hexToU8a, compactStripLength, u8aToString } from '@polkadot/util';
 import WebSocketAsPromised from 'websocket-as-promised';
 import { HexString } from '@polkadot/util/types';
-import { RequestBody } from '../common/type-definitions';
-import { WorkerRpcReturnValue } from '../parachain-interfaces/identity/types';
+import type { RequestBody } from '../common/type-definitions';
+import type { WorkerRpcReturnValue } from '../parachain-interfaces/identity/types';
+import { Metadata, TypeRegistry } from '@polkadot/types';
+import type { Bytes } from '@polkadot/types-codec';
 // send RPC request
 export async function sendRequest(
     wsClient: WebSocketAsPromised,

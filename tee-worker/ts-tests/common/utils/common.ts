@@ -1,4 +1,4 @@
-import { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
+import type { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
 export function sleep(secs: number) {
     return new Promise((resolve) => {
         setTimeout(resolve, secs * 1000);
@@ -6,7 +6,7 @@ export function sleep(secs: number) {
 }
 
 export function isEqual(obj1: LitentryPrimitivesIdentity, obj2: LitentryPrimitivesIdentity) {
-    return JSON.stringify(obj1) === JSON.stringify(obj2);
+    return obj1.toString() === obj2.toString();
 }
 
 // campare two array of event_identities idgraph_identities whether equal

@@ -12,16 +12,16 @@ import {
     assertInitialIDGraphCreated,
     checkUserShieldingKeys,
 } from './common/utils';
-
+import { env_network } from './common/helpers';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import { IdentityGenericEvent, TransactionSubmit } from './common/type-definitions';
-import { HexString } from '@polkadot/util/types';
 import { multiAccountTxSender, sendTxsWithUtility } from './common/transactions';
 import { assertIdentityVerified, assertIdentityCreated, assertIdentityRemoved } from './common/utils';
 import type { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
 import type { LitentryValidationData } from './parachain-interfaces/identity/types';
+import type { IdentityGenericEvent, TransactionSubmit } from './common/type-definitions';
+import type { HexString } from '@polkadot/util/types';
 import { Event } from '@polkadot/types/interfaces';
 import { ethers } from 'ethers';
 const substrateExtensionIdentity: LitentryPrimitivesIdentity = {
@@ -124,7 +124,7 @@ describeLitentry('Test Identity', 0, (context) => {
         // the main address should be already inside the IDGraph
         const main_identity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.alice.addressRaw),
-            process.env.NODE_ENV === 'local' ? 'TestNet' : 'LitentryRococo',
+            env_network,
             'Substrate',
             context
         );
@@ -342,7 +342,7 @@ describeLitentry('Test Identity', 0, (context) => {
         const ethereum_identity = alice_identities[1];
 
         //use wrong signature
-        const signature_ethereum = (await context.ethersWallet.alice!.signMessage(
+        const signature_ethereum = (await context.ethersWallet.alice.signMessage(
             ethers.utils.arrayify(wrong_msg)
         )) as HexString;
 
@@ -355,13 +355,18 @@ describeLitentry('Test Identity', 0, (context) => {
                     },
                 },
             },
-        } as any;
+        };
+        const encode_verifyIdentity_validation: LitentryValidationData = context.api.createType(
+            'LitentryValidationData',
+            ethereumValidationData
+        ) as any;
+        context;
         let alice_txs = await buildIdentityTxs(
             context,
             context.substrateWallet.alice,
             [ethereum_identity],
             'verifyIdentity',
-            [ethereumValidationData]
+            [encode_verifyIdentity_validation]
         );
         let alice_resp_events = await sendTxsWithUtility(
             context,
@@ -622,7 +627,7 @@ describeLitentry('Test Identity', 0, (context) => {
         // remove prime identity
         const substratePrimeIdentity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.alice.addressRaw),
-            process.env.NODE_ENV === 'local' ? 'TestNet' : 'LitentryRococo',
+            env_network,
             'Substrate',
             context
         );

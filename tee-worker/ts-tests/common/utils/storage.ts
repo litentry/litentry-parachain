@@ -1,12 +1,13 @@
-import { Metadata } from '@polkadot/types';
-import { HexString } from '@polkadot/util/types';
 import { u8aToHex, u8aConcat } from '@polkadot/util';
 import { xxhashAsU8a } from '@polkadot/util-crypto';
 import { StorageEntryMetadataV14, SiLookupTypeId, StorageHasherV14 } from '@polkadot/types/interfaces';
 import { sendRequest } from '../call';
 import { blake2128Concat, twox64Concat, identity } from '../helpers';
-import { IntegrationTestContext } from '../type-definitions';
-import { PalletIdentityManagementTeeIdentityContext } from '@polkadot/types/lookup';
+import type { IntegrationTestContext } from '../type-definitions';
+import type { PalletIdentityManagementTeeIdentityContext } from '@polkadot/types/lookup';
+import type { HexString } from '@polkadot/util/types';
+import type { Metadata } from '@polkadot/types';
+
 const base58 = require('micro-base58');
 
 //sidechain storage utils

@@ -9,7 +9,7 @@ import {
     getTEEShieldingKey,
     sendRequestFromTrustedGetter,
 } from './examples/direct-invocation/util'; // @fixme move to a better place
-import { IntegrationTestContext } from './common/type-definitions';
+import type { IntegrationTestContext } from './common/type-definitions';
 
 describe('Test Identity (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;

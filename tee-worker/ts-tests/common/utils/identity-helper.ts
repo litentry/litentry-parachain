@@ -1,5 +1,3 @@
-import { KeyringPair } from '@polkadot/keyring/types';
-import { HexString } from '@polkadot/util/types';
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import {
@@ -10,12 +8,15 @@ import {
     Web2Network,
 } from '../type-definitions';
 import { decryptWithAES, encryptWithTeeShieldingKey } from './crypto';
-import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { assert } from 'chai';
 import { ethers } from 'ethers';
-import { TypeRegistry } from '@polkadot/types';
+import type { TypeRegistry } from '@polkadot/types';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from '@polkadot/types/lookup';
 import type { LitentryValidationData } from '../../parachain-interfaces/identity/types';
+import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
+import type { KeyringPair } from '@polkadot/keyring/types';
+import type { HexString } from '@polkadot/util/types';
+
 //<challeng-code> + <litentry-AccountId32> + <Identity>
 export function generateVerificationMessage(
     context: IntegrationTestContext,

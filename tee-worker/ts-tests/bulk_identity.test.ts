@@ -11,15 +11,14 @@ import {
 } from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
-import { BatchCall, IdentityGenericEvent } from './common/type-definitions';
+import type { BatchCall, IdentityGenericEvent } from './common/type-definitions';
 import type { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
 import type { LitentryValidationData } from './parachain-interfaces/identity/types';
+import type { Call } from '@polkadot/types/interfaces/types';
+import type { Vec } from '@polkadot/types';
 import { handleIdentityEvents } from './common/utils';
 import { assert } from 'chai';
-import { listenEvent, multiAccountTxSender } from './common/transactions';
-import { u8aToHex } from '@polkadot/util';
-import { Call } from '@polkadot/types/interfaces/types';
-import { Vec } from '@polkadot/types';
+import { multiAccountTxSender } from './common/transactions';
 import { SubmittableResult } from '@polkadot/api';
 //Explain how to use this test, which has two important parameters:
 //1.The "number" parameter in describeLitentry represents the number of accounts generated, including Substrate wallets and Ethereum wallets.If you want to use a large number of accounts for testing, you can modify this parameter.

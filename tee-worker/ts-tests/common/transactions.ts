@@ -1,13 +1,15 @@
 import { ApiPromise, SubmittableResult } from '@polkadot/api';
-import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
-import { IntegrationTestContext, TransactionSubmit, RequestEvent } from './type-definitions';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { defaultListenTimeoutInBlockNumber } from './utils';
 import { EventRecord, Event } from '@polkadot/types/interfaces';
 import { expect } from 'chai';
 import colors from 'colors';
-import { HexString } from '@polkadot/util/types';
-import { Codec } from '@polkadot/types/types';
+import type { HexString } from '@polkadot/util/types';
+import type { Codec } from '@polkadot/types/types';
+import type { IntegrationTestContext, TransactionSubmit } from './type-definitions';
+import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
+import { RequestEvent } from './type-definitions';
+
 import { u8aToHex } from '@polkadot/util';
 //transactions utils
 export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrinsic<ApiTypes>, signer: KeyringPair) {

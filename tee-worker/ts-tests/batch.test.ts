@@ -19,7 +19,7 @@ import {
     assertIdentityRemoved,
 } from './common/utils';
 import { ethers } from 'ethers';
-import { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
+import type { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
 import type { LitentryValidationData } from './parachain-interfaces/identity/types';
 import type { IdentityGenericEvent } from './common/type-definitions';
 describeLitentry('Test Batch Utility', 0, (context) => {
@@ -73,12 +73,12 @@ describeLitentry('Test Batch Utility', 0, (context) => {
                 identity_hex
             );
             assert.equal(
-                resp_id_graph.verificationRequestBlock,
+                resp_id_graph.verificationRequestBlock.toHuman(),
                 null,
                 'verification_request_block should  be null before create'
             );
             assert.equal(
-                resp_id_graph.creationRequestBlock,
+                resp_id_graph.creationRequestBlock.toHuman(),
                 null,
                 'linking_request_block should  be null before create'
             );
@@ -177,7 +177,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
                 identity_hex
             );
             assert.notEqual(
-                resp_id_graph.verificationRequestBlock,
+                resp_id_graph.verificationRequestBlock.toHuman(),
                 null,
                 'verification_request_block should not be null after verifyIdentity'
             );
@@ -236,12 +236,12 @@ describeLitentry('Test Batch Utility', 0, (context) => {
                 identity_hex
             );
             assert.equal(
-                resp_id_graph.verificationRequestBlock,
+                resp_id_graph.verificationRequestBlock.toHuman(),
                 null,
                 'verification_request_block should  be null after removeIdentity'
             );
             assert.equal(
-                resp_id_graph.creationRequestBlock,
+                resp_id_graph.creationRequestBlock.toHuman(),
                 null,
                 'linking_request_block should  be null after removeIdentity'
             );

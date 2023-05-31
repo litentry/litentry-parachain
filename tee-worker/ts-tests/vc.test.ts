@@ -8,10 +8,11 @@ import {
     handleVcEvents,
 } from './common/utils';
 import { step } from 'mocha-steps';
-import { Assertion, IndexingNetwork, TransactionSubmit } from './common/type-definitions';
+import type { Assertion, IdentityGenericEvent, TransactionSubmit } from './common/type-definitions';
+import { IndexingNetwork } from './common/type-definitions';
+import type { HexString } from '@polkadot/util/types';
 import { assert } from 'chai';
 import { u8aToHex } from '@polkadot/util';
-import { HexString } from '@polkadot/util/types';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import { multiAccountTxSender, sendTxsWithUtility, sendTxUntilInBlockList } from './common/transactions';
 
@@ -55,7 +56,12 @@ describeLitentry('VC test', 0, async (context) => {
             'identityManagement',
             ['UserShieldingKeySet']
         );
-        const [alice] = await handleIdentityEvents(context, aesKey, resp_events, 'UserShieldingKeySet');
+        const [alice] = (await handleIdentityEvents(
+            context,
+            aesKey,
+            resp_events,
+            'UserShieldingKeySet'
+        )) as IdentityGenericEvent[];
         assert.equal(
             alice.who,
             u8aToHex(context.substrateWallet.alice.addressRaw),

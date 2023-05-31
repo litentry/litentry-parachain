@@ -1,8 +1,9 @@
 import { xxhashAsU8a, blake2AsU8a } from '@polkadot/util-crypto';
 import { u8aConcat, u8aToU8a } from '@polkadot/util';
-import { HexString } from '@polkadot/util/types';
 import { Keyring } from '@polkadot/api';
 import type { KeyringPair } from '@polkadot/keyring/types';
+import type { HexString } from '@polkadot/util/types';
+import './config';
 
 //format and setup
 const keyring = new Keyring({ type: 'sr25519' });
@@ -54,3 +55,5 @@ export function twox64Concat(data: HexString | Uint8Array): Uint8Array {
 export function identity(data: HexString | Uint8Array): Uint8Array {
     return u8aToU8a(data);
 }
+
+export const env_network = process.env.NODE_ENV === 'local' ? 'TestNet' : 'LitentryRococo';
