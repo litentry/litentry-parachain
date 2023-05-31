@@ -53,7 +53,7 @@ pub(crate) fn perform_trusted_operation(
 	}
 }
 
-fn execute_getter_from_cli_args(
+pub(crate) fn execute_getter_from_cli_args(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
 	getter: &Getter,
