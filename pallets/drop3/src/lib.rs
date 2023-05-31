@@ -252,7 +252,7 @@ pub mod pallet {
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::approve_reward_pool())]
 		pub fn approve_reward_pool(
 			origin: OriginFor<T>,
-			#[pallet::compact] id: T::PoolId,
+			id: T::PoolId,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
@@ -271,7 +271,7 @@ pub mod pallet {
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::reject_reward_pool())]
 		pub fn reject_reward_pool(
 			origin: OriginFor<T>,
-			#[pallet::compact] id: T::PoolId,
+			id: T::PoolId,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
@@ -302,7 +302,7 @@ pub mod pallet {
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::start_reward_pool())]
 		pub fn start_reward_pool(
 			origin: OriginFor<T>,
-			#[pallet::compact] id: T::PoolId,
+			id: T::PoolId,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
@@ -323,10 +323,7 @@ pub mod pallet {
 		/// Stop a reward pool, can be called by admin or reward pool owner
 		#[pallet::call_index(4)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::stop_reward_pool())]
-		pub fn stop_reward_pool(
-			origin: OriginFor<T>,
-			#[pallet::compact] id: T::PoolId,
-		) -> DispatchResultWithPostInfo {
+		pub fn stop_reward_pool(origin: OriginFor<T>, id: T::PoolId) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
 			RewardPools::<T>::try_mutate(id, |pool| {
@@ -351,7 +348,7 @@ pub mod pallet {
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::close_reward_pool())]
 		pub fn close_reward_pool(
 			origin: OriginFor<T>,
-			#[pallet::compact] id: T::PoolId,
+			id: T::PoolId,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			let pool = RewardPools::<T>::get(id).ok_or(Error::<T>::NoSuchRewardPool)?;
@@ -369,9 +366,9 @@ pub mod pallet {
 		pub fn propose_reward_pool(
 			origin: OriginFor<T>,
 			name: Vec<u8>,
-			#[pallet::compact] total: BalanceOf<T>,
-			#[pallet::compact] start_at: T::BlockNumber,
-			#[pallet::compact] end_at: T::BlockNumber,
+			total: BalanceOf<T>,
+			start_at: T::BlockNumber,
+			end_at: T::BlockNumber,
 		) -> DispatchResultWithPostInfo {
 			// a few sanity checks
 			let sender = ensure_signed(origin)?;
@@ -413,9 +410,9 @@ pub mod pallet {
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::send_reward())]
 		pub fn send_reward(
 			origin: OriginFor<T>,
-			#[pallet::compact] id: T::PoolId,
+			id: T::PoolId,
 			to: T::AccountId,
-			#[pallet::compact] amount: BalanceOf<T>,
+			amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
