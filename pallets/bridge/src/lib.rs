@@ -326,10 +326,7 @@ pub mod pallet {
 		/// # </weight>
 		#[pallet::call_index(0)]
 		#[pallet::weight(<T as Config>::WeightInfo::set_threshold())]
-		pub fn set_threshold(
-			origin: OriginFor<T>,
-			#[pallet::compact] threshold: u32,
-		) -> DispatchResult {
+		pub fn set_threshold(origin: OriginFor<T>, threshold: u32) -> DispatchResult {
 			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
 			Self::set_relayer_threshold(threshold)
 		}
@@ -372,10 +369,7 @@ pub mod pallet {
 		/// # </weight>
 		#[pallet::call_index(3)]
 		#[pallet::weight(<T as Config>::WeightInfo::whitelist_chain())]
-		pub fn whitelist_chain(
-			origin: OriginFor<T>,
-			#[pallet::compact] id: BridgeChainId,
-		) -> DispatchResult {
+		pub fn whitelist_chain(origin: OriginFor<T>, id: BridgeChainId) -> DispatchResult {
 			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
 			Self::whitelist(id)
 		}
@@ -413,8 +407,8 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::update_fee())]
 		pub fn update_fee(
 			origin: OriginFor<T>,
-			#[pallet::compact] dest_id: BridgeChainId,
-			#[pallet::compact] fee: BalanceOf<T>,
+			dest_id: BridgeChainId,
+			fee: BalanceOf<T>,
 		) -> DispatchResult {
 			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
 			BridgeFee::<T>::insert(dest_id, fee);
@@ -439,8 +433,8 @@ pub mod pallet {
 		})]
 		pub fn acknowledge_proposal(
 			origin: OriginFor<T>,
-			#[pallet::compact] nonce: DepositNonce,
-			#[pallet::compact] src_id: BridgeChainId,
+			nonce: DepositNonce,
+			src_id: BridgeChainId,
 			r_id: ResourceId,
 			call: Box<<T as Config>::Proposal>,
 		) -> DispatchResult {
@@ -461,8 +455,8 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::reject_proposal())]
 		pub fn reject_proposal(
 			origin: OriginFor<T>,
-			#[pallet::compact] nonce: DepositNonce,
-			#[pallet::compact] src_id: BridgeChainId,
+			nonce: DepositNonce,
+			src_id: BridgeChainId,
 			r_id: ResourceId,
 			call: Box<<T as Config>::Proposal>,
 		) -> DispatchResult {
@@ -491,8 +485,8 @@ pub mod pallet {
 		})]
 		pub fn eval_vote_state(
 			origin: OriginFor<T>,
-			#[pallet::compact] nonce: DepositNonce,
-			#[pallet::compact] src_id: BridgeChainId,
+			nonce: DepositNonce,
+			src_id: BridgeChainId,
 			prop: Box<<T as Config>::Proposal>,
 		) -> DispatchResult {
 			ensure_signed(origin)?;
