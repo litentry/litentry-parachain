@@ -6,7 +6,7 @@ import type { KeyringPair } from '@polkadot/keyring/types';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { Metadata, Vec, TypeRegistry } from '@polkadot/types';
 import { Wallet } from 'ethers';
-import type { Assertion as GenericAssertion, DirectRequestStatus } from '../parachain-interfaces/identity/types';
+import type { Assertion as GenericAssertion } from '../parachain-interfaces/identity/types';
 import { default as teeTypes } from '../parachain-interfaces/identity/definitions';
 import { AnyTuple, IMethod } from '@polkadot/types/types';
 import { Call } from '@polkadot/types/interfaces';
@@ -23,16 +23,9 @@ export type Web2Network = LitentryPrimitivesIdentityWeb2Network['type'];
 export type SubstrateNetwork = LitentryPrimitivesIdentitySubstrateNetwork['type'];
 export type EvmNetwork = LitentryPrimitivesIdentityEvmNetwork['type'];
 export type ParachainAssertion = GenericAssertion['type'];
-export type WorkerRpcReturnString = {
-    vec: string;
-};
 
 export type BatchCall = Vec<Call> | (string | Uint8Array | IMethod<AnyTuple, any> | Call)[];
-export type WorkerRpcReturnValue = {
-    value: `0x${string}`;
-    do_watch: boolean;
-    status: DirectRequestStatus;
-};
+
 export type EnclaveResult = {
     mrEnclave: `0x${string}`;
     shieldingKey: `0x${string}`;
