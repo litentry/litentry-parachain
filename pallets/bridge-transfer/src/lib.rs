@@ -141,7 +141,7 @@ pub mod pallet {
 		#[transactional]
 		pub fn transfer_native(
 			origin: OriginFor<T>,
-			#[pallet::compact] amount: bridge::BalanceOf<T>,
+			amount: bridge::BalanceOf<T>,
 			recipient: Vec<u8>,
 			#[pallet::compact] dest_id: bridge::BridgeChainId,
 		) -> DispatchResult {
@@ -162,7 +162,7 @@ pub mod pallet {
 		pub fn transfer(
 			origin: OriginFor<T>,
 			to: T::AccountId,
-			#[pallet::compact] amount: bridge::BalanceOf<T>,
+			amount: bridge::BalanceOf<T>,
 			rid: ResourceId,
 		) -> DispatchResult {
 			T::BridgeOrigin::ensure_origin(origin)?;
@@ -192,7 +192,7 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::set_maximum_issuance())]
 		pub fn set_maximum_issuance(
 			origin: OriginFor<T>,
-			#[pallet::compact] maximum_issuance: bridge::BalanceOf<T>,
+			maximum_issuance: bridge::BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			T::SetMaximumIssuanceOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::MaximumIssuanceChanged {
@@ -206,7 +206,7 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::set_external_balances())]
 		pub fn set_external_balances(
 			origin: OriginFor<T>,
-			#[pallet::compact] external_balances: bridge::BalanceOf<T>,
+			external_balances: bridge::BalanceOf<T>,
 		) -> DispatchResult {
 			frame_system::ensure_root(origin)?;
 			<ExternalBalances<T>>::put(external_balances);
