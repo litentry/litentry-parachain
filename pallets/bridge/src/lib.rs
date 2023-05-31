@@ -326,10 +326,7 @@ pub mod pallet {
 		/// # </weight>
 		#[pallet::call_index(0)]
 		#[pallet::weight(<T as Config>::WeightInfo::set_threshold())]
-		pub fn set_threshold(
-			origin: OriginFor<T>,
-			threshold: u32,
-		) -> DispatchResult {
+		pub fn set_threshold(origin: OriginFor<T>, threshold: u32) -> DispatchResult {
 			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
 			Self::set_relayer_threshold(threshold)
 		}
@@ -372,10 +369,7 @@ pub mod pallet {
 		/// # </weight>
 		#[pallet::call_index(3)]
 		#[pallet::weight(<T as Config>::WeightInfo::whitelist_chain())]
-		pub fn whitelist_chain(
-			origin: OriginFor<T>,
-			id: BridgeChainId,
-		) -> DispatchResult {
+		pub fn whitelist_chain(origin: OriginFor<T>, id: BridgeChainId) -> DispatchResult {
 			T::BridgeCommitteeOrigin::ensure_origin(origin)?;
 			Self::whitelist(id)
 		}
