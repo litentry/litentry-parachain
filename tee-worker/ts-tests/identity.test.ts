@@ -24,12 +24,12 @@ import type { IdentityGenericEvent, TransactionSubmit } from './common/type-defi
 import type { HexString } from '@polkadot/util/types';
 import { Event } from '@polkadot/types/interfaces';
 import { ethers } from 'ethers';
-const substrateExtensionIdentity: LitentryPrimitivesIdentity = {
+const substrateExtensionIdentity = {
     Substrate: {
         address: '0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48', //Bob
         network: 'Litentry',
     },
-} as any;
+} as unknown as LitentryPrimitivesIdentity;
 describeLitentry('Test Identity', 0, (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     const errorAesKey = '0xError';
@@ -139,12 +139,12 @@ describeLitentry('Test Identity', 0, (context) => {
         assert.equal(
             resp_id_graph.verificationRequestBlock.toHuman(),
             0,
-            'verification_request_block should be 0 for main address'
+            'verificationRequestBlock should be 0 for main address'
         );
         assert.equal(
             resp_id_graph.creationRequestBlock.toHuman(),
             0,
-            'linking_request_block should be 0 for main address'
+            'creationRequestBlock should be 0 for main address'
         );
         assert.equal(resp_id_graph.isVerified.toHuman(), true, 'IDGraph is_verified should be true for main address');
         // TODO: check IDGraph.length == 1 in the sidechain storage
@@ -268,7 +268,7 @@ describeLitentry('Test Identity', 0, (context) => {
                         },
                     },
                 },
-            } as any;
+            };
             const msg = generateVerificationMessage(
                 context,
                 hexToU8a(resp_extension_data.challengeCode),
@@ -284,10 +284,10 @@ describeLitentry('Test Identity', 0, (context) => {
             substrateExtensionValidationData!.Web3Validation.Substrate.signature.Sr25519 =
                 u8aToHex(signature_substrate);
             assert.isNotEmpty(resp_extension_data.challengeCode, 'challengeCode empty');
-            const encode_verifyIdentity_validation: LitentryValidationData = context.api.createType(
+            const encode_verifyIdentity_validation = context.api.createType(
                 'LitentryValidationData',
                 substrateExtensionValidationData
-            ) as any;
+            ) as unknown as LitentryValidationData;
             bob_validations = [encode_verifyIdentity_validation];
         }
     });
@@ -304,9 +304,9 @@ describeLitentry('Test Identity', 0, (context) => {
             identity_hex
         );
         assert.notEqual(
-            resp_id_graph.creationRequestBlock,
-            null,
-            'linking_request_block should not be null after createIdentity'
+            resp_id_graph.creationRequestBlock.toHuman(),
+            0,
+            'creationRequestBlock should not be 0 after createIdentity'
         );
         assert.equal(resp_id_graph.isVerified.toHuman(), false, 'is_verified should be false before verifyIdentity');
     });
@@ -359,7 +359,7 @@ describeLitentry('Test Identity', 0, (context) => {
         const encode_verifyIdentity_validation: LitentryValidationData = context.api.createType(
             'LitentryValidationData',
             ethereumValidationData
-        ) as any;
+        ) as unknown as LitentryValidationData;
         context;
         let alice_txs = await buildIdentityTxs(
             context,
@@ -446,9 +446,9 @@ describeLitentry('Test Identity', 0, (context) => {
             identity_hex
         );
         assert.notEqual(
-            resp_id_graph.verificationRequestBlock,
-            null,
-            'verification_request_block should not be null after verifyIdentity'
+            resp_id_graph.verificationRequestBlock.toHuman(),
+            0,
+            'verificationRequestBlock should not be 0 after verifyIdentity'
         );
         assert.equal(resp_id_graph.isVerified.toHuman(), true, 'is_verified should be true after verifyIdentity');
     });
@@ -573,16 +573,16 @@ describeLitentry('Test Identity', 0, (context) => {
             identity_hex
         );
         assert.equal(
-            resp_id_graph.verificationRequestBlock,
+            resp_id_graph.verificationRequestBlock.toHuman(),
             null,
-            'verification_request_block should  be null after removeIdentity'
+            'verificationRequestBlock should be null after removeIdentity'
         );
         assert.equal(
-            resp_id_graph.creationRequestBlock,
+            resp_id_graph.creationRequestBlock.toHuman(),
             null,
-            'linking_request_block should  be null after removeIdentity'
+            'creationRequestBlock should be null after removeIdentity'
         );
-        assert.equal(resp_id_graph.isVerified.toHuman(), false, 'is_verified should be false after removeIdentity');
+        assert.equal(resp_id_graph.isVerified.toHuman(), false, 'isVerified should be false after removeIdentity');
     });
     step('remove prime identity NOT allowed', async function () {
         // create substrate identity
@@ -759,7 +759,7 @@ describeLitentry('Test Identity', 0, (context) => {
             [setUserShieldingKeyTx],
             'identityManagement',
             ['UserShieldingKeySet']
-        )) as any as Event[];
+        )) as Event[];
         const [event] = (await handleIdentityEvents(
             context,
             aesKey,
@@ -777,7 +777,7 @@ describeLitentry('Test Identity', 0, (context) => {
         resp_events = (await sendTxsWithUtility(context, context.substrateWallet.eve, txs, 'identityManagement', [
             'IdentityCreated',
             'CreateIdentityFailed',
-        ])) as any as Event[];
+        ])) as Event[];
 
         let identity_created_events_raw = resp_events.filter((e) => e.method === 'IdentityCreated');
         let create_identity_failed_events_raw = resp_events.filter((e) => e.method === 'CreateIdentityFailed');

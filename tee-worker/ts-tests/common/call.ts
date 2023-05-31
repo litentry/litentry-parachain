@@ -13,7 +13,7 @@ export async function sendRequest(
     api: ApiPromise
 ): Promise<WorkerRpcReturnValue> {
     const rawRes = await wsClient.sendRequest(request, { requestId: 1, timeout: 6000 });
-    const res: WorkerRpcReturnValue = api.createType('WorkerRpcReturnValue', rawRes.result) as any;
+    const res = api.createType('WorkerRpcReturnValue', rawRes.result) as unknown as WorkerRpcReturnValue;
     if (res.status.isError) {
         console.log('Rpc response error: ' + decodeRpcBytesAsString(res.value));
     }

@@ -20,10 +20,10 @@ export async function assertInitialIDGraphCreated(
     assert.equal(event.who, u8aToHex(signer.addressRaw));
     assert.equal(event.idGraph.length, 1);
     // check identity in idgraph
-    const expected_identity: LitentryPrimitivesIdentity = context.sidechainRegistry.createType(
+    const expected_identity = context.sidechainRegistry.createType(
         'LitentryPrimitivesIdentity',
         await buildIdentityHelper(u8aToHex(signer.addressRaw), env_network, 'Substrate', context)
-    ) as any;
+    ) as unknown as LitentryPrimitivesIdentity;
 
     const expected_target = expected_identity[`as${expected_identity.type}`];
     const idGraph_target = event.idGraph[0][0][`as${event.idGraph[0][0].type}`];

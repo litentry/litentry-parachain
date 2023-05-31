@@ -41,10 +41,11 @@ export async function buildIdentityHelper(
             network,
         },
     };
-    const encoded_identity: LitentryPrimitivesIdentity = context.sidechainRegistry.createType(
+
+    const encoded_identity = context.sidechainRegistry.createType(
         'LitentryPrimitivesIdentity',
         identity
-    ) as any;
+    ) as unknown as LitentryPrimitivesIdentity;
     return encoded_identity;
 }
 
@@ -178,15 +179,18 @@ export function createIdentityEvent(
     idGraphString?: HexString,
     challengeCode?: HexString
 ): IdentityGenericEvent {
-    let identity: LitentryPrimitivesIdentity = identityString
-        ? (sidechainRegistry.createType('LitentryPrimitivesIdentity', identityString) as any)
-        : undefined;
-    let idGraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][] = idGraphString
-        ? (sidechainRegistry.createType(
-              'Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
-              idGraphString
-          ) as any)
-        : undefined;
+    let identity: LitentryPrimitivesIdentity =
+        identityString! &&
+        (sidechainRegistry.createType(
+            'LitentryPrimitivesIdentity',
+            identityString
+        ) as unknown as LitentryPrimitivesIdentity);
+    let idGraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][] =
+        idGraphString! &&
+        (sidechainRegistry.createType(
+            'Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
+            idGraphString
+        ) as unknown as [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][]);
     return <IdentityGenericEvent>{
         who,
         identity,
@@ -239,10 +243,10 @@ export async function buildValidations(
             ethereumValidationData!.Web3Validation.Evm.signature.Ethereum = signature_ethereum;
             assert.isNotEmpty(data.challengeCode, 'ethereum challengeCode empty');
             console.log('ethereumValidationData', ethereumValidationData);
-            const encode_verifyIdentity_validation: LitentryValidationData = context.api.createType(
+            const encode_verifyIdentity_validation = context.api.createType(
                 'LitentryValidationData',
                 ethereumValidationData
-            ) as any;
+            ) as unknown as LitentryValidationData;
 
             verifyDatas.push(encode_verifyIdentity_validation);
         } else if (network === 'substrate') {
@@ -264,7 +268,7 @@ export async function buildValidations(
             const encode_verifyIdentity_validation: LitentryValidationData = context.api.createType(
                 'LitentryValidationData',
                 substrateValidationData
-            ) as any;
+            ) as unknown as LitentryValidationData;
             verifyDatas.push(encode_verifyIdentity_validation);
         } else if (network === 'twitter') {
             console.log('post verification msg to twitter', msg);
@@ -276,10 +280,10 @@ export async function buildValidations(
                 },
             };
 
-            const encode_verifyIdentity_validation: LitentryValidationData = context.api.createType(
+            const encode_verifyIdentity_validation = context.api.createType(
                 'LitentryValidationData',
                 twitterValidationData
-            ) as any;
+            ) as unknown as LitentryValidationData;
 
             verifyDatas.push(encode_verifyIdentity_validation);
             assert.isNotEmpty(data.challengeCode, 'twitter challengeCode empty');

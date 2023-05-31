@@ -75,12 +75,12 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             assert.equal(
                 resp_id_graph.verificationRequestBlock.toHuman(),
                 null,
-                'verification_request_block should  be null before create'
+                'verificationRequestBlock should  be null before create'
             );
             assert.equal(
                 resp_id_graph.creationRequestBlock.toHuman(),
                 null,
-                'linking_request_block should  be null before create'
+                'creationRequestBlock should  be null before create'
             );
 
             assert.equal(
@@ -178,10 +178,10 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             );
             assert.notEqual(
                 resp_id_graph.verificationRequestBlock.toHuman(),
-                null,
-                'verification_request_block should not be null after verifyIdentity'
+                0,
+                'verificationRequestBlock should not be 0 after verifyIdentity'
             );
-            assert.equal(resp_id_graph.isVerified.toHuman(), true, 'is_verified should be true after verifyIdentity');
+            assert.equal(resp_id_graph.isVerified.toHuman(), true, 'isVerified should be true after verifyIdentity');
         }
     });
     step('batch test: remove identities', async function () {
@@ -238,14 +238,14 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             assert.equal(
                 resp_id_graph.verificationRequestBlock.toHuman(),
                 null,
-                'verification_request_block should  be null after removeIdentity'
+                'verificationRequestBlock should  be null after removeIdentity'
             );
             assert.equal(
                 resp_id_graph.creationRequestBlock.toHuman(),
                 null,
-                'linking_request_block should  be null after removeIdentity'
+                'creationRequestBlock should be null after removeIdentity'
             );
-            assert.equal(resp_id_graph.isVerified.toHuman(), false, 'is_verified should be false after removeIdentity');
+            assert.equal(resp_id_graph.isVerified.toHuman(), false, 'isVerified should be false after removeIdentity');
         }
     });
 });

@@ -148,9 +148,9 @@ export async function checkIDGraph(
         id: 1,
     };
     let resp = await sendRequest(context.tee, request, context.api);
-    const IDGraph: PalletIdentityManagementTeeIdentityContext = context.sidechainRegistry.createType(
+    const IDGraph = context.sidechainRegistry.createType(
         'PalletIdentityManagementTeeIdentityContext',
         resp.value
-    ) as any;
+    ) as unknown as PalletIdentityManagementTeeIdentityContext;
     return IDGraph;
 }
