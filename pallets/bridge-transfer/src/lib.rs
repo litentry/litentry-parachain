@@ -143,7 +143,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			amount: bridge::BalanceOf<T>,
 			recipient: Vec<u8>,
-			#[pallet::compact] dest_id: bridge::BridgeChainId,
+			dest_id: bridge::BridgeChainId,
 		) -> DispatchResult {
 			let source = ensure_signed(origin)?;
 			ensure!(T::TransferNativeMembers::contains(&source), BadOrigin);
