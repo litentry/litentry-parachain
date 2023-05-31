@@ -10,7 +10,7 @@ import type { Assertion, TransactionSubmit } from './common/type-definitions';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import { multiAccountTxSender } from './common/transactions';
 import { SubmittableResult } from '@polkadot/api';
-const assertion = <Assertion>{
+const all_assertions = <Assertion>{
     A1: 'A1',
     A2: ['A2'],
     A3: ['A3', 'A3', 'A3'],
@@ -20,7 +20,9 @@ const assertion = <Assertion>{
     A10: '10.003',
     A11: '10.004',
 };
-
+const assertion_A1: Assertion = {
+    A1: 'A1',
+};
 //Explain how to use this test, which has two important parameters:
 //1.The "number" parameter in describeLitentry represents the number of accounts generated, including Substrate wallets and Ethereum wallets.If you want to use a large number of accounts for testing, you can modify this parameter.
 //2.Each time the test code is executed, new wallet account will be used.
@@ -30,7 +32,7 @@ describeLitentry('multiple accounts test', 2, async (context) => {
     var substrateSigners: KeyringPair[] = [];
     var vcIndexList: HexString[] = [];
     // If want to test other assertions with multiple accounts,just need to make changes here.
-    let assertion_type = assertion.A1;
+    let assertion_type = assertion_A1;
     step('init', async () => {
         substrateSigners = context.web3Signers.map((web3Signer) => {
             return web3Signer.substrateWallet;
@@ -76,9 +78,7 @@ describeLitentry('multiple accounts test', 2, async (context) => {
     step('test requestVc with multiple accounts', async () => {
         let txs: TransactionSubmit[] = [];
         for (let i = 0; i < substrateSigners.length; i++) {
-            console.log(assertion_type);
-
-            const tx = context.api.tx.vcManagement.requestVc(context.mrEnclave, assertion_type!);
+            const tx = context.api.tx.vcManagement.requestVc(context.mrEnclave, assertion_type);
             const nonce = (await context.api.rpc.system.accountNextIndex(substrateSigners[i].address)).toNumber();
             txs.push({ tx, nonce });
         }

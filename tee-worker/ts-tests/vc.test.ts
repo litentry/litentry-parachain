@@ -16,7 +16,7 @@ import { u8aToHex } from '@polkadot/util';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import { multiAccountTxSender, sendTxsWithUtility, sendTxUntilInBlockList } from './common/transactions';
 
-const assertion = <Assertion>{
+const all_assertions: Assertion = {
     A1: 'A1',
     A2: ['A2'],
     A3: ['A3', 'A3', 'A3'],
@@ -26,7 +26,9 @@ const assertion = <Assertion>{
     A10: '10.003',
     A11: '10.004',
 };
-
+const assertion_A1: Assertion = {
+    A1: 'A1',
+};
 //It doesn't make much difference test A1 only vs test A1 - A11, one VC type is enough.
 //So only use A1 to trigger the wrong event
 describeLitentry('VC test', 0, async (context) => {
@@ -86,7 +88,7 @@ describeLitentry('VC test', 0, async (context) => {
         for (let index = 0; index < vcKeys.length; index++) {
             const key = vcKeys[index];
             const tx = context.api.tx.vcManagement.requestVc(context.mrEnclave, {
-                [key]: assertion[key as keyof Assertion],
+                [key]: all_assertions[key as keyof Assertion],
             });
             txs.push({ tx });
         }
@@ -116,7 +118,7 @@ describeLitentry('VC test', 0, async (context) => {
         }
     });
     step('Request Error VC(A1)', async () => {
-        const tx = context.api.tx.vcManagement.requestVc(context.mrEnclave, assertion.A1);
+        const tx = context.api.tx.vcManagement.requestVc(context.mrEnclave, assertion_A1);
         const resp_error_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.bob,
