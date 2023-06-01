@@ -68,13 +68,15 @@ impl ShieldFundsCommand {
 		let encryption_key = get_shielding_key(cli).unwrap();
 		let encrypted_recevier = encryption_key.encrypt(&to.encode()).unwrap();
 
+		let fund_amount = codec::Compact(self.amount);
+
 		// compose the extrinsic
 		let xt: UncheckedExtrinsicV4<_, _> = compose_extrinsic!(
 			chain_api,
 			TEEREX,
 			"shield_funds",
 			encrypted_recevier,
-			self.amount,
+			fund_amount,
 			shard
 		);
 

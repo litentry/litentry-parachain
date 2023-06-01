@@ -344,7 +344,7 @@ pub mod pallet {
 		pub fn shield_funds(
 			origin: OriginFor<T>,
 			incognito_account_encrypted: Vec<u8>,
-			amount: BalanceOf<T>,
+			#[pallet::compact] amount: BalanceOf<T>,
 			bonding_account: T::AccountId,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
@@ -364,7 +364,7 @@ pub mod pallet {
 		pub fn unshield_funds(
 			origin: OriginFor<T>,
 			public_account: T::AccountId,
-			amount: BalanceOf<T>,
+			#[pallet::compact] amount: BalanceOf<T>,
 			bonding_account: T::AccountId,
 			call_hash: H256,
 		) -> DispatchResultWithPostInfo {
