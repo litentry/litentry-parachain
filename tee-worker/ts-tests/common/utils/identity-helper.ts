@@ -1,12 +1,7 @@
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { blake2AsHex } from '@polkadot/util-crypto';
-import {
-    EvmNetwork,
-    IdentityGenericEvent,
-    IntegrationTestContext,
-    SubstrateNetwork,
-    Web2Network,
-} from '../type-definitions';
+
+import { AESOutput } from '../type-definitions';
 import { decryptWithAES, encryptWithTeeShieldingKey } from './crypto';
 import { assert } from 'chai';
 import { ethers } from 'ethers';
@@ -16,7 +11,13 @@ import type { LitentryValidationData } from '../../parachain-interfaces/identity
 import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
-
+import type {
+    EvmNetwork,
+    IdentityGenericEvent,
+    IntegrationTestContext,
+    SubstrateNetwork,
+    Web2Network,
+} from '../type-definitions';
 //<challeng-code> + <litentry-AccountId32> + <Identity>
 export function generateVerificationMessage(
     context: IntegrationTestContext,
@@ -116,8 +117,8 @@ export async function handleIdentityEvents(
     aesKey: HexString,
     events: any[],
     type: 'UserShieldingKeySet' | 'IdentityCreated' | 'IdentityVerified' | 'IdentityRemoved' | 'Failed'
-): Promise<(IdentityGenericEvent | string)[]> {
-    let results: (IdentityGenericEvent | string)[] = [];
+): Promise<IdentityGenericEvent[]> {
+    let results: IdentityGenericEvent[] = [];
 
     for (let index = 0; index < events.length; index++) {
         switch (type) {
@@ -162,14 +163,38 @@ export async function handleIdentityEvents(
                     )
                 );
                 break;
-            case 'Failed':
-                results.push(events[index].data.detail.toHuman() as string);
-                break;
         }
     }
     console.log(`${type} event data:`, results);
 
     return [...results];
+}
+
+export function parseIdGraph(
+    sidechainRegistry: TypeRegistry,
+    idGraph_output: AESOutput,
+    aesKey: HexString
+): [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][] {
+    const decrypted_idGraph = decryptWithAES(aesKey, idGraph_output, 'hex');
+    let idGraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][] =
+        sidechainRegistry.createType(
+            'Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
+            decrypted_idGraph
+        ) as unknown as [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][];
+    return idGraph;
+}
+
+export function parseIdentity(
+    sidechainRegistry: TypeRegistry,
+    identity_output: AESOutput,
+    aesKey: HexString
+): LitentryPrimitivesIdentity {
+    const decrypted_identity = decryptWithAES(aesKey, identity_output, 'hex');
+    const identity = sidechainRegistry.createType(
+        'LitentryPrimitivesIdentity',
+        decrypted_identity
+    ) as unknown as LitentryPrimitivesIdentity;
+    return identity;
 }
 
 export function createIdentityEvent(
@@ -201,8 +226,8 @@ export function createIdentityEvent(
 
 export async function buildValidations(
     context: IntegrationTestContext,
-    eventDatas: any[],
-    identities: any[],
+    eventDatas: IdentityGenericEvent[],
+    identities: LitentryPrimitivesIdentity[],
     network: 'ethereum' | 'substrate' | 'twitter',
     substrateSigners: KeyringPair[] | KeyringPair,
     ethereumSigners?: ethers.Wallet[]

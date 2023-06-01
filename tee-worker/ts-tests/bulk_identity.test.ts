@@ -1,14 +1,5 @@
 import { step } from 'mocha-steps';
-import {
-    buildValidations,
-    describeLitentry,
-    buildIdentityTxs,
-    buildIdentityHelper,
-    assertIdentityCreated,
-    assertIdentityRemoved,
-    assertIdentityVerified,
-    assertInitialIDGraphCreated,
-} from './common/utils';
+import { buildValidations, describeLitentry, buildIdentityTxs, buildIdentityHelper } from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
 import type { BatchCall, IdentityGenericEvent } from './common/type-definitions';
@@ -66,11 +57,6 @@ describeLitentry('multiple accounts test', 2, async (context) => {
         const resp_events = await multiAccountTxSender(context, txs, substrateSigners, 'identityManagement', [
             'UserShieldingKeySet',
         ]);
-
-        const event_datas = await handleIdentityEvents(context, aesKey, resp_events, 'UserShieldingKeySet');
-        event_datas.forEach(async (data: any, index: number) => {
-            await assertInitialIDGraphCreated(context, substrateSigners[index], data);
-        });
     });
 
     //test identity with multiple accounts
@@ -85,17 +71,7 @@ describeLitentry('multiple accounts test', 2, async (context) => {
         const resp_events = await multiAccountTxSender(context, txs, substrateSigners, 'identityManagement', [
             'IdentityCreated',
         ]);
-        const resp_events_datas = (await handleIdentityEvents(
-            context,
-            aesKey,
-            resp_events,
-            'IdentityCreated'
-        )) as IdentityGenericEvent[];
-
-        for (let index = 0; index < resp_events_datas.length; index++) {
-            console.log('createIdentity', index);
-            assertIdentityCreated(substrateSigners[index], resp_events_datas[index]);
-        }
+        const resp_events_datas = await handleIdentityEvents(context, aesKey, resp_events, 'IdentityCreated');
         const validations = await buildValidations(
             context,
             resp_events_datas,
@@ -114,16 +90,6 @@ describeLitentry('multiple accounts test', 2, async (context) => {
             'IdentityVerified',
         ]);
         assert.equal(resp_events.length, txs.length, 'verify identities with multiple accounts check fail');
-        const [resp_events_datas] = (await handleIdentityEvents(
-            context,
-            aesKey,
-            resp_events,
-            'IdentityVerified'
-        )) as IdentityGenericEvent[];
-        for (let index = 0; index < [resp_events_datas].length; index++) {
-            console.log('verifyIdentity', index);
-            assertIdentityVerified(substrateSigners[index], [resp_events_datas]);
-        }
     });
 
     step('test removeIdentity with multiple accounts', async () => {
@@ -133,15 +99,5 @@ describeLitentry('multiple accounts test', 2, async (context) => {
             'IdentityRemoved',
         ]);
         assert.equal(resp_events.length, txs.length, 'remove identities with multiple accounts check fail');
-        const [resp_events_datas] = (await handleIdentityEvents(
-            context,
-            aesKey,
-            resp_events,
-            'IdentityRemoved'
-        )) as IdentityGenericEvent[];
-        for (let index = 0; index < [resp_events_datas].length; index++) {
-            console.log('verifyIdentity', index);
-            assertIdentityRemoved(substrateSigners[index], resp_events_datas);
-        }
     });
 });

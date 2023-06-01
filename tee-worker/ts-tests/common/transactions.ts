@@ -165,7 +165,7 @@ export async function sendTxsWithUtility(
     pallet: string,
     events: string[],
     listenTimeoutInBlockNumber?: number
-): Promise<string[] | Event[]> {
+): Promise<Event[]> {
     //ensure the tx is in block
     const isInBlockPromise = new Promise((resolve) => {
         context.api.tx.utility.batchAll(txs.map(({ tx }) => tx)).signAndSend(signer, async (result) => {
@@ -180,14 +180,14 @@ export async function sendTxsWithUtility(
 
     await isInBlockPromise;
 
-    const resp_events = (await listenEvent(
+    const resp_events = await listenEvent(
         context.api,
         pallet,
         events,
         txs.length,
         [u8aToHex(signer.addressRaw)],
         listenTimeoutInBlockNumber
-    )) as any;
+    );
 
     expect(resp_events.length).to.be.equal(txs.length);
     return resp_events;

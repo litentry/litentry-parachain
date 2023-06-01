@@ -21,7 +21,6 @@ import {
 import { ethers } from 'ethers';
 import type { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
 import type { LitentryValidationData } from './parachain-interfaces/identity/types';
-import type { IdentityGenericEvent } from './common/type-definitions';
 describeLitentry('Test Batch Utility', 0, (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     let identities: LitentryPrimitivesIdentity[] = [];
@@ -44,12 +43,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             'identityManagement',
             ['UserShieldingKeySet']
         );
-        const [alice] = (await handleIdentityEvents(
-            context,
-            aesKey,
-            resp_events,
-            'UserShieldingKeySet'
-        )) as IdentityGenericEvent[];
+        const [alice] = await handleIdentityEvents(context, aesKey, resp_events, 'UserShieldingKeySet');
         assert.equal(
             alice.who,
             u8aToHex(context.substrateWallet.alice.addressRaw),
@@ -98,15 +92,10 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             'identityManagement',
             ['IdentityCreated']
         );
-        const event_datas = (await handleIdentityEvents(
-            context,
-            aesKey,
-            resp_events,
-            'IdentityCreated'
-        )) as IdentityGenericEvent[];
-        for (let i = 0; i < [event_datas].length; i++) {
-            assertIdentityCreated(context.substrateWallet.alice, event_datas[i]);
-        }
+        const event_datas = await handleIdentityEvents(context, aesKey, resp_events, 'IdentityCreated');
+
+        await assertIdentityCreated(context, context.substrateWallet.alice, resp_events, aesKey, identities);
+
         const ethereum_validations = await buildValidations(
             context,
             event_datas,
@@ -124,7 +113,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
         const resp_events = await sendTxsWithUtility(context, context.substrateWallet.bob, txs, 'identityManagement', [
             'CreateIdentityFailed',
         ]);
-        await checkErrorDetail(resp_events, 'UserShieldingKeyNotFound', true);
+        await checkErrorDetail(resp_events, 'UserShieldingKeyNotFound');
     });
     step('batch test: verify identity', async function () {
         let txs = await buildIdentityTxs(
@@ -139,14 +128,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             'IdentityVerified',
         ]);
 
-        let event_datas = (await handleIdentityEvents(
-            context,
-            aesKey,
-            resp_events,
-            'IdentityVerified'
-        )) as IdentityGenericEvent[];
-
-        assertIdentityVerified(context.substrateWallet.alice, event_datas);
+        await assertIdentityVerified(context, context.substrateWallet.alice, resp_events, aesKey, identities);
     });
 
     step('batch test: verify error identity', async function () {
@@ -160,8 +142,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
         let resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
             'VerifyIdentityFailed',
         ]);
-        const resp_event_datas = (await handleIdentityEvents(context, aesKey, resp_events, 'Failed')) as string[];
-        await checkErrorDetail(resp_event_datas, 'ChallengeCodeNotFound', false);
+        await checkErrorDetail(resp_events, 'ChallengeCodeNotFound');
     });
     //query here in the hope that the status remains unchanged after verify error identity
     step('batch test:check IDGraph after verifyIdentity', async function () {
@@ -176,10 +157,9 @@ describeLitentry('Test Batch Utility', 0, (context) => {
                 u8aToHex(context.substrateWallet.alice.addressRaw),
                 identity_hex
             );
-            assert.notEqual(
-                resp_id_graph.verificationRequestBlock.toHuman(),
-                0,
-                'verificationRequestBlock should not be 0 after verifyIdentity'
+            assert(
+                Number(resp_id_graph.verificationRequestBlock.toHuman()) > 0,
+                'verificationRequestBlock should be greater than 0 after verifyIdentity'
             );
             assert.equal(resp_id_graph.isVerified.toHuman(), true, 'isVerified should be true after verifyIdentity');
         }
@@ -193,15 +173,8 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             'identityManagement',
             ['IdentityRemoved']
         );
-        const resp_event_datas = (await handleIdentityEvents(
-            context,
-            aesKey,
-            resp_remove_events,
-            'IdentityRemoved'
-        )) as IdentityGenericEvent[];
-        for (let i = 0; i < resp_event_datas.length; i++) {
-            assertIdentityRemoved(context.substrateWallet.alice, resp_event_datas[i]);
-        }
+
+        await assertIdentityRemoved(context, context.substrateWallet.alice, resp_remove_events);
     });
     step('batch test: remove error identities', async function () {
         let txs = await buildIdentityTxs(context, context.substrateWallet.alice, identities, 'removeIdentity');
@@ -212,13 +185,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             'identityManagement',
             ['RemoveIdentityFailed']
         );
-        const resp_event_datas = (await handleIdentityEvents(
-            context,
-            aesKey,
-            resp_remove_events,
-            'Failed'
-        )) as string[];
-        await checkErrorDetail(resp_event_datas, 'IdentityNotExist', false);
+        await checkErrorDetail(resp_remove_events, 'IdentityNotExist');
     });
 
     //query here in the hope that the status remains unchanged after removes error identity
