@@ -325,7 +325,7 @@ where
 				calls.push(OpaqueCall::from_tuple(&(
 					node_metadata_repo.get_from_metadata(|m| m.unshield_funds_call_indexes())??,
 					beneficiary,
-					value,
+					#[pallet::compact] value,
 					shard,
 					call_hash,
 				)));
