@@ -39,7 +39,7 @@ impl SetHeartbeatTimeoutCommand {
 		let chain_api = chain_api.set_signer(alice.into());
 
 		// call set_heartbeat_timeout
-		let tm: codec::Compact(self.timeout);
+		let tm = codec::Compact(self.timeout);
 		let xt: UncheckedExtrinsicV4<_, _> =
 			compose_extrinsic!(chain_api, TEEREX, "set_heartbeat_timeout", tm);
 		let tx_hash = chain_api.send_extrinsic(xt.hex_encode(), XtStatus::Finalized).unwrap();
