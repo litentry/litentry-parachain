@@ -39,8 +39,9 @@ impl SetHeartbeatTimeoutCommand {
 		let chain_api = chain_api.set_signer(alice.into());
 
 		// call set_heartbeat_timeout
+		let tm: parity_scale_codec::Compact<u64> = parity_scale_codec::Compact::From(self.timeout);
 		let xt: UncheckedExtrinsicV4<_, _> =
-			compose_extrinsic!(chain_api, TEEREX, "set_heartbeat_timeout", self.timeout);
+			compose_extrinsic!(chain_api, TEEREX, "set_heartbeat_timeout", tm);
 		let tx_hash = chain_api.send_extrinsic(xt.hex_encode(), XtStatus::Finalized).unwrap();
 
 		println!("[+] TrustedOperation got finalized. Hash: {:?}\n", tx_hash);
