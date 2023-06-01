@@ -49,9 +49,8 @@ export async function assertInitialIDGraphCreated(
             'Check InitialIDGraph error: verification_request_block should be 0'
         );
         assert.isTrue(idGraph_context.isVerified, 'Check InitialIDGraph error: isVerified should be true');
-
-        console.log(colors.green('assertInitialIDGraphCreated complete'));
     }
+    console.log(colors.green('assertInitialIDGraphCreated complete'));
 }
 
 export async function assertIdentityVerified(

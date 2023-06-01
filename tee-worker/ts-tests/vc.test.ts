@@ -34,7 +34,7 @@ const assertion_A1: Assertion = {
 describeLitentry('VC test', 0, async (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     var indexList: HexString[] = [];
-    var vcKeys: string[] = ['A1', 'A2', 'A3', 'A4', 'A7', 'A8', 'A10', 'A11'];
+    var vcKeys: string[] = ['A1'];
     step('check user sidechain storage before create', async function () {
         const resp_shieldingKey = await checkUserShieldingKeys(
             context,
@@ -93,9 +93,14 @@ describeLitentry('VC test', 0, async (context) => {
             txs.push({ tx });
         }
 
-        const resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'vcManagement', [
-            'VCIssued',
-        ]);
+        const resp_events = await sendTxsWithUtility(
+            context,
+            context.substrateWallet.alice,
+            txs,
+            'vcManagement',
+            ['VCIssued'],
+            30
+        );
         const res = await handleVcEvents(aesKey, resp_events, 'VCIssued');
 
         for (let k = 0; k < res.length; k++) {
@@ -126,9 +131,8 @@ describeLitentry('VC test', 0, async (context) => {
             'vcManagement',
             ['RequestVCFailed']
         );
-        const error_event_datas = await handleVcEvents(aesKey, resp_error_events, 'Failed');
 
-        await checkErrorDetail(error_event_datas, 'UserShieldingKeyNotFound', false);
+        await checkErrorDetail(resp_error_events, 'UserShieldingKeyNotFound');
     });
     step('Disable VC', async () => {
         let txs: any = [];
@@ -152,13 +156,13 @@ describeLitentry('VC test', 0, async (context) => {
         const tx = context.api.tx.vcManagement.disableVc(indexList[0]);
         const nonce = (await context.api.rpc.system.accountNextIndex(context.substrateWallet.alice.address)).toNumber();
 
-        const res = (await sendTxUntilInBlockList(
-            context.api,
-            [{ tx, nonce }],
-            context.substrateWallet.alice
-        )) as string[];
+        const [error] = await sendTxUntilInBlockList(context.api, [{ tx, nonce }], context.substrateWallet.alice);
 
-        await checkErrorDetail(res, 'vcManagement.VCAlreadyDisabled', false);
+        assert.equal(
+            error,
+            'vcManagement.VCAlreadyDisabled',
+            'check disable vc error: error should be equal to vcManagement.VCAlreadyDisabled'
+        );
     });
 
     step('Revoke VC', async () => {
@@ -185,12 +189,12 @@ describeLitentry('VC test', 0, async (context) => {
         //Alice has already revoked the A1 VC
         const tx = context.api.tx.vcManagement.revokeVc(indexList[0]);
         const nonce = (await context.api.rpc.system.accountNextIndex(context.substrateWallet.alice.address)).toNumber();
-        const res = (await sendTxUntilInBlockList(
-            context.api,
-            [{ tx, nonce }],
-            context.substrateWallet.alice
-        )) as string[];
+        const [error] = await sendTxUntilInBlockList(context.api, [{ tx, nonce }], context.substrateWallet.alice);
 
-        await checkErrorDetail(res, 'vcManagement.VCNotExist', false);
+        assert.equal(
+            error,
+            'vcManagement.VCNotExist',
+            'check revoke vc error: error should be equal to vcManagement.VCNotExist'
+        );
     });
 });

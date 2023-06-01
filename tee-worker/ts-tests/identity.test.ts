@@ -702,10 +702,10 @@ describeLitentry('Test Identity', 0, (context) => {
             identities.push(identity);
         }
         let txs = await buildIdentityTxs(context, context.substrateWallet.eve, identities, 'createIdentity');
-        resp_events = (await sendTxsWithUtility(context, context.substrateWallet.eve, txs, 'identityManagement', [
+        resp_events = await sendTxsWithUtility(context, context.substrateWallet.eve, txs, 'identityManagement', [
             'IdentityCreated',
             'CreateIdentityFailed',
-        ]));
+        ]);
 
         let identity_created_events_raw = resp_events.filter((e) => e.method === 'IdentityCreated');
         let create_identity_failed_events_raw = resp_events.filter((e) => e.method === 'CreateIdentityFailed');
