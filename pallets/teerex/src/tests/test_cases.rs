@@ -477,8 +477,7 @@ fn unshield_is_only_executed_once_for_the_same_call_hash() {
 
 		assert!(Teerex::unshield_funds(
 			RuntimeOrigin::signed(signer.clone()),
-			AccountKeyring::Alice.to_account_id(),
-			#[pallet::compact]
+			AccountKeyring::A
 			50,
 			bonding_account.clone(),
 			call_hash
@@ -488,7 +487,6 @@ fn unshield_is_only_executed_once_for_the_same_call_hash() {
 		assert!(Teerex::unshield_funds(
 			RuntimeOrigin::signed(signer),
 			AccountKeyring::Alice.to_account_id(),
-			#[pallet::compact]
 			50,
 			bonding_account,
 			call_hash
@@ -719,7 +717,6 @@ fn verify_unshield_funds_works() {
 		assert!(Teerex::shield_funds(
 			RuntimeOrigin::signed(AccountKeyring::Alice.to_account_id()),
 			incognito_account.clone(),
-			#[pallet::compact]
 			100,
 			bonding_account.clone(),
 		)
@@ -733,7 +730,6 @@ fn verify_unshield_funds_works() {
 		assert!(Teerex::unshield_funds(
 			RuntimeOrigin::signed(signer4),
 			AccountKeyring::Alice.to_account_id(),
-			#[pallet::compact]
 			50,
 			bonding_account.clone(),
 			call_hash
@@ -761,7 +757,6 @@ fn unshield_funds_from_not_registered_enclave_errs() {
 			Teerex::unshield_funds(
 				RuntimeOrigin::signed(signer4.clone()),
 				AccountKeyring::Alice.to_account_id(),
-				#[pallet::compact]
 				51,
 				signer4,
 				call_hash
@@ -794,7 +789,6 @@ fn unshield_funds_from_enclave_neq_bonding_account_errs() {
 		assert!(Teerex::shield_funds(
 			RuntimeOrigin::signed(AccountKeyring::Alice.to_account_id()),
 			incognito_account.to_vec(),
-			#[pallet::compact]
 			100,
 			bonding_account.clone(),
 		)
@@ -803,7 +797,6 @@ fn unshield_funds_from_enclave_neq_bonding_account_errs() {
 		assert!(Teerex::shield_funds(
 			RuntimeOrigin::signed(AccountKeyring::Alice.to_account_id()),
 			incognito_account.to_vec(),
-			#[pallet::compact]
 			50,
 			not_bonding_account.clone(),
 		)
@@ -813,7 +806,6 @@ fn unshield_funds_from_enclave_neq_bonding_account_errs() {
 			Teerex::unshield_funds(
 				RuntimeOrigin::signed(signer4),
 				AccountKeyring::Alice.to_account_id(),
-				#[pallet::compact]
 				50,
 				not_bonding_account.clone(),
 				call_hash
