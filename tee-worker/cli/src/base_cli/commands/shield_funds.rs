@@ -74,7 +74,7 @@ impl ShieldFundsCommand {
 			TEEREX,
 			"shield_funds",
 			encrypted_recevier,
-			self.amount,
+			#[pallet::compact] self.amount,
 			shard
 		);
 
