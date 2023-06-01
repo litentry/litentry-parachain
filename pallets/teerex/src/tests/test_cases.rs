@@ -477,7 +477,7 @@ fn unshield_is_only_executed_once_for_the_same_call_hash() {
 
 		assert!(Teerex::unshield_funds(
 			RuntimeOrigin::signed(signer.clone()),
-			AccountKeyring::A
+			AccountKeyring::AAlice.to_account_id(),
 			50,
 			bonding_account.clone(),
 			call_hash
