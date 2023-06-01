@@ -344,7 +344,7 @@ pub mod pallet {
 		pub fn shield_funds(
 			origin: OriginFor<T>,
 			incognito_account_encrypted: Vec<u8>,
-			#[pallet::compact] amount: BalanceOf<T>,
+			amount: BalanceOf<T>,
 			bonding_account: T::AccountId,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
@@ -364,7 +364,7 @@ pub mod pallet {
 		pub fn unshield_funds(
 			origin: OriginFor<T>,
 			public_account: T::AccountId,
-			#[pallet::compact] amount: BalanceOf<T>,
+			amount: BalanceOf<T>,
 			bonding_account: T::AccountId,
 			call_hash: H256,
 		) -> DispatchResultWithPostInfo {
@@ -399,7 +399,7 @@ pub mod pallet {
 		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
 		pub fn set_heartbeat_timeout(
 			origin: OriginFor<T>,
-			timeout: u64,
+			#[pallet::compact] timeout: u64,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
