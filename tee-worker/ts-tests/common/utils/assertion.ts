@@ -171,13 +171,14 @@ export async function assertIdentityRemoved(
 }
 
 export async function checkErrorDetail(events: Event[], expectedDetail: string) {
+    // TODO: sometimes `item.data.detail.toHuman()` or `item` is treated as object (why?)
+    //       I have to JSON.stringify it to assign it to a string
     events.map((item: any) => {
-        const detail = item.data.detail.toString();
-        // isModule ? (detail = JSON.stringify(item.data.detail.toHuman())) : (detail = JSON.stringify(item));
+        console.log('error detail: ', item.data.detail.toHuman());
+        const detail = JSON.stringify(item.data.detail.toHuman());
 
-        assert.equal(
-            detail,
-            expectedDetail,
+        assert.isTrue(
+            detail.includes(expectedDetail),
             `check error detail failed, expected detail is ${expectedDetail}, but got ${detail}`
         );
     });

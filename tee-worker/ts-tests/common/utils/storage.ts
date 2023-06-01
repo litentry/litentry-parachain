@@ -8,6 +8,8 @@ import type { PalletIdentityManagementTeeIdentityContext } from '@polkadot/types
 import type { HexString } from '@polkadot/util/types';
 import type { Metadata } from '@polkadot/types';
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 const base58 = require('micro-base58');
 
 //sidechain storage utils
@@ -95,6 +97,8 @@ export async function checkUserShieldingKeys(
     method: string,
     address: HexString
 ): Promise<string> {
+    await sleep(6000);
+
     const storageKey = await buildStorageHelper(context.metaData, pallet, method, address);
 
     let base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
@@ -116,6 +120,8 @@ export async function checkUserChallengeCode(
     address: HexString,
     identity: HexString
 ): Promise<string> {
+    await sleep(6000);
+
     const storageKey = await buildStorageHelper(context.metaData, pallet, method, address, identity);
 
     let base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
@@ -137,6 +143,7 @@ export async function checkIDGraph(
     address: HexString,
     identity: HexString
 ): Promise<PalletIdentityManagementTeeIdentityContext> {
+    await sleep(6000);
     const storageKey = await buildStorageHelper(context.metaData, pallet, method, address, identity);
 
     let base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));

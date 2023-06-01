@@ -157,9 +157,14 @@ describeLitentry('Test Batch Utility', 0, (context) => {
                 u8aToHex(context.substrateWallet.alice.addressRaw),
                 identity_hex
             );
+
             assert(
                 Number(resp_id_graph.verificationRequestBlock.toHuman()) > 0,
                 'verificationRequestBlock should be greater than 0 after verifyIdentity'
+            );
+            assert(
+                Number(resp_id_graph.creationRequestBlock.toHuman()) > 0,
+                'creationRequestBlock should be greater than 0 after verifyIdentity'
             );
             assert.equal(resp_id_graph.isVerified.toHuman(), true, 'isVerified should be true after verifyIdentity');
         }

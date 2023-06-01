@@ -75,10 +75,8 @@ describeLitentry('Test Identity', 0, (context) => {
         ]);
         await checkErrorDetail(resp_events, 'UserShieldingKeyNotFound');
     });
-    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
     step('set user shielding key', async function () {
-        // await sleep(6000);
         let [alice_txs] = (await buildIdentityTxs(
             context,
             [context.substrateWallet.alice],
@@ -98,8 +96,6 @@ describeLitentry('Test Identity', 0, (context) => {
             'identityManagement',
             ['UserShieldingKeySet']
         );
-
-        await sleep(6000);
 
         await assertInitialIDGraphCreated(
             context,
