@@ -56,7 +56,7 @@ impl SetUserShieldingKeyCommand {
 		};
 
 		let who = sr25519_core::Pair::from_string(&self.account, None).unwrap();
-		chain_api.set_signer(ParentchainExtrinsicSigner::new(who.clone()));
+		chain_api.set_signer(ParentchainExtrinsicSigner::new(who));
 
 		let mut key = [0u8; 32];
 		hex::decode_to_slice(&self.key_hex, &mut key).expect("decoding key failed");
