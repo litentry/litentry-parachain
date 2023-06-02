@@ -39,7 +39,7 @@ impl IDGraphStats {
 			.sign(&KeyPair::Sr25519(Box::new(who)))
 			.into();
 		let id_graph_stats = perform_trusted_operation(cli, trusted_cli, &top)
-			.and_then(|v| Ok(IDGraphStatsVec::decode(&mut v.unwrap().as_slice()).ok()));
+			.map(|v| IDGraphStatsVec::decode(&mut v.unwrap().as_slice()).ok());
 
 		println!("IDGraph stats:");
 		match id_graph_stats {
@@ -61,7 +61,7 @@ impl IDGraphStats {
 				println!("Total number: {}", total_number);
 				Ok(CliResultOk::None)
 			},
-			_ => Err(CliError::BaseOp { msg: format!("invalid id graph stats") }),
+			_ => Err(CliError::BaseOp { msg: "invalid id graph stats".to_string() }),
 		}
 	}
 }

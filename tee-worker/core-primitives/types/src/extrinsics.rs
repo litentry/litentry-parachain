@@ -104,10 +104,10 @@ mod tests {
 	use sp_runtime::{
 		generic::Era, testing::sr25519, AccountId32 as AccountId, MultiSignature, OpaqueExtrinsic,
 	};
-	use substrate_api_client::{
-		BaseExtrinsicParams, ExtrinsicParams, PlainTip, PlainTipExtrinsicParamsBuilder,
-		SubstrateDefaultSignedExtra, UncheckedExtrinsicV4,
-	};
+	// use substrate_api_client::{
+	// 	BaseExtrinsicParams, ExtrinsicParams, PlainTip, PlainTipExtrinsicParamsBuilder,
+	// 	SubstrateDefaultSignedExtra, UncheckedExtrinsicV4,
+	// };
 
 	#[test]
 	fn fill_opaque_extrinsic_with_status_works() {
@@ -120,13 +120,12 @@ mod tests {
 			PlainTipExtrinsicParamsBuilder::new().era(Era::mortal(8, 0), Hash::from([0u8; 32]));
 
 		let default_extra = BaseExtrinsicParams::new(0, 0, 2, Hash::from([0u8; 32]), tx_params);
-		let xt: UncheckedExtrinsicV4<Vec<i32>, SubstrateDefaultSignedExtra<PlainTip>> =
-			UncheckedExtrinsicV4::new_signed(
-				vec![1, 1, 1],
-				account.into(),
-				multi_sig,
-				default_extra.signed_extra(),
-			);
+		let xt = UncheckedExtrinsicV4::new_signed(
+			vec![1, 1, 1],
+			account.into(),
+			multi_sig,
+			default_extra.signed_extra(),
+		);
 		let mut input: &[u8] = &xt.encode();
 		let oq_xt = OpaqueExtrinsic::from_bytes(&mut input).unwrap();
 		let oq_xt_with_status = fill_opaque_extrinsic_with_status(oq_xt, true).unwrap();

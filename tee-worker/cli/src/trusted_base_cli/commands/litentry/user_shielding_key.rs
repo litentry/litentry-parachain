@@ -37,7 +37,7 @@ impl UserShiledingKeyCommand {
 			.sign(&KeyPair::Sr25519(Box::new(who)))
 			.into();
 		let key = perform_trusted_operation(cli, trusted_cli, &top)
-			.and_then(|v| Ok(UserShieldingKeyType::decode(&mut v.unwrap().as_slice()).ok()));
+			.map(|v| UserShieldingKeyType::decode(&mut v.unwrap().as_slice()).ok());
 		println!("{}", hex::encode(key.unwrap().unwrap()));
 
 		// Ok(perform_trusted_operation(cli, trusted_cli, &top).map(|_| CliResultOk::None)?)

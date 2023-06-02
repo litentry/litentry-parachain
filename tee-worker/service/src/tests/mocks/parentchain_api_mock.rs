@@ -21,6 +21,7 @@ use frame_metadata::{
 	RuntimeMetadataPrefixed,
 };
 use itc_parentchain_test::{ParentchainBlockBuilder, ParentchainHeaderBuilder};
+use itp_node_api::api_client::{ApiResult, ChainApi, SignedBlock};
 use itp_types::{
 	parentchain::{Hash, Header, StorageProof},
 	H256,
@@ -127,7 +128,7 @@ impl ChainApi for ParentchainApiMock {
 		Ok(Default::default())
 	}
 
-	fn events(&self, _hash: Option<H256>) -> ApiResult<Events> {
+	fn events(&self, _hash: Option<H256>) -> ApiResult<Events<H256>> {
 		let metadata = metadata::<Event>();
 		Ok(Events::new(metadata, H256::default(), vec![].into()))
 	}
