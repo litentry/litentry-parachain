@@ -1,24 +1,22 @@
-import { ApiPromise } from '@polkadot/api';
+import { ApiPromise, SubmittableResult } from '@polkadot/api';
 import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
-import { IntegrationTestContext, TransactionSubmit } from './type-definitions';
+import { IntegrationTestContext, TransactionSubmit, RequestEvent } from './type-definitions';
 import { KeyringPair } from '@polkadot/keyring/types';
-import { getListenTimeoutInBlocks } from './utils';
+import { defaultListenTimeoutInBlockNumber } from './utils';
 import { EventRecord, Event } from '@polkadot/types/interfaces';
-import { HexString } from '@polkadot/util/types';
-import { u8aToHex } from '@polkadot/util';
 import { expect } from 'chai';
 import colors from 'colors';
+import { HexString } from '@polkadot/util/types';
+import { Codec } from '@polkadot/types/types';
+import { u8aToHex } from '@polkadot/util';
 //transactions utils
 export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrinsic<ApiTypes>, signer: KeyringPair) {
-    return new Promise<{ block: string; txHash: string }>(async (resolve, reject) => {
+    return new Promise<SubmittableResult>(async (resolve, reject) => {
         const nonce = await api.rpc.system.accountNextIndex(signer.address);
         await tx.signAndSend(signer, { nonce }, (result) => {
             if (result.status.isInBlock) {
                 console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
-                resolve({
-                    block: result.status.asInBlock.toString(),
-                    txHash: result.txHash.toHex(),
-                });
+                resolve(result);
             } else if (result.status.isInvalid) {
                 reject(`Transaction is ${result.status}`);
             }
@@ -54,16 +52,14 @@ export async function sendTxUntilInBlockList(
                             }
                         } else {
                             console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
-                            resolve({
-                                block: result.status.asInBlock.toString(),
-                                txHash: result.status.hash.toString(),
-                            });
+                            resolve(result);
                         }
                     } else if (result.status.isInvalid) {
                         reject(`Transaction is ${result.status}`);
                     }
                 });
             });
+
             return result;
         })
     );
@@ -77,94 +73,83 @@ export async function listenEvent(
     section: string,
     methods: string[],
     txsLength: number,
-    signers: HexString[]
+    signers: HexString[],
+    listenTimeoutInBlockNumber: number = defaultListenTimeoutInBlockNumber
 ) {
     return new Promise<Event[]>(async (resolve, reject) => {
         let startBlock = 0;
         let events: EventRecord[] = [];
-        const signerToIndexMap: Record<string, number> = {};
-        for (let i = 0; i < signers.length; i++) {
-            signerToIndexMap[signers[i]] = i;
-        }
         const unsubscribe = await api.rpc.chain.subscribeNewHeads(async (header) => {
             const currentBlockNumber = header.number.toNumber();
             if (startBlock == 0) startBlock = currentBlockNumber;
-            const timeout = await getListenTimeoutInBlocks(api);
-            if (currentBlockNumber > startBlock + timeout) {
-                reject('timeout');
+            if (currentBlockNumber > startBlock + listenTimeoutInBlockNumber) {
+                reject('Timeout: No event received, please check the worker logs for more details');
                 return;
             }
             console.log(`\n--------- block #${header.number}, hash ${header.hash} ---------\n`);
-            const apiAt = await api.at(header.hash);
+            const [signedBlock, apiAt] = await Promise.all([api.rpc.chain.getBlock(header.hash), api.at(header.hash)]);
 
             const records: EventRecord[] = (await apiAt.query.system.events()) as any;
-            records.forEach((e, i) => {
-                const s = e.event.section;
-                const m = e.event.method;
-                const d = e.event.data;
-                section === s
-                    ? console.log(colors.green(`Event[${i}]: ${s}.${m} ${d}`))
-                    : console.log(`Event[${i}]: ${s}.${m} ${d}`);
-            });
+            const signerToIndexMap: Record<string, number> = {};
+            for (let i = 0; i < signers.length; i++) {
+                signerToIndexMap[signers[i]] = i;
+            }
+            const signerMatches = (d: Codec) => {
+                if (Array.isArray(d)) {
+                    return d.find((v) => signers.includes(v.toHex()));
+                } else {
+                    return signers.includes(d.toHex());
+                }
+            };
+            signedBlock.block.extrinsics.forEach((extrinsic, index) => {
+                records.forEach((e, i) => {
+                    const s = e.event.section;
+                    const m = e.event.method;
+                    const d = e.event.data;
 
-            const filtered_events = records.filter(({ phase, event }) => {
-                return phase.isApplyExtrinsic && section === event.section && methods.includes(event.method);
-            });
-
-            //We're going to have to filter by signer, because multiple txs is going to mix
-            const filtered_events_with_signer = filtered_events
-                .filter((event) => {
-                    const signerDatas = event.event.data.find((d) => {
-                        if (Array.isArray(d)) {
-                            return d.find((v) => signers.includes(v.toHex()));
-                        } else {
-                            return signers.includes(d.toHex());
-                        }
-                    });
-                    return !!signerDatas;
-                })
-                .sort((a, b) => {
-                    //We need sort by signers order
-                    //First convert the signers array into an object signerToIndexMap, where the keys are each element in the signers array and the values are the index of that element in the array.
-                    //Then, for each of the filtered events that match the given section and methods, the function uses the find function to locate the index of a specific parameter in the signers array.
-                    //Then, it sorts the events based on this index so that the resulting event array is sorted according to the order of the signers array.
-                    const signerIndexA =
-                        signerToIndexMap[
-                            a.event.data
-                                .find((d) => {
-                                    if (Array.isArray(d)) {
-                                        return d.find((v) => signers.includes(v.toHex()));
-                                    } else {
-                                        return signers.includes(d.toHex());
-                                    }
-                                })!
-                                .toHex()
-                        ];
-                    const signerIndexB =
-                        signerToIndexMap[
-                            b.event.data
-                                .find((d) => {
-                                    if (Array.isArray(d)) {
-                                        return d.find((v) => signers.includes(v.toHex()));
-                                    } else {
-                                        return signers.includes(d.toHex());
-                                    }
-                                })!
-                                .toHex()
-                        ];
-                    return signerIndexA - signerIndexB;
+                    section === s && e.phase.asApplyExtrinsic.eq(index)
+                        ? console.log(colors.green(`Event[${i}]: ${s}.${m} ${d}`))
+                        : console.log(`Event[${i}]: ${s}.${m} ${d}`);
                 });
+                const events_in_extrinsic = records.filter(({ event, phase }) => {
+                    if (
+                        phase.isApplyExtrinsic &&
+                        section === event.section &&
+                        !methods.includes(event.method) &&
+                        !(event.method in RequestEvent)
+                    ) {
+                        reject(
+                            `listenEvent error----Expect event:${methods} but received unexpected event :${event.method}`
+                        );
+                    }
+                    return phase.isApplyExtrinsic && section === event.section && methods.includes(event.method);
+                });
+                //We're going to have to filter by signer, because multiple txs is going to mix
+                const filtered_events_with_signer = events_in_extrinsic
+                    .filter((event) => {
+                        const signerDatas = event.event.data.find(signerMatches);
+                        return !!signerDatas;
+                    })
+                    .sort((a, b) => {
+                        //We need sort by signers order
+                        //First convert the signers array into an object signerToIndexMap, where the keys are each element in the signers array and the values are the index of that element in the array.
+                        //Then, for each of the filtered events that match the given section and methods, the function uses the find function to locate the index of a specific parameter in the signers array.
+                        //Then, it sorts the events based on this index so that the resulting event array is sorted according to the order of the signers array.
+                        const signerIndexA = signerToIndexMap[a.event.data.find(signerMatches)!.toHex()];
+                        const signerIndexB = signerToIndexMap[b.event.data.find(signerMatches)!.toHex()];
+                        return signerIndexA - signerIndexB;
+                    });
 
-            //There is no good compatibility method here.Only successful and failed events can be filtered normally, but it cannot filter error + successful events, which may need further optimization
-            const eventsToUse = filtered_events_with_signer.length > 0 ? filtered_events_with_signer : filtered_events;
+                //There is no good compatibility method here.Only successful and failed events can be filtered normally, but it cannot filter error + successful events, which may need further optimization
+                const eventsToUse =
+                    filtered_events_with_signer.length > 0 ? filtered_events_with_signer : events_in_extrinsic;
 
-            events = [...eventsToUse];
+                events = [...eventsToUse];
+            });
 
             if (events.length === txsLength) {
                 resolve(events.map((e) => e.event));
-
                 unsubscribe();
-
                 return;
             }
         });
@@ -176,7 +161,8 @@ export async function sendTxsWithUtility(
     signer: KeyringPair,
     txs: TransactionSubmit[],
     pallet: string,
-    events: string[]
+    events: string[],
+    listenTimeoutInBlockNumber?: number
 ): Promise<string[] | Event[]> {
     //ensure the tx is in block
     const isInBlockPromise = new Promise((resolve) => {
@@ -192,9 +178,14 @@ export async function sendTxsWithUtility(
 
     await isInBlockPromise;
 
-    const resp_events = (await listenEvent(context.api, pallet, events, txs.length, [
-        u8aToHex(signer.addressRaw),
-    ])) as any;
+    const resp_events = (await listenEvent(
+        context.api,
+        pallet,
+        events,
+        txs.length,
+        [u8aToHex(signer.addressRaw)],
+        listenTimeoutInBlockNumber
+    )) as any;
 
     expect(resp_events.length).to.be.equal(txs.length);
     return resp_events;
@@ -205,7 +196,8 @@ export async function multiAccountTxSender(
     txs: TransactionSubmit[],
     signers: KeyringPair | KeyringPair[],
     pallet: string,
-    events: string[]
+    events: string[],
+    listenTimeoutInBlockNumber?: number
 ): Promise<Event[]> {
     let signers_hex: HexString[] = [];
     if (Array.isArray(signers)) {
@@ -217,7 +209,14 @@ export async function multiAccountTxSender(
     }
 
     await sendTxUntilInBlockList(context.api, txs, signers);
-    const resp_events = await listenEvent(context.api, pallet, events, txs.length, signers_hex);
+    const resp_events = await listenEvent(
+        context.api,
+        pallet,
+        events,
+        txs.length,
+        signers_hex,
+        listenTimeoutInBlockNumber
+    );
     expect(resp_events.length).to.be.equal(txs.length);
     return resp_events;
 }

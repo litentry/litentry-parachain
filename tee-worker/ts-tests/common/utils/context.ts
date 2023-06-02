@@ -11,13 +11,8 @@ import { IntegrationTestContext, teeTypes, EnclaveResult, Web3Wallets } from '..
 
 const crypto = require('crypto');
 
-// maximum milliseconds that we wait in listening events before we timeout
-const listenTimeoutInMilliSeconds = 3 * 60 * 1000;
-
-export async function getListenTimeoutInBlocks(api: ApiPromise) {
-    const slotDuration = await api.call.auraApi.slotDuration();
-    return listenTimeoutInMilliSeconds / parseInt(slotDuration.toString());
-}
+// maximum block number that we wait in listening events before we timeout
+export const defaultListenTimeoutInBlockNumber = 15;
 
 export async function initWorkerConnection(endpoint: string): Promise<WebSocketAsPromised> {
     const wsp = new WebSocketAsPromised(endpoint, <Options>(<unknown>{

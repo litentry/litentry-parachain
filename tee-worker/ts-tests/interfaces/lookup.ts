@@ -601,6 +601,7 @@ export default {
                 metadata: 'Option<Bytes>',
                 creationRequestBlock: 'u32',
                 parentSs58Prefix: 'u16',
+                code: '[u8;16]',
             },
             remove_identity: {
                 who: 'AccountId32',
