@@ -61,7 +61,7 @@ use itp_enclave_api::{
 };
 use itp_node_api::{
 	api_client::{AccountApi, PalletTeerexApi, ParentchainApi},
-	metadata::{event::print_event, NodeMetadata},
+	metadata::NodeMetadata,
 	node_api_factory::{CreateNodeApi, NodeApiFactory},
 };
 use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
@@ -88,31 +88,20 @@ use my_node_runtime::{Hash, Header, RuntimeEvent};
 use serde_json::Value;
 use sgx_types::*;
 use substrate_api_client::{
-	rpc::HandleSubscription, storage_key, Events, GetHeader, SubmitAndWatch, SubscribeChain,
+	rpc::HandleSubscription, storage_key, GetHeader, GetStorage, SubmitAndWatch, SubscribeChain,
 	SubscribeEvents, XtStatus,
 };
+// use substrate_api_client::ac_primitives::StorageKey;
+use substrate_api_client::serde_impls::StorageKey;
 
 #[cfg(feature = "dcap")]
 use sgx_verify::extract_tcb_info_from_raw_dcap_quote;
 
-use sp_core::{
-	crypto::{AccountId32, Ss58Codec},
-	storage::StorageKey,
-};
+use sp_core::crypto::{AccountId32, Ss58Codec};
 use sp_keyring::AccountKeyring;
 extern crate config as rs_config;
 use sp_runtime::traits::Header as HeaderTrait;
-use std::{
-	env,
-	fs::File,
-	io::Read,
-	path::PathBuf,
-	str,
-	sync::{mpsc::channel, Arc},
-	thread,
-	thread::sleep,
-	time::Duration,
-};
+use std::{env, fs::File, io::Read, path::PathBuf, str, sync::Arc, thread, time::Duration};
 use teerex_primitives::{Enclave as TeerexEnclave, ShardIdentifier};
 
 mod account_funding;
@@ -591,12 +580,12 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	#[cfg(feature = "dcap")]
 	let xt = enclave.generate_dcap_ra_extrinsic(&trusted_url, skip_ra).unwrap();
 
-	let mut xthex = hex::encode(xt);
+	let mut xthex = hex::encode(xt.clone());
 	xthex.insert_str(0, "0x");
 
 	// Account funds
 	if let Err(x) =
-		setup_account_funding(&node_api, &tee_accountid, &xthex.clone(), is_development_mode)
+		setup_account_funding(&node_api, &tee_accountid, xthex.into(), is_development_mode)
 	{
 		error!("Starting worker failed: {:?}", x);
 		// Return without registering the enclave. This will fail and the transaction will be banned for 30min.
@@ -644,7 +633,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 			if !found {
 				println!("[>] Register the enclave (send the extrinsic)");
 				let register_enclave_xt_hash =
-					node_api.send_extrinsic(xthex, XtStatus::Finalized).unwrap();
+					send_extrinsic(xt, &node_api, &tee_accountid, is_development_mode);
 				println!("[<] Extrinsic got finalized. Hash: {:?}\n", register_enclave_xt_hash);
 				register_enclave_xt_header = node_api.get_header(register_enclave_xt_hash).unwrap();
 			}
@@ -705,7 +694,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		if WorkerModeProvider::worker_mode() == WorkerMode::Sidechain {
 			last_synced_header = sidechain_init_block_production(
 				enclave,
-				&register_enclave_xt_header,
+				register_enclave_xt_header,
 				we_are_primary_validateer,
 				parentchain_handler.clone(),
 				sidechain_storage,

@@ -24,16 +24,12 @@ use itc_parentchain::{
 use itp_enclave_api::{enclave_base::EnclaveBase, sidechain::Sidechain};
 use itp_node_api::api_client::ChainApi;
 use itp_storage::StorageProof;
-use itp_types::extrinsics::fill_opaque_extrinsic_with_status;
 use litentry_primitives::ParentchainHeader as Header;
 use log::*;
 use sp_finality_grandpa::VersionedAuthorityList;
-use sp_runtime::{
-	traits::{Block, Header as HeaderTrait},
-	OpaqueExtrinsic,
-};
+use sp_runtime::traits::{Block, Header as HeaderTrait};
 use std::{cmp::min, sync::Arc};
-use substrate_api_client::{Events, Phase};
+use substrate_api_client::Phase;
 
 const BLOCK_SYNC_BATCH_SIZE: u32 = 1000;
 
