@@ -24,7 +24,10 @@ export default {
             },
         },
         PublicGetter: {
-            _enum: ['some_value'],
+            _enum: {
+                some_value: 'u32',
+                nonce: '(AccountId)',
+            },
         },
         TrustedGetterSigned: {
             getter: 'TrustedGetter',
@@ -36,7 +39,6 @@ export default {
             _enum: {
                 free_balance: '(AccountId)',
                 reserved_balance: '(AccountId)',
-                nonce: '(AccountId)',
                 user_shielding_key: '(AccountId)',
                 id_graph: '(AccountId)',
                 challenge_code: '(AccountId, LitentryIdentity)',
