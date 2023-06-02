@@ -104,10 +104,10 @@ mod tests {
 	use sp_runtime::{
 		generic::Era, testing::sr25519, AccountId32 as AccountId, MultiSignature, OpaqueExtrinsic,
 	};
-	// use substrate_api_client::{
-	// 	BaseExtrinsicParams, ExtrinsicParams, PlainTip, PlainTipExtrinsicParamsBuilder,
-	// 	SubstrateDefaultSignedExtra, UncheckedExtrinsicV4,
-	// };
+	use substrate_api_client::{
+		BaseExtrinsicParams, ExtrinsicParams, PlainTip, PlainTipExtrinsicParamsBuilder,
+		SubstrateDefaultSignedExtra, UncheckedExtrinsicV4,
+	};
 
 	#[test]
 	fn fill_opaque_extrinsic_with_status_works() {
