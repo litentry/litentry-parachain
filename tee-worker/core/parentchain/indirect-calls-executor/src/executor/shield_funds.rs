@@ -73,7 +73,7 @@ where
 	) -> Result<()> {
 		let (call, account_encrypted, amount, shard) = extrinsic.function;
 		info!("Found ShieldFunds extrinsic in block: \nCall: {:?} \nAccount Encrypted {:?} \nAmount: {} \nShard: {}",
-        	call, account_encrypted, amount, bs58::encode(shard.encode()).into_string());
+        	call, account_encrypted, amount.decode().unwrap(), bs58::encode(shard.encode()).into_string());
 
 		debug!("decrypt the account id");
 		let shielding_key = context.shielding_key_repo.retrieve_key()?;
@@ -82,7 +82,8 @@ where
 		let account = AccountId::decode(&mut account_vec.as_slice())?;
 
 		let enclave_account_id = context.stf_enclave_signer.get_enclave_account()?;
-		let trusted_call = TrustedCall::balance_shield(enclave_account_id, account, amount);
+		let trusted_call =
+			TrustedCall::balance_shield(enclave_account_id, account, amount.decode().unwrap());
 		let signed_trusted_call =
 			context.stf_enclave_signer.sign_call_with_self(&trusted_call, &shard)?;
 		let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
