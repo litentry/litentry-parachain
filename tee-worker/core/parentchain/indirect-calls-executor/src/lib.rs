@@ -496,7 +496,11 @@ mod test {
 
 		// when
 		let call = indirect_calls_executor
-			.create_processed_parentchain_block_call::<Block>(block_hash, extrinsics, 1)
+			.create_processed_parentchain_block_call::<Block>(
+				block_hash,
+				extrinsics,
+				codec::Compact(1),
+			)
 			.unwrap();
 
 		// then
@@ -519,7 +523,11 @@ mod test {
 
 		// when
 		let call = indirect_calls_executor
-			.create_processed_parentchain_block_call::<Block>(block_hash, extrinsics, 1)
+			.create_processed_parentchain_block_call::<Block>(
+				block_hash,
+				extrinsics,
+				codec::Compact(1),
+			)
 			.unwrap();
 
 		// then
