@@ -931,9 +931,6 @@ construct_runtime! {
 		Teerex: pallet_teerex = 90,
 		Sidechain: pallet_sidechain = 91,
 		Teeracle: pallet_teeracle = 92,
-
-		// Mock
-		IdentityManagementMock: pallet_identity_management_mock = 100,
 	}
 }
 

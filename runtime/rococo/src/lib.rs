@@ -1012,9 +1012,6 @@ construct_runtime! {
 		Sidechain: pallet_sidechain = 91,
 		Teeracle: pallet_teeracle = 92,
 
-		// Mock
-		IdentityManagementMock: pallet_identity_management_mock = 100,
-
 		// TMP
 		Sudo: pallet_sudo = 255,
 	}
@@ -1077,8 +1074,7 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::Session(_) |
 			// Balance
 			RuntimeCall::Balances(_) |
-			// IMP Mock, only allowed on rococo for testing
-			RuntimeCall::IdentityManagementMock(_) |
+			// IMP and VCMP
 			RuntimeCall::IdentityManagement(_) |
 			RuntimeCall::VCManagement(_) |
 			// TEE pallets
