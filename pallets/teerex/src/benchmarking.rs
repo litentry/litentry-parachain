@@ -138,7 +138,7 @@ benchmarks! {
 		let merkle_root: H256 = [4; 32].into();
 		let block_number: u32 = 0;
 
-	}: _(RawOrigin::Signed(accounts[0].clone()), block_hash, codec::Compact(block_number), merkle_root)
+	}: _(RawOrigin::Signed(accounts[0].clone()), block_hash, block_number, merkle_root)
 
 	// Benchmark `publish_hash` with the worst possible conditions:
 	// * sender enclave is registered
