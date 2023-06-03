@@ -82,7 +82,7 @@ use its_peer_fetch::{
 use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
 use its_storage::{interface::FetchBlocks, BlockPruner, SidechainStorageLock};
 use lc_data_providers::DataProvidersStatic;
-use litentry_primitives::{ChallengeCode, Identity, ParentchainHeader as Header};
+use litentry_primitives::{Identity, ParentchainHeader as Header};
 use log::*;
 use serde_json::Value;
 use sgx_types::*;

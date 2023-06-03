@@ -22,7 +22,6 @@ use crate::{
 		litentry::{
 			id_graph_stats::IDGraphStats,
 			send_erroneous_parentchain_call::SendErroneousParentchainCallCommand,
-			set_challenge_code::SetChallengeCodeCommand,
 			set_scheduled_mrenclave::SetScheduledMrenclaveCommand,
 			set_user_shielding_key::SetUserShieldingKeyCommand,
 			user_shielding_key::UserShiledingKeyCommand, verify_identity::VerifyIdentityCommand,
@@ -72,8 +71,6 @@ pub enum TrustedBaseCommand {
 	/// query a user's shielding key, the setter is non-trusted command
 	UserShieldingKey(UserShiledingKeyCommand),
 
-	SetChallengeCode(SetChallengeCodeCommand),
-
 	VerifyIdentity(VerifyIdentityCommand),
 
 	SetUserShieldingKey(SetUserShieldingKeyCommand),
@@ -100,7 +97,6 @@ impl TrustedBaseCommand {
 			TrustedBaseCommand::Nonce(cmd) => cmd.run(cli, trusted_cli),
 			// Litentry's commands below
 			TrustedBaseCommand::UserShieldingKey(cmd) => cmd.run(cli, trusted_cli),
-			TrustedBaseCommand::SetChallengeCode(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::VerifyIdentity(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::SetUserShieldingKey(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::GetStorage(cmd) => cmd.run(cli, trusted_cli),

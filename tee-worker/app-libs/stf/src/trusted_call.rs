@@ -36,7 +36,7 @@ use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier, Signature};
 pub use itp_types::{OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
 pub use litentry_primitives::{
-	aes_encrypt_default, AesOutput, Assertion, ChallengeCode, ErrorDetail, IMPError, Identity,
+	aes_encrypt_default, AesOutput, Assertion, ErrorDetail, IMPError, Identity,
 	ParentchainAccountId, ParentchainBlockNumber, UserShieldingKeyType, VCMPError, ValidationData,
 };
 use log::*;
@@ -129,7 +129,6 @@ pub enum TrustedCall {
 	request_vc_callback(AccountId, AccountId, Assertion, [u8; 32], [u8; 32], Vec<u8>, H256),
 	handle_imp_error(AccountId, Option<AccountId>, IMPError, H256),
 	handle_vcmp_error(AccountId, Option<AccountId>, VCMPError, H256),
-	set_challenge_code(AccountId, AccountId, Identity, ChallengeCode, H256),
 	send_erroneous_parentchain_call(AccountId),
 	set_scheduled_mrenclave(AccountId, SidechainBlockNumber, MrEnclave),
 }
@@ -157,7 +156,6 @@ impl TrustedCall {
 			TrustedCall::request_vc(account, ..) => account,
 			TrustedCall::verify_identity_callback(account, ..) => account,
 			TrustedCall::request_vc_callback(account, ..) => account,
-			TrustedCall::set_challenge_code(account, ..) => account,
 			TrustedCall::handle_imp_error(account, ..) => account,
 			TrustedCall::handle_vcmp_error(account, ..) => account,
 			TrustedCall::send_erroneous_parentchain_call(account) => account,
@@ -694,20 +692,6 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::set_challenge_code(enclave_account, who, did, code, hash) => {
-				if let Err(e) =
-					Self::set_challenge_code_internal(enclave_account, who.clone(), did, code)
-				{
-					add_call_from_imp_error(
-						calls,
-						node_metadata_repo,
-						Some(SgxParentchainTypeConverter::convert(who)),
-						e.to_imp_error(),
-						hash,
-					);
-				}
-				Ok(())
-			},
 			TrustedCall::handle_imp_error(_enclave_account, account, e, hash) => {
 				// checking of `_enclave_account` is not strictly needed, as this trusted call can
 				// only be constructed internally
@@ -758,7 +742,6 @@ where
 			TrustedCall::verify_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::verify_identity_callback(..) => debug!("No storage updates needed..."),
 			TrustedCall::request_vc(..) => debug!("No storage updates needed..."),
-			TrustedCall::set_challenge_code(..) => debug!("No storage updates needed..."),
 			TrustedCall::request_vc_callback(..) => debug!("No storage updates needed..."),
 			TrustedCall::handle_imp_error(..) => debug!("No storage updates needed..."),
 			TrustedCall::handle_vcmp_error(..) => debug!("No storage updates needed..."),

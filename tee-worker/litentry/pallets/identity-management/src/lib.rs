@@ -43,7 +43,7 @@ use log::debug;
 
 pub use identity_context::IdentityContext;
 pub use litentry_primitives::{
-	ChallengeCode, Identity, ParentchainBlockNumber, SubstrateNetwork, UserShieldingKeyType,
+	Identity, ParentchainBlockNumber, SubstrateNetwork, UserShieldingKeyType,
 };
 use sp_std::vec::Vec;
 pub type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
@@ -85,10 +85,6 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// user shielding key was set
 		UserShieldingKeySet { who: T::AccountId, key: UserShieldingKeyType },
-		/// challenge code was set
-		ChallengeCodeSet { who: T::AccountId, identity: Identity, code: ChallengeCode },
-		/// challenge code was removed
-		ChallengeCodeRemoved { who: T::AccountId, identity: Identity },
 		/// an identity was created
 		IdentityCreated { who: T::AccountId, identity: Identity },
 		/// an identity was removed
@@ -97,8 +93,6 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// challenge code doesn't exist
-		ChallengeCodeNotExist,
 		/// the pair (litentry-account, identity) already verified when creating an identity
 		IdentityAlreadyVerified,
 		/// the pair (litentry-account, identity) doesn't exist
@@ -122,19 +116,6 @@ pub mod pallet {
 	#[pallet::getter(fn user_shielding_keys)]
 	pub type UserShieldingKeys<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, UserShieldingKeyType, OptionQuery>;
-
-	/// challenge code is per Litentry account + identity
-	#[pallet::storage]
-	#[pallet::getter(fn challenge_codes)]
-	pub type ChallengeCodes<T: Config> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		T::AccountId,
-		Blake2_128Concat,
-		Identity,
-		ChallengeCode,
-		OptionQuery,
-	>;
 
 	/// ID graph is per Litentry account + identity
 	#[pallet::storage]
@@ -194,37 +175,6 @@ pub mod pallet {
 
 		#[pallet::call_index(1)]
 		#[pallet::weight(15_000_000)]
-		pub fn set_challenge_code(
-			origin: OriginFor<T>,
-			who: T::AccountId,
-			identity: Identity,
-			code: ChallengeCode,
-		) -> DispatchResult {
-			T::ManageOrigin::ensure_origin(origin)?;
-			// we don't care if it has already associated with any challenge code
-			ChallengeCodes::<T>::insert(&who, &identity, code);
-			Self::deposit_event(Event::ChallengeCodeSet { who, identity, code });
-			Ok(())
-		}
-
-		#[pallet::call_index(2)]
-		#[pallet::weight(15_000_000)]
-		pub fn remove_challenge_code(
-			origin: OriginFor<T>,
-			who: T::AccountId,
-			identity: Identity,
-		) -> DispatchResult {
-			T::ManageOrigin::ensure_origin(origin)?;
-			ensure!(
-				ChallengeCodes::<T>::contains_key(&who, &identity),
-				Error::<T>::ChallengeCodeNotExist
-			);
-			Self::do_remove_challenge_code(who, identity);
-			Ok(())
-		}
-
-		#[pallet::call_index(3)]
-		#[pallet::weight(15_000_000)]
 		pub fn create_identity(
 			origin: OriginFor<T>,
 			who: T::AccountId,
@@ -263,12 +213,10 @@ pub mod pallet {
 				who: who.clone(),
 				identity: identity.clone(),
 			});
-			ChallengeCodes::<T>::insert(&who, &identity, code);
-			Self::deposit_event(Event::ChallengeCodeSet { who, identity, code });
 			Ok(())
 		}
 
-		#[pallet::call_index(4)]
+		#[pallet::call_index(2)]
 		#[pallet::weight(15_000_000)]
 		pub fn remove_identity(
 			origin: OriginFor<T>,
@@ -298,7 +246,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::call_index(5)]
+		#[pallet::call_index(3)]
 		#[pallet::weight(15_000_000)]
 		pub fn verify_identity(
 			origin: OriginFor<T>,
@@ -329,10 +277,6 @@ pub mod pallet {
 						Err(Error::<T>::IdentityNotCreated.into())
 					}
 				});
-			// remove challenge code associated with this identity
-			if ChallengeCodes::<T>::contains_key(&who, &identity) {
-				Self::do_remove_challenge_code(who, identity);
-			}
 			verify_result
 		}
 	}
@@ -376,11 +320,6 @@ pub mod pallet {
 				}
 			});
 			IDGraphs::<T>::remove(owner, identity);
-		}
-
-		fn do_remove_challenge_code(who: T::AccountId, identity: Identity) {
-			ChallengeCodes::<T>::remove(&who, &identity);
-			Self::deposit_event(Event::ChallengeCodeRemoved { who, identity });
 		}
 
 		pub fn get_id_graph(who: &T::AccountId) -> IDGraph<T> {

@@ -19,7 +19,7 @@ extern crate sgx_tstd as std;
 
 use super::*;
 use crate::{
-	helpers::{ensure_enclave_signer_account, generate_challenge_code, is_authorised_signer},
+	helpers::{ensure_enclave_signer_account, is_authorised_signer},
 	AccountId, IdentityManagement, MetadataOf, Runtime, StfError, StfResult, UserShieldingKeys,
 };
 use frame_support::{dispatch::UnfilteredDispatchable, ensure};
@@ -30,8 +30,7 @@ use lc_stf_task_sender::{
 	AssertionBuildRequest, IdentityVerificationRequest, RequestType,
 };
 use litentry_primitives::{
-	Assertion, ChallengeCode, ErrorDetail, Identity, ParentchainBlockNumber, UserShieldingKeyType,
-	ValidationData,
+	Assertion, ErrorDetail, Identity, ParentchainBlockNumber, UserShieldingKeyType, ValidationData,
 };
 use log::*;
 use std::{format, vec::Vec};
@@ -210,19 +209,5 @@ impl TrustedCallSigned {
 			.ok_or(StfError::RequestVCFailed(assertion, ErrorDetail::UserShieldingKeyNotFound))?;
 
 		Ok(key)
-	}
-
-	pub fn set_challenge_code_internal(
-		enclave_account: AccountId,
-		who: AccountId,
-		identity: Identity,
-		code: ChallengeCode,
-	) -> StfResult<()> {
-		ensure_enclave_signer_account(&enclave_account)?;
-		// only used in tests, we don't care about the error
-		IMTCall::set_challenge_code { who, identity, code }
-			.dispatch_bypass_filter(RuntimeOrigin::root())
-			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
-		Ok(())
 	}
 }

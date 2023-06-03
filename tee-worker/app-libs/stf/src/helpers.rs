@@ -20,14 +20,8 @@ use crate::{StfError, StfResult, ENCLAVE_ACCOUNT_KEY};
 use codec::{Decode, Encode};
 use itp_storage::{storage_double_map_key, storage_map_key, storage_value_key, StorageHasher};
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::ChallengeCode;
 use log::*;
 use std::prelude::v1::*;
-
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate rand_sgx as rand;
-
-use rand::Rng;
 
 pub fn get_storage_value<V: Decode>(
 	storage_prefix: &'static str,
@@ -109,10 +103,6 @@ pub fn ensure_enclave_signer_account<AccountId: Encode + Decode + PartialEq>(
 
 pub fn set_block_number(block_number: u32) {
 	sp_io::storage::set(&storage_value_key("System", "Number"), &block_number.encode());
-}
-
-pub fn generate_challenge_code() -> ChallengeCode {
-	rand::thread_rng().gen::<ChallengeCode>()
 }
 
 pub fn is_authorised_signer<AccountId: Encode + Decode + PartialEq>(

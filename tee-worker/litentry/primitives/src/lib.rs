@@ -35,6 +35,3 @@ pub use parentchain_primitives::{
 	ASSERTION_FROM_DATE, MINUTES, USER_SHIELDING_KEY_LEN, USER_SHIELDING_KEY_NONCE_LEN,
 	USER_SHIELDING_KEY_TAG_LEN,
 };
-
-pub const CHALLENGE_CODE_SIZE: usize = 16;
-pub type ChallengeCode = [u8; CHALLENGE_CODE_SIZE];

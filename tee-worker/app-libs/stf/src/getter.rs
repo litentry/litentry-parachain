@@ -75,7 +75,6 @@ pub enum TrustedGetter {
 	// litentry
 	user_shielding_key(AccountId),
 	id_graph(AccountId),
-	challenge_code(AccountId, Identity),
 	id_graph_stats(AccountId),
 }
 
@@ -93,7 +92,6 @@ impl TrustedGetter {
 			// litentry
 			TrustedGetter::user_shielding_key(account) => account,
 			TrustedGetter::id_graph(account) => account,
-			TrustedGetter::challenge_code(account, _) => account,
 			TrustedGetter::id_graph_stats(account) => account,
 		}
 	}
@@ -187,8 +185,6 @@ impl ExecuteGetter for TrustedGetterSigned {
 			TrustedGetter::user_shielding_key(who) =>
 				IdentityManagement::user_shielding_keys(&who).map(|key| key.encode()),
 			TrustedGetter::id_graph(who) => Some(IdentityManagement::get_id_graph(&who).encode()),
-			TrustedGetter::challenge_code(who, identity) =>
-				IdentityManagement::challenge_codes(&who, &identity).map(|code| code.encode()),
 			// TODO: we need to re-think it
 			//       currently, _who is ignored meaning it's actually not a "trusted" getter.
 			//       In fact, in the production no one should have access to the concrete identities

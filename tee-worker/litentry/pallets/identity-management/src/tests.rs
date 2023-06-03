@@ -19,15 +19,11 @@ use crate::{
 	UserShieldingKeyType,
 };
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Get};
-use litentry_primitives::{
-	Identity, IdentityString, Web2Network, CHALLENGE_CODE_SIZE, USER_SHIELDING_KEY_LEN,
-};
+use litentry_primitives::{Identity, IdentityString, Web2Network, USER_SHIELDING_KEY_LEN};
 use sp_runtime::AccountId32;
 
 pub const ALICE: AccountId32 = AccountId32::new([1u8; 32]);
 pub const BOB: AccountId32 = AccountId32::new([2u8; 32]);
-
-pub const SAMPLE_CHALLENGE_CODE: [u8; CHALLENGE_CODE_SIZE] = [0u8; CHALLENGE_CODE_SIZE];
 
 #[test]
 fn set_user_shielding_key_works() {
