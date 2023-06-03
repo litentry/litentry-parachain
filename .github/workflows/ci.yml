@@ -216,7 +216,7 @@ jobs:
       - set-condition
       - sequentialise
     if: needs.set-condition.outputs.rebuild_tee == 'true'
-    container: "integritee/integritee-dev:0.1.13"
+    container: "integritee/integritee-dev:0.2.1"
     steps:
       - uses: actions/checkout@v3
 
