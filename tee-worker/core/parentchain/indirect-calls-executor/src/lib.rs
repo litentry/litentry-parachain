@@ -497,8 +497,13 @@ mod test {
 		let extrinsics = Vec::new();
 		let confirm_processed_parentchain_block_indexes =
 			dummy_metadata.confirm_processed_parentchain_block_call_indexes().unwrap();
-		let expected_call =
-			(confirm_processed_parentchain_block_indexes, block_hash, 1, H256::default()).encode();
+		let expected_call = (
+			confirm_processed_parentchain_block_indexes,
+			block_hash,
+			codec::Compact(1),
+			H256::default(),
+		)
+			.encode();
 
 		// when
 		let call = indirect_calls_executor
@@ -520,8 +525,13 @@ mod test {
 		let confirm_processed_parentchain_block_indexes =
 			dummy_metadata.confirm_processed_parentchain_block_call_indexes().unwrap();
 
-		let zero_root_call =
-			(confirm_processed_parentchain_block_indexes, block_hash, 1, H256::default()).encode();
+		let zero_root_call = (
+			confirm_processed_parentchain_block_indexes,
+			block_hash,
+			codec::Compact(1),
+			H256::default(),
+		)
+			.encode();
 
 		// when
 		let call = indirect_calls_executor
