@@ -500,7 +500,7 @@ mod test {
 		let expected_call = (
 			confirm_processed_parentchain_block_indexes,
 			block_hash,
-			codec::Compact(1),
+			codec::Compact(1u32),
 			H256::default(),
 		)
 			.encode();
@@ -528,7 +528,7 @@ mod test {
 		let zero_root_call = (
 			confirm_processed_parentchain_block_indexes,
 			block_hash,
-			codec::Compact(1),
+			codec::Compact(1u32),
 			H256::default(),
 		)
 			.encode();
