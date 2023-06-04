@@ -248,7 +248,7 @@ where
 		})??;
 
 		let root: H256 = merkle_root::<Keccak256, _>(extrinsics);
-		Ok(OpaqueCall::from_tuple(&(call, block_hash, codec::Compact(block_number).0, root)))
+		Ok(OpaqueCall::from_tuple(&(call, block_hash, block_number, root)))
 	}
 }
 
