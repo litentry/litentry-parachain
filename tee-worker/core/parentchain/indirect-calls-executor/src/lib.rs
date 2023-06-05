@@ -55,12 +55,11 @@ use crate::{
 		call_worker::CallWorker,
 		litentry::{
 			batch_all::BatchAll,
-			create_identity::CreateIdentity,
+			link_identity::LinkIdentity,
 			remove_identity::RemoveIdentity,
 			request_vc::RequestVC,
 			scheduled_enclave::{RemoveScheduledEnclave, UpdateScheduledEnclave},
 			set_user_shielding_key::SetUserShieldingKey,
-			verify_identity::VerifyIdentity,
 		},
 		shield_funds::ShieldFunds,
 		DecorateExecutor,
@@ -161,21 +160,19 @@ where
 				SupportedBatchCallParams::SetUserShieldingKey(Default::default()),
 			),
 			(
-				IMPCallIndexes::create_identity_call_indexes,
-				SupportedBatchCallParams::CreateIdentity((
+				IMPCallIndexes::link_identity_call_indexes,
+				SupportedBatchCallParams::LinkIdentity((
 					Default::default(),
 					AccountId::new([0u8; 32]),
 					Default::default(),
 					None,
+					Default::default(),
+					Default::default(),
 				)),
 			),
 			(
 				IMPCallIndexes::remove_identity_call_indexes,
 				SupportedBatchCallParams::RemoveIdentity(Default::default()),
-			),
-			(
-				IMPCallIndexes::verify_identity_call_indexes,
-				SupportedBatchCallParams::VerifyIdentity(Default::default()),
 			),
 			(
 				VCMPCallIndexes::request_vc_call_indexes,
@@ -293,12 +290,10 @@ where
 			// litentry
 			// Found SetUserShieldingKey extrinsic
 			let set_user_shielding_key = SetUserShieldingKey {};
-			// Found CreateIdentityFn extrinsic
-			let create_identity = CreateIdentity { block_number: parentchain_block_number };
+			// Found LinkIdentityFn extrinsic
+			let link_identity = LinkIdentity {};
 			// Found RemoveIdentityFn extrinsic
 			let remove_identity = RemoveIdentity {};
-			// Found VerifyIdentity extrinsic
-			let verify_identity = VerifyIdentity { block_number: parentchain_block_number };
 			// Found RequestVC extrinsic
 			let request_vc = RequestVC;
 			// Found BatchAll extrinsic
@@ -313,7 +308,7 @@ where
 				&call_worker,
 				&batch_all,
 				&set_user_shielding_key,
-				&create_identity,
+				&link_identity,
 				&remove_identity,
 				&verify_identity,
 				&request_vc,

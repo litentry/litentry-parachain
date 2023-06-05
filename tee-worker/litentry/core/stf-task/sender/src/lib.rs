@@ -37,7 +37,7 @@ use codec::{Decode, Encode};
 pub use error::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use litentry_primitives::{
-	Assertion, ChallengeCode, Identity, ParentchainBlockNumber, ValidationData,
+	Assertion, Identity, ParentchainBlockNumber, UserShieldingKeyNonceType, ValidationData,
 };
 use sp_runtime::traits::ConstU32;
 use sp_std::prelude::Vec;
@@ -67,13 +67,13 @@ use sp_std::prelude::Vec;
 /// https://www.notion.so/web3builders/Sidechain-block-importer-and-block-production-28292233b4c74f4ab8110a0014f8d9df
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub struct IdentityVerificationRequest {
+pub struct IdentityLinkRequest {
 	pub shard: ShardIdentifier,
 	pub who: AccountId,
 	pub identity: Identity,
-	pub challenge_code: ChallengeCode,
 	pub validation_data: ValidationData,
-	pub bn: ParentchainBlockNumber,
+	pub nonce: UserShieldingKeyNonceType,
+	pub parent_ss58_prefix: u16,
 	pub hash: H256,
 }
 
@@ -90,12 +90,12 @@ pub struct AssertionBuildRequest {
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub enum RequestType {
-	IdentityVerification(IdentityVerificationRequest),
+	IdentityVerification(IdentityLinkRequest),
 	AssertionVerification(AssertionBuildRequest),
 }
 
-impl From<IdentityVerificationRequest> for RequestType {
-	fn from(r: IdentityVerificationRequest) -> Self {
+impl From<IdentityLinkRequest> for RequestType {
+	fn from(r: IdentityLinkRequest) -> Self {
 		RequestType::IdentityVerification(r)
 	}
 }

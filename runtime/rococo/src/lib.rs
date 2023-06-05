@@ -34,7 +34,7 @@ use frame_support::{
 	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
 	PalletId, RuntimeDebug,
 };
-use frame_system::{EnsureRoot, EnsureSignedBy};
+use frame_system::EnsureRoot;
 use hex_literal::hex;
 
 use runtime_common::EnsureEnclaveSigner;
@@ -898,7 +898,7 @@ impl pallet_teeracle::Config for Runtime {
 
 impl pallet_identity_management::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = weights::pallet_identity_management::WeightInfo<Runtime>;
+	type WeightInfo = ();
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
 	type ExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
@@ -907,14 +907,6 @@ impl pallet_identity_management::Config for Runtime {
 impl pallet_group::Config<IMPExtrinsicWhitelistInstance> for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type GroupManagerOrigin = EnsureRootOrAllCouncil;
-}
-
-impl pallet_identity_management_mock::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type MaxVerificationDelay = ConstU32<{ 30 * MINUTES }>;
-	// intentionally use ALICE for the IMP mock
-	type TEECallOrigin = EnsureSignedBy<ALICE, AccountId>;
-	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
 }
 
 impl pallet_vc_management::Config for Runtime {

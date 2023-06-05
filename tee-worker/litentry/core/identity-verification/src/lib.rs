@@ -35,11 +35,11 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 use codec::Encode;
 use frame_support::pallet_prelude::*;
-use lc_stf_task_sender::IdentityVerificationRequest;
+use lc_stf_task_sender::IdentityLinkRequest;
 use sp_core::blake2_256;
 // this should be ita_stf::AccountId, but we use itp_types to avoid cyclic dep
 use itp_types::AccountId;
-use litentry_primitives::{ChallengeCode, Identity, ValidationData};
+use litentry_primitives::{Identity, ValidationData};
 use sp_std::vec::Vec;
 use std::string::ToString;
 
@@ -49,28 +49,9 @@ mod web3;
 mod error;
 use error::{Error, Result};
 
-pub fn verify(r: &IdentityVerificationRequest) -> Result<()> {
+pub fn verify(r: &IdentityLinkRequest) -> Result<()> {
 	match &r.validation_data {
 		ValidationData::Web2(data) => web2::verify(&r.who, &r.identity, &r.challenge_code, data),
 		ValidationData::Web3(data) => web3::verify(&r.who, &r.identity, &r.challenge_code, data),
 	}
-}
-
-// verification message format: <challeng-code> + <litentry-AccountId32> + <Identity>,
-// where <> means SCALE-encoded
-pub fn get_expected_raw_message(
-	who: &AccountId,
-	identity: &Identity,
-	code: &ChallengeCode,
-) -> Vec<u8> {
-	let mut payload = code.encode();
-	payload.append(&mut who.encode());
-	payload.append(&mut identity.encode());
-	blake2_256(payload.as_slice()).to_vec()
-}
-
-// Get the wrapped version of the raw msg: <Bytes>raw_msg</Bytes>,
-// see https://github.com/litentry/litentry-parachain/issues/1137
-pub fn get_expected_wrapped_message(raw_msg: Vec<u8>) -> Vec<u8> {
-	["<Bytes>".as_bytes(), raw_msg.as_slice(), "</Bytes>".as_bytes()].concat()
 }

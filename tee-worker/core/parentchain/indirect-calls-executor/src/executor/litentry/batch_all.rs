@@ -18,9 +18,8 @@ use crate::{
 	error::{Error, Result},
 	executor::{
 		litentry::{
-			create_identity::CreateIdentity, remove_identity::RemoveIdentity,
-			request_vc::RequestVC, set_user_shielding_key::SetUserShieldingKey,
-			verify_identity::VerifyIdentity,
+			link_identity::LinkIdentity, remove_identity::RemoveIdentity, request_vc::RequestVC,
+			set_user_shielding_key::SetUserShieldingKey, verify_identity::VerifyIdentity,
 		},
 		Executor,
 	},
@@ -41,7 +40,7 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{
 	extrinsics::ParentchainUncheckedExtrinsicWithStatus, BatchAllFn, BatchCall, CallIndex,
-	CreateIdentityParams, RemoveIdentityParams, RequestVCParams, SetUserShieldingKeyParams,
+	LinkIdentityParams, RemoveIdentityParams, RequestVCParams, SetUserShieldingKeyParams,
 	SupportedBatchCallMap, SupportedBatchCallParams, VerifyIdentityParams, H256,
 };
 use litentry_primitives::ParentchainBlockNumber;
@@ -83,14 +82,14 @@ impl BatchAll {
 					};
 					set_user_shielding_key.execute(context, xt)?;
 				},
-				SupportedBatchCallParams::CreateIdentity(p) => {
-					let create_identity = CreateIdentity { block_number: self.block_number };
+				SupportedBatchCallParams::LinkIdentity(p) => {
+					let link_identity = LinkIdentity { block_number: self.block_number };
 					let c = (call.index, p);
 					let xt = ParentchainUncheckedExtrinsic {
 						function: c,
 						signature: extrinsic.signature.clone(),
 					};
-					create_identity.execute(context, xt)?;
+					link_identity.execute(context, xt)?;
 				},
 				SupportedBatchCallParams::RemoveIdentity(p) => {
 					let remove_identity = RemoveIdentity {};
@@ -207,9 +206,9 @@ pub(crate) fn decode_batch_call(
 				let decoded_params = SetUserShieldingKeyParams::decode(input)?;
 				SupportedBatchCallParams::SetUserShieldingKey(decoded_params)
 			},
-			SupportedBatchCallParams::CreateIdentity(..) => {
-				let decoded_params = CreateIdentityParams::decode(input)?;
-				SupportedBatchCallParams::CreateIdentity(decoded_params)
+			SupportedBatchCallParams::LinkIdentity(..) => {
+				let decoded_params = LinkIdentityParams::decode(input)?;
+				SupportedBatchCallParams::LinkIdentity(decoded_params)
 			},
 			SupportedBatchCallParams::RemoveIdentity(..) => {
 				let decoded_params = RemoveIdentityParams::decode(input)?;

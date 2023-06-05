@@ -19,7 +19,9 @@ use crate::{StfError, StfResult, ENCLAVE_ACCOUNT_KEY};
 
 use codec::{Decode, Encode};
 use itp_storage::{storage_double_map_key, storage_map_key, storage_value_key, StorageHasher};
+use itp_types::Index;
 use itp_utils::stringify::account_id_to_string;
+use litentry_primitives::{aes_encrypt_default, aes_encrypt_nonce, UserShieldingKeyNonceType};
 use log::*;
 use std::prelude::v1::*;
 
@@ -110,4 +112,30 @@ pub fn is_authorised_signer<AccountId: Encode + Decode + PartialEq>(
 	who: &AccountId,
 ) -> bool {
 	signer == &enclave_signer_account::<AccountId>() || signer == who
+}
+
+// verification message format:
+// blake2_256(<nonce> + shieldingKey.encrypt(<primary account> + <identity-to-be-linked>).ciphertext)
+// where <> means SCALE-encoded
+// see https://github.com/litentry/litentry-parachain/issues/1739
+pub fn get_expected_raw_message(
+	who: &AccountId,
+	identity: &Identity,
+	sidechain_nonce: Index,
+	key: UserShieldingKeyType,
+	nonce: UserShieldingKeyNonceType,
+) -> Vec<u8> {
+	let mut data = who.encode();
+	data.append(&mut identity.encode());
+	let mut encrypted_data = aes_encrypt_nonce(key, &data, nonce).ciphertext;
+
+	let mut payload = sidechain_nonce.encode();
+	payload.append(&mut encrypted_data);
+	blake2_256(payload.as_slice()).to_vec()
+}
+
+// Get the wrapped version of the raw msg: <Bytes>raw_msg</Bytes>,
+// see https://github.com/litentry/litentry-parachain/issues/1137
+pub fn get_expected_wrapped_message(raw_msg: Vec<u8>) -> Vec<u8> {
+	["<Bytes>".as_bytes(), raw_msg.as_slice(), "</Bytes>".as_bytes()].concat()
 }

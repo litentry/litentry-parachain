@@ -15,9 +15,10 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 #![allow(opaque_hidden_inferred_bound)]
 
-use crate::mock_tweet_payload;
+use crate::{Index, UserShieldingKeyType, MOCK_VERIFICATION_NONCE};
+use ita_stf::helpers::get_expected_raw_message;
 use lc_data_providers::twitter_official::*;
-use litentry_primitives::{ChallengeCode, Identity, IdentityString, Web2Network};
+use litentry_primitives::{Identity, IdentityString, Web2Network};
 use sp_core::crypto::AccountId32 as AccountId;
 use std::{collections::HashMap, sync::Arc};
 use warp::{http::Response, Filter};
@@ -26,7 +27,7 @@ pub(crate) fn query_tweet<F>(
 	func: Arc<F>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone
 where
-	F: Fn(&AccountId, &Identity) -> ChallengeCode + Send + Sync + 'static,
+	F: Fn(&AccountId, &Identity) -> (Index, UserShieldingKeyType) + Send + Sync + 'static,
 {
 	warp::get()
 		.and(warp::path!("2" / "tweets" / u32))
@@ -48,12 +49,14 @@ where
 					network: Web2Network::Twitter,
 					address: IdentityString::try_from("mock_user".as_bytes().to_vec()).unwrap(),
 				};
-				let chanllenge_code = func(&account_id, &twitter_identity);
-				log::info!(
-					"query_tweet, challenge_code:{:?}",
-					sp_core::hexdisplay::HexDisplay::from(&chanllenge_code)
-				);
-				let payload = mock_tweet_payload(&account_id, &twitter_identity, &chanllenge_code);
+				let (sidechain_nonce, key) = func(&account_id, &twitter_identity);
+				let payload = hex::encode(get_expected_raw_message(
+					&account_id,
+					&twitter_identity,
+					sidechain_nonce,
+					key,
+					MOCK_VERIFICATION_NONCE,
+				));
 
 				let tweet = Tweet { author_id: "mock_user".into(), id: ids.clone(), text: payload };
 				let twitter_users = TwitterUsers {

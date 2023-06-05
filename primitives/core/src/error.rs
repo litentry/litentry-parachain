@@ -82,9 +82,8 @@ where
 pub enum IMPError {
 	// errors when executing individual error
 	SetUserShieldingKeyFailed(ErrorDetail),
-	CreateIdentityFailed(ErrorDetail),
+	LinkIdentityFailed(ErrorDetail),
 	RemoveIdentityFailed(ErrorDetail),
-	VerifyIdentityFailed(ErrorDetail),
 	// scheduled encalve import error
 	ImportScheduledEnclaveFailed,
 

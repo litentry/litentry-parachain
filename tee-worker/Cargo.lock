@@ -4379,6 +4379,7 @@ name = "lc-mock-server"
 version = "0.1.0"
 dependencies = [
  "hex 0.4.3",
+ "ita-stf",
  "lazy_static",
  "lc-data-providers",
  "litentry-primitives",

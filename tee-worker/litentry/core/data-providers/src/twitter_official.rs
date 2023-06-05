@@ -258,13 +258,12 @@ impl TwitterOfficialClient {
 mod tests {
 	use super::*;
 	use itp_stf_primitives::types::AccountId;
-	use lc_mock_server::run;
-	use litentry_primitives::{ChallengeCode, Identity};
+	use lc_mock_server::{default_getter, run};
 	use std::sync::Arc;
 
 	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
-		let url = run(Arc::new(|_: &AccountId, _: &Identity| ChallengeCode::default()), 0).unwrap();
+		let url = run(Arc::new(default_getter), 0).unwrap();
 		G_DATA_PROVIDERS.write().unwrap().set_twitter_official_url(url.clone());
 	}
 

@@ -206,6 +206,7 @@ fn main() {
 			.expect("mock server port to be a valid port number");
 		thread::spawn(move || {
 			info!("*** Starting mock server");
+			// TODO: use trused getter
 			let getter = Arc::new(move |account: &AccountId32, identity: &Identity| {
 				let client = DirectClient::new(trusted_server_url.clone());
 

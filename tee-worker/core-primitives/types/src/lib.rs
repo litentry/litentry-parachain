@@ -57,8 +57,8 @@ pub type RemoveScheduledEnclaveFn = (CallIndex, SidechainBlockNumber);
 pub type SetUserShieldingKeyParams = (ShardIdentifier, Vec<u8>);
 pub type SetUserShieldingKeyFn = (CallIndex, SetUserShieldingKeyParams);
 
-pub type CreateIdentityParams = (ShardIdentifier, AccountId, Vec<u8>, Option<Vec<u8>>);
-pub type CreateIdentityFn = (CallIndex, CreateIdentityParams);
+pub type LinkIdentityParams = (ShardIdentifier, AccountId, Vec<u8>, Option<Vec<u8>>);
+pub type LinkIdentityFn = (CallIndex, LinkIdentityParams);
 
 pub type RemoveIdentityParams = (ShardIdentifier, Vec<u8>);
 pub type RemoveIdentityFn = (CallIndex, RemoveIdentityParams);
@@ -74,7 +74,7 @@ pub type RequestVCFn = (CallIndex, RequestVCParams);
 #[derive(Clone, Encode, Decode, Debug)]
 pub enum SupportedBatchCallParams {
 	SetUserShieldingKey(SetUserShieldingKeyParams),
-	CreateIdentity(CreateIdentityParams),
+	LinkIdentity(LinkIdentityParams),
 	RemoveIdentity(RemoveIdentityParams),
 	VerifyIdentity(VerifyIdentityParams),
 	RequestVC(RequestVCParams),

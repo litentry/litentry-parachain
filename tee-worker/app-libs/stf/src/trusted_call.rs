@@ -21,9 +21,7 @@ use sp_core::{H160, U256};
 #[cfg(feature = "evm")]
 use std::vec::Vec;
 
-use crate::{
-	helpers::ensure_enclave_signer_account, MetadataOf, Runtime, StfError, System, TrustedOperation,
-};
+use crate::{helpers::ensure_enclave_signer_account, Runtime, StfError, System, TrustedOperation};
 use codec::{Decode, Encode};
 use frame_support::{ensure, traits::UnfilteredDispatchable};
 pub use ita_sgx_runtime::{Balance, ConvertAccountId, Index, SgxParentchainTypeConverter};
@@ -37,7 +35,8 @@ pub use itp_types::{OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
 pub use litentry_primitives::{
 	aes_encrypt_default, AesOutput, Assertion, ErrorDetail, IMPError, Identity,
-	ParentchainAccountId, ParentchainBlockNumber, UserShieldingKeyType, VCMPError, ValidationData,
+	ParentchainAccountId, ParentchainBlockNumber, UserShieldingKeyNonceType, UserShieldingKeyType,
+	VCMPError, ValidationData,
 };
 use log::*;
 use sp_io::hashing::blake2_256;
@@ -112,20 +111,12 @@ pub enum TrustedCall {
 	),
 	// litentry
 	set_user_shielding_key(AccountId, AccountId, UserShieldingKeyType, H256),
-	create_identity(
-		AccountId,
-		AccountId,
-		Identity,
-		Option<MetadataOf<Runtime>>,
-		ParentchainBlockNumber,
-		H256,
-	),
+	link_identity(AccountId, AccountId, Identity, ValidationData, UserShieldingKeyNonceType, H256),
 	remove_identity(AccountId, AccountId, Identity, H256),
-	verify_identity(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber, H256),
 	request_vc(AccountId, AccountId, Assertion, H256),
 	// the following trusted calls should not be requested directly from external
 	// they are guarded by the signature check (either root or enclave_signer_account)
-	verify_identity_callback(AccountId, AccountId, Identity, ParentchainBlockNumber, H256),
+	link_identity_callback(AccountId, AccountId, Identity, H256),
 	request_vc_callback(AccountId, AccountId, Assertion, [u8; 32], [u8; 32], Vec<u8>, H256),
 	handle_imp_error(AccountId, Option<AccountId>, IMPError, H256),
 	handle_vcmp_error(AccountId, Option<AccountId>, VCMPError, H256),
@@ -150,7 +141,7 @@ impl TrustedCall {
 			TrustedCall::evm_create2(sender_account, ..) => sender_account,
 			// litentry
 			TrustedCall::set_user_shielding_key(account, ..) => account,
-			TrustedCall::create_identity(account, ..) => account,
+			TrustedCall::link_identity(account, ..) => account,
 			TrustedCall::remove_identity(account, ..) => account,
 			TrustedCall::verify_identity(account, ..) => account,
 			TrustedCall::request_vc(account, ..) => account,
@@ -501,42 +492,30 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::create_identity(signer, who, identity, metadata, bn, hash) => {
-				debug!("create_identity, who: {}", account_id_to_string(&who));
+			TrustedCall::link_identity(signer, who, identity, validation_data, nonce, hash) => {
+				debug!("link_identity, who: {}", account_id_to_string(&who));
 				let account = SgxParentchainTypeConverter::convert(who.clone());
+
 				let parent_ss58_prefix =
 					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
-				let call_index = node_metadata_repo
-					.get_from_metadata(|m| m.identity_created_call_indexes())??;
 
-				match Self::create_identity_internal(
+				if let Err(e) = Self::link_identity_internal(
 					signer,
 					who,
 					identity.clone(),
-					metadata,
-					bn,
+					validation_data,
+					nonce,
+					hash,
+					shard,
 					parent_ss58_prefix,
 				) {
-					Ok((key, code)) => {
-						debug!("pushing identity_created event ...");
-						calls.push(OpaqueCall::from_tuple(&(
-							call_index,
-							account,
-							aes_encrypt_default(&key, &identity.encode()),
-							aes_encrypt_default(&key, &code.encode()),
-							hash,
-						)));
-					},
-					Err(e) => {
-						debug!("pushing error event ... error: {}", e);
-						add_call_from_imp_error(
-							calls,
-							node_metadata_repo,
-							Some(account),
-							e.to_imp_error(),
-							hash,
-						);
-					},
+					add_call_from_imp_error(
+						calls,
+						node_metadata_repo,
+						Some(SgxParentchainTypeConverter::convert(who)),
+						e.to_imp_error(),
+						hash,
+					);
 				}
 				Ok(())
 			},
@@ -546,7 +525,15 @@ where
 				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.identity_removed_call_indexes())??;
 
-				match Self::remove_identity_internal(signer, who, identity.clone()) {
+				let parent_ss58_prefix =
+					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
+
+				match Self::remove_identity_internal(
+					signer,
+					who,
+					identity.clone(),
+					parent_ss58_prefix,
+				) {
 					Ok(key) => {
 						debug!("pushing identity_removed event ...");
 						calls.push(OpaqueCall::from_tuple(&(
@@ -569,39 +556,20 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::verify_identity(signer, who, identity, validation_data, bn, hash) => {
-				debug!("verify_identity, who: {}", account_id_to_string(&who));
-				if let Err(e) = Self::verify_identity_internal(
-					signer,
-					who.clone(),
-					identity,
-					validation_data,
-					bn,
-					hash,
-					shard,
-				) {
-					debug!("pushing error event ... error: {}", e);
-					add_call_from_imp_error(
-						calls,
-						node_metadata_repo,
-						Some(SgxParentchainTypeConverter::convert(who)),
-						e.to_imp_error(),
-						hash,
-					);
-				}
-				Ok(())
-			},
-			TrustedCall::verify_identity_callback(signer, who, identity, bn, hash) => {
-				debug!("verify_identity_callback, who: {}", account_id_to_string(&who));
+			TrustedCall::link_identity_callback(signer, who, identity, hash) => {
+				debug!("link_identity_callback, who: {}", account_id_to_string(&who));
 				let account = SgxParentchainTypeConverter::convert(who.clone());
 				let call_index = node_metadata_repo
-					.get_from_metadata(|m| m.identity_verified_call_indexes())??;
+					.get_from_metadata(|m| m.identity_linked_call_indexes())??;
 
-				match Self::verify_identity_callback_internal(
+				let parent_ss58_prefix =
+					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
+
+				match Self::link_identity_callback_internal(
 					signer,
 					who.clone(),
 					identity.clone(),
-					bn,
+					parent_ss58_prefix,
 				) {
 					Ok(key) => {
 						let id_graph =
@@ -737,7 +705,7 @@ where
 			TrustedCall::balance_shield(..) => debug!("No storage updates needed..."),
 			// litentry
 			TrustedCall::set_user_shielding_key(..) => debug!("No storage updates needed..."),
-			TrustedCall::create_identity(..) => debug!("No storage updates needed..."),
+			TrustedCall::link_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::remove_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::verify_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::verify_identity_callback(..) => debug!("No storage updates needed..."),

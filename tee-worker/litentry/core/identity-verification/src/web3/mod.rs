@@ -14,14 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{
-	ensure, get_expected_raw_message, get_expected_wrapped_message, AccountId, Error, Result,
-	ToString,
-};
+use crate::{ensure, AccountId, Error, Result, ToString};
+use ita_stf::helpers::{get_expected_raw_message, get_expected_wrapped_message};
+use itp_types::Index;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
-	ChallengeCode, ErrorDetail, Identity, IdentityMultiSignature, Web3CommonValidationData,
-	Web3ValidationData,
+	ErrorDetail, Identity, IdentityMultiSignature, UserShieldingKeyNonceType, UserShieldingKeyType,
+	Web3CommonValidationData, Web3ValidationData,
 };
 use log::*;
 use sp_core::{ed25519, sr25519};
@@ -35,35 +34,45 @@ use sp_io::{
 pub fn verify(
 	who: &AccountId,
 	identity: &Identity,
-	code: &ChallengeCode,
+	sidechain_nonce: Index,
+	key: UserShieldingKeyType,
+	nonce: UserShieldingKeyNonceType,
 	data: &Web3ValidationData,
 ) -> Result<()> {
 	debug!("verify web3 identity, who: {}", account_id_to_string(&who));
 	match data {
-		Web3ValidationData::Substrate(substrate_validation_data) =>
-			verify_substrate_signature(who, identity, code, substrate_validation_data),
+		Web3ValidationData::Substrate(substrate_validation_data) => verify_substrate_signature(
+			who,
+			identity,
+			sidechain_nonce,
+			key,
+			nonce,
+			substrate_validation_data,
+		),
 		Web3ValidationData::Evm(evm_validation_data) =>
-			verify_evm_signature(who, identity, code, evm_validation_data),
+			verify_evm_signature(who, identity, sidechain_nonce, key, nonce, evm_validation_data),
 	}
 }
 
 fn verify_substrate_signature(
 	who: &AccountId,
 	identity: &Identity,
-	code: &ChallengeCode,
+	sidechain_nonce: Index,
+	key: UserShieldingKeyType,
+	nonce: UserShieldingKeyNonceType,
 	validation_data: &Web3CommonValidationData,
 ) -> Result<()> {
-	let raw_msg = get_expected_raw_message(who, identity, code);
+	let raw_msg = get_expected_raw_message(who, identity, sidechain_nonce, key, nonce);
 	let wrapped_msg = get_expected_wrapped_message(raw_msg.clone());
 
 	ensure!(
 		raw_msg.as_slice() == validation_data.message.as_slice(),
-		Error::VerifyIdentityFailed(ErrorDetail::UnexpectedMessage)
+		Error::LinkIdentityFailed(ErrorDetail::UnexpectedMessage)
 	);
 	let substrate_address = if let Identity::Substrate { address, .. } = identity {
 		address.as_ref()
 	} else {
-		return Err(Error::VerifyIdentityFailed(ErrorDetail::InvalidIdentity))
+		return Err(Error::LinkIdentityFailed(ErrorDetail::InvalidIdentity))
 	};
 
 	// we accept both the raw_msg's signature and the wrapped_msg's signature
@@ -77,7 +86,7 @@ fn verify_substrate_signature(
 			&validation_data.signature,
 			substrate_address
 		),
-		Error::VerifyIdentityFailed(ErrorDetail::VerifySubstrateSignatureFailed)
+		Error::LinkIdentityFailed(ErrorDetail::VerifySubstrateSignatureFailed)
 	);
 	Ok(())
 }
@@ -112,25 +121,27 @@ fn verify_substrate_signature_internal(
 fn verify_evm_signature(
 	who: &AccountId,
 	identity: &Identity,
-	code: &ChallengeCode,
+	sidechain_nonce: Index,
+	key: UserShieldingKeyType,
+	nonce: UserShieldingKeyNonceType,
 	validation_data: &Web3CommonValidationData,
 ) -> Result<()> {
-	let msg = get_expected_raw_message(who, identity, code);
+	let msg = get_expected_raw_message(who, identity, sidechain_nonce, key, nonce);
 	let digest = compute_evm_msg_digest(&msg);
 	let evm_address = if let Identity::Evm { address, .. } = identity {
 		address
 	} else {
-		return Err(Error::VerifyIdentityFailed(ErrorDetail::InvalidIdentity))
+		return Err(Error::LinkIdentityFailed(ErrorDetail::InvalidIdentity))
 	};
 	if let IdentityMultiSignature::Ethereum(sig) = &validation_data.signature {
 		let recovered_evm_address = recover_evm_address(&digest, sig.as_ref())
-			.map_err(|_| Error::VerifyIdentityFailed(ErrorDetail::RecoverEvmAddressFailed))?;
+			.map_err(|_| Error::LinkIdentityFailed(ErrorDetail::RecoverEvmAddressFailed))?;
 		ensure!(
 			&recovered_evm_address == evm_address.as_ref(),
-			Error::VerifyIdentityFailed(ErrorDetail::VerifyEvmSignatureFailed)
+			Error::LinkIdentityFailed(ErrorDetail::VerifyEvmSignatureFailed)
 		);
 	} else {
-		return Err(Error::VerifyIdentityFailed(ErrorDetail::WrongSignatureType))
+		return Err(Error::LinkIdentityFailed(ErrorDetail::WrongSignatureType))
 	}
 	Ok(())
 }
