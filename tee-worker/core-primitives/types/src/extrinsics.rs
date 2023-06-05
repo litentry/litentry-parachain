@@ -105,8 +105,8 @@ mod tests {
 		generic::Era, testing::sr25519, AccountId32 as AccountId, MultiSignature, OpaqueExtrinsic,
 	};
 	use substrate_api_client::{
-		BaseExtrinsicParams, ExtrinsicParams, PlainTip, PlainTipExtrinsicParamsBuilder,
-		SubstrateDefaultSignedExtra, UncheckedExtrinsicV4,
+		ExtrinsicParams, GenericAdditionalParams, GenericExtrinsicParams, PlainTip,
+		UncheckedExtrinsicV4,
 	};
 
 	#[test]
@@ -116,13 +116,14 @@ mod tests {
 		let signature = pair.sign(msg);
 		let multi_sig = MultiSignature::from(signature);
 		let account: AccountId = pair.public().into();
-		let tx_params =
-			PlainTipExtrinsicParamsBuilder::new().era(Era::mortal(8, 0), Hash::from([0u8; 32]));
+		let tx_params = GenericAdditionalParams::<PlainTip<u128>, Hash>::new()
+			.era(Era::mortal(8, 0), Hash::from([0u8; 32]));
 
-		let default_extra = BaseExtrinsicParams::new(0, 0, 2, Hash::from([0u8; 32]), tx_params);
+		let default_extra =
+			GenericExtrinsicParams::new(0, 0, 2u32, Hash::from([0u8; 32]), tx_params);
 		let xt = UncheckedExtrinsicV4::new_signed(
 			vec![1, 1, 1],
-			account.into(),
+			account,
 			multi_sig,
 			default_extra.signed_extra(),
 		);
