@@ -110,7 +110,6 @@ impl StfError {
 				IMPError::SetUserShieldingKeyFailed(d.clone()),
 			StfError::LinkIdentityFailed(d) => IMPError::LinkIdentityFailed(d.clone()),
 			StfError::RemoveIdentityFailed(d) => IMPError::RemoveIdentityFailed(d.clone()),
-			StfError::LinkIdentityFailed(d) => IMPError::LinkIdentityFailed(d.clone()),
 			_ => IMPError::UnclassifiedError(ErrorDetail::StfError(ErrorString::truncate_from(
 				format!("{:?}", self).as_bytes().to_vec(),
 			))),

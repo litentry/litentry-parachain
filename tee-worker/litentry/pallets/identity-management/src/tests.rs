@@ -181,7 +181,7 @@ fn get_id_graph_with_max_len_works() {
 		// fill in 21 identities, starting from 1 to reserve place for prime_id
 		// set the block number too as it's used to tell "recent"
 		for i in 1..22 {
-			System::set_block_number(i+1);
+			System::set_block_number(i + 1);
 			assert_ok!(IMT::link_identity(
 				RuntimeOrigin::signed(ALICE),
 				BOB,

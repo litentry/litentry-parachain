@@ -13,11 +13,10 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
-use codec::Encode;
 
 use ita_stf::Index;
-use litentry_primitives::{Identity, UserShieldingKeyNonceType, UserShieldingKeyType};
-use sp_core::{blake2_256, crypto::AccountId32 as AccountId};
+use litentry_primitives::{UserShieldingKeyNonceType, UserShieldingKeyType};
+use sp_core::sr25519::Pair as Sr25519Pair;
 use std::{sync::Arc, thread};
 use tokio::{
 	sync::oneshot::{channel, error::RecvError},
@@ -53,13 +52,13 @@ async fn shutdown_signal() {
 	}
 }
 
-pub fn default_getter(_who: &AccountId, _id: &Identity) -> (Index, UserShieldingKeyType) {
+pub fn default_getter(_who: &Sr25519Pair) -> (Index, UserShieldingKeyType) {
 	(Index::default(), UserShieldingKeyType::default())
 }
 
 pub fn run<F>(getter: Arc<F>, port: u16) -> Result<String, RecvError>
 where
-	F: Fn(&AccountId, &Identity) -> (Index, UserShieldingKeyType) + Send + Sync + 'static,
+	F: Fn(&Sr25519Pair) -> (Index, UserShieldingKeyType) + Send + Sync + 'static,
 {
 	let (result_in, result_out) = channel();
 	thread::spawn(move || {

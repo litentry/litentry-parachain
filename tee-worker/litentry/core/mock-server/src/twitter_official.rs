@@ -19,7 +19,7 @@ use crate::{Index, UserShieldingKeyType, MOCK_VERIFICATION_NONCE};
 use ita_stf::helpers::get_expected_raw_message;
 use lc_data_providers::twitter_official::*;
 use litentry_primitives::{Identity, IdentityString, Web2Network};
-use sp_core::crypto::AccountId32 as AccountId;
+use sp_core::{sr25519::Pair as Sr25519Pair, Pair};
 use std::{collections::HashMap, sync::Arc};
 use warp::{http::Response, Filter};
 
@@ -27,7 +27,7 @@ pub(crate) fn query_tweet<F>(
 	func: Arc<F>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone
 where
-	F: Fn(&AccountId, &Identity) -> (Index, UserShieldingKeyType) + Send + Sync + 'static,
+	F: Fn(&Sr25519Pair) -> (Index, UserShieldingKeyType) + Send + Sync + 'static,
 {
 	warp::get()
 		.and(warp::path!("2" / "tweets" / u32))
@@ -41,17 +41,14 @@ where
 			if expansions.as_str() != "author_id" {
 				Response::builder().status(400).body(String::from("Error query"))
 			} else {
-				let account_id = AccountId::new([
-					212, 53, 147, 199, 21, 253, 211, 28, 97, 20, 26, 189, 4, 169, 159, 214, 130,
-					44, 133, 88, 133, 76, 205, 227, 154, 86, 132, 231, 165, 109, 162, 125,
-				]); // Alice
+				let alice = Sr25519Pair::from_string("//Alice", None).unwrap();
 				let twitter_identity = Identity::Web2 {
 					network: Web2Network::Twitter,
 					address: IdentityString::try_from("mock_user".as_bytes().to_vec()).unwrap(),
 				};
-				let (sidechain_nonce, key) = func(&account_id, &twitter_identity);
+				let (sidechain_nonce, key) = func(&alice);
 				let payload = hex::encode(get_expected_raw_message(
-					&account_id,
+					&alice.public(),
 					&twitter_identity,
 					sidechain_nonce,
 					key,

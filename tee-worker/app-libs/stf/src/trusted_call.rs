@@ -143,9 +143,8 @@ impl TrustedCall {
 			TrustedCall::set_user_shielding_key(account, ..) => account,
 			TrustedCall::link_identity(account, ..) => account,
 			TrustedCall::remove_identity(account, ..) => account,
-			TrustedCall::verify_identity(account, ..) => account,
 			TrustedCall::request_vc(account, ..) => account,
-			TrustedCall::verify_identity_callback(account, ..) => account,
+			TrustedCall::link_identity_callback(account, ..) => account,
 			TrustedCall::request_vc_callback(account, ..) => account,
 			TrustedCall::handle_imp_error(account, ..) => account,
 			TrustedCall::handle_vcmp_error(account, ..) => account,
@@ -494,14 +493,13 @@ where
 			},
 			TrustedCall::link_identity(signer, who, identity, validation_data, nonce, hash) => {
 				debug!("link_identity, who: {}", account_id_to_string(&who));
-				let account = SgxParentchainTypeConverter::convert(who.clone());
 
 				let parent_ss58_prefix =
 					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
 
 				if let Err(e) = Self::link_identity_internal(
 					signer,
-					who,
+					who.clone(),
 					identity.clone(),
 					validation_data,
 					nonce,
@@ -707,9 +705,8 @@ where
 			TrustedCall::set_user_shielding_key(..) => debug!("No storage updates needed..."),
 			TrustedCall::link_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::remove_identity(..) => debug!("No storage updates needed..."),
-			TrustedCall::verify_identity(..) => debug!("No storage updates needed..."),
-			TrustedCall::verify_identity_callback(..) => debug!("No storage updates needed..."),
 			TrustedCall::request_vc(..) => debug!("No storage updates needed..."),
+			TrustedCall::link_identity_callback(..) => debug!("No storage updates needed..."),
 			TrustedCall::request_vc_callback(..) => debug!("No storage updates needed..."),
 			TrustedCall::handle_imp_error(..) => debug!("No storage updates needed..."),
 			TrustedCall::handle_vcmp_error(..) => debug!("No storage updates needed..."),

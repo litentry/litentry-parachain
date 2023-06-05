@@ -20,7 +20,6 @@ use crate::{
 	hash_of, IndirectCallsExecutor,
 };
 use codec::{Decode, Encode};
-use ita_sgx_runtime::Runtime;
 use ita_stf::{TrustedCall, TrustedOperation};
 use itp_node_api::{
 	api_client::ParentchainUncheckedExtrinsic,
@@ -35,7 +34,7 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{LinkIdentityFn, H256};
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{Identity, ParentchainBlockNumber, ValidationData};
+use litentry_primitives::{Identity, ValidationData};
 use log::*;
 
 pub(crate) struct LinkIdentity {}
@@ -77,7 +76,7 @@ impl LinkIdentity {
 				account.clone(),
 				identity,
 				validation_data,
-				nonce,
+				*nonce,
 				hash_of(extrinsic),
 			);
 			let signed_trusted_call =
@@ -118,7 +117,7 @@ where
 	) -> Result<()> {
 		// the account is user that requested to link the identity, not necessarily the extrinsic sender
 		// there's case where a delegatee could send this extrinsic on behalf of the user
-		let (_, (shard, account, _, _)) = &extrinsic.function;
+		let (_, (shard, account, _, _, _)) = &extrinsic.function;
 		let e = Error::IMPHandlingError(IMPError::LinkIdentityFailed(ErrorDetail::ImportError));
 		if self.execute_internal(context, &extrinsic).is_err() {
 			// try to handle the error internally, if we get another error, log it and return the

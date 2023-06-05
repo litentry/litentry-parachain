@@ -45,9 +45,8 @@ pub struct NodeMetadataMock {
 	imp_link_identity: u8,
 	imp_remove_identity: u8,
 	imp_user_shielding_key_set: u8,
-	imp_identity_created: u8,
+	imp_identity_linked: u8,
 	imp_identity_removed: u8,
-	imp_identity_verified: u8,
 	imp_some_error: u8,
 	// VCMP
 	vcmp_module: u8,
@@ -91,9 +90,8 @@ impl NodeMetadataMock {
 			imp_link_identity: 1u8,
 			imp_remove_identity: 2u8,
 			imp_user_shielding_key_set: 4u8,
-			imp_identity_created: 6u8,
+			imp_identity_linked: 6u8,
 			imp_identity_removed: 7u8,
-			imp_identity_verified: 8u8,
 			imp_some_error: 9u8,
 
 			vcmp_module: 66u8,
@@ -188,16 +186,12 @@ impl IMPCallIndexes for NodeMetadataMock {
 		Ok([self.imp_module, self.imp_user_shielding_key_set])
 	}
 
-	fn identity_created_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.imp_module, self.imp_identity_created])
+	fn identity_linked_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_module, self.imp_identity_linked])
 	}
 
 	fn identity_removed_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.imp_module, self.imp_identity_removed])
-	}
-
-	fn identity_verified_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.imp_module, self.imp_identity_verified])
 	}
 
 	fn imp_some_error_call_indexes(&self) -> Result<[u8; 2]> {

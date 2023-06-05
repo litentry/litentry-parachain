@@ -21,7 +21,6 @@ use ita_sgx_runtime::System;
 use itp_stf_interface::ExecuteGetter;
 use itp_stf_primitives::types::{AccountId, KeyPair, Signature};
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::Identity;
 use log::*;
 use sp_runtime::traits::Verify;
 use std::prelude::v1::*;

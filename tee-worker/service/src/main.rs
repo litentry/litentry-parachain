@@ -49,7 +49,8 @@ use enclave::{
 	api::enclave_init,
 	tls_ra::{enclave_request_state_provisioning, enclave_run_state_provisioning_server},
 };
-use itc_rpc_client::direct_client::{DirectApi, DirectClient};
+use ita_stf::{Getter, Index, PublicGetter, TrustedGetter};
+use itc_rpc_client::direct_client::DirectClient;
 use itp_enclave_api::{
 	direct_request::DirectRequest,
 	enclave_base::EnclaveBase,
@@ -64,25 +65,24 @@ use itp_node_api::{
 	metadata::{event::print_event, NodeMetadata},
 	node_api_factory::{CreateNodeApi, NodeApiFactory},
 };
-use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
 use itp_settings::{
 	files::SIDECHAIN_STORAGE_PATH,
 	worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvider},
 };
+use itp_stf_primitives::types::KeyPair;
 
 #[cfg(feature = "dcap")]
 use itp_utils::hex::hex_encode;
 #[cfg(feature = "dcap")]
 use litentry_primitives::ParentchainHash as Hash;
 
-use itp_types::DirectRequestStatus;
 use its_peer_fetch::{
 	block_fetch_client::BlockFetcher, untrusted_peer_fetch::UntrustedPeerFetcher,
 };
 use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
 use its_storage::{interface::FetchBlocks, BlockPruner, SidechainStorageLock};
 use lc_data_providers::DataProvidersStatic;
-use litentry_primitives::{Identity, ParentchainHeader as Header};
+use litentry_primitives::{ParentchainHeader as Header, UserShieldingKeyType};
 use log::*;
 use serde_json::Value;
 use sgx_types::*;
@@ -90,7 +90,11 @@ use sgx_types::*;
 #[cfg(feature = "dcap")]
 use sgx_verify::extract_tcb_info_from_raw_dcap_quote;
 
-use sp_core::crypto::{AccountId32, Ss58Codec};
+use sp_core::{
+	crypto::{AccountId32, Ss58Codec},
+	sr25519::Pair as Sr25519Pair,
+	Pair,
+};
 use sp_keyring::AccountKeyring;
 use std::{
 	env,
@@ -197,84 +201,46 @@ fn main() {
 		enclave_metrics_receiver,
 	)));
 
-	if config.enable_mock_server {
-		let enclave = enclave.clone();
-		let trusted_server_url = format!("wss://localhost:{}", config.trusted_worker_port);
-		let base58_enclave = enclave.get_mrenclave().unwrap().encode().to_base58();
-		let mock_server_port = config
-			.try_parse_mock_server_port()
-			.expect("mock server port to be a valid port number");
-		thread::spawn(move || {
-			info!("*** Starting mock server");
-			// TODO: use trused getter
-			let getter = Arc::new(move |account: &AccountId32, identity: &Identity| {
-				let client = DirectClient::new(trusted_server_url.clone());
-
-				let mut entry_bytes = sp_core::twox_128("IdentityManagement".as_bytes()).to_vec();
-				entry_bytes.extend(&sp_core::twox_128("ChallengeCodes".as_bytes())[..]);
-
-				let encoded_account: &[u8] = &account.encode();
-				let encoded_identity: &[u8] = &identity.encode();
-				// Key1: Blake2_128Concat
-				entry_bytes.extend(sp_core::blake2_128(encoded_account));
-				entry_bytes.extend(encoded_account);
-				// Key2: Blake2_128Concat
-				entry_bytes.extend(sp_core::blake2_128(encoded_identity));
-				entry_bytes.extend(encoded_identity);
-
-				let request = RpcRequest {
-					jsonrpc: "2.0".to_owned(),
-					method: "state_getStorage".to_string(),
-					params: vec![base58_enclave.clone(), format!("0x{}", hex::encode(entry_bytes))],
-					id: 1,
-				};
-
-				match client.get(serde_json::to_string(&request).unwrap().as_str()) {
-					Ok(response) => {
-						let response: RpcResponse = serde_json::from_str(&response).unwrap();
-						if let Ok(return_value) =
-							<RpcReturnValue as itp_utils::FromHexPrefixed>::from_hex(
-								&response.result,
-							) {
-							match return_value.status {
-								DirectRequestStatus::Ok => {
-									let mut value: &[u8] = &return_value.value;
-									ChallengeCode::decode(&mut value).unwrap_or_default()
-								},
-								DirectRequestStatus::Error => {
-									warn!("request status is error");
-									if let Ok(value) =
-										String::decode(&mut return_value.value.as_slice())
-									{
-										warn!("[Error] {}", value);
-									}
-									ChallengeCode::default()
-								},
-								DirectRequestStatus::TrustedOperationStatus(status) => {
-									warn!("request status is: {:?}", status);
-									ChallengeCode::default()
-								},
-							}
-						} else {
-							ChallengeCode::default()
-						}
-					},
-					Err(e) => {
-						error!("failed to send request: {:?}", e);
-						ChallengeCode::default()
-					},
-				}
-			});
-			let _ = lc_mock_server::run(getter, mock_server_port);
-		});
-	}
-
 	let data_provider_config = data_provider(&config);
 
 	if let Some(run_config) = &config.run_config {
 		let shard = extract_shard(&run_config.shard, enclave.as_ref());
 
 		println!("Worker Config: {:?}", config);
+
+		// litentry: start the mock-server if enabled
+		if config.enable_mock_server {
+			let trusted_server_url = format!("wss://localhost:{}", config.trusted_worker_port);
+			let mock_server_port = config
+				.try_parse_mock_server_port()
+				.expect("mock server port to be a valid port number");
+			thread::spawn(move || {
+				info!("*** Starting mock server");
+				// TODO: use trused getter
+				let getter = Arc::new(move |who: &Sr25519Pair| {
+					let client = DirectClient::new(trusted_server_url.clone());
+
+					let sidechain_nonce_getter =
+						Getter::from(PublicGetter::nonce(who.public().into()));
+					let nonce = client
+						.get_state(shard, &sidechain_nonce_getter)
+						.and_then(|n| Index::decode(&mut n.as_slice()).ok())
+						.unwrap_or_default();
+
+					let key_getter = Getter::from(
+						TrustedGetter::user_shielding_key(who.public().into())
+							.sign(&KeyPair::Sr25519(Box::new(who.clone()))),
+					);
+					let key = client
+						.get_state(shard, &key_getter)
+						.and_then(|n| UserShieldingKeyType::decode(&mut n.as_slice()).ok())
+						.unwrap_or_default();
+
+					(nonce, key)
+				});
+				let _ = lc_mock_server::run(getter, mock_server_port);
+			});
+		}
 
 		if clean_reset {
 			setup::initialize_shard_and_keys(enclave.as_ref(), &shard).unwrap();

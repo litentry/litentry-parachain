@@ -80,7 +80,6 @@ use itp_types::{
 	AccountId, Assertion, CallIndex, OpaqueCall, ShardIdentifier, SupportedBatchCallMap,
 	SupportedBatchCallParams, H256,
 };
-use litentry_primitives::ParentchainBlockNumber;
 use log::*;
 use sp_core::blake2_256;
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header, Keccak256};
@@ -165,7 +164,6 @@ where
 					Default::default(),
 					AccountId::new([0u8; 32]),
 					Default::default(),
-					None,
 					Default::default(),
 					Default::default(),
 				)),
@@ -271,9 +269,6 @@ where
 		let block_hash = block.hash();
 		let mut calls = Vec::<OpaqueCall>::new();
 
-		let parentchain_block_number: ParentchainBlockNumber =
-			block_number.try_into().map_err(|_| Error::ConvertParentchainBlockNumber)?;
-
 		debug!("Scanning block {:?} for relevant xt", block_number);
 		let mut executed_calls = Vec::<H256>::new();
 
@@ -297,7 +292,7 @@ where
 			// Found RequestVC extrinsic
 			let request_vc = RequestVC;
 			// Found BatchAll extrinsic
-			let batch_all = BatchAll { block_number: parentchain_block_number };
+			let batch_all = BatchAll {};
 			// Found UpdateScheduledEnclave extrinisc
 			let update_scheduled_enclave = UpdateScheduledEnclave {};
 			// Found RemoveScheduledEnclave extrinisc
@@ -310,7 +305,6 @@ where
 				&set_user_shielding_key,
 				&link_identity,
 				&remove_identity,
-				&verify_identity,
 				&request_vc,
 				&update_scheduled_enclave,
 				&remove_scheduled_enclave,

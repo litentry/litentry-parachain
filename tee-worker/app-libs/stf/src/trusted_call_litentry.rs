@@ -23,17 +23,15 @@ use crate::{
 	AccountId, IdentityManagement, Runtime, StfError, StfResult, UserShieldingKeys,
 };
 use frame_support::{dispatch::UnfilteredDispatchable, ensure};
-use ita_sgx_runtime::RuntimeOrigin;
+use ita_sgx_runtime::{IdentityStatus, RuntimeOrigin};
 use itp_stf_primitives::types::ShardIdentifier;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
 	AssertionBuildRequest, IdentityLinkRequest, RequestType,
 };
-use litentry_primitives::{
-	Assertion, ErrorDetail, Identity, ParentchainBlockNumber, UserShieldingKeyType, ValidationData,
-};
+use litentry_primitives::{Assertion, ErrorDetail, Identity, UserShieldingKeyType, ValidationData};
 use log::*;
-use std::{format, vec::Vec};
+use std::vec::Vec;
 
 impl TrustedCallSigned {
 	pub fn set_user_shielding_key_internal(
@@ -65,17 +63,20 @@ impl TrustedCallSigned {
 			is_authorised_signer(&signer, &who),
 			StfError::LinkIdentityFailed(ErrorDetail::UnauthorisedSigner)
 		);
-		ensure!(
-			UserShieldingKeys::<Runtime>::contains_key(&who),
-			StfError::LinkIdentityFailed(ErrorDetail::UserShieldingKeyNotFound)
-		);
+
+		let key = IdentityManagement::user_shielding_keys(&who)
+			.ok_or(StfError::LinkIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
+
+		let sidechain_nonce = System::account_nonce(&who);
 
 		let request: RequestType = IdentityLinkRequest {
 			shard: *shard,
 			who,
 			identity,
 			validation_data,
-			nonce,
+			sidechain_nonce,
+			key_nonce: nonce,
+			key,
 			parent_ss58_prefix,
 			hash,
 		}
@@ -124,7 +125,7 @@ impl TrustedCallSigned {
 		let id_graph = IMT::get_id_graph(&who);
 		let vec_identity: Vec<Identity> = id_graph
 			.into_iter()
-			.filter(|item| item.1.is_verified)
+			.filter(|item| item.1.status == IdentityStatus::Active)
 			.map(|item| item.0)
 			.collect();
 		let request: RequestType = AssertionBuildRequest {
