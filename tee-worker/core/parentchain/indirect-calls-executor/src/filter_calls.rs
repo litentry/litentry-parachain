@@ -58,12 +58,12 @@ impl FilterCalls<NodeMetadata> for DenyAll {
 }
 
 /// Default filter we use for the Integritee-Parachain.
-pub struct LitentryCallFilter<ExtrinsicParser> {
+pub struct ShieldFundsAndCallWorkerFilter<ExtrinsicParser> {
 	_phantom: PhantomData<ExtrinsicParser>,
 }
 
 impl<ExtrinsicParser, NodeMetadata: NodeMetadataTrait> FilterCalls<NodeMetadata>
-	for LitentryCallFilter<ExtrinsicParser>
+	for ShieldFundsAndCallWorkerFilter<ExtrinsicParser>
 where
 	ExtrinsicParser: ParseExtrinsic,
 {
