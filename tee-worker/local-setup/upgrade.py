@@ -2,6 +2,14 @@
 
 import os
 import subprocess
+import re
+
+def extract_number(line):
+    regex_pattern = r'\[(\d+)\]'
+    matches = re.findall(regex_pattern, line)
+    if matches:
+        return int(matches[-1])
+    return None
 
 output = subprocess.check_output('make mrenclave', shell=True).decode().strip().split('\n')[0].split(" ")
 
@@ -28,17 +36,14 @@ if output:
 else:
     print("Failed to extract MRENCLAVE value.")
 
-# # Read logs and extract the value of x
-# logs = subprocess.check_output('read_logs_command', shell=True).decode().strip()
-# regex_pattern = r'\[(\d+)\]'
-# matches = re.findall(regex_pattern, logs)
-#
-# if matches:
-#     last_match = int(matches[-1])
-#     incremented_value = last_match + 50
-#     print(f"Last match: {last_match}")
-#     print(f"Incremented value: {incremented_value}")
-#     os.environ['INCREMENTED_VALUE'] = str(incremented_value)
-#
-# # Run the bash script that calls a yarn script and stores environment variables
-# subprocess.run('bash_script.sh', shell=True)
+# Get the latest sidechain block number
+
+line = subprocess.check_output("grep '\[.*\]$' log/worker0.log | tail -n 1", shell=True).decode().strip();
+number = extract_number(line)
+current_sidechain_end_block = int(number) + 50
+print("The next enclave is scheduled to start producing blocks after:", current_sidechain_end_block, "blocks ")
+
+os.environ['SCHEDULE_UPDATE_BLOCK'] = str(current_sidechain_end_block)
+
+# Call yarn to set the extrinsic
+
