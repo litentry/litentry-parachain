@@ -10,10 +10,11 @@ import colors from "colors";
 const transferAmount = "100000000000000";
 const enclaveAccount = process.argv[2];
 const mrenclave = process.argv[3];
-const accountPassword = process.argv[4];
+const block = process.argv[4];
+// const accountPassword = process.argv[4];
 
 //put account in private.json
-const private_account_pair = require("./private.json");
+// const private_account_pair = require("./private.json");
 
 async function transfer(api: any, Alice: any) {
 
@@ -34,11 +35,39 @@ async function transfer(api: any, Alice: any) {
             });
     });
 }
-async function updateScheduledEnclave(api: any, signAccount: any) {
+async function setTeerexAdmin(api: any, Alice: any) {
     return new Promise(async (resolve, reject) => {
         await api.tx.sudo
-            .sudo(api.tx.teerex.updateScheduledEnclave(0, hexToU8a(`0x${mrenclave}`)))
-            .signAndSend(signAccount, ({ status, events, dispatchError }) => {
+            .sudo(api.tx.teerex.setAdmin("esqZdrqhgH8zy1wqYh1aLKoRyoRWLFbX9M62eKfaTAoK67pJ5"))
+            .signAndSend(Alice, ({ status, events, dispatchError }) => {
+                if (status.isInBlock || status.isFinalized) {
+                    if (dispatchError) {
+                        if (dispatchError.isModule) {
+                            // for module errors, we have the section indexed, lookup
+                            const decoded = api.registry.findMetaError(
+                                dispatchError.asModule
+                            );
+                            const { docs, name, section } = decoded;
+
+                            console.log(colors.red(`${section}.${name}: ${docs.join(" ")}`));
+                            reject("updateScheduledEnclave failed");
+                        } else {
+                            // Other, CannotLookup, BadOrigin, no extra info
+                            console.log(dispatchError.toString());
+                            reject("updateScheduledEnclave failed");
+                        }
+                    } else {
+                        console.log(colors.green("updateScheduledEnclave completed"));
+                        resolve("updateScheduledEnclave done");
+                    }
+                }
+            });
+    });
+}
+async function updateScheduledEnclave(api: any, Alice: any, block: any) {
+    return new Promise(async (resolve, reject) => {
+        await api.tx.teerex.updateScheduledEnclave(block, hexToU8a(`0x${mrenclave}`))
+            .signAndSend(Alice, ({ status, events, dispatchError }) => {
                 if (status.isInBlock || status.isFinalized) {
                     if (dispatchError) {
                         if (dispatchError.isModule) {
@@ -66,20 +95,21 @@ async function updateScheduledEnclave(api: any, signAccount: any) {
 
 async function main() {
 
+    // NOTE: If we are using development environment, we can use Alice instead of moving around with keys
     const keyring = new Keyring({ type: "sr25519" });
-    let signAccount = keyring.addFromJson(private_account_pair);
+    // let signAccount = keyring.addFromJson(private_account_pair);
 
     console.log(colors.green("account unlock..."));
 
     //unlock account
-    signAccount.toJson(accountPassword);
+    // signAccount.toJson(accountPassword);
 
     const { defaultAPI } = await initApi();
     const Alice = keyring.addFromUri("//Alice", { name: "Alice default" });
 
     await transfer(defaultAPI, Alice);
-
-    await updateScheduledEnclave(defaultAPI, signAccount);
+    await setTeerexAdmin(defaultAPI, Alice);
+    await updateScheduledEnclave(defaultAPI, Alice, block);
 
     console.log(colors.green("done"));
     process.exit();
