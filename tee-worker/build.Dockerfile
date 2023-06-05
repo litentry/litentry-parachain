@@ -95,7 +95,7 @@ RUN --mount=type=cache,id=cargo-registry,target=/opt/rust/registry \
 ##################################################
 FROM ubuntu:22.04 AS runner
 
-RUN apt update && apt install -y libssl-dev iproute2 curl protobuf-compiler
+RUN apt update && apt install -y libssl-dev iproute2 curl
 
 ## ts-tests
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash

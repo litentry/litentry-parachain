@@ -81,7 +81,7 @@ concurrency:
 
 jobs:
   set-condition:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     # see https://github.com/orgs/community/discussions/25722
     if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
     outputs:
@@ -135,7 +135,7 @@ jobs:
           echo "run_tee_test=$run_tee_test" | tee -a $GITHUB_OUTPUT
 
   fmt:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
@@ -174,7 +174,7 @@ jobs:
   # sequentialise the workflow runs on `dev` branch
   # the if condition is applied in step level to make this job always `successful`
   sequentialise:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Wait for previous run
         if: ${{ !failure() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
@@ -185,7 +185,7 @@ jobs:
           branch: dev
 
   parachain-clippy:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs:
       - fmt
       - set-condition
@@ -210,7 +210,7 @@ jobs:
         uses: andymckay/cancel-action@0.3
 
   tee-clippy:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs:
       - fmt
       - set-condition
@@ -245,7 +245,7 @@ jobs:
         uses: andymckay/cancel-action@0.3
 
   parachain-build-dev:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs:
       - fmt
       - set-condition
@@ -281,7 +281,7 @@ jobs:
         uses: andymckay/cancel-action@0.3
 
   parachain-build-tee-prod:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs:
       - fmt
       - set-condition
@@ -321,7 +321,7 @@ jobs:
         uses: andymckay/cancel-action@0.3
 
   tee-build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs:
       - fmt
       - set-condition
@@ -390,7 +390,7 @@ jobs:
         uses: andymckay/cancel-action@0.3
 
   parachain-ts-test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs:
       - set-condition
       - parachain-build-dev
@@ -431,7 +431,7 @@ jobs:
         uses: andymckay/cancel-action@0.3
 
   parachain-unit-test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs:
       - fmt
       - set-condition
@@ -458,7 +458,7 @@ jobs:
         uses: andymckay/cancel-action@0.3
 
   parachain-runtime-test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs:
       - fmt
       - set-condition
@@ -494,7 +494,7 @@ jobs:
         uses: andymckay/cancel-action@0.3
 
   tee-test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs:
       - set-condition
       - parachain-build-dev
@@ -603,7 +603,7 @@ jobs:
   #
   # `!failure()` needs to be used to cover skipped jobs
   push-docker:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     needs:
       - set-condition
       - parachain-ts-test
