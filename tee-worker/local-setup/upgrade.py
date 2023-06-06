@@ -14,9 +14,20 @@ def extract_number(line):
 output = subprocess.check_output('make mrenclave', shell=True).decode().strip().split('\n')[0].split(" ")
 
 if output:
-    mrenclave_value = output[1]
+    mrenclave_value = output
     print(f"MRENCLAVE value: {mrenclave_value}")
     os.environ['OLD_MRENCLAVE'] = mrenclave_value
+else:
+    print("Failed to extract MRENCLAVE value.")
+
+output = subprocess.check_output('cd bin && ./integritee-service signing-key', shell=True).decode().strip().split('\n')[1].split(" ")[2]
+
+print("Signing key", output)
+
+if output:
+    mrenclave_value = output[1]
+    print(f"Enclave Signing key value: {mrenclave_value}")
+    os.environ['ENCLAVE_ACCOUNT'] = mrenclave_value
 else:
     print("Failed to extract MRENCLAVE value.")
 
@@ -46,4 +57,12 @@ print("The next enclave is scheduled to start producing blocks after:", current_
 os.environ['SCHEDULE_UPDATE_BLOCK'] = str(current_sidechain_end_block)
 
 # Call yarn to set the extrinsic
+
+command = '../scripts/ts-utils/setup_enclave.sh'
+output = subprocess.check_output(command, shell=True).decode().strip()
+
+# Now we wait for existing enclave to finish producing block
+
+
+
 
