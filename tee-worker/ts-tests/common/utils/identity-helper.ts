@@ -73,19 +73,12 @@ export async function buildIdentityTxs(
                 ).toString('hex');
                 tx = context.api.tx.identityManagement.setUserShieldingKey(context.mrEnclave, `0x${ciphertext}`);
                 break;
-            case 'createIdentity':
-                tx = api.tx.identityManagement.createIdentity(
-                    mrEnclave,
-                    signer.address,
-                    `0x${ciphertext_identity}`,
-                    null
-                );
-                break;
+
             // 			shard: ShardIdentifier,
-			user: T::AccountId,
-			encrypted_identity: Vec<u8>,
-			encrypted_validation_data: Vec<u8>,
-			nonce: UserShieldingKeyNonceType,
+            // user: T::AccountId,
+            // encrypted_identity: Vec<u8>,
+            // encrypted_validation_data: Vec<u8>,
+            // nonce: UserShieldingKeyNonceType,
             case 'linkIdentity':
                 const data = validations![k];
                 const encode_verifyIdentity_validation = api.createType('LitentryValidationData', data).toU8a();

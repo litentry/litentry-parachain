@@ -41,7 +41,6 @@ export default {
                 reserved_balance: '(AccountId)',
                 user_shielding_key: '(AccountId)',
                 id_graph: '(AccountId)',
-                challenge_code: '(AccountId, LitentryIdentity)',
                 id_graph_stats: '(AccountId)',
             },
         },
@@ -54,7 +53,7 @@ export default {
                 balance_shield: '(AccountId, AccountId, Balance)',
                 set_user_shielding_key: '(AccountId, AccountId, UserShieldingKeyType, H256)',
                 link_identity:
-                    '(AccountId, AccountId, Identity, LitentryValidationData, UserShieldingKeyNonceType, H256)',
+                    '(AccountId, AccountId, LitentryIdentity, LitentryValidationData, UserShieldingKeyNonceType, H256)',
                 remove_identity: '(AccountId, AccountId, LitentryIdentity, H256)',
                 request_vc: '(AccountId, AccountId, Assertion, u32, H256)',
             },

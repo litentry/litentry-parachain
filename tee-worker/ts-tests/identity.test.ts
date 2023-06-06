@@ -35,10 +35,6 @@ const substrateExtensionIdentity = <LitentryIdentity>{
 import { Event } from '@polkadot/types/interfaces';
 
 describeLitentry('Test Identity', 0, (context) => {
-    const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
-    // used for identity verification calculation
-    // TODO: randomize it - adjustments are needed for mock-server too
-    const keyNonce = 
     const errorAesKey = '0xError';
     const errorCiphertext = '0xError';
     //random wrong msg

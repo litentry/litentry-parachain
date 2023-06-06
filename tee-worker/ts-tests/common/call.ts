@@ -7,6 +7,17 @@ import { HexString } from '@polkadot/util/types';
 import { RequestBody } from './type-definitions';
 import { WorkerRpcReturnValue } from '../interfaces/identity';
 
+// TODO:
+// - better place to put these constants?
+// - maybe randomise it in test initialisation
+//
+// the user shielding key
+export const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
+// the key nonce to calculate the verification message
+// copied from hardcoded mock-server
+// MOCK_VERIFICATION_NONCE: UserShieldingKeyNonceType = [1u8; 12];
+export const keyNonce = '0x010101010101010101010101';
+
 // send RPC request
 export async function sendRequest(
     wsClient: WebSocketAsPromised,

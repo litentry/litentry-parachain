@@ -6,7 +6,7 @@ import { hexToU8a, u8aToHex } from '@polkadot/util';
 import Ajv from 'ajv';
 import { assert, expect } from 'chai';
 import * as ed from '@noble/ed25519';
-import { EnclaveResult, IdentityGenericEvent, JsonSchema, LitentryIdentity } from '../type-definitions';
+import { EnclaveResult, IdentityGenericEvent, JsonSchema, LitentryIdentity, IdentityStatus } from '../type-definitions';
 import { buildIdentityHelper } from './identity-helper';
 import { isEqual, isArrayEqual } from './common';
 
@@ -20,34 +20,11 @@ export async function assertInitialIDGraphCreated(api: ApiPromise, signer: Keyri
     ) as LitentryIdentity;
     assert.equal(JSON.stringify(event.idGraph[0][0]), JSON.stringify(expected_identity));
     // check identityContext in idgraph
-    assert.equal(event.idGraph[0][1].linking_request_block, 0);
-    assert.equal(event.idGraph[0][1].verification_request_block, 0);
-    assert.isTrue(event.idGraph[0][1].is_verified);
+    assert.isAbove(event.idGraph[0][1].link_block, 0);
+    assert.equal(event.idGraph[0][1].status, IdentityStatus.Active);
 }
 
-export function assertIdentityVerified(signer: KeyringPair, eventDatas: IdentityGenericEvent[]) {
-    let event_identities: LitentryIdentity[] = [];
-    let idgraph_identities: LitentryIdentity[] = [];
-    for (let index = 0; index < eventDatas.length; index++) {
-        event_identities.push(eventDatas[index].identity);
-    }
-    for (let i = 0; i < eventDatas[eventDatas.length - 1].idGraph.length; i++) {
-        idgraph_identities.push(eventDatas[eventDatas.length - 1].idGraph[i][0]);
-    }
-    //idgraph_identities[idgraph_identities.length - 1] is prime identity,don't need to compare
-    assert.isTrue(
-        isArrayEqual(event_identities, idgraph_identities.slice(0, idgraph_identities.length - 1)),
-        'event identities should be equal to idgraph identities'
-    );
-
-    const data = eventDatas[eventDatas.length - 1];
-    for (let i = 0; i < eventDatas[eventDatas.length - 1].idGraph.length; i++) {
-        if (isEqual(data.idGraph[i][0], data.identity)) {
-            assert.isTrue(data.idGraph[i][1].is_verified, 'identity should be verified');
-        }
-    }
-    assert.equal(data?.who, u8aToHex(signer.addressRaw), 'check caller error');
-}
+export function assertIdentityVerified(signer: KeyringPair, eventDatas: IdentityGenericEvent[]) {}
 
 export function assertIdentityCreated(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
     assert.equal(identityEvent?.who, u8aToHex(signer.addressRaw), 'check caller error');

@@ -185,7 +185,7 @@ export interface TrustedCall extends Enum {
     readonly asSetUserShieldingKey: ITuple<[AccountId, AccountId, UserShieldingKeyType, H256]>;
     readonly isLinkIdentity: boolean;
     readonly asLinkIdentity: ITuple<
-        [AccountId, AccountId, Identity, LitentryValidationData, UserShieldingKeyNonceType, H256]
+        [AccountId, AccountId, LitentryIdentity, LitentryValidationData, UserShieldingKeyNonceType, H256]
     >;
     readonly isRemoveIdentity: boolean;
     readonly asRemoveIdentity: ITuple<[AccountId, AccountId, LitentryIdentity, H256]>;
@@ -219,17 +219,9 @@ export interface TrustedGetter extends Enum {
     readonly asUserShieldingKey: AccountId;
     readonly isIdGraph: boolean;
     readonly asIdGraph: AccountId;
-    readonly isChallengeCode: boolean;
-    readonly asChallengeCode: ITuple<[AccountId, LitentryIdentity]>;
     readonly isIdGraphStats: boolean;
     readonly asIdGraphStats: AccountId;
-    readonly type:
-        | 'FreeBalance'
-        | 'ReservedBalance'
-        | 'UserShieldingKey'
-        | 'IdGraph'
-        | 'ChallengeCode'
-        | 'IdGraphStats';
+    readonly type: 'FreeBalance' | 'ReservedBalance' | 'UserShieldingKey' | 'IdGraph' | 'IdGraphStats';
 }
 
 /** @name TrustedGetterSigned */
