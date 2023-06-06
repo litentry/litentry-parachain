@@ -224,7 +224,7 @@ jobs:
         working-directory: ./tee-worker
         run: |
           rustup show
-          sudo apt install protobuf-compiler
+          sudo apt-get install protobuf-compiler
           cargo clippy -- -D warnings
           cargo clippy --features evm -- -D warnings
           cargo clippy --features sidechain -- -D warnings
@@ -235,7 +235,7 @@ jobs:
         working-directory: ./tee-worker/enclave-runtime
         run: |
           rustup show
-          sudo apt install protobuf-compiler
+          sudo apt-get install protobuf-compiler
           cargo clippy -- -D warnings
           cargo clippy --features evm -- -D warnings
           cargo clippy --features sidechain -- -D warnings
