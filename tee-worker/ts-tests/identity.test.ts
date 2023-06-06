@@ -16,6 +16,7 @@ import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import {
+    IdentityStatus,
     LitentryIdentity,
     LitentryValidationData,
     SubstrateIdentity,
@@ -35,6 +36,9 @@ import { Event } from '@polkadot/types/interfaces';
 
 describeLitentry('Test Identity', 0, (context) => {
     const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
+    // used for identity verification calculation
+    // TODO: randomize it - adjustments are needed for mock-server too
+    const keyNonce = 
     const errorAesKey = '0xError';
     const errorCiphertext = '0xError';
     //random wrong msg
@@ -116,7 +120,7 @@ describeLitentry('Test Identity', 0, (context) => {
         assert.equal(resp_shieldingKey, aesKey, 'resp_shieldingKey should be equal aesKey after set');
     });
 
-    step('check idgraph from sidechain storage before create', async function () {
+    step('check idgraph from sidechain storage before linking', async function () {
         // the main address should be already inside the IDGraph
         const main_identity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.alice.addressRaw),
@@ -131,16 +135,11 @@ describeLitentry('Test Identity', 0, (context) => {
             u8aToHex(context.substrateWallet.alice.addressRaw),
             identity_hex
         );
-        assert.equal(
-            resp_id_graph.verification_request_block,
-            0,
-            'verification_request_block should be 0 for main address'
-        );
-        assert.equal(resp_id_graph.linking_request_block, 0, 'linking_request_block should be 0 for main address');
-        assert.equal(resp_id_graph.is_verified, true, 'IDGraph is_verified should be true for main address');
+        assert.isAbove(resp_id_graph.link_block, 0, 'link_block should be greater than 0 for main address');
+        assert.equal(resp_id_graph.status, IdentityStatus.Active, 'status should be active for main address');
         // TODO: check IDGraph.length == 1 in the sidechain storage
     });
-    step('create identities', async function () {
+    step('link identities', async function () {
         //Alice
         const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
         const ethereum_identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Ethereum', 'Evm');

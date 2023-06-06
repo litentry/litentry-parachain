@@ -140,11 +140,14 @@ export type IdentityGenericEvent = {
     challengeCode?: HexString;
 };
 
+export enum IdentityStatus {
+    Active = 'Active',
+    Inactive = 'Inactive',
+}
+
 export type IdentityContext = {
-    metadata?: HexString;
-    linking_request_block?: number;
-    verification_request_block?: number;
-    is_verified: boolean;
+    link_block: number;
+    status: IdentityStatus;
 };
 
 //vc types
@@ -163,9 +166,8 @@ export enum IndexingNetwork {
     Ethereum = 'Ethereum',
 }
 export enum RequestEvent {
-    CreateIdentityRequested = 'CreateIdentityRequested',
+    LinkdentityRequested = 'LinkdentityRequested',
     SetUserShieldingKeyRequested = 'SetUserShieldingKeyRequested',
-    VerifyIdentityRequested = 'VerifyIdentityRequested',
     RemoveIdentityRequested = 'RemoveIdentityRequested',
     VCRequested = 'VCRequested',
     ItemCompleted = 'ItemCompleted',

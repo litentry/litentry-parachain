@@ -33,6 +33,7 @@ import type {
     TrustedOperation,
     TrustedOperationStatus,
     TwitterValidationData,
+    UserShieldingKeyNonceType,
     UserShieldingKeyType,
     VCRequested,
     Web2Identity,
@@ -2250,6 +2251,7 @@ declare module '@polkadot/types/types/registry' {
         UpgradeGoAhead: UpgradeGoAhead;
         UpgradeRestriction: UpgradeRestriction;
         UpwardMessage: UpwardMessage;
+        UserShieldingKeyNonceType: UserShieldingKeyNonceType;
         UserShieldingKeyType: UserShieldingKeyType;
         usize: usize;
         USize: USize;

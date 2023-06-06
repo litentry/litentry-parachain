@@ -500,7 +500,7 @@ where
 				if let Err(e) = Self::link_identity_internal(
 					signer,
 					who.clone(),
-					identity.clone(),
+					identity,
 					validation_data,
 					nonce,
 					hash,

@@ -48,7 +48,7 @@ export async function buildIdentityTxs(
     context: IntegrationTestContext,
     signers: KeyringPair[] | KeyringPair,
     identities: LitentryIdentity[],
-    method: 'setUserShieldingKey' | 'createIdentity' | 'verifyIdentity' | 'removeIdentity',
+    method: 'setUserShieldingKey' | 'linkIdentity' | 'removeIdentity',
     validations?: LitentryValidationData[]
 ): Promise<any[]> {
     const txs: any[] = [];
@@ -81,15 +81,21 @@ export async function buildIdentityTxs(
                     null
                 );
                 break;
-            case 'verifyIdentity':
+            // 			shard: ShardIdentifier,
+			user: T::AccountId,
+			encrypted_identity: Vec<u8>,
+			encrypted_validation_data: Vec<u8>,
+			nonce: UserShieldingKeyNonceType,
+            case 'linkIdentity':
                 const data = validations![k];
                 const encode_verifyIdentity_validation = api.createType('LitentryValidationData', data).toU8a();
                 const ciphertext_verifyIdentity_validation = encryptWithTeeShieldingKey(
                     teeShieldingKey,
                     encode_verifyIdentity_validation
                 ).toString('hex');
-                tx = api.tx.identityManagement.verifyIdentity(
+                tx = api.tx.identityManagement.linkIdentity(
                     mrEnclave,
+                    signer.address,
                     `0x${ciphertext_identity}`,
                     `0x${ciphertext_verifyIdentity_validation}`
                 );

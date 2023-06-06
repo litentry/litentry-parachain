@@ -49,6 +49,7 @@ impl TrustedCallSigned {
 			.map_or_else(|e| Err(StfError::SetUserShieldingKeyFailed(e.error.into())), |_| Ok(key))
 	}
 
+	#[allow(clippy::too_many_arguments)]
 	pub fn link_identity_internal(
 		signer: AccountId,
 		who: AccountId,
