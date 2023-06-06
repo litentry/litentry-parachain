@@ -14,7 +14,7 @@ def extract_number(line):
 output = subprocess.check_output('make mrenclave', shell=True).decode().strip().split('\n')[0].split(" ")
 
 if output:
-    mrenclave_value = output
+    mrenclave_value = output[1]
     print(f"MRENCLAVE value: {mrenclave_value}")
     os.environ['OLD_MRENCLAVE'] = mrenclave_value
 else:
@@ -25,7 +25,7 @@ output = subprocess.check_output('cd bin && ./integritee-service signing-key', s
 print("Signing key", output)
 
 if output:
-    mrenclave_value = output[1]
+    mrenclave_value = output
     print(f"Enclave Signing key value: {mrenclave_value}")
     os.environ['ENCLAVE_ACCOUNT'] = mrenclave_value
 else:
@@ -60,19 +60,27 @@ os.environ['SCHEDULE_UPDATE_BLOCK'] = str(current_sidechain_end_block)
 
 command = '../scripts/ts-utils/setup_enclave.sh'
 output = subprocess.check_output(command, shell=True).decode().strip()
+print(output)
+print("Finished executing setting up enclave script")
 
 # Now we wait for existing enclave to finish producing block
 command = 'scripts/litentry/stop_old_worker.sh'
 output = subprocess.check_output(command, shell=True).decode().strip()
+print(output)
+print("Finished stopping old worker")
 
 # Once the old worker cannot produce new blocks, We migrate the to new worker
 command = 'scripts/litentry/migrate_worker.sh'
 output = subprocess.check_output(command, shell=True).decode().strip()
+print(output)
+print("Finished migrating worker shards and files")
 
 # Once the above is completed, We launch the worker again
-command = 'local-setup/launch.py ./local-setup/development-worker.json remote'
+print("Restarting worker")
+command = 'local-setup/launch-worker.py ./local-setup/development-worker.json local-binary 2000'
 output = subprocess.check_output(command, shell=True).decode().strip()
 
+print("Launching worker complete")
 # Check if the enclave has succesfully resumed or not
 
 
