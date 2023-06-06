@@ -222,7 +222,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys E5C7F0FA1C6C6C3C  \
+          sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys E5C7F0FA1C6C6C3C  && \
           sudo apt-get update && \
           sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
 
