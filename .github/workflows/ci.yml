@@ -220,11 +220,15 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Install dependencies
+        run: |
+          sudo apt-get update &&
+          sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
+
       - name: Tee-worker clippy
         working-directory: ./tee-worker
         run: |
           rustup show
-          sudo apt-get install protobuf-compiler
           cargo clippy -- -D warnings
           cargo clippy --features evm -- -D warnings
           cargo clippy --features sidechain -- -D warnings
@@ -235,7 +239,6 @@ jobs:
         working-directory: ./tee-worker/enclave-runtime
         run: |
           rustup show
-          sudo apt-get install protobuf-compiler
           cargo clippy -- -D warnings
           cargo clippy --features evm -- -D warnings
           cargo clippy --features sidechain -- -D warnings
