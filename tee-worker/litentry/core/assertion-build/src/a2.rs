@@ -22,10 +22,9 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use itp_stf_primitives::types::ShardIdentifier;
-use itp_types::AccountId;
-use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::{discord_litentry::DiscordLitentryClient, vec_to_string};
+use litentry_primitives::IdGraphIdentifier;
 use log::*;
 use std::vec::Vec;
 
@@ -38,12 +37,11 @@ pub fn build(
 	identities: Vec<Identity>,
 	guild_id: ParameterString,
 	shard: &ShardIdentifier,
-	who: &AccountId,
+	id_graph_identifier: &IdGraphIdentifier,
 ) -> Result<Credential> {
 	debug!(
-		"Assertion A2 build, who: {:?}, identities: {:?}",
-		account_id_to_string(&who),
-		identities
+		"Assertion A2 build, id_graph_identifier: {:?}, identities: {:?}",
+		&id_graph_identifier, identities
 	);
 
 	let mut discord_cnt: i32 = 0;
@@ -79,7 +77,7 @@ pub fn build(
 		}
 	}
 
-	match Credential::new_default(who, &shard.clone()) {
+	match Credential::new_default(id_graph_identifier, &shard.clone()) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_A2_SUBJECT_DESCRIPTION,
@@ -105,7 +103,9 @@ mod tests {
 	use itp_stf_primitives::types::ShardIdentifier;
 	use itp_types::AccountId;
 	use lc_data_providers::G_DATA_PROVIDERS;
-	use litentry_primitives::{Identity, IdentityString, Web2Network};
+	use litentry_primitives::{
+		Address32, IdGraphIdentifier, Identity, IdentityString, Web2Network,
+	};
 	use log;
 	use std::{format, vec, vec::Vec};
 
@@ -127,8 +127,9 @@ mod tests {
 		let guild_id = BoundedVec::try_from(guild_id_vec).unwrap();
 		let who = AccountId::from([0; 32]);
 		let shard = ShardIdentifier::default();
+		let id_graph_identifier = IdGraphIdentifier::Substrate { address: Address32::from(who) };
 
-		let _ = build(identities, guild_id, &shard, &who);
+		let _ = build(identities, guild_id, &shard, &id_graph_identifier);
 		log::info!("assertion2 test");
 	}
 }

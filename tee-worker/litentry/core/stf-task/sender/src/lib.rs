@@ -30,7 +30,7 @@ pub mod sgx_reexport_prelude {
 	pub use url_sgx as url;
 }
 
-use itp_types::{AccountId, H256};
+use itp_types::H256;
 pub mod error;
 pub mod stf_task_sender;
 use codec::{Decode, Encode};
@@ -38,7 +38,8 @@ pub use error::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::Index;
 use litentry_primitives::{
-	Assertion, Identity, UserShieldingKeyNonceType, UserShieldingKeyType, ValidationData,
+	Assertion, IdGraphIdentifier, Identity, UserShieldingKeyNonceType, UserShieldingKeyType,
+	ValidationData,
 };
 use sp_runtime::traits::ConstU32;
 use sp_std::prelude::Vec;
@@ -70,13 +71,12 @@ use sp_std::prelude::Vec;
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct IdentityVerificationRequest {
 	pub shard: ShardIdentifier,
-	pub who: AccountId,
+	pub id_graph_id: IdGraphIdentifier,
 	pub identity: Identity,
 	pub validation_data: ValidationData,
 	pub sidechain_nonce: Index,
 	pub key_nonce: UserShieldingKeyNonceType,
 	pub key: UserShieldingKeyType,
-	pub parent_ss58_prefix: u16,
 	pub hash: H256,
 }
 
@@ -85,7 +85,7 @@ pub type MaxIdentityLength = ConstU32<64>;
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct AssertionBuildRequest {
 	pub shard: ShardIdentifier,
-	pub who: AccountId,
+	pub id_graph_id: IdGraphIdentifier,
 	pub assertion: Assertion,
 	pub vec_identity: Vec<Identity>,
 	pub hash: H256,

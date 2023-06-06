@@ -22,7 +22,7 @@ use itp_storage::{storage_double_map_key, storage_map_key, storage_value_key, St
 use itp_types::Index;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
-	aes_encrypt_nonce, Identity, UserShieldingKeyNonceType, UserShieldingKeyType,
+	aes_encrypt_nonce, IdGraphIdentifier, Identity, UserShieldingKeyNonceType, UserShieldingKeyType,
 };
 use log::*;
 use sp_core::blake2_256;
@@ -121,14 +121,17 @@ pub fn is_authorised_signer<AccountId: Encode + Decode + PartialEq>(
 // blake2_256(<sidechain nonce> + shieldingKey.encrypt(<primary account> + <identity-to-be-linked>).ciphertext)
 // where <> means SCALE-encoded
 // see https://github.com/litentry/litentry-parachain/issues/1739
-pub fn get_expected_raw_message<AccountId: Encode + Decode>(
-	who: &AccountId,
+pub fn get_expected_raw_message(
+	who: &IdGraphIdentifier,
 	identity: &Identity,
 	sidechain_nonce: Index,
 	key: UserShieldingKeyType,
 	nonce: UserShieldingKeyNonceType,
 ) -> Vec<u8> {
-	let mut data = who.encode();
+	let mut data = match who {
+		IdGraphIdentifier::Substrate { address } => address.encode(),
+		IdGraphIdentifier::Evm { address } => address.encode(),
+	};
 	data.append(&mut identity.encode());
 	let mut encrypted_data = aes_encrypt_nonce(&key, &data, nonce).ciphertext;
 	let mut payload = sidechain_nonce.encode();

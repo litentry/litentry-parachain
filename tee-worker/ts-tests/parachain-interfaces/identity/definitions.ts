@@ -1,5 +1,3 @@
-import { InfuraWebSocketProvider } from '@ethersproject/providers';
-
 export default {
     types: {
         WorkerRpcReturnValue: {
@@ -17,7 +15,7 @@ export default {
         TrustedCallSigned: {
             call: 'TrustedCall',
             index: 'u32',
-            signature: 'MultiSignature',
+            signature: 'LitentryMultiSignature',
         },
         Getter: {
             _enum: {
@@ -28,36 +26,36 @@ export default {
         PublicGetter: {
             _enum: {
                 some_value: 'u32',
-                nonce: '(AccountId)',
+                nonce: '(LitentryAddress)',
             },
         },
         TrustedGetterSigned: {
             getter: 'TrustedGetter',
-            signature: 'MultiSignature',
+            signature: 'LitentryMultiSignature',
         },
 
         //important
         TrustedGetter: {
             _enum: {
-                free_balance: '(AccountId)',
-                reserved_balance: '(AccountId)',
-                user_shielding_key: '(AccountId)',
-                id_graph: '(AccountId)',
-                id_graph_stats: '(AccountId)',
+                free_balance: '(LitentryAddress)',
+                reserved_balance: '(LitentryAddress)',
+                user_shielding_key: '(LitentryAddress)',
+                id_graph: '(LitentryAddress)',
+                id_graph_stats: '(LitentryAddress)',
             },
         },
         //important
         TrustedCall: {
             _enum: {
-                balance_set_balance: '(AccountId, AccountId, Balance, Balance)',
-                balance_transfer: '(AccountId, AccountId, Balance)',
-                balance_unshield: '(AccountId, AccountId, Balance, ShardIdentifier)',
-                balance_shield: '(AccountId, AccountId, Balance)',
-                set_user_shielding_key: '(AccountId, AccountId, UserShieldingKeyType, H256)',
+                balance_set_balance: '(LitentryAddress, AccountId, Balance, Balance)',
+                balance_transfer: '(LitentryAddress, AccountId, Balance)',
+                balance_unshield: '(LitentryAddress, AccountId, Balance, ShardIdentifier)',
+                balance_shield: '(LitentryAddress, AccountId, Balance)',
+                set_user_shielding_key: '(LitentryAddress, IdGraphIdentifier, UserShieldingKeyType, H256)',
                 link_identity:
-                    '(AccountId, AccountId, LitentryIdentity, LitentryValidationData, UserShieldingKeyNonceType, H256)',
-                remove_identity: '(AccountId, AccountId, LitentryIdentity, H256)',
-                request_vc: '(AccountId, AccountId, Assertion, u32, H256)',
+                    '(LitentryAddress, IdGraphIdentifier, LitentryIdentity, LitentryValidationData, UserShieldingKeyNonceType, H256)',
+                remove_identity: '(LitentryAddress, IdGraphIdentifier, LitentryIdentity, H256)',
+                request_vc: '(LitentryAddress, IdGraphIdentifier, Assertion, u32, H256)',
             },
         },
         UserShieldingKeyType: '[u8; 32]',
@@ -83,6 +81,28 @@ export default {
                 Dropped: null,
                 Invalid: null,
             },
+        },
+
+        LitentryAddress: {
+            _enum: {
+                Substrate: 'Address32',
+                Evm: 'Address20',
+            },
+        },
+
+        IdGraphIdentifier: {
+            _enum: {
+                Substrate: 'LitentryAddress32',
+                Evm: 'LitentryAddress20',
+            },
+        },
+
+        LitentryAddress20: {
+            address: 'Address20',
+        },
+
+        LitentryAddress32: {
+            address: 'Address32',
         },
 
         // identity management
@@ -145,10 +165,10 @@ export default {
         },
         Web3CommonValidationData: {
             message: 'Vec<u8>',
-            signature: 'IdentityMultiSignature',
+            signature: 'LitentryMultiSignature',
         },
 
-        IdentityMultiSignature: {
+        LitentryMultiSignature: {
             _enum: {
                 Ed25519: 'ed25519::Signature',
                 Sr25519: 'sr25519::Signature',

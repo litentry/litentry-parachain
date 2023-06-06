@@ -46,6 +46,9 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 itc-parentchain-test = { path = "../../core/parentchain/test", optional = true, default-features = false }
 itp-test = { path = "../test", default-features = false, optional = true }
 
+# litentry
+litentry-primitives = { path = "../../litentry/primitives", default-features = false }
+
 [dev-dependencies]
 itp-stf-state-observer = { path = "../stf-state-observer", features = ["mocks"] }
 itp-stf-interface = { path = "../stf-interface", features = ["mocks"] }
@@ -75,6 +78,8 @@ std = [
     "sp-core/std",
     "sp-runtime/std",
     "thiserror",
+    # litentry
+    "litentry-primitives/std",
 ]
 sgx = [
     "sgx_tstd",
@@ -88,6 +93,8 @@ sgx = [
     "itp-storage/sgx",
     "itp-time-utils/sgx",
     "thiserror_sgx",
+    # litentry
+    "litentry-primitives/sgx",
 ]
 test = [
     "itc-parentchain-test",

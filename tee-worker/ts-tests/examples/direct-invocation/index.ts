@@ -11,8 +11,16 @@ import {
     createSignedTrustedGetterUserShieldingKey,
     sendRequestFromGetter,
     getSidechainNonce,
+    getKeyPair,
 } from './util';
-import { getEnclave, sleep, buildIdentityHelper, initIntegrationTestContext } from '../../common/utils';
+import {
+    getEnclave,
+    sleep,
+    buildIdentityHelper,
+    initIntegrationTestContext,
+    buildAddressHelper,
+    buildIdGraphIdentityHelper,
+} from '../../common/utils';
 import { aesKey, keyNonce } from '../../common/call';
 import { Metadata, TypeRegistry } from '@polkadot/types';
 import sidechainMetaData from '../../litentry-sidechain-metadata.json';
@@ -20,6 +28,7 @@ import { hexToU8a } from '@polkadot/util';
 import type { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
 import type { LitentryValidationData } from '../../parachain-interfaces/identity/types';
 import { assert } from 'chai';
+import { KeypairType } from '@polkadot/util-crypto/types';
 
 // in order to handle self-signed certificates we need to turn off the validation
 // TODO add self signed certificate
@@ -32,7 +41,9 @@ const keyring = new Keyring({ type: 'sr25519' });
 const PARACHAIN_WS_ENDPINT = 'ws://localhost:9944';
 const WORKER_TRUSTED_WS_ENDPOINT = 'wss://localhost:2000';
 
-async function runDirectCall() {
+async function runDirectCall(keyPairType: KeypairType) {
+    const keyring = new Keyring({ type: keyPairType });
+
     const parachain_ws = new WsProvider(PARACHAIN_WS_ENDPINT);
     const sidechainRegistry = new TypeRegistry();
     const metaData = new Metadata(sidechainRegistry, sidechainMetaData.result as HexString);
@@ -57,11 +68,17 @@ async function runDirectCall() {
 
     let key = await getTEEShieldingKey(wsp, parachain_api);
 
-    const alice: KeyringPair = keyring.addFromUri('//Alice', { name: 'Alice' });
-    const bob: KeyringPair = keyring.addFromUri('//Bob', { name: 'Bob' });
+    const alice: KeyringPair = getKeyPair('Alice', keyring);
+    const bob: KeyringPair = getKeyPair('Bob', keyring);
     const mrenclave = (await getEnclave(parachain_api)).mrEnclave;
 
-    let nonce = await getSidechainNonce(wsp, parachain_api, mrenclave, key, alice.address);
+    let aliceAddress = await buildAddressHelper(alice);
+    let bobAddress = await buildAddressHelper(bob);
+
+    let aliceIdGraphIdentifier = await buildIdGraphIdentityHelper(alice);
+    let bobIdGraphIdentifier = await buildIdGraphIdentityHelper(bob);
+
+    let nonce = await getSidechainNonce(wsp, parachain_api, mrenclave, key, aliceAddress);
 
     // a hardcoded AES key which is used overall in tests - maybe we need to put it in a common place
     const key_alice = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
@@ -75,6 +92,8 @@ async function runDirectCall() {
         mrenclave,
         nonce,
         alice,
+        aliceAddress,
+        aliceIdGraphIdentifier,
         aesKey,
         hash
     );
@@ -85,7 +104,7 @@ async function runDirectCall() {
 
     hash = `0x${require('crypto').randomBytes(32).toString('hex')}`;
 
-    nonce = await getSidechainNonce(wsp, parachain_api, mrenclave, key, alice.address);
+    nonce = await getSidechainNonce(wsp, parachain_api, mrenclave, key, aliceAddress);
 
     console.log('Send direct createIdentity call... hash:', hash);
     const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2', context);
@@ -94,6 +113,8 @@ async function runDirectCall() {
         mrenclave,
         nonce,
         alice,
+        aliceAddress,
+        aliceIdGraphIdentifier,
         sidechainRegistry.createType('LitentryPrimitivesIdentity', twitter_identity).toHex(),
         parachain_api
             .createType('LitentryValidationData', {
@@ -113,7 +134,7 @@ async function runDirectCall() {
     sleep(10);
 
     console.log('Send UserShieldingKey getter for alice ...');
-    let UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachain_api, alice);
+    let UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachain_api, alice, aliceAddress);
     res = await sendRequestFromGetter(wsp, parachain_api, mrenclave, key, UserShieldingKeyGetter);
     console.log('UserShieldingKey getter returned', res.toHuman());
     // the returned res.value of the trustedGetter is of Option<> type
@@ -128,7 +149,7 @@ async function runDirectCall() {
 
     // bob's shielding key should be none
     console.log('Send UserShieldingKey getter for bob ...');
-    UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachain_api, bob);
+    UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachain_api, bob, bobAddress);
     res = await sendRequestFromGetter(wsp, parachain_api, mrenclave, key, UserShieldingKeyGetter);
     console.log('UserShieldingKey getter returned', res.toHuman());
     k = parachain_api.createType('Option<Bytes>', hexToU8a(res.value.toHex()));
@@ -136,7 +157,7 @@ async function runDirectCall() {
 
     sleep(10);
 
-    nonce = await getSidechainNonce(wsp, parachain_api, mrenclave, key, bob.address);
+    nonce = await getSidechainNonce(wsp, parachain_api, mrenclave, key, bobAddress);
 
     // set bob's shielding key, with wrapped bytes
     let key_bob = '0x8378193a4ce64180814bd60591d1054a04dbc4da02afde453799cd6888ee0c6c';
@@ -147,6 +168,8 @@ async function runDirectCall() {
         mrenclave,
         nonce,
         bob,
+        bobAddress,
+        bobIdGraphIdentifier,
         key_bob,
         hash,
         true // with wrapped bytes
@@ -156,7 +179,7 @@ async function runDirectCall() {
 
     // verify that bob's key is set
     console.log('Send UserShieldingKey getter for bob ...');
-    UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachain_api, bob);
+    UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachain_api, bob, bobAddress);
     res = await sendRequestFromGetter(wsp, parachain_api, mrenclave, key, UserShieldingKeyGetter);
     console.log('UserShieldingKey getter returned', res.toHuman());
     k = parachain_api.createType('Option<Bytes>', hexToU8a(res.value.toHex()));
@@ -165,7 +188,7 @@ async function runDirectCall() {
 }
 
 (async () => {
-    await runDirectCall().catch((e) => {
+    await runDirectCall('sr25519').catch((e) => {
         console.error(e);
     });
     process.exit(0);

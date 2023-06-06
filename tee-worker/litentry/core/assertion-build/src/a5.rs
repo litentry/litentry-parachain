@@ -22,10 +22,9 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use itp_stf_primitives::types::ShardIdentifier;
-use itp_types::AccountId;
-use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::{twitter_official::TwitterOfficialClient, vec_to_string};
+use litentry_primitives::IdGraphIdentifier;
 use log::*;
 use std::{format, vec::Vec};
 
@@ -38,12 +37,11 @@ pub fn build(
 	identities: Vec<Identity>,
 	original_tweet_id: ParameterString,
 	shard: &ShardIdentifier,
-	who: &AccountId,
+	id_graph_identifier: &IdGraphIdentifier,
 ) -> Result<Credential> {
 	debug!(
-		"Assertion A5 build, who: {:?}, identities: {:?}",
-		account_id_to_string(&who),
-		identities
+		"Assertion A5 build, id_graph_identifier: {:?}, identities: {:?}",
+		&id_graph_identifier, identities
 	);
 
 	//ToDo: Check this string is a pure number or not, to avoid wasting API calls.
@@ -118,7 +116,7 @@ pub fn build(
 		}
 	}
 
-	match Credential::new_default(who, &shard.clone()) {
+	match Credential::new_default(id_graph_identifier, &shard.clone()) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_A5_SUBJECT_DESCRIPTION,

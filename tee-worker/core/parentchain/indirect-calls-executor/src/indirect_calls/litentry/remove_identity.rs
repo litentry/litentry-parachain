@@ -24,7 +24,7 @@ use ita_stf::{TrustedCall, TrustedOperation};
 
 use itp_types::{ShardIdentifier, H256};
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::Identity;
+use litentry_primitives::{Address, IdGraphIdentifier, Identity};
 use log::debug;
 use sp_runtime::traits::{AccountIdLookup, StaticLookup};
 use std::vec::Vec;
@@ -55,8 +55,12 @@ impl RemoveIdentityArgs {
 			);
 
 			let enclave_account_id = executor.get_enclave_account()?;
-			let trusted_call =
-				TrustedCall::remove_identity(enclave_account_id, account, identity, hash);
+			let trusted_call = TrustedCall::remove_identity(
+				Address::Substrate(enclave_account_id.into()),
+				IdGraphIdentifier::Substrate { address: account.into() },
+				identity,
+				hash,
+			);
 			let signed_trusted_call = executor.sign_call_with_self(&trusted_call, &self.shard)?;
 			let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
 

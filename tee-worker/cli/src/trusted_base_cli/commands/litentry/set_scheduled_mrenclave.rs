@@ -25,6 +25,7 @@ use codec::Decode;
 use ita_stf::{Index, TrustedCall, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
 use itp_types::SidechainBlockNumber;
+use litentry_primitives::Address;
 use log::*;
 use sp_core::Pair;
 use std::boxed::Box;
@@ -46,10 +47,13 @@ impl SetScheduledMrenclaveCommand {
 
 		let mut enclave_to_set: MrEnclave = [0u8; 32];
 		enclave_to_set.copy_from_slice(&hex::decode(&self.mrenclave).unwrap());
-		let top: TrustedOperation =
-			TrustedCall::set_scheduled_mrenclave(root.public().into(), self.bn, enclave_to_set)
-				.sign(&KeyPair::Sr25519(Box::new(root)), nonce, &mrenclave, &shard)
-				.into_trusted_operation(trusted_cli.direct);
+		let top: TrustedOperation = TrustedCall::set_scheduled_mrenclave(
+			Address::Substrate(root.public().into()),
+			self.bn,
+			enclave_to_set,
+		)
+		.sign(&KeyPair::Sr25519(Box::new(root)), nonce, &mrenclave, &shard)
+		.into_trusted_operation(trusted_cli.direct);
 		perform_trusted_operation(cli, trusted_cli, &top);
 	}
 }

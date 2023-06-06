@@ -3,7 +3,7 @@ import { xxhashAsU8a } from '@polkadot/util-crypto';
 import { StorageEntryMetadataV14, SiLookupTypeId, StorageHasherV14 } from '@polkadot/types/interfaces';
 import { sendRequest } from '../call';
 import { blake2128Concat, twox64Concat, identity } from '../helpers';
-import type { IntegrationTestContext } from '../type-definitions';
+import type { IdGraphIdentifier, IntegrationTestContext } from '../type-definitions';
 import type { PalletIdentityManagementTeeIdentityContext } from '@polkadot/types/lookup';
 import type { HexString } from '@polkadot/util/types';
 import type { Metadata } from '@polkadot/types';
@@ -73,7 +73,6 @@ export async function buildStorageHelper(
         throw new Error('Can not find the storage entry from metadata');
     }
     let storageKey, valueType;
-
     if (storageEntry.type.isPlain) {
         storageKey = buildStorageKey(metadata, prefix, method);
         valueType = metadata.registry.createLookupType(storageEntry.type.asPlain);
@@ -95,11 +94,11 @@ export async function checkUserShieldingKeys(
     context: IntegrationTestContext,
     pallet: string,
     method: string,
-    address: HexString
+    idGraphIdentifier: IdGraphIdentifier
 ): Promise<string> {
     await sleep(6000);
 
-    const storageKey = await buildStorageHelper(context.metaData, pallet, method, address);
+    const storageKey = await buildStorageHelper(context.metaData, pallet, method, idGraphIdentifier);
 
     let base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
 
@@ -117,11 +116,11 @@ export async function checkIDGraph(
     context: IntegrationTestContext,
     pallet: string,
     method: string,
-    address: HexString,
+    idGraphIdentifier: IdGraphIdentifier,
     identity: HexString
 ): Promise<PalletIdentityManagementTeeIdentityContext> {
     await sleep(6000);
-    const storageKey = await buildStorageHelper(context.metaData, pallet, method, address, identity);
+    const storageKey = await buildStorageHelper(context.metaData, pallet, method, idGraphIdentifier, identity);
 
     let base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
 

@@ -52,8 +52,8 @@ pub type IDGraph<T> = Vec<(Identity, IdentityContext<T>)>;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use litentry_primitives::Address32;
-	use log::warn;
+	use litentry_primitives::{EvmNetwork, IdGraphIdentifier};
+	use log::{info, warn};
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
@@ -77,11 +77,11 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// user shielding key was set
-		UserShieldingKeySet { who: T::AccountId, key: UserShieldingKeyType },
+		UserShieldingKeySet { id_graph_id: IdGraphIdentifier, key: UserShieldingKeyType },
 		/// an identity was linked
-		IdentityLinked { who: T::AccountId, identity: Identity },
+		IdentityLinked { id_graph_id: IdGraphIdentifier, identity: Identity },
 		/// an identity was removed
-		IdentityRemoved { who: T::AccountId, identity: Identity },
+		IdentityRemoved { id_graph_id: IdGraphIdentifier, identity: Identity },
 	}
 
 	#[pallet::error]
@@ -102,7 +102,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn user_shielding_keys)]
 	pub type UserShieldingKeys<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AccountId, UserShieldingKeyType, OptionQuery>;
+		StorageMap<_, Blake2_128Concat, IdGraphIdentifier, UserShieldingKeyType, OptionQuery>;
 
 	/// ID graph is per Litentry account + identity
 	#[pallet::storage]
@@ -110,7 +110,7 @@ pub mod pallet {
 	pub type IDGraphs<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
-		T::AccountId,
+		IdGraphIdentifier,
 		Blake2_128Concat,
 		Identity,
 		IdentityContext<T>,
@@ -119,7 +119,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	pub type IDGraphLens<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AccountId, u32, ValueQuery>;
+		StorageMap<_, Blake2_128Concat, IdGraphIdentifier, u32, ValueQuery>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -127,21 +127,21 @@ pub mod pallet {
 		#[pallet::weight(15_000_000)]
 		pub fn set_user_shielding_key(
 			origin: OriginFor<T>,
-			who: T::AccountId,
+			id_graph_id: IdGraphIdentifier,
 			key: UserShieldingKeyType,
 			parent_ss58_prefix: u16,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 			// we don't care about the current key
-			UserShieldingKeys::<T>::insert(&who, key);
+			UserShieldingKeys::<T>::insert(&id_graph_id, key);
 
-			let prime_id = Self::build_prime_identity(&who, parent_ss58_prefix)?;
-			if IDGraphs::<T>::get(&who, &prime_id).is_none() {
+			let prime_id = Self::build_prime_identity(&id_graph_id, parent_ss58_prefix)?;
+			if IDGraphs::<T>::get(&id_graph_id, &prime_id).is_none() {
 				let context = <IdentityContext<T>>::new(<frame_system::Pallet<T>>::block_number());
-				Self::insert_identity_with_limit(&who, &prime_id, context)?;
+				Self::insert_identity_with_limit(&id_graph_id, &prime_id, context)?;
 			}
 
-			Self::deposit_event(Event::UserShieldingKeySet { who, key });
+			Self::deposit_event(Event::UserShieldingKeySet { id_graph_id, key });
 			Ok(())
 		}
 
@@ -149,22 +149,22 @@ pub mod pallet {
 		#[pallet::weight(15_000_000)]
 		pub fn link_identity(
 			origin: OriginFor<T>,
-			who: T::AccountId,
+			id_graph_id: IdGraphIdentifier,
 			identity: Identity,
 			parent_ss58_prefix: u16,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 
 			ensure!(
-				!IDGraphs::<T>::contains_key(&who, &identity),
+				!IDGraphs::<T>::contains_key(&id_graph_id, &identity),
 				Error::<T>::IdentityAlreadyLinked
 			);
-			let prime_id = Self::build_prime_identity(&who, parent_ss58_prefix)?;
+			let prime_id = Self::build_prime_identity(&id_graph_id, parent_ss58_prefix)?;
 			ensure!(identity != prime_id, Error::<T>::LinkPrimeIdentityDisallowed);
 
 			let context = <IdentityContext<T>>::new(<frame_system::Pallet<T>>::block_number());
-			Self::insert_identity_with_limit(&who, &identity, context)?;
-			Self::deposit_event(Event::IdentityLinked { who, identity });
+			Self::insert_identity_with_limit(&id_graph_id, &identity, context)?;
+			Self::deposit_event(Event::IdentityLinked { id_graph_id, identity });
 			Ok(())
 		}
 
@@ -172,17 +172,20 @@ pub mod pallet {
 		#[pallet::weight(15_000_000)]
 		pub fn remove_identity(
 			origin: OriginFor<T>,
-			who: T::AccountId,
+			id_graph_id: IdGraphIdentifier,
 			identity: Identity,
 			parent_ss58_prefix: u16,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
-			ensure!(IDGraphs::<T>::contains_key(&who, &identity), Error::<T>::IdentityNotExist);
-			let prime_id = Self::build_prime_identity(&who, parent_ss58_prefix)?;
+			ensure!(
+				IDGraphs::<T>::contains_key(&id_graph_id, &identity),
+				Error::<T>::IdentityNotExist
+			);
+			let prime_id = Self::build_prime_identity(&id_graph_id, parent_ss58_prefix)?;
 			ensure!(identity != prime_id, Error::<T>::RemovePrimeIdentityDisallowed);
 
-			Self::remove_identity_with_limit(&who, &identity);
-			Self::deposit_event(Event::IdentityRemoved { who, identity });
+			Self::remove_identity_with_limit(&id_graph_id, &identity);
+			Self::deposit_event(Event::IdentityRemoved { id_graph_id, identity });
 			Ok(())
 		}
 	}
@@ -190,25 +193,26 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		// build the prime identity which is always a substrate address32-based identity
 		fn build_prime_identity(
-			who: &T::AccountId,
+			id_graph_identifier: &IdGraphIdentifier,
 			parent_ss58_prefix: u16,
 		) -> Result<Identity, DispatchError> {
-			let address_raw: [u8; 32] =
-				who.encode().try_into().map_err(|_| DispatchError::Other("Invalid AccountId"))?;
-			let address: Address32 = address_raw.into();
-
-			Ok(Identity::Substrate {
-				network: SubstrateNetwork::from_ss58_prefix(parent_ss58_prefix),
-				address,
-			})
+			match id_graph_identifier {
+				IdGraphIdentifier::Substrate { address } => Ok(Identity::Substrate {
+					network: SubstrateNetwork::from_ss58_prefix(parent_ss58_prefix),
+					address: *address,
+				}),
+				IdGraphIdentifier::Evm { address } =>
+					Ok(Identity::Evm { network: EvmNetwork::Ethereum, address: *address }),
+			}
 		}
 
 		fn insert_identity_with_limit(
-			owner: &T::AccountId,
+			id_graph_id: &IdGraphIdentifier,
 			identity: &Identity,
 			context: IdentityContext<T>,
 		) -> Result<(), DispatchError> {
-			IDGraphLens::<T>::try_mutate(owner, |len| {
+			info!("Inserting identity {:?} to graph {:?}", identity, id_graph_id);
+			IDGraphLens::<T>::try_mutate(id_graph_id, |len| {
 				let new_len = len.checked_add(1).ok_or(Error::<T>::IDGraphLenLimitReached)?;
 				if new_len > T::MaxIDGraphLength::get() {
 					return Err(Error::<T>::IDGraphLenLimitReached.into())
@@ -216,12 +220,12 @@ pub mod pallet {
 				*len = new_len;
 				Result::<(), DispatchError>::Ok(())
 			})?;
-			IDGraphs::<T>::insert(owner, identity, context);
+			IDGraphs::<T>::insert(id_graph_id, identity, context);
 			Ok(())
 		}
 
-		fn remove_identity_with_limit(owner: &T::AccountId, identity: &Identity) {
-			IDGraphLens::<T>::mutate_exists(owner, |maybe_value| {
+		fn remove_identity_with_limit(id_graph_id: &IdGraphIdentifier, identity: &Identity) {
+			IDGraphLens::<T>::mutate_exists(id_graph_id, |maybe_value| {
 				if let Some(graph_len) = maybe_value {
 					if *graph_len == 0 {
 						warn!(
@@ -240,23 +244,26 @@ pub mod pallet {
 					warn!("Detected IDGraphLens inconsistency, missing IdGraphLen while removing identity");
 				}
 			});
-			IDGraphs::<T>::remove(owner, identity);
+			IDGraphs::<T>::remove(id_graph_id, identity);
 		}
 
-		pub fn get_id_graph(who: &T::AccountId) -> IDGraph<T> {
-			IDGraphs::<T>::iter_prefix(who).collect::<_>()
+		pub fn get_id_graph(id_graph_id: &IdGraphIdentifier) -> IDGraph<T> {
+			IDGraphs::iter_prefix(id_graph_id).collect::<Vec<_>>()
 		}
 
 		// get the most recent `max_len` elements in IDGraph
-		pub fn get_id_graph_with_max_len(who: &T::AccountId, max_len: usize) -> IDGraph<T> {
-			let mut id_graph = Self::get_id_graph(who);
+		pub fn get_id_graph_with_max_len(
+			id_graph_id: &IdGraphIdentifier,
+			max_len: usize,
+		) -> IDGraph<T> {
+			let mut id_graph = Self::get_id_graph(id_graph_id);
 			id_graph.sort_by(|a, b| Ord::cmp(&b.1.link_block, &a.1.link_block));
 			id_graph.truncate(max_len);
 			id_graph
 		}
 
 		// get count of all keys account + identity in the IDGraphs
-		pub fn id_graph_stats() -> Option<Vec<(T::AccountId, u32)>> {
+		pub fn id_graph_stats() -> Option<Vec<(IdGraphIdentifier, u32)>> {
 			let stats = IDGraphLens::<T>::iter().collect();
 			debug!("IDGraph stats: {:?}", stats);
 			Some(stats)

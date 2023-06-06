@@ -3,7 +3,7 @@
 
 import type { Bytes, Enum, Struct, U8aFixed, Vec, bool, u128, u32 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
-import type { MultiSignature, Signature } from '@polkadot/types/interfaces/extrinsics';
+import type { Signature } from '@polkadot/types/interfaces/extrinsics';
 import type { AccountId, Balance, BlockNumber, H256 } from '@polkadot/types/interfaces/runtime';
 
 /** @name Address20 */
@@ -97,19 +97,6 @@ export interface IdentityGenericEvent extends Struct {
     readonly id_graph: Vec<ITuple<[LitentryIdentity, IdentityContext]>>;
 }
 
-/** @name IdentityMultiSignature */
-export interface IdentityMultiSignature extends Enum {
-    readonly isEd25519: boolean;
-    readonly asEd25519: Signature;
-    readonly isSr25519: boolean;
-    readonly asSr25519: Signature;
-    readonly isEcdsa: boolean;
-    readonly asEcdsa: Signature;
-    readonly isEthereum: boolean;
-    readonly asEthereum: EthereumSignature;
-    readonly type: 'Ed25519' | 'Sr25519' | 'Ecdsa' | 'Ethereum';
-}
-
 /** @name IdentityStatus */
 export interface IdentityStatus extends Enum {
     readonly isActive: boolean;
@@ -120,6 +107,15 @@ export interface IdentityStatus extends Enum {
 /** @name IdentityString */
 export interface IdentityString extends Bytes {}
 
+/** @name LitentryAddress */
+export interface LitentryAddress extends Enum {
+    readonly isEvm: boolean;
+    readonly asEvm: Address20;
+    readonly isSubstrate: boolean;
+    readonly asSubstrate: Address32;
+    readonly type: 'Evm' | 'Substrate';
+}
+
 /** @name LitentryIdentity */
 export interface LitentryIdentity extends Enum {
     readonly isSubstrate: boolean;
@@ -129,6 +125,19 @@ export interface LitentryIdentity extends Enum {
     readonly isWeb2: boolean;
     readonly asWeb2: Web2Identity;
     readonly type: 'Substrate' | 'Evm' | 'Web2';
+}
+
+/** @name LitentryMultiSignature */
+export interface LitentryMultiSignature extends Enum {
+    readonly isEd25519: boolean;
+    readonly asEd25519: Signature;
+    readonly isSr25519: boolean;
+    readonly asSr25519: Signature;
+    readonly isEcdsa: boolean;
+    readonly asEcdsa: Signature;
+    readonly isEthereum: boolean;
+    readonly asEthereum: EthereumSignature;
+    readonly type: 'Ed25519' | 'Sr25519' | 'Ecdsa' | 'Ethereum';
 }
 
 /** @name LitentryValidationData */
@@ -146,7 +155,13 @@ export interface PublicGetter extends Enum {
     readonly asSomeValue: u32;
     readonly isNonce: boolean;
     readonly asNonce: AccountId;
-    readonly type: 'SomeValue' | 'Nonce';
+    readonly isNewNonce: boolean;
+    readonly asNewNonce: LitentryAddress;
+    readonly isOldNonce: boolean;
+    readonly asOldNonce: LitentryMultiSignature;
+    readonly isAddress20Nonce: boolean;
+    readonly asAddress20Nonce: Address20;
+    readonly type: 'SomeValue' | 'Nonce' | 'NewNonce' | 'OldNonce' | 'Address20Nonce';
 }
 
 /** @name Request */
@@ -211,7 +226,7 @@ export interface TrustedCall extends Enum {
 export interface TrustedCallSigned extends Struct {
     readonly call: TrustedCall;
     readonly index: u32;
-    readonly signature: MultiSignature;
+    readonly signature: LitentryMultiSignature;
 }
 
 /** @name TrustedGetter */
@@ -232,7 +247,7 @@ export interface TrustedGetter extends Enum {
 /** @name TrustedGetterSigned */
 export interface TrustedGetterSigned extends Struct {
     readonly getter: TrustedGetter;
-    readonly signature: MultiSignature;
+    readonly signature: LitentryMultiSignature;
 }
 
 /** @name TrustedOperation */
@@ -318,7 +333,7 @@ export interface Web2ValidationData extends Enum {
 /** @name Web3CommonValidationData */
 export interface Web3CommonValidationData extends Struct {
     readonly message: Bytes;
-    readonly signature: IdentityMultiSignature;
+    readonly signature: LitentryMultiSignature;
 }
 
 /** @name Web3ValidationData */

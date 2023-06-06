@@ -62,10 +62,9 @@ extern crate sgx_tstd as std;
 /// the operators are mainly for IDHub's parsing, we will **NEVER** have:
 /// - `from_date` with >= op, nor
 /// - `value` is false but the `from_date` is something other than 2017-01-01.
-///  
+///
 use crate::*;
 use itp_stf_primitives::types::ShardIdentifier;
-use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::{
@@ -74,7 +73,7 @@ use lc_data_providers::{
 	},
 	vec_to_string,
 };
-use litentry_primitives::SupportedNetwork;
+use litentry_primitives::{IdGraphIdentifier, SupportedNetwork};
 use log::*;
 use std::{
 	collections::{HashMap, HashSet},
@@ -94,12 +93,11 @@ pub fn build(
 	identities: Vec<Identity>,
 	min_balance: ParameterString,
 	shard: &ShardIdentifier,
-	who: &AccountId,
+	id_graph_identifier: &IdGraphIdentifier,
 ) -> Result<Credential> {
 	debug!(
-		"Assertion A4 build, who: {:?}, identities: {:?}",
-		account_id_to_string(&who),
-		identities
+		"Assertion A4 build, id_graph_identifier: {:?}, identities: {:?}",
+		&id_graph_identifier, identities
 	);
 
 	let q_min_balance = vec_to_string(min_balance.to_vec()).map_err(|_| {
@@ -201,7 +199,7 @@ pub fn build(
 		optimal_hold_index = 0;
 	}
 
-	match Credential::new_default(who, &shard.clone()) {
+	match Credential::new_default(id_graph_identifier, &shard.clone()) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_A4_SUBJECT_DESCRIPTION,

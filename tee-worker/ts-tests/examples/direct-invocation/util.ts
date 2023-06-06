@@ -1,8 +1,8 @@
-import { ApiPromise } from '@polkadot/api';
+import { ApiPromise, Keyring } from '@polkadot/api';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { BN, u8aToHex, hexToU8a, compactAddLength, bufferToU8a, u8aConcat, stringToU8a } from '@polkadot/util';
 import { Codec } from '@polkadot/types/types';
-import { PubicKeyJson } from '../../common/type-definitions';
+import { Address, IdGraphIdentifier, PubicKeyJson } from '../../common/type-definitions';
 import { WorkerRpcReturnValue } from '../../parachain-interfaces/identity/types';
 import { encryptWithTeeShieldingKey } from '../../common/utils';
 import { decodeRpcBytesAsString } from '../../common/call';
@@ -88,8 +88,8 @@ export const createSignedTrustedCall = (
     if (withWrappedBytes) {
         payload = u8aConcat(stringToU8a('<Bytes>'), payload, stringToU8a('</Bytes>'));
     }
-    const signature = parachain_api.createType('MultiSignature', {
-        Sr25519: u8aToHex(account.sign(payload)),
+    const signature = parachain_api.createType('LitentryMultiSignature', {
+        [account.type]: u8aToHex(account.sign(payload)),
     });
     return parachain_api.createType('TrustedCallSigned', {
         call: call,
@@ -109,8 +109,8 @@ export const createSignedTrustedGetter = (
         [variant]: parachain_api.createType(argType, params),
     });
     const payload = getter.toU8a();
-    const signature = parachain_api.createType('MultiSignature', {
-        Sr25519: account.sign(payload),
+    const signature = parachain_api.createType('LitentryMultiSignature', {
+        [account.type]: account.sign(payload),
     });
     return parachain_api.createType('TrustedGetterSigned', {
         getter: getter,
@@ -151,17 +151,19 @@ export function createSignedTrustedCallSetUserShieldingKey(
     mrenclave: string,
     nonce: Codec,
     who: KeyringPair,
+    address: Address,
+    idGraphIdentifier: IdGraphIdentifier,
     key: string,
     hash: string,
     withWrappedBytes: boolean = false
 ) {
     return createSignedTrustedCall(
         parachain_api,
-        ['set_user_shielding_key', '(AccountId, AccountId, UserShieldingKeyType, H256)'],
+        ['set_user_shielding_key', '(LitentryAddress, IdGraphIdentifier, UserShieldingKeyType, H256)'],
         who,
         mrenclave,
         nonce,
-        [who.address, who.address, key, hash],
+        [address, idGraphIdentifier, key, hash],
         withWrappedBytes
     );
 }
@@ -171,6 +173,8 @@ export function createSignedTrustedCallLinkIdentity(
     mrenclave: string,
     nonce: Codec,
     who: KeyringPair,
+    address: Address,
+    idGraphIdentifier: IdGraphIdentifier,
     identity: string,
     validation_data: string,
     key_nonce: string,
@@ -180,21 +184,25 @@ export function createSignedTrustedCallLinkIdentity(
         parachain_api,
         [
             'link_identity',
-            '(AccountId, AccountId, LitentryIdentity, LitentryValidationData, UserShieldingKeyNonceType, H256)',
+            '(LitentryAddress, IdGraphIdentifier, LitentryIdentity, LitentryValidationData, UserShieldingKeyNonceType, H256)',
         ],
         who,
         mrenclave,
         nonce,
-        [who.address, who.address, identity, validation_data, key_nonce, hash]
+        [address, idGraphIdentifier, identity, validation_data, key_nonce, hash]
     );
 }
 
-export function createSignedTrustedGetterUserShieldingKey(parachain_api: ApiPromise, who: KeyringPair) {
+export function createSignedTrustedGetterUserShieldingKey(
+    parachain_api: ApiPromise,
+    who: KeyringPair,
+    address: Address
+) {
     let getterSigned = createSignedTrustedGetter(
         parachain_api,
-        ['user_shielding_key', '(AccountId)'],
+        ['user_shielding_key', '(LitentryAddress)'],
         who,
-        who.address
+        address
     );
     return parachain_api.createType('Getter', { trusted: getterSigned });
 }
@@ -204,9 +212,9 @@ export const getSidechainNonce = async (
     parachain_api: ApiPromise,
     mrenclave: string,
     teeShieldingKey: KeyObject,
-    who: string
+    address: Address
 ) => {
-    let getterPublic = createPublicGetter(parachain_api, ['nonce', '(AccountId)'], who);
+    let getterPublic = createPublicGetter(parachain_api, ['nonce', '(LitentryAddress)'], address);
     let getter = parachain_api.createType('Getter', { public: getterPublic });
     const nonce = await sendRequestFromGetter(wsp, parachain_api, mrenclave, teeShieldingKey, getter);
     const NonceValue = decodeNonce(nonce.value.toHex());
@@ -303,4 +311,17 @@ export function decodeNonce(nonceInHex: string) {
     const encodedNonce = optionalType.dec(nonceInHex) as number[];
     const nonce = u32.dec(new Uint8Array(encodedNonce));
     return nonce;
+}
+
+export function getKeyPair(accountName: string, keyring: Keyring): KeyringPair {
+    switch (keyring.type) {
+        case 'ethereum': {
+            return keyring.addFromMnemonic('test_account' + accountName, { name: accountName });
+        }
+        case 'ecdsa':
+        case 'ed25519':
+        case 'sr25519': {
+            return keyring.addFromUri('//' + accountName, { name: accountName });
+        }
+    }
 }

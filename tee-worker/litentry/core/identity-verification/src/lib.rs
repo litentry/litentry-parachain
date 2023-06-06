@@ -35,8 +35,6 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 use frame_support::pallet_prelude::*;
 use lc_stf_task_sender::IdentityVerificationRequest;
-// this should be ita_stf::AccountId, but we use itp_types to avoid cyclic dep
-use itp_types::AccountId;
 use litentry_primitives::ValidationData;
 use std::string::ToString;
 
@@ -49,8 +47,8 @@ use error::{Error, Result};
 pub fn verify(r: &IdentityVerificationRequest) -> Result<()> {
 	match &r.validation_data {
 		ValidationData::Web2(data) =>
-			web2::verify(&r.who, &r.identity, r.sidechain_nonce, r.key, r.key_nonce, data),
+			web2::verify(&r.id_graph_id, &r.identity, r.sidechain_nonce, r.key, r.key_nonce, data),
 		ValidationData::Web3(data) =>
-			web3::verify(&r.who, &r.identity, r.sidechain_nonce, r.key, r.key_nonce, data),
+			web3::verify(&r.id_graph_id, &r.identity, r.sidechain_nonce, r.key, r.key_nonce, data),
 	}
 }

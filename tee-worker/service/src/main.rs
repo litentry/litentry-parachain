@@ -82,7 +82,7 @@ use its_peer_fetch::{
 use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
 use its_storage::{interface::FetchBlocks, BlockPruner, SidechainStorageLock};
 use lc_data_providers::DataProvidersStatic;
-use litentry_primitives::{ParentchainHeader as Header, UserShieldingKeyType};
+use litentry_primitives::{Address, ParentchainHeader as Header, UserShieldingKeyType};
 use log::*;
 use serde_json::Value;
 use sgx_types::*;
@@ -219,7 +219,7 @@ fn main() {
 				let getter = Arc::new(move |who: &Sr25519Pair| {
 					let client = DirectClient::new(trusted_server_url.clone());
 					let key_getter = Getter::from(
-						TrustedGetter::user_shielding_key(who.public().into())
+						TrustedGetter::user_shielding_key(Address::Substrate(who.public().into()))
 							.sign(&KeyPair::Sr25519(Box::new(who.clone()))),
 					);
 					client

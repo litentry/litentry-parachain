@@ -24,7 +24,7 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_utils::stringify::account_id_to_string;
 use lc_data_providers::G_DATA_PROVIDERS;
 use lc_stf_task_sender::AssertionBuildRequest;
-use litentry_primitives::{Assertion, ErrorDetail, ErrorString, VCMPError};
+use litentry_primitives::{Address, Assertion, ErrorDetail, ErrorString, VCMPError};
 use log::*;
 use sp_core::hashing::blake2_256;
 use std::{format, sync::Arc, vec::Vec};
@@ -56,14 +56,14 @@ where
 			Assertion::A1 => lc_assertion_build::a1::build(
 				self.req.vec_identity.to_vec(),
 				&self.req.shard,
-				&self.req.who,
+				&self.req.id_graph_id,
 			),
 
 			Assertion::A2(guild_id) => lc_assertion_build::a2::build(
 				self.req.vec_identity.to_vec(),
 				guild_id,
 				&self.req.shard,
-				&self.req.who,
+				&self.req.id_graph_id,
 			),
 
 			Assertion::A3(guild_id, channel_id, role_id) => lc_assertion_build::a3::build(
@@ -72,55 +72,55 @@ where
 				channel_id,
 				role_id,
 				&self.req.shard,
-				&self.req.who,
+				&self.req.id_graph_id,
 			),
 
 			Assertion::A4(min_balance) => lc_assertion_build::a4::build(
 				self.req.vec_identity.to_vec(),
 				min_balance,
 				&self.req.shard,
-				&self.req.who,
+				&self.req.id_graph_id,
 			),
 
 			Assertion::A5(original_tweet_id) => lc_assertion_build::a5::build(
 				self.req.vec_identity.to_vec(),
 				original_tweet_id,
 				&self.req.shard,
-				&self.req.who,
+				&self.req.id_graph_id,
 			),
 
 			Assertion::A6 => lc_assertion_build::a6::build(
 				self.req.vec_identity.to_vec(),
 				&self.req.shard,
-				&self.req.who,
+				&self.req.id_graph_id,
 			),
 
 			Assertion::A7(min_balance) => lc_assertion_build::a7::build(
 				self.req.vec_identity.to_vec(),
 				min_balance,
 				&self.req.shard,
-				&self.req.who,
+				&self.req.id_graph_id,
 			),
 
 			Assertion::A8(networks) => lc_assertion_build::a8::build(
 				self.req.vec_identity.to_vec(),
 				networks,
 				&self.req.shard,
-				&self.req.who,
+				&self.req.id_graph_id,
 			),
 
 			Assertion::A10(min_balance) => lc_assertion_build::a10::build(
 				self.req.vec_identity.to_vec(),
 				min_balance,
 				&self.req.shard,
-				&self.req.who,
+				&self.req.id_graph_id,
 			),
 
 			Assertion::A11(min_balance) => lc_assertion_build::a11::build(
 				self.req.vec_identity.to_vec(),
 				min_balance,
 				&self.req.shard,
-				&self.req.who,
+				&self.req.id_graph_id,
 			),
 
 			_ => {
@@ -183,8 +183,8 @@ where
 		let (vc_index, vc_hash, vc_payload) = result;
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::request_vc_callback(
-				enclave_signer,
-				self.req.who.clone(),
+				Address::Substrate(enclave_signer.into()),
+				self.req.id_graph_id.clone(),
 				self.req.assertion.clone(),
 				vc_index,
 				vc_hash,
@@ -204,8 +204,8 @@ where
 		error!("Assertion build error: {error:?}");
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::handle_vcmp_error(
-				enclave_signer,
-				Some(self.req.who.clone()),
+				Address::Substrate(enclave_signer.into()),
+				Some(self.req.id_graph_id.clone()),
 				error,
 				self.req.hash,
 			);

@@ -15,14 +15,15 @@
 
 */
 
-use crate::{Getter, State, Stf, TrustedCall, TrustedCallSigned};
+use crate::{Address, Getter, State, Stf, TrustedCall, TrustedCallSigned};
 use ita_sgx_runtime::Runtime;
 use itp_node_api::metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository};
 use itp_stf_interface::{
 	sudo_pallet::SudoPalletInterface, system_pallet::SystemPalletAccountInterface, InitState,
 	StateCallInterface,
 };
-use itp_stf_primitives::types::{AccountId, ShardIdentifier, Signature};
+use itp_stf_primitives::types::{AccountId, ShardIdentifier};
+use litentry_primitives::LitentryMultiSignature;
 use sp_core::{
 	ed25519::{Pair as Ed25519Pair, Signature as Ed25519Signature},
 	Pair,
@@ -49,12 +50,12 @@ pub fn shield_funds_increments_signer_account_nonce() {
 
 	let shield_funds_call = TrustedCallSigned::new(
 		TrustedCall::balance_shield(
-			enclave_call_signer.public().into(),
+			Address::Substrate(enclave_call_signer.public().into()),
 			AccountId::new([1u8; 32]),
 			500u128,
 		),
 		0,
-		Signature::Ed25519(Ed25519Signature([0u8; 64])),
+		LitentryMultiSignature::Ed25519(Ed25519Signature([0u8; 64])),
 	);
 
 	let repo = Arc::new(NodeMetadataRepository::new(NodeMetadataMock::new()));

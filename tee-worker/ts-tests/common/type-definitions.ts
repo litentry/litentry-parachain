@@ -14,7 +14,7 @@ import type {
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import type { HexString } from '@polkadot/util/types';
-import type { Assertion as GenericAssertion } from '../parachain-interfaces/identity/types';
+import type { Address20, Address32, Assertion as GenericAssertion } from '../parachain-interfaces/identity/types';
 import type { AnyTuple, IMethod } from '@polkadot/types/types';
 
 export type Web2Network = LitentryPrimitivesIdentityWeb2Network['type'];
@@ -59,6 +59,16 @@ export class AESOutput {
     aad?: Uint8Array;
     nonce?: Uint8Array;
 }
+
+export type IdGraphIdentifier = {
+    Substrate?: Address32;
+    Evm?: Address20;
+};
+
+export type Address = {
+    Substrate?: Address32;
+    Evm?: Address20;
+};
 
 export type Web3Wallets = {
     substrateWallet: KeyringPair;

@@ -23,19 +23,19 @@ use crate::sgx_reexport_prelude::*;
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
-use crate::{ensure, AccountId, Error, Result};
+use crate::{ensure, Error, Result};
 use ita_stf::helpers::get_expected_raw_message;
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
 use itp_types::Index;
-use itp_utils::stringify::account_id_to_string;
 use lc_data_providers::{
 	discord_official::{DiscordMessage, DiscordOfficialClient},
 	twitter_official::{Tweet, TwitterOfficialClient},
 	UserInfo,
 };
 use litentry_primitives::{
-	DiscordValidationData, ErrorDetail, Identity, IntoErrorDetail, TwitterValidationData,
-	UserShieldingKeyNonceType, UserShieldingKeyType, Web2Network, Web2ValidationData,
+	DiscordValidationData, ErrorDetail, IdGraphIdentifier, Identity, IntoErrorDetail,
+	TwitterValidationData, UserShieldingKeyNonceType, UserShieldingKeyType, Web2Network,
+	Web2ValidationData,
 };
 use log::*;
 use std::{string::ToString, vec::Vec};
@@ -56,14 +56,14 @@ fn payload_from_discord(discord: &DiscordMessage) -> Result<Vec<u8>> {
 }
 
 pub fn verify(
-	who: &AccountId,
+	id_graph_identifier: &IdGraphIdentifier,
 	identity: &Identity,
 	sidechain_nonce: Index,
 	key: UserShieldingKeyType,
 	nonce: UserShieldingKeyNonceType,
 	data: &Web2ValidationData,
 ) -> Result<()> {
-	debug!("verify web2 identity, who: {}", account_id_to_string(who));
+	debug!("verify web2 identity, id_graph_identifier: {:?}", id_graph_identifier);
 
 	let (user_id, payload) = match data {
 		Web2ValidationData::Twitter(TwitterValidationData { ref tweet_id }) => {
@@ -124,9 +124,8 @@ pub fn verify(
 
 	// the payload must match
 	// TODO: maybe move it to common place
-	ensure!(
-		payload == get_expected_raw_message(who, identity, sidechain_nonce, key, nonce),
-		Error::LinkIdentityFailed(ErrorDetail::UnexpectedMessage)
-	);
+	let expected =
+		get_expected_raw_message(id_graph_identifier, identity, sidechain_nonce, key, nonce);
+	ensure!(payload == expected, Error::LinkIdentityFailed(ErrorDetail::UnexpectedMessage));
 	Ok(())
 }

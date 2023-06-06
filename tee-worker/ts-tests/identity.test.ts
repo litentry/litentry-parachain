@@ -12,11 +12,12 @@ import {
     checkUserShieldingKeys,
     assertIdentityLinked,
     assertIdentityRemoved,
+    buildIdGraphIdentityHelper,
 } from './common/utils';
 import { aesKey } from './common/call';
 import { SubstrateNetworkMapping } from './common/helpers';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
-import { step } from 'mocha-steps';
+import { step, xstep } from 'mocha-steps';
 import { assert } from 'chai';
 import { multiAccountTxSender, sendTxsWithUtility } from './common/transactions';
 import type { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
@@ -46,16 +47,19 @@ describeLitentry('Test Identity', 0, (context) => {
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
     step('check user sidechain storage before create', async function () {
+        let aliceAddress = await buildIdGraphIdentityHelper(context.substrateWallet.alice);
         const resp_shieldingKey = await checkUserShieldingKeys(
             context,
             'IdentityManagement',
             'UserShieldingKeys',
-            u8aToHex(context.substrateWallet.alice.addressRaw)
+            aliceAddress
         );
         assert.equal(resp_shieldingKey, '0x', 'shielding key should be empty before set');
     });
 
     step('Invalid user shielding key', async function () {
+        // let aliceAddress = await buildAddressHelper(context.substrateWallet.alice);
+
         let identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Ethereum', 'Evm', context);
         // use empty `alice_validations`, the `UserShieldingKeyNotFound` error should be emitted before verification
         let txs = await buildIdentityTxs(
@@ -101,16 +105,19 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
+        let aliceAddress = await buildIdGraphIdentityHelper(context.substrateWallet.alice);
         const resp_shieldingKey = await checkUserShieldingKeys(
             context,
             'IdentityManagement',
             'UserShieldingKeys',
-            u8aToHex(context.substrateWallet.alice.addressRaw)
+            aliceAddress
         );
         assert.equal(resp_shieldingKey, aesKey, 'resp_shieldingKey should be equal aesKey after set');
     });
 
     step('check idgraph from sidechain storage before linking', async function () {
+        let aliceAddress = await buildIdGraphIdentityHelper(context.substrateWallet.alice);
+
         // the main address should be already inside the IDGraph
         const main_identity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.alice.addressRaw),
@@ -119,13 +126,7 @@ describeLitentry('Test Identity', 0, (context) => {
             context
         );
         const identity_hex = main_identity.toHex();
-        const resp_id_graph = await checkIDGraph(
-            context,
-            'IdentityManagement',
-            'IDGraphs',
-            u8aToHex(context.substrateWallet.alice.addressRaw),
-            identity_hex
-        );
+        const resp_id_graph = await checkIDGraph(context, 'IdentityManagement', 'IDGraphs', aliceAddress, identity_hex);
         assert.isTrue(resp_id_graph.linkBlock.toNumber() > 0, 'linkBlock should be greater than 0 for main address');
         assert.isTrue(resp_id_graph.status.isActive, 'status should be active for main address');
         // TODO: check IDGraph.length == 1 in the sidechain storage
@@ -133,6 +134,7 @@ describeLitentry('Test Identity', 0, (context) => {
 
     step('link identities', async function () {
         // Alice
+        const aliceIdGraphIdentifier = await buildIdGraphIdentityHelper(context.substrateWallet.alice);
         const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2', context);
         const ethereum_identity = await buildIdentityHelper(
             context.ethersWallet.alice.address,
@@ -148,6 +150,7 @@ describeLitentry('Test Identity', 0, (context) => {
         );
 
         // Bob
+        const bobIdGraphIdentifier = await buildIdGraphIdentityHelper(context.substrateWallet.bob);
         const bob_substrate_identity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.bob.addressRaw),
             'Litentry',
@@ -156,6 +159,8 @@ describeLitentry('Test Identity', 0, (context) => {
         );
 
         alice_identities = [twitter_identity, ethereum_identity, alice_substrate_identity];
+
+        // alice_identities = [twitter_identity, ethereum_identity];
 
         bob_identities = [bob_substrate_identity];
 
@@ -169,7 +174,8 @@ describeLitentry('Test Identity', 0, (context) => {
             [twitter_identity],
             3,
             'twitter',
-            context.substrateWallet.alice
+            context.substrateWallet.alice,
+            []
         );
 
         const alice_ethereum_validations = await buildValidations(
@@ -186,7 +192,8 @@ describeLitentry('Test Identity', 0, (context) => {
             [alice_substrate_identity],
             5,
             'substrate',
-            context.substrateWallet.alice
+            context.substrateWallet.alice,
+            []
         );
 
         alice_validations = [
@@ -269,14 +276,9 @@ describeLitentry('Test Identity', 0, (context) => {
     step('check IDGraph after LinkIdentity', async function () {
         const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2', context);
         const identity_hex = context.api.createType('LitentryIdentity', twitter_identity).toHex();
+        let aliceAddress = await buildIdGraphIdentityHelper(context.substrateWallet.alice);
 
-        const resp_id_graph = await checkIDGraph(
-            context,
-            'IdentityManagement',
-            'IDGraphs',
-            u8aToHex(context.substrateWallet.alice.addressRaw),
-            identity_hex
-        );
+        const resp_id_graph = await checkIDGraph(context, 'IdentityManagement', 'IDGraphs', aliceAddress, identity_hex);
         assert.isTrue(resp_id_graph.linkBlock.toNumber() > 0, 'linkBlock should be greater than 0');
         assert.isTrue(resp_id_graph.status.isActive, 'status should be active');
     });

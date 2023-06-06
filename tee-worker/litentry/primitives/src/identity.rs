@@ -27,9 +27,15 @@ use sp_core::hexdisplay::HexDisplay;
 #[cfg(any(feature = "std", feature = "sgx"))]
 use std::vec::Vec;
 
+use crate::Address;
 use codec::{Decode, Encode, MaxEncodedLen};
+use parentchain_primitives::AccountId;
 use scale_info::TypeInfo;
-use sp_runtime::{traits::ConstU32, BoundedVec};
+use sp_core::{crypto::AccountId32, ed25519, sr25519, ByteArray, Hasher};
+use sp_runtime::{
+	traits::{BlakeTwo256, ConstU32},
+	BoundedVec,
+};
 
 pub type MaxStringLength = ConstU32<64>;
 pub type IdentityString = BoundedVec<u8, MaxStringLength>;
@@ -62,6 +68,38 @@ impl AsRef<[u8; 32]> for Address32 {
 impl From<[u8; 32]> for Address32 {
 	fn from(value: [u8; 32]) -> Self {
 		Self(value)
+	}
+}
+
+impl From<AccountId32> for Address32 {
+	fn from(value: AccountId32) -> Self {
+		let raw: [u8; 32] = value.as_slice().try_into().unwrap();
+		Address32::from(raw)
+	}
+}
+
+impl From<Address32> for AccountId32 {
+	fn from(value: Address32) -> Self {
+		let raw: [u8; 32] = *value.as_ref();
+		AccountId32::from(raw)
+	}
+}
+
+impl From<&Address32> for AccountId32 {
+	fn from(value: &Address32) -> Self {
+		(*value).into()
+	}
+}
+
+impl From<sr25519::Public> for Address32 {
+	fn from(k: sr25519::Public) -> Self {
+		k.0.into()
+	}
+}
+
+impl From<ed25519::Public> for Address32 {
+	fn from(k: ed25519::Public) -> Self {
+		k.0.into()
 	}
 }
 
@@ -117,6 +155,41 @@ pub enum Web2Network {
 	Twitter,
 	Discord,
 	Github,
+}
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub enum IdGraphIdentifier {
+	Substrate { address: Address32 },
+	Evm { address: Address20 },
+}
+
+impl IdGraphIdentifier {
+	pub fn to_account_id(&self) -> AccountId {
+		match self {
+			Self::Substrate { address } => {
+				let mut account_id_slice: [u8; 32] = [0; 32];
+				account_id_slice.copy_from_slice(address.as_ref());
+				AccountId32::from(account_id_slice)
+			},
+			Self::Evm { address } => {
+				let mut data = [0u8; 24];
+				data[0..4].copy_from_slice(b"evm:");
+				data[4..24].copy_from_slice(&address.0);
+				let hash = BlakeTwo256::hash(&data);
+				AccountId::from(Into::<[u8; 32]>::into(hash))
+			},
+		}
+	}
+}
+
+impl From<Address> for IdGraphIdentifier {
+	fn from(value: Address) -> Self {
+		match value {
+			Address::Substrate(address) => IdGraphIdentifier::Substrate { address },
+			Address::Evm(address) => IdGraphIdentifier::Evm { address },
+		}
+	}
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]

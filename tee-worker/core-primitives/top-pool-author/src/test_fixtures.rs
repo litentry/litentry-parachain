@@ -18,6 +18,7 @@
 use codec::Encode;
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned, TrustedGetter, TrustedOperation};
 use itp_stf_primitives::types::{KeyPair, ShardIdentifier};
+use litentry_primitives::Address;
 use sp_core::{ed25519, Pair};
 use sp_runtime::traits::{BlakeTwo256, Hash};
 use std::{boxed::Box, vec};
@@ -27,21 +28,24 @@ const TEST_SEED: Seed = *b"12345678901234567890123456789012";
 
 pub(crate) fn trusted_call_signed() -> TrustedCallSigned {
 	let account = ed25519::Pair::from_seed(&TEST_SEED);
-	let call =
-		TrustedCall::balance_shield(account.public().into(), account.public().into(), 12u128);
+	let call = TrustedCall::balance_shield(
+		Address::Substrate(account.public().into()),
+		account.public().into(),
+		12u128,
+	);
 	call.sign(&KeyPair::Ed25519(Box::new(account)), 0, &mr_enclave(), &shard_id())
 }
 
 pub(crate) fn trusted_getter_signed() -> Getter {
 	let account = ed25519::Pair::from_seed(&TEST_SEED);
-	let getter = TrustedGetter::free_balance(account.public().into());
+	let getter = TrustedGetter::free_balance(Address::Substrate(account.public().into()));
 	Getter::trusted(getter.sign(&KeyPair::Ed25519(Box::new(account))))
 }
 
 pub(crate) fn create_indirect_trusted_operation() -> TrustedOperation {
 	let account = ed25519::Pair::from_seed(&TEST_SEED);
 	let trusted_call_signed = TrustedCall::balance_transfer(
-		alice_pair().public().into(),
+		Address::Substrate(alice_pair().public().into()),
 		bob_pair().public().into(),
 		1000u128,
 	)

@@ -2133,6 +2133,7 @@ dependencies = [
  "itp-time-utils",
  "itp-top-pool-author",
  "itp-types",
+ "litentry-primitives",
  "log 0.4.17",
  "parity-scale-codec",
  "sgx_crypto_helper",
@@ -2157,6 +2158,7 @@ dependencies = [
 name = "itp-stf-primitives"
 version = "0.9.0"
 dependencies = [
+ "litentry-primitives",
  "parity-scale-codec",
  "sp-core",
  "sp-runtime",
@@ -2270,6 +2272,7 @@ dependencies = [
  "its-primitives",
  "jsonrpc-core",
  "linked-hash-map",
+ "litentry-primitives",
  "log 0.4.17",
  "parity-scale-codec",
  "serde 1.0.163",
@@ -2297,6 +2300,7 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "jsonrpc-core",
+ "litentry-primitives",
  "log 0.4.17",
  "parity-scale-codec",
  "sgx_tstd",
@@ -2875,6 +2879,7 @@ dependencies = [
  "base64 0.13.0 (git+https://github.com/mesalock-linux/rust-base64-sgx?rev=sgx_1.1.3)",
  "chrono 0.4.11",
  "core-primitives",
+ "log 0.4.18",
  "parity-scale-codec",
  "rand 0.7.3",
  "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2883,6 +2888,7 @@ dependencies = [
  "serde_json 1.0.96",
  "sgx_tstd",
  "sp-core",
+ "sp-io",
  "sp-runtime",
  "sp-std",
 ]

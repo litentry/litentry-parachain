@@ -29,8 +29,9 @@ use itp_stf_executor::{getter_executor::GetterExecutor, mocks::GetStateMock};
 use itp_stf_state_observer::mock::ObserveStateMock;
 use itp_test::mock::handle_state_mock::HandleStateMock;
 use itp_top_pool_author::mocks::AuthorApiMock;
-use itp_types::{AccountId, DirectRequestStatus, Request, ShardIdentifier};
+use itp_types::{DirectRequestStatus, Request, ShardIdentifier};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
+use litentry_primitives::{Address, Address32};
 use std::{string::ToString, sync::Arc, vec::Vec};
 
 pub fn get_state_request_works() {
@@ -48,7 +49,8 @@ pub fn get_state_request_works() {
 		public_api_rpc_handler(top_pool_author, getter_executor, None::<Arc<HandleStateMock>>);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 
-	let getter = Getter::public(PublicGetter::nonce(AccountId::new([0u8; 32])));
+	let getter =
+		Getter::public(PublicGetter::nonce(Address::Substrate(Address32::from([0u8; 32]))));
 
 	let request = Request { shard: ShardIdentifier::default(), cyphertext: getter.encode() };
 

@@ -25,7 +25,7 @@ use crate::{
 use codec::Decode;
 use ita_stf::{Index, TrustedCall, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
-use litentry_primitives::ParentchainBalance as Balance;
+use litentry_primitives::{Address, ParentchainBalance as Balance};
 use log::*;
 use sp_core::{crypto::Ss58Codec, Pair};
 use std::boxed::Box;
@@ -58,10 +58,14 @@ impl UnshieldFundsCommand {
 
 		let (mrenclave, shard) = get_identifiers(trusted_args);
 		let nonce = get_layer_two_nonce!(from, cli, trusted_args);
-		let top: TrustedOperation =
-			TrustedCall::balance_unshield(from.public().into(), to, self.amount, shard)
-				.sign(&KeyPair::Sr25519(Box::new(from)), nonce, &mrenclave, &shard)
-				.into_trusted_operation(trusted_args.direct);
+		let top: TrustedOperation = TrustedCall::balance_unshield(
+			Address::Substrate(from.public().into()),
+			to,
+			self.amount,
+			shard,
+		)
+		.sign(&KeyPair::Sr25519(Box::new(from)), nonce, &mrenclave, &shard)
+		.into_trusted_operation(trusted_args.direct);
 		let _ = perform_trusted_operation(cli, trusted_args, &top);
 	}
 }

@@ -21,7 +21,7 @@ use crate::{
 use codec::Decode;
 use ita_stf::{TrustedGetter, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
-use litentry_primitives::ParentchainAccountId;
+use litentry_primitives::{Address, ParentchainAccountId};
 use sp_core::Pair;
 
 type IDGraphStatsVec = Vec<(ParentchainAccountId, u32)>;
@@ -35,9 +35,10 @@ pub struct IDGraphStats {
 impl IDGraphStats {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) {
 		let who = get_pair_from_str(trusted_cli, &self.account);
-		let top: TrustedOperation = TrustedGetter::id_graph_stats(who.public().into())
-			.sign(&KeyPair::Sr25519(Box::new(who)))
-			.into();
+		let top: TrustedOperation =
+			TrustedGetter::id_graph_stats(Address::Substrate(who.public().into()))
+				.sign(&KeyPair::Sr25519(Box::new(who)))
+				.into();
 		let id_graph_stats = perform_trusted_operation(cli, trusted_cli, &top)
 			.and_then(|v| IDGraphStatsVec::decode(&mut v.as_slice()).ok());
 

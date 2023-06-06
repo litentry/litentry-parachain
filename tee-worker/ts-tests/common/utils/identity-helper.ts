@@ -1,7 +1,9 @@
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { blake2AsHex } from '@polkadot/util-crypto';
-import { AESOutput } from '../type-definitions';
+
+import { Address, AESOutput } from '../type-definitions';
 import { decryptWithAES, encryptWithAES, encryptWithTeeShieldingKey } from './crypto';
+import { assert } from 'chai';
 import { ethers } from 'ethers';
 import type { TypeRegistry } from '@polkadot/types';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from '@polkadot/types/lookup';
@@ -12,6 +14,7 @@ import type { HexString } from '@polkadot/util/types';
 import type {
     EvmNetwork,
     IdentityGenericEvent,
+    IdGraphIdentifier,
     IntegrationTestContext,
     SubstrateNetwork,
     Web2Network,
@@ -51,6 +54,50 @@ export async function buildIdentityHelper(
         identity
     ) as unknown as LitentryPrimitivesIdentity;
     return encoded_identity;
+}
+
+export async function buildIdGraphIdentityHelper(keyringPair: KeyringPair): Promise<IdGraphIdentifier> {
+    let type: string = (() => {
+        switch (keyringPair.type) {
+            case 'ethereum':
+                return 'Evm';
+            case 'sr25519':
+                return 'Substrate';
+            case 'ed25519':
+                return 'Substrate';
+            case 'ecdsa':
+                return 'Substrate';
+            default:
+                return 'Substrate';
+        }
+    })();
+    let address = keyringPair.addressRaw;
+    const identifier: IdGraphIdentifier = {
+        [type]: address,
+    };
+    return identifier;
+}
+
+export async function buildAddressHelper(keyringPair: KeyringPair): Promise<Address> {
+    let type: string = (() => {
+        switch (keyringPair.type) {
+            case 'ethereum':
+                return 'Evm';
+            case 'sr25519':
+                return 'Substrate';
+            case 'ed25519':
+                return 'Substrate';
+            case 'ecdsa':
+                return 'Substrate';
+            default:
+                return 'Substrate';
+        }
+    })();
+    let address = keyringPair.addressRaw;
+    const identifier: Address = {
+        [type]: address,
+    };
+    return identifier;
 }
 
 // If multiple transactions are built from multiple accounts, pass the signers as an array.
@@ -214,7 +261,7 @@ export async function buildValidations(
     startingSidechainNonce: number,
     network: 'ethereum' | 'substrate' | 'twitter',
     substrateSigners: KeyringPair[] | KeyringPair,
-    ethereumSigners?: ethers.Wallet[]
+    ethereumSigners: ethers.Wallet[]
 ): Promise<LitentryValidationData[]> {
     let signature_ethereum: HexString;
     let signature_substrate: Uint8Array;

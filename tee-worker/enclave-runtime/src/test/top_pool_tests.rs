@@ -63,6 +63,7 @@ use itp_types::{
 	ShieldFundsFn, H256,
 };
 use jsonrpc_core::futures::executor;
+use litentry_primitives::Address;
 use log::*;
 use sgx_crypto_helper::RsaKeyPair;
 use sp_core::{ed25519, Pair};
@@ -170,8 +171,11 @@ fn encrypted_indirect_call<
 	let sender = endowed_account();
 	let receiver = unendowed_account();
 
-	let call =
-		TrustedCall::balance_transfer(sender.public().into(), receiver.public().into(), 10000u128);
+	let call = TrustedCall::balance_transfer(
+		Address::Substrate(sender.public().into()),
+		receiver.public().into(),
+		10000u128,
+	);
 	let call_signed = sign_trusted_call(&call, attestation_api, shard_id, sender);
 	let trusted_operation = TrustedOperation::indirect_call(call_signed);
 	encrypt_trusted_operation(shielding_key, &trusted_operation)

@@ -114,7 +114,7 @@ where
 		// `trusted_call` in this fn always contains the req_ext_hash, which is unique for each request.
 		if self
 			.author_api
-			.get_pending_trusted_calls_for(*shard, trusted_call.sender_account())
+			.get_pending_trusted_calls_for(*shard, &trusted_call.sender_address().clone().into())
 			.into_iter()
 			.any(|t| t.hash() == top.hash())
 		{

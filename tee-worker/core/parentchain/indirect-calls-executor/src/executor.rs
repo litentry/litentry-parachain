@@ -36,7 +36,7 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_primitives::types::AccountId;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{OpaqueCall, ShardIdentifier, H256};
-use litentry_primitives::ParentchainBlockNumber;
+use litentry_primitives::{Address, IdGraphIdentifier, ParentchainBlockNumber};
 use log::*;
 use sp_core::blake2_256;
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header, Keccak256};
@@ -216,10 +216,19 @@ impl<
 		let enclave_account = self.get_enclave_account()?;
 		// let shielding_key = self.shielding_key_repo.retrieve_key()?;
 		let trusted_call = match err {
-			Error::IMPHandlingError(e) =>
-				TrustedCall::handle_imp_error(enclave_account, account, e.clone(), hash),
-			Error::VCMPHandlingError(e) =>
-				TrustedCall::handle_vcmp_error(enclave_account, account, e.clone(), hash),
+			Error::IMPHandlingError(e) => TrustedCall::handle_imp_error(
+				Address::Substrate(enclave_account.into()),
+				account.map(|a| IdGraphIdentifier::Substrate { address: a.into() }),
+				e.clone(),
+				hash,
+			),
+
+			Error::VCMPHandlingError(e) => TrustedCall::handle_vcmp_error(
+				Address::Substrate(enclave_account.into()),
+				account.map(|a| IdGraphIdentifier::Substrate { address: a.into() }),
+				e.clone(),
+				hash,
+			),
 			_ => return Err(Error::Other(("unsupported error").into())),
 		};
 		let signed_trusted_call = self.sign_call_with_self(&trusted_call, &shard)?;
