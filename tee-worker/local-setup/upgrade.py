@@ -62,6 +62,19 @@ command = '../scripts/ts-utils/setup_enclave.sh'
 output = subprocess.check_output(command, shell=True).decode().strip()
 
 # Now we wait for existing enclave to finish producing block
+command = 'scripts/litentry/stop_old_worker.sh'
+output = subprocess.check_output(command, shell=True).decode().strip()
+
+# Once the old worker cannot produce new blocks, We migrate the to new worker
+command = 'scripts/litentry/migrate_worker.sh'
+output = subprocess.check_output(command, shell=True).decode().strip()
+
+# Once the above is completed, We launch the worker again
+command = 'local-setup/launch.py ./local-setup/development-worker.json remote'
+output = subprocess.check_output(command, shell=True).decode().strip()
+
+# Check if the enclave has succesfully resumed or not
+
 
 
 
