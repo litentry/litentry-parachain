@@ -118,7 +118,7 @@ pub fn is_authorised_signer<AccountId: Encode + Decode + PartialEq>(
 }
 
 // verification message format:
-// blake2_256(<nonce> + shieldingKey.encrypt(<primary account> + <identity-to-be-linked>).ciphertext)
+// blake2_256(<sidechain nonce> + shieldingKey.encrypt(<primary account> + <identity-to-be-linked>).ciphertext)
 // where <> means SCALE-encoded
 // see https://github.com/litentry/litentry-parachain/issues/1739
 pub fn get_expected_raw_message<AccountId: Encode + Decode>(

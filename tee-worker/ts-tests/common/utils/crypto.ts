@@ -16,6 +16,15 @@ export function encryptWithTeeShieldingKey(teeShieldingKey: KeyObject, plaintext
     );
 }
 
+// a lazy version without aad
+export function encryptWithAES(key: HexString, nonce: Uint8Array, cleartext: Buffer): HexString {
+    const secretKey = crypto.createSecretKey(hexToU8a(key));
+    const cipher = crypto.createCipheriv('aes-256-gcm', secretKey, nonce);
+    let encrypted = cipher.update(cleartext, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    return `0x${encrypted}`;
+}
+
 export function decryptWithAES(key: HexString, aesOutput: AESOutput, type: string): HexString {
     if (aesOutput.ciphertext && aesOutput.nonce) {
         const secretKey = crypto.createSecretKey(hexToU8a(key));

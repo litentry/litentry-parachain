@@ -14,6 +14,7 @@ import { u8aToHex } from '@polkadot/util';
 import { HexString } from '@polkadot/util/types';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import { multiAccountTxSender, sendTxsWithUtility, sendTxUntilInBlockList } from './common/transactions';
+import { aesKey } from './common/call';
 
 const assertion = <Assertion>{
     A1: 'A1',
@@ -29,7 +30,6 @@ const assertion = <Assertion>{
 //It doesn't make much difference test A1 only vs test A1 - A11, one VC type is enough.
 //So only use A1 to trigger the wrong event
 describeLitentry('VC test', 0, async (context) => {
-    const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     var indexList: HexString[] = [];
     var vcKeys: string[] = ['A1', 'A2', 'A3', 'A4', 'A7', 'A8', 'A10', 'A11'];
     step('check user sidechain storage before create', async function () {

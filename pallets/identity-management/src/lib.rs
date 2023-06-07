@@ -203,6 +203,7 @@ pub mod pallet {
 			user: T::AccountId,
 			encrypted_identity: Vec<u8>,
 			encrypted_validation_data: Vec<u8>,
+			// I don't think it has to be encrypted - no problem to adjust it if required
 			nonce: UserShieldingKeyNonceType,
 		) -> DispatchResultWithPostInfo {
 			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;

@@ -172,7 +172,10 @@ export function createSignedTrustedCallLinkIdentity(
 ) {
     return createSignedTrustedCall(
         parachain_api,
-        ['link_identity', '(AccountId, AccountId, LitentryIdentity, LitentryValidationData, UserShieldingKeyNonceType, H256)'],
+        [
+            'link_identity',
+            '(AccountId, AccountId, LitentryIdentity, LitentryValidationData, UserShieldingKeyNonceType, H256)',
+        ],
         who,
         mrenclave,
         nonce,

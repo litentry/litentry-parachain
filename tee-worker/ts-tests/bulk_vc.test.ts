@@ -8,7 +8,7 @@ import { blake2AsHex } from '@polkadot/util-crypto';
 import { assert } from 'chai';
 import { HexString } from '@polkadot/util/types';
 import { multiAccountTxSender } from './common/transactions';
-import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
+import { aesKey } from './common/call';
 import { SubmittableResult } from '@polkadot/api';
 import { hexToU8a } from '@polkadot/util';
 const assertion = <Assertion>{
@@ -27,7 +27,6 @@ const assertion = <Assertion>{
 //2.Each time the test code is executed, new wallet account will be used.
 
 describeLitentry('multiple accounts test', 2, async (context) => {
-    const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     var substrateSigners: KeyringPair[] = [];
     var ethereumSigners: ethers.Wallet[] = [];
     var vcIndexList: HexString[] = [];

@@ -4,9 +4,8 @@ import {
     describeLitentry,
     buildIdentityTxs,
     buildIdentityHelper,
-    assertIdentityCreated,
+    assertIdentityLinked,
     assertIdentityRemoved,
-    assertIdentityVerified,
     assertInitialIDGraphCreated,
 } from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
@@ -14,6 +13,7 @@ import { ethers } from 'ethers';
 import { LitentryIdentity, LitentryValidationData } from './common/type-definitions';
 import { handleIdentityEvents } from './common/utils';
 import { multiAccountTxSender } from './common/transactions';
+import { aesKey } from './common/call';
 import { SubmittableResult } from '@polkadot/api';
 
 //Explain how to use this test, which has two important parameters:
@@ -21,7 +21,6 @@ import { SubmittableResult } from '@polkadot/api';
 //2.Each time the test code is executed, new wallet account will be used.
 
 describeLitentry('multiple accounts test', 2, async (context) => {
-    const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     var substrateSigners: KeyringPair[] = [];
     var ethereumSigners: ethers.Wallet[] = [];
     var web3Validations: LitentryValidationData[] = [];
@@ -70,44 +69,32 @@ describeLitentry('multiple accounts test', 2, async (context) => {
     });
 
     //test identity with multiple accounts
-    step('test createIdentity with multiple accounts', async () => {
+    step('test linkIdentity with multiple accounts', async () => {
         for (let index = 0; index < ethereumSigners.length; index++) {
             let identity = await buildIdentityHelper(ethereumSigners[index].address, 'Ethereum', 'Evm');
             identities.push(identity);
         }
 
-        let txs = await buildIdentityTxs(context, substrateSigners, identities, 'createIdentity');
-
-        const resp_events = await multiAccountTxSender(context, txs, substrateSigners, 'identityManagement', [
-            'IdentityCreated',
-        ]);
-        const resp_events_datas = await handleIdentityEvents(context, aesKey, resp_events, 'IdentityCreated');
-
-        for (let index = 0; index < resp_events_datas.length; index++) {
-            console.log('createIdentity', index);
-            assertIdentityCreated(substrateSigners[index], resp_events_datas[index]);
-        }
         const validations = await buildValidations(
             context,
-            resp_events_datas,
             identities,
+            0,
             'ethereum',
             substrateSigners,
             ethereumSigners
         );
 
         web3Validations = [...validations];
-    });
 
-    step('test verifyIdentity with multiple accounts', async () => {
-        let txs = await buildIdentityTxs(context, substrateSigners, identities, 'verifyIdentity', web3Validations);
+        let txs = await buildIdentityTxs(context, substrateSigners, identities, 'linkIdentity', validations);
+
         const resp_events = await multiAccountTxSender(context, txs, substrateSigners, 'identityManagement', [
-            'IdentityVerified',
+            'IdentityLinked',
         ]);
-        const [resp_events_datas] = await handleIdentityEvents(context, aesKey, resp_events, 'IdentityVerified');
+        const [resp_events_datas] = await handleIdentityEvents(context, aesKey, resp_events, 'IdentityLinked');
         for (let index = 0; index < resp_events_datas.length; index++) {
-            console.log('verifyIdentity', index);
-            assertIdentityVerified(substrateSigners[index], resp_events_datas);
+            console.log('linkIdentity', index);
+            assertIdentityLinked(substrateSigners[index], resp_events_datas);
         }
     });
 
@@ -119,7 +106,7 @@ describeLitentry('multiple accounts test', 2, async (context) => {
         ]);
         const [resp_events_datas] = await handleIdentityEvents(context, aesKey, resp_events, 'IdentityRemoved');
         for (let index = 0; index < resp_events_datas.length; index++) {
-            console.log('verifyIdentity', index);
+            console.log('removeIdentity', index);
             assertIdentityRemoved(substrateSigners[index], resp_events_datas);
         }
     });

@@ -24,14 +24,31 @@ export async function assertInitialIDGraphCreated(api: ApiPromise, signer: Keyri
     assert.equal(event.idGraph[0][1].status, IdentityStatus.Active);
 }
 
-export function assertIdentityVerified(signer: KeyringPair, eventDatas: IdentityGenericEvent[]) {}
+export function assertIdentityLinked(signer: KeyringPair, eventDatas: IdentityGenericEvent[]) {
+    let event_identities: LitentryIdentity[] = [];
+    let idgraph_identities: LitentryIdentity[] = [];
+    for (let index = 0; index < eventDatas.length; index++) {
+        event_identities.push(eventDatas[index].identity);
+    }
+    for (let i = 0; i < eventDatas[eventDatas.length - 1].idGraph.length; i++) {
+        idgraph_identities.push(eventDatas[eventDatas.length - 1].idGraph[i][0]);
+    }
+    // idgraph_identities[idgraph_identities.length - 1] is prime identity,don't need to compare
+    assert.isTrue(
+        isArrayEqual(event_identities, idgraph_identities.slice(0, idgraph_identities.length - 1)),
+        'event identities should be equal to idgraph identities'
+    );
 
-export function assertIdentityCreated(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
-    assert.equal(identityEvent?.who, u8aToHex(signer.addressRaw), 'check caller error');
+    const data = eventDatas[eventDatas.length - 1];
+    for (let i = 0; i < eventDatas[eventDatas.length - 1].idGraph.length; i++) {
+        if (isEqual(data.idGraph[i][0], data.identity)) {
+            assert.isAbove(data.idGraph[i][1].link_block, 0, 'identity link_block should be greater than 0');
+        }
+    }
+    assert.equal(data?.who, u8aToHex(signer.addressRaw), 'check caller error');
 }
 
 export function assertIdentityRemoved(signer: KeyringPair, identityEvent: IdentityGenericEvent | undefined) {
-    assert.equal(identityEvent?.idGraph, null, 'check idGraph error,should be null after removed');
     assert.equal(identityEvent?.who, u8aToHex(signer.addressRaw), 'check caller error');
 }
 
