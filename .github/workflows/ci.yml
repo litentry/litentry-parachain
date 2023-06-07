@@ -218,6 +218,11 @@ jobs:
     if: needs.set-condition.outputs.rebuild_tee == 'true'
     container: "litentry/litentry-tee-dev:edge"
     steps:
+      - name: Remove unnecessary files
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
       - uses: actions/checkout@v3
 
       - name: Install dependencies
