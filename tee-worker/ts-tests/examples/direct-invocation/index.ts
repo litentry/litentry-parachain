@@ -10,6 +10,9 @@ import {
     createSignedTrustedCallCreateIdentity,
     createSignedTrustedGetterUserShieldingKey,
     sendRequestFromTrustedGetter,
+    createPublicGetterAccountNonce,
+    sendRequestFromPublicGetter,
+    decodeNonce,
 } from './util';
 import { getEnclave, sleep, buildIdentityHelper } from '../../common/utils';
 import { Metadata, TypeRegistry } from '@polkadot/types';
@@ -54,7 +57,11 @@ async function runDirectCall() {
     const alice: KeyringPair = keyring.addFromUri('//Alice', { name: 'Alice' });
     const bob: KeyringPair = keyring.addFromUri('//Bob', { name: 'Bob' });
     const mrenclave = (await getEnclave(parachain_api)).mrEnclave;
-    let nonce = parachain_api.createType('Index', '0x00');
+
+    const NonceGetter = createPublicGetterAccountNonce(parachain_api, alice);
+    const noncex = await sendRequestFromPublicGetter(wsp, parachain_api, mrenclave, key, NonceGetter);
+    const NonceValue = decodeNonce(noncex.value.toHex());
+    let nonce = parachain_api.createType('Index', NonceValue);
 
     // a hardcoded AES key which is used overall in tests - maybe we need to put it in a common place
     let key_alice = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
@@ -77,7 +84,11 @@ async function runDirectCall() {
     sleep(10);
 
     hash = `0x${require('crypto').randomBytes(32).toString('hex')}`;
-    nonce = parachain_api.createType('Index', '0x01');
+
+    const noncex1 = await sendRequestFromPublicGetter(wsp, parachain_api, mrenclave, key, NonceGetter);
+    const NonceValue1 = decodeNonce(noncex1.value.toHex());
+
+    nonce = parachain_api.createType('Index', NonceValue1);
     console.log('Send direct createIdentity call... hash:', hash);
     const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
     let createIdentityCall = createSignedTrustedCallCreateIdentity(
