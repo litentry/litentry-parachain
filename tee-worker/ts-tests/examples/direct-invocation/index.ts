@@ -35,21 +35,13 @@ async function runDirectCall() {
     const parachain_ws = new WsProvider(PARACHAIN_WS_ENDPINT);
     const sidechainRegistry = new TypeRegistry();
     const metaData = new Metadata(sidechainRegistry, sidechainMetaData.result as HexString);
-    const registry = new TypeRegistry();
-
-    const { types } = teeTypes;
-
     sidechainRegistry.setMetadata(metaData);
+    const { types } = teeTypes;
     const parachain_api = await ApiPromise.create({
         provider: parachain_ws,
         types,
     });
-
-    const context = await initIntegrationTestContext(
-        WORKER_TRUSTED_WS_ENDPOINT, // @fixme evil assertion; centralize env access
-        PARACHAIN_WS_ENDPINT, // @fixme evil assertion; centralize env access
-        0
-    );
+    const context = await initIntegrationTestContext(WORKER_TRUSTED_WS_ENDPOINT, PARACHAIN_WS_ENDPINT, 0);
 
     await cryptoWaitReady();
     const wsp = new WebSocketAsPromised(WORKER_TRUSTED_WS_ENDPOINT, {
