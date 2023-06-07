@@ -22,7 +22,7 @@
 use crate::{
 	error::Result, pallet_imp::IMPCallIndexes, pallet_sidechain::SidechainCallIndexes,
 	pallet_system::SystemSs58Prefix, pallet_teerex::TeerexCallIndexes,
-	pallet_vcmp::VCMPCallIndexes,
+	pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes,
 };
 use codec::{Decode, Encode};
 use sp_core::storage::StorageKey;
@@ -48,7 +48,12 @@ pub mod event;
 pub mod metadata_mocks;
 
 pub trait NodeMetadataTrait:
-	TeerexCallIndexes + SidechainCallIndexes + IMPCallIndexes + VCMPCallIndexes + SystemSs58Prefix
+	TeerexCallIndexes
+	+ SidechainCallIndexes
+	+ IMPCallIndexes
+	+ VCMPCallIndexes
+	+ SystemSs58Prefix
+	+ UtilityCallIndexes
 {
 }
 impl<
@@ -56,7 +61,8 @@ impl<
 			+ SidechainCallIndexes
 			+ IMPCallIndexes
 			+ VCMPCallIndexes
-			+ SystemSs58Prefix,
+			+ SystemSs58Prefix
+			+ UtilityCallIndexes,
 	> NodeMetadataTrait for T
 {
 }
