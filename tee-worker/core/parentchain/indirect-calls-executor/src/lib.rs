@@ -238,7 +238,7 @@ where
 		&self,
 		block_hash: H256,
 		extrinsics: Vec<H256>,
-		block_number: u32,
+		block_number: <<ParentchainBlock as ParentchainBlockTrait>::Header as Header>::Number,
 	) -> Result<OpaqueCall>
 	where
 		ParentchainBlock: ParentchainBlockTrait<Hash = H256>,
@@ -248,7 +248,10 @@ where
 		})??;
 
 		let root: H256 = merkle_root::<Keccak256, _>(extrinsics);
-		Ok(OpaqueCall::from_tuple(&(call, block_hash, codec::Compact(block_number), root)))
+		let parentchain_block_number: ParentchainBlockNumber =
+			block_number.try_into().map_err(|_| Error::ConvertParentchainBlockNumber)?; 
+		let block: u32 = parentchain_block_number.try_into().unwrap();
+		Ok(OpaqueCall::from_tuple(&(call, block_hash, codec::Compact(block), root)))
 	}
 }
 
@@ -346,7 +349,7 @@ where
 			.create_processed_parentchain_block_call::<ParentchainBlock>(
 				block_hash,
 				executed_calls,
-				parentchain_block_number,
+				block_number,
 			)?;
 		calls.push(confirm_processed_parentchain_block_call);
 		Ok(calls)
