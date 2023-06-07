@@ -1,13 +1,15 @@
 import { ApiPromise, SubmittableResult } from '@polkadot/api';
-import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
-import { IntegrationTestContext, TransactionSubmit, RequestEvent } from './type-definitions';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { defaultListenTimeoutInBlockNumber } from './utils';
 import { EventRecord, Event } from '@polkadot/types/interfaces';
 import { expect } from 'chai';
 import colors from 'colors';
-import { HexString } from '@polkadot/util/types';
-import { Codec } from '@polkadot/types/types';
+import type { HexString } from '@polkadot/util/types';
+import type { Codec } from '@polkadot/types/types';
+import type { IntegrationTestContext, TransactionSubmit } from './type-definitions';
+import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
+import { RequestEvent } from './type-definitions';
+
 import { u8aToHex } from '@polkadot/util';
 //transactions utils
 export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrinsic<ApiTypes>, signer: KeyringPair) {
@@ -163,7 +165,7 @@ export async function sendTxsWithUtility(
     pallet: string,
     events: string[],
     listenTimeoutInBlockNumber?: number
-): Promise<string[] | Event[]> {
+): Promise<Event[]> {
     //ensure the tx is in block
     const isInBlockPromise = new Promise((resolve) => {
         context.api.tx.utility.batchAll(txs.map(({ tx }) => tx)).signAndSend(signer, async (result) => {
@@ -178,14 +180,14 @@ export async function sendTxsWithUtility(
 
     await isInBlockPromise;
 
-    const resp_events = (await listenEvent(
+    const resp_events = await listenEvent(
         context.api,
         pallet,
         events,
         txs.length,
         [u8aToHex(signer.addressRaw)],
         listenTimeoutInBlockNumber
-    )) as any;
+    );
 
     expect(resp_events.length).to.be.equal(txs.length);
     return resp_events;

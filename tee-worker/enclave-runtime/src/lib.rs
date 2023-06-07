@@ -33,8 +33,7 @@ use crate::{
 	error::{Error, Result},
 	initialization::global_components::{
 		GLOBAL_FULL_PARACHAIN_HANDLER_COMPONENT, GLOBAL_FULL_SOLOCHAIN_HANDLER_COMPONENT,
-		GLOBAL_INDIRECT_CALLS_EXECUTOR_COMPONENT, GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT,
-		GLOBAL_STATE_HANDLER_COMPONENT,
+		GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT, GLOBAL_STATE_HANDLER_COMPONENT,
 	},
 	rpc::worker_api_direct::sidechain_io_handler,
 	utils::{
@@ -211,7 +210,8 @@ pub unsafe extern "C" fn set_node_metadata(
 	info!("Successfully set the node meta data");
 
 	// update the supported_batch_call_map now
-	if let Ok(executor) = GLOBAL_INDIRECT_CALLS_EXECUTOR_COMPONENT.get() {
+	// TODO: Fix this later
+	/* if let Ok(executor) = GLOBAL_INDIRECT_CALLS_EXECUTOR_COMPONENT.get() {
 		if executor.update_supported_batch_call_map().is_ok() {
 			info!("Successfully update supported batch call map");
 		} else {
@@ -219,7 +219,7 @@ pub unsafe extern "C" fn set_node_metadata(
 		}
 	} else {
 		warn!("Failed to get GLOBAL_INDIRECT_CALLS_EXECUTOR_COMPONENT");
-	}
+	} */
 
 	sgx_status_t::SGX_SUCCESS
 }

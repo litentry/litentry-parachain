@@ -1,4 +1,4 @@
-import { HexString } from '@polkadot/util/types';
+import type { HexString } from '@polkadot/util/types';
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { KeyObject } from 'crypto';
 import { AESOutput } from '../type-definitions';

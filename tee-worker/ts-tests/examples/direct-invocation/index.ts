@@ -1,8 +1,8 @@
 import { cryptoWaitReady } from '@polkadot/util-crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
-import { TypeRegistry, Vec } from '@polkadot/types';
-import { teeTypes } from '../../common/type-definitions';
+import { default as teeTypes } from '../../parachain-interfaces/identity/definitions';
+import { HexString } from '@polkadot/util/types';
 import {
     createSignedTrustedCallSetUserShieldingKey,
     sendRequestFromTrustedCall,
@@ -14,7 +14,9 @@ import {
     sendRequestFromPublicGetter,
     decodeNonce,
 } from './util';
-import { getEnclave, sleep, buildIdentityHelper } from '../../common/utils';
+import { getEnclave, sleep, buildIdentityHelper, initIntegrationTestContext } from '../../common/utils';
+import { Metadata, TypeRegistry } from '@polkadot/types';
+import sidechainMetaData from '../../litentry-sidechain-metadata.json';
 import { hexToU8a, compactStripLength, u8aToString } from '@polkadot/util';
 import { assert } from 'chai';
 
@@ -31,12 +33,16 @@ const WORKER_TRUSTED_WS_ENDPOINT = 'wss://localhost:2000';
 
 async function runDirectCall() {
     const parachain_ws = new WsProvider(PARACHAIN_WS_ENDPINT);
-    const registry = new TypeRegistry();
+    const sidechainRegistry = new TypeRegistry();
+    const metaData = new Metadata(sidechainRegistry, sidechainMetaData.result as HexString);
+    sidechainRegistry.setMetadata(metaData);
     const { types } = teeTypes;
     const parachain_api = await ApiPromise.create({
         provider: parachain_ws,
         types,
     });
+    const context = await initIntegrationTestContext(WORKER_TRUSTED_WS_ENDPOINT, PARACHAIN_WS_ENDPINT, 0);
+
     await cryptoWaitReady();
     const wsp = new WebSocketAsPromised(WORKER_TRUSTED_WS_ENDPOINT, {
         createWebSocket: (url: any) => new WebSocket(url),
@@ -86,13 +92,13 @@ async function runDirectCall() {
 
     nonce = parachain_api.createType('Index', NonceValue1);
     console.log('Send direct createIdentity call... hash:', hash);
-    const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
+    const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2', context);
     let createIdentityCall = createSignedTrustedCallCreateIdentity(
         parachain_api,
         mrenclave,
         nonce,
         alice,
-        parachain_api.createType('LitentryIdentity', twitter_identity).toHex(),
+        sidechainRegistry.createType('LitentryPrimitivesIdentity', twitter_identity).toHex(),
         '0x',
         parachain_api.createType('u32', 1).toHex(),
         hash

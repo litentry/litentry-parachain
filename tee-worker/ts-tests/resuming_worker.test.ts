@@ -207,13 +207,7 @@ describe('Resume worker', function () {
         console.log('=========== worker stopped ==================');
 
         // resume worker
-        let { process: r_worker0 } = await launchWorker(
-            'worker0',
-            binary_dir,
-            worker0_dir,
-            commands.worker0.commands.resume,
-            false
-        );
+        await launchWorker('worker0', binary_dir, worker0_dir, commands.worker0.commands.resume, false);
         await worker0_conn.open(); //reopen connection
         const resume_block = await latestBlock(worker0_conn, shard);
         // TODO compare the block hash
@@ -241,13 +235,7 @@ describe('Resume worker', function () {
         await sleep(20);
 
         // resume worker1
-        let { process: r_worker1 } = await launchWorker(
-            'worker1',
-            binary_dir,
-            worker1_dir,
-            commands.worker1.commands.resume,
-            false
-        );
+        await launchWorker('worker1', binary_dir, worker1_dir, commands.worker1.commands.resume, false);
         await worker1_conn.open(); //reopen connection
         const resume_block = await latestBlock(worker1_conn, shard);
         assert.isNotEmpty(resume_block.result, "the latest block can't be empty");

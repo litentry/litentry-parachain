@@ -1,10 +1,10 @@
 import { ApiPromise } from '@polkadot/api';
-import { Metadata } from '@polkadot/types';
-import { HexString } from '@polkadot/util/types';
 import { KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
 import { after, before, describe } from 'mocha';
-import { IntegrationTestContext, Web3Wallets } from '../type-definitions';
+import type { IntegrationTestContext, Web3Wallets } from '../type-definitions';
+import type { Metadata, TypeRegistry } from '@polkadot/types';
+import type { HexString } from '@polkadot/util/types';
 import { initIntegrationTestContext } from './context';
 
 export function describeLitentry(title: string, walletsNumber: number, cb: (context: IntegrationTestContext) => void) {
@@ -20,6 +20,7 @@ export function describeLitentry(title: string, walletsNumber: number, cb: (cont
             ethersWallet: {},
             substrateWallet: {},
             metaData: {} as Metadata,
+            sidechainRegistry: {} as TypeRegistry,
             web3Signers: [] as Web3Wallets[],
         };
 
@@ -37,6 +38,7 @@ export function describeLitentry(title: string, walletsNumber: number, cb: (cont
             context.ethersWallet = tmp.ethersWallet;
             context.substrateWallet = tmp.substrateWallet;
             context.metaData = tmp.metaData;
+            context.sidechainRegistry = tmp.sidechainRegistry;
             context.web3Signers = tmp.web3Signers;
         });
 
