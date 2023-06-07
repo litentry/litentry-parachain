@@ -255,7 +255,7 @@ where
 		let root: H256 = merkle_root::<Keccak256, _>(extrinsics);
 		let parentchain_block_number: ParentchainBlockNumber =
 			block_number.try_into().map_err(|_| Error::ConvertParentchainBlockNumber)?;
-		let block: u32 = parentchain_block_number.try_into().unwrap();
+		let block: u32 = parentchain_block_number;
 		Ok(OpaqueCall::from_tuple(&(call, block_hash, codec::Compact(block), root)))
 	}
 }
