@@ -275,7 +275,7 @@ pub trait AchainableTagAccount {
 	fn class_of_2021(&mut self, address: &str) -> Result<bool, Error>;
 	fn class_of_2022(&mut self, address: &str) -> Result<bool, Error>;
 	fn found_on_bsc(&mut self, address: &str) -> Result<bool, Error>;
-	fn is_polkadot_alidator(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_polkadot_validator(&mut self, address: &str) -> Result<bool, Error>;
 	fn is_kusama_validator(&mut self, address: &str) -> Result<bool, Error>;
 }
 
@@ -406,7 +406,7 @@ impl AchainableTagAccount for GraphQLClient {
 		}
 	}
 
-	fn is_polkadot_alidator(&mut self, address: &str) -> Result<bool, Error> {
+	fn is_polkadot_validator(&mut self, address: &str) -> Result<bool, Error> {
 		let params = ReqParams::new("/v1/run/label/eb66927e8f56fd7f9a8917d380e6100d");
 		let body = ReqBody { params: ParamsAccount { address: address.to_string() } };
 		let response =
