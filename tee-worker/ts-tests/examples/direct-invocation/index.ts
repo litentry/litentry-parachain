@@ -1,8 +1,8 @@
 import { cryptoWaitReady } from '@polkadot/util-crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
-import { TypeRegistry, Vec } from '@polkadot/types';
 import { teeTypes } from '../../common/type-definitions';
+import { HexString } from '@polkadot/util/types';
 import {
     createSignedTrustedCallSetUserShieldingKey,
     sendRequestFromTrustedCall,
@@ -15,6 +15,8 @@ import {
     decodeNonce,
 } from './util';
 import { getEnclave, sleep, buildIdentityHelper } from '../../common/utils';
+import { Metadata, TypeRegistry } from '@polkadot/types';
+import sidechainMetaData from '../../litentry-sidechain-metadata.json';
 import { hexToU8a, compactStripLength, u8aToString } from '@polkadot/util';
 import { assert } from 'chai';
 
@@ -31,7 +33,9 @@ const WORKER_TRUSTED_WS_ENDPOINT = 'wss://localhost:2000';
 
 async function runDirectCall() {
     const parachain_ws = new WsProvider(PARACHAIN_WS_ENDPINT);
-    const registry = new TypeRegistry();
+    const sidechainRegistry = new TypeRegistry();
+    const metaData = new Metadata(sidechainRegistry, sidechainMetaData.result as HexString);
+    sidechainRegistry.setMetadata(metaData);
     const { types } = teeTypes;
     const parachain_api = await ApiPromise.create({
         provider: parachain_ws,
@@ -92,7 +96,7 @@ async function runDirectCall() {
         mrenclave,
         nonce,
         alice,
-        parachain_api.createType('LitentryIdentity', twitter_identity).toHex(),
+        sidechainRegistry.createType('LitentryPrimitivesIdentity', twitter_identity).toHex(),
         '0x',
         parachain_api.createType('u32', 1).toHex(),
         hash
