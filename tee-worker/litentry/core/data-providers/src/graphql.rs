@@ -23,7 +23,7 @@ use http_req::response::Headers;
 use itc_rest_client::{
 	http_client::{DefaultSend, HttpClient},
 	rest_client::RestClient,
-	RestGet, RestPath,
+	RestGet, RestPath, RestPost,
 };
 use litentry_primitives::{EvmNetwork, SubstrateNetwork, SupportedNetwork};
 use log::debug;
@@ -64,6 +64,7 @@ impl GraphQLClient {
 		);
 		let client =
 			build_client(G_DATA_PROVIDERS.read().unwrap().graphql_url.clone().as_str(), headers);
+
 		GraphQLClient { client }
 	}
 }
@@ -262,6 +263,224 @@ pub struct IsHodlerOutStruct {
 pub struct TotalTxsStruct {
 	pub address: String,
 	pub total_transactions: u64,
+}
+
+/// AchainableTag: Account
+/// base_url: https://label-production.graph.tdf-labs.io
+/// test key: 26353d4c-b01c-4466-98a5-80d3fc53a9d8
+pub trait AchainableTagAccount {
+	fn fresh_account(&mut self, address: &str) -> Result<bool, Error>;
+	fn og_account(&mut self, address: &str) -> Result<bool, Error>;
+	fn class_of_2020(&mut self, address: &str) -> Result<bool, Error>;
+	fn class_of_2021(&mut self, address: &str) -> Result<bool, Error>;
+	fn class_of_2022(&mut self, address: &str) -> Result<bool, Error>;
+	fn found_on_bsc(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_polkadot_alidator(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_kusama_validator(&mut self, address: &str) -> Result<bool, Error>;
+}
+
+impl AchainableTagAccount for GraphQLClient {
+	fn fresh_account(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/1de85e1d215868788dfc91a9f04d7afd");
+		let body = ReqBody { params: ParamsAccount { address: address.to_string() } };
+		let response =
+			self.client.post_capture::<ReqParams, ReqBody, serde_json::Value>(params, &body);
+		debug!("ReqBody response: {:?}", response);
+		match response {
+			Ok(res) =>
+				if let Some(value) = res.get("result") {
+					if let Some(b) = value.as_bool() {
+						Ok(b)
+					} else {
+						Err(Error::GraphQLError("Invalid response".to_string()))
+					}
+				} else {
+					Err(Error::GraphQLError("Invalid response".to_string()))
+				},
+			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
+		}
+	}
+
+	fn og_account(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/8a6e26b90dee869634215683ea2dad0d");
+		let body = ReqBody { params: ParamsAccount { address: address.to_string() } };
+		let response =
+			self.client.post_capture::<ReqParams, ReqBody, serde_json::Value>(params, &body);
+		debug!("ReqBody response: {:?}", response);
+		match response {
+			Ok(res) =>
+				if let Some(value) = res.get("result") {
+					if let Some(b) = value.as_bool() {
+						Ok(b)
+					} else {
+						Err(Error::GraphQLError("Invalid response".to_string()))
+					}
+				} else {
+					Err(Error::GraphQLError("Invalid response".to_string()))
+				},
+			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
+		}
+	}
+
+	fn class_of_2020(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/9343efca78222a4fad82c635ab697ca0");
+		let body = ReqBody { params: ParamsAccount { address: address.to_string() } };
+		let response =
+			self.client.post_capture::<ReqParams, ReqBody, serde_json::Value>(params, &body);
+		debug!("ReqBody response: {:?}", response);
+		match response {
+			Ok(res) =>
+				if let Some(value) = res.get("result") {
+					if let Some(b) = value.as_bool() {
+						Ok(b)
+					} else {
+						Err(Error::GraphQLError("Invalid response".to_string()))
+					}
+				} else {
+					Err(Error::GraphQLError("Invalid response".to_string()))
+				},
+			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
+		}
+	}
+
+	fn class_of_2021(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/6808c28c26908eb695f63b089cfdae80");
+		let body = ReqBody { params: ParamsAccount { address: address.to_string() } };
+		let response =
+			self.client.post_capture::<ReqParams, ReqBody, serde_json::Value>(params, &body);
+		debug!("ReqBody response: {:?}", response);
+		match response {
+			Ok(res) =>
+				if let Some(value) = res.get("result") {
+					if let Some(b) = value.as_bool() {
+						Ok(b)
+					} else {
+						Err(Error::GraphQLError("Invalid response".to_string()))
+					}
+				} else {
+					Err(Error::GraphQLError("Invalid response".to_string()))
+				},
+			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
+		}
+	}
+
+	fn class_of_2022(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/a4ee0c9e44cbc7b8a4b2074b3b8fb912");
+		let body = ReqBody { params: ParamsAccount { address: address.to_string() } };
+		let response =
+			self.client.post_capture::<ReqParams, ReqBody, serde_json::Value>(params, &body);
+		debug!("ReqBody response: {:?}", response);
+		match response {
+			Ok(res) =>
+				if let Some(value) = res.get("result") {
+					if let Some(b) = value.as_bool() {
+						Ok(b)
+					} else {
+						Err(Error::GraphQLError("Invalid response".to_string()))
+					}
+				} else {
+					Err(Error::GraphQLError("Invalid response".to_string()))
+				},
+			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
+		}
+	}
+
+	fn found_on_bsc(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/3ace29836b372ae66a218dec16e37b62");
+		let body = ReqBody { params: ParamsAccount { address: address.to_string() } };
+		let response =
+			self.client.post_capture::<ReqParams, ReqBody, serde_json::Value>(params, &body);
+		debug!("ReqBody response: {:?}", response);
+		match response {
+			Ok(res) =>
+				if let Some(value) = res.get("result") {
+					if let Some(b) = value.as_bool() {
+						Ok(b)
+					} else {
+						Err(Error::GraphQLError("Invalid response".to_string()))
+					}
+				} else {
+					Err(Error::GraphQLError("Invalid response".to_string()))
+				},
+			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
+		}
+	}
+
+	fn is_polkadot_alidator(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/eb66927e8f56fd7f9a8917d380e6100d");
+		let body = ReqBody { params: ParamsAccount { address: address.to_string() } };
+		let response =
+			self.client.post_capture::<ReqParams, ReqBody, serde_json::Value>(params, &body);
+		debug!("ReqBody response: {:?}", response);
+		match response {
+			Ok(res) =>
+				if let Some(value) = res.get("result") {
+					if let Some(b) = value.as_bool() {
+						Ok(b)
+					} else {
+						Err(Error::GraphQLError("Invalid response".to_string()))
+					}
+				} else {
+					Err(Error::GraphQLError("Invalid response".to_string()))
+				},
+			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
+		}
+	}
+
+	fn is_kusama_validator(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/a0d213ff009e43b4ecd0cae67bbabae9");
+		let body = ReqBody { params: ParamsAccount { address: address.to_string() } };
+		let response =
+			self.client.post_capture::<ReqParams, ReqBody, serde_json::Value>(params, &body);
+		debug!("ReqBody response: {:?}", response);
+		match response {
+			Ok(res) =>
+				if let Some(value) = res.get("result") {
+					if let Some(b) = value.as_bool() {
+						Ok(b)
+					} else {
+						Err(Error::GraphQLError("Invalid response".to_string()))
+					}
+				} else {
+					Err(Error::GraphQLError("Invalid response".to_string()))
+				},
+			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
+		}
+	}
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ReqParams {
+	path: String,
+}
+
+impl ReqParams {
+	pub fn new(path: &str) -> Self {
+		Self { path: path.into() }
+	}
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ReqBody {
+	params: ParamsAccount,
+}
+impl RestPath<ReqParams> for ReqBody {
+	fn get_path(req_params: ReqParams) -> core::result::Result<String, HttpError> {
+		Ok(req_params.path)
+	}
+}
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ParamsAccount {
+	address: String,
+}
+
+impl RestPath<String> for ParamsAccount {
+	fn get_path(path: String) -> core::result::Result<String, HttpError> {
+		Ok(path)
+	}
 }
 
 #[cfg(test)]
