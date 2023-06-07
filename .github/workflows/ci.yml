@@ -218,11 +218,6 @@ jobs:
     if: needs.set-condition.outputs.rebuild_tee == 'true'
     container: "litentry/litentry-tee-dev:edge"
     steps:
-      - name: Remove unnecessary files
-        run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-
       - uses: actions/checkout@v3
 
       - name: Install dependencies
@@ -233,6 +228,8 @@ jobs:
       - name: Tee-worker clippy
         working-directory: ./tee-worker
         run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
           rustup show
           cargo clippy -- -D warnings
           cargo clippy --features evm -- -D warnings
@@ -243,6 +240,8 @@ jobs:
       - name: Tee-enclave clippy
         working-directory: ./tee-worker/enclave-runtime
         run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
           rustup show
           cargo clippy -- -D warnings
           cargo clippy --features evm -- -D warnings
