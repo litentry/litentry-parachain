@@ -332,6 +332,11 @@ jobs:
       - set-condition
       - sequentialise
     steps:
+      - name: Remove unnecessary files
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
       - uses: actions/checkout@v3
 
       - name: Set up Docker Buildx
