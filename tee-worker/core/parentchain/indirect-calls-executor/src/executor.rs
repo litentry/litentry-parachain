@@ -170,12 +170,14 @@ impl<
 		})??;
 
 		let root: H256 = merkle_root::<Keccak256, _>(extrinsics);
-		let parentchain_block_number: ParentchainBlockNumber =
-			block_number.try_into().map_err(|_| Error::ConvertParentchainBlockNumber)?;
+		let mut block_num: u32 = 0;
+		if let Ok(number) = block_number.try_into() {
+			block_num = number;
+		}
 		Ok(OpaqueCall::from_tuple(&(
 			call,
 			block_hash,
-			codec::Compact(parentchain_block_number),
+			codec::Compact(block_num),
 			root,
 		)))
 	}
