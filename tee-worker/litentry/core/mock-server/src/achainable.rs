@@ -15,8 +15,8 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 #![allow(opaque_hidden_inferred_bound)]
 
-use lc_data_providers::graphql::{
-	ToGraphQL, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsTotalTxs,
+use lc_data_providers::achainable::{
+	ToAchainable, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsTotalTxs,
 };
 use litentry_primitives::SupportedNetwork;
 use std::collections::HashMap;
@@ -24,7 +24,7 @@ use warp::{http::Response, Filter};
 
 pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
 	warp::get()
-		.and(warp::path!("latest" / "graphql"))
+		.and(warp::path!("latest" / "achainable"))
 		.and(warp::query::<HashMap<String, String>>())
 		.map(|p: HashMap<String, String>| {
 			let default = String::default();
@@ -34,7 +34,7 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 				vec!["EGP7XztdTosm1EmaATZVMjSWujGEj9nNidhjqA2zZtttkFg".to_string()],
 				vec![SupportedNetwork::Kusama, SupportedNetwork::Polkadot],
 			)
-			.to_graphql();
+			.to_achainable();
 
 			let expected_query_is_hodler = VerifiedCredentialsIsHodlerIn::new(
 				vec![
@@ -46,7 +46,7 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 				"0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723".to_string(),
 				"0.00000056".into(),
 			)
-			.to_graphql();
+			.to_achainable();
 
 			if query == &expected_query_total_txs {
 				let body = r#"

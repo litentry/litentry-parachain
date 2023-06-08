@@ -36,7 +36,7 @@ use std::{
 	vec::Vec,
 };
 
-pub trait AchainableQuery<Query: ToGraphQL> {
+pub trait AchainableQuery<Query: ToAchainable> {
 	fn verified_credentials_is_hodler(&mut self, params: Query) -> Result<IsHodlerOut, Error>;
 	fn verified_credentials_total_transactions(
 		&mut self,
@@ -44,35 +44,35 @@ pub trait AchainableQuery<Query: ToGraphQL> {
 	) -> Result<Vec<TotalTxsStruct>, Error>;
 }
 
-pub struct GraphQLClient {
+pub struct AchainableClient {
 	client: RestClient<HttpClient<DefaultSend>>,
 }
 
-impl Default for GraphQLClient {
+impl Default for AchainableClient {
 	fn default() -> Self {
 		Self::new()
 	}
 }
 
-impl GraphQLClient {
+impl AchainableClient {
 	pub fn new() -> Self {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert(
 			AUTHORIZATION.as_str(),
-			G_DATA_PROVIDERS.read().unwrap().graphql_auth_key.clone().as_str(),
+			G_DATA_PROVIDERS.read().unwrap().achainable_auth_key.clone().as_str(),
 		);
 		let client =
-			build_client(G_DATA_PROVIDERS.read().unwrap().graphql_url.clone().as_str(), headers);
+			build_client(G_DATA_PROVIDERS.read().unwrap().achainable_url.clone().as_str(), headers);
 
-		GraphQLClient { client }
+		AchainableClient { client }
 	}
 }
 
-impl<Query: ToGraphQL> AchainableQuery<Query> for GraphQLClient {
+impl<Query: ToAchainable> AchainableQuery<Query> for AchainableClient {
 	fn verified_credentials_is_hodler(&mut self, query: Query) -> Result<IsHodlerOut, Error> {
 		let path = query.path();
-		let query_value = query.to_graphql();
+		let query_value = query.to_achainable();
 		debug!("verified_credentials_is_hodler query: {}", query_value);
 
 		let query = vec![("query", query_value.as_str())];
@@ -82,11 +82,11 @@ impl<Query: ToGraphQL> AchainableQuery<Query> for GraphQLClient {
 					debug!("	[Graphql] value: {:?}", value);
 
 					serde_json::from_value(value.clone()).map_err(|e| {
-						let error_msg = format!("Deserialize GraphQL response error: {:?}", e);
-						Error::GraphQLError(error_msg)
+						let error_msg = format!("Deserialize Achainable response error: {:?}", e);
+						Error::AchainableError(error_msg)
 					})
 				} else {
-					Err(Error::GraphQLError("Invalid GraphQL response".to_string()))
+					Err(Error::AchainableError("Invalid Achainable response".to_string()))
 				},
 			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
 		}
@@ -97,7 +97,7 @@ impl<Query: ToGraphQL> AchainableQuery<Query> for GraphQLClient {
 		query: Query,
 	) -> Result<Vec<TotalTxsStruct>, Error> {
 		let path = query.path();
-		let query_value = query.to_graphql();
+		let query_value = query.to_achainable();
 		debug!("verified_credentials_total_transactions query: {}", query_value);
 
 		let query = vec![("query", query_value.as_str())];
@@ -128,7 +128,7 @@ impl<Query: ToGraphQL> AchainableQuery<Query> for GraphQLClient {
 		if !result.is_empty() {
 			Ok(result.values().cloned().collect::<Vec<TotalTxsStruct>>())
 		} else {
-			Err(Error::GraphQLError("Invalid GraphQL response".to_string()))
+			Err(Error::AchainableError("Invalid Achainable response".to_string()))
 		}
 	}
 }
@@ -161,12 +161,12 @@ impl GetSupportedNetworks for EvmNetwork {
 	}
 }
 
-pub trait ToGraphQL {
+pub trait ToAchainable {
 	fn path(&self) -> String {
-		"latest/graphql".to_string()
+		"latest/achainable".to_string()
 	}
 
-	fn to_graphql(&self) -> String;
+	fn to_achainable(&self) -> String;
 }
 
 #[derive(Debug)]
@@ -190,8 +190,8 @@ impl VerifiedCredentialsIsHodlerIn {
 	}
 }
 
-impl ToGraphQL for VerifiedCredentialsIsHodlerIn {
-	fn to_graphql(&self) -> String {
+impl ToAchainable for VerifiedCredentialsIsHodlerIn {
+	fn to_achainable(&self) -> String {
 		let addresses_str = format!("{:?}", self.addresses);
 		let network = format!("{:?}", self.network).to_lowercase();
 		if self.token_address.is_empty() {
@@ -214,8 +214,8 @@ impl VerifiedCredentialsTotalTxs {
 	}
 }
 
-impl ToGraphQL for VerifiedCredentialsTotalTxs {
-	fn to_graphql(&self) -> String {
+impl ToAchainable for VerifiedCredentialsTotalTxs {
+	fn to_achainable(&self) -> String {
 		let addresses_str = format!("{:?}", self.addresses);
 		let q = self
 			.networks
@@ -279,7 +279,7 @@ pub trait AchainableTagAccount {
 	fn is_kusama_validator(&mut self, address: &str) -> Result<bool, Error>;
 }
 
-impl AchainableTagAccount for GraphQLClient {
+impl AchainableTagAccount for AchainableClient {
 	fn fresh_account(&mut self, address: &str) -> Result<bool, Error> {
 		let params = ReqParams::new("/v1/run/label/1de85e1d215868788dfc91a9f04d7afd");
 		let body = ReqBody { params: ParamsAccount { address: address.to_string() } };
@@ -292,10 +292,10 @@ impl AchainableTagAccount for GraphQLClient {
 					if let Some(b) = value.as_bool() {
 						Ok(b)
 					} else {
-						Err(Error::GraphQLError("Invalid response".to_string()))
+						Err(Error::AchainableError("Invalid response".to_string()))
 					}
 				} else {
-					Err(Error::GraphQLError("Invalid response".to_string()))
+					Err(Error::AchainableError("Invalid response".to_string()))
 				},
 			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
 		}
@@ -313,10 +313,10 @@ impl AchainableTagAccount for GraphQLClient {
 					if let Some(b) = value.as_bool() {
 						Ok(b)
 					} else {
-						Err(Error::GraphQLError("Invalid response".to_string()))
+						Err(Error::AchainableError("Invalid response".to_string()))
 					}
 				} else {
-					Err(Error::GraphQLError("Invalid response".to_string()))
+					Err(Error::AchainableError("Invalid response".to_string()))
 				},
 			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
 		}
@@ -334,10 +334,10 @@ impl AchainableTagAccount for GraphQLClient {
 					if let Some(b) = value.as_bool() {
 						Ok(b)
 					} else {
-						Err(Error::GraphQLError("Invalid response".to_string()))
+						Err(Error::AchainableError("Invalid response".to_string()))
 					}
 				} else {
-					Err(Error::GraphQLError("Invalid response".to_string()))
+					Err(Error::AchainableError("Invalid response".to_string()))
 				},
 			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
 		}
@@ -355,10 +355,10 @@ impl AchainableTagAccount for GraphQLClient {
 					if let Some(b) = value.as_bool() {
 						Ok(b)
 					} else {
-						Err(Error::GraphQLError("Invalid response".to_string()))
+						Err(Error::AchainableError("Invalid response".to_string()))
 					}
 				} else {
-					Err(Error::GraphQLError("Invalid response".to_string()))
+					Err(Error::AchainableError("Invalid response".to_string()))
 				},
 			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
 		}
@@ -376,10 +376,10 @@ impl AchainableTagAccount for GraphQLClient {
 					if let Some(b) = value.as_bool() {
 						Ok(b)
 					} else {
-						Err(Error::GraphQLError("Invalid response".to_string()))
+						Err(Error::AchainableError("Invalid response".to_string()))
 					}
 				} else {
-					Err(Error::GraphQLError("Invalid response".to_string()))
+					Err(Error::AchainableError("Invalid response".to_string()))
 				},
 			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
 		}
@@ -397,10 +397,10 @@ impl AchainableTagAccount for GraphQLClient {
 					if let Some(b) = value.as_bool() {
 						Ok(b)
 					} else {
-						Err(Error::GraphQLError("Invalid response".to_string()))
+						Err(Error::AchainableError("Invalid response".to_string()))
 					}
 				} else {
-					Err(Error::GraphQLError("Invalid response".to_string()))
+					Err(Error::AchainableError("Invalid response".to_string()))
 				},
 			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
 		}
@@ -418,10 +418,10 @@ impl AchainableTagAccount for GraphQLClient {
 					if let Some(b) = value.as_bool() {
 						Ok(b)
 					} else {
-						Err(Error::GraphQLError("Invalid response".to_string()))
+						Err(Error::AchainableError("Invalid response".to_string()))
 					}
 				} else {
-					Err(Error::GraphQLError("Invalid response".to_string()))
+					Err(Error::AchainableError("Invalid response".to_string()))
 				},
 			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
 		}
@@ -439,10 +439,10 @@ impl AchainableTagAccount for GraphQLClient {
 					if let Some(b) = value.as_bool() {
 						Ok(b)
 					} else {
-						Err(Error::GraphQLError("Invalid response".to_string()))
+						Err(Error::AchainableError("Invalid response".to_string()))
 					}
 				} else {
-					Err(Error::GraphQLError("Invalid response".to_string()))
+					Err(Error::AchainableError("Invalid response".to_string()))
 				},
 			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
 		}
@@ -485,8 +485,8 @@ impl RestPath<String> for ParamsAccount {
 
 #[cfg(test)]
 mod tests {
-	use crate::graphql::{
-		AchainableQuery, GraphQLClient, SupportedNetwork, VerifiedCredentialsIsHodlerIn,
+	use crate::achainable::{
+		AchainableQuery, AchainableClient, SupportedNetwork, VerifiedCredentialsIsHodlerIn,
 		VerifiedCredentialsTotalTxs, G_DATA_PROVIDERS,
 	};
 	use itp_stf_primitives::types::AccountId;
@@ -502,14 +502,14 @@ mod tests {
 	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(Arc::new(|_: &AccountId, _: &Identity| ChallengeCode::default()), 0).unwrap();
-		G_DATA_PROVIDERS.write().unwrap().set_graphql_url(url.clone());
+		G_DATA_PROVIDERS.write().unwrap().set_achainable_url(url.clone());
 	}
 
 	#[test]
 	fn verified_credentials_is_hodler_work() {
 		init();
 
-		let mut client = GraphQLClient::new();
+		let mut client = AchainableClient::new();
 		let credentials = VerifiedCredentialsIsHodlerIn {
 			addresses: vec![ACCOUNT_ADDRESS1.to_string(), ACCOUNT_ADDRESS2.to_string()],
 			from_date: "2022-10-16T00:00:00Z".to_string(),
@@ -532,7 +532,7 @@ mod tests {
 			addresses: vec!["EGP7XztdTosm1EmaATZVMjSWujGEj9nNidhjqA2zZtttkFg".to_string()],
 			networks: vec![SupportedNetwork::Kusama, SupportedNetwork::Polkadot],
 		};
-		let mut client = GraphQLClient::new();
+		let mut client = AchainableClient::new();
 		let r = client.verified_credentials_total_transactions(query);
 		assert!(r.is_ok());
 		let r = r.unwrap();
