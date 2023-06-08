@@ -234,6 +234,8 @@ jobs:
           cargo clippy -- -D warnings
           cargo clippy --features evm -- -D warnings
           cargo clippy --features sidechain -- -D warnings
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
           cargo clippy --features teeracle -- -D warnings
           cargo clippy --features offchain-worker -- -D warnings
 
@@ -246,6 +248,8 @@ jobs:
           cargo clippy -- -D warnings
           cargo clippy --features evm -- -D warnings
           cargo clippy --features sidechain -- -D warnings
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
           cargo clippy --features teeracle -- -D warnings
           cargo clippy --features offchain-worker -- -D warnings
 
