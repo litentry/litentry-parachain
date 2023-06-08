@@ -3,36 +3,33 @@ import {
     encryptWithTeeShieldingKey,
     generateVerificationMessage,
     checkErrorDetail,
-    checkUserShieldingKeys,
     checkIDGraph,
     buildIdentityHelper,
     buildIdentityTxs,
     handleIdentityEvents,
     buildValidations,
     assertInitialIDGraphCreated,
-    assertIdentityLinked,
-    assertIdentityRemoved,
+    checkUserShieldingKeys,
+    assertIdentityVerified, assertIdentityLinked, assertIdentityRemoved
 } from './common/utils';
-import { aesKey } from './common/call';
+import { env_network } from './common/helpers';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import {
-    IdentityStatus,
-    LitentryIdentity,
-    LitentryValidationData,
-    SubstrateIdentity,
-    TransactionSubmit,
-} from './common/type-definitions';
-import { HexString } from '@polkadot/util/types';
 import { multiAccountTxSender, sendTxsWithUtility } from './common/transactions';
+import type { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
+import type { LitentryValidationData } from './parachain-interfaces/identity/types';
+import type { TransactionSubmit } from './common/type-definitions';
+import type { HexString } from '@polkadot/util/types';
+import { Event } from '@polkadot/types/interfaces';
 import { ethers } from 'ethers';
-const substrateExtensionIdentity = <LitentryIdentity>{
-    Substrate: <SubstrateIdentity>{
+
+const substrateExtensionIdentity = {
+    Substrate: {
         address: '0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48', //Bob
         network: 'Litentry',
     },
-};
+} as unknown as LitentryPrimitivesIdentity;
 
 describeLitentry('Test Identity', 0, (context) => {
     const errorAesKey = '0xError';
@@ -40,8 +37,8 @@ describeLitentry('Test Identity', 0, (context) => {
     // random wrong msg
     const wrong_msg = '0x693d9131808e7a8574c7ea5eb7813bdf356223263e61fa8fe2ee8e434508bc75';
     var signature_substrate;
-    let alice_identities: LitentryIdentity[] = [];
-    let bob_identities: LitentryIdentity[] = [];
+    let alice_identities: LitentryPrimitivesIdentity[] = [];
+    let bob_identities: LitentryPrimitivesIdentity[] = [];
     let alice_validations: LitentryValidationData[] = [];
     let bob_validations: LitentryValidationData[] = [];
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -57,7 +54,7 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('Invalid user shielding key', async function () {
-        let identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Ethereum', 'Evm');
+        let identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Ethereum', 'Evm', context);
         // use empty `alice_validations`, the `UserShieldingKeyNotFound` error should be emitted before verification
         let txs = await buildIdentityTxs(
             context,
@@ -70,11 +67,10 @@ describeLitentry('Test Identity', 0, (context) => {
         let resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
             'LinkIdentityFailed',
         ]);
-        await checkErrorDetail(resp_events, 'UserShieldingKeyNotFound', true);
+        await checkErrorDetail(resp_events, 'UserShieldingKeyNotFound');
     });
 
     step('set user shielding key', async function () {
-        await sleep(6000);
         let [alice_txs] = (await buildIdentityTxs(
             context,
             [context.substrateWallet.alice],
@@ -94,11 +90,13 @@ describeLitentry('Test Identity', 0, (context) => {
             'identityManagement',
             ['UserShieldingKeySet']
         );
-        await sleep(6000);
 
-        const [alice, bob] = await handleIdentityEvents(context, aesKey, resp_events, 'UserShieldingKeySet');
-        await assertInitialIDGraphCreated(context.api, context.substrateWallet.alice, alice);
-        await assertInitialIDGraphCreated(context.api, context.substrateWallet.bob, bob);
+        await assertInitialIDGraphCreated(
+            context,
+            [context.substrateWallet.alice, context.substrateWallet.bob],
+            resp_events,
+            aesKey
+        );
     });
 
     step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
@@ -115,10 +113,11 @@ describeLitentry('Test Identity', 0, (context) => {
         // the main address should be already inside the IDGraph
         const main_identity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.alice.addressRaw),
-            'LitentryRococo',
-            'Substrate'
+            env_network,
+            'Substrate',
+            context
         );
-        const identity_hex = context.api.createType('LitentryIdentity', main_identity).toHex();
+        const identity_hex = main_identity.toHex();
         const resp_id_graph = await checkIDGraph(
             context,
             'IdentityManagement',
@@ -126,29 +125,32 @@ describeLitentry('Test Identity', 0, (context) => {
             u8aToHex(context.substrateWallet.alice.addressRaw),
             identity_hex
         );
-        assert.isAbove(resp_id_graph.link_block, 0, 'link_block should be greater than 0 for main address');
+        assert.isAbove(resp_id_graph.linkBlock.toHuman(), 0, 'link_block should be greater than 0 for main address');
         assert.equal(resp_id_graph.status, IdentityStatus.Active, 'status should be active for main address');
         // TODO: check IDGraph.length == 1 in the sidechain storage
     });
 
     step('link identities', async function () {
         // Alice
-        const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
-        const ethereum_identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Ethereum', 'Evm');
+        const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2', context);
+        const ethereum_identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Ethereum', 'Evm', context);
         const alice_substrate_identity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.alice.addressRaw),
             'Litentry',
-            'Substrate'
+            'Substrate',
+            context
         );
 
         // Bob
         const bob_substrate_identity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.bob.addressRaw),
             'Litentry',
-            'Substrate'
+            'Substrate',
+            context
         );
 
         alice_identities = [twitter_identity, ethereum_identity, alice_substrate_identity];
+
         bob_identities = [bob_substrate_identity];
 
         // TODO: being lazy - the nonce here is hardcoded
@@ -290,8 +292,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'identityManagement',
             ['LinkIdentityFailed']
         );
-        const verified_event_datas = await handleIdentityEvents(context, aesKey, alice_resp_events, 'Failed');
-        await checkErrorDetail(verified_event_datas, 'InvalidIdentity', false);
+        await checkErrorDetail(alice_resp_events, 'InvalidIdentity');
     });
 
     step('link identities with wrong signature', async function () {
@@ -299,11 +300,11 @@ describeLitentry('Test Identity', 0, (context) => {
 
         // link eth identity with wrong validation data
         // the `VerifyEvmSignatureFailed` error should be emitted prior to `AlreadyLinked` error
-        const signature_ethereum = (await context.ethersWallet.alice!.signMessage(
+        const signature_ethereum = (await context.ethersWallet.alice.signMessage(
             ethers.utils.arrayify(wrong_msg)
         )) as HexString;
 
-        const ethereumValidationData: LitentryValidationData = {
+        const ethereumValidationData = {
             Web3Validation: {
                 Evm: {
                     message: wrong_msg as HexString,
@@ -313,12 +314,17 @@ describeLitentry('Test Identity', 0, (context) => {
                 },
             },
         };
+        const ethereum_validation_data: LitentryValidationData = context.api.createType(
+            'LitentryValidationData',
+            ethereumValidationData
+        ) as unknown as LitentryValidationData;
+        context;
         let alice_txs = await buildIdentityTxs(
             context,
             context.substrateWallet.alice,
             [ethereum_identity],
             'linkIdentity',
-            [ethereumValidationData]
+            [ethereum_validation_data]
         );
         let alice_resp_events = await sendTxsWithUtility(
             context,
@@ -327,9 +333,8 @@ describeLitentry('Test Identity', 0, (context) => {
             'identityManagement',
             ['LinkIdentityFailed']
         );
-        const verified_event_datas = await handleIdentityEvents(context, aesKey, alice_resp_events, 'Failed');
 
-        await checkErrorDetail(verified_event_datas, 'VerifyEvmSignatureFailed', false);
+        await checkErrorDetail(alice_resp_events, 'VerifyEvmSignatureFailed');
     });
 
     // TODO: testcase for linking prime address and already linked address
@@ -349,8 +354,6 @@ describeLitentry('Test Identity', 0, (context) => {
             'identityManagement',
             ['IdentityRemoved']
         );
-        const [twitter_identity_removed, ethereum_identity_removed, substrate_identity_removed] =
-            await handleIdentityEvents(context, aesKey, alice_resp_remove_events, 'IdentityRemoved');
 
         // Bob remove substrate identities
         let bob_txs = await buildIdentityTxs(context, context.substrateWallet.bob, bob_identities, 'removeIdentity');
@@ -375,8 +378,8 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('check IDGraph after removeIdentity', async function () {
-        const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
-        const identity_hex = context.api.createType('LitentryIdentity', twitter_identity).toHex();
+        const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2', context);
+        const identity_hex = twitter_identity.toHex();
 
         // TODO: we should verify the IDGraph is empty
     });
@@ -385,8 +388,9 @@ describeLitentry('Test Identity', 0, (context) => {
         // remove prime identity
         const substratePrimeIdentity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.alice.addressRaw),
-            'LitentryRococo',
-            'Substrate'
+            env_network,
+            'Substrate',
+            context
         );
 
         let prime_txs = await buildIdentityTxs(
@@ -402,14 +406,13 @@ describeLitentry('Test Identity', 0, (context) => {
             'identityManagement',
             ['RemoveIdentityFailed']
         );
-        const prime_resp_event_datas = await handleIdentityEvents(context, aesKey, prime_resp_events, 'Failed');
 
-        await checkErrorDetail(prime_resp_event_datas, 'RemovePrimeIdentityDisallowed', false);
+        await checkErrorDetail(prime_resp_events, 'RemovePrimeIdentityDisallowed');
     });
 
     step('remove error identities', async function () {
-        //remove a nonexistent identity
-        //context.substrateWallet.alice has aleady removed all identities in step('remove identities')
+        // Remove a nonexistent identity
+        // context.substrateWallet.alice has aleady removed all identities in step('remove identities')
         let alice_remove_txs = await buildIdentityTxs(
             context,
             context.substrateWallet.alice,
@@ -423,14 +426,8 @@ describeLitentry('Test Identity', 0, (context) => {
             'identityManagement',
             ['RemoveIdentityFailed']
         );
-        const alice_resp_remove_event_datas = await handleIdentityEvents(
-            context,
-            aesKey,
-            alice_resp_remove_events,
-            'Failed'
-        );
 
-        await checkErrorDetail(alice_resp_remove_event_datas, 'IdentityNotExist', false);
+        await checkErrorDetail(alice_resp_remove_events, 'IdentityNotExist');
 
         //charlie doesn't have a challenge code,use alice identity
         let charlie_remove_txs = await buildIdentityTxs(
@@ -447,14 +444,7 @@ describeLitentry('Test Identity', 0, (context) => {
             ['RemoveIdentityFailed']
         );
 
-        const charile_resp_remove_events_data = await handleIdentityEvents(
-            context,
-            aesKey,
-            charile_resp_remove_events,
-            'Failed'
-        );
-
-        await checkErrorDetail(charile_resp_remove_events_data, 'UserShieldingKeyNotFound', false);
+        await checkErrorDetail(charile_resp_remove_events, 'UserShieldingKeyNotFound');
     });
 
     step('set error user shielding key', async function () {
@@ -474,9 +464,7 @@ describeLitentry('Test Identity', 0, (context) => {
             ['SetUserShieldingKeyFailed']
         );
 
-        let error_event_datas = await handleIdentityEvents(context, aesKey, resp_error_events, 'Failed');
-
-        await checkErrorDetail(error_event_datas, 'ImportError', false);
+        await checkErrorDetail(resp_error_events, 'ImportError');
     });
 
     step('exceeding IDGraph limit not allowed', async function () {

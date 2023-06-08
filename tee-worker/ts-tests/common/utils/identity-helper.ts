@@ -1,31 +1,33 @@
-import { ApiPromise } from '@polkadot/api';
-import { KeyringPair } from '@polkadot/keyring/types';
-import { HexString } from '@polkadot/util/types';
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { blake2AsHex } from '@polkadot/util-crypto';
-import {
+
+import { AESOutput } from '../type-definitions';
+import { decryptWithAES, encryptWithAES, encryptWithTeeShieldingKey } from './crypto';
+import { assert } from 'chai';
+import { ethers } from 'ethers';
+import type { TypeRegistry } from '@polkadot/types';
+import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from '@polkadot/types/lookup';
+import type { LitentryValidationData } from '../../parachain-interfaces/identity/types';
+import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
+import type { KeyringPair } from '@polkadot/keyring/types';
+import type { HexString } from '@polkadot/util/types';
+import type {
     EvmNetwork,
     IdentityGenericEvent,
     IntegrationTestContext,
-    LitentryIdentity,
-    LitentryValidationData,
     SubstrateNetwork,
     Web2Network,
 } from '../type-definitions';
-import { decryptWithAES, encryptWithAES, encryptWithTeeShieldingKey } from './crypto';
-import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
-import { assert } from 'chai';
-import { ethers } from 'ethers';
 import { aesKey, keyNonce } from '../call';
 
 // blake2_256(<sidechain nonce> + shieldingKey.encrypt(<primary account> + <identity-to-be-linked>).ciphertext)
 export function generateVerificationMessage(
     context: IntegrationTestContext,
     signerAddress: Uint8Array,
-    identity: LitentryIdentity,
+    identity: LitentryPrimitivesIdentity,
     sidechainNonce: number
 ): HexString {
-    const encodedIdentity = context.api.createType('LitentryIdentity', identity).toU8a();
+    const encodedIdentity = context.api.createType('LitentryPrimitivesIdentity', identity).toU8a();
     const payload = Buffer.concat([signerAddress, encodedIdentity]);
     const encryptedPayload = hexToU8a(encryptWithAES(aesKey, hexToU8a(keyNonce), payload));
     const encodedSidechainNonce = context.api.createType('Index', sidechainNonce);
@@ -36,15 +38,21 @@ export function generateVerificationMessage(
 export async function buildIdentityHelper(
     address: HexString | string,
     network: SubstrateNetwork | EvmNetwork | Web2Network,
-    type: 'Evm' | 'Substrate' | 'Web2'
-): Promise<LitentryIdentity> {
-    const identity: LitentryIdentity = {
+    type: LitentryPrimitivesIdentity['type'],
+    context: IntegrationTestContext
+): Promise<LitentryPrimitivesIdentity> {
+    const identity = {
         [type]: {
             address,
             network,
         },
     };
-    return identity;
+
+    const encoded_identity = context.sidechainRegistry.createType(
+        'LitentryPrimitivesIdentity',
+        identity
+    ) as unknown as LitentryPrimitivesIdentity;
+    return encoded_identity;
 }
 
 // If multiple transactions are built from multiple accounts, pass the signers as an array.
@@ -54,7 +62,7 @@ export async function buildIdentityHelper(
 export async function buildIdentityTxs(
     context: IntegrationTestContext,
     signers: KeyringPair[] | KeyringPair,
-    identities: LitentryIdentity[],
+    identities: LitentryPrimitivesIdentity[],
     method: 'setUserShieldingKey' | 'linkIdentity' | 'removeIdentity',
     validations?: LitentryValidationData[]
 ): Promise<any[]> {
@@ -68,8 +76,8 @@ export async function buildIdentityTxs(
         const identity = identities[k];
         let tx: SubmittableExtrinsic<ApiTypes>;
         let nonce: number;
-        const encod_identity = api.createType('LitentryIdentity', identity).toU8a();
-        const ciphertext_identity = encryptWithTeeShieldingKey(teeShieldingKey, encod_identity).toString('hex');
+        const ciphertext_identity =
+            identity && encryptWithTeeShieldingKey(teeShieldingKey, identity.toU8a()).toString('hex');
         nonce = (await api.rpc.system.accountNextIndex(signer.address)).toNumber();
 
         switch (method) {
@@ -108,8 +116,8 @@ export async function handleIdentityEvents(
     context: IntegrationTestContext,
     aesKey: HexString,
     events: any[],
-    type: 'UserShieldingKeySet' | 'IdentityLinked' | 'IdentityRemoved' | 'Failed' | 'LinkIdentityFailed'
-): Promise<any[]> {
+    type: 'UserShieldingKeySet' | 'IdentityLinked' | 'IdentityRemoved' | 'Failed'
+): Promise<IdentityGenericEvent[]> {
     let results: IdentityGenericEvent[] = [];
 
     for (let index = 0; index < events.length; index++) {
@@ -117,7 +125,7 @@ export async function handleIdentityEvents(
             case 'UserShieldingKeySet':
                 results.push(
                     createIdentityEvent(
-                        context.api,
+                        context.sidechainRegistry,
                         events[index].data.account.toHex(),
                         undefined,
                         decryptWithAES(aesKey, events[index].data.idGraph, 'hex')
@@ -127,7 +135,7 @@ export async function handleIdentityEvents(
             case 'IdentityLinked':
                 results.push(
                     createIdentityEvent(
-                        context.api,
+                        context.sidechainRegistry,
                         events[index].data.account.toHex(),
                         decryptWithAES(aesKey, events[index].data.identity, 'hex'),
                         decryptWithAES(aesKey, events[index].data.idGraph, 'hex')
@@ -137,15 +145,11 @@ export async function handleIdentityEvents(
             case 'IdentityRemoved':
                 results.push(
                     createIdentityEvent(
-                        context.api,
+                        context.sidechainRegistry,
                         events[index].data.account.toHex(),
                         decryptWithAES(aesKey, events[index].data.identity, 'hex')
                     )
                 );
-                break;
-            case 'Failed':
-            case 'LinkIdentityFailed':
-                results.push(events[index].data.detail.toHuman());
                 break;
         }
     }
@@ -154,16 +158,51 @@ export async function handleIdentityEvents(
     return [...results];
 }
 
+export function parseIdGraph(
+    sidechainRegistry: TypeRegistry,
+    idGraph_output: AESOutput,
+    aesKey: HexString
+): [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][] {
+    const decrypted_idGraph = decryptWithAES(aesKey, idGraph_output, 'hex');
+    let idGraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][] =
+        sidechainRegistry.createType(
+            'Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
+            decrypted_idGraph
+        ) as unknown as [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][];
+    return idGraph;
+}
+
+export function parseIdentity(
+    sidechainRegistry: TypeRegistry,
+    identity_output: AESOutput,
+    aesKey: HexString
+): LitentryPrimitivesIdentity {
+    const decrypted_identity = decryptWithAES(aesKey, identity_output, 'hex');
+    const identity = sidechainRegistry.createType(
+        'LitentryPrimitivesIdentity',
+        decrypted_identity
+    ) as unknown as LitentryPrimitivesIdentity;
+    return identity;
+}
+
 export function createIdentityEvent(
-    api: ApiPromise,
+    sidechainRegistry: TypeRegistry,
     who: HexString,
     identityString?: HexString,
     idGraphString?: HexString
 ): IdentityGenericEvent {
-    let identity = identityString ? api.createType('LitentryIdentity', identityString).toJSON() : undefined;
-    let idGraph = idGraphString
-        ? api.createType('Vec<(LitentryIdentity, IdentityContext)>', idGraphString).toJSON()
-        : undefined;
+    let identity: LitentryPrimitivesIdentity =
+        identityString! &&
+        (sidechainRegistry.createType(
+            'LitentryPrimitivesIdentity',
+            identityString
+        ) as unknown as LitentryPrimitivesIdentity);
+    let idGraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][] =
+        idGraphString! &&
+        (sidechainRegistry.createType(
+            'Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
+            idGraphString
+        ) as unknown as [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][]);
     return <IdentityGenericEvent>{
         who,
         identity,
@@ -173,7 +212,7 @@ export function createIdentityEvent(
 
 export async function buildValidations(
     context: IntegrationTestContext,
-    identities: any[],
+    identities: LitentryPrimitivesIdentity[],
     startingSidechainNonce: number,
     network: 'ethereum' | 'substrate' | 'twitter',
     substrateSigners: KeyringPair[] | KeyringPair,
@@ -195,7 +234,7 @@ export async function buildValidations(
             validationNonce
         );
         if (network === 'ethereum') {
-            const ethereumValidationData: LitentryValidationData = {
+            const ethereumValidationData = {
                 Web3Validation: {
                     Evm: {
                         message: '' as HexString,
@@ -206,17 +245,21 @@ export async function buildValidations(
                 },
             };
             console.log('post verification msg to ethereum: ', msg);
-            ethereumValidationData!.Web3Validation!.Evm!.message = msg;
+            ethereumValidationData.Web3Validation.Evm.message = msg;
             const msgHash = ethers.utils.arrayify(msg);
             signature_ethereum = (await ethereumSigner!.signMessage(msgHash)) as HexString;
             console.log('signature_ethereum', ethereumSigners![index].address, signature_ethereum);
 
-            ethereumValidationData!.Web3Validation!.Evm!.signature!.Ethereum = signature_ethereum;
+            ethereumValidationData!.Web3Validation.Evm.signature.Ethereum = signature_ethereum;
             console.log('ethereumValidationData', ethereumValidationData);
+            const encode_verifyIdentity_validation = context.api.createType(
+                'LitentryValidationData',
+                ethereumValidationData
+            ) as unknown as LitentryValidationData;
 
-            validations.push(ethereumValidationData);
+            validations.push(encode_verifyIdentity_validation);
         } else if (network === 'substrate') {
-            const substrateValidationData: LitentryValidationData = {
+            const substrateValidationData = {
                 Web3Validation: {
                     Substrate: {
                         message: '' as HexString,
@@ -227,20 +270,29 @@ export async function buildValidations(
                 },
             };
             console.log('post verification msg to substrate: ', msg);
-            substrateValidationData!.Web3Validation!.Substrate!.message = msg;
+            substrateValidationData.Web3Validation.Substrate.message = msg;
             signature_substrate = substrateSigner.sign(msg) as Uint8Array;
-            substrateValidationData!.Web3Validation!.Substrate!.signature!.Sr25519 = u8aToHex(signature_substrate);
-            validations.push(substrateValidationData);
+            substrateValidationData!.Web3Validation.Substrate.signature.Sr25519 = u8aToHex(signature_substrate);
+            const encode_verifyIdentity_validation: LitentryValidationData = context.api.createType(
+                'LitentryValidationData',
+                substrateValidationData
+            ) as unknown as LitentryValidationData;
+            validations.push(encode_verifyIdentity_validation);
         } else if (network === 'twitter') {
             console.log('post verification msg to twitter', msg);
-            const twitterValidationData: LitentryValidationData = {
+            const twitterValidationData = {
                 Web2Validation: {
                     Twitter: {
                         tweet_id: `0x${Buffer.from(validationNonce.toString(), 'utf8').toString('hex')}`,
                     },
                 },
             };
-            validations.push(twitterValidationData);
+
+            const encode_verifyIdentity_validation = context.api.createType(
+                'LitentryValidationData',
+                twitterValidationData
+            ) as unknown as LitentryValidationData;
+            validations.push(encode_verifyIdentity_validation);
         }
     }
     return validations;

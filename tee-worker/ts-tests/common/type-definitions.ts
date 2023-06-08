@@ -1,23 +1,28 @@
-import { ApiPromise, Keyring } from '@polkadot/api';
+import { ApiPromise } from '@polkadot/api';
 import { KeyObject } from 'crypto';
-import { HexString } from '@polkadot/util/types';
 import WebSocketAsPromised from 'websocket-as-promised';
-import type { KeyringPair } from '@polkadot/keyring/types';
-import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
-import { Metadata } from '@polkadot/types';
+import { Metadata, Vec, TypeRegistry } from '@polkadot/types';
 import { Wallet } from 'ethers';
+import { Call } from '@polkadot/types/interfaces';
 import type {
-    SubstrateNetwork as SubNet,
-    Web2Network as Web2Net,
-    EvmNetwork as EvmNet,
-} from '../interfaces/identity/types';
-import { default as teeTypes } from '../interfaces/identity/definitions';
+    LitentryPrimitivesIdentitySubstrateNetwork,
+    LitentryPrimitivesIdentityEvmNetwork,
+    LitentryPrimitivesIdentityWeb2Network,
+    PalletIdentityManagementTeeIdentityContext,
+    LitentryPrimitivesIdentity,
+} from '@polkadot/types/lookup';
+import type { KeyringPair } from '@polkadot/keyring/types';
+import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
+import type { HexString } from '@polkadot/util/types';
+import type { Assertion as GenericAssertion } from '../parachain-interfaces/identity/types';
+import type { AnyTuple, IMethod } from '@polkadot/types/types';
 
-export { teeTypes };
+export type Web2Network = LitentryPrimitivesIdentityWeb2Network['type'];
+export type SubstrateNetwork = LitentryPrimitivesIdentitySubstrateNetwork['type'];
+export type EvmNetwork = LitentryPrimitivesIdentityEvmNetwork['type'];
+export type ParachainAssertion = GenericAssertion['type'];
 
-export type Web2Network = Web2Net['type'];
-export type SubstrateNetwork = SubNet['type'];
-export type EvmNetwork = EvmNet['type'];
+export type BatchCall = Vec<Call> | (string | Uint8Array | IMethod<AnyTuple, any> | Call)[];
 
 export type EnclaveResult = {
     mrEnclave: `0x${string}`;
@@ -25,7 +30,6 @@ export type EnclaveResult = {
     vcPubkey: `0x${string}`;
     sgxMetadata: {};
 };
-
 export type PubicKeyJson = {
     n: Uint8Array;
     e: Uint8Array;
@@ -45,6 +49,7 @@ export type IntegrationTestContext = {
     ethersWallet: EthersWalletItem;
     substrateWallet: SubstrateWalletItem;
     metaData: Metadata;
+    sidechainRegistry: TypeRegistry;
     web3Signers: Web3Wallets[];
 };
 
@@ -54,89 +59,15 @@ export class AESOutput {
     nonce?: Uint8Array;
 }
 
-//identity types
-export type LitentryIdentity = {
-    Substrate?: SubstrateIdentity;
-    Evm?: EvmIdentity;
-    Web2?: Web2Identity;
-};
-
-export type SubstrateIdentity = {
-    network: SubstrateNetwork;
-    address: HexString;
-};
-
-export type EvmIdentity = {
-    network: EvmNetwork;
-    address: HexString;
-};
-
-export type Web2Identity = {
-    network: Web2Network;
-    address: string;
-};
-
-export type LitentryValidationData = {
-    Web2Validation?: Web2ValidationData;
-    Web3Validation?: Web3ValidationData;
-};
-
-export type Web2ValidationData = {
-    Twitter?: TwitterValidationData;
-    Discord?: DiscordValidationData;
-};
-
-export type Web3ValidationData = {
-    Substrate?: Web3CommonValidationData;
-    Evm?: Web3CommonValidationData;
-};
-
-export type Web3CommonValidationData = {
-    message: HexString;
-    signature: IdentityMultiSignature;
-};
-
-export type IdentityMultiSignature = {
-    Ethereum?: HexString;
-    Ed25519?: HexString;
-    Sr25519?: HexString;
-};
-
-export type Ed25519Signature = {
-    Ed25519: HexString;
-    Sr25519: HexString;
-    Ecdsa: HexString;
-    Ethereum: EthereumSignature;
-};
-
-export type EthereumSignature = HexString;
-
-export type TwitterValidationData = {
-    tweet_id: HexString;
-};
-
-export type DiscordValidationData = {
-    channel_id: HexString;
-    message_id: HexString;
-    guild_id: HexString;
-};
-
 export type Web3Wallets = {
     substrateWallet: KeyringPair;
     ethereumWallet: Wallet;
 };
 
-// export type DiscordValidationData = {}
-
-export type Web3Network = {
-    Substrate?: SubstrateNetwork;
-    Evm?: EvmNetwork;
-};
-
 export type IdentityGenericEvent = {
     who: HexString;
-    identity: LitentryIdentity;
-    idGraph: [LitentryIdentity, IdentityContext][];
+    identity: LitentryPrimitivesIdentity;
+    idGraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][];
 };
 
 export enum IdentityStatus {
@@ -173,19 +104,18 @@ export enum RequestEvent {
     BatchCompleted = 'BatchCompleted',
 }
 
-export type Assertion = {
-    A1?: string;
-    A2?: [string];
-    A3?: [string, string, string];
-    A4?: string;
-    A5?: [string, string];
-    A6?: string;
-    A7?: string;
-    A8?: [IndexingNetwork];
-    A9?: string;
-    A10?: string;
-    A11?: string;
-};
+export type Assertion =
+    | { A1: string }
+    | { A2: [string] }
+    | { A3: [string, string, string] }
+    | { A4: string }
+    | { A5: [string, string] }
+    | { A6: string }
+    | { A7: string }
+    | { A8: [IndexingNetwork] }
+    | { A9: string }
+    | { A10: string }
+    | { A11: string };
 
 export type TransactionSubmit = {
     tx: SubmittableExtrinsic<ApiTypes>;

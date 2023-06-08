@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-pub mod batch_all;
+// pub mod batch_all;
 pub mod link_identity;
 pub mod remove_identity;
 pub mod request_vc;

@@ -3,7 +3,7 @@ import { KeyringPair } from '@polkadot/keyring/types';
 import { BN, u8aToHex, hexToU8a, compactAddLength, bufferToU8a } from '@polkadot/util';
 import { Codec } from '@polkadot/types/types';
 import { PubicKeyJson } from '../../common/type-definitions';
-import { WorkerRpcReturnValue } from '../../interfaces/identity';
+import { WorkerRpcReturnValue } from '../../parachain-interfaces/identity/types';
 import { encryptWithTeeShieldingKey } from '../../common/utils';
 import { decodeRpcBytesAsString } from '../../common/call';
 import { createPublicKey, KeyObject } from 'crypto';
