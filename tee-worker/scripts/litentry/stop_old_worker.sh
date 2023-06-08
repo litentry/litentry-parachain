@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#!/bin/bash
-
 LOG_FILE="log/worker0.log"
 TIMEOUT=240  # Timeout in seconds
 SERVICE_PROCESS="./integritee-service"
@@ -23,7 +21,7 @@ check_log_file_and_kill_process() {
             # Kill the processes
             echo "Killing integritee-service processes for user $current_user..."
             echo "$pids"
-            kill -9 "$pids"
+            kill -9 $pids
             echo "Processes killed."
         fi
         exit 0
