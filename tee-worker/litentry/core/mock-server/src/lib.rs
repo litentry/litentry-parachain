@@ -24,9 +24,9 @@ use tokio::{
 };
 use warp::Filter;
 
+pub mod achainable;
 pub mod discord_litentry;
 pub mod discord_official;
-pub mod achainable;
 pub mod twitter_litentry;
 pub mod twitter_official;
 
@@ -72,7 +72,15 @@ where
 					.or(discord_official::query_message())
 					.or(discord_litentry::check_id_hubber())
 					.or(discord_litentry::check_join())
-					.or(achainable::query()),
+					.or(achainable::query())
+					.or(achainable::fresh_account())
+					.or(achainable::og_account())
+					.or(achainable::class_of_2020())
+					.or(achainable::class_of_2021())
+					.or(achainable::class_of_2022())
+					.or(achainable::found_on_bsc())
+					.or(achainable::is_polkadot_validator())
+					.or(achainable::is_kusama_validator()),
 			)
 			.bind_with_graceful_shutdown(([127, 0, 0, 1], port), shutdown_signal());
 			log::info!("mock-server listen on addr:{:?}", addr);

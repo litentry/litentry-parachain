@@ -70,7 +70,7 @@ use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::{
 	achainable::{
-		AchainableQuery, GetSupportedNetworks, AchainableClient, VerifiedCredentialsIsHodlerIn,
+		AchainableClient, AchainableQuery, GetSupportedNetworks, VerifiedCredentialsIsHodlerIn,
 	},
 	vec_to_string,
 };

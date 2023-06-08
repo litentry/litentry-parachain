@@ -268,6 +268,7 @@ pub struct TotalTxsStruct {
 /// AchainableTag: Account
 /// base_url: https://label-production.graph.tdf-labs.io
 /// test key: 26353d4c-b01c-4466-98a5-80d3fc53a9d8
+/// Run UT: cargo test --package lc-data-providers --lib fresh_account_works -- --nocapture
 pub trait AchainableTagAccount {
 	fn fresh_account(&mut self, address: &str) -> Result<bool, Error>;
 	fn og_account(&mut self, address: &str) -> Result<bool, Error>;
@@ -279,173 +280,98 @@ pub trait AchainableTagAccount {
 	fn is_kusama_validator(&mut self, address: &str) -> Result<bool, Error>;
 }
 
-impl AchainableTagAccount for AchainableClient {
-	fn fresh_account(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/1de85e1d215868788dfc91a9f04d7afd");
-		let body = ReqBody { params: ParamsAccount { address: address.to_string() } };
+pub trait AchainablePost {
+	fn post(&mut self, params: ReqParams, body: &ReqBody) -> Result<serde_json::Value, Error>;
+}
+
+impl AchainablePost for AchainableClient {
+	fn post(&mut self, params: ReqParams, body: &ReqBody) -> Result<serde_json::Value, Error> {
 		let response =
-			self.client.post_capture::<ReqParams, ReqBody, serde_json::Value>(params, &body);
+			self.client.post_capture::<ReqParams, ReqBody, serde_json::Value>(params, body);
 		debug!("ReqBody response: {:?}", response);
 		match response {
 			Ok(res) =>
 				if let Some(value) = res.get("result") {
-					if let Some(b) = value.as_bool() {
-						Ok(b)
-					} else {
-						Err(Error::AchainableError("Invalid response".to_string()))
-					}
+					Ok(value.clone())
 				} else {
 					Err(Error::AchainableError("Invalid response".to_string()))
 				},
 			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
 		}
+	}
+}
+
+pub trait AchainableTagAccountParser {
+	type Item;
+	fn parse(value: serde_json::Value) -> Result<Self::Item, Error>;
+}
+
+impl AchainableTagAccountParser for AchainableClient {
+	type Item = bool;
+	fn parse(value: serde_json::Value) -> Result<Self::Item, Error> {
+		if let Some(b) = value.as_bool() {
+			Ok(b)
+		} else {
+			Err(Error::AchainableError("Invalid response".to_string()))
+		}
+	}
+}
+
+impl AchainableTagAccount for AchainableClient {
+	fn fresh_account(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/1de85e1d215868788dfc91a9f04d7afd");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
 	}
 
 	fn og_account(&mut self, address: &str) -> Result<bool, Error> {
 		let params = ReqParams::new("/v1/run/label/8a6e26b90dee869634215683ea2dad0d");
-		let body = ReqBody { params: ParamsAccount { address: address.to_string() } };
-		let response =
-			self.client.post_capture::<ReqParams, ReqBody, serde_json::Value>(params, &body);
-		debug!("ReqBody response: {:?}", response);
-		match response {
-			Ok(res) =>
-				if let Some(value) = res.get("result") {
-					if let Some(b) = value.as_bool() {
-						Ok(b)
-					} else {
-						Err(Error::AchainableError("Invalid response".to_string()))
-					}
-				} else {
-					Err(Error::AchainableError("Invalid response".to_string()))
-				},
-			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
-		}
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
 	}
 
 	fn class_of_2020(&mut self, address: &str) -> Result<bool, Error> {
 		let params = ReqParams::new("/v1/run/label/9343efca78222a4fad82c635ab697ca0");
-		let body = ReqBody { params: ParamsAccount { address: address.to_string() } };
-		let response =
-			self.client.post_capture::<ReqParams, ReqBody, serde_json::Value>(params, &body);
-		debug!("ReqBody response: {:?}", response);
-		match response {
-			Ok(res) =>
-				if let Some(value) = res.get("result") {
-					if let Some(b) = value.as_bool() {
-						Ok(b)
-					} else {
-						Err(Error::AchainableError("Invalid response".to_string()))
-					}
-				} else {
-					Err(Error::AchainableError("Invalid response".to_string()))
-				},
-			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
-		}
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
 	}
 
 	fn class_of_2021(&mut self, address: &str) -> Result<bool, Error> {
 		let params = ReqParams::new("/v1/run/label/6808c28c26908eb695f63b089cfdae80");
-		let body = ReqBody { params: ParamsAccount { address: address.to_string() } };
-		let response =
-			self.client.post_capture::<ReqParams, ReqBody, serde_json::Value>(params, &body);
-		debug!("ReqBody response: {:?}", response);
-		match response {
-			Ok(res) =>
-				if let Some(value) = res.get("result") {
-					if let Some(b) = value.as_bool() {
-						Ok(b)
-					} else {
-						Err(Error::AchainableError("Invalid response".to_string()))
-					}
-				} else {
-					Err(Error::AchainableError("Invalid response".to_string()))
-				},
-			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
-		}
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
 	}
 
 	fn class_of_2022(&mut self, address: &str) -> Result<bool, Error> {
 		let params = ReqParams::new("/v1/run/label/a4ee0c9e44cbc7b8a4b2074b3b8fb912");
-		let body = ReqBody { params: ParamsAccount { address: address.to_string() } };
-		let response =
-			self.client.post_capture::<ReqParams, ReqBody, serde_json::Value>(params, &body);
-		debug!("ReqBody response: {:?}", response);
-		match response {
-			Ok(res) =>
-				if let Some(value) = res.get("result") {
-					if let Some(b) = value.as_bool() {
-						Ok(b)
-					} else {
-						Err(Error::AchainableError("Invalid response".to_string()))
-					}
-				} else {
-					Err(Error::AchainableError("Invalid response".to_string()))
-				},
-			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
-		}
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
 	}
 
 	fn found_on_bsc(&mut self, address: &str) -> Result<bool, Error> {
 		let params = ReqParams::new("/v1/run/label/3ace29836b372ae66a218dec16e37b62");
-		let body = ReqBody { params: ParamsAccount { address: address.to_string() } };
-		let response =
-			self.client.post_capture::<ReqParams, ReqBody, serde_json::Value>(params, &body);
-		debug!("ReqBody response: {:?}", response);
-		match response {
-			Ok(res) =>
-				if let Some(value) = res.get("result") {
-					if let Some(b) = value.as_bool() {
-						Ok(b)
-					} else {
-						Err(Error::AchainableError("Invalid response".to_string()))
-					}
-				} else {
-					Err(Error::AchainableError("Invalid response".to_string()))
-				},
-			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
-		}
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
 	}
 
 	fn is_polkadot_validator(&mut self, address: &str) -> Result<bool, Error> {
 		let params = ReqParams::new("/v1/run/label/eb66927e8f56fd7f9a8917d380e6100d");
-		let body = ReqBody { params: ParamsAccount { address: address.to_string() } };
-		let response =
-			self.client.post_capture::<ReqParams, ReqBody, serde_json::Value>(params, &body);
-		debug!("ReqBody response: {:?}", response);
-		match response {
-			Ok(res) =>
-				if let Some(value) = res.get("result") {
-					if let Some(b) = value.as_bool() {
-						Ok(b)
-					} else {
-						Err(Error::AchainableError("Invalid response".to_string()))
-					}
-				} else {
-					Err(Error::AchainableError("Invalid response".to_string()))
-				},
-			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
-		}
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
 	}
 
 	fn is_kusama_validator(&mut self, address: &str) -> Result<bool, Error> {
 		let params = ReqParams::new("/v1/run/label/a0d213ff009e43b4ecd0cae67bbabae9");
-		let body = ReqBody { params: ParamsAccount { address: address.to_string() } };
-		let response =
-			self.client.post_capture::<ReqParams, ReqBody, serde_json::Value>(params, &body);
-		debug!("ReqBody response: {:?}", response);
-		match response {
-			Ok(res) =>
-				if let Some(value) = res.get("result") {
-					if let Some(b) = value.as_bool() {
-						Ok(b)
-					} else {
-						Err(Error::AchainableError("Invalid response".to_string()))
-					}
-				} else {
-					Err(Error::AchainableError("Invalid response".to_string()))
-				},
-			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
-		}
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
 	}
 }
 
@@ -464,17 +390,31 @@ impl ReqParams {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ReqBody {
-	params: ParamsAccount,
+	pub params: ParamsAccount,
 }
+
 impl RestPath<ReqParams> for ReqBody {
 	fn get_path(req_params: ReqParams) -> core::result::Result<String, HttpError> {
 		Ok(req_params.path)
 	}
 }
+
+impl From<ParamsAccount> for ReqBody {
+	fn from(item: ParamsAccount) -> Self {
+		ReqBody { params: item }
+	}
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ParamsAccount {
-	address: String,
+	pub address: String,
+}
+
+impl ParamsAccount {
+	pub fn new(address: &str) -> Self {
+		ParamsAccount { address: address.into() }
+	}
 }
 
 impl RestPath<String> for ParamsAccount {
@@ -486,8 +426,8 @@ impl RestPath<String> for ParamsAccount {
 #[cfg(test)]
 mod tests {
 	use crate::achainable::{
-		AchainableQuery, AchainableClient, SupportedNetwork, VerifiedCredentialsIsHodlerIn,
-		VerifiedCredentialsTotalTxs, G_DATA_PROVIDERS,
+		AchainableClient, AchainableQuery, AchainableTagAccount, SupportedNetwork,
+		VerifiedCredentialsIsHodlerIn, VerifiedCredentialsTotalTxs, G_DATA_PROVIDERS,
 	};
 	use itp_stf_primitives::types::AccountId;
 	use lc_mock_server::run;
@@ -538,5 +478,93 @@ mod tests {
 		let r = r.unwrap();
 		assert!(!r.is_empty());
 		assert!(r.get(0).unwrap().total_transactions >= 41)
+	}
+
+	#[test]
+	fn fresh_account_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.fresh_account("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn og_account_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.og_account("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn class_of_2020_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.class_of_2020("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn class_of_2021_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.class_of_2021("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn class_of_2022_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.class_of_2022("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, true);
+	}
+
+	#[test]
+	fn found_on_bsc_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.found_on_bsc("0x3f349bBaFEc1551819B8be1EfEA2fC46cA749aA1");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, true);
+	}
+
+	#[test]
+	fn is_polkadot_validator_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.is_polkadot_validator("17bR6rzVsVrzVJS1hM4dSJU43z2MUmz7ZDpPLh8y2fqVg7m");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, true);
+	}
+
+	#[test]
+	fn is_kusama_validator_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.is_kusama_validator("ESRBbWstgpPV1pVBsqjMo717rA8HLrtQvEUVwAGeFZyKcia");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, true);
 	}
 }

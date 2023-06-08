@@ -16,7 +16,7 @@
 #![allow(opaque_hidden_inferred_bound)]
 
 use lc_data_providers::achainable::{
-	ToAchainable, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsTotalTxs,
+	ReqBody, ToAchainable, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsTotalTxs,
 };
 use litentry_primitives::SupportedNetwork;
 use std::collections::HashMap;
@@ -83,6 +83,168 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
     ]
   }
 }"#;
+				Response::builder().body(body.to_string())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
+}
+
+pub(crate) fn fresh_account(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post()
+		.and(warp::path!("v1" / "run" / "label" / "1de85e1d215868788dfc91a9f04d7afd"))
+		.and(warp::body::content_length_limit(1024 * 16))
+		.and(warp::body::json())
+		.map(|body: ReqBody| {
+			if body.params.address == *"0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5".to_string() {
+				let body = r#"
+			{
+				"result": false
+			}"#;
+
+				Response::builder().body(body.to_string())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
+}
+
+pub(crate) fn og_account(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post()
+		.and(warp::path!("v1" / "run" / "label" / "8a6e26b90dee869634215683ea2dad0d"))
+		.and(warp::body::content_length_limit(1024 * 16))
+		.and(warp::body::json())
+		.map(|body: ReqBody| {
+			if body.params.address == *"0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5".to_string() {
+				let body = r#"
+			{
+				"result": false
+			}"#;
+
+				Response::builder().body(body.to_string())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
+}
+
+pub(crate) fn class_of_2020(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post()
+		.and(warp::path!("v1" / "run" / "label" / "9343efca78222a4fad82c635ab697ca0"))
+		.and(warp::body::content_length_limit(1024 * 16))
+		.and(warp::body::json())
+		.map(|body: ReqBody| {
+			if body.params.address == *"0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5".to_string() {
+				let body = r#"
+			{
+				"result": false
+			}"#;
+
+				Response::builder().body(body.to_string())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
+}
+
+pub(crate) fn class_of_2021(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post()
+		.and(warp::path!("v1" / "run" / "label" / "6808c28c26908eb695f63b089cfdae80"))
+		.and(warp::body::content_length_limit(1024 * 16))
+		.and(warp::body::json())
+		.map(|body: ReqBody| {
+			if body.params.address == *"0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5".to_string() {
+				let body = r#"
+			{
+				"result": false
+			}"#;
+
+				Response::builder().body(body.to_string())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
+}
+
+pub(crate) fn class_of_2022(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post()
+		.and(warp::path!("v1" / "run" / "label" / "a4ee0c9e44cbc7b8a4b2074b3b8fb912"))
+		.and(warp::body::content_length_limit(1024 * 16))
+		.and(warp::body::json())
+		.map(|body: ReqBody| {
+			if body.params.address == *"0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5".to_string() {
+				let body = r#"
+			{
+				"result": true
+			}"#;
+
+				Response::builder().body(body.to_string())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
+}
+
+pub(crate) fn found_on_bsc(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post()
+		.and(warp::path!("v1" / "run" / "label" / "3ace29836b372ae66a218dec16e37b62"))
+		.and(warp::body::content_length_limit(1024 * 16))
+		.and(warp::body::json())
+		.map(|body: ReqBody| {
+			if body.params.address == *"0x3f349bBaFEc1551819B8be1EfEA2fC46cA749aA1".to_string() {
+				let body = r#"
+			{
+				"result": true
+			}"#;
+
+				Response::builder().body(body.to_string())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
+}
+
+pub(crate) fn is_polkadot_validator(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post()
+		.and(warp::path!("v1" / "run" / "label" / "eb66927e8f56fd7f9a8917d380e6100d"))
+		.and(warp::body::content_length_limit(1024 * 16))
+		.and(warp::body::json())
+		.map(|body: ReqBody| {
+			if body.params.address == *"17bR6rzVsVrzVJS1hM4dSJU43z2MUmz7ZDpPLh8y2fqVg7m".to_string()
+			{
+				let body = r#"
+			{
+				"result": true
+			}"#;
+
+				Response::builder().body(body.to_string())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
+}
+
+pub(crate) fn is_kusama_validator(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post()
+		.and(warp::path!("v1" / "run" / "label" / "a0d213ff009e43b4ecd0cae67bbabae9"))
+		.and(warp::body::content_length_limit(1024 * 16))
+		.and(warp::body::json())
+		.map(|body: ReqBody| {
+			if body.params.address == *"ESRBbWstgpPV1pVBsqjMo717rA8HLrtQvEUVwAGeFZyKcia".to_string()
+			{
+				let body = r#"
+			{
+				"result": true
+			}"#;
+
 				Response::builder().body(body.to_string())
 			} else {
 				Response::builder().status(400).body(String::from("Error query"))

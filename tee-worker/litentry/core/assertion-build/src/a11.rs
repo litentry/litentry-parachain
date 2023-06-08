@@ -26,7 +26,7 @@ use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::{
-	achainable::{AchainableQuery, AchainableClient, VerifiedCredentialsIsHodlerIn},
+	achainable::{AchainableClient, AchainableQuery, VerifiedCredentialsIsHodlerIn},
 	vec_to_string,
 };
 use litentry_primitives::SupportedNetwork;
