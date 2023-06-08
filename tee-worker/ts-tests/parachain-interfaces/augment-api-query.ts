@@ -36,7 +36,6 @@ import type {
     FrameSystemEventRecord,
     FrameSystemLastRuntimeUpgradeInfo,
     FrameSystemPhase,
-    MockTeePrimitivesIdentity,
     OrmlTokensAccountData,
     OrmlTokensBalanceLock,
     OrmlTokensReserveData,
@@ -54,7 +53,6 @@ import type {
     PalletDemocracyVoteVoting,
     PalletDrop3RewardPool,
     PalletExtrinsicFilterOperationalMode,
-    PalletIdentityManagementMockIdentityContext,
     PalletIdentityRegistrarInfo,
     PalletIdentityRegistration,
     PalletMultisigMultisig,
@@ -633,73 +631,12 @@ declare module '@polkadot/api-base/types/storage' {
         };
         identityManagement: {
             /**
-             * delegatees who are authorised to send extrinsics(currently only `create_identity`)
+             * delegatees who are authorised to send extrinsics(currently only `link_identity`)
              * on behalf of the users
              **/
             delegatee: AugmentedQuery<
                 ApiType,
                 (arg: AccountId32 | string | Uint8Array) => Observable<Option<Null>>,
-                [AccountId32]
-            > &
-                QueryableStorageEntry<ApiType, [AccountId32]>;
-            /**
-             * Generic query
-             **/
-            [key: string]: QueryableStorageEntry<ApiType>;
-        };
-        identityManagementMock: {
-            /**
-             * challenge code is per Litentry account + identity
-             **/
-            challengeCodes: AugmentedQuery<
-                ApiType,
-                (
-                    arg1: AccountId32 | string | Uint8Array,
-                    arg2:
-                        | MockTeePrimitivesIdentity
-                        | { Substrate: any }
-                        | { Evm: any }
-                        | { Web2: any }
-                        | string
-                        | Uint8Array
-                ) => Observable<Option<U8aFixed>>,
-                [AccountId32, MockTeePrimitivesIdentity]
-            > &
-                QueryableStorageEntry<ApiType, [AccountId32, MockTeePrimitivesIdentity]>;
-            /**
-             * delegatees who are authorised to send extrinsics(currently only `create_identity`)
-             * on behalf of the users
-             **/
-            delegatee: AugmentedQuery<
-                ApiType,
-                (arg: AccountId32 | string | Uint8Array) => Observable<Option<Null>>,
-                [AccountId32]
-            > &
-                QueryableStorageEntry<ApiType, [AccountId32]>;
-            /**
-             * ID graph is per Litentry account + identity
-             **/
-            idGraphs: AugmentedQuery<
-                ApiType,
-                (
-                    arg1: AccountId32 | string | Uint8Array,
-                    arg2:
-                        | MockTeePrimitivesIdentity
-                        | { Substrate: any }
-                        | { Evm: any }
-                        | { Web2: any }
-                        | string
-                        | Uint8Array
-                ) => Observable<Option<PalletIdentityManagementMockIdentityContext>>,
-                [AccountId32, MockTeePrimitivesIdentity]
-            > &
-                QueryableStorageEntry<ApiType, [AccountId32, MockTeePrimitivesIdentity]>;
-            /**
-             * user shielding key is per Litentry account
-             **/
-            userShieldingKeys: AugmentedQuery<
-                ApiType,
-                (arg: AccountId32 | string | Uint8Array) => Observable<Option<U8aFixed>>,
                 [AccountId32]
             > &
                 QueryableStorageEntry<ApiType, [AccountId32]>;

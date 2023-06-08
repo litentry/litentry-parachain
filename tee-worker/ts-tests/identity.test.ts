@@ -10,7 +10,9 @@ import {
     buildValidations,
     assertInitialIDGraphCreated,
     checkUserShieldingKeys,
-    assertIdentityVerified, assertIdentityLinked, assertIdentityRemoved
+    assertIdentityVerified,
+    assertIdentityLinked,
+    assertIdentityRemoved,
 } from './common/utils';
 import { env_network } from './common/helpers';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
@@ -133,7 +135,12 @@ describeLitentry('Test Identity', 0, (context) => {
     step('link identities', async function () {
         // Alice
         const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2', context);
-        const ethereum_identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Ethereum', 'Evm', context);
+        const ethereum_identity = await buildIdentityHelper(
+            context.ethersWallet.alice.address,
+            'Ethereum',
+            'Evm',
+            context
+        );
         const alice_substrate_identity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.alice.addressRaw),
             'Litentry',
