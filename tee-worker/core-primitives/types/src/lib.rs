@@ -47,7 +47,7 @@ pub type CallIndex = [u8; 2];
 
 // pallet teerex
 pub type ConfirmCallFn = (CallIndex, ShardIdentifier, H256, Vec<u8>);
-pub type ShieldFundsFn = (CallIndex, Vec<u8>, codec::Compact<u128>, ShardIdentifier);
+pub type ShieldFundsFn = (CallIndex, Vec<u8>, Balance, ShardIdentifier);
 pub type CallWorkerFn = (CallIndex, Request);
 
 pub type UpdateScheduledEnclaveFn = (CallIndex, SidechainBlockNumber, MrEnclave);
