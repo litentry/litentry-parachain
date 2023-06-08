@@ -26,9 +26,12 @@ use itp_types::{ShardIdentifier, H256};
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{Identity, ValidationData};
 use log::debug;
-use sp_runtime::traits::{AccountIdLookup, StaticLookup};
+use sp_core::crypto::AccountId32;
+use sp_runtime::{
+	traits::{AccountIdLookup, StaticLookup},
+	MultiAddress,
+};
 use std::vec::Vec;
-use substrate_api_client::GenericAddress;
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct VerifyIdentityArgs {
@@ -41,7 +44,7 @@ impl VerifyIdentityArgs {
 	fn internal_dispatch<Executor: IndirectExecutor>(
 		&self,
 		executor: &Executor,
-		address: Option<GenericAddress>,
+		address: Option<MultiAddress<AccountId32, ()>>,
 		hash: H256,
 		block: u32,
 	) -> Result<()> {
@@ -80,7 +83,7 @@ impl VerifyIdentityArgs {
 }
 
 impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for VerifyIdentityArgs {
-	type Args = (Option<GenericAddress>, H256, u32);
+	type Args = (Option<MultiAddress<AccountId32, ()>>, H256, u32);
 	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
 		let (address, hash, block) = args;
 		let e = Error::IMPHandlingError(IMPError::VerifyIdentityFailed(ErrorDetail::ImportError));

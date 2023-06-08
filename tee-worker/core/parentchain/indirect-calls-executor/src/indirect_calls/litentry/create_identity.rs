@@ -28,8 +28,9 @@ use itp_types::{ShardIdentifier, H256};
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::Identity;
 use log::{debug, info};
+use sp_core::crypto::AccountId32;
+use sp_runtime::MultiAddress;
 use sp_std::vec::Vec;
-use substrate_api_client::GenericAddress;
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct CreateIdentityArgs {
@@ -42,7 +43,7 @@ impl CreateIdentityArgs {
 	fn internal_dispatch<Executor: IndirectExecutor>(
 		&self,
 		executor: &Executor,
-		address: Option<GenericAddress>,
+		address: Option<MultiAddress<AccountId32, ()>>,
 		block_number: u32,
 		xt_hash: H256,
 	) -> Result<()> {
@@ -85,7 +86,7 @@ impl CreateIdentityArgs {
 }
 
 impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for CreateIdentityArgs {
-	type Args = (Option<GenericAddress>, u32, H256);
+	type Args = (Option<MultiAddress<AccountId32, ()>>, u32, H256);
 	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
 		let (address, block_number, xt_hash) = args;
 		let e = Error::IMPHandlingError(IMPError::CreateIdentityFailed(ErrorDetail::ImportError));

@@ -29,8 +29,9 @@ use codec::{Decode, Encode};
 use core::marker::PhantomData;
 use itp_node_api::metadata::{NodeMetadata, NodeMetadataTrait};
 use itp_types::{CallIndex, H256};
+use sp_core::crypto::AccountId32;
+use sp_runtime::MultiAddress;
 use sp_std::{vec, vec::Vec};
-use substrate_api_client::GenericAddress;
 
 /// Trait to filter an indirect call and decode into it, where the decoding
 /// is based on the metadata provided.
@@ -82,8 +83,7 @@ where
 				return None
 			},
 		};
-		let address: Option<GenericAddress> =
-			if let Some(signature) = xt.signature { Some(signature.0) } else { None };
+		let address = if let Some(signature) = xt.signature { Some(signature.0) } else { None };
 
 		let index = xt.call_index;
 		let call_args = &mut &xt.call_args[..];
@@ -136,13 +136,13 @@ where
 pub enum IndirectCall {
 	ShieldFunds(ShiedFundsArgs),
 	CallWorker(CallWorkerArgs),
-	CreateIdentity(CreateIdentityArgs, Option<GenericAddress>, H256),
-	RemoveIdentity(RemoveIdentityArgs, Option<GenericAddress>, H256),
-	RequestVC(RequestVCArgs, Option<GenericAddress>, H256),
+	CreateIdentity(CreateIdentityArgs, Option<MultiAddress<AccountId32, ()>>, H256),
+	RemoveIdentity(RemoveIdentityArgs, Option<MultiAddress<AccountId32, ()>>, H256),
+	RequestVC(RequestVCArgs, Option<MultiAddress<AccountId32, ()>>, H256),
 	UpdateScheduledEnclave(UpdateScheduledEnclaveArgs),
 	RemoveScheduledEnclave(RemoveScheduledEnclaveArgs),
-	SetUserShieldingKey(SetUserShieldingKeyArgs, Option<GenericAddress>, H256),
-	VerifyIdentity(VerifyIdentityArgs, Option<GenericAddress>, H256),
+	SetUserShieldingKey(SetUserShieldingKeyArgs, Option<MultiAddress<AccountId32, ()>>, H256),
+	VerifyIdentity(VerifyIdentityArgs, Option<MultiAddress<AccountId32, ()>>, H256),
 	BatchAll(Vec<IndirectCall>),
 }
 
@@ -193,7 +193,7 @@ fn decode_and_log_error<V: Decode>(encoded: &mut &[u8]) -> Option<V> {
 fn parse_batch_all<NodeMetadata: NodeMetadataTrait>(
 	call_args: &mut &[u8],
 	metadata: &NodeMetadata,
-	address: Option<GenericAddress>,
+	address: Option<MultiAddress<AccountId32, ()>>,
 	hash: H256,
 ) -> Option<IndirectCall> {
 	let call_count: sp_std::vec::Vec<()> = Decode::decode(call_args).ok()?;
