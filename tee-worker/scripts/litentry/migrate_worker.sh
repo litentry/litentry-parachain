@@ -2,7 +2,7 @@
 
 # Copy integritee-service binary and enclave_signed.so to ./tmp/w0
 cp ./bin/integritee-service ./tmp/w0
-cp ./bin/enclave_signed.so ./tmp/w0
+cp ./bin/enclave.signed.so ./tmp/w0
 
 # Navigate to ./tmp/w0
 cd ./tmp/w0 || exit
