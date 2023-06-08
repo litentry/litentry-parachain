@@ -18,6 +18,7 @@ import type {
     IdentityContext,
     IdentityGenericEvent,
     IdentityMultiSignature,
+    IdentityStatus,
     IdentityString,
     LitentryIdentity,
     LitentryValidationData,
@@ -1691,6 +1692,7 @@ declare module '@polkadot/types/types/registry' {
         IdentityContext: IdentityContext;
         IdentityGenericEvent: IdentityGenericEvent;
         IdentityMultiSignature: IdentityMultiSignature;
+        IdentityStatus: IdentityStatus;
         IdentityString: IdentityString;
         ImmortalEra: ImmortalEra;
         ImportedAux: ImportedAux;

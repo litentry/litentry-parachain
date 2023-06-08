@@ -16,12 +16,15 @@ export function encryptWithTeeShieldingKey(teeShieldingKey: KeyObject, plaintext
     );
 }
 
-// a lazy version without aad
+// A lazy version without aad. Append the tag to be consistent with rust implementation
 export function encryptWithAES(key: HexString, nonce: Uint8Array, cleartext: Buffer): HexString {
     const secretKey = crypto.createSecretKey(hexToU8a(key));
-    const cipher = crypto.createCipheriv('aes-256-gcm', secretKey, nonce);
+    const cipher = crypto.createCipheriv('aes-256-gcm', secretKey, nonce, {
+        authTagLength: 16,
+    });
     let encrypted = cipher.update(cleartext, 'utf8', 'hex');
     encrypted += cipher.final('hex');
+    encrypted += cipher.getAuthTag().toString('hex');
     return `0x${encrypted}`;
 }
 
@@ -30,7 +33,6 @@ export function decryptWithAES(key: HexString, aesOutput: AESOutput, type: strin
         const secretKey = crypto.createSecretKey(hexToU8a(key));
         const tagSize = 16;
         const ciphertext = aesOutput.ciphertext ? aesOutput.ciphertext : hexToU8a('0x');
-        console.log('ciphertext: ', u8aToHex(ciphertext));
 
         const nonce = aesOutput.nonce ? aesOutput.nonce : hexToU8a('0x');
         const aad = aesOutput.aad ? aesOutput.aad : hexToU8a('0x');
@@ -39,12 +41,13 @@ export function decryptWithAES(key: HexString, aesOutput: AESOutput, type: strin
         // maybe this code only works with rust aes encryption
         const authorTag = ciphertext.subarray(ciphertext.length - tagSize);
 
-        const decipher = crypto.createDecipheriv('aes-256-gcm', secretKey, nonce);
+        const decipher = crypto.createDecipheriv('aes-256-gcm', secretKey, nonce, {
+            authTagLength: 16,
+        });
         decipher.setAAD(aad);
         decipher.setAuthTag(authorTag);
 
         let part1 = decipher.update(ciphertext.subarray(0, ciphertext.length - tagSize), undefined, type);
-
         let part2 = decipher.final(type);
 
         return `0x${part1 + part2}`;

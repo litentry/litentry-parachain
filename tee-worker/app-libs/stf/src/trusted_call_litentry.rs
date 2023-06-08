@@ -68,7 +68,11 @@ impl TrustedCallSigned {
 		let key = IdentityManagement::user_shielding_keys(&who)
 			.ok_or(StfError::LinkIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
 
-		let sidechain_nonce = System::account_nonce(&who);
+		// note it's the signer's nonce, not `who`
+		// we intentionally use `System::account_nonce - 1` to make up for the increment at the
+		// beginning of STF execution, otherwise it might be unexpected that we were hoping
+		// (current nonce + 1) when verifying the validation data.
+		let sidechain_nonce = System::account_nonce(&signer) - 1;
 
 		let request: RequestType = IdentityLinkRequest {
 			shard: *shard,

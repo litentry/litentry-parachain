@@ -57,7 +57,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
         const ethereum_validations = await buildValidations(
             context,
             identities,
-            0,
+            1,
             'ethereum',
             context.substrateWallet.alice,
             ethereumSigners

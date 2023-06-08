@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use ita_stf::Index;
 use litentry_primitives::{UserShieldingKeyNonceType, UserShieldingKeyType};
 use sp_core::sr25519::Pair as Sr25519Pair;
 use std::{sync::Arc, thread};
@@ -52,13 +51,13 @@ async fn shutdown_signal() {
 	}
 }
 
-pub fn default_getter(_who: &Sr25519Pair) -> (Index, UserShieldingKeyType) {
-	(Index::default(), UserShieldingKeyType::default())
+pub fn default_getter(_who: &Sr25519Pair) -> UserShieldingKeyType {
+	UserShieldingKeyType::default()
 }
 
 pub fn run<F>(getter: Arc<F>, port: u16) -> Result<String, RecvError>
 where
-	F: Fn(&Sr25519Pair) -> (Index, UserShieldingKeyType) + Send + Sync + 'static,
+	F: Fn(&Sr25519Pair) -> UserShieldingKeyType + Send + Sync + 'static,
 {
 	let (result_in, result_out) = channel();
 	thread::spawn(move || {

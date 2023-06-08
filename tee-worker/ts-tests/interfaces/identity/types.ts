@@ -1,7 +1,7 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
-import type { Bytes, Enum, Option, Struct, U8aFixed, Vec, bool, u128, u32 } from '@polkadot/types-codec';
+import type { Bytes, Enum, Struct, U8aFixed, Vec, bool, u128, u32 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
 import type { MultiSignature, Signature } from '@polkadot/types/interfaces/extrinsics';
 import type { AccountId, Balance, BlockNumber, H256 } from '@polkadot/types/interfaces/runtime';
@@ -86,10 +86,8 @@ export interface Getter extends Enum {
 
 /** @name IdentityContext */
 export interface IdentityContext extends Struct {
-    readonly metadata: Option<Bytes>;
-    readonly linking_request_block: Option<BlockNumber>;
-    readonly verification_request_block: Option<BlockNumber>;
-    readonly is_verified: bool;
+    readonly link_block: BlockNumber;
+    readonly status: IdentityStatus;
 }
 
 /** @name IdentityGenericEvent */
@@ -110,6 +108,13 @@ export interface IdentityMultiSignature extends Enum {
     readonly isEthereum: boolean;
     readonly asEthereum: EthereumSignature;
     readonly type: 'Ed25519' | 'Sr25519' | 'Ecdsa' | 'Ethereum';
+}
+
+/** @name IdentityStatus */
+export interface IdentityStatus extends Enum {
+    readonly isActive: boolean;
+    readonly isInactive: boolean;
+    readonly type: 'Active' | 'Inactive';
 }
 
 /** @name IdentityString */

@@ -15,7 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 #![allow(opaque_hidden_inferred_bound)]
 
-use crate::{Index, UserShieldingKeyType, MOCK_VERIFICATION_NONCE};
+use crate::{UserShieldingKeyType, MOCK_VERIFICATION_NONCE};
 use ita_stf::helpers::get_expected_raw_message;
 use lc_data_providers::twitter_official::*;
 use litentry_primitives::{Identity, IdentityString, Web2Network};
@@ -27,15 +27,15 @@ pub(crate) fn query_tweet<F>(
 	func: Arc<F>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone
 where
-	F: Fn(&Sr25519Pair) -> (Index, UserShieldingKeyType) + Send + Sync + 'static,
+	F: Fn(&Sr25519Pair) -> UserShieldingKeyType + Send + Sync + 'static,
 {
 	warp::get()
 		.and(warp::path!("2" / "tweets" / u32))
 		.and(warp::query::<HashMap<String, String>>())
-		.map(move |_tweet_id, p: HashMap<String, String>| {
-			log::info!("query_tweet");
+		.map(move |tweet_id: u32, p: HashMap<String, String>| {
+			println!("query_tweet, tweet_id: {}", tweet_id);
 			let default = String::default();
-			let ids = "100".to_string();
+			let ids = tweet_id.to_string();
 			let expansions = p.get("expansions").unwrap_or(&default);
 
 			if expansions.as_str() != "author_id" {
@@ -46,14 +46,20 @@ where
 					network: Web2Network::Twitter,
 					address: IdentityString::try_from("mock_user".as_bytes().to_vec()).unwrap(),
 				};
-				let (sidechain_nonce, key) = func(&alice);
+				let key = func(&alice);
 				let payload = hex::encode(get_expected_raw_message(
 					&alice.public(),
 					&twitter_identity,
-					sidechain_nonce,
+					// the tweet_id is used as sidechain_nonce
+					// it's a bit tricky to get the nonce from the getter: you need to know
+					// the enclave signer account when launching the mock-server thread
+					// the enclaveApi doesn't provide such interface
+					tweet_id,
 					key,
 					MOCK_VERIFICATION_NONCE,
 				));
+
+				println!("query_tweet, payload: {}", payload);
 
 				let tweet = Tweet { author_id: "mock_user".into(), id: ids.clone(), text: payload };
 				let twitter_users = TwitterUsers {

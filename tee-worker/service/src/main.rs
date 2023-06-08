@@ -49,7 +49,7 @@ use enclave::{
 	api::enclave_init,
 	tls_ra::{enclave_request_state_provisioning, enclave_run_state_provisioning_server},
 };
-use ita_stf::{Getter, Index, PublicGetter, TrustedGetter};
+use ita_stf::{Getter, TrustedGetter};
 use itc_rpc_client::direct_client::DirectClient;
 use itp_enclave_api::{
 	direct_request::DirectRequest,
@@ -216,27 +216,16 @@ fn main() {
 				.expect("mock server port to be a valid port number");
 			thread::spawn(move || {
 				info!("*** Starting mock server");
-				// TODO: use trused getter
 				let getter = Arc::new(move |who: &Sr25519Pair| {
 					let client = DirectClient::new(trusted_server_url.clone());
-
-					let sidechain_nonce_getter =
-						Getter::from(PublicGetter::nonce(who.public().into()));
-					let nonce = client
-						.get_state(shard, &sidechain_nonce_getter)
-						.and_then(|n| Index::decode(&mut n.as_slice()).ok())
-						.unwrap_or_default();
-
 					let key_getter = Getter::from(
 						TrustedGetter::user_shielding_key(who.public().into())
 							.sign(&KeyPair::Sr25519(Box::new(who.clone()))),
 					);
-					let key = client
+					client
 						.get_state(shard, &key_getter)
 						.and_then(|n| UserShieldingKeyType::decode(&mut n.as_slice()).ok())
-						.unwrap_or_default();
-
-					(nonce, key)
+						.unwrap_or_default()
 				});
 				let _ = lc_mock_server::run(getter, mock_server_port);
 			});

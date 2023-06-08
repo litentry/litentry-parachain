@@ -186,12 +186,13 @@ export async function buildValidations(
     for (let index = 0; index < identities.length; index++) {
         const substrateSigner = Array.isArray(substrateSigners) ? substrateSigners[index] : substrateSigners;
         const ethereumSigner = network === 'ethereum' ? ethereumSigners![index] : undefined;
+        const validationNonce = startingSidechainNonce + index;
 
         const msg = generateVerificationMessage(
             context,
             substrateSigner.addressRaw,
             identities[index],
-            startingSidechainNonce + index
+            validationNonce
         );
         if (network === 'ethereum') {
             const ethereumValidationData: LitentryValidationData = {
@@ -235,7 +236,7 @@ export async function buildValidations(
             const twitterValidationData: LitentryValidationData = {
                 Web2Validation: {
                     Twitter: {
-                        tweet_id: `0x${Buffer.from('100', 'utf8').toString('hex')}`,
+                        tweet_id: `0x${Buffer.from(validationNonce.toString(), 'utf8').toString('hex')}`,
                     },
                 },
             };

@@ -131,7 +131,6 @@ pub fn get_expected_raw_message<AccountId: Encode + Decode>(
 	let mut data = who.encode();
 	data.append(&mut identity.encode());
 	let mut encrypted_data = aes_encrypt_nonce(&key, &data, nonce).ciphertext;
-
 	let mut payload = sidechain_nonce.encode();
 	payload.append(&mut encrypted_data);
 	blake2_256(payload.as_slice()).to_vec()

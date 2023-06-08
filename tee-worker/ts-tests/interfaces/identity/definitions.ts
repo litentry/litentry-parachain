@@ -1,3 +1,5 @@
+import { InfuraWebSocketProvider } from '@ethersproject/providers';
+
 export default {
     types: {
         WorkerRpcReturnValue: {
@@ -161,11 +163,14 @@ export default {
             identity: 'LitentryIdentity',
             id_graph: 'Vec<(LitentryIdentity, IdentityContext)>',
         },
+
+        IdentityStatus: {
+            _enum: ['Active', 'Inactive'],
+        },
+
         IdentityContext: {
-            metadata: 'Option<Vec<u8>>',
-            linking_request_block: 'Option<BlockNumber>',
-            verification_request_block: 'Option<BlockNumber>',
-            is_verified: 'bool',
+            link_block: 'BlockNumber',
+            status: 'IdentityStatus',
         },
 
         // teerex

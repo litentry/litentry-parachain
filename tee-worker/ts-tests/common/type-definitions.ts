@@ -165,7 +165,7 @@ export enum IndexingNetwork {
     Ethereum = 'Ethereum',
 }
 export enum RequestEvent {
-    LinkdentityRequested = 'LinkdentityRequested',
+    LinkIdentityRequested = 'LinkIdentityRequested',
     SetUserShieldingKeyRequested = 'SetUserShieldingKeyRequested',
     RemoveIdentityRequested = 'RemoveIdentityRequested',
     VCRequested = 'VCRequested',

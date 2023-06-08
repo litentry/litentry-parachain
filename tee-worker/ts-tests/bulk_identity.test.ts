@@ -25,6 +25,7 @@ describeLitentry('multiple accounts test', 2, async (context) => {
     var ethereumSigners: ethers.Wallet[] = [];
     var web3Validations: LitentryValidationData[] = [];
     var identities: LitentryIdentity[] = [];
+
     step('setup signers', async () => {
         substrateSigners = context.web3Signers.map((web3Signer) => {
             return web3Signer.substrateWallet;
@@ -33,6 +34,7 @@ describeLitentry('multiple accounts test', 2, async (context) => {
             return web3Signer.ethereumWallet;
         });
     });
+
     step('send test token to each account', async () => {
         const txs: any = [];
         for (let i = 0; i < substrateSigners.length; i++) {
@@ -78,7 +80,7 @@ describeLitentry('multiple accounts test', 2, async (context) => {
         const validations = await buildValidations(
             context,
             identities,
-            0,
+            2,
             'ethereum',
             substrateSigners,
             ethereumSigners

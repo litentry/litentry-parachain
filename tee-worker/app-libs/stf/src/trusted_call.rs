@@ -250,9 +250,8 @@ where
 		let system_nonce = System::account_nonce(&sender);
 		ensure!(self.nonce == system_nonce, Self::Error::InvalidNonce(self.nonce, system_nonce));
 
-		// increment the nonce, no matter if the call succeeds or fails.
-		// The call must have entered the transaction pool already,
-		// so it should be considered as valid
+		// Increment the nonce no matter if the call succeeds or fails.
+		// We consider the call "valid" once it reaches here (= it entered the tx pool)
 		System::inc_account_nonce(&sender);
 
 		// TODO: maybe we can further simplify this by effacing the duplicate code
@@ -572,7 +571,7 @@ where
 					Ok(key) => {
 						let id_graph =
 							IMT::get_id_graph_with_max_len(&who, RETURNED_IDGRAPH_MAX_LEN);
-						debug!("pushing identity_verified event ...");
+						debug!("pushing identity_linked event ...");
 						calls.push(OpaqueCall::from_tuple(&(
 							call_index,
 							account,

@@ -33,7 +33,6 @@ const substrateExtensionIdentity = <LitentryIdentity>{
         network: 'Litentry',
     },
 };
-import { Event } from '@polkadot/types/interfaces';
 
 describeLitentry('Test Identity', 0, (context) => {
     const errorAesKey = '0xError';
@@ -48,8 +47,6 @@ describeLitentry('Test Identity', 0, (context) => {
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
     step('check user sidechain storage before create', async function () {
-        const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
-        const identity_hex = context.api.createType('LitentryIdentity', twitter_identity).toHex();
         const resp_shieldingKey = await checkUserShieldingKeys(
             context,
             'IdentityManagement',
@@ -61,7 +58,14 @@ describeLitentry('Test Identity', 0, (context) => {
 
     step('Invalid user shielding key', async function () {
         let identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Ethereum', 'Evm');
-        let txs = await buildIdentityTxs(context, context.substrateWallet.alice, [identity], 'linkIdentity');
+        // use empty `alice_validations`, the `UserShieldingKeyNotFound` error should be emitted before verification
+        let txs = await buildIdentityTxs(
+            context,
+            context.substrateWallet.alice,
+            [identity],
+            'linkIdentity',
+            alice_validations
+        );
 
         let resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
             'LinkIdentityFailed',
@@ -150,10 +154,12 @@ describeLitentry('Test Identity', 0, (context) => {
         // TODO: being lazy - the nonce here is hardcoded
         //       it's better to retrieve the starting nonce from the sidechain and increment
         //       it for each such request, similar to the construction of substrate tx
+        //       However, beware that we should query the nonce of the enclave-signer-account
+        //       not alice or bob, as it's the indirect calls are signed by the enclave signer
         const alice_twitter_validations = await buildValidations(
             context,
             [twitter_identity],
-            0,
+            3,
             'twitter',
             context.substrateWallet.alice
         );
@@ -161,7 +167,7 @@ describeLitentry('Test Identity', 0, (context) => {
         const alice_ethereum_validations = await buildValidations(
             context,
             [ethereum_identity],
-            1,
+            4,
             'ethereum',
             context.substrateWallet.alice,
             [context.ethersWallet.alice]
@@ -170,7 +176,7 @@ describeLitentry('Test Identity', 0, (context) => {
         const alice_substrate_validations = await buildValidations(
             context,
             [alice_substrate_identity],
-            2,
+            5,
             'substrate',
             context.substrateWallet.alice
         );
@@ -197,16 +203,9 @@ describeLitentry('Test Identity', 0, (context) => {
             ['IdentityLinked']
         );
 
-        const [twitter_event_data, ethereum_event_data, substrate_event_data] = await handleIdentityEvents(
-            context,
-            aesKey,
-            alice_resp_events,
-            'IdentityLinked'
-        );
+        const alice_data = await handleIdentityEvents(context, aesKey, alice_resp_events, 'IdentityLinked');
 
-        assertIdentityLinked(context.substrateWallet.alice, twitter_event_data);
-        assertIdentityLinked(context.substrateWallet.alice, ethereum_event_data);
-        assertIdentityLinked(context.substrateWallet.alice, substrate_event_data);
+        assertIdentityLinked(context.substrateWallet.alice, alice_data);
 
         // Bob check extension substrate identity
         // https://github.com/litentry/litentry-parachain/issues/1137
@@ -224,7 +223,9 @@ describeLitentry('Test Identity', 0, (context) => {
             context,
             context.substrateWallet.bob.addressRaw,
             substrateExtensionIdentity,
-            0
+            // 9 because each previous linking of Alice's identity would trigger an additional nonce bump
+            // due to the callback trustedCall
+            9
         );
         console.log('post verification msg to substrate: ', msg);
         substrateExtensionValidationData!.Web3Validation!.Substrate!.message = msg;
@@ -250,8 +251,8 @@ describeLitentry('Test Identity', 0, (context) => {
             'identityManagement',
             ['IdentityLinked']
         );
-        const [resp_extension_data] = await handleIdentityEvents(context, aesKey, bob_resp_events, 'IdentityLinked');
-        assertIdentityLinked(context.substrateWallet.bob, resp_extension_data);
+        const bob_data = await handleIdentityEvents(context, aesKey, bob_resp_events, 'IdentityLinked');
+        assertIdentityLinked(context.substrateWallet.bob, bob_data);
     });
 
     step('check IDGraph after LinkIdentity', async function () {
