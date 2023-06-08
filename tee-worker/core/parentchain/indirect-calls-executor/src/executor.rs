@@ -36,6 +36,7 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_primitives::types::AccountId;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{OpaqueCall, ShardIdentifier, H256};
+use litentry_primitives::ParentchainBlockNumber;
 use log::*;
 use sp_core::blake2_256;
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header, Keccak256};
@@ -170,7 +171,14 @@ impl<
 		})??;
 
 		let root: H256 = merkle_root::<Keccak256, _>(extrinsics);
-		Ok(OpaqueCall::from_tuple(&(call, block_hash, block_number, root)))
+		let parentchain_block_number: ParentchainBlockNumber =
+			block_number.try_into().map_err(|_| Error::ConvertParentchainBlockNumber)?;
+		Ok(OpaqueCall::from_tuple(&(
+			call,
+			block_hash,
+			codec::Compact(parentchain_block_number),
+			root,
+		)))
 	}
 }
 
@@ -365,12 +373,17 @@ mod test {
 		let extrinsics = Vec::new();
 		let confirm_processed_parentchain_block_indexes =
 			dummy_metadata.confirm_processed_parentchain_block_call_indexes().unwrap();
-		let expected_call =
-			(confirm_processed_parentchain_block_indexes, block_hash, 1, H256::default()).encode();
+		let expected_call = (
+			confirm_processed_parentchain_block_indexes,
+			block_hash,
+			codec::Compact(1u32),
+			H256::default(),
+		)
+			.encode();
 
 		// when
 		let call = indirect_calls_executor
-			.create_processed_parentchain_block_call::<Block>(block_hash, extrinsics, 1)
+			.create_processed_parentchain_block_call::<Block>(block_hash, extrinsics, 1u32)
 			.unwrap();
 
 		// then
@@ -388,12 +401,17 @@ mod test {
 		let confirm_processed_parentchain_block_indexes =
 			dummy_metadata.confirm_processed_parentchain_block_call_indexes().unwrap();
 
-		let zero_root_call =
-			(confirm_processed_parentchain_block_indexes, block_hash, 1, H256::default()).encode();
+		let zero_root_call = (
+			confirm_processed_parentchain_block_indexes,
+			block_hash,
+			codec::Compact(1u32),
+			H256::default(),
+		)
+			.encode();
 
 		// when
 		let call = indirect_calls_executor
-			.create_processed_parentchain_block_call::<Block>(block_hash, extrinsics, 1)
+			.create_processed_parentchain_block_call::<Block>(block_hash, extrinsics, 1u32)
 			.unwrap();
 
 		// then
