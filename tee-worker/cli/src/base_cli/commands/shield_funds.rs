@@ -74,7 +74,7 @@ impl ShieldFundsCommand {
 			TEEREX,
 			"shield_funds",
 			encrypted_recevier,
-			self.amount,
+			codec::Compact(self.amount),
 			shard
 		);
 
