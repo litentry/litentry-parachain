@@ -174,12 +174,7 @@ impl<
 		if let Ok(number) = block_number.try_into() {
 			block_num = number;
 		}
-		Ok(OpaqueCall::from_tuple(&(
-			call,
-			block_hash,
-			codec::Compact(block_num),
-			root,
-		)))
+		Ok(OpaqueCall::from_tuple(&(call, block_hash, codec::Compact(block_num), root)))
 	}
 }
 
