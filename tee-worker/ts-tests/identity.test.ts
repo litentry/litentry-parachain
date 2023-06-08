@@ -10,11 +10,11 @@ import {
     buildValidations,
     assertInitialIDGraphCreated,
     checkUserShieldingKeys,
-    assertIdentityVerified,
     assertIdentityLinked,
     assertIdentityRemoved,
 } from './common/utils';
 import { env_network } from './common/helpers';
+import { aesKey } from './common/call';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
@@ -96,8 +96,7 @@ describeLitentry('Test Identity', 0, (context) => {
         await assertInitialIDGraphCreated(
             context,
             [context.substrateWallet.alice, context.substrateWallet.bob],
-            resp_events,
-            aesKey
+            resp_events
         );
     });
 
@@ -127,8 +126,8 @@ describeLitentry('Test Identity', 0, (context) => {
             u8aToHex(context.substrateWallet.alice.addressRaw),
             identity_hex
         );
-        assert.isAbove(resp_id_graph.linkBlock.toHuman(), 0, 'link_block should be greater than 0 for main address');
-        assert.equal(resp_id_graph.status, IdentityStatus.Active, 'status should be active for main address');
+        assert.isTrue(resp_id_graph.linkBlock.toNumber() > 0, 'linkBlock should be greater than 0 for main address');
+        assert.isTrue(resp_id_graph.status.isActive, 'status should be active for main address');
         // TODO: check IDGraph.length == 1 in the sidechain storage
     });
 
@@ -214,11 +213,11 @@ describeLitentry('Test Identity', 0, (context) => {
 
         const alice_data = await handleIdentityEvents(context, aesKey, alice_resp_events, 'IdentityLinked');
 
-        assertIdentityLinked(context.substrateWallet.alice, alice_data);
+        assertIdentityLinked(context, context.substrateWallet.alice, alice_resp_events, alice_identities);
 
         // Bob check extension substrate identity
         // https://github.com/litentry/litentry-parachain/issues/1137
-        const substrateExtensionValidationData = <LitentryValidationData>{
+        const substrateExtensionValidationData = {
             Web3Validation: {
                 Substrate: {
                     message: `0x${Buffer.from('mock_message', 'utf8').toString('hex')}`,
@@ -237,13 +236,17 @@ describeLitentry('Test Identity', 0, (context) => {
             9
         );
         console.log('post verification msg to substrate: ', msg);
-        substrateExtensionValidationData!.Web3Validation!.Substrate!.message = msg;
+        substrateExtensionValidationData.Web3Validation.Substrate.message = msg;
         // sign the wrapped version as in polkadot-extension
         signature_substrate = context.substrateWallet.bob.sign(
             u8aConcat(stringToU8a('<Bytes>'), u8aToU8a(msg), stringToU8a('</Bytes>'))
         );
-        substrateExtensionValidationData!.Web3Validation!.Substrate!.signature!.Sr25519 = u8aToHex(signature_substrate);
-        bob_validations = [substrateExtensionValidationData];
+        substrateExtensionValidationData!.Web3Validation.Substrate.signature.Sr25519 = u8aToHex(signature_substrate);
+        const bob_substrate_validation = context.api.createType(
+            'LitentryValidationData',
+            substrateExtensionValidationData
+        ) as unknown as LitentryValidationData;
+        bob_validations = [bob_substrate_validation];
 
         let bob_txs = await buildIdentityTxs(
             context,
@@ -260,12 +263,11 @@ describeLitentry('Test Identity', 0, (context) => {
             'identityManagement',
             ['IdentityLinked']
         );
-        const bob_data = await handleIdentityEvents(context, aesKey, bob_resp_events, 'IdentityLinked');
-        assertIdentityLinked(context.substrateWallet.bob, bob_data);
+        assertIdentityLinked(context, context.substrateWallet.bob, bob_resp_events, bob_identities);
     });
 
     step('check IDGraph after LinkIdentity', async function () {
-        const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
+        const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2', context);
         const identity_hex = context.api.createType('LitentryIdentity', twitter_identity).toHex();
 
         const resp_id_graph = await checkIDGraph(
@@ -275,8 +277,8 @@ describeLitentry('Test Identity', 0, (context) => {
             u8aToHex(context.substrateWallet.alice.addressRaw),
             identity_hex
         );
-        assert.isAbove(resp_id_graph.link_block, 0, 'link_block should be greater than 0');
-        assert.equal(resp_id_graph.status, IdentityStatus.Active, 'status should be active');
+        assert.isTrue(resp_id_graph.linkBlock.toNumber() > 0, 'linkBlock should be greater than 0');
+        assert.isTrue(resp_id_graph.status.isActive, 'status should be active');
     });
 
     step('link invalid identities', async function () {
@@ -371,17 +373,12 @@ describeLitentry('Test Identity', 0, (context) => {
             'identityManagement',
             ['IdentityRemoved']
         );
-        const [substrate_extension_identity_removed] = await handleIdentityEvents(
-            context,
-            aesKey,
-            bob_resp_remove_events,
-            'IdentityRemoved'
-        );
-        assertIdentityRemoved(context.substrateWallet.alice, twitter_identity_removed);
-        assertIdentityRemoved(context.substrateWallet.alice, ethereum_identity_removed);
-        assertIdentityRemoved(context.substrateWallet.alice, substrate_identity_removed);
 
-        assertIdentityRemoved(context.substrateWallet.bob, substrate_extension_identity_removed);
+        // Alice check identity
+        assertIdentityRemoved(context, context.substrateWallet.alice, alice_resp_remove_events);
+
+        // Bob check identity
+        assertIdentityRemoved(context, context.substrateWallet.bob, alice_resp_remove_events);
     });
 
     step('check IDGraph after removeIdentity', async function () {
@@ -436,7 +433,7 @@ describeLitentry('Test Identity', 0, (context) => {
 
         await checkErrorDetail(alice_resp_remove_events, 'IdentityNotExist');
 
-        //charlie doesn't have a challenge code,use alice identity
+        // remove a wrong identity (alice) for charlie
         let charlie_remove_txs = await buildIdentityTxs(
             context,
             context.substrateWallet.charlie,

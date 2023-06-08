@@ -5,7 +5,7 @@ import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
 import './config';
 
-//format and setup
+// format and setup
 const keyring = new Keyring({ type: 'sr25519' });
 export function getSubstrateSigner(): {
     alice: KeyringPair;
@@ -17,7 +17,6 @@ export function getSubstrateSigner(): {
     let Bob = keyring.addFromUri('//Bob', { name: 'Bob' });
     let Charlie = keyring.addFromUri('//Charlie', { name: 'Charlie' });
     let Eve = keyring.addFromUri('//Eve', { name: 'Eve' });
-    // const signers = [Alice, Bob, Charlie, Eve];
     const signers = {
         alice: Alice,
         bob: Bob,
@@ -56,4 +55,8 @@ export function identity(data: HexString | Uint8Array): Uint8Array {
     return u8aToU8a(data);
 }
 
-export const env_network = process.env.NODE_ENV === 'local' ? 'TestNet' : 'LitentryRococo';
+// TODO: the parentchain network type has nothing to do with `local` or not
+//       as I could launch a local parachain network with `LitentryRococo` or `Litmus`,
+//       depending on which chain spec I use.
+//       It should be retrieved from the parentchain SS58Prefix and set in initialisation
+export const env_network = 'LitentryRococo';

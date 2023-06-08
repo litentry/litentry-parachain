@@ -17,7 +17,9 @@ import { getEnclave, sleep, buildIdentityHelper, initIntegrationTestContext } fr
 import { aesKey, keyNonce } from '../../common/call';
 import { Metadata, TypeRegistry } from '@polkadot/types';
 import sidechainMetaData from '../../litentry-sidechain-metadata.json';
-import { hexToU8a, compactStripLength, u8aToString } from '@polkadot/util';
+import { hexToU8a } from '@polkadot/util';
+import type { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
+import type { LitentryValidationData } from '../../parachain-interfaces/identity/types';
 import { assert } from 'chai';
 
 // in order to handle self-signed certificates we need to turn off the validation
@@ -96,7 +98,7 @@ async function runDirectCall() {
         mrenclave,
         nonce,
         alice,
-        parachain_api.createType('LitentryPrimitivesIdentity', twitter_identity).toHex(),
+        sidechainRegistry.createType('LitentryPrimitivesIdentity', twitter_identity).toHex(),
         parachain_api
             .createType('LitentryValidationData', {
                 Web2Validation: {

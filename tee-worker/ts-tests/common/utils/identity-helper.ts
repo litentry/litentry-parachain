@@ -1,9 +1,7 @@
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { blake2AsHex } from '@polkadot/util-crypto';
-
 import { AESOutput } from '../type-definitions';
 import { decryptWithAES, encryptWithAES, encryptWithTeeShieldingKey } from './crypto';
-import { assert } from 'chai';
 import { ethers } from 'ethers';
 import type { TypeRegistry } from '@polkadot/types';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from '@polkadot/types/lookup';
@@ -27,7 +25,7 @@ export function generateVerificationMessage(
     identity: LitentryPrimitivesIdentity,
     sidechainNonce: number
 ): HexString {
-    const encodedIdentity = context.api.createType('LitentryPrimitivesIdentity', identity).toU8a();
+    const encodedIdentity = context.sidechainRegistry.createType('LitentryPrimitivesIdentity', identity).toU8a();
     const payload = Buffer.concat([signerAddress, encodedIdentity]);
     const encryptedPayload = hexToU8a(encryptWithAES(aesKey, hexToU8a(keyNonce), payload));
     const encodedSidechainNonce = context.api.createType('Index', sidechainNonce);

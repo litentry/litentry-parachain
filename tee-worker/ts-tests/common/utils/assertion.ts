@@ -4,20 +4,20 @@ import { hexToU8a, u8aToHex } from '@polkadot/util';
 import Ajv from 'ajv';
 import { assert, expect } from 'chai';
 import * as ed from '@noble/ed25519';
-import { buildIdentityHelper, parseIdGraph, createIdentityEvent, parseIdentity } from './identity-helper';
+import { buildIdentityHelper, parseIdGraph, parseIdentity } from './identity-helper';
 import type { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
 import type { EnclaveResult, IntegrationTestContext } from '../type-definitions';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
 import { JsonSchema } from '../type-definitions';
 import { env_network } from '../../common/helpers';
+import { aesKey } from '../../common/call';
 import colors from 'colors';
 
 export async function assertInitialIDGraphCreated(
     context: IntegrationTestContext,
     signer: KeyringPair[],
-    events: any[],
-    aesKey: HexString
+    events: any[]
 ) {
     for (let index = 0; index < events.length; index++) {
         const event_data = events[index].data;
@@ -39,16 +39,12 @@ export async function assertInitialIDGraphCreated(
         assert.equal(expected_target.toString(), idGraph_target.toString());
 
         // Check identityContext in idgraph
-        const idGraph_context = idGraph_data[0][1].toHuman();
-        const creation_request_block = idGraph_context.creationRequestBlock;
-        const verification_request_block = idGraph_context.verificationRequestBlock;
-        assert.equal(creation_request_block, 0, 'Check InitialIDGraph error: creation_request_block should be 0');
-        assert.equal(
-            verification_request_block,
-            0,
-            'Check InitialIDGraph error: verification_request_block should be 0'
+        const idGraph_context = idGraph_data[0][1];
+        assert.isTrue(
+            idGraph_context.linkBlock.toNumber() > 0,
+            'Check InitialIDGraph error: link_block should be greater than 0'
         );
-        assert.isTrue(idGraph_context.isVerified, 'Check InitialIDGraph error: isVerified should be true');
+        assert.isTrue(idGraph_context.status.isActive, 'Check InitialIDGraph error: isActive should be true');
     }
     console.log(colors.green('assertInitialIDGraphCreated complete'));
 }
@@ -57,7 +53,6 @@ export async function assertIdentityLinked(
     context: IntegrationTestContext,
     signers: KeyringPair | KeyringPair[],
     events: any[],
-    aesKey: HexString,
     expected_identities: LitentryPrimitivesIdentity[]
 ) {
     // We should parse idGraph from the last event, because the last event updates the verification status of all identities.
@@ -94,18 +89,12 @@ export async function assertIdentityLinked(
         );
 
         // Check identityContext in idGraph
+        const idGraph_context = event_idGraph[index][1];
         assert.isTrue(
-            event_idGraph[index][1].isVerified.toHuman(),
-            'Check IdentityVerified error: event_idGraph identity should be verified'
+            idGraph_context.linkBlock.toNumber() > 0,
+            'Check InitialIDGraph error: link_block should be greater than 0'
         );
-        assert(
-            Number(event_idGraph[index][1].verificationRequestBlock.toHuman()) > 0,
-            'Check IdentityVerified error: event_idGraph verificationRequestBlock should be greater than 0'
-        );
-        assert(
-            Number(event_idGraph[index][1].creationRequestBlock.toHuman()) > 0,
-            'Check IdentityVerified error: event_idGraph creationRequestBlock should be greater than 0'
-        );
+        assert.isTrue(idGraph_context.status.isActive, 'Check InitialIDGraph error: isActive should be true');
 
         assert.equal(who, u8aToHex(signer.addressRaw), 'Check IdentityCreated error: signer should be equal to who');
     }

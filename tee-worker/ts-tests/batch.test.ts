@@ -73,8 +73,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
         let resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
             'IdentityLinked',
         ]);
-        let event_data = await handleIdentityEvents(context, aesKey, resp_events, 'IdentityLinked');
-        assertIdentityLinked(context.substrateWallet.alice, event_data);
+        assertIdentityLinked(context, context.substrateWallet.alice, resp_events, identities);
     });
 
     step('batch test: remove identities', async function () {
@@ -102,31 +101,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
         await checkErrorDetail(resp_remove_events, 'IdentityNotExist');
     });
 
-    // query here in the hope that the status remains unchanged after removes error identity
     step('check IDGraph after removeIdentity', async function () {
-        for (let index = 0; index < identities.length; index++) {
-            const identity_hex = context.sidechainRegistry
-                .createType('LitentryPrimitivesIdentity', identities[index])
-                .toHex();
-
-            const resp_id_graph = await checkIDGraph(
-                context,
-                'IdentityManagement',
-                'IDGraphs',
-                u8aToHex(context.substrateWallet.alice.addressRaw),
-                identity_hex
-            );
-            assert.equal(
-                resp_id_graph.verificationRequestBlock.toHuman(),
-                null,
-                'verificationRequestBlock should  be null after removeIdentity'
-            );
-            assert.equal(
-                resp_id_graph.creationRequestBlock.toHuman(),
-                null,
-                'creationRequestBlock should be null after removeIdentity'
-            );
-            assert.equal(resp_id_graph.isVerified.toHuman(), false, 'isVerified should be false after removeIdentity');
-        }
+        // TODO: check the idgraph is empty
     });
 });
