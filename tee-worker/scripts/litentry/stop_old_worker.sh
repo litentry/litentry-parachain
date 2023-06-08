@@ -24,8 +24,8 @@ check_log_file_and_kill_process() {
             kill -9 $pids
             echo "Processes killed."
         fi
-        echo "Sleeping for 10 seconds"
-        sleep 20
+        echo "Sleeping for 60 seconds"
+        sleep 60
         exit 0
     fi
 }
