@@ -187,7 +187,7 @@ export async function checkErrorDetail(events: Event[], expectedDetail: string) 
 export async function verifySignature(data: any, index: HexString, proofJson: any, api: ApiPromise) {
     const count = await api.query.teerex.enclaveCount();
     const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as EnclaveResult;
-    //check vc index
+    // Check vc index
     expect(index).to.be.eq(data.id);
 
     const signature = Buffer.from(hexToU8a(`0x${proofJson.proofValue}`));
@@ -211,7 +211,7 @@ export async function checkVc(vcObj: any, index: HexString, proof: any, api: Api
     return true;
 }
 
-//Check VC json fields
+// Check VC json fields
 export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
     //check JsonSchema
     const ajv = new Ajv();
@@ -220,8 +220,8 @@ export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
     expect(isValid).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-            vc.issuer.id === proofJson.verificationMethod &&
-            proofJson.type === 'Ed25519Signature2020'
+        vc.issuer.id === proofJson.verificationMethod &&
+        proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
 }

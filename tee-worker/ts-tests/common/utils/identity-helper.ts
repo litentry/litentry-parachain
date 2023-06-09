@@ -18,7 +18,7 @@ import type {
     SubstrateNetwork,
     Web2Network,
 } from '../type-definitions';
-//<challeng-code> + <litentry-AccountId32> + <Identity>
+// <challeng-code> + <litentry-AccountId32> + <Identity>
 export function generateVerificationMessage(
     context: IntegrationTestContext,
     challengeCode: Uint8Array,
@@ -50,7 +50,7 @@ export async function buildIdentityHelper(
     return encoded_identity;
 }
 
-//If multiple transactions are built from multiple accounts, pass the signers as an array. If multiple transactions are built from a single account, signers cannot be an array.
+// If multiple transactions are built from multiple accounts, pass the signers as an array. If multiple transactions are built from a single account, signers cannot be an array.
 export async function buildIdentityTxs(
     context: IntegrationTestContext,
     signers: KeyringPair[] | KeyringPair,
