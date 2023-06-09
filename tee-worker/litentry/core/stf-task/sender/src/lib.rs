@@ -68,7 +68,7 @@ use sp_std::prelude::Vec;
 /// https://www.notion.so/web3builders/Sidechain-block-importer-and-block-production-28292233b4c74f4ab8110a0014f8d9df
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub struct IdentityLinkRequest {
+pub struct IdentityVerificationRequest {
 	pub shard: ShardIdentifier,
 	pub who: AccountId,
 	pub identity: Identity,
@@ -93,12 +93,12 @@ pub struct AssertionBuildRequest {
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub enum RequestType {
-	IdentityVerification(IdentityLinkRequest),
+	IdentityVerification(IdentityVerificationRequest),
 	AssertionVerification(AssertionBuildRequest),
 }
 
-impl From<IdentityLinkRequest> for RequestType {
-	fn from(r: IdentityLinkRequest) -> Self {
+impl From<IdentityVerificationRequest> for RequestType {
+	fn from(r: IdentityVerificationRequest) -> Self {
 		RequestType::IdentityVerification(r)
 	}
 }

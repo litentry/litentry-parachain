@@ -27,7 +27,7 @@ use ita_sgx_runtime::{IdentityStatus, RuntimeOrigin};
 use itp_stf_primitives::types::ShardIdentifier;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
-	AssertionBuildRequest, IdentityLinkRequest, RequestType,
+	AssertionBuildRequest, IdentityVerificationRequest, RequestType,
 };
 use litentry_primitives::{Assertion, ErrorDetail, Identity, UserShieldingKeyType, ValidationData};
 use log::*;
@@ -74,7 +74,7 @@ impl TrustedCallSigned {
 		// (current nonce + 1) when verifying the validation data.
 		let sidechain_nonce = System::account_nonce(&signer) - 1;
 
-		let request: RequestType = IdentityLinkRequest {
+		let request: RequestType = IdentityVerificationRequest {
 			shard: *shard,
 			who,
 			identity,
