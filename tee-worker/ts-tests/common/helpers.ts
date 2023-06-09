@@ -56,7 +56,7 @@ export function identity(data: HexString | Uint8Array): Uint8Array {
     return u8aToU8a(data);
 }
 
-// https://github.com/paritytech/ss58-registry/blob/main/c.json
+// see https://github.com/litentry/litentry-parachain/blob/97f80f711e8ec308cbf230b9b35cd40b191d8217/tee-worker/litentry/primitives/src/identity.rs#L80
 export const SubstrateNetworkMapping: Record<number, SubstrateNetwork['type']> = {
     0: 'Polkadot',
     2: 'Kusama',
