@@ -51,6 +51,7 @@ export type IntegrationTestContext = {
     metaData: Metadata;
     sidechainRegistry: TypeRegistry;
     web3Signers: Web3Wallets[];
+    chainID: number;
 };
 
 export class AESOutput {

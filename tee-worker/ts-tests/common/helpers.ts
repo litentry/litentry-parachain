@@ -56,4 +56,13 @@ export function identity(data: HexString | Uint8Array): Uint8Array {
     return u8aToU8a(data);
 }
 
-export const env_network = process.env.NODE_ENV === 'local' ? 'TestNet' : 'LitentryRococo';
+// https://github.com/paritytech/ss58-registry/blob/main/c.json
+export enum SubstrateNetwork {
+    Polkadot = 0,
+    Kusama = 2,
+    Litentry = 31,
+    Litmus = 131,
+    LitentryRococo = 42,
+    Khala = 30,
+    TestNet = 13,
+}

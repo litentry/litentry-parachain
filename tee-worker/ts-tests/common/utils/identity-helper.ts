@@ -11,13 +11,7 @@ import type { LitentryValidationData } from '../../parachain-interfaces/identity
 import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
-import type {
-    EvmNetwork,
-    IdentityGenericEvent,
-    IntegrationTestContext,
-    SubstrateNetwork,
-    Web2Network,
-} from '../type-definitions';
+import type { IdentityGenericEvent, IntegrationTestContext } from '../type-definitions';
 //<challeng-code> + <litentry-AccountId32> + <Identity>
 export function generateVerificationMessage(
     context: IntegrationTestContext,
@@ -32,7 +26,7 @@ export function generateVerificationMessage(
 
 export async function buildIdentityHelper(
     address: HexString | string,
-    network: SubstrateNetwork | EvmNetwork | Web2Network,
+    network: string,
     type: LitentryPrimitivesIdentity['type'],
     context: IntegrationTestContext
 ): Promise<LitentryPrimitivesIdentity> {
