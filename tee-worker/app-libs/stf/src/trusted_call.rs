@@ -186,7 +186,15 @@ impl TrustedCallSigned {
 		payload.append(&mut self.nonce.encode());
 		payload.append(&mut mrenclave.encode());
 		payload.append(&mut shard.encode());
+
+		// litentry: https://github.com/litentry/litentry-parachain/issues/1752
+		// the raw message is always wrapped up with `<Bytes></Bytes>` when using browser
+		// wallet extension, we need to support it as well
+		let wrapped_payload =
+			["<Bytes>".as_bytes(), payload.as_slice(), "</Bytes>".as_bytes()].concat();
+
 		self.signature.verify(payload.as_slice(), self.call.sender_account())
+			|| self.signature.verify(wrapped_payload.as_slice(), self.call.sender_account())
 	}
 
 	pub fn into_trusted_operation(self, direct: bool) -> TrustedOperation {
