@@ -4,7 +4,7 @@ import { Keyring } from '@polkadot/api';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
 import './config';
-
+import { SubstrateNetwork } from '../parachain-interfaces/identity/types';
 //format and setup
 const keyring = new Keyring({ type: 'sr25519' });
 export function getSubstrateSigner(): {
@@ -57,12 +57,12 @@ export function identity(data: HexString | Uint8Array): Uint8Array {
 }
 
 // https://github.com/paritytech/ss58-registry/blob/main/c.json
-export enum SubstrateNetwork {
-    Polkadot = 0,
-    Kusama = 2,
-    Litentry = 31,
-    Litmus = 131,
-    LitentryRococo = 42,
-    Khala = 30,
-    TestNet = 13,
-}
+export const SubstrateNetworkMapping: Record<number, SubstrateNetwork['type']> = {
+    0: 'Polkadot',
+    2: 'Kusama',
+    31: 'Litentry',
+    131: 'Litmus',
+    42: 'LitentryRococo',
+    30: 'Khala',
+    13: 'TestNet',
+};

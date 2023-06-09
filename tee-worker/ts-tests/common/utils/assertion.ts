@@ -10,7 +10,7 @@ import type { EnclaveResult, IntegrationTestContext } from '../type-definitions'
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
 import { JsonSchema } from '../type-definitions';
-import { SubstrateNetwork } from '../../common/helpers';
+import { SubstrateNetworkMapping } from '../../common/helpers';
 import colors from 'colors';
 
 export async function assertInitialIDGraphCreated(
@@ -30,7 +30,7 @@ export async function assertInitialIDGraphCreated(
         // Check identity in idgraph
         const expected_identity = await buildIdentityHelper(
             u8aToHex(signer[index].addressRaw),
-            SubstrateNetwork[context.chainID],
+            SubstrateNetworkMapping[context.chainID],
             'Substrate',
             context
         );
@@ -74,7 +74,7 @@ export async function assertIdentityVerified(
         // Check prime identity in idGraph
         const expected_prime_identity = await buildIdentityHelper(
             u8aToHex(signer.addressRaw),
-            SubstrateNetwork[context.chainID],
+            SubstrateNetworkMapping[context.chainID],
             'Substrate',
             context
         );
