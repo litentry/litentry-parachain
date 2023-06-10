@@ -48,6 +48,7 @@ export async function initIntegrationTestContext(
         types,
     });
 
+    const chainID = api.registry.chainSS58 as number;
     await cryptoWaitReady();
 
     const wsp = await initWorkerConnection(workerEndpoint);
@@ -65,6 +66,7 @@ export async function initIntegrationTestContext(
         metaData,
         sidechainRegistry,
         web3Signers,
+        chainID,
     };
 }
 
