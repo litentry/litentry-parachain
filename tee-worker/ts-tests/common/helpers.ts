@@ -4,8 +4,8 @@ import { Keyring } from '@polkadot/api';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
 import './config';
-
-//format and setup
+import { SubstrateNetwork } from '../parachain-interfaces/identity/types';
+// format and setup
 const keyring = new Keyring({ type: 'sr25519' });
 export function getSubstrateSigner(): {
     alice: KeyringPair;
@@ -56,4 +56,13 @@ export function identity(data: HexString | Uint8Array): Uint8Array {
     return u8aToU8a(data);
 }
 
-export const env_network = process.env.NODE_ENV === 'local' ? 'TestNet' : 'LitentryRococo';
+// see https://github.com/litentry/litentry-parachain/blob/97f80f711e8ec308cbf230b9b35cd40b191d8217/tee-worker/litentry/primitives/src/identity.rs#L80
+export const SubstrateNetworkMapping: Record<number, SubstrateNetwork['type']> = {
+    0: 'Polkadot',
+    2: 'Kusama',
+    31: 'Litentry',
+    131: 'Litmus',
+    42: 'LitentryRococo',
+    30: 'Khala',
+    13: 'TestNet',
+};
