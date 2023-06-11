@@ -26,13 +26,13 @@ use sp_std::prelude::*;
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 
+use ring::aead::NONCE_LEN;
+
 pub type ShardIdentifier = sp_core::H256;
 pub type MrenclaveType = [u8; 32];
 
 // we use 256-bit AES-GCM as user shielding key
 pub const USER_SHIELDING_KEY_LEN: usize = 32;
-pub const USER_SHIELDING_KEY_NONCE_LEN: usize = 12;
-pub const USER_SHIELDING_KEY_TAG_LEN: usize = 16;
 
 pub type UserShieldingKeyType = [u8; USER_SHIELDING_KEY_LEN];
 
@@ -44,5 +44,5 @@ pub type UserShieldingKeyType = [u8; USER_SHIELDING_KEY_LEN];
 pub struct AesOutput {
 	pub ciphertext: Vec<u8>,
 	pub aad: Vec<u8>,
-	pub nonce: [u8; USER_SHIELDING_KEY_NONCE_LEN], // IV
+	pub nonce: [u8; NONCE_LEN], // IV
 }

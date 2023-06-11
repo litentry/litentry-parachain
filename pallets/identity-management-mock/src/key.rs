@@ -29,7 +29,8 @@ use aes_gcm::{
 	Aes256Gcm,
 };
 
-pub use core_primitives::{AesOutput, USER_SHIELDING_KEY_LEN, USER_SHIELDING_KEY_NONCE_LEN};
+pub use core_primitives::{AesOutput, USER_SHIELDING_KEY_LEN};
+pub use ring::aead::NONCE_LEN;
 
 #[rustfmt::skip]
 // The hardcoded exemplary shielding keys for mocking
@@ -48,7 +49,7 @@ const MOCK_TEE_SHIELDING_KEY_PUB: &str = include_str!("rsa_key_examples/pkcs1/30
 // use a fake nonce for this pallet
 // in real situations we should either use Randomness pallet for wasm runtime, or
 // Aes256Gcm::generate_nonce for non-wasm case
-const MOCK_NONCE: [u8; USER_SHIELDING_KEY_NONCE_LEN] = [2u8; USER_SHIELDING_KEY_NONCE_LEN];
+const MOCK_NONCE: [u8; NONCE_LEN] = [2u8; NONCE_LEN];
 
 pub fn get_mock_tee_shielding_key() -> (RsaPublicKey, RsaPrivateKey) {
 	(
@@ -62,7 +63,7 @@ pub(crate) fn aes_encrypt(
 	key: &[u8; USER_SHIELDING_KEY_LEN],
 	data: &[u8],
 	aad: &[u8],
-	nonce: [u8; USER_SHIELDING_KEY_NONCE_LEN],
+	nonce: [u8; NONCE_LEN],
 ) -> AesOutput {
 	let cipher = Aes256Gcm::new(key.into());
 	let payload = Payload { msg: data, aad };

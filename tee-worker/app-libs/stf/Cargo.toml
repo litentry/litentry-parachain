@@ -101,6 +101,7 @@ std = [
     "litentry-primitives/std",
     "lc-scheduled-enclave/std",
     "lc-stf-task-sender/std",
+    "ring/std",
     "rand",
 ]
 test = []
