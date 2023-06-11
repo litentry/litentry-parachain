@@ -28,9 +28,9 @@ pallet-identity-management = { path = "../../pallets/identity-management", defau
 aes-gcm = { git = "https://github.com/RustCrypto/AEADs", default-features = false, features = ["aes", "alloc"] }
 hex = { version = "0.4", default-features = false }
 hex-literal = { version = "0.4.1" }
+ring = { git = "https://github.com/Niederb/ring-xous.git", branch = "0.16.20-cleanup", default-features = false, features = ["alloc"] }
 rsa = { git = "https://github.com/litentry/RustCrypto-RSA", default-features = false, features = ["serde", "pem"] }
 sha2 = { version = "0.10.2", default-features = false }
-ring = { git = "https://github.com/Niederb/ring-xous.git", branch = "0.16.20-cleanup", default-features = false, features = ["alloc"] }
 
 [dev-dependencies]
 aes-gcm = { git = "https://github.com/RustCrypto/AEADs" }
