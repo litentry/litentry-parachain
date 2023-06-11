@@ -21,11 +21,11 @@ if [[ ${#files[@]} -eq 2 ]]; then
     file1="${files[0]}"
     file2="${files[1]}"
     if [[ $file1 -ot $file2 ]]; then
-        echo "Deleting the older file: $file1"
-        rm "$file1"
+        echo "Deleting the older shard folder: $file1"
+        rm -r "$file1"
     else
-        echo "Deleting the older file: $file2"
-        rm "$file2"
+        echo "Deleting the older shard folder: $file2"
+        rm -r "$file2"
     fi
 fi
 
