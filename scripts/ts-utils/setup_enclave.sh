@@ -4,5 +4,4 @@
 
 cd ../scripts/ts-utils/
 yarn install
-yarn tsc
-yarn node setup-enclave.js  $ENCLAVE_ACCOUNT $NEW_MRENCLAVE $SCHEDULE_UPDATE_BLOCK
+npx ts-node setup-enclave.ts  $ENCLAVE_ACCOUNT $NEW_MRENCLAVE $SCHEDULE_UPDATE_BLOCK
