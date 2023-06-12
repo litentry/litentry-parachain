@@ -58,7 +58,7 @@ impl From<TrustedGetterSigned> for Getter {
 #[allow(non_camel_case_types)]
 pub enum PublicGetter {
 	some_value,
-	nonce(AccountId, u64),
+	nonce(AccountId, u32),
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
