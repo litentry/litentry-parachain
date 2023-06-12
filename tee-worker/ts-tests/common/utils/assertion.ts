@@ -10,8 +10,8 @@ import type { EnclaveResult, IntegrationTestContext } from '../type-definitions'
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
 import { JsonSchema } from '../type-definitions';
-import { env_network } from '../../common/helpers';
 import { aesKey } from '../../common/call';
+import { SubstrateNetworkMapping } from '../../common/helpers';
 import colors from 'colors';
 
 export async function assertInitialIDGraphCreated(
@@ -30,7 +30,7 @@ export async function assertInitialIDGraphCreated(
         // Check identity in idgraph
         const expected_identity = await buildIdentityHelper(
             u8aToHex(signer[index].addressRaw),
-            env_network,
+            SubstrateNetworkMapping[context.chainID],
             'Substrate',
             context
         );
@@ -69,7 +69,7 @@ export async function assertIdentityLinked(
         // Check prime identity in idGraph
         const expected_prime_identity = await buildIdentityHelper(
             u8aToHex(signer.addressRaw),
-            env_network,
+            SubstrateNetworkMapping[context.chainID],
             'Substrate',
             context
         );
@@ -176,7 +176,7 @@ export async function checkErrorDetail(events: Event[], expectedDetail: string) 
 export async function verifySignature(data: any, index: HexString, proofJson: any, api: ApiPromise) {
     const count = await api.query.teerex.enclaveCount();
     const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as EnclaveResult;
-    //check vc index
+    // Check vc index
     expect(index).to.be.eq(data.id);
 
     const signature = Buffer.from(hexToU8a(`0x${proofJson.proofValue}`));
@@ -200,7 +200,7 @@ export async function checkVc(vcObj: any, index: HexString, proof: any, api: Api
     return true;
 }
 
-//Check VC json fields
+// Check VC json fields
 export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
     //check JsonSchema
     const ajv = new Ajv();
@@ -209,8 +209,8 @@ export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
     expect(isValid).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-            vc.issuer.id === proofJson.verificationMethod &&
-            proofJson.type === 'Ed25519Signature2020'
+        vc.issuer.id === proofJson.verificationMethod &&
+        proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
 }

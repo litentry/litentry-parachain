@@ -13,8 +13,8 @@ import {
     assertIdentityLinked,
     assertIdentityRemoved,
 } from './common/utils';
-import { env_network } from './common/helpers';
 import { aesKey } from './common/call';
+import { SubstrateNetworkMapping } from './common/helpers';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
@@ -114,7 +114,7 @@ describeLitentry('Test Identity', 0, (context) => {
         // the main address should be already inside the IDGraph
         const main_identity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.alice.addressRaw),
-            env_network,
+            SubstrateNetworkMapping[context.chainID],
             'Substrate',
             context
         );
@@ -392,7 +392,7 @@ describeLitentry('Test Identity', 0, (context) => {
         // remove prime identity
         const substratePrimeIdentity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.alice.addressRaw),
-            env_network,
+            SubstrateNetworkMapping[context.chainID],
             'Substrate',
             context
         );

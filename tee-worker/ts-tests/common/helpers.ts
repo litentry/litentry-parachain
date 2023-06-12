@@ -4,6 +4,7 @@ import { Keyring } from '@polkadot/api';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
 import './config';
+import { SubstrateNetwork } from '../parachain-interfaces/identity/types';
 
 // format and setup
 const keyring = new Keyring({ type: 'sr25519' });
@@ -55,8 +56,13 @@ export function identity(data: HexString | Uint8Array): Uint8Array {
     return u8aToU8a(data);
 }
 
-// TODO: the parentchain network type has nothing to do with `local` or not
-//       as I could launch a local parachain network with `LitentryRococo` or `Litmus`,
-//       depending on which chain spec I use.
-//       It should be retrieved from the parentchain SS58Prefix and set in initialisation
-export const env_network = 'LitentryRococo';
+// see https://github.com/litentry/litentry-parachain/blob/97f80f711e8ec308cbf230b9b35cd40b191d8217/tee-worker/litentry/primitives/src/identity.rs#L80
+export const SubstrateNetworkMapping: Record<number, SubstrateNetwork['type']> = {
+    0: 'Polkadot',
+    2: 'Kusama',
+    31: 'Litentry',
+    131: 'Litmus',
+    42: 'LitentryRococo',
+    30: 'Khala',
+    13: 'TestNet',
+};
