@@ -22,7 +22,7 @@ use bit_vec::BitVec;
 use chrono::{prelude::*, TimeZone, Utc as TzUtc};
 use core::convert::TryFrom;
 use rcgen::{date_time_ymd, Certificate, CertificateParams, DistinguishedName, DnType};
-use sp_core::{crypto::Pair, ed25519};
+use sp_core::{crypto::Pair, ecdsa, ed25519};
 use std::{
 	string::ToString,
 	time::{SystemTime, UNIX_EPOCH},
@@ -115,6 +115,87 @@ fn ed25519_private_key_pkcs8_der(key_pair: ed25519::Pair) -> WebSocketResult<Vec
 		});
 	});
 	Ok(key_der)
+}
+
+// litentry: ecdsa signed certificate
+pub fn ecdsa_self_signed_certificate(
+	key_pair: ecdsa::Pair,
+	common_name: &str,
+) -> WebSocketResult<Certificate> {
+	let mut params = CertificateParams::new(vec![common_name.to_string()]);
+	let now = SystemTime::now().duration_since(UNIX_EPOCH).expect("Error: UNIX_EPOCH");
+	let issue_ts = TzUtc
+		.timestamp_opt(now.as_secs() as i64, 0)
+		.single()
+		.expect("Error: this should not fail as long as secs fit into i64");
+	let year = issue_ts.year();
+	let month = issue_ts.month();
+	let day = issue_ts.day();
+	params.not_before = date_time_ymd(year, month, day);
+	params.not_after = date_time_ymd(4096, 1, 1);
+	let mut dn = DistinguishedName::new();
+	dn.push(DnType::OrganizationName, "Litentry");
+	params.distinguished_name = dn;
+
+	params.alg = &rcgen::PKCS_ECDSA_P256_SHA256;
+	let private_key_der = ecdsa_private_key_pkcs8_der(key_pair);
+
+	let key_pair = rcgen::KeyPair::try_from(private_key_der.as_ref()).expect("Invalid pkcs8 der");
+	params.key_pair = Some(key_pair);
+
+	Certificate::from_params(params).map_err(|e| WebSocketError::Other(e.into()))
+}
+
+// mainly copied from https://github.com/apache/incubator-teaclave/blob/master/attestation/src/key.rs
+fn ecdsa_private_key_pkcs8_der(key_pair: ecdsa::Pair) -> Vec<u8> {
+	let seed = key_pair.seed();
+	let private_key = seed.as_slice();
+	let pk = key_pair.public().0;
+	let public_key = pk.as_slice();
+
+	use bit_vec::BitVec;
+	use yasna::{construct_der, models::ObjectIdentifier, Tag};
+
+	// Construct useful OIDs.
+	let ec_public_key_oid = ObjectIdentifier::from_slice(&[1, 2, 840, 10045, 2, 1]);
+	let prime256v1_oid = ObjectIdentifier::from_slice(&[1, 2, 840, 10045, 3, 1, 7]);
+
+	// Construct private key in DER.
+	// construct_der(|writer| {
+	// 	writer.write_sequence(|writer| {
+	// 		writer.next().write_u8(0);
+	// 		writer.next().write_sequence(|writer| {
+	// 			writer.next().write_oid(&ec_public_key_oid);
+	// 			writer.next().write_oid(&prime256v1_oid);
+	// 		});
+	// 		let inner_key_der = construct_der(|writer| {
+	// 			writer.write_sequence(|writer| {
+	// 				writer.next().write_u8(1);
+	// 				writer.next().write_bytes(private_key);
+	// 				writer.next().write_tagged(Tag::context(1), |writer| {
+	// 					writer.write_bitvec(&BitVec::from_bytes(public_key));
+	// 				});
+	// 			});
+	// 		});
+	// 		writer.next().write_bytes(&inner_key_der);
+	// 	});
+	// })
+
+	yasna::construct_der(|writer| {
+		writer.write_sequence(|writer| {
+			writer.next().write_u8(1);
+			// write OID
+			writer.next().write_sequence(|writer| {
+				writer.next().write_oid(&ec_public_key_oid);
+				writer.next().write_oid(&prime256v1_oid);
+			});
+			let pk = construct_der(|writer| writer.write_bytes(private_key));
+			writer.next().write_bytes(&pk);
+			writer.next().write_tagged(yasna::Tag::context(1), |writer| {
+				writer.write_bitvec(&BitVec::from_bytes(public_key))
+			})
+		});
+	})
 }
 
 #[cfg(test)]

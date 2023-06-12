@@ -53,7 +53,7 @@ use itc_direct_rpc_server::{
 	rpc_ws_handler::RpcWsHandler,
 };
 use itc_tls_websocket_server::{
-	certificate_generation::ed25519_self_signed_certificate, create_ws_server, ConnectionToken,
+	certificate_generation::ecdsa_self_signed_certificate, create_ws_server, ConnectionToken,
 	WebSocketServer,
 };
 use itp_attestation_handler::{AttestationHandler, IntelAttestationHandler};
@@ -73,7 +73,7 @@ use itp_types::ShardIdentifier;
 use its_sidechain::block_composer::BlockComposer;
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use log::*;
-use sp_core::crypto::Pair;
+use sp_core::{crypto::Pair, ecdsa};
 use std::{collections::HashMap, string::String, sync::Arc};
 
 pub(crate) fn init_enclave(mu_ra_url: String, untrusted_worker_url: String) -> EnclaveResult<()> {
@@ -247,9 +247,11 @@ pub(crate) fn init_enclave_sidechain_components() -> EnclaveResult<()> {
 pub(crate) fn init_direct_invocation_server(server_addr: String) -> EnclaveResult<()> {
 	let rpc_handler = GLOBAL_RPC_WS_HANDLER_COMPONENT.get()?;
 	let signing = Ed25519Seal::unseal_from_static_file()?;
+	let signing_derive_ecdsa = ecdsa::Pair::from_seed_slice(signing.seed().as_slice()).unwrap();
 
-	let cert =
-		ed25519_self_signed_certificate(signing, "Enclave").map_err(|e| Error::Other(e.into()))?;
+	// litentry: try to use ecdsa self-signed cert
+	let cert = ecdsa_self_signed_certificate(signing_derive_ecdsa, "Enclave")
+		.map_err(|e| Error::Other(e.into()))?;
 
 	// Serialize certificate(s) and private key to PEM.
 	// PEM format is needed as a certificate chain can only be serialized into PEM.

@@ -4,6 +4,7 @@
       "source": "bin",
       "flags": [
         "--clean-reset",
+        "--ws-external",
         "-P",
         "$TrustedWorkerPort",
         "-w",
