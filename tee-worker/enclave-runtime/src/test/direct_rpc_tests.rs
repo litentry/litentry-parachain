@@ -48,7 +48,7 @@ pub fn get_state_request_works() {
 		public_api_rpc_handler(top_pool_author, getter_executor, None::<Arc<HandleStateMock>>);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 
-	let getter = Getter::public(PublicGetter::nonce(AccountId::new([0u8; 32])));
+	let getter = Getter::public(PublicGetter::nonce(AccountId::new([0u8; 32]), 0));
 
 	let request = Request { shard: ShardIdentifier::default(), cyphertext: getter.encode() };
 

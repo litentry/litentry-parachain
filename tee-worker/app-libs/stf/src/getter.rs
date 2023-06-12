@@ -58,7 +58,7 @@ impl From<TrustedGetterSigned> for Getter {
 #[allow(non_camel_case_types)]
 pub enum PublicGetter {
 	some_value,
-	nonce(AccountId),
+	nonce(AccountId, u64),
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
@@ -208,11 +208,11 @@ impl ExecuteGetter for PublicGetter {
 	fn execute(self) -> Option<Vec<u8>> {
 		match self {
 			PublicGetter::some_value => Some(42u32.encode()),
-			PublicGetter::nonce(who) => {
+			PublicGetter::nonce(who, tx_num) => {
 				let nonce = System::account_nonce(&who);
 				debug!("PublicGetter nonce");
 				debug!("Account nonce is {}", nonce);
-				Some(nonce.encode())
+				Some((nonce + tx_num).encode())
 			},
 		}
 	}

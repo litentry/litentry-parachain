@@ -276,7 +276,7 @@ fn get_nonce(
 	shard: ShardIdentifier,
 	direct_client: &DirectClient,
 ) -> Index {
-	let getter = Getter::public(PublicGetter::nonce(account.public().into()));
+	let getter = Getter::public(PublicGetter::nonce(account.public().into(), 0));
 
 	let getter_start_timer = Instant::now();
 	let getter_result = get_state(direct_client, shard, &getter);
