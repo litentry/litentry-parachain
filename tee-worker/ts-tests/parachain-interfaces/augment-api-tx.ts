@@ -1592,22 +1592,7 @@ declare module '@polkadot/api-base/types/submittable' {
                 (account: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
                 [AccountId32]
             >;
-            /**
-             * Create an identity
-             * We do the origin check for this extrinsic, it has to be
-             * - either the caller him/herself, i.e. ensure_signed(origin)? == who
-             * - or from a delegatee in the list
-             **/
-            createIdentity: AugmentedSubmittable<
-                (
-                    shard: H256 | string | Uint8Array,
-                    user: AccountId32 | string | Uint8Array,
-                    encryptedIdentity: Bytes | string | Uint8Array,
-                    encryptedMetadata: Option<Bytes> | null | Uint8Array | Bytes | string
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, AccountId32, Bytes, Option<Bytes>]
-            >;
-            identityCreated: AugmentedSubmittable<
+            identityLinked: AugmentedSubmittable<
                 (
                     account: AccountId32 | string | Uint8Array,
                     identity:
@@ -1615,7 +1600,7 @@ declare module '@polkadot/api-base/types/submittable' {
                         | { ciphertext?: any; aad?: any; nonce?: any }
                         | string
                         | Uint8Array,
-                    code:
+                    idGraph:
                         | CorePrimitivesKeyAesOutput
                         | { ciphertext?: any; aad?: any; nonce?: any }
                         | string
@@ -1636,22 +1621,21 @@ declare module '@polkadot/api-base/types/submittable' {
                 ) => SubmittableExtrinsic<ApiType>,
                 [AccountId32, CorePrimitivesKeyAesOutput, H256]
             >;
-            identityVerified: AugmentedSubmittable<
+            /**
+             * Create an identity
+             * We do the origin check for this extrinsic, it has to be
+             * - either the caller him/herself, i.e. ensure_signed(origin)? == who
+             * - or from a delegatee in the list
+             **/
+            linkIdentity: AugmentedSubmittable<
                 (
-                    account: AccountId32 | string | Uint8Array,
-                    identity:
-                        | CorePrimitivesKeyAesOutput
-                        | { ciphertext?: any; aad?: any; nonce?: any }
-                        | string
-                        | Uint8Array,
-                    idGraph:
-                        | CorePrimitivesKeyAesOutput
-                        | { ciphertext?: any; aad?: any; nonce?: any }
-                        | string
-                        | Uint8Array,
-                    reqExtHash: H256 | string | Uint8Array
+                    shard: H256 | string | Uint8Array,
+                    user: AccountId32 | string | Uint8Array,
+                    encryptedIdentity: Bytes | string | Uint8Array,
+                    encryptedValidationData: Bytes | string | Uint8Array,
+                    nonce: U8aFixed | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
-                [AccountId32, CorePrimitivesKeyAesOutput, CorePrimitivesKeyAesOutput, H256]
+                [H256, AccountId32, Bytes, Bytes, U8aFixed]
             >;
             /**
              * remove an account from the delegatees
@@ -1686,9 +1670,8 @@ declare module '@polkadot/api-base/types/submittable' {
                     error:
                         | CorePrimitivesErrorImpError
                         | { SetUserShieldingKeyFailed: any }
-                        | { CreateIdentityFailed: any }
+                        | { LinkIdentityFailed: any }
                         | { RemoveIdentityFailed: any }
-                        | { VerifyIdentityFailed: any }
                         | { ImportScheduledEnclaveFailed: any }
                         | { UnclassifiedError: any }
                         | string
@@ -1713,144 +1696,6 @@ declare module '@polkadot/api-base/types/submittable' {
                     reqExtHash: H256 | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [AccountId32, CorePrimitivesKeyAesOutput, H256]
-            >;
-            /**
-             * Verify an identity
-             **/
-            verifyIdentity: AugmentedSubmittable<
-                (
-                    shard: H256 | string | Uint8Array,
-                    encryptedIdentity: Bytes | string | Uint8Array,
-                    encryptedValidationData: Bytes | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, Bytes, Bytes]
-            >;
-            /**
-             * Generic tx
-             **/
-            [key: string]: SubmittableExtrinsicFunction<ApiType>;
-        };
-        identityManagementMock: {
-            /**
-             * add an account to the delegatees
-             **/
-            addDelegatee: AugmentedSubmittable<
-                (account: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [AccountId32]
-            >;
-            /**
-             * Create an identity
-             **/
-            createIdentity: AugmentedSubmittable<
-                (
-                    shard: H256 | string | Uint8Array,
-                    user: AccountId32 | string | Uint8Array,
-                    encryptedIdentity: Bytes | string | Uint8Array,
-                    encryptedMetadata: Option<Bytes> | null | Uint8Array | Bytes | string
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, AccountId32, Bytes, Option<Bytes>]
-            >;
-            identityCreated: AugmentedSubmittable<
-                (
-                    account: AccountId32 | string | Uint8Array,
-                    identity:
-                        | CorePrimitivesKeyAesOutput
-                        | { ciphertext?: any; aad?: any; nonce?: any }
-                        | string
-                        | Uint8Array,
-                    code:
-                        | CorePrimitivesKeyAesOutput
-                        | { ciphertext?: any; aad?: any; nonce?: any }
-                        | string
-                        | Uint8Array,
-                    idGraph:
-                        | CorePrimitivesKeyAesOutput
-                        | { ciphertext?: any; aad?: any; nonce?: any }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [AccountId32, CorePrimitivesKeyAesOutput, CorePrimitivesKeyAesOutput, CorePrimitivesKeyAesOutput]
-            >;
-            identityRemoved: AugmentedSubmittable<
-                (
-                    account: AccountId32 | string | Uint8Array,
-                    identity:
-                        | CorePrimitivesKeyAesOutput
-                        | { ciphertext?: any; aad?: any; nonce?: any }
-                        | string
-                        | Uint8Array,
-                    idGraph:
-                        | CorePrimitivesKeyAesOutput
-                        | { ciphertext?: any; aad?: any; nonce?: any }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [AccountId32, CorePrimitivesKeyAesOutput, CorePrimitivesKeyAesOutput]
-            >;
-            identityVerified: AugmentedSubmittable<
-                (
-                    account: AccountId32 | string | Uint8Array,
-                    identity:
-                        | CorePrimitivesKeyAesOutput
-                        | { ciphertext?: any; aad?: any; nonce?: any }
-                        | string
-                        | Uint8Array,
-                    idGraph:
-                        | CorePrimitivesKeyAesOutput
-                        | { ciphertext?: any; aad?: any; nonce?: any }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [AccountId32, CorePrimitivesKeyAesOutput, CorePrimitivesKeyAesOutput]
-            >;
-            /**
-             * remove an account from the delegatees
-             **/
-            removeDelegatee: AugmentedSubmittable<
-                (account: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [AccountId32]
-            >;
-            /**
-             * Remove an identity
-             **/
-            removeIdentity: AugmentedSubmittable<
-                (
-                    shard: H256 | string | Uint8Array,
-                    encryptedIdentity: Bytes | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, Bytes]
-            >;
-            /**
-             * Set or update user's shielding key
-             **/
-            setUserShieldingKey: AugmentedSubmittable<
-                (
-                    shard: H256 | string | Uint8Array,
-                    encryptedKey: Bytes | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, Bytes]
-            >;
-            someError: AugmentedSubmittable<
-                (
-                    func: Bytes | string | Uint8Array,
-                    error: Bytes | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Bytes, Bytes]
-            >;
-            userShieldingKeySet: AugmentedSubmittable<
-                (account: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [AccountId32]
-            >;
-            /**
-             * Verify a created identity
-             **/
-            verifyIdentity: AugmentedSubmittable<
-                (
-                    shard: H256 | string | Uint8Array,
-                    encryptedIdentity: Bytes | string | Uint8Array,
-                    encryptedValidationData: Bytes | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, Bytes, Bytes]
             >;
             /**
              * Generic tx
@@ -4063,10 +3908,10 @@ declare module '@polkadot/api-base/types/submittable' {
             confirmProcessedParentchainBlock: AugmentedSubmittable<
                 (
                     blockHash: H256 | string | Uint8Array,
-                    blockNumber: u32 | AnyNumber | Uint8Array,
+                    blockNumber: Compact<u32> | AnyNumber | Uint8Array,
                     trustedCallsMerkleRoot: H256 | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
-                [H256, u32, H256]
+                [H256, Compact<u32>, H256]
             >;
             /**
              * Publish a hash as a result of an arbitrary enclave operation.
@@ -4130,8 +3975,8 @@ declare module '@polkadot/api-base/types/submittable' {
                 [AccountId32]
             >;
             setHeartbeatTimeout: AugmentedSubmittable<
-                (timeout: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [u64]
+                (timeout: Compact<u64> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
+                [Compact<u64>]
             >;
             /**
              * Sent by a client who requests to get shielded funds managed by an enclave. For this
@@ -4163,10 +4008,10 @@ declare module '@polkadot/api-base/types/submittable' {
             >;
             updateScheduledEnclave: AugmentedSubmittable<
                 (
-                    sidechainBlockNumber: u64 | AnyNumber | Uint8Array,
+                    sidechainBlockNumber: Compact<u64> | AnyNumber | Uint8Array,
                     mrEnclave: U8aFixed | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
-                [u64, U8aFixed]
+                [Compact<u64>, U8aFixed]
             >;
             /**
              * Generic tx

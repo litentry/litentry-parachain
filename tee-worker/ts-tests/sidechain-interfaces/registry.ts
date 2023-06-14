@@ -47,6 +47,7 @@ import type {
     PalletIdentityManagementTeeError,
     PalletIdentityManagementTeeEvent,
     PalletIdentityManagementTeeIdentityContext,
+    PalletIdentityManagementTeeIdentityContextIdentityStatus,
     PalletParentchainCall,
     PalletSudoCall,
     PalletSudoError,
@@ -116,6 +117,7 @@ declare module '@polkadot/types/types/registry' {
         PalletIdentityManagementTeeError: PalletIdentityManagementTeeError;
         PalletIdentityManagementTeeEvent: PalletIdentityManagementTeeEvent;
         PalletIdentityManagementTeeIdentityContext: PalletIdentityManagementTeeIdentityContext;
+        PalletIdentityManagementTeeIdentityContextIdentityStatus: PalletIdentityManagementTeeIdentityContextIdentityStatus;
         PalletParentchainCall: PalletParentchainCall;
         PalletSudoCall: PalletSudoCall;
         PalletSudoError: PalletSudoError;

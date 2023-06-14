@@ -21,11 +21,10 @@ mod shield_funds;
 
 pub use call_worker::CallWorkerArgs;
 pub use litentry::{
-	create_identity::CreateIdentityArgs,
+	link_identity::LinkIdentityArgs,
 	remove_identity::RemoveIdentityArgs,
 	request_vc::RequestVCArgs,
 	scheduled_enclave::{RemoveScheduledEnclaveArgs, UpdateScheduledEnclaveArgs},
 	set_user_shielding_key::SetUserShieldingKeyArgs,
-	verify_identity::VerifyIdentityArgs,
 };
 pub use shield_funds::ShiedFundsArgs;

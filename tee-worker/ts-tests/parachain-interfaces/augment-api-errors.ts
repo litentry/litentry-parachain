@@ -482,91 +482,9 @@ declare module '@polkadot/api-base/types/errors' {
              **/
             DelegateeNotExist: AugmentedError<ApiType>;
             /**
-             * a `create_identity` request from unauthorised user
+             * a `link_identity` request from unauthorised user
              **/
             UnauthorisedUser: AugmentedError<ApiType>;
-            /**
-             * Generic error
-             **/
-            [key: string]: AugmentedError<ApiType>;
-        };
-        identityManagementMock: {
-            /**
-             * the challenge code doesn't exist
-             **/
-            ChallengeCodeNotExist: AugmentedError<ApiType>;
-            /**
-             * creating the prime identity manually is disallowed
-             **/
-            CreatePrimeIdentityNotAllowed: AugmentedError<ApiType>;
-            /**
-             * the creation request block is zero
-             **/
-            CreationRequestBlockZero: AugmentedError<ApiType>;
-            /**
-             * a delegatee doesn't exist
-             **/
-            DelegateeNotExist: AugmentedError<ApiType>;
-            /**
-             * identity already verified when creating an identity
-             **/
-            IdentityAlreadyVerified: AugmentedError<ApiType>;
-            /**
-             * identity not exist when removing an identity
-             **/
-            IdentityNotExist: AugmentedError<ApiType>;
-            /**
-             * fail to recover evm address
-             **/
-            RecoverEvmAddressFailed: AugmentedError<ApiType>;
-            /**
-             * recover substrate pubkey failed using ecdsa
-             **/
-            RecoverSubstratePubkeyFailed: AugmentedError<ApiType>;
-            /**
-             * Error when decrypting using TEE'shielding key
-             **/
-            ShieldingKeyDecryptionFailed: AugmentedError<ApiType>;
-            /**
-             * no shielding key for a given AccountId
-             **/
-            ShieldingKeyNotExist: AugmentedError<ApiType>;
-            /**
-             * a `create_identity` request from unauthorised user
-             **/
-            UnauthorisedUser: AugmentedError<ApiType>;
-            /**
-             * the message in validation data is unexpected
-             **/
-            UnexpectedMessage: AugmentedError<ApiType>;
-            /**
-             * a verification reqeust comes too early
-             **/
-            VerificationRequestTooEarly: AugmentedError<ApiType>;
-            /**
-             * a verification reqeust comes too late
-             **/
-            VerificationRequestTooLate: AugmentedError<ApiType>;
-            /**
-             * verify evm signature failed
-             **/
-            VerifyEvmSignatureFailed: AugmentedError<ApiType>;
-            /**
-             * verify substrate signature failed
-             **/
-            VerifySubstrateSignatureFailed: AugmentedError<ApiType>;
-            /**
-             * unexpected decoded type
-             **/
-            WrongDecodedType: AugmentedError<ApiType>;
-            /**
-             * wrong identity type
-             **/
-            WrongIdentityType: AugmentedError<ApiType>;
-            /**
-             * wrong signature type
-             **/
-            WrongSignatureType: AugmentedError<ApiType>;
             /**
              * Generic error
              **/
