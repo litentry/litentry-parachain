@@ -25,7 +25,7 @@
 <!-- Have you done all of these things?  -->
 <!-- to check an item, place an "x" in the box like so: "- [x] Automated tests" -->
 
-- [ ] If any of below files is changed, pls add the breaking-change label to this PR, choose from C0-F/E-breaking, C1-F/E-noteworthy
+- [ ] If any of below files is changed, pls add the breaking-change label to this PR, choose from C0-breaking, C1-noteworthy
 
 1 PalletIdentityManagementCall
 - [ ] pallets/identity-management/src/lib.rs
