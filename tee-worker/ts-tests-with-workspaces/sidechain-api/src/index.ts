@@ -1,7 +1,10 @@
-import "@polkadot/api-augment";
+import "@polkadot/api/augment";
+import "@polkadot/types/augment";
+import { ApiOptions } from "@polkadot/api/types";
 import { ApiPromise } from "@polkadot/api";
 
-async function foo() {
-    const api = ApiPromise.create();
-    const val = (await api).createType;
+type ProviderInterface = Exclude<ApiOptions["provider"], undefined>;
+
+export async function create(provider: ProviderInterface): Promise<ApiPromise> {
+    return await ApiPromise.create({ provider });
 }

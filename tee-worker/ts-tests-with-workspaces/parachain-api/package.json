@@ -6,11 +6,11 @@
 		"clean": "rm -rf lib build node_modules",
 		"prepare:dir": "mkdir -p build && cp -rf prepare-build/* build",
 		"get:meta": "curl -s -H \"Content-Type: application/json\" -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' http://localhost:9944 > build/litentry-parachain-metadata.json",
-		"generate:defs": "ts-node --esm node_modules/.bin/polkadot-types-from-defs  --package parachain-api/interfaces --input build/interfaces --endpoint build/litentry-parachain-metadata.json",
-		"generate:meta": "ts-node --esm node_modules/.bin/polkadot-types-from-chain --package parachain-api/interfaces --output build/interfaces --endpoint build/litentry-parachain-metadata.json --strict",
+		"generate:from-defs": "ts-node --esm node_modules/.bin/polkadot-types-from-defs  --package parachain-api/interfaces --input build/interfaces --endpoint build/litentry-parachain-metadata.json",
+		"generate:from-chain": "ts-node --esm node_modules/.bin/polkadot-types-from-chain --package parachain-api/interfaces --output build/interfaces --endpoint build/litentry-parachain-metadata.json --strict",
 		"format": "yarn prettier --write .",
 		"compile": "tsc",
-		"build": "yarn prepare:dir && yarn get:meta && yarn generate:defs && yarn generate:meta && yarn format && yarn compile"
+		"build": "yarn prepare:dir && yarn get:meta && yarn generate:from-defs && yarn generate:from-chain && yarn format && yarn compile"
 	},
 	"dependencies": {
 		"@polkadot/api": "^10.9.1",

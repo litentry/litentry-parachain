@@ -2,13 +2,15 @@
 	"compilerOptions": {
 		// this is specific with augmented overrides
 		"paths": {
-			"@polkadot/api/augment": ["./sidechain-interfaces/augment-api.ts"],
-			"@polkadot/types/augment": ["./sidechain-interfaces/augment-types.ts"],
-			"@polkadot/types/lookup": ["./sidechain-interfaces/types-lookup.ts"]
+			"sidechain-api/*": ["./src/*", "./build/*"],
+			"@polkadot/api/augment": ["./build/interfaces/augment-api.ts"],
+			"@polkadot/types/augment": ["./build/interfaces/augment-types.ts"],
+			"@polkadot/types/lookup": ["./build/interfaces/types-lookup.ts"]
 		},
 		"composite": true,
 		"target": "es2017",
-		"module": "commonjs",
+		"module": "ESNext",
+		"moduleResolution": "node",
 		"declaration": true,
 		"outDir": "./lib",
 		"strict": true,
@@ -17,5 +19,9 @@
 		"allowSyntheticDefaultImports": true,
 		"resolveJsonModule": true,
 		"baseUrl": "."
+	},
+	"exclude": ["./prepare-build"],
+	"ts-node": {
+		"experimentalSpecifierResolution": "node"
 	}
 }
