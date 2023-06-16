@@ -3,13 +3,14 @@
 		// this is specific with augmented overrides
 		"paths": {
 			"parachain-api/*": ["./src/*"],
-			"@polkadot/api/augment": ["./parachain-interfaces/augment-api.ts"],
-			"@polkadot/types/augment": ["./parachain-interfaces/augment-types.ts"],
-			"@polkadot/types/lookup": ["./parachain-interfaces/types-lookup.ts"]
+			"@polkadot/api/augment": ["./src/interfaces/augment-api.ts"],
+			"@polkadot/types/augment": ["./src/interfaces/augment-types.ts"],
+			"@polkadot/types/lookup": ["./src/interfaces/types-lookup.ts"]
 		},
-		"composite": false,
+		"composite": true,
 		"target": "es2017",
-		"module": "commonjs",
+		"module": "ESNext",
+		"moduleResolution": "node",
 		"declaration": true,
 		"outDir": "./lib",
 		"strict": true,
@@ -18,5 +19,8 @@
 		"allowSyntheticDefaultImports": true,
 		"resolveJsonModule": true,
 		"baseUrl": "."
+	},
+	"ts-node": {
+		"experimentalSpecifierResolution": "node"
 	}
 }
