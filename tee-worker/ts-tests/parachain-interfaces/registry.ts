@@ -7,7 +7,7 @@ import '@polkadot/types/types/registry';
 
 import type {
     CorePrimitivesAssertion,
-    CorePrimitivesAssertionIndexingNetwork,
+    CorePrimitivesAssertionSupportedNetwork,
     CorePrimitivesErrorErrorDetail,
     CorePrimitivesErrorImpError,
     CorePrimitivesErrorVcmpError,
@@ -60,12 +60,6 @@ import type {
     FrameSystemLimitsBlockWeights,
     FrameSystemLimitsWeightsPerClass,
     FrameSystemPhase,
-    MockTeePrimitivesIdentity,
-    MockTeePrimitivesIdentityAddress20,
-    MockTeePrimitivesIdentityAddress32,
-    MockTeePrimitivesIdentityEvmNetwork,
-    MockTeePrimitivesIdentitySubstrateNetwork,
-    MockTeePrimitivesIdentityWeb2Network,
     OrmlTokensAccountData,
     OrmlTokensBalanceLock,
     OrmlTokensModuleCall,
@@ -139,10 +133,6 @@ import type {
     PalletIdentityManagementCall,
     PalletIdentityManagementError,
     PalletIdentityManagementEvent,
-    PalletIdentityManagementMockCall,
-    PalletIdentityManagementMockError,
-    PalletIdentityManagementMockEvent,
-    PalletIdentityManagementMockIdentityContext,
     PalletIdentityRegistrarInfo,
     PalletIdentityRegistration,
     PalletMembershipCall,
@@ -340,7 +330,7 @@ import type {
 declare module '@polkadot/types/types/registry' {
     interface InterfaceTypes {
         CorePrimitivesAssertion: CorePrimitivesAssertion;
-        CorePrimitivesAssertionIndexingNetwork: CorePrimitivesAssertionIndexingNetwork;
+        CorePrimitivesAssertionSupportedNetwork: CorePrimitivesAssertionSupportedNetwork;
         CorePrimitivesErrorErrorDetail: CorePrimitivesErrorErrorDetail;
         CorePrimitivesErrorImpError: CorePrimitivesErrorImpError;
         CorePrimitivesErrorVcmpError: CorePrimitivesErrorVcmpError;
@@ -393,12 +383,6 @@ declare module '@polkadot/types/types/registry' {
         FrameSystemLimitsBlockWeights: FrameSystemLimitsBlockWeights;
         FrameSystemLimitsWeightsPerClass: FrameSystemLimitsWeightsPerClass;
         FrameSystemPhase: FrameSystemPhase;
-        MockTeePrimitivesIdentity: MockTeePrimitivesIdentity;
-        MockTeePrimitivesIdentityAddress20: MockTeePrimitivesIdentityAddress20;
-        MockTeePrimitivesIdentityAddress32: MockTeePrimitivesIdentityAddress32;
-        MockTeePrimitivesIdentityEvmNetwork: MockTeePrimitivesIdentityEvmNetwork;
-        MockTeePrimitivesIdentitySubstrateNetwork: MockTeePrimitivesIdentitySubstrateNetwork;
-        MockTeePrimitivesIdentityWeb2Network: MockTeePrimitivesIdentityWeb2Network;
         OrmlTokensAccountData: OrmlTokensAccountData;
         OrmlTokensBalanceLock: OrmlTokensBalanceLock;
         OrmlTokensModuleCall: OrmlTokensModuleCall;
@@ -472,10 +456,6 @@ declare module '@polkadot/types/types/registry' {
         PalletIdentityManagementCall: PalletIdentityManagementCall;
         PalletIdentityManagementError: PalletIdentityManagementError;
         PalletIdentityManagementEvent: PalletIdentityManagementEvent;
-        PalletIdentityManagementMockCall: PalletIdentityManagementMockCall;
-        PalletIdentityManagementMockError: PalletIdentityManagementMockError;
-        PalletIdentityManagementMockEvent: PalletIdentityManagementMockEvent;
-        PalletIdentityManagementMockIdentityContext: PalletIdentityManagementMockIdentityContext;
         PalletIdentityRegistrarInfo: PalletIdentityRegistrarInfo;
         PalletIdentityRegistration: PalletIdentityRegistration;
         PalletMembershipCall: PalletMembershipCall;

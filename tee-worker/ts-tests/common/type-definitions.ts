@@ -51,6 +51,7 @@ export type IntegrationTestContext = {
     metaData: Metadata;
     sidechainRegistry: TypeRegistry;
     web3Signers: Web3Wallets[];
+    chainID: number;
 };
 
 export class AESOutput {
@@ -68,7 +69,16 @@ export type IdentityGenericEvent = {
     who: HexString;
     identity: LitentryPrimitivesIdentity;
     idGraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][];
-    challengeCode?: HexString;
+};
+
+export enum IdentityStatus {
+    Active = 'Active',
+    Inactive = 'Inactive',
+}
+
+export type IdentityContext = {
+    link_block: number;
+    status: IdentityStatus;
 };
 
 //vc types
@@ -87,9 +97,8 @@ export enum IndexingNetwork {
     Ethereum = 'Ethereum',
 }
 export enum RequestEvent {
-    CreateIdentityRequested = 'CreateIdentityRequested',
+    LinkIdentityRequested = 'LinkIdentityRequested',
     SetUserShieldingKeyRequested = 'SetUserShieldingKeyRequested',
-    VerifyIdentityRequested = 'VerifyIdentityRequested',
     RemoveIdentityRequested = 'RemoveIdentityRequested',
     VCRequested = 'VCRequested',
     ItemCompleted = 'ItemCompleted',

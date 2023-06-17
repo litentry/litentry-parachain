@@ -20,12 +20,14 @@ extern crate sgx_tstd as std;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate rand_sgx as rand;
 
-use crate::{AesOutput, UserShieldingKeyType, USER_SHIELDING_KEY_NONCE_LEN};
+use crate::{
+	AesOutput, UserShieldingKeyNonceType, UserShieldingKeyType, USER_SHIELDING_KEY_NONCE_LEN,
+};
 
 use rand::Rng;
 
 use ring::{
-	aead::{Aad, BoundKey, Nonce, NonceSequence, SealingKey, UnboundKey, AES_256_GCM},
+	aead::{Aad, BoundKey, LessSafeKey, Nonce, NonceSequence, SealingKey, UnboundKey, AES_256_GCM},
 	error::Unspecified,
 };
 
@@ -55,9 +57,37 @@ pub fn aes_encrypt_default(key: &UserShieldingKeyType, data: &[u8]) -> AesOutput
 	AesOutput::default()
 }
 
+// use LessSafeKey::seal_in_place_append_tag to encrypt the data using the given nonce
+// don't be scared by the name, it's similar to `SealingKey::seal_in_place_append_tag`,
+// except that it accepts an arbitrary nonce.
+// It's only used by the one-off verification message calculation.
+pub fn aes_encrypt_nonce(
+	key: &UserShieldingKeyType,
+	data: &[u8],
+	nonce: UserShieldingKeyNonceType,
+) -> AesOutput {
+	let mut in_out = data.to_vec();
+	let aad = b"";
+	if let Ok(unbound_key) = UnboundKey::new(&AES_256_GCM, key.as_slice()) {
+		let less_safe_key = LessSafeKey::new(unbound_key);
+		if less_safe_key
+			.seal_in_place_append_tag(
+				Nonce::assume_unique_for_key(nonce),
+				Aad::from(aad),
+				&mut in_out,
+			)
+			.is_ok()
+		{
+			return AesOutput { ciphertext: in_out.to_vec(), aad: aad.to_vec(), nonce }
+		}
+	}
+
+	AesOutput::default()
+}
+
 #[derive(Clone)]
 pub struct RingAeadNonceSequence {
-	pub nonce: [u8; USER_SHIELDING_KEY_NONCE_LEN],
+	pub nonce: UserShieldingKeyNonceType,
 }
 
 impl RingAeadNonceSequence {
@@ -69,7 +99,7 @@ impl RingAeadNonceSequence {
 impl NonceSequence for RingAeadNonceSequence {
 	fn advance(&mut self) -> Result<Nonce, Unspecified> {
 		let nonce = Nonce::assume_unique_for_key(self.nonce);
-		let nonce_vec = rand::thread_rng().gen::<[u8; USER_SHIELDING_KEY_NONCE_LEN]>();
+		let nonce_vec = rand::thread_rng().gen::<UserShieldingKeyNonceType>();
 		self.nonce.copy_from_slice(&nonce_vec[0..USER_SHIELDING_KEY_NONCE_LEN]);
 		Ok(nonce)
 	}

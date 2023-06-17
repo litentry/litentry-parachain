@@ -12,7 +12,7 @@ import { default as teeTypes } from '../../parachain-interfaces/identity/definit
 const crypto = require('crypto');
 
 // maximum block number that we wait in listening events before we timeout
-export const defaultListenTimeoutInBlockNumber = 15;
+export const defaultListenTimeoutInBlockNumber = 10;
 
 export async function initWorkerConnection(endpoint: string): Promise<WebSocketAsPromised> {
     const wsp = new WebSocketAsPromised(endpoint, <Options>(<unknown>{
@@ -48,6 +48,7 @@ export async function initIntegrationTestContext(
         types,
     });
 
+    const chainID = api.registry.chainSS58 as number;
     await cryptoWaitReady();
 
     const wsp = await initWorkerConnection(workerEndpoint);
@@ -65,6 +66,7 @@ export async function initIntegrationTestContext(
         metaData,
         sidechainRegistry,
         web3Signers,
+        chainID,
     };
 }
 

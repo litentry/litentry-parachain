@@ -21,9 +21,7 @@ use sp_core::{H160, U256};
 #[cfg(feature = "evm")]
 use std::vec::Vec;
 
-use crate::{
-	helpers::ensure_enclave_signer_account, MetadataOf, Runtime, StfError, System, TrustedOperation,
-};
+use crate::{helpers::ensure_enclave_signer_account, Runtime, StfError, System, TrustedOperation};
 use codec::{Decode, Encode};
 use frame_support::{ensure, traits::UnfilteredDispatchable};
 pub use ita_sgx_runtime::{Balance, ConvertAccountId, Index, SgxParentchainTypeConverter};
@@ -36,8 +34,9 @@ use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier, Signature};
 pub use itp_types::{OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
 pub use litentry_primitives::{
-	aes_encrypt_default, AesOutput, Assertion, ChallengeCode, ErrorDetail, IMPError, Identity,
-	ParentchainAccountId, ParentchainBlockNumber, UserShieldingKeyType, VCMPError, ValidationData,
+	aes_encrypt_default, AesOutput, Assertion, ErrorDetail, IMPError, Identity,
+	ParentchainAccountId, ParentchainBlockNumber, UserShieldingKeyNonceType, UserShieldingKeyType,
+	VCMPError, ValidationData,
 };
 use log::*;
 use sp_io::hashing::blake2_256;
@@ -112,24 +111,15 @@ pub enum TrustedCall {
 	),
 	// litentry
 	set_user_shielding_key(AccountId, AccountId, UserShieldingKeyType, H256),
-	create_identity(
-		AccountId,
-		AccountId,
-		Identity,
-		Option<MetadataOf<Runtime>>,
-		ParentchainBlockNumber,
-		H256,
-	),
+	link_identity(AccountId, AccountId, Identity, ValidationData, UserShieldingKeyNonceType, H256),
 	remove_identity(AccountId, AccountId, Identity, H256),
-	verify_identity(AccountId, AccountId, Identity, ValidationData, ParentchainBlockNumber, H256),
 	request_vc(AccountId, AccountId, Assertion, H256),
 	// the following trusted calls should not be requested directly from external
 	// they are guarded by the signature check (either root or enclave_signer_account)
-	verify_identity_callback(AccountId, AccountId, Identity, ParentchainBlockNumber, H256),
+	link_identity_callback(AccountId, AccountId, Identity, H256),
 	request_vc_callback(AccountId, AccountId, Assertion, [u8; 32], [u8; 32], Vec<u8>, H256),
 	handle_imp_error(AccountId, Option<AccountId>, IMPError, H256),
 	handle_vcmp_error(AccountId, Option<AccountId>, VCMPError, H256),
-	set_challenge_code(AccountId, AccountId, Identity, ChallengeCode, H256),
 	send_erroneous_parentchain_call(AccountId),
 	set_scheduled_mrenclave(AccountId, SidechainBlockNumber, MrEnclave),
 }
@@ -151,13 +141,11 @@ impl TrustedCall {
 			TrustedCall::evm_create2(sender_account, ..) => sender_account,
 			// litentry
 			TrustedCall::set_user_shielding_key(account, ..) => account,
-			TrustedCall::create_identity(account, ..) => account,
+			TrustedCall::link_identity(account, ..) => account,
 			TrustedCall::remove_identity(account, ..) => account,
-			TrustedCall::verify_identity(account, ..) => account,
 			TrustedCall::request_vc(account, ..) => account,
-			TrustedCall::verify_identity_callback(account, ..) => account,
+			TrustedCall::link_identity_callback(account, ..) => account,
 			TrustedCall::request_vc_callback(account, ..) => account,
-			TrustedCall::set_challenge_code(account, ..) => account,
 			TrustedCall::handle_imp_error(account, ..) => account,
 			TrustedCall::handle_vcmp_error(account, ..) => account,
 			TrustedCall::send_erroneous_parentchain_call(account) => account,
@@ -270,9 +258,8 @@ where
 		let system_nonce = System::account_nonce(&sender);
 		ensure!(self.nonce == system_nonce, Self::Error::InvalidNonce(self.nonce, system_nonce));
 
-		// increment the nonce, no matter if the call succeeds or fails.
-		// The call must have entered the transaction pool already,
-		// so it should be considered as valid
+		// Increment the nonce no matter if the call succeeds or fails.
+		// We consider the call "valid" once it reaches here (= it entered the tx pool)
 		System::inc_account_nonce(&sender);
 
 		// TODO: maybe we can further simplify this by effacing the duplicate code
@@ -511,42 +498,29 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::create_identity(signer, who, identity, metadata, bn, hash) => {
-				debug!("create_identity, who: {}", account_id_to_string(&who));
-				let account = SgxParentchainTypeConverter::convert(who.clone());
+			TrustedCall::link_identity(signer, who, identity, validation_data, nonce, hash) => {
+				debug!("link_identity, who: {}", account_id_to_string(&who));
+
 				let parent_ss58_prefix =
 					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
-				let call_index = node_metadata_repo
-					.get_from_metadata(|m| m.identity_created_call_indexes())??;
 
-				match Self::create_identity_internal(
+				if let Err(e) = Self::link_identity_internal(
 					signer,
-					who,
-					identity.clone(),
-					metadata,
-					bn,
+					who.clone(),
+					identity,
+					validation_data,
+					nonce,
+					hash,
+					shard,
 					parent_ss58_prefix,
 				) {
-					Ok((key, code)) => {
-						debug!("pushing identity_created event ...");
-						calls.push(OpaqueCall::from_tuple(&(
-							call_index,
-							account,
-							aes_encrypt_default(&key, &identity.encode()),
-							aes_encrypt_default(&key, &code.encode()),
-							hash,
-						)));
-					},
-					Err(e) => {
-						debug!("pushing error event ... error: {}", e);
-						add_call_from_imp_error(
-							calls,
-							node_metadata_repo,
-							Some(account),
-							e.to_imp_error(),
-							hash,
-						);
-					},
+					add_call_from_imp_error(
+						calls,
+						node_metadata_repo,
+						Some(SgxParentchainTypeConverter::convert(who)),
+						e.to_imp_error(),
+						hash,
+					);
 				}
 				Ok(())
 			},
@@ -556,7 +530,15 @@ where
 				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.identity_removed_call_indexes())??;
 
-				match Self::remove_identity_internal(signer, who, identity.clone()) {
+				let parent_ss58_prefix =
+					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
+
+				match Self::remove_identity_internal(
+					signer,
+					who,
+					identity.clone(),
+					parent_ss58_prefix,
+				) {
 					Ok(key) => {
 						debug!("pushing identity_removed event ...");
 						calls.push(OpaqueCall::from_tuple(&(
@@ -579,44 +561,25 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::verify_identity(signer, who, identity, validation_data, bn, hash) => {
-				debug!("verify_identity, who: {}", account_id_to_string(&who));
-				if let Err(e) = Self::verify_identity_internal(
-					signer,
-					who.clone(),
-					identity,
-					validation_data,
-					bn,
-					hash,
-					shard,
-				) {
-					debug!("pushing error event ... error: {}", e);
-					add_call_from_imp_error(
-						calls,
-						node_metadata_repo,
-						Some(SgxParentchainTypeConverter::convert(who)),
-						e.to_imp_error(),
-						hash,
-					);
-				}
-				Ok(())
-			},
-			TrustedCall::verify_identity_callback(signer, who, identity, bn, hash) => {
-				debug!("verify_identity_callback, who: {}", account_id_to_string(&who));
+			TrustedCall::link_identity_callback(signer, who, identity, hash) => {
+				debug!("link_identity_callback, who: {}", account_id_to_string(&who));
 				let account = SgxParentchainTypeConverter::convert(who.clone());
 				let call_index = node_metadata_repo
-					.get_from_metadata(|m| m.identity_verified_call_indexes())??;
+					.get_from_metadata(|m| m.identity_linked_call_indexes())??;
 
-				match Self::verify_identity_callback_internal(
+				let parent_ss58_prefix =
+					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
+
+				match Self::link_identity_callback_internal(
 					signer,
 					who.clone(),
 					identity.clone(),
-					bn,
+					parent_ss58_prefix,
 				) {
 					Ok(key) => {
 						let id_graph =
 							IMT::get_id_graph_with_max_len(&who, RETURNED_IDGRAPH_MAX_LEN);
-						debug!("pushing identity_verified event ...");
+						debug!("pushing identity_linked event ...");
 						calls.push(OpaqueCall::from_tuple(&(
 							call_index,
 							account,
@@ -702,20 +665,6 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::set_challenge_code(enclave_account, who, did, code, hash) => {
-				if let Err(e) =
-					Self::set_challenge_code_internal(enclave_account, who.clone(), did, code)
-				{
-					add_call_from_imp_error(
-						calls,
-						node_metadata_repo,
-						Some(SgxParentchainTypeConverter::convert(who)),
-						e.to_imp_error(),
-						hash,
-					);
-				}
-				Ok(())
-			},
 			TrustedCall::handle_imp_error(_enclave_account, account, e, hash) => {
 				// checking of `_enclave_account` is not strictly needed, as this trusted call can
 				// only be constructed internally
@@ -761,12 +710,10 @@ where
 			TrustedCall::balance_shield(..) => debug!("No storage updates needed..."),
 			// litentry
 			TrustedCall::set_user_shielding_key(..) => debug!("No storage updates needed..."),
-			TrustedCall::create_identity(..) => debug!("No storage updates needed..."),
+			TrustedCall::link_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::remove_identity(..) => debug!("No storage updates needed..."),
-			TrustedCall::verify_identity(..) => debug!("No storage updates needed..."),
-			TrustedCall::verify_identity_callback(..) => debug!("No storage updates needed..."),
 			TrustedCall::request_vc(..) => debug!("No storage updates needed..."),
-			TrustedCall::set_challenge_code(..) => debug!("No storage updates needed..."),
+			TrustedCall::link_identity_callback(..) => debug!("No storage updates needed..."),
 			TrustedCall::request_vc_callback(..) => debug!("No storage updates needed..."),
 			TrustedCall::handle_imp_error(..) => debug!("No storage updates needed..."),
 			TrustedCall::handle_vcmp_error(..) => debug!("No storage updates needed..."),

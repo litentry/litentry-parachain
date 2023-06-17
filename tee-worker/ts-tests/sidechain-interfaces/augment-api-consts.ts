@@ -44,14 +44,6 @@ declare module '@polkadot/api-base/types/consts' {
              **/
             maxIDGraphLength: u32 & AugmentedConst<ApiType>;
             /**
-             * maximum metadata length
-             **/
-            maxMetadataLength: u32 & AugmentedConst<ApiType>;
-            /**
-             * maximum delay in block numbers between creating an identity and verifying an identity
-             **/
-            maxVerificationDelay: u32 & AugmentedConst<ApiType>;
-            /**
              * Generic const
              **/
             [key: string]: Codec;
