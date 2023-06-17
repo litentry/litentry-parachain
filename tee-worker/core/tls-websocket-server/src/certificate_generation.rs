@@ -140,8 +140,10 @@ pub fn ecdsa_self_signed_certificate(
 	params.alg = &rcgen::PKCS_ECDSA_P256_SHA256;
 	let private_key_der = ecdsa_private_key_pkcs8_der(key_pair);
 
-	let key_pair = rcgen::KeyPair::try_from(private_key_der.as_ref()).expect("Invalid pkcs8 der");
-	params.key_pair = Some(key_pair);
+	// try to generate the random keys
+	//
+	// let key_pair = rcgen::KeyPair::try_from(private_key_der.as_ref()).expect("Invalid pkcs8 der");
+	// params.key_pair = Some(key_pair);
 
 	Certificate::from_params(params).map_err(|e| WebSocketError::Other(e.into()))
 }
