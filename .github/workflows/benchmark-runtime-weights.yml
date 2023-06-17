@@ -39,12 +39,19 @@ jobs:
   ## build docker image with runtime-benchmarks feature and push it to the hub
   build-docker:
     if: ${{ github.event.inputs.rebuild-docker == 'true' }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout codes on ${{ github.ref }}
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
+      # try to increase usable memory
+      # https://github.com/actions/runner/issues/1051
+      - name: Set Swap Space
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 10
 
       - name: Build docker image
         run: |
