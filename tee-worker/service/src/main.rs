@@ -84,7 +84,7 @@ use its_storage::{interface::FetchBlocks, BlockPruner, SidechainStorageLock};
 use lc_data_providers::DataProvidersStatic;
 use litentry_primitives::{ParentchainHeader as Header, UserShieldingKeyType};
 use log::*;
-use my_node_runtime::{Hash, Header, RuntimeEvent};
+use my_node_runtime::{Hash, RuntimeEvent};
 use serde_json::Value;
 use sgx_types::*;
 use substrate_api_client::{

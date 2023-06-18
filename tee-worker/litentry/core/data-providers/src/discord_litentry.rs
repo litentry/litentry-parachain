@@ -146,9 +146,7 @@ impl DiscordLitentryClient {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use itp_stf_primitives::types::AccountId;
 	use lc_mock_server::{default_getter, run};
-	use litentry_primitives::{Identity, UserShieldingKeyNonceType};
 	use std::sync::Arc;
 
 	fn init() {

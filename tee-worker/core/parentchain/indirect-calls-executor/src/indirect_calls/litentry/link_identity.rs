@@ -25,10 +25,7 @@ use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{Identity, UserShieldingKeyNonceType, ValidationData};
 use log::debug;
 use sp_core::crypto::AccountId32;
-use sp_runtime::{
-	traits::{AccountIdLookup, StaticLookup},
-	MultiAddress,
-};
+use sp_runtime::MultiAddress;
 use std::vec::Vec;
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]

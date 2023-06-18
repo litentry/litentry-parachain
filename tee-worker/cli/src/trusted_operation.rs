@@ -24,7 +24,7 @@ use crate::{
 use base58::FromBase58;
 use codec::{Decode, Encode};
 use ita_stf::{Getter, TrustedOperation};
-use itc_rpc_client::direct_client::{DirectApi, DirectClient};
+use itc_rpc_client::direct_client::DirectApi;
 use itp_node_api::api_client::{ParentchainApi, ParentchainExtrinsicSigner, TEEREX};
 use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
@@ -73,7 +73,7 @@ pub(crate) fn execute_getter_from_cli_args(
 	getter: &Getter,
 ) -> TrustedOpResult {
 	let shard = read_shard(trusted_args).unwrap();
-	get_worker_api_direct(cli).get_state(shard, getter)
+	Ok(get_worker_api_direct(cli).get_state(shard, getter))
 }
 
 fn send_request(
