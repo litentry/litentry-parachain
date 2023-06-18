@@ -22,6 +22,8 @@ export function describeLitentry(title: string, walletsNumber: number, cb: (cont
             metaData: {} as Metadata,
             sidechainRegistry: {} as TypeRegistry,
             web3Signers: [] as Web3Wallets[],
+            // default LitentryRococo
+            chainID: 42,
         };
 
         before('Starting Litentry(parachain&tee)', async function () {
@@ -40,6 +42,7 @@ export function describeLitentry(title: string, walletsNumber: number, cb: (cont
             context.metaData = tmp.metaData;
             context.sidechainRegistry = tmp.sidechainRegistry;
             context.web3Signers = tmp.web3Signers;
+            context.chainID = tmp.chainID;
         });
 
         after(async function () {});

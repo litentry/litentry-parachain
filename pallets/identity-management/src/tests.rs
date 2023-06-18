@@ -15,7 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 #[allow(unused)]
 use crate::{mock::*, Error, ShardIdentifier};
-use core_primitives::{ErrorDetail, IMPError};
+use core_primitives::{ErrorDetail, IMPError, UserShieldingKeyNonceType};
 use frame_support::{assert_noop, assert_ok};
 use sp_core::H256;
 
@@ -45,55 +45,58 @@ fn set_user_shielding_key_works() {
 }
 
 #[test]
-fn create_identity_without_delegatee_works() {
+fn link_identity_without_delegatee_works() {
 	new_test_ext().execute_with(|| {
 		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
-		assert_ok!(IdentityManagement::create_identity(
+		assert_ok!(IdentityManagement::link_identity(
 			RuntimeOrigin::signed(alice.clone()),
 			shard,
 			alice,
 			vec![1u8; 2048],
-			Some(vec![1u8; 2048])
+			vec![1u8; 2048],
+			UserShieldingKeyNonceType::default(),
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
-			crate::Event::CreateIdentityRequested { shard },
+			crate::Event::LinkIdentityRequested { shard },
 		));
 	});
 }
 
 #[test]
-fn create_identity_with_authorised_delegatee_works() {
+fn link_identity_with_authorised_delegatee_works() {
 	new_test_ext().execute_with(|| {
 		let eddie: SystemAccountId = test_utils::get_signer(EDDIE_PUBKEY);
 		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
-		assert_ok!(IdentityManagement::create_identity(
+		assert_ok!(IdentityManagement::link_identity(
 			RuntimeOrigin::signed(eddie), // authorised delegatee set in initialisation
 			shard,
 			alice,
 			vec![1u8; 2048],
-			Some(vec![1u8; 2048]),
+			vec![1u8; 2048],
+			UserShieldingKeyNonceType::default(),
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
-			crate::Event::CreateIdentityRequested { shard },
+			crate::Event::LinkIdentityRequested { shard },
 		));
 	});
 }
 
 #[test]
-fn create_identity_with_unauthorised_delegatee_fails() {
+fn link_identity_with_unauthorised_delegatee_fails() {
 	new_test_ext().execute_with(|| {
 		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
 		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		assert_noop!(
-			IdentityManagement::create_identity(
+			IdentityManagement::link_identity(
 				RuntimeOrigin::signed(bob),
 				shard,
 				alice,
 				vec![1u8; 2048],
-				Some(vec![1u8; 2048]),
+				vec![1u8; 2048],
+				UserShieldingKeyNonceType::default(),
 			),
 			Error::<Test>::UnauthorisedUser
 		);
@@ -117,23 +120,6 @@ fn remove_identity_works() {
 }
 
 #[test]
-fn verify_identity_works() {
-	new_test_ext().execute_with(|| {
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
-		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
-		assert_ok!(IdentityManagement::verify_identity(
-			RuntimeOrigin::signed(alice),
-			shard,
-			vec![1u8; 2048],
-			vec![1u8; 2048]
-		));
-		System::assert_last_event(RuntimeEvent::IdentityManagement(
-			crate::Event::VerifyIdentityRequested { shard },
-		));
-	});
-}
-
-#[test]
 #[cfg(feature = "skip-ias-check")]
 fn tee_callback_with_registered_enclave_works() {
 	// copied from https://github.com/integritee-network/pallets/blob/5b0706e8b9f726d81d8aff74efbae8e023e783b7/test-utils/src/ias.rs#L147
@@ -152,11 +138,11 @@ fn tee_callback_with_registered_enclave_works() {
 		assert_ok!(IdentityManagement::some_error(
 			RuntimeOrigin::signed(alice),
 			None,
-			IMPError::VerifyIdentityFailed(ErrorDetail::WrongWeb2Handle),
+			IMPError::LinkIdentityFailed(ErrorDetail::WrongWeb2Handle),
 			H256::default(),
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
-			crate::Event::VerifyIdentityFailed {
+			crate::Event::LinkIdentityFailed {
 				account: None,
 				detail: ErrorDetail::WrongWeb2Handle,
 				req_ext_hash: H256::default(),
@@ -173,7 +159,7 @@ fn tee_callback_with_unregistered_enclave_fails() {
 			IdentityManagement::some_error(
 				RuntimeOrigin::signed(alice),
 				None,
-				IMPError::VerifyIdentityFailed(ErrorDetail::WrongWeb2Handle),
+				IMPError::LinkIdentityFailed(ErrorDetail::WrongWeb2Handle),
 				H256::default(),
 			),
 			sp_runtime::DispatchError::BadOrigin,

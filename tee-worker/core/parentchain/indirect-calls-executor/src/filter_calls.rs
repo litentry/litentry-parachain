@@ -18,9 +18,8 @@
 use crate::{
 	error::Result,
 	indirect_calls::{
-		CallWorkerArgs, CreateIdentityArgs, RemoveIdentityArgs, RemoveScheduledEnclaveArgs,
+		CallWorkerArgs, LinkIdentityArgs, RemoveIdentityArgs, RemoveScheduledEnclaveArgs,
 		RequestVCArgs, SetUserShieldingKeyArgs, ShiedFundsArgs, UpdateScheduledEnclaveArgs,
-		VerifyIdentityArgs,
 	},
 	parentchain_extrinsic_parser::ParseExtrinsic,
 	IndirectDispatch, IndirectExecutor,
@@ -94,10 +93,14 @@ where
 		} else if index == metadata.call_worker_call_indexes().ok()? {
 			let args = decode_and_log_error::<CallWorkerArgs>(call_args)?;
 			Some(IndirectCall::CallWorker(args))
-		} else if index == metadata.create_identity_call_indexes().ok()? {
-			let args = decode_and_log_error::<CreateIdentityArgs>(call_args)?;
+		} else if index == metadata.set_user_shielding_key_call_indexes().ok()? {
+			let args = decode_and_log_error::<SetUserShieldingKeyArgs>(call_args)?;
 			let hashed_extrinsic = xt.hashed_extrinsic;
-			Some(IndirectCall::CreateIdentity(args, address, hashed_extrinsic))
+			Some(IndirectCall::SetUserShieldingKey(args, address, hashed_extrinsic))
+		} else if index == metadata.link_identity_call_indexes().ok()? {
+			let args = decode_and_log_error::<LinkIdentityArgs>(call_args)?;
+			let hashed_extrinsic = xt.hashed_extrinsic;
+			Some(IndirectCall::LinkIdentity(args, address, hashed_extrinsic))
 		} else if index == metadata.remove_identity_call_indexes().ok()? {
 			let args = decode_and_log_error::<RemoveIdentityArgs>(call_args)?;
 			let hashed_extrinsic = xt.hashed_extrinsic;
@@ -112,14 +115,6 @@ where
 		} else if index == metadata.remove_scheduled_enclave().ok()? {
 			let args = decode_and_log_error::<RemoveScheduledEnclaveArgs>(call_args)?;
 			Some(IndirectCall::RemoveScheduledEnclave(args))
-		} else if index == metadata.set_user_shielding_key_call_indexes().ok()? {
-			let args = decode_and_log_error::<SetUserShieldingKeyArgs>(call_args)?;
-			let hashed_extrinsic = xt.hashed_extrinsic;
-			Some(IndirectCall::SetUserShieldingKey(args, address, hashed_extrinsic))
-		} else if index == metadata.verify_identity_call_indexes().ok()? {
-			let args = decode_and_log_error::<VerifyIdentityArgs>(call_args)?;
-			let hashed_extrinsic = xt.hashed_extrinsic;
-			Some(IndirectCall::VerifyIdentity(args, address, hashed_extrinsic))
 		} else if index == metadata.batch_all_call_indexes().ok()? {
 			parse_batch_all(call_args, metadata, address, xt.hashed_extrinsic)
 		} else {
@@ -136,13 +131,12 @@ where
 pub enum IndirectCall {
 	ShieldFunds(ShiedFundsArgs),
 	CallWorker(CallWorkerArgs),
-	CreateIdentity(CreateIdentityArgs, Option<MultiAddress<AccountId32, ()>>, H256),
+	SetUserShieldingKey(SetUserShieldingKeyArgs, Option<MultiAddress<AccountId32, ()>>, H256),
+	LinkIdentity(LinkIdentityArgs, Option<MultiAddress<AccountId32, ()>>, H256),
 	RemoveIdentity(RemoveIdentityArgs, Option<MultiAddress<AccountId32, ()>>, H256),
 	RequestVC(RequestVCArgs, Option<MultiAddress<AccountId32, ()>>, H256),
 	UpdateScheduledEnclave(UpdateScheduledEnclaveArgs),
 	RemoveScheduledEnclave(RemoveScheduledEnclaveArgs),
-	SetUserShieldingKey(SetUserShieldingKeyArgs, Option<MultiAddress<AccountId32, ()>>, H256),
-	VerifyIdentity(VerifyIdentityArgs, Option<MultiAddress<AccountId32, ()>>, H256),
 	BatchAll(Vec<IndirectCall>),
 }
 
@@ -153,8 +147,10 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for IndirectCall {
 		match self {
 			IndirectCall::ShieldFunds(shieldfunds) => shieldfunds.dispatch(executor, ()),
 			IndirectCall::CallWorker(call_worker) => call_worker.dispatch(executor, ()),
-			IndirectCall::CreateIdentity(create_identity, address, hash) =>
-				create_identity.dispatch(executor, (address.clone(), block, *hash)),
+			IndirectCall::SetUserShieldingKey(set_shied, address, hash) =>
+				set_shied.dispatch(executor, (address.clone(), *hash)),
+			IndirectCall::LinkIdentity(verify_id, address, hash) =>
+				verify_id.dispatch(executor, (address.clone(), *hash, block)),
 			IndirectCall::RemoveIdentity(remove_ideentity, address, hash) =>
 				remove_ideentity.dispatch(executor, (address.clone(), *hash)),
 			IndirectCall::RequestVC(requestvc, address, hash) =>
@@ -163,10 +159,6 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for IndirectCall {
 				update_enclave_args.dispatch(executor, ()),
 			IndirectCall::RemoveScheduledEnclave(remove_enclave_args) =>
 				remove_enclave_args.dispatch(executor, ()),
-			IndirectCall::SetUserShieldingKey(set_shied, address, hash) =>
-				set_shied.dispatch(executor, (address.clone(), *hash)),
-			IndirectCall::VerifyIdentity(verify_id, address, hash) =>
-				verify_id.dispatch(executor, (address.clone(), *hash, block)),
 			IndirectCall::BatchAll(calls) => {
 				for x in calls.clone() {
 					if let Err(e) = x.dispatch(executor, block) {
@@ -198,7 +190,7 @@ fn parse_batch_all<NodeMetadata: NodeMetadataTrait>(
 ) -> Option<IndirectCall> {
 	let call_count: sp_std::vec::Vec<()> = Decode::decode(call_args).ok()?;
 	let mut calls: Vec<IndirectCall> = vec![];
-	log::debug!("Received Batch All Call for This Many call: {}", call_count.len());
+	log::debug!("Received BatchAll including {} calls", call_count.len());
 	for _i in 0..call_count.len() {
 		let index: CallIndex = Decode::decode(call_args).ok()?;
 		if index == metadata.shield_funds_call_indexes().ok()? {
@@ -207,10 +199,14 @@ fn parse_batch_all<NodeMetadata: NodeMetadataTrait>(
 		} else if index == metadata.call_worker_call_indexes().ok()? {
 			let args = decode_and_log_error::<CallWorkerArgs>(call_args)?;
 			calls.push(IndirectCall::CallWorker(args))
-		} else if index == metadata.create_identity_call_indexes().ok()? {
-			let args = decode_and_log_error::<CreateIdentityArgs>(call_args)?;
+		} else if index == metadata.set_user_shielding_key_call_indexes().ok()? {
+			let args = decode_and_log_error::<SetUserShieldingKeyArgs>(call_args)?;
 			let hashed_extrinsic = hash;
-			calls.push(IndirectCall::CreateIdentity(args, address.clone(), hashed_extrinsic));
+			calls.push(IndirectCall::SetUserShieldingKey(args, address.clone(), hashed_extrinsic))
+		} else if index == metadata.link_identity_call_indexes().ok()? {
+			let args = decode_and_log_error::<LinkIdentityArgs>(call_args)?;
+			let hashed_extrinsic = hash;
+			calls.push(IndirectCall::LinkIdentity(args, address.clone(), hashed_extrinsic))
 		} else if index == metadata.remove_identity_call_indexes().ok()? {
 			let args = decode_and_log_error::<RemoveIdentityArgs>(call_args)?;
 			let hashed_extrinsic = hash;
@@ -225,14 +221,6 @@ fn parse_batch_all<NodeMetadata: NodeMetadataTrait>(
 		} else if index == metadata.remove_scheduled_enclave().ok()? {
 			let args = decode_and_log_error::<RemoveScheduledEnclaveArgs>(call_args)?;
 			calls.push(IndirectCall::RemoveScheduledEnclave(args))
-		} else if index == metadata.set_user_shielding_key_call_indexes().ok()? {
-			let args = decode_and_log_error::<SetUserShieldingKeyArgs>(call_args)?;
-			let hashed_extrinsic = hash;
-			calls.push(IndirectCall::SetUserShieldingKey(args, address.clone(), hashed_extrinsic))
-		} else if index == metadata.verify_identity_call_indexes().ok()? {
-			let args = decode_and_log_error::<VerifyIdentityArgs>(call_args)?;
-			let hashed_extrinsic = hash;
-			calls.push(IndirectCall::VerifyIdentity(args, address.clone(), hashed_extrinsic))
 		}
 	}
 	Some(IndirectCall::BatchAll(calls))

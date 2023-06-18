@@ -120,13 +120,8 @@ impl<
 		let block_number = *block.header().number();
 		let block_hash = block.hash();
 
-		// let block_number_convert: u32 = block_number.try_into();
-		let mut block_num: u32 = 0;
-		if let Ok(number) = block_number.try_into() {
-			block_num = number;
-		}
-
 		debug!("Scanning block {:?} for relevant xt", block_number);
+		let block_number_u32: u32 = block_number.try_into().unwrap_or_default();
 		let mut executed_calls = Vec::<H256>::new();
 
 		for xt_opaque in block.extrinsics().iter() {
@@ -141,7 +136,7 @@ impl<
 				None => continue,
 			};
 
-			if let Err(e) = call.dispatch(self, block_num) {
+			if let Err(e) = call.dispatch(self, block_number_u32) {
 				log::warn!("Error executing the indirect call: {:?}", e);
 				continue
 			};
@@ -173,6 +168,7 @@ impl<
 		let root: H256 = merkle_root::<Keccak256, _>(extrinsics);
 		let parentchain_block_number: ParentchainBlockNumber =
 			block_number.try_into().map_err(|_| Error::ConvertParentchainBlockNumber)?;
+
 		Ok(OpaqueCall::from_tuple(&(
 			call,
 			block_hash,

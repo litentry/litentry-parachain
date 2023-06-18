@@ -20,7 +20,7 @@ use super::*;
 
 use crate::Pallet as IdentityManagement;
 #[allow(unused)]
-use core_primitives::{AesOutput, ErrorDetail, IMPError};
+use core_primitives::{AesOutput, ErrorDetail, IMPError, UserShieldingKeyNonceType};
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, BenchmarkError};
 use frame_support::traits::EnsureOrigin;
 use frame_system::RawOrigin;
@@ -52,16 +52,17 @@ benchmarks! {
 	verify{
 		assert!(!Delegatee::<T>::contains_key(account));
 	}
-	// Benchmark `create_identity`. There are no worst conditions. The benchmark showed that
+	// Benchmark `link_identity`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
-	create_identity {
+	link_identity {
 		let caller: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
 		let shard = H256::from_slice(&TEST8_MRENCLAVE);
 		let encrypted_did = vec![1u8; 2048];
-		let encrypted_metadata = Some(vec![1u8; 2048]);
-	}: _(RawOrigin::Signed(caller.clone()), shard, caller.clone(), encrypted_did, encrypted_metadata)
+		let encrypted_validation_data = vec![1u8; 2048];
+		let nonce = UserShieldingKeyNonceType::default();
+	}: _(RawOrigin::Signed(caller.clone()), shard, caller.clone(), encrypted_did, encrypted_validation_data, nonce)
 	verify {
-		assert_last_event::<T>(Event::CreateIdentityRequested{ shard }.into());
+		assert_last_event::<T>(Event::LinkIdentityRequested{ shard }.into());
 	}
 
 	// Benchmark `remove_identity`. There are no worst conditions. The benchmark showed that
@@ -70,23 +71,12 @@ benchmarks! {
 		let caller: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
 		let shard = H256::from_slice(&TEST8_MRENCLAVE);
 		let encrypted_did = vec![1u8; 2048];
-		let encrypted_metadata = Some(vec![1u8; 2048]);
-		IdentityManagement::<T>::create_identity(RawOrigin::Signed(caller.clone()).into(), shard, caller.clone(), encrypted_did.clone(), encrypted_metadata)?;
+		let encrypted_validation_data = vec![1u8; 2048];
+		let nonce = UserShieldingKeyNonceType::default();
+		IdentityManagement::<T>::link_identity(RawOrigin::Signed(caller.clone()).into(), shard, caller.clone(), encrypted_did.clone(), encrypted_validation_data, nonce)?;
 	}: _(RawOrigin::Signed(caller), shard, encrypted_did)
 	verify {
 		assert_last_event::<T>(Event::RemoveIdentityRequested{ shard }.into());
-	}
-
-	// Benchmark `verify_identity`. There are no worst conditions. The benchmark showed that
-	// execution time is constant irrespective of encrypted_data size.
-	verify_identity {
-		let caller: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
-		let shard = H256::from_slice(&TEST8_MRENCLAVE);
-		let encrypted_did = vec![1u8; 2048];
-		let encrypted_validation_data = vec![1u8; 2048];
-	}: _(RawOrigin::Signed(caller), shard, encrypted_did, encrypted_validation_data)
-	verify {
-		assert_last_event::<T>(Event::VerifyIdentityRequested{ shard }.into());
 	}
 
 	// Benchmark `set_user_shielding_key`. There are no worst conditions. The benchmark showed that
@@ -112,17 +102,17 @@ benchmarks! {
 		assert_last_event::<T>(Event::UserShieldingKeySet { account, id_graph, req_ext_hash }.into());
 	}
 
-	// Benchmark `identity_created`. There are no worst conditions. The benchmark showed that
+	// Benchmark `identity_linked`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
-	identity_created {
+	identity_linked {
 		let req_ext_hash = H256::default();
 		let identity = AesOutput::default();
-		let code = AesOutput::default();
+		let id_graph = AesOutput::default();
 		let call_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
 		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
-	}: _<T::RuntimeOrigin>(call_origin, account.clone(), identity.clone(), code.clone(), req_ext_hash)
+	}: _<T::RuntimeOrigin>(call_origin, account.clone(), identity.clone(), id_graph.clone(), req_ext_hash)
 	verify {
-		assert_last_event::<T>(Event::IdentityCreated { account, identity, code, req_ext_hash }.into());
+		assert_last_event::<T>(Event::IdentityLinked { account, identity, id_graph, req_ext_hash }.into());
 	}
 
 	// Benchmark `identity_removed`. There are no worst conditions. The benchmark showed that
@@ -137,30 +127,17 @@ benchmarks! {
 		assert_last_event::<T>(Event::IdentityRemoved { account, identity, req_ext_hash }.into());
 	}
 
-	// Benchmark `identity_verified`. There are no worst conditions. The benchmark showed that
-	// execution time is constant irrespective of encrypted_data size.
-	identity_verified {
-		let req_ext_hash = H256::default();
-		let identity = AesOutput::default();
-		let id_graph = AesOutput::default();
-		let call_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
-		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
-	}: _<T::RuntimeOrigin>(call_origin, account.clone(), identity.clone(), id_graph.clone(), req_ext_hash)
-	verify {
-		assert_last_event::<T>(Event::IdentityVerified { account, identity, id_graph, req_ext_hash }.into());
-	}
-
 	// Benchmark `some_error`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
 	some_error {
 		let call_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
 		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
 		let detail = ErrorDetail::WrongWeb2Handle;
-		let error = IMPError::VerifyIdentityFailed(detail.clone());
+		let error = IMPError::LinkIdentityFailed(detail.clone());
 		let req_ext_hash = H256::default();
 	}: _<T::RuntimeOrigin>(call_origin, Some(account.clone()), error, req_ext_hash)
 	verify {
-		assert_last_event::<T>(Event::VerifyIdentityFailed { account: Some(account), detail, req_ext_hash }.into())
+		assert_last_event::<T>(Event::LinkIdentityFailed { account: Some(account), detail, req_ext_hash }.into())
 	}
 }
 

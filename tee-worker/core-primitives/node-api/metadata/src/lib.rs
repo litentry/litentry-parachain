@@ -32,7 +32,6 @@ pub use itp_api_client_types::{Metadata, MetadataError};
 
 pub mod error;
 pub mod pallet_imp;
-pub mod pallet_imp_mock;
 pub mod pallet_sidechain;
 pub mod pallet_system;
 pub mod pallet_teeracle;

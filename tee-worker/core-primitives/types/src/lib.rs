@@ -20,6 +20,7 @@
 
 use crate::storage::StorageEntry;
 use codec::{Decode, Encode};
+use litentry_primitives::UserShieldingKeyNonceType;
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 
 pub mod extrinsics;
@@ -58,14 +59,12 @@ pub type RemoveScheduledEnclaveFn = (CallIndex, SidechainBlockNumber);
 pub type SetUserShieldingKeyParams = (ShardIdentifier, Vec<u8>);
 pub type SetUserShieldingKeyFn = (CallIndex, SetUserShieldingKeyParams);
 
-pub type CreateIdentityParams = (ShardIdentifier, AccountId, Vec<u8>, Option<Vec<u8>>);
-pub type CreateIdentityFn = (CallIndex, CreateIdentityParams);
+pub type LinkIdentityParams =
+	(ShardIdentifier, AccountId, Vec<u8>, Vec<u8>, UserShieldingKeyNonceType);
+pub type LinkIdentityFn = (CallIndex, LinkIdentityParams);
 
 pub type RemoveIdentityParams = (ShardIdentifier, Vec<u8>);
 pub type RemoveIdentityFn = (CallIndex, RemoveIdentityParams);
-
-pub type VerifyIdentityParams = (ShardIdentifier, Vec<u8>, Vec<u8>);
-pub type VerifyIdentityFn = (CallIndex, VerifyIdentityParams);
 
 // pallet VCMP
 pub type RequestVCParams = (ShardIdentifier, Assertion);
@@ -75,9 +74,8 @@ pub type RequestVCFn = (CallIndex, RequestVCParams);
 #[derive(Clone, Encode, Decode, Debug)]
 pub enum SupportedBatchCallParams {
 	SetUserShieldingKey(SetUserShieldingKeyParams),
-	CreateIdentity(CreateIdentityParams),
+	LinkIdentity(LinkIdentityParams),
 	RemoveIdentity(RemoveIdentityParams),
-	VerifyIdentity(VerifyIdentityParams),
 	RequestVC(RequestVCParams),
 }
 

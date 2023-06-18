@@ -12,10 +12,10 @@
   "dependencies": {
     "@polkadot/api": "^10.3.1",
     "colors": "^1.4.0",
+    "exceljs": "^4.3.0",
     "prettier": "^2.8.7",
     "ts-node": "^10.9.1",
-    "typescript": "^5.0.4",
-    "xlsx": "^0.18.5"
+    "typescript": "^5.0.4"
   },
   "devDependencies": {
     "@types/node": "^18.15.11"
