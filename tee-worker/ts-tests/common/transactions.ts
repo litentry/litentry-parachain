@@ -81,6 +81,7 @@ export async function listenEvent(
     return new Promise<Event[]>(async (resolve, reject) => {
         let startBlock = 0;
         let events: EventRecord[] = [];
+        const printed_events = new Set<string>();
         const unsubscribe = await api.rpc.chain.subscribeNewHeads(async (header) => {
             const currentBlockNumber = header.number.toNumber();
             if (startBlock == 0) startBlock = currentBlockNumber;
@@ -108,10 +109,11 @@ export async function listenEvent(
                     const s = e.event.section;
                     const m = e.event.method;
                     const d = e.event.data;
-
-                    section === s && e.phase.asApplyExtrinsic.eq(index)
-                        ? console.log(colors.green(`Event[${i}]: ${s}.${m} ${d}`))
-                        : console.log(`Event[${i}]: ${s}.${m} ${d}`);
+                    const event_string = `Event[${i}]: ${s}.${m} ${d}`;
+                    if (!printed_events.has(event_string)) {
+                        console.log(section === s ? colors.green(event_string) : event_string);
+                        printed_events.add(event_string);
+                    }
                 });
                 const events_in_extrinsic = records.filter(({ event, phase }) => {
                     if (
