@@ -5,7 +5,7 @@ import {
     checkUserShieldingKeys,
     buildIdentityTxs,
     handleIdentityEvents,
-    handleVcEvents,
+    handleVcEvents, buildIdGraphIdentityHelper,
 } from './common/utils';
 import { step } from 'mocha-steps';
 import type { Assertion, IdentityGenericEvent, TransactionSubmit } from './common/type-definitions';
@@ -35,12 +35,13 @@ const assertion_A1: Assertion = {
 describeLitentry('VC test', 0, async (context) => {
     var indexList: HexString[] = [];
     var vcKeys: string[] = ['A1'];
+    let alice_id_graph_identifier = await buildIdGraphIdentityHelper(context.substrateWallet.alice);
     step('check user sidechain storage before create', async function () {
         const resp_shieldingKey = await checkUserShieldingKeys(
             context,
             'IdentityManagement',
             'UserShieldingKeys',
-            u8aToHex(context.substrateWallet.alice.addressRaw)
+            alice_id_graph_identifier
         );
         assert.equal(resp_shieldingKey, '0x', 'resp_shieldingKey should be empty before set');
     });
@@ -75,7 +76,7 @@ describeLitentry('VC test', 0, async (context) => {
             context,
             'IdentityManagement',
             'UserShieldingKeys',
-            u8aToHex(context.substrateWallet.alice.addressRaw)
+            alice_id_graph_identifier
         );
         assert.equal(resp_shieldingKey, aesKey, 'resp_shieldingKey should be equal aesKey after set');
     });
