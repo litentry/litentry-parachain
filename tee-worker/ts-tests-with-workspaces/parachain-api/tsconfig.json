@@ -8,6 +8,7 @@
 			"@polkadot/types/lookup": ["./build/interfaces/types-lookup.ts"]
 		},
 		"composite": true,
+		"isolatedModules": true,
 		"target": "es2017",
 		"module": "ESNext",
 		"moduleResolution": "node",

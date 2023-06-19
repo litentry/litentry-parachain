@@ -3,5 +3,6 @@ import "@polkadot/types/augment";
 import { ApiOptions } from "@polkadot/api/types";
 import { ApiPromise } from "@polkadot/api";
 type ProviderInterface = Exclude<ApiOptions["provider"], undefined>;
-export declare function create(provider: ProviderInterface): Promise<ApiPromise>;
+export type ParachainApiPromise = ApiPromise;
+export declare function create(provider: ProviderInterface): Promise<ParachainApiPromise>;
 export {};
