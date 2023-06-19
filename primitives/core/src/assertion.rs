@@ -52,6 +52,7 @@ pub enum Assertion {
 	A10(ParameterString),                                   // (minimum_amount)
 	A11(ParameterString),                                   // (minimum_amount)
 	A13(u32),                                               // (Karma_amount) - TODO: unsupported
+	TwitterFollower(ParameterString)						// (target_twitter_screen_name)
 }
 
 pub const ASSERTION_FROM_DATE: [&str; 7] = [

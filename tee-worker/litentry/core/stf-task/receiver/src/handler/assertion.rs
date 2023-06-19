@@ -123,6 +123,13 @@ where
 				&self.req.who,
 			),
 
+			Assertion::TwitterFollower(s) => lc_assertion_build::twitter_follower::build(
+				s,
+				self.req.vec_identity.to_vec(),
+				&self.req.shard,
+				&self.req.who,
+			),
+
 			_ => {
 				unimplemented!()
 			},

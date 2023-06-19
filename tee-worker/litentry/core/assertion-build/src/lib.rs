@@ -39,6 +39,7 @@ pub mod a5;
 pub mod a6;
 pub mod a7;
 pub mod a8;
+pub mod twitter_follower;
 
 use litentry_primitives::{
 	Assertion, ErrorDetail, ErrorString, EvmNetwork, Identity, IntoErrorDetail, ParameterString,
