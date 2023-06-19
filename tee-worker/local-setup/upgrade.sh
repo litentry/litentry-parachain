@@ -10,14 +10,17 @@ else
     echo "Failed to extract MRENCLAVE value."
 fi
 
-output=$(cd bin && ./integritee-service signing-key 2>&1 | awk 'NR==2{print $3}')
-if [[ -n $output ]]; then
-    echo "Signing key: $output"
-    export ENCLAVE_ACCOUNT="$output"
-    echo "Enclave Signing key value: $ENCLAVE_ACCOUNT"
+log=$(cd bin && ./integritee-service signing-key 2>&1)
+enclave_account=$(echo "$log" | awk '/Enclave account:/{print $NF}')
+if [[ -n $enclave_account ]]; then
+    echo "Enclave account value: $enclave_account"
+    export ENCLAVE_ACCOUNT="$enclave_account"
+    echo "ENCLAVE_ACCOUNT exported successfully."
 else
-    echo "Failed to extract Enclave Signing key value."
+    echo "Failed to extract Enclave account value."
 fi
+
+
 
 # TODO: This will be different depending on who is calling it
 export SGX_COMMERCIAL_KEY="/home/faisal/litentry-parachain/tee-worker/enclave-runtime/Enclave_private.pem"
