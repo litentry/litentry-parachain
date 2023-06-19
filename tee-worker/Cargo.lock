@@ -2629,6 +2629,7 @@ dependencies = [
  "futures 0.3.28",
  "hex 0.4.3",
  "ipfs-api",
+ "ita-stf",
  "itc-parentchain",
  "itc-parentchain-test",
  "itc-rest-client",
@@ -2640,6 +2641,7 @@ dependencies = [
  "itp-node-api-metadata",
  "itp-rpc",
  "itp-settings",
+ "itp-stf-primitives",
  "itp-types",
  "itp-utils",
  "its-consensus-slots",
@@ -2832,8 +2834,6 @@ dependencies = [
  "pallet-parentchain",
  "pallet-sudo",
  "parity-scale-codec",
- "rand 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "rand 0.7.3 (git+https://github.com/mesalock-linux/rand-sgx?tag=sgx_1.1.3)",
  "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
  "rlp",
  "sgx_tstd",
@@ -3051,9 +3051,11 @@ name = "itc-rpc-client"
 version = "0.9.0"
 dependencies = [
  "env_logger 0.9.3",
+ "ita-stf",
  "itc-tls-websocket-server",
  "itp-networking-utils",
  "itp-rpc",
+ "itp-stf-primitives",
  "itp-types",
  "itp-utils",
  "log 0.4.18",
@@ -3065,6 +3067,7 @@ dependencies = [
  "serde_json 1.0.96",
  "sgx_crypto_helper",
  "substrate-api-client",
+ "teerex-primitives",
  "thiserror 1.0.40",
  "url 2.3.1",
  "ws",
@@ -4387,6 +4390,7 @@ name = "lc-mock-server"
 version = "0.1.0"
 dependencies = [
  "hex 0.4.3",
+ "ita-stf",
  "lazy_static",
  "lc-data-providers",
  "litentry-primitives",

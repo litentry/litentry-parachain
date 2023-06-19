@@ -4,20 +4,20 @@ import { hexToU8a, u8aToHex } from '@polkadot/util';
 import Ajv from 'ajv';
 import { assert, expect } from 'chai';
 import * as ed from '@noble/ed25519';
-import { buildIdentityHelper, parseIdGraph, createIdentityEvent, parseIdentity } from './identity-helper';
+import { buildIdentityHelper, parseIdGraph, parseIdentity } from './identity-helper';
 import type { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
 import type { EnclaveResult, IntegrationTestContext } from '../type-definitions';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
 import { JsonSchema } from '../type-definitions';
-import { env_network } from '../../common/helpers';
+import { aesKey } from '../../common/call';
+import { SubstrateNetworkMapping } from '../../common/helpers';
 import colors from 'colors';
 
 export async function assertInitialIDGraphCreated(
     context: IntegrationTestContext,
     signer: KeyringPair[],
-    events: any[],
-    aesKey: HexString
+    events: any[]
 ) {
     for (let index = 0; index < events.length; index++) {
         const event_data = events[index].data;
@@ -30,7 +30,7 @@ export async function assertInitialIDGraphCreated(
         // Check identity in idgraph
         const expected_identity = await buildIdentityHelper(
             u8aToHex(signer[index].addressRaw),
-            env_network,
+            SubstrateNetworkMapping[context.chainID],
             'Substrate',
             context
         );
@@ -39,25 +39,20 @@ export async function assertInitialIDGraphCreated(
         assert.equal(expected_target.toString(), idGraph_target.toString());
 
         // Check identityContext in idgraph
-        const idGraph_context = idGraph_data[0][1].toHuman();
-        const creation_request_block = idGraph_context.creationRequestBlock;
-        const verification_request_block = idGraph_context.verificationRequestBlock;
-        assert.equal(creation_request_block, 0, 'Check InitialIDGraph error: creation_request_block should be 0');
-        assert.equal(
-            verification_request_block,
-            0,
-            'Check InitialIDGraph error: verification_request_block should be 0'
+        const idGraph_context = idGraph_data[0][1];
+        assert.isTrue(
+            idGraph_context.linkBlock.toNumber() > 0,
+            'Check InitialIDGraph error: link_block should be greater than 0'
         );
-        assert.isTrue(idGraph_context.isVerified, 'Check InitialIDGraph error: isVerified should be true');
+        assert.isTrue(idGraph_context.status.isActive, 'Check InitialIDGraph error: isActive should be true');
     }
     console.log(colors.green('assertInitialIDGraphCreated complete'));
 }
 
-export async function assertIdentityVerified(
+export async function assertIdentityLinked(
     context: IntegrationTestContext,
     signers: KeyringPair | KeyringPair[],
     events: any[],
-    aesKey: HexString,
     expected_identities: LitentryPrimitivesIdentity[]
 ) {
     // We should parse idGraph from the last event, because the last event updates the verification status of all identities.
@@ -74,7 +69,7 @@ export async function assertIdentityVerified(
         // Check prime identity in idGraph
         const expected_prime_identity = await buildIdentityHelper(
             u8aToHex(signer.addressRaw),
-            env_network,
+            SubstrateNetworkMapping[context.chainID],
             'Substrate',
             context
         );
@@ -94,18 +89,12 @@ export async function assertIdentityVerified(
         );
 
         // Check identityContext in idGraph
+        const idGraph_context = event_idGraph[index][1];
         assert.isTrue(
-            event_idGraph[index][1].isVerified.toHuman(),
-            'Check IdentityVerified error: event_idGraph identity should be verified'
+            idGraph_context.linkBlock.toNumber() > 0,
+            'Check InitialIDGraph error: link_block should be greater than 0'
         );
-        assert(
-            Number(event_idGraph[index][1].verificationRequestBlock.toHuman()) > 0,
-            'Check IdentityVerified error: event_idGraph verificationRequestBlock should be greater than 0'
-        );
-        assert(
-            Number(event_idGraph[index][1].creationRequestBlock.toHuman()) > 0,
-            'Check IdentityVerified error: event_idGraph creationRequestBlock should be greater than 0'
-        );
+        assert.isTrue(idGraph_context.status.isActive, 'Check InitialIDGraph error: isActive should be true');
 
         assert.equal(who, u8aToHex(signer.addressRaw), 'Check IdentityCreated error: signer should be equal to who');
     }
@@ -187,7 +176,7 @@ export async function checkErrorDetail(events: Event[], expectedDetail: string) 
 export async function verifySignature(data: any, index: HexString, proofJson: any, api: ApiPromise) {
     const count = await api.query.teerex.enclaveCount();
     const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as EnclaveResult;
-    //check vc index
+    // Check vc index
     expect(index).to.be.eq(data.id);
 
     const signature = Buffer.from(hexToU8a(`0x${proofJson.proofValue}`));
@@ -211,7 +200,7 @@ export async function checkVc(vcObj: any, index: HexString, proof: any, api: Api
     return true;
 }
 
-//Check VC json fields
+// Check VC json fields
 export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
     //check JsonSchema
     const ajv = new Ajv();
@@ -220,8 +209,8 @@ export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
     expect(isValid).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-            vc.issuer.id === proofJson.verificationMethod &&
-            proofJson.type === 'Ed25519Signature2020'
+        vc.issuer.id === proofJson.verificationMethod &&
+        proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
 }

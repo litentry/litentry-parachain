@@ -99,25 +99,9 @@ declare module '@polkadot/api-base/types/events' {
         };
         identityManagement: {
             /**
-             * challenge code was removed
+             * an identity was linked
              **/
-            ChallengeCodeRemoved: AugmentedEvent<
-                ApiType,
-                [who: AccountId32, identity: LitentryPrimitivesIdentity],
-                { who: AccountId32; identity: LitentryPrimitivesIdentity }
-            >;
-            /**
-             * challenge code was set
-             **/
-            ChallengeCodeSet: AugmentedEvent<
-                ApiType,
-                [who: AccountId32, identity: LitentryPrimitivesIdentity, code: U8aFixed],
-                { who: AccountId32; identity: LitentryPrimitivesIdentity; code: U8aFixed }
-            >;
-            /**
-             * an identity was created
-             **/
-            IdentityCreated: AugmentedEvent<
+            IdentityLinked: AugmentedEvent<
                 ApiType,
                 [who: AccountId32, identity: LitentryPrimitivesIdentity],
                 { who: AccountId32; identity: LitentryPrimitivesIdentity }

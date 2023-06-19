@@ -19,64 +19,57 @@ use crate::{
 	IndirectDispatch, IndirectExecutor,
 };
 use codec::{Decode, Encode};
-use ita_sgx_runtime::{pallet_imt::MetadataOf, Runtime};
 use ita_stf::{TrustedCall, TrustedOperation};
-
-use itp_stf_primitives::types::AccountId;
-
-use itp_types::{ShardIdentifier, H256};
+use itp_types::{AccountId, ShardIdentifier, H256};
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::Identity;
-use log::{debug, info};
-use sp_std::vec::Vec;
+use litentry_primitives::{Identity, UserShieldingKeyNonceType, ValidationData};
+use log::debug;
+use std::vec::Vec;
 use substrate_api_client::GenericAddress;
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
-pub struct CreateIdentityArgs {
+pub struct LinkIdentityArgs {
 	shard: ShardIdentifier,
 	account: AccountId,
 	encrypted_identity: Vec<u8>,
-	encrypted_metadata: Option<Vec<u8>>,
+	encrypted_validation_data: Vec<u8>,
+	nonce: UserShieldingKeyNonceType,
 }
-impl CreateIdentityArgs {
+
+impl LinkIdentityArgs {
 	fn internal_dispatch<Executor: IndirectExecutor>(
 		&self,
 		executor: &Executor,
 		address: Option<GenericAddress>,
-		block_number: u32,
-		xt_hash: H256,
+		hash: H256,
 	) -> Result<()> {
-		info!(
-			"Found CreateIdentity extrinsic in block: Shard: {}\nAccount {:?}",
-			bs58::encode(self.shard.encode()).into_string(),
-			self.account
-		);
 		let identity: Identity =
 			Identity::decode(&mut executor.decrypt(&self.encrypted_identity)?.as_slice())?;
-		debug!(
-			"execute indirect call: CreateIdentity, who: {:?}, identity: {:?}",
-			account_id_to_string(&self.account),
-			identity
-		);
-		let metadata = match &self.encrypted_metadata {
-			None => None,
-			Some(m) => {
-				let decrypted_metadata = executor.decrypt(m)?;
-				Some(MetadataOf::<Runtime>::decode(&mut decrypted_metadata.as_slice())?)
-			},
-		};
+		let validation_data = ValidationData::decode(
+			&mut executor.decrypt(&self.encrypted_validation_data)?.as_slice(),
+		)?;
+
 		if address.is_some() {
+			debug!(
+				"indirect call LinkIdentity, who:{:?}, keyNonce: {:?}, identity: {:?}, validation_data: {:?}",
+				account_id_to_string(&self.account),
+				self.nonce,
+				identity,
+				validation_data
+			);
+
 			let enclave_account_id = executor.get_enclave_account()?;
-			let trusted_call = TrustedCall::create_identity(
+			let trusted_call = TrustedCall::link_identity(
 				enclave_account_id,
 				self.account.clone(),
 				identity,
-				metadata,
-				block_number,
-				xt_hash,
+				validation_data,
+				self.nonce,
+				hash,
 			);
 			let signed_trusted_call = executor.sign_call_with_self(&trusted_call, &self.shard)?;
 			let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
+
 			let encrypted_trusted_call = executor.encrypt(&trusted_operation.encode())?;
 			executor.submit_trusted_call(self.shard, encrypted_trusted_call);
 		}
@@ -84,19 +77,16 @@ impl CreateIdentityArgs {
 	}
 }
 
-impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for CreateIdentityArgs {
-	type Args = (Option<GenericAddress>, u32, H256);
+impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for LinkIdentityArgs {
+	type Args = (Option<GenericAddress>, H256, u32);
 	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
-		let (address, block_number, xt_hash) = args;
-		let e = Error::IMPHandlingError(IMPError::CreateIdentityFailed(ErrorDetail::ImportError));
-		if self.internal_dispatch(executor, address, block_number, xt_hash).is_err() {
-			if let Err(internal_e) = executor.submit_trusted_call_from_error(
-				self.shard,
-				Some(self.account.clone()),
-				&e,
-				xt_hash,
-			) {
-				log::warn!("fail to handle internal errors in create_identity: {:?}", internal_e);
+		let (address, hash, _block) = args;
+		let e = Error::IMPHandlingError(IMPError::LinkIdentityFailed(ErrorDetail::ImportError));
+		if self.internal_dispatch(executor, address, hash).is_err() {
+			if let Err(internal_e) =
+				executor.submit_trusted_call_from_error(self.shard, None, &e, hash)
+			{
+				log::warn!("fail to handle internal errors in verify_identity: {:?}", internal_e);
 			}
 			return Err(e)
 		}
