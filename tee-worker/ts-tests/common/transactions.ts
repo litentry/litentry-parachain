@@ -126,6 +126,7 @@ export async function listenEvent(
                     }
                     return phase.isApplyExtrinsic && section === event.section && methods.includes(event.method);
                 });
+
                 //We're going to have to filter by signer, because multiple txs is going to mix
                 const filtered_events_with_signer = events_in_extrinsic
                     .filter((event) => {

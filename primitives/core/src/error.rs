@@ -36,8 +36,6 @@ pub enum ErrorDetail {
 	StfError(ErrorString),
 	// error when sending stf request to the receiver fails
 	SendStfRequestFailed,
-	// error when the challenge code can not be found
-	ChallengeCodeNotFound,
 	// error when the user shielding key can not be found
 	UserShieldingKeyNotFound,
 	// generic parse error, can be caused by UTF8/JSON serde..
@@ -84,9 +82,8 @@ where
 pub enum IMPError {
 	// errors when executing individual error
 	SetUserShieldingKeyFailed(ErrorDetail),
-	CreateIdentityFailed(ErrorDetail),
+	LinkIdentityFailed(ErrorDetail),
 	RemoveIdentityFailed(ErrorDetail),
-	VerifyIdentityFailed(ErrorDetail),
 	// scheduled encalve import error
 	ImportScheduledEnclaveFailed,
 

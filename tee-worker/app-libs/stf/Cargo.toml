@@ -43,8 +43,6 @@ lc-scheduled-enclave = { path = "../../litentry/core/scheduled-enclave", default
 lc-stf-task-sender = { path = "../../litentry/core/stf-task/sender", default-features = false }
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
 pallet-parentchain = { path = "../../../pallets/parentchain", default-features = false }
-rand = { version = "0.7", optional = true }
-rand-sgx = { package = "rand", git = "https://github.com/mesalock-linux/rand-sgx", tag = "sgx_1.1.3", features = ["sgx_tstd"], optional = true }
 ring = { version = "0.16.20", default-features = false }
 
 [dev-dependencies]
@@ -65,7 +63,6 @@ sgx = [
     "litentry-primitives/sgx",
     "lc-scheduled-enclave/sgx",
     "lc-stf-task-sender/sgx",
-    "rand-sgx",
 ]
 std = [
     # crates.io
@@ -101,7 +98,5 @@ std = [
     "litentry-primitives/std",
     "lc-scheduled-enclave/std",
     "lc-stf-task-sender/std",
-    "ring/std",
-    "rand",
 ]
 test = []

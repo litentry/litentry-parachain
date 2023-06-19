@@ -31,7 +31,7 @@ use sp_core::sr25519 as sr25519_core;
 use substrate_api_client::{compose_extrinsic, CallIndex, UncheckedExtrinsicV4, XtStatus};
 
 #[derive(Parser)]
-pub struct CreateIdentityCommand {
+pub struct LinkIdentityCommand {
 	/// AccountId in ss58check format
 	account: String,
 	/// Identity to be created
@@ -40,7 +40,7 @@ pub struct CreateIdentityCommand {
 	shard: String,
 }
 
-impl CreateIdentityCommand {
+impl LinkIdentityCommand {
 	pub(crate) fn run(&self, cli: &Cli) {
 		let chain_api = get_chain_api(cli);
 
@@ -67,11 +67,11 @@ impl CreateIdentityCommand {
 		let encrypted_identity = tee_shielding_key.encrypt(&identity.unwrap().encode()).unwrap();
 
 		let vdata: Option<Vec<u8>> = None;
-		pub type CreateIdentityFn = (CallIndex, H256, Address32, Vec<u8>, Option<Vec<u8>>);
-		let xt: UncheckedExtrinsicV4<CreateIdentityFn, _> = compose_extrinsic!(
+		pub type LinkIdentityFn = (CallIndex, H256, Address32, Vec<u8>, Option<Vec<u8>>);
+		let xt: UncheckedExtrinsicV4<LinkIdentityFn, _> = compose_extrinsic!(
 			chain_api,
 			IMP,
-			"create_identity",
+			"link_identity",
 			shard,
 			who.public().0.into(),
 			encrypted_identity.to_vec(),

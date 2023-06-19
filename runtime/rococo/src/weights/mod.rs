@@ -27,7 +27,7 @@ pub mod pallet_democracy;
 pub mod pallet_drop3;
 pub mod pallet_extrinsic_filter;
 pub mod pallet_identity;
-pub mod pallet_identity_management;
+// pub mod pallet_identity_management;
 pub mod pallet_membership;
 pub mod pallet_multisig;
 pub mod pallet_parachain_staking;

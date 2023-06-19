@@ -99,8 +99,6 @@ ord_parameter_types! {
 impl pallet_tee_identity_management::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type ManageOrigin = EnsureSignedBy<One, AccountId32>;
-	type MaxMetadataLength = ConstU32<128>;
-	type MaxVerificationDelay = ConstU32<2>;
 	type MaxIDGraphLength = ConstU32<64>;
 }
 

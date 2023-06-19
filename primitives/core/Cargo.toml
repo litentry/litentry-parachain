@@ -7,7 +7,7 @@ version = '0.9.12'
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len"] }
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39", default-features = false }
-ring = { git = "https://github.com/Niederb/ring-xous.git", branch = "0.16.20-cleanup", default-features = false, features = ["alloc"] }
+ring = { version = "0.16.20", default-features = false }
 scale-info = { version = "2.7.0", default-features = false, features = ["derive"] }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39", default-features = false }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39", default-features = false }

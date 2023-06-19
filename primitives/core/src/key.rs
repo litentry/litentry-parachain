@@ -26,15 +26,16 @@ use sp_std::prelude::*;
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 
-use ring::aead::NONCE_LEN;
-
 pub type ShardIdentifier = sp_core::H256;
 pub type MrenclaveType = [u8; 32];
 
 // we use 256-bit AES-GCM as user shielding key
+// TODO: use constants from `ring` crate, e.g. ring::aead::NONCE_LEN
 pub const USER_SHIELDING_KEY_LEN: usize = 32;
+pub use ring::aead::{MAX_TAG_LEN, NONCE_LEN};
 
 pub type UserShieldingKeyType = [u8; USER_SHIELDING_KEY_LEN];
+pub type UserShieldingKeyNonceType = [u8; NONCE_LEN];
 
 // all-in-one struct containing the encrypted ciphertext with user's
 // shielding key and other metadata that is required for decryption
@@ -44,5 +45,5 @@ pub type UserShieldingKeyType = [u8; USER_SHIELDING_KEY_LEN];
 pub struct AesOutput {
 	pub ciphertext: Vec<u8>,
 	pub aad: Vec<u8>,
-	pub nonce: [u8; NONCE_LEN], // IV
+	pub nonce: UserShieldingKeyNonceType, // IV
 }
