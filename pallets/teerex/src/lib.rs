@@ -309,7 +309,7 @@ pub mod pallet {
 		pub fn confirm_processed_parentchain_block(
 			origin: OriginFor<T>,
 			block_hash: H256,
-			block_number: T::BlockNumber,
+			#[pallet::compact] block_number: T::BlockNumber,
 			trusted_calls_merkle_root: H256,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
@@ -399,7 +399,7 @@ pub mod pallet {
 		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
 		pub fn set_heartbeat_timeout(
 			origin: OriginFor<T>,
-			timeout: u64,
+			#[pallet::compact] timeout: u64,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
@@ -469,7 +469,7 @@ pub mod pallet {
 		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
 		pub fn update_scheduled_enclave(
 			origin: OriginFor<T>,
-			sidechain_block_number: SidechainBlockNumber,
+			#[pallet::compact] sidechain_block_number: SidechainBlockNumber,
 			mr_enclave: MrEnclave,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;

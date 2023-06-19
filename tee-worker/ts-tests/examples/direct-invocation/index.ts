@@ -1,21 +1,24 @@
 import { cryptoWaitReady } from '@polkadot/util-crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
-import { TypeRegistry, Vec } from '@polkadot/types';
-import { teeTypes } from '../../common/type-definitions';
+import { default as teeTypes } from '../../parachain-interfaces/identity/definitions';
+import { HexString } from '@polkadot/util/types';
 import {
     createSignedTrustedCallSetUserShieldingKey,
     sendRequestFromTrustedCall,
     getTEEShieldingKey,
-    createSignedTrustedCallCreateIdentity,
+    createSignedTrustedCallLinkIdentity,
     createSignedTrustedGetterUserShieldingKey,
-    sendRequestFromTrustedGetter,
-    createPublicGetterAccountNonce,
-    sendRequestFromPublicGetter,
-    decodeNonce,
+    sendRequestFromGetter,
+    getSidechainNonce,
 } from './util';
-import { getEnclave, sleep, buildIdentityHelper } from '../../common/utils';
-import { hexToU8a, compactStripLength, u8aToString } from '@polkadot/util';
+import { getEnclave, sleep, buildIdentityHelper, initIntegrationTestContext } from '../../common/utils';
+import { aesKey, keyNonce } from '../../common/call';
+import { Metadata, TypeRegistry } from '@polkadot/types';
+import sidechainMetaData from '../../litentry-sidechain-metadata.json';
+import { hexToU8a } from '@polkadot/util';
+import type { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
+import type { LitentryValidationData } from '../../parachain-interfaces/identity/types';
 import { assert } from 'chai';
 
 // in order to handle self-signed certificates we need to turn off the validation
@@ -31,12 +34,16 @@ const WORKER_TRUSTED_WS_ENDPOINT = 'wss://localhost:2000';
 
 async function runDirectCall() {
     const parachain_ws = new WsProvider(PARACHAIN_WS_ENDPINT);
-    const registry = new TypeRegistry();
+    const sidechainRegistry = new TypeRegistry();
+    const metaData = new Metadata(sidechainRegistry, sidechainMetaData.result as HexString);
+    sidechainRegistry.setMetadata(metaData);
     const { types } = teeTypes;
     const parachain_api = await ApiPromise.create({
         provider: parachain_ws,
         types,
     });
+    const context = await initIntegrationTestContext(WORKER_TRUSTED_WS_ENDPOINT, PARACHAIN_WS_ENDPINT, 0);
+
     await cryptoWaitReady();
     const wsp = new WebSocketAsPromised(WORKER_TRUSTED_WS_ENDPOINT, {
         createWebSocket: (url: any) => new WebSocket(url),
@@ -54,24 +61,21 @@ async function runDirectCall() {
     const bob: KeyringPair = keyring.addFromUri('//Bob', { name: 'Bob' });
     const mrenclave = (await getEnclave(parachain_api)).mrEnclave;
 
-    const NonceGetter = createPublicGetterAccountNonce(parachain_api, alice);
-    const noncex = await sendRequestFromPublicGetter(wsp, parachain_api, mrenclave, key, NonceGetter);
-    const NonceValue = decodeNonce(noncex.value.toHex());
-    let nonce = parachain_api.createType('Index', NonceValue);
+    let nonce = await getSidechainNonce(wsp, parachain_api, mrenclave, key, alice.address);
 
     // a hardcoded AES key which is used overall in tests - maybe we need to put it in a common place
-    let key_alice = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
+    const key_alice = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     // similar to `reqExtHash` in indirect calls, we need some "identifiers" to pair the response
     // with the request. Ideally it's the hash of the trusted operation, but we need it before constructing
     // a trusted call, hence a random number is used here - better ideas are welcome
     let hash = `0x${require('crypto').randomBytes(32).toString('hex')}`;
-    console.log('Send direct setUserShieldingKey call... hash:', hash);
+    console.log('Send direct setUserShieldingKey call for alice ... hash:', hash);
     let setUserShieldingKeyCall = createSignedTrustedCallSetUserShieldingKey(
         parachain_api,
         mrenclave,
         nonce,
         alice,
-        key_alice,
+        aesKey,
         hash
     );
     let res = await sendRequestFromTrustedCall(wsp, parachain_api, mrenclave, key, setUserShieldingKeyCall);
@@ -81,30 +85,36 @@ async function runDirectCall() {
 
     hash = `0x${require('crypto').randomBytes(32).toString('hex')}`;
 
-    const noncex1 = await sendRequestFromPublicGetter(wsp, parachain_api, mrenclave, key, NonceGetter);
-    const NonceValue1 = decodeNonce(noncex1.value.toHex());
+    nonce = await getSidechainNonce(wsp, parachain_api, mrenclave, key, alice.address);
 
-    nonce = parachain_api.createType('Index', NonceValue1);
     console.log('Send direct createIdentity call... hash:', hash);
-    const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
-    let createIdentityCall = createSignedTrustedCallCreateIdentity(
+    const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2', context);
+    let linkIdentityCall = createSignedTrustedCallLinkIdentity(
         parachain_api,
         mrenclave,
         nonce,
         alice,
-        parachain_api.createType('LitentryIdentity', twitter_identity).toHex(),
-        '0x',
-        parachain_api.createType('u32', 1).toHex(),
+        sidechainRegistry.createType('LitentryPrimitivesIdentity', twitter_identity).toHex(),
+        parachain_api
+            .createType('LitentryValidationData', {
+                Web2Validation: {
+                    Twitter: {
+                        tweet_id: `0x${Buffer.from('100', 'utf8').toString('hex')}`,
+                    },
+                },
+            })
+            .toHex(),
+        keyNonce,
         hash
     );
-    res = await sendRequestFromTrustedCall(wsp, parachain_api, mrenclave, key, createIdentityCall);
-    console.log('createIdentity call returned', res.toHuman());
+    res = await sendRequestFromTrustedCall(wsp, parachain_api, mrenclave, key, linkIdentityCall);
+    console.log('linkIdentity call returned', res.toHuman());
 
     sleep(10);
 
     console.log('Send UserShieldingKey getter for alice ...');
     let UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachain_api, alice);
-    res = await sendRequestFromTrustedGetter(wsp, parachain_api, mrenclave, key, UserShieldingKeyGetter);
+    res = await sendRequestFromGetter(wsp, parachain_api, mrenclave, key, UserShieldingKeyGetter);
     console.log('UserShieldingKey getter returned', res.toHuman());
     // the returned res.value of the trustedGetter is of Option<> type
     // res.value should be `0x018022fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12`
@@ -114,15 +124,44 @@ async function runDirectCall() {
     //       console.log("k.unwrap", k.unwrap().toHex()); // still 0x018022fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12
     let k = parachain_api.createType('Option<Bytes>', hexToU8a(res.value.toHex()));
     assert.isTrue(k.isSome);
-    assert.equal(k.unwrap().toHex(), key_alice);
+    assert.equal(k.unwrap().toHex(), aesKey);
 
     // bob's shielding key should be none
     console.log('Send UserShieldingKey getter for bob ...');
     UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachain_api, bob);
-    res = await sendRequestFromTrustedGetter(wsp, parachain_api, mrenclave, key, UserShieldingKeyGetter);
+    res = await sendRequestFromGetter(wsp, parachain_api, mrenclave, key, UserShieldingKeyGetter);
     console.log('UserShieldingKey getter returned', res.toHuman());
     k = parachain_api.createType('Option<Bytes>', hexToU8a(res.value.toHex()));
     assert.isTrue(k.isNone);
+
+    sleep(10);
+
+    nonce = await getSidechainNonce(wsp, parachain_api, mrenclave, key, bob.address);
+
+    // set bob's shielding key, with wrapped bytes
+    let key_bob = '0x8378193a4ce64180814bd60591d1054a04dbc4da02afde453799cd6888ee0c6c';
+    hash = `0x${require('crypto').randomBytes(32).toString('hex')}`;
+    console.log('Send direct setUserShieldingKey call for bob, with wrapped bytes... hash:', hash);
+    setUserShieldingKeyCall = createSignedTrustedCallSetUserShieldingKey(
+        parachain_api,
+        mrenclave,
+        nonce,
+        bob,
+        key_bob,
+        hash,
+        true // with wrapped bytes
+    );
+    res = await sendRequestFromTrustedCall(wsp, parachain_api, mrenclave, key, setUserShieldingKeyCall);
+    console.log('setUserShieldingKey call returned', res.toHuman());
+
+    // verify that bob's key is set
+    console.log('Send UserShieldingKey getter for bob ...');
+    UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachain_api, bob);
+    res = await sendRequestFromGetter(wsp, parachain_api, mrenclave, key, UserShieldingKeyGetter);
+    console.log('UserShieldingKey getter returned', res.toHuman());
+    k = parachain_api.createType('Option<Bytes>', hexToU8a(res.value.toHex()));
+    assert.isTrue(k.isSome);
+    assert.equal(k.unwrap().toHex(), key_bob);
 }
 
 (async () => {

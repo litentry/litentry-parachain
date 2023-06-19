@@ -1,11 +1,14 @@
-import { Metadata } from '@polkadot/types';
-import { HexString } from '@polkadot/util/types';
 import { u8aToHex, u8aConcat } from '@polkadot/util';
 import { xxhashAsU8a } from '@polkadot/util-crypto';
 import { StorageEntryMetadataV14, SiLookupTypeId, StorageHasherV14 } from '@polkadot/types/interfaces';
 import { sendRequest } from '../call';
 import { blake2128Concat, twox64Concat, identity } from '../helpers';
-import { IntegrationTestContext, IdentityContext } from '../type-definitions';
+import type { IntegrationTestContext } from '../type-definitions';
+import type { PalletIdentityManagementTeeIdentityContext } from '@polkadot/types/lookup';
+import type { HexString } from '@polkadot/util/types';
+import type { Metadata } from '@polkadot/types';
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 const base58 = require('micro-base58');
 
@@ -94,28 +97,9 @@ export async function checkUserShieldingKeys(
     method: string,
     address: HexString
 ): Promise<string> {
+    await sleep(6000);
+
     const storageKey = await buildStorageHelper(context.metaData, pallet, method, address);
-
-    let base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
-
-    let request = {
-        jsonrpc: '2.0',
-        method: 'state_getStorage',
-        params: [base58mrEnclave, storageKey],
-        id: 1,
-    };
-    let resp = await sendRequest(context.tee, request, context.api);
-    return resp.value.toHex();
-}
-
-export async function checkUserChallengeCode(
-    context: IntegrationTestContext,
-    pallet: string,
-    method: string,
-    address: HexString,
-    identity: HexString
-): Promise<string> {
-    const storageKey = await buildStorageHelper(context.metaData, pallet, method, address, identity);
 
     let base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
 
@@ -135,7 +119,8 @@ export async function checkIDGraph(
     method: string,
     address: HexString,
     identity: HexString
-): Promise<IdentityContext> {
+): Promise<PalletIdentityManagementTeeIdentityContext> {
+    await sleep(6000);
     const storageKey = await buildStorageHelper(context.metaData, pallet, method, address, identity);
 
     let base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
@@ -147,6 +132,9 @@ export async function checkIDGraph(
         id: 1,
     };
     let resp = await sendRequest(context.tee, request, context.api);
-    const IDGraph = context.api.createType('IdentityContext', resp.value).toJSON() as IdentityContext;
+    const IDGraph = context.sidechainRegistry.createType(
+        'PalletIdentityManagementTeeIdentityContext',
+        resp.value
+    ) as unknown as PalletIdentityManagementTeeIdentityContext;
     return IDGraph;
 }

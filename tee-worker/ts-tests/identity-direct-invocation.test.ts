@@ -7,9 +7,9 @@ import { initIntegrationTestContext } from './common/utils';
 import {
     createSignedTrustedGetterUserShieldingKey,
     getTEEShieldingKey,
-    sendRequestFromTrustedGetter,
+    sendRequestFromGetter,
 } from './examples/direct-invocation/util'; // @fixme move to a better place
-import { IntegrationTestContext } from './common/type-definitions';
+import type { IntegrationTestContext } from './common/type-definitions';
 
 describe('Test Identity (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
@@ -34,7 +34,7 @@ describe('Test Identity (direct invocation)', function () {
             context.substrateWallet.alice
         );
 
-        const shieldingKeyGetResult = await sendRequestFromTrustedGetter(
+        const shieldingKeyGetResult = await sendRequestFromGetter(
             context.tee,
             context.api,
             context.mrEnclave,

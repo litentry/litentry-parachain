@@ -15,10 +15,11 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 #![allow(opaque_hidden_inferred_bound)]
 
-use crate::mock_tweet_payload;
+use crate::{UserShieldingKeyType, MOCK_VERIFICATION_NONCE};
+use ita_stf::helpers::get_expected_raw_message;
 use lc_data_providers::twitter_official::*;
-use litentry_primitives::{ChallengeCode, Identity, IdentityString, Web2Network};
-use sp_core::crypto::AccountId32 as AccountId;
+use litentry_primitives::{Identity, IdentityString, Web2Network};
+use sp_core::{sr25519::Pair as Sr25519Pair, Pair};
 use std::{collections::HashMap, sync::Arc};
 use warp::{http::Response, Filter};
 
@@ -26,34 +27,39 @@ pub(crate) fn query_tweet<F>(
 	func: Arc<F>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone
 where
-	F: Fn(&AccountId, &Identity) -> ChallengeCode + Send + Sync + 'static,
+	F: Fn(&Sr25519Pair) -> UserShieldingKeyType + Send + Sync + 'static,
 {
 	warp::get()
 		.and(warp::path!("2" / "tweets" / u32))
 		.and(warp::query::<HashMap<String, String>>())
-		.map(move |_tweet_id, p: HashMap<String, String>| {
-			log::info!("query_tweet");
+		.map(move |tweet_id: u32, p: HashMap<String, String>| {
+			println!("query_tweet, tweet_id: {}", tweet_id);
 			let default = String::default();
-			let ids = "100".to_string();
+			let ids = tweet_id.to_string();
 			let expansions = p.get("expansions").unwrap_or(&default);
 
 			if expansions.as_str() != "author_id" {
 				Response::builder().status(400).body(String::from("Error query"))
 			} else {
-				let account_id = AccountId::new([
-					212, 53, 147, 199, 21, 253, 211, 28, 97, 20, 26, 189, 4, 169, 159, 214, 130,
-					44, 133, 88, 133, 76, 205, 227, 154, 86, 132, 231, 165, 109, 162, 125,
-				]); // Alice
+				let alice = Sr25519Pair::from_string("//Alice", None).unwrap();
 				let twitter_identity = Identity::Web2 {
 					network: Web2Network::Twitter,
 					address: IdentityString::try_from("mock_user".as_bytes().to_vec()).unwrap(),
 				};
-				let chanllenge_code = func(&account_id, &twitter_identity);
-				log::info!(
-					"query_tweet, challenge_code:{:?}",
-					sp_core::hexdisplay::HexDisplay::from(&chanllenge_code)
-				);
-				let payload = mock_tweet_payload(&account_id, &twitter_identity, &chanllenge_code);
+				let key = func(&alice);
+				let payload = hex::encode(get_expected_raw_message(
+					&alice.public(),
+					&twitter_identity,
+					// the tweet_id is used as sidechain_nonce
+					// it's a bit tricky to get the nonce from the getter: you need to know
+					// the enclave signer account when launching the mock-server thread
+					// the enclaveApi doesn't provide such interface
+					tweet_id,
+					key,
+					MOCK_VERIFICATION_NONCE,
+				));
+
+				println!("query_tweet, payload: {}", payload);
 
 				let tweet = Tweet { author_id: "mock_user".into(), id: ids.clone(), text: payload };
 				let twitter_users = TwitterUsers {
