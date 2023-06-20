@@ -1,5 +1,5 @@
 import { ApiPromise } from '@polkadot/api';
-import { Event, EventRecord } from '@polkadot/types/interfaces';
+import { Event } from '@polkadot/types/interfaces';
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import Ajv from 'ajv';
 import { assert, expect } from 'chai';

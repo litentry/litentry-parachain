@@ -47,8 +47,8 @@ export function decryptWithAES(key: HexString, aesOutput: AESOutput, type: strin
         decipher.setAAD(aad);
         decipher.setAuthTag(authorTag);
 
-        let part1 = decipher.update(ciphertext.subarray(0, ciphertext.length - tagSize), undefined, type);
-        let part2 = decipher.final(type);
+        const part1 = decipher.update(ciphertext.subarray(0, ciphertext.length - tagSize), undefined, type);
+        const part2 = decipher.final(type);
 
         return `0x${part1 + part2}`;
     } else {

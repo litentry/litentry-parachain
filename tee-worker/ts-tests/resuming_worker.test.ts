@@ -83,7 +83,7 @@ async function launchWorker(
         fs.copyFileSync(`${binary_dir}/integritee-service`, `${working_dir}/integritee-service`);
         fs.closeSync(fs.openSync(`${working_dir}/spid.txt`, 'w'));
         fs.closeSync(fs.openSync(`${working_dir}/key.txt`, 'w'));
-        let data = JSON.stringify(
+        const data = JSON.stringify(
             {
                 twitter_official_url: 'http://localhost:19527',
                 twitter_litentry_url: 'http://localhost:19527',
@@ -100,7 +100,7 @@ async function launchWorker(
         fs.writeFileSync(`${working_dir}/worker-config-mock.json`, data);
     }
 
-    return new Promise<{ shard: string; process: ChildProcess }>(async (resolve, reject) => {
+    return new Promise<{ shard: string; process: ChildProcess }>((resolve) => {
         const job = spawn(`./integritee-service`, [command], {
             cwd: working_dir,
             shell: '/bin/sh',
@@ -163,7 +163,8 @@ async function waitWorkerProducingBlock(
     shard: string,
     atLeast: number
 ): Promise<number> {
-    return new Promise<number>(async (resolve, reject) => {
+    // eslint-disable-next-line no-async-promise-executor
+    return new Promise<number>(async (resolve) => {
         let block_number = 0;
         let start_block_number = 0;
         do {
@@ -186,22 +187,22 @@ async function waitWorkerProducingBlock(
 describe('Resume worker', function () {
     this.timeout(6000000);
 
-    let binary_dir = process.env.BINARY_DIR!;
-    let [_, node_url, node_port] = process.env.SUBSTRATE_END_POINT!.split(':');
-    let worker0_dir = path.join(__dirname, './tmp/worker0');
-    let worker1_dir = path.join(__dirname, './tmp/worker1');
-    let commands = genCommands(`ws:${node_url}`, node_port);
+    const binary_dir = process.env.BINARY_DIR!;
+    const [, node_url, node_port] = process.env.SUBSTRATE_END_POINT!.split(':');
+    const worker0_dir = path.join(__dirname, './tmp/worker0');
+    const worker1_dir = path.join(__dirname, './tmp/worker1');
+    const commands = genCommands(`ws:${node_url}`, node_port);
 
     step('One worker', async function () {
         // first launch worker
-        let { shard: shard, process: worker0 } = await launchWorker(
+        const { shard: shard, process: worker0 } = await launchWorker(
             'worker0',
             binary_dir,
             worker0_dir,
             commands.worker0.commands.first_launch,
             true
         );
-        let worker0_conn = await initWorkerConnection(`ws://localhost:${commands.worker0.untrusted_ws_port}`);
+        const worker0_conn = await initWorkerConnection(`ws://localhost:${commands.worker0.untrusted_ws_port}`);
         const current_block = await waitWorkerProducingBlock(worker0_conn, shard, 4);
         await killWorker(worker0);
         console.log('=========== worker stopped ==================');
@@ -221,14 +222,14 @@ describe('Resume worker', function () {
     step('Two workers & resume worker1', async function () {
         // 2 workers were actually launched
         // first launch worker1
-        let { shard: shard, process: worker1 } = await launchWorker(
+        const { shard: shard, process: worker1 } = await launchWorker(
             'worker1',
             binary_dir,
             worker1_dir,
             commands.worker1.commands.first_launch,
             true
         );
-        let worker1_conn = await initWorkerConnection(`ws://localhost:${commands.worker1.untrusted_ws_port}`);
+        const worker1_conn = await initWorkerConnection(`ws://localhost:${commands.worker1.untrusted_ws_port}`);
         const worker1_current_block = await waitWorkerProducingBlock(worker1_conn, shard, 4);
         await killWorker(worker1);
         console.log('=========== worker1 stopped ==================');

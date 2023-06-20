@@ -73,34 +73,39 @@ export async function buildIdentityTxs(
         const signer = Array.isArray(signers) ? signers[k] : signers;
         const identity = identities[k];
         let tx: SubmittableExtrinsic<ApiTypes>;
-        let nonce: number;
         const ciphertext_identity =
             identity && encryptWithTeeShieldingKey(teeShieldingKey, identity.toU8a()).toString('hex');
-        nonce = (await api.rpc.system.accountNextIndex(signer.address)).toNumber();
+        const nonce = (await api.rpc.system.accountNextIndex(signer.address)).toNumber();
 
         switch (method) {
-            case 'setUserShieldingKey':
+            case 'setUserShieldingKey': {
                 const ciphertext = encryptWithTeeShieldingKey(
                     context.teeShieldingKey,
                     hexToU8a('0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12')
                 ).toString('hex');
                 tx = context.api.tx.identityManagement.setUserShieldingKey(context.mrEnclave, `0x${ciphertext}`);
                 break;
+            }
             case 'linkIdentity':
-                const data = validations![k];
-                const validation = api.createType('LitentryValidationData', data).toU8a();
-                const ciphertext_validation = encryptWithTeeShieldingKey(teeShieldingKey, validation).toString('hex');
-                tx = api.tx.identityManagement.linkIdentity(
-                    mrEnclave,
-                    signer.address,
-                    `0x${ciphertext_identity}`,
-                    `0x${ciphertext_validation}`,
-                    keyNonce
-                );
-                break;
+                {
+                    const data = validations![k];
+                    const validation = api.createType('LitentryValidationData', data).toU8a();
+                    const ciphertext_validation = encryptWithTeeShieldingKey(teeShieldingKey, validation).toString('hex');
+
+                    tx = api.tx.identityManagement.linkIdentity(
+                        mrEnclave,
+                        signer.address,
+                        `0x${ciphertext_identity}`,
+                        `0x${ciphertext_validation}`,
+                        keyNonce
+                    );
+                    break;
+                }
             case 'removeIdentity':
-                tx = api.tx.identityManagement.removeIdentity(mrEnclave, `0x${ciphertext_identity}`);
-                break;
+                {
+                    tx = api.tx.identityManagement.removeIdentity(mrEnclave, `0x${ciphertext_identity}`);
+                    break;
+                }
             default:
                 throw new Error(`Invalid method: ${method}`);
         }
@@ -116,7 +121,7 @@ export async function handleIdentityEvents(
     events: any[],
     type: 'UserShieldingKeySet' | 'IdentityLinked' | 'IdentityRemoved' | 'Failed'
 ): Promise<IdentityGenericEvent[]> {
-    let results: IdentityGenericEvent[] = [];
+    const results: IdentityGenericEvent[] = [];
 
     for (let index = 0; index < events.length; index++) {
         switch (type) {
@@ -162,7 +167,7 @@ export function parseIdGraph(
     aesKey: HexString
 ): [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][] {
     const decrypted_idGraph = decryptWithAES(aesKey, idGraph_output, 'hex');
-    let idGraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][] =
+    const idGraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][] =
         sidechainRegistry.createType(
             'Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
             decrypted_idGraph
@@ -189,13 +194,13 @@ export function createIdentityEvent(
     identityString?: HexString,
     idGraphString?: HexString
 ): IdentityGenericEvent {
-    let identity: LitentryPrimitivesIdentity =
+    const identity: LitentryPrimitivesIdentity =
         identityString! &&
         (sidechainRegistry.createType(
             'LitentryPrimitivesIdentity',
             identityString
         ) as unknown as LitentryPrimitivesIdentity);
-    let idGraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][] =
+    const idGraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][] =
         idGraphString! &&
         (sidechainRegistry.createType(
             'Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
@@ -218,7 +223,7 @@ export async function buildValidations(
 ): Promise<LitentryValidationData[]> {
     let signature_ethereum: HexString;
     let signature_substrate: Uint8Array;
-    let validations: LitentryValidationData[] = [];
+    const validations: LitentryValidationData[] = [];
 
     for (let index = 0; index < identities.length; index++) {
         const substrateSigner = Array.isArray(substrateSigners) ? substrateSigners[index] : substrateSigners;

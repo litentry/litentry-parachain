@@ -14,10 +14,10 @@ export function getSubstrateSigner(): {
     charlie: KeyringPair;
     eve: KeyringPair;
 } {
-    let Alice = keyring.addFromUri('//Alice', { name: 'Alice' });
-    let Bob = keyring.addFromUri('//Bob', { name: 'Bob' });
-    let Charlie = keyring.addFromUri('//Charlie', { name: 'Charlie' });
-    let Eve = keyring.addFromUri('//Eve', { name: 'Eve' });
+    const Alice = keyring.addFromUri('//Alice', { name: 'Alice' });
+    const Bob = keyring.addFromUri('//Bob', { name: 'Bob' });
+    const Charlie = keyring.addFromUri('//Charlie', { name: 'Charlie' });
+    const Eve = keyring.addFromUri('//Eve', { name: 'Eve' });
     const signers = {
         alice: Alice,
         bob: Bob,
@@ -35,7 +35,7 @@ export function getEthereumSigner(): {
 } {
     const secp256k1PrivateKeyLength = 32;
     const names = ['alice', 'bob', 'charlie', 'dave', 'eve'];
-    let keys = new Array<string>();
+    const keys = new Array<string>();
     for (const name of names) {
         const result = Buffer.alloc(secp256k1PrivateKeyLength);
         result.fill(name, secp256k1PrivateKeyLength - Buffer.from(name, 'utf8').length);

@@ -12,10 +12,9 @@ import { RequestEvent } from './type-definitions';
 
 import { u8aToHex } from '@polkadot/util';
 //transactions utils
-export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrinsic<ApiTypes>, signer: KeyringPair) {
-    return new Promise<SubmittableResult>(async (resolve, reject) => {
-        const nonce = await api.rpc.system.accountNextIndex(signer.address);
-        await tx.signAndSend(signer, { nonce }, (result) => {
+export async function sendTxUntilInBlock(tx: SubmittableExtrinsic<ApiTypes>, signer: KeyringPair) {
+    return new Promise<SubmittableResult>((resolve, reject) => {
+        tx.signAndSend(signer, (result) => {
             if (result.status.isInBlock) {
                 console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
                 resolve(result);
@@ -78,6 +77,7 @@ export async function listenEvent(
     signers: HexString[],
     listenTimeoutInBlockNumber: number = defaultListenTimeoutInBlockNumber
 ) {
+    // eslint-disable-next-line no-async-promise-executor
     return new Promise<Event[]>(async (resolve, reject) => {
         let startBlock = 0;
         let events: EventRecord[] = [];
@@ -89,7 +89,7 @@ export async function listenEvent(
                 return;
             }
             console.log(`\n--------- block #${header.number}, hash ${header.hash} ---------\n`);
-            const [signedBlock, apiAt] = await Promise.all([api.rpc.chain.getBlock(header.hash), api.at(header.hash)]);
+            const [, apiAt] = await Promise.all([api.rpc.chain.getBlock(header.hash), api.at(header.hash)]);
 
             const records: EventRecord[] = (await apiAt.query.system.events()) as any;
             const signerToIndexMap: Record<string, number> = {};
@@ -197,7 +197,7 @@ export async function multiAccountTxSender(
     events: string[],
     listenTimeoutInBlockNumber?: number
 ): Promise<Event[]> {
-    let signers_hex: HexString[] = [];
+    const signers_hex: HexString[] = [];
     if (Array.isArray(signers)) {
         for (let index = 0; index < signers.length; index++) {
             signers_hex.push(u8aToHex(signers[index].addressRaw));

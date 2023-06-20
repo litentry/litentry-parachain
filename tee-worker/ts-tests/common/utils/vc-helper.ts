@@ -6,7 +6,7 @@ export async function handleVcEvents(
     events: any[],
     method: 'VCIssued' | 'VCDisabled' | 'VCRevoked' | 'Failed'
 ): Promise<any> {
-    let results: any = [];
+    const results: any = [];
     for (let k = 0; k < events.length; k++) {
         switch (method) {
             case 'VCIssued':

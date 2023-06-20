@@ -17,8 +17,6 @@ import { aesKey, keyNonce } from '../../common/call';
 import { Metadata, TypeRegistry } from '@polkadot/types';
 import sidechainMetaData from '../../litentry-sidechain-metadata.json';
 import { hexToU8a } from '@polkadot/util';
-import type { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
-import type { LitentryValidationData } from '../../parachain-interfaces/identity/types';
 import { assert } from 'chai';
 
 // in order to handle self-signed certificates we need to turn off the validation
@@ -55,7 +53,7 @@ async function runDirectCall() {
     });
     await wsp.open();
 
-    let key = await getTEEShieldingKey(wsp, parachain_api);
+    const key = await getTEEShieldingKey(wsp, parachain_api);
 
     const alice: KeyringPair = keyring.addFromUri('//Alice', { name: 'Alice' });
     const bob: KeyringPair = keyring.addFromUri('//Bob', { name: 'Bob' });
@@ -64,7 +62,9 @@ async function runDirectCall() {
     let nonce = await getSidechainNonce(wsp, parachain_api, mrenclave, key, alice.address);
 
     // a hardcoded AES key which is used overall in tests - maybe we need to put it in a common place
-    const key_alice = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
+    // const key_alice = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
+
+
     // similar to `reqExtHash` in indirect calls, we need some "identifiers" to pair the response
     // with the request. Ideally it's the hash of the trusted operation, but we need it before constructing
     // a trusted call, hence a random number is used here - better ideas are welcome
@@ -89,7 +89,7 @@ async function runDirectCall() {
 
     console.log('Send direct createIdentity call... hash:', hash);
     const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2', context);
-    let linkIdentityCall = createSignedTrustedCallLinkIdentity(
+    const linkIdentityCall = createSignedTrustedCallLinkIdentity(
         parachain_api,
         mrenclave,
         nonce,
@@ -139,7 +139,7 @@ async function runDirectCall() {
     nonce = await getSidechainNonce(wsp, parachain_api, mrenclave, key, bob.address);
 
     // set bob's shielding key, with wrapped bytes
-    let key_bob = '0x8378193a4ce64180814bd60591d1054a04dbc4da02afde453799cd6888ee0c6c';
+    const key_bob = '0x8378193a4ce64180814bd60591d1054a04dbc4da02afde453799cd6888ee0c6c';
     hash = `0x${require('crypto').randomBytes(32).toString('hex')}`;
     console.log('Send direct setUserShieldingKey call for bob, with wrapped bytes... hash:', hash);
     setUserShieldingKeyCall = createSignedTrustedCallSetUserShieldingKey(

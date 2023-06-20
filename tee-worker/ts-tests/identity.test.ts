@@ -6,7 +6,6 @@ import {
     checkIDGraph,
     buildIdentityHelper,
     buildIdentityTxs,
-    handleIdentityEvents,
     buildValidations,
     assertInitialIDGraphCreated,
     checkUserShieldingKeys,
@@ -23,7 +22,6 @@ import type { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
 import type { LitentryValidationData } from './parachain-interfaces/identity/types';
 import type { TransactionSubmit } from './common/type-definitions';
 import type { HexString } from '@polkadot/util/types';
-import { Event } from '@polkadot/types/interfaces';
 import { ethers } from 'ethers';
 
 const substrateExtensionIdentity = {
@@ -35,15 +33,13 @@ const substrateExtensionIdentity = {
 
 describeLitentry('Test Identity', 0, (context) => {
     const errorAesKey = '0xError';
-    const errorCiphertext = '0xError';
     // random wrong msg
     const wrong_msg = '0x693d9131808e7a8574c7ea5eb7813bdf356223263e61fa8fe2ee8e434508bc75';
-    var signature_substrate;
+    let signature_substrate;
     let alice_identities: LitentryPrimitivesIdentity[] = [];
     let bob_identities: LitentryPrimitivesIdentity[] = [];
     let alice_validations: LitentryValidationData[] = [];
     let bob_validations: LitentryValidationData[] = [];
-    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
     step('check user sidechain storage before create', async function () {
         const resp_shieldingKey = await checkUserShieldingKeys(
@@ -56,9 +52,9 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('Invalid user shielding key', async function () {
-        let identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Ethereum', 'Evm', context);
+        const identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Ethereum', 'Evm', context);
         // use empty `alice_validations`, the `UserShieldingKeyNotFound` error should be emitted before verification
-        let txs = await buildIdentityTxs(
+        const txs = await buildIdentityTxs(
             context,
             context.substrateWallet.alice,
             [identity],
@@ -66,20 +62,20 @@ describeLitentry('Test Identity', 0, (context) => {
             alice_validations
         );
 
-        let resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
+        const resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
             'LinkIdentityFailed',
         ]);
         await checkErrorDetail(resp_events, 'UserShieldingKeyNotFound');
     });
 
     step('set user shielding key', async function () {
-        let [alice_txs] = (await buildIdentityTxs(
+        const [alice_txs] = (await buildIdentityTxs(
             context,
             [context.substrateWallet.alice],
             [],
             'setUserShieldingKey'
         )) as TransactionSubmit[];
-        let [bob_txs] = (await buildIdentityTxs(
+        const [bob_txs] = (await buildIdentityTxs(
             context,
             [context.substrateWallet.bob],
             [],
@@ -195,7 +191,7 @@ describeLitentry('Test Identity', 0, (context) => {
             ...alice_substrate_validations,
         ];
 
-        let alice_txs = await buildIdentityTxs(
+        const alice_txs = await buildIdentityTxs(
             context,
             context.substrateWallet.alice,
             alice_identities,
@@ -203,7 +199,7 @@ describeLitentry('Test Identity', 0, (context) => {
             alice_validations
         );
 
-        let alice_resp_events = await sendTxsWithUtility(
+        const alice_resp_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
             alice_txs,
@@ -211,7 +207,6 @@ describeLitentry('Test Identity', 0, (context) => {
             ['IdentityLinked']
         );
 
-        const alice_data = await handleIdentityEvents(context, aesKey, alice_resp_events, 'IdentityLinked');
 
         assertIdentityLinked(context, context.substrateWallet.alice, alice_resp_events, alice_identities);
 
@@ -248,7 +243,7 @@ describeLitentry('Test Identity', 0, (context) => {
         ) as unknown as LitentryValidationData;
         bob_validations = [bob_substrate_validation];
 
-        let bob_txs = await buildIdentityTxs(
+        const bob_txs = await buildIdentityTxs(
             context,
             context.substrateWallet.bob,
             bob_identities,
@@ -256,7 +251,7 @@ describeLitentry('Test Identity', 0, (context) => {
             bob_validations
         );
 
-        let bob_resp_events = await sendTxsWithUtility(
+        const bob_resp_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.bob,
             bob_txs,
@@ -287,14 +282,14 @@ describeLitentry('Test Identity', 0, (context) => {
 
         // link twitter identity with ethereum validation data
         // the `InvalidIdentity` error should be emitted prior to `AlreadyLinked` error
-        let alice_txs = await buildIdentityTxs(
+        const alice_txs = await buildIdentityTxs(
             context,
             context.substrateWallet.alice,
             [twitter_identity],
             'linkIdentity',
             [ethereum_validation]
         );
-        let alice_resp_events = await sendTxsWithUtility(
+        const alice_resp_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
             alice_txs,
@@ -328,14 +323,14 @@ describeLitentry('Test Identity', 0, (context) => {
             ethereumValidationData
         ) as unknown as LitentryValidationData;
         context;
-        let alice_txs = await buildIdentityTxs(
+        const alice_txs = await buildIdentityTxs(
             context,
             context.substrateWallet.alice,
             [ethereum_identity],
             'linkIdentity',
             [ethereum_validation_data]
         );
-        let alice_resp_events = await sendTxsWithUtility(
+        const alice_resp_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
             alice_txs,
@@ -350,13 +345,13 @@ describeLitentry('Test Identity', 0, (context) => {
 
     step('remove identities', async function () {
         // Alice remove all identities
-        let alice_txs = await buildIdentityTxs(
+        const alice_txs = await buildIdentityTxs(
             context,
             context.substrateWallet.alice,
             alice_identities,
             'removeIdentity'
         );
-        let alice_resp_remove_events = await sendTxsWithUtility(
+        const alice_resp_remove_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
             alice_txs,
@@ -365,8 +360,8 @@ describeLitentry('Test Identity', 0, (context) => {
         );
 
         // Bob remove substrate identities
-        let bob_txs = await buildIdentityTxs(context, context.substrateWallet.bob, bob_identities, 'removeIdentity');
-        let bob_resp_remove_events = await sendTxsWithUtility(
+        const bob_txs = await buildIdentityTxs(context, context.substrateWallet.bob, bob_identities, 'removeIdentity');
+        const bob_resp_remove_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.bob,
             bob_txs,
@@ -378,7 +373,7 @@ describeLitentry('Test Identity', 0, (context) => {
         assertIdentityRemoved(context, context.substrateWallet.alice, alice_resp_remove_events);
 
         // Bob check identity
-        assertIdentityRemoved(context, context.substrateWallet.bob, alice_resp_remove_events);
+        assertIdentityRemoved(context, context.substrateWallet.bob, bob_resp_remove_events);
     });
 
     step('check IDGraph after removeIdentity', async function () {
@@ -397,13 +392,13 @@ describeLitentry('Test Identity', 0, (context) => {
             context
         );
 
-        let prime_txs = await buildIdentityTxs(
+        const prime_txs = await buildIdentityTxs(
             context,
             context.substrateWallet.alice,
             [substratePrimeIdentity],
             'removeIdentity'
         );
-        let prime_resp_events = await sendTxsWithUtility(
+        const prime_resp_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
             prime_txs,
@@ -417,13 +412,13 @@ describeLitentry('Test Identity', 0, (context) => {
     step('remove error identities', async function () {
         // Remove a nonexistent identity
         // context.substrateWallet.alice has aleady removed all identities in step('remove identities')
-        let alice_remove_txs = await buildIdentityTxs(
+        const alice_remove_txs = await buildIdentityTxs(
             context,
             context.substrateWallet.alice,
             alice_identities,
             'removeIdentity'
         );
-        let alice_resp_remove_events = await sendTxsWithUtility(
+        const alice_resp_remove_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
             alice_remove_txs,
@@ -434,13 +429,13 @@ describeLitentry('Test Identity', 0, (context) => {
         await checkErrorDetail(alice_resp_remove_events, 'IdentityNotExist');
 
         // remove a wrong identity (alice) for charlie
-        let charlie_remove_txs = await buildIdentityTxs(
+        const charlie_remove_txs = await buildIdentityTxs(
             context,
             context.substrateWallet.charlie,
             alice_identities,
             'removeIdentity'
         );
-        let charile_resp_remove_events = await sendTxsWithUtility(
+        const charile_resp_remove_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.charlie,
             charlie_remove_txs,
@@ -460,7 +455,7 @@ describeLitentry('Test Identity', 0, (context) => {
             `0x${error_ciphertext}`
         );
 
-        let resp_error_events = await sendTxsWithUtility(
+        const resp_error_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
             [{ tx: error_tx }] as any,

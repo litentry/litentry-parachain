@@ -5,7 +5,6 @@ import {
     buildIdentityHelper,
     buildValidations,
     checkErrorDetail,
-    checkIDGraph,
 } from './common/utils';
 import { aesKey } from './common/call';
 import { u8aToHex } from '@polkadot/util';
@@ -18,9 +17,9 @@ import type { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
 import type { LitentryValidationData } from './parachain-interfaces/identity/types';
 
 describeLitentry('Test Batch Utility', 0, (context) => {
-    let identities: LitentryPrimitivesIdentity[] = [];
+    const identities: LitentryPrimitivesIdentity[] = [];
     let validations: LitentryValidationData[] = [];
-    var ethereumSigners: ethers.Wallet[] = [];
+    let ethereumSigners: ethers.Wallet[] = [];
 
     step('generate web3 wallets', async function () {
         const web3Wallets = await generateWeb3Wallets(10);
@@ -30,7 +29,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
     });
 
     step('set user shielding key', async function () {
-        let [alice_txs] = await buildIdentityTxs(context, [context.substrateWallet.alice], [], 'setUserShieldingKey');
+        const [alice_txs] = await buildIdentityTxs(context, [context.substrateWallet.alice], [], 'setUserShieldingKey');
         const resp_events = await multiAccountTxSender(
             context,
             [alice_txs],
@@ -70,15 +69,15 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             'linkIdentity',
             validations
         );
-        let resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
+        const resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
             'IdentityLinked',
         ]);
         assertIdentityLinked(context, context.substrateWallet.alice, resp_events, identities);
     });
 
     step('batch test: remove identities', async function () {
-        let txs = await buildIdentityTxs(context, context.substrateWallet.alice, identities, 'removeIdentity');
-        let resp_remove_events = await sendTxsWithUtility(
+        const txs = await buildIdentityTxs(context, context.substrateWallet.alice, identities, 'removeIdentity');
+        const resp_remove_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
             txs,
@@ -90,8 +89,8 @@ describeLitentry('Test Batch Utility', 0, (context) => {
     });
 
     step('batch test: remove error identities', async function () {
-        let txs = await buildIdentityTxs(context, context.substrateWallet.alice, identities, 'removeIdentity');
-        let resp_remove_events = await sendTxsWithUtility(
+        const txs = await buildIdentityTxs(context, context.substrateWallet.alice, identities, 'removeIdentity');
+        const resp_remove_events = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
             txs,

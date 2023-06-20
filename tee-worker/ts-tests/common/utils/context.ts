@@ -9,7 +9,7 @@ import { getSidechainMetadata } from '../call';
 import { getEthereumSigner, getSubstrateSigner } from '../helpers';
 import type { IntegrationTestContext, EnclaveResult, Web3Wallets } from '../type-definitions';
 import { default as teeTypes } from '../../parachain-interfaces/identity/definitions';
-const crypto = require('crypto');
+import crypto from 'crypto';
 
 // maximum block number that we wait in listening events before we timeout
 export const defaultListenTimeoutInBlockNumber = 10;

@@ -1,7 +1,6 @@
 import { step } from 'mocha-steps';
 import { checkVc, describeLitentry, encryptWithTeeShieldingKey } from './common/utils';
 import { hexToU8a } from '@polkadot/util';
-import { IndexingNetwork } from './common/type-definitions';
 import { handleVcEvents } from './common/utils';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import { assert } from 'chai';
@@ -12,16 +11,6 @@ import { multiAccountTxSender } from './common/transactions';
 import { aesKey } from './common/call';
 import { SubmittableResult } from '@polkadot/api';
 
-const all_assertions = <Assertion>{
-    A1: 'A1',
-    A2: ['A2'],
-    A3: ['A3', 'A3', 'A3'],
-    A4: '10.001',
-    A7: '10.002',
-    A8: [IndexingNetwork.Litentry],
-    A10: '10.003',
-    A11: '10.004',
-};
 const assertion_A1: Assertion = {
     A1: 'A1',
 };
@@ -30,10 +19,10 @@ const assertion_A1: Assertion = {
 //1.The "number" parameter in describeLitentry represents the number of accounts generated, including Substrate wallets and Ethereum wallets.If you want to use a large number of accounts for testing, you can modify this parameter.
 //2.Each time the test code is executed, new wallet account will be used.
 describeLitentry('multiple accounts test', 2, async (context) => {
-    var substrateSigners: KeyringPair[] = [];
-    var vcIndexList: HexString[] = [];
+    let substrateSigners: KeyringPair[] = [];
+    const vcIndexList: HexString[] = [];
     // If want to test other assertions with multiple accounts,just need to make changes here.
-    let assertion_type = assertion_A1;
+    const assertion_type = assertion_A1;
     step('init', async () => {
         substrateSigners = context.web3Signers.map((web3Signer) => {
             return web3Signer.substrateWallet;
@@ -64,7 +53,7 @@ describeLitentry('multiple accounts test', 2, async (context) => {
     //test with multiple accounts
     step('test set usershieldingkey with multiple accounts', async () => {
         const ciphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, hexToU8a(aesKey)).toString('hex');
-        let txs: TransactionSubmit[] = [];
+        const txs: TransactionSubmit[] = [];
         for (let i = 0; i < substrateSigners.length; i++) {
             const tx = context.api.tx.identityManagement.setUserShieldingKey(context.mrEnclave, `0x${ciphertext}`);
             const nonce = (await context.api.rpc.system.accountNextIndex(substrateSigners[i].address)).toNumber();
@@ -72,18 +61,18 @@ describeLitentry('multiple accounts test', 2, async (context) => {
         }
         const resp_events = await multiAccountTxSender(context, txs, substrateSigners, 'identityManagement', [
             'UserShieldingKeySet',
-        ]);
+        ], 15);
         assert.equal(resp_events.length, substrateSigners.length, 'set usershieldingkey check fail');
     });
 
     step('test requestVc with multiple accounts', async () => {
-        let txs: TransactionSubmit[] = [];
+        const txs: TransactionSubmit[] = [];
         for (let i = 0; i < substrateSigners.length; i++) {
             const tx = context.api.tx.vcManagement.requestVc(context.mrEnclave, assertion_type);
             const nonce = (await context.api.rpc.system.accountNextIndex(substrateSigners[i].address)).toNumber();
             txs.push({ tx, nonce });
         }
-        const resp_events = await multiAccountTxSender(context, txs, substrateSigners, 'vcManagement', ['VCIssued']);
+        const resp_events = await multiAccountTxSender(context, txs, substrateSigners, 'vcManagement', ['VCIssued'], 15);
 
         const event_data = await handleVcEvents(aesKey, resp_events, 'VCIssued');
 
@@ -94,10 +83,10 @@ describeLitentry('multiple accounts test', 2, async (context) => {
             const vcProof = vcObj.proof;
 
             const registry = (await context.api.query.vcManagement.vcRegistry(event_data[k].index)) as any;
-            assert.equal(registry.toHuman()!['status'], 'Active', 'check registry error');
+            assert.equal(registry.toHuman()['status'], 'Active', 'check registry error');
 
             const vcHash = blake2AsHex(Buffer.from(vcString));
-            assert.equal(vcHash, registry.toHuman()!['hash_'], 'check vc json hash error');
+            assert.equal(vcHash, registry.toHuman()['hash_'], 'check vc json hash error');
 
             //check vc
             const vcValid = await checkVc(vcObj, event_data[k].index, vcProof, context.api);
@@ -107,13 +96,13 @@ describeLitentry('multiple accounts test', 2, async (context) => {
     });
 
     step('test disableVc with multiple accounts', async () => {
-        let txs: TransactionSubmit[] = [];
+        const txs: TransactionSubmit[] = [];
         for (let i = 0; i < substrateSigners.length; i++) {
             const tx = context.api.tx.vcManagement.disableVc(vcIndexList[i]);
             const nonce = (await context.api.rpc.system.accountNextIndex(substrateSigners[i].address)).toNumber();
             txs.push({ tx, nonce });
         }
-        const resp_events = await multiAccountTxSender(context, txs, substrateSigners, 'vcManagement', ['VCDisabled']);
+        const resp_events = await multiAccountTxSender(context, txs, substrateSigners, 'vcManagement', ['VCDisabled'], 15);
 
         assert.equal(resp_events.length, vcIndexList.length, 'disable vc check fail');
         const event_datas = await handleVcEvents(aesKey, resp_events, 'VCDisabled');
@@ -121,18 +110,18 @@ describeLitentry('multiple accounts test', 2, async (context) => {
             console.log('disableVc index:', k);
             assert.equal(event_datas[k], vcIndexList[k], 'check index error');
             const registry = (await context.api.query.vcManagement.vcRegistry(vcIndexList[k])) as any;
-            assert.equal(registry.toHuman()!['status'], 'Disabled');
+            assert.equal(registry.toHuman()['status'], 'Disabled');
         }
     });
 
     step('test revokeVc with multiple accounts', async () => {
-        let txs: TransactionSubmit[] = [];
+        const txs: TransactionSubmit[] = [];
         for (let i = 0; i < substrateSigners.length; i++) {
             const tx = context.api.tx.vcManagement.revokeVc(vcIndexList[i]);
             const nonce = (await context.api.rpc.system.accountNextIndex(substrateSigners[i].address)).toNumber();
             txs.push({ tx, nonce });
         }
-        const resp_events = await multiAccountTxSender(context, txs, substrateSigners, 'vcManagement', ['VCRevoked']);
+        const resp_events = await multiAccountTxSender(context, txs, substrateSigners, 'vcManagement', ['VCRevoked'], 15);
         assert.equal(resp_events.length, vcIndexList.length, 'revoke vc check fail');
         const event_datas = await handleVcEvents(aesKey, resp_events, 'VCRevoked');
         console.log('event_datas', event_datas);

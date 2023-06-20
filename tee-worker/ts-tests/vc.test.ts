@@ -33,8 +33,8 @@ const assertion_A1: Assertion = {
 //It doesn't make much difference test A1 only vs test A1 - A11, one VC type is enough.
 //So only use A1 to trigger the wrong event
 describeLitentry('VC test', 0, async (context) => {
-    var indexList: HexString[] = [];
-    var vcKeys: string[] = ['A1'];
+    const indexList: HexString[] = [];
+    const vcKeys: string[] = ['A1', 'A2', 'A3', 'A4', 'A7', 'A8', 'A10', 'A11'];
     step('check user sidechain storage before create', async function () {
         const resp_shieldingKey = await checkUserShieldingKeys(
             context,
@@ -45,7 +45,7 @@ describeLitentry('VC test', 0, async (context) => {
         assert.equal(resp_shieldingKey, '0x', 'resp_shieldingKey should be empty before set');
     });
     step('set user shielding key', async function () {
-        let [alice_txs] = (await buildIdentityTxs(
+        const [alice_txs] = (await buildIdentityTxs(
             context,
             [context.substrateWallet.alice],
             [],
@@ -81,7 +81,7 @@ describeLitentry('VC test', 0, async (context) => {
     });
     step('Request VC', async () => {
         //request all vc
-        let txs: any = [];
+        const txs: any = [];
         for (let index = 0; index < vcKeys.length; index++) {
             const key = vcKeys[index];
             const tx = context.api.tx.vcManagement.requestVc(context.mrEnclave, {
@@ -132,7 +132,7 @@ describeLitentry('VC test', 0, async (context) => {
         await checkErrorDetail(resp_error_events, 'UserShieldingKeyNotFound');
     });
     step('Disable VC', async () => {
-        let txs: any = [];
+        const txs: any = [];
         for (let i = 0; i < indexList.length; i++) {
             const tx = context.api.tx.vcManagement.disableVc(indexList[i]);
             txs.push({ tx });
@@ -163,7 +163,7 @@ describeLitentry('VC test', 0, async (context) => {
     });
 
     step('Revoke VC', async () => {
-        let txs: any = [];
+        const txs: any = [];
         for (let i = 0; i < indexList.length; i++) {
             const tx = context.api.tx.vcManagement.revokeVc(indexList[i]);
             txs.push({ tx });

@@ -28,7 +28,7 @@ export type EnclaveResult = {
     mrEnclave: `0x${string}`;
     shieldingKey: `0x${string}`;
     vcPubkey: `0x${string}`;
-    sgxMetadata: {};
+    sgxMetadata: object;
 };
 export type PubicKeyJson = {
     n: Uint8Array;

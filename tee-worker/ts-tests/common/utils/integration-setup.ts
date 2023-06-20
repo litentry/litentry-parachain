@@ -12,7 +12,7 @@ export function describeLitentry(title: string, walletsNumber: number, cb: (cont
         // Set timeout to 6000 seconds
         this.timeout(6000000);
 
-        let context: IntegrationTestContext = {
+        const context: IntegrationTestContext = {
             mrEnclave: '0x11' as HexString,
             api: {} as ApiPromise,
             tee: {} as WebSocketAsPromised,
@@ -45,7 +45,7 @@ export function describeLitentry(title: string, walletsNumber: number, cb: (cont
             context.chainID = tmp.chainID;
         });
 
-        after(async function () {});
+        after(() => Promise.resolve());
 
         cb(context);
     });

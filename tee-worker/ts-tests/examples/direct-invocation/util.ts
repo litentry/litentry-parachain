@@ -32,7 +32,7 @@ async function sendRequest(
 ): Promise<WorkerRpcReturnValue> {
     const p = new Promise<WorkerRpcReturnValue>((resolve) =>
         wsClient.onMessage.addListener((data) => {
-            let result = JSON.parse(data.toString()).result;
+            const result = JSON.parse(data.toString()).result;
             const res: WorkerRpcReturnValue = api.createType('WorkerRpcReturnValue', result) as any;
 
             if (res.status.isError) {
@@ -73,7 +73,7 @@ export const createSignedTrustedCall = (
     mrenclave: string,
     nonce: Codec,
     params: any,
-    withWrappedBytes: boolean = false
+    withWrappedBytes = false
 ) => {
     const [variant, argType] = trustedCall;
     const call = parachain_api.createType('TrustedCall', {
@@ -153,7 +153,7 @@ export function createSignedTrustedCallSetUserShieldingKey(
     who: KeyringPair,
     key: string,
     hash: string,
-    withWrappedBytes: boolean = false
+    withWrappedBytes = false
 ) {
     return createSignedTrustedCall(
         parachain_api,
@@ -190,7 +190,7 @@ export function createSignedTrustedCallLinkIdentity(
 }
 
 export function createSignedTrustedGetterUserShieldingKey(parachain_api: ApiPromise, who: KeyringPair) {
-    let getterSigned = createSignedTrustedGetter(
+    const getterSigned = createSignedTrustedGetter(
         parachain_api,
         ['user_shielding_key', '(AccountId)'],
         who,
@@ -206,8 +206,8 @@ export const getSidechainNonce = async (
     teeShieldingKey: KeyObject,
     who: string
 ) => {
-    let getterPublic = createPublicGetter(parachain_api, ['nonce', '(AccountId)'], who);
-    let getter = parachain_api.createType('Getter', { public: getterPublic });
+    const getterPublic = createPublicGetter(parachain_api, ['nonce', '(AccountId)'], who);
+    const getter = parachain_api.createType('Getter', { public: getterPublic });
     const nonce = await sendRequestFromGetter(wsp, parachain_api, mrenclave, teeShieldingKey, getter);
     const NonceValue = decodeNonce(nonce.value.toHex());
     return parachain_api.createType('Index', NonceValue);
@@ -224,7 +224,7 @@ export const sendRequestFromTrustedCall = async (
     const trustedOperation = parachain_api.createType('TrustedOperation', { direct_call: call });
     console.log('top: ', trustedOperation.toJSON());
     // create the request parameter
-    let requestParam = await createRequest(
+    const requestParam = await createRequest(
         wsp,
         parachain_api,
         mrenclave,
@@ -232,7 +232,7 @@ export const sendRequestFromTrustedCall = async (
         false,
         trustedOperation.toU8a()
     );
-    let request = {
+    const request = {
         jsonrpc: '2.0',
         method: 'author_submitAndWatchExtrinsic',
         params: [u8aToHex(requestParam)],
@@ -250,8 +250,8 @@ export const sendRequestFromGetter = async (
 ): Promise<WorkerRpcReturnValue> => {
     // important: we don't create the `TrustedOperation` type here, but use `Getter` type directly
     //            this is what `state_executeGetter` expects in rust
-    let requestParam = await createRequest(wsp, parachain_api, mrenclave, teeShieldingKey, true, getter.toU8a());
-    let request = {
+    const requestParam = await createRequest(wsp, parachain_api, mrenclave, teeShieldingKey, true, getter.toU8a());
+    const request = {
         jsonrpc: '2.0',
         method: 'state_executeGetter',
         params: [u8aToHex(requestParam)],
@@ -262,8 +262,8 @@ export const sendRequestFromGetter = async (
 
 // get TEE's shielding key directly via RPC
 export const getTEEShieldingKey = async (wsp: WebSocketAsPromised, parachain_api: ApiPromise) => {
-    let request = { jsonrpc: '2.0', method: 'author_getShieldingKey', params: [], id: 1 };
-    let res = await sendRequest(wsp, request, parachain_api);
+    const request = { jsonrpc: '2.0', method: 'author_getShieldingKey', params: [], id: 1 };
+    const res = await sendRequest(wsp, request, parachain_api);
     const k = JSON.parse(decodeRpcBytesAsString(res.value)) as PubicKeyJson;
 
     return createPublicKey({
