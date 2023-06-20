@@ -20,9 +20,7 @@ extern crate sgx_tstd as std;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate rand_sgx as rand;
 
-use crate::NONCE_LEN;
-
-use crate::{AesOutput, UserShieldingKeyNonceType, UserShieldingKeyType};
+use crate::{AesOutput, UserShieldingKeyNonceType, UserShieldingKeyType, NONCE_LEN};
 
 use rand::Rng;
 
