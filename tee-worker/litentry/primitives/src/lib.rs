@@ -32,6 +32,6 @@ pub use parentchain_primitives::{
 	Header as ParentchainHeader, IMPError, Index as ParentchainIndex, IndexingNetworks,
 	IntoErrorDetail, ParameterString, SchemaContentString, SchemaIdString,
 	Signature as ParentchainSignature, SupportedNetwork, UserShieldingKeyNonceType,
-	UserShieldingKeyType, VCMPError, ASSERTION_FROM_DATE, MINUTES, USER_SHIELDING_KEY_LEN,
-	USER_SHIELDING_KEY_NONCE_LEN, USER_SHIELDING_KEY_TAG_LEN,
+	UserShieldingKeyType, VCMPError, ASSERTION_FROM_DATE, MAX_TAG_LEN, MINUTES, NONCE_LEN,
+	USER_SHIELDING_KEY_LEN,
 };

@@ -508,6 +508,7 @@ version = "0.9.12"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
+ "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
  "scale-info",
  "sp-core",
  "sp-runtime",
