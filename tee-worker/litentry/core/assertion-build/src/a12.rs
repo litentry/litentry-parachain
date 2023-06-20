@@ -43,16 +43,13 @@ pub fn build(
 	who: &AccountId,
 ) -> Result<Credential> {
 	debug!(
-		"Assertion TwitterFollower build, who: {:?}, identities: {:?}",
+		"Assertion 12 build, who: {:?}, identities: {:?}",
 		account_id_to_string(&who),
 		identities
 	);
 
 	let twitter_screen_name_s = vec_to_string(twitter_screen_name.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::TwitterFollower(twitter_screen_name.clone()),
-			ErrorDetail::ParseError,
-		)
+		Error::RequestVCFailed(Assertion::A12(twitter_screen_name.clone()), ErrorDetail::ParseError)
 	})?;
 
 	let mut result = false;
@@ -70,9 +67,9 @@ pub fn build(
 					)
 					.map_err(|e| {
 						// invalid permissions, rate limitation, etc
-						log::warn!("TwitterFollower query_friendship error:{:?}", e);
+						log::warn!("A12 query_friendship error:{:?}", e);
 						Error::RequestVCFailed(
-							Assertion::TwitterFollower(twitter_screen_name.clone()),
+							Assertion::A12(twitter_screen_name.clone()),
 							ErrorDetail::StfError(ErrorString::truncate_from(
 								format!("{:?}", e).into(),
 							)),
@@ -99,11 +96,8 @@ pub fn build(
 			Ok(credential_unsigned)
 		},
 		Err(e) => {
-			error!("Generate unsigned credential A5 failed {:?}", e);
-			Err(Error::RequestVCFailed(
-				Assertion::TwitterFollower(twitter_screen_name),
-				e.into_error_detail(),
-			))
+			error!("Generate unsigned credential A12 failed {:?}", e);
+			Err(Error::RequestVCFailed(Assertion::A12(twitter_screen_name), e.into_error_detail()))
 		},
 	}
 }
