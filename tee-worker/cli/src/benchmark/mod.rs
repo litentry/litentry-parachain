@@ -22,7 +22,7 @@ use crate::{
 	trusted_command_utils::{
 		decode_balance, get_identifiers, get_keystore_path, get_pair_from_str,
 	},
-	trusted_operation::{get_json_request, get_state, wait_until},
+	trusted_operation::{get_json_request, wait_until},
 	Cli,
 };
 use codec::Decode;
@@ -262,7 +262,7 @@ fn get_balance(
 	);
 
 	let getter_start_timer = Instant::now();
-	let getter_result = get_state(direct_client, shard, &getter);
+	let getter_result = direct_client.get_state(shard, &getter);
 	let getter_execution_time = getter_start_timer.elapsed().as_millis();
 
 	let balance = decode_balance(getter_result);
@@ -279,7 +279,7 @@ fn get_nonce(
 	let getter = Getter::public(PublicGetter::nonce(account.public().into(), 0));
 
 	let getter_start_timer = Instant::now();
-	let getter_result = get_state(direct_client, shard, &getter);
+	let getter_result = direct_client.get_state(shard, &getter);
 	let getter_execution_time = getter_start_timer.elapsed().as_millis();
 
 	let nonce = match getter_result {

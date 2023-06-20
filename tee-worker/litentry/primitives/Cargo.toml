@@ -43,6 +43,7 @@ std = [
     "sp-core/std",
     "sp-std/std",
     "sp-runtime/std",
+    "ring/std",
     "parentchain-primitives/std",
     "rand",
     "chrono",

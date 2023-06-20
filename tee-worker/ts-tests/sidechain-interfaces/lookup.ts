@@ -255,16 +255,7 @@ export default {
                 who: 'AccountId32',
                 key: '[u8;32]',
             },
-            ChallengeCodeSet: {
-                who: 'AccountId32',
-                identity: 'LitentryPrimitivesIdentity',
-                code: '[u8;16]',
-            },
-            ChallengeCodeRemoved: {
-                who: 'AccountId32',
-                identity: 'LitentryPrimitivesIdentity',
-            },
-            IdentityCreated: {
+            IdentityLinked: {
                 who: 'AccountId32',
                 identity: 'LitentryPrimitivesIdentity',
             },
@@ -320,7 +311,7 @@ export default {
         _enum: ['Twitter', 'Discord', 'Github'],
     },
     /**
-     * Lookup46: frame_system::Phase
+     * Lookup45: frame_system::Phase
      **/
     FrameSystemPhase: {
         _enum: {
@@ -330,14 +321,14 @@ export default {
         },
     },
     /**
-     * Lookup50: frame_system::LastRuntimeUpgradeInfo
+     * Lookup49: frame_system::LastRuntimeUpgradeInfo
      **/
     FrameSystemLastRuntimeUpgradeInfo: {
         specVersion: 'Compact<u32>',
         specName: 'Text',
     },
     /**
-     * Lookup54: frame_system::pallet::Call<T>
+     * Lookup53: frame_system::pallet::Call<T>
      **/
     FrameSystemCall: {
         _enum: {
@@ -372,7 +363,7 @@ export default {
         },
     },
     /**
-     * Lookup58: frame_system::limits::BlockWeights
+     * Lookup57: frame_system::limits::BlockWeights
      **/
     FrameSystemLimitsBlockWeights: {
         baseBlock: 'SpWeightsWeightV2Weight',
@@ -380,7 +371,7 @@ export default {
         perClass: 'FrameSupportDispatchPerDispatchClassWeightsPerClass',
     },
     /**
-     * Lookup59: frame_support::dispatch::PerDispatchClass<frame_system::limits::WeightsPerClass>
+     * Lookup58: frame_support::dispatch::PerDispatchClass<frame_system::limits::WeightsPerClass>
      **/
     FrameSupportDispatchPerDispatchClassWeightsPerClass: {
         normal: 'FrameSystemLimitsWeightsPerClass',
@@ -388,7 +379,7 @@ export default {
         mandatory: 'FrameSystemLimitsWeightsPerClass',
     },
     /**
-     * Lookup60: frame_system::limits::WeightsPerClass
+     * Lookup59: frame_system::limits::WeightsPerClass
      **/
     FrameSystemLimitsWeightsPerClass: {
         baseExtrinsic: 'SpWeightsWeightV2Weight',
@@ -397,13 +388,13 @@ export default {
         reserved: 'Option<SpWeightsWeightV2Weight>',
     },
     /**
-     * Lookup62: frame_system::limits::BlockLength
+     * Lookup61: frame_system::limits::BlockLength
      **/
     FrameSystemLimitsBlockLength: {
         max: 'FrameSupportDispatchPerDispatchClassU32',
     },
     /**
-     * Lookup63: frame_support::dispatch::PerDispatchClass<T>
+     * Lookup62: frame_support::dispatch::PerDispatchClass<T>
      **/
     FrameSupportDispatchPerDispatchClassU32: {
         normal: 'u32',
@@ -411,14 +402,14 @@ export default {
         mandatory: 'u32',
     },
     /**
-     * Lookup64: sp_weights::RuntimeDbWeight
+     * Lookup63: sp_weights::RuntimeDbWeight
      **/
     SpWeightsRuntimeDbWeight: {
         read: 'u64',
         write: 'u64',
     },
     /**
-     * Lookup65: sp_version::RuntimeVersion
+     * Lookup64: sp_version::RuntimeVersion
      **/
     SpVersionRuntimeVersion: {
         specName: 'Text',
@@ -431,7 +422,7 @@ export default {
         stateVersion: 'u8',
     },
     /**
-     * Lookup71: frame_system::pallet::Error<T>
+     * Lookup70: frame_system::pallet::Error<T>
      **/
     FrameSystemError: {
         _enum: [
@@ -444,7 +435,7 @@ export default {
         ],
     },
     /**
-     * Lookup72: pallet_timestamp::pallet::Call<T>
+     * Lookup71: pallet_timestamp::pallet::Call<T>
      **/
     PalletTimestampCall: {
         _enum: {
@@ -454,7 +445,7 @@ export default {
         },
     },
     /**
-     * Lookup74: pallet_balances::BalanceLock<Balance>
+     * Lookup73: pallet_balances::BalanceLock<Balance>
      **/
     PalletBalancesBalanceLock: {
         id: '[u8;8]',
@@ -462,20 +453,20 @@ export default {
         reasons: 'PalletBalancesReasons',
     },
     /**
-     * Lookup75: pallet_balances::Reasons
+     * Lookup74: pallet_balances::Reasons
      **/
     PalletBalancesReasons: {
         _enum: ['Fee', 'Misc', 'All'],
     },
     /**
-     * Lookup78: pallet_balances::ReserveData<ReserveIdentifier, Balance>
+     * Lookup77: pallet_balances::ReserveData<ReserveIdentifier, Balance>
      **/
     PalletBalancesReserveData: {
         id: '[u8;8]',
         amount: 'u128',
     },
     /**
-     * Lookup80: pallet_balances::pallet::Call<T, I>
+     * Lookup79: pallet_balances::pallet::Call<T, I>
      **/
     PalletBalancesCall: {
         _enum: {
@@ -508,7 +499,7 @@ export default {
         },
     },
     /**
-     * Lookup84: pallet_balances::pallet::Error<T, I>
+     * Lookup83: pallet_balances::pallet::Error<T, I>
      **/
     PalletBalancesError: {
         _enum: [
@@ -523,13 +514,13 @@ export default {
         ],
     },
     /**
-     * Lookup86: pallet_transaction_payment::Releases
+     * Lookup85: pallet_transaction_payment::Releases
      **/
     PalletTransactionPaymentReleases: {
         _enum: ['V1Ancient', 'V2'],
     },
     /**
-     * Lookup87: pallet_sudo::pallet::Call<T>
+     * Lookup86: pallet_sudo::pallet::Call<T>
      **/
     PalletSudoCall: {
         _enum: {
@@ -553,7 +544,7 @@ export default {
         },
     },
     /**
-     * Lookup89: pallet_parentchain::pallet::Call<T>
+     * Lookup88: pallet_parentchain::pallet::Call<T>
      **/
     PalletParentchainCall: {
         _enum: {
@@ -563,7 +554,7 @@ export default {
         },
     },
     /**
-     * Lookup90: sp_runtime::generic::header::Header<Number, sp_runtime::traits::BlakeTwo256>
+     * Lookup89: sp_runtime::generic::header::Header<Number, sp_runtime::traits::BlakeTwo256>
      **/
     SpRuntimeHeader: {
         parentHash: 'H256',
@@ -573,11 +564,11 @@ export default {
         digest: 'SpRuntimeDigest',
     },
     /**
-     * Lookup91: sp_runtime::traits::BlakeTwo256
+     * Lookup90: sp_runtime::traits::BlakeTwo256
      **/
     SpRuntimeBlakeTwo256: 'Null',
     /**
-     * Lookup92: pallet_identity_management_tee::pallet::Call<T>
+     * Lookup91: pallet_identity_management_tee::pallet::Call<T>
      **/
     PalletIdentityManagementTeeCall: {
         _enum: {
@@ -586,67 +577,51 @@ export default {
                 key: '[u8;32]',
                 parentSs58Prefix: 'u16',
             },
-            set_challenge_code: {
+            link_identity: {
                 who: 'AccountId32',
                 identity: 'LitentryPrimitivesIdentity',
-                code: '[u8;16]',
-            },
-            remove_challenge_code: {
-                who: 'AccountId32',
-                identity: 'LitentryPrimitivesIdentity',
-            },
-            create_identity: {
-                who: 'AccountId32',
-                identity: 'LitentryPrimitivesIdentity',
-                metadata: 'Option<Bytes>',
-                creationRequestBlock: 'u32',
                 parentSs58Prefix: 'u16',
-                code: '[u8;16]',
             },
             remove_identity: {
                 who: 'AccountId32',
                 identity: 'LitentryPrimitivesIdentity',
-            },
-            verify_identity: {
-                who: 'AccountId32',
-                identity: 'LitentryPrimitivesIdentity',
-                verificationRequestBlock: 'u32',
+                parentSs58Prefix: 'u16',
             },
         },
     },
     /**
-     * Lookup95: pallet_sudo::pallet::Error<T>
+     * Lookup92: pallet_sudo::pallet::Error<T>
      **/
     PalletSudoError: {
         _enum: ['RequireSudo'],
     },
     /**
-     * Lookup97: pallet_identity_management_tee::identity_context::IdentityContext<T>
+     * Lookup94: pallet_identity_management_tee::identity_context::IdentityContext<T>
      **/
     PalletIdentityManagementTeeIdentityContext: {
-        metadata: 'Option<Bytes>',
-        creationRequestBlock: 'Option<u32>',
-        verificationRequestBlock: 'Option<u32>',
-        isVerified: 'bool',
+        linkBlock: 'u32',
+        status: 'PalletIdentityManagementTeeIdentityContextIdentityStatus',
     },
     /**
-     * Lookup99: pallet_identity_management_tee::pallet::Error<T>
+     * Lookup95: pallet_identity_management_tee::identity_context::IdentityStatus
+     **/
+    PalletIdentityManagementTeeIdentityContextIdentityStatus: {
+        _enum: ['Active', 'Inactive'],
+    },
+    /**
+     * Lookup96: pallet_identity_management_tee::pallet::Error<T>
      **/
     PalletIdentityManagementTeeError: {
         _enum: [
-            'ChallengeCodeNotExist',
-            'IdentityAlreadyVerified',
+            'IdentityAlreadyLinked',
             'IdentityNotExist',
-            'IdentityNotCreated',
-            'CreatePrimeIdentityNotAllowed',
-            'VerificationRequestTooEarly',
-            'VerificationRequestTooLate',
+            'LinkPrimeIdentityDisallowed',
             'RemovePrimeIdentityDisallowed',
             'IDGraphLenLimitReached',
         ],
     },
     /**
-     * Lookup101: sp_runtime::MultiSignature
+     * Lookup98: sp_runtime::MultiSignature
      **/
     SpRuntimeMultiSignature: {
         _enum: {
@@ -656,47 +631,47 @@ export default {
         },
     },
     /**
-     * Lookup102: sp_core::ed25519::Signature
+     * Lookup99: sp_core::ed25519::Signature
      **/
     SpCoreEd25519Signature: '[u8;64]',
     /**
-     * Lookup104: sp_core::sr25519::Signature
+     * Lookup101: sp_core::sr25519::Signature
      **/
     SpCoreSr25519Signature: '[u8;64]',
     /**
-     * Lookup105: sp_core::ecdsa::Signature
+     * Lookup102: sp_core::ecdsa::Signature
      **/
     SpCoreEcdsaSignature: '[u8;65]',
     /**
-     * Lookup108: frame_system::extensions::check_non_zero_sender::CheckNonZeroSender<T>
+     * Lookup105: frame_system::extensions::check_non_zero_sender::CheckNonZeroSender<T>
      **/
     FrameSystemExtensionsCheckNonZeroSender: 'Null',
     /**
-     * Lookup109: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
+     * Lookup106: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
      **/
     FrameSystemExtensionsCheckSpecVersion: 'Null',
     /**
-     * Lookup110: frame_system::extensions::check_tx_version::CheckTxVersion<T>
+     * Lookup107: frame_system::extensions::check_tx_version::CheckTxVersion<T>
      **/
     FrameSystemExtensionsCheckTxVersion: 'Null',
     /**
-     * Lookup111: frame_system::extensions::check_genesis::CheckGenesis<T>
+     * Lookup108: frame_system::extensions::check_genesis::CheckGenesis<T>
      **/
     FrameSystemExtensionsCheckGenesis: 'Null',
     /**
-     * Lookup114: frame_system::extensions::check_nonce::CheckNonce<T>
+     * Lookup111: frame_system::extensions::check_nonce::CheckNonce<T>
      **/
     FrameSystemExtensionsCheckNonce: 'Compact<u32>',
     /**
-     * Lookup115: frame_system::extensions::check_weight::CheckWeight<T>
+     * Lookup112: frame_system::extensions::check_weight::CheckWeight<T>
      **/
     FrameSystemExtensionsCheckWeight: 'Null',
     /**
-     * Lookup116: pallet_transaction_payment::ChargeTransactionPayment<T>
+     * Lookup113: pallet_transaction_payment::ChargeTransactionPayment<T>
      **/
     PalletTransactionPaymentChargeTransactionPayment: 'Compact<u128>',
     /**
-     * Lookup117: ita_sgx_runtime::Runtime
+     * Lookup114: ita_sgx_runtime::Runtime
      **/
     ItaSgxRuntimeRuntime: 'Null',
 };

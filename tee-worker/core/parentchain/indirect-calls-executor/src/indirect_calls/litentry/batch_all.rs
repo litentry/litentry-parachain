@@ -18,9 +18,8 @@ use crate::{
 	error::{Error, Result},
 	executor::{
 		litentry::{
-			create_identity::CreateIdentity, remove_identity::RemoveIdentity,
-			request_vc::RequestVC, set_user_shielding_key::SetUserShieldingKey,
-			verify_identity::VerifyIdentity,
+			link_identity::LinkIdentity, remove_identity::RemoveIdentity, request_vc::RequestVC,
+			set_user_shielding_key::SetUserShieldingKey,
 		},
 		Executor,
 	},
@@ -41,15 +40,12 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{
 	extrinsics::ParentchainUncheckedExtrinsicWithStatus, BatchAllFn, BatchCall, CallIndex,
-	CreateIdentityParams, RemoveIdentityParams, RequestVCParams, SetUserShieldingKeyParams,
-	SupportedBatchCallMap, SupportedBatchCallParams, VerifyIdentityParams, H256,
+	LinkIdentityParams, RemoveIdentityParams, RequestVCParams, SetUserShieldingKeyParams,
+	SupportedBatchCallMap, SupportedBatchCallParams, H256,
 };
-use litentry_primitives::ParentchainBlockNumber;
 use sp_std::{vec, vec::Vec};
 
-pub(crate) struct BatchAll {
-	pub(crate) block_number: ParentchainBlockNumber,
-}
+pub(crate) struct BatchAll {}
 
 const V4: u8 = 4;
 
@@ -83,14 +79,14 @@ impl BatchAll {
 					};
 					set_user_shielding_key.execute(context, xt)?;
 				},
-				SupportedBatchCallParams::CreateIdentity(p) => {
-					let create_identity = CreateIdentity { block_number: self.block_number };
+				SupportedBatchCallParams::LinkIdentity(p) => {
+					let link_identity = LinkIdentity {};
 					let c = (call.index, p);
 					let xt = ParentchainUncheckedExtrinsic {
 						function: c,
 						signature: extrinsic.signature.clone(),
 					};
-					create_identity.execute(context, xt)?;
+					link_identity.execute(context, xt)?;
 				},
 				SupportedBatchCallParams::RemoveIdentity(p) => {
 					let remove_identity = RemoveIdentity {};
@@ -100,15 +96,6 @@ impl BatchAll {
 						signature: extrinsic.signature.clone(),
 					};
 					remove_identity.execute(context, xt)?;
-				},
-				SupportedBatchCallParams::VerifyIdentity(p) => {
-					let verify_identity = VerifyIdentity { block_number: self.block_number };
-					let c = (call.index, p);
-					let xt = ParentchainUncheckedExtrinsic {
-						function: c,
-						signature: extrinsic.signature.clone(),
-					};
-					verify_identity.execute(context, xt)?;
 				},
 				SupportedBatchCallParams::RequestVC(p) => {
 					let request_vc = RequestVC;
@@ -207,17 +194,13 @@ pub(crate) fn decode_batch_call(
 				let decoded_params = SetUserShieldingKeyParams::decode(input)?;
 				SupportedBatchCallParams::SetUserShieldingKey(decoded_params)
 			},
-			SupportedBatchCallParams::CreateIdentity(..) => {
-				let decoded_params = CreateIdentityParams::decode(input)?;
-				SupportedBatchCallParams::CreateIdentity(decoded_params)
+			SupportedBatchCallParams::LinkIdentity(..) => {
+				let decoded_params = LinkIdentityParams::decode(input)?;
+				SupportedBatchCallParams::LinkIdentity(decoded_params)
 			},
 			SupportedBatchCallParams::RemoveIdentity(..) => {
 				let decoded_params = RemoveIdentityParams::decode(input)?;
 				SupportedBatchCallParams::RemoveIdentity(decoded_params)
-			},
-			SupportedBatchCallParams::VerifyIdentity(..) => {
-				let decoded_params = VerifyIdentityParams::decode(input)?;
-				SupportedBatchCallParams::VerifyIdentity(decoded_params)
 			},
 			SupportedBatchCallParams::RequestVC(..) => {
 				let decoded_params = RequestVCParams::decode(input)?;

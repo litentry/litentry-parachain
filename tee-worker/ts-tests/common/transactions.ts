@@ -103,51 +103,47 @@ export async function listenEvent(
                     return signers.includes(d.toHex());
                 }
             };
-            signedBlock.block.extrinsics.forEach((extrinsic, index) => {
-                records.forEach((e, i) => {
-                    const s = e.event.section;
-                    const m = e.event.method;
-                    const d = e.event.data;
-
-                    section === s && e.phase.asApplyExtrinsic.eq(index)
-                        ? console.log(colors.green(`Event[${i}]: ${s}.${m} ${d}`))
-                        : console.log(`Event[${i}]: ${s}.${m} ${d}`);
-                });
-                const events_in_extrinsic = records.filter(({ event, phase }) => {
-                    if (
-                        phase.isApplyExtrinsic &&
-                        section === event.section &&
-                        !methods.includes(event.method) &&
-                        !(event.method in RequestEvent)
-                    ) {
-                        reject(
-                            `listenEvent error----Expect event:${methods} but received unexpected event :${event.method}`
-                        );
-                    }
-                    return phase.isApplyExtrinsic && section === event.section && methods.includes(event.method);
-                });
-                //We're going to have to filter by signer, because multiple txs is going to mix
-                const filtered_events_with_signer = events_in_extrinsic
-                    .filter((event) => {
-                        const signerDatas = event.event.data.find(signerMatches);
-                        return !!signerDatas;
-                    })
-                    .sort((a, b) => {
-                        //We need sort by signers order
-                        //First convert the signers array into an object signerToIndexMap, where the keys are each element in the signers array and the values are the index of that element in the array.
-                        //Then, for each of the filtered events that match the given section and methods, the function uses the find function to locate the index of a specific parameter in the signers array.
-                        //Then, it sorts the events based on this index so that the resulting event array is sorted according to the order of the signers array.
-                        const signerIndexA = signerToIndexMap[a.event.data.find(signerMatches)!.toHex()];
-                        const signerIndexB = signerToIndexMap[b.event.data.find(signerMatches)!.toHex()];
-                        return signerIndexA - signerIndexB;
-                    });
-
-                //There is no good compatibility method here.Only successful and failed events can be filtered normally, but it cannot filter error + successful events, which may need further optimization
-                const eventsToUse =
-                    filtered_events_with_signer.length > 0 ? filtered_events_with_signer : events_in_extrinsic;
-
-                events = [...eventsToUse];
+            records.forEach((e, i) => {
+                const s = e.event.section;
+                const m = e.event.method;
+                const d = e.event.data;
+                const event_string = `Event[${i}]: ${s}.${m} ${d}`;
+                console.log(section === s ? colors.green(event_string) : event_string);
             });
+            const events_in_extrinsic = records.filter(({ event, phase }) => {
+                if (
+                    phase.isApplyExtrinsic &&
+                    section === event.section &&
+                    !methods.includes(event.method) &&
+                    !(event.method in RequestEvent)
+                ) {
+                    reject(
+                        `listenEvent error----Expect event:${methods} but received unexpected event :${event.method}`
+                    );
+                }
+                return phase.isApplyExtrinsic && section === event.section && methods.includes(event.method);
+            });
+            //We're going to have to filter by signer, because multiple txs is going to mix
+            const filtered_events_with_signer = events_in_extrinsic
+                .filter((event) => {
+                    const signerDatas = event.event.data.find(signerMatches);
+                    return !!signerDatas;
+                })
+                .sort((a, b) => {
+                    //We need sort by signers order
+                    //First convert the signers array into an object signerToIndexMap, where the keys are each element in the signers array and the values are the index of that element in the array.
+                    //Then, for each of the filtered events that match the given section and methods, the function uses the find function to locate the index of a specific parameter in the signers array.
+                    //Then, it sorts the events based on this index so that the resulting event array is sorted according to the order of the signers array.
+                    const signerIndexA = signerToIndexMap[a.event.data.find(signerMatches)!.toHex()];
+                    const signerIndexB = signerToIndexMap[b.event.data.find(signerMatches)!.toHex()];
+                    return signerIndexA - signerIndexB;
+                });
+
+            //There is no good compatibility method here.Only successful and failed events can be filtered normally, but it cannot filter error + successful events, which may need further optimization
+            const eventsToUse =
+                filtered_events_with_signer.length > 0 ? filtered_events_with_signer : events_in_extrinsic;
+
+            events = [...eventsToUse];
 
             if (events.length === txsLength) {
                 resolve(events.map((e) => e.event));
