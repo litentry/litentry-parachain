@@ -30,8 +30,8 @@ pub use parentchain_primitives::{
 	AccountId as ParentchainAccountId, AesOutput, Assertion, Balance as ParentchainBalance,
 	BlockNumber as ParentchainBlockNumber, ErrorDetail, ErrorString, Hash as ParentchainHash,
 	Header as ParentchainHeader, IMPError, Index as ParentchainIndex, IndexingNetworks,
-	IntoErrorDetail, ParameterString, SchemaContentString, SchemaIdString,
-	Signature as ParentchainSignature, SupportedNetwork, UserShieldingKeyNonceType,
+	IntoErrorDetail, NativeToken, ParameterString, ParameterYears, SchemaContentString,
+	SchemaIdString, Signature as ParentchainSignature, SupportedNetwork, UserShieldingKeyNonceType,
 	UserShieldingKeyType, VCMPError, ASSERTION_FROM_DATE, MAX_TAG_LEN, MINUTES, NONCE_LEN,
 	USER_SHIELDING_KEY_LEN,
 };

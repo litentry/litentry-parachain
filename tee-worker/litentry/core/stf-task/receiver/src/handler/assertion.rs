@@ -130,6 +130,15 @@ where
 				&self.req.who,
 			),
 
+			Assertion::A14(min_balance, token, years) => lc_assertion_build::a14::build(
+				min_balance,
+				years,
+				token,
+				self.req.vec_identity.to_vec(),
+				&self.req.shard,
+				&self.req.who,
+			),
+
 			_ => {
 				unimplemented!()
 			},

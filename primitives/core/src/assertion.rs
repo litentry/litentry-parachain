@@ -23,7 +23,23 @@ use sp_runtime::{traits::ConstU32, BoundedVec};
 
 type MaxStringLength = ConstU32<64>;
 pub type ParameterString = BoundedVec<u8, MaxStringLength>;
+pub type ParameterYears = BoundedVec<BoundedVec<u8, ConstU32<4>>, ConstU32<10>>;
 pub type IndexingNetworks = BoundedVec<SupportedNetwork, MaxStringLength>;
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen, Hash)]
+pub enum NativeToken {
+	LIT,
+	DOT,
+}
+
+impl From<NativeToken> for SupportedNetwork {
+	fn from(value: NativeToken) -> Self {
+		match value {
+			NativeToken::LIT => SupportedNetwork::Litentry,
+			NativeToken::DOT => SupportedNetwork::Polkadot,
+		}
+	}
+}
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen, Hash)]
 pub enum SupportedNetwork {
@@ -53,7 +69,7 @@ pub enum Assertion {
 	A11(ParameterString),                                   // (minimum_amount)
 	A12(ParameterString),									// (target_twitter_screen_name)
 	A13(u32),                                               // (Karma_amount) - TODO: unsupported
-
+	A14(ParameterString, NativeToken, ParameterYears)	    // (min_balance, native_token, [years -> eg [2021, 2022]])
 }
 
 pub const ASSERTION_FROM_DATE: [&str; 7] = [

@@ -360,6 +360,42 @@ impl Credential {
 		self.credential_subject.values.push(is_hold);
 	}
 
+	pub fn update_holder_at_dates(
+		&mut self,
+		minimum_amount: &String,
+		results: &[(String, bool)],
+	) -> Result<(), Error> {
+		//todo: maybe there is cleaner way ??
+		let current_year = get_year_from_string_date(&format_assertion_to_date())?;
+		for (from_date, is_holding) in results {
+			//todo: maybe there is cleaner way ??
+			let date_year = get_year_from_string_date(from_date)?;
+			// from_date's Op is ALWAYS Op::LessThan
+			let from_date_logic = AssertionLogic::new_item("$from_date", Op::LessThan, from_date);
+
+			// minimum_amount' Op is ALWAYS Op::Equal
+			let minimum_amount_logic =
+				AssertionLogic::new_item("$minimum_amount", Op::Equal, minimum_amount);
+
+			// to_date's Op is ALWAYS Op::GreaterEq
+			let to_date = if current_year == date_year {
+				format_assertion_to_date()
+			} else {
+				format!("{}-12-31", date_year)
+			};
+			let to_date_logic = AssertionLogic::new_item("$to_date", Op::GreaterEq, &to_date);
+
+			let assertion = AssertionLogic::new_and()
+				.add_item(minimum_amount_logic)
+				.add_item(from_date_logic)
+				.add_item(to_date_logic);
+
+			self.credential_subject.assertions.push(assertion);
+			self.credential_subject.values.push(*is_holding);
+		}
+		Ok(())
+	}
+
 	pub fn add_subject_info(&mut self, subject_description: &str, types: &str, tag: Vec<&str>) {
 		self.credential_subject.description = subject_description.into();
 		self.credential_subject.types = types.into();
@@ -501,6 +537,14 @@ pub fn format_assertion_to_date() -> String {
 	}
 }
 
+fn get_year_from_string_date(date: &str) -> Result<String, Error> {
+	let parts: Vec<&str> = date.split('-').collect();
+	parts
+		.first()
+		.map(|p| p.to_string())
+		.ok_or_else(|| Error::RuntimeError(format!("Could not get year from date {}", date)))
+}
+
 trait DisplayNetwork {
 	fn display(&self) -> String;
 }
@@ -533,6 +577,65 @@ mod tests {
 		assert!(vc.validate_unsigned().is_ok());
 		let id: String = vc.credential_subject.id.clone();
 		assert_eq!(id, account_id_to_string(&who));
+	}
+
+	#[test]
+	fn update_holder_at_dates_works() {
+		let who = AccountId::from([0; 32]);
+		let shard = ShardIdentifier::default();
+		let minimum_amount = "1".to_string();
+		{
+			let mut credential_unsigned = Credential::new_default(&who, &shard.clone()).unwrap();
+
+			let current_date = format_assertion_to_date();
+			let current_year = get_year_from_string_date(&current_date).unwrap();
+			let beginning_of_current_year_date_str = format!("{}-01-01", current_year);
+
+			credential_unsigned
+				.update_holder_at_dates(
+					&minimum_amount,
+					&vec![
+						("2021-01-01".to_string(), true),
+						("2022-01-01".to_string(), false),
+						(beginning_of_current_year_date_str.clone(), true),
+					],
+				)
+				.unwrap();
+
+			let minimum_amount_logic =
+				AssertionLogic::new_item("$minimum_amount", Op::Equal, &minimum_amount);
+
+			assert_eq!(credential_unsigned.credential_subject.values[0], true);
+			assert_eq!(
+				credential_unsigned.credential_subject.assertions[0],
+				AssertionLogic::new_and()
+					.add_item(minimum_amount_logic.clone())
+					.add_item(AssertionLogic::new_item("$from_date", Op::LessThan, "2021-01-01"))
+					.add_item(AssertionLogic::new_item("$to_date", Op::GreaterEq, "2021-12-31"))
+			);
+
+			assert_eq!(credential_unsigned.credential_subject.values[1], false);
+			assert_eq!(
+				credential_unsigned.credential_subject.assertions[1],
+				AssertionLogic::new_and()
+					.add_item(minimum_amount_logic.clone())
+					.add_item(AssertionLogic::new_item("$from_date", Op::LessThan, "2022-01-01"))
+					.add_item(AssertionLogic::new_item("$to_date", Op::GreaterEq, "2022-12-31"))
+			);
+
+			assert_eq!(credential_unsigned.credential_subject.values[2], true);
+			assert_eq!(
+				credential_unsigned.credential_subject.assertions[2],
+				AssertionLogic::new_and()
+					.add_item(minimum_amount_logic)
+					.add_item(AssertionLogic::new_item(
+						"$from_date",
+						Op::LessThan,
+						&beginning_of_current_year_date_str
+					))
+					.add_item(AssertionLogic::new_item("$to_date", Op::GreaterEq, &current_date))
+			)
+		}
 	}
 
 	#[test]
