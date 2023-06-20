@@ -322,7 +322,7 @@ mod tests {
 	}
 
 	#[test]
-	fn query_friendship_work() {
+	fn query_friendship_by_id_work() {
 		init();
 
 		let source = "twitterdev";
@@ -331,6 +331,20 @@ mod tests {
 		let result = client.query_friendship(
 			source.as_bytes().to_vec(),
 			TargetUser::Id(target_id.as_bytes().to_vec()),
+		);
+		assert!(result.is_ok(), "error: {:?}", result);
+	}
+
+	#[test]
+	fn query_friendship_by_name_work() {
+		init();
+
+		let source = "twitterdev";
+		let target_name = "twitter"; //user: twitter
+		let mut client = TwitterOfficialClient::v1_1();
+		let result = client.query_friendship(
+			source.as_bytes().to_vec(),
+			TargetUser::Name(target_name.as_bytes().to_vec()),
 		);
 		assert!(result.is_ok(), "error: {:?}", result);
 	}
