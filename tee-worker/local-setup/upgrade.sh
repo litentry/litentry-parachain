@@ -55,9 +55,23 @@ scripts/litentry/stop_old_worker.sh
 echo "Performing migration for the worker"
 scripts/litentry/migrate_worker.sh
 
+export RUST_LOG='info,integritee_service=debug,ws=warn,sp_io=error,substrate_api_client=warn,
+itc_parentchain_light_client=info,
+jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=debug,ita_stf=debug,
+its_rpc_handler=warn,itc_rpc_client=warn,its_consensus_common=debug,its_state=warn,
+its_consensus_aura=warn,aura*=warn,its_consensus_slots=warn,
+itp_attestation_handler=debug,http_req=debug,lc_mock_server=warn,itc_rest_client=debug,
+lc_credentials=debug,lc_identity_verification=debug,lc_stf_task_receiver=debug,lc_stf_task_sender=debug,
+lc_data_providers=debug,itp_top_pool=debug,itc_parentchain_indirect_calls_executor=debug'
+
 echo "Starting new worker"
 cd tmp/w0
-./integritee-service -P 2000 -w 2001 -r 3443 -h 4545 --running-mode mock --enable-mock-server --parentchain-start-block 0 run --skip-ra --dev
+
+# Redirect stdout to a log file
+log_file="../../log/worker0.log"
+
+# Execute the command
+exec ./integritee-service -P 2000 -w 2001 -r 3443 -h 4545 --running-mode mock --enable-mock-server --parentchain-start-block 0 run --skip-ra --dev >"$log_file" 2>&1
 
 
 
