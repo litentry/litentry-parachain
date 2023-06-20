@@ -280,6 +280,24 @@ pub trait AchainableTagAccount {
 	fn is_kusama_validator(&mut self, address: &str) -> Result<bool, Error>;
 }
 
+pub trait AchainableTagBalance {
+	fn polkadot_dolphin(&mut self, address: &str) -> Result<bool, Error>;
+	fn kusama_dolphin(&mut self, address: &str) -> Result<bool, Error>;
+	fn polkadot_whale(&mut self, address: &str) -> Result<bool, Error>;
+	fn kusama_whale(&mut self, address: &str) -> Result<bool, Error>;
+	fn less_than_10_eth_holder(&mut self, address: &str) -> Result<bool, Error>;
+	fn less_than_10_lit_holder(&mut self, address: &str) -> Result<bool, Error>;
+	fn not_less_than_100_eth_holder(&mut self, address: &str) -> Result<bool, Error>;
+	fn between_10_to_100_eth_holder(&mut self, address: &str) -> Result<bool, Error>;
+	fn eth_millionaire(&mut self, address: &str) -> Result<bool, Error>;
+	fn eth2_validator_eligible(&mut self, address: &str) -> Result<bool, Error>;
+	fn not_less_than_100_weth_holder(&mut self, address: &str) -> Result<bool, Error>;
+	fn not_less_than_100_lit_bep20_holder(&mut self, address: &str) -> Result<bool, Error>;
+	fn native_lit_holder(&mut self, address: &str) -> Result<bool, Error>;
+	fn erc20_lit_holder(&mut self, address: &str) -> Result<bool, Error>;
+	fn bep20_lit_holder(&mut self, address: &str) -> Result<bool, Error>;
+}
+
 pub trait AchainablePost {
 	fn post(&mut self, params: ReqParams, body: &ReqBody) -> Result<serde_json::Value, Error>;
 }
@@ -301,12 +319,12 @@ impl AchainablePost for AchainableClient {
 	}
 }
 
-pub trait AchainableTagAccountParser {
+pub trait AchainableResultParser {
 	type Item;
 	fn parse(value: serde_json::Value) -> Result<Self::Item, Error>;
 }
 
-impl AchainableTagAccountParser for AchainableClient {
+impl AchainableResultParser for AchainableClient {
 	type Item = bool;
 	fn parse(value: serde_json::Value) -> Result<Self::Item, Error> {
 		if let Some(b) = value.as_bool() {
@@ -375,6 +393,113 @@ impl AchainableTagAccount for AchainableClient {
 	}
 }
 
+impl AchainableTagBalance for AchainableClient {
+	fn polkadot_dolphin(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/6a0424e7544696a3e774dfc7e260dd6e");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn kusama_dolphin(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/3e226ee1bfb0d33564efe7f28f5015bd");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn polkadot_whale(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/68390df24e8ac5d0984a8e9c0725a964");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn kusama_whale(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/2bf33f5b3ae60293bf93784b80251129");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn less_than_10_eth_holder(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/fee8171e2001d1605e018c74f64352da");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn less_than_10_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/4a35e107005f1ea4077f119c10d18503");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn not_less_than_100_eth_holder(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/8657c801983aed40012e387900d75726");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn between_10_to_100_eth_holder(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/e4724ad5b7354ef85332887ee7852800");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn eth_millionaire(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/83d16c4c31c55ae535472643e63f49ce");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn eth2_validator_eligible(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/53b54e51090a3663173c2a97039ebf69");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn not_less_than_100_weth_holder(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/f55a4c5a19b6817ad4faf90385f4df6e");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn not_less_than_100_lit_bep20_holder(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/0f26a13d7ff182641f9bb9168a3f1d84");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn native_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/3f0469170cd271ebaac4ed2c92754479");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn erc20_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/7bf72e9190098776817afa763044ac1b");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn bep20_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/0dc166e3b588fb45a9cca36c60c61f79");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ReqParams {
@@ -426,8 +551,9 @@ impl RestPath<String> for ParamsAccount {
 #[cfg(test)]
 mod tests {
 	use crate::achainable::{
-		AchainableClient, AchainableQuery, AchainableTagAccount, SupportedNetwork,
-		VerifiedCredentialsIsHodlerIn, VerifiedCredentialsTotalTxs, G_DATA_PROVIDERS,
+		AchainableClient, AchainableQuery, AchainableTagAccount, AchainableTagBalance,
+		SupportedNetwork, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsTotalTxs,
+		G_DATA_PROVIDERS,
 	};
 	use lc_mock_server::{default_getter, run};
 	use std::sync::Arc;
@@ -563,5 +689,172 @@ mod tests {
 		assert!(res.is_ok());
 		let res = res.unwrap();
 		assert_eq!(res, true);
+	}
+
+	#[test]
+	fn polkadot_dolphin_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.polkadot_dolphin("1soESeTVLfse9e2G8dRSMUyJ2SWad33qhtkjQTv9GMToRvP");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn kusama_dolphin_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.kusama_dolphin("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, true);
+	}
+
+	#[test]
+	fn polkadot_whale_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.polkadot_whale("1soESeTVLfse9e2G8dRSMUyJ2SWad33qhtkjQTv9GMToRvP");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn kusama_whale_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.kusama_whale("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn less_than_10_eth_holder_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.less_than_10_eth_holder("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, true);
+	}
+
+	#[test]
+	fn less_than_10_eth_lit_holder_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.less_than_10_lit_holder("0x2A038e100F8B85DF21e4d44121bdBfE0c288A869");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, true);
+	}
+
+	#[test]
+	fn not_less_than_100_eth_holder_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.not_less_than_100_eth_holder("0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, true);
+	}
+
+	#[test]
+	fn between_10_to_100_eth_holder_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.between_10_to_100_eth_holder("0x082aB5505CdeA46caeF670754E962830Aa49ED2C");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, true);
+	}
+
+	#[test]
+	fn eth_millionaire_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.eth_millionaire("0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, true);
+	}
+
+	#[test]
+	fn eth2_validator_eligible_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.eth2_validator_eligible("0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, true);
+	}
+
+	#[test]
+	fn not_less_than_100_weth_holder_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res =
+			client.not_less_than_100_weth_holder("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn not_less_than_100_lit_bep20_holder_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res =
+			client.not_less_than_100_lit_bep20_holder("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn native_lit_holder_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.native_lit_holder("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn erc20_lit_holder_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.native_lit_holder("0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, true);
+	}
+
+	#[test]
+	fn bep20_lit_holder_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.bep20_lit_holder("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
 	}
 }

@@ -80,7 +80,22 @@ where
 					.or(achainable::class_of_2022())
 					.or(achainable::found_on_bsc())
 					.or(achainable::is_polkadot_validator())
-					.or(achainable::is_kusama_validator()),
+					.or(achainable::is_kusama_validator())
+					.or(achainable::polkadot_dolphin())
+					.or(achainable::kusama_dolphin())
+					.or(achainable::polkadot_whale())
+					.or(achainable::kusama_whale())
+					.or(achainable::less_than_10_eth_holder())
+					.or(achainable::less_than_10_lit_holder())
+					.or(achainable::not_less_than_100_eth_holder())
+					.or(achainable::between_10_to_100_eth_holder())
+					.or(achainable::eth_millionaire())
+					.or(achainable::eth2_validator_eligible())
+					.or(achainable::not_less_than_100_weth_holder())
+					.or(achainable::not_less_than_100_lit_bep20_holder())
+					.or(achainable::native_lit_holder())
+					.or(achainable::erc20_lit_holder())
+					.or(achainable::bep20_lit_holder()),
 			)
 			.bind_with_graceful_shutdown(([127, 0, 0, 1], port), shutdown_signal());
 			log::info!("mock-server listen on addr:{:?}", addr);

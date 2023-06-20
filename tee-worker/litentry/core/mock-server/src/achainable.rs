@@ -251,3 +251,307 @@ pub(crate) fn is_kusama_validator(
 			}
 		})
 }
+
+pub(crate) fn polkadot_dolphin(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post()
+		.and(warp::path!("v1" / "run" / "label" / "6a0424e7544696a3e774dfc7e260dd6e"))
+		.and(warp::body::content_length_limit(1024 * 16))
+		.and(warp::body::json())
+		.map(|body: ReqBody| {
+			if body.params.address == *"1soESeTVLfse9e2G8dRSMUyJ2SWad33qhtkjQTv9GMToRvP".to_string()
+			{
+				let body = r#"
+			{
+				"result": false
+			}"#;
+
+				Response::builder().body(body.to_string())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
+}
+
+pub(crate) fn kusama_dolphin(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post()
+		.and(warp::path!("v1" / "run" / "label" / "3e226ee1bfb0d33564efe7f28f5015bd"))
+		.and(warp::body::content_length_limit(1024 * 16))
+		.and(warp::body::json())
+		.map(|body: ReqBody| {
+			if body.params.address == *"CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq".to_string()
+			{
+				let body = r#"
+			{
+				"result": true
+			}"#;
+
+				Response::builder().body(body.to_string())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
+}
+
+pub(crate) fn polkadot_whale(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post()
+		.and(warp::path!("v1" / "run" / "label" / "68390df24e8ac5d0984a8e9c0725a964"))
+		.and(warp::body::content_length_limit(1024 * 16))
+		.and(warp::body::json())
+		.map(|body: ReqBody| {
+			if body.params.address == *"1soESeTVLfse9e2G8dRSMUyJ2SWad33qhtkjQTv9GMToRvP".to_string()
+			{
+				let body = r#"
+			{
+				"result": false
+			}"#;
+
+				Response::builder().body(body.to_string())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
+}
+
+pub(crate) fn kusama_whale(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post()
+		.and(warp::path!("v1" / "run" / "label" / "2bf33f5b3ae60293bf93784b80251129"))
+		.and(warp::body::content_length_limit(1024 * 16))
+		.and(warp::body::json())
+		.map(|body: ReqBody| {
+			if body.params.address == *"CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq".to_string()
+			{
+				let body = r#"
+			{
+				"result": false
+			}"#;
+
+				Response::builder().body(body.to_string())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
+}
+
+pub(crate) fn less_than_10_eth_holder(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post()
+		.and(warp::path!("v1" / "run" / "label" / "fee8171e2001d1605e018c74f64352da"))
+		.and(warp::body::content_length_limit(1024 * 16))
+		.and(warp::body::json())
+		.map(|body: ReqBody| {
+			if body.params.address == *"0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84".to_string() {
+				let body = r#"
+			{
+				"result": true
+			}"#;
+
+				Response::builder().body(body.to_string())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
+}
+
+pub(crate) fn less_than_10_lit_holder(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post()
+		.and(warp::path!("v1" / "run" / "label" / "4a35e107005f1ea4077f119c10d18503"))
+		.and(warp::body::content_length_limit(1024 * 16))
+		.and(warp::body::json())
+		.map(|body: ReqBody| {
+			if body.params.address == *"0x2A038e100F8B85DF21e4d44121bdBfE0c288A869".to_string() {
+				let body = r#"
+			{
+				"result": true
+			}"#;
+
+				Response::builder().body(body.to_string())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
+}
+
+pub(crate) fn not_less_than_100_eth_holder(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post()
+		.and(warp::path!("v1" / "run" / "label" / "8657c801983aed40012e387900d75726"))
+		.and(warp::body::content_length_limit(1024 * 16))
+		.and(warp::body::json())
+		.map(|body: ReqBody| {
+			if body.params.address == *"0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA".to_string() {
+				let body = r#"
+			{
+				"result": true
+			}"#;
+
+				Response::builder().body(body.to_string())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
+}
+
+pub(crate) fn between_10_to_100_eth_holder(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post()
+		.and(warp::path!("v1" / "run" / "label" / "e4724ad5b7354ef85332887ee7852800"))
+		.and(warp::body::content_length_limit(1024 * 16))
+		.and(warp::body::json())
+		.map(|body: ReqBody| {
+			if body.params.address == *"0x082aB5505CdeA46caeF670754E962830Aa49ED2C".to_string() {
+				let body = r#"
+			{
+				"result": true
+			}"#;
+
+				Response::builder().body(body.to_string())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
+}
+
+pub(crate) fn eth_millionaire(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post()
+		.and(warp::path!("v1" / "run" / "label" / "83d16c4c31c55ae535472643e63f49ce"))
+		.and(warp::body::content_length_limit(1024 * 16))
+		.and(warp::body::json())
+		.map(|body: ReqBody| {
+			if body.params.address == *"0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA".to_string() {
+				let body = r#"
+			{
+				"result": true
+			}"#;
+
+				Response::builder().body(body.to_string())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
+}
+
+pub(crate) fn eth2_validator_eligible(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post()
+		.and(warp::path!("v1" / "run" / "label" / "53b54e51090a3663173c2a97039ebf69"))
+		.and(warp::body::content_length_limit(1024 * 16))
+		.and(warp::body::json())
+		.map(|body: ReqBody| {
+			if body.params.address == *"0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA".to_string() {
+				let body = r#"
+			{
+				"result": true
+			}"#;
+
+				Response::builder().body(body.to_string())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
+}
+
+pub(crate) fn not_less_than_100_weth_holder(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post()
+		.and(warp::path!("v1" / "run" / "label" / "f55a4c5a19b6817ad4faf90385f4df6e"))
+		.and(warp::body::content_length_limit(1024 * 16))
+		.and(warp::body::json())
+		.map(|body: ReqBody| {
+			if body.params.address == *"0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84".to_string() {
+				let body = r#"
+			{
+				"result": false
+			}"#;
+
+				Response::builder().body(body.to_string())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
+}
+
+pub(crate) fn not_less_than_100_lit_bep20_holder(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post()
+		.and(warp::path!("v1" / "run" / "label" / "0f26a13d7ff182641f9bb9168a3f1d84"))
+		.and(warp::body::content_length_limit(1024 * 16))
+		.and(warp::body::json())
+		.map(|body: ReqBody| {
+			if body.params.address == *"0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84".to_string() {
+				let body = r#"
+			{
+				"result": false
+			}"#;
+
+				Response::builder().body(body.to_string())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
+}
+
+pub(crate) fn native_lit_holder(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post()
+		.and(warp::path!("v1" / "run" / "label" / "3f0469170cd271ebaac4ed2c92754479"))
+		.and(warp::body::content_length_limit(1024 * 16))
+		.and(warp::body::json())
+		.map(|body: ReqBody| {
+			if body.params.address == *"0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84".to_string() {
+				let body = r#"
+			{
+				"result": false
+			}"#;
+
+				Response::builder().body(body.to_string())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
+}
+
+pub(crate) fn erc20_lit_holder(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post()
+		.and(warp::path!("v1" / "run" / "label" / "7bf72e9190098776817afa763044ac1b"))
+		.and(warp::body::content_length_limit(1024 * 16))
+		.and(warp::body::json())
+		.map(|body: ReqBody| {
+			if body.params.address == *"0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA".to_string() {
+				let body = r#"
+			{
+				"result": true
+			}"#;
+
+				Response::builder().body(body.to_string())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
+}
+
+pub(crate) fn bep20_lit_holder(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::post()
+		.and(warp::path!("v1" / "run" / "label" / "0dc166e3b588fb45a9cca36c60c61f79"))
+		.and(warp::body::content_length_limit(1024 * 16))
+		.and(warp::body::json())
+		.map(|body: ReqBody| {
+			if body.params.address == *"0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84".to_string() {
+				let body = r#"
+			{
+				"result": false
+			}"#;
+
+				Response::builder().body(body.to_string())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
+}
