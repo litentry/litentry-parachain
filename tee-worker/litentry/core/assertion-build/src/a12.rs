@@ -32,8 +32,8 @@ use lc_data_providers::{
 use log::*;
 use std::{format, vec::Vec};
 
-const VC_SUBJECT_DESCRIPTION: &str = "The user has followed {:?}";
-const VC_SUBJECT_TYPE: &str = "A follower of the {:?}";
+const VC_SUBJECT_DESCRIPTION: &str = "The user has followed a specific user";
+const VC_SUBJECT_TYPE: &str = "A follower of the twitter user";
 const VC_SUBJECT_TAG: [&str; 1] = ["Twitter"];
 
 pub fn build(
