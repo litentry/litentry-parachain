@@ -17,7 +17,7 @@ import { getEnclave, sleep, buildIdentityHelper, initIntegrationTestContext } fr
 import { aesKey, keyNonce } from '../../common/call';
 import { Metadata, TypeRegistry } from '@polkadot/types';
 import sidechainMetaData from '../../litentry-sidechain-metadata.json';
-import { hexToU8a } from '@polkadot/util';
+import { hexToU8a, u8aToString, u8aToHex } from '@polkadot/util';
 import { assert } from 'chai';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from '@polkadot/types/lookup';
 
@@ -118,8 +118,21 @@ async function runDirectCall() {
     // somehow createType('Option<Vec<(....)>>') doesn't work, why?
     let idgraphBytes = sidechainRegistry.createType('Option<Bytes>', hexToU8a(res.value.toHex()));
     assert.isTrue(idgraphBytes.isSome);
-    let idgraphArray = sidechainRegistry.createType('Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>', idgraphBytes.unwrap()) as unknown as [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][];
+    let idgraphArray = sidechainRegistry.createType(
+        'Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
+        idgraphBytes.unwrap()
+    ) as unknown as [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][];
     assert.equal(idgraphArray.length, 2);
+    // the first identity is the twitter identity
+    assert.isTrue(idgraphArray[0][0].isWeb2);
+    assert.isTrue(idgraphArray[0][0].asWeb2.network.isTwitter);
+    assert.equal(u8aToString(idgraphArray[0][0].asWeb2.address.toU8a()), '$mock_user');
+    assert.isTrue(idgraphArray[0][1].status.isActive);
+    // the second identity is the substrate identity (prime identity)
+    assert.isTrue(idgraphArray[1][0].isSubstrate);
+    assert.isTrue(idgraphArray[1][0].asSubstrate.network.isLitentryRococo);
+    assert.equal(idgraphArray[1][0].asSubstrate.address.toHex(), u8aToHex(alice.publicKey));
+    assert.isTrue(idgraphArray[1][1].status.isActive);
 
     console.log('Send UserShieldingKey getter for alice ...');
     let UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachain_api, alice);

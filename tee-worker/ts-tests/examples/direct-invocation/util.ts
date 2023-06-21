@@ -200,12 +200,7 @@ export function createSignedTrustedGetterUserShieldingKey(parachain_api: ApiProm
 }
 
 export function createSignedTrustedGetterIDGraph(parachain_api: ApiPromise, who: KeyringPair) {
-    let getterSigned = createSignedTrustedGetter(
-        parachain_api,
-        ['id_graph', '(AccountId)'],
-        who,
-        who.address
-    );
+    let getterSigned = createSignedTrustedGetter(parachain_api, ['id_graph', '(AccountId)'], who, who.address);
     return parachain_api.createType('Getter', { trusted: getterSigned });
 }
 
