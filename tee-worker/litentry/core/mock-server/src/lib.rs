@@ -95,7 +95,8 @@ where
 					.or(achainable::not_less_than_100_lit_bep20_holder())
 					.or(achainable::native_lit_holder())
 					.or(achainable::erc20_lit_holder())
-					.or(achainable::bep20_lit_holder()),
+					.or(achainable::bep20_lit_holder())
+					.boxed(),
 			)
 			.bind_with_graceful_shutdown(([127, 0, 0, 1], port), shutdown_signal());
 			log::info!("mock-server listen on addr:{:?}", addr);
