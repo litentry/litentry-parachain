@@ -39,7 +39,7 @@ jobs:
   ## build docker image with runtime-benchmarks feature and push it to the hub
   build-docker:
     if: ${{ github.event.inputs.rebuild-docker == 'true' }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout codes on ${{ github.ref }}
         uses: actions/checkout@v3
