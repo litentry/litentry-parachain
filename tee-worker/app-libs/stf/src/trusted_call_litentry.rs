@@ -127,7 +127,7 @@ impl TrustedCallSigned {
 			StfError::RequestVCFailed(assertion, ErrorDetail::UserShieldingKeyNotFound)
 		);
 
-		let id_graph = IMT::get_id_graph(&who);
+		let id_graph = IMT::get_id_graph(&who, usize::MAX);
 		let vec_identity: Vec<Identity> = id_graph
 			.into_iter()
 			.filter(|item| item.1.status == IdentityStatus::Active)
