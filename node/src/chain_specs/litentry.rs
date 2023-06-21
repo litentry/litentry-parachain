@@ -39,7 +39,7 @@ fn default_parachain_properties() -> Option<Properties> {
 	parachain_properties("LIT", 12, 31)
 }
 
-const DEFAULT_ENDOWED_ACCOUNT_BALANCE: Balance = 10000 * UNIT;
+const DEFAULT_ENDOWED_ACCOUNT_BALANCE: Balance = 1000 * UNIT;
 
 /// GenesisInfo struct to store the parsed genesis_info JSON
 #[derive(Deserialize, Debug, Clone)]
@@ -200,7 +200,7 @@ fn generate_genesis(
 		sudo: SudoConfig { key: Some(root_key) },
 		parachain_info: ParachainInfoConfig { parachain_id: id },
 		parachain_staking: ParachainStakingConfig {
-			candidates: invulnerables.iter().cloned().map(|(acc, _)| (acc, 5000 * UNIT)).collect(),
+			candidates: invulnerables.iter().cloned().map(|(acc, _)| (acc, 50 * UNIT)).collect(),
 			..Default::default()
 		},
 		session: SessionConfig {
