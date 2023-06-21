@@ -1,6 +1,9 @@
 #!/bin/bash
 
-# TODO: Set Pipe fail if any of the commands fail 
+export LOG="/data/log/worker0.log"
+export TARGET_DIRECTORY="/opt/worker/"
+
+# TODO: Set Pipe fail if any of the commands fail
 generate_service_file() {
   if [ "$#" -ne 4 ]; then
     echo "Usage: generate_service_file <service_name> <description> <command> <working_directory>"
@@ -70,7 +73,6 @@ current_mrenclave(){
 }
 
 enclave_account(){
-  # TODO: Correct Working Directory
   log=$(cd bin && ./integritee-service signing-key 2>&1)
   enclave_account=$(echo "$log" | awk '/Enclave account:/{print $NF}')
   if [[ -n $enclave_account ]]; then
@@ -83,7 +85,6 @@ enclave_account(){
 }
 
 new_mrenclave(){
-  # TODO: Correct Working Directory
   output=$(make mrenclave 2>&1)
   if [[ $? -eq 0 ]]; then
       mrenclave_value=$(echo "$output" | awk '{print $2}')
@@ -95,14 +96,20 @@ new_mrenclave(){
 }
 
 latest_sync_block(){
-  # TODO: Correct Log file
   # Fetch Latest Block Produced
-  line=$(grep '\[.*\]$' log/worker0.log | tail -n 1 2>&1)
-  number=$(echo "$line" | sed -E 's/.*\[([0-9]+)\]$/\1/')
-  current_sidechain_end_block=$((number + 50))
-  echo "The next enclave is scheduled to start producing blocks after: $current_sidechain_end_block blocks"
-
-  export SCHEDULE_UPDATE_BLOCK="$current_sidechain_end_block"
+  if [ "$PRODUCTION" = "1" ]; then
+    line=$(grep '\[.*\]$' /data/log/worker0.log | tail -n 1 2>&1)
+    number=$(echo "$line" | sed -E 's/.*\[([0-9]+)\]$/\1/')
+    current_sidechain_end_block=$((number + 50))
+    echo "The next enclave is scheduled to start producing blocks after: $current_sidechain_end_block blocks"
+    export SCHEDULE_UPDATE_BLOCK="$current_sidechain_end_block"
+  else
+    line=$(grep '\[.*\]$' log/worker0.log | tail -n 1 2>&1)
+    number=$(echo "$line" | sed -E 's/.*\[([0-9]+)\]$/\1/')
+    current_sidechain_end_block=$((number + 50))
+    echo "The next enclave is scheduled to start producing blocks after: $current_sidechain_end_block blocks"
+    export SCHEDULE_UPDATE_BLOCK="$current_sidechain_end_block"
+  fi
 }
 
 start_service_files(){
@@ -137,18 +144,71 @@ perform_upgrade(){
   scripts/litentry/migrate_worker.sh
 }
 
+upgrade_worker(){
+  current_mrenclave
+  enclave_account
+
+  export SGX_COMMERCIAL_KEY="/home/faisal/litentry-parachain/tee-worker/enclave-runtime/Enclave_private.pem"
+  export SGX_PRODUCTION="1"
+  make
+
+  new_mrenclave
+  latest_sync_block
+  perform_upgrade
+
+  if [ "$PRODUCTION" = "1" ]; then
+      generate_upgrade_worker_service_file
+      cp worker.service /etc/systemd/system/
+      systemctl daemon-reload
+      systemctl start worker.service
+  else
+      export RUST_LOG='info,integritee_service=debug,ws=warn,sp_io=error,substrate_api_client=warn,
+      itc_parentchain_light_client=info,
+      jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=debug,ita_stf=debug,
+      its_rpc_handler=warn,itc_rpc_client=warn,its_consensus_common=debug,its_state=warn,
+      its_consensus_aura=warn,aura*=warn,its_consensus_slots=warn,
+      itp_attestation_handler=debug,http_req=debug,lc_mock_server=warn,itc_rest_client=debug,
+      lc_credentials=debug,lc_identity_verification=debug,lc_stf_task_receiver=debug,lc_stf_task_sender=debug,
+      lc_data_providers=debug,itp_top_pool=debug,itc_parentchain_indirect_calls_executor=debug'
+
+      echo "Starting new worker"
+      cd tmp/w0
+
+      # Redirect stdout to a log file
+      log_file="../../log/worker0.log"
+
+      exec ./integritee-service -P 2000 -w 2001 -r 3443 -h 4545 --running-mode mock --enable-mock-server --parentchain-start-block 0 run --skip-ra --dev >"$log_file" 2>&1
+  fi
+}
+
 # Example usage
 # generate_service_file "my_service" "My Service Description" "/path/to/my_script.sh" "/path/to/working_directory"
-generate_worker_service_file
-generate_parachain_service_file
+if [ "$PRODUCTION" = "1" ]; then
+    echo "Running in production mode."
+    generate_worker_service_file
+    generate_parachain_service_file
+else
+    echo "Not running in production mode."
+fi
 
 if [ "$AUTO_START" = "true" ]; then
   # Start the services
-  echo "Starting Services"
-  start_service_files
+  if [ "$PRODUCTION" = "1" ]; then
+    echo "Starting Services"
+    start_service_files
+  else
+    ./local-setup/launch.sh
+  fi
 fi
 
 if [ "$UPGRADE_WORKER" = "true" ]; then
+  # Assuming the worker has already stopped
+  echo "Preparing to Upgrade Worker"
+  upgrade_worker
+fi
+
+# TODO: Need to also perform clean reset of the service
+if [ "$CLEAN_RESET" = "true" ]; then
   # Assuming the worker has already stopped
   echo "Preparing to Upgrade Worker"
 fi
