@@ -205,7 +205,7 @@ impl TwitterOfficialClient {
 			if tweet_users.users.is_empty() {
 				return Err(Error::RequestError("user not found from tweet".to_string()))
 			}
-			tweet.author_id = tweet_users.users[0].username.clone();
+			tweet.author_id = tweet_users.users[0].id.clone();
 		}
 
 		Ok(tweet)
