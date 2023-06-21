@@ -68,6 +68,8 @@ pub mod pallet {
 		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		// origin who can set the admin account
 		type SetAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		// origin to manage authorised delegatee list
+		type DelegateeAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		// origin that is allowed to call extrinsics
 		type ExtrinsicWhitelistOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
 	}
@@ -82,6 +84,14 @@ pub mod pallet {
 	#[pallet::getter(fn admin)]
 	pub type Admin<T: Config> = StorageValue<_, T::AccountId, OptionQuery>;
 
+	// delegatees who can send extrinsics(currently only `request_vc`) on users' behalf
+	// please note delegatees and admins are different:
+	// - admins are meant to manage the pallet state manually, e.g. schema, vcRegistry
+	// - delegatees can send certain extrinsics for users, similar to `proxied account`
+	#[pallet::storage]
+	#[pallet::getter(fn delegatee)]
+	pub type Delegatee<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, (), OptionQuery>;
+
 	#[pallet::storage]
 	#[pallet::getter(fn schema_index)]
 	pub type SchemaRegistryIndex<T: Config> = StorageValue<_, SchemaIndex, ValueQuery>;
@@ -94,6 +104,12 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
+		DelegateeAdded {
+			account: T::AccountId,
+		},
+		DelegateeRemoved {
+			account: T::AccountId,
+		},
 		// a VC is requested
 		VCRequested {
 			account: T::AccountId,
@@ -175,6 +191,10 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
+		/// a delegatee doesn't exist
+		DelegateeNotExist,
+		/// a `request_vc` request from unauthorised user
+		UnauthorisedUser,
 		/// the VC already exists
 		VCAlreadyExists,
 		/// the ID doesn't exist
@@ -218,7 +238,29 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// add an account to the delegatees
 		#[pallet::call_index(0)]
+		#[pallet::weight(<T as Config>::WeightInfo::add_delegatee())]
+		pub fn add_delegatee(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
+			let _ = T::DelegateeAdminOrigin::ensure_origin(origin)?;
+			// we don't care if `account` already exists
+			Delegatee::<T>::insert(account.clone(), ());
+			Self::deposit_event(Event::DelegateeAdded { account });
+			Ok(())
+		}
+
+		/// remove an account from the delegatees
+		#[pallet::call_index(1)]
+		#[pallet::weight(<T as Config>::WeightInfo::remove_delegatee())]
+		pub fn remove_delegatee(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
+			let _ = T::DelegateeAdminOrigin::ensure_origin(origin)?;
+			ensure!(Delegatee::<T>::contains_key(&account), Error::<T>::DelegateeNotExist);
+			Delegatee::<T>::remove(account.clone());
+			Self::deposit_event(Event::DelegateeRemoved { account });
+			Ok(())
+		}
+
+		#[pallet::call_index(2)]
 		#[pallet::weight(<T as Config>::WeightInfo::request_vc())]
 		pub fn request_vc(
 			origin: OriginFor<T>,
@@ -230,7 +272,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::call_index(1)]
+		#[pallet::call_index(3)]
 		#[pallet::weight(<T as Config>::WeightInfo::disable_vc())]
 		pub fn disable_vc(origin: OriginFor<T>, index: VCIndex) -> DispatchResultWithPostInfo {
 			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
@@ -245,7 +287,7 @@ pub mod pallet {
 			})
 		}
 
-		#[pallet::call_index(2)]
+		#[pallet::call_index(4)]
 		#[pallet::weight(<T as Config>::WeightInfo::revoke_vc())]
 		pub fn revoke_vc(origin: OriginFor<T>, index: VCIndex) -> DispatchResultWithPostInfo {
 			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
@@ -256,7 +298,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::call_index(3)]
+		#[pallet::call_index(5)]
 		#[pallet::weight(<T as Config>::WeightInfo::set_admin())]
 		pub fn set_admin(origin: OriginFor<T>, new: T::AccountId) -> DispatchResultWithPostInfo {
 			T::SetAdminOrigin::ensure_origin(origin)?;
@@ -268,7 +310,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
-		#[pallet::call_index(4)]
+		#[pallet::call_index(6)]
 		#[pallet::weight(<T as Config>::WeightInfo::add_schema())]
 		pub fn add_schema(
 			origin: OriginFor<T>,
@@ -294,7 +336,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::call_index(5)]
+		#[pallet::call_index(7)]
 		#[pallet::weight(<T as Config>::WeightInfo::disable_schema())]
 		pub fn disable_schema(
 			origin: OriginFor<T>,
@@ -313,7 +355,7 @@ pub mod pallet {
 			})
 		}
 
-		#[pallet::call_index(6)]
+		#[pallet::call_index(8)]
 		#[pallet::weight(<T as Config>::WeightInfo::activate_schema())]
 		pub fn activate_schema(
 			origin: OriginFor<T>,
@@ -332,7 +374,7 @@ pub mod pallet {
 			})
 		}
 
-		#[pallet::call_index(7)]
+		#[pallet::call_index(9)]
 		#[pallet::weight(<T as Config>::WeightInfo::revoke_schema())]
 		pub fn revoke_schema(
 			origin: OriginFor<T>,
@@ -347,7 +389,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::call_index(8)]
+		#[pallet::call_index(10)]
 		#[pallet::weight(<T as Config>::WeightInfo::add_vc_registry_item())]
 		pub fn add_vc_registry_item(
 			origin: OriginFor<T>,
@@ -367,7 +409,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::call_index(9)]
+		#[pallet::call_index(11)]
 		#[pallet::weight(<T as Config>::WeightInfo::remove_vc_registry_item())]
 		pub fn remove_vc_registry_item(
 			origin: OriginFor<T>,
@@ -381,7 +423,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::call_index(10)]
+		#[pallet::call_index(12)]
 		#[pallet::weight(<T as Config>::WeightInfo::clear_vc_registry(u32::max_value()))]
 		pub fn clear_vc_registry(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;

@@ -147,6 +147,7 @@ impl pallet_vc_management::Config for Test {
 	type WeightInfo = ();
 	type TEECallOrigin = EnsureEnclaveSigner<Self>;
 	type SetAdminOrigin = EnsureRoot<Self::AccountId>;
+	type DelegateeAdminOrigin = EnsureRoot<Self::AccountId>;
 	type ExtrinsicWhitelistOrigin = VCMPExtrinsicWhitelist;
 }
 

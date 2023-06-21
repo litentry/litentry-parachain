@@ -140,8 +140,7 @@ pub mod pallet {
 		},
 	}
 
-	/// delegatees who are authorised to send extrinsics(currently only `link_identity`)
-	/// on behalf of the users
+	// delegatees who can send extrinsics(currently only `link_identity`) on users' behalf
 	#[pallet::storage]
 	#[pallet::getter(fn delegatee)]
 	pub type Delegatee<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, (), OptionQuery>;
