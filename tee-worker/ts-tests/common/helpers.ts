@@ -14,15 +14,15 @@ export function getSubstrateSigner(): {
     charlie: KeyringPair;
     eve: KeyringPair;
 } {
-    const Alice = keyring.addFromUri('//Alice', { name: 'Alice' });
-    const Bob = keyring.addFromUri('//Bob', { name: 'Bob' });
-    const Charlie = keyring.addFromUri('//Charlie', { name: 'Charlie' });
-    const Eve = keyring.addFromUri('//Eve', { name: 'Eve' });
+    const alice = keyring.addFromUri('//Alice', { name: 'Alice' });
+    const bob = keyring.addFromUri('//Bob', { name: 'Bob' });
+    const charlie = keyring.addFromUri('//Charlie', { name: 'Charlie' });
+    const eve = keyring.addFromUri('//Eve', { name: 'Eve' });
     const signers = {
-        alice: Alice,
-        bob: Bob,
-        charlie: Charlie,
-        eve: Eve,
+        alice,
+        bob,
+        charlie,
+        eve
     };
     return signers;
 }
@@ -57,7 +57,7 @@ export function identity(data: HexString | Uint8Array): Uint8Array {
 }
 
 // see https://github.com/litentry/litentry-parachain/blob/97f80f711e8ec308cbf230b9b35cd40b191d8217/tee-worker/litentry/primitives/src/identity.rs#L80
-export const SubstrateNetworkMapping: Record<number, SubstrateNetwork['type']> = {
+export const substrateNetworkMapping: Record<number, SubstrateNetwork['type']> = {
     0: 'Polkadot',
     2: 'Kusama',
     31: 'Litentry',

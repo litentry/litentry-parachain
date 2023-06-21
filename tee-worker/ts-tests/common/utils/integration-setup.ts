@@ -19,11 +19,11 @@ export function describeLitentry(title: string, walletsNumber: number, cb: (cont
             teeShieldingKey: {} as KeyObject,
             ethersWallet: {},
             substrateWallet: {},
-            metaData: {} as Metadata,
+            sidechainMetaData: {} as Metadata,
             sidechainRegistry: {} as TypeRegistry,
             web3Signers: [] as Web3Wallets[],
             // default LitentryRococo
-            chainID: 42,
+            chainIdentifier: 42,
         };
 
         before('Starting Litentry(parachain&tee)', async function () {
@@ -39,10 +39,10 @@ export function describeLitentry(title: string, walletsNumber: number, cb: (cont
             context.teeShieldingKey = tmp.teeShieldingKey;
             context.ethersWallet = tmp.ethersWallet;
             context.substrateWallet = tmp.substrateWallet;
-            context.metaData = tmp.metaData;
+            context.sidechainMetaData = tmp.sidechainMetaData;
             context.sidechainRegistry = tmp.sidechainRegistry;
             context.web3Signers = tmp.web3Signers;
-            context.chainID = tmp.chainID;
+            context.chainIdentifier = tmp.chainIdentifier;
         });
 
         after(() => Promise.resolve());

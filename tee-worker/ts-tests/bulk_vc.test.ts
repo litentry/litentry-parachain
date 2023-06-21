@@ -11,7 +11,7 @@ import { multiAccountTxSender } from './common/transactions';
 import { aesKey } from './common/call';
 import { SubmittableResult } from '@polkadot/api';
 
-const assertion_A1: Assertion = {
+const assertionA1: Assertion = {
     A1: 'A1',
 };
 
@@ -22,7 +22,7 @@ describeLitentry('multiple accounts test', 2, async (context) => {
     let substrateSigners: KeyringPair[] = [];
     const vcIndexList: HexString[] = [];
     // If want to test other assertions with multiple accounts,just need to make changes here.
-    const assertion_type = assertion_A1;
+    const assertionType = assertionA1;
     step('init', async () => {
         substrateSigners = context.web3Signers.map((web3Signer) => {
             return web3Signer.substrateWallet;
@@ -59,39 +59,39 @@ describeLitentry('multiple accounts test', 2, async (context) => {
             const nonce = (await context.api.rpc.system.accountNextIndex(substrateSigners[i].address)).toNumber();
             txs.push({ tx, nonce });
         }
-        const resp_events = await multiAccountTxSender(context, txs, substrateSigners, 'identityManagement', [
+        const events = await multiAccountTxSender(context, txs, substrateSigners, 'identityManagement', [
             'UserShieldingKeySet',
         ], 15);
-        assert.equal(resp_events.length, substrateSigners.length, 'set usershieldingkey check fail');
+        assert.equal(events.length, substrateSigners.length, 'set usershieldingkey check fail');
     });
 
     step('test requestVc with multiple accounts', async () => {
         const txs: TransactionSubmit[] = [];
         for (let i = 0; i < substrateSigners.length; i++) {
-            const tx = context.api.tx.vcManagement.requestVc(context.mrEnclave, assertion_type);
+            const tx = context.api.tx.vcManagement.requestVc(context.mrEnclave, assertionType);
             const nonce = (await context.api.rpc.system.accountNextIndex(substrateSigners[i].address)).toNumber();
             txs.push({ tx, nonce });
         }
-        const resp_events = await multiAccountTxSender(context, txs, substrateSigners, 'vcManagement', ['VCIssued'], 15);
+        const events = await multiAccountTxSender(context, txs, substrateSigners, 'vcManagement', ['VCIssued'], 15);
 
-        const event_data = await handleVcEvents(aesKey, resp_events, 'VCIssued');
+        const eventsData = await handleVcEvents(aesKey, events, 'VCIssued');
 
-        for (let k = 0; k < event_data.length; k++) {
-            const vcString = event_data[k].vc.replace('0x', '');
+        for (let k = 0; k < eventsData.length; k++) {
+            const vcString = eventsData[k].vc.replace('0x', '');
             const vcObj = JSON.parse(vcString);
 
             const vcProof = vcObj.proof;
 
-            const registry = (await context.api.query.vcManagement.vcRegistry(event_data[k].index)) as any;
+            const registry = (await context.api.query.vcManagement.vcRegistry(eventsData[k].index)) as any;
             assert.equal(registry.toHuman()['status'], 'Active', 'check registry error');
 
             const vcHash = blake2AsHex(Buffer.from(vcString));
             assert.equal(vcHash, registry.toHuman()['hash_'], 'check vc json hash error');
 
             //check vc
-            const vcValid = await checkVc(vcObj, event_data[k].index, vcProof, context.api);
+            const vcValid = await checkVc(vcObj, eventsData[k].index, vcProof, context.api);
             assert.equal(vcValid, true, 'check vc error');
-            vcIndexList.push(event_data[k].index);
+            vcIndexList.push(eventsData[k].index);
         }
     });
 
@@ -102,13 +102,13 @@ describeLitentry('multiple accounts test', 2, async (context) => {
             const nonce = (await context.api.rpc.system.accountNextIndex(substrateSigners[i].address)).toNumber();
             txs.push({ tx, nonce });
         }
-        const resp_events = await multiAccountTxSender(context, txs, substrateSigners, 'vcManagement', ['VCDisabled'], 15);
+        const events = await multiAccountTxSender(context, txs, substrateSigners, 'vcManagement', ['VCDisabled'], 15);
 
-        assert.equal(resp_events.length, vcIndexList.length, 'disable vc check fail');
-        const event_datas = await handleVcEvents(aesKey, resp_events, 'VCDisabled');
+        assert.equal(events.length, vcIndexList.length, 'disable vc check fail');
+        const eventsData = await handleVcEvents(aesKey, events, 'VCDisabled');
         for (let k = 0; k < vcIndexList.length; k++) {
             console.log('disableVc index:', k);
-            assert.equal(event_datas[k], vcIndexList[k], 'check index error');
+            assert.equal(eventsData[k], vcIndexList[k], 'check index error');
             const registry = (await context.api.query.vcManagement.vcRegistry(vcIndexList[k])) as any;
             assert.equal(registry.toHuman()['status'], 'Disabled');
         }
@@ -121,14 +121,14 @@ describeLitentry('multiple accounts test', 2, async (context) => {
             const nonce = (await context.api.rpc.system.accountNextIndex(substrateSigners[i].address)).toNumber();
             txs.push({ tx, nonce });
         }
-        const resp_events = await multiAccountTxSender(context, txs, substrateSigners, 'vcManagement', ['VCRevoked'], 15);
-        assert.equal(resp_events.length, vcIndexList.length, 'revoke vc check fail');
-        const event_datas = await handleVcEvents(aesKey, resp_events, 'VCRevoked');
-        console.log('event_datas', event_datas);
+        const events = await multiAccountTxSender(context, txs, substrateSigners, 'vcManagement', ['VCRevoked'], 15);
+        assert.equal(events.length, vcIndexList.length, 'revoke vc check fail');
+        const eventsData = await handleVcEvents(aesKey, events, 'VCRevoked');
+        console.log('eventsData', eventsData);
 
         for (let k = 0; k < vcIndexList.length; k++) {
             console.log('revokeVc index:', k);
-            assert.equal(event_datas[k], vcIndexList[k], 'check index error');
+            assert.equal(eventsData[k], vcIndexList[k], 'check index error');
             const registry = (await context.api.query.vcManagement.vcRegistry(vcIndexList[k])) as any;
             assert.equal(registry.toHuman(), null);
         }

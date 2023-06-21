@@ -1,7 +1,7 @@
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { blake2AsHex } from '@polkadot/util-crypto';
-import { AESOutput } from '../type-definitions';
-import { decryptWithAES, encryptWithAES, encryptWithTeeShieldingKey } from './crypto';
+import { AesOutput } from '../type-definitions';
+import { decryptWithAes, encryptWithAes, encryptWithTeeShieldingKey } from './crypto';
 import { ethers } from 'ethers';
 import type { TypeRegistry } from '@polkadot/types';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from '@polkadot/types/lookup';
@@ -27,7 +27,7 @@ export function generateVerificationMessage(
 ): HexString {
     const encodedIdentity = context.sidechainRegistry.createType('LitentryPrimitivesIdentity', identity).toU8a();
     const payload = Buffer.concat([signerAddress, encodedIdentity]);
-    const encryptedPayload = hexToU8a(encryptWithAES(aesKey, hexToU8a(keyNonce), payload));
+    const encryptedPayload = hexToU8a(encryptWithAes(aesKey, hexToU8a(keyNonce), payload));
     const encodedSidechainNonce = context.api.createType('Index', sidechainNonce);
     const msg = Buffer.concat([encodedSidechainNonce.toU8a(), encryptedPayload]);
     return blake2AsHex(msg, 256);
@@ -46,11 +46,11 @@ export async function buildIdentityHelper(
         },
     };
 
-    const encoded_identity = context.sidechainRegistry.createType(
+    const encodedIdentity = context.sidechainRegistry.createType(
         'LitentryPrimitivesIdentity',
         identity
     ) as unknown as LitentryPrimitivesIdentity;
-    return encoded_identity;
+    return encodedIdentity;
 }
 
 // If multiple transactions are built from multiple accounts, pass the signers as an array.
@@ -73,7 +73,7 @@ export async function buildIdentityTxs(
         const signer = Array.isArray(signers) ? signers[k] : signers;
         const identity = identities[k];
         let tx: SubmittableExtrinsic<ApiTypes>;
-        const ciphertext_identity =
+        const ciphertextIdentity =
             identity && encryptWithTeeShieldingKey(teeShieldingKey, identity.toU8a()).toString('hex');
         const nonce = (await api.rpc.system.accountNextIndex(signer.address)).toNumber();
 
@@ -90,20 +90,20 @@ export async function buildIdentityTxs(
                 {
                     const data = validations![k];
                     const validation = api.createType('LitentryValidationData', data).toU8a();
-                    const ciphertext_validation = encryptWithTeeShieldingKey(teeShieldingKey, validation).toString('hex');
+                    const ciphertextValidation = encryptWithTeeShieldingKey(teeShieldingKey, validation).toString('hex');
 
                     tx = api.tx.identityManagement.linkIdentity(
                         mrEnclave,
                         signer.address,
-                        `0x${ciphertext_identity}`,
-                        `0x${ciphertext_validation}`,
+                        `0x${ciphertextIdentity}`,
+                        `0x${ciphertextValidation}`,
                         keyNonce
                     );
                     break;
                 }
             case 'removeIdentity':
                 {
-                    tx = api.tx.identityManagement.removeIdentity(mrEnclave, `0x${ciphertext_identity}`);
+                    tx = api.tx.identityManagement.removeIdentity(mrEnclave, `0x${ciphertextIdentity}`);
                     break;
                 }
             default:
@@ -131,7 +131,7 @@ export async function handleIdentityEvents(
                         context.sidechainRegistry,
                         events[index].data.account.toHex(),
                         undefined,
-                        decryptWithAES(aesKey, events[index].data.idGraph, 'hex')
+                        decryptWithAes(aesKey, events[index].data.idGraph, 'hex')
                     )
                 );
                 break;
@@ -140,8 +140,8 @@ export async function handleIdentityEvents(
                     createIdentityEvent(
                         context.sidechainRegistry,
                         events[index].data.account.toHex(),
-                        decryptWithAES(aesKey, events[index].data.identity, 'hex'),
-                        decryptWithAES(aesKey, events[index].data.idGraph, 'hex')
+                        decryptWithAes(aesKey, events[index].data.identity, 'hex'),
+                        decryptWithAes(aesKey, events[index].data.idGraph, 'hex')
                     )
                 );
                 break;
@@ -150,7 +150,7 @@ export async function handleIdentityEvents(
                     createIdentityEvent(
                         context.sidechainRegistry,
                         events[index].data.account.toHex(),
-                        decryptWithAES(aesKey, events[index].data.identity, 'hex')
+                        decryptWithAes(aesKey, events[index].data.identity, 'hex')
                     )
                 );
                 break;
@@ -163,27 +163,27 @@ export async function handleIdentityEvents(
 
 export function parseIdGraph(
     sidechainRegistry: TypeRegistry,
-    idGraph_output: AESOutput,
+    idGraphOutput: AesOutput,
     aesKey: HexString
 ): [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][] {
-    const decrypted_idGraph = decryptWithAES(aesKey, idGraph_output, 'hex');
+    const decryptedIdGraph = decryptWithAes(aesKey, idGraphOutput, 'hex');
     const idGraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][] =
         sidechainRegistry.createType(
             'Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
-            decrypted_idGraph
+            decryptedIdGraph
         ) as unknown as [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][];
     return idGraph;
 }
 
 export function parseIdentity(
     sidechainRegistry: TypeRegistry,
-    identity_output: AESOutput,
+    identityOutput: AesOutput,
     aesKey: HexString
 ): LitentryPrimitivesIdentity {
-    const decrypted_identity = decryptWithAES(aesKey, identity_output, 'hex');
+    const decryptedIdentity = decryptWithAes(aesKey, identityOutput, 'hex');
     const identity = sidechainRegistry.createType(
         'LitentryPrimitivesIdentity',
-        decrypted_identity
+        decryptedIdentity
     ) as unknown as LitentryPrimitivesIdentity;
     return identity;
 }
@@ -221,8 +221,8 @@ export async function buildValidations(
     substrateSigners: KeyringPair[] | KeyringPair,
     ethereumSigners?: ethers.Wallet[]
 ): Promise<LitentryValidationData[]> {
-    let signature_ethereum: HexString;
-    let signature_substrate: Uint8Array;
+    let ethereumSignature: HexString;
+    let substrateSignature: Uint8Array;
     const validations: LitentryValidationData[] = [];
 
     for (let index = 0; index < identities.length; index++) {
@@ -250,17 +250,17 @@ export async function buildValidations(
             console.log('post verification msg to ethereum: ', msg);
             ethereumValidationData.Web3Validation.Evm.message = msg;
             const msgHash = ethers.utils.arrayify(msg);
-            signature_ethereum = (await ethereumSigner!.signMessage(msgHash)) as HexString;
-            console.log('signature_ethereum', ethereumSigners![index].address, signature_ethereum);
+            ethereumSignature = (await ethereumSigner!.signMessage(msgHash)) as HexString;
+            console.log('ethereumSignature', ethereumSigners![index].address, ethereumSignature);
 
-            ethereumValidationData!.Web3Validation.Evm.signature.Ethereum = signature_ethereum;
+            ethereumValidationData!.Web3Validation.Evm.signature.Ethereum = ethereumSignature;
             console.log('ethereumValidationData', ethereumValidationData);
-            const encode_verifyIdentity_validation = context.api.createType(
+            const encodedVerifyIdentityValidation = context.api.createType(
                 'LitentryValidationData',
                 ethereumValidationData
             ) as unknown as LitentryValidationData;
 
-            validations.push(encode_verifyIdentity_validation);
+            validations.push(encodedVerifyIdentityValidation);
         } else if (network === 'substrate') {
             const substrateValidationData = {
                 Web3Validation: {
@@ -274,13 +274,13 @@ export async function buildValidations(
             };
             console.log('post verification msg to substrate: ', msg);
             substrateValidationData.Web3Validation.Substrate.message = msg;
-            signature_substrate = substrateSigner.sign(msg) as Uint8Array;
-            substrateValidationData!.Web3Validation.Substrate.signature.Sr25519 = u8aToHex(signature_substrate);
-            const encode_verifyIdentity_validation: LitentryValidationData = context.api.createType(
+            substrateSignature = substrateSigner.sign(msg) as Uint8Array;
+            substrateValidationData!.Web3Validation.Substrate.signature.Sr25519 = u8aToHex(substrateSignature);
+            const encodedVerifyIdentityValidation: LitentryValidationData = context.api.createType(
                 'LitentryValidationData',
                 substrateValidationData
             ) as unknown as LitentryValidationData;
-            validations.push(encode_verifyIdentity_validation);
+            validations.push(encodedVerifyIdentityValidation);
         } else if (network === 'twitter') {
             console.log('post verification msg to twitter', msg);
             const twitterValidationData = {
@@ -291,11 +291,11 @@ export async function buildValidations(
                 },
             };
 
-            const encode_verifyIdentity_validation = context.api.createType(
+            const encodedVerifyIdentityValidation = context.api.createType(
                 'LitentryValidationData',
                 twitterValidationData
             ) as unknown as LitentryValidationData;
-            validations.push(encode_verifyIdentity_validation);
+            validations.push(encodedVerifyIdentityValidation);
         }
     }
     return validations;

@@ -1,5 +1,5 @@
 import type { HexString } from '@polkadot/util/types';
-import { decryptWithAES } from './crypto';
+import { decryptWithAes } from './crypto';
 
 export async function handleVcEvents(
     aesKey: HexString,
@@ -13,7 +13,7 @@ export async function handleVcEvents(
                 results.push({
                     account: events[k].data.account.toHex(),
                     index: events[k].data.index.toHex(),
-                    vc: decryptWithAES(aesKey, events[k].data.vc, 'utf-8'),
+                    vc: decryptWithAes(aesKey, events[k].data.vc, 'utf-8'),
                 });
                 break;
             case 'VCDisabled':

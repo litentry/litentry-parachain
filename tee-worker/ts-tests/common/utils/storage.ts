@@ -97,7 +97,7 @@ export async function checkUserShieldingKeys(
 ): Promise<string> {
     await sleep(6000);
 
-    const storageKey = await buildStorageHelper(context.metaData, pallet, method, address);
+    const storageKey = await buildStorageHelper(context.sidechainMetaData, pallet, method, address);
 
     const base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
 
@@ -111,7 +111,7 @@ export async function checkUserShieldingKeys(
     return resp.value.toHex();
 }
 
-export async function checkIDGraph(
+export async function checkIdGraph(
     context: IntegrationTestContext,
     pallet: string,
     method: string,
@@ -119,7 +119,7 @@ export async function checkIDGraph(
     identity: HexString
 ): Promise<PalletIdentityManagementTeeIdentityContext> {
     await sleep(6000);
-    const storageKey = await buildStorageHelper(context.metaData, pallet, method, address, identity);
+    const storageKey = await buildStorageHelper(context.sidechainMetaData, pallet, method, address, identity);
 
     const base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
 
@@ -130,9 +130,9 @@ export async function checkIDGraph(
         id: 1,
     };
     const resp = await sendRequest(context.tee, request, context.api);
-    const IDGraph = context.sidechainRegistry.createType(
+    const idGraph = context.sidechainRegistry.createType(
         'PalletIdentityManagementTeeIdentityContext',
         resp.value
     ) as unknown as PalletIdentityManagementTeeIdentityContext;
-    return IDGraph;
+    return idGraph;
 }

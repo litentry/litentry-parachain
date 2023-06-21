@@ -74,18 +74,18 @@ describeLitentry('multiple accounts test', 2, async (context) => {
 
         const txs = await buildIdentityTxs(context, substrateSigners, identities, 'linkIdentity', validations);
 
-        const resp_events = await multiAccountTxSender(context, txs, substrateSigners, 'identityManagement', [
+        const events = await multiAccountTxSender(context, txs, substrateSigners, 'identityManagement', [
             'IdentityLinked',
         ]);
-        assert.equal(resp_events.length, txs.length, 'verify identities with multiple accounts check fail');
+        assert.equal(events.length, txs.length, 'verify identities with multiple accounts check fail');
     });
 
     step('test removeIdentity with multiple accounts', async () => {
         const txs = await buildIdentityTxs(context, substrateSigners, identities, 'removeIdentity');
 
-        const resp_events = await multiAccountTxSender(context, txs, substrateSigners, 'identityManagement', [
+        const events = await multiAccountTxSender(context, txs, substrateSigners, 'identityManagement', [
             'IdentityRemoved',
         ]);
-        assert.equal(resp_events.length, txs.length, 'remove identities with multiple accounts check fail');
+        assert.equal(events.length, txs.length, 'remove identities with multiple accounts check fail');
     });
 });

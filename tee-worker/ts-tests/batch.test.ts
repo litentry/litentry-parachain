@@ -29,15 +29,15 @@ describeLitentry('Test Batch Utility', 0, (context) => {
     });
 
     step('set user shielding key', async function () {
-        const [alice_txs] = await buildIdentityTxs(context, [context.substrateWallet.alice], [], 'setUserShieldingKey');
-        const resp_events = await multiAccountTxSender(
+        const [aliceTxs] = await buildIdentityTxs(context, [context.substrateWallet.alice], [], 'setUserShieldingKey');
+        const events = await multiAccountTxSender(
             context,
-            [alice_txs],
+            [aliceTxs],
             [context.substrateWallet.alice],
             'identityManagement',
             ['UserShieldingKeySet']
         );
-        const [alice] = await handleIdentityEvents(context, aesKey, resp_events, 'UserShieldingKeySet');
+        const [alice] = await handleIdentityEvents(context, aesKey, events, 'UserShieldingKeySet');
         assert.equal(
             alice.who,
             u8aToHex(context.substrateWallet.alice.addressRaw),
@@ -48,11 +48,11 @@ describeLitentry('Test Batch Utility', 0, (context) => {
     step('batch test: link identities', async function () {
         for (let index = 0; index < ethereumSigners.length; index++) {
             const signer = ethereumSigners[index];
-            const ethereum_identity = await buildIdentityHelper(signer.address, 'Ethereum', 'Evm', context);
-            identities.push(ethereum_identity);
+            const ethereumIdentity = await buildIdentityHelper(signer.address, 'Ethereum', 'Evm', context);
+            identities.push(ethereumIdentity);
         }
 
-        const ethereum_validations = await buildValidations(
+        const ethereumValidations = await buildValidations(
             context,
             identities,
             1,
@@ -60,7 +60,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             context.substrateWallet.alice,
             ethereumSigners
         );
-        validations = [...ethereum_validations];
+        validations = [...ethereumValidations];
 
         const txs = await buildIdentityTxs(
             context,
@@ -69,15 +69,15 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             'linkIdentity',
             validations
         );
-        const resp_events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
+        const events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
             'IdentityLinked',
         ]);
-        assertIdentityLinked(context, context.substrateWallet.alice, resp_events, identities);
+        assertIdentityLinked(context, context.substrateWallet.alice, events, identities);
     });
 
     step('batch test: remove identities', async function () {
         const txs = await buildIdentityTxs(context, context.substrateWallet.alice, identities, 'removeIdentity');
-        const resp_remove_events = await sendTxsWithUtility(
+        const removedEvents = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
             txs,
@@ -85,19 +85,19 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             ['IdentityRemoved']
         );
 
-        await assertIdentityRemoved(context, context.substrateWallet.alice, resp_remove_events);
+        await assertIdentityRemoved(context, context.substrateWallet.alice, removedEvents);
     });
 
     step('batch test: remove error identities', async function () {
         const txs = await buildIdentityTxs(context, context.substrateWallet.alice, identities, 'removeIdentity');
-        const resp_remove_events = await sendTxsWithUtility(
+        const removedEvents = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
             txs,
             'identityManagement',
             ['RemoveIdentityFailed']
         );
-        await checkErrorDetail(resp_remove_events, 'IdentityNotExist');
+        await checkErrorDetail(removedEvents, 'IdentityNotExist');
     });
 
     step('check IDGraph after removeIdentity', async function () {
