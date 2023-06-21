@@ -1,4 +1,3 @@
-
 export default {
     types: {
         WorkerRpcReturnValue: {

@@ -22,7 +22,7 @@ export function getSubstrateSigner(): {
         alice,
         bob,
         charlie,
-        eve
+        eve,
     };
     return signers;
 }

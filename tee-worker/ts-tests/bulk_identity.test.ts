@@ -51,9 +51,7 @@ describeLitentry('multiple accounts test', 2, async (context) => {
     //test with multiple accounts
     step('test set usershieldingkey with multiple accounts', async () => {
         const txs = await buildIdentityTxs(context, substrateSigners, [], 'setUserShieldingKey');
-        await multiAccountTxSender(context, txs, substrateSigners, 'identityManagement', [
-            'UserShieldingKeySet',
-        ]);
+        await multiAccountTxSender(context, txs, substrateSigners, 'identityManagement', ['UserShieldingKeySet']);
     });
 
     //test identity with multiple accounts

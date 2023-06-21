@@ -38,7 +38,8 @@ export function buildStorageKey(
 ): Uint8Array {
     let storageKey = u8aConcat(xxhashAsU8a(prefix, 128), xxhashAsU8a(method, 128));
     if (keyTypeId && hashers && input) {
-        const keyTypeIds = hashers.length === 1 ? [keyTypeId] : metadata.registry.lookup.getSiType(keyTypeId).def.asTuple;
+        const keyTypeIds =
+            hashers.length === 1 ? [keyTypeId] : metadata.registry.lookup.getSiType(keyTypeId).def.asTuple;
         for (let i = 0; i < keyTypeIds.length; i++) {
             const theKeyTypeId = keyTypeIds[i];
             const theHasher = hashers[i].toString();

@@ -64,7 +64,6 @@ async function runDirectCall() {
     // a hardcoded AES key which is used overall in tests - maybe we need to put it in a common place
     // const key_alice = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
 
-
     // similar to `reqExtHash` in indirect calls, we need some "identifiers" to pair the response
     // with the request. Ideally it's the hash of the trusted operation, but we need it before constructing
     // a trusted call, hence a random number is used here - better ideas are welcome

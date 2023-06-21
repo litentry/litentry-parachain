@@ -185,11 +185,7 @@ describeLitentry('Test Identity', 0, (context) => {
             context.substrateWallet.alice
         );
 
-        aliceValidations = [
-            ...aliceTwitterValidations,
-            ...aliceEthereumValidations,
-            ...aliceSubstrateValidations,
-        ];
+        aliceValidations = [...aliceTwitterValidations, ...aliceEthereumValidations, ...aliceSubstrateValidations];
 
         const aliceTxs = await buildIdentityTxs(
             context,
@@ -206,7 +202,6 @@ describeLitentry('Test Identity', 0, (context) => {
             'identityManagement',
             ['IdentityLinked']
         );
-
 
         assertIdentityLinked(context, context.substrateWallet.alice, aliceRespEvents, aliceIdentities);
 

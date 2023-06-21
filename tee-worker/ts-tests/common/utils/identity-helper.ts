@@ -86,26 +86,24 @@ export async function buildIdentityTxs(
                 tx = context.api.tx.identityManagement.setUserShieldingKey(context.mrEnclave, `0x${ciphertext}`);
                 break;
             }
-            case 'linkIdentity':
-                {
-                    const data = validations![k];
-                    const validation = api.createType('LitentryValidationData', data).toU8a();
-                    const ciphertextValidation = encryptWithTeeShieldingKey(teeShieldingKey, validation).toString('hex');
+            case 'linkIdentity': {
+                const data = validations![k];
+                const validation = api.createType('LitentryValidationData', data).toU8a();
+                const ciphertextValidation = encryptWithTeeShieldingKey(teeShieldingKey, validation).toString('hex');
 
-                    tx = api.tx.identityManagement.linkIdentity(
-                        mrEnclave,
-                        signer.address,
-                        `0x${ciphertextIdentity}`,
-                        `0x${ciphertextValidation}`,
-                        keyNonce
-                    );
-                    break;
-                }
-            case 'removeIdentity':
-                {
-                    tx = api.tx.identityManagement.removeIdentity(mrEnclave, `0x${ciphertextIdentity}`);
-                    break;
-                }
+                tx = api.tx.identityManagement.linkIdentity(
+                    mrEnclave,
+                    signer.address,
+                    `0x${ciphertextIdentity}`,
+                    `0x${ciphertextValidation}`,
+                    keyNonce
+                );
+                break;
+            }
+            case 'removeIdentity': {
+                tx = api.tx.identityManagement.removeIdentity(mrEnclave, `0x${ciphertextIdentity}`);
+                break;
+            }
             default:
                 throw new Error(`Invalid method: ${method}`);
         }

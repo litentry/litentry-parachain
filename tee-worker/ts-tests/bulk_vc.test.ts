@@ -59,9 +59,14 @@ describeLitentry('multiple accounts test', 2, async (context) => {
             const nonce = (await context.api.rpc.system.accountNextIndex(substrateSigners[i].address)).toNumber();
             txs.push({ tx, nonce });
         }
-        const events = await multiAccountTxSender(context, txs, substrateSigners, 'identityManagement', [
-            'UserShieldingKeySet',
-        ], 15);
+        const events = await multiAccountTxSender(
+            context,
+            txs,
+            substrateSigners,
+            'identityManagement',
+            ['UserShieldingKeySet'],
+            15
+        );
         assert.equal(events.length, substrateSigners.length, 'set usershieldingkey check fail');
     });
 
