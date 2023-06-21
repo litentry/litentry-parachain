@@ -115,31 +115,39 @@ pub(crate) fn query_friendship(
 		.and(warp::query::<HashMap<String, String>>())
 		.map(move |p: HashMap<String, String>| {
 			log::info!("query_friendship");
-			let default = String::default();
-			let source = p.get("source_screen_name").unwrap_or(&default);
-			let target_id = p.get("target_id").unwrap_or(&default);
+			if let Some(target_id) = p.get("target_id") {
+				if target_id == "783214" {
+					return Response::builder()
+						.body(serde_json::to_string(&prepare_mocked_relationship()).unwrap())
+				}
+			};
 
-			if source != "twitterdev" || target_id != "783214" {
-				Response::builder().status(400).body(String::from("Error query"))
-			} else {
-				let source_user = SourceTwitterUser {
-					id_str: "2244994945".into(),
-					screen_name: "TwitterDev".into(),
-					following: true,
-					followed_by: false,
-				};
-
-				let target_user = TargetTwitterUser {
-					id_str: "783214".into(),
-					screen_name: "Twitter".into(),
-					following: false,
-					followed_by: true,
-				};
-
-				let body = Relationship { source: source_user, target: target_user };
-				Response::builder().body(serde_json::to_string(&body).unwrap())
+			if let Some(target_screen_name) = p.get("target_screen_name") {
+				if target_screen_name == "twitter" {
+					return Response::builder()
+						.body(serde_json::to_string(&prepare_mocked_relationship()).unwrap())
+				}
 			}
+			Response::builder().status(400).body(String::from("Error query"))
 		})
+}
+
+fn prepare_mocked_relationship() -> Relationship {
+	let source_user = SourceTwitterUser {
+		id_str: "2244994945".into(),
+		screen_name: "TwitterDev".into(),
+		following: true,
+		followed_by: false,
+	};
+
+	let target_user = TargetTwitterUser {
+		id_str: "783214".into(),
+		screen_name: "Twitter".into(),
+		following: false,
+		followed_by: true,
+	};
+
+	Relationship { source: source_user, target: target_user }
 }
 
 pub(crate) fn query_user(
