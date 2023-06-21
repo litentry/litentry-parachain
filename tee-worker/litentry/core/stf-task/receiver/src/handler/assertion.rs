@@ -123,6 +123,13 @@ where
 				&self.req.who,
 			),
 
+			Assertion::A12(s) => lc_assertion_build::a12::build(
+				s,
+				self.req.vec_identity.to_vec(),
+				&self.req.shard,
+				&self.req.who,
+			),
+
 			_ => {
 				unimplemented!()
 			},
