@@ -1,4 +1,5 @@
 {
+	"name": "tee-integration-test",
 	"license": "ISC",
 	"scripts": {
 		"format": "yarn prettier --write .",
