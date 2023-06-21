@@ -34,11 +34,11 @@
         "add": "^2.0.6",
         "dotenv": "^16.0.3",
         "ethers": "^5.7.2",
-        "web3": "^1.8.1",
-        "yarn": "^1.22.19"
+        "web3": "^1.8.1"
     },
     "compilerOptions": {
         "allowSyntheticDefaultImports": true,
         "esModuleInterop": true
-    }
+    },
+    "packageManager": "yarn@3.6.0"
 }
