@@ -747,7 +747,7 @@ mod tests {
 	}
 
 	#[test]
-	fn less_than_10_eth_lit_holder_works() {
+	fn less_than_10_lit_holder_works() {
 		init();
 
 		let mut client = AchainableClient::new();
@@ -841,7 +841,7 @@ mod tests {
 		init();
 
 		let mut client = AchainableClient::new();
-		let res = client.native_lit_holder("0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA");
+		let res = client.erc20_lit_holder("0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA");
 		assert!(res.is_ok());
 		let res = res.unwrap();
 		assert_eq!(res, true);
