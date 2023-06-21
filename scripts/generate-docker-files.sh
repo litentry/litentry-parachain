@@ -21,6 +21,7 @@ OUTDIR=generated-$CHAIN
 print_divider
 
 echo "installing parachain-launch ..."
+yarn set version stable
 yarn
 print_divider
 
