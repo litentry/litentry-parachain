@@ -64,9 +64,28 @@ pub fn build(
 		)
 	})?;
 
+	let token_str = vec_to_string(token.as_string().to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::A14(min_balance.clone(), token.clone(), years.clone()),
+			ErrorDetail::ParseError,
+		)
+	})?;
+
 	let mut client = GraphQLClient::new();
 	let supported_network: SupportedNetwork = token.clone().into();
 	let addresses: Vec<String> = collect_addresses_from_identities(identities, supported_network);
+
+	if addresses.is_empty() {
+		return Err(Error::RequestVCFailed(
+			Assertion::A14(min_balance, token, years),
+			ErrorDetail::StfError(ErrorString::truncate_from(
+				format!("Account {:?} has no addresses on requested networks", who)
+					.as_bytes()
+					.to_vec(),
+			)),
+		))
+	}
+
 	let assertion_dates = prepare_assertion_dates(&years).map_err(|_| {
 		Error::RequestVCFailed(
 			Assertion::A14(min_balance.clone(), token.clone(), years.clone()),
@@ -82,12 +101,13 @@ pub fn build(
 			"".to_string(),
 			q_min_balance.to_string(),
 		);
-		match client.verified_credentials_is_hodler(vch) {
-			Ok(is_hodler_out) => results
-				.push((from_date.to_string(), is_hodler_out.hodlers.iter().any(|h| h.is_hodler))),
-			Err(e) =>
-				error!("Assertion A14 request check_verified_credentials_is_hodler error: {:?}", e),
-		};
+		let result = client.verified_credentials_is_hodler(vch).map_err(|e| {
+			Error::RequestVCFailed(
+				Assertion::A14(min_balance.clone(), token.clone(), years.clone()),
+				e.into_error_detail(),
+			)
+		})?;
+		results.push((from_date.to_string(), result.hodlers.iter().any(|h| h.is_hodler)));
 	}
 
 	match Credential::new_default(who, &shard.clone()) {
@@ -98,7 +118,7 @@ pub fn build(
 				VC_SUBJECT_TAG.to_vec(),
 			);
 			credential_unsigned
-				.update_holder_at_dates(&q_min_balance, &results)
+				.update_holder_at_dates(&token_str, &q_min_balance, &results)
 				.map_err(|e| {
 					Error::RequestVCFailed(
 						Assertion::A14(min_balance, token, years),
@@ -181,5 +201,10 @@ mod tests {
 			vec!["2020-01-01", "2021-01-01", "2022-01-01"],
 			prepare_assertion_dates(&years).unwrap()
 		)
+	}
+
+	#[test]
+	pub fn build_works() {
+		unimplemented!()
 	}
 }

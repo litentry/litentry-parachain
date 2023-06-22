@@ -362,6 +362,7 @@ impl Credential {
 
 	pub fn update_holder_at_dates(
 		&mut self,
+		token: &String,
 		minimum_amount: &String,
 		results: &[(String, bool)],
 	) -> Result<(), Error> {
@@ -377,6 +378,8 @@ impl Credential {
 			let minimum_amount_logic =
 				AssertionLogic::new_item("$minimum_amount", Op::Equal, minimum_amount);
 
+			let token = AssertionLogic::new_item("$token", Op::Equal, token);
+
 			// to_date's Op is ALWAYS Op::GreaterEq
 			let to_date = if current_year == date_year {
 				format_assertion_to_date()
@@ -387,6 +390,7 @@ impl Credential {
 
 			let assertion = AssertionLogic::new_and()
 				.add_item(minimum_amount_logic)
+				.add_item(token)
 				.add_item(from_date_logic)
 				.add_item(to_date_logic);
 
@@ -584,6 +588,7 @@ mod tests {
 		let who = AccountId::from([0; 32]);
 		let shard = ShardIdentifier::default();
 		let minimum_amount = "1".to_string();
+		let token = "LIT".to_string();
 		{
 			let mut credential_unsigned = Credential::new_default(&who, &shard.clone()).unwrap();
 
@@ -593,6 +598,7 @@ mod tests {
 
 			credential_unsigned
 				.update_holder_at_dates(
+					&token,
 					&minimum_amount,
 					&vec![
 						("2021-01-01".to_string(), true),
@@ -605,11 +611,14 @@ mod tests {
 			let minimum_amount_logic =
 				AssertionLogic::new_item("$minimum_amount", Op::Equal, &minimum_amount);
 
+			let token_logic = AssertionLogic::new_item("$token", Op::Equal, &token);
+
 			assert_eq!(credential_unsigned.credential_subject.values[0], true);
 			assert_eq!(
 				credential_unsigned.credential_subject.assertions[0],
 				AssertionLogic::new_and()
 					.add_item(minimum_amount_logic.clone())
+					.add_item(token_logic.clone())
 					.add_item(AssertionLogic::new_item("$from_date", Op::LessThan, "2021-01-01"))
 					.add_item(AssertionLogic::new_item("$to_date", Op::GreaterEq, "2021-12-31"))
 			);
@@ -619,6 +628,7 @@ mod tests {
 				credential_unsigned.credential_subject.assertions[1],
 				AssertionLogic::new_and()
 					.add_item(minimum_amount_logic.clone())
+					.add_item(token_logic.clone())
 					.add_item(AssertionLogic::new_item("$from_date", Op::LessThan, "2022-01-01"))
 					.add_item(AssertionLogic::new_item("$to_date", Op::GreaterEq, "2022-12-31"))
 			);
@@ -628,6 +638,7 @@ mod tests {
 				credential_unsigned.credential_subject.assertions[2],
 				AssertionLogic::new_and()
 					.add_item(minimum_amount_logic)
+					.add_item(token_logic.clone())
 					.add_item(AssertionLogic::new_item(
 						"$from_date",
 						Op::LessThan,

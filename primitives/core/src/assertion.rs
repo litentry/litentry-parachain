@@ -41,6 +41,14 @@ impl From<NativeToken> for SupportedNetwork {
 	}
 }
 
+impl NativeToken {
+	pub fn as_string(&self) -> BoundedVec<u8, ConstU32<4>> {
+		match self {
+			Self::DOT => BoundedVec::truncate_from("DOT".as_bytes().to_vec()),
+			Self::LIT => BoundedVec::truncate_from("LIT".as_bytes().to_vec()),
+		}
+	}
+}
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen, Hash)]
 pub enum SupportedNetwork {
 	Litentry,
