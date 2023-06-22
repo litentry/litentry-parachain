@@ -23,6 +23,7 @@
 use crate::{config::Config, error::Error, TrackInitialization};
 use async_trait::async_trait;
 use itc_rpc_client::direct_client::{DirectApi, DirectClient as DirectWorkerApi};
+use itp_enclave_api::enclave_base::EnclaveBase;
 use itp_node_api::{api_client::PalletTeerexApi, node_api_factory::CreateNodeApi};
 use its_primitives::types::SignedBlock as SignedSidechainBlock;
 use its_rpc_handler::constants::RPC_METHOD_NAME_IMPORT_BLOCKS;
@@ -31,7 +32,10 @@ use jsonrpsee::{
 	ws_client::WsClientBuilder,
 };
 use log::*;
-use std::sync::{Arc, RwLock};
+use std::{
+	collections::HashSet,
+	sync::{Arc, RwLock},
+};
 
 pub type WorkerResult<T> = Result<T, Error>;
 pub type Url = String;
@@ -41,7 +45,7 @@ pub struct Worker<Config, NodeApiFactory, Enclave, InitializationHandler> {
 	_enclave_api: Arc<Enclave>,
 	node_api_factory: Arc<NodeApiFactory>,
 	initialization_handler: Arc<InitializationHandler>,
-	peers: RwLock<Vec<Url>>,
+	peers: RwLock<HashSet<Url>>,
 }
 
 impl<Config, NodeApiFactory, Enclave, InitializationHandler>
@@ -52,7 +56,7 @@ impl<Config, NodeApiFactory, Enclave, InitializationHandler>
 		enclave_api: Arc<Enclave>,
 		node_api_factory: Arc<NodeApiFactory>,
 		initialization_handler: Arc<InitializationHandler>,
-		peers: Vec<Url>,
+		peers: HashSet<Url>,
 	) -> Self {
 		Self {
 			_config: config,
@@ -125,9 +129,9 @@ where
 
 /// Looks for new peers and updates them.
 pub trait UpdatePeers {
-	fn search_peers(&self) -> WorkerResult<Vec<Url>>;
+	fn search_peers(&self) -> WorkerResult<HashSet<Url>>;
 
-	fn set_peers(&self, peers: Vec<Url>) -> WorkerResult<()>;
+	fn set_peers(&self, peers: HashSet<Url>) -> WorkerResult<()>;
 
 	fn update_peers(&self) -> WorkerResult<()> {
 		let peers = self.search_peers()?;
@@ -139,22 +143,27 @@ impl<NodeApiFactory, Enclave, InitializationHandler> UpdatePeers
 	for Worker<Config, NodeApiFactory, Enclave, InitializationHandler>
 where
 	NodeApiFactory: CreateNodeApi + Send + Sync,
+	Enclave: EnclaveBase + itp_enclave_api::remote_attestation::TlsRemoteAttestation,
 {
-	fn search_peers(&self) -> WorkerResult<Vec<String>> {
+	fn search_peers(&self) -> WorkerResult<HashSet<String>> {
 		let node_api = self
 			.node_api_factory
 			.create_api()
 			.map_err(|e| Error::Custom(format!("Failed to create NodeApi: {:?}", e).into()))?;
 		let enclaves = node_api.all_enclaves(None)?;
-		let mut peer_urls = Vec::<String>::new();
+		let whitelisted = node_api.all_scheduled_mrenclaves(None)?;
+		let mut peer_urls = HashSet::<String>::new();
 		for enclave in enclaves {
+			if !whitelisted.contains(&enclave.mr_enclave) {
+				continue
+			}
 			// FIXME: This is temporary only, as block broadcasting should be moved to trusted ws server.
 			let enclave_url = enclave.url.clone();
 			let worker_api_direct = DirectWorkerApi::new(enclave.url);
 			// related issue: https://github.com/litentry/litentry-parachain/issues/1124#issuecomment-1367690264
 			match worker_api_direct.get_untrusted_worker_url() {
 				Ok(untrusted_worker_url) => {
-					peer_urls.push(untrusted_worker_url);
+					peer_urls.insert(untrusted_worker_url);
 				},
 				Err(e) => {
 					error!(
@@ -167,7 +176,7 @@ where
 		Ok(peer_urls)
 	}
 
-	fn set_peers(&self, peers: Vec<Url>) -> WorkerResult<()> {
+	fn set_peers(&self, peers: HashSet<Url>) -> WorkerResult<()> {
 		let mut peers_lock = self.peers.write().map_err(|e| {
 			Error::Custom(format!("Encountered poisoned lock for peers: {:?}", e).into())
 		})?;
@@ -224,6 +233,7 @@ mod tests {
 		run_server(W2_URL).await.unwrap();
 		let untrusted_worker_port = "4000".to_string();
 		let peers = vec![format!("ws://{}", W1_URL), format!("ws://{}", W2_URL)];
+		let peers: HashSet<String> = vector.into_iter().collect();
 
 		let worker = Worker::new(
 			local_worker_config(W1_URL.into(), untrusted_worker_port.clone(), "30".to_string()),
