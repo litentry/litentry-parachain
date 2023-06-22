@@ -34,7 +34,6 @@ use substrate_api_client::GenericAddress;
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct RequestVCArgs {
 	shard: ShardIdentifier,
-	account: AccountId,
 	assertion: Assertion,
 }
 
@@ -45,21 +44,18 @@ impl RequestVCArgs {
 		address: Option<GenericAddress>,
 		hash: H256,
 	) -> Result<()> {
-		if address.is_some() {
+		if let Some(address) = address {
+			let account = AccountIdLookup::lookup(address)?;
 			debug!(
 				"indirect call Requested VC, who:{:?}, assertion: {:?}",
-				account_id_to_string(&self.account),
+				account_id_to_string(&account),
 				self.assertion
 			);
 
 			let enclave_account_id = executor.get_enclave_account()?;
 
-			let trusted_call = TrustedCall::request_vc(
-				enclave_account_id,
-				self.account,
-				self.assertion.clone(),
-				hash,
-			);
+			let trusted_call =
+				TrustedCall::request_vc(enclave_account_id, account, self.assertion.clone(), hash);
 			let signed_trusted_call = executor.sign_call_with_self(&trusted_call, &self.shard)?;
 			let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
 

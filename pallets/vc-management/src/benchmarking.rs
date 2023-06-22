@@ -74,7 +74,7 @@ benchmarks! {
 		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
 		let shard = H256::from_slice(&TEST8_MRENCLAVE);
 		let assertion = Assertion::A1;
-	}: _(RawOrigin::Signed(account.clone()), shard, account.clone(), assertion.clone())
+	}: _(RawOrigin::Signed(account.clone()), shard, assertion.clone())
 	verify{
 		assert_last_event::<T>(Event::VCRequested{ account, shard, assertion }.into());
 	}

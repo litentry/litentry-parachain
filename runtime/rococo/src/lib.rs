@@ -911,7 +911,7 @@ impl pallet_group::Config<IMPExtrinsicWhitelistInstance> for Runtime {
 
 impl pallet_vc_management::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = ();
+	type WeightInfo = weights::pallet_vc_management::WeightInfo<Runtime>;
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	type SetAdminOrigin = EnsureRootOrHalfCouncil;
 	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;

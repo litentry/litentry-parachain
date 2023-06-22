@@ -35,7 +35,6 @@ fn request_vc_without_delegatee_works() {
 		assert_ok!(VCManagement::request_vc(
 			RuntimeOrigin::signed(alice.clone()),
 			shard,
-			alice.clone(),
 			Assertion::A1
 		));
 		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::VCRequested {
@@ -55,13 +54,12 @@ fn request_vc_with_authorised_delegatee_works() {
 		assert_ok!(VCManagement::request_vc(
 			RuntimeOrigin::signed(eddie.clone()),
 			shard,
-			alice.clone(),
-			Assertion::A1
+			Assertion::A13(alice.clone())
 		));
 		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::VCRequested {
-			account: alice,
+			account: eddie,
 			shard,
-			assertion: Assertion::A1,
+			assertion: Assertion::A13(alice),
 		}));
 	});
 }
@@ -71,13 +69,12 @@ fn request_vc_with_unauthorised_delegatee_fails() {
 	new_test_ext().execute_with(|| {
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
-		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
+		// even alice can't apply A13 by herself
 		assert_noop!(
 			VCManagement::request_vc(
-				RuntimeOrigin::signed(bob.clone()),
+				RuntimeOrigin::signed(alice.clone()),
 				shard,
-				alice,
-				Assertion::A1
+				Assertion::A13(alice)
 			),
 			Error::<Test>::UnauthorisedUser
 		);

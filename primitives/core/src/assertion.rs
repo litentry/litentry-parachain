@@ -17,6 +17,7 @@
 // This file includes the predefined rulesets and the corresponding parameters
 // when requesting VCs.
 
+use crate::AccountId;
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
@@ -51,9 +52,11 @@ pub enum Assertion {
 	A9,
 	A10(ParameterString),                                   // (minimum_amount)
 	A11(ParameterString),                                   // (minimum_amount)
-	A12(ParameterString),									// (target_twitter_screen_name)
-	A13(u32),                                               // (Karma_amount) - TODO: unsupported
 
+	// ----- begin polkadot decoded 2023 -----
+	A12(ParameterString),									// (target_twitter_screen_name)
+	A13(AccountId),                                         // (participant_account)
+	// ----- end polkadot decoded 2023 -----
 }
 
 pub const ASSERTION_FROM_DATE: [&str; 7] = [
