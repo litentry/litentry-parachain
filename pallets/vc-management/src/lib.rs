@@ -84,10 +84,11 @@ pub mod pallet {
 	#[pallet::getter(fn admin)]
 	pub type Admin<T: Config> = StorageValue<_, T::AccountId, OptionQuery>;
 
-	// delegatees who can send extrinsics(currently only `request_vc`) on users' behalf
-	// please note delegatees and admins are different:
+	// delegatees who can request (and receive) VCs on users' behalf,
+	// some VCs can only be requested by delegatee accounts (e.g. A13)
+	// delegatees and admins are different:
 	// - admins are meant to manage the pallet state manually, e.g. schema, vcRegistry
-	// - delegatees can send certain extrinsics for users, similar to `proxied account`
+	// - delegatees can request VCs for users, similar to `proxied account`
 	#[pallet::storage]
 	#[pallet::getter(fn delegatee)]
 	pub type Delegatee<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, (), OptionQuery>;
