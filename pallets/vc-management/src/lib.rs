@@ -240,7 +240,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// add an account to the delegatees
 		#[pallet::call_index(0)]
-		#[pallet::weight(<T as Config>::WeightInfo::add_delegatee())]
+		#[pallet::weight(195_000)]
 		pub fn add_delegatee(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
 			let _ = T::DelegateeAdminOrigin::ensure_origin(origin)?;
 			// we don't care if `account` already exists
@@ -251,7 +251,7 @@ pub mod pallet {
 
 		/// remove an account from the delegatees
 		#[pallet::call_index(1)]
-		#[pallet::weight(<T as Config>::WeightInfo::remove_delegatee())]
+		#[pallet::weight(195_000)]
 		pub fn remove_delegatee(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
 			let _ = T::DelegateeAdminOrigin::ensure_origin(origin)?;
 			ensure!(Delegatee::<T>::contains_key(&account), Error::<T>::DelegateeNotExist);
@@ -260,15 +260,23 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// We do the origin check for this extrinsic, it has to be
+		/// - either the caller themselves, i.e. ensure_signed(origin)? == who
+		/// - or from a delegatee in the list
 		#[pallet::call_index(2)]
 		#[pallet::weight(<T as Config>::WeightInfo::request_vc())]
 		pub fn request_vc(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
+			user: T::AccountId,
 			assertion: Assertion,
 		) -> DispatchResultWithPostInfo {
 			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::VCRequested { account: who, shard, assertion });
+			ensure!(
+				who == user || Delegatee::<T>::contains_key(&who),
+				Error::<T>::UnauthorisedUser
+			);
+			Self::deposit_event(Event::VCRequested { account: user, shard, assertion });
 			Ok(().into())
 		}
 

@@ -50,13 +50,31 @@ fn convert_u32_array_to_u8_array(u32_array: [u32; 8]) -> [u8; 32] {
 }
 
 benchmarks! {
+	// Benchmark `add_delegatee`. There are no worst conditions. The benchmark showed that
+	// execution time is constant irrespective of encrypted_data size.
+	add_delegatee {
+		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
+	}: _(RawOrigin::Root, account.clone())
+	verify{
+		assert!(Delegatee::<T>::contains_key(account));
+	}
+	// Benchmark `remove_delegatee`. There are no worst conditions. The benchmark showed that
+	// execution time is constant irrespective of encrypted_data size.
+	remove_delegatee {
+		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
+		VCManagement::<T>::add_delegatee(RawOrigin::Root.into(), account.clone())?;
+	}: _(RawOrigin::Root, account.clone())
+	verify{
+		assert!(!Delegatee::<T>::contains_key(account));
+	}
+
 	// Benchmark `request_vc`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
 	request_vc {
 		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
 		let shard = H256::from_slice(&TEST8_MRENCLAVE);
 		let assertion = Assertion::A1;
-	}: _(RawOrigin::Signed(account.clone()), shard, assertion.clone())
+	}: _(RawOrigin::Signed(account.clone()), shard, account.clone(), assertion.clone())
 	verify{
 		assert_last_event::<T>(Event::VCRequested{ account, shard, assertion }.into());
 	}

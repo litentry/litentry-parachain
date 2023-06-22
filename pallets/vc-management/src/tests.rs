@@ -25,15 +25,17 @@ const VC_INDEX: H256 = H256::zero();
 type SystemAccountId = <Test as frame_system::Config>::AccountId;
 const ALICE_PUBKEY: &[u8; 32] = &[1u8; 32];
 const BOB_PUBKEY: &[u8; 32] = &[2u8; 32];
+const EDDIE_PUBKEY: &[u8; 32] = &[5u8; 32];
 
 #[test]
-fn request_vc_works() {
+fn request_vc_without_delegatee_works() {
 	new_test_ext().execute_with(|| {
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
 		assert_ok!(VCManagement::request_vc(
 			RuntimeOrigin::signed(alice.clone()),
 			shard,
+			alice.clone(),
 			Assertion::A1
 		));
 		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::VCRequested {
@@ -41,6 +43,44 @@ fn request_vc_works() {
 			shard,
 			assertion: Assertion::A1,
 		}));
+	});
+}
+
+#[test]
+fn request_vc_with_authorised_delegatee_works() {
+	new_test_ext().execute_with(|| {
+		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
+		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
+		let eddie: SystemAccountId = test_utils::get_signer(EDDIE_PUBKEY);
+		assert_ok!(VCManagement::request_vc(
+			RuntimeOrigin::signed(eddie.clone()),
+			shard,
+			alice.clone(),
+			Assertion::A1
+		));
+		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::VCRequested {
+			account: alice,
+			shard,
+			assertion: Assertion::A1,
+		}));
+	});
+}
+
+#[test]
+fn request_vc_with_unauthorised_delegatee_fails() {
+	new_test_ext().execute_with(|| {
+		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
+		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
+		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
+		assert_noop!(
+			VCManagement::request_vc(
+				RuntimeOrigin::signed(bob.clone()),
+				shard,
+				alice,
+				Assertion::A1
+			),
+			Error::<Test>::UnauthorisedUser
+		);
 	});
 }
 

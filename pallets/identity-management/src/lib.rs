@@ -190,9 +190,9 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Create an identity
+		/// Link an identity with the given validation data
 		/// We do the origin check for this extrinsic, it has to be
-		/// - either the caller him/herself, i.e. ensure_signed(origin)? == who
+		/// - either the caller themselves, i.e. ensure_signed(origin)? == who
 		/// - or from a delegatee in the list
 		#[pallet::call_index(3)]
 		#[pallet::weight(<T as Config>::WeightInfo::link_identity())]

@@ -173,11 +173,12 @@ impl pallet_group::Config for Test {
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	let alice: SystemAccountId = test_utils::get_signer(&[1u8; 32]);
-
+	let eddie: SystemAccountId = test_utils::get_signer(&[5u8; 32]);
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| {
 		System::set_block_number(1);
 		let _ = VCManagement::set_admin(RuntimeOrigin::root(), alice);
+		let _ = VCManagement::add_delegatee(RuntimeOrigin::root(), eddie);
 
 		use test_utils::ias::consts::{TEST8_CERT, TEST8_SIGNER_PUB, TEST8_TIMESTAMP, URL};
 		Timestamp::set_timestamp(TEST8_TIMESTAMP);
