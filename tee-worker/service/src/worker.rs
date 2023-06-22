@@ -151,12 +151,8 @@ where
 			.create_api()
 			.map_err(|e| Error::Custom(format!("Failed to create NodeApi: {:?}", e).into()))?;
 		let enclaves = node_api.all_enclaves(None)?;
-		let whitelisted = node_api.all_scheduled_mrenclaves(None)?;
 		let mut peer_urls = HashSet::<String>::new();
 		for enclave in enclaves {
-			if !whitelisted.contains(&enclave.mr_enclave) {
-				continue
-			}
 			// FIXME: This is temporary only, as block broadcasting should be moved to trusted ws server.
 			let enclave_url = enclave.url.clone();
 			let worker_api_direct = DirectWorkerApi::new(enclave.url);
