@@ -42,4 +42,4 @@ pub mod pallet_teeracle;
 pub mod pallet_timestamp;
 pub mod pallet_treasury;
 pub mod pallet_utility;
-pub mod pallet_vc_management;
+// pub mod pallet_vc_management;
