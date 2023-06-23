@@ -64,7 +64,7 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 		// some extrinsics should only be called by origins from TEE
 		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-		// origin to manage authorised delegatee list
+		// origin to manage authorized delegatee list
 		type DelegateeAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		// origin that is allowed to call extrinsics
 		type ExtrinsicWhitelistOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
@@ -149,8 +149,8 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// a delegatee doesn't exist
 		DelegateeNotExist,
-		/// a `link_identity` request from unauthorised user
-		UnauthorisedUser,
+		/// a `link_identity` request from unauthorized user
+		UnauthorizedUser,
 	}
 
 	#[pallet::call]
@@ -208,7 +208,7 @@ pub mod pallet {
 			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
 			ensure!(
 				who == user || Delegatee::<T>::contains_key(&who),
-				Error::<T>::UnauthorisedUser
+				Error::<T>::UnauthorizedUser
 			);
 			Self::deposit_event(Event::LinkIdentityRequested { shard });
 			Ok(().into())

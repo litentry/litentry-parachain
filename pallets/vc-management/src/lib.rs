@@ -68,7 +68,7 @@ pub mod pallet {
 		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		// origin who can set the admin account
 		type SetAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-		// origin to manage authorised delegatee list
+		// origin to manage authorized delegatee list
 		type DelegateeAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		// origin that is allowed to call extrinsics
 		type ExtrinsicWhitelistOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
@@ -194,8 +194,8 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// a delegatee doesn't exist
 		DelegateeNotExist,
-		/// a `request_vc` request from unauthorised user
-		UnauthorisedUser,
+		/// a `request_vc` request from unauthorized user
+		UnauthorizedUser,
 		/// the VC already exists
 		VCAlreadyExists,
 		/// the ID doesn't exist
@@ -271,7 +271,7 @@ pub mod pallet {
 			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
 			// special handling for A13, where the origin is required to be one of the delegatees
 			if let Assertion::A13(_owner) = assertion.clone() {
-				ensure!(Delegatee::<T>::contains_key(&who), Error::<T>::UnauthorisedUser);
+				ensure!(Delegatee::<T>::contains_key(&who), Error::<T>::UnauthorizedUser);
 			}
 			Self::deposit_event(Event::VCRequested { account: who, shard, assertion });
 			Ok(().into())

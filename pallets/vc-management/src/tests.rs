@@ -46,7 +46,7 @@ fn request_vc_without_delegatee_works() {
 }
 
 #[test]
-fn request_vc_with_authorised_delegatee_works() {
+fn request_vc_13_with_authorized_delegatee_works() {
 	new_test_ext().execute_with(|| {
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
@@ -65,7 +65,7 @@ fn request_vc_with_authorised_delegatee_works() {
 }
 
 #[test]
-fn request_vc_with_unauthorised_delegatee_fails() {
+fn request_vc_13_with_unauthorized_delegatee_fails() {
 	new_test_ext().execute_with(|| {
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
@@ -76,7 +76,7 @@ fn request_vc_with_unauthorised_delegatee_fails() {
 				shard,
 				Assertion::A13(alice)
 			),
-			Error::<Test>::UnauthorisedUser
+			Error::<Test>::UnauthorizedUser
 		);
 	});
 }
