@@ -35,8 +35,11 @@ where
 		.map(move |tweet_id: u32, p: HashMap<String, String>| {
 			println!("query_tweet, tweet_id: {}", tweet_id);
 			let default = String::default();
-			let ids = tweet_id.to_string();
+			let id = tweet_id.to_string();
 			let expansions = p.get("expansions").unwrap_or(&default);
+
+			let tweet_author_name = "mock_user";
+			let tweet_author_id = "mock_user_id";
 
 			if expansions.as_str() != "author_id" {
 				Response::builder().status(400).body(String::from("Error query"))
@@ -44,7 +47,8 @@ where
 				let alice = Sr25519Pair::from_string("//Alice", None).unwrap();
 				let twitter_identity = Identity::Web2 {
 					network: Web2Network::Twitter,
-					address: IdentityString::try_from("mock_user".as_bytes().to_vec()).unwrap(),
+					address: IdentityString::try_from(tweet_author_name.as_bytes().to_vec())
+						.unwrap(),
 				};
 				let key = func(&alice);
 				let payload = hex::encode(get_expected_raw_message(
@@ -61,14 +65,19 @@ where
 
 				println!("query_tweet, payload: {}", payload);
 
-				let tweet = Tweet { author_id: "mock_user".into(), id: ids.clone(), text: payload };
+				let tweet = Tweet {
+					author_id: tweet_author_id.into(),
+					author_name: tweet_author_name.into(),
+					id,
+					text: payload,
+				};
 				let twitter_users = TwitterUsers {
 					users: vec![TwitterUser {
-						id: ids,
-						name: "mock_user".to_string(),
+						id: tweet_author_id.to_string(),
+						name: tweet_author_name.to_string(),
 						// intentionally return username with a different case, which shouldn't fail the verification
 						// see https://github.com/litentry/litentry-parachain/issues/1680
-						username: "Mock_User".to_string(),
+						username: tweet_author_name.to_string().to_uppercase(),
 						public_metrics: None,
 					}],
 				};

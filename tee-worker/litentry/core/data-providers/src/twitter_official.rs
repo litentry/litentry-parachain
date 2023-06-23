@@ -49,6 +49,7 @@ pub struct ResponseMeta {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Tweet {
 	pub author_id: String,
+	pub author_name: String,
 	pub id: String,
 	pub text: String,
 }
@@ -126,6 +127,10 @@ impl RestPath<String> for Retweeted {
 impl UserInfo for Tweet {
 	fn get_user_id(&self) -> Option<String> {
 		Some(self.author_id.clone())
+	}
+
+	fn get_user_name(&self) -> Option<String> {
+		Some(self.author_name.clone())
 	}
 }
 
@@ -293,10 +298,17 @@ mod tests {
 	#[test]
 	fn query_tweet_work() {
 		init();
+		let tweet_id = "100";
 
 		let mut client = TwitterOfficialClient::v2();
-		let result = client.query_tweet("100".as_bytes().to_vec());
+		let result = client.query_tweet(tweet_id.as_bytes().to_vec());
 		assert!(result.is_ok(), "error: {:?}", result);
+		let tweet = result.unwrap();
+
+		assert_eq!(tweet.id, tweet_id);
+		assert_eq!(tweet.author_id, "mock_user_id");
+		assert_eq!(tweet.author_name, "mock_user");
+		assert_eq!(tweet.text, "38336b4b37f7d61060c3a490d978efb44af5bc78ec8e418b44ffce649f25455d")
 	}
 
 	#[test]
