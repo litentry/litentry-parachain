@@ -1,0 +1,12 @@
+{
+	"type": "module",
+	"license": "ISC",
+	"workspaces": {
+		"packages": [
+			"parachain-api",
+			"sidechain-api",
+			"tests"
+		]
+	},
+	"packageManager": "yarn@3.6.0"
+}
