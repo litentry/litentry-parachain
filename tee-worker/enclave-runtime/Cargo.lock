@@ -154,6 +154,15 @@ checksum = "6b4930d2cb77ce62f89ee5d5289b4ac049559b1c45539271f5ed4fdc7db34545"
 
 [[package]]
 name = "arrayvec"
+version = "0.4.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd9fd44efafa8690358b7408d253adf110036b88f55672a933f01d616ad9b1b9"
+dependencies = [
+ "nodrop",
+]
+
+[[package]]
+name = "arrayvec"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "23b62fc65de8e4e7f52534fb52b0f3ed04746ae267519eef2a83941e8085068b"
@@ -277,6 +286,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "46502ad458c9a52b69d4d4d32775c788b7a1b85e8bc9d482d92250fc0e3f8efe"
 dependencies = [
  "digest 0.10.7",
+]
+
+[[package]]
+name = "blake2-rfc"
+version = "0.2.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d6d530bdd2d52966a6d03b7a964add7ae1a288d25214066fd4b600f0f796400"
+dependencies = [
+ "arrayvec 0.4.12",
+ "constant_time_eq",
 ]
 
 [[package]]
@@ -2640,6 +2659,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "subcryptor",
  "thiserror 1.0.9",
  "url",
 ]
@@ -3017,6 +3037,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "nodrop"
+version = "0.1.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72ef4a56884ca558e5ddb05a1d1e7e1bfd9a68d9ed024c21704cc98872dae1bb"
+
+[[package]]
 name = "num"
 version = "0.2.0"
 source = "git+https://github.com/mesalock-linux/num-sgx#22645415542cc67551890dfdd34f4d5638b9ec78"
@@ -3059,6 +3085,16 @@ dependencies = [
  "proc-macro2",
  "quote 1.0.28",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "num-format"
+version = "0.4.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a652d9771a63711fd3c3deb670acfbe5c30a4072e664d7a3bf5a9e1056ac72c3"
+dependencies = [
+ "arrayvec 0.7.4",
+ "itoa 1.0.6",
 ]
 
 [[package]]
@@ -4887,6 +4923,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eb47a8ad42e5fc72d5b1eb104a5546937eaf39843499948bb666d6e93c62423b"
 dependencies = [
  "Inflector",
+ "num-format",
  "proc-macro2",
  "quote 1.0.28",
  "serde 1.0.164",
@@ -4899,6 +4936,18 @@ name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
+
+[[package]]
+name = "subcryptor"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1b549becdde268a087024efb8798519c610615bcbfee8690ef8c86cb7950a6e3"
+dependencies = [
+ "base58",
+ "blake2-rfc",
+ "ss58-registry",
+ "thiserror 1.0.40",
+]
 
 [[package]]
 name = "substrate-api-client"

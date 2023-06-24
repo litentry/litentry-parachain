@@ -4271,6 +4271,7 @@ dependencies = [
  "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.39)",
  "sp-runtime",
  "sp-std 5.0.0",
+ "subcryptor",
  "thiserror 1.0.40",
  "thiserror 1.0.9",
  "url 2.1.1",
@@ -8204,6 +8205,18 @@ dependencies = [
  "quote",
  "rustversion",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "subcryptor"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1b549becdde268a087024efb8798519c610615bcbfee8690ef8c86cb7950a6e3"
+dependencies = [
+ "base58",
+ "blake2-rfc",
+ "ss58-registry",
+ "thiserror 1.0.40",
 ]
 
 [[package]]

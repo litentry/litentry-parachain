@@ -25,6 +25,8 @@ extern crate sgx_tstd as std;
 // re-export module to properly feature gate sgx and regular std environment
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod sgx_reexport_prelude {
+	pub use http_req_sgx as http_req;
+	pub use http_sgx as http;
 	pub use thiserror_sgx as thiserror;
 	pub use url_sgx as url;
 }
@@ -33,6 +35,7 @@ pub mod a1;
 pub mod a10;
 pub mod a11;
 pub mod a12;
+pub mod a14;
 pub mod a2;
 pub mod a3;
 pub mod a4;
