@@ -464,7 +464,7 @@ impl Credential {
 		self.credential_subject.values.push(true);
 	}
 
-	pub fn add_twitter_follower_assertion(&mut self, twitter_screen_name: String, value: bool) {
+	pub fn add_assertion_a12(&mut self, twitter_screen_name: String, value: bool) {
 		let is_following = AssertionLogic::new_item("$is_following", Op::Equal, "true");
 		let twitter_screen_name = AssertionLogic::new_item(
 			"$twitter_screen_name",
@@ -476,6 +476,16 @@ impl Credential {
 			AssertionLogic::new_and().add_item(is_following).add_item(twitter_screen_name);
 		self.credential_subject.assertions.push(assertion);
 		self.credential_subject.values.push(value);
+	}
+
+	pub fn add_assertion_a13(&mut self) {
+		let event_name =
+			AssertionLogic::new_item("$event_name", Op::Equal, "Polkadot Decoded 2023");
+		let participation = AssertionLogic::new_item("$has_participated", Op::Equal, "true");
+
+		let assertion = AssertionLogic::new_and().add_item(event_name).add_item(participation);
+		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.values.push(true);
 	}
 }
 
