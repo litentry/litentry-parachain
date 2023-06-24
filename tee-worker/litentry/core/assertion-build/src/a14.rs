@@ -20,7 +20,12 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{sgx_reexport_prelude::*, *};
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use crate::sgx_reexport_prelude::*;
+
+use crate::{
+	Assertion, Error, ErrorDetail, ErrorString, Identity, IntoErrorDetail, Result, SubstrateNetwork,
+};
 use blake2_rfc::blake2b::Blake2b;
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
@@ -78,11 +83,6 @@ pub fn ss58_address_of(
 	Ok(bytes.to_base58())
 }
 
-// TODO: merge it to new achainable API client once the migration is done
-pub struct A14Client {
-	client: RestClient<HttpClient<DefaultSend>>,
-}
-
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct A14Data {
@@ -107,6 +107,17 @@ pub struct A14DataParams {
 pub struct A14Response {
 	#[serde(flatten)]
 	data: serde_json::Value,
+}
+
+// TODO: merge it to new achainable API client once the migration is done
+pub struct A14Client {
+	client: RestClient<HttpClient<DefaultSend>>,
+}
+
+impl Default for A14Client {
+	fn default() -> Self {
+		Self::new()
+	}
 }
 
 impl A14Client {
