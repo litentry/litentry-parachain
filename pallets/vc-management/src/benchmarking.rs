@@ -50,6 +50,24 @@ fn convert_u32_array_to_u8_array(u32_array: [u32; 8]) -> [u8; 32] {
 }
 
 benchmarks! {
+	// Benchmark `add_delegatee`. There are no worst conditions. The benchmark showed that
+	// execution time is constant irrespective of encrypted_data size.
+	add_delegatee {
+		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
+	}: _(RawOrigin::Root, account.clone())
+	verify{
+		assert!(Delegatee::<T>::contains_key(account));
+	}
+	// Benchmark `remove_delegatee`. There are no worst conditions. The benchmark showed that
+	// execution time is constant irrespective of encrypted_data size.
+	remove_delegatee {
+		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
+		VCManagement::<T>::add_delegatee(RawOrigin::Root.into(), account.clone())?;
+	}: _(RawOrigin::Root, account.clone())
+	verify{
+		assert!(!Delegatee::<T>::contains_key(account));
+	}
+
 	// Benchmark `request_vc`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
 	request_vc {
