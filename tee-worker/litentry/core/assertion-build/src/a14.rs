@@ -20,26 +20,63 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::*;
+use crate::{sgx_reexport_prelude::*, *};
+use blake2_rfc::blake2b::Blake2b;
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{
+	error::Error as RestClientError,
 	http_client::{DefaultSend, HttpClient},
 	rest_client::RestClient,
-	RestGet, RestPath, RestPost,
+	RestPath, RestPost,
 };
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
-use lc_data_providers::{build_client, Error, HttpError};
+use lc_data_providers::{build_client, G_DATA_PROVIDERS};
 use log::*;
+use rust_base58::ToBase58;
 use serde::{Deserialize, Serialize};
-use std::vec::Vec;
+use ss58_registry::Ss58AddressFormat;
+use std::{format, string::String, vec, vec::Vec};
 
 const VC_A14_SUBJECT_DESCRIPTION: &str = "The user has participated in any polkadot governance";
 const VC_A14_SUBJECT_TYPE: &str = "Governance participation proof";
 const VC_A14_SUBJECT_TAG: [&str; 2] = ["Polkadot", "Governance"];
+
+// mostly copied from https://github.com/hack-ink/substrate-minimal/blob/main/subcryptor/src/lib.rs
+// no_std version is used here
+pub fn ss58_address_of(
+	public_key: &[u8],
+	network: &str,
+) -> core::result::Result<String, ErrorDetail> {
+	let network = Ss58AddressFormat::try_from(network).map_err(|_| ErrorDetail::ParseError)?;
+	let prefix = u16::from(network);
+	let mut bytes = match prefix {
+		0..=63 => vec![prefix as u8],
+		64..=16_383 => {
+			let first = ((prefix & 0b0000_0000_1111_1100) as u8) >> 2;
+			let second = ((prefix >> 8) as u8) | ((prefix & 0b0000_0000_0000_0011) as u8) << 6;
+
+			vec![first | 0b01000000, second]
+		},
+		_ => Err(ErrorDetail::ParseError)?,
+	};
+
+	bytes.extend(public_key);
+
+	let blake2b = {
+		let mut context = Blake2b::new(64);
+		context.update(b"SS58PRE");
+		context.update(&bytes);
+		context.finalize()
+	};
+
+	bytes.extend(&blake2b.as_bytes()[0..2]);
+
+	Ok(bytes.to_base58())
+}
 
 // TODO: merge it to new achainable API client once the migration is done
 pub struct A14Client {
@@ -47,14 +84,15 @@ pub struct A14Client {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct A14Data {
 	params: A14DataParams,
-	includeMetadata: bool,
-	includeWidgets: bool,
+	include_metadata: bool,
+	include_widgets: bool,
 }
 
 impl RestPath<String> for A14Data {
-	fn get_path(path: String) -> core::result::Result<String, HttpError> {
+	fn get_path(path: String) -> core::result::Result<String, RestClientError> {
 		Ok(path)
 	}
 }
@@ -84,10 +122,17 @@ impl A14Client {
 		A14Client { client }
 	}
 
-	pub fn send_request(&self, data: &A14Data) -> Result<A14Response, Error> {
+	pub fn send_request(&mut self, data: &A14Data) -> Result<A14Response> {
 		self.client
 			.post_capture::<String, A14Data, A14Response>(String::default(), data)
-			.map_err(|e| Error::RequestError(e.into()))
+			.map_err(|e| {
+				Error::RequestVCFailed(
+					Assertion::A14,
+					ErrorDetail::DataProviderError(ErrorString::truncate_from(
+						format!("{e:?}").as_bytes().to_vec(),
+					)),
+				)
+			})
 	}
 }
 
@@ -102,24 +147,32 @@ pub fn build(
 	let mut polkadot_addresses = vec![];
 	for id in identities {
 		if let Identity::Substrate { network: SubstrateNetwork::Polkadot, address } = id {
-			let (_, address) = subcryptor::ss58_address_of(address.as_ref(), "polkadot")
+			let address = ss58_address_of(address.as_ref(), "polkadot")
 				.map_err(|_| Error::RequestVCFailed(Assertion::A14, ErrorDetail::ParseError))?;
 			polkadot_addresses.push(address);
 		}
 	}
 
 	let mut value = false;
-	let client = A14Client::new();
+	let mut client = A14Client::new();
 
 	for address in polkadot_addresses {
 		let data = A14Data {
 			params: A14DataParams { address },
-			includeMetadata: false,
-			includeWidgets: false,
+			include_metadata: false,
+			include_widgets: false,
 		};
-		let res = client
-			.send_request(&data)
-			.map_err(|e| Error::RequestVCFailed(Assertion::A14, ErrorDetail::ParseError))?;
+		let response = client.send_request(&data)?;
+
+		let result = response
+			.data
+			.get("result")
+			.and_then(|r| r.as_bool())
+			.ok_or(Error::RequestVCFailed(Assertion::A14, ErrorDetail::ParseError))?;
+		if result {
+			value = result;
+			break
+		}
 	}
 
 	match Credential::new_default(who, &shard.clone()) {
@@ -132,13 +185,12 @@ pub fn build(
 			);
 
 			// add assertion
-			// credential_unsigned.add_assertion_a14(flag);
-
+			credential_unsigned.add_assertion_a14(value);
 			Ok(credential_unsigned)
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVCFailed(Assertion::A1, e.into_error_detail()))
+			Err(Error::RequestVCFailed(Assertion::A14, e.into_error_detail()))
 		},
 	}
 }
