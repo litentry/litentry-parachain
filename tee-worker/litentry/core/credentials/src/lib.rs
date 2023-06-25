@@ -479,12 +479,8 @@ impl Credential {
 	}
 
 	pub fn add_assertion_a13(&mut self) {
-		let event_name =
-			AssertionLogic::new_item("$event_name", Op::Equal, "Polkadot Decoded 2023");
-		let participation = AssertionLogic::new_item("$has_participated", Op::Equal, "true");
-
-		let assertion = AssertionLogic::new_and().add_item(event_name).add_item(participation);
-		self.credential_subject.assertions.push(assertion);
+		let badge = AssertionLogic::new_item("$has_claimed_badge", Op::Equal, "true");
+		self.credential_subject.assertions.push(badge);
 		self.credential_subject.values.push(true);
 	}
 }
