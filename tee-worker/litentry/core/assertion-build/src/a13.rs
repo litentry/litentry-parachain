@@ -27,9 +27,10 @@ use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use log::*;
 
-const VC_A13_SUBJECT_DESCRIPTION: &str = "The user has participated in polkadot decoded 2023";
-const VC_A13_SUBJECT_TYPE: &str = "Basic participation proof";
-const VC_A13_SUBJECT_TAG: [&str; 1] = ["Polkadot decoded 2023"];
+const VC_A13_SUBJECT_DESCRIPTION: &str =
+	"The user has a Polkadot Decoded 2023 Litentry Booth Special Badge";
+const VC_A13_SUBJECT_TYPE: &str = "Decoded 2023 Basic Special Badge";
+const VC_A13_SUBJECT_TAG: [&str; 2] = ["Polkadot decoded 2023", "Litentry"];
 
 pub fn build(shard: &ShardIdentifier, who: &AccountId) -> Result<Credential> {
 	debug!("Assertion A13 build, who: {:?}", account_id_to_string(&who));
