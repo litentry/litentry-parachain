@@ -46,8 +46,9 @@ use serde::{Deserialize, Serialize};
 use ss58_registry::Ss58AddressFormat;
 use std::{format, string::String, vec, vec::Vec};
 
-const VC_A14_SUBJECT_DESCRIPTION: &str = "The user has participated in any polkadot governance";
-const VC_A14_SUBJECT_TYPE: &str = "Governance participation proof";
+const VC_A14_SUBJECT_DESCRIPTION: &str =
+	"The user has participated in any Polkadot on-chain governance events";
+const VC_A14_SUBJECT_TYPE: &str = "Polkadot Governance Participation Proof";
 const VC_A14_SUBJECT_TAG: [&str; 2] = ["Polkadot", "Governance"];
 
 // mostly copied from https://github.com/hack-ink/substrate-minimal/blob/main/subcryptor/src/lib.rs
