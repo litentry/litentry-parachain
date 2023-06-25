@@ -160,6 +160,7 @@ where
 			match worker_api_direct.get_untrusted_worker_url() {
 				Ok(untrusted_worker_url) => {
 					peer_urls.insert(untrusted_worker_url);
+					ve
 				},
 				Err(e) => {
 					error!(
@@ -229,7 +230,7 @@ mod tests {
 		run_server(W2_URL).await.unwrap();
 		let untrusted_worker_port = "4000".to_string();
 		let peers = vec![format!("ws://{}", W1_URL), format!("ws://{}", W2_URL)];
-		let peers: HashSet<String> = vector.into_iter().collect();
+		let peers: HashSet<String> = peers.into_iter().collect();
 
 		let worker = Worker::new(
 			local_worker_config(W1_URL.into(), untrusted_worker_port.clone(), "30".to_string()),
