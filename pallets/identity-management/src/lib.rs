@@ -64,7 +64,7 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 		// some extrinsics should only be called by origins from TEE
 		type TEECallOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-		// origin to manage authorised delegatee list
+		// origin to manage authorized delegatee list
 		type DelegateeAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		// origin that is allowed to call extrinsics
 		type ExtrinsicWhitelistOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
@@ -140,8 +140,7 @@ pub mod pallet {
 		},
 	}
 
-	/// delegatees who are authorised to send extrinsics(currently only `link_identity`)
-	/// on behalf of the users
+	// delegatees who can send extrinsics(currently only `link_identity`) on users' behalf
 	#[pallet::storage]
 	#[pallet::getter(fn delegatee)]
 	pub type Delegatee<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, (), OptionQuery>;
@@ -150,8 +149,8 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// a delegatee doesn't exist
 		DelegateeNotExist,
-		/// a `link_identity` request from unauthorised user
-		UnauthorisedUser,
+		/// a `link_identity` request from unauthorized user
+		UnauthorizedUser,
 	}
 
 	#[pallet::call]
@@ -191,9 +190,9 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Create an identity
+		/// Link an identity with the given validation data
 		/// We do the origin check for this extrinsic, it has to be
-		/// - either the caller him/herself, i.e. ensure_signed(origin)? == who
+		/// - either the caller themselves, i.e. ensure_signed(origin)? == who
 		/// - or from a delegatee in the list
 		#[pallet::call_index(3)]
 		#[pallet::weight(<T as Config>::WeightInfo::link_identity())]
@@ -209,7 +208,7 @@ pub mod pallet {
 			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
 			ensure!(
 				who == user || Delegatee::<T>::contains_key(&who),
-				Error::<T>::UnauthorisedUser
+				Error::<T>::UnauthorizedUser
 			);
 			Self::deposit_event(Event::LinkIdentityRequested { shard });
 			Ok(().into())

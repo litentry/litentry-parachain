@@ -199,6 +199,11 @@ export function createSignedTrustedGetterUserShieldingKey(parachainApi: ApiPromi
     return parachainApi.createType('Getter', { trusted: getterSigned });
 }
 
+export function createSignedTrustedGetterIDGraph(parachain_api: ApiPromise, who: KeyringPair) {
+    let getterSigned = createSignedTrustedGetter(parachain_api, ['id_graph', '(AccountId)'], who, who.address);
+    return parachain_api.createType('Getter', { trusted: getterSigned });
+}
+
 export const getSidechainNonce = async (
     wsp: any,
     parachainApi: ApiPromise,
@@ -297,7 +302,6 @@ export const createRequest = async (
     return parachainApi.createType('Request', { shard: hexToU8a(mrenclave), cyphertext }).toU8a();
 };
 
-// HexString
 export function decodeNonce(nonceInHex: string) {
     const optionalType = Option(Vector(u8));
     const encodedNonce = optionalType.dec(nonceInHex) as number[];

@@ -17,6 +17,7 @@
 // This file includes the predefined rulesets and the corresponding parameters
 // when requesting VCs.
 
+use crate::AccountId;
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
@@ -44,16 +45,19 @@ pub enum Assertion {
 	A2(ParameterString),                                    // (guild_id)
 	A3(ParameterString, ParameterString, ParameterString),  // (guild_id, channel_id, role_id)
 	A4(ParameterString),                                    // (minimum_amount)
-	A5(ParameterString),                   					// (original_tweet_id)
+	A5(ParameterString),               	                    // (original_tweet_id)
 	A6,
 	A7(ParameterString),                                    // (minimum_amount)
 	A8(IndexingNetworks),                                   // litentry, litmus, polkadot, kusama, khala, ethereum
 	A9,
 	A10(ParameterString),                                   // (minimum_amount)
 	A11(ParameterString),                                   // (minimum_amount)
-	A12(ParameterString),									// (target_twitter_screen_name)
-	A13(u32),                                               // (Karma_amount) - TODO: unsupported
 
+	// ----- begin polkadot decoded 2023 -----
+	A12(ParameterString),                                   // (target_twitter_screen_name)
+	A13(AccountId),                                         // (participant_account), can only be requested by delegatee
+	// for Holder assertions we'll reuse A4/A7
+	// ----- end polkadot decoded 2023 -----
 }
 
 pub const ASSERTION_FROM_DATE: [&str; 7] = [

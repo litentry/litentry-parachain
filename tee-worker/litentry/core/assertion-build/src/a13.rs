@@ -26,49 +26,30 @@ use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use log::*;
-use std::vec::Vec;
 
-const VC_A1_SUBJECT_DESCRIPTION: &str =
-	"The user has verified one identity in Web 2 and one identity in Web 3";
-const VC_A1_SUBJECT_TYPE: &str = "Basic Identity Verification";
-const VC_A1_SUBJECT_TAG: [&str; 1] = ["Litentry Network"];
+const VC_A13_SUBJECT_DESCRIPTION: &str = "The user has participated in polkadot decoded 2023";
+const VC_A13_SUBJECT_TYPE: &str = "Basic participation proof";
+const VC_A13_SUBJECT_TAG: [&str; 1] = ["Polkadot decoded 2023"];
 
-pub fn build(
-	identities: Vec<Identity>,
-	shard: &ShardIdentifier,
-	who: &AccountId,
-) -> Result<Credential> {
-	debug!("Assertion A1 build, who: {:?}", account_id_to_string(&who));
-
-	let mut web2_cnt = 0;
-	let mut web3_cnt = 0;
-
-	for identity in &identities {
-		if identity.is_web2() {
-			web2_cnt += 1;
-		} else if identity.is_web3() {
-			web3_cnt += 1;
-		}
-	}
+pub fn build(shard: &ShardIdentifier, who: &AccountId) -> Result<Credential> {
+	debug!("Assertion A13 build, who: {:?}", account_id_to_string(&who));
 
 	match Credential::new_default(who, shard) {
 		Ok(mut credential_unsigned) => {
 			// add subject info
 			credential_unsigned.add_subject_info(
-				VC_A1_SUBJECT_DESCRIPTION,
-				VC_A1_SUBJECT_TYPE,
-				VC_A1_SUBJECT_TAG.to_vec(),
+				VC_A13_SUBJECT_DESCRIPTION,
+				VC_A13_SUBJECT_TYPE,
+				VC_A13_SUBJECT_TAG.to_vec(),
 			);
 
 			// add assertion
-			let flag = web2_cnt != 0 && web3_cnt != 0;
-			credential_unsigned.add_assertion_a1(flag);
-
+			credential_unsigned.add_assertion_a13();
 			Ok(credential_unsigned)
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVCFailed(Assertion::A1, e.into_error_detail()))
+			Err(Error::RequestVCFailed(Assertion::A13(who.clone()), e.into_error_detail()))
 		},
 	}
 }

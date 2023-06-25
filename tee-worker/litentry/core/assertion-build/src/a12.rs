@@ -84,14 +84,14 @@ pub fn build(
 		}
 	}
 
-	match Credential::new_default(who, &shard.clone()) {
+	match Credential::new_default(who, shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_SUBJECT_DESCRIPTION,
 				VC_SUBJECT_TYPE,
 				VC_SUBJECT_TAG.to_vec(),
 			);
-			credential_unsigned.add_twitter_follower_assertion(twitter_screen_name_s, result);
+			credential_unsigned.add_assertion_a12(twitter_screen_name_s, result);
 
 			Ok(credential_unsigned)
 		},

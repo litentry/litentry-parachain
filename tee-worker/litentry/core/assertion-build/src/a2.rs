@@ -79,7 +79,7 @@ pub fn build(
 		}
 	}
 
-	match Credential::new_default(who, &shard.clone()) {
+	match Credential::new_default(who, shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_A2_SUBJECT_DESCRIPTION,

@@ -183,7 +183,8 @@ impl ExecuteGetter for TrustedGetterSigned {
 			// litentry
 			TrustedGetter::user_shielding_key(who) =>
 				IdentityManagement::user_shielding_keys(&who).map(|key| key.encode()),
-			TrustedGetter::id_graph(who) => Some(IdentityManagement::get_id_graph(&who).encode()),
+			TrustedGetter::id_graph(who) =>
+				Some(IdentityManagement::get_id_graph(&who, usize::MAX).encode()),
 			// TODO: we need to re-think it
 			//       currently, _who is ignored meaning it's actually not a "trusted" getter.
 			//       In fact, in the production no one should have access to the concrete identities
