@@ -160,7 +160,6 @@ where
 			match worker_api_direct.get_untrusted_worker_url() {
 				Ok(untrusted_worker_url) => {
 					peer_urls.insert(untrusted_worker_url);
-					ve
 				},
 				Err(e) => {
 					error!(
