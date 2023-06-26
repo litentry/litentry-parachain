@@ -13,7 +13,7 @@ cd <path-to-tee-worker>
 
 ```
 cd <path-to-tee-worker/ts-tests>
-npm run di-examples
+yarn run di-examples
 ```
 
 ### Notes

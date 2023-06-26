@@ -25,103 +25,79 @@ use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
-use lc_data_providers::twitter_official::TwitterOfficialClient;
+use lc_data_providers::{
+	twitter_official::{TargetUser, TwitterOfficialClient},
+	vec_to_string,
+};
 use log::*;
 use std::{format, vec::Vec};
 
-const VC_A6_SUBJECT_DESCRIPTION: &str = "The range of the user's Twitter follower count";
-const VC_A6_SUBJECT_TYPE: &str = "Twitter Follower Amount";
-const VC_A6_SUBJECT_TAG: [&str; 1] = ["Twitter"];
+const VC_SUBJECT_DESCRIPTION: &str = "The user has followed a specific user";
+const VC_SUBJECT_TYPE: &str = "A follower of the twitter user";
+const VC_SUBJECT_TAG: [&str; 1] = ["Twitter"];
 
-/// Following ranges:
-///
-///    * 1+ follower
-///    * 100+ followers
-///    * 1,000+ followers
-///    * 10,000+ followers
-///    * 100,000+ followers
 pub fn build(
+	twitter_screen_name: ParameterString,
 	identities: Vec<Identity>,
 	shard: &ShardIdentifier,
 	who: &AccountId,
 ) -> Result<Credential> {
 	debug!(
-		"Assertion A6 build, who: {:?}, identities: {:?}",
+		"Assertion 12 build, who: {:?}, identities: {:?}",
 		account_id_to_string(&who),
 		identities
 	);
 
-	let mut client = TwitterOfficialClient::v2();
-	let mut sum: u32 = 0;
+	let twitter_screen_name_s = vec_to_string(twitter_screen_name.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(Assertion::A12(twitter_screen_name.clone()), ErrorDetail::ParseError)
+	})?;
 
+	let mut result = false;
+
+	let mut twitter_official_v1_1 = TwitterOfficialClient::v1_1();
 	for identity in identities {
 		if let Identity::Web2 { network, address } = identity {
 			if matches!(network, Web2Network::Twitter) {
 				let twitter_handler = address.to_vec();
-				match client.query_user(twitter_handler) {
-					Ok(user) =>
-						if let Some(metrics) = user.public_metrics {
-							sum += metrics.followers_count;
-						},
-					Err(e) => {
-						log::warn!("Assertion6 request error:{:?}", e);
-						return Err(Error::RequestVCFailed(
-							Assertion::A6,
+
+				let relationship = twitter_official_v1_1
+					.query_friendship(
+						twitter_handler.clone(),
+						TargetUser::Name(twitter_screen_name.to_vec()),
+					)
+					.map_err(|e| {
+						// invalid permissions, rate limitation, etc
+						log::warn!("A12 query_friendship error:{:?}", e);
+						Error::RequestVCFailed(
+							Assertion::A12(twitter_screen_name.clone()),
 							ErrorDetail::StfError(ErrorString::truncate_from(
 								format!("{:?}", e).into(),
 							)),
-						))
-					},
+						)
+					})?;
+
+				if relationship.source.following {
+					result = true;
+					break
 				}
 			}
 		}
 	}
 
-	info!("sum followers: {}", sum);
-	let min: u32;
-	let max: u32;
-
-	match sum {
-		0 | 1 => {
-			min = 0;
-			max = 1;
-		},
-		2..=100 => {
-			min = 1;
-			max = 100;
-		},
-		101..=1000 => {
-			min = 100;
-			max = 1000;
-		},
-		1001..=10000 => {
-			min = 1000;
-			max = 10000;
-		},
-		10001..=100000 => {
-			min = 10000;
-			max = 100000;
-		},
-		100001..=u32::MAX => {
-			min = 100000;
-			max = u32::MAX;
-		},
-	}
-
 	match Credential::new_default(who, shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
-				VC_A6_SUBJECT_DESCRIPTION,
-				VC_A6_SUBJECT_TYPE,
-				VC_A6_SUBJECT_TAG.to_vec(),
+				VC_SUBJECT_DESCRIPTION,
+				VC_SUBJECT_TYPE,
+				VC_SUBJECT_TAG.to_vec(),
 			);
-			credential_unsigned.add_assertion_a6(min, max);
+			credential_unsigned.add_assertion_a12(twitter_screen_name_s, result);
 
 			Ok(credential_unsigned)
 		},
 		Err(e) => {
-			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVCFailed(Assertion::A6, e.into_error_detail()))
+			error!("Generate unsigned credential A12 failed {:?}", e);
+			Err(Error::RequestVCFailed(Assertion::A12(twitter_screen_name), e.into_error_detail()))
 		},
 	}
 }

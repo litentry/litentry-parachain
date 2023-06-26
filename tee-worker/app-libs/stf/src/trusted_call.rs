@@ -476,8 +476,7 @@ where
 				) {
 					Ok(key) => {
 						debug!("pushing user_shielding_key_set event ...");
-						let id_graph =
-							IMT::get_id_graph_with_max_len(&who, RETURNED_IDGRAPH_MAX_LEN);
+						let id_graph = IMT::get_id_graph(&who, RETURNED_IDGRAPH_MAX_LEN);
 						calls.push(OpaqueCall::from_tuple(&(
 							call_index,
 							account,
@@ -577,8 +576,7 @@ where
 					parent_ss58_prefix,
 				) {
 					Ok(key) => {
-						let id_graph =
-							IMT::get_id_graph_with_max_len(&who, RETURNED_IDGRAPH_MAX_LEN);
+						let id_graph = IMT::get_id_graph(&who, RETURNED_IDGRAPH_MAX_LEN);
 						debug!("pushing identity_linked event ...");
 						calls.push(OpaqueCall::from_tuple(&(
 							call_index,

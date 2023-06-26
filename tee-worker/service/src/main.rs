@@ -97,6 +97,7 @@ use sp_core::{
 };
 use sp_keyring::AccountKeyring;
 use std::{
+	collections::HashSet,
 	env,
 	fs::File,
 	io::Read,
@@ -179,7 +180,7 @@ fn main() {
 		enclave.clone(),
 		node_api_factory.clone(),
 		initialization_handler.clone(),
-		Vec::new(),
+		HashSet::new(),
 	));
 	let sync_block_broadcaster =
 		Arc::new(SyncBlockBroadcaster::new(tokio_handle.clone(), worker.clone()));

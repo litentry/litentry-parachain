@@ -1972,7 +1972,7 @@ export default {
     CorePrimitivesErrorErrorDetail: {
         _enum: {
             ImportError: 'Null',
-            UnauthorisedSigner: 'Null',
+            UnauthorizedSigner: 'Null',
             StfError: 'Bytes',
             SendStfRequestFailed: 'Null',
             UserShieldingKeyNotFound: 'Null',
@@ -2043,6 +2043,12 @@ export default {
      **/
     PalletVcManagementEvent: {
         _enum: {
+            DelegateeAdded: {
+                account: 'AccountId32',
+            },
+            DelegateeRemoved: {
+                account: 'AccountId32',
+            },
             VCRequested: {
                 account: 'AccountId32',
                 shard: 'H256',
@@ -2125,7 +2131,8 @@ export default {
             A9: 'Null',
             A10: 'Bytes',
             A11: 'Bytes',
-            A13: 'u32',
+            A12: 'Bytes',
+            A13: 'AccountId32',
         },
     },
     /**
@@ -4086,6 +4093,12 @@ export default {
      **/
     PalletVcManagementCall: {
         _enum: {
+            add_delegatee: {
+                account: 'AccountId32',
+            },
+            remove_delegatee: {
+                account: 'AccountId32',
+            },
             request_vc: {
                 shard: 'H256',
                 assertion: 'CorePrimitivesAssertion',
@@ -4132,8 +4145,6 @@ export default {
                 index: 'H256',
             },
             clear_vc_registry: 'Null',
-            __Unused11: 'Null',
-            __Unused12: 'Null',
             __Unused13: 'Null',
             __Unused14: 'Null',
             __Unused15: 'Null',
@@ -5351,7 +5362,7 @@ export default {
      * Lookup527: pallet_identity_management::pallet::Error<T>
      **/
     PalletIdentityManagementError: {
-        _enum: ['DelegateeNotExist', 'UnauthorisedUser'],
+        _enum: ['DelegateeNotExist', 'UnauthorizedUser'],
     },
     /**
      * Lookup528: pallet_asset_manager::pallet::Error<T>
@@ -5397,6 +5408,8 @@ export default {
      **/
     PalletVcManagementError: {
         _enum: [
+            'DelegateeNotExist',
+            'UnauthorizedUser',
             'VCAlreadyExists',
             'VCNotExist',
             'VCSubjectMismatch',

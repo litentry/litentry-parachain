@@ -36,27 +36,36 @@ env:
   DOCKER_BUILDKIT: 1
 
 jobs:
-  ## build docker image with runtime-benchmarks feature
+  ## build docker image with runtime-benchmarks feature and push it to the hub
   build-docker:
     if: ${{ github.event.inputs.rebuild-docker == 'true' }}
-    runs-on: dev-builder
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout codes on ${{ github.ref }}
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
+      # try to increase usable memory
+      # https://github.com/actions/runner/issues/1051
+      - name: Set Swap Space
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 10
+
       - name: Build docker image
         run: |
           ./scripts/build-docker.sh production runtime-benchmarks --features=runtime-benchmarks
 
+      - name: Dockerhub login
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
       - name: Push docker image
         run: |
           docker push litentry/litentry-parachain:runtime-benchmarks
-
-      - name: Remove dangling images if any
-        run: |
-          [ -z "$(docker images --filter=dangling=true -q)" ] || docker rmi -f $(docker images --filter=dangling=true -q)
 
   ## run the benchmarking remotely
   benchmark:

@@ -201,7 +201,7 @@ pub fn build(
 		optimal_hold_index = 0;
 	}
 
-	match Credential::new_default(who, &shard.clone()) {
+	match Credential::new_default(who, shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_A4_SUBJECT_DESCRIPTION,
