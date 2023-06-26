@@ -2,6 +2,11 @@
 
 export LOG="log/worker0.log"
 export TARGET_DIRECTORY="tmp/w0"
+export PARACHAIN_SOURCE=$(cd .. && pwd)
+export WORKER_DIR=$(pwd)
+
+echo "Source Directory for Parachain: ${PARACHAIN_SOURCE}"
+echo "Worker Directory: ${WORKER_DIR}"
 
 # TODO: Set Pipe fail if any of the commands fail
 generate_service_file() {
@@ -76,7 +81,7 @@ generate_upgrade_worker_service_file() {
 }
 
 generate_parachain_service_file() {
-  local command="/bin/bash -c 'cd ${PARACHAIN_SOURCE} && scripts/launch-local-binary.sh rococo'"
+  local command="/bin/bash -c 'source /home/faisal/.nvm/nvm.sh && cd ${PARACHAIN_SOURCE} && scripts/launch-local-binary.sh rococo && sleep infinity'"
   local service_name='litentry-parachain'
   local description='Parachain Setup for Litentry'
   local working_directory=$PARACHAIN_SOURCE
@@ -147,7 +152,7 @@ start_service_files(){
   systemctl --user daemon-reload
 
   echo "Starting Parachain Service"
-  # systemctl --user start litentry-parachain.service
+  systemctl --user start litentry-parachain.service
 
   echo "Sleep for 60s, Parachain can be started"
   sleep 60
