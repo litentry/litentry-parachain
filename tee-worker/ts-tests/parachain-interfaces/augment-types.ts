@@ -18,7 +18,6 @@ import type {
     IdentityContext,
     IdentityGenericEvent,
     IdentityMultiSignature,
-    IdentityStatus,
     IdentityString,
     LitentryIdentity,
     LitentryValidationData,
@@ -34,7 +33,6 @@ import type {
     TrustedOperation,
     TrustedOperationStatus,
     TwitterValidationData,
-    UserShieldingKeyNonceType,
     UserShieldingKeyType,
     VCRequested,
     Web2Identity,
@@ -1692,7 +1690,6 @@ declare module '@polkadot/types/types/registry' {
         IdentityContext: IdentityContext;
         IdentityGenericEvent: IdentityGenericEvent;
         IdentityMultiSignature: IdentityMultiSignature;
-        IdentityStatus: IdentityStatus;
         IdentityString: IdentityString;
         ImmortalEra: ImmortalEra;
         ImportedAux: ImportedAux;
@@ -2253,7 +2250,6 @@ declare module '@polkadot/types/types/registry' {
         UpgradeGoAhead: UpgradeGoAhead;
         UpgradeRestriction: UpgradeRestriction;
         UpwardMessage: UpwardMessage;
-        UserShieldingKeyNonceType: UserShieldingKeyNonceType;
         UserShieldingKeyType: UserShieldingKeyType;
         usize: usize;
         USize: USize;

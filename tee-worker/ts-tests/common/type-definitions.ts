@@ -69,16 +69,7 @@ export type IdentityGenericEvent = {
     who: HexString;
     identity: LitentryPrimitivesIdentity;
     idGraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][];
-};
-
-export enum IdentityStatus {
-    Active = 'Active',
-    Inactive = 'Inactive',
-}
-
-export type IdentityContext = {
-    link_block: number;
-    status: IdentityStatus;
+    challengeCode?: HexString;
 };
 
 //vc types
@@ -97,8 +88,9 @@ export enum IndexingNetwork {
     Ethereum = 'Ethereum',
 }
 export enum RequestEvent {
-    LinkIdentityRequested = 'LinkIdentityRequested',
+    CreateIdentityRequested = 'CreateIdentityRequested',
     SetUserShieldingKeyRequested = 'SetUserShieldingKeyRequested',
+    VerifyIdentityRequested = 'VerifyIdentityRequested',
     RemoveIdentityRequested = 'RemoveIdentityRequested',
     VCRequested = 'VCRequested',
     ItemCompleted = 'ItemCompleted',

@@ -19,19 +19,22 @@ extern crate sgx_tstd as std;
 
 use super::*;
 use crate::{
-	helpers::{ensure_enclave_signer_account, is_authorized_signer},
-	AccountId, IdentityManagement, Runtime, StfError, StfResult, UserShieldingKeys,
+	helpers::{ensure_enclave_signer_account, generate_challenge_code, is_authorized_signer},
+	AccountId, IdentityManagement, MetadataOf, Runtime, StfError, StfResult, UserShieldingKeys,
 };
 use frame_support::{dispatch::UnfilteredDispatchable, ensure};
-use ita_sgx_runtime::{IdentityStatus, RuntimeOrigin};
+use ita_sgx_runtime::RuntimeOrigin;
 use itp_stf_primitives::types::ShardIdentifier;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
 	AssertionBuildRequest, IdentityVerificationRequest, RequestType,
 };
-use litentry_primitives::{Assertion, ErrorDetail, Identity, UserShieldingKeyType, ValidationData};
+use litentry_primitives::{
+	Assertion, ChallengeCode, ErrorDetail, Identity, ParentchainBlockNumber, UserShieldingKeyType,
+	ValidationData,
+};
 use log::*;
-use std::vec::Vec;
+use std::{format, vec::Vec};
 
 impl TrustedCallSigned {
 	pub fn set_user_shielding_key_internal(
@@ -49,53 +52,43 @@ impl TrustedCallSigned {
 			.map_or_else(|e| Err(StfError::SetUserShieldingKeyFailed(e.error.into())), |_| Ok(key))
 	}
 
-	#[allow(clippy::too_many_arguments)]
-	pub fn link_identity_internal(
+	pub fn create_identity_internal(
 		signer: AccountId,
 		who: AccountId,
 		identity: Identity,
-		validation_data: ValidationData,
-		nonce: UserShieldingKeyNonceType,
-		hash: H256,
-		shard: &ShardIdentifier,
+		metadata: Option<MetadataOf<Runtime>>,
+		bn: ParentchainBlockNumber,
 		parent_ss58_prefix: u16,
-	) -> StfResult<()> {
+	) -> StfResult<(UserShieldingKeyType, ChallengeCode)> {
 		ensure!(
 			is_authorized_signer(&signer, &who),
-			StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner)
+			StfError::CreateIdentityFailed(ErrorDetail::UnauthorizedSigner)
 		);
 
 		let key = IdentityManagement::user_shielding_keys(&who)
-			.ok_or(StfError::LinkIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
+			.ok_or(StfError::CreateIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
 
-		// note it's the signer's nonce, not `who`
-		// we intentionally use `System::account_nonce - 1` to make up for the increment at the
-		// beginning of STF execution, otherwise it might be unexpected that we were hoping
-		// (current nonce + 1) when verifying the validation data.
-		let sidechain_nonce = System::account_nonce(&signer) - 1;
+		// generate challenge code
+		let code = generate_challenge_code();
 
-		let request: RequestType = IdentityVerificationRequest {
-			shard: *shard,
+		IMTCall::create_identity {
 			who,
 			identity,
-			validation_data,
-			sidechain_nonce,
-			key_nonce: nonce,
-			key,
+			metadata,
+			creation_request_block: bn,
 			parent_ss58_prefix,
-			hash,
+			code,
 		}
-		.into();
-		StfRequestSender::new()
-			.send_stf_request(request)
-			.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::SendStfRequestFailed))
+		.dispatch_bypass_filter(RuntimeOrigin::root())
+		.map_err(|e| StfError::CreateIdentityFailed(e.into()))?;
+
+		Ok((key, code))
 	}
 
 	pub fn remove_identity_internal(
 		signer: AccountId,
 		who: AccountId,
 		identity: Identity,
-		parent_ss58_prefix: u16,
 	) -> StfResult<UserShieldingKeyType> {
 		ensure!(
 			is_authorized_signer(&signer, &who),
@@ -104,11 +97,46 @@ impl TrustedCallSigned {
 		let key = IdentityManagement::user_shielding_keys(&who)
 			.ok_or(StfError::RemoveIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
 
-		IMTCall::remove_identity { who, identity, parent_ss58_prefix }
+		IMTCall::remove_identity { who, identity }
 			.dispatch_bypass_filter(RuntimeOrigin::root())
 			.map_err(|e| StfError::RemoveIdentityFailed(e.into()))?;
 
 		Ok(key)
+	}
+
+	pub fn verify_identity_internal(
+		signer: AccountId,
+		who: AccountId,
+		identity: Identity,
+		validation_data: ValidationData,
+		bn: ParentchainBlockNumber,
+		hash: H256,
+		shard: &ShardIdentifier,
+	) -> StfResult<()> {
+		ensure!(
+			is_authorized_signer(&signer, &who),
+			StfError::VerifyIdentityFailed(ErrorDetail::UnauthorizedSigner)
+		);
+		let code = IdentityManagement::challenge_codes(&who, &identity)
+			.ok_or(StfError::VerifyIdentityFailed(ErrorDetail::ChallengeCodeNotFound))?;
+		ensure!(
+			UserShieldingKeys::<Runtime>::contains_key(&who),
+			StfError::VerifyIdentityFailed(ErrorDetail::UserShieldingKeyNotFound)
+		);
+
+		let request: RequestType = IdentityVerificationRequest {
+			shard: *shard,
+			who,
+			identity,
+			challenge_code: code,
+			validation_data,
+			bn,
+			hash,
+		}
+		.into();
+		StfRequestSender::new()
+			.send_stf_request(request)
+			.map_err(|_| StfError::VerifyIdentityFailed(ErrorDetail::SendStfRequestFailed))
 	}
 
 	pub fn request_vc_internal(
@@ -130,7 +158,7 @@ impl TrustedCallSigned {
 		let id_graph = IMT::get_id_graph(&who, usize::MAX);
 		let vec_identity: Vec<Identity> = id_graph
 			.into_iter()
-			.filter(|item| item.1.status == IdentityStatus::Active)
+			.filter(|item| item.1.is_verified)
 			.map(|item| item.0)
 			.collect();
 		let request: RequestType = AssertionBuildRequest {
@@ -148,22 +176,22 @@ impl TrustedCallSigned {
 		})
 	}
 
-	pub fn link_identity_callback_internal(
+	pub fn verify_identity_callback_internal(
 		signer: AccountId,
 		who: AccountId,
 		identity: Identity,
-		parent_ss58_prefix: u16,
+		bn: ParentchainBlockNumber,
 	) -> StfResult<UserShieldingKeyType> {
 		// important! The signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
 		ensure_enclave_signer_account(&signer)
-			.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner))?;
+			.map_err(|_| StfError::VerifyIdentityFailed(ErrorDetail::UnauthorizedSigner))?;
 
 		let key = IdentityManagement::user_shielding_keys(&who)
-			.ok_or(StfError::LinkIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
+			.ok_or(StfError::VerifyIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
 
-		IMTCall::link_identity { who, identity, parent_ss58_prefix }
+		IMTCall::verify_identity { who, identity, verification_request_block: bn }
 			.dispatch_bypass_filter(RuntimeOrigin::root())
-			.map_err(|e| StfError::LinkIdentityFailed(e.into()))?;
+			.map_err(|e| StfError::VerifyIdentityFailed(e.into()))?;
 
 		Ok(key)
 	}
@@ -182,5 +210,19 @@ impl TrustedCallSigned {
 			.ok_or(StfError::RequestVCFailed(assertion, ErrorDetail::UserShieldingKeyNotFound))?;
 
 		Ok(key)
+	}
+
+	pub fn set_challenge_code_internal(
+		enclave_account: AccountId,
+		who: AccountId,
+		identity: Identity,
+		code: ChallengeCode,
+	) -> StfResult<()> {
+		ensure_enclave_signer_account(&enclave_account)?;
+		// only used in tests, we don't care about the error
+		IMTCall::set_challenge_code { who, identity, code }
+			.dispatch_bypass_filter(RuntimeOrigin::root())
+			.map_err(|e| StfError::Dispatch(format!("{:?}", e.error)))?;
+		Ok(())
 	}
 }

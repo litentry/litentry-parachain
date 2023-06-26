@@ -23,7 +23,7 @@ use crate::{
 use base58::FromBase58;
 use codec::{Decode, Encode};
 use ita_stf::{Getter, TrustedOperation};
-use itc_rpc_client::direct_client::DirectApi;
+use itc_rpc_client::direct_client::{DirectApi, DirectClient};
 use itp_node_api::api_client::TEEREX;
 use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
@@ -59,7 +59,47 @@ pub(crate) fn execute_getter_from_cli_args(
 	getter: &Getter,
 ) -> Option<Vec<u8>> {
 	let shard = read_shard(trusted_args).unwrap();
-	get_worker_api_direct(cli).get_state(shard, getter)
+	let direct_api = get_worker_api_direct(cli);
+	get_state(&direct_api, shard, getter)
+}
+
+pub(crate) fn get_state(
+	direct_api: &DirectClient,
+	shard: ShardIdentifier,
+	getter: &Getter,
+) -> Option<Vec<u8>> {
+	// Compose jsonrpc call.
+	let data = Request { shard, cyphertext: getter.encode() };
+	let rpc_method = "state_executeGetter".to_owned();
+	let jsonrpc_call: String =
+		RpcRequest::compose_jsonrpc_call(rpc_method, vec![data.to_hex()]).unwrap();
+
+	let rpc_response_str = direct_api.get(&jsonrpc_call).unwrap();
+
+	// Decode RPC response.
+	let rpc_response: RpcResponse = serde_json::from_str(&rpc_response_str).ok()?;
+	let rpc_return_value = RpcReturnValue::from_hex(&rpc_response.result)
+		// Replace with `inspect_err` once it's stable.
+		.map_err(|e| {
+			error!("Failed to decode RpcReturnValue: {:?}", e);
+			e
+		})
+		.ok()?;
+
+	if rpc_return_value.status == DirectRequestStatus::Error {
+		println!("[Error] {}", String::decode(&mut rpc_return_value.value.as_slice()).unwrap());
+		return None
+	}
+
+	let maybe_state = Option::decode(&mut rpc_return_value.value.as_slice())
+		// Replace with `inspect_err` once it's stable.
+		.map_err(|e| {
+			error!("Failed to decode return value: {:?}", e);
+			e
+		})
+		.ok()?;
+
+	maybe_state
 }
 
 fn send_request(

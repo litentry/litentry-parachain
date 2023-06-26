@@ -9,9 +9,7 @@ import type { HexString } from '@polkadot/util/types';
 import type { Assertion, TransactionSubmit } from './common/type-definitions';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import { multiAccountTxSender } from './common/transactions';
-import { aesKey } from './common/call';
 import { SubmittableResult } from '@polkadot/api';
-
 const all_assertions = <Assertion>{
     A1: 'A1',
     A2: ['A2'],
@@ -25,11 +23,12 @@ const all_assertions = <Assertion>{
 const assertion_A1: Assertion = {
     A1: 'A1',
 };
-
 //Explain how to use this test, which has two important parameters:
 //1.The "number" parameter in describeLitentry represents the number of accounts generated, including Substrate wallets and Ethereum wallets.If you want to use a large number of accounts for testing, you can modify this parameter.
 //2.Each time the test code is executed, new wallet account will be used.
+
 describeLitentry('multiple accounts test', 2, async (context) => {
+    const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     var substrateSigners: KeyringPair[] = [];
     var vcIndexList: HexString[] = [];
     // If want to test other assertions with multiple accounts,just need to make changes here.

@@ -191,6 +191,13 @@ declare module '@polkadot/api-base/types/consts' {
              **/
             [key: string]: Codec;
         };
+        identityManagementMock: {
+            maxVerificationDelay: u32 & AugmentedConst<ApiType>;
+            /**
+             * Generic const
+             **/
+            [key: string]: Codec;
+        };
         multisig: {
             /**
              * The base amount of currency needed to reserve for creating a multisig execution or to

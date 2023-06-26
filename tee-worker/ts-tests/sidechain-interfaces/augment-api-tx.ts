@@ -11,7 +11,7 @@ import type {
     SubmittableExtrinsic,
     SubmittableExtrinsicFunction,
 } from '@polkadot/api-base/types';
-import type { Bytes, Compact, U8aFixed, Vec, bool, u128, u16, u32, u64 } from '@polkadot/types-codec';
+import type { Bytes, Compact, Option, U8aFixed, Vec, bool, u128, u16, u32, u64 } from '@polkadot/types-codec';
 import type { AnyNumber, IMethod, ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, Call, MultiAddress } from '@polkadot/types/interfaces/runtime';
 import type { LitentryPrimitivesIdentity, SpRuntimeHeader, SpWeightsWeightV2Weight } from '@polkadot/types/lookup';
@@ -201,7 +201,7 @@ declare module '@polkadot/api-base/types/submittable' {
             [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         identityManagement: {
-            linkIdentity: AugmentedSubmittable<
+            createIdentity: AugmentedSubmittable<
                 (
                     who: AccountId32 | string | Uint8Array,
                     identity:
@@ -211,9 +211,25 @@ declare module '@polkadot/api-base/types/submittable' {
                         | { Web2: any }
                         | string
                         | Uint8Array,
-                    parentSs58Prefix: u16 | AnyNumber | Uint8Array
+                    metadata: Option<Bytes> | null | Uint8Array | Bytes | string,
+                    creationRequestBlock: u32 | AnyNumber | Uint8Array,
+                    parentSs58Prefix: u16 | AnyNumber | Uint8Array,
+                    code: U8aFixed | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
-                [AccountId32, LitentryPrimitivesIdentity, u16]
+                [AccountId32, LitentryPrimitivesIdentity, Option<Bytes>, u32, u16, U8aFixed]
+            >;
+            removeChallengeCode: AugmentedSubmittable<
+                (
+                    who: AccountId32 | string | Uint8Array,
+                    identity:
+                        | LitentryPrimitivesIdentity
+                        | { Substrate: any }
+                        | { Evm: any }
+                        | { Web2: any }
+                        | string
+                        | Uint8Array
+                ) => SubmittableExtrinsic<ApiType>,
+                [AccountId32, LitentryPrimitivesIdentity]
             >;
             removeIdentity: AugmentedSubmittable<
                 (
@@ -224,10 +240,23 @@ declare module '@polkadot/api-base/types/submittable' {
                         | { Evm: any }
                         | { Web2: any }
                         | string
-                        | Uint8Array,
-                    parentSs58Prefix: u16 | AnyNumber | Uint8Array
+                        | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
-                [AccountId32, LitentryPrimitivesIdentity, u16]
+                [AccountId32, LitentryPrimitivesIdentity]
+            >;
+            setChallengeCode: AugmentedSubmittable<
+                (
+                    who: AccountId32 | string | Uint8Array,
+                    identity:
+                        | LitentryPrimitivesIdentity
+                        | { Substrate: any }
+                        | { Evm: any }
+                        | { Web2: any }
+                        | string
+                        | Uint8Array,
+                    code: U8aFixed | string | Uint8Array
+                ) => SubmittableExtrinsic<ApiType>,
+                [AccountId32, LitentryPrimitivesIdentity, U8aFixed]
             >;
             setUserShieldingKey: AugmentedSubmittable<
                 (
@@ -236,6 +265,20 @@ declare module '@polkadot/api-base/types/submittable' {
                     parentSs58Prefix: u16 | AnyNumber | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [AccountId32, U8aFixed, u16]
+            >;
+            verifyIdentity: AugmentedSubmittable<
+                (
+                    who: AccountId32 | string | Uint8Array,
+                    identity:
+                        | LitentryPrimitivesIdentity
+                        | { Substrate: any }
+                        | { Evm: any }
+                        | { Web2: any }
+                        | string
+                        | Uint8Array,
+                    verificationRequestBlock: u32 | AnyNumber | Uint8Array
+                ) => SubmittableExtrinsic<ApiType>,
+                [AccountId32, LitentryPrimitivesIdentity, u32]
             >;
             /**
              * Generic tx

@@ -1,5 +1,3 @@
-import { InfuraWebSocketProvider } from '@ethersproject/providers';
-
 export default {
     types: {
         WorkerRpcReturnValue: {
@@ -43,6 +41,7 @@ export default {
                 reserved_balance: '(AccountId)',
                 user_shielding_key: '(AccountId)',
                 id_graph: '(AccountId)',
+                challenge_code: '(AccountId, LitentryIdentity)',
                 id_graph_stats: '(AccountId)',
             },
         },
@@ -54,14 +53,13 @@ export default {
                 balance_unshield: '(AccountId, AccountId, Balance, ShardIdentifier)',
                 balance_shield: '(AccountId, AccountId, Balance)',
                 set_user_shielding_key: '(AccountId, AccountId, UserShieldingKeyType, H256)',
-                link_identity:
-                    '(AccountId, AccountId, LitentryIdentity, LitentryValidationData, UserShieldingKeyNonceType, H256)',
+                create_identity: '(AccountId, AccountId, LitentryIdentity, Option<Vec<u8>>, u32, H256)',
                 remove_identity: '(AccountId, AccountId, LitentryIdentity, H256)',
+                verify_identity: '(AccountId, AccountId, LitentryIdentity, LitentryValidationData, u32, H256)',
                 request_vc: '(AccountId, AccountId, Assertion, u32, H256)',
             },
         },
         UserShieldingKeyType: '[u8; 32]',
-        UserShieldingKeyNonceType: '[u8; 12]',
         DirectRequestStatus: {
             _enum: {
                 Ok: null,
@@ -163,14 +161,11 @@ export default {
             identity: 'LitentryIdentity',
             id_graph: 'Vec<(LitentryIdentity, IdentityContext)>',
         },
-
-        IdentityStatus: {
-            _enum: ['Active', 'Inactive'],
-        },
-
         IdentityContext: {
-            link_block: 'BlockNumber',
-            status: 'IdentityStatus',
+            metadata: 'Option<Vec<u8>>',
+            linking_request_block: 'Option<BlockNumber>',
+            verification_request_block: 'Option<BlockNumber>',
+            is_verified: 'bool',
         },
 
         // teerex

@@ -36,9 +36,8 @@ pub mod stf_task_sender;
 use codec::{Decode, Encode};
 pub use error::Result;
 use itp_stf_primitives::types::ShardIdentifier;
-use itp_types::Index;
 use litentry_primitives::{
-	Assertion, Identity, UserShieldingKeyNonceType, UserShieldingKeyType, ValidationData,
+	Assertion, ChallengeCode, Identity, ParentchainBlockNumber, ValidationData,
 };
 use sp_runtime::traits::ConstU32;
 use sp_std::prelude::Vec;
@@ -72,11 +71,9 @@ pub struct IdentityVerificationRequest {
 	pub shard: ShardIdentifier,
 	pub who: AccountId,
 	pub identity: Identity,
+	pub challenge_code: ChallengeCode,
 	pub validation_data: ValidationData,
-	pub sidechain_nonce: Index,
-	pub key_nonce: UserShieldingKeyNonceType,
-	pub key: UserShieldingKeyType,
-	pub parent_ss58_prefix: u16,
+	pub bn: ParentchainBlockNumber,
 	pub hash: H256,
 }
 

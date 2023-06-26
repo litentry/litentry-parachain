@@ -50,6 +50,7 @@ pub trait ExecuteIndirectCalls {
 /// Trait that should be implemented on indirect calls to be executed.
 pub trait IndirectDispatch<E: IndirectExecutor> {
 	type Args;
+
 	fn dispatch(&self, executor: &E, args: Self::Args) -> Result<()>;
 }
 

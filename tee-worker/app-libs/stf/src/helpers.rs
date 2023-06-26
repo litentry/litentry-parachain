@@ -19,14 +19,15 @@ use crate::{StfError, StfResult, ENCLAVE_ACCOUNT_KEY};
 
 use codec::{Decode, Encode};
 use itp_storage::{storage_double_map_key, storage_map_key, storage_value_key, StorageHasher};
-use itp_types::Index;
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{
-	aes_encrypt_nonce, Identity, UserShieldingKeyNonceType, UserShieldingKeyType,
-};
+use litentry_primitives::ChallengeCode;
 use log::*;
-use sp_core::blake2_256;
 use std::prelude::v1::*;
+
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+extern crate rand_sgx as rand;
+
+use rand::Rng;
 
 pub fn get_storage_value<V: Decode>(
 	storage_prefix: &'static str,
@@ -110,34 +111,13 @@ pub fn set_block_number(block_number: u32) {
 	sp_io::storage::set(&storage_value_key("System", "Number"), &block_number.encode());
 }
 
+pub fn generate_challenge_code() -> ChallengeCode {
+	rand::thread_rng().gen::<ChallengeCode>()
+}
+
 pub fn is_authorized_signer<AccountId: Encode + Decode + PartialEq>(
 	signer: &AccountId,
 	who: &AccountId,
 ) -> bool {
 	signer == &enclave_signer_account::<AccountId>() || signer == who
-}
-
-// verification message format:
-// blake2_256(<sidechain nonce> + shieldingKey.encrypt(<primary account> + <identity-to-be-linked>).ciphertext)
-// where <> means SCALE-encoded
-// see https://github.com/litentry/litentry-parachain/issues/1739
-pub fn get_expected_raw_message<AccountId: Encode + Decode>(
-	who: &AccountId,
-	identity: &Identity,
-	sidechain_nonce: Index,
-	key: UserShieldingKeyType,
-	nonce: UserShieldingKeyNonceType,
-) -> Vec<u8> {
-	let mut data = who.encode();
-	data.append(&mut identity.encode());
-	let mut encrypted_data = aes_encrypt_nonce(&key, &data, nonce).ciphertext;
-	let mut payload = sidechain_nonce.encode();
-	payload.append(&mut encrypted_data);
-	blake2_256(payload.as_slice()).to_vec()
-}
-
-// Get the wrapped version of the raw msg: <Bytes>raw_msg</Bytes>,
-// see https://github.com/litentry/litentry-parachain/issues/1137
-pub fn get_expected_wrapped_message(raw_msg: Vec<u8>) -> Vec<u8> {
-	["<Bytes>".as_bytes(), raw_msg.as_slice(), "</Bytes>".as_bytes()].concat()
 }

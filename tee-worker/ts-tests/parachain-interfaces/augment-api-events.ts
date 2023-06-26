@@ -6,7 +6,7 @@
 import '@polkadot/api-base/types/events';
 
 import type { ApiTypes, AugmentedEvent } from '@polkadot/api-base/types';
-import type { Bytes, Null, Option, Result, U8aFixed, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
+import type { Bytes, Null, Option, Result, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, H256, Perbill, Percent } from '@polkadot/types/interfaces/runtime';
 import type {
@@ -15,11 +15,13 @@ import type {
     CorePrimitivesKeyAesOutput,
     FrameSupportDispatchDispatchInfo,
     FrameSupportTokensMiscBalanceStatus,
+    MockTeePrimitivesIdentity,
     PalletAssetManagerAssetMetadata,
     PalletDemocracyMetadataOwner,
     PalletDemocracyVoteAccountVote,
     PalletDemocracyVoteThreshold,
     PalletExtrinsicFilterOperationalMode,
+    PalletIdentityManagementMockIdentityContext,
     PalletMultisigTimepoint,
     PalletParachainStakingDelegationRequestsCancelledScheduledRequest,
     PalletParachainStakingDelegatorAdded,
@@ -661,9 +663,35 @@ declare module '@polkadot/api-base/types/events' {
             [key: string]: AugmentedEvent<ApiType>;
         };
         identityManagement: {
+            CreateIdentityFailed: AugmentedEvent<
+                ApiType,
+                [account: Option<AccountId32>, detail: CorePrimitivesErrorErrorDetail, reqExtHash: H256],
+                { account: Option<AccountId32>; detail: CorePrimitivesErrorErrorDetail; reqExtHash: H256 }
+            >;
+            CreateIdentityRequested: AugmentedEvent<ApiType, [shard: H256], { shard: H256 }>;
             DelegateeAdded: AugmentedEvent<ApiType, [account: AccountId32], { account: AccountId32 }>;
             DelegateeRemoved: AugmentedEvent<ApiType, [account: AccountId32], { account: AccountId32 }>;
-            IdentityLinked: AugmentedEvent<
+            IdentityCreated: AugmentedEvent<
+                ApiType,
+                [
+                    account: AccountId32,
+                    identity: CorePrimitivesKeyAesOutput,
+                    code: CorePrimitivesKeyAesOutput,
+                    reqExtHash: H256
+                ],
+                {
+                    account: AccountId32;
+                    identity: CorePrimitivesKeyAesOutput;
+                    code: CorePrimitivesKeyAesOutput;
+                    reqExtHash: H256;
+                }
+            >;
+            IdentityRemoved: AugmentedEvent<
+                ApiType,
+                [account: AccountId32, identity: CorePrimitivesKeyAesOutput, reqExtHash: H256],
+                { account: AccountId32; identity: CorePrimitivesKeyAesOutput; reqExtHash: H256 }
+            >;
+            IdentityVerified: AugmentedEvent<
                 ApiType,
                 [
                     account: AccountId32,
@@ -678,18 +706,7 @@ declare module '@polkadot/api-base/types/events' {
                     reqExtHash: H256;
                 }
             >;
-            IdentityRemoved: AugmentedEvent<
-                ApiType,
-                [account: AccountId32, identity: CorePrimitivesKeyAesOutput, reqExtHash: H256],
-                { account: AccountId32; identity: CorePrimitivesKeyAesOutput; reqExtHash: H256 }
-            >;
             ImportScheduledEnclaveFailed: AugmentedEvent<ApiType, []>;
-            LinkIdentityFailed: AugmentedEvent<
-                ApiType,
-                [account: Option<AccountId32>, detail: CorePrimitivesErrorErrorDetail, reqExtHash: H256],
-                { account: Option<AccountId32>; detail: CorePrimitivesErrorErrorDetail; reqExtHash: H256 }
-            >;
-            LinkIdentityRequested: AugmentedEvent<ApiType, [shard: H256], { shard: H256 }>;
             RemoveIdentityFailed: AugmentedEvent<
                 ApiType,
                 [account: Option<AccountId32>, detail: CorePrimitivesErrorErrorDetail, reqExtHash: H256],
@@ -712,6 +729,93 @@ declare module '@polkadot/api-base/types/events' {
                 [account: AccountId32, idGraph: CorePrimitivesKeyAesOutput, reqExtHash: H256],
                 { account: AccountId32; idGraph: CorePrimitivesKeyAesOutput; reqExtHash: H256 }
             >;
+            VerifyIdentityFailed: AugmentedEvent<
+                ApiType,
+                [account: Option<AccountId32>, detail: CorePrimitivesErrorErrorDetail, reqExtHash: H256],
+                { account: Option<AccountId32>; detail: CorePrimitivesErrorErrorDetail; reqExtHash: H256 }
+            >;
+            VerifyIdentityRequested: AugmentedEvent<ApiType, [shard: H256], { shard: H256 }>;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
+        };
+        identityManagementMock: {
+            CreateIdentityRequested: AugmentedEvent<ApiType, [shard: H256], { shard: H256 }>;
+            DelegateeAdded: AugmentedEvent<ApiType, [account: AccountId32], { account: AccountId32 }>;
+            DelegateeRemoved: AugmentedEvent<ApiType, [account: AccountId32], { account: AccountId32 }>;
+            IdentityCreated: AugmentedEvent<
+                ApiType,
+                [
+                    account: AccountId32,
+                    identity: CorePrimitivesKeyAesOutput,
+                    code: CorePrimitivesKeyAesOutput,
+                    idGraph: CorePrimitivesKeyAesOutput
+                ],
+                {
+                    account: AccountId32;
+                    identity: CorePrimitivesKeyAesOutput;
+                    code: CorePrimitivesKeyAesOutput;
+                    idGraph: CorePrimitivesKeyAesOutput;
+                }
+            >;
+            IdentityCreatedPlain: AugmentedEvent<
+                ApiType,
+                [
+                    account: AccountId32,
+                    identity: MockTeePrimitivesIdentity,
+                    code: U8aFixed,
+                    idGraph: Vec<ITuple<[MockTeePrimitivesIdentity, PalletIdentityManagementMockIdentityContext]>>
+                ],
+                {
+                    account: AccountId32;
+                    identity: MockTeePrimitivesIdentity;
+                    code: U8aFixed;
+                    idGraph: Vec<ITuple<[MockTeePrimitivesIdentity, PalletIdentityManagementMockIdentityContext]>>;
+                }
+            >;
+            IdentityRemoved: AugmentedEvent<
+                ApiType,
+                [account: AccountId32, identity: CorePrimitivesKeyAesOutput, idGraph: CorePrimitivesKeyAesOutput],
+                { account: AccountId32; identity: CorePrimitivesKeyAesOutput; idGraph: CorePrimitivesKeyAesOutput }
+            >;
+            IdentityRemovedPlain: AugmentedEvent<
+                ApiType,
+                [
+                    account: AccountId32,
+                    identity: MockTeePrimitivesIdentity,
+                    idGraph: Vec<ITuple<[MockTeePrimitivesIdentity, PalletIdentityManagementMockIdentityContext]>>
+                ],
+                {
+                    account: AccountId32;
+                    identity: MockTeePrimitivesIdentity;
+                    idGraph: Vec<ITuple<[MockTeePrimitivesIdentity, PalletIdentityManagementMockIdentityContext]>>;
+                }
+            >;
+            IdentityVerified: AugmentedEvent<
+                ApiType,
+                [account: AccountId32, identity: CorePrimitivesKeyAesOutput, idGraph: CorePrimitivesKeyAesOutput],
+                { account: AccountId32; identity: CorePrimitivesKeyAesOutput; idGraph: CorePrimitivesKeyAesOutput }
+            >;
+            IdentityVerifiedPlain: AugmentedEvent<
+                ApiType,
+                [
+                    account: AccountId32,
+                    identity: MockTeePrimitivesIdentity,
+                    idGraph: Vec<ITuple<[MockTeePrimitivesIdentity, PalletIdentityManagementMockIdentityContext]>>
+                ],
+                {
+                    account: AccountId32;
+                    identity: MockTeePrimitivesIdentity;
+                    idGraph: Vec<ITuple<[MockTeePrimitivesIdentity, PalletIdentityManagementMockIdentityContext]>>;
+                }
+            >;
+            RemoveIdentityRequested: AugmentedEvent<ApiType, [shard: H256], { shard: H256 }>;
+            SetUserShieldingKeyRequested: AugmentedEvent<ApiType, [shard: H256], { shard: H256 }>;
+            SomeError: AugmentedEvent<ApiType, [func: Bytes, error: Bytes], { func: Bytes; error: Bytes }>;
+            UserShieldingKeySet: AugmentedEvent<ApiType, [account: AccountId32], { account: AccountId32 }>;
+            UserShieldingKeySetPlain: AugmentedEvent<ApiType, [account: AccountId32], { account: AccountId32 }>;
+            VerifyIdentityRequested: AugmentedEvent<ApiType, [shard: H256], { shard: H256 }>;
             /**
              * Generic event
              **/

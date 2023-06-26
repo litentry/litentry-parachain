@@ -16,9 +16,10 @@
 */
 
 use crate::{
-	error::Result, pallet_imp::IMPCallIndexes, pallet_sidechain::SidechainCallIndexes,
-	pallet_system::SystemSs58Prefix, pallet_teerex::TeerexCallIndexes,
-	pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes, runtime_call::RuntimeCall,
+	error::Result, pallet_imp::IMPCallIndexes, pallet_imp_mock::IMPMockCallIndexes,
+	pallet_sidechain::SidechainCallIndexes, pallet_system::SystemSs58Prefix,
+	pallet_teerex::TeerexCallIndexes, pallet_utility::UtilityCallIndexes,
+	pallet_vcmp::VCMPCallIndexes, runtime_call::RuntimeCall,
 };
 use codec::{Decode, Encode};
 
@@ -42,12 +43,25 @@ pub struct NodeMetadataMock {
 	// IMP
 	imp_module: u8,
 	imp_set_user_shielding_key: u8,
-	imp_link_identity: u8,
+	imp_create_identity: u8,
 	imp_remove_identity: u8,
+	imp_verify_identity: u8,
 	imp_user_shielding_key_set: u8,
-	imp_identity_linked: u8,
+	imp_identity_created: u8,
 	imp_identity_removed: u8,
+	imp_identity_verified: u8,
 	imp_some_error: u8,
+	// IMP mock
+	imp_mock_module: u8,
+	imp_mock_set_user_shielding_key: u8,
+	imp_mock_create_identity: u8,
+	imp_mock_remove_identity: u8,
+	imp_mock_verify_identity: u8,
+	imp_mock_user_shielding_key_set: u8,
+	imp_mock_identity_created: u8,
+	imp_mock_identity_removed: u8,
+	imp_mock_identity_verified: u8,
+	imp_mock_some_error: u8,
 	// VCMP
 	vcmp_module: u8,
 	vcmp_request_vc: u8,
@@ -87,11 +101,13 @@ impl NodeMetadataMock {
 
 			imp_module: 64u8,
 			imp_set_user_shielding_key: 0u8,
-			imp_link_identity: 1u8,
+			imp_create_identity: 1u8,
 			imp_remove_identity: 2u8,
+			imp_verify_identity: 3u8,
 			imp_user_shielding_key_set: 4u8,
-			imp_identity_linked: 6u8,
+			imp_identity_created: 6u8,
 			imp_identity_removed: 7u8,
+			imp_identity_verified: 8u8,
 			imp_some_error: 9u8,
 
 			vcmp_module: 66u8,
@@ -105,6 +121,17 @@ impl NodeMetadataMock {
 			utility_batch_all: 2u8,
 			utility_dispatch_as: 3u8,
 			utility_force_batch: 4u8,
+
+			imp_mock_module: 100u8,
+			imp_mock_set_user_shielding_key: 0u8,
+			imp_mock_create_identity: 1u8,
+			imp_mock_remove_identity: 2u8,
+			imp_mock_verify_identity: 3u8,
+			imp_mock_user_shielding_key_set: 4u8,
+			imp_mock_identity_created: 6u8,
+			imp_mock_identity_removed: 7u8,
+			imp_mock_identity_verified: 8u8,
+			imp_mock_some_error: 9u8,
 
 			imported_sidechain_block: 0u8,
 			runtime_spec_version: 25,
@@ -174,28 +201,74 @@ impl IMPCallIndexes for NodeMetadataMock {
 		Ok([self.imp_module, self.imp_set_user_shielding_key])
 	}
 
-	fn link_identity_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.imp_module, self.imp_link_identity])
+	fn create_identity_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_module, self.imp_create_identity])
 	}
 
 	fn remove_identity_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.imp_module, self.imp_remove_identity])
 	}
 
+	fn verify_identity_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_module, self.imp_verify_identity])
+	}
+
 	fn user_shielding_key_set_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.imp_module, self.imp_user_shielding_key_set])
 	}
 
-	fn identity_linked_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.imp_module, self.imp_identity_linked])
+	fn identity_created_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_module, self.imp_identity_created])
 	}
 
 	fn identity_removed_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.imp_module, self.imp_identity_removed])
 	}
 
+	fn identity_verified_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_module, self.imp_identity_verified])
+	}
+
 	fn imp_some_error_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.imp_module, self.imp_some_error])
+	}
+}
+
+impl IMPMockCallIndexes for NodeMetadataMock {
+	fn set_user_shielding_key_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_mock_module, self.imp_mock_set_user_shielding_key])
+	}
+
+	fn create_identity_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_mock_module, self.imp_mock_create_identity])
+	}
+
+	fn remove_identity_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_mock_module, self.imp_mock_remove_identity])
+	}
+
+	fn verify_identity_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_mock_module, self.imp_mock_verify_identity])
+	}
+
+	fn user_shielding_key_set_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_mock_module, self.imp_mock_user_shielding_key_set])
+	}
+
+	fn identity_created_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_mock_module, self.imp_mock_identity_created])
+	}
+
+	fn identity_removed_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_mock_module, self.imp_mock_identity_removed])
+	}
+
+	fn identity_verified_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_mock_module, self.imp_mock_identity_verified])
+	}
+
+	fn imp_some_error_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_mock_module, self.imp_mock_some_error])
 	}
 }
 

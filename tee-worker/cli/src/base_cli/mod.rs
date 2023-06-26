@@ -21,7 +21,8 @@ use crate::{
 		faucet::FaucetCommand,
 		listen::ListenCommand,
 		litentry::{
-			link_identity::LinkIdentityCommand, set_heartbeat_timeout::SetHeartbeatTimeoutCommand,
+			create_identity::CreateIdentityCommand,
+			set_heartbeat_timeout::SetHeartbeatTimeoutCommand,
 			set_user_shielding_key::SetUserShieldingKeyCommand,
 		},
 		shield_funds::ShieldFundsCommand,
@@ -88,7 +89,7 @@ pub enum BaseCommand {
 	SetUserShieldingKey(SetUserShieldingKeyCommand),
 
 	/// create idenity graph
-	LinkIdentity(LinkIdentityCommand),
+	CreateIdentity(CreateIdentityCommand),
 
 	/// Set heartbeat timeout storage
 	SetHeartbeatTimeout(SetHeartbeatTimeoutCommand),
@@ -110,7 +111,7 @@ impl BaseCommand {
 			BaseCommand::ShieldFunds(cmd) => cmd.run(cli),
 			// Litentry's commands below
 			BaseCommand::SetUserShieldingKey(cmd) => cmd.run(cli),
-			BaseCommand::LinkIdentity(cmd) => cmd.run(cli),
+			BaseCommand::CreateIdentity(cmd) => cmd.run(cli),
 			BaseCommand::SetHeartbeatTimeout(cmd) => cmd.run(cli),
 		}
 	}

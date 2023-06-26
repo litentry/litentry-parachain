@@ -13,9 +13,10 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
+use codec::Encode;
 
-use litentry_primitives::{UserShieldingKeyNonceType, UserShieldingKeyType};
-use sp_core::sr25519::Pair as Sr25519Pair;
+use litentry_primitives::{ChallengeCode, Identity};
+use sp_core::{blake2_256, crypto::AccountId32 as AccountId};
 use std::{sync::Arc, thread};
 use tokio::{
 	sync::oneshot::{channel, error::RecvError},
@@ -28,10 +29,6 @@ pub mod discord_official;
 pub mod graphql;
 pub mod twitter_litentry;
 pub mod twitter_official;
-
-// the nonce that is used to generate the verification message for the mock server
-// it should have come from the client/user side, but here a mock number is used
-pub const MOCK_VERIFICATION_NONCE: UserShieldingKeyNonceType = [1u8; 12];
 
 // It should only works on UNIX.
 async fn shutdown_signal() {
@@ -51,13 +48,16 @@ async fn shutdown_signal() {
 	}
 }
 
-pub fn default_getter(_who: &Sr25519Pair) -> UserShieldingKeyType {
-	UserShieldingKeyType::default()
+pub fn mock_tweet_payload(who: &AccountId, identity: &Identity, code: &ChallengeCode) -> String {
+	let mut payload = code.encode();
+	payload.append(&mut who.encode());
+	payload.append(&mut identity.encode());
+	hex::encode(blake2_256(payload.as_slice()))
 }
 
 pub fn run<F>(getter: Arc<F>, port: u16) -> Result<String, RecvError>
 where
-	F: Fn(&Sr25519Pair) -> UserShieldingKeyType + Send + Sync + 'static,
+	F: Fn(&AccountId, &Identity) -> ChallengeCode + Send + Sync + 'static,
 {
 	let (result_in, result_out) = channel();
 	thread::spawn(move || {

@@ -1,7 +1,7 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
-import type { Bytes, Enum, Struct, U8aFixed, Vec, bool, u128, u32 } from '@polkadot/types-codec';
+import type { Bytes, Enum, Option, Struct, U8aFixed, Vec, bool, u128, u32 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
 import type { MultiSignature, Signature } from '@polkadot/types/interfaces/extrinsics';
 import type { AccountId, Balance, BlockNumber, H256 } from '@polkadot/types/interfaces/runtime';
@@ -86,8 +86,10 @@ export interface Getter extends Enum {
 
 /** @name IdentityContext */
 export interface IdentityContext extends Struct {
-    readonly link_block: BlockNumber;
-    readonly status: IdentityStatus;
+    readonly metadata: Option<Bytes>;
+    readonly linking_request_block: Option<BlockNumber>;
+    readonly verification_request_block: Option<BlockNumber>;
+    readonly is_verified: bool;
 }
 
 /** @name IdentityGenericEvent */
@@ -108,13 +110,6 @@ export interface IdentityMultiSignature extends Enum {
     readonly isEthereum: boolean;
     readonly asEthereum: EthereumSignature;
     readonly type: 'Ed25519' | 'Sr25519' | 'Ecdsa' | 'Ethereum';
-}
-
-/** @name IdentityStatus */
-export interface IdentityStatus extends Enum {
-    readonly isActive: boolean;
-    readonly isInactive: boolean;
-    readonly type: 'Active' | 'Inactive';
 }
 
 /** @name IdentityString */
@@ -143,10 +138,7 @@ export interface LitentryValidationData extends Enum {
 /** @name PublicGetter */
 export interface PublicGetter extends Enum {
     readonly isSomeValue: boolean;
-    readonly asSomeValue: u32;
-    readonly isNonce: boolean;
-    readonly asNonce: AccountId;
-    readonly type: 'SomeValue' | 'Nonce';
+    readonly type: 'SomeValue';
 }
 
 /** @name Request */
@@ -188,12 +180,12 @@ export interface TrustedCall extends Enum {
     readonly asBalanceShield: ITuple<[AccountId, AccountId, Balance]>;
     readonly isSetUserShieldingKey: boolean;
     readonly asSetUserShieldingKey: ITuple<[AccountId, AccountId, UserShieldingKeyType, H256]>;
-    readonly isLinkIdentity: boolean;
-    readonly asLinkIdentity: ITuple<
-        [AccountId, AccountId, LitentryIdentity, LitentryValidationData, UserShieldingKeyNonceType, H256]
-    >;
+    readonly isCreateIdentity: boolean;
+    readonly asCreateIdentity: ITuple<[AccountId, AccountId, LitentryIdentity, Option<Bytes>, u32, H256]>;
     readonly isRemoveIdentity: boolean;
     readonly asRemoveIdentity: ITuple<[AccountId, AccountId, LitentryIdentity, H256]>;
+    readonly isVerifyIdentity: boolean;
+    readonly asVerifyIdentity: ITuple<[AccountId, AccountId, LitentryIdentity, LitentryValidationData, u32, H256]>;
     readonly isRequestVc: boolean;
     readonly asRequestVc: ITuple<[AccountId, AccountId, Assertion, u32, H256]>;
     readonly type:
@@ -202,8 +194,9 @@ export interface TrustedCall extends Enum {
         | 'BalanceUnshield'
         | 'BalanceShield'
         | 'SetUserShieldingKey'
-        | 'LinkIdentity'
+        | 'CreateIdentity'
         | 'RemoveIdentity'
+        | 'VerifyIdentity'
         | 'RequestVc';
 }
 
@@ -220,13 +213,24 @@ export interface TrustedGetter extends Enum {
     readonly asFreeBalance: AccountId;
     readonly isReservedBalance: boolean;
     readonly asReservedBalance: AccountId;
+    readonly isNonce: boolean;
+    readonly asNonce: AccountId;
     readonly isUserShieldingKey: boolean;
     readonly asUserShieldingKey: AccountId;
     readonly isIdGraph: boolean;
     readonly asIdGraph: AccountId;
+    readonly isChallengeCode: boolean;
+    readonly asChallengeCode: ITuple<[AccountId, LitentryIdentity]>;
     readonly isIdGraphStats: boolean;
     readonly asIdGraphStats: AccountId;
-    readonly type: 'FreeBalance' | 'ReservedBalance' | 'UserShieldingKey' | 'IdGraph' | 'IdGraphStats';
+    readonly type:
+        | 'FreeBalance'
+        | 'ReservedBalance'
+        | 'Nonce'
+        | 'UserShieldingKey'
+        | 'IdGraph'
+        | 'ChallengeCode'
+        | 'IdGraphStats';
 }
 
 /** @name TrustedGetterSigned */
@@ -278,9 +282,6 @@ export interface TrustedOperationStatus extends Enum {
 export interface TwitterValidationData extends Struct {
     readonly tweet_id: Bytes;
 }
-
-/** @name UserShieldingKeyNonceType */
-export interface UserShieldingKeyNonceType extends U8aFixed {}
 
 /** @name UserShieldingKeyType */
 export interface UserShieldingKeyType extends U8aFixed {}

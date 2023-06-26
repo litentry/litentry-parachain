@@ -50,7 +50,7 @@ use sp_std::vec::Vec;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::{AesOutput, ShardIdentifier, Vec, WeightInfo, H256};
-	use core_primitives::{ErrorDetail, IMPError, UserShieldingKeyNonceType};
+	use core_primitives::{ErrorDetail, IMPError};
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
@@ -80,10 +80,13 @@ pub mod pallet {
 			account: T::AccountId,
 		},
 		// TODO: do we need account as event parameter? This needs to be decided by F/E
-		LinkIdentityRequested {
+		CreateIdentityRequested {
 			shard: ShardIdentifier,
 		},
 		RemoveIdentityRequested {
+			shard: ShardIdentifier,
+		},
+		VerifyIdentityRequested {
 			shard: ShardIdentifier,
 		},
 		SetUserShieldingKeyRequested {
@@ -100,15 +103,21 @@ pub mod pallet {
 		// we return the request-extrinsic-hash for better tracking
 		// TODO: what if the event is triggered by an extrinsic that is included in a batch call?
 		//       Can we retrieve that extrinsic hash in F/E?
-		IdentityLinked {
+		IdentityCreated {
 			account: T::AccountId,
 			identity: AesOutput,
-			id_graph: AesOutput,
+			code: AesOutput,
 			req_ext_hash: H256,
 		},
 		IdentityRemoved {
 			account: T::AccountId,
 			identity: AesOutput,
+			req_ext_hash: H256,
+		},
+		IdentityVerified {
+			account: T::AccountId,
+			identity: AesOutput,
+			id_graph: AesOutput,
 			req_ext_hash: H256,
 		},
 		// event errors caused by processing in TEE
@@ -122,12 +131,17 @@ pub mod pallet {
 			detail: ErrorDetail,
 			req_ext_hash: H256,
 		},
-		LinkIdentityFailed {
+		CreateIdentityFailed {
 			account: Option<T::AccountId>,
 			detail: ErrorDetail,
 			req_ext_hash: H256,
 		},
 		RemoveIdentityFailed {
+			account: Option<T::AccountId>,
+			detail: ErrorDetail,
+			req_ext_hash: H256,
+		},
+		VerifyIdentityFailed {
 			account: Option<T::AccountId>,
 			detail: ErrorDetail,
 			req_ext_hash: H256,
@@ -149,7 +163,7 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// a delegatee doesn't exist
 		DelegateeNotExist,
-		/// a `link_identity` request from unauthorized user
+		/// a `create_identity` request from unauthorized user
 		UnauthorizedUser,
 	}
 
@@ -190,27 +204,25 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Link an identity with the given validation data
+		/// Create an identity
 		/// We do the origin check for this extrinsic, it has to be
 		/// - either the caller themselves, i.e. ensure_signed(origin)? == who
 		/// - or from a delegatee in the list
 		#[pallet::call_index(3)]
-		#[pallet::weight(<T as Config>::WeightInfo::link_identity())]
-		pub fn link_identity(
+		#[pallet::weight(<T as Config>::WeightInfo::create_identity())]
+		pub fn create_identity(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
 			user: T::AccountId,
 			encrypted_identity: Vec<u8>,
-			encrypted_validation_data: Vec<u8>,
-			// I don't think it has to be encrypted - no problem to adjust it if required
-			nonce: UserShieldingKeyNonceType,
+			encrypted_metadata: Option<Vec<u8>>,
 		) -> DispatchResultWithPostInfo {
 			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
 			ensure!(
 				who == user || Delegatee::<T>::contains_key(&who),
 				Error::<T>::UnauthorizedUser
 			);
-			Self::deposit_event(Event::LinkIdentityRequested { shard });
+			Self::deposit_event(Event::CreateIdentityRequested { shard });
 			Ok(().into())
 		}
 
@@ -224,6 +236,20 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let _ = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::RemoveIdentityRequested { shard });
+			Ok(().into())
+		}
+
+		/// Verify an identity
+		#[pallet::call_index(5)]
+		#[pallet::weight(<T as Config>::WeightInfo::verify_identity())]
+		pub fn verify_identity(
+			origin: OriginFor<T>,
+			shard: ShardIdentifier,
+			encrypted_identity: Vec<u8>,
+			encrypted_validation_data: Vec<u8>,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::VerifyIdentityRequested { shard });
 			Ok(().into())
 		}
 
@@ -244,21 +270,16 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(31)]
-		#[pallet::weight(<T as Config>::WeightInfo::identity_linked())]
-		pub fn identity_linked(
+		#[pallet::weight(<T as Config>::WeightInfo::identity_created())]
+		pub fn identity_created(
 			origin: OriginFor<T>,
 			account: T::AccountId,
 			identity: AesOutput,
-			id_graph: AesOutput,
+			code: AesOutput,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityLinked {
-				account,
-				identity,
-				id_graph,
-				req_ext_hash,
-			});
+			Self::deposit_event(Event::IdentityCreated { account, identity, code, req_ext_hash });
 			Ok(Pays::No.into())
 		}
 
@@ -276,6 +297,25 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(33)]
+		#[pallet::weight(<T as Config>::WeightInfo::identity_verified())]
+		pub fn identity_verified(
+			origin: OriginFor<T>,
+			account: T::AccountId,
+			identity: AesOutput,
+			id_graph: AesOutput,
+			req_ext_hash: H256,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::IdentityVerified {
+				account,
+				identity,
+				id_graph,
+				req_ext_hash,
+			});
+			Ok(Pays::No.into())
+		}
+
+		#[pallet::call_index(34)]
 		#[pallet::weight(<T as Config>::WeightInfo::some_error())]
 		pub fn some_error(
 			origin: OriginFor<T>,
@@ -291,10 +331,20 @@ pub mod pallet {
 						detail,
 						req_ext_hash,
 					}),
-				IMPError::LinkIdentityFailed(detail) =>
-					Self::deposit_event(Event::LinkIdentityFailed { account, detail, req_ext_hash }),
+				IMPError::CreateIdentityFailed(detail) =>
+					Self::deposit_event(Event::CreateIdentityFailed {
+						account,
+						detail,
+						req_ext_hash,
+					}),
 				IMPError::RemoveIdentityFailed(detail) =>
 					Self::deposit_event(Event::RemoveIdentityFailed {
+						account,
+						detail,
+						req_ext_hash,
+					}),
+				IMPError::VerifyIdentityFailed(detail) =>
+					Self::deposit_event(Event::VerifyIdentityFailed {
 						account,
 						detail,
 						req_ext_hash,

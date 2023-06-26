@@ -7,17 +7,15 @@ import {
     createSignedTrustedCallSetUserShieldingKey,
     sendRequestFromTrustedCall,
     getTEEShieldingKey,
-    createSignedTrustedCallLinkIdentity,
+    createSignedTrustedCallCreateIdentity,
     createSignedTrustedGetterUserShieldingKey,
-    createSignedTrustedGetterIDGraph,
-    sendRequestFromGetter,
+    sendRequestFromTrustedGetter,
     getSidechainNonce,
 } from './util';
 import { getEnclave, sleep, buildIdentityHelper, initIntegrationTestContext } from '../../common/utils';
-import { aesKey, keyNonce } from '../../common/call';
 import { Metadata, TypeRegistry } from '@polkadot/types';
 import sidechainMetaData from '../../litentry-sidechain-metadata.json';
-import { hexToU8a, u8aToString, u8aToHex } from '@polkadot/util';
+import { hexToU8a } from '@polkadot/util';
 import { assert } from 'chai';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from '@polkadot/types/lookup';
 
@@ -73,7 +71,7 @@ async function runDirectCall() {
         mrenclave,
         nonce,
         alice,
-        aesKey,
+        key_alice,
         hash
     );
     let res = await sendRequestFromTrustedCall(wsp, parachain_api, mrenclave, key, setUserShieldingKeyCall);
@@ -86,26 +84,18 @@ async function runDirectCall() {
 
     console.log('Send direct linkIdentity call... hash:', hash);
     const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2', context);
-    let linkIdentityCall = createSignedTrustedCallLinkIdentity(
+    let createIdentityCall = createSignedTrustedCallCreateIdentity(
         parachain_api,
         mrenclave,
         nonce,
         alice,
         sidechainRegistry.createType('LitentryPrimitivesIdentity', twitter_identity).toHex(),
-        parachain_api
-            .createType('LitentryValidationData', {
-                Web2Validation: {
-                    Twitter: {
-                        tweet_id: `0x${Buffer.from(nonce.toString(), 'utf8').toString('hex')}`,
-                    },
-                },
-            })
-            .toHex(),
-        keyNonce,
+        '0x',
+        parachain_api.createType('u32', 1).toHex(),
         hash
     );
-    res = await sendRequestFromTrustedCall(wsp, parachain_api, mrenclave, key, linkIdentityCall);
-    console.log('linkIdentity call returned', res.toHuman());
+    res = await sendRequestFromTrustedCall(wsp, parachain_api, mrenclave, key, createIdentityCall);
+    console.log('createIdentity call returned', res.toHuman());
 
     // we should have listened to the parachain event, for demo purpose we only wait for enough
     // time and check the IDGraph
@@ -136,7 +126,7 @@ async function runDirectCall() {
 
     console.log('Send UserShieldingKey getter for alice ...');
     let UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachain_api, alice);
-    res = await sendRequestFromGetter(wsp, parachain_api, mrenclave, key, UserShieldingKeyGetter);
+    res = await sendRequestFromTrustedGetter(wsp, parachain_api, mrenclave, key, UserShieldingKeyGetter);
     console.log('UserShieldingKey getter returned', res.toHuman());
     // the returned res.value of the trustedGetter is of Option<> type
     // res.value should be `0x018022fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12`
@@ -146,12 +136,12 @@ async function runDirectCall() {
     //       console.log("k.unwrap", k.unwrap().toHex()); // still 0x018022fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12
     let k = parachain_api.createType('Option<Bytes>', hexToU8a(res.value.toHex()));
     assert.isTrue(k.isSome);
-    assert.equal(k.unwrap().toHex(), aesKey);
+    assert.equal(k.unwrap().toHex(), key_alice);
 
     // bob's shielding key should be none
     console.log('Send UserShieldingKey getter for bob ...');
     UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachain_api, bob);
-    res = await sendRequestFromGetter(wsp, parachain_api, mrenclave, key, UserShieldingKeyGetter);
+    res = await sendRequestFromTrustedGetter(wsp, parachain_api, mrenclave, key, UserShieldingKeyGetter);
     console.log('UserShieldingKey getter returned', res.toHuman());
     k = parachain_api.createType('Option<Bytes>', hexToU8a(res.value.toHex()));
     assert.isTrue(k.isNone);
@@ -179,7 +169,7 @@ async function runDirectCall() {
     // verify that bob's key is set
     console.log('Send UserShieldingKey getter for bob ...');
     UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachain_api, bob);
-    res = await sendRequestFromGetter(wsp, parachain_api, mrenclave, key, UserShieldingKeyGetter);
+    res = await sendRequestFromTrustedGetter(wsp, parachain_api, mrenclave, key, UserShieldingKeyGetter);
     console.log('UserShieldingKey getter returned', res.toHuman());
     k = parachain_api.createType('Option<Bytes>', hexToU8a(res.value.toHex()));
     assert.isTrue(k.isSome);

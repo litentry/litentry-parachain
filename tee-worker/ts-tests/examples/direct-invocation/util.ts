@@ -166,26 +166,23 @@ export function createSignedTrustedCallSetUserShieldingKey(
     );
 }
 
-export function createSignedTrustedCallLinkIdentity(
+export function createSignedTrustedCallCreateIdentity(
     parachain_api: ApiPromise,
     mrenclave: string,
     nonce: Codec,
     who: KeyringPair,
     identity: string,
-    validation_data: string,
-    key_nonce: string,
+    metadata: string,
+    bn: string,
     hash: string
 ) {
     return createSignedTrustedCall(
         parachain_api,
-        [
-            'link_identity',
-            '(AccountId, AccountId, LitentryIdentity, LitentryValidationData, UserShieldingKeyNonceType, H256)',
-        ],
+        ['create_identity', '(AccountId, AccountId, LitentryIdentity, Option<Vec<u8>>, u32, H256)'],
         who,
         mrenclave,
         nonce,
-        [who.address, who.address, identity, validation_data, key_nonce, hash]
+        [who.address, who.address, identity, metadata, bn, hash]
     );
 }
 
@@ -213,7 +210,7 @@ export const getSidechainNonce = async (
 ) => {
     let getterPublic = createPublicGetter(parachain_api, ['nonce', '(AccountId)'], who);
     let getter = parachain_api.createType('Getter', { public: getterPublic });
-    const nonce = await sendRequestFromGetter(wsp, parachain_api, mrenclave, teeShieldingKey, getter);
+    const nonce = await sendRequestFromPublicGetter(wsp, parachain_api, mrenclave, teeShieldingKey, getter);
     const NonceValue = decodeNonce(nonce.value.toHex());
     return parachain_api.createType('Index', NonceValue);
 };
@@ -246,7 +243,26 @@ export const sendRequestFromTrustedCall = async (
     return sendRequest(wsp, request, parachain_api);
 };
 
-export const sendRequestFromGetter = async (
+export const sendRequestFromTrustedGetter = async (
+    wsp: any,
+    parachain_api: ApiPromise,
+    mrenclave: string,
+    teeShieldingKey: KeyObject,
+    getter: Codec
+): Promise<WorkerRpcReturnValue> => {
+    // important: we don't create the `TrustedOperation` type here, but use `Getter` type directly
+    //            this is what `state_executeGetter` expects in rust
+    let requestParam = await createRequest(wsp, parachain_api, mrenclave, teeShieldingKey, true, getter.toU8a());
+    let request = {
+        jsonrpc: '2.0',
+        method: 'state_executeGetter',
+        params: [u8aToHex(requestParam)],
+        id: 1,
+    };
+    return sendRequest(wsp, request, parachain_api);
+};
+
+export const sendRequestFromPublicGetter = async (
     wsp: any,
     parachain_api: ApiPromise,
     mrenclave: string,

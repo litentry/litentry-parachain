@@ -10,13 +10,13 @@ import type { Vec } from '@polkadot/types';
 import { handleIdentityEvents } from './common/utils';
 import { assert } from 'chai';
 import { multiAccountTxSender } from './common/transactions';
-import { aesKey } from './common/call';
 import { SubmittableResult } from '@polkadot/api';
 //Explain how to use this test, which has two important parameters:
 //1.The "number" parameter in describeLitentry represents the number of accounts generated, including Substrate wallets and Ethereum wallets.If you want to use a large number of accounts for testing, you can modify this parameter.
 //2.Each time the test code is executed, new wallet account will be used.
 
 describeLitentry('multiple accounts test', 2, async (context) => {
+    const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     var substrateSigners: KeyringPair[] = [];
     var ethereumSigners: ethers.Wallet[] = [];
     var web3Validations: LitentryValidationData[] = [];
@@ -29,7 +29,6 @@ describeLitentry('multiple accounts test', 2, async (context) => {
             return web3Signer.ethereumWallet;
         });
     });
-
     step('send test token to each account', async () => {
         const txs: BatchCall = [];
         for (let i = 0; i < substrateSigners.length; i++) {
@@ -61,25 +60,34 @@ describeLitentry('multiple accounts test', 2, async (context) => {
     });
 
     //test identity with multiple accounts
-    step('test linkIdentity with multiple accounts', async () => {
+    step('test createIdentity with multiple accounts', async () => {
         for (let index = 0; index < ethereumSigners.length; index++) {
             let identity = await buildIdentityHelper(ethereumSigners[index].address, 'Ethereum', 'Evm', context);
             identities.push(identity);
         }
 
+        let txs = await buildIdentityTxs(context, substrateSigners, identities, 'createIdentity');
+
+        const resp_events = await multiAccountTxSender(context, txs, substrateSigners, 'identityManagement', [
+            'IdentityCreated',
+        ]);
+        const resp_events_datas = await handleIdentityEvents(context, aesKey, resp_events, 'IdentityCreated');
         const validations = await buildValidations(
             context,
+            resp_events_datas,
             identities,
-            2,
             'ethereum',
             substrateSigners,
             ethereumSigners
         );
 
-        let txs = await buildIdentityTxs(context, substrateSigners, identities, 'linkIdentity', validations);
+        web3Validations = [...validations];
+    });
 
+    step('test verifyIdentity with multiple accounts', async () => {
+        let txs = await buildIdentityTxs(context, substrateSigners, identities, 'verifyIdentity', web3Validations);
         const resp_events = await multiAccountTxSender(context, txs, substrateSigners, 'identityManagement', [
-            'IdentityLinked',
+            'IdentityVerified',
         ]);
         assert.equal(resp_events.length, txs.length, 'verify identities with multiple accounts check fail');
     });

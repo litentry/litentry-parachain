@@ -15,7 +15,6 @@ import { assert } from 'chai';
 import { u8aToHex } from '@polkadot/util';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import { multiAccountTxSender, sendTxsWithUtility, sendTxUntilInBlockList } from './common/transactions';
-import { aesKey } from './common/call';
 
 const all_assertions: Assertion = {
     A1: 'A1',
@@ -33,6 +32,7 @@ const assertion_A1: Assertion = {
 //It doesn't make much difference test A1 only vs test A1 - A11, one VC type is enough.
 //So only use A1 to trigger the wrong event
 describeLitentry('VC test', 0, async (context) => {
+    const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     var indexList: HexString[] = [];
     var vcKeys: string[] = ['A1'];
     step('check user sidechain storage before create', async function () {

@@ -1,7 +1,9 @@
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { blake2AsHex } from '@polkadot/util-crypto';
+
 import { AESOutput } from '../type-definitions';
-import { decryptWithAES, encryptWithAES, encryptWithTeeShieldingKey } from './crypto';
+import { decryptWithAES, encryptWithTeeShieldingKey } from './crypto';
+import { assert } from 'chai';
 import { ethers } from 'ethers';
 import type { TypeRegistry } from '@polkadot/types';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from '@polkadot/types/lookup';
@@ -16,20 +18,15 @@ import type {
     SubstrateNetwork,
     Web2Network,
 } from '../type-definitions';
-import { aesKey, keyNonce } from '../call';
-
-// blake2_256(<sidechain nonce> + shieldingKey.encrypt(<primary account> + <identity-to-be-linked>).ciphertext)
+// <challeng-code> + <litentry-AccountId32> + <Identity>
 export function generateVerificationMessage(
     context: IntegrationTestContext,
+    challengeCode: Uint8Array,
     signerAddress: Uint8Array,
-    identity: LitentryPrimitivesIdentity,
-    sidechainNonce: number
+    identity: LitentryPrimitivesIdentity
 ): HexString {
-    const encodedIdentity = context.sidechainRegistry.createType('LitentryPrimitivesIdentity', identity).toU8a();
-    const payload = Buffer.concat([signerAddress, encodedIdentity]);
-    const encryptedPayload = hexToU8a(encryptWithAES(aesKey, hexToU8a(keyNonce), payload));
-    const encodedSidechainNonce = context.api.createType('Index', sidechainNonce);
-    const msg = Buffer.concat([encodedSidechainNonce.toU8a(), encryptedPayload]);
+    const encode = context.sidechainRegistry.createType('LitentryPrimitivesIdentity', identity).toU8a();
+    const msg = Buffer.concat([challengeCode, signerAddress, encode]);
     return blake2AsHex(msg, 256);
 }
 
@@ -53,15 +50,12 @@ export async function buildIdentityHelper(
     return encoded_identity;
 }
 
-// If multiple transactions are built from multiple accounts, pass the signers as an array.
-// If multiple transactions are built from a single account, signers cannot be an array.
-//
-// TODO: enforce `validations` if method is `linkIdentity`
+// If multiple transactions are built from multiple accounts, pass the signers as an array. If multiple transactions are built from a single account, signers cannot be an array.
 export async function buildIdentityTxs(
     context: IntegrationTestContext,
     signers: KeyringPair[] | KeyringPair,
     identities: LitentryPrimitivesIdentity[],
-    method: 'setUserShieldingKey' | 'linkIdentity' | 'removeIdentity',
+    method: 'setUserShieldingKey' | 'createIdentity' | 'verifyIdentity' | 'removeIdentity',
     validations?: LitentryValidationData[]
 ): Promise<any[]> {
     const txs: any[] = [];
@@ -86,16 +80,24 @@ export async function buildIdentityTxs(
                 ).toString('hex');
                 tx = context.api.tx.identityManagement.setUserShieldingKey(context.mrEnclave, `0x${ciphertext}`);
                 break;
-            case 'linkIdentity':
-                const data = validations![k];
-                const validation = api.createType('LitentryValidationData', data).toU8a();
-                const ciphertext_validation = encryptWithTeeShieldingKey(teeShieldingKey, validation).toString('hex');
-                tx = api.tx.identityManagement.linkIdentity(
+            case 'createIdentity':
+                tx = api.tx.identityManagement.createIdentity(
                     mrEnclave,
                     signer.address,
                     `0x${ciphertext_identity}`,
-                    `0x${ciphertext_validation}`,
-                    keyNonce
+                    null
+                );
+                break;
+            case 'verifyIdentity':
+                const data = validations![k];
+                const ciphertext_verifyIdentity_validation = encryptWithTeeShieldingKey(
+                    teeShieldingKey,
+                    data.toU8a()
+                ).toString('hex');
+                tx = api.tx.identityManagement.verifyIdentity(
+                    mrEnclave,
+                    `0x${ciphertext_identity}`,
+                    `0x${ciphertext_verifyIdentity_validation}`
                 );
                 break;
             case 'removeIdentity':
@@ -114,7 +116,7 @@ export async function handleIdentityEvents(
     context: IntegrationTestContext,
     aesKey: HexString,
     events: any[],
-    type: 'UserShieldingKeySet' | 'IdentityLinked' | 'IdentityRemoved' | 'Failed'
+    type: 'UserShieldingKeySet' | 'IdentityCreated' | 'IdentityVerified' | 'IdentityRemoved' | 'Failed'
 ): Promise<IdentityGenericEvent[]> {
     let results: IdentityGenericEvent[] = [];
 
@@ -130,7 +132,18 @@ export async function handleIdentityEvents(
                     )
                 );
                 break;
-            case 'IdentityLinked':
+            case 'IdentityCreated':
+                results.push(
+                    createIdentityEvent(
+                        context.sidechainRegistry,
+                        events[index].data.account.toHex(),
+                        decryptWithAES(aesKey, events[index].data.identity, 'hex'),
+                        undefined,
+                        decryptWithAES(aesKey, events[index].data.code, 'hex')
+                    )
+                );
+                break;
+            case 'IdentityVerified':
                 results.push(
                     createIdentityEvent(
                         context.sidechainRegistry,
@@ -140,6 +153,7 @@ export async function handleIdentityEvents(
                     )
                 );
                 break;
+
             case 'IdentityRemoved':
                 results.push(
                     createIdentityEvent(
@@ -187,7 +201,8 @@ export function createIdentityEvent(
     sidechainRegistry: TypeRegistry,
     who: HexString,
     identityString?: HexString,
-    idGraphString?: HexString
+    idGraphString?: HexString,
+    challengeCode?: HexString
 ): IdentityGenericEvent {
     let identity: LitentryPrimitivesIdentity =
         identityString! &&
@@ -205,31 +220,33 @@ export function createIdentityEvent(
         who,
         identity,
         idGraph,
+        challengeCode,
     };
 }
 
 export async function buildValidations(
     context: IntegrationTestContext,
+    eventDatas: IdentityGenericEvent[],
     identities: LitentryPrimitivesIdentity[],
-    startingSidechainNonce: number,
     network: 'ethereum' | 'substrate' | 'twitter',
     substrateSigners: KeyringPair[] | KeyringPair,
     ethereumSigners?: ethers.Wallet[]
 ): Promise<LitentryValidationData[]> {
     let signature_ethereum: HexString;
     let signature_substrate: Uint8Array;
-    let validations: LitentryValidationData[] = [];
+    let verifyDatas: LitentryValidationData[] = [];
 
-    for (let index = 0; index < identities.length; index++) {
+    for (let index = 0; index < eventDatas.length; index++) {
         const substrateSigner = Array.isArray(substrateSigners) ? substrateSigners[index] : substrateSigners;
-        const ethereumSigner = network === 'ethereum' ? ethereumSigners![index] : undefined;
-        const validationNonce = startingSidechainNonce + index;
 
+        const ethereumSigner = network === 'ethereum' ? ethereumSigners![index] : undefined;
+
+        const data = eventDatas[index];
         const msg = generateVerificationMessage(
             context,
+            hexToU8a(data.challengeCode),
             substrateSigner.addressRaw,
-            identities[index],
-            validationNonce
+            identities[index]
         );
         if (network === 'ethereum') {
             const ethereumValidationData = {
@@ -249,13 +266,14 @@ export async function buildValidations(
             console.log('signature_ethereum', ethereumSigners![index].address, signature_ethereum);
 
             ethereumValidationData!.Web3Validation.Evm.signature.Ethereum = signature_ethereum;
+            assert.isNotEmpty(data.challengeCode, 'ethereum challengeCode empty');
             console.log('ethereumValidationData', ethereumValidationData);
             const encode_verifyIdentity_validation = context.api.createType(
                 'LitentryValidationData',
                 ethereumValidationData
             ) as unknown as LitentryValidationData;
 
-            validations.push(encode_verifyIdentity_validation);
+            verifyDatas.push(encode_verifyIdentity_validation);
         } else if (network === 'substrate') {
             const substrateValidationData = {
                 Web3Validation: {
@@ -271,17 +289,18 @@ export async function buildValidations(
             substrateValidationData.Web3Validation.Substrate.message = msg;
             signature_substrate = substrateSigner.sign(msg) as Uint8Array;
             substrateValidationData!.Web3Validation.Substrate.signature.Sr25519 = u8aToHex(signature_substrate);
+            assert.isNotEmpty(data.challengeCode, 'substrate challengeCode empty');
             const encode_verifyIdentity_validation: LitentryValidationData = context.api.createType(
                 'LitentryValidationData',
                 substrateValidationData
             ) as unknown as LitentryValidationData;
-            validations.push(encode_verifyIdentity_validation);
+            verifyDatas.push(encode_verifyIdentity_validation);
         } else if (network === 'twitter') {
             console.log('post verification msg to twitter', msg);
             const twitterValidationData = {
                 Web2Validation: {
                     Twitter: {
-                        tweet_id: `0x${Buffer.from(validationNonce.toString(), 'utf8').toString('hex')}`,
+                        tweet_id: `0x${Buffer.from('100', 'utf8').toString('hex')}`,
                     },
                 },
             };
@@ -290,8 +309,10 @@ export async function buildValidations(
                 'LitentryValidationData',
                 twitterValidationData
             ) as unknown as LitentryValidationData;
-            validations.push(encode_verifyIdentity_validation);
+
+            verifyDatas.push(encode_verifyIdentity_validation);
+            assert.isNotEmpty(data.challengeCode, 'twitter challengeCode empty');
         }
     }
-    return validations;
+    return verifyDatas;
 }

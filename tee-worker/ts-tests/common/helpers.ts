@@ -5,7 +5,6 @@ import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
 import './config';
 import { SubstrateNetwork } from '../parachain-interfaces/identity/types';
-
 // format and setup
 const keyring = new Keyring({ type: 'sr25519' });
 export function getSubstrateSigner(): {
@@ -18,6 +17,7 @@ export function getSubstrateSigner(): {
     let Bob = keyring.addFromUri('//Bob', { name: 'Bob' });
     let Charlie = keyring.addFromUri('//Charlie', { name: 'Charlie' });
     let Eve = keyring.addFromUri('//Eve', { name: 'Eve' });
+    // const signers = [Alice, Bob, Charlie, Eve];
     const signers = {
         alice: Alice,
         bob: Bob,

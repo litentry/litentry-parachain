@@ -113,6 +113,29 @@ export async function checkUserShieldingKeys(
     return resp.value.toHex();
 }
 
+export async function checkUserChallengeCode(
+    context: IntegrationTestContext,
+    pallet: string,
+    method: string,
+    address: HexString,
+    identity: HexString
+): Promise<string> {
+    await sleep(6000);
+
+    const storageKey = await buildStorageHelper(context.metaData, pallet, method, address, identity);
+
+    let base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
+
+    let request = {
+        jsonrpc: '2.0',
+        method: 'state_getStorage',
+        params: [base58mrEnclave, storageKey],
+        id: 1,
+    };
+    let resp = await sendRequest(context.tee, request, context.api);
+    return resp.value.toHex();
+}
+
 export async function checkIDGraph(
     context: IntegrationTestContext,
     pallet: string,

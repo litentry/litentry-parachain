@@ -51,9 +51,21 @@ declare module '@polkadot/api-base/types/errors' {
         };
         identityManagement: {
             /**
-             * the pair (litentry-account, identity) already linked
+             * challenge code doesn't exist
              **/
-            IdentityAlreadyLinked: AugmentedError<ApiType>;
+            ChallengeCodeNotExist: AugmentedError<ApiType>;
+            /**
+             * creating the prime identity manually is disallowed
+             **/
+            CreatePrimeIdentityNotAllowed: AugmentedError<ApiType>;
+            /**
+             * the pair (litentry-account, identity) already verified when creating an identity
+             **/
+            IdentityAlreadyVerified: AugmentedError<ApiType>;
+            /**
+             * the identity was not created before verification
+             **/
+            IdentityNotCreated: AugmentedError<ApiType>;
             /**
              * the pair (litentry-account, identity) doesn't exist
              **/
@@ -63,13 +75,17 @@ declare module '@polkadot/api-base/types/errors' {
              **/
             IDGraphLenLimitReached: AugmentedError<ApiType>;
             /**
-             * creating the prime identity manually is disallowed
-             **/
-            LinkPrimeIdentityDisallowed: AugmentedError<ApiType>;
-            /**
              * remove prime identiy should be disallowed
              **/
             RemovePrimeIdentityDisallowed: AugmentedError<ApiType>;
+            /**
+             * a verification reqeust comes too early
+             **/
+            VerificationRequestTooEarly: AugmentedError<ApiType>;
+            /**
+             * a verification reqeust comes too late
+             **/
+            VerificationRequestTooLate: AugmentedError<ApiType>;
             /**
              * Generic error
              **/

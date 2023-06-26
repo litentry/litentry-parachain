@@ -271,8 +271,8 @@ mod tests {
 		VerifiedCredentialsTotalTxs, G_DATA_PROVIDERS,
 	};
 	use itp_stf_primitives::types::AccountId;
-	use lc_mock_server::{default_getter, run};
-	use litentry_primitives::{Identity, UserShieldingKeyNonceType};
+	use lc_mock_server::run;
+	use litentry_primitives::{ChallengeCode, Identity};
 
 	use std::sync::Arc;
 
@@ -282,7 +282,7 @@ mod tests {
 
 	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
-		let url = run(Arc::new(default_getter), 0).unwrap();
+		let url = run(Arc::new(|_: &AccountId, _: &Identity| ChallengeCode::default()), 0).unwrap();
 		G_DATA_PROVIDERS.write().unwrap().set_graphql_url(url.clone());
 	}
 

@@ -73,7 +73,7 @@ impl<T: frame_system::Config> pallet_identity_management::WeightInfo for WeightI
 	}
 	/// Storage: IMPExtrinsicWhitelist GroupControlOn (r:1 w:0)
 	/// Proof Skipped: IMPExtrinsicWhitelist GroupControlOn (max_values: Some(1), max_size: None, mode: Measured)
-	fn link_identity() -> Weight {
+	fn create_identity() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `42`
 		//  Estimated: `537`

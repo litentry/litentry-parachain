@@ -96,6 +96,24 @@ declare module '@polkadot/api-base/types/storage' {
             [key: string]: QueryableStorageEntry<ApiType>;
         };
         identityManagement: {
+            /**
+             * challenge code is per Litentry account + identity
+             **/
+            challengeCodes: AugmentedQuery<
+                ApiType,
+                (
+                    arg1: AccountId32 | string | Uint8Array,
+                    arg2:
+                        | LitentryPrimitivesIdentity
+                        | { Substrate: any }
+                        | { Evm: any }
+                        | { Web2: any }
+                        | string
+                        | Uint8Array
+                ) => Observable<Option<U8aFixed>>,
+                [AccountId32, LitentryPrimitivesIdentity]
+            > &
+                QueryableStorageEntry<ApiType, [AccountId32, LitentryPrimitivesIdentity]>;
             idGraphLens: AugmentedQuery<
                 ApiType,
                 (arg: AccountId32 | string | Uint8Array) => Observable<u32>,
