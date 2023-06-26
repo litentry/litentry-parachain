@@ -667,6 +667,9 @@ parameter_types! {
 	pub const DefaultCollatorCommission: Perbill = Perbill::from_percent(33);
 	/// Default percent of inflation set aside for parachain bond every round
 	pub const DefaultParachainBondReservePercent: Percent = Percent::from_percent(0);
+	#[cfg(feature = "runtime-benchmarks")]
+	pub const MinCollatorStk: Balance = 50 * DOLLARS;
+	#[cfg(not(feature = "runtime-benchmarks"))]
 	pub const MinCollatorStk: Balance = 5000 * DOLLARS;
 	pub const MinCandidateStk: Balance = 5000 * DOLLARS;
 	pub const MinDelegation: Balance = 50 * DOLLARS;
