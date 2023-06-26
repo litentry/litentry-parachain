@@ -1,7 +1,7 @@
 #!/bin/bash
 
-export LOG="/data/log/worker0.log"
-export TARGET_DIRECTORY="/opt/worker/"
+export LOG="/var/log"
+export TARGET_DIRECTORY="/usr/local/bin"
 
 # TODO: Set Pipe fail if any of the commands fail
 generate_service_file() {
@@ -36,7 +36,7 @@ generate_worker_service_file() {
   local command='./integritee-service --clean-reset -P 2000 -w 2001 -r 3443 -h 4545 --running-mode mock --enable-mock-server --parentchain-start-block 0 run --skip-ra --dev'
   local service_name='worker'
   local description='Worker Service for Litentry Side chain'
-  local working_directory='/opt/worker/'
+  local working_directory='/usr/local/bin'
 
   generate_service_file "${service_name}" "${description}" "${command}" "${working_directory}"
 }
@@ -51,7 +51,7 @@ generate_upgrade_worker_service_file() {
 }
 
 generate_parachain_service_file() {
-  local command='./scripts/launch-local-binary.sh rococo'
+  local command='/bin/bash -c "cd /home/faisal/litentry-parachain && scripts/launch-local-binary.sh rococo"'
   local service_name='litentry-parachain'
   local description='Parachain Setup for Litentry'
   local working_directory=$PARACHAIN_SOURCE
@@ -113,6 +113,8 @@ latest_sync_block(){
 }
 
 start_service_files(){
+  echo "Moving worker binaries to /usr/local/bin"
+  setup_working_dir "bin" "/usr/local/bin"
   echo "Moving service files to /etc/systemd/system"
   cp -r *.service /etc/systemd/system/
 
@@ -179,6 +181,37 @@ upgrade_worker(){
 
       exec ./integritee-service -P 2000 -w 2001 -r 3443 -h 4545 --running-mode mock --enable-mock-server --parentchain-start-block 0 run --skip-ra --dev >"$log_file" 2>&1
   fi
+}
+
+setup_working_dir() {
+    source_dir=$1
+    target_dir=$2
+
+    optional=("key.txt" "spid.txt")
+
+    for file in "${optional[@]}"; do
+        source="${source_dir}/${file}"
+        target="${target_dir}/${file}"
+
+        if [ -f "$source" ]; then
+            cp "$source" "$target"
+        else
+            echo "$source does not exist, this is fine, but you can't perform remote attestation with this."
+        fi
+    done
+
+    mandatory=("enclave.signed.so" "integritee-service")
+
+    for file in "${mandatory[@]}"; do
+        source="${source_dir}/${file}"
+        target="${target_dir}/${file}"
+
+        if [ -f "$source" ]; then
+            cp "$source" "$target"
+        else
+            echo "$source does not exist. Did you run make?"
+        fi
+    done
 }
 
 # Example usage
