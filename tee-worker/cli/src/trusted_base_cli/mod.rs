@@ -25,7 +25,7 @@ use crate::{
 			set_challenge_code::SetChallengeCodeCommand,
 			set_scheduled_mrenclave::SetScheduledMrenclaveCommand,
 			set_user_shielding_key::SetUserShieldingKeyCommand,
-			user_shielding_key::UserShiledingKeyCommand, verify_identity::VerifyIdentityCommand,
+			user_shielding_key::UserShieldingKeyCommand, verify_identity::VerifyIdentityCommand,
 		},
 		nonce::NonceCommand,
 		set_balance::SetBalanceCommand,
@@ -70,7 +70,7 @@ pub enum TrustedBaseCommand {
 	// Litentry's commands below
 	// for commands that should trigger parentchain extrins, check non-trusted commands
 	/// query a user's shielding key, the setter is non-trusted command
-	UserShieldingKey(UserShiledingKeyCommand),
+	UserShieldingKey(UserShieldingKeyCommand),
 
 	SetChallengeCode(SetChallengeCodeCommand),
 

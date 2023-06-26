@@ -154,6 +154,15 @@ checksum = "6b4930d2cb77ce62f89ee5d5289b4ac049559b1c45539271f5ed4fdc7db34545"
 
 [[package]]
 name = "arrayvec"
+version = "0.4.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd9fd44efafa8690358b7408d253adf110036b88f55672a933f01d616ad9b1b9"
+dependencies = [
+ "nodrop",
+]
+
+[[package]]
+name = "arrayvec"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "23b62fc65de8e4e7f52534fb52b0f3ed04746ae267519eef2a83941e8085068b"
@@ -277,6 +286,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "46502ad458c9a52b69d4d4d32775c788b7a1b85e8bc9d482d92250fc0e3f8efe"
 dependencies = [
  "digest 0.10.7",
+]
+
+[[package]]
+name = "blake2-rfc"
+version = "0.2.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d6d530bdd2d52966a6d03b7a964add7ae1a288d25214066fd4b600f0f796400"
+dependencies = [
+ "arrayvec 0.4.12",
+ "constant_time_eq",
 ]
 
 [[package]]
@@ -2612,6 +2631,7 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 name = "lc-assertion-build"
 version = "0.1.0"
 dependencies = [
+ "blake2-rfc",
  "frame-support",
  "futures 0.3.8",
  "hex 0.4.0",
@@ -2634,6 +2654,7 @@ dependencies = [
  "litentry-primitives",
  "log",
  "parity-scale-codec",
+ "rust-base58 0.0.4 (git+https://github.com/mesalock-linux/rust-base58-sgx)",
  "serde 1.0.164",
  "serde_json 1.0.97",
  "sgx_tstd",
@@ -2641,6 +2662,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "ss58-registry",
  "thiserror 1.0.9",
  "url",
 ]
@@ -3016,6 +3038,12 @@ dependencies = [
  "sgx_libc",
  "sgx_tstd",
 ]
+
+[[package]]
+name = "nodrop"
+version = "0.1.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72ef4a56884ca558e5ddb05a1d1e7e1bfd9a68d9ed024c21704cc98872dae1bb"
 
 [[package]]
 name = "num"

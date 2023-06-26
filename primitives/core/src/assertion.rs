@@ -56,6 +56,7 @@ pub enum Assertion {
 	// ----- begin polkadot decoded 2023 -----
 	A12(ParameterString),                                   // (target_twitter_screen_name)
 	A13(AccountId),                                         // (participant_account), can only be requested by delegatee
+	A14,
 	// for Holder assertions we'll reuse A4/A7
 	// ----- end polkadot decoded 2023 -----
 }
