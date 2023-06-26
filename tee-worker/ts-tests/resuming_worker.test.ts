@@ -187,7 +187,7 @@ async function waitWorkerProducingBlock(
 describe('Resume worker', function () {
     this.timeout(6000000);
 
-    const binaryDir = process.env.BINARYDIR!;
+    const binaryDir = process.env.BINARY_DIR!;
     const [, nodeUrl, nodePort] = process.env.SUBSTRATE_END_POINT!.split(':');
     const worker0Dir = path.join(__dirname, './tmp/worker0');
     const worker1Dir = path.join(__dirname, './tmp/worker1');
