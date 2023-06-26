@@ -193,7 +193,7 @@ impl ExecuteGetter for TrustedGetterSigned {
 			TrustedGetter::id_graph(who) => {
 				// let identifier: IdGraphIdentifier = who.into();
 				let identifier: IdGraphIdentifier = prepare_id_graph_identifier(who);
-				Some(IdentityManagement::get_id_graph(&identifier).encode())
+				Some(IdentityManagement::get_id_graph(&identifier, usize::MAX).encode())
 			},
 
 			// TODO: we need to re-think it

@@ -107,13 +107,32 @@ export interface IdentityStatus extends Enum {
 /** @name IdentityString */
 export interface IdentityString extends Bytes {}
 
+/** @name IdGraphIdentifier */
+export interface IdGraphIdentifier extends Enum {
+    readonly isSubstrate: boolean;
+    readonly asSubstrate: LitentryAddress32;
+    readonly isEvm: boolean;
+    readonly asEvm: LitentryAddress20;
+    readonly type: 'Substrate' | 'Evm';
+}
+
 /** @name LitentryAddress */
 export interface LitentryAddress extends Enum {
-    readonly isEvm: boolean;
-    readonly asEvm: Address20;
     readonly isSubstrate: boolean;
     readonly asSubstrate: Address32;
-    readonly type: 'Evm' | 'Substrate';
+    readonly isEvm: boolean;
+    readonly asEvm: Address20;
+    readonly type: 'Substrate' | 'Evm';
+}
+
+/** @name LitentryAddress20 */
+export interface LitentryAddress20 extends Struct {
+    readonly address: Address20;
+}
+
+/** @name LitentryAddress32 */
+export interface LitentryAddress32 extends Struct {
+    readonly address: Address32;
 }
 
 /** @name LitentryIdentity */
@@ -154,14 +173,8 @@ export interface PublicGetter extends Enum {
     readonly isSomeValue: boolean;
     readonly asSomeValue: u32;
     readonly isNonce: boolean;
-    readonly asNonce: AccountId;
-    readonly isNewNonce: boolean;
-    readonly asNewNonce: LitentryAddress;
-    readonly isOldNonce: boolean;
-    readonly asOldNonce: LitentryMultiSignature;
-    readonly isAddress20Nonce: boolean;
-    readonly asAddress20Nonce: Address20;
-    readonly type: 'SomeValue' | 'Nonce' | 'NewNonce' | 'OldNonce' | 'Address20Nonce';
+    readonly asNonce: LitentryAddress;
+    readonly type: 'SomeValue' | 'Nonce';
 }
 
 /** @name Request */
@@ -194,23 +207,23 @@ export interface SubstrateNetwork extends Enum {
 /** @name TrustedCall */
 export interface TrustedCall extends Enum {
     readonly isBalanceSetBalance: boolean;
-    readonly asBalanceSetBalance: ITuple<[AccountId, AccountId, Balance, Balance]>;
+    readonly asBalanceSetBalance: ITuple<[LitentryAddress, AccountId, Balance, Balance]>;
     readonly isBalanceTransfer: boolean;
-    readonly asBalanceTransfer: ITuple<[AccountId, AccountId, Balance]>;
+    readonly asBalanceTransfer: ITuple<[LitentryAddress, AccountId, Balance]>;
     readonly isBalanceUnshield: boolean;
-    readonly asBalanceUnshield: ITuple<[AccountId, AccountId, Balance, ShardIdentifier]>;
+    readonly asBalanceUnshield: ITuple<[LitentryAddress, AccountId, Balance, ShardIdentifier]>;
     readonly isBalanceShield: boolean;
-    readonly asBalanceShield: ITuple<[AccountId, AccountId, Balance]>;
+    readonly asBalanceShield: ITuple<[LitentryAddress, AccountId, Balance]>;
     readonly isSetUserShieldingKey: boolean;
-    readonly asSetUserShieldingKey: ITuple<[AccountId, AccountId, UserShieldingKeyType, H256]>;
+    readonly asSetUserShieldingKey: ITuple<[LitentryAddress, IdGraphIdentifier, UserShieldingKeyType, H256]>;
     readonly isLinkIdentity: boolean;
     readonly asLinkIdentity: ITuple<
-        [AccountId, AccountId, LitentryIdentity, LitentryValidationData, UserShieldingKeyNonceType, H256]
+        [LitentryAddress, IdGraphIdentifier, LitentryIdentity, LitentryValidationData, UserShieldingKeyNonceType, H256]
     >;
     readonly isRemoveIdentity: boolean;
-    readonly asRemoveIdentity: ITuple<[AccountId, AccountId, LitentryIdentity, H256]>;
+    readonly asRemoveIdentity: ITuple<[LitentryAddress, IdGraphIdentifier, LitentryIdentity, H256]>;
     readonly isRequestVc: boolean;
-    readonly asRequestVc: ITuple<[AccountId, AccountId, Assertion, u32, H256]>;
+    readonly asRequestVc: ITuple<[LitentryAddress, IdGraphIdentifier, Assertion, u32, H256]>;
     readonly type:
         | 'BalanceSetBalance'
         | 'BalanceTransfer'
@@ -232,15 +245,15 @@ export interface TrustedCallSigned extends Struct {
 /** @name TrustedGetter */
 export interface TrustedGetter extends Enum {
     readonly isFreeBalance: boolean;
-    readonly asFreeBalance: AccountId;
+    readonly asFreeBalance: LitentryAddress;
     readonly isReservedBalance: boolean;
-    readonly asReservedBalance: AccountId;
+    readonly asReservedBalance: LitentryAddress;
     readonly isUserShieldingKey: boolean;
-    readonly asUserShieldingKey: AccountId;
+    readonly asUserShieldingKey: LitentryAddress;
     readonly isIdGraph: boolean;
-    readonly asIdGraph: AccountId;
+    readonly asIdGraph: LitentryAddress;
     readonly isIdGraphStats: boolean;
-    readonly asIdGraphStats: AccountId;
+    readonly asIdGraphStats: LitentryAddress;
     readonly type: 'FreeBalance' | 'ReservedBalance' | 'UserShieldingKey' | 'IdGraph' | 'IdGraphStats';
 }
 

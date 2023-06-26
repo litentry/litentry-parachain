@@ -470,6 +470,32 @@ impl Credential {
 		self.credential_subject.assertions.push(assertion);
 		self.credential_subject.values.push(true);
 	}
+
+	pub fn add_assertion_a12(&mut self, twitter_screen_name: String, value: bool) {
+		let is_following = AssertionLogic::new_item("$is_following", Op::Equal, "true");
+		let twitter_screen_name = AssertionLogic::new_item(
+			"$twitter_screen_name",
+			Op::Equal,
+			twitter_screen_name.as_str(),
+		);
+
+		let assertion =
+			AssertionLogic::new_and().add_item(is_following).add_item(twitter_screen_name);
+		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.values.push(value);
+	}
+
+	pub fn add_assertion_a13(&mut self) {
+		let badge = AssertionLogic::new_item("$has_claimed_badge", Op::Equal, "true");
+		self.credential_subject.assertions.push(badge);
+		self.credential_subject.values.push(true);
+	}
+
+	pub fn add_assertion_a14(&mut self, value: bool) {
+		let governance = AssertionLogic::new_item("$total_governance_action", Op::GreaterThan, "0");
+		self.credential_subject.assertions.push(governance);
+		self.credential_subject.values.push(value);
+	}
 }
 
 /// Assertion To-Date

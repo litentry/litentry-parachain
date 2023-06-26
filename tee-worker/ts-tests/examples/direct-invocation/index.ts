@@ -9,6 +9,7 @@ import {
     getTEEShieldingKey,
     createSignedTrustedCallLinkIdentity,
     createSignedTrustedGetterUserShieldingKey,
+    createSignedTrustedGetterIDGraph,
     sendRequestFromGetter,
     getSidechainNonce,
     getKeyPair,
@@ -24,11 +25,10 @@ import {
 import { aesKey, keyNonce } from '../../common/call';
 import { Metadata, TypeRegistry } from '@polkadot/types';
 import sidechainMetaData from '../../litentry-sidechain-metadata.json';
-import { hexToU8a } from '@polkadot/util';
-import type { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
-import type { LitentryValidationData } from '../../parachain-interfaces/identity/types';
+import { hexToU8a, u8aToString, u8aToHex } from '@polkadot/util';
 import { assert } from 'chai';
 import { KeypairType } from '@polkadot/util-crypto/types';
+import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from '@polkadot/types/lookup';
 
 // in order to handle self-signed certificates we need to turn off the validation
 // TODO add self signed certificate
@@ -80,8 +80,6 @@ async function runDirectCall(keyPairType: KeypairType) {
 
     let nonce = await getSidechainNonce(wsp, parachain_api, mrenclave, key, aliceAddress);
 
-    // a hardcoded AES key which is used overall in tests - maybe we need to put it in a common place
-    const key_alice = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
     // similar to `reqExtHash` in indirect calls, we need some "identifiers" to pair the response
     // with the request. Ideally it's the hash of the trusted operation, but we need it before constructing
     // a trusted call, hence a random number is used here - better ideas are welcome
@@ -100,13 +98,12 @@ async function runDirectCall(keyPairType: KeypairType) {
     let res = await sendRequestFromTrustedCall(wsp, parachain_api, mrenclave, key, setUserShieldingKeyCall);
     console.log('setUserShieldingKey call returned', res.toHuman());
 
-    sleep(10);
+    await sleep(10);
 
     hash = `0x${require('crypto').randomBytes(32).toString('hex')}`;
-
     nonce = await getSidechainNonce(wsp, parachain_api, mrenclave, key, aliceAddress);
 
-    console.log('Send direct createIdentity call... hash:', hash);
+    console.log('Send direct linkIdentity call... hash:', hash);
     const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2', context);
     let linkIdentityCall = createSignedTrustedCallLinkIdentity(
         parachain_api,
@@ -120,7 +117,7 @@ async function runDirectCall(keyPairType: KeypairType) {
             .createType('LitentryValidationData', {
                 Web2Validation: {
                     Twitter: {
-                        tweet_id: `0x${Buffer.from('100', 'utf8').toString('hex')}`,
+                        tweet_id: `0x${Buffer.from(nonce.toString(), 'utf8').toString('hex')}`,
                     },
                 },
             })
@@ -131,7 +128,32 @@ async function runDirectCall(keyPairType: KeypairType) {
     res = await sendRequestFromTrustedCall(wsp, parachain_api, mrenclave, key, linkIdentityCall);
     console.log('linkIdentity call returned', res.toHuman());
 
-    sleep(10);
+    // we should have listened to the parachain event, for demo purpose we only wait for enough
+    // time and check the IDGraph
+    await sleep(30);
+
+    console.log('Send IDGraph getter for alice ...');
+    let idgraphGetter = createSignedTrustedGetterIDGraph(parachain_api, alice);
+    res = await sendRequestFromGetter(wsp, parachain_api, mrenclave, key, idgraphGetter);
+    console.log('IDGraph getter returned', res.toHuman());
+    // somehow createType('Option<Vec<(....)>>') doesn't work, why?
+    let idgraphBytes = sidechainRegistry.createType('Option<Bytes>', hexToU8a(res.value.toHex()));
+    assert.isTrue(idgraphBytes.isSome);
+    let idgraphArray = sidechainRegistry.createType(
+        'Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
+        idgraphBytes.unwrap()
+    ) as unknown as [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][];
+    assert.equal(idgraphArray.length, 2);
+    // the first identity is the twitter identity
+    assert.isTrue(idgraphArray[0][0].isWeb2);
+    assert.isTrue(idgraphArray[0][0].asWeb2.network.isTwitter);
+    assert.equal(u8aToString(idgraphArray[0][0].asWeb2.address.toU8a()), '$mock_user');
+    assert.isTrue(idgraphArray[0][1].status.isActive);
+    // the second identity is the substrate identity (prime identity)
+    assert.isTrue(idgraphArray[1][0].isSubstrate);
+    assert.isTrue(idgraphArray[1][0].asSubstrate.network.isLitentryRococo);
+    assert.equal(idgraphArray[1][0].asSubstrate.address.toHex(), u8aToHex(alice.publicKey));
+    assert.isTrue(idgraphArray[1][1].status.isActive);
 
     console.log('Send UserShieldingKey getter for alice ...');
     let UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachain_api, alice, aliceAddress);
@@ -155,7 +177,7 @@ async function runDirectCall(keyPairType: KeypairType) {
     k = parachain_api.createType('Option<Bytes>', hexToU8a(res.value.toHex()));
     assert.isTrue(k.isNone);
 
-    sleep(10);
+    await sleep(10);
 
     nonce = await getSidechainNonce(wsp, parachain_api, mrenclave, key, bobAddress);
 

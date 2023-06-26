@@ -20,9 +20,7 @@ extern crate sgx_tstd as std;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate rand_sgx as rand;
 
-use crate::{
-	AesOutput, UserShieldingKeyNonceType, UserShieldingKeyType, USER_SHIELDING_KEY_NONCE_LEN,
-};
+use crate::{AesOutput, UserShieldingKeyNonceType, UserShieldingKeyType, NONCE_LEN};
 
 use rand::Rng;
 
@@ -92,7 +90,7 @@ pub struct RingAeadNonceSequence {
 
 impl RingAeadNonceSequence {
 	fn new() -> RingAeadNonceSequence {
-		RingAeadNonceSequence { nonce: [0u8; USER_SHIELDING_KEY_NONCE_LEN] }
+		RingAeadNonceSequence { nonce: [0u8; NONCE_LEN] }
 	}
 }
 
@@ -100,7 +98,7 @@ impl NonceSequence for RingAeadNonceSequence {
 	fn advance(&mut self) -> Result<Nonce, Unspecified> {
 		let nonce = Nonce::assume_unique_for_key(self.nonce);
 		let nonce_vec = rand::thread_rng().gen::<UserShieldingKeyNonceType>();
-		self.nonce.copy_from_slice(&nonce_vec[0..USER_SHIELDING_KEY_NONCE_LEN]);
+		self.nonce.copy_from_slice(&nonce_vec[0..NONCE_LEN]);
 		Ok(nonce)
 	}
 }

@@ -247,16 +247,9 @@ pub mod pallet {
 			IDGraphs::<T>::remove(id_graph_id, identity);
 		}
 
-		pub fn get_id_graph(id_graph_id: &IdGraphIdentifier) -> IDGraph<T> {
-			IDGraphs::iter_prefix(id_graph_id).collect::<Vec<_>>()
-		}
-
 		// get the most recent `max_len` elements in IDGraph
-		pub fn get_id_graph_with_max_len(
-			id_graph_id: &IdGraphIdentifier,
-			max_len: usize,
-		) -> IDGraph<T> {
-			let mut id_graph = Self::get_id_graph(id_graph_id);
+		pub fn get_id_graph(id_graph_id: &IdGraphIdentifier, max_len: usize) -> IDGraph<T> {
+			let mut id_graph = IDGraphs::iter_prefix(id_graph_id).collect::<IDGraph<T>>();
 			id_graph.sort_by(|a, b| Ord::cmp(&b.1.link_block, &a.1.link_block));
 			id_graph.truncate(max_len);
 			id_graph

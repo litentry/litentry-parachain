@@ -19,7 +19,7 @@ extern crate sgx_tstd as std;
 
 use super::*;
 use crate::{
-	helpers::{ensure_enclave_signer_account, is_authorised_signer},
+	helpers::{ensure_enclave_signer_account, is_authorized_signer},
 	AccountId, IdentityManagement, Runtime, StfError, StfResult, UserShieldingKeys,
 };
 use frame_support::{dispatch::UnfilteredDispatchable, ensure};
@@ -43,8 +43,8 @@ impl TrustedCallSigned {
 		parent_ss58_prefix: u16,
 	) -> StfResult<UserShieldingKeyType> {
 		ensure!(
-			is_authorised_signer(&signer, &id_graph_id.to_account_id()),
-			StfError::SetUserShieldingKeyFailed(ErrorDetail::UnauthorisedSigner)
+			is_authorized_signer(&signer, &id_graph_id.to_account_id()),
+			StfError::SetUserShieldingKeyFailed(ErrorDetail::UnauthorizedSigner)
 		);
 		IMTCall::set_user_shielding_key { id_graph_id, key, parent_ss58_prefix }
 			.dispatch_bypass_filter(RuntimeOrigin::root())
@@ -62,8 +62,8 @@ impl TrustedCallSigned {
 		shard: &ShardIdentifier,
 	) -> StfResult<()> {
 		ensure!(
-			is_authorised_signer(&signer, &id_graph_id.to_account_id()),
-			StfError::LinkIdentityFailed(ErrorDetail::UnauthorisedSigner)
+			is_authorized_signer(&signer, &id_graph_id.to_account_id()),
+			StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner)
 		);
 
 		let key = IdentityManagement::user_shielding_keys(&id_graph_id)
@@ -98,8 +98,8 @@ impl TrustedCallSigned {
 		parent_ss58_prefix: u16,
 	) -> StfResult<UserShieldingKeyType> {
 		ensure!(
-			is_authorised_signer(&signer, &id_graph_id.to_account_id()),
-			StfError::RemoveIdentityFailed(ErrorDetail::UnauthorisedSigner)
+			is_authorized_signer(&signer, &id_graph_id.to_account_id()),
+			StfError::RemoveIdentityFailed(ErrorDetail::UnauthorizedSigner)
 		);
 		let key = IdentityManagement::user_shielding_keys(&id_graph_id)
 			.ok_or(StfError::RemoveIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
@@ -119,15 +119,15 @@ impl TrustedCallSigned {
 		shard: &ShardIdentifier,
 	) -> StfResult<()> {
 		ensure!(
-			is_authorised_signer(&signer, &id_graph_id.to_account_id()),
-			StfError::RequestVCFailed(assertion, ErrorDetail::UnauthorisedSigner)
+			is_authorized_signer(&signer, &id_graph_id.to_account_id()),
+			StfError::RequestVCFailed(assertion, ErrorDetail::UnauthorizedSigner)
 		);
 		ensure!(
 			UserShieldingKeys::<Runtime>::contains_key(&id_graph_id),
 			StfError::RequestVCFailed(assertion, ErrorDetail::UserShieldingKeyNotFound)
 		);
 
-		let id_graph = IMT::get_id_graph(&id_graph_id);
+		let id_graph = IMT::get_id_graph(&id_graph_id, usize::MAX);
 		let vec_identity: Vec<Identity> = id_graph
 			.into_iter()
 			.filter(|item| item.1.status == IdentityStatus::Active)
@@ -156,7 +156,7 @@ impl TrustedCallSigned {
 	) -> StfResult<UserShieldingKeyType> {
 		// important! The signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
 		ensure_enclave_signer_account(&signer)
-			.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::UnauthorisedSigner))?;
+			.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner))?;
 
 		let key = IdentityManagement::user_shielding_keys(&id_graph_id)
 			.ok_or(StfError::LinkIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
@@ -175,7 +175,7 @@ impl TrustedCallSigned {
 	) -> StfResult<UserShieldingKeyType> {
 		// important! The signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
 		ensure_enclave_signer_account(&signer).map_err(|_| {
-			StfError::RequestVCFailed(assertion.clone(), ErrorDetail::UnauthorisedSigner)
+			StfError::RequestVCFailed(assertion.clone(), ErrorDetail::UnauthorizedSigner)
 		})?;
 
 		let key = IdentityManagement::user_shielding_keys(&id_graph_id)

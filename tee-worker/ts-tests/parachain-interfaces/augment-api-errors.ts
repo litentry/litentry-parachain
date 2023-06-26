@@ -1249,6 +1249,10 @@ declare module '@polkadot/api-base/types/errors' {
             [key: string]: AugmentedError<ApiType>;
         };
         vcManagement: {
+            /**
+             * a delegatee doesn't exist
+             **/
+            DelegateeNotExist: AugmentedError<ApiType>;
             LengthMismatch: AugmentedError<ApiType>;
             /**
              * Error when the caller account is not the admin
@@ -1267,6 +1271,10 @@ declare module '@polkadot/api-base/types/errors' {
              * Schema not exists
              **/
             SchemaNotExists: AugmentedError<ApiType>;
+            /**
+             * a `request_vc` request from unauthorised user
+             **/
+            UnauthorisedUser: AugmentedError<ApiType>;
             /**
              * The VC is already disabled
              **/

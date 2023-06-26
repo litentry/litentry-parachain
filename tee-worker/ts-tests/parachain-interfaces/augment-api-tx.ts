@@ -1622,9 +1622,9 @@ declare module '@polkadot/api-base/types/submittable' {
                 [AccountId32, CorePrimitivesKeyAesOutput, H256]
             >;
             /**
-             * Create an identity
+             * Link an identity with the given validation data
              * We do the origin check for this extrinsic, it has to be
-             * - either the caller him/herself, i.e. ensure_signed(origin)? == who
+             * - either the caller themselves, i.e. ensure_signed(origin)? == who
              * - or from a delegatee in the list
              **/
             linkIdentity: AugmentedSubmittable<
@@ -4603,6 +4603,13 @@ declare module '@polkadot/api-base/types/submittable' {
                 ) => SubmittableExtrinsic<ApiType>,
                 [H256, u64]
             >;
+            /**
+             * add an account to the delegatees
+             **/
+            addDelegatee: AugmentedSubmittable<
+                (account: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
+                [AccountId32]
+            >;
             addSchema: AugmentedSubmittable<
                 (
                     shard: H256 | string | Uint8Array,
@@ -4628,6 +4635,7 @@ declare module '@polkadot/api-base/types/submittable' {
                         | { A9: any }
                         | { A10: any }
                         | { A11: any }
+                        | { A12: any }
                         | { A13: any }
                         | string
                         | Uint8Array,
@@ -4646,6 +4654,13 @@ declare module '@polkadot/api-base/types/submittable' {
             disableVc: AugmentedSubmittable<
                 (index: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
                 [H256]
+            >;
+            /**
+             * remove an account from the delegatees
+             **/
+            removeDelegatee: AugmentedSubmittable<
+                (account: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
+                [AccountId32]
             >;
             removeVcRegistryItem: AugmentedSubmittable<
                 (index: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
@@ -4667,6 +4682,7 @@ declare module '@polkadot/api-base/types/submittable' {
                         | { A9: any }
                         | { A10: any }
                         | { A11: any }
+                        | { A12: any }
                         | { A13: any }
                         | string
                         | Uint8Array
@@ -4722,6 +4738,7 @@ declare module '@polkadot/api-base/types/submittable' {
                         | { A9: any }
                         | { A10: any }
                         | { A11: any }
+                        | { A12: any }
                         | { A13: any }
                         | string
                         | Uint8Array,

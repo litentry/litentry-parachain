@@ -3,7 +3,7 @@ import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import { hexToU8a } from '@polkadot/util';
 
-import {buildAddressHelper, initIntegrationTestContext} from './common/utils';
+import { buildAddressHelper, initIntegrationTestContext } from './common/utils';
 import {
     createSignedTrustedGetterUserShieldingKey,
     getTEEShieldingKey,
