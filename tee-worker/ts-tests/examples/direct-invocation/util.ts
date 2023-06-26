@@ -199,9 +199,9 @@ export function createSignedTrustedGetterUserShieldingKey(parachainApi: ApiPromi
     return parachainApi.createType('Getter', { trusted: getterSigned });
 }
 
-export function createSignedTrustedGetterIDGraph(parachain_api: ApiPromise, who: KeyringPair) {
-    let getterSigned = createSignedTrustedGetter(parachain_api, ['id_graph', '(AccountId)'], who, who.address);
-    return parachain_api.createType('Getter', { trusted: getterSigned });
+export function createSignedTrustedGetterIdGraph(parachainApi: ApiPromise, who: KeyringPair) {
+    const getterSigned = createSignedTrustedGetter(parachainApi, ['id_graph', '(AccountId)'], who, who.address);
+    return parachainApi.createType('Getter', { trusted: getterSigned });
 }
 
 export const getSidechainNonce = async (

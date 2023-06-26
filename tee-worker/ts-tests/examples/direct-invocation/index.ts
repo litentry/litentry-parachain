@@ -6,10 +6,10 @@ import { HexString } from '@polkadot/util/types';
 import {
     createSignedTrustedCallSetUserShieldingKey,
     sendRequestFromTrustedCall,
-    getTEEShieldingKey,
+    getTeeShieldingKey,
     createSignedTrustedCallLinkIdentity,
     createSignedTrustedGetterUserShieldingKey,
-    createSignedTrustedGetterIDGraph,
+    createSignedTrustedGetterIdGraph,
     sendRequestFromGetter,
     getSidechainNonce,
 } from './util';
@@ -55,7 +55,7 @@ async function runDirectCall() {
     });
     await wsp.open();
 
-    const key = await getTEEShieldingKey(wsp, parachainApi);
+    const key = await getTeeShieldingKey(wsp, parachainApi);
 
     const alice: KeyringPair = keyring.addFromUri('//Alice', { name: 'Alice' });
     const bob: KeyringPair = keyring.addFromUri('//Bob', { name: 'Bob' });
@@ -82,12 +82,12 @@ async function runDirectCall() {
     await sleep(10);
 
     hash = `0x${require('crypto').randomBytes(32).toString('hex')}`;
-    nonce = await getSidechainNonce(wsp, parachain_api, mrenclave, key, alice.address);
+    nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, alice.address);
 
     console.log('Send direct linkIdentity call... hash:', hash);
-    const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2', context);
-    let linkIdentityCall = createSignedTrustedCallLinkIdentity(
-        parachain_api,
+    const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2', context);
+    const linkIdentityCall = createSignedTrustedCallLinkIdentity(
+        parachainApi,
         mrenclave,
         nonce,
         alice,
@@ -112,13 +112,13 @@ async function runDirectCall() {
     await sleep(30);
 
     console.log('Send IDGraph getter for alice ...');
-    let idgraphGetter = createSignedTrustedGetterIDGraph(parachain_api, alice);
-    res = await sendRequestFromGetter(wsp, parachain_api, mrenclave, key, idgraphGetter);
+    const idgraphGetter = createSignedTrustedGetterIdGraph(parachainApi, alice);
+    res = await sendRequestFromGetter(wsp, parachainApi, mrenclave, key, idgraphGetter);
     console.log('IDGraph getter returned', res.toHuman());
     // somehow createType('Option<Vec<(....)>>') doesn't work, why?
-    let idgraphBytes = sidechainRegistry.createType('Option<Bytes>', hexToU8a(res.value.toHex()));
+    const idgraphBytes = sidechainRegistry.createType('Option<Bytes>', hexToU8a(res.value.toHex()));
     assert.isTrue(idgraphBytes.isSome);
-    let idgraphArray = sidechainRegistry.createType(
+    const idgraphArray = sidechainRegistry.createType(
         'Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
         idgraphBytes.unwrap()
     ) as unknown as [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][];
