@@ -72,7 +72,7 @@ generate_worker_service_file() {
 }
 
 generate_upgrade_worker_service_file() {
-  local command='./integritee-service -P 2000 -w 2001 -r 3443 -h 4545 --running-mode mock --enable-mock-server --parentchain-start-block 0 run --skip-ra --dev'
+  local command='cd ${WORKER_DIR}/tmp/w0 && ./integritee-service -P 2000 -w 2001 -r 3443 -h 4545 --running-mode mock --enable-mock-server --parentchain-start-block 0 run --skip-ra --dev'
   local service_name='worker'
   local description='Worker Service for Litentry Side chain'
   local working_directory='/opt/worker/'
@@ -146,7 +146,7 @@ start_service_files(){
   # echo "Moving worker binaries to /usr/local/bin"
   # setup_working_dir "bin" "/usr/local/bin"
   echo "Moving service files to ~/.config/systemd/user"
-  cp -r *.service ~/.config/systemd/user/
+  cp -r *.service ~/.config/systemd/user
 
   echo "Performing Daemon Reload"
   systemctl --user daemon-reload
@@ -190,7 +190,7 @@ upgrade_worker(){
 
   if [ "$PRODUCTION" = "1" ]; then
       generate_upgrade_worker_service_file
-      cp worker.service /etc/systemd/system/
+      cp worker.service ~/.config/systemd/user/
       systemctl --user daemon-reload
       systemctl --user start worker.service
   else
