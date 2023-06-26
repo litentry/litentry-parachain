@@ -62,7 +62,7 @@ where
 				let tweet = Tweet {
 					author_id: tweet_author_id.into(),
 					author_name: tweet_author_name.into(),
-					id: ids.clone(),
+					id: ids,
 					text: payload,
 				};
 				let twitter_users = TwitterUsers {
