@@ -39,9 +39,9 @@ check_local_log(){
 }
 
 check_prod_log(){
-  LOG_FILE="/data/log/worker0.log"
+  LOG_FILE="log/worker0.log"
   if grep -q "Enclave did not produce sidechain blocks" "$LOG_FILE"; then
-      systemctl stop worker.service
+      systemctl --user stop worker.service
       echo "Sleeping for 60 seconds"
       sleep 60
       exit 0
