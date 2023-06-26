@@ -248,7 +248,7 @@ fn get_id_graph_works() {
 			2
 		));
 
-		let id_graph = IMT::get_id_graph(&BOB);
+		let id_graph = IMT::get_id_graph(&BOB, usize::MAX);
 		// "+1": because of the main id is added by default when first calling creat_identity.
 		assert_eq!(id_graph.len(), 2 + 1);
 	});
