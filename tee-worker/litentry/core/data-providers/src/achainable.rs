@@ -298,6 +298,27 @@ pub trait AchainableTagBalance {
 	fn bep20_lit_holder(&mut self, address: &str) -> Result<bool, Error>;
 }
 
+pub trait AchainableTagDotsama {
+	fn is_polkadot_treasury_proposal_beneficiary(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_kusama_treasury_proposal_beneficiary(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_polkadot_tip_finder(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_kusama_tip_finder(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_polkadot_tip_beneficiary(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_kusama_tip_beneficiary(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_polkadot_opengov_proposer(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_kusama_opengov_proposer(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_polkadot_fellowship_proposer(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_kusama_fellowship_proposer(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_polkadot_fellowship_member(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_kusama_fellowship_member(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_polkadot_ex_councilor(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_kusama_ex_councilor(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_polkadot_councilor(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_kusama_councilor(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_polkadot_bounty_curator(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_kusama_bounty_curator(&mut self, address: &str) -> Result<bool, Error>;
+}
+
 pub trait AchainablePost {
 	fn post(&mut self, params: ReqParams, body: &ReqBody) -> Result<serde_json::Value, Error>;
 }
@@ -500,6 +521,134 @@ impl AchainableTagBalance for AchainableClient {
 	}
 }
 
+impl AchainableTagDotsama for AchainableClient {
+	fn is_polkadot_treasury_proposal_beneficiary(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/d4748f8b162a78a195cbbc6669333545");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn is_kusama_treasury_proposal_beneficiary(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/d7cf879652ea3bcab1c043828f4d4478");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn is_polkadot_tip_finder(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/fbf7f158c78d7eb95cb872b1a8d5fe07");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn is_kusama_tip_finder(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/1181944a66c746042c2914080eb7155b");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn is_polkadot_tip_beneficiary(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/1829e887a62fa97113dd0cee977aa8d5");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn is_kusama_tip_beneficiary(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/3564145e6ca3f13185b2cd1490db65fc");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn is_polkadot_opengov_proposer(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/ce5e845483b2fcbe42021ff91198b92b");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn is_kusama_opengov_proposer(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/ee1a4e4a1e3e63e3e9d1c5af1674e15b");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn is_polkadot_fellowship_proposer(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/5c1a272ce054e729f1eca5c5a47bcbdd");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn is_kusama_fellowship_proposer(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/4aa1a72b5d1fae6dd0417671193fffe1");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn is_polkadot_fellowship_member(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/9b03668237a0a4a7bbdd45c839dbb0fd");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn is_kusama_fellowship_member(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/91b0529b323d6c1207dc601d0f677414");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn is_polkadot_ex_councilor(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/8cb42563adaacf8fd4609d6641ce7670");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn is_kusama_ex_councilor(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/50e6094ebf3df2e8bf2d2b41b2737ba0");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn is_polkadot_councilor(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/e5bcdbdb20c07ffd9ff68ce206fb64d5");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn is_kusama_councilor(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/a27e414ae882a5e5b291b437376e266a");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn is_polkadot_bounty_curator(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/1f39ff71595b1f0ff9f196b8f64f04e3");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn is_kusama_bounty_curator(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/6ecc10647157f1c34fe7d3734ba3d89f");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ReqParams {
@@ -552,8 +701,8 @@ impl RestPath<String> for ParamsAccount {
 mod tests {
 	use crate::achainable::{
 		AchainableClient, AchainableQuery, AchainableTagAccount, AchainableTagBalance,
-		SupportedNetwork, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsTotalTxs,
-		G_DATA_PROVIDERS,
+		AchainableTagDotsama, SupportedNetwork, VerifiedCredentialsIsHodlerIn,
+		VerifiedCredentialsTotalTxs, G_DATA_PROVIDERS,
 	};
 	use lc_mock_server::{default_getter, run};
 	use std::sync::Arc;
@@ -853,6 +1002,219 @@ mod tests {
 
 		let mut client = AchainableClient::new();
 		let res = client.bep20_lit_holder("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn is_polkadot_treasury_proposal_beneficiary_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.is_polkadot_treasury_proposal_beneficiary(
+			"5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW",
+		);
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn is_kusama_treasury_proposal_beneficiary_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.is_kusama_treasury_proposal_beneficiary(
+			"CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq",
+		);
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn is_polkadot_tip_finder_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.is_polkadot_tip_finder("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn is_kusama_tip_finder_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.is_kusama_tip_finder("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn is_polkadot_tip_beneficiary_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res =
+			client.is_polkadot_tip_beneficiary("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn is_kusama_tip_beneficiary_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res =
+			client.is_kusama_tip_beneficiary("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn is_polkadot_opengov_proposer_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res =
+			client.is_polkadot_opengov_proposer("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn is_kusama_opengov_proposer_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res =
+			client.is_kusama_opengov_proposer("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn is_polkadot_fellowship_proposer_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client
+			.is_polkadot_fellowship_proposer("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn is_kusama_fellowship_proposer_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res =
+			client.is_kusama_fellowship_proposer("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn is_polkadot_fellowship_member_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client
+			.is_polkadot_fellowship_member("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn is_kusama_fellowship_member_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res =
+			client.is_kusama_fellowship_member("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn is_polkadot_ex_councilor_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res =
+			client.is_polkadot_ex_councilor("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn is_kusama_ex_councilor_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.is_kusama_ex_councilor("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn is_polkadot_councilor_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.is_polkadot_councilor("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn is_kusama_councilor_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.is_kusama_councilor("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn is_polkadot_bounty_curator_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res =
+			client.is_polkadot_bounty_curator("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn is_kusama_bounty_curator_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res =
+			client.is_kusama_bounty_curator("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
 		assert!(res.is_ok());
 		let res = res.unwrap();
 		assert_eq!(res, false);
