@@ -2630,10 +2630,7 @@ declare module '@polkadot/types/lookup' {
     /** @name CorePrimitivesErrorErrorDetail (139) */
     interface CorePrimitivesErrorErrorDetail extends Enum {
         readonly isImportError: boolean;
-<<<<<<< HEAD
         readonly isUnauthorizedSigner: boolean;
-=======
->>>>>>> parent of 8d8c7cf9 (Remove the usage of challenge code (#1761))
         readonly isStfError: boolean;
         readonly asStfError: Bytes;
         readonly isSendStfRequestFailed: boolean;
@@ -2651,10 +2648,7 @@ declare module '@polkadot/types/lookup' {
         readonly isRecoverEvmAddressFailed: boolean;
         readonly type:
             | 'ImportError'
-<<<<<<< HEAD
             | 'UnauthorizedSigner'
-=======
->>>>>>> parent of 8d8c7cf9 (Remove the usage of challenge code (#1761))
             | 'StfError'
             | 'SendStfRequestFailed'
             | 'ChallengeCodeNotFound'
@@ -2847,7 +2841,7 @@ declare module '@polkadot/types/lookup' {
         readonly isA7: boolean;
         readonly asA7: Bytes;
         readonly isA8: boolean;
-        readonly asA8: Vec<CorePrimitivesAssertionIndexingNetwork>;
+        readonly asA8: Vec<CorePrimitivesAssertionSupportedNetwork>;
         readonly isA9: boolean;
         readonly isA10: boolean;
         readonly asA10: Bytes;
@@ -2860,15 +2854,25 @@ declare module '@polkadot/types/lookup' {
         readonly type: 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'A7' | 'A8' | 'A9' | 'A10' | 'A11' | 'A12' | 'A13';
     }
 
-    /** @name CorePrimitivesAssertionIndexingNetwork (149) */
-    interface CorePrimitivesAssertionIndexingNetwork extends Enum {
+    /** @name CorePrimitivesAssertionSupportedNetwork (149) */
+    interface CorePrimitivesAssertionSupportedNetwork extends Enum {
         readonly isLitentry: boolean;
         readonly isLitmus: boolean;
+        readonly isLitentryRococo: boolean;
         readonly isPolkadot: boolean;
         readonly isKusama: boolean;
         readonly isKhala: boolean;
         readonly isEthereum: boolean;
-        readonly type: 'Litentry' | 'Litmus' | 'Polkadot' | 'Kusama' | 'Khala' | 'Ethereum';
+        readonly isTestNet: boolean;
+        readonly type:
+            | 'Litentry'
+            | 'Litmus'
+            | 'LitentryRococo'
+            | 'Polkadot'
+            | 'Kusama'
+            | 'Khala'
+            | 'Ethereum'
+            | 'TestNet';
     }
 
     /** @name PalletGroupEvent (151) */
@@ -5266,7 +5270,7 @@ declare module '@polkadot/types/lookup' {
         readonly isConfirmProcessedParentchainBlock: boolean;
         readonly asConfirmProcessedParentchainBlock: {
             readonly blockHash: H256;
-            readonly blockNumber: u32;
+            readonly blockNumber: Compact<u32>;
             readonly trustedCallsMerkleRoot: H256;
         } & Struct;
         readonly isShieldFunds: boolean;
@@ -5284,7 +5288,7 @@ declare module '@polkadot/types/lookup' {
         } & Struct;
         readonly isSetHeartbeatTimeout: boolean;
         readonly asSetHeartbeatTimeout: {
-            readonly timeout: u64;
+            readonly timeout: Compact<u64>;
         } & Struct;
         readonly isRegisterDcapEnclave: boolean;
         readonly asRegisterDcapEnclave: {
@@ -5293,7 +5297,7 @@ declare module '@polkadot/types/lookup' {
         } & Struct;
         readonly isUpdateScheduledEnclave: boolean;
         readonly asUpdateScheduledEnclave: {
-            readonly sidechainBlockNumber: u64;
+            readonly sidechainBlockNumber: Compact<u64>;
             readonly mrEnclave: U8aFixed;
         } & Struct;
         readonly isRegisterQuotingEnclave: boolean;

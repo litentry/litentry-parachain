@@ -1595,7 +1595,7 @@ declare module '@polkadot/api-base/types/submittable' {
             /**
              * Create an identity
              * We do the origin check for this extrinsic, it has to be
-             * - either the caller him/herself, i.e. ensure_signed(origin)? == who
+             * - either the caller themselves, i.e. ensure_signed(origin)? == who
              * - or from a delegatee in the list
              **/
             createIdentity: AugmentedSubmittable<
@@ -1636,17 +1636,7 @@ declare module '@polkadot/api-base/types/submittable' {
                 ) => SubmittableExtrinsic<ApiType>,
                 [AccountId32, CorePrimitivesKeyAesOutput, H256]
             >;
-<<<<<<< HEAD
-            /**
-             * Link an identity with the given validation data
-             * We do the origin check for this extrinsic, it has to be
-             * - either the caller themselves, i.e. ensure_signed(origin)? == who
-             * - or from a delegatee in the list
-             **/
-            linkIdentity: AugmentedSubmittable<
-=======
             identityVerified: AugmentedSubmittable<
->>>>>>> parent of 8d8c7cf9 (Remove the usage of challenge code (#1761))
                 (
                     account: AccountId32 | string | Uint8Array,
                     identity:
@@ -4073,10 +4063,10 @@ declare module '@polkadot/api-base/types/submittable' {
             confirmProcessedParentchainBlock: AugmentedSubmittable<
                 (
                     blockHash: H256 | string | Uint8Array,
-                    blockNumber: u32 | AnyNumber | Uint8Array,
+                    blockNumber: Compact<u32> | AnyNumber | Uint8Array,
                     trustedCallsMerkleRoot: H256 | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
-                [H256, u32, H256]
+                [H256, Compact<u32>, H256]
             >;
             /**
              * Publish a hash as a result of an arbitrary enclave operation.
@@ -4140,8 +4130,8 @@ declare module '@polkadot/api-base/types/submittable' {
                 [AccountId32]
             >;
             setHeartbeatTimeout: AugmentedSubmittable<
-                (timeout: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [u64]
+                (timeout: Compact<u64> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
+                [Compact<u64>]
             >;
             /**
              * Sent by a client who requests to get shielded funds managed by an enclave. For this
@@ -4173,10 +4163,10 @@ declare module '@polkadot/api-base/types/submittable' {
             >;
             updateScheduledEnclave: AugmentedSubmittable<
                 (
-                    sidechainBlockNumber: u64 | AnyNumber | Uint8Array,
+                    sidechainBlockNumber: Compact<u64> | AnyNumber | Uint8Array,
                     mrEnclave: U8aFixed | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
-                [u64, U8aFixed]
+                [Compact<u64>, U8aFixed]
             >;
             /**
              * Generic tx

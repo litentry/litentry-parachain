@@ -632,13 +632,6 @@ declare module '@polkadot/api-base/types/storage' {
             [key: string]: QueryableStorageEntry<ApiType>;
         };
         identityManagement: {
-<<<<<<< HEAD
-=======
-            /**
-             * delegatees who are authorised to send extrinsics(currently only `create_identity`)
-             * on behalf of the users
-             **/
->>>>>>> parent of 8d8c7cf9 (Remove the usage of challenge code (#1761))
             delegatee: AugmentedQuery<
                 ApiType,
                 (arg: AccountId32 | string | Uint8Array) => Observable<Option<Null>>,

@@ -7,7 +7,7 @@ import '@polkadot/types/types/registry';
 
 import type {
     CorePrimitivesAssertion,
-    CorePrimitivesAssertionIndexingNetwork,
+    CorePrimitivesAssertionSupportedNetwork,
     CorePrimitivesErrorErrorDetail,
     CorePrimitivesErrorImpError,
     CorePrimitivesErrorVcmpError,
@@ -340,7 +340,7 @@ import type {
 declare module '@polkadot/types/types/registry' {
     interface InterfaceTypes {
         CorePrimitivesAssertion: CorePrimitivesAssertion;
-        CorePrimitivesAssertionIndexingNetwork: CorePrimitivesAssertionIndexingNetwork;
+        CorePrimitivesAssertionSupportedNetwork: CorePrimitivesAssertionSupportedNetwork;
         CorePrimitivesErrorErrorDetail: CorePrimitivesErrorErrorDetail;
         CorePrimitivesErrorImpError: CorePrimitivesErrorImpError;
         CorePrimitivesErrorVcmpError: CorePrimitivesErrorVcmpError;

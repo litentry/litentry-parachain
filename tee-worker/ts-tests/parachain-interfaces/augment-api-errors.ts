@@ -482,11 +482,7 @@ declare module '@polkadot/api-base/types/errors' {
              **/
             DelegateeNotExist: AugmentedError<ApiType>;
             /**
-<<<<<<< HEAD
-             * a `link_identity` request from unauthorized user
-=======
-             * a `create_identity` request from unauthorised user
->>>>>>> parent of 8d8c7cf9 (Remove the usage of challenge code (#1761))
+             * a `create_identity` request from unauthorized user
              **/
             UnauthorizedUser: AugmentedError<ApiType>;
             /**

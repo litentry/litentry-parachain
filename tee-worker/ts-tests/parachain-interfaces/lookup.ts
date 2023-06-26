@@ -1986,10 +1986,7 @@ export default {
     CorePrimitivesErrorErrorDetail: {
         _enum: {
             ImportError: 'Null',
-<<<<<<< HEAD
             UnauthorizedSigner: 'Null',
-=======
->>>>>>> parent of 8d8c7cf9 (Remove the usage of challenge code (#1761))
             StfError: 'Bytes',
             SendStfRequestFailed: 'Null',
             ChallengeCodeNotFound: 'Null',
@@ -2145,7 +2142,7 @@ export default {
             A5: 'Bytes',
             A6: 'Null',
             A7: 'Bytes',
-            A8: 'Vec<CorePrimitivesAssertionIndexingNetwork>',
+            A8: 'Vec<CorePrimitivesAssertionSupportedNetwork>',
             A9: 'Null',
             A10: 'Bytes',
             A11: 'Bytes',
@@ -2154,10 +2151,10 @@ export default {
         },
     },
     /**
-     * Lookup149: core_primitives::assertion::IndexingNetwork
+     * Lookup149: core_primitives::assertion::SupportedNetwork
      **/
-    CorePrimitivesAssertionIndexingNetwork: {
-        _enum: ['Litentry', 'Litmus', 'Polkadot', 'Kusama', 'Khala', 'Ethereum'],
+    CorePrimitivesAssertionSupportedNetwork: {
+        _enum: ['Litentry', 'Litmus', 'LitentryRococo', 'Polkadot', 'Kusama', 'Khala', 'Ethereum', 'TestNet'],
     },
     /**
      * Lookup151: pallet_group::pallet::Event<T, I>
@@ -4376,7 +4373,7 @@ export default {
             },
             confirm_processed_parentchain_block: {
                 blockHash: 'H256',
-                blockNumber: 'u32',
+                blockNumber: 'Compact<u32>',
                 trustedCallsMerkleRoot: 'H256',
             },
             shield_funds: {
@@ -4391,14 +4388,14 @@ export default {
                 callHash: 'H256',
             },
             set_heartbeat_timeout: {
-                timeout: 'u64',
+                timeout: 'Compact<u64>',
             },
             register_dcap_enclave: {
                 dcapQuote: 'Bytes',
                 workerUrl: 'Bytes',
             },
             update_scheduled_enclave: {
-                sidechainBlockNumber: 'u64',
+                sidechainBlockNumber: 'Compact<u64>',
                 mrEnclave: '[u8;32]',
             },
             register_quoting_enclave: {
