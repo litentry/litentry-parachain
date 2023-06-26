@@ -27,7 +27,7 @@ env:
 jobs:
   ## build docker image of client binary with args ##
   build-docker-with-args:
-    runs-on: ubuntu-latest
+    runs-on: dev-builder
     steps:
       - name: Checkout codes on ${{ github.event.inputs.ref || github.ref }}
         uses: actions/checkout@v3
@@ -41,15 +41,13 @@ jobs:
           echo "============================="
           docker images
 
-      - name: Dockerhub login
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-
       - name: Push docker image
         run: |
           docker push litentry/litentry-parachain:${{ github.event.inputs.docker_tag }}
+
+      - name: Remove dangling images if any
+        run: |
+          [ -z "$(docker images --filter=dangling=true -q)" ] || docker rmi -f $(docker images --filter=dangling=true -q)
 
       - name: Copy client binary to disk
         run: |

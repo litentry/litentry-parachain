@@ -898,7 +898,7 @@ impl pallet_teeracle::Config for Runtime {
 
 impl pallet_identity_management::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = weights::pallet_identity_management::WeightInfo<Runtime>;
+	type WeightInfo = ();
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
 	type ExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
