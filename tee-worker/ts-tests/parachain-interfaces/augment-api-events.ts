@@ -2048,6 +2048,8 @@ declare module '@polkadot/api-base/types/events' {
                 [oldAdmin: Option<AccountId32>, newAdmin: Option<AccountId32>],
                 { oldAdmin: Option<AccountId32>; newAdmin: Option<AccountId32> }
             >;
+            DelegateeAdded: AugmentedEvent<ApiType, [account: AccountId32], { account: AccountId32 }>;
+            DelegateeRemoved: AugmentedEvent<ApiType, [account: AccountId32], { account: AccountId32 }>;
             RequestVCFailed: AugmentedEvent<
                 ApiType,
                 [

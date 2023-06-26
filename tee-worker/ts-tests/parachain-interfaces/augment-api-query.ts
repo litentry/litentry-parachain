@@ -630,10 +630,6 @@ declare module '@polkadot/api-base/types/storage' {
             [key: string]: QueryableStorageEntry<ApiType>;
         };
         identityManagement: {
-            /**
-             * delegatees who are authorised to send extrinsics(currently only `link_identity`)
-             * on behalf of the users
-             **/
             delegatee: AugmentedQuery<
                 ApiType,
                 (arg: AccountId32 | string | Uint8Array) => Observable<Option<Null>>,
@@ -1713,6 +1709,12 @@ declare module '@polkadot/api-base/types/storage' {
         vcManagement: {
             admin: AugmentedQuery<ApiType, () => Observable<Option<AccountId32>>, []> &
                 QueryableStorageEntry<ApiType, []>;
+            delegatee: AugmentedQuery<
+                ApiType,
+                (arg: AccountId32 | string | Uint8Array) => Observable<Option<Null>>,
+                [AccountId32]
+            > &
+                QueryableStorageEntry<ApiType, [AccountId32]>;
             schemaRegistry: AugmentedQuery<
                 ApiType,
                 (arg: u64 | AnyNumber | Uint8Array) => Observable<Option<PalletVcManagementSchemaVcSchema>>,

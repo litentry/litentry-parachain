@@ -118,7 +118,7 @@ fn remove_identity_works() {
 			IdentityContext { link_block: 1, status: IdentityStatus::Active }
 		);
 
-		let id_graph = IMT::get_id_graph(&BOB);
+		let id_graph = IMT::get_id_graph(&BOB, usize::MAX);
 		assert_eq!(id_graph.len(), 2);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&BOB), 2);
 
@@ -130,7 +130,7 @@ fn remove_identity_works() {
 		));
 		assert_eq!(IMT::id_graphs(BOB, alice_web3_identity()), None);
 
-		let id_graph = IMT::get_id_graph(&BOB);
+		let id_graph = IMT::get_id_graph(&BOB, usize::MAX);
 		// "1": because of the main id is added by default when first calling set_user_shielding_key.
 		assert_eq!(id_graph.len(), 1);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&BOB), 1);
@@ -150,34 +150,6 @@ fn remove_identity_works() {
 #[test]
 fn get_id_graph_works() {
 	new_test_ext(true).execute_with(|| {
-		let ss58_prefix = 131_u16;
-		assert_ok!(IMT::link_identity(
-			RuntimeOrigin::signed(ALICE),
-			BOB,
-			alice_web3_identity(),
-			ss58_prefix,
-		));
-
-		let alice_web2_identity = Identity::Web2 {
-			network: Web2Network::Twitter,
-			address: IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
-		};
-		assert_ok!(IMT::link_identity(
-			RuntimeOrigin::signed(ALICE),
-			BOB,
-			alice_web2_identity.clone(),
-			ss58_prefix,
-		));
-
-		let id_graph = IMT::get_id_graph(&BOB);
-		// "+1": because of the main id is added by default when first calling set_user_shielding_key.
-		assert_eq!(id_graph.len(), 2 + 1);
-	});
-}
-
-#[test]
-fn get_id_graph_with_max_len_works() {
-	new_test_ext(true).execute_with(|| {
 		// fill in 21 identities, starting from 1 to reserve place for prime_id
 		// set the block number too as it's used to tell "recent"
 		for i in 1..22 {
@@ -190,10 +162,10 @@ fn get_id_graph_with_max_len_works() {
 			));
 		}
 		// the full id_graph should have 22 elements, including the prime_id
-		assert_eq!(IMT::get_id_graph(&BOB).len(), 22);
+		assert_eq!(IMT::get_id_graph(&BOB, usize::MAX).len(), 22);
 
 		// only get the recent 15 identities
-		let id_graph = IMT::get_id_graph_with_max_len(&BOB, 15);
+		let id_graph = IMT::get_id_graph(&BOB, 15);
 		for i in id_graph.clone() {
 			println!("{:?}", String::from_utf8(i.0.flat()).unwrap());
 		}
@@ -204,7 +176,7 @@ fn get_id_graph_with_max_len_works() {
 		assert_eq!(String::from_utf8(id_graph.get(14).unwrap().0.flat()).unwrap(), "did:twitter:web2:_:alice7");
 
 		// try to get more than id_graph length
-		let id_graph = IMT::get_id_graph_with_max_len(&BOB, 30);
+		let id_graph = IMT::get_id_graph(&BOB, 30);
 		assert_eq!(id_graph.len(), 22);
 		assert_eq!(String::from_utf8(id_graph.get(0).unwrap().0.flat()).unwrap(), "did:twitter:web2:_:alice21");
 		assert_eq!(String::from_utf8(id_graph.get(21).unwrap().0.flat()).unwrap(), "did:litmus:web3:substrate:0x0202020202020202020202020202020202020202020202020202020202020202");

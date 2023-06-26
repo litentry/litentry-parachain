@@ -35,8 +35,11 @@ where
 		.map(move |tweet_id: u32, p: HashMap<String, String>| {
 			println!("query_tweet, tweet_id: {}", tweet_id);
 			let default = String::default();
-			let ids = tweet_id.to_string();
+			let id = tweet_id.to_string();
 			let expansions = p.get("expansions").unwrap_or(&default);
+
+			let tweet_author_name = "mock_user";
+			let tweet_author_id = "mock_user_id";
 
 			if expansions.as_str() != "author_id" {
 				Response::builder().status(400).body(String::from("Error query"))
@@ -44,7 +47,8 @@ where
 				let alice = Sr25519Pair::from_string("//Alice", None).unwrap();
 				let twitter_identity = Identity::Web2 {
 					network: Web2Network::Twitter,
-					address: IdentityString::try_from("mock_user".as_bytes().to_vec()).unwrap(),
+					address: IdentityString::try_from(tweet_author_name.as_bytes().to_vec())
+						.unwrap(),
 				};
 				let key = func(&alice);
 				let payload = hex::encode(get_expected_raw_message(
@@ -61,14 +65,19 @@ where
 
 				println!("query_tweet, payload: {}", payload);
 
-				let tweet = Tweet { author_id: "mock_user".into(), id: ids.clone(), text: payload };
+				let tweet = Tweet {
+					author_id: tweet_author_id.into(),
+					author_name: tweet_author_name.into(),
+					id,
+					text: payload,
+				};
 				let twitter_users = TwitterUsers {
 					users: vec![TwitterUser {
-						id: ids,
-						name: "mock_user".to_string(),
+						id: tweet_author_id.to_string(),
+						name: tweet_author_name.to_string(),
 						// intentionally return username with a different case, which shouldn't fail the verification
 						// see https://github.com/litentry/litentry-parachain/issues/1680
-						username: "Mock_User".to_string(),
+						username: tweet_author_name.to_string().to_uppercase(),
 						public_metrics: None,
 					}],
 				};
@@ -115,31 +124,39 @@ pub(crate) fn query_friendship(
 		.and(warp::query::<HashMap<String, String>>())
 		.map(move |p: HashMap<String, String>| {
 			log::info!("query_friendship");
-			let default = String::default();
-			let source = p.get("source_screen_name").unwrap_or(&default);
-			let target_id = p.get("target_id").unwrap_or(&default);
+			if let Some(target_id) = p.get("target_id") {
+				if target_id == "783214" {
+					return Response::builder()
+						.body(serde_json::to_string(&prepare_mocked_relationship()).unwrap())
+				}
+			};
 
-			if source != "twitterdev" || target_id != "783214" {
-				Response::builder().status(400).body(String::from("Error query"))
-			} else {
-				let source_user = SourceTwitterUser {
-					id_str: "2244994945".into(),
-					screen_name: "TwitterDev".into(),
-					following: true,
-					followed_by: false,
-				};
-
-				let target_user = TargetTwitterUser {
-					id_str: "783214".into(),
-					screen_name: "Twitter".into(),
-					following: false,
-					followed_by: true,
-				};
-
-				let body = Relationship { source: source_user, target: target_user };
-				Response::builder().body(serde_json::to_string(&body).unwrap())
+			if let Some(target_screen_name) = p.get("target_screen_name") {
+				if target_screen_name == "twitter" {
+					return Response::builder()
+						.body(serde_json::to_string(&prepare_mocked_relationship()).unwrap())
+				}
 			}
+			Response::builder().status(400).body(String::from("Error query"))
 		})
+}
+
+fn prepare_mocked_relationship() -> Relationship {
+	let source_user = SourceTwitterUser {
+		id_str: "2244994945".into(),
+		screen_name: "TwitterDev".into(),
+		following: true,
+		followed_by: false,
+	};
+
+	let target_user = TargetTwitterUser {
+		id_str: "783214".into(),
+		screen_name: "Twitter".into(),
+		following: false,
+		followed_by: true,
+	};
+
+	Relationship { source: source_user, target: target_user }
 }
 
 pub(crate) fn query_user(
