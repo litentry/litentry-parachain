@@ -483,6 +483,12 @@ impl Credential {
 		self.credential_subject.assertions.push(badge);
 		self.credential_subject.values.push(true);
 	}
+
+	pub fn add_assertion_a14(&mut self, value: bool) {
+		let governance = AssertionLogic::new_item("$total_governance_action", Op::GreaterThan, "0");
+		self.credential_subject.assertions.push(governance);
+		self.credential_subject.values.push(value);
+	}
 }
 
 /// Assertion To-Date
