@@ -41,8 +41,9 @@ impl DirectClientMock {
 		mu_ra_url: String,
 		untrusted_worker_url: String,
 		metadata: String,
+		nonce: String,
 	) -> Self {
-		Self { rsa_pubkey, mu_ra_url, untrusted_worker_url, metadata }
+		Self { rsa_pubkey, mu_ra_url, untrusted_worker_url, metadata, nonce }
 	}
 
 	pub fn with_rsa_pubkey(mut self, key: Rsa3072PubKey) -> Self {
