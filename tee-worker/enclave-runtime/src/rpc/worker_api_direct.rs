@@ -22,7 +22,7 @@ use itp_primitives_cache::{GetPrimitives, GLOBAL_PRIMITIVES_CACHE};
 use itp_rpc::RpcReturnValue;
 use itp_sgx_crypto::Rsa3072Seal;
 use itp_sgx_externalities::SgxExternalitiesTrait;
-use itp_stf_executor::{error::Error, getter_executor::ExecuteGetter};
+use itp_stf_executor::getter_executor::ExecuteGetter;
 use itp_stf_primitives::types::AccountId;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
@@ -228,8 +228,8 @@ where
 	});
 
 	// author_getNextNonce
-	let author_getNextNonce: &str = "author_getNextNonce";
-	io.add_sync_method(author_getNextNonce, move |params: Params| {
+	let author_get_next_nonce: &str = "author_getNextNonce";
+	io.add_sync_method(author_get_next_nonce, move |params: Params| {
 		match params.parse::<(String, String)>() {
 			Ok((shard_base58, account_hex)) => {
 				let shard = match decode_shard_from_base58(shard_base58.as_str()) {
