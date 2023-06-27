@@ -68,9 +68,13 @@ pub fn verify(
 				.query_tweet(tweet_id.to_vec())
 				.map_err(|e| Error::VerifyIdentityFailed(e.into_error_detail()))?;
 
-			let user_name = tweet
-				.get_user_name()
+			let user_id = tweet
+				.get_user_id()
 				.ok_or(Error::VerifyIdentityFailed(ErrorDetail::WrongWeb2Handle))?;
+			let user = client
+				.query_user_by_id(user_id.into_bytes())
+				.map_err(|e| Error::VerifyIdentityFailed(e.into_error_detail()))?;
+			let user_name = user.username;
 
 			let payload = payload_from_tweet(&tweet)?;
 
