@@ -66,7 +66,7 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		/// the event
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-		/// the manager origin for extrincis
+		/// the manager origin for extrinsics
 		type ManageOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		/// maximum number of identities an account can have, if you change this value to lower some accounts may exceed this limit
 		#[pallet::constant]
@@ -86,25 +86,23 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// the pair (litentry-account, identity) already linked
+		/// the pair (id_graph_identifier, identity) already linked
 		IdentityAlreadyLinked,
-		/// the pair (litentry-account, identity) doesn't exist
+		/// the pair (id_graph_identifier, identity) doesn't exist
 		IdentityNotExist,
 		/// creating the prime identity manually is disallowed
 		LinkPrimeIdentityDisallowed,
-		/// remove prime identiy should be disallowed
+		/// remove prime identity should be disallowed
 		RemovePrimeIdentityDisallowed,
 		/// IDGraph len limit reached
 		IDGraphLenLimitReached,
 	}
 
-	/// user shielding key is per Litentry account
 	#[pallet::storage]
 	#[pallet::getter(fn user_shielding_keys)]
 	pub type UserShieldingKeys<T: Config> =
 		StorageMap<_, Blake2_128Concat, IdGraphIdentifier, UserShieldingKeyType, OptionQuery>;
 
-	/// ID graph is per Litentry account + identity
 	#[pallet::storage]
 	#[pallet::getter(fn id_graphs)]
 	pub type IDGraphs<T: Config> = StorageDoubleMap<
