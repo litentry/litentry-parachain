@@ -1,5 +1,5 @@
-// import "@polkadot/api/augment";
-// import "@polkadot/types/augment";
+import "@polkadot/api/augment";
+import "@polkadot/types/augment";
 import { ApiOptions } from "@polkadot/api/types";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 

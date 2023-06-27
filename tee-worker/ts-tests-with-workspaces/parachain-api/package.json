@@ -2,13 +2,12 @@
 	"name": "parachain-api",
 	"type": "module",
 	"license": "ISC",
-	"main": "dist/src/index.d.ts",
 	"scripts": {
 		"clean": "rm -rf dist build node_modules",
 		"update-metadata": "curl -s -H \"Content-Type: application/json\" -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' http://localhost:9944 > prepare-build/litentry-parachain-metadata.json",
 		"prepare-dir": "mkdir -p build && cp -rf prepare-build/* build",
-		"generate-from-defs": "ts-node node_modules/.bin/polkadot-types-from-defs  --package parachain-api/interfaces --input build/interfaces --endpoint build/litentry-parachain-metadata.json",
-		"generate-from-chain": "ts-node node_modules/.bin/polkadot-types-from-chain --package parachain-api/interfaces --output build/interfaces --endpoint build/litentry-parachain-metadata.json --strict",
+		"generate-from-defs": "ts-node --esm node_modules/.bin/polkadot-types-from-defs  --package parachain-api/interfaces --input build/interfaces --endpoint build/litentry-parachain-metadata.json",
+		"generate-from-chain": "ts-node --esm node_modules/.bin/polkadot-types-from-chain --package parachain-api/interfaces --output build/interfaces --endpoint build/litentry-parachain-metadata.json --strict",
 		"format": "yarn prettier --write .",
 		"compile": "tsc",
 		"build": "yarn prepare-dir && yarn generate-from-defs && yarn generate-from-chain && yarn format && yarn compile"
