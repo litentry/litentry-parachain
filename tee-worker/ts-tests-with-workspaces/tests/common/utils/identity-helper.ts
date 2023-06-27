@@ -3,10 +3,10 @@ import { blake2AsHex } from '@polkadot/util-crypto';
 import { AESOutput } from '../type-definitions';
 import { decryptWithAES, encryptWithAES, encryptWithTeeShieldingKey } from './crypto';
 import { ethers } from 'ethers';
-import type { TypeRegistry } from '@polkadot/types';
-import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from '@polkadot/types/lookup';
-import type { LitentryValidationData } from '../../parachain-interfaces/identity/types';
-import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
+import type { TypeRegistry } from 'sidechain-api';
+import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
+import type { LitentryValidationData } from 'parachain-api';
+import type { ApiTypes, SubmittableExtrinsic } from 'parachain-api';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
 import type {

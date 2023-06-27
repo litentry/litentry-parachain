@@ -1,11 +1,12 @@
 import "@polkadot/api/augment";
 import "@polkadot/types/augment";
 import { ApiOptions } from "@polkadot/api/types";
-import { ApiPromise, WsProvider } from "@polkadot/api";
+import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
 export type { ApiTypes, SubmittableExtrinsic } from "@polkadot/api/types";
-export type { LitentryValidationData, WorkerRpcReturnValue } from "parachain-api/interfaces";
+export type { Assertion, LitentryIdentity, LitentryValidationData, SubstrateNetwork, WorkerRpcReturnValue, } from "parachain-api/interfaces";
 export type { Codec } from "@polkadot/types/types";
-export { ApiPromise, WsProvider };
+export type { Bytes } from "@polkadot/types-codec";
+export { ApiPromise, Keyring, WsProvider };
 export declare const definitions: {
     types: {
         WorkerRpcReturnValue: {

@@ -1,7 +1,7 @@
 import { cryptoWaitReady } from '@polkadot/util-crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
-import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
-import { default as teeTypes } from '../../parachain-interfaces/identity/definitions';
+import { ApiPromise, Keyring, WsProvider } from 'parachain-api';
+import { definitions as teeTypes } from 'parachain-api';
 import { HexString } from '@polkadot/util/types';
 import {
     createSignedTrustedCallSetUserShieldingKey,
@@ -14,42 +14,51 @@ import {
 } from './util';
 import { getEnclave, sleep, buildIdentityHelper, initIntegrationTestContext } from '../../common/utils';
 import { aesKey, keyNonce } from '../../common/call';
-import { Metadata, TypeRegistry } from '@polkadot/types';
-import sidechainMetaData from '../../litentry-sidechain-metadata.json';
+import { Metadata as SidechainMetadata, TypeRegistry } from 'sidechain-api';
+import { rawMetadata as sidechainMetaData } from 'sidechain-api';
 import { hexToU8a } from '@polkadot/util';
-import type { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
-import type { LitentryValidationData } from '../../parachain-interfaces/identity/types';
 import { assert } from 'chai';
+
+import WebSocketAsPromised from 'websocket-as-promised';
+import WsWebSocket from 'ws';
 
 // in order to handle self-signed certificates we need to turn off the validation
 // TODO add self signed certificate
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-const WebSocketAsPromised = require('websocket-as-promised');
-const WebSocket = require('ws');
 const keyring = new Keyring({ type: 'sr25519' });
 
-const PARACHAIN_WS_ENDPINT = 'ws://localhost:9944';
+const PARACHAIN_WS_ENDPOINT = 'ws://localhost:9944';
 const WORKER_TRUSTED_WS_ENDPOINT = 'wss://localhost:2000';
 
+const textDecoder = new TextDecoder();
+
 async function runDirectCall() {
-    const parachain_ws = new WsProvider(PARACHAIN_WS_ENDPINT);
+    const parachain_ws = new WsProvider(PARACHAIN_WS_ENDPOINT);
     const sidechainRegistry = new TypeRegistry();
-    const metaData = new Metadata(sidechainRegistry, sidechainMetaData.result as HexString);
+    const metaData = new SidechainMetadata(sidechainRegistry, sidechainMetaData.result as HexString);
     sidechainRegistry.setMetadata(metaData);
     const { types } = teeTypes;
     const parachain_api = await ApiPromise.create({
         provider: parachain_ws,
         types,
     });
-    const context = await initIntegrationTestContext(WORKER_TRUSTED_WS_ENDPOINT, PARACHAIN_WS_ENDPINT, 0);
+    const context = await initIntegrationTestContext(WORKER_TRUSTED_WS_ENDPOINT, PARACHAIN_WS_ENDPOINT, 0);
 
     await cryptoWaitReady();
     const wsp = new WebSocketAsPromised(WORKER_TRUSTED_WS_ENDPOINT, {
-        createWebSocket: (url: any) => new WebSocket(url),
+        createWebSocket: (url: string) => new WsWebSocket(url) as unknown as WebSocket,
         extractMessageData: (event: any) => event,
         packMessage: (data: any) => JSON.stringify(data),
-        unpackMessage: (data: string) => JSON.parse(data),
+        unpackMessage: async (data: string | ArrayBuffer | Blob) => {
+            const text =
+                data instanceof ArrayBuffer
+                    ? textDecoder.decode(data)
+                    : data instanceof Blob
+                    ? await data.text()
+                    : data;
+            return JSON.parse(text);
+        },
         attachRequestId: (data: any, requestId: string | number) => Object.assign({ id: requestId }, data),
         extractRequestId: (data: any) => data && data.id,
     });

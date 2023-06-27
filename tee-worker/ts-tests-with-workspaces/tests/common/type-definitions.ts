@@ -1,7 +1,8 @@
 import { ApiPromise } from '@polkadot/api';
 import { KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
-import { Metadata, Vec, TypeRegistry } from '@polkadot/types';
+import { Vec } from '@polkadot/types';
+import { Metadata as SidechainMetadata, TypeRegistry } from 'sidechain-api';
 import { Wallet } from 'ethers';
 import { Call } from '@polkadot/types/interfaces';
 import type {
@@ -10,11 +11,11 @@ import type {
     LitentryPrimitivesIdentityWeb2Network,
     PalletIdentityManagementTeeIdentityContext,
     LitentryPrimitivesIdentity,
-} from '@polkadot/types/lookup';
+} from 'sidechain-api';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import type { HexString } from '@polkadot/util/types';
-import type { Assertion as GenericAssertion } from '../parachain-interfaces/identity/types';
+import type { Assertion as GenericAssertion } from 'parachain-api';
 import type { AnyTuple, IMethod } from '@polkadot/types/types';
 
 export type Web2Network = LitentryPrimitivesIdentityWeb2Network['type'];
@@ -48,7 +49,7 @@ export type IntegrationTestContext = {
     mrEnclave: HexString;
     ethersWallet: EthersWalletItem;
     substrateWallet: SubstrateWalletItem;
-    metaData: Metadata;
+    metaData: SidechainMetadata;
     sidechainRegistry: TypeRegistry;
     web3Signers: Web3Wallets[];
     chainID: number;

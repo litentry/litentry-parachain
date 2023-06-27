@@ -1,12 +1,12 @@
 import { u8aToHex, u8aConcat } from '@polkadot/util';
 import { xxhashAsU8a } from '@polkadot/util-crypto';
-import { StorageEntryMetadataV14, SiLookupTypeId, StorageHasherV14 } from '@polkadot/types/interfaces';
+import { StorageEntryMetadataV14, SiLookupTypeId, StorageHasherV14 } from 'sidechain-api';
 import { sendRequest } from '../call';
 import { blake2128Concat, twox64Concat, identity } from '../helpers';
 import type { IntegrationTestContext } from '../type-definitions';
-import type { PalletIdentityManagementTeeIdentityContext } from '@polkadot/types/lookup';
+import type { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import type { HexString } from '@polkadot/util/types';
-import type { Metadata } from '@polkadot/types';
+import type { Metadata } from 'sidechain-api';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 

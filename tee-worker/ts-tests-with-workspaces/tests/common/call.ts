@@ -1,11 +1,11 @@
-import { ApiPromise } from '@polkadot/api';
+import { ApiPromise as ParachainApiPromise } from 'parachain-api';
 import { hexToU8a, compactStripLength, u8aToString } from '@polkadot/util';
 import WebSocketAsPromised from 'websocket-as-promised';
 import { HexString } from '@polkadot/util/types';
 import type { RequestBody } from '../common/type-definitions';
-import type { WorkerRpcReturnValue } from '../parachain-interfaces/identity/types';
-import { Metadata, TypeRegistry } from '@polkadot/types';
-import type { Bytes } from '@polkadot/types-codec';
+import type { WorkerRpcReturnValue } from 'parachain-api';
+import { Metadata as SidechainMetadata, TypeRegistry as SidechainTypeRegistry } from 'sidechain-api';
+import type { Bytes } from 'parachain-api';
 
 // TODO:
 // - better place to put these constants?
@@ -22,10 +22,10 @@ export const keyNonce = '0x010101010101010101010101';
 export async function sendRequest(
     wsClient: WebSocketAsPromised,
     request: RequestBody,
-    api: ApiPromise
+    api: ParachainApiPromise
 ): Promise<WorkerRpcReturnValue> {
     const rawRes = await wsClient.sendRequest(request, { requestId: 1, timeout: 6000 });
-    const res = api.createType('WorkerRpcReturnValue', rawRes.result) as unknown as WorkerRpcReturnValue;
+    const res: WorkerRpcReturnValue = api.createType('WorkerRpcReturnValue', rawRes.result);
     if (res.status.isError) {
         console.log('Rpc response error: ' + decodeRpcBytesAsString(res.value));
     }
@@ -47,12 +47,12 @@ export function decodeRpcBytesAsString(value: Bytes): string {
 
 export async function getSidechainMetadata(
     wsClient: WebSocketAsPromised,
-    api: ApiPromise
-): Promise<{ metaData: Metadata; sidechainRegistry: TypeRegistry }> {
+    api: ParachainApiPromise
+): Promise<{ metaData: SidechainMetadata; sidechainRegistry: SidechainTypeRegistry }> {
     let request = { jsonrpc: '2.0', method: 'state_getMetadata', params: [], id: 1 };
     let respJSON = await sendRequest(wsClient, request, api);
-    const sidechainRegistry = new TypeRegistry();
-    const metaData = new Metadata(sidechainRegistry, respJSON.value);
+    const sidechainRegistry = new SidechainTypeRegistry();
+    const metaData = new SidechainMetadata(sidechainRegistry, respJSON.value);
     sidechainRegistry.setMetadata(metaData);
     return { metaData, sidechainRegistry };
 }
@@ -60,7 +60,7 @@ export async function getSidechainMetadata(
 export async function getSideChainStorage(
     wsClient: WebSocketAsPromised,
     rpcMethod: string,
-    api: ApiPromise,
+    api: ParachainApiPromise,
     mrenclave: HexString,
     storageKey: string
 ): Promise<WorkerRpcReturnValue> {

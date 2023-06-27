@@ -4,7 +4,7 @@ import { Keyring } from '@polkadot/api';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
 import './config';
-import { SubstrateNetwork } from '../parachain-interfaces/identity/types';
+import { SubstrateNetwork } from 'parachain-api';
 
 // format and setup
 const keyring = new Keyring({ type: 'sr25519' });
