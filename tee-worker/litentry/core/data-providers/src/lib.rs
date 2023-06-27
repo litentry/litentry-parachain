@@ -178,7 +178,6 @@ impl IntoErrorDetail for Error {
 
 pub trait UserInfo {
 	fn get_user_id(&self) -> Option<String>;
-	fn get_user_name(&self) -> Option<String>;
 }
 
 pub fn vec_to_string(vec: Vec<u8>) -> Result<String, Error> {
