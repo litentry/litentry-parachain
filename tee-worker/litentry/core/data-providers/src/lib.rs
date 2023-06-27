@@ -82,6 +82,7 @@ pub struct DataProvidersStatic {
 	pub achainable_url: String,
 	pub achainable_auth_key: String,
 	pub credential_endpoint: String,
+	pub achainable_rest_key: String,
 }
 impl Default for DataProvidersStatic {
 	fn default() -> Self {
@@ -101,6 +102,7 @@ impl DataProvidersStatic {
 			achainable_url: "https://graph.tdf-labs.io/".to_string(),
 			achainable_auth_key: "".to_string(),
 			credential_endpoint: "".to_string(),
+			achainable_rest_key: "".to_string(),
 		}
 	}
 	pub fn set_twitter_official_url(&mut self, v: String) {
@@ -142,6 +144,10 @@ impl DataProvidersStatic {
 	pub fn set_credential_endpoint(&mut self, v: String) {
 		debug!("set_credential_endpoint: {:?}", v);
 		self.credential_endpoint = v;
+	}
+	pub fn set_achainable_rest_key(&mut self, v: String) {
+		debug!("set_achainable_rest_key: {:?}", v);
+		self.achainable_rest_key = v;
 	}
 }
 

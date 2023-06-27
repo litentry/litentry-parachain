@@ -6,7 +6,8 @@
     "discord_official_url": "https://discordapp.com",
     "discord_litentry_url": "",
     "discord_auth_token": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-    "achainable_url": "https://graph.tdf-labs.io/",
-    "achainable_auth_key": "88888888-4444-4444-4444-1234567890ab",
+    "graphql_url": "https://graph.tdf-labs.io/",
+    "graphql_auth_key": "88888888-4444-4444-4444-1234567890ab",
+    "achainable_rest_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
     "credential_endpoint": ""
 }
