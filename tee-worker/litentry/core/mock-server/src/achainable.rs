@@ -197,6 +197,30 @@ pub mod tag {
 					|| (path == "/v1/run/label/6ecc10647157f1c34fe7d3734ba3d89f"
 						&& address
 							== *"CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq".to_string())
+					|| (path == "/v1/run/label/17769b1442bb26a1604c85ad49045f1b"
+						&& address == *"0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b".to_string())
+					|| (path == "/v1/run/label/aa7d5d57430bfb68708417aca6fa2e16"
+						&& address == *"0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84".to_string())
+					|| (path == "/v1/run/label/05265d4009703337e7a57764b09d39d2"
+						&& address == *"0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84".to_string())
+					|| (path == "/v1/run/label/1dcd359e078fb8fac92b76d2e9d720c8"
+						&& address == *"0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84".to_string())
+					|| (path == "/v1/run/label/5a2a14a93b7352e93a6cf84a460c2c50"
+						&& address == *"0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84".to_string())
+					|| (path == "/v1/run/label/b9256d66b76ad62b9ec25f27775e6d83"
+						&& address == *"0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b".to_string())
+					|| (path == "/v1/run/label/2f0470c59799e58f91929678d2a62c2b"
+						&& address == *"0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b".to_string())
+					|| (path == "/v1/run/label/c090d9694c902141673c85a8f64d7f78"
+						&& address == *"0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b".to_string())
+					|| (path == "/v1/run/label/054625c2a49a73876831b797c5c41cd3"
+						&& address == *"0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b".to_string())
+					|| (path == "/v1/run/label/7d7c271af78ebf94d7f3b1ff6df30142"
+						&& address == *"0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b".to_string())
+					|| (path == "/v1/run/label/2c3d7189e1783880916cc56a1277cb13"
+						&& address == *"0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b".to_string())
+					|| (path == "/v1/run/label/112860d373ee427d80b2d687ca54dc8e"
+						&& address == *"0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b".to_string())
 				{
 					return Response::builder().body(body_false.to_string())
 				}
@@ -229,6 +253,18 @@ pub mod tag {
 						&& address == *"0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA".to_string())
 					|| (path == "/v1/run/label/7bf72e9190098776817afa763044ac1b"
 						&& address == *"0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA".to_string())
+					|| (path == "/v1/run/label/6650ee41cda375e6d2a4d27746ce4805"
+						&& address == *"0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84".to_string())
+					|| (path == "/v1/run/label/9e394bae4a87c67d1073d930e0dee58c"
+						&& address == *"0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84".to_string())
+					|| (path == "/v1/run/label/e3da6466ef2e710b39f1139872a69eed"
+						&& address == *"0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b".to_string())
+					|| (path == "/v1/run/label/3a0a5230a42c5dd2b3581218766cc7fb"
+						&& address == *"0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84".to_string())
+					|| (path == "/v1/run/label/e79d42db5a0e1571262e5d7c056111ed"
+						&& address == *"0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b".to_string())
+					|| (path == "/v1/run/label/5061d6de2687378f303b2f38538b350d"
+						&& address == *"0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b".to_string())
 				{
 					return Response::builder().body(body_true.to_string())
 				}

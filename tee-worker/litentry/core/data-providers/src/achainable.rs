@@ -265,10 +265,6 @@ pub struct TotalTxsStruct {
 	pub total_transactions: u64,
 }
 
-/// AchainableTag: Account
-/// base_url: https://label-production.graph.tdf-labs.io
-/// test key: 26353d4c-b01c-4466-98a5-80d3fc53a9d8
-/// Run UT: cargo test --package lc-data-providers --lib fresh_account_works -- --nocapture
 pub trait AchainableTagAccount {
 	fn fresh_account(&mut self, address: &str) -> Result<bool, Error>;
 	fn og_account(&mut self, address: &str) -> Result<bool, Error>;
@@ -317,6 +313,27 @@ pub trait AchainableTagDotsama {
 	fn is_kusama_councilor(&mut self, address: &str) -> Result<bool, Error>;
 	fn is_polkadot_bounty_curator(&mut self, address: &str) -> Result<bool, Error>;
 	fn is_kusama_bounty_curator(&mut self, address: &str) -> Result<bool, Error>;
+}
+
+pub trait AchainableTagDeFi {
+	fn uniswap_v2_user(&mut self, address: &str) -> Result<bool, Error>;
+	fn uniswap_v3_user(&mut self, address: &str) -> Result<bool, Error>;
+	fn uniswap_v2_lp_in_2022(&mut self, address: &str) -> Result<bool, Error>;
+	fn uniswap_v3_lp_in_2022(&mut self, address: &str) -> Result<bool, Error>;
+	fn usdc_uniswap_v2_lp(&mut self, address: &str) -> Result<bool, Error>;
+	fn usdc_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error>;
+	fn usdt_uniswap_lp(&mut self, address: &str) -> Result<bool, Error>;
+	fn usdt_uniswap_v2_lp(&mut self, address: &str) -> Result<bool, Error>;
+	fn usdt_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error>;
+	fn aave_v2_lender(&mut self, address: &str) -> Result<bool, Error>;
+	fn aave_v2_borrower(&mut self, address: &str) -> Result<bool, Error>;
+	fn aave_v3_lender(&mut self, address: &str) -> Result<bool, Error>;
+	fn aave_v3_borrower(&mut self, address: &str) -> Result<bool, Error>;
+	fn curve_trader(&mut self, address: &str) -> Result<bool, Error>;
+	fn curve_trader_in_2022(&mut self, address: &str) -> Result<bool, Error>;
+	fn curve_liquidity_provider(&mut self, address: &str) -> Result<bool, Error>;
+	fn curve_liquidity_provider_in_2022(&mut self, address: &str) -> Result<bool, Error>;
+	fn swapped_with_metamask_in_2022(&mut self, address: &str) -> Result<bool, Error>;
 }
 
 pub trait AchainablePost {
@@ -649,6 +666,134 @@ impl AchainableTagDotsama for AchainableClient {
 	}
 }
 
+impl AchainableTagDeFi for AchainableClient {
+	fn uniswap_v2_user(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/6650ee41cda375e6d2a4d27746ce4805");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn uniswap_v3_user(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/9e394bae4a87c67d1073d930e0dee58c");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn uniswap_v2_lp_in_2022(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/17769b1442bb26a1604c85ad49045f1b");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn uniswap_v3_lp_in_2022(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/e3da6466ef2e710b39f1139872a69eed");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn usdc_uniswap_v2_lp(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/aa7d5d57430bfb68708417aca6fa2e16");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn usdc_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/3a0a5230a42c5dd2b3581218766cc7fb");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn usdt_uniswap_lp(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/05265d4009703337e7a57764b09d39d2");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn usdt_uniswap_v2_lp(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/1dcd359e078fb8fac92b76d2e9d720c8");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn usdt_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/5a2a14a93b7352e93a6cf84a460c2c50");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn aave_v2_lender(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/e79d42db5a0e1571262e5d7c056111ed");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn aave_v2_borrower(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/b9256d66b76ad62b9ec25f27775e6d83");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn aave_v3_lender(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/2f0470c59799e58f91929678d2a62c2b");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn aave_v3_borrower(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/c090d9694c902141673c85a8f64d7f78");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn curve_trader(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/054625c2a49a73876831b797c5c41cd3");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn curve_trader_in_2022(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/7d7c271af78ebf94d7f3b1ff6df30142");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn curve_liquidity_provider(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/2c3d7189e1783880916cc56a1277cb13");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn curve_liquidity_provider_in_2022(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/112860d373ee427d80b2d687ca54dc8e");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+
+	fn swapped_with_metamask_in_2022(&mut self, address: &str) -> Result<bool, Error> {
+		let params = ReqParams::new("/v1/run/label/5061d6de2687378f303b2f38538b350d");
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+		AchainableClient::parse(resp)
+	}
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ReqParams {
@@ -701,7 +846,7 @@ impl RestPath<String> for ParamsAccount {
 mod tests {
 	use crate::achainable::{
 		AchainableClient, AchainableQuery, AchainableTagAccount, AchainableTagBalance,
-		AchainableTagDotsama, SupportedNetwork, VerifiedCredentialsIsHodlerIn,
+		AchainableTagDeFi, AchainableTagDotsama, SupportedNetwork, VerifiedCredentialsIsHodlerIn,
 		VerifiedCredentialsTotalTxs, G_DATA_PROVIDERS,
 	};
 	use lc_mock_server::{default_getter, run};
@@ -1218,5 +1363,205 @@ mod tests {
 		assert!(res.is_ok());
 		let res = res.unwrap();
 		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn uniswap_v2_user_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.uniswap_v2_user("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, true);
+	}
+
+	#[test]
+	fn uniswap_v3_user_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.uniswap_v3_user("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, true);
+	}
+
+	#[test]
+	fn uniswap_v2_lp_in_2022_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.uniswap_v2_lp_in_2022("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn uniswap_v3_lp_in_2022_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.uniswap_v3_lp_in_2022("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, true);
+	}
+
+	#[test]
+	fn usdc_uniswap_v2_lp_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.usdc_uniswap_v2_lp("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn usdc_uniswap_v3_lp_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.usdc_uniswap_v3_lp("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, true);
+	}
+
+	#[test]
+	fn usdt_uniswap_lp_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.usdt_uniswap_lp("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn usdt_uniswap_v2_lp_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.usdt_uniswap_v2_lp("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn usdt_uniswap_v3_lp_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.usdt_uniswap_v3_lp("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn aave_v2_lender_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.aave_v2_lender("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, true);
+	}
+
+	#[test]
+	fn aave_v2_borrower_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.aave_v2_borrower("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn aave_v3_lender_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.aave_v3_lender("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn aave_v3_borrower_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.aave_v3_borrower("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn curve_trader_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.curve_trader("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn curve_trader_in_2022_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.curve_trader_in_2022("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn curve_liquidity_provider_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res = client.curve_liquidity_provider("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn curve_liquidity_provider_in_2022_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res =
+			client.curve_liquidity_provider_in_2022("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, false);
+	}
+
+	#[test]
+	fn swapped_with_metamask_in_2022_works() {
+		init();
+
+		let mut client = AchainableClient::new();
+		let res =
+			client.swapped_with_metamask_in_2022("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, true);
 	}
 }
