@@ -20,6 +20,7 @@ use crate::{
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
 	trusted_operation::perform_trusted_operation,
+	command_utils::get_worker_api_direct;
 	Cli,
 };
 use codec::Decode;
