@@ -32,6 +32,7 @@ pub struct DirectClientMock {
 	mu_ra_url: String,
 	untrusted_worker_url: String,
 	metadata: String,
+	nonce: String,
 }
 
 impl DirectClientMock {
@@ -61,6 +62,11 @@ impl DirectClientMock {
 
 	pub fn with_metadata(mut self, hex_metadata: String) -> Self {
 		self.metadata = hex_metadata;
+		self
+	}
+
+	pub fn with_nonce(mut self, nonce: &str) -> Self {
+		self.nonce = nonce.to_string();
 		self
 	}
 }
@@ -105,5 +111,9 @@ impl DirectApi for DirectClientMock {
 
 	fn close(&self) -> Result<()> {
 		unimplemented!()
+	}
+
+	fn get_next_nonce(&self) -> Result<String> {
+		Ok(self.nonce.clone())
 	}
 }
