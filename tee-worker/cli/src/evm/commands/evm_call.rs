@@ -25,6 +25,7 @@ use crate::{
 };
 use codec::Decode;
 use ita_stf::{Index, TrustedCall, TrustedGetter, TrustedOperation};
+use itc_rpc_client::direct_client::DirectApi;
 use itp_stf_primitives::types::KeyPair;
 use itp_types::AccountId;
 use log::*;
