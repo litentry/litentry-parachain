@@ -15,13 +15,8 @@
 
 */
 
-use crate::{
-	get_layer_two_nonce, trusted_cli::TrustedCli, trusted_command_utils::get_pair_from_str, Cli,
-};
-use codec::Decode;
-use ita_stf::Index;
-use log::*;
-use sp_core::Pair;
+use crate::{command_utils::get_worker_api_direct, trusted_cli::TrustedCli, Cli};
+use itc_rpc_client::direct_client::DirectApi;
 
 #[derive(Parser)]
 pub struct NonceCommand {
@@ -30,8 +25,9 @@ pub struct NonceCommand {
 }
 
 impl NonceCommand {
-	pub(crate) fn run(&self, cli: &Cli, trusted_args: &TrustedCli) {
-		let who = get_pair_from_str(trusted_args, &self.account);
-		println!("{}", get_layer_two_nonce!(who, cli, trusted_args));
+	pub(crate) fn run(&self, cli: &Cli, _trusted_args: &TrustedCli) {
+		let worker_api_direct = get_worker_api_direct(cli);
+		let nonce = worker_api_direct.get_next_nonce().unwrap();
+		println!("{}", nonce);
 	}
 }

@@ -15,16 +15,15 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	get_layer_two_nonce,
+	command_utils::get_worker_api_direct,
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
 	trusted_operation::perform_trusted_operation,
 	Cli,
 };
-use codec::Decode;
-use ita_stf::{Index, TrustedCall, TrustedOperation};
+use ita_stf::{TrustedCall, TrustedOperation};
+use itc_rpc_client::direct_client::DirectApi;
 use itp_stf_primitives::types::KeyPair;
-use log::*;
 use sp_core::Pair;
 
 #[derive(Parser)]
@@ -35,7 +34,8 @@ impl SendErroneousParentchainCallCommand {
 		let root = get_pair_from_str(trusted_cli, "//Alice");
 
 		let (mrenclave, shard) = get_identifiers(trusted_cli);
-		let nonce = get_layer_two_nonce!(root, cli, trusted_cli);
+		let worker_api_direct = get_worker_api_direct(cli);
+		let nonce = worker_api_direct.get_next_nonce().unwrap().parse::<u32>().unwrap();
 
 		let top: TrustedOperation =
 			TrustedCall::send_erroneous_parentchain_call(root.public().into())
