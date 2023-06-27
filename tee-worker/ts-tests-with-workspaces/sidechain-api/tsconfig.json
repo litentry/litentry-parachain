@@ -9,7 +9,7 @@
 		},
 		"composite": true,
 		"isolatedModules": true,
-		"target": "es2017",
+		"target": "ESNext",
 		"module": "ESNext",
 		"moduleResolution": "node",
 		"declaration": true,
@@ -25,6 +25,8 @@
 	"include": ["**/*.ts", "**/*.json"],
 	"exclude": ["./dist", "./prepare-build"],
 	"ts-node": {
+		"esm": true,
+		"experimentalResolver": true,
 		"experimentalSpecifierResolution": "node"
 	}
 }
