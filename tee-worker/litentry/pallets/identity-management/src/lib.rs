@@ -86,7 +86,7 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// the pair (Identity, Identity) already linked
+		/// the identity is already linked
 		IdentityAlreadyLinked,
 		/// the pair (Identity, Identity) doesn't exist
 		IdentityNotExist,
@@ -106,6 +106,10 @@ pub mod pallet {
 	#[pallet::getter(fn user_shielding_keys)]
 	pub type UserShieldingKeys<T: Config> =
 		StorageMap<_, Blake2_128Concat, Identity, UserShieldingKeyType, OptionQuery>;
+
+	#[pallet::storage]
+	pub type LinkedIdentities<T: Config> =
+		StorageMap<_, Blake2_128Concat, Identity, (), OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn id_graphs)]
@@ -159,7 +163,7 @@ pub mod pallet {
 			T::ManageOrigin::ensure_origin(origin)?;
 
 			ensure!(
-				!IDGraphs::<T>::contains_key(&who, &identity),
+				!LinkedIdentities::<T>::contains_key(&identity),
 				Error::<T>::IdentityAlreadyLinked
 			);
 			let (prime_id, _) = Self::build_prime_identity_with_networks(&who)?;
@@ -244,6 +248,7 @@ pub mod pallet {
 				*len = new_len;
 				Result::<(), DispatchError>::Ok(())
 			})?;
+			LinkedIdentities::<T>::insert(identity, ());
 			IDGraphs::<T>::insert(owner, identity, context);
 			Ok(())
 		}

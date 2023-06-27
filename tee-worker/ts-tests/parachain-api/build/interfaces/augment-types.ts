@@ -1220,10 +1220,10 @@ import type {
     Getter,
     IdentityContext,
     IdentityGenericEvent,
-    IdentityMultiSignature,
     IdentityStatus,
     IdentityString,
     LitentryIdentity,
+    LitentryMultiSignature,
     LitentryValidationData,
     PublicGetter,
     Request,
@@ -1742,7 +1742,6 @@ declare module "@polkadot/types/types/registry" {
         IdentificationTuple: IdentificationTuple;
         IdentityContext: IdentityContext;
         IdentityGenericEvent: IdentityGenericEvent;
-        IdentityMultiSignature: IdentityMultiSignature;
         IdentityStatus: IdentityStatus;
         IdentityString: IdentityString;
         ImmortalEra: ImmortalEra;
@@ -1808,6 +1807,7 @@ declare module "@polkadot/types/types/registry" {
         Limits: Limits;
         LimitsTo264: LimitsTo264;
         LitentryIdentity: LitentryIdentity;
+        LitentryMultiSignature: LitentryMultiSignature;
         LitentryValidationData: LitentryValidationData;
         LocalValidationData: LocalValidationData;
         LockIdentifier: LockIdentifier;
