@@ -45,12 +45,8 @@ macro_rules! get_layer_two_nonce {
 			trusted_command_utils::get_pending_trusted_calls_for,
 			trusted_operation::execute_getter_from_cli_args,
 		};
-		let pending_tx_count =
-			get_pending_trusted_calls_for($cli, $trusted_args, &$signer_pair.public().into()).len();
-		let pending_tx_count = Index::try_from(pending_tx_count).unwrap();
-		debug!("got pending tx count: {:?}", pending_tx_count);
-		let getter =
-			Getter::public(PublicGetter::nonce($signer_pair.public().into(), pending_tx_count));
+
+		let getter = Getter::public(PublicGetter::nonce($signer_pair.public().into()));
 		let getter_result = execute_getter_from_cli_args($cli, $trusted_args, &getter);
 		let nonce = match getter_result {
 			Some(encoded_nonce) => Index::decode(&mut encoded_nonce.as_slice()).unwrap(),
@@ -58,7 +54,11 @@ macro_rules! get_layer_two_nonce {
 		};
 
 		debug!("got system nonce: {:?}", nonce);
-		nonce
+		let pending_tx_count =
+			get_pending_trusted_calls_for($cli, $trusted_args, &$signer_pair.public().into()).len();
+		let pending_tx_count = Index::try_from(pending_tx_count).unwrap();
+		debug!("got pending tx count: {:?}", pending_tx_count);
+		nonce + pending_tx_count
 	}};
 }
 
