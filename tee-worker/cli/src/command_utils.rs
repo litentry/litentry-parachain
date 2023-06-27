@@ -85,8 +85,3 @@ pub(crate) fn mrenclave_from_base58(src: &str) -> [u8; 32] {
 	mrenclave.copy_from_slice(&src.from_base58().expect("mrenclave has to be base58 encoded"));
 	mrenclave
 }
-
-pub(crate) fn get_next_nonce(cli: &Cli) -> Result<String, String> {
-	let worker_api_direct = get_worker_api_direct(cli);
-	worker_api_direct.get_next_nonce().map_err(|e| e.to_string())
-}

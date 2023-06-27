@@ -16,7 +16,7 @@
 */
 
 use crate::{
-	get_layer_two_evm_nonce, get_layer_two_nonce,
+	get_layer_two_evm_nonce,
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
 	trusted_operation::perform_trusted_operation,
@@ -63,7 +63,8 @@ impl EvmCallCommands {
 		let function_hash = Vec::from_hex(self.function.to_string()).unwrap();
 
 		let (mrenclave, shard) = get_identifiers(trusted_args);
-		let nonce = get_layer_two_nonce!(sender, cli, trusted_args);
+		let worker_api_direct = get_worker_api_direct(cli);
+		let nonce = worker_api_direct.get_next_nonce().unwrap().parse::<u32>().unwrap();
 		let evm_nonce = get_layer_two_evm_nonce!(sender, cli, trusted_args);
 
 		println!("calling smart contract function");

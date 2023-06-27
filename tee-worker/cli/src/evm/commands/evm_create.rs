@@ -16,7 +16,7 @@
 */
 
 use crate::{
-	get_layer_two_evm_nonce, get_layer_two_nonce,
+	get_layer_two_evm_nonce,
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
 	trusted_operation::perform_trusted_operation,
@@ -64,7 +64,8 @@ impl EvmCreateCommands {
 			sender_evm_substrate_addr.to_ss58check()
 		);
 
-		let nonce = get_layer_two_nonce!(from, cli, trusted_args);
+		let worker_api_direct = get_worker_api_direct(cli);
+		let nonce = worker_api_direct.get_next_nonce().unwrap().parse::<u32>().unwrap();
 		let evm_account_nonce = get_layer_two_evm_nonce!(from, cli, trusted_args);
 
 		let top = TrustedCall::evm_create(

@@ -17,7 +17,6 @@
 
 use crate::{
 	command_utils::get_worker_api_direct,
-	get_layer_two_nonce,
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{
 		decode_balance, get_identifiers, get_keystore_path, get_pair_from_str,
@@ -130,14 +129,19 @@ impl BenchmarkCommand {
 			Err(err_msg) => panic!("{}", err_msg.to_string()),
 		};
 
-		let nonce_start = get_layer_two_nonce!(funding_account_keys, cli, trusted_args);
+		let nonce_start: String = match worker_api_direct.get_next_nonce() {
+			Ok(nonce) => nonce,
+			Err(err_msg) => panic!("{}", err_msg.to_string()),
+		};
+
 		println!("Nonce for account {}: {}", self.funding_account, nonce_start);
 
 		let mut accounts = Vec::new();
+		let nonce_u32: u32 = nonce_start.parse().unwrap();
 
 		// Setup new accounts and initialize them with money from Alice.
 		for i in 0..self.number_clients {
-			let nonce = i + nonce_start;
+			let nonce = i + nonce_u32;
 			println!("Initializing account {}", i);
 
 			// Create new account to use.
