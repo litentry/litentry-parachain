@@ -59,6 +59,7 @@ pub trait DirectApi {
 	fn send(&self, request: &str) -> Result<()>;
 	/// Close any open websocket connection.
 	fn close(&self) -> Result<()>;
+	fn get_next_nonce(&self) -> Result<String>;
 }
 
 impl DirectClient {
@@ -206,6 +207,21 @@ impl DirectApi for DirectClient {
 
 	fn close(&self) -> Result<()> {
 		self.web_socket_control.close_connection()
+	}
+
+	fn get_next_nonce(&self) -> Result<String> {
+		let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
+			"author_getNextNonce".to_string(),
+			Default::default(),
+		)?;
+
+		// Send json rpc call to ws server.
+		let response_str = self.get(&jsonrpc_call)?;
+
+		let nonce_string = decode_from_rpc_response(&response_str)?;
+
+		info!("[+] Got next nonce: {}", nonce_string);
+		Ok(nonce_string)
 	}
 }
 
