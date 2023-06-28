@@ -28,7 +28,7 @@ export type EnclaveResult = {
     mrEnclave: `0x${string}`;
     shieldingKey: `0x${string}`;
     vcPubkey: `0x${string}`;
-    sgxMetadata: {};
+    sgxMetadata: object;
 };
 export type PubicKeyJson = {
     n: Uint8Array;
@@ -48,13 +48,13 @@ export type IntegrationTestContext = {
     mrEnclave: HexString;
     ethersWallet: EthersWalletItem;
     substrateWallet: SubstrateWalletItem;
-    metaData: Metadata;
+    sidechainMetaData: Metadata;
     sidechainRegistry: TypeRegistry;
     web3Signers: Web3Wallets[];
-    chainID: number;
+    chainIdentifier: number;
 };
 
-export class AESOutput {
+export class AesOutput {
     ciphertext?: Uint8Array;
     aad?: Uint8Array;
     nonce?: Uint8Array;
@@ -92,7 +92,7 @@ export type IdentityContext = {
 };
 
 //vc types
-export type VCRequested = {
+export type VcRequested = {
     account: HexString;
     mrEnclave: HexString;
     assertion: Assertion;
@@ -140,7 +140,7 @@ export type RequestBody = {
     method: string;
 };
 
-export const JsonSchema = {
+export const jsonSchema = {
     type: 'object',
     properties: {
         id: {

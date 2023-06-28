@@ -38,7 +38,8 @@ export function buildStorageKey(
 ): Uint8Array {
     let storageKey = u8aConcat(xxhashAsU8a(prefix, 128), xxhashAsU8a(method, 128));
     if (keyTypeId && hashers && input) {
-        let keyTypeIds = hashers.length === 1 ? [keyTypeId] : metadata.registry.lookup.getSiType(keyTypeId).def.asTuple;
+        const keyTypeIds =
+            hashers.length === 1 ? [keyTypeId] : metadata.registry.lookup.getSiType(keyTypeId).def.asTuple;
         for (let i = 0; i < keyTypeIds.length; i++) {
             const theKeyTypeId = keyTypeIds[i];
             const theHasher = hashers[i].toString();
@@ -72,17 +73,16 @@ export async function buildStorageHelper(
     if (!storageEntry) {
         throw new Error('Can not find the storage entry from metadata');
     }
-    let storageKey, valueType;
+    let storageKey;
+
     if (storageEntry.type.isPlain) {
         storageKey = buildStorageKey(metadata, prefix, method);
-        valueType = metadata.registry.createLookupType(storageEntry.type.asPlain);
     } else if (storageEntry.type.isMap) {
-        const { hashers, key, value } = storageEntry.type.asMap;
+        const { hashers, key } = storageEntry.type.asMap;
         if (input.length != hashers.length) {
             throw new Error('The `input` param is not correct');
         }
         storageKey = buildStorageKey(metadata, prefix, method, key, hashers, input);
-        valueType = metadata.registry.createLookupType(value);
     } else {
         throw new Error('Only support plain and map type');
     }
@@ -98,21 +98,21 @@ export async function checkUserShieldingKeys(
 ): Promise<string> {
     await sleep(6000);
 
-    const storageKey = await buildStorageHelper(context.metaData, pallet, method, idGraphIdentifier);
+    const storageKey = await buildStorageHelper(context.sidechainMetaData, pallet, method, idGraphIdentifier);
 
-    let base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
+    const base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
 
-    let request = {
+    const request = {
         jsonrpc: '2.0',
         method: 'state_getStorage',
         params: [base58mrEnclave, storageKey],
         id: 1,
     };
-    let resp = await sendRequest(context.tee, request, context.api);
+    const resp = await sendRequest(context.tee, request, context.api);
     return resp.value.toHex();
 }
 
-export async function checkIDGraph(
+export async function checkIdGraph(
     context: IntegrationTestContext,
     pallet: string,
     method: string,
@@ -120,20 +120,20 @@ export async function checkIDGraph(
     identity: HexString
 ): Promise<PalletIdentityManagementTeeIdentityContext> {
     await sleep(6000);
-    const storageKey = await buildStorageHelper(context.metaData, pallet, method, idGraphIdentifier, identity);
+    const storageKey = await buildStorageHelper(context.sidechainMetaData, pallet, method, idGraphIdentifier, identity);
 
-    let base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
+    const base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
 
-    let request = {
+    const request = {
         jsonrpc: '2.0',
         method: 'state_getStorage',
         params: [base58mrEnclave, storageKey],
         id: 1,
     };
-    let resp = await sendRequest(context.tee, request, context.api);
-    const IDGraph = context.sidechainRegistry.createType(
+    const resp = await sendRequest(context.tee, request, context.api);
+    const idGraph = context.sidechainRegistry.createType(
         'PalletIdentityManagementTeeIdentityContext',
         resp.value
     ) as unknown as PalletIdentityManagementTeeIdentityContext;
-    return IDGraph;
+    return idGraph;
 }

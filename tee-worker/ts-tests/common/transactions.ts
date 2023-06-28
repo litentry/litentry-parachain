@@ -12,10 +12,9 @@ import { RequestEvent } from './type-definitions';
 
 import { u8aToHex } from '@polkadot/util';
 //transactions utils
-export async function sendTxUntilInBlock(api: ApiPromise, tx: SubmittableExtrinsic<ApiTypes>, signer: KeyringPair) {
-    return new Promise<SubmittableResult>(async (resolve, reject) => {
-        const nonce = await api.rpc.system.accountNextIndex(signer.address);
-        await tx.signAndSend(signer, { nonce }, (result) => {
+export async function sendTxUntilInBlock(tx: SubmittableExtrinsic<ApiTypes>, signer: KeyringPair) {
+    return new Promise<SubmittableResult>((resolve, reject) => {
+        tx.signAndSend(signer, (result) => {
             if (result.status.isInBlock) {
                 console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
                 resolve(result);
@@ -78,6 +77,7 @@ export async function listenEvent(
     signers: HexString[],
     listenTimeoutInBlockNumber: number = defaultListenTimeoutInBlockNumber
 ) {
+    // eslint-disable-next-line no-async-promise-executor
     return new Promise<Event[]>(async (resolve, reject) => {
         let startBlock = 0;
         let events: EventRecord[] = [];
@@ -89,7 +89,7 @@ export async function listenEvent(
                 return;
             }
             console.log(`\n--------- block #${header.number}, hash ${header.hash} ---------\n`);
-            const [signedBlock, apiAt] = await Promise.all([api.rpc.chain.getBlock(header.hash), api.at(header.hash)]);
+            const [, apiAt] = await Promise.all([api.rpc.chain.getBlock(header.hash), api.at(header.hash)]);
 
             const records: EventRecord[] = (await apiAt.query.system.events()) as any;
             const signerToIndexMap: Record<string, number> = {};
@@ -107,10 +107,10 @@ export async function listenEvent(
                 const s = e.event.section;
                 const m = e.event.method;
                 const d = e.event.data;
-                const event_string = `Event[${i}]: ${s}.${m} ${d}`;
-                console.log(section === s ? colors.green(event_string) : event_string);
+                const eventString = `Event[${i}]: ${s}.${m} ${d}`;
+                console.log(section === s ? colors.green(eventString) : eventString);
             });
-            const events_in_extrinsic = records.filter(({ event, phase }) => {
+            const eventsInExtrinsic = records.filter(({ event, phase }) => {
                 if (
                     phase.isApplyExtrinsic &&
                     section === event.section &&
@@ -124,7 +124,7 @@ export async function listenEvent(
                 return phase.isApplyExtrinsic && section === event.section && methods.includes(event.method);
             });
             //We're going to have to filter by signer, because multiple txs is going to mix
-            const filtered_events_with_signer = events_in_extrinsic
+            const filteredEventsWithSigner = eventsInExtrinsic
                 .filter((event) => {
                     const signerDatas = event.event.data.find(signerMatches);
                     return !!signerDatas;
@@ -140,8 +140,7 @@ export async function listenEvent(
                 });
 
             //There is no good compatibility method here.Only successful and failed events can be filtered normally, but it cannot filter error + successful events, which may need further optimization
-            const eventsToUse =
-                filtered_events_with_signer.length > 0 ? filtered_events_with_signer : events_in_extrinsic;
+            const eventsToUse = filteredEventsWithSigner.length > 0 ? filteredEventsWithSigner : eventsInExtrinsic;
 
             events = [...eventsToUse];
 
@@ -176,7 +175,7 @@ export async function sendTxsWithUtility(
 
     await isInBlockPromise;
 
-    const resp_events = await listenEvent(
+    const eventResults = await listenEvent(
         context.api,
         pallet,
         events,
@@ -185,8 +184,8 @@ export async function sendTxsWithUtility(
         listenTimeoutInBlockNumber
     );
 
-    expect(resp_events.length).to.be.equal(txs.length);
-    return resp_events;
+    expect(eventResults.length).to.be.equal(txs.length);
+    return eventResults;
 }
 
 export async function multiAccountTxSender(
@@ -197,24 +196,24 @@ export async function multiAccountTxSender(
     events: string[],
     listenTimeoutInBlockNumber?: number
 ): Promise<Event[]> {
-    let signers_hex: HexString[] = [];
+    const signersHex: HexString[] = [];
     if (Array.isArray(signers)) {
         for (let index = 0; index < signers.length; index++) {
-            signers_hex.push(u8aToHex(signers[index].addressRaw));
+            signersHex.push(u8aToHex(signers[index].addressRaw));
         }
     } else {
-        signers_hex.push(u8aToHex(signers.addressRaw));
+        signersHex.push(u8aToHex(signers.addressRaw));
     }
 
     await sendTxUntilInBlockList(context.api, txs, signers);
-    const resp_events = await listenEvent(
+    const eventsResp = await listenEvent(
         context.api,
         pallet,
         events,
         txs.length,
-        signers_hex,
+        signersHex,
         listenTimeoutInBlockNumber
     );
-    expect(resp_events.length).to.be.equal(txs.length);
-    return resp_events;
+    expect(eventsResp.length).to.be.equal(txs.length);
+    return eventsResp;
 }

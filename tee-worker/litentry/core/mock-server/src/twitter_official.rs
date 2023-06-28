@@ -65,12 +65,7 @@ where
 
 				println!("query_tweet, payload: {}", payload);
 
-				let tweet = Tweet {
-					author_id: tweet_author_id.into(),
-					author_name: tweet_author_name.into(),
-					id,
-					text: payload,
-				};
+				let tweet = Tweet { author_id: tweet_author_id.into(), id, text: payload };
 				let twitter_users = TwitterUsers {
 					users: vec![TwitterUser {
 						id: tweet_author_id.to_string(),
@@ -159,7 +154,7 @@ fn prepare_mocked_relationship() -> Relationship {
 	Relationship { source: source_user, target: target_user }
 }
 
-pub(crate) fn query_user(
+pub(crate) fn query_user_by_name(
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
 	warp::get()
 		.and(warp::path!("2" / "users" / "by" / "username" / String))
@@ -177,6 +172,45 @@ pub(crate) fn query_user(
 					id: "2244994945".into(),
 					name: "TwitterDev".to_string(),
 					username: "TwitterDev".to_string(),
+					public_metrics: Some(TwitterUserPublicMetrics {
+						followers_count: 100_u32,
+						following_count: 99_u32,
+					}),
+				};
+				let body = TwitterAPIV2Response {
+					data: Some(twitter_user_data),
+					meta: None,
+					includes: None,
+				};
+				Response::builder().body(serde_json::to_string(&body).unwrap())
+			}
+		})
+}
+
+pub(crate) fn query_user_by_id(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::get()
+		.and(warp::path!("2" / "users" / String))
+		.and(warp::query::<HashMap<String, String>>())
+		.map(move |id, p: HashMap<String, String>| {
+			let expected_user_ids = vec!["2244994945".to_string(), "mock_user_id".to_string()];
+
+			let mut user_names = HashMap::new();
+			user_names.insert("2244994945", "TwitterDev".to_string());
+			user_names.insert("mock_user_id", "mock_user".to_string());
+
+			let default = String::default();
+			let user_fields = p.get("user.fields").unwrap_or(&default);
+
+			if user_fields.as_str() != "public_metrics" || !expected_user_ids.contains(&id) {
+				Response::builder().status(400).body(String::from("Error query"))
+			} else {
+				let user_name = user_names.get(id.as_str()).unwrap().to_string();
+
+				let twitter_user_data = TwitterUser {
+					id,
+					name: user_name.clone(),
+					username: user_name,
 					public_metrics: Some(TwitterUserPublicMetrics {
 						followers_count: 100_u32,
 						following_count: 99_u32,

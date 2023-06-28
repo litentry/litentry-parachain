@@ -56,7 +56,7 @@ pub fn build(
 		if let Identity::Web2 { network, address } = identity {
 			if matches!(network, Web2Network::Twitter) {
 				let twitter_handler = address.to_vec();
-				match client.query_user(twitter_handler) {
+				match client.query_user_by_name(twitter_handler) {
 					Ok(user) =>
 						if let Some(metrics) = user.public_metrics {
 							sum += metrics.followers_count;

@@ -2610,7 +2610,7 @@ declare module '@polkadot/types/lookup' {
     /** @name CorePrimitivesErrorErrorDetail (139) */
     interface CorePrimitivesErrorErrorDetail extends Enum {
         readonly isImportError: boolean;
-        readonly isUnauthorisedSigner: boolean;
+        readonly isUnauthorizedSigner: boolean;
         readonly isStfError: boolean;
         readonly asStfError: Bytes;
         readonly isSendStfRequestFailed: boolean;
@@ -2627,7 +2627,7 @@ declare module '@polkadot/types/lookup' {
         readonly isRecoverEvmAddressFailed: boolean;
         readonly type:
             | 'ImportError'
-            | 'UnauthorisedSigner'
+            | 'UnauthorizedSigner'
             | 'StfError'
             | 'SendStfRequestFailed'
             | 'UserShieldingKeyNotFound'
@@ -2829,7 +2829,22 @@ declare module '@polkadot/types/lookup' {
         readonly asA12: Bytes;
         readonly isA13: boolean;
         readonly asA13: AccountId32;
-        readonly type: 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'A7' | 'A8' | 'A9' | 'A10' | 'A11' | 'A12' | 'A13';
+        readonly isA14: boolean;
+        readonly type:
+            | 'A1'
+            | 'A2'
+            | 'A3'
+            | 'A4'
+            | 'A5'
+            | 'A6'
+            | 'A7'
+            | 'A8'
+            | 'A9'
+            | 'A10'
+            | 'A11'
+            | 'A12'
+            | 'A13'
+            | 'A14';
     }
 
     /** @name CorePrimitivesAssertionSupportedNetwork (149) */
@@ -2892,6 +2907,10 @@ declare module '@polkadot/types/lookup' {
             readonly hash_: H256;
             readonly data: Bytes;
         } & Struct;
+        readonly isNewMrenclaveSet: boolean;
+        readonly asNewMrenclaveSet: {
+            readonly newMrenclave: U8aFixed;
+        } & Struct;
         readonly type:
             | 'AdminChanged'
             | 'AddedEnclave'
@@ -2903,7 +2922,8 @@ declare module '@polkadot/types/lookup' {
             | 'SetHeartbeatTimeout'
             | 'UpdatedScheduledEnclave'
             | 'RemovedScheduledEnclave'
-            | 'PublishedHash';
+            | 'PublishedHash'
+            | 'NewMrenclaveSet';
     }
 
     /** @name PalletSidechainEvent (154) */
@@ -5133,6 +5153,10 @@ declare module '@polkadot/types/lookup' {
         readonly asSetAdmin: {
             readonly new_: AccountId32;
         } & Struct;
+        readonly isSetMrenclave: boolean;
+        readonly asSetMrenclave: {
+            readonly newMrenclave: U8aFixed;
+        } & Struct;
         readonly type:
             | 'RegisterEnclave'
             | 'UnregisterEnclave'
@@ -5147,7 +5171,8 @@ declare module '@polkadot/types/lookup' {
             | 'RemoveScheduledEnclave'
             | 'RegisterTcbInfo'
             | 'PublishHash'
-            | 'SetAdmin';
+            | 'SetAdmin'
+            | 'SetMrenclave';
     }
 
     /** @name TeerexPrimitivesRequest (332) */
@@ -6423,8 +6448,8 @@ declare module '@polkadot/types/lookup' {
     /** @name PalletIdentityManagementError (527) */
     interface PalletIdentityManagementError extends Enum {
         readonly isDelegateeNotExist: boolean;
-        readonly isUnauthorisedUser: boolean;
-        readonly type: 'DelegateeNotExist' | 'UnauthorisedUser';
+        readonly isUnauthorizedUser: boolean;
+        readonly type: 'DelegateeNotExist' | 'UnauthorizedUser';
     }
 
     /** @name PalletAssetManagerError (528) */
@@ -6468,7 +6493,7 @@ declare module '@polkadot/types/lookup' {
     /** @name PalletVcManagementError (534) */
     interface PalletVcManagementError extends Enum {
         readonly isDelegateeNotExist: boolean;
-        readonly isUnauthorisedUser: boolean;
+        readonly isUnauthorizedUser: boolean;
         readonly isVcAlreadyExists: boolean;
         readonly isVcNotExist: boolean;
         readonly isVcSubjectMismatch: boolean;
@@ -6481,7 +6506,7 @@ declare module '@polkadot/types/lookup' {
         readonly isLengthMismatch: boolean;
         readonly type:
             | 'DelegateeNotExist'
-            | 'UnauthorisedUser'
+            | 'UnauthorizedUser'
             | 'VcAlreadyExists'
             | 'VcNotExist'
             | 'VcSubjectMismatch'

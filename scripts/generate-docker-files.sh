@@ -21,7 +21,8 @@ OUTDIR=generated-$CHAIN
 print_divider
 
 echo "installing parachain-launch ..."
-yarn
+yarn set version stable
+YARN_ENABLE_IMMUTABLE_INSTALLS=false  yarn
 print_divider
 
 # pull the polkadot image to make sure we are using the latest

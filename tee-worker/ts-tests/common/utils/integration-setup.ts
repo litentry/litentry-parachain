@@ -12,18 +12,18 @@ export function describeLitentry(title: string, walletsNumber: number, cb: (cont
         // Set timeout to 6000 seconds
         this.timeout(6000000);
 
-        let context: IntegrationTestContext = {
+        const context: IntegrationTestContext = {
             mrEnclave: '0x11' as HexString,
             api: {} as ApiPromise,
             tee: {} as WebSocketAsPromised,
             teeShieldingKey: {} as KeyObject,
             ethersWallet: {},
             substrateWallet: {},
-            metaData: {} as Metadata,
+            sidechainMetaData: {} as Metadata,
             sidechainRegistry: {} as TypeRegistry,
             web3Signers: [] as Web3Wallets[],
             // default LitentryRococo
-            chainID: 42,
+            chainIdentifier: 42,
         };
 
         before('Starting Litentry(parachain&tee)', async function () {
@@ -39,13 +39,13 @@ export function describeLitentry(title: string, walletsNumber: number, cb: (cont
             context.teeShieldingKey = tmp.teeShieldingKey;
             context.ethersWallet = tmp.ethersWallet;
             context.substrateWallet = tmp.substrateWallet;
-            context.metaData = tmp.metaData;
+            context.sidechainMetaData = tmp.sidechainMetaData;
             context.sidechainRegistry = tmp.sidechainRegistry;
             context.web3Signers = tmp.web3Signers;
-            context.chainID = tmp.chainID;
+            context.chainIdentifier = tmp.chainIdentifier;
         });
 
-        after(async function () {});
+        after(() => Promise.resolve());
 
         cb(context);
     });

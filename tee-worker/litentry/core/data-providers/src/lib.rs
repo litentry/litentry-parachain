@@ -82,6 +82,7 @@ pub struct DataProvidersStatic {
 	pub graphql_url: String,
 	pub graphql_auth_key: String,
 	pub credential_endpoint: String,
+	pub achainable_rest_key: String,
 }
 impl Default for DataProvidersStatic {
 	fn default() -> Self {
@@ -101,6 +102,7 @@ impl DataProvidersStatic {
 			graphql_url: "https://graph.tdf-labs.io/".to_string(),
 			graphql_auth_key: "".to_string(),
 			credential_endpoint: "".to_string(),
+			achainable_rest_key: "".to_string(),
 		}
 	}
 	pub fn set_twitter_official_url(&mut self, v: String) {
@@ -143,6 +145,10 @@ impl DataProvidersStatic {
 		debug!("set_credential_endpoint: {:?}", v);
 		self.credential_endpoint = v;
 	}
+	pub fn set_achainable_rest_key(&mut self, v: String) {
+		debug!("set_achainable_rest_key: {:?}", v);
+		self.achainable_rest_key = v;
+	}
 }
 
 lazy_static! {
@@ -172,7 +178,6 @@ impl IntoErrorDetail for Error {
 
 pub trait UserInfo {
 	fn get_user_id(&self) -> Option<String>;
-	fn get_user_name(&self) -> Option<String>;
 }
 
 pub fn vec_to_string(vec: Vec<u8>) -> Result<String, Error> {
