@@ -114,7 +114,7 @@ impl DirectApi for DirectClientMock {
 		unimplemented!()
 	}
 
-	fn get_next_nonce(&self) -> Result<String> {
+	fn get_next_nonce(&self, shard: ShardIdentifier, account: AccountI) -> Result<String> {
 		Ok(self.nonce.clone())
 	}
 }
