@@ -1,4 +1,4 @@
 {
-  "fetchEndpoint": "ws://localhost:11944",
-  "defaultEndpoint": "ws://localhost:11944"
+  "fetchEndpoint": "ws://localhost:9944",
+  "defaultEndpoint": "ws://localhost:9944"
 }
