@@ -67,7 +67,11 @@ impl EvmCreateCommands {
 		);
 
 		let worker_api_direct = get_worker_api_direct(cli);
-		let nonce = worker_api_direct.get_next_nonce().unwrap().parse::<u32>().unwrap();
+		let nonce = worker_api_direct
+			.get_next_nonce(shard, from_acc.clone())
+			.unwrap()
+			.parse::<u32>()
+			.unwrap();
 		let evm_account_nonce = get_layer_two_evm_nonce!(from, cli, trusted_args);
 
 		let top = TrustedCall::evm_create(
