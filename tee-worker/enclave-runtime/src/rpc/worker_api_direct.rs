@@ -230,45 +230,31 @@ where
 	// author_getNextNonce
 	let author_get_next_nonce: &str = "author_getNextNonce";
 	io.add_sync_method(author_get_next_nonce, move |params: Params| {
-		match params.parse::<(String, String)>() {
-			Ok((shard_base58, account_hex)) => {
-				let shard = match decode_shard_from_base58(shard_base58.as_str()) {
-					Ok(id) => id,
-					Err(msg) => {
-						let error_msg: String =
-							format!("Could not retrieve author_getNextNonce decode_shard_from_base58 due to: {}", msg);
-						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-					},
-				};
-				let account = match AccountId::from_hex(account_hex.as_str()) {
-					Ok(acc) => acc,
-					Err(msg) => {
-						let error_msg: String = format!(
-							"Could not retrieve author_getNextNonce AccountId due to: {}",
-							msg
-						);
-						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-					},
-				};
+		let hex_encoded_params = params.parse::<Vec<String>>().unwrap();
 
-				let pending_tx_count =
-					top_pool_author.get_pending_trusted_calls_for(shard, &account).len();
-				let pending_tx_count = Index::try_from(pending_tx_count).unwrap();
-				let nonce = System::account_nonce(&account);
+		let request = Request::from_hex(&hex_encoded_params[0].clone()).unwrap();
 
-				let json_value = RpcReturnValue {
-					do_watch: false,
-					value: (nonce + pending_tx_count).encode(),
-					status: DirectRequestStatus::Ok,
-				};
-				Ok(json!(json_value.to_hex()))
-			},
-			Err(e) => {
+		let shard: ShardIdentifier = request.shard;
+		let encoded_account: Vec<u8> = request.cyphertext;
+
+		let account = match AccountId::from_hex(encoded_account.as_str()) {
+			Ok(acc) => acc,
+			Err(msg) => {
 				let error_msg: String =
-					format!("Could not retrieve author_getNextNonce calls due to: {}", e);
-				Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+					format!("Could not retrieve author_getNextNonce AccountId due to: {}", msg);
+				return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
 			},
-		}
+		};
+		let pending_tx_count = top_pool_author.get_pending_trusted_calls_for(shard, &account).len();
+		let pending_tx_count = Index::try_from(pending_tx_count).unwrap();
+		let nonce = System::account_nonce(&account);
+
+		let json_value = RpcReturnValue {
+			do_watch: false,
+			value: (nonce + pending_tx_count).encode(),
+			status: DirectRequestStatus::Ok,
+		};
+		Ok(json!(json_value.to_hex()))
 	});
 	io
 }
