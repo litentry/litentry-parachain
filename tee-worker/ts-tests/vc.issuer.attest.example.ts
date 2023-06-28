@@ -122,6 +122,7 @@ function checkIssuerAttestation() {
             case 'CONFIGURATION_NEEDED': {
                 // Verify platformInfoBlob for further info if status not OK
                 if (quote!['platformInfoBlob'] !== undefined) {
+                    return;
                 } else {
                     console.log('   [IssuerAttestation] Failed to fetch platformInfoBlob from attestation report');
                 }

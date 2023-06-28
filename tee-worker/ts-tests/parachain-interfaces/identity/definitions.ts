@@ -1,5 +1,3 @@
-import { InfuraWebSocketProvider } from '@ethersproject/providers';
-
 export default {
     types: {
         WorkerRpcReturnValue: {
