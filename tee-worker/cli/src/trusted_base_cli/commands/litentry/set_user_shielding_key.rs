@@ -38,25 +38,23 @@ pub struct SetUserShieldingKeyCommand {
 
 impl SetUserShieldingKeyCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) {
-		let root = get_pair_from_str(trusted_cli, "//Alice");
-		let alice_pair = get_pair_from_str(trusted_cli, self.account.as_str());
-		let idgraph_identifier =
-			IdGraphIdentifier::Substrate { address: alice_pair.public().into() };
+		let who = get_pair_from_str(trusted_cli, self.account.as_str());
+		let idgraph_identifier = IdGraphIdentifier::Substrate { address: who.public().into() };
 
 		let (mrenclave, shard) = get_identifiers(trusted_cli);
-		let nonce = get_layer_two_nonce!(root, cli, trusted_cli);
+		let nonce = get_layer_two_nonce!(who, cli, trusted_cli);
 
 		let mut key = UserShieldingKeyType::default();
 
 		hex::decode_to_slice(&self.key_hex, &mut key).expect("decoding shielding_key failed");
 
 		let top: TrustedOperation = TrustedCall::set_user_shielding_key(
-			Address::Substrate(root.public().into()),
+			Address::Substrate(who.public().into()),
 			idgraph_identifier,
 			key,
 			Default::default(),
 		)
-		.sign(&KeyPair::Sr25519(Box::new(root)), nonce, &mrenclave, &shard)
+		.sign(&KeyPair::Sr25519(Box::new(who)), nonce, &mrenclave, &shard)
 		.into_trusted_operation(trusted_cli.direct);
 		perform_trusted_operation(cli, trusted_cli, &top);
 	}
