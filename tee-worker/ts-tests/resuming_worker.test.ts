@@ -169,6 +169,7 @@ async function waitWorkerProducingBlock(
         let start_block_number = 0;
         do {
             const resp = await latestBlock(connection, shard);
+            console.log(JSON.stringify({ DEBUG_LATEST_BLOCK_PROBE: resp }, null, 4));
             if (resp.result) {
                 block_number = resp.result.number;
                 if (start_block_number == 0) {
