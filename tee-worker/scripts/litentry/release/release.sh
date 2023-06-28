@@ -197,6 +197,18 @@ start_service_files(){
 
 }
 
+succesful_parse_of_update_schedule_enclave(){
+  log_file="log/worker0.log"
+  pattern="itc_parentchain_indirect_calls_executor::executor::litentry::scheduled_enclave] execute indirect call: UpdateScheduledEnclave, sidechain_block_number"
+
+  if grep -Fq "$pattern" "$log_file"; then
+    echo "Update Schedule Enclave Call has been parsed by the Enclave Succesfully"
+  else
+    echo "Update Schedule Enclave Call has not been parsed succesfully by the Enclave"
+  fi
+
+}
+
 perform_upgrade(){
   # echo "Fetching Latest Finalized Block"
   # scripts/litentry/get_sync_block.sh
@@ -226,6 +238,7 @@ upgrade_worker(){
   latest_parentchain_sync_block
   print_divider
   perform_upgrade
+  succesful_parse_of_update_schedule_enclave
   print_divider
 
   if [ "$PRODUCTION" = "1" ]; then
