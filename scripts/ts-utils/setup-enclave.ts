@@ -11,10 +11,6 @@ const transferAmount = "100000000000000";
 const enclaveAccount = process.argv[2];
 const mrenclave = process.argv[3];
 const block = process.argv[4];
-// const accountPassword = process.argv[4];
-
-//put account in private.json
-// const private_account_pair = require("./private.json");
 
 async function transfer(api: any, Alice: any) {
 
@@ -37,6 +33,7 @@ async function transfer(api: any, Alice: any) {
 }
 async function setTeerexAdmin(api: any, Alice: any) {
     return new Promise(async (resolve, reject) => {
+        // Note: The hardcoded address is that of Alice on dev chain 
         await api.tx.sudo
             .sudo(api.tx.teerex.setAdmin("esqZdrqhgH8zy1wqYh1aLKoRyoRWLFbX9M62eKfaTAoK67pJ5"))
             .signAndSend(Alice, ({ status, events, dispatchError }) => {
