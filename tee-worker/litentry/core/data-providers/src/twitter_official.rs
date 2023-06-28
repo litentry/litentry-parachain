@@ -205,7 +205,7 @@ impl TwitterOfficialClient {
 			if tweet_users.users.is_empty() {
 				return Err(Error::RequestError("user not found from tweet".to_string()))
 			}
-			tweet.author_id = tweet_users.users[0].username.clone();
+			tweet.author_id = tweet_users.users[0].id.clone();
 		}
 
 		Ok(tweet)
@@ -231,15 +231,33 @@ impl TwitterOfficialClient {
 	}
 
 	/// V2, rate limit: 300/15min(per App) 900/15min(per User)
-	pub fn query_user(&mut self, user_name: Vec<u8>) -> Result<TwitterUser, Error> {
+	pub fn query_user_by_name(&mut self, user_name: Vec<u8>) -> Result<TwitterUser, Error> {
 		let user = vec_to_string(user_name)?;
-		debug!("Twitter query user, user: {}", user);
+		debug!("Twitter query user by name, name: {}", user);
 
 		let query = vec![("user.fields", "public_metrics")];
 		let resp = self
 			.client
 			.get_with::<String, TwitterAPIV2Response<TwitterUser>>(
 				format!("/2/users/by/username/{}", user),
+				query.as_slice(),
+			)
+			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
+
+		let user = resp.data.ok_or_else(|| Error::RequestError("user not found".to_string()))?;
+		Ok(user)
+	}
+
+	/// V2, rate limit: 300/15min(per App) 900/15min(per User)
+	pub fn query_user_by_id(&mut self, id: Vec<u8>) -> Result<TwitterUser, Error> {
+		let id = vec_to_string(id)?;
+		debug!("Twitter query user by id, id: {}", id);
+
+		let query = vec![("user.fields", "public_metrics")];
+		let resp = self
+			.client
+			.get_with::<String, TwitterAPIV2Response<TwitterUser>>(
+				format!("/2/users/{}", id),
 				query.as_slice(),
 			)
 			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
@@ -293,10 +311,16 @@ mod tests {
 	#[test]
 	fn query_tweet_work() {
 		init();
+		let tweet_id = "100";
 
 		let mut client = TwitterOfficialClient::v2();
-		let result = client.query_tweet("100".as_bytes().to_vec());
+		let result = client.query_tweet(tweet_id.as_bytes().to_vec());
 		assert!(result.is_ok(), "error: {:?}", result);
+		let tweet = result.unwrap();
+
+		assert_eq!(tweet.id, tweet_id);
+		assert_eq!(tweet.author_id, "mock_user_id");
+		assert_eq!(tweet.text, "38336b4b37f7d61060c3a490d978efb44af5bc78ec8e418b44ffce649f25455d")
 	}
 
 	#[test]
@@ -316,9 +340,18 @@ mod tests {
 
 		let user = "twitterdev";
 		let mut client = TwitterOfficialClient::v2();
-		let result = client.query_user(user.as_bytes().to_vec());
+		let result = client.query_user_by_name(user.as_bytes().to_vec());
 		assert!(result.is_ok(), "error: {:?}", result);
-		// task.abort();
+	}
+
+	#[test]
+	fn query_user_by_id_work() {
+		init();
+
+		let user_id = "2244994945";
+		let mut client = TwitterOfficialClient::v2();
+		let result = client.query_user_by_id(user_id.as_bytes().to_vec());
+		assert!(result.is_ok(), "error: {:?}", result);
 	}
 
 	#[test]

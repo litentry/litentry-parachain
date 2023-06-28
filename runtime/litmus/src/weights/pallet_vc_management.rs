@@ -48,6 +48,29 @@ use sp_std::marker::PhantomData;
 /// Weight functions for `pallet_vc_management`.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_vc_management::WeightInfo for WeightInfo<T> {
+	/// Storage: VCManagement Delegatee (r:0 w:1)
+	/// Proof: VCManagement Delegatee (max_values: None, max_size: Some(48), added: 2523, mode: MaxEncodedLen)
+	fn add_delegatee() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `0`
+		//  Estimated: `0`
+		// Minimum execution time: 12_934 nanoseconds.
+		Weight::from_ref_time(13_290_000)
+			.saturating_add(Weight::from_proof_size(0))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
+	/// Storage: VCManagement Delegatee (r:1 w:1)
+	/// Proof: VCManagement Delegatee (max_values: None, max_size: Some(48), added: 2523, mode: MaxEncodedLen)
+	fn remove_delegatee() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `79`
+		//  Estimated: `2523`
+		// Minimum execution time: 19_200 nanoseconds.
+		Weight::from_ref_time(19_830_000)
+			.saturating_add(Weight::from_proof_size(2523))
+			.saturating_add(T::DbWeight::get().reads(1))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
 	/// Storage: VCMPExtrinsicWhitelist GroupControlOn (r:1 w:0)
 	/// Proof Skipped: VCMPExtrinsicWhitelist GroupControlOn (max_values: Some(1), max_size: None, mode: Measured)
 	fn request_vc() -> Weight {
