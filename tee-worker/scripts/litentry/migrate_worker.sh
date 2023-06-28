@@ -1,15 +1,9 @@
 #!/bin/bash
 
 # Copy integritee-service binary and enclave_signed.so to ./tmp/w0
-if [ "$PRODUCTION" = "1" ]; then
-  cp ./bin/integritee-service ./tmp/w0
-  cp ./bin/enclave.signed.so  ./tmp/w0
-  cd ./tmp/w0 || exit
-else
-  cp ./bin/integritee-service ./tmp/w0
-  cp ./bin/enclave.signed.so ./tmp/w0
-  cd ./tmp/w0 || exit
-fi
+cp ./bin/integritee-service ./tmp/w0
+cp ./bin/enclave.signed.so  ./tmp/w0
+cd ./tmp/w0 || exit
 
 echo "Old MRENCLAVE VALUE: $OLD_MRENCLAVE"
 echo "New MRENCLAVE VALUE: $NEW_MRENCLAVE"
