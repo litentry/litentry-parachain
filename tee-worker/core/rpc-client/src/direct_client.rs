@@ -21,7 +21,7 @@ use crate::ws_client::{WsClient, WsClientControl};
 use codec::{Decode, Encode};
 use ita_stf::Getter;
 use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
-use itp_stf_primitives::types::ShardIdentifier;
+use itp_stf_primitives::types::{AccountId, ShardIdentifier};
 use itp_types::DirectRequestStatus;
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use log::*;
@@ -59,7 +59,7 @@ pub trait DirectApi {
 	fn send(&self, request: &str) -> Result<()>;
 	/// Close any open websocket connection.
 	fn close(&self) -> Result<()>;
-	fn get_next_nonce(&self) -> Result<String>;
+	fn get_next_nonce(&self, shard: ShardIdentifier, account: AccountId) -> Result<String>;
 }
 
 impl DirectClient {
@@ -209,11 +209,13 @@ impl DirectApi for DirectClient {
 		self.web_socket_control.close_connection()
 	}
 
-	fn get_next_nonce(&self) -> Result<String> {
+	fn get_next_nonce(&self, shard: ShardIdentifier, account: AccountId) -> Result<String> {
+		let data = Request { shard, cyphertext: account.encode() };
 		let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
 			"author_getNextNonce".to_string(),
-			Default::default(),
-		)?;
+			vec![data.to_hex()],
+		)
+		.unwrap();
 
 		// Send json rpc call to ws server.
 		let response_str = self.get(&jsonrpc_call)?;

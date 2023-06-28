@@ -15,7 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	command_utils::get_worker_api_direct,
+	command_utils::{get_accountid_from_str, get_worker_api_direct},
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
 	trusted_operation::perform_trusted_operation,
@@ -38,11 +38,16 @@ pub struct SetScheduledMrenclaveCommand {
 
 impl SetScheduledMrenclaveCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) {
-		let root = get_pair_from_str(trusted_cli, "//Alice");
+		let account: &str = "//Alice";
+		let root = get_pair_from_str(trusted_cli, account);
 
 		let (mrenclave, shard) = get_identifiers(trusted_cli);
 		let worker_api_direct = get_worker_api_direct(cli);
-		let nonce = worker_api_direct.get_next_nonce().unwrap().parse::<u32>().unwrap();
+		let nonce = worker_api_direct
+			.get_next_nonce(shard, get_accountid_from_str(account))
+			.unwrap()
+			.parse::<u32>()
+			.unwrap();
 
 		let mut enclave_to_set: MrEnclave = [0u8; 32];
 		enclave_to_set.copy_from_slice(&hex::decode(&self.mrenclave).unwrap());

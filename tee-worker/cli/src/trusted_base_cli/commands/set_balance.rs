@@ -16,7 +16,7 @@
 */
 
 use crate::{
-	command_utils::get_worker_api_direct,
+	command_utils::{get_accountid_from_str, get_worker_api_direct},
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
 	trusted_operation::perform_trusted_operation,
@@ -49,7 +49,11 @@ impl SetBalanceCommand {
 
 		let (mrenclave, shard) = get_identifiers(trusted_args);
 		let worker_api_direct = get_worker_api_direct(cli);
-		let nonce = worker_api_direct.get_next_nonce().unwrap().parse::<u32>().unwrap();
+		let nonce = worker_api_direct
+			.get_next_nonce(shard, get_accountid_from_str(&self.account))
+			.unwrap()
+			.parse::<u32>()
+			.unwrap();
 		let top: TrustedOperation = TrustedCall::balance_set_balance(
 			signer.public().into(),
 			who.public().into(),

@@ -51,7 +51,11 @@ impl TransferCommand {
 
 		let (mrenclave, shard) = get_identifiers(trusted_args);
 		let worker_api_direct = get_worker_api_direct(cli);
-		let nonce = worker_api_direct.get_next_nonce().unwrap().parse::<u32>().unwrap();
+		let nonce = worker_api_direct
+			.get_next_nonce(shard, get_accountid_from_str(&self.to))
+			.unwrap()
+			.parse::<u32>()
+			.unwrap();
 		println!(
 			"send trusted call transfer from {} to {}: {}, nonce: {}",
 			from.public(),

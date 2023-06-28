@@ -15,7 +15,12 @@
 
 */
 
-use crate::{command_utils::get_worker_api_direct, trusted_cli::TrustedCli, Cli};
+use crate::{
+	command_utils::{get_accountid_from_str, get_worker_api_direct},
+	trusted_cli::TrustedCli,
+	trusted_command_utils::get_identifiers,
+	Cli,
+};
 use itc_rpc_client::direct_client::DirectApi;
 
 #[derive(Parser)]
@@ -25,9 +30,12 @@ pub struct NonceCommand {
 }
 
 impl NonceCommand {
-	pub(crate) fn run(&self, cli: &Cli, _trusted_args: &TrustedCli) {
+	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) {
+		let (_mrenclave, shard) = get_identifiers(trusted_cli);
 		let worker_api_direct = get_worker_api_direct(cli);
-		let nonce = worker_api_direct.get_next_nonce().unwrap();
+		let nonce = worker_api_direct
+			.get_next_nonce(shard, get_accountid_from_str(&self.account))
+			.unwrap();
 		println!("{}", nonce);
 	}
 }

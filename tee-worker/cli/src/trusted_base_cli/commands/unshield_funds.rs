@@ -57,7 +57,11 @@ impl UnshieldFundsCommand {
 
 		let (mrenclave, shard) = get_identifiers(trusted_args);
 		let worker_api_direct = get_worker_api_direct(cli);
-		let nonce = worker_api_direct.get_next_nonce().unwrap().parse::<u32>().unwrap();
+		let nonce = worker_api_direct
+			.get_next_nonce(shard, get_accountid_from_str(&self.to))
+			.unwrap()
+			.parse::<u32>()
+			.unwrap();
 		let top: TrustedOperation =
 			TrustedCall::balance_unshield(from.public().into(), to, self.amount, shard)
 				.sign(&KeyPair::Sr25519(Box::new(from)), nonce, &mrenclave, &shard)
