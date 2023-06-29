@@ -216,15 +216,15 @@ impl DirectApi for DirectClient {
 			vec![data.to_hex()],
 		)
 		.unwrap();
-		info!("get_next_nonce jsonrpc_call: {}", jsonrpc_call);
+		error!("get_next_nonce jsonrpc_call: {}", jsonrpc_call);
 
 		// Send json rpc call to ws server.
 		let response_str = self.get(&jsonrpc_call)?;
-		info!("[+] get_next_nonce response_str: {}", response_str);
+		error!("[+] get_next_nonce response_str: {}", response_str);
 
 		let nonce_string = decode_from_rpc_response(&response_str)?;
 
-		info!("[+] Got next nonce: {}", nonce_string);
+		error!("[+] Got next nonce: {}", nonce_string);
 		Ok(nonce_string)
 	}
 }

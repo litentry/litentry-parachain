@@ -38,7 +38,7 @@ pub struct SetUserShieldingKeyCommand {
 
 impl SetUserShieldingKeyCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) {
-		info!("SetUserShieldingKeyCommand account: {}", self.account);
+		error!("SetUserShieldingKeyCommand account: {}", self.account);
 		let who = get_pair_from_str(trusted_cli, &self.account);
 
 		let (mrenclave, shard) = get_identifiers(trusted_cli);
