@@ -219,6 +219,7 @@ impl DirectApi for DirectClient {
 
 		// Send json rpc call to ws server.
 		let response_str = self.get(&jsonrpc_call)?;
+		info!("[+] get_next_nonce response_str: {}", response_str);
 
 		let nonce_string = decode_from_rpc_response(&response_str)?;
 

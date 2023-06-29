@@ -33,7 +33,7 @@ use its_sidechain::rpc_handler::{
 	direct_top_pool_api, direct_top_pool_api::decode_shard_from_base58, import_block_api,
 };
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
-use log::debug;
+use log::{debug, info};
 use std::{borrow::ToOwned, format, str, string::String, sync::Arc, vec::Vec};
 
 fn compute_hex_encoded_return_error(error_msg: &str) -> String {
@@ -230,19 +230,24 @@ where
 	// author_getNextNonce
 	let author_get_next_nonce: &str = "author_getNextNonce";
 	io.add_sync_method(author_get_next_nonce, move |params: Params| {
+		info!("author_get_next_nonce 233");
 		let hex_encoded_params = params.parse::<Vec<String>>().unwrap();
-
+		info!("author_get_next_nonce 234");
 		let request = Request::from_hex(&hex_encoded_params[0].clone()).unwrap();
-
+		info!("author_get_next_nonce 236");
 		let shard: ShardIdentifier = request.shard;
+		info!("author_get_next_nonce 238");
 		let encoded_account: Vec<u8> = request.cyphertext;
-
+		info!("author_get_next_nonce 240");
 		// let account = AccountId::from_hex(&String::from_utf8(encoded_account).unwrap()).unwrap();
 		let account: AccountId = Decode::decode(&mut encoded_account.as_slice()).unwrap();
-
+		info!("author_get_next_nonce 243");
 		let pending_tx_count = top_pool_author.get_pending_trusted_calls_for(shard, &account).len();
+		info!("pending_tx_count1:{:?}", &pending_tx_count);
 		let pending_tx_count = Index::try_from(pending_tx_count).unwrap();
+		info!("pending_tx_count2:{:?}", &pending_tx_count);
 		let nonce = System::account_nonce(&account);
+		info!("pending_tx_count nonce:{:?}", nonce);
 
 		let json_value = RpcReturnValue {
 			do_watch: false,
