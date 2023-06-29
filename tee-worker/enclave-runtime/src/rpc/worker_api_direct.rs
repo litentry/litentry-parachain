@@ -15,7 +15,7 @@
 
 */
 
-use codec::Encode;
+use codec::{Decode, Encode};
 use core::result::Result;
 use ita_sgx_runtime::{Runtime, System};
 use itp_primitives_cache::{GetPrimitives, GLOBAL_PRIMITIVES_CACHE};
@@ -237,7 +237,8 @@ where
 		let shard: ShardIdentifier = request.shard;
 		let encoded_account: Vec<u8> = request.cyphertext;
 
-		let account = AccountId::from_hex(&String::from_utf8(encoded_account).unwrap()).unwrap();
+		// let account = AccountId::from_hex(&String::from_utf8(encoded_account).unwrap()).unwrap();
+		let account: AccountId = Decode::decode(&mut encoded_account.as_slice()).unwrap();
 
 		let pending_tx_count = top_pool_author.get_pending_trusted_calls_for(shard, &account).len();
 		let pending_tx_count = Index::try_from(pending_tx_count).unwrap();
