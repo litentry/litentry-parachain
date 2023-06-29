@@ -237,14 +237,8 @@ where
 		let shard: ShardIdentifier = request.shard;
 		let encoded_account: Vec<u8> = request.cyphertext;
 
-		let account = match AccountId::from_hex(encoded_account.as_str()) {
-			Ok(acc) => acc,
-			Err(msg) => {
-				let error_msg: String =
-					format!("Could not retrieve author_getNextNonce AccountId due to: {}", msg);
-				return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-			},
-		};
+		let account = AccountId::from_hex(&String::from_utf8(encoded_account).unwrap()).unwrap();
+
 		let pending_tx_count = top_pool_author.get_pending_trusted_calls_for(shard, &account).len();
 		let pending_tx_count = Index::try_from(pending_tx_count).unwrap();
 		let nonce = System::account_nonce(&account);
