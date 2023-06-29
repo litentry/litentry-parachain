@@ -232,7 +232,7 @@ where
 	io.add_sync_method(author_get_next_nonce, move |params: Params| {
 		info!("author_get_next_nonce 233");
 		let hex_encoded_params = params.parse::<Vec<String>>().unwrap();
-		info!("author_get_next_nonce 234");
+		info!("author_get_next_nonce 235 {:?}", hex_encoded_params);
 		let request = Request::from_hex(&hex_encoded_params[0].clone()).unwrap();
 		info!("author_get_next_nonce 236");
 		let shard: ShardIdentifier = request.shard;

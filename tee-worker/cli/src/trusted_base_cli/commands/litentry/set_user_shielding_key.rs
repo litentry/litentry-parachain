@@ -25,6 +25,7 @@ use ita_stf::{TrustedCall, TrustedOperation};
 use itc_rpc_client::direct_client::DirectApi;
 use itp_stf_primitives::types::KeyPair;
 use litentry_primitives::UserShieldingKeyType;
+use log::*;
 use sp_core::Pair;
 
 #[derive(Parser)]
@@ -37,6 +38,7 @@ pub struct SetUserShieldingKeyCommand {
 
 impl SetUserShieldingKeyCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) {
+		info!("SetUserShieldingKeyCommand account: {}", self.account);
 		let who = get_pair_from_str(trusted_cli, &self.account);
 
 		let (mrenclave, shard) = get_identifiers(trusted_cli);

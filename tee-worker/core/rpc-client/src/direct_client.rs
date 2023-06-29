@@ -216,6 +216,7 @@ impl DirectApi for DirectClient {
 			vec![data.to_hex()],
 		)
 		.unwrap();
+		info!("get_next_nonce jsonrpc_call: {}", jsonrpc_call);
 
 		// Send json rpc call to ws server.
 		let response_str = self.get(&jsonrpc_call)?;
