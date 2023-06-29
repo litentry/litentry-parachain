@@ -79,10 +79,10 @@ async function launchWorker(
     // const logging = fs.createWriteStream(log, {flags: 'w+'});
     if (initFiles) {
         fs.mkdirSync(workingDir, { recursive: true });
-        fs.copyFileSync(`${binaryDir}/enclave.signed.so`, `${workingDir}/enclave.signed.so`);
-        fs.copyFileSync(`${binaryDir}/integritee-service`, `${workingDir}/integritee-service`);
-        fs.closeSync(fs.openSync(`${workingDir}/spid.txt`, 'w'));
-        fs.closeSync(fs.openSync(`${workingDir}/key.txt`, 'w'));
+        fs.copyFileSync(path.join(binaryDir, 'enclave.signed.so'), path.join(workingDir, 'enclave.signed.so'));
+        fs.copyFileSync(path.join(binaryDir, 'integritee-service'), path.join(workingDir, 'integritee-service'));
+        fs.closeSync(fs.openSync(path.join(workingDir, 'spid.txt'), 'w'));
+        fs.closeSync(fs.openSync(path.join(workingDir, 'key.txt'), 'w'));
         const data = JSON.stringify(
             {
                 twitter_official_url: 'http://localhost:19527',
