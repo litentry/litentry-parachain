@@ -89,7 +89,7 @@ impl EvmCreateCommands {
 		let top = TrustedCall::evm_create(
 			from_acc,
 			sender_evm_acc,
-			Vec::from_hex(self.smart_contract.to_string()).unwrap(),
+			Vec::from_hex(&self.smart_contract.to_string()).unwrap(),
 			U256::from(0),
 			967295,        // gas limit
 			U256::from(1), // max_fee_per_gas !>= min_gas_price defined in runtime

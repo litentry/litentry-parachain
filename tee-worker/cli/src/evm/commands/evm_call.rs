@@ -62,9 +62,9 @@ impl EvmCallCommands {
 		info!("senders evm account is {}", sender_evm_acc);
 
 		let execution_address =
-			H160::from_slice(&Vec::from_hex(self.execution_address.to_string()).unwrap());
+			H160::from_slice(&Vec::from_hex(&self.execution_address.to_string()).unwrap());
 
-		let function_hash = Vec::from_hex(self.function.to_string()).unwrap();
+		let function_hash = Vec::from_hex(&self.function.to_string()).unwrap();
 
 		let (mrenclave, shard) = get_identifiers(trusted_args);
 		let worker_api_direct = get_worker_api_direct(cli);
