@@ -95,9 +95,9 @@ impl WsClient {
 	/// Connects a web-socket client for a one-shot request.
 	#[allow(clippy::result_large_err)]
 	pub fn connect_one_shot(url: &str, request: &str, result: MpscSender<String>) -> Result<()> {
-		debug!("Connecting one-shot web-socket connection");
+		error!("Connecting one-shot web-socket connection url {} request {}", url, request);
 		connect(url.to_string(), |out| {
-			debug!("Create new web-socket client");
+			error!("Create new web-socket client");
 			WsClient::new(out, request.to_string(), result.clone(), false)
 		})
 	}

@@ -114,11 +114,12 @@ impl Drop for DirectClient {
 
 impl DirectApi for DirectClient {
 	fn get(&self, request: &str) -> Result<String> {
+		error!("DirectApi 117");
 		let (port_in, port_out) = channel();
 
-		info!("[WorkerApi Direct]: (get) Sending request: {:?}", request);
+		error!("[WorkerApi Direct]: (get) Sending request: {:?}", request);
 		WsClient::connect_one_shot(&self.url, request, port_in)?;
-		debug!("Waiting for web-socket result..");
+		error!("Waiting for web-socket result..");
 		port_out.recv().map_err(Error::MspcReceiver)
 	}
 
