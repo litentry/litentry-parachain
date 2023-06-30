@@ -22,7 +22,7 @@ use crate::sgx_reexport_prelude::*;
 use rust_base58::base58::FromBase58;
 
 #[cfg(feature = "sgx")]
-use base58::FromBase58;
+use ::base58::FromBase58;
 
 use codec::{Decode, Encode};
 use itp_rpc::RpcReturnValue;
@@ -34,6 +34,7 @@ use jsonrpc_core::{futures::executor, serde_json::json, Error as RpcError, IoHan
 use log::*;
 use std::{borrow::ToOwned, format, string::String, sync::Arc, vec, vec::Vec};
 
+use ::base58::ToBase58;
 type Hash = sp_core::H256;
 
 pub fn add_top_pool_direct_rpc_methods<R>(
@@ -135,6 +136,11 @@ where
 						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
 					},
 				};
+				error!(
+					"add_sync_method author_pendingTrustedCallsFor shard base58 {} account_hex {}",
+					shard.encode().to_base58(),
+					account.to_hex()
+				);
 				let trusted_calls = pending_author.get_pending_trusted_calls_for(shard, &account);
 				let json_value = RpcReturnValue {
 					do_watch: false,

@@ -8,7 +8,7 @@ version = "0.9.0"
 # sgx dependencies
 sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
 sgx_types = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
-
+base58 = "0.2"
 # local dependencies
 itp-rpc = { path = "../../core-primitives/rpc", default-features = false }
 itp-stf-primitives = { path = "../../core-primitives/stf-primitives", default-features = false }
