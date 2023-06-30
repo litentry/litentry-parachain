@@ -26,8 +26,9 @@ use crate::{
 use codec::Decode;
 use ita_stf::{Index, TrustedCall, TrustedGetter, TrustedOperation};
 use itc_rpc_client::direct_client::DirectApi;
+use itp_rpc::{RpcResponse, RpcReturnValue};
 use itp_stf_primitives::types::KeyPair;
-use itp_types::AccountId;
+use itp_types::{AccountId, DirectRequestStatus};
 use log::*;
 use sp_core::{crypto::Ss58Codec, Pair, H160, U256};
 use std::{boxed::Box, vec::Vec};
@@ -66,7 +67,7 @@ impl EvmCallCommands {
 
 		let (mrenclave, shard) = get_identifiers(trusted_args);
 		let worker_api_direct = get_worker_api_direct(cli);
-		let nonce_ret = worker_api_direct.get_next_nonce(shard, toclone);
+		let nonce_ret = worker_api_direct.get_next_nonce(shard, sender_acc.clone());
 		info!("nonce_ret {:?} ", nonce_ret);
 		let nonce_val = nonce_ret.unwrap();
 		info!("nonce_val {:?} ", nonce_val);
