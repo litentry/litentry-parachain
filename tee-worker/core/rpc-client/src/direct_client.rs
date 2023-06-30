@@ -18,6 +18,7 @@
 //! Interface for direct access to a workers rpc.
 
 use crate::ws_client::{WsClient, WsClientControl};
+use base58::ToBase58;
 use codec::{Decode, Encode};
 use ita_stf::Getter;
 use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
@@ -211,10 +212,10 @@ impl DirectApi for DirectClient {
 	}
 
 	fn get_next_nonce(&self, shard: ShardIdentifier, account: AccountId) -> Result<String> {
-		let data = Request { shard, cyphertext: account.encode() };
+		// let data = Request { shard, cyphertext: account.encode() };
 		let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
 			"author_getNextNonce".to_string(),
-			vec![data.to_hex()],
+			vec![shard.encode().to_base58(), account.to_hex()],
 		)
 		.unwrap();
 		error!("get_next_nonce jsonrpc_call: {}", jsonrpc_call);
