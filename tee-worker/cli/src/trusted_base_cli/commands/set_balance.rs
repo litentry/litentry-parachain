@@ -22,9 +22,13 @@ use crate::{
 	trusted_operation::perform_trusted_operation,
 	Cli,
 };
+use codec::Decode;
 use ita_stf::{TrustedCall, TrustedOperation};
 use itc_rpc_client::direct_client::DirectApi;
+use itp_rpc::{RpcResponse, RpcReturnValue};
 use itp_stf_primitives::types::KeyPair;
+use itp_types::DirectRequestStatus;
+use itp_utils::FromHexPrefixed;
 use litentry_primitives::ParentchainBalance as Balance;
 use log::*;
 use sp_core::{crypto::Ss58Codec, Pair};
@@ -49,11 +53,22 @@ impl SetBalanceCommand {
 
 		let (mrenclave, shard) = get_identifiers(trusted_args);
 		let worker_api_direct = get_worker_api_direct(cli);
-		let nonce = worker_api_direct
-			.get_next_nonce(shard, get_accountid_from_str(&self.account))
-			.unwrap()
-			.parse::<u32>()
-			.unwrap();
+		let nonce_ret =
+			worker_api_direct.get_next_nonce(shard, get_accountid_from_str(&self.account));
+		info!("nonce_ret {:?} ", nonce_ret);
+		let nonce_val = nonce_ret.unwrap();
+		info!("nonce_val {:?} ", nonce_val);
+		let rpc_response: RpcResponse = serde_json::from_str(&nonce_val).unwrap();
+		let rpc_return_value = RpcReturnValue::from_hex(&rpc_response.result).unwrap();
+		if rpc_return_value.status == DirectRequestStatus::Error {
+			println!("[Error] {}", String::decode(&mut rpc_return_value.value.as_slice()).unwrap());
+			worker_api_direct.close().unwrap();
+			return
+		}
+
+		worker_api_direct.close().unwrap();
+		let nonce: u32 = Decode::decode(&mut rpc_return_value.value.as_slice()).unwrap_or_default();
+
 		let top: TrustedOperation = TrustedCall::balance_set_balance(
 			signer.public().into(),
 			who.public().into(),

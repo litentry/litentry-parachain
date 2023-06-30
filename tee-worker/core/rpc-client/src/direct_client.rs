@@ -216,8 +216,8 @@ impl DirectApi for DirectClient {
 		let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
 			"author_getNextNonce".to_string(),
 			vec![shard.encode().to_base58(), account.to_hex()],
-		)
-		.unwrap();
+		)?;
+
 		error!("get_next_nonce jsonrpc_call: {}", jsonrpc_call);
 
 		// Send json rpc call to ws server.

@@ -21,7 +21,12 @@ use crate::{
 	trusted_command_utils::get_identifiers,
 	Cli,
 };
+use codec::Decode;
 use itc_rpc_client::direct_client::DirectApi;
+use itp_rpc::{RpcResponse, RpcReturnValue};
+use itp_types::DirectRequestStatus;
+use itp_utils::FromHexPrefixed;
+use log::*;
 
 #[derive(Parser)]
 pub struct NonceCommand {
@@ -33,9 +38,22 @@ impl NonceCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) {
 		let (_mrenclave, shard) = get_identifiers(trusted_cli);
 		let worker_api_direct = get_worker_api_direct(cli);
-		let nonce = worker_api_direct
-			.get_next_nonce(shard, get_accountid_from_str(&self.account))
-			.unwrap();
+		let nonce_ret =
+			worker_api_direct.get_next_nonce(shard, get_accountid_from_str(&self.account));
+		info!("nonce_ret {:?} ", nonce_ret);
+		let nonce_val = nonce_ret.unwrap();
+		info!("nonce_val {:?} ", nonce_val);
+		let rpc_response: RpcResponse = serde_json::from_str(&nonce_val).unwrap();
+		let rpc_return_value = RpcReturnValue::from_hex(&rpc_response.result).unwrap();
+		if rpc_return_value.status == DirectRequestStatus::Error {
+			println!("[Error] {}", String::decode(&mut rpc_return_value.value.as_slice()).unwrap());
+			worker_api_direct.close().unwrap();
+			return
+		}
+
+		worker_api_direct.close().unwrap();
+		let nonce: u32 = Decode::decode(&mut rpc_return_value.value.as_slice()).unwrap_or_default();
+
 		println!("{}", nonce);
 	}
 }

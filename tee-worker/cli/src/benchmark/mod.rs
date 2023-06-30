@@ -133,8 +133,12 @@ impl BenchmarkCommand {
 			.get_next_nonce(shard, get_accountid_from_str(&self.funding_account))
 		{
 			Ok(nonce) => nonce,
-			Err(err_msg) => panic!("{}", err_msg.to_string()),
+			Err(err_msg) => {
+				worker_api_direct.close().unwrap();
+				panic!("{}", err_msg.to_string())
+			},
 		};
+		worker_api_direct.close().unwrap();
 
 		println!("Nonce for account {}: {}", self.funding_account, nonce_start);
 
