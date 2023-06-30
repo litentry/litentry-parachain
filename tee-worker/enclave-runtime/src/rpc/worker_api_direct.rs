@@ -203,21 +203,32 @@ where
 	});
 
 	if cfg!(not(feature = "production")) {
-		// mrenclave_updateScheduled
+		// state_updateScheduledEnclave
 		// params: sidechainBlockNumber, hex encoded mrenclave
-		let mrenclave_update_scheduled_name: &str = "mrenclave_updateScheduled";
+		let mrenclave_update_scheduled_name: &str = "state_updateScheduledEnclave";
 		io.add_sync_method(mrenclave_update_scheduled_name, move |params: Params| {
 			match params.parse::<(SidechainBlockNumber, String)>() {
 				Ok((bn, mrenclave)) =>
 					return match hex::decode(&mrenclave) {
 						Ok(mrenclave) => {
 							let mut enclave_to_set: MrEnclave = [0u8; 32];
+							if mrenclave.len() != enclave_to_set.len() {
+								return Ok(json!(compute_hex_encoded_return_error(
+									"mrenclave len mismatch, expected 32 bytes long"
+								)))
+							}
+
 							enclave_to_set.copy_from_slice(&mrenclave);
 							return match GLOBAL_SCHEDULED_ENCLAVE.update(bn, enclave_to_set) {
-								Ok(()) => Ok(json!("{}")),
+								Ok(()) => Ok(json!(RpcReturnValue::new(
+									vec![],
+									false,
+									DirectRequestStatus::Ok
+								)
+								.to_hex())),
 								Err(e) => {
 									let error_msg =
-										format!("Failed to set scheduled mr_enclave {:?}", e);
+										format!("Failed to set scheduled mrenclave {:?}", e);
 									Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
 								},
 							}
