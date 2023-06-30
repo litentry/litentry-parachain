@@ -31,7 +31,6 @@ use itc_rpc_client::direct_client::DirectApi;
 use itp_rpc::{RpcResponse, RpcReturnValue};
 use itp_stf_primitives::types::KeyPair;
 use itp_types::{AccountId, DirectRequestStatus};
-use itp_utils::FromHexPrefixed;
 use log::*;
 use pallet_evm::{AddressMapping, HashedAddressMapping};
 use sp_core::{crypto::Ss58Codec, Pair, H160, U256};
