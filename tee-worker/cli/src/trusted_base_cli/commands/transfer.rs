@@ -22,7 +22,7 @@ use crate::{
 	trusted_operation::perform_trusted_operation,
 	Cli,
 };
-use base58::{FromBase58, ToBase58};
+use base58::ToBase58;
 use codec::{Decode, Encode};
 use ita_stf::{TrustedCall, TrustedOperation};
 use itc_rpc_client::direct_client::DirectApi;
@@ -68,7 +68,7 @@ impl TransferCommand {
 		if rpc_return_value.status == DirectRequestStatus::Error {
 			println!("[Error] {}", String::decode(&mut rpc_return_value.value.as_slice()).unwrap());
 			worker_api_direct.close().unwrap();
-			return ()
+			return
 		}
 
 		worker_api_direct.close().unwrap();
