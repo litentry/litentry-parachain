@@ -27,7 +27,7 @@ use itp_stf_primitives::types::AccountId;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{
-	DirectRequestStatus, MrEnclave, Request, ShardIdentifier, SidechainBlockNumber, H256,
+	DirectRequestStatus, Index, MrEnclave, Request, ShardIdentifier, SidechainBlockNumber, H256,
 };
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use its_primitives::types::block::SignedBlock;
