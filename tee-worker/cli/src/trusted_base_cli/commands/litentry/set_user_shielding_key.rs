@@ -15,19 +15,15 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	command_utils::{get_accountid_from_str, get_worker_api_direct},
+	get_layer_two_nonce,
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
 	trusted_operation::perform_trusted_operation,
 	Cli,
 };
 use codec::Decode;
-use ita_stf::{TrustedCall, TrustedOperation};
-use itc_rpc_client::direct_client::DirectApi;
-use itp_rpc::{RpcResponse, RpcReturnValue};
+use ita_stf::{Index, TrustedCall, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
-use itp_types::DirectRequestStatus;
-use itp_utils::FromHexPrefixed;
 use litentry_primitives::UserShieldingKeyType;
 use log::*;
 use sp_core::Pair;
@@ -42,26 +38,10 @@ pub struct SetUserShieldingKeyCommand {
 
 impl SetUserShieldingKeyCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) {
-		error!("SetUserShieldingKeyCommand account: {}", self.account);
 		let who = get_pair_from_str(trusted_cli, &self.account);
 
 		let (mrenclave, shard) = get_identifiers(trusted_cli);
-		let worker_api_direct = get_worker_api_direct(cli);
-		let nonce_ret =
-			worker_api_direct.get_next_nonce(shard, get_accountid_from_str(&self.account));
-		info!("nonce_ret {:?} ", nonce_ret);
-		let nonce_val = nonce_ret.unwrap();
-		info!("nonce_val {:?} ", nonce_val);
-		let rpc_response: RpcResponse = serde_json::from_str(&nonce_val).unwrap();
-		let rpc_return_value = RpcReturnValue::from_hex(&rpc_response.result).unwrap();
-		if rpc_return_value.status == DirectRequestStatus::Error {
-			println!("[Error] {}", String::decode(&mut rpc_return_value.value.as_slice()).unwrap());
-			worker_api_direct.close().unwrap();
-			return
-		}
-
-		worker_api_direct.close().unwrap();
-		let nonce: u32 = Decode::decode(&mut rpc_return_value.value.as_slice()).unwrap_or_default();
+		let nonce = get_layer_two_nonce!(who, cli, trusted_cli);
 
 		let mut key = UserShieldingKeyType::default();
 

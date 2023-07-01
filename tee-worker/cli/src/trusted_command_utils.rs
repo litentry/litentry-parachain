@@ -16,13 +16,19 @@
 */
 
 use crate::{
-	command_utils::mrenclave_from_base58, trusted_cli::TrustedCli,
-	trusted_operation::perform_trusted_operation, Cli,
+	command_utils::{get_worker_api_direct, mrenclave_from_base58},
+	trusted_cli::TrustedCli,
+	trusted_operation::{perform_trusted_operation, read_shard},
+	Cli,
 };
 use base58::{FromBase58, ToBase58};
 use codec::{Decode, Encode};
 use ita_stf::{TrustedGetter, TrustedOperation};
+use itc_rpc_client::direct_client::DirectApi;
+use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
 use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier};
+use itp_types::DirectRequestStatus;
+use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use litentry_primitives::ParentchainBalance as Balance;
 use log::*;
 use sp_application_crypto::sr25519;
@@ -30,6 +36,31 @@ use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
 use sp_runtime::traits::IdentifyAccount;
 use std::{boxed::Box, path::PathBuf};
 use substrate_client_keystore::LocalKeystore;
+
+#[macro_export]
+macro_rules! get_layer_two_nonce {
+	($signer_pair:ident, $cli: ident, $trusted_args:ident ) => {{
+		use ita_stf::{Getter, PublicGetter};
+		use $crate::{
+			trusted_command_utils::get_pending_trusted_calls_for,
+			trusted_operation::execute_getter_from_cli_args,
+		};
+
+		let getter = Getter::public(PublicGetter::nonce($signer_pair.public().into()));
+		let getter_result = execute_getter_from_cli_args($cli, $trusted_args, &getter);
+		let nonce = match getter_result {
+			Some(encoded_nonce) => Index::decode(&mut encoded_nonce.as_slice()).unwrap(),
+			None => Default::default(),
+		};
+
+		debug!("got system nonce: {:?}", nonce);
+		let pending_tx_count =
+			get_pending_trusted_calls_for($cli, $trusted_args, &$signer_pair.public().into()).len();
+		let pending_tx_count = Index::try_from(pending_tx_count).unwrap();
+		debug!("got pending tx count: {:?}", pending_tx_count);
+		nonce + pending_tx_count
+	}};
+}
 
 const TRUSTED_KEYSTORE_PATH: &str = "my_trusted_keystore";
 
@@ -105,4 +136,33 @@ pub(crate) fn get_pair_from_str(trusted_args: &TrustedCli, account: &str) -> sr2
 			_pair.into()
 		},
 	}
+}
+
+// helper method to get the pending trusted calls for a given account via direct RPC
+pub(crate) fn get_pending_trusted_calls_for(
+	cli: &Cli,
+	trusted_args: &TrustedCli,
+	who: &AccountId,
+) -> Vec<TrustedOperation> {
+	let shard = read_shard(trusted_args).unwrap();
+	let direct_api = get_worker_api_direct(cli);
+	let rpc_method = "author_pendingTrustedCallsFor".to_owned();
+	let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
+		rpc_method,
+		vec![shard.encode().to_base58(), who.to_hex()],
+	)
+	.unwrap();
+
+	let rpc_response_str = direct_api.get(&jsonrpc_call).unwrap();
+	let rpc_response: RpcResponse = serde_json::from_str(&rpc_response_str).unwrap();
+	let rpc_return_value = RpcReturnValue::from_hex(&rpc_response.result).unwrap();
+
+	if rpc_return_value.status == DirectRequestStatus::Error {
+		println!("[Error] {}", String::decode(&mut rpc_return_value.value.as_slice()).unwrap());
+		direct_api.close().unwrap();
+		return vec![]
+	}
+
+	direct_api.close().unwrap();
+	Decode::decode(&mut rpc_return_value.value.as_slice()).unwrap_or_default()
 }
