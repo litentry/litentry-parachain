@@ -15,7 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	command_utils::{get_accountid_from_str, get_worker_api_direct},
+	command_utils::get_worker_api_direct,
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
 	trusted_operation::perform_trusted_operation,
@@ -41,7 +41,7 @@ impl SendErroneousParentchainCallCommand {
 
 		let (mrenclave, shard) = get_identifiers(trusted_cli);
 		let worker_api_direct = get_worker_api_direct(cli);
-		let nonce_ret = worker_api_direct.get_next_nonce(shard, get_accountid_from_str(account));
+		let nonce_ret = worker_api_direct.get_next_nonce(shard, root.public().into());
 		info!("nonce_ret {:?} ", nonce_ret);
 		let nonce_val = nonce_ret.unwrap();
 		info!("nonce_val {:?} ", nonce_val);
