@@ -127,7 +127,7 @@ impl A14Client {
 		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert(
 			AUTHORIZATION.as_str(),
-			G_DATA_PROVIDERS.read().unwrap().graphql_auth_key.clone().as_str(),
+			G_DATA_PROVIDERS.read().unwrap().achainable_rest_key.clone().as_str(),
 		);
 		let client =
 			build_client("https://label-production.graph.tdf-labs.io/v1/run/label/a719e99c-1f9b-432e-8f1d-cb3de0f14dde", headers);

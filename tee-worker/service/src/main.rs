@@ -97,6 +97,7 @@ use sp_core::{
 };
 use sp_keyring::AccountKeyring;
 use std::{
+	collections::HashSet,
 	env,
 	fs::File,
 	io::Read,
@@ -179,7 +180,7 @@ fn main() {
 		enclave.clone(),
 		node_api_factory.clone(),
 		initialization_handler.clone(),
-		Vec::new(),
+		HashSet::new(),
 	));
 	let sync_block_broadcaster =
 		Arc::new(SyncBlockBroadcaster::new(tokio_handle.clone(), worker.clone()));
@@ -943,6 +944,9 @@ fn data_provider(config: &Config) -> DataProvidersStatic {
 	}
 	if let Ok(v) = env::var("CREDENTIAL_ENDPOINT") {
 		data_provider_config.set_credential_endpoint(v);
+	}
+	if let Ok(v) = env::var("ACHAINABLE_REST_KEY") {
+		data_provider_config.set_achainable_rest_key(v)
 	}
 
 	data_provider_config

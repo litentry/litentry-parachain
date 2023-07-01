@@ -3979,6 +3979,18 @@ declare module '@polkadot/api-base/types/submittable' {
                 [Compact<u64>]
             >;
             /**
+             * Set registered mrenclave
+             * This is a workaround to overcome the problem that the ra-report seems to contain
+             * the old mrenclave after doing enclave update, which breaks the client/IDHub.
+             * See https://github.com/litentry/litentry-parachain/issues/1820
+             *
+             * To be removed once the issue is solved
+             **/
+            setMrenclave: AugmentedSubmittable<
+                (newMrenclave: U8aFixed | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
+                [U8aFixed]
+            >;
+            /**
              * Sent by a client who requests to get shielded funds managed by an enclave. For this
              * on-chain balance is sent to the bonding_account of the enclave. The bonding_account does
              * not have a private key as the balance on this account is exclusively managed from
@@ -4637,6 +4649,7 @@ declare module '@polkadot/api-base/types/submittable' {
                         | { A11: any }
                         | { A12: any }
                         | { A13: any }
+                        | { A14: any }
                         | string
                         | Uint8Array,
                     hash: H256 | string | Uint8Array
@@ -4684,6 +4697,7 @@ declare module '@polkadot/api-base/types/submittable' {
                         | { A11: any }
                         | { A12: any }
                         | { A13: any }
+                        | { A14: any }
                         | string
                         | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
@@ -4740,6 +4754,7 @@ declare module '@polkadot/api-base/types/submittable' {
                         | { A11: any }
                         | { A12: any }
                         | { A13: any }
+                        | { A14: any }
                         | string
                         | Uint8Array,
                     index: H256 | string | Uint8Array,

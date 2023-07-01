@@ -10,7 +10,7 @@ version = '0.1.0'
 # third-party dependencies
 blake2-rfc = { version = "0.2.18", default-features = false }
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len"] }
-scale-info = { version = "2.7.0", default-features = false, features = ["derive"] }
+scale-info = { version = "2.8.0", default-features = false, features = ["derive"] }
 
 # primitives
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39", default-features = false }

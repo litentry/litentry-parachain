@@ -1,7 +1,7 @@
 import type { HexString } from '@polkadot/util/types';
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { KeyObject } from 'crypto';
-import { AESOutput } from '../type-definitions';
+import { AesOutput } from '../type-definitions';
 
 const crypto = require('crypto');
 
@@ -17,7 +17,7 @@ export function encryptWithTeeShieldingKey(teeShieldingKey: KeyObject, plaintext
 }
 
 // A lazy version without aad. Append the tag to be consistent with rust implementation
-export function encryptWithAES(key: HexString, nonce: Uint8Array, cleartext: Buffer): HexString {
+export function encryptWithAes(key: HexString, nonce: Uint8Array, cleartext: Buffer): HexString {
     const secretKey = crypto.createSecretKey(hexToU8a(key));
     const cipher = crypto.createCipheriv('aes-256-gcm', secretKey, nonce, {
         authTagLength: 16,
@@ -28,7 +28,7 @@ export function encryptWithAES(key: HexString, nonce: Uint8Array, cleartext: Buf
     return `0x${encrypted}`;
 }
 
-export function decryptWithAES(key: HexString, aesOutput: AESOutput, type: string): HexString {
+export function decryptWithAes(key: HexString, aesOutput: AesOutput, type: string): HexString {
     if (aesOutput.ciphertext && aesOutput.nonce) {
         const secretKey = crypto.createSecretKey(hexToU8a(key));
         const tagSize = 16;
@@ -47,8 +47,8 @@ export function decryptWithAES(key: HexString, aesOutput: AESOutput, type: strin
         decipher.setAAD(aad);
         decipher.setAuthTag(authorTag);
 
-        let part1 = decipher.update(ciphertext.subarray(0, ciphertext.length - tagSize), undefined, type);
-        let part2 = decipher.final(type);
+        const part1 = decipher.update(ciphertext.subarray(0, ciphertext.length - tagSize), undefined, type);
+        const part2 = decipher.final(type);
 
         return `0x${part1 + part2}`;
     } else {

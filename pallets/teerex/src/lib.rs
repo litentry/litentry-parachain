@@ -102,6 +102,9 @@ pub mod pallet {
 			hash: H256,
 			data: Vec<u8>,
 		},
+		NewMrenclaveSet {
+			new_mrenclave: MrEnclave,
+		},
 	}
 
 	#[pallet::storage]
@@ -571,6 +574,32 @@ pub mod pallet {
 			T::SetAdminOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::AdminChanged { old_admin: Self::admin() });
 			<Admin<T>>::put(new);
+			// Do not pay a fee
+			Ok(Pays::No.into())
+		}
+
+		/// Set registered mrenclave
+		/// This is a workaround to overcome the problem that the ra-report seems to contain
+		/// the old mrenclave after doing enclave update, which breaks the client/IDHub.
+		/// See https://github.com/litentry/litentry-parachain/issues/1820
+		///
+		/// To be removed once the issue is solved
+		#[pallet::call_index(30)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
+		pub fn set_mrenclave(
+			origin: OriginFor<T>,
+			new_mrenclave: MrEnclave,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
+			// not the best way but just to get the job done
+			for index in <EnclaveRegistry<T>>::iter_keys() {
+				let mut enclave =
+					<EnclaveRegistry<T>>::get(index).ok_or(Error::<T>::EmptyEnclaveRegistry)?;
+				enclave.mr_enclave = new_mrenclave;
+				<EnclaveRegistry<T>>::insert(index, enclave);
+			}
+			Self::deposit_event(Event::NewMrenclaveSet { new_mrenclave });
 			// Do not pay a fee
 			Ok(Pays::No.into())
 		}
