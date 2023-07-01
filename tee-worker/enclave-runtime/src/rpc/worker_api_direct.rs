@@ -265,12 +265,6 @@ where
 		Ok(Value::String(format!("hello, {}", parsed)))
 	});
 
-	// returns all rpcs methods
-	let rpc_methods_string = get_all_rpc_methods_string(&io);
-	io.add_sync_method("rpc_methods", move |_: Params| {
-		Ok(Value::String(rpc_methods_string.to_owned()))
-	});
-
 	// author_getNextNonce
 	let author_get_next_nonce: &str = "author_getNextNonce";
 	io.add_sync_method(author_get_next_nonce, move |params: Params| {
@@ -314,6 +308,12 @@ where
 				Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
 			},
 		}
+	});
+
+	// returns all rpcs methods
+	let rpc_methods_string = get_all_rpc_methods_string(&io);
+	io.add_sync_method("rpc_methods", move |_: Params| {
+		Ok(Value::String(rpc_methods_string.to_owned()))
 	});
 	io
 }
