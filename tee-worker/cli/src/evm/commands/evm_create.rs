@@ -16,8 +16,7 @@
 */
 
 use crate::{
-	command_utils::get_worker_api_direct,
-	get_layer_two_evm_nonce,
+	get_layer_two_evm_nonce, get_layer_two_nonce,
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
 	trusted_operation::perform_trusted_operation,
@@ -27,17 +26,14 @@ use codec::Decode;
 use ita_stf::{
 	evm_helpers::evm_create_address, Index, TrustedCall, TrustedGetter, TrustedOperation,
 };
-use itc_rpc_client::direct_client::DirectApi;
-use itp_rpc::{RpcResponse, RpcReturnValue};
 use itp_stf_primitives::types::KeyPair;
-use itp_types::{AccountId, DirectRequestStatus};
-use itp_utils::FromHexPrefixed;
+use itp_types::AccountId;
 use log::*;
 use pallet_evm::{AddressMapping, HashedAddressMapping};
 use sp_core::{crypto::Ss58Codec, Pair, H160, U256};
 use sp_runtime::traits::BlakeTwo256;
 use std::vec::Vec;
-// use substrate_api_client::utils::FromHexString;
+use substrate_api_client::utils::FromHexString;
 
 #[derive(Parser)]
 pub struct EvmCreateCommands {
@@ -68,28 +64,13 @@ impl EvmCreateCommands {
 			sender_evm_substrate_addr.to_ss58check()
 		);
 
-		let worker_api_direct = get_worker_api_direct(cli);
-		let nonce_ret = worker_api_direct.get_next_nonce(&shard, &from_acc);
-		info!("nonce_ret {:?} ", nonce_ret);
-		let nonce_val = nonce_ret.unwrap();
-		info!("nonce_val {:?} ", nonce_val);
-		let rpc_response: RpcResponse = serde_json::from_str(&nonce_val).unwrap();
-		let rpc_return_value = RpcReturnValue::from_hex(&rpc_response.result).unwrap();
-		if rpc_return_value.status == DirectRequestStatus::Error {
-			println!("[Error] {}", String::decode(&mut rpc_return_value.value.as_slice()).unwrap());
-			worker_api_direct.close().unwrap();
-			return
-		}
-
-		worker_api_direct.close().unwrap();
-		let nonce: u32 = Decode::decode(&mut rpc_return_value.value.as_slice()).unwrap_or_default();
-
+		let nonce = get_layer_two_nonce!(from, cli, trusted_args);
 		let evm_account_nonce = get_layer_two_evm_nonce!(from, cli, trusted_args);
 
 		let top = TrustedCall::evm_create(
 			from_acc,
 			sender_evm_acc,
-			Vec::from_hex(&self.smart_contract.to_string()).unwrap(),
+			Vec::from_hex(self.smart_contract.to_string()).unwrap(),
 			U256::from(0),
 			967295,        // gas limit
 			U256::from(1), // max_fee_per_gas !>= min_gas_price defined in runtime

@@ -16,8 +16,7 @@
 */
 
 use crate::{
-	command_utils::get_worker_api_direct,
-	get_layer_two_evm_nonce,
+	get_layer_two_evm_nonce, get_layer_two_nonce,
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
 	trusted_operation::perform_trusted_operation,
@@ -25,15 +24,12 @@ use crate::{
 };
 use codec::Decode;
 use ita_stf::{Index, TrustedCall, TrustedGetter, TrustedOperation};
-use itc_rpc_client::direct_client::DirectApi;
-use itp_rpc::{RpcResponse, RpcReturnValue};
 use itp_stf_primitives::types::KeyPair;
-use itp_types::{AccountId, DirectRequestStatus};
-use itp_utils::FromHexPrefixed;
+use itp_types::AccountId;
 use log::*;
 use sp_core::{crypto::Ss58Codec, Pair, H160, U256};
 use std::{boxed::Box, vec::Vec};
-// use substrate_api_client::utils::FromHexString;
+use substrate_api_client::utils::FromHexString;
 
 #[derive(Parser)]
 pub struct EvmCallCommands {
@@ -62,27 +58,12 @@ impl EvmCallCommands {
 		info!("senders evm account is {}", sender_evm_acc);
 
 		let execution_address =
-			H160::from_slice(&Vec::from_hex(&self.execution_address.to_string()).unwrap());
+			H160::from_slice(&Vec::from_hex(self.execution_address.to_string()).unwrap());
 
-		let function_hash = Vec::from_hex(&self.function.to_string()).unwrap();
+		let function_hash = Vec::from_hex(self.function.to_string()).unwrap();
 
 		let (mrenclave, shard) = get_identifiers(trusted_args);
-		let worker_api_direct = get_worker_api_direct(cli);
-		let nonce_ret = worker_api_direct.get_next_nonce(&shard, &sender_acc);
-		info!("nonce_ret {:?} ", nonce_ret);
-		let nonce_val = nonce_ret.unwrap();
-		info!("nonce_val {:?} ", nonce_val);
-		let rpc_response: RpcResponse = serde_json::from_str(&nonce_val).unwrap();
-		let rpc_return_value = RpcReturnValue::from_hex(&rpc_response.result).unwrap();
-		if rpc_return_value.status == DirectRequestStatus::Error {
-			println!("[Error] {}", String::decode(&mut rpc_return_value.value.as_slice()).unwrap());
-			worker_api_direct.close().unwrap();
-			return
-		}
-
-		worker_api_direct.close().unwrap();
-		let nonce: u32 = Decode::decode(&mut rpc_return_value.value.as_slice()).unwrap_or_default();
-
+		let nonce = get_layer_two_nonce!(sender, cli, trusted_args);
 		let evm_nonce = get_layer_two_evm_nonce!(sender, cli, trusted_args);
 
 		println!("calling smart contract function");
