@@ -36,7 +36,7 @@ use its_sidechain::rpc_handler::{
 };
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
-use log::*;
+use log::debug;
 use std::{borrow::ToOwned, format, str, string::String, sync::Arc, vec::Vec};
 
 fn compute_hex_encoded_return_error(error_msg: &str) -> String {
@@ -91,6 +91,47 @@ where
 		let json_value =
 			RpcReturnValue::new(rsa_pubkey_json.encode(), false, DirectRequestStatus::Ok);
 		Ok(json!(json_value.to_hex()))
+	});
+
+	// author_getNextNonce
+	let author_get_next_nonce: &str = "author_getNextNonce";
+	io.add_sync_method(author_get_next_nonce, move |params: Params| {
+		debug!("author_getNextNonce in enclave");
+		match params.parse::<(String, String)>() {
+			Ok((shard_base58, account_hex)) => {
+				let shard = match decode_shard_from_base58(shard_base58.as_str()) {
+					Ok(id) => id,
+					Err(msg) => {
+						let error_msg: String =
+							format!("Could not retrieve pending trusted calls due to: {}", msg);
+						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+					},
+				};
+				let account = match AccountId::from_hex(account_hex.as_str()) {
+					Ok(acc) => acc,
+					Err(msg) => {
+						let error_msg: String =
+							format!("Could not retrieve pending trusted calls due to: {}", msg);
+						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+					},
+				};
+				let trusted_calls = top_pool_author.get_pending_trusted_calls_for(shard, &account);
+				let pending_tx_count = trusted_calls.len();
+				let pending_tx_count = Index::try_from(pending_tx_count).unwrap();
+				let nonce = System::account_nonce(&account);
+				let json_value = RpcReturnValue {
+					do_watch: false,
+					value: (nonce + pending_tx_count).encode(),
+					status: DirectRequestStatus::Ok,
+				};
+				Ok(json!(json_value.to_hex()))
+			},
+			Err(e) => {
+				let error_msg: String =
+					format!("Could not retrieve pending trusted calls due to: {}", e);
+				Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+			},
+		}
 	});
 
 	let mu_ra_url_name: &str = "author_getMuRaUrl";
@@ -263,51 +304,6 @@ where
 	io.add_sync_method(state_version_name, |_: Params| {
 		let parsed = "world";
 		Ok(Value::String(format!("hello, {}", parsed)))
-	});
-
-	// author_getNextNonce
-	let author_get_next_nonce: &str = "author_getNextNonce1";
-	io.add_sync_method(author_get_next_nonce, move |params: Params| {
-		error!("author_get_next_nonce 233");
-		match params.parse::<(String, String)>() {
-			Ok((shard_base58, account_hex)) => {
-				let shard = match decode_shard_from_base58(shard_base58.as_str()) {
-					Ok(id) => id,
-					Err(msg) => {
-						let error_msg: String =
-							format!("Could not retrieve pending trusted calls due to: {}", msg);
-						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-					},
-				};
-				error!("author_get_next_nonce 244 {:?} {:?}", shard_base58, account_hex);
-				let account = match AccountId::from_hex(account_hex.as_str()) {
-					Ok(acc) => acc,
-					Err(msg) => {
-						let error_msg: String =
-							format!("Could not retrieve pending trusted calls due to: {}", msg);
-						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-					},
-				};
-				let trusted_calls = top_pool_author.get_pending_trusted_calls_for(shard, &account);
-				let pending_tx_count = trusted_calls.len();
-				error!("pending_tx_count1:{:?}", &pending_tx_count);
-				let pending_tx_count = Index::try_from(pending_tx_count).unwrap();
-				info!("pending_tx_count2:{:?}", &pending_tx_count);
-				let nonce = System::account_nonce(&account);
-				error!("pending_tx_count nonce:{:?}", nonce);
-				let json_value = RpcReturnValue {
-					do_watch: false,
-					value: (nonce + pending_tx_count).encode(),
-					status: DirectRequestStatus::Ok,
-				};
-				Ok(json!(json_value.to_hex()))
-			},
-			Err(e) => {
-				let error_msg: String =
-					format!("Could not retrieve pending trusted calls due to: {}", e);
-				Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-			},
-		}
 	});
 
 	// returns all rpcs methods

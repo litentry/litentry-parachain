@@ -115,7 +115,6 @@ impl Drop for DirectClient {
 
 impl DirectApi for DirectClient {
 	fn get(&self, request: &str) -> Result<String> {
-		error!("DirectApi 117");
 		let (port_in, port_out) = channel();
 
 		error!("[WorkerApi Direct]: (get) Sending request: {:?}", request);
