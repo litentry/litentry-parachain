@@ -60,7 +60,7 @@ pub trait DirectApi {
 	fn send(&self, request: &str) -> Result<()>;
 	/// Close any open websocket connection.
 	fn close(&self) -> Result<()>;
-	fn get_next_nonce(&self, shard: ShardIdentifier, account: AccountId) -> Result<String>;
+	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &AccountId) -> Result<String>;
 }
 
 impl DirectClient {
@@ -211,7 +211,7 @@ impl DirectApi for DirectClient {
 		self.web_socket_control.close_connection()
 	}
 
-	fn get_next_nonce(&self, shard: ShardIdentifier, account: AccountId) -> Result<String> {
+	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &AccountId) -> Result<String> {
 		// let data = Request { shard, cyphertext: account.encode() };
 		let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
 			"author_getNextNonce".to_string(),

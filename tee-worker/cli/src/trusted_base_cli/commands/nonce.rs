@@ -16,9 +16,9 @@
 */
 
 use crate::{
-	command_utils::{get_accountid_from_str, get_worker_api_direct},
+	command_utils::get_worker_api_direct,
 	trusted_cli::TrustedCli,
-	trusted_command_utils::get_identifiers,
+	trusted_command_utils::{get_identifiers, get_pair_from_str},
 	Cli,
 };
 use codec::Decode;
@@ -27,6 +27,7 @@ use itp_rpc::{RpcResponse, RpcReturnValue};
 use itp_types::DirectRequestStatus;
 use itp_utils::FromHexPrefixed;
 use log::*;
+use sp_core::Pair;
 
 #[derive(Parser)]
 pub struct NonceCommand {
@@ -37,9 +38,9 @@ pub struct NonceCommand {
 impl NonceCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) {
 		let (_mrenclave, shard) = get_identifiers(trusted_cli);
+		let who = get_pair_from_str(trusted_cli, &self.account);
 		let worker_api_direct = get_worker_api_direct(cli);
-		let nonce_ret =
-			worker_api_direct.get_next_nonce(shard, get_accountid_from_str(&self.account));
+		let nonce_ret = worker_api_direct.get_next_nonce(&shard, &(who.public().into()));
 		info!("nonce_ret {:?} ", nonce_ret);
 		let nonce_val = nonce_ret.unwrap();
 		info!("nonce_val {:?} ", nonce_val);

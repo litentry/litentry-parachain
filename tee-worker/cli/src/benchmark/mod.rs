@@ -16,7 +16,7 @@
 */
 
 use crate::{
-	command_utils::{get_accountid_from_str, get_worker_api_direct},
+	command_utils::get_worker_api_direct,
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{
 		decode_balance, get_identifiers, get_keystore_path, get_pair_from_str,
@@ -130,7 +130,7 @@ impl BenchmarkCommand {
 		};
 
 		let nonce_start: String = match worker_api_direct
-			.get_next_nonce(shard, get_accountid_from_str(&self.funding_account))
+			.get_next_nonce(&shard, &(funding_account_keys.public().into()))
 		{
 			Ok(nonce) => nonce,
 			Err(err_msg) => {
