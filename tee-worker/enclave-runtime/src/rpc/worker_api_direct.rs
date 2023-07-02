@@ -266,7 +266,7 @@ where
 	});
 
 	// author_getNextNonce
-	let author_get_next_nonce: &str = "author_getNextNonce";
+	let author_get_next_nonce: &str = "author_getNextNonce1";
 	io.add_sync_method(author_get_next_nonce, move |params: Params| {
 		error!("author_get_next_nonce 233");
 		match params.parse::<(String, String)>() {

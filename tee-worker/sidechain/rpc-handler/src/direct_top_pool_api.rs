@@ -24,17 +24,17 @@ use rust_base58::base58::FromBase58;
 #[cfg(feature = "sgx")]
 use ::base58::FromBase58;
 
+use ::base58::ToBase58;
 use codec::{Decode, Encode};
+use ita_sgx_runtime::System;
 use itp_rpc::RpcReturnValue;
 use itp_stf_primitives::types::AccountId;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{DirectRequestStatus, Request, ShardIdentifier, TrustedOperationStatus};
+use itp_types::{DirectRequestStatus, Index, Request, ShardIdentifier, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::{futures::executor, serde_json::json, Error as RpcError, IoHandler, Params};
 use log::*;
 use std::{borrow::ToOwned, format, string::String, sync::Arc, vec, vec::Vec};
-
-use ::base58::ToBase58;
 type Hash = sp_core::H256;
 
 pub fn add_top_pool_direct_rpc_methods<R>(
@@ -113,6 +113,7 @@ where
 			},
 		}
 	});
+	let nonce_author = top_pool_author.clone();
 
 	// author_pendingTrustedCallsFor
 	let author_pending_trusted_calls_for_name: &str = "author_pendingTrustedCallsFor";
@@ -145,6 +146,51 @@ where
 				let json_value = RpcReturnValue {
 					do_watch: false,
 					value: trusted_calls.encode(),
+					status: DirectRequestStatus::Ok,
+				};
+				Ok(json!(json_value.to_hex()))
+			},
+			Err(e) => {
+				let error_msg: String =
+					format!("Could not retrieve pending trusted calls due to: {}", e);
+				Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+			},
+		}
+	});
+
+	// author_getNextNonce
+	let author_get_next_nonce: &str = "author_getNextNonce";
+	io_handler.add_sync_method(author_get_next_nonce, move |params: Params| {
+		error!("author_get_next_nonce 233");
+		match params.parse::<(String, String)>() {
+			Ok((shard_base58, account_hex)) => {
+				let shard = match decode_shard_from_base58(shard_base58.as_str()) {
+					Ok(id) => id,
+					Err(msg) => {
+						let error_msg: String =
+							format!("Could not retrieve pending trusted calls due to: {}", msg);
+						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+					},
+				};
+				error!("author_get_next_nonce 244 {:?} {:?}", shard_base58, account_hex);
+				let account = match AccountId::from_hex(account_hex.as_str()) {
+					Ok(acc) => acc,
+					Err(msg) => {
+						let error_msg: String =
+							format!("Could not retrieve pending trusted calls due to: {}", msg);
+						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+					},
+				};
+				let trusted_calls = nonce_author.get_pending_trusted_calls_for(shard, &account);
+				let pending_tx_count = trusted_calls.len();
+				error!("pending_tx_count1:{:?}", &pending_tx_count);
+				let pending_tx_count = Index::try_from(pending_tx_count).unwrap();
+				info!("pending_tx_count2:{:?}", &pending_tx_count);
+				let nonce = System::account_nonce(&account);
+				error!("pending_tx_count nonce:{:?}", nonce);
+				let json_value = RpcReturnValue {
+					do_watch: false,
+					value: (nonce + pending_tx_count).encode(),
 					status: DirectRequestStatus::Ok,
 				};
 				Ok(json!(json_value.to_hex()))

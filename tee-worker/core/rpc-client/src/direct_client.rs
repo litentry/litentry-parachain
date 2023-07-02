@@ -214,9 +214,10 @@ impl DirectApi for DirectClient {
 	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &AccountId) -> Result<String> {
 		// let data = Request { shard, cyphertext: account.encode() };
 		let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
-			"author_getNextNonce".to_string(),
+			"author_getNextNonce".to_owned(),
 			vec![shard.encode().to_base58(), account.to_hex()],
-		)?;
+		)
+		.unwrap();
 
 		error!("get_next_nonce jsonrpc_call: {}", jsonrpc_call);
 
