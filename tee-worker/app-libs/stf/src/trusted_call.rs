@@ -49,8 +49,6 @@ use std::{format, prelude::v1::*, sync::Arc};
 #[cfg(feature = "evm")]
 use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
 use itp_node_api::metadata::NodeMetadataTrait;
-use itp_types::{MrEnclave, SidechainBlockNumber};
-use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use litentry_primitives::LitentryMultiSignature;
 
 #[cfg(feature = "evm")]
@@ -125,7 +123,6 @@ pub enum TrustedCall {
 	handle_imp_error(Address, Option<Address>, IMPError, H256),
 	handle_vcmp_error(Address, Option<Address>, VCMPError, H256),
 	send_erroneous_parentchain_call(Address),
-	set_scheduled_mrenclave(Address, SidechainBlockNumber, MrEnclave),
 }
 
 impl TrustedCall {
@@ -153,7 +150,6 @@ impl TrustedCall {
 			TrustedCall::handle_imp_error(sender_address, ..) => sender_address,
 			TrustedCall::handle_vcmp_error(sender_address, ..) => sender_address,
 			TrustedCall::send_erroneous_parentchain_call(sender_address) => sender_address,
-			TrustedCall::set_scheduled_mrenclave(sender_address, ..) => sender_address,
 		}
 	}
 
@@ -700,18 +696,6 @@ where
 				)));
 				Ok(())
 			},
-			TrustedCall::set_scheduled_mrenclave(multi_account_id, bn, mrenclave) => {
-				let account_id: AccountId = multi_account_id.clone().into();
-				ensure!(
-					is_root::<Runtime, AccountId>(&account_id),
-					Self::Error::MissingPrivileges(multi_account_id)
-				);
-				GLOBAL_SCHEDULED_ENCLAVE.update(bn, mrenclave).map_err(|e| {
-					error!("Failed to set scheduled mr_enclave {:?}", e);
-					StfError::SetScheduledMrEnclaveFailed
-				})?;
-				Ok(())
-			},
 		}?;
 		Ok(())
 	}
@@ -734,7 +718,6 @@ where
 			TrustedCall::handle_vcmp_error(..) => debug!("No storage updates needed..."),
 			TrustedCall::send_erroneous_parentchain_call(..) =>
 				debug!("No storage updates needed..."),
-			TrustedCall::set_scheduled_mrenclave(..) => debug!("No storage updates needed..."),
 			#[cfg(feature = "evm")]
 			_ => debug!("No storage updates needed..."),
 		};
