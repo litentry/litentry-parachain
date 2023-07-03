@@ -210,7 +210,7 @@ jobs:
         uses: andymckay/cancel-action@0.3
 
   tee-clippy:
-    runs-on: ubuntu-latest
+    runs-on: jumphost
     needs:
       - fmt
       - set-condition
@@ -270,7 +270,7 @@ jobs:
         uses: andymckay/cancel-action@0.3
 
   parachain-build-dev:
-    runs-on: ubuntu-latest
+    runs-on: jumphost
     needs:
       - fmt
       - set-condition
@@ -346,7 +346,7 @@ jobs:
         uses: andymckay/cancel-action@0.3
 
   tee-build:
-    runs-on: ubuntu-latest
+    runs-on: jumphost
     needs:
       - fmt
       - set-condition
