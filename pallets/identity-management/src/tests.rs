@@ -64,13 +64,13 @@ fn link_identity_without_delegatee_works() {
 }
 
 #[test]
-fn link_identity_with_authorised_delegatee_works() {
+fn link_identity_with_authorized_delegatee_works() {
 	new_test_ext().execute_with(|| {
 		let eddie: SystemAccountId = test_utils::get_signer(EDDIE_PUBKEY);
 		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		assert_ok!(IdentityManagement::link_identity(
-			RuntimeOrigin::signed(eddie), // authorised delegatee set in initialisation
+			RuntimeOrigin::signed(eddie), // authorized delegatee set in initialisation
 			shard,
 			alice,
 			vec![1u8; 2048],
@@ -84,7 +84,7 @@ fn link_identity_with_authorised_delegatee_works() {
 }
 
 #[test]
-fn link_identity_with_unauthorised_delegatee_fails() {
+fn link_identity_with_unauthorized_delegatee_fails() {
 	new_test_ext().execute_with(|| {
 		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
 		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
@@ -98,7 +98,7 @@ fn link_identity_with_unauthorised_delegatee_fails() {
 				vec![1u8; 2048],
 				UserShieldingKeyNonceType::default(),
 			),
-			Error::<Test>::UnauthorisedUser
+			Error::<Test>::UnauthorizedUser
 		);
 	});
 }

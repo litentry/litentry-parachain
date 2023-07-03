@@ -1622,9 +1622,9 @@ declare module '@polkadot/api-base/types/submittable' {
                 [AccountId32, CorePrimitivesKeyAesOutput, H256]
             >;
             /**
-             * Create an identity
+             * Link an identity with the given validation data
              * We do the origin check for this extrinsic, it has to be
-             * - either the caller him/herself, i.e. ensure_signed(origin)? == who
+             * - either the caller themselves, i.e. ensure_signed(origin)? == who
              * - or from a delegatee in the list
              **/
             linkIdentity: AugmentedSubmittable<
@@ -3979,6 +3979,18 @@ declare module '@polkadot/api-base/types/submittable' {
                 [Compact<u64>]
             >;
             /**
+             * Set registered mrenclave
+             * This is a workaround to overcome the problem that the ra-report seems to contain
+             * the old mrenclave after doing enclave update, which breaks the client/IDHub.
+             * See https://github.com/litentry/litentry-parachain/issues/1820
+             *
+             * To be removed once the issue is solved
+             **/
+            setMrenclave: AugmentedSubmittable<
+                (newMrenclave: U8aFixed | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
+                [U8aFixed]
+            >;
+            /**
              * Sent by a client who requests to get shielded funds managed by an enclave. For this
              * on-chain balance is sent to the bonding_account of the enclave. The bonding_account does
              * not have a private key as the balance on this account is exclusively managed from
@@ -4603,6 +4615,13 @@ declare module '@polkadot/api-base/types/submittable' {
                 ) => SubmittableExtrinsic<ApiType>,
                 [H256, u64]
             >;
+            /**
+             * add an account to the delegatees
+             **/
+            addDelegatee: AugmentedSubmittable<
+                (account: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
+                [AccountId32]
+            >;
             addSchema: AugmentedSubmittable<
                 (
                     shard: H256 | string | Uint8Array,
@@ -4628,7 +4647,9 @@ declare module '@polkadot/api-base/types/submittable' {
                         | { A9: any }
                         | { A10: any }
                         | { A11: any }
+                        | { A12: any }
                         | { A13: any }
+                        | { A14: any }
                         | string
                         | Uint8Array,
                     hash: H256 | string | Uint8Array
@@ -4646,6 +4667,13 @@ declare module '@polkadot/api-base/types/submittable' {
             disableVc: AugmentedSubmittable<
                 (index: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
                 [H256]
+            >;
+            /**
+             * remove an account from the delegatees
+             **/
+            removeDelegatee: AugmentedSubmittable<
+                (account: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
+                [AccountId32]
             >;
             removeVcRegistryItem: AugmentedSubmittable<
                 (index: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
@@ -4667,7 +4695,9 @@ declare module '@polkadot/api-base/types/submittable' {
                         | { A9: any }
                         | { A10: any }
                         | { A11: any }
+                        | { A12: any }
                         | { A13: any }
+                        | { A14: any }
                         | string
                         | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
@@ -4722,7 +4752,9 @@ declare module '@polkadot/api-base/types/submittable' {
                         | { A9: any }
                         | { A10: any }
                         | { A11: any }
+                        | { A12: any }
                         | { A13: any }
+                        | { A14: any }
                         | string
                         | Uint8Array,
                     index: H256 | string | Uint8Array,

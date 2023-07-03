@@ -1,5 +1,5 @@
 import { ApiPromise } from '@polkadot/api';
-import { Event, EventRecord } from '@polkadot/types/interfaces';
+import { Event } from '@polkadot/types/interfaces';
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import Ajv from 'ajv';
 import { assert, expect } from 'chai';
@@ -9,92 +9,92 @@ import type { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
 import type { EnclaveResult, IntegrationTestContext } from '../type-definitions';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
-import { JsonSchema } from '../type-definitions';
+import { jsonSchema } from '../type-definitions';
 import { aesKey } from '../../common/call';
-import { SubstrateNetworkMapping } from '../../common/helpers';
+import { substrateNetworkMapping } from '../../common/helpers';
 import colors from 'colors';
 
-export async function assertInitialIDGraphCreated(
+export async function assertInitialIdGraphCreated(
     context: IntegrationTestContext,
     signer: KeyringPair[],
     events: any[]
 ) {
     for (let index = 0; index < events.length; index++) {
-        const event_data = events[index].data;
+        const eventData = events[index].data;
 
-        const who = event_data.account.toHex();
-        const idGraph_data = parseIdGraph(context.sidechainRegistry, event_data.idGraph, aesKey);
-        assert.equal(idGraph_data.length, 1);
+        const who = eventData.account.toHex();
+        const idGraphData = parseIdGraph(context.sidechainRegistry, eventData.idGraph, aesKey);
+        assert.equal(idGraphData.length, 1);
         assert.equal(who, u8aToHex(signer[index].addressRaw));
 
         // Check identity in idgraph
-        const expected_identity = await buildIdentityHelper(
+        const expectedIdentity = await buildIdentityHelper(
             u8aToHex(signer[index].addressRaw),
-            SubstrateNetworkMapping[context.chainID],
+            substrateNetworkMapping[context.chainIdentifier],
             'Substrate',
             context
         );
-        const expected_target = expected_identity[`as${expected_identity.type}`];
-        const idGraph_target = idGraph_data[0][0][`as${idGraph_data[0][0].type}`];
-        assert.equal(expected_target.toString(), idGraph_target.toString());
+        const expectedTarget = expectedIdentity[`as${expectedIdentity.type}`];
+        const idGraphTarget = idGraphData[0][0][`as${idGraphData[0][0].type}`];
+        assert.equal(expectedTarget.toString(), idGraphTarget.toString());
 
         // Check identityContext in idgraph
-        const idGraph_context = idGraph_data[0][1];
+        const idGraphContext = idGraphData[0][1];
         assert.isTrue(
-            idGraph_context.linkBlock.toNumber() > 0,
+            idGraphContext.linkBlock.toNumber() > 0,
             'Check InitialIDGraph error: link_block should be greater than 0'
         );
-        assert.isTrue(idGraph_context.status.isActive, 'Check InitialIDGraph error: isActive should be true');
+        assert.isTrue(idGraphContext.status.isActive, 'Check InitialIDGraph error: isActive should be true');
     }
-    console.log(colors.green('assertInitialIDGraphCreated complete'));
+    console.log(colors.green('assertInitialIdGraphCreated complete'));
 }
 
 export async function assertIdentityLinked(
     context: IntegrationTestContext,
     signers: KeyringPair | KeyringPair[],
     events: any[],
-    expected_identities: LitentryPrimitivesIdentity[]
+    expectedIdentities: LitentryPrimitivesIdentity[]
 ) {
     // We should parse idGraph from the last event, because the last event updates the verification status of all identities.
-    const event_idGraph = parseIdGraph(context.sidechainRegistry, events[events.length - 1].data.idGraph, aesKey);
+    const eventIdGraph = parseIdGraph(context.sidechainRegistry, events[events.length - 1].data.idGraph, aesKey);
 
     for (let index = 0; index < events.length; index++) {
         const signer = Array.isArray(signers) ? signers[index] : signers;
-        const expected_identity = expected_identities[index];
-        const expected_identity_target = expected_identity[`as${expected_identity.type}`];
+        const expectedIdentity = expectedIdentities[index];
+        const expectedIdentityTarget = expectedIdentity[`as${expectedIdentity.type}`];
 
-        const event_data = events[index].data;
-        const who = event_data.account.toHex();
+        const eventData = events[index].data;
+        const who = eventData.account.toHex();
 
         // Check prime identity in idGraph
-        const expected_prime_identity = await buildIdentityHelper(
+        const expectedPrimeIdentity = await buildIdentityHelper(
             u8aToHex(signer.addressRaw),
-            SubstrateNetworkMapping[context.chainID],
+            substrateNetworkMapping[context.chainIdentifier],
             'Substrate',
             context
         );
         assert.equal(
-            expected_prime_identity.toString(),
-            event_idGraph[events.length][0].toString(),
-            'Check IdentityVerified error: event_idGraph prime identity should be equal to expected_prime_identity'
+            expectedPrimeIdentity.toString(),
+            eventIdGraph[events.length][0].toString(),
+            'Check IdentityVerified error: eventIdGraph prime identity should be equal to expectedPrimeIdentity'
         );
 
         // Check event identity with expected identity
-        const event_identity = parseIdentity(context.sidechainRegistry, event_data.identity, aesKey);
-        const event_identity_target = event_identity[`as${event_identity.type}`];
+        const eventIdentity = parseIdentity(context.sidechainRegistry, eventData.identity, aesKey);
+        const eventIdentityTarget = eventIdentity[`as${eventIdentity.type}`];
         assert.equal(
-            expected_identity_target.toString(),
-            event_identity_target.toString(),
-            'Check IdentityVerified error: event_identity_target should be equal to expected_identity_target'
+            expectedIdentityTarget.toString(),
+            eventIdentityTarget.toString(),
+            'Check IdentityVerified error: eventIdentityTarget should be equal to expectedIdentityTarget'
         );
 
         // Check identityContext in idGraph
-        const idGraph_context = event_idGraph[index][1];
+        const idGraphContext = eventIdGraph[index][1];
         assert.isTrue(
-            idGraph_context.linkBlock.toNumber() > 0,
+            idGraphContext.linkBlock.toNumber() > 0,
             'Check InitialIDGraph error: link_block should be greater than 0'
         );
-        assert.isTrue(idGraph_context.status.isActive, 'Check InitialIDGraph error: isActive should be true');
+        assert.isTrue(idGraphContext.status.isActive, 'Check InitialIDGraph error: isActive should be true');
 
         assert.equal(who, u8aToHex(signer.addressRaw), 'Check IdentityCreated error: signer should be equal to who');
     }
@@ -106,30 +106,30 @@ export async function assertIdentityCreated(
     signers: KeyringPair | KeyringPair[],
     events: any[],
     aesKey: HexString,
-    expected_identities: LitentryPrimitivesIdentity[]
+    expectedIdentities: LitentryPrimitivesIdentity[]
 ) {
     for (let index = 0; index < events.length; index++) {
         const signer = Array.isArray(signers) ? signers[index] : signers;
-        const expected_identity = expected_identities[index];
-        const expected_identity_target = expected_identity[`as${expected_identity.type}`];
-        const event_data = events[index].data;
-        const who = event_data.account.toHex();
-        const event_identity = parseIdentity(context.sidechainRegistry, event_data.identity, aesKey);
-        const event_identity_target = event_identity[`as${event_identity.type}`];
+        const expectedIdentity = expectedIdentities[index];
+        const expectedIdentityTarget = expectedIdentity[`as${expectedIdentity.type}`];
+        const eventData = events[index].data;
+        const who = eventData.account.toHex();
+        const eventIdentity = parseIdentity(context.sidechainRegistry, eventData.identity, aesKey);
+        const eventIdentityTarget = eventIdentity[`as${eventIdentity.type}`];
         // Check identity caller
         assert.equal(who, u8aToHex(signer.addressRaw), 'Check IdentityCreated error: signer should be equal to who');
 
         // Check identity type
         assert.equal(
-            expected_identity.type,
-            event_identity.type,
-            'Check IdentityCreated error: event_identity type should be equal to expected_identity type'
+            expectedIdentity.type,
+            eventIdentity.type,
+            'Check IdentityCreated error: eventIdentity type should be equal to expectedIdentity type'
         );
         // Check identity in event
         assert.equal(
-            expected_identity_target.toString(),
-            event_identity_target.toString(),
-            'Check IdentityCreated error: event_identity_target should be equal to expected_identity_target'
+            expectedIdentityTarget.toString(),
+            eventIdentityTarget.toString(),
+            'Check IdentityCreated error: eventIdentityTarget should be equal to expectedIdentityTarget'
         );
     }
     console.log(colors.green('assertIdentityCreated complete'));
@@ -143,12 +143,12 @@ export async function assertIdentityRemoved(
     for (let index = 0; index < events.length; index++) {
         const signer = Array.isArray(signers) ? signers[index] : signers;
 
-        const event_data = events[index].data;
-        const who = event_data.account.toHex();
+        const eventData = events[index].data;
+        const who = eventData.account.toHex();
 
         // Check idGraph
         assert.equal(
-            event_data.idGraph,
+            eventData.idGraph,
             null,
             'check IdentityRemoved error: event idGraph should be null after removed identity'
         );
@@ -195,22 +195,22 @@ export async function checkVc(vcObj: any, index: HexString, proof: any, api: Api
     const signatureValid = await verifySignature(vc, index, proof, api);
     expect(signatureValid).to.be.true;
 
-    const jsonValid = await checkJSON(vcObj, proof);
+    const jsonValid = await checkJson(vcObj, proof);
     expect(jsonValid).to.be.true;
     return true;
 }
 
 // Check VC json fields
-export async function checkJSON(vc: any, proofJson: any): Promise<boolean> {
-    //check JsonSchema
+export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
+    //check jsonSchema
     const ajv = new Ajv();
-    const validate = ajv.compile(JsonSchema);
+    const validate = ajv.compile(jsonSchema);
     const isValid = validate(vc);
     expect(isValid).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-        vc.issuer.id === proofJson.verificationMethod &&
-        proofJson.type === 'Ed25519Signature2020'
+            vc.issuer.id === proofJson.verificationMethod &&
+            proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
 }

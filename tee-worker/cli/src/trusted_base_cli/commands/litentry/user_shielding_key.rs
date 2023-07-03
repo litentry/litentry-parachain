@@ -25,7 +25,7 @@ use litentry_primitives::UserShieldingKeyType;
 use sp_core::Pair;
 
 #[derive(Parser)]
-pub struct UserShiledingKeyCommand {
+pub struct UserShieldingKeyCommand {
 	/// AccountId in ss58check format
 	account: String,
 }

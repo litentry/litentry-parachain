@@ -32,12 +32,10 @@ git checkout "$2"
 docker cp "$(docker create --rm litentry/litentry-parachain:runtime-benchmarks):/usr/local/bin/litentry-collator" .
 chmod a+x litentry-collator
 
-# poopulate PALLETS
+# populate PALLETS
 PALLETS=
 case "$3" in
   '*')
-#    PALLETS=$(grep -F '[pallet_' runtime/$1/src/lib.rs | sed 's/.*\[//;s/,.*//' | paste -s -d' ' -)
-# In runtime, you want to ignore a benchmark code
     PALLETS=$(grep -F '[pallet_' runtime/$1/src/lib.rs | tr -d '\t' | grep -v "^ *//" | sed 's/.*\[//;s/,.*//' | paste -s -d' ' -)
     PALLETS="frame_system cumulus_pallet_xcmp_queue $PALLETS"
     ;;
@@ -47,8 +45,8 @@ case "$3" in
 esac
 PALLETS=${PALLETS//-/_}
 
-echo "Pallets:"
-echo "$PALLETS"
+echo "chain: $1"
+echo "pallets: $PALLETS"
 
 if [ -z "$PALLETS" ]; then
   echo "no pallets found"

@@ -14,15 +14,15 @@ export function getSubstrateSigner(): {
     charlie: KeyringPair;
     eve: KeyringPair;
 } {
-    let Alice = keyring.addFromUri('//Alice', { name: 'Alice' });
-    let Bob = keyring.addFromUri('//Bob', { name: 'Bob' });
-    let Charlie = keyring.addFromUri('//Charlie', { name: 'Charlie' });
-    let Eve = keyring.addFromUri('//Eve', { name: 'Eve' });
+    const alice = keyring.addFromUri('//Alice', { name: 'Alice' });
+    const bob = keyring.addFromUri('//Bob', { name: 'Bob' });
+    const charlie = keyring.addFromUri('//Charlie', { name: 'Charlie' });
+    const eve = keyring.addFromUri('//Eve', { name: 'Eve' });
     const signers = {
-        alice: Alice,
-        bob: Bob,
-        charlie: Charlie,
-        eve: Eve,
+        alice,
+        bob,
+        charlie,
+        eve,
     };
     return signers;
 }
@@ -35,7 +35,7 @@ export function getEthereumSigner(): {
 } {
     const secp256k1PrivateKeyLength = 32;
     const names = ['alice', 'bob', 'charlie', 'dave', 'eve'];
-    let keys = new Array<string>();
+    const keys = new Array<string>();
     for (const name of names) {
         const result = Buffer.alloc(secp256k1PrivateKeyLength);
         result.fill(name, secp256k1PrivateKeyLength - Buffer.from(name, 'utf8').length);
@@ -57,7 +57,7 @@ export function identity(data: HexString | Uint8Array): Uint8Array {
 }
 
 // see https://github.com/litentry/litentry-parachain/blob/97f80f711e8ec308cbf230b9b35cd40b191d8217/tee-worker/litentry/primitives/src/identity.rs#L80
-export const SubstrateNetworkMapping: Record<number, SubstrateNetwork['type']> = {
+export const substrateNetworkMapping: Record<number, SubstrateNetwork['type']> = {
     0: 'Polkadot',
     2: 'Kusama',
     31: 'Litentry',

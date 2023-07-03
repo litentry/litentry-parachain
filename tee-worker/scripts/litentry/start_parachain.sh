@@ -11,7 +11,7 @@ set -euo pipefail
 # 30333: default p2p port for relaychain node
 # 4545: default untrusted-http-port for tee-worker (see config.json)
 for p in ${CollatorWSPort:-9944} ${CollatorPort:-30333} ${UntrustedHttpPort:-4545}; do
-  if [ ! -z "$(netstat -nat | grep $p)" ]; then
+  if [ ! -z "$(netstat -nat | grep :$p)" ]; then
     echo "port $p is in use, quit now"
     exit 1
   fi

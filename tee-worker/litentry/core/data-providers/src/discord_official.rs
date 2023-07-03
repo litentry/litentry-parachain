@@ -138,10 +138,18 @@ mod tests {
 	fn query_message_work() {
 		init();
 
-		let channel_id = "919848392035794945".as_bytes().to_vec();
-		let message_id = "1".as_bytes().to_vec();
+		let channel_id = "919848392035794945";
+		let message_id = "1";
 		let mut client = DiscordOfficialClient::new();
-		let result = client.query_message(channel_id, message_id);
+		let result =
+			client.query_message(channel_id.as_bytes().to_vec(), message_id.as_bytes().to_vec());
 		assert!(result.is_ok(), "query discord error: {:?}", result);
+
+		let message = result.unwrap();
+		assert_eq!(message.id, message_id);
+		assert_eq!(message.author.id, "001");
+		assert_eq!(message.author.username, "elon");
+		assert_eq!(message.content, "Hello, litentry.");
+		assert_eq!(message.channel_id, channel_id)
 	}
 }

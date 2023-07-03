@@ -65,7 +65,7 @@ pub fn verify(
 ) -> Result<()> {
 	debug!("verify web2 identity, who: {}", account_id_to_string(who));
 
-	let (user_id, payload) = match data {
+	let (user_name, payload) = match data {
 		Web2ValidationData::Twitter(TwitterValidationData { ref tweet_id }) => {
 			let mut client = TwitterOfficialClient::v2();
 			let tweet: Tweet = client
@@ -75,10 +75,14 @@ pub fn verify(
 			let user_id = tweet
 				.get_user_id()
 				.ok_or(Error::LinkIdentityFailed(ErrorDetail::WrongWeb2Handle))?;
+			let user = client
+				.query_user_by_id(user_id.into_bytes())
+				.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
+			let user_name = user.username;
 
 			let payload = payload_from_tweet(&tweet)?;
 
-			Ok((user_id, payload))
+			Ok((user_name, payload))
 		},
 		Web2ValidationData::Discord(DiscordValidationData {
 			ref channel_id,
@@ -94,12 +98,12 @@ pub fn verify(
 				.get_user_info(message.author.id.clone())
 				.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
 
-			let mut user_id = message.author.username.clone();
-			user_id.push_str(&'#'.to_string());
-			user_id.push_str(&user.discriminator);
+			let mut user_name_with_discriminator = message.author.username.clone();
+			user_name_with_discriminator.push_str(&'#'.to_string());
+			user_name_with_discriminator.push_str(&user.discriminator);
 
 			let payload = payload_from_discord(&message)?;
-			Ok((user_id, payload))
+			Ok((user_name_with_discriminator, payload))
 		},
 	}?;
 
@@ -111,11 +115,13 @@ pub fn verify(
 			.map_err(|_| Error::LinkIdentityFailed(ErrorDetail::ParseError))?;
 		match network {
 			Web2Network::Twitter => ensure!(
-				user_id.to_ascii_lowercase().eq(&handle.to_string().to_ascii_lowercase()),
+				user_name.to_ascii_lowercase().eq(&handle.to_string().to_ascii_lowercase()),
 				Error::LinkIdentityFailed(ErrorDetail::WrongWeb2Handle)
 			),
-			Web2Network::Discord =>
-				ensure!(user_id.eq(handle), Error::LinkIdentityFailed(ErrorDetail::WrongWeb2Handle)),
+			Web2Network::Discord => ensure!(
+				user_name.eq(handle),
+				Error::LinkIdentityFailed(ErrorDetail::WrongWeb2Handle)
+			),
 			_ => (),
 		}
 	} else {

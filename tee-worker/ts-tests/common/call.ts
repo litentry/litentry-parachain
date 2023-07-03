@@ -48,13 +48,13 @@ export function decodeRpcBytesAsString(value: Bytes): string {
 export async function getSidechainMetadata(
     wsClient: WebSocketAsPromised,
     api: ApiPromise
-): Promise<{ metaData: Metadata; sidechainRegistry: TypeRegistry }> {
-    let request = { jsonrpc: '2.0', method: 'state_getMetadata', params: [], id: 1 };
-    let respJSON = await sendRequest(wsClient, request, api);
+): Promise<{ sidechainMetaData: Metadata; sidechainRegistry: TypeRegistry }> {
+    const request = { jsonrpc: '2.0', method: 'state_getMetadata', params: [], id: 1 };
+    const resp = await sendRequest(wsClient, request, api);
     const sidechainRegistry = new TypeRegistry();
-    const metaData = new Metadata(sidechainRegistry, respJSON.value);
-    sidechainRegistry.setMetadata(metaData);
-    return { metaData, sidechainRegistry };
+    const sidechainMetaData = new Metadata(sidechainRegistry, resp.value);
+    sidechainRegistry.setMetadata(sidechainMetaData);
+    return { sidechainMetaData, sidechainRegistry };
 }
 
 export async function getSideChainStorage(
@@ -64,6 +64,6 @@ export async function getSideChainStorage(
     mrenclave: HexString,
     storageKey: string
 ): Promise<WorkerRpcReturnValue> {
-    let request = { jsonrpc: '2.0', method: rpcMethod, params: [mrenclave, storageKey], id: 1 };
+    const request = { jsonrpc: '2.0', method: rpcMethod, params: [mrenclave, storageKey], id: 1 };
     return await sendRequest(wsClient, request, api);
 }
