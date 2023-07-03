@@ -26,7 +26,6 @@ use itc_rpc_client::direct_client::DirectApi;
 use itp_rpc::{RpcResponse, RpcReturnValue};
 use itp_types::DirectRequestStatus;
 use itp_utils::FromHexPrefixed;
-use log::*;
 use sp_core::Pair;
 
 #[derive(Parser)]
