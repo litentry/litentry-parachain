@@ -27,7 +27,7 @@ use lc_credentials::Credential;
 use lc_data_providers::graphql::{
 	AchainableQuery, GetSupportedNetworks, GraphQLClient, VerifiedCredentialsTotalTxs,
 };
-use litentry_primitives::{IdGraphIdentifier, IndexingNetworks, SupportedNetwork};
+use litentry_primitives::{Address, IndexingNetworks, SupportedNetwork};
 use log::*;
 use std::{collections::HashSet, string::String, vec::Vec};
 
@@ -57,11 +57,11 @@ pub fn build(
 	identities: Vec<Identity>,
 	index_networks: IndexingNetworks,
 	shard: &ShardIdentifier,
-	id_graph_identifier: &IdGraphIdentifier,
+	who: &Address,
 ) -> Result<Credential> {
 	debug!(
-		"Assertion A8 build, id_graph_identifier: {:?}, identities: {:?}, networks:{:?}",
-		&id_graph_identifier, identities, index_networks
+		"Assertion A8 build, who: {:?}, identities: {:?}, networks:{:?}",
+		&who, identities, index_networks
 	);
 
 	let networks = filter_networks(&index_networks);
@@ -121,7 +121,7 @@ pub fn build(
 	debug!("Assertion A8 total_transactions: {}", total_txs);
 
 	let (min, max) = get_total_tx_ranges(total_txs);
-	match Credential::new_default(id_graph_identifier, &shard.clone()) {
+	match Credential::new_default(who, &shard.clone()) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_A8_SUBJECT_DESCRIPTION,

@@ -15,8 +15,8 @@ import type { Bytes, Compact, U8aFixed, Vec, bool, u128, u16, u32, u64 } from '@
 import type { AnyNumber, IMethod, ITuple } from '@polkadot/types-codec/types';
 import type { Call, MultiAddress } from '@polkadot/types/interfaces/runtime';
 import type {
+    LitentryPrimitivesAddress,
     LitentryPrimitivesIdentity,
-    LitentryPrimitivesIdentityIdGraphIdentifier,
     SpRuntimeHeader,
     SpWeightsWeightV2Weight,
 } from '@polkadot/types/lookup';
@@ -208,12 +208,7 @@ declare module '@polkadot/api-base/types/submittable' {
         identityManagement: {
             linkIdentity: AugmentedSubmittable<
                 (
-                    idGraphId:
-                        | LitentryPrimitivesIdentityIdGraphIdentifier
-                        | { Substrate: any }
-                        | { Evm: any }
-                        | string
-                        | Uint8Array,
+                    idGraphId: LitentryPrimitivesAddress | { Substrate: any } | { Evm: any } | string | Uint8Array,
                     identity:
                         | LitentryPrimitivesIdentity
                         | { Substrate: any }
@@ -223,16 +218,11 @@ declare module '@polkadot/api-base/types/submittable' {
                         | Uint8Array,
                     parentSs58Prefix: u16 | AnyNumber | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
-                [LitentryPrimitivesIdentityIdGraphIdentifier, LitentryPrimitivesIdentity, u16]
+                [LitentryPrimitivesAddress, LitentryPrimitivesIdentity, u16]
             >;
             removeIdentity: AugmentedSubmittable<
                 (
-                    idGraphId:
-                        | LitentryPrimitivesIdentityIdGraphIdentifier
-                        | { Substrate: any }
-                        | { Evm: any }
-                        | string
-                        | Uint8Array,
+                    idGraphId: LitentryPrimitivesAddress | { Substrate: any } | { Evm: any } | string | Uint8Array,
                     identity:
                         | LitentryPrimitivesIdentity
                         | { Substrate: any }
@@ -242,20 +232,15 @@ declare module '@polkadot/api-base/types/submittable' {
                         | Uint8Array,
                     parentSs58Prefix: u16 | AnyNumber | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
-                [LitentryPrimitivesIdentityIdGraphIdentifier, LitentryPrimitivesIdentity, u16]
+                [LitentryPrimitivesAddress, LitentryPrimitivesIdentity, u16]
             >;
             setUserShieldingKey: AugmentedSubmittable<
                 (
-                    idGraphId:
-                        | LitentryPrimitivesIdentityIdGraphIdentifier
-                        | { Substrate: any }
-                        | { Evm: any }
-                        | string
-                        | Uint8Array,
+                    idGraphId: LitentryPrimitivesAddress | { Substrate: any } | { Evm: any } | string | Uint8Array,
                     key: U8aFixed | string | Uint8Array,
                     parentSs58Prefix: u16 | AnyNumber | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
-                [LitentryPrimitivesIdentityIdGraphIdentifier, U8aFixed, u16]
+                [LitentryPrimitivesAddress, U8aFixed, u16]
             >;
             /**
              * Generic tx

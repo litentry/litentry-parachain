@@ -33,9 +33,8 @@ use lc_data_providers::{
 	UserInfo,
 };
 use litentry_primitives::{
-	DiscordValidationData, ErrorDetail, IdGraphIdentifier, Identity, IntoErrorDetail,
-	TwitterValidationData, UserShieldingKeyNonceType, UserShieldingKeyType, Web2Network,
-	Web2ValidationData,
+	Address, DiscordValidationData, ErrorDetail, Identity, IntoErrorDetail, TwitterValidationData,
+	UserShieldingKeyNonceType, UserShieldingKeyType, Web2Network, Web2ValidationData,
 };
 use log::*;
 use std::{string::ToString, vec::Vec};
@@ -56,14 +55,14 @@ fn payload_from_discord(discord: &DiscordMessage) -> Result<Vec<u8>> {
 }
 
 pub fn verify(
-	id_graph_identifier: &IdGraphIdentifier,
+	who: &Address,
 	identity: &Identity,
 	sidechain_nonce: Index,
 	key: UserShieldingKeyType,
 	nonce: UserShieldingKeyNonceType,
 	data: &Web2ValidationData,
 ) -> Result<()> {
-	debug!("verify web2 identity, id_graph_identifier: {:?}", id_graph_identifier);
+	debug!("verify web2 identity, who: {:?}", who);
 
 	let (user_name, payload) = match data {
 		Web2ValidationData::Twitter(TwitterValidationData { ref tweet_id }) => {
@@ -130,8 +129,7 @@ pub fn verify(
 
 	// the payload must match
 	// TODO: maybe move it to common place
-	let expected =
-		get_expected_raw_message(id_graph_identifier, identity, sidechain_nonce, key, nonce);
+	let expected = get_expected_raw_message(who, identity, sidechain_nonce, key, nonce);
 	ensure!(payload == expected, Error::LinkIdentityFailed(ErrorDetail::UnexpectedMessage));
 	Ok(())
 }

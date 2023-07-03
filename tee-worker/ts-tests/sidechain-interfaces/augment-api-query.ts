@@ -15,8 +15,8 @@ import type {
     FrameSystemEventRecord,
     FrameSystemLastRuntimeUpgradeInfo,
     FrameSystemPhase,
+    LitentryPrimitivesAddress,
     LitentryPrimitivesIdentity,
-    LitentryPrimitivesIdentityIdGraphIdentifier,
     PalletBalancesAccountData,
     PalletBalancesBalanceLock,
     PalletBalancesReserveData,
@@ -100,28 +100,15 @@ declare module '@polkadot/api-base/types/storage' {
             idGraphLens: AugmentedQuery<
                 ApiType,
                 (
-                    arg:
-                        | LitentryPrimitivesIdentityIdGraphIdentifier
-                        | { Substrate: any }
-                        | { Evm: any }
-                        | string
-                        | Uint8Array
+                    arg: LitentryPrimitivesAddress | { Substrate: any } | { Evm: any } | string | Uint8Array
                 ) => Observable<u32>,
-                [LitentryPrimitivesIdentityIdGraphIdentifier]
+                [LitentryPrimitivesAddress]
             > &
-                QueryableStorageEntry<ApiType, [LitentryPrimitivesIdentityIdGraphIdentifier]>;
-            /**
-             * ID graph is per Litentry account + identity
-             **/
+                QueryableStorageEntry<ApiType, [LitentryPrimitivesAddress]>;
             idGraphs: AugmentedQuery<
                 ApiType,
                 (
-                    arg1:
-                        | LitentryPrimitivesIdentityIdGraphIdentifier
-                        | { Substrate: any }
-                        | { Evm: any }
-                        | string
-                        | Uint8Array,
+                    arg1: LitentryPrimitivesAddress | { Substrate: any } | { Evm: any } | string | Uint8Array,
                     arg2:
                         | LitentryPrimitivesIdentity
                         | { Substrate: any }
@@ -130,28 +117,17 @@ declare module '@polkadot/api-base/types/storage' {
                         | string
                         | Uint8Array
                 ) => Observable<Option<PalletIdentityManagementTeeIdentityContext>>,
-                [LitentryPrimitivesIdentityIdGraphIdentifier, LitentryPrimitivesIdentity]
+                [LitentryPrimitivesAddress, LitentryPrimitivesIdentity]
             > &
-                QueryableStorageEntry<
-                    ApiType,
-                    [LitentryPrimitivesIdentityIdGraphIdentifier, LitentryPrimitivesIdentity]
-                >;
-            /**
-             * user shielding key is per Litentry account
-             **/
+                QueryableStorageEntry<ApiType, [LitentryPrimitivesAddress, LitentryPrimitivesIdentity]>;
             userShieldingKeys: AugmentedQuery<
                 ApiType,
                 (
-                    arg:
-                        | LitentryPrimitivesIdentityIdGraphIdentifier
-                        | { Substrate: any }
-                        | { Evm: any }
-                        | string
-                        | Uint8Array
+                    arg: LitentryPrimitivesAddress | { Substrate: any } | { Evm: any } | string | Uint8Array
                 ) => Observable<Option<U8aFixed>>,
-                [LitentryPrimitivesIdentityIdGraphIdentifier]
+                [LitentryPrimitivesAddress]
             > &
-                QueryableStorageEntry<ApiType, [LitentryPrimitivesIdentityIdGraphIdentifier]>;
+                QueryableStorageEntry<ApiType, [LitentryPrimitivesAddress]>;
             /**
              * Generic query
              **/

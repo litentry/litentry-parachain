@@ -24,7 +24,7 @@ use crate::*;
 use itp_stf_primitives::types::ShardIdentifier;
 use lc_credentials::Credential;
 use lc_data_providers::twitter_official::TwitterOfficialClient;
-use litentry_primitives::IdGraphIdentifier;
+use litentry_primitives::Address;
 use log::*;
 use std::{format, vec::Vec};
 
@@ -42,12 +42,9 @@ const VC_A6_SUBJECT_TAG: [&str; 1] = ["Twitter"];
 pub fn build(
 	identities: Vec<Identity>,
 	shard: &ShardIdentifier,
-	id_graph_identifier: &IdGraphIdentifier,
+	who: &Address,
 ) -> Result<Credential> {
-	debug!(
-		"Assertion A6 build, id_graph_identifier: {:?}, identities: {:?}",
-		&id_graph_identifier, identities
-	);
+	debug!("Assertion A6 build, who: {:?}, identities: {:?}", &who, identities);
 
 	let mut client = TwitterOfficialClient::v2();
 	let mut sum: u32 = 0;
@@ -106,7 +103,7 @@ pub fn build(
 		},
 	}
 
-	match Credential::new_default(id_graph_identifier, &shard.clone()) {
+	match Credential::new_default(who, &shard.clone()) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_A6_SUBJECT_DESCRIPTION,

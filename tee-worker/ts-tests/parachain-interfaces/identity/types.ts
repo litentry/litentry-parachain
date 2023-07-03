@@ -107,15 +107,6 @@ export interface IdentityStatus extends Enum {
 /** @name IdentityString */
 export interface IdentityString extends Bytes {}
 
-/** @name IdGraphIdentifier */
-export interface IdGraphIdentifier extends Enum {
-    readonly isSubstrate: boolean;
-    readonly asSubstrate: LitentryAddress32;
-    readonly isEvm: boolean;
-    readonly asEvm: LitentryAddress20;
-    readonly type: 'Substrate' | 'Evm';
-}
-
 /** @name LitentryAddress */
 export interface LitentryAddress extends Enum {
     readonly isSubstrate: boolean;
@@ -123,16 +114,6 @@ export interface LitentryAddress extends Enum {
     readonly isEvm: boolean;
     readonly asEvm: Address20;
     readonly type: 'Substrate' | 'Evm';
-}
-
-/** @name LitentryAddress20 */
-export interface LitentryAddress20 extends Struct {
-    readonly address: Address20;
-}
-
-/** @name LitentryAddress32 */
-export interface LitentryAddress32 extends Struct {
-    readonly address: Address32;
 }
 
 /** @name LitentryIdentity */
@@ -215,15 +196,15 @@ export interface TrustedCall extends Enum {
     readonly isBalanceShield: boolean;
     readonly asBalanceShield: ITuple<[LitentryAddress, AccountId, Balance]>;
     readonly isSetUserShieldingKey: boolean;
-    readonly asSetUserShieldingKey: ITuple<[LitentryAddress, IdGraphIdentifier, UserShieldingKeyType, H256]>;
+    readonly asSetUserShieldingKey: ITuple<[LitentryAddress, LitentryAddress, UserShieldingKeyType, H256]>;
     readonly isLinkIdentity: boolean;
     readonly asLinkIdentity: ITuple<
-        [LitentryAddress, IdGraphIdentifier, LitentryIdentity, LitentryValidationData, UserShieldingKeyNonceType, H256]
+        [LitentryAddress, LitentryAddress, LitentryIdentity, LitentryValidationData, UserShieldingKeyNonceType, H256]
     >;
     readonly isRemoveIdentity: boolean;
-    readonly asRemoveIdentity: ITuple<[LitentryAddress, IdGraphIdentifier, LitentryIdentity, H256]>;
+    readonly asRemoveIdentity: ITuple<[LitentryAddress, LitentryAddress, LitentryIdentity, H256]>;
     readonly isRequestVc: boolean;
-    readonly asRequestVc: ITuple<[LitentryAddress, IdGraphIdentifier, Assertion, u32, H256]>;
+    readonly asRequestVc: ITuple<[LitentryAddress, LitentryAddress, Assertion, u32, H256]>;
     readonly type:
         | 'BalanceSetBalance'
         | 'BalanceTransfer'

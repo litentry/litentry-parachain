@@ -36,7 +36,7 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_primitives::types::AccountId;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{OpaqueCall, ShardIdentifier, H256};
-use litentry_primitives::{Address, IdGraphIdentifier, ParentchainBlockNumber};
+use litentry_primitives::{Address, ParentchainBlockNumber};
 use log::*;
 use sp_core::blake2_256;
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header, Keccak256};
@@ -218,14 +218,14 @@ impl<
 		let trusted_call = match err {
 			Error::IMPHandlingError(e) => TrustedCall::handle_imp_error(
 				Address::Substrate(enclave_account.into()),
-				account.map(|a| IdGraphIdentifier::Substrate { address: a.into() }),
+				account.map(|a| Address::Substrate(a.into())),
 				e.clone(),
 				hash,
 			),
 
 			Error::VCMPHandlingError(e) => TrustedCall::handle_vcmp_error(
 				Address::Substrate(enclave_account.into()),
-				account.map(|a| IdGraphIdentifier::Substrate { address: a.into() }),
+				account.map(|a| Address::Substrate(a.into())),
 				e.clone(),
 				hash,
 			),

@@ -2,8 +2,8 @@ import { ApiPromise, Keyring } from '@polkadot/api';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { BN, u8aToHex, hexToU8a, compactAddLength, bufferToU8a, u8aConcat, stringToU8a } from '@polkadot/util';
 import { Codec } from '@polkadot/types/types';
-import { Address, IdGraphIdentifier, PubicKeyJson } from '../../common/type-definitions';
-import { WorkerRpcReturnValue } from '../../parachain-interfaces/identity/types';
+import { Address, PubicKeyJson } from '../../common/type-definitions';
+import { LitentryAddress, WorkerRpcReturnValue } from '../../parachain-interfaces/identity/types';
 import { encryptWithTeeShieldingKey } from '../../common/utils';
 import { decodeRpcBytesAsString } from '../../common/call';
 import { createPublicKey, KeyObject } from 'crypto';
@@ -152,18 +152,17 @@ export function createSignedTrustedCallSetUserShieldingKey(
     nonce: Codec,
     who: KeyringPair,
     address: Address,
-    idGraphIdentifier: IdGraphIdentifier,
     key: string,
     hash: string,
     withWrappedBytes = false
 ) {
     return createSignedTrustedCall(
         parachainApi,
-        ['set_user_shielding_key', '(LitentryAddress, IdGraphIdentifier, UserShieldingKeyType, H256)'],
+        ['set_user_shielding_key', '(LitentryAddress, LitentryAddress, UserShieldingKeyType, H256)'],
         who,
         mrenclave,
         nonce,
-        [address, idGraphIdentifier, key, hash],
+        [address, address, key, hash],
         withWrappedBytes
     );
 }
@@ -174,7 +173,6 @@ export function createSignedTrustedCallLinkIdentity(
     nonce: Codec,
     who: KeyringPair,
     address: Address,
-    idGraphIdentifier: IdGraphIdentifier,
     identity: string,
     validationData: string,
     keyNonce: string,
@@ -184,12 +182,12 @@ export function createSignedTrustedCallLinkIdentity(
         parachainApi,
         [
             'link_identity',
-            '(LitentryAddress, IdGraphIdentifier, LitentryIdentity, LitentryValidationData, UserShieldingKeyNonceType, H256)',
+            '(LitentryAddress, LitentryAddress, LitentryIdentity, LitentryValidationData, UserShieldingKeyNonceType, H256)',
         ],
         who,
         mrenclave,
         nonce,
-        [address, idGraphIdentifier, identity, validationData, keyNonce, hash]
+        [address, address, identity, validationData, keyNonce, hash]
     );
 }
 
@@ -207,8 +205,8 @@ export function createSignedTrustedGetterUserShieldingKey(
     return parachainApi.createType('Getter', { trusted: getterSigned });
 }
 
-export function createSignedTrustedGetterIdGraph(parachainApi: ApiPromise, who: KeyringPair) {
-    const getterSigned = createSignedTrustedGetter(parachainApi, ['id_graph', '(AccountId)'], who, who.address);
+export function createSignedTrustedGetterIdGraph(parachainApi: ApiPromise, who: KeyringPair, address: Address) {
+    const getterSigned = createSignedTrustedGetter(parachainApi, ['id_graph', '(LitentryAddress)'], who, address);
     return parachainApi.createType('Getter', { trusted: getterSigned });
 }
 

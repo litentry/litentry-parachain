@@ -51,11 +51,11 @@ export default {
                 balance_transfer: '(LitentryAddress, AccountId, Balance)',
                 balance_unshield: '(LitentryAddress, AccountId, Balance, ShardIdentifier)',
                 balance_shield: '(LitentryAddress, AccountId, Balance)',
-                set_user_shielding_key: '(LitentryAddress, IdGraphIdentifier, UserShieldingKeyType, H256)',
+                set_user_shielding_key: '(LitentryAddress, LitentryAddress, UserShieldingKeyType, H256)',
                 link_identity:
-                    '(LitentryAddress, IdGraphIdentifier, LitentryIdentity, LitentryValidationData, UserShieldingKeyNonceType, H256)',
-                remove_identity: '(LitentryAddress, IdGraphIdentifier, LitentryIdentity, H256)',
-                request_vc: '(LitentryAddress, IdGraphIdentifier, Assertion, u32, H256)',
+                    '(LitentryAddress, LitentryAddress, LitentryIdentity, LitentryValidationData, UserShieldingKeyNonceType, H256)',
+                remove_identity: '(LitentryAddress, LitentryAddress, LitentryIdentity, H256)',
+                request_vc: '(LitentryAddress, LitentryAddress, Assertion, u32, H256)',
             },
         },
         UserShieldingKeyType: '[u8; 32]',
@@ -88,21 +88,6 @@ export default {
                 Substrate: 'Address32',
                 Evm: 'Address20',
             },
-        },
-
-        IdGraphIdentifier: {
-            _enum: {
-                Substrate: 'LitentryAddress32',
-                Evm: 'LitentryAddress20',
-            },
-        },
-
-        LitentryAddress20: {
-            address: 'Address20',
-        },
-
-        LitentryAddress32: {
-            address: 'Address32',
         },
 
         // identity management

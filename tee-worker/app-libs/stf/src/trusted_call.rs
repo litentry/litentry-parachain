@@ -51,7 +51,7 @@ use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
 use itp_node_api::metadata::NodeMetadataTrait;
 use itp_types::{MrEnclave, SidechainBlockNumber};
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
-use litentry_primitives::{IdGraphIdentifier, LitentryMultiSignature};
+use litentry_primitives::LitentryMultiSignature;
 
 #[cfg(feature = "evm")]
 use crate::evm_helpers::{create_code_hash, evm_create2_address, evm_create_address};
@@ -114,23 +114,16 @@ pub enum TrustedCall {
 		Vec<(H160, Vec<H256>)>,
 	),
 	// litentry
-	set_user_shielding_key(Address, IdGraphIdentifier, UserShieldingKeyType, H256),
-	link_identity(
-		Address,
-		IdGraphIdentifier,
-		Identity,
-		ValidationData,
-		UserShieldingKeyNonceType,
-		H256,
-	),
-	remove_identity(Address, IdGraphIdentifier, Identity, H256),
-	request_vc(Address, IdGraphIdentifier, Assertion, H256),
+	set_user_shielding_key(Address, Address, UserShieldingKeyType, H256),
+	link_identity(Address, Address, Identity, ValidationData, UserShieldingKeyNonceType, H256),
+	remove_identity(Address, Address, Identity, H256),
+	request_vc(Address, Address, Assertion, H256),
 	// the following trusted calls should not be requested directly from external
 	// they are guarded by the signature check (either root or enclave_signer_account)
-	link_identity_callback(Address, IdGraphIdentifier, Identity, H256),
-	request_vc_callback(Address, IdGraphIdentifier, Assertion, [u8; 32], [u8; 32], Vec<u8>, H256),
-	handle_imp_error(Address, Option<IdGraphIdentifier>, IMPError, H256),
-	handle_vcmp_error(Address, Option<IdGraphIdentifier>, VCMPError, H256),
+	link_identity_callback(Address, Address, Identity, H256),
+	request_vc_callback(Address, Address, Assertion, [u8; 32], [u8; 32], Vec<u8>, H256),
+	handle_imp_error(Address, Option<Address>, IMPError, H256),
+	handle_vcmp_error(Address, Option<Address>, VCMPError, H256),
 	send_erroneous_parentchain_call(Address),
 	set_scheduled_mrenclave(Address, SidechainBlockNumber, MrEnclave),
 }
@@ -479,7 +472,7 @@ where
 				debug!("set_user_shielding_key, who: {}", account_id_to_string(&who));
 				let parent_ss58_prefix =
 					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
-				let account = SgxParentchainTypeConverter::convert(who.to_account_id());
+				let account = SgxParentchainTypeConverter::convert((&who).into());
 				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.user_shielding_key_set_call_indexes())??;
 				match Self::set_user_shielding_key_internal(
@@ -526,7 +519,7 @@ where
 					add_call_from_imp_error(
 						calls,
 						node_metadata_repo,
-						Some(SgxParentchainTypeConverter::convert(who.to_account_id())),
+						Some(SgxParentchainTypeConverter::convert(who.into())),
 						e.to_imp_error(),
 						hash,
 					);
@@ -535,7 +528,7 @@ where
 			},
 			TrustedCall::remove_identity(signer, who, identity, hash) => {
 				debug!("remove_identity, who: {}", account_id_to_string(&who));
-				let account = SgxParentchainTypeConverter::convert(who.to_account_id());
+				let account = SgxParentchainTypeConverter::convert((&who).into());
 				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.identity_removed_call_indexes())??;
 
@@ -572,7 +565,7 @@ where
 			},
 			TrustedCall::link_identity_callback(signer, who, identity, hash) => {
 				debug!("link_identity_callback, who: {}", account_id_to_string(&who));
-				let account = SgxParentchainTypeConverter::convert(who.to_account_id());
+				let account = SgxParentchainTypeConverter::convert((&who).into());
 				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.identity_linked_call_indexes())??;
 
@@ -623,7 +616,7 @@ where
 					add_call_from_vcmp_error(
 						calls,
 						node_metadata_repo,
-						Some(SgxParentchainTypeConverter::convert(who.to_account_id())),
+						Some(SgxParentchainTypeConverter::convert(who.into())),
 						e.to_vcmp_error(),
 						hash,
 					);
@@ -644,7 +637,7 @@ where
 					account_id_to_string(&who),
 					assertion
 				);
-				let account = SgxParentchainTypeConverter::convert(who.to_account_id());
+				let account = SgxParentchainTypeConverter::convert((&who).into());
 				let call_index =
 					node_metadata_repo.get_from_metadata(|m| m.vc_issued_call_indexes())??;
 
@@ -679,7 +672,7 @@ where
 				add_call_from_imp_error(
 					calls,
 					node_metadata_repo,
-					account.map(|g| g.to_account_id()),
+					account.map(|g| g.into()),
 					e,
 					hash,
 				);
@@ -692,7 +685,7 @@ where
 				add_call_from_vcmp_error(
 					calls,
 					node_metadata_repo,
-					account.map(|g| g.to_account_id()),
+					account.map(|g| g.into()),
 					e,
 					hash,
 				);

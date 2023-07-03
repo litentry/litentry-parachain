@@ -30,7 +30,7 @@ use lc_stf_task_sender::{
 	AssertionBuildRequest, IdentityVerificationRequest, RequestType,
 };
 use litentry_primitives::{
-	Assertion, ErrorDetail, IdGraphIdentifier, Identity, UserShieldingKeyType, ValidationData,
+	Address, Assertion, ErrorDetail, Identity, UserShieldingKeyType, ValidationData,
 };
 use log::*;
 use std::vec::Vec;
@@ -38,15 +38,15 @@ use std::vec::Vec;
 impl TrustedCallSigned {
 	pub fn set_user_shielding_key_internal(
 		signer: AccountId,
-		id_graph_id: IdGraphIdentifier,
+		who: Address,
 		key: UserShieldingKeyType,
 		parent_ss58_prefix: u16,
 	) -> StfResult<UserShieldingKeyType> {
 		ensure!(
-			is_authorized_signer(&signer, &id_graph_id.to_account_id()),
+			is_authorized_signer(&signer, &(&who).into()),
 			StfError::SetUserShieldingKeyFailed(ErrorDetail::UnauthorizedSigner)
 		);
-		IMTCall::set_user_shielding_key { id_graph_id, key, parent_ss58_prefix }
+		IMTCall::set_user_shielding_key { who, key, parent_ss58_prefix }
 			.dispatch_bypass_filter(RuntimeOrigin::root())
 			.map_or_else(|e| Err(StfError::SetUserShieldingKeyFailed(e.error.into())), |_| Ok(key))
 	}
@@ -54,7 +54,7 @@ impl TrustedCallSigned {
 	#[allow(clippy::too_many_arguments)]
 	pub fn link_identity_internal(
 		signer: AccountId,
-		id_graph_id: IdGraphIdentifier,
+		who: Address,
 		identity: Identity,
 		validation_data: ValidationData,
 		nonce: UserShieldingKeyNonceType,
@@ -62,11 +62,11 @@ impl TrustedCallSigned {
 		shard: &ShardIdentifier,
 	) -> StfResult<()> {
 		ensure!(
-			is_authorized_signer(&signer, &id_graph_id.to_account_id()),
+			is_authorized_signer(&signer, &(&who).into()),
 			StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner)
 		);
 
-		let key = IdentityManagement::user_shielding_keys(&id_graph_id)
+		let key = IdentityManagement::user_shielding_keys(&who)
 			.ok_or(StfError::LinkIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
 
 		// note it's the signer's nonce, not `who`
@@ -77,7 +77,7 @@ impl TrustedCallSigned {
 
 		let request: RequestType = IdentityVerificationRequest {
 			shard: *shard,
-			id_graph_id,
+			who,
 			identity,
 			validation_data,
 			sidechain_nonce,
@@ -93,18 +93,18 @@ impl TrustedCallSigned {
 
 	pub fn remove_identity_internal(
 		signer: AccountId,
-		id_graph_id: IdGraphIdentifier,
+		who: Address,
 		identity: Identity,
 		parent_ss58_prefix: u16,
 	) -> StfResult<UserShieldingKeyType> {
 		ensure!(
-			is_authorized_signer(&signer, &id_graph_id.to_account_id()),
+			is_authorized_signer(&signer, &(&who).into()),
 			StfError::RemoveIdentityFailed(ErrorDetail::UnauthorizedSigner)
 		);
-		let key = IdentityManagement::user_shielding_keys(&id_graph_id)
+		let key = IdentityManagement::user_shielding_keys(&who)
 			.ok_or(StfError::RemoveIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
 
-		IMTCall::remove_identity { id_graph_id, identity, parent_ss58_prefix }
+		IMTCall::remove_identity { who, identity, parent_ss58_prefix }
 			.dispatch_bypass_filter(RuntimeOrigin::root())
 			.map_err(|e| StfError::RemoveIdentityFailed(e.into()))?;
 
@@ -113,21 +113,21 @@ impl TrustedCallSigned {
 
 	pub fn request_vc_internal(
 		signer: AccountId,
-		id_graph_id: IdGraphIdentifier,
+		who: Address,
 		assertion: Assertion,
 		hash: H256,
 		shard: &ShardIdentifier,
 	) -> StfResult<()> {
 		ensure!(
-			is_authorized_signer(&signer, &id_graph_id.to_account_id()),
+			is_authorized_signer(&signer, &(&who).into()),
 			StfError::RequestVCFailed(assertion, ErrorDetail::UnauthorizedSigner)
 		);
 		ensure!(
-			UserShieldingKeys::<Runtime>::contains_key(&id_graph_id),
+			UserShieldingKeys::<Runtime>::contains_key(&who),
 			StfError::RequestVCFailed(assertion, ErrorDetail::UserShieldingKeyNotFound)
 		);
 
-		let id_graph = IMT::get_id_graph(&id_graph_id, usize::MAX);
+		let id_graph = IMT::get_id_graph(&who, usize::MAX);
 		let vec_identity: Vec<Identity> = id_graph
 			.into_iter()
 			.filter(|item| item.1.status == IdentityStatus::Active)
@@ -135,7 +135,7 @@ impl TrustedCallSigned {
 			.collect();
 		let request: RequestType = AssertionBuildRequest {
 			shard: *shard,
-			id_graph_id,
+			who,
 			assertion: assertion.clone(),
 			vec_identity,
 			hash,
@@ -150,7 +150,7 @@ impl TrustedCallSigned {
 
 	pub fn link_identity_callback_internal(
 		signer: AccountId,
-		id_graph_id: IdGraphIdentifier,
+		who: Address,
 		identity: Identity,
 		parent_ss58_prefix: u16,
 	) -> StfResult<UserShieldingKeyType> {
@@ -158,10 +158,10 @@ impl TrustedCallSigned {
 		ensure_enclave_signer_account(&signer)
 			.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner))?;
 
-		let key = IdentityManagement::user_shielding_keys(&id_graph_id)
+		let key = IdentityManagement::user_shielding_keys(&who)
 			.ok_or(StfError::LinkIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
 
-		IMTCall::link_identity { id_graph_id, identity, parent_ss58_prefix }
+		IMTCall::link_identity { who, identity, parent_ss58_prefix }
 			.dispatch_bypass_filter(RuntimeOrigin::root())
 			.map_err(|e| StfError::LinkIdentityFailed(e.into()))?;
 
@@ -170,7 +170,7 @@ impl TrustedCallSigned {
 
 	pub fn request_vc_callback_internal(
 		signer: AccountId,
-		id_graph_id: IdGraphIdentifier,
+		who: Address,
 		assertion: Assertion,
 	) -> StfResult<UserShieldingKeyType> {
 		// important! The signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
@@ -178,7 +178,7 @@ impl TrustedCallSigned {
 			StfError::RequestVCFailed(assertion.clone(), ErrorDetail::UnauthorizedSigner)
 		})?;
 
-		let key = IdentityManagement::user_shielding_keys(&id_graph_id)
+		let key = IdentityManagement::user_shielding_keys(&who)
 			.ok_or(StfError::RequestVCFailed(assertion, ErrorDetail::UserShieldingKeyNotFound))?;
 
 		Ok(key)

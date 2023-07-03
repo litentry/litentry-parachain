@@ -38,7 +38,7 @@ use itc_rest_client::{
 use itp_stf_primitives::types::ShardIdentifier;
 use lc_credentials::Credential;
 use lc_data_providers::{build_client, G_DATA_PROVIDERS};
-use litentry_primitives::IdGraphIdentifier;
+use litentry_primitives::Address;
 use log::*;
 use rust_base58::ToBase58;
 use serde::{Deserialize, Serialize};
@@ -150,9 +150,9 @@ impl A14Client {
 pub fn build(
 	identities: Vec<Identity>,
 	shard: &ShardIdentifier,
-	id_graph_identifier: &IdGraphIdentifier,
+	who: &Address,
 ) -> Result<Credential> {
-	debug!("Assertion A14 build, id_graph_identifier: {:?}", &id_graph_identifier);
+	debug!("Assertion A14 build, who: {:?}", &who);
 
 	// achainable expects polkadot addresses (those start with 1...)
 	let mut polkadot_addresses = vec![];
@@ -186,7 +186,7 @@ pub fn build(
 		}
 	}
 
-	match Credential::new_default(id_graph_identifier, &shard.clone()) {
+	match Credential::new_default(who, &shard.clone()) {
 		Ok(mut credential_unsigned) => {
 			// add subject info
 			credential_unsigned.add_subject_info(

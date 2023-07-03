@@ -24,7 +24,7 @@ use crate::{
 use codec::Decode;
 use ita_stf::{Index, TrustedCall, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
-use litentry_primitives::{Address, IdGraphIdentifier, UserShieldingKeyType};
+use litentry_primitives::{Address, UserShieldingKeyType};
 use log::*;
 use sp_core::Pair;
 
@@ -39,7 +39,7 @@ pub struct SetUserShieldingKeyCommand {
 impl SetUserShieldingKeyCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) {
 		let who = get_pair_from_str(trusted_cli, self.account.as_str());
-		let idgraph_identifier = IdGraphIdentifier::Substrate { address: who.public().into() };
+		let idgraph_identifier = Address::Substrate(who.public().into());
 
 		let (mrenclave, shard) = get_identifiers(trusted_cli);
 		let nonce = get_layer_two_nonce!(who, cli, trusted_cli);

@@ -27,7 +27,7 @@ use lc_data_providers::{
 	twitter_official::{TargetUser, TwitterOfficialClient},
 	vec_to_string,
 };
-use litentry_primitives::IdGraphIdentifier;
+use litentry_primitives::Address;
 use log::*;
 use std::{format, vec::Vec};
 
@@ -39,12 +39,9 @@ pub fn build(
 	twitter_screen_name: ParameterString,
 	identities: Vec<Identity>,
 	shard: &ShardIdentifier,
-	id_graph_identifier: &IdGraphIdentifier,
+	who: &Address,
 ) -> Result<Credential> {
-	debug!(
-		"Assertion 12 build, id_graph_identifier: {:?}, identities: {:?}",
-		&id_graph_identifier, identities
-	);
+	debug!("Assertion 12 build, who: {:?}, identities: {:?}", &who, identities);
 
 	let twitter_screen_name_s = vec_to_string(twitter_screen_name.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(Assertion::A12(twitter_screen_name.clone()), ErrorDetail::ParseError)
@@ -82,7 +79,7 @@ pub fn build(
 		}
 	}
 
-	match Credential::new_default(id_graph_identifier, shard) {
+	match Credential::new_default(who, shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_SUBJECT_DESCRIPTION,

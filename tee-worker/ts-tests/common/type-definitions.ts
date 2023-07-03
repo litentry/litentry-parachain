@@ -60,11 +60,6 @@ export class AesOutput {
     nonce?: Uint8Array;
 }
 
-export type IdGraphIdentifier = {
-    Substrate?: Address32;
-    Evm?: Address20;
-};
-
 export type Address = {
     Substrate?: Address32;
     Evm?: Address20;

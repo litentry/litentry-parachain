@@ -56,14 +56,14 @@ where
 			Assertion::A1 => lc_assertion_build::a1::build(
 				self.req.vec_identity.to_vec(),
 				&self.req.shard,
-				&self.req.id_graph_id,
+				&self.req.who,
 			),
 
 			Assertion::A2(guild_id) => lc_assertion_build::a2::build(
 				self.req.vec_identity.to_vec(),
 				guild_id,
 				&self.req.shard,
-				&self.req.id_graph_id,
+				&self.req.who,
 			),
 
 			Assertion::A3(guild_id, channel_id, role_id) => lc_assertion_build::a3::build(
@@ -72,62 +72,62 @@ where
 				channel_id,
 				role_id,
 				&self.req.shard,
-				&self.req.id_graph_id,
+				&self.req.who,
 			),
 
 			Assertion::A4(min_balance) => lc_assertion_build::a4::build(
 				self.req.vec_identity.to_vec(),
 				min_balance,
 				&self.req.shard,
-				&self.req.id_graph_id,
+				&self.req.who,
 			),
 
 			Assertion::A5(original_tweet_id) => lc_assertion_build::a5::build(
 				self.req.vec_identity.to_vec(),
 				original_tweet_id,
 				&self.req.shard,
-				&self.req.id_graph_id,
+				&self.req.who,
 			),
 
 			Assertion::A6 => lc_assertion_build::a6::build(
 				self.req.vec_identity.to_vec(),
 				&self.req.shard,
-				&self.req.id_graph_id,
+				&self.req.who,
 			),
 
 			Assertion::A7(min_balance) => lc_assertion_build::a7::build(
 				self.req.vec_identity.to_vec(),
 				min_balance,
 				&self.req.shard,
-				&self.req.id_graph_id,
+				&self.req.who,
 			),
 
 			Assertion::A8(networks) => lc_assertion_build::a8::build(
 				self.req.vec_identity.to_vec(),
 				networks,
 				&self.req.shard,
-				&self.req.id_graph_id,
+				&self.req.who,
 			),
 
 			Assertion::A10(min_balance) => lc_assertion_build::a10::build(
 				self.req.vec_identity.to_vec(),
 				min_balance,
 				&self.req.shard,
-				&self.req.id_graph_id,
+				&self.req.who,
 			),
 
 			Assertion::A11(min_balance) => lc_assertion_build::a11::build(
 				self.req.vec_identity.to_vec(),
 				min_balance,
 				&self.req.shard,
-				&self.req.id_graph_id,
+				&self.req.who,
 			),
 
 			Assertion::A12(s) => lc_assertion_build::a12::build(
 				s,
 				self.req.vec_identity.to_vec(),
 				&self.req.shard,
-				&self.req.id_graph_id,
+				&self.req.who,
 			),
 
 			Assertion::A13(owner) => lc_assertion_build::a13::build(&self.req.shard, &owner),
@@ -135,7 +135,7 @@ where
 			Assertion::A14 => lc_assertion_build::a14::build(
 				self.req.vec_identity.to_vec(),
 				&self.req.shard,
-				&self.req.id_graph_id,
+				&self.req.who,
 			),
 
 			_ => {
@@ -199,7 +199,7 @@ where
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::request_vc_callback(
 				Address::Substrate(enclave_signer.into()),
-				self.req.id_graph_id.clone(),
+				self.req.who.clone(),
 				self.req.assertion.clone(),
 				vc_index,
 				vc_hash,
@@ -220,7 +220,7 @@ where
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::handle_vcmp_error(
 				Address::Substrate(enclave_signer.into()),
-				Some(self.req.id_graph_id.clone()),
+				Some(self.req.who.clone()),
 				error,
 				self.req.hash,
 			);

@@ -51,11 +51,11 @@ declare module '@polkadot/api-base/types/errors' {
         };
         identityManagement: {
             /**
-             * the pair (litentry-account, identity) already linked
+             * the pair (id_graph_identifier, identity) already linked
              **/
             IdentityAlreadyLinked: AugmentedError<ApiType>;
             /**
-             * the pair (litentry-account, identity) doesn't exist
+             * the pair (id_graph_identifier, identity) doesn't exist
              **/
             IdentityNotExist: AugmentedError<ApiType>;
             /**
@@ -67,7 +67,7 @@ declare module '@polkadot/api-base/types/errors' {
              **/
             LinkPrimeIdentityDisallowed: AugmentedError<ApiType>;
             /**
-             * remove prime identiy should be disallowed
+             * remove prime identity should be disallowed
              **/
             RemovePrimeIdentityDisallowed: AugmentedError<ApiType>;
             /**

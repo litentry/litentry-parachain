@@ -20,7 +20,6 @@ import {
     buildIdentityHelper,
     initIntegrationTestContext,
     buildAddressHelper,
-    buildIdGraphIdentityHelper,
 } from '../../common/utils';
 import { aesKey, keyNonce } from '../../common/call';
 import { Metadata, TypeRegistry } from '@polkadot/types';
@@ -73,9 +72,6 @@ async function runDirectCall(keyPairType: KeypairType) {
     let aliceAddress = await buildAddressHelper(alice);
     let bobAddress = await buildAddressHelper(bob);
 
-    let aliceIdGraphIdentifier = await buildIdGraphIdentityHelper(alice);
-    let bobIdGraphIdentifier = await buildIdGraphIdentityHelper(bob);
-
     let nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, aliceAddress);
 
     // similar to `reqExtHash` in indirect calls, we need some "identifiers" to pair the response
@@ -89,7 +85,6 @@ async function runDirectCall(keyPairType: KeypairType) {
         nonce,
         alice,
         aliceAddress,
-        aliceIdGraphIdentifier,
         aesKey,
         hash
     );
@@ -109,7 +104,6 @@ async function runDirectCall(keyPairType: KeypairType) {
         nonce,
         alice,
         aliceAddress,
-        aliceIdGraphIdentifier,
         sidechainRegistry.createType('LitentryPrimitivesIdentity', twitterIdentity).toHex(),
         parachainApi
             .createType('LitentryValidationData', {
@@ -131,7 +125,7 @@ async function runDirectCall(keyPairType: KeypairType) {
     await sleep(30);
 
     console.log('Send IDGraph getter for alice ...');
-    const idgraphGetter = createSignedTrustedGetterIdGraph(parachainApi, alice);
+    const idgraphGetter = createSignedTrustedGetterIdGraph(parachainApi, alice, aliceAddress);
     res = await sendRequestFromGetter(wsp, parachainApi, mrenclave, key, idgraphGetter);
     console.log('IDGraph getter returned', res.toHuman());
     // somehow createType('Option<Vec<(....)>>') doesn't work, why?
@@ -154,7 +148,7 @@ async function runDirectCall(keyPairType: KeypairType) {
     assert.isTrue(idgraphArray[1][1].status.isActive);
 
     console.log('Send UserShieldingKey getter for alice ...');
-    let UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachainApi, aliceAddress);
+    let UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachainApi, alice, aliceAddress);
     res = await sendRequestFromGetter(wsp, parachainApi, mrenclave, key, UserShieldingKeyGetter);
     console.log('UserShieldingKey getter returned', res.toHuman());
     // the returned res.value of the trustedGetter is of Option<> type
@@ -169,7 +163,7 @@ async function runDirectCall(keyPairType: KeypairType) {
 
     // bob's shielding key should be none
     console.log('Send UserShieldingKey getter for bob ...');
-    UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachainApi, bobAddress);
+    UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachainApi, bob, bobAddress);
     res = await sendRequestFromGetter(wsp, parachainApi, mrenclave, key, UserShieldingKeyGetter);
     console.log('UserShieldingKey getter returned', res.toHuman());
     k = parachainApi.createType('Option<Bytes>', hexToU8a(res.value.toHex()));
@@ -189,7 +183,6 @@ async function runDirectCall(keyPairType: KeypairType) {
         nonce,
         bob,
         bobAddress,
-        bobIdGraphIdentifier,
         keyBob,
         hash,
         true // with wrapped bytes
@@ -199,7 +192,7 @@ async function runDirectCall(keyPairType: KeypairType) {
 
     // verify that bob's key is set
     console.log('Send UserShieldingKey getter for bob ...');
-    UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachainApi, bobAddress);
+    UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachainApi, bob, bobAddress);
     res = await sendRequestFromGetter(wsp, parachainApi, mrenclave, key, UserShieldingKeyGetter);
     console.log('UserShieldingKey getter returned', res.toHuman());
     k = parachainApi.createType('Option<Bytes>', hexToU8a(res.value.toHex()));

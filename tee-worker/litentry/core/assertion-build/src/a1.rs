@@ -23,7 +23,7 @@ extern crate sgx_tstd as std;
 use crate::*;
 use itp_stf_primitives::types::ShardIdentifier;
 use lc_credentials::Credential;
-use litentry_primitives::IdGraphIdentifier;
+use litentry_primitives::Address;
 use log::*;
 use std::vec::Vec;
 
@@ -35,9 +35,9 @@ const VC_A1_SUBJECT_TAG: [&str; 1] = ["Litentry Network"];
 pub fn build(
 	identities: Vec<Identity>,
 	shard: &ShardIdentifier,
-	id_graph_identifier: &IdGraphIdentifier,
+	who: &Address,
 ) -> Result<Credential> {
-	debug!("Assertion A1 build, id_graph_identifier: {:?}", id_graph_identifier);
+	debug!("Assertion A1 build, who: {:?}", who);
 
 	let mut web2_cnt = 0;
 	let mut web3_cnt = 0;
@@ -50,7 +50,7 @@ pub fn build(
 		}
 	}
 
-	match Credential::new_default(id_graph_identifier, &shard.clone()) {
+	match Credential::new_default(who, &shard.clone()) {
 		Ok(mut credential_unsigned) => {
 			// add subject info
 			credential_unsigned.add_subject_info(

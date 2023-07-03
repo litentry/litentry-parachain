@@ -323,32 +323,28 @@ declare module '@polkadot/types/lookup' {
     interface PalletIdentityManagementTeeEvent extends Enum {
         readonly isUserShieldingKeySet: boolean;
         readonly asUserShieldingKeySet: {
-            readonly idGraphId: LitentryPrimitivesIdentityIdGraphIdentifier;
+            readonly idGraphId: LitentryPrimitivesAddress;
             readonly key: U8aFixed;
         } & Struct;
         readonly isIdentityLinked: boolean;
         readonly asIdentityLinked: {
-            readonly idGraphId: LitentryPrimitivesIdentityIdGraphIdentifier;
+            readonly idGraphId: LitentryPrimitivesAddress;
             readonly identity: LitentryPrimitivesIdentity;
         } & Struct;
         readonly isIdentityRemoved: boolean;
         readonly asIdentityRemoved: {
-            readonly idGraphId: LitentryPrimitivesIdentityIdGraphIdentifier;
+            readonly idGraphId: LitentryPrimitivesAddress;
             readonly identity: LitentryPrimitivesIdentity;
         } & Struct;
         readonly type: 'UserShieldingKeySet' | 'IdentityLinked' | 'IdentityRemoved';
     }
 
-    /** @name LitentryPrimitivesIdentityIdGraphIdentifier (37) */
-    interface LitentryPrimitivesIdentityIdGraphIdentifier extends Enum {
+    /** @name LitentryPrimitivesAddress (37) */
+    interface LitentryPrimitivesAddress extends Enum {
         readonly isSubstrate: boolean;
-        readonly asSubstrate: {
-            readonly address: LitentryPrimitivesIdentityAddress32;
-        } & Struct;
+        readonly asSubstrate: LitentryPrimitivesIdentityAddress32;
         readonly isEvm: boolean;
-        readonly asEvm: {
-            readonly address: LitentryPrimitivesIdentityAddress20;
-        } & Struct;
+        readonly asEvm: LitentryPrimitivesIdentityAddress20;
         readonly type: 'Substrate' | 'Evm';
     }
 
@@ -684,19 +680,19 @@ declare module '@polkadot/types/lookup' {
     interface PalletIdentityManagementTeeCall extends Enum {
         readonly isSetUserShieldingKey: boolean;
         readonly asSetUserShieldingKey: {
-            readonly idGraphId: LitentryPrimitivesIdentityIdGraphIdentifier;
+            readonly idGraphId: LitentryPrimitivesAddress;
             readonly key: U8aFixed;
             readonly parentSs58Prefix: u16;
         } & Struct;
         readonly isLinkIdentity: boolean;
         readonly asLinkIdentity: {
-            readonly idGraphId: LitentryPrimitivesIdentityIdGraphIdentifier;
+            readonly idGraphId: LitentryPrimitivesAddress;
             readonly identity: LitentryPrimitivesIdentity;
             readonly parentSs58Prefix: u16;
         } & Struct;
         readonly isRemoveIdentity: boolean;
         readonly asRemoveIdentity: {
-            readonly idGraphId: LitentryPrimitivesIdentityIdGraphIdentifier;
+            readonly idGraphId: LitentryPrimitivesAddress;
             readonly identity: LitentryPrimitivesIdentity;
             readonly parentSs58Prefix: u16;
         } & Struct;

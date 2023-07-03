@@ -13,7 +13,6 @@ import type { HexString } from '@polkadot/util/types';
 import type {
     EvmNetwork,
     IdentityGenericEvent,
-    IdGraphIdentifier,
     IntegrationTestContext,
     SubstrateNetwork,
     Web2Network,
@@ -53,28 +52,6 @@ export async function buildIdentityHelper(
         identity
     ) as unknown as LitentryPrimitivesIdentity;
     return encodedIdentity;
-}
-
-export async function buildIdGraphIdentityHelper(keyringPair: KeyringPair): Promise<IdGraphIdentifier> {
-    let type: string = (() => {
-        switch (keyringPair.type) {
-            case 'ethereum':
-                return 'Evm';
-            case 'sr25519':
-                return 'Substrate';
-            case 'ed25519':
-                return 'Substrate';
-            case 'ecdsa':
-                return 'Substrate';
-            default:
-                return 'Substrate';
-        }
-    })();
-    let address = keyringPair.addressRaw;
-    const identifier: IdGraphIdentifier = {
-        [type]: address,
-    };
-    return identifier;
 }
 
 export async function buildAddressHelper(keyringPair: KeyringPair): Promise<Address> {

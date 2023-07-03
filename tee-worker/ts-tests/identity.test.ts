@@ -10,8 +10,8 @@ import {
     checkUserShieldingKeys,
     assertIdentityLinked,
     assertIdentityRemoved,
-    buildIdGraphIdentityHelper,
     assertInitialIdGraphCreated,
+    buildAddressHelper,
 } from './common/utils';
 import { aesKey } from './common/call';
 import { substrateNetworkMapping } from './common/helpers';
@@ -43,7 +43,7 @@ describeLitentry('Test Identity', 0, (context) => {
     let bobValidations: LitentryValidationData[] = [];
 
     step('check user sidechain storage before create', async function () {
-        let aliceAddress = await buildIdGraphIdentityHelper(context.substrateWallet.alice);
+        let aliceAddress = await buildAddressHelper(context.substrateWallet.alice);
         const respShieldingKey = await checkUserShieldingKeys(
             context,
             'IdentityManagement',
@@ -99,7 +99,7 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
-        let aliceAddress = await buildIdGraphIdentityHelper(context.substrateWallet.alice);
+        let aliceAddress = await buildAddressHelper(context.substrateWallet.alice);
         const respShieldingKey = await checkUserShieldingKeys(
             context,
             'IdentityManagement',
@@ -110,7 +110,7 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('check idgraph from sidechain storage before linking', async function () {
-        let aliceAddress = await buildIdGraphIdentityHelper(context.substrateWallet.alice);
+        let aliceAddress = await buildAddressHelper(context.substrateWallet.alice);
 
         // the main address should be already inside the IDGraph
         const mainIdentity = await buildIdentityHelper(
@@ -128,7 +128,6 @@ describeLitentry('Test Identity', 0, (context) => {
 
     step('link identities', async function () {
         // Alice
-        const aliceIdGraphIdentifier = await buildIdGraphIdentityHelper(context.substrateWallet.alice);
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2', context);
         const ethereumIdentity = await buildIdentityHelper(
             context.ethersWallet.alice.address,
@@ -144,7 +143,6 @@ describeLitentry('Test Identity', 0, (context) => {
         );
 
         // Bob
-        const bobIdGraphIdentifier = await buildIdGraphIdentityHelper(context.substrateWallet.bob);
         const bobSubstrateIdentity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.bob.addressRaw),
             'Litentry',
@@ -262,7 +260,7 @@ describeLitentry('Test Identity', 0, (context) => {
     step('check IDGraph after LinkIdentity', async function () {
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2', context);
         const identityHex = context.api.createType('LitentryIdentity', twitterIdentity).toHex();
-        let aliceAddress = await buildIdGraphIdentityHelper(context.substrateWallet.alice);
+        let aliceAddress = await buildAddressHelper(context.substrateWallet.alice);
 
         const respIdGraph = await checkIdGraph(context, 'IdentityManagement', 'IDGraphs', aliceAddress, identityHex);
         assert.isTrue(respIdGraph.linkBlock.toNumber() > 0, 'linkBlock should be greater than 0');

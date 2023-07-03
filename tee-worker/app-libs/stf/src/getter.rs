@@ -21,7 +21,7 @@ use ita_sgx_runtime::System;
 use itp_stf_interface::ExecuteGetter;
 use itp_stf_primitives::types::KeyPair;
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{Address, IdGraphIdentifier, LitentryMultiSignature};
+use litentry_primitives::{Address, LitentryMultiSignature};
 use log::*;
 use std::prelude::v1::*;
 
@@ -184,17 +184,10 @@ impl ExecuteGetter for TrustedGetterSigned {
 					None
 				},
 			// litentry
-			TrustedGetter::user_shielding_key(who) => {
-				// let identifier: IdGraphIdentifier = who.into();
-				let identifier: IdGraphIdentifier = prepare_id_graph_identifier(who);
-
-				IdentityManagement::user_shielding_keys(&identifier).map(|key| key.encode())
-			},
-			TrustedGetter::id_graph(who) => {
-				// let identifier: IdGraphIdentifier = who.into();
-				let identifier: IdGraphIdentifier = prepare_id_graph_identifier(who);
-				Some(IdentityManagement::get_id_graph(&identifier, usize::MAX).encode())
-			},
+			TrustedGetter::user_shielding_key(who) =>
+				IdentityManagement::user_shielding_keys(&who).map(|key| key.encode()),
+			TrustedGetter::id_graph(who) =>
+				Some(IdentityManagement::get_id_graph(&who, usize::MAX).encode()),
 
 			// TODO: we need to re-think it
 			//       currently, _who is ignored meaning it's actually not a "trusted" getter.
@@ -208,13 +201,6 @@ impl ExecuteGetter for TrustedGetterSigned {
 
 	fn get_storage_hashes_to_update(self) -> Vec<Vec<u8>> {
 		Vec::new()
-	}
-}
-
-fn prepare_id_graph_identifier(who: Address) -> IdGraphIdentifier {
-	match who {
-		Address::Substrate(address) => IdGraphIdentifier::Substrate { address },
-		Address::Evm(address) => IdGraphIdentifier::Evm { address },
 	}
 }
 

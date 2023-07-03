@@ -19,7 +19,7 @@ use ita_stf::helpers::{get_expected_raw_message, get_expected_wrapped_message};
 use itp_types::Index;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
-	recover_evm_address, ErrorDetail, IdGraphIdentifier, Identity, LitentryMultiSignature,
+	recover_evm_address, Address, ErrorDetail, Identity, LitentryMultiSignature,
 	UserShieldingKeyNonceType, UserShieldingKeyType, Web3CommonValidationData, Web3ValidationData,
 };
 use log::*;
@@ -30,47 +30,37 @@ use sp_io::{
 };
 
 pub fn verify(
-	id_graph_identifier: &IdGraphIdentifier,
+	who: &Address,
 	identity: &Identity,
 	sidechain_nonce: Index,
 	key: UserShieldingKeyType,
 	nonce: UserShieldingKeyNonceType,
 	data: &Web3ValidationData,
 ) -> Result<()> {
-	debug!(
-		"verify web3 identity, id_graph_identifier: {}",
-		account_id_to_string(&id_graph_identifier)
-	);
+	debug!("verify web3 identity, who: {}", account_id_to_string(&who));
 	match data {
 		Web3ValidationData::Substrate(substrate_validation_data) => verify_substrate_signature(
-			id_graph_identifier,
+			who,
 			identity,
 			sidechain_nonce,
 			key,
 			nonce,
 			substrate_validation_data,
 		),
-		Web3ValidationData::Evm(evm_validation_data) => verify_evm_signature(
-			id_graph_identifier,
-			identity,
-			sidechain_nonce,
-			key,
-			nonce,
-			evm_validation_data,
-		),
+		Web3ValidationData::Evm(evm_validation_data) =>
+			verify_evm_signature(who, identity, sidechain_nonce, key, nonce, evm_validation_data),
 	}
 }
 
 fn verify_substrate_signature(
-	id_graph_identifier: &IdGraphIdentifier,
+	who: &Address,
 	identity: &Identity,
 	sidechain_nonce: Index,
 	key: UserShieldingKeyType,
 	nonce: UserShieldingKeyNonceType,
 	validation_data: &Web3CommonValidationData,
 ) -> Result<()> {
-	let raw_msg =
-		get_expected_raw_message(id_graph_identifier, identity, sidechain_nonce, key, nonce);
+	let raw_msg = get_expected_raw_message(who, identity, sidechain_nonce, key, nonce);
 	let wrapped_msg = get_expected_wrapped_message(raw_msg.clone());
 
 	ensure!(
@@ -127,14 +117,14 @@ fn verify_substrate_signature_internal(
 }
 
 fn verify_evm_signature(
-	id_graph_identifier: &IdGraphIdentifier,
+	who: &Address,
 	identity: &Identity,
 	sidechain_nonce: Index,
 	key: UserShieldingKeyType,
 	nonce: UserShieldingKeyNonceType,
 	validation_data: &Web3CommonValidationData,
 ) -> Result<()> {
-	let msg = get_expected_raw_message(id_graph_identifier, identity, sidechain_nonce, key, nonce);
+	let msg = get_expected_raw_message(who, identity, sidechain_nonce, key, nonce);
 	let digest = compute_evm_msg_digest(&msg);
 	let evm_address = if let Identity::Evm { address, .. } = identity {
 		address

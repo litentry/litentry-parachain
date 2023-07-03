@@ -47,8 +47,8 @@ use error::{Error, Result};
 pub fn verify(r: &IdentityVerificationRequest) -> Result<()> {
 	match &r.validation_data {
 		ValidationData::Web2(data) =>
-			web2::verify(&r.id_graph_id, &r.identity, r.sidechain_nonce, r.key, r.key_nonce, data),
+			web2::verify(&r.who, &r.identity, r.sidechain_nonce, r.key, r.key_nonce, data),
 		ValidationData::Web3(data) =>
-			web3::verify(&r.id_graph_id, &r.identity, r.sidechain_nonce, r.key, r.key_nonce, data),
+			web3::verify(&r.who, &r.identity, r.sidechain_nonce, r.key, r.key_nonce, data),
 	}
 }

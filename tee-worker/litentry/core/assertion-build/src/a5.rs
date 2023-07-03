@@ -27,7 +27,7 @@ use lc_data_providers::{
 	twitter_official::{TargetUser, TwitterOfficialClient},
 	vec_to_string,
 };
-use litentry_primitives::IdGraphIdentifier;
+use litentry_primitives::Address;
 use log::*;
 use std::{format, vec::Vec};
 
@@ -40,12 +40,9 @@ pub fn build(
 	identities: Vec<Identity>,
 	original_tweet_id: ParameterString,
 	shard: &ShardIdentifier,
-	id_graph_identifier: &IdGraphIdentifier,
+	who: &Address,
 ) -> Result<Credential> {
-	debug!(
-		"Assertion A5 build, id_graph_identifier: {:?}, identities: {:?}",
-		&id_graph_identifier, identities
-	);
+	debug!("Assertion A5 build, who: {:?}, identities: {:?}", &who, identities);
 
 	//ToDo: Check this string is a pure number or not, to avoid wasting API calls.
 	let original_tweet_id_s = vec_to_string(original_tweet_id.to_vec()).map_err(|_| {
@@ -122,7 +119,7 @@ pub fn build(
 		}
 	}
 
-	match Credential::new_default(id_graph_identifier, &shard.clone()) {
+	match Credential::new_default(who, &shard.clone()) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_A5_SUBJECT_DESCRIPTION,

@@ -15,14 +15,11 @@ import type {
     EvmNetwork,
     GenericEventWithAccount,
     Getter,
-    IdGraphIdentifier,
     IdentityContext,
     IdentityGenericEvent,
     IdentityStatus,
     IdentityString,
     LitentryAddress,
-    LitentryAddress20,
-    LitentryAddress32,
     LitentryIdentity,
     LitentryMultiSignature,
     LitentryValidationData,
@@ -1697,7 +1694,6 @@ declare module '@polkadot/types/types/registry' {
         IdentityGenericEvent: IdentityGenericEvent;
         IdentityStatus: IdentityStatus;
         IdentityString: IdentityString;
-        IdGraphIdentifier: IdGraphIdentifier;
         ImmortalEra: ImmortalEra;
         ImportedAux: ImportedAux;
         InboundDownwardMessage: InboundDownwardMessage;
@@ -1759,8 +1755,6 @@ declare module '@polkadot/types/types/registry' {
         Limits: Limits;
         LimitsTo264: LimitsTo264;
         LitentryAddress: LitentryAddress;
-        LitentryAddress20: LitentryAddress20;
-        LitentryAddress32: LitentryAddress32;
         LitentryIdentity: LitentryIdentity;
         LitentryMultiSignature: LitentryMultiSignature;
         LitentryValidationData: LitentryValidationData;

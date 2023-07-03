@@ -482,9 +482,9 @@ declare module '@polkadot/api-base/types/errors' {
              **/
             DelegateeNotExist: AugmentedError<ApiType>;
             /**
-             * a `link_identity` request from unauthorized user
+             * a `link_identity` request from unauthorised user
              **/
-            UnauthorizedUser: AugmentedError<ApiType>;
+            UnauthorisedUser: AugmentedError<ApiType>;
             /**
              * Generic error
              **/
@@ -1272,9 +1272,9 @@ declare module '@polkadot/api-base/types/errors' {
              **/
             SchemaNotExists: AugmentedError<ApiType>;
             /**
-             * a `request_vc` request from unauthorized user
+             * a `request_vc` request from unauthorised user
              **/
-            UnauthorizedUser: AugmentedError<ApiType>;
+            UnauthorisedUser: AugmentedError<ApiType>;
             /**
              * The VC is already disabled
              **/

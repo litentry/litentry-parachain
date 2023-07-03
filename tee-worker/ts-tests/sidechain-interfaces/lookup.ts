@@ -252,30 +252,26 @@ export default {
     PalletIdentityManagementTeeEvent: {
         _enum: {
             UserShieldingKeySet: {
-                idGraphId: 'LitentryPrimitivesIdentityIdGraphIdentifier',
+                idGraphId: 'LitentryPrimitivesAddress',
                 key: '[u8;32]',
             },
             IdentityLinked: {
-                idGraphId: 'LitentryPrimitivesIdentityIdGraphIdentifier',
+                idGraphId: 'LitentryPrimitivesAddress',
                 identity: 'LitentryPrimitivesIdentity',
             },
             IdentityRemoved: {
-                idGraphId: 'LitentryPrimitivesIdentityIdGraphIdentifier',
+                idGraphId: 'LitentryPrimitivesAddress',
                 identity: 'LitentryPrimitivesIdentity',
             },
         },
     },
     /**
-     * Lookup37: litentry_primitives::identity::IdGraphIdentifier
+     * Lookup37: litentry_primitives::Address
      **/
-    LitentryPrimitivesIdentityIdGraphIdentifier: {
+    LitentryPrimitivesAddress: {
         _enum: {
-            Substrate: {
-                address: 'LitentryPrimitivesIdentityAddress32',
-            },
-            Evm: {
-                address: 'LitentryPrimitivesIdentityAddress20',
-            },
+            Substrate: 'LitentryPrimitivesIdentityAddress32',
+            Evm: 'LitentryPrimitivesIdentityAddress20',
         },
     },
     /**
@@ -586,17 +582,17 @@ export default {
     PalletIdentityManagementTeeCall: {
         _enum: {
             set_user_shielding_key: {
-                idGraphId: 'LitentryPrimitivesIdentityIdGraphIdentifier',
+                idGraphId: 'LitentryPrimitivesAddress',
                 key: '[u8;32]',
                 parentSs58Prefix: 'u16',
             },
             link_identity: {
-                idGraphId: 'LitentryPrimitivesIdentityIdGraphIdentifier',
+                idGraphId: 'LitentryPrimitivesAddress',
                 identity: 'LitentryPrimitivesIdentity',
                 parentSs58Prefix: 'u16',
             },
             remove_identity: {
-                idGraphId: 'LitentryPrimitivesIdentityIdGraphIdentifier',
+                idGraphId: 'LitentryPrimitivesAddress',
                 identity: 'LitentryPrimitivesIdentity',
                 parentSs58Prefix: 'u16',
             },

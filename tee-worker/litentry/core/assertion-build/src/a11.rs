@@ -28,7 +28,7 @@ use lc_data_providers::{
 	graphql::{AchainableQuery, GraphQLClient, VerifiedCredentialsIsHodlerIn},
 	vec_to_string,
 };
-use litentry_primitives::{IdGraphIdentifier, SupportedNetwork};
+use litentry_primitives::{Address, SupportedNetwork};
 use log::*;
 use std::{string::ToString, vec, vec::Vec};
 
@@ -41,12 +41,9 @@ pub fn build(
 	identities: Vec<Identity>,
 	min_balance: ParameterString,
 	shard: &ShardIdentifier,
-	id_graph_identifier: &IdGraphIdentifier,
+	who: &Address,
 ) -> Result<Credential> {
-	debug!(
-		"Assertion A11 build, id_graph_identifier: {:?}, identities: {:?}",
-		&id_graph_identifier, identities,
-	);
+	debug!("Assertion A11 build, who: {:?}, identities: {:?}", &who, identities,);
 
 	let q_min_balance = vec_to_string(min_balance.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(Assertion::A11(min_balance.clone()), ErrorDetail::ParseError)
@@ -97,7 +94,7 @@ pub fn build(
 		}
 	}
 
-	match Credential::new_default(id_graph_identifier, &shard.clone()) {
+	match Credential::new_default(who, &shard.clone()) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_A11_SUBJECT_DESCRIPTION,

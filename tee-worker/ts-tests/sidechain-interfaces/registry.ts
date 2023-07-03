@@ -30,11 +30,11 @@ import type {
     FrameSystemLimitsWeightsPerClass,
     FrameSystemPhase,
     ItaSgxRuntimeRuntime,
+    LitentryPrimitivesAddress,
     LitentryPrimitivesIdentity,
     LitentryPrimitivesIdentityAddress20,
     LitentryPrimitivesIdentityAddress32,
     LitentryPrimitivesIdentityEvmNetwork,
-    LitentryPrimitivesIdentityIdGraphIdentifier,
     LitentryPrimitivesIdentitySubstrateNetwork,
     LitentryPrimitivesIdentityWeb2Network,
     PalletBalancesAccountData,
@@ -101,11 +101,11 @@ declare module '@polkadot/types/types/registry' {
         FrameSystemLimitsWeightsPerClass: FrameSystemLimitsWeightsPerClass;
         FrameSystemPhase: FrameSystemPhase;
         ItaSgxRuntimeRuntime: ItaSgxRuntimeRuntime;
+        LitentryPrimitivesAddress: LitentryPrimitivesAddress;
         LitentryPrimitivesIdentity: LitentryPrimitivesIdentity;
         LitentryPrimitivesIdentityAddress20: LitentryPrimitivesIdentityAddress20;
         LitentryPrimitivesIdentityAddress32: LitentryPrimitivesIdentityAddress32;
         LitentryPrimitivesIdentityEvmNetwork: LitentryPrimitivesIdentityEvmNetwork;
-        LitentryPrimitivesIdentityIdGraphIdentifier: LitentryPrimitivesIdentityIdGraphIdentifier;
         LitentryPrimitivesIdentitySubstrateNetwork: LitentryPrimitivesIdentitySubstrateNetwork;
         LitentryPrimitivesIdentityWeb2Network: LitentryPrimitivesIdentityWeb2Network;
         PalletBalancesAccountData: PalletBalancesAccountData;

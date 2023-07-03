@@ -56,7 +56,7 @@ where
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::link_identity_callback(
 				Address::Substrate(enclave_signer.into()),
-				self.req.id_graph_id.clone(),
+				self.req.who.clone(),
 				self.req.identity.clone(),
 				self.req.hash,
 			);
@@ -74,7 +74,7 @@ where
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::handle_imp_error(
 				Address::Substrate(enclave_signer.into()),
-				Some(self.req.id_graph_id.clone()),
+				Some(self.req.who.clone()),
 				error,
 				self.req.hash,
 			);

@@ -38,8 +38,7 @@ pub use error::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::Index;
 use litentry_primitives::{
-	Assertion, IdGraphIdentifier, Identity, UserShieldingKeyNonceType, UserShieldingKeyType,
-	ValidationData,
+	Address, Assertion, Identity, UserShieldingKeyNonceType, UserShieldingKeyType, ValidationData,
 };
 use sp_runtime::traits::ConstU32;
 use sp_std::prelude::Vec;
@@ -71,7 +70,7 @@ use sp_std::prelude::Vec;
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct IdentityVerificationRequest {
 	pub shard: ShardIdentifier,
-	pub id_graph_id: IdGraphIdentifier,
+	pub who: Address,
 	pub identity: Identity,
 	pub validation_data: ValidationData,
 	pub sidechain_nonce: Index,
@@ -85,7 +84,7 @@ pub type MaxIdentityLength = ConstU32<64>;
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct AssertionBuildRequest {
 	pub shard: ShardIdentifier,
-	pub id_graph_id: IdGraphIdentifier,
+	pub who: Address,
 	pub assertion: Assertion,
 	pub vec_identity: Vec<Identity>,
 	pub hash: H256,
