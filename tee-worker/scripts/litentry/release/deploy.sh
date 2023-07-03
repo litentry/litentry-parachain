@@ -9,7 +9,7 @@ function print_divider() {
 
 # Function to display the script's usage
 function display_help() {
-  echo "Usage: ./release.sh launch --build"
+  echo "Usage: ./deploy.sh restart --build --config config.json"
   echo ""
   echo "Options:"
   echo "  -h, --help         Display this help message and exit."
@@ -41,7 +41,7 @@ function display_help() {
 generate_service_file() {
   if [ "$#" -ne 5 ]; then
     echo "Usage: generate_service_file <service_name> <description> <command> <working_directory> <log_file_path>"
-    return 1
+    exit 1
   fi
 
   local service_name="$1"
@@ -504,7 +504,7 @@ function latest_parentchain_sync_block(){
   dec_number=$(printf "%d" "$hex_number")
 
 
-  # Store the latest finalized block numbe  r in an environment variable
+  # Store the latest finalized block number in an environment variable
   export LATEST_FINALIZED_BLOCK=${dec_number}
 
   echo "Latest finalized block number: $LATEST_FINALIZED_BLOCK"
@@ -518,7 +518,7 @@ function build_parachain(){
 function build_worker(){
   cd $ROOTDIR/tee-worker/
   source /opt/intel/sgxsdk/environment
-  SGX_COMMERCIAL_KEY=/home/faisal/litentry-parachain/tee-worker/enclave-runtime/Enclave_private.pem SGX_PRODUCTION=1 make
+  SGX_COMMERCIAL_KEY=$ROOTDIR/tee-worker/enclave-runtime/Enclave_private.pem SGX_PRODUCTION=1 make
 }
 
 # Default values
@@ -600,7 +600,7 @@ if [ "$discard" = true ]; then
   rm -rf $ROOTDIR/tee-worker/tmp
 fi
 
-# Get Old MRENCLAVE
+# Get old MRENCLAVE
 if [ "$action" = "upgrade-worker" ]; then
   cd $ROOTDIR/tee-worker
   output=$(make mrenclave 2>&1)
@@ -614,7 +614,7 @@ if [ "$action" = "upgrade-worker" ]; then
   fi
 fi
 
-# Move log files  to log-backup
+# Move log files to log-backup
 if [ -d "log" ]; then
   new_folder_name=$(date +"log-backup/log-%Y%m%d-%H%M%S")
   cp -r "log" "$new_folder_name"
