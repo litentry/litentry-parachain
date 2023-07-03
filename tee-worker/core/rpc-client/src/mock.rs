@@ -33,7 +33,7 @@ pub struct DirectClientMock {
 	mu_ra_url: String,
 	untrusted_worker_url: String,
 	metadata: String,
-	nonce: String,
+	nonce: u32,
 }
 
 impl DirectClientMock {
