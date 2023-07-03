@@ -65,9 +65,10 @@ where
 	S::StateT: SgxExternalitiesTrait,
 {
 	let io = IoHandler::new();
+	let pool_author = top_pool_author.clone();
 
 	// Add direct TOP pool rpc methods
-	let mut io = direct_top_pool_api::add_top_pool_direct_rpc_methods(top_pool_author.clone(), io);
+	let mut io = direct_top_pool_api::add_top_pool_direct_rpc_methods(top_pool_author, io);
 
 	// author_getShieldingKey
 	let rsa_pubkey_name: &str = "author_getShieldingKey";
@@ -115,7 +116,7 @@ where
 						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
 					},
 				};
-				let trusted_calls = top_pool_author.get_pending_trusted_calls_for(shard, &account);
+				let trusted_calls = pool_author.get_pending_trusted_calls_for(shard, &account);
 				let pending_tx_count = trusted_calls.len();
 				let pending_tx_count = Index::try_from(pending_tx_count).unwrap();
 				let nonce = System::account_nonce(&account);
@@ -311,6 +312,7 @@ where
 	io.add_sync_method("rpc_methods", move |_: Params| {
 		Ok(Value::String(rpc_methods_string.to_owned()))
 	});
+
 	io
 }
 

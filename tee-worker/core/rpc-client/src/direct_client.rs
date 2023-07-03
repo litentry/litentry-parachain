@@ -117,9 +117,9 @@ impl DirectApi for DirectClient {
 	fn get(&self, request: &str) -> Result<String> {
 		let (port_in, port_out) = channel();
 
-		error!("[WorkerApi Direct]: (get) Sending request: {:?}", request);
+		info!("[WorkerApi Direct]: (get) Sending request: {:?}", request);
 		WsClient::connect_one_shot(&self.url, request, port_in)?;
-		error!("Waiting for web-socket result..");
+		debug!("Waiting for web-socket result..");
 		port_out.recv().map_err(Error::MspcReceiver)
 	}
 
@@ -217,16 +217,12 @@ impl DirectApi for DirectClient {
 			vec![shard.encode().to_base58(), account.to_hex()],
 		)
 		.unwrap();
-
-		error!("get_next_nonce jsonrpc_call: {}", jsonrpc_call);
-
+		debug!("[+] get_next_nonce jsonrpc_call: {}", jsonrpc_call);
 		// Send json rpc call to ws server.
 		let response_str = self.get(&jsonrpc_call)?;
-		error!("[+] get_next_nonce response_str: {}", response_str);
-
+		debug!("[+] get_next_nonce response_str: {}", response_str);
 		let nonce_string = decode_from_rpc_response(&response_str)?;
-
-		error!("[+] Got next nonce: {}", nonce_string);
+		info!("[+] Got next nonce: {}", nonce_string);
 		Ok(nonce_string)
 	}
 }

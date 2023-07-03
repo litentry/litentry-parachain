@@ -41,9 +41,8 @@ impl NonceCommand {
 		let who = get_pair_from_str(trusted_cli, &self.account);
 		let worker_api_direct = get_worker_api_direct(cli);
 		let nonce_ret = worker_api_direct.get_next_nonce(&shard, &(who.public().into()));
-		info!("nonce_ret {:?} ", nonce_ret);
 		let nonce_val = nonce_ret.unwrap();
-		info!("nonce_val {:?} ", nonce_val);
+		println!("nonce_val {:?} ", nonce_val);
 		let rpc_response: RpcResponse = serde_json::from_str(&nonce_val).unwrap();
 		let rpc_return_value = RpcReturnValue::from_hex(&rpc_response.result).unwrap();
 		if rpc_return_value.status == DirectRequestStatus::Error {
@@ -51,10 +50,8 @@ impl NonceCommand {
 			worker_api_direct.close().unwrap();
 			return
 		}
-
 		worker_api_direct.close().unwrap();
 		let nonce: u32 = Decode::decode(&mut rpc_return_value.value.as_slice()).unwrap_or_default();
-
 		println!("{}", nonce);
 	}
 }
