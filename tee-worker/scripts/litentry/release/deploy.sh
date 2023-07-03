@@ -364,7 +364,9 @@ function upgrade_worker(){
   latest_parentchain_sync_block
 
   echo "Setting up the new Worker on Chain"
-  $ROOTDIR/tee-worker/scripts/litentry/setup_enclave.sh
+  cd $ROOTDIR/scripts/ts-utils/
+  yarn install
+  npx ts-node setup-enclave.ts  $ENCLAVE_ACCOUNT $NEW_MRENCLAVE $SCHEDULE_UPDATE_BLOCK
 
   echo "Stopping Currently running Worker..."
   stop_old_worker
