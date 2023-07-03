@@ -22,7 +22,7 @@ use crate::sgx_reexport_prelude::*;
 use rust_base58::base58::FromBase58;
 
 #[cfg(feature = "sgx")]
-use ::base58::{FromBase58, ToBase58};
+use base58::FromBase58;
 use codec::{Decode, Encode};
 use itp_rpc::RpcReturnValue;
 use itp_stf_primitives::types::AccountId;

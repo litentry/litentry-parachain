@@ -6,7 +6,6 @@ version = "0.9.0"
 
 [dependencies]
 # sgx dependencies
-base58 = "0.2"
 sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
 sgx_types = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 # local dependencies

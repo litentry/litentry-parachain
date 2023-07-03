@@ -21,11 +21,7 @@ use crate::{
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
 	Cli,
 };
-use codec::Decode;
 use itc_rpc_client::direct_client::DirectApi;
-use itp_rpc::{RpcResponse, RpcReturnValue};
-use itp_types::DirectRequestStatus;
-use itp_utils::FromHexPrefixed;
 use sp_core::Pair;
 
 #[derive(Parser)]
@@ -40,17 +36,8 @@ impl NonceCommand {
 		let who = get_pair_from_str(trusted_cli, &self.account);
 		let worker_api_direct = get_worker_api_direct(cli);
 		let nonce_ret = worker_api_direct.get_next_nonce(&shard, &(who.public().into()));
-		let nonce_val = nonce_ret.unwrap();
-		println!("nonce_val {:?} ", nonce_val);
-		let rpc_response: RpcResponse = serde_json::from_str(&nonce_val).unwrap();
-		let rpc_return_value = RpcReturnValue::from_hex(&rpc_response.result).unwrap();
-		if rpc_return_value.status == DirectRequestStatus::Error {
-			println!("[Error] {}", String::decode(&mut rpc_return_value.value.as_slice()).unwrap());
-			worker_api_direct.close().unwrap();
-			return
-		}
+		let nonce = nonce_ret.unwrap();
 		worker_api_direct.close().unwrap();
-		let nonce: u32 = Decode::decode(&mut rpc_return_value.value.as_slice()).unwrap_or_default();
 		println!("{}", nonce);
 	}
 }

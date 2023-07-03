@@ -56,11 +56,11 @@ pub trait DirectApi {
 	fn get_state_metadata(&self) -> Result<RuntimeMetadataPrefixed>;
 	// litentry
 	fn get_state_metadata_raw(&self) -> Result<String>;
+	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &AccountId) -> Result<u32>;
 
 	fn send(&self, request: &str) -> Result<()>;
 	/// Close any open websocket connection.
 	fn close(&self) -> Result<()>;
-	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &AccountId) -> Result<String>;
 }
 
 impl DirectClient {
@@ -202,15 +202,7 @@ impl DirectApi for DirectClient {
 		serde_json::to_string(&rpc_response).map_err(|e| Error::Custom(Box::new(e)))
 	}
 
-	fn send(&self, request: &str) -> Result<()> {
-		self.web_socket_control.send(request)
-	}
-
-	fn close(&self) -> Result<()> {
-		self.web_socket_control.close_connection()
-	}
-
-	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &AccountId) -> Result<String> {
+	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &AccountId) -> Result<u32> {
 		// let data = Request { shard, cyphertext: account.encode() };
 		let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
 			"author_getNextNonce".to_owned(),
@@ -221,10 +213,16 @@ impl DirectApi for DirectClient {
 		// Send json rpc call to ws server.
 		let response_str = self.get(&jsonrpc_call)?;
 		debug!("[+] get_next_nonce response_str: {}", response_str);
-		let nonce_string = decode_from_rpc_response(&response_str)?;
-		info!("[+] Got next nonce: {}", nonce_string);
-		Ok(nonce_string)
+		decode_u32_from_rpc_response(&response_str)
 	}
+
+	fn send(&self, request: &str) -> Result<()> {
+		self.web_socket_control.send(request)
+	}
+
+	fn close(&self) -> Result<()> {
+		self.web_socket_control.close_connection()
+	}	
 }
 
 fn decode_from_rpc_response(json_rpc_response: &str) -> Result<String> {
@@ -235,6 +233,17 @@ fn decode_from_rpc_response(json_rpc_response: &str) -> Result<String> {
 	match rpc_return_value.status {
 		DirectRequestStatus::Ok => Ok(response_message),
 		_ => Err(Error::Status(response_message)),
+	}
+}
+
+fn decode_u32_from_rpc_response(json_rpc_response: &str) -> Result<u32> {
+	let rpc_response: RpcResponse = serde_json::from_str(json_rpc_response)?;
+	let rpc_return_value =
+		RpcReturnValue::from_hex(&rpc_response.result).map_err(|e| Error::Custom(Box::new(e)))?;
+	let response_value = u32::decode(&mut rpc_return_value.value.as_slice())?;
+	match rpc_return_value.status {
+		DirectRequestStatus::Ok => Ok(response_value),
+		_ => Err(Error::Status(format!("decode_u32_from_rpc_response failed to decode {}", json_rpc_response))),
 	}
 }
 
