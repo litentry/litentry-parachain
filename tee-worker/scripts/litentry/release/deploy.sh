@@ -439,7 +439,7 @@ function stop_old_worker(){
   TIMEOUT=300  # Timeout in seconds
   SECONDS=0
   while (( SECONDS < TIMEOUT )); do
-      LOG_FILE="log/worker0.log"
+      LOG_FILE="$ROOTDIR/tee-worker/log/worker0.log"
         if grep -q "Enclave did not produce sidechain blocks" "$LOG_FILE"; then
             echo "Enclave has stoppped producing blocks, Stopping it now"
             worker_count=$(echo "$CONFIG" | jq '.workers | length')
@@ -455,6 +455,7 @@ function stop_old_worker(){
 }
 
 function migrate_worker(){
+  cd $ROOTDIR/tee-worker
   # Copy integritee-service binary and enclave_signed.so to ./tmp/w0
   cp ./bin/integritee-service ./tmp/w0
   cp ./bin/enclave.signed.so  ./tmp/w0
@@ -468,19 +469,8 @@ function migrate_worker(){
   # Navigate to ./tmp/w0/shards
   cd shards || exit
 
-  # Find the two files and delete the older one
-  files=(*)
-  if [[ ${#files[@]} -eq 2 ]]; then
-      file1="${files[0]}"
-      file2="${files[1]}"
-      if [[ $file1 -ot $file2 ]]; then
-          echo "Deleting the older shard folder: $file1"
-          rm -r "$file1"
-      else
-          echo "Deleting the older shard folder: $file2"
-          rm -r "$file2"
-      fi
-  fi
+  # Delete the old shard value
+  rm -r $OLD_SHARD
 
   echo "Migration of shards completed"
 }
@@ -614,6 +604,11 @@ if [ "$action" = "upgrade-worker" ]; then
     echo "Failed to extract MRENCLAVE value."
     exit 1
   fi
+
+  # Fetch Base58 value for MRENCLAVE
+  cd $ROOTDIR/tee-worker/bin
+  export OLD_SHARD=$(./integritee-service mrenclave)
+  echo "Old Shard value: ${OLD_SHARD}"
 fi
 
 # Move log files to log-backup
@@ -639,4 +634,3 @@ elif [ "$action" = "upgrade-worker" ]; then
   echo "Upgrading Worker"
   upgrade_worker
 fi
-
