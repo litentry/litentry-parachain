@@ -42,7 +42,7 @@ impl DirectClientMock {
 		mu_ra_url: String,
 		untrusted_worker_url: String,
 		metadata: String,
-		nonce: String,
+		nonce: u32,
 	) -> Self {
 		Self { rsa_pubkey, mu_ra_url, untrusted_worker_url, metadata, nonce }
 	}
@@ -67,8 +67,8 @@ impl DirectClientMock {
 		self
 	}
 
-	pub fn with_nonce(mut self, nonce: &str) -> Self {
-		self.nonce = nonce.to_string();
+	pub fn with_nonce(mut self, nonce: u32) -> Self {
+		self.nonce = nonce;
 		self
 	}
 }
@@ -115,7 +115,7 @@ impl DirectApi for DirectClientMock {
 		unimplemented!()
 	}
 
-	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &AccountId) -> Result<String> {
-		Ok(self.nonce.clone())
+	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &AccountId) -> Result<u32> {
+		Ok(self.nonce)
 	}
 }
