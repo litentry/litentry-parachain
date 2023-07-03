@@ -222,7 +222,7 @@ impl DirectApi for DirectClient {
 
 	fn close(&self) -> Result<()> {
 		self.web_socket_control.close_connection()
-	}	
+	}
 }
 
 fn decode_from_rpc_response(json_rpc_response: &str) -> Result<String> {
@@ -243,7 +243,10 @@ fn decode_u32_from_rpc_response(json_rpc_response: &str) -> Result<u32> {
 	let response_value = u32::decode(&mut rpc_return_value.value.as_slice())?;
 	match rpc_return_value.status {
 		DirectRequestStatus::Ok => Ok(response_value),
-		_ => Err(Error::Status(format!("decode_u32_from_rpc_response failed to decode {}", json_rpc_response))),
+		_ => Err(Error::Status(format!(
+			"decode_u32_from_rpc_response failed to decode {}",
+			json_rpc_response
+		))),
 	}
 }
 
