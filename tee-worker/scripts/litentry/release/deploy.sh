@@ -110,6 +110,7 @@ function restart(){
 }
 
 function stop_running_services() {
+  cd ~/.config/systemd/user
   if [ "$ONLY_WORKER" = true ]; then
     worker_count=$(echo "$CONFIG" | jq '.workers | length')
 
@@ -118,7 +119,9 @@ function stop_running_services() {
     done
   else
     echo "Stopping Running Services if any"
-    systemctl --user stop para-alice, relay-alice, relay-bob
+    systemctl --user stop para-alice.service
+    systemctl --user stop relay-alice.service
+    systemctl --user stop relay-bob.service
 
     worker_count=$(echo "$CONFIG" | jq '.workers | length')
 
@@ -361,7 +364,7 @@ function upgrade_worker(){
   latest_parentchain_sync_block
 
   echo "Setting up the new Worker on Chain"
-  $ROOTDIR/scripts/ts-utils/setup_enclave.sh
+  $ROOTDIR/tee-worker/scripts/litentry/setup_enclave.sh
 
   echo "Stopping Currently running Worker..."
   stop_old_worker
@@ -584,19 +587,18 @@ done
 # Create systemd folder for user if not already present
 mkdir -p ~/.config/systemd/user
 
+if [ -n "$config" ]; then
+  echo "Config file: $config"
+fi
+
+export CONFIG=$(cat $config)
+
 if [ "$discard" = true ]; then
   echo "Cleaning the existing state for Parachain and Worker."
   stop_running_services
   rm -rf /tmp/parachain_dev/
   rm -rf $ROOTDIR/tee-worker/tmp
 fi
-
-
-if [ -n "$config" ]; then
-  echo "Config file: $config"
-fi
-
-export CONFIG=$(cat $config)
 
 # Get Old MRENCLAVE
 if [ "$action" = "upgrade-worker" ]; then
