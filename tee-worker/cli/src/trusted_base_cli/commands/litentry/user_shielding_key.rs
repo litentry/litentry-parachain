@@ -30,7 +30,7 @@ pub struct UserShieldingKeyCommand {
 	account: String,
 }
 
-impl UserShiledingKeyCommand {
+impl UserShieldingKeyCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
 		let who = get_pair_from_str(trusted_cli, &self.account);
 		let top: TrustedOperation = TrustedGetter::user_shielding_key(who.public().into())

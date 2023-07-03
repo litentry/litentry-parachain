@@ -102,20 +102,11 @@ use sp_core::{
 };
 use sp_keyring::AccountKeyring;
 use std::{
-	collections::HashSet,
-	env,
-	fs::File,
-	io::Read,
-	path::PathBuf,
-	str,
-	sync::{mpsc::channel, Arc},
-	thread,
-	thread::sleep,
+	collections::HashSet, env, fs::File, io::Read, path::PathBuf, str, sync::Arc, thread,
 	time::Duration,
 };
 extern crate config as rs_config;
 use sp_runtime::traits::Header as HeaderTrait;
-use std::{env, fs::File, io::Read, path::PathBuf, str, sync::Arc, thread, time::Duration};
 use teerex_primitives::{Enclave as TeerexEnclave, ShardIdentifier};
 
 mod account_funding;
