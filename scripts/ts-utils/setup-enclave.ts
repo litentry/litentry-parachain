@@ -33,7 +33,7 @@ async function transfer(api: any, Alice: any) {
 }
 async function setTeerexAdmin(api: any, Alice: any) {
     return new Promise(async (resolve, reject) => {
-        // Note: The hardcoded address is that of Alice on dev chain 
+        // Note: The hardcoded address is that of Alice on dev chain
         await api.tx.sudo
             .sudo(api.tx.teerex.setAdmin("esqZdrqhgH8zy1wqYh1aLKoRyoRWLFbX9M62eKfaTAoK67pJ5"))
             .signAndSend(Alice, ({ status, events, dispatchError }) => {
@@ -91,15 +91,10 @@ async function updateScheduledEnclave(api: any, Alice: any, block: any) {
 }
 
 async function main() {
-
     // NOTE: If we are using development environment, we can use Alice instead of moving around with keys
     const keyring = new Keyring({ type: "sr25519" });
-    // let signAccount = keyring.addFromJson(private_account_pair);
 
     console.log(colors.green("account unlock..."));
-
-    //unlock account
-    // signAccount.toJson(accountPassword);
 
     const { defaultAPI } = await initApi();
     const Alice = keyring.addFromUri("//Alice", { name: "Alice default" });
