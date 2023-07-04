@@ -381,6 +381,16 @@ function upgrade_worker(){
   echo "Worker Count is: ${worker_count}"
 
   for ((i = 0; i < worker_count; i++)); do
+
+      local WORKERTMPDIR=$ROOTDIR/tee-worker/tmp/w$i
+      # Rename the original db to backup file
+      mv $WORKERTMPDIR/light_client_db.bin $WORKERTMPDIR/light_client_db.bin.backup
+
+      # Rename the backup file to replace the original file
+      mv $WORKERTMPDIR/light_client_db.bin.1 $WORKERTMPDIR/light_client_db.bin
+
+      echo "Replacement complete. light_client_db has been replaced with light_client_db.bin.1."
+
       rm $ROOTDIR/tee-worker/log/worker$i.log
       WORKER_DIR=$ROOTDIR/tee-worker/tmp/w$i
 
