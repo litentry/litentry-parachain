@@ -17,7 +17,7 @@
 use crate::{mock::*, Error, IdentityContext, IdentityStatus, UserShieldingKeyType};
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Get};
 use litentry_primitives::{
-	Address, Address32, Identity, IdentityString, Web2Network, USER_SHIELDING_KEY_LEN,
+	Address32, Identity, IdentityString, LitentryMultiAddress, Web2Network, USER_SHIELDING_KEY_LEN,
 };
 use sp_runtime::AccountId32;
 
@@ -28,7 +28,7 @@ pub const BOB: AccountId32 = AccountId32::new([2u8; 32]);
 fn set_user_shielding_key_works() {
 	new_test_ext(false).execute_with(|| {
 		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
-		let who = Address::Substrate(Address32::from(BOB));
+		let who = LitentryMultiAddress::Substrate(Address32::from(BOB));
 
 		assert_eq!(IMT::user_shielding_keys(who.clone()), None);
 
@@ -52,7 +52,7 @@ fn set_user_shielding_key_works() {
 fn link_identity_works() {
 	new_test_ext(true).execute_with(|| {
 		let ss58_prefix = 131_u16;
-		let who = Address::Substrate(Address32::from(BOB));
+		let who = LitentryMultiAddress::Substrate(Address32::from(BOB));
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
@@ -71,7 +71,7 @@ fn link_identity_works() {
 fn cannot_create_more_identities_for_account_than_limit() {
 	new_test_ext(true).execute_with(|| {
 		let max_id_graph_len = <<Test as crate::Config>::MaxIDGraphLength as Get<u32>>::get();
-		let who = Address::Substrate(Address32::from(BOB));
+		let who = LitentryMultiAddress::Substrate(Address32::from(BOB));
 
 		for i in 1..max_id_graph_len {
 			assert_ok!(IMT::link_identity(
@@ -97,7 +97,7 @@ fn cannot_create_more_identities_for_account_than_limit() {
 fn remove_identity_works() {
 	new_test_ext(false).execute_with(|| {
 		let ss58_prefix = 31_u16;
-		let who = Address::Substrate(Address32::from(BOB));
+		let who = LitentryMultiAddress::Substrate(Address32::from(BOB));
 		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
 
 		assert_ok!(IMT::set_user_shielding_key(
@@ -159,7 +159,7 @@ fn remove_identity_works() {
 fn get_id_graph_works() {
 	new_test_ext(true).execute_with(|| {
 		let ss58_prefix = 131_u16;
-		let who = Address::Substrate(Address32::from(BOB));
+		let who = LitentryMultiAddress::Substrate(Address32::from(BOB));
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
@@ -187,7 +187,7 @@ fn get_id_graph_works() {
 #[test]
 fn get_id_graph_with_max_len_works() {
 	new_test_ext(true).execute_with(|| {
-		let who = Address::Substrate ( Address32::from(BOB));
+		let who = LitentryMultiAddress::Substrate ( Address32::from(BOB));
 
 		// fill in 21 identities, starting from 1 to reserve place for prime_id
 		// set the block number too as it's used to tell "recent"
@@ -227,8 +227,8 @@ fn id_graph_stats_works() {
 	new_test_ext(true).execute_with(|| {
 		let ss58_prefix = 131_u16;
 
-		let alice = Address::Substrate(Address32::from(ALICE));
-		let bob = Address::Substrate(Address32::from(BOB));
+		let alice = LitentryMultiAddress::Substrate(Address32::from(ALICE));
+		let bob = LitentryMultiAddress::Substrate(Address32::from(BOB));
 
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),

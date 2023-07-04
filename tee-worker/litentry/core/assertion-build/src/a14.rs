@@ -38,7 +38,7 @@ use itc_rest_client::{
 use itp_stf_primitives::types::ShardIdentifier;
 use lc_credentials::Credential;
 use lc_data_providers::{build_client, G_DATA_PROVIDERS};
-use litentry_primitives::Address;
+use litentry_primitives::LitentryMultiAddress;
 use log::*;
 use rust_base58::ToBase58;
 use serde::{Deserialize, Serialize};
@@ -150,7 +150,7 @@ impl A14Client {
 pub fn build(
 	identities: Vec<Identity>,
 	shard: &ShardIdentifier,
-	who: &Address,
+	who: &LitentryMultiAddress,
 ) -> Result<Credential> {
 	debug!("Assertion A14 build, who: {:?}", &who);
 

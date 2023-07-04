@@ -146,7 +146,7 @@ mod tests {
 	use ita_stf::{PublicGetter, TrustedCall, TrustedOperation};
 	use itp_stf_primitives::types::{KeyPair, ShardIdentifier};
 	use itp_types::Block as ParentchainBlock;
-	use litentry_primitives::Address;
+	use litentry_primitives::LitentryMultiAddress;
 	use sp_core::{ed25519, Pair};
 	use sp_keyring::AccountKeyring;
 
@@ -187,7 +187,7 @@ mod tests {
 
 	fn create_indirect_trusted_operation() -> TrustedOperation {
 		let trusted_call_signed = TrustedCall::balance_transfer(
-			Address::Substrate(AccountKeyring::Alice.public().into()),
+			LitentryMultiAddress::Substrate(AccountKeyring::Alice.public().into()),
 			AccountKeyring::Bob.public().into(),
 			1000u128,
 		)

@@ -22,7 +22,7 @@ use codec::{Decode, Encode};
 use ita_stf::{TrustedCall, TrustedOperation};
 use itp_types::{AccountId, ShardIdentifier, H256};
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{Address, Identity, ValidationData};
+use litentry_primitives::{Identity, LitentryMultiAddress, ValidationData};
 use log::debug;
 use parachain_core_primitives::UserShieldingKeyNonceType;
 use std::vec::Vec;
@@ -61,8 +61,8 @@ impl LinkIdentityArgs {
 
 			let enclave_account_id = executor.get_enclave_account()?;
 			let trusted_call = TrustedCall::link_identity(
-				Address::Substrate(enclave_account_id.into()),
-				Address::Substrate(self.account.clone().into()),
+				LitentryMultiAddress::Substrate(enclave_account_id.into()),
+				LitentryMultiAddress::Substrate(self.account.clone().into()),
 				identity,
 				validation_data,
 				self.nonce,

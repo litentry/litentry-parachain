@@ -24,7 +24,7 @@ use crate::*;
 use itp_stf_primitives::types::ShardIdentifier;
 use lc_credentials::Credential;
 use lc_data_providers::{discord_litentry::DiscordLitentryClient, vec_to_string};
-use litentry_primitives::Address;
+use litentry_primitives::LitentryMultiAddress;
 use log::*;
 use std::vec::Vec;
 
@@ -39,7 +39,7 @@ pub fn build(
 	channel_id: ParameterString,
 	role_id: ParameterString,
 	shard: &ShardIdentifier,
-	who: &Address,
+	who: &LitentryMultiAddress,
 ) -> Result<Credential> {
 	debug!("Assertion A3 build, who: {:?}, identities: {:?}", &who, identities);
 
@@ -115,7 +115,9 @@ mod tests {
 	use itp_stf_primitives::types::ShardIdentifier;
 	use itp_types::AccountId;
 	use lc_data_providers::G_DATA_PROVIDERS;
-	use litentry_primitives::{Address, Address32, Identity, IdentityString, Web2Network};
+	use litentry_primitives::{
+		Address32, Identity, IdentityString, LitentryMultiAddress, Web2Network,
+	};
 	use log;
 	use std::{format, vec, vec::Vec};
 
@@ -143,7 +145,7 @@ mod tests {
 		let channel_id = BoundedVec::try_from(channel_id_vec).unwrap();
 		let role_id = BoundedVec::try_from(role_id_vec).unwrap();
 		let who = AccountId::from([0; 32]);
-		let address = Address::Substrate(Address32::from(who));
+		let address = LitentryMultiAddress::Substrate(Address32::from(who));
 
 		let shard = ShardIdentifier::default();
 

@@ -29,7 +29,7 @@ use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
 use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier};
 use itp_types::DirectRequestStatus;
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
-use litentry_primitives::{Address, ParentchainBalance as Balance};
+use litentry_primitives::{LitentryMultiAddress, ParentchainBalance as Balance};
 use log::*;
 use sp_application_crypto::sr25519;
 use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
@@ -41,15 +41,16 @@ use substrate_client_keystore::LocalKeystore;
 macro_rules! get_layer_two_nonce {
 	($signer_pair:ident, $cli: ident, $trusted_args:ident ) => {{
 		use ita_stf::{Getter, PublicGetter};
-		use litentry_primitives::Address;
+		use litentry_primitives::LitentryMultiAddress;
 
 		use $crate::{
 			trusted_command_utils::get_pending_trusted_calls_for,
 			trusted_operation::execute_getter_from_cli_args,
 		};
 
-		let getter =
-			Getter::public(PublicGetter::nonce(Address::Substrate($signer_pair.public().into())));
+		let getter = Getter::public(PublicGetter::nonce(LitentryMultiAddress::Substrate(
+			$signer_pair.public().into(),
+		)));
 		let getter_result = execute_getter_from_cli_args($cli, $trusted_args, &getter);
 		let nonce = match getter_result {
 			Some(encoded_nonce) => Index::decode(&mut encoded_nonce.as_slice()).unwrap(),
@@ -71,7 +72,7 @@ pub(crate) fn get_balance(cli: &Cli, trusted_args: &TrustedCli, arg_who: &str) -
 	debug!("arg_who = {:?}", arg_who);
 	let who = get_pair_from_str(trusted_args, arg_who);
 	let top: TrustedOperation =
-		TrustedGetter::free_balance(Address::Substrate(who.public().into()))
+		TrustedGetter::free_balance(LitentryMultiAddress::Substrate(who.public().into()))
 			.sign(&KeyPair::Sr25519(Box::new(who)))
 			.into();
 	let res = perform_trusted_operation(cli, trusted_args, &top);

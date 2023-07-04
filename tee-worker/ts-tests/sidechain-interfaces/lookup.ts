@@ -252,23 +252,23 @@ export default {
     PalletIdentityManagementTeeEvent: {
         _enum: {
             UserShieldingKeySet: {
-                idGraphId: 'LitentryPrimitivesAddress',
+                who: 'LitentryPrimitivesLitentryMultiAddress',
                 key: '[u8;32]',
             },
             IdentityLinked: {
-                idGraphId: 'LitentryPrimitivesAddress',
+                who: 'LitentryPrimitivesLitentryMultiAddress',
                 identity: 'LitentryPrimitivesIdentity',
             },
             IdentityRemoved: {
-                idGraphId: 'LitentryPrimitivesAddress',
+                who: 'LitentryPrimitivesLitentryMultiAddress',
                 identity: 'LitentryPrimitivesIdentity',
             },
         },
     },
     /**
-     * Lookup37: litentry_primitives::Address
+     * Lookup37: litentry_primitives::LitentryMultiAddress
      **/
-    LitentryPrimitivesAddress: {
+    LitentryPrimitivesLitentryMultiAddress: {
         _enum: {
             Substrate: 'LitentryPrimitivesIdentityAddress32',
             Evm: 'LitentryPrimitivesIdentityAddress20',
@@ -582,17 +582,17 @@ export default {
     PalletIdentityManagementTeeCall: {
         _enum: {
             set_user_shielding_key: {
-                idGraphId: 'LitentryPrimitivesAddress',
+                who: 'LitentryPrimitivesLitentryMultiAddress',
                 key: '[u8;32]',
                 parentSs58Prefix: 'u16',
             },
             link_identity: {
-                idGraphId: 'LitentryPrimitivesAddress',
+                who: 'LitentryPrimitivesLitentryMultiAddress',
                 identity: 'LitentryPrimitivesIdentity',
                 parentSs58Prefix: 'u16',
             },
             remove_identity: {
-                idGraphId: 'LitentryPrimitivesAddress',
+                who: 'LitentryPrimitivesLitentryMultiAddress',
                 identity: 'LitentryPrimitivesIdentity',
                 parentSs58Prefix: 'u16',
             },

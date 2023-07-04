@@ -19,8 +19,8 @@ import type {
     IdentityGenericEvent,
     IdentityStatus,
     IdentityString,
-    LitentryAddress,
     LitentryIdentity,
+    LitentryMultiAddress,
     LitentryMultiSignature,
     LitentryValidationData,
     PublicGetter,
@@ -1754,8 +1754,8 @@ declare module '@polkadot/types/types/registry' {
         LegacyTransaction: LegacyTransaction;
         Limits: Limits;
         LimitsTo264: LimitsTo264;
-        LitentryAddress: LitentryAddress;
         LitentryIdentity: LitentryIdentity;
+        LitentryMultiAddress: LitentryMultiAddress;
         LitentryMultiSignature: LitentryMultiSignature;
         LitentryValidationData: LitentryValidationData;
         LocalValidationData: LocalValidationData;

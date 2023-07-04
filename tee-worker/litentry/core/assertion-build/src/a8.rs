@@ -27,7 +27,7 @@ use lc_credentials::Credential;
 use lc_data_providers::graphql::{
 	AchainableQuery, GetSupportedNetworks, GraphQLClient, VerifiedCredentialsTotalTxs,
 };
-use litentry_primitives::{Address, IndexingNetworks, SupportedNetwork};
+use litentry_primitives::{IndexingNetworks, LitentryMultiAddress, SupportedNetwork};
 use log::*;
 use std::{collections::HashSet, string::String, vec::Vec};
 
@@ -57,7 +57,7 @@ pub fn build(
 	identities: Vec<Identity>,
 	index_networks: IndexingNetworks,
 	shard: &ShardIdentifier,
-	who: &Address,
+	who: &LitentryMultiAddress,
 ) -> Result<Credential> {
 	debug!(
 		"Assertion A8 build, who: {:?}, identities: {:?}, networks:{:?}",

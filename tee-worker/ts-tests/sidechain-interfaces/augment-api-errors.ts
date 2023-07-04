@@ -51,11 +51,11 @@ declare module '@polkadot/api-base/types/errors' {
         };
         identityManagement: {
             /**
-             * the pair (id_graph_identifier, identity) already linked
+             * the pair (address, identity) already linked
              **/
             IdentityAlreadyLinked: AugmentedError<ApiType>;
             /**
-             * the pair (id_graph_identifier, identity) doesn't exist
+             * the pair (address, identity) doesn't exist
              **/
             IdentityNotExist: AugmentedError<ApiType>;
             /**

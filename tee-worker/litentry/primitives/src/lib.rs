@@ -54,26 +54,26 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub enum Address {
+pub enum LitentryMultiAddress {
 	Substrate(Address32),
 	Evm(Address20),
 }
 
-impl From<Address> for AccountId32 {
-	fn from(value: Address) -> Self {
+impl From<LitentryMultiAddress> for AccountId32 {
+	fn from(value: LitentryMultiAddress) -> Self {
 		(&value).into()
 	}
 }
 
-impl From<&Address> for AccountId32 {
-	fn from(value: &Address) -> Self {
+impl From<&LitentryMultiAddress> for AccountId32 {
+	fn from(value: &LitentryMultiAddress) -> Self {
 		match value {
-			Address::Substrate(address) => {
+			LitentryMultiAddress::Substrate(address) => {
 				let mut data = [0u8; 32];
 				data.copy_from_slice(address.as_ref());
 				Self::from(data)
 			},
-			Address::Evm(address) => {
+			LitentryMultiAddress::Evm(address) => {
 				let mut data = [0u8; 24];
 				data[0..4].copy_from_slice(b"evm:");
 				data[4..24].copy_from_slice(address.as_ref());
@@ -84,7 +84,7 @@ impl From<&Address> for AccountId32 {
 	}
 }
 
-impl Address {
+impl LitentryMultiAddress {
 	pub fn to_account_id(&self) -> AccountId {
 		match self {
 			Self::Substrate(address) => {
@@ -117,10 +117,10 @@ pub enum LitentryMultiSignature {
 }
 
 impl LitentryMultiSignature {
-	pub fn verify(&self, msg: &[u8], signer: &Address) -> bool {
+	pub fn verify(&self, msg: &[u8], signer: &LitentryMultiAddress) -> bool {
 		match signer {
-			Address::Substrate(address) => self.verify_substrate(msg, address),
-			Address::Evm(address) => self.verify_evm(msg, address),
+			LitentryMultiAddress::Substrate(address) => self.verify_substrate(msg, address),
+			LitentryMultiAddress::Evm(address) => self.verify_evm(msg, address),
 		}
 	}
 

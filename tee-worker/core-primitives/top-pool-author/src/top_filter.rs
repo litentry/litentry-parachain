@@ -101,7 +101,7 @@ mod tests {
 	use ita_stf::{Getter, TrustedCall, TrustedCallSigned, TrustedGetter};
 	use itp_stf_primitives::types::KeyPair;
 	use itp_types::ShardIdentifier;
-	use litentry_primitives::Address;
+	use litentry_primitives::LitentryMultiAddress;
 	use sp_core::{ed25519, Pair};
 	use sp_runtime::traits::{BlakeTwo256, Hash};
 	use std::{
@@ -187,7 +187,8 @@ mod tests {
 
 	fn trusted_getter() -> TrustedOperation {
 		let account = test_account();
-		let getter = TrustedGetter::free_balance(Address::Substrate(account.public().into()));
+		let getter =
+			TrustedGetter::free_balance(LitentryMultiAddress::Substrate(account.public().into()));
 		let trusted_getter_signed =
 			Getter::trusted(getter.sign(&KeyPair::Ed25519(Box::new(account))));
 		TrustedOperation::from(trusted_getter_signed)
@@ -196,7 +197,7 @@ mod tests {
 	fn trusted_call_signed() -> TrustedCallSigned {
 		let account = test_account();
 		let call = TrustedCall::balance_shield(
-			Address::Substrate(account.public().into()),
+			LitentryMultiAddress::Substrate(account.public().into()),
 			account.public().into(),
 			12u128,
 		);

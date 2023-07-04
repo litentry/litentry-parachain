@@ -33,8 +33,9 @@ use lc_data_providers::{
 	UserInfo,
 };
 use litentry_primitives::{
-	Address, DiscordValidationData, ErrorDetail, Identity, IntoErrorDetail, TwitterValidationData,
-	UserShieldingKeyNonceType, UserShieldingKeyType, Web2Network, Web2ValidationData,
+	DiscordValidationData, ErrorDetail, Identity, IntoErrorDetail, LitentryMultiAddress,
+	TwitterValidationData, UserShieldingKeyNonceType, UserShieldingKeyType, Web2Network,
+	Web2ValidationData,
 };
 use log::*;
 use std::{string::ToString, vec::Vec};
@@ -55,7 +56,7 @@ fn payload_from_discord(discord: &DiscordMessage) -> Result<Vec<u8>> {
 }
 
 pub fn verify(
-	who: &Address,
+	who: &LitentryMultiAddress,
 	identity: &Identity,
 	sidechain_nonce: Index,
 	key: UserShieldingKeyType,

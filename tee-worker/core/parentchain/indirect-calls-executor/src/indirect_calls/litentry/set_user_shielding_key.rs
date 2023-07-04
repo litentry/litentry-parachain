@@ -23,7 +23,7 @@ use codec::{Decode, Encode};
 use ita_stf::{TrustedCall, TrustedOperation};
 
 use itp_types::{ShardIdentifier, H256};
-use litentry_primitives::{Address, UserShieldingKeyType};
+use litentry_primitives::{LitentryMultiAddress, UserShieldingKeyType};
 use sp_runtime::traits::{AccountIdLookup, StaticLookup};
 use std::vec::Vec;
 use substrate_api_client::GenericAddress;
@@ -48,8 +48,8 @@ impl SetUserShieldingKeyArgs {
 			let account = AccountIdLookup::lookup(address)?;
 			let enclave_account_id = executor.get_enclave_account()?;
 			let trusted_call = TrustedCall::set_user_shielding_key(
-				Address::Substrate(enclave_account_id.into()),
-				Address::Substrate(account.into()),
+				LitentryMultiAddress::Substrate(enclave_account_id.into()),
+				LitentryMultiAddress::Substrate(account.into()),
 				key,
 				hash,
 			);

@@ -22,7 +22,8 @@ use sp_core::{H160, U256};
 use std::vec::Vec;
 
 use crate::{
-	helpers::ensure_enclave_signer_account, Address, Runtime, StfError, System, TrustedOperation,
+	helpers::ensure_enclave_signer_account, LitentryMultiAddress, Runtime, StfError, System,
+	TrustedOperation,
 };
 use codec::{Decode, Encode};
 use frame_support::{ensure, traits::UnfilteredDispatchable};
@@ -64,16 +65,16 @@ pub type IMT = ita_sgx_runtime::pallet_imt::Pallet<Runtime>;
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum TrustedCall {
-	balance_set_balance(Address, AccountId, Balance, Balance),
-	balance_transfer(Address, AccountId, Balance),
-	balance_unshield(Address, AccountId, Balance, ShardIdentifier), // (AccountIncognito, BeneficiaryPublicAccount, Amount, Shard)
-	balance_shield(Address, AccountId, Balance),                    // (Root, AccountIncognito, Amount)
+	balance_set_balance(LitentryMultiAddress, AccountId, Balance, Balance),
+	balance_transfer(LitentryMultiAddress, AccountId, Balance),
+	balance_unshield(LitentryMultiAddress, AccountId, Balance, ShardIdentifier), // (AccountIncognito, BeneficiaryPublicAccount, Amount, Shard)
+	balance_shield(LitentryMultiAddress, AccountId, Balance), // (Root, AccountIncognito, Amount)
 	#[cfg(feature = "evm")]
-	evm_withdraw(Address, H160, Balance),  // (Origin, Address EVM Account, Value)
+	evm_withdraw(LitentryMultiAddress, H160, Balance), // (Origin, Address EVM Account, Value)
 	// (Origin, Source, Target, Input, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
 	#[cfg(feature = "evm")]
 	evm_call(
-		Address,
+		LitentryMultiAddress,
 		H160,
 		H160,
 		Vec<u8>,
@@ -87,7 +88,7 @@ pub enum TrustedCall {
 	// (Origin, Source, Init, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
 	#[cfg(feature = "evm")]
 	evm_create(
-		Address,
+		LitentryMultiAddress,
 		H160,
 		Vec<u8>,
 		U256,
@@ -100,7 +101,7 @@ pub enum TrustedCall {
 	// (Origin, Source, Init, Salt, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
 	#[cfg(feature = "evm")]
 	evm_create2(
-		Address,
+		LitentryMultiAddress,
 		H160,
 		Vec<u8>,
 		H256,
@@ -112,21 +113,36 @@ pub enum TrustedCall {
 		Vec<(H160, Vec<H256>)>,
 	),
 	// litentry
-	set_user_shielding_key(Address, Address, UserShieldingKeyType, H256),
-	link_identity(Address, Address, Identity, ValidationData, UserShieldingKeyNonceType, H256),
-	remove_identity(Address, Address, Identity, H256),
-	request_vc(Address, Address, Assertion, H256),
+	set_user_shielding_key(LitentryMultiAddress, LitentryMultiAddress, UserShieldingKeyType, H256),
+	link_identity(
+		LitentryMultiAddress,
+		LitentryMultiAddress,
+		Identity,
+		ValidationData,
+		UserShieldingKeyNonceType,
+		H256,
+	),
+	remove_identity(LitentryMultiAddress, LitentryMultiAddress, Identity, H256),
+	request_vc(LitentryMultiAddress, LitentryMultiAddress, Assertion, H256),
 	// the following trusted calls should not be requested directly from external
 	// they are guarded by the signature check (either root or enclave_signer_account)
-	link_identity_callback(Address, Address, Identity, H256),
-	request_vc_callback(Address, Address, Assertion, [u8; 32], [u8; 32], Vec<u8>, H256),
-	handle_imp_error(Address, Option<Address>, IMPError, H256),
-	handle_vcmp_error(Address, Option<Address>, VCMPError, H256),
-	send_erroneous_parentchain_call(Address),
+	link_identity_callback(LitentryMultiAddress, LitentryMultiAddress, Identity, H256),
+	request_vc_callback(
+		LitentryMultiAddress,
+		LitentryMultiAddress,
+		Assertion,
+		[u8; 32],
+		[u8; 32],
+		Vec<u8>,
+		H256,
+	),
+	handle_imp_error(LitentryMultiAddress, Option<LitentryMultiAddress>, IMPError, H256),
+	handle_vcmp_error(LitentryMultiAddress, Option<LitentryMultiAddress>, VCMPError, H256),
+	send_erroneous_parentchain_call(LitentryMultiAddress),
 }
 
 impl TrustedCall {
-	pub fn sender_address(&self) -> &Address {
+	pub fn sender_address(&self) -> &LitentryMultiAddress {
 		match self {
 			TrustedCall::balance_set_balance(sender_address, ..) => sender_address,
 			TrustedCall::balance_transfer(sender_address, ..) => sender_address,
@@ -814,7 +830,7 @@ mod tests {
 		let shard = ShardIdentifier::default();
 
 		let call = TrustedCall::balance_set_balance(
-			Address::Substrate(AccountKeyring::Alice.public().into()),
+			LitentryMultiAddress::Substrate(AccountKeyring::Alice.public().into()),
 			AccountKeyring::Alice.public().into(),
 			42,
 			42,

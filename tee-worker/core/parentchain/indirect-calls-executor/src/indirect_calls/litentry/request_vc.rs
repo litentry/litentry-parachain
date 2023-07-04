@@ -25,7 +25,7 @@ use ita_stf::{TrustedCall, TrustedOperation};
 use itp_types::{ShardIdentifier, H256};
 use itp_utils::stringify::account_id_to_string;
 
-use litentry_primitives::Address;
+use litentry_primitives::LitentryMultiAddress;
 use log::debug;
 use parachain_core_primitives::Assertion;
 use sp_runtime::traits::{AccountIdLookup, StaticLookup};
@@ -56,8 +56,8 @@ impl RequestVCArgs {
 			let enclave_account_id = executor.get_enclave_account()?;
 
 			let trusted_call = TrustedCall::request_vc(
-				Address::Substrate(enclave_account_id.into()),
-				Address::Substrate(account.into()),
+				LitentryMultiAddress::Substrate(enclave_account_id.into()),
+				LitentryMultiAddress::Substrate(account.into()),
 				self.assertion.clone(),
 				hash,
 			);

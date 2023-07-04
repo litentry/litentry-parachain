@@ -27,7 +27,7 @@ use lc_data_providers::{
 	twitter_official::{TargetUser, TwitterOfficialClient},
 	vec_to_string,
 };
-use litentry_primitives::Address;
+use litentry_primitives::LitentryMultiAddress;
 use log::*;
 use std::{format, vec::Vec};
 
@@ -39,7 +39,7 @@ pub fn build(
 	twitter_screen_name: ParameterString,
 	identities: Vec<Identity>,
 	shard: &ShardIdentifier,
-	who: &Address,
+	who: &LitentryMultiAddress,
 ) -> Result<Credential> {
 	debug!("Assertion 12 build, who: {:?}, identities: {:?}", &who, identities);
 

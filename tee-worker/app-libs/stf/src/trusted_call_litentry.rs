@@ -30,7 +30,7 @@ use lc_stf_task_sender::{
 	AssertionBuildRequest, IdentityVerificationRequest, RequestType,
 };
 use litentry_primitives::{
-	Address, Assertion, ErrorDetail, Identity, UserShieldingKeyType, ValidationData,
+	Assertion, ErrorDetail, Identity, LitentryMultiAddress, UserShieldingKeyType, ValidationData,
 };
 use log::*;
 use std::vec::Vec;
@@ -38,7 +38,7 @@ use std::vec::Vec;
 impl TrustedCallSigned {
 	pub fn set_user_shielding_key_internal(
 		signer: AccountId,
-		who: Address,
+		who: LitentryMultiAddress,
 		key: UserShieldingKeyType,
 		parent_ss58_prefix: u16,
 	) -> StfResult<UserShieldingKeyType> {
@@ -54,7 +54,7 @@ impl TrustedCallSigned {
 	#[allow(clippy::too_many_arguments)]
 	pub fn link_identity_internal(
 		signer: AccountId,
-		who: Address,
+		who: LitentryMultiAddress,
 		identity: Identity,
 		validation_data: ValidationData,
 		nonce: UserShieldingKeyNonceType,
@@ -93,7 +93,7 @@ impl TrustedCallSigned {
 
 	pub fn remove_identity_internal(
 		signer: AccountId,
-		who: Address,
+		who: LitentryMultiAddress,
 		identity: Identity,
 		parent_ss58_prefix: u16,
 	) -> StfResult<UserShieldingKeyType> {
@@ -113,7 +113,7 @@ impl TrustedCallSigned {
 
 	pub fn request_vc_internal(
 		signer: AccountId,
-		who: Address,
+		who: LitentryMultiAddress,
 		assertion: Assertion,
 		hash: H256,
 		shard: &ShardIdentifier,
@@ -150,7 +150,7 @@ impl TrustedCallSigned {
 
 	pub fn link_identity_callback_internal(
 		signer: AccountId,
-		who: Address,
+		who: LitentryMultiAddress,
 		identity: Identity,
 		parent_ss58_prefix: u16,
 	) -> StfResult<UserShieldingKeyType> {
@@ -170,7 +170,7 @@ impl TrustedCallSigned {
 
 	pub fn request_vc_callback_internal(
 		signer: AccountId,
-		who: Address,
+		who: LitentryMultiAddress,
 		assertion: Assertion,
 	) -> StfResult<UserShieldingKeyType> {
 		// important! The signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally

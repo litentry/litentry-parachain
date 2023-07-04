@@ -24,7 +24,7 @@ use crate::*;
 use itp_stf_primitives::types::ShardIdentifier;
 use lc_credentials::Credential;
 use lc_data_providers::twitter_official::TwitterOfficialClient;
-use litentry_primitives::Address;
+use litentry_primitives::LitentryMultiAddress;
 use log::*;
 use std::{format, vec::Vec};
 
@@ -42,7 +42,7 @@ const VC_A6_SUBJECT_TAG: [&str; 1] = ["Twitter"];
 pub fn build(
 	identities: Vec<Identity>,
 	shard: &ShardIdentifier,
-	who: &Address,
+	who: &LitentryMultiAddress,
 ) -> Result<Credential> {
 	debug!("Assertion A6 build, who: {:?}, identities: {:?}", &who, identities);
 

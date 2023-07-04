@@ -23,7 +23,8 @@ use frame_support::{
 use frame_system as system;
 use frame_system::EnsureSignedBy;
 use litentry_primitives::{
-	Address, Identity, IdentityString, SubstrateNetwork, Web2Network, USER_SHIELDING_KEY_LEN,
+	Identity, IdentityString, LitentryMultiAddress, SubstrateNetwork, Web2Network,
+	USER_SHIELDING_KEY_LEN,
 };
 use sp_core::H256;
 use sp_runtime::{
@@ -134,7 +135,7 @@ pub fn new_test_ext(set_shielding_key: bool) -> sp_io::TestExternalities {
 		if set_shielding_key {
 			let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
 			let ss58_prefix = 131_u16;
-			let who = Address::Substrate(BOB.into());
+			let who = LitentryMultiAddress::Substrate(BOB.into());
 			let _ = IMT::set_user_shielding_key(
 				RuntimeOrigin::signed(ALICE),
 				who,

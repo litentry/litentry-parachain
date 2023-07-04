@@ -28,7 +28,7 @@ use lc_data_providers::{
 	graphql::{AchainableQuery, GraphQLClient, VerifiedCredentialsIsHodlerIn},
 	vec_to_string,
 };
-use litentry_primitives::{Address, SupportedNetwork};
+use litentry_primitives::{LitentryMultiAddress, SupportedNetwork};
 use log::*;
 use std::{string::ToString, vec, vec::Vec};
 
@@ -41,7 +41,7 @@ pub fn build(
 	identities: Vec<Identity>,
 	min_balance: ParameterString,
 	shard: &ShardIdentifier,
-	who: &Address,
+	who: &LitentryMultiAddress,
 ) -> Result<Credential> {
 	debug!("Assertion A11 build, who: {:?}, identities: {:?}", &who, identities,);
 

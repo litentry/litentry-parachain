@@ -25,7 +25,7 @@ use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
-use litentry_primitives::Address;
+use litentry_primitives::LitentryMultiAddress;
 use log::*;
 
 const VC_A13_SUBJECT_DESCRIPTION: &str =
@@ -36,7 +36,7 @@ const VC_A13_SUBJECT_TAG: [&str; 2] = ["Polkadot decoded 2023", "Litentry"];
 pub fn build(shard: &ShardIdentifier, who: &AccountId) -> Result<Credential> {
 	debug!("Assertion A13 build, who: {:?}", account_id_to_string(&who));
 
-	let address = Address::Substrate(who.clone().into());
+	let address = LitentryMultiAddress::Substrate(who.clone().into());
 
 	match Credential::new_default(&address, shard) {
 		Ok(mut credential_unsigned) => {

@@ -3,7 +3,7 @@ import { KeyringPair } from '@polkadot/keyring/types';
 import { BN, u8aToHex, hexToU8a, compactAddLength, bufferToU8a, u8aConcat, stringToU8a } from '@polkadot/util';
 import { Codec } from '@polkadot/types/types';
 import { Address, PubicKeyJson } from '../../common/type-definitions';
-import { LitentryAddress, WorkerRpcReturnValue } from '../../parachain-interfaces/identity/types';
+import { WorkerRpcReturnValue } from '../../parachain-interfaces/identity/types';
 import { encryptWithTeeShieldingKey } from '../../common/utils';
 import { decodeRpcBytesAsString } from '../../common/call';
 import { createPublicKey, KeyObject } from 'crypto';
@@ -88,7 +88,7 @@ export const createSignedTrustedCall = (
     if (withWrappedBytes) {
         payload = u8aConcat(stringToU8a('<Bytes>'), payload, stringToU8a('</Bytes>'));
     }
-    const signature = parachainApi.createType('MultiSignature', {
+    const signature = parachainApi.createType('LitentryMultiSignature', {
         [account.type]: u8aToHex(account.sign(payload)),
     });
     return parachainApi.createType('TrustedCallSigned', {
@@ -109,7 +109,7 @@ export const createSignedTrustedGetter = (
         [variant]: parachainApi.createType(argType, params),
     });
     const payload = getter.toU8a();
-    const signature = parachainApi.createType('MultiSignature', {
+    const signature = parachainApi.createType('LitentryMultiSignature', {
         [account.type]: account.sign(payload),
     });
     return parachainApi.createType('TrustedGetterSigned', {
@@ -158,7 +158,7 @@ export function createSignedTrustedCallSetUserShieldingKey(
 ) {
     return createSignedTrustedCall(
         parachainApi,
-        ['set_user_shielding_key', '(LitentryAddress, LitentryAddress, UserShieldingKeyType, H256)'],
+        ['set_user_shielding_key', '(LitentryMultiAddress, LitentryMultiAddress, UserShieldingKeyType, H256)'],
         who,
         mrenclave,
         nonce,
@@ -182,7 +182,7 @@ export function createSignedTrustedCallLinkIdentity(
         parachainApi,
         [
             'link_identity',
-            '(LitentryAddress, LitentryAddress, LitentryIdentity, LitentryValidationData, UserShieldingKeyNonceType, H256)',
+            '(LitentryMultiAddress, LitentryMultiAddress, LitentryIdentity, LitentryValidationData, UserShieldingKeyNonceType, H256)',
         ],
         who,
         mrenclave,
@@ -198,7 +198,7 @@ export function createSignedTrustedGetterUserShieldingKey(
 ) {
     const getterSigned = createSignedTrustedGetter(
         parachainApi,
-        ['user_shielding_key', '(LitentryAddress)'],
+        ['user_shielding_key', '(LitentryMultiAddress)'],
         who,
         address
     );
@@ -206,7 +206,7 @@ export function createSignedTrustedGetterUserShieldingKey(
 }
 
 export function createSignedTrustedGetterIdGraph(parachainApi: ApiPromise, who: KeyringPair, address: Address) {
-    const getterSigned = createSignedTrustedGetter(parachainApi, ['id_graph', '(LitentryAddress)'], who, address);
+    const getterSigned = createSignedTrustedGetter(parachainApi, ['id_graph', '(LitentryMultiAddress)'], who, address);
     return parachainApi.createType('Getter', { trusted: getterSigned });
 }
 
@@ -217,7 +217,7 @@ export const getSidechainNonce = async (
     teeShieldingKey: KeyObject,
     address: Address
 ) => {
-    const getterPublic = createPublicGetter(parachainApi, ['nonce', '(LitentryAddress)'], address);
+    const getterPublic = createPublicGetter(parachainApi, ['nonce', '(LitentryMultiAddress)'], address);
     const getter = parachainApi.createType('Getter', { public: getterPublic });
     const nonce = await sendRequestFromGetter(wsp, parachainApi, mrenclave, teeShieldingKey, getter);
     const nonceValue = decodeNonce(nonce.value.toHex());

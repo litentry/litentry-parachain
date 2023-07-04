@@ -23,7 +23,7 @@ extern crate sgx_tstd as std;
 use crate::*;
 use itp_stf_primitives::types::ShardIdentifier;
 use lc_credentials::Credential;
-use litentry_primitives::Address;
+use litentry_primitives::LitentryMultiAddress;
 use log::*;
 use std::vec::Vec;
 
@@ -35,7 +35,7 @@ const VC_A1_SUBJECT_TAG: [&str; 1] = ["Litentry Network"];
 pub fn build(
 	identities: Vec<Identity>,
 	shard: &ShardIdentifier,
-	who: &Address,
+	who: &LitentryMultiAddress,
 ) -> Result<Credential> {
 	debug!("Assertion A1 build, who: {:?}", who);
 

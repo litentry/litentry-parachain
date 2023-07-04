@@ -34,7 +34,7 @@ use itp_types::{
 	Balance, ShardIdentifier, TrustedOperationStatus,
 	TrustedOperationStatus::{InSidechainBlock, Submitted},
 };
-use litentry_primitives::Address;
+use litentry_primitives::LitentryMultiAddress;
 use log::*;
 use rand::Rng;
 use rayon::prelude::*;
@@ -146,7 +146,8 @@ impl BenchmarkCommand {
 			let account = get_pair_from_str(trusted_args, a.public().to_string().as_str());
 			let initial_balance = 10000000;
 
-			let funding_address = Address::Substrate(funding_account_keys.public().into());
+			let funding_address =
+				LitentryMultiAddress::Substrate(funding_account_keys.public().into());
 
 			// Transfer amount from Alice to new account.
 			let top: TrustedOperation = TrustedCall::balance_transfer(
@@ -205,7 +206,7 @@ impl BenchmarkCommand {
 					// Get nonce of account.
 					let nonce = get_nonce(client.account.clone(), shard, &client.client_api);
 
-					let client_address = Address::Substrate ( client.account.public().into() );
+					let client_address = LitentryMultiAddress::Substrate ( client.account.public().into() );
 
 					// Transfer money from client account to new account.
 					let top: TrustedOperation = TrustedCall::balance_transfer(
@@ -262,7 +263,7 @@ fn get_balance(
 	direct_client: &DirectClient,
 ) -> Option<u128> {
 	let getter = Getter::trusted(
-		TrustedGetter::free_balance(Address::Substrate(account.public().into()))
+		TrustedGetter::free_balance(LitentryMultiAddress::Substrate(account.public().into()))
 			.sign(&KeyPair::Sr25519(Box::new(account.clone()))),
 	);
 
@@ -281,7 +282,9 @@ fn get_nonce(
 	shard: ShardIdentifier,
 	direct_client: &DirectClient,
 ) -> Index {
-	let getter = Getter::public(PublicGetter::nonce(Address::Substrate(account.public().into())));
+	let getter = Getter::public(PublicGetter::nonce(LitentryMultiAddress::Substrate(
+		account.public().into(),
+	)));
 
 	let getter_start_timer = Instant::now();
 	let getter_result = direct_client.get_state(shard, &getter);

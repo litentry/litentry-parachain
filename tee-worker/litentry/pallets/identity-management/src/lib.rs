@@ -52,7 +52,7 @@ pub type IDGraph<T> = Vec<(Identity, IdentityContext<T>)>;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use litentry_primitives::{Address, EvmNetwork};
+	use litentry_primitives::{EvmNetwork, LitentryMultiAddress};
 	use log::{info, warn};
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
@@ -77,11 +77,11 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// user shielding key was set
-		UserShieldingKeySet { who: Address, key: UserShieldingKeyType },
+		UserShieldingKeySet { who: LitentryMultiAddress, key: UserShieldingKeyType },
 		/// an identity was linked
-		IdentityLinked { who: Address, identity: Identity },
+		IdentityLinked { who: LitentryMultiAddress, identity: Identity },
 		/// an identity was removed
-		IdentityRemoved { who: Address, identity: Identity },
+		IdentityRemoved { who: LitentryMultiAddress, identity: Identity },
 	}
 
 	#[pallet::error]
@@ -101,14 +101,14 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn user_shielding_keys)]
 	pub type UserShieldingKeys<T: Config> =
-		StorageMap<_, Blake2_128Concat, Address, UserShieldingKeyType, OptionQuery>;
+		StorageMap<_, Blake2_128Concat, LitentryMultiAddress, UserShieldingKeyType, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn id_graphs)]
 	pub type IDGraphs<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
-		Address,
+		LitentryMultiAddress,
 		Blake2_128Concat,
 		Identity,
 		IdentityContext<T>,
@@ -116,7 +116,8 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	pub type IDGraphLens<T: Config> = StorageMap<_, Blake2_128Concat, Address, u32, ValueQuery>;
+	pub type IDGraphLens<T: Config> =
+		StorageMap<_, Blake2_128Concat, LitentryMultiAddress, u32, ValueQuery>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -124,7 +125,7 @@ pub mod pallet {
 		#[pallet::weight(15_000_000)]
 		pub fn set_user_shielding_key(
 			origin: OriginFor<T>,
-			who: Address,
+			who: LitentryMultiAddress,
 			key: UserShieldingKeyType,
 			parent_ss58_prefix: u16,
 		) -> DispatchResult {
@@ -146,7 +147,7 @@ pub mod pallet {
 		#[pallet::weight(15_000_000)]
 		pub fn link_identity(
 			origin: OriginFor<T>,
-			who: Address,
+			who: LitentryMultiAddress,
 			identity: Identity,
 			parent_ss58_prefix: u16,
 		) -> DispatchResult {
@@ -169,7 +170,7 @@ pub mod pallet {
 		#[pallet::weight(15_000_000)]
 		pub fn remove_identity(
 			origin: OriginFor<T>,
-			who: Address,
+			who: LitentryMultiAddress,
 			identity: Identity,
 			parent_ss58_prefix: u16,
 		) -> DispatchResult {
@@ -187,21 +188,21 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		// build the prime identity which is always a substrate address32-based identity
 		fn build_prime_identity(
-			address: &Address,
+			address: &LitentryMultiAddress,
 			parent_ss58_prefix: u16,
 		) -> Result<Identity, DispatchError> {
 			match address {
-				Address::Substrate(address) => Ok(Identity::Substrate {
+				LitentryMultiAddress::Substrate(address) => Ok(Identity::Substrate {
 					network: SubstrateNetwork::from_ss58_prefix(parent_ss58_prefix),
 					address: *address,
 				}),
-				Address::Evm(address) =>
+				LitentryMultiAddress::Evm(address) =>
 					Ok(Identity::Evm { network: EvmNetwork::Ethereum, address: *address }),
 			}
 		}
 
 		fn insert_identity_with_limit(
-			owner: &Address,
+			owner: &LitentryMultiAddress,
 			identity: &Identity,
 			context: IdentityContext<T>,
 		) -> Result<(), DispatchError> {
@@ -218,7 +219,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		fn remove_identity_with_limit(owner: &Address, identity: &Identity) {
+		fn remove_identity_with_limit(owner: &LitentryMultiAddress, identity: &Identity) {
 			IDGraphLens::<T>::mutate_exists(owner, |maybe_value| {
 				if let Some(graph_len) = maybe_value {
 					if *graph_len == 0 {
@@ -242,7 +243,7 @@ pub mod pallet {
 		}
 
 		// get the most recent `max_len` elements in IDGraph
-		pub fn get_id_graph(who: &Address, max_len: usize) -> IDGraph<T> {
+		pub fn get_id_graph(who: &LitentryMultiAddress, max_len: usize) -> IDGraph<T> {
 			let mut id_graph = IDGraphs::iter_prefix(who).collect::<IDGraph<T>>();
 			id_graph.sort_by(|a, b| Ord::cmp(&b.1.link_block, &a.1.link_block));
 			id_graph.truncate(max_len);
@@ -250,7 +251,7 @@ pub mod pallet {
 		}
 
 		// get count of all keys account + identity in the IDGraphs
-		pub fn id_graph_stats() -> Option<Vec<(Address, u32)>> {
+		pub fn id_graph_stats() -> Option<Vec<(LitentryMultiAddress, u32)>> {
 			let stats = IDGraphLens::<T>::iter().collect();
 			debug!("IDGraph stats: {:?}", stats);
 			Some(stats)

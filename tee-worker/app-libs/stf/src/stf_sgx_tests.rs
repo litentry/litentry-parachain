@@ -15,7 +15,7 @@
 
 */
 
-use crate::{Address, Getter, State, Stf, TrustedCall, TrustedCallSigned};
+use crate::{Getter, LitentryMultiAddress, State, Stf, TrustedCall, TrustedCallSigned};
 use ita_sgx_runtime::Runtime;
 use itp_node_api::metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository};
 use itp_stf_interface::{
@@ -50,7 +50,7 @@ pub fn shield_funds_increments_signer_account_nonce() {
 
 	let shield_funds_call = TrustedCallSigned::new(
 		TrustedCall::balance_shield(
-			Address::Substrate(enclave_call_signer.public().into()),
+			LitentryMultiAddress::Substrate(enclave_call_signer.public().into()),
 			AccountId::new([1u8; 32]),
 			500u128,
 		),

@@ -323,24 +323,24 @@ declare module '@polkadot/types/lookup' {
     interface PalletIdentityManagementTeeEvent extends Enum {
         readonly isUserShieldingKeySet: boolean;
         readonly asUserShieldingKeySet: {
-            readonly idGraphId: LitentryPrimitivesAddress;
+            readonly who: LitentryPrimitivesLitentryMultiAddress;
             readonly key: U8aFixed;
         } & Struct;
         readonly isIdentityLinked: boolean;
         readonly asIdentityLinked: {
-            readonly idGraphId: LitentryPrimitivesAddress;
+            readonly who: LitentryPrimitivesLitentryMultiAddress;
             readonly identity: LitentryPrimitivesIdentity;
         } & Struct;
         readonly isIdentityRemoved: boolean;
         readonly asIdentityRemoved: {
-            readonly idGraphId: LitentryPrimitivesAddress;
+            readonly who: LitentryPrimitivesLitentryMultiAddress;
             readonly identity: LitentryPrimitivesIdentity;
         } & Struct;
         readonly type: 'UserShieldingKeySet' | 'IdentityLinked' | 'IdentityRemoved';
     }
 
-    /** @name LitentryPrimitivesAddress (37) */
-    interface LitentryPrimitivesAddress extends Enum {
+    /** @name LitentryPrimitivesLitentryMultiAddress (37) */
+    interface LitentryPrimitivesLitentryMultiAddress extends Enum {
         readonly isSubstrate: boolean;
         readonly asSubstrate: LitentryPrimitivesIdentityAddress32;
         readonly isEvm: boolean;
@@ -680,19 +680,19 @@ declare module '@polkadot/types/lookup' {
     interface PalletIdentityManagementTeeCall extends Enum {
         readonly isSetUserShieldingKey: boolean;
         readonly asSetUserShieldingKey: {
-            readonly idGraphId: LitentryPrimitivesAddress;
+            readonly who: LitentryPrimitivesLitentryMultiAddress;
             readonly key: U8aFixed;
             readonly parentSs58Prefix: u16;
         } & Struct;
         readonly isLinkIdentity: boolean;
         readonly asLinkIdentity: {
-            readonly idGraphId: LitentryPrimitivesAddress;
+            readonly who: LitentryPrimitivesLitentryMultiAddress;
             readonly identity: LitentryPrimitivesIdentity;
             readonly parentSs58Prefix: u16;
         } & Struct;
         readonly isRemoveIdentity: boolean;
         readonly asRemoveIdentity: {
-            readonly idGraphId: LitentryPrimitivesAddress;
+            readonly who: LitentryPrimitivesLitentryMultiAddress;
             readonly identity: LitentryPrimitivesIdentity;
             readonly parentSs58Prefix: u16;
         } & Struct;

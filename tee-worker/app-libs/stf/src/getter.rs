@@ -21,7 +21,7 @@ use ita_sgx_runtime::System;
 use itp_stf_interface::ExecuteGetter;
 use itp_stf_primitives::types::KeyPair;
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{Address, LitentryMultiSignature};
+use litentry_primitives::{LitentryMultiAddress, LitentryMultiSignature};
 use log::*;
 use std::prelude::v1::*;
 
@@ -58,28 +58,28 @@ impl From<TrustedGetterSigned> for Getter {
 #[allow(non_camel_case_types)]
 pub enum PublicGetter {
 	some_value,
-	nonce(Address),
+	nonce(LitentryMultiAddress),
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum TrustedGetter {
-	free_balance(Address),
-	reserved_balance(Address),
+	free_balance(LitentryMultiAddress),
+	reserved_balance(LitentryMultiAddress),
 	#[cfg(feature = "evm")]
-	evm_nonce(Address),
+	evm_nonce(LitentryMultiAddress),
 	#[cfg(feature = "evm")]
-	evm_account_codes(Address, H160),
+	evm_account_codes(LitentryMultiAddress, H160),
 	#[cfg(feature = "evm")]
-	evm_account_storages(Address, H160, H256),
+	evm_account_storages(LitentryMultiAddress, H160, H256),
 	// litentry
-	user_shielding_key(Address),
-	id_graph(Address),
-	id_graph_stats(Address),
+	user_shielding_key(LitentryMultiAddress),
+	id_graph(LitentryMultiAddress),
+	id_graph_stats(LitentryMultiAddress),
 }
 
 impl TrustedGetter {
-	pub fn sender_address(&self) -> &Address {
+	pub fn sender_address(&self) -> &LitentryMultiAddress {
 		match self {
 			TrustedGetter::free_balance(sender_address) => sender_address,
 			TrustedGetter::reserved_balance(sender_address) => sender_address,

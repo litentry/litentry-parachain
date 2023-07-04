@@ -22,7 +22,7 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use lc_stf_task_sender::IdentityVerificationRequest;
-use litentry_primitives::{Address, IMPError};
+use litentry_primitives::{IMPError, LitentryMultiAddress};
 use log::*;
 use std::sync::Arc;
 
@@ -55,7 +55,7 @@ where
 		debug!("verify identity OK");
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::link_identity_callback(
-				Address::Substrate(enclave_signer.into()),
+				LitentryMultiAddress::Substrate(enclave_signer.into()),
 				self.req.who.clone(),
 				self.req.identity.clone(),
 				self.req.hash,
@@ -73,7 +73,7 @@ where
 		error!("verify identity failed:{:?}", error);
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::handle_imp_error(
-				Address::Substrate(enclave_signer.into()),
+				LitentryMultiAddress::Substrate(enclave_signer.into()),
 				Some(self.req.who.clone()),
 				error,
 				self.req.hash,

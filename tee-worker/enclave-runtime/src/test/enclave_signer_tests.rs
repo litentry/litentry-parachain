@@ -33,7 +33,7 @@ use itp_stf_primitives::types::{AccountId, ShardIdentifier};
 use itp_stf_state_observer::mock::ObserveStateMock;
 use itp_test::mock::onchain_mock::OnchainMock;
 use itp_top_pool_author::{mocks::AuthorApiMock, traits::AuthorApi};
-use litentry_primitives::Address;
+use litentry_primitives::LitentryMultiAddress;
 use sgx_crypto_helper::{rsa3072::Rsa3072KeyPair, RsaKeyPair};
 use sp_core::Pair;
 use std::{sync::Arc, vec::Vec};
@@ -72,7 +72,7 @@ pub fn enclave_signer_signatures_are_valid() {
 		top_pool_author,
 	);
 	let trusted_call = TrustedCall::balance_shield(
-		Address::Substrate(enclave_account.into()),
+		LitentryMultiAddress::Substrate(enclave_account.into()),
 		AccountId::new([3u8; 32]),
 		200u128,
 	);
@@ -106,7 +106,7 @@ pub fn nonce_is_computed_correctly() {
 
 	// create the first trusted_call and submit it
 	let trusted_call_1 = TrustedCall::balance_shield(
-		Address::Substrate(enclave_account.clone().into()),
+		LitentryMultiAddress::Substrate(enclave_account.clone().into()),
 		AccountId::new([1u8; 32]),
 		100u128,
 	);
@@ -118,7 +118,7 @@ pub fn nonce_is_computed_correctly() {
 
 	// create the second trusted_call and submit it
 	let trusted_call_2 = TrustedCall::balance_shield(
-		Address::Substrate(enclave_account.clone().into()),
+		LitentryMultiAddress::Substrate(enclave_account.clone().into()),
 		AccountId::new([2u8; 32]),
 		200u128,
 	);

@@ -24,7 +24,7 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_utils::stringify::account_id_to_string;
 use lc_data_providers::G_DATA_PROVIDERS;
 use lc_stf_task_sender::AssertionBuildRequest;
-use litentry_primitives::{Address, Assertion, ErrorDetail, ErrorString, VCMPError};
+use litentry_primitives::{Assertion, ErrorDetail, ErrorString, LitentryMultiAddress, VCMPError};
 use log::*;
 use sp_core::hashing::blake2_256;
 use std::{format, sync::Arc, vec::Vec};
@@ -198,7 +198,7 @@ where
 		let (vc_index, vc_hash, vc_payload) = result;
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::request_vc_callback(
-				Address::Substrate(enclave_signer.into()),
+				LitentryMultiAddress::Substrate(enclave_signer.into()),
 				self.req.who.clone(),
 				self.req.assertion.clone(),
 				vc_index,
@@ -219,7 +219,7 @@ where
 		error!("Assertion build error: {error:?}");
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::handle_vcmp_error(
-				Address::Substrate(enclave_signer.into()),
+				LitentryMultiAddress::Substrate(enclave_signer.into()),
 				Some(self.req.who.clone()),
 				error,
 				self.req.hash,

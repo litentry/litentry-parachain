@@ -40,7 +40,7 @@ use itp_stf_primitives::types::ShardIdentifier;
 use itp_time_utils::now_as_millis;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{Address, SupportedNetwork};
+use litentry_primitives::{LitentryMultiAddress, SupportedNetwork};
 use log::*;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
@@ -229,7 +229,10 @@ pub struct Credential {
 }
 
 impl Credential {
-	pub fn new_default(address: &Address, shard: &ShardIdentifier) -> Result<Credential, Error> {
+	pub fn new_default(
+		address: &LitentryMultiAddress,
+		shard: &ShardIdentifier,
+	) -> Result<Credential, Error> {
 		let raw = include_str!("templates/credential.json");
 		let credential: Credential = Credential::from_template(raw, address, shard)?;
 		Ok(credential)
@@ -237,7 +240,7 @@ impl Credential {
 
 	pub fn from_template(
 		s: &str,
-		address: &Address,
+		address: &LitentryMultiAddress,
 		shard: &ShardIdentifier,
 	) -> Result<Self, Error> {
 		debug!("generate credential from template, who: {:?}", &address);
@@ -543,7 +546,7 @@ mod tests {
 	#[test]
 	fn eval_simple_success() {
 		let who = AccountId::from([0; 32]);
-		let address = Address::Substrate(Address32::from(who.clone()));
+		let address = LitentryMultiAddress::Substrate(Address32::from(who.clone()));
 
 		let data = include_str!("templates/credential.json");
 		let shard = ShardIdentifier::default();
@@ -557,7 +560,7 @@ mod tests {
 	#[test]
 	fn update_holder_works() {
 		let who = AccountId::from([0; 32]);
-		let address = Address::Substrate(Address32::from(who));
+		let address = LitentryMultiAddress::Substrate(Address32::from(who));
 		let shard = ShardIdentifier::default();
 		let minimum_amount = "1".to_string();
 		let to_date = format_assertion_to_date();
