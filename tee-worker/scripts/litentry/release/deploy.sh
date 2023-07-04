@@ -614,6 +614,26 @@ fi
 
 export CONFIG=$(cat $config)
 
+# Move log files to log-backup
+if [ -d "$ROOTDIR/tee-worker/log" ]; then
+  new_folder_name=$(date +"$ROOTDIR/tee-worker/log-backup/log-%Y%m%d-%H%M%S")
+  mkdir -p $new_folder_name
+  cp -r "$ROOTDIR/tee-worker/log" "$new_folder_name"
+  cp /tmp/parachain_dev/*.log $new_folder_name
+  echo "Backup log into $new_folder_name"
+fi
+
+# Backup worker folder
+worker_count=$(echo "$CONFIG" | jq '.workers | length')
+for ((i = 0; i < worker_count; i++)); do
+    if [ -d "$ROOTDIR/tee-worker/tmp/w$i" ]; then
+        new_folder_name=$(date +"$ROOTDIR/tee-worker/tmp/w$i-%Y%m%d-%H%M%S")
+        mkdir -p new_folder_name
+        cp -r $ROOTDIR/tee-worker/tmp/w$i $new_folder_name
+        echo "Backing up, previous worker binary $new_folder_name"
+    fi
+done
+
 if [ "$discard" = true ]; then
   echo "Cleaning the existing state for Parachain and Worker."
   stop_running_services
@@ -638,13 +658,6 @@ if [ "$action" = "upgrade-worker" ]; then
   cd $ROOTDIR/tee-worker/bin
   export OLD_SHARD=$(./integritee-service mrenclave)
   echo "Old Shard value: ${OLD_SHARD}"
-fi
-
-# Move log files to log-backup
-if [ -d "log" ]; then
-  new_folder_name=$(date +"log-backup/log-%Y%m%d-%H%M%S")
-  cp -r "log" "$new_folder_name"
-  echo "Backup log into $new_folder_name"
 fi
 
 
