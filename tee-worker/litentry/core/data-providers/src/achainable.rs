@@ -76,10 +76,10 @@ impl<Query: ToAchainable> AchainableQuery<Query> for AchainableClient {
 		debug!("verified_credentials_is_hodler query: {}", query_value);
 
 		let query = vec![("query", query_value.as_str())];
-		match self.client.get_with::<String, QLResponse>(path, query.as_slice()) {
+		match self.client.get_with::<String, AchainableResponse>(path, query.as_slice()) {
 			Ok(response) =>
 				if let Some(value) = response.data.get("data") {
-					debug!("	[Graphql] value: {:?}", value);
+					debug!("	[Achainable] value: {:?}", value);
 
 					serde_json::from_value(value.clone()).map_err(|e| {
 						let error_msg = format!("Deserialize Achainable response error: {:?}", e);
@@ -103,7 +103,7 @@ impl<Query: ToAchainable> AchainableQuery<Query> for AchainableClient {
 		let query = vec![("query", query_value.as_str())];
 		let response = self
 			.client
-			.get_with::<String, QLResponse>(path, query.as_slice())
+			.get_with::<String, AchainableResponse>(path, query.as_slice())
 			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
 
 		let mut result: HashMap<String, TotalTxsStruct> = HashMap::new();
@@ -235,11 +235,11 @@ impl ToAchainable for VerifiedCredentialsTotalTxs {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct QLResponse {
+pub struct AchainableResponse {
 	#[serde(flatten)]
 	data: serde_json::Value,
 }
-impl RestPath<String> for QLResponse {
+impl RestPath<String> for AchainableResponse {
 	fn get_path(path: String) -> core::result::Result<String, HttpError> {
 		Ok(path)
 	}
@@ -373,424 +373,258 @@ impl AchainableResultParser for AchainableClient {
 	}
 }
 
+fn check_achainable_label(
+	client: &mut AchainableClient,
+	address: &str,
+	label_path: &str,
+) -> Result<bool, Error> {
+	let params = ReqParams::new(label_path);
+	let body = ParamsAccount::new(address).into();
+	let resp = client.post(params, &body)?;
+	AchainableClient::parse(resp)
+}
+
 impl AchainableTagAccount for AchainableClient {
 	fn fresh_account(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/1de85e1d215868788dfc91a9f04d7afd");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/1de85e1d215868788dfc91a9f04d7afd")
 	}
 
 	fn og_account(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/8a6e26b90dee869634215683ea2dad0d");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/8a6e26b90dee869634215683ea2dad0d")
 	}
 
 	fn class_of_2020(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/9343efca78222a4fad82c635ab697ca0");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/9343efca78222a4fad82c635ab697ca0")
 	}
 
 	fn class_of_2021(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/6808c28c26908eb695f63b089cfdae80");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/6808c28c26908eb695f63b089cfdae80")
 	}
 
 	fn class_of_2022(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/a4ee0c9e44cbc7b8a4b2074b3b8fb912");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/a4ee0c9e44cbc7b8a4b2074b3b8fb912")
 	}
 
 	fn found_on_bsc(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/3ace29836b372ae66a218dec16e37b62");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/3ace29836b372ae66a218dec16e37b62")
 	}
 
 	fn is_polkadot_validator(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/eb66927e8f56fd7f9a8917d380e6100d");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/eb66927e8f56fd7f9a8917d380e6100d")
 	}
 
 	fn is_kusama_validator(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/a0d213ff009e43b4ecd0cae67bbabae9");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/a0d213ff009e43b4ecd0cae67bbabae9")
 	}
 }
 
 impl AchainableTagBalance for AchainableClient {
 	fn polkadot_dolphin(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/6a0424e7544696a3e774dfc7e260dd6e");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/6a0424e7544696a3e774dfc7e260dd6e")
 	}
 
 	fn kusama_dolphin(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/3e226ee1bfb0d33564efe7f28f5015bd");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/3e226ee1bfb0d33564efe7f28f5015bd")
 	}
 
 	fn polkadot_whale(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/68390df24e8ac5d0984a8e9c0725a964");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/68390df24e8ac5d0984a8e9c0725a964")
 	}
 
 	fn kusama_whale(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/2bf33f5b3ae60293bf93784b80251129");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/2bf33f5b3ae60293bf93784b80251129")
 	}
 
 	fn less_than_10_eth_holder(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/fee8171e2001d1605e018c74f64352da");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/fee8171e2001d1605e018c74f64352da")
 	}
 
 	fn less_than_10_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/4a35e107005f1ea4077f119c10d18503");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/4a35e107005f1ea4077f119c10d18503")
 	}
 
 	fn not_less_than_100_eth_holder(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/8657c801983aed40012e387900d75726");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/8657c801983aed40012e387900d75726")
 	}
 
 	fn between_10_to_100_eth_holder(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/e4724ad5b7354ef85332887ee7852800");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/e4724ad5b7354ef85332887ee7852800")
 	}
 
 	fn eth_millionaire(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/83d16c4c31c55ae535472643e63f49ce");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/83d16c4c31c55ae535472643e63f49ce")
 	}
 
 	fn eth2_validator_eligible(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/53b54e51090a3663173c2a97039ebf69");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/53b54e51090a3663173c2a97039ebf69")
 	}
 
 	fn not_less_than_100_weth_holder(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/f55a4c5a19b6817ad4faf90385f4df6e");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/f55a4c5a19b6817ad4faf90385f4df6e")
 	}
 
 	fn not_less_than_100_lit_bep20_holder(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/0f26a13d7ff182641f9bb9168a3f1d84");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/0f26a13d7ff182641f9bb9168a3f1d84")
 	}
 
 	fn native_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/3f0469170cd271ebaac4ed2c92754479");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/3f0469170cd271ebaac4ed2c92754479")
 	}
 
 	fn erc20_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/7bf72e9190098776817afa763044ac1b");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/7bf72e9190098776817afa763044ac1b")
 	}
 
 	fn bep20_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/0dc166e3b588fb45a9cca36c60c61f79");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/0dc166e3b588fb45a9cca36c60c61f79")
 	}
 }
 
 impl AchainableTagDotsama for AchainableClient {
 	fn is_polkadot_treasury_proposal_beneficiary(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/d4748f8b162a78a195cbbc6669333545");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/d4748f8b162a78a195cbbc6669333545")
 	}
 
 	fn is_kusama_treasury_proposal_beneficiary(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/d7cf879652ea3bcab1c043828f4d4478");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/d7cf879652ea3bcab1c043828f4d4478")
 	}
 
 	fn is_polkadot_tip_finder(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/fbf7f158c78d7eb95cb872b1a8d5fe07");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/fbf7f158c78d7eb95cb872b1a8d5fe07")
 	}
 
 	fn is_kusama_tip_finder(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/1181944a66c746042c2914080eb7155b");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/1181944a66c746042c2914080eb7155b")
 	}
 
 	fn is_polkadot_tip_beneficiary(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/1829e887a62fa97113dd0cee977aa8d5");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/1829e887a62fa97113dd0cee977aa8d5")
 	}
 
 	fn is_kusama_tip_beneficiary(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/3564145e6ca3f13185b2cd1490db65fc");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/3564145e6ca3f13185b2cd1490db65fc")
 	}
 
 	fn is_polkadot_opengov_proposer(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/ce5e845483b2fcbe42021ff91198b92b");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/ce5e845483b2fcbe42021ff91198b92b")
 	}
 
 	fn is_kusama_opengov_proposer(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/ee1a4e4a1e3e63e3e9d1c5af1674e15b");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/ee1a4e4a1e3e63e3e9d1c5af1674e15b")
 	}
 
 	fn is_polkadot_fellowship_proposer(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/5c1a272ce054e729f1eca5c5a47bcbdd");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/5c1a272ce054e729f1eca5c5a47bcbdd")
 	}
 
 	fn is_kusama_fellowship_proposer(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/4aa1a72b5d1fae6dd0417671193fffe1");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/4aa1a72b5d1fae6dd0417671193fffe1")
 	}
 
 	fn is_polkadot_fellowship_member(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/9b03668237a0a4a7bbdd45c839dbb0fd");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/9b03668237a0a4a7bbdd45c839dbb0fd")
 	}
 
 	fn is_kusama_fellowship_member(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/91b0529b323d6c1207dc601d0f677414");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/91b0529b323d6c1207dc601d0f677414")
 	}
 
 	fn is_polkadot_ex_councilor(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/8cb42563adaacf8fd4609d6641ce7670");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/8cb42563adaacf8fd4609d6641ce7670")
 	}
 
 	fn is_kusama_ex_councilor(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/50e6094ebf3df2e8bf2d2b41b2737ba0");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/50e6094ebf3df2e8bf2d2b41b2737ba0")
 	}
 
 	fn is_polkadot_councilor(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/e5bcdbdb20c07ffd9ff68ce206fb64d5");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/e5bcdbdb20c07ffd9ff68ce206fb64d5")
 	}
 
 	fn is_kusama_councilor(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/a27e414ae882a5e5b291b437376e266a");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/a27e414ae882a5e5b291b437376e266a")
 	}
 
 	fn is_polkadot_bounty_curator(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/1f39ff71595b1f0ff9f196b8f64f04e3");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/1f39ff71595b1f0ff9f196b8f64f04e3")
 	}
 
 	fn is_kusama_bounty_curator(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/6ecc10647157f1c34fe7d3734ba3d89f");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/6ecc10647157f1c34fe7d3734ba3d89f")
 	}
 }
 
 impl AchainableTagDeFi for AchainableClient {
 	fn uniswap_v2_user(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/6650ee41cda375e6d2a4d27746ce4805");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/6650ee41cda375e6d2a4d27746ce4805")
 	}
 
 	fn uniswap_v3_user(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/9e394bae4a87c67d1073d930e0dee58c");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/9e394bae4a87c67d1073d930e0dee58c")
 	}
 
 	fn uniswap_v2_lp_in_2022(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/17769b1442bb26a1604c85ad49045f1b");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/17769b1442bb26a1604c85ad49045f1b")
 	}
 
 	fn uniswap_v3_lp_in_2022(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/e3da6466ef2e710b39f1139872a69eed");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/e3da6466ef2e710b39f1139872a69eed")
 	}
 
 	fn usdc_uniswap_v2_lp(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/aa7d5d57430bfb68708417aca6fa2e16");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/aa7d5d57430bfb68708417aca6fa2e16")
 	}
 
 	fn usdc_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/3a0a5230a42c5dd2b3581218766cc7fb");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/3a0a5230a42c5dd2b3581218766cc7fb")
 	}
 
 	fn usdt_uniswap_lp(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/05265d4009703337e7a57764b09d39d2");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/05265d4009703337e7a57764b09d39d2")
 	}
 
 	fn usdt_uniswap_v2_lp(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/1dcd359e078fb8fac92b76d2e9d720c8");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/1dcd359e078fb8fac92b76d2e9d720c8")
 	}
 
 	fn usdt_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/5a2a14a93b7352e93a6cf84a460c2c50");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/5a2a14a93b7352e93a6cf84a460c2c50")
 	}
 
 	fn aave_v2_lender(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/e79d42db5a0e1571262e5d7c056111ed");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/e79d42db5a0e1571262e5d7c056111ed")
 	}
 
 	fn aave_v2_borrower(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/b9256d66b76ad62b9ec25f27775e6d83");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/b9256d66b76ad62b9ec25f27775e6d83")
 	}
 
 	fn aave_v3_lender(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/2f0470c59799e58f91929678d2a62c2b");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/2f0470c59799e58f91929678d2a62c2b")
 	}
 
 	fn aave_v3_borrower(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/c090d9694c902141673c85a8f64d7f78");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/c090d9694c902141673c85a8f64d7f78")
 	}
 
 	fn curve_trader(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/054625c2a49a73876831b797c5c41cd3");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/054625c2a49a73876831b797c5c41cd3")
 	}
 
 	fn curve_trader_in_2022(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/7d7c271af78ebf94d7f3b1ff6df30142");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/7d7c271af78ebf94d7f3b1ff6df30142")
 	}
 
 	fn curve_liquidity_provider(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/2c3d7189e1783880916cc56a1277cb13");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/2c3d7189e1783880916cc56a1277cb13")
 	}
 
 	fn curve_liquidity_provider_in_2022(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/112860d373ee427d80b2d687ca54dc8e");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/112860d373ee427d80b2d687ca54dc8e")
 	}
 
 	fn swapped_with_metamask_in_2022(&mut self, address: &str) -> Result<bool, Error> {
-		let params = ReqParams::new("/v1/run/label/5061d6de2687378f303b2f38538b350d");
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-		AchainableClient::parse(resp)
+		check_achainable_label(self, address, "/v1/run/label/5061d6de2687378f303b2f38538b350d")
 	}
 }
 
