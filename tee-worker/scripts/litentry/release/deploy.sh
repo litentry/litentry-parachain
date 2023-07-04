@@ -20,6 +20,7 @@ function display_help() {
   echo "  -c, --chain        Chain to use for Parachain Deployment"
   echo "  -p, --parachain-port  Parachain Port Number (default: 9944)"
   echo "  -h, --parachain-host  Parachain Host Url (default: localhost)"
+  echo "  -v, --copy-from-docker Copy the binary for Parachain from a docker image (default: litentry/litentry-parachain:tee-prod)"
   echo ""
   echo "Arguments:"
   echo "  restart            Restart the services."
@@ -161,7 +162,11 @@ function restart_parachain() {
   fi
 
   echo "Fething Litentry Collator Binary"
-  PARACHAIN_BIN="$ROOTDIR/target/release/litentry-collator"
+  if [ "$COPY_FROM_DOCKER" = true ]; then
+    PARACHAIN_BIN="$ROOTDIR/litentry-collator"
+  else
+    PARACHAIN_BIN="$ROOTDIR/target/release/litentry-collator"
+  fi
   chmod a+x "$PARACHAIN_BIN"
 
   if ! "$PARACHAIN_BIN" --version &> /dev/null; then
@@ -513,8 +518,15 @@ function latest_parentchain_sync_block(){
 }
 
 function build_parachain(){
-  cd $ROOTDIR
-  make build-node
+  if [ "$COPY_FROM_DOCKER" = true ]; then
+    docker pull litentry/litentry-parachain:tee-prod
+    img_id=$(docker create litentry/litentry-parachain:tee-prod)
+    docker cp $img_id:/usr/local/bin/litentry-collator $ROOTDIR/
+    docker rm -v $img_id
+  else
+    cd $ROOTDIR
+    make build-node
+  fi
 }
 
 function build_worker(){
@@ -533,6 +545,8 @@ export CHAIN=rococo
 export ONLY_WORKER=false
 export PARACHAIN_HOST="localhost"
 export PARACHAIN_PORT="9944"
+export DOCKERIMAGE="litentry/litentry-parachain:tee-prod"
+export COPY_FROM_DOCKER=false
 
 # Parse command-line options and arguments
 while [[ $# -gt 0 ]]; do
@@ -572,6 +586,11 @@ while [[ $# -gt 0 ]]; do
       ;;
     -h| --parachain-host)
       export PARACHAIN_HOST="$2"
+      shift
+      ;;
+    -v| --copy-from-docker)
+      export COPY_FROM_DOCKER=true
+      export DOCKERIMAGE="$2"
       shift
       ;;
     restart|upgrade-worker)
