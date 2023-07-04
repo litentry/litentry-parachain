@@ -74,10 +74,6 @@ impl UserInfo for DiscordMessage {
 	fn get_user_id(&self) -> Option<String> {
 		Some(self.author.id.clone())
 	}
-
-	fn get_user_name(&self) -> Option<String> {
-		Some(self.author.username.clone())
-	}
 }
 
 pub struct DiscordOfficialClient {

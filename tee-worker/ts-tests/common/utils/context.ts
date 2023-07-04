@@ -9,10 +9,10 @@ import { getSidechainMetadata } from '../call';
 import { getEthereumSigner, getSubstrateSigner } from '../helpers';
 import type { IntegrationTestContext, EnclaveResult, Web3Wallets } from '../type-definitions';
 import { default as teeTypes } from '../../parachain-interfaces/identity/definitions';
-const crypto = require('crypto');
+import crypto from 'crypto';
 
 // maximum block number that we wait in listening events before we timeout
-export const defaultListenTimeoutInBlockNumber = 10;
+export const defaultListenTimeoutInBlockNumber = 15;
 
 export async function initWorkerConnection(endpoint: string): Promise<WebSocketAsPromised> {
     const wsp = new WebSocketAsPromised(endpoint, <Options>(<unknown>{
@@ -48,12 +48,12 @@ export async function initIntegrationTestContext(
         types,
     });
 
-    const chainID = api.registry.chainSS58 as number;
+    const chainIdentifier = api.registry.chainSS58 as number;
     await cryptoWaitReady();
 
     const wsp = await initWorkerConnection(workerEndpoint);
 
-    const { metaData, sidechainRegistry } = await getSidechainMetadata(wsp, api);
+    const { sidechainMetaData, sidechainRegistry } = await getSidechainMetadata(wsp, api);
     const web3Signers = await generateWeb3Wallets(walletsNumber);
     const { mrEnclave, teeShieldingKey } = await getEnclave(api);
     return {
@@ -63,10 +63,10 @@ export async function initIntegrationTestContext(
         mrEnclave,
         ethersWallet,
         substrateWallet,
-        metaData,
+        sidechainMetaData,
         sidechainRegistry,
         web3Signers,
-        chainID,
+        chainIdentifier,
     };
 }
 

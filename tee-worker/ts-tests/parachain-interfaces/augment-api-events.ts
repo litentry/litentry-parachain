@@ -1736,6 +1736,7 @@ declare module '@polkadot/api-base/types/events' {
             AddedEnclave: AugmentedEvent<ApiType, [AccountId32, Bytes]>;
             AdminChanged: AugmentedEvent<ApiType, [oldAdmin: Option<AccountId32>], { oldAdmin: Option<AccountId32> }>;
             Forwarded: AugmentedEvent<ApiType, [H256]>;
+            NewMrenclaveSet: AugmentedEvent<ApiType, [newMrenclave: U8aFixed], { newMrenclave: U8aFixed }>;
             ProcessedParentchainBlock: AugmentedEvent<ApiType, [AccountId32, H256, H256, u32]>;
             /**
              * An enclave with [mr_enclave] has published some [hash] with some metadata [data].
