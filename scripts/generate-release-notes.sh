@@ -167,18 +167,18 @@ Details:
 
 EOF
 
-labels=("C0-breaking" "C1-noteworthy")
+  labels=("C0-breaking" "C1-noteworthy")
 
-git log --no-merges --abbrev-commit --pretty="format:%h|%s%n" "$DIFF_TAG..$RELEASE_TAG" | grep -v "^$" | while read -r f; do
-  commit=$(echo "$f" | cut -d'|' -f1)
-  desc=$(echo "$f" | cut -d'|' -f2)
-  output="- [\`$commit\`]($REPO/commit/$commit) $desc"
-  
-  for ((i=0; i<${#labels[@]}; i++)); do
-    label=$(gh pr list --search "$commit" --label "${labels[i]}" --state merged)
-    [ -n "$label" ] && output+=" $REPO/labels/${labels[i]}"
+  git log --no-merges --abbrev-commit --pretty="format:%h|%s%n" "$DIFF_TAG..$RELEASE_TAG" | grep -v "^$" | while read -r f; do
+    commit=$(echo "$f" | cut -d'|' -f1)
+    desc=$(echo "$f" | cut -d'|' -f2)
+    output="- [\`$commit\`]($REPO/commit/$commit) $desc"
+    
+    for ((i=0; i<${#labels[@]}; i++)); do
+      label=$(gh pr list --search "$commit" --label "${labels[i]}" --state merged)
+      [ -n "$label" ] && output+=" $REPO/labels/${labels[i]}"
+    done
+    
+    echo "$output" >> "$1"
   done
-  
-  echo "$output" >> "$1"
-done
 fi
