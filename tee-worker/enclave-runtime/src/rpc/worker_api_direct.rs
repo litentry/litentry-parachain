@@ -150,7 +150,7 @@ where
 			},
 			Err(e) => {
 				let error_msg: String =
-					format!("Could not retrieve pending trusted calls due to: {}", e);
+					format!("Could not retrieve author_getNextNonce calls due to: {}", e);
 				Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
 			},
 		}
