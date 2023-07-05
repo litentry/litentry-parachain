@@ -157,51 +157,6 @@ where
 		Ok(json!(json_value))
 	});
 
-	// state_getStorage
-	let state_get_storage = "state_getStorage";
-	io.add_sync_method(state_get_storage, move |params: Params| {
-		if state.is_none() {
-			return Ok(json!(compute_hex_encoded_return_error("state_getStorage is not avaiable")))
-		}
-		let state = state.clone().unwrap();
-		match params.parse::<(String, String)>() {
-			Ok((shard_str, key_hash)) => {
-				let key_hash = if key_hash.starts_with("0x") {
-					key_hash.strip_prefix("0x").unwrap()
-				} else {
-					key_hash.as_str()
-				};
-				let key_hash = match hex::decode(key_hash) {
-					Ok(key_hash) => key_hash,
-					Err(_) =>
-						return Ok(json!(compute_hex_encoded_return_error("docode key error"))),
-				};
-
-				let shard: ShardIdentifier = match decode_shard_from_base58(shard_str.as_str()) {
-					Ok(id) => id,
-					Err(msg) => {
-						let error_msg = format!("decode shard failure due to: {}", msg);
-						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-					},
-				};
-				match state.load_cloned(&shard) {
-					Ok((state, _hash)) => {
-						// Get storage by key hash
-						let value = state.get(key_hash.as_slice()).cloned().unwrap_or_default();
-						debug!("query storage value:{:?}", &value);
-						let json_value = RpcReturnValue::new(value, false, DirectRequestStatus::Ok);
-						Ok(json!(json_value.to_hex()))
-					},
-					Err(e) => {
-						let error_msg = format!("load shard failure due to: {:?}", e);
-						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-					},
-				}
-			},
-			Err(_err) => Ok(json!(compute_hex_encoded_return_error("parse error"))),
-		}
-	});
-
 	if cfg!(not(feature = "production")) {
 		// state_updateScheduledEnclave
 		// params: sidechainBlockNumber, hex encoded mrenclave
@@ -239,6 +194,55 @@ where
 						},
 					},
 				Err(_) => Ok(json!(compute_hex_encoded_return_error("parse error"))),
+			}
+		});
+
+		// state_getStorage
+		let state_get_storage = "state_getStorage";
+		io.add_sync_method(state_get_storage, move |params: Params| {
+			if state.is_none() {
+				return Ok(json!(compute_hex_encoded_return_error(
+					"state_getStorage is not avaiable"
+				)))
+			}
+			let state = state.clone().unwrap();
+			match params.parse::<(String, String)>() {
+				Ok((shard_str, key_hash)) => {
+					let key_hash = if key_hash.starts_with("0x") {
+						key_hash.strip_prefix("0x").unwrap()
+					} else {
+						key_hash.as_str()
+					};
+					let key_hash = match hex::decode(key_hash) {
+						Ok(key_hash) => key_hash,
+						Err(_) =>
+							return Ok(json!(compute_hex_encoded_return_error("docode key error"))),
+					};
+
+					let shard: ShardIdentifier = match decode_shard_from_base58(shard_str.as_str())
+					{
+						Ok(id) => id,
+						Err(msg) => {
+							let error_msg = format!("decode shard failure due to: {}", msg);
+							return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+						},
+					};
+					match state.load_cloned(&shard) {
+						Ok((state, _hash)) => {
+							// Get storage by key hash
+							let value = state.get(key_hash.as_slice()).cloned().unwrap_or_default();
+							debug!("query storage value:{:?}", &value);
+							let json_value =
+								RpcReturnValue::new(value, false, DirectRequestStatus::Ok);
+							Ok(json!(json_value.to_hex()))
+						},
+						Err(e) => {
+							let error_msg = format!("load shard failure due to: {:?}", e);
+							return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+						},
+					}
+				},
+				Err(_err) => Ok(json!(compute_hex_encoded_return_error("parse error"))),
 			}
 		});
 	}
