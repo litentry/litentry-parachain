@@ -936,11 +936,11 @@ fn data_provider(config: &Config) -> DataProvidersStatic {
 	if let Ok(v) = env::var("DISCORD_AUTH_TOKEN") {
 		data_provider_config.set_discord_auth_token(v);
 	}
-	if let Ok(v) = env::var("GRAPHQL_URL") {
-		data_provider_config.set_graphql_url(v);
+	if let Ok(v) = env::var("ACHAINABLE_URL") {
+		data_provider_config.set_achainable_url(v);
 	}
-	if let Ok(v) = env::var("GRAPHQL_AUTH_KEY") {
-		data_provider_config.set_graphql_auth_key(v);
+	if let Ok(v) = env::var("ACHAINABLE_AUTH_KEY") {
+		data_provider_config.set_achainable_auth_key(v);
 	}
 	if let Ok(v) = env::var("CREDENTIAL_ENDPOINT") {
 		data_provider_config.set_credential_endpoint(v);

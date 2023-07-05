@@ -91,7 +91,6 @@ impl TwitterLitentryClient {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use itp_stf_primitives::types::AccountId;
 	use lc_mock_server::{default_getter, run};
 	use std::sync::Arc;
 
