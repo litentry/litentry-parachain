@@ -32,6 +32,7 @@ pub fn enclave_init(config: &Config) -> EnclaveResult<Enclave> {
 	let mut launch_token = [0; LEN];
 	let mut launch_token_updated = 0;
 
+	info!("test log, remove later 1");
 	// Step 1: try to retrieve the launch token saved by last transaction
 	//         if there is no token, then create a new one.
 	//
@@ -48,6 +49,7 @@ pub fn enclave_init(config: &Config) -> EnclaveResult<Enclave> {
 			false
 		},
 	};
+	info!("test log, remove later 2");
 	let token_file = home_dir.join(ENCLAVE_TOKEN);
 	if use_token {
 		match File::open(&token_file) {
@@ -69,6 +71,7 @@ pub fn enclave_init(config: &Config) -> EnclaveResult<Enclave> {
 		}
 	}
 
+	info!("test log, remove later 3");
 	// Step 2: call sgx_create_enclave to initialize an enclave instance
 	// Debug Support: 1 = debug mode, 0 = not debug mode
 	#[cfg(not(feature = "production"))]
@@ -87,6 +90,7 @@ pub fn enclave_init(config: &Config) -> EnclaveResult<Enclave> {
 	))
 	.map_err(EnclaveApiError::Sgx)?;
 
+	info!("test log, remove later 4");
 	// Step 3: save the launch token if it is updated
 	if use_token && launch_token_updated != 0 {
 		// reopen the file with write capability
