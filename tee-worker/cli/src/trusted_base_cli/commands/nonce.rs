@@ -36,7 +36,7 @@ impl NonceCommand {
 		let who = get_pair_from_str(trusted_cli, &self.account);
 		let worker_api_direct = get_worker_api_direct(cli);
 		let nonce_ret = worker_api_direct.get_next_nonce(&shard, &(who.public().into()));
-		let nonce = nonce_ret.unwrap();
+		let nonce = nonce_ret.expect("get nonce error!");
 		println!("{}", nonce);
 		worker_api_direct.close().unwrap();
 	}
