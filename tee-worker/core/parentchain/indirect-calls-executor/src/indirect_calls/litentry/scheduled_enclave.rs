@@ -40,17 +40,17 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for UpdateScheduledE
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct RemoveScheduledEnclaveArgs {
-	sbn: SidechainBlockNumber,
+	sbn: codec::Compact<SidechainBlockNumber>,
 }
 
 impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for RemoveScheduledEnclaveArgs {
 	type Args = ();
 	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {
 		debug!(
-			"execute indirect call: RemoveScheduledEnclave, sidechain_block_number: {}",
+			"execute indirect call: RemoveScheduledEnclave, sidechain_block_number: {:?}",
 			self.sbn
 		);
-		GLOBAL_SCHEDULED_ENCLAVE.remove(self.sbn)?;
+		GLOBAL_SCHEDULED_ENCLAVE.remove(self.sbn.into())?;
 		Ok(())
 	}
 }
