@@ -43,7 +43,7 @@ use frame_system::pallet_prelude::*;
 use log::debug;
 
 pub use litentry_primitives::{
-	Identity, ParentchainBlockNumber, SubstrateNetwork, UserShieldingKeyType,
+	get_all_web3networks, Identity, ParentchainBlockNumber, UserShieldingKeyType, Web3Network,
 };
 use sp_std::vec::Vec;
 pub type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
@@ -71,6 +71,10 @@ pub mod pallet {
 		/// maximum number of identities an account can have, if you change this value to lower some accounts may exceed this limit
 		#[pallet::constant]
 		type MaxIDGraphLength: Get<u32>;
+		/// maximum number of web3 networks an `IdentityContext` can have, if should be greater than
+		/// the number of Web3Network enum items
+		#[pallet::constant]
+		type MaxWeb3NetworkLength: Get<u32>;
 	}
 
 	#[pallet::event]
@@ -96,6 +100,8 @@ pub mod pallet {
 		RemovePrimeIdentityDisallowed,
 		/// IDGraph len limit reached
 		IDGraphLenLimitReached,
+		/// Web3Network len limit reached
+		Web3NetworkLenLimitReached,
 	}
 
 	/// user shielding key is per Litentry account
@@ -129,17 +135,23 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			who: T::AccountId,
 			key: UserShieldingKeyType,
-			parent_ss58_prefix: u16,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
-			// we don't care about the current key
-			UserShieldingKeys::<T>::insert(&who, key);
 
-			let prime_id = Self::build_prime_identity(&who, parent_ss58_prefix)?;
+			let prime_id = Self::build_prime_identity(&who)?;
 			if IDGraphs::<T>::get(&who, &prime_id).is_none() {
-				let context = <IdentityContext<T>>::new(<frame_system::Pallet<T>>::block_number());
+				// TODO: shall we activate all available networks for the prime id?
+				let bounded_web3networks = get_all_web3networks()
+					.try_into()
+					.map_err(|_| Error::<T>::Web3NetworkLenLimitReached)?;
+				let context = <IdentityContext<T>>::new(
+					<frame_system::Pallet<T>>::block_number(),
+					bounded_web3networks,
+				);
 				Self::insert_identity_with_limit(&who, &prime_id, context)?;
 			}
+			// we don't care about the current key
+			UserShieldingKeys::<T>::insert(&who, key);
 
 			Self::deposit_event(Event::UserShieldingKeySet { who, key });
 			Ok(())
@@ -151,7 +163,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			who: T::AccountId,
 			identity: Identity,
-			parent_ss58_prefix: u16,
+			web3networks: Vec<Web3Network>,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 
@@ -159,10 +171,11 @@ pub mod pallet {
 				!IDGraphs::<T>::contains_key(&who, &identity),
 				Error::<T>::IdentityAlreadyLinked
 			);
-			let prime_id = Self::build_prime_identity(&who, parent_ss58_prefix)?;
+			let prime_id = Self::build_prime_identity(&who)?;
 			ensure!(identity != prime_id, Error::<T>::LinkPrimeIdentityDisallowed);
 
-			let context = <IdentityContext<T>>::new(<frame_system::Pallet<T>>::block_number());
+			let context =
+				<IdentityContext<T>>::new(<frame_system::Pallet<T>>::block_number(), web3networks);
 			Self::insert_identity_with_limit(&who, &identity, context)?;
 			Self::deposit_event(Event::IdentityLinked { who, identity });
 			Ok(())
@@ -174,11 +187,10 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			who: T::AccountId,
 			identity: Identity,
-			parent_ss58_prefix: u16,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 			ensure!(IDGraphs::<T>::contains_key(&who, &identity), Error::<T>::IdentityNotExist);
-			let prime_id = Self::build_prime_identity(&who, parent_ss58_prefix)?;
+			let prime_id = Self::build_prime_identity(&who)?;
 			ensure!(identity != prime_id, Error::<T>::RemovePrimeIdentityDisallowed);
 
 			Self::remove_identity_with_limit(&who, &identity);
@@ -189,18 +201,12 @@ pub mod pallet {
 
 	impl<T: Config> Pallet<T> {
 		// build the prime identity which is always a substrate address32-based identity
-		fn build_prime_identity(
-			who: &T::AccountId,
-			parent_ss58_prefix: u16,
-		) -> Result<Identity, DispatchError> {
+		fn build_prime_identity(who: &T::AccountId) -> Result<Identity, DispatchError> {
 			let address_raw: [u8; 32] =
 				who.encode().try_into().map_err(|_| DispatchError::Other("Invalid AccountId"))?;
 			let address: Address32 = address_raw.into();
 
-			Ok(Identity::Substrate {
-				network: SubstrateNetwork::from_ss58_prefix(parent_ss58_prefix),
-				address,
-			})
+			Ok(Identity::Substrate(address_raw.into()))
 		}
 
 		fn insert_identity_with_limit(

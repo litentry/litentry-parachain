@@ -272,6 +272,7 @@ impl pallet_imt::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type ManageOrigin = EnsureRoot<AccountId>;
 	type MaxIDGraphLength = ConstU32<64>;
+	type MaxWeb3NetworkLength = ConstU32<128>;
 }
 
 // The plain sgx-runtime without the `evm-pallet`

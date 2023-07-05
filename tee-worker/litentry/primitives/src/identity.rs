@@ -17,15 +17,8 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-#[cfg(any(feature = "std", feature = "sgx"))]
-use std::format;
-
 #[cfg(all(not(feature = "sgx"), feature = "std"))]
 use serde::{Deserialize, Serialize};
-#[cfg(any(feature = "std", feature = "sgx"))]
-use sp_core::hexdisplay::HexDisplay;
-#[cfg(any(feature = "std", feature = "sgx"))]
-use std::vec::Vec;
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -65,135 +58,59 @@ impl From<[u8; 32]> for Address32 {
 	}
 }
 
-#[derive(Encode, Decode, Copy, Clone, Debug, PartialEq, Eq, Hash, TypeInfo, MaxEncodedLen)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub enum SubstrateNetwork {
-	Polkadot,
-	Kusama,
-	Litentry,
-	Litmus,
-	LitentryRococo,
-	Khala,
-	TestNet, // when we launch it with standalone (integritee-)node
-}
-
-impl SubstrateNetwork {
-	/// get the ss58 prefix, see https://github.com/paritytech/ss58-registry/blob/main/ss58-registry.json
-	pub fn ss58_prefix(&self) -> u16 {
-		match self {
-			Self::Polkadot => 0,
-			Self::Kusama => 2,
-			Self::Litentry => 31,
-			Self::Litmus => 131,
-			Self::LitentryRococo => 42,
-			Self::Khala => 30,
-			Self::TestNet => 13,
-		}
-	}
-
-	pub fn from_ss58_prefix(prefix: u16) -> Self {
-		match prefix {
-			0 => Self::Polkadot,
-			2 => Self::Kusama,
-			31 => Self::Litentry,
-			131 => Self::Litmus,
-			42 => Self::LitentryRococo,
-			30 => Self::Khala,
-			_ => Self::TestNet,
-		}
-	}
-}
-
-#[derive(Encode, Decode, Copy, Clone, Debug, PartialEq, Eq, Hash, TypeInfo, MaxEncodedLen)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub enum EvmNetwork {
-	Ethereum,
-	BSC,
-}
-
-#[derive(Encode, Decode, Copy, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub enum Web2Network {
-	Twitter,
-	Discord,
-	Github,
-}
-
+/// Web2 and Web3 Identity based on handle/public key
+/// We only include the network categories (substrate/evm) without concrete types
+/// see https://github.com/litentry/litentry-parachain/issues/1841
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum Identity {
-	Substrate { network: SubstrateNetwork, address: Address32 },
-	Evm { network: EvmNetwork, address: Address20 },
-	Web2 { network: Web2Network, address: IdentityString },
+	// web2
+	Twitter(IdentityString),
+	Discord(IdentityString),
+	Github(IdentityString),
+
+	// web3
+	Substrate(Address32),
+	Evm(Address20),
 }
 
 impl Identity {
-	#[cfg(any(feature = "std", feature = "sgx"))]
-	pub fn flat(&self) -> Vec<u8> {
-		match &self {
-			Identity::Substrate { network, address } => {
-				let mut data = format!("did:{:?}:web3:substrate:", network)
-					.to_ascii_lowercase()
-					.as_bytes()
-					.to_vec();
-				let mut suffix =
-					format!("0x{}", HexDisplay::from(address.as_ref())).as_bytes().to_vec();
-				data.append(&mut suffix);
-				data
-			},
-			Identity::Evm { network, address } => {
-				let mut data =
-					format!("did:{:?}:web3:evm:", network).to_ascii_lowercase().as_bytes().to_vec();
-				let mut suffix =
-					format!("0x{}", HexDisplay::from(address.as_ref())).as_bytes().to_vec();
-				data.append(&mut suffix);
-				data
-			},
-			Identity::Web2 { network, address } => {
-				let mut data =
-					format!("did:{:?}:web2:_:", network).to_ascii_lowercase().as_bytes().to_vec();
-				let mut suffix = address.to_vec();
-				data.append(&mut suffix);
-				data
-			},
-		}
-	}
-
 	pub fn is_web2(&self) -> bool {
-		matches!(self, Identity::Web2 { .. })
+		matches!(self, Self::Twitter(..) | Self::Discord(..) | Self::Github(..))
 	}
 
 	pub fn is_web3(&self) -> bool {
-		matches!(self, Identity::Evm { .. } | Identity::Substrate { .. })
+		matches!(self, Self::Substrate(..) | Self::Evm(..))
+	}
+
+	pub fn is_substrate(&self) -> bool {
+		matches!(self, Self::Substrate(..))
+	}
+
+	pub fn is_evm(&self) -> bool {
+		matches!(self, Self::Evm(..))
 	}
 }
 
 #[cfg(test)]
 mod tests {
-	use crate::{Identity, IdentityString, SubstrateNetwork, Web2Network};
+	use super::*;
 	use sp_core::Pair;
 
 	#[test]
-	fn identity() {
-		let sub_pair = sp_core::sr25519::Pair::from_string("//Alice", None).unwrap();
-		// let eth_pair = sp_core::ed25519::Pair::from_string("//Alice", None).unwrap();
-		let polkadot_identity: Identity = Identity::Substrate {
-			network: SubstrateNetwork::Polkadot,
-			address: sub_pair.public().0.into(),
-		};
+	fn identity_parsing_works() {
+		let pair = sp_core::sr25519::Pair::from_string("//Alice", None).unwrap();
+		let twitter_identity =
+			Identity::Twitter(IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap());
+		let substrate_identity = Identity::Substrate(pair.public().0.into());
+		let evm_identity = Identity::Evm([2u8; 20].into());
 
-		let twitter_identity: Identity = Identity::Web2 {
-			network: Web2Network::Twitter,
-			address: IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
-		};
+		assert!(twitter_identity.is_web2());
 
-		assert_eq!(
-			"did:polkadot:web3:substrate:0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
-			String::from_utf8(polkadot_identity.flat()).unwrap()
-		);
-		assert_eq!(
-			"did:twitter:web2:_:litentry",
-			String::from_utf8(twitter_identity.flat()).unwrap()
-		);
+		assert!(substrate_identity.is_web3());
+		assert!(substrate_identity.is_substrate());
+
+		assert!(evm_identity.is_web3());
+		assert!(evm_identity.is_evm());
 	}
 }

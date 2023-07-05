@@ -22,9 +22,7 @@ use frame_support::{
 };
 use frame_system as system;
 use frame_system::EnsureSignedBy;
-use litentry_primitives::{
-	Identity, IdentityString, SubstrateNetwork, Web2Network, USER_SHIELDING_KEY_LEN,
-};
+use litentry_primitives::{Identity, IdentityString, Web3Network, USER_SHIELDING_KEY_LEN};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -100,6 +98,7 @@ impl pallet_tee_identity_management::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type ManageOrigin = EnsureSignedBy<One, AccountId32>;
 	type MaxIDGraphLength = ConstU32<64>;
+	type MaxWeb3NetworkLength = ConstU32<64>;
 }
 
 const ALICE_KEY: &str = "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d";
@@ -110,18 +109,18 @@ pub const BOB: AccountId32 = AccountId32::new([2u8; 32]);
 pub fn alice_twitter_identity(suffix: u32) -> Identity {
 	let address = IdentityString::try_from(format!("alice{}", suffix).as_bytes().to_vec())
 		.expect("convert to BoundedVec failed");
-	Identity::Web2 { network: Web2Network::Twitter, address }
+	Identity::Twitter(address)
 }
 
 pub fn alice_web3_identity() -> Identity {
 	let alice_key_hex: [u8; 32] =
 		hex::decode(ALICE_KEY.strip_prefix("0x").unwrap()).unwrap().try_into().unwrap();
-	Identity::Substrate { network: SubstrateNetwork::Polkadot, address: alice_key_hex.into() }
+	Identity::Substrate(alice_key_hex.into())
 }
 
 pub fn bob_web3_identity() -> Identity {
 	let bob_key_hex = [2u8; 32];
-	Identity::Substrate { network: SubstrateNetwork::Litentry, address: bob_key_hex.into() }
+	Identity::Substrate(bob_key_hex.into())
 }
 
 pub fn new_test_ext(set_shielding_key: bool) -> sp_io::TestExternalities {
@@ -133,12 +132,10 @@ pub fn new_test_ext(set_shielding_key: bool) -> sp_io::TestExternalities {
 
 		if set_shielding_key {
 			let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
-			let ss58_prefix = 131_u16;
 			let _ = IMT::set_user_shielding_key(
 				RuntimeOrigin::signed(ALICE),
 				BOB,
 				shielding_key.clone(),
-				ss58_prefix,
 			);
 		}
 	});

@@ -14,10 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{mock::*, Error, IdentityContext, IdentityStatus, UserShieldingKeyType};
+use crate::{
+	mock::*, Error, Identity, IdentityContext, IdentityStatus, UserShieldingKeyType, Web3Network,
+};
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Get};
-use litentry_primitives::{Identity, IdentityString, Web2Network, USER_SHIELDING_KEY_LEN};
-use sp_runtime::AccountId32;
+use litentry_primitives::{IdentityString, USER_SHIELDING_KEY_LEN};
+use sp_runtime::{AccountId32, BoundedVec};
 
 pub const ALICE: AccountId32 = AccountId32::new([1u8; 32]);
 pub const BOB: AccountId32 = AccountId32::new([2u8; 32]);
@@ -28,12 +30,10 @@ fn set_user_shielding_key_works() {
 		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
 		assert_eq!(IMT::user_shielding_keys(BOB), None);
 
-		let ss58_prefix = 131_u16;
 		assert_ok!(IMT::set_user_shielding_key(
 			RuntimeOrigin::signed(ALICE),
 			BOB,
 			shielding_key.clone(),
-			ss58_prefix
 		));
 		assert_eq!(IMT::user_shielding_keys(BOB), Some(shielding_key.clone()));
 		System::assert_last_event(RuntimeEvent::IMT(crate::Event::UserShieldingKeySet {
@@ -47,16 +47,17 @@ fn set_user_shielding_key_works() {
 #[test]
 fn link_identity_works() {
 	new_test_ext(true).execute_with(|| {
-		let ss58_prefix = 131_u16;
+		let web3networks: BoundedVec<Web3Network, <Test as crate::Config>::MaxWeb3NetworkLength> =
+			BoundedVec::truncate_from(vec![Web3Network::Litentry]);
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			BOB,
 			alice_web3_identity(),
-			ss58_prefix,
+			web3networks,
 		));
 		assert_eq!(
 			IMT::id_graphs(BOB, alice_web3_identity()).unwrap(),
-			IdentityContext { link_block: 1, status: IdentityStatus::Active }
+			IdentityContext { link_block: 1, web3networks, status: IdentityStatus::Active }
 		);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&BOB), 2);
 	});
@@ -71,7 +72,7 @@ fn cannot_create_more_identities_for_account_than_limit() {
 				RuntimeOrigin::signed(ALICE),
 				BOB,
 				alice_twitter_identity(i),
-				131_u16,
+				vec![],
 			));
 		}
 		assert_err!(
@@ -79,7 +80,7 @@ fn cannot_create_more_identities_for_account_than_limit() {
 				RuntimeOrigin::signed(ALICE),
 				BOB,
 				alice_twitter_identity(65),
-				131_u16,
+				vec![],
 			),
 			Error::<Test>::IDGraphLenLimitReached
 		);
@@ -89,45 +90,37 @@ fn cannot_create_more_identities_for_account_than_limit() {
 #[test]
 fn remove_identity_works() {
 	new_test_ext(false).execute_with(|| {
-		let ss58_prefix = 31_u16;
 		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
 
 		assert_ok!(IMT::set_user_shielding_key(
 			RuntimeOrigin::signed(ALICE),
 			BOB,
 			shielding_key.clone(),
-			ss58_prefix.clone()
 		));
 		assert_noop!(
-			IMT::remove_identity(
-				RuntimeOrigin::signed(ALICE),
-				BOB,
-				alice_web3_identity(),
-				ss58_prefix
-			),
+			IMT::remove_identity(RuntimeOrigin::signed(ALICE), BOB, alice_web3_identity(),),
 			Error::<Test>::IdentityNotExist
 		);
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			BOB,
 			alice_web3_identity(),
-			ss58_prefix,
+			vec![],
 		));
 		assert_eq!(
 			IMT::id_graphs(BOB, alice_web3_identity()).unwrap(),
-			IdentityContext { link_block: 1, status: IdentityStatus::Active }
+			IdentityContext {
+				link_block: 1,
+				web3networks: BoundedVec::default(),
+				status: IdentityStatus::Active
+			}
 		);
 
 		let id_graph = IMT::get_id_graph(&BOB, usize::MAX);
 		assert_eq!(id_graph.len(), 2);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&BOB), 2);
 
-		assert_ok!(IMT::remove_identity(
-			RuntimeOrigin::signed(ALICE),
-			BOB,
-			alice_web3_identity(),
-			ss58_prefix
-		));
+		assert_ok!(IMT::remove_identity(RuntimeOrigin::signed(ALICE), BOB, alice_web3_identity(),));
 		assert_eq!(IMT::id_graphs(BOB, alice_web3_identity()), None);
 
 		let id_graph = IMT::get_id_graph(&BOB, usize::MAX);
@@ -136,12 +129,7 @@ fn remove_identity_works() {
 		assert_eq!(crate::IDGraphLens::<Test>::get(&BOB), 1);
 
 		assert_noop!(
-			IMT::remove_identity(
-				RuntimeOrigin::signed(ALICE),
-				BOB,
-				bob_web3_identity(),
-				ss58_prefix
-			),
+			IMT::remove_identity(RuntimeOrigin::signed(ALICE), BOB, bob_web3_identity(),),
 			Error::<Test>::RemovePrimeIdentityDisallowed
 		);
 	});
@@ -158,7 +146,7 @@ fn get_id_graph_works() {
 				RuntimeOrigin::signed(ALICE),
 				BOB,
 				alice_twitter_identity(i.try_into().unwrap()),
-				131_u16,
+				vec![],
 			));
 		}
 		// the full id_graph should have 22 elements, including the prime_id
@@ -166,45 +154,49 @@ fn get_id_graph_works() {
 
 		// only get the recent 15 identities
 		let id_graph = IMT::get_id_graph(&BOB, 15);
-		for i in id_graph.clone() {
-			println!("{:?}", String::from_utf8(i.0.flat()).unwrap());
-		}
 		assert_eq!(id_graph.len(), 15);
 		// index 0 has the most recent identity
-		assert_eq!(String::from_utf8(id_graph.get(0).unwrap().0.flat()).unwrap(), "did:twitter:web2:_:alice21");
+		assert_eq!(
+			id_graph.get(0).unwrap().0,
+			Identity::Twitter("alice21".as_bytes().to_vec().try_into().unwrap())
+		);
 		// index 14 has the least recent identity
-		assert_eq!(String::from_utf8(id_graph.get(14).unwrap().0.flat()).unwrap(), "did:twitter:web2:_:alice7");
+		assert_eq!(
+			id_graph.get(14).unwrap().0,
+			Identity::Twitter("alice7".as_bytes().to_vec().try_into().unwrap())
+		);
 
 		// try to get more than id_graph length
 		let id_graph = IMT::get_id_graph(&BOB, 30);
 		assert_eq!(id_graph.len(), 22);
-		assert_eq!(String::from_utf8(id_graph.get(0).unwrap().0.flat()).unwrap(), "did:twitter:web2:_:alice21");
-		assert_eq!(String::from_utf8(id_graph.get(21).unwrap().0.flat()).unwrap(), "did:litmus:web3:substrate:0x0202020202020202020202020202020202020202020202020202020202020202");
+		assert_eq!(
+			id_graph.get(0).unwrap().0,
+			Identity::Twitter("alice21".as_bytes().to_vec().try_into().unwrap())
+		);
+		assert_eq!(id_graph.get(21).unwrap().0, Identity::Substrate([2u8; 32].into()));
 	});
 }
 
 #[test]
 fn id_graph_stats_works() {
 	new_test_ext(true).execute_with(|| {
-		let ss58_prefix = 131_u16;
-
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			ALICE,
 			alice_web3_identity(),
-			ss58_prefix,
+			vec![],
 		));
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			ALICE,
 			alice_twitter_identity(1),
-			ss58_prefix,
+			vec![],
 		));
 
 		let stats = IMT::id_graph_stats().unwrap();
 		assert_eq!(stats.len(), 2);
 		assert!(stats.contains(&(ALICE, 2)));
-		//bob identity is created by setting shielding key
+		// bob's identity is created when setting shielding key
 		assert!(stats.contains(&(BOB, 1)));
 	});
 }
