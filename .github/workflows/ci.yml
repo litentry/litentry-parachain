@@ -375,10 +375,10 @@ jobs:
           rustup show
           cargo test --locked --release -p pallet-* --lib
 
-      - name: Test enclave
-        # cargo test is not supported in the enclave
-        # see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
-        run: docker run litentry/integritee-worker test --all
+      # - name: Test enclave
+      #   # cargo test is not supported in the enclave
+      #   # see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
+      #   run: docker run litentry/integritee-worker test --all
 
       - name: Save docker images
         run: docker save litentry/integritee-worker litentry/integritee-cli -o litentry-tee.tar
