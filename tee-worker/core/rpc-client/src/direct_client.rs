@@ -144,7 +144,7 @@ impl DirectApi for DirectClient {
 		// Send json rpc call to ws server.
 		let response_str = self.get(&jsonrpc_call)?;
 
-		let shielding_pubkey_string = decode_from_rpc_response(&response_str)?;
+		let shielding_pubkey_string = decode_from_rpc_response::<String>(&response_str)?;
 		let shielding_pubkey: Rsa3072PubKey = serde_json::from_str(&shielding_pubkey_string)?;
 
 		info!("[+] Got RSA public key of enclave");
@@ -158,7 +158,7 @@ impl DirectApi for DirectClient {
 		// Send json rpc call to ws server.
 		let response_str = self.get(&jsonrpc_call)?;
 
-		let mu_ra_url: String = decode_from_rpc_response(&response_str)?;
+		let mu_ra_url: String = decode_from_rpc_response::<String>(&response_str)?;
 
 		info!("[+] Got mutual remote attestation url of enclave: {}", mu_ra_url);
 		Ok(mu_ra_url)
@@ -173,7 +173,7 @@ impl DirectApi for DirectClient {
 		// Send json rpc call to ws server.
 		let response_str = self.get(&jsonrpc_call)?;
 
-		let untrusted_url: String = decode_from_rpc_response(&response_str)?;
+		let untrusted_url: String = decode_from_rpc_response::<String>(&response_str)?;
 
 		info!("[+] Got untrusted websocket url of worker: {}", untrusted_url);
 		Ok(untrusted_url)
@@ -212,7 +212,7 @@ impl DirectApi for DirectClient {
 		// Send json rpc call to ws server.
 		let response_str = self.get(&jsonrpc_call)?;
 		debug!("[+] get_next_nonce response_str: {}", response_str);
-		decode_u32_from_rpc_response(&response_str)
+		decode_from_rpc_response::<u32>(&response_str)
 	}
 
 	fn send(&self, request: &str) -> Result<()> {
@@ -224,28 +224,15 @@ impl DirectApi for DirectClient {
 	}
 }
 
-fn decode_from_rpc_response(json_rpc_response: &str) -> Result<String> {
+fn decode_from_rpc_response<T : Decode + std::fmt::Display>(json_rpc_response: &str) -> Result<T> {
 	let rpc_response: RpcResponse = serde_json::from_str(json_rpc_response)?;
 	let rpc_return_value =
 		RpcReturnValue::from_hex(&rpc_response.result).map_err(|e| Error::Custom(Box::new(e)))?;
-	let response_message = String::decode(&mut rpc_return_value.value.as_slice())?;
+	let response_message = T::decode(&mut rpc_return_value.value.as_slice())?;
 	match rpc_return_value.status {
 		DirectRequestStatus::Ok => Ok(response_message),
-		_ => Err(Error::Status(response_message)),
-	}
-}
-
-fn decode_u32_from_rpc_response(json_rpc_response: &str) -> Result<u32> {
-	let rpc_response: RpcResponse = serde_json::from_str(json_rpc_response)?;
-	let rpc_return_value =
-		RpcReturnValue::from_hex(&rpc_response.result).map_err(|e| Error::Custom(Box::new(e)))?;
-	let response_value = u32::decode(&mut rpc_return_value.value.as_slice())?;
-	match rpc_return_value.status {
-		DirectRequestStatus::Ok => Ok(response_value),
-		_ => Err(Error::Status(format!(
-			"decode_u32_from_rpc_response failed to decode {}",
-			json_rpc_response
-		))),
+		_ => Err(Error::Status(format!("decode_response failed to decode {}",
+		response_message))),
 	}
 }
 

@@ -16,14 +16,14 @@
 */
 
 use crate::{
-	command_utils::get_worker_api_direct,
+	get_layer_two_nonce,
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
 	trusted_operation::perform_trusted_operation,
 	Cli,
 };
-use ita_stf::{TrustedCall, TrustedOperation};
-use itc_rpc_client::direct_client::DirectApi;
+use codec::Decode;
+use ita_stf::{Index, TrustedCall, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
 use litentry_primitives::ParentchainBalance as Balance;
 use log::*;
@@ -48,9 +48,7 @@ impl SetBalanceCommand {
 		println!("send trusted call set-balance({}, {})", who.public(), self.amount);
 
 		let (mrenclave, shard) = get_identifiers(trusted_args);
-		let worker_api_direct = get_worker_api_direct(cli);
-		let nonce = worker_api_direct.get_next_nonce(&shard, &(signer.public().into())).unwrap();
-		info!("nonce {:?} ", nonce);
+		let nonce = get_layer_two_nonce!(signer, cli, trusted_args);
 		let top: TrustedOperation = TrustedCall::balance_set_balance(
 			signer.public().into(),
 			who.public().into(),
