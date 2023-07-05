@@ -228,41 +228,21 @@ jobs:
       - name: Tee-worker clippy
         working-directory: ./tee-worker
         run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
           rustup show
           cargo clippy -- -D warnings
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
           cargo clippy --features evm -- -D warnings
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
           cargo clippy --features sidechain -- -D warnings
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
           cargo clippy --features teeracle -- -D warnings
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
           cargo clippy --features offchain-worker -- -D warnings
 
       - name: Tee-enclave clippy
         working-directory: ./tee-worker/enclave-runtime
         run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
           rustup show
           cargo clippy -- -D warnings
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
           cargo clippy --features evm -- -D warnings
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
           cargo clippy --features sidechain -- -D warnings
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
           cargo clippy --features teeracle -- -D warnings
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
           cargo clippy --features offchain-worker -- -D warnings
 
       - name: Fail early
@@ -352,11 +332,6 @@ jobs:
       - set-condition
       - sequentialise
     steps:
-      - name: Remove unnecessary files
-        run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-
       - uses: actions/checkout@v3
 
       - name: Set up Docker Buildx
